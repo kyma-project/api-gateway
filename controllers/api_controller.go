@@ -22,7 +22,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	gatewayv2alpha1 "github.com/piotrmsc/api-gateway/api/v2alpha1"
+	gatewayv2alpha1 "github.com/kyma-incubator/api-gateway/api/v2alpha1"
 )
 
 // ApiReconciler reconciles a Api object

@@ -19,8 +19,8 @@ import (
 	"flag"
 	"os"
 
-	gatewayv2alpha1 "github.com/piotrmsc/api-gateway/api/v2alpha1"
-	"github.com/piotrmsc/api-gateway/controllers"
+	gatewayv2alpha1 "github.com/kyma-incubator/api-gateway/api/v2alpha1"
+	"github.com/kyma-incubator/api-gateway/controllers"
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"

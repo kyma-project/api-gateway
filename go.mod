@@ -1,4 +1,4 @@
-module github.com/piotrmsc/api-gateway
+module github.com/kyma-incubator/api-gateway
 
 go 1.12
 
