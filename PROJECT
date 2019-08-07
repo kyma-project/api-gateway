@@ -1,0 +1,7 @@
+version: "2"
+domain: kyma-project.io
+repo: github.com/piotrmsc/api-gateway
+resources:
+- group: gateway
+  version: v2alpha1
+  kind: Api
