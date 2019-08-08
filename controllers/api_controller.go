@@ -17,12 +17,15 @@ package controllers
 
 import (
 	"context"
+	"fmt"
+	"os"
 
 	"github.com/go-logr/logr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	gatewayv2alpha1 "github.com/kyma-incubator/api-gateway/api/v2alpha1"
+	networkingv1alpha3 "knative.dev/pkg/apis/istio/v1alpha3"
 )
 
 // ApiReconciler reconciles a Api object
@@ -38,7 +41,16 @@ func (r *ApiReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	_ = context.Background()
 	_ = r.Log.WithValues("api", req.NamespacedName)
 
-	// your logic here
+	// demo sample fetching virtualservices
+
+	list := networkingv1alpha3.VirtualServiceList{}
+	err := r.Client.List(context.TODO(), &list, client.InNamespace(req.Namespace))
+	if err != nil {
+		fmt.Printf("ooops, error occured when fetching vs " + err.Error())
+		os.Exit(1)
+	}
+
+	fmt.Println(list)
 
 	return ctrl.Result{}, nil
 }
