@@ -17,6 +17,13 @@ package v2alpha1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+)
+
+const (
+	JWT         string = "JWT"
+	OAUTH       string = "OAUTH"
+	PASSTHROUGH string = "PASSTHROUGH"
 )
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
@@ -24,8 +31,11 @@ import (
 
 // ApiSpec defines the desired state of Api
 type ApiSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
+	// Definition of the service, application to expose
+	Service *Service `json:"application"`
+	// Auth strategy to be used
+	Auth *AuthStrategy `json:"auth"`
 }
 
 // ApiStatus defines the observed state of Api
@@ -52,6 +62,29 @@ type ApiList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []Api `json:"items"`
+}
+
+type Service struct {
+	// Name of the service
+	Name *string `json:"name"`
+	// Port of the service to expose
+	// +kubebuilder:validation:Minimum=1
+	// +kubebuilder:validation:Maximum=99999
+	Port *int32 `json:"port"`
+	// URL on which the service will be visible
+	// +kubebuilder:validation:MinLength=3
+	// +kubebuilder:validation:MaxLength=256
+	// +kubebuilder:validation:Pattern=^(?:https?:\/\/)?(?:[^@\/\n]+@)?(?:www\.)?([^:\/\n]+)
+	HostURL *string `json:"hostURL"`
+	// Defines if the service is internal (in cluster) or external
+	// +optional
+	IsExternal *bool `json:"external,omitempty"`
+}
+
+type AuthStrategy struct {
+	// +kubebuilder:validation:Enum=JWT;OAUTH;PASSTHROUGH
+	Name   *string               `json:"name"`
+	Config *runtime.RawExtension `json:"config,inline"`
 }
 
 func init() {

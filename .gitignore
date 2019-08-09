@@ -22,3 +22,6 @@ bin
 *.swp
 *.swo
 *~
+
+# Other
+info.json

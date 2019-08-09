@@ -384,6 +384,52 @@ spec:
               type: string
           type: object
         spec:
+          properties:
+            application:
+              description: 'Important: Run "make" to regenerate code after modifying
+                this file Definition of the service, application to expose'
+              properties:
+                external:
+                  description: Defines if the service is internal (in cluster) or
+                    external
+                  type: boolean
+                hostURL:
+                  description: URL on which the service will be visible
+                  maxLength: 256
+                  minLength: 3
+                  pattern: ^(?:https?:\/\/)?(?:[^@\/\n]+@)?(?:www\.)?([^:\/\n]+)
+                  type: string
+                name:
+                  description: Name of the service
+                  type: string
+                port:
+                  description: Port of the service to expose
+                  format: int32
+                  maximum: 99999
+                  minimum: 1
+                  type: integer
+              required:
+              - name
+              - port
+              - hostURL
+              type: object
+            auth:
+              allOf:
+              - type: object
+              description: Auth strategy to be used
+              properties:
+                name:
+                  enum:
+                  - JWT
+                  - OAUTH
+                  - PASSTHROUGH
+                  type: string
+              required:
+              - name
+              type: object
+          required:
+          - application
+          - auth
           type: object
         status:
           type: object
