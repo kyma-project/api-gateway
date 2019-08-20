@@ -20,32 +20,37 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
-const (
-	JWT         string = "JWT"
-	OAUTH       string = "OAUTH"
-	PASSTHROUGH string = "PASSTHROUGH"
-)
+type StatusCode string
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
+const (
+	JWT            string     = "JWT"
+	OAUTH          string     = "OAUTH"
+	PASSTHROUGH    string     = "PASSTHROUGH"
+	STATUS_OK      StatusCode = "OK"
+	STATUS_SKIPPED StatusCode = "SKIPPED"
+	STATUS_ERROR   StatusCode = "ERROR"
+)
 
 // ApiSpec defines the desired state of Api
 type ApiSpec struct {
-	// Important: Run "make" to regenerate code after modifying this file
-	// Definition of the service, application to expose
-	Service *Service `json:"application"`
+	// Definition of the service to expose
+	Service *Service `json:"service"`
 	// Auth strategy to be used
 	Auth *AuthStrategy `json:"auth"`
 }
 
 // ApiStatus defines the observed state of Api
 type ApiStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	LastProcessedTime    *metav1.Time           `json:"lastProcessedTime,omitempty"`
+	ObservedGeneration   int64                  `json:"observedGeneration,omitempty"`
+	APIStatus            *GatewayResourceStatus `json:"APIStatus,omitempty"`
+	VirtualServiceStatus *GatewayResourceStatus `json:"virtualServiceStatus,omitempty"`
+	PolicyServiceStatus  *GatewayResourceStatus `json:"policyStatus,omitempty"`
+	AccessRuleStatus     *GatewayResourceStatus `json:"accessRuleStatus,omitempty"`
 }
 
 // +kubebuilder:object:root=true
-
+// +kubebuilder:subresource:status
 // Api is the Schema for the apis API
 type Api struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -85,6 +90,11 @@ type AuthStrategy struct {
 	// +kubebuilder:validation:Enum=JWT;OAUTH;PASSTHROUGH
 	Name   *string               `json:"name"`
 	Config *runtime.RawExtension `json:"config,inline"`
+}
+
+type GatewayResourceStatus struct {
+	Code        StatusCode `json:"code,omitempty"`
+	Description string     `json:"desc,omitempty"`
 }
 
 func init() {

@@ -11,6 +11,8 @@ spec:
     kind: Api
     plural: apis
   scope: ""
+  subresources:
+    status: {}
   validation:
     openAPIV3Schema:
       description: Api is the Schema for the apis API
@@ -385,9 +387,22 @@ spec:
           type: object
         spec:
           properties:
-            application:
-              description: 'Important: Run "make" to regenerate code after modifying
-                this file Definition of the service, application to expose'
+            auth:
+              allOf:
+              - type: object
+              description: Auth strategy to be used
+              properties:
+                name:
+                  enum:
+                  - JWT
+                  - OAUTH
+                  - PASSTHROUGH
+                  type: string
+              required:
+              - name
+              type: object
+            service:
+              description: Definition of the service, application to expose
               properties:
                 external:
                   description: Defines if the service is internal (in cluster) or
@@ -413,25 +428,39 @@ spec:
               - port
               - hostURL
               type: object
-            auth:
-              allOf:
-              - type: object
-              description: Auth strategy to be used
-              properties:
-                name:
-                  enum:
-                  - JWT
-                  - OAUTH
-                  - PASSTHROUGH
-                  type: string
-              required:
-              - name
-              type: object
           required:
-          - application
+          - service
           - auth
           type: object
         status:
+          properties:
+            accessRuleStatus:
+              properties:
+                code:
+                  type: string
+                desc:
+                  type: string
+              type: object
+            lastProcessedTime:
+              format: date-time
+              type: string
+            observedGeneration:
+              format: int64
+              type: integer
+            policyStatus:
+              properties:
+                code:
+                  type: string
+                desc:
+                  type: string
+              type: object
+            virtualServiceStatus:
+              properties:
+                code:
+                  type: string
+                desc:
+                  type: string
+              type: object
           type: object
       type: object
   versions:

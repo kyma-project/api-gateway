@@ -1,7 +1,7 @@
 apiVersion: gateway.kyma-project.io/v2alpha1
 kind: Api
 metadata:
-  name: api-sample
+  name: sample-api
 spec:
   service:
     hostURL: https://imgur.com
