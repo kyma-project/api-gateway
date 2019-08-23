@@ -2,6 +2,7 @@ package controllers_test
 
 import (
 	"context"
+
 	gatewayv2alpha1 "github.com/kyma-incubator/api-gateway/api/v2alpha1"
 	"github.com/kyma-incubator/api-gateway/controllers"
 	. "github.com/onsi/ginkgo"
@@ -23,65 +24,68 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 )
 
-var ts *testSuite
-var serviceName, hostURL string
-var servicePort int32
-var isExernal bool
-var authStrategy string
+var (
+	ts                                       *testSuite
+	serviceName, host, authStrategy, gateway string
+	servicePort                              int32
+	isExernal                                bool
+)
 
 var _ = Describe("Controller", func() {
 	Describe("Reconcile", func() {
-		Context("API", func() {
+		Context("Gate", func() {
 			It("should update status", func() {
-				testApi := fixApi()
+				testAPI := fixAPI()
 
-				ts = getTestSuite(testApi)
-				reconciler := getApiReconciler(ts.mgr)
+				ts = getTestSuite(testAPI)
+				reconciler := getAPIReconciler(ts.mgr)
 
-				result, err := reconciler.Reconcile(reconcile.Request{NamespacedName: types.NamespacedName{Name: testApi.Name}})
+				result, err := reconciler.Reconcile(reconcile.Request{NamespacedName: types.NamespacedName{Name: testAPI.Name}})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(result.Requeue).To(BeFalse())
 
-				res := gatewayv2alpha1.Api{}
-				err = ts.mgr.GetClient().Get(context.Background(), types.NamespacedName{Namespace: testApi.Namespace, Name: testApi.Name}, &res)
+				res := gatewayv2alpha1.Gate{}
+				err = ts.mgr.GetClient().Get(context.Background(), types.NamespacedName{Namespace: testAPI.Namespace, Name: testAPI.Name}, &res)
 				Expect(err).ToNot(HaveOccurred())
 				Expect(res.Status.AccessRuleStatus.Code).To(Equal(gatewayv2alpha1.STATUS_SKIPPED))
 				Expect(res.Status.PolicyServiceStatus.Code).To(Equal(gatewayv2alpha1.STATUS_SKIPPED))
-				Expect(res.Status.VirtualServiceStatus.Code).To(Equal(gatewayv2alpha1.STATUS_SKIPPED))
-				Expect(res.Status.APIStatus.Code).To(Equal(gatewayv2alpha1.STATUS_OK))
+				Expect(res.Status.VirtualServiceStatus.Code).To(Equal(gatewayv2alpha1.STATUS_OK))
+				Expect(res.Status.GateStatus.Code).To(Equal(gatewayv2alpha1.STATUS_OK))
 			})
 		})
 	})
 })
 
-func fixApi() *gatewayv2alpha1.Api {
+func fixAPI() *gatewayv2alpha1.Gate {
 	serviceName = "test"
 	servicePort = 8000
-	hostURL = "https://foo.bar"
+	host = "foo.bar"
 	isExernal = false
 	authStrategy = gatewayv2alpha1.PASSTHROUGH
+	gateway = "some-gateway.some-namespace.foo"
 
-	return &gatewayv2alpha1.Api{
+	return &gatewayv2alpha1.Gate{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:       "test",
 			Generation: 1,
 		},
-		Spec: gatewayv2alpha1.ApiSpec{
+		Spec: gatewayv2alpha1.GateSpec{
 			Service: &gatewayv2alpha1.Service{
 				Name:       &serviceName,
 				Port:       &servicePort,
-				HostURL:    &hostURL,
+				Host:       &host,
 				IsExternal: &isExernal,
 			},
 			Auth: &gatewayv2alpha1.AuthStrategy{
 				Name:   &authStrategy,
 				Config: nil,
 			},
+			Gateway: &gateway,
 		},
 	}
 }
 
-func getApiReconciler(mgr manager.Manager) reconcile.Reconciler {
+func getAPIReconciler(mgr manager.Manager) reconcile.Reconciler {
 	return &controllers.ApiReconciler{
 		Client: mgr.GetClient(),
 		Log:    ctrl.Log.WithName("controllers").WithName("Api"),

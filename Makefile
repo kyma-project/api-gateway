@@ -2,6 +2,7 @@ APP_NAME = api-gateway-controller
 IMG = $(DOCKER_PUSH_REPOSITORY)$(DOCKER_PUSH_DIRECTORY)/$(APP_NAME)
 TAG = $(DOCKER_TAG)
 CRD_OPTIONS ?= "crd:trivialVersions=true"
+SHELL = /bin/bash
 
 .EXPORT_ALL_VARIABLES:
 GO111MODULE = on
@@ -47,11 +48,11 @@ path-to-referenced-charts:
 
 # Install CRDs into a cluster
 install: manifests
-	kubectl apply -f config/crd/bases
+	kustomize build config/crd | kubectl apply -f -
+	@if ! kubectl get crd virtualservices.networking.istio.io > /dev/null 2>&1 ; then kubectl apply -f hack/networking.istio.io_virtualservice.yaml; fi;
 
 # Deploy controller in the configured Kubernetes cluster in ~/.kube/config
 deploy: manifests
-	kubectl apply -f config/crd/bases
 	kustomize build config/default | kubectl apply -f -
 
 # Generate manifests e.g. CRD, RBAC etc.
@@ -71,3 +72,21 @@ CONTROLLER_GEN=$(shell go env GOPATH)/bin/controller-gen
 else
 CONTROLLER_GEN=$(shell which controller-gen)
 endif
+
+run: build
+	go run .
+
+samples-clean:
+	kubectl delete -f config/samples/valid.yaml --ignore-not-found=true
+	kubectl delete -f config/samples/invalid.yaml --ignore-not-found=true
+
+.PHONY: samples
+samples: samples-valid
+
+.PHONY: samples-valid
+samples-valid: samples-clean
+	kubectl apply -f config/samples/valid.yaml
+
+.PHONY: samples-invalid
+samples-invalid: samples-clean
+	kubectl apply -f config/samples/invalid.yaml

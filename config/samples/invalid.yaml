@@ -1,0 +1,62 @@
+---
+apiVersion: gateway.kyma-project.io/v2alpha1
+kind: Gate
+metadata:
+  name: passthrough-bad-host
+spec:
+  service:
+    host: https://imgur.com
+    name: imgur
+    port: 443
+  auth: 
+    name: PASSTHROUGH
+  gateway: some-gateway.some-namespace
+---
+apiVersion: gateway.kyma-project.io/v2alpha1
+kind: Gate
+metadata:
+  name: passthrough-bad-gateway
+spec:
+  service:
+    host: imgur.com
+    name: imgur
+    port: 443
+  auth: 
+    name: PASSTHROUGH
+  gateway: short-name-gateway
+---
+apiVersion: gateway.kyma-project.io/v2alpha1
+kind: Gate
+metadata:
+  name: oauth-no-paths
+spec:
+  gateway: kyma-gateway.kyma-system.svc.cluster.local
+  service:
+    host: imgur.com
+    name: imgur
+    port: 443
+  auth: 
+    name: OAUTH
+    config:
+      paths: []
+---
+apiVersion: gateway.kyma-project.io/v2alpha1
+kind: Gate
+metadata:
+  name: oauth-bad-paths
+spec:
+  gateway: kyma-gateway.kyma-system.svc.cluster.local
+  service:
+    host: imgur.com
+    name: imgur
+    port: 443
+  auth: 
+    name: OAUTH
+    config:
+      paths:
+      - path: /foo
+        scopes: [foo, bar]
+        methods: [GET]
+      - path: /foo
+        scopes: [foo]
+        methods: [POST]

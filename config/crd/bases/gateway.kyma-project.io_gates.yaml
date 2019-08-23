@@ -4,18 +4,18 @@ apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
 metadata:
   creationTimestamp: null
-  name: apis.gateway.kyma-project.io
+  name: gates.gateway.kyma-project.io
 spec:
   group: gateway.kyma-project.io
   names:
-    kind: Api
-    plural: apis
+    kind: Gate
+    plural: gates
   scope: ""
   subresources:
     status: {}
   validation:
     openAPIV3Schema:
-      description: Api is the Schema for the apis API
+      description: Gate is the Schema for the apis Gate
       properties:
         apiVersion:
           description: 'APIVersion defines the versioned schema of this representation
@@ -388,10 +388,12 @@ spec:
         spec:
           properties:
             auth:
-              allOf:
-              - type: object
               description: Auth strategy to be used
               properties:
+                config:
+                  description: Config configures the auth strategy. Configuration
+                    keys vary per strategy.
+                  type: object
                 name:
                   enum:
                   - JWT
@@ -401,18 +403,22 @@ spec:
               required:
               - name
               type: object
+            gateway:
+              description: Gateway to be used
+              pattern: ^(?:[_a-z0-9](?:[_a-z0-9-]+[a-z0-9])?\.)+(?:[a-z](?:[a-z0-9-]+[a-z0-9])?)?$
+              type: string
             service:
-              description: Definition of the service, application to expose
+              description: Definition of the service to expose
               properties:
                 external:
                   description: Defines if the service is internal (in cluster) or
                     external
                   type: boolean
-                hostURL:
+                host:
                   description: URL on which the service will be visible
                   maxLength: 256
                   minLength: 3
-                  pattern: ^(?:https?:\/\/)?(?:[^@\/\n]+@)?(?:www\.)?([^:\/\n]+)
+                  pattern: ^(?:[_a-z0-9](?:[_a-z0-9-]+[a-z0-9])?\.)+(?:[a-z](?:[a-z0-9-]+[a-z0-9])?)?$
                   type: string
                 name:
                   description: Name of the service
@@ -426,14 +432,22 @@ spec:
               required:
               - name
               - port
-              - hostURL
+              - host
               type: object
           required:
           - service
           - auth
+          - gateway
           type: object
         status:
           properties:
+            GateStatus:
+              properties:
+                code:
+                  type: string
+                desc:
+                  type: string
+              type: object
             accessRuleStatus:
               properties:
                 code:

@@ -1,0 +1,31 @@
+---
+apiVersion: gateway.kyma-project.io/v2alpha1
+kind: Gate
+metadata:
+  name: passthrough
+spec:
+  service:
+    host: imgur.com
+    name: imgur
+    port: 443
+  auth: 
+    name: PASSTHROUGH
+  gateway: kyma-gateway.kyma-system.svc.cluster.local
+#---
+#apiVersion: gateway.kyma-project.io/v2alpha1
+#kind: Gate
+#metadata:
+#  name: oauth
+#spec:
+#  gateway: kyma-gateway.kyma-system.svc.cluster.local
+#  service:
+#    host: imgur.com
+#    name: imgur
+#    port: 443
+#  auth:
+#    name: OAUTH
+#    config:
+#      paths:
+#      - path: /foo
+#        scopes: [foo, bar]
+#        methods: [GET]

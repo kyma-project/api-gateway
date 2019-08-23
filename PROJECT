@@ -4,4 +4,4 @@ repo: github.com/kyma-incubator/api-gateway
 resources:
 - group: gateway
   version: v2alpha1
-  kind: Api
+  kind: Gate
