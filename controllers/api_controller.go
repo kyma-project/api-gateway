@@ -17,11 +17,13 @@ package controllers
 
 import (
 	"context"
-	"github.com/kyma-incubator/api-gateway/internal/processing"
 	"time"
+
+	"github.com/kyma-incubator/api-gateway/internal/processing"
 
 	"github.com/go-logr/logr"
 	gatewayv2alpha1 "github.com/kyma-incubator/api-gateway/api/v2alpha1"
+	"github.com/kyma-incubator/api-gateway/internal/clients"
 	"github.com/kyma-incubator/api-gateway/internal/validation"
 	apierrs "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -32,6 +34,7 @@ import (
 
 // ApiReconciler reconciles a Api object
 type ApiReconciler struct {
+	ExtCRClients *clients.ExternalCRClients
 	client.Client
 	Log logr.Logger
 }
@@ -91,7 +94,7 @@ func (r *ApiReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 			return ctrl.Result{}, err
 		}
 
-		processingStrategy, err := processing.NewFactory(r.Client, r.Log).StrategyFor(*api.Spec.Auth.Name)
+		processingStrategy, err := processing.NewFactory(r.ExtCRClients.ForVirtualService(), r.Log).StrategyFor(*api.Spec.Auth.Name)
 		if err != nil {
 			_, updateStatErr := r.updateStatus(ctx, api, generateErrorStatus(err), virtualServiceStatus, policyStatus, accessRuleStatus)
 			if updateStatErr != nil {

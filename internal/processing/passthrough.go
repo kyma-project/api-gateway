@@ -3,16 +3,17 @@ package processing
 import (
 	"context"
 	"fmt"
+
 	gatewayv2alpha1 "github.com/kyma-incubator/api-gateway/api/v2alpha1"
+	istioClient "github.com/kyma-incubator/api-gateway/internal/clients/istio"
 	apierrs "k8s.io/apimachinery/pkg/api/errors"
 	k8sMeta "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"knative.dev/pkg/apis/istio/common/v1alpha1"
 	networkingv1alpha3 "knative.dev/pkg/apis/istio/v1alpha3"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type passthrough struct {
-	client.Client
+	vsClient *istioClient.VirtualService
 }
 
 func (p *passthrough) Process(ctx context.Context, api *gatewayv2alpha1.Gate) error {
@@ -33,11 +34,7 @@ func (p *passthrough) Process(ctx context.Context, api *gatewayv2alpha1.Gate) er
 }
 
 func (p *passthrough) getVirtualService(ctx context.Context, api *gatewayv2alpha1.Gate) (*networkingv1alpha3.VirtualService, error) {
-	virtualServiceName := fmt.Sprintf("%s-%s", api.ObjectMeta.Name, *api.Spec.Service.Name)
-	namespacedName := client.ObjectKey{Namespace: api.GetNamespace(), Name: virtualServiceName}
-	var vs networkingv1alpha3.VirtualService
-
-	err := p.Client.Get(ctx, namespacedName, &vs)
+	vs, err := p.vsClient.GetForAPI(ctx, api)
 	if err != nil {
 		if apierrs.IsNotFound(err) {
 			return nil, nil
@@ -45,11 +42,11 @@ func (p *passthrough) getVirtualService(ctx context.Context, api *gatewayv2alpha
 		return nil, err
 	}
 
-	return &vs, nil
+	return vs, nil
 }
 
 func (p *passthrough) createVirtualService(ctx context.Context, vs *networkingv1alpha3.VirtualService) error {
-	return p.Client.Create(ctx, vs)
+	return p.vsClient.Create(ctx, vs)
 }
 
 func (p *passthrough) prepareVirtualService(api *gatewayv2alpha1.Gate, vs *networkingv1alpha3.VirtualService) *networkingv1alpha3.VirtualService {
@@ -100,7 +97,7 @@ func (p *passthrough) prepareVirtualService(api *gatewayv2alpha1.Gate, vs *netwo
 }
 
 func (p *passthrough) updateVirtualService(ctx context.Context, vs *networkingv1alpha3.VirtualService) error {
-	return p.Client.Update(ctx, vs)
+	return p.vsClient.Update(ctx, vs)
 }
 
 func (p *passthrough) generateVirtualService(api *gatewayv2alpha1.Gate) *networkingv1alpha3.VirtualService {

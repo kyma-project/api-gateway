@@ -5,6 +5,7 @@ import (
 
 	gatewayv2alpha1 "github.com/kyma-incubator/api-gateway/api/v2alpha1"
 	"github.com/kyma-incubator/api-gateway/controllers"
+	crClients "github.com/kyma-incubator/api-gateway/internal/clients"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -87,8 +88,9 @@ func fixAPI() *gatewayv2alpha1.Gate {
 
 func getAPIReconciler(mgr manager.Manager) reconcile.Reconciler {
 	return &controllers.ApiReconciler{
-		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("controllers").WithName("Api"),
+		Client:       mgr.GetClient(),
+		ExtCRClients: crClients.New(mgr.GetClient()),
+		Log:          ctrl.Log.WithName("controllers").WithName("Api"),
 	}
 }
 
