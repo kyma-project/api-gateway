@@ -42,14 +42,14 @@ ci-release: build build-image push-image
 clean:
 	rm -rf bin
 
-.PHONY: path-to-referenced-charts
-path-to-referenced-charts:
-	@echo "resources/core"
-
 # Install CRDs into a cluster
 install: manifests
 	kustomize build config/crd | kubectl apply -f -
 	@if ! kubectl get crd virtualservices.networking.istio.io > /dev/null 2>&1 ; then kubectl apply -f hack/networking.istio.io_virtualservice.yaml; fi;
+
+# Generate static installation files
+static: manifests
+	kustomize build config/default -o install/k8s
 
 # Deploy controller in the configured Kubernetes cluster in ~/.kube/config
 deploy: manifests
