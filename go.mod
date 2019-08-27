@@ -3,6 +3,7 @@ module github.com/kyma-incubator/api-gateway
 go 1.12
 
 require (
+	github.com/ghodss/yaml v1.0.0
 	github.com/go-logr/logr v0.1.0
 	github.com/google/go-cmp v0.3.1 // indirect
 	github.com/onsi/ginkgo v1.6.0

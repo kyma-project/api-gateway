@@ -28,13 +28,13 @@ func (o *oauth) Validate(config *runtime.RawExtension) error {
 	if len(template.Paths) == 0 {
 		return fmt.Errorf("supplied config does not match internal template")
 	}
-	if hasDuplicates(template.Paths) {
+	if o.hasDuplicates(template.Paths) {
 		return fmt.Errorf("supplied config is invalid: multiple definitions of the same path detected")
 	}
 	return nil
 }
 
-func hasDuplicates(elements []gatewayv2alpha1.Option) bool {
+func (o *oauth) hasDuplicates(elements []gatewayv2alpha1.Option) bool {
 	encountered := map[string]bool{}
 	// Create a map of all unique elements.
 	for v := range elements {

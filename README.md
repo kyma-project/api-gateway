@@ -70,6 +70,7 @@ auth:
     mode: 
       name: INCLUDE
       config:
+        paths:
         - path: '/a'
           scopes: 
             - read
@@ -98,6 +99,7 @@ service:
 auth:
   name: OAUTH
   config:
+    paths:
     - path: '/a'
       scopes: 
         - write
