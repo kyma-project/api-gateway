@@ -94,7 +94,7 @@ func (r *ApiReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 			return ctrl.Result{}, err
 		}
 
-		processingStrategy, err := processing.NewFactory(r.ExtCRClients.ForVirtualService(), r.Log).StrategyFor(*api.Spec.Auth.Name)
+		processingStrategy, err := processing.NewFactory(r.ExtCRClients.ForVirtualService(), r.ExtCRClients.ForAuthenticationPolicy(), r.Log).StrategyFor(*api.Spec.Auth.Name)
 		if err != nil {
 			_, updateStatErr := r.updateStatus(ctx, api, generateErrorStatus(err), virtualServiceStatus, policyStatus, accessRuleStatus)
 			if updateStatErr != nil {

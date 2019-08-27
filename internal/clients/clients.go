@@ -7,15 +7,21 @@ import (
 
 func New(crClient client.Client) *ExternalCRClients {
 	return &ExternalCRClients{
-		virtualService: istioClient.ForVirtualService(crClient),
+		virtualService:       istioClient.ForVirtualService(crClient),
+		authenticationPolicy: istioClient.ForAuthenticationPolicy(crClient),
 	}
 }
 
 //Exposes clients for external Custom Resources (e.g. Istio VirtualService)
 type ExternalCRClients struct {
-	virtualService *istioClient.VirtualService
+	virtualService       *istioClient.VirtualService
+	authenticationPolicy *istioClient.AuthenticationPolicy
 }
 
 func (c *ExternalCRClients) ForVirtualService() *istioClient.VirtualService {
 	return c.virtualService
+}
+
+func (c *ExternalCRClients) ForAuthenticationPolicy() *istioClient.AuthenticationPolicy {
+	return c.authenticationPolicy
 }

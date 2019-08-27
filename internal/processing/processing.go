@@ -12,6 +12,7 @@ import (
 
 type factory struct {
 	vsClient *istioClient.VirtualService
+	apClient *istioClient.AuthenticationPolicy
 	Log      logr.Logger
 }
 
@@ -19,9 +20,10 @@ type ProcessingStrategy interface {
 	Process(ctx context.Context, api *gatewayv2alpha1.Gate) error
 }
 
-func NewFactory(vsClient *istioClient.VirtualService, logger logr.Logger) *factory {
+func NewFactory(vsClient *istioClient.VirtualService, apClient *istioClient.AuthenticationPolicy, logger logr.Logger) *factory {
 	return &factory{
 		vsClient: vsClient,
+		apClient: apClient,
 		Log:      logger,
 	}
 }
@@ -31,6 +33,9 @@ func (f *factory) StrategyFor(strategyName string) (ProcessingStrategy, error) {
 	case gatewayv2alpha1.PASSTHROUGH:
 		f.Log.Info("PASSTHROUGH processing mode detected")
 		return &passthrough{vsClient: f.vsClient}, nil
+	case gatewayv2alpha1.JWT:
+		f.Log.Info("JWT processing mode detected")
+		return &jwt{vsClient: f.vsClient, apClient: f.apClient}, nil
 	default:
 		return nil, fmt.Errorf("Unsupported mode: %s", strategyName)
 	}

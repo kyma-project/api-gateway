@@ -29,23 +29,23 @@ spec:
 #      - path: /foo
 #        scopes: [foo, bar]
 #        methods: [GET]
-# ---
-# apiVersion: gateway.kyma-project.io/v2alpha1
-# kind: Gate
-# metadata:
-#   name: jwt-all
-# spec:
-#   gateway: kyma-gateway.kyma-system.svc.cluster.local
-#   service:
-#     name: foo-service
-#     port: 8080
-#     host: foo.bar
-#   auth: 
-#     name: JWT
-#     config:
-#       issuer: http://dex.kyma.local
-#       jwks: []
-#       mode: 
-#         name: ALL
-#         config:
-#           scopes: ["foo", "bar"]
+---
+apiVersion: gateway.kyma-project.io/v2alpha1
+kind: Gate
+metadata:
+  name: jwt-all
+spec:
+  gateway: kyma-gateway.kyma-system.svc.cluster.local
+  service:
+    name: foo-service
+    port: 8080
+    host: foo.bar
+  auth: 
+    name: JWT
+    config:
+      issuer: http://dex.kyma.local
+      jwks: []
+      mode: 
+        name: ALL
+        config:
+          scopes: ["foo", "bar"]
