@@ -19,6 +19,7 @@ type Factory struct {
 	Log               logr.Logger
 	oathkeeperSvc     string
 	oathkeeperSvcPort uint32
+	JWKSURI           string
 }
 
 //Strategy .
@@ -27,7 +28,7 @@ type Strategy interface {
 }
 
 //NewFactory .
-func NewFactory(vsClient *istioClient.VirtualService, apClient *istioClient.AuthenticationPolicy, arClient *oryClient.AccessRule, logger logr.Logger, oathkeeperSvc string, oathkeeperSvcPort uint32) *Factory {
+func NewFactory(vsClient *istioClient.VirtualService, apClient *istioClient.AuthenticationPolicy, arClient *oryClient.AccessRule, logger logr.Logger, oathkeeperSvc string, oathkeeperSvcPort uint32, jwksURI string) *Factory {
 	return &Factory{
 		vsClient:          vsClient,
 		apClient:          apClient,
@@ -35,6 +36,7 @@ func NewFactory(vsClient *istioClient.VirtualService, apClient *istioClient.Auth
 		Log:               logger,
 		oathkeeperSvc:     oathkeeperSvc,
 		oathkeeperSvcPort: oathkeeperSvcPort,
+		JWKSURI:           jwksURI,
 	}
 }
 
@@ -46,7 +48,7 @@ func (f *Factory) StrategyFor(strategyName string) (Strategy, error) {
 		return &passthrough{vsClient: f.vsClient}, nil
 	case gatewayv2alpha1.Jwt:
 		f.Log.Info("JWT processing mode detected")
-		return &jwt{vsClient: f.vsClient, apClient: f.apClient}, nil
+		return &jwt{vsClient: f.vsClient, apClient: f.apClient, JWKSURI: f.JWKSURI}, nil
 	case gatewayv2alpha1.Oauth:
 		f.Log.Info("OAUTH processing mode detected")
 		return &oauth{vsClient: f.vsClient, arClient: f.arClient, oathkeeperSvc: f.oathkeeperSvc, oathkeeperSvcPort: f.oathkeeperSvcPort}, nil

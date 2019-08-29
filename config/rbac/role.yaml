@@ -50,3 +50,15 @@ rules:
   - update
   - patch
   - delete
+- apiGroups:
+  - authentication.istio.io
+  resources:
+  - policies
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete

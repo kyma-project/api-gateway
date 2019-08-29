@@ -24,6 +24,12 @@ deployment:
     #   cpu: 100m
     #   memory: 20Mi
 
+config:
+  oathkeeper:
+    service: ory-oathkeeper
+    port: 4455
+  jwksURI: https://example.com/.well-known/jwks.json
+
   # Node labels for pod assignment.
   nodeSelector: {}
   # If you do want to specify node labels, uncomment the following

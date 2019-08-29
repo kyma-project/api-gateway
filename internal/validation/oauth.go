@@ -18,13 +18,10 @@ func (o *oauth) Validate(config *runtime.RawExtension) error {
 		return fmt.Errorf("supplied config cannot be empty")
 	}
 
-	//Check if the supplied data is castable to OauthModeConfig
 	err := json.Unmarshal(config.Raw, &template)
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	// If not, the result is an empty template object.
-	// Check if template is empty
 	if len(template.Paths) != 1 {
 		return fmt.Errorf("supplied config should contain exactly one path")
 	}

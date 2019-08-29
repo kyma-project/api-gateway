@@ -31,3 +31,12 @@ type IncludePath struct {
 	Scopes  []string `json:"scopes"`
 	Methods []string `json:"methods"`
 }
+
+const (
+	// JWTAll ?
+	JWTAll string = "ALL"
+	// JWTInclude ?
+	JWTInclude string = "INCLUDE"
+	// JWTExclude ?
+	JWTExclude string = "EXCLUDE"
+)

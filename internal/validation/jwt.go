@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	jwtModes = []string{"ALL", "INCLUDE", "EXCLUDE"}
+	jwtModes = []string{gatewayv2alpha1.JWTAll, gatewayv2alpha1.JWTInclude, gatewayv2alpha1.JWTExclude}
 )
 
 type jwt struct{}

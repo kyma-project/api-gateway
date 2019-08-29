@@ -4,6 +4,21 @@ TAG = $(DOCKER_TAG)
 CRD_OPTIONS ?= "crd:trivialVersions=true"
 SHELL = /bin/bash
 
+# Example ory-oathkeeper
+ifndef OATHKEEPER_SVC_ADDRESS
+override OATHKEEPER_SVC_ADDRESS = change-me
+endif
+
+# Example 4455
+ifndef OATHKEEPER_SVC_PORT
+override OATHKEEPER_SVC_PORT = change-me
+endif
+
+# https://example.com/.well-known/jwks.json
+ifndef JWKS_URI
+override JWKS_URI = change-me
+endif
+
 .EXPORT_ALL_VARIABLES:
 GO111MODULE = on
 
@@ -46,13 +61,23 @@ clean:
 install: manifests
 	kustomize build config/crd | kubectl apply -f -
 	@if ! kubectl get crd virtualservices.networking.istio.io > /dev/null 2>&1 ; then kubectl apply -f hack/networking.istio.io_virtualservice.yaml; fi;
+	@if ! kubectl get crd policies.authentication.istio.io > /dev/null 2>&1 ; then kubectl apply -f hack/authentication.istio.io_policies.yaml; fi;
+	@if ! kubectl get crd rules.oathkeeper.ory.sh > /dev/null 2>&1 ; then kubectl apply -f hack/oathkeeper.ory.sh_rules.yaml; fi;
 
 # Generate static installation files
 static: manifests
+	@cat config/default/manager_args_patch.yaml.tmpl |\
+		sed -e 's|OATHKEEPER_SVC_ADDRESS|"${OATHKEEPER_SVC_ADDRESS}"|g' |\
+		sed -e 's|OATHKEEPER_SVC_PORT|"${OATHKEEPER_SVC_PORT}"|g' |\
+		sed -e 's|JWKS_URI|"${JWKS_URI}"|g' > config/default/manager_args_patch.yaml
 	kustomize build config/default -o install/k8s
 
 # Deploy controller in the configured Kubernetes cluster in ~/.kube/config
 deploy: manifests
+	@cat config/default/manager_args_patch.yaml.tmpl |\
+		sed -e 's|OATHKEEPER_SVC_ADDRESS|"${OATHKEEPER_SVC_ADDRESS}"|g' |\
+		sed -e 's|OATHKEEPER_SVC_PORT|"${OATHKEEPER_SVC_PORT}"|g' |\
+		sed -e 's|JWKS_URI|"${JWKS_URI}"|g' > config/default/manager_args_patch.yaml
 	kustomize build config/default | kubectl apply -f -
 
 # Generate manifests e.g. CRD, RBAC etc.
@@ -74,7 +99,7 @@ CONTROLLER_GEN=$(shell which controller-gen)
 endif
 
 run: build
-	go run .
+	go run . --oathkeeper-svc-address=${OATHKEEPER_SVC_ADDRESS} --oathkeeper-svc-port=${OATHKEEPER_SVC_PORT} --jwks-uri=${JWKS_URI}
 
 samples-clean:
 	kubectl delete -f config/samples/valid.yaml --ignore-not-found=true

@@ -27,6 +27,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
+	authenticationv1alpha1 "knative.dev/pkg/apis/istio/authentication/v1alpha1"
 	networkingv1alpha3 "knative.dev/pkg/apis/istio/v1alpha3"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
@@ -39,7 +40,7 @@ var (
 
 func init() {
 	_ = clientgoscheme.AddToScheme(scheme)
-
+	_ = authenticationv1alpha1.AddToScheme(scheme)
 	_ = gatewayv2alpha1.AddToScheme(scheme)
 	_ = networkingv1alpha3.AddToScheme(scheme)
 	_ = rulev1alpha1.AddToScheme(scheme)
@@ -49,23 +50,28 @@ func init() {
 func main() {
 	var metricsAddr string
 	var enableLeaderElection bool
+	var jwksURI string
 	var oathkeeperSvcAddr string
 	var oathkeeperSvcPort uint
 
 	flag.StringVar(&oathkeeperSvcAddr, "oathkeeper-svc-address", "", "Oathkeeper proxy service")
 	flag.UintVar(&oathkeeperSvcPort, "oathkeeper-svc-port", 0, "Oathkeeper proxy service port")
 	flag.StringVar(&metricsAddr, "metrics-addr", ":8080", "The address the metric endpoint binds to.")
+	flag.StringVar(&jwksURI, "jwks-uri", "", "URL of the provider's public key set to validate signature of the JWT")
 	flag.BoolVar(&enableLeaderElection, "enable-leader-election", false,
 		"Enable leader election for controller manager. Enabling this will ensure there is only one active controller manager.")
 	flag.Parse()
 
 	ctrl.SetLogger(zap.Logger(true))
 
+	if jwksURI == "" {
+		setupLog.Error(fmt.Errorf("jwksURI required, but not supplied"), "unable to create controller", "controller", "Api")
+		os.Exit(1)
+	}
 	if oathkeeperSvcAddr == "" {
 		setupLog.Error(fmt.Errorf("oathkeeper service address can't be empty"), "unable to create controller", "controller", "Api")
 		os.Exit(1)
 	}
-
 	if oathkeeperSvcPort == 0 {
 		setupLog.Error(fmt.Errorf("oathkeeper service port can't be empty"), "unable to create controller", "controller", "Api")
 		os.Exit(1)
@@ -87,6 +93,7 @@ func main() {
 		Log:               ctrl.Log.WithName("controllers").WithName("Api"),
 		OathkeeperSvc:     oathkeeperSvcAddr,
 		OathkeeperSvcPort: uint32(oathkeeperSvcPort),
+		JWKSURI:           jwksURI,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Api")
 		os.Exit(1)

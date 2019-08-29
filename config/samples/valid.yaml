@@ -5,9 +5,9 @@ metadata:
   name: passthrough
 spec:
   service:
-    host: httpbin.org
+    host: httpbin.kyma.local
     name: httpbin
-    port: 443
+    port: 8000
   auth:
     name: PASSTHROUGH
   gateway: kyma-gateway.kyma-system.svc.cluster.local
@@ -15,7 +15,7 @@ spec:
 apiVersion: gateway.kyma-project.io/v2alpha1
 kind: Gate
 metadata:
-  name: jwt-all
+  name: jwt-all-no-scopes
 spec:
   gateway: kyma-gateway.kyma-system.svc.cluster.local
   service:
@@ -29,7 +29,26 @@ spec:
       jwks: []
       mode:
         name: ALL
-        config:
+        config: {}
+---
+apiVersion: gateway.kyma-project.io/v2alpha1
+kind: Gate
+metadata:
+  name: jwt-all-with-scopes
+spec:
+  gateway: kyma-gateway.kyma-system.svc.cluster.local
+  service:
+    name: foo-service
+    port: 8080
+    host: foo.bar
+  auth: 
+    name: JWT
+    config:
+      issuer: http://dex.kyma.local
+      jwks: []
+      mode: 
+        name: ALL
+        config: 
           scopes: ["foo", "bar"]
 ---
 apiVersion: gateway.kyma-project.io/v2alpha1
