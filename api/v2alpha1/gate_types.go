@@ -20,15 +20,22 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
+//StatusCode .
 type StatusCode string
 
 const (
-	JWT            string     = "JWT"
-	OAUTH          string     = "OAUTH"
-	PASSTHROUGH    string     = "PASSTHROUGH"
-	STATUS_OK      StatusCode = "OK"
-	STATUS_SKIPPED StatusCode = "SKIPPED"
-	STATUS_ERROR   StatusCode = "ERROR"
+	//Jwt .
+	Jwt string = "JWT"
+	//Oauth .
+	Oauth string = "OAUTH"
+	//Passthrough .
+	Passthrough string = "PASSTHROUGH"
+	//StatusOK .
+	StatusOK StatusCode = "OK"
+	//StatusSkipped .
+	StatusSkipped StatusCode = "SKIPPED"
+	//StatusError .
+	StatusError StatusCode = "ERROR"
 )
 
 // GateSpec defines the desired state of Gate
@@ -52,10 +59,10 @@ type GateStatus struct {
 	AccessRuleStatus     *GatewayResourceStatus `json:"accessRuleStatus,omitempty"`
 }
 
+//Gate is the Schema for the apis Gate
 // +kubebuilder:storageversion
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
-// Gate is the Schema for the apis Gate
 type Gate struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -73,6 +80,7 @@ type GateList struct {
 	Items           []Gate `json:"items"`
 }
 
+//Service .
 type Service struct {
 	// Name of the service
 	Name *string `json:"name"`
@@ -90,6 +98,7 @@ type Service struct {
 	IsExternal *bool `json:"external,omitempty"`
 }
 
+//AuthStrategy .
 type AuthStrategy struct {
 	// +kubebuilder:validation:Enum=JWT;OAUTH;PASSTHROUGH
 	Name *string `json:"name"`
@@ -98,6 +107,7 @@ type AuthStrategy struct {
 	Config *runtime.RawExtension `json:"config,omitempty"`
 }
 
+//GatewayResourceStatus .
 type GatewayResourceStatus struct {
 	Code        StatusCode `json:"code,omitempty"`
 	Description string     `json:"desc,omitempty"`

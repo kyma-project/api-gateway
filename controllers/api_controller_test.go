@@ -48,10 +48,10 @@ var _ = Describe("Controller", func() {
 				res := gatewayv2alpha1.Gate{}
 				err = ts.mgr.GetClient().Get(context.Background(), types.NamespacedName{Namespace: testAPI.Namespace, Name: testAPI.Name}, &res)
 				Expect(err).ToNot(HaveOccurred())
-				Expect(res.Status.AccessRuleStatus.Code).To(Equal(gatewayv2alpha1.STATUS_SKIPPED))
-				Expect(res.Status.PolicyServiceStatus.Code).To(Equal(gatewayv2alpha1.STATUS_SKIPPED))
-				Expect(res.Status.VirtualServiceStatus.Code).To(Equal(gatewayv2alpha1.STATUS_OK))
-				Expect(res.Status.GateStatus.Code).To(Equal(gatewayv2alpha1.STATUS_OK))
+				Expect(res.Status.AccessRuleStatus.Code).To(Equal(gatewayv2alpha1.StatusSkipped))
+				Expect(res.Status.PolicyServiceStatus.Code).To(Equal(gatewayv2alpha1.StatusSkipped))
+				Expect(res.Status.VirtualServiceStatus.Code).To(Equal(gatewayv2alpha1.StatusOK))
+				Expect(res.Status.GateStatus.Code).To(Equal(gatewayv2alpha1.StatusOK))
 			})
 		})
 	})
@@ -62,7 +62,7 @@ func fixAPI() *gatewayv2alpha1.Gate {
 	servicePort = 8000
 	host = "foo.bar"
 	isExernal = false
-	authStrategy = gatewayv2alpha1.PASSTHROUGH
+	authStrategy = gatewayv2alpha1.Passthrough
 	gateway = "some-gateway.some-namespace.foo"
 
 	return &gatewayv2alpha1.Gate{
@@ -87,7 +87,7 @@ func fixAPI() *gatewayv2alpha1.Gate {
 }
 
 func getAPIReconciler(mgr manager.Manager) reconcile.Reconciler {
-	return &controllers.ApiReconciler{
+	return &controllers.APIReconciler{
 		Client:       mgr.GetClient(),
 		ExtCRClients: crClients.New(mgr.GetClient()),
 		Log:          ctrl.Log.WithName("controllers").WithName("Api"),

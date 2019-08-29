@@ -35,7 +35,7 @@ mode:
 )
 
 func TestJWTValidate(t *testing.T) {
-	strategy, err := validation.NewFactory(logJWT).StrategyFor(gatewayv2alpha1.JWT)
+	strategy, err := validation.NewFactory(logJWT).StrategyFor(gatewayv2alpha1.Jwt)
 	assert.NilError(t, err)
 
 	jsonData, err := yaml.YAMLToJSON([]byte(invalidIssuer))

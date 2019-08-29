@@ -6,37 +6,51 @@ import (
 
 	"github.com/go-logr/logr"
 	istioClient "github.com/kyma-incubator/api-gateway/internal/clients/istio"
+	oryClient "github.com/kyma-incubator/api-gateway/internal/clients/ory"
 
 	gatewayv2alpha1 "github.com/kyma-incubator/api-gateway/api/v2alpha1"
 )
 
-type factory struct {
-	vsClient *istioClient.VirtualService
-	apClient *istioClient.AuthenticationPolicy
-	Log      logr.Logger
+//Factory .
+type Factory struct {
+	vsClient          *istioClient.VirtualService
+	apClient          *istioClient.AuthenticationPolicy
+	arClient          *oryClient.AccessRule
+	Log               logr.Logger
+	oathkeeperSvc     string
+	oathkeeperSvcPort uint32
 }
 
-type ProcessingStrategy interface {
+//Strategy .
+type Strategy interface {
 	Process(ctx context.Context, api *gatewayv2alpha1.Gate) error
 }
 
-func NewFactory(vsClient *istioClient.VirtualService, apClient *istioClient.AuthenticationPolicy, logger logr.Logger) *factory {
-	return &factory{
-		vsClient: vsClient,
-		apClient: apClient,
-		Log:      logger,
+//NewFactory .
+func NewFactory(vsClient *istioClient.VirtualService, apClient *istioClient.AuthenticationPolicy, arClient *oryClient.AccessRule, logger logr.Logger, oathkeeperSvc string, oathkeeperSvcPort uint32) *Factory {
+	return &Factory{
+		vsClient:          vsClient,
+		apClient:          apClient,
+		arClient:          arClient,
+		Log:               logger,
+		oathkeeperSvc:     oathkeeperSvc,
+		oathkeeperSvcPort: oathkeeperSvcPort,
 	}
 }
 
-func (f *factory) StrategyFor(strategyName string) (ProcessingStrategy, error) {
+//StrategyFor .
+func (f *Factory) StrategyFor(strategyName string) (Strategy, error) {
 	switch strategyName {
-	case gatewayv2alpha1.PASSTHROUGH:
+	case gatewayv2alpha1.Passthrough:
 		f.Log.Info("PASSTHROUGH processing mode detected")
 		return &passthrough{vsClient: f.vsClient}, nil
-	case gatewayv2alpha1.JWT:
+	case gatewayv2alpha1.Jwt:
 		f.Log.Info("JWT processing mode detected")
 		return &jwt{vsClient: f.vsClient, apClient: f.apClient}, nil
+	case gatewayv2alpha1.Oauth:
+		f.Log.Info("OAUTH processing mode detected")
+		return &oauth{vsClient: f.vsClient, arClient: f.arClient, oathkeeperSvc: f.oathkeeperSvc, oathkeeperSvcPort: f.oathkeeperSvcPort}, nil
 	default:
-		return nil, fmt.Errorf("Unsupported mode: %s", strategyName)
+		return nil, fmt.Errorf("unsupported mode: %s", strategyName)
 	}
 }

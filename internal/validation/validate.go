@@ -8,29 +8,33 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
-type factory struct {
+//Factory .
+type Factory struct {
 	Log logr.Logger
 }
 
-type ValidationStrategy interface {
+//Strategy .
+type Strategy interface {
 	Validate(config *runtime.RawExtension) error
 }
 
-func NewFactory(logger logr.Logger) *factory {
-	return &factory{
+//NewFactory .
+func NewFactory(logger logr.Logger) *Factory {
+	return &Factory{
 		Log: logger,
 	}
 }
 
-func (f *factory) StrategyFor(strategyName string) (ValidationStrategy, error) {
+//StrategyFor .
+func (f *Factory) StrategyFor(strategyName string) (Strategy, error) {
 	switch strategyName {
-	case gatewayv2alpha1.PASSTHROUGH:
+	case gatewayv2alpha1.Passthrough:
 		f.Log.Info("PASSTHROUGH validation mode detected")
 		return &passthrough{}, nil
-	case gatewayv2alpha1.JWT:
+	case gatewayv2alpha1.Jwt:
 		f.Log.Info("JWT validation mode detected")
 		return &jwt{}, nil
-	case gatewayv2alpha1.OAUTH:
+	case gatewayv2alpha1.Oauth:
 		f.Log.Info("OAUTH validation mode detected")
 		return &oauth{}, nil
 	default:

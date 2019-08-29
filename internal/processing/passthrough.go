@@ -27,10 +27,10 @@ func (p *passthrough) Process(ctx context.Context, api *gatewayv2alpha1.Gate) er
 	if oldVS != nil {
 		newVS := p.prepareVirtualService(api, oldVS)
 		return p.updateVirtualService(ctx, newVS)
-	} else {
-		vs := p.generateVirtualService(api)
-		return p.createVirtualService(ctx, vs)
 	}
+	vs := p.generateVirtualService(api)
+	return p.createVirtualService(ctx, vs)
+
 }
 
 func (p *passthrough) getVirtualService(ctx context.Context, api *gatewayv2alpha1.Gate) (*networkingv1alpha3.VirtualService, error) {

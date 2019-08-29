@@ -42,6 +42,14 @@ if [ $? != 0 ]; then
 else echo -e "${GREEN}√ go test${NC}"
 fi
 
+
+##
+#  GO LINT
+##
+
+go install golang.org/x/lint/golint
+golint ./...
+
 ##
 # GO FMT
 ##

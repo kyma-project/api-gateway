@@ -17,11 +17,13 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"os"
 
 	gatewayv2alpha1 "github.com/kyma-incubator/api-gateway/api/v2alpha1"
 	"github.com/kyma-incubator/api-gateway/controllers"
 	crClients "github.com/kyma-incubator/api-gateway/internal/clients"
+	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
@@ -40,18 +42,34 @@ func init() {
 
 	_ = gatewayv2alpha1.AddToScheme(scheme)
 	_ = networkingv1alpha3.AddToScheme(scheme)
+	_ = rulev1alpha1.AddToScheme(scheme)
 	// +kubebuilder:scaffold:scheme
 }
 
 func main() {
 	var metricsAddr string
 	var enableLeaderElection bool
+	var oathkeeperSvcAddr string
+	var oathkeeperSvcPort uint
+
+	flag.StringVar(&oathkeeperSvcAddr, "oathkeeper-svc-address", "", "Oathkeeper proxy service")
+	flag.UintVar(&oathkeeperSvcPort, "oathkeeper-svc-port", 0, "Oathkeeper proxy service port")
 	flag.StringVar(&metricsAddr, "metrics-addr", ":8080", "The address the metric endpoint binds to.")
 	flag.BoolVar(&enableLeaderElection, "enable-leader-election", false,
 		"Enable leader election for controller manager. Enabling this will ensure there is only one active controller manager.")
 	flag.Parse()
 
 	ctrl.SetLogger(zap.Logger(true))
+
+	if oathkeeperSvcAddr == "" {
+		setupLog.Error(fmt.Errorf("oathkeeper service address can't be empty"), "unable to create controller", "controller", "Api")
+		os.Exit(1)
+	}
+
+	if oathkeeperSvcPort == 0 {
+		setupLog.Error(fmt.Errorf("oathkeeper service port can't be empty"), "unable to create controller", "controller", "Api")
+		os.Exit(1)
+	}
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:             scheme,
@@ -63,10 +81,12 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err = (&controllers.ApiReconciler{
-		Client:       mgr.GetClient(),
-		ExtCRClients: crClients.New(mgr.GetClient()),
-		Log:          ctrl.Log.WithName("controllers").WithName("Api"),
+	if err = (&controllers.APIReconciler{
+		Client:            mgr.GetClient(),
+		ExtCRClients:      crClients.New(mgr.GetClient()),
+		Log:               ctrl.Log.WithName("controllers").WithName("Api"),
+		OathkeeperSvc:     oathkeeperSvcAddr,
+		OathkeeperSvcPort: uint32(oathkeeperSvcPort),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Api")
 		os.Exit(1)

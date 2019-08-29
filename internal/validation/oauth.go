@@ -25,8 +25,8 @@ func (o *oauth) Validate(config *runtime.RawExtension) error {
 	}
 	// If not, the result is an empty template object.
 	// Check if template is empty
-	if len(template.Paths) == 0 {
-		return fmt.Errorf("supplied config does not match internal template")
+	if len(template.Paths) != 1 {
+		return fmt.Errorf("supplied config should contain exactly one path")
 	}
 	if o.hasDuplicates(template.Paths) {
 		return fmt.Errorf("supplied config is invalid: multiple definitions of the same path detected")
