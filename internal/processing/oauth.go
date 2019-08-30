@@ -71,6 +71,9 @@ func (o *oauth) Process(ctx context.Context, api *gatewayv2alpha1.Gate) error {
 	} else {
 		ar := generateAccessRule(api, &oauthConfig.Paths[0], requiredScopesJSON)
 		err = o.createAccessRule(ctx, ar)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil

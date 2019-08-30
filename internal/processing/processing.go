@@ -48,7 +48,7 @@ func (f *Factory) StrategyFor(strategyName string) (Strategy, error) {
 		return &passthrough{vsClient: f.vsClient}, nil
 	case gatewayv2alpha1.Jwt:
 		f.Log.Info("JWT processing mode detected")
-		return &jwt{vsClient: f.vsClient, apClient: f.apClient, JWKSURI: f.JWKSURI}, nil
+		return &jwt{vsClient: f.vsClient, apClient: f.apClient, arClient: f.arClient, JWKSURI: f.JWKSURI, oathkeeperSvc: f.oathkeeperSvc, oathkeeperSvcPort: f.oathkeeperSvcPort}, nil
 	case gatewayv2alpha1.Oauth:
 		f.Log.Info("OAUTH processing mode detected")
 		return &oauth{vsClient: f.vsClient, arClient: f.arClient, oathkeeperSvc: f.oathkeeperSvc, oathkeeperSvcPort: f.oathkeeperSvcPort}, nil

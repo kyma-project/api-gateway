@@ -91,6 +91,7 @@ func TestOauthGenerateAccessRule(t *testing.T) {
 
 	assert.Equal(len(ar.Spec.Authenticators), 1)
 	assert.NotEmpty(ar.Spec.Authenticators[0].Config)
+	assert.Equal(ar.Spec.Authenticators[0].Name, "oauth2_introspection")
 	assert.Equal(string(ar.Spec.Authenticators[0].Config.Raw), string(requiredScopes))
 
 	assert.Equal(len(ar.Spec.Match.Methods), 1)
@@ -129,26 +130,27 @@ func TestOauthPrepareAccessRule(t *testing.T) {
 
 	assert.Equal(newAR.ObjectMeta.Generation, int64(15))
 
-	assert.Equal(len(oldAR.Spec.Authenticators), 1)
-	assert.NotEmpty(oldAR.Spec.Authenticators[0].Config)
-	assert.Equal(string(oldAR.Spec.Authenticators[0].Config.Raw), string(requiredScopes))
+	assert.Equal(len(newAR.Spec.Authenticators), 1)
+	assert.NotEmpty(newAR.Spec.Authenticators[0].Config)
+	assert.Equal(newAR.Spec.Authenticators[0].Name, "oauth2_introspection")
+	assert.Equal(string(newAR.Spec.Authenticators[0].Config.Raw), string(requiredScopes))
 
-	assert.Equal(len(oldAR.Spec.Match.Methods), 1)
-	assert.Equal(oldAR.Spec.Match.Methods[0], "GET")
-	assert.Equal(oldAR.Spec.Match.URL, "<http|https>://myService.myDomain.com</foo>")
+	assert.Equal(len(newAR.Spec.Match.Methods), 1)
+	assert.Equal(newAR.Spec.Match.Methods[0], "GET")
+	assert.Equal(newAR.Spec.Match.URL, "<http|https>://myService.myDomain.com</foo>")
 
-	assert.Equal(oldAR.Spec.Authorizer.Name, "allow")
-	assert.Empty(oldAR.Spec.Authorizer.Config)
+	assert.Equal(newAR.Spec.Authorizer.Name, "allow")
+	assert.Empty(newAR.Spec.Authorizer.Config)
 
-	assert.Equal(oldAR.Spec.Upstream.URL, "http://test-service.test-namespace.svc.cluster.local:8080")
+	assert.Equal(newAR.Spec.Upstream.URL, "http://test-service.test-namespace.svc.cluster.local:8080")
 
-	assert.Equal(oldAR.ObjectMeta.Name, "test-gate-test-service")
-	assert.Equal(oldAR.ObjectMeta.Namespace, "test-namespace")
+	assert.Equal(newAR.ObjectMeta.Name, "test-gate-test-service")
+	assert.Equal(newAR.ObjectMeta.Namespace, "test-namespace")
 
-	assert.Equal(oldAR.ObjectMeta.OwnerReferences[0].APIVersion, "gateway.kyma-project.io/v2alpha1")
-	assert.Equal(oldAR.ObjectMeta.OwnerReferences[0].Kind, "Gate")
-	assert.Equal(oldAR.ObjectMeta.OwnerReferences[0].Name, "test-gate")
-	assert.Equal(oldAR.ObjectMeta.OwnerReferences[0].UID, types.UID("eab0f1c8-c417-11e9-bf11-4ac644044351"))
+	assert.Equal(newAR.ObjectMeta.OwnerReferences[0].APIVersion, "gateway.kyma-project.io/v2alpha1")
+	assert.Equal(newAR.ObjectMeta.OwnerReferences[0].Kind, "Gate")
+	assert.Equal(newAR.ObjectMeta.OwnerReferences[0].Name, "test-gate")
+	assert.Equal(newAR.ObjectMeta.OwnerReferences[0].UID, types.UID("eab0f1c8-c417-11e9-bf11-4ac644044351"))
 
 }
 
