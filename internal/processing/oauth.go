@@ -157,6 +157,7 @@ func (o *oauth) updateAccessRule(ctx context.Context, ar *rulev1alpha1.Rule) err
 
 func generateOwnerRef(api *gatewayv2alpha1.Gate) k8sMeta.OwnerReference {
 	return k8sMeta.OwnerReference{
+
 		Name:       api.ObjectMeta.Name,
 		APIVersion: api.TypeMeta.APIVersion,
 		Kind:       api.TypeMeta.Kind,
