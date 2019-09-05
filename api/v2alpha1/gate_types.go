@@ -86,8 +86,8 @@ type Service struct {
 	Name *string `json:"name"`
 	// Port of the service to expose
 	// +kubebuilder:validation:Minimum=1
-	// +kubebuilder:validation:Maximum=99999
-	Port *int32 `json:"port"`
+	// +kubebuilder:validation:Maximum=65535
+	Port *uint32 `json:"port"`
 	// URL on which the service will be visible
 	// +kubebuilder:validation:MinLength=3
 	// +kubebuilder:validation:MaxLength=256
@@ -95,7 +95,7 @@ type Service struct {
 	Host *string `json:"host"`
 	// Defines if the service is internal (in cluster) or external
 	// +optional
-	IsExternal *bool `json:"external,omitempty"`
+	IsExternal *bool   `json:"external,omitempty"`
 }
 
 //AuthStrategy .

@@ -31,7 +31,7 @@ const timeout = time.Second * 5
 
 const tstGateway = "kyma-gateway.kyma-system.svc.cluster.local"
 const tstOathkeeperSvc = "oathkeeper.kyma-system.svc.cluster.local"
-const tstOathkeeperPort = uint32(1234)
+const tstOathkeeperPort uint32 = 1234
 const tstNamespace = "padu-system"
 const tstName = "test"
 
@@ -81,7 +81,7 @@ var _ = Describe("Gate Controller", func() {
 				mgrStopped.Wait()
 			}()
 
-			instance := testInstance(tstName, tstNamespace, tstServiceName, tstServiceHost, int32(tstServicePort), tstPath, tstMethods, tstScopes)
+			instance := testInstance(tstName, tstNamespace, tstServiceName, tstServiceHost, tstServicePort, tstPath, tstMethods, tstScopes)
 
 			err = c.Create(context.TODO(), instance)
 			if apierrors.IsInvalid(err) {
@@ -205,7 +205,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	return nil
 }
 
-func testInstance(name, namespace, serviceName, serviceHost string, servicePort int32, path string, methods, scopes []string) *gatewayv2alpha1.Gate {
+func testInstance(name, namespace, serviceName, serviceHost string, servicePort uint32, path string, methods, scopes []string) *gatewayv2alpha1.Gate {
 
 	toCSVList := func(input []string) string {
 		if len(input) == 0 {

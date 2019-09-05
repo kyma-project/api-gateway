@@ -14,7 +14,7 @@ func TestOauthGenerateVirtualService(t *testing.T) {
 
 	gate := getGate()
 	oauthConfig := getOauthConfig()
-	oauthStrategy := &oauth{oathkeeperSvc: "test-oathkeeper", oathkeeperSvcPort: uint32(4455)}
+	oauthStrategy := &oauth{oathkeeperSvc: "test-oathkeeper", oathkeeperSvcPort: 4455}
 
 	vs := oauthStrategy.generateVirtualService(gate, oauthConfig)
 
@@ -46,7 +46,7 @@ func TestOauthPrepareVirtualService(t *testing.T) {
 
 	gate := getGate()
 	oauthConfig := getOauthConfig()
-	oauthStrategy := &oauth{oathkeeperSvc: "test-oathkeeper", oathkeeperSvcPort: uint32(4455)}
+	oauthStrategy := &oauth{oathkeeperSvc: "test-oathkeeper", oathkeeperSvcPort: 4455}
 
 	oldVS := oauthStrategy.generateVirtualService(gate, oauthConfig)
 
@@ -159,7 +159,7 @@ func getGate() *gatewayv2alpha1.Gate {
 	var apiGateway = "some-gateway"
 	var serviceName = "test-service"
 	var serviceHost = "myService.myDomain.com"
-	var servicePort int32 = 8080
+	var servicePort uint32 = 8080
 
 	return &gatewayv2alpha1.Gate{
 		ObjectMeta: metav1.ObjectMeta{

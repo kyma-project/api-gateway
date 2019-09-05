@@ -18,7 +18,7 @@ var (
 	apiGateway              = "some-gateway"
 	serviceName             = "example-service"
 	serviceHost             = "myService.myDomain.com"
-	servicePort   int32     = 8080
+	servicePort   uint32    = 8080
 )
 
 func TestGenerateVirtualService(t *testing.T) {
@@ -56,7 +56,7 @@ func TestGenerateVirtualService(t *testing.T) {
 	assert.Equal(len(vs.Spec.HTTP[0].Route), 1)
 	assert.Equal(len(vs.Spec.HTTP[0].Match), 1)
 	assert.Equal(vs.Spec.HTTP[0].Route[0].Destination.Host, serviceName+"."+apiNamespace+".svc.cluster.local")
-	assert.Equal(vs.Spec.HTTP[0].Route[0].Destination.Port.Number, uint32(servicePort))
+	assert.Equal(vs.Spec.HTTP[0].Route[0].Destination.Port.Number, servicePort)
 	assert.Equal(vs.Spec.HTTP[0].Match[0].URI.Regex, "/.*")
 
 	assert.Equal(vs.ObjectMeta.Name, apiName+"-"+serviceName)

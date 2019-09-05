@@ -28,7 +28,7 @@ import (
 var (
 	ts                                       *testSuite
 	serviceName, host, authStrategy, gateway string
-	servicePort                              int32
+	servicePort                              uint32
 	isExernal                                bool
 )
 

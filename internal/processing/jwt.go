@@ -60,7 +60,7 @@ func (j *jwt) Process(ctx context.Context, api *gatewayv2alpha1.Gate) error {
 				}
 
 				destinationHost = fmt.Sprintf("%s.%s.svc.cluster.local", *api.Spec.Service.Name, api.ObjectMeta.Namespace)
-				destinationPort = uint32(*api.Spec.Service.Port)
+				destinationPort = *api.Spec.Service.Port
 			} else {
 				oldAR, err := j.getAccessRule(ctx, api)
 				if err != nil {

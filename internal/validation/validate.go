@@ -2,6 +2,7 @@ package validation
 
 import (
 	"fmt"
+
 	"github.com/go-logr/logr"
 
 	gatewayv2alpha1 "github.com/kyma-incubator/api-gateway/api/v2alpha1"

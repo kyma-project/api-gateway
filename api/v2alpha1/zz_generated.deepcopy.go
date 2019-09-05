@@ -358,7 +358,7 @@ func (in *Service) DeepCopyInto(out *Service) {
 	}
 	if in.Port != nil {
 		in, out := &in.Port, &out.Port
-		*out = new(int32)
+		*out = new(uint32)
 		**out = **in
 	}
 	if in.Host != nil {

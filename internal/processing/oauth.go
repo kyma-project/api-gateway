@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+
 	gatewayv2alpha1 "github.com/kyma-incubator/api-gateway/api/v2alpha1"
 	istioClient "github.com/kyma-incubator/api-gateway/internal/clients/istio"
 	accessRuleClient "github.com/kyma-incubator/api-gateway/internal/clients/ory"

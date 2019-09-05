@@ -74,7 +74,7 @@ func (p *passthrough) prepareVirtualService(api *gatewayv2alpha1.Gate, vs *netwo
 		Destination: networkingv1alpha3.Destination{
 			Host: fmt.Sprintf("%s.%s.svc.cluster.local", *api.Spec.Service.Name, api.ObjectMeta.Namespace),
 			Port: networkingv1alpha3.PortSelector{
-				Number: uint32(*api.Spec.Service.Port),
+				Number: *api.Spec.Service.Port,
 			},
 		},
 	}
@@ -127,7 +127,7 @@ func (p *passthrough) generateVirtualService(api *gatewayv2alpha1.Gate) *network
 		Destination: networkingv1alpha3.Destination{
 			Host: fmt.Sprintf("%s.%s.svc.cluster.local", *api.Spec.Service.Name, api.ObjectMeta.Namespace),
 			Port: networkingv1alpha3.PortSelector{
-				Number: uint32(*api.Spec.Service.Port),
+				Number: *api.Spec.Service.Port,
 			},
 		},
 	}

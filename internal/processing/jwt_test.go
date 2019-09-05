@@ -16,7 +16,7 @@ func getGate4JWT() *gatewayv2alpha1.Gate {
 	var apiGateway = "some-gateway"
 	var serviceName = "test-service"
 	var serviceHost = "myService.myDomain.com"
-	var servicePort int32 = 8080
+	var servicePort uint32 = 8080
 
 	return &gatewayv2alpha1.Gate{
 		ObjectMeta: metav1.ObjectMeta{
@@ -121,7 +121,7 @@ func TestPrepareAuthenticationPolicy(t *testing.T) {
 func TestJwtPrepareAccessRule(t *testing.T) {
 	assert := assert.New(t)
 
-	jwtStrategy := &jwt{oathkeeperSvc: "test-oathkeeper", oathkeeperSvcPort: uint32(8080)}
+	jwtStrategy := &jwt{oathkeeperSvc: "test-oathkeeper", oathkeeperSvcPort: 8080}
 	gate := getGate()
 
 	jwtConfig := []byte(`"required_scope":["write","read"],"trusted_issuers":["http://dex.kyma.local"]`)
@@ -162,7 +162,7 @@ func TestJwtPrepareAccessRule(t *testing.T) {
 func TestJwtGenerateAccessRule(t *testing.T) {
 	assert := assert.New(t)
 
-	jwtStrategy := &jwt{oathkeeperSvc: "test-oathkeeper", oathkeeperSvcPort: uint32(8080)}
+	jwtStrategy := &jwt{oathkeeperSvc: "test-oathkeeper", oathkeeperSvcPort: 8080}
 	gate := getGate()
 
 	jwtConfig := []byte(`"required_scope":["write","read"],"trusted_issuers":["http://dex.kyma.local"]`)
