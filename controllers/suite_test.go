@@ -1,7 +1,14 @@
 package controllers_test
 
 import (
+	gatewayv2alpha1 "github.com/kyma-incubator/api-gateway/api/v2alpha1"
+	"github.com/kyma-incubator/api-gateway/controllers"
+	crClients "github.com/kyma-incubator/api-gateway/internal/clients"
+	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
+	"k8s.io/apimachinery/pkg/runtime"
+	networkingv1alpha3 "knative.dev/pkg/apis/istio/v1alpha3"
 	"path/filepath"
+	ctrl "sigs.k8s.io/controller-runtime"
 	"sync"
 	"testing"
 
@@ -22,6 +29,10 @@ import (
 var cfg *rest.Config
 var k8sClient client.Client
 var testEnv *envtest.Environment
+var stopMgr chan struct{}
+var mgrStopped *sync.WaitGroup
+var requests chan reconcile.Request
+var c client.Client
 
 func TestAPIs(t *testing.T) {
 	RegisterFailHandler(Fail)
@@ -48,10 +59,43 @@ var _ = BeforeSuite(func(done Done) {
 	Expect(err).ToNot(HaveOccurred())
 	Expect(k8sClient).ToNot(BeNil())
 
+	s := runtime.NewScheme()
+
+	err = rulev1alpha1.AddToScheme(s)
+	Expect(err).NotTo(HaveOccurred())
+
+	err = gatewayv2alpha1.AddToScheme(s)
+	Expect(err).NotTo(HaveOccurred())
+
+	err = networkingv1alpha3.AddToScheme(s)
+	Expect(err).NotTo(HaveOccurred())
+
+	mgr, err := manager.New(cfg, manager.Options{Scheme: s, MetricsBindAddress: "0"})
+	Expect(err).NotTo(HaveOccurred())
+	c = mgr.GetClient()
+
+	reconciler := &controllers.APIReconciler{
+		Client:            mgr.GetClient(),
+		ExtCRClients:      crClients.New(mgr.GetClient()),
+		Log:               ctrl.Log.WithName("controllers").WithName("Gate"),
+		OathkeeperSvc:     testOathkeeperSvcURL,
+		OathkeeperSvcPort: testOathkeeperPort,
+	}
+
+	var recFn reconcile.Reconciler
+	recFn, requests = SetupTestReconcile(reconciler)
+
+	Expect(add(mgr, recFn)).To(Succeed())
+
+	stopMgr, mgrStopped = StartTestManager(mgr)
+
 	close(done)
 }, 60)
 
 var _ = AfterSuite(func() {
+	close(stopMgr)
+	mgrStopped.Wait()
+
 	By("tearing down the test environment")
 	err := testEnv.Stop()
 	Expect(err).ToNot(HaveOccurred())
@@ -74,6 +118,7 @@ func StartTestManager(mgr manager.Manager) (chan struct{}, *sync.WaitGroup) {
 	stop := make(chan struct{})
 	wg := &sync.WaitGroup{}
 	wg.Add(1)
+
 	go func() {
 		defer wg.Done()
 		Expect(mgr.Start(stop)).NotTo(HaveOccurred())
