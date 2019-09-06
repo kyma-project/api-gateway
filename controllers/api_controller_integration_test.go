@@ -45,6 +45,7 @@ var _ = Describe("Gate Controller", func() {
 	var testMethods = []string{"GET", "PUT"}
 	var allMethods = []string{"GET", "POST", "PUT", "HEAD", "DELETE", "PATCH", "OPTIONS", "TRACE", "CONNECT"}
 	var testScopes = []string{"foo", "bar"}
+	var testMutators = []string{"noop", "idtoken"}
 
 	Context("when creating a Gate for exposing service", func() {
 		Context("on all the paths,", func() {
@@ -59,8 +60,9 @@ var _ = Describe("Gate Controller", func() {
 										"scopes": [%s],
 										"methods": [%s]
 									}
-								]
-							}`, testPath, toCSVList(testScopes), toCSVList(testMethods))
+								],
+								"mutators": [%s]
+							}`, testPath, toCSVList(testScopes), toCSVList(testMethods), getMutators(testMutators))
 
 						testName := generateTestName(testNameBase, testIDLength)
 
@@ -173,7 +175,9 @@ var _ = Describe("Gate Controller", func() {
 						Expect(rl.Spec.Authorizer.Handler.Config).To(BeNil())
 
 						//Spec.Mutators
-						Expect(rl.Spec.Mutators).To(BeNil())
+						Expect(rl.Spec.Mutators).NotTo(BeNil())
+						Expect(len(rl.Spec.Mutators)).To(Equal(len(testMutators)))
+						Expect(rl.Spec.Mutators[0].Handler.Name).To(Equal(testMutators[0]))
 					})
 				})
 			})
@@ -189,9 +193,10 @@ var _ = Describe("Gate Controller", func() {
 									"config": {
 										"scopes": [%s]
 									}
-                                }
-							}`, testIssuer, gatewayv2alpha1.JWTAll, toCSVList(testScopes))
-
+                                },
+                                "mutators": [%s]
+							}`, testIssuer, gatewayv2alpha1.JWTAll, toCSVList(testScopes), getMutators(testMutators))
+						fmt.Printf("---\n%s\n---", configJSON)
 						testName := generateTestName(testNameBase, testIDLength)
 
 						var authStrategyName = gatewayv2alpha1.Jwt
@@ -302,7 +307,9 @@ var _ = Describe("Gate Controller", func() {
 						Expect(rl.Spec.Authorizer.Handler.Config).To(BeNil())
 
 						//Spec.Mutators
-						Expect(rl.Spec.Mutators).To(BeNil())
+						Expect(rl.Spec.Mutators).NotTo(BeNil())
+						Expect(len(rl.Spec.Mutators)).To(Equal(len(testMutators)))
+						Expect(rl.Spec.Mutators[0].Handler.Name).To(Equal(testMutators[0]))
 					})
 				})
 			})
@@ -403,4 +410,27 @@ func generateTestName(name string, length int) string {
 		b[i] = letterRunes[rand.Intn(len(letterRunes))]
 	}
 	return name + "-" + string(b)
+}
+
+func getMutators(in []string) string {
+	if len(in) == 0 {
+		return `[]`
+	}
+	res := ""
+	for i := range in {
+		if i == len(in)-1 {
+			res = res + fmt.Sprintf(
+				`
+			{
+				"handler": "%s"
+			}`, in[i])
+		} else {
+			res = res + fmt.Sprintf(
+				`
+			{
+				"handler": "%s"
+			},`, in[i])
+		}
+	}
+	return res
 }

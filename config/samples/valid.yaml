@@ -27,9 +27,32 @@ spec:
     config:
       issuer: http://dex.kyma.local
       jwks: []
+      mutators: []
       mode:
         name: ALL
         config: {}
+---
+apiVersion: gateway.kyma-project.io/v2alpha1
+kind: Gate
+metadata:
+  name: jwt-all-mutators
+spec:
+  gateway: kyma-gateway.kyma-system.svc.cluster.local
+  service:
+    name: foo-service
+    port: 8080
+    host: foo.bar
+  auth:
+    name: JWT
+    config:
+      issuer: http://dex.kyma.local
+      jwks: []
+      mutators: 
+        - handler: noop
+      mode:
+        name: ALL
+        config: 
+          scopes: ["foo", "bar"]
 ---
 apiVersion: gateway.kyma-project.io/v2alpha1
 kind: Gate
@@ -46,6 +69,7 @@ spec:
     config:
       issuer: http://dex.kyma.local
       jwks: []
+      mutators: []
       mode: 
         name: ALL
         config: 
@@ -68,3 +92,25 @@ spec:
       - path: /.*
         scopes: [read]
         methods: [GET]
+      mutators: []
+---
+apiVersion: gateway.kyma-project.io/v2alpha1
+kind: Gate
+metadata:
+  name: oauth-mutators
+spec:
+  gateway: kyma-gateway.kyma-system.svc.cluster.local
+  service:
+    host: httpbin.kyma.local
+    name: httpbin
+    port: 8000
+  auth:
+    name: OAUTH
+    config:
+      paths:
+      - path: /.*
+        scopes: [read]
+        methods: [GET]
+      mutators: 
+        - handler: noop
+          config: {}

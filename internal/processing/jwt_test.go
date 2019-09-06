@@ -124,14 +124,15 @@ func TestJwtPrepareAccessRule(t *testing.T) {
 	jwtStrategy := &jwt{oathkeeperSvc: "test-oathkeeper", oathkeeperSvcPort: 8080}
 	gate := getGate()
 
+	jwtConfigOrig := getJWTConfig()
 	jwtConfig := []byte(`"required_scope":["write","read"],"trusted_issuers":["http://dex.kyma.local"]`)
 
-	oldAR := jwtStrategy.generateAccessRule(gate, jwtConfig)
+	oldAR := jwtStrategy.generateAccessRule(gate, jwtConfigOrig, jwtConfig)
 
 	oldAR.ObjectMeta.Generation = int64(15)
 	oldAR.ObjectMeta.Name = "mst"
 
-	newAR := jwtStrategy.prepareAccessRule(gate, oldAR, jwtConfig)
+	newAR := jwtStrategy.prepareAccessRule(gate, oldAR, jwtConfigOrig, jwtConfig)
 
 	assert.Equal(newAR.ObjectMeta.Generation, int64(15))
 
@@ -166,8 +167,8 @@ func TestJwtGenerateAccessRule(t *testing.T) {
 	gate := getGate()
 
 	jwtConfig := []byte(`"required_scope":["write","read"],"trusted_issuers":["http://dex.kyma.local"]`)
-
-	ar := jwtStrategy.generateAccessRule(gate, jwtConfig)
+	jwtConfigOrig := getJWTConfig()
+	ar := jwtStrategy.generateAccessRule(gate, jwtConfigOrig, jwtConfig)
 
 	assert.Equal(len(ar.Spec.Authenticators), 1)
 	assert.NotEmpty(ar.Spec.Authenticators[0].Config)

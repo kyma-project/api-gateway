@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/kyma-incubator/api-gateway/api/v2alpha1"
 	gatewayv2alpha1 "github.com/kyma-incubator/api-gateway/api/v2alpha1"
 	istioClient "github.com/kyma-incubator/api-gateway/internal/clients/istio"
 	accessRuleClient "github.com/kyma-incubator/api-gateway/internal/clients/ory"
@@ -73,13 +74,13 @@ func (j *jwt) Process(ctx context.Context, api *gatewayv2alpha1.Gate) error {
 				}
 
 				if oldAR != nil {
-					newAR := j.prepareAccessRule(api, oldAR, jwtConfJSON)
+					newAR := j.prepareAccessRule(api, oldAR, jwtConfig, jwtConfJSON)
 					err = j.updateAccessRule(ctx, newAR)
 					if err != nil {
 						return err
 					}
 				} else {
-					ar := j.generateAccessRule(api, jwtConfJSON)
+					ar := j.generateAccessRule(api, jwtConfig, jwtConfJSON)
 					err = j.createAccessRule(ctx, ar)
 					if err != nil {
 						return err
@@ -113,11 +114,25 @@ func (j *jwt) createAccessRule(ctx context.Context, ar *rulev1alpha1.Rule) error
 	return j.arClient.Create(ctx, ar)
 }
 
-func (j *jwt) generateAccessRule(api *gatewayv2alpha1.Gate, jwtConfig []byte) *rulev1alpha1.Rule {
+func (j *jwt) generateAccessRule(api *gatewayv2alpha1.Gate, config *gatewayv2alpha1.JWTModeConfig, jwtConfig []byte) *rulev1alpha1.Rule {
 	objectMeta := generateObjectMeta(api)
 
 	rawConfig := &runtime.RawExtension{
 		Raw: jwtConfig,
+	}
+
+	mutators := []*rulev1alpha1.Mutator{}
+
+	if len(config.Mutators) > 0 {
+		for i := range config.Mutators {
+			mut := &rulev1alpha1.Mutator{
+				Handler: &rulev1alpha1.Handler{
+					Name:   config.Mutators[i].Name,
+					Config: config.Mutators[i].Config,
+				},
+			}
+			mutators = append(mutators, mut)
+		}
 	}
 
 	spec := &rulev1alpha1.RuleSpec{
@@ -141,6 +156,7 @@ func (j *jwt) generateAccessRule(api *gatewayv2alpha1.Gate, jwtConfig []byte) *r
 				},
 			},
 		},
+		Mutators: mutators,
 	}
 
 	rule := &rulev1alpha1.Rule{
@@ -423,13 +439,27 @@ func (j *jwt) getAccessRule(ctx context.Context, api *gatewayv2alpha1.Gate) (*ru
 	return ar, nil
 }
 
-func (j *jwt) prepareAccessRule(api *gatewayv2alpha1.Gate, ar *rulev1alpha1.Rule, jwtConfig []byte) *rulev1alpha1.Rule {
+func (j *jwt) prepareAccessRule(api *gatewayv2alpha1.Gate, ar *rulev1alpha1.Rule, config *v2alpha1.JWTModeConfig, jwtConfig []byte) *rulev1alpha1.Rule {
 	ar.ObjectMeta.OwnerReferences = []k8sMeta.OwnerReference{generateOwnerRef(api)}
 	ar.ObjectMeta.Name = fmt.Sprintf("%s-%s", api.ObjectMeta.Name, *api.Spec.Service.Name)
 	ar.ObjectMeta.Namespace = api.ObjectMeta.Namespace
 
 	rawConfig := &runtime.RawExtension{
 		Raw: jwtConfig,
+	}
+
+	mutators := []*rulev1alpha1.Mutator{}
+
+	if len(config.Mutators) > 0 {
+		for i := range config.Mutators {
+			mut := &rulev1alpha1.Mutator{
+				Handler: &rulev1alpha1.Handler{
+					Name:   config.Mutators[i].Name,
+					Config: config.Mutators[i].Config,
+				},
+			}
+			mutators = append(mutators, mut)
+		}
 	}
 
 	spec := &rulev1alpha1.RuleSpec{
@@ -453,6 +483,7 @@ func (j *jwt) prepareAccessRule(api *gatewayv2alpha1.Gate, ar *rulev1alpha1.Rule
 				},
 			},
 		},
+		Mutators: mutators,
 	}
 
 	ar.Spec = *spec

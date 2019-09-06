@@ -95,7 +95,7 @@ type Service struct {
 	Host *string `json:"host"`
 	// Defines if the service is internal (in cluster) or external
 	// +optional
-	IsExternal *bool   `json:"external,omitempty"`
+	IsExternal *bool `json:"external,omitempty"`
 }
 
 //AuthStrategy .

@@ -5,7 +5,8 @@ type OauthModeConfig struct {
 	// Array of paths. Each path creates an oathkeeper AccessRule
 	// +kubebuilder:validation:MinItems=1
 	// +kubebuilder:validation:UniqueItems=true
-	Paths []Option `json:"paths"`
+	Paths    []Option   `json:"paths"`
+	Mutators []*Mutator `json:"mutators,omitempty"`
 }
 
 //Option Set of options for the Oauth mode

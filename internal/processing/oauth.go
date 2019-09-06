@@ -64,13 +64,13 @@ func (o *oauth) Process(ctx context.Context, api *gatewayv2alpha1.Gate) error {
 	}
 
 	if oldAR != nil {
-		newAR := o.prepareAccessRule(api, oldAR, &oauthConfig.Paths[0], requiredScopesJSON)
+		newAR := o.prepareAccessRule(api, oldAR, oauthConfig, requiredScopesJSON)
 		err = o.updateAccessRule(ctx, newAR)
 		if err != nil {
 			return err
 		}
 	} else {
-		ar := generateAccessRule(api, &oauthConfig.Paths[0], requiredScopesJSON)
+		ar := o.generateAccessRule(api, oauthConfig, requiredScopesJSON)
 		err = o.createAccessRule(ctx, ar)
 		if err != nil {
 			return err
@@ -228,11 +228,24 @@ func generateOauthConfig(api *gatewayv2alpha1.Gate) (*gatewayv2alpha1.OauthModeC
 	return &oauthConfig, nil
 }
 
-func generateAccessRule(api *gatewayv2alpha1.Gate, path *gatewayv2alpha1.Option, requiredScopes []byte) *rulev1alpha1.Rule {
+func (o *oauth) generateAccessRule(api *gatewayv2alpha1.Gate, config *gatewayv2alpha1.OauthModeConfig, requiredScopes []byte) *rulev1alpha1.Rule {
 	objectMeta := generateObjectMeta(api)
 
 	rawConfig := &runtime.RawExtension{
 		Raw: requiredScopes,
+	}
+	mutators := []*rulev1alpha1.Mutator{}
+
+	if len(config.Mutators) > 0 {
+		for i := range config.Mutators {
+			mut := &rulev1alpha1.Mutator{
+				Handler: &rulev1alpha1.Handler{
+					Name:   config.Mutators[i].Name,
+					Config: config.Mutators[i].Config,
+				},
+			}
+			mutators = append(mutators, mut)
+		}
 	}
 
 	spec := &rulev1alpha1.RuleSpec{
@@ -240,14 +253,15 @@ func generateAccessRule(api *gatewayv2alpha1.Gate, path *gatewayv2alpha1.Option,
 			URL: fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", *api.Spec.Service.Name, api.ObjectMeta.Namespace, int(*api.Spec.Service.Port)),
 		},
 		Match: &rulev1alpha1.Match{
-			Methods: path.Methods,
-			URL:     fmt.Sprintf("<http|https>://%s<%s>", *api.Spec.Service.Host, path.Path),
+			Methods: config.Paths[0].Methods,
+			URL:     fmt.Sprintf("<http|https>://%s<%s>", *api.Spec.Service.Host, config.Paths[0].Path),
 		},
 		Authorizer: &rulev1alpha1.Authorizer{
 			Handler: &rulev1alpha1.Handler{
 				Name: "allow",
 			},
 		},
+		Mutators: mutators,
 		Authenticators: []*rulev1alpha1.Authenticator{
 			{
 				Handler: &rulev1alpha1.Handler{
@@ -266,7 +280,7 @@ func generateAccessRule(api *gatewayv2alpha1.Gate, path *gatewayv2alpha1.Option,
 	return rule
 }
 
-func (o *oauth) prepareAccessRule(api *gatewayv2alpha1.Gate, ar *rulev1alpha1.Rule, path *gatewayv2alpha1.Option, requiredScopes []byte) *rulev1alpha1.Rule {
+func (o *oauth) prepareAccessRule(api *gatewayv2alpha1.Gate, ar *rulev1alpha1.Rule, config *gatewayv2alpha1.OauthModeConfig, requiredScopes []byte) *rulev1alpha1.Rule {
 	ar.ObjectMeta.OwnerReferences = []k8sMeta.OwnerReference{generateOwnerRef(api)}
 	ar.ObjectMeta.Name = fmt.Sprintf("%s-%s", api.ObjectMeta.Name, *api.Spec.Service.Name)
 	ar.ObjectMeta.Namespace = api.ObjectMeta.Namespace
@@ -275,13 +289,27 @@ func (o *oauth) prepareAccessRule(api *gatewayv2alpha1.Gate, ar *rulev1alpha1.Ru
 		Raw: requiredScopes,
 	}
 
+	mutators := []*rulev1alpha1.Mutator{}
+
+	if len(config.Mutators) > 0 {
+		for i := range config.Mutators {
+			mut := &rulev1alpha1.Mutator{
+				Handler: &rulev1alpha1.Handler{
+					Name:   config.Mutators[i].Name,
+					Config: config.Mutators[i].Config,
+				},
+			}
+			mutators = append(mutators, mut)
+		}
+	}
+
 	spec := &rulev1alpha1.RuleSpec{
 		Upstream: &rulev1alpha1.Upstream{
 			URL: fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", *api.Spec.Service.Name, api.ObjectMeta.Namespace, int(*api.Spec.Service.Port)),
 		},
 		Match: &rulev1alpha1.Match{
-			Methods: path.Methods,
-			URL:     fmt.Sprintf("<http|https>://%s<%s>", *api.Spec.Service.Host, path.Path),
+			Methods: config.Paths[0].Methods,
+			URL:     fmt.Sprintf("<http|https>://%s<%s>", *api.Spec.Service.Host, config.Paths[0].Path),
 		},
 		Authorizer: &rulev1alpha1.Authorizer{
 			Handler: &rulev1alpha1.Handler{
@@ -296,6 +324,7 @@ func (o *oauth) prepareAccessRule(api *gatewayv2alpha1.Gate, ar *rulev1alpha1.Ru
 				},
 			},
 		},
+		Mutators: mutators,
 	}
 
 	ar.Spec = *spec
