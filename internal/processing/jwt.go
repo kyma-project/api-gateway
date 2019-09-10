@@ -7,6 +7,7 @@ import (
 
 	"github.com/kyma-incubator/api-gateway/api/v2alpha1"
 	gatewayv2alpha1 "github.com/kyma-incubator/api-gateway/api/v2alpha1"
+	builders "github.com/kyma-incubator/api-gateway/internal/builders"
 	istioClient "github.com/kyma-incubator/api-gateway/internal/clients/istio"
 	accessRuleClient "github.com/kyma-incubator/api-gateway/internal/clients/ory"
 	internalTypes "github.com/kyma-incubator/api-gateway/internal/types/ory"
@@ -16,7 +17,6 @@ import (
 	k8sMeta "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	authenticationv1alpha1 "knative.dev/pkg/apis/istio/authentication/v1alpha1"
-	"knative.dev/pkg/apis/istio/common/v1alpha1"
 	networkingv1alpha3 "knative.dev/pkg/apis/istio/v1alpha3"
 )
 
@@ -197,49 +197,20 @@ func (j *jwt) createVirtualService(ctx context.Context, vs *networkingv1alpha3.V
 
 func (j *jwt) prepareVirtualService(api *gatewayv2alpha1.Gate, vs *networkingv1alpha3.VirtualService, destinationHost string, destinationPort uint32) *networkingv1alpha3.VirtualService {
 	virtualServiceName := fmt.Sprintf("%s-%s", api.ObjectMeta.Name, *api.Spec.Service.Name)
-	controller := true
+	ownerRef := generateOwnerRef(api)
 
-	ownerRef := &k8sMeta.OwnerReference{
-		Name:       api.ObjectMeta.Name,
-		APIVersion: api.TypeMeta.APIVersion,
-		Kind:       api.TypeMeta.Kind,
-		UID:        api.ObjectMeta.UID,
-		Controller: &controller,
-	}
-
-	vs.ObjectMeta.OwnerReferences = []k8sMeta.OwnerReference{*ownerRef}
-	vs.ObjectMeta.Name = virtualServiceName
-	vs.ObjectMeta.Namespace = api.ObjectMeta.Namespace
-
-	match := &networkingv1alpha3.HTTPMatchRequest{
-		URI: &v1alpha1.StringMatch{
-			Regex: "/.*",
-		},
-	}
-	route := &networkingv1alpha3.HTTPRouteDestination{
-		Destination: networkingv1alpha3.Destination{
-			Host: destinationHost,
-			Port: networkingv1alpha3.PortSelector{
-				Number: destinationPort,
-			},
-		},
-	}
-
-	spec := &networkingv1alpha3.VirtualServiceSpec{
-		Hosts:    []string{*api.Spec.Service.Host},
-		Gateways: []string{*api.Spec.Gateway},
-		HTTP: []networkingv1alpha3.HTTPRoute{
-			{
-				Match: []networkingv1alpha3.HTTPMatchRequest{*match},
-				Route: []networkingv1alpha3.HTTPRouteDestination{*route},
-			},
-		},
-	}
-
-	vs.Spec = *spec
-
-	return vs
-
+	return builders.VirtualService().From(vs).
+		Name(virtualServiceName).
+		Namespace(api.ObjectMeta.Namespace).
+		Owner(builders.OwnerReference().From(&ownerRef)).
+		Spec(
+			builders.VirtualServiceSpec().
+				Host(*api.Spec.Service.Host).
+				Gateway(*api.Spec.Gateway).
+				HTTP(
+					builders.MatchRequest().URI().Regex("/.*"),
+					builders.RouteDestination().Host(destinationHost).Port(destinationPort))).
+		Get()
 }
 
 func (j *jwt) updateVirtualService(ctx context.Context, vs *networkingv1alpha3.VirtualService) error {
@@ -248,53 +219,19 @@ func (j *jwt) updateVirtualService(ctx context.Context, vs *networkingv1alpha3.V
 
 func (j *jwt) generateVirtualService(api *gatewayv2alpha1.Gate, destinationHost string, destinationPort uint32) *networkingv1alpha3.VirtualService {
 	virtualServiceName := fmt.Sprintf("%s-%s", api.ObjectMeta.Name, *api.Spec.Service.Name)
-	controller := true
-
-	ownerRef := &k8sMeta.OwnerReference{
-		Name:       api.ObjectMeta.Name,
-		APIVersion: api.TypeMeta.APIVersion,
-		Kind:       api.TypeMeta.Kind,
-		UID:        api.ObjectMeta.UID,
-		Controller: &controller,
-	}
-
-	objectMeta := k8sMeta.ObjectMeta{
-		Name:            virtualServiceName,
-		Namespace:       api.ObjectMeta.Namespace,
-		OwnerReferences: []k8sMeta.OwnerReference{*ownerRef},
-	}
-
-	match := &networkingv1alpha3.HTTPMatchRequest{
-		URI: &v1alpha1.StringMatch{
-			Regex: "/.*",
-		},
-	}
-	route := &networkingv1alpha3.HTTPRouteDestination{
-		Destination: networkingv1alpha3.Destination{
-			Host: destinationHost,
-			Port: networkingv1alpha3.PortSelector{
-				Number: destinationPort,
-			},
-		},
-	}
-
-	spec := &networkingv1alpha3.VirtualServiceSpec{
-		Hosts:    []string{*api.Spec.Service.Host},
-		Gateways: []string{*api.Spec.Gateway},
-		HTTP: []networkingv1alpha3.HTTPRoute{
-			{
-				Match: []networkingv1alpha3.HTTPMatchRequest{*match},
-				Route: []networkingv1alpha3.HTTPRouteDestination{*route},
-			},
-		},
-	}
-
-	vs := &networkingv1alpha3.VirtualService{
-		ObjectMeta: objectMeta,
-		Spec:       *spec,
-	}
-
-	return vs
+	ownerRef := generateOwnerRef(api)
+	return builders.VirtualService().
+		Name(virtualServiceName).
+		Namespace(api.ObjectMeta.Namespace).
+		Owner(builders.OwnerReference().From(&ownerRef)).
+		Spec(
+			builders.VirtualServiceSpec().
+				Host(*api.Spec.Service.Host).
+				Gateway(*api.Spec.Gateway).
+				HTTP(
+					builders.MatchRequest().URI().Regex("/.*"),
+					builders.RouteDestination().Host(destinationHost).Port(destinationPort))).
+		Get()
 }
 
 func (j *jwt) getAuthenticationPolicy(ctx context.Context, api *gatewayv2alpha1.Gate) (*authenticationv1alpha1.Policy, error) {

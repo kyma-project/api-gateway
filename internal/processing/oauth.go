@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	gatewayv2alpha1 "github.com/kyma-incubator/api-gateway/api/v2alpha1"
+	builders "github.com/kyma-incubator/api-gateway/internal/builders"
 	istioClient "github.com/kyma-incubator/api-gateway/internal/clients/istio"
 	accessRuleClient "github.com/kyma-incubator/api-gateway/internal/clients/ory"
 	internalTypes "github.com/kyma-incubator/api-gateway/internal/types/ory"
@@ -14,8 +15,6 @@ import (
 	apierrs "k8s.io/apimachinery/pkg/api/errors"
 	k8sMeta "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/utils/pointer"
-	"knative.dev/pkg/apis/istio/common/v1alpha1"
 	networkingv1alpha3 "knative.dev/pkg/apis/istio/v1alpha3"
 )
 
@@ -113,39 +112,20 @@ func (o *oauth) createAccessRule(ctx context.Context, ar *rulev1alpha1.Rule) err
 }
 
 func (o *oauth) prepareVirtualService(api *gatewayv2alpha1.Gate, vs *networkingv1alpha3.VirtualService, oauthConfig *gatewayv2alpha1.OauthModeConfig) *networkingv1alpha3.VirtualService {
-	vs.ObjectMeta.OwnerReferences = []k8sMeta.OwnerReference{generateOwnerRef(api)}
-	vs.ObjectMeta.Name = fmt.Sprintf("%s-%s", api.ObjectMeta.Name, *api.Spec.Service.Name)
-	vs.ObjectMeta.Namespace = api.ObjectMeta.Namespace
 
-	match := &networkingv1alpha3.HTTPMatchRequest{
-		URI: &v1alpha1.StringMatch{
-			Regex: oauthConfig.Paths[0].Path,
-		},
-	}
-	route := &networkingv1alpha3.HTTPRouteDestination{
-		Destination: networkingv1alpha3.Destination{
-			Host: o.oathkeeperSvc,
-			Port: networkingv1alpha3.PortSelector{
-				Number: o.oathkeeperSvcPort,
-			},
-		},
-	}
-
-	spec := &networkingv1alpha3.VirtualServiceSpec{
-		Hosts:    []string{*api.Spec.Service.Host},
-		Gateways: []string{*api.Spec.Gateway},
-		HTTP: []networkingv1alpha3.HTTPRoute{
-			{
-				Match: []networkingv1alpha3.HTTPMatchRequest{*match},
-				Route: []networkingv1alpha3.HTTPRouteDestination{*route},
-			},
-		},
-	}
-
-	vs.Spec = *spec
-
-	return vs
-
+	ownerRef := generateOwnerRef(api)
+	return builders.VirtualService().From(vs).
+		Name(fmt.Sprintf("%s-%s", api.ObjectMeta.Name, *api.Spec.Service.Name)).
+		Namespace(api.ObjectMeta.Namespace).
+		Owner(builders.OwnerReference().From(&ownerRef)).
+		Spec(
+			builders.VirtualServiceSpec().
+				Host(*api.Spec.Service.Host).
+				Gateway(*api.Spec.Gateway).
+				HTTP(
+					builders.MatchRequest().URI().Regex(oauthConfig.Paths[0].Path),
+					builders.RouteDestination().Host(o.oathkeeperSvc).Port(o.oathkeeperSvcPort))).
+		Get()
 }
 
 func (o *oauth) updateVirtualService(ctx context.Context, vs *networkingv1alpha3.VirtualService) error {
@@ -157,57 +137,39 @@ func (o *oauth) updateAccessRule(ctx context.Context, ar *rulev1alpha1.Rule) err
 }
 
 func generateOwnerRef(api *gatewayv2alpha1.Gate) k8sMeta.OwnerReference {
-	return k8sMeta.OwnerReference{
-
-		Name:       api.ObjectMeta.Name,
-		APIVersion: api.TypeMeta.APIVersion,
-		Kind:       api.TypeMeta.Kind,
-		UID:        api.ObjectMeta.UID,
-		Controller: pointer.BoolPtr(true),
-	}
+	return *builders.OwnerReference().
+		Name(api.ObjectMeta.Name).
+		APIVersion(api.TypeMeta.APIVersion).
+		Kind(api.TypeMeta.Kind).
+		UID(api.ObjectMeta.UID).
+		Controller(true).
+		Get()
 }
 
 func generateObjectMeta(api *gatewayv2alpha1.Gate) k8sMeta.ObjectMeta {
-	objectMeta := k8sMeta.ObjectMeta{
-		Name:            fmt.Sprintf("%s-%s", api.ObjectMeta.Name, *api.Spec.Service.Name),
-		Namespace:       api.ObjectMeta.Namespace,
-		OwnerReferences: []k8sMeta.OwnerReference{generateOwnerRef(api)},
-	}
-
-	return objectMeta
+	ownerRef := generateOwnerRef(api)
+	return *builders.ObjectMeta().
+		Name(fmt.Sprintf("%s-%s", api.ObjectMeta.Name, *api.Spec.Service.Name)).
+		Namespace(api.ObjectMeta.Namespace).
+		OwnerReference(builders.OwnerReference().From(&ownerRef)).
+		Get()
 }
 
 func (o *oauth) generateVirtualService(api *gatewayv2alpha1.Gate, oauthConfig *gatewayv2alpha1.OauthModeConfig) *networkingv1alpha3.VirtualService {
-	match := &networkingv1alpha3.HTTPMatchRequest{
-		URI: &v1alpha1.StringMatch{
-			Regex: oauthConfig.Paths[0].Path,
-		},
-	}
-	route := &networkingv1alpha3.HTTPRouteDestination{
-		Destination: networkingv1alpha3.Destination{
-			Host: o.oathkeeperSvc,
-			Port: networkingv1alpha3.PortSelector{
-				Number: o.oathkeeperSvcPort,
-			},
-		},
-	}
-
-	spec := &networkingv1alpha3.VirtualServiceSpec{
-		Hosts:    []string{*api.Spec.Service.Host},
-		Gateways: []string{*api.Spec.Gateway},
-		HTTP: []networkingv1alpha3.HTTPRoute{
-			{
-				Match: []networkingv1alpha3.HTTPMatchRequest{*match},
-				Route: []networkingv1alpha3.HTTPRouteDestination{*route},
-			},
-		},
-	}
-
-	vs := &networkingv1alpha3.VirtualService{
-		ObjectMeta: generateObjectMeta(api),
-		Spec:       *spec,
-	}
-
+	vs := builders.VirtualService().Name(fmt.Sprintf("%s-%s", api.ObjectMeta.Name, *api.Spec.Service.Name)).
+		Namespace(api.ObjectMeta.Namespace).
+		Owner(builders.OwnerReference().
+			Name(api.ObjectMeta.Name).APIVersion(api.TypeMeta.APIVersion).
+			Kind(api.TypeMeta.Kind).UID(api.ObjectMeta.UID).
+			Controller(true)).
+		Spec(
+			builders.VirtualServiceSpec().
+				Host(*api.Spec.Service.Host).
+				Gateway(*api.Spec.Gateway).
+				HTTP(
+					builders.MatchRequest().URI().Regex(oauthConfig.Paths[0].Path),
+					builders.RouteDestination().Host(o.oathkeeperSvc).Port(o.oathkeeperSvcPort))).
+		Get()
 	return vs
 }
 
