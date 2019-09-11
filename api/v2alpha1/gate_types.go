@@ -16,6 +16,7 @@ limitations under the License.
 package v2alpha1
 
 import (
+	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
@@ -47,6 +48,10 @@ type GateSpec struct {
 	// Gateway to be used
 	// +kubebuilder:validation:Pattern=^(?:[_a-z0-9](?:[_a-z0-9-]+[a-z0-9])?\.)+(?:[a-z](?:[a-z0-9-]+[a-z0-9])?)?$
 	Gateway *string `json:"gateway"`
+	//Paths represents collection of Path to secure
+	Paths []Path `json:"paths,omitempty"`
+	// Mutators to be used
+	Mutators []*rulev1alpha1.Mutator `json:"mutators,omitempty"`
 }
 
 // GateStatus defines the observed state of Gate
@@ -104,6 +109,28 @@ type AuthStrategy struct {
 	Name *string `json:"name"`
 	// Config configures the auth strategy. Configuration keys vary per strategy.
 	// +kubebuilder:validation:Type=object
+	Config *runtime.RawExtension `json:"config,omitempty"`
+}
+
+//Path .
+type Path struct {
+	// Path to be exposed
+	// +kubebuilder:validation:Pattern=^/([0-9a-zA-Z./*]+)
+	Path string `json:"path"`
+	// Set of allowed scopes
+	Scopes []string `json:"scopes,omitempty"`
+	// Set of allowed HTTP methods
+	Methods []string `json:"methods,omitempty"`
+}
+
+// Mutator representation of AccessRule mutator field
+type Mutator struct {
+	*Handler `json:",inline"`
+}
+
+// Handler represents an Oathkeeper routine that operates on incoming requests. It is used to either validate a request (Authenticator, Authorizer) or modify it (Mutator).
+type Handler struct {
+	Name   string                `json:"handler"`
 	Config *runtime.RawExtension `json:"config,omitempty"`
 }
 

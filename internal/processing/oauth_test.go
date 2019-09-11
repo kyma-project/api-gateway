@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	gatewayv2alpha1 "github.com/kyma-incubator/api-gateway/api/v2alpha1"
+	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -13,10 +14,7 @@ func TestOauthGenerateVirtualService(t *testing.T) {
 	assert := assert.New(t)
 
 	gate := getGate()
-	oauthConfig := getOauthConfig()
-	oauthStrategy := &oauth{oathkeeperSvc: "test-oathkeeper", oathkeeperSvcPort: 4455}
-
-	vs := oauthStrategy.generateVirtualService(gate, oauthConfig)
+	vs := generateVirtualService(gate, "test-oathkeeper", 4455, gate.Spec.Paths[0].Path)
 
 	assert.Equal(len(vs.Spec.Gateways), 1)
 	assert.Equal(vs.Spec.Gateways[0], apiGateway)
@@ -45,15 +43,13 @@ func TestOauthPrepareVirtualService(t *testing.T) {
 	assert := assert.New(t)
 
 	gate := getGate()
-	oauthConfig := getOauthConfig()
-	oauthStrategy := &oauth{oathkeeperSvc: "test-oathkeeper", oathkeeperSvcPort: 4455}
 
-	oldVS := oauthStrategy.generateVirtualService(gate, oauthConfig)
+	oldVS := generateVirtualService(gate, "test-oathkeeper", 4455, gate.Spec.Paths[0].Path)
 
 	oldVS.ObjectMeta.Generation = int64(15)
 	oldVS.ObjectMeta.Name = "mst"
 
-	newVS := oauthStrategy.prepareVirtualService(gate, oldVS, oauthConfig)
+	newVS := prepareVirtualService(gate, oldVS, "test-oathkeeper", 4455, gate.Spec.Paths[0].Path)
 
 	assert.Equal(newVS.ObjectMeta.Generation, int64(15))
 
@@ -85,10 +81,9 @@ func TestOauthGenerateAccessRule(t *testing.T) {
 
 	oauthStrategy := &oauth{oathkeeperSvc: "test-oathkeeper"}
 	gate := getGate()
-	oauthConfig := getOauthConfig()
 	requiredScopes := []byte(`required_scopes: ["write", "read"]`)
 
-	ar := oauthStrategy.generateAccessRule(gate, oauthConfig, requiredScopes)
+	ar := oauthStrategy.generateAccessRule(gate, requiredScopes)
 
 	assert.Equal(len(ar.Spec.Authenticators), 1)
 	assert.NotEmpty(ar.Spec.Authenticators[0].Config)
@@ -119,15 +114,14 @@ func TestOauthPrepareAccessRule(t *testing.T) {
 
 	oauthStrategy := &oauth{oathkeeperSvc: "test-oathkeeper"}
 	gate := getGate()
-	oauthConfig := getOauthConfig()
 	requiredScopes := []byte(`required_scopes: ["write", "read"]`)
 
-	oldAR := oauthStrategy.generateAccessRule(gate, oauthConfig, requiredScopes)
+	oldAR := oauthStrategy.generateAccessRule(gate, requiredScopes)
 
 	oldAR.ObjectMeta.Generation = int64(15)
 	oldAR.ObjectMeta.Name = "mst"
 
-	newAR := oauthStrategy.prepareAccessRule(gate, oldAR, oauthConfig, requiredScopes)
+	newAR := oauthStrategy.prepareAccessRule(gate, oldAR, requiredScopes)
 
 	assert.Equal(newAR.ObjectMeta.Generation, int64(15))
 
@@ -179,18 +173,14 @@ func getGate() *gatewayv2alpha1.Gate {
 				Host: &serviceHost,
 				Port: &servicePort,
 			},
-		},
-	}
-}
-
-func getOauthConfig() *gatewayv2alpha1.OauthModeConfig {
-	return &gatewayv2alpha1.OauthModeConfig{
-		Paths: []gatewayv2alpha1.Option{
-			{
-				Path:    "/foo",
-				Scopes:  []string{"write", "read"},
-				Methods: []string{"GET"},
+			Paths: []gatewayv2alpha1.Path{
+				{
+					Path:    "/foo",
+					Scopes:  []string{"write", "read"},
+					Methods: []string{"GET"},
+				},
 			},
+			Mutators: []*rulev1alpha1.Mutator{},
 		},
 	}
 }

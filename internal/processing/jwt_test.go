@@ -4,9 +4,9 @@ import (
 	"testing"
 
 	gatewayv2alpha1 "github.com/kyma-incubator/api-gateway/api/v2alpha1"
+	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	authenticationv1alpha1 "knative.dev/pkg/apis/istio/authentication/v1alpha1"
 )
@@ -35,18 +35,18 @@ func getGate4JWT() *gatewayv2alpha1.Gate {
 				Host: &serviceHost,
 				Port: &servicePort,
 			},
+			Paths: []gatewayv2alpha1.Path{{
+				Path:    "/.*",
+				Methods: []string{"GET"},
+			},
+			},
+			Mutators: []*rulev1alpha1.Mutator{},
 		},
 	}
 }
 
 func getJWTConfig() *gatewayv2alpha1.JWTModeConfig {
-	return &gatewayv2alpha1.JWTModeConfig{
-		Issuer: "http://dex.someDomain.local",
-		Mode: gatewayv2alpha1.InternalConfig{
-			Name:   gatewayv2alpha1.JWTAll,
-			Config: &runtime.RawExtension{},
-		},
-	}
+	return &gatewayv2alpha1.JWTModeConfig{Issuer: "http://dex.someDomain.local"}
 }
 
 func TestGenerateAuthenticationPolicy(t *testing.T) {
@@ -75,8 +75,7 @@ func TestGenerateAuthenticationPolicy(t *testing.T) {
 func TestOauthGenerateVirtualService4JWT(t *testing.T) {
 	assert := assert.New(t)
 
-	jwtStrategy := &jwt{JWKSURI: "http://dex-service.namespace.svc.cluster.local:5556/keys"}
-	vs := jwtStrategy.generateVirtualService(getGate4JWT(), "test-service.test-namespace.svc.cluster.local", 8080)
+	vs := generateVirtualService(getGate4JWT(), "test-service.test-namespace.svc.cluster.local", 8080, "/.*")
 
 	assert.Equal(len(vs.Spec.Gateways), 1)
 	assert.Equal(vs.Spec.Gateways[0], apiGateway)
@@ -141,9 +140,9 @@ func TestJwtPrepareAccessRule(t *testing.T) {
 	assert.NotEmpty(newAR.Spec.Authenticators[0].Config)
 	assert.Equal(string(newAR.Spec.Authenticators[0].Config.Raw), string(jwtConfig))
 
-	assert.Equal(len(newAR.Spec.Match.Methods), len(methods))
-	assert.Equal(newAR.Spec.Match.Methods, methods)
-	assert.Equal(newAR.Spec.Match.URL, "<http|https>://myService.myDomain.com</.*>")
+	assert.Equal(len(newAR.Spec.Match.Methods), 1)
+	assert.Equal(newAR.Spec.Match.Methods, []string{"GET"})
+	assert.Equal(newAR.Spec.Match.URL, "<http|https>://myService.myDomain.com</foo>")
 
 	assert.Equal(newAR.Spec.Authorizer.Name, "allow")
 	assert.Empty(newAR.Spec.Authorizer.Config)
@@ -175,9 +174,9 @@ func TestJwtGenerateAccessRule(t *testing.T) {
 	assert.Equal(ar.Spec.Authenticators[0].Name, "jwt")
 	assert.Equal(string(ar.Spec.Authenticators[0].Config.Raw), string(jwtConfig))
 
-	assert.Equal(len(ar.Spec.Match.Methods), len(methods))
-	assert.Equal(ar.Spec.Match.Methods, methods)
-	assert.Equal(ar.Spec.Match.URL, "<http|https>://myService.myDomain.com</.*>")
+	assert.Equal(len(ar.Spec.Match.Methods), 1)
+	assert.Equal(ar.Spec.Match.Methods, []string{"GET"})
+	assert.Equal(ar.Spec.Match.URL, "<http|https>://myService.myDomain.com</foo>")
 
 	assert.Equal(ar.Spec.Authorizer.Name, "allow")
 	assert.Empty(ar.Spec.Authorizer.Config)

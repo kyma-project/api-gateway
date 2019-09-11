@@ -43,8 +43,8 @@ func TestGenerateVirtualService(t *testing.T) {
 			},
 		},
 	}
-	strategyPassthrough := &passthrough{}
-	vs := strategyPassthrough.generateVirtualService(exampleAPI)
+
+	vs := generateVirtualService(exampleAPI, serviceName+"."+apiNamespace+".svc.cluster.local", servicePort, "/.*")
 
 	assert.Equal(len(vs.Spec.Gateways), 1)
 	assert.Equal(vs.Spec.Gateways[0], apiGateway)

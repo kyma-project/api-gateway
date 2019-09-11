@@ -23,76 +23,39 @@ import (
 type jwt struct {
 	arClient          *accessRuleClient.AccessRule
 	vsClient          *istioClient.VirtualService
-	apClient          *istioClient.AuthenticationPolicy
 	JWKSURI           string
 	oathkeeperSvc     string
 	oathkeeperSvcPort uint32
 }
 
-var methods = []string{"GET", "POST", "PUT", "HEAD", "DELETE", "PATCH", "OPTIONS", "TRACE", "CONNECT"}
-
 func (j *jwt) Process(ctx context.Context, api *gatewayv2alpha1.Gate) error {
-	var destinationHost string
-	var destinationPort uint32
-
 	jwtConfig, err := j.toJWTConfig(api.Spec.Auth.Config)
 	if err != nil {
 		return err
 	}
 
-	switch jwtConfig.Mode.Name {
-	case gatewayv2alpha1.JWTAll:
-		{
-			modeConfig, err := j.toJWTModeALLConfig(jwtConfig.Mode.Config)
-			if err != nil {
-				return err
-			}
-			if len(modeConfig.Scopes) == 0 {
-				oldAP, err := j.getAuthenticationPolicy(ctx, api)
-				if err != nil {
-					return err
-				}
-				if oldAP != nil {
-					return j.updateAuthenticationPolicy(ctx, j.prepareAuthenticationPolicy(api, jwtConfig, oldAP))
-				}
-				err = j.createAuthenticationPolicy(ctx, j.generateAuthenticationPolicy(api, jwtConfig))
-				if err != nil {
-					return err
-				}
+	oldAR, err := j.getAccessRule(ctx, api)
+	if err != nil {
+		return err
+	}
 
-				destinationHost = fmt.Sprintf("%s.%s.svc.cluster.local", *api.Spec.Service.Name, api.ObjectMeta.Namespace)
-				destinationPort = *api.Spec.Service.Port
-			} else {
-				oldAR, err := j.getAccessRule(ctx, api)
-				if err != nil {
-					return err
-				}
+	jwtConfJSON, err := generateRequiredScopesJSONForJWT(api, jwtConfig)
+	if err != nil {
+		return err
+	}
 
-				jwtConfJSON, err := generateRequiredScopesJSONForJWT(modeConfig, jwtConfig)
-				if err != nil {
-					return err
-				}
-
-				if oldAR != nil {
-					newAR := j.prepareAccessRule(api, oldAR, jwtConfig, jwtConfJSON)
-					err = j.updateAccessRule(ctx, newAR)
-					if err != nil {
-						return err
-					}
-				} else {
-					ar := j.generateAccessRule(api, jwtConfig, jwtConfJSON)
-					err = j.createAccessRule(ctx, ar)
-					if err != nil {
-						return err
-					}
-				}
-
-				destinationHost = j.oathkeeperSvc
-				destinationPort = j.oathkeeperSvcPort
-			}
+	if oldAR != nil {
+		newAR := j.prepareAccessRule(api, oldAR, jwtConfig, jwtConfJSON)
+		err = j.updateAccessRule(ctx, newAR)
+		if err != nil {
+			return err
 		}
-	default:
-		return fmt.Errorf("unsupported mode: %s", jwtConfig.Mode.Name)
+	} else {
+		ar := j.generateAccessRule(api, jwtConfig, jwtConfJSON)
+		err = j.createAccessRule(ctx, ar)
+		if err != nil {
+			return err
+		}
 	}
 
 	oldVS, err := j.getVirtualService(ctx, api)
@@ -100,9 +63,9 @@ func (j *jwt) Process(ctx context.Context, api *gatewayv2alpha1.Gate) error {
 		return err
 	}
 	if oldVS != nil {
-		return j.updateVirtualService(ctx, j.prepareVirtualService(api, oldVS, destinationHost, destinationPort))
+		return j.updateVirtualService(ctx, prepareVirtualService(api, oldVS, j.oathkeeperSvc, j.oathkeeperSvcPort, api.Spec.Paths[0].Path))
 	}
-	err = j.createVirtualService(ctx, j.generateVirtualService(api, destinationHost, destinationPort))
+	err = j.createVirtualService(ctx, generateVirtualService(api, j.oathkeeperSvc, j.oathkeeperSvcPort, api.Spec.Paths[0].Path))
 	if err != nil {
 		return err
 	}
@@ -121,27 +84,13 @@ func (j *jwt) generateAccessRule(api *gatewayv2alpha1.Gate, config *gatewayv2alp
 		Raw: jwtConfig,
 	}
 
-	mutators := []*rulev1alpha1.Mutator{}
-
-	if len(config.Mutators) > 0 {
-		for i := range config.Mutators {
-			mut := &rulev1alpha1.Mutator{
-				Handler: &rulev1alpha1.Handler{
-					Name:   config.Mutators[i].Name,
-					Config: config.Mutators[i].Config,
-				},
-			}
-			mutators = append(mutators, mut)
-		}
-	}
-
 	spec := &rulev1alpha1.RuleSpec{
 		Upstream: &rulev1alpha1.Upstream{
 			URL: fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", *api.Spec.Service.Name, api.ObjectMeta.Namespace, int(*api.Spec.Service.Port)),
 		},
 		Match: &rulev1alpha1.Match{
-			Methods: methods,
-			URL:     fmt.Sprintf("<http|https>://%s<%s>", *api.Spec.Service.Host, "/.*"),
+			Methods: api.Spec.Paths[0].Methods,
+			URL:     fmt.Sprintf("<http|https>://%s<%s>", *api.Spec.Service.Host, api.Spec.Paths[0].Path),
 		},
 		Authorizer: &rulev1alpha1.Authorizer{
 			Handler: &rulev1alpha1.Handler{
@@ -156,7 +105,7 @@ func (j *jwt) generateAccessRule(api *gatewayv2alpha1.Gate, config *gatewayv2alp
 				},
 			},
 		},
-		Mutators: mutators,
+		Mutators: api.Spec.Mutators,
 	}
 
 	rule := &rulev1alpha1.Rule{
@@ -171,9 +120,9 @@ func (j *jwt) updateAccessRule(ctx context.Context, ar *rulev1alpha1.Rule) error
 	return j.arClient.Update(ctx, ar)
 }
 
-func generateRequiredScopesJSONForJWT(jwtAllConf *gatewayv2alpha1.JWTModeALL, conf *gatewayv2alpha1.JWTModeConfig) ([]byte, error) {
+func generateRequiredScopesJSONForJWT(gate *gatewayv2alpha1.Gate, conf *gatewayv2alpha1.JWTModeConfig) ([]byte, error) {
 	jwtConf := &internalTypes.JwtConfig{
-		RequiredScope: jwtAllConf.Scopes,
+		RequiredScope: gate.Spec.Paths[0].Scopes,
 		TrustedIssuer: []string{conf.Issuer},
 	}
 	return json.Marshal(jwtConf)
@@ -195,7 +144,7 @@ func (j *jwt) createVirtualService(ctx context.Context, vs *networkingv1alpha3.V
 	return j.vsClient.Create(ctx, vs)
 }
 
-func (j *jwt) prepareVirtualService(api *gatewayv2alpha1.Gate, vs *networkingv1alpha3.VirtualService, destinationHost string, destinationPort uint32) *networkingv1alpha3.VirtualService {
+func prepareVirtualService(api *gatewayv2alpha1.Gate, vs *networkingv1alpha3.VirtualService, destinationHost string, destinationPort uint32, path string) *networkingv1alpha3.VirtualService {
 	virtualServiceName := fmt.Sprintf("%s-%s", api.ObjectMeta.Name, *api.Spec.Service.Name)
 	ownerRef := generateOwnerRef(api)
 
@@ -208,7 +157,7 @@ func (j *jwt) prepareVirtualService(api *gatewayv2alpha1.Gate, vs *networkingv1a
 				Host(*api.Spec.Service.Host).
 				Gateway(*api.Spec.Gateway).
 				HTTP(
-					builders.MatchRequest().URI().Regex("/.*"),
+					builders.MatchRequest().URI().Regex(path),
 					builders.RouteDestination().Host(destinationHost).Port(destinationPort))).
 		Get()
 }
@@ -217,7 +166,7 @@ func (j *jwt) updateVirtualService(ctx context.Context, vs *networkingv1alpha3.V
 	return j.vsClient.Update(ctx, vs)
 }
 
-func (j *jwt) generateVirtualService(api *gatewayv2alpha1.Gate, destinationHost string, destinationPort uint32) *networkingv1alpha3.VirtualService {
+func generateVirtualService(api *gatewayv2alpha1.Gate, destinationHost string, destinationPort uint32, path string) *networkingv1alpha3.VirtualService {
 	virtualServiceName := fmt.Sprintf("%s-%s", api.ObjectMeta.Name, *api.Spec.Service.Name)
 	ownerRef := generateOwnerRef(api)
 	return builders.VirtualService().
@@ -229,29 +178,9 @@ func (j *jwt) generateVirtualService(api *gatewayv2alpha1.Gate, destinationHost 
 				Host(*api.Spec.Service.Host).
 				Gateway(*api.Spec.Gateway).
 				HTTP(
-					builders.MatchRequest().URI().Regex("/.*"),
+					builders.MatchRequest().URI().Regex(path),
 					builders.RouteDestination().Host(destinationHost).Port(destinationPort))).
 		Get()
-}
-
-func (j *jwt) getAuthenticationPolicy(ctx context.Context, api *gatewayv2alpha1.Gate) (*authenticationv1alpha1.Policy, error) {
-	ap, err := j.apClient.GetForAPI(ctx, api)
-	if err != nil {
-		if apierrs.IsNotFound(err) {
-			return nil, nil
-		}
-		return nil, err
-	}
-
-	return ap, nil
-}
-
-func (j *jwt) createAuthenticationPolicy(ctx context.Context, ap *authenticationv1alpha1.Policy) error {
-	return j.apClient.Create(ctx, ap)
-}
-
-func (j *jwt) updateAuthenticationPolicy(ctx context.Context, ap *authenticationv1alpha1.Policy) error {
-	return j.apClient.Update(ctx, ap)
 }
 
 func (j *jwt) prepareAuthenticationPolicy(api *gatewayv2alpha1.Gate, config *gatewayv2alpha1.JWTModeConfig, ap *authenticationv1alpha1.Policy) *authenticationv1alpha1.Policy {
@@ -355,15 +284,6 @@ func (j *jwt) toJWTConfig(config *runtime.RawExtension) (*gatewayv2alpha1.JWTMod
 	return &template, nil
 }
 
-func (j *jwt) toJWTModeALLConfig(config *runtime.RawExtension) (*gatewayv2alpha1.JWTModeALL, error) {
-	var template gatewayv2alpha1.JWTModeALL
-	err := json.Unmarshal(config.Raw, &template)
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-	return &template, nil
-}
-
 func (j *jwt) getAccessRule(ctx context.Context, api *gatewayv2alpha1.Gate) (*rulev1alpha1.Rule, error) {
 	ar, err := j.arClient.GetForAPI(ctx, api)
 	if err != nil {
@@ -385,27 +305,13 @@ func (j *jwt) prepareAccessRule(api *gatewayv2alpha1.Gate, ar *rulev1alpha1.Rule
 		Raw: jwtConfig,
 	}
 
-	mutators := []*rulev1alpha1.Mutator{}
-
-	if len(config.Mutators) > 0 {
-		for i := range config.Mutators {
-			mut := &rulev1alpha1.Mutator{
-				Handler: &rulev1alpha1.Handler{
-					Name:   config.Mutators[i].Name,
-					Config: config.Mutators[i].Config,
-				},
-			}
-			mutators = append(mutators, mut)
-		}
-	}
-
 	spec := &rulev1alpha1.RuleSpec{
 		Upstream: &rulev1alpha1.Upstream{
 			URL: fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", *api.Spec.Service.Name, api.ObjectMeta.Namespace, int(*api.Spec.Service.Port)),
 		},
 		Match: &rulev1alpha1.Match{
-			Methods: methods,
-			URL:     fmt.Sprintf("<http|https>://%s<%s>", *api.Spec.Service.Host, "/.*"),
+			Methods: api.Spec.Paths[0].Methods,
+			URL:     fmt.Sprintf("<http|https>://%s<%s>", *api.Spec.Service.Host, api.Spec.Paths[0].Path),
 		},
 		Authorizer: &rulev1alpha1.Authorizer{
 			Handler: &rulev1alpha1.Handler{
@@ -420,7 +326,7 @@ func (j *jwt) prepareAccessRule(api *gatewayv2alpha1.Gate, ar *rulev1alpha1.Rule
 				},
 			},
 		},
-		Mutators: mutators,
+		Mutators: api.Spec.Mutators,
 	}
 
 	ar.Spec = *spec

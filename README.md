@@ -27,7 +27,7 @@ The API Gateway Controller manages Istio authentication Policies, VirtualService
 
 | Name | Required | Description | Possible values |
 |------|----------|-------------|-----------------|
-| **oathkeeper-svc-address** | yes | ory oathkeeper-proxy service address. | ` ory-oathkeeper-proxy.kyma-system.svc.cluster.local` |
+| **oathkeeper-svc-address** | yes | ory oathkeeper-proxy service address. | `ory-oathkeeper-proxy.kyma-system.svc.cluster.local` |
 | **oathkeeper-svc-port** | yes | ory oathkeeper-proxy service port. | `4455` |
 | **jwks-uri** | yes | default jwksUri in the Policy. | any string |
 

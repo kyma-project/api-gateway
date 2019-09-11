@@ -91,7 +91,7 @@ func (r *APIReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 			return ctrl.Result{}, err
 		}
 
-		err = validationStrategy.Validate(api.Spec.Auth.Config)
+		err = validationStrategy.Validate(api)
 		if err != nil {
 			_, updateStatErr := r.updateStatus(ctx, api, generateErrorStatus(err), virtualServiceStatus, policyStatus, accessRuleStatus)
 			if updateStatErr != nil {
@@ -100,7 +100,7 @@ func (r *APIReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 			return ctrl.Result{}, err
 		}
 
-		processingStrategy, err := processing.NewFactory(r.ExtCRClients.ForVirtualService(), r.ExtCRClients.ForAuthenticationPolicy(), r.ExtCRClients.ForAccessRule(), r.Log, r.OathkeeperSvc, r.OathkeeperSvcPort, r.JWKSURI).StrategyFor(*api.Spec.Auth.Name)
+		processingStrategy, err := processing.NewFactory(r.ExtCRClients.ForVirtualService(), r.ExtCRClients.ForAccessRule(), r.Log, r.OathkeeperSvc, r.OathkeeperSvcPort, r.JWKSURI).StrategyFor(*api.Spec.Auth.Name)
 		if err != nil {
 			_, updateStatErr := r.updateStatus(ctx, api, generateErrorStatus(err), virtualServiceStatus, policyStatus, accessRuleStatus)
 			if updateStatErr != nil {

@@ -4,26 +4,26 @@ kind: Gate
 metadata:
   name: passthrough-bad-host
 spec:
+  gateway: some-gateway.some-namespace
   service:
     host: https://imgur.com
     name: imgur
     port: 443
   auth: 
     name: PASSTHROUGH
-  gateway: some-gateway.some-namespace
 ---
 apiVersion: gateway.kyma-project.io/v2alpha1
 kind: Gate
 metadata:
   name: passthrough-bad-gateway
 spec:
+  gateway: short-name-gateway
   service:
     host: imgur.com
     name: imgur
     port: 443
   auth: 
     name: PASSTHROUGH
-  gateway: short-name-gateway
 ---
 apiVersion: gateway.kyma-project.io/v2alpha1
 kind: Gate
@@ -32,39 +32,39 @@ metadata:
 spec:
   gateway: kyma-gateway.kyma-system.svc.cluster.local
   service:
-    host: imgur.com
-    name: imgur
-    port: 443
-  auth: 
+    host: httpbin.kyma.local
+    name: httpbin
+    port: 8000
+  auth:
     name: OAUTH
-    config:
-      paths: []
+  paths: []
+  mutators: []
 ---
 apiVersion: gateway.kyma-project.io/v2alpha1
 kind: Gate
 metadata:
-  name: oauth-bad-paths
+  name: oauth-multiple-paths
 spec:
   gateway: kyma-gateway.kyma-system.svc.cluster.local
   service:
-    host: imgur.com
-    name: imgur
-    port: 443
-  auth: 
+    host: httpbin.kyma.local
+    name: httpbin
+    port: 8000
+  auth:
     name: OAUTH
-    config:
-      paths:
-      - path: /foo
-        scopes: [foo, bar]
-        methods: [GET]
-      - path: /foo
-        scopes: [foo]
-        methods: [POST]
+  paths:
+    - path: /foo
+      scopes: ["read"]
+      methods: ["GET"]
+    - path: /bar
+      scopes: ["read"]
+      methods: ["GET"]
+  mutators: []
 ---
 apiVersion: gateway.kyma-project.io/v2alpha1
 kind: Gate
 metadata:
-  name: jwt-bad-issuer
+  name: jwt-all-bad-issuer
 spec:
   gateway: kyma-gateway.kyma-system.svc.cluster.local
   service:
@@ -76,27 +76,21 @@ spec:
     config:
       issuer: not-a-valid-url
       jwks: []
-      mode: 
-        name: ALL
-        config:
-          scopes: ["foo", "bar"]
+  paths:
+    - path: /.*
+      scopes: ["foo", "bar"]
+      methods: ["GET"]
+  mutators: []
 ---
 apiVersion: gateway.kyma-project.io/v2alpha1
 kind: Gate
 metadata:
-  name: jwt-bad-mode
+  name: invalid-auth
 spec:
-  gateway: kyma-gateway.kyma-system.svc.cluster.local
   service:
-    name: foo-service
-    port: 8080
-    host: foo.bar
-  auth: 
-    name: JWT
-    config:
-      issuer: http://dex.kyma.local
-      jwks: []
-      mode: 
-        name: FOO
-        config:
-          foo: bar
+    host: httpbin.kyma.local
+    name: httpbin
+    port: 8000
+  auth:
+    name: NOT_VALID
+  gateway: kyma-gateway.kyma-system.svc.cluster.local

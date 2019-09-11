@@ -16,7 +16,7 @@ type Factory struct {
 
 //Strategy .
 type Strategy interface {
-	Validate(config *runtime.RawExtension) error
+	Validate(gate *gatewayv2alpha1.Gate) error
 }
 
 //NewFactory .

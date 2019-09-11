@@ -43,32 +43,32 @@ var _ = Describe("Gate Controller", func() {
 	const testPath = "/.*"
 	var testIssuer = "https://oauth2.example.com/"
 	var testMethods = []string{"GET", "PUT"}
-	var allMethods = []string{"GET", "POST", "PUT", "HEAD", "DELETE", "PATCH", "OPTIONS", "TRACE", "CONNECT"}
 	var testScopes = []string{"foo", "bar"}
-	var testMutators = []string{"noop", "idtoken"}
+	var testMutators = []*rulev1alpha1.Mutator{
+		{
+			Handler: &rulev1alpha1.Handler{
+				Name: "noop",
+			},
+		},
+		{
+			Handler: &rulev1alpha1.Handler{
+				Name: "idtoken",
+			},
+		},
+	}
 
 	Context("when creating a Gate for exposing service", func() {
 		Context("on all the paths,", func() {
 			Context("secured with Oauth2 introspection,", func() {
 				Context("in a happy-path scenario", func() {
 					It("should create a VirtualService and an AccessRule", func() {
-						configJSON := fmt.Sprintf(`
-							{
-								"paths":[
-									{
-										"path": "%s",
-										"scopes": [%s],
-										"methods": [%s]
-									}
-								],
-								"mutators": [%s]
-							}`, testPath, toCSVList(testScopes), toCSVList(testMethods), getMutators(testMutators))
+						configJSON := fmt.Sprintf(`{}`)
 
 						testName := generateTestName(testNameBase, testIDLength)
 
 						var authStrategyName = gatewayv2alpha1.Oauth
 
-						instance := testInstance(authStrategyName, configJSON, testName, testNamespace, testServiceName, testServiceHost, testServicePort)
+						instance := testInstance(authStrategyName, configJSON, testName, testNamespace, testServiceName, testServiceHost, testServicePort, testPath, testMethods, testScopes, testMutators)
 
 						err := c.Create(context.TODO(), instance)
 						if apierrors.IsInvalid(err) {
@@ -177,7 +177,8 @@ var _ = Describe("Gate Controller", func() {
 						//Spec.Mutators
 						Expect(rl.Spec.Mutators).NotTo(BeNil())
 						Expect(len(rl.Spec.Mutators)).To(Equal(len(testMutators)))
-						Expect(rl.Spec.Mutators[0].Handler.Name).To(Equal(testMutators[0]))
+						Expect(rl.Spec.Mutators[0].Handler.Name).To(Equal(testMutators[0].Name))
+						Expect(rl.Spec.Mutators[1].Handler.Name).To(Equal(testMutators[1].Name))
 					})
 				})
 			})
@@ -187,20 +188,13 @@ var _ = Describe("Gate Controller", func() {
 						configJSON := fmt.Sprintf(`
 							{
 								"issuer": "%s",
-								"jwks": [],
-								"mode": {
-									"name": "%s",
-									"config": {
-										"scopes": [%s]
-									}
-                                },
-                                "mutators": [%s]
-							}`, testIssuer, gatewayv2alpha1.JWTAll, toCSVList(testScopes), getMutators(testMutators))
+								"jwks": []
+							}`, testIssuer)
 						fmt.Printf("---\n%s\n---", configJSON)
 						testName := generateTestName(testNameBase, testIDLength)
 
 						var authStrategyName = gatewayv2alpha1.Jwt
-						instance := testInstance(authStrategyName, configJSON, testName, testNamespace, testServiceName, testServiceHost, testServicePort)
+						instance := testInstance(authStrategyName, configJSON, testName, testNamespace, testServiceName, testServiceHost, testServicePort, "/.*", []string{"GET"}, testScopes, testMutators)
 
 						err := c.Create(context.TODO(), instance)
 						if apierrors.IsInvalid(err) {
@@ -287,7 +281,7 @@ var _ = Describe("Gate Controller", func() {
 						//Spec.Match
 						Expect(rl.Spec.Match).NotTo(BeNil())
 						Expect(rl.Spec.Match.URL).To(Equal(fmt.Sprintf("<http|https>://%s<%s>", testServiceHost, testPath)))
-						Expect(rl.Spec.Match.Methods).To(Equal(allMethods))
+						Expect(rl.Spec.Match.Methods).To(Equal([]string{"GET"}))
 						//Spec.Authenticators
 						Expect(rl.Spec.Authenticators).To(HaveLen(1))
 						Expect(rl.Spec.Authenticators[0].Handler).NotTo(BeNil())
@@ -309,7 +303,8 @@ var _ = Describe("Gate Controller", func() {
 						//Spec.Mutators
 						Expect(rl.Spec.Mutators).NotTo(BeNil())
 						Expect(len(rl.Spec.Mutators)).To(Equal(len(testMutators)))
-						Expect(rl.Spec.Mutators[0].Handler.Name).To(Equal(testMutators[0]))
+						Expect(rl.Spec.Mutators[0].Handler.Name).To(Equal(testMutators[0].Name))
+						Expect(rl.Spec.Mutators[1].Handler.Name).To(Equal(testMutators[1].Name))
 					})
 				})
 			})
@@ -345,7 +340,7 @@ func toCSVList(input []string) string {
 	return res
 }
 
-func testInstance(authStrategyName, configJSON, name, namespace, serviceName, serviceHost string, servicePort uint32) *gatewayv2alpha1.Gate {
+func testInstance(authStrategyName, configJSON, name, namespace, serviceName, serviceHost string, servicePort uint32, path string, methods []string, scopes []string, mutators []*rulev1alpha1.Mutator) *gatewayv2alpha1.Gate {
 	rawCfg := &runtime.RawExtension{
 		Raw: []byte(configJSON),
 	}
@@ -368,6 +363,14 @@ func testInstance(authStrategyName, configJSON, name, namespace, serviceName, se
 				Name:   &authStrategyName,
 				Config: rawCfg,
 			},
+			Paths: []gatewayv2alpha1.Path{
+				{
+					Path:    path,
+					Scopes:  scopes,
+					Methods: methods,
+				},
+			},
+			Mutators: mutators,
 		},
 	}
 }
@@ -410,27 +413,4 @@ func generateTestName(name string, length int) string {
 		b[i] = letterRunes[rand.Intn(len(letterRunes))]
 	}
 	return name + "-" + string(b)
-}
-
-func getMutators(in []string) string {
-	if len(in) == 0 {
-		return `[]`
-	}
-	res := ""
-	for i := range in {
-		if i == len(in)-1 {
-			res = res + fmt.Sprintf(
-				`
-			{
-				"handler": "%s"
-			}`, in[i])
-		} else {
-			res = res + fmt.Sprintf(
-				`
-			{
-				"handler": "%s"
-			},`, in[i])
-		}
-	}
-	return res
 }

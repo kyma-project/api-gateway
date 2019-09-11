@@ -407,6 +407,43 @@ spec:
               description: Gateway to be used
               pattern: ^(?:[_a-z0-9](?:[_a-z0-9-]+[a-z0-9])?\.)+(?:[a-z](?:[a-z0-9-]+[a-z0-9])?)?$
               type: string
+            mutators:
+              description: Mutators to be used
+              items:
+                properties:
+                  config:
+                    description: Config configures the handler. Configuration keys
+                      vary per handler.
+                    type: object
+                  handler:
+                    description: Name is the name of a handler
+                    type: string
+                required:
+                - handler
+                type: object
+              type: array
+            paths:
+              description: Paths represents collection of Path to secure
+              items:
+                properties:
+                  methods:
+                    description: Set of allowed HTTP methods
+                    items:
+                      type: string
+                    type: array
+                  path:
+                    description: Path to be exposed
+                    pattern: ^/([0-9a-zA-Z./*]+)
+                    type: string
+                  scopes:
+                    description: Set of allowed scopes
+                    items:
+                      type: string
+                    type: array
+                required:
+                - path
+                type: object
+              type: array
             service:
               description: Definition of the service to expose
               properties:
