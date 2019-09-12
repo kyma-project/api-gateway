@@ -82,7 +82,7 @@ func fixAPI() *gatewayv2alpha1.Gate {
 				Config: nil,
 			},
 			Gateway: &gateway,
-			Paths: []gatewayv2alpha1.Path{
+			Rules: []gatewayv2alpha1.Rule{
 				{
 					Path:    "/.*",
 					Methods: []string{"GET"},

@@ -41,7 +41,7 @@ func TestVSforAllowModeNoMutators(t *testing.T) {
 	assert.Equal(len(vs.Spec.HTTP[0].Match), 1)
 	assert.Equal(vs.Spec.HTTP[0].Route[0].Destination.Host, serviceName+"."+apiNamespace+".svc.cluster.local")
 	assert.Equal(vs.Spec.HTTP[0].Route[0].Destination.Port.Number, servicePort)
-	assert.Equal(vs.Spec.HTTP[0].Match[0].URI.Regex, exampleAPI.Spec.Paths[0].Path)
+	assert.Equal(vs.Spec.HTTP[0].Match[0].URI.Regex, exampleAPI.Spec.Rules[0].Path)
 
 	assert.Equal(vs.ObjectMeta.Name, apiName+"-"+serviceName)
 	assert.Equal(vs.ObjectMeta.Namespace, apiNamespace)
@@ -71,16 +71,16 @@ func getGate4Allow() *gatewayv2alpha1.Gate {
 				Host: &serviceHost,
 				Port: &servicePort,
 			},
-			Paths: []gatewayv2alpha1.Path{
+			Rules: []gatewayv2alpha1.Rule{
 				{
 					Path:    "/.*",
 					Methods: []string{"GET"},
-				},
-			},
-			Mutators: []*rulev1alpha1.Mutator{
-				{
-					&rulev1alpha1.Handler{
-						Name: "noop",
+					Mutators: []*rulev1alpha1.Mutator{
+						&rulev1alpha1.Mutator{
+							Handler: &rulev1alpha1.Handler{
+								Name: "noop",
+							},
+						},
 					},
 				},
 			},

@@ -363,14 +363,14 @@ func testInstance(authStrategyName, configJSON, name, namespace, serviceName, se
 				Name:   &authStrategyName,
 				Config: rawCfg,
 			},
-			Paths: []gatewayv2alpha1.Path{
+			Rules: []gatewayv2alpha1.Rule{
 				{
-					Path:    path,
-					Scopes:  scopes,
-					Methods: methods,
+					Path:     path,
+					Scopes:   scopes,
+					Methods:  methods,
+					Mutators: mutators,
 				},
 			},
-			Mutators: mutators,
 		},
 	}
 }

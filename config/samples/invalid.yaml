@@ -37,8 +37,7 @@ spec:
     port: 8000
   auth:
     name: OAUTH
-  paths: []
-  mutators: []
+  rules: []
 ---
 apiVersion: gateway.kyma-project.io/v2alpha1
 kind: Gate
@@ -52,14 +51,13 @@ spec:
     port: 8000
   auth:
     name: OAUTH
-  paths:
+  rules:
     - path: /foo
       scopes: ["read"]
       methods: ["GET"]
     - path: /bar
       scopes: ["read"]
       methods: ["GET"]
-  mutators: []
 ---
 apiVersion: gateway.kyma-project.io/v2alpha1
 kind: Gate
@@ -76,11 +74,10 @@ spec:
     config:
       issuer: not-a-valid-url
       jwks: []
-  paths:
+  rules:
     - path: /.*
       scopes: ["foo", "bar"]
       methods: ["GET"]
-  mutators: []
 ---
 apiVersion: gateway.kyma-project.io/v2alpha1
 kind: Gate
@@ -107,7 +104,7 @@ spec:
   auth:
     name: ALLOW
   gateway: kyma-gateway.kyma-system.svc.cluster.local
-  paths:
+  rules:
     - path: /.*
       scopes: ["foo", "bar"]
       methods: ["GET"]

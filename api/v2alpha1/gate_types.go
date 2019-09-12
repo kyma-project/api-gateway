@@ -49,9 +49,7 @@ type GateSpec struct {
 	// +kubebuilder:validation:Pattern=^(?:[_a-z0-9](?:[_a-z0-9-]+[a-z0-9])?\.)+(?:[a-z](?:[a-z0-9-]+[a-z0-9])?)?$
 	Gateway *string `json:"gateway"`
 	//Paths represents collection of Path to secure
-	Paths []Path `json:"paths,omitempty"`
-	// Mutators to be used
-	Mutators []*rulev1alpha1.Mutator `json:"mutators,omitempty"`
+	Rules []Rule `json:"rules,omitempty"`
 }
 
 // GateStatus defines the observed state of Gate
@@ -112,8 +110,8 @@ type AuthStrategy struct {
 	Config *runtime.RawExtension `json:"config,omitempty"`
 }
 
-//Path .
-type Path struct {
+//Rule .
+type Rule struct {
 	// Path to be exposed
 	// +kubebuilder:validation:Pattern=^/([0-9a-zA-Z./*]+)
 	Path string `json:"path"`
@@ -121,6 +119,8 @@ type Path struct {
 	Scopes []string `json:"scopes,omitempty"`
 	// Set of allowed HTTP methods
 	Methods []string `json:"methods,omitempty"`
+	// Mutators to be used
+	Mutators []*rulev1alpha1.Mutator `json:"mutators,omitempty"`
 }
 
 //GatewayResourceStatus .

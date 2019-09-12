@@ -52,13 +52,13 @@ func (j *jwt) Process(ctx context.Context, api *gatewayv2alpha1.Gate) error {
 	}
 
 	if oldAR != nil {
-		newAR := prepareAccessRule(api, oldAR, api.Spec.Paths[0], []*rulev1alpha1.Authenticator{accessStrategy})
+		newAR := prepareAccessRule(api, oldAR, api.Spec.Rules[0], []*rulev1alpha1.Authenticator{accessStrategy})
 		err = j.updateAccessRule(ctx, newAR)
 		if err != nil {
 			return err
 		}
 	} else {
-		ar := generateAccessRule(api, api.Spec.Paths[0], []*rulev1alpha1.Authenticator{accessStrategy})
+		ar := generateAccessRule(api, api.Spec.Rules[0], []*rulev1alpha1.Authenticator{accessStrategy})
 		err = j.createAccessRule(ctx, ar)
 		if err != nil {
 			return err
@@ -70,9 +70,9 @@ func (j *jwt) Process(ctx context.Context, api *gatewayv2alpha1.Gate) error {
 		return err
 	}
 	if oldVS != nil {
-		return j.updateVirtualService(ctx, prepareVirtualService(api, oldVS, j.oathkeeperSvc, j.oathkeeperSvcPort, api.Spec.Paths[0].Path))
+		return j.updateVirtualService(ctx, prepareVirtualService(api, oldVS, j.oathkeeperSvc, j.oathkeeperSvcPort, api.Spec.Rules[0].Path))
 	}
-	err = j.createVirtualService(ctx, generateVirtualService(api, j.oathkeeperSvc, j.oathkeeperSvcPort, api.Spec.Paths[0].Path))
+	err = j.createVirtualService(ctx, generateVirtualService(api, j.oathkeeperSvc, j.oathkeeperSvcPort, api.Spec.Rules[0].Path))
 	if err != nil {
 		return err
 	}
@@ -90,7 +90,7 @@ func (j *jwt) updateAccessRule(ctx context.Context, ar *rulev1alpha1.Rule) error
 
 func generateRequiredScopesJSONForJWT(gate *gatewayv2alpha1.Gate, conf *gatewayv2alpha1.JWTModeConfig) ([]byte, error) {
 	jwtConf := &internalTypes.JwtConfig{
-		RequiredScope: gate.Spec.Paths[0].Scopes,
+		RequiredScope: gate.Spec.Rules[0].Scopes,
 		TrustedIssuer: []string{conf.Issuer},
 	}
 	return json.Marshal(jwtConf)
@@ -172,7 +172,7 @@ func (j *jwt) getAccessRule(ctx context.Context, api *gatewayv2alpha1.Gate) (*ru
 	return ar, nil
 }
 
-func prepareAccessRule(api *gatewayv2alpha1.Gate, ar *rulev1alpha1.Rule, rule gatewayv2alpha1.Path, accessStrategies []*rulev1alpha1.Authenticator) *rulev1alpha1.Rule {
+func prepareAccessRule(api *gatewayv2alpha1.Gate, ar *rulev1alpha1.Rule, rule gatewayv2alpha1.Rule, accessStrategies []*rulev1alpha1.Authenticator) *rulev1alpha1.Rule {
 	ar.ObjectMeta.OwnerReferences = []k8sMeta.OwnerReference{generateOwnerRef(api)}
 	ar.ObjectMeta.Name = fmt.Sprintf("%s-%s", api.ObjectMeta.Name, *api.Spec.Service.Name)
 	ar.ObjectMeta.Namespace = api.ObjectMeta.Namespace
@@ -191,7 +191,7 @@ func prepareAccessRule(api *gatewayv2alpha1.Gate, ar *rulev1alpha1.Rule, rule ga
 			},
 		},
 		Authenticators: accessStrategies,
-		Mutators:       api.Spec.Mutators,
+		Mutators:       rule.Mutators,
 	}
 
 	ar.Spec = *spec
@@ -200,7 +200,7 @@ func prepareAccessRule(api *gatewayv2alpha1.Gate, ar *rulev1alpha1.Rule, rule ga
 
 }
 
-func generateAccessRule(api *gatewayv2alpha1.Gate, rule gatewayv2alpha1.Path, accessStrategies []*rulev1alpha1.Authenticator) *rulev1alpha1.Rule {
+func generateAccessRule(api *gatewayv2alpha1.Gate, rule gatewayv2alpha1.Rule, accessStrategies []*rulev1alpha1.Authenticator) *rulev1alpha1.Rule {
 	objectMeta := generateObjectMeta(api)
 
 	spec := &rulev1alpha1.RuleSpec{
@@ -217,7 +217,7 @@ func generateAccessRule(api *gatewayv2alpha1.Gate, rule gatewayv2alpha1.Path, ac
 			},
 		},
 		Authenticators: accessStrategies,
-		Mutators:       api.Spec.Mutators,
+		Mutators:       rule.Mutators,
 	}
 
 	accessRule := &rulev1alpha1.Rule{

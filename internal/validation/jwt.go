@@ -13,7 +13,7 @@ type jwt struct{}
 func (j *jwt) Validate(gate *gatewayv2alpha1.Gate) error {
 	var template gatewayv2alpha1.JWTModeConfig
 
-	if len(gate.Spec.Paths) == 0 {
+	if len(gate.Spec.Rules) == 0 {
 		return fmt.Errorf("path is required")
 	}
 

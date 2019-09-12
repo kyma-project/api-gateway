@@ -19,7 +19,7 @@ type allow struct {
 func (a *allow) Process(ctx context.Context, api *gatewayv2alpha1.Gate) error {
 	destinationHost := ""
 	var destinationPort uint32
-	if a.isSecured(api, api.Spec.Paths[0]) {
+	if a.isSecured(api.Spec.Rules[0]) {
 		destinationHost = fmt.Sprintf("%s.svc.cluster.local", a.oathkeeperSvc)
 		destinationPort = a.oathkeeperSvcPort
 	} else {
@@ -33,10 +33,10 @@ func (a *allow) Process(ctx context.Context, api *gatewayv2alpha1.Gate) error {
 	}
 
 	if oldVS != nil {
-		newVS := prepareVirtualService(api, oldVS, destinationHost, destinationPort, api.Spec.Paths[0].Path)
+		newVS := prepareVirtualService(api, oldVS, destinationHost, destinationPort, api.Spec.Rules[0].Path)
 		return a.updateVirtualService(ctx, newVS)
 	}
-	vs := generateVirtualService(api, destinationHost, destinationPort, api.Spec.Paths[0].Path)
+	vs := generateVirtualService(api, destinationHost, destinationPort, api.Spec.Rules[0].Path)
 	return a.createVirtualService(ctx, vs)
 
 }
@@ -61,8 +61,8 @@ func (a *allow) updateVirtualService(ctx context.Context, vs *networkingv1alpha3
 	return a.vsClient.Update(ctx, vs)
 }
 
-func (a *allow) isSecured(api *gatewayv2alpha1.Gate, path gatewayv2alpha1.Path) bool {
-	if len(path.Scopes) > 0 || len(api.Spec.Mutators) > 0 {
+func (a *allow) isSecured(rule gatewayv2alpha1.Rule) bool {
+	if len(rule.Scopes) > 0 || len(rule.Mutators) > 0 {
 		return true
 	}
 	return false

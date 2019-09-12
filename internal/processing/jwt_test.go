@@ -35,12 +35,12 @@ func getGate4JWT() *gatewayv2alpha1.Gate {
 				Host: &serviceHost,
 				Port: &servicePort,
 			},
-			Paths: []gatewayv2alpha1.Path{{
-				Path:    "/.*",
-				Methods: []string{"GET"},
+			Rules: []gatewayv2alpha1.Rule{{
+				Path:     "/.*",
+				Methods:  []string{"GET"},
+				Mutators: []*rulev1alpha1.Mutator{},
 			},
 			},
-			Mutators: []*rulev1alpha1.Mutator{},
 		},
 	}
 }
@@ -93,12 +93,12 @@ func TestJwtPrepareAccessRule(t *testing.T) {
 		},
 	}
 
-	oldAR := generateAccessRule(gate, gate.Spec.Paths[0], []*rulev1alpha1.Authenticator{accessStrategy})
+	oldAR := generateAccessRule(gate, gate.Spec.Rules[0], []*rulev1alpha1.Authenticator{accessStrategy})
 
 	oldAR.ObjectMeta.Generation = int64(15)
 	oldAR.ObjectMeta.Name = "mst"
 
-	newAR := prepareAccessRule(gate, oldAR, gate.Spec.Paths[0], []*rulev1alpha1.Authenticator{accessStrategy})
+	newAR := prepareAccessRule(gate, oldAR, gate.Spec.Rules[0], []*rulev1alpha1.Authenticator{accessStrategy})
 
 	assert.Equal(newAR.ObjectMeta.Generation, int64(15))
 
@@ -142,7 +142,7 @@ func TestJwtGenerateAccessRule(t *testing.T) {
 		},
 	}
 
-	ar := generateAccessRule(gate, gate.Spec.Paths[0], []*rulev1alpha1.Authenticator{accessStrategy})
+	ar := generateAccessRule(gate, gate.Spec.Rules[0], []*rulev1alpha1.Authenticator{accessStrategy})
 
 	assert.Equal(len(ar.Spec.Authenticators), 1)
 	assert.NotEmpty(ar.Spec.Authenticators[0].Config)

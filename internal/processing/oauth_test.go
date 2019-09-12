@@ -15,7 +15,7 @@ func TestOauthGenerateVirtualService(t *testing.T) {
 	assert := assert.New(t)
 
 	gate := getGate()
-	vs := generateVirtualService(gate, "test-oathkeeper", 4455, gate.Spec.Paths[0].Path)
+	vs := generateVirtualService(gate, "test-oathkeeper", 4455, gate.Spec.Rules[0].Path)
 
 	assert.Equal(len(vs.Spec.Gateways), 1)
 	assert.Equal(vs.Spec.Gateways[0], apiGateway)
@@ -45,12 +45,12 @@ func TestOauthPrepareVirtualService(t *testing.T) {
 
 	gate := getGate()
 
-	oldVS := generateVirtualService(gate, "test-oathkeeper", 4455, gate.Spec.Paths[0].Path)
+	oldVS := generateVirtualService(gate, "test-oathkeeper", 4455, gate.Spec.Rules[0].Path)
 
 	oldVS.ObjectMeta.Generation = int64(15)
 	oldVS.ObjectMeta.Name = "mst"
 
-	newVS := prepareVirtualService(gate, oldVS, "test-oathkeeper", 4455, gate.Spec.Paths[0].Path)
+	newVS := prepareVirtualService(gate, oldVS, "test-oathkeeper", 4455, gate.Spec.Rules[0].Path)
 
 	assert.Equal(newVS.ObjectMeta.Generation, int64(15))
 
@@ -92,7 +92,7 @@ func TestOauthGenerateAccessRule(t *testing.T) {
 		},
 	}
 
-	ar := generateAccessRule(gate, gate.Spec.Paths[0], []*rulev1alpha1.Authenticator{accessStrategy})
+	ar := generateAccessRule(gate, gate.Spec.Rules[0], []*rulev1alpha1.Authenticator{accessStrategy})
 
 	assert.Equal(len(ar.Spec.Authenticators), 1)
 	assert.NotEmpty(ar.Spec.Authenticators[0].Config)
@@ -133,12 +133,12 @@ func TestOauthPrepareAccessRule(t *testing.T) {
 		},
 	}
 
-	oldAR := generateAccessRule(gate, gate.Spec.Paths[0], []*rulev1alpha1.Authenticator{accessStrategy})
+	oldAR := generateAccessRule(gate, gate.Spec.Rules[0], []*rulev1alpha1.Authenticator{accessStrategy})
 
 	oldAR.ObjectMeta.Generation = int64(15)
 	oldAR.ObjectMeta.Name = "mst"
 
-	newAR := prepareAccessRule(gate, oldAR, gate.Spec.Paths[0], []*rulev1alpha1.Authenticator{accessStrategy})
+	newAR := prepareAccessRule(gate, oldAR, gate.Spec.Rules[0], []*rulev1alpha1.Authenticator{accessStrategy})
 
 	assert.Equal(newAR.ObjectMeta.Generation, int64(15))
 
@@ -190,14 +190,14 @@ func getGate() *gatewayv2alpha1.Gate {
 				Host: &serviceHost,
 				Port: &servicePort,
 			},
-			Paths: []gatewayv2alpha1.Path{
+			Rules: []gatewayv2alpha1.Rule{
 				{
-					Path:    "/foo",
-					Scopes:  []string{"write", "read"},
-					Methods: []string{"GET"},
+					Path:     "/foo",
+					Scopes:   []string{"write", "read"},
+					Methods:  []string{"GET"},
+					Mutators: []*rulev1alpha1.Mutator{},
 				},
 			},
-			Mutators: []*rulev1alpha1.Mutator{},
 		},
 	}
 }

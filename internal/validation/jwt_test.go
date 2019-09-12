@@ -70,7 +70,7 @@ func getJWTGate(config *runtime.RawExtension) *gatewayv2alpha1.Gate {
 			Auth: &gatewayv2alpha1.AuthStrategy{
 				Config: config,
 			},
-			Paths: []gatewayv2alpha1.Path{
+			Rules: []gatewayv2alpha1.Rule{
 				{
 					Path:    "/.*",
 					Scopes:  []string{},

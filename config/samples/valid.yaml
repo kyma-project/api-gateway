@@ -11,11 +11,11 @@ spec:
   auth:
     name: ALLOW
   gateway: kyma-gateway.kyma-system.svc.cluster.local
-  paths:
+  rules:
     - path: /.*
       scopes: []
       methods: ["GET"]
-  mutators: []
+      mutators: []
 ---
 apiVersion: gateway.kyma-project.io/v2alpha1
 kind: Gate
@@ -29,11 +29,11 @@ spec:
   auth:
     name: ALLOW
   gateway: kyma-gateway.kyma-system.svc.cluster.local
-  paths:
+  rules:
     - path: /.*
       methods: ["GET"]
-  mutators:
-    - handler: noop
+      mutators:
+        - handler: noop
 ---
 apiVersion: gateway.kyma-project.io/v2alpha1
 kind: Gate
@@ -50,11 +50,11 @@ spec:
     config:
       issuer: http://dex.kyma.local
       jwks: []
-  paths:
+  rules:
     - path: /.*
       scopes: []
       methods: ["GET"]
-  mutators: []
+      mutators: []
 ---
 apiVersion: gateway.kyma-project.io/v2alpha1
 kind: Gate
@@ -71,12 +71,12 @@ spec:
     config:
       issuer: http://dex.kyma.local
       jwks: []
-  paths:
+  rules:
     - path: /.*
       scopes: ["foo", "bar"]
       methods: ["GET"]
-  mutators:
-    - handler: noop
+      mutators:
+        - handler: noop
 ---
 apiVersion: gateway.kyma-project.io/v2alpha1
 kind: Gate
@@ -93,11 +93,11 @@ spec:
     config:
       issuer: http://dex.kyma.local
       jwks: []
-  paths:
+  rules:
     - path: /.*
       scopes: ["foo", "bar"]
       methods: ["GET"]
-  mutators: []
+      mutators: []
 ---
 apiVersion: gateway.kyma-project.io/v2alpha1
 kind: Gate
@@ -111,11 +111,11 @@ spec:
     port: 8000
   auth:
     name: OAUTH
-  paths:
+  rules:
     - path: /.*
       scopes: ["read"]
       methods: ["GET"]
-  mutators: []
+      mutators: []
 ---
 apiVersion: gateway.kyma-project.io/v2alpha1
 kind: Gate
@@ -129,10 +129,10 @@ spec:
     port: 8000
   auth:
     name: OAUTH
-  paths:
+  rules:
     - path: /.*
       scopes: ["read"]
       methods: ["GET"]
-  mutators:
-    - handler: noop
-      config: {}
+      mutators:
+        - handler: noop
+          config: {}

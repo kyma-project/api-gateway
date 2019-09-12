@@ -33,13 +33,13 @@ func (o *oauth) Process(ctx context.Context, api *gatewayv2alpha1.Gate) error {
 	}
 
 	if oldVS != nil {
-		newVS := prepareVirtualService(api, oldVS, o.oathkeeperSvc, o.oathkeeperSvcPort, api.Spec.Paths[0].Path)
+		newVS := prepareVirtualService(api, oldVS, o.oathkeeperSvc, o.oathkeeperSvcPort, api.Spec.Rules[0].Path)
 		err = o.updateVirtualService(ctx, newVS)
 		if err != nil {
 			return err
 		}
 	} else {
-		vs := generateVirtualService(api, o.oathkeeperSvc, o.oathkeeperSvcPort, api.Spec.Paths[0].Path)
+		vs := generateVirtualService(api, o.oathkeeperSvc, o.oathkeeperSvcPort, api.Spec.Rules[0].Path)
 		err = o.createVirtualService(ctx, vs)
 		if err != nil {
 			return err
@@ -51,7 +51,7 @@ func (o *oauth) Process(ctx context.Context, api *gatewayv2alpha1.Gate) error {
 		return err
 	}
 
-	requiredScopesJSON, err := generateRequiredScopesJSON(&api.Spec.Paths[0])
+	requiredScopesJSON, err := generateRequiredScopesJSON(&api.Spec.Rules[0])
 	if err != nil {
 		return err
 	}
@@ -66,13 +66,13 @@ func (o *oauth) Process(ctx context.Context, api *gatewayv2alpha1.Gate) error {
 	}
 
 	if oldAR != nil {
-		newAR := prepareAccessRule(api, oldAR, api.Spec.Paths[0], []*rulev1alpha1.Authenticator{accessStrategy})
+		newAR := prepareAccessRule(api, oldAR, api.Spec.Rules[0], []*rulev1alpha1.Authenticator{accessStrategy})
 		err = o.updateAccessRule(ctx, newAR)
 		if err != nil {
 			return err
 		}
 	} else {
-		ar := generateAccessRule(api, api.Spec.Paths[0], []*rulev1alpha1.Authenticator{accessStrategy})
+		ar := generateAccessRule(api, api.Spec.Rules[0], []*rulev1alpha1.Authenticator{accessStrategy})
 		err = o.createAccessRule(ctx, ar)
 		if err != nil {
 			return err
@@ -141,8 +141,8 @@ func generateObjectMeta(api *gatewayv2alpha1.Gate) k8sMeta.ObjectMeta {
 		Get()
 }
 
-func generateRequiredScopesJSON(path *gatewayv2alpha1.Path) ([]byte, error) {
+func generateRequiredScopesJSON(rule *gatewayv2alpha1.Rule) ([]byte, error) {
 	requiredScopes := &internalTypes.OauthIntrospectionConfig{
-		RequiredScope: path.Scopes}
+		RequiredScope: rule.Scopes}
 	return json.Marshal(requiredScopes)
 }

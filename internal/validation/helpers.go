@@ -6,7 +6,7 @@ import (
 	gatewayv2alpha1 "github.com/kyma-incubator/api-gateway/api/v2alpha1"
 )
 
-func hasDuplicates(paths []gatewayv2alpha1.Path) bool {
+func hasDuplicates(paths []gatewayv2alpha1.Rule) bool {
 	encountered := map[string]bool{}
 	// Create a map of all unique elements.
 	for v := range paths {
