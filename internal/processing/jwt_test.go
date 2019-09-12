@@ -1,6 +1,7 @@
 package processing
 
 import (
+	"k8s.io/apimachinery/pkg/runtime"
 	"testing"
 
 	gatewayv2alpha1 "github.com/kyma-incubator/api-gateway/api/v2alpha1"
@@ -8,7 +9,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-	authenticationv1alpha1 "knative.dev/pkg/apis/istio/authentication/v1alpha1"
 )
 
 func getGate4JWT() *gatewayv2alpha1.Gate {
@@ -49,29 +49,6 @@ func getJWTConfig() *gatewayv2alpha1.JWTModeConfig {
 	return &gatewayv2alpha1.JWTModeConfig{Issuer: "http://dex.someDomain.local"}
 }
 
-func TestGenerateAuthenticationPolicy(t *testing.T) {
-	assert := assert.New(t)
-
-	jwtStrategy := &jwt{JWKSURI: "http://dex-service.namespace.svc.cluster.local:5556/keys"}
-	ap := jwtStrategy.generateAuthenticationPolicy(getGate4JWT(), getJWTConfig())
-
-	assert.Equal(ap.ObjectMeta.OwnerReferences[0].APIVersion, "gateway.kyma-project.io/v2alpha1")
-	assert.Equal(ap.ObjectMeta.OwnerReferences[0].Kind, "Gate")
-	assert.Equal(ap.ObjectMeta.OwnerReferences[0].Name, "test-gate")
-	assert.Equal(ap.ObjectMeta.OwnerReferences[0].UID, types.UID("eab0f1c8-c417-11e9-bf11-4ac644044351"))
-	assert.Equal(ap.ObjectMeta.Name, "test-gate-test-service")
-	assert.Equal(ap.ObjectMeta.Namespace, "test-namespace")
-
-	assert.Equal(len(ap.Spec.Targets), 1)
-	assert.Equal(ap.Spec.Targets[0].Name, "test-service")
-	assert.Equal(ap.Spec.PrincipalBinding, authenticationv1alpha1.PrincipalBindingUserOrigin)
-	assert.Equal(len(ap.Spec.Peers), 1)
-	assert.Equal(*ap.Spec.Peers[0].Mtls, authenticationv1alpha1.MutualTLS{})
-	assert.Equal(len(ap.Spec.Origins), 1)
-	assert.Equal(ap.Spec.Origins[0].Jwt.Issuer, "http://dex.someDomain.local")
-	assert.Equal(ap.Spec.Origins[0].Jwt.JwksURI, "http://dex-service.namespace.svc.cluster.local:5556/keys")
-}
-
 func TestOauthGenerateVirtualService4JWT(t *testing.T) {
 	assert := assert.New(t)
 
@@ -100,38 +77,28 @@ func TestOauthGenerateVirtualService4JWT(t *testing.T) {
 
 }
 
-func TestPrepareAuthenticationPolicy(t *testing.T) {
-	assert := assert.New(t)
-
-	jwtStrategy := &jwt{JWKSURI: "http://dex-service.namespace.svc.cluster.local:5556/keys"}
-	gate := getGate4JWT()
-	jwtConfig := getJWTConfig()
-	jwtConfig.Issuer = "http://someIssuer.someDomain.com"
-
-	currentAP := jwtStrategy.generateAuthenticationPolicy(gate, getJWTConfig())
-	currentAP.ObjectMeta.Generation = int64(42)
-
-	newAP := jwtStrategy.prepareAuthenticationPolicy(gate, jwtConfig, currentAP)
-
-	assert.Equal(newAP.ObjectMeta.Generation, int64(42))
-	assert.Equal(newAP.Spec.Origins[0].Jwt.Issuer, jwtConfig.Issuer)
-}
-
 func TestJwtPrepareAccessRule(t *testing.T) {
 	assert := assert.New(t)
 
-	jwtStrategy := &jwt{oathkeeperSvc: "test-oathkeeper", oathkeeperSvcPort: 8080}
 	gate := getGate()
 
-	jwtConfigOrig := getJWTConfig()
 	jwtConfig := []byte(`"required_scope":["write","read"],"trusted_issuers":["http://dex.kyma.local"]`)
 
-	oldAR := jwtStrategy.generateAccessRule(gate, jwtConfigOrig, jwtConfig)
+	accessStrategy := &rulev1alpha1.Authenticator{
+		Handler: &rulev1alpha1.Handler{
+			Name: "jwt",
+			Config: &runtime.RawExtension{
+				Raw: jwtConfig,
+			},
+		},
+	}
+
+	oldAR := generateAccessRule(gate, gate.Spec.Paths[0], []*rulev1alpha1.Authenticator{accessStrategy})
 
 	oldAR.ObjectMeta.Generation = int64(15)
 	oldAR.ObjectMeta.Name = "mst"
 
-	newAR := jwtStrategy.prepareAccessRule(gate, oldAR, jwtConfigOrig, jwtConfig)
+	newAR := prepareAccessRule(gate, oldAR, gate.Spec.Paths[0], []*rulev1alpha1.Authenticator{accessStrategy})
 
 	assert.Equal(newAR.ObjectMeta.Generation, int64(15))
 
@@ -162,12 +129,20 @@ func TestJwtPrepareAccessRule(t *testing.T) {
 func TestJwtGenerateAccessRule(t *testing.T) {
 	assert := assert.New(t)
 
-	jwtStrategy := &jwt{oathkeeperSvc: "test-oathkeeper", oathkeeperSvcPort: 8080}
 	gate := getGate()
 
 	jwtConfig := []byte(`"required_scope":["write","read"],"trusted_issuers":["http://dex.kyma.local"]`)
-	jwtConfigOrig := getJWTConfig()
-	ar := jwtStrategy.generateAccessRule(gate, jwtConfigOrig, jwtConfig)
+
+	accessStrategy := &rulev1alpha1.Authenticator{
+		Handler: &rulev1alpha1.Handler{
+			Name: "jwt",
+			Config: &runtime.RawExtension{
+				Raw: jwtConfig,
+			},
+		},
+	}
+
+	ar := generateAccessRule(gate, gate.Spec.Paths[0], []*rulev1alpha1.Authenticator{accessStrategy})
 
 	assert.Equal(len(ar.Spec.Authenticators), 1)
 	assert.NotEmpty(ar.Spec.Authenticators[0].Config)

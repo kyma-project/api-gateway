@@ -11,7 +11,6 @@ import (
 	accessRuleClient "github.com/kyma-incubator/api-gateway/internal/clients/ory"
 	internalTypes "github.com/kyma-incubator/api-gateway/internal/types/ory"
 	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
-	"github.com/pkg/errors"
 	apierrs "k8s.io/apimachinery/pkg/api/errors"
 	k8sMeta "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -57,14 +56,23 @@ func (o *oauth) Process(ctx context.Context, api *gatewayv2alpha1.Gate) error {
 		return err
 	}
 
+	accessStrategy := &rulev1alpha1.Authenticator{
+		Handler: &rulev1alpha1.Handler{
+			Name: "oauth2_introspection",
+			Config: &runtime.RawExtension{
+				Raw: requiredScopesJSON,
+			},
+		},
+	}
+
 	if oldAR != nil {
-		newAR := o.prepareAccessRule(api, oldAR, requiredScopesJSON)
+		newAR := prepareAccessRule(api, oldAR, api.Spec.Paths[0], []*rulev1alpha1.Authenticator{accessStrategy})
 		err = o.updateAccessRule(ctx, newAR)
 		if err != nil {
 			return err
 		}
 	} else {
-		ar := o.generateAccessRule(api, requiredScopesJSON)
+		ar := generateAccessRule(api, api.Spec.Paths[0], []*rulev1alpha1.Authenticator{accessStrategy})
 		err = o.createAccessRule(ctx, ar)
 		if err != nil {
 			return err
@@ -137,93 +145,4 @@ func generateRequiredScopesJSON(path *gatewayv2alpha1.Path) ([]byte, error) {
 	requiredScopes := &internalTypes.OauthIntrospectionConfig{
 		RequiredScope: path.Scopes}
 	return json.Marshal(requiredScopes)
-}
-
-func generateOauthConfig(api *gatewayv2alpha1.Gate) (*gatewayv2alpha1.OauthModeConfig, error) {
-	apiConfig := api.Spec.Auth.Config
-	var oauthConfig gatewayv2alpha1.OauthModeConfig
-
-	err := json.Unmarshal(apiConfig.Raw, &oauthConfig)
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-	return &oauthConfig, nil
-}
-
-func (o *oauth) generateAccessRule(api *gatewayv2alpha1.Gate, requiredScopes []byte) *rulev1alpha1.Rule {
-	objectMeta := generateObjectMeta(api)
-
-	rawConfig := &runtime.RawExtension{
-		Raw: requiredScopes,
-	}
-
-	spec := &rulev1alpha1.RuleSpec{
-		Upstream: &rulev1alpha1.Upstream{
-			URL: fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", *api.Spec.Service.Name, api.ObjectMeta.Namespace, int(*api.Spec.Service.Port)),
-		},
-		Match: &rulev1alpha1.Match{
-			Methods: api.Spec.Paths[0].Methods,
-			URL:     fmt.Sprintf("<http|https>://%s<%s>", *api.Spec.Service.Host, api.Spec.Paths[0].Path),
-		},
-		Authorizer: &rulev1alpha1.Authorizer{
-			Handler: &rulev1alpha1.Handler{
-				Name: "allow",
-			},
-		},
-		Mutators: api.Spec.Mutators,
-		Authenticators: []*rulev1alpha1.Authenticator{
-			{
-				Handler: &rulev1alpha1.Handler{
-					Name:   "oauth2_introspection",
-					Config: rawConfig,
-				},
-			},
-		},
-	}
-
-	rule := &rulev1alpha1.Rule{
-		ObjectMeta: objectMeta,
-		Spec:       *spec,
-	}
-
-	return rule
-}
-
-func (o *oauth) prepareAccessRule(api *gatewayv2alpha1.Gate, ar *rulev1alpha1.Rule, requiredScopes []byte) *rulev1alpha1.Rule {
-	ar.ObjectMeta.OwnerReferences = []k8sMeta.OwnerReference{generateOwnerRef(api)}
-	ar.ObjectMeta.Name = fmt.Sprintf("%s-%s", api.ObjectMeta.Name, *api.Spec.Service.Name)
-	ar.ObjectMeta.Namespace = api.ObjectMeta.Namespace
-
-	rawConfig := &runtime.RawExtension{
-		Raw: requiredScopes,
-	}
-
-	spec := &rulev1alpha1.RuleSpec{
-		Upstream: &rulev1alpha1.Upstream{
-			URL: fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", *api.Spec.Service.Name, api.ObjectMeta.Namespace, int(*api.Spec.Service.Port)),
-		},
-		Match: &rulev1alpha1.Match{
-			Methods: api.Spec.Paths[0].Methods,
-			URL:     fmt.Sprintf("<http|https>://%s<%s>", *api.Spec.Service.Host, api.Spec.Paths[0].Path),
-		},
-		Authorizer: &rulev1alpha1.Authorizer{
-			Handler: &rulev1alpha1.Handler{
-				Name: "allow",
-			},
-		},
-		Authenticators: []*rulev1alpha1.Authenticator{
-			{
-				Handler: &rulev1alpha1.Handler{
-					Name:   "oauth2_introspection",
-					Config: rawConfig,
-				},
-			},
-		},
-		Mutators: api.Spec.Mutators,
-	}
-
-	ar.Spec = *spec
-
-	return ar
-
 }

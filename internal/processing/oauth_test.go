@@ -1,6 +1,7 @@
 package processing
 
 import (
+	"k8s.io/apimachinery/pkg/runtime"
 	"testing"
 
 	gatewayv2alpha1 "github.com/kyma-incubator/api-gateway/api/v2alpha1"
@@ -79,11 +80,19 @@ func TestOauthPrepareVirtualService(t *testing.T) {
 func TestOauthGenerateAccessRule(t *testing.T) {
 	assert := assert.New(t)
 
-	oauthStrategy := &oauth{oathkeeperSvc: "test-oathkeeper"}
 	gate := getGate()
 	requiredScopes := []byte(`required_scopes: ["write", "read"]`)
 
-	ar := oauthStrategy.generateAccessRule(gate, requiredScopes)
+	accessStrategy := &rulev1alpha1.Authenticator{
+		Handler: &rulev1alpha1.Handler{
+			Name: "oauth2_introspection",
+			Config: &runtime.RawExtension{
+				Raw: requiredScopes,
+			},
+		},
+	}
+
+	ar := generateAccessRule(gate, gate.Spec.Paths[0], []*rulev1alpha1.Authenticator{accessStrategy})
 
 	assert.Equal(len(ar.Spec.Authenticators), 1)
 	assert.NotEmpty(ar.Spec.Authenticators[0].Config)
@@ -112,16 +121,24 @@ func TestOauthGenerateAccessRule(t *testing.T) {
 func TestOauthPrepareAccessRule(t *testing.T) {
 	assert := assert.New(t)
 
-	oauthStrategy := &oauth{oathkeeperSvc: "test-oathkeeper"}
 	gate := getGate()
 	requiredScopes := []byte(`required_scopes: ["write", "read"]`)
 
-	oldAR := oauthStrategy.generateAccessRule(gate, requiredScopes)
+	accessStrategy := &rulev1alpha1.Authenticator{
+		Handler: &rulev1alpha1.Handler{
+			Name: "oauth2_introspection",
+			Config: &runtime.RawExtension{
+				Raw: requiredScopes,
+			},
+		},
+	}
+
+	oldAR := generateAccessRule(gate, gate.Spec.Paths[0], []*rulev1alpha1.Authenticator{accessStrategy})
 
 	oldAR.ObjectMeta.Generation = int64(15)
 	oldAR.ObjectMeta.Name = "mst"
 
-	newAR := oauthStrategy.prepareAccessRule(gate, oldAR, requiredScopes)
+	newAR := prepareAccessRule(gate, oldAR, gate.Spec.Paths[0], []*rulev1alpha1.Authenticator{accessStrategy})
 
 	assert.Equal(newAR.ObjectMeta.Generation, int64(15))
 
