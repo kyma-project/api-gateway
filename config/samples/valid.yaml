@@ -2,15 +2,38 @@
 apiVersion: gateway.kyma-project.io/v2alpha1
 kind: Gate
 metadata:
-  name: passthrough
+  name: passthrough-unsecured
 spec:
   service:
     host: httpbin.kyma.local
     name: httpbin
     port: 8000
   auth:
-    name: PASSTHROUGH
+    name: ALLOW
   gateway: kyma-gateway.kyma-system.svc.cluster.local
+  paths:
+    - path: /.*
+      scopes: []
+      methods: ["GET"]
+  mutators: []
+---
+apiVersion: gateway.kyma-project.io/v2alpha1
+kind: Gate
+metadata:
+  name: passthrough-secured-mutators
+spec:
+  service:
+    host: httpbin.kyma.local
+    name: httpbin
+    port: 8000
+  auth:
+    name: ALLOW
+  gateway: kyma-gateway.kyma-system.svc.cluster.local
+  paths:
+    - path: /.*
+      methods: ["GET"]
+  mutators:
+    - handler: noop
 ---
 apiVersion: gateway.kyma-project.io/v2alpha1
 kind: Gate

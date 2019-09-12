@@ -41,9 +41,9 @@ func NewFactory(vsClient *istioClient.VirtualService, arClient *oryClient.Access
 //StrategyFor .
 func (f *Factory) StrategyFor(strategyName string) (Strategy, error) {
 	switch strategyName {
-	case gatewayv2alpha1.Passthrough:
-		f.Log.Info("PASSTHROUGH processing mode detected")
-		return &passthrough{vsClient: f.vsClient}, nil
+	case gatewayv2alpha1.Allow:
+		f.Log.Info("Allow processing mode detected")
+		return &allow{vsClient: f.vsClient, oathkeeperSvc: f.oathkeeperSvc, oathkeeperSvcPort: f.oathkeeperSvcPort}, nil
 	case gatewayv2alpha1.Jwt:
 		f.Log.Info("JWT processing mode detected")
 		return &jwt{vsClient: f.vsClient, arClient: f.arClient, JWKSURI: f.JWKSURI, oathkeeperSvc: f.oathkeeperSvc, oathkeeperSvcPort: f.oathkeeperSvcPort}, nil

@@ -398,7 +398,7 @@ spec:
                   enum:
                   - JWT
                   - OAUTH
-                  - PASSTHROUGH
+                  - ALLOW
                   type: string
               required:
               - name

@@ -29,9 +29,9 @@ func NewFactory(logger logr.Logger) *Factory {
 //StrategyFor .
 func (f *Factory) StrategyFor(strategyName string) (Strategy, error) {
 	switch strategyName {
-	case gatewayv2alpha1.Passthrough:
-		f.Log.Info("PASSTHROUGH validation mode detected")
-		return &passthrough{}, nil
+	case gatewayv2alpha1.Allow:
+		f.Log.Info("Allow validation mode detected")
+		return &allow{}, nil
 	case gatewayv2alpha1.Jwt:
 		f.Log.Info("JWT validation mode detected")
 		return &jwt{}, nil

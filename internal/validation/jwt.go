@@ -3,7 +3,6 @@ package validation
 import (
 	"encoding/json"
 	"fmt"
-	"net/url"
 
 	gatewayv2alpha1 "github.com/kyma-incubator/api-gateway/api/v2alpha1"
 	"github.com/pkg/errors"
@@ -25,19 +24,8 @@ func (j *jwt) Validate(gate *gatewayv2alpha1.Gate) error {
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	if !j.isValidURL(template.Issuer) {
+	if !isValidURL(template.Issuer) {
 		return fmt.Errorf("issuer field is empty or not a valid url")
 	}
 	return nil
-}
-
-func (j *jwt) isValidURL(toTest string) bool {
-	if len(toTest) == 0 {
-		return false
-	}
-	_, err := url.ParseRequestURI(toTest)
-	if err != nil {
-		return false
-	}
-	return true
 }

@@ -62,7 +62,7 @@ func fixAPI() *gatewayv2alpha1.Gate {
 	servicePort = 8000
 	host = "foo.bar"
 	isExernal = false
-	authStrategy = gatewayv2alpha1.Passthrough
+	authStrategy = gatewayv2alpha1.Allow
 	gateway = "some-gateway.some-namespace.foo"
 
 	return &gatewayv2alpha1.Gate{
@@ -82,6 +82,12 @@ func fixAPI() *gatewayv2alpha1.Gate {
 				Config: nil,
 			},
 			Gateway: &gateway,
+			Paths: []gatewayv2alpha1.Path{
+				{
+					Path:    "/.*",
+					Methods: []string{"GET"},
+				},
+			},
 		},
 	}
 }
