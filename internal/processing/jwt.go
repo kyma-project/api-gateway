@@ -177,53 +177,33 @@ func prepareAccessRule(api *gatewayv2alpha1.Gate, ar *rulev1alpha1.Rule, rule ga
 	ar.ObjectMeta.Name = fmt.Sprintf("%s-%s", api.ObjectMeta.Name, *api.Spec.Service.Name)
 	ar.ObjectMeta.Namespace = api.ObjectMeta.Namespace
 
-	spec := &rulev1alpha1.RuleSpec{
-		Upstream: &rulev1alpha1.Upstream{
-			URL: fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", *api.Spec.Service.Name, api.ObjectMeta.Namespace, int(*api.Spec.Service.Port)),
-		},
-		Match: &rulev1alpha1.Match{
-			Methods: rule.Methods,
-			URL:     fmt.Sprintf("<http|https>://%s<%s>", *api.Spec.Service.Host, rule.Path),
-		},
-		Authorizer: &rulev1alpha1.Authorizer{
-			Handler: &rulev1alpha1.Handler{
-				Name: "allow",
-			},
-		},
-		Authenticators: accessStrategies,
-		Mutators:       rule.Mutators,
-	}
-
-	ar.Spec = *spec
-
-	return ar
-
+	return builders.AccessRule().From(ar).
+		Spec(builders.AccessRuleSpec().From(generateAccessRuleSpec(api, rule, accessStrategies))).
+		Get()
 }
 
 func generateAccessRule(api *gatewayv2alpha1.Gate, rule gatewayv2alpha1.Rule, accessStrategies []*rulev1alpha1.Authenticator) *rulev1alpha1.Rule {
-	objectMeta := generateObjectMeta(api)
+	name := fmt.Sprintf("%s-%s", api.ObjectMeta.Name, *api.Spec.Service.Name)
+	namespace := api.ObjectMeta.Namespace
+	ownerRef := generateOwnerRef(api)
 
-	spec := &rulev1alpha1.RuleSpec{
-		Upstream: &rulev1alpha1.Upstream{
-			URL: fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", *api.Spec.Service.Name, api.ObjectMeta.Namespace, int(*api.Spec.Service.Port)),
-		},
-		Match: &rulev1alpha1.Match{
-			Methods: rule.Methods,
-			URL:     fmt.Sprintf("<http|https>://%s<%s>", *api.Spec.Service.Host, rule.Path),
-		},
-		Authorizer: &rulev1alpha1.Authorizer{
-			Handler: &rulev1alpha1.Handler{
-				Name: "allow",
-			},
-		},
-		Authenticators: accessStrategies,
-		Mutators:       rule.Mutators,
-	}
+	return builders.AccessRule().
+		Name(name).
+		Namespace(namespace).
+		Owner(builders.OwnerReference().From(&ownerRef)).
+		Spec(builders.AccessRuleSpec().From(generateAccessRuleSpec(api, rule, accessStrategies))).
+		Get()
+}
 
-	accessRule := &rulev1alpha1.Rule{
-		ObjectMeta: objectMeta,
-		Spec:       *spec,
-	}
-
-	return accessRule
+func generateAccessRuleSpec(api *gatewayv2alpha1.Gate, rule gatewayv2alpha1.Rule, accessStrategies []*rulev1alpha1.Authenticator) *rulev1alpha1.RuleSpec {
+	return builders.AccessRuleSpec().
+		Upstream(builders.Upstream().
+			URL(fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", *api.Spec.Service.Name, api.ObjectMeta.Namespace, int(*api.Spec.Service.Port)))).
+		Match(builders.Match().
+			URL(fmt.Sprintf("<http|https>://%s<%s>", *api.Spec.Service.Host, rule.Path)).
+			Methods(rule.Methods)).
+		Authorizer(builders.Authorizer().Handler(builders.Handler().
+			Name("allow"))).
+		Authenticators(builders.Authenticators().From(accessStrategies)).
+		Mutators(builders.Mutators().From(rule.Mutators)).Get()
 }
