@@ -103,7 +103,7 @@ type Service struct {
 
 //AuthStrategy .
 type AuthStrategy struct {
-	// +kubebuilder:validation:Enum=JWT;OAUTH;ALLOW
+	// Deprected, to be deleted
 	Name *string `json:"name"`
 	// Config configures the auth strategy. Configuration keys vary per strategy.
 	// +kubebuilder:validation:Type=object
@@ -119,6 +119,8 @@ type Rule struct {
 	Scopes []string `json:"scopes,omitempty"`
 	// Set of allowed HTTP methods
 	Methods []string `json:"methods,omitempty"`
+	// Set of access strategies for a single path
+	AccessStrategies []*rulev1alpha1.Authenticator `json:"accessStrategies,omitempty"`
 	// Mutators to be used
 	Mutators []*rulev1alpha1.Mutator `json:"mutators,omitempty"`
 }

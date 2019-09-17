@@ -8,6 +8,7 @@ import (
 	crClients "github.com/kyma-incubator/api-gateway/internal/clients"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -48,7 +49,7 @@ var _ = Describe("Controller", func() {
 				res := gatewayv2alpha1.Gate{}
 				err = ts.mgr.GetClient().Get(context.Background(), types.NamespacedName{Namespace: testAPI.Namespace, Name: testAPI.Name}, &res)
 				Expect(err).ToNot(HaveOccurred())
-				Expect(res.Status.AccessRuleStatus.Code).To(Equal(gatewayv2alpha1.StatusSkipped))
+				Expect(res.Status.AccessRuleStatus.Code).To(Equal(gatewayv2alpha1.StatusOK))
 				Expect(res.Status.PolicyServiceStatus.Code).To(Equal(gatewayv2alpha1.StatusSkipped))
 				Expect(res.Status.VirtualServiceStatus.Code).To(Equal(gatewayv2alpha1.StatusOK))
 				Expect(res.Status.GateStatus.Code).To(Equal(gatewayv2alpha1.StatusOK))
@@ -108,6 +109,8 @@ func getTestSuite(objects ...runtime.Object) *testSuite {
 	err := gatewayv2alpha1.AddToScheme(scheme.Scheme)
 	Expect(err).NotTo(HaveOccurred())
 	err = networkingv1alpha3.AddToScheme(scheme.Scheme)
+	Expect(err).NotTo(HaveOccurred())
+	err = rulev1alpha1.AddToScheme(scheme.Scheme)
 	Expect(err).NotTo(HaveOccurred())
 
 	return &testSuite{

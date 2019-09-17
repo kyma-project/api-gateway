@@ -4,93 +4,80 @@ kind: Gate
 metadata:
   name: passthrough-bad-host
 spec:
-  gateway: some-gateway.some-namespace
   service:
     host: https://imgur.com
-    name: imgur
-    port: 443
-  auth: 
-    name: PASSTHROUGH
----
-apiVersion: gateway.kyma-project.io/v2alpha1
-kind: Gate
-metadata:
-  name: passthrough-bad-gateway
-spec:
-  gateway: short-name-gateway
-  service:
-    host: imgur.com
-    name: imgur
-    port: 443
-  auth: 
-    name: PASSTHROUGH
----
-apiVersion: gateway.kyma-project.io/v2alpha1
-kind: Gate
-metadata:
-  name: oauth-no-paths
-spec:
-  gateway: kyma-gateway.kyma-system.svc.cluster.local
-  service:
-    host: httpbin.kyma.local
     name: httpbin
     port: 8000
   auth:
-    name: OAUTH
+    name: ALLOW
+  gateway: kyma-gateway.kyma-system.svc.cluster.local
+  rules:
+    - path: /.*
+      scopes: []
+      methods: ["GET"]
+      accessStrategy:
+        - handler: noop
+      mutators: []
+---
+apiVersion: gateway.kyma-project.io/v2alpha1
+kind: Gate
+metadata:
+  name: passthrough-bad-host
+spec:
+  service:
+    host: https://imgur.com
+    name: httpbin
+    port: 8000
+  auth:
+    name: ALLOW
+  gateway: short-name-gateway
+  rules:
+    - path: /.*
+      scopes: []
+      methods: ["GET"]
+      accessStrategy:
+        - handler: noop
+      mutators: []
+---
+apiVersion: gateway.kyma-project.io/v2alpha1
+kind: Gate
+metadata:
+  name: gate-no-rules
+spec:
+  service:
+    host: https://imgur.com
+    name: httpbin
+    port: 8000
+  auth:
+    name: ALLOW
+  gateway: kyma-gateway.kyma-system.svc.cluster.local
   rules: []
 ---
 apiVersion: gateway.kyma-project.io/v2alpha1
 kind: Gate
 metadata:
-  name: oauth-multiple-paths
+  name: gate-multiple-hosts
 spec:
-  gateway: kyma-gateway.kyma-system.svc.cluster.local
   service:
-    host: httpbin.kyma.local
+    host: https://imgur.com
     name: httpbin
     port: 8000
   auth:
-    name: OAUTH
-  rules:
-    - path: /foo
-      scopes: ["read"]
-      methods: ["GET"]
-    - path: /bar
-      scopes: ["read"]
-      methods: ["GET"]
----
-apiVersion: gateway.kyma-project.io/v2alpha1
-kind: Gate
-metadata:
-  name: jwt-all-bad-issuer
-spec:
-  gateway: kyma-gateway.kyma-system.svc.cluster.local
-  service:
-    name: foo-service
-    port: 8080
-    host: foo.bar
-  auth: 
-    name: JWT
-    config:
-      issuer: not-a-valid-url
-      jwks: []
+    name: ALLOW
+  gateway: short-name-gateway
   rules:
     - path: /.*
-      scopes: ["foo", "bar"]
+      scopes: []
       methods: ["GET"]
----
-apiVersion: gateway.kyma-project.io/v2alpha1
-kind: Gate
-metadata:
-  name: invalid-auth
-spec:
-  service:
-    host: httpbin.kyma.local
-    name: httpbin
-    port: 8000
-  auth:
-    name: NOT_VALID
-  gateway: kyma-gateway.kyma-system.svc.cluster.local
+      accessStrategy:
+        - handler: noop
+      mutators: []
+    - path: /foo
+      scopes: []
+      methods: ["GET"]
+      accessStrategy:
+        - handler: noop
+      mutators: []
 ---
 apiVersion: gateway.kyma-project.io/v2alpha1
 kind: Gate

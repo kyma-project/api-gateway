@@ -395,10 +395,7 @@ spec:
                     keys vary per strategy.
                   type: object
                 name:
-                  enum:
-                  - JWT
-                  - OAUTH
-                  - ALLOW
+                  description: Deprected, to be deleted
                   type: string
               required:
               - name
@@ -411,6 +408,21 @@ spec:
               description: Paths represents collection of Path to secure
               items:
                 properties:
+                  accessStrategies:
+                    description: Set of access strategies for a single path
+                    items:
+                      properties:
+                        config:
+                          description: Config configures the handler. Configuration
+                            keys vary per handler.
+                          type: object
+                        handler:
+                          description: Name is the name of a handler
+                          type: string
+                      required:
+                      - handler
+                      type: object
+                    type: array
                   methods:
                     description: Set of allowed HTTP methods
                     items:

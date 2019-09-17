@@ -24,7 +24,6 @@ import (
 	"github.com/go-logr/logr"
 	gatewayv2alpha1 "github.com/kyma-incubator/api-gateway/api/v2alpha1"
 	"github.com/kyma-incubator/api-gateway/internal/clients"
-	"github.com/kyma-incubator/api-gateway/internal/validation"
 	apierrs "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -43,7 +42,6 @@ type APIReconciler struct {
 }
 
 //Reconcile .
-// +kubebuilder:rbac:groups=authentication.istio.io,resources=policies,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=gateway.kyma-project.io,resources=gates,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=gateway.kyma-project.io,resources=gates/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=networking.istio.io,resources=virtualservices,verbs=get;list;watch;create;update;patch;delete
@@ -81,37 +79,13 @@ func (r *APIReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 
 	if api.Generation != api.Status.ObservedGeneration {
 		r.Log.Info("Api processing")
-
-		validationStrategy, err := validation.NewFactory(r.Log).StrategyFor(*api.Spec.Auth.Name)
+		err = processing.NewFactory(r.ExtCRClients.ForVirtualService(), r.ExtCRClients.ForAccessRule(), r.Log, r.OathkeeperSvc, r.OathkeeperSvcPort, r.JWKSURI).Run(ctx, api)
 		if err != nil {
-			_, updateStatErr := r.updateStatus(ctx, api, generateErrorStatus(err), virtualServiceStatus, policyStatus, accessRuleStatus)
-			if updateStatErr != nil {
-				return reconcile.Result{Requeue: true}, err
+			virtualServiceStatus = &gatewayv2alpha1.GatewayResourceStatus{
+				Code:        gatewayv2alpha1.StatusError,
+				Description: err.Error(),
 			}
-			return ctrl.Result{}, err
-		}
-
-		err = validationStrategy.Validate(api)
-		if err != nil {
-			_, updateStatErr := r.updateStatus(ctx, api, generateErrorStatus(err), virtualServiceStatus, policyStatus, accessRuleStatus)
-			if updateStatErr != nil {
-				return reconcile.Result{Requeue: true}, err
-			}
-			return ctrl.Result{}, err
-		}
-
-		processingStrategy, err := processing.NewFactory(r.ExtCRClients.ForVirtualService(), r.ExtCRClients.ForAccessRule(), r.Log, r.OathkeeperSvc, r.OathkeeperSvcPort, r.JWKSURI).StrategyFor(*api.Spec.Auth.Name)
-		if err != nil {
-			_, updateStatErr := r.updateStatus(ctx, api, generateErrorStatus(err), virtualServiceStatus, policyStatus, accessRuleStatus)
-			if updateStatErr != nil {
-				return reconcile.Result{Requeue: true}, err
-			}
-			return ctrl.Result{}, err
-		}
-
-		err = processingStrategy.Process(ctx, api)
-		if err != nil {
-			virtualServiceStatus := &gatewayv2alpha1.GatewayResourceStatus{
+			accessRuleStatus = &gatewayv2alpha1.GatewayResourceStatus{
 				Code:        gatewayv2alpha1.StatusError,
 				Description: err.Error(),
 			}
@@ -123,7 +97,11 @@ func (r *APIReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 			return ctrl.Result{}, err
 		}
 
-		virtualServiceStatus := &gatewayv2alpha1.GatewayResourceStatus{
+		virtualServiceStatus = &gatewayv2alpha1.GatewayResourceStatus{
+			Code: gatewayv2alpha1.StatusOK,
+		}
+
+		accessRuleStatus = &gatewayv2alpha1.GatewayResourceStatus{
 			Code: gatewayv2alpha1.StatusOK,
 		}
 

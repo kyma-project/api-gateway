@@ -62,13 +62,22 @@ var _ = Describe("Gate Controller", func() {
 			Context("secured with Oauth2 introspection,", func() {
 				Context("in a happy-path scenario", func() {
 					It("should create a VirtualService and an AccessRule", func() {
-						configJSON := fmt.Sprintf(`{}`)
+						configJSON := fmt.Sprintf(`{
+							"required_scope": [%s]
+						}`, toCSVList(testScopes))
+
+						oauthConfig := &rulev1alpha1.Handler{
+							Name: "oauth2_introspection",
+							Config: &runtime.RawExtension{
+								Raw: []byte(configJSON),
+							},
+						}
 
 						testName := generateTestName(testNameBase, testIDLength)
 
 						var authStrategyName = gatewayv2alpha1.Oauth
 
-						instance := testInstance(authStrategyName, configJSON, testName, testNamespace, testServiceName, testServiceHost, testServicePort, testPath, testMethods, testScopes, testMutators)
+						instance := testInstance(authStrategyName, testName, testNamespace, testServiceName, testServiceHost, oauthConfig, testServicePort, testPath, testMethods, testScopes, testMutators)
 
 						err := c.Create(context.TODO(), instance)
 						if apierrors.IsInvalid(err) {
@@ -187,14 +196,20 @@ var _ = Describe("Gate Controller", func() {
 					It("should create a VirtualService and an AccessRule", func() {
 						configJSON := fmt.Sprintf(`
 							{
-								"issuer": "%s",
-								"jwks": []
-							}`, testIssuer)
-						fmt.Printf("---\n%s\n---", configJSON)
+								"trusted_issuers": ["%s"],
+								"jwks": [],
+								"required_scope": [%s]
+						}`, testIssuer, toCSVList(testScopes))
+						jwtConfig := &rulev1alpha1.Handler{
+							Name: "jwt",
+							Config: &runtime.RawExtension{
+								Raw: []byte(configJSON),
+							},
+						}
 						testName := generateTestName(testNameBase, testIDLength)
 
 						var authStrategyName = gatewayv2alpha1.Jwt
-						instance := testInstance(authStrategyName, configJSON, testName, testNamespace, testServiceName, testServiceHost, testServicePort, "/.*", []string{"GET"}, testScopes, testMutators)
+						instance := testInstance(authStrategyName, testName, testNamespace, testServiceName, testServiceHost, jwtConfig, testServicePort, "/.*", []string{"GET"}, testScopes, testMutators)
 
 						err := c.Create(context.TODO(), instance)
 						if apierrors.IsInvalid(err) {
@@ -289,9 +304,10 @@ var _ = Describe("Gate Controller", func() {
 						Expect(rl.Spec.Authenticators[0].Handler.Config).NotTo(BeNil())
 						//Authenticators[0].Handler.Config validation
 						handlerConfig := map[string]interface{}{}
+
 						err = json.Unmarshal(rl.Spec.Authenticators[0].Config.Raw, &handlerConfig)
 						Expect(err).NotTo(HaveOccurred())
-						Expect(handlerConfig).To(HaveLen(2))
+						Expect(handlerConfig).To(HaveLen(3))
 						Expect(asStringSlice(handlerConfig["required_scope"])).To(BeEquivalentTo(testScopes))
 						Expect(asStringSlice(handlerConfig["trusted_issuers"])).To(BeEquivalentTo([]string{testIssuer}))
 						//Spec.Authorizer
@@ -340,11 +356,7 @@ func toCSVList(input []string) string {
 	return res
 }
 
-func testInstance(authStrategyName, configJSON, name, namespace, serviceName, serviceHost string, servicePort uint32, path string, methods []string, scopes []string, mutators []*rulev1alpha1.Mutator) *gatewayv2alpha1.Gate {
-	rawCfg := &runtime.RawExtension{
-		Raw: []byte(configJSON),
-	}
-
+func testInstance(authStrategyName, name, namespace, serviceName, serviceHost string, config *rulev1alpha1.Handler, servicePort uint32, path string, methods []string, scopes []string, mutators []*rulev1alpha1.Mutator) *gatewayv2alpha1.Gate {
 	var gateway = testGatewayURL
 
 	return &gatewayv2alpha1.Gate{
@@ -360,8 +372,8 @@ func testInstance(authStrategyName, configJSON, name, namespace, serviceName, se
 				Port: &servicePort,
 			},
 			Auth: &gatewayv2alpha1.AuthStrategy{
-				Name:   &authStrategyName,
-				Config: rawCfg,
+				Name:   &config.Name,
+				Config: config.Config,
 			},
 			Rules: []gatewayv2alpha1.Rule{
 				{
@@ -369,6 +381,11 @@ func testInstance(authStrategyName, configJSON, name, namespace, serviceName, se
 					Scopes:   scopes,
 					Methods:  methods,
 					Mutators: mutators,
+					AccessStrategies: []*rulev1alpha1.Authenticator{
+						{
+							Handler: config,
+						},
+					},
 				},
 			},
 		},

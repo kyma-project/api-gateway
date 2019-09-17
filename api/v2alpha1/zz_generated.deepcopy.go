@@ -316,6 +316,17 @@ func (in *Rule) DeepCopyInto(out *Rule) {
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
+	if in.AccessStrategies != nil {
+		in, out := &in.AccessStrategies, &out.AccessStrategies
+		*out = make([]*v1alpha1.Authenticator, len(*in))
+		for i := range *in {
+			if (*in)[i] != nil {
+				in, out := &(*in)[i], &(*out)[i]
+				*out = new(v1alpha1.Authenticator)
+				(*in).DeepCopyInto(*out)
+			}
+		}
+	}
 	if in.Mutators != nil {
 		in, out := &in.Mutators, &out.Mutators
 		*out = make([]*v1alpha1.Mutator, len(*in))

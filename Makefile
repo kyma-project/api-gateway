@@ -61,7 +61,6 @@ clean:
 install: manifests
 	kustomize build config/crd | kubectl apply -f -
 	@if ! kubectl get crd virtualservices.networking.istio.io > /dev/null 2>&1 ; then kubectl apply -f hack/networking.istio.io_virtualservice.yaml; fi;
-	@if ! kubectl get crd policies.authentication.istio.io > /dev/null 2>&1 ; then kubectl apply -f hack/authentication.istio.io_policies.yaml; fi;
 	@if ! kubectl get crd rules.oathkeeper.ory.sh > /dev/null 2>&1 ; then kubectl apply -f hack/oathkeeper.ory.sh_rules.yaml; fi;
 
 # Generate static installation files

@@ -15,6 +15,8 @@ spec:
     - path: /.*
       scopes: []
       methods: ["GET"]
+      accessStrategy:
+        - handler: noop
       mutators: []
 ---
 apiVersion: gateway.kyma-project.io/v2alpha1
@@ -32,6 +34,8 @@ spec:
   rules:
     - path: /.*
       methods: ["GET"]
+      accessStrategy:
+        - handler: noop
       mutators:
         - handler: noop
 ---
@@ -52,9 +56,13 @@ spec:
       jwks: []
   rules:
     - path: /.*
-      scopes: []
       methods: ["GET"]
       mutators: []
+      accessStrategy:
+        - handler: jwt
+          config:
+            trusted_issuers: ["http://dex.kyma.local"]
+            required_scope: []
 ---
 apiVersion: gateway.kyma-project.io/v2alpha1
 kind: Gate
@@ -73,10 +81,14 @@ spec:
       jwks: []
   rules:
     - path: /.*
-      scopes: ["foo", "bar"]
       methods: ["GET"]
       mutators:
         - handler: noop
+      accessStrategy:
+        - handler: jwt
+          config:
+            trusted_issuers: ["http://dex.kyma.local"]
+            required_scope: []
 ---
 apiVersion: gateway.kyma-project.io/v2alpha1
 kind: Gate
@@ -95,9 +107,13 @@ spec:
       jwks: []
   rules:
     - path: /.*
-      scopes: ["foo", "bar"]
       methods: ["GET"]
       mutators: []
+      accessStrategy:
+        - handler: jwt
+          config:
+            trusted_issuers: ["http://dex.kyma.local"]
+            required_scope: ["foo", "bar"]
 ---
 apiVersion: gateway.kyma-project.io/v2alpha1
 kind: Gate
@@ -116,6 +132,10 @@ spec:
       scopes: ["read"]
       methods: ["GET"]
       mutators: []
+      accessStrategy:
+        - handler: oauth2_introspection
+          config:
+            required_scope: ["foo", "bar"]
 ---
 apiVersion: gateway.kyma-project.io/v2alpha1
 kind: Gate
@@ -131,8 +151,11 @@ spec:
     name: OAUTH
   rules:
     - path: /.*
-      scopes: ["read"]
       methods: ["GET"]
       mutators:
         - handler: noop
           config: {}
+      accessStrategy:
+        - handler: oauth2_introspection
+          config:
+            required_scope: []
