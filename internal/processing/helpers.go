@@ -64,8 +64,13 @@ func generateVirtualService(api *gatewayv2alpha1.Gate, destinationHost string, d
 }
 
 func isSecured(rule gatewayv2alpha1.Rule) bool {
-	if len(rule.Scopes) > 0 || len(rule.Mutators) > 0 {
+	if len(rule.Mutators) > 0 {
 		return true
+	}
+	for _, strat := range rule.AccessStrategies {
+		if strat.Name != "noop" {
+			return true
+		}
 	}
 	return false
 }

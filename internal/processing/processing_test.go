@@ -55,9 +55,6 @@ func getGateFor(strategies []*rulev1alpha1.Authenticator, mutators []*rulev1alph
 					AccessStrategies: strategies,
 				},
 			},
-			Auth: &gatewayv2alpha1.AuthStrategy{
-				Name: &authStrategy,
-			},
 		},
 	}
 }

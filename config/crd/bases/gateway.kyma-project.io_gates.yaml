@@ -387,19 +387,6 @@ spec:
           type: object
         spec:
           properties:
-            auth:
-              description: Auth strategy to be used
-              properties:
-                config:
-                  description: Config configures the auth strategy. Configuration
-                    keys vary per strategy.
-                  type: object
-                name:
-                  description: Deprected, to be deleted
-                  type: string
-              required:
-              - name
-              type: object
             gateway:
               description: Gateway to be used
               pattern: ^(?:[_a-z0-9](?:[_a-z0-9-]+[a-z0-9])?\.)+(?:[a-z](?:[a-z0-9-]+[a-z0-9])?)?$
@@ -422,6 +409,7 @@ spec:
                       required:
                       - handler
                       type: object
+                    minItems: 1
                     type: array
                   methods:
                     description: Set of allowed HTTP methods
@@ -447,14 +435,11 @@ spec:
                     description: Path to be exposed
                     pattern: ^/([0-9a-zA-Z./*]+)
                     type: string
-                  scopes:
-                    description: Set of allowed scopes
-                    items:
-                      type: string
-                    type: array
                 required:
                 - path
+                - accessStrategies
                 type: object
+              minItems: 1
               type: array
             service:
               description: Definition of the service to expose
@@ -485,7 +470,6 @@ spec:
               type: object
           required:
           - service
-          - auth
           - gateway
           type: object
         status:
@@ -510,13 +494,6 @@ spec:
             observedGeneration:
               format: int64
               type: integer
-            policyStatus:
-              properties:
-                code:
-                  type: string
-                desc:
-                  type: string
-              type: object
             virtualServiceStatus:
               properties:
                 code:

@@ -15,8 +15,5 @@ func (a *allow) Validate(gate *gatewayv2alpha1.Gate) error {
 	if hasDuplicates(gate.Spec.Rules) {
 		return fmt.Errorf("supplied config is invalid: multiple definitions of the same path detected")
 	}
-	if len(gate.Spec.Rules[0].Scopes) > 0 {
-		return fmt.Errorf("allow mode does not support scopes")
-	}
 	return nil
 }

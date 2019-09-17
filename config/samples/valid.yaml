@@ -8,14 +8,11 @@ spec:
     host: httpbin.kyma.local
     name: httpbin
     port: 8000
-  auth:
-    name: ALLOW
   gateway: kyma-gateway.kyma-system.svc.cluster.local
   rules:
     - path: /.*
-      scopes: []
       methods: ["GET"]
-      accessStrategy:
+      accessStrategies:
         - handler: noop
       mutators: []
 ---
@@ -28,13 +25,11 @@ spec:
     host: httpbin.kyma.local
     name: httpbin
     port: 8000
-  auth:
-    name: ALLOW
   gateway: kyma-gateway.kyma-system.svc.cluster.local
   rules:
     - path: /.*
       methods: ["GET"]
-      accessStrategy:
+      accessStrategies:
         - handler: noop
       mutators:
         - handler: noop
@@ -49,16 +44,11 @@ spec:
     name: foo-service
     port: 8080
     host: foo.bar
-  auth:
-    name: JWT
-    config:
-      issuer: http://dex.kyma.local
-      jwks: []
   rules:
     - path: /.*
       methods: ["GET"]
       mutators: []
-      accessStrategy:
+      accessStrategies:
         - handler: jwt
           config:
             trusted_issuers: ["http://dex.kyma.local"]
@@ -74,17 +64,12 @@ spec:
     name: foo-service
     port: 8080
     host: foo.bar
-  auth:
-    name: JWT
-    config:
-      issuer: http://dex.kyma.local
-      jwks: []
   rules:
     - path: /.*
       methods: ["GET"]
       mutators:
         - handler: noop
-      accessStrategy:
+      accessStrategies:
         - handler: jwt
           config:
             trusted_issuers: ["http://dex.kyma.local"]
@@ -100,16 +85,11 @@ spec:
     name: foo-service
     port: 8080
     host: foo.bar
-  auth: 
-    name: JWT
-    config:
-      issuer: http://dex.kyma.local
-      jwks: []
   rules:
     - path: /.*
       methods: ["GET"]
       mutators: []
-      accessStrategy:
+      accessStrategies:
         - handler: jwt
           config:
             trusted_issuers: ["http://dex.kyma.local"]
@@ -125,14 +105,11 @@ spec:
     host: httpbin.kyma.local
     name: httpbin
     port: 8000
-  auth:
-    name: OAUTH
   rules:
     - path: /.*
-      scopes: ["read"]
       methods: ["GET"]
       mutators: []
-      accessStrategy:
+      accessStrategies:
         - handler: oauth2_introspection
           config:
             required_scope: ["foo", "bar"]
@@ -147,15 +124,13 @@ spec:
     host: httpbin.kyma.local
     name: httpbin
     port: 8000
-  auth:
-    name: OAUTH
   rules:
     - path: /.*
       methods: ["GET"]
       mutators:
         - handler: noop
           config: {}
-      accessStrategy:
+      accessStrategies:
         - handler: oauth2_introspection
           config:
             required_scope: []

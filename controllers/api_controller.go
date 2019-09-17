@@ -67,10 +67,6 @@ func (r *APIReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		Code:        gatewayv2alpha1.StatusSkipped,
 		Description: "Skipped setting Istio Virtual Service",
 	}
-	policyStatus := &gatewayv2alpha1.GatewayResourceStatus{
-		Code:        gatewayv2alpha1.StatusSkipped,
-		Description: "Skipped setting Istio Policy",
-	}
 
 	accessRuleStatus := &gatewayv2alpha1.GatewayResourceStatus{
 		Code:        gatewayv2alpha1.StatusSkipped,
@@ -90,7 +86,7 @@ func (r *APIReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 				Description: err.Error(),
 			}
 
-			_, updateStatErr := r.updateStatus(ctx, api, generateErrorStatus(err), virtualServiceStatus, policyStatus, accessRuleStatus)
+			_, updateStatErr := r.updateStatus(ctx, api, generateErrorStatus(err), virtualServiceStatus, accessRuleStatus)
 			if updateStatErr != nil {
 				return reconcile.Result{Requeue: true}, err
 			}
@@ -105,7 +101,7 @@ func (r *APIReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 			Code: gatewayv2alpha1.StatusOK,
 		}
 
-		_, err = r.updateStatus(ctx, api, APIStatus, virtualServiceStatus, policyStatus, accessRuleStatus)
+		_, err = r.updateStatus(ctx, api, APIStatus, virtualServiceStatus, accessRuleStatus)
 
 		if err != nil {
 			return reconcile.Result{Requeue: true}, err
@@ -122,12 +118,11 @@ func (r *APIReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
-func (r *APIReconciler) updateStatus(ctx context.Context, api *gatewayv2alpha1.Gate, APIStatus, virtualServiceStatus, policyStatus, accessRuleStatus *gatewayv2alpha1.GatewayResourceStatus) (*gatewayv2alpha1.Gate, error) {
+func (r *APIReconciler) updateStatus(ctx context.Context, api *gatewayv2alpha1.Gate, APIStatus, virtualServiceStatus, accessRuleStatus *gatewayv2alpha1.GatewayResourceStatus) (*gatewayv2alpha1.Gate, error) {
 	api.Status.ObservedGeneration = api.Generation
 	api.Status.LastProcessedTime = &v1.Time{Time: time.Now()}
 	api.Status.GateStatus = APIStatus
 	api.Status.VirtualServiceStatus = virtualServiceStatus
-	api.Status.PolicyServiceStatus = policyStatus
 	api.Status.AccessRuleStatus = accessRuleStatus
 
 	err := r.Status().Update(ctx, api)

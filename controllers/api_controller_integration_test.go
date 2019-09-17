@@ -74,10 +74,7 @@ var _ = Describe("Gate Controller", func() {
 						}
 
 						testName := generateTestName(testNameBase, testIDLength)
-
-						var authStrategyName = gatewayv2alpha1.Oauth
-
-						instance := testInstance(authStrategyName, testName, testNamespace, testServiceName, testServiceHost, oauthConfig, testServicePort, testPath, testMethods, testScopes, testMutators)
+						instance := testInstance(testName, testNamespace, testServiceName, testServiceHost, oauthConfig, testServicePort, testPath, testMethods, testScopes, testMutators)
 
 						err := c.Create(context.TODO(), instance)
 						if apierrors.IsInvalid(err) {
@@ -207,9 +204,7 @@ var _ = Describe("Gate Controller", func() {
 							},
 						}
 						testName := generateTestName(testNameBase, testIDLength)
-
-						var authStrategyName = gatewayv2alpha1.Jwt
-						instance := testInstance(authStrategyName, testName, testNamespace, testServiceName, testServiceHost, jwtConfig, testServicePort, "/.*", []string{"GET"}, testScopes, testMutators)
+						instance := testInstance(testName, testNamespace, testServiceName, testServiceHost, jwtConfig, testServicePort, "/.*", []string{"GET"}, testScopes, testMutators)
 
 						err := c.Create(context.TODO(), instance)
 						if apierrors.IsInvalid(err) {
@@ -356,7 +351,7 @@ func toCSVList(input []string) string {
 	return res
 }
 
-func testInstance(authStrategyName, name, namespace, serviceName, serviceHost string, config *rulev1alpha1.Handler, servicePort uint32, path string, methods []string, scopes []string, mutators []*rulev1alpha1.Mutator) *gatewayv2alpha1.Gate {
+func testInstance(name, namespace, serviceName, serviceHost string, config *rulev1alpha1.Handler, servicePort uint32, path string, methods []string, scopes []string, mutators []*rulev1alpha1.Mutator) *gatewayv2alpha1.Gate {
 	var gateway = testGatewayURL
 
 	return &gatewayv2alpha1.Gate{
@@ -371,14 +366,9 @@ func testInstance(authStrategyName, name, namespace, serviceName, serviceHost st
 				Name: &serviceName,
 				Port: &servicePort,
 			},
-			Auth: &gatewayv2alpha1.AuthStrategy{
-				Name:   &config.Name,
-				Config: config.Config,
-			},
 			Rules: []gatewayv2alpha1.Rule{
 				{
 					Path:     path,
-					Scopes:   scopes,
 					Methods:  methods,
 					Mutators: mutators,
 					AccessStrategies: []*rulev1alpha1.Authenticator{

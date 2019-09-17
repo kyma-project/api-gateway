@@ -50,7 +50,6 @@ var _ = Describe("Controller", func() {
 				err = ts.mgr.GetClient().Get(context.Background(), types.NamespacedName{Namespace: testAPI.Namespace, Name: testAPI.Name}, &res)
 				Expect(err).ToNot(HaveOccurred())
 				Expect(res.Status.AccessRuleStatus.Code).To(Equal(gatewayv2alpha1.StatusOK))
-				Expect(res.Status.PolicyServiceStatus.Code).To(Equal(gatewayv2alpha1.StatusSkipped))
 				Expect(res.Status.VirtualServiceStatus.Code).To(Equal(gatewayv2alpha1.StatusOK))
 				Expect(res.Status.GateStatus.Code).To(Equal(gatewayv2alpha1.StatusOK))
 			})
@@ -77,10 +76,6 @@ func fixAPI() *gatewayv2alpha1.Gate {
 				Port:       &servicePort,
 				Host:       &host,
 				IsExternal: &isExernal,
-			},
-			Auth: &gatewayv2alpha1.AuthStrategy{
-				Name:   &authStrategy,
-				Config: nil,
 			},
 			Gateway: &gateway,
 			Rules: []gatewayv2alpha1.Rule{

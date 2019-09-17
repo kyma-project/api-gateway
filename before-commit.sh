@@ -46,16 +46,18 @@ fi
 ##
 #  GO LINT
 ##
-
+echo "? golint"
 go install golang.org/x/lint/golint
-golint ./...
+golint ./... | grep -v internal/builders
+echo -e "${GREEN}√ golint${NC}"
+
 
 ##
 # GO FMT
 ##
-
+echo "? go fmt"
 go fmt ./...
-
+echo -e "${GREEN}√ go fmt${NC}"
 ##
 # GO VET
 ##

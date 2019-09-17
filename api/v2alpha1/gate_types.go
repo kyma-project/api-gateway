@@ -18,7 +18,6 @@ package v2alpha1
 import (
 	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 )
 
 //StatusCode .
@@ -43,12 +42,11 @@ const (
 type GateSpec struct {
 	// Definition of the service to expose
 	Service *Service `json:"service"`
-	// Auth strategy to be used
-	Auth *AuthStrategy `json:"auth"`
 	// Gateway to be used
 	// +kubebuilder:validation:Pattern=^(?:[_a-z0-9](?:[_a-z0-9-]+[a-z0-9])?\.)+(?:[a-z](?:[a-z0-9-]+[a-z0-9])?)?$
 	Gateway *string `json:"gateway"`
 	//Paths represents collection of Path to secure
+	// +kubebuilder:validation:MinItems=1
 	Rules []Rule `json:"rules,omitempty"`
 }
 
@@ -58,7 +56,6 @@ type GateStatus struct {
 	ObservedGeneration   int64                  `json:"observedGeneration,omitempty"`
 	GateStatus           *GatewayResourceStatus `json:"GateStatus,omitempty"`
 	VirtualServiceStatus *GatewayResourceStatus `json:"virtualServiceStatus,omitempty"`
-	PolicyServiceStatus  *GatewayResourceStatus `json:"policyStatus,omitempty"`
 	AccessRuleStatus     *GatewayResourceStatus `json:"accessRuleStatus,omitempty"`
 }
 
@@ -101,27 +98,18 @@ type Service struct {
 	IsExternal *bool `json:"external,omitempty"`
 }
 
-//AuthStrategy .
-type AuthStrategy struct {
-	// Deprected, to be deleted
-	Name *string `json:"name"`
-	// Config configures the auth strategy. Configuration keys vary per strategy.
-	// +kubebuilder:validation:Type=object
-	Config *runtime.RawExtension `json:"config,omitempty"`
-}
-
 //Rule .
 type Rule struct {
 	// Path to be exposed
 	// +kubebuilder:validation:Pattern=^/([0-9a-zA-Z./*]+)
 	Path string `json:"path"`
-	// Set of allowed scopes
-	Scopes []string `json:"scopes,omitempty"`
 	// Set of allowed HTTP methods
 	Methods []string `json:"methods,omitempty"`
 	// Set of access strategies for a single path
-	AccessStrategies []*rulev1alpha1.Authenticator `json:"accessStrategies,omitempty"`
+	// +kubebuilder:validation:MinItems=1
+	AccessStrategies []*rulev1alpha1.Authenticator `json:"accessStrategies"`
 	// Mutators to be used
+	// +optional
 	Mutators []*rulev1alpha1.Mutator `json:"mutators,omitempty"`
 }
 
