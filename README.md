@@ -2,7 +2,7 @@
 
 ## Overview
 
-The API Gateway Controller manages Istio authentication Policies, VirtualServices and Oathkeeper Rule. The controller allows to expose services using instances of the `gate.gateway.kyma-project.io` custom resource (CR).
+The API Gateway Controller manages Istio VirtualServices and Oathkeeper Rule. The controller allows to expose services using instances of the `gate.gateway.kyma-project.io` custom resource (CR).
 
 ## Prerequisites
 
@@ -33,10 +33,10 @@ The API Gateway Controller manages Istio authentication Policies, VirtualService
 
 ## Custom Resource
 
-The `api.gateway.kyma-project.io` CustomResourceDefinition (CRD) is a detailed description of the kind of data and the format the API Controller listens for. To get the up-to-date CRD and show
+The `gate.gateway.kyma-project.io` CustomResourceDefinition (CRD) is a detailed description of the kind of data and the format the API Gateway Controller listens for. To get the up-to-date CRD and show
 the output in the `yaml` format, run this command:
 ```
-kubectl get crd apis.gateway.kyma-project.io -o yaml
+kubectl get crd gate.gateway.kyma-project.io -o yaml
 ```
 
 ### Sample custom resource
@@ -73,20 +73,31 @@ This table lists all the possible parameters of a given resource together with t
 | **metadata.name** |    **YES**   | Specifies the name of the exposed API |
 | **spec.gateway** | **YES** | Specifies Istio Gateway. |
 | **spec.service.name**, **spec.service.port** | **YES** | Specifies the name and the communication port of the exposed service. |
-| **spec.host** | **YES** | Specifies the service's external inbound communication address. |
+| **spec.service.host** | **YES** | Specifies the service's external inbound communication address. |
+| **spec.rules** | **YES** | Specifies array of rules. |
 | **spec.rules.path** | **YES** | Specifies the path of the exposed service. |
-| **spec.rules.methods** | **YES** | Specifies the list of HTTP request methods available for **spec.rules.path**. |
-| **spec.rules.mutators** | **YES** | Specifies Oathkeeper mutators. |
-| **spec.rules.accessStrategy** | **YES** | Specifies Oathkeeper authenticators. |
+| **spec.rules.methods** | **NO** | Specifies the list of HTTP request methods available for **spec.rules.path**. |
+| **spec.rules.mutators** | **NO** | Specifies array of [Oathkeeper mutators](https://www.ory.sh/docs/oathkeeper/pipeline/mutator). |
+| **spec.rules.accessStrategies** | **YES** | Specifies array of [Oathkeeper authenticators](https://www.ory.sh/docs/oathkeeper/pipeline/authn). |
 
 ## Additional information
 
-When you fetch an existing Gate CR, the system adds the **status** section which describes the status of the Virtual Service and the AccessRule created for this CR. This table lists the fields of the **status** section.
+When you fetch an existing Gate CR, the system adds the **status** section which describes the status of the Virtual Service and the Rule created for this CR. This table lists the fields of the **status** section.
 
 | Field   |  Description |
 |----------|-------------|
 | **status.GateStatus** | Status code describing the Gate CR. |
 | **status.virtualServiceStatus.code** | Status code describing the Virtual Service. |
 | **status.virtualService.desc** | Current state of the Virtual Service. |
-| **status.accessRuleStatus.code** | Status code describing the AccessRule. |
-| **status.accessRuleStatus.desc** | Current state of the Authentication Policy. |
+| **status.accessRuleStatus.code** | Status code describing the Oathkeeper Rule. |
+| **status.accessRuleStatus.desc** | Current state of the Oathkeeper Rule. |
+
+### Status codes
+
+These are the status codes used to describe the Virtual Services and Rules:
+
+| Code   |  Description |
+|----------|-------------|
+| **OK** | Resource created. |
+| **SKIPPED** | Skipped creating a resource. |
+| **ERROR** | Resource not created. |
