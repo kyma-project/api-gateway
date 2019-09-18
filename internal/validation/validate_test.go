@@ -5,11 +5,9 @@ import (
 
 	"testing"
 
-	"github.com/kyma-incubator/api-gateway/api/v2alpha1"
-	gatewayv2alpha1 "github.com/kyma-incubator/api-gateway/api/v2alpha1"
+	gatewayv1alpha1 "github.com/kyma-incubator/api-gateway/api/v1alpha1"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/ory/oathkeeper-maester/api/v1alpha1"
 	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
@@ -23,14 +21,14 @@ var _ = Describe("Validate function", func() {
 
 	It("Should fail for empty rules", func() {
 		//given
-		input := &gatewayv2alpha1.Gate{
-			Spec: gatewayv2alpha1.GateSpec{
+		input := &gatewayv1alpha1.APIRule{
+			Spec: gatewayv1alpha1.APIRuleSpec{
 				Rules: nil,
 			},
 		}
 
 		//when
-		problems := (&Gate{}).Validate(input)
+		problems := (&APIRule{}).Validate(input)
 
 		//then
 		Expect(problems).To(HaveLen(1))
@@ -40,29 +38,29 @@ var _ = Describe("Validate function", func() {
 
 	It("Should detect several problems", func() {
 		//given
-		input := &gatewayv2alpha1.Gate{
-			Spec: gatewayv2alpha1.GateSpec{
-				Rules: []gatewayv2alpha1.Rule{
-					gatewayv2alpha1.Rule{
+		input := &gatewayv1alpha1.APIRule{
+			Spec: gatewayv1alpha1.APIRuleSpec{
+				Rules: []gatewayv1alpha1.Rule{
+					{
 						Path: "/abc",
 						AccessStrategies: []*rulev1alpha1.Authenticator{
 							toAuthenticator("noop", simpleJWTConfig()),
 							toAuthenticator("jwt", emptyConfig()),
 						},
 					},
-					gatewayv2alpha1.Rule{
+					{
 						Path: "/abc",
 						AccessStrategies: []*rulev1alpha1.Authenticator{
 							toAuthenticator("anonymous", simpleJWTConfig()),
 						},
 					},
-					gatewayv2alpha1.Rule{
+					{
 						Path: "/def",
 						AccessStrategies: []*rulev1alpha1.Authenticator{
 							toAuthenticator("non-existing", nil),
 						},
 					},
-					gatewayv2alpha1.Rule{
+					{
 						Path:             "/ghi",
 						AccessStrategies: []*rulev1alpha1.Authenticator{},
 					},
@@ -70,7 +68,7 @@ var _ = Describe("Validate function", func() {
 			},
 		}
 		//when
-		problems := (&Gate{}).Validate(input)
+		problems := (&APIRule{}).Validate(input)
 
 		//then
 		Expect(problems).To(HaveLen(6))
@@ -95,23 +93,23 @@ var _ = Describe("Validate function", func() {
 
 	It("Should succedd for valid input", func() {
 		//given
-		input := &gatewayv2alpha1.Gate{
-			Spec: gatewayv2alpha1.GateSpec{
-				Rules: []gatewayv2alpha1.Rule{
-					gatewayv2alpha1.Rule{
+		input := &gatewayv1alpha1.APIRule{
+			Spec: gatewayv1alpha1.APIRuleSpec{
+				Rules: []gatewayv1alpha1.Rule{
+					{
 						Path: "/abc",
 						AccessStrategies: []*rulev1alpha1.Authenticator{
 							toAuthenticator("jwt", simpleJWTConfig()),
 							toAuthenticator("noop", emptyConfig()),
 						},
 					},
-					gatewayv2alpha1.Rule{
+					{
 						Path: "/bcd",
 						AccessStrategies: []*rulev1alpha1.Authenticator{
 							toAuthenticator("anonymous", emptyConfig()),
 						},
 					},
-					gatewayv2alpha1.Rule{
+					{
 						Path: "/def",
 						AccessStrategies: []*rulev1alpha1.Authenticator{
 							toAuthenticator("allow", nil),
@@ -121,7 +119,7 @@ var _ = Describe("Validate function", func() {
 			},
 		}
 		//when
-		problems := (&Gate{}).Validate(input)
+		problems := (&APIRule{}).Validate(input)
 
 		//then
 		Expect(problems).To(HaveLen(0))
@@ -134,7 +132,7 @@ var _ = Describe("Validator for", func() {
 
 		It("Should fail with non-empty config", func() {
 			//given
-			handler := &v1alpha1.Handler{Name: "noop", Config: simpleJWTConfig("http://atgo.org")}
+			handler := &rulev1alpha1.Handler{Name: "noop", Config: simpleJWTConfig("http://atgo.org")}
 
 			//when
 			problems := (&noConfigAccStrValidator{}).Validate("some.attribute", handler)
@@ -147,7 +145,7 @@ var _ = Describe("Validator for", func() {
 
 		It("Should succeed with empty config: {}", func() {
 			//given
-			handler := &v1alpha1.Handler{Name: "noop", Config: emptyConfig()}
+			handler := &rulev1alpha1.Handler{Name: "noop", Config: emptyConfig()}
 
 			//when
 			problems := (&noConfigAccStrValidator{}).Validate("some.attribute", handler)
@@ -158,7 +156,7 @@ var _ = Describe("Validator for", func() {
 
 		It("Should succeed with null config", func() {
 			//given
-			handler := &v1alpha1.Handler{Name: "noop", Config: nil}
+			handler := &rulev1alpha1.Handler{Name: "noop", Config: nil}
 
 			//when
 			problems := (&noConfigAccStrValidator{}).Validate("some.attribute", handler)
@@ -172,7 +170,7 @@ var _ = Describe("Validator for", func() {
 
 		It("Should fail with empty config", func() {
 			//given
-			handler := &v1alpha1.Handler{Name: "jwt", Config: emptyConfig()}
+			handler := &rulev1alpha1.Handler{Name: "jwt", Config: emptyConfig()}
 
 			//when
 			problems := (&jwtAccStrValidator{}).Validate("some.attribute", handler)
@@ -185,7 +183,7 @@ var _ = Describe("Validator for", func() {
 
 		It("Should fail for config with invalid trustedIssuers", func() {
 			//given
-			handler := &v1alpha1.Handler{Name: "jwt", Config: simpleJWTConfig("a t g o")}
+			handler := &rulev1alpha1.Handler{Name: "jwt", Config: simpleJWTConfig("a t g o")}
 
 			//when
 			problems := (&jwtAccStrValidator{}).Validate("some.attribute", handler)
@@ -198,7 +196,7 @@ var _ = Describe("Validator for", func() {
 
 		It("Should fail for invalid JSON", func() {
 			//given
-			handler := &v1alpha1.Handler{Name: "jwt", Config: &runtime.RawExtension{Raw: []byte("/abc]")}}
+			handler := &rulev1alpha1.Handler{Name: "jwt", Config: &runtime.RawExtension{Raw: []byte("/abc]")}}
 
 			//when
 			problems := (&jwtAccStrValidator{}).Validate("some.attribute", handler)
@@ -211,7 +209,7 @@ var _ = Describe("Validator for", func() {
 
 		It("Should succeed with valid config", func() {
 			//given
-			handler := &v1alpha1.Handler{Name: "jwt", Config: simpleJWTConfig()}
+			handler := &rulev1alpha1.Handler{Name: "jwt", Config: simpleJWTConfig()}
 
 			//when
 			problems := (&jwtAccStrValidator{}).Validate("some.attribute", handler)
@@ -224,18 +222,18 @@ var _ = Describe("Validator for", func() {
 
 func emptyConfig() *runtime.RawExtension {
 	return getRawConfig(
-		&v2alpha1.JWTAccStrConfig{})
+		&gatewayv1alpha1.JWTAccStrConfig{})
 }
 
 func simpleJWTConfig(trustedIssuers ...string) *runtime.RawExtension {
 	return getRawConfig(
-		&v2alpha1.JWTAccStrConfig{
+		&gatewayv1alpha1.JWTAccStrConfig{
 			TrustedIssuers: trustedIssuers,
 			RequiredScopes: []string{"atgo"},
 		})
 }
 
-func getRawConfig(config *v2alpha1.JWTAccStrConfig) *runtime.RawExtension {
+func getRawConfig(config *gatewayv1alpha1.JWTAccStrConfig) *runtime.RawExtension {
 	bytes, err := json.Marshal(config)
 	Expect(err).To(BeNil())
 	return &runtime.RawExtension{
@@ -245,7 +243,7 @@ func getRawConfig(config *v2alpha1.JWTAccStrConfig) *runtime.RawExtension {
 
 func toAuthenticator(name string, config *runtime.RawExtension) *rulev1alpha1.Authenticator {
 	return &rulev1alpha1.Authenticator{
-		Handler: &v1alpha1.Handler{
+		Handler: &rulev1alpha1.Handler{
 			Name:   name,
 			Config: config,
 		},

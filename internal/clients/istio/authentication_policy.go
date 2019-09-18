@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	gatewayv2alpha1 "github.com/kyma-incubator/api-gateway/api/v2alpha1"
+	gatewayv1alpha1 "github.com/kyma-incubator/api-gateway/api/v1alpha1"
 	authenticationv1alpha1 "knative.dev/pkg/apis/istio/authentication/v1alpha1"
 	crClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -26,8 +26,8 @@ func (c *AuthenticationPolicy) Create(ctx context.Context, ap *authenticationv1a
 	return c.crClient.Create(ctx, ap)
 }
 
-//GetForAPI method gets Istio Policy for given Gate
-func (c *AuthenticationPolicy) GetForAPI(ctx context.Context, api *gatewayv2alpha1.Gate) (*authenticationv1alpha1.Policy, error) {
+//GetForAPI method gets Istio Policy for given APIRule
+func (c *AuthenticationPolicy) GetForAPI(ctx context.Context, api *gatewayv1alpha1.APIRule) (*authenticationv1alpha1.Policy, error) {
 	authenticationPolicyName := fmt.Sprintf("%s-%s", api.ObjectMeta.Name, *api.Spec.Service.Name)
 	return c.Get(ctx, authenticationPolicyName, api.GetNamespace())
 }

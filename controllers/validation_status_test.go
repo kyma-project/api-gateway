@@ -3,7 +3,7 @@ package controllers
 import (
 	"strings"
 
-	gatewayv2alpha1 "github.com/kyma-incubator/api-gateway/api/v2alpha1"
+	gatewayv1alpha1 "github.com/kyma-incubator/api-gateway/api/v1alpha1"
 	"github.com/kyma-incubator/api-gateway/internal/validation"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -23,7 +23,7 @@ var _ = Describe("Controller", func() {
 			st := generateValidationStatus(failures)
 
 			Expect(st).NotTo(BeNil())
-			Expect(st.Code).To(Equal(gatewayv2alpha1.StatusError))
+			Expect(st.Code).To(Equal(gatewayv1alpha1.StatusError))
 			Expect(st.Description).To(HavePrefix("Validation error: "))
 			failureLines := strings.Split(st.Description, "\n")
 			Expect(failureLines).To(HaveLen(1))
@@ -35,7 +35,7 @@ var _ = Describe("Controller", func() {
 			st := generateValidationStatus(failures)
 
 			Expect(st).NotTo(BeNil())
-			Expect(st.Code).To(Equal(gatewayv2alpha1.StatusError))
+			Expect(st.Code).To(Equal(gatewayv1alpha1.StatusError))
 			failureLines := strings.Split(st.Description, "\n")
 			Expect(failureLines).To(HaveLen(4))
 			Expect(failureLines[0]).To(Equal("Multiple validation errors: "))
@@ -49,7 +49,7 @@ var _ = Describe("Controller", func() {
 			st := generateValidationStatus(failures)
 
 			Expect(st).NotTo(BeNil())
-			Expect(st.Code).To(Equal(gatewayv2alpha1.StatusError))
+			Expect(st.Code).To(Equal(gatewayv1alpha1.StatusError))
 			failureLines := strings.Split(st.Description, "\n")
 			Expect(failureLines).To(HaveLen(5))
 			Expect(failureLines[0]).To(Equal("Multiple validation errors: "))

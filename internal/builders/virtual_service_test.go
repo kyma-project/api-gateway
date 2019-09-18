@@ -23,8 +23,8 @@ var _ = Describe("Builder for", func() {
 			namespace := "testNs"
 
 			refName := "refName"
-			refVersion := "v2alpha1"
-			refKind := "Gate"
+			refVersion := "v1alpha1"
+			refKind := "APIRule"
 			var refUID k8sTypes.UID = "123"
 
 			vs := VirtualService().Name(name).Namespace(namespace).

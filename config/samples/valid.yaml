@@ -1,6 +1,6 @@
 ---
-apiVersion: gateway.kyma-project.io/v2alpha1
-kind: Gate
+apiVersion: gateway.kyma-project.io/v1alpha1
+kind: APIRule
 metadata:
   name: passthrough-unsecured
 spec:
@@ -16,8 +16,8 @@ spec:
         - handler: noop
       mutators: []
 ---
-apiVersion: gateway.kyma-project.io/v2alpha1
-kind: Gate
+apiVersion: gateway.kyma-project.io/v1alpha1
+kind: APIRule
 metadata:
   name: passthrough-secured-mutators
 spec:
@@ -34,8 +34,8 @@ spec:
       mutators:
         - handler: noop
 ---
-apiVersion: gateway.kyma-project.io/v2alpha1
-kind: Gate
+apiVersion: gateway.kyma-project.io/v1alpha1
+kind: APIRule
 metadata:
   name: jwt-all-no-scopes
 spec:
@@ -54,8 +54,8 @@ spec:
             trusted_issuers: ["http://dex.kyma.local"]
             required_scope: []
 ---
-apiVersion: gateway.kyma-project.io/v2alpha1
-kind: Gate
+apiVersion: gateway.kyma-project.io/v1alpha1
+kind: APIRule
 metadata:
   name: jwt-all-mutators
 spec:
@@ -75,8 +75,8 @@ spec:
             trusted_issuers: ["http://dex.kyma.local"]
             required_scope: []
 ---
-apiVersion: gateway.kyma-project.io/v2alpha1
-kind: Gate
+apiVersion: gateway.kyma-project.io/v1alpha1
+kind: APIRule
 metadata:
   name: jwt-all-with-scopes
 spec:
@@ -95,8 +95,8 @@ spec:
             trusted_issuers: ["http://dex.kyma.local"]
             required_scope: ["foo", "bar"]
 ---
-apiVersion: gateway.kyma-project.io/v2alpha1
-kind: Gate
+apiVersion: gateway.kyma-project.io/v1alpha1
+kind: APIRule
 metadata:
   name: oauth
 spec:
@@ -114,8 +114,8 @@ spec:
           config:
             required_scope: ["foo", "bar"]
 ---
-apiVersion: gateway.kyma-project.io/v2alpha1
-kind: Gate
+apiVersion: gateway.kyma-project.io/v1alpha1
+kind: APIRule
 metadata:
   name: oauth-mutators
 spec:

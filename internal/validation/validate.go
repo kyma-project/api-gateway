@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"fmt"
 
-	gatewayv2alpha1 "github.com/kyma-incubator/api-gateway/api/v2alpha1"
+	gatewayv1alpha1 "github.com/kyma-incubator/api-gateway/api/v1alpha1"
 	"github.com/ory/oathkeeper-maester/api/v1alpha1"
 	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -33,20 +33,20 @@ func configNotEmpty(config *runtime.RawExtension) bool {
 	return !configEmpty(config)
 }
 
-//Gate is used to validate github.com/kyma-incubator/api-gateway/api/v2alpha1/Gate instances
-type Gate struct {
+//APIRule is used to validate github.com/kyma-incubator/api-gateway/api/v1alpha1/APIRule instances
+type APIRule struct {
 }
 
-//Validate performs Gate validation
-func (v *Gate) Validate(gate *gatewayv2alpha1.Gate) []Failure {
+//Validate performs APIRule validation
+func (v *APIRule) Validate(api *gatewayv1alpha1.APIRule) []Failure {
 
 	res := []Failure{}
 	//Validate service
-	res = append(res, v.validateService(".spec.service", gate.Spec.Service)...)
+	res = append(res, v.validateService(".spec.service", api.Spec.Service)...)
 	//Validate Gateway
-	res = append(res, v.validateGateway(".spec.gateway", gate.Spec.Gateway)...)
+	res = append(res, v.validateGateway(".spec.gateway", api.Spec.Gateway)...)
 	//Validate Rules
-	res = append(res, v.validateRules(".spec.rules", gate.Spec.Rules)...)
+	res = append(res, v.validateRules(".spec.rules", api.Spec.Rules)...)
 
 	return res
 }
@@ -57,15 +57,15 @@ type Failure struct {
 	Message       string
 }
 
-func (v *Gate) validateService(attributePath string, service *gatewayv2alpha1.Service) []Failure {
+func (v *APIRule) validateService(attributePath string, service *gatewayv1alpha1.Service) []Failure {
 	return nil
 }
 
-func (v *Gate) validateGateway(attributePath string, gateway *string) []Failure {
+func (v *APIRule) validateGateway(attributePath string, gateway *string) []Failure {
 	return nil
 }
 
-func (v *Gate) validateRules(attributePath string, rules []gatewayv2alpha1.Rule) []Failure {
+func (v *APIRule) validateRules(attributePath string, rules []gatewayv1alpha1.Rule) []Failure {
 	var problems []Failure
 
 	if len(rules) == 0 {
@@ -86,11 +86,11 @@ func (v *Gate) validateRules(attributePath string, rules []gatewayv2alpha1.Rule)
 	return problems
 }
 
-func (v *Gate) validateMethods(attributePath string, methods []string) []Failure {
+func (v *APIRule) validateMethods(attributePath string, methods []string) []Failure {
 	return nil
 }
 
-func (v *Gate) validateAccessStrategies(attributePath string, accessStrategies []*rulev1alpha1.Authenticator) []Failure {
+func (v *APIRule) validateAccessStrategies(attributePath string, accessStrategies []*rulev1alpha1.Authenticator) []Failure {
 	var problems []Failure
 
 	if len(accessStrategies) == 0 {
@@ -106,7 +106,7 @@ func (v *Gate) validateAccessStrategies(attributePath string, accessStrategies [
 	return problems
 }
 
-func (v *Gate) validateAccessStrategy(attributePath string, accessStrategy *rulev1alpha1.Authenticator) []Failure {
+func (v *APIRule) validateAccessStrategy(attributePath string, accessStrategy *rulev1alpha1.Authenticator) []Failure {
 	var problems []Failure
 
 	var vld accessStrategyValidator

@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	gatewayv2alpha1 "github.com/kyma-incubator/api-gateway/api/v2alpha1"
+	gatewayv1alpha1 "github.com/kyma-incubator/api-gateway/api/v1alpha1"
 	networkingv1alpha3 "knative.dev/pkg/apis/istio/v1alpha3"
 	crClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -26,8 +26,8 @@ func (c *VirtualService) Create(ctx context.Context, vs *networkingv1alpha3.Virt
 	return c.crClient.Create(ctx, vs)
 }
 
-//GetForAPI method gets Istio VirtualService for given Gate
-func (c *VirtualService) GetForAPI(ctx context.Context, api *gatewayv2alpha1.Gate) (*networkingv1alpha3.VirtualService, error) {
+//GetForAPI method gets Istio VirtualService for given APIRule
+func (c *VirtualService) GetForAPI(ctx context.Context, api *gatewayv1alpha1.APIRule) (*networkingv1alpha3.VirtualService, error) {
 	virtualServiceName := fmt.Sprintf("%s-%s", api.ObjectMeta.Name, *api.Spec.Service.Name)
 	return c.Get(ctx, virtualServiceName, api.GetNamespace())
 }

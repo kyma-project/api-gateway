@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/go-logr/logr"
-	gatewayv2alpha1 "github.com/kyma-incubator/api-gateway/api/v2alpha1"
+	gatewayv1alpha1 "github.com/kyma-incubator/api-gateway/api/v1alpha1"
 	istioClient "github.com/kyma-incubator/api-gateway/internal/clients/istio"
 	oryClient "github.com/kyma-incubator/api-gateway/internal/clients/ory"
 	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
@@ -36,7 +36,7 @@ func NewFactory(vsClient *istioClient.VirtualService, arClient *oryClient.Access
 }
 
 // Run ?
-func (f *Factory) Run(ctx context.Context, api *gatewayv2alpha1.Gate) error {
+func (f *Factory) Run(ctx context.Context, api *gatewayv1alpha1.APIRule) error {
 	var destinationHost string
 	var destinationPort uint32
 	var err error
@@ -63,7 +63,7 @@ func (f *Factory) Run(ctx context.Context, api *gatewayv2alpha1.Gate) error {
 	return nil
 }
 
-func (f *Factory) getVirtualService(ctx context.Context, api *gatewayv2alpha1.Gate) (*networkingv1alpha3.VirtualService, error) {
+func (f *Factory) getVirtualService(ctx context.Context, api *gatewayv1alpha1.APIRule) (*networkingv1alpha3.VirtualService, error) {
 	vs, err := f.vsClient.GetForAPI(ctx, api)
 	if err != nil {
 		if apierrs.IsNotFound(err) {
@@ -91,7 +91,7 @@ func (f *Factory) updateAccessRule(ctx context.Context, ar *rulev1alpha1.Rule) e
 	return f.arClient.Update(ctx, ar)
 }
 
-func (f *Factory) getAccessRule(ctx context.Context, api *gatewayv2alpha1.Gate) (*rulev1alpha1.Rule, error) {
+func (f *Factory) getAccessRule(ctx context.Context, api *gatewayv1alpha1.APIRule) (*rulev1alpha1.Rule, error) {
 	ar, err := f.arClient.GetForAPI(ctx, api)
 	if err != nil {
 		if apierrs.IsNotFound(err) {
@@ -103,7 +103,7 @@ func (f *Factory) getAccessRule(ctx context.Context, api *gatewayv2alpha1.Gate) 
 	return ar, nil
 }
 
-func (f *Factory) processVS(ctx context.Context, api *gatewayv2alpha1.Gate, destinationHost string, destinationPort uint32) error {
+func (f *Factory) processVS(ctx context.Context, api *gatewayv1alpha1.APIRule, destinationHost string, destinationPort uint32) error {
 	oldVS, err := f.getVirtualService(ctx, api)
 	if err != nil {
 		return err
@@ -117,7 +117,7 @@ func (f *Factory) processVS(ctx context.Context, api *gatewayv2alpha1.Gate, dest
 	return f.createVirtualService(ctx, vs)
 }
 
-func (f *Factory) processAR(ctx context.Context, api *gatewayv2alpha1.Gate, config []*rulev1alpha1.Authenticator) error {
+func (f *Factory) processAR(ctx context.Context, api *gatewayv1alpha1.APIRule, config []*rulev1alpha1.Authenticator) error {
 	oldAR, err := f.getAccessRule(ctx, api)
 	if err != nil {
 		return err

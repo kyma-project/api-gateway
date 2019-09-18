@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	gatewayv2alpha1 "github.com/kyma-incubator/api-gateway/api/v2alpha1"
+	gatewayv1alpha1 "github.com/kyma-incubator/api-gateway/api/v1alpha1"
 	"github.com/ory/oathkeeper-maester/api/v1alpha1"
 )
 
@@ -14,7 +14,7 @@ type jwtAccStrValidator struct{}
 func (j *jwtAccStrValidator) Validate(attributePath string, handler *v1alpha1.Handler) []Failure {
 	var problems []Failure
 
-	var template gatewayv2alpha1.JWTAccStrConfig
+	var template gatewayv1alpha1.JWTAccStrConfig
 
 	if !configNotEmpty(handler.Config) {
 		problems = append(problems, Failure{AttributePath: attributePath + ".config", Message: "supplied config cannot be empty"})

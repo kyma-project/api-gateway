@@ -2,18 +2,18 @@ apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
 metadata:
   creationTimestamp: null
-  name: gates.gateway.kyma-project.io
+  name: apirules.gateway.kyma-project.io
 spec:
   group: gateway.kyma-project.io
   names:
-    kind: Gate
-    plural: gates
+    kind: APIRule
+    plural: apirules
   scope: ""
   subresources:
     status: {}
   validation:
     openAPIV3Schema:
-      description: Gate is the Schema for the apis Gate
+      description: APIRule is the Schema for the apis ApiRule
       properties:
         apiVersion:
           description: 'APIVersion defines the versioned schema of this representation
@@ -472,7 +472,7 @@ spec:
           type: object
         status:
           properties:
-            GateStatus:
+            APIRuleStatus:
               properties:
                 code:
                   type: string
@@ -502,7 +502,7 @@ spec:
           type: object
       type: object
   versions:
-  - name: v2alpha1
+  - name: v1alpha1
     served: true
     storage: true
 status:

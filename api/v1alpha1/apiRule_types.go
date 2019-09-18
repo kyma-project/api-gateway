@@ -13,7 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package v2alpha1
+package v1alpha1
 
 import (
 	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
@@ -32,8 +32,8 @@ const (
 	StatusError StatusCode = "ERROR"
 )
 
-// GateSpec defines the desired state of Gate
-type GateSpec struct {
+// APIRuleSpec defines the desired state of ApiRule
+type APIRuleSpec struct {
 	// Definition of the service to expose
 	Service *Service `json:"service"`
 	// Gateway to be used
@@ -44,34 +44,34 @@ type GateSpec struct {
 	Rules []Rule `json:"rules,omitempty"`
 }
 
-// GateStatus defines the observed state of Gate
-type GateStatus struct {
+// APIRuleStatus defines the observed state of ApiRule
+type APIRuleStatus struct {
 	LastProcessedTime    *metav1.Time           `json:"lastProcessedTime,omitempty"`
 	ObservedGeneration   int64                  `json:"observedGeneration,omitempty"`
-	GateStatus           *GatewayResourceStatus `json:"GateStatus,omitempty"`
-	VirtualServiceStatus *GatewayResourceStatus `json:"virtualServiceStatus,omitempty"`
-	AccessRuleStatus     *GatewayResourceStatus `json:"accessRuleStatus,omitempty"`
+	APIRuleStatus        *APIRuleResourceStatus `json:"APIRuleStatus,omitempty"`
+	VirtualServiceStatus *APIRuleResourceStatus `json:"virtualServiceStatus,omitempty"`
+	AccessRuleStatus     *APIRuleResourceStatus `json:"accessRuleStatus,omitempty"`
 }
 
-//Gate is the Schema for the apis Gate
+//APIRule is the Schema for the apis ApiRule
 // +kubebuilder:storageversion
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
-type Gate struct {
+type APIRule struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   GateSpec   `json:"spec,omitempty"`
-	Status GateStatus `json:"status,omitempty"`
+	Spec   APIRuleSpec   `json:"spec,omitempty"`
+	Status APIRuleStatus `json:"status,omitempty"`
 }
 
 // +kubebuilder:object:root=true
 
-// GateList contains a list of Gate
-type GateList struct {
+// APIRuleList contains a list of ApiRule
+type APIRuleList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []Gate `json:"items"`
+	Items           []APIRule `json:"items"`
 }
 
 //Service .
@@ -107,12 +107,12 @@ type Rule struct {
 	Mutators []*rulev1alpha1.Mutator `json:"mutators,omitempty"`
 }
 
-//GatewayResourceStatus .
-type GatewayResourceStatus struct {
+//APIRuleResourceStatus .
+type APIRuleResourceStatus struct {
 	Code        StatusCode `json:"code,omitempty"`
 	Description string     `json:"desc,omitempty"`
 }
 
 func init() {
-	SchemeBuilder.Register(&Gate{}, &GateList{})
+	SchemeBuilder.Register(&APIRule{}, &APIRuleList{})
 }

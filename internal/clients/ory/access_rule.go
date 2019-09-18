@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	gatewayv2alpha1 "github.com/kyma-incubator/api-gateway/api/v2alpha1"
+	gatewayv1alpha1 "github.com/kyma-incubator/api-gateway/api/v1alpha1"
 	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
 	crClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -26,8 +26,8 @@ func (c *AccessRule) Create(ctx context.Context, ar *rulev1alpha1.Rule) error {
 	return c.crClient.Create(ctx, ar)
 }
 
-//GetForAPI method gets Oathkeeper Access Rule for given Gate
-func (c *AccessRule) GetForAPI(ctx context.Context, api *gatewayv2alpha1.Gate) (*rulev1alpha1.Rule, error) {
+//GetForAPI method gets Oathkeeper Access Rule for given APIRule
+func (c *AccessRule) GetForAPI(ctx context.Context, api *gatewayv1alpha1.APIRule) (*rulev1alpha1.Rule, error) {
 	accessRuleName := fmt.Sprintf("%s-%s", api.ObjectMeta.Name, *api.Spec.Service.Name)
 	return c.Get(ctx, accessRuleName, api.GetNamespace())
 }

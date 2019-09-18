@@ -2,7 +2,7 @@
 
 ## Overview
 
-The API Gateway Controller manages Istio VirtualServices and Oathkeeper Rule. The controller allows to expose services using instances of the `gate.gateway.kyma-project.io` custom resource (CR).
+The API Gateway Controller manages Istio VirtualServices and Oathkeeper Rule. The controller allows to expose services using instances of the `apirule.gateway.kyma-project.io` custom resource (CR).
 
 ## Prerequisites
 
@@ -33,10 +33,10 @@ The API Gateway Controller manages Istio VirtualServices and Oathkeeper Rule. Th
 
 ## Custom Resource
 
-The `gate.gateway.kyma-project.io` CustomResourceDefinition (CRD) is a detailed description of the kind of data and the format the API Gateway Controller listens for. To get the up-to-date CRD and show
+The `apirule.gateway.kyma-project.io` CustomResourceDefinition (CRD) is a detailed description of the kind of data and the format the API Gateway Controller listens for. To get the up-to-date CRD and show
 the output in the `yaml` format, run this command:
 ```
-kubectl get crd gate.gateway.kyma-project.io -o yaml
+kubectl get crd apirule.gateway.kyma-project.io -o yaml
 ```
 
 ### Sample custom resource
@@ -44,8 +44,8 @@ kubectl get crd gate.gateway.kyma-project.io -o yaml
 This is a sample custom resource (CR) that the API-gateway listens for to expose a service.
 
 ```
-apiVersion: gateway.kyma-project.io/v2alpha1
-kind: Gate
+apiVersion: gateway.kyma-project.io/v1alpha1
+kind: APIRule
 metadata:
   name: jwt-all-with-scopes
 spec:
@@ -69,7 +69,7 @@ spec:
 This table lists all the possible parameters of a given resource together with their descriptions:
 
 | Field   |      Mandatory      |  Description |
-|----------|:-------------:|------|
+|:---|:---:|:---|
 | **metadata.name** |    **YES**   | Specifies the name of the exposed API |
 | **spec.gateway** | **YES** | Specifies Istio Gateway. |
 | **spec.service.name**, **spec.service.port** | **YES** | Specifies the name and the communication port of the exposed service. |
@@ -82,11 +82,11 @@ This table lists all the possible parameters of a given resource together with t
 
 ## Additional information
 
-When you fetch an existing Gate CR, the system adds the **status** section which describes the status of the Virtual Service and the Rule created for this CR. This table lists the fields of the **status** section.
+When you fetch an existing APIRule CR, the system adds the **status** section which describes the status of the Virtual Service and the Rule created for this CR. This table lists the fields of the **status** section.
 
 | Field   |  Description |
-|----------|-------------|
-| **status.GateStatus** | Status code describing the Gate CR. |
+|:---|:---|
+| **status.apiRuleStatus** | Status code describing the APIRule CR. |
 | **status.virtualServiceStatus.code** | Status code describing the Virtual Service. |
 | **status.virtualService.desc** | Current state of the Virtual Service. |
 | **status.accessRuleStatus.code** | Status code describing the Oathkeeper Rule. |
@@ -97,7 +97,7 @@ When you fetch an existing Gate CR, the system adds the **status** section which
 These are the status codes used to describe the Virtual Services and Rules:
 
 | Code   |  Description |
-|----------|-------------|
+|:---:|:---|
 | **OK** | Resource created. |
 | **SKIPPED** | Skipped creating a resource. |
 | **ERROR** | Resource not created. |

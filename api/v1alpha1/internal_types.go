@@ -1,4 +1,4 @@
-package v2alpha1
+package v1alpha1
 
 //JWTAccStrConfig is used to deserialize jwt accessStrategy configuration for the validation purposes
 type JWTAccStrConfig struct {

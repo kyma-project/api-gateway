@@ -3,10 +3,10 @@ package validation
 import (
 	"net/url"
 
-	gatewayv2alpha1 "github.com/kyma-incubator/api-gateway/api/v2alpha1"
+	gatewayv1alpha1 "github.com/kyma-incubator/api-gateway/api/v1alpha1"
 )
 
-func hasDuplicates(rules []gatewayv2alpha1.Rule) bool {
+func hasDuplicates(rules []gatewayv1alpha1.Rule) bool {
 	encountered := map[string]bool{}
 	// Create a map of all unique elements.
 	for v := range rules {

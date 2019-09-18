@@ -5,7 +5,7 @@ import (
 	"sync"
 	"testing"
 
-	gatewayv2alpha1 "github.com/kyma-incubator/api-gateway/api/v2alpha1"
+	gatewayv1alpha1 "github.com/kyma-incubator/api-gateway/api/v1alpha1"
 	"github.com/kyma-incubator/api-gateway/controllers"
 	crClients "github.com/kyma-incubator/api-gateway/internal/clients"
 	"github.com/kyma-incubator/api-gateway/internal/validation"
@@ -66,7 +66,7 @@ var _ = BeforeSuite(func(done Done) {
 	err = rulev1alpha1.AddToScheme(s)
 	Expect(err).NotTo(HaveOccurred())
 
-	err = gatewayv2alpha1.AddToScheme(s)
+	err = gatewayv1alpha1.AddToScheme(s)
 	Expect(err).NotTo(HaveOccurred())
 
 	err = networkingv1alpha3.AddToScheme(s)
@@ -79,10 +79,10 @@ var _ = BeforeSuite(func(done Done) {
 	reconciler := &controllers.APIReconciler{
 		Client:            mgr.GetClient(),
 		ExtCRClients:      crClients.New(mgr.GetClient()),
-		Log:               ctrl.Log.WithName("controllers").WithName("Gate"),
+		Log:               ctrl.Log.WithName("controllers").WithName("Api"),
 		OathkeeperSvc:     testOathkeeperSvcURL,
 		OathkeeperSvcPort: testOathkeeperPort,
-		Validator:         &validation.Gate{},
+		Validator:         &validation.APIRule{},
 	}
 
 	var recFn reconcile.Reconciler

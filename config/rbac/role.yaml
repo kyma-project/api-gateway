@@ -9,7 +9,7 @@ rules:
 - apiGroups:
   - gateway.kyma-project.io
   resources:
-  - gates
+  - apirules
   verbs:
   - get
   - list
@@ -21,7 +21,7 @@ rules:
 - apiGroups:
   - gateway.kyma-project.io
   resources:
-  - gates/status
+  - apirules/status
   verbs:
   - get
   - update
@@ -42,18 +42,6 @@ rules:
   - oathkeeper.ory.sh
   resources:
   - rules
-  verbs:
-  - get
-  - list
-  - watch
-  - create
-  - update
-  - patch
-  - delete
-- apiGroups:
-  - authentication.istio.io
-  resources:
-  - policies
   verbs:
   - get
   - list

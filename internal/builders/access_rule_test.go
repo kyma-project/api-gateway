@@ -3,6 +3,7 @@ package builders
 import (
 	"encoding/json"
 	"fmt"
+
 	"k8s.io/apimachinery/pkg/runtime"
 
 	internalTypes "github.com/kyma-incubator/api-gateway/internal/types/ory"
@@ -26,8 +27,8 @@ var _ = Describe("Builder for", func() {
 			namespace := "testNs"
 
 			refName := "refName"
-			refVersion := "v2alpha1"
-			refKind := "Gate"
+			refVersion := "v1alpha1"
+			refKind := "APIRule"
 			var refUID k8sTypes.UID = "123"
 
 			testUpstreamURL := fmt.Sprintf("http://%s:%d", destHost, destPort)

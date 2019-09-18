@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	gatewayv2alpha1 "github.com/kyma-incubator/api-gateway/api/v2alpha1"
+	gatewayv1alpha1 "github.com/kyma-incubator/api-gateway/api/v1alpha1"
 	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -13,11 +13,11 @@ import (
 )
 
 var (
-	apiName                 = "test-gate"
+	apiName                 = "test-apirule"
 	apiUID        types.UID = "eab0f1c8-c417-11e9-bf11-4ac644044351"
 	apiNamespace            = "some-namespace"
-	apiAPIVersion           = "gateway.kyma-project.io/v2alpha1"
-	apiKind                 = "Gate"
+	apiAPIVersion           = "gateway.kyma-project.io/v1alpha1"
+	apiKind                 = "ApiRule"
 	apiGateway              = "some-gateway"
 	apiPath                 = "/.*"
 	apiMethods              = []string{"GET"}
@@ -29,8 +29,8 @@ var (
 	jwtIssuer               = "https://oauth2.example.com/"
 )
 
-func getGateFor(strategies []*rulev1alpha1.Authenticator, mutators []*rulev1alpha1.Mutator) *gatewayv2alpha1.Gate {
-	return &gatewayv2alpha1.Gate{
+func getAPIRuleFor(strategies []*rulev1alpha1.Authenticator, mutators []*rulev1alpha1.Mutator) *gatewayv1alpha1.APIRule {
+	return &gatewayv1alpha1.APIRule{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      apiName,
 			UID:       apiUID,
@@ -40,14 +40,14 @@ func getGateFor(strategies []*rulev1alpha1.Authenticator, mutators []*rulev1alph
 			APIVersion: apiAPIVersion,
 			Kind:       apiKind,
 		},
-		Spec: gatewayv2alpha1.GateSpec{
+		Spec: gatewayv1alpha1.APIRuleSpec{
 			Gateway: &apiGateway,
-			Service: &gatewayv2alpha1.Service{
+			Service: &gatewayv1alpha1.Service{
 				Name: &serviceName,
 				Host: &serviceHost,
 				Port: &servicePort,
 			},
-			Rules: []gatewayv2alpha1.Rule{
+			Rules: []gatewayv1alpha1.Rule{
 				{
 					Path:             apiPath,
 					Methods:          apiMethods,
@@ -84,9 +84,9 @@ func TestCreateVS_NoOp(t *testing.T) {
 		},
 	}
 
-	gate := getGateFor(strategies, []*rulev1alpha1.Mutator{})
+	apiRule := getAPIRuleFor(strategies, []*rulev1alpha1.Mutator{})
 
-	vs := generateVirtualService(gate, serviceName+"."+apiNamespace+".svc.cluster.local", servicePort, apiPath)
+	vs := generateVirtualService(apiRule, serviceName+"."+apiNamespace+".svc.cluster.local", servicePort, apiPath)
 
 	assert.Equal(len(vs.Spec.Gateways), 1)
 	assert.Equal(vs.Spec.Gateways[0], apiGateway)
@@ -99,7 +99,7 @@ func TestCreateVS_NoOp(t *testing.T) {
 	assert.Equal(len(vs.Spec.HTTP[0].Match), 1)
 	assert.Equal(vs.Spec.HTTP[0].Route[0].Destination.Host, serviceName+"."+apiNamespace+".svc.cluster.local")
 	assert.Equal(vs.Spec.HTTP[0].Route[0].Destination.Port.Number, servicePort)
-	assert.Equal(vs.Spec.HTTP[0].Match[0].URI.Regex, gate.Spec.Rules[0].Path)
+	assert.Equal(vs.Spec.HTTP[0].Match[0].URI.Regex, apiRule.Spec.Rules[0].Path)
 
 	assert.Equal(vs.ObjectMeta.Name, apiName+"-"+serviceName)
 	assert.Equal(vs.ObjectMeta.Namespace, apiNamespace)
@@ -132,9 +132,9 @@ func TestCreateVS_JWT(t *testing.T) {
 		},
 	}
 
-	gate := getGateFor(strategies, []*rulev1alpha1.Mutator{})
+	apiRule := getAPIRuleFor(strategies, []*rulev1alpha1.Mutator{})
 
-	vs := generateVirtualService(gate, "test-oathkeeper", 4455, apiPath)
+	vs := generateVirtualService(apiRule, "test-oathkeeper", 4455, apiPath)
 
 	assert.Equal(len(vs.Spec.Gateways), 1)
 	assert.Equal(vs.Spec.Gateways[0], apiGateway)
@@ -147,7 +147,7 @@ func TestCreateVS_JWT(t *testing.T) {
 	assert.Equal(len(vs.Spec.HTTP[0].Match), 1)
 	assert.Equal(vs.Spec.HTTP[0].Route[0].Destination.Host, "test-oathkeeper")
 	assert.Equal(vs.Spec.HTTP[0].Route[0].Destination.Port.Number, uint32(4455))
-	assert.Equal(vs.Spec.HTTP[0].Match[0].URI.Regex, gate.Spec.Rules[0].Path)
+	assert.Equal(vs.Spec.HTTP[0].Match[0].URI.Regex, apiRule.Spec.Rules[0].Path)
 
 	assert.Equal(vs.ObjectMeta.Name, apiName+"-"+serviceName)
 	assert.Equal(vs.ObjectMeta.Namespace, apiNamespace)
@@ -180,14 +180,14 @@ func TestPrepareAR_JWT(t *testing.T) {
 		},
 	}
 
-	gate := getGateFor(strategies, []*rulev1alpha1.Mutator{})
+	apiRule := getAPIRuleFor(strategies, []*rulev1alpha1.Mutator{})
 
-	oldAR := generateAccessRule(gate, gate.Spec.Rules[0], []*rulev1alpha1.Authenticator{strategies[0]})
+	oldAR := generateAccessRule(apiRule, apiRule.Spec.Rules[0], []*rulev1alpha1.Authenticator{strategies[0]})
 
 	oldAR.ObjectMeta.Generation = int64(15)
 	oldAR.ObjectMeta.Name = "mst"
 
-	newAR := prepareAccessRule(gate, oldAR, gate.Spec.Rules[0], []*rulev1alpha1.Authenticator{strategies[0]})
+	newAR := prepareAccessRule(apiRule, oldAR, apiRule.Spec.Rules[0], []*rulev1alpha1.Authenticator{strategies[0]})
 
 	assert.Equal(newAR.ObjectMeta.Generation, int64(15))
 
@@ -236,9 +236,9 @@ func TestGenerateAR_JWT(t *testing.T) {
 		},
 	}
 
-	gate := getGateFor(strategies, []*rulev1alpha1.Mutator{})
+	apiRule := getAPIRuleFor(strategies, []*rulev1alpha1.Mutator{})
 
-	ar := generateAccessRule(gate, gate.Spec.Rules[0], []*rulev1alpha1.Authenticator{strategies[0]})
+	ar := generateAccessRule(apiRule, apiRule.Spec.Rules[0], []*rulev1alpha1.Authenticator{strategies[0]})
 
 	assert.Equal(len(ar.Spec.Authenticators), 1)
 	assert.NotEmpty(ar.Spec.Authenticators[0].Config)
@@ -283,8 +283,8 @@ func TestGenerateVS_OAUTH(t *testing.T) {
 		},
 	}
 
-	gate := getGateFor(strategies, []*rulev1alpha1.Mutator{})
-	vs := generateVirtualService(gate, "test-oathkeeper", 4455, gate.Spec.Rules[0].Path)
+	apiRule := getAPIRuleFor(strategies, []*rulev1alpha1.Mutator{})
+	vs := generateVirtualService(apiRule, "test-oathkeeper", 4455, apiRule.Spec.Rules[0].Path)
 
 	assert.Equal(len(vs.Spec.Gateways), 1)
 	assert.Equal(vs.Spec.Gateways[0], apiGateway)
@@ -328,14 +328,14 @@ func TestPrepareVS_OAUTH(t *testing.T) {
 		},
 	}
 
-	gate := getGateFor(strategies, []*rulev1alpha1.Mutator{})
+	apiRule := getAPIRuleFor(strategies, []*rulev1alpha1.Mutator{})
 
-	oldVS := generateVirtualService(gate, "test-oathkeeper", 4455, gate.Spec.Rules[0].Path)
+	oldVS := generateVirtualService(apiRule, "test-oathkeeper", 4455, apiRule.Spec.Rules[0].Path)
 
 	oldVS.ObjectMeta.Generation = int64(15)
 	oldVS.ObjectMeta.Name = "mst"
 
-	newVS := prepareVirtualService(gate, oldVS, "test-oathkeeper", 4455, gate.Spec.Rules[0].Path)
+	newVS := prepareVirtualService(apiRule, oldVS, "test-oathkeeper", 4455, apiRule.Spec.Rules[0].Path)
 
 	assert.Equal(newVS.ObjectMeta.Generation, int64(15))
 
@@ -381,9 +381,9 @@ func TestGenerateAR_OAUTH(t *testing.T) {
 		},
 	}
 
-	gate := getGateFor(strategies, []*rulev1alpha1.Mutator{})
+	apiRule := getAPIRuleFor(strategies, []*rulev1alpha1.Mutator{})
 
-	ar := generateAccessRule(gate, gate.Spec.Rules[0], []*rulev1alpha1.Authenticator{strategies[0]})
+	ar := generateAccessRule(apiRule, apiRule.Spec.Rules[0], []*rulev1alpha1.Authenticator{strategies[0]})
 
 	assert.Equal(len(ar.Spec.Authenticators), 1)
 	assert.NotEmpty(ar.Spec.Authenticators[0].Config)
@@ -428,14 +428,14 @@ func TestPreapreAR_OAUTH(t *testing.T) {
 		},
 	}
 
-	gate := getGateFor(strategies, []*rulev1alpha1.Mutator{})
+	apiRule := getAPIRuleFor(strategies, []*rulev1alpha1.Mutator{})
 
-	oldAR := generateAccessRule(gate, gate.Spec.Rules[0], strategies)
+	oldAR := generateAccessRule(apiRule, apiRule.Spec.Rules[0], strategies)
 
 	oldAR.ObjectMeta.Generation = int64(15)
 	oldAR.ObjectMeta.Name = "mst"
 
-	newAR := prepareAccessRule(gate, oldAR, gate.Spec.Rules[0], strategies)
+	newAR := prepareAccessRule(apiRule, oldAR, apiRule.Spec.Rules[0], strategies)
 
 	assert.Equal(newAR.ObjectMeta.Generation, int64(15))
 
