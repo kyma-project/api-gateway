@@ -23,6 +23,7 @@ import (
 	gatewayv2alpha1 "github.com/kyma-incubator/api-gateway/api/v2alpha1"
 	"github.com/kyma-incubator/api-gateway/controllers"
 	crClients "github.com/kyma-incubator/api-gateway/internal/clients"
+	"github.com/kyma-incubator/api-gateway/internal/validation"
 	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
@@ -94,6 +95,7 @@ func main() {
 		OathkeeperSvc:     oathkeeperSvcAddr,
 		OathkeeperSvcPort: uint32(oathkeeperSvcPort),
 		JWKSURI:           jwksURI,
+		Validator:         &validation.Gate{},
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Api")
 		os.Exit(1)

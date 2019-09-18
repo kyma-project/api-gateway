@@ -24,12 +24,6 @@ import (
 type StatusCode string
 
 const (
-	//Jwt .
-	Jwt string = "JWT"
-	//Oauth .
-	Oauth string = "OAUTH"
-	//Allow .
-	Allow string = "ALLOW"
 	//StatusOK .
 	StatusOK StatusCode = "OK"
 	//StatusSkipped .

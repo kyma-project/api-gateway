@@ -1,29 +1,37 @@
 package validation
 
 import (
+	"encoding/json"
 	"fmt"
 
 	gatewayv2alpha1 "github.com/kyma-incubator/api-gateway/api/v2alpha1"
+	"github.com/ory/oathkeeper-maester/api/v1alpha1"
 )
 
-type jwt struct{}
+//jwtAccStrValidator is an accessStrategy validator for jwt ORY authenticator
+type jwtAccStrValidator struct{}
 
-func (j *jwt) Validate(gate *gatewayv2alpha1.Gate) error {
-	// var template gatewayv2alpha1.JWTModeConfig
+func (j *jwtAccStrValidator) Validate(attributePath string, handler *v1alpha1.Handler) []Failure {
+	var problems []Failure
 
-	if len(gate.Spec.Rules) == 0 {
-		return fmt.Errorf("path is required")
+	var template gatewayv2alpha1.JWTAccStrConfig
+
+	if !configNotEmpty(handler.Config) {
+		problems = append(problems, Failure{AttributePath: attributePath + ".config", Message: "supplied config cannot be empty"})
+		return problems
 	}
-
-	// if !configNotEmpty(gate.Spec.Auth.Config) {
-	// 	return fmt.Errorf("supplied config cannot be empty")
-	// }
-	// err := json.Unmarshal(gate.Spec.Auth.Config.Raw, &template)
-	// if err != nil {
-	// 	return errors.WithStack(err)
-	// }
-	// if !isValidURL(template.Issuer) {
-	// 	return fmt.Errorf("issuer field is empty or not a valid url")
-	// }
-	return nil
+	err := json.Unmarshal(handler.Config.Raw, &template)
+	if err != nil {
+		problems = append(problems, Failure{AttributePath: attributePath + ".config", Message: "Can't read json: " + err.Error()})
+		return problems
+	}
+	if len(template.TrustedIssuers) > 0 {
+		for i := 0; i < len(template.TrustedIssuers); i++ {
+			if !isValidURL(template.TrustedIssuers[i]) {
+				attrPath := fmt.Sprintf("%s[%d]", attributePath+".config.trusted_issuers", i)
+				problems = append(problems, Failure{AttributePath: attrPath, Message: "value is empty or not a valid url"})
+			}
+		}
+	}
+	return problems
 }

@@ -6,13 +6,13 @@ import (
 	gatewayv2alpha1 "github.com/kyma-incubator/api-gateway/api/v2alpha1"
 )
 
-func hasDuplicates(paths []gatewayv2alpha1.Rule) bool {
+func hasDuplicates(rules []gatewayv2alpha1.Rule) bool {
 	encountered := map[string]bool{}
 	// Create a map of all unique elements.
-	for v := range paths {
-		encountered[paths[v].Path] = true
+	for v := range rules {
+		encountered[rules[v].Path] = true
 	}
-	return len(encountered) != len(paths)
+	return len(encountered) != len(rules)
 }
 
 func isValidURL(toTest string) bool {

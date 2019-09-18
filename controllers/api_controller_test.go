@@ -6,6 +6,7 @@ import (
 	gatewayv2alpha1 "github.com/kyma-incubator/api-gateway/api/v2alpha1"
 	"github.com/kyma-incubator/api-gateway/controllers"
 	crClients "github.com/kyma-incubator/api-gateway/internal/clients"
+	"github.com/kyma-incubator/api-gateway/internal/validation"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
@@ -62,7 +63,7 @@ func fixAPI() *gatewayv2alpha1.Gate {
 	servicePort = 8000
 	host = "foo.bar"
 	isExernal = false
-	authStrategy = gatewayv2alpha1.Allow
+	authStrategy = "noop"
 	gateway = "some-gateway.some-namespace.foo"
 
 	return &gatewayv2alpha1.Gate{
@@ -82,6 +83,14 @@ func fixAPI() *gatewayv2alpha1.Gate {
 				{
 					Path:    "/.*",
 					Methods: []string{"GET"},
+					AccessStrategies: []*rulev1alpha1.Authenticator{
+						&rulev1alpha1.Authenticator{
+							Handler: &rulev1alpha1.Handler{
+								Name:   authStrategy,
+								Config: nil,
+							},
+						},
+					},
 				},
 			},
 		},
@@ -93,6 +102,7 @@ func getAPIReconciler(mgr manager.Manager) reconcile.Reconciler {
 		Client:       mgr.GetClient(),
 		ExtCRClients: crClients.New(mgr.GetClient()),
 		Log:          ctrl.Log.WithName("controllers").WithName("Api"),
+		Validator:    &validation.Gate{},
 	}
 }
 

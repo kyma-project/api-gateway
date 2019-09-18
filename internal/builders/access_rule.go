@@ -5,6 +5,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
+// AccessRule returns a builder for github.com/ory/oathkeeper-maester/api/v1alpha1/Rule instances
 func AccessRule() *accessRule {
 	return &accessRule{
 		value: &rulev1alpha1.Rule{},
@@ -44,6 +45,7 @@ func (ar *accessRule) Get() *rulev1alpha1.Rule {
 	return ar.value
 }
 
+// AccessRuleSpec returns a builder for github.com/ory/oathkeeper-maester/api/v1alpha1/RuleSpec instances
 func AccessRuleSpec() *accessRuleSpec {
 	return &accessRuleSpec{
 		value: &rulev1alpha1.RuleSpec{},
@@ -85,6 +87,7 @@ func (ars *accessRuleSpec) Mutators(val *mutators) *accessRuleSpec {
 	return ars
 }
 
+// Upstream returns a builder for github.com/ory/oathkeeper-maester/api/v1alpha1/Upstream instances
 func Upstream() *upstream {
 	return &upstream{
 		value: &rulev1alpha1.Upstream{},
@@ -114,6 +117,7 @@ func (u *upstream) Get() *rulev1alpha1.Upstream {
 	return u.value
 }
 
+// Match returns a builder for github.com/ory/oathkeeper-maester/api/v1alpha1/Match instances
 func Match() *match {
 	return &match{
 		value: &rulev1alpha1.Match{},
@@ -138,6 +142,7 @@ func (m *match) Get() *rulev1alpha1.Match {
 	return m.value
 }
 
+// Handler returns a builder for github.com/ory/oathkeeper-maester/api/v1alpha1/Handler instances
 func Handler() *handler {
 	return &handler{
 		value: &rulev1alpha1.Handler{},
@@ -162,6 +167,7 @@ func (h *handler) Config(val *runtime.RawExtension) *handler {
 	return h
 }
 
+// Authorizer returns a builder for github.com/ory/oathkeeper-maester/api/v1alpha1/Authorizer instances
 func Authorizer() *authorizer {
 	return &authorizer{
 		value: &rulev1alpha1.Authorizer{},
@@ -186,6 +192,7 @@ func (a *authorizer) From(val *rulev1alpha1.Authorizer) *authorizer {
 	return a
 }
 
+// Authenticators returns a builder for github.com/ory/oathkeeper-maester/api/v1alpha1/Authenticators instances
 func Authenticators() *authenticators {
 	return &authenticators{
 		value: []*rulev1alpha1.Authenticator{},
@@ -197,7 +204,7 @@ type authenticators struct {
 }
 
 func (a *authenticators) Handler(val *handler) *authenticators {
-	a.value = append(a.value, &rulev1alpha1.Authenticator{val.Get()})
+	a.value = append(a.value, &rulev1alpha1.Authenticator{Handler: val.Get()})
 	return a
 }
 
@@ -210,6 +217,7 @@ func (a *authenticators) From(val []*rulev1alpha1.Authenticator) *authenticators
 	return a
 }
 
+// Mutators returns a builder for github.com/ory/oathkeeper-maester/api/v1alpha1/Mutators instances
 func Mutators() *mutators {
 	return &mutators{
 		value: []*rulev1alpha1.Mutator{},
@@ -221,7 +229,7 @@ type mutators struct {
 }
 
 func (m *mutators) Handler(val *handler) *mutators {
-	m.value = append(m.value, &rulev1alpha1.Mutator{val.Get()})
+	m.value = append(m.value, &rulev1alpha1.Mutator{Handler: val.Get()})
 	return m
 }
 

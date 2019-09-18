@@ -12,6 +12,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -58,6 +59,55 @@ var _ = Describe("Gate Controller", func() {
 	}
 
 	Context("when creating a Gate for exposing service", func() {
+
+		It("Should report validation errors in CR status", func() {
+			configJSON := fmt.Sprintf(`{
+							"required_scope": [%s]
+						}`, toCSVList(testScopes))
+
+			nonEmptyConfig := &rulev1alpha1.Handler{
+				Name: "noop",
+				Config: &runtime.RawExtension{
+					Raw: []byte(configJSON),
+				},
+			}
+
+			testName := generateTestName(testNameBase, testIDLength)
+			instance := testInstance(testName, testNamespace, testServiceName, testServiceHost, nonEmptyConfig, testServicePort, testPath, testMethods, testScopes, testMutators)
+			instance.Spec.Rules = append(instance.Spec.Rules, instance.Spec.Rules[0]) //Duplicate entry
+			instance.Spec.Rules = append(instance.Spec.Rules, instance.Spec.Rules[0]) //Duplicate entry
+
+			err := c.Create(context.TODO(), instance)
+			if apierrors.IsInvalid(err) {
+				Fail(fmt.Sprintf("failed to create object, got an invalid object error: %v", err))
+				return
+			}
+			Expect(err).NotTo(HaveOccurred())
+			defer c.Delete(context.TODO(), instance)
+
+			expectedRequest := reconcile.Request{NamespacedName: types.NamespacedName{Name: testName, Namespace: testNamespace}}
+
+			Eventually(requests, timeout).Should(Receive(Equal(expectedRequest)))
+
+			//Verify Gate
+			created := gatewayv2alpha1.Gate{}
+			err = c.Get(context.TODO(), client.ObjectKey{Name: testName, Namespace: testNamespace}, &created)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(created.Status.GateStatus.Code).To(Equal(gatewayv2alpha1.StatusError))
+			Expect(created.Status.GateStatus.Description).To(ContainSubstring("Multiple validation errors:"))
+			Expect(created.Status.GateStatus.Description).To(ContainSubstring("Attribute \".spec.rules\": multiple rules defined for the same path"))
+			Expect(created.Status.GateStatus.Description).To(ContainSubstring("Attribute \".spec.rules[0].accessStrategies[0].config\": strategy: noop does not support configuration"))
+			Expect(created.Status.GateStatus.Description).To(ContainSubstring("Attribute \".spec.rules[1].accessStrategies[0].config\": strategy: noop does not support configuration"))
+			Expect(created.Status.GateStatus.Description).To(ContainSubstring("1 more error(s)..."))
+
+			//Verify VirtualService is not created
+			expectedVSName := testName + "-" + testServiceName
+			expectedVSNamespace := testNamespace
+			vs := networkingv1alpha3.VirtualService{}
+			err = c.Get(context.TODO(), client.ObjectKey{Name: expectedVSName, Namespace: expectedVSNamespace}, &vs)
+			Expect(errors.IsNotFound(err)).To(BeTrue())
+		})
+
 		Context("on all the paths,", func() {
 			Context("secured with Oauth2 introspection,", func() {
 				Context("in a happy-path scenario", func() {
