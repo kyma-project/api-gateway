@@ -57,9 +57,9 @@ func generateVirtualService(api *gatewayv1alpha1.APIRule, destinationHost string
 			builders.VirtualServiceSpec().
 				Host(*api.Spec.Service.Host).
 				Gateway(*api.Spec.Gateway).
-				HTTP(
-					builders.MatchRequest().URI().Regex(path),
-					builders.RouteDestination().Host(destinationHost).Port(destinationPort))).
+				HTTP(builders.HTTPRoute().
+					Match(builders.MatchRequest().URI().Regex(path)).
+					Route(builders.RouteDestination().Host(destinationHost).Port(destinationPort)))).
 		Get()
 }
 
@@ -106,8 +106,8 @@ func prepareVirtualService(api *gatewayv1alpha1.APIRule, vs *networkingv1alpha3.
 			builders.VirtualServiceSpec().
 				Host(*api.Spec.Service.Host).
 				Gateway(*api.Spec.Gateway).
-				HTTP(
-					builders.MatchRequest().URI().Regex(path),
-					builders.RouteDestination().Host(destinationHost).Port(destinationPort))).
+				HTTP(builders.HTTPRoute().
+					Match(builders.MatchRequest().URI().Regex(path)).
+					Route(builders.RouteDestination().Host(destinationHost).Port(destinationPort)))).
 		Get()
 }
