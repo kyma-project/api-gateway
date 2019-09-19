@@ -182,12 +182,11 @@ func TestPrepareAR_JWT(t *testing.T) {
 
 	apiRule := getAPIRuleFor(strategies, []*rulev1alpha1.Mutator{})
 
-	oldAR := generateAccessRule(apiRule, apiRule.Spec.Rules[0], []*rulev1alpha1.Authenticator{strategies[0]})
-
+	oldAR := generateAccessRule(apiRule, apiRule.Spec.Rules[0], 0, []*rulev1alpha1.Authenticator{strategies[0]})
 	oldAR.ObjectMeta.Generation = int64(15)
 	oldAR.ObjectMeta.Name = "mst"
 
-	newAR := prepareAccessRule(apiRule, oldAR, apiRule.Spec.Rules[0], []*rulev1alpha1.Authenticator{strategies[0]})
+	newAR := prepareAccessRule(apiRule, oldAR, apiRule.Spec.Rules[0], 0, []*rulev1alpha1.Authenticator{strategies[0]})
 
 	assert.Equal(newAR.ObjectMeta.Generation, int64(15))
 
@@ -205,7 +204,7 @@ func TestPrepareAR_JWT(t *testing.T) {
 
 	assert.Equal(newAR.Spec.Upstream.URL, "http://example-service.some-namespace.svc.cluster.local:8080")
 
-	assert.Equal(newAR.ObjectMeta.Name, apiName+"-"+serviceName)
+	assert.Equal(newAR.ObjectMeta.Name, apiName+"-"+serviceName+"-0")
 	assert.Equal(newAR.ObjectMeta.Namespace, apiNamespace)
 
 	assert.Equal(newAR.ObjectMeta.OwnerReferences[0].APIVersion, apiAPIVersion)
@@ -238,7 +237,7 @@ func TestGenerateAR_JWT(t *testing.T) {
 
 	apiRule := getAPIRuleFor(strategies, []*rulev1alpha1.Mutator{})
 
-	ar := generateAccessRule(apiRule, apiRule.Spec.Rules[0], []*rulev1alpha1.Authenticator{strategies[0]})
+	ar := generateAccessRule(apiRule, apiRule.Spec.Rules[0], 0, []*rulev1alpha1.Authenticator{strategies[0]})
 
 	assert.Equal(len(ar.Spec.Authenticators), 1)
 	assert.NotEmpty(ar.Spec.Authenticators[0].Config)
@@ -254,7 +253,7 @@ func TestGenerateAR_JWT(t *testing.T) {
 
 	assert.Equal(ar.Spec.Upstream.URL, "http://example-service.some-namespace.svc.cluster.local:8080")
 
-	assert.Equal(ar.ObjectMeta.Name, apiName+"-"+serviceName)
+	assert.Equal(ar.ObjectMeta.Name, apiName+"-"+serviceName+"-0")
 	assert.Equal(ar.ObjectMeta.Namespace, apiNamespace)
 
 	assert.Equal(ar.ObjectMeta.OwnerReferences[0].APIVersion, apiAPIVersion)
@@ -383,7 +382,7 @@ func TestGenerateAR_OAUTH(t *testing.T) {
 
 	apiRule := getAPIRuleFor(strategies, []*rulev1alpha1.Mutator{})
 
-	ar := generateAccessRule(apiRule, apiRule.Spec.Rules[0], []*rulev1alpha1.Authenticator{strategies[0]})
+	ar := generateAccessRule(apiRule, apiRule.Spec.Rules[0], 0, []*rulev1alpha1.Authenticator{strategies[0]})
 
 	assert.Equal(len(ar.Spec.Authenticators), 1)
 	assert.NotEmpty(ar.Spec.Authenticators[0].Config)
@@ -399,7 +398,7 @@ func TestGenerateAR_OAUTH(t *testing.T) {
 
 	assert.Equal(ar.Spec.Upstream.URL, "http://example-service.some-namespace.svc.cluster.local:8080")
 
-	assert.Equal(ar.ObjectMeta.Name, apiName+"-"+serviceName)
+	assert.Equal(ar.ObjectMeta.Name, apiName+"-"+serviceName+"-0")
 	assert.Equal(ar.ObjectMeta.Namespace, apiNamespace)
 
 	assert.Equal(ar.ObjectMeta.OwnerReferences[0].APIVersion, apiAPIVersion)
@@ -430,12 +429,12 @@ func TestPreapreAR_OAUTH(t *testing.T) {
 
 	apiRule := getAPIRuleFor(strategies, []*rulev1alpha1.Mutator{})
 
-	oldAR := generateAccessRule(apiRule, apiRule.Spec.Rules[0], strategies)
+	oldAR := generateAccessRule(apiRule, apiRule.Spec.Rules[0], 0, strategies)
 
 	oldAR.ObjectMeta.Generation = int64(15)
 	oldAR.ObjectMeta.Name = "mst"
 
-	newAR := prepareAccessRule(apiRule, oldAR, apiRule.Spec.Rules[0], strategies)
+	newAR := prepareAccessRule(apiRule, oldAR, apiRule.Spec.Rules[0], 0, strategies)
 
 	assert.Equal(newAR.ObjectMeta.Generation, int64(15))
 
@@ -453,7 +452,7 @@ func TestPreapreAR_OAUTH(t *testing.T) {
 
 	assert.Equal(newAR.Spec.Upstream.URL, "http://example-service.some-namespace.svc.cluster.local:8080")
 
-	assert.Equal(newAR.ObjectMeta.Name, apiName+"-"+serviceName)
+	assert.Equal(newAR.ObjectMeta.Name, apiName+"-"+serviceName+"-0")
 	assert.Equal(newAR.ObjectMeta.Namespace, apiNamespace)
 
 	assert.Equal(newAR.ObjectMeta.OwnerReferences[0].APIVersion, apiAPIVersion)

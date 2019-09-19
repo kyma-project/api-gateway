@@ -134,3 +134,29 @@ spec:
         - handler: oauth2_introspection
           config:
             required_scope: []
+---
+apiVersion: gateway.kyma-project.io/v1alpha1
+kind: APIRule
+metadata:
+  name: multiple-rules
+spec:
+  gateway: kyma-gateway.kyma-system.svc.cluster.local
+  service:
+    name: foo-service
+    port: 8080
+    host: foo.bar
+  rules:
+    - path: /.img
+      methods: ["GET"]
+      mutators: []
+      accessStrategies:
+        - handler: jwt
+          config:
+            trusted_issuers: ["http://dex.kyma.local"]
+            required_scope: []
+    - path: /.headers
+      methods: ["GET"]
+      accessStrategies:
+        - handler: oauth2_introspection
+          config:
+            required_scope: ["foo"]

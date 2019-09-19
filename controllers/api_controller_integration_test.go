@@ -74,7 +74,8 @@ var _ = Describe("APIRule Controller", func() {
 			}
 
 			testName := generateTestName(testNameBase, testIDLength)
-			instance := testInstance(testName, testNamespace, testServiceName, testServiceHost, nonEmptyConfig, testServicePort, testPath, testMethods, testScopes, testMutators)
+			rule := testRule(testPath, testMethods, testMutators, nonEmptyConfig)
+			instance := testInstance(testName, testNamespace, testServiceName, testServiceHost, testServicePort, []gatewayv1alpha1.Rule{rule})
 			instance.Spec.Rules = append(instance.Spec.Rules, instance.Spec.Rules[0]) //Duplicate entry
 			instance.Spec.Rules = append(instance.Spec.Rules, instance.Spec.Rules[0]) //Duplicate entry
 
@@ -125,7 +126,8 @@ var _ = Describe("APIRule Controller", func() {
 						}
 
 						testName := generateTestName(testNameBase, testIDLength)
-						instance := testInstance(testName, testNamespace, testServiceName, testServiceHost, oauthConfig, testServicePort, testPath, testMethods, testScopes, testMutators)
+						rule := testRule(testPath, testMethods, testMutators, oauthConfig)
+						instance := testInstance(testName, testNamespace, testServiceName, testServiceHost, testServicePort, []gatewayv1alpha1.Rule{rule})
 
 						err := c.Create(context.TODO(), instance)
 						if apierrors.IsInvalid(err) {
@@ -196,7 +198,7 @@ var _ = Describe("APIRule Controller", func() {
 						Expect(vs.Spec.TLS).To(BeNil())
 
 						//Verify Rule
-						expectedRuleName := testName + "-" + testServiceName
+						expectedRuleName := testName + "-" + testServiceName + "-0"
 						expectedRuleNamespace := testNamespace
 						rl := rulev1alpha1.Rule{}
 						err = c.Get(context.TODO(), client.ObjectKey{Name: expectedRuleName, Namespace: expectedRuleNamespace}, &rl)
@@ -241,7 +243,7 @@ var _ = Describe("APIRule Controller", func() {
 			})
 			Context("secured with JWT token authentication,", func() {
 				Context("in a happy-path scenario", func() {
-					It("should create a VirtualService and an AccessRule", func() {
+					It("should create a VirtualService and an AccessRules", func() {
 						configJSON := fmt.Sprintf(`
 							{
 								"trusted_issuers": ["%s"],
@@ -255,7 +257,9 @@ var _ = Describe("APIRule Controller", func() {
 							},
 						}
 						testName := generateTestName(testNameBase, testIDLength)
-						instance := testInstance(testName, testNamespace, testServiceName, testServiceHost, jwtConfig, testServicePort, "/.*", []string{"GET"}, testScopes, testMutators)
+						rule1 := testRule("/img", []string{"GET"}, testMutators, jwtConfig)
+						rule2 := testRule("/headers", []string{"GET"}, testMutators, jwtConfig)
+						instance := testInstance(testName, testNamespace, testServiceName, testServiceHost, testServicePort, []gatewayv1alpha1.Rule{rule1, rule2})
 
 						err := c.Create(context.TODO(), instance)
 						if apierrors.IsInvalid(err) {
@@ -292,7 +296,7 @@ var _ = Describe("APIRule Controller", func() {
 						Expect(vs.Spec.HTTP[0].Match[0].URI.Exact).To(BeEmpty())
 						Expect(vs.Spec.HTTP[0].Match[0].URI.Prefix).To(BeEmpty())
 						Expect(vs.Spec.HTTP[0].Match[0].URI.Suffix).To(BeEmpty())
-						Expect(vs.Spec.HTTP[0].Match[0].URI.Regex).To(Equal(testPath))
+						Expect(vs.Spec.HTTP[0].Match[0].URI.Regex).To(Equal("/.*"))
 						Expect(vs.Spec.HTTP[0].Match[0].Scheme).To(BeNil())
 						Expect(vs.Spec.HTTP[0].Match[0].Method).To(BeNil())
 						Expect(vs.Spec.HTTP[0].Match[0].Authority).To(BeNil())
@@ -324,8 +328,8 @@ var _ = Describe("APIRule Controller", func() {
 						//Spec.TLS
 						Expect(vs.Spec.TLS).To(BeNil())
 
-						//Verify Rule
-						expectedRuleName := testName + "-" + testServiceName
+						//Verify Rule1
+						expectedRuleName := testName + "-" + testServiceName + "-0"
 						expectedRuleNamespace := testNamespace
 						rl := rulev1alpha1.Rule{}
 						err = c.Get(context.TODO(), client.ObjectKey{Name: expectedRuleName, Namespace: expectedRuleNamespace}, &rl)
@@ -341,7 +345,7 @@ var _ = Describe("APIRule Controller", func() {
 						Expect(rl.Spec.Upstream.PreserveHost).To(BeNil())
 						//Spec.Match
 						Expect(rl.Spec.Match).NotTo(BeNil())
-						Expect(rl.Spec.Match.URL).To(Equal(fmt.Sprintf("<http|https>://%s<%s>", testServiceHost, testPath)))
+						Expect(rl.Spec.Match.URL).To(Equal(fmt.Sprintf("<http|https>://%s<%s>", testServiceHost, "/img")))
 						Expect(rl.Spec.Match.Methods).To(Equal([]string{"GET"}))
 						//Spec.Authenticators
 						Expect(rl.Spec.Authenticators).To(HaveLen(1))
@@ -367,6 +371,49 @@ var _ = Describe("APIRule Controller", func() {
 						Expect(len(rl.Spec.Mutators)).To(Equal(len(testMutators)))
 						Expect(rl.Spec.Mutators[0].Handler.Name).To(Equal(testMutators[0].Name))
 						Expect(rl.Spec.Mutators[1].Handler.Name).To(Equal(testMutators[1].Name))
+
+						//Verify Rule2
+						expectedRuleName2 := testName + "-" + testServiceName + "-1"
+						rl2 := rulev1alpha1.Rule{}
+						err = c.Get(context.TODO(), client.ObjectKey{Name: expectedRuleName2, Namespace: expectedRuleNamespace}, &rl2)
+						Expect(err).NotTo(HaveOccurred())
+
+						//Meta
+						verifyOwnerReference(rl2.ObjectMeta, testName, gatewayv1alpha1.GroupVersion.String(), "APIRule")
+
+						//Spec.Upstream
+						Expect(rl2.Spec.Upstream).NotTo(BeNil())
+						Expect(rl2.Spec.Upstream.URL).To(Equal(fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", testServiceName, testNamespace, testServicePort)))
+						Expect(rl2.Spec.Upstream.StripPath).To(BeNil())
+						Expect(rl2.Spec.Upstream.PreserveHost).To(BeNil())
+						//Spec.Match
+						Expect(rl2.Spec.Match).NotTo(BeNil())
+						Expect(rl2.Spec.Match.URL).To(Equal(fmt.Sprintf("<http|https>://%s<%s>", testServiceHost, "/headers")))
+						Expect(rl2.Spec.Match.Methods).To(Equal([]string{"GET"}))
+						//Spec.Authenticators
+						Expect(rl2.Spec.Authenticators).To(HaveLen(1))
+						Expect(rl2.Spec.Authenticators[0].Handler).NotTo(BeNil())
+						Expect(rl2.Spec.Authenticators[0].Handler.Name).To(Equal("jwt"))
+						Expect(rl2.Spec.Authenticators[0].Handler.Config).NotTo(BeNil())
+						//Authenticators[0].Handler.Config validation
+						handlerConfig = map[string]interface{}{}
+
+						err = json.Unmarshal(rl2.Spec.Authenticators[0].Config.Raw, &handlerConfig)
+						Expect(err).NotTo(HaveOccurred())
+						Expect(handlerConfig).To(HaveLen(3))
+						Expect(asStringSlice(handlerConfig["required_scope"])).To(BeEquivalentTo(testScopes))
+						Expect(asStringSlice(handlerConfig["trusted_issuers"])).To(BeEquivalentTo([]string{testIssuer}))
+						//Spec.Authorizer
+						Expect(rl2.Spec.Authorizer).NotTo(BeNil())
+						Expect(rl2.Spec.Authorizer.Handler).NotTo(BeNil())
+						Expect(rl2.Spec.Authorizer.Handler.Name).To(Equal("allow"))
+						Expect(rl2.Spec.Authorizer.Handler.Config).To(BeNil())
+
+						//Spec.Mutators
+						Expect(rl2.Spec.Mutators).NotTo(BeNil())
+						Expect(len(rl2.Spec.Mutators)).To(Equal(len(testMutators)))
+						Expect(rl2.Spec.Mutators[0].Handler.Name).To(Equal(testMutators[0].Name))
+						Expect(rl2.Spec.Mutators[1].Handler.Name).To(Equal(testMutators[1].Name))
 					})
 				})
 			})
@@ -402,7 +449,20 @@ func toCSVList(input []string) string {
 	return res
 }
 
-func testInstance(name, namespace, serviceName, serviceHost string, config *rulev1alpha1.Handler, servicePort uint32, path string, methods []string, scopes []string, mutators []*rulev1alpha1.Mutator) *gatewayv1alpha1.APIRule {
+func testRule(path string, methods []string, mutators []*rulev1alpha1.Mutator, config *rulev1alpha1.Handler) gatewayv1alpha1.Rule {
+	return gatewayv1alpha1.Rule{
+		Path:     path,
+		Methods:  methods,
+		Mutators: mutators,
+		AccessStrategies: []*rulev1alpha1.Authenticator{
+			{
+				Handler: config,
+			},
+		},
+	}
+}
+
+func testInstance(name, namespace, serviceName, serviceHost string, servicePort uint32, rules []gatewayv1alpha1.Rule) *gatewayv1alpha1.APIRule {
 	var gateway = testGatewayURL
 
 	return &gatewayv1alpha1.APIRule{
@@ -417,18 +477,7 @@ func testInstance(name, namespace, serviceName, serviceHost string, config *rule
 				Name: &serviceName,
 				Port: &servicePort,
 			},
-			Rules: []gatewayv1alpha1.Rule{
-				{
-					Path:     path,
-					Methods:  methods,
-					Mutators: mutators,
-					AccessStrategies: []*rulev1alpha1.Authenticator{
-						{
-							Handler: config,
-						},
-					},
-				},
-			},
+			Rules: rules,
 		},
 	}
 }

@@ -10,9 +10,9 @@ import (
 	networkingv1alpha3 "knative.dev/pkg/apis/istio/v1alpha3"
 )
 
-func prepareAccessRule(api *gatewayv1alpha1.APIRule, ar *rulev1alpha1.Rule, rule gatewayv1alpha1.Rule, accessStrategies []*rulev1alpha1.Authenticator) *rulev1alpha1.Rule {
+func prepareAccessRule(api *gatewayv1alpha1.APIRule, ar *rulev1alpha1.Rule, rule gatewayv1alpha1.Rule, ruleInd int, accessStrategies []*rulev1alpha1.Authenticator) *rulev1alpha1.Rule {
 	ar.ObjectMeta.OwnerReferences = []k8sMeta.OwnerReference{generateOwnerRef(api)}
-	ar.ObjectMeta.Name = fmt.Sprintf("%s-%s", api.ObjectMeta.Name, *api.Spec.Service.Name)
+	ar.ObjectMeta.Name = fmt.Sprintf("%s-%s-%d", api.ObjectMeta.Name, *api.Spec.Service.Name, ruleInd)
 	ar.ObjectMeta.Namespace = api.ObjectMeta.Namespace
 
 	return builders.AccessRule().From(ar).
@@ -20,8 +20,8 @@ func prepareAccessRule(api *gatewayv1alpha1.APIRule, ar *rulev1alpha1.Rule, rule
 		Get()
 }
 
-func generateAccessRule(api *gatewayv1alpha1.APIRule, rule gatewayv1alpha1.Rule, accessStrategies []*rulev1alpha1.Authenticator) *rulev1alpha1.Rule {
-	name := fmt.Sprintf("%s-%s", api.ObjectMeta.Name, *api.Spec.Service.Name)
+func generateAccessRule(api *gatewayv1alpha1.APIRule, rule gatewayv1alpha1.Rule, ruleInd int, accessStrategies []*rulev1alpha1.Authenticator) *rulev1alpha1.Rule {
+	name := fmt.Sprintf("%s-%s-%d", api.ObjectMeta.Name, *api.Spec.Service.Name, ruleInd)
 	namespace := api.ObjectMeta.Namespace
 	ownerRef := generateOwnerRef(api)
 
@@ -47,6 +47,7 @@ func generateAccessRuleSpec(api *gatewayv1alpha1.APIRule, rule gatewayv1alpha1.R
 }
 
 func generateVirtualService(api *gatewayv1alpha1.APIRule, destinationHost string, destinationPort uint32, path string) *networkingv1alpha3.VirtualService {
+	//TODO implement support for "allow" & oathkeeper authn (many http objects)
 	virtualServiceName := fmt.Sprintf("%s-%s", api.ObjectMeta.Name, *api.Spec.Service.Name)
 	ownerRef := generateOwnerRef(api)
 	return builders.VirtualService().
@@ -58,7 +59,7 @@ func generateVirtualService(api *gatewayv1alpha1.APIRule, destinationHost string
 				Host(*api.Spec.Service.Host).
 				Gateway(*api.Spec.Gateway).
 				HTTP(builders.HTTPRoute().
-					Match(builders.MatchRequest().URI().Regex(path)).
+					Match(builders.MatchRequest().URI().Regex("/.*")).
 					Route(builders.RouteDestination().Host(destinationHost).Port(destinationPort)))).
 		Get()
 }
@@ -95,6 +96,7 @@ func generateObjectMeta(api *gatewayv1alpha1.APIRule) k8sMeta.ObjectMeta {
 }
 
 func prepareVirtualService(api *gatewayv1alpha1.APIRule, vs *networkingv1alpha3.VirtualService, destinationHost string, destinationPort uint32, path string) *networkingv1alpha3.VirtualService {
+	//TODO implement support for "allow" & oathkeeper authn (many http objects)
 	virtualServiceName := fmt.Sprintf("%s-%s", api.ObjectMeta.Name, *api.Spec.Service.Name)
 	ownerRef := generateOwnerRef(api)
 
@@ -107,7 +109,7 @@ func prepareVirtualService(api *gatewayv1alpha1.APIRule, vs *networkingv1alpha3.
 				Host(*api.Spec.Service.Host).
 				Gateway(*api.Spec.Gateway).
 				HTTP(builders.HTTPRoute().
-					Match(builders.MatchRequest().URI().Regex(path)).
+					Match(builders.MatchRequest().URI().Regex("/.*")).
 					Route(builders.RouteDestination().Host(destinationHost).Port(destinationPort)))).
 		Get()
 }

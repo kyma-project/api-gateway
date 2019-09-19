@@ -41,7 +41,7 @@ func (f *Factory) Run(ctx context.Context, api *gatewayv1alpha1.APIRule) error {
 	var destinationPort uint32
 	var err error
 
-	for _, rule := range api.Spec.Rules {
+	for i, rule := range api.Spec.Rules {
 		if isSecured(rule) {
 			destinationHost = f.oathkeeperSvc
 			destinationPort = f.oathkeeperSvcPort
@@ -50,7 +50,7 @@ func (f *Factory) Run(ctx context.Context, api *gatewayv1alpha1.APIRule) error {
 			destinationPort = *api.Spec.Service.Port
 		}
 		// Create one AR per path
-		err = f.processAR(ctx, api, rule.AccessStrategies)
+		err = f.processAR(ctx, api, api.Spec.Rules[i], i, rule.AccessStrategies)
 		if err != nil {
 			return err
 		}
@@ -91,8 +91,8 @@ func (f *Factory) updateAccessRule(ctx context.Context, ar *rulev1alpha1.Rule) e
 	return f.arClient.Update(ctx, ar)
 }
 
-func (f *Factory) getAccessRule(ctx context.Context, api *gatewayv1alpha1.APIRule) (*rulev1alpha1.Rule, error) {
-	ar, err := f.arClient.GetForAPI(ctx, api)
+func (f *Factory) getAccessRule(ctx context.Context, api *gatewayv1alpha1.APIRule, ruleInd int) (*rulev1alpha1.Rule, error) {
+	ar, err := f.arClient.GetForAPI(ctx, api, ruleInd)
 	if err != nil {
 		if apierrs.IsNotFound(err) {
 			return nil, nil
@@ -117,20 +117,20 @@ func (f *Factory) processVS(ctx context.Context, api *gatewayv1alpha1.APIRule, d
 	return f.createVirtualService(ctx, vs)
 }
 
-func (f *Factory) processAR(ctx context.Context, api *gatewayv1alpha1.APIRule, config []*rulev1alpha1.Authenticator) error {
-	oldAR, err := f.getAccessRule(ctx, api)
+func (f *Factory) processAR(ctx context.Context, api *gatewayv1alpha1.APIRule, rule gatewayv1alpha1.Rule, ruleInd int, config []*rulev1alpha1.Authenticator) error {
+	oldAR, err := f.getAccessRule(ctx, api, ruleInd)
 	if err != nil {
 		return err
 	}
 
 	if oldAR != nil {
-		ar := prepareAccessRule(api, oldAR, api.Spec.Rules[0], config)
+		ar := prepareAccessRule(api, oldAR, rule, ruleInd, config)
 		err = f.updateAccessRule(ctx, ar)
 		if err != nil {
 			return err
 		}
 	} else {
-		ar := generateAccessRule(api, api.Spec.Rules[0], config)
+		ar := generateAccessRule(api, rule, ruleInd, config)
 		err = f.createAccessRule(ctx, ar)
 		if err != nil {
 			return err
