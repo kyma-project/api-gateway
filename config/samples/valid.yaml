@@ -146,7 +146,7 @@ spec:
     port: 8080
     host: foo.bar
   rules:
-    - path: /.img
+    - path: /img
       methods: ["GET"]
       mutators: []
       accessStrategies:
@@ -154,9 +154,19 @@ spec:
           config:
             trusted_issuers: ["http://dex.kyma.local"]
             required_scope: []
-    - path: /.headers
+    - path: /headers
       methods: ["GET"]
       accessStrategies:
         - handler: oauth2_introspection
           config:
             required_scope: ["foo"]
+    - path: /favicon
+      methods: ["GET"]
+      accessStrategies:
+        - handler: allow
+    - path: /status/.*
+      methods: ["GET"]
+      accessStrategies:
+        - handler: noop
+      mutators:
+        - handler: noop

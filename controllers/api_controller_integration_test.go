@@ -288,7 +288,7 @@ var _ = Describe("APIRule Controller", func() {
 						Expect(vs.Spec.Gateways).To(HaveLen(1))
 						Expect(vs.Spec.Gateways[0]).To(Equal(testGatewayURL))
 						//Spec.HTTP
-						Expect(vs.Spec.HTTP).To(HaveLen(1))
+						Expect(vs.Spec.HTTP).To(HaveLen(2))
 						////// HTTP.Match[]
 						Expect(vs.Spec.HTTP[0].Match).To(HaveLen(1))
 						/////////// Match[].URI
@@ -296,7 +296,7 @@ var _ = Describe("APIRule Controller", func() {
 						Expect(vs.Spec.HTTP[0].Match[0].URI.Exact).To(BeEmpty())
 						Expect(vs.Spec.HTTP[0].Match[0].URI.Prefix).To(BeEmpty())
 						Expect(vs.Spec.HTTP[0].Match[0].URI.Suffix).To(BeEmpty())
-						Expect(vs.Spec.HTTP[0].Match[0].URI.Regex).To(Equal("/.*"))
+						Expect(vs.Spec.HTTP[0].Match[0].URI.Regex).To(Equal("/img"))
 						Expect(vs.Spec.HTTP[0].Match[0].Scheme).To(BeNil())
 						Expect(vs.Spec.HTTP[0].Match[0].Method).To(BeNil())
 						Expect(vs.Spec.HTTP[0].Match[0].Authority).To(BeNil())

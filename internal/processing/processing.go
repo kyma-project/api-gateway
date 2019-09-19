@@ -3,6 +3,7 @@ package processing
 import (
 	"context"
 	"fmt"
+	"github.com/kyma-incubator/api-gateway/internal/builders"
 
 	"github.com/go-logr/logr"
 	gatewayv1alpha1 "github.com/kyma-incubator/api-gateway/api/v1alpha1"
@@ -37,26 +38,19 @@ func NewFactory(vsClient *istioClient.VirtualService, arClient *oryClient.Access
 
 // Run ?
 func (f *Factory) Run(ctx context.Context, api *gatewayv1alpha1.APIRule) error {
-	var destinationHost string
-	var destinationPort uint32
 	var err error
 
 	for i, rule := range api.Spec.Rules {
 		if isSecured(rule) {
-			destinationHost = f.oathkeeperSvc
-			destinationPort = f.oathkeeperSvcPort
-		} else {
-			destinationHost = fmt.Sprintf("%s.%s.svc.cluster.local", *api.Spec.Service.Name, api.ObjectMeta.Namespace)
-			destinationPort = *api.Spec.Service.Port
-		}
-		// Create one AR per path
-		err = f.processAR(ctx, api, api.Spec.Rules[i], i, rule.AccessStrategies)
-		if err != nil {
-			return err
+			// Create one AR per path
+			err = f.processAR(ctx, api, api.Spec.Rules[i], i, rule.AccessStrategies)
+			if err != nil {
+				return err
+			}
 		}
 	}
 	// Compile list of paths, create one VS
-	err = f.processVS(ctx, api, destinationHost, destinationPort)
+	err = f.processVS(ctx, api)
 	if err != nil {
 		return err
 	}
@@ -103,17 +97,17 @@ func (f *Factory) getAccessRule(ctx context.Context, api *gatewayv1alpha1.APIRul
 	return ar, nil
 }
 
-func (f *Factory) processVS(ctx context.Context, api *gatewayv1alpha1.APIRule, destinationHost string, destinationPort uint32) error {
+func (f *Factory) processVS(ctx context.Context, api *gatewayv1alpha1.APIRule) error {
 	oldVS, err := f.getVirtualService(ctx, api)
 	if err != nil {
 		return err
 	}
 
 	if oldVS != nil {
-		newVS := prepareVirtualService(api, oldVS, destinationHost, destinationPort, api.Spec.Rules[0].Path)
+		newVS := f.prepareVirtualService(api, oldVS)
 		return f.updateVirtualService(ctx, newVS)
 	}
-	vs := generateVirtualService(api, destinationHost, destinationPort, api.Spec.Rules[0].Path)
+	vs := f.generateVirtualService(api)
 	return f.createVirtualService(ctx, vs)
 }
 
@@ -137,4 +131,62 @@ func (f *Factory) processAR(ctx context.Context, api *gatewayv1alpha1.APIRule, r
 		}
 	}
 	return nil
+}
+
+func (f *Factory) prepareVirtualService(api *gatewayv1alpha1.APIRule, vs *networkingv1alpha3.VirtualService) *networkingv1alpha3.VirtualService {
+	vsSpecBuilder := builders.VirtualServiceSpec()
+	vsSpecBuilder.Host(*api.Spec.Service.Host)
+	vsSpecBuilder.Gateway(*api.Spec.Gateway)
+
+	for _, rule := range api.Spec.Rules {
+		httpRouteBuilder := builders.HTTPRoute()
+
+		if isSecured(rule) {
+			httpRouteBuilder.Route(builders.RouteDestination().Host(f.oathkeeperSvc).Port(f.oathkeeperSvcPort))
+		} else {
+			destinationHost := fmt.Sprintf("%s.%s.svc.cluster.local", *api.Spec.Service.Name, api.ObjectMeta.Namespace)
+			httpRouteBuilder.Route(builders.RouteDestination().Host(destinationHost).Port(*api.Spec.Service.Port))
+		}
+
+		httpRouteBuilder.Match(builders.MatchRequest().URI().Regex(rule.Path))
+		vsSpecBuilder.HTTP(httpRouteBuilder)
+	}
+
+	vsBuilder := builders.VirtualService().
+		From(vs).
+		Spec(vsSpecBuilder)
+
+	return vsBuilder.Get()
+}
+
+func (f *Factory) generateVirtualService(api *gatewayv1alpha1.APIRule) *networkingv1alpha3.VirtualService {
+	virtualServiceName := fmt.Sprintf("%s-%s", api.ObjectMeta.Name, *api.Spec.Service.Name)
+	ownerRef := generateOwnerRef(api)
+
+	vsSpecBuilder := builders.VirtualServiceSpec()
+	vsSpecBuilder.Host(*api.Spec.Service.Host)
+	vsSpecBuilder.Gateway(*api.Spec.Gateway)
+
+	for _, rule := range api.Spec.Rules {
+		httpRouteBuilder := builders.HTTPRoute()
+
+		if isSecured(rule) {
+			httpRouteBuilder.Route(builders.RouteDestination().Host(f.oathkeeperSvc).Port(f.oathkeeperSvcPort))
+		} else {
+			destinationHost := fmt.Sprintf("%s.%s.svc.cluster.local", *api.Spec.Service.Name, api.ObjectMeta.Namespace)
+			httpRouteBuilder.Route(builders.RouteDestination().Host(destinationHost).Port(*api.Spec.Service.Port))
+		}
+
+		httpRouteBuilder.Match(builders.MatchRequest().URI().Regex(rule.Path))
+		vsSpecBuilder.HTTP(httpRouteBuilder)
+	}
+
+	vsBuilder := builders.VirtualService().
+		Name(virtualServiceName).
+		Namespace(api.ObjectMeta.Namespace).
+		Owner(builders.OwnerReference().From(&ownerRef))
+
+	vsBuilder.Spec(vsSpecBuilder)
+
+	return vsBuilder.Get()
 }

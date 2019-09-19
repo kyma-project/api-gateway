@@ -79,14 +79,15 @@ func TestCreateVS_NoOp(t *testing.T) {
 	strategies := []*rulev1alpha1.Authenticator{
 		{
 			Handler: &rulev1alpha1.Handler{
-				Name: "noop",
+				Name: "allow",
 			},
 		},
 	}
 
 	apiRule := getAPIRuleFor(strategies, []*rulev1alpha1.Mutator{})
+	f := &Factory{oathkeeperSvcPort: 1234, oathkeeperSvc: "fake.oathkeeper"}
 
-	vs := generateVirtualService(apiRule, serviceName+"."+apiNamespace+".svc.cluster.local", servicePort, apiPath)
+	vs := f.generateVirtualService(apiRule)
 
 	assert.Equal(len(vs.Spec.Gateways), 1)
 	assert.Equal(vs.Spec.Gateways[0], apiGateway)
@@ -133,8 +134,9 @@ func TestCreateVS_JWT(t *testing.T) {
 	}
 
 	apiRule := getAPIRuleFor(strategies, []*rulev1alpha1.Mutator{})
+	f := &Factory{oathkeeperSvcPort: 4455, oathkeeperSvc: "test-oathkeeper"}
 
-	vs := generateVirtualService(apiRule, "test-oathkeeper", 4455, apiPath)
+	vs := f.generateVirtualService(apiRule)
 
 	assert.Equal(len(vs.Spec.Gateways), 1)
 	assert.Equal(vs.Spec.Gateways[0], apiGateway)
@@ -183,12 +185,8 @@ func TestPrepareAR_JWT(t *testing.T) {
 	apiRule := getAPIRuleFor(strategies, []*rulev1alpha1.Mutator{})
 
 	oldAR := generateAccessRule(apiRule, apiRule.Spec.Rules[0], 0, []*rulev1alpha1.Authenticator{strategies[0]})
-	oldAR.ObjectMeta.Generation = int64(15)
-	oldAR.ObjectMeta.Name = "mst"
-
+	oldAROnwerRef := oldAR.OwnerReferences[0]
 	newAR := prepareAccessRule(apiRule, oldAR, apiRule.Spec.Rules[0], 0, []*rulev1alpha1.Authenticator{strategies[0]})
-
-	assert.Equal(newAR.ObjectMeta.Generation, int64(15))
 
 	assert.Equal(len(newAR.Spec.Authenticators), 1)
 	assert.Equal(newAR.Spec.Authenticators[0].Name, "jwt")
@@ -207,11 +205,12 @@ func TestPrepareAR_JWT(t *testing.T) {
 	assert.Equal(newAR.ObjectMeta.Name, apiName+"-"+serviceName+"-0")
 	assert.Equal(newAR.ObjectMeta.Namespace, apiNamespace)
 
-	assert.Equal(newAR.ObjectMeta.OwnerReferences[0].APIVersion, apiAPIVersion)
-	assert.Equal(newAR.ObjectMeta.OwnerReferences[0].Kind, apiKind)
-	assert.Equal(newAR.ObjectMeta.OwnerReferences[0].Name, apiName)
-	assert.Equal(newAR.ObjectMeta.OwnerReferences[0].UID, apiUID)
+	assert.Equal(len(newAR.ObjectMeta.OwnerReferences), 1)
 
+	assert.Equal(newAR.ObjectMeta.OwnerReferences[0].APIVersion, oldAROnwerRef.APIVersion)
+	assert.Equal(newAR.ObjectMeta.OwnerReferences[0].Kind, oldAROnwerRef.Kind)
+	assert.Equal(newAR.ObjectMeta.OwnerReferences[0].Name, oldAROnwerRef.Name)
+	assert.Equal(newAR.ObjectMeta.OwnerReferences[0].UID, oldAROnwerRef.UID)
 }
 
 func TestGenerateAR_JWT(t *testing.T) {
@@ -283,7 +282,8 @@ func TestGenerateVS_OAUTH(t *testing.T) {
 	}
 
 	apiRule := getAPIRuleFor(strategies, []*rulev1alpha1.Mutator{})
-	vs := generateVirtualService(apiRule, "test-oathkeeper", 4455, apiRule.Spec.Rules[0].Path)
+	f := &Factory{oathkeeperSvcPort: 4455, oathkeeperSvc: "test-oathkeeper"}
+	vs := f.generateVirtualService(apiRule)
 
 	assert.Equal(len(vs.Spec.Gateways), 1)
 	assert.Equal(vs.Spec.Gateways[0], apiGateway)
@@ -328,15 +328,11 @@ func TestPrepareVS_OAUTH(t *testing.T) {
 	}
 
 	apiRule := getAPIRuleFor(strategies, []*rulev1alpha1.Mutator{})
+	f := &Factory{oathkeeperSvcPort: 4455, oathkeeperSvc: "test-oathkeeper"}
 
-	oldVS := generateVirtualService(apiRule, "test-oathkeeper", 4455, apiRule.Spec.Rules[0].Path)
-
-	oldVS.ObjectMeta.Generation = int64(15)
-	oldVS.ObjectMeta.Name = "mst"
-
-	newVS := prepareVirtualService(apiRule, oldVS, "test-oathkeeper", 4455, apiRule.Spec.Rules[0].Path)
-
-	assert.Equal(newVS.ObjectMeta.Generation, int64(15))
+	oldVS := f.generateVirtualService(apiRule)
+	oldVSOnwerRef := oldVS.OwnerReferences[0]
+	newVS := f.prepareVirtualService(apiRule, oldVS)
 
 	assert.Equal(len(newVS.Spec.Gateways), 1)
 	assert.Equal(newVS.Spec.Gateways[0], apiGateway)
@@ -351,14 +347,11 @@ func TestPrepareVS_OAUTH(t *testing.T) {
 	assert.Equal(int(newVS.Spec.HTTP[0].Route[0].Destination.Port.Number), 4455)
 	assert.Equal(newVS.Spec.HTTP[0].Match[0].URI.Regex, apiPath)
 
-	assert.Equal(newVS.ObjectMeta.Name, apiName+"-"+serviceName)
-	assert.Equal(newVS.ObjectMeta.Namespace, apiNamespace)
-
-	assert.Equal(newVS.ObjectMeta.OwnerReferences[0].APIVersion, apiAPIVersion)
-	assert.Equal(newVS.ObjectMeta.OwnerReferences[0].Kind, apiKind)
-	assert.Equal(newVS.ObjectMeta.OwnerReferences[0].Name, apiName)
-	assert.Equal(newVS.ObjectMeta.OwnerReferences[0].UID, apiUID)
-
+	assert.Equal(len(newVS.ObjectMeta.OwnerReferences), 1)
+	assert.Equal(newVS.ObjectMeta.OwnerReferences[0].APIVersion, oldVSOnwerRef.APIVersion)
+	assert.Equal(newVS.ObjectMeta.OwnerReferences[0].Kind, oldVSOnwerRef.Kind)
+	assert.Equal(newVS.ObjectMeta.OwnerReferences[0].Name, oldVSOnwerRef.Name)
+	assert.Equal(newVS.ObjectMeta.OwnerReferences[0].UID, oldVSOnwerRef.UID)
 }
 
 func TestGenerateAR_OAUTH(t *testing.T) {
@@ -430,13 +423,8 @@ func TestPreapreAR_OAUTH(t *testing.T) {
 	apiRule := getAPIRuleFor(strategies, []*rulev1alpha1.Mutator{})
 
 	oldAR := generateAccessRule(apiRule, apiRule.Spec.Rules[0], 0, strategies)
-
-	oldAR.ObjectMeta.Generation = int64(15)
-	oldAR.ObjectMeta.Name = "mst"
-
+	oldAROnwerRef := oldAR.OwnerReferences[0]
 	newAR := prepareAccessRule(apiRule, oldAR, apiRule.Spec.Rules[0], 0, strategies)
-
-	assert.Equal(newAR.ObjectMeta.Generation, int64(15))
 
 	assert.Equal(len(newAR.Spec.Authenticators), 1)
 	assert.NotEmpty(newAR.Spec.Authenticators[0].Config)
@@ -452,12 +440,9 @@ func TestPreapreAR_OAUTH(t *testing.T) {
 
 	assert.Equal(newAR.Spec.Upstream.URL, "http://example-service.some-namespace.svc.cluster.local:8080")
 
-	assert.Equal(newAR.ObjectMeta.Name, apiName+"-"+serviceName+"-0")
-	assert.Equal(newAR.ObjectMeta.Namespace, apiNamespace)
-
-	assert.Equal(newAR.ObjectMeta.OwnerReferences[0].APIVersion, apiAPIVersion)
-	assert.Equal(newAR.ObjectMeta.OwnerReferences[0].Kind, apiKind)
-	assert.Equal(newAR.ObjectMeta.OwnerReferences[0].Name, apiName)
-	assert.Equal(newAR.ObjectMeta.OwnerReferences[0].UID, apiUID)
-
+	assert.Equal(len(newAR.ObjectMeta.OwnerReferences), 1)
+	assert.Equal(newAR.ObjectMeta.OwnerReferences[0].APIVersion, oldAROnwerRef.APIVersion)
+	assert.Equal(newAR.ObjectMeta.OwnerReferences[0].Kind, oldAROnwerRef.Kind)
+	assert.Equal(newAR.ObjectMeta.OwnerReferences[0].Name, oldAROnwerRef.Name)
+	assert.Equal(newAR.ObjectMeta.OwnerReferences[0].UID, oldAROnwerRef.UID)
 }
