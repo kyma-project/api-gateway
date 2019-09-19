@@ -19,6 +19,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"strings"
 
 	gatewayv1alpha1 "github.com/kyma-incubator/api-gateway/api/v1alpha1"
 	"github.com/kyma-incubator/api-gateway/controllers"
@@ -52,6 +53,7 @@ func main() {
 	var jwksURI string
 	var oathkeeperSvcAddr string
 	var oathkeeperSvcPort uint
+	var blackListedServices string
 
 	flag.StringVar(&oathkeeperSvcAddr, "oathkeeper-svc-address", "", "Oathkeeper proxy service")
 	flag.UintVar(&oathkeeperSvcPort, "oathkeeper-svc-port", 0, "Oathkeeper proxy service port")
@@ -59,6 +61,7 @@ func main() {
 	flag.StringVar(&jwksURI, "jwks-uri", "", "URL of the provider's public key set to validate signature of the JWT")
 	flag.BoolVar(&enableLeaderElection, "enable-leader-election", false,
 		"Enable leader election for controller manager. Enabling this will ensure there is only one active controller manager.")
+	flag.StringVar(&blackListedServices, "service-blacklist", "kubernetes", "List of services to be blacklisted from exposure.")
 	flag.Parse()
 
 	ctrl.SetLogger(zap.Logger(true))
@@ -93,7 +96,7 @@ func main() {
 		OathkeeperSvc:     oathkeeperSvcAddr,
 		OathkeeperSvcPort: uint32(oathkeeperSvcPort),
 		JWKSURI:           jwksURI,
-		Validator:         &validation.APIRule{},
+		Validator:         &validation.APIRule{BlackList: parseServices(blackListedServices)},
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Api")
 		os.Exit(1)
@@ -105,4 +108,15 @@ func main() {
 		setupLog.Error(err, "problem running manager")
 		os.Exit(1)
 	}
+}
+
+func parseServices(raw string) []string {
+	var result []string
+	for _, s := range strings.Split(raw, ",") {
+		trim := strings.TrimSpace(s)
+		if trim != "" {
+			result = append(result, trim)
+		}
+	}
+	return result
 }

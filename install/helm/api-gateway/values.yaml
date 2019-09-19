@@ -7,7 +7,7 @@ rbacJob:
 
 image:
   repository: eu.gcr.io/kyma-project/incubator/develop/api-gateway-controller
-  tag: "1669a1f9"
+  tag: "c2eb9a00"
   # Image pull policy
   pullPolicy: IfNotPresent
 
@@ -29,6 +29,9 @@ config:
     service: ory-oathkeeper
     port: 4455
   jwksURI: https://example.com/.well-known/jwks.json
+  blackList:
+    - kubernetes
+    - kube-dns
 
   # Node labels for pod assignment.
   nodeSelector: {}

@@ -35,6 +35,7 @@ func configNotEmpty(config *runtime.RawExtension) bool {
 
 //APIRule is used to validate github.com/kyma-incubator/api-gateway/api/v1alpha1/APIRule instances
 type APIRule struct {
+	BlackList []string
 }
 
 //Validate performs APIRule validation
@@ -58,7 +59,16 @@ type Failure struct {
 }
 
 func (v *APIRule) validateService(attributePath string, service *gatewayv1alpha1.Service) []Failure {
-	return nil
+	var problems []Failure
+	for _, svc := range v.BlackList {
+		if svc == *service.Name {
+			problems = append(problems, Failure{
+				AttributePath: attributePath + ".name",
+				Message:       "This service has been blacklisted",
+			})
+		}
+	}
+	return problems
 }
 
 func (v *APIRule) validateGateway(attributePath string, gateway *string) []Failure {

@@ -66,3 +66,20 @@ spec:
       accessStrategies:
         - handler: noop
       mutators: []
+---
+apiVersion: gateway.kyma-project.io/v1alpha1
+kind: APIRule
+metadata:
+  name: blacklisted-service
+spec:
+  service:
+    host: kubernetes.kyma.local
+    name: kubernetes
+    port: 443
+  gateway: kyma-gateway.kyma-system.svc.cluster.local
+  rules:
+    - path: /.*
+      methods: ["GET", "POST"]
+      accessStrategies:
+        - handler: noop
+      mutators: []

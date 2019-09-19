@@ -12,3 +12,4 @@ spec:
           - --oathkeeper-svc-address="change-me"
           - --oathkeeper-svc-port="change-me"
           - --jwks-uri="change-me"
+          - --service-blacklist="kubernetes"

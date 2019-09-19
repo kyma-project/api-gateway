@@ -20,6 +20,7 @@ spec:
         - --oathkeeper-svc-address="change-me"
         - --oathkeeper-svc-port="change-me"
         - --jwks-uri="change-me"
+        - --service-blacklist="kubernetes"
         command:
         - /manager
         image: eu.gcr.io/kyma-project/incubator/develop/api-gateway-controller:1669a1f9
