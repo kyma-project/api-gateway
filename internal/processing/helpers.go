@@ -9,10 +9,8 @@ import (
 	k8sMeta "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func prepareAccessRule(api *gatewayv1alpha1.APIRule, ar *rulev1alpha1.Rule, rule gatewayv1alpha1.Rule, ruleInd int, accessStrategies []*rulev1alpha1.Authenticator) *rulev1alpha1.Rule {
-	return builders.AccessRule().From(ar).
-		Spec(builders.AccessRuleSpec().From(generateAccessRuleSpec(api, rule, accessStrategies))).
-		Get()
+func modifyAccessRule(existing, required *rulev1alpha1.Rule) {
+	existing.Spec = required.Spec
 }
 
 func generateAccessRule(api *gatewayv1alpha1.APIRule, rule gatewayv1alpha1.Rule, ruleInd int, accessStrategies []*rulev1alpha1.Authenticator) *rulev1alpha1.Rule {

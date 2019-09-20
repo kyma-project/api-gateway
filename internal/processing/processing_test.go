@@ -160,59 +160,6 @@ func TestCreateVS_JWT(t *testing.T) {
 	assert.Equal(vs.ObjectMeta.OwnerReferences[0].UID, apiUID)
 
 }
-
-func TestPrepareAR_JWT(t *testing.T) {
-	assert := assert.New(t)
-
-	configJSON := fmt.Sprintf(`
-		{
-			"trusted_issuers": ["%s"],
-			"jwks": [],
-			"required_scope": [%s]
-	}`, jwtIssuer, toCSVList(apiScopes))
-
-	strategies := []*rulev1alpha1.Authenticator{
-		{
-			Handler: &rulev1alpha1.Handler{
-				Name: "jwt",
-				Config: &runtime.RawExtension{
-					Raw: []byte(configJSON),
-				},
-			},
-		},
-	}
-
-	apiRule := getAPIRuleFor(strategies, []*rulev1alpha1.Mutator{})
-
-	oldAR := generateAccessRule(apiRule, apiRule.Spec.Rules[0], 0, []*rulev1alpha1.Authenticator{strategies[0]})
-	oldAROnwerRef := oldAR.OwnerReferences[0]
-	newAR := prepareAccessRule(apiRule, oldAR, apiRule.Spec.Rules[0], 0, []*rulev1alpha1.Authenticator{strategies[0]})
-
-	assert.Equal(len(newAR.Spec.Authenticators), 1)
-	assert.Equal(newAR.Spec.Authenticators[0].Name, "jwt")
-	assert.NotEmpty(newAR.Spec.Authenticators[0].Config)
-	assert.Equal(string(newAR.Spec.Authenticators[0].Config.Raw), configJSON)
-
-	assert.Equal(len(newAR.Spec.Match.Methods), 1)
-	assert.Equal(newAR.Spec.Match.Methods, []string{"GET"})
-	assert.Equal(newAR.Spec.Match.URL, "<http|https>://myService.myDomain.com</.*>")
-
-	assert.Equal(newAR.Spec.Authorizer.Name, "allow")
-	assert.Empty(newAR.Spec.Authorizer.Config)
-
-	assert.Equal(newAR.Spec.Upstream.URL, "http://example-service.some-namespace.svc.cluster.local:8080")
-
-	assert.Equal(newAR.ObjectMeta.Name, apiName+"-"+serviceName+"-0")
-	assert.Equal(newAR.ObjectMeta.Namespace, apiNamespace)
-
-	assert.Equal(len(newAR.ObjectMeta.OwnerReferences), 1)
-
-	assert.Equal(newAR.ObjectMeta.OwnerReferences[0].APIVersion, oldAROnwerRef.APIVersion)
-	assert.Equal(newAR.ObjectMeta.OwnerReferences[0].Kind, oldAROnwerRef.Kind)
-	assert.Equal(newAR.ObjectMeta.OwnerReferences[0].Name, oldAROnwerRef.Name)
-	assert.Equal(newAR.ObjectMeta.OwnerReferences[0].UID, oldAROnwerRef.UID)
-}
-
 func TestGenerateAR_JWT(t *testing.T) {
 	assert := assert.New(t)
 
@@ -308,52 +255,6 @@ func TestGenerateVS_OAUTH(t *testing.T) {
 
 }
 
-func TestPrepareVS_OAUTH(t *testing.T) {
-	assert := assert.New(t)
-
-	configJSON := fmt.Sprintf(`
-		{
-			"required_scope": [%s]
-	}`, toCSVList(apiScopes))
-
-	strategies := []*rulev1alpha1.Authenticator{
-		{
-			Handler: &rulev1alpha1.Handler{
-				Name: "oauth2_introspection",
-				Config: &runtime.RawExtension{
-					Raw: []byte(configJSON),
-				},
-			},
-		},
-	}
-
-	apiRule := getAPIRuleFor(strategies, []*rulev1alpha1.Mutator{})
-	f := &Factory{oathkeeperSvcPort: 4455, oathkeeperSvc: "test-oathkeeper"}
-
-	oldVS := f.generateVirtualService(apiRule)
-	oldVSOnwerRef := oldVS.OwnerReferences[0]
-	newVS := f.prepareVirtualService(apiRule, oldVS)
-
-	assert.Equal(len(newVS.Spec.Gateways), 1)
-	assert.Equal(newVS.Spec.Gateways[0], apiGateway)
-
-	assert.Equal(len(newVS.Spec.Hosts), 1)
-	assert.Equal(newVS.Spec.Hosts[0], serviceHost)
-
-	assert.Equal(len(newVS.Spec.HTTP), 1)
-	assert.Equal(len(newVS.Spec.HTTP[0].Route), 1)
-	assert.Equal(len(newVS.Spec.HTTP[0].Match), 1)
-	assert.Equal(newVS.Spec.HTTP[0].Route[0].Destination.Host, "test-oathkeeper")
-	assert.Equal(int(newVS.Spec.HTTP[0].Route[0].Destination.Port.Number), 4455)
-	assert.Equal(newVS.Spec.HTTP[0].Match[0].URI.Regex, apiPath)
-
-	assert.Equal(len(newVS.ObjectMeta.OwnerReferences), 1)
-	assert.Equal(newVS.ObjectMeta.OwnerReferences[0].APIVersion, oldVSOnwerRef.APIVersion)
-	assert.Equal(newVS.ObjectMeta.OwnerReferences[0].Kind, oldVSOnwerRef.Kind)
-	assert.Equal(newVS.ObjectMeta.OwnerReferences[0].Name, oldVSOnwerRef.Name)
-	assert.Equal(newVS.ObjectMeta.OwnerReferences[0].UID, oldVSOnwerRef.UID)
-}
-
 func TestGenerateAR_OAUTH(t *testing.T) {
 	assert := assert.New(t)
 
@@ -399,50 +300,4 @@ func TestGenerateAR_OAUTH(t *testing.T) {
 	assert.Equal(ar.ObjectMeta.OwnerReferences[0].Name, apiName)
 	assert.Equal(ar.ObjectMeta.OwnerReferences[0].UID, apiUID)
 
-}
-
-func TestPreapreAR_OAUTH(t *testing.T) {
-	assert := assert.New(t)
-
-	configJSON := fmt.Sprintf(`
-		{
-			"required_scope": [%s]
-	}`, toCSVList(apiScopes))
-
-	strategies := []*rulev1alpha1.Authenticator{
-		{
-			Handler: &rulev1alpha1.Handler{
-				Name: "oauth2_introspection",
-				Config: &runtime.RawExtension{
-					Raw: []byte(configJSON),
-				},
-			},
-		},
-	}
-
-	apiRule := getAPIRuleFor(strategies, []*rulev1alpha1.Mutator{})
-
-	oldAR := generateAccessRule(apiRule, apiRule.Spec.Rules[0], 0, strategies)
-	oldAROnwerRef := oldAR.OwnerReferences[0]
-	newAR := prepareAccessRule(apiRule, oldAR, apiRule.Spec.Rules[0], 0, strategies)
-
-	assert.Equal(len(newAR.Spec.Authenticators), 1)
-	assert.NotEmpty(newAR.Spec.Authenticators[0].Config)
-	assert.Equal(newAR.Spec.Authenticators[0].Name, "oauth2_introspection")
-	assert.Equal(string(newAR.Spec.Authenticators[0].Config.Raw), configJSON)
-
-	assert.Equal(len(newAR.Spec.Match.Methods), 1)
-	assert.Equal(newAR.Spec.Match.Methods[0], "GET")
-	assert.Equal(newAR.Spec.Match.URL, "<http|https>://myService.myDomain.com</.*>")
-
-	assert.Equal(newAR.Spec.Authorizer.Name, "allow")
-	assert.Empty(newAR.Spec.Authorizer.Config)
-
-	assert.Equal(newAR.Spec.Upstream.URL, "http://example-service.some-namespace.svc.cluster.local:8080")
-
-	assert.Equal(len(newAR.ObjectMeta.OwnerReferences), 1)
-	assert.Equal(newAR.ObjectMeta.OwnerReferences[0].APIVersion, oldAROnwerRef.APIVersion)
-	assert.Equal(newAR.ObjectMeta.OwnerReferences[0].Kind, oldAROnwerRef.Kind)
-	assert.Equal(newAR.ObjectMeta.OwnerReferences[0].Name, oldAROnwerRef.Name)
-	assert.Equal(newAR.ObjectMeta.OwnerReferences[0].UID, oldAROnwerRef.UID)
 }

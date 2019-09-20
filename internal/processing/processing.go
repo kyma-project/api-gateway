@@ -3,6 +3,7 @@ package processing
 import (
 	"context"
 	"fmt"
+
 	"github.com/kyma-incubator/api-gateway/internal/builders"
 
 	"github.com/go-logr/logr"
@@ -36,23 +37,46 @@ func NewFactory(vsClient *istioClient.VirtualService, arClient *oryClient.Access
 	}
 }
 
-// Run ?
-func (f *Factory) Run(ctx context.Context, api *gatewayv1alpha1.APIRule) error {
-	var err error
+// RequiredObjects carries required state of the cluster after reconciliation
+type RequiredObjects struct {
+	virtualServices []*networkingv1alpha3.VirtualService
+	accessRules     []*rulev1alpha1.Rule
+}
+
+// CalculateRequiredState returns required state of all objects related to given api
+func (f *Factory) CalculateRequiredState(api *gatewayv1alpha1.APIRule) RequiredObjects {
+	var res RequiredObjects
 
 	for i, rule := range api.Spec.Rules {
 		if isSecured(rule) {
-			// Create one AR per path
-			err = f.processAR(ctx, api, api.Spec.Rules[i], i, rule.AccessStrategies)
-			if err != nil {
-				return err
-			}
+			ar := generateAccessRule(api, api.Spec.Rules[i], i, rule.AccessStrategies)
+			res.accessRules = append(res.accessRules, ar)
 		}
 	}
-	// Compile list of paths, create one VS
-	err = f.processVS(ctx, api)
-	if err != nil {
-		return err
+
+	//Only one vs
+	vs := f.generateVirtualService(api)
+	res.virtualServices = append(res.virtualServices, vs)
+
+	return res
+}
+
+// ApplyRequiredState applies required state to the cluster
+//TODO: It should be possible to get rid of api parameter
+func (f *Factory) ApplyRequiredState(ctx context.Context, requiredState RequiredObjects, api *gatewayv1alpha1.APIRule) error {
+
+	for i, rule := range requiredState.accessRules {
+		err := f.processAR(ctx, rule, api, i)
+		if err != nil {
+			return err
+		}
+	}
+
+	for _, vs := range requiredState.virtualServices {
+		err := f.processVS(ctx, vs, api)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -97,66 +121,34 @@ func (f *Factory) getAccessRule(ctx context.Context, api *gatewayv1alpha1.APIRul
 	return ar, nil
 }
 
-func (f *Factory) processVS(ctx context.Context, api *gatewayv1alpha1.APIRule) error {
-	oldVS, err := f.getVirtualService(ctx, api)
+func (f *Factory) processVS(ctx context.Context, required *networkingv1alpha3.VirtualService, api *gatewayv1alpha1.APIRule) error {
+	existingVS, err := f.getVirtualService(ctx, api)
+	if err != nil {
+		return err
+	}
+	if existingVS != nil {
+		f.modifyVirtualService(existingVS, required)
+		return f.updateVirtualService(ctx, existingVS)
+	}
+	return f.createVirtualService(ctx, required)
+}
+
+func (f *Factory) processAR(ctx context.Context, required *rulev1alpha1.Rule, api *gatewayv1alpha1.APIRule, ruleInd int) error {
+	existingAR, err := f.getAccessRule(ctx, api, ruleInd)
 	if err != nil {
 		return err
 	}
 
-	if oldVS != nil {
-		newVS := f.prepareVirtualService(api, oldVS)
-		return f.updateVirtualService(ctx, newVS)
+	if existingAR != nil {
+		modifyAccessRule(existingAR, required)
+		return f.updateAccessRule(ctx, existingAR)
 	}
-	vs := f.generateVirtualService(api)
-	return f.createVirtualService(ctx, vs)
+	return f.createAccessRule(ctx, required)
 }
 
-func (f *Factory) processAR(ctx context.Context, api *gatewayv1alpha1.APIRule, rule gatewayv1alpha1.Rule, ruleInd int, config []*rulev1alpha1.Authenticator) error {
-	oldAR, err := f.getAccessRule(ctx, api, ruleInd)
-	if err != nil {
-		return err
-	}
-
-	if oldAR != nil {
-		ar := prepareAccessRule(api, oldAR, rule, ruleInd, config)
-		err = f.updateAccessRule(ctx, ar)
-		if err != nil {
-			return err
-		}
-	} else {
-		ar := generateAccessRule(api, rule, ruleInd, config)
-		err = f.createAccessRule(ctx, ar)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (f *Factory) prepareVirtualService(api *gatewayv1alpha1.APIRule, vs *networkingv1alpha3.VirtualService) *networkingv1alpha3.VirtualService {
-	vsSpecBuilder := builders.VirtualServiceSpec()
-	vsSpecBuilder.Host(*api.Spec.Service.Host)
-	vsSpecBuilder.Gateway(*api.Spec.Gateway)
-
-	for _, rule := range api.Spec.Rules {
-		httpRouteBuilder := builders.HTTPRoute()
-
-		if isSecured(rule) {
-			httpRouteBuilder.Route(builders.RouteDestination().Host(f.oathkeeperSvc).Port(f.oathkeeperSvcPort))
-		} else {
-			destinationHost := fmt.Sprintf("%s.%s.svc.cluster.local", *api.Spec.Service.Name, api.ObjectMeta.Namespace)
-			httpRouteBuilder.Route(builders.RouteDestination().Host(destinationHost).Port(*api.Spec.Service.Port))
-		}
-
-		httpRouteBuilder.Match(builders.MatchRequest().URI().Regex(rule.Path))
-		vsSpecBuilder.HTTP(httpRouteBuilder)
-	}
-
-	vsBuilder := builders.VirtualService().
-		From(vs).
-		Spec(vsSpecBuilder)
-
-	return vsBuilder.Get()
+//TODO: Find better name (updateVirtualService is already taken)
+func (f *Factory) modifyVirtualService(existing, required *networkingv1alpha3.VirtualService) {
+	existing.Spec = required.Spec
 }
 
 func (f *Factory) generateVirtualService(api *gatewayv1alpha1.APIRule) *networkingv1alpha3.VirtualService {

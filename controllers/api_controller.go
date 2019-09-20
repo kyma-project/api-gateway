@@ -85,6 +85,7 @@ func (r *APIReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	//Prevent reconciliation after status update. It should be solved by controller-runtime implementation but still isn't.
 	if api.Generation != api.Status.ObservedGeneration {
 
+		//1) Validate input
 		validationFailures := r.Validator.Validate(api)
 		if len(validationFailures) > 0 {
 			r.Log.Info(fmt.Sprintf(`Validation failure {"controller": "Api", "request": "%s/%s"}`, api.Namespace, api.Name))
@@ -97,7 +98,18 @@ func (r *APIReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 			return doneReconcile()
 		}
 
-		err = processing.NewFactory(r.ExtCRClients.ForVirtualService(), r.ExtCRClients.ForAccessRule(), r.Log, r.OathkeeperSvc, r.OathkeeperSvcPort, r.JWKSURI).Run(ctx, api)
+		//2) Compute list of required objects (the set of objects required to satisfy our contract on apiRule.Spec, not yet applied)
+		factory := processing.NewFactory(r.ExtCRClients.ForVirtualService(), r.ExtCRClients.ForAccessRule(), r.Log, r.OathkeeperSvc, r.OathkeeperSvcPort, r.JWKSURI)
+		requiredObjects := factory.CalculateRequiredState(api)
+
+		//3) Compare required objects to cluster state and update cluster state to reflect requirements
+		//TODO-IN-FUTURE: Re-implement according to the following logic:
+		//3.1) Fetch all existing objects related to _this_ apiRule from the cluster (VS, Rules)
+		//3.2) Based on required objects, compute four sets of objects: vsToUpdate, arToCreate, arToUpdate, arToDelete
+		//3.3) Apply changes to the cluster
+		err := factory.ApplyRequiredState(ctx, requiredObjects, api)
+
+		//4) Update status of CR
 		if err != nil {
 			virtualServiceStatus = &gatewayv1alpha1.APIRuleResourceStatus{
 				Code:        gatewayv1alpha1.StatusError,
