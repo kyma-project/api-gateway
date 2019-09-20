@@ -30,6 +30,8 @@ The API Gateway Controller manages Istio VirtualServices and Oathkeeper Rule. Th
 | **oathkeeper-svc-address** | yes | ory oathkeeper-proxy service address. | `ory-oathkeeper-proxy.kyma-system.svc.cluster.local` |
 | **oathkeeper-svc-port** | yes | ory oathkeeper-proxy service port. | `4455` |
 | **jwks-uri** | yes | default jwksUri in the Policy. | any string |
+| **service-blacklist** | no | list of services to be blacklisted | `kubernetes` <br> `kube-dns` | 
+| **domain-whitelist** | yes | list of domains that can be exposed | `kyma.local` <br> `foo.bar` | 
 
 ## Custom Resource
 

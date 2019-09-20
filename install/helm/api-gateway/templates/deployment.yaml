@@ -35,8 +35,11 @@ spec:
             - --oathkeeper-svc-address={{ .Values.config.oathkeeper.service }}
             - --oathkeeper-svc-port={{ .Values.config.oathkeeper.port }}
             - --jwks-uri={{ .Values.config.jwksURI }}
-            {{- with .Values.config.blackList }}
+            {{- with .Values.config.serviceBlackList }}
             - --service-blacklist={{ . | join ", " | quote }}
+            {{- end }}
+            {{- with .Values.config.domainWhiteList }}
+            - --domain-whitelist={{ . | join ", " | quote }}
             {{- end }}
           resources:
             {{- toYaml .Values.deployment.resources | nindent 12 }}

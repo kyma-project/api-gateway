@@ -102,7 +102,9 @@ func getAPIReconciler(mgr manager.Manager) reconcile.Reconciler {
 		Client:       mgr.GetClient(),
 		ExtCRClients: crClients.New(mgr.GetClient()),
 		Log:          ctrl.Log.WithName("controllers").WithName("Api"),
-		Validator:    &validation.APIRule{},
+		Validator: &validation.APIRule{
+			DomainWhiteList: []string{"bar", "kyma.local"},
+		},
 	}
 }
 

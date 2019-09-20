@@ -82,7 +82,9 @@ var _ = BeforeSuite(func(done Done) {
 		Log:               ctrl.Log.WithName("controllers").WithName("Api"),
 		OathkeeperSvc:     testOathkeeperSvcURL,
 		OathkeeperSvcPort: testOathkeeperPort,
-		Validator:         &validation.APIRule{},
+		Validator: &validation.APIRule{
+			DomainWhiteList: []string{"bar", "kyma.local"},
+		},
 	}
 
 	var recFn reconcile.Reconciler

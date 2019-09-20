@@ -54,6 +54,7 @@ func main() {
 	var oathkeeperSvcAddr string
 	var oathkeeperSvcPort uint
 	var blackListedServices string
+	var whiteListedDomains string
 
 	flag.StringVar(&oathkeeperSvcAddr, "oathkeeper-svc-address", "", "Oathkeeper proxy service")
 	flag.UintVar(&oathkeeperSvcPort, "oathkeeper-svc-port", 0, "Oathkeeper proxy service port")
@@ -62,6 +63,7 @@ func main() {
 	flag.BoolVar(&enableLeaderElection, "enable-leader-election", false,
 		"Enable leader election for controller manager. Enabling this will ensure there is only one active controller manager.")
 	flag.StringVar(&blackListedServices, "service-blacklist", "kubernetes", "List of services to be blacklisted from exposure.")
+	flag.StringVar(&whiteListedDomains, "domain-whitelist", "", "List of domains to be allowed.")
 	flag.Parse()
 
 	ctrl.SetLogger(zap.Logger(true))
@@ -77,6 +79,17 @@ func main() {
 	if oathkeeperSvcPort == 0 {
 		setupLog.Error(fmt.Errorf("oathkeeper service port can't be empty"), "unable to create controller", "controller", "Api")
 		os.Exit(1)
+	}
+	if whiteListedDomains == "" {
+		setupLog.Error(fmt.Errorf("domain whitelist can't be empty"), "unable to create controller", "controller", "Api")
+		os.Exit(1)
+	} else {
+		for _, domain := range getList(whiteListedDomains) {
+			if !validation.ValidateDomainName(domain) {
+				setupLog.Error(fmt.Errorf("invalid domain in domain whitelist"), "unable to create controller", "controller", "Api")
+				os.Exit(1)
+			}
+		}
 	}
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
@@ -96,7 +109,10 @@ func main() {
 		OathkeeperSvc:     oathkeeperSvcAddr,
 		OathkeeperSvcPort: uint32(oathkeeperSvcPort),
 		JWKSURI:           jwksURI,
-		Validator:         &validation.APIRule{BlackList: parseServices(blackListedServices)},
+		Validator: &validation.APIRule{
+			ServiceBlackList: getList(blackListedServices),
+			DomainWhiteList:  getList(whiteListedDomains),
+		},
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Api")
 		os.Exit(1)
@@ -110,7 +126,7 @@ func main() {
 	}
 }
 
-func parseServices(raw string) []string {
+func getList(raw string) []string {
 	var result []string
 	for _, s := range strings.Split(raw, ",") {
 		trim := strings.TrimSpace(s)

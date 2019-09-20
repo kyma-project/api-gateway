@@ -3,6 +3,7 @@ package validation
 import (
 	"bytes"
 	"fmt"
+	"strings"
 
 	gatewayv1alpha1 "github.com/kyma-incubator/api-gateway/api/v1alpha1"
 	"github.com/ory/oathkeeper-maester/api/v1alpha1"
@@ -35,7 +36,8 @@ func configNotEmpty(config *runtime.RawExtension) bool {
 
 //APIRule is used to validate github.com/kyma-incubator/api-gateway/api/v1alpha1/APIRule instances
 type APIRule struct {
-	BlackList []string
+	ServiceBlackList []string
+	DomainWhiteList  []string
 }
 
 //Validate performs APIRule validation
@@ -60,13 +62,25 @@ type Failure struct {
 
 func (v *APIRule) validateService(attributePath string, service *gatewayv1alpha1.Service) []Failure {
 	var problems []Failure
-	for _, svc := range v.BlackList {
+	domainFound := false
+	for _, svc := range v.ServiceBlackList {
 		if svc == *service.Name {
 			problems = append(problems, Failure{
 				AttributePath: attributePath + ".name",
 				Message:       "This service has been blacklisted",
 			})
 		}
+	}
+	for _, domain := range v.DomainWhiteList {
+		if strings.HasSuffix(*service.Host, domain) {
+			domainFound = true
+		}
+	}
+	if !domainFound {
+		problems = append(problems, Failure{
+			AttributePath: attributePath + ".host",
+			Message:       "Host is not whitelisted",
+		})
 	}
 	return problems
 }

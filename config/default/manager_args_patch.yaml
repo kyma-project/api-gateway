@@ -13,3 +13,4 @@ spec:
           - --oathkeeper-svc-port="change-me"
           - --jwks-uri="change-me"
           - --service-blacklist="kubernetes"
+          - --domain-whitelist=""kyma.local""

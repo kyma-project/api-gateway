@@ -43,7 +43,7 @@ spec:
   service:
     name: foo-service
     port: 8080
-    host: foo.bar
+    host: foo.kyma.local
   rules:
     - path: /.*
       methods: ["GET"]
@@ -63,7 +63,7 @@ spec:
   service:
     name: foo-service
     port: 8080
-    host: foo.bar
+    host: foo.kyma.local
   rules:
     - path: /.*
       methods: ["GET"]
@@ -84,7 +84,7 @@ spec:
   service:
     name: foo-service
     port: 8080
-    host: foo.bar
+    host: foo.kyma.local
   rules:
     - path: /.*
       methods: ["GET"]
@@ -144,7 +144,7 @@ spec:
   service:
     name: foo-service
     port: 8080
-    host: foo.bar
+    host: foo.kyma.local
   rules:
     - path: /img
       methods: ["GET"]

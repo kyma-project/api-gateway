@@ -19,10 +19,10 @@ spec:
 apiVersion: gateway.kyma-project.io/v1alpha1
 kind: APIRule
 metadata:
-  name: passthrough-bad-host
+  name: passthrough-bad-gateway
 spec:
   service:
-    host: https://imgur.com
+    host: httpbin.kyma.local
     name: httpbin
     port: 8000
   gateway: short-name-gateway
@@ -39,33 +39,11 @@ metadata:
   name: gate-no-rules
 spec:
   service:
-    host: https://imgur.com
+    host: httpbin.kyma.local
     name: httpbin
     port: 8000
   gateway: kyma-gateway.kyma-system.svc.cluster.local
   rules: []
----
-apiVersion: gateway.kyma-project.io/v1alpha1
-kind: APIRule
-metadata:
-  name: gate-multiple-hosts
-spec:
-  service:
-    host: https://imgur.com
-    name: httpbin
-    port: 8000
-  gateway: short-name-gateway
-  rules:
-    - path: /.*
-      methods: ["GET"]
-      accessStrategies:
-        - handler: noop
-      mutators: []
-    - path: /foo
-      methods: ["GET"]
-      accessStrategies:
-        - handler: noop
-      mutators: []
 ---
 apiVersion: gateway.kyma-project.io/v1alpha1
 kind: APIRule
@@ -75,6 +53,23 @@ spec:
   service:
     host: kubernetes.kyma.local
     name: kubernetes
+    port: 443
+  gateway: kyma-gateway.kyma-system.svc.cluster.local
+  rules:
+    - path: /.*
+      methods: ["GET", "POST"]
+      accessStrategies:
+        - handler: noop
+      mutators: []
+---
+apiVersion: gateway.kyma-project.io/v1alpha1
+kind: APIRule
+metadata:
+  name: not-whitelisted-domain
+spec:
+  service:
+    host: foo.some-fancy-domain.xyz
+    name: foo
     port: 443
   gateway: kyma-gateway.kyma-system.svc.cluster.local
   rules:

@@ -20,15 +20,19 @@ func TestValidators(t *testing.T) {
 var _ = Describe("Validate function", func() {
 
 	It("Should fail for empty rules", func() {
+		testWhiteList := []string{"foo.bar", "bar.foo", "kyma.local"}
 		//given
 		input := &gatewayv1alpha1.APIRule{
 			Spec: gatewayv1alpha1.APIRuleSpec{
-				Rules: nil,
+				Rules:   nil,
+				Service: getService("foo-service", uint32(8080), "foo.bar"),
 			},
 		}
 
 		//when
-		problems := (&APIRule{}).Validate(input)
+		problems := (&APIRule{
+			DomainWhiteList: testWhiteList,
+		}).Validate(input)
 
 		//then
 		Expect(problems).To(HaveLen(1))
@@ -37,34 +41,71 @@ var _ = Describe("Validate function", func() {
 	})
 
 	It("Should fail for blacklisted service", func() {
-		var testService string = "kubernetes"
-		var testPort uint32 = 443
 		testBlackList := []string{"kubernetes", "kube-dns", "kubernetes.default"}
+		testWhiteList := []string{"foo.bar", "bar.foo", "kyma.local"}
 		//given
 		input := &gatewayv1alpha1.APIRule{
 			Spec: gatewayv1alpha1.APIRuleSpec{
-				Service: &gatewayv1alpha1.Service{
-					Name: &testService,
-					Port: &testPort,
+				Service: getService("kubernetes", uint32(443), "kubernetes.foo.bar"),
+				Rules: []gatewayv1alpha1.Rule{
+					{
+						Path: "/abc",
+						AccessStrategies: []*rulev1alpha1.Authenticator{
+							toAuthenticator("jwt", simpleJWTConfig()),
+							toAuthenticator("noop", emptyConfig()),
+						},
+					},
 				},
 			}}
 
 		//when
-		problems := (&APIRule{BlackList: testBlackList}).Validate(input)
+		problems := (&APIRule{
+			ServiceBlackList: testBlackList,
+			DomainWhiteList:  testWhiteList,
+		}).Validate(input)
 
 		//then
-		Expect(problems).To(HaveLen(2))
+		Expect(problems).To(HaveLen(1))
 		Expect(problems[0].AttributePath).To(Equal(".spec.service.name"))
 		Expect(problems[0].Message).To(Equal("This service has been blacklisted"))
-
-		Expect(problems[1].AttributePath).To(Equal(".spec.rules"))
-		Expect(problems[1].Message).To(Equal("No rules defined"))
 	})
 
-	It("Should detect several problems", func() {
+	It("Should fail for not whitelisted domain", func() {
+		testBlackList := []string{"kubernetes", "kube-dns", "kubernetes.default"}
+		testWhiteList := []string{"foo.bar", "bar.foo", "kyma.local"}
 		//given
 		input := &gatewayv1alpha1.APIRule{
 			Spec: gatewayv1alpha1.APIRuleSpec{
+				Service: getService("some-service", uint32(8080), "some-service.myDomain.xyz"),
+				Rules: []gatewayv1alpha1.Rule{
+					{
+						Path: "/abc",
+						AccessStrategies: []*rulev1alpha1.Authenticator{
+							toAuthenticator("jwt", simpleJWTConfig()),
+							toAuthenticator("noop", emptyConfig()),
+						},
+					},
+				},
+			}}
+
+		//when
+		problems := (&APIRule{
+			ServiceBlackList: testBlackList,
+			DomainWhiteList:  testWhiteList,
+		}).Validate(input)
+
+		//then
+		Expect(problems).To(HaveLen(1))
+		Expect(problems[0].AttributePath).To(Equal(".spec.service.host"))
+		Expect(problems[0].Message).To(Equal("Host is not whitelisted"))
+	})
+
+	It("Should detect several problems", func() {
+		testWhiteList := []string{"foo.bar", "bar.foo", "kyma.local"}
+		//given
+		input := &gatewayv1alpha1.APIRule{
+			Spec: gatewayv1alpha1.APIRuleSpec{
+				Service: getService("foo-service", uint32(8080), "foo.bar"),
 				Rules: []gatewayv1alpha1.Rule{
 					{
 						Path: "/abc",
@@ -93,7 +134,9 @@ var _ = Describe("Validate function", func() {
 			},
 		}
 		//when
-		problems := (&APIRule{}).Validate(input)
+		problems := (&APIRule{
+			DomainWhiteList: testWhiteList,
+		}).Validate(input)
 
 		//then
 		Expect(problems).To(HaveLen(6))
@@ -117,9 +160,11 @@ var _ = Describe("Validate function", func() {
 	})
 
 	It("Should succeed for valid input", func() {
+		testWhiteList := []string{"foo.bar", "bar.foo", "kyma.local"}
 		//given
 		input := &gatewayv1alpha1.APIRule{
 			Spec: gatewayv1alpha1.APIRuleSpec{
+				Service: getService("foo-service", uint32(8080), "foo.bar"),
 				Rules: []gatewayv1alpha1.Rule{
 					{
 						Path: "/abc",
@@ -144,7 +189,9 @@ var _ = Describe("Validate function", func() {
 			},
 		}
 		//when
-		problems := (&APIRule{}).Validate(input)
+		problems := (&APIRule{
+			DomainWhiteList: testWhiteList,
+		}).Validate(input)
 
 		//then
 		Expect(problems).To(HaveLen(0))
@@ -272,5 +319,13 @@ func toAuthenticator(name string, config *runtime.RawExtension) *rulev1alpha1.Au
 			Name:   name,
 			Config: config,
 		},
+	}
+}
+
+func getService(serviceName string, servicePort uint32, serviceHost string) *gatewayv1alpha1.Service {
+	return &gatewayv1alpha1.Service{
+		Name: &serviceName,
+		Port: &servicePort,
+		Host: &serviceHost,
 	}
 }

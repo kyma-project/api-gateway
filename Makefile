@@ -19,6 +19,11 @@ ifndef JWKS_URI
 override JWKS_URI = change-me
 endif
 
+# kyma.local foo.bar bar
+ifndef DOMAIN_WHITELIST
+override DOMAIN_WHITELIST = "kyma.local"
+endif
+
 .EXPORT_ALL_VARIABLES:
 GO111MODULE = on
 
@@ -68,6 +73,7 @@ static: manifests
 	@cat config/default/manager_args_patch.yaml.tmpl |\
 		sed -e 's|OATHKEEPER_SVC_ADDRESS|"${OATHKEEPER_SVC_ADDRESS}"|g' |\
 		sed -e 's|OATHKEEPER_SVC_PORT|"${OATHKEEPER_SVC_PORT}"|g' |\
+		sed -e 's|DOMAIN_WHITELIST|"${DOMAIN_WHITELIST}"|g' |\
 		sed -e 's|JWKS_URI|"${JWKS_URI}"|g' > config/default/manager_args_patch.yaml
 	kustomize build config/default -o install/k8s
 
@@ -76,6 +82,7 @@ deploy: manifests
 	@cat config/default/manager_args_patch.yaml.tmpl |\
 		sed -e 's|OATHKEEPER_SVC_ADDRESS|"${OATHKEEPER_SVC_ADDRESS}"|g' |\
 		sed -e 's|OATHKEEPER_SVC_PORT|"${OATHKEEPER_SVC_PORT}"|g' |\
+		sed -e 's|DOMAIN_WHITELIST|"${DOMAIN_WHITELIST}"|g' |\
 		sed -e 's|JWKS_URI|"${JWKS_URI}"|g' > config/default/manager_args_patch.yaml
 	kustomize build config/default | kubectl apply -f -
 
@@ -98,7 +105,7 @@ CONTROLLER_GEN=$(shell which controller-gen)
 endif
 
 run: build
-	go run . --oathkeeper-svc-address=${OATHKEEPER_SVC_ADDRESS} --oathkeeper-svc-port=${OATHKEEPER_SVC_PORT} --jwks-uri=${JWKS_URI}
+	go run . --oathkeeper-svc-address=${OATHKEEPER_SVC_ADDRESS} --oathkeeper-svc-port=${OATHKEEPER_SVC_PORT} --jwks-uri=${JWKS_URI} --domain-whitelist=${DOMAIN_WHITELIST}
 
 samples-clean:
 	kubectl delete -f config/samples/valid.yaml --ignore-not-found=true
