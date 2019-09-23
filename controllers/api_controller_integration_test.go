@@ -418,6 +418,194 @@ var _ = Describe("APIRule Controller", func() {
 				})
 			})
 		})
+
+		Context("on specified paths", func() {
+			Context("with multiple endpoints secured with different authentication methods", func() {
+				Context("in the happy path scenario", func() {
+					It("should create a VS with corresponding matchers and access rules for each secured path", func() {
+
+						configJWT := fmt.Sprintf(`
+							{
+								"trusted_issuers": ["%s"],
+								"jwks": [],
+								"required_scope": [%s]
+						}`, testIssuer, toCSVList(testScopes))
+
+						configOAuth := fmt.Sprintf(`{
+							"required_scope": [%s]
+						}`, toCSVList(testScopes))
+
+						jwtHandler := &rulev1alpha1.Handler{
+							Name: "jwt",
+							Config: &runtime.RawExtension{
+								Raw: []byte(configJWT),
+							},
+						}
+
+						oauthHandler := &rulev1alpha1.Handler{
+							Name: "oauth2_introspection",
+							Config: &runtime.RawExtension{
+								Raw: []byte(configOAuth),
+							},
+						}
+
+						noopHandler := &rulev1alpha1.Handler{
+							Name: "noop",
+						}
+
+						allowHandler := &rulev1alpha1.Handler{
+							Name: "allow",
+						}
+
+						rule1 := testRule("/img", []string{"GET"}, testMutators, jwtHandler)
+						rule2 := testRule("/headers", []string{"GET"}, testMutators, oauthHandler)
+						rule3 := testRule("/status", []string{"GET"}, testMutators, noopHandler)
+						rule4 := testRule("/favicon", []string{"GET"}, nil, allowHandler)
+
+						testName := generateTestName(testNameBase, testIDLength)
+						instance := testInstance(testName, testNamespace, testServiceName, testServiceHost, testServicePort, []gatewayv1alpha1.Rule{rule1, rule2, rule3, rule4})
+
+						err := c.Create(context.TODO(), instance)
+						if apierrors.IsInvalid(err) {
+							Fail(fmt.Sprintf("failed to create object, got an invalid object error: %v", err))
+							return
+						}
+						Expect(err).NotTo(HaveOccurred())
+						defer c.Delete(context.TODO(), instance)
+
+						expectedRequest := reconcile.Request{NamespacedName: types.NamespacedName{Name: testName, Namespace: testNamespace}}
+						Eventually(requests, timeout).Should(Receive(Equal(expectedRequest)))
+
+						//Verify VirtualService
+						vs := networkingv1alpha3.VirtualService{}
+						err = c.Get(context.TODO(), client.ObjectKey{Name: fmt.Sprintf("%s-%s", testName, testServiceName), Namespace: testNamespace}, &vs)
+						Expect(err).NotTo(HaveOccurred())
+
+						//Meta
+						verifyOwnerReference(vs.ObjectMeta, testName, gatewayv1alpha1.GroupVersion.String(), kind)
+						//Spec.Hosts
+						Expect(vs.Spec.Hosts).To(HaveLen(1))
+						Expect(vs.Spec.Hosts[0]).To(Equal(testServiceHost))
+						//Spec.Gateways
+						Expect(vs.Spec.Gateways).To(HaveLen(1))
+						Expect(vs.Spec.Gateways[0]).To(Equal(testGatewayURL))
+						//Spec.HTTP
+						Expect(vs.Spec.HTTP).To(HaveLen(4))
+						//HTTP.Match[]
+						Expect(vs.Spec.HTTP[0].Match).To(HaveLen(1))
+
+						Expect(vs.Spec.HTTP[0].Match[0].URI.Regex).To(Equal(rule1.Path))
+						Expect(vs.Spec.HTTP[1].Match[0].URI.Regex).To(Equal(rule2.Path))
+						Expect(vs.Spec.HTTP[2].Match[0].URI.Regex).To(Equal(rule3.Path))
+						Expect(vs.Spec.HTTP[3].Match[0].URI.Regex).To(Equal(rule4.Path))
+
+						for _, h := range vs.Spec.HTTP {
+
+							//Match[].URI
+							Expect(h.Match[0].URI).NotTo(BeNil())
+							Expect(h.Match[0].URI.Exact).To(BeEmpty())
+							Expect(h.Match[0].URI.Prefix).To(BeEmpty())
+							Expect(h.Match[0].URI.Suffix).To(BeEmpty())
+							Expect(h.Match[0].Scheme).To(BeNil())
+							Expect(h.Match[0].Method).To(BeNil())
+							Expect(h.Match[0].Authority).To(BeNil())
+							Expect(h.Match[0].Headers).To(BeNil())
+							Expect(h.Match[0].Port).To(BeZero())
+							Expect(h.Match[0].SourceLabels).To(BeNil())
+							Expect(h.Match[0].Gateways).To(BeNil())
+
+							//HTTP.Route[]
+							Expect(h.Route).To(HaveLen(1))
+
+							url, port := testOathkeeperSvcURL, testOathkeeperPort
+							if h.Match[0].URI.Regex == "/favicon" { // allow, no oathkeeper rule
+								url, port = "httpbin.padu-system.svc.cluster.local", 443
+							}
+							Expect(h.Route[0].Destination.Host).To(Equal(url))
+							Expect(h.Route[0].Destination.Subset).To(Equal(""))
+							Expect(h.Route[0].Destination.Port.Name).To(Equal(""))
+							Expect(h.Route[0].Destination.Port.Number).To(Equal(port))
+							Expect(h.Route[0].Weight).To(BeZero())
+							Expect(h.Route[0].Headers).To(BeNil())
+
+							//Others
+							Expect(h.Rewrite).To(BeNil())
+							Expect(h.WebsocketUpgrade).To(BeFalse())
+							Expect(h.Timeout).To(BeEmpty())
+							Expect(h.Retries).To(BeNil())
+							Expect(h.Fault).To(BeNil())
+							Expect(h.Mirror).To(BeNil())
+							Expect(h.DeprecatedAppendHeaders).To(BeNil())
+							Expect(h.Headers).To(BeNil())
+							Expect(h.RemoveResponseHeaders).To(BeNil())
+							Expect(h.CorsPolicy).To(BeNil())
+						}
+
+						//Spec.TCP
+						Expect(vs.Spec.TCP).To(BeNil())
+						//Spec.TLS
+						Expect(vs.Spec.TLS).To(BeNil())
+
+						//Verify Rules
+						for i, tc := range []struct {
+							path    string
+							handler string
+							config  []byte
+						}{
+							{path: "img", handler: "jwt", config: []byte(configJWT)},
+							{path: "headers", handler: "oauth2_introspection", config: []byte(configOAuth)},
+							{path: "status", handler: "noop", config: nil},
+						} {
+							expectedRuleName := fmt.Sprintf("%s-%s-%d", testName, testServiceName, i)
+							rl := rulev1alpha1.Rule{}
+							err = c.Get(context.TODO(), client.ObjectKey{Name: expectedRuleName, Namespace: testNamespace}, &rl)
+							Expect(err).NotTo(HaveOccurred())
+
+							//Meta
+							verifyOwnerReference(rl.ObjectMeta, testName, gatewayv1alpha1.GroupVersion.String(), kind)
+
+							//Spec.Upstream
+							Expect(rl.Spec.Upstream).NotTo(BeNil())
+							Expect(rl.Spec.Upstream.URL).To(Equal(fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", testServiceName, testNamespace, testServicePort)))
+							Expect(rl.Spec.Upstream.StripPath).To(BeNil())
+							Expect(rl.Spec.Upstream.PreserveHost).To(BeNil())
+
+							//Spec.Match
+							Expect(rl.Spec.Match).NotTo(BeNil())
+							Expect(rl.Spec.Match.Methods).To(Equal([]string{"GET"}))
+							Expect(rl.Spec.Match.URL).To(Equal(fmt.Sprintf("<http|https>://%s</%s>", testServiceHost, tc.path)))
+
+							//Spec.Authenticators
+							Expect(rl.Spec.Authenticators).To(HaveLen(1))
+							Expect(rl.Spec.Authenticators[0].Handler).NotTo(BeNil())
+							Expect(rl.Spec.Authenticators[0].Handler.Name).To(Equal(tc.handler))
+
+							if tc.config != nil {
+								//Authenticators[0].Handler.Config validation
+								Expect(rl.Spec.Authenticators[0].Handler.Config).NotTo(BeNil())
+								Expect(rl.Spec.Authenticators[0].Handler.Config.Raw).To(MatchJSON(tc.config))
+							}
+
+							//Spec.Authorizer
+							Expect(rl.Spec.Authorizer).NotTo(BeNil())
+							Expect(rl.Spec.Authorizer.Handler).NotTo(BeNil())
+							Expect(rl.Spec.Authorizer.Handler.Name).To(Equal("allow"))
+							Expect(rl.Spec.Authorizer.Handler.Config).To(BeNil())
+
+							//Spec.Mutators
+							Expect(rl.Spec.Mutators).NotTo(BeNil())
+							Expect(len(rl.Spec.Mutators)).To(Equal(len(testMutators)))
+							Expect(rl.Spec.Mutators[0].Handler.Name).To(Equal(testMutators[0].Name))
+							Expect(rl.Spec.Mutators[1].Handler.Name).To(Equal(testMutators[1].Name))
+						}
+
+						//make sure no rule for "/favicon" path has been created
+						name := fmt.Sprintf("%s-%s-3", testName, testServiceName)
+						Expect(c.Get(context.TODO(), client.ObjectKey{Name: name, Namespace: testNamespace}, &rulev1alpha1.Rule{})).To(HaveOccurred())
+					})
+				})
+			})
+		})
 	})
 })
 
