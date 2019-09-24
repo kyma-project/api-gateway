@@ -40,6 +40,14 @@ func (vs *virtualService) Owner(val *ownerReference) *virtualService {
 	return vs
 }
 
+func (vs *virtualService) Label(key, val string) *virtualService {
+	if vs.value.Labels == nil {
+		vs.value.Labels = make(map[string]string)
+	}
+	vs.value.Labels[key] = val
+	return vs
+}
+
 func (vs *virtualService) Spec(val *virtualServiceSpec) *virtualService {
 	vs.value.Spec = *val.Get()
 	return vs

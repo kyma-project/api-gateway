@@ -36,8 +36,8 @@ import (
 
 //APIReconciler reconciles a Api object
 type APIReconciler struct {
-	ExtCRClients *clients.ExternalCRClients
-	client.Client
+	ExtCRClients      *clients.ExternalCRClients
+	Client            client.Client
 	Log               logr.Logger
 	OathkeeperSvc     string
 	OathkeeperSvcPort uint32
@@ -61,7 +61,7 @@ func (r *APIReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 
 	api := &gatewayv1alpha1.APIRule{}
 
-	err := r.Get(ctx, req.NamespacedName, api)
+	err := r.Client.Get(ctx, req.NamespacedName, api)
 	if err != nil {
 		if !apierrs.IsNotFound(err) {
 			return retryReconcile(err)
@@ -99,15 +99,23 @@ func (r *APIReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		}
 
 		//2) Compute list of required objects (the set of objects required to satisfy our contract on apiRule.Spec, not yet applied)
-		factory := processing.NewFactory(r.ExtCRClients.ForVirtualService(), r.ExtCRClients.ForAccessRule(), r.Log, r.OathkeeperSvc, r.OathkeeperSvcPort, r.JWKSURI)
+		factory := processing.NewFactory(r.ExtCRClients.ForVirtualService(), r.ExtCRClients.ForAccessRule(), r.Client, r.Log, r.OathkeeperSvc, r.OathkeeperSvcPort, r.JWKSURI)
 		requiredObjects := factory.CalculateRequiredState(api)
 
-		//3) Compare required objects to cluster state and update cluster state to reflect requirements
-		//TODO-IN-FUTURE: Re-implement according to the following logic:
-		//3.1) Fetch all existing objects related to _this_ apiRule from the cluster (VS, Rules)
-		//3.2) Based on required objects, compute four sets of objects: vsToUpdate, arToCreate, arToUpdate, arToDelete
-		//3.3) Apply changes to the cluster
-		err := factory.ApplyRequiredState(ctx, requiredObjects, api)
+		//3.1 Fetch all existing objects related to _this_ apiRule from the cluster (VS, Rules)
+		actualObjects, err := factory.GetActualState(ctx, api)
+		if err != nil {
+			return retryReconcile(err)
+		}
+
+		//3.2 Compute patch object
+		patch := factory.CalculateDiff(requiredObjects, actualObjects)
+
+		//3.3 Apply changes to the cluster
+		err = factory.ApplyDiff(ctx, patch)
+		if err != nil {
+			return retryReconcile(err)
+		}
 
 		//4) Update status of CR
 		if err != nil {
@@ -170,7 +178,7 @@ func (r *APIReconciler) updateStatus(ctx context.Context, api *gatewayv1alpha1.A
 	api.Status.VirtualServiceStatus = virtualServiceStatus
 	api.Status.AccessRuleStatus = accessRuleStatus
 
-	err := r.Status().Update(ctx, api)
+	err := r.Client.Status().Update(ctx, api)
 	if err != nil {
 		return nil, err
 	}

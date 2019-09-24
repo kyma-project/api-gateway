@@ -36,6 +36,14 @@ func (ar *accessRule) Owner(val *ownerReference) *accessRule {
 	return ar
 }
 
+func (ar *accessRule) Label(key, val string) *accessRule {
+	if ar.value.Labels == nil {
+		ar.value.Labels = make(map[string]string)
+	}
+	ar.value.Labels[key] = val
+	return ar
+}
+
 func (ar *accessRule) Spec(val *accessRuleSpec) *accessRule {
 	ar.value.Spec = *val.Get()
 	return ar
