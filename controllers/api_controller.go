@@ -26,9 +26,8 @@ import (
 
 	"github.com/go-logr/logr"
 	gatewayv1alpha1 "github.com/kyma-incubator/api-gateway/api/v1alpha1"
-	"github.com/kyma-incubator/api-gateway/internal/clients"
 	apierrs "k8s.io/apimachinery/pkg/api/errors"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -36,7 +35,6 @@ import (
 
 //APIReconciler reconciles a Api object
 type APIReconciler struct {
-	ExtCRClients      *clients.ExternalCRClients
 	Client            client.Client
 	Log               logr.Logger
 	OathkeeperSvc     string
@@ -99,7 +97,7 @@ func (r *APIReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		}
 
 		//2) Compute list of required objects (the set of objects required to satisfy our contract on apiRule.Spec, not yet applied)
-		factory := processing.NewFactory(r.ExtCRClients.ForVirtualService(), r.ExtCRClients.ForAccessRule(), r.Client, r.Log, r.OathkeeperSvc, r.OathkeeperSvcPort, r.JWKSURI)
+		factory := processing.NewFactory(r.Client, r.Log, r.OathkeeperSvc, r.OathkeeperSvcPort, r.JWKSURI)
 		requiredObjects := factory.CalculateRequiredState(api)
 
 		//3.1 Fetch all existing objects related to _this_ apiRule from the cluster (VS, Rules)

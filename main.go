@@ -23,7 +23,6 @@ import (
 
 	gatewayv1alpha1 "github.com/kyma-incubator/api-gateway/api/v1alpha1"
 	"github.com/kyma-incubator/api-gateway/controllers"
-	crClients "github.com/kyma-incubator/api-gateway/internal/clients"
 	"github.com/kyma-incubator/api-gateway/internal/validation"
 	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -104,7 +103,6 @@ func main() {
 
 	if err = (&controllers.APIReconciler{
 		Client:            mgr.GetClient(),
-		ExtCRClients:      crClients.New(mgr.GetClient()),
 		Log:               ctrl.Log.WithName("controllers").WithName("Api"),
 		OathkeeperSvc:     oathkeeperSvcAddr,
 		OathkeeperSvcPort: uint32(oathkeeperSvcPort),

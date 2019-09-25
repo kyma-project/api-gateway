@@ -5,7 +5,6 @@ import (
 
 	gatewayv1alpha1 "github.com/kyma-incubator/api-gateway/api/v1alpha1"
 	"github.com/kyma-incubator/api-gateway/controllers"
-	crClients "github.com/kyma-incubator/api-gateway/internal/clients"
 	"github.com/kyma-incubator/api-gateway/internal/validation"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -99,9 +98,8 @@ func fixAPI() *gatewayv1alpha1.APIRule {
 
 func getAPIReconciler(mgr manager.Manager) reconcile.Reconciler {
 	return &controllers.APIReconciler{
-		Client:       mgr.GetClient(),
-		ExtCRClients: crClients.New(mgr.GetClient()),
-		Log:          ctrl.Log.WithName("controllers").WithName("Api"),
+		Client: mgr.GetClient(),
+		Log:    ctrl.Log.WithName("controllers").WithName("Api"),
 		Validator: &validation.APIRule{
 			DomainWhiteList: []string{"bar", "kyma.local"},
 		},

@@ -10,16 +10,12 @@ import (
 
 	"github.com/go-logr/logr"
 	gatewayv1alpha1 "github.com/kyma-incubator/api-gateway/api/v1alpha1"
-	istioClient "github.com/kyma-incubator/api-gateway/internal/clients/istio"
-	oryClient "github.com/kyma-incubator/api-gateway/internal/clients/ory"
 	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
 	networkingv1alpha3 "knative.dev/pkg/apis/istio/v1alpha3"
 )
 
 //Factory .
 type Factory struct {
-	vsClient          *istioClient.VirtualService
-	arClient          *oryClient.AccessRule
 	client            client.Client
 	Log               logr.Logger
 	oathkeeperSvc     string
@@ -28,10 +24,8 @@ type Factory struct {
 }
 
 //NewFactory .
-func NewFactory(vsClient *istioClient.VirtualService, arClient *oryClient.AccessRule, client client.Client, logger logr.Logger, oathkeeperSvc string, oathkeeperSvcPort uint32, jwksURI string) *Factory {
+func NewFactory(client client.Client, logger logr.Logger, oathkeeperSvc string, oathkeeperSvcPort uint32, jwksURI string) *Factory {
 	return &Factory{
-		vsClient:          vsClient,
-		arClient:          arClient,
 		client:            client,
 		Log:               logger,
 		oathkeeperSvc:     oathkeeperSvc,
@@ -72,26 +66,26 @@ func (f *Factory) GetActualState(ctx context.Context, api *gatewayv1alpha1.APIRu
 	labels["owner"] = fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace)
 	var state State
 
-	vsList, err := f.vsClient.GetForLabels(ctx, labels)
-	if err != nil {
+	var vsList networkingv1alpha3.VirtualServiceList
+	if err := f.client.List(ctx, &vsList, client.MatchingLabels(labels)); err != nil {
 		return nil, err
 	}
 
 	//what to do if len(vsList) > 1?
 
-	if len(vsList) == 1 {
-		state.virtualService = &vsList[0]
+	if len(vsList.Items) == 1 {
+		state.virtualService = &vsList.Items[0]
 	} else {
 		state.virtualService = nil
 	}
 
-	arList, err := f.arClient.GetForLabels(ctx, labels)
-	if err != nil {
+	var arList rulev1alpha1.RuleList
+	if err := f.client.List(ctx, &arList, client.MatchingLabels(labels)); err != nil {
 		return nil, err
 	}
 
 	state.accessRules = make(map[string]*rulev1alpha1.Rule)
-	for _, ar := range arList {
+	for _, ar := range arList.Items {
 		state.accessRules[ar.Spec.Match.URL] = &ar
 	}
 
