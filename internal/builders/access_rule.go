@@ -26,6 +26,12 @@ func (ar *accessRule) Name(val string) *accessRule {
 	return ar
 }
 
+func (ar *accessRule) GenerateName(val string) *accessRule {
+	ar.value.Name = ""
+	ar.value.GenerateName = val
+	return ar
+}
+
 func (ar *accessRule) Namespace(val string) *accessRule {
 	ar.value.Namespace = val
 	return ar

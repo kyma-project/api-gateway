@@ -102,7 +102,8 @@ func TestCreateVS_NoOp(t *testing.T) {
 	assert.Equal(vs.Spec.HTTP[0].Route[0].Destination.Port.Number, servicePort)
 	assert.Equal(vs.Spec.HTTP[0].Match[0].URI.Regex, apiRule.Spec.Rules[0].Path)
 
-	assert.Equal(vs.ObjectMeta.Name, apiName)
+	assert.Empty(vs.ObjectMeta.Name)
+	assert.Equal(vs.ObjectMeta.GenerateName, apiName+"-")
 	assert.Equal(vs.ObjectMeta.Namespace, apiNamespace)
 
 	assert.Equal(vs.ObjectMeta.OwnerReferences[0].APIVersion, apiAPIVersion)
@@ -151,7 +152,8 @@ func TestCreateVS_JWT(t *testing.T) {
 	assert.Equal(vs.Spec.HTTP[0].Route[0].Destination.Port.Number, uint32(4455))
 	assert.Equal(vs.Spec.HTTP[0].Match[0].URI.Regex, apiRule.Spec.Rules[0].Path)
 
-	assert.Equal(vs.ObjectMeta.Name, apiName)
+	assert.Empty(vs.ObjectMeta.Name)
+	assert.Equal(vs.ObjectMeta.GenerateName, apiName+"-")
 	assert.Equal(vs.ObjectMeta.Namespace, apiNamespace)
 
 	assert.Equal(vs.ObjectMeta.OwnerReferences[0].APIVersion, apiAPIVersion)
@@ -199,7 +201,8 @@ func TestGenerateAR_JWT(t *testing.T) {
 
 	assert.Equal(ar.Spec.Upstream.URL, "http://example-service.some-namespace.svc.cluster.local:8080")
 
-	assert.Contains(ar.ObjectMeta.Name, apiName)
+	assert.Empty(ar.ObjectMeta.Name)
+	assert.Equal(ar.ObjectMeta.GenerateName, apiName+"-")
 	assert.Equal(ar.ObjectMeta.Namespace, apiNamespace)
 
 	assert.Equal(ar.ObjectMeta.OwnerReferences[0].APIVersion, apiAPIVersion)
@@ -245,7 +248,8 @@ func TestGenerateVS_OAUTH(t *testing.T) {
 	assert.Equal(vs.Spec.HTTP[0].Route[0].Destination.Port.Number, uint32(4455))
 	assert.Equal(vs.Spec.HTTP[0].Match[0].URI.Regex, apiPath)
 
-	assert.Equal(vs.ObjectMeta.Name, apiName)
+	assert.Empty(vs.ObjectMeta.Name)
+	assert.Equal(vs.ObjectMeta.GenerateName, apiName+"-")
 	assert.Equal(vs.ObjectMeta.Namespace, apiNamespace)
 
 	assert.Equal(vs.ObjectMeta.OwnerReferences[0].APIVersion, apiAPIVersion)
@@ -292,7 +296,8 @@ func TestGenerateAR_OAUTH(t *testing.T) {
 
 	assert.Equal(ar.Spec.Upstream.URL, "http://example-service.some-namespace.svc.cluster.local:8080")
 
-	assert.Contains(ar.ObjectMeta.Name, apiName)
+	assert.Empty(ar.ObjectMeta.Name)
+	assert.Equal(ar.ObjectMeta.GenerateName, apiName+"-")
 	assert.Equal(ar.ObjectMeta.Namespace, apiNamespace)
 
 	assert.Equal(ar.ObjectMeta.OwnerReferences[0].APIVersion, apiAPIVersion)

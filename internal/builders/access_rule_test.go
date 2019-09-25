@@ -43,7 +43,7 @@ var _ = Describe("Builder for", func() {
 				Raw: requiredScopesJSON,
 			}
 
-			ar := AccessRule().Name(name).Namespace(namespace).
+			ar := AccessRule().GenerateName(name).Namespace(namespace).
 				Owner(OwnerReference().Name(refName).APIVersion(refVersion).Kind(refKind).UID(refUID).Controller(true)).
 				Spec(AccessRuleSpec().
 					Upstream(Upstream().
@@ -64,7 +64,8 @@ var _ = Describe("Builder for", func() {
 						Handler(Handler().
 							Name("hydrator")))).
 				Get()
-			Expect(ar.Name).To(Equal(name))
+			Expect(ar.Name).To(BeEmpty())
+			Expect(ar.GenerateName).To(Equal(name))
 			Expect(ar.Namespace).To(Equal(namespace))
 			Expect(ar.OwnerReferences).To(HaveLen(1))
 			Expect(ar.OwnerReferences[0].Name).To(Equal(refName))

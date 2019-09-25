@@ -2,8 +2,6 @@ package processing
 
 import (
 	"fmt"
-	"math/rand"
-	"time"
 
 	gatewayv1alpha1 "github.com/kyma-incubator/api-gateway/api/v1alpha1"
 	"github.com/kyma-incubator/api-gateway/internal/builders"
@@ -16,13 +14,12 @@ func modifyAccessRule(existing, required *rulev1alpha1.Rule) {
 }
 
 func generateAccessRule(api *gatewayv1alpha1.APIRule, rule gatewayv1alpha1.Rule, accessStrategies []*rulev1alpha1.Authenticator) *rulev1alpha1.Rule {
-	rand.Seed(time.Now().UTC().UnixNano())
-	name := fmt.Sprintf("%s-%d", api.ObjectMeta.Name, rand.Int())
+	namePrefix := fmt.Sprintf("%s-", api.ObjectMeta.Name)
 	namespace := api.ObjectMeta.Namespace
 	ownerRef := generateOwnerRef(api)
 
 	return builders.AccessRule().
-		Name(name).
+		GenerateName(namePrefix).
 		Namespace(namespace).
 		Owner(builders.OwnerReference().From(&ownerRef)).
 		Spec(builders.AccessRuleSpec().From(generateAccessRuleSpec(api, rule, accessStrategies))).

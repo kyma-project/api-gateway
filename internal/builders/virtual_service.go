@@ -30,6 +30,12 @@ func (vs *virtualService) Name(val string) *virtualService {
 	return vs
 }
 
+func (vs *virtualService) GenerateName(val string) *virtualService {
+	vs.value.Name = ""
+	vs.value.GenerateName = val
+	return vs
+}
+
 func (vs *virtualService) Namespace(val string) *virtualService {
 	vs.value.Namespace = val
 	return vs

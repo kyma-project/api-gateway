@@ -30,14 +30,15 @@ var _ = Describe("Builder for", func() {
 			initialVs.Name = "shoudBeOverwritten"
 			initialVs.Spec.Hosts = []string{"a,", "b", "c"}
 
-			vs := VirtualService().From(&initialVs).Name(name).Namespace(namespace).
+			vs := VirtualService().From(&initialVs).GenerateName(name).Namespace(namespace).
 				Owner(OwnerReference().Name(refName).APIVersion(refVersion).Kind(refKind).UID(refUID).Controller(true)).
 				Spec(
 					VirtualServiceSpec().
 						Host(host).
 						Gateway(gateway)).
 				Get()
-			Expect(vs.Name).To(Equal(name))
+			Expect(vs.Name).To(BeEmpty())
+			Expect(vs.GenerateName).To(Equal(name))
 			Expect(vs.Namespace).To(Equal(namespace))
 			Expect(vs.OwnerReferences).To(HaveLen(1))
 			Expect(vs.OwnerReferences[0].Name).To(Equal(refName))

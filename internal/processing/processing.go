@@ -3,6 +3,7 @@ package processing
 import (
 	"context"
 	"fmt"
+
 	"github.com/kyma-incubator/api-gateway/internal/builders"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -188,7 +189,7 @@ func (f *Factory) updateVirtualService(existing, required *networkingv1alpha3.Vi
 }
 
 func (f *Factory) generateVirtualService(api *gatewayv1alpha1.APIRule) *networkingv1alpha3.VirtualService {
-	virtualServiceName := fmt.Sprintf("%s", api.ObjectMeta.Name)
+	virtualServiceNamePrefix := fmt.Sprintf("%s-", api.ObjectMeta.Name)
 	ownerRef := generateOwnerRef(api)
 
 	vsSpecBuilder := builders.VirtualServiceSpec()
@@ -210,7 +211,7 @@ func (f *Factory) generateVirtualService(api *gatewayv1alpha1.APIRule) *networki
 	}
 
 	vsBuilder := builders.VirtualService().
-		Name(virtualServiceName).
+		GenerateName(virtualServiceNamePrefix).
 		Namespace(api.ObjectMeta.Namespace).
 		Owner(builders.OwnerReference().From(&ownerRef)).
 		Label("owner", fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace))
