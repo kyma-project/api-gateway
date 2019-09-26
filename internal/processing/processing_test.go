@@ -2,34 +2,498 @@ package processing
 
 import (
 	"fmt"
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/utils/pointer"
 	"testing"
 
 	gatewayv1alpha1 "github.com/kyma-incubator/api-gateway/api/v1alpha1"
 	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
-	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
+	networkingv1alpha3 "knative.dev/pkg/apis/istio/v1alpha3"
+	ctrl "sigs.k8s.io/controller-runtime"
+)
+
+const (
+	apiName                     = "test-apirule"
+	apiUID            types.UID = "eab0f1c8-c417-11e9-bf11-4ac644044351"
+	apiNamespace                = "some-namespace"
+	apiAPIVersion               = "gateway.kyma-project.io/v1alpha1"
+	apiKind                     = "ApiRule"
+	apiGateway                  = "some-gateway"
+	apiPath                     = "/.*"
+	headersApiPath              = "/headers"
+	oauthApiPath                = "/img"
+	serviceName                 = "example-service"
+	serviceHost                 = "myService.myDomain.com"
+	jwtIssuer                   = "https://oauth2.example.com/"
+	oathkeeperSvc               = "fake.oathkeeper"
+	oathkeeperSvcPort uint32    = 1234
 )
 
 var (
-	apiName                 = "test-apirule"
-	apiUID        types.UID = "eab0f1c8-c417-11e9-bf11-4ac644044351"
-	apiNamespace            = "some-namespace"
-	apiAPIVersion           = "gateway.kyma-project.io/v1alpha1"
-	apiKind                 = "ApiRule"
-	apiGateway              = "some-gateway"
-	apiPath                 = "/.*"
-	apiMethods              = []string{"GET"}
-	serviceName             = "example-service"
-	serviceHost             = "myService.myDomain.com"
-	servicePort   uint32    = 8080
-	authStrategy            = "ALLOW"
-	apiScopes               = []string{"write", "read"}
-	jwtIssuer               = "https://oauth2.example.com/"
+	apiMethods         = []string{"GET"}
+	apiScopes          = []string{"write", "read"}
+	servicePort uint32 = 8080
 )
 
-func getAPIRuleFor(strategies []*rulev1alpha1.Authenticator, mutators []*rulev1alpha1.Mutator) *gatewayv1alpha1.APIRule {
+func TestProcessing(t *testing.T) {
+	RegisterFailHandler(Fail)
+	RunSpecs(t, "Processing Suite")
+}
+
+var _ = Describe("Factory", func() {
+	Describe("CalculateRequiredState", func() {
+		Context("APIRule", func() {
+			It("should produce VS for allow authenticator", func() {
+				strategies := []*rulev1alpha1.Authenticator{
+					{
+						Handler: &rulev1alpha1.Handler{
+							Name: "allow",
+						},
+					},
+				}
+
+				allowRule := getRuleFor(apiPath, apiMethods, []*rulev1alpha1.Mutator{}, strategies)
+				rules := []gatewayv1alpha1.Rule{allowRule}
+
+				apiRule := getAPIRuleFor(rules)
+
+				f := NewFactory(nil, ctrl.Log.WithName("test"), oathkeeperSvc, oathkeeperSvcPort, "https://example.com/.well-known/jwks.json")
+
+				desiredState := f.CalculateRequiredState(apiRule)
+				vs := desiredState.virtualService
+				accessRules := desiredState.accessRules
+
+				//verify VS
+				Expect(vs).NotTo(BeNil())
+				Expect(len(vs.Spec.Gateways)).To(Equal(1))
+				Expect(len(vs.Spec.Hosts)).To(Equal(1))
+				Expect(vs.Spec.Hosts[0]).To(Equal(serviceHost))
+				Expect(len(vs.Spec.HTTP)).To(Equal(1))
+
+				Expect(len(vs.Spec.HTTP[0].Route)).To(Equal(1))
+				Expect(vs.Spec.HTTP[0].Route[0].Destination.Host).To(Equal(serviceName + "." + apiNamespace + ".svc.cluster.local"))
+				Expect(vs.Spec.HTTP[0].Route[0].Destination.Port.Number).To(Equal(servicePort))
+
+				Expect(len(vs.Spec.HTTP[0].Match)).To(Equal(1))
+				Expect(vs.Spec.HTTP[0].Match[0].URI.Regex).To(Equal(apiRule.Spec.Rules[0].Path))
+
+				Expect(vs.ObjectMeta.Name).To(BeEmpty())
+				Expect(vs.ObjectMeta.GenerateName).To(Equal(apiName + "-"))
+				Expect(vs.ObjectMeta.Namespace).To(Equal(apiNamespace))
+
+				Expect(vs.ObjectMeta.OwnerReferences[0].APIVersion).To(Equal(apiAPIVersion))
+				Expect(vs.ObjectMeta.OwnerReferences[0].Kind).To(Equal(apiKind))
+				Expect(vs.ObjectMeta.OwnerReferences[0].Name).To(Equal(apiName))
+				Expect(vs.ObjectMeta.OwnerReferences[0].UID).To(Equal(apiUID))
+
+				//Verify AR
+				Expect(len(accessRules)).To(Equal(0))
+			})
+
+			It("should produce VS and ARs for given paths", func() {
+				noop := []*rulev1alpha1.Authenticator{
+					{
+						Handler: &rulev1alpha1.Handler{
+							Name: "noop",
+						},
+					},
+				}
+
+				jwtConfigJSON := fmt.Sprintf(`
+					{
+						"trusted_issuers": ["%s"],
+						"jwks": [],
+						"required_scope": [%s]
+				}`, jwtIssuer, toCSVList(apiScopes))
+
+				jwt := []*rulev1alpha1.Authenticator{
+					{
+						Handler: &rulev1alpha1.Handler{
+							Name: "jwt",
+							Config: &runtime.RawExtension{
+								Raw: []byte(jwtConfigJSON),
+							},
+						},
+					},
+				}
+
+				testMutators := []*rulev1alpha1.Mutator{
+					{
+						Handler: &rulev1alpha1.Handler{
+							Name: "noop",
+						},
+					},
+					{
+						Handler: &rulev1alpha1.Handler{
+							Name: "idtoken",
+						},
+					},
+				}
+
+				noopRule := getRuleFor(apiPath, apiMethods, []*rulev1alpha1.Mutator{}, noop)
+				jwtRule := getRuleFor(headersApiPath, apiMethods, testMutators, jwt)
+				rules := []gatewayv1alpha1.Rule{noopRule, jwtRule}
+
+				expectedNoopRuleMatchURL := fmt.Sprintf("<http|https>://%s<%s>", serviceHost, apiPath)
+				expectedJwtRuleMatchURL := fmt.Sprintf("<http|https>://%s<%s>", serviceHost, headersApiPath)
+				expectedRuleUpstreamURL := fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", serviceName, apiNamespace, servicePort)
+
+				apiRule := getAPIRuleFor(rules)
+
+				f := NewFactory(nil, ctrl.Log.WithName("test"), oathkeeperSvc, oathkeeperSvcPort, "https://example.com/.well-known/jwks.json")
+
+				desiredState := f.CalculateRequiredState(apiRule)
+				vs := desiredState.virtualService
+				accessRules := desiredState.accessRules
+
+				//verify VS
+				Expect(vs).NotTo(BeNil())
+				Expect(len(vs.Spec.Gateways)).To(Equal(1))
+				Expect(len(vs.Spec.Hosts)).To(Equal(1))
+				Expect(vs.Spec.Hosts[0]).To(Equal(serviceHost))
+				Expect(len(vs.Spec.HTTP)).To(Equal(2))
+
+				Expect(len(vs.Spec.HTTP[0].Route)).To(Equal(1))
+				Expect(vs.Spec.HTTP[0].Route[0].Destination.Host).To(Equal(oathkeeperSvc))
+				Expect(vs.Spec.HTTP[0].Route[0].Destination.Port.Number).To(Equal(oathkeeperSvcPort))
+				Expect(len(vs.Spec.HTTP[0].Match)).To(Equal(1))
+				Expect(vs.Spec.HTTP[0].Match[0].URI.Regex).To(Equal(apiRule.Spec.Rules[0].Path))
+
+				Expect(len(vs.Spec.HTTP[1].Route)).To(Equal(1))
+				Expect(vs.Spec.HTTP[1].Route[0].Destination.Host).To(Equal(oathkeeperSvc))
+				Expect(vs.Spec.HTTP[1].Route[0].Destination.Port.Number).To(Equal(oathkeeperSvcPort))
+				Expect(len(vs.Spec.HTTP[1].Match)).To(Equal(1))
+				Expect(vs.Spec.HTTP[1].Match[0].URI.Regex).To(Equal(apiRule.Spec.Rules[1].Path))
+
+				Expect(vs.ObjectMeta.Name).To(BeEmpty())
+				Expect(vs.ObjectMeta.GenerateName).To(Equal(apiName + "-"))
+				Expect(vs.ObjectMeta.Namespace).To(Equal(apiNamespace))
+
+				Expect(vs.ObjectMeta.OwnerReferences[0].APIVersion).To(Equal(apiAPIVersion))
+				Expect(vs.ObjectMeta.OwnerReferences[0].Kind).To(Equal(apiKind))
+				Expect(vs.ObjectMeta.OwnerReferences[0].Name).To(Equal(apiName))
+				Expect(vs.ObjectMeta.OwnerReferences[0].UID).To(Equal(apiUID))
+
+				//Verify ARs
+				Expect(len(accessRules)).To(Equal(2))
+
+				noopAccessRule := accessRules[expectedNoopRuleMatchURL]
+
+				Expect(len(accessRules)).To(Equal(2))
+				Expect(len(noopAccessRule.Spec.Authenticators)).To(Equal(1))
+
+				Expect(noopAccessRule.Spec.Authorizer.Name).To(Equal("allow"))
+				Expect(noopAccessRule.Spec.Authorizer.Config).To(BeNil())
+
+				Expect(noopAccessRule.Spec.Authenticators[0].Handler.Name).To(Equal("noop"))
+				Expect(noopAccessRule.Spec.Authenticators[0].Handler.Config).To(BeNil())
+
+				Expect(len(noopAccessRule.Spec.Match.Methods)).To(Equal(len(apiMethods)))
+				Expect(noopAccessRule.Spec.Match.Methods).To(Equal(apiMethods))
+				Expect(noopAccessRule.Spec.Match.URL).To(Equal(expectedNoopRuleMatchURL))
+
+				Expect(noopAccessRule.Spec.Upstream.URL).To(Equal(expectedRuleUpstreamURL))
+
+				Expect(noopAccessRule.ObjectMeta.Name).To(BeEmpty())
+				Expect(noopAccessRule.ObjectMeta.GenerateName).To(Equal(apiName + "-"))
+				Expect(noopAccessRule.ObjectMeta.Namespace).To(Equal(apiNamespace))
+
+				Expect(noopAccessRule.ObjectMeta.OwnerReferences[0].APIVersion).To(Equal(apiAPIVersion))
+				Expect(noopAccessRule.ObjectMeta.OwnerReferences[0].Kind).To(Equal(apiKind))
+				Expect(noopAccessRule.ObjectMeta.OwnerReferences[0].Name).To(Equal(apiName))
+				Expect(noopAccessRule.ObjectMeta.OwnerReferences[0].UID).To(Equal(apiUID))
+
+				jwtAccessRule := accessRules[expectedJwtRuleMatchURL]
+
+				Expect(len(jwtAccessRule.Spec.Authenticators)).To(Equal(1))
+
+				Expect(jwtAccessRule.Spec.Authorizer.Name).To(Equal("allow"))
+				Expect(jwtAccessRule.Spec.Authorizer.Config).To(BeNil())
+
+				Expect(jwtAccessRule.Spec.Authenticators[0].Handler.Name).To(Equal("jwt"))
+				Expect(jwtAccessRule.Spec.Authenticators[0].Handler.Config).NotTo(BeNil())
+				Expect(string(jwtAccessRule.Spec.Authenticators[0].Handler.Config.Raw)).To(Equal(jwtConfigJSON))
+
+				Expect(len(jwtAccessRule.Spec.Match.Methods)).To(Equal(len(apiMethods)))
+				Expect(jwtAccessRule.Spec.Match.Methods).To(Equal(apiMethods))
+				Expect(jwtAccessRule.Spec.Match.URL).To(Equal(expectedJwtRuleMatchURL))
+
+				Expect(jwtAccessRule.Spec.Upstream.URL).To(Equal(expectedRuleUpstreamURL))
+
+				Expect(jwtAccessRule.Spec.Mutators).NotTo(BeNil())
+				Expect(len(jwtAccessRule.Spec.Mutators)).To(Equal(len(testMutators)))
+				Expect(jwtAccessRule.Spec.Mutators[0].Handler.Name).To(Equal(testMutators[0].Name))
+				Expect(jwtAccessRule.Spec.Mutators[1].Handler.Name).To(Equal(testMutators[1].Name))
+
+				Expect(jwtAccessRule.ObjectMeta.Name).To(BeEmpty())
+				Expect(jwtAccessRule.ObjectMeta.GenerateName).To(Equal(apiName + "-"))
+				Expect(jwtAccessRule.ObjectMeta.Namespace).To(Equal(apiNamespace))
+
+				Expect(jwtAccessRule.ObjectMeta.OwnerReferences[0].APIVersion).To(Equal(apiAPIVersion))
+				Expect(jwtAccessRule.ObjectMeta.OwnerReferences[0].Kind).To(Equal(apiKind))
+				Expect(jwtAccessRule.ObjectMeta.OwnerReferences[0].Name).To(Equal(apiName))
+				Expect(jwtAccessRule.ObjectMeta.OwnerReferences[0].UID).To(Equal(apiUID))
+			})
+
+			It("should produce VS & AR for jwt & oauth authenticators for given path", func() {
+				oauthConfigJSON := fmt.Sprintf(`{"required_scope": [%s]}`, toCSVList(apiScopes))
+
+				jwtConfigJSON := fmt.Sprintf(`
+					{
+						"trusted_issuers": ["%s"],
+						"jwks": [],
+						"required_scope": [%s]
+				}`, jwtIssuer, toCSVList(apiScopes))
+
+				jwt := &rulev1alpha1.Authenticator{
+					Handler: &rulev1alpha1.Handler{
+						Name: "jwt",
+						Config: &runtime.RawExtension{
+							Raw: []byte(jwtConfigJSON),
+						},
+					},
+				}
+				oauth := &rulev1alpha1.Authenticator{
+					Handler: &rulev1alpha1.Handler{
+						Name: "oauth2_introspection",
+						Config: &runtime.RawExtension{
+							Raw: []byte(oauthConfigJSON),
+						},
+					},
+				}
+
+				strategies := []*rulev1alpha1.Authenticator{jwt, oauth}
+
+				allowRule := getRuleFor(apiPath, apiMethods, []*rulev1alpha1.Mutator{}, strategies)
+				rules := []gatewayv1alpha1.Rule{allowRule}
+
+				expectedRuleMatchURL := fmt.Sprintf("<http|https>://%s<%s>", serviceHost, apiPath)
+				expectedRuleUpstreamURL := fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", serviceName, apiNamespace, servicePort)
+
+				apiRule := getAPIRuleFor(rules)
+
+				f := NewFactory(nil, ctrl.Log.WithName("test"), oathkeeperSvc, oathkeeperSvcPort, "https://example.com/.well-known/jwks.json")
+
+				desiredState := f.CalculateRequiredState(apiRule)
+				vs := desiredState.virtualService
+				accessRules := desiredState.accessRules
+
+				//verify VS
+				Expect(vs).NotTo(BeNil())
+				Expect(len(vs.Spec.Gateways)).To(Equal(1))
+				Expect(len(vs.Spec.Hosts)).To(Equal(1))
+				Expect(vs.Spec.Hosts[0]).To(Equal(serviceHost))
+				Expect(len(vs.Spec.HTTP)).To(Equal(1))
+
+				Expect(len(vs.Spec.HTTP[0].Route)).To(Equal(1))
+				Expect(vs.Spec.HTTP[0].Route[0].Destination.Host).To(Equal(oathkeeperSvc))
+				Expect(vs.Spec.HTTP[0].Route[0].Destination.Port.Number).To(Equal(oathkeeperSvcPort))
+
+				Expect(len(vs.Spec.HTTP[0].Match)).To(Equal(1))
+				Expect(vs.Spec.HTTP[0].Match[0].URI.Regex).To(Equal(apiRule.Spec.Rules[0].Path))
+
+				Expect(vs.ObjectMeta.Name).To(BeEmpty())
+				Expect(vs.ObjectMeta.GenerateName).To(Equal(apiName + "-"))
+				Expect(vs.ObjectMeta.Namespace).To(Equal(apiNamespace))
+
+				Expect(vs.ObjectMeta.OwnerReferences[0].APIVersion).To(Equal(apiAPIVersion))
+				Expect(vs.ObjectMeta.OwnerReferences[0].Kind).To(Equal(apiKind))
+				Expect(vs.ObjectMeta.OwnerReferences[0].Name).To(Equal(apiName))
+				Expect(vs.ObjectMeta.OwnerReferences[0].UID).To(Equal(apiUID))
+
+				rule := accessRules[expectedRuleMatchURL]
+
+				//Verify AR
+				Expect(len(accessRules)).To(Equal(1))
+				Expect(len(rule.Spec.Authenticators)).To(Equal(2))
+
+				Expect(rule.Spec.Authorizer.Name).To(Equal("allow"))
+				Expect(rule.Spec.Authorizer.Config).To(BeNil())
+
+				Expect(rule.Spec.Authenticators[0].Handler.Name).To(Equal("jwt"))
+				Expect(rule.Spec.Authenticators[0].Handler.Config).NotTo(BeNil())
+				Expect(string(rule.Spec.Authenticators[0].Handler.Config.Raw)).To(Equal(jwtConfigJSON))
+
+				Expect(rule.Spec.Authenticators[1].Handler.Name).To(Equal("oauth2_introspection"))
+				Expect(rule.Spec.Authenticators[1].Handler.Config).NotTo(BeNil())
+				Expect(string(rule.Spec.Authenticators[1].Handler.Config.Raw)).To(Equal(oauthConfigJSON))
+
+				Expect(len(rule.Spec.Match.Methods)).To(Equal(len(apiMethods)))
+				Expect(rule.Spec.Match.Methods).To(Equal(apiMethods))
+				Expect(rule.Spec.Match.URL).To(Equal(expectedRuleMatchURL))
+
+				Expect(rule.Spec.Upstream.URL).To(Equal(expectedRuleUpstreamURL))
+
+				Expect(rule.ObjectMeta.Name).To(BeEmpty())
+				Expect(rule.ObjectMeta.GenerateName).To(Equal(apiName + "-"))
+				Expect(rule.ObjectMeta.Namespace).To(Equal(apiNamespace))
+
+				Expect(rule.ObjectMeta.OwnerReferences[0].APIVersion).To(Equal(apiAPIVersion))
+				Expect(rule.ObjectMeta.OwnerReferences[0].Kind).To(Equal(apiKind))
+				Expect(rule.ObjectMeta.OwnerReferences[0].Name).To(Equal(apiName))
+				Expect(rule.ObjectMeta.OwnerReferences[0].UID).To(Equal(apiUID))
+
+			})
+		})
+	})
+
+	Describe("CalculateDiff", func() {
+		Context("between desired state & actual state", func() {
+			It("should produce patch containing VS to create & AR to create", func() {
+				noop := []*rulev1alpha1.Authenticator{
+					{
+						Handler: &rulev1alpha1.Handler{
+							Name: "noop",
+						},
+					},
+				}
+
+				noopRule := getRuleFor(apiPath, apiMethods, []*rulev1alpha1.Mutator{}, noop)
+				rules := []gatewayv1alpha1.Rule{noopRule}
+
+				apiRule := getAPIRuleFor(rules)
+				expectedNoopRuleMatchURL := fmt.Sprintf("<http|https>://%s<%s>", serviceHost, apiPath)
+
+				f := NewFactory(nil, ctrl.Log.WithName("test"), oathkeeperSvc, oathkeeperSvcPort, "https://example.com/.well-known/jwks.json")
+
+				desiredState := f.CalculateRequiredState(apiRule)
+				actualState := &State{}
+
+				patch := f.CalculateDiff(desiredState, actualState)
+
+				//Verify patch
+				Expect(patch.virtualService).NotTo(BeNil())
+				Expect(patch.virtualService.action).To(Equal("create"))
+				Expect(patch.virtualService.obj).To(Equal(desiredState.virtualService))
+
+				Expect(patch.accessRule).NotTo(BeNil())
+				Expect(len(patch.accessRule)).To(Equal(len(desiredState.accessRules)))
+				Expect(patch.accessRule[expectedNoopRuleMatchURL].action).To(Equal("create"))
+				Expect(patch.accessRule[expectedNoopRuleMatchURL].obj).To(Equal(desiredState.accessRules[expectedNoopRuleMatchURL]))
+
+			})
+
+			It("should produce patch containing VS to update, AR to create, AR to update & AR to delete", func() {
+				oauthConfigJSON := fmt.Sprintf(`{"required_scope": [%s]}`, toCSVList(apiScopes))
+				oauth := &rulev1alpha1.Authenticator{
+					Handler: &rulev1alpha1.Handler{
+						Name: "oauth2_introspection",
+						Config: &runtime.RawExtension{
+							Raw: []byte(oauthConfigJSON),
+						},
+					},
+				}
+
+				strategies := []*rulev1alpha1.Authenticator{oauth}
+
+				noop := []*rulev1alpha1.Authenticator{
+					{
+						Handler: &rulev1alpha1.Handler{
+							Name: "noop",
+						},
+					},
+				}
+
+				noopRule := getRuleFor(headersApiPath, apiMethods, []*rulev1alpha1.Mutator{}, noop)
+				allowRule := getRuleFor(oauthApiPath, apiMethods, []*rulev1alpha1.Mutator{}, strategies)
+
+				rules := []gatewayv1alpha1.Rule{noopRule, allowRule}
+
+				apiRule := getAPIRuleFor(rules)
+
+				f := NewFactory(nil, ctrl.Log.WithName("test"), oathkeeperSvc, oathkeeperSvcPort, "https://example.com/.well-known/jwks.json")
+
+				desiredState := f.CalculateRequiredState(apiRule)
+				oauthNoopRuleMatchURL := fmt.Sprintf("<http|https>://%s<%s>", serviceHost, oauthApiPath)
+				expectedNoopRuleMatchURL := fmt.Sprintf("<http|https>://%s<%s>", serviceHost, headersApiPath)
+				notDesiredRuleMatchURL := fmt.Sprintf("<http|https>://%s<%s>", serviceHost, "/delete")
+
+				labels := make(map[string]string)
+				labels["myLabel"] = "should not override"
+
+				vs := &networkingv1alpha3.VirtualService{
+					ObjectMeta: metav1.ObjectMeta{
+						GenerateName: apiName + "-",
+						Labels:       labels,
+					},
+				}
+
+				noopExistingRule := &rulev1alpha1.Rule{
+					ObjectMeta: metav1.ObjectMeta{
+						GenerateName: apiName + "-",
+						Labels:       labels,
+					},
+					Spec: rulev1alpha1.RuleSpec{
+						Match: &rulev1alpha1.Match{
+							URL: expectedNoopRuleMatchURL,
+						},
+					},
+				}
+
+				deleteExistingRule := &rulev1alpha1.Rule{
+					ObjectMeta: metav1.ObjectMeta{
+						GenerateName: apiName + "-",
+						Labels:       labels,
+					},
+					Spec: rulev1alpha1.RuleSpec{
+						Match: &rulev1alpha1.Match{
+							URL: notDesiredRuleMatchURL,
+						},
+					},
+				}
+
+				accessRules := make(map[string]*rulev1alpha1.Rule)
+				accessRules[expectedNoopRuleMatchURL] = noopExistingRule
+				accessRules[notDesiredRuleMatchURL] = deleteExistingRule
+
+				actualState := &State{virtualService: vs, accessRules: accessRules}
+
+				patch := f.CalculateDiff(desiredState, actualState)
+				vsPatch := patch.virtualService.obj.(*networkingv1alpha3.VirtualService)
+
+				//Verify patch
+				Expect(patch.virtualService).NotTo(BeNil())
+				Expect(patch.virtualService.action).To(Equal("update"))
+				Expect(vsPatch.ObjectMeta.Labels).To(Equal(actualState.virtualService.ObjectMeta.Labels))
+
+				//TODO verify vs spec
+
+				Expect(len(patch.accessRule)).To(Equal(3))
+
+				noopPatchRule := patch.accessRule[expectedNoopRuleMatchURL]
+				Expect(noopPatchRule).NotTo(BeNil())
+				Expect(noopPatchRule.action).To(Equal("update"))
+
+				//TODO verify ar spec
+
+				notDesiredPatchRule := patch.accessRule[notDesiredRuleMatchURL]
+				Expect(notDesiredPatchRule).NotTo(BeNil())
+				Expect(notDesiredPatchRule.action).To(Equal("delete"))
+
+				oauthPatchRule := patch.accessRule[oauthNoopRuleMatchURL]
+				Expect(oauthPatchRule).NotTo(BeNil())
+				Expect(oauthPatchRule.action).To(Equal("create"))
+
+				//TODO verify ar spec
+			})
+		})
+	})
+})
+
+func getRuleFor(path string, methods []string, mutators []*rulev1alpha1.Mutator, accessStrategies []*rulev1alpha1.Authenticator) gatewayv1alpha1.Rule {
+	return gatewayv1alpha1.Rule{
+		Path:             path,
+		Methods:          methods,
+		Mutators:         mutators,
+		AccessStrategies: accessStrategies,
+	}
+}
+
+func getAPIRuleFor(rules []gatewayv1alpha1.Rule) *gatewayv1alpha1.APIRule {
 	return &gatewayv1alpha1.APIRule{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      apiName,
@@ -41,20 +505,13 @@ func getAPIRuleFor(strategies []*rulev1alpha1.Authenticator, mutators []*rulev1a
 			Kind:       apiKind,
 		},
 		Spec: gatewayv1alpha1.APIRuleSpec{
-			Gateway: &apiGateway,
+			Gateway: pointer.StringPtr(apiGateway),
 			Service: &gatewayv1alpha1.Service{
-				Name: &serviceName,
-				Host: &serviceHost,
+				Name: pointer.StringPtr(serviceName),
+				Host: pointer.StringPtr(serviceHost),
 				Port: &servicePort,
 			},
-			Rules: []gatewayv1alpha1.Rule{
-				{
-					Path:             apiPath,
-					Methods:          apiMethods,
-					Mutators:         mutators,
-					AccessStrategies: strategies,
-				},
-			},
+			Rules: rules,
 		},
 	}
 }
@@ -71,238 +528,4 @@ func toCSVList(input []string) string {
 	}
 
 	return res
-}
-
-func TestCreateVS_NoOp(t *testing.T) {
-	assert := assert.New(t)
-
-	strategies := []*rulev1alpha1.Authenticator{
-		{
-			Handler: &rulev1alpha1.Handler{
-				Name: "allow",
-			},
-		},
-	}
-
-	apiRule := getAPIRuleFor(strategies, []*rulev1alpha1.Mutator{})
-	f := &Factory{oathkeeperSvcPort: 1234, oathkeeperSvc: "fake.oathkeeper"}
-
-	vs := f.generateVirtualService(apiRule)
-
-	assert.Equal(len(vs.Spec.Gateways), 1)
-	assert.Equal(vs.Spec.Gateways[0], apiGateway)
-
-	assert.Equal(len(vs.Spec.Hosts), 1)
-	assert.Equal(vs.Spec.Hosts[0], serviceHost)
-
-	assert.Equal(len(vs.Spec.HTTP), 1)
-	assert.Equal(len(vs.Spec.HTTP[0].Route), 1)
-	assert.Equal(len(vs.Spec.HTTP[0].Match), 1)
-	assert.Equal(vs.Spec.HTTP[0].Route[0].Destination.Host, serviceName+"."+apiNamespace+".svc.cluster.local")
-	assert.Equal(vs.Spec.HTTP[0].Route[0].Destination.Port.Number, servicePort)
-	assert.Equal(vs.Spec.HTTP[0].Match[0].URI.Regex, apiRule.Spec.Rules[0].Path)
-
-	assert.Empty(vs.ObjectMeta.Name)
-	assert.Equal(vs.ObjectMeta.GenerateName, apiName+"-")
-	assert.Equal(vs.ObjectMeta.Namespace, apiNamespace)
-
-	assert.Equal(vs.ObjectMeta.OwnerReferences[0].APIVersion, apiAPIVersion)
-	assert.Equal(vs.ObjectMeta.OwnerReferences[0].Kind, apiKind)
-	assert.Equal(vs.ObjectMeta.OwnerReferences[0].Name, apiName)
-	assert.Equal(vs.ObjectMeta.OwnerReferences[0].UID, apiUID)
-
-}
-
-func TestCreateVS_JWT(t *testing.T) {
-	assert := assert.New(t)
-
-	configJSON := fmt.Sprintf(`
-		{
-			"trusted_issuers": ["%s"],
-			"jwks": [],
-			"required_scope": [%s]
-	}`, jwtIssuer, toCSVList(apiScopes))
-
-	strategies := []*rulev1alpha1.Authenticator{
-		{
-			Handler: &rulev1alpha1.Handler{
-				Name: "jwt",
-				Config: &runtime.RawExtension{
-					Raw: []byte(configJSON),
-				},
-			},
-		},
-	}
-
-	apiRule := getAPIRuleFor(strategies, []*rulev1alpha1.Mutator{})
-	f := &Factory{oathkeeperSvcPort: 4455, oathkeeperSvc: "test-oathkeeper"}
-
-	vs := f.generateVirtualService(apiRule)
-
-	assert.Equal(len(vs.Spec.Gateways), 1)
-	assert.Equal(vs.Spec.Gateways[0], apiGateway)
-
-	assert.Equal(len(vs.Spec.Hosts), 1)
-	assert.Equal(vs.Spec.Hosts[0], serviceHost)
-
-	assert.Equal(len(vs.Spec.HTTP), 1)
-	assert.Equal(len(vs.Spec.HTTP[0].Route), 1)
-	assert.Equal(len(vs.Spec.HTTP[0].Match), 1)
-	assert.Equal(vs.Spec.HTTP[0].Route[0].Destination.Host, "test-oathkeeper")
-	assert.Equal(vs.Spec.HTTP[0].Route[0].Destination.Port.Number, uint32(4455))
-	assert.Equal(vs.Spec.HTTP[0].Match[0].URI.Regex, apiRule.Spec.Rules[0].Path)
-
-	assert.Empty(vs.ObjectMeta.Name)
-	assert.Equal(vs.ObjectMeta.GenerateName, apiName+"-")
-	assert.Equal(vs.ObjectMeta.Namespace, apiNamespace)
-
-	assert.Equal(vs.ObjectMeta.OwnerReferences[0].APIVersion, apiAPIVersion)
-	assert.Equal(vs.ObjectMeta.OwnerReferences[0].Kind, apiKind)
-	assert.Equal(vs.ObjectMeta.OwnerReferences[0].Name, apiName)
-	assert.Equal(vs.ObjectMeta.OwnerReferences[0].UID, apiUID)
-
-}
-func TestGenerateAR_JWT(t *testing.T) {
-	assert := assert.New(t)
-
-	configJSON := fmt.Sprintf(`
-		{
-			"trusted_issuers": ["%s"],
-			"jwks": [],
-			"required_scope": [%s]
-	}`, jwtIssuer, toCSVList(apiScopes))
-
-	strategies := []*rulev1alpha1.Authenticator{
-		{
-			Handler: &rulev1alpha1.Handler{
-				Name: "jwt",
-				Config: &runtime.RawExtension{
-					Raw: []byte(configJSON),
-				},
-			},
-		},
-	}
-
-	apiRule := getAPIRuleFor(strategies, []*rulev1alpha1.Mutator{})
-
-	ar := generateAccessRule(apiRule, apiRule.Spec.Rules[0], []*rulev1alpha1.Authenticator{strategies[0]})
-
-	assert.Equal(len(ar.Spec.Authenticators), 1)
-	assert.NotEmpty(ar.Spec.Authenticators[0].Config)
-	assert.Equal(ar.Spec.Authenticators[0].Name, "jwt")
-	assert.Equal(string(ar.Spec.Authenticators[0].Config.Raw), configJSON)
-
-	assert.Equal(len(ar.Spec.Match.Methods), 1)
-	assert.Equal(ar.Spec.Match.Methods, []string{"GET"})
-	assert.Equal(ar.Spec.Match.URL, "<http|https>://myService.myDomain.com</.*>")
-
-	assert.Equal(ar.Spec.Authorizer.Name, "allow")
-	assert.Empty(ar.Spec.Authorizer.Config)
-
-	assert.Equal(ar.Spec.Upstream.URL, "http://example-service.some-namespace.svc.cluster.local:8080")
-
-	assert.Empty(ar.ObjectMeta.Name)
-	assert.Equal(ar.ObjectMeta.GenerateName, apiName+"-")
-	assert.Equal(ar.ObjectMeta.Namespace, apiNamespace)
-
-	assert.Equal(ar.ObjectMeta.OwnerReferences[0].APIVersion, apiAPIVersion)
-	assert.Equal(ar.ObjectMeta.OwnerReferences[0].Kind, apiKind)
-	assert.Equal(ar.ObjectMeta.OwnerReferences[0].Name, apiName)
-	assert.Equal(ar.ObjectMeta.OwnerReferences[0].UID, apiUID)
-
-}
-
-func TestGenerateVS_OAUTH(t *testing.T) {
-	assert := assert.New(t)
-
-	configJSON := fmt.Sprintf(`
-		{
-			"required_scope": [%s]
-	}`, toCSVList(apiScopes))
-
-	strategies := []*rulev1alpha1.Authenticator{
-		{
-			Handler: &rulev1alpha1.Handler{
-				Name: "oauth2_introspection",
-				Config: &runtime.RawExtension{
-					Raw: []byte(configJSON),
-				},
-			},
-		},
-	}
-
-	apiRule := getAPIRuleFor(strategies, []*rulev1alpha1.Mutator{})
-	f := &Factory{oathkeeperSvcPort: 4455, oathkeeperSvc: "test-oathkeeper"}
-	vs := f.generateVirtualService(apiRule)
-
-	assert.Equal(len(vs.Spec.Gateways), 1)
-	assert.Equal(vs.Spec.Gateways[0], apiGateway)
-
-	assert.Equal(len(vs.Spec.Hosts), 1)
-	assert.Equal(vs.Spec.Hosts[0], serviceHost)
-
-	assert.Equal(len(vs.Spec.HTTP), 1)
-	assert.Equal(len(vs.Spec.HTTP[0].Route), 1)
-	assert.Equal(len(vs.Spec.HTTP[0].Match), 1)
-	assert.Equal(vs.Spec.HTTP[0].Route[0].Destination.Host, "test-oathkeeper")
-	assert.Equal(vs.Spec.HTTP[0].Route[0].Destination.Port.Number, uint32(4455))
-	assert.Equal(vs.Spec.HTTP[0].Match[0].URI.Regex, apiPath)
-
-	assert.Empty(vs.ObjectMeta.Name)
-	assert.Equal(vs.ObjectMeta.GenerateName, apiName+"-")
-	assert.Equal(vs.ObjectMeta.Namespace, apiNamespace)
-
-	assert.Equal(vs.ObjectMeta.OwnerReferences[0].APIVersion, apiAPIVersion)
-	assert.Equal(vs.ObjectMeta.OwnerReferences[0].Kind, apiKind)
-	assert.Equal(vs.ObjectMeta.OwnerReferences[0].Name, apiName)
-	assert.Equal(vs.ObjectMeta.OwnerReferences[0].UID, apiUID)
-
-}
-
-func TestGenerateAR_OAUTH(t *testing.T) {
-	assert := assert.New(t)
-
-	configJSON := fmt.Sprintf(`
-		{
-			"required_scope": [%s]
-	}`, toCSVList(apiScopes))
-
-	strategies := []*rulev1alpha1.Authenticator{
-		{
-			Handler: &rulev1alpha1.Handler{
-				Name: "oauth2_introspection",
-				Config: &runtime.RawExtension{
-					Raw: []byte(configJSON),
-				},
-			},
-		},
-	}
-
-	apiRule := getAPIRuleFor(strategies, []*rulev1alpha1.Mutator{})
-
-	ar := generateAccessRule(apiRule, apiRule.Spec.Rules[0], []*rulev1alpha1.Authenticator{strategies[0]})
-
-	assert.Equal(len(ar.Spec.Authenticators), 1)
-	assert.NotEmpty(ar.Spec.Authenticators[0].Config)
-	assert.Equal(ar.Spec.Authenticators[0].Name, "oauth2_introspection")
-	assert.Equal(string(ar.Spec.Authenticators[0].Config.Raw), configJSON)
-
-	assert.Equal(len(ar.Spec.Match.Methods), 1)
-	assert.Equal(ar.Spec.Match.Methods[0], "GET")
-	assert.Equal(ar.Spec.Match.URL, "<http|https>://myService.myDomain.com</.*>")
-
-	assert.Equal(ar.Spec.Authorizer.Name, "allow")
-	assert.Empty(ar.Spec.Authorizer.Config)
-
-	assert.Equal(ar.Spec.Upstream.URL, "http://example-service.some-namespace.svc.cluster.local:8080")
-
-	assert.Empty(ar.ObjectMeta.Name)
-	assert.Equal(ar.ObjectMeta.GenerateName, apiName+"-")
-	assert.Equal(ar.ObjectMeta.Namespace, apiNamespace)
-
-	assert.Equal(ar.ObjectMeta.OwnerReferences[0].APIVersion, apiAPIVersion)
-	assert.Equal(ar.ObjectMeta.OwnerReferences[0].Kind, apiKind)
-	assert.Equal(ar.ObjectMeta.OwnerReferences[0].Name, apiName)
-	assert.Equal(ar.ObjectMeta.OwnerReferences[0].UID, apiUID)
-
 }
