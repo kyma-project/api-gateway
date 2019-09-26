@@ -2,12 +2,12 @@ package processing
 
 import (
 	"fmt"
+	"testing"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/utils/pointer"
-	"testing"
 
 	gatewayv1alpha1 "github.com/kyma-incubator/api-gateway/api/v1alpha1"
 	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
@@ -22,12 +22,9 @@ const (
 	apiNamespace                = "some-namespace"
 	apiAPIVersion               = "gateway.kyma-project.io/v1alpha1"
 	apiKind                     = "ApiRule"
-	apiGateway                  = "some-gateway"
 	apiPath                     = "/.*"
-	headersApiPath              = "/headers"
-	oauthApiPath                = "/img"
-	serviceName                 = "example-service"
-	serviceHost                 = "myService.myDomain.com"
+	headersAPIPath              = "/headers"
+	oauthAPIPath                = "/img"
 	jwtIssuer                   = "https://oauth2.example.com/"
 	oathkeeperSvc               = "fake.oathkeeper"
 	oathkeeperSvcPort uint32    = 1234
@@ -37,6 +34,9 @@ var (
 	apiMethods         = []string{"GET"}
 	apiScopes          = []string{"write", "read"}
 	servicePort uint32 = 8080
+	apiGateway         = "some-gateway"
+	serviceName        = "example-service"
+	serviceHost        = "myService.myDomain.com"
 )
 
 func TestProcessing(t *testing.T) {
@@ -135,11 +135,11 @@ var _ = Describe("Factory", func() {
 				}
 
 				noopRule := getRuleFor(apiPath, apiMethods, []*rulev1alpha1.Mutator{}, noop)
-				jwtRule := getRuleFor(headersApiPath, apiMethods, testMutators, jwt)
+				jwtRule := getRuleFor(headersAPIPath, apiMethods, testMutators, jwt)
 				rules := []gatewayv1alpha1.Rule{noopRule, jwtRule}
 
 				expectedNoopRuleMatchURL := fmt.Sprintf("<http|https>://%s<%s>", serviceHost, apiPath)
-				expectedJwtRuleMatchURL := fmt.Sprintf("<http|https>://%s<%s>", serviceHost, headersApiPath)
+				expectedJwtRuleMatchURL := fmt.Sprintf("<http|https>://%s<%s>", serviceHost, headersAPIPath)
 				expectedRuleUpstreamURL := fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", serviceName, apiNamespace, servicePort)
 
 				apiRule := getAPIRuleFor(rules)
@@ -398,8 +398,8 @@ var _ = Describe("Factory", func() {
 					},
 				}
 
-				noopRule := getRuleFor(headersApiPath, apiMethods, []*rulev1alpha1.Mutator{}, noop)
-				allowRule := getRuleFor(oauthApiPath, apiMethods, []*rulev1alpha1.Mutator{}, strategies)
+				noopRule := getRuleFor(headersAPIPath, apiMethods, []*rulev1alpha1.Mutator{}, noop)
+				allowRule := getRuleFor(oauthAPIPath, apiMethods, []*rulev1alpha1.Mutator{}, strategies)
 
 				rules := []gatewayv1alpha1.Rule{noopRule, allowRule}
 
@@ -408,8 +408,8 @@ var _ = Describe("Factory", func() {
 				f := NewFactory(nil, ctrl.Log.WithName("test"), oathkeeperSvc, oathkeeperSvcPort, "https://example.com/.well-known/jwks.json")
 
 				desiredState := f.CalculateRequiredState(apiRule)
-				oauthNoopRuleMatchURL := fmt.Sprintf("<http|https>://%s<%s>", serviceHost, oauthApiPath)
-				expectedNoopRuleMatchURL := fmt.Sprintf("<http|https>://%s<%s>", serviceHost, headersApiPath)
+				oauthNoopRuleMatchURL := fmt.Sprintf("<http|https>://%s<%s>", serviceHost, oauthAPIPath)
+				expectedNoopRuleMatchURL := fmt.Sprintf("<http|https>://%s<%s>", serviceHost, headersAPIPath)
 				notDesiredRuleMatchURL := fmt.Sprintf("<http|https>://%s<%s>", serviceHost, "/delete")
 
 				labels := make(map[string]string)
@@ -505,10 +505,10 @@ func getAPIRuleFor(rules []gatewayv1alpha1.Rule) *gatewayv1alpha1.APIRule {
 			Kind:       apiKind,
 		},
 		Spec: gatewayv1alpha1.APIRuleSpec{
-			Gateway: pointer.StringPtr(apiGateway),
+			Gateway: &apiGateway,
 			Service: &gatewayv1alpha1.Service{
-				Name: pointer.StringPtr(serviceName),
-				Host: pointer.StringPtr(serviceHost),
+				Name: &serviceName,
+				Host: &serviceHost,
 				Port: &servicePort,
 			},
 			Rules: rules,
