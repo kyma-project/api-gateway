@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strings"
 
+	"knative.dev/pkg/apis/istio/v1alpha3"
+
 	gatewayv1alpha1 "github.com/kyma-incubator/api-gateway/api/v1alpha1"
 	"github.com/ory/oathkeeper-maester/api/v1alpha1"
 	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
@@ -41,11 +43,11 @@ type APIRule struct {
 }
 
 //Validate performs APIRule validation
-func (v *APIRule) Validate(api *gatewayv1alpha1.APIRule) []Failure {
+func (v *APIRule) Validate(api *gatewayv1alpha1.APIRule, vsList v1alpha3.VirtualServiceList) []Failure {
 
 	res := []Failure{}
 	//Validate service
-	res = append(res, v.validateService(".spec.service", api.Spec.Service)...)
+	res = append(res, v.validateService(".spec.service", vsList, api)...)
 	//Validate Gateway
 	res = append(res, v.validateGateway(".spec.gateway", api.Spec.Gateway)...)
 	//Validate Rules
@@ -60,11 +62,21 @@ type Failure struct {
 	Message       string
 }
 
-func (v *APIRule) validateService(attributePath string, service *gatewayv1alpha1.Service) []Failure {
+func (v *APIRule) validateService(attributePath string, vsList v1alpha3.VirtualServiceList, api *gatewayv1alpha1.APIRule) []Failure {
 	var problems []Failure
+
+	for _, vs := range vsList.Items {
+		if occupiesHost(vs, *api.Spec.Service.Host) && !ownedBy(vs, api) {
+			problems = append(problems, Failure{
+				AttributePath: attributePath + ".host",
+				Message:       "This host is occupied by another Virtual Service",
+			})
+		}
+	}
+
 	domainFound := false
 	for _, svc := range v.ServiceBlackList {
-		if svc == *service.Name {
+		if svc == *api.Spec.Service.Name {
 			problems = append(problems, Failure{
 				AttributePath: attributePath + ".name",
 				Message:       "This service has been blacklisted",
@@ -72,7 +84,7 @@ func (v *APIRule) validateService(attributePath string, service *gatewayv1alpha1
 		}
 	}
 	for _, domain := range v.DomainWhiteList {
-		if strings.HasSuffix(*service.Host, domain) {
+		if strings.HasSuffix(*api.Spec.Service.Host, domain) {
 			domainFound = true
 		}
 	}
@@ -158,4 +170,22 @@ func (v *APIRule) validateAccessStrategy(attributePath string, accessStrategy *r
 	}
 
 	return vld.Validate(attributePath, accessStrategy.Handler)
+}
+
+func occupiesHost(vs v1alpha3.VirtualService, host string) bool {
+	for _, h := range vs.Spec.Hosts {
+		if h == host {
+			return true
+		}
+	}
+	return false
+}
+
+func ownedBy(vs v1alpha3.VirtualService, api *gatewayv1alpha1.APIRule) bool {
+	for _, or := range vs.OwnerReferences {
+		if or.UID == api.UID {
+			return true
+		}
+	}
+	return false
 }

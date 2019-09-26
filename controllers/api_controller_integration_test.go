@@ -6,6 +6,8 @@ import (
 	"math/rand"
 	"time"
 
+	"github.com/kyma-incubator/api-gateway/internal/processing"
+
 	"encoding/json"
 
 	gatewayv1alpha1 "github.com/kyma-incubator/api-gateway/api/v1alpha1"
@@ -39,7 +41,6 @@ const (
 
 var _ = Describe("APIRule Controller", func() {
 	const testServiceName = "httpbin"
-	const testServiceHost = "httpbin.kyma.local"
 	const testServicePort uint32 = 443
 	const testPath = "/.*"
 	var testIssuer = "https://oauth2.example.com/"
@@ -74,6 +75,7 @@ var _ = Describe("APIRule Controller", func() {
 			}
 
 			apiRuleName := generateTestName(testNameBase, testIDLength)
+			testServiceHost := "httpbin.kyma.local"
 			rule := testRule(testPath, testMethods, testMutators, nonEmptyConfig)
 			instance := testInstance(apiRuleName, testNamespace, testServiceName, testServiceHost, testServicePort, []gatewayv1alpha1.Rule{rule})
 			instance.Spec.Rules = append(instance.Spec.Rules, instance.Spec.Rules[0]) //Duplicate entry
@@ -125,6 +127,7 @@ var _ = Describe("APIRule Controller", func() {
 						}
 
 						apiRuleName := generateTestName(testNameBase, testIDLength)
+						testServiceHost := "httpbin2.kyma.local"
 						rule := testRule(testPath, testMethods, testMutators, oauthConfig)
 						instance := testInstance(apiRuleName, testNamespace, testServiceName, testServiceHost, testServicePort, []gatewayv1alpha1.Rule{rule})
 
@@ -141,7 +144,7 @@ var _ = Describe("APIRule Controller", func() {
 						Eventually(requests, timeout).Should(Receive(Equal(expectedRequest)))
 
 						labels := make(map[string]string)
-						labels["owner"] = fmt.Sprintf("%s.%s", apiRuleName, testNamespace)
+						labels[processing.OwnerLabel] = fmt.Sprintf("%s.%s", apiRuleName, testNamespace)
 						matchingLabelsFunc := client.MatchingLabels(labels)
 
 						//Verify VirtualService
@@ -278,6 +281,7 @@ var _ = Describe("APIRule Controller", func() {
 						}
 
 						apiRuleName := generateTestName(testNameBase, testIDLength)
+						testServiceHost := "httpbin3.kyma.local"
 						rule1 := testRule("/img", []string{"GET"}, testMutators, jwtConfig)
 						rule2 := testRule("/headers", []string{"GET"}, testMutators, jwtConfig)
 						instance := testInstance(apiRuleName, testNamespace, testServiceName, testServiceHost, testServicePort, []gatewayv1alpha1.Rule{rule1, rule2})
@@ -295,7 +299,7 @@ var _ = Describe("APIRule Controller", func() {
 						Eventually(requests, timeout).Should(Receive(Equal(expectedRequest)))
 
 						labels := make(map[string]string)
-						labels["owner"] = fmt.Sprintf("%s.%s", apiRuleName, testNamespace)
+						labels[processing.OwnerLabel] = fmt.Sprintf("%s.%s", apiRuleName, testNamespace)
 						matchingLabelsFunc := client.MatchingLabels(labels)
 
 						//Verify VirtualService
@@ -498,6 +502,7 @@ var _ = Describe("APIRule Controller", func() {
 						rule4 := testRule("/favicon", []string{"GET"}, nil, allowHandler)
 
 						apiRuleName := generateTestName(testNameBase, testIDLength)
+						testServiceHost := "httpbin4.kyma.local"
 						instance := testInstance(apiRuleName, testNamespace, testServiceName, testServiceHost, testServicePort, []gatewayv1alpha1.Rule{rule1, rule2, rule3, rule4})
 
 						err := c.Create(context.TODO(), instance)
@@ -512,7 +517,7 @@ var _ = Describe("APIRule Controller", func() {
 						Eventually(requests, timeout).Should(Receive(Equal(expectedRequest)))
 
 						labels := make(map[string]string)
-						labels["owner"] = fmt.Sprintf("%s.%s", apiRuleName, testNamespace)
+						labels[processing.OwnerLabel] = fmt.Sprintf("%s.%s", apiRuleName, testNamespace)
 						matchingLabelsFunc := client.MatchingLabels(labels)
 
 						//Verify VirtualService

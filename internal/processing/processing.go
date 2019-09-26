@@ -14,6 +14,8 @@ import (
 	networkingv1alpha3 "knative.dev/pkg/apis/istio/v1alpha3"
 )
 
+var OwnerLabel = fmt.Sprintf("%s.%s", "apirule", gatewayv1alpha1.GroupVersion.String())
+
 //Factory .
 type Factory struct {
 	client            client.Client
@@ -63,7 +65,7 @@ type State struct {
 //GetActualState methods gets actual state of Istio Virtual Services and Oathkeeper Rules
 func (f *Factory) GetActualState(ctx context.Context, api *gatewayv1alpha1.APIRule) (*State, error) {
 	labels := make(map[string]string)
-	labels["owner"] = fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace)
+	labels[OwnerLabel] = fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace)
 	var state State
 
 	var vsList networkingv1alpha3.VirtualServiceList
@@ -208,7 +210,7 @@ func (f *Factory) generateVirtualService(api *gatewayv1alpha1.APIRule) *networki
 		GenerateName(virtualServiceNamePrefix).
 		Namespace(api.ObjectMeta.Namespace).
 		Owner(builders.OwnerReference().From(&ownerRef)).
-		Label("owner", fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace))
+		Label(OwnerLabel, fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace))
 
 	vsBuilder.Spec(vsSpecBuilder)
 

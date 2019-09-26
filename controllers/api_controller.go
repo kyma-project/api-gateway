@@ -21,13 +21,15 @@ import (
 	"fmt"
 	"time"
 
+	"knative.dev/pkg/apis/istio/v1alpha3"
+
 	"github.com/kyma-incubator/api-gateway/internal/processing"
 	"github.com/kyma-incubator/api-gateway/internal/validation"
 
 	"github.com/go-logr/logr"
 	gatewayv1alpha1 "github.com/kyma-incubator/api-gateway/api/v1alpha1"
 	apierrs "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -45,7 +47,7 @@ type APIReconciler struct {
 
 //APIRuleValidator allows to validate APIRule instances created by the user.
 type APIRuleValidator interface {
-	Validate(apiRule *gatewayv1alpha1.APIRule) []validation.Failure
+	Validate(apiRule *gatewayv1alpha1.APIRule, vsList v1alpha3.VirtualServiceList) []validation.Failure
 }
 
 //Reconcile .
@@ -83,8 +85,14 @@ func (r *APIReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	//Prevent reconciliation after status update. It should be solved by controller-runtime implementation but still isn't.
 	if api.Generation != api.Status.ObservedGeneration {
 
-		//1) Validate input
-		validationFailures := r.Validator.Validate(api)
+		//1.1) Get the list of existing Virtual Services to validate host
+		var vsList v1alpha3.VirtualServiceList
+		if err := r.Client.List(ctx, &vsList); err != nil {
+			return retryReconcile(err)
+		}
+
+		//1.2) Validate input including host
+		validationFailures := r.Validator.Validate(api, vsList)
 		if len(validationFailures) > 0 {
 			r.Log.Info(fmt.Sprintf(`Validation failure {"controller": "Api", "request": "%s/%s"}`, api.Namespace, api.Name))
 			apiRuleValidationStatus := generateValidationStatus(validationFailures)
