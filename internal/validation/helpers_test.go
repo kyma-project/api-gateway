@@ -69,5 +69,4 @@ var _ = Describe("ValidateDomainName function", func() {
 		Expect(valid).To(BeFalse())
 	})
 
-
 })
