@@ -84,7 +84,9 @@ func (v *APIRule) validateService(attributePath string, vsList v1alpha3.VirtualS
 		}
 	}
 	for _, domain := range v.DomainWhiteList {
-		if strings.HasSuffix(*api.Spec.Service.Host, domain) {
+		// service host containing duplicated whitelisted domain should be rejected.
+		// for example my-lambda.kyma.local.kyma.local
+		if count := strings.Count(*api.Spec.Service.Host,domain); count == 1 {
 			domainFound = true
 		}
 	}

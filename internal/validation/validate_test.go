@@ -105,6 +105,36 @@ var _ = Describe("Validate function", func() {
 		Expect(problems[0].Message).To(Equal("Host is not whitelisted"))
 	})
 
+	It("Should fail for serviceHost containing duplicated whitelisted domain", func() {
+		//given
+		testBlackList := []string{"kubernetes", "kube-dns", "kubernetes.default"}
+		testWhiteList := []string{"foo.bar", "bar.foo", "kyma.local"}
+		input := &gatewayv1alpha1.APIRule{
+			Spec: gatewayv1alpha1.APIRuleSpec{
+				Service: getService("some-service", uint32(8080), "some-service.kyma.local.kyma.local"),
+				Rules: []gatewayv1alpha1.Rule{
+					{
+						Path: "/abc",
+						AccessStrategies: []*rulev1alpha1.Authenticator{
+							toAuthenticator("jwt", simpleJWTConfig()),
+							toAuthenticator("noop", emptyConfig()),
+						},
+					},
+				},
+			}}
+
+		//when
+		problems := (&APIRule{
+			ServiceBlackList: testBlackList,
+			DomainWhiteList:  testWhiteList,
+		}).Validate(input, v1alpha3.VirtualServiceList{})
+
+		//then
+		Expect(problems).To(HaveLen(1))
+		Expect(problems[0].AttributePath).To(Equal(".spec.service.host"))
+		Expect(problems[0].Message).To(Equal("Host is not whitelisted"))
+	})
+
 	It("Should fail for a host that is occupied by a VS exposed by another resource", func() {
 		//given
 		testWhiteList := []string{"foo.bar"}
