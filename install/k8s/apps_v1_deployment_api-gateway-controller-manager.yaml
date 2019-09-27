@@ -21,10 +21,10 @@ spec:
         - --oathkeeper-svc-port="change-me"
         - --jwks-uri="change-me"
         - --service-blacklist="kubernetes"
-        - --domain-whitelist="kyma.local"
+        - --domain-whitelist=""kyma.local""
         command:
         - /manager
-        image: eu.gcr.io/kyma-project/incubator/develop/api-gateway-controller:2a721826
+        image: eu.gcr.io/kyma-project/incubator/develop/api-gateway-controller:1669a1f9
         imagePullPolicy: IfNotPresent
         name: manager
         resources:
