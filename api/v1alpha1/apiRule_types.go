@@ -85,7 +85,7 @@ type Service struct {
 	// URL on which the service will be visible
 	// +kubebuilder:validation:MinLength=3
 	// +kubebuilder:validation:MaxLength=256
-	// +kubebuilder:validation:Pattern=^(?:[_a-z0-9](?:[_a-z0-9-]+[a-z0-9])?\.)+(?:[a-z](?:[a-z0-9-]+[a-z0-9])?)?$
+	// +kubebuilder:validation:Pattern=^([a-zA-Z0-9][a-zA-Z0-9-_]*\.)*[a-zA-Z0-9]*[a-zA-Z0-9-_]*[[a-zA-Z0-9]+$
 	Host *string `json:"host"`
 	// Defines if the service is internal (in cluster) or external
 	// +optional
