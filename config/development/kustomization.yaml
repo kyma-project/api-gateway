@@ -1,0 +1,7 @@
+namespace: api-gateway-system
+
+bases:
+- ../default
+
+patchesStrategicMerge:
+- ./manager_image_patch.yaml

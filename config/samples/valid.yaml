@@ -5,7 +5,7 @@ metadata:
   name: passthrough-unsecured
 spec:
   service:
-    host: httpbin.kyma.local
+    host: httpbin1.kyma.local
     name: httpbin
     port: 8000
   gateway: kyma-gateway.kyma-system.svc.cluster.local
@@ -22,7 +22,7 @@ metadata:
   name: passthrough-secured-mutators
 spec:
   service:
-    host: httpbin.kyma.local
+    host: httpbin2.kyma.local
     name: httpbin
     port: 8000
   gateway: kyma-gateway.kyma-system.svc.cluster.local
@@ -43,7 +43,7 @@ spec:
   service:
     name: foo-service
     port: 8080
-    host: foo.kyma.local
+    host: foo1.kyma.local
   rules:
     - path: /.*
       methods: ["GET"]
@@ -63,7 +63,7 @@ spec:
   service:
     name: foo-service
     port: 8080
-    host: foo.kyma.local
+    host: foo2.kyma.local
   rules:
     - path: /.*
       methods: ["GET"]
@@ -84,7 +84,7 @@ spec:
   service:
     name: foo-service
     port: 8080
-    host: foo.kyma.local
+    host: foo3.kyma.local
   rules:
     - path: /.*
       methods: ["GET"]
@@ -102,7 +102,7 @@ metadata:
 spec:
   gateway: kyma-gateway.kyma-system.svc.cluster.local
   service:
-    host: httpbin.kyma.local
+    host: httpbin3.kyma.local
     name: httpbin
     port: 8000
   rules:
@@ -121,7 +121,7 @@ metadata:
 spec:
   gateway: kyma-gateway.kyma-system.svc.cluster.local
   service:
-    host: httpbin.kyma.local
+    host: httpbin4.kyma.local
     name: httpbin
     port: 8000
   rules:
@@ -144,7 +144,7 @@ spec:
   service:
     name: foo-service
     port: 8080
-    host: foo.kyma.local
+    host: foo4.kyma.local
   rules:
     - path: /img
       methods: ["GET"]

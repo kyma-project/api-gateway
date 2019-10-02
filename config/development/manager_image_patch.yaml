@@ -7,6 +7,5 @@ spec:
   template:
     spec:
       containers:
-      - image: eu.gcr.io/kyma-project/incubator/develop/api-gateway-controller:1669a1f9
+      - image: api-gateway-controller:latest
         name: manager
-        imagePullPolicy: IfNotPresent

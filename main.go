@@ -68,24 +68,24 @@ func main() {
 	ctrl.SetLogger(zap.Logger(true))
 
 	if jwksURI == "" {
-		setupLog.Error(fmt.Errorf("jwksURI required, but not supplied"), "unable to create controller", "controller", "Api")
+		setupLog.Error(fmt.Errorf("jwks-uri required, but not supplied"), "unable to create controller", "controller", "Api")
 		os.Exit(1)
 	}
 	if oathkeeperSvcAddr == "" {
-		setupLog.Error(fmt.Errorf("oathkeeper service address can't be empty"), "unable to create controller", "controller", "Api")
+		setupLog.Error(fmt.Errorf("oathkeeper-svc-address can't be empty"), "unable to create controller", "controller", "Api")
 		os.Exit(1)
 	}
 	if oathkeeperSvcPort == 0 {
-		setupLog.Error(fmt.Errorf("oathkeeper service port can't be empty"), "unable to create controller", "controller", "Api")
+		setupLog.Error(fmt.Errorf("oathkeeper-svc-port can't be empty"), "unable to create controller", "controller", "Api")
 		os.Exit(1)
 	}
 	if whiteListedDomains == "" {
-		setupLog.Error(fmt.Errorf("domain whitelist can't be empty"), "unable to create controller", "controller", "Api")
+		setupLog.Error(fmt.Errorf("domain-whitelist can't be empty"), "unable to create controller", "controller", "Api")
 		os.Exit(1)
 	} else {
 		for _, domain := range getList(whiteListedDomains) {
 			if !validation.ValidateDomainName(domain) {
-				setupLog.Error(fmt.Errorf("invalid domain in domain whitelist"), "unable to create controller", "controller", "Api")
+				setupLog.Error(fmt.Errorf("invalid domain in domain-whitelist"), "unable to create controller", "controller", "Api")
 				os.Exit(1)
 			}
 		}

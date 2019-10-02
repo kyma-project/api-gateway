@@ -9,8 +9,8 @@ spec:
       containers:
       - name: manager
         args:
-          - --oathkeeper-svc-address="change-me"
-          - --oathkeeper-svc-port="change-me"
-          - --jwks-uri="change-me"
-          - --service-blacklist="kubernetes"
-          - --domain-whitelist=""kyma.local""
+          - --oathkeeper-svc-address=change-me
+          - --oathkeeper-svc-port=change-me
+          - --jwks-uri=change-me
+          - --service-blacklist=kubernetes
+          - --domain-whitelist=kyma.local

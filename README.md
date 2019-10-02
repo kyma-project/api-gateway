@@ -14,14 +14,32 @@ The API Gateway Controller manages Istio VirtualServices and Oathkeeper Rule. Th
 
 ## Details
 
-### Run the controller locally
+### Deploy to the cluster
+Deploys the oficially released Controller version to the cluster
 
-- `start minikube`
+- ensure the access to a Kubernetes cluster is configured in `~/.kube/config`
+- `make install` to install necessary Custom Resource Definitions
+- export `OATHKEEPER_SVC_ADDRESS`, `OATHKEEPER_SVC_PORT`, `JWKS_URI` and `DOMAIN_WHITELIST` variables
+- `make deploy` to deploy controller
+
+### Run the controller locally
+This procedure is the fastest way to run the Controller, useful for development purposes
+
+- start Minikube or ensure the access to a Kubernetes cluster is configured in `~/.kube/config`
+- `make install` to install necessary Custom Resource Definitions
+- export `OATHKEEPER_SVC_ADDRESS`, `OATHKEEPER_SVC_PORT`, `JWKS_URI` and `DOMAIN_WHITELIST` variables
+- `go run main.go --jwks-uri="$JWKS_URI" --oathkeeper-svc-address="$OATHKEEPER_SVC_ADDRESS" --oathkeeper-svc-port=$OATHKEEPER_SVC_PORT --domain-whitelist=$DOMAIN_WHITELIST`
+
+### Deploy a custom Controller build to the local Minikube cluster
+This procedure is useful to test your own Controller build end-to-end in a local Minikube cluster.
+
+- start Minikube
 - `make build` to build the binary and run tests
 - `eval $(minikube docker-env)`
-- `make build-image` to build a docker image
-- export `OATHKEEPER_SVC_ADDRESS`, `OATHKEEPER_SVC_PORT` and `JWKS_URI` variables
-- `make deploy` to deploy controller
+- `make build-image` to put the docker image inside running Minikube
+- `make install` to install necessary Custom Resource Definitions
+- export `OATHKEEPER_SVC_ADDRESS`, `OATHKEEPER_SVC_PORT`, `JWKS_URI` and `DOMAIN_WHITELIST` variables
+- `make deploy-dev` to deploy controller
 
 ### Use command-line flags
 
@@ -30,8 +48,8 @@ The API Gateway Controller manages Istio VirtualServices and Oathkeeper Rule. Th
 | **oathkeeper-svc-address** | yes | ory oathkeeper-proxy service address. | `ory-oathkeeper-proxy.kyma-system.svc.cluster.local` |
 | **oathkeeper-svc-port** | yes | ory oathkeeper-proxy service port. | `4455` |
 | **jwks-uri** | yes | default jwksUri in the Policy. | any string |
-| **service-blacklist** | no | list of services to be blacklisted | `kubernetes` <br> `kube-dns` | 
-| **domain-whitelist** | yes | list of domains that can be exposed | `kyma.local` <br> `foo.bar` | 
+| **service-blacklist** | no | list of services to be blacklisted | `kubernetes` <br> `kube-dns` |
+| **domain-whitelist** | yes | list of domains that can be exposed | `kyma.local` <br> `foo.bar` |
 
 ## Custom Resource
 

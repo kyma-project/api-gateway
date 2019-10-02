@@ -27,7 +27,8 @@ spec:
         - /manager
         args:
         - --enable-leader-election
-        image: controller:latest
+        image: eu.gcr.io/kyma-project/incubator/develop/api-gateway-controller:dfcb9e32
+        imagePullPolicy: IfNotPresent
         name: manager
         resources:
           limits:
