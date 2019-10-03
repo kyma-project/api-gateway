@@ -119,6 +119,11 @@ func (hr *httpRoute) Route(rd *routeDestination) *httpRoute {
 	return hr
 }
 
+func (hr *httpRoute) CorsPolicy(cc *networkingv1alpha3.CorsPolicy) *httpRoute {
+	hr.value.CorsPolicy = cc
+	return hr
+}
+
 // MatchRequest returns builder for knative.dev/pkg/apis/istio/v1alpha3/HTTPMatchRequest type
 func MatchRequest() *matchRequest {
 	return &matchRequest{

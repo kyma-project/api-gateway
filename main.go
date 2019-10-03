@@ -18,6 +18,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/kyma-incubator/api-gateway/internal/processing"
 	"os"
 	"strings"
 
@@ -54,6 +55,7 @@ func main() {
 	var oathkeeperSvcPort uint
 	var blackListedServices string
 	var whiteListedDomains string
+	var corsAllowOrigin, corsAllowMethods, corsAllowHeaders string
 
 	flag.StringVar(&oathkeeperSvcAddr, "oathkeeper-svc-address", "", "Oathkeeper proxy service")
 	flag.UintVar(&oathkeeperSvcPort, "oathkeeper-svc-port", 0, "Oathkeeper proxy service port")
@@ -63,6 +65,10 @@ func main() {
 		"Enable leader election for controller manager. Enabling this will ensure there is only one active controller manager.")
 	flag.StringVar(&blackListedServices, "service-blacklist", "kubernetes", "List of services to be blacklisted from exposure.")
 	flag.StringVar(&whiteListedDomains, "domain-whitelist", "", "List of domains to be allowed.")
+	flag.StringVar(&corsAllowOrigin, "cors-allow-origin", "*", "list of allowed origins")
+	flag.StringVar(&corsAllowMethods, "cors-allow-methods", "GET,POST,PUT,DELETE", "list of allowed methods")
+	flag.StringVar(&corsAllowHeaders, "cors-allow-headers", "Authorization,Content-Type,*", "list of allowed headers")
+
 	flag.Parse()
 
 	ctrl.SetLogger(zap.Logger(true))
@@ -110,6 +116,11 @@ func main() {
 		Validator: &validation.APIRule{
 			ServiceBlackList: getList(blackListedServices),
 			DomainWhiteList:  getList(whiteListedDomains),
+		},
+		CorsConfig: &processing.CorsConfig{
+			AllowHeaders: getList(corsAllowHeaders),
+			AllowMethods: getList(corsAllowMethods),
+			AllowOrigin:  getList(corsAllowOrigin),
 		},
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Api")

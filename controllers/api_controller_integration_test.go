@@ -190,6 +190,11 @@ var _ = Describe("APIRule Controller", func() {
 						Expect(vs.Spec.HTTP[0].Route[0].Destination.Port.Number).To(Equal(testOathkeeperPort))
 						Expect(vs.Spec.HTTP[0].Route[0].Weight).To(BeZero())
 						Expect(vs.Spec.HTTP[0].Route[0].Headers).To(BeNil())
+						//CORS
+						Expect(vs.Spec.HTTP[0].CorsPolicy).NotTo(BeNil())
+						Expect(vs.Spec.HTTP[0].CorsPolicy.AllowOrigin).To(Equal(TestAllowOrigin))
+						Expect(vs.Spec.HTTP[0].CorsPolicy.AllowMethods).To(Equal(TestAllowMethods))
+						Expect(vs.Spec.HTTP[0].CorsPolicy.AllowHeaders).To(Equal(TestAllowHeaders))
 						//Others
 						Expect(vs.Spec.HTTP[0].Rewrite).To(BeNil())
 						Expect(vs.Spec.HTTP[0].WebsocketUpgrade).To(BeFalse())
@@ -200,7 +205,7 @@ var _ = Describe("APIRule Controller", func() {
 						Expect(vs.Spec.HTTP[0].DeprecatedAppendHeaders).To(BeNil())
 						Expect(vs.Spec.HTTP[0].Headers).To(BeNil())
 						Expect(vs.Spec.HTTP[0].RemoveResponseHeaders).To(BeNil())
-						Expect(vs.Spec.HTTP[0].CorsPolicy).To(BeNil())
+
 						//Spec.TCP
 						Expect(vs.Spec.TCP).To(BeNil())
 						//Spec.TLS
@@ -342,6 +347,11 @@ var _ = Describe("APIRule Controller", func() {
 						Expect(vs.Spec.HTTP[0].Route[0].Destination.Port.Number).To(Equal(testOathkeeperPort))
 						Expect(vs.Spec.HTTP[0].Route[0].Weight).To(BeZero())
 						Expect(vs.Spec.HTTP[0].Route[0].Headers).To(BeNil())
+						//CORS
+						Expect(vs.Spec.HTTP[0].CorsPolicy).NotTo(BeNil())
+						Expect(vs.Spec.HTTP[0].CorsPolicy.AllowOrigin).To(Equal(TestAllowOrigin))
+						Expect(vs.Spec.HTTP[0].CorsPolicy.AllowMethods).To(Equal(TestAllowMethods))
+						Expect(vs.Spec.HTTP[0].CorsPolicy.AllowHeaders).To(Equal(TestAllowHeaders))
 						//Others
 						Expect(vs.Spec.HTTP[0].Rewrite).To(BeNil())
 						Expect(vs.Spec.HTTP[0].WebsocketUpgrade).To(BeFalse())
@@ -352,7 +362,6 @@ var _ = Describe("APIRule Controller", func() {
 						Expect(vs.Spec.HTTP[0].DeprecatedAppendHeaders).To(BeNil())
 						Expect(vs.Spec.HTTP[0].Headers).To(BeNil())
 						Expect(vs.Spec.HTTP[0].RemoveResponseHeaders).To(BeNil())
-						Expect(vs.Spec.HTTP[0].CorsPolicy).To(BeNil())
 						//Spec.TCP
 						Expect(vs.Spec.TCP).To(BeNil())
 						//Spec.TLS
@@ -574,6 +583,12 @@ var _ = Describe("APIRule Controller", func() {
 							Expect(h.Route[0].Weight).To(BeZero())
 							Expect(h.Route[0].Headers).To(BeNil())
 
+							//CORS
+							Expect(h.CorsPolicy).NotTo(BeNil())
+							Expect(h.CorsPolicy.AllowOrigin).To(Equal(TestAllowOrigin))
+							Expect(h.CorsPolicy.AllowMethods).To(Equal(TestAllowMethods))
+							Expect(h.CorsPolicy.AllowHeaders).To(Equal(TestAllowHeaders))
+
 							//Others
 							Expect(h.Rewrite).To(BeNil())
 							Expect(h.WebsocketUpgrade).To(BeFalse())
@@ -584,7 +599,6 @@ var _ = Describe("APIRule Controller", func() {
 							Expect(h.DeprecatedAppendHeaders).To(BeNil())
 							Expect(h.Headers).To(BeNil())
 							Expect(h.RemoveResponseHeaders).To(BeNil())
-							Expect(h.CorsPolicy).To(BeNil())
 						}
 
 						//Spec.TCP

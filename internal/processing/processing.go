@@ -3,7 +3,6 @@ package processing
 import (
 	"context"
 	"fmt"
-
 	"github.com/kyma-incubator/api-gateway/internal/builders"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -24,17 +23,26 @@ type Factory struct {
 	oathkeeperSvc     string
 	oathkeeperSvcPort uint32
 	JWKSURI           string
+	corsConfig        *CorsConfig
 }
 
 //NewFactory .
-func NewFactory(client client.Client, logger logr.Logger, oathkeeperSvc string, oathkeeperSvcPort uint32, jwksURI string) *Factory {
+func NewFactory(client client.Client, logger logr.Logger, oathkeeperSvc string, oathkeeperSvcPort uint32, jwksURI string, corsConfig *CorsConfig) *Factory {
 	return &Factory{
 		client:            client,
 		Log:               logger,
 		oathkeeperSvc:     oathkeeperSvc,
 		oathkeeperSvcPort: oathkeeperSvcPort,
 		JWKSURI:           jwksURI,
+		corsConfig:        corsConfig,
 	}
+}
+
+//CorsConfig is an internal representation of v1alpha3.CorsPolicy object
+type CorsConfig struct {
+	AllowOrigin  []string
+	AllowMethods []string
+	AllowHeaders []string
 }
 
 // CalculateRequiredState returns required state of all objects related to given api
@@ -196,16 +204,22 @@ func (f *Factory) generateVirtualService(api *gatewayv1alpha1.APIRule) *networki
 	vsSpecBuilder.Gateway(*api.Spec.Gateway)
 
 	for _, rule := range api.Spec.Rules {
-		httpRouteBuilder := builders.HTTPRoute()
 
-		if isSecured(rule) {
-			httpRouteBuilder.Route(builders.RouteDestination().Host(f.oathkeeperSvc).Port(f.oathkeeperSvcPort))
-		} else {
-			destinationHost := fmt.Sprintf("%s.%s.svc.cluster.local", *api.Spec.Service.Name, api.ObjectMeta.Namespace)
-			httpRouteBuilder.Route(builders.RouteDestination().Host(destinationHost).Port(*api.Spec.Service.Port))
+		httpRouteBuilder := builders.HTTPRoute()
+		host, port := f.oathkeeperSvc, f.oathkeeperSvcPort
+
+		if !isSecured(rule) {
+			host = fmt.Sprintf("%s.%s.svc.cluster.local", *api.Spec.Service.Name, api.ObjectMeta.Namespace)
+			port = *api.Spec.Service.Port
 		}
 
+		httpRouteBuilder.Route(builders.RouteDestination().Host(host).Port(port))
 		httpRouteBuilder.Match(builders.MatchRequest().URI().Regex(rule.Path))
+		httpRouteBuilder.CorsPolicy(&networkingv1alpha3.CorsPolicy{
+			AllowOrigin:  f.corsConfig.AllowOrigin,
+			AllowMethods: f.corsConfig.AllowMethods,
+			AllowHeaders: f.corsConfig.AllowHeaders,
+		})
 		vsSpecBuilder.HTTP(httpRouteBuilder)
 	}
 

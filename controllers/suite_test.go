@@ -1,6 +1,7 @@
 package controllers_test
 
 import (
+	"github.com/kyma-incubator/api-gateway/internal/processing"
 	"path/filepath"
 	"sync"
 	"testing"
@@ -27,13 +28,19 @@ import (
 	// +kubebuilder:scaffold:imports
 )
 
-var cfg *rest.Config
-var k8sClient client.Client
-var testEnv *envtest.Environment
-var stopMgr chan struct{}
-var mgrStopped *sync.WaitGroup
-var requests chan reconcile.Request
-var c client.Client
+var (
+	cfg        *rest.Config
+	k8sClient  client.Client
+	testEnv    *envtest.Environment
+	stopMgr    chan struct{}
+	mgrStopped *sync.WaitGroup
+	requests   chan reconcile.Request
+	c          client.Client
+
+	TestAllowOrigin  = []string{"*"}
+	TestAllowMethods = []string{"GET", "POST", "PUT", "DELETE"}
+	TestAllowHeaders = []string{"header1", "header2"}
+)
 
 func TestAPIs(t *testing.T) {
 	RegisterFailHandler(Fail)
@@ -82,6 +89,11 @@ var _ = BeforeSuite(func(done Done) {
 		OathkeeperSvcPort: testOathkeeperPort,
 		Validator: &validation.APIRule{
 			DomainWhiteList: []string{"bar", "kyma.local"},
+		},
+		CorsConfig: &processing.CorsConfig{
+			AllowOrigin:  TestAllowOrigin,
+			AllowMethods: TestAllowMethods,
+			AllowHeaders: TestAllowHeaders,
 		},
 	}
 

@@ -43,13 +43,16 @@ This procedure is useful to test your own Controller build end-to-end in a local
 
 ### Use command-line flags
 
-| Name | Required | Description | Possible values |
+| Name | Required | Description | Example values |
 |------|----------|-------------|-----------------|
 | **oathkeeper-svc-address** | yes | ory oathkeeper-proxy service address. | `ory-oathkeeper-proxy.kyma-system.svc.cluster.local` |
 | **oathkeeper-svc-port** | yes | ory oathkeeper-proxy service port. | `4455` |
 | **jwks-uri** | yes | default jwksUri in the Policy. | any string |
 | **service-blacklist** | no | list of services to be blacklisted | `kubernetes` <br> `kube-dns` |
 | **domain-whitelist** | yes | list of domains that can be exposed | `kyma.local` <br> `foo.bar` |
+| **cors-allow-origin**  | no | comma-separated list of allowed origins | `*`, `https://developer.org` |
+| **cors-allow-methods** | no | comma-separated list of allowed methods | `GET,POST,DELETE` |
+| **cors-allow-headers** | no | comma-separated list of allowed headers | `Authorization,Content-Type` |
 
 ## Custom Resource
 

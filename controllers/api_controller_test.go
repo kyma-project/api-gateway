@@ -2,6 +2,7 @@ package controllers_test
 
 import (
 	"context"
+	"github.com/kyma-incubator/api-gateway/internal/processing"
 
 	gatewayv1alpha1 "github.com/kyma-incubator/api-gateway/api/v1alpha1"
 	"github.com/kyma-incubator/api-gateway/controllers"
@@ -102,6 +103,11 @@ func getAPIReconciler(mgr manager.Manager) reconcile.Reconciler {
 		Log:    ctrl.Log.WithName("controllers").WithName("Api"),
 		Validator: &validation.APIRule{
 			DomainWhiteList: []string{"bar", "kyma.local"},
+		},
+		CorsConfig: &processing.CorsConfig{
+			AllowOrigin:  TestAllowOrigin,
+			AllowMethods: TestAllowMethods,
+			AllowHeaders: TestAllowHeaders,
 		},
 	}
 }
