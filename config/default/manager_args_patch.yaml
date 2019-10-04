@@ -14,3 +14,6 @@ spec:
           - --jwks-uri=change-me
           - --service-blacklist=kubernetes
           - --domain-whitelist=kyma.local
+          - --cors-allow-origin=*
+          - --cors-allow-methods=GET,POST,PUT,DELETE
+          - --cors-allow-headers=Authorization,Content-Type,*
