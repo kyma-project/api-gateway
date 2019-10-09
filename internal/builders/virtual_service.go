@@ -119,8 +119,8 @@ func (hr *httpRoute) Route(rd *routeDestination) *httpRoute {
 	return hr
 }
 
-func (hr *httpRoute) CorsPolicy(cc *networkingv1alpha3.CorsPolicy) *httpRoute {
-	hr.value.CorsPolicy = cc
+func (hr *httpRoute) CorsPolicy(cc *corsPolicy) *httpRoute {
+	hr.value.CorsPolicy = cc.Get()
 	return hr
 }
 
@@ -175,4 +175,46 @@ func (rd *routeDestination) Host(val string) *routeDestination {
 func (rd *routeDestination) Port(val uint32) *routeDestination {
 	rd.value.Destination.Port.Number = val
 	return rd
+}
+
+// CorsPolicy returns builder for knative.dev/pkg/apis/istio/v1alpha3/CorsPolicy type
+func CorsPolicy() *corsPolicy {
+	return &corsPolicy{
+		value: &networkingv1alpha3.CorsPolicy{},
+	}
+}
+
+type corsPolicy struct {
+	value *networkingv1alpha3.CorsPolicy
+}
+
+func (cp *corsPolicy) Get() *networkingv1alpha3.CorsPolicy {
+	return cp.value
+}
+
+func (cp *corsPolicy) AllowHeaders(val ...string) *corsPolicy {
+	if len(val) == 0 {
+		cp.value.AllowHeaders = nil
+	} else {
+		cp.value.AllowHeaders = append(cp.value.AllowHeaders, val...)
+	}
+	return cp
+}
+
+func (cp *corsPolicy) AllowMethods(val ...string) *corsPolicy {
+	if len(val) == 0 {
+		cp.value.AllowMethods = nil
+	} else {
+		cp.value.AllowMethods = append(cp.value.AllowMethods, val...)
+	}
+	return cp
+}
+
+func (cp *corsPolicy) AllowOrigins(val ...string) *corsPolicy {
+	if len(val) == 0 {
+		cp.value.AllowOrigin = nil
+	} else {
+		cp.value.AllowOrigin = append(cp.value.AllowOrigin, val...)
+	}
+	return cp
 }

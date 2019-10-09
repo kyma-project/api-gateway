@@ -6,6 +6,7 @@ import (
 	"math/rand"
 	"time"
 
+	"github.com/kyma-incubator/api-gateway/internal/builders"
 	"github.com/kyma-incubator/api-gateway/internal/processing"
 
 	"encoding/json"
@@ -48,35 +49,101 @@ var _ = Describe("APIRule Controller", func() {
 	var testScopes = []string{"foo", "bar"}
 	var testMutators = []*rulev1alpha1.Mutator{
 		{
-			Handler: &rulev1alpha1.Handler{
-				Name: "noop",
-			},
+			Handler: noConfigHandler("noop"),
 		},
 		{
-			Handler: &rulev1alpha1.Handler{
-				Name: "idtoken",
-			},
+			Handler: noConfigHandler("idToken"),
 		},
 	}
+
+	var corsPolicyBuilder = builders.CorsPolicy().
+		AllowHeaders(TestAllowHeaders...).
+		AllowMethods(TestAllowMethods...).
+		AllowOrigins(TestAllowOrigins...)
+
+	Context("when updating the APIRule with multiple paths", func() {
+
+		It("should create, update and delete rules depending on patch match", func() {
+
+			rule1 := testRule("/rule1", []string{"GET"}, testMutators, noConfigHandler("noop"))
+			rule2 := testRule("/rule2", []string{"PUT"}, testMutators, noConfigHandler("unauthorized"))
+			rule3 := testRule("/rule3", []string{"DELETE"}, testMutators, noConfigHandler("anonymous"))
+
+			apiRuleName := generateTestName(testNameBase, testIDLength)
+			testServiceHost := "httpbin5.kyma.local"
+
+			matchingLabels := matchingLabelsFunc(apiRuleName, testNamespace)
+
+			pathToURLFunc := func(path string) string {
+				return fmt.Sprintf("<http|https>://%s<%s>", testServiceHost, path)
+			}
+
+			By("Create APIRule")
+
+			instance := testInstance(apiRuleName, testNamespace, testServiceName, testServiceHost, testServicePort, []gatewayv1alpha1.Rule{rule1, rule2, rule3})
+			err := c.Create(context.TODO(), instance)
+
+			if apierrors.IsInvalid(err) {
+				Fail(fmt.Sprintf("failed to create object, got an invalid object error: %v", err))
+			}
+			Expect(err).NotTo(HaveOccurred())
+			defer c.Delete(context.TODO(), instance)
+
+			expectedRequest := reconcile.Request{NamespacedName: types.NamespacedName{Name: apiRuleName, Namespace: testNamespace}}
+			Eventually(requests, timeout).Should(Receive(Equal(expectedRequest)))
+
+			By("Verify before update")
+
+			ruleList := getRuleList(matchingLabels)
+			verifyRuleList(ruleList, pathToURLFunc, rule1, rule2, rule3)
+			expectedUpstream := fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", testServiceName, testNamespace, testServicePort)
+			//Verify All Rules point to original Service
+			for i := range ruleList {
+				r := ruleList[i]
+				Expect(r.Spec.Upstream.URL).To(Equal(expectedUpstream))
+			}
+
+			By("Update APIRule")
+			existingInstance := gatewayv1alpha1.APIRule{}
+			err = c.Get(context.TODO(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &existingInstance)
+			Expect(err).NotTo(HaveOccurred())
+
+			rule4 := testRule("/rule4", []string{"POST"}, testMutators, noConfigHandler("cookie_session"))
+			existingInstance.Spec.Rules = []gatewayv1alpha1.Rule{rule1, rule4}
+			newServiceName := testServiceName + "new"
+			newServicePort := testServicePort + 3
+			existingInstance.Spec.Service.Name = &newServiceName
+			existingInstance.Spec.Service.Port = &newServicePort
+
+			err = c.Update(context.TODO(), &existingInstance)
+			Expect(err).NotTo(HaveOccurred())
+
+			expectedRequest = reconcile.Request{NamespacedName: types.NamespacedName{Name: apiRuleName, Namespace: testNamespace}}
+			Eventually(requests, timeout).Should(Receive(Equal(expectedRequest)))
+
+			By("Verify after update")
+			time.Sleep(1 * time.Second) //Otherwise K8s client fetches old Rules.
+			ruleList = getRuleList(matchingLabels)
+			verifyRuleList(ruleList, pathToURLFunc, rule1, rule4)
+			//Verify All Rules point to new Service after update
+			expectedUpstream = fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", newServiceName, testNamespace, newServicePort)
+			for i := range ruleList {
+				r := ruleList[i]
+				Expect(r.Spec.Upstream.URL).To(Equal(expectedUpstream))
+			}
+		})
+	})
 
 	Context("when creating an APIRule for exposing service", func() {
 
 		It("Should report validation errors in CR status", func() {
 
-			configJSON := fmt.Sprintf(`{
-							"required_scope": [%s]
-						}`, toCSVList(testScopes))
-
-			nonEmptyConfig := &rulev1alpha1.Handler{
-				Name: "noop",
-				Config: &runtime.RawExtension{
-					Raw: []byte(configJSON),
-				},
-			}
+			invalidConfig := testOauthHandler(testScopes)
+			invalidConfig.Name = "noop"
 
 			apiRuleName := generateTestName(testNameBase, testIDLength)
 			testServiceHost := "httpbin.kyma.local"
-			rule := testRule(testPath, testMethods, testMutators, nonEmptyConfig)
+			rule := testRule(testPath, testMethods, testMutators, invalidConfig)
 			instance := testInstance(apiRuleName, testNamespace, testServiceName, testServiceHost, testServicePort, []gatewayv1alpha1.Rule{rule})
 			instance.Spec.Rules = append(instance.Spec.Rules, instance.Spec.Rules[0]) //Duplicate entry
 			instance.Spec.Rules = append(instance.Spec.Rules, instance.Spec.Rules[0]) //Duplicate entry
@@ -106,7 +173,7 @@ var _ = Describe("APIRule Controller", func() {
 
 			//Verify VirtualService is not created
 			vsList := networkingv1alpha3.VirtualServiceList{}
-			err = c.List(context.TODO(), &vsList)
+			err = c.List(context.TODO(), &vsList, matchingLabelsFunc(apiRuleName, testNamespace))
 			Expect(err).NotTo(HaveOccurred())
 			Expect(vsList.Items).To(HaveLen(0))
 		})
@@ -115,20 +182,10 @@ var _ = Describe("APIRule Controller", func() {
 			Context("secured with Oauth2 introspection,", func() {
 				Context("in a happy-path scenario", func() {
 					It("should create a VirtualService and an AccessRule", func() {
-						configJSON := fmt.Sprintf(`{
-							"required_scope": [%s]
-						}`, toCSVList(testScopes))
-
-						oauthConfig := &rulev1alpha1.Handler{
-							Name: "oauth2_introspection",
-							Config: &runtime.RawExtension{
-								Raw: []byte(configJSON),
-							},
-						}
 
 						apiRuleName := generateTestName(testNameBase, testIDLength)
 						testServiceHost := "httpbin2.kyma.local"
-						rule := testRule(testPath, testMethods, testMutators, oauthConfig)
+						rule := testRule(testPath, testMethods, testMutators, testOauthHandler(testScopes))
 						instance := testInstance(apiRuleName, testNamespace, testServiceName, testServiceHost, testServicePort, []gatewayv1alpha1.Rule{rule})
 
 						err := c.Create(context.TODO(), instance)
@@ -143,13 +200,11 @@ var _ = Describe("APIRule Controller", func() {
 
 						Eventually(requests, timeout).Should(Receive(Equal(expectedRequest)))
 
-						labels := make(map[string]string)
-						labels[processing.OwnerLabel] = fmt.Sprintf("%s.%s", apiRuleName, testNamespace)
-						matchingLabelsFunc := client.MatchingLabels(labels)
+						matchingLabels := matchingLabelsFunc(apiRuleName, testNamespace)
 
 						//Verify VirtualService
 						vsList := networkingv1alpha3.VirtualServiceList{}
-						err = c.List(context.TODO(), &vsList, matchingLabelsFunc)
+						err = c.List(context.TODO(), &vsList, matchingLabels)
 						Expect(err).NotTo(HaveOccurred())
 						Expect(vsList.Items).To(HaveLen(1))
 						vs := vsList.Items[0]
@@ -159,75 +214,24 @@ var _ = Describe("APIRule Controller", func() {
 						Expect(len(vs.Name) > len(apiRuleName)).To(BeTrue())
 
 						verifyOwnerReference(vs.ObjectMeta, apiRuleName, gatewayv1alpha1.GroupVersion.String(), kind)
-						//Spec.Hosts
-						Expect(vs.Spec.Hosts).To(HaveLen(1))
-						Expect(vs.Spec.Hosts[0]).To(Equal(testServiceHost))
-						//Spec.Gateways
-						Expect(vs.Spec.Gateways).To(HaveLen(1))
-						Expect(vs.Spec.Gateways[0]).To(Equal(testGatewayURL))
-						//Spec.HTTP
-						Expect(vs.Spec.HTTP).To(HaveLen(1))
-						////// HTTP.Match[]
-						Expect(vs.Spec.HTTP[0].Match).To(HaveLen(1))
-						/////////// Match[].URI
-						Expect(vs.Spec.HTTP[0].Match[0].URI).NotTo(BeNil())
-						Expect(vs.Spec.HTTP[0].Match[0].URI.Exact).To(BeEmpty())
-						Expect(vs.Spec.HTTP[0].Match[0].URI.Prefix).To(BeEmpty())
-						Expect(vs.Spec.HTTP[0].Match[0].URI.Suffix).To(BeEmpty())
-						Expect(vs.Spec.HTTP[0].Match[0].URI.Regex).To(Equal(testPath))
-						Expect(vs.Spec.HTTP[0].Match[0].Scheme).To(BeNil())
-						Expect(vs.Spec.HTTP[0].Match[0].Method).To(BeNil())
-						Expect(vs.Spec.HTTP[0].Match[0].Authority).To(BeNil())
-						Expect(vs.Spec.HTTP[0].Match[0].Headers).To(BeNil())
-						Expect(vs.Spec.HTTP[0].Match[0].Port).To(BeZero())
-						Expect(vs.Spec.HTTP[0].Match[0].SourceLabels).To(BeNil())
-						Expect(vs.Spec.HTTP[0].Match[0].Gateways).To(BeNil())
-						////// HTTP.Route[]
-						Expect(vs.Spec.HTTP[0].Route).To(HaveLen(1))
-						Expect(vs.Spec.HTTP[0].Route[0].Destination.Host).To(Equal(testOathkeeperSvcURL))
-						Expect(vs.Spec.HTTP[0].Route[0].Destination.Subset).To(Equal(""))
-						Expect(vs.Spec.HTTP[0].Route[0].Destination.Port.Name).To(Equal(""))
-						Expect(vs.Spec.HTTP[0].Route[0].Destination.Port.Number).To(Equal(testOathkeeperPort))
-						Expect(vs.Spec.HTTP[0].Route[0].Weight).To(BeZero())
-						Expect(vs.Spec.HTTP[0].Route[0].Headers).To(BeNil())
-						//CORS
-						Expect(vs.Spec.HTTP[0].CorsPolicy).NotTo(BeNil())
-						Expect(vs.Spec.HTTP[0].CorsPolicy.AllowOrigin).To(Equal(TestAllowOrigin))
-						Expect(vs.Spec.HTTP[0].CorsPolicy.AllowMethods).To(Equal(TestAllowMethods))
-						Expect(vs.Spec.HTTP[0].CorsPolicy.AllowHeaders).To(Equal(TestAllowHeaders))
-						//Others
-						Expect(vs.Spec.HTTP[0].Rewrite).To(BeNil())
-						Expect(vs.Spec.HTTP[0].WebsocketUpgrade).To(BeFalse())
-						Expect(vs.Spec.HTTP[0].Timeout).To(BeEmpty())
-						Expect(vs.Spec.HTTP[0].Retries).To(BeNil())
-						Expect(vs.Spec.HTTP[0].Fault).To(BeNil())
-						Expect(vs.Spec.HTTP[0].Mirror).To(BeNil())
-						Expect(vs.Spec.HTTP[0].DeprecatedAppendHeaders).To(BeNil())
-						Expect(vs.Spec.HTTP[0].Headers).To(BeNil())
-						Expect(vs.Spec.HTTP[0].RemoveResponseHeaders).To(BeNil())
 
-						//Spec.TCP
-						Expect(vs.Spec.TCP).To(BeNil())
-						//Spec.TLS
-						Expect(vs.Spec.TLS).To(BeNil())
+						expectedSpec := builders.VirtualServiceSpec().
+							Host(testServiceHost).
+							Gateway(testGatewayURL).
+							HTTP(builders.HTTPRoute().
+								Match(builders.MatchRequest().URI().Regex(testPath)).
+								Route(builders.RouteDestination().Host(testOathkeeperSvcURL).Port(testOathkeeperPort)).
+								CorsPolicy(corsPolicyBuilder))
+
+						Expect(vs.Spec).To(Equal(*expectedSpec.Get()))
 
 						//Verify Rule
 						expectedRuleMatchURL := fmt.Sprintf("<http|https>://%s<%s>", testServiceHost, testPath)
 
-						rlList := rulev1alpha1.RuleList{}
-
-						err = c.List(context.TODO(), &rlList, matchingLabelsFunc)
-						Expect(err).NotTo(HaveOccurred())
-
-						Expect(rlList.Items).To(HaveLen(1))
-
-						rules := make(map[string]rulev1alpha1.Rule)
-
-						for _, rule := range rlList.Items {
-							rules[rule.Spec.Match.URL] = rule
-						}
-
-						rl := rules[expectedRuleMatchURL]
+						rlList := getRuleList(matchingLabels)
+						Expect(rlList).To(HaveLen(1))
+						rl := rlList[0]
+						Expect(rl.Spec.Match.URL).To(Equal(expectedRuleMatchURL))
 
 						//Meta
 						Expect(rl.Name).To(HavePrefix(apiRuleName + "-"))
@@ -272,23 +276,11 @@ var _ = Describe("APIRule Controller", func() {
 			Context("secured with JWT token authentication,", func() {
 				Context("in a happy-path scenario", func() {
 					It("should create a VirtualService and an AccessRules", func() {
-						configJSON := fmt.Sprintf(`
-							{
-								"trusted_issuers": ["%s"],
-								"jwks": [],
-								"required_scope": [%s]
-						}`, testIssuer, toCSVList(testScopes))
-						jwtConfig := &rulev1alpha1.Handler{
-							Name: "jwt",
-							Config: &runtime.RawExtension{
-								Raw: []byte(configJSON),
-							},
-						}
 
 						apiRuleName := generateTestName(testNameBase, testIDLength)
 						testServiceHost := "httpbin3.kyma.local"
-						rule1 := testRule("/img", []string{"GET"}, testMutators, jwtConfig)
-						rule2 := testRule("/headers", []string{"GET"}, testMutators, jwtConfig)
+						rule1 := testRule("/img", []string{"GET"}, testMutators, testJWTHandler(testIssuer, testScopes))
+						rule2 := testRule("/headers", []string{"GET"}, testMutators, testJWTHandler(testIssuer, testScopes))
 						instance := testInstance(apiRuleName, testNamespace, testServiceName, testServiceHost, testServicePort, []gatewayv1alpha1.Rule{rule1, rule2})
 
 						err := c.Create(context.TODO(), instance)
@@ -303,83 +295,42 @@ var _ = Describe("APIRule Controller", func() {
 
 						Eventually(requests, timeout).Should(Receive(Equal(expectedRequest)))
 
-						labels := make(map[string]string)
-						labels[processing.OwnerLabel] = fmt.Sprintf("%s.%s", apiRuleName, testNamespace)
-						matchingLabelsFunc := client.MatchingLabels(labels)
+						matchingLabels := matchingLabelsFunc(apiRuleName, testNamespace)
 
 						//Verify VirtualService
 						vsList := networkingv1alpha3.VirtualServiceList{}
-						err = c.List(context.TODO(), &vsList, matchingLabelsFunc)
+						err = c.List(context.TODO(), &vsList, matchingLabels)
 						Expect(err).NotTo(HaveOccurred())
 						Expect(vsList.Items).To(HaveLen(1))
 						vs := vsList.Items[0]
 
 						//Meta
 						verifyOwnerReference(vs.ObjectMeta, apiRuleName, gatewayv1alpha1.GroupVersion.String(), kind)
-						//Spec.Hosts
-						Expect(vs.Spec.Hosts).To(HaveLen(1))
-						Expect(vs.Spec.Hosts[0]).To(Equal(testServiceHost))
-						//Spec.Gateways
-						Expect(vs.Spec.Gateways).To(HaveLen(1))
-						Expect(vs.Spec.Gateways[0]).To(Equal(testGatewayURL))
-						//Spec.HTTP
-						Expect(vs.Spec.HTTP).To(HaveLen(2))
-						////// HTTP.Match[]
-						Expect(vs.Spec.HTTP[0].Match).To(HaveLen(1))
-						/////////// Match[].URI
-						Expect(vs.Spec.HTTP[0].Match[0].URI).NotTo(BeNil())
-						Expect(vs.Spec.HTTP[0].Match[0].URI.Exact).To(BeEmpty())
-						Expect(vs.Spec.HTTP[0].Match[0].URI.Prefix).To(BeEmpty())
-						Expect(vs.Spec.HTTP[0].Match[0].URI.Suffix).To(BeEmpty())
-						Expect(vs.Spec.HTTP[0].Match[0].URI.Regex).To(Equal("/img"))
-						Expect(vs.Spec.HTTP[0].Match[0].Scheme).To(BeNil())
-						Expect(vs.Spec.HTTP[0].Match[0].Method).To(BeNil())
-						Expect(vs.Spec.HTTP[0].Match[0].Authority).To(BeNil())
-						Expect(vs.Spec.HTTP[0].Match[0].Headers).To(BeNil())
-						Expect(vs.Spec.HTTP[0].Match[0].Port).To(BeZero())
-						Expect(vs.Spec.HTTP[0].Match[0].SourceLabels).To(BeNil())
-						Expect(vs.Spec.HTTP[0].Match[0].Gateways).To(BeNil())
-						////// HTTP.Route[]
-						Expect(vs.Spec.HTTP[0].Route).To(HaveLen(1))
-						Expect(vs.Spec.HTTP[0].Route[0].Destination.Host).To(Equal(testOathkeeperSvcURL))
-						Expect(vs.Spec.HTTP[0].Route[0].Destination.Subset).To(Equal(""))
-						Expect(vs.Spec.HTTP[0].Route[0].Destination.Port.Name).To(Equal(""))
-						Expect(vs.Spec.HTTP[0].Route[0].Destination.Port.Number).To(Equal(testOathkeeperPort))
-						Expect(vs.Spec.HTTP[0].Route[0].Weight).To(BeZero())
-						Expect(vs.Spec.HTTP[0].Route[0].Headers).To(BeNil())
-						//CORS
-						Expect(vs.Spec.HTTP[0].CorsPolicy).NotTo(BeNil())
-						Expect(vs.Spec.HTTP[0].CorsPolicy.AllowOrigin).To(Equal(TestAllowOrigin))
-						Expect(vs.Spec.HTTP[0].CorsPolicy.AllowMethods).To(Equal(TestAllowMethods))
-						Expect(vs.Spec.HTTP[0].CorsPolicy.AllowHeaders).To(Equal(TestAllowHeaders))
-						//Others
-						Expect(vs.Spec.HTTP[0].Rewrite).To(BeNil())
-						Expect(vs.Spec.HTTP[0].WebsocketUpgrade).To(BeFalse())
-						Expect(vs.Spec.HTTP[0].Timeout).To(BeEmpty())
-						Expect(vs.Spec.HTTP[0].Retries).To(BeNil())
-						Expect(vs.Spec.HTTP[0].Fault).To(BeNil())
-						Expect(vs.Spec.HTTP[0].Mirror).To(BeNil())
-						Expect(vs.Spec.HTTP[0].DeprecatedAppendHeaders).To(BeNil())
-						Expect(vs.Spec.HTTP[0].Headers).To(BeNil())
-						Expect(vs.Spec.HTTP[0].RemoveResponseHeaders).To(BeNil())
-						//Spec.TCP
-						Expect(vs.Spec.TCP).To(BeNil())
-						//Spec.TLS
-						Expect(vs.Spec.TLS).To(BeNil())
+
+						expectedSpec := builders.VirtualServiceSpec().
+							Host(testServiceHost).
+							Gateway(testGatewayURL).
+							HTTP(builders.HTTPRoute().
+								Match(builders.MatchRequest().URI().Regex("/img")).
+								Route(builders.RouteDestination().Host(testOathkeeperSvcURL).Port(testOathkeeperPort)).
+								CorsPolicy(corsPolicyBuilder)).
+							HTTP(builders.HTTPRoute().
+								Match(builders.MatchRequest().URI().Regex("/headers")).
+								Route(builders.RouteDestination().Host(testOathkeeperSvcURL).Port(testOathkeeperPort)).
+								CorsPolicy(corsPolicyBuilder))
+
+						Expect(vs.Spec).To(Equal(*expectedSpec.Get()))
 
 						//Verify Rule1
 						expectedRuleMatchURL := fmt.Sprintf("<http|https>://%s<%s>", testServiceHost, "/img")
 
-						rlList := rulev1alpha1.RuleList{}
+						rlList := getRuleList(matchingLabels)
 
-						err = c.List(context.TODO(), &rlList, matchingLabelsFunc)
-						Expect(err).NotTo(HaveOccurred())
-
-						Expect(len(rlList.Items)).To(Equal(2))
+						Expect(rlList).To(HaveLen(2))
 
 						rules := make(map[string]rulev1alpha1.Rule)
 
-						for _, rule := range rlList.Items {
+						for _, rule := range rlList {
 							rules[rule.Spec.Match.URL] = rule
 						}
 
@@ -472,43 +423,12 @@ var _ = Describe("APIRule Controller", func() {
 				Context("in the happy path scenario", func() {
 					It("should create a VS with corresponding matchers and access rules for each secured path", func() {
 
-						configJWT := fmt.Sprintf(`
-							{
-								"trusted_issuers": ["%s"],
-								"jwks": [],
-								"required_scope": [%s]
-						}`, testIssuer, toCSVList(testScopes))
-
-						configOAuth := fmt.Sprintf(`{
-							"required_scope": [%s]
-						}`, toCSVList(testScopes))
-
-						jwtHandler := &rulev1alpha1.Handler{
-							Name: "jwt",
-							Config: &runtime.RawExtension{
-								Raw: []byte(configJWT),
-							},
-						}
-
-						oauthHandler := &rulev1alpha1.Handler{
-							Name: "oauth2_introspection",
-							Config: &runtime.RawExtension{
-								Raw: []byte(configOAuth),
-							},
-						}
-
-						noopHandler := &rulev1alpha1.Handler{
-							Name: "noop",
-						}
-
-						allowHandler := &rulev1alpha1.Handler{
-							Name: "allow",
-						}
-
+						jwtHandler := testJWTHandler(testIssuer, testScopes)
+						oauthHandler := testOauthHandler(testScopes)
 						rule1 := testRule("/img", []string{"GET"}, testMutators, jwtHandler)
 						rule2 := testRule("/headers", []string{"GET"}, testMutators, oauthHandler)
-						rule3 := testRule("/status", []string{"GET"}, testMutators, noopHandler)
-						rule4 := testRule("/favicon", []string{"GET"}, nil, allowHandler)
+						rule3 := testRule("/status", []string{"GET"}, testMutators, noConfigHandler("noop"))
+						rule4 := testRule("/favicon", []string{"GET"}, nil, noConfigHandler("allow"))
 
 						apiRuleName := generateTestName(testNameBase, testIDLength)
 						testServiceHost := "httpbin4.kyma.local"
@@ -525,86 +445,39 @@ var _ = Describe("APIRule Controller", func() {
 						expectedRequest := reconcile.Request{NamespacedName: types.NamespacedName{Name: apiRuleName, Namespace: testNamespace}}
 						Eventually(requests, timeout).Should(Receive(Equal(expectedRequest)))
 
-						labels := make(map[string]string)
-						labels[processing.OwnerLabel] = fmt.Sprintf("%s.%s", apiRuleName, testNamespace)
-						matchingLabelsFunc := client.MatchingLabels(labels)
+						matchingLabels := matchingLabelsFunc(apiRuleName, testNamespace)
 
 						//Verify VirtualService
 						vsList := networkingv1alpha3.VirtualServiceList{}
-						err = c.List(context.TODO(), &vsList, matchingLabelsFunc)
+						err = c.List(context.TODO(), &vsList, matchingLabels)
 						Expect(err).NotTo(HaveOccurred())
 						Expect(vsList.Items).To(HaveLen(1))
 						vs := vsList.Items[0]
 
 						//Meta
 						verifyOwnerReference(vs.ObjectMeta, apiRuleName, gatewayv1alpha1.GroupVersion.String(), kind)
-						//Spec.Hosts
-						Expect(vs.Spec.Hosts).To(HaveLen(1))
-						Expect(vs.Spec.Hosts[0]).To(Equal(testServiceHost))
-						//Spec.Gateways
-						Expect(vs.Spec.Gateways).To(HaveLen(1))
-						Expect(vs.Spec.Gateways[0]).To(Equal(testGatewayURL))
-						//Spec.HTTP
-						Expect(vs.Spec.HTTP).To(HaveLen(4))
-						//HTTP.Match[]
-						Expect(vs.Spec.HTTP[0].Match).To(HaveLen(1))
 
-						Expect(vs.Spec.HTTP[0].Match[0].URI.Regex).To(Equal(rule1.Path))
-						Expect(vs.Spec.HTTP[1].Match[0].URI.Regex).To(Equal(rule2.Path))
-						Expect(vs.Spec.HTTP[2].Match[0].URI.Regex).To(Equal(rule3.Path))
-						Expect(vs.Spec.HTTP[3].Match[0].URI.Regex).To(Equal(rule4.Path))
+						expectedSpec := builders.VirtualServiceSpec().
+							Host(testServiceHost).
+							Gateway(testGatewayURL).
+							HTTP(builders.HTTPRoute().
+								Match(builders.MatchRequest().URI().Regex("/img")).
+								Route(builders.RouteDestination().Host(testOathkeeperSvcURL).Port(testOathkeeperPort)).
+								CorsPolicy(corsPolicyBuilder)).
+							HTTP(builders.HTTPRoute().
+								Match(builders.MatchRequest().URI().Regex("/headers")).
+								Route(builders.RouteDestination().Host(testOathkeeperSvcURL).Port(testOathkeeperPort)).
+								CorsPolicy(corsPolicyBuilder)).
+							HTTP(builders.HTTPRoute().
+								Match(builders.MatchRequest().URI().Regex("/status")).
+								Route(builders.RouteDestination().Host(testOathkeeperSvcURL).Port(testOathkeeperPort)).
+								CorsPolicy(corsPolicyBuilder)).
+							HTTP(builders.HTTPRoute().
+								Match(builders.MatchRequest().URI().Regex("/favicon")).
+								Route(builders.RouteDestination().Host("httpbin.atgo-system.svc.cluster.local").Port(443)). // "allow", no oathkeeper rule!
+								CorsPolicy(corsPolicyBuilder))
 
-						for _, h := range vs.Spec.HTTP {
-
-							//Match[].URI
-							Expect(h.Match[0].URI).NotTo(BeNil())
-							Expect(h.Match[0].URI.Exact).To(BeEmpty())
-							Expect(h.Match[0].URI.Prefix).To(BeEmpty())
-							Expect(h.Match[0].URI.Suffix).To(BeEmpty())
-							Expect(h.Match[0].Scheme).To(BeNil())
-							Expect(h.Match[0].Method).To(BeNil())
-							Expect(h.Match[0].Authority).To(BeNil())
-							Expect(h.Match[0].Headers).To(BeNil())
-							Expect(h.Match[0].Port).To(BeZero())
-							Expect(h.Match[0].SourceLabels).To(BeNil())
-							Expect(h.Match[0].Gateways).To(BeNil())
-
-							//HTTP.Route[]
-							Expect(h.Route).To(HaveLen(1))
-
-							url, port := testOathkeeperSvcURL, testOathkeeperPort
-							if h.Match[0].URI.Regex == "/favicon" { // allow, no oathkeeper rule
-								url, port = "httpbin.atgo-system.svc.cluster.local", 443
-							}
-							Expect(h.Route[0].Destination.Host).To(Equal(url))
-							Expect(h.Route[0].Destination.Subset).To(Equal(""))
-							Expect(h.Route[0].Destination.Port.Name).To(Equal(""))
-							Expect(h.Route[0].Destination.Port.Number).To(Equal(port))
-							Expect(h.Route[0].Weight).To(BeZero())
-							Expect(h.Route[0].Headers).To(BeNil())
-
-							//CORS
-							Expect(h.CorsPolicy).NotTo(BeNil())
-							Expect(h.CorsPolicy.AllowOrigin).To(Equal(TestAllowOrigin))
-							Expect(h.CorsPolicy.AllowMethods).To(Equal(TestAllowMethods))
-							Expect(h.CorsPolicy.AllowHeaders).To(Equal(TestAllowHeaders))
-
-							//Others
-							Expect(h.Rewrite).To(BeNil())
-							Expect(h.WebsocketUpgrade).To(BeFalse())
-							Expect(h.Timeout).To(BeEmpty())
-							Expect(h.Retries).To(BeNil())
-							Expect(h.Fault).To(BeNil())
-							Expect(h.Mirror).To(BeNil())
-							Expect(h.DeprecatedAppendHeaders).To(BeNil())
-							Expect(h.Headers).To(BeNil())
-							Expect(h.RemoveResponseHeaders).To(BeNil())
-						}
-
-						//Spec.TCP
-						Expect(vs.Spec.TCP).To(BeNil())
-						//Spec.TLS
-						Expect(vs.Spec.TLS).To(BeNil())
+						Expect(vs.Spec).To(Equal(*expectedSpec.Get()))
 
 						//Verify Rules
 						for _, tc := range []struct {
@@ -612,22 +485,18 @@ var _ = Describe("APIRule Controller", func() {
 							handler string
 							config  []byte
 						}{
-							{path: "img", handler: "jwt", config: []byte(configJWT)},
-							{path: "headers", handler: "oauth2_introspection", config: []byte(configOAuth)},
+							{path: "img", handler: "jwt", config: jwtHandler.Config.Raw},
+							{path: "headers", handler: "oauth2_introspection", config: oauthHandler.Config.Raw},
 							{path: "status", handler: "noop", config: nil},
 						} {
 							expectedRuleMatchURL := fmt.Sprintf("<http|https>://%s</%s>", testServiceHost, tc.path)
 
-							rlList := rulev1alpha1.RuleList{}
-
-							err = c.List(context.TODO(), &rlList, matchingLabelsFunc)
-							Expect(err).NotTo(HaveOccurred())
-
-							Expect(len(rlList.Items)).To(Equal(3))
+							rlList := getRuleList(matchingLabels)
+							Expect(rlList).To(HaveLen(3))
 
 							rules := make(map[string]rulev1alpha1.Rule)
 
-							for _, rule := range rlList.Items {
+							for _, rule := range rlList {
 								rules[rule.Spec.Match.URL] = rule
 							}
 
@@ -709,14 +578,14 @@ func toCSVList(input []string) string {
 	return res
 }
 
-func testRule(path string, methods []string, mutators []*rulev1alpha1.Mutator, config *rulev1alpha1.Handler) gatewayv1alpha1.Rule {
+func testRule(path string, methods []string, mutators []*rulev1alpha1.Mutator, handler *rulev1alpha1.Handler) gatewayv1alpha1.Rule {
 	return gatewayv1alpha1.Rule{
 		Path:     path,
 		Methods:  methods,
 		Mutators: mutators,
 		AccessStrategies: []*rulev1alpha1.Authenticator{
 			{
-				Handler: config,
+				Handler: handler,
 			},
 		},
 	}
@@ -751,6 +620,43 @@ func verifyOwnerReference(m metav1.ObjectMeta, name, version, kind string) {
 	Expect(*m.OwnerReferences[0].Controller).To(BeTrue())
 }
 
+func testJWTHandler(issuer string, scopes []string) *rulev1alpha1.Handler {
+
+	configJSON := fmt.Sprintf(`
+		{
+			"trusted_issuers": ["%s"],
+			"jwks": [],
+			"required_scope": [%s]
+	}`, issuer, toCSVList(scopes))
+
+	return &rulev1alpha1.Handler{
+		Name: "jwt",
+		Config: &runtime.RawExtension{
+			Raw: []byte(configJSON),
+		},
+	}
+}
+
+func testOauthHandler(scopes []string) *rulev1alpha1.Handler {
+
+	configJSON := fmt.Sprintf(`{
+		"required_scope": [%s]
+	}`, toCSVList(scopes))
+
+	return &rulev1alpha1.Handler{
+		Name: "oauth2_introspection",
+		Config: &runtime.RawExtension{
+			Raw: []byte(configJSON),
+		},
+	}
+}
+
+func noConfigHandler(name string) *rulev1alpha1.Handler {
+	return &rulev1alpha1.Handler{
+		Name: name,
+	}
+}
+
 //Converts a []interface{} to a string slice. Panics if given object is of other type.
 func asStringSlice(in interface{}) []string {
 
@@ -780,4 +686,35 @@ func generateTestName(name string, length int) string {
 		b[i] = letterRunes[rand.Intn(len(letterRunes))]
 	}
 	return name + "-" + string(b)
+}
+
+func getRuleList(matchingLabels client.ListOptionFunc) []rulev1alpha1.Rule {
+	res := rulev1alpha1.RuleList{}
+	err := c.List(context.TODO(), &res, matchingLabels)
+	Expect(err).NotTo(HaveOccurred())
+	return res.Items
+}
+
+func verifyRuleList(ruleList []rulev1alpha1.Rule, pathToURLFunc func(string) string, expected ...gatewayv1alpha1.Rule) {
+
+	Expect(ruleList).To(HaveLen(len(expected)))
+
+	actual := make(map[string]rulev1alpha1.Rule)
+
+	for _, rule := range ruleList {
+		actual[rule.Spec.Match.URL] = rule
+	}
+
+	for i := range expected {
+		ruleUrl := pathToURLFunc(expected[i].Path)
+		Expect(actual[ruleUrl].Spec.Match.Methods).To(Equal(expected[i].Methods))
+		Expect(actual[ruleUrl].Spec.Authenticators).To(Equal(expected[i].AccessStrategies))
+		Expect(actual[ruleUrl].Spec.Mutators).To(Equal(expected[i].Mutators))
+	}
+}
+
+func matchingLabelsFunc(apiRuleName, namespace string) client.ListOptionFunc {
+	labels := make(map[string]string)
+	labels[processing.OwnerLabel] = fmt.Sprintf("%s.%s", apiRuleName, namespace)
+	return client.MatchingLabels(labels)
 }

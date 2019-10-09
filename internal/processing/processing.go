@@ -3,6 +3,7 @@ package processing
 import (
 	"context"
 	"fmt"
+
 	"github.com/kyma-incubator/api-gateway/internal/builders"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -96,12 +97,11 @@ func (f *Factory) GetActualState(ctx context.Context, api *gatewayv1alpha1.APIRu
 	}
 
 	state.accessRules = make(map[string]*rulev1alpha1.Rule)
-	for i, ar := range arList.Items {
-		//Needs to be like that cause address to ar is always the same
-		obj := arList.Items[i]
-		state.accessRules[ar.Spec.Match.URL] = &obj
-	}
 
+	for i := range arList.Items {
+		obj := arList.Items[i]
+		state.accessRules[obj.Spec.Match.URL] = &obj
+	}
 	return &state, nil
 }
 
@@ -157,6 +157,7 @@ func (f *Factory) CalculateDiff(requiredState *State, actualState *State) *Patch
 
 //ApplyDiff method applies computed diff
 func (f *Factory) ApplyDiff(ctx context.Context, patch *Patch) error {
+
 	err := f.applyObjDiff(ctx, patch.virtualService)
 	if err != nil {
 		return err
@@ -215,11 +216,10 @@ func (f *Factory) generateVirtualService(api *gatewayv1alpha1.APIRule) *networki
 
 		httpRouteBuilder.Route(builders.RouteDestination().Host(host).Port(port))
 		httpRouteBuilder.Match(builders.MatchRequest().URI().Regex(rule.Path))
-		httpRouteBuilder.CorsPolicy(&networkingv1alpha3.CorsPolicy{
-			AllowOrigin:  f.corsConfig.AllowOrigin,
-			AllowMethods: f.corsConfig.AllowMethods,
-			AllowHeaders: f.corsConfig.AllowHeaders,
-		})
+		httpRouteBuilder.CorsPolicy(builders.CorsPolicy().
+			AllowOrigins(f.corsConfig.AllowOrigin...).
+			AllowMethods(f.corsConfig.AllowMethods...).
+			AllowHeaders(f.corsConfig.AllowHeaders...))
 		vsSpecBuilder.HTTP(httpRouteBuilder)
 	}
 

@@ -1,10 +1,11 @@
 package controllers_test
 
 import (
-	"github.com/kyma-incubator/api-gateway/internal/processing"
 	"path/filepath"
 	"sync"
 	"testing"
+
+	"github.com/kyma-incubator/api-gateway/internal/processing"
 
 	gatewayv1alpha1 "github.com/kyma-incubator/api-gateway/api/v1alpha1"
 	"github.com/kyma-incubator/api-gateway/controllers"
@@ -37,7 +38,7 @@ var (
 	requests   chan reconcile.Request
 	c          client.Client
 
-	TestAllowOrigin  = []string{"*"}
+	TestAllowOrigins = []string{"*"}
 	TestAllowMethods = []string{"GET", "POST", "PUT", "DELETE"}
 	TestAllowHeaders = []string{"header1", "header2"}
 )
@@ -91,7 +92,7 @@ var _ = BeforeSuite(func(done Done) {
 			DomainWhiteList: []string{"bar", "kyma.local"},
 		},
 		CorsConfig: &processing.CorsConfig{
-			AllowOrigin:  TestAllowOrigin,
+			AllowOrigin:  TestAllowOrigins,
 			AllowMethods: TestAllowMethods,
 			AllowHeaders: TestAllowHeaders,
 		},
