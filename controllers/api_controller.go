@@ -17,7 +17,6 @@ package controllers
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"time"
 
@@ -29,7 +28,7 @@ import (
 	"github.com/go-logr/logr"
 	gatewayv1alpha1 "github.com/kyma-incubator/api-gateway/api/v1alpha1"
 	apierrs "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -64,23 +63,13 @@ func (r *APIReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 
 	err := r.Client.Get(ctx, req.NamespacedName, api)
 	if err != nil {
-		if !apierrs.IsNotFound(err) {
-			return retryReconcile(err)
+		if apierrs.IsNotFound(err) {
+			//There is no APIRule. Nothing to process, dependent objects will be garbage-collected.
+			return doneReconcile()
 		}
-	}
 
-	APIStatus := &gatewayv1alpha1.APIRuleResourceStatus{
-		Code: gatewayv1alpha1.StatusOK,
-	}
-
-	virtualServiceStatus := &gatewayv1alpha1.APIRuleResourceStatus{
-		Code:        gatewayv1alpha1.StatusSkipped,
-		Description: "Skipped setting Istio Virtual Service",
-	}
-
-	accessRuleStatus := &gatewayv1alpha1.APIRuleResourceStatus{
-		Code:        gatewayv1alpha1.StatusSkipped,
-		Description: "Skipped setting Oathkeeper Access Rule",
+		//Nothing is yet processed: StatusSkipped
+		return r.setStatusForError(ctx, api, err, gatewayv1alpha1.StatusSkipped)
 	}
 
 	//Prevent reconciliation after status update. It should be solved by controller-runtime implementation but still isn't.
@@ -89,20 +78,15 @@ func (r *APIReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		//1.1) Get the list of existing Virtual Services to validate host
 		var vsList v1alpha3.VirtualServiceList
 		if err := r.Client.List(ctx, &vsList); err != nil {
-			return retryReconcile(err)
+			//Nothing is yet processed: StatusSkipped
+			return r.setStatusForError(ctx, api, err, gatewayv1alpha1.StatusSkipped)
 		}
 
 		//1.2) Validate input including host
 		validationFailures := r.Validator.Validate(api, vsList)
 		if len(validationFailures) > 0 {
 			r.Log.Info(fmt.Sprintf(`Validation failure {"controller": "Api", "request": "%s/%s"}`, api.Namespace, api.Name))
-			apiRuleValidationStatus := generateValidationStatus(validationFailures)
-			_, updateStatErr := r.updateStatus(ctx, api, apiRuleValidationStatus, virtualServiceStatus, accessRuleStatus)
-			if updateStatErr != nil {
-				r.Log.Error(errors.New("Status couldn't be updated with validation failures"), apiRuleValidationStatus.Description)
-				return retryReconcile(updateStatErr)
-			}
-			return doneReconcile()
+			return r.setStatus(ctx, api, generateValidationStatus(validationFailures), gatewayv1alpha1.StatusSkipped)
 		}
 
 		//2) Compute list of required objects (the set of objects required to satisfy our contract on apiRule.Spec, not yet applied)
@@ -112,7 +96,7 @@ func (r *APIReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		//3.1 Fetch all existing objects related to _this_ apiRule from the cluster (VS, Rules)
 		actualObjects, err := factory.GetActualState(ctx, api)
 		if err != nil {
-			return retryReconcile(err)
+			return r.setStatusForError(ctx, api, err, gatewayv1alpha1.StatusSkipped)
 		}
 
 		//3.2 Compute patch object
@@ -121,45 +105,54 @@ func (r *APIReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		//3.3 Apply changes to the cluster
 		err = factory.ApplyDiff(ctx, patch)
 		if err != nil {
-			return retryReconcile(err)
+			//We don't know exactly which object(s) are not updated properly.
+			//The safest approach is to assume nothing is correct and just use `StatusError`.
+			return r.setStatusForError(ctx, api, err, gatewayv1alpha1.StatusError)
 		}
 
 		//4) Update status of CR
-		if err != nil {
-			virtualServiceStatus = &gatewayv1alpha1.APIRuleResourceStatus{
-				Code:        gatewayv1alpha1.StatusError,
-				Description: err.Error(),
-			}
-			accessRuleStatus = &gatewayv1alpha1.APIRuleResourceStatus{
-				Code:        gatewayv1alpha1.StatusError,
-				Description: err.Error(),
-			}
-
-			_, updateStatErr := r.updateStatus(ctx, api, generateErrorStatus(err), virtualServiceStatus, accessRuleStatus)
-			if updateStatErr != nil {
-				//Log original error (it will be silently lost otherwise)
-				r.Log.Error(err, "Error during reconcilation")
-				return retryReconcile(updateStatErr)
-			}
-			//Fail fast: If status is updated we don't want to reconcile again.
-			return doneReconcile()
-		}
-
-		virtualServiceStatus = &gatewayv1alpha1.APIRuleResourceStatus{
+		APIStatus := &gatewayv1alpha1.APIRuleResourceStatus{
 			Code: gatewayv1alpha1.StatusOK,
 		}
 
-		accessRuleStatus = &gatewayv1alpha1.APIRuleResourceStatus{
-			Code: gatewayv1alpha1.StatusOK,
-		}
-
-		_, err = r.updateStatus(ctx, api, APIStatus, virtualServiceStatus, accessRuleStatus)
-
-		if err != nil {
-			return retryReconcile(err)
-		}
+		return r.setStatus(ctx, api, APIStatus, gatewayv1alpha1.StatusOK)
 	}
 
+	return doneReconcile()
+}
+
+//Sets status of APIRule. Accepts an auxilary status code that is used to report VirtualService and AccessRule status.
+func (r *APIReconciler) setStatus(ctx context.Context, api *gatewayv1alpha1.APIRule, apiStatus *gatewayv1alpha1.APIRuleResourceStatus, auxStatusCode gatewayv1alpha1.StatusCode) (ctrl.Result, error) {
+	virtualServiceStatus := &gatewayv1alpha1.APIRuleResourceStatus{
+		Code: auxStatusCode,
+	}
+	accessRuleStatus := &gatewayv1alpha1.APIRuleResourceStatus{
+		Code: auxStatusCode,
+	}
+	return r.updateStatusOrRetry(ctx, api, apiStatus, virtualServiceStatus, accessRuleStatus)
+}
+
+//Sets status of APIRule in error condition. Accepts an auxilary status code that is used to report VirtualService and AccessRule status.
+func (r *APIReconciler) setStatusForError(ctx context.Context, api *gatewayv1alpha1.APIRule, err error, auxStatusCode gatewayv1alpha1.StatusCode) (ctrl.Result, error) {
+	r.Log.Error(err, "Error during reconciliation")
+
+	virtualServiceStatus := &gatewayv1alpha1.APIRuleResourceStatus{
+		Code: auxStatusCode,
+	}
+	accessRuleStatus := &gatewayv1alpha1.APIRuleResourceStatus{
+		Code: auxStatusCode,
+	}
+
+	return r.updateStatusOrRetry(ctx, api, generateErrorStatus(err), virtualServiceStatus, accessRuleStatus)
+}
+
+//Updates api status. If there was an error during update, returns the error so that entire reconcile loop is retried. If there is no error, returns a "reconcile success" value.
+func (r *APIReconciler) updateStatusOrRetry(ctx context.Context, api *gatewayv1alpha1.APIRule, apiStatus, virtualServiceStatus, accessRuleStatus *gatewayv1alpha1.APIRuleResourceStatus) (ctrl.Result, error) {
+	_, updateStatusErr := r.updateStatus(ctx, api, apiStatus, virtualServiceStatus, accessRuleStatus)
+	if updateStatusErr != nil {
+		return retryReconcile(updateStatusErr) //controller retries to set the correct status eventually.
+	}
+	//Fail fast: If status is updated, users are informed about the problem. We don't need to reconcile again.
 	return doneReconcile()
 }
 
