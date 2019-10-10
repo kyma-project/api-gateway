@@ -63,7 +63,7 @@ func main() {
 	flag.StringVar(&jwksURI, "jwks-uri", "", "URL of the provider's public key set to validate signature of the JWT")
 	flag.BoolVar(&enableLeaderElection, "enable-leader-election", false,
 		"Enable leader election for controller manager. Enabling this will ensure there is only one active controller manager.")
-	flag.StringVar(&blackListedServices, "service-blacklist", "kubernetes", "List of services to be blacklisted from exposure.")
+	flag.StringVar(&blackListedServices, "service-blacklist", "kubernetes.default,kube-dns.kube-system", "List of services to be blacklisted from exposure.")
 	flag.StringVar(&whiteListedDomains, "domain-whitelist", "", "List of domains to be allowed.")
 	flag.StringVar(&corsAllowOrigin, "cors-allow-origin", "*", "list of allowed origins")
 	flag.StringVar(&corsAllowMethods, "cors-allow-methods", "GET,POST,PUT,DELETE", "list of allowed methods")
@@ -114,7 +114,7 @@ func main() {
 		OathkeeperSvcPort: uint32(oathkeeperSvcPort),
 		JWKSURI:           jwksURI,
 		Validator: &validation.APIRule{
-			ServiceBlackList: getList(blackListedServices),
+			ServiceBlackList: getNamespaceServiceMap(blackListedServices),
 			DomainWhiteList:  getList(whiteListedDomains),
 		},
 		CorsConfig: &processing.CorsConfig{
@@ -142,6 +142,20 @@ func getList(raw string) []string {
 		if trim != "" {
 			result = append(result, trim)
 		}
+	}
+	return result
+}
+func getNamespaceServiceMap(raw string) map[string][]string {
+	result := make(map[string][]string)
+	for _, s := range getList(raw) {
+		if !validation.ValidateServiceName(s) {
+			setupLog.Error(fmt.Errorf("invalid service in service-blacklist"), "unable to create controller", "controller", "Api")
+			os.Exit(1)
+		}
+		namespacedService := strings.Split(s, ".")
+		namespace := namespacedService[1]
+		service := namespacedService[0]
+		result[namespace] = append(result[namespace], service)
 	}
 	return result
 }

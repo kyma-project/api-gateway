@@ -20,7 +20,7 @@ spec:
         - --oathkeeper-svc-address=change-me
         - --oathkeeper-svc-port=change-me
         - --jwks-uri=change-me
-        - --service-blacklist=kubernetes
+        - --service-blacklist=kubernetes.default,kube-dns.kube-system
         - --domain-whitelist=kyma.local
         command:
         - /manager

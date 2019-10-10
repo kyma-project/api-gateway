@@ -70,3 +70,49 @@ var _ = Describe("ValidateDomainName function", func() {
 	})
 
 })
+var _ = Describe("ValidateServiceName function", func() {
+
+	It("Should return true for kubernetes.default service", func() {
+		//given
+		testService := "kubernetes.default"
+
+		//when
+		valid := ValidateServiceName(testService)
+
+		//then
+		Expect(valid).To(BeTrue())
+	})
+
+	It("Should return false for service containing more than one .", func() {
+		//given
+		testService := "kubernetes.default.example"
+
+		//when
+		valid := ValidateServiceName(testService)
+
+		//then
+		Expect(valid).To(BeFalse())
+	})
+
+	It("Should return false for service name ending with -", func() {
+		//given
+		testService := "kubernetes-.default"
+
+		//when
+		valid := ValidateServiceName(testService)
+
+		//then
+		Expect(valid).To(BeFalse())
+	})
+
+	It("Should return false for service containing forbidden character /", func() {
+		//given
+		testService := "kubernetes.de/fault"
+
+		//when
+		valid := ValidateServiceName(testService)
+
+		//then
+		Expect(valid).To(BeFalse())
+	})
+})

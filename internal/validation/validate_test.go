@@ -47,9 +47,14 @@ var _ = Describe("Validate function", func() {
 
 	It("Should fail for blacklisted service", func() {
 		//given
-		testBlackList := []string{"kubernetes", "kube-dns", "kubernetes.default"}
+		testBlackList := map[string][]string{
+			"default": []string{"kubernetes", "kube-dns"},
+			"example": []string{"service"}}
 		testWhiteList := []string{"foo.bar", "bar.foo", "kyma.local"}
 		input := &gatewayv1alpha1.APIRule{
+			ObjectMeta: v1.ObjectMeta{
+				Namespace: "default",
+			},
 			Spec: gatewayv1alpha1.APIRuleSpec{
 				Service: getService("kubernetes", uint32(443), "kubernetes.foo.bar"),
 				Rules: []gatewayv1alpha1.Rule{
@@ -72,12 +77,14 @@ var _ = Describe("Validate function", func() {
 		//then
 		Expect(problems).To(HaveLen(1))
 		Expect(problems[0].AttributePath).To(Equal(".spec.service.name"))
-		Expect(problems[0].Message).To(Equal("This service has been blacklisted"))
+		Expect(problems[0].Message).To(Equal("Service kubernetes in namespace default is blacklisted"))
 	})
 
 	It("Should fail for not whitelisted domain", func() {
 		//given
-		testBlackList := []string{"kubernetes", "kube-dns", "kubernetes.default"}
+		testBlackList := map[string][]string{
+			"default": []string{"kubernetes", "kube-dns"},
+			"example": []string{"service"}}
 		testWhiteList := []string{"foo.bar", "bar.foo", "kyma.local"}
 		input := &gatewayv1alpha1.APIRule{
 			Spec: gatewayv1alpha1.APIRuleSpec{
@@ -107,7 +114,9 @@ var _ = Describe("Validate function", func() {
 
 	It("Should fail for serviceHost containing duplicated whitelisted domain", func() {
 		//given
-		testBlackList := []string{"kubernetes", "kube-dns", "kubernetes.default"}
+		testBlackList := map[string][]string{
+			"default": []string{"kubernetes", "kube-dns"},
+			"example": []string{"service"}}
 		testWhiteList := []string{"foo.bar", "bar.foo", "kyma.local"}
 		input := &gatewayv1alpha1.APIRule{
 			Spec: gatewayv1alpha1.APIRuleSpec{

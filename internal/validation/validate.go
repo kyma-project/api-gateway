@@ -38,7 +38,7 @@ func configNotEmpty(config *runtime.RawExtension) bool {
 
 //APIRule is used to validate github.com/kyma-incubator/api-gateway/api/v1alpha1/APIRule instances
 type APIRule struct {
-	ServiceBlackList []string
+	ServiceBlackList map[string][]string
 	DomainWhiteList  []string
 }
 
@@ -75,12 +75,14 @@ func (v *APIRule) validateService(attributePath string, vsList v1alpha3.VirtualS
 	}
 
 	domainFound := false
-	for _, svc := range v.ServiceBlackList {
-		if svc == *api.Spec.Service.Name {
-			problems = append(problems, Failure{
-				AttributePath: attributePath + ".name",
-				Message:       "This service has been blacklisted",
-			})
+	for namespace, services := range v.ServiceBlackList {
+		for _, svc := range services {
+			if svc == *api.Spec.Service.Name && namespace == api.ObjectMeta.Namespace {
+				problems = append(problems, Failure{
+					AttributePath: attributePath + ".name",
+					Message:       fmt.Sprintf("Service %s in namespace %s is blacklisted", svc, namespace),
+				})
+			}
 		}
 	}
 	for _, domain := range v.DomainWhiteList {

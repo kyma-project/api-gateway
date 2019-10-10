@@ -26,8 +26,10 @@ config:
     port: 4455
   jwksURI: https://example.com/.well-known/jwks.json
   serviceBlackList:
-    - kubernetes
-    - kube-dns
+    default:
+      - kubernetes
+    kube-system:
+      - kube-dns
   domainWhiteList:
     - kyma.local
   cors: # values listed below will be used to set corsPolicy in created VirtualServices (https://istio.io/docs/reference/config/networking/v1alpha3/virtual-service/#CorsPolicy)
