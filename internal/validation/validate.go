@@ -114,7 +114,7 @@ func (v *APIRule) validateRules(attributePath string, rules []gatewayv1alpha1.Ru
 	}
 
 	if hasDuplicates(rules) {
-		problems = append(problems, Failure{AttributePath: attributePath, Message: "multiple rules defined for the same path"})
+		problems = append(problems, Failure{AttributePath: attributePath, Message: "multiple rules defined for the same path and method"})
 	}
 
 	for i, r := range rules {
