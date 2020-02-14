@@ -1,7 +1,6 @@
 package validation
 
 import (
-	"fmt"
 	"net/url"
 	"regexp"
 
@@ -9,28 +8,12 @@ import (
 )
 
 func hasDuplicates(rules []gatewayv1alpha1.Rule) bool {
-	duplicates := map[string]bool{}
-
-	if len(rules) > 1 {
-		for _, rule := range rules {
-			if len(rule.Methods) > 0 {
-				for _, method := range rule.Methods {
-					tmp := fmt.Sprintf("%s:%s", rule.Path, method)
-					if duplicates[tmp] {
-						return true
-					}
-					duplicates[tmp] = true
-				}
-			} else {
-				if duplicates[rule.Path] {
-					return true
-				}
-				duplicates[rule.Path] = true
-			}
-		}
+	encountered := map[string]bool{}
+	// Create a map of all unique elements.
+	for v := range rules {
+		encountered[rules[v].Path] = true
 	}
-
-	return false
+	return len(encountered) != len(rules)
 }
 
 func isValidURL(toTest string) bool {
@@ -50,7 +33,6 @@ func ValidateDomainName(domain string) bool {
 	return RegExp.MatchString(domain)
 }
 
-//ValidateServiceName ?
 func ValidateServiceName(service string) bool {
 	regExp := regexp.MustCompile(`^[a-z0-9]([-a-z0-9]*[a-z0-9])?\.[a-z0-9]([-a-z0-9]*[a-z0-9])?$`)
 	return regExp.MatchString(service)
