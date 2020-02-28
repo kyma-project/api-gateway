@@ -110,6 +110,7 @@ func getAPIReconciler(mgr manager.Manager) reconcile.Reconciler {
 			AllowMethods: TestAllowMethods,
 			AllowHeaders: TestAllowHeaders,
 		},
+		GeneratedObjectsLabels: map[string]string{},
 	}
 }
 

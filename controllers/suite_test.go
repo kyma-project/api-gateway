@@ -96,6 +96,7 @@ var _ = BeforeSuite(func(done Done) {
 			AllowMethods: TestAllowMethods,
 			AllowHeaders: TestAllowHeaders,
 		},
+		GeneratedObjectsLabels: map[string]string{},
 	}
 
 	var recFn reconcile.Reconciler

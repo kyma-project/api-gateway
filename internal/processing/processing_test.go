@@ -28,6 +28,8 @@ const (
 	jwtIssuer                   = "https://oauth2.example.com/"
 	oathkeeperSvc               = "fake.oathkeeper"
 	oathkeeperSvcPort uint32    = 1234
+	testLabelKey                = "key"
+	testLabelValue              = "value"
 )
 
 var (
@@ -52,6 +54,8 @@ var (
 		AllowMethods: testAllowMethods,
 		AllowHeaders: testAllowHeaders,
 	}
+
+	testAdditionalLabels = map[string]string{testLabelKey: testLabelValue}
 )
 
 func TestProcessing(t *testing.T) {
@@ -76,7 +80,7 @@ var _ = Describe("Factory", func() {
 
 				apiRule := getAPIRuleFor(rules)
 
-				f := NewFactory(nil, ctrl.Log.WithName("test"), oathkeeperSvc, oathkeeperSvcPort, "https://example.com/.well-known/jwks.json", testCors)
+				f := NewFactory(nil, ctrl.Log.WithName("test"), oathkeeperSvc, oathkeeperSvcPort, "https://example.com/.well-known/jwks.json", testCors, testAdditionalLabels)
 
 				desiredState := f.CalculateRequiredState(apiRule)
 				vs := desiredState.virtualService
@@ -103,6 +107,7 @@ var _ = Describe("Factory", func() {
 				Expect(vs.ObjectMeta.Name).To(BeEmpty())
 				Expect(vs.ObjectMeta.GenerateName).To(Equal(apiName + "-"))
 				Expect(vs.ObjectMeta.Namespace).To(Equal(apiNamespace))
+				Expect(vs.ObjectMeta.Labels[testLabelKey]).To(Equal(testLabelValue))
 
 				Expect(vs.ObjectMeta.OwnerReferences[0].APIVersion).To(Equal(apiAPIVersion))
 				Expect(vs.ObjectMeta.OwnerReferences[0].Kind).To(Equal(apiKind))
@@ -163,7 +168,7 @@ var _ = Describe("Factory", func() {
 
 				apiRule := getAPIRuleFor(rules)
 
-				f := NewFactory(nil, ctrl.Log.WithName("test"), oathkeeperSvc, oathkeeperSvcPort, "https://example.com/.well-known/jwks.json", testCors)
+				f := NewFactory(nil, ctrl.Log.WithName("test"), oathkeeperSvc, oathkeeperSvcPort, "https://example.com/.well-known/jwks.json", testCors, testAdditionalLabels)
 
 				desiredState := f.CalculateRequiredState(apiRule)
 				vs := desiredState.virtualService
@@ -199,6 +204,7 @@ var _ = Describe("Factory", func() {
 				Expect(vs.ObjectMeta.Name).To(BeEmpty())
 				Expect(vs.ObjectMeta.GenerateName).To(Equal(apiName + "-"))
 				Expect(vs.ObjectMeta.Namespace).To(Equal(apiNamespace))
+				Expect(vs.ObjectMeta.Labels[testLabelKey]).To(Equal(testLabelValue))
 
 				Expect(vs.ObjectMeta.OwnerReferences[0].APIVersion).To(Equal(apiAPIVersion))
 				Expect(vs.ObjectMeta.OwnerReferences[0].Kind).To(Equal(apiKind))
@@ -228,6 +234,7 @@ var _ = Describe("Factory", func() {
 				Expect(noopAccessRule.ObjectMeta.Name).To(BeEmpty())
 				Expect(noopAccessRule.ObjectMeta.GenerateName).To(Equal(apiName + "-"))
 				Expect(noopAccessRule.ObjectMeta.Namespace).To(Equal(apiNamespace))
+				Expect(noopAccessRule.ObjectMeta.Labels[testLabelKey]).To(Equal(testLabelValue))
 
 				Expect(noopAccessRule.ObjectMeta.OwnerReferences[0].APIVersion).To(Equal(apiAPIVersion))
 				Expect(noopAccessRule.ObjectMeta.OwnerReferences[0].Kind).To(Equal(apiKind))
@@ -259,6 +266,7 @@ var _ = Describe("Factory", func() {
 				Expect(jwtAccessRule.ObjectMeta.Name).To(BeEmpty())
 				Expect(jwtAccessRule.ObjectMeta.GenerateName).To(Equal(apiName + "-"))
 				Expect(jwtAccessRule.ObjectMeta.Namespace).To(Equal(apiNamespace))
+				Expect(jwtAccessRule.ObjectMeta.Labels[testLabelKey]).To(Equal(testLabelValue))
 
 				Expect(jwtAccessRule.ObjectMeta.OwnerReferences[0].APIVersion).To(Equal(apiAPIVersion))
 				Expect(jwtAccessRule.ObjectMeta.OwnerReferences[0].Kind).To(Equal(apiKind))
@@ -303,7 +311,7 @@ var _ = Describe("Factory", func() {
 
 				apiRule := getAPIRuleFor(rules)
 
-				f := NewFactory(nil, ctrl.Log.WithName("test"), oathkeeperSvc, oathkeeperSvcPort, "https://example.com/.well-known/jwks.json", testCors)
+				f := NewFactory(nil, ctrl.Log.WithName("test"), oathkeeperSvc, oathkeeperSvcPort, "https://example.com/.well-known/jwks.json", testCors, testAdditionalLabels)
 
 				desiredState := f.CalculateRequiredState(apiRule)
 				vs := desiredState.virtualService
@@ -330,6 +338,7 @@ var _ = Describe("Factory", func() {
 				Expect(vs.ObjectMeta.Name).To(BeEmpty())
 				Expect(vs.ObjectMeta.GenerateName).To(Equal(apiName + "-"))
 				Expect(vs.ObjectMeta.Namespace).To(Equal(apiNamespace))
+				Expect(vs.ObjectMeta.Labels[testLabelKey]).To(Equal(testLabelValue))
 
 				Expect(vs.ObjectMeta.OwnerReferences[0].APIVersion).To(Equal(apiAPIVersion))
 				Expect(vs.ObjectMeta.OwnerReferences[0].Kind).To(Equal(apiKind))
@@ -362,6 +371,7 @@ var _ = Describe("Factory", func() {
 				Expect(rule.ObjectMeta.Name).To(BeEmpty())
 				Expect(rule.ObjectMeta.GenerateName).To(Equal(apiName + "-"))
 				Expect(rule.ObjectMeta.Namespace).To(Equal(apiNamespace))
+				Expect(rule.ObjectMeta.Labels[testLabelKey]).To(Equal(testLabelValue))
 
 				Expect(rule.ObjectMeta.OwnerReferences[0].APIVersion).To(Equal(apiAPIVersion))
 				Expect(rule.ObjectMeta.OwnerReferences[0].Kind).To(Equal(apiKind))
@@ -389,7 +399,7 @@ var _ = Describe("Factory", func() {
 				apiRule := getAPIRuleFor(rules)
 				expectedNoopRuleMatchURL := fmt.Sprintf("<http|https>://%s<%s>", serviceHost, apiPath)
 
-				f := NewFactory(nil, ctrl.Log.WithName("test"), oathkeeperSvc, oathkeeperSvcPort, "https://example.com/.well-known/jwks.json", testCors)
+				f := NewFactory(nil, ctrl.Log.WithName("test"), oathkeeperSvc, oathkeeperSvcPort, "https://example.com/.well-known/jwks.json", testCors, testAdditionalLabels)
 
 				desiredState := f.CalculateRequiredState(apiRule)
 				actualState := &State{}
@@ -436,7 +446,7 @@ var _ = Describe("Factory", func() {
 
 				apiRule := getAPIRuleFor(rules)
 
-				f := NewFactory(nil, ctrl.Log.WithName("test"), oathkeeperSvc, oathkeeperSvcPort, "https://example.com/.well-known/jwks.json", testCors)
+				f := NewFactory(nil, ctrl.Log.WithName("test"), oathkeeperSvc, oathkeeperSvcPort, "https://example.com/.well-known/jwks.json", testCors, testAdditionalLabels)
 
 				desiredState := f.CalculateRequiredState(apiRule)
 				oauthNoopRuleMatchURL := fmt.Sprintf("<http|https>://%s<%s>", serviceHost, oauthAPIPath)
