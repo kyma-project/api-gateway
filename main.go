@@ -58,6 +58,7 @@ func main() {
 	var oathkeeperSvcPort uint
 	var blackListedServices string
 	var whiteListedDomains string
+	var domainName string
 	var corsAllowOrigin, corsAllowMethods, corsAllowHeaders string
 	var generatedObjectsLabels string
 
@@ -69,6 +70,7 @@ func main() {
 		"Enable leader election for controller manager. Enabling this will ensure there is only one active controller manager.")
 	flag.StringVar(&blackListedServices, "service-blacklist", "kubernetes.default,kube-dns.kube-system", "List of services to be blacklisted from exposure.")
 	flag.StringVar(&whiteListedDomains, "domain-whitelist", "", "List of domains to be allowed.")
+	flag.StringVar(&domainName, "default-domain-name", "", "A default domain name for hostnames with no domain provided. Optional.")
 	flag.StringVar(&corsAllowOrigin, "cors-allow-origin", "*", "list of allowed origins")
 	flag.StringVar(&corsAllowMethods, "cors-allow-methods", "GET,POST,PUT,DELETE", "list of allowed methods")
 	flag.StringVar(&corsAllowHeaders, "cors-allow-headers", "Authorization,Content-Type,*", "list of allowed headers")
@@ -124,10 +126,9 @@ func main() {
 		OathkeeperSvc:     oathkeeperSvcAddr,
 		OathkeeperSvcPort: uint32(oathkeeperSvcPort),
 		JWKSURI:           jwksURI,
-		Validator: &validation.APIRule{
-			ServiceBlackList: getNamespaceServiceMap(blackListedServices),
-			DomainWhiteList:  getList(whiteListedDomains),
-		},
+		ServiceBlackList:  getNamespaceServiceMap(blackListedServices),
+		DomainWhiteList:   getList(whiteListedDomains),
+		DefaultDomainName: domainName,
 		CorsConfig: &processing.CorsConfig{
 			AllowHeaders: getList(corsAllowHeaders),
 			AllowMethods: getList(corsAllowMethods),

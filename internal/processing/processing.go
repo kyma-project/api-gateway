@@ -3,6 +3,7 @@ package processing
 import (
 	"context"
 	"fmt"
+	"github.com/kyma-incubator/api-gateway/internal/helpers"
 
 	"github.com/kyma-incubator/api-gateway/internal/builders"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -28,10 +29,11 @@ type Factory struct {
 	JWKSURI           string
 	corsConfig        *CorsConfig
 	additionalLabels  map[string]string
+	defaultDomainName string
 }
 
 //NewFactory .
-func NewFactory(client client.Client, logger logr.Logger, oathkeeperSvc string, oathkeeperSvcPort uint32, jwksURI string, corsConfig *CorsConfig, additionalLabels map[string]string) *Factory {
+func NewFactory(client client.Client, logger logr.Logger, oathkeeperSvc string, oathkeeperSvcPort uint32, jwksURI string, corsConfig *CorsConfig, additionalLabels map[string]string, defaultDomainName string) *Factory {
 	return &Factory{
 		client:            client,
 		Log:               logger,
@@ -40,6 +42,7 @@ func NewFactory(client client.Client, logger logr.Logger, oathkeeperSvc string, 
 		JWKSURI:           jwksURI,
 		corsConfig:        corsConfig,
 		additionalLabels:  additionalLabels,
+		defaultDomainName: defaultDomainName,
 	}
 }
 
@@ -58,7 +61,7 @@ func (f *Factory) CalculateRequiredState(api *gatewayv1alpha1.APIRule) *State {
 
 	for _, rule := range api.Spec.Rules {
 		if isSecured(rule) {
-			ar := generateAccessRule(api, rule, rule.AccessStrategies, f.additionalLabels)
+			ar := generateAccessRule(api, rule, rule.AccessStrategies, f.additionalLabels, f.defaultDomainName)
 			res.accessRules[ar.Spec.Match.URL] = ar
 		}
 	}
@@ -205,7 +208,7 @@ func (f *Factory) generateVirtualService(api *gatewayv1alpha1.APIRule) *networki
 	ownerRef := generateOwnerRef(api)
 
 	vsSpecBuilder := builders.VirtualServiceSpec()
-	vsSpecBuilder.Host(*api.Spec.Service.Host)
+	vsSpecBuilder.Host(helpers.GetHostWithDomain(*api.Spec.Service.Host, f.defaultDomainName))
 	vsSpecBuilder.Gateway(*api.Spec.Gateway)
 
 	for _, rule := range api.Spec.Rules {

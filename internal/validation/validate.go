@@ -3,6 +3,7 @@ package validation
 import (
 	"bytes"
 	"fmt"
+	"github.com/kyma-incubator/api-gateway/internal/helpers"
 	"strings"
 
 	"knative.dev/pkg/apis/istio/v1alpha3"
@@ -38,8 +39,9 @@ func configNotEmpty(config *runtime.RawExtension) bool {
 
 //APIRule is used to validate github.com/kyma-incubator/api-gateway/api/v1alpha1/APIRule instances
 type APIRule struct {
-	ServiceBlackList map[string][]string
-	DomainWhiteList  []string
+	ServiceBlackList  map[string][]string
+	DomainWhiteList   []string
+	DefaultDomainName string
 }
 
 //Validate performs APIRule validation
@@ -65,8 +67,37 @@ type Failure struct {
 func (v *APIRule) validateService(attributePath string, vsList v1alpha3.VirtualServiceList, api *gatewayv1alpha1.APIRule) []Failure {
 	var problems []Failure
 
+	host := *api.Spec.Service.Host
+	if !helpers.HostIncludesDomain(*api.Spec.Service.Host) {
+		if v.DefaultDomainName == "" {
+			problems = append(problems, Failure{
+				AttributePath: attributePath + ".host",
+				Message:       "Host does not contain a domain name and no default domain name is configured",
+			})
+		}
+		host = helpers.GetHostWithDefaultDomain(host, v.DefaultDomainName)
+	} else {
+		// if the default domain name is used, then there is no need to check if it is whitelisted
+		domainFound := false
+		for _, domain := range v.DomainWhiteList {
+			// service host containing duplicated whitelisted domain should be rejected.
+			// for example `my-lambda.kyma.local.kyma.local`
+			// service host containing whitelisted domain but only as a part of bigger domain should also be rejected
+			// for example `my-lambda.kyma.local.com` when only `kyma.local` is whitelisted
+			if count := strings.Count(host, domain); count == 1 && strings.HasSuffix(host, domain) {
+				domainFound = true
+			}
+		}
+		if !domainFound {
+			problems = append(problems, Failure{
+				AttributePath: attributePath + ".host",
+				Message:       "Host is not whitelisted",
+			})
+		}
+	}
+
 	for _, vs := range vsList.Items {
-		if occupiesHost(vs, *api.Spec.Service.Host) && !ownedBy(vs, api) {
+		if occupiesHost(vs, host) && !ownedBy(vs, api) {
 			problems = append(problems, Failure{
 				AttributePath: attributePath + ".host",
 				Message:       "This host is occupied by another Virtual Service",
@@ -74,7 +105,6 @@ func (v *APIRule) validateService(attributePath string, vsList v1alpha3.VirtualS
 		}
 	}
 
-	domainFound := false
 	for namespace, services := range v.ServiceBlackList {
 		for _, svc := range services {
 			if svc == *api.Spec.Service.Name && namespace == api.ObjectMeta.Namespace {
@@ -84,19 +114,6 @@ func (v *APIRule) validateService(attributePath string, vsList v1alpha3.VirtualS
 				})
 			}
 		}
-	}
-	for _, domain := range v.DomainWhiteList {
-		// service host containing duplicated whitelisted domain should be rejected.
-		// for example my-lambda.kyma.local.kyma.local
-		if count := strings.Count(*api.Spec.Service.Host, domain); count == 1 {
-			domainFound = true
-		}
-	}
-	if !domainFound {
-		problems = append(problems, Failure{
-			AttributePath: attributePath + ".host",
-			Message:       "Host is not whitelisted",
-		})
 	}
 	return problems
 }

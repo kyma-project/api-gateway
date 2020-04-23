@@ -41,9 +41,11 @@ type APIReconciler struct {
 	OathkeeperSvc          string
 	OathkeeperSvcPort      uint32
 	JWKSURI                string
-	Validator              APIRuleValidator
 	CorsConfig             *processing.CorsConfig
 	GeneratedObjectsLabels map[string]string
+	ServiceBlackList       map[string][]string
+	DomainWhiteList        []string
+	DefaultDomainName      string
 }
 
 //APIRuleValidator allows to validate APIRule instances created by the user.
@@ -84,14 +86,19 @@ func (r *APIReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		}
 
 		//1.2) Validate input including host
-		validationFailures := r.Validator.Validate(api, vsList)
+		validator := validation.APIRule{
+			ServiceBlackList:  r.ServiceBlackList,
+			DomainWhiteList:   r.DomainWhiteList,
+			DefaultDomainName: r.DefaultDomainName,
+		}
+		validationFailures := validator.Validate(api, vsList)
 		if len(validationFailures) > 0 {
 			r.Log.Info(fmt.Sprintf(`Validation failure {"controller": "Api", "request": "%s/%s"}`, api.Namespace, api.Name))
 			return r.setStatus(ctx, api, generateValidationStatus(validationFailures), gatewayv1alpha1.StatusSkipped)
 		}
 
 		//2) Compute list of required objects (the set of objects required to satisfy our contract on apiRule.Spec, not yet applied)
-		factory := processing.NewFactory(r.Client, r.Log, r.OathkeeperSvc, r.OathkeeperSvcPort, r.JWKSURI, r.CorsConfig, r.GeneratedObjectsLabels)
+		factory := processing.NewFactory(r.Client, r.Log, r.OathkeeperSvc, r.OathkeeperSvcPort, r.JWKSURI, r.CorsConfig, r.GeneratedObjectsLabels, r.DefaultDomainName)
 		requiredObjects := factory.CalculateRequiredState(api)
 
 		//3.1 Fetch all existing objects related to _this_ apiRule from the cluster (VS, Rules)

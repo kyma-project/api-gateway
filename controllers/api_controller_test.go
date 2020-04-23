@@ -7,7 +7,6 @@ import (
 
 	gatewayv1alpha1 "github.com/kyma-incubator/api-gateway/api/v1alpha1"
 	"github.com/kyma-incubator/api-gateway/controllers"
-	"github.com/kyma-incubator/api-gateway/internal/validation"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
@@ -100,11 +99,9 @@ func fixAPI() *gatewayv1alpha1.APIRule {
 
 func getAPIReconciler(mgr manager.Manager) reconcile.Reconciler {
 	return &controllers.APIReconciler{
-		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("controllers").WithName("Api"),
-		Validator: &validation.APIRule{
-			DomainWhiteList: []string{"bar", "kyma.local"},
-		},
+		Client:          mgr.GetClient(),
+		Log:             ctrl.Log.WithName("controllers").WithName("Api"),
+		DomainWhiteList: []string{"bar", "kyma.local"},
 		CorsConfig: &processing.CorsConfig{
 			AllowOrigin:  TestAllowOrigins,
 			AllowMethods: TestAllowMethods,

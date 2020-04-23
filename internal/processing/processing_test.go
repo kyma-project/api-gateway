@@ -30,15 +30,17 @@ const (
 	oathkeeperSvcPort uint32    = 1234
 	testLabelKey                = "key"
 	testLabelValue              = "value"
+	defaultDomain               = "myDomain.com"
 )
 
 var (
-	apiMethods         = []string{"GET"}
-	apiScopes          = []string{"write", "read"}
-	servicePort uint32 = 8080
-	apiGateway         = "some-gateway"
-	serviceName        = "example-service"
-	serviceHost        = "myService.myDomain.com"
+	apiMethods                     = []string{"GET"}
+	apiScopes                      = []string{"write", "read"}
+	servicePort             uint32 = 8080
+	apiGateway                     = "some-gateway"
+	serviceName                    = "example-service"
+	serviceHostWithNoDomain        = "myService"
+	serviceHost                    = serviceHostWithNoDomain + "." + defaultDomain
 
 	testAllowOrigin  = []string{"*"}
 	testAllowMethods = []string{"GET", "POST", "PUT", "DELETE"}
@@ -80,7 +82,7 @@ var _ = Describe("Factory", func() {
 
 				apiRule := getAPIRuleFor(rules)
 
-				f := NewFactory(nil, ctrl.Log.WithName("test"), oathkeeperSvc, oathkeeperSvcPort, "https://example.com/.well-known/jwks.json", testCors, testAdditionalLabels)
+				f := NewFactory(nil, ctrl.Log.WithName("test"), oathkeeperSvc, oathkeeperSvcPort, "https://example.com/.well-known/jwks.json", testCors, testAdditionalLabels, defaultDomain)
 
 				desiredState := f.CalculateRequiredState(apiRule)
 				vs := desiredState.virtualService
@@ -168,7 +170,7 @@ var _ = Describe("Factory", func() {
 
 				apiRule := getAPIRuleFor(rules)
 
-				f := NewFactory(nil, ctrl.Log.WithName("test"), oathkeeperSvc, oathkeeperSvcPort, "https://example.com/.well-known/jwks.json", testCors, testAdditionalLabels)
+				f := NewFactory(nil, ctrl.Log.WithName("test"), oathkeeperSvc, oathkeeperSvcPort, "https://example.com/.well-known/jwks.json", testCors, testAdditionalLabels, defaultDomain)
 
 				desiredState := f.CalculateRequiredState(apiRule)
 				vs := desiredState.virtualService
@@ -311,7 +313,7 @@ var _ = Describe("Factory", func() {
 
 				apiRule := getAPIRuleFor(rules)
 
-				f := NewFactory(nil, ctrl.Log.WithName("test"), oathkeeperSvc, oathkeeperSvcPort, "https://example.com/.well-known/jwks.json", testCors, testAdditionalLabels)
+				f := NewFactory(nil, ctrl.Log.WithName("test"), oathkeeperSvc, oathkeeperSvcPort, "https://example.com/.well-known/jwks.json", testCors, testAdditionalLabels, defaultDomain)
 
 				desiredState := f.CalculateRequiredState(apiRule)
 				vs := desiredState.virtualService
@@ -379,6 +381,77 @@ var _ = Describe("Factory", func() {
 				Expect(rule.ObjectMeta.OwnerReferences[0].UID).To(Equal(apiUID))
 
 			})
+
+			Context("when the hostname does not contain domain name", func() {
+				It("should produce VS & AR with default domain name", func() {
+					noop := []*rulev1alpha1.Authenticator{
+						{
+							Handler: &rulev1alpha1.Handler{
+								Name: "noop",
+							},
+						},
+					}
+
+					jwtConfigJSON := fmt.Sprintf(`
+					{
+						"trusted_issuers": ["%s"],
+						"jwks": [],
+						"required_scope": [%s]
+				}`, jwtIssuer, toCSVList(apiScopes))
+
+					jwt := []*rulev1alpha1.Authenticator{
+						{
+							Handler: &rulev1alpha1.Handler{
+								Name: "jwt",
+								Config: &runtime.RawExtension{
+									Raw: []byte(jwtConfigJSON),
+								},
+							},
+						},
+					}
+
+					testMutators := []*rulev1alpha1.Mutator{
+						{
+							Handler: &rulev1alpha1.Handler{
+								Name: "noop",
+							},
+						},
+						{
+							Handler: &rulev1alpha1.Handler{
+								Name: "idtoken",
+							},
+						},
+					}
+
+					noopRule := getRuleFor(apiPath, apiMethods, []*rulev1alpha1.Mutator{}, noop)
+					jwtRule := getRuleFor(headersAPIPath, apiMethods, testMutators, jwt)
+					rules := []gatewayv1alpha1.Rule{noopRule, jwtRule}
+
+					expectedNoopRuleMatchURL := fmt.Sprintf("<http|https>://%s<%s>", serviceHost, apiPath)
+					expectedJwtRuleMatchURL := fmt.Sprintf("<http|https>://%s<%s>", serviceHost, headersAPIPath)
+
+					apiRule := getAPIRuleFor(rules)
+					apiRule.Spec.Service.Host = &serviceHostWithNoDomain
+
+					f := NewFactory(nil, ctrl.Log.WithName("test"), oathkeeperSvc, oathkeeperSvcPort, "https://example.com/.well-known/jwks.json", testCors, testAdditionalLabels, defaultDomain)
+
+					desiredState := f.CalculateRequiredState(apiRule)
+					vs := desiredState.virtualService
+					accessRules := desiredState.accessRules
+
+					//verify VS
+					Expect(vs).NotTo(BeNil())
+					Expect(len(vs.Spec.Hosts)).To(Equal(1))
+					Expect(vs.Spec.Hosts[0]).To(Equal(serviceHost))
+
+					//Verify ARs
+					Expect(len(accessRules)).To(Equal(2))
+					noopAccessRule := accessRules[expectedNoopRuleMatchURL]
+					Expect(noopAccessRule.Spec.Match.URL).To(Equal(expectedNoopRuleMatchURL))
+					jwtAccessRule := accessRules[expectedJwtRuleMatchURL]
+					Expect(jwtAccessRule.Spec.Match.URL).To(Equal(expectedJwtRuleMatchURL))
+				})
+			})
 		})
 	})
 
@@ -399,7 +472,7 @@ var _ = Describe("Factory", func() {
 				apiRule := getAPIRuleFor(rules)
 				expectedNoopRuleMatchURL := fmt.Sprintf("<http|https>://%s<%s>", serviceHost, apiPath)
 
-				f := NewFactory(nil, ctrl.Log.WithName("test"), oathkeeperSvc, oathkeeperSvcPort, "https://example.com/.well-known/jwks.json", testCors, testAdditionalLabels)
+				f := NewFactory(nil, ctrl.Log.WithName("test"), oathkeeperSvc, oathkeeperSvcPort, "https://example.com/.well-known/jwks.json", testCors, testAdditionalLabels, defaultDomain)
 
 				desiredState := f.CalculateRequiredState(apiRule)
 				actualState := &State{}
@@ -446,7 +519,7 @@ var _ = Describe("Factory", func() {
 
 				apiRule := getAPIRuleFor(rules)
 
-				f := NewFactory(nil, ctrl.Log.WithName("test"), oathkeeperSvc, oathkeeperSvcPort, "https://example.com/.well-known/jwks.json", testCors, testAdditionalLabels)
+				f := NewFactory(nil, ctrl.Log.WithName("test"), oathkeeperSvc, oathkeeperSvcPort, "https://example.com/.well-known/jwks.json", testCors, testAdditionalLabels, defaultDomain)
 
 				desiredState := f.CalculateRequiredState(apiRule)
 				oauthNoopRuleMatchURL := fmt.Sprintf("<http|https>://%s<%s>", serviceHost, oauthAPIPath)
