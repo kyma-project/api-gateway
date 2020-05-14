@@ -95,6 +95,7 @@ var _ = Describe("Builder for", func() {
 			Expect(result.HTTP[0].Route[0].Destination.Host).To(Equal(destHost))
 			Expect(result.HTTP[0].Route[0].Destination.Port.Number).To(Equal(destPort))
 			Expect(result.HTTP[0].Route[0].Destination.Port.Name).To(BeEmpty())
+			Expect(result.HTTP[0].Route[0].Weight).To(Equal(100))
 
 			//One HTTPMatchRequest element
 			Expect(result.HTTP[1].Match).To(HaveLen(1))
@@ -103,6 +104,7 @@ var _ = Describe("Builder for", func() {
 			Expect(result.HTTP[1].Route[0].Destination.Host).To(Equal(destHost2))
 			Expect(result.HTTP[1].Route[0].Destination.Port.Number).To(Equal(destPort2))
 			Expect(result.HTTP[1].Route[0].Destination.Port.Name).To(BeEmpty())
+			Expect(result.HTTP[1].Route[0].Weight).To(Equal(100))
 		})
 	})
 })

@@ -156,7 +156,7 @@ func (st *stringMatch) Regex(val string) *matchRequest {
 
 // RouteDestination returns builder for knative.dev/pkg/apis/istio/v1alpha3/HTTPRouteDestination type
 func RouteDestination() *routeDestination {
-	return &routeDestination{&networkingv1alpha3.HTTPRouteDestination{}}
+	return &routeDestination{&networkingv1alpha3.HTTPRouteDestination{Weight: 100}}
 }
 
 type routeDestination struct {
