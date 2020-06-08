@@ -1,6 +1,6 @@
 module github.com/kyma-incubator/api-gateway
 
-go 1.12
+go 1.13
 
 require (
 	github.com/go-logr/logr v0.1.0
@@ -8,7 +8,7 @@ require (
 	github.com/onsi/gomega v1.5.0
 	github.com/ory/oathkeeper-maester v0.0.2-beta.1
 	github.com/pkg/errors v0.8.1
-	golang.org/x/crypto v0.0.0-20191011191535-87dc89f01550 // indirect
+	golang.org/x/crypto v0.0.0-20200220183623-bac4c82f6975 // indirect
 	golang.org/x/net v0.0.0-20190918130420-a8b05e9114ab // indirect
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e // indirect
 	golang.org/x/sys v0.0.0-20190919044723-0c1ff786ef13 // indirect
