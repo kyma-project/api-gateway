@@ -44,15 +44,19 @@ This procedure is useful to test your own Controller build end-to-end in a local
 ### Use command-line flags
 
 | Name | Required | Description | Example values |
-|------|----------|-------------|-----------------|
-| **oathkeeper-svc-address** | yes | ory oathkeeper-proxy service address. | `ory-oathkeeper-proxy.kyma-system.svc.cluster.local` |
-| **oathkeeper-svc-port** | yes | ory oathkeeper-proxy service port. | `4455` |
-| **jwks-uri** | yes | default jwksUri in the Policy. | any string |
-| **service-blacklist** | no | list of services to be blacklisted | `kubernetes.default` <br> `kube-dns.kube-system` |
-| **domain-whitelist** | yes | list of domains that can be exposed | `kyma.local` <br> `foo.bar` |
-| **cors-allow-origin**  | no | comma-separated list of allowed origins | `*`, `https://developer.org` |
-| **cors-allow-methods** | no | comma-separated list of allowed methods | `GET,POST,DELETE` |
-| **cors-allow-headers** | no | comma-separated list of allowed headers | `Authorization,Content-Type` |
+|------|:----------:|-------------|-----------------|
+| **oathkeeper-svc-address** | YES | Ory oathkeeper-proxy service address. | `ory-oathkeeper-proxy.kyma-system.svc.cluster.local` |
+| **oathkeeper-svc-port** | YES | Ory oathkeeper-proxy service port. | `4455` |
+| **metrics-addr** | NO | The address the metric endpoint binds to. | `:8080` |
+| **jwks-uri** | YES | Default jwksUri in the Policy. | any string |
+| **enable-leader-election** | YES | Enable leader election for controller manager. Enabling this will ensure there is only one active controller manager. | any string |
+| **service-blacklist** | NO | List of services to be blacklisted. | `kubernetes.default` <br> `kube-dns.kube-system` |
+| **domain-whitelist** | YES | List of domains that can be exposed. | `kyma.local` <br> `foo.bar` |
+| **default-domain-name** | NO | A default domain name for hostnames with no domain provided. | `kyma.local` <br> `foo.bar` |
+| **cors-allow-origin**  | NO | Comma-separated list of allowed origins. | `*`, `https://developer.org` |
+| **cors-allow-methods** | NO | Comma-separated list of allowed methods. | `GET,POST,DELETE` |
+| **cors-allow-headers** | NO | Comma-separated list of allowed headers. | `Authorization,Content-Type` |
+| **generated-objects-labels** | NO | Comma-separated list of key-value pairs used to label generated objects. | `managed-by=api-gateway` |
 
 ## Custom Resource
 
@@ -96,7 +100,7 @@ This table lists all the possible parameters of a given resource together with t
 | **metadata.name** |    **YES**   | Specifies the name of the exposed API |
 | **spec.gateway** | **YES** | Specifies Istio Gateway. |
 | **spec.service.name**, **spec.service.port** | **YES** | Specifies the name and the communication port of the exposed service. |
-| **spec.service.host** | **YES** | Specifies the service's external inbound communication address. |
+| **spec.service.host** | **YES** | Specifies the service's communication address for inbound external traffic. If only the leftmost label is provided, the default domain name will be used. |
 | **spec.rules** | **YES** | Specifies array of rules. |
 | **spec.rules.path** | **YES** | Specifies the path of the exposed service. |
 | **spec.rules.methods** | **NO** | Specifies the list of HTTP request methods available for **spec.rules.path**. |
