@@ -2,6 +2,8 @@ package controllers_test
 
 import (
 	"context"
+	"net/http"
+	"sigs.k8s.io/controller-runtime/pkg/healthz"
 
 	"github.com/kyma-incubator/api-gateway/internal/processing"
 
@@ -10,6 +12,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
+	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -17,7 +20,6 @@ import (
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/record"
-	networkingv1alpha3 "knative.dev/pkg/apis/istio/v1alpha3"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -103,7 +105,7 @@ func getAPIReconciler(mgr manager.Manager) reconcile.Reconciler {
 		Log:             ctrl.Log.WithName("controllers").WithName("Api"),
 		DomainWhiteList: []string{"bar", "kyma.local"},
 		CorsConfig: &processing.CorsConfig{
-			AllowOrigin:  TestAllowOrigins,
+			AllowOrigins: TestAllowOrigins,
 			AllowMethods: TestAllowMethods,
 			AllowHeaders: TestAllowHeaders,
 		},
@@ -118,7 +120,7 @@ type testSuite struct {
 func getTestSuite(objects ...runtime.Object) *testSuite {
 	err := gatewayv1alpha1.AddToScheme(scheme.Scheme)
 	Expect(err).NotTo(HaveOccurred())
-	err = networkingv1alpha3.AddToScheme(scheme.Scheme)
+	err = networkingv1beta1.AddToScheme(scheme.Scheme)
 	Expect(err).NotTo(HaveOccurred())
 	err = rulev1alpha1.AddToScheme(scheme.Scheme)
 	Expect(err).NotTo(HaveOccurred())
@@ -131,6 +133,22 @@ func getTestSuite(objects ...runtime.Object) *testSuite {
 type fakeManager struct {
 	client client.Client
 	sch    *runtime.Scheme
+}
+
+func (f fakeManager) Elected() <-chan struct{} {
+	return nil
+}
+
+func (f fakeManager) AddMetricsExtraHandler(path string, handler http.Handler) error {
+	return nil
+}
+
+func (f fakeManager) AddHealthzCheck(name string, check healthz.Checker) error {
+	return nil
+}
+
+func (f fakeManager) AddReadyzCheck(name string, check healthz.Checker) error {
+	return nil
 }
 
 func (fakeManager) Add(manager.Runnable) error {

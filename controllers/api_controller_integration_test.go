@@ -15,11 +15,11 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
+	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
-	networkingv1alpha3 "knative.dev/pkg/apis/istio/v1alpha3"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
@@ -107,7 +107,6 @@ var _ = Describe("APIRule Controller", func() {
 			existingInstance := gatewayv1alpha1.APIRule{}
 			err = c.Get(context.TODO(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &existingInstance)
 			Expect(err).NotTo(HaveOccurred())
-
 			rule4 := testRule("/rule4", []string{"POST"}, testMutators, noConfigHandler("cookie_session"))
 			existingInstance.Spec.Rules = []gatewayv1alpha1.Rule{rule1, rule4}
 			newServiceName := testServiceName + "new"
@@ -117,7 +116,6 @@ var _ = Describe("APIRule Controller", func() {
 
 			err = c.Update(context.TODO(), &existingInstance)
 			Expect(err).NotTo(HaveOccurred())
-
 			expectedRequest = reconcile.Request{NamespacedName: types.NamespacedName{Name: apiRuleName, Namespace: testNamespace}}
 			Eventually(requests, timeout).Should(Receive(Equal(expectedRequest)))
 
@@ -172,7 +170,7 @@ var _ = Describe("APIRule Controller", func() {
 			Expect(created.Status.APIRuleStatus.Description).To(ContainSubstring("1 more error(s)..."))
 
 			//Verify VirtualService is not created
-			vsList := networkingv1alpha3.VirtualServiceList{}
+			vsList := networkingv1beta1.VirtualServiceList{}
 			err = c.List(context.TODO(), &vsList, matchingLabelsFunc(apiRuleName, testNamespace))
 			Expect(err).NotTo(HaveOccurred())
 			Expect(vsList.Items).To(HaveLen(0))
@@ -203,7 +201,7 @@ var _ = Describe("APIRule Controller", func() {
 						matchingLabels := matchingLabelsFunc(apiRuleName, testNamespace)
 
 						//Verify VirtualService
-						vsList := networkingv1alpha3.VirtualServiceList{}
+						vsList := networkingv1beta1.VirtualServiceList{}
 						err = c.List(context.TODO(), &vsList, matchingLabels)
 						Expect(err).NotTo(HaveOccurred())
 						Expect(vsList.Items).To(HaveLen(1))
@@ -219,7 +217,7 @@ var _ = Describe("APIRule Controller", func() {
 							Host(testServiceHost).
 							Gateway(testGatewayURL).
 							HTTP(builders.HTTPRoute().
-								Match(builders.MatchRequest().URI().Regex(testPath)).
+								Match(builders.MatchRequest().Uri().Regex(testPath)).
 								Route(builders.RouteDestination().Host(testOathkeeperSvcURL).Port(testOathkeeperPort)).
 								CorsPolicy(corsPolicyBuilder))
 
@@ -298,7 +296,7 @@ var _ = Describe("APIRule Controller", func() {
 						matchingLabels := matchingLabelsFunc(apiRuleName, testNamespace)
 
 						//Verify VirtualService
-						vsList := networkingv1alpha3.VirtualServiceList{}
+						vsList := networkingv1beta1.VirtualServiceList{}
 						err = c.List(context.TODO(), &vsList, matchingLabels)
 						Expect(err).NotTo(HaveOccurred())
 						Expect(vsList.Items).To(HaveLen(1))
@@ -311,11 +309,11 @@ var _ = Describe("APIRule Controller", func() {
 							Host(testServiceHost).
 							Gateway(testGatewayURL).
 							HTTP(builders.HTTPRoute().
-								Match(builders.MatchRequest().URI().Regex("/img")).
+								Match(builders.MatchRequest().Uri().Regex("/img")).
 								Route(builders.RouteDestination().Host(testOathkeeperSvcURL).Port(testOathkeeperPort)).
 								CorsPolicy(corsPolicyBuilder)).
 							HTTP(builders.HTTPRoute().
-								Match(builders.MatchRequest().URI().Regex("/headers")).
+								Match(builders.MatchRequest().Uri().Regex("/headers")).
 								Route(builders.RouteDestination().Host(testOathkeeperSvcURL).Port(testOathkeeperPort)).
 								CorsPolicy(corsPolicyBuilder))
 
@@ -448,7 +446,7 @@ var _ = Describe("APIRule Controller", func() {
 						matchingLabels := matchingLabelsFunc(apiRuleName, testNamespace)
 
 						//Verify VirtualService
-						vsList := networkingv1alpha3.VirtualServiceList{}
+						vsList := networkingv1beta1.VirtualServiceList{}
 						err = c.List(context.TODO(), &vsList, matchingLabels)
 						Expect(err).NotTo(HaveOccurred())
 						Expect(vsList.Items).To(HaveLen(1))
@@ -461,19 +459,19 @@ var _ = Describe("APIRule Controller", func() {
 							Host(testServiceHost).
 							Gateway(testGatewayURL).
 							HTTP(builders.HTTPRoute().
-								Match(builders.MatchRequest().URI().Regex("/img")).
+								Match(builders.MatchRequest().Uri().Regex("/img")).
 								Route(builders.RouteDestination().Host(testOathkeeperSvcURL).Port(testOathkeeperPort)).
 								CorsPolicy(corsPolicyBuilder)).
 							HTTP(builders.HTTPRoute().
-								Match(builders.MatchRequest().URI().Regex("/headers")).
+								Match(builders.MatchRequest().Uri().Regex("/headers")).
 								Route(builders.RouteDestination().Host(testOathkeeperSvcURL).Port(testOathkeeperPort)).
 								CorsPolicy(corsPolicyBuilder)).
 							HTTP(builders.HTTPRoute().
-								Match(builders.MatchRequest().URI().Regex("/status")).
+								Match(builders.MatchRequest().Uri().Regex("/status")).
 								Route(builders.RouteDestination().Host(testOathkeeperSvcURL).Port(testOathkeeperPort)).
 								CorsPolicy(corsPolicyBuilder)).
 							HTTP(builders.HTTPRoute().
-								Match(builders.MatchRequest().URI().Regex("/favicon")).
+								Match(builders.MatchRequest().Uri().Regex("/favicon")).
 								Route(builders.RouteDestination().Host("httpbin.atgo-system.svc.cluster.local").Port(443)). // "allow", no oathkeeper rule!
 								CorsPolicy(corsPolicyBuilder))
 
@@ -688,7 +686,7 @@ func generateTestName(name string, length int) string {
 	return name + "-" + string(b)
 }
 
-func getRuleList(matchingLabels client.ListOptionFunc) []rulev1alpha1.Rule {
+func getRuleList(matchingLabels client.ListOption) []rulev1alpha1.Rule {
 	res := rulev1alpha1.RuleList{}
 	err := c.List(context.TODO(), &res, matchingLabels)
 	Expect(err).NotTo(HaveOccurred())
@@ -713,7 +711,7 @@ func verifyRuleList(ruleList []rulev1alpha1.Rule, pathToURLFunc func(string) str
 	}
 }
 
-func matchingLabelsFunc(apiRuleName, namespace string) client.ListOptionFunc {
+func matchingLabelsFunc(apiRuleName, namespace string) client.ListOption {
 	labels := make(map[string]string)
 	labels[processing.OwnerLabel] = fmt.Sprintf("%s.%s", apiRuleName, namespace)
 	return client.MatchingLabels(labels)

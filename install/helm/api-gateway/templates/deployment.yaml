@@ -39,9 +39,7 @@ spec:
             {{- with .Values.config.domainWhiteList }}
             - --domain-whitelist={{ . | join ", " }}
             {{- end }}
-            {{- with .Values.config.cors.allowOrigin }}
-            - --cors-allow-origin={{ . | join ", " }}
-            {{- end }}
+            - --cors-allow-origins={{ include "api-gateway.cors.allowOrigins" . | trimAll "," }}
             {{- with .Values.config.cors.allowMethods }}
             - --cors-allow-methods={{ . | join ", " }}
             {{- end }}

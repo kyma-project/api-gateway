@@ -2,10 +2,9 @@ package validation
 
 import (
 	"encoding/json"
+	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	"knative.dev/pkg/apis/istio/v1alpha3"
 
 	"testing"
 
@@ -49,7 +48,7 @@ var _ = Describe("Validate function", func() {
 		//when
 		problems := (&APIRule{
 			DomainWhiteList: testWhiteList,
-		}).Validate(input, v1alpha3.VirtualServiceList{})
+		}).Validate(input, networkingv1beta1.VirtualServiceList{})
 
 		//then
 		Expect(problems).To(HaveLen(1))
@@ -85,7 +84,7 @@ var _ = Describe("Validate function", func() {
 		problems := (&APIRule{
 			ServiceBlackList: testBlackList,
 			DomainWhiteList:  testDomainWhitelist,
-		}).Validate(input, v1alpha3.VirtualServiceList{})
+		}).Validate(input, networkingv1beta1.VirtualServiceList{})
 
 		//then
 		Expect(problems).To(HaveLen(1))
@@ -117,7 +116,7 @@ var _ = Describe("Validate function", func() {
 		problems := (&APIRule{
 			ServiceBlackList: testBlackList,
 			DomainWhiteList:  testDomainWhitelist,
-		}).Validate(input, v1alpha3.VirtualServiceList{})
+		}).Validate(input, networkingv1beta1.VirtualServiceList{})
 
 		//then
 		Expect(problems).To(HaveLen(1))
@@ -149,7 +148,7 @@ var _ = Describe("Validate function", func() {
 		problems := (&APIRule{
 			ServiceBlackList: testBlackList,
 			DomainWhiteList:  testDomainWhitelist,
-		}).Validate(input, v1alpha3.VirtualServiceList{})
+		}).Validate(input, networkingv1beta1.VirtualServiceList{})
 
 		//then
 		Expect(problems).To(HaveLen(1))
@@ -181,7 +180,7 @@ var _ = Describe("Validate function", func() {
 		problems := (&APIRule{
 			ServiceBlackList: testBlackList,
 			DomainWhiteList:  testDomainWhitelist,
-		}).Validate(input, v1alpha3.VirtualServiceList{})
+		}).Validate(input, networkingv1beta1.VirtualServiceList{})
 
 		//then
 		Expect(problems).To(HaveLen(1))
@@ -214,7 +213,7 @@ var _ = Describe("Validate function", func() {
 			ServiceBlackList:  testBlackList,
 			DomainWhiteList:   testDomainWhitelist,
 			DefaultDomainName: testDefaultDomain,
-		}).Validate(input, v1alpha3.VirtualServiceList{})
+		}).Validate(input, networkingv1beta1.VirtualServiceList{})
 
 		//then
 		Expect(problems).To(HaveLen(0))
@@ -244,7 +243,7 @@ var _ = Describe("Validate function", func() {
 		problems := (&APIRule{
 			ServiceBlackList: testBlackList,
 			DomainWhiteList:  testDomainWhitelist,
-		}).Validate(input, v1alpha3.VirtualServiceList{})
+		}).Validate(input, networkingv1beta1.VirtualServiceList{})
 
 		//then
 		Expect(problems).To(HaveLen(1))
@@ -255,7 +254,7 @@ var _ = Describe("Validate function", func() {
 	It("Should fail for a host that is occupied by a VS exposed by another resource", func() {
 		//given
 		occupiedHost := "occupied-host" + whitelistedDomain
-		existingVS := v1alpha3.VirtualService{}
+		existingVS := networkingv1beta1.VirtualService{}
 		existingVS.OwnerReferences = []v1.OwnerReference{{UID: "12345"}}
 		existingVS.Spec.Hosts = []string{occupiedHost}
 
@@ -280,7 +279,7 @@ var _ = Describe("Validate function", func() {
 		//when
 		problems := (&APIRule{
 			DomainWhiteList: testDomainWhitelist,
-		}).Validate(input, v1alpha3.VirtualServiceList{Items: []v1alpha3.VirtualService{existingVS}})
+		}).Validate(input, networkingv1beta1.VirtualServiceList{Items: []networkingv1beta1.VirtualService{existingVS}})
 
 		Expect(problems).To(HaveLen(1))
 		Expect(problems[0].AttributePath).To(Equal(".spec.service.host"))
@@ -290,7 +289,7 @@ var _ = Describe("Validate function", func() {
 	It("Should NOT fail for a host that is occupied by a VS exposed by this resource", func() {
 		//given
 		occupiedHost := "occupied-host" + whitelistedDomain
-		existingVS := v1alpha3.VirtualService{}
+		existingVS := networkingv1beta1.VirtualService{}
 		existingVS.OwnerReferences = []v1.OwnerReference{{UID: "12345"}}
 		existingVS.Spec.Hosts = []string{occupiedHost}
 
@@ -315,7 +314,7 @@ var _ = Describe("Validate function", func() {
 		//when
 		problems := (&APIRule{
 			DomainWhiteList: testDomainWhitelist,
-		}).Validate(input, v1alpha3.VirtualServiceList{Items: []v1alpha3.VirtualService{existingVS}})
+		}).Validate(input, networkingv1beta1.VirtualServiceList{Items: []networkingv1beta1.VirtualService{existingVS}})
 
 		Expect(problems).To(HaveLen(0))
 	})
@@ -355,7 +354,7 @@ var _ = Describe("Validate function", func() {
 		//when
 		problems := (&APIRule{
 			DomainWhiteList: testDomainWhitelist,
-		}).Validate(input, v1alpha3.VirtualServiceList{})
+		}).Validate(input, networkingv1beta1.VirtualServiceList{})
 
 		//then
 		Expect(problems).To(HaveLen(6))
@@ -382,7 +381,7 @@ var _ = Describe("Validate function", func() {
 		//given
 		occupiedHost := "occupied-host" + whitelistedDomain
 		notOccupiedHost := "not-occupied-host" + whitelistedDomain
-		existingVS := v1alpha3.VirtualService{}
+		existingVS := networkingv1beta1.VirtualService{}
 		existingVS.OwnerReferences = []v1.OwnerReference{{UID: "12345"}}
 		existingVS.Spec.Hosts = []string{occupiedHost}
 
@@ -418,7 +417,7 @@ var _ = Describe("Validate function", func() {
 		//when
 		problems := (&APIRule{
 			DomainWhiteList: testDomainWhitelist,
-		}).Validate(input, v1alpha3.VirtualServiceList{Items: []v1alpha3.VirtualService{existingVS}})
+		}).Validate(input, networkingv1beta1.VirtualServiceList{Items: []networkingv1beta1.VirtualService{existingVS}})
 
 		//then
 		Expect(problems).To(HaveLen(0))

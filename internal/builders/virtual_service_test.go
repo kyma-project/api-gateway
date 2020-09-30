@@ -3,8 +3,8 @@ package builders
 import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	k8sTypes "k8s.io/apimachinery/pkg/types"
-	networkingv1alpha3 "knative.dev/pkg/apis/istio/v1alpha3"
 )
 
 var _ = Describe("Builder for", func() {
@@ -26,7 +26,7 @@ var _ = Describe("Builder for", func() {
 			refKind := "APIRule"
 			var refUID k8sTypes.UID = "123"
 
-			initialVs := networkingv1alpha3.VirtualService{}
+			initialVs := networkingv1beta1.VirtualService{}
 			initialVs.Name = "shoudBeOverwritten"
 			initialVs.Spec.Hosts = []string{"a,", "b", "c"}
 
@@ -68,11 +68,11 @@ var _ = Describe("Builder for", func() {
 				Gateway(gateway).
 				Gateway(gateway2).
 				HTTP(HTTPRoute().
-					Match(MatchRequest().URI().Regex(matchURIRegex)).
-					Match(MatchRequest().URI().Regex(matchURIRegex2)).
+					Match(MatchRequest().Uri().Regex(matchURIRegex)).
+					Match(MatchRequest().Uri().Regex(matchURIRegex2)).
 					Route(RouteDestination().Host(destHost).Port(destPort))).
 				HTTP(HTTPRoute().
-					Match(MatchRequest().URI().Regex(matchURIRegex3)).
+					Match(MatchRequest().Uri().Regex(matchURIRegex3)).
 					Route(RouteDestination().Host(destHost2).Port(destPort2))).
 				Get()
 
@@ -85,26 +85,26 @@ var _ = Describe("Builder for", func() {
 			Expect(result.Gateways[1]).To(Equal(gateway2))
 
 			//Two HTTPRoute elements
-			Expect(result.HTTP).To(HaveLen(2))
+			Expect(result.Http).To(HaveLen(2))
 
 			//Two HTTPMatchRequest elements
-			Expect(result.HTTP[0].Match).To(HaveLen(2))
-			Expect(result.HTTP[0].Match[0].URI.Regex).To(Equal(matchURIRegex))
-			Expect(result.HTTP[0].Match[1].URI.Regex).To(Equal(matchURIRegex2))
-			Expect(result.HTTP[0].Route).To(HaveLen(1))
-			Expect(result.HTTP[0].Route[0].Destination.Host).To(Equal(destHost))
-			Expect(result.HTTP[0].Route[0].Destination.Port.Number).To(Equal(destPort))
-			Expect(result.HTTP[0].Route[0].Destination.Port.Name).To(BeEmpty())
-			Expect(result.HTTP[0].Route[0].Weight).To(Equal(100))
+			Expect(result.Http[0].Match).To(HaveLen(2))
+			Expect(result.Http[0].Match[0].Uri.GetRegex()).To(Equal(matchURIRegex))
+			Expect(result.Http[0].Match[1].Uri.GetRegex()).To(Equal(matchURIRegex2))
+			Expect(result.Http[0].Route).To(HaveLen(1))
+			Expect(result.Http[0].Route[0].Destination.Host).To(Equal(destHost))
+			Expect(result.Http[0].Route[0].Destination.Port.Number).To(Equal(destPort))
+			//Expect(result.Http[0].Route[0].Destination.Port.Name).To(BeEmpty())
+			Expect(result.Http[0].Route[0].Weight).To(Equal(int32(100)))
 
 			//One HTTPMatchRequest element
-			Expect(result.HTTP[1].Match).To(HaveLen(1))
-			Expect(result.HTTP[1].Match[0].URI.Regex).To(Equal(matchURIRegex3))
-			Expect(result.HTTP[1].Route).To(HaveLen(1))
-			Expect(result.HTTP[1].Route[0].Destination.Host).To(Equal(destHost2))
-			Expect(result.HTTP[1].Route[0].Destination.Port.Number).To(Equal(destPort2))
-			Expect(result.HTTP[1].Route[0].Destination.Port.Name).To(BeEmpty())
-			Expect(result.HTTP[1].Route[0].Weight).To(Equal(100))
+			Expect(result.Http[1].Match).To(HaveLen(1))
+			Expect(result.Http[1].Match[0].Uri.GetRegex()).To(Equal(matchURIRegex3))
+			Expect(result.Http[1].Route).To(HaveLen(1))
+			Expect(result.Http[1].Route[0].Destination.Host).To(Equal(destHost2))
+			Expect(result.Http[1].Route[0].Destination.Port.Number).To(Equal(destPort2))
+			//Expect(result.Http[1].Route[0].Destination.Port.Name).To(BeEmpty())
+			Expect(result.Http[1].Route[0].Weight).To(Equal(int32(100)))
 		})
 	})
 })

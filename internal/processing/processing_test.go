@@ -2,6 +2,8 @@ package processing
 
 import (
 	"fmt"
+	"istio.io/api/networking/v1beta1"
+	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	"testing"
 
 	. "github.com/onsi/ginkgo"
@@ -12,7 +14,6 @@ import (
 	gatewayv1alpha1 "github.com/kyma-incubator/api-gateway/api/v1alpha1"
 	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	networkingv1alpha3 "knative.dev/pkg/apis/istio/v1alpha3"
 	ctrl "sigs.k8s.io/controller-runtime"
 )
 
@@ -42,17 +43,17 @@ var (
 	serviceHostWithNoDomain        = "myService"
 	serviceHost                    = serviceHostWithNoDomain + "." + defaultDomain
 
-	testAllowOrigin  = []string{"*"}
+	testAllowOrigin  = []*v1beta1.StringMatch{{MatchType: &v1beta1.StringMatch_Regex{Regex: ".*"}}}
 	testAllowMethods = []string{"GET", "POST", "PUT", "DELETE"}
 	testAllowHeaders = []string{"header1", "header2"}
 
 	testCors = &CorsConfig{
-		AllowOrigin:  testAllowOrigin,
+		AllowOrigins: testAllowOrigin,
 		AllowMethods: testAllowMethods,
 		AllowHeaders: testAllowHeaders,
 	}
-	expectedCorsPolicy = networkingv1alpha3.CorsPolicy{
-		AllowOrigin:  testAllowOrigin,
+	expectedCorsPolicy = v1beta1.CorsPolicy{
+		AllowOrigins: testAllowOrigin,
 		AllowMethods: testAllowMethods,
 		AllowHeaders: testAllowHeaders,
 	}
@@ -93,18 +94,18 @@ var _ = Describe("Factory", func() {
 				Expect(len(vs.Spec.Gateways)).To(Equal(1))
 				Expect(len(vs.Spec.Hosts)).To(Equal(1))
 				Expect(vs.Spec.Hosts[0]).To(Equal(serviceHost))
-				Expect(len(vs.Spec.HTTP)).To(Equal(1))
+				Expect(len(vs.Spec.Http)).To(Equal(1))
 
-				Expect(len(vs.Spec.HTTP[0].Route)).To(Equal(1))
-				Expect(vs.Spec.HTTP[0].Route[0].Destination.Host).To(Equal(serviceName + "." + apiNamespace + ".svc.cluster.local"))
-				Expect(vs.Spec.HTTP[0].Route[0].Destination.Port.Number).To(Equal(servicePort))
+				Expect(len(vs.Spec.Http[0].Route)).To(Equal(1))
+				Expect(vs.Spec.Http[0].Route[0].Destination.Host).To(Equal(serviceName + "." + apiNamespace + ".svc.cluster.local"))
+				Expect(vs.Spec.Http[0].Route[0].Destination.Port.Number).To(Equal(servicePort))
 
-				Expect(len(vs.Spec.HTTP[0].Match)).To(Equal(1))
-				Expect(vs.Spec.HTTP[0].Match[0].URI.Regex).To(Equal(apiRule.Spec.Rules[0].Path))
+				Expect(len(vs.Spec.Http[0].Match)).To(Equal(1))
+				Expect(vs.Spec.Http[0].Match[0].Uri.GetRegex()).To(Equal(apiRule.Spec.Rules[0].Path))
 
-				Expect(vs.Spec.HTTP[0].CorsPolicy.AllowOrigin).To(Equal(testCors.AllowOrigin))
-				Expect(vs.Spec.HTTP[0].CorsPolicy.AllowMethods).To(Equal(testCors.AllowMethods))
-				Expect(vs.Spec.HTTP[0].CorsPolicy.AllowHeaders).To(Equal(testCors.AllowHeaders))
+				Expect(vs.Spec.Http[0].CorsPolicy.AllowOrigins).To(Equal(testCors.AllowOrigins))
+				Expect(vs.Spec.Http[0].CorsPolicy.AllowMethods).To(Equal(testCors.AllowMethods))
+				Expect(vs.Spec.Http[0].CorsPolicy.AllowHeaders).To(Equal(testCors.AllowHeaders))
 
 				Expect(vs.ObjectMeta.Name).To(BeEmpty())
 				Expect(vs.ObjectMeta.GenerateName).To(Equal(apiName + "-"))
@@ -181,27 +182,27 @@ var _ = Describe("Factory", func() {
 				Expect(len(vs.Spec.Gateways)).To(Equal(1))
 				Expect(len(vs.Spec.Hosts)).To(Equal(1))
 				Expect(vs.Spec.Hosts[0]).To(Equal(serviceHost))
-				Expect(len(vs.Spec.HTTP)).To(Equal(2))
+				Expect(len(vs.Spec.Http)).To(Equal(2))
 
-				Expect(len(vs.Spec.HTTP[0].Route)).To(Equal(1))
-				Expect(vs.Spec.HTTP[0].Route[0].Destination.Host).To(Equal(oathkeeperSvc))
-				Expect(vs.Spec.HTTP[0].Route[0].Destination.Port.Number).To(Equal(oathkeeperSvcPort))
-				Expect(len(vs.Spec.HTTP[0].Match)).To(Equal(1))
-				Expect(vs.Spec.HTTP[0].Match[0].URI.Regex).To(Equal(apiRule.Spec.Rules[0].Path))
+				Expect(len(vs.Spec.Http[0].Route)).To(Equal(1))
+				Expect(vs.Spec.Http[0].Route[0].Destination.Host).To(Equal(oathkeeperSvc))
+				Expect(vs.Spec.Http[0].Route[0].Destination.Port.Number).To(Equal(oathkeeperSvcPort))
+				Expect(len(vs.Spec.Http[0].Match)).To(Equal(1))
+				Expect(vs.Spec.Http[0].Match[0].Uri.GetRegex()).To(Equal(apiRule.Spec.Rules[0].Path))
 
-				Expect(vs.Spec.HTTP[0].CorsPolicy.AllowOrigin).To(Equal(testCors.AllowOrigin))
-				Expect(vs.Spec.HTTP[0].CorsPolicy.AllowMethods).To(Equal(testCors.AllowMethods))
-				Expect(vs.Spec.HTTP[0].CorsPolicy.AllowHeaders).To(Equal(testCors.AllowHeaders))
+				Expect(vs.Spec.Http[0].CorsPolicy.AllowOrigins).To(Equal(testCors.AllowOrigins))
+				Expect(vs.Spec.Http[0].CorsPolicy.AllowMethods).To(Equal(testCors.AllowMethods))
+				Expect(vs.Spec.Http[0].CorsPolicy.AllowHeaders).To(Equal(testCors.AllowHeaders))
 
-				Expect(len(vs.Spec.HTTP[1].Route)).To(Equal(1))
-				Expect(vs.Spec.HTTP[1].Route[0].Destination.Host).To(Equal(oathkeeperSvc))
-				Expect(vs.Spec.HTTP[1].Route[0].Destination.Port.Number).To(Equal(oathkeeperSvcPort))
-				Expect(len(vs.Spec.HTTP[1].Match)).To(Equal(1))
-				Expect(vs.Spec.HTTP[1].Match[0].URI.Regex).To(Equal(apiRule.Spec.Rules[1].Path))
+				Expect(len(vs.Spec.Http[1].Route)).To(Equal(1))
+				Expect(vs.Spec.Http[1].Route[0].Destination.Host).To(Equal(oathkeeperSvc))
+				Expect(vs.Spec.Http[1].Route[0].Destination.Port.Number).To(Equal(oathkeeperSvcPort))
+				Expect(len(vs.Spec.Http[1].Match)).To(Equal(1))
+				Expect(vs.Spec.Http[1].Match[0].Uri.GetRegex()).To(Equal(apiRule.Spec.Rules[1].Path))
 
-				Expect(vs.Spec.HTTP[1].CorsPolicy.AllowOrigin).To(Equal(testCors.AllowOrigin))
-				Expect(vs.Spec.HTTP[1].CorsPolicy.AllowMethods).To(Equal(testCors.AllowMethods))
-				Expect(vs.Spec.HTTP[1].CorsPolicy.AllowHeaders).To(Equal(testCors.AllowHeaders))
+				Expect(vs.Spec.Http[1].CorsPolicy.AllowOrigins).To(Equal(testCors.AllowOrigins))
+				Expect(vs.Spec.Http[1].CorsPolicy.AllowMethods).To(Equal(testCors.AllowMethods))
+				Expect(vs.Spec.Http[1].CorsPolicy.AllowHeaders).To(Equal(testCors.AllowHeaders))
 
 				Expect(vs.ObjectMeta.Name).To(BeEmpty())
 				Expect(vs.ObjectMeta.GenerateName).To(Equal(apiName + "-"))
@@ -324,18 +325,18 @@ var _ = Describe("Factory", func() {
 				Expect(len(vs.Spec.Gateways)).To(Equal(1))
 				Expect(len(vs.Spec.Hosts)).To(Equal(1))
 				Expect(vs.Spec.Hosts[0]).To(Equal(serviceHost))
-				Expect(len(vs.Spec.HTTP)).To(Equal(1))
+				Expect(len(vs.Spec.Http)).To(Equal(1))
 
-				Expect(len(vs.Spec.HTTP[0].Route)).To(Equal(1))
-				Expect(vs.Spec.HTTP[0].Route[0].Destination.Host).To(Equal(oathkeeperSvc))
-				Expect(vs.Spec.HTTP[0].Route[0].Destination.Port.Number).To(Equal(oathkeeperSvcPort))
+				Expect(len(vs.Spec.Http[0].Route)).To(Equal(1))
+				Expect(vs.Spec.Http[0].Route[0].Destination.Host).To(Equal(oathkeeperSvc))
+				Expect(vs.Spec.Http[0].Route[0].Destination.Port.Number).To(Equal(oathkeeperSvcPort))
 
-				Expect(len(vs.Spec.HTTP[0].Match)).To(Equal(1))
-				Expect(vs.Spec.HTTP[0].Match[0].URI.Regex).To(Equal(apiRule.Spec.Rules[0].Path))
+				Expect(len(vs.Spec.Http[0].Match)).To(Equal(1))
+				Expect(vs.Spec.Http[0].Match[0].Uri.GetRegex()).To(Equal(apiRule.Spec.Rules[0].Path))
 
-				Expect(vs.Spec.HTTP[0].CorsPolicy.AllowOrigin).To(Equal(testCors.AllowOrigin))
-				Expect(vs.Spec.HTTP[0].CorsPolicy.AllowMethods).To(Equal(testCors.AllowMethods))
-				Expect(vs.Spec.HTTP[0].CorsPolicy.AllowHeaders).To(Equal(testCors.AllowHeaders))
+				Expect(vs.Spec.Http[0].CorsPolicy.AllowOrigins).To(Equal(testCors.AllowOrigins))
+				Expect(vs.Spec.Http[0].CorsPolicy.AllowMethods).To(Equal(testCors.AllowMethods))
+				Expect(vs.Spec.Http[0].CorsPolicy.AllowHeaders).To(Equal(testCors.AllowHeaders))
 
 				Expect(vs.ObjectMeta.Name).To(BeEmpty())
 				Expect(vs.ObjectMeta.GenerateName).To(Equal(apiName + "-"))
@@ -529,7 +530,7 @@ var _ = Describe("Factory", func() {
 				labels := make(map[string]string)
 				labels["myLabel"] = "should not override"
 
-				vs := &networkingv1alpha3.VirtualService{
+				vs := &networkingv1beta1.VirtualService{
 					ObjectMeta: metav1.ObjectMeta{
 						GenerateName: apiName + "-",
 						Labels:       labels,
@@ -567,7 +568,7 @@ var _ = Describe("Factory", func() {
 				actualState := &State{virtualService: vs, accessRules: accessRules}
 
 				patch := f.CalculateDiff(desiredState, actualState)
-				vsPatch := patch.virtualService.obj.(*networkingv1alpha3.VirtualService)
+				vsPatch := patch.virtualService.obj.(*networkingv1beta1.VirtualService)
 
 				//Verify patch
 				Expect(patch.virtualService).NotTo(BeNil())

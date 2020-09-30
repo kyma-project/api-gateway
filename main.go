@@ -18,6 +18,8 @@ package main
 import (
 	"flag"
 	"fmt"
+	gatewayv1alpha1 "github.com/kyma-incubator/api-gateway/api/v1alpha1"
+	"istio.io/api/networking/v1beta1"
 	"os"
 	"strings"
 
@@ -25,14 +27,13 @@ import (
 
 	"github.com/kyma-incubator/api-gateway/internal/processing"
 
-	gatewayv1alpha1 "github.com/kyma-incubator/api-gateway/api/v1alpha1"
 	"github.com/kyma-incubator/api-gateway/controllers"
 	"github.com/kyma-incubator/api-gateway/internal/validation"
 	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
+	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
-	networkingv1alpha3 "knative.dev/pkg/apis/istio/v1alpha3"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 )
@@ -45,7 +46,7 @@ var (
 func init() {
 	_ = clientgoscheme.AddToScheme(scheme)
 	_ = gatewayv1alpha1.AddToScheme(scheme)
-	_ = networkingv1alpha3.AddToScheme(scheme)
+	_ = networkingv1beta1.AddToScheme(scheme)
 	_ = rulev1alpha1.AddToScheme(scheme)
 	// +kubebuilder:scaffold:scheme
 }
@@ -59,7 +60,7 @@ func main() {
 	var blackListedServices string
 	var whiteListedDomains string
 	var domainName string
-	var corsAllowOrigin, corsAllowMethods, corsAllowHeaders string
+	var corsAllowOrigins, corsAllowMethods, corsAllowHeaders string
 	var generatedObjectsLabels string
 
 	flag.StringVar(&oathkeeperSvcAddr, "oathkeeper-svc-address", "", "Oathkeeper proxy service")
@@ -71,7 +72,7 @@ func main() {
 	flag.StringVar(&blackListedServices, "service-blacklist", "kubernetes.default,kube-dns.kube-system", "List of services to be blacklisted from exposure.")
 	flag.StringVar(&whiteListedDomains, "domain-whitelist", "", "List of domains to be allowed.")
 	flag.StringVar(&domainName, "default-domain-name", "", "A default domain name for hostnames with no domain provided. Optional.")
-	flag.StringVar(&corsAllowOrigin, "cors-allow-origin", "*", "list of allowed origins")
+	flag.StringVar(&corsAllowOrigins, "cors-allow-origins", "regex:.*", "list of allowed origins")
 	flag.StringVar(&corsAllowMethods, "cors-allow-methods", "GET,POST,PUT,DELETE", "list of allowed methods")
 	flag.StringVar(&corsAllowHeaders, "cors-allow-headers", "Authorization,Content-Type,*", "list of allowed headers")
 	flag.StringVar(&generatedObjectsLabels, "generated-objects-labels", "", "Comma-separated list of key=value pairs used to label generated objects")
@@ -132,7 +133,7 @@ func main() {
 		CorsConfig: &processing.CorsConfig{
 			AllowHeaders: getList(corsAllowHeaders),
 			AllowMethods: getList(corsAllowMethods),
-			AllowOrigin:  getList(corsAllowOrigin),
+			AllowOrigins: getStringMatch(corsAllowOrigins),
 		},
 		GeneratedObjectsLabels: additionalLabels,
 	}).SetupWithManager(mgr); err != nil {
@@ -155,6 +156,26 @@ func getList(raw string) []string {
 		if trim != "" {
 			result = append(result, trim)
 		}
+	}
+	return result
+}
+
+func getStringMatch(raw string) []*v1beta1.StringMatch {
+	var result []*v1beta1.StringMatch
+	for _, s := range getList(raw) {
+		matchTypePair := strings.SplitN(s, ":", 2)
+		matchType := matchTypePair[0]
+		value := matchTypePair[1]
+		var stringMatch *v1beta1.StringMatch
+		switch {
+		case matchType == "regex":
+			stringMatch = regex(value)
+		case matchType == "prefix":
+			stringMatch = prefix(value)
+		case matchType == "exact":
+			stringMatch = exact(value)
+		}
+		result = append(result, stringMatch)
 	}
 	return result
 }
@@ -212,4 +233,22 @@ func parseLabels(labelsString string) (map[string]string, error) {
 	}
 
 	return output, nil
+}
+
+func regex(val string) *v1beta1.StringMatch {
+	return &v1beta1.StringMatch{
+		MatchType: &v1beta1.StringMatch_Regex{Regex: val},
+	}
+}
+
+func prefix(val string) *v1beta1.StringMatch {
+	return &v1beta1.StringMatch{
+		MatchType: &v1beta1.StringMatch_Prefix{Prefix: val},
+	}
+}
+
+func exact(val string) *v1beta1.StringMatch {
+	return &v1beta1.StringMatch{
+		MatchType: &v1beta1.StringMatch_Exact{Exact: val},
+	}
 }

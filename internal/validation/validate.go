@@ -4,9 +4,8 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/kyma-incubator/api-gateway/internal/helpers"
+	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	"strings"
-
-	"knative.dev/pkg/apis/istio/v1alpha3"
 
 	gatewayv1alpha1 "github.com/kyma-incubator/api-gateway/api/v1alpha1"
 	"github.com/ory/oathkeeper-maester/api/v1alpha1"
@@ -45,7 +44,7 @@ type APIRule struct {
 }
 
 //Validate performs APIRule validation
-func (v *APIRule) Validate(api *gatewayv1alpha1.APIRule, vsList v1alpha3.VirtualServiceList) []Failure {
+func (v *APIRule) Validate(api *gatewayv1alpha1.APIRule, vsList networkingv1beta1.VirtualServiceList) []Failure {
 
 	res := []Failure{}
 	//Validate service
@@ -64,7 +63,7 @@ type Failure struct {
 	Message       string
 }
 
-func (v *APIRule) validateService(attributePath string, vsList v1alpha3.VirtualServiceList, api *gatewayv1alpha1.APIRule) []Failure {
+func (v *APIRule) validateService(attributePath string, vsList networkingv1beta1.VirtualServiceList, api *gatewayv1alpha1.APIRule) []Failure {
 	var problems []Failure
 
 	host := *api.Spec.Service.Host
@@ -193,7 +192,7 @@ func (v *APIRule) validateAccessStrategy(attributePath string, accessStrategy *r
 	return vld.Validate(attributePath, accessStrategy.Handler)
 }
 
-func occupiesHost(vs v1alpha3.VirtualService, host string) bool {
+func occupiesHost(vs networkingv1beta1.VirtualService, host string) bool {
 	for _, h := range vs.Spec.Hosts {
 		if h == host {
 			return true
@@ -202,7 +201,7 @@ func occupiesHost(vs v1alpha3.VirtualService, host string) bool {
 	return false
 }
 
-func ownedBy(vs v1alpha3.VirtualService, api *gatewayv1alpha1.APIRule) bool {
+func ownedBy(vs networkingv1beta1.VirtualService, api *gatewayv1alpha1.APIRule) bool {
 	for _, or := range vs.OwnerReferences {
 		if or.UID == api.UID {
 			return true

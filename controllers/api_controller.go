@@ -18,9 +18,8 @@ package controllers
 import (
 	"context"
 	"fmt"
+	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	"time"
-
-	"knative.dev/pkg/apis/istio/v1alpha3"
 
 	"github.com/kyma-incubator/api-gateway/internal/processing"
 	"github.com/kyma-incubator/api-gateway/internal/validation"
@@ -50,7 +49,7 @@ type APIReconciler struct {
 
 //APIRuleValidator allows to validate APIRule instances created by the user.
 type APIRuleValidator interface {
-	Validate(apiRule *gatewayv1alpha1.APIRule, vsList v1alpha3.VirtualServiceList) []validation.Failure
+	Validate(apiRule *gatewayv1alpha1.APIRule, vsList networkingv1beta1.VirtualServiceList) []validation.Failure
 }
 
 //Reconcile .
@@ -79,7 +78,7 @@ func (r *APIReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	if api.Generation != api.Status.ObservedGeneration {
 
 		//1.1) Get the list of existing Virtual Services to validate host
-		var vsList v1alpha3.VirtualServiceList
+		var vsList networkingv1beta1.VirtualServiceList
 		if err := r.Client.List(ctx, &vsList); err != nil {
 			//Nothing is yet processed: StatusSkipped
 			return r.setStatusForError(ctx, api, err, gatewayv1alpha1.StatusSkipped)

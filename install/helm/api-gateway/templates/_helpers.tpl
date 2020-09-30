@@ -51,3 +51,11 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- end }}
 {{- end }}
 {{- end -}}
+
+{{- define "api-gateway.cors.allowOrigins" -}}
+{{- range $i, $e := .Values.config.cors.allowOrigins -}}
+{{- range $e -}}
+{{ printf "%s:%s," . $i -}}
+{{- end }}
+{{- end }}
+{{- end -}}

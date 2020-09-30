@@ -53,7 +53,7 @@ This procedure is useful to test your own Controller build end-to-end in a local
 | **service-blacklist** | NO | List of services to be blacklisted. | `kubernetes.default` <br> `kube-dns.kube-system` |
 | **domain-whitelist** | YES | List of domains that can be exposed. | `kyma.local` <br> `foo.bar` |
 | **default-domain-name** | NO | A default domain name for hostnames with no domain provided. | `kyma.local` <br> `foo.bar` |
-| **cors-allow-origin**  | NO | Comma-separated list of allowed origins. | `*`, `https://developer.org` |
+| **cors-allow-origins**  | NO | Comma-separated list of allowed origins. | `regex:.*,prefix:https://developer.org` |
 | **cors-allow-methods** | NO | Comma-separated list of allowed methods. | `GET,POST,DELETE` |
 | **cors-allow-headers** | NO | Comma-separated list of allowed headers. | `Authorization,Content-Type` |
 | **generated-objects-labels** | NO | Comma-separated list of key-value pairs used to label generated objects. | `managed-by=api-gateway` |

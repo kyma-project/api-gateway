@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/kyma-incubator/api-gateway/internal/helpers"
+	"istio.io/api/networking/v1beta1"
 
 	"github.com/kyma-incubator/api-gateway/internal/builders"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -12,7 +13,7 @@ import (
 	"github.com/go-logr/logr"
 	gatewayv1alpha1 "github.com/kyma-incubator/api-gateway/api/v1alpha1"
 	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
-	networkingv1alpha3 "knative.dev/pkg/apis/istio/v1alpha3"
+	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 )
 
 var (
@@ -48,7 +49,7 @@ func NewFactory(client client.Client, logger logr.Logger, oathkeeperSvc string, 
 
 //CorsConfig is an internal representation of v1alpha3.CorsPolicy object
 type CorsConfig struct {
-	AllowOrigin  []string
+	AllowOrigins []*v1beta1.StringMatch
 	AllowMethods []string
 	AllowHeaders []string
 }
@@ -75,7 +76,7 @@ func (f *Factory) CalculateRequiredState(api *gatewayv1alpha1.APIRule) *State {
 
 //State represents desired or actual state of Istio Virtual Services and Oathkeeper Rules
 type State struct {
-	virtualService *networkingv1alpha3.VirtualService
+	virtualService *networkingv1beta1.VirtualService
 	accessRules    map[string]*rulev1alpha1.Rule
 }
 
@@ -85,7 +86,7 @@ func (f *Factory) GetActualState(ctx context.Context, api *gatewayv1alpha1.APIRu
 	labels[OwnerLabel] = fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace)
 	var state State
 
-	var vsList networkingv1alpha3.VirtualServiceList
+	var vsList networkingv1beta1.VirtualServiceList
 	if err := f.client.List(ctx, &vsList, client.MatchingLabels(labels)); err != nil {
 		return nil, err
 	}
@@ -199,11 +200,11 @@ func (f *Factory) applyObjDiff(ctx context.Context, objToPatch *objToPatch) erro
 	return nil
 }
 
-func (f *Factory) updateVirtualService(existing, required *networkingv1alpha3.VirtualService) {
+func (f *Factory) updateVirtualService(existing, required *networkingv1beta1.VirtualService) {
 	existing.Spec = required.Spec
 }
 
-func (f *Factory) generateVirtualService(api *gatewayv1alpha1.APIRule) *networkingv1alpha3.VirtualService {
+func (f *Factory) generateVirtualService(api *gatewayv1alpha1.APIRule) *networkingv1beta1.VirtualService {
 	virtualServiceNamePrefix := fmt.Sprintf("%s-", api.ObjectMeta.Name)
 	ownerRef := generateOwnerRef(api)
 
@@ -222,9 +223,9 @@ func (f *Factory) generateVirtualService(api *gatewayv1alpha1.APIRule) *networki
 		}
 
 		httpRouteBuilder.Route(builders.RouteDestination().Host(host).Port(port))
-		httpRouteBuilder.Match(builders.MatchRequest().URI().Regex(rule.Path))
+		httpRouteBuilder.Match(builders.MatchRequest().Uri().Regex(rule.Path))
 		httpRouteBuilder.CorsPolicy(builders.CorsPolicy().
-			AllowOrigins(f.corsConfig.AllowOrigin...).
+			AllowOrigins(f.corsConfig.AllowOrigins...).
 			AllowMethods(f.corsConfig.AllowMethods...).
 			AllowHeaders(f.corsConfig.AllowHeaders...))
 		vsSpecBuilder.HTTP(httpRouteBuilder)
