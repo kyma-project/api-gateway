@@ -103,7 +103,7 @@ This table lists all the possible parameters of a given resource together with t
 | **spec.service.host** | **YES** | Specifies the service's communication address for inbound external traffic. If only the leftmost label is provided, the default domain name will be used. |
 | **spec.rules** | **YES** | Specifies array of rules. |
 | **spec.rules.path** | **YES** | Specifies the path of the exposed service. |
-| **spec.rules.methods** | **NO** | Specifies the list of HTTP request methods available for **spec.rules.path**. |
+| **spec.rules.methods** | **YES** | Specifies the list of HTTP request methods available for **spec.rules.path**. |
 | **spec.rules.mutators** | **NO** | Specifies array of [Oathkeeper mutators](https://www.ory.sh/docs/oathkeeper/pipeline/mutator). |
 | **spec.rules.accessStrategies** | **YES** | Specifies array of [Oathkeeper authenticators](https://www.ory.sh/docs/oathkeeper/pipeline/authn). |
 

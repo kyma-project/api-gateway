@@ -98,7 +98,8 @@ type Rule struct {
 	// +kubebuilder:validation:Pattern=^/([0-9a-zA-Z./*]+)
 	Path string `json:"path"`
 	// Set of allowed HTTP methods
-	Methods []string `json:"methods,omitempty"`
+	// +kubebuilder:validation:MinItems=1
+	Methods []string `json:"methods"`
 	// Set of access strategies for a single path
 	// +kubebuilder:validation:MinItems=1
 	AccessStrategies []*rulev1alpha1.Authenticator `json:"accessStrategies"`
