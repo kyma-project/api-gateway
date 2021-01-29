@@ -95,7 +95,7 @@ type Service struct {
 //Rule .
 type Rule struct {
 	// Path to be exposed
-	// +kubebuilder:validation:Pattern=^/([0-9a-zA-Z./*]+)
+	// +kubebuilder:validation:Pattern=^([0-9a-zA-Z./*()?!\\_-]+)
 	Path string `json:"path"`
 	// Set of allowed HTTP methods
 	// +kubebuilder:validation:MinItems=1
