@@ -2,6 +2,7 @@ package controllers_test
 
 import (
 	"context"
+	"github.com/go-logr/logr"
 	"net/http"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 
@@ -44,8 +45,9 @@ var _ = Describe("Controller", func() {
 
 				ts = getTestSuite(testAPI)
 				reconciler := getAPIReconciler(ts.mgr)
+				ctx := context.Background()
 
-				result, err := reconciler.Reconcile(reconcile.Request{NamespacedName: types.NamespacedName{Name: testAPI.Name}})
+				result, err := reconciler.Reconcile(ctx, reconcile.Request{NamespacedName: types.NamespacedName{Name: testAPI.Name}})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(result.Requeue).To(BeFalse())
 
@@ -159,7 +161,7 @@ func (fakeManager) SetFields(interface{}) error {
 	return nil
 }
 
-func (fakeManager) Start(<-chan struct{}) error {
+func (fakeManager) Start(ctx context.Context) error {
 	return nil
 }
 
@@ -201,6 +203,14 @@ func (fakeManager) GetWebhookServer() *webhook.Server {
 }
 
 func (fakeManager) GetRESTMapper() meta.RESTMapper {
+	return nil
+}
+
+func (fakeManager) GetLogger() logr.Logger {
+	return nil
+}
+
+func (fakeManager) Stop() meta.RESTMapper {
 	return nil
 }
 

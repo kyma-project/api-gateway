@@ -2,17 +2,11 @@ package validation
 
 import (
 	"fmt"
-	"testing"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
 )
-
-func TestLabels(t *testing.T) {
-	RegisterFailHandler(Fail)
-	RunSpecs(t, "Labels Suite")
-}
 
 func entry(value string, valid bool) TableEntry {
 	return Entry(value, value, valid)

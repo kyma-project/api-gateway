@@ -7,7 +7,6 @@ import (
 	"istio.io/api/networking/v1beta1"
 
 	"github.com/kyma-incubator/api-gateway/internal/builders"
-	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/go-logr/logr"
@@ -121,7 +120,7 @@ type Patch struct {
 
 type objToPatch struct {
 	action string
-	obj    runtime.Object
+	obj    client.Object
 }
 
 //CalculateDiff methods compute diff between desired & actual state

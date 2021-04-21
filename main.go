@@ -79,7 +79,7 @@ func main() {
 
 	flag.Parse()
 
-	ctrl.SetLogger(zap.Logger(true))
+	ctrl.SetLogger(zap.New(zap.UseDevMode(true)))
 
 	if jwksURI == "" {
 		setupLog.Error(fmt.Errorf("jwks-uri required, but not supplied"), "unable to create controller", "controller", "Api")
