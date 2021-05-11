@@ -16,8 +16,8 @@ limitations under the License.
 package v1alpha1
 
 import (
-	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	runtime "k8s.io/apimachinery/pkg/runtime"
 )
 
 //StatusCode .
@@ -102,10 +102,10 @@ type Rule struct {
 	Methods []string `json:"methods"`
 	// Set of access strategies for a single path
 	// +kubebuilder:validation:MinItems=1
-	AccessStrategies []*rulev1alpha1.Authenticator `json:"accessStrategies"`
+	AccessStrategies []*Authenticator `json:"accessStrategies"`
 	// Mutators to be used
 	// +optional
-	Mutators []*rulev1alpha1.Mutator `json:"mutators,omitempty"`
+	Mutators []*Mutator `json:"mutators,omitempty"`
 }
 
 //APIRuleResourceStatus .
@@ -116,4 +116,24 @@ type APIRuleResourceStatus struct {
 
 func init() {
 	SchemeBuilder.Register(&APIRule{}, &APIRuleList{})
+}
+
+// Authenticator represents a handler that authenticates provided credentials. See the corresponding type in the oathkeeper-maester project.
+type Authenticator struct {
+	*Handler `json:",inline"`
+}
+
+// Mutator represents a handler that transforms the HTTP request before forwarding it. See the corresponding in the oathkeeper-maester project.
+type Mutator struct {
+	*Handler `json:",inline"`
+}
+
+// Handler provides configuration for different Oathkeeper objects. It is used to either validate a request (Authenticator, Authorizer) or modify it (Mutator). See the corresponding type in the oathkeeper-maester project.
+type Handler struct {
+	// Name is the name of a handler
+	Name string `json:"handler"`
+	// Config configures the handler. Configuration keys vary per handler.
+	// +kubebuilder:validation:Type=object
+	// +kubebuilder:pruning:PreserveUnknownFields
+	Config *runtime.RawExtension `json:"config,omitempty"`
 }

@@ -2,6 +2,7 @@ package processing
 
 import (
 	"fmt"
+
 	"github.com/kyma-incubator/api-gateway/internal/helpers"
 
 	gatewayv1alpha1 "github.com/kyma-incubator/api-gateway/api/v1alpha1"
@@ -14,7 +15,7 @@ func modifyAccessRule(existing, required *rulev1alpha1.Rule) {
 	existing.Spec = required.Spec
 }
 
-func generateAccessRule(api *gatewayv1alpha1.APIRule, rule gatewayv1alpha1.Rule, accessStrategies []*rulev1alpha1.Authenticator, additionalLabels map[string]string, defaultDomainName string) *rulev1alpha1.Rule {
+func generateAccessRule(api *gatewayv1alpha1.APIRule, rule gatewayv1alpha1.Rule, accessStrategies []*gatewayv1alpha1.Authenticator, additionalLabels map[string]string, defaultDomainName string) *rulev1alpha1.Rule {
 	namePrefix := fmt.Sprintf("%s-", api.ObjectMeta.Name)
 	namespace := api.ObjectMeta.Namespace
 	ownerRef := generateOwnerRef(api)
@@ -33,7 +34,7 @@ func generateAccessRule(api *gatewayv1alpha1.APIRule, rule gatewayv1alpha1.Rule,
 	return arBuilder.Get()
 }
 
-func generateAccessRuleSpec(api *gatewayv1alpha1.APIRule, rule gatewayv1alpha1.Rule, accessStrategies []*rulev1alpha1.Authenticator, defaultDomainName string) *rulev1alpha1.RuleSpec {
+func generateAccessRuleSpec(api *gatewayv1alpha1.APIRule, rule gatewayv1alpha1.Rule, accessStrategies []*gatewayv1alpha1.Authenticator, defaultDomainName string) *rulev1alpha1.RuleSpec {
 	return builders.AccessRuleSpec().
 		Upstream(builders.Upstream().
 			URL(fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", *api.Spec.Service.Name, api.ObjectMeta.Namespace, int(*api.Spec.Service.Port)))).

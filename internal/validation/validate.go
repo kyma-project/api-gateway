@@ -3,13 +3,12 @@ package validation
 import (
 	"bytes"
 	"fmt"
-	"github.com/kyma-incubator/api-gateway/internal/helpers"
-	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	"strings"
 
+	"github.com/kyma-incubator/api-gateway/internal/helpers"
+	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
+
 	gatewayv1alpha1 "github.com/kyma-incubator/api-gateway/api/v1alpha1"
-	"github.com/ory/oathkeeper-maester/api/v1alpha1"
-	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
@@ -19,7 +18,7 @@ var vldJWT = &jwtAccStrValidator{}
 var vldDummy = &dummyAccStrValidator{}
 
 type accessStrategyValidator interface {
-	Validate(attrPath string, Handler *v1alpha1.Handler) []Failure
+	Validate(attrPath string, Handler *gatewayv1alpha1.Handler) []Failure
 }
 
 //configNotEmpty Verify if the config object is not empty
@@ -146,7 +145,7 @@ func (v *APIRule) validateMethods(attributePath string, methods []string) []Fail
 	return nil
 }
 
-func (v *APIRule) validateAccessStrategies(attributePath string, accessStrategies []*rulev1alpha1.Authenticator) []Failure {
+func (v *APIRule) validateAccessStrategies(attributePath string, accessStrategies []*gatewayv1alpha1.Authenticator) []Failure {
 	var problems []Failure
 
 	if len(accessStrategies) == 0 {
@@ -162,7 +161,7 @@ func (v *APIRule) validateAccessStrategies(attributePath string, accessStrategie
 	return problems
 }
 
-func (v *APIRule) validateAccessStrategy(attributePath string, accessStrategy *rulev1alpha1.Authenticator) []Failure {
+func (v *APIRule) validateAccessStrategy(attributePath string, accessStrategy *gatewayv1alpha1.Authenticator) []Failure {
 	var problems []Failure
 
 	var vld accessStrategyValidator

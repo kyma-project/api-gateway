@@ -2,8 +2,9 @@ package controllers_test
 
 import (
 	"context"
-	"github.com/go-logr/logr"
 	"net/http"
+
+	"github.com/go-logr/logr"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 
 	"github.com/kyma-incubator/api-gateway/internal/processing"
@@ -87,9 +88,9 @@ func fixAPI() *gatewayv1alpha1.APIRule {
 				{
 					Path:    "/.*",
 					Methods: []string{"GET"},
-					AccessStrategies: []*rulev1alpha1.Authenticator{
+					AccessStrategies: []*gatewayv1alpha1.Authenticator{
 						{
-							Handler: &rulev1alpha1.Handler{
+							Handler: &gatewayv1alpha1.Handler{
 								Name:   authStrategy,
 								Config: nil,
 							},

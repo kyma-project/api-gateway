@@ -2,9 +2,10 @@ package processing
 
 import (
 	"fmt"
+	"testing"
+
 	"istio.io/api/networking/v1beta1"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
-	"testing"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -70,15 +71,15 @@ var _ = Describe("Factory", func() {
 	Describe("CalculateRequiredState", func() {
 		Context("APIRule", func() {
 			It("should produce VS for allow authenticator", func() {
-				strategies := []*rulev1alpha1.Authenticator{
+				strategies := []*gatewayv1alpha1.Authenticator{
 					{
-						Handler: &rulev1alpha1.Handler{
+						Handler: &gatewayv1alpha1.Handler{
 							Name: "allow",
 						},
 					},
 				}
 
-				allowRule := getRuleFor(apiPath, apiMethods, []*rulev1alpha1.Mutator{}, strategies)
+				allowRule := getRuleFor(apiPath, apiMethods, []*gatewayv1alpha1.Mutator{}, strategies)
 				rules := []gatewayv1alpha1.Rule{allowRule}
 
 				apiRule := getAPIRuleFor(rules)
@@ -122,9 +123,9 @@ var _ = Describe("Factory", func() {
 			})
 
 			It("should produce VS and ARs for given paths", func() {
-				noop := []*rulev1alpha1.Authenticator{
+				noop := []*gatewayv1alpha1.Authenticator{
 					{
-						Handler: &rulev1alpha1.Handler{
+						Handler: &gatewayv1alpha1.Handler{
 							Name: "noop",
 						},
 					},
@@ -137,9 +138,9 @@ var _ = Describe("Factory", func() {
 						"required_scope": [%s]
 				}`, jwtIssuer, toCSVList(apiScopes))
 
-				jwt := []*rulev1alpha1.Authenticator{
+				jwt := []*gatewayv1alpha1.Authenticator{
 					{
-						Handler: &rulev1alpha1.Handler{
+						Handler: &gatewayv1alpha1.Handler{
 							Name: "jwt",
 							Config: &runtime.RawExtension{
 								Raw: []byte(jwtConfigJSON),
@@ -148,20 +149,20 @@ var _ = Describe("Factory", func() {
 					},
 				}
 
-				testMutators := []*rulev1alpha1.Mutator{
+				testMutators := []*gatewayv1alpha1.Mutator{
 					{
-						Handler: &rulev1alpha1.Handler{
+						Handler: &gatewayv1alpha1.Handler{
 							Name: "noop",
 						},
 					},
 					{
-						Handler: &rulev1alpha1.Handler{
+						Handler: &gatewayv1alpha1.Handler{
 							Name: "idtoken",
 						},
 					},
 				}
 
-				noopRule := getRuleFor(apiPath, apiMethods, []*rulev1alpha1.Mutator{}, noop)
+				noopRule := getRuleFor(apiPath, apiMethods, []*gatewayv1alpha1.Mutator{}, noop)
 				jwtRule := getRuleFor(headersAPIPath, apiMethods, testMutators, jwt)
 				rules := []gatewayv1alpha1.Rule{noopRule, jwtRule}
 
@@ -287,16 +288,16 @@ var _ = Describe("Factory", func() {
 						"required_scope": [%s]
 				}`, jwtIssuer, toCSVList(apiScopes))
 
-				jwt := &rulev1alpha1.Authenticator{
-					Handler: &rulev1alpha1.Handler{
+				jwt := &gatewayv1alpha1.Authenticator{
+					Handler: &gatewayv1alpha1.Handler{
 						Name: "jwt",
 						Config: &runtime.RawExtension{
 							Raw: []byte(jwtConfigJSON),
 						},
 					},
 				}
-				oauth := &rulev1alpha1.Authenticator{
-					Handler: &rulev1alpha1.Handler{
+				oauth := &gatewayv1alpha1.Authenticator{
+					Handler: &gatewayv1alpha1.Handler{
 						Name: "oauth2_introspection",
 						Config: &runtime.RawExtension{
 							Raw: []byte(oauthConfigJSON),
@@ -304,9 +305,9 @@ var _ = Describe("Factory", func() {
 					},
 				}
 
-				strategies := []*rulev1alpha1.Authenticator{jwt, oauth}
+				strategies := []*gatewayv1alpha1.Authenticator{jwt, oauth}
 
-				allowRule := getRuleFor(apiPath, apiMethods, []*rulev1alpha1.Mutator{}, strategies)
+				allowRule := getRuleFor(apiPath, apiMethods, []*gatewayv1alpha1.Mutator{}, strategies)
 				rules := []gatewayv1alpha1.Rule{allowRule}
 
 				expectedRuleMatchURL := fmt.Sprintf("<http|https>://%s<%s>", serviceHost, apiPath)
@@ -385,9 +386,9 @@ var _ = Describe("Factory", func() {
 
 			Context("when the hostname does not contain domain name", func() {
 				It("should produce VS & AR with default domain name", func() {
-					noop := []*rulev1alpha1.Authenticator{
+					noop := []*gatewayv1alpha1.Authenticator{
 						{
-							Handler: &rulev1alpha1.Handler{
+							Handler: &gatewayv1alpha1.Handler{
 								Name: "noop",
 							},
 						},
@@ -400,9 +401,9 @@ var _ = Describe("Factory", func() {
 						"required_scope": [%s]
 				}`, jwtIssuer, toCSVList(apiScopes))
 
-					jwt := []*rulev1alpha1.Authenticator{
+					jwt := []*gatewayv1alpha1.Authenticator{
 						{
-							Handler: &rulev1alpha1.Handler{
+							Handler: &gatewayv1alpha1.Handler{
 								Name: "jwt",
 								Config: &runtime.RawExtension{
 									Raw: []byte(jwtConfigJSON),
@@ -411,20 +412,20 @@ var _ = Describe("Factory", func() {
 						},
 					}
 
-					testMutators := []*rulev1alpha1.Mutator{
+					testMutators := []*gatewayv1alpha1.Mutator{
 						{
-							Handler: &rulev1alpha1.Handler{
+							Handler: &gatewayv1alpha1.Handler{
 								Name: "noop",
 							},
 						},
 						{
-							Handler: &rulev1alpha1.Handler{
+							Handler: &gatewayv1alpha1.Handler{
 								Name: "idtoken",
 							},
 						},
 					}
 
-					noopRule := getRuleFor(apiPath, apiMethods, []*rulev1alpha1.Mutator{}, noop)
+					noopRule := getRuleFor(apiPath, apiMethods, []*gatewayv1alpha1.Mutator{}, noop)
 					jwtRule := getRuleFor(headersAPIPath, apiMethods, testMutators, jwt)
 					rules := []gatewayv1alpha1.Rule{noopRule, jwtRule}
 
@@ -459,15 +460,15 @@ var _ = Describe("Factory", func() {
 	Describe("CalculateDiff", func() {
 		Context("between desired state & actual state", func() {
 			It("should produce patch containing VS to create & AR to create", func() {
-				noop := []*rulev1alpha1.Authenticator{
+				noop := []*gatewayv1alpha1.Authenticator{
 					{
-						Handler: &rulev1alpha1.Handler{
+						Handler: &gatewayv1alpha1.Handler{
 							Name: "noop",
 						},
 					},
 				}
 
-				noopRule := getRuleFor(apiPath, apiMethods, []*rulev1alpha1.Mutator{}, noop)
+				noopRule := getRuleFor(apiPath, apiMethods, []*gatewayv1alpha1.Mutator{}, noop)
 				rules := []gatewayv1alpha1.Rule{noopRule}
 
 				apiRule := getAPIRuleFor(rules)
@@ -494,8 +495,8 @@ var _ = Describe("Factory", func() {
 
 			It("should produce patch containing VS to update, AR to create, AR to update & AR to delete", func() {
 				oauthConfigJSON := fmt.Sprintf(`{"required_scope": [%s]}`, toCSVList(apiScopes))
-				oauth := &rulev1alpha1.Authenticator{
-					Handler: &rulev1alpha1.Handler{
+				oauth := &gatewayv1alpha1.Authenticator{
+					Handler: &gatewayv1alpha1.Handler{
 						Name: "oauth2_introspection",
 						Config: &runtime.RawExtension{
 							Raw: []byte(oauthConfigJSON),
@@ -503,18 +504,18 @@ var _ = Describe("Factory", func() {
 					},
 				}
 
-				strategies := []*rulev1alpha1.Authenticator{oauth}
+				strategies := []*gatewayv1alpha1.Authenticator{oauth}
 
-				noop := []*rulev1alpha1.Authenticator{
+				noop := []*gatewayv1alpha1.Authenticator{
 					{
-						Handler: &rulev1alpha1.Handler{
+						Handler: &gatewayv1alpha1.Handler{
 							Name: "noop",
 						},
 					},
 				}
 
-				noopRule := getRuleFor(headersAPIPath, apiMethods, []*rulev1alpha1.Mutator{}, noop)
-				allowRule := getRuleFor(oauthAPIPath, apiMethods, []*rulev1alpha1.Mutator{}, strategies)
+				noopRule := getRuleFor(headersAPIPath, apiMethods, []*gatewayv1alpha1.Mutator{}, noop)
+				allowRule := getRuleFor(oauthAPIPath, apiMethods, []*gatewayv1alpha1.Mutator{}, strategies)
 
 				rules := []gatewayv1alpha1.Rule{noopRule, allowRule}
 
@@ -599,7 +600,7 @@ var _ = Describe("Factory", func() {
 	})
 })
 
-func getRuleFor(path string, methods []string, mutators []*rulev1alpha1.Mutator, accessStrategies []*rulev1alpha1.Authenticator) gatewayv1alpha1.Rule {
+func getRuleFor(path string, methods []string, mutators []*gatewayv1alpha1.Mutator, accessStrategies []*gatewayv1alpha1.Authenticator) gatewayv1alpha1.Rule {
 	return gatewayv1alpha1.Rule{
 		Path:             path,
 		Methods:          methods,

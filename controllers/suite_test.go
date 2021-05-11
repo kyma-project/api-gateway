@@ -2,14 +2,15 @@ package controllers_test
 
 import (
 	"context"
-	"istio.io/api/networking/v1beta1"
-	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"path/filepath"
-	"sigs.k8s.io/controller-runtime/pkg/envtest/printer"
 	"sync"
 	"testing"
 	"time"
+
+	"istio.io/api/networking/v1beta1"
+	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/envtest/printer"
 
 	"github.com/kyma-incubator/api-gateway/internal/processing"
 
@@ -146,7 +147,7 @@ func SetupTestReconcile(inner reconcile.Reconciler) (reconcile.Reconciler, chan 
 }
 
 // StartTestManager adds recFn
-func StartTestManager(mgr manager.Manager) (context.Context) {
+func StartTestManager(mgr manager.Manager) context.Context {
 	ctx := context.Background()
 
 	go func() {

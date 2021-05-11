@@ -5,13 +5,12 @@ import (
 	"fmt"
 
 	gatewayv1alpha1 "github.com/kyma-incubator/api-gateway/api/v1alpha1"
-	"github.com/ory/oathkeeper-maester/api/v1alpha1"
 )
 
 //jwtAccStrValidator is an accessStrategy validator for jwt ORY authenticator
 type jwtAccStrValidator struct{}
 
-func (j *jwtAccStrValidator) Validate(attributePath string, handler *v1alpha1.Handler) []Failure {
+func (j *jwtAccStrValidator) Validate(attributePath string, handler *gatewayv1alpha1.Handler) []Failure {
 	var problems []Failure
 
 	var template gatewayv1alpha1.JWTAccStrConfig

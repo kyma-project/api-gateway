@@ -47,7 +47,7 @@ var _ = Describe("APIRule Controller", func() {
 	var testIssuer = "https://oauth2.example.com/"
 	var testMethods = []string{"GET", "PUT"}
 	var testScopes = []string{"foo", "bar"}
-	var testMutators = []*rulev1alpha1.Mutator{
+	var testMutators = []*gatewayv1alpha1.Mutator{
 		{
 			Handler: noConfigHandler("noop"),
 		},
@@ -64,7 +64,6 @@ var _ = Describe("APIRule Controller", func() {
 	Context("when updating the APIRule with multiple paths", func() {
 
 		It("should create, update and delete rules depending on patch match", func() {
-
 			rule1 := testRule("/rule1", []string{"GET"}, testMutators, noConfigHandler("noop"))
 			rule2 := testRule("/rule2", []string{"PUT"}, testMutators, noConfigHandler("unauthorized"))
 			rule3 := testRule("/rule3", []string{"DELETE"}, testMutators, noConfigHandler("anonymous"))
@@ -180,7 +179,6 @@ var _ = Describe("APIRule Controller", func() {
 			Context("secured with Oauth2 introspection,", func() {
 				Context("in a happy-path scenario", func() {
 					It("should create a VirtualService and an AccessRule", func() {
-
 						apiRuleName := generateTestName(testNameBase, testIDLength)
 						testServiceHost := "httpbin2.kyma.local"
 						rule := testRule(testPath, testMethods, testMutators, testOauthHandler(testScopes))
@@ -274,7 +272,6 @@ var _ = Describe("APIRule Controller", func() {
 			Context("secured with JWT token authentication,", func() {
 				Context("in a happy-path scenario", func() {
 					It("should create a VirtualService and an AccessRules", func() {
-
 						apiRuleName := generateTestName(testNameBase, testIDLength)
 						testServiceHost := "httpbin3.kyma.local"
 						rule1 := testRule("/img", []string{"GET"}, testMutators, testJWTHandler(testIssuer, testScopes))
@@ -420,7 +417,6 @@ var _ = Describe("APIRule Controller", func() {
 			Context("with multiple endpoints secured with different authentication methods", func() {
 				Context("in the happy path scenario", func() {
 					It("should create a VS with corresponding matchers and access rules for each secured path", func() {
-
 						jwtHandler := testJWTHandler(testIssuer, testScopes)
 						oauthHandler := testOauthHandler(testScopes)
 						rule1 := testRule("/img", []string{"GET"}, testMutators, jwtHandler)
@@ -576,12 +572,12 @@ func toCSVList(input []string) string {
 	return res
 }
 
-func testRule(path string, methods []string, mutators []*rulev1alpha1.Mutator, handler *rulev1alpha1.Handler) gatewayv1alpha1.Rule {
+func testRule(path string, methods []string, mutators []*gatewayv1alpha1.Mutator, handler *gatewayv1alpha1.Handler) gatewayv1alpha1.Rule {
 	return gatewayv1alpha1.Rule{
 		Path:     path,
 		Methods:  methods,
 		Mutators: mutators,
-		AccessStrategies: []*rulev1alpha1.Authenticator{
+		AccessStrategies: []*gatewayv1alpha1.Authenticator{
 			{
 				Handler: handler,
 			},
@@ -618,7 +614,7 @@ func verifyOwnerReference(m metav1.ObjectMeta, name, version, kind string) {
 	Expect(*m.OwnerReferences[0].Controller).To(BeTrue())
 }
 
-func testJWTHandler(issuer string, scopes []string) *rulev1alpha1.Handler {
+func testJWTHandler(issuer string, scopes []string) *gatewayv1alpha1.Handler {
 
 	configJSON := fmt.Sprintf(`
 		{
@@ -627,7 +623,7 @@ func testJWTHandler(issuer string, scopes []string) *rulev1alpha1.Handler {
 			"required_scope": [%s]
 	}`, issuer, toCSVList(scopes))
 
-	return &rulev1alpha1.Handler{
+	return &gatewayv1alpha1.Handler{
 		Name: "jwt",
 		Config: &runtime.RawExtension{
 			Raw: []byte(configJSON),
@@ -635,13 +631,13 @@ func testJWTHandler(issuer string, scopes []string) *rulev1alpha1.Handler {
 	}
 }
 
-func testOauthHandler(scopes []string) *rulev1alpha1.Handler {
+func testOauthHandler(scopes []string) *gatewayv1alpha1.Handler {
 
 	configJSON := fmt.Sprintf(`{
 		"required_scope": [%s]
 	}`, toCSVList(scopes))
 
-	return &rulev1alpha1.Handler{
+	return &gatewayv1alpha1.Handler{
 		Name: "oauth2_introspection",
 		Config: &runtime.RawExtension{
 			Raw: []byte(configJSON),
@@ -649,8 +645,8 @@ func testOauthHandler(scopes []string) *rulev1alpha1.Handler {
 	}
 }
 
-func noConfigHandler(name string) *rulev1alpha1.Handler {
-	return &rulev1alpha1.Handler{
+func noConfigHandler(name string) *gatewayv1alpha1.Handler {
+	return &gatewayv1alpha1.Handler{
 		Name: name,
 	}
 }
@@ -706,8 +702,37 @@ func verifyRuleList(ruleList []rulev1alpha1.Rule, pathToURLFunc func(string) str
 	for i := range expected {
 		ruleUrl := pathToURLFunc(expected[i].Path)
 		Expect(actual[ruleUrl].Spec.Match.Methods).To(Equal(expected[i].Methods))
-		Expect(actual[ruleUrl].Spec.Authenticators).To(Equal(expected[i].AccessStrategies))
-		Expect(actual[ruleUrl].Spec.Mutators).To(Equal(expected[i].Mutators))
+		//Expect(actual[ruleUrl].Spec.Authenticators).To(Equal(expected[i].AccessStrategies))
+		verifyAccessStrategies(actual[ruleUrl].Spec.Authenticators, expected[i].AccessStrategies)
+		//Expect(actual[ruleUrl].Spec.Mutators).To(Equal(expected[i].Mutators))
+		verifyMutators(actual[ruleUrl].Spec.Mutators, expected[i].Mutators)
+	}
+}
+func verifyMutators(actual []*rulev1alpha1.Mutator, expected []*gatewayv1alpha1.Mutator) {
+	if expected == nil {
+		Expect(actual).To(BeNil())
+	} else {
+		for i := 0; i < len(expected); i++ {
+			verifyHandler(actual[i].Handler, expected[i].Handler)
+		}
+	}
+}
+func verifyAccessStrategies(actual []*rulev1alpha1.Authenticator, expected []*gatewayv1alpha1.Authenticator) {
+	if expected == nil {
+		Expect(actual).To(BeNil())
+	} else {
+		for i := 0; i < len(expected); i++ {
+			verifyHandler(actual[i].Handler, expected[i].Handler)
+		}
+	}
+}
+
+func verifyHandler(actual *rulev1alpha1.Handler, expected *gatewayv1alpha1.Handler) {
+	if expected == nil {
+		Expect(actual).To(BeNil())
+	} else {
+		Expect(actual.Name).To(Equal(expected.Name))
+		Expect(actual.Config).To(Equal(expected.Config))
 	}
 }
 

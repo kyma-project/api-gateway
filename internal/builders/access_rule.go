@@ -1,6 +1,7 @@
 package builders
 
 import (
+	gatewayv1alpha1 "github.com/kyma-incubator/api-gateway/api/v1alpha1"
 	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
@@ -226,8 +227,20 @@ func (a *authenticators) Get() []*rulev1alpha1.Authenticator {
 	return a.value
 }
 
-func (a *authenticators) From(val []*rulev1alpha1.Authenticator) *authenticators {
-	a.value = val
+func (a *authenticators) From(val []*gatewayv1alpha1.Authenticator) *authenticators {
+	if val == nil {
+		a.value = nil
+	} else {
+		targetList := make([]*rulev1alpha1.Authenticator, len(val))
+		for i := 0; i < len(val); i++ {
+			targetObj := rulev1alpha1.Authenticator{
+				Handler: convertHandler(val[i].Handler),
+			}
+			targetList[i] = &targetObj
+		}
+		a.value = targetList
+	}
+
 	return a
 }
 
@@ -251,7 +264,32 @@ func (m *mutators) Get() []*rulev1alpha1.Mutator {
 	return m.value
 }
 
-func (m *mutators) From(val []*rulev1alpha1.Mutator) *mutators {
-	m.value = val
+func (m *mutators) From(val []*gatewayv1alpha1.Mutator) *mutators {
+	if val == nil {
+		m.value = nil
+	} else {
+		targetList := make([]*rulev1alpha1.Mutator, len(val))
+		for i := 0; i < len(val); i++ {
+			targetObj := rulev1alpha1.Mutator{
+				Handler: convertHandler(val[i].Handler),
+			}
+			targetList[i] = &targetObj
+		}
+		m.value = targetList
+	}
+
 	return m
+}
+
+func convertHandler(src *gatewayv1alpha1.Handler) *rulev1alpha1.Handler {
+	if src == nil {
+		return nil
+	}
+
+	res := rulev1alpha1.Handler{
+		Name:   src.Name,
+		Config: src.Config,
+	}
+
+	return &res
 }

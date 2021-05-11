@@ -2,6 +2,7 @@ package validation
 
 import (
 	"encoding/json"
+
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -11,7 +12,6 @@ import (
 	gatewayv1alpha1 "github.com/kyma-incubator/api-gateway/api/v1alpha1"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
@@ -72,7 +72,7 @@ var _ = Describe("Validate function", func() {
 				Rules: []gatewayv1alpha1.Rule{
 					{
 						Path: "/abc",
-						AccessStrategies: []*rulev1alpha1.Authenticator{
+						AccessStrategies: []*gatewayv1alpha1.Authenticator{
 							toAuthenticator("jwt", simpleJWTConfig()),
 							toAuthenticator("noop", emptyConfig()),
 						},
@@ -104,7 +104,7 @@ var _ = Describe("Validate function", func() {
 				Rules: []gatewayv1alpha1.Rule{
 					{
 						Path: "/abc",
-						AccessStrategies: []*rulev1alpha1.Authenticator{
+						AccessStrategies: []*gatewayv1alpha1.Authenticator{
 							toAuthenticator("jwt", simpleJWTConfig()),
 							toAuthenticator("noop", emptyConfig()),
 						},
@@ -136,7 +136,7 @@ var _ = Describe("Validate function", func() {
 				Rules: []gatewayv1alpha1.Rule{
 					{
 						Path: "/abc",
-						AccessStrategies: []*rulev1alpha1.Authenticator{
+						AccessStrategies: []*gatewayv1alpha1.Authenticator{
 							toAuthenticator("jwt", simpleJWTConfig()),
 							toAuthenticator("noop", emptyConfig()),
 						},
@@ -168,7 +168,7 @@ var _ = Describe("Validate function", func() {
 				Rules: []gatewayv1alpha1.Rule{
 					{
 						Path: "/abc",
-						AccessStrategies: []*rulev1alpha1.Authenticator{
+						AccessStrategies: []*gatewayv1alpha1.Authenticator{
 							toAuthenticator("jwt", simpleJWTConfig()),
 							toAuthenticator("noop", emptyConfig()),
 						},
@@ -200,7 +200,7 @@ var _ = Describe("Validate function", func() {
 				Rules: []gatewayv1alpha1.Rule{
 					{
 						Path: "/abc",
-						AccessStrategies: []*rulev1alpha1.Authenticator{
+						AccessStrategies: []*gatewayv1alpha1.Authenticator{
 							toAuthenticator("jwt", simpleJWTConfig()),
 							toAuthenticator("noop", emptyConfig()),
 						},
@@ -231,7 +231,7 @@ var _ = Describe("Validate function", func() {
 				Rules: []gatewayv1alpha1.Rule{
 					{
 						Path: "/abc",
-						AccessStrategies: []*rulev1alpha1.Authenticator{
+						AccessStrategies: []*gatewayv1alpha1.Authenticator{
 							toAuthenticator("jwt", simpleJWTConfig()),
 							toAuthenticator("noop", emptyConfig()),
 						},
@@ -267,7 +267,7 @@ var _ = Describe("Validate function", func() {
 				Rules: []gatewayv1alpha1.Rule{
 					{
 						Path: "/abc",
-						AccessStrategies: []*rulev1alpha1.Authenticator{
+						AccessStrategies: []*gatewayv1alpha1.Authenticator{
 							toAuthenticator("jwt", simpleJWTConfig()),
 							toAuthenticator("noop", emptyConfig()),
 						},
@@ -302,7 +302,7 @@ var _ = Describe("Validate function", func() {
 				Rules: []gatewayv1alpha1.Rule{
 					{
 						Path: "/abc",
-						AccessStrategies: []*rulev1alpha1.Authenticator{
+						AccessStrategies: []*gatewayv1alpha1.Authenticator{
 							toAuthenticator("jwt", simpleJWTConfig()),
 							toAuthenticator("noop", emptyConfig()),
 						},
@@ -327,26 +327,26 @@ var _ = Describe("Validate function", func() {
 				Rules: []gatewayv1alpha1.Rule{
 					{
 						Path: "/abc",
-						AccessStrategies: []*rulev1alpha1.Authenticator{
+						AccessStrategies: []*gatewayv1alpha1.Authenticator{
 							toAuthenticator("noop", simpleJWTConfig()),
 							toAuthenticator("jwt", emptyConfig()),
 						},
 					},
 					{
 						Path: "/abc",
-						AccessStrategies: []*rulev1alpha1.Authenticator{
+						AccessStrategies: []*gatewayv1alpha1.Authenticator{
 							toAuthenticator("anonymous", simpleJWTConfig()),
 						},
 					},
 					{
 						Path: "/def",
-						AccessStrategies: []*rulev1alpha1.Authenticator{
+						AccessStrategies: []*gatewayv1alpha1.Authenticator{
 							toAuthenticator("non-existing", nil),
 						},
 					},
 					{
 						Path:             "/ghi",
-						AccessStrategies: []*rulev1alpha1.Authenticator{},
+						AccessStrategies: []*gatewayv1alpha1.Authenticator{},
 					},
 				},
 			},
@@ -394,20 +394,20 @@ var _ = Describe("Validate function", func() {
 				Rules: []gatewayv1alpha1.Rule{
 					{
 						Path: "/abc",
-						AccessStrategies: []*rulev1alpha1.Authenticator{
+						AccessStrategies: []*gatewayv1alpha1.Authenticator{
 							toAuthenticator("jwt", simpleJWTConfig()),
 							toAuthenticator("noop", emptyConfig()),
 						},
 					},
 					{
 						Path: "/bcd",
-						AccessStrategies: []*rulev1alpha1.Authenticator{
+						AccessStrategies: []*gatewayv1alpha1.Authenticator{
 							toAuthenticator("anonymous", emptyConfig()),
 						},
 					},
 					{
 						Path: "/def",
-						AccessStrategies: []*rulev1alpha1.Authenticator{
+						AccessStrategies: []*gatewayv1alpha1.Authenticator{
 							toAuthenticator("allow", nil),
 						},
 					},
@@ -430,7 +430,7 @@ var _ = Describe("Validator for", func() {
 
 		It("Should fail with non-empty config", func() {
 			//given
-			handler := &rulev1alpha1.Handler{Name: "noop", Config: simpleJWTConfig("http://atgo.org")}
+			handler := &gatewayv1alpha1.Handler{Name: "noop", Config: simpleJWTConfig("http://atgo.org")}
 
 			//when
 			problems := (&noConfigAccStrValidator{}).Validate("some.attribute", handler)
@@ -443,7 +443,7 @@ var _ = Describe("Validator for", func() {
 
 		It("Should succeed with empty config: {}", func() {
 			//given
-			handler := &rulev1alpha1.Handler{Name: "noop", Config: emptyConfig()}
+			handler := &gatewayv1alpha1.Handler{Name: "noop", Config: emptyConfig()}
 
 			//when
 			problems := (&noConfigAccStrValidator{}).Validate("some.attribute", handler)
@@ -454,7 +454,7 @@ var _ = Describe("Validator for", func() {
 
 		It("Should succeed with null config", func() {
 			//given
-			handler := &rulev1alpha1.Handler{Name: "noop", Config: nil}
+			handler := &gatewayv1alpha1.Handler{Name: "noop", Config: nil}
 
 			//when
 			problems := (&noConfigAccStrValidator{}).Validate("some.attribute", handler)
@@ -468,7 +468,7 @@ var _ = Describe("Validator for", func() {
 
 		It("Should fail with empty config", func() {
 			//given
-			handler := &rulev1alpha1.Handler{Name: "jwt", Config: emptyConfig()}
+			handler := &gatewayv1alpha1.Handler{Name: "jwt", Config: emptyConfig()}
 
 			//when
 			problems := (&jwtAccStrValidator{}).Validate("some.attribute", handler)
@@ -481,7 +481,7 @@ var _ = Describe("Validator for", func() {
 
 		It("Should fail for config with invalid trustedIssuers", func() {
 			//given
-			handler := &rulev1alpha1.Handler{Name: "jwt", Config: simpleJWTConfig("a t g o")}
+			handler := &gatewayv1alpha1.Handler{Name: "jwt", Config: simpleJWTConfig("a t g o")}
 
 			//when
 			problems := (&jwtAccStrValidator{}).Validate("some.attribute", handler)
@@ -494,7 +494,7 @@ var _ = Describe("Validator for", func() {
 
 		It("Should fail for invalid JSON", func() {
 			//given
-			handler := &rulev1alpha1.Handler{Name: "jwt", Config: &runtime.RawExtension{Raw: []byte("/abc]")}}
+			handler := &gatewayv1alpha1.Handler{Name: "jwt", Config: &runtime.RawExtension{Raw: []byte("/abc]")}}
 
 			//when
 			problems := (&jwtAccStrValidator{}).Validate("some.attribute", handler)
@@ -507,7 +507,7 @@ var _ = Describe("Validator for", func() {
 
 		It("Should succeed with valid config", func() {
 			//given
-			handler := &rulev1alpha1.Handler{Name: "jwt", Config: simpleJWTConfig()}
+			handler := &gatewayv1alpha1.Handler{Name: "jwt", Config: simpleJWTConfig()}
 
 			//when
 			problems := (&jwtAccStrValidator{}).Validate("some.attribute", handler)
@@ -539,9 +539,9 @@ func getRawConfig(config *gatewayv1alpha1.JWTAccStrConfig) *runtime.RawExtension
 	}
 }
 
-func toAuthenticator(name string, config *runtime.RawExtension) *rulev1alpha1.Authenticator {
-	return &rulev1alpha1.Authenticator{
-		Handler: &rulev1alpha1.Handler{
+func toAuthenticator(name string, config *runtime.RawExtension) *gatewayv1alpha1.Authenticator {
+	return &gatewayv1alpha1.Authenticator{
+		Handler: &gatewayv1alpha1.Handler{
 			Name:   name,
 			Config: config,
 		},
