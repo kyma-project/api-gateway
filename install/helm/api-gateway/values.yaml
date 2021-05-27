@@ -2,8 +2,8 @@ replicaCount: 1
 
 rbacJob:
   image:
-    repository: eu.gcr.io/kyma-project/test-infra/alpine-kubectl
-    tag: "v20190325-ff66a3a"
+    repository: eu.gcr.io/kyma-project/tpi/k8s-tools
+    tag: "20210504-12243229"
 
 image:
   repository: eu.gcr.io/kyma-project/incubator/develop/api-gateway-controller
