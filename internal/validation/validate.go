@@ -37,8 +37,8 @@ func configNotEmpty(config *runtime.RawExtension) bool {
 
 //APIRule is used to validate github.com/kyma-incubator/api-gateway/api/v1alpha1/APIRule instances
 type APIRule struct {
-	ServiceBlackList  map[string][]string
-	DomainWhiteList   []string
+	ServiceBlockList  map[string][]string
+	DomainAllowList   []string
 	DefaultDomainName string
 }
 
@@ -75,13 +75,13 @@ func (v *APIRule) validateService(attributePath string, vsList networkingv1beta1
 		}
 		host = helpers.GetHostWithDefaultDomain(host, v.DefaultDomainName)
 	} else {
-		// if the default domain name is used, then there is no need to check if it is whitelisted
+		// if the default domain name is used, then there is no need to check if it is allowlisted
 		domainFound := false
-		for _, domain := range v.DomainWhiteList {
-			// service host containing duplicated whitelisted domain should be rejected.
+		for _, domain := range v.DomainAllowList {
+			// service host containing duplicated allowlisted domain should be rejected.
 			// for example `my-lambda.kyma.local.kyma.local`
-			// service host containing whitelisted domain but only as a part of bigger domain should also be rejected
-			// for example `my-lambda.kyma.local.com` when only `kyma.local` is whitelisted
+			// service host containing allowlisted domain but only as a part of bigger domain should also be rejected
+			// for example `my-lambda.kyma.local.com` when only `kyma.local` is allowlisted
 			if count := strings.Count(host, domain); count == 1 && strings.HasSuffix(host, domain) {
 				domainFound = true
 			}
@@ -89,7 +89,7 @@ func (v *APIRule) validateService(attributePath string, vsList networkingv1beta1
 		if !domainFound {
 			problems = append(problems, Failure{
 				AttributePath: attributePath + ".host",
-				Message:       "Host is not whitelisted",
+				Message:       "Host is not allowlisted",
 			})
 		}
 	}
@@ -103,12 +103,12 @@ func (v *APIRule) validateService(attributePath string, vsList networkingv1beta1
 		}
 	}
 
-	for namespace, services := range v.ServiceBlackList {
+	for namespace, services := range v.ServiceBlockList {
 		for _, svc := range services {
 			if svc == *api.Spec.Service.Name && namespace == api.ObjectMeta.Namespace {
 				problems = append(problems, Failure{
 					AttributePath: attributePath + ".name",
-					Message:       fmt.Sprintf("Service %s in namespace %s is blacklisted", svc, namespace),
+					Message:       fmt.Sprintf("Service %s in namespace %s is blocklisted", svc, namespace),
 				})
 			}
 		}

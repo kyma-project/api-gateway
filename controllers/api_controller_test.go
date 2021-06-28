@@ -106,7 +106,7 @@ func getAPIReconciler(mgr manager.Manager) reconcile.Reconciler {
 	return &controllers.APIReconciler{
 		Client:          mgr.GetClient(),
 		Log:             ctrl.Log.WithName("controllers").WithName("Api"),
-		DomainWhiteList: []string{"bar", "kyma.local"},
+		DomainAllowList: []string{"bar", "kyma.local"},
 		CorsConfig: &processing.CorsConfig{
 			AllowOrigins: TestAllowOrigins,
 			AllowMethods: TestAllowMethods,

@@ -19,7 +19,7 @@ Deploys the oficially released Controller version to the cluster
 
 - ensure the access to a Kubernetes cluster is configured in `~/.kube/config`
 - `make install` to install necessary Custom Resource Definitions
-- export `OATHKEEPER_SVC_ADDRESS`, `OATHKEEPER_SVC_PORT`, `JWKS_URI` and `DOMAIN_WHITELIST` variables
+- export `OATHKEEPER_SVC_ADDRESS`, `OATHKEEPER_SVC_PORT`, `JWKS_URI` and `DOMAIN_ALLOWLIST` variables
 - `make deploy` to deploy controller
 
 ### Run the controller locally
@@ -27,8 +27,8 @@ This procedure is the fastest way to run the Controller, useful for development 
 
 - start Minikube or ensure the access to a Kubernetes cluster is configured in `~/.kube/config`
 - `make install` to install necessary Custom Resource Definitions
-- export `OATHKEEPER_SVC_ADDRESS`, `OATHKEEPER_SVC_PORT`, `JWKS_URI` and `DOMAIN_WHITELIST` variables
-- `go run main.go --jwks-uri="$JWKS_URI" --oathkeeper-svc-address="$OATHKEEPER_SVC_ADDRESS" --oathkeeper-svc-port=$OATHKEEPER_SVC_PORT --domain-whitelist=$DOMAIN_WHITELIST`
+- export `OATHKEEPER_SVC_ADDRESS`, `OATHKEEPER_SVC_PORT`, `JWKS_URI` and `DOMAIN_ALLOWLIST` variables
+- `go run main.go --jwks-uri="$JWKS_URI" --oathkeeper-svc-address="$OATHKEEPER_SVC_ADDRESS" --oathkeeper-svc-port=$OATHKEEPER_SVC_PORT --domain-allowlist=$DOMAIN_ALLOWLIST`
 
 ### Deploy a custom Controller build to the local Minikube cluster
 This procedure is useful to test your own Controller build end-to-end in a local Minikube cluster.
@@ -38,7 +38,7 @@ This procedure is useful to test your own Controller build end-to-end in a local
 - `eval $(minikube docker-env)`
 - `make build-image` to put the docker image inside running Minikube
 - `make install` to install necessary Custom Resource Definitions
-- export `OATHKEEPER_SVC_ADDRESS`, `OATHKEEPER_SVC_PORT`, `JWKS_URI` and `DOMAIN_WHITELIST` variables
+- export `OATHKEEPER_SVC_ADDRESS`, `OATHKEEPER_SVC_PORT`, `JWKS_URI` and `DOMAIN_ALLOWLIST` variables
 - `make deploy-dev` to deploy controller
 
 ### Use command-line flags
@@ -50,8 +50,8 @@ This procedure is useful to test your own Controller build end-to-end in a local
 | **metrics-addr** | NO | The address the metric endpoint binds to. | `:8080` |
 | **jwks-uri** | YES | Default jwksUri in the Policy. | any string |
 | **enable-leader-election** | YES | Enable leader election for controller manager. Enabling this will ensure there is only one active controller manager. | any string |
-| **service-blacklist** | NO | List of services to be blacklisted. | `kubernetes.default` <br> `kube-dns.kube-system` |
-| **domain-whitelist** | YES | List of domains that can be exposed. | `kyma.local` <br> `foo.bar` |
+| **service-blocklist** | NO | List of services to be blocklisted. | `kubernetes.default` <br> `kube-dns.kube-system` |
+| **domain-allowlist** | YES | List of domains that can be exposed. | `kyma.local` <br> `foo.bar` |
 | **default-domain-name** | NO | A default domain name for hostnames with no domain provided. | `kyma.local` <br> `foo.bar` |
 | **cors-allow-origins**  | NO | Comma-separated list of allowed origins. | `regex:.*,prefix:https://developer.org` |
 | **cors-allow-methods** | NO | Comma-separated list of allowed methods. | `GET,POST,DELETE` |

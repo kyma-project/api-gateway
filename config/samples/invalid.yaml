@@ -48,7 +48,7 @@ spec:
 apiVersion: gateway.kyma-project.io/v1alpha1
 kind: APIRule
 metadata:
-  name: blacklisted-service
+  name: blocklisted-service
 spec:
   service:
     host: kubernetes.kyma.local
@@ -65,7 +65,7 @@ spec:
 apiVersion: gateway.kyma-project.io/v1alpha1
 kind: APIRule
 metadata:
-  name: not-whitelisted-domain
+  name: not-allowlisted-domain
 spec:
   service:
     host: foo.some-fancy-domain.xyz

@@ -22,14 +22,14 @@ func TestValidators(t *testing.T) {
 
 const (
 	sampleServiceName    = "some-service"
-	whitelistedDomain    = "foo.bar"
-	notWhitelistedDomain = "myDomain.xyz"
-	testDefaultDomain    = whitelistedDomain
-	sampleValidHost      = sampleServiceName + "." + whitelistedDomain
+	allowlistedDomain    = "foo.bar"
+	notAllowlistedDomain = "myDomain.xyz"
+	testDefaultDomain    = allowlistedDomain
+	sampleValidHost      = sampleServiceName + "." + allowlistedDomain
 )
 
 var (
-	testDomainWhitelist = []string{"foo.bar", "bar.foo", "kyma.local"}
+	testDomainAllowlist = []string{"foo.bar", "bar.foo", "kyma.local"}
 )
 
 var _ = Describe("Validate function", func() {
@@ -37,7 +37,7 @@ var _ = Describe("Validate function", func() {
 	It("Should fail for empty rules", func() {
 
 		//given
-		testWhiteList := []string{"foo.bar", "bar.foo", "kyma.local"}
+		testAllowList := []string{"foo.bar", "bar.foo", "kyma.local"}
 		input := &gatewayv1alpha1.APIRule{
 			Spec: gatewayv1alpha1.APIRuleSpec{
 				Rules:   nil,
@@ -47,7 +47,7 @@ var _ = Describe("Validate function", func() {
 
 		//when
 		problems := (&APIRule{
-			DomainWhiteList: testWhiteList,
+			DomainAllowList: testAllowList,
 		}).Validate(input, networkingv1beta1.VirtualServiceList{})
 
 		//then
@@ -56,19 +56,19 @@ var _ = Describe("Validate function", func() {
 		Expect(problems[0].Message).To(Equal("No rules defined"))
 	})
 
-	It("Should fail for blacklisted service", func() {
+	It("Should fail for blocklisted service", func() {
 		//given
-		sampleBlacklistedService := "kubernetes"
-		validHost := sampleBlacklistedService + "." + whitelistedDomain
-		testBlackList := map[string][]string{
-			"default": []string{sampleBlacklistedService, "kube-dns"},
+		sampleBlocklistedService := "kubernetes"
+		validHost := sampleBlocklistedService + "." + allowlistedDomain
+		testBlockList := map[string][]string{
+			"default": []string{sampleBlocklistedService, "kube-dns"},
 			"example": []string{"service"}}
 		input := &gatewayv1alpha1.APIRule{
 			ObjectMeta: v1.ObjectMeta{
 				Namespace: "default",
 			},
 			Spec: gatewayv1alpha1.APIRuleSpec{
-				Service: getService(sampleBlacklistedService, uint32(443), validHost),
+				Service: getService(sampleBlocklistedService, uint32(443), validHost),
 				Rules: []gatewayv1alpha1.Rule{
 					{
 						Path: "/abc",
@@ -82,20 +82,20 @@ var _ = Describe("Validate function", func() {
 
 		//when
 		problems := (&APIRule{
-			ServiceBlackList: testBlackList,
-			DomainWhiteList:  testDomainWhitelist,
+			ServiceBlockList: testBlockList,
+			DomainAllowList:  testDomainAllowlist,
 		}).Validate(input, networkingv1beta1.VirtualServiceList{})
 
 		//then
 		Expect(problems).To(HaveLen(1))
 		Expect(problems[0].AttributePath).To(Equal(".spec.service.name"))
-		Expect(problems[0].Message).To(Equal("Service kubernetes in namespace default is blacklisted"))
+		Expect(problems[0].Message).To(Equal("Service kubernetes in namespace default is blocklisted"))
 	})
 
-	It("Should fail for not whitelisted domain", func() {
+	It("Should fail for not allowlisted domain", func() {
 		//given
-		invalidHost := sampleServiceName + "." + notWhitelistedDomain
-		testBlackList := map[string][]string{
+		invalidHost := sampleServiceName + "." + notAllowlistedDomain
+		testBlockList := map[string][]string{
 			"default": []string{"kubernetes", "kube-dns"},
 			"example": []string{"service"}}
 		input := &gatewayv1alpha1.APIRule{
@@ -114,20 +114,20 @@ var _ = Describe("Validate function", func() {
 
 		//when
 		problems := (&APIRule{
-			ServiceBlackList: testBlackList,
-			DomainWhiteList:  testDomainWhitelist,
+			ServiceBlockList: testBlockList,
+			DomainAllowList:  testDomainAllowlist,
 		}).Validate(input, networkingv1beta1.VirtualServiceList{})
 
 		//then
 		Expect(problems).To(HaveLen(1))
 		Expect(problems[0].AttributePath).To(Equal(".spec.service.host"))
-		Expect(problems[0].Message).To(Equal("Host is not whitelisted"))
+		Expect(problems[0].Message).To(Equal("Host is not allowlisted"))
 	})
 
-	It("Should fail for not whitelisted domain containing whitelisted domain", func() {
+	It("Should fail for not allowlisted domain containing allowlisted domain", func() {
 		//given
-		invalidHost := sampleServiceName + "." + whitelistedDomain + "." + notWhitelistedDomain
-		testBlackList := map[string][]string{
+		invalidHost := sampleServiceName + "." + allowlistedDomain + "." + notAllowlistedDomain
+		testBlockList := map[string][]string{
 			"default": []string{"kubernetes", "kube-dns"},
 			"example": []string{"service"}}
 		input := &gatewayv1alpha1.APIRule{
@@ -146,20 +146,20 @@ var _ = Describe("Validate function", func() {
 
 		//when
 		problems := (&APIRule{
-			ServiceBlackList: testBlackList,
-			DomainWhiteList:  testDomainWhitelist,
+			ServiceBlockList: testBlockList,
+			DomainAllowList:  testDomainAllowlist,
 		}).Validate(input, networkingv1beta1.VirtualServiceList{})
 
 		//then
 		Expect(problems).To(HaveLen(1))
 		Expect(problems[0].AttributePath).To(Equal(".spec.service.host"))
-		Expect(problems[0].Message).To(Equal("Host is not whitelisted"))
+		Expect(problems[0].Message).To(Equal("Host is not allowlisted"))
 	})
 
 	It("Should fail for no domain when default domain is not configured", func() {
 		//given
 		hostWithoutDomain := sampleServiceName
-		testBlackList := map[string][]string{
+		testBlockList := map[string][]string{
 			"default": []string{"kubernetes", "kube-dns"},
 			"example": []string{"service"}}
 		input := &gatewayv1alpha1.APIRule{
@@ -178,8 +178,8 @@ var _ = Describe("Validate function", func() {
 
 		//when
 		problems := (&APIRule{
-			ServiceBlackList: testBlackList,
-			DomainWhiteList:  testDomainWhitelist,
+			ServiceBlockList: testBlockList,
+			DomainAllowList:  testDomainAllowlist,
 		}).Validate(input, networkingv1beta1.VirtualServiceList{})
 
 		//then
@@ -191,7 +191,7 @@ var _ = Describe("Validate function", func() {
 	It("Should NOT fail for no domain when default domain is configured", func() {
 		//given
 		hostWithoutDomain := sampleServiceName
-		testBlackList := map[string][]string{
+		testBlockList := map[string][]string{
 			"default": []string{"kubernetes", "kube-dns"},
 			"example": []string{"service"}}
 		input := &gatewayv1alpha1.APIRule{
@@ -210,8 +210,8 @@ var _ = Describe("Validate function", func() {
 
 		//when
 		problems := (&APIRule{
-			ServiceBlackList:  testBlackList,
-			DomainWhiteList:   testDomainWhitelist,
+			ServiceBlockList:  testBlockList,
+			DomainAllowList:   testDomainAllowlist,
 			DefaultDomainName: testDefaultDomain,
 		}).Validate(input, networkingv1beta1.VirtualServiceList{})
 
@@ -219,10 +219,10 @@ var _ = Describe("Validate function", func() {
 		Expect(problems).To(HaveLen(0))
 	})
 
-	It("Should fail for serviceHost containing duplicated whitelisted domain", func() {
+	It("Should fail for serviceHost containing duplicated allowlisted domain", func() {
 		//given
-		invalidHost := sampleServiceName + "." + whitelistedDomain + "." + whitelistedDomain
-		testBlackList := map[string][]string{
+		invalidHost := sampleServiceName + "." + allowlistedDomain + "." + allowlistedDomain
+		testBlockList := map[string][]string{
 			"default": []string{"kubernetes", "kube-dns"},
 			"example": []string{"service"}}
 		input := &gatewayv1alpha1.APIRule{
@@ -241,19 +241,19 @@ var _ = Describe("Validate function", func() {
 
 		//when
 		problems := (&APIRule{
-			ServiceBlackList: testBlackList,
-			DomainWhiteList:  testDomainWhitelist,
+			ServiceBlockList: testBlockList,
+			DomainAllowList:  testDomainAllowlist,
 		}).Validate(input, networkingv1beta1.VirtualServiceList{})
 
 		//then
 		Expect(problems).To(HaveLen(1))
 		Expect(problems[0].AttributePath).To(Equal(".spec.service.host"))
-		Expect(problems[0].Message).To(Equal("Host is not whitelisted"))
+		Expect(problems[0].Message).To(Equal("Host is not allowlisted"))
 	})
 
 	It("Should fail for a host that is occupied by a VS exposed by another resource", func() {
 		//given
-		occupiedHost := "occupied-host" + whitelistedDomain
+		occupiedHost := "occupied-host" + allowlistedDomain
 		existingVS := networkingv1beta1.VirtualService{}
 		existingVS.OwnerReferences = []v1.OwnerReference{{UID: "12345"}}
 		existingVS.Spec.Hosts = []string{occupiedHost}
@@ -278,7 +278,7 @@ var _ = Describe("Validate function", func() {
 
 		//when
 		problems := (&APIRule{
-			DomainWhiteList: testDomainWhitelist,
+			DomainAllowList: testDomainAllowlist,
 		}).Validate(input, networkingv1beta1.VirtualServiceList{Items: []networkingv1beta1.VirtualService{existingVS}})
 
 		Expect(problems).To(HaveLen(1))
@@ -288,7 +288,7 @@ var _ = Describe("Validate function", func() {
 
 	It("Should NOT fail for a host that is occupied by a VS exposed by this resource", func() {
 		//given
-		occupiedHost := "occupied-host" + whitelistedDomain
+		occupiedHost := "occupied-host" + allowlistedDomain
 		existingVS := networkingv1beta1.VirtualService{}
 		existingVS.OwnerReferences = []v1.OwnerReference{{UID: "12345"}}
 		existingVS.Spec.Hosts = []string{occupiedHost}
@@ -313,7 +313,7 @@ var _ = Describe("Validate function", func() {
 
 		//when
 		problems := (&APIRule{
-			DomainWhiteList: testDomainWhitelist,
+			DomainAllowList: testDomainAllowlist,
 		}).Validate(input, networkingv1beta1.VirtualServiceList{Items: []networkingv1beta1.VirtualService{existingVS}})
 
 		Expect(problems).To(HaveLen(0))
@@ -353,7 +353,7 @@ var _ = Describe("Validate function", func() {
 		}
 		//when
 		problems := (&APIRule{
-			DomainWhiteList: testDomainWhitelist,
+			DomainAllowList: testDomainAllowlist,
 		}).Validate(input, networkingv1beta1.VirtualServiceList{})
 
 		//then
@@ -379,8 +379,8 @@ var _ = Describe("Validate function", func() {
 
 	It("Should succeed for valid input", func() {
 		//given
-		occupiedHost := "occupied-host" + whitelistedDomain
-		notOccupiedHost := "not-occupied-host" + whitelistedDomain
+		occupiedHost := "occupied-host" + allowlistedDomain
+		notOccupiedHost := "not-occupied-host" + allowlistedDomain
 		existingVS := networkingv1beta1.VirtualService{}
 		existingVS.OwnerReferences = []v1.OwnerReference{{UID: "12345"}}
 		existingVS.Spec.Hosts = []string{occupiedHost}
@@ -416,7 +416,7 @@ var _ = Describe("Validate function", func() {
 		}
 		//when
 		problems := (&APIRule{
-			DomainWhiteList: testDomainWhitelist,
+			DomainAllowList: testDomainAllowlist,
 		}).Validate(input, networkingv1beta1.VirtualServiceList{Items: []networkingv1beta1.VirtualService{existingVS}})
 
 		//then

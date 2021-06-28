@@ -18,10 +18,11 @@ package main
 import (
 	"flag"
 	"fmt"
-	gatewayv1alpha1 "github.com/kyma-incubator/api-gateway/api/v1alpha1"
-	"istio.io/api/networking/v1beta1"
 	"os"
 	"strings"
+
+	gatewayv1alpha1 "github.com/kyma-incubator/api-gateway/api/v1alpha1"
+	"istio.io/api/networking/v1beta1"
 
 	"github.com/pkg/errors"
 
@@ -57,8 +58,8 @@ func main() {
 	var jwksURI string
 	var oathkeeperSvcAddr string
 	var oathkeeperSvcPort uint
-	var blackListedServices string
-	var whiteListedDomains string
+	var blockListedServices string
+	var allowListedDomains string
 	var domainName string
 	var corsAllowOrigins, corsAllowMethods, corsAllowHeaders string
 	var generatedObjectsLabels string
@@ -69,8 +70,8 @@ func main() {
 	flag.StringVar(&jwksURI, "jwks-uri", "", "URL of the provider's public key set to validate signature of the JWT")
 	flag.BoolVar(&enableLeaderElection, "enable-leader-election", false,
 		"Enable leader election for controller manager. Enabling this will ensure there is only one active controller manager.")
-	flag.StringVar(&blackListedServices, "service-blacklist", "kubernetes.default,kube-dns.kube-system", "List of services to be blacklisted from exposure.")
-	flag.StringVar(&whiteListedDomains, "domain-whitelist", "", "List of domains to be allowed.")
+	flag.StringVar(&blockListedServices, "service-blocklist", "kubernetes.default,kube-dns.kube-system", "List of services to be blocklisted from exposure.")
+	flag.StringVar(&allowListedDomains, "domain-allowlist", "", "List of domains to be allowed.")
 	flag.StringVar(&domainName, "default-domain-name", "", "A default domain name for hostnames with no domain provided. Optional.")
 	flag.StringVar(&corsAllowOrigins, "cors-allow-origins", "regex:.*", "list of allowed origins")
 	flag.StringVar(&corsAllowMethods, "cors-allow-methods", "GET,POST,PUT,DELETE", "list of allowed methods")
@@ -93,13 +94,13 @@ func main() {
 		setupLog.Error(fmt.Errorf("oathkeeper-svc-port can't be empty"), "unable to create controller", "controller", "Api")
 		os.Exit(1)
 	}
-	if whiteListedDomains == "" {
-		setupLog.Error(fmt.Errorf("domain-whitelist can't be empty"), "unable to create controller", "controller", "Api")
+	if allowListedDomains == "" {
+		setupLog.Error(fmt.Errorf("domain-allowlist can't be empty"), "unable to create controller", "controller", "Api")
 		os.Exit(1)
 	} else {
-		for _, domain := range getList(whiteListedDomains) {
+		for _, domain := range getList(allowListedDomains) {
 			if !validation.ValidateDomainName(domain) {
-				setupLog.Error(fmt.Errorf("invalid domain in domain-whitelist"), "unable to create controller", "controller", "Api")
+				setupLog.Error(fmt.Errorf("invalid domain in domain-allowlist"), "unable to create controller", "controller", "Api")
 				os.Exit(1)
 			}
 		}
@@ -127,8 +128,8 @@ func main() {
 		OathkeeperSvc:     oathkeeperSvcAddr,
 		OathkeeperSvcPort: uint32(oathkeeperSvcPort),
 		JWKSURI:           jwksURI,
-		ServiceBlackList:  getNamespaceServiceMap(blackListedServices),
-		DomainWhiteList:   getList(whiteListedDomains),
+		ServiceBlockList:  getNamespaceServiceMap(blockListedServices),
+		DomainAllowList:   getList(allowListedDomains),
 		DefaultDomainName: domainName,
 		CorsConfig: &processing.CorsConfig{
 			AllowHeaders: getList(corsAllowHeaders),
@@ -184,7 +185,7 @@ func getNamespaceServiceMap(raw string) map[string][]string {
 	result := make(map[string][]string)
 	for _, s := range getList(raw) {
 		if !validation.ValidateServiceName(s) {
-			setupLog.Error(fmt.Errorf("invalid service in service-blacklist"), "unable to create controller", "controller", "Api")
+			setupLog.Error(fmt.Errorf("invalid service in service-blocklist"), "unable to create controller", "controller", "Api")
 			os.Exit(1)
 		}
 		namespacedService := strings.Split(s, ".")

@@ -25,12 +25,12 @@ config:
     service: ory-oathkeeper
     port: 4455
   jwksURI: https://example.com/.well-known/jwks.json
-  serviceBlackList:
+  serviceBlockList:
     default:
       - kubernetes
     kube-system:
       - kube-dns
-  domainWhiteList:
+  domainAllowList:
     - kyma.local
   cors: # values listed below will be used to set corsPolicy in created VirtualServices (https://istio.io/docs/reference/config/networking/v1alpha3/virtual-service/#CorsPolicy)
     allowOrigins:

@@ -20,13 +20,13 @@ override JWKS_URI = change-me
 endif
 
 # kubernetes.default service.namespace
-ifndef SERVICE_BLACKLIST
-override SERVICE_BLACKLIST = kubernetes.default,kube-dns.kube-system
+ifndef SERVICE_BLOCKLIST
+override SERVICE_BLOCKLIST = kubernetes.default,kube-dns.kube-system
 endif
 
 # kyma.local foo.bar bar
-ifndef DOMAIN_WHITELIST
-override DOMAIN_WHITELIST = change-me
+ifndef DOMAIN_ALLOWLIST
+override DOMAIN_ALLOWLIST = change-me
 endif
 
 # CORS
@@ -91,8 +91,8 @@ patch-gen:
 	@cat config/default/manager_args_patch.yaml.tmpl |\
 		sed -e 's|OATHKEEPER_SVC_ADDRESS|${OATHKEEPER_SVC_ADDRESS}|g' |\
 		sed -e 's|OATHKEEPER_SVC_PORT|${OATHKEEPER_SVC_PORT}|g' |\
-		sed -e 's|SERVICE_BLACKLIST|${SERVICE_BLACKLIST}|g' |\
-		sed -e 's|DOMAIN_WHITELIST|${DOMAIN_WHITELIST}|g' |\
+		sed -e 's|SERVICE_BLOCKLIST|${SERVICE_BLOCKLIST}|g' |\
+		sed -e 's|DOMAIN_ALLOWLIST|${DOMAIN_ALLOWLIST}|g' |\
 		sed -e 's|JWKS_URI|${JWKS_URI}|g' |\
 		sed -e 's|CORS_ALLOW_ORIGINS|${CORS_ALLOW_ORIGINS}|g' |\
 		sed -e 's|CORS_ALLOW_METHODS|${CORS_ALLOW_METHODS}|g' |\
@@ -129,7 +129,7 @@ CONTROLLER_GEN=$(shell which controller-gen)
 endif
 
 run: build
-	go run . --oathkeeper-svc-address=${OATHKEEPER_SVC_ADDRESS} --oathkeeper-svc-port=${OATHKEEPER_SVC_PORT} --jwks-uri=${JWKS_URI} --service-blacklist=${SERVICE_BLACKLIST} --domain-whitelist=${DOMAIN_WHITELIST}
+	go run . --oathkeeper-svc-address=${OATHKEEPER_SVC_ADDRESS} --oathkeeper-svc-port=${OATHKEEPER_SVC_PORT} --jwks-uri=${JWKS_URI} --service-blocklist=${SERVICE_BLOCKLIST} --domain-allowlist=${DOMAIN_ALLOWLIST}
 
 samples-clean:
 	kubectl delete -f config/samples/valid.yaml --ignore-not-found=true

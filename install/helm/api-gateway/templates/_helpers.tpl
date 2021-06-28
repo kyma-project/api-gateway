@@ -44,8 +44,8 @@ app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- end -}}
 
-{{- define "api-gateway.serviceBlackList" -}}
-{{- range $i, $e := .Values.config.serviceBlackList -}}
+{{- define "api-gateway.serviceBlockList" -}}
+{{- range $i, $e := .Values.config.serviceBlockList -}}
 {{- range $e -}}
 {{ printf "%s.%s," . $i -}}
 {{- end }}

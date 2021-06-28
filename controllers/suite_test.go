@@ -106,7 +106,7 @@ var _ = BeforeSuite(func(done Done) {
 		Log:               ctrl.Log.WithName("controllers").WithName("Api"),
 		OathkeeperSvc:     testOathkeeperSvcURL,
 		OathkeeperSvcPort: testOathkeeperPort,
-		DomainWhiteList:   []string{"bar", "kyma.local"},
+		DomainAllowList:   []string{"bar", "kyma.local"},
 		CorsConfig: &processing.CorsConfig{
 			AllowOrigins: TestAllowOrigins,
 			AllowMethods: TestAllowMethods,
