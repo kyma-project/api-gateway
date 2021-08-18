@@ -51,7 +51,7 @@ This procedure is useful to test your own Controller build end-to-end in a local
 | **jwks-uri** | YES | Default jwksUri in the Policy. | any string |
 | **enable-leader-election** | YES | Enable leader election for controller manager. Enabling this will ensure there is only one active controller manager. | any string |
 | **service-blocklist** | NO | List of services to be blocklisted. | `kubernetes.default` <br> `kube-dns.kube-system` |
-| **domain-allowlist** | YES | List of domains that can be exposed. | `kyma.local` <br> `foo.bar` |
+| **domain-allowlist** | NO | List of domains that can be exposed. All domains are allowed if empty | `kyma.local` <br> `foo.bar` |
 | **default-domain-name** | NO | A default domain name for hostnames with no domain provided. | `kyma.local` <br> `foo.bar` |
 | **cors-allow-origins**  | NO | Comma-separated list of allowed origins. | `regex:.*,prefix:https://developer.org` |
 | **cors-allow-methods** | NO | Comma-separated list of allowed methods. | `GET,POST,DELETE` |

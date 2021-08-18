@@ -97,10 +97,7 @@ func main() {
 		setupLog.Error(fmt.Errorf("oathkeeper-svc-port can't be empty"), "unable to create controller", "controller", "Api")
 		os.Exit(1)
 	}
-	if allowListedDomains == "" {
-		setupLog.Error(fmt.Errorf("domain-allowlist can't be empty"), "unable to create controller", "controller", "Api")
-		os.Exit(1)
-	} else {
+	if allowListedDomains != "" {
 		for _, domain := range getList(allowListedDomains) {
 			if !validation.ValidateDomainName(domain) {
 				setupLog.Error(fmt.Errorf("invalid domain in domain-allowlist"), "unable to create controller", "controller", "Api")

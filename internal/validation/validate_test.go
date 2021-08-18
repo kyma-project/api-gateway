@@ -124,6 +124,36 @@ var _ = Describe("Validate function", func() {
 		Expect(problems[0].Message).To(Equal("Host is not allowlisted"))
 	})
 
+	It("Should NOT fail for empty allowlisted domain", func() {
+		//given
+		validHost := sampleServiceName + "." + notAllowlistedDomain
+		testBlockList := map[string][]string{
+			"default": []string{"kubernetes", "kube-dns"},
+			"example": []string{"service"}}
+		input := &gatewayv1alpha1.APIRule{
+			Spec: gatewayv1alpha1.APIRuleSpec{
+				Service: getService(sampleServiceName, uint32(8080), validHost),
+				Rules: []gatewayv1alpha1.Rule{
+					{
+						Path: "/abc",
+						AccessStrategies: []*gatewayv1alpha1.Authenticator{
+							toAuthenticator("jwt", simpleJWTConfig()),
+							toAuthenticator("noop", emptyConfig()),
+						},
+					},
+				},
+			}}
+
+		//when
+		problems := (&APIRule{
+			ServiceBlockList: testBlockList,
+			DomainAllowList:  []string{},
+		}).Validate(input, networkingv1beta1.VirtualServiceList{})
+
+		//then
+		Expect(problems).To(HaveLen(0))
+	})
+
 	It("Should fail for not allowlisted domain containing allowlisted domain", func() {
 		//given
 		invalidHost := sampleServiceName + "." + allowlistedDomain + "." + notAllowlistedDomain

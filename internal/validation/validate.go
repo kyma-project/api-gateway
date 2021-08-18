@@ -74,8 +74,8 @@ func (v *APIRule) validateService(attributePath string, vsList networkingv1beta1
 			})
 		}
 		host = helpers.GetHostWithDefaultDomain(host, v.DefaultDomainName)
-	} else {
-		// if the default domain name is used, then there is no need to check if it is allowlisted
+	} else if len(v.DomainAllowList) > 0 {
+		// Do the allowList check only if the list is actually provided AND the default domain name is not used.
 		domainFound := false
 		for _, domain := range v.DomainAllowList {
 			// service host containing duplicated allowlisted domain should be rejected.
