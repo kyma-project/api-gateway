@@ -66,6 +66,13 @@ build-image: pull-licenses
 push-image:
 	docker tag $(APP_NAME) $(IMG):$(TAG)
 	docker push $(IMG):$(TAG)
+ifeq ($(JOB_TYPE), postsubmit)
+	@echo "Sign image with Cosign"
+	cosign version
+	cosign sign -key ${KMS_KEY_URL} $(IMG):$(TAG)
+else
+	@echo "Image signing skipped"
+endif
 
 .PHONY: ci-pr
 ci-pr: build build-image push-image
