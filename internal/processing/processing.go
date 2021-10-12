@@ -3,6 +3,7 @@ package processing
 import (
 	"context"
 	"fmt"
+
 	"github.com/kyma-incubator/api-gateway/internal/helpers"
 	"istio.io/api/networking/v1beta1"
 
@@ -227,6 +228,8 @@ func (f *Factory) generateVirtualService(api *gatewayv1alpha1.APIRule) *networki
 			AllowOrigins(f.corsConfig.AllowOrigins...).
 			AllowMethods(f.corsConfig.AllowMethods...).
 			AllowHeaders(f.corsConfig.AllowHeaders...))
+		httpRouteBuilder.Headers(builders.Headers().
+			SetHostHeader(helpers.GetHostWithDomain(*api.Spec.Service.Host, f.defaultDomainName)))
 		vsSpecBuilder.HTTP(httpRouteBuilder)
 	}
 

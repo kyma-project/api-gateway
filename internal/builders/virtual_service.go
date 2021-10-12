@@ -124,6 +124,11 @@ func (hr *httpRoute) CorsPolicy(cc *corsPolicy) *httpRoute {
 	return hr
 }
 
+func (hr *httpRoute) Headers(hd *headers) *httpRoute {
+	hr.value.Headers = hd.Get()
+	return hr
+}
+
 // MatchRequest returns builder for istio.io/api/networking/v1beta1/HTTPMatchRequest type
 func MatchRequest() *matchRequest {
 	return &matchRequest{
@@ -222,4 +227,26 @@ func (cp *corsPolicy) AllowOrigins(val ...*v1beta1.StringMatch) *corsPolicy {
 		cp.value.AllowOrigins = append(cp.value.AllowOrigins, val...)
 	}
 	return cp
+}
+
+// Headers returns builder for istio.io/api/networking/v1beta1/Headers type
+func Headers() *headers {
+	return &headers{&v1beta1.Headers{
+		Request: &v1beta1.Headers_HeaderOperations{},
+	}}
+}
+
+type headers struct {
+	value *v1beta1.Headers
+}
+
+func (hd *headers) Get() *v1beta1.Headers {
+	return hd.value
+}
+
+func (hd *headers) SetHostHeader(hostname string) *headers {
+
+	hd.value.Request.Set = map[string]string{"x-forwarded-host": hostname}
+
+	return hd
 }

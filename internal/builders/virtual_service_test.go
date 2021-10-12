@@ -70,6 +70,7 @@ var _ = Describe("Builder for", func() {
 				HTTP(HTTPRoute().
 					Match(MatchRequest().Uri().Regex(matchURIRegex)).
 					Match(MatchRequest().Uri().Regex(matchURIRegex2)).
+					Headers(Headers().SetHostHeader(host)).
 					Route(RouteDestination().Host(destHost).Port(destPort))).
 				HTTP(HTTPRoute().
 					Match(MatchRequest().Uri().Regex(matchURIRegex3)).
@@ -91,6 +92,7 @@ var _ = Describe("Builder for", func() {
 			Expect(result.Http[0].Match).To(HaveLen(2))
 			Expect(result.Http[0].Match[0].Uri.GetRegex()).To(Equal(matchURIRegex))
 			Expect(result.Http[0].Match[1].Uri.GetRegex()).To(Equal(matchURIRegex2))
+			Expect(result.Http[0].Headers.Request.Set).To(Equal(map[string]string{"x-forwarded-host": host}))
 			Expect(result.Http[0].Route).To(HaveLen(1))
 			Expect(result.Http[0].Route[0].Destination.Host).To(Equal(destHost))
 			Expect(result.Http[0].Route[0].Destination.Port.Number).To(Equal(destPort))
