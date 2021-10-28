@@ -2,6 +2,7 @@ package validation
 
 import (
 	"encoding/json"
+	"fmt"
 
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 
@@ -122,6 +123,78 @@ var _ = Describe("Validate function", func() {
 		Expect(problems).To(HaveLen(1))
 		Expect(problems[0].AttributePath).To(Equal(".spec.service.host"))
 		Expect(problems[0].Message).To(Equal("Host is not allowlisted"))
+	})
+
+	It("Should fail for blocklisted subdomain with default domainName (FQDN)", func() {
+		//given
+		blocklistedSubdomain := "api"
+		blockedhost := blocklistedSubdomain + "." + testDefaultDomain
+		testBlockList := map[string][]string{
+			"default": []string{"kubernetes", "kube-dns"},
+			"example": []string{"service"}}
+		testHostBlockList := []string{blockedhost}
+		input := &gatewayv1alpha1.APIRule{
+			Spec: gatewayv1alpha1.APIRuleSpec{
+				Service: getService(sampleServiceName, uint32(8080), blockedhost),
+				Rules: []gatewayv1alpha1.Rule{
+					{
+						Path: "/abc",
+						AccessStrategies: []*gatewayv1alpha1.Authenticator{
+							toAuthenticator("jwt", simpleJWTConfig()),
+							toAuthenticator("noop", emptyConfig()),
+						},
+					},
+				},
+			}}
+
+		//when
+		problems := (&APIRule{
+			ServiceBlockList:  testBlockList,
+			DomainAllowList:   testDomainAllowlist,
+			HostBlockList:     testHostBlockList,
+			DefaultDomainName: testDefaultDomain,
+		}).Validate(input, networkingv1beta1.VirtualServiceList{})
+
+		//then
+		Expect(problems).To(HaveLen(1))
+		Expect(problems[0].AttributePath).To(Equal(".spec.service.host"))
+		Expect(problems[0].Message).To(Equal(fmt.Sprintf("The subdomain %s is blocklisted for %s domain", blocklistedSubdomain, testDefaultDomain)))
+	})
+
+	It("Should NOT fail for blocklisted subdomain with custom domainName", func() {
+		//given
+		blocklistedSubdomain := "api"
+		customDomainName := "bar.foo"
+		blockedhost := blocklistedSubdomain + "." + testDefaultDomain
+		customHost := blocklistedSubdomain + "." + customDomainName
+		testBlockList := map[string][]string{
+			"default": []string{"kubernetes", "kube-dns"},
+			"example": []string{"service"}}
+		testHostBlockList := []string{blockedhost}
+		input := &gatewayv1alpha1.APIRule{
+			Spec: gatewayv1alpha1.APIRuleSpec{
+				Service: getService(sampleServiceName, uint32(8080), customHost),
+				Rules: []gatewayv1alpha1.Rule{
+					{
+						Path: "/abc",
+						AccessStrategies: []*gatewayv1alpha1.Authenticator{
+							toAuthenticator("jwt", simpleJWTConfig()),
+							toAuthenticator("noop", emptyConfig()),
+						},
+					},
+				},
+			}}
+
+		//when
+		problems := (&APIRule{
+			ServiceBlockList:  testBlockList,
+			DomainAllowList:   testDomainAllowlist,
+			HostBlockList:     testHostBlockList,
+			DefaultDomainName: testDefaultDomain,
+		}).Validate(input, networkingv1beta1.VirtualServiceList{})
+
+		//then
+		Expect(problems).To(HaveLen(0))
 	})
 
 	It("Should NOT fail for empty allowlisted domain", func() {

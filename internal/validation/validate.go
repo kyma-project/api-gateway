@@ -39,6 +39,7 @@ func configNotEmpty(config *runtime.RawExtension) bool {
 type APIRule struct {
 	ServiceBlockList  map[string][]string
 	DomainAllowList   []string
+	HostBlockList     []string
 	DefaultDomainName string
 }
 
@@ -90,6 +91,17 @@ func (v *APIRule) validateService(attributePath string, vsList networkingv1beta1
 			problems = append(problems, Failure{
 				AttributePath: attributePath + ".host",
 				Message:       "Host is not allowlisted",
+			})
+		}
+	}
+
+	for _, blockedHost := range v.HostBlockList {
+		host := *api.Spec.Service.Host
+		if blockedHost == host {
+			subdomain := strings.Split(host, ".")[0]
+			problems = append(problems, Failure{
+				AttributePath: attributePath + ".host",
+				Message:       fmt.Sprintf("The subdomain %s is blocklisted for %s domain", subdomain, v.DefaultDomainName),
 			})
 		}
 	}

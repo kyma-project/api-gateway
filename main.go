@@ -66,6 +66,8 @@ func main() {
 	var corsAllowOrigins, corsAllowMethods, corsAllowHeaders string
 	var generatedObjectsLabels string
 
+	const blockListedSubdomains string = "api"
+
 	flag.StringVar(&oathkeeperSvcAddr, "oathkeeper-svc-address", "", "Oathkeeper proxy service")
 	flag.UintVar(&oathkeeperSvcPort, "oathkeeper-svc-port", 0, "Oathkeeper proxy service port")
 	flag.StringVar(&metricsAddr, "metrics-addr", ":8080", "The address the metric endpoint binds to.")
@@ -131,6 +133,7 @@ func main() {
 		JWKSURI:           jwksURI,
 		ServiceBlockList:  getNamespaceServiceMap(blockListedServices),
 		DomainAllowList:   getList(allowListedDomains),
+		HostBlockList:     getHostBlockListFrom(blockListedSubdomains, domainName),
 		DefaultDomainName: domainName,
 		CorsConfig: &processing.CorsConfig{
 			AllowHeaders: getList(corsAllowHeaders),
@@ -201,6 +204,19 @@ func getNamespaceServiceMap(raw string) map[string][]string {
 		namespace := namespacedService[1]
 		service := namespacedService[0]
 		result[namespace] = append(result[namespace], service)
+	}
+	return result
+}
+
+func getHostBlockListFrom(blockListedSubdomains string, domainName string) []string {
+	var result []string
+	for _, subdomain := range getList(blockListedSubdomains) {
+		if !validation.ValidateSubdomainName(subdomain) {
+			setupLog.Error(fmt.Errorf("invalid subdomain in subdomain-blocklist"), "unable to create controller", "controller", "Api")
+			os.Exit(1)
+		}
+		blockedHost := strings.Join([]string{subdomain, domainName}, ".")
+		result = append(result, blockedHost)
 	}
 	return result
 }

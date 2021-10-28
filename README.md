@@ -15,7 +15,7 @@ The API Gateway Controller manages Istio VirtualServices and Oathkeeper Rule. Th
 ## Details
 
 ### Deploy to the cluster
-Deploys the oficially released Controller version to the cluster
+Deploys the officially released Controller version to the cluster
 
 - ensure the access to a Kubernetes cluster is configured in `~/.kube/config`
 - `make install` to install necessary Custom Resource Definitions

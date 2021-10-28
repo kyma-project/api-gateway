@@ -63,6 +63,64 @@ var _ = Describe("ValidateDomainName function", func() {
 	})
 
 })
+var _ = Describe("ValidateSubdomainName function", func() {
+
+	It("Should return true for api subdomain", func() {
+		//given
+		testSubdomain := "api"
+
+		//when
+		valid := ValidateSubdomainName(testSubdomain)
+
+		//then
+		Expect(valid).To(BeTrue())
+	})
+
+	It("Should return true for valid complicated subdomain", func() {
+		//given
+		testSubdomain := "gke-upgrade-pr-5776-47nlgu1ch0"
+
+		//when
+		valid := ValidateSubdomainName(testSubdomain)
+
+		//then
+		Expect(valid).To(BeTrue())
+	})
+
+	It("Should return false for subdomain starting with -", func() {
+		//given
+		testSubdomain := "-subdomain"
+
+		//when
+		valid := ValidateSubdomainName(testSubdomain)
+
+		//then
+		Expect(valid).To(BeFalse())
+	})
+
+	It("Should return false for subdomain containing /", func() {
+		//given
+		testSubdomain := "subdomain/parameter"
+
+		//when
+		valid := ValidateSubdomainName(testSubdomain)
+
+		//then
+		Expect(valid).To(BeFalse())
+	})
+
+	It("Should return false for subdomain containing .", func() {
+		//given
+		testSubdomain := "subdomain.domain"
+
+		//when
+		valid := ValidateSubdomainName(testSubdomain)
+
+		//then
+		Expect(valid).To(BeFalse())
+	})
+
+})
 var _ = Describe("ValidateServiceName function", func() {
 
 	It("Should return true for kubernetes.default service", func() {

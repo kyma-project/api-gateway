@@ -45,6 +45,7 @@ type APIReconciler struct {
 	GeneratedObjectsLabels map[string]string
 	ServiceBlockList       map[string][]string
 	DomainAllowList        []string
+	HostBlockList          []string
 	DefaultDomainName      string
 }
 
@@ -88,6 +89,7 @@ func (r *APIReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 		validator := validation.APIRule{
 			ServiceBlockList:  r.ServiceBlockList,
 			DomainAllowList:   r.DomainAllowList,
+			HostBlockList:     r.HostBlockList,
 			DefaultDomainName: r.DefaultDomainName,
 		}
 		validationFailures := validator.Validate(api, vsList)
