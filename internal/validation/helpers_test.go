@@ -167,3 +167,94 @@ var _ = Describe("ValidateServiceName function", func() {
 		Expect(valid).To(BeFalse())
 	})
 })
+
+var _ = Describe("Validate Gateway Name", func() {
+
+	It("Should return true for kyma-system/kyma-gateway", func() {
+		//given
+		testGateway := `kyma-system/kyma-gateway`
+
+		//when
+		valid := validateGatewayName(testGateway)
+
+		//then
+		Expect(valid).To(BeTrue())
+	})
+
+	It("Should return true for kyma-gateway", func() {
+		//given
+		testGateway := `kyma-gateway`
+
+		//when
+		valid := validateGatewayName(testGateway)
+
+		//then
+		Expect(valid).To(BeTrue())
+	})
+
+	It("Should return true for kyma-gateway.kyma-system.svc.cluster.local", func() {
+		//given
+		testGateway := `kyma-gateway.kyma-system.svc.cluster.local`
+
+		//when
+		valid := validateGatewayName(testGateway)
+
+		//then
+		Expect(valid).To(BeTrue())
+	})
+
+	It("Should return true for a.ab.svc.cluster.local", func() {
+		//given
+		testGateway := `a.ab.svc.cluster.local`
+
+		//when
+		valid := validateGatewayName(testGateway)
+
+		//then
+		Expect(valid).To(BeTrue())
+	})
+
+	It("Should return false for test/test-ns/test", func() {
+		//given
+		testGateway := `test/test-ns/test`
+
+		//when
+		valid := validateGatewayName(testGateway)
+
+		//then
+		Expect(valid).To(BeFalse())
+	})
+
+	It("Should return false for test/test-ns/test.svc.cluster.local", func() {
+		//given
+		testGateway := `test/test-ns/test.svc.cluster.local`
+
+		//when
+		valid := validateGatewayName(testGateway)
+
+		//then
+		Expect(valid).To(BeFalse())
+	})
+
+	It("Should return false for test/", func() {
+		//given
+		testGateway := `test/`
+
+		//when
+		valid := validateGatewayName(testGateway)
+
+		//then
+		Expect(valid).To(BeFalse())
+	})
+
+	It("Should return false for !Abc", func() {
+		//given
+		testGateway := `!Abc`
+
+		//when
+		valid := validateGatewayName(testGateway)
+
+		//then
+		Expect(valid).To(BeFalse())
+	})
+})

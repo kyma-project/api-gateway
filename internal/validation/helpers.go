@@ -44,3 +44,8 @@ func ValidateServiceName(service string) bool {
 	regExp := regexp.MustCompile(`^[a-z0-9]([-a-z0-9]*[a-z0-9])?\.[a-z0-9]([-a-z0-9]*[a-z0-9])?$`)
 	return regExp.MatchString(service)
 }
+
+func validateGatewayName(gateway string) bool {
+	regExp := regexp.MustCompile(`^[0-9a-z-_]+(\/[0-9a-z-_]+|(\.[0-9a-z-_]+)*)$`)
+	return regExp.MatchString(gateway)
+}

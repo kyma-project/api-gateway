@@ -32,7 +32,7 @@ const (
 	timeout = time.Second * 5
 
 	kind                        = "APIRule"
-	testGatewayURL              = "kyma-gateway.kyma-system.svc.cluster.local"
+	testGatewayURL              = "kyma-system/kyma-gateway"
 	testOathkeeperSvcURL        = "oathkeeper.kyma-system.svc.cluster.local"
 	testOathkeeperPort   uint32 = 1234
 	testNamespace               = "atgo-system"

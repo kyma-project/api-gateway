@@ -38,7 +38,7 @@ spec:
             properties:
               gateway:
                 description: Gateway to be used
-                pattern: ^(?:[_a-z0-9](?:[_a-z0-9-]+[a-z0-9])?\.)+(?:[a-z](?:[a-z0-9-]+[a-z0-9])?)?$
+                pattern: ^[0-9a-z-_]+(\/[0-9a-z-_]+|(\.[0-9a-z-_]+)*)$
                 type: string
               rules:
                 description: Rules represents collection of Rule to apply
@@ -49,7 +49,8 @@ spec:
                       description: Set of access strategies for a single path
                       items:
                         description: Authenticator represents a handler that authenticates
-                          provided credentials.
+                          provided credentials. See the corresponding type in the
+                          oathkeeper-maester project.
                         properties:
                           config:
                             description: Config configures the handler. Configuration
@@ -74,7 +75,8 @@ spec:
                       description: Mutators to be used
                       items:
                         description: Mutator represents a handler that transforms
-                          the HTTP request before forwarding it.
+                          the HTTP request before forwarding it. See the corresponding
+                          in the oathkeeper-maester project.
                         properties:
                           config:
                             description: Config configures the handler. Configuration
