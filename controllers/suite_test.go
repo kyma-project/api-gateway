@@ -2,24 +2,20 @@ package controllers_test
 
 import (
 	"context"
-	"path/filepath"
-	"sync"
-	"testing"
-	"time"
-
-	"istio.io/api/networking/v1beta1"
-	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"sigs.k8s.io/controller-runtime/pkg/envtest/printer"
-
-	"github.com/kyma-incubator/api-gateway/internal/processing"
-
 	gatewayv1alpha1 "github.com/kyma-incubator/api-gateway/api/v1alpha1"
 	"github.com/kyma-incubator/api-gateway/controllers"
+	"github.com/kyma-incubator/api-gateway/internal/processing"
 	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
+	"istio.io/api/networking/v1beta1"
+	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	corev1 "k8s.io/api/core/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"path/filepath"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/envtest/printer"
+	"testing"
+	"time"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -36,13 +32,13 @@ import (
 )
 
 var (
-	cfg        *rest.Config
-	k8sClient  client.Client
-	testEnv    *envtest.Environment
-	stopMgr    context.Context
-	mgrStopped *sync.WaitGroup
-	requests   chan reconcile.Request
-	c          client.Client
+	cfg       *rest.Config
+	k8sClient client.Client
+	testEnv   *envtest.Environment
+	requests  chan reconcile.Request
+	c         client.Client
+	ctx       context.Context
+	cancel    context.CancelFunc
 
 	TestAllowOrigins = []*v1beta1.StringMatch{{MatchType: &v1beta1.StringMatch_Regex{Regex: ".*"}}}
 	TestAllowMethods = []string{"GET", "POST", "PUT", "DELETE"}
@@ -59,6 +55,7 @@ func TestAPIs(t *testing.T) {
 
 var _ = BeforeSuite(func(done Done) {
 	logf.SetLogger(zap.New(zap.UseDevMode(true), zap.WriteTo(GinkgoWriter)))
+	ctx, cancel = context.WithCancel(context.TODO())
 
 	By("bootstrapping test environment")
 	testEnv = &envtest.Environment{
@@ -76,10 +73,10 @@ var _ = BeforeSuite(func(done Done) {
 
 	s := runtime.NewScheme()
 
-	err = rulev1alpha1.AddToScheme(s)
+	err = gatewayv1alpha1.AddToScheme(s)
 	Expect(err).NotTo(HaveOccurred())
 
-	err = gatewayv1alpha1.AddToScheme(s)
+	err = rulev1alpha1.AddToScheme(s)
 	Expect(err).NotTo(HaveOccurred())
 
 	err = networkingv1beta1.AddToScheme(s)
@@ -101,7 +98,7 @@ var _ = BeforeSuite(func(done Done) {
 	err = c.Create(context.TODO(), ns)
 	Expect(err).NotTo(HaveOccurred())
 
-	reconciler := &controllers.APIReconciler{
+	apiReconciler := &controllers.APIReconciler{
 		Client:            mgr.GetClient(),
 		Log:               ctrl.Log.WithName("controllers").WithName("Api"),
 		OathkeeperSvc:     testOathkeeperSvcURL,
@@ -114,24 +111,35 @@ var _ = BeforeSuite(func(done Done) {
 		},
 		GeneratedObjectsLabels: map[string]string{},
 	}
-
+	Expect(err).NotTo(HaveOccurred())
 	var recFn reconcile.Reconciler
-	recFn, requests = SetupTestReconcile(reconciler)
-
+	recFn, requests = SetupTestReconcile(apiReconciler)
 	Expect(add(mgr, recFn)).To(Succeed())
 
-	stopMgr = StartTestManager(mgr)
+	go func() {
+		defer GinkgoRecover()
+		err = mgr.Start(ctx)
+		Expect(err).ToNot(HaveOccurred(), "failed to run manager")
+	}()
 
 	close(done)
 }, 60)
 
 var _ = AfterSuite(func() {
-	stopMgr.Done()
-	time.Sleep(10 * time.Second)
-
-	By("tearing down the test environment")
+	/*
+		 Provided solution for timeout issue waiting for kubeapiserver
+			https://github.com/kubernetes-sigs/controller-runtime/issues/1571#issuecomment-1005575071
+	*/
+	cancel()
+	By("tearing down the test environment,but I do nothing here.")
 	err := testEnv.Stop()
-	Expect(err).ToNot(HaveOccurred())
+	// Set 4 with random
+	if err != nil {
+		time.Sleep(4 * time.Second)
+	}
+	err = testEnv.Stop()
+	Expect(err).NotTo(HaveOccurred())
+
 })
 
 // SetupTestReconcile returns a reconcile.Reconcile implementation that delegates to inner and
@@ -144,15 +152,4 @@ func SetupTestReconcile(inner reconcile.Reconciler) (reconcile.Reconciler, chan 
 		return result, err
 	})
 	return fn, requests
-}
-
-// StartTestManager adds recFn
-func StartTestManager(mgr manager.Manager) context.Context {
-	ctx := context.Background()
-
-	go func() {
-		defer ctx.Done()
-		Expect(mgr.Start(ctx)).NotTo(HaveOccurred())
-	}()
-	return ctx
 }

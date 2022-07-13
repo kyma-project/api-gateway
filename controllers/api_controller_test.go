@@ -3,6 +3,7 @@ package controllers_test
 import (
 	"context"
 	"net/http"
+	"sigs.k8s.io/controller-runtime/pkg/config/v1alpha1"
 
 	"github.com/go-logr/logr"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
@@ -138,6 +139,10 @@ type fakeManager struct {
 	sch    *runtime.Scheme
 }
 
+func (f fakeManager) GetControllerOptions() v1alpha1.ControllerConfigurationSpec {
+	return v1alpha1.ControllerConfigurationSpec{}
+}
+
 func (f fakeManager) Elected() <-chan struct{} {
 	return nil
 }
@@ -208,7 +213,7 @@ func (fakeManager) GetRESTMapper() meta.RESTMapper {
 }
 
 func (fakeManager) GetLogger() logr.Logger {
-	return nil
+	return logr.Logger{}
 }
 
 func (fakeManager) Stop() meta.RESTMapper {
