@@ -212,6 +212,11 @@ func (in *JWTAccStrConfig) DeepCopyInto(out *JWTAccStrConfig) {
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
+	if in.JWKSUrls != nil {
+		in, out := &in.JWKSUrls, &out.JWKSUrls
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
 	if in.RequiredScopes != nil {
 		in, out := &in.RequiredScopes, &out.RequiredScopes
 		*out = make([]string, len(*in))

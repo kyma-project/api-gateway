@@ -3,6 +3,7 @@ package validation
 import (
 	"net/url"
 	"regexp"
+	"strings"
 
 	gatewayv1alpha1 "github.com/kyma-incubator/api-gateway/api/v1alpha1"
 )
@@ -16,15 +17,22 @@ func hasDuplicates(rules []gatewayv1alpha1.Rule) bool {
 	return len(encountered) != len(rules)
 }
 
-func isValidURL(toTest string) bool {
+func isInvalidURL(toTest string) bool {
 	if len(toTest) == 0 {
-		return false
+		return true
 	}
 	_, err := url.ParseRequestURI(toTest)
 	if err != nil {
+		return true
+	}
+	return false
+}
+
+func isUnsecuredURL(toTest string) bool {
+	if len(toTest) == 0 {
 		return false
 	}
-	return true
+	return strings.HasPrefix(toTest, "http://")
 }
 
 //ValidateDomainName ?
