@@ -1,0 +1,172 @@
+---
+apiVersion: gateway.kyma-project.io/v1alpha1
+kind: APIRule
+metadata:
+  name: passthrough-unsecured
+spec:
+  service:
+    host: httpbin1.kyma.local
+    name: httpbin
+    port: 8000
+  gateway: kyma-gateway.kyma-system.svc.cluster.local
+  rules:
+    - path: /.*
+      methods: ["GET"]
+      accessStrategies:
+        - handler: noop
+      mutators: []
+---
+apiVersion: gateway.kyma-project.io/v1alpha1
+kind: APIRule
+metadata:
+  name: passthrough-secured-mutators
+spec:
+  service:
+    host: httpbin2.kyma.local
+    name: httpbin
+    port: 8000
+  gateway: kyma-gateway.kyma-system.svc.cluster.local
+  rules:
+    - path: /.*
+      methods: ["GET"]
+      accessStrategies:
+        - handler: noop
+      mutators:
+        - handler: noop
+---
+apiVersion: gateway.kyma-project.io/v1alpha1
+kind: APIRule
+metadata:
+  name: jwt-all-no-scopes
+spec:
+  gateway: kyma-gateway.kyma-system.svc.cluster.local
+  service:
+    name: foo-service
+    port: 8080
+    host: foo1.kyma.local
+  rules:
+    - path: /.*
+      methods: ["GET"]
+      mutators: []
+      accessStrategies:
+        - handler: jwt
+          config:
+            trusted_issuers: ["http://dex.kyma.local"]
+            required_scope: []
+---
+apiVersion: gateway.kyma-project.io/v1alpha1
+kind: APIRule
+metadata:
+  name: jwt-all-mutators
+spec:
+  gateway: kyma-gateway.kyma-system.svc.cluster.local
+  service:
+    name: foo-service
+    port: 8080
+    host: foo2.kyma.local
+  rules:
+    - path: /.*
+      methods: ["GET"]
+      mutators:
+        - handler: noop
+      accessStrategies:
+        - handler: jwt
+          config:
+            trusted_issuers: ["http://dex.kyma.local"]
+            required_scope: []
+---
+apiVersion: gateway.kyma-project.io/v1alpha1
+kind: APIRule
+metadata:
+  name: jwt-all-with-scopes
+spec:
+  gateway: kyma-gateway.kyma-system.svc.cluster.local
+  service:
+    name: foo-service
+    port: 8080
+    host: foo3.kyma.local
+  rules:
+    - path: /.*
+      methods: ["GET"]
+      mutators: []
+      accessStrategies:
+        - handler: jwt
+          config:
+            trusted_issuers: ["http://dex.kyma.local"]
+            required_scope: ["foo", "bar"]
+---
+apiVersion: gateway.kyma-project.io/v1alpha1
+kind: APIRule
+metadata:
+  name: oauth
+spec:
+  gateway: kyma-gateway.kyma-system.svc.cluster.local
+  service:
+    host: httpbin3.kyma.local
+    name: httpbin
+    port: 8000
+  rules:
+    - path: /.*
+      methods: ["GET"]
+      mutators: []
+      accessStrategies:
+        - handler: oauth2_introspection
+          config:
+            required_scope: ["foo", "bar"]
+---
+apiVersion: gateway.kyma-project.io/v1alpha1
+kind: APIRule
+metadata:
+  name: oauth-mutators
+spec:
+  gateway: kyma-gateway.kyma-system.svc.cluster.local
+  service:
+    host: httpbin4.kyma.local
+    name: httpbin
+    port: 8000
+  rules:
+    - path: /.*
+      methods: ["GET"]
+      mutators:
+        - handler: noop
+          config: {}
+      accessStrategies:
+        - handler: oauth2_introspection
+          config:
+            required_scope: []
+---
+apiVersion: gateway.kyma-project.io/v1alpha1
+kind: APIRule
+metadata:
+  name: multiple-rules
+spec:
+  gateway: kyma-gateway.kyma-system.svc.cluster.local
+  service:
+    name: foo-service
+    port: 8080
+    host: foo4.kyma.local
+  rules:
+    - path: /img
+      methods: ["GET"]
+      mutators: []
+      accessStrategies:
+        - handler: jwt
+          config:
+            trusted_issuers: ["http://dex.kyma.local"]
+            required_scope: []
+    - path: /headers
+      methods: ["GET"]
+      accessStrategies:
+        - handler: oauth2_introspection
+          config:
+            required_scope: ["foo"]
+    - path: /favicon
+      methods: ["GET"]
+      accessStrategies:
+        - handler: allow
+    - path: /status/.*
+      methods: ["GET"]
+      accessStrategies:
+        - handler: noop
+      mutators:
+        - handler: noop

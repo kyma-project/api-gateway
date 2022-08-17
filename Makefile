@@ -1,6 +1,11 @@
 APP_NAME = api-gateway-controller
 IMG = $(DOCKER_PUSH_REPOSITORY)$(DOCKER_PUSH_DIRECTORY)/$(APP_NAME)
 TAG = $(DOCKER_TAG)
+
+CERTIFICATES_APP_NAME = api-gateway-webhook-certificates
+CERTIFICATES_IMG = $(DOCKER_PUSH_REPOSITORY)$(DOCKER_PUSH_DIRECTORY)/$(CERTIFICATES_APP_NAME)
+CERTIFICATES_TAG = $(DOCKER_TAG)
+
 CRD_OPTIONS ?= "crd:trivialVersions=true,crdVersions=v1"
 
 # Example ory-oathkeeper
@@ -20,7 +25,7 @@ endif
 
 # kubernetes.default service.namespace
 ifndef SERVICE_BLOCKLIST
-override SERVICE_BLOCKLIST = kubernetes.default,kube-dns.kube-system
+override SERVICE_BLOCKLIST = change-me
 endif
 
 # kyma.local foo.bar bar
@@ -90,8 +95,12 @@ manifests: controller-gen ## Generate WebhookConfiguration, ClusterRole and Cust
 
 # Generate code
 .PHONY: generate
-generate: controller-gen
-	$(CONTROLLER_GEN) object:headerFile=./hack/boilerplate.go.txt paths=./api/...
+generate: controller-gen ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
+	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
+
+.PHONY: fmt
+fmt: ## Run go fmt against code.
+	go fmt ./...
 
 .PHONY: vet
 vet: ## Run go vet against code.
@@ -116,6 +125,10 @@ run: build
 docker-build: pull-licenses test ## Build docker image with the manager.
 	docker build -t $(APP_NAME):latest .
 
+.PHONY: docker-build-certificates
+docker-build-certificates: ## Build docker image for certificates management
+	docker build -f Dockerfile-certificates -t $(CERTIFICATES_APP_NAME):latest .
+
 .PHONY: docker-push
 docker-push:
 	docker tag $(APP_NAME) $(IMG):$(TAG)
@@ -124,6 +137,18 @@ ifeq ($(JOB_TYPE), postsubmit)
 	@echo "Sign image with Cosign"
 	cosign version
 	cosign sign -key ${KMS_KEY_URL} $(IMG):$(TAG)
+else
+	@echo "Image signing skipped"
+endif
+
+.PHONY: docker-push-certificates
+docker-push-certificates:
+	docker tag $(CERTIFICATES_APP_NAME) $(CERTIFICATES_IMG):$(CERTIFICATES_TAG)
+	docker push $(CERTIFICATES_IMG):$(CERTIFICATES_TAG)
+ifeq ($(JOB_TYPE), postsubmit)
+	@echo "Sign image with Cosign"
+	cosign version
+	cosign sign -key ${KMS_KEY_URL} $(CERTIFICATES_IMG):$(CERTIFICATES_TAG)
 else
 	@echo "Image signing skipped"
 endif
@@ -137,6 +162,7 @@ else
 endif
 
 ##@ Deployment
+
 ifndef ignore-not-found
   ignore-not-found = false
 endif
@@ -153,14 +179,20 @@ uninstall: manifests kustomize ## Uninstall CRDs from the K8s cluster specified 
 	$(KUSTOMIZE) build config/crd | kubectl delete --ignore-not-found=$(ignore-not-found) -f -
 
 # Deploy the controller using "api-gateway-controller:latest" Docker image to the Kubernetes cluster configured in ~/.kube/config
-.PHONY: deploy
+.PHONY: deploy-dev
 deploy-dev: manifests patch-gen
-	kustomize build config/development | kubectl apply -f -
+	$(KUSTOMIZE) build config/development | kubectl apply -f -
+
+.PHONY: deploy
+deploy: generate manifests patch-gen kustomize install ## Deploy controller to the K8s cluster specified in ~/.kube/config.
+	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
+	$(KUSTOMIZE) build config/default | kubectl apply -f -
 
 .PHONY: undeploy
 undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/config. Call with ignore-not-found=true to ignore resource not found errors during deletion.
 	$(KUSTOMIZE) build config/default | kubectl delete --ignore-not-found=$(ignore-not-found) -f -
 
+##@ Build Dependencies
 
 ## Location to install dependencies to
 LOCALBIN ?= $(shell pwd)/bin
@@ -210,10 +242,6 @@ informer-gen: ## Download informer-gen
 lister-gen: ## Download lister-gen
 	GOBIN=$(LOCALBIN) go install k8s.io/code-generator/cmd/lister-gen@v0.23.4
 
-.PHONY: fmt
-fmt: ## Run go fmt against code.
-	go fmt ./...
-
 .PHONY: lint
 lint: ## Run golangci-lint against code.
 	GOBIN=$(LOCALBIN) go install github.com/golangci/golangci-lint/cmd/golangci-lint@$(GOLANG_CI_LINT_VERSION)
@@ -221,13 +249,13 @@ lint: ## Run golangci-lint against code.
 
 ##@ ci targets
 .PHONY: ci-pr
-ci-pr: build test docker-build docker-push
+ci-pr: build test docker-build docker-push docker-build-certificates docker-push-certificates
 
 .PHONY: ci-main
-ci-main: build docker-build docker-push
+ci-main: build docker-build docker-push docker-build-certificates docker-push-certificates
 
 .PHONY: ci-release
-ci-release: build docker-build docker-push
+ci-release: build docker-build docker-push docker-build-certificates docker-push-certificates
 
 .PHONY: clean
 clean:

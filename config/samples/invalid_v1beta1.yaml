@@ -1,0 +1,29 @@
+#Creation of this APIRule should result in error caused by path not having a service assigned to it
+apiVersion: gateway.kyma-project.io/v1beta1
+kind: APIRule
+metadata:
+  name: multiple-service
+  namespace: default
+  labels:
+    app: multiple-service
+    example: multiple-service
+spec:
+  host: 3svc.testHost.com
+  gateway: kyma-system/kyma-gateway
+  rules:
+    - path: /orders
+      service:
+          name: orders-service
+          port: 80
+      methods: ["GET"]
+      accessStrategies:
+        - handler: oauth2_introspection
+          config:
+            required_scope: ["read"]
+    - path: /hello
+      service:
+          name: helloworld
+          port: 5000
+      methods: ["GET","POST"]
+      accessStrategies:
+        - handler: noop

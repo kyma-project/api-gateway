@@ -8,7 +8,7 @@ import (
 	"github.com/kyma-incubator/api-gateway/internal/helpers"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 
-	gatewayv1alpha1 "github.com/kyma-incubator/api-gateway/api/v1alpha1"
+	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
@@ -18,7 +18,7 @@ var vldJWT = &jwtAccStrValidator{}
 var vldDummy = &dummyAccStrValidator{}
 
 type accessStrategyValidator interface {
-	Validate(attrPath string, Handler *gatewayv1alpha1.Handler) []Failure
+	Validate(attrPath string, Handler *gatewayv1beta1.Handler) []Failure
 }
 
 //configNotEmpty Verify if the config object is not empty
@@ -35,7 +35,7 @@ func configNotEmpty(config *runtime.RawExtension) bool {
 	return !configEmpty(config)
 }
 
-//APIRule is used to validate github.com/kyma-incubator/api-gateway/api/v1alpha1/APIRule instances
+//APIRule is used to validate github.com/kyma-incubator/api-gateway/api/v1beta1/APIRule instances
 type APIRule struct {
 	ServiceBlockList  map[string][]string
 	DomainAllowList   []string
@@ -44,15 +44,20 @@ type APIRule struct {
 }
 
 //Validate performs APIRule validation
-func (v *APIRule) Validate(api *gatewayv1alpha1.APIRule, vsList networkingv1beta1.VirtualServiceList) []Failure {
+func (v *APIRule) Validate(api *gatewayv1beta1.APIRule, vsList networkingv1beta1.VirtualServiceList) []Failure {
 
 	res := []Failure{}
-	//Validate service
-	res = append(res, v.validateService(".spec.service", vsList, api)...)
+	//Validate service on path level if it is created
+	if api.Spec.Service != nil {
+		res = append(res, v.validateService(".spec.service", api)...)
+	}
+	//Validate Host
+	res = append(res, v.validateHost(".spec.host", vsList, api)...)
+
 	//Validate Gateway
 	res = append(res, v.validateGateway(".spec.gateway", api.Spec.Gateway)...)
 	//Validate Rules
-	res = append(res, v.validateRules(".spec.rules", api.Spec.Rules)...)
+	res = append(res, v.validateRules(".spec.rules", api.Spec.Service == nil, api.Spec.Rules, api.Namespace)...)
 
 	return res
 }
@@ -63,14 +68,14 @@ type Failure struct {
 	Message       string
 }
 
-func (v *APIRule) validateService(attributePath string, vsList networkingv1beta1.VirtualServiceList, api *gatewayv1alpha1.APIRule) []Failure {
+func (v *APIRule) validateHost(attributePath string, vsList networkingv1beta1.VirtualServiceList, api *gatewayv1beta1.APIRule) []Failure {
 	var problems []Failure
 
-	host := *api.Spec.Service.Host
-	if !helpers.HostIncludesDomain(*api.Spec.Service.Host) {
+	host := *api.Spec.Host
+	if !helpers.HostIncludesDomain(*api.Spec.Host) {
 		if v.DefaultDomainName == "" {
 			problems = append(problems, Failure{
-				AttributePath: attributePath + ".host",
+				AttributePath: attributePath,
 				Message:       "Host does not contain a domain name and no default domain name is configured",
 			})
 		}
@@ -89,18 +94,18 @@ func (v *APIRule) validateService(attributePath string, vsList networkingv1beta1
 		}
 		if !domainFound {
 			problems = append(problems, Failure{
-				AttributePath: attributePath + ".host",
+				AttributePath: attributePath,
 				Message:       "Host is not allowlisted",
 			})
 		}
 	}
 
 	for _, blockedHost := range v.HostBlockList {
-		host := *api.Spec.Service.Host
+		host := *api.Spec.Host
 		if blockedHost == host {
 			subdomain := strings.Split(host, ".")[0]
 			problems = append(problems, Failure{
-				AttributePath: attributePath + ".host",
+				AttributePath: attributePath,
 				Message:       fmt.Sprintf("The subdomain %s is blocklisted for %s domain", subdomain, v.DefaultDomainName),
 			})
 		}
@@ -109,11 +114,17 @@ func (v *APIRule) validateService(attributePath string, vsList networkingv1beta1
 	for _, vs := range vsList.Items {
 		if occupiesHost(vs, host) && !ownedBy(vs, api) {
 			problems = append(problems, Failure{
-				AttributePath: attributePath + ".host",
+				AttributePath: attributePath,
 				Message:       "This host is occupied by another Virtual Service",
 			})
 		}
 	}
+
+	return problems
+}
+
+func (v *APIRule) validateService(attributePath string, api *gatewayv1beta1.APIRule) []Failure {
+	var problems []Failure
 
 	for namespace, services := range v.ServiceBlockList {
 		for _, svc := range services {
@@ -132,7 +143,9 @@ func (v *APIRule) validateGateway(attributePath string, gateway *string) []Failu
 	return nil
 }
 
-func (v *APIRule) validateRules(attributePath string, rules []gatewayv1alpha1.Rule) []Failure {
+// Validates whether all rules are defined correctly
+// Checks whether all rules have service defined for them if checkForService is true
+func (v *APIRule) validateRules(attributePath string, checkForService bool, rules []gatewayv1beta1.Rule, rulesNamespace string) []Failure {
 	var problems []Failure
 
 	if len(rules) == 0 {
@@ -141,13 +154,28 @@ func (v *APIRule) validateRules(attributePath string, rules []gatewayv1alpha1.Ru
 	}
 
 	if hasDuplicates(rules) {
-		problems = append(problems, Failure{AttributePath: attributePath, Message: "multiple rules defined for the same path"})
+		problems = append(problems, Failure{AttributePath: attributePath, Message: "Multiple rules defined for the same path"})
 	}
 
 	for i, r := range rules {
-		attrPath := fmt.Sprintf("%s[%d]", attributePath, i)
-		problems = append(problems, v.validateMethods(attrPath+".methods", r.Methods)...)
-		problems = append(problems, v.validateAccessStrategies(attrPath+".accessStrategies", r.AccessStrategies)...)
+		attributePathWithRuleIndex := fmt.Sprintf("%s[%d]", attributePath, i)
+		problems = append(problems, v.validateMethods(attributePathWithRuleIndex+".methods", r.Methods)...)
+		problems = append(problems, v.validateAccessStrategies(attributePathWithRuleIndex+".accessStrategies", r.AccessStrategies)...)
+		if checkForService && r.Service == nil {
+			problems = append(problems, Failure{AttributePath: attributePathWithRuleIndex + ".service", Message: "No service defined with no main service on spec level"})
+		}
+		if r.Service != nil {
+			for namespace, services := range v.ServiceBlockList {
+				for _, svc := range services {
+					if svc == *r.Service.Name && namespace == rulesNamespace {
+						problems = append(problems, Failure{
+							AttributePath: attributePathWithRuleIndex + ".service.name",
+							Message:       fmt.Sprintf("Service %s in namespace %s is blocklisted", svc, namespace),
+						})
+					}
+				}
+			}
+		}
 	}
 
 	return problems
@@ -157,7 +185,7 @@ func (v *APIRule) validateMethods(attributePath string, methods []string) []Fail
 	return nil
 }
 
-func (v *APIRule) validateAccessStrategies(attributePath string, accessStrategies []*gatewayv1alpha1.Authenticator) []Failure {
+func (v *APIRule) validateAccessStrategies(attributePath string, accessStrategies []*gatewayv1beta1.Authenticator) []Failure {
 	var problems []Failure
 
 	if len(accessStrategies) == 0 {
@@ -173,7 +201,7 @@ func (v *APIRule) validateAccessStrategies(attributePath string, accessStrategie
 	return problems
 }
 
-func (v *APIRule) validateAccessStrategy(attributePath string, accessStrategy *gatewayv1alpha1.Authenticator) []Failure {
+func (v *APIRule) validateAccessStrategy(attributePath string, accessStrategy *gatewayv1beta1.Authenticator) []Failure {
 	var problems []Failure
 
 	var vld accessStrategyValidator
@@ -203,7 +231,7 @@ func (v *APIRule) validateAccessStrategy(attributePath string, accessStrategy *g
 	return vld.Validate(attributePath, accessStrategy.Handler)
 }
 
-func occupiesHost(vs networkingv1beta1.VirtualService, host string) bool {
+func occupiesHost(vs *networkingv1beta1.VirtualService, host string) bool {
 	for _, h := range vs.Spec.Hosts {
 		if h == host {
 			return true
@@ -212,7 +240,7 @@ func occupiesHost(vs networkingv1beta1.VirtualService, host string) bool {
 	return false
 }
 
-func ownedBy(vs networkingv1beta1.VirtualService, api *gatewayv1alpha1.APIRule) bool {
+func ownedBy(vs *networkingv1beta1.VirtualService, api *gatewayv1beta1.APIRule) bool {
 	for _, or := range vs.OwnerReferences {
 		if or.UID == api.UID {
 			return true

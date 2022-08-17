@@ -3,6 +3,7 @@ package controllers_test
 import (
 	"context"
 	"net/http"
+
 	"sigs.k8s.io/controller-runtime/pkg/config/v1alpha1"
 
 	"github.com/go-logr/logr"
@@ -10,7 +11,7 @@ import (
 
 	"github.com/kyma-incubator/api-gateway/internal/processing"
 
-	gatewayv1alpha1 "github.com/kyma-incubator/api-gateway/api/v1alpha1"
+	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
 	"github.com/kyma-incubator/api-gateway/controllers"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -53,18 +54,18 @@ var _ = Describe("Controller", func() {
 				Expect(err).ToNot(HaveOccurred())
 				Expect(result.Requeue).To(BeFalse())
 
-				res := gatewayv1alpha1.APIRule{}
+				res := gatewayv1beta1.APIRule{}
 				err = ts.mgr.GetClient().Get(context.Background(), types.NamespacedName{Namespace: testAPI.Namespace, Name: testAPI.Name}, &res)
 				Expect(err).ToNot(HaveOccurred())
-				Expect(res.Status.AccessRuleStatus.Code).To(Equal(gatewayv1alpha1.StatusOK))
-				Expect(res.Status.VirtualServiceStatus.Code).To(Equal(gatewayv1alpha1.StatusOK))
-				Expect(res.Status.APIRuleStatus.Code).To(Equal(gatewayv1alpha1.StatusOK))
+				Expect(res.Status.AccessRuleStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
+				Expect(res.Status.VirtualServiceStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
+				Expect(res.Status.APIRuleStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
 			})
 		})
 	})
 })
 
-func fixAPI() *gatewayv1alpha1.APIRule {
+func fixAPI() *gatewayv1beta1.APIRule {
 	serviceName = "test"
 	servicePort = 8000
 	host = "foo.bar"
@@ -72,26 +73,26 @@ func fixAPI() *gatewayv1alpha1.APIRule {
 	authStrategy = "noop"
 	gateway = "some-gateway.some-namespace.foo"
 
-	return &gatewayv1alpha1.APIRule{
+	return &gatewayv1beta1.APIRule{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:       "test",
 			Generation: 1,
 		},
-		Spec: gatewayv1alpha1.APIRuleSpec{
-			Service: &gatewayv1alpha1.Service{
+		Spec: gatewayv1beta1.APIRuleSpec{
+			Host: &host,
+			Service: &gatewayv1beta1.Service{
 				Name:       &serviceName,
 				Port:       &servicePort,
-				Host:       &host,
 				IsExternal: &isExernal,
 			},
 			Gateway: &gateway,
-			Rules: []gatewayv1alpha1.Rule{
+			Rules: []gatewayv1beta1.Rule{
 				{
 					Path:    "/.*",
 					Methods: []string{"GET"},
-					AccessStrategies: []*gatewayv1alpha1.Authenticator{
+					AccessStrategies: []*gatewayv1beta1.Authenticator{
 						{
-							Handler: &gatewayv1alpha1.Handler{
+							Handler: &gatewayv1beta1.Handler{
 								Name:   authStrategy,
 								Config: nil,
 							},
@@ -104,7 +105,7 @@ func fixAPI() *gatewayv1alpha1.APIRule {
 }
 
 func getAPIReconciler(mgr manager.Manager) reconcile.Reconciler {
-	return &controllers.APIReconciler{
+	return &controllers.APIRuleReconciler{
 		Client:          mgr.GetClient(),
 		Log:             ctrl.Log.WithName("controllers").WithName("Api"),
 		DomainAllowList: []string{"bar", "kyma.local"},
@@ -122,7 +123,7 @@ type testSuite struct {
 }
 
 func getTestSuite(objects ...runtime.Object) *testSuite {
-	err := gatewayv1alpha1.AddToScheme(scheme.Scheme)
+	err := gatewayv1beta1.AddToScheme(scheme.Scheme)
 	Expect(err).NotTo(HaveOccurred())
 	err = networkingv1beta1.AddToScheme(scheme.Scheme)
 	Expect(err).NotTo(HaveOccurred())

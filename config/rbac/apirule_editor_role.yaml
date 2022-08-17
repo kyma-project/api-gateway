@@ -1,0 +1,24 @@
+# permissions for end users to edit apirules.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: apirule-editor-role
+rules:
+- apiGroups:
+  - gateway.kyma-project.io
+  resources:
+  - apirules
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - gateway.kyma-project.io
+  resources:
+  - apirules/status
+  verbs:
+  - get

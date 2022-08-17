@@ -3,12 +3,12 @@ package validation
 import (
 	"fmt"
 
-	gatewayv1alpha1 "github.com/kyma-incubator/api-gateway/api/v1alpha1"
+	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
 )
 
 type oauth struct{}
 
-func (o *oauth) Validate(api *gatewayv1alpha1.APIRule) error {
+func (o *oauth) Validate(api *gatewayv1beta1.APIRule) error {
 	if len(api.Spec.Rules) != 1 {
 		return fmt.Errorf("supplied config should contain exactly one path")
 	}

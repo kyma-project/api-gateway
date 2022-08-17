@@ -12,7 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 
-	gatewayv1alpha1 "github.com/kyma-incubator/api-gateway/api/v1alpha1"
+	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
 	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -71,16 +71,16 @@ var _ = Describe("Factory", func() {
 	Describe("CalculateRequiredState", func() {
 		Context("APIRule", func() {
 			It("should produce VS for allow authenticator", func() {
-				strategies := []*gatewayv1alpha1.Authenticator{
+				strategies := []*gatewayv1beta1.Authenticator{
 					{
-						Handler: &gatewayv1alpha1.Handler{
+						Handler: &gatewayv1beta1.Handler{
 							Name: "allow",
 						},
 					},
 				}
 
-				allowRule := getRuleFor(apiPath, apiMethods, []*gatewayv1alpha1.Mutator{}, strategies)
-				rules := []gatewayv1alpha1.Rule{allowRule}
+				allowRule := getRuleFor(apiPath, apiMethods, []*gatewayv1beta1.Mutator{}, strategies)
+				rules := []gatewayv1beta1.Rule{allowRule}
 
 				apiRule := getAPIRuleFor(rules)
 
@@ -122,10 +122,86 @@ var _ = Describe("Factory", func() {
 				Expect(len(accessRules)).To(Equal(0))
 			})
 
-			It("should produce VS and ARs for given paths", func() {
-				noop := []*gatewayv1alpha1.Authenticator{
+			It("noop: should override access rule upstream with rule level service", func() {
+				strategies := []*gatewayv1beta1.Authenticator{
 					{
-						Handler: &gatewayv1alpha1.Handler{
+						Handler: &gatewayv1beta1.Handler{
+							Name: "noop",
+						},
+					},
+				}
+
+				overrideServiceName := "testName"
+				overrideServicePort := uint32(8080)
+
+				service := &gatewayv1beta1.Service{
+					Name: &overrideServiceName,
+					Port: &overrideServicePort,
+				}
+
+				allowRule := getRuleWithServiceFor(apiPath, apiMethods, []*gatewayv1beta1.Mutator{}, strategies, service)
+				rules := []gatewayv1beta1.Rule{allowRule}
+
+				apiRule := getAPIRuleFor(rules)
+
+				f := NewFactory(nil, ctrl.Log.WithName("test"), oathkeeperSvc, oathkeeperSvcPort, "https://example.com/.well-known/jwks.json", testCors, testAdditionalLabels, defaultDomain)
+
+				desiredState := f.CalculateRequiredState(apiRule)
+				vs := desiredState.virtualService
+				accessRules := desiredState.accessRules
+
+				expectedNoopRuleMatchURL := fmt.Sprintf("<http|https>://%s<%s>", serviceHost, apiPath)
+				expectedRuleUpstreamURL := fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", overrideServiceName, apiNamespace, overrideServicePort)
+
+				//Verify VS
+				Expect(len(vs.Spec.Http[0].Route)).To(Equal(1))
+				Expect(vs.Spec.Http[0].Route[0].Destination.Host).To(Equal(oathkeeperSvc))
+
+				//Verify AR has rule level upstream
+				Expect(len(accessRules)).To(Equal(1))
+				Expect(accessRules[expectedNoopRuleMatchURL].Spec.Upstream.URL).To(Equal(expectedRuleUpstreamURL))
+			})
+
+			It("allow: should override VS destination host", func() {
+				strategies := []*gatewayv1beta1.Authenticator{
+					{
+						Handler: &gatewayv1beta1.Handler{
+							Name: "allow",
+						},
+					},
+				}
+
+				overrideServiceName := "testName"
+				overrideServicePort := uint32(8080)
+
+				service := &gatewayv1beta1.Service{
+					Name: &overrideServiceName,
+					Port: &overrideServicePort,
+				}
+
+				allowRule := getRuleWithServiceFor(apiPath, apiMethods, []*gatewayv1beta1.Mutator{}, strategies, service)
+				rules := []gatewayv1beta1.Rule{allowRule}
+
+				apiRule := getAPIRuleFor(rules)
+
+				f := NewFactory(nil, ctrl.Log.WithName("test"), oathkeeperSvc, oathkeeperSvcPort, "https://example.com/.well-known/jwks.json", testCors, testAdditionalLabels, defaultDomain)
+
+				desiredState := f.CalculateRequiredState(apiRule)
+				vs := desiredState.virtualService
+				accessRules := desiredState.accessRules
+
+				//verify VS has rule level destination host
+				Expect(len(vs.Spec.Http[0].Route)).To(Equal(1))
+				Expect(vs.Spec.Http[0].Route[0].Destination.Host).To(Equal(overrideServiceName + "." + apiNamespace + ".svc.cluster.local"))
+
+				//Verify AR has rule level upstream
+				Expect(len(accessRules)).To(Equal(0))
+			})
+
+			It("should produce VS and ARs for given paths", func() {
+				noop := []*gatewayv1beta1.Authenticator{
+					{
+						Handler: &gatewayv1beta1.Handler{
 							Name: "noop",
 						},
 					},
@@ -138,9 +214,9 @@ var _ = Describe("Factory", func() {
 						"required_scope": [%s]
 				}`, jwtIssuer, toCSVList(apiScopes))
 
-				jwt := []*gatewayv1alpha1.Authenticator{
+				jwt := []*gatewayv1beta1.Authenticator{
 					{
-						Handler: &gatewayv1alpha1.Handler{
+						Handler: &gatewayv1beta1.Handler{
 							Name: "jwt",
 							Config: &runtime.RawExtension{
 								Raw: []byte(jwtConfigJSON),
@@ -149,22 +225,22 @@ var _ = Describe("Factory", func() {
 					},
 				}
 
-				testMutators := []*gatewayv1alpha1.Mutator{
+				testMutators := []*gatewayv1beta1.Mutator{
 					{
-						Handler: &gatewayv1alpha1.Handler{
+						Handler: &gatewayv1beta1.Handler{
 							Name: "noop",
 						},
 					},
 					{
-						Handler: &gatewayv1alpha1.Handler{
+						Handler: &gatewayv1beta1.Handler{
 							Name: "idtoken",
 						},
 					},
 				}
 
-				noopRule := getRuleFor(apiPath, apiMethods, []*gatewayv1alpha1.Mutator{}, noop)
+				noopRule := getRuleFor(apiPath, apiMethods, []*gatewayv1beta1.Mutator{}, noop)
 				jwtRule := getRuleFor(headersAPIPath, apiMethods, testMutators, jwt)
-				rules := []gatewayv1alpha1.Rule{noopRule, jwtRule}
+				rules := []gatewayv1beta1.Rule{noopRule, jwtRule}
 
 				expectedNoopRuleMatchURL := fmt.Sprintf("<http|https>://%s<%s>", serviceHost, apiPath)
 				expectedJwtRuleMatchURL := fmt.Sprintf("<http|https>://%s<%s>", serviceHost, headersAPIPath)
@@ -288,16 +364,16 @@ var _ = Describe("Factory", func() {
 						"required_scope": [%s]
 				}`, jwtIssuer, toCSVList(apiScopes))
 
-				jwt := &gatewayv1alpha1.Authenticator{
-					Handler: &gatewayv1alpha1.Handler{
+				jwt := &gatewayv1beta1.Authenticator{
+					Handler: &gatewayv1beta1.Handler{
 						Name: "jwt",
 						Config: &runtime.RawExtension{
 							Raw: []byte(jwtConfigJSON),
 						},
 					},
 				}
-				oauth := &gatewayv1alpha1.Authenticator{
-					Handler: &gatewayv1alpha1.Handler{
+				oauth := &gatewayv1beta1.Authenticator{
+					Handler: &gatewayv1beta1.Handler{
 						Name: "oauth2_introspection",
 						Config: &runtime.RawExtension{
 							Raw: []byte(oauthConfigJSON),
@@ -305,10 +381,10 @@ var _ = Describe("Factory", func() {
 					},
 				}
 
-				strategies := []*gatewayv1alpha1.Authenticator{jwt, oauth}
+				strategies := []*gatewayv1beta1.Authenticator{jwt, oauth}
 
-				allowRule := getRuleFor(apiPath, apiMethods, []*gatewayv1alpha1.Mutator{}, strategies)
-				rules := []gatewayv1alpha1.Rule{allowRule}
+				allowRule := getRuleFor(apiPath, apiMethods, []*gatewayv1beta1.Mutator{}, strategies)
+				rules := []gatewayv1beta1.Rule{allowRule}
 
 				expectedRuleMatchURL := fmt.Sprintf("<http|https>://%s<%s>", serviceHost, apiPath)
 				expectedRuleUpstreamURL := fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", serviceName, apiNamespace, servicePort)
@@ -386,9 +462,9 @@ var _ = Describe("Factory", func() {
 
 			Context("when the hostname does not contain domain name", func() {
 				It("should produce VS & AR with default domain name", func() {
-					noop := []*gatewayv1alpha1.Authenticator{
+					noop := []*gatewayv1beta1.Authenticator{
 						{
-							Handler: &gatewayv1alpha1.Handler{
+							Handler: &gatewayv1beta1.Handler{
 								Name: "noop",
 							},
 						},
@@ -401,9 +477,9 @@ var _ = Describe("Factory", func() {
 						"required_scope": [%s]
 				}`, jwtIssuer, toCSVList(apiScopes))
 
-					jwt := []*gatewayv1alpha1.Authenticator{
+					jwt := []*gatewayv1beta1.Authenticator{
 						{
-							Handler: &gatewayv1alpha1.Handler{
+							Handler: &gatewayv1beta1.Handler{
 								Name: "jwt",
 								Config: &runtime.RawExtension{
 									Raw: []byte(jwtConfigJSON),
@@ -412,28 +488,28 @@ var _ = Describe("Factory", func() {
 						},
 					}
 
-					testMutators := []*gatewayv1alpha1.Mutator{
+					testMutators := []*gatewayv1beta1.Mutator{
 						{
-							Handler: &gatewayv1alpha1.Handler{
+							Handler: &gatewayv1beta1.Handler{
 								Name: "noop",
 							},
 						},
 						{
-							Handler: &gatewayv1alpha1.Handler{
+							Handler: &gatewayv1beta1.Handler{
 								Name: "idtoken",
 							},
 						},
 					}
 
-					noopRule := getRuleFor(apiPath, apiMethods, []*gatewayv1alpha1.Mutator{}, noop)
+					noopRule := getRuleFor(apiPath, apiMethods, []*gatewayv1beta1.Mutator{}, noop)
 					jwtRule := getRuleFor(headersAPIPath, apiMethods, testMutators, jwt)
-					rules := []gatewayv1alpha1.Rule{noopRule, jwtRule}
+					rules := []gatewayv1beta1.Rule{noopRule, jwtRule}
 
 					expectedNoopRuleMatchURL := fmt.Sprintf("<http|https>://%s<%s>", serviceHost, apiPath)
 					expectedJwtRuleMatchURL := fmt.Sprintf("<http|https>://%s<%s>", serviceHost, headersAPIPath)
 
 					apiRule := getAPIRuleFor(rules)
-					apiRule.Spec.Service.Host = &serviceHostWithNoDomain
+					apiRule.Spec.Host = &serviceHostWithNoDomain
 
 					f := NewFactory(nil, ctrl.Log.WithName("test"), oathkeeperSvc, oathkeeperSvcPort, "https://example.com/.well-known/jwks.json", testCors, testAdditionalLabels, defaultDomain)
 
@@ -460,16 +536,16 @@ var _ = Describe("Factory", func() {
 	Describe("CalculateDiff", func() {
 		Context("between desired state & actual state", func() {
 			It("should produce patch containing VS to create & AR to create", func() {
-				noop := []*gatewayv1alpha1.Authenticator{
+				noop := []*gatewayv1beta1.Authenticator{
 					{
-						Handler: &gatewayv1alpha1.Handler{
+						Handler: &gatewayv1beta1.Handler{
 							Name: "noop",
 						},
 					},
 				}
 
-				noopRule := getRuleFor(apiPath, apiMethods, []*gatewayv1alpha1.Mutator{}, noop)
-				rules := []gatewayv1alpha1.Rule{noopRule}
+				noopRule := getRuleFor(apiPath, apiMethods, []*gatewayv1beta1.Mutator{}, noop)
+				rules := []gatewayv1beta1.Rule{noopRule}
 
 				apiRule := getAPIRuleFor(rules)
 				expectedNoopRuleMatchURL := fmt.Sprintf("<http|https>://%s<%s>", serviceHost, apiPath)
@@ -495,8 +571,8 @@ var _ = Describe("Factory", func() {
 
 			It("should produce patch containing VS to update, AR to create, AR to update & AR to delete", func() {
 				oauthConfigJSON := fmt.Sprintf(`{"required_scope": [%s]}`, toCSVList(apiScopes))
-				oauth := &gatewayv1alpha1.Authenticator{
-					Handler: &gatewayv1alpha1.Handler{
+				oauth := &gatewayv1beta1.Authenticator{
+					Handler: &gatewayv1beta1.Handler{
 						Name: "oauth2_introspection",
 						Config: &runtime.RawExtension{
 							Raw: []byte(oauthConfigJSON),
@@ -504,20 +580,20 @@ var _ = Describe("Factory", func() {
 					},
 				}
 
-				strategies := []*gatewayv1alpha1.Authenticator{oauth}
+				strategies := []*gatewayv1beta1.Authenticator{oauth}
 
-				noop := []*gatewayv1alpha1.Authenticator{
+				noop := []*gatewayv1beta1.Authenticator{
 					{
-						Handler: &gatewayv1alpha1.Handler{
+						Handler: &gatewayv1beta1.Handler{
 							Name: "noop",
 						},
 					},
 				}
 
-				noopRule := getRuleFor(headersAPIPath, apiMethods, []*gatewayv1alpha1.Mutator{}, noop)
-				allowRule := getRuleFor(oauthAPIPath, apiMethods, []*gatewayv1alpha1.Mutator{}, strategies)
+				noopRule := getRuleFor(headersAPIPath, apiMethods, []*gatewayv1beta1.Mutator{}, noop)
+				allowRule := getRuleFor(oauthAPIPath, apiMethods, []*gatewayv1beta1.Mutator{}, strategies)
 
-				rules := []gatewayv1alpha1.Rule{noopRule, allowRule}
+				rules := []gatewayv1beta1.Rule{noopRule, allowRule}
 
 				apiRule := getAPIRuleFor(rules)
 
@@ -600,8 +676,8 @@ var _ = Describe("Factory", func() {
 	})
 })
 
-func getRuleFor(path string, methods []string, mutators []*gatewayv1alpha1.Mutator, accessStrategies []*gatewayv1alpha1.Authenticator) gatewayv1alpha1.Rule {
-	return gatewayv1alpha1.Rule{
+func getRuleFor(path string, methods []string, mutators []*gatewayv1beta1.Mutator, accessStrategies []*gatewayv1beta1.Authenticator) gatewayv1beta1.Rule {
+	return gatewayv1beta1.Rule{
 		Path:             path,
 		Methods:          methods,
 		Mutators:         mutators,
@@ -609,8 +685,18 @@ func getRuleFor(path string, methods []string, mutators []*gatewayv1alpha1.Mutat
 	}
 }
 
-func getAPIRuleFor(rules []gatewayv1alpha1.Rule) *gatewayv1alpha1.APIRule {
-	return &gatewayv1alpha1.APIRule{
+func getRuleWithServiceFor(path string, methods []string, mutators []*gatewayv1beta1.Mutator, accessStrategies []*gatewayv1beta1.Authenticator, service *gatewayv1beta1.Service) gatewayv1beta1.Rule {
+	return gatewayv1beta1.Rule{
+		Path:             path,
+		Methods:          methods,
+		Mutators:         mutators,
+		AccessStrategies: accessStrategies,
+		Service:          service,
+	}
+}
+
+func getAPIRuleFor(rules []gatewayv1beta1.Rule) *gatewayv1beta1.APIRule {
+	return &gatewayv1beta1.APIRule{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      apiName,
 			UID:       apiUID,
@@ -620,13 +706,13 @@ func getAPIRuleFor(rules []gatewayv1alpha1.Rule) *gatewayv1alpha1.APIRule {
 			APIVersion: apiAPIVersion,
 			Kind:       apiKind,
 		},
-		Spec: gatewayv1alpha1.APIRuleSpec{
+		Spec: gatewayv1beta1.APIRuleSpec{
 			Gateway: &apiGateway,
-			Service: &gatewayv1alpha1.Service{
+			Service: &gatewayv1beta1.Service{
 				Name: &serviceName,
-				Host: &serviceHost,
 				Port: &servicePort,
 			},
+			Host:  &serviceHost,
 			Rules: rules,
 		},
 	}

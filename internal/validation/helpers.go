@@ -1,14 +1,15 @@
 package validation
 
 import (
+	"errors"
 	"net/url"
 	"regexp"
 	"strings"
 
-	gatewayv1alpha1 "github.com/kyma-incubator/api-gateway/api/v1alpha1"
+	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
 )
 
-func hasDuplicates(rules []gatewayv1alpha1.Rule) bool {
+func hasDuplicates(rules []gatewayv1beta1.Rule) bool {
 	encountered := map[string]bool{}
 	// Create a map of all unique elements.
 	for v := range rules {
@@ -17,22 +18,25 @@ func hasDuplicates(rules []gatewayv1alpha1.Rule) bool {
 	return len(encountered) != len(rules)
 }
 
-func isInvalidURL(toTest string) bool {
+func isInvalidURL(toTest string) (bool, error) {
 	if len(toTest) == 0 {
-		return true
+		return true, errors.New("value is empty")
 	}
 	_, err := url.ParseRequestURI(toTest)
 	if err != nil {
-		return true
+		return true, err
 	}
-	return false
+	return false, nil
 }
 
-func isUnsecuredURL(toTest string) bool {
+func isUnsecuredURL(toTest string) (bool, error) {
 	if len(toTest) == 0 {
-		return false
+		return true, errors.New("value is empty")
 	}
-	return strings.HasPrefix(toTest, "http://")
+	if strings.HasPrefix(toTest, "http://") {
+		return true, errors.New("value is unsecure")
+	}
+	return false, nil
 }
 
 //ValidateDomainName ?

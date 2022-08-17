@@ -6,4 +6,4 @@ metadata:
 spec:
   template:
     spec:
-      serviceAccountName: api-gateway-sa
+      serviceAccountName: controller-manager

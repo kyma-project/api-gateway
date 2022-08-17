@@ -10,7 +10,7 @@ import (
 
 	"testing"
 
-	gatewayv1alpha1 "github.com/kyma-incubator/api-gateway/api/v1alpha1"
+	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -39,10 +39,11 @@ var _ = Describe("Validate function", func() {
 
 		//given
 		testAllowList := []string{"foo.bar", "bar.foo", "kyma.local"}
-		input := &gatewayv1alpha1.APIRule{
-			Spec: gatewayv1alpha1.APIRuleSpec{
+		input := &gatewayv1beta1.APIRule{
+			Spec: gatewayv1beta1.APIRuleSpec{
 				Rules:   nil,
-				Service: getService(sampleServiceName, uint32(8080), sampleValidHost),
+				Service: getService(sampleServiceName, uint32(8080)),
+				Host:    getHost(sampleValidHost),
 			},
 		}
 
@@ -62,18 +63,19 @@ var _ = Describe("Validate function", func() {
 		sampleBlocklistedService := "kubernetes"
 		validHost := sampleBlocklistedService + "." + allowlistedDomain
 		testBlockList := map[string][]string{
-			"default": []string{sampleBlocklistedService, "kube-dns"},
-			"example": []string{"service"}}
-		input := &gatewayv1alpha1.APIRule{
+			"default": {sampleBlocklistedService, "kube-dns"},
+			"example": {"service"}}
+		input := &gatewayv1beta1.APIRule{
 			ObjectMeta: v1.ObjectMeta{
 				Namespace: "default",
 			},
-			Spec: gatewayv1alpha1.APIRuleSpec{
-				Service: getService(sampleBlocklistedService, uint32(443), validHost),
-				Rules: []gatewayv1alpha1.Rule{
+			Spec: gatewayv1beta1.APIRuleSpec{
+				Service: getService(sampleBlocklistedService, uint32(443)),
+				Host:    getHost(validHost),
+				Rules: []gatewayv1beta1.Rule{
 					{
 						Path: "/abc",
-						AccessStrategies: []*gatewayv1alpha1.Authenticator{
+						AccessStrategies: []*gatewayv1beta1.Authenticator{
 							toAuthenticator("jwt", simpleJWTConfig()),
 							toAuthenticator("noop", emptyConfig()),
 						},
@@ -97,15 +99,16 @@ var _ = Describe("Validate function", func() {
 		//given
 		invalidHost := sampleServiceName + "." + notAllowlistedDomain
 		testBlockList := map[string][]string{
-			"default": []string{"kubernetes", "kube-dns"},
-			"example": []string{"service"}}
-		input := &gatewayv1alpha1.APIRule{
-			Spec: gatewayv1alpha1.APIRuleSpec{
-				Service: getService(sampleServiceName, uint32(8080), invalidHost),
-				Rules: []gatewayv1alpha1.Rule{
+			"default": {"kubernetes", "kube-dns"},
+			"example": {"service"}}
+		input := &gatewayv1beta1.APIRule{
+			Spec: gatewayv1beta1.APIRuleSpec{
+				Service: getService(sampleServiceName, uint32(8080)),
+				Host:    getHost(invalidHost),
+				Rules: []gatewayv1beta1.Rule{
 					{
 						Path: "/abc",
-						AccessStrategies: []*gatewayv1alpha1.Authenticator{
+						AccessStrategies: []*gatewayv1beta1.Authenticator{
 							toAuthenticator("jwt", simpleJWTConfig()),
 							toAuthenticator("noop", emptyConfig()),
 						},
@@ -121,7 +124,7 @@ var _ = Describe("Validate function", func() {
 
 		//then
 		Expect(problems).To(HaveLen(1))
-		Expect(problems[0].AttributePath).To(Equal(".spec.service.host"))
+		Expect(problems[0].AttributePath).To(Equal(".spec.host"))
 		Expect(problems[0].Message).To(Equal("Host is not allowlisted"))
 	})
 
@@ -130,16 +133,17 @@ var _ = Describe("Validate function", func() {
 		blocklistedSubdomain := "api"
 		blockedhost := blocklistedSubdomain + "." + testDefaultDomain
 		testBlockList := map[string][]string{
-			"default": []string{"kubernetes", "kube-dns"},
-			"example": []string{"service"}}
+			"default": {"kubernetes", "kube-dns"},
+			"example": {"service"}}
 		testHostBlockList := []string{blockedhost}
-		input := &gatewayv1alpha1.APIRule{
-			Spec: gatewayv1alpha1.APIRuleSpec{
-				Service: getService(sampleServiceName, uint32(8080), blockedhost),
-				Rules: []gatewayv1alpha1.Rule{
+		input := &gatewayv1beta1.APIRule{
+			Spec: gatewayv1beta1.APIRuleSpec{
+				Service: getService(sampleServiceName, uint32(8080)),
+				Host:    getHost(blockedhost),
+				Rules: []gatewayv1beta1.Rule{
 					{
 						Path: "/abc",
-						AccessStrategies: []*gatewayv1alpha1.Authenticator{
+						AccessStrategies: []*gatewayv1beta1.Authenticator{
 							toAuthenticator("jwt", simpleJWTConfig()),
 							toAuthenticator("noop", emptyConfig()),
 						},
@@ -157,7 +161,7 @@ var _ = Describe("Validate function", func() {
 
 		//then
 		Expect(problems).To(HaveLen(1))
-		Expect(problems[0].AttributePath).To(Equal(".spec.service.host"))
+		Expect(problems[0].AttributePath).To(Equal(".spec.host"))
 		Expect(problems[0].Message).To(Equal(fmt.Sprintf("The subdomain %s is blocklisted for %s domain", blocklistedSubdomain, testDefaultDomain)))
 	})
 
@@ -168,16 +172,17 @@ var _ = Describe("Validate function", func() {
 		blockedhost := blocklistedSubdomain + "." + testDefaultDomain
 		customHost := blocklistedSubdomain + "." + customDomainName
 		testBlockList := map[string][]string{
-			"default": []string{"kubernetes", "kube-dns"},
-			"example": []string{"service"}}
+			"default": {"kubernetes", "kube-dns"},
+			"example": {"service"}}
 		testHostBlockList := []string{blockedhost}
-		input := &gatewayv1alpha1.APIRule{
-			Spec: gatewayv1alpha1.APIRuleSpec{
-				Service: getService(sampleServiceName, uint32(8080), customHost),
-				Rules: []gatewayv1alpha1.Rule{
+		input := &gatewayv1beta1.APIRule{
+			Spec: gatewayv1beta1.APIRuleSpec{
+				Service: getService(sampleServiceName, uint32(8080)),
+				Host:    getHost(customHost),
+				Rules: []gatewayv1beta1.Rule{
 					{
 						Path: "/abc",
-						AccessStrategies: []*gatewayv1alpha1.Authenticator{
+						AccessStrategies: []*gatewayv1beta1.Authenticator{
 							toAuthenticator("jwt", simpleJWTConfig()),
 							toAuthenticator("noop", emptyConfig()),
 						},
@@ -201,15 +206,16 @@ var _ = Describe("Validate function", func() {
 		//given
 		validHost := sampleServiceName + "." + notAllowlistedDomain
 		testBlockList := map[string][]string{
-			"default": []string{"kubernetes", "kube-dns"},
-			"example": []string{"service"}}
-		input := &gatewayv1alpha1.APIRule{
-			Spec: gatewayv1alpha1.APIRuleSpec{
-				Service: getService(sampleServiceName, uint32(8080), validHost),
-				Rules: []gatewayv1alpha1.Rule{
+			"default": {"kubernetes", "kube-dns"},
+			"example": {"service"}}
+		input := &gatewayv1beta1.APIRule{
+			Spec: gatewayv1beta1.APIRuleSpec{
+				Service: getService(sampleServiceName, uint32(8080)),
+				Host:    getHost(validHost),
+				Rules: []gatewayv1beta1.Rule{
 					{
 						Path: "/abc",
-						AccessStrategies: []*gatewayv1alpha1.Authenticator{
+						AccessStrategies: []*gatewayv1beta1.Authenticator{
 							toAuthenticator("jwt", simpleJWTConfig()),
 							toAuthenticator("noop", emptyConfig()),
 						},
@@ -231,15 +237,16 @@ var _ = Describe("Validate function", func() {
 		//given
 		invalidHost := sampleServiceName + "." + allowlistedDomain + "." + notAllowlistedDomain
 		testBlockList := map[string][]string{
-			"default": []string{"kubernetes", "kube-dns"},
-			"example": []string{"service"}}
-		input := &gatewayv1alpha1.APIRule{
-			Spec: gatewayv1alpha1.APIRuleSpec{
-				Service: getService(sampleServiceName, uint32(8080), invalidHost),
-				Rules: []gatewayv1alpha1.Rule{
+			"default": {"kubernetes", "kube-dns"},
+			"example": {"service"}}
+		input := &gatewayv1beta1.APIRule{
+			Spec: gatewayv1beta1.APIRuleSpec{
+				Service: getService(sampleServiceName, uint32(8080)),
+				Host:    getHost(invalidHost),
+				Rules: []gatewayv1beta1.Rule{
 					{
 						Path: "/abc",
-						AccessStrategies: []*gatewayv1alpha1.Authenticator{
+						AccessStrategies: []*gatewayv1beta1.Authenticator{
 							toAuthenticator("jwt", simpleJWTConfig()),
 							toAuthenticator("noop", emptyConfig()),
 						},
@@ -255,7 +262,7 @@ var _ = Describe("Validate function", func() {
 
 		//then
 		Expect(problems).To(HaveLen(1))
-		Expect(problems[0].AttributePath).To(Equal(".spec.service.host"))
+		Expect(problems[0].AttributePath).To(Equal(".spec.host"))
 		Expect(problems[0].Message).To(Equal("Host is not allowlisted"))
 	})
 
@@ -263,15 +270,16 @@ var _ = Describe("Validate function", func() {
 		//given
 		hostWithoutDomain := sampleServiceName
 		testBlockList := map[string][]string{
-			"default": []string{"kubernetes", "kube-dns"},
-			"example": []string{"service"}}
-		input := &gatewayv1alpha1.APIRule{
-			Spec: gatewayv1alpha1.APIRuleSpec{
-				Service: getService(sampleServiceName, uint32(8080), hostWithoutDomain),
-				Rules: []gatewayv1alpha1.Rule{
+			"default": {"kubernetes", "kube-dns"},
+			"example": {"service"}}
+		input := &gatewayv1beta1.APIRule{
+			Spec: gatewayv1beta1.APIRuleSpec{
+				Service: getService(sampleServiceName, uint32(8080)),
+				Host:    getHost(hostWithoutDomain),
+				Rules: []gatewayv1beta1.Rule{
 					{
 						Path: "/abc",
-						AccessStrategies: []*gatewayv1alpha1.Authenticator{
+						AccessStrategies: []*gatewayv1beta1.Authenticator{
 							toAuthenticator("jwt", simpleJWTConfig()),
 							toAuthenticator("noop", emptyConfig()),
 						},
@@ -287,7 +295,7 @@ var _ = Describe("Validate function", func() {
 
 		//then
 		Expect(problems).To(HaveLen(1))
-		Expect(problems[0].AttributePath).To(Equal(".spec.service.host"))
+		Expect(problems[0].AttributePath).To(Equal(".spec.host"))
 		Expect(problems[0].Message).To(Equal("Host does not contain a domain name and no default domain name is configured"))
 	})
 
@@ -295,15 +303,16 @@ var _ = Describe("Validate function", func() {
 		//given
 		hostWithoutDomain := sampleServiceName
 		testBlockList := map[string][]string{
-			"default": []string{"kubernetes", "kube-dns"},
-			"example": []string{"service"}}
-		input := &gatewayv1alpha1.APIRule{
-			Spec: gatewayv1alpha1.APIRuleSpec{
-				Service: getService(sampleServiceName, uint32(8080), hostWithoutDomain),
-				Rules: []gatewayv1alpha1.Rule{
+			"default": {"kubernetes", "kube-dns"},
+			"example": {"service"}}
+		input := &gatewayv1beta1.APIRule{
+			Spec: gatewayv1beta1.APIRuleSpec{
+				Service: getService(sampleServiceName, uint32(8080)),
+				Host:    getHost(hostWithoutDomain),
+				Rules: []gatewayv1beta1.Rule{
 					{
 						Path: "/abc",
-						AccessStrategies: []*gatewayv1alpha1.Authenticator{
+						AccessStrategies: []*gatewayv1beta1.Authenticator{
 							toAuthenticator("jwt", simpleJWTConfig()),
 							toAuthenticator("noop", emptyConfig()),
 						},
@@ -326,15 +335,16 @@ var _ = Describe("Validate function", func() {
 		//given
 		invalidHost := sampleServiceName + "." + allowlistedDomain + "." + allowlistedDomain
 		testBlockList := map[string][]string{
-			"default": []string{"kubernetes", "kube-dns"},
-			"example": []string{"service"}}
-		input := &gatewayv1alpha1.APIRule{
-			Spec: gatewayv1alpha1.APIRuleSpec{
-				Service: getService(sampleServiceName, uint32(8080), invalidHost),
-				Rules: []gatewayv1alpha1.Rule{
+			"default": {"kubernetes", "kube-dns"},
+			"example": {"service"}}
+		input := &gatewayv1beta1.APIRule{
+			Spec: gatewayv1beta1.APIRuleSpec{
+				Service: getService(sampleServiceName, uint32(8080)),
+				Host:    getHost(invalidHost),
+				Rules: []gatewayv1beta1.Rule{
 					{
 						Path: "/abc",
-						AccessStrategies: []*gatewayv1alpha1.Authenticator{
+						AccessStrategies: []*gatewayv1beta1.Authenticator{
 							toAuthenticator("jwt", simpleJWTConfig()),
 							toAuthenticator("noop", emptyConfig()),
 						},
@@ -350,7 +360,7 @@ var _ = Describe("Validate function", func() {
 
 		//then
 		Expect(problems).To(HaveLen(1))
-		Expect(problems[0].AttributePath).To(Equal(".spec.service.host"))
+		Expect(problems[0].AttributePath).To(Equal(".spec.host"))
 		Expect(problems[0].Message).To(Equal("Host is not allowlisted"))
 	})
 
@@ -361,16 +371,17 @@ var _ = Describe("Validate function", func() {
 		existingVS.OwnerReferences = []v1.OwnerReference{{UID: "12345"}}
 		existingVS.Spec.Hosts = []string{occupiedHost}
 
-		input := &gatewayv1alpha1.APIRule{
+		input := &gatewayv1beta1.APIRule{
 			ObjectMeta: v1.ObjectMeta{
 				UID: "67890",
 			},
-			Spec: gatewayv1alpha1.APIRuleSpec{
-				Service: getService(sampleServiceName, uint32(8080), occupiedHost),
-				Rules: []gatewayv1alpha1.Rule{
+			Spec: gatewayv1beta1.APIRuleSpec{
+				Service: getService(sampleServiceName, uint32(8080)),
+				Host:    getHost(occupiedHost),
+				Rules: []gatewayv1beta1.Rule{
 					{
 						Path: "/abc",
-						AccessStrategies: []*gatewayv1alpha1.Authenticator{
+						AccessStrategies: []*gatewayv1beta1.Authenticator{
 							toAuthenticator("jwt", simpleJWTConfig()),
 							toAuthenticator("noop", emptyConfig()),
 						},
@@ -382,10 +393,10 @@ var _ = Describe("Validate function", func() {
 		//when
 		problems := (&APIRule{
 			DomainAllowList: testDomainAllowlist,
-		}).Validate(input, networkingv1beta1.VirtualServiceList{Items: []networkingv1beta1.VirtualService{existingVS}})
+		}).Validate(input, networkingv1beta1.VirtualServiceList{Items: []*networkingv1beta1.VirtualService{&existingVS}})
 
 		Expect(problems).To(HaveLen(1))
-		Expect(problems[0].AttributePath).To(Equal(".spec.service.host"))
+		Expect(problems[0].AttributePath).To(Equal(".spec.host"))
 		Expect(problems[0].Message).To(Equal("This host is occupied by another Virtual Service"))
 	})
 
@@ -396,16 +407,17 @@ var _ = Describe("Validate function", func() {
 		existingVS.OwnerReferences = []v1.OwnerReference{{UID: "12345"}}
 		existingVS.Spec.Hosts = []string{occupiedHost}
 
-		input := &gatewayv1alpha1.APIRule{
+		input := &gatewayv1beta1.APIRule{
 			ObjectMeta: v1.ObjectMeta{
 				UID: "12345",
 			},
-			Spec: gatewayv1alpha1.APIRuleSpec{
-				Service: getService(sampleServiceName, uint32(8080), occupiedHost),
-				Rules: []gatewayv1alpha1.Rule{
+			Spec: gatewayv1beta1.APIRuleSpec{
+				Service: getService(sampleServiceName, uint32(8080)),
+				Host:    getHost(occupiedHost),
+				Rules: []gatewayv1beta1.Rule{
 					{
 						Path: "/abc",
-						AccessStrategies: []*gatewayv1alpha1.Authenticator{
+						AccessStrategies: []*gatewayv1beta1.Authenticator{
 							toAuthenticator("jwt", simpleJWTConfig()),
 							toAuthenticator("noop", emptyConfig()),
 						},
@@ -417,39 +429,110 @@ var _ = Describe("Validate function", func() {
 		//when
 		problems := (&APIRule{
 			DomainAllowList: testDomainAllowlist,
-		}).Validate(input, networkingv1beta1.VirtualServiceList{Items: []networkingv1beta1.VirtualService{existingVS}})
+		}).Validate(input, networkingv1beta1.VirtualServiceList{Items: []*networkingv1beta1.VirtualService{&existingVS}})
 
 		Expect(problems).To(HaveLen(0))
 	})
 
-	It("Should detect several problems", func() {
+	It("Should return an error when no service is defined for rule with no service on spec level", func() {
 		//given
-		input := &gatewayv1alpha1.APIRule{
-			Spec: gatewayv1alpha1.APIRuleSpec{
-				Service: getService(sampleServiceName, uint32(8080), sampleValidHost),
-				Rules: []gatewayv1alpha1.Rule{
+		input := &gatewayv1beta1.APIRule{
+			Spec: gatewayv1beta1.APIRuleSpec{
+				Host: getHost(sampleValidHost),
+				Rules: []gatewayv1beta1.Rule{
 					{
 						Path: "/abc",
-						AccessStrategies: []*gatewayv1alpha1.Authenticator{
+						AccessStrategies: []*gatewayv1beta1.Authenticator{
+							toAuthenticator("noop", emptyConfig()),
+						},
+					},
+				},
+			},
+		}
+		//when
+		problems := (&APIRule{
+			DomainAllowList: testDomainAllowlist,
+		}).Validate(input, networkingv1beta1.VirtualServiceList{})
+
+		//then
+		Expect(problems).To(HaveLen(1))
+		Expect(problems[0].AttributePath).To(Equal(".spec.rules[0].service"))
+		Expect(problems[0].Message).To(Equal("No service defined with no main service on spec level"))
+	})
+
+	It("Should return an error when rule is defined with blocklisted service", func() {
+		//given
+		sampleBlocklistedService := "kubernetes"
+		validHost := sampleBlocklistedService + "." + allowlistedDomain
+		testBlockList := map[string][]string{
+			"default": {sampleBlocklistedService, "kube-dns"},
+			"example": {"service"}}
+
+		input := &gatewayv1beta1.APIRule{
+			ObjectMeta: v1.ObjectMeta{
+				Namespace: "default",
+			},
+			Spec: gatewayv1beta1.APIRuleSpec{
+				Host: getHost(validHost),
+				Rules: []gatewayv1beta1.Rule{
+					{
+						Path: "/abc",
+						AccessStrategies: []*gatewayv1beta1.Authenticator{
+							toAuthenticator("noop", emptyConfig()),
+						},
+						Service: getService(sampleServiceName, uint32(8080)),
+					},
+					{
+						Path: "/abcd",
+						AccessStrategies: []*gatewayv1beta1.Authenticator{
+							toAuthenticator("noop", emptyConfig()),
+						},
+						Service: getService(sampleBlocklistedService, uint32(8080)),
+					},
+				},
+			},
+		}
+		//when
+		problems := (&APIRule{
+			ServiceBlockList: testBlockList,
+			DomainAllowList:  testDomainAllowlist,
+		}).Validate(input, networkingv1beta1.VirtualServiceList{})
+
+		//then
+		Expect(problems).To(HaveLen(1))
+		Expect(problems[0].AttributePath).To(Equal(".spec.rules[1].service.name"))
+		Expect(problems[0].Message).To(Equal(fmt.Sprintf("Service %s in namespace default is blocklisted", sampleBlocklistedService)))
+	})
+
+	It("Should detect several problems", func() {
+		//given
+		input := &gatewayv1beta1.APIRule{
+			Spec: gatewayv1beta1.APIRuleSpec{
+				Service: getService(sampleServiceName, uint32(8080)),
+				Host:    getHost(sampleValidHost),
+				Rules: []gatewayv1beta1.Rule{
+					{
+						Path: "/abc",
+						AccessStrategies: []*gatewayv1beta1.Authenticator{
 							toAuthenticator("noop", simpleJWTConfig()),
 							toAuthenticator("jwt", emptyConfig()),
 						},
 					},
 					{
 						Path: "/abc",
-						AccessStrategies: []*gatewayv1alpha1.Authenticator{
+						AccessStrategies: []*gatewayv1beta1.Authenticator{
 							toAuthenticator("anonymous", simpleJWTConfig()),
 						},
 					},
 					{
 						Path: "/def",
-						AccessStrategies: []*gatewayv1alpha1.Authenticator{
+						AccessStrategies: []*gatewayv1beta1.Authenticator{
 							toAuthenticator("non-existing", nil),
 						},
 					},
 					{
 						Path:             "/ghi",
-						AccessStrategies: []*gatewayv1alpha1.Authenticator{},
+						AccessStrategies: []*gatewayv1beta1.Authenticator{},
 					},
 				},
 			},
@@ -462,7 +545,7 @@ var _ = Describe("Validate function", func() {
 		//then
 		Expect(problems).To(HaveLen(6))
 		Expect(problems[0].AttributePath).To(Equal(".spec.rules"))
-		Expect(problems[0].Message).To(Equal("multiple rules defined for the same path"))
+		Expect(problems[0].Message).To(Equal("Multiple rules defined for the same path"))
 
 		Expect(problems[1].AttributePath).To(Equal(".spec.rules[0].accessStrategies[0].config"))
 		Expect(problems[1].Message).To(Equal("strategy: noop does not support configuration"))
@@ -488,29 +571,30 @@ var _ = Describe("Validate function", func() {
 		existingVS.OwnerReferences = []v1.OwnerReference{{UID: "12345"}}
 		existingVS.Spec.Hosts = []string{occupiedHost}
 
-		input := &gatewayv1alpha1.APIRule{
+		input := &gatewayv1beta1.APIRule{
 			ObjectMeta: v1.ObjectMeta{
 				UID: "67890",
 			},
-			Spec: gatewayv1alpha1.APIRuleSpec{
-				Service: getService(sampleServiceName, uint32(8080), notOccupiedHost),
-				Rules: []gatewayv1alpha1.Rule{
+			Spec: gatewayv1beta1.APIRuleSpec{
+				Service: getService(sampleServiceName, uint32(8080)),
+				Host:    getHost(notOccupiedHost),
+				Rules: []gatewayv1beta1.Rule{
 					{
 						Path: "/abc",
-						AccessStrategies: []*gatewayv1alpha1.Authenticator{
+						AccessStrategies: []*gatewayv1beta1.Authenticator{
 							toAuthenticator("jwt", simpleJWTConfig()),
 							toAuthenticator("noop", emptyConfig()),
 						},
 					},
 					{
 						Path: "/bcd",
-						AccessStrategies: []*gatewayv1alpha1.Authenticator{
+						AccessStrategies: []*gatewayv1beta1.Authenticator{
 							toAuthenticator("anonymous", emptyConfig()),
 						},
 					},
 					{
 						Path: "/def",
-						AccessStrategies: []*gatewayv1alpha1.Authenticator{
+						AccessStrategies: []*gatewayv1beta1.Authenticator{
 							toAuthenticator("allow", nil),
 						},
 					},
@@ -520,7 +604,7 @@ var _ = Describe("Validate function", func() {
 		//when
 		problems := (&APIRule{
 			DomainAllowList: testDomainAllowlist,
-		}).Validate(input, networkingv1beta1.VirtualServiceList{Items: []networkingv1beta1.VirtualService{existingVS}})
+		}).Validate(input, networkingv1beta1.VirtualServiceList{Items: []*networkingv1beta1.VirtualService{&existingVS}})
 
 		//then
 		Expect(problems).To(HaveLen(0))
@@ -533,7 +617,7 @@ var _ = Describe("Validator for", func() {
 
 		It("Should fail with non-empty config", func() {
 			//given
-			handler := &gatewayv1alpha1.Handler{Name: "noop", Config: simpleJWTConfig("http://atgo.org")}
+			handler := &gatewayv1beta1.Handler{Name: "noop", Config: simpleJWTConfig("http://atgo.org")}
 
 			//when
 			problems := (&noConfigAccStrValidator{}).Validate("some.attribute", handler)
@@ -546,7 +630,7 @@ var _ = Describe("Validator for", func() {
 
 		It("Should succeed with empty config: {}", func() {
 			//given
-			handler := &gatewayv1alpha1.Handler{Name: "noop", Config: emptyConfig()}
+			handler := &gatewayv1beta1.Handler{Name: "noop", Config: emptyConfig()}
 
 			//when
 			problems := (&noConfigAccStrValidator{}).Validate("some.attribute", handler)
@@ -557,7 +641,7 @@ var _ = Describe("Validator for", func() {
 
 		It("Should succeed with null config", func() {
 			//given
-			handler := &gatewayv1alpha1.Handler{Name: "noop", Config: nil}
+			handler := &gatewayv1beta1.Handler{Name: "noop", Config: nil}
 
 			//when
 			problems := (&noConfigAccStrValidator{}).Validate("some.attribute", handler)
@@ -571,7 +655,7 @@ var _ = Describe("Validator for", func() {
 
 		It("Should fail with empty config", func() {
 			//given
-			handler := &gatewayv1alpha1.Handler{Name: "jwt", Config: emptyConfig()}
+			handler := &gatewayv1beta1.Handler{Name: "jwt", Config: emptyConfig()}
 
 			//when
 			problems := (&jwtAccStrValidator{}).Validate("some.attribute", handler)
@@ -584,7 +668,7 @@ var _ = Describe("Validator for", func() {
 
 		It("Should fail for config with invalid trustedIssuers and JWKSUrls", func() {
 			//given
-			handler := &gatewayv1alpha1.Handler{Name: "jwt", Config: simpleJWTConfig("a t g o")}
+			handler := &gatewayv1beta1.Handler{Name: "jwt", Config: simpleJWTConfig("a t g o")}
 
 			//when
 			problems := (&jwtAccStrValidator{}).Validate("some.attribute", handler)
@@ -592,14 +676,14 @@ var _ = Describe("Validator for", func() {
 			//then
 			Expect(problems).To(HaveLen(2))
 			Expect(problems[0].AttributePath).To(Equal("some.attribute.config.trusted_issuers[0]"))
-			Expect(problems[0].Message).To(Equal("value is empty or not a valid url"))
+			Expect(problems[0].Message).To(ContainSubstring("value is empty or not a valid url"))
 			Expect(problems[1].AttributePath).To(Equal("some.attribute.config.jwks_urls[0]"))
-			Expect(problems[1].Message).To(Equal("value is empty or not a valid url"))
+			Expect(problems[1].Message).To(ContainSubstring("value is empty or not a valid url"))
 		})
 
 		It("Should fail for config with plain HTTP JWKSUrls and trustedIssuers", func() {
 			//given
-			handler := &gatewayv1alpha1.Handler{Name: "jwt", Config: testURLJWTConfig("http://issuer.test/.well-known/jwks.json", "http://issuer.test/")}
+			handler := &gatewayv1beta1.Handler{Name: "jwt", Config: testURLJWTConfig("http://issuer.test/.well-known/jwks.json", "http://issuer.test/")}
 
 			//when
 			problems := (&jwtAccStrValidator{}).Validate("some.attribute", handler)
@@ -607,14 +691,14 @@ var _ = Describe("Validator for", func() {
 			//then
 			Expect(problems).To(HaveLen(2))
 			Expect(problems[0].AttributePath).To(Equal("some.attribute.config.trusted_issuers[0]"))
-			Expect(problems[0].Message).To(Equal("value is not a secured url"))
+			Expect(problems[0].Message).To(ContainSubstring("value is not a secured url"))
 			Expect(problems[1].AttributePath).To(Equal("some.attribute.config.jwks_urls[0]"))
-			Expect(problems[1].Message).To(Equal("value is not a secured url"))
+			Expect(problems[1].Message).To(ContainSubstring("value is not a secured url"))
 		})
 
 		It("Should succeed for config with file JWKSUrls and HTTPS trustedIssuers", func() {
 			//given
-			handler := &gatewayv1alpha1.Handler{Name: "jwt", Config: testURLJWTConfig("file://.well-known/jwks.json", "https://issuer.test/")}
+			handler := &gatewayv1beta1.Handler{Name: "jwt", Config: testURLJWTConfig("file://.well-known/jwks.json", "https://issuer.test/")}
 
 			//when
 			problems := (&jwtAccStrValidator{}).Validate("some.attribute", handler)
@@ -625,7 +709,7 @@ var _ = Describe("Validator for", func() {
 
 		It("Should succeed for config with HTTPS JWKSUrls and trustedIssuers", func() {
 			//given
-			handler := &gatewayv1alpha1.Handler{Name: "jwt", Config: testURLJWTConfig("https://issuer.test/.well-known/jwks.json", "https://issuer.test/")}
+			handler := &gatewayv1beta1.Handler{Name: "jwt", Config: testURLJWTConfig("https://issuer.test/.well-known/jwks.json", "https://issuer.test/")}
 
 			//when
 			problems := (&jwtAccStrValidator{}).Validate("some.attribute", handler)
@@ -636,7 +720,7 @@ var _ = Describe("Validator for", func() {
 
 		It("Should fail for invalid JSON", func() {
 			//given
-			handler := &gatewayv1alpha1.Handler{Name: "jwt", Config: &runtime.RawExtension{Raw: []byte("/abc]")}}
+			handler := &gatewayv1beta1.Handler{Name: "jwt", Config: &runtime.RawExtension{Raw: []byte("/abc]")}}
 
 			//when
 			problems := (&jwtAccStrValidator{}).Validate("some.attribute", handler)
@@ -649,7 +733,7 @@ var _ = Describe("Validator for", func() {
 
 		It("Should succeed with valid config", func() {
 			//given
-			handler := &gatewayv1alpha1.Handler{Name: "jwt", Config: simpleJWTConfig()}
+			handler := &gatewayv1beta1.Handler{Name: "jwt", Config: simpleJWTConfig()}
 
 			//when
 			problems := (&jwtAccStrValidator{}).Validate("some.attribute", handler)
@@ -662,12 +746,12 @@ var _ = Describe("Validator for", func() {
 
 func emptyConfig() *runtime.RawExtension {
 	return getRawConfig(
-		&gatewayv1alpha1.JWTAccStrConfig{})
+		&gatewayv1beta1.JWTAccStrConfig{})
 }
 
 func simpleJWTConfig(trustedIssuers ...string) *runtime.RawExtension {
 	return getRawConfig(
-		&gatewayv1alpha1.JWTAccStrConfig{
+		&gatewayv1beta1.JWTAccStrConfig{
 			JWKSUrls:       trustedIssuers,
 			TrustedIssuers: trustedIssuers,
 			RequiredScopes: []string{"atgo"},
@@ -676,14 +760,14 @@ func simpleJWTConfig(trustedIssuers ...string) *runtime.RawExtension {
 
 func testURLJWTConfig(JWKSUrls string, trustedIssuers string) *runtime.RawExtension {
 	return getRawConfig(
-		&gatewayv1alpha1.JWTAccStrConfig{
+		&gatewayv1beta1.JWTAccStrConfig{
 			JWKSUrls:       []string{JWKSUrls},
 			TrustedIssuers: []string{trustedIssuers},
 			RequiredScopes: []string{"atgo"},
 		})
 }
 
-func getRawConfig(config *gatewayv1alpha1.JWTAccStrConfig) *runtime.RawExtension {
+func getRawConfig(config *gatewayv1beta1.JWTAccStrConfig) *runtime.RawExtension {
 	bytes, err := json.Marshal(config)
 	Expect(err).To(BeNil())
 	return &runtime.RawExtension{
@@ -691,19 +775,22 @@ func getRawConfig(config *gatewayv1alpha1.JWTAccStrConfig) *runtime.RawExtension
 	}
 }
 
-func toAuthenticator(name string, config *runtime.RawExtension) *gatewayv1alpha1.Authenticator {
-	return &gatewayv1alpha1.Authenticator{
-		Handler: &gatewayv1alpha1.Handler{
+func toAuthenticator(name string, config *runtime.RawExtension) *gatewayv1beta1.Authenticator {
+	return &gatewayv1beta1.Authenticator{
+		Handler: &gatewayv1beta1.Handler{
 			Name:   name,
 			Config: config,
 		},
 	}
 }
 
-func getService(serviceName string, servicePort uint32, serviceHost string) *gatewayv1alpha1.Service {
-	return &gatewayv1alpha1.Service{
+func getService(serviceName string, servicePort uint32) *gatewayv1beta1.Service {
+	return &gatewayv1beta1.Service{
 		Name: &serviceName,
 		Port: &servicePort,
-		Host: &serviceHost,
 	}
+}
+
+func getHost(host string) *string {
+	return &host
 }

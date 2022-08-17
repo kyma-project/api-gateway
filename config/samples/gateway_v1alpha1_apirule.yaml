@@ -1,0 +1,20 @@
+apiVersion: gateway.kyma-project.io/v1alpha1
+kind: APIRule
+metadata:
+  name: orders-service-v1alpha1
+  namespace: default
+  labels:
+    app: httpbin
+    example: httpbin
+spec:
+  service:
+    host: multiplesvc.testHost.com
+    name: httpbin
+    port: 8000
+  gateway: kyma-system/kyma-gateway
+  rules:
+    - path: /.*
+      methods: ["GET","POST"]
+      accessStrategies:
+        - handler: allow
+      mutators: []

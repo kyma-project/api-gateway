@@ -8,5 +8,5 @@ roleRef:
   name: leader-election-role
 subjects:
 - kind: ServiceAccount
-  name: api-gateway-api-gateway-sa
-  namespace: api-gateway-system
+  name: controller-manager
+  namespace: system

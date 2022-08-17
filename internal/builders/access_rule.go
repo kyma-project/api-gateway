@@ -1,7 +1,7 @@
 package builders
 
 import (
-	gatewayv1alpha1 "github.com/kyma-incubator/api-gateway/api/v1alpha1"
+	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
 	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
@@ -227,7 +227,7 @@ func (a *authenticators) Get() []*rulev1alpha1.Authenticator {
 	return a.value
 }
 
-func (a *authenticators) From(val []*gatewayv1alpha1.Authenticator) *authenticators {
+func (a *authenticators) From(val []*gatewayv1beta1.Authenticator) *authenticators {
 	if val == nil {
 		a.value = nil
 	} else {
@@ -264,7 +264,7 @@ func (m *mutators) Get() []*rulev1alpha1.Mutator {
 	return m.value
 }
 
-func (m *mutators) From(val []*gatewayv1alpha1.Mutator) *mutators {
+func (m *mutators) From(val []*gatewayv1beta1.Mutator) *mutators {
 	if val == nil {
 		m.value = nil
 	} else {
@@ -281,7 +281,7 @@ func (m *mutators) From(val []*gatewayv1alpha1.Mutator) *mutators {
 	return m
 }
 
-func convertHandler(src *gatewayv1alpha1.Handler) *rulev1alpha1.Handler {
+func convertHandler(src *gatewayv1beta1.Handler) *rulev1alpha1.Handler {
 	if src == nil {
 		return nil
 	}

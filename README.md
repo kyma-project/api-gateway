@@ -15,6 +15,7 @@ The API Gateway Controller manages Istio VirtualServices and Oathkeeper Rule. Th
 ## Details
 
 ### Deploy to the cluster
+
 Deploys the officially released Controller version to the cluster
 
 - ensure the access to a Kubernetes cluster is configured in `~/.kube/config`
@@ -23,6 +24,7 @@ Deploys the officially released Controller version to the cluster
 - `make deploy` to deploy controller
 
 ### Run the controller locally
+
 This procedure is the fastest way to run the Controller, useful for development purposes
 
 - start Minikube or ensure the access to a Kubernetes cluster is configured in `~/.kube/config`
@@ -31,6 +33,7 @@ This procedure is the fastest way to run the Controller, useful for development 
 - `go run main.go --jwks-uri="$JWKS_URI" --oathkeeper-svc-address="$OATHKEEPER_SVC_ADDRESS" --oathkeeper-svc-port=$OATHKEEPER_SVC_PORT --domain-allowlist=$DOMAIN_ALLOWLIST`
 
 ### Deploy a custom Controller build to the local Minikube cluster
+
 This procedure is useful to test your own Controller build end-to-end in a local Minikube cluster.
 
 - start Minikube
@@ -62,7 +65,8 @@ This procedure is useful to test your own Controller build end-to-end in a local
 
 The `apirule.gateway.kyma-project.io` CustomResourceDefinition (CRD) is a detailed description of the kind of data and the format the API Gateway Controller listens for. To get the up-to-date CRD and show
 the output in the `yaml` format, run this command:
-```
+
+``` sh
 kubectl get crd apirule.gateway.kyma-project.io -o yaml
 ```
 
@@ -70,7 +74,7 @@ kubectl get crd apirule.gateway.kyma-project.io -o yaml
 
 This is a sample custom resource (CR) that the API-gateway listens for to expose a service.
 
-```
+``` yaml
 apiVersion: gateway.kyma-project.io/v1alpha1
 kind: APIRule
 metadata:

@@ -1,4 +1,5 @@
 /*
+Copyright 2022.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -21,24 +22,38 @@ import (
 	"os"
 	"strings"
 
-	gatewayv1alpha1 "github.com/kyma-incubator/api-gateway/api/v1alpha1"
-	"istio.io/api/networking/v1beta1"
+	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
+	// to ensure that exec-entrypoint and run can make use of them.
+	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
-	"github.com/pkg/errors"
-
-	"github.com/kyma-incubator/api-gateway/internal/processing"
-
-	"github.com/kyma-incubator/api-gateway/controllers"
-	"github.com/kyma-incubator/api-gateway/internal/validation"
-	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
-	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	"k8s.io/apimachinery/pkg/runtime"
+	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
-	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
+
+	"istio.io/api/networking/v1beta1"
+
+	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
+	"github.com/vrischmann/envconfig"
+	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
+
+	gatewayv1alpha1 "github.com/kyma-incubator/api-gateway/api/v1alpha1"
+	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
+	"github.com/kyma-incubator/api-gateway/controllers"
+	"github.com/kyma-incubator/api-gateway/internal/processing"
+	"github.com/kyma-incubator/api-gateway/internal/validation"
+	"github.com/pkg/errors"
+	//+kubebuilder:scaffold:imports
 )
+
+type config struct {
+	SystemNamespace    string `envconfig:"default=kyma-system"`
+	WebhookServiceName string `envconfig:"default=api-gateway-webhook-service"`
+	WebhookSecretName  string `envconfig:"default=api-gateway-webhook-service"`
+	WebhookPort        int    `envconfig:"default=9443"`
+}
 
 var (
 	scheme   = runtime.NewScheme()
@@ -46,11 +61,14 @@ var (
 )
 
 func init() {
-	_ = clientgoscheme.AddToScheme(scheme)
-	_ = gatewayv1alpha1.AddToScheme(scheme)
-	_ = networkingv1beta1.AddToScheme(scheme)
-	_ = rulev1alpha1.AddToScheme(scheme)
-	// +kubebuilder:scaffold:scheme
+	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
+
+	utilruntime.Must(gatewayv1alpha1.AddToScheme(scheme))
+	utilruntime.Must(gatewayv1beta1.AddToScheme(scheme))
+
+	utilruntime.Must(networkingv1beta1.AddToScheme(scheme))
+	utilruntime.Must(rulev1alpha1.AddToScheme(scheme))
+	//+kubebuilder:scaffold:scheme
 }
 
 func main() {
@@ -108,11 +126,28 @@ func main() {
 		}
 	}
 
+	opts := zap.Options{
+		Development: true,
+	}
+	opts.BindFlags(flag.CommandLine)
+	flag.Parse()
+
+	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
+
+	cfg := &config{}
+	setupLog.Info("reading webhook configuration")
+	if err := envconfig.Init(cfg); err != nil {
+		panic(errors.Wrap(err, "while reading env variables"))
+	}
+
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:                 scheme,
 		MetricsBindAddress:     metricsAddr,
+		Port:                   9443,
 		HealthProbeBindAddress: healthProbeAddr,
 		LeaderElection:         enableLeaderElection,
+		LeaderElectionID:       "69358922.kyma-project.io",
+		CertDir:                "/tmp/k8s-webhook-server/serving-certs",
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")
@@ -125,7 +160,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err = (&controllers.APIReconciler{
+	if err = (&controllers.APIRuleReconciler{
 		Client:            mgr.GetClient(),
 		Log:               ctrl.Log.WithName("controllers").WithName("Api"),
 		OathkeeperSvc:     oathkeeperSvcAddr,
@@ -141,11 +176,17 @@ func main() {
 			AllowOrigins: getStringMatch(corsAllowOrigins),
 		},
 		GeneratedObjectsLabels: additionalLabels,
+		Scheme:                 mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "Api")
+		setupLog.Error(err, "unable to create controller", "controller", "APIRule")
 		os.Exit(1)
 	}
-	// +kubebuilder:scaffold:builder
+	if err = (&gatewayv1beta1.APIRule{}).SetupWebhookWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create webhook", "webhook", "APIRule")
+		os.Exit(1)
+	}
+	//+kubebuilder:scaffold:builder
+
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
 		setupLog.Error(err, "unable to set up health check")
 		os.Exit(1)

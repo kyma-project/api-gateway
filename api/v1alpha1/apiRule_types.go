@@ -54,7 +54,7 @@ type APIRuleStatus struct {
 }
 
 //APIRule is the Schema for the apis ApiRule
-// +kubebuilder:storageversion
+// +kubebuilder:deprecatedversion:warning=v1alpha1 is deprecated as of Kyma 2.5.X
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 type APIRule struct {

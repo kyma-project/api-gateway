@@ -11,7 +11,7 @@ import (
 
 	"encoding/json"
 
-	gatewayv1alpha1 "github.com/kyma-incubator/api-gateway/api/v1alpha1"
+	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
@@ -47,7 +47,7 @@ var _ = Describe("APIRule Controller", func() {
 	var testIssuer = "https://oauth2.example.com/"
 	var testMethods = []string{"GET", "PUT"}
 	var testScopes = []string{"foo", "bar"}
-	var testMutators = []*gatewayv1alpha1.Mutator{
+	var testMutators = []*gatewayv1beta1.Mutator{
 		{
 			Handler: noConfigHandler("noop"),
 		},
@@ -79,7 +79,7 @@ var _ = Describe("APIRule Controller", func() {
 
 			By("Create APIRule")
 
-			instance := testInstance(apiRuleName, testNamespace, testServiceName, testServiceHost, testServicePort, []gatewayv1alpha1.Rule{rule1, rule2, rule3})
+			instance := testInstance(apiRuleName, testNamespace, testServiceName, testServiceHost, testServicePort, []gatewayv1beta1.Rule{rule1, rule2, rule3})
 			err := c.Create(context.TODO(), instance)
 
 			if apierrors.IsInvalid(err) {
@@ -103,11 +103,11 @@ var _ = Describe("APIRule Controller", func() {
 			}
 
 			By("Update APIRule")
-			existingInstance := gatewayv1alpha1.APIRule{}
+			existingInstance := gatewayv1beta1.APIRule{}
 			err = c.Get(context.TODO(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &existingInstance)
 			Expect(err).NotTo(HaveOccurred())
 			rule4 := testRule("/rule4", []string{"POST"}, testMutators, noConfigHandler("cookie_session"))
-			existingInstance.Spec.Rules = []gatewayv1alpha1.Rule{rule1, rule4}
+			existingInstance.Spec.Rules = []gatewayv1beta1.Rule{rule1, rule4}
 			newServiceName := testServiceName + "new"
 			newServicePort := testServicePort + 3
 			existingInstance.Spec.Service.Name = &newServiceName
@@ -141,7 +141,7 @@ var _ = Describe("APIRule Controller", func() {
 			apiRuleName := generateTestName(testNameBase, testIDLength)
 			testServiceHost := "httpbin.kyma.local"
 			rule := testRule(testPath, testMethods, testMutators, invalidConfig)
-			instance := testInstance(apiRuleName, testNamespace, testServiceName, testServiceHost, testServicePort, []gatewayv1alpha1.Rule{rule})
+			instance := testInstance(apiRuleName, testNamespace, testServiceName, testServiceHost, testServicePort, []gatewayv1beta1.Rule{rule})
 			instance.Spec.Rules = append(instance.Spec.Rules, instance.Spec.Rules[0]) //Duplicate entry
 			instance.Spec.Rules = append(instance.Spec.Rules, instance.Spec.Rules[0]) //Duplicate entry
 
@@ -158,12 +158,12 @@ var _ = Describe("APIRule Controller", func() {
 			Eventually(requests, timeout).Should(Receive(Equal(expectedRequest)))
 
 			//Verify APIRule
-			created := gatewayv1alpha1.APIRule{}
+			created := gatewayv1beta1.APIRule{}
 			err = c.Get(context.TODO(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &created)
 			Expect(err).NotTo(HaveOccurred())
-			Expect(created.Status.APIRuleStatus.Code).To(Equal(gatewayv1alpha1.StatusError))
+			Expect(created.Status.APIRuleStatus.Code).To(Equal(gatewayv1beta1.StatusError))
 			Expect(created.Status.APIRuleStatus.Description).To(ContainSubstring("Multiple validation errors:"))
-			Expect(created.Status.APIRuleStatus.Description).To(ContainSubstring("Attribute \".spec.rules\": multiple rules defined for the same path"))
+			Expect(created.Status.APIRuleStatus.Description).To(ContainSubstring("Attribute \".spec.rules\": Multiple rules defined for the same path"))
 			Expect(created.Status.APIRuleStatus.Description).To(ContainSubstring("Attribute \".spec.rules[0].accessStrategies[0].config\": strategy: noop does not support configuration"))
 			Expect(created.Status.APIRuleStatus.Description).To(ContainSubstring("Attribute \".spec.rules[1].accessStrategies[0].config\": strategy: noop does not support configuration"))
 			Expect(created.Status.APIRuleStatus.Description).To(ContainSubstring("1 more error(s)..."))
@@ -182,7 +182,7 @@ var _ = Describe("APIRule Controller", func() {
 						apiRuleName := generateTestName(testNameBase, testIDLength)
 						testServiceHost := "httpbin2.kyma.local"
 						rule := testRule(testPath, testMethods, testMutators, testOauthHandler(testScopes))
-						instance := testInstance(apiRuleName, testNamespace, testServiceName, testServiceHost, testServicePort, []gatewayv1alpha1.Rule{rule})
+						instance := testInstance(apiRuleName, testNamespace, testServiceName, testServiceHost, testServicePort, []gatewayv1beta1.Rule{rule})
 
 						err := c.Create(context.TODO(), instance)
 						if apierrors.IsInvalid(err) {
@@ -209,7 +209,7 @@ var _ = Describe("APIRule Controller", func() {
 						Expect(vs.Name).To(HavePrefix(apiRuleName + "-"))
 						Expect(len(vs.Name) > len(apiRuleName)).To(BeTrue())
 
-						verifyOwnerReference(vs.ObjectMeta, apiRuleName, gatewayv1alpha1.GroupVersion.String(), kind)
+						verifyOwnerReference(vs.ObjectMeta, apiRuleName, gatewayv1beta1.GroupVersion.String(), kind)
 
 						expectedSpec := builders.VirtualServiceSpec().
 							Host(testServiceHost).
@@ -219,7 +219,9 @@ var _ = Describe("APIRule Controller", func() {
 								Route(builders.RouteDestination().Host(testOathkeeperSvcURL).Port(testOathkeeperPort)).
 								Headers(builders.Headers().SetHostHeader(testServiceHost)).
 								CorsPolicy(corsPolicyBuilder))
-						Expect(vs.Spec).To(Equal(*expectedSpec.Get()))
+
+						gotSpec := *expectedSpec.Get()
+						Expect(*vs.Spec.DeepCopy()).To(Equal(*gotSpec.DeepCopy()))
 
 						//Verify Rule
 						expectedRuleMatchURL := fmt.Sprintf("<http|https>://%s<%s>", testServiceHost, testPath)
@@ -233,7 +235,7 @@ var _ = Describe("APIRule Controller", func() {
 						Expect(rl.Name).To(HavePrefix(apiRuleName + "-"))
 						Expect(len(rl.Name) > len(apiRuleName)).To(BeTrue())
 
-						verifyOwnerReference(rl.ObjectMeta, apiRuleName, gatewayv1alpha1.GroupVersion.String(), kind)
+						verifyOwnerReference(rl.ObjectMeta, apiRuleName, gatewayv1beta1.GroupVersion.String(), kind)
 
 						//Spec.Upstream
 						Expect(rl.Spec.Upstream).NotTo(BeNil())
@@ -276,7 +278,7 @@ var _ = Describe("APIRule Controller", func() {
 						testServiceHost := "httpbin3.kyma.local"
 						rule1 := testRule("/img", []string{"GET"}, testMutators, testJWTHandler(testIssuer, testScopes))
 						rule2 := testRule("/headers", []string{"GET"}, testMutators, testJWTHandler(testIssuer, testScopes))
-						instance := testInstance(apiRuleName, testNamespace, testServiceName, testServiceHost, testServicePort, []gatewayv1alpha1.Rule{rule1, rule2})
+						instance := testInstance(apiRuleName, testNamespace, testServiceName, testServiceHost, testServicePort, []gatewayv1beta1.Rule{rule1, rule2})
 
 						err := c.Create(context.TODO(), instance)
 						if apierrors.IsInvalid(err) {
@@ -300,7 +302,7 @@ var _ = Describe("APIRule Controller", func() {
 						vs := vsList.Items[0]
 
 						//Meta
-						verifyOwnerReference(vs.ObjectMeta, apiRuleName, gatewayv1alpha1.GroupVersion.String(), kind)
+						verifyOwnerReference(vs.ObjectMeta, apiRuleName, gatewayv1beta1.GroupVersion.String(), kind)
 
 						expectedSpec := builders.VirtualServiceSpec().
 							Host(testServiceHost).
@@ -315,8 +317,8 @@ var _ = Describe("APIRule Controller", func() {
 								Route(builders.RouteDestination().Host(testOathkeeperSvcURL).Port(testOathkeeperPort)).
 								Headers(builders.Headers().SetHostHeader(testServiceHost)).
 								CorsPolicy(corsPolicyBuilder))
-
-						Expect(vs.Spec).To(Equal(*expectedSpec.Get()))
+						gotSpec := *expectedSpec.Get()
+						Expect(*vs.Spec.DeepCopy()).To(Equal(*gotSpec.DeepCopy()))
 
 						//Verify Rule1
 						expectedRuleMatchURL := fmt.Sprintf("<http|https>://%s<%s>", testServiceHost, "/img")
@@ -334,7 +336,7 @@ var _ = Describe("APIRule Controller", func() {
 						rl := rules[expectedRuleMatchURL]
 
 						//Meta
-						verifyOwnerReference(rl.ObjectMeta, apiRuleName, gatewayv1alpha1.GroupVersion.String(), kind)
+						verifyOwnerReference(rl.ObjectMeta, apiRuleName, gatewayv1beta1.GroupVersion.String(), kind)
 
 						//Spec.Upstream
 						Expect(rl.Spec.Upstream).NotTo(BeNil())
@@ -375,7 +377,7 @@ var _ = Describe("APIRule Controller", func() {
 						rl2 := rules[expectedRule2MatchURL]
 
 						//Meta
-						verifyOwnerReference(rl2.ObjectMeta, apiRuleName, gatewayv1alpha1.GroupVersion.String(), "APIRule")
+						verifyOwnerReference(rl2.ObjectMeta, apiRuleName, gatewayv1beta1.GroupVersion.String(), "APIRule")
 
 						//Spec.Upstream
 						Expect(rl2.Spec.Upstream).NotTo(BeNil())
@@ -428,7 +430,7 @@ var _ = Describe("APIRule Controller", func() {
 
 						apiRuleName := generateTestName(testNameBase, testIDLength)
 						testServiceHost := "httpbin4.kyma.local"
-						instance := testInstance(apiRuleName, testNamespace, testServiceName, testServiceHost, testServicePort, []gatewayv1alpha1.Rule{rule1, rule2, rule3, rule4})
+						instance := testInstance(apiRuleName, testNamespace, testServiceName, testServiceHost, testServicePort, []gatewayv1beta1.Rule{rule1, rule2, rule3, rule4})
 
 						err := c.Create(context.TODO(), instance)
 						if apierrors.IsInvalid(err) {
@@ -451,7 +453,7 @@ var _ = Describe("APIRule Controller", func() {
 						vs := vsList.Items[0]
 
 						//Meta
-						verifyOwnerReference(vs.ObjectMeta, apiRuleName, gatewayv1alpha1.GroupVersion.String(), kind)
+						verifyOwnerReference(vs.ObjectMeta, apiRuleName, gatewayv1beta1.GroupVersion.String(), kind)
 
 						expectedSpec := builders.VirtualServiceSpec().
 							Host(testServiceHost).
@@ -477,7 +479,8 @@ var _ = Describe("APIRule Controller", func() {
 								Headers(builders.Headers().SetHostHeader(testServiceHost)).
 								CorsPolicy(corsPolicyBuilder))
 
-						Expect(vs.Spec).To(Equal(*expectedSpec.Get()))
+						gotSpec := *expectedSpec.Get()
+						Expect(*vs.Spec.DeepCopy()).To(Equal(*gotSpec.DeepCopy()))
 
 						//Verify Rules
 						for _, tc := range []struct {
@@ -503,7 +506,7 @@ var _ = Describe("APIRule Controller", func() {
 							rl := rules[expectedRuleMatchURL]
 
 							//Meta
-							verifyOwnerReference(rl.ObjectMeta, apiRuleName, gatewayv1alpha1.GroupVersion.String(), kind)
+							verifyOwnerReference(rl.ObjectMeta, apiRuleName, gatewayv1beta1.GroupVersion.String(), kind)
 
 							//Spec.Upstream
 							Expect(rl.Spec.Upstream).NotTo(BeNil())
@@ -556,7 +559,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 		return err
 	}
 
-	err = c.Watch(&source.Kind{Type: &gatewayv1alpha1.APIRule{}}, &handler.EnqueueRequestForObject{})
+	err = c.Watch(&source.Kind{Type: &gatewayv1beta1.APIRule{}}, &handler.EnqueueRequestForObject{})
 	if err != nil {
 		return err
 	}
@@ -578,12 +581,12 @@ func toCSVList(input []string) string {
 	return res
 }
 
-func testRule(path string, methods []string, mutators []*gatewayv1alpha1.Mutator, handler *gatewayv1alpha1.Handler) gatewayv1alpha1.Rule {
-	return gatewayv1alpha1.Rule{
+func testRule(path string, methods []string, mutators []*gatewayv1beta1.Mutator, handler *gatewayv1beta1.Handler) gatewayv1beta1.Rule {
+	return gatewayv1beta1.Rule{
 		Path:     path,
 		Methods:  methods,
 		Mutators: mutators,
-		AccessStrategies: []*gatewayv1alpha1.Authenticator{
+		AccessStrategies: []*gatewayv1beta1.Authenticator{
 			{
 				Handler: handler,
 			},
@@ -591,18 +594,18 @@ func testRule(path string, methods []string, mutators []*gatewayv1alpha1.Mutator
 	}
 }
 
-func testInstance(name, namespace, serviceName, serviceHost string, servicePort uint32, rules []gatewayv1alpha1.Rule) *gatewayv1alpha1.APIRule {
+func testInstance(name, namespace, serviceName, serviceHost string, servicePort uint32, rules []gatewayv1beta1.Rule) *gatewayv1beta1.APIRule {
 	var gateway = testGatewayURL
 
-	return &gatewayv1alpha1.APIRule{
+	return &gatewayv1beta1.APIRule{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: namespace,
 		},
-		Spec: gatewayv1alpha1.APIRuleSpec{
+		Spec: gatewayv1beta1.APIRuleSpec{
+			Host:    &serviceHost,
 			Gateway: &gateway,
-			Service: &gatewayv1alpha1.Service{
-				Host: &serviceHost,
+			Service: &gatewayv1beta1.Service{
 				Name: &serviceName,
 				Port: &servicePort,
 			},
@@ -620,7 +623,7 @@ func verifyOwnerReference(m metav1.ObjectMeta, name, version, kind string) {
 	Expect(*m.OwnerReferences[0].Controller).To(BeTrue())
 }
 
-func testJWTHandler(issuer string, scopes []string) *gatewayv1alpha1.Handler {
+func testJWTHandler(issuer string, scopes []string) *gatewayv1beta1.Handler {
 
 	configJSON := fmt.Sprintf(`
 		{
@@ -629,7 +632,7 @@ func testJWTHandler(issuer string, scopes []string) *gatewayv1alpha1.Handler {
 			"required_scope": [%s]
 	}`, issuer, toCSVList(scopes))
 
-	return &gatewayv1alpha1.Handler{
+	return &gatewayv1beta1.Handler{
 		Name: "jwt",
 		Config: &runtime.RawExtension{
 			Raw: []byte(configJSON),
@@ -637,13 +640,13 @@ func testJWTHandler(issuer string, scopes []string) *gatewayv1alpha1.Handler {
 	}
 }
 
-func testOauthHandler(scopes []string) *gatewayv1alpha1.Handler {
+func testOauthHandler(scopes []string) *gatewayv1beta1.Handler {
 
 	configJSON := fmt.Sprintf(`{
 		"required_scope": [%s]
 	}`, toCSVList(scopes))
 
-	return &gatewayv1alpha1.Handler{
+	return &gatewayv1beta1.Handler{
 		Name: "oauth2_introspection",
 		Config: &runtime.RawExtension{
 			Raw: []byte(configJSON),
@@ -651,8 +654,8 @@ func testOauthHandler(scopes []string) *gatewayv1alpha1.Handler {
 	}
 }
 
-func noConfigHandler(name string) *gatewayv1alpha1.Handler {
-	return &gatewayv1alpha1.Handler{
+func noConfigHandler(name string) *gatewayv1beta1.Handler {
+	return &gatewayv1beta1.Handler{
 		Name: name,
 	}
 }
@@ -695,7 +698,7 @@ func getRuleList(matchingLabels client.ListOption) []rulev1alpha1.Rule {
 	return res.Items
 }
 
-func verifyRuleList(ruleList []rulev1alpha1.Rule, pathToURLFunc func(string) string, expected ...gatewayv1alpha1.Rule) {
+func verifyRuleList(ruleList []rulev1alpha1.Rule, pathToURLFunc func(string) string, expected ...gatewayv1beta1.Rule) {
 
 	Expect(ruleList).To(HaveLen(len(expected)))
 
@@ -714,7 +717,7 @@ func verifyRuleList(ruleList []rulev1alpha1.Rule, pathToURLFunc func(string) str
 		verifyMutators(actual[ruleUrl].Spec.Mutators, expected[i].Mutators)
 	}
 }
-func verifyMutators(actual []*rulev1alpha1.Mutator, expected []*gatewayv1alpha1.Mutator) {
+func verifyMutators(actual []*rulev1alpha1.Mutator, expected []*gatewayv1beta1.Mutator) {
 	if expected == nil {
 		Expect(actual).To(BeNil())
 	} else {
@@ -723,7 +726,7 @@ func verifyMutators(actual []*rulev1alpha1.Mutator, expected []*gatewayv1alpha1.
 		}
 	}
 }
-func verifyAccessStrategies(actual []*rulev1alpha1.Authenticator, expected []*gatewayv1alpha1.Authenticator) {
+func verifyAccessStrategies(actual []*rulev1alpha1.Authenticator, expected []*gatewayv1beta1.Authenticator) {
 	if expected == nil {
 		Expect(actual).To(BeNil())
 	} else {
@@ -733,7 +736,7 @@ func verifyAccessStrategies(actual []*rulev1alpha1.Authenticator, expected []*ga
 	}
 }
 
-func verifyHandler(actual *rulev1alpha1.Handler, expected *gatewayv1alpha1.Handler) {
+func verifyHandler(actual *rulev1alpha1.Handler, expected *gatewayv1beta1.Handler) {
 	if expected == nil {
 		Expect(actual).To(BeNil())
 	} else {

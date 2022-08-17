@@ -4,21 +4,22 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/kyma-incubator/api-gateway/internal/helpers"
 	"istio.io/api/networking/v1beta1"
 
-	"github.com/kyma-incubator/api-gateway/internal/builders"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/go-logr/logr"
 	gatewayv1alpha1 "github.com/kyma-incubator/api-gateway/api/v1alpha1"
+	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
 	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 )
 
 var (
 	//OwnerLabel .
-	OwnerLabel = fmt.Sprintf("%s.%s", "apirule", gatewayv1alpha1.GroupVersion.String())
+	OwnerLabel = fmt.Sprintf("%s.%s", "apirule", gatewayv1beta1.GroupVersion.String())
+	//OwnerLabelv1alpha1 .
+	OwnerLabelv1alpha1 = fmt.Sprintf("%s.%s", "apirule", gatewayv1alpha1.GroupVersion.String())
 )
 
 //Factory .
@@ -55,11 +56,10 @@ type CorsConfig struct {
 }
 
 // CalculateRequiredState returns required state of all objects related to given api
-func (f *Factory) CalculateRequiredState(api *gatewayv1alpha1.APIRule) *State {
+func (f *Factory) CalculateRequiredState(api *gatewayv1beta1.APIRule) *State {
 	var res State
 
 	res.accessRules = make(map[string]*rulev1alpha1.Rule)
-
 	for _, rule := range api.Spec.Rules {
 		if isSecured(rule) {
 			ar := generateAccessRule(api, rule, rule.AccessStrategies, f.additionalLabels, f.defaultDomainName)
@@ -81,7 +81,7 @@ type State struct {
 }
 
 //GetActualState methods gets actual state of Istio Virtual Services and Oathkeeper Rules
-func (f *Factory) GetActualState(ctx context.Context, api *gatewayv1alpha1.APIRule) (*State, error) {
+func (f *Factory) GetActualState(ctx context.Context, api *gatewayv1beta1.APIRule) (*State, error) {
 	labels := make(map[string]string)
 	labels[OwnerLabel] = fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace)
 	var state State
@@ -91,10 +91,8 @@ func (f *Factory) GetActualState(ctx context.Context, api *gatewayv1alpha1.APIRu
 		return nil, err
 	}
 
-	//what to do if len(vsList) > 1?
-
 	if len(vsList.Items) == 1 {
-		state.virtualService = &vsList.Items[0]
+		state.virtualService = vsList.Items[0]
 	} else {
 		state.virtualService = nil
 	}
@@ -198,52 +196,4 @@ func (f *Factory) applyObjDiff(ctx context.Context, objToPatch *objToPatch) erro
 	}
 
 	return nil
-}
-
-func (f *Factory) updateVirtualService(existing, required *networkingv1beta1.VirtualService) {
-	existing.Spec = required.Spec
-}
-
-func (f *Factory) generateVirtualService(api *gatewayv1alpha1.APIRule) *networkingv1beta1.VirtualService {
-	virtualServiceNamePrefix := fmt.Sprintf("%s-", api.ObjectMeta.Name)
-	ownerRef := generateOwnerRef(api)
-
-	vsSpecBuilder := builders.VirtualServiceSpec()
-	vsSpecBuilder.Host(helpers.GetHostWithDomain(*api.Spec.Service.Host, f.defaultDomainName))
-	vsSpecBuilder.Gateway(*api.Spec.Gateway)
-
-	for _, rule := range api.Spec.Rules {
-
-		httpRouteBuilder := builders.HTTPRoute()
-		host, port := f.oathkeeperSvc, f.oathkeeperSvcPort
-
-		if !isSecured(rule) {
-			host = fmt.Sprintf("%s.%s.svc.cluster.local", *api.Spec.Service.Name, api.ObjectMeta.Namespace)
-			port = *api.Spec.Service.Port
-		}
-
-		httpRouteBuilder.Route(builders.RouteDestination().Host(host).Port(port))
-		httpRouteBuilder.Match(builders.MatchRequest().Uri().Regex(rule.Path))
-		httpRouteBuilder.CorsPolicy(builders.CorsPolicy().
-			AllowOrigins(f.corsConfig.AllowOrigins...).
-			AllowMethods(f.corsConfig.AllowMethods...).
-			AllowHeaders(f.corsConfig.AllowHeaders...))
-		httpRouteBuilder.Headers(builders.Headers().
-			SetHostHeader(helpers.GetHostWithDomain(*api.Spec.Service.Host, f.defaultDomainName)))
-		vsSpecBuilder.HTTP(httpRouteBuilder)
-	}
-
-	vsBuilder := builders.VirtualService().
-		GenerateName(virtualServiceNamePrefix).
-		Namespace(api.ObjectMeta.Namespace).
-		Owner(builders.OwnerReference().From(&ownerRef)).
-		Label(OwnerLabel, fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace))
-
-	for k, v := range f.additionalLabels {
-		vsBuilder.Label(k, v)
-	}
-
-	vsBuilder.Spec(vsSpecBuilder)
-
-	return vsBuilder.Get()
 }
