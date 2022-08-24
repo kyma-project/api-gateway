@@ -1,38 +1,36 @@
 ---
 name: Bug report
-about: Create a report to help us improve
+about: Report a bug in the project
 title: ''
-labels: ''
+labels: kind/bug
 assignees: ''
 
 ---
 
-**Describe the bug**
-A clear and concise description of what the bug is.
+<!-- Thank you for your contribution. Before you submit the issue:
+1. Search open and closed issues for duplicates.
+2. Read the contributing guidelines.
+-->
 
-**To Reproduce**
-Steps to reproduce the behavior:
-1. Go to '...'
-2. Click on '....'
-3. Scroll down to '....'
-4. See error
+**Description**
 
-**Expected behavior**
-A clear and concise description of what you expected to happen.
+<!-- Provide a clear and concise description of the problem.
+Describe where it appears, when it occurred, and what it affects.  -->
 
-**Screenshots**
-If applicable, add screenshots to help explain your problem.
+<!-- Provide relevant technical details such as the Kubernetes version, the cluster name and provider, the Kyma version, the browser name and version, or the operating system. -->
 
-**Desktop (please complete the following information):**
- - OS: [e.g. iOS]
- - Browser [e.g. chrome, safari]
- - Version [e.g. 22]
+**Expected result**
 
-**Smartphone (please complete the following information):**
- - Device: [e.g. iPhone6]
- - OS: [e.g. iOS8.1]
- - Browser [e.g. stock browser, safari]
- - Version [e.g. 22]
+<!-- Describe what you expect to happen. -->
 
-**Additional context**
-Add any other context about the problem here.
+**Actual result**
+
+<!-- Describe what happens instead. -->
+
+**Steps to reproduce**
+
+<!-- List the steps to follow to reproduce the bug. Attach any files, links, code samples, or screenshots that could help in investigating the problem. -->
+
+**Troubleshooting**
+
+<!-- Describe the steps you have already taken to solve the issue. -->
