@@ -1,4 +1,4 @@
-# Api-Gateway Controller (name to be changed)
+# Api-Gateway Controller
 
 ## Overview
 
@@ -75,16 +75,16 @@ kubectl get crd apirule.gateway.kyma-project.io -o yaml
 This is a sample custom resource (CR) that the API-gateway listens for to expose a service.
 
 ``` yaml
-apiVersion: gateway.kyma-project.io/v1alpha1
+apiVersion: gateway.kyma-project.io/v1beta1
 kind: APIRule
 metadata:
   name: jwt-all-with-scopes
 spec:
   gateway: kyma-gateway.kyma-system.svc.cluster.local
+  host: foo.bar
   service:
     name: foo-service
     port: 8080
-    host: foo.bar
   rules:
     - path: /.*
       methods: ["GET"]
@@ -103,13 +103,19 @@ This table lists all the possible parameters of a given resource together with t
 |:---|:---:|:---|
 | **metadata.name** |    **YES**   | Specifies the name of the exposed API |
 | **spec.gateway** | **YES** | Specifies Istio Gateway. |
-| **spec.service.name**, **spec.service.port** | **YES** | Specifies the name and the communication port of the exposed service. |
-| **spec.service.host** | **YES** | Specifies the service's communication address for inbound external traffic. If only the leftmost label is provided, the default domain name will be used. |
+| **spec.service.name**, **spec.service.port** | **NO** | Specifies the name and the communication port of the exposed service. |
+| **spec.service.host** | **NO** | Specifies the service's communication address for inbound external traffic. If only the leftmost label is provided, the default domain name will be used. |
 | **spec.rules** | **YES** | Specifies array of rules. |
+| **spec.rules.service.name** | **NO** | Specifies service name for the path. The services overrites the one on spec.service. |
+| **spec.rules.service.port** | **NO** | Specifies service port for the path. The services overrites the one on spec.service. |
 | **spec.rules.path** | **YES** | Specifies the path of the exposed service. |
 | **spec.rules.methods** | **YES** | Specifies the list of HTTP request methods available for **spec.rules.path**. |
 | **spec.rules.mutators** | **NO** | Specifies array of [Oathkeeper mutators](https://www.ory.sh/docs/oathkeeper/pipeline/mutator). |
 | **spec.rules.accessStrategies** | **YES** | Specifies array of [Oathkeeper authenticators](https://www.ory.sh/docs/oathkeeper/pipeline/authn). |
+
+## Note
+
+If you don't define a service at spec.service level, then you have to define one for all rules.
 
 ## Additional information
 
