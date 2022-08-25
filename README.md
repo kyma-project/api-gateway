@@ -1,4 +1,4 @@
-# Api-Gateway Controller (name to be changed)
+# Api-Gateway Controller
 
 ## Overview
 
