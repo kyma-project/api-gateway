@@ -273,6 +273,7 @@ patch-gen:
 		sed -e 's|CORS_ALLOW_METHODS|${CORS_ALLOW_METHODS}|g' |\
 		sed -e 's|CORS_ALLOW_HEADERS|${CORS_ALLOW_HEADERS}|g' > config/default/manager_args_patch.yaml
 
+
 # Generate static installation files
 static: manifests patch-gen
 	kustomize build config/released -o install/k8s
