@@ -28,20 +28,18 @@ type Factory struct {
 	Log               logr.Logger
 	oathkeeperSvc     string
 	oathkeeperSvcPort uint32
-	JWKSURI           string
 	corsConfig        *CorsConfig
 	additionalLabels  map[string]string
 	defaultDomainName string
 }
 
 //NewFactory .
-func NewFactory(client client.Client, logger logr.Logger, oathkeeperSvc string, oathkeeperSvcPort uint32, jwksURI string, corsConfig *CorsConfig, additionalLabels map[string]string, defaultDomainName string) *Factory {
+func NewFactory(client client.Client, logger logr.Logger, oathkeeperSvc string, oathkeeperSvcPort uint32, corsConfig *CorsConfig, additionalLabels map[string]string, defaultDomainName string) *Factory {
 	return &Factory{
 		client:            client,
 		Log:               logger,
 		oathkeeperSvc:     oathkeeperSvc,
 		oathkeeperSvcPort: oathkeeperSvcPort,
-		JWKSURI:           jwksURI,
 		corsConfig:        corsConfig,
 		additionalLabels:  additionalLabels,
 		defaultDomainName: defaultDomainName,

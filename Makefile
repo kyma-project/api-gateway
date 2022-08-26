@@ -18,11 +18,6 @@ ifndef OATHKEEPER_SVC_PORT
 override OATHKEEPER_SVC_PORT = change-me
 endif
 
-# https://example.com/.well-known/jwks.json
-ifndef JWKS_URI
-override JWKS_URI = change-me
-endif
-
 # kubernetes.default service.namespace
 ifndef SERVICE_BLOCKLIST
 override SERVICE_BLOCKLIST = change-me
@@ -119,7 +114,7 @@ build: generate fmt vet ## Build manager binary.
 
 .PHONY: run
 run: build
-	go run . --oathkeeper-svc-address=${OATHKEEPER_SVC_ADDRESS} --oathkeeper-svc-port=${OATHKEEPER_SVC_PORT} --jwks-uri=${JWKS_URI} --service-blocklist=${SERVICE_BLOCKLIST} --domain-allowlist=${DOMAIN_ALLOWLIST}
+	go run . --oathkeeper-svc-address=${OATHKEEPER_SVC_ADDRESS} --oathkeeper-svc-port=${OATHKEEPER_SVC_PORT} --service-blocklist=${SERVICE_BLOCKLIST} --domain-allowlist=${DOMAIN_ALLOWLIST}
 
 .PHONY: docker-build
 docker-build: pull-licenses test ## Build docker image with the manager.
@@ -268,7 +263,6 @@ patch-gen:
 		sed -e 's|OATHKEEPER_SVC_PORT|${OATHKEEPER_SVC_PORT}|g' |\
 		sed -e 's|SERVICE_BLOCKLIST|${SERVICE_BLOCKLIST}|g' |\
 		sed -e 's|DOMAIN_ALLOWLIST|${DOMAIN_ALLOWLIST}|g' |\
-		sed -e 's|JWKS_URI|${JWKS_URI}|g' |\
 		sed -e 's|CORS_ALLOW_ORIGINS|${CORS_ALLOW_ORIGINS}|g' |\
 		sed -e 's|CORS_ALLOW_METHODS|${CORS_ALLOW_METHODS}|g' |\
 		sed -e 's|CORS_ALLOW_HEADERS|${CORS_ALLOW_HEADERS}|g' > config/default/manager_args_patch.yaml
