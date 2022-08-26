@@ -106,7 +106,7 @@ This table lists all the possible parameters of a given resource together with t
 | **spec.service.host** | **NO** | Specifies the service's communication address for inbound external traffic. If only the leftmost label is provided, the default domain name will be used. |
 | **spec.rules** | **YES** | Specifies array of rules. |
 | **spec.rules.service.name** | **NO** | Specifies service name for the path. The services overrides the one on spec.service. |
-| **spec.rules.service.port** | **NO** | Specifies service port for the path. The services overrates the one on spec.service. |
+| **spec.rules.service.port** | **NO** | Specifies service port for the path. The services overrides the one on spec.service. |
 | **spec.rules.path** | **YES** | Specifies the path of the exposed service. |
 | **spec.rules.methods** | **YES** | Specifies the list of HTTP request methods available for **spec.rules.path**. |
 | **spec.rules.mutators** | **NO** | Specifies array of [Oathkeeper mutators](https://www.ory.sh/docs/oathkeeper/pipeline/mutator). |
