@@ -75,7 +75,6 @@ func main() {
 	var metricsAddr string
 	var healthProbeAddr string
 	var enableLeaderElection bool
-	var jwksURI string
 	var oathkeeperSvcAddr string
 	var oathkeeperSvcPort uint
 	var blockListedServices string
@@ -90,7 +89,6 @@ func main() {
 	flag.UintVar(&oathkeeperSvcPort, "oathkeeper-svc-port", 0, "Oathkeeper proxy service port")
 	flag.StringVar(&metricsAddr, "metrics-addr", ":8080", "The address the metric endpoint binds to.")
 	flag.StringVar(&healthProbeAddr, "health-probe-addr", ":8081", "The address the health probe endpoint binds to.")
-	flag.StringVar(&jwksURI, "jwks-uri", "", "URL of the provider's public key set to validate signature of the JWT")
 	flag.BoolVar(&enableLeaderElection, "enable-leader-election", false,
 		"Enable leader election for controller manager. Enabling this will ensure there is only one active controller manager.")
 	flag.StringVar(&blockListedServices, "service-blocklist", "kubernetes.default,kube-dns.kube-system", "List of services to be blocklisted from exposure.")
@@ -105,10 +103,6 @@ func main() {
 
 	ctrl.SetLogger(zap.New(zap.UseDevMode(true)))
 
-	if jwksURI == "" {
-		setupLog.Error(fmt.Errorf("jwks-uri required, but not supplied"), "unable to create controller", "controller", "Api")
-		os.Exit(1)
-	}
 	if oathkeeperSvcAddr == "" {
 		setupLog.Error(fmt.Errorf("oathkeeper-svc-address can't be empty"), "unable to create controller", "controller", "Api")
 		os.Exit(1)
@@ -165,7 +159,6 @@ func main() {
 		Log:               ctrl.Log.WithName("controllers").WithName("Api"),
 		OathkeeperSvc:     oathkeeperSvcAddr,
 		OathkeeperSvcPort: uint32(oathkeeperSvcPort),
-		JWKSURI:           jwksURI,
 		ServiceBlockList:  getNamespaceServiceMap(blockListedServices),
 		DomainAllowList:   getList(allowListedDomains),
 		HostBlockList:     getHostBlockListFrom(blockListedSubdomains, domainName),

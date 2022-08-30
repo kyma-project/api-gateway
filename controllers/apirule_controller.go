@@ -43,7 +43,6 @@ type APIRuleReconciler struct {
 	Log                    logr.Logger
 	OathkeeperSvc          string
 	OathkeeperSvcPort      uint32
-	JWKSURI                string
 	CorsConfig             *processing.CorsConfig
 	GeneratedObjectsLabels map[string]string
 	ServiceBlockList       map[string][]string
@@ -103,7 +102,7 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		}
 
 		//2) Compute list of required objects (the set of objects required to satisfy our contract on apiRule.Spec, not yet applied)
-		factory := processing.NewFactory(r.Client, r.Log, r.OathkeeperSvc, r.OathkeeperSvcPort, r.JWKSURI, r.CorsConfig, r.GeneratedObjectsLabels, r.DefaultDomainName)
+		factory := processing.NewFactory(r.Client, r.Log, r.OathkeeperSvc, r.OathkeeperSvcPort, r.CorsConfig, r.GeneratedObjectsLabels, r.DefaultDomainName)
 		requiredObjects := factory.CalculateRequiredState(api)
 
 		//3.1 Fetch all existing objects related to _this_ apiRule from the cluster (VS, Rules)

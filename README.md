@@ -1,4 +1,4 @@
-# Api-Gateway Controller
+# API-Gateway Controller
 
 ## Overview
 
@@ -20,7 +20,7 @@ Deploys the officially released Controller version to the cluster
 
 - ensure the access to a Kubernetes cluster is configured in `~/.kube/config`
 - `make install` to install necessary Custom Resource Definitions
-- export `OATHKEEPER_SVC_ADDRESS`, `OATHKEEPER_SVC_PORT`, `JWKS_URI` and `DOMAIN_ALLOWLIST` variables
+- export `OATHKEEPER_SVC_ADDRESS`, `OATHKEEPER_SVC_PORT` and `DOMAIN_ALLOWLIST` variables
 - `make deploy` to deploy controller
 
 ### Run the controller locally
@@ -29,8 +29,8 @@ This procedure is the fastest way to run the Controller, useful for development 
 
 - start Minikube or ensure the access to a Kubernetes cluster is configured in `~/.kube/config`
 - `make install` to install necessary Custom Resource Definitions
-- export `OATHKEEPER_SVC_ADDRESS`, `OATHKEEPER_SVC_PORT`, `JWKS_URI` and `DOMAIN_ALLOWLIST` variables
-- `go run main.go --jwks-uri="$JWKS_URI" --oathkeeper-svc-address="$OATHKEEPER_SVC_ADDRESS" --oathkeeper-svc-port=$OATHKEEPER_SVC_PORT --domain-allowlist=$DOMAIN_ALLOWLIST`
+- export `OATHKEEPER_SVC_ADDRESS`, `OATHKEEPER_SVC_PORT` and `DOMAIN_ALLOWLIST` variables
+- `go run main.go --oathkeeper-svc-address="$OATHKEEPER_SVC_ADDRESS" --oathkeeper-svc-port=$OATHKEEPER_SVC_PORT --domain-allowlist=$DOMAIN_ALLOWLIST`
 
 ### Deploy a custom Controller build to the local Minikube cluster
 
@@ -41,7 +41,7 @@ This procedure is useful to test your own Controller build end-to-end in a local
 - `eval $(minikube docker-env)`
 - `make build-image` to put the docker image inside running Minikube
 - `make install` to install necessary Custom Resource Definitions
-- export `OATHKEEPER_SVC_ADDRESS`, `OATHKEEPER_SVC_PORT`, `JWKS_URI` and `DOMAIN_ALLOWLIST` variables
+- export `OATHKEEPER_SVC_ADDRESS`, `OATHKEEPER_SVC_PORT` and `DOMAIN_ALLOWLIST` variables
 - `make deploy-dev` to deploy controller
 
 ### Use command-line flags
@@ -51,7 +51,6 @@ This procedure is useful to test your own Controller build end-to-end in a local
 | **oathkeeper-svc-address** | YES | Ory oathkeeper-proxy service address. | `ory-oathkeeper-proxy.kyma-system.svc.cluster.local` |
 | **oathkeeper-svc-port** | YES | Ory oathkeeper-proxy service port. | `4455` |
 | **metrics-addr** | NO | The address the metric endpoint binds to. | `:8080` |
-| **jwks-uri** | YES | Default jwksUri in the Policy. | any string |
 | **enable-leader-election** | YES | Enable leader election for controller manager. Enabling this will ensure there is only one active controller manager. | any string |
 | **service-blocklist** | NO | List of services to be blocklisted. | `kubernetes.default` <br> `kube-dns.kube-system` |
 | **domain-allowlist** | NO | List of domains that can be exposed. All domains are allowed if empty | `kyma.local` <br> `foo.bar` |
@@ -106,8 +105,8 @@ This table lists all the possible parameters of a given resource together with t
 | **spec.service.name**, **spec.service.port** | **NO** | Specifies the name and the communication port of the exposed service. |
 | **spec.service.host** | **NO** | Specifies the service's communication address for inbound external traffic. If only the leftmost label is provided, the default domain name will be used. |
 | **spec.rules** | **YES** | Specifies array of rules. |
-| **spec.rules.service.name** | **NO** | Specifies service name for the path. The services overrites the one on spec.service. |
-| **spec.rules.service.port** | **NO** | Specifies service port for the path. The services overrites the one on spec.service. |
+| **spec.rules.service.name** | **NO** | Specifies service name for the path. The services overrides the one on spec.service. |
+| **spec.rules.service.port** | **NO** | Specifies service port for the path. The services overrides the one on spec.service. |
 | **spec.rules.path** | **YES** | Specifies the path of the exposed service. |
 | **spec.rules.methods** | **YES** | Specifies the list of HTTP request methods available for **spec.rules.path**. |
 | **spec.rules.mutators** | **NO** | Specifies array of [Oathkeeper mutators](https://www.ory.sh/docs/oathkeeper/pipeline/mutator). |
