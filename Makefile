@@ -244,7 +244,7 @@ lint: ## Run golangci-lint against code.
 
 ##@ ci targets
 .PHONY: ci-pr
-ci-pr: build test docker-build docker-push docker-build-certificates docker-push-certificates
+ci-pr: build test
 
 .PHONY: ci-main
 ci-main: build docker-build docker-push docker-build-certificates docker-push-certificates
