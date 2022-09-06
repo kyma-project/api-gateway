@@ -242,6 +242,14 @@ lint: ## Run golangci-lint against code.
 	GOBIN=$(LOCALBIN) go install github.com/golangci/golangci-lint/cmd/golangci-lint@$(GOLANG_CI_LINT_VERSION)
 	$(LOCALBIN)/golangci-lint run
 
+.PHONY: archive
+archive:
+	cp -r bin/* $(ARTIFACTS)
+
+.PHONY: release
+release:
+	./hack/release.sh
+
 ##@ ci targets
 .PHONY: ci-pr
 ci-pr: build test
@@ -250,7 +258,7 @@ ci-pr: build test
 ci-main: build docker-build docker-push docker-build-certificates docker-push-certificates
 
 .PHONY: ci-release
-ci-release: build docker-build docker-push docker-build-certificates docker-push-certificates
+ci-release: build docker-build docker-push docker-build-certificates docker-push-certificates archive release
 
 .PHONY: clean
 clean:
