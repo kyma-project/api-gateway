@@ -58,6 +58,17 @@ spec:
                               keys vary per handler.
                             type: object
                             x-kubernetes-preserve-unknown-fields: true
+                            properties:
+                              jwks_urls:
+                                type: array
+                                items:
+                                  type: string
+                                  pattern: ^(https://|file://).*$
+                              trusted_issuers:
+                                type: array
+                                items:
+                                  type: string                              
+                                  pattern: ^(https://|file://).*$   
                           handler:
                             description: Name is the name of a handler
                             type: string
@@ -223,6 +234,17 @@ spec:
                               keys vary per handler.
                             type: object
                             x-kubernetes-preserve-unknown-fields: true
+                            properties:
+                              jwks_urls:
+                                type: array
+                                items:
+                                  type: string
+                                  pattern: ^(https://|file://).*$
+                              trusted_issuers:
+                                type: array
+                                items:
+                                  type: string                              
+                                  pattern: ^(https://|file://).*$   
                           handler:
                             description: Name is the name of a handler
                             type: string
