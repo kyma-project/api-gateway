@@ -265,7 +265,7 @@ ci-pr: build test
 ci-main: build docker-build docker-push docker-build-certificates docker-push-certificates
 
 .PHONY: ci-release
-ci-release: build docker-build docker-push docker-build-certificates docker-push-certificates archive release
+ci-release: build docker-build-release docker-push docker-build-certificates docker-push-certificates archive release
 
 .PHONY: clean
 clean:
