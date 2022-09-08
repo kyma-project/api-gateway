@@ -33,3 +33,5 @@ snapshot:
   name_template: "{{ .Tag }}-next"
 changelog:
   sort: asc
+env_files:
+  github_token: /etc/github/token
