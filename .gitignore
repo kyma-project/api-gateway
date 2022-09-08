@@ -35,3 +35,4 @@ info.json
 
 # Vscode directory
 .vscode
+dist/
