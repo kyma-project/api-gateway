@@ -119,6 +119,10 @@ build: generate fmt vet ## Build manager binary.
 run: build
 	go run . --oathkeeper-svc-address=${OATHKEEPER_SVC_ADDRESS} --oathkeeper-svc-port=${OATHKEEPER_SVC_PORT} --service-blocklist=${SERVICE_BLOCKLIST} --domain-allowlist=${DOMAIN_ALLOWLIST}
 
+.PHONY: use-release-tag
+use-release-tag: 
+	TAG=${shell git describe --abbrev=0 --tags}
+
 .PHONY: docker-build
 docker-build: pull-licenses test ## Build docker image with the manager.
 	docker build -t $(APP_NAME):latest .
@@ -265,7 +269,7 @@ ci-pr: build test
 ci-main: build docker-build docker-push docker-build-certificates docker-push-certificates
 
 .PHONY: ci-release
-ci-release: build docker-build-release docker-push docker-build-certificates docker-push-certificates archive release
+ci-release: use-release-tag build docker-build-release docker-push docker-build-certificates docker-push-certificates archive release
 
 .PHONY: clean
 clean:
