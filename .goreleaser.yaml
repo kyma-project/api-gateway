@@ -5,6 +5,10 @@ release:
     owner: kyma-project
     name: api-gateway
   prerelease: auto
+  header: |
+    Images published in {{ .Tag }} release:
+    - eu.gcr.io/kyma-project/api-gateway-controller:{{ .Tag }}
+    - eu.gcr.io/kyma-project/api-gateway-webhook-certificates:{{ .Tag }}
 builds:
 - env:
   - CGO_ENABLED=0
