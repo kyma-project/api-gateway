@@ -27,14 +27,16 @@ func (f *Factory) generateVirtualService(api *gatewayv1beta1.APIRule) *networkin
 		httpRouteBuilder := builders.HTTPRoute()
 		host, port := f.oathkeeperSvc, f.oathkeeperSvcPort
 
+		serviceNamespace := findServiceNamespace(api, &rule)
+
 		if !isSecured(rule) {
 			// Use rule level service if it exists
 			if rule.Service != nil {
-				host = fmt.Sprintf("%s.%s.svc.cluster.local", *rule.Service.Name, api.ObjectMeta.Namespace)
+				host = fmt.Sprintf("%s.%s.svc.cluster.local", *rule.Service.Name, *serviceNamespace)
 				port = *rule.Service.Port
 			} else {
 				// Otherwise use service defined on APIRule spec level
-				host = fmt.Sprintf("%s.%s.svc.cluster.local", *api.Spec.Service.Name, api.ObjectMeta.Namespace)
+				host = fmt.Sprintf("%s.%s.svc.cluster.local", *api.Spec.Service.Name, *serviceNamespace)
 				port = *api.Spec.Service.Port
 			}
 		}

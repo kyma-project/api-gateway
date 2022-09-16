@@ -80,10 +80,14 @@ type APIRuleList struct {
 	Items           []APIRule `json:"items"`
 }
 
-//Service .
+// Service .
 type Service struct {
 	// Name of the service
 	Name *string `json:"name"`
+	// Namespace of the service, if omitted will default to the APIRule namespace
+	// +kubebuilder:validation:Pattern=^[a-z0-9]([-a-z0-9]*[a-z0-9])?$
+	// +optional
+	Namespace *string `json:"namespace,omitempty"`
 	// Port of the service to expose
 	// +kubebuilder:validation:Minimum=1
 	// +kubebuilder:validation:Maximum=65535

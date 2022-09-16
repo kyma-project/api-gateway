@@ -315,6 +315,11 @@ func (in *Service) DeepCopyInto(out *Service) {
 		*out = new(string)
 		**out = **in
 	}
+	if in.Namespace != nil {
+		in, out := &in.Namespace, &out.Namespace
+		*out = new(string)
+		**out = **in
+	}
 	if in.Port != nil {
 		in, out := &in.Port, &out.Port
 		*out = new(uint32)

@@ -128,7 +128,11 @@ func (v *APIRule) validateService(attributePath string, api *gatewayv1beta1.APIR
 
 	for namespace, services := range v.ServiceBlockList {
 		for _, svc := range services {
-			if svc == *api.Spec.Service.Name && namespace == api.ObjectMeta.Namespace {
+			serviceNamespace := api.Spec.Service.Namespace
+			if serviceNamespace == nil {
+				serviceNamespace = &api.ObjectMeta.Namespace
+			}
+			if svc == *api.Spec.Service.Name && namespace == *serviceNamespace {
 				problems = append(problems, Failure{
 					AttributePath: attributePath + ".name",
 					Message:       fmt.Sprintf("Service %s in namespace %s is blocklisted", svc, namespace),
@@ -167,7 +171,11 @@ func (v *APIRule) validateRules(attributePath string, checkForService bool, rule
 		if r.Service != nil {
 			for namespace, services := range v.ServiceBlockList {
 				for _, svc := range services {
-					if svc == *r.Service.Name && namespace == rulesNamespace {
+					serviceNamespace := r.Service.Namespace
+					if serviceNamespace == nil {
+						serviceNamespace = apiRuleNamespace
+					}
+					if svc == *r.Service.Name && namespace == *serviceNamespace {
 						problems = append(problems, Failure{
 							AttributePath: attributePathWithRuleIndex + ".service.name",
 							Message:       fmt.Sprintf("Service %s in namespace %s is blocklisted", svc, namespace),
