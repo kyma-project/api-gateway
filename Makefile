@@ -259,7 +259,7 @@ release:
 
 ##@ ci targets
 .PHONY: ci-pr
-ci-pr: build test
+ci-pr: build test docker-build docker-push docker-build-certificates docker-push-certificates
 
 .PHONY: ci-main
 ci-main: build docker-build docker-push docker-build-certificates docker-push-certificates
