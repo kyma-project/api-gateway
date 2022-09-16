@@ -563,12 +563,12 @@ var _ = Describe("Validate function", func() {
 		Expect(problems[5].Message).To(Equal("No accessStrategies defined"))
 
 	})
-	It("Should fail  for the same path and method", func() {
+	It("Should fail for the same path and method", func() {
 		//given
-		testDomainAllowlist := []string{"foo.bar", "bar.foo", "kyma.local"}
 		input := &gatewayv1beta1.APIRule{
 			Spec: gatewayv1beta1.APIRuleSpec{
 				Service: getService(sampleServiceName, uint32(8080)),
+				Host:    getHost(sampleValidHost),
 				Rules: []gatewayv1beta1.Rule{
 					{
 						Path: "/abc",
@@ -619,6 +619,7 @@ var _ = Describe("Validate function", func() {
 							toAuthenticator("jwt", simpleJWTConfig()),
 							toAuthenticator("noop", emptyConfig()),
 						},
+						Methods: []string{"POST"},
 					},
 					{
 						Path: "/abc",
@@ -654,11 +655,11 @@ var _ = Describe("Validate function", func() {
 
 	It("Should succeed for the same path but different methods", func() {
 		//given
-		testDomainAllowlist := []string{"foo.bar", "bar.foo", "kyma.local"}
-
+		occupiedHost := "occupied-host" + allowlistedDomain
+		notOccupiedHost := "not-occupied-host" + allowlistedDomain
 		existingVS := networkingv1beta1.VirtualService{}
 		existingVS.OwnerReferences = []v1.OwnerReference{{UID: "12345"}}
-		existingVS.Spec.Hosts = []string{"occupied-host.foo.bar"}
+		existingVS.Spec.Hosts = []string{occupiedHost}
 
 		input := &gatewayv1beta1.APIRule{
 			ObjectMeta: v1.ObjectMeta{
@@ -666,6 +667,7 @@ var _ = Describe("Validate function", func() {
 			},
 			Spec: gatewayv1beta1.APIRuleSpec{
 				Service: getService(sampleServiceName, uint32(8080)),
+				Host:    getHost(notOccupiedHost),
 				Rules: []gatewayv1beta1.Rule{
 					{
 						Path: "/abc",
