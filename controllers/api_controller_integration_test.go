@@ -163,7 +163,7 @@ var _ = Describe("APIRule Controller", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(created.Status.APIRuleStatus.Code).To(Equal(gatewayv1beta1.StatusError))
 			Expect(created.Status.APIRuleStatus.Description).To(ContainSubstring("Multiple validation errors:"))
-			Expect(created.Status.APIRuleStatus.Description).To(ContainSubstring("Attribute \".spec.rules\": Multiple rules defined for the same path"))
+			Expect(created.Status.APIRuleStatus.Description).To(ContainSubstring("Attribute \".spec.rules\": multiple rules defined for the same path and method"))
 			Expect(created.Status.APIRuleStatus.Description).To(ContainSubstring("Attribute \".spec.rules[0].accessStrategies[0].config\": strategy: noop does not support configuration"))
 			Expect(created.Status.APIRuleStatus.Description).To(ContainSubstring("Attribute \".spec.rules[1].accessStrategies[0].config\": strategy: noop does not support configuration"))
 			Expect(created.Status.APIRuleStatus.Description).To(ContainSubstring("1 more error(s)..."))
@@ -660,7 +660,7 @@ func noConfigHandler(name string) *gatewayv1beta1.Handler {
 	}
 }
 
-//Converts a []interface{} to a string slice. Panics if given object is of other type.
+// Converts a []interface{} to a string slice. Panics if given object is of other type.
 func asStringSlice(in interface{}) []string {
 
 	inSlice := in.([]interface{})
