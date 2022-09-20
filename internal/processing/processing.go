@@ -11,7 +11,6 @@ import (
 	"github.com/go-logr/logr"
 	gatewayv1alpha1 "github.com/kyma-incubator/api-gateway/api/v1alpha1"
 	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
-	"github.com/kyma-incubator/api-gateway/internal/helpers"
 	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 )
@@ -57,18 +56,16 @@ type CorsConfig struct {
 // CalculateRequiredState returns required state of all objects related to given api
 func (f *Factory) CalculateRequiredState(api *gatewayv1beta1.APIRule) *State {
 	var res State
-	var key string
 
 	res.accessRules = make(map[string]*rulev1alpha1.Rule)
 	for _, rule := range api.Spec.Rules {
 		if isSecured(rule) {
 			ar := generateAccessRule(api, rule, rule.AccessStrategies, f.additionalLabels, f.defaultDomainName)
-			if helpers.HasPathDuplicates(api.Spec.Rules) {
-				key = fmt.Sprintf("%s:%s", ar.Spec.Match.URL, rule.Methods)
+			if hasPathDuplicates(api.Spec.Rules) {
+				res.accessRules[fmt.Sprintf("%s:%s", ar.Spec.Match.URL, ar.Spec.Match.Methods)] = ar
 			} else {
-				key = ar.Spec.Match.URL
+				res.accessRules[ar.Spec.Match.URL] = ar
 			}
-			res.accessRules[key] = ar
 		}
 	}
 
@@ -91,8 +88,8 @@ func (f *Factory) GetActualState(ctx context.Context, api *gatewayv1beta1.APIRul
 	labels[OwnerLabelv1alpha1] = fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace)
 
 	var state State
-	var key string
 	var vsList networkingv1beta1.VirtualServiceList
+
 	if err := f.client.List(ctx, &vsList, client.MatchingLabels(labels)); err != nil {
 		return nil, err
 	}
@@ -112,12 +109,12 @@ func (f *Factory) GetActualState(ctx context.Context, api *gatewayv1beta1.APIRul
 
 	for i := range arList.Items {
 		obj := arList.Items[i]
-		if helpers.HasPathDuplicates(api.Spec.Rules) {
-			key = fmt.Sprintf("%s:%s", obj.Spec.Match.URL, obj.Spec.Match.Methods)
+		if hasPathDuplicates(api.Spec.Rules) {
+			state.accessRules[fmt.Sprintf("%s:%s", obj.Spec.Match.URL, obj.Spec.Match.Methods)] = &obj
 		} else {
-			key = obj.Spec.Match.URL
+			state.accessRules[obj.Spec.Match.URL] = &obj
 		}
-		state.accessRules[key] = &obj
+
 	}
 	return &state, nil
 }

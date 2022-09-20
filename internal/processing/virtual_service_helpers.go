@@ -21,7 +21,7 @@ func (f *Factory) generateVirtualService(api *gatewayv1beta1.APIRule) *networkin
 	vsSpecBuilder := builders.VirtualServiceSpec()
 	vsSpecBuilder.Host(helpers.GetHostWithDomain(*api.Spec.Host, f.defaultDomainName))
 	vsSpecBuilder.Gateway(*api.Spec.Gateway)
-	filteredRules := helpers.FilterDuplicatePaths(api.Spec.Rules)
+	filteredRules := filterDuplicatePaths(api.Spec.Rules)
 
 	for _, rule := range filteredRules {
 		httpRouteBuilder := builders.HTTPRoute()
