@@ -21,12 +21,11 @@ func (f *Factory) generateVirtualService(api *gatewayv1beta1.APIRule) *networkin
 	vsSpecBuilder := builders.VirtualServiceSpec()
 	vsSpecBuilder.Host(helpers.GetHostWithDomain(*api.Spec.Host, f.defaultDomainName))
 	vsSpecBuilder.Gateway(*api.Spec.Gateway)
+	filteredRules := helpers.FilterDuplicatePaths(api.Spec.Rules)
 
-	for _, rule := range api.Spec.Rules {
-
+	for _, rule := range filteredRules {
 		httpRouteBuilder := builders.HTTPRoute()
 		host, port := f.oathkeeperSvc, f.oathkeeperSvcPort
-
 		if !isSecured(rule) {
 			// Use rule level service if it exists
 			if rule.Service != nil {
@@ -48,6 +47,7 @@ func (f *Factory) generateVirtualService(api *gatewayv1beta1.APIRule) *networkin
 		httpRouteBuilder.Headers(builders.Headers().
 			SetHostHeader(helpers.GetHostWithDomain(*api.Spec.Host, f.defaultDomainName)))
 		vsSpecBuilder.HTTP(httpRouteBuilder)
+
 	}
 
 	vsBuilder := builders.VirtualService().

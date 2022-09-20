@@ -11,6 +11,7 @@ import (
 	"github.com/go-logr/logr"
 	gatewayv1alpha1 "github.com/kyma-incubator/api-gateway/api/v1alpha1"
 	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
+	"github.com/kyma-incubator/api-gateway/internal/helpers"
 	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 )
@@ -56,12 +57,18 @@ type CorsConfig struct {
 // CalculateRequiredState returns required state of all objects related to given api
 func (f *Factory) CalculateRequiredState(api *gatewayv1beta1.APIRule) *State {
 	var res State
+	var key string
 
 	res.accessRules = make(map[string]*rulev1alpha1.Rule)
 	for _, rule := range api.Spec.Rules {
 		if isSecured(rule) {
 			ar := generateAccessRule(api, rule, rule.AccessStrategies, f.additionalLabels, f.defaultDomainName)
-			res.accessRules[ar.Spec.Match.URL] = ar
+			if helpers.HasPathDuplicates(api.Spec.Rules) {
+				key = fmt.Sprintf("%s:%s", rule.Path, rule.Methods)
+			} else {
+				key = ar.Spec.Match.URL
+			}
+			res.accessRules[key] = ar
 		}
 	}
 
@@ -84,7 +91,6 @@ func (f *Factory) GetActualState(ctx context.Context, api *gatewayv1beta1.APIRul
 	labels[OwnerLabelv1alpha1] = fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace)
 
 	var state State
-
 	var vsList networkingv1beta1.VirtualServiceList
 	if err := f.client.List(ctx, &vsList, client.MatchingLabels(labels)); err != nil {
 		return nil, err
