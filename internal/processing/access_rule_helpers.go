@@ -44,7 +44,7 @@ func generateAccessRuleSpec(api *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rul
 		Authenticators(builders.Authenticators().From(accessStrategies)).
 		Mutators(builders.Mutators().From(rule.Mutators))
 
-	serviceNamespace := findServiceNamespace(api, &rule)
+	serviceNamespace := helpers.FindServiceNamespace(api, &rule)
 
 	// Use rule level service if it exists
 	if rule.Service != nil {

@@ -122,6 +122,44 @@ var _ = Describe("Factory", func() {
 				Expect(len(accessRules)).To(Equal(0))
 			})
 
+			It("should override upstream for specified spec level service namespace", func() {
+				strategies := []*gatewayv1beta1.Authenticator{
+					{
+						Handler: &gatewayv1beta1.Handler{
+							Name: "allow",
+						},
+					},
+				}
+
+				allowRule := getRuleFor(apiPath, apiMethods, []*gatewayv1beta1.Mutator{}, strategies)
+				rules := []gatewayv1beta1.Rule{allowRule}
+
+				apiRule := getAPIRuleFor(rules)
+
+				overrideServiceName := "testName"
+				overrideServiceNamespace := "testName-namespace"
+				overrideServicePort := uint32(8080)
+
+				apiRule.Spec.Service = &gatewayv1beta1.Service{
+					Name:      &overrideServiceName,
+					Namespace: &overrideServiceNamespace,
+					Port:      &overrideServicePort,
+				}
+
+				f := NewFactory(nil, ctrl.Log.WithName("test"), oathkeeperSvc, oathkeeperSvcPort, testCors, testAdditionalLabels, defaultDomain)
+
+				desiredState := f.CalculateRequiredState(apiRule)
+				vs := desiredState.virtualService
+				accessRules := desiredState.accessRules
+
+				//verify VS has rule level destination host
+				Expect(len(vs.Spec.Http[0].Route)).To(Equal(1))
+				Expect(vs.Spec.Http[0].Route[0].Destination.Host).To(Equal(overrideServiceName + "." + overrideServiceNamespace + ".svc.cluster.local"))
+
+				//Verify AR has rule level upstream
+				Expect(len(accessRules)).To(Equal(0))
+			})
+
 			It("noop: should override access rule upstream with rule level service", func() {
 				strategies := []*gatewayv1beta1.Authenticator{
 					{
@@ -162,7 +200,49 @@ var _ = Describe("Factory", func() {
 				Expect(accessRules[expectedNoopRuleMatchURL].Spec.Upstream.URL).To(Equal(expectedRuleUpstreamURL))
 			})
 
-			It("allow: should override VS destination host", func() {
+			It("noop: should override access rule upstream with rule level service for specified namespace", func() {
+				strategies := []*gatewayv1beta1.Authenticator{
+					{
+						Handler: &gatewayv1beta1.Handler{
+							Name: "noop",
+						},
+					},
+				}
+
+				overrideServiceName := "testName"
+				overrideServiceNamespace := "testName-namespace"
+				overrideServicePort := uint32(8080)
+
+				service := &gatewayv1beta1.Service{
+					Name:      &overrideServiceName,
+					Namespace: &overrideServiceNamespace,
+					Port:      &overrideServicePort,
+				}
+
+				allowRule := getRuleWithServiceFor(apiPath, apiMethods, []*gatewayv1beta1.Mutator{}, strategies, service)
+				rules := []gatewayv1beta1.Rule{allowRule}
+
+				apiRule := getAPIRuleFor(rules)
+
+				f := NewFactory(nil, ctrl.Log.WithName("test"), oathkeeperSvc, oathkeeperSvcPort, testCors, testAdditionalLabels, defaultDomain)
+
+				desiredState := f.CalculateRequiredState(apiRule)
+				vs := desiredState.virtualService
+				accessRules := desiredState.accessRules
+
+				expectedNoopRuleMatchURL := fmt.Sprintf("<http|https>://%s<%s>", serviceHost, apiPath)
+				expectedRuleUpstreamURL := fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", overrideServiceName, overrideServiceNamespace, overrideServicePort)
+
+				//Verify VS
+				Expect(len(vs.Spec.Http[0].Route)).To(Equal(1))
+				Expect(vs.Spec.Http[0].Route[0].Destination.Host).To(Equal(oathkeeperSvc))
+
+				//Verify AR has rule level upstream
+				Expect(len(accessRules)).To(Equal(1))
+				Expect(accessRules[expectedNoopRuleMatchURL].Spec.Upstream.URL).To(Equal(expectedRuleUpstreamURL))
+			})
+
+			It("allow: should override VS destination host with rule level service", func() {
 				strategies := []*gatewayv1beta1.Authenticator{
 					{
 						Handler: &gatewayv1beta1.Handler{
@@ -193,6 +273,44 @@ var _ = Describe("Factory", func() {
 				//verify VS has rule level destination host
 				Expect(len(vs.Spec.Http[0].Route)).To(Equal(1))
 				Expect(vs.Spec.Http[0].Route[0].Destination.Host).To(Equal(overrideServiceName + "." + apiNamespace + ".svc.cluster.local"))
+
+				//Verify AR has rule level upstream
+				Expect(len(accessRules)).To(Equal(0))
+			})
+
+			It("allow: should override VS destination host with rule level service for specified namespace", func() {
+				strategies := []*gatewayv1beta1.Authenticator{
+					{
+						Handler: &gatewayv1beta1.Handler{
+							Name: "allow",
+						},
+					},
+				}
+
+				overrideServiceName := "testName"
+				overrideServiceNamespace := "testName-namespace"
+				overrideServicePort := uint32(8080)
+
+				service := &gatewayv1beta1.Service{
+					Name:      &overrideServiceName,
+					Namespace: &overrideServiceNamespace,
+					Port:      &overrideServicePort,
+				}
+
+				allowRule := getRuleWithServiceFor(apiPath, apiMethods, []*gatewayv1beta1.Mutator{}, strategies, service)
+				rules := []gatewayv1beta1.Rule{allowRule}
+
+				apiRule := getAPIRuleFor(rules)
+
+				f := NewFactory(nil, ctrl.Log.WithName("test"), oathkeeperSvc, oathkeeperSvcPort, testCors, testAdditionalLabels, defaultDomain)
+
+				desiredState := f.CalculateRequiredState(apiRule)
+				vs := desiredState.virtualService
+				accessRules := desiredState.accessRules
+
+				//verify VS has rule level destination host
+				Expect(len(vs.Spec.Http[0].Route)).To(Equal(1))
+				Expect(vs.Spec.Http[0].Route[0].Destination.Host).To(Equal(overrideServiceName + "." + overrideServiceNamespace + ".svc.cluster.local"))
 
 				//Verify AR has rule level upstream
 				Expect(len(accessRules)).To(Equal(0))

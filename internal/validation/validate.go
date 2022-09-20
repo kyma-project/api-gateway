@@ -53,11 +53,10 @@ func (v *APIRule) Validate(api *gatewayv1beta1.APIRule, vsList networkingv1beta1
 	}
 	//Validate Host
 	res = append(res, v.validateHost(".spec.host", vsList, api)...)
-
 	//Validate Gateway
 	res = append(res, v.validateGateway(".spec.gateway", api.Spec.Gateway)...)
 	//Validate Rules
-	res = append(res, v.validateRules(".spec.rules", api.Spec.Service == nil, api.Spec.Rules, api.Namespace)...)
+	res = append(res, v.validateRules(".spec.rules", api.Spec.Service == nil, api)...)
 
 	return res
 }
@@ -128,10 +127,7 @@ func (v *APIRule) validateService(attributePath string, api *gatewayv1beta1.APIR
 
 	for namespace, services := range v.ServiceBlockList {
 		for _, svc := range services {
-			serviceNamespace := api.Spec.Service.Namespace
-			if serviceNamespace == nil {
-				serviceNamespace = &api.ObjectMeta.Namespace
-			}
+			serviceNamespace := helpers.FindServiceNamespace(api, nil)
 			if svc == *api.Spec.Service.Name && namespace == *serviceNamespace {
 				problems = append(problems, Failure{
 					AttributePath: attributePath + ".name",
@@ -149,9 +145,10 @@ func (v *APIRule) validateGateway(attributePath string, gateway *string) []Failu
 
 // Validates whether all rules are defined correctly
 // Checks whether all rules have service defined for them if checkForService is true
-func (v *APIRule) validateRules(attributePath string, checkForService bool, rules []gatewayv1beta1.Rule, rulesNamespace string) []Failure {
+func (v *APIRule) validateRules(attributePath string, checkForService bool, api *gatewayv1beta1.APIRule) []Failure {
 	var problems []Failure
 
+	rules := api.Spec.Rules
 	if len(rules) == 0 {
 		problems = append(problems, Failure{AttributePath: attributePath, Message: "No rules defined"})
 		return problems
@@ -171,10 +168,7 @@ func (v *APIRule) validateRules(attributePath string, checkForService bool, rule
 		if r.Service != nil {
 			for namespace, services := range v.ServiceBlockList {
 				for _, svc := range services {
-					serviceNamespace := r.Service.Namespace
-					if serviceNamespace == nil {
-						serviceNamespace = apiRuleNamespace
-					}
+					serviceNamespace := helpers.FindServiceNamespace(api, &r)
 					if svc == *r.Service.Name && namespace == *serviceNamespace {
 						problems = append(problems, Failure{
 							AttributePath: attributePathWithRuleIndex + ".service.name",

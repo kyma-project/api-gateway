@@ -27,7 +27,7 @@ func (f *Factory) generateVirtualService(api *gatewayv1beta1.APIRule) *networkin
 		httpRouteBuilder := builders.HTTPRoute()
 		host, port := f.oathkeeperSvc, f.oathkeeperSvcPort
 
-		serviceNamespace := findServiceNamespace(api, &rule)
+		serviceNamespace := helpers.FindServiceNamespace(api, &rule)
 
 		if !isSecured(rule) {
 			// Use rule level service if it exists

@@ -27,14 +27,3 @@ func generateOwnerRef(api *gatewayv1beta1.APIRule) k8sMeta.OwnerReference {
 		Controller(true).
 		Get()
 }
-
-func findServiceNamespace(api *gatewayv1beta1.APIRule, rule *gatewayv1beta1.Rule) *string {
-	// Fallback direction for the upstream service namespace: Rule.Service > Spec.Service > APIRule
-	if rule.Service != nil && rule.Service.Namespace != nil {
-		return rule.Service.Namespace
-	}
-	if api.Spec.Service != nil && api.Spec.Service.Namespace != nil {
-		return api.Spec.Service.Namespace
-	}
-	return &api.ObjectMeta.Namespace
-}
