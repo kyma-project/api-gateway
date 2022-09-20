@@ -64,7 +64,7 @@ func (f *Factory) CalculateRequiredState(api *gatewayv1beta1.APIRule) *State {
 		if isSecured(rule) {
 			ar := generateAccessRule(api, rule, rule.AccessStrategies, f.additionalLabels, f.defaultDomainName)
 			if helpers.HasPathDuplicates(api.Spec.Rules) {
-				key = fmt.Sprintf("%s:%s", rule.Path, rule.Methods)
+				key = fmt.Sprintf("%s:%s", ar.Spec.Match.URL, rule.Methods)
 			} else {
 				key = ar.Spec.Match.URL
 			}
@@ -91,6 +91,7 @@ func (f *Factory) GetActualState(ctx context.Context, api *gatewayv1beta1.APIRul
 	labels[OwnerLabelv1alpha1] = fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace)
 
 	var state State
+	var key string
 	var vsList networkingv1beta1.VirtualServiceList
 	if err := f.client.List(ctx, &vsList, client.MatchingLabels(labels)); err != nil {
 		return nil, err
@@ -111,7 +112,12 @@ func (f *Factory) GetActualState(ctx context.Context, api *gatewayv1beta1.APIRul
 
 	for i := range arList.Items {
 		obj := arList.Items[i]
-		state.accessRules[obj.Spec.Match.URL] = &obj
+		if helpers.HasPathDuplicates(api.Spec.Rules) {
+			key = fmt.Sprintf("%s:%s", obj.Spec.Match.URL, obj.Spec.Match.Methods)
+		} else {
+			key = obj.Spec.Match.URL
+		}
+		state.accessRules[key] = &obj
 	}
 	return &state, nil
 }
