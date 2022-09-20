@@ -80,7 +80,7 @@ type APIRuleList struct {
 	Items           []APIRule `json:"items"`
 }
 
-// Service .
+//Service .
 type Service struct {
 	// Name of the service
 	Name *string `json:"name"`
