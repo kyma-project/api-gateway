@@ -120,8 +120,7 @@ func (f *Factory) GetActualState(ctx context.Context, api *gatewayv1beta1.APIRul
 	if err := f.client.List(ctx, &arListAlpha, client.MatchingLabels(labels)); err != nil {
 		return nil, err
 	}
-	arList.Items = append(arList.Items, arListAlpha.Items...)
-
+	
 	for _, v := range arListAlpha.Items {
 		_, ok := v.Labels[OwnerLabel]; if !ok {
 			arList.Items = append(arList.Items, v)
