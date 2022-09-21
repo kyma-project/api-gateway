@@ -95,7 +95,7 @@ func (f *Factory) GetActualState(ctx context.Context, api *gatewayv1beta1.APIRul
 	}
 
 	var vsListAlpha networkingv1beta1.VirtualServiceList
-	if err := f.client.List(ctx, &vsListAlpha, client.MatchingLabels(labels)); err != nil {
+	if err := f.client.List(ctx, &vsListAlpha, client.MatchingLabels(labelsv1alpha)); err != nil {
 		return nil, err
 	}
 
@@ -117,10 +117,10 @@ func (f *Factory) GetActualState(ctx context.Context, api *gatewayv1beta1.APIRul
 	}
 
 	var arListAlpha rulev1alpha1.RuleList
-	if err := f.client.List(ctx, &arListAlpha, client.MatchingLabels(labels)); err != nil {
+	if err := f.client.List(ctx, &arListAlpha, client.MatchingLabels(labelsv1alpha)); err != nil {
 		return nil, err
 	}
-	
+
 	for _, v := range arListAlpha.Items {
 		_, ok := v.Labels[OwnerLabel]; if !ok {
 			arList.Items = append(arList.Items, v)
