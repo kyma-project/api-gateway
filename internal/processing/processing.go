@@ -98,7 +98,12 @@ func (f *Factory) GetActualState(ctx context.Context, api *gatewayv1beta1.APIRul
 	if err := f.client.List(ctx, &vsListAlpha, client.MatchingLabels(labels)); err != nil {
 		return nil, err
 	}
-	vsList.Items = append(vsList.Items, vsListAlpha.Items...)
+
+	for _, v := range vsListAlpha.Items {
+		_, ok := v.Labels[OwnerLabel]; if !ok {
+			vsList.Items = append(vsList.Items, v)
+		}
+	}
 
 	if len(vsList.Items) == 1 {
 		state.virtualService = vsList.Items[0]
@@ -116,6 +121,12 @@ func (f *Factory) GetActualState(ctx context.Context, api *gatewayv1beta1.APIRul
 		return nil, err
 	}
 	arList.Items = append(arList.Items, arListAlpha.Items...)
+
+	for _, v := range arListAlpha.Items {
+		_, ok := v.Labels[OwnerLabel]; if !ok {
+			arList.Items = append(arList.Items, v)
+		}
+	}
 
 	state.accessRules = make(map[string]*rulev1alpha1.Rule)
 
