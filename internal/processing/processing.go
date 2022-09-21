@@ -90,7 +90,7 @@ func (f *Factory) GetActualState(ctx context.Context, api *gatewayv1beta1.APIRul
 		return nil, err
 	}
 
-	if len(vsList.Items) == 1 {
+	if len(vsList.Items) >= 1 {
 		state.virtualService = vsList.Items[0]
 	} else {
 		state.virtualService = nil
