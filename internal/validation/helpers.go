@@ -10,7 +10,7 @@ import (
 	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
 )
 
-func hasDuplicates(rules []gatewayv1beta1.Rule) bool {
+func hasPathAndMethodDuplicates(rules []gatewayv1beta1.Rule) bool {
 	duplicates := map[string]bool{}
 
 	if len(rules) > 1 {

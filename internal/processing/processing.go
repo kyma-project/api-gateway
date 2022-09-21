@@ -56,16 +56,12 @@ type CorsConfig struct {
 // CalculateRequiredState returns required state of all objects related to given api
 func (f *Factory) CalculateRequiredState(api *gatewayv1beta1.APIRule) *State {
 	var res State
-
+	pathDuplicates := hasPathDuplicates(api.Spec.Rules)
 	res.accessRules = make(map[string]*rulev1alpha1.Rule)
 	for _, rule := range api.Spec.Rules {
 		if isSecured(rule) {
 			ar := generateAccessRule(api, rule, rule.AccessStrategies, f.additionalLabels, f.defaultDomainName)
-			if hasPathDuplicates(api.Spec.Rules) {
-				res.accessRules[fmt.Sprintf("%s:%s", ar.Spec.Match.URL, ar.Spec.Match.Methods)] = ar
-			} else {
-				res.accessRules[ar.Spec.Match.URL] = ar
-			}
+			res.accessRules[setAccessRuleKey(pathDuplicates, *ar)] = ar
 		}
 	}
 
@@ -87,6 +83,7 @@ func (f *Factory) GetActualState(ctx context.Context, api *gatewayv1beta1.APIRul
 	labels := make(map[string]string)
 	labels[OwnerLabelv1alpha1] = fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace)
 
+	pathDuplicates := hasPathDuplicates(api.Spec.Rules)
 	var state State
 	var vsList networkingv1beta1.VirtualServiceList
 
@@ -109,12 +106,7 @@ func (f *Factory) GetActualState(ctx context.Context, api *gatewayv1beta1.APIRul
 
 	for i := range arList.Items {
 		obj := arList.Items[i]
-		if hasPathDuplicates(api.Spec.Rules) {
-			state.accessRules[fmt.Sprintf("%s:%s", obj.Spec.Match.URL, obj.Spec.Match.Methods)] = &obj
-		} else {
-			state.accessRules[obj.Spec.Match.URL] = &obj
-		}
-
+		state.accessRules[setAccessRuleKey(pathDuplicates, obj)] = &obj
 	}
 	return &state, nil
 }

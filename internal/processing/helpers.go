@@ -1,8 +1,11 @@
 package processing
 
 import (
+	"fmt"
+
 	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
 	"github.com/kyma-incubator/api-gateway/internal/builders"
+	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
 	k8sMeta "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -41,6 +44,14 @@ func filterDuplicatePaths(rules []gatewayv1beta1.Rule) []gatewayv1beta1.Rule {
 	}
 
 	return filteredRules
+}
+
+func setAccessRuleKey(hasPathDuplicates bool, rule rulev1alpha1.Rule) string {
+	if hasPathDuplicates {
+		return fmt.Sprintf("%s:%s", rule.Spec.Match.URL, rule.Spec.Match.Methods)
+	}
+
+	return rule.Spec.Match.URL
 }
 
 func generateOwnerRef(api *gatewayv1beta1.APIRule) k8sMeta.OwnerReference {

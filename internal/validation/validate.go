@@ -153,7 +153,7 @@ func (v *APIRule) validateRules(attributePath string, checkForService bool, rule
 		return problems
 	}
 
-	if hasDuplicates(rules) {
+	if hasPathAndMethodDuplicates(rules) {
 		problems = append(problems, Failure{AttributePath: attributePath, Message: "multiple rules defined for the same path and method"})
 	}
 
