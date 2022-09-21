@@ -81,28 +81,13 @@ type State struct {
 // GetActualState methods gets actual state of Istio Virtual Services and Oathkeeper Rules
 func (f *Factory) GetActualState(ctx context.Context, api *gatewayv1beta1.APIRule) (*State, error) {
 	labels := make(map[string]string)
-	labels[OwnerLabel] = fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace)
-
-	// Fetch objects with old label
-	labelsv1alpha := make(map[string]string)
-	labelsv1alpha[OwnerLabelv1alpha1] = fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace)
+	labels[OwnerLabelv1alpha1] = fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace)
 
 	var state State
 
 	var vsList networkingv1beta1.VirtualServiceList
 	if err := f.client.List(ctx, &vsList, client.MatchingLabels(labels)); err != nil {
 		return nil, err
-	}
-
-	var vsListAlpha networkingv1beta1.VirtualServiceList
-	if err := f.client.List(ctx, &vsListAlpha, client.MatchingLabels(labelsv1alpha)); err != nil {
-		return nil, err
-	}
-
-	for _, v := range vsListAlpha.Items {
-		_, ok := v.Labels[OwnerLabel]; if !ok {
-			vsList.Items = append(vsList.Items, v)
-		}
 	}
 
 	if len(vsList.Items) == 1 {
@@ -114,17 +99,6 @@ func (f *Factory) GetActualState(ctx context.Context, api *gatewayv1beta1.APIRul
 	var arList rulev1alpha1.RuleList
 	if err := f.client.List(ctx, &arList, client.MatchingLabels(labels)); err != nil {
 		return nil, err
-	}
-
-	var arListAlpha rulev1alpha1.RuleList
-	if err := f.client.List(ctx, &arListAlpha, client.MatchingLabels(labelsv1alpha)); err != nil {
-		return nil, err
-	}
-
-	for _, v := range arListAlpha.Items {
-		_, ok := v.Labels[OwnerLabel]; if !ok {
-			arList.Items = append(arList.Items, v)
-		}
 	}
 
 	state.accessRules = make(map[string]*rulev1alpha1.Rule)
