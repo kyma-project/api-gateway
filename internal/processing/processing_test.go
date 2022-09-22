@@ -580,7 +580,7 @@ var _ = Describe("Factory", func() {
 
 				client := fake.NewClientBuilder().WithScheme(scheme).WithObjects(&rule, &vs).Build()
 
-				f := NewFactory(client, ctrl.Log.WithName("test"), oathkeeperSvc, oathkeeperSvcPort, testCors, testAdditionalLabels, defaultDomain)
+				f := NewFactory(client, ctrl.Log.WithName("test"), oathkeeperSvc, oathkeeperSvcPort, "https://example.com/.well-known/jwks.json", testCors, testAdditionalLabels, defaultDomain)
 				actualState, err := f.GetActualState(context.TODO(), apiRule)
 
 				Expect(err).To(BeNil())
