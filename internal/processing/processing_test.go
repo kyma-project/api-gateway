@@ -1,6 +1,7 @@
 package processing
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -16,6 +17,7 @@ import (
 	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
 const (
@@ -533,6 +535,60 @@ var _ = Describe("Factory", func() {
 		})
 	})
 
+	Describe("CalculateRequiredState", func() {
+		Context("when the access rule and virtual service has owner v1alpha1 owner label", func() {
+			It("should get the access rule and virtual service", func() {
+				noop := []*gatewayv1beta1.Authenticator{
+					{
+						Handler: &gatewayv1beta1.Handler{
+							Name: "noop",
+						},
+					},
+				}
+
+				noopRule := getRuleFor(apiPath, apiMethods, []*gatewayv1beta1.Mutator{}, noop)
+				rules := []gatewayv1beta1.Rule{noopRule}
+
+				apiRule := getAPIRuleFor(rules)
+
+
+				rule := rulev1alpha1.Rule{
+					ObjectMeta: metav1.ObjectMeta{
+						Labels: map[string]string{
+							OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", apiRule.ObjectMeta.Name, apiRule.ObjectMeta.Namespace),
+						},
+					},
+					Spec: rulev1alpha1.RuleSpec{
+						Match: &rulev1alpha1.Match{
+							URL: "some url",
+						},
+					},
+				}
+
+				vs := networkingv1beta1.VirtualService{
+					ObjectMeta: metav1.ObjectMeta{
+						Labels: map[string]string{
+							OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", apiRule.ObjectMeta.Name, apiRule.ObjectMeta.Namespace),
+						},
+					},
+				}
+
+				scheme := runtime.NewScheme()
+				rulev1alpha1.AddToScheme(scheme)
+				networkingv1beta1.AddToScheme(scheme)
+				gatewayv1beta1.AddToScheme(scheme)
+
+				client := fake.NewClientBuilder().WithScheme(scheme).WithObjects(&rule, &vs).Build()
+
+				f := NewFactory(client, ctrl.Log.WithName("test"), oathkeeperSvc, oathkeeperSvcPort, "https://example.com/.well-known/jwks.json", testCors, testAdditionalLabels, defaultDomain)
+				actualState, err := f.GetActualState(context.TODO(), apiRule)
+
+				Expect(err).To(BeNil())
+				Expect(actualState.accessRules).To(HaveLen(1))
+				Expect(actualState.virtualService).To(Not(BeNil()))
+			})
+		})
+	})
 	Describe("CalculateDiff", func() {
 		Context("between desired state & actual state", func() {
 			It("should produce patch containing VS to create & AR to create", func() {
