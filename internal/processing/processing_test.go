@@ -536,8 +536,8 @@ var _ = Describe("Factory", func() {
 	})
 
 	Describe("CalculateRequiredState", func() {
-		Context("when the access rule has owner v1alpha1 owner label", func() {
-			It("should get the access rule", func() {
+		Context("when the access rule and virtual service has owner v1alpha1 owner label", func() {
+			It("should get the access rule and virtual service", func() {
 				noop := []*gatewayv1beta1.Authenticator{
 					{
 						Handler: &gatewayv1beta1.Handler{
