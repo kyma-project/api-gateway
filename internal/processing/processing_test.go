@@ -356,6 +356,344 @@ var _ = Describe("Factory", func() {
 				Expect(jwtAccessRule.ObjectMeta.OwnerReferences[0].UID).To(Equal(apiUID))
 			})
 
+			It("should produce one VS and two ARs for two same paths and different methods", func() {
+				noop := []*gatewayv1beta1.Authenticator{
+					{
+						Handler: &gatewayv1beta1.Handler{
+							Name: "noop",
+						},
+					},
+				}
+
+				jwtConfigJSON := fmt.Sprintf(`
+					{
+						"trusted_issuers": ["%s"],
+						"jwks": [],
+						"required_scope": [%s]
+				}`, jwtIssuer, toCSVList(apiScopes))
+
+				jwt := []*gatewayv1beta1.Authenticator{
+					{
+						Handler: &gatewayv1beta1.Handler{
+							Name: "jwt",
+							Config: &runtime.RawExtension{
+								Raw: []byte(jwtConfigJSON),
+							},
+						},
+					},
+				}
+
+				testMutators := []*gatewayv1beta1.Mutator{
+					{
+						Handler: &gatewayv1beta1.Handler{
+							Name: "noop",
+						},
+					},
+					{
+						Handler: &gatewayv1beta1.Handler{
+							Name: "idtoken",
+						},
+					},
+				}
+				getMethod := []string{"GET"}
+				postMethod := []string{"POST"}
+				noopRule := getRuleFor(apiPath, getMethod, []*gatewayv1beta1.Mutator{}, noop)
+				jwtRule := getRuleFor(apiPath, postMethod, testMutators, jwt)
+				rules := []gatewayv1beta1.Rule{noopRule, jwtRule}
+
+				expectedNoopRuleKey := fmt.Sprintf("<http|https>://%s<%s>:%s", serviceHost, apiPath, getMethod)
+				expectedJwtRuleKey := fmt.Sprintf("<http|https>://%s<%s>:%s", serviceHost, apiPath, postMethod)
+
+				expectedNoopRuleMatchURL := fmt.Sprintf("<http|https>://%s<%s>", serviceHost, apiPath)
+				expectedJwtRuleMatchURL := fmt.Sprintf("<http|https>://%s<%s>", serviceHost, apiPath)
+				expectedRuleUpstreamURL := fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", serviceName, apiNamespace, servicePort)
+
+				apiRule := getAPIRuleFor(rules)
+
+				f := NewFactory(nil, ctrl.Log.WithName("test"), oathkeeperSvc, oathkeeperSvcPort, testCors, testAdditionalLabels, defaultDomain)
+
+				desiredState := f.CalculateRequiredState(apiRule)
+				vs := desiredState.virtualService
+				accessRules := desiredState.accessRules
+
+				//verify VS
+				Expect(vs).NotTo(BeNil())
+				Expect(len(vs.Spec.Gateways)).To(Equal(1))
+				Expect(len(vs.Spec.Hosts)).To(Equal(1))
+				Expect(vs.Spec.Hosts[0]).To(Equal(serviceHost))
+				Expect(len(vs.Spec.Http)).To(Equal(1))
+
+				Expect(len(vs.Spec.Http[0].Route)).To(Equal(1))
+				Expect(vs.Spec.Http[0].Route[0].Destination.Host).To(Equal(oathkeeperSvc))
+				Expect(vs.Spec.Http[0].Route[0].Destination.Port.Number).To(Equal(oathkeeperSvcPort))
+				Expect(len(vs.Spec.Http[0].Match)).To(Equal(1))
+				Expect(vs.Spec.Http[0].Match[0].Uri.GetRegex()).To(Equal(apiRule.Spec.Rules[0].Path))
+
+				Expect(vs.Spec.Http[0].CorsPolicy.AllowOrigins).To(Equal(testCors.AllowOrigins))
+				Expect(vs.Spec.Http[0].CorsPolicy.AllowMethods).To(Equal(testCors.AllowMethods))
+				Expect(vs.Spec.Http[0].CorsPolicy.AllowHeaders).To(Equal(testCors.AllowHeaders))
+
+				Expect(vs.ObjectMeta.Name).To(BeEmpty())
+				Expect(vs.ObjectMeta.GenerateName).To(Equal(apiName + "-"))
+				Expect(vs.ObjectMeta.Namespace).To(Equal(apiNamespace))
+				Expect(vs.ObjectMeta.Labels[testLabelKey]).To(Equal(testLabelValue))
+
+				Expect(vs.ObjectMeta.OwnerReferences[0].APIVersion).To(Equal(apiAPIVersion))
+				Expect(vs.ObjectMeta.OwnerReferences[0].Kind).To(Equal(apiKind))
+				Expect(vs.ObjectMeta.OwnerReferences[0].Name).To(Equal(apiName))
+				Expect(vs.ObjectMeta.OwnerReferences[0].UID).To(Equal(apiUID))
+
+				//Verify ARs
+				Expect(len(accessRules)).To(Equal(2))
+
+				noopAccessRule := accessRules[expectedNoopRuleKey]
+
+				Expect(len(accessRules)).To(Equal(2))
+				Expect(len(noopAccessRule.Spec.Authenticators)).To(Equal(1))
+
+				Expect(noopAccessRule.Spec.Authorizer.Name).To(Equal("allow"))
+				Expect(noopAccessRule.Spec.Authorizer.Config).To(BeNil())
+
+				Expect(noopAccessRule.Spec.Authenticators[0].Handler.Name).To(Equal("noop"))
+				Expect(noopAccessRule.Spec.Authenticators[0].Handler.Config).To(BeNil())
+
+				Expect(len(noopAccessRule.Spec.Match.Methods)).To(Equal(len(getMethod)))
+				Expect(noopAccessRule.Spec.Match.Methods).To(Equal(getMethod))
+				Expect(noopAccessRule.Spec.Match.URL).To(Equal(expectedNoopRuleMatchURL))
+
+				Expect(noopAccessRule.Spec.Upstream.URL).To(Equal(expectedRuleUpstreamURL))
+
+				Expect(noopAccessRule.ObjectMeta.Name).To(BeEmpty())
+				Expect(noopAccessRule.ObjectMeta.GenerateName).To(Equal(apiName + "-"))
+				Expect(noopAccessRule.ObjectMeta.Namespace).To(Equal(apiNamespace))
+				Expect(noopAccessRule.ObjectMeta.Labels[testLabelKey]).To(Equal(testLabelValue))
+
+				Expect(noopAccessRule.ObjectMeta.OwnerReferences[0].APIVersion).To(Equal(apiAPIVersion))
+				Expect(noopAccessRule.ObjectMeta.OwnerReferences[0].Kind).To(Equal(apiKind))
+				Expect(noopAccessRule.ObjectMeta.OwnerReferences[0].Name).To(Equal(apiName))
+				Expect(noopAccessRule.ObjectMeta.OwnerReferences[0].UID).To(Equal(apiUID))
+
+				jwtAccessRule := accessRules[expectedJwtRuleKey]
+
+				Expect(len(jwtAccessRule.Spec.Authenticators)).To(Equal(1))
+
+				Expect(jwtAccessRule.Spec.Authorizer.Name).To(Equal("allow"))
+				Expect(jwtAccessRule.Spec.Authorizer.Config).To(BeNil())
+
+				Expect(jwtAccessRule.Spec.Authenticators[0].Handler.Name).To(Equal("jwt"))
+				Expect(jwtAccessRule.Spec.Authenticators[0].Handler.Config).NotTo(BeNil())
+				Expect(string(jwtAccessRule.Spec.Authenticators[0].Handler.Config.Raw)).To(Equal(jwtConfigJSON))
+
+				Expect(len(jwtAccessRule.Spec.Match.Methods)).To(Equal(len(postMethod)))
+				Expect(jwtAccessRule.Spec.Match.Methods).To(Equal(postMethod))
+				Expect(jwtAccessRule.Spec.Match.URL).To(Equal(expectedJwtRuleMatchURL))
+
+				Expect(jwtAccessRule.Spec.Upstream.URL).To(Equal(expectedRuleUpstreamURL))
+
+				Expect(jwtAccessRule.Spec.Mutators).NotTo(BeNil())
+				Expect(len(jwtAccessRule.Spec.Mutators)).To(Equal(len(testMutators)))
+				Expect(jwtAccessRule.Spec.Mutators[0].Handler.Name).To(Equal(testMutators[0].Name))
+				Expect(jwtAccessRule.Spec.Mutators[1].Handler.Name).To(Equal(testMutators[1].Name))
+
+				Expect(jwtAccessRule.ObjectMeta.Name).To(BeEmpty())
+				Expect(jwtAccessRule.ObjectMeta.GenerateName).To(Equal(apiName + "-"))
+				Expect(jwtAccessRule.ObjectMeta.Namespace).To(Equal(apiNamespace))
+				Expect(jwtAccessRule.ObjectMeta.Labels[testLabelKey]).To(Equal(testLabelValue))
+
+				Expect(jwtAccessRule.ObjectMeta.OwnerReferences[0].APIVersion).To(Equal(apiAPIVersion))
+				Expect(jwtAccessRule.ObjectMeta.OwnerReferences[0].Kind).To(Equal(apiKind))
+				Expect(jwtAccessRule.ObjectMeta.OwnerReferences[0].Name).To(Equal(apiName))
+				Expect(jwtAccessRule.ObjectMeta.OwnerReferences[0].UID).To(Equal(apiUID))
+			})
+
+			It("should produce VS and ARs for given two same paths and one different", func() {
+				noop := []*gatewayv1beta1.Authenticator{
+					{
+						Handler: &gatewayv1beta1.Handler{
+							Name: "noop",
+						},
+					},
+				}
+
+				jwtConfigJSON := fmt.Sprintf(`
+					{
+						"trusted_issuers": ["%s"],
+						"jwks": [],
+						"required_scope": [%s]
+				}`, jwtIssuer, toCSVList(apiScopes))
+
+				jwt := []*gatewayv1beta1.Authenticator{
+					{
+						Handler: &gatewayv1beta1.Handler{
+							Name: "jwt",
+							Config: &runtime.RawExtension{
+								Raw: []byte(jwtConfigJSON),
+							},
+						},
+					},
+				}
+
+				testMutators := []*gatewayv1beta1.Mutator{
+					{
+						Handler: &gatewayv1beta1.Handler{
+							Name: "noop",
+						},
+					},
+					{
+						Handler: &gatewayv1beta1.Handler{
+							Name: "idtoken",
+						},
+					},
+				}
+				getMethod := []string{"GET"}
+				postMethod := []string{"POST"}
+				noopGetRule := getRuleFor(apiPath, getMethod, []*gatewayv1beta1.Mutator{}, noop)
+				noopPostRule := getRuleFor(apiPath, postMethod, []*gatewayv1beta1.Mutator{}, noop)
+				jwtRule := getRuleFor(headersAPIPath, apiMethods, testMutators, jwt)
+				rules := []gatewayv1beta1.Rule{noopGetRule, noopPostRule, jwtRule}
+
+				expectedNoopGetRuleKey := fmt.Sprintf("<http|https>://%s<%s>:%s", serviceHost, apiPath, getMethod)
+				expectedNoopPostRuleKey := fmt.Sprintf("<http|https>://%s<%s>:%s", serviceHost, apiPath, postMethod)
+				expectedJwtRuleKey := fmt.Sprintf("<http|https>://%s<%s>:%s", serviceHost, headersAPIPath, apiMethods)
+
+				expectedNoopGetRuleMatchURL := fmt.Sprintf("<http|https>://%s<%s>", serviceHost, apiPath)
+				expectedNoopPostRuleMatchURL := fmt.Sprintf("<http|https>://%s<%s>", serviceHost, apiPath)
+				expectedJwtRuleMatchURL := fmt.Sprintf("<http|https>://%s<%s>", serviceHost, headersAPIPath)
+				expectedRuleUpstreamURL := fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", serviceName, apiNamespace, servicePort)
+
+				apiRule := getAPIRuleFor(rules)
+
+				f := NewFactory(nil, ctrl.Log.WithName("test"), oathkeeperSvc, oathkeeperSvcPort, testCors, testAdditionalLabels, defaultDomain)
+
+				desiredState := f.CalculateRequiredState(apiRule)
+				vs := desiredState.virtualService
+				accessRules := desiredState.accessRules
+
+				//verify VS
+				Expect(vs).NotTo(BeNil())
+				Expect(len(vs.Spec.Gateways)).To(Equal(1))
+				Expect(len(vs.Spec.Hosts)).To(Equal(1))
+				Expect(vs.Spec.Hosts[0]).To(Equal(serviceHost))
+				Expect(len(vs.Spec.Http)).To(Equal(2))
+
+				Expect(len(vs.Spec.Http[0].Route)).To(Equal(1))
+				Expect(vs.Spec.Http[0].Route[0].Destination.Host).To(Equal(oathkeeperSvc))
+				Expect(vs.Spec.Http[0].Route[0].Destination.Port.Number).To(Equal(oathkeeperSvcPort))
+				Expect(len(vs.Spec.Http[0].Match)).To(Equal(1))
+				Expect(vs.Spec.Http[0].Match[0].Uri.GetRegex()).To(Equal(apiRule.Spec.Rules[0].Path))
+
+				Expect(vs.Spec.Http[0].CorsPolicy.AllowOrigins).To(Equal(testCors.AllowOrigins))
+				Expect(vs.Spec.Http[0].CorsPolicy.AllowMethods).To(Equal(testCors.AllowMethods))
+				Expect(vs.Spec.Http[0].CorsPolicy.AllowHeaders).To(Equal(testCors.AllowHeaders))
+
+				Expect(len(vs.Spec.Http[1].Route)).To(Equal(1))
+				Expect(vs.Spec.Http[1].Route[0].Destination.Host).To(Equal(oathkeeperSvc))
+				Expect(vs.Spec.Http[1].Route[0].Destination.Port.Number).To(Equal(oathkeeperSvcPort))
+				Expect(len(vs.Spec.Http[1].Match)).To(Equal(1))
+				Expect(vs.Spec.Http[1].Match[0].Uri.GetRegex()).To(Equal(apiRule.Spec.Rules[2].Path))
+
+				Expect(vs.Spec.Http[1].CorsPolicy.AllowOrigins).To(Equal(testCors.AllowOrigins))
+				Expect(vs.Spec.Http[1].CorsPolicy.AllowMethods).To(Equal(testCors.AllowMethods))
+				Expect(vs.Spec.Http[1].CorsPolicy.AllowHeaders).To(Equal(testCors.AllowHeaders))
+
+				Expect(vs.ObjectMeta.Name).To(BeEmpty())
+				Expect(vs.ObjectMeta.GenerateName).To(Equal(apiName + "-"))
+				Expect(vs.ObjectMeta.Namespace).To(Equal(apiNamespace))
+				Expect(vs.ObjectMeta.Labels[testLabelKey]).To(Equal(testLabelValue))
+
+				Expect(vs.ObjectMeta.OwnerReferences[0].APIVersion).To(Equal(apiAPIVersion))
+				Expect(vs.ObjectMeta.OwnerReferences[0].Kind).To(Equal(apiKind))
+				Expect(vs.ObjectMeta.OwnerReferences[0].Name).To(Equal(apiName))
+				Expect(vs.ObjectMeta.OwnerReferences[0].UID).To(Equal(apiUID))
+
+				//Verify ARs
+				Expect(len(accessRules)).To(Equal(3))
+
+				noopGetAccessRule := accessRules[expectedNoopGetRuleKey]
+
+				Expect(len(noopGetAccessRule.Spec.Authenticators)).To(Equal(1))
+
+				Expect(noopGetAccessRule.Spec.Authorizer.Name).To(Equal("allow"))
+				Expect(noopGetAccessRule.Spec.Authorizer.Config).To(BeNil())
+
+				Expect(noopGetAccessRule.Spec.Authenticators[0].Handler.Name).To(Equal("noop"))
+				Expect(noopGetAccessRule.Spec.Authenticators[0].Handler.Config).To(BeNil())
+
+				Expect(len(noopGetAccessRule.Spec.Match.Methods)).To(Equal(len(getMethod)))
+				Expect(noopGetAccessRule.Spec.Match.Methods).To(Equal(getMethod))
+				Expect(noopGetAccessRule.Spec.Match.URL).To(Equal(expectedNoopGetRuleMatchURL))
+
+				Expect(noopGetAccessRule.Spec.Upstream.URL).To(Equal(expectedRuleUpstreamURL))
+
+				Expect(noopGetAccessRule.ObjectMeta.Name).To(BeEmpty())
+				Expect(noopGetAccessRule.ObjectMeta.GenerateName).To(Equal(apiName + "-"))
+				Expect(noopGetAccessRule.ObjectMeta.Namespace).To(Equal(apiNamespace))
+				Expect(noopGetAccessRule.ObjectMeta.Labels[testLabelKey]).To(Equal(testLabelValue))
+
+				Expect(noopGetAccessRule.ObjectMeta.OwnerReferences[0].APIVersion).To(Equal(apiAPIVersion))
+				Expect(noopGetAccessRule.ObjectMeta.OwnerReferences[0].Kind).To(Equal(apiKind))
+				Expect(noopGetAccessRule.ObjectMeta.OwnerReferences[0].Name).To(Equal(apiName))
+				Expect(noopGetAccessRule.ObjectMeta.OwnerReferences[0].UID).To(Equal(apiUID))
+
+				noopPostAccessRule := accessRules[expectedNoopPostRuleKey]
+
+				Expect(len(noopPostAccessRule.Spec.Authenticators)).To(Equal(1))
+
+				Expect(noopPostAccessRule.Spec.Authorizer.Name).To(Equal("allow"))
+				Expect(noopPostAccessRule.Spec.Authorizer.Config).To(BeNil())
+
+				Expect(noopPostAccessRule.Spec.Authenticators[0].Handler.Name).To(Equal("noop"))
+				Expect(noopPostAccessRule.Spec.Authenticators[0].Handler.Config).To(BeNil())
+
+				Expect(len(noopPostAccessRule.Spec.Match.Methods)).To(Equal(len(postMethod)))
+				Expect(noopPostAccessRule.Spec.Match.Methods).To(Equal(postMethod))
+				Expect(noopPostAccessRule.Spec.Match.URL).To(Equal(expectedNoopPostRuleMatchURL))
+
+				Expect(noopPostAccessRule.Spec.Upstream.URL).To(Equal(expectedRuleUpstreamURL))
+
+				Expect(noopPostAccessRule.ObjectMeta.Name).To(BeEmpty())
+				Expect(noopPostAccessRule.ObjectMeta.GenerateName).To(Equal(apiName + "-"))
+				Expect(noopPostAccessRule.ObjectMeta.Namespace).To(Equal(apiNamespace))
+				Expect(noopPostAccessRule.ObjectMeta.Labels[testLabelKey]).To(Equal(testLabelValue))
+
+				Expect(noopPostAccessRule.ObjectMeta.OwnerReferences[0].APIVersion).To(Equal(apiAPIVersion))
+				Expect(noopPostAccessRule.ObjectMeta.OwnerReferences[0].Kind).To(Equal(apiKind))
+				Expect(noopPostAccessRule.ObjectMeta.OwnerReferences[0].Name).To(Equal(apiName))
+				Expect(noopPostAccessRule.ObjectMeta.OwnerReferences[0].UID).To(Equal(apiUID))
+
+				jwtAccessRule := accessRules[expectedJwtRuleKey]
+
+				Expect(len(jwtAccessRule.Spec.Authenticators)).To(Equal(1))
+
+				Expect(jwtAccessRule.Spec.Authorizer.Name).To(Equal("allow"))
+				Expect(jwtAccessRule.Spec.Authorizer.Config).To(BeNil())
+
+				Expect(jwtAccessRule.Spec.Authenticators[0].Handler.Name).To(Equal("jwt"))
+				Expect(jwtAccessRule.Spec.Authenticators[0].Handler.Config).NotTo(BeNil())
+				Expect(string(jwtAccessRule.Spec.Authenticators[0].Handler.Config.Raw)).To(Equal(jwtConfigJSON))
+
+				Expect(len(jwtAccessRule.Spec.Match.Methods)).To(Equal(len(apiMethods)))
+				Expect(jwtAccessRule.Spec.Match.Methods).To(Equal(apiMethods))
+				Expect(jwtAccessRule.Spec.Match.URL).To(Equal(expectedJwtRuleMatchURL))
+
+				Expect(jwtAccessRule.Spec.Upstream.URL).To(Equal(expectedRuleUpstreamURL))
+
+				Expect(jwtAccessRule.Spec.Mutators).NotTo(BeNil())
+				Expect(len(jwtAccessRule.Spec.Mutators)).To(Equal(len(testMutators)))
+				Expect(jwtAccessRule.Spec.Mutators[0].Handler.Name).To(Equal(testMutators[0].Name))
+				Expect(jwtAccessRule.Spec.Mutators[1].Handler.Name).To(Equal(testMutators[1].Name))
+
+				Expect(jwtAccessRule.ObjectMeta.Name).To(BeEmpty())
+				Expect(jwtAccessRule.ObjectMeta.GenerateName).To(Equal(apiName + "-"))
+				Expect(jwtAccessRule.ObjectMeta.Namespace).To(Equal(apiNamespace))
+				Expect(jwtAccessRule.ObjectMeta.Labels[testLabelKey]).To(Equal(testLabelValue))
+
+				Expect(jwtAccessRule.ObjectMeta.OwnerReferences[0].APIVersion).To(Equal(apiAPIVersion))
+				Expect(jwtAccessRule.ObjectMeta.OwnerReferences[0].Kind).To(Equal(apiKind))
+				Expect(jwtAccessRule.ObjectMeta.OwnerReferences[0].Name).To(Equal(apiName))
+				Expect(jwtAccessRule.ObjectMeta.OwnerReferences[0].UID).To(Equal(apiUID))
+			})
+
 			It("should produce VS & AR for jwt & oauth authenticators for given path", func() {
 				oauthConfigJSON := fmt.Sprintf(`{"required_scope": [%s]}`, toCSVList(apiScopes))
 

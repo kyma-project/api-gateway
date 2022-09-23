@@ -545,7 +545,7 @@ var _ = Describe("Validate function", func() {
 		//then
 		Expect(problems).To(HaveLen(6))
 		Expect(problems[0].AttributePath).To(Equal(".spec.rules"))
-		Expect(problems[0].Message).To(Equal("Multiple rules defined for the same path"))
+		Expect(problems[0].Message).To(Equal("multiple rules defined for the same path and method"))
 
 		Expect(problems[1].AttributePath).To(Equal(".spec.rules[0].accessStrategies[0].config"))
 		Expect(problems[1].Message).To(Equal("strategy: noop does not support configuration"))
@@ -561,8 +561,42 @@ var _ = Describe("Validate function", func() {
 
 		Expect(problems[5].AttributePath).To(Equal(".spec.rules[3].accessStrategies"))
 		Expect(problems[5].Message).To(Equal("No accessStrategies defined"))
-	})
 
+	})
+	It("Should fail for the same path and method", func() {
+		//given
+		input := &gatewayv1beta1.APIRule{
+			Spec: gatewayv1beta1.APIRuleSpec{
+				Service: getService(sampleServiceName, uint32(8080)),
+				Host:    getHost(sampleValidHost),
+				Rules: []gatewayv1beta1.Rule{
+					{
+						Path: "/abc",
+						AccessStrategies: []*gatewayv1beta1.Authenticator{
+							toAuthenticator("noop", emptyConfig()),
+						},
+						Methods: []string{"GET"},
+					},
+					{
+						Path: "/abc",
+						AccessStrategies: []*gatewayv1beta1.Authenticator{
+							toAuthenticator("anonymous", emptyConfig()),
+						},
+						Methods: []string{"GET", "POST"},
+					},
+				},
+			},
+		}
+		//when
+		problems := (&APIRule{
+			DomainAllowList: testDomainAllowlist,
+		}).Validate(input, networkingv1beta1.VirtualServiceList{})
+
+		//then
+		Expect(problems).To(HaveLen(1))
+		Expect(problems[0].AttributePath).To(Equal(".spec.rules"))
+		Expect(problems[0].Message).To(Equal("multiple rules defined for the same path and method"))
+	})
 	It("Should succeed for valid input", func() {
 		//given
 		occupiedHost := "occupied-host" + allowlistedDomain
@@ -585,6 +619,15 @@ var _ = Describe("Validate function", func() {
 							toAuthenticator("jwt", simpleJWTConfig()),
 							toAuthenticator("noop", emptyConfig()),
 						},
+						Methods: []string{"POST"},
+					},
+					{
+						Path: "/abc",
+						AccessStrategies: []*gatewayv1beta1.Authenticator{
+							toAuthenticator("jwt", simpleJWTConfig()),
+							toAuthenticator("noop", emptyConfig()),
+						},
+						Methods: []string{"GET"},
 					},
 					{
 						Path: "/bcd",
@@ -597,6 +640,50 @@ var _ = Describe("Validate function", func() {
 						AccessStrategies: []*gatewayv1beta1.Authenticator{
 							toAuthenticator("allow", nil),
 						},
+					},
+				},
+			},
+		}
+		//when
+		problems := (&APIRule{
+			DomainAllowList: testDomainAllowlist,
+		}).Validate(input, networkingv1beta1.VirtualServiceList{Items: []*networkingv1beta1.VirtualService{&existingVS}})
+
+		//then
+		Expect(problems).To(HaveLen(0))
+	})
+
+	It("Should succeed for the same path but different methods", func() {
+		//given
+		occupiedHost := "occupied-host" + allowlistedDomain
+		notOccupiedHost := "not-occupied-host" + allowlistedDomain
+		existingVS := networkingv1beta1.VirtualService{}
+		existingVS.OwnerReferences = []v1.OwnerReference{{UID: "12345"}}
+		existingVS.Spec.Hosts = []string{occupiedHost}
+
+		input := &gatewayv1beta1.APIRule{
+			ObjectMeta: v1.ObjectMeta{
+				UID: "67890",
+			},
+			Spec: gatewayv1beta1.APIRuleSpec{
+				Service: getService(sampleServiceName, uint32(8080)),
+				Host:    getHost(notOccupiedHost),
+				Rules: []gatewayv1beta1.Rule{
+					{
+						Path: "/abc",
+						AccessStrategies: []*gatewayv1beta1.Authenticator{
+							toAuthenticator("jwt", simpleJWTConfig()),
+							toAuthenticator("noop", emptyConfig()),
+						},
+						Methods: []string{"POST"},
+					},
+					{
+						Path: "/abc",
+						AccessStrategies: []*gatewayv1beta1.Authenticator{
+							toAuthenticator("jwt", simpleJWTConfig()),
+							toAuthenticator("noop", emptyConfig()),
+						},
+						Methods: []string{"GET"},
 					},
 				},
 			},
