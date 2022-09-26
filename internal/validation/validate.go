@@ -12,7 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
-//Validators for AccessStrategies
+// Validators for AccessStrategies
 var vldNoConfig = &noConfigAccStrValidator{}
 var vldJWT = &jwtAccStrValidator{}
 var vldDummy = &dummyAccStrValidator{}
@@ -21,7 +21,7 @@ type accessStrategyValidator interface {
 	Validate(attrPath string, Handler *gatewayv1beta1.Handler) []Failure
 }
 
-//configNotEmpty Verify if the config object is not empty
+// configNotEmpty Verify if the config object is not empty
 func configEmpty(config *runtime.RawExtension) bool {
 
 	return config == nil ||
@@ -30,12 +30,12 @@ func configEmpty(config *runtime.RawExtension) bool {
 		bytes.Equal(config.Raw, []byte("{}"))
 }
 
-//configNotEmpty Verify if the config object is not empty
+// configNotEmpty Verify if the config object is not empty
 func configNotEmpty(config *runtime.RawExtension) bool {
 	return !configEmpty(config)
 }
 
-//APIRule is used to validate github.com/kyma-incubator/api-gateway/api/v1beta1/APIRule instances
+// APIRule is used to validate github.com/kyma-incubator/api-gateway/api/v1beta1/APIRule instances
 type APIRule struct {
 	ServiceBlockList  map[string][]string
 	DomainAllowList   []string
@@ -43,7 +43,7 @@ type APIRule struct {
 	DefaultDomainName string
 }
 
-//Validate performs APIRule validation
+// Validate performs APIRule validation
 func (v *APIRule) Validate(api *gatewayv1beta1.APIRule, vsList networkingv1beta1.VirtualServiceList) []Failure {
 
 	res := []Failure{}
@@ -61,7 +61,7 @@ func (v *APIRule) Validate(api *gatewayv1beta1.APIRule, vsList networkingv1beta1
 	return res
 }
 
-//Failure carries validation failures for a single attribute of an object.
+// Failure carries validation failures for a single attribute of an object.
 type Failure struct {
 	AttributePath string
 	Message       string
@@ -154,8 +154,8 @@ func (v *APIRule) validateRules(attributePath string, checkForService bool, api 
 		return problems
 	}
 
-	if hasDuplicates(rules) {
-		problems = append(problems, Failure{AttributePath: attributePath, Message: "Multiple rules defined for the same path"})
+	if hasPathAndMethodDuplicates(rules) {
+		problems = append(problems, Failure{AttributePath: attributePath, Message: "multiple rules defined for the same path and method"})
 	}
 
 	for i, r := range rules {

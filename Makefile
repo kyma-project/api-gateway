@@ -106,13 +106,17 @@ test: manifests generate fmt vet envtest ## Generate manifests and run tests.
 	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" go test ./... -coverprofile cover.out
 
 .PHONY: test-for-release
-test-for-release: fmt vet envtest ## Run tests.
+test-for-release: envtest ## Run tests.
 	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" go test ./... -coverprofile cover.out
 
 ##@ Build
 
 .PHONY: build
 build: generate fmt vet ## Build manager binary.
+	go build -o bin/manager main.go
+
+.PHONY: build-release
+build-release: generate
 	go build -o bin/manager main.go
 
 .PHONY: run
@@ -259,7 +263,7 @@ release:
 
 ##@ ci targets
 .PHONY: ci-pr
-ci-pr: build test
+ci-pr: build test docker-build docker-push docker-build-certificates docker-push-certificates
 
 .PHONY: ci-main
 ci-main: build docker-build docker-push docker-build-certificates docker-push-certificates
@@ -267,7 +271,7 @@ ci-main: build docker-build docker-push docker-build-certificates docker-push-ce
 .PHONY: ci-release
 ci-release: TAG=${shell git describe --abbrev=0 --tags}
 ci-release: CERTIFICATES_TAG=$(TAG)
-ci-release: build docker-build-release docker-push docker-build-certificates docker-push-certificates archive release
+ci-release: build-release docker-build-release docker-push docker-build-certificates docker-push-certificates archive release
 
 .PHONY: clean
 clean:
