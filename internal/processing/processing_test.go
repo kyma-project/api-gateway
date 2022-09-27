@@ -124,7 +124,7 @@ var _ = Describe("Factory", func() {
 				Expect(len(accessRules)).To(Equal(0))
 			})
 
-			It("should override upstream for specified spec level service namespace", func() {
+			It("should override VS destination host for specified spec level service namespace", func() {
 				strategies := []*gatewayv1beta1.Authenticator{
 					{
 						Handler: &gatewayv1beta1.Handler{
