@@ -19,12 +19,12 @@ var (
 	labelValueRegexp     = labelKeyNameRegexp
 )
 
-//VerifyLabelKey returns error if the provided string is not a proper k8s label key
+// VerifyLabelKey returns error if the provided string is not a proper k8s label key
 func VerifyLabelKey(key string) error {
 	return validateLabelKey(key)
 }
 
-//VerifyLabelValue returns error if the provided string is not a proper k8s label value
+// VerifyLabelValue returns error if the provided string is not a proper k8s label value
 func VerifyLabelValue(value string) error {
 	return validateLabelValue(value)
 }

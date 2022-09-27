@@ -140,7 +140,7 @@ func (r *APIRuleReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
-//Sets status of APIRule. Accepts an auxilary status code that is used to report VirtualService and AccessRule status.
+// Sets status of APIRule. Accepts an auxilary status code that is used to report VirtualService and AccessRule status.
 func (r *APIRuleReconciler) setStatus(ctx context.Context, api *gatewayv1beta1.APIRule, apiStatus *gatewayv1beta1.APIRuleResourceStatus, auxStatusCode gatewayv1beta1.StatusCode) (ctrl.Result, error) {
 	virtualServiceStatus := &gatewayv1beta1.APIRuleResourceStatus{
 		Code: auxStatusCode,
@@ -151,7 +151,7 @@ func (r *APIRuleReconciler) setStatus(ctx context.Context, api *gatewayv1beta1.A
 	return r.updateStatusOrRetry(ctx, api, apiStatus, virtualServiceStatus, accessRuleStatus)
 }
 
-//Sets status of APIRule in error condition. Accepts an auxilary status code that is used to report VirtualService and AccessRule status.
+// Sets status of APIRule in error condition. Accepts an auxilary status code that is used to report VirtualService and AccessRule status.
 func (r *APIRuleReconciler) setStatusForError(ctx context.Context, api *gatewayv1beta1.APIRule, err error, auxStatusCode gatewayv1beta1.StatusCode) (ctrl.Result, error) {
 	r.Log.Error(err, "Error during reconciliation")
 
@@ -165,7 +165,7 @@ func (r *APIRuleReconciler) setStatusForError(ctx context.Context, api *gatewayv
 	return r.updateStatusOrRetry(ctx, api, generateErrorStatus(err), virtualServiceStatus, accessRuleStatus)
 }
 
-//Updates api status. If there was an error during update, returns the error so that entire reconcile loop is retried. If there is no error, returns a "reconcile success" value.
+// Updates api status. If there was an error during update, returns the error so that entire reconcile loop is retried. If there is no error, returns a "reconcile success" value.
 func (r *APIRuleReconciler) updateStatusOrRetry(ctx context.Context, api *gatewayv1beta1.APIRule, apiStatus, virtualServiceStatus, accessRuleStatus *gatewayv1beta1.APIRuleResourceStatus) (ctrl.Result, error) {
 	_, updateStatusErr := r.updateStatus(ctx, api, apiStatus, virtualServiceStatus, accessRuleStatus)
 	if updateStatusErr != nil {

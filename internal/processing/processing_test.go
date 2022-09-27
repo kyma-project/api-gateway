@@ -1007,7 +1007,6 @@ var _ = Describe("Factory", func() {
 
 				apiRule := getAPIRuleFor(rules)
 
-
 				rule := rulev1alpha1.Rule{
 					ObjectMeta: metav1.ObjectMeta{
 						Labels: map[string]string{
