@@ -314,7 +314,7 @@ var _ = Describe("Factory", func() {
 				Expect(len(vs.Spec.Http[0].Route)).To(Equal(1))
 				Expect(vs.Spec.Http[0].Route[0].Destination.Host).To(Equal(overrideServiceName + "." + overrideServiceNamespace + ".svc.cluster.local"))
 
-				//Verify AR has rule level upstream
+				//Verify AR does not exist
 				Expect(len(accessRules)).To(Equal(0))
 			})
 
