@@ -293,6 +293,11 @@ spec:
                         name:
                           description: Name of the service
                           type: string
+                        namespace:
+                          description: Namespace of the service, if omitted will default
+                            to the APIRule namespace
+                          pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$
+                          type: string
                         port:
                           description: Port of the service to expose
                           format: int32
@@ -319,6 +324,11 @@ spec:
                     type: boolean
                   name:
                     description: Name of the service
+                    type: string
+                  namespace:
+                    description: Namespace of the service, if omitted will default
+                      to the APIRule namespace
+                    pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$
                     type: string
                   port:
                     description: Port of the service to expose

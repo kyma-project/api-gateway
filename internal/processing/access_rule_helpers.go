@@ -44,12 +44,14 @@ func generateAccessRuleSpec(api *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rul
 		Authenticators(builders.Authenticators().From(accessStrategies)).
 		Mutators(builders.Mutators().From(rule.Mutators))
 
+	serviceNamespace := helpers.FindServiceNamespace(api, &rule)
+
 	// Use rule level service if it exists
 	if rule.Service != nil {
 		return accessRuleSpec.Upstream(builders.Upstream().
-			URL(fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", *rule.Service.Name, api.ObjectMeta.Namespace, int(*rule.Service.Port)))).Get()
+			URL(fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", *rule.Service.Name, *serviceNamespace, int(*rule.Service.Port)))).Get()
 	}
 	// Otherwise use service defined on APIRule spec level
 	return accessRuleSpec.Upstream(builders.Upstream().
-		URL(fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", *api.Spec.Service.Name, api.ObjectMeta.Namespace, int(*api.Spec.Service.Port)))).Get()
+		URL(fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", *api.Spec.Service.Name, *serviceNamespace, int(*api.Spec.Service.Port)))).Get()
 }

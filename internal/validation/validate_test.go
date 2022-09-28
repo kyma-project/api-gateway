@@ -95,6 +95,44 @@ var _ = Describe("Validate function", func() {
 		Expect(problems[0].Message).To(Equal("Service kubernetes in namespace default is blocklisted"))
 	})
 
+	It("Should fail for blocklisted service for specific namespace", func() {
+		//given
+		sampleBlocklistedService := "service"
+		sampleBlocklistedNamespace := "service-namespace"
+		validHost := sampleBlocklistedService + "." + allowlistedDomain
+		testBlockList := map[string][]string{
+			"default":                  {"kube-dns"},
+			sampleBlocklistedNamespace: {sampleBlocklistedService}}
+		input := &gatewayv1beta1.APIRule{
+			ObjectMeta: v1.ObjectMeta{
+				Namespace: "default",
+			},
+			Spec: gatewayv1beta1.APIRuleSpec{
+				Service: getService(sampleBlocklistedService, uint32(443), &sampleBlocklistedNamespace),
+				Host:    getHost(validHost),
+				Rules: []gatewayv1beta1.Rule{
+					{
+						Path: "/abc",
+						AccessStrategies: []*gatewayv1beta1.Authenticator{
+							toAuthenticator("jwt", simpleJWTConfig()),
+							toAuthenticator("noop", emptyConfig()),
+						},
+					},
+				},
+			}}
+
+		//when
+		problems := (&APIRule{
+			ServiceBlockList: testBlockList,
+			DomainAllowList:  testDomainAllowlist,
+		}).Validate(input, networkingv1beta1.VirtualServiceList{})
+
+		//then
+		Expect(problems).To(HaveLen(1))
+		Expect(problems[0].AttributePath).To(Equal(".spec.service.name"))
+		Expect(problems[0].Message).To(Equal(fmt.Sprintf("Service %s in namespace %s is blocklisted", sampleBlocklistedService, sampleBlocklistedNamespace)))
+	})
+
 	It("Should fail for not allowlisted domain", func() {
 		//given
 		invalidHost := sampleServiceName + "." + notAllowlistedDomain
@@ -504,6 +542,51 @@ var _ = Describe("Validate function", func() {
 		Expect(problems[0].Message).To(Equal(fmt.Sprintf("Service %s in namespace default is blocklisted", sampleBlocklistedService)))
 	})
 
+	It("Should return an error when rule is defined with blocklisted service in specific namespace", func() {
+		//given
+		sampleBlocklistedService := "service"
+		sampleBlocklistedNamespace := "service-namespace"
+		validHost := sampleBlocklistedService + "." + allowlistedDomain
+		testBlockList := map[string][]string{
+			"default":                  {"kube-dns"},
+			sampleBlocklistedNamespace: {sampleBlocklistedService}}
+
+		input := &gatewayv1beta1.APIRule{
+			ObjectMeta: v1.ObjectMeta{
+				Namespace: "default",
+			},
+			Spec: gatewayv1beta1.APIRuleSpec{
+				Host: getHost(validHost),
+				Rules: []gatewayv1beta1.Rule{
+					{
+						Path: "/abc",
+						AccessStrategies: []*gatewayv1beta1.Authenticator{
+							toAuthenticator("noop", emptyConfig()),
+						},
+						Service: getService(sampleServiceName, uint32(8080)),
+					},
+					{
+						Path: "/abcd",
+						AccessStrategies: []*gatewayv1beta1.Authenticator{
+							toAuthenticator("noop", emptyConfig()),
+						},
+						Service: getService(sampleBlocklistedService, uint32(8080), &sampleBlocklistedNamespace),
+					},
+				},
+			},
+		}
+		//when
+		problems := (&APIRule{
+			ServiceBlockList: testBlockList,
+			DomainAllowList:  testDomainAllowlist,
+		}).Validate(input, networkingv1beta1.VirtualServiceList{})
+
+		//then
+		Expect(problems).To(HaveLen(1))
+		Expect(problems[0].AttributePath).To(Equal(".spec.rules[1].service.name"))
+		Expect(problems[0].Message).To(Equal(fmt.Sprintf("Service %s in namespace %s is blocklisted", sampleBlocklistedService, sampleBlocklistedNamespace)))
+	})
+
 	It("Should detect several problems", func() {
 		//given
 		input := &gatewayv1beta1.APIRule{
@@ -871,10 +954,15 @@ func toAuthenticator(name string, config *runtime.RawExtension) *gatewayv1beta1.
 	}
 }
 
-func getService(serviceName string, servicePort uint32) *gatewayv1beta1.Service {
+func getService(serviceName string, servicePort uint32, namespace ...*string) *gatewayv1beta1.Service {
+	var serviceNamespace *string
+	if len(namespace) > 0 {
+		serviceNamespace = namespace[0]
+	}
 	return &gatewayv1beta1.Service{
-		Name: &serviceName,
-		Port: &servicePort,
+		Name:      &serviceName,
+		Namespace: serviceNamespace,
+		Port:      &servicePort,
 	}
 }
 

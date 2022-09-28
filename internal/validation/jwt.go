@@ -7,7 +7,7 @@ import (
 	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
 )
 
-//jwtAccStrValidator is an accessStrategy validator for jwt ORY authenticator
+// jwtAccStrValidator is an accessStrategy validator for jwt ORY authenticator
 type jwtAccStrValidator struct{}
 
 func (j *jwtAccStrValidator) Validate(attributePath string, handler *gatewayv1beta1.Handler) []Failure {

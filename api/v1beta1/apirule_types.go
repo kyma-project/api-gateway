@@ -20,7 +20,7 @@ import (
 	runtime "k8s.io/apimachinery/pkg/runtime"
 )
 
-//StatusCode .
+// StatusCode .
 type StatusCode string
 
 const (
@@ -59,7 +59,7 @@ type APIRuleStatus struct {
 	AccessRuleStatus     *APIRuleResourceStatus `json:"accessRuleStatus,omitempty"`
 }
 
-//APIRule is the Schema for the apis ApiRule
+// APIRule is the Schema for the apis ApiRule
 // +kubebuilder:storageversion
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
@@ -80,10 +80,14 @@ type APIRuleList struct {
 	Items           []APIRule `json:"items"`
 }
 
-//Service .
+// Service .
 type Service struct {
 	// Name of the service
 	Name *string `json:"name"`
+	// Namespace of the service, if omitted will default to the APIRule namespace
+	// +kubebuilder:validation:Pattern=^[a-z0-9]([-a-z0-9]*[a-z0-9])?$
+	// +optional
+	Namespace *string `json:"namespace,omitempty"`
 	// Port of the service to expose
 	// +kubebuilder:validation:Minimum=1
 	// +kubebuilder:validation:Maximum=65535
@@ -93,7 +97,7 @@ type Service struct {
 	IsExternal *bool `json:"external,omitempty"`
 }
 
-//Rule .
+// Rule .
 type Rule struct {
 	// Path to be exposed
 	// +kubebuilder:validation:Pattern=^([0-9a-zA-Z./*()?!\\_-]+)
@@ -112,7 +116,7 @@ type Rule struct {
 	Mutators []*Mutator `json:"mutators,omitempty"`
 }
 
-//APIRuleResourceStatus .
+// APIRuleResourceStatus .
 type APIRuleResourceStatus struct {
 	Code        StatusCode `json:"code,omitempty"`
 	Description string     `json:"desc,omitempty"`

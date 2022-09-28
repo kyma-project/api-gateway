@@ -20,7 +20,7 @@ import (
 	runtime "k8s.io/apimachinery/pkg/runtime"
 )
 
-//StatusCode .
+// StatusCode .
 type StatusCode string
 
 const (
@@ -53,7 +53,7 @@ type APIRuleStatus struct {
 	AccessRuleStatus     *APIRuleResourceStatus `json:"accessRuleStatus,omitempty"`
 }
 
-//APIRule is the Schema for the apis ApiRule
+// APIRule is the Schema for the apis ApiRule
 // +kubebuilder:deprecatedversion:warning=v1alpha1 is deprecated as of Kyma 2.5.X
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
@@ -74,7 +74,7 @@ type APIRuleList struct {
 	Items           []APIRule `json:"items"`
 }
 
-//Service .
+// Service .
 type Service struct {
 	// Name of the service
 	Name *string `json:"name"`
@@ -92,7 +92,7 @@ type Service struct {
 	IsExternal *bool `json:"external,omitempty"`
 }
 
-//Rule .
+// Rule .
 type Rule struct {
 	// Path to be exposed
 	// +kubebuilder:validation:Pattern=^([0-9a-zA-Z./*()?!\\_-]+)
@@ -108,7 +108,7 @@ type Rule struct {
 	Mutators []*Mutator `json:"mutators,omitempty"`
 }
 
-//APIRuleResourceStatus .
+// APIRuleResourceStatus .
 type APIRuleResourceStatus struct {
 	Code        StatusCode `json:"code,omitempty"`
 	Description string     `json:"desc,omitempty"`
