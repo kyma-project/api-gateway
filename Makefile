@@ -264,7 +264,7 @@ release:
 ##@ ci targets
 .PHONY: ci-pr
 ci-pr: build test docker-build docker-push docker-build-certificates docker-push-certificates
-	go tool cover -html cover.out -o ${ARTIFACTS}/cover.html
+	go tool cover -html cover.out -o ${ARTIFACTS}/report-coverage.html
 
 .PHONY: ci-main
 ci-main: build docker-build docker-push docker-build-certificates docker-push-certificates
