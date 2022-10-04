@@ -24,6 +24,7 @@ import (
 
 	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
 
+	"github.com/kyma-incubator/api-gateway/internal/helpers"
 	"github.com/kyma-incubator/api-gateway/internal/processing"
 	"github.com/kyma-incubator/api-gateway/internal/validation"
 
@@ -80,6 +81,13 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	//Prevent reconciliation after status update. It should be solved by controller-runtime implementation but still isn't.
 	if api.Generation != api.Status.ObservedGeneration {
 
+		//1.0) Get the configuration
+		config, err := helpers.LoadConfig()
+		if err != nil {
+			//If configuration is not available not been able to continue.
+			return r.setStatusForError(ctx, api, err, gatewayv1beta1.StatusError)
+		}
+
 		//1.1) Get the list of existing Virtual Services to validate host
 		var vsList networkingv1beta1.VirtualServiceList
 		if err := r.Client.List(ctx, &vsList); err != nil {
@@ -94,7 +102,7 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 			HostBlockList:     r.HostBlockList,
 			DefaultDomainName: r.DefaultDomainName,
 		}
-		validationFailures := validator.Validate(api, vsList)
+		validationFailures := validator.Validate(api, vsList, config)
 		if len(validationFailures) > 0 {
 			failuresJson, _ := json.Marshal(validationFailures)
 			r.Log.Info(fmt.Sprintf(`Validation failure {"controller": "Api", "request": "%s/%s", "failures": %s}`, api.Namespace, api.Name, string(failuresJson)))
@@ -103,7 +111,7 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 
 		//2) Compute list of required objects (the set of objects required to satisfy our contract on apiRule.Spec, not yet applied)
 		factory := processing.NewFactory(r.Client, r.Log, r.OathkeeperSvc, r.OathkeeperSvcPort, r.CorsConfig, r.GeneratedObjectsLabels, r.DefaultDomainName)
-		requiredObjects := factory.CalculateRequiredState(api)
+		requiredObjects := factory.CalculateRequiredState(api, config)
 
 		//3.1 Fetch all existing objects related to _this_ apiRule from the cluster (VS, Rules)
 		actualObjects, err := factory.GetActualState(ctx, api)
