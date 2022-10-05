@@ -6,19 +6,24 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+const JWT_HANDLER_ORY = "ory"
+const JWT_HANDLER_ISTIO = "istio"
+
+const CONFIG_FILE = "/api-gateway-config.yaml"
+
+var ReadFileHandle = ioutil.ReadFile
+
 type Config struct {
 	JWTHandler string `yaml:"jwtHandler"`
 }
 
-const CONFIG_FILE = "/api-gateway-config.yaml"
-
 func LoadConfig() (*Config, error) {
-	config := &Config{}
-	configData, err := ioutil.ReadFile(CONFIG_FILE)
+	configData, err := ReadFileHandle(CONFIG_FILE)
 	if err != nil {
 		return nil, err
 	}
 
+	config := &Config{}
 	err = yaml.Unmarshal(configData, config)
 	if err != nil {
 		return nil, err

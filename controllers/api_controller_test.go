@@ -1,7 +1,10 @@
 package controllers_test
 
 import (
+	"bytes"
 	"context"
+	"fmt"
+	"io/ioutil"
 	"net/http"
 
 	"sigs.k8s.io/controller-runtime/pkg/config/v1alpha1"
@@ -9,6 +12,7 @@ import (
 	"github.com/go-logr/logr"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 
+	"github.com/kyma-incubator/api-gateway/internal/helpers"
 	"github.com/kyma-incubator/api-gateway/internal/processing"
 
 	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
@@ -40,6 +44,14 @@ var (
 	isExernal                                bool
 )
 
+type FakeFileReader struct {
+	FileContent string
+}
+
+func (f FakeFileReader) ReadFile(filename string) ([]byte, error) {
+	return ioutil.ReadAll(bytes.NewBufferString(f.FileContent))
+}
+
 var _ = Describe("Controller", func() {
 	Describe("Reconcile", func() {
 		Context("APIRule", func() {
@@ -49,6 +61,9 @@ var _ = Describe("Controller", func() {
 				ts = getTestSuite(testAPI)
 				reconciler := getAPIReconciler(ts.mgr)
 				ctx := context.Background()
+
+				fakeFileReader := FakeFileReader{FileContent: fmt.Sprintf("jwtHandler: %s", helpers.JWT_HANDLER_ORY)}
+				helpers.ReadFileHandle = fakeFileReader.ReadFile
 
 				result, err := reconciler.Reconcile(ctx, reconcile.Request{NamespacedName: types.NamespacedName{Name: testAPI.Name}})
 				Expect(err).ToNot(HaveOccurred())

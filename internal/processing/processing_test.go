@@ -14,6 +14,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 
 	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
+	"github.com/kyma-incubator/api-gateway/internal/helpers"
 	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -38,6 +39,8 @@ const (
 )
 
 var (
+	config = helpers.Config{JWTHandler: helpers.JWT_HANDLER_ORY}
+
 	apiMethods                     = []string{"GET"}
 	apiScopes                      = []string{"write", "read"}
 	servicePort             uint32 = 8080
@@ -88,7 +91,7 @@ var _ = Describe("Factory", func() {
 
 				f := NewFactory(nil, ctrl.Log.WithName("test"), oathkeeperSvc, oathkeeperSvcPort, testCors, testAdditionalLabels, defaultDomain)
 
-				desiredState := f.CalculateRequiredState(apiRule)
+				desiredState := f.CalculateRequiredState(apiRule, &config)
 				vs := desiredState.virtualService
 				accessRules := desiredState.accessRules
 
@@ -150,7 +153,7 @@ var _ = Describe("Factory", func() {
 
 				f := NewFactory(nil, ctrl.Log.WithName("test"), oathkeeperSvc, oathkeeperSvcPort, testCors, testAdditionalLabels, defaultDomain)
 
-				desiredState := f.CalculateRequiredState(apiRule)
+				desiredState := f.CalculateRequiredState(apiRule, &config)
 				vs := desiredState.virtualService
 				accessRules := desiredState.accessRules
 
@@ -186,7 +189,7 @@ var _ = Describe("Factory", func() {
 
 				f := NewFactory(nil, ctrl.Log.WithName("test"), oathkeeperSvc, oathkeeperSvcPort, testCors, testAdditionalLabels, defaultDomain)
 
-				desiredState := f.CalculateRequiredState(apiRule)
+				desiredState := f.CalculateRequiredState(apiRule, &config)
 				vs := desiredState.virtualService
 				accessRules := desiredState.accessRules
 
@@ -228,7 +231,7 @@ var _ = Describe("Factory", func() {
 
 				f := NewFactory(nil, ctrl.Log.WithName("test"), oathkeeperSvc, oathkeeperSvcPort, testCors, testAdditionalLabels, defaultDomain)
 
-				desiredState := f.CalculateRequiredState(apiRule)
+				desiredState := f.CalculateRequiredState(apiRule, &config)
 				vs := desiredState.virtualService
 				accessRules := desiredState.accessRules
 
@@ -268,7 +271,7 @@ var _ = Describe("Factory", func() {
 
 				f := NewFactory(nil, ctrl.Log.WithName("test"), oathkeeperSvc, oathkeeperSvcPort, testCors, testAdditionalLabels, defaultDomain)
 
-				desiredState := f.CalculateRequiredState(apiRule)
+				desiredState := f.CalculateRequiredState(apiRule, &config)
 				vs := desiredState.virtualService
 				accessRules := desiredState.accessRules
 
@@ -306,7 +309,7 @@ var _ = Describe("Factory", func() {
 
 				f := NewFactory(nil, ctrl.Log.WithName("test"), oathkeeperSvc, oathkeeperSvcPort, testCors, testAdditionalLabels, defaultDomain)
 
-				desiredState := f.CalculateRequiredState(apiRule)
+				desiredState := f.CalculateRequiredState(apiRule, &config)
 				vs := desiredState.virtualService
 				accessRules := desiredState.accessRules
 
@@ -370,7 +373,7 @@ var _ = Describe("Factory", func() {
 
 				f := NewFactory(nil, ctrl.Log.WithName("test"), oathkeeperSvc, oathkeeperSvcPort, testCors, testAdditionalLabels, defaultDomain)
 
-				desiredState := f.CalculateRequiredState(apiRule)
+				desiredState := f.CalculateRequiredState(apiRule, &config)
 				vs := desiredState.virtualService
 				accessRules := desiredState.accessRules
 
@@ -530,7 +533,7 @@ var _ = Describe("Factory", func() {
 
 				f := NewFactory(nil, ctrl.Log.WithName("test"), oathkeeperSvc, oathkeeperSvcPort, testCors, testAdditionalLabels, defaultDomain)
 
-				desiredState := f.CalculateRequiredState(apiRule)
+				desiredState := f.CalculateRequiredState(apiRule, &config)
 				vs := desiredState.virtualService
 				accessRules := desiredState.accessRules
 
@@ -683,7 +686,7 @@ var _ = Describe("Factory", func() {
 
 				f := NewFactory(nil, ctrl.Log.WithName("test"), oathkeeperSvc, oathkeeperSvcPort, testCors, testAdditionalLabels, defaultDomain)
 
-				desiredState := f.CalculateRequiredState(apiRule)
+				desiredState := f.CalculateRequiredState(apiRule, &config)
 				vs := desiredState.virtualService
 				accessRules := desiredState.accessRules
 
@@ -851,7 +854,7 @@ var _ = Describe("Factory", func() {
 
 				f := NewFactory(nil, ctrl.Log.WithName("test"), oathkeeperSvc, oathkeeperSvcPort, testCors, testAdditionalLabels, defaultDomain)
 
-				desiredState := f.CalculateRequiredState(apiRule)
+				desiredState := f.CalculateRequiredState(apiRule, &config)
 				vs := desiredState.virtualService
 				accessRules := desiredState.accessRules
 
@@ -971,7 +974,7 @@ var _ = Describe("Factory", func() {
 
 					f := NewFactory(nil, ctrl.Log.WithName("test"), oathkeeperSvc, oathkeeperSvcPort, testCors, testAdditionalLabels, defaultDomain)
 
-					desiredState := f.CalculateRequiredState(apiRule)
+					desiredState := f.CalculateRequiredState(apiRule, &config)
 					vs := desiredState.virtualService
 					accessRules := desiredState.accessRules
 
@@ -1063,7 +1066,7 @@ var _ = Describe("Factory", func() {
 
 				f := NewFactory(nil, ctrl.Log.WithName("test"), oathkeeperSvc, oathkeeperSvcPort, testCors, testAdditionalLabels, defaultDomain)
 
-				desiredState := f.CalculateRequiredState(apiRule)
+				desiredState := f.CalculateRequiredState(apiRule, &config)
 				actualState := &State{}
 
 				patch := f.CalculateDiff(desiredState, actualState)
@@ -1110,7 +1113,7 @@ var _ = Describe("Factory", func() {
 
 				f := NewFactory(nil, ctrl.Log.WithName("test"), oathkeeperSvc, oathkeeperSvcPort, testCors, testAdditionalLabels, defaultDomain)
 
-				desiredState := f.CalculateRequiredState(apiRule)
+				desiredState := f.CalculateRequiredState(apiRule, &config)
 				oauthNoopRuleMatchURL := fmt.Sprintf("<http|https>://%s<%s>", serviceHost, oauthAPIPath)
 				expectedNoopRuleMatchURL := fmt.Sprintf("<http|https>://%s<%s>", serviceHost, headersAPIPath)
 				notDesiredRuleMatchURL := fmt.Sprintf("<http|https>://%s<%s>", serviceHost, "/delete")

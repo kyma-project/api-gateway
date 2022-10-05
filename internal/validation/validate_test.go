@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
+	"github.com/kyma-incubator/api-gateway/internal/helpers"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -31,6 +32,7 @@ const (
 
 var (
 	testDomainAllowlist = []string{"foo.bar", "bar.foo", "kyma.local"}
+	config              = helpers.Config{JWTHandler: helpers.JWT_HANDLER_ORY}
 )
 
 var _ = Describe("Validate function", func() {
@@ -50,7 +52,7 @@ var _ = Describe("Validate function", func() {
 		//when
 		problems := (&APIRule{
 			DomainAllowList: testAllowList,
-		}).Validate(input, networkingv1beta1.VirtualServiceList{})
+		}).Validate(input, networkingv1beta1.VirtualServiceList{}, &config)
 
 		//then
 		Expect(problems).To(HaveLen(1))
@@ -87,7 +89,7 @@ var _ = Describe("Validate function", func() {
 		problems := (&APIRule{
 			ServiceBlockList: testBlockList,
 			DomainAllowList:  testDomainAllowlist,
-		}).Validate(input, networkingv1beta1.VirtualServiceList{})
+		}).Validate(input, networkingv1beta1.VirtualServiceList{}, &config)
 
 		//then
 		Expect(problems).To(HaveLen(1))
@@ -125,7 +127,7 @@ var _ = Describe("Validate function", func() {
 		problems := (&APIRule{
 			ServiceBlockList: testBlockList,
 			DomainAllowList:  testDomainAllowlist,
-		}).Validate(input, networkingv1beta1.VirtualServiceList{})
+		}).Validate(input, networkingv1beta1.VirtualServiceList{}, &config)
 
 		//then
 		Expect(problems).To(HaveLen(1))
@@ -158,7 +160,7 @@ var _ = Describe("Validate function", func() {
 		problems := (&APIRule{
 			ServiceBlockList: testBlockList,
 			DomainAllowList:  testDomainAllowlist,
-		}).Validate(input, networkingv1beta1.VirtualServiceList{})
+		}).Validate(input, networkingv1beta1.VirtualServiceList{}, &config)
 
 		//then
 		Expect(problems).To(HaveLen(1))
@@ -195,7 +197,7 @@ var _ = Describe("Validate function", func() {
 			DomainAllowList:   testDomainAllowlist,
 			HostBlockList:     testHostBlockList,
 			DefaultDomainName: testDefaultDomain,
-		}).Validate(input, networkingv1beta1.VirtualServiceList{})
+		}).Validate(input, networkingv1beta1.VirtualServiceList{}, &config)
 
 		//then
 		Expect(problems).To(HaveLen(1))
@@ -234,7 +236,7 @@ var _ = Describe("Validate function", func() {
 			DomainAllowList:   testDomainAllowlist,
 			HostBlockList:     testHostBlockList,
 			DefaultDomainName: testDefaultDomain,
-		}).Validate(input, networkingv1beta1.VirtualServiceList{})
+		}).Validate(input, networkingv1beta1.VirtualServiceList{}, &config)
 
 		//then
 		Expect(problems).To(HaveLen(0))
@@ -265,7 +267,7 @@ var _ = Describe("Validate function", func() {
 		problems := (&APIRule{
 			ServiceBlockList: testBlockList,
 			DomainAllowList:  []string{},
-		}).Validate(input, networkingv1beta1.VirtualServiceList{})
+		}).Validate(input, networkingv1beta1.VirtualServiceList{}, &config)
 
 		//then
 		Expect(problems).To(HaveLen(0))
@@ -296,7 +298,7 @@ var _ = Describe("Validate function", func() {
 		problems := (&APIRule{
 			ServiceBlockList: testBlockList,
 			DomainAllowList:  testDomainAllowlist,
-		}).Validate(input, networkingv1beta1.VirtualServiceList{})
+		}).Validate(input, networkingv1beta1.VirtualServiceList{}, &config)
 
 		//then
 		Expect(problems).To(HaveLen(1))
@@ -329,7 +331,7 @@ var _ = Describe("Validate function", func() {
 		problems := (&APIRule{
 			ServiceBlockList: testBlockList,
 			DomainAllowList:  testDomainAllowlist,
-		}).Validate(input, networkingv1beta1.VirtualServiceList{})
+		}).Validate(input, networkingv1beta1.VirtualServiceList{}, &config)
 
 		//then
 		Expect(problems).To(HaveLen(1))
@@ -363,7 +365,7 @@ var _ = Describe("Validate function", func() {
 			ServiceBlockList:  testBlockList,
 			DomainAllowList:   testDomainAllowlist,
 			DefaultDomainName: testDefaultDomain,
-		}).Validate(input, networkingv1beta1.VirtualServiceList{})
+		}).Validate(input, networkingv1beta1.VirtualServiceList{}, &config)
 
 		//then
 		Expect(problems).To(HaveLen(0))
@@ -394,7 +396,7 @@ var _ = Describe("Validate function", func() {
 		problems := (&APIRule{
 			ServiceBlockList: testBlockList,
 			DomainAllowList:  testDomainAllowlist,
-		}).Validate(input, networkingv1beta1.VirtualServiceList{})
+		}).Validate(input, networkingv1beta1.VirtualServiceList{}, &config)
 
 		//then
 		Expect(problems).To(HaveLen(1))
@@ -431,7 +433,7 @@ var _ = Describe("Validate function", func() {
 		//when
 		problems := (&APIRule{
 			DomainAllowList: testDomainAllowlist,
-		}).Validate(input, networkingv1beta1.VirtualServiceList{Items: []*networkingv1beta1.VirtualService{&existingVS}})
+		}).Validate(input, networkingv1beta1.VirtualServiceList{Items: []*networkingv1beta1.VirtualService{&existingVS}}, &config)
 
 		Expect(problems).To(HaveLen(1))
 		Expect(problems[0].AttributePath).To(Equal(".spec.host"))
@@ -467,7 +469,7 @@ var _ = Describe("Validate function", func() {
 		//when
 		problems := (&APIRule{
 			DomainAllowList: testDomainAllowlist,
-		}).Validate(input, networkingv1beta1.VirtualServiceList{Items: []*networkingv1beta1.VirtualService{&existingVS}})
+		}).Validate(input, networkingv1beta1.VirtualServiceList{Items: []*networkingv1beta1.VirtualService{&existingVS}}, &config)
 
 		Expect(problems).To(HaveLen(0))
 	})
@@ -490,7 +492,7 @@ var _ = Describe("Validate function", func() {
 		//when
 		problems := (&APIRule{
 			DomainAllowList: testDomainAllowlist,
-		}).Validate(input, networkingv1beta1.VirtualServiceList{})
+		}).Validate(input, networkingv1beta1.VirtualServiceList{}, &config)
 
 		//then
 		Expect(problems).To(HaveLen(1))
@@ -534,7 +536,7 @@ var _ = Describe("Validate function", func() {
 		problems := (&APIRule{
 			ServiceBlockList: testBlockList,
 			DomainAllowList:  testDomainAllowlist,
-		}).Validate(input, networkingv1beta1.VirtualServiceList{})
+		}).Validate(input, networkingv1beta1.VirtualServiceList{}, &config)
 
 		//then
 		Expect(problems).To(HaveLen(1))
@@ -579,7 +581,7 @@ var _ = Describe("Validate function", func() {
 		problems := (&APIRule{
 			ServiceBlockList: testBlockList,
 			DomainAllowList:  testDomainAllowlist,
-		}).Validate(input, networkingv1beta1.VirtualServiceList{})
+		}).Validate(input, networkingv1beta1.VirtualServiceList{}, &config)
 
 		//then
 		Expect(problems).To(HaveLen(1))
@@ -623,7 +625,7 @@ var _ = Describe("Validate function", func() {
 		//when
 		problems := (&APIRule{
 			DomainAllowList: testDomainAllowlist,
-		}).Validate(input, networkingv1beta1.VirtualServiceList{})
+		}).Validate(input, networkingv1beta1.VirtualServiceList{}, &config)
 
 		//then
 		Expect(problems).To(HaveLen(6))
@@ -673,7 +675,7 @@ var _ = Describe("Validate function", func() {
 		//when
 		problems := (&APIRule{
 			DomainAllowList: testDomainAllowlist,
-		}).Validate(input, networkingv1beta1.VirtualServiceList{})
+		}).Validate(input, networkingv1beta1.VirtualServiceList{}, &config)
 
 		//then
 		Expect(problems).To(HaveLen(1))
@@ -730,7 +732,7 @@ var _ = Describe("Validate function", func() {
 		//when
 		problems := (&APIRule{
 			DomainAllowList: testDomainAllowlist,
-		}).Validate(input, networkingv1beta1.VirtualServiceList{Items: []*networkingv1beta1.VirtualService{&existingVS}})
+		}).Validate(input, networkingv1beta1.VirtualServiceList{Items: []*networkingv1beta1.VirtualService{&existingVS}}, &config)
 
 		//then
 		Expect(problems).To(HaveLen(0))
@@ -774,7 +776,7 @@ var _ = Describe("Validate function", func() {
 		//when
 		problems := (&APIRule{
 			DomainAllowList: testDomainAllowlist,
-		}).Validate(input, networkingv1beta1.VirtualServiceList{Items: []*networkingv1beta1.VirtualService{&existingVS}})
+		}).Validate(input, networkingv1beta1.VirtualServiceList{Items: []*networkingv1beta1.VirtualService{&existingVS}}, &config)
 
 		//then
 		Expect(problems).To(HaveLen(0))
@@ -790,7 +792,7 @@ var _ = Describe("Validator for", func() {
 			handler := &gatewayv1beta1.Handler{Name: "noop", Config: simpleJWTConfig("http://atgo.org")}
 
 			//when
-			problems := (&noConfigAccStrValidator{}).Validate("some.attribute", handler)
+			problems := (&noConfigAccStrValidator{}).Validate("some.attribute", handler, &config)
 
 			//then
 			Expect(problems).To(HaveLen(1))
@@ -803,7 +805,7 @@ var _ = Describe("Validator for", func() {
 			handler := &gatewayv1beta1.Handler{Name: "noop", Config: emptyConfig()}
 
 			//when
-			problems := (&noConfigAccStrValidator{}).Validate("some.attribute", handler)
+			problems := (&noConfigAccStrValidator{}).Validate("some.attribute", handler, &config)
 
 			//then
 			Expect(problems).To(HaveLen(0))
@@ -814,7 +816,7 @@ var _ = Describe("Validator for", func() {
 			handler := &gatewayv1beta1.Handler{Name: "noop", Config: nil}
 
 			//when
-			problems := (&noConfigAccStrValidator{}).Validate("some.attribute", handler)
+			problems := (&noConfigAccStrValidator{}).Validate("some.attribute", handler, &config)
 
 			//then
 			Expect(problems).To(HaveLen(0))
@@ -828,7 +830,7 @@ var _ = Describe("Validator for", func() {
 			handler := &gatewayv1beta1.Handler{Name: "jwt", Config: emptyConfig()}
 
 			//when
-			problems := (&jwtAccStrValidator{}).Validate("some.attribute", handler)
+			problems := (&jwtAccStrValidator{}).Validate("some.attribute", handler, &config)
 
 			//then
 			Expect(problems).To(HaveLen(1))
@@ -841,7 +843,7 @@ var _ = Describe("Validator for", func() {
 			handler := &gatewayv1beta1.Handler{Name: "jwt", Config: simpleJWTConfig("a t g o")}
 
 			//when
-			problems := (&jwtAccStrValidator{}).Validate("some.attribute", handler)
+			problems := (&jwtAccStrValidator{}).Validate("some.attribute", handler, &config)
 
 			//then
 			Expect(problems).To(HaveLen(2))
@@ -856,7 +858,7 @@ var _ = Describe("Validator for", func() {
 			handler := &gatewayv1beta1.Handler{Name: "jwt", Config: testURLJWTConfig("http://issuer.test/.well-known/jwks.json", "http://issuer.test/")}
 
 			//when
-			problems := (&jwtAccStrValidator{}).Validate("some.attribute", handler)
+			problems := (&jwtAccStrValidator{}).Validate("some.attribute", handler, &config)
 
 			//then
 			Expect(problems).To(HaveLen(2))
@@ -871,7 +873,7 @@ var _ = Describe("Validator for", func() {
 			handler := &gatewayv1beta1.Handler{Name: "jwt", Config: testURLJWTConfig("file://.well-known/jwks.json", "https://issuer.test/")}
 
 			//when
-			problems := (&jwtAccStrValidator{}).Validate("some.attribute", handler)
+			problems := (&jwtAccStrValidator{}).Validate("some.attribute", handler, &config)
 
 			//then
 			Expect(problems).To(HaveLen(0))
@@ -882,7 +884,7 @@ var _ = Describe("Validator for", func() {
 			handler := &gatewayv1beta1.Handler{Name: "jwt", Config: testURLJWTConfig("https://issuer.test/.well-known/jwks.json", "https://issuer.test/")}
 
 			//when
-			problems := (&jwtAccStrValidator{}).Validate("some.attribute", handler)
+			problems := (&jwtAccStrValidator{}).Validate("some.attribute", handler, &config)
 
 			//then
 			Expect(problems).To(HaveLen(0))
@@ -893,7 +895,7 @@ var _ = Describe("Validator for", func() {
 			handler := &gatewayv1beta1.Handler{Name: "jwt", Config: &runtime.RawExtension{Raw: []byte("/abc]")}}
 
 			//when
-			problems := (&jwtAccStrValidator{}).Validate("some.attribute", handler)
+			problems := (&jwtAccStrValidator{}).Validate("some.attribute", handler, &config)
 
 			//then
 			Expect(problems).To(HaveLen(1))
@@ -906,7 +908,7 @@ var _ = Describe("Validator for", func() {
 			handler := &gatewayv1beta1.Handler{Name: "jwt", Config: simpleJWTConfig()}
 
 			//when
-			problems := (&jwtAccStrValidator{}).Validate("some.attribute", handler)
+			problems := (&jwtAccStrValidator{}).Validate("some.attribute", handler, &config)
 
 			//then
 			Expect(problems).To(HaveLen(0))
