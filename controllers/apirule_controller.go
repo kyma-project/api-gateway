@@ -81,7 +81,7 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	//Prevent reconciliation after status update. It should be solved by controller-runtime implementation but still isn't.
 	if api.Generation != api.Status.ObservedGeneration {
 
-		//1.0) Get the configuration
+		//1.1) Get the configuration
 		config, err := helpers.LoadConfig()
 		if err != nil {
 			//If configuration is not available not been able to continue.
@@ -89,14 +89,14 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 			return r.setStatusForError(ctx, api, err, gatewayv1beta1.StatusError)
 		}
 
-		//1.1) Get the list of existing Virtual Services to validate host
+		//1.2) Get the list of existing Virtual Services to validate host
 		var vsList networkingv1beta1.VirtualServiceList
 		if err := r.Client.List(ctx, &vsList); err != nil {
 			//Nothing is yet processed: StatusSkipped
 			return r.setStatusForError(ctx, api, err, gatewayv1beta1.StatusSkipped)
 		}
 
-		//1.2) Validate input including host
+		//1.3) Validate input including host
 		validator := validation.APIRule{
 			ServiceBlockList:  r.ServiceBlockList,
 			DomainAllowList:   r.DomainAllowList,
