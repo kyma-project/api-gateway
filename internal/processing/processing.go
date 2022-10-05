@@ -65,7 +65,7 @@ func (f *Factory) CalculateRequiredState(api *gatewayv1beta1.APIRule, config *he
 			if config.JWTHandler == helpers.JWT_HANDLER_ORY {
 				ar = generateAccessRule(api, rule, rule.AccessStrategies, f.additionalLabels, f.defaultDomainName)
 			} else if config.JWTHandler == helpers.JWT_HANDLER_ISTIO {
-				//TODO generated based on config.JWTHandler="istio"
+				//TODO generate based on config.JWTHandler="istio"
 			}
 			res.accessRules[setAccessRuleKey(pathDuplicates, *ar)] = ar
 		}
@@ -76,7 +76,7 @@ func (f *Factory) CalculateRequiredState(api *gatewayv1beta1.APIRule, config *he
 	if config.JWTHandler == helpers.JWT_HANDLER_ORY {
 		vs = f.generateVirtualService(api)
 	} else if config.JWTHandler == helpers.JWT_HANDLER_ISTIO {
-		//TODO generated based on config.JWTHandler="istio"
+		//TODO generate based on config.JWTHandler="istio"
 	}
 	res.virtualService = vs
 

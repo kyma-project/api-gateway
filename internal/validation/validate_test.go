@@ -37,6 +37,44 @@ var (
 
 var _ = Describe("Validate function", func() {
 
+	It("Should fail for missing config", func() {
+
+		//given
+		input := &gatewayv1beta1.APIRule{
+			Spec: gatewayv1beta1.APIRuleSpec{
+				Rules:   nil,
+				Service: getService(sampleServiceName, uint32(8080)),
+				Host:    getHost(sampleValidHost),
+			},
+		}
+
+		//when
+		problems := (&APIRule{}).Validate(input, networkingv1beta1.VirtualServiceList{}, nil)
+
+		//then
+		Expect(problems).To(HaveLen(2))
+		Expect(problems[0].Message).To(Equal("Configuration is missing"))
+	})
+
+	It("Should fail for wrong config", func() {
+
+		//given
+		input := &gatewayv1beta1.APIRule{
+			Spec: gatewayv1beta1.APIRuleSpec{
+				Rules:   nil,
+				Service: getService(sampleServiceName, uint32(8080)),
+				Host:    getHost(sampleValidHost),
+			},
+		}
+
+		//when
+		problems := (&APIRule{}).Validate(input, networkingv1beta1.VirtualServiceList{}, &helpers.Config{JWTHandler: "foo"})
+
+		//then
+		Expect(problems).To(HaveLen(2))
+		Expect(problems[0].Message).To(Equal("Unsupported JWT Handler: foo"))
+	})
+
 	It("Should fail for empty rules", func() {
 
 		//given
@@ -648,6 +686,7 @@ var _ = Describe("Validate function", func() {
 		Expect(problems[5].Message).To(Equal("No accessStrategies defined"))
 
 	})
+
 	It("Should fail for the same path and method", func() {
 		//given
 		input := &gatewayv1beta1.APIRule{
@@ -682,6 +721,7 @@ var _ = Describe("Validate function", func() {
 		Expect(problems[0].AttributePath).To(Equal(".spec.rules"))
 		Expect(problems[0].Message).To(Equal("multiple rules defined for the same path and method"))
 	})
+
 	It("Should succeed for valid input", func() {
 		//given
 		occupiedHost := "occupied-host" + allowlistedDomain

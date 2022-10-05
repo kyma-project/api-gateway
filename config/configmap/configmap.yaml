@@ -3,4 +3,5 @@ kind: ConfigMap
 metadata:
   name: config
 data:
-  jwtHandler: "ory"
+  api-gateway-config.yaml: >
+    jwtHandler: "ory"

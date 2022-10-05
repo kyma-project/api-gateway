@@ -41,6 +41,8 @@ const (
 var (
 	config = helpers.Config{JWTHandler: helpers.JWT_HANDLER_ORY}
 
+	//TODO should include tests for other JWT handler
+
 	apiMethods                     = []string{"GET"}
 	apiScopes                      = []string{"write", "read"}
 	servicePort             uint32 = 8080

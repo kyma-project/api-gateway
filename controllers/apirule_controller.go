@@ -85,6 +85,7 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		config, err := helpers.LoadConfig()
 		if err != nil {
 			//If configuration is not available not been able to continue.
+			r.Log.Info(fmt.Sprintf(`Configuration loading failed {"controller": "Api", "request": "%s/%s", "file": %s}`, api.Namespace, api.Name, helpers.CONFIG_FILE))
 			return r.setStatusForError(ctx, api, err, gatewayv1beta1.StatusError)
 		}
 

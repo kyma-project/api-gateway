@@ -10,6 +10,7 @@ import (
 
 	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/utils/strings/slices"
 )
 
 // Validators for AccessStrategies
@@ -70,8 +71,21 @@ type Failure struct {
 }
 
 func (v *APIRule) validateConfig(config *helpers.Config) []Failure {
-	//TODO validate config here
-	return nil
+	var problems []Failure
+
+	if config == nil {
+		problems = append(problems, Failure{
+			Message: "Configuration is missing",
+		})
+	} else {
+		if !slices.Contains([]string{helpers.JWT_HANDLER_ORY, helpers.JWT_HANDLER_ISTIO}, config.JWTHandler) {
+			problems = append(problems, Failure{
+				Message: fmt.Sprintf("Unsupported JWT Handler: %s", config.JWTHandler),
+			})
+		}
+	}
+
+	return problems
 }
 
 func (v *APIRule) validateHost(attributePath string, vsList networkingv1beta1.VirtualServiceList, api *gatewayv1beta1.APIRule) []Failure {
