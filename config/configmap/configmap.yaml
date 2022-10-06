@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: config
+data:
+  api-gateway-config.yaml: >
+    jwtHandler: "ory"

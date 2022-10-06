@@ -21,6 +21,7 @@ bases:
   - ../webhook
   # [CERTIFICATES] To enable certificate injection in CRD and manager uncomment ../certificates
   - ../certificates
+  - ../configmap
 
 patchesStrategicMerge:
   - manager_args_patch.yaml
