@@ -34,13 +34,12 @@ func (src *APIRule) ConvertTo(dstRaw conversion.Hub) error {
 	}
 
 	dst.ObjectMeta = src.ObjectMeta
-	var host string
-	if src.Spec.Service != nil && src.Spec.Service.Host != nil {
-		host = *src.Spec.Service.Host
-	} else {
-		return fmt.Errorf("the src.Spec.Service.Host was nil for %s", src.Name)
+	
+	if src.Spec.Service == nil || src.Spec.Service.Host == nil {
+		return fmt.Errorf("src.Spec.Service or src.Spec.Service.Host was nil for %s", src.Name)
 	}
 
+	host := *src.Spec.Service.Host
 	dst.Spec.Host = &host
 
 	return nil
