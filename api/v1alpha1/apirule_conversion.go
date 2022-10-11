@@ -2,6 +2,7 @@ package v1alpha1
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 
 	"github.com/kyma-incubator/api-gateway/api/v1beta1"
@@ -10,7 +11,6 @@ import (
 
 // ConvertTo converts this ApiRule to the Hub version (v1beta1).
 func (src *APIRule) ConvertTo(dstRaw conversion.Hub) error {
-	log.Default().Printf("dst host: %s", src.Name)
 	dst := dstRaw.(*v1beta1.APIRule)
 
 	specData, err := json.Marshal(src.Spec)
@@ -34,8 +34,13 @@ func (src *APIRule) ConvertTo(dstRaw conversion.Hub) error {
 	}
 
 	dst.ObjectMeta = src.ObjectMeta
+	var host string
+	if src.Spec.Service != nil && src.Spec.Service.Host != nil {
+		host = *src.Spec.Service.Host
+	} else {
+		return fmt.Errorf("the src.Spec.Service.Host was nil for %s", src.Name)
+	}
 
-	host := *src.Spec.Service.Host
 	dst.Spec.Host = &host
 
 	return nil
