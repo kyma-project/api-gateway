@@ -34,8 +34,9 @@ func Test_ConvertToNilAssert(t *testing.T) {
 		},
 	}
 	beta := v1beta1.APIRule{}
-	alpha.ConvertTo(&beta)
+	err := alpha.ConvertTo(&beta)
 	It("Should fail if host is nil", func() {
+		Expect(err).To(BeNil()) // Error will be nil as this is the prefered way for conversions to proceed
 		Expect(beta.Spec.Host).To(BeNil())
 	})
 
@@ -44,8 +45,9 @@ func Test_ConvertToNilAssert(t *testing.T) {
 			Service: nil,
 		},
 	}
-	alpha.ConvertTo(&beta)
+	err1 := alpha.ConvertTo(&beta)
 	It("Should fail if service is nil", func() {
+		Expect(err1).To(BeNil()) // Error will be nil as this is the prefered way for conversions to proceed
 		Expect(beta.Spec).To(BeNil())
 	})
 }
@@ -73,8 +75,9 @@ func Test_ConvertFromNilAssert(t *testing.T) {
 		},
 	}
 	alpha := APIRule{}
-	alpha.ConvertTo(&beta)
+	err := alpha.ConvertTo(&beta)
 	It("Should fail if host is nil", func() {
+		Expect(err).To(BeNil()) // Error will be nil as this is the prefered way for conversions to proceed
 		Expect(alpha.Spec.Service).To(BeNil())
 	})
 }
