@@ -2,7 +2,6 @@ package v1alpha1
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 
 	"github.com/kyma-incubator/api-gateway/api/v1beta1"
@@ -34,9 +33,10 @@ func (src *APIRule) ConvertTo(dstRaw conversion.Hub) error {
 	}
 
 	dst.ObjectMeta = src.ObjectMeta
-	
+
 	if src.Spec.Service == nil || src.Spec.Service.Host == nil {
-		return fmt.Errorf("src.Spec.Service or src.Spec.Service.Host was nil for %s", src.Name)
+		log.Default().Printf("conversion from v1alpha1 to v1beta1 wasn't possible as service or service.host was nil for %s", src.Name)
+		return nil
 	}
 
 	host := *src.Spec.Service.Host
@@ -80,6 +80,11 @@ func (dst *APIRule) ConvertFrom(srcRaw conversion.Hub) error {
 			log.Default().Print("conversion from v1beta1 to v1alpha1 isn't possible with rule level service definition")
 			return nil
 		}
+	}
+
+	if src.Spec.Host == nil {
+		log.Default().Printf("conversion from v1beta1 to v1alpha1 wasn't possible as host was nil for %s", src.Name)
+		return nil
 	}
 
 	host := *src.Spec.Host
