@@ -10,7 +10,6 @@ import (
 
 // ConvertTo converts this ApiRule to the Hub version (v1beta1).
 func (src *APIRule) ConvertTo(dstRaw conversion.Hub) error {
-	log.Default().Printf("dst host: %s", src.Name)
 	dst := dstRaw.(*v1beta1.APIRule)
 
 	specData, err := json.Marshal(src.Spec)
@@ -34,6 +33,11 @@ func (src *APIRule) ConvertTo(dstRaw conversion.Hub) error {
 	}
 
 	dst.ObjectMeta = src.ObjectMeta
+
+	if src.Spec.Service == nil || src.Spec.Service.Host == nil {
+		log.Default().Printf("conversion from v1alpha1 to v1beta1 wasn't possible as service or service.host was nil for %s", src.Name)
+		return nil
+	}
 
 	host := *src.Spec.Service.Host
 	dst.Spec.Host = &host
@@ -76,6 +80,11 @@ func (dst *APIRule) ConvertFrom(srcRaw conversion.Hub) error {
 			log.Default().Print("conversion from v1beta1 to v1alpha1 isn't possible with rule level service definition")
 			return nil
 		}
+	}
+
+	if src.Spec.Host == nil {
+		log.Default().Printf("conversion from v1beta1 to v1alpha1 wasn't possible as host was nil for %s", src.Name)
+		return nil
 	}
 
 	host := *src.Spec.Host
