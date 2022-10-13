@@ -48,6 +48,11 @@ func (src *APIRule) ConvertTo(dstRaw conversion.Hub) error {
 
 	dst.ObjectMeta = src.ObjectMeta
 
+	if src.Spec.Service == nil || src.Spec.Service.Host == nil {
+		log.Default().Printf("conversion from v1alpha1 to v1beta1 wasn't possible as service or service.host was nil for %s", src.Name)
+		return nil
+	}
+
 	host := *src.Spec.Service.Host
 	dst.Spec.Host = &host
 
@@ -69,46 +74,37 @@ func (dst *APIRule) ConvertFrom(srcRaw conversion.Hub) error {
 	if err != nil {
 		return err
 	}
-
 	err = json.Unmarshal(specData, &dst.Spec)
 	if err != nil {
 		return err
 	}
-
 	statusData, err := json.Marshal(src.Status)
 	if err != nil {
 		return err
 	}
-
 	err = json.Unmarshal(statusData, &dst.Status)
 	if err != nil {
 		return err
 	}
-
 	dst.ObjectMeta = src.ObjectMeta
-
-	host := *src.Spec.Host
-
-	dst.Spec.Service.Host = &host
-
-	for _, rule := range src.Spec.Rules {
-		if rule.Service != nil {
-			log.Default().Print("conversion from v1beta1 to v1alpha1 isn't possible with rule level service definition")
-			return nil
-		}
-	}
-
 	if src.Spec.Service == nil {
 		log.Default().Print("conversion from v1beta1 to v1alpha1 wasn't possible as service isn't set on spec level")
 		return nil
 	}
+	for _, rule := range src.Spec.Rules {
+		if rule.Service != nil {
+			log.Default().Print("conversion from v1beta1 to v1alpha1 isn't possible with rule level service definition")
+			return nil
+ 		}
+ 	}
 
-	dst_raw, err := json.Marshal(dst)
-	if err != nil {
-		log.Fatal(err)
-	}
-	log.Default().Println("\n dest:")
-	log.Default().Println(string(pretty.Pretty(dst_raw)))
+ 	if src.Spec.Host == nil {
+ 		log.Default().Printf("conversion from v1beta1 to v1alpha1 wasn't possible as host was nil for %s", src.Name)
+ 		return nil
+ 	}
 
+ 	host := *src.Spec.Host
+
+ 	dst.Spec.Service.Host = &host
 	return nil
 }
