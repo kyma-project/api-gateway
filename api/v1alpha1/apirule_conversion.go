@@ -93,10 +93,10 @@ func (dst *APIRule) ConvertFrom(srcRaw conversion.Hub) error {
 
 	dst.ObjectMeta = src.ObjectMeta
 
-	if src.Spec.Service == nil {
-		log.Default().Print("conversion from v1beta1 to v1alpha1 wasn't possible as service isn't set on spec level")
-		return nil
-	}
+
+	host := *src.Spec.Host
+
+	dst.Spec.Service.Host = &host
 
 	for _, rule := range src.Spec.Rules {
 		if rule.Service != nil {
@@ -105,9 +105,10 @@ func (dst *APIRule) ConvertFrom(srcRaw conversion.Hub) error {
 		}
 	}
 
-	host := *src.Spec.Host
-
-	dst.Spec.Service.Host = &host
+	if src.Spec.Service == nil {
+		log.Default().Print("conversion from v1beta1 to v1alpha1 wasn't possible as service isn't set on spec level")
+		return nil
+	}
 
 	return nil
 }
