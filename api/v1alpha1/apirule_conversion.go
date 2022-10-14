@@ -5,12 +5,17 @@ import (
 	"log"
 
 	"github.com/kyma-incubator/api-gateway/api/v1beta1"
+	"github.com/tidwall/pretty"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
 )
 
 // ConvertTo converts this ApiRule to the Hub version (v1beta1).
 func (src *APIRule) ConvertTo(dstRaw conversion.Hub) error {
-	log.Default().Printf("dst host: %s", src.Name)
+	json_raw, err := json.Marshal(dstRaw)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Default().Println(string(pretty.Pretty(json_raw)))
 	dst := dstRaw.(*v1beta1.APIRule)
 
 	specData, err := json.Marshal(src.Spec)
