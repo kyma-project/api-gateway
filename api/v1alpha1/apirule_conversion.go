@@ -11,12 +11,19 @@ import (
 
 // ConvertTo converts this ApiRule to the Hub version (v1beta1).
 func (src *APIRule) ConvertTo(dstRaw conversion.Hub) error {
+	log.Default().Println("In ConvertTo")
 	json_raw, err := json.Marshal(src)
 	if err != nil {
 		log.Fatal(err)
 	}
 	log.Default().Println(string(pretty.Pretty(json_raw)))
 	dst := dstRaw.(*v1beta1.APIRule)
+	dst_raw, err := json.Marshal(dst)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Default().Println("\n dest:")
+	log.Default().Println(string(pretty.Pretty(dst_raw)))
 
 	specData, err := json.Marshal(src.Spec)
 	if err != nil {
@@ -48,7 +55,22 @@ func (src *APIRule) ConvertTo(dstRaw conversion.Hub) error {
 
 // ConvertFrom converts this ApiRule from the Hub version (v1beta1).
 func (dst *APIRule) ConvertFrom(srcRaw conversion.Hub) error {
+	log.Default().Println("In ConvertFrom")
 	src := srcRaw.(*v1beta1.APIRule)
+
+	json_raw, err := json.Marshal(src)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Default().Println(string(pretty.Pretty(json_raw)))
+	
+	dst_raw, err := json.Marshal(dst)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Default().Println("\n dest:")
+	log.Default().Println(string(pretty.Pretty(dst_raw)))
+
 	specData, err := json.Marshal(src.Spec)
 	if err != nil {
 		return err
