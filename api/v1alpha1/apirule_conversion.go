@@ -11,7 +11,7 @@ import (
 
 // ConvertTo converts this ApiRule to the Hub version (v1beta1).
 func (src *APIRule) ConvertTo(dstRaw conversion.Hub) error {
-	json_raw, err := json.Marshal(dstRaw)
+	json_raw, err := json.Marshal(src)
 	if err != nil {
 		log.Fatal(err)
 	}
