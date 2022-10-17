@@ -5,7 +5,8 @@ import (
 	"log"
 
 	"github.com/kyma-incubator/api-gateway/api/v1beta1"
-	"github.com/kyma-incubator/api-gateway/internal/conversion"
+	"sigs.k8s.io/controller-runtime/pkg/conversion"
+
 	"github.com/tidwall/pretty"
 )
 
