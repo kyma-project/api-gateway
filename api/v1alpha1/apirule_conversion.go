@@ -63,13 +63,6 @@ func (dst *APIRule) ConvertFrom(srcRaw conversion.Hub) error {
 		log.Fatal(err)
 	}
 	log.Default().Println(string(pretty.Pretty(json_raw)))
-	
-	dst_raw, err := json.Marshal(dst)
-	if err != nil {
-		log.Fatal(err)
-	}
-	log.Default().Println("\n dest:")
-	log.Default().Println(string(pretty.Pretty(dst_raw)))
 
 	specData, err := json.Marshal(src.Spec)
 	if err != nil {
@@ -109,6 +102,13 @@ func (dst *APIRule) ConvertFrom(srcRaw conversion.Hub) error {
 		log.Default().Print("conversion from v1beta1 to v1alpha1 wasn't possible as service isn't set on spec level")
 		return nil
 	}
+
+	dst_raw, err := json.Marshal(dst)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Default().Println("\n dest:")
+	log.Default().Println(string(pretty.Pretty(dst_raw)))
 
 	return nil
 }
