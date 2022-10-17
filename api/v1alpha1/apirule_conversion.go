@@ -5,8 +5,8 @@ import (
 	"log"
 
 	"github.com/kyma-incubator/api-gateway/api/v1beta1"
+	"github.com/kyma-incubator/api-gateway/internal/conversion"
 	"github.com/tidwall/pretty"
-	"sigs.k8s.io/controller-runtime/pkg/conversion"
 )
 
 // ConvertTo converts this ApiRule to the Hub version (v1beta1).
@@ -85,7 +85,6 @@ func (dst *APIRule) ConvertFrom(srcRaw conversion.Hub) error {
 	}
 
 	dst.ObjectMeta = src.ObjectMeta
-
 
 	host := *src.Spec.Host
 
