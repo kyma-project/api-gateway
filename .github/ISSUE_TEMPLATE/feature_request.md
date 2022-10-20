@@ -27,6 +27,7 @@ assignees: ''
 - [ ] verify [Get started guides](https://kyma-project.io/docs/kyma/latest/02-get-started/) 
 - [ ] verify resource limits
 - [ ] followup issue
+- [ ] create release and bump in kyma
 
 **Attachments**
 
