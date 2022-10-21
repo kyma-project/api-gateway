@@ -67,8 +67,8 @@ spec:
                               trusted_issuers:
                                 type: array
                                 items:
-                                  type: string                              
-                                  pattern: ^(https://|file://).*$   
+                                  type: string
+                                  pattern: ^(https://|file://).*$
                           handler:
                             description: Name is the name of a handler
                             type: string
@@ -187,7 +187,14 @@ spec:
     storage: false
     subresources:
       status: {}
-  - name: v1beta1
+  - additionalPrinterColumns:
+    - jsonPath: .status.APIRuleStatus.code
+      name: Status
+      type: string
+    - jsonPath: .spec.host
+      name: Host
+      type: string
+    name: v1beta1
     schema:
       openAPIV3Schema:
         description: APIRule is the Schema for the apis ApiRule
@@ -243,8 +250,8 @@ spec:
                               trusted_issuers:
                                 type: array
                                 items:
-                                  type: string                              
-                                  pattern: ^(https://|file://).*$   
+                                  type: string
+                                  pattern: ^(https://|file://).*$
                           handler:
                             description: Name is the name of a handler
                             type: string
