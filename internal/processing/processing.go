@@ -14,6 +14,7 @@ import (
 	"github.com/kyma-incubator/api-gateway/internal/helpers"
 	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
+	istiosecurityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 )
 
 var (
@@ -59,15 +60,26 @@ func (f *Factory) CalculateRequiredState(api *gatewayv1beta1.APIRule, config *he
 	var res State
 	pathDuplicates := hasPathDuplicates(api.Spec.Rules)
 	res.accessRules = make(map[string]*rulev1alpha1.Rule)
+	res.authorizationPolicies = make(map[string]*istiosecurityv1beta1.AuthorizationPolicy)
+	res.requestAuthentications = make(map[string]*istiosecurityv1beta1.RequestAuthentication)
+
 	for _, rule := range api.Spec.Rules {
 		if isSecured(rule) {
 			var ar *rulev1alpha1.Rule
+			var ap *istiosecurityv1beta1.AuthorizationPolicy
+			var ra *istiosecurityv1beta1.RequestAuthentication
+
 			if config.JWTHandler == helpers.JWT_HANDLER_ORY {
 				ar = generateAccessRule(api, rule, rule.AccessStrategies, f.additionalLabels, f.defaultDomainName)
 			} else if config.JWTHandler == helpers.JWT_HANDLER_ISTIO {
 				//TODO generate based on config.JWTHandler="istio"
+				ap = generateAuthorizationPolicy(api, rule, f.additionalLabels)
+				ra = generateRequestAuthentication(api, rule, f.additionalLabels)
 			}
+
 			res.accessRules[setAccessRuleKey(pathDuplicates, *ar)] = ar
+			res.authorizationPolicies[setAuthorizationPolicyKey(pathDuplicates, ap)] = ap
+			res.requestAuthentications[setRequestAuthenticationKey(ra)] = ra
 		}
 	}
 
@@ -85,8 +97,10 @@ func (f *Factory) CalculateRequiredState(api *gatewayv1beta1.APIRule, config *he
 
 // State represents desired or actual state of Istio Virtual Services and Oathkeeper Rules
 type State struct {
-	virtualService *networkingv1beta1.VirtualService
-	accessRules    map[string]*rulev1alpha1.Rule
+	virtualService         *networkingv1beta1.VirtualService
+	accessRules            map[string]*rulev1alpha1.Rule
+	authorizationPolicies  map[string]*istiosecurityv1beta1.AuthorizationPolicy
+	requestAuthentications map[string]*istiosecurityv1beta1.RequestAuthentication
 }
 
 // GetActualState methods gets actual state of Istio Virtual Services and Oathkeeper Rules
