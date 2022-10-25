@@ -9,6 +9,7 @@ import (
 	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
 	"istio.io/api/networking/v1beta1"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
+	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -82,6 +83,9 @@ var _ = BeforeSuite(func(done Done) {
 	Expect(err).NotTo(HaveOccurred())
 
 	err = networkingv1beta1.AddToScheme(s)
+	Expect(err).NotTo(HaveOccurred())
+
+	err = securityv1beta1.AddToScheme(s)
 	Expect(err).NotTo(HaveOccurred())
 
 	err = corev1.AddToScheme(s)
