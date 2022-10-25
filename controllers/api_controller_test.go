@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 	"net/http"
 
 	"sigs.k8s.io/controller-runtime/pkg/config/v1alpha1"
@@ -143,6 +144,8 @@ func getTestSuite(objects ...runtime.Object) *testSuite {
 	err = networkingv1beta1.AddToScheme(scheme.Scheme)
 	Expect(err).NotTo(HaveOccurred())
 	err = rulev1alpha1.AddToScheme(scheme.Scheme)
+	Expect(err).NotTo(HaveOccurred())
+	err = securityv1beta1.AddToScheme(scheme.Scheme)
 	Expect(err).NotTo(HaveOccurred())
 
 	return &testSuite{

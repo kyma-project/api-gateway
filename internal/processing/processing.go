@@ -73,7 +73,6 @@ func (f *Factory) CalculateRequiredState(api *gatewayv1beta1.APIRule, config *he
 				ar = generateAccessRule(api, rule, rule.AccessStrategies, f.additionalLabels, f.defaultDomainName)
 				res.accessRules[setAccessRuleKey(pathDuplicates, *ar)] = ar
 			} else if config.JWTHandler == helpers.JWT_HANDLER_ISTIO {
-				//TODO generate based on config.JWTHandler="istio"
 				ap = generateAuthorizationPolicy(api, rule, f.additionalLabels)
 				ra = generateRequestAuthentication(api, rule, f.additionalLabels)
 				res.authorizationPolicies[setAuthorizationPolicyKey(pathDuplicates, ap)] = ap
