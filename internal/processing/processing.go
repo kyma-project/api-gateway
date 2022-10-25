@@ -133,13 +133,38 @@ func (f *Factory) GetActualState(ctx context.Context, api *gatewayv1beta1.APIRul
 		obj := arList.Items[i]
 		state.accessRules[setAccessRuleKey(pathDuplicates, obj)] = &obj
 	}
+
+	var apList istiosecurityv1beta1.AuthorizationPolicyList
+	if err := f.client.List(ctx, &apList, client.MatchingLabels(labels)); err != nil {
+		return nil, err
+	}
+
+	state.authorizationPolicies = make(map[string]*istiosecurityv1beta1.AuthorizationPolicy)
+	for i := range apList.Items {
+		obj := apList.Items[i]
+		state.authorizationPolicies[setAuthorizationPolicyKey(pathDuplicates, obj)] = obj
+	}
+
+	var raList istiosecurityv1beta1.RequestAuthenticationList
+	if err := f.client.List(ctx, &raList, client.MatchingLabels(labels)); err != nil {
+		return nil, err
+	}
+
+	state.requestAuthentications = make(map[string]*istiosecurityv1beta1.RequestAuthentication)
+	for i := range raList.Items {
+		obj := raList.Items[i]
+		state.requestAuthentications[setRequestAuthenticationKey(obj)] = obj
+	}
+
 	return &state, nil
 }
 
 // Patch represents diff between desired and actual state
 type Patch struct {
-	virtualService *objToPatch
-	accessRule     map[string]*objToPatch
+	virtualService        *objToPatch
+	accessRule            map[string]*objToPatch
+	authorizationPolicy   map[string]*objToPatch
+	requestAuthentication map[string]*objToPatch
 }
 
 type objToPatch struct {
@@ -150,28 +175,13 @@ type objToPatch struct {
 // CalculateDiff methods compute diff between desired & actual state
 func (f *Factory) CalculateDiff(requiredState *State, actualState *State) *Patch {
 	arPatch := make(map[string]*objToPatch)
+	accessRulePatch(arPatch, actualState, requiredState)
 
-	for path, rule := range requiredState.accessRules {
-		rulePatch := &objToPatch{}
+	apPatch := make(map[string]*objToPatch)
+	apPatch = authorizationPolicyPatch(apPatch, actualState, requiredState)
 
-		if actualState.accessRules[path] != nil {
-			rulePatch.action = "update"
-			modifyAccessRule(actualState.accessRules[path], rule)
-			rulePatch.obj = actualState.accessRules[path]
-		} else {
-			rulePatch.action = "create"
-			rulePatch.obj = rule
-		}
-
-		arPatch[path] = rulePatch
-	}
-
-	for path, rule := range actualState.accessRules {
-		if requiredState.accessRules[path] == nil {
-			objToDelete := &objToPatch{action: "delete", obj: rule}
-			arPatch[path] = objToDelete
-		}
-	}
+	raPatch := make(map[string]*objToPatch)
+	raPatch = requestAuthenticationPatch(raPatch, actualState, requiredState)
 
 	vsPatch := &objToPatch{}
 	if actualState.virtualService != nil {
@@ -183,7 +193,7 @@ func (f *Factory) CalculateDiff(requiredState *State, actualState *State) *Patch
 		vsPatch.obj = requiredState.virtualService
 	}
 
-	return &Patch{virtualService: vsPatch, accessRule: arPatch}
+	return &Patch{virtualService: vsPatch, accessRule: arPatch, authorizationPolicy: apPatch}
 }
 
 // ApplyDiff method applies computed diff
@@ -196,6 +206,20 @@ func (f *Factory) ApplyDiff(ctx context.Context, patch *Patch) error {
 
 	for _, rule := range patch.accessRule {
 		err := f.applyObjDiff(ctx, rule)
+		if err != nil {
+			return err
+		}
+	}
+
+	for _, authorizationPolicy := range patch.authorizationPolicy {
+		err := f.applyObjDiff(ctx, authorizationPolicy)
+		if err != nil {
+			return err
+		}
+	}
+
+	for _, requestAuthentication := range patch.requestAuthentication {
+		err := f.applyObjDiff(ctx, requestAuthentication)
 		if err != nil {
 			return err
 		}
@@ -221,4 +245,82 @@ func (f *Factory) applyObjDiff(ctx context.Context, objToPatch *objToPatch) erro
 	}
 
 	return nil
+}
+
+func accessRulePatch(arPatch map[string]*objToPatch, actualState, requiredState *State) map[string]*objToPatch {
+	for path, rule := range requiredState.accessRules {
+		rulePatch := &objToPatch{}
+
+		if actualState.accessRules[path] != nil {
+			rulePatch.action = "update"
+			modifyAccessRule(actualState.accessRules[path], rule)
+			rulePatch.obj = actualState.accessRules[path]
+		} else {
+			rulePatch.action = "create"
+			rulePatch.obj = rule
+		}
+
+		arPatch[path] = rulePatch
+	}
+
+	for path, rule := range actualState.accessRules {
+		if requiredState.accessRules[path] == nil {
+			objToDelete := &objToPatch{action: "delete", obj: rule}
+			arPatch[path] = objToDelete
+		}
+	}
+
+	return arPatch
+}
+
+func authorizationPolicyPatch(apPatch map[string]*objToPatch, actualState, requiredState *State) map[string]*objToPatch {
+	for path, authorizationPolicy := range requiredState.authorizationPolicies {
+		authorizationPolicyPatch := &objToPatch{}
+
+		if actualState.authorizationPolicies[path] != nil {
+			authorizationPolicyPatch.action = "update"
+			modifyAuthorizationPolicy(actualState.authorizationPolicies[path], authorizationPolicy)
+			authorizationPolicyPatch.obj = actualState.authorizationPolicies[path]
+		} else {
+			authorizationPolicyPatch.action = "create"
+			authorizationPolicyPatch.obj = authorizationPolicy
+		}
+
+		apPatch[path] = authorizationPolicyPatch
+	}
+
+	for path, authorizationPolicy := range actualState.authorizationPolicies {
+		if requiredState.authorizationPolicies[path] == nil {
+			objToDelete := &objToPatch{action: "delete", obj: authorizationPolicy}
+			apPatch[path] = objToDelete
+		}
+	}
+
+	return apPatch
+}
+
+func requestAuthenticationPatch(raPatch map[string]*objToPatch, actualState, requiredState *State) map[string]*objToPatch {
+	for path, requestAuthentication := range requiredState.requestAuthentications {
+		requestAuthenticationPatch := &objToPatch{}
+
+		if actualState.requestAuthentications[path] != nil {
+			requestAuthenticationPatch.action = "update"
+			modifyRequestAuthentication(actualState.requestAuthentications[path], requestAuthentication)
+			requestAuthenticationPatch.obj = actualState.requestAuthentications[path]
+		} else {
+			requestAuthenticationPatch.action = "create"
+			requestAuthenticationPatch.obj = requestAuthentication
+		}
+
+		raPatch[path] = requestAuthenticationPatch
+	}
+
+	for path, requestAuthentication := range actualState.requestAuthentications {
+		if requiredState.requestAuthentications[path] == nil {
+			objToDelete := &objToPatch{action: "delete", obj: requestAuthentication}
+			raPatch[path] = objToDelete
+		}
+	}
+
+	return raPatch
 }

@@ -10,8 +10,7 @@ import (
 )
 
 func modifyAuthorizationPolicy(existing, required *securityv1beta1.AuthorizationPolicy) {
-	requiredSpec := &required.Spec
-	existing.Spec = *requiredSpec
+	existing.Spec = *required.Spec.DeepCopy()
 }
 
 func generateAuthorizationPolicy(api *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rule, additionalLabels map[string]string) *securityv1beta1.AuthorizationPolicy {
