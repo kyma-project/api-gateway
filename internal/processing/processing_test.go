@@ -7,6 +7,7 @@ import (
 
 	"istio.io/api/networking/v1beta1"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
+	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -1032,6 +1033,7 @@ var _ = Describe("Factory", func() {
 				rulev1alpha1.AddToScheme(scheme)
 				networkingv1beta1.AddToScheme(scheme)
 				gatewayv1beta1.AddToScheme(scheme)
+				securityv1beta1.AddToScheme(scheme)
 
 				client := fake.NewClientBuilder().WithScheme(scheme).WithObjects(&rule, &vs).Build()
 
