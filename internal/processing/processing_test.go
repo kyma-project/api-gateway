@@ -60,11 +60,6 @@ var (
 		AllowMethods: testAllowMethods,
 		AllowHeaders: testAllowHeaders,
 	}
-	expectedCorsPolicy = v1beta1.CorsPolicy{
-		AllowOrigins: testAllowOrigin,
-		AllowMethods: testAllowMethods,
-		AllowHeaders: testAllowHeaders,
-	}
 
 	testAdditionalLabels = map[string]string{testLabelKey: testLabelValue}
 )

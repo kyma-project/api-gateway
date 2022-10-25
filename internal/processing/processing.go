@@ -71,15 +71,14 @@ func (f *Factory) CalculateRequiredState(api *gatewayv1beta1.APIRule, config *he
 
 			if config.JWTHandler == helpers.JWT_HANDLER_ORY {
 				ar = generateAccessRule(api, rule, rule.AccessStrategies, f.additionalLabels, f.defaultDomainName)
+				res.accessRules[setAccessRuleKey(pathDuplicates, *ar)] = ar
 			} else if config.JWTHandler == helpers.JWT_HANDLER_ISTIO {
 				//TODO generate based on config.JWTHandler="istio"
 				ap = generateAuthorizationPolicy(api, rule, f.additionalLabels)
 				ra = generateRequestAuthentication(api, rule, f.additionalLabels)
+				res.authorizationPolicies[setAuthorizationPolicyKey(pathDuplicates, ap)] = ap
+				res.requestAuthentications[setRequestAuthenticationKey(ra)] = ra
 			}
-
-			res.accessRules[setAccessRuleKey(pathDuplicates, *ar)] = ar
-			res.authorizationPolicies[setAuthorizationPolicyKey(pathDuplicates, ap)] = ap
-			res.requestAuthentications[setRequestAuthenticationKey(ra)] = ra
 		}
 	}
 
@@ -178,10 +177,10 @@ func (f *Factory) CalculateDiff(requiredState *State, actualState *State) *Patch
 	accessRulePatch(arPatch, actualState, requiredState)
 
 	apPatch := make(map[string]*objToPatch)
-	apPatch = authorizationPolicyPatch(apPatch, actualState, requiredState)
+	authorizationPolicyPatch(apPatch, actualState, requiredState)
 
 	raPatch := make(map[string]*objToPatch)
-	raPatch = requestAuthenticationPatch(raPatch, actualState, requiredState)
+	requestAuthenticationPatch(raPatch, actualState, requiredState)
 
 	vsPatch := &objToPatch{}
 	if actualState.virtualService != nil {
@@ -247,7 +246,7 @@ func (f *Factory) applyObjDiff(ctx context.Context, objToPatch *objToPatch) erro
 	return nil
 }
 
-func accessRulePatch(arPatch map[string]*objToPatch, actualState, requiredState *State) map[string]*objToPatch {
+func accessRulePatch(arPatch map[string]*objToPatch, actualState, requiredState *State) {
 	for path, rule := range requiredState.accessRules {
 		rulePatch := &objToPatch{}
 
@@ -269,11 +268,9 @@ func accessRulePatch(arPatch map[string]*objToPatch, actualState, requiredState 
 			arPatch[path] = objToDelete
 		}
 	}
-
-	return arPatch
 }
 
-func authorizationPolicyPatch(apPatch map[string]*objToPatch, actualState, requiredState *State) map[string]*objToPatch {
+func authorizationPolicyPatch(apPatch map[string]*objToPatch, actualState, requiredState *State) {
 	for path, authorizationPolicy := range requiredState.authorizationPolicies {
 		authorizationPolicyPatch := &objToPatch{}
 
@@ -295,11 +292,9 @@ func authorizationPolicyPatch(apPatch map[string]*objToPatch, actualState, requi
 			apPatch[path] = objToDelete
 		}
 	}
-
-	return apPatch
 }
 
-func requestAuthenticationPatch(raPatch map[string]*objToPatch, actualState, requiredState *State) map[string]*objToPatch {
+func requestAuthenticationPatch(raPatch map[string]*objToPatch, actualState, requiredState *State) {
 	for path, requestAuthentication := range requiredState.requestAuthentications {
 		requestAuthenticationPatch := &objToPatch{}
 
@@ -321,6 +316,4 @@ func requestAuthenticationPatch(raPatch map[string]*objToPatch, actualState, req
 			raPatch[path] = objToDelete
 		}
 	}
-
-	return raPatch
 }

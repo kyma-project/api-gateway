@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 
 	"sigs.k8s.io/controller-runtime/pkg/config/v1alpha1"
@@ -49,7 +49,7 @@ type FakeFileReader struct {
 }
 
 func (f FakeFileReader) ReadFile(filename string) ([]byte, error) {
-	return ioutil.ReadAll(bytes.NewBufferString(f.FileContent))
+	return io.ReadAll(bytes.NewBufferString(f.FileContent))
 }
 
 var _ = Describe("Controller", func() {
