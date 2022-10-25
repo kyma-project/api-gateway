@@ -6,7 +6,7 @@ import (
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 )
 
-// AuthorizationPolicyBuilder returns a builder for istio.io/apis/security/v1beta1/AuthorizationPolicy type
+// AuthorizationPolicyBuilder returns a builder for istio.io/client-go/pkg/apis/security/v1beta1/AuthorizationPolicy type
 func AuthorizationPolicyBuilder() *AuthorizationPolicy {
 	return &AuthorizationPolicy{
 		value: &securityv1beta1.AuthorizationPolicy{},
@@ -90,7 +90,7 @@ func (aps *AuthorizationPolicySpec) Rule(val *Rule) *AuthorizationPolicySpec {
 	return aps
 }
 
-// RuleBuilder returns builder for istio.io/apis/security/v1beta1/Rule type
+// RuleBuilder returns builder for istio.io/api/security/v1beta1/Rule type
 func RuleBuilder() *Rule {
 	return &Rule{
 		value: &v1beta1.Rule{},
@@ -115,7 +115,7 @@ func (r *Rule) RuleTo(val *RuleTo) *Rule {
 	return r
 }
 
-// RuleFromBuilder returns builder for istio.io/apis/security/v1beta1/Rule_From type
+// RuleFromBuilder returns builder for istio.io/api/security/v1beta1/Rule_From type
 func RuleFromBuilder() *RuleFrom {
 	return &RuleFrom{
 		value: &v1beta1.Rule_From{},
@@ -157,7 +157,7 @@ func (rt *RuleTo) Operation(val *Operation) *RuleTo {
 	return rt
 }
 
-// OperationBuilder returns builder for istio.io/apis/security/v1beta1/Operation type
+// OperationBuilder returns builder for istio.io/api/security/v1beta1/Operation type
 func OperationBuilder() *Operation {
 	return &Operation{
 		value: &v1beta1.Operation{},
@@ -182,7 +182,7 @@ func (o *Operation) Path(val string) *Operation {
 	return o
 }
 
-// RequestAuthenticationBuilder returns a builder for istio.io/apis/security/v1beta1/AuthorizationPolicy type
+// RequestAuthenticationBuilder returns a builder for istio.io/client-go/pkg/apis/security/v1beta1/RequestAuthentication type
 func RequestAuthenticationBuilder() *RequestAuthentication {
 	return &RequestAuthentication{
 		value: &securityv1beta1.RequestAuthentication{},
@@ -236,7 +236,7 @@ func (ra *RequestAuthentication) Spec(val *RequestAuthenticationSpec) *RequestAu
 	return ra
 }
 
-// RequestAuthenticationSpecBuilder returns a builder for istio.io/api/type/v1beta1/RequestAuthentication type
+// RequestAuthenticationSpecBuilder returns a builder for istio.io/api/security/v1beta1/RequestAuthentication type
 func RequestAuthenticationSpecBuilder() *RequestAuthenticationSpec {
 	return &RequestAuthenticationSpec{
 		value: &v1beta1.RequestAuthentication{},
@@ -266,7 +266,7 @@ func (ras *RequestAuthenticationSpec) JwtRules(val *JwtRule) *RequestAuthenticat
 	return ras
 }
 
-// JwtRuleBuilder returns builder for istio.io/api/type/v1beta1/WorkloadSelector type
+// JwtRuleBuilder returns builder for istio.io/api/security/v1beta1/JWTRule type
 func JwtRuleBuilder() *JwtRule {
 	return &JwtRule{
 		value: &[]*v1beta1.JWTRule{},
