@@ -1030,10 +1030,10 @@ var _ = Describe("Factory", func() {
 				}
 
 				scheme := runtime.NewScheme()
-				rulev1alpha1.AddToScheme(scheme)
-				networkingv1beta1.AddToScheme(scheme)
-				gatewayv1beta1.AddToScheme(scheme)
-				securityv1beta1.AddToScheme(scheme)
+				_ = rulev1alpha1.AddToScheme(scheme)
+				_ = networkingv1beta1.AddToScheme(scheme)
+				_ = gatewayv1beta1.AddToScheme(scheme)
+				_ = securityv1beta1.AddToScheme(scheme)
 
 				client := fake.NewClientBuilder().WithScheme(scheme).WithObjects(&rule, &vs).Build()
 

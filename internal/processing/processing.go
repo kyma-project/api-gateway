@@ -69,10 +69,11 @@ func (f *Factory) CalculateRequiredState(api *gatewayv1beta1.APIRule, config *he
 			var ap *istiosecurityv1beta1.AuthorizationPolicy
 			var ra *istiosecurityv1beta1.RequestAuthentication
 
-			if config.JWTHandler == helpers.JWT_HANDLER_ORY {
+			switch config.JWTHandler {
+			case helpers.JWT_HANDLER_ORY:
 				ar = generateAccessRule(api, rule, rule.AccessStrategies, f.additionalLabels, f.defaultDomainName)
 				res.accessRules[setAccessRuleKey(pathDuplicates, *ar)] = ar
-			} else if config.JWTHandler == helpers.JWT_HANDLER_ISTIO {
+			case helpers.JWT_HANDLER_ISTIO:
 				ap = generateAuthorizationPolicy(api, rule, f.additionalLabels)
 				ra = generateRequestAuthentication(api, rule, f.additionalLabels)
 				res.authorizationPolicies[setAuthorizationPolicyKey(pathDuplicates, ap)] = ap
@@ -83,9 +84,9 @@ func (f *Factory) CalculateRequiredState(api *gatewayv1beta1.APIRule, config *he
 
 	//Only one vs
 	var vs *networkingv1beta1.VirtualService
-	if config.JWTHandler == helpers.JWT_HANDLER_ORY {
+	switch config.JWTHandler {
+	case helpers.JWT_HANDLER_ORY:
 		vs = f.generateVirtualService(api)
-	} else if config.JWTHandler == helpers.JWT_HANDLER_ISTIO {
 		//TODO generate based on config.JWTHandler="istio"
 	}
 	res.virtualService = vs
