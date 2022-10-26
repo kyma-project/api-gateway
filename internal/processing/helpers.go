@@ -56,11 +56,16 @@ func setAccessRuleKey(hasPathDuplicates bool, rule rulev1alpha1.Rule) string {
 }
 
 func getAuthorizationPolicyKey(hasPathDuplicates bool, ap *istiosecurityv1beta1.AuthorizationPolicy) string {
-	if hasPathDuplicates {
-		return fmt.Sprintf("%s:%s", ap.Spec.Rules[0].To[0].Operation.Paths, ap.Spec.Rules[0].To[0].Operation.Methods)
+	key := ""
+	if ap.Spec.Rules != nil && len(ap.Spec.Rules) > 0 && ap.Spec.Rules[0].To != nil && len(ap.Spec.Rules[0].To) > 0 {
+		if hasPathDuplicates {
+			key = fmt.Sprintf("%s:%s", ap.Spec.Rules[0].To[0].Operation.Paths, ap.Spec.Rules[0].To[0].Operation.Methods)
+		} else {
+			key = fmt.Sprintf("%s", ap.Spec.Rules[0].To[0].Operation.Paths)
+		}
 	}
 
-	return ap.Spec.Rules[0].To[0].Operation.Paths[0]
+	return key
 }
 
 func getRequestAuthenticationKey(ra *istiosecurityv1beta1.RequestAuthentication) string {
