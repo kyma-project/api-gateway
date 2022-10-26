@@ -58,7 +58,7 @@ type CorsConfig struct {
 // CalculateRequiredState returns required state of all objects related to given api
 func (f *Factory) CalculateRequiredState(api *gatewayv1beta1.APIRule, config *helpers.Config) *State {
 	var res State
-	pathDuplicates := hasPathDuplicates(api.Spec.Rules)
+	hasPathDuplicates := checkPathDuplicates(api.Spec.Rules)
 	res.accessRules = make(map[string]*rulev1alpha1.Rule)
 	res.authorizationPolicies = make(map[string]*istiosecurityv1beta1.AuthorizationPolicy)
 	res.requestAuthentications = make(map[string]*istiosecurityv1beta1.RequestAuthentication)
@@ -72,12 +72,12 @@ func (f *Factory) CalculateRequiredState(api *gatewayv1beta1.APIRule, config *he
 			switch config.JWTHandler {
 			case helpers.JWT_HANDLER_ORY:
 				ar = generateAccessRule(api, rule, rule.AccessStrategies, f.additionalLabels, f.defaultDomainName)
-				res.accessRules[setAccessRuleKey(pathDuplicates, *ar)] = ar
+				res.accessRules[setAccessRuleKey(hasPathDuplicates, *ar)] = ar
 			case helpers.JWT_HANDLER_ISTIO:
 				ap = generateAuthorizationPolicy(api, rule, f.additionalLabels)
 				ra = generateRequestAuthentication(api, rule, f.additionalLabels)
-				res.authorizationPolicies[setAuthorizationPolicyKey(pathDuplicates, ap)] = ap
-				res.requestAuthentications[setRequestAuthenticationKey(ra)] = ra
+				res.authorizationPolicies[getAuthorizationPolicyKey(hasPathDuplicates, ap)] = ap
+				res.requestAuthentications[getRequestAuthenticationKey(ra)] = ra
 			}
 		}
 	}
@@ -107,7 +107,7 @@ func (f *Factory) GetActualState(ctx context.Context, api *gatewayv1beta1.APIRul
 	labels := make(map[string]string)
 	labels[OwnerLabelv1alpha1] = fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace)
 
-	pathDuplicates := hasPathDuplicates(api.Spec.Rules)
+	pathDuplicates := checkPathDuplicates(api.Spec.Rules)
 	var state State
 	var vsList networkingv1beta1.VirtualServiceList
 
@@ -141,7 +141,7 @@ func (f *Factory) GetActualState(ctx context.Context, api *gatewayv1beta1.APIRul
 	state.authorizationPolicies = make(map[string]*istiosecurityv1beta1.AuthorizationPolicy)
 	for i := range apList.Items {
 		obj := apList.Items[i]
-		state.authorizationPolicies[setAuthorizationPolicyKey(pathDuplicates, obj)] = obj
+		state.authorizationPolicies[getAuthorizationPolicyKey(pathDuplicates, obj)] = obj
 	}
 
 	var raList istiosecurityv1beta1.RequestAuthenticationList
@@ -152,7 +152,7 @@ func (f *Factory) GetActualState(ctx context.Context, api *gatewayv1beta1.APIRul
 	state.requestAuthentications = make(map[string]*istiosecurityv1beta1.RequestAuthentication)
 	for i := range raList.Items {
 		obj := raList.Items[i]
-		state.requestAuthentications[setRequestAuthenticationKey(obj)] = obj
+		state.requestAuthentications[getRequestAuthenticationKey(obj)] = obj
 	}
 
 	return &state, nil
@@ -192,7 +192,7 @@ func (f *Factory) CalculateDiff(requiredState *State, actualState *State) *Patch
 		vsPatch.obj = requiredState.virtualService
 	}
 
-	return &Patch{virtualService: vsPatch, accessRule: arPatch, authorizationPolicy: apPatch}
+	return &Patch{virtualService: vsPatch, accessRule: arPatch, authorizationPolicy: apPatch, requestAuthentication: raPatch}
 }
 
 // ApplyDiff method applies computed diff

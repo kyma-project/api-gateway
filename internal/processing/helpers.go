@@ -22,7 +22,7 @@ func isSecured(rule gatewayv1beta1.Rule) bool {
 	return false
 }
 
-func hasPathDuplicates(rules []gatewayv1beta1.Rule) bool {
+func checkPathDuplicates(rules []gatewayv1beta1.Rule) bool {
 	duplicates := map[string]bool{}
 	for _, rule := range rules {
 		if duplicates[rule.Path] {
@@ -55,7 +55,7 @@ func setAccessRuleKey(hasPathDuplicates bool, rule rulev1alpha1.Rule) string {
 	return rule.Spec.Match.URL
 }
 
-func setAuthorizationPolicyKey(hasPathDuplicates bool, ap *istiosecurityv1beta1.AuthorizationPolicy) string {
+func getAuthorizationPolicyKey(hasPathDuplicates bool, ap *istiosecurityv1beta1.AuthorizationPolicy) string {
 	if hasPathDuplicates {
 		return fmt.Sprintf("%s:%s", ap.Spec.Rules[0].To[0].Operation.Paths, ap.Spec.Rules[0].To[0].Operation.Methods)
 	}
@@ -63,7 +63,7 @@ func setAuthorizationPolicyKey(hasPathDuplicates bool, ap *istiosecurityv1beta1.
 	return ap.Spec.Rules[0].To[0].Operation.Paths[0]
 }
 
-func setRequestAuthenticationKey(ra *istiosecurityv1beta1.RequestAuthentication) string {
+func getRequestAuthenticationKey(ra *istiosecurityv1beta1.RequestAuthentication) string {
 	return fmt.Sprintf("%s", ra.Spec.JwtRules)
 }
 
