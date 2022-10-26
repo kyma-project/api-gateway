@@ -970,6 +970,19 @@ func simpleJWTConfig(trustedIssuers ...string) *runtime.RawExtension {
 		})
 }
 
+// TODO needs validation
+// func simpleJWTIstioConfig(issuer string, JwksUri string) *runtime.RawExtension {
+// 	return getRawConfig(
+// 		istio.JwtConfig{
+// 			[]istio.JwtAuth{
+// 				{
+// 					Issuer:  issuer,
+// 					JwksUri: JwksUri,
+// 				},
+// 			},
+// 		})
+// }
+
 func testURLJWTConfig(JWKSUrls string, trustedIssuers string) *runtime.RawExtension {
 	return getRawConfig(
 		&gatewayv1beta1.JWTAccStrConfig{
@@ -979,7 +992,7 @@ func testURLJWTConfig(JWKSUrls string, trustedIssuers string) *runtime.RawExtens
 		})
 }
 
-func getRawConfig(config *gatewayv1beta1.JWTAccStrConfig) *runtime.RawExtension {
+func getRawConfig(config any) *runtime.RawExtension {
 	bytes, err := json.Marshal(config)
 	Expect(err).To(BeNil())
 	return &runtime.RawExtension{

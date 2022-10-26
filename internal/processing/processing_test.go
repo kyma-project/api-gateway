@@ -32,6 +32,7 @@ const (
 	headersAPIPath              = "/headers"
 	oauthAPIPath                = "/img"
 	jwtIssuer                   = "https://oauth2.example.com/"
+	jwksUri                     = "https://oauth2.example.com/.well-known/jwks.json"
 	oathkeeperSvc               = "fake.oathkeeper"
 	oathkeeperSvcPort uint32    = 1234
 	testLabelKey                = "key"
@@ -41,8 +42,6 @@ const (
 
 var (
 	config = helpers.Config{JWTHandler: helpers.JWT_HANDLER_ORY}
-
-	//TODO should include tests for other JWT handler
 
 	apiMethods                     = []string{"GET"}
 	apiScopes                      = []string{"write", "read"}
@@ -919,6 +918,69 @@ var _ = Describe("Factory", func() {
 
 			})
 
+			Context("when the jwt handler is istio", func() {
+				configIstioJWT := helpers.Config{JWTHandler: helpers.JWT_HANDLER_ISTIO}
+
+				It("should produce VS and route it directly to the service", func() {
+					jwtConfigJSON := fmt.Sprintf(`{
+						"authentications": [{"issuer": "%s", "jwksUri": "%s"}]
+						}`, jwtIssuer, jwksUri)
+
+					jwt := []*gatewayv1beta1.Authenticator{
+						{
+							Handler: &gatewayv1beta1.Handler{
+								Name: "jwt",
+								Config: &runtime.RawExtension{
+									Raw: []byte(jwtConfigJSON),
+								},
+							},
+						},
+					}
+
+					service := &gatewayv1beta1.Service{
+						Name: &serviceName,
+						Port: &servicePort,
+					}
+
+					jwtRule := getRuleWithServiceFor(headersAPIPath, apiMethods, []*gatewayv1beta1.Mutator{}, jwt, service)
+					rules := []gatewayv1beta1.Rule{jwtRule}
+
+					apiRule := getAPIRuleFor(rules)
+
+					f := NewFactory(nil, ctrl.Log.WithName("test"), oathkeeperSvc, oathkeeperSvcPort, testCors, testAdditionalLabels, defaultDomain)
+
+					desiredState := f.CalculateRequiredState(apiRule, &configIstioJWT)
+					vs := desiredState.virtualService
+
+					//verify VS
+					Expect(vs).NotTo(BeNil())
+					Expect(len(vs.Spec.Gateways)).To(Equal(1))
+					Expect(len(vs.Spec.Hosts)).To(Equal(1))
+					Expect(vs.Spec.Hosts[0]).To(Equal(serviceHost))
+					Expect(len(vs.Spec.Http)).To(Equal(1))
+
+					Expect(len(vs.Spec.Http[0].Route)).To(Equal(1))
+					Expect(vs.Spec.Http[0].Route[0].Destination.Host).To(Equal(serviceName + "." + apiNamespace + ".svc.cluster.local"))
+					Expect(vs.Spec.Http[0].Route[0].Destination.Port.Number).To(Equal(servicePort))
+					Expect(len(vs.Spec.Http[0].Match)).To(Equal(1))
+					Expect(vs.Spec.Http[0].Match[0].Uri.GetRegex()).To(Equal(apiRule.Spec.Rules[0].Path))
+
+					Expect(vs.Spec.Http[0].CorsPolicy.AllowOrigins).To(Equal(testCors.AllowOrigins))
+					Expect(vs.Spec.Http[0].CorsPolicy.AllowMethods).To(Equal(testCors.AllowMethods))
+					Expect(vs.Spec.Http[0].CorsPolicy.AllowHeaders).To(Equal(testCors.AllowHeaders))
+
+					Expect(vs.ObjectMeta.Name).To(BeEmpty())
+					Expect(vs.ObjectMeta.GenerateName).To(Equal(apiName + "-"))
+					Expect(vs.ObjectMeta.Namespace).To(Equal(apiNamespace))
+					Expect(vs.ObjectMeta.Labels[testLabelKey]).To(Equal(testLabelValue))
+
+					Expect(vs.ObjectMeta.OwnerReferences[0].APIVersion).To(Equal(apiAPIVersion))
+					Expect(vs.ObjectMeta.OwnerReferences[0].Kind).To(Equal(apiKind))
+					Expect(vs.ObjectMeta.OwnerReferences[0].Name).To(Equal(apiName))
+					Expect(vs.ObjectMeta.OwnerReferences[0].UID).To(Equal(apiUID))
+				})
+			})
+
 			Context("when the hostname does not contain domain name", func() {
 				It("should produce VS & AR with default domain name", func() {
 					noop := []*gatewayv1beta1.Authenticator{
@@ -1046,6 +1108,7 @@ var _ = Describe("Factory", func() {
 			})
 		})
 	})
+
 	Describe("CalculateDiff", func() {
 		Context("between desired state & actual state", func() {
 			It("should produce patch containing VS to create & AR to create", func() {

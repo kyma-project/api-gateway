@@ -83,13 +83,7 @@ func (f *Factory) CalculateRequiredState(api *gatewayv1beta1.APIRule, config *he
 	}
 
 	//Only one vs
-	var vs *networkingv1beta1.VirtualService
-	switch config.JWTHandler {
-	case helpers.JWT_HANDLER_ORY:
-		vs = f.generateVirtualService(api)
-		//TODO generate based on config.JWTHandler="istio"
-	}
-	res.virtualService = vs
+	res.virtualService = f.generateVirtualService(api, config)
 
 	return &res
 }

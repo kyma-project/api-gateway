@@ -22,6 +22,15 @@ func isSecured(rule gatewayv1beta1.Rule) bool {
 	return false
 }
 
+func isJwtSecured(rule gatewayv1beta1.Rule) bool {
+	for _, strat := range rule.AccessStrategies {
+		if strat.Name == "jwt" {
+			return true
+		}
+	}
+	return false
+}
+
 func checkPathDuplicates(rules []gatewayv1beta1.Rule) bool {
 	duplicates := map[string]bool{}
 	for _, rule := range rules {
