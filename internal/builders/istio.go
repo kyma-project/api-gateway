@@ -1,6 +1,8 @@
 package builders
 
 import (
+	"encoding/json"
+	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
 	"istio.io/api/security/v1beta1"
 	apiv1beta1 "istio.io/api/type/v1beta1"
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
@@ -281,6 +283,23 @@ func (jr *JwtRule) Get() *[]*v1beta1.JWTRule {
 	return jr.value
 }
 
+func (jr *JwtRule) From(val []*gatewayv1beta1.Authenticator) *JwtRule {
+	for _, accessStrategy := range val {
+		authentications := &Authentications{
+			Authentications: []*Authentication{},
+		}
+		_ = json.Unmarshal(accessStrategy.Config.Raw, authentications)
+
+		for _, authentication := range authentications.Authentications {
+			*jr.value = append(*jr.value, &v1beta1.JWTRule{
+				Issuer:  authentication.Issuer,
+				JwksUri: authentication.JwksUri,
+			})
+		}
+	}
+	return jr
+}
+
 // SelectorBuilder returns builder for istio.io/api/type/v1beta1/WorkloadSelector type
 func SelectorBuilder() *Selector {
 	return &Selector{
@@ -302,4 +321,13 @@ func (s *Selector) MatchLabels(key, val string) *Selector {
 	}
 	s.value.MatchLabels[key] = val
 	return s
+}
+
+type Authentications struct {
+	Authentications []*Authentication `json:"authentications"`
+}
+
+type Authentication struct {
+	Issuer  string `json:"issuer"`
+	JwksUri string `json:"jwksUri"`
 }
