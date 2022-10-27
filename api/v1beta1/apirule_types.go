@@ -63,6 +63,8 @@ type APIRuleStatus struct {
 // +kubebuilder:storageversion
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
+// +kubebuilder:printcolumn:name="Status",type="string",JSONPath=".status.APIRuleStatus.code"
+// +kubebuilder:printcolumn:name="Host",type="string",JSONPath=".spec.host"
 type APIRule struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

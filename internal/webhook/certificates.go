@@ -5,6 +5,7 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
+	ctrl "sigs.k8s.io/controller-runtime"
 	"strings"
 	"time"
 
@@ -17,18 +18,15 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/util/cert"
-	ctrl "sigs.k8s.io/controller-runtime"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
-	CertName       = "tls.crt"
-	KeyName        = "tls.key"
-	APIRuleCRDName = "apirules.gateway.kyma-project.io"
+	CertName = "tls.crt"
+	KeyName  = "tls.key"
 )
 
-func SetupCertificates(ctx context.Context, logger logr.Logger, secretName, secretNamespace, serviceName string) error {
-
+func SetupCertificates(ctx context.Context, logger logr.Logger, crdName, secretName string) error {
 	serverClient, err := ctrlclient.New(ctrl.GetConfigOrDie(), ctrlclient.Options{})
 	if err != nil {
 		return errors.Wrap(err, "failed to create a server client")
@@ -38,7 +36,19 @@ func SetupCertificates(ctx context.Context, logger logr.Logger, secretName, secr
 		return errors.Wrap(err, "while adding apiextensions.v1 schema to k8s client")
 	}
 
-	if err := ensureWebhookCertificate(ctx, logger, serverClient, secretName, secretNamespace, serviceName); err != nil {
+	crd := &apiextensionsv1.CustomResourceDefinition{}
+	err = serverClient.Get(ctx, types.NamespacedName{Name: crdName}, crd)
+	if err != nil {
+		return errors.Errorf("failed to get %s crd: %v", crdName, err)
+	}
+
+	if contains, msg := containsConversionWebhookClientConfig(crd); !contains {
+		return errors.Errorf("failed to validate CRD webhook: %s", msg)
+	}
+
+	secretNamespace := crd.Spec.Conversion.Webhook.ClientConfig.Service.Namespace
+	serviceName := crd.Spec.Conversion.Webhook.ClientConfig.Service.Name
+	if err := ensureWebhookCertificate(ctx, logger, serverClient, secretName, secretNamespace, serviceName, crdName); err != nil {
 		return errors.Wrap(err, "failed to ensure webhook secret")
 	}
 
@@ -55,9 +65,9 @@ func createCABundle(ctx context.Context, logger logr.Logger, webhookNamespace st
 	return cert, key, nil
 }
 
-func addCertToConversionWebhook(ctx context.Context, client ctrlclient.Client, caBundle []byte) error {
+func addCertToConversionWebhook(ctx context.Context, client ctrlclient.Client, caBundle []byte, crdName string) error {
 	crd := &apiextensionsv1.CustomResourceDefinition{}
-	err := client.Get(ctx, types.NamespacedName{Name: APIRuleCRDName}, crd)
+	err := client.Get(ctx, types.NamespacedName{Name: crdName}, crd)
 	if err != nil {
 		return errors.Wrap(err, "failed to get APIRule crd")
 	}
@@ -74,7 +84,7 @@ func addCertToConversionWebhook(ctx context.Context, client ctrlclient.Client, c
 	return nil
 }
 
-func ensureWebhookCertificate(ctx context.Context, logger logr.Logger, client ctrlclient.Client, secretName, secretNamespace, serviceName string) error {
+func ensureWebhookCertificate(ctx context.Context, logger logr.Logger, client ctrlclient.Client, secretName, secretNamespace, serviceName, crdName string) error {
 	secret := &corev1.Secret{}
 	logger.Info("ensuring webhook secret")
 
@@ -85,17 +95,17 @@ func ensureWebhookCertificate(ctx context.Context, logger logr.Logger, client ct
 
 	if apiErrors.IsNotFound(err) {
 		logger.Info("creating webhook secret")
-		return createSecret(ctx, client, secretName, secretNamespace, serviceName)
+		return createSecret(ctx, client, secretName, secretNamespace, serviceName, crdName)
 	}
 
 	logger.Info("updating pre-exiting webhook secret")
-	if err := updateSecret(ctx, client, logger, secret, serviceName); err != nil {
+	if err := updateSecret(ctx, client, logger, secret, serviceName, crdName); err != nil {
 		return errors.Wrap(err, "failed to update secret")
 	}
 	return nil
 }
 
-func createSecret(ctx context.Context, client ctrlclient.Client, name, namespace, serviceName string) error {
+func createSecret(ctx context.Context, client ctrlclient.Client, name, namespace, serviceName, crdName string) error {
 	cert, key, err := buildCert(namespace, serviceName)
 	if err != nil {
 		return errors.Wrap(err, "failed to build cert ")
@@ -107,7 +117,7 @@ func createSecret(ctx context.Context, client ctrlclient.Client, name, namespace
 		return errors.Wrap(err, "failed to create secret")
 	}
 
-	err = addCertToConversionWebhook(ctx, client, cert)
+	err = addCertToConversionWebhook(ctx, client, cert, crdName)
 	if err != nil {
 		return err
 	}
@@ -204,7 +214,7 @@ func buildCert(namespace, serviceName string) (cert []byte, key []byte, err erro
 	return cert, key, nil
 }
 
-func updateSecret(ctx context.Context, client ctrlclient.Client, logger logr.Logger, secret *corev1.Secret, serviceName string) error {
+func updateSecret(ctx context.Context, client ctrlclient.Client, logger logr.Logger, secret *corev1.Secret, serviceName, crdName string) error {
 	valid, err := isValidSecret(secret)
 	if valid {
 		return nil
@@ -225,7 +235,7 @@ func updateSecret(ctx context.Context, client ctrlclient.Client, logger logr.Log
 		return errors.Wrap(err, "failed to update secret")
 	}
 
-	if err := addCertToConversionWebhook(ctx, client, cert); err != nil {
+	if err := addCertToConversionWebhook(ctx, client, cert, crdName); err != nil {
 		return errors.Wrap(err, "while adding CaBundle to Conversion Webhook for function CRD")
 	}
 	return nil
