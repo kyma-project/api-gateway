@@ -14,6 +14,18 @@ spec:
     plural: apirules
     singular: apirule
   scope: Namespaced
+  conversion:
+    strategy: Webhook
+    webhook:
+      clientConfig:
+        service:
+          namespace: kyma-system
+          name: api-gateway-webhook-service
+          path: /convert
+      conversionReviewVersions:
+        - v1beta1
+        - v1alpha1
+  preserveUnknownFields: false
   versions:
   - deprecated: true
     deprecationWarning: v1alpha1 is deprecated as of Kyma 2.5.X
