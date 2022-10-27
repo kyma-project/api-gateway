@@ -925,14 +925,21 @@ var _ = Describe("Factory", func() {
 					jwtConfigJSON := fmt.Sprintf(`{
 						"authentications": [{"issuer": "%s", "jwksUri": "%s"}]
 						}`, jwtIssuer, jwksUri)
+					jwt := &gatewayv1beta1.Authenticator{
+						Handler: &gatewayv1beta1.Handler{
+							Name: "jwt",
+							Config: &runtime.RawExtension{
+								Raw: []byte(jwtConfigJSON),
+							},
+						},
+					}
 
-					jwt := []*gatewayv1beta1.Authenticator{
-						{
-							Handler: &gatewayv1beta1.Handler{
-								Name: "jwt",
-								Config: &runtime.RawExtension{
-									Raw: []byte(jwtConfigJSON),
-								},
+					oauthConfigJSON := fmt.Sprintf(`{"required_scope": [%s]}`, toCSVList(apiScopes))
+					oauth := &gatewayv1beta1.Authenticator{
+						Handler: &gatewayv1beta1.Handler{
+							Name: "oauth2_introspection",
+							Config: &runtime.RawExtension{
+								Raw: []byte(oauthConfigJSON),
 							},
 						},
 					}
@@ -942,10 +949,9 @@ var _ = Describe("Factory", func() {
 						Port: &servicePort,
 					}
 
-					jwtRule := getRuleWithServiceFor(headersAPIPath, apiMethods, []*gatewayv1beta1.Mutator{}, jwt, service)
-					rules := []gatewayv1beta1.Rule{jwtRule}
-
-					apiRule := getAPIRuleFor(rules)
+					ruleJwt := getRuleWithServiceFor(headersAPIPath, apiMethods, []*gatewayv1beta1.Mutator{}, []*gatewayv1beta1.Authenticator{jwt}, service)
+					ruleOauth := getRuleWithServiceFor(oauthAPIPath, apiMethods, []*gatewayv1beta1.Mutator{}, []*gatewayv1beta1.Authenticator{oauth}, service)
+					apiRule := getAPIRuleFor([]gatewayv1beta1.Rule{ruleJwt, ruleOauth})
 
 					f := NewFactory(nil, ctrl.Log.WithName("test"), oathkeeperSvc, oathkeeperSvcPort, testCors, testAdditionalLabels, defaultDomain)
 
@@ -957,7 +963,7 @@ var _ = Describe("Factory", func() {
 					Expect(len(vs.Spec.Gateways)).To(Equal(1))
 					Expect(len(vs.Spec.Hosts)).To(Equal(1))
 					Expect(vs.Spec.Hosts[0]).To(Equal(serviceHost))
-					Expect(len(vs.Spec.Http)).To(Equal(1))
+					Expect(len(vs.Spec.Http)).To(Equal(2))
 
 					Expect(len(vs.Spec.Http[0].Route)).To(Equal(1))
 					Expect(vs.Spec.Http[0].Route[0].Destination.Host).To(Equal(serviceName + "." + apiNamespace + ".svc.cluster.local"))
@@ -968,6 +974,16 @@ var _ = Describe("Factory", func() {
 					Expect(vs.Spec.Http[0].CorsPolicy.AllowOrigins).To(Equal(testCors.AllowOrigins))
 					Expect(vs.Spec.Http[0].CorsPolicy.AllowMethods).To(Equal(testCors.AllowMethods))
 					Expect(vs.Spec.Http[0].CorsPolicy.AllowHeaders).To(Equal(testCors.AllowHeaders))
+
+					Expect(len(vs.Spec.Http[1].Route)).To(Equal(1))
+					Expect(vs.Spec.Http[1].Route[0].Destination.Host).To(Equal(oathkeeperSvc))
+					Expect(vs.Spec.Http[1].Route[0].Destination.Port.Number).To(Equal(oathkeeperSvcPort))
+					Expect(len(vs.Spec.Http[1].Match)).To(Equal(1))
+					Expect(vs.Spec.Http[1].Match[0].Uri.GetRegex()).To(Equal(apiRule.Spec.Rules[1].Path))
+
+					Expect(vs.Spec.Http[1].CorsPolicy.AllowOrigins).To(Equal(testCors.AllowOrigins))
+					Expect(vs.Spec.Http[1].CorsPolicy.AllowMethods).To(Equal(testCors.AllowMethods))
+					Expect(vs.Spec.Http[1].CorsPolicy.AllowHeaders).To(Equal(testCors.AllowHeaders))
 
 					Expect(vs.ObjectMeta.Name).To(BeEmpty())
 					Expect(vs.ObjectMeta.GenerateName).To(Equal(apiName + "-"))
