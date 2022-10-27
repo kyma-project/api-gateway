@@ -173,11 +173,6 @@ ifndef ignore-not-found
   ignore-not-found = false
 endif
 
-# Generate CRD with patches
-.PHONY: generate-crd-yaml
-generate-crd-yaml: 
-	kustomize build config/crd > config/crd/apirules.gateway.crd.yaml
-
 # Install CRDs into a cluster
 .PHONY: install
 install: manifests
@@ -302,6 +297,9 @@ static: manifests patch-gen
 deploy: manifests patch-gen
 	kustomize build config/default | kubectl apply -f -
 
+# Generate CRD with patches
+gen-crd: 
+	kustomize build config/crd > config/crd/apirules.gateway.crd.yaml
 
 samples-clean:
 	kubectl delete -f config/samples/valid.yaml --ignore-not-found=true
