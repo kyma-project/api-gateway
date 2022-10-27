@@ -19,10 +19,8 @@ spec:
         image: init-certificates:latest
         imagePullPolicy: IfNotPresent
         env:
-        - name: SERVICE_NAME
-          value: api-gateway-webhook-service
-        - name: SECRET_NAMESPACE
-          value: kyma-system
+        - name: CRD_NAME
+          value: "apirules.gateway.kyma-project.io"
         - name: SECRET_NAME
           value: api-gateway-webhook-server-cert
       serviceAccountName: certificates-account
@@ -51,10 +49,8 @@ spec:
             image: init-certificates:latest
             imagePullPolicy: IfNotPresent
             env:
-            - name: SERVICE_NAME
-              value: api-gateway-webhook-service
-            - name: SECRET_NAMESPACE
-              value: kyma-system
+            - name: CRD_NAME
+              value: "apirules.gateway.kyma-project.io"
             - name: SECRET_NAME
               value: api-gateway-webhook-server-cert
           serviceAccountName: certificates-account
