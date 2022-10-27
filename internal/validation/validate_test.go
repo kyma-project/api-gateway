@@ -12,6 +12,7 @@ import (
 
 	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
 	"github.com/kyma-incubator/api-gateway/internal/helpers"
+	oryint "github.com/kyma-incubator/api-gateway/internal/types/ory"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -958,23 +959,23 @@ var _ = Describe("Validator for", func() {
 
 func emptyConfig() *runtime.RawExtension {
 	return getRawConfig(
-		&gatewayv1beta1.JWTAccStrConfig{})
+		&oryint.JWTAccStrConfig{})
 }
 
 func simpleJWTConfig(trustedIssuers ...string) *runtime.RawExtension {
 	return getRawConfig(
-		&gatewayv1beta1.JWTAccStrConfig{
+		&oryint.JWTAccStrConfig{
 			JWKSUrls:       trustedIssuers,
 			TrustedIssuers: trustedIssuers,
 			RequiredScopes: []string{"atgo"},
 		})
 }
 
-// TODO needs validation
+// TODO need test with this
 // func simpleJWTIstioConfig(issuer string, JwksUri string) *runtime.RawExtension {
 // 	return getRawConfig(
-// 		istio.JwtConfig{
-// 			[]istio.JwtAuth{
+// 		istioint.JwtConfig{
+// 			[]istioint.JwtAuth{
 // 				{
 // 					Issuer:  issuer,
 // 					JwksUri: JwksUri,
@@ -985,7 +986,7 @@ func simpleJWTConfig(trustedIssuers ...string) *runtime.RawExtension {
 
 func testURLJWTConfig(JWKSUrls string, trustedIssuers string) *runtime.RawExtension {
 	return getRawConfig(
-		&gatewayv1beta1.JWTAccStrConfig{
+		&oryint.JWTAccStrConfig{
 			JWKSUrls:       []string{JWKSUrls},
 			TrustedIssuers: []string{trustedIssuers},
 			RequiredScopes: []string{"atgo"},
