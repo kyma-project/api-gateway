@@ -68,9 +68,11 @@ func getAuthorizationPolicyKey(hasPathDuplicates bool, ap *istiosecurityv1beta1.
 	key := ""
 	if ap.Spec.Rules != nil && len(ap.Spec.Rules) > 0 && ap.Spec.Rules[0].To != nil && len(ap.Spec.Rules[0].To) > 0 {
 		if hasPathDuplicates {
-			key = fmt.Sprintf("%s:%s", ap.Spec.Rules[0].To[0].Operation.Paths, ap.Spec.Rules[0].To[0].Operation.Methods)
+			key = fmt.Sprintf("%s:%s",
+				sliceToString(ap.Spec.Rules[0].To[0].Operation.Paths),
+				sliceToString(ap.Spec.Rules[0].To[0].Operation.Methods))
 		} else {
-			key = fmt.Sprintf("%s", ap.Spec.Rules[0].To[0].Operation.Paths)
+			key = sliceToString(ap.Spec.Rules[0].To[0].Operation.Paths)
 		}
 	}
 
@@ -78,7 +80,11 @@ func getAuthorizationPolicyKey(hasPathDuplicates bool, ap *istiosecurityv1beta1.
 }
 
 func getRequestAuthenticationKey(ra *istiosecurityv1beta1.RequestAuthentication) string {
-	return fmt.Sprintf("%s", ra.Spec.JwtRules)
+	key := ""
+	for _, k := range ra.Spec.JwtRules {
+		key += fmt.Sprintf("%s:%s", k.Issuer, k.JwksUri)
+	}
+	return key
 }
 
 func generateOwnerRef(api *gatewayv1beta1.APIRule) k8sMeta.OwnerReference {
@@ -89,4 +95,11 @@ func generateOwnerRef(api *gatewayv1beta1.APIRule) k8sMeta.OwnerReference {
 		UID(api.ObjectMeta.UID).
 		Controller(true).
 		Get()
+}
+
+func sliceToString(ss []string) (s string) {
+	for _, el := range ss {
+		s += el
+	}
+	return
 }
