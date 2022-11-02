@@ -9,7 +9,7 @@ import (
 const JWT_HANDLER_ORY = "ory"
 const JWT_HANDLER_ISTIO = "istio"
 
-const CONFIG_FILE = "/api-gateway-config.yaml"
+const CONFIG_FILE = "/api-gateway-config/api-gateway-config.yaml"
 
 var ReadFileHandle = ioutil.ReadFile
 
