@@ -20,6 +20,15 @@ assignees: ''
 
 <!-- Explain why we should add this feature. Provide use cases to illustrate its benefits. -->
 
+**DoD:**
+- [ ] provide documentation
+- [ ] provide unit tests
+- [ ] test on SKR
+- [ ] verify [Get started guides](https://kyma-project.io/docs/kyma/latest/02-get-started/) 
+- [ ] verify resource limits
+- [ ] followup issue
+- [ ] create release and bump in kyma
+
 **Attachments**
 
 <!-- Attach any files, links, code samples, or screenshots that will convince us to your idea. -->

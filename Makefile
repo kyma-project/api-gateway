@@ -299,6 +299,9 @@ static: manifests patch-gen
 deploy: manifests patch-gen
 	kustomize build config/default | kubectl apply -f -
 
+# Generate CRD with patches
+gen-crd: 
+	kustomize build config/crd > config/crd/apirules.gateway.crd.yaml
 
 samples-clean:
 	kubectl delete -f config/samples/valid.yaml --ignore-not-found=true
