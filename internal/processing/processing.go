@@ -97,7 +97,7 @@ type State struct {
 }
 
 // GetActualState methods gets actual state of Istio Virtual Services and Oathkeeper Rules
-func (f *Factory) GetActualState(ctx context.Context, api *gatewayv1beta1.APIRule) (*State, error) {
+func (f *Factory) GetActualState(ctx context.Context, api *gatewayv1beta1.APIRule, config *helpers.Config) (*State, error) {
 	labels := make(map[string]string)
 	labels[OwnerLabelv1alpha1] = fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace)
 
@@ -128,8 +128,10 @@ func (f *Factory) GetActualState(ctx context.Context, api *gatewayv1beta1.APIRul
 	}
 
 	var apList istiosecurityv1beta1.AuthorizationPolicyList
-	if err := f.client.List(ctx, &apList, client.MatchingLabels(labels)); err != nil {
-		return nil, err
+	if config.JWTHandler == helpers.JWT_HANDLER_ISTIO {
+		if err := f.client.List(ctx, &apList, client.MatchingLabels(labels)); err != nil {
+			return nil, err
+		}
 	}
 
 	state.authorizationPolicies = make(map[string]*istiosecurityv1beta1.AuthorizationPolicy)
@@ -139,8 +141,10 @@ func (f *Factory) GetActualState(ctx context.Context, api *gatewayv1beta1.APIRul
 	}
 
 	var raList istiosecurityv1beta1.RequestAuthenticationList
-	if err := f.client.List(ctx, &raList, client.MatchingLabels(labels)); err != nil {
-		return nil, err
+	if config.JWTHandler == helpers.JWT_HANDLER_ISTIO {
+		if err := f.client.List(ctx, &raList, client.MatchingLabels(labels)); err != nil {
+			return nil, err
+		}
 	}
 
 	state.requestAuthentications = make(map[string]*istiosecurityv1beta1.RequestAuthentication)

@@ -1285,7 +1285,7 @@ var _ = Describe("Factory", func() {
 				client := fake.NewClientBuilder().WithScheme(scheme).WithObjects(&rule, &vs).Build()
 
 				f := NewFactory(client, ctrl.Log.WithName("test"), oathkeeperSvc, oathkeeperSvcPort, testCors, testAdditionalLabels, defaultDomain)
-				actualState, err := f.GetActualState(context.TODO(), apiRule)
+				actualState, err := f.GetActualState(context.TODO(), apiRule, &config)
 
 				Expect(err).To(BeNil())
 				Expect(actualState.accessRules).To(HaveLen(1))

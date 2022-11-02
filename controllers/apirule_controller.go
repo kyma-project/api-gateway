@@ -117,7 +117,7 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		requiredObjects := factory.CalculateRequiredState(api, config)
 
 		//3.1 Fetch all existing objects related to _this_ apiRule from the cluster (VS, Rules)
-		actualObjects, err := factory.GetActualState(ctx, api)
+		actualObjects, err := factory.GetActualState(ctx, api, config)
 		if err != nil {
 			return r.setStatusForError(ctx, api, err, gatewayv1beta1.StatusSkipped)
 		}
