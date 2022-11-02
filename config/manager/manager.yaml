@@ -60,12 +60,13 @@ spec:
             cpu: 100m
             memory: 20Mi
         volumeMounts:
-        - name: api-gateway-config
-          mountPath: /api-gateway-config.yaml
-          subPath: api-gateway-config.yaml
-      volumes:
-      - name: api-gateway-config
-        configMap:
+        - mountPath: /api-gateway-config
           name: api-gateway-config
+          readOnly: true
+      volumes:
+      - configMap:
+          defaultMode: 420
+          name: api-gateway-config
+        name: api-gateway-config
       serviceAccountName: controller-manager
       terminationGracePeriodSeconds: 10
