@@ -1316,7 +1316,7 @@ var _ = Describe("Factory", func() {
 				desiredState := f.CalculateRequiredState(apiRule, &config)
 				actualState := &State{}
 
-				patch := f.CalculateDiff(desiredState, actualState)
+				patch := f.CalculateDiff(desiredState, actualState, &config)
 
 				//Verify patch
 				Expect(patch.virtualService).NotTo(BeNil())
@@ -1405,7 +1405,7 @@ var _ = Describe("Factory", func() {
 
 				actualState := &State{virtualService: vs, accessRules: accessRules}
 
-				patch := f.CalculateDiff(desiredState, actualState)
+				patch := f.CalculateDiff(desiredState, actualState, &config)
 				vsPatch := patch.virtualService.obj.(*networkingv1beta1.VirtualService)
 
 				//Verify patch

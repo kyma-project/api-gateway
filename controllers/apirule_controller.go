@@ -123,10 +123,10 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		}
 
 		//3.2 Compute patch object
-		patch := factory.CalculateDiff(requiredObjects, actualObjects)
+		patch := factory.CalculateDiff(requiredObjects, actualObjects, config)
 
 		//3.3 Apply changes to the cluster
-		err = factory.ApplyDiff(ctx, patch)
+		err = factory.ApplyDiff(ctx, patch, config)
 		if err != nil {
 			//We don't know exactly which object(s) are not updated properly.
 			//The safest approach is to assume nothing is correct and just use `StatusError`.

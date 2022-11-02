@@ -127,30 +127,29 @@ func (f *Factory) GetActualState(ctx context.Context, api *gatewayv1beta1.APIRul
 		state.accessRules[setAccessRuleKey(pathDuplicates, obj)] = &obj
 	}
 
-	var apList istiosecurityv1beta1.AuthorizationPolicyList
 	if config.JWTHandler == helpers.JWT_HANDLER_ISTIO {
+		var apList istiosecurityv1beta1.AuthorizationPolicyList
 		if err := f.client.List(ctx, &apList, client.MatchingLabels(labels)); err != nil {
 			return nil, err
 		}
-	}
 
-	state.authorizationPolicies = make(map[string]*istiosecurityv1beta1.AuthorizationPolicy)
-	for i := range apList.Items {
-		obj := apList.Items[i]
-		state.authorizationPolicies[getAuthorizationPolicyKey(pathDuplicates, obj)] = obj
-	}
+		state.authorizationPolicies = make(map[string]*istiosecurityv1beta1.AuthorizationPolicy)
+		for i := range apList.Items {
+			obj := apList.Items[i]
+			state.authorizationPolicies[getAuthorizationPolicyKey(pathDuplicates, obj)] = obj
+		}
 
-	var raList istiosecurityv1beta1.RequestAuthenticationList
-	if config.JWTHandler == helpers.JWT_HANDLER_ISTIO {
+		var raList istiosecurityv1beta1.RequestAuthenticationList
+
 		if err := f.client.List(ctx, &raList, client.MatchingLabels(labels)); err != nil {
 			return nil, err
 		}
-	}
 
-	state.requestAuthentications = make(map[string]*istiosecurityv1beta1.RequestAuthentication)
-	for i := range raList.Items {
-		obj := raList.Items[i]
-		state.requestAuthentications[getRequestAuthenticationKey(obj)] = obj
+		state.requestAuthentications = make(map[string]*istiosecurityv1beta1.RequestAuthentication)
+		for i := range raList.Items {
+			obj := raList.Items[i]
+			state.requestAuthentications[getRequestAuthenticationKey(obj)] = obj
+		}
 	}
 
 	return &state, nil
@@ -170,15 +169,16 @@ type objToPatch struct {
 }
 
 // CalculateDiff methods compute diff between desired & actual state
-func (f *Factory) CalculateDiff(requiredState *State, actualState *State) *Patch {
+func (f *Factory) CalculateDiff(requiredState *State, actualState *State, config *helpers.Config) *Patch {
 	arPatch := make(map[string]*objToPatch)
 	accessRulePatch(arPatch, actualState, requiredState)
 
 	apPatch := make(map[string]*objToPatch)
-	authorizationPolicyPatch(apPatch, actualState, requiredState)
-
 	raPatch := make(map[string]*objToPatch)
-	requestAuthenticationPatch(raPatch, actualState, requiredState)
+	if config.JWTHandler == helpers.JWT_HANDLER_ISTIO {
+		authorizationPolicyPatch(apPatch, actualState, requiredState)
+		requestAuthenticationPatch(raPatch, actualState, requiredState)
+	}
 
 	vsPatch := &objToPatch{}
 	if actualState.virtualService != nil {
@@ -194,7 +194,7 @@ func (f *Factory) CalculateDiff(requiredState *State, actualState *State) *Patch
 }
 
 // ApplyDiff method applies computed diff
-func (f *Factory) ApplyDiff(ctx context.Context, patch *Patch) error {
+func (f *Factory) ApplyDiff(ctx context.Context, patch *Patch, config *helpers.Config) error {
 
 	err := f.applyObjDiff(ctx, patch.virtualService)
 	if err != nil {
@@ -208,17 +208,19 @@ func (f *Factory) ApplyDiff(ctx context.Context, patch *Patch) error {
 		}
 	}
 
-	for _, authorizationPolicy := range patch.authorizationPolicy {
-		err := f.applyObjDiff(ctx, authorizationPolicy)
-		if err != nil {
-			return err
+	if config.JWTHandler == helpers.JWT_HANDLER_ISTIO {
+		for _, authorizationPolicy := range patch.authorizationPolicy {
+			err := f.applyObjDiff(ctx, authorizationPolicy)
+			if err != nil {
+				return err
+			}
 		}
-	}
 
-	for _, requestAuthentication := range patch.requestAuthentication {
-		err := f.applyObjDiff(ctx, requestAuthentication)
-		if err != nil {
-			return err
+		for _, requestAuthentication := range patch.requestAuthentication {
+			err := f.applyObjDiff(ctx, requestAuthentication)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
