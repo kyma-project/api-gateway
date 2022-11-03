@@ -34,15 +34,15 @@ func generateAuthorizationPolicy(api *gatewayv1beta1.APIRule, rule gatewayv1beta
 }
 
 func generateAuthorizationPolicySpec(api *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rule) *v1beta1.AuthorizationPolicy {
-	var ruleServiceName string
-	if rule.Service.Name != nil {
-		ruleServiceName = *rule.Service.Name
+	var serviceName string
+	if rule.Service != nil && rule.Service.Name != nil {
+		serviceName = *rule.Service.Name
 	} else {
-		ruleServiceName = *api.Spec.Service.Name
+		serviceName = *api.Spec.Service.Name
 	}
 
 	authorizationPolicySpec := builders.AuthorizationPolicySpecBuilder().
-		Selector(builders.SelectorBuilder().MatchLabels("app", ruleServiceName)).
+		Selector(builders.SelectorBuilder().MatchLabels("app", serviceName)).
 		Rule(builders.RuleBuilder().
 			RuleFrom(builders.RuleFromBuilder().Source()).
 			RuleTo(builders.RuleToBuilder().

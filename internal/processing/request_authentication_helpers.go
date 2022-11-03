@@ -22,7 +22,7 @@ func generateRequestAuthentication(api *gatewayv1beta1.APIRule, rule gatewayv1be
 		GenerateName(namePrefix).
 		Namespace(namespace).
 		Owner(builders.OwnerReference().From(&ownerRef)).
-		Spec(builders.RequestAuthenticationSpecBuilder().From(generateRequestAuthenticationSpec(rule))).
+		Spec(builders.RequestAuthenticationSpecBuilder().From(generateRequestAuthenticationSpec(api, rule))).
 		Label(OwnerLabel, fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace)).
 		Label(OwnerLabelv1alpha1, fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace))
 
@@ -33,9 +33,17 @@ func generateRequestAuthentication(api *gatewayv1beta1.APIRule, rule gatewayv1be
 	return arBuilder.Get()
 }
 
-func generateRequestAuthenticationSpec(rule gatewayv1beta1.Rule) *v1beta1.RequestAuthentication {
+func generateRequestAuthenticationSpec(api *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rule) *v1beta1.RequestAuthentication {
+
+	var serviceName string
+	if rule.Service != nil && rule.Service.Name != nil {
+		serviceName = *rule.Service.Name
+	} else {
+		serviceName = *api.Spec.Service.Name
+	}
+
 	requestAuthenticationSpec := builders.RequestAuthenticationSpecBuilder().
-		Selector(builders.SelectorBuilder().MatchLabels("app", *rule.Service.Name)).
+		Selector(builders.SelectorBuilder().MatchLabels("app", serviceName)).
 		JwtRules(builders.JwtRuleBuilder().From(rule.AccessStrategies))
 
 	return requestAuthenticationSpec.Get()
