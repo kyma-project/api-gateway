@@ -924,11 +924,10 @@ var _ = Describe("Factory", func() {
 			Context("when the jwt handler is istio", func() {
 				configIstioJWT := helpers.Config{JWTHandler: helpers.JWT_HANDLER_ISTIO}
 
-				It("should produce VS, AP and RA for a rule with one issuer and two paths", func() {
+				createIstioJwtAccessStrategy := func() *gatewayv1beta1.Authenticator {
 					jwtConfigJSON := fmt.Sprintf(`{
-						"authentications": [{"issuer": "%s", "jwksUri": "%s"}]
-						}`, jwtIssuer, jwksUri)
-					jwt := &gatewayv1beta1.Authenticator{
+						"authentications": [{"issuer": "%s", "jwksUri": "%s"}]}`, jwtIssuer, jwksUri)
+					return &gatewayv1beta1.Authenticator{
 						Handler: &gatewayv1beta1.Handler{
 							Name: "jwt",
 							Config: &runtime.RawExtension{
@@ -936,7 +935,11 @@ var _ = Describe("Factory", func() {
 							},
 						},
 					}
+				}
 
+				It("should produce VS, AP and RA for a rule with one issuer and two paths", func() {
+
+					jwt := createIstioJwtAccessStrategy()
 					service := &gatewayv1beta1.Service{
 						Name: &serviceName,
 						Port: &servicePort,
@@ -1059,6 +1062,58 @@ var _ = Describe("Factory", func() {
 					Expect(len(ra[raKey].Spec.JwtRules)).To(Equal(1))
 					Expect(ra[raKey].Spec.JwtRules[0].Issuer).To(Equal(jwtIssuer))
 					Expect(ra[raKey].Spec.JwtRules[0].JwksUri).To(Equal(jwksUri))
+				})
+
+				It("should produce AP and RA for a Rule without service, but service definition on ApiRule level", func() {
+					// given
+					jwt := createIstioJwtAccessStrategy()
+
+					ruleJwt := getRuleFor(headersAPIPath, apiMethods, []*gatewayv1beta1.Mutator{}, []*gatewayv1beta1.Authenticator{jwt})
+					apiRule := getAPIRuleFor([]gatewayv1beta1.Rule{ruleJwt})
+
+					f := NewFactory(nil, ctrl.Log.WithName("test"), oathkeeperSvc, oathkeeperSvcPort, testCors, testAdditionalLabels, defaultDomain)
+
+					// when
+					desiredState := f.CalculateRequiredState(apiRule, &configIstioJWT)
+
+					// then
+					ap := desiredState.authorizationPolicies
+					Expect(ap[headersAPIPath]).NotTo(BeNil())
+					Expect(ap[headersAPIPath].Spec.Selector.MatchLabels[testSelectorKey]).To(Equal(serviceName))
+
+					ra := desiredState.requestAuthentications
+					raKey := fmt.Sprintf("%s:%s", jwtIssuer, jwksUri)
+					Expect(ra[raKey]).NotTo(BeNil())
+					Expect(ra[raKey].Spec.Selector.MatchLabels[testSelectorKey]).To(Equal(serviceName))
+				})
+
+				It("should produce AP and RA with service from Rule, when service is configured on Rule and ApiRule level", func() {
+					// given
+					jwt := createIstioJwtAccessStrategy()
+
+					ruleServiceName := "rule-scope-example-service"
+					service := &gatewayv1beta1.Service{
+						Name: &ruleServiceName,
+						Port: &servicePort,
+					}
+
+					ruleJwt := getRuleWithServiceFor(headersAPIPath, apiMethods, []*gatewayv1beta1.Mutator{}, []*gatewayv1beta1.Authenticator{jwt}, service)
+					apiRule := getAPIRuleFor([]gatewayv1beta1.Rule{ruleJwt})
+
+					f := NewFactory(nil, ctrl.Log.WithName("test"), oathkeeperSvc, oathkeeperSvcPort, testCors, testAdditionalLabels, defaultDomain)
+
+					// when
+					desiredState := f.CalculateRequiredState(apiRule, &configIstioJWT)
+
+					// then
+					ap := desiredState.authorizationPolicies
+					Expect(ap[headersAPIPath]).NotTo(BeNil())
+					Expect(ap[headersAPIPath].Spec.Selector.MatchLabels[testSelectorKey]).To(Equal(ruleServiceName))
+
+					ra := desiredState.requestAuthentications
+					raKey := fmt.Sprintf("%s:%s", jwtIssuer, jwksUri)
+					Expect(ra[raKey]).NotTo(BeNil())
+					Expect(ra[raKey].Spec.Selector.MatchLabels[testSelectorKey]).To(Equal(ruleServiceName))
 				})
 
 				It("should produce VS, AP and RA from a rule with two issuers and one path", func() {
