@@ -22,7 +22,7 @@ func generateAuthorizationPolicy(api *gatewayv1beta1.APIRule, rule gatewayv1beta
 		GenerateName(namePrefix).
 		Namespace(namespace).
 		Owner(builders.OwnerReference().From(&ownerRef)).
-		Spec(builders.AuthorizationPolicySpecBuilder().From(generateAuthorizationPolicySpec(rule))).
+		Spec(builders.AuthorizationPolicySpecBuilder().From(generateAuthorizationPolicySpec(api, rule))).
 		Label(OwnerLabel, fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace)).
 		Label(OwnerLabelv1alpha1, fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace))
 
@@ -33,9 +33,16 @@ func generateAuthorizationPolicy(api *gatewayv1beta1.APIRule, rule gatewayv1beta
 	return arBuilder.Get()
 }
 
-func generateAuthorizationPolicySpec(rule gatewayv1beta1.Rule) *v1beta1.AuthorizationPolicy {
+func generateAuthorizationPolicySpec(api *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rule) *v1beta1.AuthorizationPolicy {
+	var ruleServiceName string
+	if rule.Service.Name != nil {
+		ruleServiceName = *rule.Service.Name
+	} else {
+		ruleServiceName = *api.Spec.Service.Name
+	}
+
 	authorizationPolicySpec := builders.AuthorizationPolicySpecBuilder().
-		Selector(builders.SelectorBuilder().MatchLabels("app", *rule.Service.Name)).
+		Selector(builders.SelectorBuilder().MatchLabels("app", ruleServiceName)).
 		Rule(builders.RuleBuilder().
 			RuleFrom(builders.RuleFromBuilder().Source()).
 			RuleTo(builders.RuleToBuilder().
