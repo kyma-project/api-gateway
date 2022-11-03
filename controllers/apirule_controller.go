@@ -151,7 +151,7 @@ func (r *APIRuleReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
-// Sets status of APIRule. Accepts an auxilary status code that is used to report VirtualService and AccessRule status.
+// Sets status of APIRule. Accepts an auxilary status code that is used to report VirtualService, AccessRule, RequestAuthentication and AuthorizationPolicy statuses.
 func (r *APIRuleReconciler) setStatus(ctx context.Context, api *gatewayv1beta1.APIRule, apiStatus *gatewayv1beta1.APIRuleResourceStatus, auxStatusCode gatewayv1beta1.StatusCode) (ctrl.Result, error) {
 	virtualServiceStatus := &gatewayv1beta1.APIRuleResourceStatus{
 		Code: auxStatusCode,
@@ -159,10 +159,17 @@ func (r *APIRuleReconciler) setStatus(ctx context.Context, api *gatewayv1beta1.A
 	accessRuleStatus := &gatewayv1beta1.APIRuleResourceStatus{
 		Code: auxStatusCode,
 	}
-	return r.updateStatusOrRetry(ctx, api, apiStatus, virtualServiceStatus, accessRuleStatus)
+	reqAuthStatus := &gatewayv1beta1.APIRuleResourceStatus{
+		Code: auxStatusCode,
+	}
+	authPolicyStatus := &gatewayv1beta1.APIRuleResourceStatus{
+		Code: auxStatusCode,
+	}
+
+	return r.updateStatusOrRetry(ctx, api, apiStatus, virtualServiceStatus, accessRuleStatus, reqAuthStatus, authPolicyStatus)
 }
 
-// Sets status of APIRule in error condition. Accepts an auxilary status code that is used to report VirtualService and AccessRule status.
+// Sets status of APIRule in error condition. Accepts an auxilary status code that is used to report VirtualService, AccessRule, RequestAuthentication and AuthorizationPolicy statuses.
 func (r *APIRuleReconciler) setStatusForError(ctx context.Context, api *gatewayv1beta1.APIRule, err error, auxStatusCode gatewayv1beta1.StatusCode) (ctrl.Result, error) {
 	r.Log.Error(err, "Error during reconciliation")
 
@@ -172,13 +179,19 @@ func (r *APIRuleReconciler) setStatusForError(ctx context.Context, api *gatewayv
 	accessRuleStatus := &gatewayv1beta1.APIRuleResourceStatus{
 		Code: auxStatusCode,
 	}
+	reqAuthStatus := &gatewayv1beta1.APIRuleResourceStatus{
+		Code: auxStatusCode,
+	}
+	authPolicyStatus := &gatewayv1beta1.APIRuleResourceStatus{
+		Code: auxStatusCode,
+	}
 
-	return r.updateStatusOrRetry(ctx, api, generateErrorStatus(err), virtualServiceStatus, accessRuleStatus)
+	return r.updateStatusOrRetry(ctx, api, generateErrorStatus(err), virtualServiceStatus, accessRuleStatus, reqAuthStatus, authPolicyStatus)
 }
 
 // Updates api status. If there was an error during update, returns the error so that entire reconcile loop is retried. If there is no error, returns a "reconcile success" value.
-func (r *APIRuleReconciler) updateStatusOrRetry(ctx context.Context, api *gatewayv1beta1.APIRule, apiStatus, virtualServiceStatus, accessRuleStatus *gatewayv1beta1.APIRuleResourceStatus) (ctrl.Result, error) {
-	_, updateStatusErr := r.updateStatus(ctx, api, apiStatus, virtualServiceStatus, accessRuleStatus)
+func (r *APIRuleReconciler) updateStatusOrRetry(ctx context.Context, api *gatewayv1beta1.APIRule, apiStatus, virtualServiceStatus, accessRuleStatus, reqAuthStatus, authPolicyStatus *gatewayv1beta1.APIRuleResourceStatus) (ctrl.Result, error) {
+	_, updateStatusErr := r.updateStatus(ctx, api, apiStatus, virtualServiceStatus, accessRuleStatus, reqAuthStatus, authPolicyStatus)
 	if updateStatusErr != nil {
 		return retryReconcile(updateStatusErr) //controller retries to set the correct status eventually.
 	}
@@ -194,12 +207,14 @@ func retryReconcile(err error) (ctrl.Result, error) {
 	return reconcile.Result{Requeue: true}, err
 }
 
-func (r *APIRuleReconciler) updateStatus(ctx context.Context, api *gatewayv1beta1.APIRule, APIStatus, virtualServiceStatus, accessRuleStatus *gatewayv1beta1.APIRuleResourceStatus) (*gatewayv1beta1.APIRule, error) {
+func (r *APIRuleReconciler) updateStatus(ctx context.Context, api *gatewayv1beta1.APIRule, APIStatus, virtualServiceStatus, accessRuleStatus, reqAuthStatus, authPolicyStatus *gatewayv1beta1.APIRuleResourceStatus) (*gatewayv1beta1.APIRule, error) {
 	api.Status.ObservedGeneration = api.Generation
 	api.Status.LastProcessedTime = &v1.Time{Time: time.Now()}
 	api.Status.APIRuleStatus = APIStatus
 	api.Status.VirtualServiceStatus = virtualServiceStatus
 	api.Status.AccessRuleStatus = accessRuleStatus
+	api.Status.RequestAuthenticationStatus = reqAuthStatus
+	api.Status.AuthorizationPolicyStatus = authPolicyStatus
 
 	err := r.Client.Status().Update(ctx, api)
 	if err != nil {
