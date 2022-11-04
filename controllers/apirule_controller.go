@@ -63,13 +63,30 @@ type APIRuleReconciler struct {
 //+kubebuilder:rbac:groups="apiextensions.k8s.io",resources=customresourcedefinitions,verbs=get;list;watch;create;update;patch;delete
 
 func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	//_ = r.Log.WithValues("Api", req.NamespacedName)
-
 	r.Log.Info("Starting reconcilation")
 
 	api := &gatewayv1beta1.APIRule{}
+	config, err := helpers.LoadConfig()
+	if err != nil {
+		r.Log.Error(err, fmt.Sprintf(`Config loading failure {"controller": "Api", "request": "%s/%s", "file": %s}, will use default config`, api.Namespace, api.Name, helpers.CONFIG_FILE))
+		config = helpers.DefaultConfig()
+	}
 
-	err := r.Client.Get(ctx, req.NamespacedName, api)
+	validator := validation.APIRule{
+		ServiceBlockList:  r.ServiceBlockList,
+		DomainAllowList:   r.DomainAllowList,
+		HostBlockList:     r.HostBlockList,
+		DefaultDomainName: r.DefaultDomainName,
+	}
+
+	configValidationFailures := validator.ValidateConfig(config)
+	if len(configValidationFailures) > 0 {
+		failuresJson, _ := json.Marshal(configValidationFailures)
+		r.Log.Error(err, fmt.Sprintf(`Config validation failure {"controller": "Api", "request": "%s/%s", "failures": %s}`, api.Namespace, api.Name, string(failuresJson)))
+		return r.setStatus(ctx, api, generateValidationStatus(configValidationFailures), gatewayv1beta1.StatusError)
+	}
+
+	err = r.Client.Get(ctx, req.NamespacedName, api)
 	if err != nil {
 		if apierrs.IsNotFound(err) {
 			//There is no APIRule. Nothing to process, dependent objects will be garbage-collected.
@@ -82,29 +99,14 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 
 	//Prevent reconciliation after status update. It should be solved by controller-runtime implementation but still isn't.
 	if api.Generation != api.Status.ObservedGeneration {
-
-		//1.1) Get the configuration
-		config, err := helpers.LoadConfig()
-		if err != nil {
-			//If configuration is not available not been able to continue.
-			r.Log.Info(fmt.Sprintf(`Configuration loading failed {"controller": "Api", "request": "%s/%s", "file": %s}`, api.Namespace, api.Name, helpers.CONFIG_FILE))
-			return r.setStatusForError(ctx, api, err, gatewayv1beta1.StatusError)
-		}
-
-		//1.2) Get the list of existing Virtual Services to validate host
+		//1.1) Get the list of existing Virtual Services to validate host
 		var vsList networkingv1beta1.VirtualServiceList
 		if err := r.Client.List(ctx, &vsList); err != nil {
 			//Nothing is yet processed: StatusSkipped
 			return r.setStatusForError(ctx, api, err, gatewayv1beta1.StatusSkipped)
 		}
 
-		//1.3) Validate input including host
-		validator := validation.APIRule{
-			ServiceBlockList:  r.ServiceBlockList,
-			DomainAllowList:   r.DomainAllowList,
-			HostBlockList:     r.HostBlockList,
-			DefaultDomainName: r.DefaultDomainName,
-		}
+		//1.2) Validate input including host
 		validationFailures := validator.Validate(api, vsList, config)
 		if len(validationFailures) > 0 {
 			failuresJson, _ := json.Marshal(validationFailures)

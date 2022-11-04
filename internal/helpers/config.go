@@ -17,6 +17,10 @@ type Config struct {
 	JWTHandler string `yaml:"jwtHandler"`
 }
 
+func DefaultConfig() *Config {
+	return &Config{JWTHandler: JWT_HANDLER_ORY}
+}
+
 func LoadConfig() (*Config, error) {
 	configData, err := ReadFileHandle(CONFIG_FILE)
 	if err != nil {
