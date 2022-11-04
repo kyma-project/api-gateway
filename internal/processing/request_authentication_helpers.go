@@ -36,7 +36,7 @@ func generateRequestAuthentication(api *gatewayv1beta1.APIRule, rule gatewayv1be
 func generateRequestAuthenticationSpec(api *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rule) *v1beta1.RequestAuthentication {
 
 	var serviceName string
-	if rule.Service != nil && rule.Service.Name != nil {
+	if rule.Service != nil {
 		serviceName = *rule.Service.Name
 	} else {
 		serviceName = *api.Spec.Service.Name

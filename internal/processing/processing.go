@@ -82,7 +82,6 @@ func (f *Factory) CalculateRequiredState(api *gatewayv1beta1.APIRule, config *he
 		}
 	}
 
-	//Only one vs
 	res.virtualService = f.generateVirtualService(api, config)
 
 	return &res

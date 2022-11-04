@@ -97,7 +97,10 @@ var _ = Describe("APIRule Controller", func() {
 				Fail(fmt.Sprintf("failed to create object, got an invalid object error: %v", err))
 			}
 			Expect(err).NotTo(HaveOccurred())
-			defer c.Delete(context.TODO(), instance)
+			defer func() {
+				err := c.Delete(context.TODO(), instance)
+				Expect(err).NotTo(HaveOccurred())
+			}()
 
 			expectedRequest := reconcile.Request{NamespacedName: types.NamespacedName{Name: apiRuleName, Namespace: testNamespace}}
 			Eventually(requests, timeout).Should(Receive(Equal(expectedRequest)))
@@ -162,7 +165,10 @@ var _ = Describe("APIRule Controller", func() {
 				return
 			}
 			Expect(err).NotTo(HaveOccurred())
-			defer c.Delete(context.TODO(), instance)
+			defer func() {
+				err := c.Delete(context.TODO(), instance)
+				Expect(err).NotTo(HaveOccurred())
+			}()
 
 			expectedRequest := reconcile.Request{NamespacedName: types.NamespacedName{Name: apiRuleName, Namespace: testNamespace}}
 
@@ -201,7 +207,10 @@ var _ = Describe("APIRule Controller", func() {
 							return
 						}
 						Expect(err).NotTo(HaveOccurred())
-						defer c.Delete(context.TODO(), instance)
+						defer func() {
+							err := c.Delete(context.TODO(), instance)
+							Expect(err).NotTo(HaveOccurred())
+						}()
 
 						expectedRequest := reconcile.Request{NamespacedName: types.NamespacedName{Name: apiRuleName, Namespace: testNamespace}}
 
@@ -298,7 +307,10 @@ var _ = Describe("APIRule Controller", func() {
 								return
 							}
 							Expect(err).NotTo(HaveOccurred())
-							defer c.Delete(context.TODO(), instance)
+							defer func() {
+								err := c.Delete(context.TODO(), instance)
+								Expect(err).NotTo(HaveOccurred())
+							}()
 
 							expectedRequest := reconcile.Request{NamespacedName: types.NamespacedName{Name: apiRuleName, Namespace: testNamespace}}
 
@@ -445,7 +457,10 @@ var _ = Describe("APIRule Controller", func() {
 								return
 							}
 							Expect(err).NotTo(HaveOccurred())
-							defer c.Delete(context.TODO(), instance)
+							defer func() {
+								err := c.Delete(context.TODO(), instance)
+								Expect(err).NotTo(HaveOccurred())
+							}()
 
 							expectedRequest := reconcile.Request{NamespacedName: types.NamespacedName{Name: apiRuleName, Namespace: testNamespace}}
 
@@ -549,7 +564,10 @@ var _ = Describe("APIRule Controller", func() {
 							return
 						}
 						Expect(err).NotTo(HaveOccurred())
-						defer c.Delete(context.TODO(), instance)
+						defer func() {
+							err := c.Delete(context.TODO(), instance)
+							Expect(err).NotTo(HaveOccurred())
+						}()
 
 						expectedRequest := reconcile.Request{NamespacedName: types.NamespacedName{Name: apiRuleName, Namespace: testNamespace}}
 						Eventually(requests, timeout).Should(Receive(Equal(expectedRequest)))
