@@ -77,7 +77,7 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		}
 
 		//Nothing is yet processed: StatusSkipped
-		return r.setStatusForError(ctx, api, err, gatewayv1beta1.StatusSkipped)
+		return r.setStatusForError(ctx, api, err, gatewayv1beta1.StatusSkipped, &helpers.Config{})
 	}
 
 	//Prevent reconciliation after status update. It should be solved by controller-runtime implementation but still isn't.
@@ -88,14 +88,14 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		if err != nil {
 			//If configuration is not available not been able to continue.
 			r.Log.Info(fmt.Sprintf(`Configuration loading failed {"controller": "Api", "request": "%s/%s", "file": %s}`, api.Namespace, api.Name, helpers.CONFIG_FILE))
-			return r.setStatusForError(ctx, api, err, gatewayv1beta1.StatusError)
+			return r.setStatusForError(ctx, api, err, gatewayv1beta1.StatusError, config)
 		}
 
 		//1.2) Get the list of existing Virtual Services to validate host
 		var vsList networkingv1beta1.VirtualServiceList
 		if err := r.Client.List(ctx, &vsList); err != nil {
 			//Nothing is yet processed: StatusSkipped
-			return r.setStatusForError(ctx, api, err, gatewayv1beta1.StatusSkipped)
+			return r.setStatusForError(ctx, api, err, gatewayv1beta1.StatusSkipped, config)
 		}
 
 		//1.3) Validate input including host
@@ -119,7 +119,7 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		//3.1 Fetch all existing objects related to _this_ apiRule from the cluster (VS, Rules)
 		actualObjects, err := factory.GetActualState(ctx, api, config)
 		if err != nil {
-			return r.setStatusForError(ctx, api, err, gatewayv1beta1.StatusSkipped)
+			return r.setStatusForError(ctx, api, err, gatewayv1beta1.StatusSkipped, config)
 		}
 
 		//3.2 Compute patch object
@@ -130,7 +130,7 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		if err != nil {
 			//We don't know exactly which object(s) are not updated properly.
 			//The safest approach is to assume nothing is correct and just use `StatusError`.
-			return r.setStatusForError(ctx, api, err, gatewayv1beta1.StatusError)
+			return r.setStatusForError(ctx, api, err, gatewayv1beta1.StatusError, config)
 		}
 
 		//4) Update status of CR
@@ -169,8 +169,8 @@ func (r *APIRuleReconciler) setStatus(ctx context.Context, api *gatewayv1beta1.A
 	return r.updateStatusOrRetry(ctx, api, apiStatus, virtualServiceStatus, accessRuleStatus, reqAuthStatus, authPolicyStatus)
 }
 
-// Sets status of APIRule in error condition. Accepts an auxilary status code that is used to report VirtualService, AccessRule, RequestAuthentication and AuthorizationPolicy statuses.
-func (r *APIRuleReconciler) setStatusForError(ctx context.Context, api *gatewayv1beta1.APIRule, err error, auxStatusCode gatewayv1beta1.StatusCode) (ctrl.Result, error) {
+// Sets status of APIRule in error condition. Accepts an auxiliary status code that is used to report VirtualService, AccessRule, RequestAuthentication and AuthorizationPolicy statuses.
+func (r *APIRuleReconciler) setStatusForError(ctx context.Context, api *gatewayv1beta1.APIRule, err error, auxStatusCode gatewayv1beta1.StatusCode, config *helpers.Config) (ctrl.Result, error) {
 	r.Log.Error(err, "Error during reconciliation")
 
 	virtualServiceStatus := &gatewayv1beta1.APIRuleResourceStatus{
@@ -179,11 +179,17 @@ func (r *APIRuleReconciler) setStatusForError(ctx context.Context, api *gatewayv
 	accessRuleStatus := &gatewayv1beta1.APIRuleResourceStatus{
 		Code: auxStatusCode,
 	}
-	reqAuthStatus := &gatewayv1beta1.APIRuleResourceStatus{
-		Code: auxStatusCode,
-	}
-	authPolicyStatus := &gatewayv1beta1.APIRuleResourceStatus{
-		Code: auxStatusCode,
+
+	var reqAuthStatus *gatewayv1beta1.APIRuleResourceStatus
+	var authPolicyStatus *gatewayv1beta1.APIRuleResourceStatus
+
+	if config.JWTHandler == helpers.JWT_HANDLER_ISTIO {
+		reqAuthStatus = &gatewayv1beta1.APIRuleResourceStatus{
+			Code: auxStatusCode,
+		}
+		authPolicyStatus = &gatewayv1beta1.APIRuleResourceStatus{
+			Code: auxStatusCode,
+		}
 	}
 
 	return r.updateStatusOrRetry(ctx, api, generateErrorStatus(err), virtualServiceStatus, accessRuleStatus, reqAuthStatus, authPolicyStatus)
