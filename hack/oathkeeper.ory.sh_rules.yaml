@@ -15,6 +15,13 @@ spec:
   scope: Namespaced
   versions:
     - name: v1alpha1
+      additionalPrinterColumns:
+      - jsonPath: .spec.authenticators[*].handler
+        name: Handler
+        type: string
+      - jsonPath: .spec.authenticators[*].config.required_scope[*]
+        name: Scopes
+        type: string
       schema:
         openAPIV3Schema:
           description: Rule is the Schema for the rules API
