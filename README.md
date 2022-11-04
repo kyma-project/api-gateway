@@ -127,10 +127,10 @@ When you fetch an existing APIRule CR, the system adds the **status** section wh
 | **status.virtualService.desc** | Current state of the Virtual Service. |
 | **status.accessRuleStatus.code** | Status code describing the Oathkeeper Rule. |
 | **status.accessRuleStatus.desc** | Current state of the Oathkeeper Rule. |
-| **status.RequestAuthenticationStatus.code** | Status code describing the Istio RequestAuthentication resource. |
-| **status.RequestAuthenticationStatus.desc** | Current state of the Istio RequestAuthentication resource. |
-| **status.AuthorizationPolicyStatus.code** | Status code describing the Istio AuthorizationPolicy resource. |
-| **status.AuthorizationPolicyStatus.desc** | Current state of the Istio AuthorizationPolicy resource. |
+| **status.RequestAuthenticationStatus.code** | Status code describing the RequestAuthentication. |
+| **status.RequestAuthenticationStatus.desc** | Current state of the RequestAuthentication. |
+| **status.AuthorizationPolicyStatus.code** | Status code describing the AuthorizationPolicy. |
+| **status.AuthorizationPolicyStatus.desc** | Current state of the AuthorizationPolicy. |
 
 ### Status codes
 
