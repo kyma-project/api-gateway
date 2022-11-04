@@ -3,20 +3,23 @@ package controllers_test
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
+
+	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 
 	"sigs.k8s.io/controller-runtime/pkg/config/v1alpha1"
 
 	"github.com/go-logr/logr"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 
-	"github.com/kyma-incubator/api-gateway/internal/helpers"
-	"github.com/kyma-incubator/api-gateway/internal/processing"
-
 	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
 	"github.com/kyma-incubator/api-gateway/controllers"
+	"github.com/kyma-incubator/api-gateway/internal/helpers"
+	"github.com/kyma-incubator/api-gateway/internal/processing"
+	istioint "github.com/kyma-incubator/api-gateway/internal/types/istio"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
@@ -49,14 +52,14 @@ type FakeFileReader struct {
 }
 
 func (f FakeFileReader) ReadFile(filename string) ([]byte, error) {
-	return ioutil.ReadAll(bytes.NewBufferString(f.FileContent))
+	return io.ReadAll(bytes.NewBufferString(f.FileContent))
 }
 
 var _ = Describe("Controller", func() {
 	Describe("Reconcile", func() {
 		Context("APIRule", func() {
 			It("should update status", func() {
-				testAPI := fixAPI()
+				testAPI := getApiRule("noop", nil)
 
 				ts = getTestSuite(testAPI)
 				reconciler := getAPIReconciler(ts.mgr)
@@ -76,16 +79,40 @@ var _ = Describe("Controller", func() {
 				Expect(res.Status.VirtualServiceStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
 				Expect(res.Status.APIRuleStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
 			})
+
+			Context("when the jwt handler is istio", func() {
+				It("should update status", func() {
+					testAPI := getApiRule("jwt", getJWTIstioConfig())
+
+					ts = getTestSuite(testAPI)
+					reconciler := getAPIReconciler(ts.mgr)
+					ctx := context.Background()
+
+					fakeFileReader := FakeFileReader{FileContent: fmt.Sprintf("jwtHandler: %s", helpers.JWT_HANDLER_ISTIO)}
+					helpers.ReadFileHandle = fakeFileReader.ReadFile
+
+					result, err := reconciler.Reconcile(ctx, reconcile.Request{NamespacedName: types.NamespacedName{Name: testAPI.Name}})
+					Expect(err).ToNot(HaveOccurred())
+					Expect(result.Requeue).To(BeFalse())
+
+					res := gatewayv1beta1.APIRule{}
+					err = ts.mgr.GetClient().Get(context.Background(), types.NamespacedName{Namespace: testAPI.Namespace, Name: testAPI.Name}, &res)
+					Expect(err).ToNot(HaveOccurred())
+					Expect(res.Status.VirtualServiceStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
+					Expect(res.Status.RequestAuthenticationStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
+					Expect(res.Status.AuthorizationPolicyStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
+					Expect(res.Status.APIRuleStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
+				})
+			})
 		})
 	})
 })
 
-func fixAPI() *gatewayv1beta1.APIRule {
+func getApiRule(authStrategy string, authConfig *runtime.RawExtension) *gatewayv1beta1.APIRule {
 	serviceName = "test"
 	servicePort = 8000
 	host = "foo.bar"
 	isExernal = false
-	authStrategy = "noop"
 	gateway = "some-gateway.some-namespace.foo"
 
 	return &gatewayv1beta1.APIRule{
@@ -109,13 +136,33 @@ func fixAPI() *gatewayv1beta1.APIRule {
 						{
 							Handler: &gatewayv1beta1.Handler{
 								Name:   authStrategy,
-								Config: nil,
+								Config: authConfig,
 							},
 						},
 					},
 				},
 			},
 		},
+	}
+}
+
+func getJWTIstioConfig() *runtime.RawExtension {
+	return getRawConfig(
+		istioint.JwtConfig{
+			Authentications: []istioint.JwtAuth{
+				{
+					Issuer:  "https://example.com/",
+					JwksUri: "https://example.com/.well-known/jwks.json",
+				},
+			},
+		})
+}
+
+func getRawConfig(config any) *runtime.RawExtension {
+	bytes, err := json.Marshal(config)
+	Expect(err).To(BeNil())
+	return &runtime.RawExtension{
+		Raw: bytes,
 	}
 }
 
@@ -144,9 +191,11 @@ func getTestSuite(objects ...runtime.Object) *testSuite {
 	Expect(err).NotTo(HaveOccurred())
 	err = rulev1alpha1.AddToScheme(scheme.Scheme)
 	Expect(err).NotTo(HaveOccurred())
+	err = securityv1beta1.AddToScheme(scheme.Scheme)
+	Expect(err).NotTo(HaveOccurred())
 
 	return &testSuite{
-		mgr: getFakeManager(fake.NewFakeClientWithScheme(scheme.Scheme, objects...), scheme.Scheme),
+		mgr: getFakeManager(fake.NewClientBuilder().WithScheme(scheme.Scheme).WithRuntimeObjects(objects...).Build(), scheme.Scheme),
 	}
 }
 

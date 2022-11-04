@@ -14,6 +14,7 @@ import (
 	"github.com/kyma-incubator/api-gateway/internal/helpers"
 	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
+	istiosecurityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 )
 
 var (
@@ -57,44 +58,49 @@ type CorsConfig struct {
 // CalculateRequiredState returns required state of all objects related to given api
 func (f *Factory) CalculateRequiredState(api *gatewayv1beta1.APIRule, config *helpers.Config) *State {
 	var res State
-	pathDuplicates := hasPathDuplicates(api.Spec.Rules)
+	hasPathDuplicates := checkPathDuplicates(api.Spec.Rules)
 	res.accessRules = make(map[string]*rulev1alpha1.Rule)
+	res.authorizationPolicies = make(map[string]*istiosecurityv1beta1.AuthorizationPolicy)
+	res.requestAuthentications = make(map[string]*istiosecurityv1beta1.RequestAuthentication)
+
 	for _, rule := range api.Spec.Rules {
 		if isSecured(rule) {
 			var ar *rulev1alpha1.Rule
-			if config.JWTHandler == helpers.JWT_HANDLER_ORY {
+			var ap *istiosecurityv1beta1.AuthorizationPolicy
+			var ra *istiosecurityv1beta1.RequestAuthentication
+
+			switch config.JWTHandler {
+			case helpers.JWT_HANDLER_ORY:
 				ar = generateAccessRule(api, rule, rule.AccessStrategies, f.additionalLabels, f.defaultDomainName)
-			} else if config.JWTHandler == helpers.JWT_HANDLER_ISTIO {
-				//TODO generate based on config.JWTHandler="istio"
+				res.accessRules[setAccessRuleKey(hasPathDuplicates, *ar)] = ar
+			case helpers.JWT_HANDLER_ISTIO:
+				ap = generateAuthorizationPolicy(api, rule, f.additionalLabels)
+				ra = generateRequestAuthentication(api, rule, f.additionalLabels)
+				res.authorizationPolicies[getAuthorizationPolicyKey(hasPathDuplicates, ap)] = ap
+				res.requestAuthentications[getRequestAuthenticationKey(ra)] = ra
 			}
-			res.accessRules[setAccessRuleKey(pathDuplicates, *ar)] = ar
 		}
 	}
 
-	//Only one vs
-	var vs *networkingv1beta1.VirtualService
-	if config.JWTHandler == helpers.JWT_HANDLER_ORY {
-		vs = f.generateVirtualService(api)
-	} else if config.JWTHandler == helpers.JWT_HANDLER_ISTIO {
-		//TODO generate based on config.JWTHandler="istio"
-	}
-	res.virtualService = vs
+	res.virtualService = f.generateVirtualService(api, config)
 
 	return &res
 }
 
 // State represents desired or actual state of Istio Virtual Services and Oathkeeper Rules
 type State struct {
-	virtualService *networkingv1beta1.VirtualService
-	accessRules    map[string]*rulev1alpha1.Rule
+	virtualService         *networkingv1beta1.VirtualService
+	accessRules            map[string]*rulev1alpha1.Rule
+	authorizationPolicies  map[string]*istiosecurityv1beta1.AuthorizationPolicy
+	requestAuthentications map[string]*istiosecurityv1beta1.RequestAuthentication
 }
 
 // GetActualState methods gets actual state of Istio Virtual Services and Oathkeeper Rules
-func (f *Factory) GetActualState(ctx context.Context, api *gatewayv1beta1.APIRule) (*State, error) {
+func (f *Factory) GetActualState(ctx context.Context, api *gatewayv1beta1.APIRule, config *helpers.Config) (*State, error) {
 	labels := make(map[string]string)
 	labels[OwnerLabelv1alpha1] = fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace)
 
-	pathDuplicates := hasPathDuplicates(api.Spec.Rules)
+	pathDuplicates := checkPathDuplicates(api.Spec.Rules)
 	var state State
 	var vsList networkingv1beta1.VirtualServiceList
 
@@ -119,13 +125,41 @@ func (f *Factory) GetActualState(ctx context.Context, api *gatewayv1beta1.APIRul
 		obj := arList.Items[i]
 		state.accessRules[setAccessRuleKey(pathDuplicates, obj)] = &obj
 	}
+
+	if config.JWTHandler == helpers.JWT_HANDLER_ISTIO {
+		var apList istiosecurityv1beta1.AuthorizationPolicyList
+		if err := f.client.List(ctx, &apList, client.MatchingLabels(labels)); err != nil {
+			return nil, err
+		}
+
+		state.authorizationPolicies = make(map[string]*istiosecurityv1beta1.AuthorizationPolicy)
+		for i := range apList.Items {
+			obj := apList.Items[i]
+			state.authorizationPolicies[getAuthorizationPolicyKey(pathDuplicates, obj)] = obj
+		}
+
+		var raList istiosecurityv1beta1.RequestAuthenticationList
+
+		if err := f.client.List(ctx, &raList, client.MatchingLabels(labels)); err != nil {
+			return nil, err
+		}
+
+		state.requestAuthentications = make(map[string]*istiosecurityv1beta1.RequestAuthentication)
+		for i := range raList.Items {
+			obj := raList.Items[i]
+			state.requestAuthentications[getRequestAuthenticationKey(obj)] = obj
+		}
+	}
+
 	return &state, nil
 }
 
 // Patch represents diff between desired and actual state
 type Patch struct {
-	virtualService *objToPatch
-	accessRule     map[string]*objToPatch
+	virtualService        *objToPatch
+	accessRule            map[string]*objToPatch
+	authorizationPolicy   map[string]*objToPatch
+	requestAuthentication map[string]*objToPatch
 }
 
 type objToPatch struct {
@@ -134,29 +168,15 @@ type objToPatch struct {
 }
 
 // CalculateDiff methods compute diff between desired & actual state
-func (f *Factory) CalculateDiff(requiredState *State, actualState *State) *Patch {
+func (f *Factory) CalculateDiff(requiredState *State, actualState *State, config *helpers.Config) *Patch {
 	arPatch := make(map[string]*objToPatch)
+	accessRulePatch(arPatch, actualState, requiredState)
 
-	for path, rule := range requiredState.accessRules {
-		rulePatch := &objToPatch{}
-
-		if actualState.accessRules[path] != nil {
-			rulePatch.action = "update"
-			modifyAccessRule(actualState.accessRules[path], rule)
-			rulePatch.obj = actualState.accessRules[path]
-		} else {
-			rulePatch.action = "create"
-			rulePatch.obj = rule
-		}
-
-		arPatch[path] = rulePatch
-	}
-
-	for path, rule := range actualState.accessRules {
-		if requiredState.accessRules[path] == nil {
-			objToDelete := &objToPatch{action: "delete", obj: rule}
-			arPatch[path] = objToDelete
-		}
+	apPatch := make(map[string]*objToPatch)
+	raPatch := make(map[string]*objToPatch)
+	if config.JWTHandler == helpers.JWT_HANDLER_ISTIO {
+		authorizationPolicyPatch(apPatch, actualState, requiredState)
+		requestAuthenticationPatch(raPatch, actualState, requiredState)
 	}
 
 	vsPatch := &objToPatch{}
@@ -169,11 +189,11 @@ func (f *Factory) CalculateDiff(requiredState *State, actualState *State) *Patch
 		vsPatch.obj = requiredState.virtualService
 	}
 
-	return &Patch{virtualService: vsPatch, accessRule: arPatch}
+	return &Patch{virtualService: vsPatch, accessRule: arPatch, authorizationPolicy: apPatch, requestAuthentication: raPatch}
 }
 
 // ApplyDiff method applies computed diff
-func (f *Factory) ApplyDiff(ctx context.Context, patch *Patch) error {
+func (f *Factory) ApplyDiff(ctx context.Context, patch *Patch, config *helpers.Config) error {
 
 	err := f.applyObjDiff(ctx, patch.virtualService)
 	if err != nil {
@@ -184,6 +204,22 @@ func (f *Factory) ApplyDiff(ctx context.Context, patch *Patch) error {
 		err := f.applyObjDiff(ctx, rule)
 		if err != nil {
 			return err
+		}
+	}
+
+	if config.JWTHandler == helpers.JWT_HANDLER_ISTIO {
+		for _, authorizationPolicy := range patch.authorizationPolicy {
+			err := f.applyObjDiff(ctx, authorizationPolicy)
+			if err != nil {
+				return err
+			}
+		}
+
+		for _, requestAuthentication := range patch.requestAuthentication {
+			err := f.applyObjDiff(ctx, requestAuthentication)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
@@ -207,4 +243,76 @@ func (f *Factory) applyObjDiff(ctx context.Context, objToPatch *objToPatch) erro
 	}
 
 	return nil
+}
+
+func accessRulePatch(arPatch map[string]*objToPatch, actualState, requiredState *State) {
+	for path, rule := range requiredState.accessRules {
+		rulePatch := &objToPatch{}
+
+		if actualState.accessRules[path] != nil {
+			rulePatch.action = "update"
+			modifyAccessRule(actualState.accessRules[path], rule)
+			rulePatch.obj = actualState.accessRules[path]
+		} else {
+			rulePatch.action = "create"
+			rulePatch.obj = rule
+		}
+
+		arPatch[path] = rulePatch
+	}
+
+	for path, rule := range actualState.accessRules {
+		if requiredState.accessRules[path] == nil {
+			objToDelete := &objToPatch{action: "delete", obj: rule}
+			arPatch[path] = objToDelete
+		}
+	}
+}
+
+func authorizationPolicyPatch(apPatch map[string]*objToPatch, actualState, requiredState *State) {
+	for path, authorizationPolicy := range requiredState.authorizationPolicies {
+		authorizationPolicyPatch := &objToPatch{}
+
+		if actualState.authorizationPolicies[path] != nil {
+			authorizationPolicyPatch.action = "update"
+			modifyAuthorizationPolicy(actualState.authorizationPolicies[path], authorizationPolicy)
+			authorizationPolicyPatch.obj = actualState.authorizationPolicies[path]
+		} else {
+			authorizationPolicyPatch.action = "create"
+			authorizationPolicyPatch.obj = authorizationPolicy
+		}
+
+		apPatch[path] = authorizationPolicyPatch
+	}
+
+	for path, authorizationPolicy := range actualState.authorizationPolicies {
+		if requiredState.authorizationPolicies[path] == nil {
+			objToDelete := &objToPatch{action: "delete", obj: authorizationPolicy}
+			apPatch[path] = objToDelete
+		}
+	}
+}
+
+func requestAuthenticationPatch(raPatch map[string]*objToPatch, actualState, requiredState *State) {
+	for path, requestAuthentication := range requiredState.requestAuthentications {
+		requestAuthenticationPatch := &objToPatch{}
+
+		if actualState.requestAuthentications[path] != nil {
+			requestAuthenticationPatch.action = "update"
+			modifyRequestAuthentication(actualState.requestAuthentications[path], requestAuthentication)
+			requestAuthenticationPatch.obj = actualState.requestAuthentications[path]
+		} else {
+			requestAuthenticationPatch.action = "create"
+			requestAuthenticationPatch.obj = requestAuthentication
+		}
+
+		raPatch[path] = requestAuthenticationPatch
+	}
+
+	for path, requestAuthentication := range actualState.requestAuthentications {
+		if requiredState.requestAuthentications[path] == nil {
+			objToDelete := &objToPatch{action: "delete", obj: requestAuthentication}
+			raPatch[path] = objToDelete
+		}
+	}
 }
