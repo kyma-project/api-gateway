@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
+	"sigs.k8s.io/controller-runtime/pkg/envtest/printer"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -19,7 +20,8 @@ import (
 
 func TestValidators(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Validators Suite")
+	RunSpecsWithDefaultAndCustomReporters(t, "Validators Suite",
+		[]Reporter{printer.NewProwReporter("api-gateway-testsuite")})
 }
 
 const (
