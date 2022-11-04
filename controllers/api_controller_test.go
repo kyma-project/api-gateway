@@ -132,11 +132,6 @@ func getApiRule(authStrategy string, authConfig *runtime.RawExtension) *gatewayv
 				{
 					Path:    "/.*",
 					Methods: []string{"GET"},
-					Service: &gatewayv1beta1.Service{
-						Name:       &serviceName,
-						Port:       &servicePort,
-						IsExternal: &isExernal,
-					},
 					AccessStrategies: []*gatewayv1beta1.Authenticator{
 						{
 							Handler: &gatewayv1beta1.Handler{
