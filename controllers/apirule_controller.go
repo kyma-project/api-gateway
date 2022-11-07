@@ -30,11 +30,14 @@ import (
 
 	"github.com/go-logr/logr"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
+	corev1 "k8s.io/api/core/v1"
 	apierrs "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/event"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
@@ -53,6 +56,35 @@ type APIRuleReconciler struct {
 	Scheme                 *runtime.Scheme
 }
 
+const (
+	CONFIGMAP_NAME = "api-gateway-config"
+	CONFIGMAP_NS   = "kyma-system"
+)
+
+type configMapPredicate struct {
+	Log logr.Logger
+	predicate.Funcs
+}
+
+func (p configMapPredicate) Create(e event.CreateEvent) bool {
+	return p.Generic(event.GenericEvent(e))
+}
+
+func (p configMapPredicate) Update(e event.UpdateEvent) bool {
+	return p.Generic(event.GenericEvent{
+		Object: e.ObjectNew,
+	})
+}
+
+func (p configMapPredicate) Generic(e event.GenericEvent) bool {
+	if e.Object == nil {
+		p.Log.Error(nil, "Generic event has no object", "event", e)
+		return false
+	}
+	configMap, ok := e.Object.(*corev1.ConfigMap)
+	return ok && configMap.GetNamespace() == CONFIGMAP_NS && configMap.GetName() == CONFIGMAP_NAME
+}
+
 //+kubebuilder:rbac:groups=gateway.kyma-project.io,resources=apirules,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=gateway.kyma-project.io,resources=apirules/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=gateway.kyma-project.io,resources=apirules/finalizers,verbs=update
@@ -66,10 +98,15 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	r.Log.Info("Starting reconcilation")
 
 	api := &gatewayv1beta1.APIRule{}
-	config, err := helpers.LoadConfig()
+	err := r.Client.Get(ctx, req.NamespacedName, api)
 	if err != nil {
-		r.Log.Error(err, fmt.Sprintf(`Config loading failure {"controller": "Api", "request": "%s/%s", "file": %s}, will use default config`, api.Namespace, api.Name, helpers.CONFIG_FILE))
-		config = helpers.DefaultConfig()
+		if apierrs.IsNotFound(err) {
+			//There is no APIRule. Nothing to process, dependent objects will be garbage-collected.
+			return doneReconcile()
+		}
+
+		//Nothing is yet processed: StatusSkipped
+		return r.setStatusForError(ctx, api, err, gatewayv1beta1.StatusSkipped)
 	}
 
 	validator := validation.APIRule{
@@ -79,22 +116,17 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		DefaultDomainName: r.DefaultDomainName,
 	}
 
+	config, err := helpers.LoadConfig()
+	if err != nil {
+		r.Log.Error(err, fmt.Sprintf(`Config loading failure {"controller": "Api", "request": "%s/%s", "file": %s}, will use default config`, api.Namespace, api.Name, helpers.CONFIG_FILE))
+		config = helpers.DefaultConfig()
+	}
+
 	configValidationFailures := validator.ValidateConfig(config)
 	if len(configValidationFailures) > 0 {
 		failuresJson, _ := json.Marshal(configValidationFailures)
 		r.Log.Error(err, fmt.Sprintf(`Config validation failure {"controller": "Api", "request": "%s/%s", "failures": %s}`, api.Namespace, api.Name, string(failuresJson)))
 		return r.setStatus(ctx, api, generateValidationStatus(configValidationFailures), gatewayv1beta1.StatusError)
-	}
-
-	err = r.Client.Get(ctx, req.NamespacedName, api)
-	if err != nil {
-		if apierrs.IsNotFound(err) {
-			//There is no APIRule. Nothing to process, dependent objects will be garbage-collected.
-			return doneReconcile()
-		}
-
-		//Nothing is yet processed: StatusSkipped
-		return r.setStatusForError(ctx, api, err, gatewayv1beta1.StatusSkipped)
 	}
 
 	//Prevent reconciliation after status update. It should be solved by controller-runtime implementation but still isn't.
