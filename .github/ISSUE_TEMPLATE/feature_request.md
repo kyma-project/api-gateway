@@ -22,6 +22,7 @@ assignees: ''
 
 **DoD:**
 - [ ] provide documentation
+- [ ] publish release notes and _What's New_ updates for Kyma customers
 - [ ] provide unit tests
 - [ ] test on SKR
 - [ ] verify [Get started guides](https://kyma-project.io/docs/kyma/latest/02-get-started/) 
