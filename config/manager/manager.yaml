@@ -59,14 +59,5 @@ spec:
           requests:
             cpu: 100m
             memory: 20Mi
-        volumeMounts:
-        - mountPath: /api-gateway-config
-          name: api-gateway-config
-          readOnly: true
-      volumes:
-      - configMap:
-          defaultMode: 420
-          name: api-gateway-config
-        name: api-gateway-config
       serviceAccountName: controller-manager
       terminationGracePeriodSeconds: 10

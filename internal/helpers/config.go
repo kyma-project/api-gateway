@@ -1,37 +1,56 @@
 package helpers
 
 import (
-	"os"
+	"context"
 
 	"gopkg.in/yaml.v2"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-const JWT_HANDLER_ORY = "ory"
-const JWT_HANDLER_ISTIO = "istio"
+const (
+	JWT_HANDLER_ORY   = "ory"
+	JWT_HANDLER_ISTIO = "istio"
 
-const CONFIG_FILE = "/api-gateway-config/api-gateway-config.yaml"
+	CM_NS   = "kyma-system"
+	CM_NAME = "api-gateway-config"
+	CM_KEY  = "api-gateway-config"
+)
 
-var ReadFileHandle = os.ReadFile
+func ReadConfigMap(ctx context.Context, client client.Client) ([]byte, error) {
+	cm := &corev1.ConfigMap{}
+	err := client.Get(ctx, types.NamespacedName{Namespace: CM_NS, Name: CM_NAME}, cm)
+	if err != nil {
+		return nil, err
+	}
+	return cm.BinaryData[CM_KEY], nil
+}
+
+var ReadConfigMapHandle = ReadConfigMap
 
 type Config struct {
 	JWTHandler string `yaml:"jwtHandler"`
 }
 
-func DefaultConfig() *Config {
-	return &Config{JWTHandler: JWT_HANDLER_ORY}
+func (c *Config) Reset() {
+	c.JWTHandler = ""
 }
 
-func LoadConfig() (*Config, error) {
-	configData, err := ReadFileHandle(CONFIG_FILE)
+func (c *Config) ResetToDefault() {
+	c.JWTHandler = JWT_HANDLER_ORY
+}
+
+func (c *Config) ReadFromConfigMap(ctx context.Context, client client.Client) error {
+	cmData, err := ReadConfigMapHandle(ctx, client)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	config := &Config{}
-	err = yaml.Unmarshal(configData, config)
+	err = yaml.Unmarshal(cmData, c)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return config, err
+	return nil
 }

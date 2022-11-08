@@ -34,6 +34,7 @@ import (
 	apierrs "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/event"
@@ -54,6 +55,7 @@ type APIRuleReconciler struct {
 	HostBlockList          []string
 	DefaultDomainName      string
 	Scheme                 *runtime.Scheme
+	Config                 *helpers.Config
 }
 
 const (
@@ -68,6 +70,12 @@ type configMapPredicate struct {
 
 func (p configMapPredicate) Create(e event.CreateEvent) bool {
 	return p.Generic(event.GenericEvent(e))
+}
+
+func (p configMapPredicate) DeleteFunc(e event.DeleteEvent) bool {
+	return p.Generic(event.GenericEvent{
+		Object: e.Object,
+	})
 }
 
 func (p configMapPredicate) Update(e event.UpdateEvent) bool {
@@ -97,6 +105,25 @@ func (p configMapPredicate) Generic(e event.GenericEvent) bool {
 func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	r.Log.Info("Starting reconcilation")
 
+	isCMReconcile := (req.NamespacedName.String() == types.NamespacedName{Namespace: helpers.CM_NS, Name: helpers.CM_NAME}.String())
+	if isCMReconcile || r.Config.JWTHandler == "" {
+		err := r.Config.ReadFromConfigMap(ctx, r.Client)
+
+		if err != nil {
+			if apierrs.IsNotFound(err) {
+				r.Log.Error(err, fmt.Sprintf(`ConfigMap not found {"controller": "Api"}, will use default config`))
+				r.Config.ResetToDefault()
+			} else {
+				r.Log.Error(err, fmt.Sprintf(`ConfigMap read failure {"controller": "Api"}`))
+				r.Config.Reset()
+			}
+		}
+
+		if isCMReconcile {
+			return doneReconcile()
+		}
+	}
+
 	api := &gatewayv1beta1.APIRule{}
 	err := r.Client.Get(ctx, req.NamespacedName, api)
 	if err != nil {
@@ -116,13 +143,7 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		DefaultDomainName: r.DefaultDomainName,
 	}
 
-	config, err := helpers.LoadConfig()
-	if err != nil {
-		r.Log.Error(err, fmt.Sprintf(`Config loading failure {"controller": "Api", "request": "%s/%s", "file": %s}, will use default config`, api.Namespace, api.Name, helpers.CONFIG_FILE))
-		config = helpers.DefaultConfig()
-	}
-
-	configValidationFailures := validator.ValidateConfig(config)
+	configValidationFailures := validator.ValidateConfig(r.Config)
 	if len(configValidationFailures) > 0 {
 		failuresJson, _ := json.Marshal(configValidationFailures)
 		r.Log.Error(err, fmt.Sprintf(`Config validation failure {"controller": "Api", "request": "%s/%s", "failures": %s}`, api.Namespace, api.Name, string(failuresJson)))
@@ -139,7 +160,7 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		}
 
 		//1.2) Validate input including host
-		validationFailures := validator.Validate(api, vsList, config)
+		validationFailures := validator.Validate(api, vsList, r.Config)
 		if len(validationFailures) > 0 {
 			failuresJson, _ := json.Marshal(validationFailures)
 			r.Log.Info(fmt.Sprintf(`Validation failure {"controller": "Api", "request": "%s/%s", "failures": %s}`, api.Namespace, api.Name, string(failuresJson)))
@@ -148,19 +169,19 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 
 		//2) Compute list of required objects (the set of objects required to satisfy our contract on apiRule.Spec, not yet applied)
 		factory := processing.NewFactory(r.Client, r.Log, r.OathkeeperSvc, r.OathkeeperSvcPort, r.CorsConfig, r.GeneratedObjectsLabels, r.DefaultDomainName)
-		requiredObjects := factory.CalculateRequiredState(api, config)
+		requiredObjects := factory.CalculateRequiredState(api, r.Config)
 
 		//3.1 Fetch all existing objects related to _this_ apiRule from the cluster (VS, Rules)
-		actualObjects, err := factory.GetActualState(ctx, api, config)
+		actualObjects, err := factory.GetActualState(ctx, api, r.Config)
 		if err != nil {
 			return r.setStatusForError(ctx, api, err, gatewayv1beta1.StatusSkipped)
 		}
 
 		//3.2 Compute patch object
-		patch := factory.CalculateDiff(requiredObjects, actualObjects, config)
+		patch := factory.CalculateDiff(requiredObjects, actualObjects, r.Config)
 
 		//3.3 Apply changes to the cluster
-		err = factory.ApplyDiff(ctx, patch, config)
+		err = factory.ApplyDiff(ctx, patch, r.Config)
 		if err != nil {
 			//We don't know exactly which object(s) are not updated properly.
 			//The safest approach is to assume nothing is correct and just use `StatusError`.
