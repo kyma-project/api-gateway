@@ -191,6 +191,24 @@ spec:
                   desc:
                     type: string
                 type: object
+              authorizationPolicyStatus:
+                description: APIRuleResourceStatus .
+                properties:
+                  code:
+                    description: StatusCode .
+                    type: string
+                  desc:
+                    type: string
+                type: object
+              requestAuthenticationStatus:
+                description: APIRuleResourceStatus .
+                properties:
+                  code:
+                    description: StatusCode .
+                    type: string
+                  desc:
+                    type: string
+                type: object
             type: object
         type: object
     served: true
@@ -383,16 +401,13 @@ spec:
                   desc:
                     type: string
                 type: object
-              authorizationPolicyStatus:
-                  description: APIRuleResourceStatus .
-                  properties:
-                    code:
-                      description: StatusCode .
-                      type: string
-                    desc:
-                      type: string
-                  type: object
-              requestAuthenticationStatus:
+              lastProcessedTime:
+                format: date-time
+                type: string
+              observedGeneration:
+                format: int64
+                type: integer
+              virtualServiceStatus:
                 description: APIRuleResourceStatus .
                 properties:
                   code:
@@ -401,13 +416,16 @@ spec:
                   desc:
                     type: string
                 type: object
-              lastProcessedTime:
-                format: date-time
-                type: string
-              observedGeneration:
-                format: int64
-                type: integer
-              virtualServiceStatus:
+              authorizationPolicyStatus:
+                description: APIRuleResourceStatus .
+                properties:
+                  code:
+                    description: StatusCode .
+                    type: string
+                  desc:
+                    type: string
+                type: object
+              requestAuthenticationStatus:
                 description: APIRuleResourceStatus .
                 properties:
                   code:
