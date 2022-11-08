@@ -182,7 +182,7 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 func (r *APIRuleReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&gatewayv1beta1.APIRule{}).
-		For(&corev1.ConfigMap{}).
+		Owns(&corev1.ConfigMap{}).
 		WithEventFilter(&configMapPredicate{Log: r.Log}).
 		Complete(r)
 }
