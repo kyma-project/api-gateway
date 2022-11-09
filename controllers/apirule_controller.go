@@ -108,7 +108,6 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	isCMReconcile := (req.NamespacedName.String() == types.NamespacedName{Namespace: helpers.CM_NS, Name: helpers.CM_NAME}.String())
 	if isCMReconcile || r.Config.JWTHandler == "" {
 		err := r.Config.ReadFromConfigMap(ctx, r.Client)
-
 		if err != nil {
 			if apierrs.IsNotFound(err) {
 				r.Log.Error(err, fmt.Sprintf(`ConfigMap not found {"controller": "Api"}, will use default config`))
@@ -118,7 +117,6 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 				r.Config.Reset()
 			}
 		}
-
 		if isCMReconcile {
 			return doneReconcile()
 		}

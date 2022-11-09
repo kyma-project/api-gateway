@@ -9,6 +9,7 @@ import (
 	"github.com/kyma-incubator/api-gateway/internal/builders"
 	"github.com/kyma-incubator/api-gateway/internal/helpers"
 	"github.com/kyma-incubator/api-gateway/internal/processing"
+	istioint "github.com/kyma-incubator/api-gateway/internal/types/istio"
 
 	"encoding/json"
 
@@ -66,18 +67,13 @@ var _ = Describe("APIRule Controller", func() {
 		AllowOrigins(TestAllowOrigins...)
 
 	BeforeEach(func() {
-		// We configure `ory` for configucation as the default for all tests
-		cm := testConfigMap("ory")
+		// We configure `ory` in ConfigMap as the default for all tests
+		cm := testConfigMap(helpers.JWT_HANDLER_ORY)
 		err := c.Update(context.TODO(), cm)
-
 		if apierrors.IsInvalid(err) {
 			Fail(fmt.Sprintf("failed to update configmap, got an invalid object error: %v", err))
 		}
 		Expect(err).NotTo(HaveOccurred())
-		defer func() {
-			err := c.Delete(context.TODO(), cm)
-			Expect(err).NotTo(HaveOccurred())
-		}()
 	})
 
 	Context("when updating the APIRule with multiple paths", func() {
@@ -299,6 +295,7 @@ var _ = Describe("APIRule Controller", func() {
 					})
 				})
 			})
+
 			Context("secured with JWT token authentication,", func() {
 				Context("with ORY as JWT handler,", func() {
 					Context("in a happy-path scenario", func() {
@@ -447,6 +444,7 @@ var _ = Describe("APIRule Controller", func() {
 						})
 					})
 				})
+
 				Context("with Istio as JWT handler,", func() {
 					Context("in a happy-path scenario", func() {
 						It("should create a VirtualService, a RequestAuthentication and AuthorizationPolicies", func() {
@@ -454,15 +452,11 @@ var _ = Describe("APIRule Controller", func() {
 							err := c.Update(context.TODO(), cm)
 
 							if apierrors.IsInvalid(err) {
-								Fail(fmt.Sprintf("failed to create configmap, got an invalid object error: %v", err))
+								Fail(fmt.Sprintf("failed to update configmap, got an invalid object error: %v", err))
 							}
 							Expect(err).NotTo(HaveOccurred())
-							defer func() {
-								err := c.Delete(context.TODO(), cm)
-								Expect(err).NotTo(HaveOccurred())
-							}()
 
-							expectedRequest := reconcile.Request{NamespacedName: types.NamespacedName{Name: helpers.CM_NAME, Namespace: helpers.CM_NS}}
+							expectedRequest := reconcile.Request{NamespacedName: types.NamespacedName{Name: cm.Name, Namespace: cm.Namespace}}
 							Eventually(requests, timeout).Should(Receive(Equal(expectedRequest)))
 
 							apiRuleName := generateTestName(testNameBase, testIDLength)
@@ -484,7 +478,6 @@ var _ = Describe("APIRule Controller", func() {
 							}()
 
 							expectedRequest = reconcile.Request{NamespacedName: types.NamespacedName{Name: apiRuleName, Namespace: testNamespace}}
-
 							Eventually(requests, timeout).Should(Receive(Equal(expectedRequest)))
 
 							matchingLabels := matchingLabelsFunc(apiRuleName, testNamespace)
@@ -714,6 +707,11 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 		return err
 	}
 
+	err = c.Watch(&source.Kind{Type: &corev1.ConfigMap{}}, &handler.EnqueueRequestForObject{})
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -787,12 +785,11 @@ func verifyOwnerReference(m metav1.ObjectMeta, name, version, kind string) {
 
 func testOryJWTHandler(issuer string, scopes []string) *gatewayv1beta1.Handler {
 
-	configJSON := fmt.Sprintf(`
-		{
+	configJSON := fmt.Sprintf(`{
 			"trusted_issuers": ["%s"],
 			"jwks": [],
 			"required_scope": [%s]
-	}`, issuer, toCSVList(scopes))
+		}`, issuer, toCSVList(scopes))
 
 	return &gatewayv1beta1.Handler{
 		Name: "jwt",
@@ -804,19 +801,19 @@ func testOryJWTHandler(issuer string, scopes []string) *gatewayv1beta1.Handler {
 
 func testIstioJWTHandler(issuer string, jwksUri string) *gatewayv1beta1.Handler {
 
-	configJSON := fmt.Sprintf(`
-		{
-  			"authentications": [
-    			{
-      				"issuer": "%s",
-      				"jwksUri": "%s"
-    			}
-  			]}`, issuer, jwksUri)
-
+	bytes, err := json.Marshal(istioint.JwtConfig{
+		Authentications: []istioint.JwtAuth{
+			{
+				Issuer:  issuer,
+				JwksUri: jwksUri,
+			},
+		},
+	})
+	Expect(err).To(BeNil())
 	return &gatewayv1beta1.Handler{
 		Name: "jwt",
 		Config: &runtime.RawExtension{
-			Raw: []byte(configJSON),
+			Raw: bytes,
 		},
 	}
 }

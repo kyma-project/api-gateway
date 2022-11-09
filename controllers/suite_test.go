@@ -141,6 +141,7 @@ var _ = BeforeSuite(func(done Done) {
 		Config:                 &helpers.Config{},
 	}
 	Expect(err).NotTo(HaveOccurred())
+
 	var recFn reconcile.Reconciler
 	recFn, requests = SetupTestReconcile(apiReconciler)
 	Expect(add(mgr, recFn)).To(Succeed())

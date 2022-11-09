@@ -76,6 +76,10 @@ var _ = Describe("Controller", func() {
 				fakeReader := FakeConfigMapReader{Content: fmt.Sprintf("jwtHandler: %s", helpers.JWT_HANDLER_ORY)}
 				helpers.ReadConfigMapHandle = fakeReader.ReadConfigMap
 
+				defer func() {
+					helpers.ReadConfigMapHandle = helpers.ReadConfigMap
+				}()
+
 				result, err := reconciler.Reconcile(ctx, reconcile.Request{NamespacedName: types.NamespacedName{Namespace: testAPI.Namespace, Name: testAPI.Name}})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(result.Requeue).To(BeFalse())
@@ -98,6 +102,10 @@ var _ = Describe("Controller", func() {
 				errorReader := FakeConfigMapReader{}
 				helpers.ReadConfigMapHandle = errorReader.ReadConfigMap
 
+				defer func() {
+					helpers.ReadConfigMapHandle = helpers.ReadConfigMap
+				}()
+
 				_, err := reconciler.Reconcile(ctx, reconcile.Request{NamespacedName: types.NamespacedName{Namespace: testAPI.Namespace, Name: testAPI.Name}})
 				Expect(err).ToNot(HaveOccurred())
 
@@ -117,6 +125,10 @@ var _ = Describe("Controller", func() {
 				fakeReader := FakeConfigMapReader{Content: "<xml/>"}
 				helpers.ReadConfigMapHandle = fakeReader.ReadConfigMap
 
+				defer func() {
+					helpers.ReadConfigMapHandle = helpers.ReadConfigMap
+				}()
+
 				_, err := reconciler.Reconcile(ctx, reconcile.Request{NamespacedName: types.NamespacedName{Namespace: testAPI.Namespace, Name: testAPI.Name}})
 				Expect(err).ToNot(HaveOccurred())
 
@@ -135,6 +147,10 @@ var _ = Describe("Controller", func() {
 
 				fakeReader := FakeConfigMapReader{Content: "jwtHandler: foo"}
 				helpers.ReadConfigMapHandle = fakeReader.ReadConfigMap
+
+				defer func() {
+					helpers.ReadConfigMapHandle = helpers.ReadConfigMap
+				}()
 
 				_, err := reconciler.Reconcile(ctx, reconcile.Request{NamespacedName: types.NamespacedName{Namespace: testAPI.Namespace, Name: testAPI.Name}})
 				Expect(err).ToNot(HaveOccurred())
@@ -157,6 +173,10 @@ var _ = Describe("Controller", func() {
 
 					fakeReader := FakeConfigMapReader{Content: fmt.Sprintf("jwtHandler: %s", helpers.JWT_HANDLER_ISTIO)}
 					helpers.ReadConfigMapHandle = fakeReader.ReadConfigMap
+
+					defer func() {
+						helpers.ReadConfigMapHandle = helpers.ReadConfigMap
+					}()
 
 					result, err := reconciler.Reconcile(ctx, reconcile.Request{NamespacedName: types.NamespacedName{Namespace: testAPI.Namespace, Name: testAPI.Name}})
 					Expect(err).ToNot(HaveOccurred())

@@ -24,7 +24,7 @@ func ReadConfigMap(ctx context.Context, client client.Client) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	return cm.BinaryData[CM_KEY], nil
+	return []byte(cm.Data[CM_KEY]), nil
 }
 
 var ReadConfigMapHandle = ReadConfigMap
@@ -46,11 +46,9 @@ func (c *Config) ReadFromConfigMap(ctx context.Context, client client.Client) er
 	if err != nil {
 		return err
 	}
-
 	err = yaml.Unmarshal(cmData, c)
 	if err != nil {
 		return err
 	}
-
 	return nil
 }
