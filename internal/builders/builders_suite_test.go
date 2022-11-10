@@ -11,5 +11,5 @@ import (
 func TestBuilders(t *testing.T) {
 	RegisterFailHandler(Fail)
 	RunSpecsWithDefaultAndCustomReporters(t, "Builders Suite",
-		[]Reporter{printer.NewProwReporter("api-gateway-testsuite")})
+		[]Reporter{printer.NewProwReporter("api-gateway-builders-testsuite")})
 }

@@ -73,7 +73,7 @@ var (
 func TestProcessing(t *testing.T) {
 	RegisterFailHandler(Fail)
 	RunSpecsWithDefaultAndCustomReporters(t, "Processing Suite",
-		[]Reporter{printer.NewProwReporter("api-gateway-testsuite")})
+		[]Reporter{printer.NewProwReporter("api-gateway-processing-testsuite")})
 }
 
 var _ = Describe("Factory", func() {

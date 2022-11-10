@@ -21,7 +21,7 @@ import (
 func TestValidators(t *testing.T) {
 	RegisterFailHandler(Fail)
 	RunSpecsWithDefaultAndCustomReporters(t, "Validators Suite",
-		[]Reporter{printer.NewProwReporter("api-gateway-testsuite")})
+		[]Reporter{printer.NewProwReporter("api-gateway-validators-testsuite")})
 }
 
 const (

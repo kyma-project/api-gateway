@@ -52,7 +52,7 @@ func TestAPIs(t *testing.T) {
 
 	RunSpecsWithDefaultAndCustomReporters(t,
 		"Controller Suite",
-		[]Reporter{printer.NewlineReporter{}, printer.NewProwReporter("api-gateway-testsuite")})
+		[]Reporter{printer.NewlineReporter{}, printer.NewProwReporter("api-gateway-controller-testsuite")})
 }
 
 var _ = BeforeSuite(func(done Done) {
