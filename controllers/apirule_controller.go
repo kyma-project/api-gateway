@@ -109,6 +109,13 @@ func (p configMapPredicate) Generic(e event.GenericEvent) bool {
 func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	r.Log.Info("Starting reconcilation")
 
+	validator := validation.APIRule{
+		ServiceBlockList:  r.ServiceBlockList,
+		DomainAllowList:   r.DomainAllowList,
+		HostBlockList:     r.HostBlockList,
+		DefaultDomainName: r.DefaultDomainName,
+	}
+
 	isCMReconcile := (req.NamespacedName.String() == types.NamespacedName{Namespace: helpers.CM_NS, Name: helpers.CM_NAME}.String())
 	if isCMReconcile || r.Config.JWTHandler == "" {
 		err := r.Config.ReadFromConfigMap(ctx, r.Client)
@@ -122,7 +129,12 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 			}
 		}
 		if isCMReconcile {
-			return doneReconcile()
+			configValidationFailures := validator.ValidateConfig(r.Config)
+			if len(configValidationFailures) > 0 {
+				failuresJson, _ := json.Marshal(configValidationFailures)
+				r.Log.Error(err, fmt.Sprintf(`Config validation failure {"controller": "Api", "failures": %s}`, string(failuresJson)))
+			}
+			return r.doneReconcile()
 		}
 	}
 
@@ -131,18 +143,11 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	if err != nil {
 		if apierrs.IsNotFound(err) {
 			//There is no APIRule. Nothing to process, dependent objects will be garbage-collected.
-			return doneReconcile()
+			return r.doneReconcile()
 		}
 
 		//Nothing is yet processed: StatusSkipped
 		return r.setStatusForError(ctx, api, err, gatewayv1beta1.StatusSkipped)
-	}
-
-	validator := validation.APIRule{
-		ServiceBlockList:  r.ServiceBlockList,
-		DomainAllowList:   r.DomainAllowList,
-		HostBlockList:     r.HostBlockList,
-		DefaultDomainName: r.DefaultDomainName,
 	}
 
 	configValidationFailures := validator.ValidateConfig(r.Config)
@@ -198,7 +203,7 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		return r.setStatus(ctx, api, APIStatus, gatewayv1beta1.StatusOK)
 	}
 
-	return doneReconcile()
+	return r.doneReconcile()
 }
 
 // SetupWithManager sets up the controller with the Manager.
@@ -255,10 +260,11 @@ func (r *APIRuleReconciler) updateStatusOrRetry(ctx context.Context, api *gatewa
 		return retryReconcile(updateStatusErr) //controller retries to set the correct status eventually.
 	}
 	//Fail fast: If status is updated, users are informed about the problem. We don't need to reconcile again.
-	return doneReconcile()
+	return r.doneReconcile()
 }
 
-func doneReconcile() (ctrl.Result, error) {
+func (r *APIRuleReconciler) doneReconcile() (ctrl.Result, error) {
+	r.Log.Info("Ending reconcilation")
 	return ctrl.Result{}, nil
 }
 
