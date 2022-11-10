@@ -20,6 +20,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
+	"sigs.k8s.io/controller-runtime/pkg/envtest/printer"
 )
 
 const (
@@ -69,7 +70,8 @@ var (
 
 func TestProcessing(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Processing Suite")
+	RunSpecsWithDefaultAndCustomReporters(t, "Processing Suite",
+		[]Reporter{printer.NewProwReporter("api-gateway-processing-testsuite")})
 }
 
 var _ = Describe("Factory", func() {
