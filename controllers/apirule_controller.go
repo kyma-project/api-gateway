@@ -89,8 +89,9 @@ func (p configMapPredicate) Generic(e event.GenericEvent) bool {
 		p.Log.Error(nil, "Generic event has no object", "event", e)
 		return false
 	}
-	configMap, ok := e.Object.(*corev1.ConfigMap)
-	return ok && configMap.GetNamespace() == CONFIGMAP_NS && configMap.GetName() == CONFIGMAP_NAME
+	_, okAP := e.Object.(*gatewayv1beta1.APIRule)
+	configMap, okCM := e.Object.(*corev1.ConfigMap)
+	return okAP || (okCM && configMap.GetNamespace() == CONFIGMAP_NS && configMap.GetName() == CONFIGMAP_NAME)
 }
 
 //+kubebuilder:rbac:groups=gateway.kyma-project.io,resources=apirules,verbs=get;list;watch;create;update;patch;delete
