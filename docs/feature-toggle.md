@@ -4,7 +4,7 @@
 
 We support two JWT handlers in API-Gateway at the moment. Switching between them is configurable via the following ConfigMap: `kyma-system/api-gateway-config`
 
-## Swithing on/off
+## Swithing between JWT handlers
 
 ### Enabling `ory/oathkeeper` JWT handler
 
