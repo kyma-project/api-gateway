@@ -167,30 +167,12 @@ spec:
                   desc:
                     type: string
                 type: object
-              authorizationPolicyStatus:
-                description: APIRuleResourceStatus .
-                properties:
-                  code:
-                    description: StatusCode .
-                    type: string
-                  desc:
-                    type: string
-                type: object
               lastProcessedTime:
                 format: date-time
                 type: string
               observedGeneration:
                 format: int64
                 type: integer
-              requestAuthenticationStatus:
-                description: APIRuleResourceStatus .
-                properties:
-                  code:
-                    description: StatusCode .
-                    type: string
-                  desc:
-                    type: string
-                type: object
               virtualServiceStatus:
                 description: APIRuleResourceStatus .
                 properties:
@@ -392,30 +374,12 @@ spec:
                   desc:
                     type: string
                 type: object
-              authorizationPolicyStatus:
-                description: APIRuleResourceStatus .
-                properties:
-                  code:
-                    description: StatusCode .
-                    type: string
-                  desc:
-                    type: string
-                type: object
               lastProcessedTime:
                 format: date-time
                 type: string
               observedGeneration:
                 format: int64
                 type: integer
-              requestAuthenticationStatus:
-                description: APIRuleResourceStatus .
-                properties:
-                  code:
-                    description: StatusCode .
-                    type: string
-                  desc:
-                    type: string
-                type: object
               virtualServiceStatus:
                 description: APIRuleResourceStatus .
                 properties:

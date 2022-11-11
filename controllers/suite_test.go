@@ -2,7 +2,6 @@ package controllers_test
 
 import (
 	"context"
-	"fmt"
 	"path/filepath"
 	"testing"
 	"time"
@@ -10,9 +9,7 @@ import (
 	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
 	"istio.io/api/networking/v1beta1"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
-	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -20,7 +17,6 @@ import (
 
 	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
 	"github.com/kyma-incubator/api-gateway/controllers"
-	"github.com/kyma-incubator/api-gateway/internal/helpers"
 	"github.com/kyma-incubator/api-gateway/internal/processing"
 
 	. "github.com/onsi/ginkgo"
@@ -88,9 +84,6 @@ var _ = BeforeSuite(func(done Done) {
 	err = networkingv1beta1.AddToScheme(s)
 	Expect(err).NotTo(HaveOccurred())
 
-	err = securityv1beta1.AddToScheme(s)
-	Expect(err).NotTo(HaveOccurred())
-
 	err = corev1.AddToScheme(s)
 	Expect(err).NotTo(HaveOccurred())
 
@@ -107,25 +100,6 @@ var _ = BeforeSuite(func(done Done) {
 	err = c.Create(context.TODO(), ns)
 	Expect(err).NotTo(HaveOccurred())
 
-	nsKyma := &corev1.Namespace{
-		ObjectMeta: v1.ObjectMeta{Name: helpers.CM_NS},
-		Spec:       corev1.NamespaceSpec{},
-	}
-	err = c.Create(context.TODO(), nsKyma)
-	Expect(err).NotTo(HaveOccurred())
-
-	cm := &corev1.ConfigMap{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      helpers.CM_NAME,
-			Namespace: helpers.CM_NS,
-		},
-		Data: map[string]string{
-			helpers.CM_KEY: fmt.Sprintf("jwtHandler: %s", helpers.JWT_HANDLER_ORY),
-		},
-	}
-	err = c.Create(context.TODO(), cm)
-	Expect(err).NotTo(HaveOccurred())
-
 	apiReconciler := &controllers.APIRuleReconciler{
 		Client:            mgr.GetClient(),
 		Log:               ctrl.Log.WithName("controllers").WithName("Api"),
@@ -138,10 +112,8 @@ var _ = BeforeSuite(func(done Done) {
 			AllowHeaders: TestAllowHeaders,
 		},
 		GeneratedObjectsLabels: map[string]string{},
-		Config:                 &helpers.Config{},
 	}
 	Expect(err).NotTo(HaveOccurred())
-
 	var recFn reconcile.Reconciler
 	recFn, requests = SetupTestReconcile(apiReconciler)
 	Expect(add(mgr, recFn)).To(Succeed())

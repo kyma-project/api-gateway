@@ -10,7 +10,6 @@ import (
 
 	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/utils/strings/slices"
 )
 
 // Validators for AccessStrategies
@@ -19,7 +18,7 @@ var vldJWT = &jwtAccStrValidator{}
 var vldDummy = &dummyAccStrValidator{}
 
 type accessStrategyValidator interface {
-	Validate(attrPath string, Handler *gatewayv1beta1.Handler, config *helpers.Config) []Failure
+	Validate(attrPath string, Handler *gatewayv1beta1.Handler) []Failure
 }
 
 // configNotEmpty Verify if the config object is not empty
@@ -44,16 +43,10 @@ type APIRule struct {
 	DefaultDomainName string
 }
 
-// Failure carries validation failures for a single attribute of an object.
-type Failure struct {
-	AttributePath string
-	Message       string
-}
-
 // Validate performs APIRule validation
-func (v *APIRule) Validate(api *gatewayv1beta1.APIRule, vsList networkingv1beta1.VirtualServiceList, config *helpers.Config) []Failure {
-	res := []Failure{}
+func (v *APIRule) Validate(api *gatewayv1beta1.APIRule, vsList networkingv1beta1.VirtualServiceList) []Failure {
 
+	res := []Failure{}
 	//Validate service on path level if it is created
 	if api.Spec.Service != nil {
 		res = append(res, v.validateService(".spec.service", api)...)
@@ -63,27 +56,15 @@ func (v *APIRule) Validate(api *gatewayv1beta1.APIRule, vsList networkingv1beta1
 	//Validate Gateway
 	res = append(res, v.validateGateway(".spec.gateway", api.Spec.Gateway)...)
 	//Validate Rules
-	res = append(res, v.validateRules(".spec.rules", api.Spec.Service == nil, api, config)...)
+	res = append(res, v.validateRules(".spec.rules", api.Spec.Service == nil, api)...)
 
 	return res
 }
 
-func (v *APIRule) ValidateConfig(config *helpers.Config) []Failure {
-	var problems []Failure
-
-	if config == nil {
-		problems = append(problems, Failure{
-			Message: "Configuration is missing",
-		})
-	} else {
-		if !slices.Contains([]string{helpers.JWT_HANDLER_ORY, helpers.JWT_HANDLER_ISTIO}, config.JWTHandler) {
-			problems = append(problems, Failure{
-				Message: fmt.Sprintf("Unsupported JWT Handler: %s", config.JWTHandler),
-			})
-		}
-	}
-
-	return problems
+// Failure carries validation failures for a single attribute of an object.
+type Failure struct {
+	AttributePath string
+	Message       string
 }
 
 func (v *APIRule) validateHost(attributePath string, vsList networkingv1beta1.VirtualServiceList, api *gatewayv1beta1.APIRule) []Failure {
@@ -164,7 +145,7 @@ func (v *APIRule) validateGateway(attributePath string, gateway *string) []Failu
 
 // Validates whether all rules are defined correctly
 // Checks whether all rules have service defined for them if checkForService is true
-func (v *APIRule) validateRules(attributePath string, checkForService bool, api *gatewayv1beta1.APIRule, config *helpers.Config) []Failure {
+func (v *APIRule) validateRules(attributePath string, checkForService bool, api *gatewayv1beta1.APIRule) []Failure {
 	var problems []Failure
 
 	rules := api.Spec.Rules
@@ -180,7 +161,7 @@ func (v *APIRule) validateRules(attributePath string, checkForService bool, api 
 	for i, r := range rules {
 		attributePathWithRuleIndex := fmt.Sprintf("%s[%d]", attributePath, i)
 		problems = append(problems, v.validateMethods(attributePathWithRuleIndex+".methods", r.Methods)...)
-		problems = append(problems, v.validateAccessStrategies(attributePathWithRuleIndex+".accessStrategies", r.AccessStrategies, config)...)
+		problems = append(problems, v.validateAccessStrategies(attributePathWithRuleIndex+".accessStrategies", r.AccessStrategies)...)
 		if checkForService && r.Service == nil {
 			problems = append(problems, Failure{AttributePath: attributePathWithRuleIndex + ".service", Message: "No service defined with no main service on spec level"})
 		}
@@ -206,7 +187,7 @@ func (v *APIRule) validateMethods(attributePath string, methods []string) []Fail
 	return nil
 }
 
-func (v *APIRule) validateAccessStrategies(attributePath string, accessStrategies []*gatewayv1beta1.Authenticator, config *helpers.Config) []Failure {
+func (v *APIRule) validateAccessStrategies(attributePath string, accessStrategies []*gatewayv1beta1.Authenticator) []Failure {
 	var problems []Failure
 
 	if len(accessStrategies) == 0 {
@@ -216,13 +197,13 @@ func (v *APIRule) validateAccessStrategies(attributePath string, accessStrategie
 
 	for i, r := range accessStrategies {
 		strategyAttrPath := attributePath + fmt.Sprintf("[%d]", i)
-		problems = append(problems, v.validateAccessStrategy(strategyAttrPath, r, config)...)
+		problems = append(problems, v.validateAccessStrategy(strategyAttrPath, r)...)
 	}
 
 	return problems
 }
 
-func (v *APIRule) validateAccessStrategy(attributePath string, accessStrategy *gatewayv1beta1.Authenticator, config *helpers.Config) []Failure {
+func (v *APIRule) validateAccessStrategy(attributePath string, accessStrategy *gatewayv1beta1.Authenticator) []Failure {
 	var problems []Failure
 
 	var vld accessStrategyValidator
@@ -249,7 +230,7 @@ func (v *APIRule) validateAccessStrategy(attributePath string, accessStrategy *g
 		return problems
 	}
 
-	return vld.Validate(attributePath, accessStrategy.Handler, config)
+	return vld.Validate(attributePath, accessStrategy.Handler)
 }
 
 func occupiesHost(vs *networkingv1beta1.VirtualService, host string) bool {
