@@ -44,7 +44,6 @@ import (
 	gatewayv1alpha1 "github.com/kyma-incubator/api-gateway/api/v1alpha1"
 	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
 	"github.com/kyma-incubator/api-gateway/controllers"
-	"github.com/kyma-incubator/api-gateway/internal/helpers"
 	"github.com/kyma-incubator/api-gateway/internal/processing"
 	"github.com/kyma-incubator/api-gateway/internal/validation"
 	"github.com/pkg/errors"
@@ -174,7 +173,6 @@ func main() {
 		},
 		GeneratedObjectsLabels: additionalLabels,
 		Scheme:                 mgr.GetScheme(),
-		Config:                 &helpers.Config{},
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "APIRule")
 		os.Exit(1)

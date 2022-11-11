@@ -39,33 +39,45 @@ var (
 	config              = helpers.Config{JWTHandler: helpers.JWT_HANDLER_ORY}
 )
 
-var _ = Describe("ValidateConfig function", func() {
+var _ = Describe("Validate function", func() {
 
 	It("Should fail for missing config", func() {
 
+		//given
+		input := &gatewayv1beta1.APIRule{
+			Spec: gatewayv1beta1.APIRuleSpec{
+				Rules:   nil,
+				Service: getService(sampleServiceName, uint32(8080)),
+				Host:    getHost(sampleValidHost),
+			},
+		}
+
 		//when
-		problems := (&APIRule{}).ValidateConfig(nil)
+		problems := (&APIRule{}).Validate(input, networkingv1beta1.VirtualServiceList{}, nil)
 
 		//then
-		Expect(problems).To(HaveLen(1))
+		Expect(problems).To(HaveLen(2))
 		Expect(problems[0].Message).To(Equal("Configuration is missing"))
 	})
 
 	It("Should fail for wrong config", func() {
 
 		//given
-		input := &helpers.Config{JWTHandler: "foo"}
+		input := &gatewayv1beta1.APIRule{
+			Spec: gatewayv1beta1.APIRuleSpec{
+				Rules:   nil,
+				Service: getService(sampleServiceName, uint32(8080)),
+				Host:    getHost(sampleValidHost),
+			},
+		}
 
 		//when
-		problems := (&APIRule{}).ValidateConfig(input)
+		problems := (&APIRule{}).Validate(input, networkingv1beta1.VirtualServiceList{}, &helpers.Config{JWTHandler: "foo"})
 
 		//then
-		Expect(problems).To(HaveLen(1))
+		Expect(problems).To(HaveLen(2))
 		Expect(problems[0].Message).To(Equal("Unsupported JWT Handler: foo"))
 	})
-})
-
-var _ = Describe("Validate function", func() {
 
 	It("Should fail for empty rules", func() {
 
