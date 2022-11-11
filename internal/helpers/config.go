@@ -1,7 +1,7 @@
 package helpers
 
 import (
-	"os"
+	"io/ioutil"
 
 	"gopkg.in/yaml.v2"
 )
@@ -11,7 +11,7 @@ const JWT_HANDLER_ISTIO = "istio"
 
 const CONFIG_FILE = "/api-gateway-config/api-gateway-config.yaml"
 
-var ReadFileHandle = os.ReadFile
+var ReadFileHandle = ioutil.ReadFile
 
 type Config struct {
 	JWTHandler string `yaml:"jwtHandler"`

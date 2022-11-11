@@ -19,7 +19,3 @@ func HostIncludesDomain(host string) bool {
 func GetHostWithDefaultDomain(host, defaultDomainName string) string {
 	return fmt.Sprintf("%s.%s", host, defaultDomainName)
 }
-
-func GetHostLocalDomain(host string, namespace string) string {
-	return fmt.Sprintf("%s.%s.svc.cluster.local", host, namespace)
-}
