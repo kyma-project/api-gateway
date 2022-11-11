@@ -30,12 +30,18 @@ import (
 
 	"github.com/go-logr/logr"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
+	corev1 "k8s.io/api/core/v1"
 	apierrs "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/event"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
 // APIRuleReconciler reconciles a APIRule object
@@ -51,6 +57,43 @@ type APIRuleReconciler struct {
 	HostBlockList          []string
 	DefaultDomainName      string
 	Scheme                 *runtime.Scheme
+	Config                 *helpers.Config
+}
+
+const (
+	CONFIGMAP_NAME = "api-gateway-config"
+	CONFIGMAP_NS   = "kyma-system"
+)
+
+type configMapPredicate struct {
+	Log logr.Logger
+	predicate.Funcs
+}
+
+func (p configMapPredicate) Create(e event.CreateEvent) bool {
+	return p.Generic(event.GenericEvent(e))
+}
+
+func (p configMapPredicate) DeleteFunc(e event.DeleteEvent) bool {
+	return p.Generic(event.GenericEvent{
+		Object: e.Object,
+	})
+}
+
+func (p configMapPredicate) Update(e event.UpdateEvent) bool {
+	return p.Generic(event.GenericEvent{
+		Object: e.ObjectNew,
+	})
+}
+
+func (p configMapPredicate) Generic(e event.GenericEvent) bool {
+	if e.Object == nil {
+		p.Log.Error(nil, "Generic event has no object", "event", e)
+		return false
+	}
+	_, okAP := e.Object.(*gatewayv1beta1.APIRule)
+	configMap, okCM := e.Object.(*corev1.ConfigMap)
+	return okAP || (okCM && configMap.GetNamespace() == CONFIGMAP_NS && configMap.GetName() == CONFIGMAP_NAME)
 }
 
 //+kubebuilder:rbac:groups=gateway.kyma-project.io,resources=apirules,verbs=get;list;watch;create;update;patch;delete
@@ -61,51 +104,70 @@ type APIRuleReconciler struct {
 //+kubebuilder:rbac:groups=security.istio.io,resources=authorizationpolicies,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=security.istio.io,resources=requestauthentications,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups="apiextensions.k8s.io",resources=customresourcedefinitions,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups="",resources=configmaps,verbs=get;list;watch;create;update;patch;delete
 
 func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	//_ = r.Log.WithValues("Api", req.NamespacedName)
-
 	r.Log.Info("Starting reconcilation")
 
-	api := &gatewayv1beta1.APIRule{}
+	validator := validation.APIRule{
+		ServiceBlockList:  r.ServiceBlockList,
+		DomainAllowList:   r.DomainAllowList,
+		HostBlockList:     r.HostBlockList,
+		DefaultDomainName: r.DefaultDomainName,
+	}
 
+	isCMReconcile := (req.NamespacedName.String() == types.NamespacedName{Namespace: helpers.CM_NS, Name: helpers.CM_NAME}.String())
+	if isCMReconcile || r.Config.JWTHandler == "" {
+		err := r.Config.ReadFromConfigMap(ctx, r.Client)
+		if err != nil {
+			if apierrs.IsNotFound(err) {
+				r.Log.Info(fmt.Sprintf(`ConfigMap %s in namespace %s was not found {"controller": "Api"}, will use default config`, helpers.CM_NAME, helpers.CM_NS))
+				r.Config.ResetToDefault()
+			} else {
+				r.Log.Error(err, fmt.Sprintf(`could not read ConfigMap %s in namespace %s {"controller": "Api"}`, helpers.CM_NAME, helpers.CM_NS))
+				r.Config.Reset()
+			}
+		}
+		if isCMReconcile {
+			configValidationFailures := validator.ValidateConfig(r.Config)
+			if len(configValidationFailures) > 0 {
+				failuresJson, _ := json.Marshal(configValidationFailures)
+				r.Log.Error(err, fmt.Sprintf(`Config validation failure {"controller": "Api", "failures": %s}`, string(failuresJson)))
+			}
+			return r.doneReconcile()
+		}
+	}
+
+	api := &gatewayv1beta1.APIRule{}
 	err := r.Client.Get(ctx, req.NamespacedName, api)
 	if err != nil {
 		if apierrs.IsNotFound(err) {
 			//There is no APIRule. Nothing to process, dependent objects will be garbage-collected.
-			return doneReconcile()
+			return r.doneReconcile()
 		}
 
 		//Nothing is yet processed: StatusSkipped
 		return r.setStatusForError(ctx, api, err, gatewayv1beta1.StatusSkipped)
 	}
 
+	configValidationFailures := validator.ValidateConfig(r.Config)
+	if len(configValidationFailures) > 0 {
+		failuresJson, _ := json.Marshal(configValidationFailures)
+		r.Log.Error(err, fmt.Sprintf(`Config validation failure {"controller": "Api", "request": "%s/%s", "failures": %s}`, api.Namespace, api.Name, string(failuresJson)))
+		return r.setStatus(ctx, api, generateValidationStatus(configValidationFailures), gatewayv1beta1.StatusError)
+	}
+
 	//Prevent reconciliation after status update. It should be solved by controller-runtime implementation but still isn't.
 	if api.Generation != api.Status.ObservedGeneration {
-
-		//1.1) Get the configuration
-		config, err := helpers.LoadConfig()
-		if err != nil {
-			//If configuration is not available not been able to continue.
-			r.Log.Info(fmt.Sprintf(`Configuration loading failed {"controller": "Api", "request": "%s/%s", "file": %s}`, api.Namespace, api.Name, helpers.CONFIG_FILE))
-			return r.setStatusForError(ctx, api, err, gatewayv1beta1.StatusError)
-		}
-
-		//1.2) Get the list of existing Virtual Services to validate host
+		//1.1) Get the list of existing Virtual Services to validate host
 		var vsList networkingv1beta1.VirtualServiceList
 		if err := r.Client.List(ctx, &vsList); err != nil {
 			//Nothing is yet processed: StatusSkipped
 			return r.setStatusForError(ctx, api, err, gatewayv1beta1.StatusSkipped)
 		}
 
-		//1.3) Validate input including host
-		validator := validation.APIRule{
-			ServiceBlockList:  r.ServiceBlockList,
-			DomainAllowList:   r.DomainAllowList,
-			HostBlockList:     r.HostBlockList,
-			DefaultDomainName: r.DefaultDomainName,
-		}
-		validationFailures := validator.Validate(api, vsList, config)
+		//1.2) Validate input including host
+		validationFailures := validator.Validate(api, vsList, r.Config)
 		if len(validationFailures) > 0 {
 			failuresJson, _ := json.Marshal(validationFailures)
 			r.Log.Info(fmt.Sprintf(`Validation failure {"controller": "Api", "request": "%s/%s", "failures": %s}`, api.Namespace, api.Name, string(failuresJson)))
@@ -114,19 +176,19 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 
 		//2) Compute list of required objects (the set of objects required to satisfy our contract on apiRule.Spec, not yet applied)
 		factory := processing.NewFactory(r.Client, r.Log, r.OathkeeperSvc, r.OathkeeperSvcPort, r.CorsConfig, r.GeneratedObjectsLabels, r.DefaultDomainName)
-		requiredObjects := factory.CalculateRequiredState(api, config)
+		requiredObjects := factory.CalculateRequiredState(api, r.Config)
 
 		//3.1 Fetch all existing objects related to _this_ apiRule from the cluster (VS, Rules)
-		actualObjects, err := factory.GetActualState(ctx, api, config)
+		actualObjects, err := factory.GetActualState(ctx, api, r.Config)
 		if err != nil {
 			return r.setStatusForError(ctx, api, err, gatewayv1beta1.StatusSkipped)
 		}
 
 		//3.2 Compute patch object
-		patch := factory.CalculateDiff(requiredObjects, actualObjects, config)
+		patch := factory.CalculateDiff(requiredObjects, actualObjects, r.Config)
 
 		//3.3 Apply changes to the cluster
-		err = factory.ApplyDiff(ctx, patch, config)
+		err = factory.ApplyDiff(ctx, patch, r.Config)
 		if err != nil {
 			//We don't know exactly which object(s) are not updated properly.
 			//The safest approach is to assume nothing is correct and just use `StatusError`.
@@ -141,13 +203,15 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		return r.setStatus(ctx, api, APIStatus, gatewayv1beta1.StatusOK)
 	}
 
-	return doneReconcile()
+	return r.doneReconcile()
 }
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *APIRuleReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&gatewayv1beta1.APIRule{}).
+		Watches(&source.Kind{Type: &corev1.ConfigMap{}}, &handler.EnqueueRequestForObject{}).
+		WithEventFilter(&configMapPredicate{Log: r.Log}).
 		Complete(r)
 }
 
@@ -196,10 +260,11 @@ func (r *APIRuleReconciler) updateStatusOrRetry(ctx context.Context, api *gatewa
 		return retryReconcile(updateStatusErr) //controller retries to set the correct status eventually.
 	}
 	//Fail fast: If status is updated, users are informed about the problem. We don't need to reconcile again.
-	return doneReconcile()
+	return r.doneReconcile()
 }
 
-func doneReconcile() (ctrl.Result, error) {
+func (r *APIRuleReconciler) doneReconcile() (ctrl.Result, error) {
+	r.Log.Info("Ending reconcilation")
 	return ctrl.Result{}, nil
 }
 

@@ -9,6 +9,7 @@ import (
 	"github.com/kyma-incubator/api-gateway/internal/builders"
 	"github.com/kyma-incubator/api-gateway/internal/helpers"
 	"github.com/kyma-incubator/api-gateway/internal/processing"
+	istioint "github.com/kyma-incubator/api-gateway/internal/types/istio"
 
 	"encoding/json"
 
@@ -18,6 +19,7 @@ import (
 	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
+	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -64,12 +66,14 @@ var _ = Describe("APIRule Controller", func() {
 		AllowMethods(TestAllowMethods...).
 		AllowOrigins(TestAllowOrigins...)
 
-	var oryJwtHandlerFakeFileReader = FakeFileReader{FileContent: fmt.Sprintf("jwtHandler: %s", helpers.JWT_HANDLER_ORY)}
-	var istioJwtHandlerFakeFileReader = FakeFileReader{FileContent: fmt.Sprintf("jwtHandler: %s", helpers.JWT_HANDLER_ISTIO)}
-
 	BeforeEach(func() {
-		// We define the oryJwtHandler as the default for all tests
-		helpers.ReadFileHandle = oryJwtHandlerFakeFileReader.ReadFile
+		// We configure `ory` in ConfigMap as the default for all tests
+		cm := testConfigMap(helpers.JWT_HANDLER_ORY)
+		err := c.Update(context.TODO(), cm)
+		if apierrors.IsInvalid(err) {
+			Fail(fmt.Sprintf("failed to update configmap, got an invalid object error: %v", err))
+		}
+		Expect(err).NotTo(HaveOccurred())
 	})
 
 	Context("when updating the APIRule with multiple paths", func() {
@@ -291,6 +295,7 @@ var _ = Describe("APIRule Controller", func() {
 					})
 				})
 			})
+
 			Context("secured with JWT token authentication,", func() {
 				Context("with ORY as JWT handler,", func() {
 					Context("in a happy-path scenario", func() {
@@ -439,10 +444,20 @@ var _ = Describe("APIRule Controller", func() {
 						})
 					})
 				})
+
 				Context("with Istio as JWT handler,", func() {
 					Context("in a happy-path scenario", func() {
 						It("should create a VirtualService, a RequestAuthentication and AuthorizationPolicies", func() {
-							helpers.ReadFileHandle = istioJwtHandlerFakeFileReader.ReadFile
+							cm := testConfigMap("istio")
+							err := c.Update(context.TODO(), cm)
+
+							if apierrors.IsInvalid(err) {
+								Fail(fmt.Sprintf("failed to update configmap, got an invalid object error: %v", err))
+							}
+							Expect(err).NotTo(HaveOccurred())
+
+							expectedRequest := reconcile.Request{NamespacedName: types.NamespacedName{Name: cm.Name, Namespace: cm.Namespace}}
+							Eventually(requests, timeout).Should(Receive(Equal(expectedRequest)))
 
 							apiRuleName := generateTestName(testNameBase, testIDLength)
 							testServiceHost := "httpbin-istio-jwt-happy-base.kyma.local"
@@ -451,7 +466,7 @@ var _ = Describe("APIRule Controller", func() {
 							rule2 := testRule("/headers", []string{"GET"}, nil, testIstioJWTHandler(testIssuer, testJwksUri))
 							instance := testInstance(apiRuleName, testNamespace, testServiceName, testServiceHost, testServicePort, []gatewayv1beta1.Rule{rule1, rule2})
 
-							err := c.Create(context.TODO(), instance)
+							err = c.Create(context.TODO(), instance)
 							if apierrors.IsInvalid(err) {
 								Fail(fmt.Sprintf("failed to create object, got an invalid object error: %v", err))
 								return
@@ -462,8 +477,7 @@ var _ = Describe("APIRule Controller", func() {
 								Expect(err).NotTo(HaveOccurred())
 							}()
 
-							expectedRequest := reconcile.Request{NamespacedName: types.NamespacedName{Name: apiRuleName, Namespace: testNamespace}}
-
+							expectedRequest = reconcile.Request{NamespacedName: types.NamespacedName{Name: apiRuleName, Namespace: testNamespace}}
 							Eventually(requests, timeout).Should(Receive(Equal(expectedRequest)))
 
 							matchingLabels := matchingLabelsFunc(apiRuleName, testNamespace)
@@ -693,6 +707,11 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 		return err
 	}
 
+	err = c.Watch(&source.Kind{Type: &corev1.ConfigMap{}}, &handler.EnqueueRequestForObject{})
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -743,6 +762,18 @@ func testInstance(name, namespace, serviceName, serviceHost string, servicePort 
 	}
 }
 
+func testConfigMap(jwtHandler string) *corev1.ConfigMap {
+	return &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      helpers.CM_NAME,
+			Namespace: helpers.CM_NS,
+		},
+		Data: map[string]string{
+			helpers.CM_KEY: fmt.Sprintf("jwtHandler: %s", jwtHandler),
+		},
+	}
+}
+
 func verifyOwnerReference(m metav1.ObjectMeta, name, version, kind string) {
 	Expect(m.OwnerReferences).To(HaveLen(1))
 	Expect(m.OwnerReferences[0].APIVersion).To(Equal(version))
@@ -754,12 +785,11 @@ func verifyOwnerReference(m metav1.ObjectMeta, name, version, kind string) {
 
 func testOryJWTHandler(issuer string, scopes []string) *gatewayv1beta1.Handler {
 
-	configJSON := fmt.Sprintf(`
-		{
+	configJSON := fmt.Sprintf(`{
 			"trusted_issuers": ["%s"],
 			"jwks": [],
 			"required_scope": [%s]
-	}`, issuer, toCSVList(scopes))
+		}`, issuer, toCSVList(scopes))
 
 	return &gatewayv1beta1.Handler{
 		Name: "jwt",
@@ -771,19 +801,19 @@ func testOryJWTHandler(issuer string, scopes []string) *gatewayv1beta1.Handler {
 
 func testIstioJWTHandler(issuer string, jwksUri string) *gatewayv1beta1.Handler {
 
-	configJSON := fmt.Sprintf(`
-		{
-  			"authentications": [
-    			{
-      				"issuer": "%s",
-      				"jwksUri": "%s"
-    			}
-  			]}`, issuer, jwksUri)
-
+	bytes, err := json.Marshal(istioint.JwtConfig{
+		Authentications: []istioint.JwtAuth{
+			{
+				Issuer:  issuer,
+				JwksUri: jwksUri,
+			},
+		},
+	})
+	Expect(err).To(BeNil())
 	return &gatewayv1beta1.Handler{
 		Name: "jwt",
 		Config: &runtime.RawExtension{
-			Raw: []byte(configJSON),
+			Raw: bytes,
 		},
 	}
 }

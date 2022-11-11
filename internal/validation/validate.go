@@ -44,12 +44,16 @@ type APIRule struct {
 	DefaultDomainName string
 }
 
+// Failure carries validation failures for a single attribute of an object.
+type Failure struct {
+	AttributePath string
+	Message       string
+}
+
 // Validate performs APIRule validation
 func (v *APIRule) Validate(api *gatewayv1beta1.APIRule, vsList networkingv1beta1.VirtualServiceList, config *helpers.Config) []Failure {
-
 	res := []Failure{}
 
-	res = append(res, v.validateConfig(config)...)
 	//Validate service on path level if it is created
 	if api.Spec.Service != nil {
 		res = append(res, v.validateService(".spec.service", api)...)
@@ -64,13 +68,7 @@ func (v *APIRule) Validate(api *gatewayv1beta1.APIRule, vsList networkingv1beta1
 	return res
 }
 
-// Failure carries validation failures for a single attribute of an object.
-type Failure struct {
-	AttributePath string
-	Message       string
-}
-
-func (v *APIRule) validateConfig(config *helpers.Config) []Failure {
+func (v *APIRule) ValidateConfig(config *helpers.Config) []Failure {
 	var problems []Failure
 
 	if config == nil {

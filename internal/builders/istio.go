@@ -2,6 +2,7 @@ package builders
 
 import (
 	"encoding/json"
+
 	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
 	"istio.io/api/security/v1beta1"
 	apiv1beta1 "istio.io/api/type/v1beta1"
@@ -288,8 +289,9 @@ func (jr *JwtRule) From(val []*gatewayv1beta1.Authenticator) *JwtRule {
 		authentications := &Authentications{
 			Authentications: []*Authentication{},
 		}
-		_ = json.Unmarshal(accessStrategy.Config.Raw, authentications)
-
+		if accessStrategy.Config != nil {
+			_ = json.Unmarshal(accessStrategy.Config.Raw, authentications)
+		}
 		for _, authentication := range authentications.Authentications {
 			*jr.value = append(*jr.value, &v1beta1.JWTRule{
 				Issuer:  authentication.Issuer,

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -47,12 +48,19 @@ var (
 	isExernal                                bool
 )
 
-type FakeFileReader struct {
-	FileContent string
+type FakeConfigMapReader struct {
+	Content string
 }
 
-func (f FakeFileReader) ReadFile(filename string) ([]byte, error) {
-	return io.ReadAll(bytes.NewBufferString(f.FileContent))
+func (f FakeConfigMapReader) ReadConfigMap(ctx context.Context, client client.Client) ([]byte, error) {
+	return io.ReadAll(bytes.NewBufferString(f.Content))
+}
+
+type ErrorFileReader struct {
+}
+
+func (e ErrorFileReader) ReadFile(filename string) ([]byte, error) {
+	return []byte{}, errors.New("foo-error")
 }
 
 var _ = Describe("Controller", func() {
@@ -65,19 +73,94 @@ var _ = Describe("Controller", func() {
 				reconciler := getAPIReconciler(ts.mgr)
 				ctx := context.Background()
 
-				fakeFileReader := FakeFileReader{FileContent: fmt.Sprintf("jwtHandler: %s", helpers.JWT_HANDLER_ORY)}
-				helpers.ReadFileHandle = fakeFileReader.ReadFile
+				fakeReader := FakeConfigMapReader{Content: fmt.Sprintf("jwtHandler: %s", helpers.JWT_HANDLER_ORY)}
+				helpers.ReadConfigMapHandle = fakeReader.ReadConfigMap
 
-				result, err := reconciler.Reconcile(ctx, reconcile.Request{NamespacedName: types.NamespacedName{Name: testAPI.Name}})
+				defer func() {
+					helpers.ReadConfigMapHandle = helpers.ReadConfigMap
+				}()
+
+				result, err := reconciler.Reconcile(ctx, reconcile.Request{NamespacedName: types.NamespacedName{Namespace: testAPI.Namespace, Name: testAPI.Name}})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(result.Requeue).To(BeFalse())
 
-				res := gatewayv1beta1.APIRule{}
-				err = ts.mgr.GetClient().Get(context.Background(), types.NamespacedName{Namespace: testAPI.Namespace, Name: testAPI.Name}, &res)
+				apiRule := gatewayv1beta1.APIRule{}
+				err = ts.mgr.GetClient().Get(context.Background(), types.NamespacedName{Namespace: testAPI.Namespace, Name: testAPI.Name}, &apiRule)
 				Expect(err).ToNot(HaveOccurred())
-				Expect(res.Status.AccessRuleStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
-				Expect(res.Status.VirtualServiceStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
-				Expect(res.Status.APIRuleStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
+				Expect(apiRule.Status.APIRuleStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
+				Expect(apiRule.Status.AccessRuleStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
+				Expect(apiRule.Status.VirtualServiceStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
+			})
+
+			It("should fail if config is empty", func() {
+				testAPI := getApiRule("noop", nil)
+
+				ts = getTestSuite(testAPI)
+				reconciler := getAPIReconciler(ts.mgr)
+				ctx := context.Background()
+
+				errorReader := FakeConfigMapReader{}
+				helpers.ReadConfigMapHandle = errorReader.ReadConfigMap
+
+				defer func() {
+					helpers.ReadConfigMapHandle = helpers.ReadConfigMap
+				}()
+
+				_, err := reconciler.Reconcile(ctx, reconcile.Request{NamespacedName: types.NamespacedName{Namespace: testAPI.Namespace, Name: testAPI.Name}})
+				Expect(err).ToNot(HaveOccurred())
+
+				apiRule := gatewayv1beta1.APIRule{}
+				err = ts.mgr.GetClient().Get(context.Background(), types.NamespacedName{Namespace: testAPI.Namespace, Name: testAPI.Name}, &apiRule)
+				Expect(err).ToNot(HaveOccurred())
+				Expect(apiRule.Status.APIRuleStatus.Code).To(Equal(gatewayv1beta1.StatusError))
+			})
+
+			It("should fail if config is in wrong format", func() {
+				testAPI := getApiRule("noop", nil)
+
+				ts = getTestSuite(testAPI)
+				reconciler := getAPIReconciler(ts.mgr)
+				ctx := context.Background()
+
+				fakeReader := FakeConfigMapReader{Content: "<xml/>"}
+				helpers.ReadConfigMapHandle = fakeReader.ReadConfigMap
+
+				defer func() {
+					helpers.ReadConfigMapHandle = helpers.ReadConfigMap
+				}()
+
+				_, err := reconciler.Reconcile(ctx, reconcile.Request{NamespacedName: types.NamespacedName{Namespace: testAPI.Namespace, Name: testAPI.Name}})
+				Expect(err).ToNot(HaveOccurred())
+
+				apiRule := gatewayv1beta1.APIRule{}
+				err = ts.mgr.GetClient().Get(context.Background(), types.NamespacedName{Namespace: testAPI.Namespace, Name: testAPI.Name}, &apiRule)
+				Expect(err).ToNot(HaveOccurred())
+				Expect(apiRule.Status.APIRuleStatus.Code).To(Equal(gatewayv1beta1.StatusError))
+			})
+
+			It("should fail if config is unsupported", func() {
+				testAPI := getApiRule("noop", nil)
+
+				ts = getTestSuite(testAPI)
+				reconciler := getAPIReconciler(ts.mgr)
+				ctx := context.Background()
+
+				fakeReader := FakeConfigMapReader{Content: "jwtHandler: foo"}
+				helpers.ReadConfigMapHandle = fakeReader.ReadConfigMap
+
+				defer func() {
+					helpers.ReadConfigMapHandle = helpers.ReadConfigMap
+				}()
+
+				_, err := reconciler.Reconcile(ctx, reconcile.Request{NamespacedName: types.NamespacedName{Namespace: testAPI.Namespace, Name: testAPI.Name}})
+				Expect(err).ToNot(HaveOccurred())
+
+				apiRule := gatewayv1beta1.APIRule{}
+				err = ts.mgr.GetClient().Get(context.Background(), types.NamespacedName{Namespace: testAPI.Namespace, Name: testAPI.Name}, &apiRule)
+				Expect(err).ToNot(HaveOccurred())
+				Expect(apiRule.Status.APIRuleStatus.Code).To(Equal(gatewayv1beta1.StatusError))
+
+				Expect(apiRule.Status.APIRuleStatus.Description).To(Equal(`Validation error: Attribute "": Unsupported JWT Handler: foo`))
 			})
 
 			Context("when the jwt handler is istio", func() {
@@ -88,20 +171,24 @@ var _ = Describe("Controller", func() {
 					reconciler := getAPIReconciler(ts.mgr)
 					ctx := context.Background()
 
-					fakeFileReader := FakeFileReader{FileContent: fmt.Sprintf("jwtHandler: %s", helpers.JWT_HANDLER_ISTIO)}
-					helpers.ReadFileHandle = fakeFileReader.ReadFile
+					fakeReader := FakeConfigMapReader{Content: fmt.Sprintf("jwtHandler: %s", helpers.JWT_HANDLER_ISTIO)}
+					helpers.ReadConfigMapHandle = fakeReader.ReadConfigMap
 
-					result, err := reconciler.Reconcile(ctx, reconcile.Request{NamespacedName: types.NamespacedName{Name: testAPI.Name}})
+					defer func() {
+						helpers.ReadConfigMapHandle = helpers.ReadConfigMap
+					}()
+
+					result, err := reconciler.Reconcile(ctx, reconcile.Request{NamespacedName: types.NamespacedName{Namespace: testAPI.Namespace, Name: testAPI.Name}})
 					Expect(err).ToNot(HaveOccurred())
 					Expect(result.Requeue).To(BeFalse())
 
-					res := gatewayv1beta1.APIRule{}
-					err = ts.mgr.GetClient().Get(context.Background(), types.NamespacedName{Namespace: testAPI.Namespace, Name: testAPI.Name}, &res)
+					apiRule := gatewayv1beta1.APIRule{}
+					err = ts.mgr.GetClient().Get(context.Background(), types.NamespacedName{Namespace: testAPI.Namespace, Name: testAPI.Name}, &apiRule)
 					Expect(err).ToNot(HaveOccurred())
-					Expect(res.Status.VirtualServiceStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
-					Expect(res.Status.RequestAuthenticationStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
-					Expect(res.Status.AuthorizationPolicyStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
-					Expect(res.Status.APIRuleStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
+					Expect(apiRule.Status.APIRuleStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
+					Expect(apiRule.Status.VirtualServiceStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
+					Expect(apiRule.Status.RequestAuthenticationStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
+					Expect(apiRule.Status.AuthorizationPolicyStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
 				})
 			})
 		})
@@ -118,6 +205,7 @@ func getApiRule(authStrategy string, authConfig *runtime.RawExtension) *gatewayv
 	return &gatewayv1beta1.APIRule{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:       "test",
+			Namespace:  "some-namespace",
 			Generation: 1,
 		},
 		Spec: gatewayv1beta1.APIRuleSpec{
@@ -177,6 +265,7 @@ func getAPIReconciler(mgr manager.Manager) reconcile.Reconciler {
 			AllowHeaders: TestAllowHeaders,
 		},
 		GeneratedObjectsLabels: map[string]string{},
+		Config:                 &helpers.Config{},
 	}
 }
 
