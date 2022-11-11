@@ -131,7 +131,7 @@ func getTestSuite(objects ...runtime.Object) *testSuite {
 	Expect(err).NotTo(HaveOccurred())
 
 	return &testSuite{
-		mgr: getFakeManager(fake.NewFakeClientWithScheme(scheme.Scheme, objects...), scheme.Scheme),
+		mgr: getFakeManager(fake.NewClientBuilder().WithScheme(scheme.Scheme).WithRuntimeObjects(objects...).Build(), scheme.Scheme),
 	}
 }
 

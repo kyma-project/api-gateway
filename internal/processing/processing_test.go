@@ -56,11 +56,6 @@ var (
 		AllowMethods: testAllowMethods,
 		AllowHeaders: testAllowHeaders,
 	}
-	expectedCorsPolicy = v1beta1.CorsPolicy{
-		AllowOrigins: testAllowOrigin,
-		AllowMethods: testAllowMethods,
-		AllowHeaders: testAllowHeaders,
-	}
 
 	testAdditionalLabels = map[string]string{testLabelKey: testLabelValue}
 )
@@ -1031,9 +1026,12 @@ var _ = Describe("Factory", func() {
 				}
 
 				scheme := runtime.NewScheme()
-				rulev1alpha1.AddToScheme(scheme)
-				networkingv1beta1.AddToScheme(scheme)
-				gatewayv1beta1.AddToScheme(scheme)
+				err := rulev1alpha1.AddToScheme(scheme)
+				Expect(err).NotTo(HaveOccurred())
+				err = networkingv1beta1.AddToScheme(scheme)
+				Expect(err).NotTo(HaveOccurred())
+				err = gatewayv1beta1.AddToScheme(scheme)
+				Expect(err).NotTo(HaveOccurred())
 
 				client := fake.NewClientBuilder().WithScheme(scheme).WithObjects(&rule, &vs).Build()
 
