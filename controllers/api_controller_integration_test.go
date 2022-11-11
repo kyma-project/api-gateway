@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/kyma-incubator/api-gateway/internal/builders"
-	"github.com/kyma-incubator/api-gateway/internal/helpers"
 	"github.com/kyma-incubator/api-gateway/internal/processing"
 
 	"encoding/json"
@@ -61,9 +60,6 @@ var _ = Describe("APIRule Controller", func() {
 		AllowHeaders(TestAllowHeaders...).
 		AllowMethods(TestAllowMethods...).
 		AllowOrigins(TestAllowOrigins...)
-
-	fakeFileReader := FakeFileReader{FileContent: fmt.Sprintf("jwtHandler: %s", helpers.JWT_HANDLER_ORY)}
-	helpers.ReadFileHandle = fakeFileReader.ReadFile
 
 	Context("when updating the APIRule with multiple paths", func() {
 

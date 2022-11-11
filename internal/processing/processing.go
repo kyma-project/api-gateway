@@ -11,7 +11,6 @@ import (
 	"github.com/go-logr/logr"
 	gatewayv1alpha1 "github.com/kyma-incubator/api-gateway/api/v1alpha1"
 	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
-	"github.com/kyma-incubator/api-gateway/internal/helpers"
 	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 )
@@ -55,29 +54,19 @@ type CorsConfig struct {
 }
 
 // CalculateRequiredState returns required state of all objects related to given api
-func (f *Factory) CalculateRequiredState(api *gatewayv1beta1.APIRule, config *helpers.Config) *State {
+func (f *Factory) CalculateRequiredState(api *gatewayv1beta1.APIRule) *State {
 	var res State
 	pathDuplicates := hasPathDuplicates(api.Spec.Rules)
 	res.accessRules = make(map[string]*rulev1alpha1.Rule)
 	for _, rule := range api.Spec.Rules {
 		if isSecured(rule) {
-			var ar *rulev1alpha1.Rule
-			if config.JWTHandler == helpers.JWT_HANDLER_ORY {
-				ar = generateAccessRule(api, rule, rule.AccessStrategies, f.additionalLabels, f.defaultDomainName)
-			} else if config.JWTHandler == helpers.JWT_HANDLER_ISTIO {
-				//TODO generate based on config.JWTHandler="istio"
-			}
+			ar := generateAccessRule(api, rule, rule.AccessStrategies, f.additionalLabels, f.defaultDomainName)
 			res.accessRules[setAccessRuleKey(pathDuplicates, *ar)] = ar
 		}
 	}
 
 	//Only one vs
-	var vs *networkingv1beta1.VirtualService
-	if config.JWTHandler == helpers.JWT_HANDLER_ORY {
-		vs = f.generateVirtualService(api)
-	} else if config.JWTHandler == helpers.JWT_HANDLER_ISTIO {
-		//TODO generate based on config.JWTHandler="istio"
-	}
+	vs := f.generateVirtualService(api)
 	res.virtualService = vs
 
 	return &res
