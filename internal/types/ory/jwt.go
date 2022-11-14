@@ -1,4 +1,4 @@
-package v1alpha1
+package ory
 
 // JWTAccStrConfig is used to deserialize jwt accessStrategy configuration for the validation purposes
 type JWTAccStrConfig struct {
