@@ -17,12 +17,12 @@ var (
 )
 
 // Reconcile executes the reconciliation of the APIRule using the given processors.
-func Reconcile(apiRule *gatewayv1beta1.APIRule, processors []ReconciliationProcessor) (gatewayv1beta1.StatusCode, error) {
+func Reconcile(processors []ReconciliationProcessor, apiRule *gatewayv1beta1.APIRule) (gatewayv1beta1.StatusCode, error) {
 	// TODO: There are multiple ways to improve this. We could do it async, but the added complexity might not be worth it.
 	//  And we can return the status for each processor/object kind to the caller.
 	for _, processor := range processors {
 
-		status, err := processor.Reconcile(apiRule)
+		status, err := processor.process(apiRule)
 
 		if status != gatewayv1beta1.StatusOK {
 			return status, err
@@ -64,4 +64,13 @@ func applyObjDiff(ctx context.Context, client client.Client, objToPatch *ObjToPa
 	}
 
 	return nil
+}
+
+func GetReconciliationProcessors(config ReconciliationConfig, apiRule *gatewayv1beta1.APIRule) []ReconciliationProcessor {
+	// TODO This apiRule check is just a dummy for real checks
+	if apiRule != nil {
+		return []ReconciliationProcessor{NewVirtualServiceProcessor(config), NewAccessRuleProcessor(config)}
+	} else {
+		return []ReconciliationProcessor{}
+	}
 }
