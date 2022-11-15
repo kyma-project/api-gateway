@@ -26,7 +26,7 @@ func NewAccessRuleProcessor(config ReconciliationConfig) AccessRuleProcessor {
 	}
 }
 
-func (a AccessRuleProcessor) evaluateReconciliation(apiRule *gatewayv1beta1.APIRule) ([]*ReconciliationCommand, gatewayv1beta1.StatusCode, error) {
+func (a AccessRuleProcessor) EvaluateReconciliation(apiRule *gatewayv1beta1.APIRule) ([]*ReconciliationCommand, gatewayv1beta1.StatusCode, error) {
 	desired := a.getDesiredState(apiRule)
 	actual, err := a.getActualState(a.ctx, apiRule)
 	if err != nil {

@@ -77,5 +77,5 @@ func NewReconciliationConfig(client client.Client,
 }
 
 type ReconciliationProcessor interface {
-	evaluateReconciliation(*gatewayv1beta1.APIRule) ([]*ReconciliationCommand, gatewayv1beta1.StatusCode, error)
+	EvaluateReconciliation(*gatewayv1beta1.APIRule) ([]*ReconciliationCommand, gatewayv1beta1.StatusCode, error)
 }

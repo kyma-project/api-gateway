@@ -22,7 +22,7 @@ func Reconcile(client client.Client, ctx context.Context, processors []Reconcili
 	//  And we can return the status for each processor/object kind to the caller.
 	for _, processor := range processors {
 
-		cmds, status, err := processor.evaluateReconciliation(apiRule)
+		cmds, status, err := processor.EvaluateReconciliation(apiRule)
 		if status != gatewayv1beta1.StatusOK {
 			return status, err
 		}
@@ -79,6 +79,6 @@ func GetReconciliationProcessors(config ReconciliationConfig, apiRule *gatewayv1
 	if apiRule != nil {
 		return []ReconciliationProcessor{NewVirtualServiceProcessor(config), NewAccessRuleProcessor(config)}
 	} else {
-		return []ReconciliationProcessor{}
+		return []ReconciliationProcessor{NewVirtualServiceProcessor(config)}
 	}
 }

@@ -32,7 +32,7 @@ func NewVirtualServiceProcessor(config ReconciliationConfig) VirtualServiceProce
 	}
 }
 
-func (v VirtualServiceProcessor) evaluateReconciliation(apiRule *gatewayv1beta1.APIRule) ([]*ReconciliationCommand, gatewayv1beta1.StatusCode, error) {
+func (v VirtualServiceProcessor) EvaluateReconciliation(apiRule *gatewayv1beta1.APIRule) ([]*ReconciliationCommand, gatewayv1beta1.StatusCode, error) {
 	desired := v.getDesiredState(apiRule)
 	actual, err := v.getActualState(v.ctx, apiRule)
 	if err != nil {
