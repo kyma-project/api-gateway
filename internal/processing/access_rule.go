@@ -99,6 +99,7 @@ func (a AccessRuleProcessor) getActualState(ctx context.Context, api *gatewayv1b
 }
 
 func setAccessRuleKey(hasPathDuplicates bool, rule rulev1alpha1.Rule) string {
+	// TODO: We can keep it simple by always using the path and methods as key. This way we can remove the hasPathDuplicates.
 	if hasPathDuplicates {
 		return fmt.Sprintf("%s:%s", rule.Spec.Match.URL, rule.Spec.Match.Methods)
 	}
