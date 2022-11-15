@@ -85,7 +85,7 @@ var _ = Describe("Factory", func() {
 
 				vsProcessor := NewVirtualServiceProcessor(config)
 
-				desiredState := vsProcessor.getDesiredObject(apiRule)
+				desiredState := vsProcessor.getDesiredState(apiRule)
 				vs := desiredState
 
 				//verify VS
@@ -145,9 +145,9 @@ var _ = Describe("Factory", func() {
 				vsProcessor := NewVirtualServiceProcessor(config)
 				arProcessor := NewAccessRuleProcessor(config)
 
-				desiredVsState := vsProcessor.getDesiredObject(apiRule)
+				desiredVsState := vsProcessor.getDesiredState(apiRule)
 				vs := desiredVsState
-				desiredArState := arProcessor.getDesiredObject(apiRule)
+				desiredArState := arProcessor.getDesiredState(apiRule)
 				accessRules := desiredArState
 
 				//verify VS has rule level destination host
@@ -184,9 +184,9 @@ var _ = Describe("Factory", func() {
 				vsProcessor := NewVirtualServiceProcessor(config)
 				arProcessor := NewAccessRuleProcessor(config)
 
-				desiredVsState := vsProcessor.getDesiredObject(apiRule)
+				desiredVsState := vsProcessor.getDesiredState(apiRule)
 				vs := desiredVsState
-				desiredArState := arProcessor.getDesiredObject(apiRule)
+				desiredArState := arProcessor.getDesiredState(apiRule)
 				accessRules := desiredArState
 
 				expectedNoopRuleMatchURL := fmt.Sprintf("<http|https>://%s<%s>", serviceHost, apiPath)
@@ -229,9 +229,9 @@ var _ = Describe("Factory", func() {
 				vsProcessor := NewVirtualServiceProcessor(config)
 				arProcessor := NewAccessRuleProcessor(config)
 
-				desiredVsState := vsProcessor.getDesiredObject(apiRule)
+				desiredVsState := vsProcessor.getDesiredState(apiRule)
 				vs := desiredVsState
-				desiredArState := arProcessor.getDesiredObject(apiRule)
+				desiredArState := arProcessor.getDesiredState(apiRule)
 				accessRules := desiredArState
 
 				expectedNoopRuleMatchURL := fmt.Sprintf("<http|https>://%s<%s>", serviceHost, apiPath)
@@ -272,9 +272,9 @@ var _ = Describe("Factory", func() {
 				vsProcessor := NewVirtualServiceProcessor(config)
 				arProcessor := NewAccessRuleProcessor(config)
 
-				desiredVsState := vsProcessor.getDesiredObject(apiRule)
+				desiredVsState := vsProcessor.getDesiredState(apiRule)
 				vs := desiredVsState
-				desiredArState := arProcessor.getDesiredObject(apiRule)
+				desiredArState := arProcessor.getDesiredState(apiRule)
 				accessRules := desiredArState
 
 				//verify VS has rule level destination host
@@ -313,9 +313,9 @@ var _ = Describe("Factory", func() {
 				vsProcessor := NewVirtualServiceProcessor(config)
 				arProcessor := NewAccessRuleProcessor(config)
 
-				desiredVsState := vsProcessor.getDesiredObject(apiRule)
+				desiredVsState := vsProcessor.getDesiredState(apiRule)
 				vs := desiredVsState
-				desiredArState := arProcessor.getDesiredObject(apiRule)
+				desiredArState := arProcessor.getDesiredState(apiRule)
 				accessRules := desiredArState
 
 				//verify VS has rule level destination host
@@ -380,9 +380,9 @@ var _ = Describe("Factory", func() {
 				vsProcessor := NewVirtualServiceProcessor(config)
 				arProcessor := NewAccessRuleProcessor(config)
 
-				desiredVsState := vsProcessor.getDesiredObject(apiRule)
+				desiredVsState := vsProcessor.getDesiredState(apiRule)
 				vs := desiredVsState
-				desiredArState := arProcessor.getDesiredObject(apiRule)
+				desiredArState := arProcessor.getDesiredState(apiRule)
 				accessRules := desiredArState
 
 				//verify VS
@@ -543,9 +543,9 @@ var _ = Describe("Factory", func() {
 				vsProcessor := NewVirtualServiceProcessor(config)
 				arProcessor := NewAccessRuleProcessor(config)
 
-				desiredVsState := vsProcessor.getDesiredObject(apiRule)
+				desiredVsState := vsProcessor.getDesiredState(apiRule)
 				vs := desiredVsState
-				desiredArState := arProcessor.getDesiredObject(apiRule)
+				desiredArState := arProcessor.getDesiredState(apiRule)
 				accessRules := desiredArState
 
 				//verify VS
@@ -699,9 +699,9 @@ var _ = Describe("Factory", func() {
 				vsProcessor := NewVirtualServiceProcessor(config)
 				arProcessor := NewAccessRuleProcessor(config)
 
-				desiredVsState := vsProcessor.getDesiredObject(apiRule)
+				desiredVsState := vsProcessor.getDesiredState(apiRule)
 				vs := desiredVsState
-				desiredArState := arProcessor.getDesiredObject(apiRule)
+				desiredArState := arProcessor.getDesiredState(apiRule)
 				accessRules := desiredArState
 
 				//verify VS
@@ -870,9 +870,9 @@ var _ = Describe("Factory", func() {
 				vsProcessor := NewVirtualServiceProcessor(config)
 				arProcessor := NewAccessRuleProcessor(config)
 
-				desiredVsState := vsProcessor.getDesiredObject(apiRule)
+				desiredVsState := vsProcessor.getDesiredState(apiRule)
 				vs := desiredVsState
-				desiredArState := arProcessor.getDesiredObject(apiRule)
+				desiredArState := arProcessor.getDesiredState(apiRule)
 				accessRules := desiredArState
 
 				//verify VS
@@ -993,9 +993,9 @@ var _ = Describe("Factory", func() {
 					vsProcessor := NewVirtualServiceProcessor(config)
 					arProcessor := NewAccessRuleProcessor(config)
 
-					desiredVsState := vsProcessor.getDesiredObject(apiRule)
+					desiredVsState := vsProcessor.getDesiredState(apiRule)
 					vs := desiredVsState
-					desiredArState := arProcessor.getDesiredObject(apiRule)
+					desiredArState := arProcessor.getDesiredState(apiRule)
 					accessRules := desiredArState
 
 					//verify VS
@@ -1096,9 +1096,9 @@ var _ = Describe("Factory", func() {
 				config := NewReconciliationConfig(nil, context.TODO(), oathkeeperSvc, oathkeeperSvcPort, testCors, testAdditionalLabels, defaultDomain)
 				vsProcessor := NewVirtualServiceProcessor(config)
 
-				desiredVsState := vsProcessor.getDesiredObject(apiRule)
+				desiredVsState := vsProcessor.getDesiredState(apiRule)
 
-				patch := vsProcessor.getDiff(desiredVsState, &networkingv1beta1.VirtualService{})
+				patch := vsProcessor.getReconciliationCommand(desiredVsState, &networkingv1beta1.VirtualService{})
 
 				//Verify patch
 				// TODO
@@ -1147,8 +1147,8 @@ var _ = Describe("Factory", func() {
 				//vsProcessor := NewVirtualServiceProcessor(config)
 				//arProcessor := NewAccessRuleProcessor(config)
 				//
-				//desiredVsState := vsProcessor.getDesiredObject(apiRule)
-				//desiredArState := arProcessor.getDesiredObject(apiRule)
+				//desiredVsState := vsProcessor.getDesiredState(apiRule)
+				//desiredArState := arProcessor.getDesiredState(apiRule)
 				//
 				//
 				//// TODO

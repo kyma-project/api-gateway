@@ -26,56 +26,48 @@ func NewAccessRuleProcessor(config ReconciliationConfig) AccessRuleProcessor {
 	}
 }
 
-func (a AccessRuleProcessor) process(apiRule *gatewayv1beta1.APIRule) (gatewayv1beta1.StatusCode, error) {
-	desiredObjectState := a.getDesiredObject(apiRule)
-	actualObjectState, err := a.getActualState(a.ctx, apiRule)
+func (a AccessRuleProcessor) evaluateReconciliation(apiRule *gatewayv1beta1.APIRule) ([]*ReconciliationCommand, gatewayv1beta1.StatusCode, error) {
+	desired := a.getDesiredState(apiRule)
+	actual, err := a.getActualState(a.ctx, apiRule)
 	if err != nil {
-		// TODO: Why is the status Skipped (not Error) when fetching of acual state fails?
-		return gatewayv1beta1.StatusSkipped, err
+		return make([]*ReconciliationCommand, 0), gatewayv1beta1.StatusSkipped, err
 	}
 
-	objectsToApply := a.getDiff(desiredObjectState, actualObjectState)
-	err = applyDiff(a.ctx, a.client, objectsToApply...)
-	if err != nil {
-		// TODO: Old comment was:
-		//  "We don't know exactly which object(s) are not updated properly. The safest approach is to assume nothing is correct and just use `StatusError`."
-		//  Can we improve the Status here?
-		return gatewayv1beta1.StatusError, err
-	}
+	c := a.getReconciliationCommands(desired, actual)
 
-	return gatewayv1beta1.StatusOK, nil
+	return c, gatewayv1beta1.StatusOK, nil
 }
 
-func (a AccessRuleProcessor) getDiff(desiredRules map[string]*rulev1alpha1.Rule, actualRules map[string]*rulev1alpha1.Rule) []*ObjToPatch {
-	arPatch := make(map[string]*ObjToPatch)
+func (a AccessRuleProcessor) getReconciliationCommands(desiredRules map[string]*rulev1alpha1.Rule, actualRules map[string]*rulev1alpha1.Rule) []*ReconciliationCommand {
+	arApplyCommands := make(map[string]*ReconciliationCommand)
 
 	for path, rule := range desiredRules {
 
 		if actualRules[path] != nil {
 			modifyAccessRule(actualRules[path], rule)
-			arPatch[path] = NewUpdateObjectAction(actualRules[path])
+			arApplyCommands[path] = NewUpdateCommand(actualRules[path])
 		} else {
-			arPatch[path] = NewCreateObjectAction(rule)
+			arApplyCommands[path] = NewCreateCommand(rule)
 		}
 
 	}
 
 	for path, rule := range actualRules {
 		if desiredRules[path] == nil {
-			arPatch[path] = NewDeleteObjectAction(rule)
+			arApplyCommands[path] = NewDeleteCommand(rule)
 		}
 	}
 
-	objectsToApply := make([]*ObjToPatch, 0, len(arPatch))
+	applyCommands := make([]*ReconciliationCommand, 0, len(arApplyCommands))
 
-	for _, objectToApply := range arPatch {
-		objectsToApply = append(objectsToApply, objectToApply)
+	for _, applyCommand := range arApplyCommands {
+		applyCommands = append(applyCommands, applyCommand)
 	}
 
-	return objectsToApply
+	return applyCommands
 }
 
-func (a AccessRuleProcessor) getDesiredObject(api *gatewayv1beta1.APIRule) map[string]*rulev1alpha1.Rule {
+func (a AccessRuleProcessor) getDesiredState(api *gatewayv1beta1.APIRule) map[string]*rulev1alpha1.Rule {
 	pathDuplicates := hasPathDuplicates(api.Spec.Rules)
 	accessRules := make(map[string]*rulev1alpha1.Rule)
 	for _, rule := range api.Spec.Rules {

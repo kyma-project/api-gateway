@@ -9,27 +9,27 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-type ObjToPatch struct {
+type ReconciliationCommand struct {
 	action string
 	obj    client.Object
 }
 
-func NewCreateObjectAction(obj client.Object) *ObjToPatch {
-	return &ObjToPatch{
+func NewCreateCommand(obj client.Object) *ReconciliationCommand {
+	return &ReconciliationCommand{
 		action: "create",
 		obj:    obj,
 	}
 }
 
-func NewUpdateObjectAction(obj client.Object) *ObjToPatch {
-	return &ObjToPatch{
+func NewUpdateCommand(obj client.Object) *ReconciliationCommand {
+	return &ReconciliationCommand{
 		action: "update",
 		obj:    obj,
 	}
 }
 
-func NewDeleteObjectAction(obj client.Object) *ObjToPatch {
-	return &ObjToPatch{
+func NewDeleteCommand(obj client.Object) *ReconciliationCommand {
+	return &ReconciliationCommand{
 		action: "delete",
 		obj:    obj,
 	}
@@ -77,5 +77,5 @@ func NewReconciliationConfig(client client.Client,
 }
 
 type ReconciliationProcessor interface {
-	process(*gatewayv1beta1.APIRule) (gatewayv1beta1.StatusCode, error)
+	evaluateReconciliation(*gatewayv1beta1.APIRule) ([]*ReconciliationCommand, gatewayv1beta1.StatusCode, error)
 }

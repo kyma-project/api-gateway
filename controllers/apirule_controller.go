@@ -104,7 +104,7 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		config := processing.NewReconciliationConfig(r.Client, ctx, r.OathkeeperSvc, r.OathkeeperSvcPort, r.CorsConfig, r.GeneratedObjectsLabels, r.DefaultDomainName)
 		processors := processing.GetReconciliationProcessors(config, api)
 
-		status, err := processing.Reconcile(processors, api)
+		status, err := processing.Reconcile(r.Client, ctx, processors, api)
 		if status != gatewayv1beta1.StatusOK {
 			return r.setStatusForError(ctx, api, err, status)
 		}

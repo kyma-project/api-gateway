@@ -32,27 +32,19 @@ func NewVirtualServiceProcessor(config ReconciliationConfig) VirtualServiceProce
 	}
 }
 
-func (v VirtualServiceProcessor) process(apiRule *gatewayv1beta1.APIRule) (gatewayv1beta1.StatusCode, error) {
-	desiredObjectState := v.getDesiredObject(apiRule)
-	actualObjectState, err := v.getActualState(v.ctx, apiRule)
+func (v VirtualServiceProcessor) evaluateReconciliation(apiRule *gatewayv1beta1.APIRule) ([]*ReconciliationCommand, gatewayv1beta1.StatusCode, error) {
+	desired := v.getDesiredState(apiRule)
+	actual, err := v.getActualState(v.ctx, apiRule)
 	if err != nil {
-		// TODO: Why is the status Skipped (not Error) when fetching of acual state fails?
-		return gatewayv1beta1.StatusSkipped, err
+		return make([]*ReconciliationCommand, 0), gatewayv1beta1.StatusSkipped, err
 	}
 
-	objectsToApply := v.getDiff(desiredObjectState, actualObjectState)
-	err = applyDiff(v.ctx, v.client, objectsToApply)
-	if err != nil {
-		// TODO: Old comment was:
-		//  "We don't know exactly which object(s) are not updated properly. The safest approach is to assume nothing is correct and just use `StatusError`."
-		//  Can we improve the Status here?
-		return gatewayv1beta1.StatusError, err
-	}
+	c := v.getReconciliationCommand(desired, actual)
 
-	return gatewayv1beta1.StatusOK, nil
+	return []*ReconciliationCommand{c}, gatewayv1beta1.StatusOK, nil
 }
 
-func (v VirtualServiceProcessor) getDesiredObject(api *gatewayv1beta1.APIRule) *networkingv1beta1.VirtualService {
+func (v VirtualServiceProcessor) getDesiredState(api *gatewayv1beta1.APIRule) *networkingv1beta1.VirtualService {
 	return v.generateVirtualService(api)
 }
 
@@ -71,12 +63,12 @@ func (v VirtualServiceProcessor) getActualState(ctx context.Context, api *gatewa
 	}
 }
 
-func (v VirtualServiceProcessor) getDiff(desiredVs *networkingv1beta1.VirtualService, actualVs *networkingv1beta1.VirtualService) *ObjToPatch {
+func (v VirtualServiceProcessor) getReconciliationCommand(desiredVs *networkingv1beta1.VirtualService, actualVs *networkingv1beta1.VirtualService) *ReconciliationCommand {
 	if actualVs != nil {
 		update(actualVs, desiredVs)
-		return NewUpdateObjectAction(actualVs)
+		return NewUpdateCommand(actualVs)
 	} else {
-		return NewCreateObjectAction(desiredVs)
+		return NewCreateCommand(desiredVs)
 	}
 }
 
