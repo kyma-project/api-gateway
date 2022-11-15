@@ -1,6 +1,8 @@
 package processing
 
 import (
+	"context"
+	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
 	"github.com/ory/oathkeeper-maester/api/v1alpha1"
 	v1beta12 "istio.io/api/networking/v1beta1"
 	"istio.io/client-go/pkg/apis/networking/v1beta1"
@@ -44,4 +46,36 @@ type CorsConfig struct {
 	AllowOrigins []*v1beta12.StringMatch
 	AllowMethods []string
 	AllowHeaders []string
+}
+
+type ReconciliationConfig struct {
+	client            client.Client
+	ctx               context.Context
+	oathkeeperSvc     string
+	oathkeeperSvcPort uint32
+	corsConfig        *CorsConfig
+	additionalLabels  map[string]string
+	defaultDomainName string
+}
+
+func NewReconciliationConfig(client client.Client,
+	ctx context.Context,
+	oathkeeperSvc string,
+	oathkeeperSvcPort uint32,
+	corsConfig *CorsConfig,
+	additionalLabels map[string]string,
+	defaultDomainName string) ReconciliationConfig {
+	return ReconciliationConfig{
+		client:            client,
+		ctx:               ctx,
+		oathkeeperSvc:     oathkeeperSvc,
+		oathkeeperSvcPort: oathkeeperSvcPort,
+		corsConfig:        corsConfig,
+		additionalLabels:  additionalLabels,
+		defaultDomainName: defaultDomainName,
+	}
+}
+
+type ReconciliationProcessor interface {
+	Reconcile(*gatewayv1beta1.APIRule) (gatewayv1beta1.StatusCode, error)
 }

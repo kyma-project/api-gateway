@@ -12,19 +12,41 @@ import (
 
 type AccessRuleProcessor struct {
 	client            client.Client
+	ctx               context.Context
 	additionalLabels  map[string]string
 	defaultDomainName string
 }
 
-func NewAccessRuleProcessor(client client.Client, additionalLabels map[string]string, defaultDomainName string) AccessRuleProcessor {
+func NewAccessRuleProcessor(config ReconciliationConfig) AccessRuleProcessor {
 	return AccessRuleProcessor{
-		client:            client,
-		additionalLabels:  additionalLabels,
-		defaultDomainName: defaultDomainName,
+		client:            config.client,
+		ctx:               config.ctx,
+		additionalLabels:  config.additionalLabels,
+		defaultDomainName: config.defaultDomainName,
 	}
 }
 
-func (a *AccessRuleProcessor) GetDiff(desiredRules map[string]*rulev1alpha1.Rule, actualRules map[string]*rulev1alpha1.Rule) []*ObjToPatch {
+func (a AccessRuleProcessor) Reconcile(apiRule *gatewayv1beta1.APIRule) (gatewayv1beta1.StatusCode, error) {
+	desiredObjectState := a.getDesiredObject(apiRule)
+	actualObjectState, err := a.getActualState(a.ctx, apiRule)
+	if err != nil {
+		// TODO: Why is the status Skipped (not Error) when fetching of acual state fails?
+		return gatewayv1beta1.StatusSkipped, err
+	}
+
+	objectsToApply := a.getDiff(desiredObjectState, actualObjectState)
+	err = applyDiff(a.ctx, a.client, objectsToApply...)
+	if err != nil {
+		// TODO: Old comment was:
+		//  "We don't know exactly which object(s) are not updated properly. The safest approach is to assume nothing is correct and just use `StatusError`."
+		//  Can we improve the Status here?
+		return gatewayv1beta1.StatusError, err
+	}
+
+	return gatewayv1beta1.StatusOK, nil
+}
+
+func (a AccessRuleProcessor) getDiff(desiredRules map[string]*rulev1alpha1.Rule, actualRules map[string]*rulev1alpha1.Rule) []*ObjToPatch {
 	arPatch := make(map[string]*ObjToPatch)
 
 	for path, rule := range desiredRules {
@@ -53,7 +75,7 @@ func (a *AccessRuleProcessor) GetDiff(desiredRules map[string]*rulev1alpha1.Rule
 	return objectsToApply
 }
 
-func (a *AccessRuleProcessor) GetDesiredObject(api *gatewayv1beta1.APIRule) map[string]*rulev1alpha1.Rule {
+func (a AccessRuleProcessor) getDesiredObject(api *gatewayv1beta1.APIRule) map[string]*rulev1alpha1.Rule {
 	pathDuplicates := hasPathDuplicates(api.Spec.Rules)
 	accessRules := make(map[string]*rulev1alpha1.Rule)
 	for _, rule := range api.Spec.Rules {
@@ -65,7 +87,7 @@ func (a *AccessRuleProcessor) GetDesiredObject(api *gatewayv1beta1.APIRule) map[
 	return accessRules
 }
 
-func (a *AccessRuleProcessor) GetActualState(ctx context.Context, api *gatewayv1beta1.APIRule) (map[string]*rulev1alpha1.Rule, error) {
+func (a AccessRuleProcessor) getActualState(ctx context.Context, api *gatewayv1beta1.APIRule) (map[string]*rulev1alpha1.Rule, error) {
 	labels := getOwnerLabels(api)
 
 	var arList rulev1alpha1.RuleList

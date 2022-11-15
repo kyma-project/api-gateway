@@ -12,6 +12,7 @@ import (
 
 type VirtualServiceProcessor struct {
 	client            client.Client
+	ctx               context.Context
 	oathkeeperSvc     string
 	oathkeeperSvcPort uint32
 	corsConfig        *CorsConfig
@@ -19,36 +20,43 @@ type VirtualServiceProcessor struct {
 	defaultDomainName string
 }
 
-func NewVirtualServiceProcessor(client client.Client,
-	oathkeeperSvc string,
-	oathkeeperSvcPort uint32,
-	corsConfig *CorsConfig,
-	additionalLabels map[string]string,
-	defaultDomainName string) VirtualServiceProcessor {
+func NewVirtualServiceProcessor(config ReconciliationConfig) VirtualServiceProcessor {
 	return VirtualServiceProcessor{
-		client:            client,
-		oathkeeperSvc:     oathkeeperSvc,
-		oathkeeperSvcPort: oathkeeperSvcPort,
-		corsConfig:        corsConfig,
-		additionalLabels:  additionalLabels,
-		defaultDomainName: defaultDomainName,
+		client:            config.client,
+		ctx:               config.ctx,
+		oathkeeperSvc:     config.oathkeeperSvc,
+		oathkeeperSvcPort: config.oathkeeperSvcPort,
+		corsConfig:        config.corsConfig,
+		additionalLabels:  config.additionalLabels,
+		defaultDomainName: config.defaultDomainName,
 	}
 }
 
-func (v *VirtualServiceProcessor) GetDiff(desiredVs *networkingv1beta1.VirtualService, actualVs *networkingv1beta1.VirtualService) *ObjToPatch {
-	if actualVs != nil {
-		update(actualVs, desiredVs)
-		return NewUpdateObjectAction(actualVs)
-	} else {
-		return NewCreateObjectAction(desiredVs)
+func (v VirtualServiceProcessor) Reconcile(apiRule *gatewayv1beta1.APIRule) (gatewayv1beta1.StatusCode, error) {
+	desiredObjectState := v.getDesiredObject(apiRule)
+	actualObjectState, err := v.getActualState(v.ctx, apiRule)
+	if err != nil {
+		// TODO: Why is the status Skipped (not Error) when fetching of acual state fails?
+		return gatewayv1beta1.StatusSkipped, err
 	}
+
+	objectsToApply := v.getDiff(desiredObjectState, actualObjectState)
+	err = applyDiff(v.ctx, v.client, objectsToApply)
+	if err != nil {
+		// TODO: Old comment was:
+		//  "We don't know exactly which object(s) are not updated properly. The safest approach is to assume nothing is correct and just use `StatusError`."
+		//  Can we improve the Status here?
+		return gatewayv1beta1.StatusError, err
+	}
+
+	return gatewayv1beta1.StatusOK, nil
 }
 
-func (v *VirtualServiceProcessor) GetDesiredObject(api *gatewayv1beta1.APIRule) *networkingv1beta1.VirtualService {
+func (v VirtualServiceProcessor) getDesiredObject(api *gatewayv1beta1.APIRule) *networkingv1beta1.VirtualService {
 	return v.generateVirtualService(api)
 }
 
-func (v *VirtualServiceProcessor) GetActualState(ctx context.Context, api *gatewayv1beta1.APIRule) (*networkingv1beta1.VirtualService, error) {
+func (v VirtualServiceProcessor) getActualState(ctx context.Context, api *gatewayv1beta1.APIRule) (*networkingv1beta1.VirtualService, error) {
 	labels := getOwnerLabels(api)
 
 	var vsList networkingv1beta1.VirtualServiceList
@@ -63,7 +71,16 @@ func (v *VirtualServiceProcessor) GetActualState(ctx context.Context, api *gatew
 	}
 }
 
-func (v *VirtualServiceProcessor) generateVirtualService(api *gatewayv1beta1.APIRule) *networkingv1beta1.VirtualService {
+func (v VirtualServiceProcessor) getDiff(desiredVs *networkingv1beta1.VirtualService, actualVs *networkingv1beta1.VirtualService) *ObjToPatch {
+	if actualVs != nil {
+		update(actualVs, desiredVs)
+		return NewUpdateObjectAction(actualVs)
+	} else {
+		return NewCreateObjectAction(desiredVs)
+	}
+}
+
+func (v VirtualServiceProcessor) generateVirtualService(api *gatewayv1beta1.APIRule) *networkingv1beta1.VirtualService {
 	virtualServiceNamePrefix := fmt.Sprintf("%s-", api.ObjectMeta.Name)
 	ownerRef := generateOwnerRef(api)
 

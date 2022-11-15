@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/go-logr/logr"
 	gatewayv1alpha1 "github.com/kyma-incubator/api-gateway/api/v1alpha1"
 	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
 )
@@ -17,64 +16,27 @@ var (
 	OwnerLabelv1alpha1 = fmt.Sprintf("%s.%s", "apirule", gatewayv1alpha1.GroupVersion.String())
 )
 
-// Factory .
-type Factory struct {
-	client      client.Client
-	Log         logr.Logger
-	vsProcessor VirtualServiceProcessor
-	arProcessor AccessRuleProcessor
-}
+// Reconcile executes the reconciliation of the APIRule using the given processors.
+func Reconcile(apiRule *gatewayv1beta1.APIRule, processors []ReconciliationProcessor) (gatewayv1beta1.StatusCode, error) {
+	// TODO: There are multiple ways to improve this. We could do it async, but the added complexity might not be worth it.
+	//  And we can return the status for each processor/object kind to the caller.
+	for _, processor := range processors {
 
-// NewFactory .
-func NewFactory(client client.Client, logger logr.Logger, vsProcessor VirtualServiceProcessor, arProcessor AccessRuleProcessor) *Factory {
-	return &Factory{
-		client:      client,
-		Log:         logger,
-		vsProcessor: vsProcessor,
-		arProcessor: arProcessor,
-	}
-}
+		status, err := processor.Reconcile(apiRule)
 
-// CalculateRequiredState returns required state of all objects related to given api
-func (f *Factory) CalculateRequiredState(api *gatewayv1beta1.APIRule) *State {
-	return &State{
-		accessRules:    f.arProcessor.GetDesiredObject(api),
-		virtualService: f.vsProcessor.GetDesiredObject(api),
-	}
-}
-
-// GetActualState methods gets actual state of Istio Virtual Services and Oathkeeper Rules
-func (f *Factory) GetActualState(ctx context.Context, api *gatewayv1beta1.APIRule) (*State, error) {
-
-	vs, err := f.vsProcessor.GetActualState(ctx, api)
-	if err != nil {
-		return nil, err
+		if status != gatewayv1beta1.StatusOK {
+			return status, err
+		}
 	}
 
-	accessRules, err := f.arProcessor.GetActualState(ctx, api)
-	if err != nil {
-		return nil, err
-	}
-
-	return &State{
-		accessRules:    accessRules,
-		virtualService: vs,
-	}, nil
+	return gatewayv1beta1.StatusOK, nil
 }
 
-// CalculateDiff methods compute diff between desired & actual state
-func (f *Factory) CalculateDiff(requiredState *State, actualState *State) []*ObjToPatch {
-
-	arsToApply := f.arProcessor.GetDiff(requiredState.accessRules, actualState.accessRules)
-	vsToApply := f.vsProcessor.GetDiff(requiredState.virtualService, actualState.virtualService)
-	return append(arsToApply, vsToApply)
-}
-
-// ApplyDiff method applies computed diff
-func (f *Factory) ApplyDiff(ctx context.Context, objectsToApply []*ObjToPatch) error {
+// applyDiff applies the given objects state on the cluster
+func applyDiff(ctx context.Context, client client.Client, objectsToApply ...*ObjToPatch) error {
 
 	for _, object := range objectsToApply {
-		err := f.applyObjDiff(ctx, object)
+		err := applyObjDiff(ctx, client, object)
 		if err != nil {
 			return err
 		}
@@ -83,16 +45,16 @@ func (f *Factory) ApplyDiff(ctx context.Context, objectsToApply []*ObjToPatch) e
 	return nil
 }
 
-func (f *Factory) applyObjDiff(ctx context.Context, objToPatch *ObjToPatch) error {
+func applyObjDiff(ctx context.Context, client client.Client, objToPatch *ObjToPatch) error {
 	var err error
 
 	switch objToPatch.action {
 	case "create":
-		err = f.client.Create(ctx, objToPatch.obj)
+		err = client.Create(ctx, objToPatch.obj)
 	case "update":
-		err = f.client.Update(ctx, objToPatch.obj)
+		err = client.Update(ctx, objToPatch.obj)
 	case "delete":
-		err = f.client.Delete(ctx, objToPatch.obj)
+		err = client.Delete(ctx, objToPatch.obj)
 	default:
 		err = fmt.Errorf("apply action %s is not supported", objToPatch.action)
 	}

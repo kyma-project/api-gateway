@@ -101,31 +101,14 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 			return r.setStatus(ctx, api, generateValidationStatus(validationFailures), gatewayv1beta1.StatusSkipped)
 		}
 
-		vsProcessor := processing.NewVirtualServiceProcessor(r.Client, r.OathkeeperSvc, r.OathkeeperSvcPort, r.CorsConfig, r.GeneratedObjectsLabels, r.DefaultDomainName)
-		arProcessor := processing.NewAccessRuleProcessor(r.Client, r.GeneratedObjectsLabels, r.DefaultDomainName)
+		config := processing.NewReconciliationConfig(r.Client, ctx, r.OathkeeperSvc, r.OathkeeperSvcPort, r.CorsConfig, r.GeneratedObjectsLabels, r.DefaultDomainName)
+		processors := []processing.ReconciliationProcessor{processing.NewVirtualServiceProcessor(config), processing.NewAccessRuleProcessor(config)}
 
-		//2) Compute list of required objects (the set of objects required to satisfy our contract on apiRule.Spec, not yet applied)
-		factory := processing.NewFactory(r.Client, r.Log, vsProcessor, arProcessor)
-		requiredObjects := factory.CalculateRequiredState(api)
-
-		//3.1 Fetch all existing objects related to _this_ apiRule from the cluster (VS, Rules)
-		actualObjects, err := factory.GetActualState(ctx, api)
-		if err != nil {
-			return r.setStatusForError(ctx, api, err, gatewayv1beta1.StatusSkipped)
+		status, err := processing.Reconcile(api, processors)
+		if status != gatewayv1beta1.StatusOK {
+			return r.setStatusForError(ctx, api, err, status)
 		}
 
-		//3.2 Compute patch object
-		objectsToApply := factory.CalculateDiff(requiredObjects, actualObjects)
-
-		//3.3 Apply changes to the cluster
-		err = factory.ApplyDiff(ctx, objectsToApply)
-		if err != nil {
-			//We don't know exactly which object(s) are not updated properly.
-			//The safest approach is to assume nothing is correct and just use `StatusError`.
-			return r.setStatusForError(ctx, api, err, gatewayv1beta1.StatusError)
-		}
-
-		//4) Update status of CR
 		APIStatus := &gatewayv1beta1.APIRuleResourceStatus{
 			Code: gatewayv1beta1.StatusOK,
 		}
