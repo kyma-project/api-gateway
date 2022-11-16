@@ -65,7 +65,7 @@ func (v VirtualServiceProcessor) getActualState(ctx context.Context, api *gatewa
 
 func (v VirtualServiceProcessor) getReconciliationCommand(desiredVs *networkingv1beta1.VirtualService, actualVs *networkingv1beta1.VirtualService) *ReconciliationCommand {
 	if actualVs != nil {
-		update(actualVs, desiredVs)
+		actualVs.Spec = *desiredVs.Spec.DeepCopy()
 		return NewUpdateCommand(actualVs)
 	} else {
 		return NewCreateCommand(desiredVs)
@@ -124,10 +124,6 @@ func (v VirtualServiceProcessor) generateVirtualService(api *gatewayv1beta1.APIR
 	vsBuilder.Spec(vsSpecBuilder)
 
 	return vsBuilder.Get()
-}
-
-func update(existing, required *networkingv1beta1.VirtualService) {
-	existing.Spec = *required.Spec.DeepCopy()
 }
 
 func filterDuplicatePaths(rules []gatewayv1beta1.Rule) []gatewayv1beta1.Rule {

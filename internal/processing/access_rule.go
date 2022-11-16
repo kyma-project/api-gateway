@@ -44,7 +44,7 @@ func (a AccessRuleProcessor) getReconciliationCommands(desiredRules map[string]*
 	for path, rule := range desiredRules {
 
 		if actualRules[path] != nil {
-			modifyAccessRule(actualRules[path], rule)
+			actualRules[path].Spec = rule.Spec
 			arApplyCommands[path] = NewUpdateCommand(actualRules[path])
 		} else {
 			arApplyCommands[path] = NewCreateCommand(rule)
@@ -105,10 +105,6 @@ func setAccessRuleKey(hasPathDuplicates bool, rule rulev1alpha1.Rule) string {
 	}
 
 	return rule.Spec.Match.URL
-}
-
-func modifyAccessRule(existing, required *rulev1alpha1.Rule) {
-	existing.Spec = required.Spec
 }
 
 func generateAccessRule(api *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rule, accessStrategies []*gatewayv1beta1.Authenticator, additionalLabels map[string]string, defaultDomainName string) *rulev1alpha1.Rule {
