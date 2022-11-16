@@ -2,34 +2,36 @@ package processing
 
 import (
 	"context"
+	"github.com/go-logr/logr"
 	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
+	"github.com/kyma-incubator/api-gateway/controllers"
 	"github.com/ory/oathkeeper-maester/api/v1alpha1"
 	v1beta12 "istio.io/api/networking/v1beta1"
 	"istio.io/client-go/pkg/apis/networking/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-type ReconciliationCommand struct {
+type ObjectChange struct {
 	action string
 	obj    client.Object
 }
 
-func NewCreateCommand(obj client.Object) *ReconciliationCommand {
-	return &ReconciliationCommand{
+func NewObjectCreateAction(obj client.Object) *ObjectChange {
+	return &ObjectChange{
 		action: "create",
 		obj:    obj,
 	}
 }
 
-func NewUpdateCommand(obj client.Object) *ReconciliationCommand {
-	return &ReconciliationCommand{
+func NewObjectUpdateAction(obj client.Object) *ObjectChange {
+	return &ObjectChange{
 		action: "update",
 		obj:    obj,
 	}
 }
 
-func NewDeleteCommand(obj client.Object) *ReconciliationCommand {
-	return &ReconciliationCommand{
+func NewObjectDeleteAction(obj client.Object) *ObjectChange {
+	return &ObjectChange{
 		action: "delete",
 		obj:    obj,
 	}
@@ -49,33 +51,35 @@ type CorsConfig struct {
 }
 
 type ReconciliationConfig struct {
-	client            client.Client
-	ctx               context.Context
-	oathkeeperSvc     string
-	oathkeeperSvcPort uint32
-	corsConfig        *CorsConfig
-	additionalLabels  map[string]string
-	defaultDomainName string
+	Client            client.Client
+	Ctx               context.Context
+	Logger            logr.Logger
+	OathkeeperSvc     string
+	OathkeeperSvcPort uint32
+	CorsConfig        *CorsConfig
+	AdditionalLabels  map[string]string
+	DefaultDomainName string
+	ServiceBlockList  map[string][]string
+	DomainAllowList   []string
+	HostBlockList     []string
 }
 
-func NewReconciliationConfig(client client.Client,
-	ctx context.Context,
-	oathkeeperSvc string,
-	oathkeeperSvcPort uint32,
-	corsConfig *CorsConfig,
-	additionalLabels map[string]string,
-	defaultDomainName string) ReconciliationConfig {
+func NewReconciliationConfig(ctx context.Context, r *controllers.APIRuleReconciler) ReconciliationConfig {
 	return ReconciliationConfig{
-		client:            client,
-		ctx:               ctx,
-		oathkeeperSvc:     oathkeeperSvc,
-		oathkeeperSvcPort: oathkeeperSvcPort,
-		corsConfig:        corsConfig,
-		additionalLabels:  additionalLabels,
-		defaultDomainName: defaultDomainName,
+		Client:            r.Client,
+		Ctx:               ctx,
+		Logger:            r.Log,
+		OathkeeperSvc:     r.OathkeeperSvc,
+		OathkeeperSvcPort: r.OathkeeperSvcPort,
+		CorsConfig:        r.CorsConfig,
+		AdditionalLabels:  r.GeneratedObjectsLabels,
+		DefaultDomainName: r.DefaultDomainName,
+		ServiceBlockList:  r.ServiceBlockList,
+		DomainAllowList:   r.DomainAllowList,
+		HostBlockList:     r.HostBlockList,
 	}
 }
 
 type ReconciliationProcessor interface {
-	EvaluateReconciliation(*gatewayv1beta1.APIRule) ([]*ReconciliationCommand, gatewayv1beta1.StatusCode, error)
+	EvaluateReconciliation(*gatewayv1beta1.APIRule) ([]*ObjectChange, gatewayv1beta1.StatusCode, error)
 }

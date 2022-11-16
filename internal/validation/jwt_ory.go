@@ -3,14 +3,12 @@ package validation
 import (
 	"encoding/json"
 	"fmt"
-
 	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
 )
 
-// jwtAccStrValidator is an accessStrategy validator for jwt ORY authenticator
-type jwtAccStrValidator struct{}
+type OryJwtValidator struct{}
 
-func (j *jwtAccStrValidator) Validate(attributePath string, handler *gatewayv1beta1.Handler) []Failure {
+func (o *OryJwtValidator) Validate(attributePath string, handler *gatewayv1beta1.Handler) []Failure {
 	var problems []Failure
 
 	var template gatewayv1beta1.JWTAccStrConfig

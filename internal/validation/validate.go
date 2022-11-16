@@ -14,7 +14,6 @@ import (
 
 // Validators for AccessStrategies
 var vldNoConfig = &noConfigAccStrValidator{}
-var vldJWT = &jwtAccStrValidator{}
 var vldDummy = &dummyAccStrValidator{}
 
 type accessStrategyValidator interface {
@@ -37,6 +36,7 @@ func configNotEmpty(config *runtime.RawExtension) bool {
 
 // APIRule is used to validate github.com/kyma-incubator/api-gateway/api/v1beta1/APIRule instances
 type APIRule struct {
+	JwtValidator      accessStrategyValidator
 	ServiceBlockList  map[string][]string
 	DomainAllowList   []string
 	HostBlockList     []string
@@ -224,7 +224,7 @@ func (v *APIRule) validateAccessStrategy(attributePath string, accessStrategy *g
 	case "oauth2_introspection":
 		vld = vldDummy
 	case "jwt":
-		vld = vldJWT
+		vld = v.JwtValidator
 	default:
 		problems = append(problems, Failure{AttributePath: attributePath + ".handler", Message: fmt.Sprintf("Unsupported accessStrategy: %s", accessStrategy.Handler.Name)})
 		return problems

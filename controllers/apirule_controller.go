@@ -18,7 +18,6 @@ package controllers
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"time"
 
@@ -28,7 +27,6 @@ import (
 	"github.com/kyma-incubator/api-gateway/internal/validation"
 
 	"github.com/go-logr/logr"
-	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	apierrs "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -60,8 +58,6 @@ type APIRuleReconciler struct {
 //+kubebuilder:rbac:groups="apiextensions.k8s.io",resources=customresourcedefinitions,verbs=get;list;watch;create;update;patch;delete
 
 func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	//_ = r.Log.WithValues("Api", req.NamespacedName)
-
 	r.Log.Info("Starting reconcilation")
 
 	api := &gatewayv1beta1.APIRule{}
@@ -80,31 +76,19 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	//Prevent reconciliation after status update. It should be solved by controller-runtime implementation but still isn't.
 	if api.Generation != api.Status.ObservedGeneration {
 
-		//1.1) Get the list of existing Virtual Services to validate host
-		var vsList networkingv1beta1.VirtualServiceList
-		if err := r.Client.List(ctx, &vsList); err != nil {
-			//Nothing is yet processed: StatusSkipped
-			return r.setStatusForError(ctx, api, err, gatewayv1beta1.StatusSkipped)
+		c := processing.NewReconciliationConfig(ctx, r)
+		cmd := getReconciliation(c, "ory")
+
+		status, validationStatus, err := processing.Reconcile(cmd, api)
+
+		if validationStatus != nil {
+			return r.setStatus(ctx, api, validationStatus, gatewayv1beta1.StatusSkipped)
 		}
 
-		//1.2) Validate input including host
-		validator := validation.APIRule{
-			ServiceBlockList:  r.ServiceBlockList,
-			DomainAllowList:   r.DomainAllowList,
-			HostBlockList:     r.HostBlockList,
-			DefaultDomainName: r.DefaultDomainName,
-		}
-		validationFailures := validator.Validate(api, vsList)
-		if len(validationFailures) > 0 {
-			failuresJson, _ := json.Marshal(validationFailures)
-			r.Log.Info(fmt.Sprintf(`Validation failure {"controller": "Api", "request": "%s/%s", "failures": %s}`, api.Namespace, api.Name, string(failuresJson)))
-			return r.setStatus(ctx, api, generateValidationStatus(validationFailures), gatewayv1beta1.StatusSkipped)
+		if err != nil {
+			return r.setStatusForError(ctx, api, err, status)
 		}
 
-		config := processing.NewReconciliationConfig(r.Client, ctx, r.OathkeeperSvc, r.OathkeeperSvcPort, r.CorsConfig, r.GeneratedObjectsLabels, r.DefaultDomainName)
-		processors := processing.GetReconciliationProcessors(config, api)
-
-		status, err := processing.Reconcile(r.Client, ctx, processors, api)
 		if status != gatewayv1beta1.StatusOK {
 			return r.setStatusForError(ctx, api, err, status)
 		}
@@ -117,6 +101,14 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	}
 
 	return doneReconcile()
+}
+
+func getReconciliation(config processing.ReconciliationConfig, featureFlag string) processing.ReconciliationCommand {
+	if featureFlag == "istio" {
+		return processing.NewIstioReconciliation(config)
+	} else {
+		return processing.NewOryReconciliation(config)
+	}
 }
 
 // SetupWithManager sets up the controller with the Manager.
@@ -187,7 +179,7 @@ func generateErrorStatus(err error) *gatewayv1beta1.APIRuleResourceStatus {
 	return toStatus(gatewayv1beta1.StatusError, err.Error())
 }
 
-func generateValidationStatus(failures []validation.Failure) *gatewayv1beta1.APIRuleResourceStatus {
+func GenerateValidationStatus(failures []validation.Failure) *gatewayv1beta1.APIRuleResourceStatus {
 	return toStatus(gatewayv1beta1.StatusError, generateValidationDescription(failures))
 }
 

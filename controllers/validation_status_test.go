@@ -20,7 +20,7 @@ var _ = Describe("Controller", func() {
 
 		It("should genereate status for single failure", func() {
 			failures := []validation.Failure{f1}
-			st := generateValidationStatus(failures)
+			st := GenerateValidationStatus(failures)
 
 			Expect(st).NotTo(BeNil())
 			Expect(st.Code).To(Equal(gatewayv1beta1.StatusError))
@@ -32,7 +32,7 @@ var _ = Describe("Controller", func() {
 
 		It("should genereate status for three failures", func() {
 			failures := []validation.Failure{f1, f2, f3}
-			st := generateValidationStatus(failures)
+			st := GenerateValidationStatus(failures)
 
 			Expect(st).NotTo(BeNil())
 			Expect(st.Code).To(Equal(gatewayv1beta1.StatusError))
@@ -46,7 +46,7 @@ var _ = Describe("Controller", func() {
 
 		It("should genereate status for five failures", func() {
 			failures := []validation.Failure{f1, f2, f3, f4, f5}
-			st := generateValidationStatus(failures)
+			st := GenerateValidationStatus(failures)
 
 			Expect(st).NotTo(BeNil())
 			Expect(st.Code).To(Equal(gatewayv1beta1.StatusError))

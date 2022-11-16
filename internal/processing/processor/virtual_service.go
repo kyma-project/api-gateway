@@ -1,4 +1,4 @@
-package processing
+package processor
 
 import (
 	"context"
@@ -6,53 +6,54 @@ import (
 	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
 	"github.com/kyma-incubator/api-gateway/internal/builders"
 	"github.com/kyma-incubator/api-gateway/internal/helpers"
+	"github.com/kyma-incubator/api-gateway/internal/processing"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-type VirtualServiceProcessor struct {
+type VirtualService struct {
 	client            client.Client
 	ctx               context.Context
 	oathkeeperSvc     string
 	oathkeeperSvcPort uint32
-	corsConfig        *CorsConfig
+	corsConfig        *processing.CorsConfig
 	additionalLabels  map[string]string
 	defaultDomainName string
 }
 
-func NewVirtualServiceProcessor(config ReconciliationConfig) VirtualServiceProcessor {
-	return VirtualServiceProcessor{
-		client:            config.client,
-		ctx:               config.ctx,
-		oathkeeperSvc:     config.oathkeeperSvc,
-		oathkeeperSvcPort: config.oathkeeperSvcPort,
-		corsConfig:        config.corsConfig,
-		additionalLabels:  config.additionalLabels,
-		defaultDomainName: config.defaultDomainName,
+func NewVirtualService(config processing.ReconciliationConfig) VirtualService {
+	return VirtualService{
+		client:            config.Client,
+		ctx:               config.Ctx,
+		oathkeeperSvc:     config.OathkeeperSvc,
+		oathkeeperSvcPort: config.OathkeeperSvcPort,
+		corsConfig:        config.CorsConfig,
+		additionalLabels:  config.AdditionalLabels,
+		defaultDomainName: config.DefaultDomainName,
 	}
 }
 
-func (v VirtualServiceProcessor) EvaluateReconciliation(apiRule *gatewayv1beta1.APIRule) ([]*ReconciliationCommand, gatewayv1beta1.StatusCode, error) {
-	desired := v.getDesiredState(apiRule)
-	actual, err := v.getActualState(v.ctx, apiRule)
+func (p VirtualService) EvaluateReconciliation(apiRule *gatewayv1beta1.APIRule) ([]*processing.ObjectChange, gatewayv1beta1.StatusCode, error) {
+	desired := p.getDesiredState(apiRule)
+	actual, err := p.getActualState(p.ctx, apiRule)
 	if err != nil {
-		return make([]*ReconciliationCommand, 0), gatewayv1beta1.StatusSkipped, err
+		return make([]*processing.ObjectChange, 0), gatewayv1beta1.StatusSkipped, err
 	}
 
-	c := v.getReconciliationCommand(desired, actual)
+	c := p.getObjectChanges(desired, actual)
 
-	return []*ReconciliationCommand{c}, gatewayv1beta1.StatusOK, nil
+	return []*processing.ObjectChange{c}, gatewayv1beta1.StatusOK, nil
 }
 
-func (v VirtualServiceProcessor) getDesiredState(api *gatewayv1beta1.APIRule) *networkingv1beta1.VirtualService {
-	return v.generateVirtualService(api)
+func (p VirtualService) getDesiredState(api *gatewayv1beta1.APIRule) *networkingv1beta1.VirtualService {
+	return p.generateVirtualService(api)
 }
 
-func (v VirtualServiceProcessor) getActualState(ctx context.Context, api *gatewayv1beta1.APIRule) (*networkingv1beta1.VirtualService, error) {
-	labels := getOwnerLabels(api)
+func (p VirtualService) getActualState(ctx context.Context, api *gatewayv1beta1.APIRule) (*networkingv1beta1.VirtualService, error) {
+	labels := processing.GetOwnerLabels(api)
 
 	var vsList networkingv1beta1.VirtualServiceList
-	if err := v.client.List(ctx, &vsList, client.MatchingLabels(labels)); err != nil {
+	if err := p.client.List(ctx, &vsList, client.MatchingLabels(labels)); err != nil {
 		return nil, err
 	}
 
@@ -63,30 +64,30 @@ func (v VirtualServiceProcessor) getActualState(ctx context.Context, api *gatewa
 	}
 }
 
-func (v VirtualServiceProcessor) getReconciliationCommand(desiredVs *networkingv1beta1.VirtualService, actualVs *networkingv1beta1.VirtualService) *ReconciliationCommand {
+func (p VirtualService) getObjectChanges(desiredVs *networkingv1beta1.VirtualService, actualVs *networkingv1beta1.VirtualService) *processing.ObjectChange {
 	if actualVs != nil {
 		actualVs.Spec = *desiredVs.Spec.DeepCopy()
-		return NewUpdateCommand(actualVs)
+		return processing.NewObjectUpdateAction(actualVs)
 	} else {
-		return NewCreateCommand(desiredVs)
+		return processing.NewObjectCreateAction(desiredVs)
 	}
 }
 
-func (v VirtualServiceProcessor) generateVirtualService(api *gatewayv1beta1.APIRule) *networkingv1beta1.VirtualService {
+func (p VirtualService) generateVirtualService(api *gatewayv1beta1.APIRule) *networkingv1beta1.VirtualService {
 	virtualServiceNamePrefix := fmt.Sprintf("%s-", api.ObjectMeta.Name)
-	ownerRef := generateOwnerRef(api)
+	ownerRef := processing.GenerateOwnerRef(api)
 
 	vsSpecBuilder := builders.VirtualServiceSpec()
-	vsSpecBuilder.Host(helpers.GetHostWithDomain(*api.Spec.Host, v.defaultDomainName))
+	vsSpecBuilder.Host(helpers.GetHostWithDomain(*api.Spec.Host, p.defaultDomainName))
 	vsSpecBuilder.Gateway(*api.Spec.Gateway)
 	filteredRules := filterDuplicatePaths(api.Spec.Rules)
 
 	for _, rule := range filteredRules {
 		httpRouteBuilder := builders.HTTPRoute()
-		host, port := v.oathkeeperSvc, v.oathkeeperSvcPort
+		host, port := p.oathkeeperSvc, p.oathkeeperSvcPort
 		serviceNamespace := helpers.FindServiceNamespace(api, &rule)
 
-		if !isSecured(rule) {
+		if !processing.IsSecured(rule) {
 			// Use rule level service if it exists
 			if rule.Service != nil {
 				host = fmt.Sprintf("%s.%s.svc.cluster.local", *rule.Service.Name, *serviceNamespace)
@@ -101,11 +102,11 @@ func (v VirtualServiceProcessor) generateVirtualService(api *gatewayv1beta1.APIR
 		httpRouteBuilder.Route(builders.RouteDestination().Host(host).Port(port))
 		httpRouteBuilder.Match(builders.MatchRequest().Uri().Regex(rule.Path))
 		httpRouteBuilder.CorsPolicy(builders.CorsPolicy().
-			AllowOrigins(v.corsConfig.AllowOrigins...).
-			AllowMethods(v.corsConfig.AllowMethods...).
-			AllowHeaders(v.corsConfig.AllowHeaders...))
+			AllowOrigins(p.corsConfig.AllowOrigins...).
+			AllowMethods(p.corsConfig.AllowMethods...).
+			AllowHeaders(p.corsConfig.AllowHeaders...))
 		httpRouteBuilder.Headers(builders.Headers().
-			SetHostHeader(helpers.GetHostWithDomain(*api.Spec.Host, v.defaultDomainName)))
+			SetHostHeader(helpers.GetHostWithDomain(*api.Spec.Host, p.defaultDomainName)))
 		vsSpecBuilder.HTTP(httpRouteBuilder)
 
 	}
@@ -114,10 +115,10 @@ func (v VirtualServiceProcessor) generateVirtualService(api *gatewayv1beta1.APIR
 		GenerateName(virtualServiceNamePrefix).
 		Namespace(api.ObjectMeta.Namespace).
 		Owner(builders.OwnerReference().From(&ownerRef)).
-		Label(OwnerLabel, fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace)).
-		Label(OwnerLabelv1alpha1, fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace))
+		Label(processing.OwnerLabel, fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace)).
+		Label(processing.OwnerLabelv1alpha1, fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace))
 
-	for k, v := range v.additionalLabels {
+	for k, v := range p.additionalLabels {
 		vsBuilder.Label(k, v)
 	}
 

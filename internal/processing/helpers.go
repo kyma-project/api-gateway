@@ -2,12 +2,20 @@ package processing
 
 import (
 	"fmt"
+	gatewayv1alpha1 "github.com/kyma-incubator/api-gateway/api/v1alpha1"
 	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
 	"github.com/kyma-incubator/api-gateway/internal/builders"
 	k8sMeta "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func isSecured(rule gatewayv1beta1.Rule) bool {
+var (
+	//OwnerLabel .
+	OwnerLabel = fmt.Sprintf("%s.%s", "apirule", gatewayv1beta1.GroupVersion.String())
+	//OwnerLabelv1alpha1 .
+	OwnerLabelv1alpha1 = fmt.Sprintf("%s.%s", "apirule", gatewayv1alpha1.GroupVersion.String())
+)
+
+func IsSecured(rule gatewayv1beta1.Rule) bool {
 	if len(rule.Mutators) > 0 {
 		return true
 	}
@@ -21,7 +29,7 @@ func isSecured(rule gatewayv1beta1.Rule) bool {
 	return false
 }
 
-func hasPathDuplicates(rules []gatewayv1beta1.Rule) bool {
+func HasPathDuplicates(rules []gatewayv1beta1.Rule) bool {
 	duplicates := map[string]bool{}
 	for _, rule := range rules {
 		if duplicates[rule.Path] {
@@ -33,7 +41,7 @@ func hasPathDuplicates(rules []gatewayv1beta1.Rule) bool {
 	return false
 }
 
-func generateOwnerRef(api *gatewayv1beta1.APIRule) k8sMeta.OwnerReference {
+func GenerateOwnerRef(api *gatewayv1beta1.APIRule) k8sMeta.OwnerReference {
 	return *builders.OwnerReference().
 		Name(api.ObjectMeta.Name).
 		APIVersion(api.TypeMeta.APIVersion).
@@ -43,7 +51,7 @@ func generateOwnerRef(api *gatewayv1beta1.APIRule) k8sMeta.OwnerReference {
 		Get()
 }
 
-func getOwnerLabels(api *gatewayv1beta1.APIRule) map[string]string {
+func GetOwnerLabels(api *gatewayv1beta1.APIRule) map[string]string {
 	labels := make(map[string]string)
 	labels[OwnerLabelv1alpha1] = fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace)
 	return labels
