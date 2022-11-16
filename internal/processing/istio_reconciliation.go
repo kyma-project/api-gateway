@@ -18,7 +18,7 @@ type IstioReconciliation struct {
 func NewIstioReconciliation(config ReconciliationConfig) IstioReconciliation {
 	return IstioReconciliation{
 		// TODO: Add missing processors for AuthorizationPolicy and RequestAuthentication
-		processors: []ReconciliationProcessor{processor.NewVirtualService(config)},
+		processors: []ReconciliationProcessor{processor.NewIstioVirtualService(config)},
 	}
 }
 

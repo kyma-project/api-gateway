@@ -17,7 +17,7 @@ type OryReconciliation struct {
 
 func NewOryReconciliation(config ReconciliationConfig) OryReconciliation {
 	return OryReconciliation{
-		processors: []ReconciliationProcessor{processor.NewVirtualService(config), processor.NewAccessRule(config)},
+		processors: []ReconciliationProcessor{processor.NewOryVirtualService(config), processor.NewAccessRule(config)},
 	}
 }
 
