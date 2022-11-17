@@ -1,4 +1,4 @@
-package processor
+package ory
 
 import (
 	"fmt"
@@ -9,7 +9,7 @@ import (
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 )
 
-type OryVirtualServiceCreator struct {
+type virtualServiceCreator struct {
 	oathkeeperSvc     string
 	oathkeeperSvcPort uint32
 	corsConfig        *processing.CorsConfig
@@ -17,7 +17,7 @@ type OryVirtualServiceCreator struct {
 	additionalLabels  map[string]string
 }
 
-func (r OryVirtualServiceCreator) create(api *gatewayv1beta1.APIRule) *networkingv1beta1.VirtualService {
+func (r virtualServiceCreator) Create(api *gatewayv1beta1.APIRule) *networkingv1beta1.VirtualService {
 	virtualServiceNamePrefix := fmt.Sprintf("%s-", api.ObjectMeta.Name)
 	ownerRef := processing.GenerateOwnerRef(api)
 

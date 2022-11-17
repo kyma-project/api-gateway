@@ -1,7 +1,6 @@
 package validation
 
 import (
-	"bytes"
 	"fmt"
 	"strings"
 
@@ -9,7 +8,6 @@ import (
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 
 	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
-	"k8s.io/apimachinery/pkg/runtime"
 )
 
 // Validators for AccessStrategies
@@ -18,20 +16,6 @@ var vldDummy = &dummyAccStrValidator{}
 
 type accessStrategyValidator interface {
 	Validate(attrPath string, Handler *gatewayv1beta1.Handler) []Failure
-}
-
-// configNotEmpty Verify if the config object is not empty
-func configEmpty(config *runtime.RawExtension) bool {
-
-	return config == nil ||
-		len(config.Raw) == 0 ||
-		bytes.Equal(config.Raw, []byte("null")) ||
-		bytes.Equal(config.Raw, []byte("{}"))
-}
-
-// configNotEmpty Verify if the config object is not empty
-func configNotEmpty(config *runtime.RawExtension) bool {
-	return !configEmpty(config)
 }
 
 // APIRule is used to validate github.com/kyma-incubator/api-gateway/api/v1beta1/APIRule instances

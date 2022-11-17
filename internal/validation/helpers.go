@@ -1,8 +1,10 @@
 package validation
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
+	"k8s.io/apimachinery/pkg/runtime"
 	"net/url"
 	"regexp"
 	"strings"
@@ -35,7 +37,7 @@ func hasPathAndMethodDuplicates(rules []gatewayv1beta1.Rule) bool {
 	return false
 }
 
-func isInvalidURL(toTest string) (bool, error) {
+func IsInvalidURL(toTest string) (bool, error) {
 	if len(toTest) == 0 {
 		return true, errors.New("value is empty")
 	}
@@ -46,7 +48,7 @@ func isInvalidURL(toTest string) (bool, error) {
 	return false, nil
 }
 
-func isUnsecuredURL(toTest string) (bool, error) {
+func IsUnsecuredURL(toTest string) (bool, error) {
 	if len(toTest) == 0 {
 		return true, errors.New("value is empty")
 	}
@@ -77,4 +79,18 @@ func ValidateServiceName(service string) bool {
 func validateGatewayName(gateway string) bool {
 	regExp := regexp.MustCompile(`^[0-9a-z-_]+(\/[0-9a-z-_]+|(\.[0-9a-z-_]+)*)$`)
 	return regExp.MatchString(gateway)
+}
+
+// configNotEmpty Verify if the config object is not empty
+func configEmpty(config *runtime.RawExtension) bool {
+
+	return config == nil ||
+		len(config.Raw) == 0 ||
+		bytes.Equal(config.Raw, []byte("null")) ||
+		bytes.Equal(config.Raw, []byte("{}"))
+}
+
+// configNotEmpty Verify if the config object is not empty
+func ConfigNotEmpty(config *runtime.RawExtension) bool {
+	return !configEmpty(config)
 }

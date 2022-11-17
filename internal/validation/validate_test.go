@@ -3,7 +3,6 @@ package validation
 import (
 	"encoding/json"
 	"fmt"
-
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/envtest/printer"
 
@@ -33,6 +32,7 @@ const (
 
 var (
 	testDomainAllowlist = []string{"foo.bar", "bar.foo", "kyma.local"}
+	jwtValidatorMock    = &dummyAccStrValidator{}
 )
 
 var _ = Describe("Validate function", func() {
@@ -87,6 +87,7 @@ var _ = Describe("Validate function", func() {
 
 		//when
 		problems := (&APIRule{
+			JwtValidator:     jwtValidatorMock,
 			ServiceBlockList: testBlockList,
 			DomainAllowList:  testDomainAllowlist,
 		}).Validate(input, networkingv1beta1.VirtualServiceList{})
@@ -125,6 +126,7 @@ var _ = Describe("Validate function", func() {
 
 		//when
 		problems := (&APIRule{
+			JwtValidator:     jwtValidatorMock,
 			ServiceBlockList: testBlockList,
 			DomainAllowList:  testDomainAllowlist,
 		}).Validate(input, networkingv1beta1.VirtualServiceList{})
@@ -158,6 +160,7 @@ var _ = Describe("Validate function", func() {
 
 		//when
 		problems := (&APIRule{
+			JwtValidator:     jwtValidatorMock,
 			ServiceBlockList: testBlockList,
 			DomainAllowList:  testDomainAllowlist,
 		}).Validate(input, networkingv1beta1.VirtualServiceList{})
@@ -193,6 +196,7 @@ var _ = Describe("Validate function", func() {
 
 		//when
 		problems := (&APIRule{
+			JwtValidator:      jwtValidatorMock,
 			ServiceBlockList:  testBlockList,
 			DomainAllowList:   testDomainAllowlist,
 			HostBlockList:     testHostBlockList,
@@ -232,6 +236,7 @@ var _ = Describe("Validate function", func() {
 
 		//when
 		problems := (&APIRule{
+			JwtValidator:      jwtValidatorMock,
 			ServiceBlockList:  testBlockList,
 			DomainAllowList:   testDomainAllowlist,
 			HostBlockList:     testHostBlockList,
@@ -265,6 +270,7 @@ var _ = Describe("Validate function", func() {
 
 		//when
 		problems := (&APIRule{
+			JwtValidator:     jwtValidatorMock,
 			ServiceBlockList: testBlockList,
 			DomainAllowList:  []string{},
 		}).Validate(input, networkingv1beta1.VirtualServiceList{})
@@ -296,6 +302,7 @@ var _ = Describe("Validate function", func() {
 
 		//when
 		problems := (&APIRule{
+			JwtValidator:     jwtValidatorMock,
 			ServiceBlockList: testBlockList,
 			DomainAllowList:  testDomainAllowlist,
 		}).Validate(input, networkingv1beta1.VirtualServiceList{})
@@ -329,6 +336,7 @@ var _ = Describe("Validate function", func() {
 
 		//when
 		problems := (&APIRule{
+			JwtValidator:     jwtValidatorMock,
 			ServiceBlockList: testBlockList,
 			DomainAllowList:  testDomainAllowlist,
 		}).Validate(input, networkingv1beta1.VirtualServiceList{})
@@ -362,6 +370,7 @@ var _ = Describe("Validate function", func() {
 
 		//when
 		problems := (&APIRule{
+			JwtValidator:      jwtValidatorMock,
 			ServiceBlockList:  testBlockList,
 			DomainAllowList:   testDomainAllowlist,
 			DefaultDomainName: testDefaultDomain,
@@ -394,6 +403,7 @@ var _ = Describe("Validate function", func() {
 
 		//when
 		problems := (&APIRule{
+			JwtValidator:     jwtValidatorMock,
 			ServiceBlockList: testBlockList,
 			DomainAllowList:  testDomainAllowlist,
 		}).Validate(input, networkingv1beta1.VirtualServiceList{})
@@ -432,6 +442,7 @@ var _ = Describe("Validate function", func() {
 
 		//when
 		problems := (&APIRule{
+			JwtValidator:    jwtValidatorMock,
 			DomainAllowList: testDomainAllowlist,
 		}).Validate(input, networkingv1beta1.VirtualServiceList{Items: []*networkingv1beta1.VirtualService{&existingVS}})
 
@@ -468,6 +479,7 @@ var _ = Describe("Validate function", func() {
 
 		//when
 		problems := (&APIRule{
+			JwtValidator:    jwtValidatorMock,
 			DomainAllowList: testDomainAllowlist,
 		}).Validate(input, networkingv1beta1.VirtualServiceList{Items: []*networkingv1beta1.VirtualService{&existingVS}})
 
@@ -600,7 +612,6 @@ var _ = Describe("Validate function", func() {
 						Path: "/abc",
 						AccessStrategies: []*gatewayv1beta1.Authenticator{
 							toAuthenticator("noop", simpleJWTConfig()),
-							toAuthenticator("jwt", emptyConfig()),
 						},
 					},
 					{
@@ -628,24 +639,21 @@ var _ = Describe("Validate function", func() {
 		}).Validate(input, networkingv1beta1.VirtualServiceList{})
 
 		//then
-		Expect(problems).To(HaveLen(6))
+		Expect(problems).To(HaveLen(5))
 		Expect(problems[0].AttributePath).To(Equal(".spec.rules"))
 		Expect(problems[0].Message).To(Equal("multiple rules defined for the same path and method"))
 
 		Expect(problems[1].AttributePath).To(Equal(".spec.rules[0].accessStrategies[0].config"))
 		Expect(problems[1].Message).To(Equal("strategy: noop does not support configuration"))
 
-		Expect(problems[2].AttributePath).To(Equal(".spec.rules[0].accessStrategies[1].config"))
-		Expect(problems[2].Message).To(Equal("supplied config cannot be empty"))
+		Expect(problems[2].AttributePath).To(Equal(".spec.rules[1].accessStrategies[0].config"))
+		Expect(problems[2].Message).To(Equal("strategy: anonymous does not support configuration"))
 
-		Expect(problems[3].AttributePath).To(Equal(".spec.rules[1].accessStrategies[0].config"))
-		Expect(problems[3].Message).To(Equal("strategy: anonymous does not support configuration"))
+		Expect(problems[3].AttributePath).To(Equal(".spec.rules[2].accessStrategies[0].handler"))
+		Expect(problems[3].Message).To(Equal("Unsupported accessStrategy: non-existing"))
 
-		Expect(problems[4].AttributePath).To(Equal(".spec.rules[2].accessStrategies[0].handler"))
-		Expect(problems[4].Message).To(Equal("Unsupported accessStrategy: non-existing"))
-
-		Expect(problems[5].AttributePath).To(Equal(".spec.rules[3].accessStrategies"))
-		Expect(problems[5].Message).To(Equal("No accessStrategies defined"))
+		Expect(problems[4].AttributePath).To(Equal(".spec.rules[3].accessStrategies"))
+		Expect(problems[4].Message).To(Equal("No accessStrategies defined"))
 
 	})
 	It("Should fail for the same path and method", func() {
@@ -731,6 +739,7 @@ var _ = Describe("Validate function", func() {
 		}
 		//when
 		problems := (&APIRule{
+			JwtValidator:    jwtValidatorMock,
 			DomainAllowList: testDomainAllowlist,
 		}).Validate(input, networkingv1beta1.VirtualServiceList{Items: []*networkingv1beta1.VirtualService{&existingVS}})
 
@@ -775,6 +784,7 @@ var _ = Describe("Validate function", func() {
 		}
 		//when
 		problems := (&APIRule{
+			JwtValidator:    jwtValidatorMock,
 			DomainAllowList: testDomainAllowlist,
 		}).Validate(input, networkingv1beta1.VirtualServiceList{Items: []*networkingv1beta1.VirtualService{&existingVS}})
 
@@ -823,97 +833,6 @@ var _ = Describe("Validator for", func() {
 		})
 	})
 
-	Describe("JWT access strategy", func() {
-
-		It("Should fail with empty config", func() {
-			//given
-			handler := &gatewayv1beta1.Handler{Name: "jwt", Config: emptyConfig()}
-
-			//when
-			problems := (&OryJwtValidator{}).Validate("some.attribute", handler)
-
-			//then
-			Expect(problems).To(HaveLen(1))
-			Expect(problems[0].AttributePath).To(Equal("some.attribute.config"))
-			Expect(problems[0].Message).To(Equal("supplied config cannot be empty"))
-		})
-
-		It("Should fail for config with invalid trustedIssuers and JWKSUrls", func() {
-			//given
-			handler := &gatewayv1beta1.Handler{Name: "jwt", Config: simpleJWTConfig("a t g o")}
-
-			//when
-			problems := (&OryJwtValidator{}).Validate("some.attribute", handler)
-
-			//then
-			Expect(problems).To(HaveLen(2))
-			Expect(problems[0].AttributePath).To(Equal("some.attribute.config.trusted_issuers[0]"))
-			Expect(problems[0].Message).To(ContainSubstring("value is empty or not a valid url"))
-			Expect(problems[1].AttributePath).To(Equal("some.attribute.config.jwks_urls[0]"))
-			Expect(problems[1].Message).To(ContainSubstring("value is empty or not a valid url"))
-		})
-
-		It("Should fail for config with plain HTTP JWKSUrls and trustedIssuers", func() {
-			//given
-			handler := &gatewayv1beta1.Handler{Name: "jwt", Config: testURLJWTConfig("http://issuer.test/.well-known/jwks.json", "http://issuer.test/")}
-
-			//when
-			problems := (&OryJwtValidator{}).Validate("some.attribute", handler)
-
-			//then
-			Expect(problems).To(HaveLen(2))
-			Expect(problems[0].AttributePath).To(Equal("some.attribute.config.trusted_issuers[0]"))
-			Expect(problems[0].Message).To(ContainSubstring("value is not a secured url"))
-			Expect(problems[1].AttributePath).To(Equal("some.attribute.config.jwks_urls[0]"))
-			Expect(problems[1].Message).To(ContainSubstring("value is not a secured url"))
-		})
-
-		It("Should succeed for config with file JWKSUrls and HTTPS trustedIssuers", func() {
-			//given
-			handler := &gatewayv1beta1.Handler{Name: "jwt", Config: testURLJWTConfig("file://.well-known/jwks.json", "https://issuer.test/")}
-
-			//when
-			problems := (&OryJwtValidator{}).Validate("some.attribute", handler)
-
-			//then
-			Expect(problems).To(HaveLen(0))
-		})
-
-		It("Should succeed for config with HTTPS JWKSUrls and trustedIssuers", func() {
-			//given
-			handler := &gatewayv1beta1.Handler{Name: "jwt", Config: testURLJWTConfig("https://issuer.test/.well-known/jwks.json", "https://issuer.test/")}
-
-			//when
-			problems := (&OryJwtValidator{}).Validate("some.attribute", handler)
-
-			//then
-			Expect(problems).To(HaveLen(0))
-		})
-
-		It("Should fail for invalid JSON", func() {
-			//given
-			handler := &gatewayv1beta1.Handler{Name: "jwt", Config: &runtime.RawExtension{Raw: []byte("/abc]")}}
-
-			//when
-			problems := (&OryJwtValidator{}).Validate("some.attribute", handler)
-
-			//then
-			Expect(problems).To(HaveLen(1))
-			Expect(problems[0].AttributePath).To(Equal("some.attribute.config"))
-			Expect(problems[0].Message).To(Equal("Can't read json: invalid character '/' looking for beginning of value"))
-		})
-
-		It("Should succeed with valid config", func() {
-			//given
-			handler := &gatewayv1beta1.Handler{Name: "jwt", Config: simpleJWTConfig()}
-
-			//when
-			problems := (&OryJwtValidator{}).Validate("some.attribute", handler)
-
-			//then
-			Expect(problems).To(HaveLen(0))
-		})
-	})
 })
 
 func emptyConfig() *runtime.RawExtension {
@@ -926,15 +845,6 @@ func simpleJWTConfig(trustedIssuers ...string) *runtime.RawExtension {
 		&gatewayv1beta1.JWTAccStrConfig{
 			JWKSUrls:       trustedIssuers,
 			TrustedIssuers: trustedIssuers,
-			RequiredScopes: []string{"atgo"},
-		})
-}
-
-func testURLJWTConfig(JWKSUrls string, trustedIssuers string) *runtime.RawExtension {
-	return getRawConfig(
-		&gatewayv1beta1.JWTAccStrConfig{
-			JWKSUrls:       []string{JWKSUrls},
-			TrustedIssuers: []string{trustedIssuers},
 			RequiredScopes: []string{"atgo"},
 		})
 }
