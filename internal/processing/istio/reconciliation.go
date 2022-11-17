@@ -19,7 +19,7 @@ func NewIstioReconciliation(config processing.ReconciliationConfig) Reconciliati
 	vsProcessor := newVirtualService(config)
 
 	return Reconciliation{
-		// TODO: Add missing processors for AuthorizationPolicy and RequestAuthentication
+		// Add missing processors for AuthorizationPolicy and RequestAuthentication
 		processors: []processing.ReconciliationProcessor{vsProcessor},
 		config:     config,
 	}

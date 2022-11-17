@@ -17,7 +17,7 @@ type Reconciliation struct {
 
 func NewOryReconciliation(config processing.ReconciliationConfig) Reconciliation {
 	vsProcessor := newVirtualService(config)
-	acProcessor := NewAccessRuleProcessor(config.Client, config.Ctx, config.AdditionalLabels, config.DefaultDomainName)
+	acProcessor := newAccessRuleProcessor(config.Client, config.Ctx, config.AdditionalLabels, config.DefaultDomainName)
 
 	return Reconciliation{
 		processors: []processing.ReconciliationProcessor{vsProcessor, acProcessor},
@@ -46,7 +46,7 @@ func (r Reconciliation) Validate(apiRule *gatewayv1beta1.APIRule) ([]validation.
 	}
 
 	validator := validation.APIRule{
-		JwtValidator:      &JwtValidator{},
+		JwtValidator:      &jwtValidator{},
 		ServiceBlockList:  r.config.ServiceBlockList,
 		DomainAllowList:   r.config.DomainAllowList,
 		HostBlockList:     r.config.HostBlockList,

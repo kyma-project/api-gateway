@@ -20,7 +20,7 @@ func IsSecured(rule gatewayv1beta1.Rule) bool {
 		return true
 	}
 	for _, strat := range rule.AccessStrategies {
-		// TODO This considers an APIRule only as "not secured" when the strategy is "allow". Isn't "noop" also
+		// TODO: This considers an APIRule only as "not secured" when the strategy is "allow". Isn't "noop" also
 		//  relevant for marking it as not secured?
 		if strat.Name != "allow" {
 			return true

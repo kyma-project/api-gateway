@@ -18,7 +18,9 @@ type ReconciliationCommand interface {
 	GetClient() client.Client
 }
 
-// TODO: We should return a more meaningful structure than two status codes of different types
+type ReconciliationProcessor interface {
+	EvaluateReconciliation(*gatewayv1beta1.APIRule) ([]*ObjectChange, error)
+}
 
 // Reconcile executes the reconciliation of the APIRule using the given reconciliation command.
 func Reconcile(cmd ReconciliationCommand, apiRule *gatewayv1beta1.APIRule) ReconciliationStatus {
@@ -35,8 +37,6 @@ func Reconcile(cmd ReconciliationCommand, apiRule *gatewayv1beta1.APIRule) Recon
 		return getFailedValidationStatus(validationFailures)
 	}
 
-	// TODO: There are multiple ways to improve this. We could do it async, but the added complexity might not be worth it.
-	//  And we can return the status for each processor/object kind to the caller.
 	for _, processor := range cmd.GetProcessors() {
 
 		objectChanges, err := processor.EvaluateReconciliation(apiRule)
@@ -44,12 +44,13 @@ func Reconcile(cmd ReconciliationCommand, apiRule *gatewayv1beta1.APIRule) Recon
 			return GetStatusForError(cmd.GetLogger(), err, gatewayv1beta1.StatusSkipped)
 		}
 
-		// TODO: Should we apply all changes after all commands are evaluated?
+		// TODO: Should we have one single call to apply, so we'll only apply after all objects/processors are evaluated?
 		err = applyChanges(cmd.GetContext(), cmd.GetClient(), objectChanges...)
 		if err != nil {
 			// TODO: Old comment was:
 			//  "We don't know exactly which object(s) are not updated properly. The safest approach is to assume nothing is correct and just use `StatusError`."
-			//  Can we improve the Status here?
+			//  I think we can improve this status as we can now know what kind of object failed, but this might be something we want to do in the future when we know how
+			//  we want to handle the status.
 			return GetStatusForError(cmd.GetLogger(), err, gatewayv1beta1.StatusError)
 		}
 	}

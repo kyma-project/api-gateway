@@ -3,7 +3,6 @@ package processing
 import (
 	"context"
 	"github.com/go-logr/logr"
-	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
 	v1beta12 "istio.io/api/networking/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -53,8 +52,4 @@ type ReconciliationConfig struct {
 	ServiceBlockList  map[string][]string
 	DomainAllowList   []string
 	HostBlockList     []string
-}
-
-type ReconciliationProcessor interface {
-	EvaluateReconciliation(*gatewayv1beta1.APIRule) ([]*ObjectChange, error)
 }

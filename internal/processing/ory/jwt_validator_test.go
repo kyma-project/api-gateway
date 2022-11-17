@@ -27,7 +27,7 @@ var _ = Describe("Validator for", func() {
 			handler := &gatewayv1beta1.Handler{Name: "jwt", Config: emptyConfig()}
 
 			//when
-			problems := (&JwtValidator{}).Validate("some.attribute", handler)
+			problems := (&jwtValidator{}).Validate("some.attribute", handler)
 
 			//then
 			Expect(problems).To(HaveLen(1))
@@ -40,7 +40,7 @@ var _ = Describe("Validator for", func() {
 			handler := &gatewayv1beta1.Handler{Name: "jwt", Config: simpleJWTConfig("a t g o")}
 
 			//when
-			problems := (&JwtValidator{}).Validate("some.attribute", handler)
+			problems := (&jwtValidator{}).Validate("some.attribute", handler)
 
 			//then
 			Expect(problems).To(HaveLen(2))
@@ -55,7 +55,7 @@ var _ = Describe("Validator for", func() {
 			handler := &gatewayv1beta1.Handler{Name: "jwt", Config: testURLJWTConfig("http://issuer.test/.well-known/jwks.json", "http://issuer.test/")}
 
 			//when
-			problems := (&JwtValidator{}).Validate("some.attribute", handler)
+			problems := (&jwtValidator{}).Validate("some.attribute", handler)
 
 			//then
 			Expect(problems).To(HaveLen(2))
@@ -70,7 +70,7 @@ var _ = Describe("Validator for", func() {
 			handler := &gatewayv1beta1.Handler{Name: "jwt", Config: testURLJWTConfig("file://.well-known/jwks.json", "https://issuer.test/")}
 
 			//when
-			problems := (&JwtValidator{}).Validate("some.attribute", handler)
+			problems := (&jwtValidator{}).Validate("some.attribute", handler)
 
 			//then
 			Expect(problems).To(HaveLen(0))
@@ -81,7 +81,7 @@ var _ = Describe("Validator for", func() {
 			handler := &gatewayv1beta1.Handler{Name: "jwt", Config: testURLJWTConfig("https://issuer.test/.well-known/jwks.json", "https://issuer.test/")}
 
 			//when
-			problems := (&JwtValidator{}).Validate("some.attribute", handler)
+			problems := (&jwtValidator{}).Validate("some.attribute", handler)
 
 			//then
 			Expect(problems).To(HaveLen(0))
@@ -92,7 +92,7 @@ var _ = Describe("Validator for", func() {
 			handler := &gatewayv1beta1.Handler{Name: "jwt", Config: &runtime.RawExtension{Raw: []byte("/abc]")}}
 
 			//when
-			problems := (&JwtValidator{}).Validate("some.attribute", handler)
+			problems := (&jwtValidator{}).Validate("some.attribute", handler)
 
 			//then
 			Expect(problems).To(HaveLen(1))
@@ -105,7 +105,7 @@ var _ = Describe("Validator for", func() {
 			handler := &gatewayv1beta1.Handler{Name: "jwt", Config: simpleJWTConfig()}
 
 			//when
-			problems := (&JwtValidator{}).Validate("some.attribute", handler)
+			problems := (&jwtValidator{}).Validate("some.attribute", handler)
 
 			//then
 			Expect(problems).To(HaveLen(0))
