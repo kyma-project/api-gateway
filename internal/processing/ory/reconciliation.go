@@ -25,20 +25,6 @@ func NewOryReconciliation(config processing.ReconciliationConfig) Reconciliation
 	}
 }
 
-func newVirtualService(config processing.ReconciliationConfig) processing.VirtualService {
-	return processing.VirtualService{
-		Client: config.Client,
-		Ctx:    config.Ctx,
-		Creator: virtualServiceCreator{
-			oathkeeperSvc:     config.OathkeeperSvc,
-			oathkeeperSvcPort: config.OathkeeperSvcPort,
-			corsConfig:        config.CorsConfig,
-			additionalLabels:  config.AdditionalLabels,
-			defaultDomainName: config.DefaultDomainName,
-		},
-	}
-}
-
 func (r Reconciliation) Validate(apiRule *gatewayv1beta1.APIRule) ([]validation.Failure, error) {
 	var vsList networkingv1beta1.VirtualServiceList
 	if err := r.config.Client.List(r.config.Ctx, &vsList); err != nil {

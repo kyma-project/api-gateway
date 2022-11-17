@@ -7,6 +7,20 @@ import (
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 )
 
+func newVirtualService(config processing.ReconciliationConfig) processing.VirtualService {
+	return processing.VirtualService{
+		Client: config.Client,
+		Ctx:    config.Ctx,
+		Creator: virtualServiceCreator{
+			oathkeeperSvc:     config.OathkeeperSvc,
+			oathkeeperSvcPort: config.OathkeeperSvcPort,
+			corsConfig:        config.CorsConfig,
+			additionalLabels:  config.AdditionalLabels,
+			defaultDomainName: config.DefaultDomainName,
+		},
+	}
+}
+
 type virtualServiceCreator struct {
 	oathkeeperSvc     string
 	oathkeeperSvcPort uint32
