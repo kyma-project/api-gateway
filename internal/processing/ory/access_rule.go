@@ -1,4 +1,4 @@
-package processing
+package ory
 
 import (
 	"context"
@@ -6,6 +6,7 @@ import (
 	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
 	"github.com/kyma-incubator/api-gateway/internal/builders"
 	"github.com/kyma-incubator/api-gateway/internal/helpers"
+	"github.com/kyma-incubator/api-gateway/internal/processing"
 	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -26,11 +27,11 @@ func NewAccessRuleProcessor(client client.Client, ctx context.Context, additiona
 	}
 }
 
-func (r AccessRuleProcessor) EvaluateReconciliation(apiRule *gatewayv1beta1.APIRule) ([]*ObjectChange, error) {
+func (r AccessRuleProcessor) EvaluateReconciliation(apiRule *gatewayv1beta1.APIRule) ([]*processing.ObjectChange, error) {
 	desired := r.getDesiredState(apiRule)
 	actual, err := r.getActualState(r.ctx, apiRule)
 	if err != nil {
-		return make([]*ObjectChange, 0), err
+		return make([]*processing.ObjectChange, 0), err
 	}
 
 	c := r.getObjectChanges(desired, actual)
@@ -38,27 +39,27 @@ func (r AccessRuleProcessor) EvaluateReconciliation(apiRule *gatewayv1beta1.APIR
 	return c, nil
 }
 
-func (r AccessRuleProcessor) getObjectChanges(desiredRules map[string]*rulev1alpha1.Rule, actualRules map[string]*rulev1alpha1.Rule) []*ObjectChange {
-	arApplyCommands := make(map[string]*ObjectChange)
+func (r AccessRuleProcessor) getObjectChanges(desiredRules map[string]*rulev1alpha1.Rule, actualRules map[string]*rulev1alpha1.Rule) []*processing.ObjectChange {
+	arApplyCommands := make(map[string]*processing.ObjectChange)
 
 	for path, rule := range desiredRules {
 
 		if actualRules[path] != nil {
 			actualRules[path].Spec = rule.Spec
-			arApplyCommands[path] = NewObjectUpdateAction(actualRules[path])
+			arApplyCommands[path] = processing.NewObjectUpdateAction(actualRules[path])
 		} else {
-			arApplyCommands[path] = NewObjectCreateAction(rule)
+			arApplyCommands[path] = processing.NewObjectCreateAction(rule)
 		}
 
 	}
 
 	for path, rule := range actualRules {
 		if desiredRules[path] == nil {
-			arApplyCommands[path] = NewObjectDeleteAction(rule)
+			arApplyCommands[path] = processing.NewObjectDeleteAction(rule)
 		}
 	}
 
-	applyCommands := make([]*ObjectChange, 0, len(arApplyCommands))
+	applyCommands := make([]*processing.ObjectChange, 0, len(arApplyCommands))
 
 	for _, applyCommand := range arApplyCommands {
 		applyCommands = append(applyCommands, applyCommand)
@@ -68,10 +69,10 @@ func (r AccessRuleProcessor) getObjectChanges(desiredRules map[string]*rulev1alp
 }
 
 func (r AccessRuleProcessor) getDesiredState(api *gatewayv1beta1.APIRule) map[string]*rulev1alpha1.Rule {
-	pathDuplicates := HasPathDuplicates(api.Spec.Rules)
+	pathDuplicates := processing.HasPathDuplicates(api.Spec.Rules)
 	accessRules := make(map[string]*rulev1alpha1.Rule)
 	for _, rule := range api.Spec.Rules {
-		if IsSecured(rule) {
+		if processing.IsSecured(rule) {
 			ar := generateAccessRule(api, rule, rule.AccessStrategies, r.additionalLabels, r.defaultDomainName)
 			accessRules[setAccessRuleKey(pathDuplicates, *ar)] = ar
 		}
@@ -80,7 +81,7 @@ func (r AccessRuleProcessor) getDesiredState(api *gatewayv1beta1.APIRule) map[st
 }
 
 func (r AccessRuleProcessor) getActualState(ctx context.Context, api *gatewayv1beta1.APIRule) (map[string]*rulev1alpha1.Rule, error) {
-	labels := GetOwnerLabels(api)
+	labels := processing.GetOwnerLabels(api)
 
 	var arList rulev1alpha1.RuleList
 	if err := r.client.List(ctx, &arList, client.MatchingLabels(labels)); err != nil {
@@ -88,7 +89,7 @@ func (r AccessRuleProcessor) getActualState(ctx context.Context, api *gatewayv1b
 	}
 
 	accessRules := make(map[string]*rulev1alpha1.Rule)
-	pathDuplicates := HasPathDuplicates(api.Spec.Rules)
+	pathDuplicates := processing.HasPathDuplicates(api.Spec.Rules)
 
 	for i := range arList.Items {
 		obj := arList.Items[i]
@@ -110,15 +111,15 @@ func setAccessRuleKey(hasPathDuplicates bool, rule rulev1alpha1.Rule) string {
 func generateAccessRule(api *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rule, accessStrategies []*gatewayv1beta1.Authenticator, additionalLabels map[string]string, defaultDomainName string) *rulev1alpha1.Rule {
 	namePrefix := fmt.Sprintf("%s-", api.ObjectMeta.Name)
 	namespace := api.ObjectMeta.Namespace
-	ownerRef := GenerateOwnerRef(api)
+	ownerRef := processing.GenerateOwnerRef(api)
 
 	arBuilder := builders.AccessRule().
 		GenerateName(namePrefix).
 		Namespace(namespace).
 		Owner(builders.OwnerReference().From(&ownerRef)).
 		Spec(builders.AccessRuleSpec().From(generateAccessRuleSpec(api, rule, accessStrategies, defaultDomainName))).
-		Label(OwnerLabel, fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace)).
-		Label(OwnerLabelv1alpha1, fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace))
+		Label(processing.OwnerLabel, fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace)).
+		Label(processing.OwnerLabelv1alpha1, fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace))
 
 	for k, v := range additionalLabels {
 		arBuilder.Label(k, v)

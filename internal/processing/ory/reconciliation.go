@@ -17,7 +17,7 @@ type Reconciliation struct {
 
 func NewOryReconciliation(config processing.ReconciliationConfig) Reconciliation {
 	vsProcessor := newVirtualService(config)
-	acProcessor := processing.NewAccessRuleProcessor(config.Client, config.Ctx, config.AdditionalLabels, config.DefaultDomainName)
+	acProcessor := NewAccessRuleProcessor(config.Client, config.Ctx, config.AdditionalLabels, config.DefaultDomainName)
 
 	return Reconciliation{
 		processors: []processing.ReconciliationProcessor{vsProcessor, acProcessor},
