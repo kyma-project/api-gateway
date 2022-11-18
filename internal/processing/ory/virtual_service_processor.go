@@ -9,8 +9,8 @@ import (
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 )
 
-func newVirtualService(config processing.ReconciliationConfig) processing.VirtualService {
-	return processing.VirtualService{
+func NewVirtualServiceProcessor(config processing.ReconciliationConfig) processing.VirtualServiceProcessor {
+	return processing.VirtualServiceProcessor{
 		Client: config.Client,
 		Ctx:    config.Ctx,
 		Creator: virtualServiceCreator{

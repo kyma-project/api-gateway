@@ -74,15 +74,15 @@ func applyChanges(ctx context.Context, client client.Client, changes ...*ObjectC
 func applyChange(ctx context.Context, client client.Client, change *ObjectChange) error {
 	var err error
 
-	switch change.action {
+	switch change.Action {
 	case "create":
-		err = client.Create(ctx, change.obj)
+		err = client.Create(ctx, change.Obj)
 	case "update":
-		err = client.Update(ctx, change.obj)
+		err = client.Update(ctx, change.Obj)
 	case "delete":
-		err = client.Delete(ctx, change.obj)
+		err = client.Delete(ctx, change.Obj)
 	default:
-		err = fmt.Errorf("apply action %s is not supported", change.action)
+		err = fmt.Errorf("apply action %s is not supported", change.Action)
 	}
 
 	if err != nil {

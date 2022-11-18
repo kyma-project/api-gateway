@@ -16,7 +16,7 @@ type Reconciliation struct {
 }
 
 func NewIstioReconciliation(config processing.ReconciliationConfig) Reconciliation {
-	vsProcessor := newVirtualService(config)
+	vsProcessor := NewVirtualService(config)
 
 	return Reconciliation{
 		// Add missing processors for AuthorizationPolicy and RequestAuthentication

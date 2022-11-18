@@ -8,28 +8,28 @@ import (
 )
 
 type ObjectChange struct {
-	action string
-	obj    client.Object
+	Action string
+	Obj    client.Object
 }
 
 func NewObjectCreateAction(obj client.Object) *ObjectChange {
 	return &ObjectChange{
-		action: "create",
-		obj:    obj,
+		Action: "create",
+		Obj:    obj,
 	}
 }
 
 func NewObjectUpdateAction(obj client.Object) *ObjectChange {
 	return &ObjectChange{
-		action: "update",
-		obj:    obj,
+		Action: "update",
+		Obj:    obj,
 	}
 }
 
 func NewObjectDeleteAction(obj client.Object) *ObjectChange {
 	return &ObjectChange{
-		action: "delete",
-		obj:    obj,
+		Action: "delete",
+		Obj:    obj,
 	}
 }
 

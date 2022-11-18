@@ -11,15 +11,15 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-type accessRuleProcessor struct {
+type AccessRuleProcessor struct {
 	client            client.Client
 	ctx               context.Context
 	additionalLabels  map[string]string
 	defaultDomainName string
 }
 
-func newAccessRuleProcessor(client client.Client, ctx context.Context, additionalLabels map[string]string, defaultDomainName string) accessRuleProcessor {
-	return accessRuleProcessor{
+func NewAccessRuleProcessor(client client.Client, ctx context.Context, additionalLabels map[string]string, defaultDomainName string) AccessRuleProcessor {
+	return AccessRuleProcessor{
 		client:            client,
 		ctx:               ctx,
 		additionalLabels:  additionalLabels,
@@ -27,7 +27,7 @@ func newAccessRuleProcessor(client client.Client, ctx context.Context, additiona
 	}
 }
 
-func (r accessRuleProcessor) EvaluateReconciliation(apiRule *gatewayv1beta1.APIRule) ([]*processing.ObjectChange, error) {
+func (r AccessRuleProcessor) EvaluateReconciliation(apiRule *gatewayv1beta1.APIRule) ([]*processing.ObjectChange, error) {
 	desired := r.getDesiredState(apiRule)
 	actual, err := r.getActualState(r.ctx, apiRule)
 	if err != nil {
@@ -39,7 +39,7 @@ func (r accessRuleProcessor) EvaluateReconciliation(apiRule *gatewayv1beta1.APIR
 	return c, nil
 }
 
-func (r accessRuleProcessor) getObjectChanges(desiredRules map[string]*rulev1alpha1.Rule, actualRules map[string]*rulev1alpha1.Rule) []*processing.ObjectChange {
+func (r AccessRuleProcessor) getObjectChanges(desiredRules map[string]*rulev1alpha1.Rule, actualRules map[string]*rulev1alpha1.Rule) []*processing.ObjectChange {
 	arApplyCommands := make(map[string]*processing.ObjectChange)
 
 	for path, rule := range desiredRules {
@@ -68,7 +68,7 @@ func (r accessRuleProcessor) getObjectChanges(desiredRules map[string]*rulev1alp
 	return applyCommands
 }
 
-func (r accessRuleProcessor) getDesiredState(api *gatewayv1beta1.APIRule) map[string]*rulev1alpha1.Rule {
+func (r AccessRuleProcessor) getDesiredState(api *gatewayv1beta1.APIRule) map[string]*rulev1alpha1.Rule {
 	pathDuplicates := processing.HasPathDuplicates(api.Spec.Rules)
 	accessRules := make(map[string]*rulev1alpha1.Rule)
 	for _, rule := range api.Spec.Rules {
@@ -80,7 +80,7 @@ func (r accessRuleProcessor) getDesiredState(api *gatewayv1beta1.APIRule) map[st
 	return accessRules
 }
 
-func (r accessRuleProcessor) getActualState(ctx context.Context, api *gatewayv1beta1.APIRule) (map[string]*rulev1alpha1.Rule, error) {
+func (r AccessRuleProcessor) getActualState(ctx context.Context, api *gatewayv1beta1.APIRule) (map[string]*rulev1alpha1.Rule, error) {
 	labels := processing.GetOwnerLabels(api)
 
 	var arList rulev1alpha1.RuleList

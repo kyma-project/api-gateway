@@ -7,7 +7,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-type VirtualService struct {
+type VirtualServiceProcessor struct {
 	Creator           VirtualServiceCreator
 	Client            client.Client
 	Ctx               context.Context
@@ -23,7 +23,7 @@ type VirtualServiceCreator interface {
 	Create(api *gatewayv1beta1.APIRule) *networkingv1beta1.VirtualService
 }
 
-func (r VirtualService) EvaluateReconciliation(apiRule *gatewayv1beta1.APIRule) ([]*ObjectChange, error) {
+func (r VirtualServiceProcessor) EvaluateReconciliation(apiRule *gatewayv1beta1.APIRule) ([]*ObjectChange, error) {
 	desired := r.getDesiredState(apiRule)
 	actual, err := r.getActualState(r.Ctx, apiRule)
 	if err != nil {
@@ -35,11 +35,11 @@ func (r VirtualService) EvaluateReconciliation(apiRule *gatewayv1beta1.APIRule) 
 	return []*ObjectChange{c}, nil
 }
 
-func (r VirtualService) getDesiredState(api *gatewayv1beta1.APIRule) *networkingv1beta1.VirtualService {
+func (r VirtualServiceProcessor) getDesiredState(api *gatewayv1beta1.APIRule) *networkingv1beta1.VirtualService {
 	return r.Creator.Create(api)
 }
 
-func (r VirtualService) getActualState(ctx context.Context, api *gatewayv1beta1.APIRule) (*networkingv1beta1.VirtualService, error) {
+func (r VirtualServiceProcessor) getActualState(ctx context.Context, api *gatewayv1beta1.APIRule) (*networkingv1beta1.VirtualService, error) {
 	labels := GetOwnerLabels(api)
 
 	var vsList networkingv1beta1.VirtualServiceList
@@ -54,7 +54,7 @@ func (r VirtualService) getActualState(ctx context.Context, api *gatewayv1beta1.
 	}
 }
 
-func (r VirtualService) getObjectChanges(desiredVs *networkingv1beta1.VirtualService, actualVs *networkingv1beta1.VirtualService) *ObjectChange {
+func (r VirtualServiceProcessor) getObjectChanges(desiredVs *networkingv1beta1.VirtualService, actualVs *networkingv1beta1.VirtualService) *ObjectChange {
 	if actualVs != nil {
 		actualVs.Spec = *desiredVs.Spec.DeepCopy()
 		return NewObjectUpdateAction(actualVs)
