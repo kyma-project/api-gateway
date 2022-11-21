@@ -8,13 +8,21 @@ import (
 	"github.com/kyma-incubator/api-gateway/internal/processing/ory"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	. "github.com/onsi/gomega/gstruct"
+	"github.com/onsi/gomega/types"
 	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/utils/strings/slices"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
+	"strconv"
 )
+
+var idFn = func(index int, element interface{}) string {
+	return strconv.Itoa(index)
+}
+
+var byteToString = func(raw []byte) string { return string(raw) }
 
 var _ = Describe("Access Rule Processor", func() {
 	When("handler is allow", func() {
@@ -394,47 +402,10 @@ var _ = Describe("Access Rule Processor", func() {
 			expectedJwtRuleMatchURL := fmt.Sprintf("<http|https>://%s<%s>", ServiceHost, HeadersApiPath)
 			expectedRuleUpstreamURL := fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", ServiceName, ApiNamespace, ServicePort)
 
-			var jwtAccessRule *rulev1alpha1.Rule
-			var noopAccessRule *rulev1alpha1.Rule
+			noopMatcher := buildNoopMatcher(ApiMethods, expectedNoopRuleMatchURL, expectedRuleUpstreamURL, "allow")
+			jwtMatcher := buildJwtMatcher(ApiMethods, expectedJwtRuleMatchURL, expectedRuleUpstreamURL, jwtConfigJSON)
 
-			for _, change := range result {
-				rule := change.Obj.(*rulev1alpha1.Rule)
-				switch rule.Spec.Authenticators[0].Handler.Name {
-				case "noop":
-					noopAccessRule = rule
-				case "jwt":
-					jwtAccessRule = rule
-				default:
-					Fail("Rule is not expected.")
-				}
-			}
-
-			Expect(noopAccessRule).NotTo(BeNil())
-			Expect(len(noopAccessRule.Spec.Authenticators)).To(Equal(1))
-			Expect(noopAccessRule.Spec.Authorizer.Name).To(Equal("allow"))
-			Expect(noopAccessRule.Spec.Authorizer.Config).To(BeNil())
-			Expect(noopAccessRule.Spec.Authenticators[0].Handler.Name).To(Equal("noop"))
-			Expect(noopAccessRule.Spec.Authenticators[0].Handler.Config).To(BeNil())
-			Expect(len(noopAccessRule.Spec.Match.Methods)).To(Equal(len(ApiMethods)))
-			Expect(noopAccessRule.Spec.Match.Methods).To(Equal(ApiMethods))
-			Expect(noopAccessRule.Spec.Match.URL).To(Equal(expectedNoopRuleMatchURL))
-			Expect(noopAccessRule.Spec.Upstream.URL).To(Equal(expectedRuleUpstreamURL))
-
-			Expect(jwtAccessRule).NotTo(BeNil())
-			Expect(len(jwtAccessRule.Spec.Authenticators)).To(Equal(1))
-			Expect(jwtAccessRule.Spec.Authorizer.Name).To(Equal("allow"))
-			Expect(jwtAccessRule.Spec.Authorizer.Config).To(BeNil())
-			Expect(jwtAccessRule.Spec.Authenticators[0].Handler.Name).To(Equal("jwt"))
-			Expect(jwtAccessRule.Spec.Authenticators[0].Handler.Config).NotTo(BeNil())
-			Expect(string(jwtAccessRule.Spec.Authenticators[0].Handler.Config.Raw)).To(Equal(jwtConfigJSON))
-			Expect(len(jwtAccessRule.Spec.Match.Methods)).To(Equal(len(ApiMethods)))
-			Expect(jwtAccessRule.Spec.Match.Methods).To(Equal(ApiMethods))
-			Expect(jwtAccessRule.Spec.Match.URL).To(Equal(expectedJwtRuleMatchURL))
-			Expect(jwtAccessRule.Spec.Upstream.URL).To(Equal(expectedRuleUpstreamURL))
-			Expect(jwtAccessRule.Spec.Mutators).NotTo(BeNil())
-			Expect(len(jwtAccessRule.Spec.Mutators)).To(Equal(len(testMutators)))
-			Expect(jwtAccessRule.Spec.Mutators[0].Handler.Name).To(Equal(testMutators[0].Name))
-			Expect(jwtAccessRule.Spec.Mutators[1].Handler.Name).To(Equal(testMutators[1].Name))
+			Expect(result).To(ContainElements(noopMatcher, jwtMatcher))
 		})
 
 		It("should return two rules for two same paths and different methods", func() {
@@ -498,48 +469,51 @@ var _ = Describe("Access Rule Processor", func() {
 			expectedJwtRuleMatchURL := fmt.Sprintf("<http|https>://%s<%s>", ServiceHost, ApiPath)
 			expectedRuleUpstreamURL := fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", ServiceName, ApiNamespace, ServicePort)
 
-			var jwtAccessRule *rulev1alpha1.Rule
-			var noopAccessRule *rulev1alpha1.Rule
+			noopMatcher := buildNoopMatcher(getMethod, expectedNoopRuleMatchURL, expectedRuleUpstreamURL, "allow")
+			//jwtMatcher := buildJwtMatcher(postMethod, expectedJwtRuleMatchURL, expectedRuleUpstreamURL, jwtConfigJSON)
+			jwtMatcher := PointTo(MatchFields(IgnoreExtras, Fields{
+				"Obj": PointTo(MatchFields(IgnoreExtras, Fields{
+					"Spec": MatchFields(IgnoreExtras, Fields{
+						"Match": PointTo(MatchFields(IgnoreExtras, Fields{
+							"Methods": Equal(postMethod),
+							"URL":     Equal(expectedJwtRuleMatchURL),
+						})),
+						"Upstream": PointTo(MatchFields(IgnoreExtras, Fields{
+							"URL": Equal(expectedRuleUpstreamURL),
+						})),
+						"Authorizer": PointTo(MatchFields(IgnoreExtras, Fields{
+							"Handler": PointTo(MatchFields(IgnoreExtras, Fields{
+								"Name":   Equal("allow"),
+								"Config": BeNil(),
+							})),
+						})),
+						"Authenticators": MatchElementsWithIndex(idFn, IgnoreExtras, Elements{
+							"0": PointTo(MatchFields(IgnoreExtras, Fields{
+								"Handler": PointTo(MatchFields(IgnoreExtras, Fields{
+									"Name": Equal("jwt"),
+									"Config": PointTo(MatchFields(IgnoreExtras, Fields{
+										"Raw": WithTransform(byteToString, Equal(jwtConfigJSON)),
+									})),
+								})),
+							})),
+						}),
+						"Mutators": MatchElementsWithIndex(idFn, IgnoreExtras, Elements{
+							"0": PointTo(MatchFields(IgnoreExtras, Fields{
+								"Handler": PointTo(MatchFields(IgnoreExtras, Fields{
+									"Name": Equal(testMutators[0].Name),
+								})),
+							})),
+							"1": PointTo(MatchFields(IgnoreExtras, Fields{
+								"Handler": PointTo(MatchFields(IgnoreExtras, Fields{
+									"Name": Equal(testMutators[1].Name),
+								})),
+							})),
+						}),
+					}),
+				})),
+			}))
 
-			for _, change := range result {
-				rule := change.Obj.(*rulev1alpha1.Rule)
-				switch rule.Spec.Authenticators[0].Handler.Name {
-				case "noop":
-					noopAccessRule = rule
-				case "jwt":
-					jwtAccessRule = rule
-				default:
-					Fail("Rule is not expected.")
-				}
-			}
-
-			Expect(noopAccessRule).NotTo(BeNil())
-			Expect(len(noopAccessRule.Spec.Authenticators)).To(Equal(1))
-			Expect(noopAccessRule.Spec.Authorizer.Name).To(Equal("allow"))
-			Expect(noopAccessRule.Spec.Authorizer.Config).To(BeNil())
-			Expect(noopAccessRule.Spec.Authenticators[0].Handler.Name).To(Equal("noop"))
-			Expect(noopAccessRule.Spec.Authenticators[0].Handler.Config).To(BeNil())
-			Expect(len(noopAccessRule.Spec.Match.Methods)).To(Equal(len(getMethod)))
-			Expect(noopAccessRule.Spec.Match.Methods).To(Equal(getMethod))
-			Expect(noopAccessRule.Spec.Match.URL).To(Equal(expectedNoopRuleMatchURL))
-			Expect(noopAccessRule.Spec.Upstream.URL).To(Equal(expectedRuleUpstreamURL))
-
-			Expect(jwtAccessRule).NotTo(BeNil())
-			Expect(len(jwtAccessRule.Spec.Authenticators)).To(Equal(1))
-			Expect(jwtAccessRule.Spec.Authorizer.Name).To(Equal("allow"))
-			Expect(jwtAccessRule.Spec.Authorizer.Config).To(BeNil())
-			Expect(jwtAccessRule.Spec.Authenticators[0].Handler.Name).To(Equal("jwt"))
-			Expect(jwtAccessRule.Spec.Authenticators[0].Handler.Config).NotTo(BeNil())
-			Expect(string(jwtAccessRule.Spec.Authenticators[0].Handler.Config.Raw)).To(Equal(jwtConfigJSON))
-			Expect(len(jwtAccessRule.Spec.Match.Methods)).To(Equal(len(postMethod)))
-			Expect(jwtAccessRule.Spec.Match.Methods).To(Equal(postMethod))
-			Expect(jwtAccessRule.Spec.Match.URL).To(Equal(expectedJwtRuleMatchURL))
-			Expect(jwtAccessRule.Spec.Upstream.URL).To(Equal(expectedRuleUpstreamURL))
-			Expect(jwtAccessRule.Spec.Mutators).NotTo(BeNil())
-			Expect(len(jwtAccessRule.Spec.Mutators)).To(Equal(len(testMutators)))
-			Expect(jwtAccessRule.Spec.Mutators[0].Handler.Name).To(Equal(testMutators[0].Name))
-			Expect(jwtAccessRule.Spec.Mutators[1].Handler.Name).To(Equal(testMutators[1].Name))
-
+			Expect(result).To(ContainElements(noopMatcher, jwtMatcher))
 		})
 
 		It("should return two rules for two same paths and one different", func() {
@@ -600,69 +574,15 @@ var _ = Describe("Access Rule Processor", func() {
 			Expect(err).To(BeNil())
 			Expect(result).To(HaveLen(3))
 
-			expectedNoopGetRuleMatchURL := fmt.Sprintf("<http|https>://%s<%s>", ServiceHost, ApiPath)
-			expectedNoopPostRuleMatchURL := fmt.Sprintf("<http|https>://%s<%s>", ServiceHost, ApiPath)
+			expectedNoopRuleMatchURL := fmt.Sprintf("<http|https>://%s<%s>", ServiceHost, ApiPath)
 			expectedJwtRuleMatchURL := fmt.Sprintf("<http|https>://%s<%s>", ServiceHost, HeadersApiPath)
 			expectedRuleUpstreamURL := fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", ServiceName, ApiNamespace, ServicePort)
 
-			var jwtAccessRule *rulev1alpha1.Rule
-			var noopPostAccessRule *rulev1alpha1.Rule
-			var noopGetAccessRule *rulev1alpha1.Rule
+			noopGetMatcher := buildNoopMatcher(getMethod, expectedNoopRuleMatchURL, expectedRuleUpstreamURL, "allow")
+			noopPostMatcher := buildNoopMatcher(postMethod, expectedNoopRuleMatchURL, expectedRuleUpstreamURL, "allow")
+			jwtMatcher := buildJwtMatcher(ApiMethods, expectedJwtRuleMatchURL, expectedRuleUpstreamURL, jwtConfigJSON)
 
-			for _, change := range result {
-				rule := change.Obj.(*rulev1alpha1.Rule)
-				switch rule.Spec.Authenticators[0].Handler.Name {
-				case "noop":
-					if slices.Contains(rule.Spec.Match.Methods, "GET") {
-						noopGetAccessRule = rule
-					} else {
-						noopPostAccessRule = rule
-					}
-				case "jwt":
-					jwtAccessRule = rule
-
-				default:
-					Fail("Rule is not expected.")
-				}
-			}
-
-			Expect(noopGetAccessRule).NotTo(BeNil())
-			Expect(noopGetAccessRule.Spec.Authorizer.Name).To(Equal("allow"))
-			Expect(noopGetAccessRule.Spec.Authorizer.Config).To(BeNil())
-			Expect(noopGetAccessRule.Spec.Authenticators[0].Handler.Name).To(Equal("noop"))
-			Expect(noopGetAccessRule.Spec.Authenticators[0].Handler.Config).To(BeNil())
-			Expect(len(noopGetAccessRule.Spec.Match.Methods)).To(Equal(len(getMethod)))
-			Expect(noopGetAccessRule.Spec.Match.Methods).To(Equal(getMethod))
-			Expect(noopGetAccessRule.Spec.Match.URL).To(Equal(expectedNoopGetRuleMatchURL))
-			Expect(noopGetAccessRule.Spec.Upstream.URL).To(Equal(expectedRuleUpstreamURL))
-
-			Expect(noopPostAccessRule).NotTo(BeNil())
-			Expect(len(noopPostAccessRule.Spec.Authenticators)).To(Equal(1))
-			Expect(noopPostAccessRule.Spec.Authorizer.Name).To(Equal("allow"))
-			Expect(noopPostAccessRule.Spec.Authorizer.Config).To(BeNil())
-			Expect(noopPostAccessRule.Spec.Authenticators[0].Handler.Name).To(Equal("noop"))
-			Expect(noopPostAccessRule.Spec.Authenticators[0].Handler.Config).To(BeNil())
-			Expect(len(noopPostAccessRule.Spec.Match.Methods)).To(Equal(len(postMethod)))
-			Expect(noopPostAccessRule.Spec.Match.Methods).To(Equal(postMethod))
-			Expect(noopPostAccessRule.Spec.Match.URL).To(Equal(expectedNoopPostRuleMatchURL))
-			Expect(noopPostAccessRule.Spec.Upstream.URL).To(Equal(expectedRuleUpstreamURL))
-
-			Expect(jwtAccessRule).NotTo(BeNil())
-			Expect(len(jwtAccessRule.Spec.Authenticators)).To(Equal(1))
-			Expect(jwtAccessRule.Spec.Authorizer.Name).To(Equal("allow"))
-			Expect(jwtAccessRule.Spec.Authorizer.Config).To(BeNil())
-			Expect(jwtAccessRule.Spec.Authenticators[0].Handler.Name).To(Equal("jwt"))
-			Expect(jwtAccessRule.Spec.Authenticators[0].Handler.Config).NotTo(BeNil())
-			Expect(string(jwtAccessRule.Spec.Authenticators[0].Handler.Config.Raw)).To(Equal(jwtConfigJSON))
-			Expect(len(jwtAccessRule.Spec.Match.Methods)).To(Equal(len(ApiMethods)))
-			Expect(jwtAccessRule.Spec.Match.Methods).To(Equal(ApiMethods))
-			Expect(jwtAccessRule.Spec.Match.URL).To(Equal(expectedJwtRuleMatchURL))
-			Expect(jwtAccessRule.Spec.Upstream.URL).To(Equal(expectedRuleUpstreamURL))
-			Expect(jwtAccessRule.Spec.Mutators).NotTo(BeNil())
-			Expect(len(jwtAccessRule.Spec.Mutators)).To(Equal(len(testMutators)))
-			Expect(jwtAccessRule.Spec.Mutators[0].Handler.Name).To(Equal(testMutators[0].Name))
-			Expect(jwtAccessRule.Spec.Mutators[1].Handler.Name).To(Equal(testMutators[1].Name))
-
+			Expect(result).To(ContainElements(noopGetMatcher, noopPostMatcher, jwtMatcher))
 		})
 
 		It("should return rule for jwt & oauth authenticators for given path", func() {
@@ -735,3 +655,78 @@ var _ = Describe("Access Rule Processor", func() {
 		})
 	})
 })
+
+func buildNoopMatcher(matchMethods []string, matchUrl string, upstreamUrl string, authorizerHandler string) types.GomegaMatcher {
+
+	return PointTo(MatchFields(IgnoreExtras, Fields{
+		"Obj": PointTo(MatchFields(IgnoreExtras, Fields{
+			"Spec": MatchFields(IgnoreExtras, Fields{
+				"Match": PointTo(MatchFields(IgnoreExtras, Fields{
+					"Methods": Equal(matchMethods),
+					"URL":     Equal(matchUrl),
+				})),
+				"Upstream": PointTo(MatchFields(IgnoreExtras, Fields{
+					"URL": Equal(upstreamUrl),
+				})),
+				"Authorizer": PointTo(MatchFields(IgnoreExtras, Fields{
+					"Handler": PointTo(MatchFields(IgnoreExtras, Fields{
+						"Name":   Equal(authorizerHandler),
+						"Config": BeNil(),
+					})),
+				})),
+				"Authenticators": MatchElementsWithIndex(idFn, IgnoreExtras, Elements{
+					"0": PointTo(MatchFields(IgnoreExtras, Fields{
+						"Handler": PointTo(MatchFields(IgnoreExtras, Fields{
+							"Name":   Equal("noop"),
+							"Config": BeNil(),
+						})),
+					})),
+				}),
+			}),
+		})),
+	}))
+}
+
+func buildJwtMatcher(matchMethods []string, matchUrl string, upstreamUrl string, jwtConfigJson string) types.GomegaMatcher {
+	return PointTo(MatchFields(IgnoreExtras, Fields{
+		"Obj": PointTo(MatchFields(IgnoreExtras, Fields{
+			"Spec": MatchFields(IgnoreExtras, Fields{
+				"Match": PointTo(MatchFields(IgnoreExtras, Fields{
+					"Methods": Equal(matchMethods),
+					"URL":     Equal(matchUrl),
+				})),
+				"Upstream": PointTo(MatchFields(IgnoreExtras, Fields{
+					"URL": Equal(upstreamUrl),
+				})),
+				"Authorizer": PointTo(MatchFields(IgnoreExtras, Fields{
+					"Handler": PointTo(MatchFields(IgnoreExtras, Fields{
+						"Name":   Equal("allow"),
+						"Config": BeNil(),
+					})),
+				})),
+				"Authenticators": MatchElementsWithIndex(idFn, IgnoreExtras, Elements{
+					"0": PointTo(MatchFields(IgnoreExtras, Fields{
+						"Handler": PointTo(MatchFields(IgnoreExtras, Fields{
+							"Name": Equal("jwt"),
+							"Config": PointTo(MatchFields(IgnoreExtras, Fields{
+								"Raw": WithTransform(byteToString, Equal(jwtConfigJson)),
+							})),
+						})),
+					})),
+				}),
+				"Mutators": MatchElementsWithIndex(idFn, IgnoreExtras, Elements{
+					"0": PointTo(MatchFields(IgnoreExtras, Fields{
+						"Handler": PointTo(MatchFields(IgnoreExtras, Fields{
+							"Name": Equal("noop"),
+						})),
+					})),
+					"1": PointTo(MatchFields(IgnoreExtras, Fields{
+						"Handler": PointTo(MatchFields(IgnoreExtras, Fields{
+							"Name": Equal("idtoken"),
+						})),
+					})),
+				}),
+			}),
+		})),
+	}))
+}
