@@ -40,32 +40,32 @@ func (r AccessRuleProcessor) EvaluateReconciliation(apiRule *gatewayv1beta1.APIR
 }
 
 func (r AccessRuleProcessor) getObjectChanges(desiredRules map[string]*rulev1alpha1.Rule, actualRules map[string]*rulev1alpha1.Rule) []*processing.ObjectChange {
-	arApplyCommands := make(map[string]*processing.ObjectChange)
+	arChanges := make(map[string]*processing.ObjectChange)
 
 	for path, rule := range desiredRules {
 
 		if actualRules[path] != nil {
 			actualRules[path].Spec = rule.Spec
-			arApplyCommands[path] = processing.NewObjectUpdateAction(actualRules[path])
+			arChanges[path] = processing.NewObjectUpdateAction(actualRules[path])
 		} else {
-			arApplyCommands[path] = processing.NewObjectCreateAction(rule)
+			arChanges[path] = processing.NewObjectCreateAction(rule)
 		}
 
 	}
 
 	for path, rule := range actualRules {
 		if desiredRules[path] == nil {
-			arApplyCommands[path] = processing.NewObjectDeleteAction(rule)
+			arChanges[path] = processing.NewObjectDeleteAction(rule)
 		}
 	}
 
-	applyCommands := make([]*processing.ObjectChange, 0, len(arApplyCommands))
+	arChangesToApply := make([]*processing.ObjectChange, 0, len(arChanges))
 
-	for _, applyCommand := range arApplyCommands {
-		applyCommands = append(applyCommands, applyCommand)
+	for _, applyCommand := range arChanges {
+		arChangesToApply = append(arChangesToApply, applyCommand)
 	}
 
-	return applyCommands
+	return arChangesToApply
 }
 
 func (r AccessRuleProcessor) getDesiredState(api *gatewayv1beta1.APIRule) map[string]*rulev1alpha1.Rule {
@@ -139,14 +139,14 @@ func generateAccessRuleSpec(api *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rul
 
 	serviceNamespace := helpers.FindServiceNamespace(api, &rule)
 
-	// Use rule level service if it exists
 	if rule.Service != nil {
 		return accessRuleSpec.Upstream(builders.Upstream().
 			URL(fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", *rule.Service.Name, *serviceNamespace, int(*rule.Service.Port)))).Get()
+	} else {
+		return accessRuleSpec.Upstream(builders.Upstream().
+			URL(fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", *api.Spec.Service.Name, *serviceNamespace, int(*api.Spec.Service.Port)))).Get()
 	}
-	// Otherwise use service defined on APIRule spec level
-	return accessRuleSpec.Upstream(builders.Upstream().
-		URL(fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", *api.Spec.Service.Name, *serviceNamespace, int(*api.Spec.Service.Port)))).Get()
+
 }
 
 func hasPathDuplicates(rules []gatewayv1beta1.Rule) bool {

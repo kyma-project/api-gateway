@@ -487,48 +487,7 @@ var _ = Describe("Access Rule Processor", func() {
 			expectedRuleUpstreamURL := fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", ServiceName, ApiNamespace, ServicePort)
 
 			noopMatcher := buildNoopMatcher(getMethod, expectedNoopRuleMatchURL, expectedRuleUpstreamURL, "allow")
-			//jwtMatcher := buildJwtMatcher(postMethod, expectedJwtRuleMatchURL, expectedRuleUpstreamURL, jwtConfigJSON)
-			jwtMatcher := PointTo(MatchFields(IgnoreExtras, Fields{
-				"Obj": PointTo(MatchFields(IgnoreExtras, Fields{
-					"Spec": MatchFields(IgnoreExtras, Fields{
-						"Match": PointTo(MatchFields(IgnoreExtras, Fields{
-							"Methods": Equal(postMethod),
-							"URL":     Equal(expectedJwtRuleMatchURL),
-						})),
-						"Upstream": PointTo(MatchFields(IgnoreExtras, Fields{
-							"URL": Equal(expectedRuleUpstreamURL),
-						})),
-						"Authorizer": PointTo(MatchFields(IgnoreExtras, Fields{
-							"Handler": PointTo(MatchFields(IgnoreExtras, Fields{
-								"Name":   Equal("allow"),
-								"Config": BeNil(),
-							})),
-						})),
-						"Authenticators": MatchElementsWithIndex(idFn, IgnoreExtras, Elements{
-							"0": PointTo(MatchFields(IgnoreExtras, Fields{
-								"Handler": PointTo(MatchFields(IgnoreExtras, Fields{
-									"Name": Equal("jwt"),
-									"Config": PointTo(MatchFields(IgnoreExtras, Fields{
-										"Raw": WithTransform(byteToString, Equal(jwtConfigJSON)),
-									})),
-								})),
-							})),
-						}),
-						"Mutators": MatchElementsWithIndex(idFn, IgnoreExtras, Elements{
-							"0": PointTo(MatchFields(IgnoreExtras, Fields{
-								"Handler": PointTo(MatchFields(IgnoreExtras, Fields{
-									"Name": Equal(testMutators[0].Name),
-								})),
-							})),
-							"1": PointTo(MatchFields(IgnoreExtras, Fields{
-								"Handler": PointTo(MatchFields(IgnoreExtras, Fields{
-									"Name": Equal(testMutators[1].Name),
-								})),
-							})),
-						}),
-					}),
-				})),
-			}))
+			jwtMatcher := buildJwtMatcher(postMethod, expectedJwtRuleMatchURL, expectedRuleUpstreamURL, jwtConfigJSON)
 
 			Expect(result).To(ContainElements(noopMatcher, jwtMatcher))
 		})
