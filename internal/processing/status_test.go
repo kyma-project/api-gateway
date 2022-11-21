@@ -1,24 +1,15 @@
 package processing
 
 import (
-	"sigs.k8s.io/controller-runtime/pkg/envtest/printer"
-	"strings"
-	"testing"
-
 	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
 	"github.com/kyma-incubator/api-gateway/internal/validation"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"strings"
 )
 
-func TestStatus(t *testing.T) {
-	RegisterFailHandler(Fail)
-	RunSpecsWithDefaultAndCustomReporters(t, "Status Suite",
-		[]Reporter{printer.NewProwReporter("api-gateway-status-testsuite")})
-}
-
 var _ = Describe("Status", func() {
-	Describe("generateValidationStatus", func() {
+	Context("generateValidationStatus", func() {
 
 		f1 := validation.Failure{AttributePath: "name", Message: "is wrong"}
 		f2 := validation.Failure{AttributePath: "gateway", Message: "is bad"}

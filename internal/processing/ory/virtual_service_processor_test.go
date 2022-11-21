@@ -16,575 +16,216 @@ import (
 )
 
 var _ = Describe("Virtual Service Processor", func() {
-	Context("create", func() {
-		When("handler is allow", func() {
-			It("should create for allow authenticator", func() {
-				// given
-				strategies := []*gatewayv1beta1.Authenticator{
-					{
-						Handler: &gatewayv1beta1.Handler{
-							Name: "allow",
-						},
+	When("handler is allow", func() {
+		It("should create for allow authenticator", func() {
+			// given
+			strategies := []*gatewayv1beta1.Authenticator{
+				{
+					Handler: &gatewayv1beta1.Handler{
+						Name: "allow",
 					},
-				}
+				},
+			}
 
-				allowRule := GetRuleFor(ApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, strategies)
-				rules := []gatewayv1beta1.Rule{allowRule}
+			allowRule := GetRuleFor(ApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, strategies)
+			rules := []gatewayv1beta1.Rule{allowRule}
 
-				apiRule := GetAPIRuleFor(rules)
+			apiRule := GetAPIRuleFor(rules)
 
-				processor := ory.NewVirtualServiceProcessor(GetConfigWithEmptyFakeClient())
+			processor := ory.NewVirtualServiceProcessor(GetConfigWithEmptyFakeClient())
 
-				// when
-				result, err := processor.EvaluateReconciliation(apiRule)
+			// when
+			result, err := processor.EvaluateReconciliation(apiRule)
 
-				// then
-				Expect(err).To(BeNil())
-				Expect(result).To(HaveLen(1))
-				Expect(result[0].Action).To(Equal("create"))
+			// then
+			Expect(err).To(BeNil())
+			Expect(result).To(HaveLen(1))
+			Expect(result[0].Action).To(Equal("create"))
 
-				vs := result[0].Obj.(*networkingv1beta1.VirtualService)
+			vs := result[0].Obj.(*networkingv1beta1.VirtualService)
 
-				Expect(vs).NotTo(BeNil())
-				Expect(len(vs.Spec.Gateways)).To(Equal(1))
-				Expect(len(vs.Spec.Hosts)).To(Equal(1))
-				Expect(vs.Spec.Hosts[0]).To(Equal(ServiceHost))
-				Expect(len(vs.Spec.Http)).To(Equal(1))
+			Expect(vs).NotTo(BeNil())
+			Expect(len(vs.Spec.Gateways)).To(Equal(1))
+			Expect(len(vs.Spec.Hosts)).To(Equal(1))
+			Expect(vs.Spec.Hosts[0]).To(Equal(ServiceHost))
+			Expect(len(vs.Spec.Http)).To(Equal(1))
 
-				Expect(len(vs.Spec.Http[0].Route)).To(Equal(1))
-				Expect(vs.Spec.Http[0].Route[0].Destination.Host).To(Equal(ServiceName + "." + ApiNamespace + ".svc.cluster.local"))
-				Expect(vs.Spec.Http[0].Route[0].Destination.Port.Number).To(Equal(ServicePort))
+			Expect(len(vs.Spec.Http[0].Route)).To(Equal(1))
+			Expect(vs.Spec.Http[0].Route[0].Destination.Host).To(Equal(ServiceName + "." + ApiNamespace + ".svc.cluster.local"))
+			Expect(vs.Spec.Http[0].Route[0].Destination.Port.Number).To(Equal(ServicePort))
 
-				Expect(len(vs.Spec.Http[0].Match)).To(Equal(1))
-				Expect(vs.Spec.Http[0].Match[0].Uri.GetRegex()).To(Equal(apiRule.Spec.Rules[0].Path))
+			Expect(len(vs.Spec.Http[0].Match)).To(Equal(1))
+			Expect(vs.Spec.Http[0].Match[0].Uri.GetRegex()).To(Equal(apiRule.Spec.Rules[0].Path))
 
-				Expect(vs.Spec.Http[0].CorsPolicy.AllowOrigins).To(Equal(TestCors.AllowOrigins))
-				Expect(vs.Spec.Http[0].CorsPolicy.AllowMethods).To(Equal(TestCors.AllowMethods))
-				Expect(vs.Spec.Http[0].CorsPolicy.AllowHeaders).To(Equal(TestCors.AllowHeaders))
+			Expect(vs.Spec.Http[0].CorsPolicy.AllowOrigins).To(Equal(TestCors.AllowOrigins))
+			Expect(vs.Spec.Http[0].CorsPolicy.AllowMethods).To(Equal(TestCors.AllowMethods))
+			Expect(vs.Spec.Http[0].CorsPolicy.AllowHeaders).To(Equal(TestCors.AllowHeaders))
 
-				Expect(vs.ObjectMeta.Name).To(BeEmpty())
-				Expect(vs.ObjectMeta.GenerateName).To(Equal(ApiName + "-"))
-				Expect(vs.ObjectMeta.Namespace).To(Equal(ApiNamespace))
-				Expect(vs.ObjectMeta.Labels[TestLabelKey]).To(Equal(TestLabelValue))
+			Expect(vs.ObjectMeta.Name).To(BeEmpty())
+			Expect(vs.ObjectMeta.GenerateName).To(Equal(ApiName + "-"))
+			Expect(vs.ObjectMeta.Namespace).To(Equal(ApiNamespace))
+			Expect(vs.ObjectMeta.Labels[TestLabelKey]).To(Equal(TestLabelValue))
 
-				Expect(vs.ObjectMeta.OwnerReferences[0].APIVersion).To(Equal(ApiAPIVersion))
-				Expect(vs.ObjectMeta.OwnerReferences[0].Kind).To(Equal(ApiKind))
-				Expect(vs.ObjectMeta.OwnerReferences[0].Name).To(Equal(ApiName))
-				Expect(vs.ObjectMeta.OwnerReferences[0].UID).To(Equal(ApiUID))
-			})
-
-			It("should override destination host for specified spec level service namespace", func() {
-				// given
-				strategies := []*gatewayv1beta1.Authenticator{
-					{
-						Handler: &gatewayv1beta1.Handler{
-							Name: "allow",
-						},
-					},
-				}
-
-				allowRule := GetRuleFor(ApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, strategies)
-				rules := []gatewayv1beta1.Rule{allowRule}
-
-				apiRule := GetAPIRuleFor(rules)
-
-				overrideServiceName := "testName"
-				overrideServiceNamespace := "testName-namespace"
-				overrideServicePort := uint32(8080)
-
-				apiRule.Spec.Service = &gatewayv1beta1.Service{
-					Name:      &overrideServiceName,
-					Namespace: &overrideServiceNamespace,
-					Port:      &overrideServicePort,
-				}
-
-				// when
-				processor := ory.NewVirtualServiceProcessor(GetConfigWithEmptyFakeClient())
-
-				// then
-				result, err := processor.EvaluateReconciliation(apiRule)
-
-				Expect(err).To(BeNil())
-				Expect(result).To(HaveLen(1))
-
-				vs := result[0].Obj.(*networkingv1beta1.VirtualService)
-
-				Expect(len(vs.Spec.Http[0].Route)).To(Equal(1))
-				Expect(vs.Spec.Http[0].Route[0].Destination.Host).To(Equal(overrideServiceName + "." + overrideServiceNamespace + ".svc.cluster.local"))
-			})
-
-			It("should override destination host with rule level service namespace", func() {
-				// given
-				strategies := []*gatewayv1beta1.Authenticator{
-					{
-						Handler: &gatewayv1beta1.Handler{
-							Name: "allow",
-						},
-					},
-				}
-
-				overrideServiceName := "testName"
-				overrideServiceNamespace := "testName-namespace"
-				overrideServicePort := uint32(8080)
-
-				service := &gatewayv1beta1.Service{
-					Name:      &overrideServiceName,
-					Namespace: &overrideServiceNamespace,
-					Port:      &overrideServicePort,
-				}
-
-				allowRule := GetRuleWithServiceFor(ApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, strategies, service)
-				rules := []gatewayv1beta1.Rule{allowRule}
-
-				apiRule := GetAPIRuleFor(rules)
-
-				// when
-				processor := ory.NewVirtualServiceProcessor(GetConfigWithEmptyFakeClient())
-
-				// then
-				result, err := processor.EvaluateReconciliation(apiRule)
-
-				Expect(err).To(BeNil())
-				Expect(result).To(HaveLen(1))
-
-				vs := result[0].Obj.(*networkingv1beta1.VirtualService)
-
-				//verify VS has rule level destination host
-				Expect(len(vs.Spec.Http[0].Route)).To(Equal(1))
-				Expect(vs.Spec.Http[0].Route[0].Destination.Host).To(Equal(overrideServiceName + "." + overrideServiceNamespace + ".svc.cluster.local"))
-
-			})
-			It("should return VS with default domain name when the hostname does not contain domain name", func() {
-				strategies := []*gatewayv1beta1.Authenticator{
-					{
-						Handler: &gatewayv1beta1.Handler{
-							Name: "allow",
-						},
-					},
-				}
-
-				allowRule := GetRuleFor(ApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, strategies)
-				rules := []gatewayv1beta1.Rule{allowRule}
-
-				apiRule := GetAPIRuleFor(rules)
-				apiRule.Spec.Host = &ServiceHostWithNoDomain
-
-				processor := ory.NewVirtualServiceProcessor(GetConfigWithEmptyFakeClient())
-
-				// when
-				result, err := processor.EvaluateReconciliation(apiRule)
-
-				// then
-				Expect(err).To(BeNil())
-				Expect(result).To(HaveLen(1))
-
-				vs := result[0].Obj.(*networkingv1beta1.VirtualService)
-
-				//verify VS
-				Expect(vs).NotTo(BeNil())
-				Expect(len(vs.Spec.Hosts)).To(Equal(1))
-				Expect(vs.Spec.Hosts[0]).To(Equal(ServiceHost))
-
-			})
+			Expect(vs.ObjectMeta.OwnerReferences[0].APIVersion).To(Equal(ApiAPIVersion))
+			Expect(vs.ObjectMeta.OwnerReferences[0].Kind).To(Equal(ApiKind))
+			Expect(vs.ObjectMeta.OwnerReferences[0].Name).To(Equal(ApiName))
+			Expect(vs.ObjectMeta.OwnerReferences[0].UID).To(Equal(ApiUID))
 		})
 
-		When("handler is noop", func() {
-			It("should not override Oathkeeper service destination host with spec level service", func() {
-				// given
-				strategies := []*gatewayv1beta1.Authenticator{
-					{
-						Handler: &gatewayv1beta1.Handler{
-							Name: "noop",
-						},
+		It("should override destination host for specified spec level service namespace", func() {
+			// given
+			strategies := []*gatewayv1beta1.Authenticator{
+				{
+					Handler: &gatewayv1beta1.Handler{
+						Name: "allow",
 					},
-				}
+				},
+			}
 
-				overrideServiceName := "testName"
-				overrideServicePort := uint32(8080)
+			allowRule := GetRuleFor(ApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, strategies)
+			rules := []gatewayv1beta1.Rule{allowRule}
 
-				service := &gatewayv1beta1.Service{
-					Name: &overrideServiceName,
-					Port: &overrideServicePort,
-				}
+			apiRule := GetAPIRuleFor(rules)
 
-				allowRule := GetRuleWithServiceFor(ApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, strategies, service)
-				rules := []gatewayv1beta1.Rule{allowRule}
+			overrideServiceName := "testName"
+			overrideServiceNamespace := "testName-namespace"
+			overrideServicePort := uint32(8080)
 
-				apiRule := GetAPIRuleFor(rules)
+			apiRule.Spec.Service = &gatewayv1beta1.Service{
+				Name:      &overrideServiceName,
+				Namespace: &overrideServiceNamespace,
+				Port:      &overrideServicePort,
+			}
 
-				processor := ory.NewVirtualServiceProcessor(GetConfigWithEmptyFakeClient())
+			// when
+			processor := ory.NewVirtualServiceProcessor(GetConfigWithEmptyFakeClient())
 
-				// when
-				result, err := processor.EvaluateReconciliation(apiRule)
+			// then
+			result, err := processor.EvaluateReconciliation(apiRule)
 
-				// then
-				Expect(err).To(BeNil())
-				Expect(result).To(HaveLen(1))
+			Expect(err).To(BeNil())
+			Expect(result).To(HaveLen(1))
 
-				vs := result[0].Obj.(*networkingv1beta1.VirtualService)
+			vs := result[0].Obj.(*networkingv1beta1.VirtualService)
 
-				Expect(len(vs.Spec.Http[0].Route)).To(Equal(1))
-				Expect(vs.Spec.Http[0].Route[0].Destination.Host).To(Equal(OathkeeperSvc))
-			})
+			Expect(len(vs.Spec.Http[0].Route)).To(Equal(1))
+			Expect(vs.Spec.Http[0].Route[0].Destination.Host).To(Equal(overrideServiceName + "." + overrideServiceNamespace + ".svc.cluster.local"))
 		})
 
-		When("multiple handler", func() {
-			It("should return service for given paths", func() {
-				// given
-				noop := []*gatewayv1beta1.Authenticator{
-					{
-						Handler: &gatewayv1beta1.Handler{
-							Name: "noop",
-						},
-					},
-				}
-
-				jwtConfigJSON := fmt.Sprintf(`
-						{
-							"trusted_issuers": ["%s"],
-							"jwks": [],
-							"required_scope": [%s]
-					}`, JwtIssuer, ToCSVList(ApiScopes))
-
-				jwt := []*gatewayv1beta1.Authenticator{
-					{
-						Handler: &gatewayv1beta1.Handler{
-							Name: "jwt",
-							Config: &runtime.RawExtension{
-								Raw: []byte(jwtConfigJSON),
-							},
-						},
-					},
-				}
-
-				testMutators := []*gatewayv1beta1.Mutator{
-					{
-						Handler: &gatewayv1beta1.Handler{
-							Name: "noop",
-						},
-					},
-					{
-						Handler: &gatewayv1beta1.Handler{
-							Name: "idtoken",
-						},
-					},
-				}
-
-				noopRule := GetRuleFor(ApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, noop)
-				jwtRule := GetRuleFor(HeadersApiPath, ApiMethods, testMutators, jwt)
-				rules := []gatewayv1beta1.Rule{noopRule, jwtRule}
-
-				apiRule := GetAPIRuleFor(rules)
-
-				processor := ory.NewVirtualServiceProcessor(GetConfigWithEmptyFakeClient())
-
-				// when
-				result, err := processor.EvaluateReconciliation(apiRule)
-
-				// then
-				Expect(err).To(BeNil())
-				Expect(result).To(HaveLen(1))
-
-				vs := result[0].Obj.(*networkingv1beta1.VirtualService)
-
-				Expect(vs).NotTo(BeNil())
-				Expect(len(vs.Spec.Gateways)).To(Equal(1))
-				Expect(len(vs.Spec.Hosts)).To(Equal(1))
-				Expect(vs.Spec.Hosts[0]).To(Equal(ServiceHost))
-				Expect(len(vs.Spec.Http)).To(Equal(2))
-
-				Expect(len(vs.Spec.Http[0].Route)).To(Equal(1))
-				Expect(vs.Spec.Http[0].Route[0].Destination.Host).To(Equal(OathkeeperSvc))
-				Expect(vs.Spec.Http[0].Route[0].Destination.Port.Number).To(Equal(OathkeeperSvcPort))
-				Expect(len(vs.Spec.Http[0].Match)).To(Equal(1))
-				Expect(vs.Spec.Http[0].Match[0].Uri.GetRegex()).To(Equal(apiRule.Spec.Rules[0].Path))
-
-				Expect(vs.Spec.Http[0].CorsPolicy.AllowOrigins).To(Equal(TestCors.AllowOrigins))
-				Expect(vs.Spec.Http[0].CorsPolicy.AllowMethods).To(Equal(TestCors.AllowMethods))
-				Expect(vs.Spec.Http[0].CorsPolicy.AllowHeaders).To(Equal(TestCors.AllowHeaders))
-
-				Expect(len(vs.Spec.Http[1].Route)).To(Equal(1))
-				Expect(vs.Spec.Http[1].Route[0].Destination.Host).To(Equal(OathkeeperSvc))
-				Expect(vs.Spec.Http[1].Route[0].Destination.Port.Number).To(Equal(OathkeeperSvcPort))
-				Expect(len(vs.Spec.Http[1].Match)).To(Equal(1))
-				Expect(vs.Spec.Http[1].Match[0].Uri.GetRegex()).To(Equal(apiRule.Spec.Rules[1].Path))
-
-				Expect(vs.Spec.Http[1].CorsPolicy.AllowOrigins).To(Equal(TestCors.AllowOrigins))
-				Expect(vs.Spec.Http[1].CorsPolicy.AllowMethods).To(Equal(TestCors.AllowMethods))
-				Expect(vs.Spec.Http[1].CorsPolicy.AllowHeaders).To(Equal(TestCors.AllowHeaders))
-
-				Expect(vs.ObjectMeta.Name).To(BeEmpty())
-				Expect(vs.ObjectMeta.GenerateName).To(Equal(ApiName + "-"))
-				Expect(vs.ObjectMeta.Namespace).To(Equal(ApiNamespace))
-				Expect(vs.ObjectMeta.Labels[TestLabelKey]).To(Equal(TestLabelValue))
-
-				Expect(vs.ObjectMeta.OwnerReferences[0].APIVersion).To(Equal(ApiAPIVersion))
-				Expect(vs.ObjectMeta.OwnerReferences[0].Kind).To(Equal(ApiKind))
-				Expect(vs.ObjectMeta.OwnerReferences[0].Name).To(Equal(ApiName))
-				Expect(vs.ObjectMeta.OwnerReferences[0].UID).To(Equal(ApiUID))
-			})
-
-			It("should return service for two same paths and different methods", func() {
-				// given
-				noop := []*gatewayv1beta1.Authenticator{
-					{
-						Handler: &gatewayv1beta1.Handler{
-							Name: "noop",
-						},
-					},
-				}
-
-				jwtConfigJSON := fmt.Sprintf(`
-						{
-							"trusted_issuers": ["%s"],
-							"jwks": [],
-							"required_scope": [%s]
-					}`, JwtIssuer, ToCSVList(ApiScopes))
-
-				jwt := []*gatewayv1beta1.Authenticator{
-					{
-						Handler: &gatewayv1beta1.Handler{
-							Name: "jwt",
-							Config: &runtime.RawExtension{
-								Raw: []byte(jwtConfigJSON),
-							},
-						},
-					},
-				}
-
-				testMutators := []*gatewayv1beta1.Mutator{
-					{
-						Handler: &gatewayv1beta1.Handler{
-							Name: "noop",
-						},
-					},
-					{
-						Handler: &gatewayv1beta1.Handler{
-							Name: "idtoken",
-						},
-					},
-				}
-				getMethod := []string{"GET"}
-				postMethod := []string{"POST"}
-				noopRule := GetRuleFor(ApiPath, getMethod, []*gatewayv1beta1.Mutator{}, noop)
-				jwtRule := GetRuleFor(ApiPath, postMethod, testMutators, jwt)
-				rules := []gatewayv1beta1.Rule{noopRule, jwtRule}
-
-				apiRule := GetAPIRuleFor(rules)
-
-				processor := ory.NewVirtualServiceProcessor(GetConfigWithEmptyFakeClient())
-
-				// when
-				result, err := processor.EvaluateReconciliation(apiRule)
-
-				// then
-				Expect(err).To(BeNil())
-				Expect(result).To(HaveLen(1))
-
-				vs := result[0].Obj.(*networkingv1beta1.VirtualService)
-
-				Expect(vs).NotTo(BeNil())
-				Expect(len(vs.Spec.Gateways)).To(Equal(1))
-				Expect(len(vs.Spec.Hosts)).To(Equal(1))
-				Expect(vs.Spec.Hosts[0]).To(Equal(ServiceHost))
-				Expect(len(vs.Spec.Http)).To(Equal(1))
-
-				Expect(len(vs.Spec.Http[0].Route)).To(Equal(1))
-				Expect(vs.Spec.Http[0].Route[0].Destination.Host).To(Equal(OathkeeperSvc))
-				Expect(vs.Spec.Http[0].Route[0].Destination.Port.Number).To(Equal(OathkeeperSvcPort))
-				Expect(len(vs.Spec.Http[0].Match)).To(Equal(1))
-				Expect(vs.Spec.Http[0].Match[0].Uri.GetRegex()).To(Equal(apiRule.Spec.Rules[0].Path))
-
-				Expect(vs.Spec.Http[0].CorsPolicy.AllowOrigins).To(Equal(TestCors.AllowOrigins))
-				Expect(vs.Spec.Http[0].CorsPolicy.AllowMethods).To(Equal(TestCors.AllowMethods))
-				Expect(vs.Spec.Http[0].CorsPolicy.AllowHeaders).To(Equal(TestCors.AllowHeaders))
-
-				Expect(vs.ObjectMeta.Name).To(BeEmpty())
-				Expect(vs.ObjectMeta.GenerateName).To(Equal(ApiName + "-"))
-				Expect(vs.ObjectMeta.Namespace).To(Equal(ApiNamespace))
-				Expect(vs.ObjectMeta.Labels[TestLabelKey]).To(Equal(TestLabelValue))
-
-				Expect(vs.ObjectMeta.OwnerReferences[0].APIVersion).To(Equal(ApiAPIVersion))
-				Expect(vs.ObjectMeta.OwnerReferences[0].Kind).To(Equal(ApiKind))
-				Expect(vs.ObjectMeta.OwnerReferences[0].Name).To(Equal(ApiName))
-				Expect(vs.ObjectMeta.OwnerReferences[0].UID).To(Equal(ApiUID))
-			})
-
-			It("should return service for two same paths and one different", func() {
-				// given
-				noop := []*gatewayv1beta1.Authenticator{
-					{
-						Handler: &gatewayv1beta1.Handler{
-							Name: "noop",
-						},
-					},
-				}
-
-				jwtConfigJSON := fmt.Sprintf(`
-						{
-							"trusted_issuers": ["%s"],
-							"jwks": [],
-							"required_scope": [%s]
-					}`, JwtIssuer, ToCSVList(ApiScopes))
-
-				jwt := []*gatewayv1beta1.Authenticator{
-					{
-						Handler: &gatewayv1beta1.Handler{
-							Name: "jwt",
-							Config: &runtime.RawExtension{
-								Raw: []byte(jwtConfigJSON),
-							},
-						},
-					},
-				}
-
-				testMutators := []*gatewayv1beta1.Mutator{
-					{
-						Handler: &gatewayv1beta1.Handler{
-							Name: "noop",
-						},
-					},
-					{
-						Handler: &gatewayv1beta1.Handler{
-							Name: "idtoken",
-						},
-					},
-				}
-				getMethod := []string{"GET"}
-				postMethod := []string{"POST"}
-				noopGetRule := GetRuleFor(ApiPath, getMethod, []*gatewayv1beta1.Mutator{}, noop)
-				noopPostRule := GetRuleFor(ApiPath, postMethod, []*gatewayv1beta1.Mutator{}, noop)
-				jwtRule := GetRuleFor(HeadersApiPath, ApiMethods, testMutators, jwt)
-				rules := []gatewayv1beta1.Rule{noopGetRule, noopPostRule, jwtRule}
-
-				apiRule := GetAPIRuleFor(rules)
-
-				processor := ory.NewVirtualServiceProcessor(GetConfigWithEmptyFakeClient())
-
-				// when
-				result, err := processor.EvaluateReconciliation(apiRule)
-
-				// then
-				Expect(err).To(BeNil())
-				Expect(result).To(HaveLen(1))
-
-				vs := result[0].Obj.(*networkingv1beta1.VirtualService)
-
-				Expect(vs).NotTo(BeNil())
-				Expect(len(vs.Spec.Gateways)).To(Equal(1))
-				Expect(len(vs.Spec.Hosts)).To(Equal(1))
-				Expect(vs.Spec.Hosts[0]).To(Equal(ServiceHost))
-				Expect(len(vs.Spec.Http)).To(Equal(2))
-
-				Expect(len(vs.Spec.Http[0].Route)).To(Equal(1))
-				Expect(vs.Spec.Http[0].Route[0].Destination.Host).To(Equal(OathkeeperSvc))
-				Expect(vs.Spec.Http[0].Route[0].Destination.Port.Number).To(Equal(OathkeeperSvcPort))
-				Expect(len(vs.Spec.Http[0].Match)).To(Equal(1))
-				Expect(vs.Spec.Http[0].Match[0].Uri.GetRegex()).To(Equal(apiRule.Spec.Rules[0].Path))
-
-				Expect(vs.Spec.Http[0].CorsPolicy.AllowOrigins).To(Equal(TestCors.AllowOrigins))
-				Expect(vs.Spec.Http[0].CorsPolicy.AllowMethods).To(Equal(TestCors.AllowMethods))
-				Expect(vs.Spec.Http[0].CorsPolicy.AllowHeaders).To(Equal(TestCors.AllowHeaders))
-
-				Expect(len(vs.Spec.Http[1].Route)).To(Equal(1))
-				Expect(vs.Spec.Http[1].Route[0].Destination.Host).To(Equal(OathkeeperSvc))
-				Expect(vs.Spec.Http[1].Route[0].Destination.Port.Number).To(Equal(OathkeeperSvcPort))
-				Expect(len(vs.Spec.Http[1].Match)).To(Equal(1))
-				Expect(vs.Spec.Http[1].Match[0].Uri.GetRegex()).To(Equal(apiRule.Spec.Rules[2].Path))
-
-				Expect(vs.Spec.Http[1].CorsPolicy.AllowOrigins).To(Equal(TestCors.AllowOrigins))
-				Expect(vs.Spec.Http[1].CorsPolicy.AllowMethods).To(Equal(TestCors.AllowMethods))
-				Expect(vs.Spec.Http[1].CorsPolicy.AllowHeaders).To(Equal(TestCors.AllowHeaders))
-
-				Expect(vs.ObjectMeta.Name).To(BeEmpty())
-				Expect(vs.ObjectMeta.GenerateName).To(Equal(ApiName + "-"))
-				Expect(vs.ObjectMeta.Namespace).To(Equal(ApiNamespace))
-				Expect(vs.ObjectMeta.Labels[TestLabelKey]).To(Equal(TestLabelValue))
-
-				Expect(vs.ObjectMeta.OwnerReferences[0].APIVersion).To(Equal(ApiAPIVersion))
-				Expect(vs.ObjectMeta.OwnerReferences[0].Kind).To(Equal(ApiKind))
-				Expect(vs.ObjectMeta.OwnerReferences[0].Name).To(Equal(ApiName))
-				Expect(vs.ObjectMeta.OwnerReferences[0].UID).To(Equal(ApiUID))
-			})
-
-			It("should return service for jwt & oauth authenticators for given path", func() {
-				// given
-				oauthConfigJSON := fmt.Sprintf(`{"required_scope": [%s]}`, ToCSVList(ApiScopes))
-
-				jwtConfigJSON := fmt.Sprintf(`
-						{
-							"trusted_issuers": ["%s"],
-							"jwks": [],
-							"required_scope": [%s]
-					}`, JwtIssuer, ToCSVList(ApiScopes))
-
-				jwt := &gatewayv1beta1.Authenticator{
+		It("should override destination host with rule level service namespace", func() {
+			// given
+			strategies := []*gatewayv1beta1.Authenticator{
+				{
 					Handler: &gatewayv1beta1.Handler{
-						Name: "jwt",
-						Config: &runtime.RawExtension{
-							Raw: []byte(jwtConfigJSON),
-						},
+						Name: "allow",
 					},
-				}
-				oauth := &gatewayv1beta1.Authenticator{
+				},
+			}
+
+			overrideServiceName := "testName"
+			overrideServiceNamespace := "testName-namespace"
+			overrideServicePort := uint32(8080)
+
+			service := &gatewayv1beta1.Service{
+				Name:      &overrideServiceName,
+				Namespace: &overrideServiceNamespace,
+				Port:      &overrideServicePort,
+			}
+
+			allowRule := GetRuleWithServiceFor(ApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, strategies, service)
+			rules := []gatewayv1beta1.Rule{allowRule}
+
+			apiRule := GetAPIRuleFor(rules)
+
+			// when
+			processor := ory.NewVirtualServiceProcessor(GetConfigWithEmptyFakeClient())
+
+			// then
+			result, err := processor.EvaluateReconciliation(apiRule)
+
+			Expect(err).To(BeNil())
+			Expect(result).To(HaveLen(1))
+
+			vs := result[0].Obj.(*networkingv1beta1.VirtualService)
+
+			//verify VS has rule level destination host
+			Expect(len(vs.Spec.Http[0].Route)).To(Equal(1))
+			Expect(vs.Spec.Http[0].Route[0].Destination.Host).To(Equal(overrideServiceName + "." + overrideServiceNamespace + ".svc.cluster.local"))
+
+		})
+		It("should return VS with default domain name when the hostname does not contain domain name", func() {
+			strategies := []*gatewayv1beta1.Authenticator{
+				{
 					Handler: &gatewayv1beta1.Handler{
-						Name: "oauth2_introspection",
-						Config: &runtime.RawExtension{
-							Raw: []byte(oauthConfigJSON),
-						},
+						Name: "allow",
 					},
-				}
+				},
+			}
 
-				strategies := []*gatewayv1beta1.Authenticator{jwt, oauth}
+			allowRule := GetRuleFor(ApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, strategies)
+			rules := []gatewayv1beta1.Rule{allowRule}
 
-				allowRule := GetRuleFor(ApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, strategies)
-				rules := []gatewayv1beta1.Rule{allowRule}
+			apiRule := GetAPIRuleFor(rules)
+			apiRule.Spec.Host = &ServiceHostWithNoDomain
 
-				apiRule := GetAPIRuleFor(rules)
+			processor := ory.NewVirtualServiceProcessor(GetConfigWithEmptyFakeClient())
 
-				processor := ory.NewVirtualServiceProcessor(GetConfigWithEmptyFakeClient())
+			// when
+			result, err := processor.EvaluateReconciliation(apiRule)
 
-				// when
-				result, err := processor.EvaluateReconciliation(apiRule)
+			// then
+			Expect(err).To(BeNil())
+			Expect(result).To(HaveLen(1))
 
-				// then
-				Expect(err).To(BeNil())
-				Expect(result).To(HaveLen(1))
+			vs := result[0].Obj.(*networkingv1beta1.VirtualService)
 
-				vs := result[0].Obj.(*networkingv1beta1.VirtualService)
+			//verify VS
+			Expect(vs).NotTo(BeNil())
+			Expect(len(vs.Spec.Hosts)).To(Equal(1))
+			Expect(vs.Spec.Hosts[0]).To(Equal(ServiceHost))
 
-				Expect(vs).NotTo(BeNil())
-				Expect(len(vs.Spec.Gateways)).To(Equal(1))
-				Expect(len(vs.Spec.Hosts)).To(Equal(1))
-				Expect(vs.Spec.Hosts[0]).To(Equal(ServiceHost))
-				Expect(len(vs.Spec.Http)).To(Equal(1))
-
-				Expect(len(vs.Spec.Http[0].Route)).To(Equal(1))
-				Expect(vs.Spec.Http[0].Route[0].Destination.Host).To(Equal(OathkeeperSvc))
-				Expect(vs.Spec.Http[0].Route[0].Destination.Port.Number).To(Equal(OathkeeperSvcPort))
-
-				Expect(len(vs.Spec.Http[0].Match)).To(Equal(1))
-				Expect(vs.Spec.Http[0].Match[0].Uri.GetRegex()).To(Equal(apiRule.Spec.Rules[0].Path))
-
-				Expect(vs.Spec.Http[0].CorsPolicy.AllowOrigins).To(Equal(TestCors.AllowOrigins))
-				Expect(vs.Spec.Http[0].CorsPolicy.AllowMethods).To(Equal(TestCors.AllowMethods))
-				Expect(vs.Spec.Http[0].CorsPolicy.AllowHeaders).To(Equal(TestCors.AllowHeaders))
-
-				Expect(vs.ObjectMeta.Name).To(BeEmpty())
-				Expect(vs.ObjectMeta.GenerateName).To(Equal(ApiName + "-"))
-				Expect(vs.ObjectMeta.Namespace).To(Equal(ApiNamespace))
-				Expect(vs.ObjectMeta.Labels[TestLabelKey]).To(Equal(TestLabelValue))
-
-				Expect(vs.ObjectMeta.OwnerReferences[0].APIVersion).To(Equal(ApiAPIVersion))
-				Expect(vs.ObjectMeta.OwnerReferences[0].Kind).To(Equal(ApiKind))
-				Expect(vs.ObjectMeta.OwnerReferences[0].Name).To(Equal(ApiName))
-				Expect(vs.ObjectMeta.OwnerReferences[0].UID).To(Equal(ApiUID))
-			})
 		})
 	})
 
-	Context("update", func() {
-		Context("when existing virtual service has owner v1alpha1 owner label", func() {
+	When("handler is noop", func() {
+		It("should not override Oathkeeper service destination host with spec level service", func() {
+			// given
+			strategies := []*gatewayv1beta1.Authenticator{
+				{
+					Handler: &gatewayv1beta1.Handler{
+						Name: "noop",
+					},
+				},
+			}
+
+			overrideServiceName := "testName"
+			overrideServicePort := uint32(8080)
+
+			service := &gatewayv1beta1.Service{
+				Name: &overrideServiceName,
+				Port: &overrideServicePort,
+			}
+
+			allowRule := GetRuleWithServiceFor(ApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, strategies, service)
+			rules := []gatewayv1beta1.Rule{allowRule}
+
+			apiRule := GetAPIRuleFor(rules)
+
+			processor := ory.NewVirtualServiceProcessor(GetConfigWithEmptyFakeClient())
+
+			// when
+			result, err := processor.EvaluateReconciliation(apiRule)
+
+			// then
+			Expect(err).To(BeNil())
+			Expect(result).To(HaveLen(1))
+
+			vs := result[0].Obj.(*networkingv1beta1.VirtualService)
+
+			Expect(len(vs.Spec.Http[0].Route)).To(Equal(1))
+			Expect(vs.Spec.Http[0].Route[0].Destination.Host).To(Equal(OathkeeperSvc))
+		})
+		When("existing virtual service has owner v1alpha1 owner label", func() {
 			It("should get and update", func() {
 				// given
 				noop := []*gatewayv1beta1.Authenticator{
@@ -661,6 +302,360 @@ var _ = Describe("Virtual Service Processor", func() {
 				Expect(resultVs.Spec.Http[0].CorsPolicy.AllowMethods).To(Equal(TestCors.AllowMethods))
 				Expect(resultVs.Spec.Http[0].CorsPolicy.AllowHeaders).To(Equal(TestCors.AllowHeaders))
 			})
+		})
+	})
+
+	When("multiple handler", func() {
+		It("should return service for given paths", func() {
+			// given
+			noop := []*gatewayv1beta1.Authenticator{
+				{
+					Handler: &gatewayv1beta1.Handler{
+						Name: "noop",
+					},
+				},
+			}
+
+			jwtConfigJSON := fmt.Sprintf(`
+						{
+							"trusted_issuers": ["%s"],
+							"jwks": [],
+							"required_scope": [%s]
+					}`, JwtIssuer, ToCSVList(ApiScopes))
+
+			jwt := []*gatewayv1beta1.Authenticator{
+				{
+					Handler: &gatewayv1beta1.Handler{
+						Name: "jwt",
+						Config: &runtime.RawExtension{
+							Raw: []byte(jwtConfigJSON),
+						},
+					},
+				},
+			}
+
+			testMutators := []*gatewayv1beta1.Mutator{
+				{
+					Handler: &gatewayv1beta1.Handler{
+						Name: "noop",
+					},
+				},
+				{
+					Handler: &gatewayv1beta1.Handler{
+						Name: "idtoken",
+					},
+				},
+			}
+
+			noopRule := GetRuleFor(ApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, noop)
+			jwtRule := GetRuleFor(HeadersApiPath, ApiMethods, testMutators, jwt)
+			rules := []gatewayv1beta1.Rule{noopRule, jwtRule}
+
+			apiRule := GetAPIRuleFor(rules)
+
+			processor := ory.NewVirtualServiceProcessor(GetConfigWithEmptyFakeClient())
+
+			// when
+			result, err := processor.EvaluateReconciliation(apiRule)
+
+			// then
+			Expect(err).To(BeNil())
+			Expect(result).To(HaveLen(1))
+
+			vs := result[0].Obj.(*networkingv1beta1.VirtualService)
+
+			Expect(vs).NotTo(BeNil())
+			Expect(len(vs.Spec.Gateways)).To(Equal(1))
+			Expect(len(vs.Spec.Hosts)).To(Equal(1))
+			Expect(vs.Spec.Hosts[0]).To(Equal(ServiceHost))
+			Expect(len(vs.Spec.Http)).To(Equal(2))
+
+			Expect(len(vs.Spec.Http[0].Route)).To(Equal(1))
+			Expect(vs.Spec.Http[0].Route[0].Destination.Host).To(Equal(OathkeeperSvc))
+			Expect(vs.Spec.Http[0].Route[0].Destination.Port.Number).To(Equal(OathkeeperSvcPort))
+			Expect(len(vs.Spec.Http[0].Match)).To(Equal(1))
+			Expect(vs.Spec.Http[0].Match[0].Uri.GetRegex()).To(Equal(apiRule.Spec.Rules[0].Path))
+
+			Expect(vs.Spec.Http[0].CorsPolicy.AllowOrigins).To(Equal(TestCors.AllowOrigins))
+			Expect(vs.Spec.Http[0].CorsPolicy.AllowMethods).To(Equal(TestCors.AllowMethods))
+			Expect(vs.Spec.Http[0].CorsPolicy.AllowHeaders).To(Equal(TestCors.AllowHeaders))
+
+			Expect(len(vs.Spec.Http[1].Route)).To(Equal(1))
+			Expect(vs.Spec.Http[1].Route[0].Destination.Host).To(Equal(OathkeeperSvc))
+			Expect(vs.Spec.Http[1].Route[0].Destination.Port.Number).To(Equal(OathkeeperSvcPort))
+			Expect(len(vs.Spec.Http[1].Match)).To(Equal(1))
+			Expect(vs.Spec.Http[1].Match[0].Uri.GetRegex()).To(Equal(apiRule.Spec.Rules[1].Path))
+
+			Expect(vs.Spec.Http[1].CorsPolicy.AllowOrigins).To(Equal(TestCors.AllowOrigins))
+			Expect(vs.Spec.Http[1].CorsPolicy.AllowMethods).To(Equal(TestCors.AllowMethods))
+			Expect(vs.Spec.Http[1].CorsPolicy.AllowHeaders).To(Equal(TestCors.AllowHeaders))
+
+			Expect(vs.ObjectMeta.Name).To(BeEmpty())
+			Expect(vs.ObjectMeta.GenerateName).To(Equal(ApiName + "-"))
+			Expect(vs.ObjectMeta.Namespace).To(Equal(ApiNamespace))
+			Expect(vs.ObjectMeta.Labels[TestLabelKey]).To(Equal(TestLabelValue))
+
+			Expect(vs.ObjectMeta.OwnerReferences[0].APIVersion).To(Equal(ApiAPIVersion))
+			Expect(vs.ObjectMeta.OwnerReferences[0].Kind).To(Equal(ApiKind))
+			Expect(vs.ObjectMeta.OwnerReferences[0].Name).To(Equal(ApiName))
+			Expect(vs.ObjectMeta.OwnerReferences[0].UID).To(Equal(ApiUID))
+		})
+
+		It("should return service for two same paths and different methods", func() {
+			// given
+			noop := []*gatewayv1beta1.Authenticator{
+				{
+					Handler: &gatewayv1beta1.Handler{
+						Name: "noop",
+					},
+				},
+			}
+
+			jwtConfigJSON := fmt.Sprintf(`
+						{
+							"trusted_issuers": ["%s"],
+							"jwks": [],
+							"required_scope": [%s]
+					}`, JwtIssuer, ToCSVList(ApiScopes))
+
+			jwt := []*gatewayv1beta1.Authenticator{
+				{
+					Handler: &gatewayv1beta1.Handler{
+						Name: "jwt",
+						Config: &runtime.RawExtension{
+							Raw: []byte(jwtConfigJSON),
+						},
+					},
+				},
+			}
+
+			testMutators := []*gatewayv1beta1.Mutator{
+				{
+					Handler: &gatewayv1beta1.Handler{
+						Name: "noop",
+					},
+				},
+				{
+					Handler: &gatewayv1beta1.Handler{
+						Name: "idtoken",
+					},
+				},
+			}
+			getMethod := []string{"GET"}
+			postMethod := []string{"POST"}
+			noopRule := GetRuleFor(ApiPath, getMethod, []*gatewayv1beta1.Mutator{}, noop)
+			jwtRule := GetRuleFor(ApiPath, postMethod, testMutators, jwt)
+			rules := []gatewayv1beta1.Rule{noopRule, jwtRule}
+
+			apiRule := GetAPIRuleFor(rules)
+
+			processor := ory.NewVirtualServiceProcessor(GetConfigWithEmptyFakeClient())
+
+			// when
+			result, err := processor.EvaluateReconciliation(apiRule)
+
+			// then
+			Expect(err).To(BeNil())
+			Expect(result).To(HaveLen(1))
+
+			vs := result[0].Obj.(*networkingv1beta1.VirtualService)
+
+			Expect(vs).NotTo(BeNil())
+			Expect(len(vs.Spec.Gateways)).To(Equal(1))
+			Expect(len(vs.Spec.Hosts)).To(Equal(1))
+			Expect(vs.Spec.Hosts[0]).To(Equal(ServiceHost))
+			Expect(len(vs.Spec.Http)).To(Equal(1))
+
+			Expect(len(vs.Spec.Http[0].Route)).To(Equal(1))
+			Expect(vs.Spec.Http[0].Route[0].Destination.Host).To(Equal(OathkeeperSvc))
+			Expect(vs.Spec.Http[0].Route[0].Destination.Port.Number).To(Equal(OathkeeperSvcPort))
+			Expect(len(vs.Spec.Http[0].Match)).To(Equal(1))
+			Expect(vs.Spec.Http[0].Match[0].Uri.GetRegex()).To(Equal(apiRule.Spec.Rules[0].Path))
+
+			Expect(vs.Spec.Http[0].CorsPolicy.AllowOrigins).To(Equal(TestCors.AllowOrigins))
+			Expect(vs.Spec.Http[0].CorsPolicy.AllowMethods).To(Equal(TestCors.AllowMethods))
+			Expect(vs.Spec.Http[0].CorsPolicy.AllowHeaders).To(Equal(TestCors.AllowHeaders))
+
+			Expect(vs.ObjectMeta.Name).To(BeEmpty())
+			Expect(vs.ObjectMeta.GenerateName).To(Equal(ApiName + "-"))
+			Expect(vs.ObjectMeta.Namespace).To(Equal(ApiNamespace))
+			Expect(vs.ObjectMeta.Labels[TestLabelKey]).To(Equal(TestLabelValue))
+
+			Expect(vs.ObjectMeta.OwnerReferences[0].APIVersion).To(Equal(ApiAPIVersion))
+			Expect(vs.ObjectMeta.OwnerReferences[0].Kind).To(Equal(ApiKind))
+			Expect(vs.ObjectMeta.OwnerReferences[0].Name).To(Equal(ApiName))
+			Expect(vs.ObjectMeta.OwnerReferences[0].UID).To(Equal(ApiUID))
+		})
+
+		It("should return service for two same paths and one different", func() {
+			// given
+			noop := []*gatewayv1beta1.Authenticator{
+				{
+					Handler: &gatewayv1beta1.Handler{
+						Name: "noop",
+					},
+				},
+			}
+
+			jwtConfigJSON := fmt.Sprintf(`
+						{
+							"trusted_issuers": ["%s"],
+							"jwks": [],
+							"required_scope": [%s]
+					}`, JwtIssuer, ToCSVList(ApiScopes))
+
+			jwt := []*gatewayv1beta1.Authenticator{
+				{
+					Handler: &gatewayv1beta1.Handler{
+						Name: "jwt",
+						Config: &runtime.RawExtension{
+							Raw: []byte(jwtConfigJSON),
+						},
+					},
+				},
+			}
+
+			testMutators := []*gatewayv1beta1.Mutator{
+				{
+					Handler: &gatewayv1beta1.Handler{
+						Name: "noop",
+					},
+				},
+				{
+					Handler: &gatewayv1beta1.Handler{
+						Name: "idtoken",
+					},
+				},
+			}
+			getMethod := []string{"GET"}
+			postMethod := []string{"POST"}
+			noopGetRule := GetRuleFor(ApiPath, getMethod, []*gatewayv1beta1.Mutator{}, noop)
+			noopPostRule := GetRuleFor(ApiPath, postMethod, []*gatewayv1beta1.Mutator{}, noop)
+			jwtRule := GetRuleFor(HeadersApiPath, ApiMethods, testMutators, jwt)
+			rules := []gatewayv1beta1.Rule{noopGetRule, noopPostRule, jwtRule}
+
+			apiRule := GetAPIRuleFor(rules)
+
+			processor := ory.NewVirtualServiceProcessor(GetConfigWithEmptyFakeClient())
+
+			// when
+			result, err := processor.EvaluateReconciliation(apiRule)
+
+			// then
+			Expect(err).To(BeNil())
+			Expect(result).To(HaveLen(1))
+
+			vs := result[0].Obj.(*networkingv1beta1.VirtualService)
+
+			Expect(vs).NotTo(BeNil())
+			Expect(len(vs.Spec.Gateways)).To(Equal(1))
+			Expect(len(vs.Spec.Hosts)).To(Equal(1))
+			Expect(vs.Spec.Hosts[0]).To(Equal(ServiceHost))
+			Expect(len(vs.Spec.Http)).To(Equal(2))
+
+			Expect(len(vs.Spec.Http[0].Route)).To(Equal(1))
+			Expect(vs.Spec.Http[0].Route[0].Destination.Host).To(Equal(OathkeeperSvc))
+			Expect(vs.Spec.Http[0].Route[0].Destination.Port.Number).To(Equal(OathkeeperSvcPort))
+			Expect(len(vs.Spec.Http[0].Match)).To(Equal(1))
+			Expect(vs.Spec.Http[0].Match[0].Uri.GetRegex()).To(Equal(apiRule.Spec.Rules[0].Path))
+
+			Expect(vs.Spec.Http[0].CorsPolicy.AllowOrigins).To(Equal(TestCors.AllowOrigins))
+			Expect(vs.Spec.Http[0].CorsPolicy.AllowMethods).To(Equal(TestCors.AllowMethods))
+			Expect(vs.Spec.Http[0].CorsPolicy.AllowHeaders).To(Equal(TestCors.AllowHeaders))
+
+			Expect(len(vs.Spec.Http[1].Route)).To(Equal(1))
+			Expect(vs.Spec.Http[1].Route[0].Destination.Host).To(Equal(OathkeeperSvc))
+			Expect(vs.Spec.Http[1].Route[0].Destination.Port.Number).To(Equal(OathkeeperSvcPort))
+			Expect(len(vs.Spec.Http[1].Match)).To(Equal(1))
+			Expect(vs.Spec.Http[1].Match[0].Uri.GetRegex()).To(Equal(apiRule.Spec.Rules[2].Path))
+
+			Expect(vs.Spec.Http[1].CorsPolicy.AllowOrigins).To(Equal(TestCors.AllowOrigins))
+			Expect(vs.Spec.Http[1].CorsPolicy.AllowMethods).To(Equal(TestCors.AllowMethods))
+			Expect(vs.Spec.Http[1].CorsPolicy.AllowHeaders).To(Equal(TestCors.AllowHeaders))
+
+			Expect(vs.ObjectMeta.Name).To(BeEmpty())
+			Expect(vs.ObjectMeta.GenerateName).To(Equal(ApiName + "-"))
+			Expect(vs.ObjectMeta.Namespace).To(Equal(ApiNamespace))
+			Expect(vs.ObjectMeta.Labels[TestLabelKey]).To(Equal(TestLabelValue))
+
+			Expect(vs.ObjectMeta.OwnerReferences[0].APIVersion).To(Equal(ApiAPIVersion))
+			Expect(vs.ObjectMeta.OwnerReferences[0].Kind).To(Equal(ApiKind))
+			Expect(vs.ObjectMeta.OwnerReferences[0].Name).To(Equal(ApiName))
+			Expect(vs.ObjectMeta.OwnerReferences[0].UID).To(Equal(ApiUID))
+		})
+
+		It("should return service for jwt & oauth authenticators for given path", func() {
+			// given
+			oauthConfigJSON := fmt.Sprintf(`{"required_scope": [%s]}`, ToCSVList(ApiScopes))
+
+			jwtConfigJSON := fmt.Sprintf(`
+						{
+							"trusted_issuers": ["%s"],
+							"jwks": [],
+							"required_scope": [%s]
+					}`, JwtIssuer, ToCSVList(ApiScopes))
+
+			jwt := &gatewayv1beta1.Authenticator{
+				Handler: &gatewayv1beta1.Handler{
+					Name: "jwt",
+					Config: &runtime.RawExtension{
+						Raw: []byte(jwtConfigJSON),
+					},
+				},
+			}
+			oauth := &gatewayv1beta1.Authenticator{
+				Handler: &gatewayv1beta1.Handler{
+					Name: "oauth2_introspection",
+					Config: &runtime.RawExtension{
+						Raw: []byte(oauthConfigJSON),
+					},
+				},
+			}
+
+			strategies := []*gatewayv1beta1.Authenticator{jwt, oauth}
+
+			allowRule := GetRuleFor(ApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, strategies)
+			rules := []gatewayv1beta1.Rule{allowRule}
+
+			apiRule := GetAPIRuleFor(rules)
+
+			processor := ory.NewVirtualServiceProcessor(GetConfigWithEmptyFakeClient())
+
+			// when
+			result, err := processor.EvaluateReconciliation(apiRule)
+
+			// then
+			Expect(err).To(BeNil())
+			Expect(result).To(HaveLen(1))
+
+			vs := result[0].Obj.(*networkingv1beta1.VirtualService)
+
+			Expect(vs).NotTo(BeNil())
+			Expect(len(vs.Spec.Gateways)).To(Equal(1))
+			Expect(len(vs.Spec.Hosts)).To(Equal(1))
+			Expect(vs.Spec.Hosts[0]).To(Equal(ServiceHost))
+			Expect(len(vs.Spec.Http)).To(Equal(1))
+
+			Expect(len(vs.Spec.Http[0].Route)).To(Equal(1))
+			Expect(vs.Spec.Http[0].Route[0].Destination.Host).To(Equal(OathkeeperSvc))
+			Expect(vs.Spec.Http[0].Route[0].Destination.Port.Number).To(Equal(OathkeeperSvcPort))
+
+			Expect(len(vs.Spec.Http[0].Match)).To(Equal(1))
+			Expect(vs.Spec.Http[0].Match[0].Uri.GetRegex()).To(Equal(apiRule.Spec.Rules[0].Path))
+
+			Expect(vs.Spec.Http[0].CorsPolicy.AllowOrigins).To(Equal(TestCors.AllowOrigins))
+			Expect(vs.Spec.Http[0].CorsPolicy.AllowMethods).To(Equal(TestCors.AllowMethods))
+			Expect(vs.Spec.Http[0].CorsPolicy.AllowHeaders).To(Equal(TestCors.AllowHeaders))
+
+			Expect(vs.ObjectMeta.Name).To(BeEmpty())
+			Expect(vs.ObjectMeta.GenerateName).To(Equal(ApiName + "-"))
+			Expect(vs.ObjectMeta.Namespace).To(Equal(ApiNamespace))
+			Expect(vs.ObjectMeta.Labels[TestLabelKey]).To(Equal(TestLabelValue))
+
+			Expect(vs.ObjectMeta.OwnerReferences[0].APIVersion).To(Equal(ApiAPIVersion))
+			Expect(vs.ObjectMeta.OwnerReferences[0].Kind).To(Equal(ApiKind))
+			Expect(vs.ObjectMeta.OwnerReferences[0].Name).To(Equal(ApiName))
+			Expect(vs.ObjectMeta.OwnerReferences[0].UID).To(Equal(ApiUID))
 		})
 	})
 })
