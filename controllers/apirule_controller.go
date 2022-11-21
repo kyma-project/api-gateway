@@ -77,8 +77,8 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	if apiRule.Generation != apiRule.Status.ObservedGeneration {
 
 		c := processing.ReconciliationConfig{
-			Client:            r.Client,
 			Ctx:               ctx,
+			Client:            r.Client,
 			Logger:            r.Log,
 			OathkeeperSvc:     r.OathkeeperSvc,
 			OathkeeperSvcPort: r.OathkeeperSvcPort,

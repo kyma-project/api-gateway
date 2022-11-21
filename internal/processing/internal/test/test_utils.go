@@ -6,6 +6,7 @@ import (
 	v1beta12 "github.com/kyma-incubator/api-gateway/api/v1beta1"
 	"github.com/kyma-incubator/api-gateway/internal/processing"
 	"github.com/onsi/gomega"
+	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
 	"istio.io/api/networking/v1beta1"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -73,6 +74,8 @@ func GetConfigWithClient(client client.Client) processing.ReconciliationConfig {
 func GetEmptyFakeClient() client.Client {
 	scheme := runtime.NewScheme()
 	err := networkingv1beta1.AddToScheme(scheme)
+	gomega.Expect(err).NotTo(gomega.HaveOccurred())
+	err = rulev1alpha1.AddToScheme(scheme)
 	gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 	return fake.NewClientBuilder().WithScheme(scheme).WithObjects().Build()

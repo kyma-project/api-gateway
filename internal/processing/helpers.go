@@ -27,18 +27,6 @@ func IsSecured(rule gatewayv1beta1.Rule) bool {
 	return false
 }
 
-func HasPathDuplicates(rules []gatewayv1beta1.Rule) bool {
-	duplicates := map[string]bool{}
-	for _, rule := range rules {
-		if duplicates[rule.Path] {
-			return true
-		}
-		duplicates[rule.Path] = true
-	}
-
-	return false
-}
-
 func GenerateOwnerRef(api *gatewayv1beta1.APIRule) k8sMeta.OwnerReference {
 	return *builders.OwnerReference().
 		Name(api.ObjectMeta.Name).

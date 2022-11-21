@@ -18,12 +18,12 @@ type AccessRuleProcessor struct {
 	defaultDomainName string
 }
 
-func NewAccessRuleProcessor(client client.Client, ctx context.Context, additionalLabels map[string]string, defaultDomainName string) AccessRuleProcessor {
+func NewAccessRuleProcessor(config processing.ReconciliationConfig) AccessRuleProcessor {
 	return AccessRuleProcessor{
-		client:            client,
-		ctx:               ctx,
-		additionalLabels:  additionalLabels,
-		defaultDomainName: defaultDomainName,
+		client:            config.Client,
+		ctx:               config.Ctx,
+		additionalLabels:  config.AdditionalLabels,
+		defaultDomainName: config.DefaultDomainName,
 	}
 }
 
@@ -69,7 +69,7 @@ func (r AccessRuleProcessor) getObjectChanges(desiredRules map[string]*rulev1alp
 }
 
 func (r AccessRuleProcessor) getDesiredState(api *gatewayv1beta1.APIRule) map[string]*rulev1alpha1.Rule {
-	pathDuplicates := processing.HasPathDuplicates(api.Spec.Rules)
+	pathDuplicates := hasPathDuplicates(api.Spec.Rules)
 	accessRules := make(map[string]*rulev1alpha1.Rule)
 	for _, rule := range api.Spec.Rules {
 		if processing.IsSecured(rule) {
@@ -89,7 +89,7 @@ func (r AccessRuleProcessor) getActualState(ctx context.Context, api *gatewayv1b
 	}
 
 	accessRules := make(map[string]*rulev1alpha1.Rule)
-	pathDuplicates := processing.HasPathDuplicates(api.Spec.Rules)
+	pathDuplicates := hasPathDuplicates(api.Spec.Rules)
 
 	for i := range arList.Items {
 		obj := arList.Items[i]
@@ -100,7 +100,6 @@ func (r AccessRuleProcessor) getActualState(ctx context.Context, api *gatewayv1b
 }
 
 func setAccessRuleKey(hasPathDuplicates bool, rule rulev1alpha1.Rule) string {
-	// TODO: We can keep it simple by always using the path and methods as key. This way we can remove the HasPathDuplicates.
 	if hasPathDuplicates {
 		return fmt.Sprintf("%s:%s", rule.Spec.Match.URL, rule.Spec.Match.Methods)
 	}
@@ -148,4 +147,16 @@ func generateAccessRuleSpec(api *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rul
 	// Otherwise use service defined on APIRule spec level
 	return accessRuleSpec.Upstream(builders.Upstream().
 		URL(fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", *api.Spec.Service.Name, *serviceNamespace, int(*api.Spec.Service.Port)))).Get()
+}
+
+func hasPathDuplicates(rules []gatewayv1beta1.Rule) bool {
+	duplicates := map[string]bool{}
+	for _, rule := range rules {
+		if duplicates[rule.Path] {
+			return true
+		}
+		duplicates[rule.Path] = true
+	}
+
+	return false
 }

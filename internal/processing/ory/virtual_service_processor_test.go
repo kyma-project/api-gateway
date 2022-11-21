@@ -33,10 +33,10 @@ var _ = Describe("Virtual Service Processor", func() {
 
 				apiRule := GetAPIRuleFor(rules)
 
-				vsProcessor := ory.NewVirtualServiceProcessor(GetConfigWithEmptyFakeClient())
+				processor := ory.NewVirtualServiceProcessor(GetConfigWithEmptyFakeClient())
 
 				// when
-				result, err := vsProcessor.EvaluateReconciliation(apiRule)
+				result, err := processor.EvaluateReconciliation(apiRule)
 
 				// then
 				Expect(err).To(BeNil())
@@ -99,10 +99,10 @@ var _ = Describe("Virtual Service Processor", func() {
 				}
 
 				// when
-				vsProcessor := ory.NewVirtualServiceProcessor(GetConfigWithEmptyFakeClient())
+				processor := ory.NewVirtualServiceProcessor(GetConfigWithEmptyFakeClient())
 
 				// then
-				result, err := vsProcessor.EvaluateReconciliation(apiRule)
+				result, err := processor.EvaluateReconciliation(apiRule)
 
 				Expect(err).To(BeNil())
 				Expect(result).To(HaveLen(1))
@@ -139,10 +139,10 @@ var _ = Describe("Virtual Service Processor", func() {
 				apiRule := GetAPIRuleFor(rules)
 
 				// when
-				vsProcessor := ory.NewVirtualServiceProcessor(GetConfigWithEmptyFakeClient())
+				processor := ory.NewVirtualServiceProcessor(GetConfigWithEmptyFakeClient())
 
 				// then
-				result, err := vsProcessor.EvaluateReconciliation(apiRule)
+				result, err := processor.EvaluateReconciliation(apiRule)
 
 				Expect(err).To(BeNil())
 				Expect(result).To(HaveLen(1))
@@ -154,7 +154,7 @@ var _ = Describe("Virtual Service Processor", func() {
 				Expect(vs.Spec.Http[0].Route[0].Destination.Host).To(Equal(overrideServiceName + "." + overrideServiceNamespace + ".svc.cluster.local"))
 
 			})
-			It("should produce VS with default domain name when the hostname does not contain domain name", func() {
+			It("should return VS with default domain name when the hostname does not contain domain name", func() {
 				strategies := []*gatewayv1beta1.Authenticator{
 					{
 						Handler: &gatewayv1beta1.Handler{
@@ -169,10 +169,10 @@ var _ = Describe("Virtual Service Processor", func() {
 				apiRule := GetAPIRuleFor(rules)
 				apiRule.Spec.Host = &ServiceHostWithNoDomain
 
-				vsProcessor := ory.NewVirtualServiceProcessor(GetConfigWithEmptyFakeClient())
+				processor := ory.NewVirtualServiceProcessor(GetConfigWithEmptyFakeClient())
 
 				// when
-				result, err := vsProcessor.EvaluateReconciliation(apiRule)
+				result, err := processor.EvaluateReconciliation(apiRule)
 
 				// then
 				Expect(err).To(BeNil())
@@ -212,10 +212,10 @@ var _ = Describe("Virtual Service Processor", func() {
 
 				apiRule := GetAPIRuleFor(rules)
 
-				vsProcessor := ory.NewVirtualServiceProcessor(GetConfigWithEmptyFakeClient())
+				processor := ory.NewVirtualServiceProcessor(GetConfigWithEmptyFakeClient())
 
 				// when
-				result, err := vsProcessor.EvaluateReconciliation(apiRule)
+				result, err := processor.EvaluateReconciliation(apiRule)
 
 				// then
 				Expect(err).To(BeNil())
@@ -229,7 +229,7 @@ var _ = Describe("Virtual Service Processor", func() {
 		})
 
 		When("multiple handler", func() {
-			It("should produce VS for given paths", func() {
+			It("should return service for given paths", func() {
 				// given
 				noop := []*gatewayv1beta1.Authenticator{
 					{
@@ -276,10 +276,10 @@ var _ = Describe("Virtual Service Processor", func() {
 
 				apiRule := GetAPIRuleFor(rules)
 
-				vsProcessor := ory.NewVirtualServiceProcessor(GetConfigWithEmptyFakeClient())
+				processor := ory.NewVirtualServiceProcessor(GetConfigWithEmptyFakeClient())
 
 				// when
-				result, err := vsProcessor.EvaluateReconciliation(apiRule)
+				result, err := processor.EvaluateReconciliation(apiRule)
 
 				// then
 				Expect(err).To(BeNil())
@@ -324,7 +324,7 @@ var _ = Describe("Virtual Service Processor", func() {
 				Expect(vs.ObjectMeta.OwnerReferences[0].UID).To(Equal(ApiUID))
 			})
 
-			It("should produce VS for two same paths and different methods", func() {
+			It("should return service for two same paths and different methods", func() {
 				// given
 				noop := []*gatewayv1beta1.Authenticator{
 					{
@@ -372,10 +372,10 @@ var _ = Describe("Virtual Service Processor", func() {
 
 				apiRule := GetAPIRuleFor(rules)
 
-				vsProcessor := ory.NewVirtualServiceProcessor(GetConfigWithEmptyFakeClient())
+				processor := ory.NewVirtualServiceProcessor(GetConfigWithEmptyFakeClient())
 
 				// when
-				result, err := vsProcessor.EvaluateReconciliation(apiRule)
+				result, err := processor.EvaluateReconciliation(apiRule)
 
 				// then
 				Expect(err).To(BeNil())
@@ -410,7 +410,7 @@ var _ = Describe("Virtual Service Processor", func() {
 				Expect(vs.ObjectMeta.OwnerReferences[0].UID).To(Equal(ApiUID))
 			})
 
-			It("should produce VS for two same paths and one different", func() {
+			It("should return service for two same paths and one different", func() {
 				// given
 				noop := []*gatewayv1beta1.Authenticator{
 					{
@@ -459,10 +459,10 @@ var _ = Describe("Virtual Service Processor", func() {
 
 				apiRule := GetAPIRuleFor(rules)
 
-				vsProcessor := ory.NewVirtualServiceProcessor(GetConfigWithEmptyFakeClient())
+				processor := ory.NewVirtualServiceProcessor(GetConfigWithEmptyFakeClient())
 
 				// when
-				result, err := vsProcessor.EvaluateReconciliation(apiRule)
+				result, err := processor.EvaluateReconciliation(apiRule)
 
 				// then
 				Expect(err).To(BeNil())
@@ -507,7 +507,7 @@ var _ = Describe("Virtual Service Processor", func() {
 				Expect(vs.ObjectMeta.OwnerReferences[0].UID).To(Equal(ApiUID))
 			})
 
-			It("should produce VS for jwt & oauth authenticators for given path", func() {
+			It("should return service for jwt & oauth authenticators for given path", func() {
 				// given
 				oauthConfigJSON := fmt.Sprintf(`{"required_scope": [%s]}`, ToCSVList(ApiScopes))
 
@@ -542,10 +542,10 @@ var _ = Describe("Virtual Service Processor", func() {
 
 				apiRule := GetAPIRuleFor(rules)
 
-				vsProcessor := ory.NewVirtualServiceProcessor(GetConfigWithEmptyFakeClient())
+				processor := ory.NewVirtualServiceProcessor(GetConfigWithEmptyFakeClient())
 
 				// when
-				result, err := vsProcessor.EvaluateReconciliation(apiRule)
+				result, err := processor.EvaluateReconciliation(apiRule)
 
 				// then
 				Expect(err).To(BeNil())
@@ -584,7 +584,7 @@ var _ = Describe("Virtual Service Processor", func() {
 	})
 
 	Context("update", func() {
-		Context("when virtual service has owner v1alpha1 owner label", func() {
+		Context("when existing virtual service has owner v1alpha1 owner label", func() {
 			It("should get and update", func() {
 				// given
 				noop := []*gatewayv1beta1.Authenticator{
@@ -631,10 +631,10 @@ var _ = Describe("Virtual Service Processor", func() {
 
 				client := fake.NewClientBuilder().WithScheme(scheme).WithObjects(&rule, &vs).Build()
 
-				vsProcessor := ory.NewVirtualServiceProcessor(GetConfigWithClient(client))
+				processor := ory.NewVirtualServiceProcessor(GetConfigWithClient(client))
 
 				// when
-				result, err := vsProcessor.EvaluateReconciliation(apiRule)
+				result, err := processor.EvaluateReconciliation(apiRule)
 
 				// then
 				Expect(err).To(BeNil())

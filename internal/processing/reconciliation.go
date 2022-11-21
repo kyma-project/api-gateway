@@ -44,13 +44,9 @@ func Reconcile(cmd ReconciliationCommand, apiRule *gatewayv1beta1.APIRule) Recon
 			return GetStatusForError(cmd.GetLogger(), err, gatewayv1beta1.StatusSkipped)
 		}
 
-		// TODO: Should we have one single call to apply, so we'll only apply after all objects/processors are evaluated?
 		err = applyChanges(cmd.GetContext(), cmd.GetClient(), objectChanges...)
 		if err != nil {
-			// TODO: Old comment was:
 			//  "We don't know exactly which object(s) are not updated properly. The safest approach is to assume nothing is correct and just use `StatusError`."
-			//  I think we can improve this status as we can now know what kind of object failed, but this might be something we want to do in the future when we know how
-			//  we want to handle the status.
 			return GetStatusForError(cmd.GetLogger(), err, gatewayv1beta1.StatusError)
 		}
 	}

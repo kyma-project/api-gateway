@@ -33,7 +33,6 @@ func getOkStatus() ReconciliationStatus {
 
 // GetStatusForError creates a status with APIRule status in error condition. Accepts an auxiliary status code that is used to report VirtualService and AccessRule status.
 func GetStatusForError(log logr.Logger, err error, statusCode gatewayv1beta1.StatusCode) ReconciliationStatus {
-	// TODO Is this helpful or do we have the same information as part of the resource status?
 	log.Error(err, "Error during reconciliation")
 	return ReconciliationStatus{
 		ApiRuleStatus: generateErrorStatus(err),

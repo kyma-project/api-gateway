@@ -18,7 +18,6 @@ type VirtualServiceProcessor struct {
 	DefaultDomainName string
 }
 
-// TODO Find a better name
 type VirtualServiceCreator interface {
 	Create(api *gatewayv1beta1.APIRule) *networkingv1beta1.VirtualService
 }
