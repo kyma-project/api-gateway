@@ -12,6 +12,7 @@ import (
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/utils/strings/slices"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
@@ -393,8 +394,21 @@ var _ = Describe("Access Rule Processor", func() {
 			expectedJwtRuleMatchURL := fmt.Sprintf("<http|https>://%s<%s>", ServiceHost, HeadersApiPath)
 			expectedRuleUpstreamURL := fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", ServiceName, ApiNamespace, ServicePort)
 
-			// TODO Don't rely on order of results, so this test won't be flaky.
-			noopAccessRule := result[0].Obj.(*rulev1alpha1.Rule)
+			var jwtAccessRule *rulev1alpha1.Rule
+			var noopAccessRule *rulev1alpha1.Rule
+
+			for _, change := range result {
+				rule := change.Obj.(*rulev1alpha1.Rule)
+				switch rule.Spec.Authenticators[0].Handler.Name {
+				case "noop":
+					noopAccessRule = rule
+				case "jwt":
+					jwtAccessRule = rule
+				default:
+					Fail("Rule is not expected.")
+				}
+			}
+
 			Expect(noopAccessRule).NotTo(BeNil())
 			Expect(len(noopAccessRule.Spec.Authenticators)).To(Equal(1))
 			Expect(noopAccessRule.Spec.Authorizer.Name).To(Equal("allow"))
@@ -406,7 +420,6 @@ var _ = Describe("Access Rule Processor", func() {
 			Expect(noopAccessRule.Spec.Match.URL).To(Equal(expectedNoopRuleMatchURL))
 			Expect(noopAccessRule.Spec.Upstream.URL).To(Equal(expectedRuleUpstreamURL))
 
-			jwtAccessRule := result[1].Obj.(*rulev1alpha1.Rule)
 			Expect(jwtAccessRule).NotTo(BeNil())
 			Expect(len(jwtAccessRule.Spec.Authenticators)).To(Equal(1))
 			Expect(jwtAccessRule.Spec.Authorizer.Name).To(Equal("allow"))
@@ -485,43 +498,43 @@ var _ = Describe("Access Rule Processor", func() {
 			expectedJwtRuleMatchURL := fmt.Sprintf("<http|https>://%s<%s>", ServiceHost, ApiPath)
 			expectedRuleUpstreamURL := fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", ServiceName, ApiNamespace, ServicePort)
 
-			// TODO Don't rely on order of results, so this test won't be flaky.
-			noopAccessRule := result[1].Obj.(*rulev1alpha1.Rule)
+			var jwtAccessRule *rulev1alpha1.Rule
+			var noopAccessRule *rulev1alpha1.Rule
+
+			for _, change := range result {
+				rule := change.Obj.(*rulev1alpha1.Rule)
+				switch rule.Spec.Authenticators[0].Handler.Name {
+				case "noop":
+					noopAccessRule = rule
+				case "jwt":
+					jwtAccessRule = rule
+				default:
+					Fail("Rule is not expected.")
+				}
+			}
 
 			Expect(noopAccessRule).NotTo(BeNil())
-
 			Expect(len(noopAccessRule.Spec.Authenticators)).To(Equal(1))
-
 			Expect(noopAccessRule.Spec.Authorizer.Name).To(Equal("allow"))
 			Expect(noopAccessRule.Spec.Authorizer.Config).To(BeNil())
-
 			Expect(noopAccessRule.Spec.Authenticators[0].Handler.Name).To(Equal("noop"))
 			Expect(noopAccessRule.Spec.Authenticators[0].Handler.Config).To(BeNil())
-
 			Expect(len(noopAccessRule.Spec.Match.Methods)).To(Equal(len(getMethod)))
 			Expect(noopAccessRule.Spec.Match.Methods).To(Equal(getMethod))
 			Expect(noopAccessRule.Spec.Match.URL).To(Equal(expectedNoopRuleMatchURL))
-
 			Expect(noopAccessRule.Spec.Upstream.URL).To(Equal(expectedRuleUpstreamURL))
-
-			jwtAccessRule := result[0].Obj.(*rulev1alpha1.Rule)
 
 			Expect(jwtAccessRule).NotTo(BeNil())
 			Expect(len(jwtAccessRule.Spec.Authenticators)).To(Equal(1))
-
 			Expect(jwtAccessRule.Spec.Authorizer.Name).To(Equal("allow"))
 			Expect(jwtAccessRule.Spec.Authorizer.Config).To(BeNil())
-
 			Expect(jwtAccessRule.Spec.Authenticators[0].Handler.Name).To(Equal("jwt"))
 			Expect(jwtAccessRule.Spec.Authenticators[0].Handler.Config).NotTo(BeNil())
 			Expect(string(jwtAccessRule.Spec.Authenticators[0].Handler.Config.Raw)).To(Equal(jwtConfigJSON))
-
 			Expect(len(jwtAccessRule.Spec.Match.Methods)).To(Equal(len(postMethod)))
 			Expect(jwtAccessRule.Spec.Match.Methods).To(Equal(postMethod))
 			Expect(jwtAccessRule.Spec.Match.URL).To(Equal(expectedJwtRuleMatchURL))
-
 			Expect(jwtAccessRule.Spec.Upstream.URL).To(Equal(expectedRuleUpstreamURL))
-
 			Expect(jwtAccessRule.Spec.Mutators).NotTo(BeNil())
 			Expect(len(jwtAccessRule.Spec.Mutators)).To(Equal(len(testMutators)))
 			Expect(jwtAccessRule.Spec.Mutators[0].Handler.Name).To(Equal(testMutators[0].Name))
@@ -592,8 +605,27 @@ var _ = Describe("Access Rule Processor", func() {
 			expectedJwtRuleMatchURL := fmt.Sprintf("<http|https>://%s<%s>", ServiceHost, HeadersApiPath)
 			expectedRuleUpstreamURL := fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", ServiceName, ApiNamespace, ServicePort)
 
-			// TODO Don't rely on order of results, so this test won't be flaky.
-			noopGetAccessRule := result[0].Obj.(*rulev1alpha1.Rule)
+			var jwtAccessRule *rulev1alpha1.Rule
+			var noopPostAccessRule *rulev1alpha1.Rule
+			var noopGetAccessRule *rulev1alpha1.Rule
+
+			for _, change := range result {
+				rule := change.Obj.(*rulev1alpha1.Rule)
+				switch rule.Spec.Authenticators[0].Handler.Name {
+				case "noop":
+					if slices.Contains(rule.Spec.Match.Methods, "GET") {
+						noopGetAccessRule = rule
+					} else {
+						noopPostAccessRule = rule
+					}
+				case "jwt":
+					jwtAccessRule = rule
+
+				default:
+					Fail("Rule is not expected.")
+				}
+			}
+
 			Expect(noopGetAccessRule).NotTo(BeNil())
 			Expect(noopGetAccessRule.Spec.Authorizer.Name).To(Equal("allow"))
 			Expect(noopGetAccessRule.Spec.Authorizer.Config).To(BeNil())
@@ -604,7 +636,6 @@ var _ = Describe("Access Rule Processor", func() {
 			Expect(noopGetAccessRule.Spec.Match.URL).To(Equal(expectedNoopGetRuleMatchURL))
 			Expect(noopGetAccessRule.Spec.Upstream.URL).To(Equal(expectedRuleUpstreamURL))
 
-			noopPostAccessRule := result[1].Obj.(*rulev1alpha1.Rule)
 			Expect(noopPostAccessRule).NotTo(BeNil())
 			Expect(len(noopPostAccessRule.Spec.Authenticators)).To(Equal(1))
 			Expect(noopPostAccessRule.Spec.Authorizer.Name).To(Equal("allow"))
@@ -616,7 +647,6 @@ var _ = Describe("Access Rule Processor", func() {
 			Expect(noopPostAccessRule.Spec.Match.URL).To(Equal(expectedNoopPostRuleMatchURL))
 			Expect(noopPostAccessRule.Spec.Upstream.URL).To(Equal(expectedRuleUpstreamURL))
 
-			jwtAccessRule := result[2].Obj.(*rulev1alpha1.Rule)
 			Expect(jwtAccessRule).NotTo(BeNil())
 			Expect(len(jwtAccessRule.Spec.Authenticators)).To(Equal(1))
 			Expect(jwtAccessRule.Spec.Authorizer.Name).To(Equal("allow"))
