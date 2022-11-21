@@ -328,13 +328,30 @@ var _ = Describe("Access Rule Processor", func() {
 				// then
 				Expect(err).To(BeNil())
 				Expect(result).To(HaveLen(2))
-				Expect(result[0].Action).To(Equal("create"))
-				createdRule := result[0].Obj.(*rulev1alpha1.Rule)
-				Expect(createdRule.Spec.Match.URL).To(Equal("<http|https>://myService.myDomain.com<newPath>"))
 
-				Expect(result[1].Action).To(Equal("delete"))
-				deletedRule := result[1].Obj.(*rulev1alpha1.Rule)
-				Expect(deletedRule.Spec.Match.URL).To(Equal("<http|https>://myService.myDomain.com<oldPath>"))
+				createResultMatcher := PointTo(MatchFields(IgnoreExtras, Fields{
+					"Action": Equal("create"),
+					"Obj": PointTo(MatchFields(IgnoreExtras, Fields{
+						"Spec": MatchFields(IgnoreExtras, Fields{
+							"Match": PointTo(MatchFields(IgnoreExtras, Fields{
+								"URL": Equal("<http|https>://myService.myDomain.com<newPath>"),
+							})),
+						}),
+					})),
+				}))
+
+				deleteResultMatcher := PointTo(MatchFields(IgnoreExtras, Fields{
+					"Action": Equal("delete"),
+					"Obj": PointTo(MatchFields(IgnoreExtras, Fields{
+						"Spec": MatchFields(IgnoreExtras, Fields{
+							"Match": PointTo(MatchFields(IgnoreExtras, Fields{
+								"URL": Equal("<http|https>://myService.myDomain.com<oldPath>"),
+							})),
+						}),
+					})),
+				}))
+
+				Expect(result).To(ContainElements(createResultMatcher, deleteResultMatcher))
 			})
 		})
 

@@ -18,7 +18,6 @@ package controllers
 
 import (
 	"context"
-	"github.com/kyma-incubator/api-gateway/internal/processing/istio"
 	"github.com/kyma-incubator/api-gateway/internal/processing/ory"
 	"time"
 
@@ -90,7 +89,7 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 			HostBlockList:     r.HostBlockList,
 		}
 
-		cmd := getReconciliation(c, "ory")
+		cmd := getReconciliation(c)
 
 		status := processing.Reconcile(cmd, apiRule)
 
@@ -100,12 +99,9 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	return doneReconcile()
 }
 
-func getReconciliation(config processing.ReconciliationConfig, featureFlag string) processing.ReconciliationCommand {
-	if featureFlag == "istio" {
-		return istio.NewIstioReconciliation(config)
-	} else {
-		return ory.NewOryReconciliation(config)
-	}
+func getReconciliation(config processing.ReconciliationConfig) processing.ReconciliationCommand {
+	// This should be replaced by the feature flag handling to return the appropriate reconciliation.
+	return ory.NewOryReconciliation(config)
 }
 
 // SetupWithManager sets up the controller with the Manager.
