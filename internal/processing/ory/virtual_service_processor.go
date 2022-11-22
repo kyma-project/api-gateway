@@ -11,8 +11,6 @@ import (
 
 func NewVirtualServiceProcessor(config processing.ReconciliationConfig) processing.VirtualServiceProcessor {
 	return processing.VirtualServiceProcessor{
-		Client: config.Client,
-		Ctx:    config.Ctx,
 		Creator: virtualServiceCreator{
 			oathkeeperSvc:     config.OathkeeperSvc,
 			oathkeeperSvcPort: config.OathkeeperSvcPort,

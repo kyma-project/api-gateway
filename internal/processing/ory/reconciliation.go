@@ -2,7 +2,6 @@ package ory
 
 import (
 	"context"
-	"github.com/go-logr/logr"
 	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
 	"github.com/kyma-incubator/api-gateway/internal/processing"
 	"github.com/kyma-incubator/api-gateway/internal/validation"
@@ -25,9 +24,9 @@ func NewOryReconciliation(config processing.ReconciliationConfig) Reconciliation
 	}
 }
 
-func (r Reconciliation) Validate(apiRule *gatewayv1beta1.APIRule) ([]validation.Failure, error) {
+func (r Reconciliation) Validate(ctx context.Context, client client.Client, apiRule *gatewayv1beta1.APIRule) ([]validation.Failure, error) {
 	var vsList networkingv1beta1.VirtualServiceList
-	if err := r.config.Client.List(r.config.Ctx, &vsList); err != nil {
+	if err := client.List(ctx, &vsList); err != nil {
 		return make([]validation.Failure, 0), err
 	}
 
@@ -39,18 +38,6 @@ func (r Reconciliation) Validate(apiRule *gatewayv1beta1.APIRule) ([]validation.
 		DefaultDomainName: r.config.DefaultDomainName,
 	}
 	return validator.Validate(apiRule, vsList), nil
-}
-
-func (r Reconciliation) GetLogger() logr.Logger {
-	return r.config.Logger
-}
-
-func (r Reconciliation) GetContext() context.Context {
-	return r.config.Ctx
-}
-
-func (r Reconciliation) GetClient() client.Client {
-	return r.config.Client
 }
 
 func (r Reconciliation) GetProcessors() []processing.ReconciliationProcessor {

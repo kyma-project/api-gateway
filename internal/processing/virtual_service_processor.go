@@ -4,13 +4,11 @@ import (
 	"context"
 	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
-	"sigs.k8s.io/controller-runtime/pkg/client"
+	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type VirtualServiceProcessor struct {
 	Creator           VirtualServiceCreator
-	Client            client.Client
-	Ctx               context.Context
 	OathkeeperSvc     string
 	OathkeeperSvcPort uint32
 	CorsConfig        *CorsConfig
@@ -22,27 +20,27 @@ type VirtualServiceCreator interface {
 	Create(api *gatewayv1beta1.APIRule) *networkingv1beta1.VirtualService
 }
 
-func (r VirtualServiceProcessor) EvaluateReconciliation(apiRule *gatewayv1beta1.APIRule) ([]*ObjectChange, error) {
+func (r VirtualServiceProcessor) EvaluateReconciliation(ctx context.Context, client ctrlclient.Client, apiRule *gatewayv1beta1.APIRule) ([]*ObjectChange, error) {
 	desired := r.getDesiredState(apiRule)
-	actual, err := r.getActualState(r.Ctx, apiRule)
+	actual, err := r.getActualState(ctx, client, apiRule)
 	if err != nil {
 		return make([]*ObjectChange, 0), err
 	}
 
-	c := r.getObjectChanges(desired, actual)
+	changes := r.getObjectChanges(desired, actual)
 
-	return []*ObjectChange{c}, nil
+	return []*ObjectChange{changes}, nil
 }
 
 func (r VirtualServiceProcessor) getDesiredState(api *gatewayv1beta1.APIRule) *networkingv1beta1.VirtualService {
 	return r.Creator.Create(api)
 }
 
-func (r VirtualServiceProcessor) getActualState(ctx context.Context, api *gatewayv1beta1.APIRule) (*networkingv1beta1.VirtualService, error) {
+func (r VirtualServiceProcessor) getActualState(ctx context.Context, client ctrlclient.Client, api *gatewayv1beta1.APIRule) (*networkingv1beta1.VirtualService, error) {
 	labels := GetOwnerLabels(api)
 
 	var vsList networkingv1beta1.VirtualServiceList
-	if err := r.Client.List(ctx, &vsList, client.MatchingLabels(labels)); err != nil {
+	if err := client.List(ctx, &vsList, ctrlclient.MatchingLabels(labels)); err != nil {
 		return nil, err
 	}
 

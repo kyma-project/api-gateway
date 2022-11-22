@@ -1,8 +1,6 @@
 package processingtest
 
 import (
-	"context"
-	"github.com/go-logr/logr"
 	v1beta12 "github.com/kyma-incubator/api-gateway/api/v1beta1"
 	"github.com/kyma-incubator/api-gateway/internal/processing"
 	"github.com/onsi/gomega"
@@ -54,15 +52,8 @@ var (
 	TestAdditionalLabels = map[string]string{TestLabelKey: TestLabelValue}
 )
 
-func GetConfigWithEmptyFakeClient() processing.ReconciliationConfig {
-	return GetConfigWithClient(GetEmptyFakeClient())
-}
-
-func GetConfigWithClient(client client.Client) processing.ReconciliationConfig {
+func GetTestConfig() processing.ReconciliationConfig {
 	return processing.ReconciliationConfig{
-		Client:            client,
-		Ctx:               context.TODO(),
-		Logger:            logr.Logger{},
 		OathkeeperSvc:     OathkeeperSvc,
 		OathkeeperSvcPort: OathkeeperSvcPort,
 		CorsConfig:        TestCors,

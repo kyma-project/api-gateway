@@ -11,43 +11,40 @@ import (
 )
 
 type ReconciliationCommand interface {
-	Validate(*gatewayv1beta1.APIRule) ([]validation.Failure, error)
-	GetLogger() logr.Logger
+	Validate(context.Context, client.Client, *gatewayv1beta1.APIRule) ([]validation.Failure, error)
 	GetProcessors() []ReconciliationProcessor
-	GetContext() context.Context
-	GetClient() client.Client
 }
 
 type ReconciliationProcessor interface {
-	EvaluateReconciliation(*gatewayv1beta1.APIRule) ([]*ObjectChange, error)
+	EvaluateReconciliation(context.Context, client.Client, *gatewayv1beta1.APIRule) ([]*ObjectChange, error)
 }
 
 // Reconcile executes the reconciliation of the APIRule using the given reconciliation command.
-func Reconcile(cmd ReconciliationCommand, apiRule *gatewayv1beta1.APIRule) ReconciliationStatus {
+func Reconcile(ctx context.Context, client client.Client, log logr.Logger, cmd ReconciliationCommand, apiRule *gatewayv1beta1.APIRule) ReconciliationStatus {
 
-	validationFailures, err := cmd.Validate(apiRule)
+	validationFailures, err := cmd.Validate(ctx, client, apiRule)
 	if err != nil {
 		// We set the status to skipped because it was not the validation that failed, but an error occurred during validation.
-		return GetStatusForError(cmd.GetLogger(), err, gatewayv1beta1.StatusSkipped)
+		return GetStatusForError(log, err, gatewayv1beta1.StatusSkipped)
 	}
 
 	if len(validationFailures) > 0 {
 		failuresJson, _ := json.Marshal(validationFailures)
-		cmd.GetLogger().Info(fmt.Sprintf(`Validation failure {"controller": "Api", "request": "%s/%s", "failures": %s}`, apiRule.Namespace, apiRule.Name, string(failuresJson)))
+		log.Info(fmt.Sprintf(`Validation failure {"controller": "Api", "request": "%s/%s", "failures": %s}`, apiRule.Namespace, apiRule.Name, string(failuresJson)))
 		return getFailedValidationStatus(validationFailures)
 	}
 
 	for _, processor := range cmd.GetProcessors() {
 
-		objectChanges, err := processor.EvaluateReconciliation(apiRule)
+		objectChanges, err := processor.EvaluateReconciliation(ctx, client, apiRule)
 		if err != nil {
-			return GetStatusForError(cmd.GetLogger(), err, gatewayv1beta1.StatusSkipped)
+			return GetStatusForError(log, err, gatewayv1beta1.StatusSkipped)
 		}
 
-		err = applyChanges(cmd.GetContext(), cmd.GetClient(), objectChanges...)
+		err = applyChanges(ctx, client, objectChanges...)
 		if err != nil {
 			//  "We don't know exactly which object(s) are not updated properly. The safest approach is to assume nothing is correct and just use `StatusError`."
-			return GetStatusForError(cmd.GetLogger(), err, gatewayv1beta1.StatusError)
+			return GetStatusForError(log, err, gatewayv1beta1.StatusError)
 		}
 	}
 

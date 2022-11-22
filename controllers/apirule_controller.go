@@ -76,9 +76,6 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	if apiRule.Generation != apiRule.Status.ObservedGeneration {
 
 		c := processing.ReconciliationConfig{
-			Ctx:               ctx,
-			Client:            r.Client,
-			Logger:            r.Log,
 			OathkeeperSvc:     r.OathkeeperSvc,
 			OathkeeperSvcPort: r.OathkeeperSvcPort,
 			CorsConfig:        r.CorsConfig,
@@ -91,7 +88,7 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 
 		cmd := getReconciliation(c)
 
-		status := processing.Reconcile(cmd, apiRule)
+		status := processing.Reconcile(ctx, r.Client, r.Log, cmd, apiRule)
 
 		return r.updateStatusOrRetry(ctx, apiRule, status)
 	}

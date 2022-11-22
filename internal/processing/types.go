@@ -1,8 +1,6 @@
 package processing
 
 import (
-	"context"
-	"github.com/go-logr/logr"
 	v1beta12 "istio.io/api/networking/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -41,9 +39,6 @@ type CorsConfig struct {
 }
 
 type ReconciliationConfig struct {
-	Client            client.Client
-	Ctx               context.Context
-	Logger            logr.Logger
 	OathkeeperSvc     string
 	OathkeeperSvcPort uint32
 	CorsConfig        *CorsConfig

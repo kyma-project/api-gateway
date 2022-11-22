@@ -8,28 +8,24 @@ import (
 	"github.com/kyma-incubator/api-gateway/internal/helpers"
 	"github.com/kyma-incubator/api-gateway/internal/processing"
 	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
-	"sigs.k8s.io/controller-runtime/pkg/client"
+	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type AccessRuleProcessor struct {
-	client            client.Client
-	ctx               context.Context
 	additionalLabels  map[string]string
 	defaultDomainName string
 }
 
 func NewAccessRuleProcessor(config processing.ReconciliationConfig) AccessRuleProcessor {
 	return AccessRuleProcessor{
-		client:            config.Client,
-		ctx:               config.Ctx,
 		additionalLabels:  config.AdditionalLabels,
 		defaultDomainName: config.DefaultDomainName,
 	}
 }
 
-func (r AccessRuleProcessor) EvaluateReconciliation(apiRule *gatewayv1beta1.APIRule) ([]*processing.ObjectChange, error) {
+func (r AccessRuleProcessor) EvaluateReconciliation(ctx context.Context, client ctrlclient.Client, apiRule *gatewayv1beta1.APIRule) ([]*processing.ObjectChange, error) {
 	desired := r.getDesiredState(apiRule)
-	actual, err := r.getActualState(r.ctx, apiRule)
+	actual, err := r.getActualState(ctx, client, apiRule)
 	if err != nil {
 		return make([]*processing.ObjectChange, 0), err
 	}
@@ -80,11 +76,11 @@ func (r AccessRuleProcessor) getDesiredState(api *gatewayv1beta1.APIRule) map[st
 	return accessRules
 }
 
-func (r AccessRuleProcessor) getActualState(ctx context.Context, api *gatewayv1beta1.APIRule) (map[string]*rulev1alpha1.Rule, error) {
+func (r AccessRuleProcessor) getActualState(ctx context.Context, client ctrlclient.Client, api *gatewayv1beta1.APIRule) (map[string]*rulev1alpha1.Rule, error) {
 	labels := processing.GetOwnerLabels(api)
 
 	var arList rulev1alpha1.RuleList
-	if err := r.client.List(ctx, &arList, client.MatchingLabels(labels)); err != nil {
+	if err := client.List(ctx, &arList, ctrlclient.MatchingLabels(labels)); err != nil {
 		return nil, err
 	}
 

@@ -1,6 +1,7 @@
 package ory_test
 
 import (
+	"context"
 	"fmt"
 	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
 	"github.com/kyma-incubator/api-gateway/internal/processing"
@@ -31,11 +32,11 @@ var _ = Describe("Virtual Service Processor", func() {
 			rules := []gatewayv1beta1.Rule{allowRule}
 
 			apiRule := GetAPIRuleFor(rules)
-
-			processor := ory.NewVirtualServiceProcessor(GetConfigWithEmptyFakeClient())
+			client := GetEmptyFakeClient()
+			processor := ory.NewVirtualServiceProcessor(GetTestConfig())
 
 			// when
-			result, err := processor.EvaluateReconciliation(apiRule)
+			result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
 
 			// then
 			Expect(err).To(BeNil())
@@ -96,13 +97,13 @@ var _ = Describe("Virtual Service Processor", func() {
 				Namespace: &overrideServiceNamespace,
 				Port:      &overrideServicePort,
 			}
+			client := GetEmptyFakeClient()
+			processor := ory.NewVirtualServiceProcessor(GetTestConfig())
 
 			// when
-			processor := ory.NewVirtualServiceProcessor(GetConfigWithEmptyFakeClient())
+			result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
 
 			// then
-			result, err := processor.EvaluateReconciliation(apiRule)
-
 			Expect(err).To(BeNil())
 			Expect(result).To(HaveLen(1))
 
@@ -136,13 +137,13 @@ var _ = Describe("Virtual Service Processor", func() {
 			rules := []gatewayv1beta1.Rule{allowRule}
 
 			apiRule := GetAPIRuleFor(rules)
+			client := GetEmptyFakeClient()
+			processor := ory.NewVirtualServiceProcessor(GetTestConfig())
 
 			// when
-			processor := ory.NewVirtualServiceProcessor(GetConfigWithEmptyFakeClient())
+			result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
 
 			// then
-			result, err := processor.EvaluateReconciliation(apiRule)
-
 			Expect(err).To(BeNil())
 			Expect(result).To(HaveLen(1))
 
@@ -167,11 +168,11 @@ var _ = Describe("Virtual Service Processor", func() {
 
 			apiRule := GetAPIRuleFor(rules)
 			apiRule.Spec.Host = &ServiceHostWithNoDomain
-
-			processor := ory.NewVirtualServiceProcessor(GetConfigWithEmptyFakeClient())
+			client := GetEmptyFakeClient()
+			processor := ory.NewVirtualServiceProcessor(GetTestConfig())
 
 			// when
-			result, err := processor.EvaluateReconciliation(apiRule)
+			result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
 
 			// then
 			Expect(err).To(BeNil())
@@ -210,11 +211,11 @@ var _ = Describe("Virtual Service Processor", func() {
 			rules := []gatewayv1beta1.Rule{allowRule}
 
 			apiRule := GetAPIRuleFor(rules)
-
-			processor := ory.NewVirtualServiceProcessor(GetConfigWithEmptyFakeClient())
+			client := GetEmptyFakeClient()
+			processor := ory.NewVirtualServiceProcessor(GetTestConfig())
 
 			// when
-			result, err := processor.EvaluateReconciliation(apiRule)
+			result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
 
 			// then
 			Expect(err).To(BeNil())
@@ -271,11 +272,10 @@ var _ = Describe("Virtual Service Processor", func() {
 				Expect(err).NotTo(HaveOccurred())
 
 				client := fake.NewClientBuilder().WithScheme(scheme).WithObjects(&rule, &vs).Build()
-
-				processor := ory.NewVirtualServiceProcessor(GetConfigWithClient(client))
+				processor := ory.NewVirtualServiceProcessor(GetTestConfig())
 
 				// when
-				result, err := processor.EvaluateReconciliation(apiRule)
+				result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
 
 				// then
 				Expect(err).To(BeNil())
@@ -352,11 +352,11 @@ var _ = Describe("Virtual Service Processor", func() {
 			rules := []gatewayv1beta1.Rule{noopRule, jwtRule}
 
 			apiRule := GetAPIRuleFor(rules)
-
-			processor := ory.NewVirtualServiceProcessor(GetConfigWithEmptyFakeClient())
+			client := GetEmptyFakeClient()
+			processor := ory.NewVirtualServiceProcessor(GetTestConfig())
 
 			// when
-			result, err := processor.EvaluateReconciliation(apiRule)
+			result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
 
 			// then
 			Expect(err).To(BeNil())
@@ -448,11 +448,11 @@ var _ = Describe("Virtual Service Processor", func() {
 			rules := []gatewayv1beta1.Rule{noopRule, jwtRule}
 
 			apiRule := GetAPIRuleFor(rules)
-
-			processor := ory.NewVirtualServiceProcessor(GetConfigWithEmptyFakeClient())
+			client := GetEmptyFakeClient()
+			processor := ory.NewVirtualServiceProcessor(GetTestConfig())
 
 			// when
-			result, err := processor.EvaluateReconciliation(apiRule)
+			result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
 
 			// then
 			Expect(err).To(BeNil())
@@ -535,11 +535,11 @@ var _ = Describe("Virtual Service Processor", func() {
 			rules := []gatewayv1beta1.Rule{noopGetRule, noopPostRule, jwtRule}
 
 			apiRule := GetAPIRuleFor(rules)
-
-			processor := ory.NewVirtualServiceProcessor(GetConfigWithEmptyFakeClient())
+			client := GetEmptyFakeClient()
+			processor := ory.NewVirtualServiceProcessor(GetTestConfig())
 
 			// when
-			result, err := processor.EvaluateReconciliation(apiRule)
+			result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
 
 			// then
 			Expect(err).To(BeNil())
@@ -618,11 +618,11 @@ var _ = Describe("Virtual Service Processor", func() {
 			rules := []gatewayv1beta1.Rule{allowRule}
 
 			apiRule := GetAPIRuleFor(rules)
-
-			processor := ory.NewVirtualServiceProcessor(GetConfigWithEmptyFakeClient())
+			client := GetEmptyFakeClient()
+			processor := ory.NewVirtualServiceProcessor(GetTestConfig())
 
 			// when
-			result, err := processor.EvaluateReconciliation(apiRule)
+			result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
 
 			// then
 			Expect(err).To(BeNil())

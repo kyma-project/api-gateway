@@ -22,12 +22,10 @@ var _ = Describe("Virtual Service Processor", func() {
 
 		processor := processing.VirtualServiceProcessor{
 			Creator: mockVirtualServiceCreator{},
-			Client:  GetEmptyFakeClient(),
-			Ctx:     context.TODO(),
 		}
 
 		// when
-		result, err := processor.EvaluateReconciliation(apiRule)
+		result, err := processor.EvaluateReconciliation(context.TODO(), GetEmptyFakeClient(), apiRule)
 
 		// then
 		Expect(err).To(BeNil())
@@ -66,12 +64,10 @@ var _ = Describe("Virtual Service Processor", func() {
 
 		processor := processing.VirtualServiceProcessor{
 			Creator: mockVirtualServiceCreator{},
-			Client:  client,
-			Ctx:     context.TODO(),
 		}
 
 		// when
-		result, err := processor.EvaluateReconciliation(apiRule)
+		result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
 
 		// then
 		Expect(err).To(BeNil())

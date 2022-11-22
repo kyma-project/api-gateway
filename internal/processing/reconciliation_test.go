@@ -24,9 +24,10 @@ var _ = Describe("Reconcile", func() {
 		cmd := MockReconciliationCommand{
 			validateMock: func() ([]validation.Failure, error) { return nil, fmt.Errorf("error during validation") },
 		}
+		client := fake.NewClientBuilder().Build()
 
 		// when
-		status := processing.Reconcile(cmd, &gatewayv1beta1.APIRule{})
+		status := processing.Reconcile(context.TODO(), client, testLogger(), cmd, &gatewayv1beta1.APIRule{})
 
 		// then
 		Expect(status.ApiRuleStatus.Code).To(Equal(gatewayv1beta1.StatusError))
@@ -44,9 +45,10 @@ var _ = Describe("Reconcile", func() {
 		cmd := MockReconciliationCommand{
 			validateMock: func() ([]validation.Failure, error) { return failures, nil },
 		}
+		client := fake.NewClientBuilder().Build()
 
 		// when
-		status := processing.Reconcile(cmd, &gatewayv1beta1.APIRule{})
+		status := processing.Reconcile(context.TODO(), client, testLogger(), cmd, &gatewayv1beta1.APIRule{})
 
 		// then
 		Expect(status.ApiRuleStatus.Code).To(Equal(gatewayv1beta1.StatusError))
@@ -68,8 +70,10 @@ var _ = Describe("Reconcile", func() {
 			processorMocks: func() []processing.ReconciliationProcessor { return []processing.ReconciliationProcessor{p} },
 		}
 
+		client := fake.NewClientBuilder().Build()
+
 		// when
-		status := processing.Reconcile(cmd, &gatewayv1beta1.APIRule{})
+		status := processing.Reconcile(context.TODO(), client, testLogger(), cmd, &gatewayv1beta1.APIRule{})
 
 		// then
 		Expect(status.ApiRuleStatus.Code).To(Equal(gatewayv1beta1.StatusError))
@@ -90,13 +94,12 @@ var _ = Describe("Reconcile", func() {
 		cmd := MockReconciliationCommand{
 			validateMock:   func() ([]validation.Failure, error) { return []validation.Failure{}, nil },
 			processorMocks: func() []processing.ReconciliationProcessor { return []processing.ReconciliationProcessor{p} },
-			clientMock: func() client.Client {
-				return fake.NewClientBuilder().Build()
-			},
 		}
 
+		client := fake.NewClientBuilder().Build()
+
 		// when
-		status := processing.Reconcile(cmd, &gatewayv1beta1.APIRule{})
+		status := processing.Reconcile(context.TODO(), client, testLogger(), cmd, &gatewayv1beta1.APIRule{})
 
 		// then
 		Expect(status.ApiRuleStatus.Code).To(Equal(gatewayv1beta1.StatusError))
@@ -117,13 +120,12 @@ var _ = Describe("Reconcile", func() {
 		cmd := MockReconciliationCommand{
 			validateMock:   func() ([]validation.Failure, error) { return []validation.Failure{}, nil },
 			processorMocks: func() []processing.ReconciliationProcessor { return []processing.ReconciliationProcessor{p} },
-			clientMock: func() client.Client {
-				return fake.NewClientBuilder().Build()
-			},
 		}
 
+		client := fake.NewClientBuilder().Build()
+
 		// when
-		status := processing.Reconcile(cmd, &gatewayv1beta1.APIRule{})
+		status := processing.Reconcile(context.TODO(), client, testLogger(), cmd, &gatewayv1beta1.APIRule{})
 
 		// then
 		Expect(status.ApiRuleStatus.Code).To(Equal(gatewayv1beta1.StatusError))
@@ -150,16 +152,15 @@ var _ = Describe("Reconcile", func() {
 		cmd := MockReconciliationCommand{
 			validateMock:   func() ([]validation.Failure, error) { return []validation.Failure{}, nil },
 			processorMocks: func() []processing.ReconciliationProcessor { return []processing.ReconciliationProcessor{p} },
-			clientMock: func() client.Client {
-				scheme := runtime.NewScheme()
-				err := networkingv1beta1.AddToScheme(scheme)
-				Expect(err).NotTo(HaveOccurred())
-				return fake.NewClientBuilder().WithScheme(scheme).WithObjects(toBeUpdatedVs, toBeDeletedVs).Build()
-			},
 		}
 
+		scheme := runtime.NewScheme()
+		err := networkingv1beta1.AddToScheme(scheme)
+		Expect(err).NotTo(HaveOccurred())
+		client := fake.NewClientBuilder().WithScheme(scheme).WithObjects(toBeUpdatedVs, toBeDeletedVs).Build()
+
 		// when
-		status := processing.Reconcile(cmd, &gatewayv1beta1.APIRule{})
+		status := processing.Reconcile(context.TODO(), client, testLogger(), cmd, &gatewayv1beta1.APIRule{})
 
 		// then
 		Expect(status.ApiRuleStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
@@ -171,31 +172,24 @@ var _ = Describe("Reconcile", func() {
 type MockReconciliationCommand struct {
 	validateMock   func() ([]validation.Failure, error)
 	processorMocks func() []processing.ReconciliationProcessor
-	clientMock     func() client.Client
 }
 
-func (r MockReconciliationCommand) Validate(_ *gatewayv1beta1.APIRule) ([]validation.Failure, error) {
+func (r MockReconciliationCommand) Validate(_ context.Context, _ client.Client, _ *gatewayv1beta1.APIRule) ([]validation.Failure, error) {
 	return r.validateMock()
 }
 
-func (r MockReconciliationCommand) GetLogger() logr.Logger {
-	return ctrl.Log.WithName("test")
-}
 func (r MockReconciliationCommand) GetProcessors() []processing.ReconciliationProcessor {
 	return r.processorMocks()
-}
-
-func (r MockReconciliationCommand) GetContext() context.Context {
-	return context.TODO()
-}
-func (r MockReconciliationCommand) GetClient() client.Client {
-	return r.clientMock()
 }
 
 type MockReconciliationProcessor struct {
 	evaluate func() ([]*processing.ObjectChange, error)
 }
 
-func (r MockReconciliationProcessor) EvaluateReconciliation(_ *gatewayv1beta1.APIRule) ([]*processing.ObjectChange, error) {
+func (r MockReconciliationProcessor) EvaluateReconciliation(_ context.Context, _ client.Client, _ *gatewayv1beta1.APIRule) ([]*processing.ObjectChange, error) {
 	return r.evaluate()
+}
+
+func testLogger() logr.Logger {
+	return ctrl.Log.WithName("test")
 }
