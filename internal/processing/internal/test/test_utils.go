@@ -1,4 +1,4 @@
-package processingtest
+package processing_test
 
 import (
 	v1beta12 "github.com/kyma-incubator/api-gateway/api/v1beta1"
