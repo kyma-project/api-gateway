@@ -9,9 +9,7 @@ import (
 )
 
 type AccessRuleProcessor struct {
-	Creator           AccessRuleCreator
-	additionalLabels  map[string]string
-	defaultDomainName string
+	Creator AccessRuleCreator
 }
 
 type AccessRuleCreator interface {

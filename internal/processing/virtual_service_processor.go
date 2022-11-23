@@ -8,12 +8,7 @@ import (
 )
 
 type VirtualServiceProcessor struct {
-	Creator           VirtualServiceCreator
-	oathkeeperSvc     string
-	oathkeeperSvcPort uint32
-	corsConfig        *CorsConfig
-	additionalLabels  map[string]string
-	defaultDomainName string
+	Creator VirtualServiceCreator
 }
 
 type VirtualServiceCreator interface {
