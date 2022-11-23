@@ -1,6 +1,6 @@
 # APIRule performance tests
 
-Tests were performed on Gardener GCP cluster with the help of `k6s` on Kyma `production` profile. Requests where made from inside the cluster with HPA disabled for the sake of having identical enviroment on all runs. The tests were made with usage of 500 Virtual Users making constant requests for 1 minute.
+Tests were performed on Gardener GCP cluster with the help of `k6s` on Kyma `production` profile. Requests were made from inside the cluster with HPA disabled for the sake of having identical environment on all runs. The tests were made using 500 Virtual Users making constant requests for 1 minute.
 
 ## Performance on deployments without Istio sidecar
 
