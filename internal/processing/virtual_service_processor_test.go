@@ -30,7 +30,7 @@ var _ = Describe("Virtual Service Processor", func() {
 		// then
 		Expect(err).To(BeNil())
 		Expect(result).To(HaveLen(1))
-		Expect(result[0].Action).To(Equal("create"))
+		Expect(result[0].Action.String()).To(Equal("create"))
 	})
 
 	It("should update virtual service when virtual service exists", func() {
@@ -72,7 +72,7 @@ var _ = Describe("Virtual Service Processor", func() {
 		// then
 		Expect(err).To(BeNil())
 		Expect(result).To(HaveLen(1))
-		Expect(result[0].Action).To(Equal("update"))
+		Expect(result[0].Action.String()).To(Equal("update"))
 	})
 })
 

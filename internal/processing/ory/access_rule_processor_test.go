@@ -267,7 +267,7 @@ var _ = Describe("Access Rule Processor", func() {
 				// then
 				Expect(err).To(BeNil())
 				Expect(result).To(HaveLen(1))
-				Expect(result[0].Action).To(Equal("update"))
+				Expect(result[0].Action.String()).To(Equal("update"))
 
 				accessRule := result[0].Obj.(*rulev1alpha1.Rule)
 				Expect(accessRule.Spec.Match.Methods).To(Equal([]string{"GET"}))

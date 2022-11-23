@@ -40,7 +40,7 @@ var _ = Describe("Access Rule Processor", func() {
 		// then
 		Expect(err).To(BeNil())
 		Expect(result).To(HaveLen(1))
-		Expect(result[0].Action).To(Equal("create"))
+		Expect(result[0].Action.String()).To(Equal("create"))
 	})
 
 	It("should update access rule when path exists", func() {
@@ -106,7 +106,7 @@ var _ = Describe("Access Rule Processor", func() {
 		// then
 		Expect(err).To(BeNil())
 		Expect(result).To(HaveLen(1))
-		Expect(result[0].Action).To(Equal("update"))
+		Expect(result[0].Action.String()).To(Equal("update"))
 	})
 
 	It("should delete access rule", func() {
@@ -168,7 +168,7 @@ var _ = Describe("Access Rule Processor", func() {
 		// then
 		Expect(err).To(BeNil())
 		Expect(result).To(HaveLen(1))
-		Expect(result[0].Action).To(Equal("delete"))
+		Expect(result[0].Action.String()).To(Equal("delete"))
 	})
 
 	When("rule exists and and rule path is different", func() {
@@ -237,7 +237,7 @@ var _ = Describe("Access Rule Processor", func() {
 			Expect(result).To(HaveLen(2))
 
 			createResultMatcher := PointTo(MatchFields(IgnoreExtras, Fields{
-				"Action": Equal("create"),
+				"Action": WithTransform(actionToString, Equal("create")),
 				"Obj": PointTo(MatchFields(IgnoreExtras, Fields{
 					"Spec": MatchFields(IgnoreExtras, Fields{
 						"Match": PointTo(MatchFields(IgnoreExtras, Fields{
@@ -248,7 +248,7 @@ var _ = Describe("Access Rule Processor", func() {
 			}))
 
 			deleteResultMatcher := PointTo(MatchFields(IgnoreExtras, Fields{
-				"Action": Equal("delete"),
+				"Action": WithTransform(actionToString, Equal("delete")),
 				"Obj": PointTo(MatchFields(IgnoreExtras, Fields{
 					"Spec": MatchFields(IgnoreExtras, Fields{
 						"Match": PointTo(MatchFields(IgnoreExtras, Fields{
@@ -270,3 +270,5 @@ type mockCreator struct {
 func (r mockCreator) Create(_ *gatewayv1beta1.APIRule) map[string]*rulev1alpha1.Rule {
 	return r.createMock()
 }
+
+var actionToString = func(a processing.Action) string { return a.String() }

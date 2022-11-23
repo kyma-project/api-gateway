@@ -41,7 +41,7 @@ var _ = Describe("Virtual Service Processor", func() {
 			// then
 			Expect(err).To(BeNil())
 			Expect(result).To(HaveLen(1))
-			Expect(result[0].Action).To(Equal("create"))
+			Expect(result[0].Action.String()).To(Equal("create"))
 
 			vs := result[0].Obj.(*networkingv1beta1.VirtualService)
 
@@ -280,7 +280,7 @@ var _ = Describe("Virtual Service Processor", func() {
 				// then
 				Expect(err).To(BeNil())
 				Expect(result).To(HaveLen(1))
-				Expect(result[0].Action).To(Equal("update"))
+				Expect(result[0].Action.String()).To(Equal("update"))
 
 				resultVs := result[0].Obj.(*networkingv1beta1.VirtualService)
 

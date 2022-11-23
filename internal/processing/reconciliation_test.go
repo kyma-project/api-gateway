@@ -82,35 +82,9 @@ var _ = Describe("Reconcile", func() {
 		Expect(status.VirtualServiceStatus.Code).To(Equal(gatewayv1beta1.StatusSkipped))
 	})
 
-	It("should return api status error and vs/ar status error because apply action \"something\" is not supported", func() {
-		// given
-		c := []*processing.ObjectChange{{Action: "something", Obj: builders.VirtualService().Get()}}
-		p := MockReconciliationProcessor{
-			evaluate: func() ([]*processing.ObjectChange, error) {
-				return c, nil
-			},
-		}
-
-		cmd := MockReconciliationCommand{
-			validateMock:   func() ([]validation.Failure, error) { return []validation.Failure{}, nil },
-			processorMocks: func() []processing.ReconciliationProcessor { return []processing.ReconciliationProcessor{p} },
-		}
-
-		client := fake.NewClientBuilder().Build()
-
-		// when
-		status := processing.Reconcile(context.TODO(), client, testLogger(), cmd, &gatewayv1beta1.APIRule{})
-
-		// then
-		Expect(status.ApiRuleStatus.Code).To(Equal(gatewayv1beta1.StatusError))
-		Expect(status.ApiRuleStatus.Description).To(Equal("apply action something is not supported"))
-		Expect(status.AccessRuleStatus.Code).To(Equal(gatewayv1beta1.StatusError))
-		Expect(status.VirtualServiceStatus.Code).To(Equal(gatewayv1beta1.StatusError))
-	})
-
 	It("should return api status error and vs/ar status error when error during apply of changes", func() {
 		// given
-		c := []*processing.ObjectChange{{Action: "create", Obj: builders.VirtualService().Get()}}
+		c := []*processing.ObjectChange{processing.NewObjectCreateAction(builders.VirtualService().Get())}
 		p := MockReconciliationProcessor{
 			evaluate: func() ([]*processing.ObjectChange, error) {
 				return c, nil
@@ -139,9 +113,9 @@ var _ = Describe("Reconcile", func() {
 		toBeUpdatedVs := builders.VirtualService().Name("toBeUpdated").Get()
 		toBeDeletedVs := builders.VirtualService().Name("toBeDeleted").Get()
 		c := []*processing.ObjectChange{
-			{Action: "create", Obj: builders.VirtualService().Name("test").Get()},
-			{Action: "update", Obj: toBeUpdatedVs},
-			{Action: "delete", Obj: toBeDeletedVs},
+			processing.NewObjectCreateAction(builders.VirtualService().Name("test").Get()),
+			processing.NewObjectUpdateAction(toBeUpdatedVs),
+			processing.NewObjectDeleteAction(toBeDeletedVs),
 		}
 		p := MockReconciliationProcessor{
 			evaluate: func() ([]*processing.ObjectChange, error) {
