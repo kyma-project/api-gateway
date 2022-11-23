@@ -68,7 +68,7 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		}
 
 		//Nothing is yet processed: StatusSkipped
-		status := processing.GetStatusForError(r.Log, err, gatewayv1beta1.StatusSkipped)
+		status := processing.GetStatusForError(&r.Log, err, gatewayv1beta1.StatusSkipped)
 		return r.updateStatusOrRetry(ctx, apiRule, status)
 	}
 
@@ -88,7 +88,7 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 
 		cmd := getReconciliation(c)
 
-		status := processing.Reconcile(ctx, r.Client, r.Log, cmd, apiRule)
+		status := processing.Reconcile(ctx, r.Client, &r.Log, cmd, apiRule)
 
 		return r.updateStatusOrRetry(ctx, apiRule, status)
 	}

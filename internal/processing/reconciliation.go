@@ -20,7 +20,7 @@ type ReconciliationProcessor interface {
 }
 
 // Reconcile executes the reconciliation of the APIRule using the given reconciliation command.
-func Reconcile(ctx context.Context, client client.Client, log logr.Logger, cmd ReconciliationCommand, apiRule *gatewayv1beta1.APIRule) ReconciliationStatus {
+func Reconcile(ctx context.Context, client client.Client, log *logr.Logger, cmd ReconciliationCommand, apiRule *gatewayv1beta1.APIRule) ReconciliationStatus {
 
 	validationFailures, err := cmd.Validate(ctx, client, apiRule)
 	if err != nil {

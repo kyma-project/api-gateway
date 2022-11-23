@@ -190,6 +190,7 @@ func (r MockReconciliationProcessor) EvaluateReconciliation(_ context.Context, _
 	return r.evaluate()
 }
 
-func testLogger() logr.Logger {
-	return ctrl.Log.WithName("test")
+func testLogger() *logr.Logger {
+	logger := ctrl.Log.WithName("test")
+	return &logger
 }
