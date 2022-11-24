@@ -7,7 +7,8 @@ import (
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 )
 
-func NewVirtualService(config processing.ReconciliationConfig) processing.VirtualServiceProcessor {
+// NewVirtualServiceProcessor returns a VirtualServiceProcessor with the desired state handling specific for the Istio handler.
+func NewVirtualServiceProcessor(config processing.ReconciliationConfig) processing.VirtualServiceProcessor {
 	return processing.VirtualServiceProcessor{
 		Creator: virtualServiceCreator{
 			oathkeeperSvc:     config.OathkeeperSvc,

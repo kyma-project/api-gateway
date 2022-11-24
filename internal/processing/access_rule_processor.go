@@ -8,10 +8,13 @@ import (
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
+// AccessRuleProcessor is the generic processor that handles the Ory Rules in the reconciliation of API Rule.
 type AccessRuleProcessor struct {
 	Creator AccessRuleCreator
 }
 
+// AccessRuleCreator provides the creation of Rules using the configuration in the given APIRule.
+// The key of the map is expected to be unique and comparable with the
 type AccessRuleCreator interface {
 	Create(api *gatewayv1beta1.APIRule) map[string]*rulev1alpha1.Rule
 }

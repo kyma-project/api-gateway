@@ -10,12 +10,15 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
+// ReconciliationCommand provides the processors and validation required to reconcile the API rule.
 type ReconciliationCommand interface {
 	Validate(context.Context, client.Client, *gatewayv1beta1.APIRule) ([]validation.Failure, error)
 	GetProcessors() []ReconciliationProcessor
 }
 
+// ReconciliationProcessor provides the evaluation of changes during the reconciliation of API Rule.
 type ReconciliationProcessor interface {
+	// EvaluateReconciliation returns the changes that needs to be applied to the cluster by comparing the desired with the actual state.
 	EvaluateReconciliation(context.Context, client.Client, *gatewayv1beta1.APIRule) ([]*ObjectChange, error)
 }
 

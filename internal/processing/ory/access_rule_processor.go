@@ -9,21 +9,24 @@ import (
 	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
 )
 
+// NewAccessRuleProcessor returns a AccessRuleProcessor with the desired state handling specific for the Ory handler.
 func NewAccessRuleProcessor(config processing.ReconciliationConfig) processing.AccessRuleProcessor {
 	return processing.AccessRuleProcessor{
-		Creator: AccessRuleCreator{
+		Creator: accessRuleCreator{
 			additionalLabels:  config.AdditionalLabels,
 			defaultDomainName: config.DefaultDomainName,
 		},
 	}
 }
 
-type AccessRuleCreator struct {
+type accessRuleCreator struct {
 	additionalLabels  map[string]string
 	defaultDomainName string
 }
 
-func (r AccessRuleCreator) Create(api *gatewayv1beta1.APIRule) map[string]*rulev1alpha1.Rule {
+// Create returns a map of rules using the configuration of the APIRule. The key of the map is a unique combination of
+// the match URL and methods of the rule.
+func (r accessRuleCreator) Create(api *gatewayv1beta1.APIRule) map[string]*rulev1alpha1.Rule {
 	pathDuplicates := processing.HasPathDuplicates(api.Spec.Rules)
 	accessRules := make(map[string]*rulev1alpha1.Rule)
 	for _, rule := range api.Spec.Rules {

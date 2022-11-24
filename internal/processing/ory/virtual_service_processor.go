@@ -9,6 +9,7 @@ import (
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 )
 
+// NewVirtualServiceProcessor returns a VirtualServiceProcessor with the desired state handling specific for the Ory handler.
 func NewVirtualServiceProcessor(config processing.ReconciliationConfig) processing.VirtualServiceProcessor {
 	return processing.VirtualServiceProcessor{
 		Creator: virtualServiceCreator{
@@ -29,6 +30,7 @@ type virtualServiceCreator struct {
 	additionalLabels  map[string]string
 }
 
+// Create returns the Virtual Service using the configuration of the APIRule.
 func (r virtualServiceCreator) Create(api *gatewayv1beta1.APIRule) *networkingv1beta1.VirtualService {
 	virtualServiceNamePrefix := fmt.Sprintf("%s-", api.ObjectMeta.Name)
 	ownerRef := processing.GenerateOwnerRef(api)
