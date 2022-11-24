@@ -20,3 +20,29 @@ updates:
     commit-message:
       prefix: "docker"
       include: "scope"
+  - package-ecosystem: "gomod"
+    directory: "/"
+    target-branch: "release-1.1"
+    labels:
+      - "go"
+      - "area/dependency"
+    schedule:
+      interval: "daily"
+    commit-message:
+      prefix: "gomod"
+      include: "scope"
+    ignore:
+      - update-types: ["version-update:semver-major", "version-update:semver-minor"]
+  - package-ecosystem: "docker"
+    target-branch: "release-1.1"
+    directory: "/"
+    labels:
+      - "docker"
+      - "area/dependency"
+    schedule:
+      interval: "daily"
+    commit-message:
+      prefix: "docker"
+      include: "scope"
+    ignore:
+      - update-types: ["version-update:semver-major", "version-update:semver-minor"]
