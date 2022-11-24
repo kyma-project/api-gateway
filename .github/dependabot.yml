@@ -32,7 +32,8 @@ updates:
       prefix: "gomod"
       include: "scope"
     ignore:
-      - update-types: ["version-update:semver-major", "version-update:semver-minor"]
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
   - package-ecosystem: "docker"
     target-branch: "release-1.1"
     directory: "/"
@@ -45,4 +46,5 @@ updates:
       prefix: "docker"
       include: "scope"
     ignore:
-      - update-types: ["version-update:semver-major", "version-update:semver-minor"]
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
