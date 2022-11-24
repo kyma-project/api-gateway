@@ -37,6 +37,7 @@ const (
 var (
 	testDomainAllowlist = []string{"foo.bar", "bar.foo", "kyma.local"}
 	config              = helpers.Config{JWTHandler: helpers.JWT_HANDLER_ORY}
+	jwtValidatorMock    = &dummyAccStrValidator{}
 )
 
 var _ = Describe("ValidateConfig function", func() {
@@ -117,6 +118,7 @@ var _ = Describe("Validate function", func() {
 
 		//when
 		problems := (&APIRule{
+			JwtValidator:     jwtValidatorMock,
 			ServiceBlockList: testBlockList,
 			DomainAllowList:  testDomainAllowlist,
 		}).Validate(input, networkingv1beta1.VirtualServiceList{}, &config)
@@ -155,6 +157,7 @@ var _ = Describe("Validate function", func() {
 
 		//when
 		problems := (&APIRule{
+			JwtValidator:     jwtValidatorMock,
 			ServiceBlockList: testBlockList,
 			DomainAllowList:  testDomainAllowlist,
 		}).Validate(input, networkingv1beta1.VirtualServiceList{}, &config)
@@ -188,6 +191,7 @@ var _ = Describe("Validate function", func() {
 
 		//when
 		problems := (&APIRule{
+			JwtValidator:     jwtValidatorMock,
 			ServiceBlockList: testBlockList,
 			DomainAllowList:  testDomainAllowlist,
 		}).Validate(input, networkingv1beta1.VirtualServiceList{}, &config)
@@ -223,6 +227,7 @@ var _ = Describe("Validate function", func() {
 
 		//when
 		problems := (&APIRule{
+			JwtValidator:      jwtValidatorMock,
 			ServiceBlockList:  testBlockList,
 			DomainAllowList:   testDomainAllowlist,
 			HostBlockList:     testHostBlockList,
@@ -262,6 +267,7 @@ var _ = Describe("Validate function", func() {
 
 		//when
 		problems := (&APIRule{
+			JwtValidator:      jwtValidatorMock,
 			ServiceBlockList:  testBlockList,
 			DomainAllowList:   testDomainAllowlist,
 			HostBlockList:     testHostBlockList,
@@ -295,6 +301,7 @@ var _ = Describe("Validate function", func() {
 
 		//when
 		problems := (&APIRule{
+			JwtValidator:     jwtValidatorMock,
 			ServiceBlockList: testBlockList,
 			DomainAllowList:  []string{},
 		}).Validate(input, networkingv1beta1.VirtualServiceList{}, &config)
@@ -326,6 +333,7 @@ var _ = Describe("Validate function", func() {
 
 		//when
 		problems := (&APIRule{
+			JwtValidator:     jwtValidatorMock,
 			ServiceBlockList: testBlockList,
 			DomainAllowList:  testDomainAllowlist,
 		}).Validate(input, networkingv1beta1.VirtualServiceList{}, &config)
@@ -359,6 +367,7 @@ var _ = Describe("Validate function", func() {
 
 		//when
 		problems := (&APIRule{
+			JwtValidator:     jwtValidatorMock,
 			ServiceBlockList: testBlockList,
 			DomainAllowList:  testDomainAllowlist,
 		}).Validate(input, networkingv1beta1.VirtualServiceList{}, &config)
@@ -392,6 +401,7 @@ var _ = Describe("Validate function", func() {
 
 		//when
 		problems := (&APIRule{
+			JwtValidator:      jwtValidatorMock,
 			ServiceBlockList:  testBlockList,
 			DomainAllowList:   testDomainAllowlist,
 			DefaultDomainName: testDefaultDomain,
@@ -424,6 +434,7 @@ var _ = Describe("Validate function", func() {
 
 		//when
 		problems := (&APIRule{
+			JwtValidator:     jwtValidatorMock,
 			ServiceBlockList: testBlockList,
 			DomainAllowList:  testDomainAllowlist,
 		}).Validate(input, networkingv1beta1.VirtualServiceList{}, &config)
@@ -462,6 +473,7 @@ var _ = Describe("Validate function", func() {
 
 		//when
 		problems := (&APIRule{
+			JwtValidator:    jwtValidatorMock,
 			DomainAllowList: testDomainAllowlist,
 		}).Validate(input, networkingv1beta1.VirtualServiceList{Items: []*networkingv1beta1.VirtualService{&existingVS}}, &config)
 
@@ -498,6 +510,7 @@ var _ = Describe("Validate function", func() {
 
 		//when
 		problems := (&APIRule{
+			JwtValidator:    jwtValidatorMock,
 			DomainAllowList: testDomainAllowlist,
 		}).Validate(input, networkingv1beta1.VirtualServiceList{Items: []*networkingv1beta1.VirtualService{&existingVS}}, &config)
 
@@ -658,24 +671,21 @@ var _ = Describe("Validate function", func() {
 		}).Validate(input, networkingv1beta1.VirtualServiceList{}, &config)
 
 		//then
-		Expect(problems).To(HaveLen(6))
+		Expect(problems).To(HaveLen(5))
 		Expect(problems[0].AttributePath).To(Equal(".spec.rules"))
 		Expect(problems[0].Message).To(Equal("multiple rules defined for the same path and method"))
 
 		Expect(problems[1].AttributePath).To(Equal(".spec.rules[0].accessStrategies[0].config"))
 		Expect(problems[1].Message).To(Equal("strategy: noop does not support configuration"))
 
-		Expect(problems[2].AttributePath).To(Equal(".spec.rules[0].accessStrategies[1].config"))
-		Expect(problems[2].Message).To(Equal("supplied config cannot be empty"))
+		Expect(problems[2].AttributePath).To(Equal(".spec.rules[1].accessStrategies[0].config"))
+		Expect(problems[2].Message).To(Equal("strategy: anonymous does not support configuration"))
 
-		Expect(problems[3].AttributePath).To(Equal(".spec.rules[1].accessStrategies[0].config"))
-		Expect(problems[3].Message).To(Equal("strategy: anonymous does not support configuration"))
+		Expect(problems[3].AttributePath).To(Equal(".spec.rules[2].accessStrategies[0].handler"))
+		Expect(problems[3].Message).To(Equal("Unsupported accessStrategy: non-existing"))
 
-		Expect(problems[4].AttributePath).To(Equal(".spec.rules[2].accessStrategies[0].handler"))
-		Expect(problems[4].Message).To(Equal("Unsupported accessStrategy: non-existing"))
-
-		Expect(problems[5].AttributePath).To(Equal(".spec.rules[3].accessStrategies"))
-		Expect(problems[5].Message).To(Equal("No accessStrategies defined"))
+		Expect(problems[4].AttributePath).To(Equal(".spec.rules[3].accessStrategies"))
+		Expect(problems[4].Message).To(Equal("No accessStrategies defined"))
 
 	})
 
@@ -763,6 +773,7 @@ var _ = Describe("Validate function", func() {
 		}
 		//when
 		problems := (&APIRule{
+			JwtValidator:    jwtValidatorMock,
 			DomainAllowList: testDomainAllowlist,
 		}).Validate(input, networkingv1beta1.VirtualServiceList{Items: []*networkingv1beta1.VirtualService{&existingVS}}, &config)
 
@@ -807,6 +818,7 @@ var _ = Describe("Validate function", func() {
 		}
 		//when
 		problems := (&APIRule{
+			JwtValidator:    jwtValidatorMock,
 			DomainAllowList: testDomainAllowlist,
 		}).Validate(input, networkingv1beta1.VirtualServiceList{Items: []*networkingv1beta1.VirtualService{&existingVS}}, &config)
 

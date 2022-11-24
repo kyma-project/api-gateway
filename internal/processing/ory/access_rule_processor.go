@@ -1,31 +1,55 @@
-package processing
+package ory
 
 import (
 	"fmt"
-
-	"github.com/kyma-incubator/api-gateway/internal/helpers"
-
 	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
 	"github.com/kyma-incubator/api-gateway/internal/builders"
+	"github.com/kyma-incubator/api-gateway/internal/helpers"
+	"github.com/kyma-incubator/api-gateway/internal/processing"
 	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
 )
 
-func modifyAccessRule(existing, required *rulev1alpha1.Rule) {
-	existing.Spec = required.Spec
+// NewAccessRuleProcessor returns a AccessRuleProcessor with the desired state handling specific for the Ory handler.
+func NewAccessRuleProcessor(config processing.ReconciliationConfig) processing.AccessRuleProcessor {
+	return processing.AccessRuleProcessor{
+		Creator: accessRuleCreator{
+			additionalLabels:  config.AdditionalLabels,
+			defaultDomainName: config.DefaultDomainName,
+		},
+	}
+}
+
+type accessRuleCreator struct {
+	additionalLabels  map[string]string
+	defaultDomainName string
+}
+
+// Create returns a map of rules using the configuration of the APIRule. The key of the map is a unique combination of
+// the match URL and methods of the rule.
+func (r accessRuleCreator) Create(api *gatewayv1beta1.APIRule) map[string]*rulev1alpha1.Rule {
+	pathDuplicates := processing.HasPathDuplicates(api.Spec.Rules)
+	accessRules := make(map[string]*rulev1alpha1.Rule)
+	for _, rule := range api.Spec.Rules {
+		if processing.IsSecured(rule) {
+			ar := generateAccessRule(api, rule, rule.AccessStrategies, r.additionalLabels, r.defaultDomainName)
+			accessRules[processing.SetAccessRuleKey(pathDuplicates, *ar)] = ar
+		}
+	}
+	return accessRules
 }
 
 func generateAccessRule(api *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rule, accessStrategies []*gatewayv1beta1.Authenticator, additionalLabels map[string]string, defaultDomainName string) *rulev1alpha1.Rule {
 	namePrefix := fmt.Sprintf("%s-", api.ObjectMeta.Name)
 	namespace := api.ObjectMeta.Namespace
-	ownerRef := generateOwnerRef(api)
+	ownerRef := processing.GenerateOwnerRef(api)
 
 	arBuilder := builders.AccessRule().
 		GenerateName(namePrefix).
 		Namespace(namespace).
 		Owner(builders.OwnerReference().From(&ownerRef)).
 		Spec(builders.AccessRuleSpec().From(generateAccessRuleSpec(api, rule, accessStrategies, defaultDomainName))).
-		Label(OwnerLabel, fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace)).
-		Label(OwnerLabelv1alpha1, fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace))
+		Label(processing.OwnerLabel, fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace)).
+		Label(processing.OwnerLabelv1alpha1, fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace))
 
 	for k, v := range additionalLabels {
 		arBuilder.Label(k, v)
@@ -46,12 +70,12 @@ func generateAccessRuleSpec(api *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rul
 
 	serviceNamespace := helpers.FindServiceNamespace(api, &rule)
 
-	// Use rule level service if it exists
 	if rule.Service != nil {
 		return accessRuleSpec.Upstream(builders.Upstream().
 			URL(fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", *rule.Service.Name, *serviceNamespace, int(*rule.Service.Port)))).Get()
+	} else {
+		return accessRuleSpec.Upstream(builders.Upstream().
+			URL(fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", *api.Spec.Service.Name, *serviceNamespace, int(*api.Spec.Service.Port)))).Get()
 	}
-	// Otherwise use service defined on APIRule spec level
-	return accessRuleSpec.Upstream(builders.Upstream().
-		URL(fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", *api.Spec.Service.Name, *serviceNamespace, int(*api.Spec.Service.Port)))).Get()
+
 }

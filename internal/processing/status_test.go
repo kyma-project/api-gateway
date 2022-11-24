@@ -1,16 +1,15 @@
-package controllers
+package processing
 
 import (
-	"strings"
-
 	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
 	"github.com/kyma-incubator/api-gateway/internal/validation"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"strings"
 )
 
-var _ = Describe("Controller", func() {
-	Describe("generateValidationProblemStatus", func() {
+var _ = Describe("Status", func() {
+	Context("generateValidationStatus", func() {
 
 		f1 := validation.Failure{AttributePath: "name", Message: "is wrong"}
 		f2 := validation.Failure{AttributePath: "gateway", Message: "is bad"}
@@ -18,7 +17,7 @@ var _ = Describe("Controller", func() {
 		f4 := validation.Failure{AttributePath: "service.port", Message: "is too big"}
 		f5 := validation.Failure{AttributePath: "service.host", Message: "is invalid"}
 
-		It("should genereate status for single failure", func() {
+		It("should generate status for single failure", func() {
 			failures := []validation.Failure{f1}
 			st := generateValidationStatus(failures)
 
@@ -30,7 +29,7 @@ var _ = Describe("Controller", func() {
 			Expect(failureLines[0]).To(HaveSuffix("Attribute \"name\": is wrong"))
 		})
 
-		It("should genereate status for three failures", func() {
+		It("should generate status for three failures", func() {
 			failures := []validation.Failure{f1, f2, f3}
 			st := generateValidationStatus(failures)
 
@@ -44,7 +43,7 @@ var _ = Describe("Controller", func() {
 			Expect(failureLines[3]).To(Equal("Attribute \"service.name\": is too short"))
 		})
 
-		It("should genereate status for five failures", func() {
+		It("should generate status for five failures", func() {
 			failures := []validation.Failure{f1, f2, f3, f4, f5}
 			st := generateValidationStatus(failures)
 

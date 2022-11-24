@@ -22,15 +22,13 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/kyma-incubator/api-gateway/internal/helpers"
+	"github.com/kyma-incubator/api-gateway/internal/processing/ory"
+
 	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
 
-	"github.com/kyma-incubator/api-gateway/internal/helpers"
-	"github.com/kyma-incubator/api-gateway/internal/processing"
-	"github.com/kyma-incubator/api-gateway/internal/validation"
-
 	"github.com/go-logr/logr"
-	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
-	corev1 "k8s.io/api/core/v1"
+	"github.com/kyma-incubator/api-gateway/internal/processing"
 	apierrs "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -147,7 +145,8 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		}
 
 		//Nothing is yet processed: StatusSkipped
-		return r.setStatusForError(ctx, api, err, gatewayv1beta1.StatusSkipped)
+		status := processing.GetStatusForError(&r.Log, err, gatewayv1beta1.StatusSkipped)
+		return r.updateStatusOrRetry(ctx, apiRule, status)
 	}
 
 	configValidationFailures := validator.ValidateConfig(r.Config)
@@ -204,6 +203,11 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	}
 
 	return r.doneReconcile()
+}
+
+func getReconciliation(config processing.ReconciliationConfig) processing.ReconciliationCommand {
+	// This should be replaced by the feature flag handling to return the appropriate reconciliation.
+	return ory.NewOryReconciliation(config)
 }
 
 // SetupWithManager sets up the controller with the Manager.
@@ -286,39 +290,4 @@ func (r *APIRuleReconciler) updateStatus(ctx context.Context, api *gatewayv1beta
 		return nil, err
 	}
 	return api, nil
-}
-
-func generateErrorStatus(err error) *gatewayv1beta1.APIRuleResourceStatus {
-	return toStatus(gatewayv1beta1.StatusError, err.Error())
-}
-
-func generateValidationStatus(failures []validation.Failure) *gatewayv1beta1.APIRuleResourceStatus {
-	return toStatus(gatewayv1beta1.StatusError, generateValidationDescription(failures))
-}
-
-func toStatus(c gatewayv1beta1.StatusCode, desc string) *gatewayv1beta1.APIRuleResourceStatus {
-	return &gatewayv1beta1.APIRuleResourceStatus{
-		Code:        c,
-		Description: desc,
-	}
-}
-
-func generateValidationDescription(failures []validation.Failure) string {
-	var description string
-
-	if len(failures) == 1 {
-		description = "Validation error: "
-		description += fmt.Sprintf("Attribute \"%s\": %s", failures[0].AttributePath, failures[0].Message)
-	} else {
-		const maxEntries = 3
-		description = "Multiple validation errors: "
-		for i := 0; i < len(failures) && i < maxEntries; i++ {
-			description += fmt.Sprintf("\nAttribute \"%s\": %s", failures[i].AttributePath, failures[i].Message)
-		}
-		if len(failures) > maxEntries {
-			description += fmt.Sprintf("\n%d more error(s)...", len(failures)-maxEntries)
-		}
-	}
-
-	return description
 }
