@@ -13,6 +13,7 @@ import (
 // ReconciliationCommand provides the processors and validation required to reconcile the API rule.
 type ReconciliationCommand interface {
 	Validate(context.Context, client.Client, *gatewayv1beta1.APIRule) ([]validation.Failure, error)
+	// GetProcessors returns the processor relevant for the reconciliation of this command.
 	GetProcessors() []ReconciliationProcessor
 }
 

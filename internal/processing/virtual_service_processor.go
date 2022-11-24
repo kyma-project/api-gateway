@@ -17,7 +17,6 @@ type VirtualServiceCreator interface {
 	Create(api *gatewayv1beta1.APIRule) *networkingv1beta1.VirtualService
 }
 
-// EvaluateReconciliation returns the changes  for Virtual Service that needs to be applied to the cluster by comparing the desired with the actual state.
 func (r VirtualServiceProcessor) EvaluateReconciliation(ctx context.Context, client ctrlclient.Client, apiRule *gatewayv1beta1.APIRule) ([]*ObjectChange, error) {
 	desired := r.getDesiredState(apiRule)
 	actual, err := r.getActualState(ctx, client, apiRule)
