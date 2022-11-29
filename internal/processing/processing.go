@@ -4,24 +4,14 @@ import (
 	"context"
 	"fmt"
 
-	"istio.io/api/networking/v1beta1"
-
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/go-logr/logr"
-	gatewayv1alpha1 "github.com/kyma-incubator/api-gateway/api/v1alpha1"
 	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
 	"github.com/kyma-incubator/api-gateway/internal/helpers"
 	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	istiosecurityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
-)
-
-var (
-	//OwnerLabel .
-	OwnerLabel = fmt.Sprintf("%s.%s", "apirule", gatewayv1beta1.GroupVersion.String())
-	//OwnerLabelv1alpha1 .
-	OwnerLabelv1alpha1 = fmt.Sprintf("%s.%s", "apirule", gatewayv1alpha1.GroupVersion.String())
 )
 
 // Factory .
@@ -48,13 +38,6 @@ func NewFactory(client client.Client, logger logr.Logger, oathkeeperSvc string, 
 	}
 }
 
-// CorsConfig is an internal representation of v1alpha3.CorsPolicy object
-type CorsConfig struct {
-	AllowOrigins []*v1beta1.StringMatch
-	AllowMethods []string
-	AllowHeaders []string
-}
-
 // CalculateRequiredState returns required state of all objects related to given api
 func (f *Factory) CalculateRequiredState(api *gatewayv1beta1.APIRule, config *helpers.Config) *State {
 	var res State
@@ -64,7 +47,7 @@ func (f *Factory) CalculateRequiredState(api *gatewayv1beta1.APIRule, config *he
 	res.requestAuthentications = make(map[string]*istiosecurityv1beta1.RequestAuthentication)
 
 	for _, rule := range api.Spec.Rules {
-		if isSecured(rule) {
+		if IsSecured(rule) {
 			var ar *rulev1alpha1.Rule
 			var ap *istiosecurityv1beta1.AuthorizationPolicy
 			var ra *istiosecurityv1beta1.RequestAuthentication

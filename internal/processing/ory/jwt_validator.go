@@ -3,6 +3,7 @@ package ory
 import (
 	"encoding/json"
 	"fmt"
+
 	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
 	"github.com/kyma-incubator/api-gateway/internal/validation"
 )
