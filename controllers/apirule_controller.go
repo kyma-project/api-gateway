@@ -24,11 +24,12 @@ import (
 
 	"github.com/kyma-incubator/api-gateway/internal/helpers"
 	"github.com/kyma-incubator/api-gateway/internal/processing/ory"
-
-	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
+	"github.com/kyma-incubator/api-gateway/internal/validation"
 
 	"github.com/go-logr/logr"
+	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
 	"github.com/kyma-incubator/api-gateway/internal/processing"
+	corev1 "k8s.io/api/core/v1"
 	apierrs "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -132,16 +133,16 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 				failuresJson, _ := json.Marshal(configValidationFailures)
 				r.Log.Error(err, fmt.Sprintf(`Config validation failure {"controller": "Api", "failures": %s}`, string(failuresJson)))
 			}
-			return r.doneReconcile()
+			return doneReconcile()
 		}
 	}
 
-	api := &gatewayv1beta1.APIRule{}
-	err := r.Client.Get(ctx, req.NamespacedName, api)
+	apiRule := &gatewayv1beta1.APIRule{}
+	err := r.Client.Get(ctx, req.NamespacedName, apiRule)
 	if err != nil {
 		if apierrs.IsNotFound(err) {
 			//There is no APIRule. Nothing to process, dependent objects will be garbage-collected.
-			return r.doneReconcile()
+			return doneReconcile()
 		}
 
 		//Nothing is yet processed: StatusSkipped
@@ -152,57 +153,32 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	configValidationFailures := validator.ValidateConfig(r.Config)
 	if len(configValidationFailures) > 0 {
 		failuresJson, _ := json.Marshal(configValidationFailures)
-		r.Log.Error(err, fmt.Sprintf(`Config validation failure {"controller": "Api", "request": "%s/%s", "failures": %s}`, api.Namespace, api.Name, string(failuresJson)))
-		return r.setStatus(ctx, api, generateValidationStatus(configValidationFailures), gatewayv1beta1.StatusError)
+		r.Log.Error(err, fmt.Sprintf(`Config validation failure {"controller": "Api", "request": "%s/%s", "failures": %s}`, apiRule.Namespace, apiRule.Name, string(failuresJson)))
+		return r.updateStatusOrRetry(ctx, apiRule, generateValidationStatus(configValidationFailures), gatewayv1beta1.StatusError)
 	}
 
 	//Prevent reconciliation after status update. It should be solved by controller-runtime implementation but still isn't.
-	if api.Generation != api.Status.ObservedGeneration {
-		//1.1) Get the list of existing Virtual Services to validate host
-		var vsList networkingv1beta1.VirtualServiceList
-		if err := r.Client.List(ctx, &vsList); err != nil {
-			//Nothing is yet processed: StatusSkipped
-			return r.setStatusForError(ctx, api, err, gatewayv1beta1.StatusSkipped)
+	if apiRule.Generation != apiRule.Status.ObservedGeneration {
+
+		c := processing.ReconciliationConfig{
+			OathkeeperSvc:     r.OathkeeperSvc,
+			OathkeeperSvcPort: r.OathkeeperSvcPort,
+			CorsConfig:        r.CorsConfig,
+			AdditionalLabels:  r.GeneratedObjectsLabels,
+			DefaultDomainName: r.DefaultDomainName,
+			ServiceBlockList:  r.ServiceBlockList,
+			DomainAllowList:   r.DomainAllowList,
+			HostBlockList:     r.HostBlockList,
 		}
 
-		//1.2) Validate input including host
-		validationFailures := validator.Validate(api, vsList, r.Config)
-		if len(validationFailures) > 0 {
-			failuresJson, _ := json.Marshal(validationFailures)
-			r.Log.Info(fmt.Sprintf(`Validation failure {"controller": "Api", "request": "%s/%s", "failures": %s}`, api.Namespace, api.Name, string(failuresJson)))
-			return r.setStatus(ctx, api, generateValidationStatus(validationFailures), gatewayv1beta1.StatusSkipped)
-		}
+		cmd := getReconciliation(c)
 
-		//2) Compute list of required objects (the set of objects required to satisfy our contract on apiRule.Spec, not yet applied)
-		factory := processing.NewFactory(r.Client, r.Log, r.OathkeeperSvc, r.OathkeeperSvcPort, r.CorsConfig, r.GeneratedObjectsLabels, r.DefaultDomainName)
-		requiredObjects := factory.CalculateRequiredState(api, r.Config)
+		status := processing.Reconcile(ctx, r.Client, &r.Log, cmd, apiRule)
 
-		//3.1 Fetch all existing objects related to _this_ apiRule from the cluster (VS, Rules)
-		actualObjects, err := factory.GetActualState(ctx, api, r.Config)
-		if err != nil {
-			return r.setStatusForError(ctx, api, err, gatewayv1beta1.StatusSkipped)
-		}
-
-		//3.2 Compute patch object
-		patch := factory.CalculateDiff(requiredObjects, actualObjects, r.Config)
-
-		//3.3 Apply changes to the cluster
-		err = factory.ApplyDiff(ctx, patch, r.Config)
-		if err != nil {
-			//We don't know exactly which object(s) are not updated properly.
-			//The safest approach is to assume nothing is correct and just use `StatusError`.
-			return r.setStatusForError(ctx, api, err, gatewayv1beta1.StatusError)
-		}
-
-		//4) Update status of CR
-		APIStatus := &gatewayv1beta1.APIRuleResourceStatus{
-			Code: gatewayv1beta1.StatusOK,
-		}
-
-		return r.setStatus(ctx, api, APIStatus, gatewayv1beta1.StatusOK)
+		return r.updateStatusOrRetry(ctx, apiRule, status)
 	}
 
-	return r.doneReconcile()
+	return doneReconcile()
 }
 
 func getReconciliation(config processing.ReconciliationConfig) processing.ReconciliationCommand {
@@ -219,56 +195,17 @@ func (r *APIRuleReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
-// Sets status of APIRule. Accepts an auxilary status code that is used to report VirtualService, AccessRule, RequestAuthentication and AuthorizationPolicy statuses.
-func (r *APIRuleReconciler) setStatus(ctx context.Context, api *gatewayv1beta1.APIRule, apiStatus *gatewayv1beta1.APIRuleResourceStatus, auxStatusCode gatewayv1beta1.StatusCode) (ctrl.Result, error) {
-	virtualServiceStatus := &gatewayv1beta1.APIRuleResourceStatus{
-		Code: auxStatusCode,
-	}
-	accessRuleStatus := &gatewayv1beta1.APIRuleResourceStatus{
-		Code: auxStatusCode,
-	}
-	reqAuthStatus := &gatewayv1beta1.APIRuleResourceStatus{
-		Code: auxStatusCode,
-	}
-	authPolicyStatus := &gatewayv1beta1.APIRuleResourceStatus{
-		Code: auxStatusCode,
-	}
-
-	return r.updateStatusOrRetry(ctx, api, apiStatus, virtualServiceStatus, accessRuleStatus, reqAuthStatus, authPolicyStatus)
-}
-
-// Sets status of APIRule in error condition. Accepts an auxilary status code that is used to report VirtualService, AccessRule, RequestAuthentication and AuthorizationPolicy statuses.
-func (r *APIRuleReconciler) setStatusForError(ctx context.Context, api *gatewayv1beta1.APIRule, err error, auxStatusCode gatewayv1beta1.StatusCode) (ctrl.Result, error) {
-	r.Log.Error(err, "Error during reconciliation")
-
-	virtualServiceStatus := &gatewayv1beta1.APIRuleResourceStatus{
-		Code: auxStatusCode,
-	}
-	accessRuleStatus := &gatewayv1beta1.APIRuleResourceStatus{
-		Code: auxStatusCode,
-	}
-	reqAuthStatus := &gatewayv1beta1.APIRuleResourceStatus{
-		Code: auxStatusCode,
-	}
-	authPolicyStatus := &gatewayv1beta1.APIRuleResourceStatus{
-		Code: auxStatusCode,
-	}
-
-	return r.updateStatusOrRetry(ctx, api, generateErrorStatus(err), virtualServiceStatus, accessRuleStatus, reqAuthStatus, authPolicyStatus)
-}
-
 // Updates api status. If there was an error during update, returns the error so that entire reconcile loop is retried. If there is no error, returns a "reconcile success" value.
-func (r *APIRuleReconciler) updateStatusOrRetry(ctx context.Context, api *gatewayv1beta1.APIRule, apiStatus, virtualServiceStatus, accessRuleStatus, reqAuthStatus, authPolicyStatus *gatewayv1beta1.APIRuleResourceStatus) (ctrl.Result, error) {
-	_, updateStatusErr := r.updateStatus(ctx, api, apiStatus, virtualServiceStatus, accessRuleStatus, reqAuthStatus, authPolicyStatus)
+func (r *APIRuleReconciler) updateStatusOrRetry(ctx context.Context, api *gatewayv1beta1.APIRule, status processing.ReconciliationStatus) (ctrl.Result, error) {
+	_, updateStatusErr := r.updateStatus(ctx, api, status)
 	if updateStatusErr != nil {
 		return retryReconcile(updateStatusErr) //controller retries to set the correct status eventually.
 	}
 	//Fail fast: If status is updated, users are informed about the problem. We don't need to reconcile again.
-	return r.doneReconcile()
+	return doneReconcile()
 }
 
-func (r *APIRuleReconciler) doneReconcile() (ctrl.Result, error) {
-	r.Log.Info("Ending reconcilation")
+func doneReconcile() (ctrl.Result, error) {
 	return ctrl.Result{}, nil
 }
 
@@ -276,14 +213,14 @@ func retryReconcile(err error) (ctrl.Result, error) {
 	return reconcile.Result{Requeue: true}, err
 }
 
-func (r *APIRuleReconciler) updateStatus(ctx context.Context, api *gatewayv1beta1.APIRule, APIStatus, virtualServiceStatus, accessRuleStatus, reqAuthStatus, authPolicyStatus *gatewayv1beta1.APIRuleResourceStatus) (*gatewayv1beta1.APIRule, error) {
+func (r *APIRuleReconciler) updateStatus(ctx context.Context, api *gatewayv1beta1.APIRule, status processing.ReconciliationStatus) (*gatewayv1beta1.APIRule, error) {
 	api.Status.ObservedGeneration = api.Generation
 	api.Status.LastProcessedTime = &v1.Time{Time: time.Now()}
-	api.Status.APIRuleStatus = APIStatus
-	api.Status.VirtualServiceStatus = virtualServiceStatus
-	api.Status.AccessRuleStatus = accessRuleStatus
-	api.Status.RequestAuthenticationStatus = reqAuthStatus
-	api.Status.AuthorizationPolicyStatus = authPolicyStatus
+	api.Status.APIRuleStatus = status.ApiRuleStatus
+	api.Status.VirtualServiceStatus = status.VirtualServiceStatus
+	api.Status.AccessRuleStatus = status.AccessRuleStatus
+	api.Status.RequestAuthenticationStatus = status.RequestAuthenticationStatus
+	api.Status.AuthorizationPolicyStatus = status.AuthorizationPolicyStatus
 
 	err := r.Client.Status().Update(ctx, api)
 	if err != nil {

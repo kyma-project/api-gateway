@@ -16,7 +16,7 @@ type jwtAccStrValidator struct{}
 func (j *jwtAccStrValidator) Validate(attrPath string, handler *gatewayv1beta1.Handler, config *helpers.Config) []Failure {
 	var problems []Failure
 
-	if !configNotEmpty(handler.Config) {
+	if !ConfigNotEmpty(handler.Config) {
 		problems = append(problems, Failure{AttributePath: attrPath + ".config", Message: "supplied config cannot be empty"})
 		return problems
 	}
@@ -43,12 +43,12 @@ func (j *jwtAccStrValidator) validateOryConfig(attrPath string, handler *gateway
 
 	if len(template.TrustedIssuers) > 0 {
 		for i := 0; i < len(template.TrustedIssuers); i++ {
-			invalid, err := isInvalidURL(template.TrustedIssuers[i])
+			invalid, err := IsInvalidURL(template.TrustedIssuers[i])
 			if invalid {
 				attrPath := fmt.Sprintf("%s[%d]", attrPath+".config.trusted_issuers", i)
 				problems = append(problems, Failure{AttributePath: attrPath, Message: fmt.Sprintf("value is empty or not a valid url err=%s", err)})
 			}
-			unsecured, err := isUnsecuredURL(template.TrustedIssuers[i])
+			unsecured, err := IsUnsecuredURL(template.TrustedIssuers[i])
 			if unsecured {
 				attrPath := fmt.Sprintf("%s[%d]", attrPath+".config.trusted_issuers", i)
 				problems = append(problems, Failure{AttributePath: attrPath, Message: fmt.Sprintf("value is not a secured url err=%s", err)})
@@ -58,12 +58,12 @@ func (j *jwtAccStrValidator) validateOryConfig(attrPath string, handler *gateway
 
 	if len(template.JWKSUrls) > 0 {
 		for i := 0; i < len(template.JWKSUrls); i++ {
-			invalid, err := isInvalidURL(template.JWKSUrls[i])
+			invalid, err := IsInvalidURL(template.JWKSUrls[i])
 			if invalid {
 				attrPath := fmt.Sprintf("%s[%d]", attrPath+".config.jwks_urls", i)
 				problems = append(problems, Failure{AttributePath: attrPath, Message: fmt.Sprintf("value is empty or not a valid url err=%s", err)})
 			}
-			unsecured, err := isUnsecuredURL(template.JWKSUrls[i])
+			unsecured, err := IsUnsecuredURL(template.JWKSUrls[i])
 			if unsecured {
 				attrPath := fmt.Sprintf("%s[%d]", attrPath+".config.jwks_urls", i)
 				problems = append(problems, Failure{AttributePath: attrPath, Message: fmt.Sprintf("value is not a secured url err=%s", err)})
@@ -85,22 +85,22 @@ func (j *jwtAccStrValidator) validateIstioConfig(attrPath string, handler *gatew
 	}
 
 	for i, auth := range template.Authentications {
-		invalidIssuer, err := isInvalidURL(auth.Issuer)
+		invalidIssuer, err := IsInvalidURL(auth.Issuer)
 		if invalidIssuer {
 			attrPath := fmt.Sprintf("%s%s[%d]%s", attrPath, ".config.authentications", i, ".issuer")
 			problems = append(problems, Failure{AttributePath: attrPath, Message: fmt.Sprintf("value is empty or not a valid url err=%s", err)})
 		}
-		unsecuredIssuer, err := isUnsecuredURL(auth.Issuer)
+		unsecuredIssuer, err := IsUnsecuredURL(auth.Issuer)
 		if unsecuredIssuer {
 			attrPath := fmt.Sprintf("%s%s[%d]%s", attrPath, ".config.authentications", i, ".issuer")
 			problems = append(problems, Failure{AttributePath: attrPath, Message: fmt.Sprintf("value is not a secured url err=%s", err)})
 		}
-		invalidJwksUri, err := isInvalidURL(auth.JwksUri)
+		invalidJwksUri, err := IsInvalidURL(auth.JwksUri)
 		if invalidJwksUri {
 			attrPath := fmt.Sprintf("%s%s[%d]%s", attrPath, ".config.authentications", i, ".jwksUri")
 			problems = append(problems, Failure{AttributePath: attrPath, Message: fmt.Sprintf("value is empty or not a valid url err=%s", err)})
 		}
-		unsecuredJwksUri, err := isUnsecuredURL(auth.JwksUri)
+		unsecuredJwksUri, err := IsUnsecuredURL(auth.JwksUri)
 		if unsecuredJwksUri {
 			attrPath := fmt.Sprintf("%s%s[%d]%s", attrPath, ".config.authentications", i, ".jwksUri")
 			problems = append(problems, Failure{AttributePath: attrPath, Message: fmt.Sprintf("value is not a secured url err=%s", err)})
