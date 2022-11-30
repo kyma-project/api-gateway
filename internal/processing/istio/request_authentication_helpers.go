@@ -1,28 +1,28 @@
-package processing
+package istio
 
 import (
 	"fmt"
-	"istio.io/api/security/v1beta1"
 
 	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
 	"github.com/kyma-incubator/api-gateway/internal/builders"
+	"istio.io/api/security/v1beta1"
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 )
 
-func modifyAuthorizationPolicy(existing, required *securityv1beta1.AuthorizationPolicy) {
+func modifyRequestAuthentication(existing, required *securityv1beta1.RequestAuthentication) {
 	existing.Spec = *required.Spec.DeepCopy()
 }
 
-func generateAuthorizationPolicy(api *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rule, additionalLabels map[string]string) *securityv1beta1.AuthorizationPolicy {
+func generateRequestAuthentication(api *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rule, additionalLabels map[string]string) *securityv1beta1.RequestAuthentication {
 	namePrefix := fmt.Sprintf("%s-", api.ObjectMeta.Name)
 	namespace := api.ObjectMeta.Namespace
-	ownerRef := generateOwnerRef(api)
+	ownerRef := GenerateOwnerRef(api)
 
-	arBuilder := builders.AuthorizationPolicyBuilder().
+	arBuilder := builders.RequestAuthenticationBuilder().
 		GenerateName(namePrefix).
 		Namespace(namespace).
 		Owner(builders.OwnerReference().From(&ownerRef)).
-		Spec(builders.AuthorizationPolicySpecBuilder().From(generateAuthorizationPolicySpec(api, rule))).
+		Spec(builders.RequestAuthenticationSpecBuilder().From(generateRequestAuthenticationSpec(api, rule))).
 		Label(OwnerLabel, fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace)).
 		Label(OwnerLabelv1alpha1, fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace))
 
@@ -33,7 +33,8 @@ func generateAuthorizationPolicy(api *gatewayv1beta1.APIRule, rule gatewayv1beta
 	return arBuilder.Get()
 }
 
-func generateAuthorizationPolicySpec(api *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rule) *v1beta1.AuthorizationPolicy {
+func generateRequestAuthenticationSpec(api *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rule) *v1beta1.RequestAuthentication {
+
 	var serviceName string
 	if rule.Service != nil {
 		serviceName = *rule.Service.Name
@@ -41,12 +42,9 @@ func generateAuthorizationPolicySpec(api *gatewayv1beta1.APIRule, rule gatewayv1
 		serviceName = *api.Spec.Service.Name
 	}
 
-	authorizationPolicySpec := builders.AuthorizationPolicySpecBuilder().
+	requestAuthenticationSpec := builders.RequestAuthenticationSpecBuilder().
 		Selector(builders.SelectorBuilder().MatchLabels("app", serviceName)).
-		Rule(builders.RuleBuilder().
-			RuleFrom(builders.RuleFromBuilder().Source()).
-			RuleTo(builders.RuleToBuilder().
-				Operation(builders.OperationBuilder().Methods(rule.Methods).Path(rule.Path))))
+		JwtRules(builders.JwtRuleBuilder().From(rule.AccessStrategies))
 
-	return authorizationPolicySpec.Get()
+	return requestAuthenticationSpec.Get()
 }

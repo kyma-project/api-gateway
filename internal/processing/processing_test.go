@@ -3,7 +3,6 @@ package processing
 import (
 	"context"
 	"fmt"
-	"testing"
 
 	"istio.io/api/networking/v1beta1"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
@@ -20,7 +19,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
-	"sigs.k8s.io/controller-runtime/pkg/envtest/printer"
 )
 
 const (
@@ -67,12 +65,6 @@ var (
 
 	testAdditionalLabels = map[string]string{testLabelKey: testLabelValue}
 )
-
-func TestProcessing(t *testing.T) {
-	RegisterFailHandler(Fail)
-	RunSpecsWithDefaultAndCustomReporters(t, "Processing Suite",
-		[]Reporter{printer.NewProwReporter("api-gateway-processing-testsuite")})
-}
 
 var _ = Describe("Factory", func() {
 	Describe("CalculateRequiredState", func() {
