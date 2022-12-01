@@ -4,10 +4,11 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"k8s.io/apimachinery/pkg/runtime"
 	"net/url"
 	"regexp"
 	"strings"
+
+	"k8s.io/apimachinery/pkg/runtime"
 
 	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
 )

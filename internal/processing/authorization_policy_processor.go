@@ -21,7 +21,7 @@ type AuthorizationPolicyCreator interface {
 	Create(api *gatewayv1beta1.APIRule) map[string]*securityv1beta1.AuthorizationPolicy
 }
 
-func (r AuthorizationPolicyProcessor) EvaluateReconciliation(ctx context.Context, client ctrlclient.Client, apiRule *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rule) ([]*ObjectChange, error) {
+func (r AuthorizationPolicyProcessor) EvaluateReconciliation(ctx context.Context, client ctrlclient.Client, apiRule *gatewayv1beta1.APIRule) ([]*ObjectChange, error) {
 	desired := r.getDesiredState(apiRule)
 	actual, err := r.getActualState(ctx, client, apiRule)
 	if err != nil {
@@ -49,7 +49,7 @@ func (r AuthorizationPolicyProcessor) getActualState(ctx context.Context, client
 	pathDuplicates := HasPathDuplicates(api.Spec.Rules)
 	for i := range apList.Items {
 		obj := apList.Items[i]
-		authorizationPolicies[getAuthorizationPolicyKey(pathDuplicates, obj)] = obj
+		authorizationPolicies[GetAuthorizationPolicyKey(pathDuplicates, obj)] = obj
 	}
 
 	return authorizationPolicies, nil
@@ -84,22 +84,22 @@ func (r AuthorizationPolicyProcessor) getObjectChanges(desiredAps map[string]*se
 	return apChangesToApply
 }
 
-func getAuthorizationPolicyKey(hasPathDuplicates bool, ap *istiosecurityv1beta1.AuthorizationPolicy) string {
+func GetAuthorizationPolicyKey(hasPathDuplicates bool, ap *istiosecurityv1beta1.AuthorizationPolicy) string {
 	key := ""
 	if ap.Spec.Rules != nil && len(ap.Spec.Rules) > 0 && ap.Spec.Rules[0].To != nil && len(ap.Spec.Rules[0].To) > 0 {
 		if hasPathDuplicates {
 			key = fmt.Sprintf("%s:%s",
-				sliceToString(ap.Spec.Rules[0].To[0].Operation.Paths),
-				sliceToString(ap.Spec.Rules[0].To[0].Operation.Methods))
+				SliceToString(ap.Spec.Rules[0].To[0].Operation.Paths),
+				SliceToString(ap.Spec.Rules[0].To[0].Operation.Methods))
 		} else {
-			key = sliceToString(ap.Spec.Rules[0].To[0].Operation.Paths)
+			key = SliceToString(ap.Spec.Rules[0].To[0].Operation.Paths)
 		}
 	}
 
 	return key
 }
 
-func sliceToString(ss []string) (s string) {
+func SliceToString(ss []string) (s string) {
 	for _, el := range ss {
 		s += el
 	}

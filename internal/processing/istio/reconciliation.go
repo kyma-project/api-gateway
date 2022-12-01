@@ -21,7 +21,6 @@ func NewIstioReconciliation(config processing.ReconciliationConfig) Reconciliati
 	raProcessor := NewRequestAuthenticationProcessor(config)
 
 	return Reconciliation{
-		// Add missing processors for AuthorizationPolicy and RequestAuthentication
 		processors: []processing.ReconciliationProcessor{vsProcessor, raProcessor, apProcessor},
 		config:     config,
 	}

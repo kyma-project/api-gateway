@@ -20,7 +20,7 @@ type RequestAuthenticationCreator interface {
 	Create(api *gatewayv1beta1.APIRule) map[string]*istiosecurityv1beta1.RequestAuthentication
 }
 
-func (r RequestAuthenticationProcessor) EvaluateReconciliation(ctx context.Context, client ctrlclient.Client, apiRule *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rule) ([]*ObjectChange, error) {
+func (r RequestAuthenticationProcessor) EvaluateReconciliation(ctx context.Context, client ctrlclient.Client, apiRule *gatewayv1beta1.APIRule) ([]*ObjectChange, error) {
 	desired := r.getDesiredState(apiRule)
 	actual, err := r.getActualState(ctx, client, apiRule)
 	if err != nil {
@@ -48,7 +48,7 @@ func (r RequestAuthenticationProcessor) getActualState(ctx context.Context, clie
 
 	for i := range raList.Items {
 		obj := raList.Items[i]
-		requestAuthentications[getRequestAuthenticationKey(obj)] = obj
+		requestAuthentications[GetRequestAuthenticationKey(obj)] = obj
 	}
 
 	return requestAuthentications, nil
@@ -83,7 +83,7 @@ func (r RequestAuthenticationProcessor) getObjectChanges(desiredRas map[string]*
 	return raChangesToApply
 }
 
-func getRequestAuthenticationKey(ra *istiosecurityv1beta1.RequestAuthentication) string {
+func GetRequestAuthenticationKey(ra *istiosecurityv1beta1.RequestAuthentication) string {
 	key := ""
 	for _, k := range ra.Spec.JwtRules {
 		key += fmt.Sprintf("%s:%s", k.Issuer, k.JwksUri)

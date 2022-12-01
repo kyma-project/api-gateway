@@ -14,30 +14,34 @@ import (
 func NewAuthorizationPolicyProcessor(config processing.ReconciliationConfig) processing.AuthorizationPolicyProcessor {
 	return processing.AuthorizationPolicyProcessor{
 		Creator: authorizationPolicyCreator{
-			oathkeeperSvc:     config.OathkeeperSvc,
-			oathkeeperSvcPort: config.OathkeeperSvcPort,
-			corsConfig:        config.CorsConfig,
-			additionalLabels:  config.AdditionalLabels,
-			defaultDomainName: config.DefaultDomainName,
+			additionalLabels: config.AdditionalLabels,
 		},
 	}
 }
 
 type authorizationPolicyCreator struct {
-	oathkeeperSvc     string
-	oathkeeperSvcPort uint32
-	corsConfig        *processing.CorsConfig
-	defaultDomainName string
-	additionalLabels  map[string]string
+	additionalLabels map[string]string
 }
 
 // Create returns the Virtual Service using the configuration of the APIRule.
 func (r authorizationPolicyCreator) Create(api *gatewayv1beta1.APIRule) map[string]*securityv1beta1.AuthorizationPolicy {
+	pathDuplicates := processing.HasPathDuplicates(api.Spec.Rules)
+	authorizationPolicies := make(map[string]*securityv1beta1.AuthorizationPolicy)
+	for _, rule := range api.Spec.Rules {
+		if processing.IsSecured(rule) {
+			ar := generateAuthorizationPolicy(api, rule, r.additionalLabels)
+			authorizationPolicies[processing.GetAuthorizationPolicyKey(pathDuplicates, ar)] = ar
+		}
+	}
+	return authorizationPolicies
+}
+
+func generateAuthorizationPolicy(api *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rule, additionalLabels map[string]string) *securityv1beta1.AuthorizationPolicy {
 	namePrefix := fmt.Sprintf("%s-", api.ObjectMeta.Name)
 	namespace := api.ObjectMeta.Namespace
 	ownerRef := processing.GenerateOwnerRef(api)
 
-	arBuilder := builders.AuthorizationPolicyBuilder().
+	apBuilder := builders.AuthorizationPolicyBuilder().
 		GenerateName(namePrefix).
 		Namespace(namespace).
 		Owner(builders.OwnerReference().From(&ownerRef)).
@@ -45,11 +49,11 @@ func (r authorizationPolicyCreator) Create(api *gatewayv1beta1.APIRule) map[stri
 		Label(processing.OwnerLabel, fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace)).
 		Label(processing.OwnerLabelv1alpha1, fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace))
 
-	for k, v := range r.additionalLabels {
-		arBuilder.Label(k, v)
+	for k, v := range additionalLabels {
+		apBuilder.Label(k, v)
 	}
 
-	return arBuilder.Get()
+	return apBuilder.Get()
 }
 
 func generateAuthorizationPolicySpec(api *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rule) *v1beta1.AuthorizationPolicy {

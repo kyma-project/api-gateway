@@ -2,7 +2,9 @@ package ory
 
 import (
 	"encoding/json"
+
 	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
+	"github.com/kyma-incubator/api-gateway/internal/types/ory"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -102,12 +104,12 @@ var _ = Describe("JWT Validator", func() {
 
 func emptyConfig() *runtime.RawExtension {
 	return getRawConfig(
-		&gatewayv1beta1.JWTAccStrConfig{})
+		&ory.JWTAccStrConfig{})
 }
 
 func simpleJWTConfig(trustedIssuers ...string) *runtime.RawExtension {
 	return getRawConfig(
-		&gatewayv1beta1.JWTAccStrConfig{
+		&ory.JWTAccStrConfig{
 			JWKSUrls:       trustedIssuers,
 			TrustedIssuers: trustedIssuers,
 			RequiredScopes: []string{"atgo"},
@@ -116,14 +118,14 @@ func simpleJWTConfig(trustedIssuers ...string) *runtime.RawExtension {
 
 func testURLJWTConfig(JWKSUrls string, trustedIssuers string) *runtime.RawExtension {
 	return getRawConfig(
-		&gatewayv1beta1.JWTAccStrConfig{
+		&ory.JWTAccStrConfig{
 			JWKSUrls:       []string{JWKSUrls},
 			TrustedIssuers: []string{trustedIssuers},
 			RequiredScopes: []string{"atgo"},
 		})
 }
 
-func getRawConfig(config *gatewayv1beta1.JWTAccStrConfig) *runtime.RawExtension {
+func getRawConfig(config *ory.JWTAccStrConfig) *runtime.RawExtension {
 	bytes, err := json.Marshal(config)
 	Expect(err).To(BeNil())
 	return &runtime.RawExtension{
