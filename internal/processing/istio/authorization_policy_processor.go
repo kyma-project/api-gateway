@@ -32,7 +32,7 @@ type authorizationPolicyCreator struct {
 }
 
 // Create returns the Virtual Service using the configuration of the APIRule.
-func (r authorizationPolicyCreator) Create(api *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rule) *securityv1beta1.AuthorizationPolicy {
+func (r authorizationPolicyCreator) Create(api *gatewayv1beta1.APIRule) map[string]*securityv1beta1.AuthorizationPolicy {
 	namePrefix := fmt.Sprintf("%s-", api.ObjectMeta.Name)
 	namespace := api.ObjectMeta.Namespace
 	ownerRef := processing.GenerateOwnerRef(api)

@@ -2,6 +2,7 @@ package processing
 
 import (
 	"context"
+	"fmt"
 
 	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
 	istiosecurityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
@@ -16,11 +17,11 @@ type RequestAuthenticationProcessor struct {
 // RequestAuthenticationCreator provides the creation of Request Authentications using the configuration in the given APIRule.
 // The key of the map is expected to be unique and comparable with the
 type RequestAuthenticationCreator interface {
-	Create(api *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rule) *istiosecurityv1beta1.RequestAuthentication
+	Create(api *gatewayv1beta1.APIRule) map[string]*istiosecurityv1beta1.RequestAuthentication
 }
 
 func (r RequestAuthenticationProcessor) EvaluateReconciliation(ctx context.Context, client ctrlclient.Client, apiRule *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rule) ([]*ObjectChange, error) {
-	desired := r.getDesiredState(apiRule, rule)
+	desired := r.getDesiredState(apiRule)
 	actual, err := r.getActualState(ctx, client, apiRule)
 	if err != nil {
 		return make([]*ObjectChange, 0), err
@@ -28,14 +29,14 @@ func (r RequestAuthenticationProcessor) EvaluateReconciliation(ctx context.Conte
 
 	changes := r.getObjectChanges(desired, actual)
 
-	return []*ObjectChange{changes}, nil
+	return changes, nil
 }
 
-func (r RequestAuthenticationProcessor) getDesiredState(api *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rule) *istiosecurityv1beta1.RequestAuthentication {
-	return r.Creator.Create(api, rule)
+func (r RequestAuthenticationProcessor) getDesiredState(api *gatewayv1beta1.APIRule) map[string]*istiosecurityv1beta1.RequestAuthentication {
+	return r.Creator.Create(api)
 }
 
-func (r RequestAuthenticationProcessor) getActualState(ctx context.Context, client ctrlclient.Client, api *gatewayv1beta1.APIRule) (*istiosecurityv1beta1.RequestAuthentication, error) {
+func (r RequestAuthenticationProcessor) getActualState(ctx context.Context, client ctrlclient.Client, api *gatewayv1beta1.APIRule) (map[string]*istiosecurityv1beta1.RequestAuthentication, error) {
 	labels := GetOwnerLabels(api)
 
 	var raList istiosecurityv1beta1.RequestAuthenticationList
@@ -43,18 +44,49 @@ func (r RequestAuthenticationProcessor) getActualState(ctx context.Context, clie
 		return nil, err
 	}
 
-	if len(raList.Items) >= 1 {
-		return raList.Items[0], nil
-	} else {
-		return nil, nil
+	requestAuthentications := make(map[string]*istiosecurityv1beta1.RequestAuthentication)
+
+	for i := range raList.Items {
+		obj := raList.Items[i]
+		requestAuthentications[getRequestAuthenticationKey(obj)] = obj
 	}
+
+	return requestAuthentications, nil
 }
 
-func (r RequestAuthenticationProcessor) getObjectChanges(desiredRa *istiosecurityv1beta1.RequestAuthentication, actualRa *istiosecurityv1beta1.RequestAuthentication) *ObjectChange {
-	if actualRa != nil {
-		actualRa.Spec = *desiredRa.Spec.DeepCopy()
-		return NewObjectUpdateAction(actualRa)
-	} else {
-		return NewObjectCreateAction(desiredRa)
+func (r RequestAuthenticationProcessor) getObjectChanges(desiredRas map[string]*istiosecurityv1beta1.RequestAuthentication, actualRas map[string]*istiosecurityv1beta1.RequestAuthentication) []*ObjectChange {
+	raChanges := make(map[string]*ObjectChange)
+
+	for path, rule := range desiredRas {
+
+		if actualRas[path] != nil {
+			actualRas[path].Spec = rule.Spec
+			raChanges[path] = NewObjectUpdateAction(actualRas[path])
+		} else {
+			raChanges[path] = NewObjectCreateAction(rule)
+		}
+
 	}
+
+	for path, rule := range actualRas {
+		if desiredRas[path] == nil {
+			raChanges[path] = NewObjectDeleteAction(rule)
+		}
+	}
+
+	raChangesToApply := make([]*ObjectChange, 0, len(raChanges))
+
+	for _, applyCommand := range raChanges {
+		raChangesToApply = append(raChangesToApply, applyCommand)
+	}
+
+	return raChangesToApply
+}
+
+func getRequestAuthenticationKey(ra *istiosecurityv1beta1.RequestAuthentication) string {
+	key := ""
+	for _, k := range ra.Spec.JwtRules {
+		key += fmt.Sprintf("%s:%s", k.Issuer, k.JwksUri)
+	}
+	return key
 }

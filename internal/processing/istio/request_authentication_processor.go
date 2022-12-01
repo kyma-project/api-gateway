@@ -32,7 +32,7 @@ type requestAuthenticationCreator struct {
 }
 
 // Create returns the Virtual Service using the configuration of the APIRule.
-func (r requestAuthenticationCreator) Create(api *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rule) *istiosecurityv1beta1.RequestAuthentication {
+func (r requestAuthenticationCreator) Create(api *gatewayv1beta1.APIRule) map[string]*istiosecurityv1beta1.RequestAuthentication {
 	namePrefix := fmt.Sprintf("%s-", api.ObjectMeta.Name)
 	namespace := api.ObjectMeta.Namespace
 	ownerRef := processing.GenerateOwnerRef(api)
