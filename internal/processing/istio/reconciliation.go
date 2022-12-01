@@ -2,6 +2,7 @@ package istio
 
 import (
 	"context"
+
 	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
 	"github.com/kyma-incubator/api-gateway/internal/processing"
 	"github.com/kyma-incubator/api-gateway/internal/validation"
@@ -16,10 +17,12 @@ type Reconciliation struct {
 
 func NewIstioReconciliation(config processing.ReconciliationConfig) Reconciliation {
 	vsProcessor := NewVirtualServiceProcessor(config)
+	apProcessor := NewAuthorizationPolicyProcessor(config)
+	raProcessor := NewRequestAuthenticationProcessor(config)
 
 	return Reconciliation{
 		// Add missing processors for AuthorizationPolicy and RequestAuthentication
-		processors: []processing.ReconciliationProcessor{vsProcessor},
+		processors: []processing.ReconciliationProcessor{vsProcessor, raProcessor, apProcessor},
 		config:     config,
 	}
 }
