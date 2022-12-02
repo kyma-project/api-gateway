@@ -12,6 +12,7 @@ import (
 	"testing"
 
 	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
+	"github.com/kyma-incubator/api-gateway/internal/helpers"
 	"github.com/kyma-incubator/api-gateway/internal/types/ory"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -36,6 +37,32 @@ var (
 	testDomainAllowlist = []string{"foo.bar", "bar.foo", "kyma.local"}
 	jwtValidatorMock    = &dummyAccStrValidator{}
 )
+
+var _ = Describe("ValidateConfig function", func() {
+
+	It("Should fail for missing config", func() {
+
+		//when
+		problems := (&APIRule{}).ValidateConfig(nil)
+
+		//then
+		Expect(problems).To(HaveLen(1))
+		Expect(problems[0].Message).To(Equal("Configuration is missing"))
+	})
+
+	It("Should fail for wrong config", func() {
+
+		//given
+		input := &helpers.Config{JWTHandler: "foo"}
+
+		//when
+		problems := (&APIRule{}).ValidateConfig(input)
+
+		//then
+		Expect(problems).To(HaveLen(1))
+		Expect(problems[0].Message).To(Equal("Unsupported JWT Handler: foo"))
+	})
+})
 
 var _ = Describe("Validate function", func() {
 
