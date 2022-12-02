@@ -127,7 +127,7 @@ func (r AuthorizationPolicyProcessor) getObjectChanges(desiredAps map[string]*se
 	for path, rule := range desiredAps {
 
 		if actualAps[path] != nil {
-			actualAps[path].Spec = rule.Spec
+			actualAps[path].Spec = *rule.Spec.DeepCopy()
 			apChanges[path] = processing.NewObjectUpdateAction(actualAps[path])
 		} else {
 			apChanges[path] = processing.NewObjectCreateAction(rule)

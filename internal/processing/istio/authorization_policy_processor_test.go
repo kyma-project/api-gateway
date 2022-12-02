@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
-	"github.com/kyma-incubator/api-gateway/internal/helpers"
 	. "github.com/kyma-incubator/api-gateway/internal/processing/internal/test"
 	"github.com/kyma-incubator/api-gateway/internal/processing/istio"
 	. "github.com/onsi/ginkgo"
@@ -22,7 +21,6 @@ const (
 )
 
 var (
-	config      = helpers.Config{JWTHandler: helpers.JWT_HANDLER_ORY}
 	apiMethods  = []string{"GET"}
 	serviceName = "example-service"
 )

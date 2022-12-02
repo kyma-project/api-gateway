@@ -124,7 +124,7 @@ func (r RequestAuthenticationProcessor) getObjectChanges(desiredRas map[string]*
 	for path, rule := range desiredRas {
 
 		if actualRas[path] != nil {
-			actualRas[path].Spec = rule.Spec
+			actualRas[path].Spec = *rule.Spec.DeepCopy()
 			raChanges[path] = processing.NewObjectUpdateAction(actualRas[path])
 		} else {
 			raChanges[path] = processing.NewObjectCreateAction(rule)
