@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+
 	"github.com/go-logr/logr"
 	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
 	"github.com/kyma-incubator/api-gateway/internal/validation"
@@ -35,7 +36,7 @@ func Reconcile(ctx context.Context, client client.Client, log *logr.Logger, cmd 
 	if len(validationFailures) > 0 {
 		failuresJson, _ := json.Marshal(validationFailures)
 		log.Info(fmt.Sprintf(`Validation failure {"controller": "Api", "request": "%s/%s", "failures": %s}`, apiRule.Namespace, apiRule.Name, string(failuresJson)))
-		return getFailedValidationStatus(validationFailures)
+		return GetFailedValidationStatus(validationFailures)
 	}
 
 	for _, processor := range cmd.GetProcessors() {

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	oryint "github.com/kyma-incubator/api-gateway/internal/types/ory"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/envtest/printer"
 
@@ -12,8 +13,6 @@ import (
 	"testing"
 
 	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
-	"github.com/kyma-incubator/api-gateway/internal/helpers"
-	oryint "github.com/kyma-incubator/api-gateway/internal/types/ory"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -35,35 +34,8 @@ const (
 
 var (
 	testDomainAllowlist = []string{"foo.bar", "bar.foo", "kyma.local"}
-	config              = helpers.Config{JWTHandler: helpers.JWT_HANDLER_ORY}
 	jwtValidatorMock    = &dummyAccStrValidator{}
 )
-
-var _ = Describe("ValidateConfig function", func() {
-
-	It("Should fail for missing config", func() {
-
-		//when
-		problems := (&APIRule{}).ValidateConfig(nil)
-
-		//then
-		Expect(problems).To(HaveLen(1))
-		Expect(problems[0].Message).To(Equal("Configuration is missing"))
-	})
-
-	It("Should fail for wrong config", func() {
-
-		//given
-		input := &helpers.Config{JWTHandler: "foo"}
-
-		//when
-		problems := (&APIRule{}).ValidateConfig(input)
-
-		//then
-		Expect(problems).To(HaveLen(1))
-		Expect(problems[0].Message).To(Equal("Unsupported JWT Handler: foo"))
-	})
-})
 
 var _ = Describe("Validate function", func() {
 
@@ -82,7 +54,7 @@ var _ = Describe("Validate function", func() {
 		//when
 		problems := (&APIRule{
 			DomainAllowList: testAllowList,
-		}).Validate(input, networkingv1beta1.VirtualServiceList{}, &config)
+		}).Validate(input, networkingv1beta1.VirtualServiceList{})
 
 		//then
 		Expect(problems).To(HaveLen(1))
@@ -120,7 +92,7 @@ var _ = Describe("Validate function", func() {
 			JwtValidator:     jwtValidatorMock,
 			ServiceBlockList: testBlockList,
 			DomainAllowList:  testDomainAllowlist,
-		}).Validate(input, networkingv1beta1.VirtualServiceList{}, &config)
+		}).Validate(input, networkingv1beta1.VirtualServiceList{})
 
 		//then
 		Expect(problems).To(HaveLen(1))
@@ -159,7 +131,7 @@ var _ = Describe("Validate function", func() {
 			JwtValidator:     jwtValidatorMock,
 			ServiceBlockList: testBlockList,
 			DomainAllowList:  testDomainAllowlist,
-		}).Validate(input, networkingv1beta1.VirtualServiceList{}, &config)
+		}).Validate(input, networkingv1beta1.VirtualServiceList{})
 
 		//then
 		Expect(problems).To(HaveLen(1))
@@ -193,7 +165,7 @@ var _ = Describe("Validate function", func() {
 			JwtValidator:     jwtValidatorMock,
 			ServiceBlockList: testBlockList,
 			DomainAllowList:  testDomainAllowlist,
-		}).Validate(input, networkingv1beta1.VirtualServiceList{}, &config)
+		}).Validate(input, networkingv1beta1.VirtualServiceList{})
 
 		//then
 		Expect(problems).To(HaveLen(1))
@@ -231,7 +203,7 @@ var _ = Describe("Validate function", func() {
 			DomainAllowList:   testDomainAllowlist,
 			HostBlockList:     testHostBlockList,
 			DefaultDomainName: testDefaultDomain,
-		}).Validate(input, networkingv1beta1.VirtualServiceList{}, &config)
+		}).Validate(input, networkingv1beta1.VirtualServiceList{})
 
 		//then
 		Expect(problems).To(HaveLen(1))
@@ -271,7 +243,7 @@ var _ = Describe("Validate function", func() {
 			DomainAllowList:   testDomainAllowlist,
 			HostBlockList:     testHostBlockList,
 			DefaultDomainName: testDefaultDomain,
-		}).Validate(input, networkingv1beta1.VirtualServiceList{}, &config)
+		}).Validate(input, networkingv1beta1.VirtualServiceList{})
 
 		//then
 		Expect(problems).To(HaveLen(0))
@@ -303,7 +275,7 @@ var _ = Describe("Validate function", func() {
 			JwtValidator:     jwtValidatorMock,
 			ServiceBlockList: testBlockList,
 			DomainAllowList:  []string{},
-		}).Validate(input, networkingv1beta1.VirtualServiceList{}, &config)
+		}).Validate(input, networkingv1beta1.VirtualServiceList{})
 
 		//then
 		Expect(problems).To(HaveLen(0))
@@ -335,7 +307,7 @@ var _ = Describe("Validate function", func() {
 			JwtValidator:     jwtValidatorMock,
 			ServiceBlockList: testBlockList,
 			DomainAllowList:  testDomainAllowlist,
-		}).Validate(input, networkingv1beta1.VirtualServiceList{}, &config)
+		}).Validate(input, networkingv1beta1.VirtualServiceList{})
 
 		//then
 		Expect(problems).To(HaveLen(1))
@@ -369,7 +341,7 @@ var _ = Describe("Validate function", func() {
 			JwtValidator:     jwtValidatorMock,
 			ServiceBlockList: testBlockList,
 			DomainAllowList:  testDomainAllowlist,
-		}).Validate(input, networkingv1beta1.VirtualServiceList{}, &config)
+		}).Validate(input, networkingv1beta1.VirtualServiceList{})
 
 		//then
 		Expect(problems).To(HaveLen(1))
@@ -404,7 +376,7 @@ var _ = Describe("Validate function", func() {
 			ServiceBlockList:  testBlockList,
 			DomainAllowList:   testDomainAllowlist,
 			DefaultDomainName: testDefaultDomain,
-		}).Validate(input, networkingv1beta1.VirtualServiceList{}, &config)
+		}).Validate(input, networkingv1beta1.VirtualServiceList{})
 
 		//then
 		Expect(problems).To(HaveLen(0))
@@ -436,7 +408,7 @@ var _ = Describe("Validate function", func() {
 			JwtValidator:     jwtValidatorMock,
 			ServiceBlockList: testBlockList,
 			DomainAllowList:  testDomainAllowlist,
-		}).Validate(input, networkingv1beta1.VirtualServiceList{}, &config)
+		}).Validate(input, networkingv1beta1.VirtualServiceList{})
 
 		//then
 		Expect(problems).To(HaveLen(1))
@@ -474,7 +446,7 @@ var _ = Describe("Validate function", func() {
 		problems := (&APIRule{
 			JwtValidator:    jwtValidatorMock,
 			DomainAllowList: testDomainAllowlist,
-		}).Validate(input, networkingv1beta1.VirtualServiceList{Items: []*networkingv1beta1.VirtualService{&existingVS}}, &config)
+		}).Validate(input, networkingv1beta1.VirtualServiceList{Items: []*networkingv1beta1.VirtualService{&existingVS}})
 
 		Expect(problems).To(HaveLen(1))
 		Expect(problems[0].AttributePath).To(Equal(".spec.host"))
@@ -511,7 +483,7 @@ var _ = Describe("Validate function", func() {
 		problems := (&APIRule{
 			JwtValidator:    jwtValidatorMock,
 			DomainAllowList: testDomainAllowlist,
-		}).Validate(input, networkingv1beta1.VirtualServiceList{Items: []*networkingv1beta1.VirtualService{&existingVS}}, &config)
+		}).Validate(input, networkingv1beta1.VirtualServiceList{Items: []*networkingv1beta1.VirtualService{&existingVS}})
 
 		Expect(problems).To(HaveLen(0))
 	})
@@ -534,7 +506,7 @@ var _ = Describe("Validate function", func() {
 		//when
 		problems := (&APIRule{
 			DomainAllowList: testDomainAllowlist,
-		}).Validate(input, networkingv1beta1.VirtualServiceList{}, &config)
+		}).Validate(input, networkingv1beta1.VirtualServiceList{})
 
 		//then
 		Expect(problems).To(HaveLen(1))
@@ -578,7 +550,7 @@ var _ = Describe("Validate function", func() {
 		problems := (&APIRule{
 			ServiceBlockList: testBlockList,
 			DomainAllowList:  testDomainAllowlist,
-		}).Validate(input, networkingv1beta1.VirtualServiceList{}, &config)
+		}).Validate(input, networkingv1beta1.VirtualServiceList{})
 
 		//then
 		Expect(problems).To(HaveLen(1))
@@ -623,7 +595,7 @@ var _ = Describe("Validate function", func() {
 		problems := (&APIRule{
 			ServiceBlockList: testBlockList,
 			DomainAllowList:  testDomainAllowlist,
-		}).Validate(input, networkingv1beta1.VirtualServiceList{}, &config)
+		}).Validate(input, networkingv1beta1.VirtualServiceList{})
 
 		//then
 		Expect(problems).To(HaveLen(1))
@@ -642,7 +614,6 @@ var _ = Describe("Validate function", func() {
 						Path: "/abc",
 						AccessStrategies: []*gatewayv1beta1.Authenticator{
 							toAuthenticator("noop", simpleJWTConfig()),
-							toAuthenticator("jwt", emptyJWTConfig()),
 						},
 					},
 					{
@@ -667,7 +638,7 @@ var _ = Describe("Validate function", func() {
 		//when
 		problems := (&APIRule{
 			DomainAllowList: testDomainAllowlist,
-		}).Validate(input, networkingv1beta1.VirtualServiceList{}, &config)
+		}).Validate(input, networkingv1beta1.VirtualServiceList{})
 
 		//then
 		Expect(problems).To(HaveLen(5))
@@ -687,7 +658,6 @@ var _ = Describe("Validate function", func() {
 		Expect(problems[4].Message).To(Equal("No accessStrategies defined"))
 
 	})
-
 	It("Should fail for the same path and method", func() {
 		//given
 		input := &gatewayv1beta1.APIRule{
@@ -715,14 +685,13 @@ var _ = Describe("Validate function", func() {
 		//when
 		problems := (&APIRule{
 			DomainAllowList: testDomainAllowlist,
-		}).Validate(input, networkingv1beta1.VirtualServiceList{}, &config)
+		}).Validate(input, networkingv1beta1.VirtualServiceList{})
 
 		//then
 		Expect(problems).To(HaveLen(1))
 		Expect(problems[0].AttributePath).To(Equal(".spec.rules"))
 		Expect(problems[0].Message).To(Equal("multiple rules defined for the same path and method"))
 	})
-
 	It("Should succeed for valid input", func() {
 		//given
 		occupiedHost := "occupied-host" + allowlistedDomain
@@ -774,7 +743,7 @@ var _ = Describe("Validate function", func() {
 		problems := (&APIRule{
 			JwtValidator:    jwtValidatorMock,
 			DomainAllowList: testDomainAllowlist,
-		}).Validate(input, networkingv1beta1.VirtualServiceList{Items: []*networkingv1beta1.VirtualService{&existingVS}}, &config)
+		}).Validate(input, networkingv1beta1.VirtualServiceList{Items: []*networkingv1beta1.VirtualService{&existingVS}})
 
 		//then
 		Expect(problems).To(HaveLen(0))
@@ -819,7 +788,7 @@ var _ = Describe("Validate function", func() {
 		problems := (&APIRule{
 			JwtValidator:    jwtValidatorMock,
 			DomainAllowList: testDomainAllowlist,
-		}).Validate(input, networkingv1beta1.VirtualServiceList{Items: []*networkingv1beta1.VirtualService{&existingVS}}, &config)
+		}).Validate(input, networkingv1beta1.VirtualServiceList{Items: []*networkingv1beta1.VirtualService{&existingVS}})
 
 		//then
 		Expect(problems).To(HaveLen(0))
@@ -835,7 +804,7 @@ var _ = Describe("Validator for", func() {
 			handler := &gatewayv1beta1.Handler{Name: "noop", Config: simpleJWTConfig("http://atgo.org")}
 
 			//when
-			problems := (&noConfigAccStrValidator{}).Validate("some.attribute", handler, &config)
+			problems := (&noConfigAccStrValidator{}).Validate("some.attribute", handler)
 
 			//then
 			Expect(problems).To(HaveLen(1))
@@ -848,7 +817,7 @@ var _ = Describe("Validator for", func() {
 			handler := &gatewayv1beta1.Handler{Name: "noop", Config: emptyConfig()}
 
 			//when
-			problems := (&noConfigAccStrValidator{}).Validate("some.attribute", handler, &config)
+			problems := (&noConfigAccStrValidator{}).Validate("some.attribute", handler)
 
 			//then
 			Expect(problems).To(HaveLen(0))
@@ -859,20 +828,16 @@ var _ = Describe("Validator for", func() {
 			handler := &gatewayv1beta1.Handler{Name: "noop", Config: nil}
 
 			//when
-			problems := (&noConfigAccStrValidator{}).Validate("some.attribute", handler, &config)
+			problems := (&noConfigAccStrValidator{}).Validate("some.attribute", handler)
 
 			//then
 			Expect(problems).To(HaveLen(0))
 		})
 	})
+
 })
 
 func emptyConfig() *runtime.RawExtension {
-	var emptyConfig struct{}
-	return getRawConfig(emptyConfig)
-}
-
-func emptyJWTConfig() *runtime.RawExtension {
 	return getRawConfig(
 		&oryint.JWTAccStrConfig{})
 }
@@ -886,7 +851,7 @@ func simpleJWTConfig(trustedIssuers ...string) *runtime.RawExtension {
 		})
 }
 
-func getRawConfig(config any) *runtime.RawExtension {
+func getRawConfig(config *oryint.JWTAccStrConfig) *runtime.RawExtension {
 	bytes, err := json.Marshal(config)
 	Expect(err).To(BeNil())
 	return &runtime.RawExtension{

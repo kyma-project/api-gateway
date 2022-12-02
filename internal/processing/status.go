@@ -59,7 +59,7 @@ func generateErrorStatus(err error) *gatewayv1beta1.APIRuleResourceStatus {
 	return toStatus(gatewayv1beta1.StatusError, err.Error())
 }
 
-func getFailedValidationStatus(failures []validation.Failure) ReconciliationStatus {
+func GetFailedValidationStatus(failures []validation.Failure) ReconciliationStatus {
 	apiRuleStatus := generateValidationStatus(failures)
 	return getStatus(apiRuleStatus, gatewayv1beta1.StatusSkipped)
 }

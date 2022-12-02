@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
-	istiosecurityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -84,7 +83,7 @@ func (r AuthorizationPolicyProcessor) getObjectChanges(desiredAps map[string]*se
 	return apChangesToApply
 }
 
-func GetAuthorizationPolicyKey(hasPathDuplicates bool, ap *istiosecurityv1beta1.AuthorizationPolicy) string {
+func GetAuthorizationPolicyKey(hasPathDuplicates bool, ap *securityv1beta1.AuthorizationPolicy) string {
 	key := ""
 	if ap.Spec.Rules != nil && len(ap.Spec.Rules) > 0 && ap.Spec.Rules[0].To != nil && len(ap.Spec.Rules[0].To) > 0 {
 		if hasPathDuplicates {

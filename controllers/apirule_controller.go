@@ -23,6 +23,7 @@ import (
 	"time"
 
 	"github.com/kyma-incubator/api-gateway/internal/helpers"
+	"github.com/kyma-incubator/api-gateway/internal/processing/istio"
 	"github.com/kyma-incubator/api-gateway/internal/processing/ory"
 	"github.com/kyma-incubator/api-gateway/internal/validation"
 
@@ -154,7 +155,7 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	if len(configValidationFailures) > 0 {
 		failuresJson, _ := json.Marshal(configValidationFailures)
 		r.Log.Error(err, fmt.Sprintf(`Config validation failure {"controller": "Api", "request": "%s/%s", "failures": %s}`, apiRule.Namespace, apiRule.Name, string(failuresJson)))
-		return r.updateStatusOrRetry(ctx, apiRule, generateValidationStatus(configValidationFailures), gatewayv1beta1.StatusError)
+		return r.updateStatusOrRetry(ctx, apiRule, processing.GetFailedValidationStatus(configValidationFailures))
 	}
 
 	//Prevent reconciliation after status update. It should be solved by controller-runtime implementation but still isn't.
@@ -171,7 +172,7 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 			HostBlockList:     r.HostBlockList,
 		}
 
-		cmd := getReconciliation(c)
+		cmd := r.getReconciliation(c)
 
 		status := processing.Reconcile(ctx, r.Client, &r.Log, cmd, apiRule)
 
@@ -181,9 +182,13 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	return doneReconcile()
 }
 
-func getReconciliation(config processing.ReconciliationConfig) processing.ReconciliationCommand {
+func (r *APIRuleReconciler) getReconciliation(config processing.ReconciliationConfig) processing.ReconciliationCommand {
 	// This should be replaced by the feature flag handling to return the appropriate reconciliation.
-	return ory.NewOryReconciliation(config)
+	if r.Config.JWTHandler == helpers.JWT_HANDLER_ORY {
+		return ory.NewOryReconciliation(config)
+	}
+
+	return istio.NewIstioReconciliation(config)
 }
 
 // SetupWithManager sets up the controller with the Manager.
