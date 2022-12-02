@@ -6,9 +6,9 @@ import (
 
 	"github.com/kyma-incubator/api-gateway/internal/helpers"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
-	"k8s.io/utils/strings/slices"
 
 	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
+	"k8s.io/utils/strings/slices"
 )
 
 // Validators for AccessStrategies
@@ -28,6 +28,30 @@ type APIRule struct {
 	DefaultDomainName string
 }
 
+// Failure carries validation failures for a single attribute of an object.
+type Failure struct {
+	AttributePath string
+	Message       string
+}
+
+// Validate performs APIRule validation
+func (v *APIRule) Validate(api *gatewayv1beta1.APIRule, vsList networkingv1beta1.VirtualServiceList) []Failure {
+	res := []Failure{}
+
+	//Validate service on path level if it is created
+	if api.Spec.Service != nil {
+		res = append(res, v.validateService(".spec.service", api)...)
+	}
+	//Validate Host
+	res = append(res, v.validateHost(".spec.host", vsList, api)...)
+	//Validate Gateway
+	res = append(res, v.validateGateway(".spec.gateway", api.Spec.Gateway)...)
+	//Validate Rules
+	res = append(res, v.validateRules(".spec.rules", api.Spec.Service == nil, api)...)
+
+	return res
+}
+
 func (v *APIRule) ValidateConfig(config *helpers.Config) []Failure {
 	var problems []Failure
 
@@ -44,30 +68,6 @@ func (v *APIRule) ValidateConfig(config *helpers.Config) []Failure {
 	}
 
 	return problems
-}
-
-// Validate performs APIRule validation
-func (v *APIRule) Validate(api *gatewayv1beta1.APIRule, vsList networkingv1beta1.VirtualServiceList) []Failure {
-
-	res := []Failure{}
-	//Validate service on path level if it is created
-	if api.Spec.Service != nil {
-		res = append(res, v.validateService(".spec.service", api)...)
-	}
-	//Validate Host
-	res = append(res, v.validateHost(".spec.host", vsList, api)...)
-	//Validate Gateway
-	res = append(res, v.validateGateway(".spec.gateway", api.Spec.Gateway)...)
-	//Validate Rules
-	res = append(res, v.validateRules(".spec.rules", api.Spec.Service == nil, api)...)
-
-	return res
-}
-
-// Failure carries validation failures for a single attribute of an object.
-type Failure struct {
-	AttributePath string
-	Message       string
 }
 
 func (v *APIRule) validateHost(attributePath string, vsList networkingv1beta1.VirtualServiceList, api *gatewayv1beta1.APIRule) []Failure {

@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 
-	oryint "github.com/kyma-incubator/api-gateway/internal/types/ory"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/envtest/printer"
 
@@ -13,6 +12,7 @@ import (
 	"testing"
 
 	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
+	"github.com/kyma-incubator/api-gateway/internal/types/ory"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -839,19 +839,19 @@ var _ = Describe("Validator for", func() {
 
 func emptyConfig() *runtime.RawExtension {
 	return getRawConfig(
-		&oryint.JWTAccStrConfig{})
+		&ory.JWTAccStrConfig{})
 }
 
 func simpleJWTConfig(trustedIssuers ...string) *runtime.RawExtension {
 	return getRawConfig(
-		&oryint.JWTAccStrConfig{
+		&ory.JWTAccStrConfig{
 			JWKSUrls:       trustedIssuers,
 			TrustedIssuers: trustedIssuers,
 			RequiredScopes: []string{"atgo"},
 		})
 }
 
-func getRawConfig(config *oryint.JWTAccStrConfig) *runtime.RawExtension {
+func getRawConfig(config *ory.JWTAccStrConfig) *runtime.RawExtension {
 	bytes, err := json.Marshal(config)
 	Expect(err).To(BeNil())
 	return &runtime.RawExtension{
