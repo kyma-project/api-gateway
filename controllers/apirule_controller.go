@@ -183,12 +183,12 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 }
 
 func (r *APIRuleReconciler) getReconciliation(config processing.ReconciliationConfig) processing.ReconciliationCommand {
-	// This should be replaced by the feature flag handling to return the appropriate reconciliation.
-	if r.Config.JWTHandler == helpers.JWT_HANDLER_ORY {
-		return ory.NewOryReconciliation(config)
+	if r.Config.JWTHandler == helpers.JWT_HANDLER_ISTIO {
+		return istio.NewIstioReconciliation(config)
 	}
 
-	return istio.NewIstioReconciliation(config)
+	return ory.NewOryReconciliation(config)
+
 }
 
 // SetupWithManager sets up the controller with the Manager.
