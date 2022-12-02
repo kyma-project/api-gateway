@@ -15,6 +15,11 @@ func (o *jwtValidator) Validate(attributePath string, handler *gatewayv1beta1.Ha
 	var problems []validation.Failure
 	var template istiojwt.JwtConfig
 
+	if !validation.ConfigNotEmpty(handler.Config) {
+		problems = append(problems, validation.Failure{AttributePath: attributePath + ".config", Message: "supplied config cannot be empty"})
+		return problems
+	}
+
 	err := json.Unmarshal(handler.Config.Raw, &template)
 	if err != nil {
 		problems = append(problems, validation.Failure{AttributePath: attributePath + ".config", Message: "Can't read json: " + err.Error()})

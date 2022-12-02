@@ -1,8 +1,11 @@
 package istio
 
 import (
+	"fmt"
+
 	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
 	"github.com/kyma-incubator/api-gateway/internal/builders"
+	"github.com/kyma-incubator/api-gateway/internal/helpers"
 	"github.com/kyma-incubator/api-gateway/internal/processing"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 )
@@ -28,6 +31,81 @@ type virtualServiceCreator struct {
 	additionalLabels  map[string]string
 }
 
-func (r virtualServiceCreator) Create(_ *gatewayv1beta1.APIRule) *networkingv1beta1.VirtualService {
-	return builders.VirtualService().Get()
+// Create returns the Virtual Service using the configuration of the APIRule.
+func (r virtualServiceCreator) Create(api *gatewayv1beta1.APIRule) *networkingv1beta1.VirtualService {
+	virtualServiceNamePrefix := fmt.Sprintf("%s-", api.ObjectMeta.Name)
+	ownerRef := processing.GenerateOwnerRef(api)
+
+	vsSpecBuilder := builders.VirtualServiceSpec()
+	vsSpecBuilder.Host(helpers.GetHostWithDomain(*api.Spec.Host, r.defaultDomainName))
+	vsSpecBuilder.Gateway(*api.Spec.Gateway)
+	filteredRules := filterDuplicatePaths(api.Spec.Rules)
+
+	for _, rule := range filteredRules {
+		httpRouteBuilder := builders.HTTPRoute()
+		serviceNamespace := helpers.FindServiceNamespace(api, &rule)
+		routeDirectlyToService := false
+		if !processing.IsSecured(rule) {
+			routeDirectlyToService = true
+		} else if processing.IsJwtSecured(rule) {
+			routeDirectlyToService = true
+		}
+
+		var host string
+		var port uint32
+
+		if routeDirectlyToService {
+			// Use rule level service if it exists
+			if rule.Service != nil {
+				host = helpers.GetHostLocalDomain(*rule.Service.Name, *serviceNamespace)
+				port = *rule.Service.Port
+			} else {
+				// Otherwise use service defined on APIRule spec level
+				host = helpers.GetHostLocalDomain(*api.Spec.Service.Name, *serviceNamespace)
+				port = *api.Spec.Service.Port
+			}
+		} else {
+			host = r.oathkeeperSvc
+			port = r.oathkeeperSvcPort
+		}
+
+		httpRouteBuilder.Route(builders.RouteDestination().Host(host).Port(port))
+		httpRouteBuilder.Match(builders.MatchRequest().Uri().Regex(rule.Path))
+		httpRouteBuilder.CorsPolicy(builders.CorsPolicy().
+			AllowOrigins(r.corsConfig.AllowOrigins...).
+			AllowMethods(r.corsConfig.AllowMethods...).
+			AllowHeaders(r.corsConfig.AllowHeaders...))
+		httpRouteBuilder.Headers(builders.Headers().
+			SetHostHeader(helpers.GetHostWithDomain(*api.Spec.Host, r.defaultDomainName)))
+		vsSpecBuilder.HTTP(httpRouteBuilder)
+
+	}
+
+	vsBuilder := builders.VirtualService().
+		GenerateName(virtualServiceNamePrefix).
+		Namespace(api.ObjectMeta.Namespace).
+		Owner(builders.OwnerReference().From(&ownerRef)).
+		Label(processing.OwnerLabel, fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace)).
+		Label(processing.OwnerLabelv1alpha1, fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace))
+
+	for k, v := range r.additionalLabels {
+		vsBuilder.Label(k, v)
+	}
+
+	vsBuilder.Spec(vsSpecBuilder)
+
+	return vsBuilder.Get()
+}
+
+func filterDuplicatePaths(rules []gatewayv1beta1.Rule) []gatewayv1beta1.Rule {
+	duplicates := make(map[string]bool)
+	var filteredRules []gatewayv1beta1.Rule
+	for _, rule := range rules {
+		if _, exists := duplicates[rule.Path]; !exists {
+			duplicates[rule.Path] = true
+			filteredRules = append(filteredRules, rule)
+		}
+	}
+
+	return filteredRules
 }

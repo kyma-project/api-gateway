@@ -16,7 +16,7 @@ var (
 	OwnerLabelv1alpha1 = fmt.Sprintf("%s.%s", "apirule", gatewayv1alpha1.GroupVersion.String())
 )
 
-func isJwtSecured(rule gatewayv1beta1.Rule) bool {
+func IsJwtSecured(rule gatewayv1beta1.Rule) bool {
 	for _, strat := range rule.AccessStrategies {
 		if strat.Name == "jwt" {
 			return true

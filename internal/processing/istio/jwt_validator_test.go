@@ -91,11 +91,6 @@ var _ = Describe("JWT Validator", func() {
 	})
 })
 
-func emptyConfig() *runtime.RawExtension {
-	var emptyConfig struct{}
-	return getRawConfig(emptyConfig)
-}
-
 func emptyJWTIstioConfig() *runtime.RawExtension {
 	return getRawConfig(
 		&istiojwt.JwtConfig{})
@@ -131,29 +126,4 @@ func getRawConfig(config any) *runtime.RawExtension {
 	return &runtime.RawExtension{
 		Raw: bytes,
 	}
-}
-
-func toAuthenticator(name string, config *runtime.RawExtension) *gatewayv1beta1.Authenticator {
-	return &gatewayv1beta1.Authenticator{
-		Handler: &gatewayv1beta1.Handler{
-			Name:   name,
-			Config: config,
-		},
-	}
-}
-
-func getService(serviceName string, servicePort uint32, namespace ...*string) *gatewayv1beta1.Service {
-	var serviceNamespace *string
-	if len(namespace) > 0 {
-		serviceNamespace = namespace[0]
-	}
-	return &gatewayv1beta1.Service{
-		Name:      &serviceName,
-		Namespace: serviceNamespace,
-		Port:      &servicePort,
-	}
-}
-
-func getHost(host string) *string {
-	return &host
 }

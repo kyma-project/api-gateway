@@ -7,7 +7,8 @@ import (
 	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
 	"istio.io/api/networking/v1beta1"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
+	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -67,6 +68,8 @@ func GetEmptyFakeClient() client.Client {
 	err := networkingv1beta1.AddToScheme(scheme)
 	gomega.Expect(err).NotTo(gomega.HaveOccurred())
 	err = rulev1alpha1.AddToScheme(scheme)
+	gomega.Expect(err).NotTo(gomega.HaveOccurred())
+	err = securityv1beta1.AddToScheme(scheme)
 	gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 	return fake.NewClientBuilder().WithScheme(scheme).WithObjects().Build()
