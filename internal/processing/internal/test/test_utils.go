@@ -23,12 +23,17 @@ const (
 	ApiKind                     = "ApiRule"
 	ApiPath                     = "/.*"
 	HeadersApiPath              = "/headers"
+	ImgApiPath                  = "/img"
 	JwtIssuer                   = "https://oauth2.example.com/"
+	JwksUri                     = "https://oauth2.example.com/.well-known/jwks.json"
+	JwtIssuer2                  = "https://oauth2.another.example.com/"
+	JwksUri2                    = "https://oauth2.another.example.com/.well-known/jwks.json"
 	OathkeeperSvc               = "fake.oathkeeper"
 	OathkeeperSvcPort uint32    = 1234
 	TestLabelKey                = "key"
 	TestLabelValue              = "value"
 	DefaultDomain               = "myDomain.com"
+	TestSelectorKey             = "app"
 )
 
 var (
