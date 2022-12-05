@@ -36,7 +36,7 @@ type authorizationPolicyCreator struct {
 	additionalLabels map[string]string
 }
 
-// Create returns the Virtual Service using the configuration of the APIRule.
+// Create returns the Authorization Policy using the configuration of the APIRule.
 func (r authorizationPolicyCreator) Create(api *gatewayv1beta1.APIRule) map[string]*securityv1beta1.AuthorizationPolicy {
 	pathDuplicates := processing.HasPathDuplicates(api.Spec.Rules)
 	authorizationPolicies := make(map[string]*securityv1beta1.AuthorizationPolicy)
