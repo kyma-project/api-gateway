@@ -7,7 +7,7 @@ import (
 	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
 	"github.com/kyma-incubator/api-gateway/internal/processing"
 	. "github.com/kyma-incubator/api-gateway/internal/processing/internal/test"
-	"github.com/kyma-incubator/api-gateway/internal/processing/ory"
+	"github.com/kyma-incubator/api-gateway/internal/processing/istio"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
