@@ -10,7 +10,6 @@ import (
 const (
 	labelKeyPrefixRegexDef = "^[a-z]{1,}(([.][a-z]){0,}([-]?[a-z0-9]{1,}){0,}){0,}$" //"prefix" part of k8s label key (before "/")
 	labelKeyNameRegexDef   = "^[a-zA-Z0-9]([-A-Za-z0-9_.]{0,61}[a-zA-Z0-9]){0,}$"    //"name" part of k8s label key (after "/")
-	labelValueRegexpDef    = labelKeyNameRegexDef                                    //value of k8s label. The only difference is this one can be empty
 )
 
 var (
