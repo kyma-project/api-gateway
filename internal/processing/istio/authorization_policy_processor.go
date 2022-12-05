@@ -14,13 +14,7 @@ import (
 
 // AuthorizationPolicyProcessor is the generic processor that handles the Istio Authorization Policies in the reconciliation of API Rule.
 type AuthorizationPolicyProcessor struct {
-	Creator AuthorizationPolicyCreator
-}
-
-// AuthorizationPolicyCreator provides the creation of Authorization Policies using the configuration in the given APIRule.
-// The key of the map is expected to be unique and comparable with the
-type AuthorizationPolicyCreator interface {
-	Create(api *gatewayv1beta1.APIRule) map[string]*securityv1beta1.AuthorizationPolicy
+	Creator authorizationPolicyCreator
 }
 
 // NewAuthorizationPolicyProcessor returns a AuthorizationPolicyProcessor with the desired state handling specific for the Istio handler.

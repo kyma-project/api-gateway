@@ -34,7 +34,7 @@ var _ = Describe("Virtual Service Processor", func() {
 
 			apiRule := GetAPIRuleFor(rules)
 			client := GetEmptyFakeClient()
-			processor := ory.NewVirtualServiceProcessor(GetTestConfig())
+			processor := istio.NewVirtualServiceProcessor(GetTestConfig())
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
@@ -99,7 +99,7 @@ var _ = Describe("Virtual Service Processor", func() {
 				Port:      &overrideServicePort,
 			}
 			client := GetEmptyFakeClient()
-			processor := ory.NewVirtualServiceProcessor(GetTestConfig())
+			processor := istio.NewVirtualServiceProcessor(GetTestConfig())
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
@@ -139,7 +139,7 @@ var _ = Describe("Virtual Service Processor", func() {
 
 			apiRule := GetAPIRuleFor(rules)
 			client := GetEmptyFakeClient()
-			processor := ory.NewVirtualServiceProcessor(GetTestConfig())
+			processor := istio.NewVirtualServiceProcessor(GetTestConfig())
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
@@ -170,7 +170,7 @@ var _ = Describe("Virtual Service Processor", func() {
 			apiRule := GetAPIRuleFor(rules)
 			apiRule.Spec.Host = &ServiceHostWithNoDomain
 			client := GetEmptyFakeClient()
-			processor := ory.NewVirtualServiceProcessor(GetTestConfig())
+			processor := istio.NewVirtualServiceProcessor(GetTestConfig())
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
@@ -213,7 +213,7 @@ var _ = Describe("Virtual Service Processor", func() {
 
 			apiRule := GetAPIRuleFor(rules)
 			client := GetEmptyFakeClient()
-			processor := ory.NewVirtualServiceProcessor(GetTestConfig())
+			processor := istio.NewVirtualServiceProcessor(GetTestConfig())
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
@@ -273,7 +273,7 @@ var _ = Describe("Virtual Service Processor", func() {
 				Expect(err).NotTo(HaveOccurred())
 
 				client := fake.NewClientBuilder().WithScheme(scheme).WithObjects(&rule, &vs).Build()
-				processor := ory.NewVirtualServiceProcessor(GetTestConfig())
+				processor := istio.NewVirtualServiceProcessor(GetTestConfig())
 
 				// when
 				result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
@@ -354,7 +354,7 @@ var _ = Describe("Virtual Service Processor", func() {
 
 			apiRule := GetAPIRuleFor(rules)
 			client := GetEmptyFakeClient()
-			processor := ory.NewVirtualServiceProcessor(GetTestConfig())
+			processor := istio.NewVirtualServiceProcessor(GetTestConfig())
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
@@ -382,8 +382,8 @@ var _ = Describe("Virtual Service Processor", func() {
 			Expect(vs.Spec.Http[0].CorsPolicy.AllowHeaders).To(Equal(TestCors.AllowHeaders))
 
 			Expect(len(vs.Spec.Http[1].Route)).To(Equal(1))
-			Expect(vs.Spec.Http[1].Route[0].Destination.Host).To(Equal(OathkeeperSvc))
-			Expect(vs.Spec.Http[1].Route[0].Destination.Port.Number).To(Equal(OathkeeperSvcPort))
+			Expect(vs.Spec.Http[1].Route[0].Destination.Host).To(Equal(ServiceName + "." + ApiNamespace + ".svc.cluster.local"))
+			Expect(vs.Spec.Http[1].Route[0].Destination.Port.Number).To(Equal(ServicePort))
 			Expect(len(vs.Spec.Http[1].Match)).To(Equal(1))
 			Expect(vs.Spec.Http[1].Match[0].Uri.GetRegex()).To(Equal(apiRule.Spec.Rules[1].Path))
 
@@ -450,7 +450,7 @@ var _ = Describe("Virtual Service Processor", func() {
 
 			apiRule := GetAPIRuleFor(rules)
 			client := GetEmptyFakeClient()
-			processor := ory.NewVirtualServiceProcessor(GetTestConfig())
+			processor := istio.NewVirtualServiceProcessor(GetTestConfig())
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
@@ -537,7 +537,7 @@ var _ = Describe("Virtual Service Processor", func() {
 
 			apiRule := GetAPIRuleFor(rules)
 			client := GetEmptyFakeClient()
-			processor := ory.NewVirtualServiceProcessor(GetTestConfig())
+			processor := istio.NewVirtualServiceProcessor(GetTestConfig())
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
@@ -565,8 +565,8 @@ var _ = Describe("Virtual Service Processor", func() {
 			Expect(vs.Spec.Http[0].CorsPolicy.AllowHeaders).To(Equal(TestCors.AllowHeaders))
 
 			Expect(len(vs.Spec.Http[1].Route)).To(Equal(1))
-			Expect(vs.Spec.Http[1].Route[0].Destination.Host).To(Equal(OathkeeperSvc))
-			Expect(vs.Spec.Http[1].Route[0].Destination.Port.Number).To(Equal(OathkeeperSvcPort))
+			Expect(vs.Spec.Http[1].Route[0].Destination.Host).To(Equal(ServiceName + "." + ApiNamespace + ".svc.cluster.local"))
+			Expect(vs.Spec.Http[1].Route[0].Destination.Port.Number).To(Equal(ServicePort))
 			Expect(len(vs.Spec.Http[1].Match)).To(Equal(1))
 			Expect(vs.Spec.Http[1].Match[0].Uri.GetRegex()).To(Equal(apiRule.Spec.Rules[2].Path))
 
@@ -620,7 +620,7 @@ var _ = Describe("Virtual Service Processor", func() {
 
 			apiRule := GetAPIRuleFor(rules)
 			client := GetEmptyFakeClient()
-			processor := ory.NewVirtualServiceProcessor(GetTestConfig())
+			processor := istio.NewVirtualServiceProcessor(GetTestConfig())
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
@@ -638,8 +638,8 @@ var _ = Describe("Virtual Service Processor", func() {
 			Expect(len(vs.Spec.Http)).To(Equal(1))
 
 			Expect(len(vs.Spec.Http[0].Route)).To(Equal(1))
-			Expect(vs.Spec.Http[0].Route[0].Destination.Host).To(Equal(OathkeeperSvc))
-			Expect(vs.Spec.Http[0].Route[0].Destination.Port.Number).To(Equal(OathkeeperSvcPort))
+			Expect(vs.Spec.Http[0].Route[0].Destination.Host).To(Equal(ServiceName + "." + ApiNamespace + ".svc.cluster.local"))
+			Expect(vs.Spec.Http[0].Route[0].Destination.Port.Number).To(Equal(ServicePort))
 
 			Expect(len(vs.Spec.Http[0].Match)).To(Equal(1))
 			Expect(vs.Spec.Http[0].Match[0].Uri.GetRegex()).To(Equal(apiRule.Spec.Rules[0].Path))

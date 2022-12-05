@@ -14,13 +14,7 @@ import (
 
 // RequestAuthenticationProcessor is the generic processor that handles the Istio Request Authentications in the reconciliation of API Rule.
 type RequestAuthenticationProcessor struct {
-	Creator RequestAuthenticationCreator
-}
-
-// RequestAuthenticationCreator provides the creation of Request Authentications using the configuration in the given APIRule.
-// The key of the map is expected to be unique and comparable with the
-type RequestAuthenticationCreator interface {
-	Create(api *gatewayv1beta1.APIRule) map[string]*securityv1beta1.RequestAuthentication
+	Creator requestAuthenticationCreator
 }
 
 // NewRequestAuthenticationProcessor returns a RequestAuthenticationProcessor with the desired state handling specific for the Istio handler.
