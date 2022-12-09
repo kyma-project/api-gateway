@@ -190,11 +190,6 @@ func (r *APIRuleReconciler) getReconciliation(config processing.ReconciliationCo
 
 }
 
-func getReconciliation(config processing.ReconciliationConfig) processing.ReconciliationCommand {
-	// This should be replaced by the feature flag handling to return the appropriate reconciliation.
-	return ory.NewOryReconciliation(config)
-}
-
 // SetupWithManager sets up the controller with the Manager.
 func (r *APIRuleReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
