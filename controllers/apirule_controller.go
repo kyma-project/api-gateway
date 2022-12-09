@@ -18,13 +18,13 @@ package controllers
 
 import (
 	"context"
-	"github.com/kyma-incubator/api-gateway/internal/processing/ory"
+	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/kyma-incubator/api-gateway/internal/helpers"
 	"github.com/kyma-incubator/api-gateway/internal/processing/istio"
 	"github.com/kyma-incubator/api-gateway/internal/processing/ory"
-	"github.com/go-logr/logr"
 	"github.com/kyma-incubator/api-gateway/internal/validation"
 
 	"github.com/go-logr/logr"
@@ -139,7 +139,6 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	}
 	apiRule := &gatewayv1beta1.APIRule{}
 
-	apiRule := &gatewayv1beta1.APIRule{}
 	err := r.Client.Get(ctx, req.NamespacedName, apiRule)
 	if err != nil {
 		if apierrs.IsNotFound(err) {
