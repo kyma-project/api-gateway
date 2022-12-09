@@ -1,10 +1,11 @@
 package ory
 
 import (
+	"testing"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"sigs.k8s.io/controller-runtime/pkg/envtest/printer"
-	"testing"
 )
 
 func TestOry(t *testing.T) {

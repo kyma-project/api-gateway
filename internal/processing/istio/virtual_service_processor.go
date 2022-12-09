@@ -7,12 +7,13 @@ import (
 	"github.com/kyma-incubator/api-gateway/internal/builders"
 	"github.com/kyma-incubator/api-gateway/internal/helpers"
 	"github.com/kyma-incubator/api-gateway/internal/processing"
+	"github.com/kyma-incubator/api-gateway/internal/processing/processors"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 )
 
 // NewVirtualServiceProcessor returns a VirtualServiceProcessor with the desired state handling specific for the Istio handler.
-func NewVirtualServiceProcessor(config processing.ReconciliationConfig) processing.VirtualServiceProcessor {
-	return processing.VirtualServiceProcessor{
+func NewVirtualServiceProcessor(config processing.ReconciliationConfig) processors.VirtualServiceProcessor {
+	return processors.VirtualServiceProcessor{
 		Creator: virtualServiceCreator{
 			oathkeeperSvc:     config.OathkeeperSvc,
 			oathkeeperSvcPort: config.OathkeeperSvcPort,

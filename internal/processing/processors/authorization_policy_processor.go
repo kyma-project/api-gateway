@@ -1,4 +1,4 @@
-package istio
+package processors
 
 import (
 	"context"
@@ -32,7 +32,7 @@ type authorizationPolicyCreator struct {
 
 // Create returns the Authorization Policy using the configuration of the APIRule.
 func (r authorizationPolicyCreator) Create(api *gatewayv1beta1.APIRule) map[string]*securityv1beta1.AuthorizationPolicy {
-	pathDuplicates := processing.HasPathDuplicates(api.Spec.Rules)
+	pathDuplicates := HasPathDuplicates(api.Spec.Rules)
 	authorizationPolicies := make(map[string]*securityv1beta1.AuthorizationPolicy)
 	for _, rule := range api.Spec.Rules {
 		if processing.IsSecured(rule) {
@@ -106,7 +106,7 @@ func (r AuthorizationPolicyProcessor) getActualState(ctx context.Context, client
 	}
 
 	authorizationPolicies := make(map[string]*securityv1beta1.AuthorizationPolicy)
-	pathDuplicates := processing.HasPathDuplicates(api.Spec.Rules)
+	pathDuplicates := HasPathDuplicates(api.Spec.Rules)
 	for i := range apList.Items {
 		obj := apList.Items[i]
 		authorizationPolicies[getAuthorizationPolicyKey(pathDuplicates, obj)] = obj

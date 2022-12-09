@@ -1,4 +1,4 @@
-package istio_test
+package processors_test
 
 import (
 	"context"
@@ -6,7 +6,7 @@ import (
 
 	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
 	. "github.com/kyma-incubator/api-gateway/internal/processing/internal/test"
-	"github.com/kyma-incubator/api-gateway/internal/processing/istio"
+	"github.com/kyma-incubator/api-gateway/internal/processing/processors"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
@@ -40,7 +40,7 @@ var _ = Describe("Request Authentication Processor", func() {
 		ruleJwt2 := GetRuleWithServiceFor(ImgApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, []*gatewayv1beta1.Authenticator{jwt}, service)
 		apiRule := GetAPIRuleFor([]gatewayv1beta1.Rule{ruleJwt, ruleJwt2})
 		client := GetEmptyFakeClient()
-		processor := istio.NewRequestAuthenticationProcessor(GetTestConfig())
+		processor := processors.NewRequestAuthenticationProcessor(GetTestConfig())
 
 		// when
 		result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
@@ -74,7 +74,7 @@ var _ = Describe("Request Authentication Processor", func() {
 		client := GetEmptyFakeClient()
 		ruleJwt := GetRuleFor(HeadersApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, []*gatewayv1beta1.Authenticator{jwt})
 		apiRule := GetAPIRuleFor([]gatewayv1beta1.Rule{ruleJwt})
-		processor := istio.NewRequestAuthenticationProcessor(GetTestConfig())
+		processor := processors.NewRequestAuthenticationProcessor(GetTestConfig())
 
 		// when
 		result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
@@ -100,7 +100,7 @@ var _ = Describe("Request Authentication Processor", func() {
 		ruleJwt := GetRuleWithServiceFor(HeadersApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, []*gatewayv1beta1.Authenticator{jwt}, service)
 		apiRule := GetAPIRuleFor([]gatewayv1beta1.Rule{ruleJwt})
 
-		processor := istio.NewRequestAuthenticationProcessor(GetTestConfig())
+		processor := processors.NewRequestAuthenticationProcessor(GetTestConfig())
 
 		// when
 		result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
@@ -132,7 +132,7 @@ var _ = Describe("Request Authentication Processor", func() {
 		}
 		ruleJwt := GetRuleWithServiceFor(HeadersApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, []*gatewayv1beta1.Authenticator{jwt}, service)
 		apiRule := GetAPIRuleFor([]gatewayv1beta1.Rule{ruleJwt})
-		processor := istio.NewRequestAuthenticationProcessor(GetTestConfig())
+		processor := processors.NewRequestAuthenticationProcessor(GetTestConfig())
 
 		// when
 		result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)

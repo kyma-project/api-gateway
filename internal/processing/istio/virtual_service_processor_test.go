@@ -227,6 +227,7 @@ var _ = Describe("Virtual Service Processor", func() {
 			Expect(len(vs.Spec.Http[0].Route)).To(Equal(1))
 			Expect(vs.Spec.Http[0].Route[0].Destination.Host).To(Equal(OathkeeperSvc))
 		})
+
 		When("existing virtual service has owner v1alpha1 owner label", func() {
 			It("should get and update", func() {
 				// given
