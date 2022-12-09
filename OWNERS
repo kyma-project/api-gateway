@@ -1,18 +1,19 @@
 approvers:
-  - Tomasz-Smelcerz-SAP
   - strekm
-  - jakkab
-  - piotrmsc
-  - kubadz
-  - Demonsthere
+  - werdes72
+  - dariusztutaj
+  - cnvergence
+  - barchw
+  - videlov
+  - triffer
 reviewers:
-  - Tomasz-Smelcerz-SAP
   - strekm
-  - jakkab
-  - piotrmsc
-  - kubadz
-  - Demonsthere 
+  - werdes72
+  - dariusztutaj
+  - cnvergence
+  - barchw
+  - videlov
+  - triffer
 
 labels:
-- area/service-mesh
-- area/security
+- area/api-gateway

@@ -18,13 +18,13 @@ package controllers
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
+	"github.com/kyma-incubator/api-gateway/internal/processing/ory"
 	"time"
 
 	"github.com/kyma-incubator/api-gateway/internal/helpers"
 	"github.com/kyma-incubator/api-gateway/internal/processing/istio"
 	"github.com/kyma-incubator/api-gateway/internal/processing/ory"
+	"github.com/go-logr/logr"
 	"github.com/kyma-incubator/api-gateway/internal/validation"
 
 	"github.com/go-logr/logr"
@@ -137,6 +137,7 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 			return doneReconcile()
 		}
 	}
+	apiRule := &gatewayv1beta1.APIRule{}
 
 	apiRule := &gatewayv1beta1.APIRule{}
 	err := r.Client.Get(ctx, req.NamespacedName, apiRule)
@@ -186,9 +187,13 @@ func (r *APIRuleReconciler) getReconciliation(config processing.ReconciliationCo
 	if r.Config.JWTHandler == helpers.JWT_HANDLER_ISTIO {
 		return istio.NewIstioReconciliation(config)
 	}
-
 	return ory.NewOryReconciliation(config)
 
+}
+
+func getReconciliation(config processing.ReconciliationConfig) processing.ReconciliationCommand {
+	// This should be replaced by the feature flag handling to return the appropriate reconciliation.
+	return ory.NewOryReconciliation(config)
 }
 
 // SetupWithManager sets up the controller with the Manager.

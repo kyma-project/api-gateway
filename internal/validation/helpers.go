@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"k8s.io/apimachinery/pkg/runtime"
 	"net/url"
 	"regexp"
 	"strings"
