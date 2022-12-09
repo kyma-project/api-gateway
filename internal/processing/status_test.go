@@ -1,12 +1,11 @@
 package processing
 
 import (
-	"strings"
-
 	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
 	"github.com/kyma-incubator/api-gateway/internal/validation"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"strings"
 )
 
 var _ = Describe("Status", func() {

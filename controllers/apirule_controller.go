@@ -137,8 +137,8 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 			return doneReconcile()
 		}
 	}
-
 	apiRule := &gatewayv1beta1.APIRule{}
+
 	err := r.Client.Get(ctx, req.NamespacedName, apiRule)
 	if err != nil {
 		if apierrs.IsNotFound(err) {
@@ -186,7 +186,6 @@ func (r *APIRuleReconciler) getReconciliation(config processing.ReconciliationCo
 	if r.Config.JWTHandler == helpers.JWT_HANDLER_ISTIO {
 		return istio.NewIstioReconciliation(config)
 	}
-
 	return ory.NewOryReconciliation(config)
 
 }
