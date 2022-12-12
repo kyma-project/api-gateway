@@ -113,6 +113,7 @@ var _ = Describe("Request Authentication Processor", func() {
 		Expect(ra).NotTo(BeNil())
 		Expect(ra.Spec.Selector.MatchLabels[TestSelectorKey]).To(Equal(ruleServiceName))
 	})
+
 	It("should produce RA from a rule with two issuers and one path", func() {
 		jwtConfigJSON := fmt.Sprintf(`{
 			"authentications": [{"issuer": "%s", "jwksUri": "%s"}, {"issuer": "%s", "jwksUri": "%s"}]

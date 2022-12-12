@@ -19,7 +19,6 @@ import (
 )
 
 var _ = Describe("Reconcile", func() {
-
 	It("should return api status error and vs/ar status skipped when an error happens during validation", func() {
 		// given
 		cmd := MockReconciliationCommand{

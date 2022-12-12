@@ -267,7 +267,6 @@ var _ = Describe("Access Rule Processor", func() {
 	})
 
 	When("handler is allow", func() {
-
 		It("should not create access rules", func() {
 			// given
 			strategies := []*gatewayv1beta1.Authenticator{
@@ -303,11 +302,9 @@ var _ = Describe("Access Rule Processor", func() {
 			Expect(err).To(BeNil())
 			Expect(result).To(BeEmpty())
 		})
-
 	})
 
 	When("handler is noop", func() {
-
 		It("should override rule with meta data", func() {
 			// given
 			strategies := []*gatewayv1beta1.Authenticator{
@@ -513,11 +510,9 @@ var _ = Describe("Access Rule Processor", func() {
 				Expect(accessRule.Spec.Match.Methods).To(Equal([]string{"GET"}))
 			})
 		})
-
 	})
 
 	When("multiple handler", func() {
-
 		It("should return two rules for given paths", func() {
 			// given
 			noop := []*gatewayv1beta1.Authenticator{

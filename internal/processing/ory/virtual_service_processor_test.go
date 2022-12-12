@@ -155,6 +155,7 @@ var _ = Describe("Virtual Service Processor", func() {
 			Expect(vs.Spec.Http[0].Route[0].Destination.Host).To(Equal(overrideServiceName + "." + overrideServiceNamespace + ".svc.cluster.local"))
 
 		})
+
 		It("should return VS with default domain name when the hostname does not contain domain name", func() {
 			strategies := []*gatewayv1beta1.Authenticator{
 				{
@@ -227,6 +228,7 @@ var _ = Describe("Virtual Service Processor", func() {
 			Expect(len(vs.Spec.Http[0].Route)).To(Equal(1))
 			Expect(vs.Spec.Http[0].Route[0].Destination.Host).To(Equal(OathkeeperSvc))
 		})
+
 		When("existing virtual service has owner v1alpha1 owner label", func() {
 			It("should get and update", func() {
 				// given
