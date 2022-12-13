@@ -5,7 +5,6 @@ import (
 
 	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
 	"github.com/kyma-incubator/api-gateway/internal/processing"
-	"github.com/kyma-incubator/api-gateway/internal/processing/processors"
 	"github.com/kyma-incubator/api-gateway/internal/validation"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -18,7 +17,7 @@ type Reconciliation struct {
 
 func NewOryReconciliation(config processing.ReconciliationConfig) Reconciliation {
 	vsProcessor := NewVirtualServiceProcessor(config)
-	acProcessor := processors.NewAccessRuleProcessor(config)
+	acProcessor := NewAccessRuleProcessor(config)
 
 	return Reconciliation{
 		processors: []processing.ReconciliationProcessor{vsProcessor, acProcessor},

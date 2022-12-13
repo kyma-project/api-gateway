@@ -23,35 +23,6 @@ type AccessRuleCreator interface {
 	Create(api *gatewayv1beta1.APIRule) map[string]*rulev1alpha1.Rule
 }
 
-// NewAccessRuleProcessor returns a AccessRuleProcessor with the desired state handling specific for the Ory handler.
-func NewAccessRuleProcessor(config processing.ReconciliationConfig) AccessRuleProcessor {
-	return AccessRuleProcessor{
-		Creator: accessRuleCreator{
-			additionalLabels:  config.AdditionalLabels,
-			defaultDomainName: config.DefaultDomainName,
-		},
-	}
-}
-
-type accessRuleCreator struct {
-	additionalLabels  map[string]string
-	defaultDomainName string
-}
-
-// Create returns a map of rules using the configuration of the APIRule. The key of the map is a unique combination of
-// the match URL and methods of the rule.
-func (r accessRuleCreator) Create(api *gatewayv1beta1.APIRule) map[string]*rulev1alpha1.Rule {
-	pathDuplicates := HasPathDuplicates(api.Spec.Rules)
-	accessRules := make(map[string]*rulev1alpha1.Rule)
-	for _, rule := range api.Spec.Rules {
-		if processing.IsSecured(rule) {
-			ar := generateAccessRule(api, rule, rule.AccessStrategies, r.additionalLabels, r.defaultDomainName)
-			accessRules[SetAccessRuleKey(pathDuplicates, *ar)] = ar
-		}
-	}
-	return accessRules
-}
-
 func (r AccessRuleProcessor) EvaluateReconciliation(ctx context.Context, client ctrlclient.Client, apiRule *gatewayv1beta1.APIRule) ([]*processing.ObjectChange, error) {
 	desired := r.getDesiredState(apiRule)
 	actual, err := r.getActualState(ctx, client, apiRule)
@@ -117,7 +88,6 @@ func (r AccessRuleProcessor) getActualState(ctx context.Context, client ctrlclie
 }
 
 func SetAccessRuleKey(hasPathDuplicates bool, rule rulev1alpha1.Rule) string {
-
 	if hasPathDuplicates {
 		return fmt.Sprintf("%s:%s", rule.Spec.Match.URL, rule.Spec.Match.Methods)
 	}
@@ -137,7 +107,7 @@ func HasPathDuplicates(rules []gatewayv1beta1.Rule) bool {
 	return false
 }
 
-func generateAccessRule(api *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rule, accessStrategies []*gatewayv1beta1.Authenticator, additionalLabels map[string]string, defaultDomainName string) *rulev1alpha1.Rule {
+func GenerateAccessRule(api *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rule, accessStrategies []*gatewayv1beta1.Authenticator, additionalLabels map[string]string, defaultDomainName string) *rulev1alpha1.Rule {
 	namePrefix := fmt.Sprintf("%s-", api.ObjectMeta.Name)
 	namespace := api.ObjectMeta.Namespace
 	ownerRef := processing.GenerateOwnerRef(api)
@@ -146,7 +116,7 @@ func generateAccessRule(api *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rule, a
 		GenerateName(namePrefix).
 		Namespace(namespace).
 		Owner(builders.OwnerReference().From(&ownerRef)).
-		Spec(builders.AccessRuleSpec().From(generateAccessRuleSpec(api, rule, accessStrategies, defaultDomainName))).
+		Spec(builders.AccessRuleSpec().From(GenerateAccessRuleSpec(api, rule, accessStrategies, defaultDomainName))).
 		Label(processing.OwnerLabel, fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace)).
 		Label(processing.OwnerLabelv1alpha1, fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace))
 
@@ -157,7 +127,7 @@ func generateAccessRule(api *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rule, a
 	return arBuilder.Get()
 }
 
-func generateAccessRuleSpec(api *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rule, accessStrategies []*gatewayv1beta1.Authenticator, defaultDomainName string) *rulev1alpha1.RuleSpec {
+func GenerateAccessRuleSpec(api *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rule, accessStrategies []*gatewayv1beta1.Authenticator, defaultDomainName string) *rulev1alpha1.RuleSpec {
 	accessRuleSpec := builders.AccessRuleSpec().
 		Match(builders.Match().
 			URL(fmt.Sprintf("<http|https>://%s<%s>", helpers.GetHostWithDomain(*api.Spec.Host, defaultDomainName), rule.Path)).

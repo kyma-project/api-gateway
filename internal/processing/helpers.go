@@ -2,6 +2,7 @@ package processing
 
 import (
 	"fmt"
+
 	gatewayv1alpha1 "github.com/kyma-incubator/api-gateway/api/v1alpha1"
 	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
 	"github.com/kyma-incubator/api-gateway/internal/builders"
@@ -50,4 +51,26 @@ func GetOwnerLabels(api *gatewayv1beta1.APIRule) map[string]string {
 	labels := make(map[string]string)
 	labels[OwnerLabelv1alpha1] = fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace)
 	return labels
+}
+
+func FilterDuplicatePaths(rules []gatewayv1beta1.Rule) []gatewayv1beta1.Rule {
+	duplicates := make(map[string]bool)
+	var filteredRules []gatewayv1beta1.Rule
+	for _, rule := range rules {
+		if _, exists := duplicates[rule.Path]; !exists {
+			duplicates[rule.Path] = true
+			filteredRules = append(filteredRules, rule)
+		}
+	}
+
+	return filteredRules
+}
+
+func FilterGeneric[T any](ss []T, test func(T) bool) (ret []T) {
+	for _, s := range ss {
+		if test(s) {
+			ret = append(ret, s)
+		}
+	}
+	return
 }

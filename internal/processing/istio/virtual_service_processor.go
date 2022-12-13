@@ -40,7 +40,7 @@ func (r virtualServiceCreator) Create(api *gatewayv1beta1.APIRule) *networkingv1
 	vsSpecBuilder := builders.VirtualServiceSpec()
 	vsSpecBuilder.Host(helpers.GetHostWithDomain(*api.Spec.Host, r.defaultDomainName))
 	vsSpecBuilder.Gateway(*api.Spec.Gateway)
-	filteredRules := filterDuplicatePaths(api.Spec.Rules)
+	filteredRules := processing.FilterDuplicatePaths(api.Spec.Rules)
 
 	for _, rule := range filteredRules {
 		httpRouteBuilder := builders.HTTPRoute()
@@ -96,17 +96,4 @@ func (r virtualServiceCreator) Create(api *gatewayv1beta1.APIRule) *networkingv1
 	vsBuilder.Spec(vsSpecBuilder)
 
 	return vsBuilder.Get()
-}
-
-func filterDuplicatePaths(rules []gatewayv1beta1.Rule) []gatewayv1beta1.Rule {
-	duplicates := make(map[string]bool)
-	var filteredRules []gatewayv1beta1.Rule
-	for _, rule := range rules {
-		if _, exists := duplicates[rule.Path]; !exists {
-			duplicates[rule.Path] = true
-			filteredRules = append(filteredRules, rule)
-		}
-	}
-
-	return filteredRules
 }

@@ -20,7 +20,7 @@ func NewIstioReconciliation(config processing.ReconciliationConfig) Reconciliati
 	vsProcessor := NewVirtualServiceProcessor(config)
 	apProcessor := processors.NewAuthorizationPolicyProcessor(config)
 	raProcessor := processors.NewRequestAuthenticationProcessor(config)
-	acProcessor := processors.NewAccessRuleProcessor(config)
+	acProcessor := NewAccessRuleProcessor(config)
 
 	return Reconciliation{
 		processors: []processing.ReconciliationProcessor{vsProcessor, raProcessor, apProcessor, acProcessor},
