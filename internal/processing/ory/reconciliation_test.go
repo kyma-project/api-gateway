@@ -71,6 +71,8 @@ var _ = Describe("Reconciliation", func() {
 			}
 
 			// then
+			Expect(createdObjects).To(HaveLen(3))
+
 			vsCreated, oryRuleCreated := false, false
 			for _, createdObj := range createdObjects {
 				vs, vsOk := createdObj.(*networkingv1beta1.VirtualService)
@@ -131,6 +133,8 @@ var _ = Describe("Reconciliation", func() {
 			}
 
 			// then
+			Expect(createdObjects).To(HaveLen(3))
+
 			vsCreated, oryRuleCreated := false, false
 			for _, createdObj := range createdObjects {
 				vs, vsOk := createdObj.(*networkingv1beta1.VirtualService)
