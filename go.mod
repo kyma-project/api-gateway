@@ -81,7 +81,7 @@ require (
 	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
 	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	k8s.io/api v0.25.4
+	k8s.io/api v0.26.0
 	k8s.io/apiextensions-apiserver v0.25.4
 	k8s.io/component-base v0.25.4 // indirect
 	k8s.io/klog/v2 v2.80.1 // indirect
