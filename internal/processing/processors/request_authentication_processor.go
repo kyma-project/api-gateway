@@ -14,68 +14,13 @@ import (
 
 // RequestAuthenticationProcessor is the generic processor that handles the Istio Request Authentications in the reconciliation of API Rule.
 type RequestAuthenticationProcessor struct {
-	Creator requestAuthenticationCreator
+	Creator RequestAuthenticationCreator
 }
 
-// NewRequestAuthenticationProcessor returns a RequestAuthenticationProcessor with the desired state handling specific for the Istio handler.
-func NewRequestAuthenticationProcessor(config processing.ReconciliationConfig) RequestAuthenticationProcessor {
-	return RequestAuthenticationProcessor{
-		Creator: requestAuthenticationCreator{
-			additionalLabels: config.AdditionalLabels,
-		},
-	}
-}
-
-type requestAuthenticationCreator struct {
-	additionalLabels map[string]string
-}
-
-// Create returns the Virtual Service using the configuration of the APIRule.
-func (r requestAuthenticationCreator) Create(api *gatewayv1beta1.APIRule) map[string]*securityv1beta1.RequestAuthentication {
-	requestAuthentications := make(map[string]*securityv1beta1.RequestAuthentication)
-	for _, rule := range api.Spec.Rules {
-		if processing.IsSecured(rule) {
-			ra := generateRequestAuthentication(api, rule, r.additionalLabels)
-			requestAuthentications[getRequestAuthenticationKey(ra)] = ra
-		}
-	}
-	return requestAuthentications
-}
-
-func generateRequestAuthentication(api *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rule, additionalLabels map[string]string) *securityv1beta1.RequestAuthentication {
-	namePrefix := fmt.Sprintf("%s-", api.ObjectMeta.Name)
-	namespace := api.ObjectMeta.Namespace
-	ownerRef := processing.GenerateOwnerRef(api)
-
-	raBuilder := builders.RequestAuthenticationBuilder().
-		GenerateName(namePrefix).
-		Namespace(namespace).
-		Owner(builders.OwnerReference().From(&ownerRef)).
-		Spec(builders.RequestAuthenticationSpecBuilder().From(generateRequestAuthenticationSpec(api, rule))).
-		Label(processing.OwnerLabel, fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace)).
-		Label(processing.OwnerLabelv1alpha1, fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace))
-
-	for k, v := range additionalLabels {
-		raBuilder.Label(k, v)
-	}
-
-	return raBuilder.Get()
-}
-
-func generateRequestAuthenticationSpec(api *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rule) *v1beta1.RequestAuthentication {
-
-	var serviceName string
-	if rule.Service != nil {
-		serviceName = *rule.Service.Name
-	} else {
-		serviceName = *api.Spec.Service.Name
-	}
-
-	requestAuthenticationSpec := builders.RequestAuthenticationSpecBuilder().
-		Selector(builders.SelectorBuilder().MatchLabels("app", serviceName)).
-		JwtRules(builders.JwtRuleBuilder().From(rule.AccessStrategies))
-
-	return requestAuthenticationSpec.Get()
+// RequestAuthenticationCreator provides the creation of RequestAuthentications using the configuration in the given APIRule.
+// The key of the map is expected to be unique and comparable with the
+type RequestAuthenticationCreator interface {
+	Create(api *gatewayv1beta1.APIRule) map[string]*securityv1beta1.RequestAuthentication
 }
 
 func (r RequestAuthenticationProcessor) EvaluateReconciliation(ctx context.Context, client ctrlclient.Client, apiRule *gatewayv1beta1.APIRule) ([]*processing.ObjectChange, error) {
@@ -106,7 +51,7 @@ func (r RequestAuthenticationProcessor) getActualState(ctx context.Context, clie
 
 	for i := range raList.Items {
 		obj := raList.Items[i]
-		requestAuthentications[getRequestAuthenticationKey(obj)] = obj
+		requestAuthentications[GetRequestAuthenticationKey(obj)] = obj
 	}
 
 	return requestAuthentications, nil
@@ -141,7 +86,42 @@ func (r RequestAuthenticationProcessor) getObjectChanges(desiredRas map[string]*
 	return raChangesToApply
 }
 
-func getRequestAuthenticationKey(ra *securityv1beta1.RequestAuthentication) string {
+func GenerateRequestAuthentication(api *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rule, additionalLabels map[string]string) *securityv1beta1.RequestAuthentication {
+	namePrefix := fmt.Sprintf("%s-", api.ObjectMeta.Name)
+	namespace := api.ObjectMeta.Namespace
+	ownerRef := processing.GenerateOwnerRef(api)
+
+	raBuilder := builders.RequestAuthenticationBuilder().
+		GenerateName(namePrefix).
+		Namespace(namespace).
+		Owner(builders.OwnerReference().From(&ownerRef)).
+		Spec(builders.RequestAuthenticationSpecBuilder().From(GenerateRequestAuthenticationSpec(api, rule))).
+		Label(processing.OwnerLabel, fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace)).
+		Label(processing.OwnerLabelv1alpha1, fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace))
+
+	for k, v := range additionalLabels {
+		raBuilder.Label(k, v)
+	}
+
+	return raBuilder.Get()
+}
+
+func GenerateRequestAuthenticationSpec(api *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rule) *v1beta1.RequestAuthentication {
+	var serviceName string
+	if rule.Service != nil {
+		serviceName = *rule.Service.Name
+	} else {
+		serviceName = *api.Spec.Service.Name
+	}
+
+	requestAuthenticationSpec := builders.RequestAuthenticationSpecBuilder().
+		Selector(builders.SelectorBuilder().MatchLabels("app", serviceName)).
+		JwtRules(builders.JwtRuleBuilder().From(rule.AccessStrategies))
+
+	return requestAuthenticationSpec.Get()
+}
+
+func GetRequestAuthenticationKey(ra *securityv1beta1.RequestAuthentication) string {
 	key := ""
 	for _, k := range ra.Spec.JwtRules {
 		key += fmt.Sprintf("%s:%s", k.Issuer, k.JwksUri)

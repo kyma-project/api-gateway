@@ -56,6 +56,44 @@ var _ = Describe("Access Rule Processor", func() {
 		})
 	})
 
+	When("handler is jwt", func() {
+		It("should not create access rules", func() {
+			// given
+			strategies := []*gatewayv1beta1.Authenticator{
+				{
+					Handler: &gatewayv1beta1.Handler{
+						Name: "jwt",
+					},
+				},
+			}
+
+			allowRule := GetRuleFor(ApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, strategies)
+			rules := []gatewayv1beta1.Rule{allowRule}
+
+			apiRule := GetAPIRuleFor(rules)
+
+			overrideServiceName := "testName"
+			overrideServiceNamespace := "testName-namespace"
+			overrideServicePort := uint32(8080)
+
+			apiRule.Spec.Service = &gatewayv1beta1.Service{
+				Name:      &overrideServiceName,
+				Namespace: &overrideServiceNamespace,
+				Port:      &overrideServicePort,
+			}
+
+			client := GetEmptyFakeClient()
+			processor := istio.NewAccessRuleProcessor(GetTestConfig())
+
+			// when
+			result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
+
+			// then
+			Expect(err).To(BeNil())
+			Expect(result).To(BeEmpty())
+		})
+	})
+
 	When("handler is noop", func() {
 		It("should override rule with meta data", func() {
 			// given

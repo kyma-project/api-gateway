@@ -1,4 +1,4 @@
-package processing
+package processors
 
 import (
 	"testing"
@@ -10,6 +10,6 @@ import (
 
 func TestProcessing(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecsWithDefaultAndCustomReporters(t, "Processing Suite",
-		[]Reporter{printer.NewProwReporter("api-gateway-processing-testsuite")})
+	RunSpecsWithDefaultAndCustomReporters(t, "Processors Suite",
+		[]Reporter{printer.NewProwReporter("api-gateway-processors-testsuite")})
 }

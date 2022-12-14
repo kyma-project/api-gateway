@@ -74,3 +74,10 @@ func FilterGeneric[T any](ss []T, test func(T) bool) (ret []T) {
 	}
 	return
 }
+
+func SliceToString(ss []string) (s string) {
+	for _, el := range ss {
+		s += el
+	}
+	return
+}

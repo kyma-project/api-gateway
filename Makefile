@@ -300,7 +300,7 @@ deploy: manifests patch-gen
 	kustomize build config/default | kubectl apply -f -
 
 # Generate CRD with patches
-gen-crd: 
+gen-crd:
 	kustomize build config/crd > config/crd/apirules.gateway.crd.yaml
 
 samples-clean:
