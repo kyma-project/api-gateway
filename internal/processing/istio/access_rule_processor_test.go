@@ -8,6 +8,7 @@ import (
 	"github.com/kyma-incubator/api-gateway/internal/processing"
 	. "github.com/kyma-incubator/api-gateway/internal/processing/internal/test"
 	"github.com/kyma-incubator/api-gateway/internal/processing/istio"
+	"github.com/kyma-incubator/api-gateway/internal/processing/ory"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
@@ -299,6 +300,57 @@ var _ = Describe("Access Rule Processor", func() {
 				accessRule := result[0].Obj.(*rulev1alpha1.Rule)
 				Expect(accessRule.Spec.Match.Methods).To(Equal([]string{"GET"}))
 			})
+		})
+	})
+
+	When("handler is oauth2", func() {
+		It("should return rule for oauth authenticators for given path", func() {
+			// given
+			oauthConfigJSON := fmt.Sprintf(`{"required_scope": [%s]}`, ToCSVList(ApiScopes))
+			oauth := &gatewayv1beta1.Authenticator{
+				Handler: &gatewayv1beta1.Handler{
+					Name: "oauth2_introspection",
+					Config: &runtime.RawExtension{
+						Raw: []byte(oauthConfigJSON),
+					},
+				},
+			}
+
+			strategies := []*gatewayv1beta1.Authenticator{oauth}
+
+			allowRule := GetRuleFor(ApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, strategies)
+			rules := []gatewayv1beta1.Rule{allowRule}
+
+			apiRule := GetAPIRuleFor(rules)
+			client := GetEmptyFakeClient()
+			processor := ory.NewAccessRuleProcessor(GetTestConfig())
+
+			// when
+			result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
+
+			// then
+			Expect(err).To(BeNil())
+			Expect(result).To(HaveLen(1))
+
+			rule := result[0].Obj.(*rulev1alpha1.Rule)
+
+			Expect(len(rule.Spec.Authenticators)).To(Equal(1))
+
+			Expect(rule.Spec.Authorizer.Name).To(Equal("allow"))
+			Expect(rule.Spec.Authorizer.Config).To(BeNil())
+
+			Expect(rule.Spec.Authenticators[0].Handler.Name).To(Equal("oauth2_introspection"))
+			Expect(rule.Spec.Authenticators[0].Handler.Config).NotTo(BeNil())
+			Expect(string(rule.Spec.Authenticators[0].Handler.Config.Raw)).To(Equal(oauthConfigJSON))
+
+			expectedRuleMatchURL := fmt.Sprintf("<http|https>://%s<%s>", ServiceHost, ApiPath)
+			expectedRuleUpstreamURL := fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", ServiceName, ApiNamespace, ServicePort)
+
+			Expect(len(rule.Spec.Match.Methods)).To(Equal(len(ApiMethods)))
+			Expect(rule.Spec.Match.Methods).To(Equal(ApiMethods))
+			Expect(rule.Spec.Match.URL).To(Equal(expectedRuleMatchURL))
+
+			Expect(rule.Spec.Upstream.URL).To(Equal(expectedRuleUpstreamURL))
 		})
 	})
 })

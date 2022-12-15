@@ -8,7 +8,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/envtest/printer"
 )
 
-func TestOry(t *testing.T) {
+func TestIstio(t *testing.T) {
 	RegisterFailHandler(Fail)
 	RunSpecsWithDefaultAndCustomReporters(t, "Istio Suite",
 		[]Reporter{printer.NewProwReporter("api-gateway-istio-testsuite")})

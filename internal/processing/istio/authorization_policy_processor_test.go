@@ -26,6 +26,7 @@ var _ = Describe("Authorization Policy Processor", func() {
 			},
 		}
 	}
+
 	It("should produce two APs for a rule with one issuer and two paths", func() {
 		// given
 		jwt := createIstioJwtAccessStrategy()

@@ -11,12 +11,13 @@ import (
 	. "github.com/onsi/gomega"
 	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
+	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 var _ = Describe("Reconciliation", func() {
-	When("multiple handlers in addtion to istio jwt", func() {
+	When("multiple handlers in addtion to Istio JWT", func() {
 		jwtConfigJSON := fmt.Sprintf(`{"authentications": [{"issuer": "%s", "jwksUri": "%s"}]}`, JwtIssuer, JwksUri)
 		jwt := []*gatewayv1beta1.Authenticator{
 			{
@@ -29,7 +30,7 @@ var _ = Describe("Reconciliation", func() {
 			},
 		}
 
-		It("with ory noop should provide istio vs and ory rule", func() {
+		It("with ory noop should provide Istio VS, AP, RA and Ory rule", func() {
 			// given
 			noop := []*gatewayv1beta1.Authenticator{
 				{
@@ -52,45 +53,52 @@ var _ = Describe("Reconciliation", func() {
 			for _, processor := range reconciliation.GetProcessors() {
 				results, err := processor.EvaluateReconciliation(context.TODO(), faceClient, apiRule)
 				Expect(err).To(BeNil())
-
 				for _, result := range results {
-					_, vsOk := result.Obj.(*networkingv1beta1.VirtualService)
-					_, arOk := result.Obj.(*rulev1alpha1.Rule)
-
-					if vsOk || arOk {
-						createdObjects = append(createdObjects, result.Obj)
-					}
+					createdObjects = append(createdObjects, result.Obj)
 				}
 			}
 
 			// then
-			Expect(createdObjects).To(HaveLen(2))
+			Expect(createdObjects).To(HaveLen(4))
 
-			vsCreated, oryRuleCreated := false, false
+			vsCreated, oryRuleCreated, raCreated, apCreated := false, false, false, false
 			for _, createdObj := range createdObjects {
 				vs, vsOk := createdObj.(*networkingv1beta1.VirtualService)
 				ar, arOk := createdObj.(*rulev1alpha1.Rule)
+				ra, raOk := createdObj.(*securityv1beta1.RequestAuthentication)
+				ap, apOk := createdObj.(*securityv1beta1.AuthorizationPolicy)
 
 				if vsOk {
 					vsCreated = true
-
 					Expect(vs).NotTo(BeNil())
 					Expect(len(vs.Spec.Http)).To(Equal(2))
 					Expect(len(vs.Spec.Http[1].Route)).To(Equal(1))
 					Expect(vs.Spec.Http[1].Route[0].Destination.Host).To(Equal(ServiceName + "." + ApiNamespace + ".svc.cluster.local"))
 				} else if arOk {
 					oryRuleCreated = true
-
 					Expect(ar).NotTo(BeNil())
 					Expect(ar.Spec.Authenticators[0].Handler.Name).To(Equal("noop"))
 					Expect(ar.Spec.Upstream.URL).To(Equal(fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", ServiceName, ApiNamespace, ServicePort)))
+				} else if raOk {
+					raCreated = true
+					Expect(ra).NotTo(BeNil())
+					Expect(len(ra.Spec.JwtRules)).To(Equal(1))
+					Expect(ra.Spec.JwtRules[0].Issuer).To(Equal(JwtIssuer))
+					Expect(ra.Spec.JwtRules[0].JwksUri).To(Equal(JwksUri))
+				} else if apOk {
+					apCreated = true
+					Expect(ap).NotTo(BeNil())
+					Expect(len(ap.Spec.Rules)).To(Equal(1))
+					Expect(len(ap.Spec.Rules[0].From)).To(Equal(1))
+					Expect(len(ap.Spec.Rules[0].From[0].Source.RequestPrincipals)).To(Equal(1))
+					Expect(ap.Spec.Rules[0].From[0].Source.RequestPrincipals[0]).To(Equal("*"))
 				}
 			}
 
-			Expect(vsCreated && oryRuleCreated).To(BeTrue())
+			Expect(vsCreated && oryRuleCreated && raCreated && apCreated).To(BeTrue())
 		})
 
-		It("with ory oauth2 should provide istio vs and ory rule", func() {
+		It("with ory oauth2 should provide Istio VS, AP, RA and Ory rule", func() {
 			// given
 			oauthConfigJSON := fmt.Sprintf(`{"required_scope": [%s]}`, ToCSVList(ApiScopes))
 			oauth := []*gatewayv1beta1.Authenticator{
@@ -117,42 +125,49 @@ var _ = Describe("Reconciliation", func() {
 			for _, processor := range reconciliation.GetProcessors() {
 				results, err := processor.EvaluateReconciliation(context.TODO(), faceClient, apiRule)
 				Expect(err).To(BeNil())
-
 				for _, result := range results {
-					_, vsOk := result.Obj.(*networkingv1beta1.VirtualService)
-					_, arOk := result.Obj.(*rulev1alpha1.Rule)
-
-					if vsOk || arOk {
-						createdObjects = append(createdObjects, result.Obj)
-					}
+					createdObjects = append(createdObjects, result.Obj)
 				}
 			}
 
 			// then
-			Expect(createdObjects).To(HaveLen(2))
+			Expect(createdObjects).To(HaveLen(4))
 
-			vsCreated, oryRuleCreated := false, false
+			vsCreated, oryRuleCreated, raCreated, apCreated := false, false, false, false
 			for _, createdObj := range createdObjects {
 				vs, vsOk := createdObj.(*networkingv1beta1.VirtualService)
 				ar, arOk := createdObj.(*rulev1alpha1.Rule)
+				ra, raOk := createdObj.(*securityv1beta1.RequestAuthentication)
+				ap, apOk := createdObj.(*securityv1beta1.AuthorizationPolicy)
 
 				if vsOk {
 					vsCreated = true
-
 					Expect(vs).NotTo(BeNil())
 					Expect(len(vs.Spec.Http)).To(Equal(2))
 					Expect(len(vs.Spec.Http[1].Route)).To(Equal(1))
 					Expect(vs.Spec.Http[1].Route[0].Destination.Host).To(Equal(ServiceName + "." + ApiNamespace + ".svc.cluster.local"))
 				} else if arOk {
 					oryRuleCreated = true
-
 					Expect(ar).NotTo(BeNil())
 					Expect(ar.Spec.Authenticators[0].Handler.Name).To(Equal("oauth2_introspection"))
 					Expect(ar.Spec.Upstream.URL).To(Equal(fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", ServiceName, ApiNamespace, ServicePort)))
+				} else if raOk {
+					raCreated = true
+					Expect(ra).NotTo(BeNil())
+					Expect(len(ra.Spec.JwtRules)).To(Equal(1))
+					Expect(ra.Spec.JwtRules[0].Issuer).To(Equal(JwtIssuer))
+					Expect(ra.Spec.JwtRules[0].JwksUri).To(Equal(JwksUri))
+				} else if apOk {
+					apCreated = true
+					Expect(ap).NotTo(BeNil())
+					Expect(len(ap.Spec.Rules)).To(Equal(1))
+					Expect(len(ap.Spec.Rules[0].From)).To(Equal(1))
+					Expect(len(ap.Spec.Rules[0].From[0].Source.RequestPrincipals)).To(Equal(1))
+					Expect(ap.Spec.Rules[0].From[0].Source.RequestPrincipals[0]).To(Equal("*"))
 				}
 			}
 
-			Expect(vsCreated && oryRuleCreated).To(BeTrue())
+			Expect(vsCreated && oryRuleCreated && raCreated && apCreated).To(BeTrue())
 		})
 	})
 })
