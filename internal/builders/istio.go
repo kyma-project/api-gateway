@@ -113,6 +113,13 @@ func (r *Rule) RuleFrom(val *RuleFrom) *Rule {
 	return r
 }
 
+func (r *Rule) RuleFromConditional(val *RuleFrom, condition bool) *Rule {
+	if condition {
+		return r.RuleFrom(val)
+	}
+	return r
+}
+
 func (r *Rule) RuleTo(val *RuleTo) *Rule {
 	r.value.To = append(r.value.To, val.Get())
 	return r

@@ -39,16 +39,17 @@ type authorizationPolicyCreator struct {
 func (r authorizationPolicyCreator) Create(api *gatewayv1beta1.APIRule) map[string]*securityv1beta1.AuthorizationPolicy {
 	pathDuplicates := processors.HasPathDuplicates(api.Spec.Rules)
 	authorizationPolicies := make(map[string]*securityv1beta1.AuthorizationPolicy)
+	hasJwtRule := processing.HasJwtRule(api)
 	for _, rule := range api.Spec.Rules {
-		if processing.IsJwtSecured(rule) {
-			ar := generateAuthorizationPolicy(api, rule, r.additionalLabels)
+		if hasJwtRule {
+			ar := generateAuthorizationPolicy(api, rule, r.additionalLabels, processing.IsJwtSecured(rule))
 			authorizationPolicies[processors.GetAuthorizationPolicyKey(pathDuplicates, ar)] = ar
 		}
 	}
 	return authorizationPolicies
 }
 
-func generateAuthorizationPolicy(api *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rule, additionalLabels map[string]string) *securityv1beta1.AuthorizationPolicy {
+func generateAuthorizationPolicy(api *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rule, additionalLabels map[string]string, includeFromSpec bool) *securityv1beta1.AuthorizationPolicy {
 	namePrefix := fmt.Sprintf("%s-", api.ObjectMeta.Name)
 	namespace := api.ObjectMeta.Namespace
 	ownerRef := processing.GenerateOwnerRef(api)
@@ -57,7 +58,7 @@ func generateAuthorizationPolicy(api *gatewayv1beta1.APIRule, rule gatewayv1beta
 		GenerateName(namePrefix).
 		Namespace(namespace).
 		Owner(builders.OwnerReference().From(&ownerRef)).
-		Spec(builders.AuthorizationPolicySpecBuilder().From(generateAuthorizationPolicySpec(api, rule))).
+		Spec(builders.AuthorizationPolicySpecBuilder().From(generateAuthorizationPolicySpec(api, rule, includeFromSpec))).
 		Label(processing.OwnerLabel, fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace)).
 		Label(processing.OwnerLabelv1alpha1, fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace))
 
@@ -68,7 +69,7 @@ func generateAuthorizationPolicy(api *gatewayv1beta1.APIRule, rule gatewayv1beta
 	return apBuilder.Get()
 }
 
-func generateAuthorizationPolicySpec(api *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rule) *v1beta1.AuthorizationPolicy {
+func generateAuthorizationPolicySpec(api *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rule, includeFromSpec bool) *v1beta1.AuthorizationPolicy {
 	var serviceName string
 	if rule.Service != nil {
 		serviceName = *rule.Service.Name
@@ -79,7 +80,7 @@ func generateAuthorizationPolicySpec(api *gatewayv1beta1.APIRule, rule gatewayv1
 	authorizationPolicySpec := builders.AuthorizationPolicySpecBuilder().
 		Selector(builders.SelectorBuilder().MatchLabels("app", serviceName)).
 		Rule(builders.RuleBuilder().
-			RuleFrom(builders.RuleFromBuilder().Source()).
+			RuleFromConditional(builders.RuleFromBuilder().Source(), includeFromSpec).
 			RuleTo(builders.RuleToBuilder().
 				Operation(builders.OperationBuilder().Methods(rule.Methods).Path(rule.Path))))
 

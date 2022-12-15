@@ -17,7 +17,7 @@ import (
 )
 
 var _ = Describe("Reconciliation", func() {
-	When("multiple handlers in addtion to Istio JWT", func() {
+	When("multiple handlers in addition to Istio JWT", func() {
 		jwtConfigJSON := fmt.Sprintf(`{"authentications": [{"issuer": "%s", "jwksUri": "%s"}]}`, JwtIssuer, JwksUri)
 		jwt := []*gatewayv1beta1.Authenticator{
 			{
@@ -30,19 +30,19 @@ var _ = Describe("Reconciliation", func() {
 			},
 		}
 
-		It("with ory noop should provide Istio VS, AP, RA and Ory rule", func() {
+		It("with allow handler should provide Istio VS, RA and 2 APs", func() {
 			// given
-			noop := []*gatewayv1beta1.Authenticator{
+			allow := []*gatewayv1beta1.Authenticator{
 				{
 					Handler: &gatewayv1beta1.Handler{
-						Name: "noop",
+						Name: "allow",
 					},
 				},
 			}
 
-			noopRule := GetRuleFor(ApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, noop)
+			allowRule := GetRuleFor(ApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, allow)
 			jwtRule := GetRuleFor(HeadersApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, jwt)
-			rules := []gatewayv1beta1.Rule{noopRule, jwtRule}
+			rules := []gatewayv1beta1.Rule{allowRule, jwtRule}
 
 			apiRule := GetAPIRuleFor(rules)
 			faceClient := GetEmptyFakeClient()
@@ -61,10 +61,10 @@ var _ = Describe("Reconciliation", func() {
 			// then
 			Expect(createdObjects).To(HaveLen(4))
 
-			vsCreated, oryRuleCreated, raCreated, apCreated := false, false, false, false
+			vsCreated, raCreated := false, false
+			apCreated := 0
 			for _, createdObj := range createdObjects {
 				vs, vsOk := createdObj.(*networkingv1beta1.VirtualService)
-				ar, arOk := createdObj.(*rulev1alpha1.Rule)
 				ra, raOk := createdObj.(*securityv1beta1.RequestAuthentication)
 				ap, apOk := createdObj.(*securityv1beta1.AuthorizationPolicy)
 
@@ -74,11 +74,6 @@ var _ = Describe("Reconciliation", func() {
 					Expect(len(vs.Spec.Http)).To(Equal(2))
 					Expect(len(vs.Spec.Http[1].Route)).To(Equal(1))
 					Expect(vs.Spec.Http[1].Route[0].Destination.Host).To(Equal(ServiceName + "." + ApiNamespace + ".svc.cluster.local"))
-				} else if arOk {
-					oryRuleCreated = true
-					Expect(ar).NotTo(BeNil())
-					Expect(ar.Spec.Authenticators[0].Handler.Name).To(Equal("noop"))
-					Expect(ar.Spec.Upstream.URL).To(Equal(fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", ServiceName, ApiNamespace, ServicePort)))
 				} else if raOk {
 					raCreated = true
 					Expect(ra).NotTo(BeNil())
@@ -86,25 +81,22 @@ var _ = Describe("Reconciliation", func() {
 					Expect(ra.Spec.JwtRules[0].Issuer).To(Equal(JwtIssuer))
 					Expect(ra.Spec.JwtRules[0].JwksUri).To(Equal(JwksUri))
 				} else if apOk {
-					apCreated = true
+					apCreated++
 					Expect(ap).NotTo(BeNil())
 					Expect(len(ap.Spec.Rules)).To(Equal(1))
-					Expect(len(ap.Spec.Rules[0].From)).To(Equal(1))
-					Expect(len(ap.Spec.Rules[0].From[0].Source.RequestPrincipals)).To(Equal(1))
-					Expect(ap.Spec.Rules[0].From[0].Source.RequestPrincipals[0]).To(Equal("*"))
 				}
 			}
 
-			Expect(vsCreated && oryRuleCreated && raCreated && apCreated).To(BeTrue())
+			Expect(vsCreated && raCreated && apCreated == 2).To(BeTrue())
 		})
 
-		It("with ory oauth2 should provide Istio VS, AP, RA and Ory rule", func() {
+		It("with Ory oauth2 should provide Istio VS, AP, RA and Ory rule", func() {
 			// given
 			oauthConfigJSON := fmt.Sprintf(`{"required_scope": [%s]}`, ToCSVList(ApiScopes))
 			oauth := []*gatewayv1beta1.Authenticator{
 				{
 					Handler: &gatewayv1beta1.Handler{
-						Name: "oauth2_introspection",
+						Name: "noop",
 						Config: &runtime.RawExtension{
 							Raw: []byte(oauthConfigJSON),
 						},
@@ -131,9 +123,10 @@ var _ = Describe("Reconciliation", func() {
 			}
 
 			// then
-			Expect(createdObjects).To(HaveLen(4))
+			Expect(createdObjects).To(HaveLen(5))
 
-			vsCreated, oryRuleCreated, raCreated, apCreated := false, false, false, false
+			vsCreated, oryRuleCreated, raCreated := false, false, false
+			apCreated := 0
 			for _, createdObj := range createdObjects {
 				vs, vsOk := createdObj.(*networkingv1beta1.VirtualService)
 				ar, arOk := createdObj.(*rulev1alpha1.Rule)
@@ -149,7 +142,7 @@ var _ = Describe("Reconciliation", func() {
 				} else if arOk {
 					oryRuleCreated = true
 					Expect(ar).NotTo(BeNil())
-					Expect(ar.Spec.Authenticators[0].Handler.Name).To(Equal("oauth2_introspection"))
+					Expect(ar.Spec.Authenticators[0].Handler.Name).To(Equal("noop"))
 					Expect(ar.Spec.Upstream.URL).To(Equal(fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", ServiceName, ApiNamespace, ServicePort)))
 				} else if raOk {
 					raCreated = true
@@ -158,16 +151,13 @@ var _ = Describe("Reconciliation", func() {
 					Expect(ra.Spec.JwtRules[0].Issuer).To(Equal(JwtIssuer))
 					Expect(ra.Spec.JwtRules[0].JwksUri).To(Equal(JwksUri))
 				} else if apOk {
-					apCreated = true
+					apCreated++
 					Expect(ap).NotTo(BeNil())
 					Expect(len(ap.Spec.Rules)).To(Equal(1))
-					Expect(len(ap.Spec.Rules[0].From)).To(Equal(1))
-					Expect(len(ap.Spec.Rules[0].From[0].Source.RequestPrincipals)).To(Equal(1))
-					Expect(ap.Spec.Rules[0].From[0].Source.RequestPrincipals[0]).To(Equal("*"))
 				}
 			}
 
-			Expect(vsCreated && oryRuleCreated && raCreated && apCreated).To(BeTrue())
+			Expect(vsCreated && oryRuleCreated && raCreated && apCreated == 2).To(BeTrue())
 		})
 	})
 })

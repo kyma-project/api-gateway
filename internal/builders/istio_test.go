@@ -34,8 +34,8 @@ var _ = Describe("Builder for", func() {
 					Selector(SelectorBuilder().
 						MatchLabels(testMatchLabelsKey, testMatchLabelsValue)).
 					Rule(RuleBuilder().
-						RuleFrom(RuleFromBuilder().
-							Source()).
+						RuleFromConditional(RuleFromBuilder().
+							Source(), true).
 						RuleTo(RuleToBuilder().
 							Operation(OperationBuilder().
 								Path(path).
