@@ -7,10 +7,9 @@ require (
 	github.com/onsi/ginkgo v1.16.5
 	github.com/onsi/gomega v1.24.2
 	github.com/ory/oathkeeper-maester v0.1.7
-	golang.org/x/exp v0.0.0-20221212164502-fae10dda9338
-	istio.io/api v0.0.0-20221013011440-bc935762d2b9
-	istio.io/client-go v1.15.3
-	k8s.io/apimachinery v0.25.4
+	istio.io/api v0.0.0-20221208070204-0528cb6ce63b
+	istio.io/client-go v1.16.1
+	k8s.io/apimachinery v0.26.0
 	k8s.io/client-go v0.25.4
 	sigs.k8s.io/controller-runtime v0.13.1
 )
