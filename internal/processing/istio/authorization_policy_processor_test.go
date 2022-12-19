@@ -9,12 +9,12 @@ import (
 	"github.com/kyma-incubator/api-gateway/internal/processing/istio"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"golang.org/x/exp/slices"
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
 var _ = Describe("Authorization Policy Processor", func() {
-
 	createIstioJwtAccessStrategy := func() *gatewayv1beta1.Authenticator {
 		jwtConfigJSON := fmt.Sprintf(`{
 			"authentications": [{"issuer": "%s", "jwksUri": "%s"}]}`, JwtIssuer, JwksUri)
@@ -27,6 +27,7 @@ var _ = Describe("Authorization Policy Processor", func() {
 			},
 		}
 	}
+
 	It("should produce two APs for a rule with one issuer and two paths", func() {
 		// given
 		jwt := createIstioJwtAccessStrategy()
@@ -43,12 +44,13 @@ var _ = Describe("Authorization Policy Processor", func() {
 
 		// when
 		result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
-		ap1 := result[0].Obj.(*securityv1beta1.AuthorizationPolicy)
-		ap2 := result[1].Obj.(*securityv1beta1.AuthorizationPolicy)
 
 		// then
 		Expect(err).To(BeNil())
 		Expect(result).To(HaveLen(2))
+
+		ap1 := result[0].Obj.(*securityv1beta1.AuthorizationPolicy)
+		ap2 := result[1].Obj.(*securityv1beta1.AuthorizationPolicy)
 
 		Expect(ap1).NotTo(BeNil())
 		Expect(ap1.ObjectMeta.Name).To(BeEmpty())
@@ -127,7 +129,6 @@ var _ = Describe("Authorization Policy Processor", func() {
 		client := GetEmptyFakeClient()
 		ruleJwt := GetRuleWithServiceFor(HeadersApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, []*gatewayv1beta1.Authenticator{jwt}, service)
 		apiRule := GetAPIRuleFor([]gatewayv1beta1.Rule{ruleJwt})
-
 		processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig())
 
 		// when
@@ -169,6 +170,7 @@ var _ = Describe("Authorization Policy Processor", func() {
 		// then
 		Expect(err).To(BeNil())
 		Expect(result).To(HaveLen(1))
+
 		ap := result[0].Obj.(*securityv1beta1.AuthorizationPolicy)
 
 		Expect(ap).NotTo(BeNil())
@@ -193,5 +195,213 @@ var _ = Describe("Authorization Policy Processor", func() {
 		Expect(ap.OwnerReferences[0].Kind).To(Equal(ApiKind))
 		Expect(ap.OwnerReferences[0].Name).To(Equal(ApiName))
 		Expect(ap.OwnerReferences[0].UID).To(Equal(ApiUID))
+	})
+
+	When("single handler only", func() {
+
+		It("should create AP with From in Rules Spec for jwt", func() {
+			// given
+			strategies := []*gatewayv1beta1.Authenticator{
+				{
+					Handler: &gatewayv1beta1.Handler{
+						Name: "jwt",
+					},
+				},
+			}
+
+			rule := GetRuleFor(ApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, strategies)
+			rules := []gatewayv1beta1.Rule{rule}
+
+			apiRule := GetAPIRuleFor(rules)
+
+			overrideServiceName := "testName"
+			overrideServiceNamespace := "testName-namespace"
+			overrideServicePort := uint32(8080)
+
+			apiRule.Spec.Service = &gatewayv1beta1.Service{
+				Name:      &overrideServiceName,
+				Namespace: &overrideServiceNamespace,
+				Port:      &overrideServicePort,
+			}
+
+			client := GetEmptyFakeClient()
+			processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig())
+
+			// when
+			result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
+
+			// then
+			Expect(err).To(BeNil())
+			Expect(len(result)).To(Equal(1))
+			ap := result[0].Obj.(*securityv1beta1.AuthorizationPolicy)
+			Expect(len(result)).To(Equal(1))
+			Expect(ap.Spec.Rules[0].From).NotTo(BeEmpty())
+		})
+
+		It("should not create AP for allow", func() {
+			// given
+			strategies := []*gatewayv1beta1.Authenticator{
+				{
+					Handler: &gatewayv1beta1.Handler{
+						Name: "allow",
+					},
+				},
+			}
+
+			allowRule := GetRuleFor(ApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, strategies)
+			rules := []gatewayv1beta1.Rule{allowRule}
+
+			apiRule := GetAPIRuleFor(rules)
+
+			overrideServiceName := "testName"
+			overrideServiceNamespace := "testName-namespace"
+			overrideServicePort := uint32(8080)
+
+			apiRule.Spec.Service = &gatewayv1beta1.Service{
+				Name:      &overrideServiceName,
+				Namespace: &overrideServiceNamespace,
+				Port:      &overrideServicePort,
+			}
+
+			client := GetEmptyFakeClient()
+			processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig())
+
+			// when
+			result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
+
+			// then
+			Expect(err).To(BeNil())
+			Expect(result).To(BeEmpty())
+		})
+
+		It("should not create AP for noop", func() {
+			// given
+			strategies := []*gatewayv1beta1.Authenticator{
+				{
+					Handler: &gatewayv1beta1.Handler{
+						Name: "noop",
+					},
+				},
+			}
+
+			allowRule := GetRuleFor(ApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, strategies)
+			rules := []gatewayv1beta1.Rule{allowRule}
+
+			apiRule := GetAPIRuleFor(rules)
+
+			overrideServiceName := "testName"
+			overrideServiceNamespace := "testName-namespace"
+			overrideServicePort := uint32(8080)
+
+			apiRule.Spec.Service = &gatewayv1beta1.Service{
+				Name:      &overrideServiceName,
+				Namespace: &overrideServiceNamespace,
+				Port:      &overrideServicePort,
+			}
+
+			client := GetEmptyFakeClient()
+			processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig())
+
+			// when
+			result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
+
+			// then
+			Expect(err).To(BeNil())
+			Expect(result).To(BeEmpty())
+		})
+	})
+
+	When("additional handler to JWT", func() {
+		It("should create AP for allow without From spec", func() {
+			// given
+			jwt := createIstioJwtAccessStrategy()
+			allow := &gatewayv1beta1.Authenticator{
+				Handler: &gatewayv1beta1.Handler{
+					Name: "allow",
+				},
+			}
+
+			service := &gatewayv1beta1.Service{
+				Name: &ServiceName,
+				Port: &ServicePort,
+			}
+
+			ruleAllow := GetRuleWithServiceFor(HeadersApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, []*gatewayv1beta1.Authenticator{allow}, service)
+			ruleJwt := GetRuleWithServiceFor(ImgApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, []*gatewayv1beta1.Authenticator{jwt}, service)
+			apiRule := GetAPIRuleFor([]gatewayv1beta1.Rule{ruleAllow, ruleJwt})
+			client := GetEmptyFakeClient()
+			processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig())
+
+			// when
+			results, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
+
+			// then
+			Expect(err).To(BeNil())
+			Expect(results).To(HaveLen(2))
+
+			for _, result := range results {
+				ap := result.Obj.(*securityv1beta1.AuthorizationPolicy)
+
+				Expect(ap).NotTo(BeNil())
+				Expect(len(ap.Spec.Rules)).To(Equal(1))
+				Expect(len(ap.Spec.Rules[0].To)).To(Equal(1))
+				Expect(len(ap.Spec.Rules[0].To[0].Operation.Paths)).To(Equal(1))
+
+				expectedHandlers := []string{HeadersApiPath, ImgApiPath}
+				Expect(slices.Contains(expectedHandlers, ap.Spec.Rules[0].To[0].Operation.Paths[0])).To(BeTrue())
+
+				if ap.Spec.Rules[0].To[0].Operation.Paths[0] == HeadersApiPath {
+					Expect(len(ap.Spec.Rules[0].From)).To(Equal(0))
+				} else if ap.Spec.Rules[0].To[0].Operation.Paths[0] == ImgApiPath {
+					Expect(len(ap.Spec.Rules[0].From)).To(Equal(1))
+				}
+			}
+		})
+
+		It("should create AP for noop without From spec", func() {
+			// given
+			jwt := createIstioJwtAccessStrategy()
+			noop := &gatewayv1beta1.Authenticator{
+				Handler: &gatewayv1beta1.Handler{
+					Name: "noop",
+				},
+			}
+
+			service := &gatewayv1beta1.Service{
+				Name: &ServiceName,
+				Port: &ServicePort,
+			}
+
+			ruleNoop := GetRuleWithServiceFor(HeadersApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, []*gatewayv1beta1.Authenticator{noop}, service)
+			ruleJwt := GetRuleWithServiceFor(ImgApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, []*gatewayv1beta1.Authenticator{jwt}, service)
+			apiRule := GetAPIRuleFor([]gatewayv1beta1.Rule{ruleNoop, ruleJwt})
+			client := GetEmptyFakeClient()
+			processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig())
+
+			// when
+			results, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
+
+			// then
+			Expect(err).To(BeNil())
+			Expect(results).To(HaveLen(2))
+
+			for _, result := range results {
+				ap := result.Obj.(*securityv1beta1.AuthorizationPolicy)
+
+				Expect(ap).NotTo(BeNil())
+				Expect(len(ap.Spec.Rules)).To(Equal(1))
+				Expect(len(ap.Spec.Rules[0].To)).To(Equal(1))
+				Expect(len(ap.Spec.Rules[0].To[0].Operation.Paths)).To(Equal(1))
+
+				expectedHandlers := []string{HeadersApiPath, ImgApiPath}
+				Expect(slices.Contains(expectedHandlers, ap.Spec.Rules[0].To[0].Operation.Paths[0])).To(BeTrue())
+
+				if ap.Spec.Rules[0].To[0].Operation.Paths[0] == HeadersApiPath {
+					Expect(len(ap.Spec.Rules[0].From)).To(Equal(0))
+				} else if ap.Spec.Rules[0].To[0].Operation.Paths[0] == ImgApiPath {
+					Expect(len(ap.Spec.Rules[0].From)).To(Equal(1))
+				}
+			}
+		})
 	})
 })

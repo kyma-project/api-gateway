@@ -1,12 +1,14 @@
-package processing_test
+package processors_test
 
 import (
 	"context"
 	"fmt"
+
 	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
 	"github.com/kyma-incubator/api-gateway/internal/builders"
 	"github.com/kyma-incubator/api-gateway/internal/processing"
 	. "github.com/kyma-incubator/api-gateway/internal/processing/internal/test"
+	"github.com/kyma-incubator/api-gateway/internal/processing/processors"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	. "github.com/onsi/gomega/gstruct"
@@ -22,7 +24,7 @@ var _ = Describe("Access Rule Processor", func() {
 		// given
 		apiRule := &gatewayv1beta1.APIRule{}
 
-		processor := processing.AccessRuleProcessor{
+		processor := processors.AccessRuleProcessor{
 			Creator: mockCreator{
 				createMock: func() map[string]*rulev1alpha1.Rule {
 					return map[string]*rulev1alpha1.Rule{
@@ -88,7 +90,7 @@ var _ = Describe("Access Rule Processor", func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		client := fake.NewClientBuilder().WithScheme(scheme).WithObjects(&rule, &vs).Build()
-		processor := processing.AccessRuleProcessor{
+		processor := processors.AccessRuleProcessor{
 			Creator: mockCreator{
 				createMock: func() map[string]*rulev1alpha1.Rule {
 					return map[string]*rulev1alpha1.Rule{
@@ -154,7 +156,7 @@ var _ = Describe("Access Rule Processor", func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		client := fake.NewClientBuilder().WithScheme(scheme).WithObjects(&rule, &vs).Build()
-		processor := processing.AccessRuleProcessor{
+		processor := processors.AccessRuleProcessor{
 			Creator: mockCreator{
 				createMock: func() map[string]*rulev1alpha1.Rule {
 					return map[string]*rulev1alpha1.Rule{}
@@ -217,7 +219,7 @@ var _ = Describe("Access Rule Processor", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			client := fake.NewClientBuilder().WithScheme(scheme).WithObjects(&rule, &vs).Build()
-			processor := processing.AccessRuleProcessor{
+			processor := processors.AccessRuleProcessor{
 				Creator: mockCreator{
 					createMock: func() map[string]*rulev1alpha1.Rule {
 						return map[string]*rulev1alpha1.Rule{

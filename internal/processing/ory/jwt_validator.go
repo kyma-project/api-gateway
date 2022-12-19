@@ -9,22 +9,23 @@ import (
 	"github.com/kyma-incubator/api-gateway/internal/validation"
 )
 
-type jwtValidator struct{}
+type handlerValidator struct{}
 
-func (o *jwtValidator) Validate(attributePath string, handler *gatewayv1beta1.Handler) []validation.Failure {
+func (o *handlerValidator) Validate(attributePath string, handler *gatewayv1beta1.Handler) []validation.Failure {
 	var problems []validation.Failure
-
 	var template ory.JWTAccStrConfig
 
 	if !validation.ConfigNotEmpty(handler.Config) {
 		problems = append(problems, validation.Failure{AttributePath: attributePath + ".config", Message: "supplied config cannot be empty"})
 		return problems
 	}
+
 	err := json.Unmarshal(handler.Config.Raw, &template)
 	if err != nil {
 		problems = append(problems, validation.Failure{AttributePath: attributePath + ".config", Message: "Can't read json: " + err.Error()})
 		return problems
 	}
+
 	if len(template.TrustedIssuers) > 0 {
 		for i := 0; i < len(template.TrustedIssuers); i++ {
 			invalid, err := validation.IsInvalidURL(template.TrustedIssuers[i])

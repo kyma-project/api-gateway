@@ -14,7 +14,6 @@ import (
 )
 
 var _ = Describe("Request Authentication Processor", func() {
-
 	createIstioJwtAccessStrategy := func() *gatewayv1beta1.Authenticator {
 		jwtConfigJSON := fmt.Sprintf(`{
 			"authentications": [{"issuer": "%s", "jwksUri": "%s"}]}`, JwtIssuer, JwksUri)
@@ -113,6 +112,7 @@ var _ = Describe("Request Authentication Processor", func() {
 		Expect(ra).NotTo(BeNil())
 		Expect(ra.Spec.Selector.MatchLabels[TestSelectorKey]).To(Equal(ruleServiceName))
 	})
+
 	It("should produce RA from a rule with two issuers and one path", func() {
 		jwtConfigJSON := fmt.Sprintf(`{
 			"authentications": [{"issuer": "%s", "jwksUri": "%s"}, {"issuer": "%s", "jwksUri": "%s"}]
@@ -161,5 +161,77 @@ var _ = Describe("Request Authentication Processor", func() {
 		Expect(ra.Spec.JwtRules[0].JwksUri).To(Equal(JwksUri))
 		Expect(ra.Spec.JwtRules[1].Issuer).To(Equal(JwtIssuer2))
 		Expect(ra.Spec.JwtRules[1].JwksUri).To(Equal(JwksUri2))
+	})
+
+	It("should not create RA if handler is allow", func() {
+		// given
+		strategies := []*gatewayv1beta1.Authenticator{
+			{
+				Handler: &gatewayv1beta1.Handler{
+					Name: "allow",
+				},
+			},
+		}
+
+		allowRule := GetRuleFor(ApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, strategies)
+		rules := []gatewayv1beta1.Rule{allowRule}
+
+		apiRule := GetAPIRuleFor(rules)
+
+		overrideServiceName := "testName"
+		overrideServiceNamespace := "testName-namespace"
+		overrideServicePort := uint32(8080)
+
+		apiRule.Spec.Service = &gatewayv1beta1.Service{
+			Name:      &overrideServiceName,
+			Namespace: &overrideServiceNamespace,
+			Port:      &overrideServicePort,
+		}
+
+		client := GetEmptyFakeClient()
+		processor := istio.NewRequestAuthenticationProcessor(GetTestConfig())
+
+		// when
+		result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
+
+		// then
+		Expect(err).To(BeNil())
+		Expect(result).To(BeEmpty())
+	})
+
+	It("should not create RA if handler is noop", func() {
+		// given
+		strategies := []*gatewayv1beta1.Authenticator{
+			{
+				Handler: &gatewayv1beta1.Handler{
+					Name: "noop",
+				},
+			},
+		}
+
+		allowRule := GetRuleFor(ApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, strategies)
+		rules := []gatewayv1beta1.Rule{allowRule}
+
+		apiRule := GetAPIRuleFor(rules)
+
+		overrideServiceName := "testName"
+		overrideServiceNamespace := "testName-namespace"
+		overrideServicePort := uint32(8080)
+
+		apiRule.Spec.Service = &gatewayv1beta1.Service{
+			Name:      &overrideServiceName,
+			Namespace: &overrideServiceNamespace,
+			Port:      &overrideServicePort,
+		}
+
+		client := GetEmptyFakeClient()
+		processor := istio.NewRequestAuthenticationProcessor(GetTestConfig())
+
+		// when
+		result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
+
+		// then
+		Expect(err).To(BeNil())
+		Expect(result).To(BeEmpty())
 	})
 })

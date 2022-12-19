@@ -3,6 +3,8 @@ package ory_test
 import (
 	"context"
 	"fmt"
+	"strconv"
+
 	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
 	"github.com/kyma-incubator/api-gateway/internal/processing"
 	. "github.com/kyma-incubator/api-gateway/internal/processing/internal/test"
@@ -16,18 +18,10 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
-	"strconv"
 )
-
-var idFn = func(index int, element interface{}) string {
-	return strconv.Itoa(index)
-}
-
-var byteToString = func(raw []byte) string { return string(raw) }
 
 var _ = Describe("Access Rule Processor", func() {
 	When("handler is allow", func() {
-
 		It("should not create access rules", func() {
 			// given
 			strategies := []*gatewayv1beta1.Authenticator{
@@ -63,11 +57,9 @@ var _ = Describe("Access Rule Processor", func() {
 			Expect(err).To(BeNil())
 			Expect(result).To(BeEmpty())
 		})
-
 	})
 
 	When("handler is noop", func() {
-
 		It("should override rule with meta data", func() {
 			// given
 			strategies := []*gatewayv1beta1.Authenticator{
@@ -273,11 +265,9 @@ var _ = Describe("Access Rule Processor", func() {
 				Expect(accessRule.Spec.Match.Methods).To(Equal([]string{"GET"}))
 			})
 		})
-
 	})
 
 	When("multiple handler", func() {
-
 		It("should return two rules for given paths", func() {
 			// given
 			noop := []*gatewayv1beta1.Authenticator{
@@ -551,8 +541,13 @@ var _ = Describe("Access Rule Processor", func() {
 	})
 })
 
-func buildNoopMatcher(matchMethods []string, matchUrl string, upstreamUrl string, authorizerHandler string) types.GomegaMatcher {
+var idFn = func(index int, element interface{}) string {
+	return strconv.Itoa(index)
+}
 
+var byteToString = func(raw []byte) string { return string(raw) }
+
+func buildNoopMatcher(matchMethods []string, matchUrl string, upstreamUrl string, authorizerHandler string) types.GomegaMatcher {
 	return PointTo(MatchFields(IgnoreExtras, Fields{
 		"Obj": PointTo(MatchFields(IgnoreExtras, Fields{
 			"Spec": MatchFields(IgnoreExtras, Fields{

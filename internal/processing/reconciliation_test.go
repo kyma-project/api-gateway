@@ -3,6 +3,7 @@ package processing_test
 import (
 	"context"
 	"fmt"
+
 	"github.com/go-logr/logr"
 	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
 	"github.com/kyma-incubator/api-gateway/internal/builders"
@@ -18,7 +19,6 @@ import (
 )
 
 var _ = Describe("Reconcile", func() {
-
 	It("should return api status error and vs/ar status skipped when an error happens during validation", func() {
 		// given
 		cmd := MockReconciliationCommand{

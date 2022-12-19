@@ -2,16 +2,18 @@ package ory
 
 import (
 	"fmt"
+
 	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
 	"github.com/kyma-incubator/api-gateway/internal/builders"
 	"github.com/kyma-incubator/api-gateway/internal/helpers"
 	"github.com/kyma-incubator/api-gateway/internal/processing"
+	"github.com/kyma-incubator/api-gateway/internal/processing/processors"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 )
 
 // NewVirtualServiceProcessor returns a VirtualServiceProcessor with the desired state handling specific for the Ory handler.
-func NewVirtualServiceProcessor(config processing.ReconciliationConfig) processing.VirtualServiceProcessor {
-	return processing.VirtualServiceProcessor{
+func NewVirtualServiceProcessor(config processing.ReconciliationConfig) processors.VirtualServiceProcessor {
+	return processors.VirtualServiceProcessor{
 		Creator: virtualServiceCreator{
 			oathkeeperSvc:     config.OathkeeperSvc,
 			oathkeeperSvcPort: config.OathkeeperSvcPort,
@@ -38,7 +40,7 @@ func (r virtualServiceCreator) Create(api *gatewayv1beta1.APIRule) *networkingv1
 	vsSpecBuilder := builders.VirtualServiceSpec()
 	vsSpecBuilder.Host(helpers.GetHostWithDomain(*api.Spec.Host, r.defaultDomainName))
 	vsSpecBuilder.Gateway(*api.Spec.Gateway)
-	filteredRules := filterDuplicatePaths(api.Spec.Rules)
+	filteredRules := processing.FilterDuplicatePaths(api.Spec.Rules)
 
 	for _, rule := range filteredRules {
 		httpRouteBuilder := builders.HTTPRoute()
@@ -83,17 +85,4 @@ func (r virtualServiceCreator) Create(api *gatewayv1beta1.APIRule) *networkingv1
 	vsBuilder.Spec(vsSpecBuilder)
 
 	return vsBuilder.Get()
-}
-
-func filterDuplicatePaths(rules []gatewayv1beta1.Rule) []gatewayv1beta1.Rule {
-	duplicates := make(map[string]bool)
-	var filteredRules []gatewayv1beta1.Rule
-	for _, rule := range rules {
-		if _, exists := duplicates[rule.Path]; !exists {
-			duplicates[rule.Path] = true
-			filteredRules = append(filteredRules, rule)
-		}
-	}
-
-	return filteredRules
 }
