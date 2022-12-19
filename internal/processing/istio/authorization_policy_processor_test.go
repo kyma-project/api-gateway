@@ -198,6 +198,46 @@ var _ = Describe("Authorization Policy Processor", func() {
 	})
 
 	When("single handler only", func() {
+
+		It("should create AP with From in Rules Spec for jwt", func() {
+			// given
+			strategies := []*gatewayv1beta1.Authenticator{
+				{
+					Handler: &gatewayv1beta1.Handler{
+						Name: "jwt",
+					},
+				},
+			}
+
+			rule := GetRuleFor(ApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, strategies)
+			rules := []gatewayv1beta1.Rule{rule}
+
+			apiRule := GetAPIRuleFor(rules)
+
+			overrideServiceName := "testName"
+			overrideServiceNamespace := "testName-namespace"
+			overrideServicePort := uint32(8080)
+
+			apiRule.Spec.Service = &gatewayv1beta1.Service{
+				Name:      &overrideServiceName,
+				Namespace: &overrideServiceNamespace,
+				Port:      &overrideServicePort,
+			}
+
+			client := GetEmptyFakeClient()
+			processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig())
+
+			// when
+			result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
+
+			// then
+			Expect(err).To(BeNil())
+			Expect(len(result)).To(Equal(1))
+			ap := result[0].Obj.(*securityv1beta1.AuthorizationPolicy)
+			Expect(len(result)).To(Equal(1))
+			Expect(ap.Spec.Rules[0].From).NotTo(BeEmpty())
+		})
+
 		It("should not create AP for allow", func() {
 			// given
 			strategies := []*gatewayv1beta1.Authenticator{

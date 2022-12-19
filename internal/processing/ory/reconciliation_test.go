@@ -17,7 +17,7 @@ import (
 )
 
 var _ = Describe("Reconciliation", func() {
-	When("multiple handlers in addtion to ory jwt", func() {
+	When("multiple handlers in addition to ory jwt", func() {
 		jwtConfigJSON := fmt.Sprintf(`
 		{
 			"trusted_issuers": ["%s"],

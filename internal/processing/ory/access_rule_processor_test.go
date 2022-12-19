@@ -541,14 +541,6 @@ var _ = Describe("Access Rule Processor", func() {
 	})
 })
 
-type mockCreator struct {
-	createMock func() map[string]*rulev1alpha1.Rule
-}
-
-func (r mockCreator) Create(_ *gatewayv1beta1.APIRule) map[string]*rulev1alpha1.Rule {
-	return r.createMock()
-}
-
 var idFn = func(index int, element interface{}) string {
 	return strconv.Itoa(index)
 }

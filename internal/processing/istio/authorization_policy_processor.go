@@ -42,14 +42,14 @@ func (r authorizationPolicyCreator) Create(api *gatewayv1beta1.APIRule) map[stri
 	hasJwtRule := processing.HasJwtRule(api)
 	for _, rule := range api.Spec.Rules {
 		if hasJwtRule {
-			ar := generateAuthorizationPolicy(api, rule, r.additionalLabels, processing.IsJwtSecured(rule))
+			ar := generateAuthorizationPolicy(api, rule, r.additionalLabels)
 			authorizationPolicies[processors.GetAuthorizationPolicyKey(pathDuplicates, ar)] = ar
 		}
 	}
 	return authorizationPolicies
 }
 
-func generateAuthorizationPolicy(api *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rule, additionalLabels map[string]string, includeFromSpec bool) *securityv1beta1.AuthorizationPolicy {
+func generateAuthorizationPolicy(api *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rule, additionalLabels map[string]string) *securityv1beta1.AuthorizationPolicy {
 	namePrefix := fmt.Sprintf("%s-", api.ObjectMeta.Name)
 	namespace := api.ObjectMeta.Namespace
 	ownerRef := processing.GenerateOwnerRef(api)
@@ -58,7 +58,7 @@ func generateAuthorizationPolicy(api *gatewayv1beta1.APIRule, rule gatewayv1beta
 		GenerateName(namePrefix).
 		Namespace(namespace).
 		Owner(builders.OwnerReference().From(&ownerRef)).
-		Spec(builders.AuthorizationPolicySpecBuilder().From(generateAuthorizationPolicySpec(api, rule, includeFromSpec))).
+		Spec(builders.AuthorizationPolicySpecBuilder().From(generateAuthorizationPolicySpec(api, rule))).
 		Label(processing.OwnerLabel, fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace)).
 		Label(processing.OwnerLabelv1alpha1, fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace))
 
@@ -69,7 +69,7 @@ func generateAuthorizationPolicy(api *gatewayv1beta1.APIRule, rule gatewayv1beta
 	return apBuilder.Get()
 }
 
-func generateAuthorizationPolicySpec(api *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rule, includeFromSpec bool) *v1beta1.AuthorizationPolicy {
+func generateAuthorizationPolicySpec(api *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rule) *v1beta1.AuthorizationPolicy {
 	var serviceName string
 	if rule.Service != nil {
 		serviceName = *rule.Service.Name
@@ -77,12 +77,16 @@ func generateAuthorizationPolicySpec(api *gatewayv1beta1.APIRule, rule gatewayv1
 		serviceName = *api.Spec.Service.Name
 	}
 
+	ruleBuilder := builders.RuleBuilder().RuleTo(builders.RuleToBuilder().
+		Operation(builders.OperationBuilder().Methods(rule.Methods).Path(rule.Path)))
+
+	if processing.IsJwtSecured(rule) {
+		ruleBuilder.RuleFrom(builders.RuleFromBuilder().Source())
+	}
+
 	authorizationPolicySpec := builders.AuthorizationPolicySpecBuilder().
 		Selector(builders.SelectorBuilder().MatchLabels("app", serviceName)).
-		Rule(builders.RuleBuilder().
-			RuleFromConditional(builders.RuleFromBuilder().Source(), includeFromSpec).
-			RuleTo(builders.RuleToBuilder().
-				Operation(builders.OperationBuilder().Methods(rule.Methods).Path(rule.Path))))
+		Rule(ruleBuilder)
 
 	return authorizationPolicySpec.Get()
 }

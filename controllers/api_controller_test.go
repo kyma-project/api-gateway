@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -42,25 +41,18 @@ import (
 )
 
 var (
-	ts                                       *testSuite
-	serviceName, host, authStrategy, gateway string
-	servicePort                              uint32
-	isExernal                                bool
+	ts                         *testSuite
+	serviceName, host, gateway string
+	servicePort                uint32
+	isExernal                  bool
 )
 
 type FakeConfigMapReader struct {
 	Content string
 }
 
-func (f FakeConfigMapReader) ReadConfigMap(ctx context.Context, client client.Client) ([]byte, error) {
+func (f FakeConfigMapReader) ReadConfigMap(_ context.Context, _ client.Client) ([]byte, error) {
 	return io.ReadAll(bytes.NewBufferString(f.Content))
-}
-
-type ErrorFileReader struct {
-}
-
-func (e ErrorFileReader) ReadFile(filename string) ([]byte, error) {
-	return []byte{}, errors.New("foo-error")
 }
 
 var _ = Describe("Controller", func() {
@@ -247,10 +239,10 @@ func getJWTIstioConfig() *runtime.RawExtension {
 }
 
 func getRawConfig(config any) *runtime.RawExtension {
-	bytes, err := json.Marshal(config)
+	b, err := json.Marshal(config)
 	Expect(err).To(BeNil())
 	return &runtime.RawExtension{
-		Raw: bytes,
+		Raw: b,
 	}
 }
 
@@ -301,15 +293,15 @@ func (f fakeManager) Elected() <-chan struct{} {
 	return nil
 }
 
-func (f fakeManager) AddMetricsExtraHandler(path string, handler http.Handler) error {
+func (f fakeManager) AddMetricsExtraHandler(_ string, _ http.Handler) error {
 	return nil
 }
 
-func (f fakeManager) AddHealthzCheck(name string, check healthz.Checker) error {
+func (f fakeManager) AddHealthzCheck(_ string, _ healthz.Checker) error {
 	return nil
 }
 
-func (f fakeManager) AddReadyzCheck(name string, check healthz.Checker) error {
+func (f fakeManager) AddReadyzCheck(_ string, _ healthz.Checker) error {
 	return nil
 }
 
@@ -317,60 +309,60 @@ func (fakeManager) Add(manager.Runnable) error {
 	return nil
 }
 
-func (fakeManager) SetFields(interface{}) error {
+func (f fakeManager) SetFields(interface{}) error {
 	return nil
 }
 
-func (fakeManager) Start(ctx context.Context) error {
+func (f fakeManager) Start(_ context.Context) error {
 	return nil
 }
 
-func (fakeManager) GetConfig() *rest.Config {
+func (f fakeManager) GetConfig() *rest.Config {
 	return &rest.Config{}
 }
 
-func (f *fakeManager) GetScheme() *runtime.Scheme {
+func (f fakeManager) GetScheme() *runtime.Scheme {
 	// Setup schemes for all resources
 	return f.sch
 }
 
-func (f *fakeManager) GetClient() client.Client {
+func (f fakeManager) GetClient() client.Client {
 	return f.client
 }
 
-func (fakeManager) GetFieldIndexer() client.FieldIndexer {
+func (f fakeManager) GetFieldIndexer() client.FieldIndexer {
 	return nil
 }
 
-func (fakeManager) GetCache() cache.Cache {
+func (f fakeManager) GetCache() cache.Cache {
 	return nil
 }
 
-func (fakeManager) GetRecorder(name string) record.EventRecorder {
+func (f fakeManager) GetRecorder(_ string) record.EventRecorder {
 	return nil
 }
 
-func (fakeManager) GetEventRecorderFor(name string) record.EventRecorder {
+func (f fakeManager) GetEventRecorderFor(_ string) record.EventRecorder {
 	return nil
 }
 
-func (fakeManager) GetAPIReader() client.Reader {
+func (f fakeManager) GetAPIReader() client.Reader {
 	return nil
 }
 
-func (fakeManager) GetWebhookServer() *webhook.Server {
+func (f fakeManager) GetWebhookServer() *webhook.Server {
 	return nil
 }
 
-func (fakeManager) GetRESTMapper() meta.RESTMapper {
+func (f fakeManager) GetRESTMapper() meta.RESTMapper {
 	return nil
 }
 
-func (fakeManager) GetLogger() logr.Logger {
+func (f fakeManager) GetLogger() logr.Logger {
 	return logr.Logger{}
 }
 
-func (fakeManager) Stop() meta.RESTMapper {
+func (f fakeManager) Stop() meta.RESTMapper {
 	return nil
 }
 
