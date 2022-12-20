@@ -711,7 +711,7 @@ var _ = Describe("APIRule Controller", func() {
 					Eventually(requests, timeout).Should(Receive(Equal(expectedRequest)))
 
 					apiRuleName := generateTestName(testNameBase, testIDLength)
-					testServiceHost := "httpbin-jwt.kyma.local"
+					testServiceHost := fmt.Sprintf("httpbin-%s.kyma.local", apiRuleName)
 
 					rule := testRule("/img", []string{"GET"}, nil, testOryJWTHandler(testIssuer, testScopes))
 					instance := testInstance(apiRuleName, testNamespace, testServiceName, testServiceHost, testServicePort, []gatewayv1beta1.Rule{rule})
@@ -761,7 +761,7 @@ var _ = Describe("APIRule Controller", func() {
 					Eventually(requests, timeout).Should(Receive(Equal(cmRequest)))
 
 					apiRuleName := generateTestName(testNameBase, testIDLength)
-					testServiceHost := "httpbin-jwt.kyma.local"
+					testServiceHost := fmt.Sprintf("httpbin-%s.kyma.local", apiRuleName)
 
 					rule := testRule("/img", []string{"GET"}, nil, testOryJWTHandler(testIssuer, testScopes))
 					apiRule := testInstance(apiRuleName, testNamespace, testServiceName, testServiceHost, testServicePort, []gatewayv1beta1.Rule{rule})
@@ -785,6 +785,7 @@ var _ = Describe("APIRule Controller", func() {
 					cmRequest = reconcile.Request{NamespacedName: types.NamespacedName{Name: cm.Name, Namespace: cm.Namespace}}
 					Eventually(requests, timeout).Should(Receive(Equal(cmRequest)))
 
+					// when
 					By("Updating JWT handler in ApiRule to be valid for istio")
 					istioJwtRule := testRule("/img", []string{"GET"}, nil, testIstioJWTHandler(testIssuer, testJwksUri))
 					updatedApiRule := gatewayv1beta1.APIRule{}
@@ -794,7 +795,6 @@ var _ = Describe("APIRule Controller", func() {
 					err = c.Update(context.TODO(), &updatedApiRule)
 					Expect(err).NotTo(HaveOccurred())
 
-					// when
 					updateApiRuleReq := reconcile.Request{NamespacedName: types.NamespacedName{Name: apiRuleName, Namespace: testNamespace}}
 					Eventually(requests, timeout).Should(Receive(Equal(updateApiRuleReq)))
 
@@ -809,6 +809,9 @@ var _ = Describe("APIRule Controller", func() {
 					err = c.List(context.TODO(), &apList, matchingLabels)
 					Expect(err).NotTo(HaveOccurred())
 					Expect(apList.Items).To(HaveLen(1))
+
+					ruleList := getRuleList(matchingLabels)
+					Expect(ruleList).To(HaveLen(0))
 
 					expectedApiRule := gatewayv1beta1.APIRule{}
 					err = c.Get(context.TODO(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &expectedApiRule)
@@ -834,7 +837,7 @@ var _ = Describe("APIRule Controller", func() {
 					Eventually(requests, timeout).Should(Receive(Equal(expectedRequest)))
 
 					apiRuleName := generateTestName(testNameBase, testIDLength)
-					testServiceHost := "httpbin-jwt.kyma.local"
+					testServiceHost := fmt.Sprintf("httpbin-%s.kyma.local", apiRuleName)
 
 					rule := testRule("/img", []string{"GET"}, nil, testIstioJWTHandler(testIssuer, testJwksUri))
 					instance := testInstance(apiRuleName, testNamespace, testServiceName, testServiceHost, testServicePort, []gatewayv1beta1.Rule{rule})
