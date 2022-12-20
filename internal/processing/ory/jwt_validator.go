@@ -26,6 +26,9 @@ func (o *handlerValidator) Validate(attributePath string, handler *gatewayv1beta
 		return problems
 	}
 
+	// The https:// configuration for TrustedIssuers is not necessary in terms of security best practices,
+	// however it is part of "secure by default" configuration, as this is the most common use case for iss claim.
+	// If we want to allow some weaker configurations, we should have a dedicated configuration which allows that.
 	if len(template.TrustedIssuers) > 0 {
 		for i := 0; i < len(template.TrustedIssuers); i++ {
 			invalid, err := validation.IsInvalidURL(template.TrustedIssuers[i])
