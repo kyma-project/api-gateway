@@ -1,6 +1,7 @@
 package processing_test
 
 import (
+	"fmt"
 	v1beta12 "github.com/kyma-incubator/api-gateway/api/v1beta1"
 	"github.com/kyma-incubator/api-gateway/internal/processing"
 	"github.com/onsi/gomega"
@@ -80,6 +81,19 @@ func GetEmptyFakeClient() client.Client {
 	return fake.NewClientBuilder().WithScheme(scheme).WithObjects().Build()
 }
 
+// TODO This should replace the GetEmptyFakeClient function before merging it. This wasn't done yet, because this will cause a lot of changes and will make it harder to merge.
+func GetFakeClient(objs ...client.Object) client.Client {
+	scheme := runtime.NewScheme()
+	err := networkingv1beta1.AddToScheme(scheme)
+	gomega.Expect(err).NotTo(gomega.HaveOccurred())
+	err = rulev1alpha1.AddToScheme(scheme)
+	gomega.Expect(err).NotTo(gomega.HaveOccurred())
+	err = securityv1beta1.AddToScheme(scheme)
+	gomega.Expect(err).NotTo(gomega.HaveOccurred())
+
+	return fake.NewClientBuilder().WithScheme(scheme).WithObjects(objs...).Build()
+}
+
 func GetRuleFor(path string, methods []string, mutators []*v1beta12.Mutator, accessStrategies []*v1beta12.Authenticator) v1beta12.Rule {
 	return v1beta12.Rule{
 		Path:             path,
@@ -97,6 +111,28 @@ func GetRuleWithServiceFor(path string, methods []string, mutators []*v1beta12.M
 		AccessStrategies: accessStrategies,
 		Service:          service,
 	}
+}
+
+func GetJwtRuleWithService(jwtIssuer, jwksUri, serviceName string) v1beta12.Rule {
+	jwtConfigJSON := fmt.Sprintf(`{"authentications": [{"issuer": "%s", "jwksUri": "%s"}]}`, jwtIssuer, jwksUri)
+	jwt := []*v1beta12.Authenticator{
+		{
+			Handler: &v1beta12.Handler{
+				Name: "jwt",
+				Config: &runtime.RawExtension{
+					Raw: []byte(jwtConfigJSON),
+				},
+			},
+		},
+	}
+
+	port := uint32(8080)
+	jwtRuleService := &v1beta12.Service{
+		Name: &serviceName,
+		Port: &port,
+	}
+
+	return GetRuleWithServiceFor("path", ApiMethods, []*v1beta12.Mutator{}, jwt, jwtRuleService)
 }
 
 func GetAPIRuleFor(rules []v1beta12.Rule) *v1beta12.APIRule {
@@ -135,3 +171,5 @@ func ToCSVList(input []string) string {
 
 	return res
 }
+
+var ActionToString = func(a processing.Action) string { return a.String() }

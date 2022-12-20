@@ -46,10 +46,9 @@ func (r AuthorizationPolicyProcessor) getActualState(ctx context.Context, client
 	}
 
 	authorizationPolicies := make(map[string]*securityv1beta1.AuthorizationPolicy)
-	pathDuplicates := HasPathDuplicates(api.Spec.Rules)
 	for i := range apList.Items {
 		obj := apList.Items[i]
-		authorizationPolicies[GetAuthorizationPolicyKey(pathDuplicates, obj)] = obj
+		authorizationPolicies[GetAuthorizationPolicyKey(obj)] = obj
 	}
 
 	return authorizationPolicies, nil
@@ -84,16 +83,13 @@ func (r AuthorizationPolicyProcessor) getObjectChanges(desiredAps map[string]*se
 	return apChangesToApply
 }
 
-func GetAuthorizationPolicyKey(hasPathDuplicates bool, ap *securityv1beta1.AuthorizationPolicy) string {
+func GetAuthorizationPolicyKey(ap *securityv1beta1.AuthorizationPolicy) string {
 	key := ""
 	if ap.Spec.Rules != nil && len(ap.Spec.Rules) > 0 && ap.Spec.Rules[0].To != nil && len(ap.Spec.Rules[0].To) > 0 {
-		if hasPathDuplicates {
-			key = fmt.Sprintf("%s:%s",
-				processing.SliceToString(ap.Spec.Rules[0].To[0].Operation.Paths),
-				processing.SliceToString(ap.Spec.Rules[0].To[0].Operation.Methods))
-		} else {
-			key = processing.SliceToString(ap.Spec.Rules[0].To[0].Operation.Paths)
-		}
+		key = fmt.Sprintf("%s:%s",
+			processing.SliceToString(ap.Spec.Rules[0].To[0].Operation.Paths),
+			processing.SliceToString(ap.Spec.Rules[0].To[0].Operation.Methods))
+
 	}
 
 	return key

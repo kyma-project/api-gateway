@@ -37,7 +37,7 @@ var _ = Describe("Access Rule Processor", func() {
 		}
 
 		// when
-		result, err := processor.EvaluateReconciliation(context.TODO(), GetEmptyFakeClient(), apiRule)
+		result, err := processor.EvaluateReconciliation(context.TODO(), GetFakeClient(), apiRule)
 
 		// then
 		Expect(err).To(BeNil())
@@ -173,7 +173,7 @@ var _ = Describe("Access Rule Processor", func() {
 		Expect(result[0].Action.String()).To(Equal("delete"))
 	})
 
-	When("rule exists and and rule path is different", func() {
+	When("rule exists and rule path is different", func() {
 		It("should create new rule and delete old rule", func() {
 			// given
 			noop := []*gatewayv1beta1.Authenticator{
