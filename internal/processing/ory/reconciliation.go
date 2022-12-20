@@ -18,9 +18,11 @@ type Reconciliation struct {
 func NewOryReconciliation(config processing.ReconciliationConfig) Reconciliation {
 	acProcessor := NewAccessRuleProcessor(config)
 	vsProcessor := NewVirtualServiceProcessor(config)
+	apProcessor := NewAuthorizationPolicyProcessor(config)
+	raProcessor := NewRequestAuthenticationProcessor(config)
 
 	return Reconciliation{
-		processors: []processing.ReconciliationProcessor{vsProcessor, acProcessor},
+		processors: []processing.ReconciliationProcessor{vsProcessor, raProcessor, apProcessor, acProcessor},
 		config:     config,
 	}
 }

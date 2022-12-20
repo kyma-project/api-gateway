@@ -130,9 +130,31 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		}
 		if isCMReconcile {
 			configValidationFailures := validator.ValidateConfig(r.Config)
+			r.Log.Info("ConfigMap changed")
 			if len(configValidationFailures) > 0 {
 				failuresJson, _ := json.Marshal(configValidationFailures)
 				r.Log.Error(err, fmt.Sprintf(`Config validation failure {"controller": "Api", "failures": %s}`, string(failuresJson)))
+			}
+			c := processing.ReconciliationConfig{
+				OathkeeperSvc:     r.OathkeeperSvc,
+				OathkeeperSvcPort: r.OathkeeperSvcPort,
+				CorsConfig:        r.CorsConfig,
+				AdditionalLabels:  r.GeneratedObjectsLabels,
+				DefaultDomainName: r.DefaultDomainName,
+				ServiceBlockList:  r.ServiceBlockList,
+				DomainAllowList:   r.DomainAllowList,
+				HostBlockList:     r.HostBlockList,
+			}
+			cmd := r.getReconciliation(c)
+			apiRuleList, err := helpers.ListApiRule(ctx, r.Client)
+			if err != nil {
+				r.Log.Error(err, "Cannot get list of all ApiRules")
+				return doneReconcile()
+			}
+			for _, apiRule := range apiRuleList.Items {
+				r.Log.Info(fmt.Sprintf("apirul name: %s in namespace %s", apiRule.Name, apiRule.Namespace))
+				status := processing.Reconcile(ctx, r.Client, &r.Log, cmd, &apiRule)
+				r.Log.Info(fmt.Sprintf("Status code: %d", status.ApiRuleStatus.Code))
 			}
 			return doneReconcile()
 		}
