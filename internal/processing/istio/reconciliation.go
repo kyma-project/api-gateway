@@ -16,6 +16,7 @@ type Reconciliation struct {
 }
 
 func NewIstioReconciliation(config processing.ReconciliationConfig) Reconciliation {
+	acProcessor := NewAccessRuleProcessor(config)
 	vsProcessor := NewVirtualServiceProcessor(config)
 	apProcessor := NewAuthorizationPolicyProcessor(config)
 	raProcessor := NewRequestAuthenticationProcessor(config)
@@ -28,18 +29,18 @@ func NewIstioReconciliation(config processing.ReconciliationConfig) Reconciliati
 }
 
 func (r Reconciliation) Validate(ctx context.Context, client client.Client, apiRule *gatewayv1beta1.APIRule) ([]validation.Failure, error) {
-
 	var vsList networkingv1beta1.VirtualServiceList
 	if err := client.List(ctx, &vsList); err != nil {
 		return make([]validation.Failure, 0), err
 	}
 
 	validator := validation.APIRule{
-		JwtValidator:      &jwtValidator{},
-		ServiceBlockList:  r.config.ServiceBlockList,
-		DomainAllowList:   r.config.DomainAllowList,
-		HostBlockList:     r.config.HostBlockList,
-		DefaultDomainName: r.config.DefaultDomainName,
+		HandlerValidator:          &handlerValidator{},
+		AccessStrategiesValidator: &asValidator{},
+		ServiceBlockList:          r.config.ServiceBlockList,
+		DomainAllowList:           r.config.DomainAllowList,
+		HostBlockList:             r.config.HostBlockList,
+		DefaultDomainName:         r.config.DefaultDomainName,
 	}
 	return validator.Validate(apiRule, vsList), nil
 }

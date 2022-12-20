@@ -9,9 +9,9 @@ import (
 	"github.com/kyma-incubator/api-gateway/internal/validation"
 )
 
-type jwtValidator struct{}
+type handlerValidator struct{}
 
-func (o *jwtValidator) Validate(attributePath string, handler *gatewayv1beta1.Handler) []validation.Failure {
+func (o *handlerValidator) Validate(attributePath string, handler *gatewayv1beta1.Handler) []validation.Failure {
 	var problems []validation.Failure
 	var template istiojwt.JwtConfig
 
@@ -32,6 +32,9 @@ func (o *jwtValidator) Validate(attributePath string, handler *gatewayv1beta1.Ha
 			attrPath := fmt.Sprintf("%s%s[%d]%s", attributePath, ".config.authentications", i, ".issuer")
 			problems = append(problems, validation.Failure{AttributePath: attrPath, Message: fmt.Sprintf("value is empty or not a valid url err=%s", err)})
 		}
+		// The https:// configuration for TrustedIssuers is not necessary in terms of security best practices, 
+		// however it is part of "secure by default" configuration, as this is the most common use case for iss claim.
+	    // If we want to allow some weaker configurations, we should have a dedicated configuration which allows that.
 		unsecuredIssuer, err := validation.IsUnsecuredURL(auth.Issuer)
 		if unsecuredIssuer {
 			attrPath := fmt.Sprintf("%s%s[%d]%s", attributePath, ".config.authentications", i, ".issuer")
