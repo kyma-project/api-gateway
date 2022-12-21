@@ -61,9 +61,8 @@ type APIRuleReconciler struct {
 }
 
 const (
-	CONFIGMAP_NAME             = "api-gateway-config"
-	CONFIGMAP_NS               = "kyma-system"
-	CM_CHANGED_ANNOTATION_NAME = "apigateway-config-updated-at"
+	CONFIGMAP_NAME = "api-gateway-config"
+	CONFIGMAP_NS   = "kyma-system"
 )
 
 type configMapPredicate struct {
@@ -137,26 +136,6 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 				failuresJson, _ := json.Marshal(configValidationFailures)
 				r.Log.Error(err, fmt.Sprintf(`Config validation failure {"controller": "Api", "failures": %s}`, string(failuresJson)))
 			}
-			apiRuleList, err := helpers.ListApiRule(ctx, r.Client)
-			if err != nil {
-				r.Log.Error(err, "Cannot get list of all ApiRules")
-				return doneReconcile()
-			}
-			r.Log.Info(fmt.Sprintf("Setting temporary annotation: %s for all ApiRules", CM_CHANGED_ANNOTATION_NAME))
-			for _, apiRule := range apiRuleList.Items {
-				if apiRule.Annotations == nil {
-					apiRule.Annotations = make(map[string]string)
-				}
-				apiRule.Annotations[CM_CHANGED_ANNOTATION_NAME] = fmt.Sprint(v1.Now())
-				// annotate Api Rule
-				err = r.Client.Update(ctx, &apiRule)
-				if err != nil {
-					r.Log.Error(err, fmt.Sprintf("Cannot update ApiRule: %s in namespace: %s", apiRule.Name, apiRule.Namespace))
-					return doneReconcile()
-				}
-				r.Log.Info(fmt.Sprintf("ApiRule name: %s in namespace: %s has been temporary annotated", apiRule.Name, apiRule.Namespace))
-			}
-			r.Log.Info("Finishing ConfigMap reconciliation")
 			return doneReconcile()
 		}
 	}
@@ -186,10 +165,8 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	//Prevent reconciliation after status update. It should be solved by controller-runtime implementation but still isn't.
 
 	r.Log.Info("Validating if not status update or temporary annotation set")
-	generationChanged := apiRule.Generation != apiRule.Status.ObservedGeneration
-	_, annotationCMChangedExists := apiRule.Annotations[CM_CHANGED_ANNOTATION_NAME]
-	if generationChanged || annotationCMChangedExists {
-		r.Log.Info("not a status update or temporary annotation set")
+	if apiRule.Generation != apiRule.Status.ObservedGeneration {
+		r.Log.Info("not a status update")
 		c := processing.ReconciliationConfig{
 			OathkeeperSvc:     r.OathkeeperSvc,
 			OathkeeperSvcPort: r.OathkeeperSvcPort,
@@ -233,15 +210,6 @@ func (r *APIRuleReconciler) updateStatusOrRetry(ctx context.Context, api *gatewa
 	_, updateStatusErr := r.updateStatus(ctx, api, status)
 	if updateStatusErr != nil {
 		return retryReconcile(updateStatusErr) //controller retries to set the correct status eventually.
-	}
-	// removing annotation CM_CHANGED_ANNOTATION_NAME, it's needed only when ConfigMap has been changed
-	// and we're triggered reconciliation of all CRs
-	r.Log.Info(fmt.Sprintf("Temporary annotation for ApiRule name: %s in namespace: %s has been deleted", api.Name, api.Namespace))
-	delete(api.Annotations, CM_CHANGED_ANNOTATION_NAME)
-	err := r.Client.Update(ctx, api)
-	if err != nil {
-		r.Log.Error(err, fmt.Sprintf("Cannot update ApiRule: %s in namespace: %s", api.Name, api.Namespace))
-		return retryReconcile(err)
 	}
 	//Fail fast: If status is updated, users are informed about the problem. We don't need to reconcile again.
 	return doneReconcile()
