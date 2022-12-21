@@ -203,6 +203,7 @@ var _ = Describe("APIRule Controller", func() {
 						cm := testConfigMap("ory")
 						err := c.Update(context.TODO(), cm)
 						apiRuleName := generateTestName(testNameBase, testIDLength)
+						Expect(err).NotTo(HaveOccurred())
 						testServiceHost := "httpbin2.kyma.local"
 						rule := testRule(testPath, testMethods, testMutators, testOauthHandler(testScopes))
 						instance := testInstance(apiRuleName, testNamespace, testServiceName, testServiceHost, testServicePort, []gatewayv1beta1.Rule{rule})
