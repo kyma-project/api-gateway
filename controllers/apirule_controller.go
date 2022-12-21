@@ -115,9 +115,10 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		HostBlockList:     r.HostBlockList,
 		DefaultDomainName: r.DefaultDomainName,
 	}
-
+	r.Log.Info("Checking if it's ConfigMap reconciliation")
 	isCMReconcile := (req.NamespacedName.String() == types.NamespacedName{Namespace: helpers.CM_NS, Name: helpers.CM_NAME}.String())
 	if isCMReconcile || r.Config.JWTHandler == "" {
+		r.Log.Info("Starting ConfigMap reconciliation")
 		err := r.Config.ReadFromConfigMap(ctx, r.Client)
 		if err != nil {
 			if apierrs.IsNotFound(err) {
@@ -130,6 +131,7 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		}
 		if isCMReconcile {
 			configValidationFailures := validator.ValidateConfig(r.Config)
+			r.Log.Info("ConfigMap changed")
 			if len(configValidationFailures) > 0 {
 				failuresJson, _ := json.Marshal(configValidationFailures)
 				r.Log.Error(err, fmt.Sprintf(`Config validation failure {"controller": "Api", "failures": %s}`, string(failuresJson)))
@@ -137,10 +139,12 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 			return doneReconcile()
 		}
 	}
+	r.Log.Info("Starting ApiRule reconciliation")
 	apiRule := &gatewayv1beta1.APIRule{}
 
 	err := r.Client.Get(ctx, req.NamespacedName, apiRule)
 	if err != nil {
+		r.Log.Error(err, "Error getting ApiRule")
 		if apierrs.IsNotFound(err) {
 			//There is no APIRule. Nothing to process, dependent objects will be garbage-collected.
 			return doneReconcile()
@@ -150,7 +154,7 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		status := processing.GetStatusForError(&r.Log, err, gatewayv1beta1.StatusSkipped)
 		return r.updateStatusOrRetry(ctx, apiRule, status)
 	}
-
+	r.Log.Info("Validating ApiRule config")
 	configValidationFailures := validator.ValidateConfig(r.Config)
 	if len(configValidationFailures) > 0 {
 		failuresJson, _ := json.Marshal(configValidationFailures)
@@ -159,8 +163,10 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	}
 
 	//Prevent reconciliation after status update. It should be solved by controller-runtime implementation but still isn't.
-	if apiRule.Generation != apiRule.Status.ObservedGeneration {
 
+	r.Log.Info("Validating if not status update or temporary annotation set")
+	if apiRule.Generation != apiRule.Status.ObservedGeneration {
+		r.Log.Info("not a status update")
 		c := processing.ReconciliationConfig{
 			OathkeeperSvc:     r.OathkeeperSvc,
 			OathkeeperSvcPort: r.OathkeeperSvcPort,
@@ -173,12 +179,12 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		}
 
 		cmd := r.getReconciliation(c)
-
+		r.Log.Info("Process reconcile")
 		status := processing.Reconcile(ctx, r.Client, &r.Log, cmd, apiRule)
-
+		r.Log.Info("Update status or retry")
 		return r.updateStatusOrRetry(ctx, apiRule, status)
 	}
-
+	r.Log.Info("Finishing reconciliation")
 	return doneReconcile()
 }
 
