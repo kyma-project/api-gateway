@@ -87,10 +87,10 @@ func (r RequestAuthenticationProcessor) getObjectChanges(desiredRas map[string]*
 }
 
 func GetRequestAuthenticationKey(ra *securityv1beta1.RequestAuthentication) string {
-	JwtRulesKey := ""
+	jwtRulesKey := ""
 
 	for _, k := range ra.Spec.JwtRules {
-		JwtRulesKey += fmt.Sprintf("%s:%s", k.Issuer, k.JwksUri)
+		jwtRulesKey += fmt.Sprintf("%s:%s", k.Issuer, k.JwksUri)
 	}
-	return fmt.Sprintf("%s:%s", ra.Spec.Selector.MatchLabels[RequestAuthenticationAppSelectorLabel], JwtRulesKey)
+	return fmt.Sprintf("%s:%s", ra.Spec.Selector.MatchLabels[RequestAuthenticationAppSelectorLabel], jwtRulesKey)
 }
