@@ -10,6 +10,8 @@ import (
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
+const RequestAuthenticationAppSelectorLabel = "app"
+
 // RequestAuthenticationProcessor is the generic processor that handles the Istio Request Authentications in the reconciliation of API Rule.
 type RequestAuthenticationProcessor struct {
 	Creator RequestAuthenticationCreator
@@ -85,9 +87,10 @@ func (r RequestAuthenticationProcessor) getObjectChanges(desiredRas map[string]*
 }
 
 func GetRequestAuthenticationKey(ra *securityv1beta1.RequestAuthentication) string {
-	key := ""
+	JwtRulesKey := ""
+
 	for _, k := range ra.Spec.JwtRules {
-		key += fmt.Sprintf("%s:%s", k.Issuer, k.JwksUri)
+		JwtRulesKey += fmt.Sprintf("%s:%s", k.Issuer, k.JwksUri)
 	}
-	return key
+	return fmt.Sprintf("%s:%s", ra.Spec.Selector.MatchLabels[RequestAuthenticationAppSelectorLabel], JwtRulesKey)
 }

@@ -84,7 +84,7 @@ func generateAuthorizationPolicySpec(api *gatewayv1beta1.APIRule, rule gatewayv1
 	}
 
 	authorizationPolicySpec := builders.AuthorizationPolicySpecBuilder().
-		Selector(builders.SelectorBuilder().MatchLabels("app", serviceName)).
+		Selector(builders.SelectorBuilder().MatchLabels(processors.AuthorizationPolicyAppSelectorLabel, serviceName)).
 		Rule(ruleBuilder)
 
 	return authorizationPolicySpec.Get()

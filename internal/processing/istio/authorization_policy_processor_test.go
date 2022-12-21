@@ -431,7 +431,7 @@ var _ = Describe("Authorization Policy Processor", func() {
 		Expect(result[0].Action.String()).To(Equal("create"))
 	})
 
-	It("should update existing AP when path and methods are the same", func() {
+	It("should update existing AP when path, methods and service name didn't change", func() {
 		// given
 		methods := []string{"GET", "POST"}
 		path := "/"
@@ -505,6 +505,170 @@ var _ = Describe("Authorization Policy Processor", func() {
 		Expect(result).To(ContainElements(resultMatcher))
 	})
 
+	When("Two AP for different services with JWT handler exist", func() {
+		It("should update existing AP when handler changed for one of the AP to noop", func() {
+			// given
+			jwtRule := getRuleForApTest([]string{"GET", "POST"}, "/", "jwt-secured-service")
+
+			strategies := []*gatewayv1beta1.Authenticator{
+				{
+					Handler: &gatewayv1beta1.Handler{
+						Name: "noop",
+					},
+				},
+			}
+
+			serviceName := "test-service"
+			port := uint32(8080)
+			service := &gatewayv1beta1.Service{
+				Name: &serviceName,
+				Port: &port,
+			}
+
+			rule := GetRuleWithServiceFor("/", []string{"GET", "POST"}, []*gatewayv1beta1.Mutator{}, strategies, service)
+
+			rules := []gatewayv1beta1.Rule{rule, jwtRule}
+
+			apiRule := GetAPIRuleFor(rules)
+
+			beingUpdatedAp := securityv1beta1.AuthorizationPolicy{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "being-updated-ap",
+					Labels: map[string]string{
+						processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", apiRule.ObjectMeta.Name, apiRule.ObjectMeta.Namespace),
+					},
+				},
+				Spec: v1beta1.AuthorizationPolicy{
+					Selector: &typev1beta1.WorkloadSelector{
+						MatchLabels: map[string]string{
+							"app": "test-service",
+						},
+					},
+					Rules: []*v1beta1.Rule{
+						{
+							From: []*v1beta1.Rule_From{
+								{
+									Source: &v1beta1.Source{
+										RequestPrincipals: []string{"*"},
+									},
+								},
+							},
+							To: []*v1beta1.Rule_To{
+								{
+									Operation: &v1beta1.Operation{
+										Methods: []string{"GET", "POST"},
+										Paths:   []string{"/"},
+									},
+								},
+							},
+						},
+					},
+				},
+			}
+
+			jwtSecuredAp := securityv1beta1.AuthorizationPolicy{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "jwt-secured-ap",
+					Labels: map[string]string{
+						processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", apiRule.ObjectMeta.Name, apiRule.ObjectMeta.Namespace),
+					},
+				},
+				Spec: v1beta1.AuthorizationPolicy{
+					Selector: &typev1beta1.WorkloadSelector{
+						MatchLabels: map[string]string{
+							"app": "jwt-secured-service",
+						},
+					},
+					Rules: []*v1beta1.Rule{
+						{
+							From: []*v1beta1.Rule_From{
+								{
+									Source: &v1beta1.Source{
+										RequestPrincipals: []string{"*"},
+									},
+								},
+							},
+							To: []*v1beta1.Rule_To{
+								{
+									Operation: &v1beta1.Operation{
+										Methods: []string{"GET", "POST"},
+										Paths:   []string{"/"},
+									},
+								},
+							},
+						},
+					},
+				},
+			}
+
+			ctrlClient := GetFakeClient(&beingUpdatedAp, &jwtSecuredAp)
+			processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig())
+
+			// when
+			result, err := processor.EvaluateReconciliation(context.TODO(), ctrlClient, apiRule)
+
+			// then
+			Expect(err).To(BeNil())
+			Expect(result).To(HaveLen(2))
+
+			updatedToNoopMatcher := PointTo(MatchFields(IgnoreExtras, Fields{
+				"Action": WithTransform(ActionToString, Equal("update")),
+				"Obj": PointTo(MatchFields(IgnoreExtras, Fields{
+					"Spec": MatchFields(IgnoreExtras, Fields{
+						"Selector": PointTo(MatchFields(IgnoreExtras, Fields{
+							"MatchLabels": ContainElement("test-service"),
+						})),
+						"Rules": ContainElements(
+							PointTo(MatchFields(IgnoreExtras, Fields{
+								"From": BeNil(),
+								"To": ContainElements(
+									PointTo(MatchFields(IgnoreExtras, Fields{
+										"Operation": PointTo(MatchFields(IgnoreExtras, Fields{
+											"Methods": ContainElements("GET", "POST"),
+											"Paths":   ContainElements("/"),
+										})),
+									})),
+								),
+							})),
+						),
+					}),
+				})),
+			}))
+
+			notChangedMatcher := PointTo(MatchFields(IgnoreExtras, Fields{
+				"Action": WithTransform(ActionToString, Equal("update")),
+				"Obj": PointTo(MatchFields(IgnoreExtras, Fields{
+					"Spec": MatchFields(IgnoreExtras, Fields{
+						"Selector": PointTo(MatchFields(IgnoreExtras, Fields{
+							"MatchLabels": ContainElement("jwt-secured-service"),
+						})),
+						"Rules": ContainElements(
+							PointTo(MatchFields(IgnoreExtras, Fields{
+								"From": ContainElement(
+									PointTo(MatchFields(IgnoreExtras, Fields{
+										"Source": PointTo(MatchFields(IgnoreExtras, Fields{
+											"RequestPrincipals": ContainElements("*"),
+										})),
+									})),
+								),
+								"To": ContainElements(
+									PointTo(MatchFields(IgnoreExtras, Fields{
+										"Operation": PointTo(MatchFields(IgnoreExtras, Fields{
+											"Methods": ContainElements("GET", "POST"),
+											"Paths":   ContainElements("/"),
+										})),
+									})),
+								),
+							})),
+						),
+					}),
+				})),
+			}))
+
+			Expect(result).To(ContainElements(updatedToNoopMatcher, notChangedMatcher))
+		})
+
+	})
 	It("should delete AP when there is no desired AP", func() {
 		// given
 		apiRule := GetAPIRuleFor([]gatewayv1beta1.Rule{})
@@ -765,12 +929,10 @@ var _ = Describe("Authorization Policy Processor", func() {
 
 		It("should create new AP when new rule with same path and methods, but different service is added to ApiRule", func() {
 			// given
-			methods := []string{"GET", "POST"}
-			path := "/"
-			serviceName := "new-service"
+			existingRule := getRuleForApTest([]string{"GET", "POST"}, "/", "test-service")
+			newRule := getRuleForApTest([]string{"GET", "POST"}, "/", "new-service")
 
-			rule := getRuleForApTest(methods, path, serviceName)
-			rules := []gatewayv1beta1.Rule{rule}
+			rules := []gatewayv1beta1.Rule{existingRule, newRule}
 
 			apiRule := GetAPIRuleFor(rules)
 

@@ -336,7 +336,7 @@ var _ = Describe("Request Authentication Processor", func() {
 			Expect(result[0].Action.String()).To(Equal("update"))
 		})
 
-		It("should update RA when only service name in JWT Rule has changed", func() {
+		It("should delete and create new RA when only service name in JWT Rule has changed", func() {
 			// given
 			jwtRule := GetJwtRuleWithService(JwtIssuer, JwksUri, "updated-service")
 			rules := []gatewayv1beta1.Rule{jwtRule}
@@ -371,10 +371,27 @@ var _ = Describe("Request Authentication Processor", func() {
 
 			// then
 			Expect(err).To(BeNil())
-			Expect(result).To(HaveLen(1))
+			Expect(result).To(HaveLen(2))
 
-			resultMatcher := PointTo(MatchFields(IgnoreExtras, Fields{
-				"Action": WithTransform(ActionToString, Equal("update")),
+			deleteMatcher := PointTo(MatchFields(IgnoreExtras, Fields{
+				"Action": WithTransform(ActionToString, Equal("delete")),
+				"Obj": PointTo(MatchFields(IgnoreExtras, Fields{
+					"Spec": MatchFields(IgnoreExtras, Fields{
+						"Selector": PointTo(MatchFields(IgnoreExtras, Fields{
+							"MatchLabels": ContainElement("old-service"),
+						})),
+						"JwtRules": ContainElements(
+							PointTo(MatchFields(IgnoreExtras, Fields{
+								"JwksUri": Equal(JwksUri),
+								"Issuer":  Equal(JwtIssuer),
+							})),
+						),
+					}),
+				})),
+			}))
+
+			createMatcher := PointTo(MatchFields(IgnoreExtras, Fields{
+				"Action": WithTransform(ActionToString, Equal("create")),
 				"Obj": PointTo(MatchFields(IgnoreExtras, Fields{
 					"Spec": MatchFields(IgnoreExtras, Fields{
 						"Selector": PointTo(MatchFields(IgnoreExtras, Fields{
@@ -390,7 +407,7 @@ var _ = Describe("Request Authentication Processor", func() {
 				})),
 			}))
 
-			Expect(result).To(ContainElements(resultMatcher))
+			Expect(result).To(ContainElements(deleteMatcher, createMatcher))
 		})
 
 		It("should create new RA when new service with new JWT config is added to ApiRule", func() {
@@ -548,7 +565,7 @@ var _ = Describe("Request Authentication Processor", func() {
 
 	When("Two RA with same JWT config for different services exist", func() {
 
-		It("should update RAs and set new issuer on first-service when JWT issuer in JWT Rule for first-service has changed", func() {
+		It("should update RAs and create new RA for first-service and delete old RA when JWT issuer in JWT Rule for first-service has changed", func() {
 			// given
 			firstJwtRule := GetJwtRuleWithService("https://new.issuer.com/", JwksUri, "first-service")
 			secondJwtRule := GetJwtRuleWithService(JwtIssuer, JwksUri, "second-service")
@@ -609,10 +626,10 @@ var _ = Describe("Request Authentication Processor", func() {
 
 			// then
 			Expect(err).To(BeNil())
-			Expect(result).To(HaveLen(2))
+			Expect(result).To(HaveLen(3))
 
-			firstRaResultMatcher := PointTo(MatchFields(IgnoreExtras, Fields{
-				"Action": WithTransform(ActionToString, Equal("update")),
+			createFirstServiceRaResultMatcher := PointTo(MatchFields(IgnoreExtras, Fields{
+				"Action": WithTransform(ActionToString, Equal("create")),
 				"Obj": PointTo(MatchFields(IgnoreExtras, Fields{
 					"Spec": MatchFields(IgnoreExtras, Fields{
 						"Selector": PointTo(MatchFields(IgnoreExtras, Fields{
@@ -622,6 +639,23 @@ var _ = Describe("Request Authentication Processor", func() {
 							PointTo(MatchFields(IgnoreExtras, Fields{
 								"JwksUri": Equal(JwksUri),
 								"Issuer":  Equal("https://new.issuer.com/"),
+							})),
+						),
+					}),
+				})),
+			}))
+
+			deleteFirstServiceRaResultMatcher := PointTo(MatchFields(IgnoreExtras, Fields{
+				"Action": WithTransform(ActionToString, Equal("delete")),
+				"Obj": PointTo(MatchFields(IgnoreExtras, Fields{
+					"Spec": MatchFields(IgnoreExtras, Fields{
+						"Selector": PointTo(MatchFields(IgnoreExtras, Fields{
+							"MatchLabels": ContainElement("first-service"),
+						})),
+						"JwtRules": ContainElements(
+							PointTo(MatchFields(IgnoreExtras, Fields{
+								"JwksUri": Equal(JwksUri),
+								"Issuer":  Equal(JwtIssuer),
 							})),
 						),
 					}),
@@ -645,7 +679,7 @@ var _ = Describe("Request Authentication Processor", func() {
 				})),
 			}))
 
-			Expect(result).To(ContainElements(firstRaResultMatcher, secondRaResultMatcher))
+			Expect(result).To(ContainElements(createFirstServiceRaResultMatcher, deleteFirstServiceRaResultMatcher, secondRaResultMatcher))
 		})
 
 		It("should delete only first-service RA when it was removed from ApiRule", func() {
