@@ -707,9 +707,6 @@ var _ = Describe("APIRule Controller", func() {
 					err := c.Update(context.TODO(), cm)
 					Expect(err).NotTo(HaveOccurred())
 
-					expectedRequest := reconcile.Request{NamespacedName: types.NamespacedName{Name: cm.Name, Namespace: cm.Namespace}}
-					Eventually(requests, timeout).Should(Receive(Equal(expectedRequest)))
-
 					apiRuleName := generateTestName(testNameBase, testIDLength)
 					testServiceHost := fmt.Sprintf("httpbin-%s.kyma.local", apiRuleName)
 
@@ -759,9 +756,6 @@ var _ = Describe("APIRule Controller", func() {
 					err := c.Update(context.TODO(), cm)
 					Expect(err).NotTo(HaveOccurred())
 
-					cmRequest := reconcile.Request{NamespacedName: types.NamespacedName{Name: cm.Name, Namespace: cm.Namespace}}
-					Eventually(requests, timeout).Should(Receive(Equal(cmRequest)))
-
 					apiRuleName := generateTestName(testNameBase, testIDLength)
 					testServiceHost := fmt.Sprintf("httpbin-%s.kyma.local", apiRuleName)
 
@@ -784,7 +778,7 @@ var _ = Describe("APIRule Controller", func() {
 					err = c.Update(context.TODO(), cm)
 					Expect(err).NotTo(HaveOccurred())
 
-					cmRequest = reconcile.Request{NamespacedName: types.NamespacedName{Name: cm.Name, Namespace: cm.Namespace}}
+					cmRequest := reconcile.Request{NamespacedName: types.NamespacedName{Name: cm.Name, Namespace: cm.Namespace}}
 					Eventually(requests, timeout).Should(Receive(Equal(cmRequest)))
 
 					// when
