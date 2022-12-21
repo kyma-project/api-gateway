@@ -727,7 +727,6 @@ var _ = Describe("APIRule Controller", func() {
 					initialStateReq := reconcile.Request{NamespacedName: types.NamespacedName{Name: apiRuleName, Namespace: testNamespace}}
 					Eventually(requests, timeout).Should(Receive(Equal(initialStateReq)))
 
-					// when
 					By("Updating JWT handler config map to istio")
 					cm = testConfigMap("istio")
 					err = c.Update(context.TODO(), cm)
@@ -735,6 +734,9 @@ var _ = Describe("APIRule Controller", func() {
 
 					cmChangedReq := reconcile.Request{NamespacedName: types.NamespacedName{Name: cm.Name, Namespace: cm.Namespace}}
 					Eventually(requests, timeout).Should(Receive(Equal(cmChangedReq)))
+
+					// when
+					triggerApiRuleReconciliation(apiRuleName)
 
 					// then
 					matchingLabels := matchingLabelsFunc(apiRuleName, testNamespace)
@@ -853,7 +855,6 @@ var _ = Describe("APIRule Controller", func() {
 					initialStateReq := reconcile.Request{NamespacedName: types.NamespacedName{Name: apiRuleName, Namespace: testNamespace}}
 					Eventually(requests, timeout).Should(Receive(Equal(initialStateReq)))
 
-					// when
 					By("Updating JWT handler config map to ory")
 					cm = testConfigMap("ory")
 					err = c.Update(context.TODO(), cm)
@@ -861,6 +862,9 @@ var _ = Describe("APIRule Controller", func() {
 
 					cmChangedReq := reconcile.Request{NamespacedName: types.NamespacedName{Name: cm.Name, Namespace: cm.Namespace}}
 					Eventually(requests, timeout).Should(Receive(Equal(cmChangedReq)))
+
+					// when
+					triggerApiRuleReconciliation(apiRuleName)
 
 					// then
 					matchingLabels := matchingLabelsFunc(apiRuleName, testNamespace)
@@ -1187,4 +1191,20 @@ func matchingLabelsFunc(apiRuleName, namespace string) client.ListOption {
 	labels := make(map[string]string)
 	labels[processing.OwnerLabel] = fmt.Sprintf("%s.%s", apiRuleName, namespace)
 	return client.MatchingLabels(labels)
+}
+
+func triggerApiRuleReconciliation(apiRuleName string) {
+	By("Trigger Reconcile of ApiRule")
+	reconciledApiRule := gatewayv1beta1.APIRule{}
+	err := c.Get(context.TODO(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &reconciledApiRule)
+	// We check for a different generation before reconciliation of APiRule, therefore we need to do a dummy change to
+	// trigger the reconciliation of the ApiRule.
+	newDummyHost := "dummyChange"
+	reconciledApiRule.Spec.Host = &newDummyHost
+	Expect(err).NotTo(HaveOccurred())
+	err = c.Update(context.TODO(), &reconciledApiRule)
+	Expect(err).NotTo(HaveOccurred())
+
+	reconcileApiReq := reconcile.Request{NamespacedName: types.NamespacedName{Name: apiRuleName, Namespace: testNamespace}}
+	Eventually(requests, timeout).Should(Receive(Equal(reconcileApiReq)))
 }
