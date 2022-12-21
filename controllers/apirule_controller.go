@@ -151,7 +151,7 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 				// annotate Api Rule
 				err = r.Client.Update(ctx, &apiRule)
 				if err != nil {
-					r.Log.Error(err, fmt.Sprintf("Cannot update ApiRule: %s in namespace: $s", apiRule.Name, apiRule.Namespace))
+					r.Log.Error(err, fmt.Sprintf("Cannot update ApiRule: %s in namespace: %s", apiRule.Name, apiRule.Namespace))
 					return doneReconcile()
 				}
 				r.Log.Info(fmt.Sprintf("ApiRule name: %s in namespace: %s has been temporary annotated", apiRule.Name, apiRule.Namespace))
@@ -240,7 +240,7 @@ func (r *APIRuleReconciler) updateStatusOrRetry(ctx context.Context, api *gatewa
 	delete(api.Annotations, CM_CHANGED_ANNOTATION_NAME)
 	err := r.Client.Update(ctx, api)
 	if err != nil {
-		r.Log.Error(err, fmt.Sprintf("Cannot update ApiRule: %s in namespace: $s", api.Name, api.Namespace))
+		r.Log.Error(err, fmt.Sprintf("Cannot update ApiRule: %s in namespace: %s", api.Name, api.Namespace))
 		return retryReconcile(err)
 	}
 	//Fail fast: If status is updated, users are informed about the problem. We don't need to reconcile again.
