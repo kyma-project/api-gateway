@@ -39,8 +39,8 @@ type authorizationPolicyCreator struct {
 func (r authorizationPolicyCreator) Create(api *gatewayv1beta1.APIRule) map[string]*securityv1beta1.AuthorizationPolicy {
 	authorizationPolicies := make(map[string]*securityv1beta1.AuthorizationPolicy)
 	hasJwtRule := processing.HasJwtRule(api)
-	for _, rule := range api.Spec.Rules {
-		if hasJwtRule {
+	if hasJwtRule {
+		for _, rule := range api.Spec.Rules {
 			ar := generateAuthorizationPolicy(api, rule, r.additionalLabels)
 			authorizationPolicies[processors.GetAuthorizationPolicyKey(ar)] = ar
 		}
@@ -81,6 +81,10 @@ func generateAuthorizationPolicySpec(api *gatewayv1beta1.APIRule, rule gatewayv1
 
 	if processing.IsJwtSecured(rule) {
 		ruleBuilder.RuleFrom(builders.RuleFromBuilder().Source())
+	} else if processing.IsSecured(rule) {
+		ruleBuilder.RuleFrom(builders.RuleFromBuilder().OathkeeperProxySource())
+	} else {
+		ruleBuilder.RuleFrom(builders.RuleFromBuilder().IngressGatewaySource())
 	}
 
 	authorizationPolicySpec := builders.AuthorizationPolicySpecBuilder().

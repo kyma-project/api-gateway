@@ -140,6 +140,18 @@ func (rf *RuleFrom) Source() *RuleFrom {
 	return rf
 }
 
+func (rf *RuleFrom) IngressGatewaySource() *RuleFrom {
+	source := v1beta1.Source{Principals: []string{"cluster.local/ns/istio-system/sa/istio-ingressgateway-service-account"}}
+	rf.value.Source = &source
+	return rf
+}
+
+func (rf *RuleFrom) OathkeeperProxySource() *RuleFrom {
+	source := v1beta1.Source{Principals: []string{"cluster.local/ns/kyma-system/sa/oathkeeper-maester-account"}}
+	rf.value.Source = &source
+	return rf
+}
+
 // RuleToBuilder returns builder for istio.io/apis/security/v1beta1/Rule_To type
 func RuleToBuilder() *RuleTo {
 	return &RuleTo{
