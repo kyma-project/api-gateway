@@ -1290,13 +1290,6 @@ var _ = Describe("Authorization Policy Processor", func() {
 
 	When("Two AP with same RuleTo for different services exist", func() {
 		It("should create new AP and delete old AP with matching service, when path has changed", func() {
-			// given: New resources
-			unchangedRule := getRuleForApTest([]string{"GET"}, "/", "first-service")
-			updatedRule := getRuleForApTest([]string{"GET"}, "/new-path", "second-service")
-			rules := []gatewayv1beta1.Rule{updatedRule, unchangedRule}
-
-			apiRule := GetAPIRuleFor(rules)
-
 			// given: Cluster state
 			unchangedAp := securityv1beta1.AuthorizationPolicy{
 				ObjectMeta: metav1.ObjectMeta{
@@ -1356,6 +1349,13 @@ var _ = Describe("Authorization Policy Processor", func() {
 
 			ctrlClient := GetFakeClient(&toBeUpdateAp, &unchangedAp)
 			processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig())
+
+			// given: New resources
+			unchangedRule := getRuleForApTest([]string{"GET"}, "/", "first-service")
+			updatedRule := getRuleForApTest([]string{"GET"}, "/new-path", "second-service")
+			rules := []gatewayv1beta1.Rule{updatedRule, unchangedRule}
+
+			apiRule := GetAPIRuleFor(rules)
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.TODO(), ctrlClient, apiRule)
