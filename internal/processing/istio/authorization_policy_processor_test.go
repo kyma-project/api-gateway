@@ -624,7 +624,13 @@ var _ = Describe("Authorization Policy Processor", func() {
 						})),
 						"Rules": ContainElements(
 							PointTo(MatchFields(IgnoreExtras, Fields{
-								"From": BeNil(),
+								"From": ContainElement(
+									PointTo(MatchFields(IgnoreExtras, Fields{
+										"Source": PointTo(MatchFields(IgnoreExtras, Fields{
+											"Principals": ContainElements("cluster.local/ns/kyma-system/sa/oathkeeper-maester-account"),
+										})),
+									})),
+								),
 								"To": ContainElements(
 									PointTo(MatchFields(IgnoreExtras, Fields{
 										"Operation": PointTo(MatchFields(IgnoreExtras, Fields{
