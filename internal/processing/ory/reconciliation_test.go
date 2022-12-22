@@ -51,7 +51,7 @@ var _ = Describe("Reconciliation", func() {
 			rules := []gatewayv1beta1.Rule{noopRule, jwtRule}
 
 			apiRule := GetAPIRuleFor(rules)
-			faceClient := GetEmptyFakeClient()
+			faceClient := GetFakeClient()
 
 			// when
 			var createdObjects []client.Object
@@ -113,7 +113,7 @@ var _ = Describe("Reconciliation", func() {
 			rules := []gatewayv1beta1.Rule{oauthRule, jwtRule}
 
 			apiRule := GetAPIRuleFor(rules)
-			faceClient := GetEmptyFakeClient()
+			faceClient := GetFakeClient()
 
 			// when
 			var createdObjects []client.Object

@@ -3,12 +3,13 @@ package processors
 import (
 	"context"
 	"fmt"
-
 	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
 	"github.com/kyma-incubator/api-gateway/internal/processing"
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
+
+const AuthorizationPolicyAppSelectorLabel = "app"
 
 // AuthorizationPolicyProcessor is the generic processor that handles the Istio Authorization Policies in the reconciliation of API Rule.
 type AuthorizationPolicyProcessor struct {
@@ -46,10 +47,9 @@ func (r AuthorizationPolicyProcessor) getActualState(ctx context.Context, client
 	}
 
 	authorizationPolicies := make(map[string]*securityv1beta1.AuthorizationPolicy)
-	pathDuplicates := HasPathDuplicates(api.Spec.Rules)
 	for i := range apList.Items {
 		obj := apList.Items[i]
-		authorizationPolicies[GetAuthorizationPolicyKey(pathDuplicates, obj)] = obj
+		authorizationPolicies[GetAuthorizationPolicyKey(obj)] = obj
 	}
 
 	return authorizationPolicies, nil
@@ -84,16 +84,17 @@ func (r AuthorizationPolicyProcessor) getObjectChanges(desiredAps map[string]*se
 	return apChangesToApply
 }
 
-func GetAuthorizationPolicyKey(hasPathDuplicates bool, ap *securityv1beta1.AuthorizationPolicy) string {
+func GetAuthorizationPolicyKey(ap *securityv1beta1.AuthorizationPolicy) string {
 	key := ""
-	if ap.Spec.Rules != nil && len(ap.Spec.Rules) > 0 && ap.Spec.Rules[0].To != nil && len(ap.Spec.Rules[0].To) > 0 {
-		if hasPathDuplicates {
-			key = fmt.Sprintf("%s:%s",
-				processing.SliceToString(ap.Spec.Rules[0].To[0].Operation.Paths),
-				processing.SliceToString(ap.Spec.Rules[0].To[0].Operation.Methods))
-		} else {
-			key = processing.SliceToString(ap.Spec.Rules[0].To[0].Operation.Paths)
-		}
+
+	hasRuleInSpec := ap.Spec.Rules != nil && len(ap.Spec.Rules) > 0
+	hasToInFirstRule := ap.Spec.Rules[0].To != nil && len(ap.Spec.Rules[0].To) > 0
+
+	if hasRuleInSpec && hasToInFirstRule {
+		key = fmt.Sprintf("%s:%s:%s",
+			ap.Spec.Selector.MatchLabels[AuthorizationPolicyAppSelectorLabel],
+			processing.SliceToString(ap.Spec.Rules[0].To[0].Operation.Paths),
+			processing.SliceToString(ap.Spec.Rules[0].To[0].Operation.Methods))
 	}
 
 	return key

@@ -33,7 +33,7 @@ var _ = Describe("Virtual Service Processor", func() {
 			rules := []gatewayv1beta1.Rule{allowRule}
 
 			apiRule := GetAPIRuleFor(rules)
-			client := GetEmptyFakeClient()
+			client := GetFakeClient()
 			processor := istio.NewVirtualServiceProcessor(GetTestConfig())
 
 			// when
@@ -98,7 +98,7 @@ var _ = Describe("Virtual Service Processor", func() {
 				Namespace: &overrideServiceNamespace,
 				Port:      &overrideServicePort,
 			}
-			client := GetEmptyFakeClient()
+			client := GetFakeClient()
 			processor := istio.NewVirtualServiceProcessor(GetTestConfig())
 
 			// when
@@ -138,7 +138,7 @@ var _ = Describe("Virtual Service Processor", func() {
 			rules := []gatewayv1beta1.Rule{allowRule}
 
 			apiRule := GetAPIRuleFor(rules)
-			client := GetEmptyFakeClient()
+			client := GetFakeClient()
 			processor := istio.NewVirtualServiceProcessor(GetTestConfig())
 
 			// when
@@ -170,7 +170,7 @@ var _ = Describe("Virtual Service Processor", func() {
 
 			apiRule := GetAPIRuleFor(rules)
 			apiRule.Spec.Host = &ServiceHostWithNoDomain
-			client := GetEmptyFakeClient()
+			client := GetFakeClient()
 			processor := istio.NewVirtualServiceProcessor(GetTestConfig())
 
 			// when
@@ -213,7 +213,7 @@ var _ = Describe("Virtual Service Processor", func() {
 			rules := []gatewayv1beta1.Rule{allowRule}
 
 			apiRule := GetAPIRuleFor(rules)
-			client := GetEmptyFakeClient()
+			client := GetFakeClient()
 			processor := istio.NewVirtualServiceProcessor(GetTestConfig())
 
 			// when
@@ -355,7 +355,7 @@ var _ = Describe("Virtual Service Processor", func() {
 			rules := []gatewayv1beta1.Rule{noopRule, jwtRule}
 
 			apiRule := GetAPIRuleFor(rules)
-			client := GetEmptyFakeClient()
+			client := GetFakeClient()
 			processor := istio.NewVirtualServiceProcessor(GetTestConfig())
 
 			// when
@@ -451,7 +451,7 @@ var _ = Describe("Virtual Service Processor", func() {
 			rules := []gatewayv1beta1.Rule{noopRule, jwtRule}
 
 			apiRule := GetAPIRuleFor(rules)
-			client := GetEmptyFakeClient()
+			client := GetFakeClient()
 			processor := istio.NewVirtualServiceProcessor(GetTestConfig())
 
 			// when
@@ -538,7 +538,7 @@ var _ = Describe("Virtual Service Processor", func() {
 			rules := []gatewayv1beta1.Rule{noopGetRule, noopPostRule, jwtRule}
 
 			apiRule := GetAPIRuleFor(rules)
-			client := GetEmptyFakeClient()
+			client := GetFakeClient()
 			processor := istio.NewVirtualServiceProcessor(GetTestConfig())
 
 			// when
@@ -621,7 +621,7 @@ var _ = Describe("Virtual Service Processor", func() {
 			rules := []gatewayv1beta1.Rule{allowRule}
 
 			apiRule := GetAPIRuleFor(rules)
-			client := GetEmptyFakeClient()
+			client := GetFakeClient()
 			processor := istio.NewVirtualServiceProcessor(GetTestConfig())
 
 			// when

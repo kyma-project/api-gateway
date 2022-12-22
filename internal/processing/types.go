@@ -1,7 +1,7 @@
 package processing
 
 import (
-	v1beta12 "istio.io/api/networking/v1beta1"
+	v1beta1 "istio.io/api/networking/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -53,7 +53,7 @@ func NewObjectDeleteAction(obj client.Object) *ObjectChange {
 
 // CorsConfig is an internal representation of v1alpha3.CorsPolicy object
 type CorsConfig struct {
-	AllowOrigins []*v1beta12.StringMatch
+	AllowOrigins []*v1beta1.StringMatch
 	AllowMethods []string
 	AllowHeaders []string
 }

@@ -37,13 +37,12 @@ type authorizationPolicyCreator struct {
 
 // Create returns the Authorization Policy using the configuration of the APIRule.
 func (r authorizationPolicyCreator) Create(api *gatewayv1beta1.APIRule) map[string]*securityv1beta1.AuthorizationPolicy {
-	pathDuplicates := processors.HasPathDuplicates(api.Spec.Rules)
 	authorizationPolicies := make(map[string]*securityv1beta1.AuthorizationPolicy)
 	hasJwtRule := processing.HasJwtRule(api)
 	if hasJwtRule {
 		for _, rule := range api.Spec.Rules {
 			ar := generateAuthorizationPolicy(api, rule, r.additionalLabels)
-			authorizationPolicies[processors.GetAuthorizationPolicyKey(pathDuplicates, ar)] = ar
+			authorizationPolicies[processors.GetAuthorizationPolicyKey(ar)] = ar
 		}
 	}
 	return authorizationPolicies
@@ -89,7 +88,7 @@ func generateAuthorizationPolicySpec(api *gatewayv1beta1.APIRule, rule gatewayv1
 	}
 
 	authorizationPolicySpec := builders.AuthorizationPolicySpecBuilder().
-		Selector(builders.SelectorBuilder().MatchLabels("app", serviceName)).
+		Selector(builders.SelectorBuilder().MatchLabels(processors.AuthorizationPolicyAppSelectorLabel, serviceName)).
 		Rule(ruleBuilder)
 
 	return authorizationPolicySpec.Get()

@@ -76,7 +76,7 @@ func generateRequestAuthenticationSpec(api *gatewayv1beta1.APIRule, rule gateway
 	}
 
 	requestAuthenticationSpec := builders.RequestAuthenticationSpecBuilder().
-		Selector(builders.SelectorBuilder().MatchLabels("app", serviceName)).
+		Selector(builders.SelectorBuilder().MatchLabels(processors.RequestAuthenticationAppSelectorLabel, serviceName)).
 		JwtRules(builders.JwtRuleBuilder().From(rule.AccessStrategies))
 
 	return requestAuthenticationSpec.Get()

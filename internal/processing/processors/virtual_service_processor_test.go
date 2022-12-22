@@ -27,7 +27,7 @@ var _ = Describe("Virtual Service Processor", func() {
 		}
 
 		// when
-		result, err := processor.EvaluateReconciliation(context.TODO(), GetEmptyFakeClient(), apiRule)
+		result, err := processor.EvaluateReconciliation(context.TODO(), GetFakeClient(), apiRule)
 
 		// then
 		Expect(err).To(BeNil())

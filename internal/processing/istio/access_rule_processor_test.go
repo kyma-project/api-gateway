@@ -45,7 +45,7 @@ var _ = Describe("Access Rule Processor", func() {
 				Port:      &overrideServicePort,
 			}
 
-			client := GetEmptyFakeClient()
+			client := GetFakeClient()
 			processor := istio.NewAccessRuleProcessor(GetTestConfig())
 
 			// when
@@ -83,7 +83,7 @@ var _ = Describe("Access Rule Processor", func() {
 				Port:      &overrideServicePort,
 			}
 
-			client := GetEmptyFakeClient()
+			client := GetFakeClient()
 			processor := istio.NewAccessRuleProcessor(GetTestConfig())
 
 			// when
@@ -110,7 +110,7 @@ var _ = Describe("Access Rule Processor", func() {
 			rules := []gatewayv1beta1.Rule{allowRule}
 
 			apiRule := GetAPIRuleFor(rules)
-			client := GetEmptyFakeClient()
+			client := GetFakeClient()
 			processor := istio.NewAccessRuleProcessor(GetTestConfig())
 
 			// when
@@ -155,7 +155,7 @@ var _ = Describe("Access Rule Processor", func() {
 			rules := []gatewayv1beta1.Rule{allowRule}
 
 			apiRule := GetAPIRuleFor(rules)
-			client := GetEmptyFakeClient()
+			client := GetFakeClient()
 			processor := istio.NewAccessRuleProcessor(GetTestConfig())
 
 			// when
@@ -194,7 +194,7 @@ var _ = Describe("Access Rule Processor", func() {
 			rules := []gatewayv1beta1.Rule{allowRule}
 
 			apiRule := GetAPIRuleFor(rules)
-			client := GetEmptyFakeClient()
+			client := GetFakeClient()
 			processor := istio.NewAccessRuleProcessor(GetTestConfig())
 
 			// when
@@ -223,7 +223,7 @@ var _ = Describe("Access Rule Processor", func() {
 
 			apiRule := GetAPIRuleFor(rules)
 			apiRule.Spec.Host = &ServiceHostWithNoDomain
-			client := GetEmptyFakeClient()
+			client := GetFakeClient()
 			processor := istio.NewAccessRuleProcessor(GetTestConfig())
 
 			// when
@@ -322,7 +322,7 @@ var _ = Describe("Access Rule Processor", func() {
 			rules := []gatewayv1beta1.Rule{allowRule}
 
 			apiRule := GetAPIRuleFor(rules)
-			client := GetEmptyFakeClient()
+			client := GetFakeClient()
 			processor := ory.NewAccessRuleProcessor(GetTestConfig())
 
 			// when
