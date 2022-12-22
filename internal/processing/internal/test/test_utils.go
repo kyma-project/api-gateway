@@ -69,19 +69,6 @@ func GetTestConfig() processing.ReconciliationConfig {
 	}
 }
 
-func GetEmptyFakeClient() client.Client {
-	scheme := runtime.NewScheme()
-	err := networkingv1beta1.AddToScheme(scheme)
-	gomega.Expect(err).NotTo(gomega.HaveOccurred())
-	err = rulev1alpha1.AddToScheme(scheme)
-	gomega.Expect(err).NotTo(gomega.HaveOccurred())
-	err = securityv1beta1.AddToScheme(scheme)
-	gomega.Expect(err).NotTo(gomega.HaveOccurred())
-
-	return fake.NewClientBuilder().WithScheme(scheme).WithObjects().Build()
-}
-
-// TODO This should replace the GetEmptyFakeClient function before merging it. This wasn't done yet, because this will cause a lot of changes and will make it harder to merge.
 func GetFakeClient(objs ...client.Object) client.Client {
 	scheme := runtime.NewScheme()
 	err := networkingv1beta1.AddToScheme(scheme)

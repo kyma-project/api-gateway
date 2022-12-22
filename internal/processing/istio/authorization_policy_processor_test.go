@@ -44,7 +44,7 @@ var _ = Describe("Authorization Policy Processor", func() {
 		ruleJwt := GetRuleWithServiceFor(HeadersApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, []*gatewayv1beta1.Authenticator{jwt}, service)
 		ruleJwt2 := GetRuleWithServiceFor(ImgApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, []*gatewayv1beta1.Authenticator{jwt}, service)
 		apiRule := GetAPIRuleFor([]gatewayv1beta1.Rule{ruleJwt, ruleJwt2})
-		client := GetEmptyFakeClient()
+		client := GetFakeClient()
 		processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig())
 
 		// when
@@ -106,7 +106,7 @@ var _ = Describe("Authorization Policy Processor", func() {
 	It("should produce one AP for a Rule without service, but service definition on ApiRule level", func() {
 		// given
 		jwt := createIstioJwtAccessStrategy()
-		client := GetEmptyFakeClient()
+		client := GetFakeClient()
 		ruleJwt := GetRuleFor(HeadersApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, []*gatewayv1beta1.Authenticator{jwt})
 		apiRule := GetAPIRuleFor([]gatewayv1beta1.Rule{ruleJwt})
 		processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig())
@@ -131,7 +131,7 @@ var _ = Describe("Authorization Policy Processor", func() {
 			Name: &ruleServiceName,
 			Port: &ServicePort,
 		}
-		client := GetEmptyFakeClient()
+		client := GetFakeClient()
 		ruleJwt := GetRuleWithServiceFor(HeadersApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, []*gatewayv1beta1.Authenticator{jwt}, service)
 		apiRule := GetAPIRuleFor([]gatewayv1beta1.Rule{ruleJwt})
 		processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig())
@@ -160,7 +160,7 @@ var _ = Describe("Authorization Policy Processor", func() {
 				},
 			},
 		}
-		client := GetEmptyFakeClient()
+		client := GetFakeClient()
 		service := &gatewayv1beta1.Service{
 			Name: &ServiceName,
 			Port: &ServicePort,
@@ -229,7 +229,7 @@ var _ = Describe("Authorization Policy Processor", func() {
 				Port:      &overrideServicePort,
 			}
 
-			client := GetEmptyFakeClient()
+			client := GetFakeClient()
 			processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig())
 
 			// when
@@ -268,7 +268,7 @@ var _ = Describe("Authorization Policy Processor", func() {
 				Port:      &overrideServicePort,
 			}
 
-			client := GetEmptyFakeClient()
+			client := GetFakeClient()
 			processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig())
 
 			// when
@@ -304,7 +304,7 @@ var _ = Describe("Authorization Policy Processor", func() {
 				Port:      &overrideServicePort,
 			}
 
-			client := GetEmptyFakeClient()
+			client := GetFakeClient()
 			processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig())
 
 			// when
@@ -334,7 +334,7 @@ var _ = Describe("Authorization Policy Processor", func() {
 			ruleAllow := GetRuleWithServiceFor(HeadersApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, []*gatewayv1beta1.Authenticator{allow}, service)
 			ruleJwt := GetRuleWithServiceFor(ImgApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, []*gatewayv1beta1.Authenticator{jwt}, service)
 			apiRule := GetAPIRuleFor([]gatewayv1beta1.Rule{ruleAllow, ruleJwt})
-			client := GetEmptyFakeClient()
+			client := GetFakeClient()
 			processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig())
 
 			// when
@@ -382,7 +382,7 @@ var _ = Describe("Authorization Policy Processor", func() {
 			ruleNoop := GetRuleWithServiceFor(HeadersApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, []*gatewayv1beta1.Authenticator{noop}, service)
 			ruleJwt := GetRuleWithServiceFor(ImgApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, []*gatewayv1beta1.Authenticator{jwt}, service)
 			apiRule := GetAPIRuleFor([]gatewayv1beta1.Rule{ruleNoop, ruleJwt})
-			client := GetEmptyFakeClient()
+			client := GetFakeClient()
 			processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig())
 
 			// when
@@ -428,7 +428,7 @@ var _ = Describe("Authorization Policy Processor", func() {
 		processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig())
 
 		// when
-		result, err := processor.EvaluateReconciliation(context.TODO(), GetEmptyFakeClient(), apiRule)
+		result, err := processor.EvaluateReconciliation(context.TODO(), GetFakeClient(), apiRule)
 
 		// then
 		Expect(err).To(BeNil())
