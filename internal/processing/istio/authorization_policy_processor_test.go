@@ -3,6 +3,7 @@ package istio_test
 import (
 	"context"
 	"fmt"
+
 	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
 	"github.com/kyma-incubator/api-gateway/internal/processing"
 	. "github.com/kyma-incubator/api-gateway/internal/processing/internal/test"
@@ -414,7 +415,7 @@ var _ = Describe("Authorization Policy Processor", func() {
 	})
 
 	It("should create AP when no exists", func() {
-		// given
+		// given: New resources
 		methods := []string{"GET"}
 		path := "/"
 		serviceName := "test-service"
@@ -436,20 +437,11 @@ var _ = Describe("Authorization Policy Processor", func() {
 	})
 
 	It("should update existing AP when path, methods and service name didn't change", func() {
-		// given
-		methods := []string{"GET", "POST"}
-		path := "/"
-		serviceName := "test-service"
-
-		rule := getRuleForApTest(methods, path, serviceName)
-		rules := []gatewayv1beta1.Rule{rule}
-
-		apiRule := GetAPIRuleFor(rules)
-
+		// given: Cluster state
 		existingAp := securityv1beta1.AuthorizationPolicy{
 			ObjectMeta: metav1.ObjectMeta{
 				Labels: map[string]string{
-					processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", apiRule.ObjectMeta.Name, apiRule.ObjectMeta.Namespace),
+					processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", ApiName, ApiNamespace),
 				},
 			},
 			Spec: v1beta1.AuthorizationPolicy{
@@ -475,6 +467,16 @@ var _ = Describe("Authorization Policy Processor", func() {
 
 		ctrlClient := GetFakeClient(&existingAp)
 		processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig())
+
+		// given: New resources
+		methods := []string{"GET", "POST"}
+		path := "/"
+		serviceName := "test-service"
+
+		rule := getRuleForApTest(methods, path, serviceName)
+		rules := []gatewayv1beta1.Rule{rule}
+
+		apiRule := GetAPIRuleFor(rules)
 
 		// when
 		result, err := processor.EvaluateReconciliation(context.TODO(), ctrlClient, apiRule)
@@ -511,35 +513,12 @@ var _ = Describe("Authorization Policy Processor", func() {
 
 	When("Two AP for different services with JWT handler exist", func() {
 		It("should update existing AP when handler changed for one of the AP to noop", func() {
-			// given
-			jwtRule := getRuleForApTest([]string{"GET", "POST"}, "/", "jwt-secured-service")
-
-			strategies := []*gatewayv1beta1.Authenticator{
-				{
-					Handler: &gatewayv1beta1.Handler{
-						Name: "noop",
-					},
-				},
-			}
-
-			serviceName := "test-service"
-			port := uint32(8080)
-			service := &gatewayv1beta1.Service{
-				Name: &serviceName,
-				Port: &port,
-			}
-
-			rule := GetRuleWithServiceFor("/", []string{"GET", "POST"}, []*gatewayv1beta1.Mutator{}, strategies, service)
-
-			rules := []gatewayv1beta1.Rule{rule, jwtRule}
-
-			apiRule := GetAPIRuleFor(rules)
-
+			// given: Cluster state
 			beingUpdatedAp := securityv1beta1.AuthorizationPolicy{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "being-updated-ap",
 					Labels: map[string]string{
-						processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", apiRule.ObjectMeta.Name, apiRule.ObjectMeta.Namespace),
+						processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", ApiName, ApiNamespace),
 					},
 				},
 				Spec: v1beta1.AuthorizationPolicy{
@@ -574,7 +553,7 @@ var _ = Describe("Authorization Policy Processor", func() {
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "jwt-secured-ap",
 					Labels: map[string]string{
-						processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", apiRule.ObjectMeta.Name, apiRule.ObjectMeta.Namespace),
+						processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", ApiName, ApiNamespace),
 					},
 				},
 				Spec: v1beta1.AuthorizationPolicy{
@@ -607,6 +586,30 @@ var _ = Describe("Authorization Policy Processor", func() {
 
 			ctrlClient := GetFakeClient(&beingUpdatedAp, &jwtSecuredAp)
 			processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig())
+
+			// given: New resources
+			jwtRule := getRuleForApTest([]string{"GET", "POST"}, "/", "jwt-secured-service")
+
+			strategies := []*gatewayv1beta1.Authenticator{
+				{
+					Handler: &gatewayv1beta1.Handler{
+						Name: "noop",
+					},
+				},
+			}
+
+			serviceName := "test-service"
+			port := uint32(8080)
+			service := &gatewayv1beta1.Service{
+				Name: &serviceName,
+				Port: &port,
+			}
+
+			rule := GetRuleWithServiceFor("/", []string{"GET", "POST"}, []*gatewayv1beta1.Mutator{}, strategies, service)
+
+			rules := []gatewayv1beta1.Rule{rule, jwtRule}
+
+			apiRule := GetAPIRuleFor(rules)
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.TODO(), ctrlClient, apiRule)
@@ -680,13 +683,11 @@ var _ = Describe("Authorization Policy Processor", func() {
 
 	})
 	It("should delete AP when there is no desired AP", func() {
-		// given
-		apiRule := GetAPIRuleFor([]gatewayv1beta1.Rule{})
-
+		//given: Cluster state
 		existingAp := securityv1beta1.AuthorizationPolicy{
 			ObjectMeta: metav1.ObjectMeta{
 				Labels: map[string]string{
-					processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", apiRule.ObjectMeta.Name, apiRule.ObjectMeta.Namespace),
+					processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", ApiName, ApiNamespace),
 				},
 			},
 			Spec: v1beta1.AuthorizationPolicy{
@@ -712,6 +713,9 @@ var _ = Describe("Authorization Policy Processor", func() {
 
 		ctrlClient := GetFakeClient(&existingAp)
 		processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig())
+
+		// given: New resources
+		apiRule := GetAPIRuleFor([]gatewayv1beta1.Rule{})
 
 		// when
 		result, err := processor.EvaluateReconciliation(context.TODO(), ctrlClient, apiRule)
@@ -748,18 +752,11 @@ var _ = Describe("Authorization Policy Processor", func() {
 
 	When("AP with RuleTo exists", func() {
 		It("should create new AP when new rule with same methods and service but different path is added to ApiRule", func() {
-			// given
-
-			existingRule := getRuleForApTest([]string{"GET", "POST"}, "/", "test-service")
-			newRule := getRuleForApTest([]string{"GET", "POST"}, "/new-path", "test-service")
-			rules := []gatewayv1beta1.Rule{existingRule, newRule}
-
-			apiRule := GetAPIRuleFor(rules)
-
+			// given: Cluster state
 			existingAp := securityv1beta1.AuthorizationPolicy{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: map[string]string{
-						processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", apiRule.ObjectMeta.Name, apiRule.ObjectMeta.Namespace),
+						processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", ApiName, ApiNamespace),
 					},
 				},
 				Spec: v1beta1.AuthorizationPolicy{
@@ -785,6 +782,14 @@ var _ = Describe("Authorization Policy Processor", func() {
 
 			ctrlClient := GetFakeClient(&existingAp)
 			processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig())
+
+			// given: New resources
+
+			existingRule := getRuleForApTest([]string{"GET", "POST"}, "/", "test-service")
+			newRule := getRuleForApTest([]string{"GET", "POST"}, "/new-path", "test-service")
+			rules := []gatewayv1beta1.Rule{existingRule, newRule}
+
+			apiRule := GetAPIRuleFor(rules)
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.TODO(), ctrlClient, apiRule)
@@ -843,18 +848,11 @@ var _ = Describe("Authorization Policy Processor", func() {
 		})
 
 		It("should create new AP when new rule with same path and service but different methods is added to ApiRule", func() {
-			// given
-
-			existingRule := getRuleForApTest([]string{"GET", "POST"}, "/", "test-service")
-			newRule := getRuleForApTest([]string{"DELETE"}, "/", "test-service")
-			rules := []gatewayv1beta1.Rule{existingRule, newRule}
-
-			apiRule := GetAPIRuleFor(rules)
-
+			// given: Cluster state
 			existingAp := securityv1beta1.AuthorizationPolicy{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: map[string]string{
-						processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", apiRule.ObjectMeta.Name, apiRule.ObjectMeta.Namespace),
+						processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", ApiName, ApiNamespace),
 					},
 				},
 				Spec: v1beta1.AuthorizationPolicy{
@@ -880,6 +878,14 @@ var _ = Describe("Authorization Policy Processor", func() {
 
 			ctrlClient := GetFakeClient(&existingAp)
 			processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig())
+
+			// given: New resources
+
+			existingRule := getRuleForApTest([]string{"GET", "POST"}, "/", "test-service")
+			newRule := getRuleForApTest([]string{"DELETE"}, "/", "test-service")
+			rules := []gatewayv1beta1.Rule{existingRule, newRule}
+
+			apiRule := GetAPIRuleFor(rules)
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.TODO(), ctrlClient, apiRule)
@@ -938,18 +944,11 @@ var _ = Describe("Authorization Policy Processor", func() {
 		})
 
 		It("should create new AP when new rule with same path and methods, but different service is added to ApiRule", func() {
-			// given
-			existingRule := getRuleForApTest([]string{"GET", "POST"}, "/", "test-service")
-			newRule := getRuleForApTest([]string{"GET", "POST"}, "/", "new-service")
-
-			rules := []gatewayv1beta1.Rule{existingRule, newRule}
-
-			apiRule := GetAPIRuleFor(rules)
-
+			//given: Cluster state
 			existingAp := securityv1beta1.AuthorizationPolicy{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: map[string]string{
-						processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", apiRule.ObjectMeta.Name, apiRule.ObjectMeta.Namespace),
+						processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", ApiName, ApiNamespace),
 					},
 				},
 				Spec: v1beta1.AuthorizationPolicy{
@@ -972,6 +971,14 @@ var _ = Describe("Authorization Policy Processor", func() {
 					},
 				},
 			}
+
+			// given: New resources
+			existingRule := getRuleForApTest([]string{"GET", "POST"}, "/", "test-service")
+			newRule := getRuleForApTest([]string{"GET", "POST"}, "/", "new-service")
+
+			rules := []gatewayv1beta1.Rule{existingRule, newRule}
+
+			apiRule := GetAPIRuleFor(rules)
 
 			ctrlClient := GetFakeClient(&existingAp)
 			processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig())
@@ -1033,20 +1040,11 @@ var _ = Describe("Authorization Policy Processor", func() {
 		})
 
 		It("should create new AP and delete old AP when path in ApiRule changed", func() {
-			// given
-			methods := []string{"GET", "POST"}
-			path := "/new-path"
-			serviceName := "test-service"
-
-			rule := getRuleForApTest(methods, path, serviceName)
-			rules := []gatewayv1beta1.Rule{rule}
-
-			apiRule := GetAPIRuleFor(rules)
-
+			// given: Cluster state
 			existingAp := securityv1beta1.AuthorizationPolicy{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: map[string]string{
-						processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", apiRule.ObjectMeta.Name, apiRule.ObjectMeta.Namespace),
+						processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", ApiName, ApiNamespace),
 					},
 				},
 				Spec: v1beta1.AuthorizationPolicy{
@@ -1072,6 +1070,16 @@ var _ = Describe("Authorization Policy Processor", func() {
 
 			ctrlClient := GetFakeClient(&existingAp)
 			processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig())
+
+			// given: New resources
+			methods := []string{"GET", "POST"}
+			path := "/new-path"
+			serviceName := "test-service"
+
+			rule := getRuleForApTest(methods, path, serviceName)
+			rules := []gatewayv1beta1.Rule{rule}
+
+			apiRule := GetAPIRuleFor(rules)
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.TODO(), ctrlClient, apiRule)
@@ -1133,18 +1141,12 @@ var _ = Describe("Authorization Policy Processor", func() {
 
 	When("Two AP with different methods for same path and service exist", func() {
 		It("should create new AP and delete old AP with matching method, when path has changed", func() {
-			// given
-			unchangedRule := getRuleForApTest([]string{"DELETE"}, "/", "test-service")
-			updatedRule := getRuleForApTest([]string{"GET"}, "/new-path", "test-service")
-			rules := []gatewayv1beta1.Rule{updatedRule, unchangedRule}
-
-			apiRule := GetAPIRuleFor(rules)
-
+			// given: Cluster state
 			unchangedAp := securityv1beta1.AuthorizationPolicy{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "unchanged-ap",
 					Labels: map[string]string{
-						processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", apiRule.ObjectMeta.Name, apiRule.ObjectMeta.Namespace),
+						processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", ApiName, ApiNamespace),
 					},
 				},
 				Spec: v1beta1.AuthorizationPolicy{
@@ -1172,7 +1174,7 @@ var _ = Describe("Authorization Policy Processor", func() {
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "to-be-updated-ap",
 					Labels: map[string]string{
-						processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", apiRule.ObjectMeta.Name, apiRule.ObjectMeta.Namespace),
+						processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", ApiName, ApiNamespace),
 					},
 				},
 				Spec: v1beta1.AuthorizationPolicy{
@@ -1198,6 +1200,13 @@ var _ = Describe("Authorization Policy Processor", func() {
 
 			ctrlClient := GetFakeClient(&toBeUpdateAp, &unchangedAp)
 			processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig())
+
+			// given: New resources
+			unchangedRule := getRuleForApTest([]string{"DELETE"}, "/", "test-service")
+			updatedRule := getRuleForApTest([]string{"GET"}, "/new-path", "test-service")
+			rules := []gatewayv1beta1.Rule{updatedRule, unchangedRule}
+
+			apiRule := GetAPIRuleFor(rules)
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.TODO(), ctrlClient, apiRule)
@@ -1281,18 +1290,19 @@ var _ = Describe("Authorization Policy Processor", func() {
 
 	When("Two AP with same RuleTo for different services exist", func() {
 		It("should create new AP and delete old AP with matching service, when path has changed", func() {
-			// given
+			// given: New resources
 			unchangedRule := getRuleForApTest([]string{"GET"}, "/", "first-service")
 			updatedRule := getRuleForApTest([]string{"GET"}, "/new-path", "second-service")
 			rules := []gatewayv1beta1.Rule{updatedRule, unchangedRule}
 
 			apiRule := GetAPIRuleFor(rules)
 
+			// given: Cluster state
 			unchangedAp := securityv1beta1.AuthorizationPolicy{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "unchanged-ap",
 					Labels: map[string]string{
-						processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", apiRule.ObjectMeta.Name, apiRule.ObjectMeta.Namespace),
+						processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", ApiName, ApiNamespace),
 					},
 				},
 				Spec: v1beta1.AuthorizationPolicy{
@@ -1320,7 +1330,7 @@ var _ = Describe("Authorization Policy Processor", func() {
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "to-be-updated-ap",
 					Labels: map[string]string{
-						processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", apiRule.ObjectMeta.Name, apiRule.ObjectMeta.Namespace),
+						processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", ApiName, ApiNamespace),
 					},
 				},
 				Spec: v1beta1.AuthorizationPolicy{
