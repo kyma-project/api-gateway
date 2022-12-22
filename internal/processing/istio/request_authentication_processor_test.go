@@ -241,7 +241,7 @@ var _ = Describe("Request Authentication Processor", func() {
 	})
 
 	It("should create RA when no exists", func() {
-		// given
+		// given: New resources
 		jwtRule := GetJwtRuleWithService(JwtIssuer, JwksUri, "test-service")
 		rules := []gatewayv1beta1.Rule{jwtRule}
 
@@ -258,13 +258,11 @@ var _ = Describe("Request Authentication Processor", func() {
 	})
 
 	It("should delete RA when there is no rule configured in ApiRule", func() {
-		// given
-		apiRule := GetAPIRuleFor([]gatewayv1beta1.Rule{})
-
+		// given: Cluster state
 		existingRa := securityv1beta1.RequestAuthentication{
 			ObjectMeta: metav1.ObjectMeta{
 				Labels: map[string]string{
-					processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", apiRule.ObjectMeta.Name, apiRule.ObjectMeta.Namespace),
+					processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", ApiName, ApiNamespace),
 				},
 			},
 			Spec: v1beta1.RequestAuthentication{
@@ -285,6 +283,9 @@ var _ = Describe("Request Authentication Processor", func() {
 		ctrlClient := GetFakeClient(&existingRa)
 		processor := istio.NewRequestAuthenticationProcessor(GetTestConfig())
 
+		// given: New resources
+		apiRule := GetAPIRuleFor([]gatewayv1beta1.Rule{})
+
 		// when
 		result, err := processor.EvaluateReconciliation(context.TODO(), ctrlClient, apiRule)
 
@@ -297,16 +298,11 @@ var _ = Describe("Request Authentication Processor", func() {
 	When("RA with JWT config exists", func() {
 
 		It("should update RA when nothing changed", func() {
-			// given
-			jwtRule := GetJwtRuleWithService(JwtIssuer, JwksUri, "test-service")
-			rules := []gatewayv1beta1.Rule{jwtRule}
-
-			apiRule := GetAPIRuleFor(rules)
-
+			// given: Cluster state
 			existingRa := securityv1beta1.RequestAuthentication{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: map[string]string{
-						processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", apiRule.ObjectMeta.Name, apiRule.ObjectMeta.Namespace),
+						processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", ApiName, ApiNamespace),
 					},
 				},
 				Spec: v1beta1.RequestAuthentication{
@@ -323,9 +319,13 @@ var _ = Describe("Request Authentication Processor", func() {
 					},
 				},
 			}
-
 			ctrlClient := GetFakeClient(&existingRa)
 			processor := istio.NewRequestAuthenticationProcessor(GetTestConfig())
+
+			// given: New resources
+			jwtRule := GetJwtRuleWithService(JwtIssuer, JwksUri, "test-service")
+			rules := []gatewayv1beta1.Rule{jwtRule}
+			apiRule := GetAPIRuleFor(rules)
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.TODO(), ctrlClient, apiRule)
@@ -337,15 +337,11 @@ var _ = Describe("Request Authentication Processor", func() {
 		})
 
 		It("should delete and create new RA when only service name in JWT Rule has changed", func() {
-			// given
-			jwtRule := GetJwtRuleWithService(JwtIssuer, JwksUri, "updated-service")
-			rules := []gatewayv1beta1.Rule{jwtRule}
-			apiRule := GetAPIRuleFor(rules)
-
+			// given: Cluster state
 			existingRa := securityv1beta1.RequestAuthentication{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: map[string]string{
-						processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", apiRule.ObjectMeta.Name, apiRule.ObjectMeta.Namespace),
+						processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", ApiName, ApiNamespace),
 					},
 				},
 				Spec: v1beta1.RequestAuthentication{
@@ -365,6 +361,11 @@ var _ = Describe("Request Authentication Processor", func() {
 
 			ctrlClient := GetFakeClient(&existingRa)
 			processor := istio.NewRequestAuthenticationProcessor(GetTestConfig())
+
+			// given: New resources
+			jwtRule := GetJwtRuleWithService(JwtIssuer, JwksUri, "updated-service")
+			rules := []gatewayv1beta1.Rule{jwtRule}
+			apiRule := GetAPIRuleFor(rules)
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.TODO(), ctrlClient, apiRule)
@@ -411,18 +412,11 @@ var _ = Describe("Request Authentication Processor", func() {
 		})
 
 		It("should create new RA when new service with new JWT config is added to ApiRule", func() {
-			// given
-			existingJwtRule := GetJwtRuleWithService(JwtIssuer, JwksUri, "existing-service")
-			newJwtRule := GetJwtRuleWithService("https://new.issuer.com/", JwksUri, "new-service")
-
-			rules := []gatewayv1beta1.Rule{existingJwtRule, newJwtRule}
-
-			apiRule := GetAPIRuleFor(rules)
-
+			// given: Cluster state
 			existingRa := securityv1beta1.RequestAuthentication{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: map[string]string{
-						processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", apiRule.ObjectMeta.Name, apiRule.ObjectMeta.Namespace),
+						processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", ApiName, ApiNamespace),
 					},
 				},
 				Spec: v1beta1.RequestAuthentication{
@@ -442,6 +436,12 @@ var _ = Describe("Request Authentication Processor", func() {
 
 			ctrlClient := GetFakeClient(&existingRa)
 			processor := istio.NewRequestAuthenticationProcessor(GetTestConfig())
+
+			// given: New resources
+			existingJwtRule := GetJwtRuleWithService(JwtIssuer, JwksUri, "existing-service")
+			newJwtRule := GetJwtRuleWithService("https://new.issuer.com/", JwksUri, "new-service")
+			rules := []gatewayv1beta1.Rule{existingJwtRule, newJwtRule}
+			apiRule := GetAPIRuleFor(rules)
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.TODO(), ctrlClient, apiRule)
@@ -488,16 +488,11 @@ var _ = Describe("Request Authentication Processor", func() {
 		})
 
 		It("should create new RA and delete old RA when JWT ApiRule has new JWKS URI", func() {
-			// given
-			jwtRule := GetJwtRuleWithService(JwtIssuer, JwksUri2, "test-service")
-			rules := []gatewayv1beta1.Rule{jwtRule}
-
-			apiRule := GetAPIRuleFor(rules)
-
+			// given: Cluster state
 			existingRa := securityv1beta1.RequestAuthentication{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: map[string]string{
-						processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", apiRule.ObjectMeta.Name, apiRule.ObjectMeta.Namespace),
+						processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", ApiName, ApiNamespace),
 					},
 				},
 				Spec: v1beta1.RequestAuthentication{
@@ -517,6 +512,11 @@ var _ = Describe("Request Authentication Processor", func() {
 
 			ctrlClient := GetFakeClient(&existingRa)
 			processor := istio.NewRequestAuthenticationProcessor(GetTestConfig())
+
+			// given: New resources
+			jwtRule := GetJwtRuleWithService(JwtIssuer, JwksUri2, "test-service")
+			rules := []gatewayv1beta1.Rule{jwtRule}
+			apiRule := GetAPIRuleFor(rules)
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.TODO(), ctrlClient, apiRule)
@@ -566,19 +566,12 @@ var _ = Describe("Request Authentication Processor", func() {
 	When("Two RA with same JWT config for different services exist", func() {
 
 		It("should update RAs and create new RA for first-service and delete old RA when JWT issuer in JWT Rule for first-service has changed", func() {
-			// given
-			firstJwtRule := GetJwtRuleWithService("https://new.issuer.com/", JwksUri, "first-service")
-			secondJwtRule := GetJwtRuleWithService(JwtIssuer, JwksUri, "second-service")
-
-			rules := []gatewayv1beta1.Rule{firstJwtRule, secondJwtRule}
-
-			apiRule := GetAPIRuleFor(rules)
-
+			// given: Cluster state
 			existingFirstServiceRa := securityv1beta1.RequestAuthentication{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "firstRa",
 					Labels: map[string]string{
-						processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", apiRule.ObjectMeta.Name, apiRule.ObjectMeta.Namespace),
+						processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", ApiName, ApiNamespace),
 					},
 				},
 				Spec: v1beta1.RequestAuthentication{
@@ -600,7 +593,7 @@ var _ = Describe("Request Authentication Processor", func() {
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "secondRa",
 					Labels: map[string]string{
-						processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", apiRule.ObjectMeta.Name, apiRule.ObjectMeta.Namespace),
+						processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", ApiName, ApiNamespace),
 					},
 				},
 				Spec: v1beta1.RequestAuthentication{
@@ -620,6 +613,12 @@ var _ = Describe("Request Authentication Processor", func() {
 
 			ctrlClient := GetFakeClient(&existingFirstServiceRa, &existingSecondServiceRa)
 			processor := istio.NewRequestAuthenticationProcessor(GetTestConfig())
+
+			// given: New resources
+			firstJwtRule := GetJwtRuleWithService("https://new.issuer.com/", JwksUri, "first-service")
+			secondJwtRule := GetJwtRuleWithService(JwtIssuer, JwksUri, "second-service")
+			rules := []gatewayv1beta1.Rule{firstJwtRule, secondJwtRule}
+			apiRule := GetAPIRuleFor(rules)
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.TODO(), ctrlClient, apiRule)
@@ -683,18 +682,12 @@ var _ = Describe("Request Authentication Processor", func() {
 		})
 
 		It("should delete only first-service RA when it was removed from ApiRule", func() {
-			// given
-			secondJwtRule := GetJwtRuleWithService(JwtIssuer, JwksUri, "second-service")
-
-			rules := []gatewayv1beta1.Rule{secondJwtRule}
-
-			apiRule := GetAPIRuleFor(rules)
-
+			// given: Cluster state
 			firstServiceRa := securityv1beta1.RequestAuthentication{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "firstRa",
 					Labels: map[string]string{
-						processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", apiRule.ObjectMeta.Name, apiRule.ObjectMeta.Namespace),
+						processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", ApiName, ApiNamespace),
 					},
 				},
 				Spec: v1beta1.RequestAuthentication{
@@ -716,7 +709,7 @@ var _ = Describe("Request Authentication Processor", func() {
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "secondRa",
 					Labels: map[string]string{
-						processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", apiRule.ObjectMeta.Name, apiRule.ObjectMeta.Namespace),
+						processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", ApiName, ApiNamespace),
 					},
 				},
 				Spec: v1beta1.RequestAuthentication{
@@ -736,6 +729,11 @@ var _ = Describe("Request Authentication Processor", func() {
 
 			ctrlClient := GetFakeClient(&firstServiceRa, &secondServiceRa)
 			processor := istio.NewRequestAuthenticationProcessor(GetTestConfig())
+
+			// given: New resources
+			secondJwtRule := GetJwtRuleWithService(JwtIssuer, JwksUri, "second-service")
+			rules := []gatewayv1beta1.Rule{secondJwtRule}
+			apiRule := GetAPIRuleFor(rules)
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.TODO(), ctrlClient, apiRule)
@@ -782,20 +780,12 @@ var _ = Describe("Request Authentication Processor", func() {
 		})
 
 		It("should create new RA when it has different service", func() {
-			// given
-			firstJwtRule := GetJwtRuleWithService(JwtIssuer, JwksUri, "first-service")
-			secondJwtRule := GetJwtRuleWithService(JwtIssuer, JwksUri, "second-service")
-			newJwtRule := GetJwtRuleWithService(JwtIssuer, JwksUri, "new-service")
-
-			rules := []gatewayv1beta1.Rule{firstJwtRule, secondJwtRule, newJwtRule}
-
-			apiRule := GetAPIRuleFor(rules)
-
+			// given: Cluster state
 			firstServiceRa := securityv1beta1.RequestAuthentication{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "firstRa",
 					Labels: map[string]string{
-						processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", apiRule.ObjectMeta.Name, apiRule.ObjectMeta.Namespace),
+						processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", ApiName, ApiNamespace),
 					},
 				},
 				Spec: v1beta1.RequestAuthentication{
@@ -817,7 +807,7 @@ var _ = Describe("Request Authentication Processor", func() {
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "secondRa",
 					Labels: map[string]string{
-						processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", apiRule.ObjectMeta.Name, apiRule.ObjectMeta.Namespace),
+						processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", ApiName, ApiNamespace),
 					},
 				},
 				Spec: v1beta1.RequestAuthentication{
@@ -837,6 +827,13 @@ var _ = Describe("Request Authentication Processor", func() {
 
 			ctrlClient := GetFakeClient(&firstServiceRa, &secondServiceRa)
 			processor := istio.NewRequestAuthenticationProcessor(GetTestConfig())
+
+			// given: New resources
+			firstJwtRule := GetJwtRuleWithService(JwtIssuer, JwksUri, "first-service")
+			secondJwtRule := GetJwtRuleWithService(JwtIssuer, JwksUri, "second-service")
+			newJwtRule := GetJwtRuleWithService(JwtIssuer, JwksUri, "new-service")
+			rules := []gatewayv1beta1.Rule{firstJwtRule, secondJwtRule, newJwtRule}
+			apiRule := GetAPIRuleFor(rules)
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.TODO(), ctrlClient, apiRule)
