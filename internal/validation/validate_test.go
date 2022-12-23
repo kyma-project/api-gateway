@@ -3,7 +3,6 @@ package validation
 import (
 	"encoding/json"
 	"fmt"
-
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/envtest/printer"
 
