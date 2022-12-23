@@ -19,7 +19,6 @@ func (o *handlerValidator) Validate(attributePath string, handler *gatewayv1beta
 		problems = append(problems, validation.Failure{AttributePath: attributePath + ".config", Message: "supplied config cannot be empty"})
 		return problems
 	}
-
 	err := json.Unmarshal(handler.Config.Raw, &template)
 	if err != nil {
 		problems = append(problems, validation.Failure{AttributePath: attributePath + ".config", Message: "Can't read json: " + err.Error()})
