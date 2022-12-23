@@ -9,8 +9,6 @@ import (
 	"regexp"
 	"strings"
 
-	"k8s.io/apimachinery/pkg/runtime"
-
 	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
 )
 
