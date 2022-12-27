@@ -20,6 +20,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
+	"strconv"
 	"time"
 
 	"github.com/kyma-incubator/api-gateway/internal/helpers"
@@ -216,7 +218,16 @@ func (r *APIRuleReconciler) updateStatusOrRetry(ctx context.Context, api *gatewa
 }
 
 func doneReconcile() (ctrl.Result, error) {
-	return ctrl.Result{}, nil
+	amount, ok := os.LookupEnv("REQUEUE_AFTER")
+	after := uint(10)
+	if ok {
+		a, err := strconv.ParseInt(amount, 10, 32)
+		if err != nil {
+			return ctrl.Result{}, err
+		}
+		after = uint(a)
+	}
+	return ctrl.Result{RequeueAfter: time.Duration(after) * time.Second}, nil
 }
 
 func retryReconcile(err error) (ctrl.Result, error) {
