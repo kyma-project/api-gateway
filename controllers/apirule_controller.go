@@ -216,7 +216,7 @@ func (r *APIRuleReconciler) updateStatusOrRetry(ctx context.Context, api *gatewa
 }
 
 func doneReconcile() (ctrl.Result, error) {
-	return ctrl.Result{}, nil
+	return ctrl.Result{RequeueAfter: 10*time.Second}, nil
 }
 
 func retryReconcile(err error) (ctrl.Result, error) {
