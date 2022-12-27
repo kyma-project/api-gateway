@@ -1,12 +1,14 @@
-package processing_test
+package processors_test
 
 import (
 	"context"
 	"fmt"
+
 	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
 	"github.com/kyma-incubator/api-gateway/internal/builders"
 	"github.com/kyma-incubator/api-gateway/internal/processing"
 	. "github.com/kyma-incubator/api-gateway/internal/processing/internal/test"
+	"github.com/kyma-incubator/api-gateway/internal/processing/processors"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
@@ -20,12 +22,12 @@ var _ = Describe("Virtual Service Processor", func() {
 		// given
 		apiRule := &gatewayv1beta1.APIRule{}
 
-		processor := processing.VirtualServiceProcessor{
+		processor := processors.VirtualServiceProcessor{
 			Creator: mockVirtualServiceCreator{},
 		}
 
 		// when
-		result, err := processor.EvaluateReconciliation(context.TODO(), GetEmptyFakeClient(), apiRule)
+		result, err := processor.EvaluateReconciliation(context.TODO(), GetFakeClient(), apiRule)
 
 		// then
 		Expect(err).To(BeNil())
@@ -62,7 +64,7 @@ var _ = Describe("Virtual Service Processor", func() {
 
 		client := fake.NewClientBuilder().WithScheme(scheme).WithObjects(&vs).Build()
 
-		processor := processing.VirtualServiceProcessor{
+		processor := processors.VirtualServiceProcessor{
 			Creator: mockVirtualServiceCreator{},
 		}
 

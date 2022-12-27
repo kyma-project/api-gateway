@@ -11,6 +11,8 @@ import (
 	"testing"
 
 	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
+	"github.com/kyma-incubator/api-gateway/internal/helpers"
+	"github.com/kyma-incubator/api-gateway/internal/types/ory"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -31,14 +33,36 @@ const (
 )
 
 var (
-	testDomainAllowlist = []string{"foo.bar", "bar.foo", "kyma.local"}
-	jwtValidatorMock    = &dummyAccStrValidator{}
+	testDomainAllowlist  = []string{"foo.bar", "bar.foo", "kyma.local"}
+	handlerValidatorMock = &dummyHandlerValidator{}
+	asValidatorMock      = &dummyAccessStrategiesValidator{}
 )
 
+var _ = Describe("ValidateConfig function", func() {
+	It("Should fail for missing config", func() {
+		//when
+		problems := (&APIRule{}).ValidateConfig(nil)
+
+		//then
+		Expect(problems).To(HaveLen(1))
+		Expect(problems[0].Message).To(Equal("Configuration is missing"))
+	})
+
+	It("Should fail for wrong config", func() {
+		//given
+		input := &helpers.Config{JWTHandler: "foo"}
+
+		//when
+		problems := (&APIRule{}).ValidateConfig(input)
+
+		//then
+		Expect(problems).To(HaveLen(1))
+		Expect(problems[0].Message).To(Equal("Unsupported JWT Handler: foo"))
+	})
+})
+
 var _ = Describe("Validate function", func() {
-
 	It("Should fail for empty rules", func() {
-
 		//given
 		testAllowList := []string{"foo.bar", "bar.foo", "kyma.local"}
 		input := &gatewayv1beta1.APIRule{
@@ -51,7 +75,9 @@ var _ = Describe("Validate function", func() {
 
 		//when
 		problems := (&APIRule{
-			DomainAllowList: testAllowList,
+			HandlerValidator:          handlerValidatorMock,
+			AccessStrategiesValidator: asValidatorMock,
+			DomainAllowList:           testAllowList,
 		}).Validate(input, networkingv1beta1.VirtualServiceList{})
 
 		//then
@@ -87,9 +113,10 @@ var _ = Describe("Validate function", func() {
 
 		//when
 		problems := (&APIRule{
-			JwtValidator:     jwtValidatorMock,
-			ServiceBlockList: testBlockList,
-			DomainAllowList:  testDomainAllowlist,
+			HandlerValidator:          handlerValidatorMock,
+			AccessStrategiesValidator: asValidatorMock,
+			ServiceBlockList:          testBlockList,
+			DomainAllowList:           testDomainAllowlist,
 		}).Validate(input, networkingv1beta1.VirtualServiceList{})
 
 		//then
@@ -126,9 +153,10 @@ var _ = Describe("Validate function", func() {
 
 		//when
 		problems := (&APIRule{
-			JwtValidator:     jwtValidatorMock,
-			ServiceBlockList: testBlockList,
-			DomainAllowList:  testDomainAllowlist,
+			HandlerValidator:          handlerValidatorMock,
+			AccessStrategiesValidator: asValidatorMock,
+			ServiceBlockList:          testBlockList,
+			DomainAllowList:           testDomainAllowlist,
 		}).Validate(input, networkingv1beta1.VirtualServiceList{})
 
 		//then
@@ -160,9 +188,10 @@ var _ = Describe("Validate function", func() {
 
 		//when
 		problems := (&APIRule{
-			JwtValidator:     jwtValidatorMock,
-			ServiceBlockList: testBlockList,
-			DomainAllowList:  testDomainAllowlist,
+			HandlerValidator:          handlerValidatorMock,
+			AccessStrategiesValidator: asValidatorMock,
+			ServiceBlockList:          testBlockList,
+			DomainAllowList:           testDomainAllowlist,
 		}).Validate(input, networkingv1beta1.VirtualServiceList{})
 
 		//then
@@ -196,11 +225,12 @@ var _ = Describe("Validate function", func() {
 
 		//when
 		problems := (&APIRule{
-			JwtValidator:      jwtValidatorMock,
-			ServiceBlockList:  testBlockList,
-			DomainAllowList:   testDomainAllowlist,
-			HostBlockList:     testHostBlockList,
-			DefaultDomainName: testDefaultDomain,
+			HandlerValidator:          handlerValidatorMock,
+			AccessStrategiesValidator: asValidatorMock,
+			ServiceBlockList:          testBlockList,
+			DomainAllowList:           testDomainAllowlist,
+			HostBlockList:             testHostBlockList,
+			DefaultDomainName:         testDefaultDomain,
 		}).Validate(input, networkingv1beta1.VirtualServiceList{})
 
 		//then
@@ -236,11 +266,12 @@ var _ = Describe("Validate function", func() {
 
 		//when
 		problems := (&APIRule{
-			JwtValidator:      jwtValidatorMock,
-			ServiceBlockList:  testBlockList,
-			DomainAllowList:   testDomainAllowlist,
-			HostBlockList:     testHostBlockList,
-			DefaultDomainName: testDefaultDomain,
+			HandlerValidator:          handlerValidatorMock,
+			AccessStrategiesValidator: asValidatorMock,
+			ServiceBlockList:          testBlockList,
+			DomainAllowList:           testDomainAllowlist,
+			HostBlockList:             testHostBlockList,
+			DefaultDomainName:         testDefaultDomain,
 		}).Validate(input, networkingv1beta1.VirtualServiceList{})
 
 		//then
@@ -270,9 +301,10 @@ var _ = Describe("Validate function", func() {
 
 		//when
 		problems := (&APIRule{
-			JwtValidator:     jwtValidatorMock,
-			ServiceBlockList: testBlockList,
-			DomainAllowList:  []string{},
+			HandlerValidator:          handlerValidatorMock,
+			AccessStrategiesValidator: asValidatorMock,
+			ServiceBlockList:          testBlockList,
+			DomainAllowList:           []string{},
 		}).Validate(input, networkingv1beta1.VirtualServiceList{})
 
 		//then
@@ -302,9 +334,10 @@ var _ = Describe("Validate function", func() {
 
 		//when
 		problems := (&APIRule{
-			JwtValidator:     jwtValidatorMock,
-			ServiceBlockList: testBlockList,
-			DomainAllowList:  testDomainAllowlist,
+			HandlerValidator:          handlerValidatorMock,
+			AccessStrategiesValidator: asValidatorMock,
+			ServiceBlockList:          testBlockList,
+			DomainAllowList:           testDomainAllowlist,
 		}).Validate(input, networkingv1beta1.VirtualServiceList{})
 
 		//then
@@ -336,9 +369,10 @@ var _ = Describe("Validate function", func() {
 
 		//when
 		problems := (&APIRule{
-			JwtValidator:     jwtValidatorMock,
-			ServiceBlockList: testBlockList,
-			DomainAllowList:  testDomainAllowlist,
+			HandlerValidator:          handlerValidatorMock,
+			AccessStrategiesValidator: asValidatorMock,
+			ServiceBlockList:          testBlockList,
+			DomainAllowList:           testDomainAllowlist,
 		}).Validate(input, networkingv1beta1.VirtualServiceList{})
 
 		//then
@@ -370,10 +404,11 @@ var _ = Describe("Validate function", func() {
 
 		//when
 		problems := (&APIRule{
-			JwtValidator:      jwtValidatorMock,
-			ServiceBlockList:  testBlockList,
-			DomainAllowList:   testDomainAllowlist,
-			DefaultDomainName: testDefaultDomain,
+			HandlerValidator:          handlerValidatorMock,
+			AccessStrategiesValidator: asValidatorMock,
+			ServiceBlockList:          testBlockList,
+			DomainAllowList:           testDomainAllowlist,
+			DefaultDomainName:         testDefaultDomain,
 		}).Validate(input, networkingv1beta1.VirtualServiceList{})
 
 		//then
@@ -403,9 +438,10 @@ var _ = Describe("Validate function", func() {
 
 		//when
 		problems := (&APIRule{
-			JwtValidator:     jwtValidatorMock,
-			ServiceBlockList: testBlockList,
-			DomainAllowList:  testDomainAllowlist,
+			HandlerValidator:          handlerValidatorMock,
+			AccessStrategiesValidator: asValidatorMock,
+			ServiceBlockList:          testBlockList,
+			DomainAllowList:           testDomainAllowlist,
 		}).Validate(input, networkingv1beta1.VirtualServiceList{})
 
 		//then
@@ -442,8 +478,9 @@ var _ = Describe("Validate function", func() {
 
 		//when
 		problems := (&APIRule{
-			JwtValidator:    jwtValidatorMock,
-			DomainAllowList: testDomainAllowlist,
+			HandlerValidator:          handlerValidatorMock,
+			AccessStrategiesValidator: asValidatorMock,
+			DomainAllowList:           testDomainAllowlist,
 		}).Validate(input, networkingv1beta1.VirtualServiceList{Items: []*networkingv1beta1.VirtualService{&existingVS}})
 
 		Expect(problems).To(HaveLen(1))
@@ -479,8 +516,9 @@ var _ = Describe("Validate function", func() {
 
 		//when
 		problems := (&APIRule{
-			JwtValidator:    jwtValidatorMock,
-			DomainAllowList: testDomainAllowlist,
+			HandlerValidator:          handlerValidatorMock,
+			AccessStrategiesValidator: asValidatorMock,
+			DomainAllowList:           testDomainAllowlist,
 		}).Validate(input, networkingv1beta1.VirtualServiceList{Items: []*networkingv1beta1.VirtualService{&existingVS}})
 
 		Expect(problems).To(HaveLen(0))
@@ -503,7 +541,8 @@ var _ = Describe("Validate function", func() {
 		}
 		//when
 		problems := (&APIRule{
-			DomainAllowList: testDomainAllowlist,
+			AccessStrategiesValidator: asValidatorMock,
+			DomainAllowList:           testDomainAllowlist,
 		}).Validate(input, networkingv1beta1.VirtualServiceList{})
 
 		//then
@@ -546,8 +585,9 @@ var _ = Describe("Validate function", func() {
 		}
 		//when
 		problems := (&APIRule{
-			ServiceBlockList: testBlockList,
-			DomainAllowList:  testDomainAllowlist,
+			AccessStrategiesValidator: asValidatorMock,
+			ServiceBlockList:          testBlockList,
+			DomainAllowList:           testDomainAllowlist,
 		}).Validate(input, networkingv1beta1.VirtualServiceList{})
 
 		//then
@@ -591,8 +631,9 @@ var _ = Describe("Validate function", func() {
 		}
 		//when
 		problems := (&APIRule{
-			ServiceBlockList: testBlockList,
-			DomainAllowList:  testDomainAllowlist,
+			AccessStrategiesValidator: asValidatorMock,
+			ServiceBlockList:          testBlockList,
+			DomainAllowList:           testDomainAllowlist,
 		}).Validate(input, networkingv1beta1.VirtualServiceList{})
 
 		//then
@@ -635,7 +676,8 @@ var _ = Describe("Validate function", func() {
 		}
 		//when
 		problems := (&APIRule{
-			DomainAllowList: testDomainAllowlist,
+			AccessStrategiesValidator: asValidatorMock,
+			DomainAllowList:           testDomainAllowlist,
 		}).Validate(input, networkingv1beta1.VirtualServiceList{})
 
 		//then
@@ -656,6 +698,7 @@ var _ = Describe("Validate function", func() {
 		Expect(problems[4].Message).To(Equal("No accessStrategies defined"))
 
 	})
+
 	It("Should fail for the same path and method", func() {
 		//given
 		input := &gatewayv1beta1.APIRule{
@@ -682,7 +725,8 @@ var _ = Describe("Validate function", func() {
 		}
 		//when
 		problems := (&APIRule{
-			DomainAllowList: testDomainAllowlist,
+			AccessStrategiesValidator: asValidatorMock,
+			DomainAllowList:           testDomainAllowlist,
 		}).Validate(input, networkingv1beta1.VirtualServiceList{})
 
 		//then
@@ -690,6 +734,7 @@ var _ = Describe("Validate function", func() {
 		Expect(problems[0].AttributePath).To(Equal(".spec.rules"))
 		Expect(problems[0].Message).To(Equal("multiple rules defined for the same path and method"))
 	})
+
 	It("Should succeed for valid input", func() {
 		//given
 		occupiedHost := "occupied-host" + allowlistedDomain
@@ -739,8 +784,9 @@ var _ = Describe("Validate function", func() {
 		}
 		//when
 		problems := (&APIRule{
-			JwtValidator:    jwtValidatorMock,
-			DomainAllowList: testDomainAllowlist,
+			HandlerValidator:          handlerValidatorMock,
+			AccessStrategiesValidator: asValidatorMock,
+			DomainAllowList:           testDomainAllowlist,
 		}).Validate(input, networkingv1beta1.VirtualServiceList{Items: []*networkingv1beta1.VirtualService{&existingVS}})
 
 		//then
@@ -784,8 +830,9 @@ var _ = Describe("Validate function", func() {
 		}
 		//when
 		problems := (&APIRule{
-			JwtValidator:    jwtValidatorMock,
-			DomainAllowList: testDomainAllowlist,
+			HandlerValidator:          handlerValidatorMock,
+			AccessStrategiesValidator: asValidatorMock,
+			DomainAllowList:           testDomainAllowlist,
 		}).Validate(input, networkingv1beta1.VirtualServiceList{Items: []*networkingv1beta1.VirtualService{&existingVS}})
 
 		//then
@@ -794,9 +841,7 @@ var _ = Describe("Validate function", func() {
 })
 
 var _ = Describe("Validator for", func() {
-
 	Describe("NoConfig access strategy", func() {
-
 		It("Should fail with non-empty config", func() {
 			//given
 			handler := &gatewayv1beta1.Handler{Name: "noop", Config: simpleJWTConfig("http://atgo.org")}
@@ -837,19 +882,19 @@ var _ = Describe("Validator for", func() {
 
 func emptyConfig() *runtime.RawExtension {
 	return getRawConfig(
-		&gatewayv1beta1.JWTAccStrConfig{})
+		&ory.JWTAccStrConfig{})
 }
 
 func simpleJWTConfig(trustedIssuers ...string) *runtime.RawExtension {
 	return getRawConfig(
-		&gatewayv1beta1.JWTAccStrConfig{
+		&ory.JWTAccStrConfig{
 			JWKSUrls:       trustedIssuers,
 			TrustedIssuers: trustedIssuers,
 			RequiredScopes: []string{"atgo"},
 		})
 }
 
-func getRawConfig(config *gatewayv1beta1.JWTAccStrConfig) *runtime.RawExtension {
+func getRawConfig(config *ory.JWTAccStrConfig) *runtime.RawExtension {
 	bytes, err := json.Marshal(config)
 	Expect(err).To(BeNil())
 	return &runtime.RawExtension{

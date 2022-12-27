@@ -1,0 +1,24 @@
+apiVersion: gateway.kyma-project.io/v1beta1
+kind: APIRule
+metadata:
+  name: istio-service-v1beta1
+  namespace: default
+  labels:
+    app: istio-service
+    example: orders-service
+spec:
+  host: istio.testHost.com
+  gateway: kyma-system/kyma-gateway
+  rules:
+    - path: /.*
+      service:
+        name: orders-service
+        port: 80
+      methods: ["GET","POST"]
+      mutators: []
+      accessStrategies:
+        - handler: jwt
+          config:
+            authentications:
+              - issuer: https://example.com/
+                jwksUri: https://example.com/.well-known/jwks.json

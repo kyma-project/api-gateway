@@ -3,16 +3,17 @@ package ory
 import (
 	"encoding/json"
 	"fmt"
+
 	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
+	"github.com/kyma-incubator/api-gateway/internal/types/ory"
 	"github.com/kyma-incubator/api-gateway/internal/validation"
 )
 
-type jwtValidator struct{}
+type handlerValidator struct{}
 
-func (o *jwtValidator) Validate(attributePath string, handler *gatewayv1beta1.Handler) []validation.Failure {
+func (o *handlerValidator) Validate(attributePath string, handler *gatewayv1beta1.Handler) []validation.Failure {
 	var problems []validation.Failure
-
-	var template gatewayv1beta1.JWTAccStrConfig
+	var template ory.JWTAccStrConfig
 
 	if !validation.ConfigNotEmpty(handler.Config) {
 		problems = append(problems, validation.Failure{AttributePath: attributePath + ".config", Message: "supplied config cannot be empty"})

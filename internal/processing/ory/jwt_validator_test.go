@@ -2,20 +2,21 @@ package ory
 
 import (
 	"encoding/json"
+
 	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
+	"github.com/kyma-incubator/api-gateway/internal/types/ory"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
 var _ = Describe("JWT Validator", func() {
-
 	It("Should fail with empty config", func() {
 		//given
 		handler := &gatewayv1beta1.Handler{Name: "jwt", Config: emptyConfig()}
 
 		//when
-		problems := (&jwtValidator{}).Validate("some.attribute", handler)
+		problems := (&handlerValidator{}).Validate("some.attribute", handler)
 
 		//then
 		Expect(problems).To(HaveLen(1))
@@ -28,7 +29,7 @@ var _ = Describe("JWT Validator", func() {
 		handler := &gatewayv1beta1.Handler{Name: "jwt", Config: simpleJWTConfig("a t g o")}
 
 		//when
-		problems := (&jwtValidator{}).Validate("some.attribute", handler)
+		problems := (&handlerValidator{}).Validate("some.attribute", handler)
 
 		//then
 		Expect(problems).To(HaveLen(2))
@@ -43,7 +44,7 @@ var _ = Describe("JWT Validator", func() {
 		handler := &gatewayv1beta1.Handler{Name: "jwt", Config: testURLJWTConfig("http://issuer.test/.well-known/jwks.json", "http://issuer.test/")}
 
 		//when
-		problems := (&jwtValidator{}).Validate("some.attribute", handler)
+		problems := (&handlerValidator{}).Validate("some.attribute", handler)
 
 		//then
 		Expect(problems).To(HaveLen(2))
@@ -58,7 +59,7 @@ var _ = Describe("JWT Validator", func() {
 		handler := &gatewayv1beta1.Handler{Name: "jwt", Config: testURLJWTConfig("file://.well-known/jwks.json", "https://issuer.test/")}
 
 		//when
-		problems := (&jwtValidator{}).Validate("some.attribute", handler)
+		problems := (&handlerValidator{}).Validate("some.attribute", handler)
 
 		//then
 		Expect(problems).To(HaveLen(0))
@@ -69,7 +70,7 @@ var _ = Describe("JWT Validator", func() {
 		handler := &gatewayv1beta1.Handler{Name: "jwt", Config: testURLJWTConfig("https://issuer.test/.well-known/jwks.json", "https://issuer.test/")}
 
 		//when
-		problems := (&jwtValidator{}).Validate("some.attribute", handler)
+		problems := (&handlerValidator{}).Validate("some.attribute", handler)
 
 		//then
 		Expect(problems).To(HaveLen(0))
@@ -80,7 +81,7 @@ var _ = Describe("JWT Validator", func() {
 		handler := &gatewayv1beta1.Handler{Name: "jwt", Config: &runtime.RawExtension{Raw: []byte("/abc]")}}
 
 		//when
-		problems := (&jwtValidator{}).Validate("some.attribute", handler)
+		problems := (&handlerValidator{}).Validate("some.attribute", handler)
 
 		//then
 		Expect(problems).To(HaveLen(1))
@@ -93,7 +94,7 @@ var _ = Describe("JWT Validator", func() {
 		handler := &gatewayv1beta1.Handler{Name: "jwt", Config: simpleJWTConfig()}
 
 		//when
-		problems := (&jwtValidator{}).Validate("some.attribute", handler)
+		problems := (&handlerValidator{}).Validate("some.attribute", handler)
 
 		//then
 		Expect(problems).To(HaveLen(0))
@@ -102,12 +103,12 @@ var _ = Describe("JWT Validator", func() {
 
 func emptyConfig() *runtime.RawExtension {
 	return getRawConfig(
-		&gatewayv1beta1.JWTAccStrConfig{})
+		&ory.JWTAccStrConfig{})
 }
 
 func simpleJWTConfig(trustedIssuers ...string) *runtime.RawExtension {
 	return getRawConfig(
-		&gatewayv1beta1.JWTAccStrConfig{
+		&ory.JWTAccStrConfig{
 			JWKSUrls:       trustedIssuers,
 			TrustedIssuers: trustedIssuers,
 			RequiredScopes: []string{"atgo"},
@@ -116,14 +117,14 @@ func simpleJWTConfig(trustedIssuers ...string) *runtime.RawExtension {
 
 func testURLJWTConfig(JWKSUrls string, trustedIssuers string) *runtime.RawExtension {
 	return getRawConfig(
-		&gatewayv1beta1.JWTAccStrConfig{
+		&ory.JWTAccStrConfig{
 			JWKSUrls:       []string{JWKSUrls},
 			TrustedIssuers: []string{trustedIssuers},
 			RequiredScopes: []string{"atgo"},
 		})
 }
 
-func getRawConfig(config *gatewayv1beta1.JWTAccStrConfig) *runtime.RawExtension {
+func getRawConfig(config *ory.JWTAccStrConfig) *runtime.RawExtension {
 	bytes, err := json.Marshal(config)
 	Expect(err).To(BeNil())
 	return &runtime.RawExtension{

@@ -8,9 +8,11 @@ import (
 )
 
 type ReconciliationStatus struct {
-	ApiRuleStatus        *gatewayv1beta1.APIRuleResourceStatus
-	VirtualServiceStatus *gatewayv1beta1.APIRuleResourceStatus
-	AccessRuleStatus     *gatewayv1beta1.APIRuleResourceStatus
+	ApiRuleStatus               *gatewayv1beta1.APIRuleResourceStatus
+	VirtualServiceStatus        *gatewayv1beta1.APIRuleResourceStatus
+	AccessRuleStatus            *gatewayv1beta1.APIRuleResourceStatus
+	RequestAuthenticationStatus *gatewayv1beta1.APIRuleResourceStatus
+	AuthorizationPolicyStatus   *gatewayv1beta1.APIRuleResourceStatus
 }
 
 func getStatus(apiStatus *gatewayv1beta1.APIRuleResourceStatus, statusCode gatewayv1beta1.StatusCode) ReconciliationStatus {
@@ -19,6 +21,10 @@ func getStatus(apiStatus *gatewayv1beta1.APIRuleResourceStatus, statusCode gatew
 		VirtualServiceStatus: &gatewayv1beta1.APIRuleResourceStatus{
 			Code: statusCode,
 		}, AccessRuleStatus: &gatewayv1beta1.APIRuleResourceStatus{
+			Code: statusCode,
+		}, RequestAuthenticationStatus: &gatewayv1beta1.APIRuleResourceStatus{
+			Code: statusCode,
+		}, AuthorizationPolicyStatus: &gatewayv1beta1.APIRuleResourceStatus{
 			Code: statusCode,
 		},
 	}
@@ -40,6 +46,10 @@ func GetStatusForError(log *logr.Logger, err error, statusCode gatewayv1beta1.St
 			Code: statusCode,
 		}, AccessRuleStatus: &gatewayv1beta1.APIRuleResourceStatus{
 			Code: statusCode,
+		}, RequestAuthenticationStatus: &gatewayv1beta1.APIRuleResourceStatus{
+			Code: statusCode,
+		}, AuthorizationPolicyStatus: &gatewayv1beta1.APIRuleResourceStatus{
+			Code: statusCode,
 		},
 	}
 }
@@ -48,7 +58,7 @@ func generateErrorStatus(err error) *gatewayv1beta1.APIRuleResourceStatus {
 	return toStatus(gatewayv1beta1.StatusError, err.Error())
 }
 
-func getFailedValidationStatus(failures []validation.Failure) ReconciliationStatus {
+func GetFailedValidationStatus(failures []validation.Failure) ReconciliationStatus {
 	apiRuleStatus := generateValidationStatus(failures)
 	return getStatus(apiRuleStatus, gatewayv1beta1.StatusSkipped)
 }

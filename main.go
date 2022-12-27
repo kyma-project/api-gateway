@@ -24,6 +24,7 @@ import (
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
+
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
 	"k8s.io/apimachinery/pkg/runtime"
@@ -38,10 +39,12 @@ import (
 	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
 	"github.com/vrischmann/envconfig"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
+	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 
 	gatewayv1alpha1 "github.com/kyma-incubator/api-gateway/api/v1alpha1"
 	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
 	"github.com/kyma-incubator/api-gateway/controllers"
+	"github.com/kyma-incubator/api-gateway/internal/helpers"
 	"github.com/kyma-incubator/api-gateway/internal/processing"
 	"github.com/kyma-incubator/api-gateway/internal/validation"
 	"github.com/pkg/errors"
@@ -68,6 +71,7 @@ func init() {
 
 	utilruntime.Must(networkingv1beta1.AddToScheme(scheme))
 	utilruntime.Must(rulev1alpha1.AddToScheme(scheme))
+	utilruntime.Must(securityv1beta1.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
 }
 
@@ -170,6 +174,7 @@ func main() {
 		},
 		GeneratedObjectsLabels: additionalLabels,
 		Scheme:                 mgr.GetScheme(),
+		Config:                 &helpers.Config{},
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "APIRule")
 		os.Exit(1)

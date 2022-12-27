@@ -179,6 +179,8 @@ install: manifests
 	kustomize build config/crd | kubectl apply -f -
 	@if ! kubectl get crd virtualservices.networking.istio.io > /dev/null 2>&1 ; then kubectl apply -f hack/networking.istio.io_virtualservice.yaml; fi;
 	@if ! kubectl get crd rules.oathkeeper.ory.sh > /dev/null 2>&1 ; then kubectl apply -f hack/oathkeeper.ory.sh_rules.yaml; fi;
+	@if ! kubectl get crd authorizationpolicies.security.istio.io > /dev/null 2>&1 ; then kubectl apply -f hack/security.istio.io_authorizationpolicy.yaml; fi;
+	@if ! kubectl get crd requestauthentications.security.istio.io > /dev/null 2>&1 ; then kubectl apply -f hack/security.istio.io_requestauthentication.yaml; fi;
 
 .PHONY: uninstall
 uninstall: manifests kustomize ## Uninstall CRDs from the K8s cluster specified in ~/.kube/config. Call with ignore-not-found=true to ignore resource not found errors during deletion.
@@ -298,7 +300,7 @@ deploy: manifests patch-gen
 	kustomize build config/default | kubectl apply -f -
 
 # Generate CRD with patches
-gen-crd: 
+gen-crd:
 	kustomize build config/crd > config/crd/apirules.gateway.crd.yaml
 
 samples-clean:

@@ -14,7 +14,6 @@ spec:
     plural: apirules
     singular: apirule
   scope: Namespaced
-  preserveUnknownFields: false
   versions:
   - deprecated: true
     deprecationWarning: v1alpha1 is deprecated as of Kyma 2.5.X
@@ -59,17 +58,6 @@ spec:
                               keys vary per handler.
                             type: object
                             x-kubernetes-preserve-unknown-fields: true
-                            properties:
-                              jwks_urls:
-                                type: array
-                                items:
-                                  type: string
-                                  pattern: ^(https://|file://).*$
-                              trusted_issuers:
-                                type: array
-                                items:
-                                  type: string
-                                  pattern: ^(https://|file://).*$
                           handler:
                             description: Name is the name of a handler
                             type: string
@@ -167,12 +155,30 @@ spec:
                   desc:
                     type: string
                 type: object
+              authorizationPolicyStatus:
+                description: APIRuleResourceStatus .
+                properties:
+                  code:
+                    description: StatusCode .
+                    type: string
+                  desc:
+                    type: string
+                type: object
               lastProcessedTime:
                 format: date-time
                 type: string
               observedGeneration:
                 format: int64
                 type: integer
+              requestAuthenticationStatus:
+                description: APIRuleResourceStatus .
+                properties:
+                  code:
+                    description: StatusCode .
+                    type: string
+                  desc:
+                    type: string
+                type: object
               virtualServiceStatus:
                 description: APIRuleResourceStatus .
                 properties:
@@ -242,17 +248,6 @@ spec:
                               keys vary per handler.
                             type: object
                             x-kubernetes-preserve-unknown-fields: true
-                            properties:
-                              jwks_urls:
-                                type: array
-                                items:
-                                  type: string
-                                  pattern: ^(https://|file://).*$
-                              trusted_issuers:
-                                type: array
-                                items:
-                                  type: string
-                                  pattern: ^(https://|file://).*$
                           handler:
                             description: Name is the name of a handler
                             type: string
@@ -374,12 +369,30 @@ spec:
                   desc:
                     type: string
                 type: object
+              authorizationPolicyStatus:
+                description: APIRuleResourceStatus .
+                properties:
+                  code:
+                    description: StatusCode .
+                    type: string
+                  desc:
+                    type: string
+                type: object
               lastProcessedTime:
                 format: date-time
                 type: string
               observedGeneration:
                 format: int64
                 type: integer
+              requestAuthenticationStatus:
+                description: APIRuleResourceStatus .
+                properties:
+                  code:
+                    description: StatusCode .
+                    type: string
+                  desc:
+                    type: string
+                type: object
               virtualServiceStatus:
                 description: APIRuleResourceStatus .
                 properties:

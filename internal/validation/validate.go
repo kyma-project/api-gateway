@@ -8,29 +8,41 @@ import (
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 
 	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
+	"k8s.io/utils/strings/slices"
 )
 
 // Validators for AccessStrategies
 var vldNoConfig = &noConfigAccStrValidator{}
-var vldDummy = &dummyAccStrValidator{}
+var vldDummy = &dummyHandlerValidator{}
+
+type handlerValidator interface {
+	Validate(attrPath string, Handler *gatewayv1beta1.Handler) []Failure
+}
 
 type accessStrategyValidator interface {
-	Validate(attrPath string, Handler *gatewayv1beta1.Handler) []Failure
+	Validate(attrPath string, accessStrategies []*gatewayv1beta1.Authenticator) []Failure
 }
 
 // APIRule is used to validate github.com/kyma-incubator/api-gateway/api/v1beta1/APIRule instances
 type APIRule struct {
-	JwtValidator      accessStrategyValidator
-	ServiceBlockList  map[string][]string
-	DomainAllowList   []string
-	HostBlockList     []string
-	DefaultDomainName string
+	HandlerValidator          handlerValidator
+	AccessStrategiesValidator accessStrategyValidator
+	ServiceBlockList          map[string][]string
+	DomainAllowList           []string
+	HostBlockList             []string
+	DefaultDomainName         string
+}
+
+// Failure carries validation failures for a single attribute of an object.
+type Failure struct {
+	AttributePath string
+	Message       string
 }
 
 // Validate performs APIRule validation
 func (v *APIRule) Validate(api *gatewayv1beta1.APIRule, vsList networkingv1beta1.VirtualServiceList) []Failure {
-
 	res := []Failure{}
+
 	//Validate service on path level if it is created
 	if api.Spec.Service != nil {
 		res = append(res, v.validateService(".spec.service", api)...)
@@ -45,10 +57,22 @@ func (v *APIRule) Validate(api *gatewayv1beta1.APIRule, vsList networkingv1beta1
 	return res
 }
 
-// Failure carries validation failures for a single attribute of an object.
-type Failure struct {
-	AttributePath string
-	Message       string
+func (v *APIRule) ValidateConfig(config *helpers.Config) []Failure {
+	var problems []Failure
+
+	if config == nil {
+		problems = append(problems, Failure{
+			Message: "Configuration is missing",
+		})
+	} else {
+		if !slices.Contains([]string{helpers.JWT_HANDLER_ORY, helpers.JWT_HANDLER_ISTIO}, config.JWTHandler) {
+			problems = append(problems, Failure{
+				Message: fmt.Sprintf("Unsupported JWT Handler: %s", config.JWTHandler),
+			})
+		}
+	}
+
+	return problems
 }
 
 func (v *APIRule) validateHost(attributePath string, vsList networkingv1beta1.VirtualServiceList, api *gatewayv1beta1.APIRule) []Failure {
@@ -179,6 +203,8 @@ func (v *APIRule) validateAccessStrategies(attributePath string, accessStrategie
 		return problems
 	}
 
+	problems = append(problems, v.AccessStrategiesValidator.Validate(attributePath, accessStrategies)...)
+
 	for i, r := range accessStrategies {
 		strategyAttrPath := attributePath + fmt.Sprintf("[%d]", i)
 		problems = append(problems, v.validateAccessStrategy(strategyAttrPath, r)...)
@@ -189,8 +215,7 @@ func (v *APIRule) validateAccessStrategies(attributePath string, accessStrategie
 
 func (v *APIRule) validateAccessStrategy(attributePath string, accessStrategy *gatewayv1beta1.Authenticator) []Failure {
 	var problems []Failure
-
-	var vld accessStrategyValidator
+	var vld handlerValidator
 
 	switch accessStrategy.Handler.Name {
 	case "allow": //our internal constant, does not exist in ORY
@@ -208,7 +233,7 @@ func (v *APIRule) validateAccessStrategy(attributePath string, accessStrategy *g
 	case "oauth2_introspection":
 		vld = vldDummy
 	case "jwt":
-		vld = v.JwtValidator
+		vld = v.HandlerValidator
 	default:
 		problems = append(problems, Failure{AttributePath: attributePath + ".handler", Message: fmt.Sprintf("Unsupported accessStrategy: %s", accessStrategy.Handler.Name)})
 		return problems

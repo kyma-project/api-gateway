@@ -16,7 +16,7 @@ The API Gateway Controller manages Istio VirtualServices and Oathkeeper Rule. Th
 
 ### Deploy to the cluster
 
-Deploys the officially released Controller version to the cluster
+Deploys the officially released Controller version to the cluster.
 
 - ensure the access to a Kubernetes cluster is configured in `~/.kube/config`
 - `make install` to install necessary Custom Resource Definitions
@@ -127,6 +127,10 @@ When you fetch an existing APIRule CR, the system adds the **status** section wh
 | **status.virtualService.desc** | Current state of the Virtual Service. |
 | **status.accessRuleStatus.code** | Status code describing the Oathkeeper Rule. |
 | **status.accessRuleStatus.desc** | Current state of the Oathkeeper Rule. |
+| **status.RequestAuthenticationStatus.code** | Status code describing the RequestAuthentication. |
+| **status.RequestAuthenticationStatus.desc** | Current state of the RequestAuthentication. |
+| **status.AuthorizationPolicyStatus.code** | Status code describing the AuthorizationPolicy. |
+| **status.AuthorizationPolicyStatus.desc** | Current state of the AuthorizationPolicy. |
 
 ### Status codes
 

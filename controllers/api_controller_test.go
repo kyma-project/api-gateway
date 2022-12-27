@@ -1,18 +1,25 @@
 package controllers_test
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
+	"fmt"
+	"io"
 	"net/http"
+
+	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 
 	"sigs.k8s.io/controller-runtime/pkg/config/v1alpha1"
 
 	"github.com/go-logr/logr"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 
-	"github.com/kyma-incubator/api-gateway/internal/processing"
-
 	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
 	"github.com/kyma-incubator/api-gateway/controllers"
+	"github.com/kyma-incubator/api-gateway/internal/helpers"
+	"github.com/kyma-incubator/api-gateway/internal/processing"
+	istioint "github.com/kyma-incubator/api-gateway/internal/types/istio"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
@@ -34,48 +41,163 @@ import (
 )
 
 var (
-	ts                                       *testSuite
-	serviceName, host, authStrategy, gateway string
-	servicePort                              uint32
-	isExernal                                bool
+	ts                         *testSuite
+	serviceName, host, gateway string
+	servicePort                uint32
+	isExernal                  bool
 )
+
+type FakeConfigMapReader struct {
+	Content string
+}
+
+func (f FakeConfigMapReader) ReadConfigMap(_ context.Context, _ client.Client) ([]byte, error) {
+	return io.ReadAll(bytes.NewBufferString(f.Content))
+}
 
 var _ = Describe("Controller", func() {
 	Describe("Reconcile", func() {
 		Context("APIRule", func() {
 			It("should update status", func() {
-				testAPI := fixAPI()
+				testAPI := getApiRule("noop", nil)
 
 				ts = getTestSuite(testAPI)
 				reconciler := getAPIReconciler(ts.mgr)
 				ctx := context.Background()
 
-				result, err := reconciler.Reconcile(ctx, reconcile.Request{NamespacedName: types.NamespacedName{Name: testAPI.Name}})
+				fakeReader := FakeConfigMapReader{Content: fmt.Sprintf("jwtHandler: %s", helpers.JWT_HANDLER_ORY)}
+				helpers.ReadConfigMapHandle = fakeReader.ReadConfigMap
+
+				defer func() {
+					helpers.ReadConfigMapHandle = helpers.ReadConfigMap
+				}()
+
+				result, err := reconciler.Reconcile(ctx, reconcile.Request{NamespacedName: types.NamespacedName{Namespace: testAPI.Namespace, Name: testAPI.Name}})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(result.Requeue).To(BeFalse())
 
-				res := gatewayv1beta1.APIRule{}
-				err = ts.mgr.GetClient().Get(context.Background(), types.NamespacedName{Namespace: testAPI.Namespace, Name: testAPI.Name}, &res)
+				apiRule := gatewayv1beta1.APIRule{}
+				err = ts.mgr.GetClient().Get(context.Background(), types.NamespacedName{Namespace: testAPI.Namespace, Name: testAPI.Name}, &apiRule)
 				Expect(err).ToNot(HaveOccurred())
-				Expect(res.Status.AccessRuleStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
-				Expect(res.Status.VirtualServiceStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
-				Expect(res.Status.APIRuleStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
+				Expect(apiRule.Status.APIRuleStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
+				Expect(apiRule.Status.AccessRuleStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
+				Expect(apiRule.Status.VirtualServiceStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
+			})
+
+			It("should fail if config is empty", func() {
+				testAPI := getApiRule("noop", nil)
+
+				ts = getTestSuite(testAPI)
+				reconciler := getAPIReconciler(ts.mgr)
+				ctx := context.Background()
+
+				errorReader := FakeConfigMapReader{}
+				helpers.ReadConfigMapHandle = errorReader.ReadConfigMap
+
+				defer func() {
+					helpers.ReadConfigMapHandle = helpers.ReadConfigMap
+				}()
+
+				_, err := reconciler.Reconcile(ctx, reconcile.Request{NamespacedName: types.NamespacedName{Namespace: testAPI.Namespace, Name: testAPI.Name}})
+				Expect(err).ToNot(HaveOccurred())
+
+				apiRule := gatewayv1beta1.APIRule{}
+				err = ts.mgr.GetClient().Get(context.Background(), types.NamespacedName{Namespace: testAPI.Namespace, Name: testAPI.Name}, &apiRule)
+				Expect(err).ToNot(HaveOccurred())
+				Expect(apiRule.Status.APIRuleStatus.Code).To(Equal(gatewayv1beta1.StatusError))
+			})
+
+			It("should fail if config is in wrong format", func() {
+				testAPI := getApiRule("noop", nil)
+
+				ts = getTestSuite(testAPI)
+				reconciler := getAPIReconciler(ts.mgr)
+				ctx := context.Background()
+
+				fakeReader := FakeConfigMapReader{Content: "<xml/>"}
+				helpers.ReadConfigMapHandle = fakeReader.ReadConfigMap
+
+				defer func() {
+					helpers.ReadConfigMapHandle = helpers.ReadConfigMap
+				}()
+
+				_, err := reconciler.Reconcile(ctx, reconcile.Request{NamespacedName: types.NamespacedName{Namespace: testAPI.Namespace, Name: testAPI.Name}})
+				Expect(err).ToNot(HaveOccurred())
+
+				apiRule := gatewayv1beta1.APIRule{}
+				err = ts.mgr.GetClient().Get(context.Background(), types.NamespacedName{Namespace: testAPI.Namespace, Name: testAPI.Name}, &apiRule)
+				Expect(err).ToNot(HaveOccurred())
+				Expect(apiRule.Status.APIRuleStatus.Code).To(Equal(gatewayv1beta1.StatusError))
+			})
+
+			It("should fail if config is unsupported", func() {
+				testAPI := getApiRule("noop", nil)
+
+				ts = getTestSuite(testAPI)
+				reconciler := getAPIReconciler(ts.mgr)
+				ctx := context.Background()
+
+				fakeReader := FakeConfigMapReader{Content: "jwtHandler: foo"}
+				helpers.ReadConfigMapHandle = fakeReader.ReadConfigMap
+
+				defer func() {
+					helpers.ReadConfigMapHandle = helpers.ReadConfigMap
+				}()
+
+				_, err := reconciler.Reconcile(ctx, reconcile.Request{NamespacedName: types.NamespacedName{Namespace: testAPI.Namespace, Name: testAPI.Name}})
+				Expect(err).ToNot(HaveOccurred())
+
+				apiRule := gatewayv1beta1.APIRule{}
+				err = ts.mgr.GetClient().Get(context.Background(), types.NamespacedName{Namespace: testAPI.Namespace, Name: testAPI.Name}, &apiRule)
+				Expect(err).ToNot(HaveOccurred())
+				Expect(apiRule.Status.APIRuleStatus.Code).To(Equal(gatewayv1beta1.StatusError))
+
+				Expect(apiRule.Status.APIRuleStatus.Description).To(Equal(`Validation error: Attribute "": Unsupported JWT Handler: foo`))
+			})
+
+			Context("when the jwt handler is istio", func() {
+				It("should update status", func() {
+					testAPI := getApiRule("jwt", getJWTIstioConfig())
+
+					ts = getTestSuite(testAPI)
+					reconciler := getAPIReconciler(ts.mgr)
+					ctx := context.Background()
+
+					fakeReader := FakeConfigMapReader{Content: fmt.Sprintf("jwtHandler: %s", helpers.JWT_HANDLER_ISTIO)}
+					helpers.ReadConfigMapHandle = fakeReader.ReadConfigMap
+
+					defer func() {
+						helpers.ReadConfigMapHandle = helpers.ReadConfigMap
+					}()
+
+					result, err := reconciler.Reconcile(ctx, reconcile.Request{NamespacedName: types.NamespacedName{Namespace: testAPI.Namespace, Name: testAPI.Name}})
+					Expect(err).ToNot(HaveOccurred())
+					Expect(result.Requeue).To(BeFalse())
+
+					apiRule := gatewayv1beta1.APIRule{}
+					err = ts.mgr.GetClient().Get(context.Background(), types.NamespacedName{Namespace: testAPI.Namespace, Name: testAPI.Name}, &apiRule)
+					Expect(err).ToNot(HaveOccurred())
+					Expect(apiRule.Status.APIRuleStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
+					Expect(apiRule.Status.VirtualServiceStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
+					Expect(apiRule.Status.RequestAuthenticationStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
+					Expect(apiRule.Status.AuthorizationPolicyStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
+				})
 			})
 		})
 	})
 })
 
-func fixAPI() *gatewayv1beta1.APIRule {
+func getApiRule(authStrategy string, authConfig *runtime.RawExtension) *gatewayv1beta1.APIRule {
 	serviceName = "test"
 	servicePort = 8000
 	host = "foo.bar"
 	isExernal = false
-	authStrategy = "noop"
 	gateway = "some-gateway.some-namespace.foo"
 
 	return &gatewayv1beta1.APIRule{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:       "test",
+			Namespace:  "some-namespace",
 			Generation: 1,
 		},
 		Spec: gatewayv1beta1.APIRuleSpec{
@@ -94,13 +216,33 @@ func fixAPI() *gatewayv1beta1.APIRule {
 						{
 							Handler: &gatewayv1beta1.Handler{
 								Name:   authStrategy,
-								Config: nil,
+								Config: authConfig,
 							},
 						},
 					},
 				},
 			},
 		},
+	}
+}
+
+func getJWTIstioConfig() *runtime.RawExtension {
+	return getRawConfig(
+		istioint.JwtConfig{
+			Authentications: []istioint.JwtAuth{
+				{
+					Issuer:  "https://example.com/",
+					JwksUri: "https://example.com/.well-known/jwks.json",
+				},
+			},
+		})
+}
+
+func getRawConfig(config any) *runtime.RawExtension {
+	b, err := json.Marshal(config)
+	Expect(err).To(BeNil())
+	return &runtime.RawExtension{
+		Raw: b,
 	}
 }
 
@@ -115,6 +257,7 @@ func getAPIReconciler(mgr manager.Manager) reconcile.Reconciler {
 			AllowHeaders: TestAllowHeaders,
 		},
 		GeneratedObjectsLabels: map[string]string{},
+		Config:                 &helpers.Config{},
 	}
 }
 
@@ -128,6 +271,8 @@ func getTestSuite(objects ...runtime.Object) *testSuite {
 	err = networkingv1beta1.AddToScheme(scheme.Scheme)
 	Expect(err).NotTo(HaveOccurred())
 	err = rulev1alpha1.AddToScheme(scheme.Scheme)
+	Expect(err).NotTo(HaveOccurred())
+	err = securityv1beta1.AddToScheme(scheme.Scheme)
 	Expect(err).NotTo(HaveOccurred())
 
 	return &testSuite{
@@ -148,15 +293,15 @@ func (f fakeManager) Elected() <-chan struct{} {
 	return nil
 }
 
-func (f fakeManager) AddMetricsExtraHandler(path string, handler http.Handler) error {
+func (f fakeManager) AddMetricsExtraHandler(_ string, _ http.Handler) error {
 	return nil
 }
 
-func (f fakeManager) AddHealthzCheck(name string, check healthz.Checker) error {
+func (f fakeManager) AddHealthzCheck(_ string, _ healthz.Checker) error {
 	return nil
 }
 
-func (f fakeManager) AddReadyzCheck(name string, check healthz.Checker) error {
+func (f fakeManager) AddReadyzCheck(_ string, _ healthz.Checker) error {
 	return nil
 }
 
@@ -164,60 +309,60 @@ func (fakeManager) Add(manager.Runnable) error {
 	return nil
 }
 
-func (fakeManager) SetFields(interface{}) error {
+func (f fakeManager) SetFields(interface{}) error {
 	return nil
 }
 
-func (fakeManager) Start(ctx context.Context) error {
+func (f fakeManager) Start(_ context.Context) error {
 	return nil
 }
 
-func (fakeManager) GetConfig() *rest.Config {
+func (f fakeManager) GetConfig() *rest.Config {
 	return &rest.Config{}
 }
 
-func (f *fakeManager) GetScheme() *runtime.Scheme {
+func (f fakeManager) GetScheme() *runtime.Scheme {
 	// Setup schemes for all resources
 	return f.sch
 }
 
-func (f *fakeManager) GetClient() client.Client {
+func (f fakeManager) GetClient() client.Client {
 	return f.client
 }
 
-func (fakeManager) GetFieldIndexer() client.FieldIndexer {
+func (f fakeManager) GetFieldIndexer() client.FieldIndexer {
 	return nil
 }
 
-func (fakeManager) GetCache() cache.Cache {
+func (f fakeManager) GetCache() cache.Cache {
 	return nil
 }
 
-func (fakeManager) GetRecorder(name string) record.EventRecorder {
+func (f fakeManager) GetRecorder(_ string) record.EventRecorder {
 	return nil
 }
 
-func (fakeManager) GetEventRecorderFor(name string) record.EventRecorder {
+func (f fakeManager) GetEventRecorderFor(_ string) record.EventRecorder {
 	return nil
 }
 
-func (fakeManager) GetAPIReader() client.Reader {
+func (f fakeManager) GetAPIReader() client.Reader {
 	return nil
 }
 
-func (fakeManager) GetWebhookServer() *webhook.Server {
+func (f fakeManager) GetWebhookServer() *webhook.Server {
 	return nil
 }
 
-func (fakeManager) GetRESTMapper() meta.RESTMapper {
+func (f fakeManager) GetRESTMapper() meta.RESTMapper {
 	return nil
 }
 
-func (fakeManager) GetLogger() logr.Logger {
+func (f fakeManager) GetLogger() logr.Logger {
 	return logr.Logger{}
 }
 
-func (fakeManager) Stop() meta.RESTMapper {
+func (f fakeManager) Stop() meta.RESTMapper {
 	return nil
 }
 
