@@ -246,7 +246,7 @@ func doneReconcile() (ctrl.Result, error) {
 		}
 		after = time.Duration(a) * time.Second
 	}
-	return ctrl.Result{RequeueAfter: after * time.Second}, nil
+	return ctrl.Result{RequeueAfter: after}, nil
 }
 
 func doneReconcileErrorRequeue() (ctrl.Result, error) {
@@ -260,7 +260,7 @@ func doneReconcileErrorRequeue() (ctrl.Result, error) {
 		}
 		after = time.Duration(a) * time.Second
 	}
-	return ctrl.Result{RequeueAfter: after * time.Second}, nil
+	return ctrl.Result{RequeueAfter: after}, nil
 }
 
 func retryReconcile(err error) (ctrl.Result, error) {
