@@ -170,25 +170,23 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	r.Log.Info("Validating if not status update or temporary annotation set")
 	if apiRule.Generation != apiRule.Status.ObservedGeneration {
 		r.Log.Info("not a status update")
-		c := processing.ReconciliationConfig{
-			OathkeeperSvc:     r.OathkeeperSvc,
-			OathkeeperSvcPort: r.OathkeeperSvcPort,
-			CorsConfig:        r.CorsConfig,
-			AdditionalLabels:  r.GeneratedObjectsLabels,
-			DefaultDomainName: r.DefaultDomainName,
-			ServiceBlockList:  r.ServiceBlockList,
-			DomainAllowList:   r.DomainAllowList,
-			HostBlockList:     r.HostBlockList,
-		}
-
-		cmd := r.getReconciliation(c)
-		r.Log.Info("Process reconcile")
-		status := processing.Reconcile(ctx, r.Client, &r.Log, cmd, apiRule)
-		r.Log.Info("Update status or retry")
-		return r.updateStatusOrRetry(ctx, apiRule, status)
 	}
-	r.Log.Info("Finishing reconciliation")
-	return doneReconcile()
+	c := processing.ReconciliationConfig{
+		OathkeeperSvc:     r.OathkeeperSvc,
+		OathkeeperSvcPort: r.OathkeeperSvcPort,
+		CorsConfig:        r.CorsConfig,
+		AdditionalLabels:  r.GeneratedObjectsLabels,
+		DefaultDomainName: r.DefaultDomainName,
+		ServiceBlockList:  r.ServiceBlockList,
+		DomainAllowList:   r.DomainAllowList,
+		HostBlockList:     r.HostBlockList,
+	}
+
+	cmd := r.getReconciliation(c)
+	r.Log.Info("Process reconcile")
+	status := processing.Reconcile(ctx, r.Client, &r.Log, cmd, apiRule)
+	r.Log.Info("Update status or retry")
+	return r.updateStatusOrRetry(ctx, apiRule, status)
 }
 
 func (r *APIRuleReconciler) getReconciliation(config processing.ReconciliationConfig) processing.ReconciliationCommand {
