@@ -118,6 +118,7 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		DefaultDomainName: r.DefaultDomainName,
 	}
 	r.Log.Info("Checking if it's ConfigMap reconciliation")
+	r.Log.Info("Reconciling for", "namespacedName", req.NamespacedName.String())
 	isCMReconcile := (req.NamespacedName.String() == types.NamespacedName{Namespace: helpers.CM_NS, Name: helpers.CM_NAME}.String())
 	if isCMReconcile || r.Config.JWTHandler == "" {
 		r.Log.Info("Starting ConfigMap reconciliation")
@@ -138,7 +139,7 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 				failuresJson, _ := json.Marshal(configValidationFailures)
 				r.Log.Error(err, fmt.Sprintf(`Config validation failure {"controller": "Api", "failures": %s}`, string(failuresJson)))
 			}
-			return doneReconcile()
+			return doneReconcileNoRequeue()
 		}
 	}
 	r.Log.Info("Starting ApiRule reconciliation")
@@ -215,6 +216,10 @@ func (r *APIRuleReconciler) updateStatusOrRetry(ctx context.Context, api *gatewa
 	}
 	//Fail fast: If status is updated, users are informed about the problem. We don't need to reconcile again.
 	return doneReconcile()
+}
+
+func doneReconcileNoRequeue() (ctrl.Result, error) {
+	return ctrl.Result{}, nil
 }
 
 func doneReconcile() (ctrl.Result, error) {
