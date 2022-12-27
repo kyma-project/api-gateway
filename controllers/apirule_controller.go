@@ -63,8 +63,10 @@ type APIRuleReconciler struct {
 }
 
 const (
-	CONFIGMAP_NAME = "api-gateway-config"
-	CONFIGMAP_NS   = "kyma-system"
+	CONFIGMAP_NAME               = "api-gateway-config"
+	CONFIGMAP_NS                 = "kyma-system"
+	DEFAULT_RECONCILATION_PERIOD = 30 * time.Minute
+	ERROR_RECONCILATION_PERIOD   = time.Minute
 )
 
 type configMapPredicate struct {
@@ -212,8 +214,21 @@ func (r *APIRuleReconciler) updateStatusOrRetry(ctx context.Context, api *gatewa
 	if updateStatusErr != nil {
 		return retryReconcile(updateStatusErr) //controller retries to set the correct status eventually.
 	}
-	//Fail fast: If status is updated, users are informed about the problem. We don't need to reconcile again.
+
+	// If error happened during reconcilation (e.g. VirtualService conflict) requeue for reconcilation earlier
+	if statusHasError(status) {
+		return doneReconcileErrorRequeue()
+	}
+
 	return doneReconcile()
+}
+
+func statusHasError(status processing.ReconciliationStatus) bool {
+	return status.ApiRuleStatus.Code == gatewayv1beta1.StatusError ||
+		status.AccessRuleStatus.Code == gatewayv1beta1.StatusError ||
+		status.VirtualServiceStatus.Code == gatewayv1beta1.StatusError ||
+		status.AuthorizationPolicyStatus.Code == gatewayv1beta1.StatusError ||
+		status.RequestAuthenticationStatus.Code == gatewayv1beta1.StatusError
 }
 
 func doneReconcileNoRequeue() (ctrl.Result, error) {
@@ -221,16 +236,31 @@ func doneReconcileNoRequeue() (ctrl.Result, error) {
 }
 
 func doneReconcile() (ctrl.Result, error) {
-	amount, ok := os.LookupEnv("REQUEUE_AFTER")
-	after := uint(10)
+	// Leaving this env here for the review, we might want to get rid of this env
+	amount, ok := os.LookupEnv("REQUEUE_AFTER_SECONDS")
+	after := DEFAULT_RECONCILATION_PERIOD
 	if ok {
 		a, err := strconv.ParseInt(amount, 10, 32)
 		if err != nil {
 			return ctrl.Result{}, err
 		}
-		after = uint(a)
+		after = time.Duration(a) * time.Second
 	}
-	return ctrl.Result{RequeueAfter: time.Duration(after) * time.Second}, nil
+	return ctrl.Result{RequeueAfter: after * time.Second}, nil
+}
+
+func doneReconcileErrorRequeue() (ctrl.Result, error) {
+	// Leaving this env here for the review, we might want to get rid of this env
+	amount, ok := os.LookupEnv("REQUEUE_AFTER_SECONDS_ERROR")
+	after := ERROR_RECONCILATION_PERIOD
+	if ok {
+		a, err := strconv.ParseInt(amount, 10, 32)
+		if err != nil {
+			return ctrl.Result{}, err
+		}
+		after = time.Duration(a) * time.Second
+	}
+	return ctrl.Result{RequeueAfter: after * time.Second}, nil
 }
 
 func retryReconcile(err error) (ctrl.Result, error) {
