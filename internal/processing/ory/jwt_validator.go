@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
+	istiojwt "github.com/kyma-incubator/api-gateway/internal/types/istio"
 	"github.com/kyma-incubator/api-gateway/internal/types/ory"
 	"github.com/kyma-incubator/api-gateway/internal/validation"
 )
@@ -19,6 +20,9 @@ func (o *handlerValidator) Validate(attributePath string, handler *gatewayv1beta
 		problems = append(problems, validation.Failure{AttributePath: attributePath + ".config", Message: "supplied config cannot be empty"})
 		return problems
 	}
+
+	problems = append(problems, checkForIstioConfig(attributePath, handler))
+	
 	err := json.Unmarshal(handler.Config.Raw, &template)
 	if err != nil {
 		problems = append(problems, validation.Failure{AttributePath: attributePath + ".config", Message: "Can't read json: " + err.Error()})
@@ -59,4 +63,18 @@ func (o *handlerValidator) Validate(attributePath string, handler *gatewayv1beta
 	}
 
 	return problems
+}
+
+func checkForIstioConfig(attributePath string, handler *gatewayv1beta1.Handler) validation.Failure {
+	var template istiojwt.JwtConfig
+	err := json.Unmarshal(handler.Config.Raw, &template)
+	if err != nil {
+		return validation.Failure{AttributePath: attributePath + ".config", Message: "Can't read json: " + err.Error()}
+	}
+
+	if len(template.Authentications) > 0 {
+		return validation.Failure{AttributePath: attributePath + ".config", Message: "Configuration for authentications is not supported with Ory handler"}
+	}
+
+	return validation.Failure{}
 }

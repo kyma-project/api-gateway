@@ -149,11 +149,13 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 
 	err := r.Client.Get(ctx, req.NamespacedName, apiRule)
 	if err != nil {
-		r.Log.Error(err, "Error getting ApiRule")
 		if apierrs.IsNotFound(err) {
 			//There is no APIRule. Nothing to process, dependent objects will be garbage-collected.
+			r.Log.Info("Finishing reconcilation after ApiRule was deleted")
 			return doneReconcileNoRequeue()
 		}
+
+		r.Log.Error(err, "Error getting ApiRule")
 
 		//Nothing is yet processed: StatusSkipped
 		status := processing.GetStatusForError(&r.Log, err, gatewayv1beta1.StatusSkipped)
