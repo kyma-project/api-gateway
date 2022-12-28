@@ -77,6 +77,13 @@ func (v *APIRule) ValidateConfig(config *helpers.Config) []Failure {
 
 func (v *APIRule) validateHost(attributePath string, vsList networkingv1beta1.VirtualServiceList, api *gatewayv1beta1.APIRule) []Failure {
 	var problems []Failure
+	if api.Spec.Host == nil {
+		problems = append(problems, Failure{
+			AttributePath: attributePath,
+			Message:       "Host was nil",
+		})
+		return problems
+	}
 
 	host := *api.Spec.Host
 	if !helpers.HostIncludesDomain(*api.Spec.Host) {
