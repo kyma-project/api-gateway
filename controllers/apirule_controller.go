@@ -20,7 +20,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"os"
 	"strconv"
 	"time"
@@ -153,13 +152,14 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		r.Log.Error(err, "Error getting ApiRule")
 		if apierrs.IsNotFound(err) {
 			//There is no APIRule. Nothing to process, dependent objects will be garbage-collected.
-			return doneReconcile()
+			return doneReconcileNoRequeue()
 		}
 
 		//Nothing is yet processed: StatusSkipped
 		status := processing.GetStatusForError(&r.Log, err, gatewayv1beta1.StatusSkipped)
 		return r.updateStatusOrRetry(ctx, apiRule, status)
 	}
+
 	r.Log.Info("Validating ApiRule config")
 	configValidationFailures := validator.ValidateConfig(r.Config)
 	if len(configValidationFailures) > 0 {
@@ -221,14 +221,7 @@ func (r *APIRuleReconciler) updateStatusOrRetry(ctx context.Context, api *gatewa
 		return doneReconcileErrorRequeue()
 	}
 
-	logr.Discard().Info("Deletion timpstamp:", "d", api.ObjectMeta.DeletionTimestamp)
-
-	// If the request is a deletion, do not requeue the reconcile request
-	if !api.ObjectMeta.DeletionTimestamp.IsZero() {
-		return doneReconcileNoRequeue()
-	}
-
-	return doneReconcile()
+	return doneReconcileDefaultRequeue()
 }
 
 func statusHasError(status processing.ReconciliationStatus) bool {
@@ -243,7 +236,7 @@ func doneReconcileNoRequeue() (ctrl.Result, error) {
 	return ctrl.Result{}, nil
 }
 
-func doneReconcile() (ctrl.Result, error) {
+func doneReconcileDefaultRequeue() (ctrl.Result, error) {
 	// Leaving this env here for the review, we might want to get rid of this env, or move it to start parameters
 	amount, ok := os.LookupEnv("REQUEUE_AFTER_SECONDS")
 	after := DEFAULT_RECONCILATION_PERIOD
