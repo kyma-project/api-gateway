@@ -188,6 +188,9 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	r.Log.Info("Process reconcile")
 	status := processing.Reconcile(ctx, r.Client, &r.Log, cmd, apiRule)
 	r.Log.Info("Update status or retry")
+	if apiRule.ObjectMeta.DeletionTimestamp.IsZero() {
+		return doneReconcileNoRequeue()
+	}
 	return r.updateStatusOrRetry(ctx, apiRule, status)
 }
 
@@ -236,7 +239,7 @@ func doneReconcileNoRequeue() (ctrl.Result, error) {
 }
 
 func doneReconcile() (ctrl.Result, error) {
-	// Leaving this env here for the review, we might want to get rid of this env
+	// Leaving this env here for the review, we might want to get rid of this env, or move it to start parameters
 	amount, ok := os.LookupEnv("REQUEUE_AFTER_SECONDS")
 	after := DEFAULT_RECONCILATION_PERIOD
 	if ok {
@@ -250,7 +253,7 @@ func doneReconcile() (ctrl.Result, error) {
 }
 
 func doneReconcileErrorRequeue() (ctrl.Result, error) {
-	// Leaving this env here for the review, we might want to get rid of this env
+	// Leaving this env here for the review, we might want to get rid of this env, or move it to start parameters
 	amount, ok := os.LookupEnv("REQUEUE_AFTER_SECONDS_ERROR")
 	after := ERROR_RECONCILATION_PERIOD
 	if ok {
