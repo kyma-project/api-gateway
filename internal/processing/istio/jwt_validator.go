@@ -21,13 +21,13 @@ func (o *handlerValidator) Validate(attributePath string, handler *gatewayv1beta
 		return problems
 	}
 
-	problems = append(problems, checkForOryConfig(attributePath, handler)...)
-
 	err := json.Unmarshal(handler.Config.Raw, &template)
 	if err != nil {
 		problems = append(problems, validation.Failure{AttributePath: attributePath + ".config", Message: "Can't read json: " + err.Error()})
 		return problems
 	}
+	
+	problems = append(problems, checkForOryConfig(attributePath, handler)...)
 
 	for i, auth := range template.Authentications {
 		invalidIssuer, err := validation.IsInvalidURL(auth.Issuer)

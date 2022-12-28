@@ -21,13 +21,13 @@ func (o *handlerValidator) Validate(attributePath string, handler *gatewayv1beta
 		return problems
 	}
 
-	problems = append(problems, checkForIstioConfig(attributePath, handler)...)
-
 	err := json.Unmarshal(handler.Config.Raw, &template)
 	if err != nil {
 		problems = append(problems, validation.Failure{AttributePath: attributePath + ".config", Message: "Can't read json: " + err.Error()})
 		return problems
 	}
+
+	problems = append(problems, checkForIstioConfig(attributePath, handler)...)
 
 	// The https:// configuration for TrustedIssuers is not necessary in terms of security best practices,
 	// however it is part of "secure by default" configuration, as this is the most common use case for iss claim.
