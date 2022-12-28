@@ -220,10 +220,12 @@ func (r *APIRuleReconciler) updateStatusOrRetry(ctx context.Context, api *gatewa
 		return doneReconcileErrorRequeue()
 	}
 
+	print(api.ObjectMeta.DeletionTimestamp)
+
 	if api.ObjectMeta.DeletionTimestamp.IsZero() {
 		return doneReconcileNoRequeue()
 	}
-	
+
 	return doneReconcile()
 }
 
