@@ -188,9 +188,6 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	r.Log.Info("Process reconcile")
 	status := processing.Reconcile(ctx, r.Client, &r.Log, cmd, apiRule)
 	r.Log.Info("Update status or retry")
-	if apiRule.ObjectMeta.DeletionTimestamp.IsZero() {
-		return doneReconcileNoRequeue()
-	}
 	return r.updateStatusOrRetry(ctx, apiRule, status)
 }
 
@@ -223,6 +220,10 @@ func (r *APIRuleReconciler) updateStatusOrRetry(ctx context.Context, api *gatewa
 		return doneReconcileErrorRequeue()
 	}
 
+	if api.ObjectMeta.DeletionTimestamp.IsZero() {
+		return doneReconcileNoRequeue()
+	}
+	
 	return doneReconcile()
 }
 
