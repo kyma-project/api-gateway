@@ -21,8 +21,8 @@ func (o *handlerValidator) Validate(attributePath string, handler *gatewayv1beta
 		return problems
 	}
 
-	problems = append(problems, checkForIstioConfig(attributePath, handler))
-	
+	problems = append(problems, checkForIstioConfig(attributePath, handler)...)
+
 	err := json.Unmarshal(handler.Config.Raw, &template)
 	if err != nil {
 		problems = append(problems, validation.Failure{AttributePath: attributePath + ".config", Message: "Can't read json: " + err.Error()})
@@ -65,16 +65,16 @@ func (o *handlerValidator) Validate(attributePath string, handler *gatewayv1beta
 	return problems
 }
 
-func checkForIstioConfig(attributePath string, handler *gatewayv1beta1.Handler) validation.Failure {
+func checkForIstioConfig(attributePath string, handler *gatewayv1beta1.Handler) (problems []validation.Failure) {
 	var template istiojwt.JwtConfig
 	err := json.Unmarshal(handler.Config.Raw, &template)
 	if err != nil {
-		return validation.Failure{AttributePath: attributePath + ".config", Message: "Can't read json: " + err.Error()}
+		return []validation.Failure{{AttributePath: attributePath + ".config", Message: "Can't read json: " + err.Error()}}
 	}
 
 	if len(template.Authentications) > 0 {
-		return validation.Failure{AttributePath: attributePath + ".config", Message: "Configuration for authentications is not supported with Ory handler"}
+		return []validation.Failure{{AttributePath: attributePath + ".config" + ".authentications", Message: "Configuration for authentications is not supported with Ory handler"}}
 	}
 
-	return validation.Failure{}
+	return problems
 }
