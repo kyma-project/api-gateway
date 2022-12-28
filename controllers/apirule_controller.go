@@ -20,6 +20,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"os"
 	"strconv"
 	"time"
@@ -220,7 +221,7 @@ func (r *APIRuleReconciler) updateStatusOrRetry(ctx context.Context, api *gatewa
 		return doneReconcileErrorRequeue()
 	}
 
-	print(api.ObjectMeta.DeletionTimestamp.IsZero())
+	logr.Discard().Info("Deletion timpstamp:", "d", api.ObjectMeta.DeletionTimestamp)
 
 	// If the request is a deletion, do not requeue the reconcile request
 	if !api.ObjectMeta.DeletionTimestamp.IsZero() {
