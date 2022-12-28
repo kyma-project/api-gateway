@@ -21,6 +21,8 @@ func (o *handlerValidator) Validate(attributePath string, handler *gatewayv1beta
 		return problems
 	}
 
+	problems = append(problems, checkForOryConfig(attributePath, handler)...)
+
 	err := json.Unmarshal(handler.Config.Raw, &template)
 	if err != nil {
 		problems = append(problems, validation.Failure{AttributePath: attributePath + ".config", Message: "Can't read json: " + err.Error()})
@@ -56,7 +58,7 @@ func (o *handlerValidator) Validate(attributePath string, handler *gatewayv1beta
 	return problems
 }
 
-func checkForIstioConfig(attributePath string, handler *gatewayv1beta1.Handler) (problems []validation.Failure) {
+func checkForOryConfig(attributePath string, handler *gatewayv1beta1.Handler) (problems []validation.Failure) {
 	var template oryjwt.JWTAccStrConfig
 	err := json.Unmarshal(handler.Config.Raw, &template)
 	if err != nil {
