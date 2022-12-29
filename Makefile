@@ -317,3 +317,4 @@ samples-valid: samples-clean
 .PHONY: samples-invalid
 samples-invalid: samples-clean
 	kubectl apply -f config/samples/invalid.yaml
+
