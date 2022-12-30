@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
@@ -104,8 +105,8 @@ func main() {
 	flag.StringVar(&corsAllowMethods, "cors-allow-methods", "GET,POST,PUT,DELETE", "list of allowed methods")
 	flag.StringVar(&corsAllowHeaders, "cors-allow-headers", "Authorization,Content-Type,*", "list of allowed headers")
 	flag.StringVar(&generatedObjectsLabels, "generated-objects-labels", "", "Comma-separated list of key=value pairs used to label generated objects")
-	flag.UintVar(&reconcilationPeriod, "reconcilation-period", 0, "Default reconcilation period when no error happened in the previous run")
-	flag.UintVar(&errorReconcilationPeriod, "error-reconcilation-period", 0, "Reconcilation period after an error happened in the previous run (e.g. VirtualService confict)")
+	flag.UintVar(&reconcilationPeriod, "reconcilation-period", 0, "Default reconcilation period when no error happened in the previous run [s]")
+	flag.UintVar(&errorReconcilationPeriod, "error-reconcilation-period", 0, "Reconcilation period after an error happened in the previous run (e.g. VirtualService confict) [s]")
 
 	flag.Parse()
 
@@ -179,6 +180,8 @@ func main() {
 		GeneratedObjectsLabels: additionalLabels,
 		Scheme:                 mgr.GetScheme(),
 		Config:                 &helpers.Config{},
+		ReconcilePeriod:        time.Duration(reconcilationPeriod) * time.Second,
+		OnErrorReconcilePeriod: time.Duration(errorReconcilationPeriod) * time.Second,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "APIRule")
 		os.Exit(1)
