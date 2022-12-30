@@ -138,7 +138,7 @@ var _ = BeforeSuite(func(done Done) {
 		},
 		GeneratedObjectsLabels: map[string]string{},
 		Config:                 &helpers.Config{},
-		
+
 		// Run the suite with period that won't interfere with tests
 		ReconcilePeriod:        time.Hour * 24,
 		OnErrorReconcilePeriod: time.Hour * 24,

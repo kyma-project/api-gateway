@@ -1,4 +1,4 @@
-package reconcilation_test
+package reconciliation_test
 
 import (
 	"context"
@@ -39,7 +39,7 @@ const (
 	testIDLength                = 5
 )
 
-var _ = Describe("APIRule Controller Reconcilation", func() {
+var _ = Describe("APIRule Controller Reconciliation", func() {
 	const testServiceName = "httpbin"
 	const testServicePort uint32 = 443
 	var testIssuer = "https://oauth2.example.com/"

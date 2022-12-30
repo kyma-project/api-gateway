@@ -26,7 +26,7 @@ func (o *handlerValidator) Validate(attributePath string, handler *gatewayv1beta
 		problems = append(problems, validation.Failure{AttributePath: attributePath + ".config", Message: "Can't read json: " + err.Error()})
 		return problems
 	}
-	
+
 	problems = append(problems, checkForOryConfig(attributePath, handler)...)
 
 	for i, auth := range template.Authentications {

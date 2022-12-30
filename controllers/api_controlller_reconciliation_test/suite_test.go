@@ -1,4 +1,4 @@
-package reconcilation_test
+package reconciliation_test
 
 import (
 	"context"
@@ -50,19 +50,19 @@ var (
 	TestAllowHeaders = []string{"header1", "header2"}
 )
 
-func TestAPIGatewayReconcilation(t *testing.T) {
+func TestAPIGatewayReconciliation(t *testing.T) {
 	RegisterFailHandler(Fail)
 
 	RunSpecsWithDefaultAndCustomReporters(t,
-		"Reconcilation Suite",
-		[]Reporter{printer.NewlineReporter{}, printer.NewProwReporter("api-gateway-controller-reconcilation")})
+		"Reconciliation Suite",
+		[]Reporter{printer.NewlineReporter{}, printer.NewProwReporter("api-gateway-controller-reconciliation")})
 }
 
 var _ = BeforeSuite(func(done Done) {
 	logf.SetLogger(zap.New(zap.UseDevMode(true), zap.WriteTo(GinkgoWriter)))
 	ctx, cancel = context.WithCancel(context.TODO())
 
-	By("bootstrapping test environment for reconcilation")
+	By("bootstrapping test environment for reconciliation")
 	testEnv = &envtest.Environment{
 		CRDDirectoryPaths: []string{filepath.Join("..", "..", "config", "crd", "bases"), filepath.Join("..", "..", "hack")},
 	}

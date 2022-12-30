@@ -63,10 +63,10 @@ type APIRuleReconciler struct {
 }
 
 const (
-	CONFIGMAP_NAME               = "api-gateway-config"
-	CONFIGMAP_NS                 = "kyma-system"
-	DEFAULT_RECONCILATION_PERIOD = 30 * time.Minute
-	ERROR_RECONCILATION_PERIOD   = 5 * time.Minute
+	CONFIGMAP_NAME                = "api-gateway-config"
+	CONFIGMAP_NS                  = "kyma-system"
+	DEFAULT_RECONCILIATION_PERIOD = 30 * time.Minute
+	ERROR_RECONCILIATION_PERIOD   = time.Minute
 )
 
 type configMapPredicate struct {
@@ -111,7 +111,7 @@ func (p configMapPredicate) Generic(e event.GenericEvent) bool {
 //+kubebuilder:rbac:groups="",resources=configmaps,verbs=get;list;watch;create;update;patch;delete
 
 func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	r.Log.Info("Starting reconcilation")
+	r.Log.Info("Starting reconciliation")
 
 	validator := validation.APIRule{
 		ServiceBlockList:  r.ServiceBlockList,
@@ -151,7 +151,7 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	if err != nil {
 		if apierrs.IsNotFound(err) {
 			//There is no APIRule. Nothing to process, dependent objects will be garbage-collected.
-			r.Log.Info("Finishing reconcilation after ApiRule was deleted")
+			r.Log.Info("Finishing reconciliation after ApiRule was deleted")
 			return doneReconcileNoRequeue()
 		}
 
@@ -218,7 +218,7 @@ func (r *APIRuleReconciler) updateStatusOrRetry(ctx context.Context, api *gatewa
 		return retryReconcile(updateStatusErr) //controller retries to set the correct status eventually.
 	}
 
-	// If error happened during reconcilation (e.g. VirtualService conflict) requeue for reconcilation earlier
+	// If error happened during reconciliation (e.g. VirtualService conflict) requeue for reconciliation earlier
 	if statusHasError(status) {
 		return doneReconcileErrorRequeue(r.OnErrorReconcilePeriod)
 	}
@@ -239,7 +239,7 @@ func doneReconcileNoRequeue() (ctrl.Result, error) {
 }
 
 func doneReconcileDefaultRequeue(reconcilerPeriod time.Duration) (ctrl.Result, error) {
-	after := DEFAULT_RECONCILATION_PERIOD
+	after := DEFAULT_RECONCILIATION_PERIOD
 	if reconcilerPeriod != 0 {
 		after = reconcilerPeriod
 	}
@@ -247,7 +247,7 @@ func doneReconcileDefaultRequeue(reconcilerPeriod time.Duration) (ctrl.Result, e
 }
 
 func doneReconcileErrorRequeue(errorReconcilerPeriod time.Duration) (ctrl.Result, error) {
-	after := ERROR_RECONCILATION_PERIOD
+	after := ERROR_RECONCILIATION_PERIOD
 	if errorReconcilerPeriod != 0 {
 		after = errorReconcilerPeriod
 	}
