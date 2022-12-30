@@ -58,13 +58,15 @@ type APIRuleReconciler struct {
 	DefaultDomainName      string
 	Scheme                 *runtime.Scheme
 	Config                 *helpers.Config
+	ReconcilePeriod        time.Duration
+	OnErrorReconcilePeriod time.Duration
 }
 
 const (
 	CONFIGMAP_NAME               = "api-gateway-config"
 	CONFIGMAP_NS                 = "kyma-system"
 	DEFAULT_RECONCILATION_PERIOD = 30 * time.Minute
-	ERROR_RECONCILATION_PERIOD   = time.Minute
+	ERROR_RECONCILATION_PERIOD   = 5 * time.Minute
 )
 
 type configMapPredicate struct {
@@ -218,10 +220,10 @@ func (r *APIRuleReconciler) updateStatusOrRetry(ctx context.Context, api *gatewa
 
 	// If error happened during reconcilation (e.g. VirtualService conflict) requeue for reconcilation earlier
 	if statusHasError(status) {
-		return doneReconcileErrorRequeue()
+		return doneReconcileErrorRequeue(r.OnErrorReconcilePeriod)
 	}
 
-	return doneReconcileDefaultRequeue()
+	return doneReconcileDefaultRequeue(r.ReconcilePeriod)
 }
 
 func statusHasError(status processing.ReconciliationStatus) bool {
@@ -236,12 +238,20 @@ func doneReconcileNoRequeue() (ctrl.Result, error) {
 	return ctrl.Result{}, nil
 }
 
-func doneReconcileDefaultRequeue() (ctrl.Result, error) {
-	return ctrl.Result{RequeueAfter: DEFAULT_RECONCILATION_PERIOD}, nil
+func doneReconcileDefaultRequeue(reconcilerPeriod time.Duration) (ctrl.Result, error) {
+	after := DEFAULT_RECONCILATION_PERIOD
+	if reconcilerPeriod != 0 {
+		after = reconcilerPeriod
+	}
+	return ctrl.Result{RequeueAfter: after}, nil
 }
 
-func doneReconcileErrorRequeue() (ctrl.Result, error) {
-	return ctrl.Result{RequeueAfter: ERROR_RECONCILATION_PERIOD}, nil
+func doneReconcileErrorRequeue(errorReconcilerPeriod time.Duration) (ctrl.Result, error) {
+	after := ERROR_RECONCILATION_PERIOD
+	if errorReconcilerPeriod != 0 {
+		after = errorReconcilerPeriod
+	}
+	return ctrl.Result{RequeueAfter: after}, nil
 }
 
 func retryReconcile(err error) (ctrl.Result, error) {

@@ -13,7 +13,6 @@ import (
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/envtest/printer"
@@ -101,14 +100,14 @@ var _ = BeforeSuite(func(done Done) {
 	Expect(err).NotTo(HaveOccurred())
 
 	ns := &corev1.Namespace{
-		ObjectMeta: v1.ObjectMeta{Name: testNamespace},
+		ObjectMeta: metav1.ObjectMeta{Name: testNamespace},
 		Spec:       corev1.NamespaceSpec{},
 	}
 	err = c.Create(context.TODO(), ns)
 	Expect(err).NotTo(HaveOccurred())
 
 	nsKyma := &corev1.Namespace{
-		ObjectMeta: v1.ObjectMeta{Name: helpers.CM_NS},
+		ObjectMeta: metav1.ObjectMeta{Name: helpers.CM_NS},
 		Spec:       corev1.NamespaceSpec{},
 	}
 	err = c.Create(context.TODO(), nsKyma)
@@ -139,6 +138,10 @@ var _ = BeforeSuite(func(done Done) {
 		},
 		GeneratedObjectsLabels: map[string]string{},
 		Config:                 &helpers.Config{},
+		
+		// Run the suite with period that won't interfere with tests
+		ReconcilePeriod:        time.Hour * 24,
+		OnErrorReconcilePeriod: time.Hour * 24,
 	}
 	Expect(err).NotTo(HaveOccurred())
 
