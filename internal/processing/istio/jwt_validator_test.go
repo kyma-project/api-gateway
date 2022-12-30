@@ -5,6 +5,7 @@ import (
 
 	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
 	istiojwt "github.com/kyma-incubator/api-gateway/internal/types/istio"
+	"github.com/kyma-incubator/api-gateway/internal/types/ory"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -88,6 +89,16 @@ var _ = Describe("JWT Validator", func() {
 		Expect(problems[0].AttributePath).To(Equal("some.attribute.config"))
 		Expect(problems[0].Message).To(Equal("Can't read json: invalid character '/' looking for beginning of value"))
 	})
+
+	It("Should fail for config with Ory JWT configuration", func() {
+		handler := &gatewayv1beta1.Handler{Name: "jwt", Config: testURLJWTOryConfig("https://issuer.test/.well-known/jwks.json", "https://issuer.test/")}
+
+		//when
+		problems := (&handlerValidator{}).Validate("some.attribute", handler)
+
+		//then
+		Expect(problems).To(Not(BeEmpty()))
+	})
 })
 
 func emptyJWTIstioConfig() *runtime.RawExtension {
@@ -116,6 +127,15 @@ func testURLJWTIstioConfig(JWKSUrl string, trustedIssuer string) *runtime.RawExt
 					JwksUri: JWKSUrl,
 				},
 			},
+		})
+}
+
+func testURLJWTOryConfig(JWKSUrls string, trustedIssuers string) *runtime.RawExtension {
+	return getRawConfig(
+		&ory.JWTAccStrConfig{
+			JWKSUrls:       []string{JWKSUrls},
+			TrustedIssuers: []string{trustedIssuers},
+			RequiredScopes: []string{"atgo"},
 		})
 }
 
