@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 
 	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
+	istiojwt "github.com/kyma-incubator/api-gateway/internal/types/istio"
 	"github.com/kyma-incubator/api-gateway/internal/types/ory"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -99,6 +100,16 @@ var _ = Describe("JWT Validator", func() {
 		//then
 		Expect(problems).To(HaveLen(0))
 	})
+
+	It("Should fail for config with Istio JWT configuration", func() {
+		handler := &gatewayv1beta1.Handler{Name: "jwt", Config: testURLJWTIstioConfig("https://issuer.test/.well-known/jwks.json", "https://issuer.test/")}
+
+		//when
+		problems := (&handlerValidator{}).Validate("some.attribute", handler)
+
+		//then
+		Expect(problems).To(Not(BeEmpty()))
+	})
 })
 
 func emptyConfig() *runtime.RawExtension {
@@ -124,7 +135,19 @@ func testURLJWTConfig(JWKSUrls string, trustedIssuers string) *runtime.RawExtens
 		})
 }
 
-func getRawConfig(config *ory.JWTAccStrConfig) *runtime.RawExtension {
+func testURLJWTIstioConfig(JWKSUrl string, trustedIssuer string) *runtime.RawExtension {
+	return getRawConfig(
+		istiojwt.JwtConfig{
+			Authentications: []istiojwt.JwtAuth{
+				{
+					Issuer:  trustedIssuer,
+					JwksUri: JWKSUrl,
+				},
+			},
+		})
+}
+
+func getRawConfig(config any) *runtime.RawExtension {
 	bytes, err := json.Marshal(config)
 	Expect(err).To(BeNil())
 	return &runtime.RawExtension{

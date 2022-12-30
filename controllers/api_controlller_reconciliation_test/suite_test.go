@@ -1,4 +1,4 @@
-package controllers_test
+package reconciliation_test
 
 import (
 	"context"
@@ -50,21 +50,21 @@ var (
 	TestAllowHeaders = []string{"header1", "header2"}
 )
 
-func TestAPIs(t *testing.T) {
+func TestAPIGatewayReconciliation(t *testing.T) {
 	RegisterFailHandler(Fail)
 
 	RunSpecsWithDefaultAndCustomReporters(t,
-		"Controller Suite",
-		[]Reporter{printer.NewlineReporter{}, printer.NewProwReporter("api-gateway-controller-testsuite")})
+		"Reconciliation Suite",
+		[]Reporter{printer.NewlineReporter{}, printer.NewProwReporter("api-gateway-controller-reconciliation")})
 }
 
 var _ = BeforeSuite(func(done Done) {
 	logf.SetLogger(zap.New(zap.UseDevMode(true), zap.WriteTo(GinkgoWriter)))
 	ctx, cancel = context.WithCancel(context.TODO())
 
-	By("bootstrapping test environment")
+	By("bootstrapping test environment for reconciliation")
 	testEnv = &envtest.Environment{
-		CRDDirectoryPaths: []string{filepath.Join("..", "config", "crd", "bases"), filepath.Join("..", "hack")},
+		CRDDirectoryPaths: []string{filepath.Join("..", "..", "config", "crd", "bases"), filepath.Join("..", "..", "hack")},
 	}
 
 	var err error
@@ -140,8 +140,8 @@ var _ = BeforeSuite(func(done Done) {
 		Config:                 &helpers.Config{},
 
 		// Run the suite with period that won't interfere with tests
-		ReconcilePeriod:        time.Hour * 24,
-		OnErrorReconcilePeriod: time.Hour * 24,
+		ReconcilePeriod:        time.Second,
+		OnErrorReconcilePeriod: time.Second,
 	}
 	Expect(err).NotTo(HaveOccurred())
 
