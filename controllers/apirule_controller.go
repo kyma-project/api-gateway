@@ -239,31 +239,11 @@ func doneReconcileNoRequeue() (ctrl.Result, error) {
 }
 
 func doneReconcileDefaultRequeue() (ctrl.Result, error) {
-	// Leaving this env here for the review, we might want to get rid of this env, or move it to start parameters
-	amount, ok := os.LookupEnv("REQUEUE_AFTER_SECONDS")
-	after := DEFAULT_RECONCILATION_PERIOD
-	if ok {
-		a, err := strconv.ParseInt(amount, 10, 32)
-		if err != nil {
-			return ctrl.Result{}, err
-		}
-		after = time.Duration(a) * time.Second
-	}
-	return ctrl.Result{RequeueAfter: after}, nil
+	return ctrl.Result{RequeueAfter: REQUEUE_AFTER_SECONDS}, nil
 }
 
 func doneReconcileErrorRequeue() (ctrl.Result, error) {
-	// Leaving this env here for the review, we might want to get rid of this env, or move it to start parameters
-	amount, ok := os.LookupEnv("REQUEUE_AFTER_SECONDS_ERROR")
-	after := ERROR_RECONCILATION_PERIOD
-	if ok {
-		a, err := strconv.ParseInt(amount, 10, 32)
-		if err != nil {
-			return ctrl.Result{}, err
-		}
-		after = time.Duration(a) * time.Second
-	}
-	return ctrl.Result{RequeueAfter: after}, nil
+	return ctrl.Result{RequeueAfter: ERROR_RECONCILATION_PERIOD}, nil
 }
 
 func retryReconcile(err error) (ctrl.Result, error) {
