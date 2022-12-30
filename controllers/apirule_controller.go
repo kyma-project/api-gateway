@@ -239,7 +239,7 @@ func doneReconcileNoRequeue() (ctrl.Result, error) {
 }
 
 func doneReconcileDefaultRequeue() (ctrl.Result, error) {
-	return ctrl.Result{RequeueAfter: REQUEUE_AFTER_SECONDS}, nil
+	return ctrl.Result{RequeueAfter: DEFAULT_RECONCILATION_PERIOD}, nil
 }
 
 func doneReconcileErrorRequeue() (ctrl.Result, error) {
