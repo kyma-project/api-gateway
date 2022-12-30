@@ -20,6 +20,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
+	"strconv"
 	"time"
 
 	"github.com/kyma-incubator/api-gateway/internal/helpers"
@@ -61,8 +63,10 @@ type APIRuleReconciler struct {
 }
 
 const (
-	CONFIGMAP_NAME = "api-gateway-config"
-	CONFIGMAP_NS   = "kyma-system"
+	CONFIGMAP_NAME               = "api-gateway-config"
+	CONFIGMAP_NS                 = "kyma-system"
+	DEFAULT_RECONCILATION_PERIOD = 30 * time.Minute
+	ERROR_RECONCILATION_PERIOD   = time.Minute
 )
 
 type configMapPredicate struct {
@@ -116,6 +120,7 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		DefaultDomainName: r.DefaultDomainName,
 	}
 	r.Log.Info("Checking if it's ConfigMap reconciliation")
+	r.Log.Info("Reconciling for", "namespacedName", req.NamespacedName.String())
 	isCMReconcile := (req.NamespacedName.String() == types.NamespacedName{Namespace: helpers.CM_NS, Name: helpers.CM_NAME}.String())
 	if isCMReconcile || r.Config.JWTHandler == "" {
 		r.Log.Info("Starting ConfigMap reconciliation")
@@ -136,7 +141,7 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 				failuresJson, _ := json.Marshal(configValidationFailures)
 				r.Log.Error(err, fmt.Sprintf(`Config validation failure {"controller": "Api", "failures": %s}`, string(failuresJson)))
 			}
-			return doneReconcile()
+			return doneReconcileNoRequeue()
 		}
 	}
 	r.Log.Info("Starting ApiRule reconciliation")
@@ -144,16 +149,19 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 
 	err := r.Client.Get(ctx, req.NamespacedName, apiRule)
 	if err != nil {
-		r.Log.Error(err, "Error getting ApiRule")
 		if apierrs.IsNotFound(err) {
 			//There is no APIRule. Nothing to process, dependent objects will be garbage-collected.
-			return doneReconcile()
+			r.Log.Info("Finishing reconcilation after ApiRule was deleted")
+			return doneReconcileNoRequeue()
 		}
+
+		r.Log.Error(err, "Error getting ApiRule")
 
 		//Nothing is yet processed: StatusSkipped
 		status := processing.GetStatusForError(&r.Log, err, gatewayv1beta1.StatusSkipped)
 		return r.updateStatusOrRetry(ctx, apiRule, status)
 	}
+
 	r.Log.Info("Validating ApiRule config")
 	configValidationFailures := validator.ValidateConfig(r.Config)
 	if len(configValidationFailures) > 0 {
@@ -167,25 +175,23 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	r.Log.Info("Validating if not status update or temporary annotation set")
 	if apiRule.Generation != apiRule.Status.ObservedGeneration {
 		r.Log.Info("not a status update")
-		c := processing.ReconciliationConfig{
-			OathkeeperSvc:     r.OathkeeperSvc,
-			OathkeeperSvcPort: r.OathkeeperSvcPort,
-			CorsConfig:        r.CorsConfig,
-			AdditionalLabels:  r.GeneratedObjectsLabels,
-			DefaultDomainName: r.DefaultDomainName,
-			ServiceBlockList:  r.ServiceBlockList,
-			DomainAllowList:   r.DomainAllowList,
-			HostBlockList:     r.HostBlockList,
-		}
-
-		cmd := r.getReconciliation(c)
-		r.Log.Info("Process reconcile")
-		status := processing.Reconcile(ctx, r.Client, &r.Log, cmd, apiRule)
-		r.Log.Info("Update status or retry")
-		return r.updateStatusOrRetry(ctx, apiRule, status)
 	}
-	r.Log.Info("Finishing reconciliation")
-	return doneReconcile()
+	c := processing.ReconciliationConfig{
+		OathkeeperSvc:     r.OathkeeperSvc,
+		OathkeeperSvcPort: r.OathkeeperSvcPort,
+		CorsConfig:        r.CorsConfig,
+		AdditionalLabels:  r.GeneratedObjectsLabels,
+		DefaultDomainName: r.DefaultDomainName,
+		ServiceBlockList:  r.ServiceBlockList,
+		DomainAllowList:   r.DomainAllowList,
+		HostBlockList:     r.HostBlockList,
+	}
+
+	cmd := r.getReconciliation(c)
+	r.Log.Info("Process reconcile")
+	status := processing.Reconcile(ctx, r.Client, &r.Log, cmd, apiRule)
+	r.Log.Info("Update status or retry")
+	return r.updateStatusOrRetry(ctx, apiRule, status)
 }
 
 func (r *APIRuleReconciler) getReconciliation(config processing.ReconciliationConfig) processing.ReconciliationCommand {
@@ -211,12 +217,53 @@ func (r *APIRuleReconciler) updateStatusOrRetry(ctx context.Context, api *gatewa
 	if updateStatusErr != nil {
 		return retryReconcile(updateStatusErr) //controller retries to set the correct status eventually.
 	}
-	//Fail fast: If status is updated, users are informed about the problem. We don't need to reconcile again.
-	return doneReconcile()
+
+	// If error happened during reconcilation (e.g. VirtualService conflict) requeue for reconcilation earlier
+	if statusHasError(status) {
+		return doneReconcileErrorRequeue()
+	}
+
+	return doneReconcileDefaultRequeue()
 }
 
-func doneReconcile() (ctrl.Result, error) {
+func statusHasError(status processing.ReconciliationStatus) bool {
+	return status.ApiRuleStatus.Code == gatewayv1beta1.StatusError ||
+		status.AccessRuleStatus.Code == gatewayv1beta1.StatusError ||
+		status.VirtualServiceStatus.Code == gatewayv1beta1.StatusError ||
+		status.AuthorizationPolicyStatus.Code == gatewayv1beta1.StatusError ||
+		status.RequestAuthenticationStatus.Code == gatewayv1beta1.StatusError
+}
+
+func doneReconcileNoRequeue() (ctrl.Result, error) {
 	return ctrl.Result{}, nil
+}
+
+func doneReconcileDefaultRequeue() (ctrl.Result, error) {
+	// Leaving this env here for the review, we might want to get rid of this env, or move it to start parameters
+	amount, ok := os.LookupEnv("REQUEUE_AFTER_SECONDS")
+	after := DEFAULT_RECONCILATION_PERIOD
+	if ok {
+		a, err := strconv.ParseInt(amount, 10, 32)
+		if err != nil {
+			return ctrl.Result{}, err
+		}
+		after = time.Duration(a) * time.Second
+	}
+	return ctrl.Result{RequeueAfter: after}, nil
+}
+
+func doneReconcileErrorRequeue() (ctrl.Result, error) {
+	// Leaving this env here for the review, we might want to get rid of this env, or move it to start parameters
+	amount, ok := os.LookupEnv("REQUEUE_AFTER_SECONDS_ERROR")
+	after := ERROR_RECONCILATION_PERIOD
+	if ok {
+		a, err := strconv.ParseInt(amount, 10, 32)
+		if err != nil {
+			return ctrl.Result{}, err
+		}
+		after = time.Duration(a) * time.Second
+	}
+	return ctrl.Result{RequeueAfter: after}, nil
 }
 
 func retryReconcile(err error) (ctrl.Result, error) {
