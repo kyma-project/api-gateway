@@ -123,6 +123,38 @@ var _ = Describe("Authorization Policy Processor", func() {
 		Expect(ap.Spec.Selector.MatchLabels[TestSelectorKey]).To(Equal(ServiceName))
 	})
 
+	It("should produce one AP for a Rule with service with configured namespace, in the configured namespace", func() {
+		// given
+		jwt := createIstioJwtAccessStrategy()
+		ruleServiceName := "rule-scope-example-service"
+		namespace := "other-namespace"
+		service := &gatewayv1beta1.Service{
+			Name:      &ruleServiceName,
+			Port:      &ServicePort,
+			Namespace: &namespace,
+		}
+		client := GetFakeClient()
+		ruleJwt := GetRuleWithServiceFor(HeadersApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, []*gatewayv1beta1.Authenticator{jwt}, service)
+		apiRule := GetAPIRuleFor([]gatewayv1beta1.Rule{ruleJwt})
+		processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig())
+
+		// when
+		result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
+
+		// then
+		Expect(err).To(BeNil())
+		Expect(result).To(HaveLen(1))
+
+		ap := result[0].Obj.(*securityv1beta1.AuthorizationPolicy)
+		Expect(ap).NotTo(BeNil())
+		Expect(ap.Spec.Selector.MatchLabels[TestSelectorKey]).To(Equal(ruleServiceName))
+		// The AP should be in .Service.Namespace
+		Expect(ap.Namespace).To(Equal(namespace))
+		// And the OwnerLabel should point to APIRule namespace
+		Expect(ap.Labels[processing.OwnerLabel]).ToNot(BeEmpty())
+		Expect(ap.Labels[processing.OwnerLabel]).To(Equal(fmt.Sprintf("%s.%s",apiRule.Name,apiRule.Namespace)))
+	})
+
 	It("should produce AP with service from Rule, when service is configured on Rule and ApiRule level", func() {
 		// given
 		jwt := createIstioJwtAccessStrategy()

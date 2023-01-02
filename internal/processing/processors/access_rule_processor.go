@@ -141,9 +141,9 @@ func GenerateAccessRuleSpec(api *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rul
 
 	if rule.Service != nil {
 		return accessRuleSpec.Upstream(builders.Upstream().
-			URL(fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", *rule.Service.Name, *serviceNamespace, int(*rule.Service.Port)))).Get()
+			URL(fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", *rule.Service.Name, serviceNamespace, int(*rule.Service.Port)))).Get()
 	} else {
 		return accessRuleSpec.Upstream(builders.Upstream().
-			URL(fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", *api.Spec.Service.Name, *serviceNamespace, int(*api.Spec.Service.Port)))).Get()
+			URL(fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", *api.Spec.Service.Name, serviceNamespace, int(*api.Spec.Service.Port)))).Get()
 	}
 }

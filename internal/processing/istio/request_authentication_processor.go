@@ -5,6 +5,7 @@ import (
 
 	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
 	"github.com/kyma-incubator/api-gateway/internal/builders"
+	"github.com/kyma-incubator/api-gateway/internal/helpers"
 	"github.com/kyma-incubator/api-gateway/internal/processing"
 	"github.com/kyma-incubator/api-gateway/internal/processing/processors"
 	"istio.io/api/security/v1beta1"
@@ -49,7 +50,7 @@ func (r requestAuthenticationCreator) Create(api *gatewayv1beta1.APIRule) map[st
 
 func generateRequestAuthentication(api *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rule, additionalLabels map[string]string) *securityv1beta1.RequestAuthentication {
 	namePrefix := fmt.Sprintf("%s-", api.ObjectMeta.Name)
-	namespace := api.ObjectMeta.Namespace
+	namespace := helpers.FindServiceNamespace(api, &rule)
 	ownerRef := processing.GenerateOwnerRef(api)
 
 	raBuilder := builders.RequestAuthenticationBuilder().

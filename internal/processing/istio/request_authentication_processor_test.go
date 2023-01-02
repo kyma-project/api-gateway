@@ -118,6 +118,40 @@ var _ = Describe("Request Authentication Processor", func() {
 		Expect(ra.Spec.Selector.MatchLabels[TestSelectorKey]).To(Equal(ruleServiceName))
 	})
 
+	It("should produce RA for a Rule with service with configured namespace, in the configured namespace", func() {
+		// given
+		jwt := createIstioJwtAccessStrategy()
+		ruleServiceName := "rule-scope-example-service"
+		namespace := "other-namespace"
+		service := &gatewayv1beta1.Service{
+			Name: &ruleServiceName,
+			Port: &ServicePort,
+			Namespace: &namespace,
+		}
+		client := GetFakeClient()
+		ruleJwt := GetRuleWithServiceFor(HeadersApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, []*gatewayv1beta1.Authenticator{jwt}, service)
+		apiRule := GetAPIRuleFor([]gatewayv1beta1.Rule{ruleJwt})
+
+		processor := istio.NewRequestAuthenticationProcessor(GetTestConfig())
+
+		// when
+		result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
+
+		// then
+		Expect(err).To(BeNil())
+		Expect(result).To(HaveLen(1))
+
+		ra := result[0].Obj.(*securityv1beta1.RequestAuthentication)
+		Expect(ra).NotTo(BeNil())
+		Expect(ra.Spec.Selector.MatchLabels[TestSelectorKey]).To(Equal(ruleServiceName))
+
+		// The RA should be in .Service.Namespace
+		Expect(ra.Namespace).To(Equal(namespace))
+		// And the OwnerLabel should point to APIRule namespace
+		Expect(ra.Labels[processing.OwnerLabel]).ToNot(BeEmpty())
+		Expect(ra.Labels[processing.OwnerLabel]).To(Equal(fmt.Sprintf("%s.%s",apiRule.Name,apiRule.Namespace)))
+	})
+
 	It("should produce RA from a rule with two issuers and one path", func() {
 		jwtConfigJSON := fmt.Sprintf(`{
 			"authentications": [{"issuer": "%s", "jwksUri": "%s"}, {"issuer": "%s", "jwksUri": "%s"}]
