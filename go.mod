@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	github.com/go-logr/logr v1.2.3
-	github.com/onsi/ginkgo v1.16.5
+	github.com/onsi/ginkgo/v2 v2.6.1
 	github.com/onsi/gomega v1.24.2
 	github.com/ory/oathkeeper-maester v0.1.7
 	istio.io/api v0.0.0-20221208070204-0528cb6ce63b
@@ -25,6 +25,7 @@ require (
 	github.com/emicklei/go-restful/v3 v3.8.0 // indirect
 	github.com/evanphx/json-patch/v5 v5.6.0 // indirect
 	github.com/golang-jwt/jwt/v4 v4.2.0 // indirect
+	github.com/onsi/ginkgo v1.16.5 // indirect
 	golang.org/x/crypto v0.0.0-20220315160706-3147a52a75dd // indirect
 )
 

@@ -15,14 +15,13 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/envtest/printer"
 
 	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
 	"github.com/kyma-incubator/api-gateway/controllers"
 	"github.com/kyma-incubator/api-gateway/internal/helpers"
 	"github.com/kyma-incubator/api-gateway/internal/processing"
 
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
 	"k8s.io/client-go/kubernetes/scheme"
@@ -53,14 +52,11 @@ var (
 func TestAPIs(t *testing.T) {
 	RegisterFailHandler(Fail)
 
-	RunSpecsWithDefaultAndCustomReporters(t,
-		"Controller Suite",
-		[]Reporter{printer.NewlineReporter{}, printer.NewProwReporter("api-gateway-controller-testsuite")})
+	RunSpecs(t, "Controller Suite")
 }
 
-var _ = BeforeSuite(func(done Done) {
+var _ = BeforeSuite(func(ctx SpecContext) {
 	logf.SetLogger(zap.New(zap.UseDevMode(true), zap.WriteTo(GinkgoWriter)))
-	ctx, cancel = context.WithCancel(context.TODO())
 
 	By("bootstrapping test environment")
 	testEnv = &envtest.Environment{
@@ -155,15 +151,13 @@ var _ = BeforeSuite(func(done Done) {
 		Expect(err).ToNot(HaveOccurred(), "failed to run manager")
 	}()
 
-	close(done)
-}, 60)
+}, NodeTimeout(timeout))
 
 var _ = AfterSuite(func() {
 	/*
 		 Provided solution for timeout issue waiting for kubeapiserver
 			https://github.com/kubernetes-sigs/controller-runtime/issues/1571#issuecomment-1005575071
 	*/
-	cancel()
 	By("tearing down the test environment,but I do nothing here.")
 	err := testEnv.Stop()
 	// Set 4 with random

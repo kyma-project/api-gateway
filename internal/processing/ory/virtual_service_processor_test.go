@@ -3,11 +3,12 @@ package ory_test
 import (
 	"context"
 	"fmt"
+
 	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
 	"github.com/kyma-incubator/api-gateway/internal/processing"
 	. "github.com/kyma-incubator/api-gateway/internal/processing/internal/test"
 	"github.com/kyma-incubator/api-gateway/internal/processing/ory"
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"

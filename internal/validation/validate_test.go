@@ -3,8 +3,8 @@ package validation
 import (
 	"encoding/json"
 	"fmt"
+
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
-	"sigs.k8s.io/controller-runtime/pkg/envtest/printer"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -13,15 +13,14 @@ import (
 	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
 	"github.com/kyma-incubator/api-gateway/internal/helpers"
 	"github.com/kyma-incubator/api-gateway/internal/types/ory"
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
 func TestValidators(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecsWithDefaultAndCustomReporters(t, "Validators Suite",
-		[]Reporter{printer.NewProwReporter("api-gateway-validators-testsuite")})
+	RunSpecs(t, "Validators Suite")
 }
 
 const (

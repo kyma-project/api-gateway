@@ -3,8 +3,7 @@ package validation
 import (
 	"fmt"
 
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/ginkgo/extensions/table"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
 
@@ -49,7 +48,7 @@ var _ = Describe("Label validation function", func() {
 				}
 				Expect(err == nil).To(Equal(shouldBeValid))
 			},
-			entries...,
+			entries,
 		)
 	})
 
@@ -76,7 +75,7 @@ var _ = Describe("Label validation function", func() {
 			func(labelKey string, shouldBeValid bool) {
 				err := validateLabelKey(labelKey)
 				Expect(err == nil).To(Equal(shouldBeValid))
-			}, commonEntries...)
+			}, commonEntries)
 
 		DescribeTable("validate label keys with \"prefix\" part",
 			func(labelKey string, shouldBeValid bool) {

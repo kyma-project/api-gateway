@@ -3,12 +3,13 @@ package processing_test
 import (
 	"context"
 	"fmt"
+
 	"github.com/go-logr/logr"
 	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
 	"github.com/kyma-incubator/api-gateway/internal/builders"
 	"github.com/kyma-incubator/api-gateway/internal/processing"
 	"github.com/kyma-incubator/api-gateway/internal/validation"
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	"k8s.io/apimachinery/pkg/runtime"
