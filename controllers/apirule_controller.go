@@ -176,7 +176,7 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	} else {
 		if controllerutil.ContainsFinalizer(apiRule, API_GATEWAY_FINALIZER) {
 			// our finalizer is present, so lets handle any external dependency
-			if err := r.deleteExternalResources(*apiRule); err != nil {
+			if err := r.deleteExternalResources(ctx, *apiRule); err != nil {
 				// if fail to delete the external dependency here, return with error
 				// so that it can be retried
 				return ctrl.Result{}, err
