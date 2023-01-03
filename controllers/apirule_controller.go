@@ -43,6 +43,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
+
+	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 )
 
 // APIRuleReconciler reconciles a APIRule object
@@ -163,7 +165,7 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		status := processing.GetStatusForError(&r.Log, err, gatewayv1beta1.StatusSkipped)
 		return r.updateStatusOrRetry(ctx, apiRule, status)
 	}
-	
+
 	if apiRule.ObjectMeta.DeletionTimestamp.IsZero() {
 		if !controllerutil.ContainsFinalizer(apiRule, API_GATEWAY_FINALIZER) {
 			controllerutil.AddFinalizer(apiRule, API_GATEWAY_FINALIZER)
@@ -173,6 +175,13 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		}
 	} else {
 		if controllerutil.ContainsFinalizer(apiRule, API_GATEWAY_FINALIZER) {
+			// our finalizer is present, so lets handle any external dependency
+			if err := r.deleteExternalResources(*apiRule); err != nil {
+				// if fail to delete the external dependency here, return with error
+				// so that it can be retried
+				return ctrl.Result{}, err
+			}
+
 			controllerutil.RemoveFinalizer(apiRule, API_GATEWAY_FINALIZER)
 			if err := r.Update(ctx, apiRule); err != nil {
 				return doneReconcileErrorRequeue(r.OnErrorReconcilePeriod)
@@ -218,6 +227,26 @@ func (r *APIRuleReconciler) getReconciliation(config processing.ReconciliationCo
 	}
 	return ory.NewOryReconciliation(config)
 
+}
+
+func (r *APIRuleReconciler) deleteExternalResources(apiRule gatewayv1beta1.APIRule) error {
+	err := r.Client.DeleteAllOf(context.Background(), &securityv1beta1.AuthorizationPolicy{}, client.MatchingLabels{
+		processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", apiRule.ObjectMeta.Name, apiRule.ObjectMeta.Namespace),
+	})
+	
+	if err != nil {
+		return err
+	}
+
+	err = r.Client.DeleteAllOf(context.Background(), &securityv1beta1.RequestAuthentication{}, client.MatchingLabels{
+		processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", apiRule.ObjectMeta.Name, apiRule.ObjectMeta.Namespace),
+	})
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // SetupWithManager sets up the controller with the Manager.
