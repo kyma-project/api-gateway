@@ -230,17 +230,13 @@ func (r *APIRuleReconciler) getReconciliation(config processing.ReconciliationCo
 }
 
 func (r *APIRuleReconciler) deleteExternalResources(apiRule gatewayv1beta1.APIRule) error {
-	err := r.Client.DeleteAllOf(context.Background(), &securityv1beta1.AuthorizationPolicy{}, client.MatchingLabels{
-		processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", apiRule.ObjectMeta.Name, apiRule.ObjectMeta.Namespace),
-	})
+	err := r.Client.DeleteAllOf(context.Background(), &securityv1beta1.AuthorizationPolicy{}, client.MatchingLabels(processing.GetOwnerLabels(&apiRule)))
 	
 	if err != nil {
 		return err
 	}
 
-	err = r.Client.DeleteAllOf(context.Background(), &securityv1beta1.RequestAuthentication{}, client.MatchingLabels{
-		processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", apiRule.ObjectMeta.Name, apiRule.ObjectMeta.Namespace),
-	})
+	err = r.Client.DeleteAllOf(context.Background(), &securityv1beta1.RequestAuthentication{}, client.MatchingLabels(processing.GetOwnerLabels(&apiRule)))
 
 	if err != nil {
 		return err
