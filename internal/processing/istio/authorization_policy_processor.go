@@ -52,6 +52,8 @@ func (r authorizationPolicyCreator) Create(api *gatewayv1beta1.APIRule) map[stri
 func generateAuthorizationPolicy(api *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rule, additionalLabels map[string]string) *securityv1beta1.AuthorizationPolicy {
 	namePrefix := fmt.Sprintf("%s-", api.ObjectMeta.Name)
 	namespace := helpers.FindServiceNamespace(api, &rule)
+
+	println(namespace)
 	ownerRef := processing.GenerateOwnerRef(api)
 
 	apBuilder := builders.AuthorizationPolicyBuilder().
