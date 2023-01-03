@@ -229,17 +229,31 @@ func (r *APIRuleReconciler) getReconciliation(config processing.ReconciliationCo
 
 }
 
-func (r *APIRuleReconciler) deleteExternalResources(apiRule gatewayv1beta1.APIRule) error {
-	err := r.Client.DeleteAllOf(context.Background(), &securityv1beta1.AuthorizationPolicy{}, client.MatchingLabels(processing.GetOwnerLabels(&apiRule)))
-	
-	if err != nil {
+func (r *APIRuleReconciler) deleteExternalResources(ctx context.Context, apiRule gatewayv1beta1.APIRule) error {
+	labels := processing.GetOwnerLabels(&apiRule)
+
+	var apList securityv1beta1.AuthorizationPolicyList
+	if err := r.List(ctx, &apList, client.MatchingLabels(labels)); err != nil {
 		return err
 	}
 
-	err = r.Client.DeleteAllOf(context.Background(), &securityv1beta1.RequestAuthentication{}, client.MatchingLabels(processing.GetOwnerLabels(&apiRule)))
+	for _, ap := range apList.Items {
+		err := r.Delete(ctx, ap)
+		if err != nil {
+			return err
+		}
+	}
 
-	if err != nil {
+	var raList securityv1beta1.RequestAuthenticationList
+	if err := r.List(ctx, &raList, client.MatchingLabels(labels)); err != nil {
 		return err
+	}
+
+	for _, ra := range raList.Items {
+		err := r.Delete(ctx, ra)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
