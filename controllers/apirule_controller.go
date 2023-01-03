@@ -37,6 +37,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
@@ -67,6 +68,7 @@ const (
 	CONFIGMAP_NS                  = "kyma-system"
 	DEFAULT_RECONCILIATION_PERIOD = 30 * time.Minute
 	ERROR_RECONCILIATION_PERIOD   = time.Minute
+	API_GATEWAY_FINALIZER         = "gateway.kyma-project.io/finalizer"
 )
 
 type configMapPredicate struct {
@@ -160,6 +162,22 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		//Nothing is yet processed: StatusSkipped
 		status := processing.GetStatusForError(&r.Log, err, gatewayv1beta1.StatusSkipped)
 		return r.updateStatusOrRetry(ctx, apiRule, status)
+	}
+	
+	if apiRule.ObjectMeta.DeletionTimestamp.IsZero() {
+		if !controllerutil.ContainsFinalizer(apiRule, API_GATEWAY_FINALIZER) {
+			controllerutil.AddFinalizer(apiRule, API_GATEWAY_FINALIZER)
+			if err := r.Update(ctx, apiRule); err != nil {
+				return doneReconcileErrorRequeue(r.OnErrorReconcilePeriod)
+			}
+		}
+	} else {
+		if controllerutil.ContainsFinalizer(apiRule, API_GATEWAY_FINALIZER) {
+			controllerutil.RemoveFinalizer(apiRule, API_GATEWAY_FINALIZER)
+			if err := r.Update(ctx, apiRule); err != nil {
+				return doneReconcileErrorRequeue(r.OnErrorReconcilePeriod)
+			}
+		}
 	}
 
 	r.Log.Info("Validating ApiRule config")
