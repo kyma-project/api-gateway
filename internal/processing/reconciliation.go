@@ -73,7 +73,6 @@ func applyChange(ctx context.Context, client client.Client, change *ObjectChange
 
 	switch change.Action {
 	case create:
-		print(change.Obj.GetNamespace())
 		err = client.Create(ctx, change.Obj)
 	case update:
 		err = client.Update(ctx, change.Obj)

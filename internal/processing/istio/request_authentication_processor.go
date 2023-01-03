@@ -51,12 +51,12 @@ func (r requestAuthenticationCreator) Create(api *gatewayv1beta1.APIRule) map[st
 func generateRequestAuthentication(api *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rule, additionalLabels map[string]string) *securityv1beta1.RequestAuthentication {
 	namePrefix := fmt.Sprintf("%s-", api.ObjectMeta.Name)
 	namespace := helpers.FindServiceNamespace(api, &rule)
-	ownerRef := processing.GenerateOwnerRef(api)
+	//ownerRef := processing.GenerateOwnerRef(api)
 
 	raBuilder := builders.RequestAuthenticationBuilder().
 		GenerateName(namePrefix).
 		Namespace(namespace).
-		Owner(builders.OwnerReference().From(&ownerRef)).
+		//Owner(builders.OwnerReference().From(&ownerRef)).
 		Spec(builders.RequestAuthenticationSpecBuilder().From(generateRequestAuthenticationSpec(api, rule))).
 		Label(processing.OwnerLabel, fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace)).
 		Label(processing.OwnerLabelv1alpha1, fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace))
