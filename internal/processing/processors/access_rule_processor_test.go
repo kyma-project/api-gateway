@@ -9,7 +9,7 @@ import (
 	"github.com/kyma-incubator/api-gateway/internal/processing"
 	. "github.com/kyma-incubator/api-gateway/internal/processing/internal/test"
 	"github.com/kyma-incubator/api-gateway/internal/processing/processors"
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	. "github.com/onsi/gomega/gstruct"
 	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"

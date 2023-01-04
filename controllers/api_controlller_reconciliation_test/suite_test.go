@@ -3,6 +3,7 @@ package reconciliation_test
 import (
 	"context"
 	"fmt"
+	"os"
 	"path/filepath"
 	"testing"
 	"time"
@@ -15,14 +16,15 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/envtest/printer"
 
 	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
 	"github.com/kyma-incubator/api-gateway/controllers"
 	"github.com/kyma-incubator/api-gateway/internal/helpers"
 	"github.com/kyma-incubator/api-gateway/internal/processing"
 
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
+	"github.com/onsi/ginkgo/v2/reporters"
+	"github.com/onsi/ginkgo/v2/types"
 	. "github.com/onsi/gomega"
 
 	"k8s.io/client-go/kubernetes/scheme"
@@ -53,12 +55,10 @@ var (
 func TestAPIGatewayReconciliation(t *testing.T) {
 	RegisterFailHandler(Fail)
 
-	RunSpecsWithDefaultAndCustomReporters(t,
-		"Reconciliation Suite",
-		[]Reporter{printer.NewlineReporter{}, printer.NewProwReporter("api-gateway-controller-reconciliation")})
+	RunSpecs(t, "Reconciliation Suite")
 }
 
-var _ = BeforeSuite(func(done Done) {
+var _ = BeforeSuite(func(specCtx SpecContext) {
 	logf.SetLogger(zap.New(zap.UseDevMode(true), zap.WriteTo(GinkgoWriter)))
 	ctx, cancel = context.WithCancel(context.TODO())
 
@@ -139,7 +139,7 @@ var _ = BeforeSuite(func(done Done) {
 		GeneratedObjectsLabels: map[string]string{},
 		Config:                 &helpers.Config{},
 
-		// Run the suite with period that won't interfere with tests
+		// Run the suite with small period so reconcilation should happen very often
 		ReconcilePeriod:        time.Second,
 		OnErrorReconcilePeriod: time.Second,
 	}
@@ -155,8 +155,7 @@ var _ = BeforeSuite(func(done Done) {
 		Expect(err).ToNot(HaveOccurred(), "failed to run manager")
 	}()
 
-	close(done)
-}, 60)
+}, NodeTimeout(timeout))
 
 var _ = AfterSuite(func() {
 	/*
@@ -164,6 +163,7 @@ var _ = AfterSuite(func() {
 			https://github.com/kubernetes-sigs/controller-runtime/issues/1571#issuecomment-1005575071
 	*/
 	cancel()
+
 	By("tearing down the test environment,but I do nothing here.")
 	err := testEnv.Stop()
 	// Set 4 with random
@@ -173,6 +173,31 @@ var _ = AfterSuite(func() {
 	err = testEnv.Stop()
 	Expect(err).NotTo(HaveOccurred())
 
+})
+
+var _ = ReportAfterSuite("custom reporter", func(report types.Report) {
+	logger := zap.New(zap.UseDevMode(true), zap.WriteTo(GinkgoWriter))
+	if key, ok := os.LookupEnv("ARTIFACTS"); ok {
+		reportsFilename := fmt.Sprintf("%s/%s", key, "junit-reconciliation.xml")
+		logger.Info("Generating reports at", "location", reportsFilename)
+		err := reporters.GenerateJUnitReport(report, reportsFilename)
+
+		if err != nil {
+			logger.Error(err, "Junit Report Generation Error")
+		}
+	} else {
+		if err := os.MkdirAll("../../reports", 0755); err != nil {
+			logger.Error(err, "could not create directory")
+		}
+
+		reportsFilename := fmt.Sprintf("%s/%s", "../../reports", "junit-reconciliation.xml")
+		logger.Info("Generating reports at", "location", reportsFilename)
+		err := reporters.GenerateJUnitReport(report, reportsFilename)
+
+		if err != nil {
+			logger.Error(err, "Junit Report Generation Error")
+		}
+	}
 })
 
 // SetupTestReconcile returns a reconcile.Reconcile implementation that delegates to inner and
