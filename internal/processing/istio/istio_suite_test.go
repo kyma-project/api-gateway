@@ -21,7 +21,7 @@ var _ = ReportAfterSuite("custom reporter", func(report types.Report) {
 	logger := zap.New(zap.UseDevMode(true), zap.WriteTo(GinkgoWriter))
 
 	if key, ok := os.LookupEnv("ARTIFACTS"); ok {
-		reportsFilename := fmt.Sprintf("%s/%s", key, "istio-junit.xml")
+		reportsFilename := fmt.Sprintf("%s/%s", key, "junit-istio.xml")
 		logger.Info("Generating reports at", "location", reportsFilename)
 		err := reporters.GenerateJUnitReport(report, reportsFilename)
 
@@ -33,7 +33,7 @@ var _ = ReportAfterSuite("custom reporter", func(report types.Report) {
 			logger.Error(err, "could not create directory")
 		}
 
-		reportsFilename := fmt.Sprintf("%s/%s", "../../../reports", "istio-junit.xml")
+		reportsFilename := fmt.Sprintf("%s/%s", "../../../reports", "junit-istio.xml")
 		logger.Info("Generating reports at", "location", reportsFilename)
 		err := reporters.GenerateJUnitReport(report, reportsFilename)
 
