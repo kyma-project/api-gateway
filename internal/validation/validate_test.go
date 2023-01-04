@@ -3,8 +3,10 @@ package validation
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
+	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -14,6 +16,8 @@ import (
 	"github.com/kyma-incubator/api-gateway/internal/helpers"
 	"github.com/kyma-incubator/api-gateway/internal/types/ory"
 	. "github.com/onsi/ginkgo/v2"
+	"github.com/onsi/ginkgo/v2/reporters"
+	"github.com/onsi/ginkgo/v2/types"
 	. "github.com/onsi/gomega"
 	"k8s.io/apimachinery/pkg/runtime"
 )
@@ -925,3 +929,29 @@ func getService(serviceName string, servicePort uint32, namespace ...*string) *g
 func getHost(host string) *string {
 	return &host
 }
+
+var _ = ReportAfterSuite("custom reporter", func(report types.Report) {
+	logger := zap.New(zap.UseDevMode(true), zap.WriteTo(GinkgoWriter))
+
+	if key, ok := os.LookupEnv("ARTIFACTS"); ok {
+		reportsFilename := fmt.Sprintf("%s/%s", key, "validation-report.xml")
+		logger.Info("Generating reports at", "location", reportsFilename)
+		err := reporters.GenerateJUnitReport(report, reportsFilename)
+
+		if err != nil {
+			logger.Error(err, "Junit Report Generation Error")
+		}
+	} else {
+		if err := os.MkdirAll("../../reports", 0755); err != nil {
+			logger.Error(err, "could not create directory")
+		}
+
+		reportsFilename := fmt.Sprintf("%s/%s", "../../reports", "validation-report.xml")
+		logger.Info("Generating reports at", "location", reportsFilename)
+		err := reporters.GenerateJUnitReport(report, reportsFilename)
+
+		if err != nil {
+			logger.Error(err, "Junit Report Generation Error")
+		}
+	}
+})

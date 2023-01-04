@@ -3,6 +3,7 @@ package controllers_test
 import (
 	"context"
 	"fmt"
+	"os"
 	"path/filepath"
 	"testing"
 	"time"
@@ -22,6 +23,8 @@ import (
 	"github.com/kyma-incubator/api-gateway/internal/processing"
 
 	. "github.com/onsi/ginkgo/v2"
+	"github.com/onsi/ginkgo/v2/reporters"
+	"github.com/onsi/ginkgo/v2/types"
 	. "github.com/onsi/gomega"
 
 	"k8s.io/client-go/kubernetes/scheme"
@@ -55,8 +58,9 @@ func TestAPIs(t *testing.T) {
 	RunSpecs(t, "Controller Suite")
 }
 
-var _ = BeforeSuite(func(ctx SpecContext) {
+var _ = BeforeSuite(func(specCtx SpecContext) {
 	logf.SetLogger(zap.New(zap.UseDevMode(true), zap.WriteTo(GinkgoWriter)))
+	ctx, cancel = context.WithCancel(context.TODO())
 
 	By("bootstrapping test environment")
 	testEnv = &envtest.Environment{
@@ -151,13 +155,14 @@ var _ = BeforeSuite(func(ctx SpecContext) {
 		Expect(err).ToNot(HaveOccurred(), "failed to run manager")
 	}()
 
-}, NodeTimeout(timeout))
+}, NodeTimeout(10*time.Second))
 
 var _ = AfterSuite(func() {
 	/*
 		 Provided solution for timeout issue waiting for kubeapiserver
 			https://github.com/kubernetes-sigs/controller-runtime/issues/1571#issuecomment-1005575071
 	*/
+	cancel()
 	By("tearing down the test environment,but I do nothing here.")
 	err := testEnv.Stop()
 	// Set 4 with random
@@ -167,6 +172,32 @@ var _ = AfterSuite(func() {
 	err = testEnv.Stop()
 	Expect(err).NotTo(HaveOccurred())
 
+})
+
+var _ = ReportAfterSuite("custom reporter", func(report types.Report) {
+	logger := zap.New(zap.UseDevMode(true), zap.WriteTo(GinkgoWriter))
+
+	if key, ok := os.LookupEnv("ARTIFACTS"); ok {
+		reportsFilename := fmt.Sprintf("%s/%s", key, "controller-report.xml")
+		logger.Info("Generating reports at", "location", reportsFilename)
+		err := reporters.GenerateJUnitReport(report, reportsFilename)
+
+		if err != nil {
+			logger.Error(err, "Junit Report Generation Error")
+		}
+	} else {
+		if err := os.MkdirAll("../reports", 0755); err != nil {
+			logger.Error(err, "could not create directory")
+		}
+
+		reportsFilename := fmt.Sprintf("%s/%s", "../reports", "controller-report.xml")
+		logger.Info("Generating reports at", "location", reportsFilename)
+		err := reporters.GenerateJUnitReport(report, reportsFilename)
+
+		if err != nil {
+			logger.Error(err, "Junit Report Generation Error")
+		}
+	}
 })
 
 // SetupTestReconcile returns a reconcile.Reconcile implementation that delegates to inner and

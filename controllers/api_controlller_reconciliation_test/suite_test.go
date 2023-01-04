@@ -3,6 +3,7 @@ package reconciliation_test
 import (
 	"context"
 	"fmt"
+	"os"
 	"path/filepath"
 	"testing"
 	"time"
@@ -22,6 +23,8 @@ import (
 	"github.com/kyma-incubator/api-gateway/internal/processing"
 
 	. "github.com/onsi/ginkgo/v2"
+	"github.com/onsi/ginkgo/v2/reporters"
+	"github.com/onsi/ginkgo/v2/types"
 	. "github.com/onsi/gomega"
 
 	"k8s.io/client-go/kubernetes/scheme"
@@ -55,8 +58,9 @@ func TestAPIGatewayReconciliation(t *testing.T) {
 	RunSpecs(t, "Reconciliation Suite")
 }
 
-var _ = BeforeSuite(func(ctx SpecContext) {
+var _ = BeforeSuite(func(specCtx SpecContext) {
 	logf.SetLogger(zap.New(zap.UseDevMode(true), zap.WriteTo(GinkgoWriter)))
+	ctx, cancel = context.WithCancel(context.TODO())
 
 	By("bootstrapping test environment for reconciliation")
 	testEnv = &envtest.Environment{
@@ -135,7 +139,7 @@ var _ = BeforeSuite(func(ctx SpecContext) {
 		GeneratedObjectsLabels: map[string]string{},
 		Config:                 &helpers.Config{},
 
-		// Run the suite with period that won't interfere with tests
+		// Run the suite with small period so reconcilation should happen very often
 		ReconcilePeriod:        time.Second,
 		OnErrorReconcilePeriod: time.Second,
 	}
@@ -159,6 +163,7 @@ var _ = AfterSuite(func() {
 			https://github.com/kubernetes-sigs/controller-runtime/issues/1571#issuecomment-1005575071
 	*/
 	cancel()
+
 	By("tearing down the test environment,but I do nothing here.")
 	err := testEnv.Stop()
 	// Set 4 with random
@@ -168,6 +173,31 @@ var _ = AfterSuite(func() {
 	err = testEnv.Stop()
 	Expect(err).NotTo(HaveOccurred())
 
+})
+
+var _ = ReportAfterSuite("custom reporter", func(report types.Report) {
+	logger := zap.New(zap.UseDevMode(true), zap.WriteTo(GinkgoWriter))
+	if key, ok := os.LookupEnv("ARTIFACTS"); ok {
+		reportsFilename := fmt.Sprintf("%s/%s", key, "reconciliation-report.xml")
+		logger.Info("Generating reports at", "location", reportsFilename)
+		err := reporters.GenerateJUnitReport(report, reportsFilename)
+
+		if err != nil {
+			logger.Error(err, "Junit Report Generation Error")
+		}
+	} else {
+		if err := os.MkdirAll("../../reports", 0755); err != nil {
+			logger.Error(err, "could not create directory")
+		}
+
+		reportsFilename := fmt.Sprintf("%s/%s", "../../reports", "reconciliation-report.xml")
+		logger.Info("Generating reports at", "location", reportsFilename)
+		err := reporters.GenerateJUnitReport(report, reportsFilename)
+
+		if err != nil {
+			logger.Error(err, "Junit Report Generation Error")
+		}
+	}
 })
 
 // SetupTestReconcile returns a reconcile.Reconcile implementation that delegates to inner and
