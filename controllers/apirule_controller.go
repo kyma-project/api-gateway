@@ -37,11 +37,14 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
+
+	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 )
 
 // APIRuleReconciler reconciles a APIRule object
@@ -67,6 +70,7 @@ const (
 	CONFIGMAP_NS                  = "kyma-system"
 	DEFAULT_RECONCILIATION_PERIOD = 30 * time.Minute
 	ERROR_RECONCILIATION_PERIOD   = time.Minute
+	API_GATEWAY_FINALIZER         = "gateway.kyma-project.io/finalizer"
 )
 
 type configMapPredicate struct {
@@ -162,6 +166,29 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		return r.updateStatusOrRetry(ctx, apiRule, status)
 	}
 
+	if apiRule.ObjectMeta.DeletionTimestamp.IsZero() {
+		if !controllerutil.ContainsFinalizer(apiRule, API_GATEWAY_FINALIZER) {
+			controllerutil.AddFinalizer(apiRule, API_GATEWAY_FINALIZER)
+			if err := r.Update(ctx, apiRule); err != nil {
+				return doneReconcileErrorRequeue(r.OnErrorReconcilePeriod)
+			}
+		}
+	} else {
+		if controllerutil.ContainsFinalizer(apiRule, API_GATEWAY_FINALIZER) {
+			// our finalizer is present, so lets handle any external dependency
+			if err := r.deleteExternalResources(ctx, *apiRule); err != nil {
+				// if fail to delete the external dependency here, return with error
+				// so that it can be retried
+				return ctrl.Result{}, err
+			}
+
+			controllerutil.RemoveFinalizer(apiRule, API_GATEWAY_FINALIZER)
+			if err := r.Update(ctx, apiRule); err != nil {
+				return doneReconcileErrorRequeue(r.OnErrorReconcilePeriod)
+			}
+		}
+	}
+
 	r.Log.Info("Validating ApiRule config")
 	configValidationFailures := validator.ValidateConfig(r.Config)
 	if len(configValidationFailures) > 0 {
@@ -200,6 +227,36 @@ func (r *APIRuleReconciler) getReconciliation(config processing.ReconciliationCo
 	}
 	return ory.NewOryReconciliation(config)
 
+}
+
+func (r *APIRuleReconciler) deleteExternalResources(ctx context.Context, apiRule gatewayv1beta1.APIRule) error {
+	labels := processing.GetOwnerLabels(&apiRule)
+
+	var apList securityv1beta1.AuthorizationPolicyList
+	if err := r.List(ctx, &apList, client.MatchingLabels(labels)); err != nil {
+		return err
+	}
+
+	for _, ap := range apList.Items {
+		err := r.Delete(ctx, ap)
+		if err != nil {
+			return err
+		}
+	}
+
+	var raList securityv1beta1.RequestAuthenticationList
+	if err := r.List(ctx, &raList, client.MatchingLabels(labels)); err != nil {
+		return err
+	}
+
+	for _, ra := range raList.Items {
+		err := r.Delete(ctx, ra)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 // SetupWithManager sets up the controller with the Manager.

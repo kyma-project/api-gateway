@@ -92,5 +92,16 @@ func GetRequestAuthenticationKey(ra *securityv1beta1.RequestAuthentication) stri
 	for _, k := range ra.Spec.JwtRules {
 		jwtRulesKey += fmt.Sprintf("%s:%s", k.Issuer, k.JwksUri)
 	}
-	return fmt.Sprintf("%s:%s", ra.Spec.Selector.MatchLabels[RequestAuthenticationAppSelectorLabel], jwtRulesKey)
+
+	namespace := ra.Namespace
+	if namespace == "" {
+		namespace = "default"
+	}
+
+	return fmt.Sprintf("%s:%s:%s",
+		ra.Spec.Selector.MatchLabels[RequestAuthenticationAppSelectorLabel],
+		jwtRulesKey,
+		// If the namespace changed, the resource should be recreated
+		namespace,
+	)
 }

@@ -58,11 +58,11 @@ func (r virtualServiceCreator) Create(api *gatewayv1beta1.APIRule) *networkingv1
 		if routeDirectlyToService {
 			// Use rule level service if it exists
 			if rule.Service != nil {
-				host = helpers.GetHostLocalDomain(*rule.Service.Name, *serviceNamespace)
+				host = helpers.GetHostLocalDomain(*rule.Service.Name, serviceNamespace)
 				port = *rule.Service.Port
 			} else {
 				// Otherwise use service defined on APIRule spec level
-				host = helpers.GetHostLocalDomain(*api.Spec.Service.Name, *serviceNamespace)
+				host = helpers.GetHostLocalDomain(*api.Spec.Service.Name, serviceNamespace)
 				port = *api.Spec.Service.Port
 			}
 		} else {

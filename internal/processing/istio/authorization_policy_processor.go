@@ -5,6 +5,7 @@ import (
 
 	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
 	"github.com/kyma-incubator/api-gateway/internal/builders"
+	"github.com/kyma-incubator/api-gateway/internal/helpers"
 	"github.com/kyma-incubator/api-gateway/internal/processing"
 	"github.com/kyma-incubator/api-gateway/internal/processing/processors"
 	"istio.io/api/security/v1beta1"
@@ -50,13 +51,13 @@ func (r authorizationPolicyCreator) Create(api *gatewayv1beta1.APIRule) map[stri
 
 func generateAuthorizationPolicy(api *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rule, additionalLabels map[string]string) *securityv1beta1.AuthorizationPolicy {
 	namePrefix := fmt.Sprintf("%s-", api.ObjectMeta.Name)
-	namespace := api.ObjectMeta.Namespace
-	ownerRef := processing.GenerateOwnerRef(api)
+	namespace := helpers.FindServiceNamespace(api, &rule)
+	//ownerRef := processing.GenerateOwnerRef(api)
 
 	apBuilder := builders.AuthorizationPolicyBuilder().
 		GenerateName(namePrefix).
 		Namespace(namespace).
-		Owner(builders.OwnerReference().From(&ownerRef)).
+		//Owner(builders.OwnerReference().From(&ownerRef)).
 		Spec(builders.AuthorizationPolicySpecBuilder().From(generateAuthorizationPolicySpec(api, rule))).
 		Label(processing.OwnerLabel, fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace)).
 		Label(processing.OwnerLabelv1alpha1, fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace))

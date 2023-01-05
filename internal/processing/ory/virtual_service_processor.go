@@ -49,11 +49,11 @@ func (r virtualServiceCreator) Create(api *gatewayv1beta1.APIRule) *networkingv1
 		if !processing.IsSecured(rule) {
 			// Use rule level service if it exists
 			if rule.Service != nil {
-				host = fmt.Sprintf("%s.%s.svc.cluster.local", *rule.Service.Name, *serviceNamespace)
+				host = fmt.Sprintf("%s.%s.svc.cluster.local", *rule.Service.Name, serviceNamespace)
 				port = *rule.Service.Port
 			} else {
 				// Otherwise use service defined on APIRule spec level
-				host = fmt.Sprintf("%s.%s.svc.cluster.local", *api.Spec.Service.Name, *serviceNamespace)
+				host = fmt.Sprintf("%s.%s.svc.cluster.local", *api.Spec.Service.Name, serviceNamespace)
 				port = *api.Spec.Service.Port
 			}
 		}

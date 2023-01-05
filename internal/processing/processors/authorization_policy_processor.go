@@ -3,6 +3,7 @@ package processors
 import (
 	"context"
 	"fmt"
+
 	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
 	"github.com/kyma-incubator/api-gateway/internal/processing"
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
@@ -86,13 +87,23 @@ func (r AuthorizationPolicyProcessor) getObjectChanges(desiredAps map[string]*se
 
 func GetAuthorizationPolicyKey(ap *securityv1beta1.AuthorizationPolicy) string {
 	key := ""
+	if ap == nil {
+		return key
+	}
 
-	hasRuleInSpec := ap.Spec.Rules != nil && len(ap.Spec.Rules) > 0
-	hasToInFirstRule := ap.Spec.Rules[0].To != nil && len(ap.Spec.Rules[0].To) > 0
+	hasRuleInSpec := len(ap.Spec.Rules) > 0
+	hasToInFirstRule := len(ap.Spec.Rules[0].To) > 0
+
+	namespace := ap.Namespace
+	if namespace == "" {
+		namespace = "default"
+	}
 
 	if hasRuleInSpec && hasToInFirstRule {
-		key = fmt.Sprintf("%s:%s:%s",
+		key = fmt.Sprintf("%s:%s:%s:%s",
 			ap.Spec.Selector.MatchLabels[AuthorizationPolicyAppSelectorLabel],
+			// If the namespace changed, the resource should be recreated
+			namespace,
 			processing.SliceToString(ap.Spec.Rules[0].To[0].Operation.Paths),
 			processing.SliceToString(ap.Spec.Rules[0].To[0].Operation.Methods))
 	}
