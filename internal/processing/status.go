@@ -2,68 +2,32 @@ package processing
 
 import (
 	"fmt"
-	"github.com/go-logr/logr"
+
 	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
 	"github.com/kyma-incubator/api-gateway/internal/validation"
 )
 
 type ReconciliationStatus struct {
-	ApiRuleStatus               *gatewayv1beta1.APIRuleResourceStatus
-	VirtualServiceStatus        *gatewayv1beta1.APIRuleResourceStatus
-	AccessRuleStatus            *gatewayv1beta1.APIRuleResourceStatus
-	RequestAuthenticationStatus *gatewayv1beta1.APIRuleResourceStatus
-	AuthorizationPolicyStatus   *gatewayv1beta1.APIRuleResourceStatus
+	ApiRuleStatus               *gatewayv1beta1.ResourceStatus
+	VirtualServiceStatus        *gatewayv1beta1.ResourceStatus
+	AccessRuleStatus            *gatewayv1beta1.ResourceStatus
+	RequestAuthenticationStatus *gatewayv1beta1.ResourceStatus
+	AuthorizationPolicyStatus   *gatewayv1beta1.ResourceStatus
 }
 
-func getStatus(apiStatus *gatewayv1beta1.APIRuleResourceStatus, statusCode gatewayv1beta1.StatusCode) ReconciliationStatus {
-	return ReconciliationStatus{
-		ApiRuleStatus: apiStatus,
-		VirtualServiceStatus: &gatewayv1beta1.APIRuleResourceStatus{
-			Code: statusCode,
-		}, AccessRuleStatus: &gatewayv1beta1.APIRuleResourceStatus{
-			Code: statusCode,
-		}, RequestAuthenticationStatus: &gatewayv1beta1.APIRuleResourceStatus{
-			Code: statusCode,
-		}, AuthorizationPolicyStatus: &gatewayv1beta1.APIRuleResourceStatus{
-			Code: statusCode,
-		},
-	}
-}
-
-func getOkStatus() ReconciliationStatus {
-	apiRuleStatus := &gatewayv1beta1.APIRuleResourceStatus{
-		Code: gatewayv1beta1.StatusOK,
-	}
-	return getStatus(apiRuleStatus, gatewayv1beta1.StatusOK)
-}
-
-// GetStatusForError creates a status with APIRule status in error condition. Accepts an auxiliary status code that is used to report VirtualService and AccessRule status.
-func GetStatusForError(log *logr.Logger, err error, statusCode gatewayv1beta1.StatusCode) ReconciliationStatus {
-	log.Error(err, "Error during reconciliation")
-	return ReconciliationStatus{
-		ApiRuleStatus: generateErrorStatus(err),
-		VirtualServiceStatus: &gatewayv1beta1.APIRuleResourceStatus{
-			Code: statusCode,
-		}, AccessRuleStatus: &gatewayv1beta1.APIRuleResourceStatus{
-			Code: statusCode,
-		}, RequestAuthenticationStatus: &gatewayv1beta1.APIRuleResourceStatus{
-			Code: statusCode,
-		}, AuthorizationPolicyStatus: &gatewayv1beta1.APIRuleResourceStatus{
-			Code: statusCode,
-		},
-	}
-}
-
-func generateErrorStatus(err error) *gatewayv1beta1.APIRuleResourceStatus {
+func generateErrorStatus(err error) *gatewayv1beta1.ResourceStatus {
 	return toStatus(gatewayv1beta1.StatusError, err.Error())
 }
 
-func GetFailedValidationStatus(failures []validation.Failure) ReconciliationStatus {
-	apiRuleStatus := generateValidationStatus(failures)
-	return getStatus(apiRuleStatus, gatewayv1beta1.StatusSkipped)
+func GenerateStatusFromFailures(failures []validation.Failure) *gatewayv1beta1.ResourceStatus {
+	if len(failures) == 0 {
+		return &gatewayv1beta1.ResourceStatus{Code: gatewayv1beta1.StatusOK}
+	}
+
+	return &gatewayv1beta1.ResourceStatus{Code: gatewayv1beta1.StatusError, Description: generateValidationDescription(failures)}
 }
 
-func generateValidationStatus(failures []validation.Failure) *gatewayv1beta1.APIRuleResourceStatus {
+func generateValidationStatus(failures []validation.Failure) *gatewayv1beta1.ResourceStatus {
 	return toStatus(gatewayv1beta1.StatusError, generateValidationDescription(failures))
 }
 
@@ -87,8 +51,8 @@ func generateValidationDescription(failures []validation.Failure) string {
 	return description
 }
 
-func toStatus(c gatewayv1beta1.StatusCode, desc string) *gatewayv1beta1.APIRuleResourceStatus {
-	return &gatewayv1beta1.APIRuleResourceStatus{
+func toStatus(c gatewayv1beta1.StatusCode, desc string) *gatewayv1beta1.ResourceStatus {
+	return &gatewayv1beta1.ResourceStatus{
 		Code:        c,
 		Description: desc,
 	}

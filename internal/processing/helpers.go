@@ -2,9 +2,11 @@ package processing
 
 import (
 	"fmt"
+
 	gatewayv1alpha1 "github.com/kyma-incubator/api-gateway/api/v1alpha1"
 	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
 	"github.com/kyma-incubator/api-gateway/internal/builders"
+	"github.com/kyma-incubator/api-gateway/internal/validation"
 	k8sMeta "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -97,4 +99,25 @@ func SliceToString(ss []string) (s string) {
 		s += el
 	}
 	return
+}
+
+
+func GenerateValidationDescription(failures []validation.Failure) string {
+	var description string
+
+	if len(failures) == 1 {
+		description = "Validation error: "
+		description += fmt.Sprintf("Attribute \"%s\": %s", failures[0].AttributePath, failures[0].Message)
+	} else {
+		const maxEntries = 3
+		description = "Multiple validation errors: "
+		for i := 0; i < len(failures) && i < maxEntries; i++ {
+			description += fmt.Sprintf("\nAttribute \"%s\": %s", failures[i].AttributePath, failures[i].Message)
+		}
+		if len(failures) > maxEntries {
+			description += fmt.Sprintf("\n%d more error(s)...", len(failures)-maxEntries)
+		}
+	}
+
+	return description
 }

@@ -23,6 +23,16 @@ type accessStrategyValidator interface {
 	Validate(attrPath string, accessStrategies []*gatewayv1beta1.Authenticator) []Failure
 }
 
+type ResourceSelector int
+
+const (
+	OnApiRule ResourceSelector = iota
+	OnVirtualService
+	OnAccessRule
+	OnAuthorizationPolicy
+	OnRequestAuthentication
+)
+
 // APIRule is used to validate github.com/kyma-incubator/api-gateway/api/v1beta1/APIRule instances
 type APIRule struct {
 	HandlerValidator          handlerValidator
@@ -35,6 +45,7 @@ type APIRule struct {
 
 // Failure carries validation failures for a single attribute of an object.
 type Failure struct {
+	OnResource    ResourceSelector
 	AttributePath string
 	Message       string
 }

@@ -3,6 +3,7 @@ package processing_test
 import (
 	"context"
 	"fmt"
+
 	"github.com/go-logr/logr"
 	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
 	"github.com/kyma-incubator/api-gateway/internal/builders"
@@ -143,8 +144,10 @@ var _ = Describe("Reconcile", func() {
 })
 
 type MockReconciliationCommand struct {
-	validateMock   func() ([]validation.Failure, error)
-	processorMocks func() []processing.ReconciliationProcessor
+	validateMock                      func() ([]validation.Failure, error)
+	getStatusForErrorMock             func() processing.ReconciliationStatus
+	getStatusForValidationFailureMock func() processing.ReconciliationStatus
+	processorMocks                    func() []processing.ReconciliationProcessor
 }
 
 func (r MockReconciliationCommand) Validate(_ context.Context, _ client.Client, _ *gatewayv1beta1.APIRule) ([]validation.Failure, error) {
@@ -161,6 +164,14 @@ type MockReconciliationProcessor struct {
 
 func (r MockReconciliationProcessor) EvaluateReconciliation(_ context.Context, _ client.Client, _ *gatewayv1beta1.APIRule) ([]*processing.ObjectChange, error) {
 	return r.evaluate()
+}
+
+func (c MockReconciliationCommand) GetValidationStatusForFailures(_ []validation.Failure) processing.ReconciliationStatus {
+	return c.getStatusForValidationFailureMock()
+}
+
+func (c MockReconciliationCommand) GetStatusForError(_ error, _ validation.ResourceSelector, _ gatewayv1beta1.StatusCode) processing.ReconciliationStatus {
+	return c.getStatusForValidationFailureMock()
 }
 
 func testLogger() *logr.Logger {
