@@ -18,13 +18,30 @@ package v1beta1
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"fmt"
 
+	"github.com/kyma-incubator/api-gateway/internal/validation"
+	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
+
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 )
+
+type tmpHandlerValidator struct{}
+
+func (t *tmpHandlerValidator) Validate(attrPath string, handler *Handler) []Failure {
+	return nil
+}
+
+type tmpAccessStrategiesValidator struct{}
+
+func (t *tmpAccessStrategiesValidator) Validate(attrPath string, accessStrategies []*Authenticator) []Failure {
+	return nil
+}
 
 var log = ctrl.Log.WithName("controllers").WithName("Api")
 
@@ -54,8 +71,24 @@ var _ webhook.Validator = &APIRule{}
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
 func (r *APIRule) ValidateCreate() error {
-	log.Info("WEBHOOK->ValidateCreate()")
-	return errors.New("ErrorOnCreate")
+	var vsList networkingv1beta1.VirtualServiceList
+	if err := globalWebhookClient.List(globalWebhookContext, &vsList); err != nil {
+		return err
+	}
+	validator := validation.APIRule{
+		HandlerValidator:          &tmpHandlerValidator{},
+		AccessStrategiesValidator: &tmpAccessStrategiesValidator{},
+		ServiceBlockList:          make(map[string][]string),
+		DomainAllowList:           []string{},
+		HostBlockList:             []string{},
+		DefaultDomainName:         "",
+	}
+	failures := validator.Validate(r, vsList)
+	if len(failures) > 0 {
+		failuresJson, _ := json.Marshal(failures)
+		return errors.New(fmt.Sprintf(`Validation failure {"controller": "Api", "request": "%s/%s", "failures": %s}`, r.Namespace, r.Name, string(failuresJson)))
+	}
+	return nil
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
