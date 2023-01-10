@@ -23,6 +23,9 @@ var _ = Describe("Reconcile", func() {
 		// given
 		cmd := MockReconciliationCommand{
 			validateMock: func() ([]validation.Failure, error) { return nil, fmt.Errorf("error during validation") },
+			getStatusForErrorMock: func() processing.ReconciliationStatus {
+				return mockErrorStatusCommand(gatewayv1beta1.StatusError, "error during validation", gatewayv1beta1.StatusSkipped, istio)
+			},
 		}
 		client := fake.NewClientBuilder().Build()
 
@@ -32,7 +35,7 @@ var _ = Describe("Reconcile", func() {
 		// then
 		Expect(status.ApiRuleStatus.Code).To(Equal(gatewayv1beta1.StatusError))
 		Expect(status.ApiRuleStatus.Description).To(Equal("error during validation"))
-		Expect(status.AccessRuleStatus.Code).To(Equal(gatewayv1beta1.StatusSkipped))
+		Expect(status.AccessRuleStatus).To(BeNil())
 		Expect(status.VirtualServiceStatus.Code).To(Equal(gatewayv1beta1.StatusSkipped))
 	})
 
@@ -171,10 +174,50 @@ func (c MockReconciliationCommand) GetValidationStatusForFailures(_ []validation
 }
 
 func (c MockReconciliationCommand) GetStatusForError(_ error, _ validation.ResourceSelector, _ gatewayv1beta1.StatusCode) processing.ReconciliationStatus {
-	return c.getStatusForValidationFailureMock()
+	return c.getStatusForErrorMock()
 }
 
 func testLogger() *logr.Logger {
 	logger := ctrl.Log.WithName("test")
 	return &logger
+}
+
+type handler int
+
+const (
+	istio handler = iota
+	ory
+)
+
+func mockErrorStatusCommand(statusCode gatewayv1beta1.StatusCode, desc string, subresourcesCode gatewayv1beta1.StatusCode, handler handler) processing.ReconciliationStatus {
+	if handler == istio {
+		return processing.ReconciliationStatus{
+			ApiRuleStatus: &gatewayv1beta1.ResourceStatus{
+				Description: desc,
+				Code: statusCode,
+			},
+			VirtualServiceStatus: &gatewayv1beta1.ResourceStatus{
+				Code: subresourcesCode,
+			},
+			AuthorizationPolicyStatus: &gatewayv1beta1.ResourceStatus{
+				Code: subresourcesCode,
+			},
+			RequestAuthenticationStatus: &gatewayv1beta1.ResourceStatus{
+				Code: subresourcesCode,
+			},
+		}
+	}
+	return processing.ReconciliationStatus{
+		ApiRuleStatus: &gatewayv1beta1.ResourceStatus{
+			Description: desc,
+			Code:        statusCode,
+		},
+		VirtualServiceStatus: &gatewayv1beta1.ResourceStatus{
+			Code: subresourcesCode,
+		},
+		AccessRuleStatus: &gatewayv1beta1.ResourceStatus{
+			Code: subresourcesCode,
+		},
+	}
+
 }
