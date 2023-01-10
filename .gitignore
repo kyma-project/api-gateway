@@ -36,3 +36,6 @@ info.json
 # Vscode directory
 .vscode
 dist/
+
+# Test reports
+reports
