@@ -7,7 +7,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 
 	internalTypes "github.com/kyma-incubator/api-gateway/internal/types/ory"
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	k8sTypes "k8s.io/apimachinery/pkg/types"
 )

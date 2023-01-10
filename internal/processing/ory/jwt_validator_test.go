@@ -6,7 +6,7 @@ import (
 	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
 	istiojwt "github.com/kyma-incubator/api-gateway/internal/types/istio"
 	"github.com/kyma-incubator/api-gateway/internal/types/ory"
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"k8s.io/apimachinery/pkg/runtime"
 )

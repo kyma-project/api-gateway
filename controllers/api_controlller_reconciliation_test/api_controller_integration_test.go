@@ -12,7 +12,7 @@ import (
 	"encoding/json"
 
 	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -54,8 +54,8 @@ var _ = Describe("APIRule Controller Reconciliation", func() {
 		Expect(err).NotTo(HaveOccurred())
 	})
 
-	It("Should update the apirule with error after the ConfigMap was changed to different one", func() {
-		Context("From Ory to Istio", func() {
+	Context("Handler in ConfigMap was changed to different one", func() {
+		It("Should update valid Ory APIRule with error when going from Ory to Istio", func() {
 			// given
 			apiRuleName := generateTestName(testNameBase, testIDLength)
 			testServiceHost := fmt.Sprintf("httpbin-%s.kyma.local", apiRuleName)
@@ -95,7 +95,7 @@ var _ = Describe("APIRule Controller Reconciliation", func() {
 			Expect(expectedApiRule.Status.APIRuleStatus.Code).To(Equal(gatewayv1beta1.StatusError))
 		})
 
-		Context("From Istio to Ory", func() {
+		It("Should update valid Istio APIRule with error from Istio to Ory", func() {
 			// given
 			By("Setting JWT handler config map to istio")
 			cm := testConfigMap("istio")

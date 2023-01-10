@@ -1,7 +1,7 @@
 package builders
 
 import (
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	k8sTypes "k8s.io/apimachinery/pkg/types"
