@@ -33,6 +33,21 @@ const (
 	OnRequestAuthentication
 )
 
+func (r ResourceSelector) String() string{
+	switch r {
+	case OnVirtualService:
+		return "VirtualService"
+	case OnAccessRule:
+		return "AccessRule"
+	case OnRequestAuthentication:
+		return "RequestAuthentication"
+	case OnAuthorizationPolicy:
+		return "AuthorizationPolicy"
+	default:
+		return "APIRule"
+	}
+}
+
 // APIRule is used to validate github.com/kyma-incubator/api-gateway/api/v1beta1/APIRule instances
 type APIRule struct {
 	HandlerValidator          handlerValidator

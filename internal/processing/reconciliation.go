@@ -8,9 +8,6 @@ import (
 	"github.com/go-logr/logr"
 	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
 	"github.com/kyma-incubator/api-gateway/internal/validation"
-	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
-	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
-	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -112,13 +109,13 @@ func applyChange(ctx context.Context, client client.Client, change *ObjectChange
 func objectToSelector(obj client.Object) validation.ResourceSelector {
 	kind := obj.GetObjectKind().GroupVersionKind().Kind
 	switch kind {
-	case networkingv1beta1.VirtualService{}.Kind:
+	case validation.OnVirtualService.String():
 		return validation.OnVirtualService
-	case rulev1alpha1.Rule{}.Kind:
+	case validation.OnAccessRule.String():
 		return validation.OnAccessRule
-	case securityv1beta1.RequestAuthentication{}.Kind:
+	case validation.OnRequestAuthentication.String():
 		return validation.OnRequestAuthentication
-	case securityv1beta1.AuthorizationPolicy{}.Kind:
+	case validation.OnAuthorizationPolicy.String():
 		return validation.OnAuthorizationPolicy
 	default:
 		return validation.OnApiRule
