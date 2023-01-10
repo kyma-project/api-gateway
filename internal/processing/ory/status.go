@@ -17,7 +17,7 @@ func (r Reconciliation) GetStatusForError(err error, selector validation.Resourc
 		},
 	}
 
-	switch selector{
+	switch selector {
 	case validation.OnApiRule:
 		status.ApiRuleStatus = generateErrorStatus(err)
 	case validation.OnVirtualService:

@@ -101,7 +101,6 @@ func SliceToString(ss []string) (s string) {
 	return
 }
 
-
 func GenerateValidationDescription(failures []validation.Failure) string {
 	var description string
 

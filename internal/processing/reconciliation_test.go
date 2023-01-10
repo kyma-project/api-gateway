@@ -194,7 +194,7 @@ func mockErrorStatusCommand(statusCode gatewayv1beta1.StatusCode, desc string, s
 		return processing.ReconciliationStatus{
 			ApiRuleStatus: &gatewayv1beta1.ResourceStatus{
 				Description: desc,
-				Code: statusCode,
+				Code:        statusCode,
 			},
 			VirtualServiceStatus: &gatewayv1beta1.ResourceStatus{
 				Code: subresourcesCode,
