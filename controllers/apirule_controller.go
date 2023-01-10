@@ -229,11 +229,22 @@ func (r *APIRuleReconciler) updateStatusOrRetry(ctx context.Context, api *gatewa
 }
 
 func statusHasError(status processing.ReconciliationStatus) bool {
-	return status.ApiRuleStatus.Code == gatewayv1beta1.StatusError ||
-		status.AccessRuleStatus.Code == gatewayv1beta1.StatusError ||
-		status.VirtualServiceStatus.Code == gatewayv1beta1.StatusError ||
-		status.AuthorizationPolicyStatus.Code == gatewayv1beta1.StatusError ||
-		status.RequestAuthenticationStatus.Code == gatewayv1beta1.StatusError
+	if status.ApiRuleStatus != nil && status.ApiRuleStatus.Code == gatewayv1beta1.StatusError {
+		return true
+	}
+	if status.VirtualServiceStatus != nil && status.VirtualServiceStatus.Code == gatewayv1beta1.StatusError {
+		return true
+	}
+	if status.AccessRuleStatus != nil && status.AccessRuleStatus.Code == gatewayv1beta1.StatusError {
+		return true
+	}
+	if status.AuthorizationPolicyStatus != nil && status.AuthorizationPolicyStatus.Code == gatewayv1beta1.StatusError {
+		return true
+	}
+	if status.RequestAuthenticationStatus != nil && status.RequestAuthenticationStatus.Code == gatewayv1beta1.StatusError {
+		return true
+	}
+	return false
 }
 
 func doneReconcileNoRequeue() (ctrl.Result, error) {
