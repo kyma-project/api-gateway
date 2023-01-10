@@ -23,8 +23,8 @@ var _ = Describe("Reconcile", func() {
 		// given
 		cmd := MockReconciliationCommand{
 			validateMock: func() ([]validation.Failure, error) { return nil, fmt.Errorf("error during validation") },
-			getStatusForErrorMock: func() processing.ReconciliationStatus {
-				return mockErrorStatusCommand(gatewayv1beta1.StatusError, "error during validation", gatewayv1beta1.StatusSkipped, istio)
+			getStatusBaseMock: func() processing.ReconciliationStatus {
+				return mockStatusBase(gatewayv1beta1.StatusSkipped, ory)
 			},
 		}
 		client := fake.NewClientBuilder().Build()
@@ -35,7 +35,7 @@ var _ = Describe("Reconcile", func() {
 		// then
 		Expect(status.ApiRuleStatus.Code).To(Equal(gatewayv1beta1.StatusError))
 		Expect(status.ApiRuleStatus.Description).To(Equal("error during validation"))
-		Expect(status.AccessRuleStatus).To(BeNil())
+		Expect(status.AccessRuleStatus).To(Equal(gatewayv1beta1.StatusSkipped))
 		Expect(status.VirtualServiceStatus.Code).To(Equal(gatewayv1beta1.StatusSkipped))
 	})
 
@@ -47,6 +47,9 @@ var _ = Describe("Reconcile", func() {
 		}}
 		cmd := MockReconciliationCommand{
 			validateMock: func() ([]validation.Failure, error) { return failures, nil },
+			getStatusBaseMock: func() processing.ReconciliationStatus {
+				return mockStatusBase(gatewayv1beta1.StatusSkipped, ory)
+			},
 		}
 		client := fake.NewClientBuilder().Build()
 
@@ -58,6 +61,9 @@ var _ = Describe("Reconcile", func() {
 		Expect(status.ApiRuleStatus.Description).To(Equal("Validation error: Attribute \"some.path\": The value is not allowed"))
 		Expect(status.AccessRuleStatus.Code).To(Equal(gatewayv1beta1.StatusSkipped))
 		Expect(status.VirtualServiceStatus.Code).To(Equal(gatewayv1beta1.StatusSkipped))
+		Expect(status.AuthorizationPolicyStatus).To(Equal(BeNil()))
+		Expect(status.RequestAuthenticationStatus).To(Equal(BeNil()))
+
 	})
 
 	It("should return api status error and vs/ar status skipped when processor reconciliation returns error", func() {
@@ -71,6 +77,9 @@ var _ = Describe("Reconcile", func() {
 		cmd := MockReconciliationCommand{
 			validateMock:   func() ([]validation.Failure, error) { return []validation.Failure{}, nil },
 			processorMocks: func() []processing.ReconciliationProcessor { return []processing.ReconciliationProcessor{p} },
+			getStatusBaseMock: func() processing.ReconciliationStatus {
+				return mockStatusBase(gatewayv1beta1.StatusSkipped, ory)
+			},
 		}
 
 		client := fake.NewClientBuilder().Build()
@@ -97,6 +106,9 @@ var _ = Describe("Reconcile", func() {
 		cmd := MockReconciliationCommand{
 			validateMock:   func() ([]validation.Failure, error) { return []validation.Failure{}, nil },
 			processorMocks: func() []processing.ReconciliationProcessor { return []processing.ReconciliationProcessor{p} },
+			getStatusBaseMock: func() processing.ReconciliationStatus {
+				return mockStatusBase(gatewayv1beta1.StatusOK, ory)
+			},
 		}
 
 		client := fake.NewClientBuilder().Build()
@@ -129,6 +141,9 @@ var _ = Describe("Reconcile", func() {
 		cmd := MockReconciliationCommand{
 			validateMock:   func() ([]validation.Failure, error) { return []validation.Failure{}, nil },
 			processorMocks: func() []processing.ReconciliationProcessor { return []processing.ReconciliationProcessor{p} },
+			getStatusBaseMock: func() processing.ReconciliationStatus {
+				return mockStatusBase(gatewayv1beta1.StatusOK, ory)
+			},
 		}
 
 		scheme := runtime.NewScheme()
@@ -147,10 +162,9 @@ var _ = Describe("Reconcile", func() {
 })
 
 type MockReconciliationCommand struct {
-	validateMock                      func() ([]validation.Failure, error)
-	getStatusForErrorMock             func() processing.ReconciliationStatus
-	getStatusForValidationFailureMock func() processing.ReconciliationStatus
-	processorMocks                    func() []processing.ReconciliationProcessor
+	validateMock      func() ([]validation.Failure, error)
+	getStatusBaseMock func() processing.ReconciliationStatus
+	processorMocks    func() []processing.ReconciliationProcessor
 }
 
 func (r MockReconciliationCommand) Validate(_ context.Context, _ client.Client, _ *gatewayv1beta1.APIRule) ([]validation.Failure, error) {
@@ -169,12 +183,8 @@ func (r MockReconciliationProcessor) EvaluateReconciliation(_ context.Context, _
 	return r.evaluate()
 }
 
-func (c MockReconciliationCommand) GetValidationStatusForFailures(_ []validation.Failure) processing.ReconciliationStatus {
-	return c.getStatusForValidationFailureMock()
-}
-
-func (c MockReconciliationCommand) GetStatusForError(_ error, _ validation.ResourceSelector, _ gatewayv1beta1.StatusCode) processing.ReconciliationStatus {
-	return c.getStatusForErrorMock()
+func (c MockReconciliationCommand) GetStatusBase(_ gatewayv1beta1.StatusCode) processing.ReconciliationStatus {
+	return c.getStatusBaseMock()
 }
 
 func testLogger() *logr.Logger {
@@ -189,34 +199,32 @@ const (
 	ory
 )
 
-func mockErrorStatusCommand(statusCode gatewayv1beta1.StatusCode, desc string, subresourcesCode gatewayv1beta1.StatusCode, handler handler) processing.ReconciliationStatus {
+func mockStatusBase(statusCode gatewayv1beta1.StatusCode, handler handler) processing.ReconciliationStatus {
 	if handler == istio {
 		return processing.ReconciliationStatus{
 			ApiRuleStatus: &gatewayv1beta1.ResourceStatus{
-				Description: desc,
-				Code:        statusCode,
+				Code: statusCode,
 			},
 			VirtualServiceStatus: &gatewayv1beta1.ResourceStatus{
-				Code: subresourcesCode,
+				Code: statusCode,
 			},
 			AuthorizationPolicyStatus: &gatewayv1beta1.ResourceStatus{
-				Code: subresourcesCode,
+				Code: statusCode,
 			},
 			RequestAuthenticationStatus: &gatewayv1beta1.ResourceStatus{
-				Code: subresourcesCode,
+				Code: statusCode,
 			},
 		}
 	}
 	return processing.ReconciliationStatus{
 		ApiRuleStatus: &gatewayv1beta1.ResourceStatus{
-			Description: desc,
-			Code:        statusCode,
+			Code: statusCode,
 		},
 		VirtualServiceStatus: &gatewayv1beta1.ResourceStatus{
-			Code: subresourcesCode,
+			Code: statusCode,
 		},
 		AccessRuleStatus: &gatewayv1beta1.ResourceStatus{
-			Code: subresourcesCode,
+			Code: statusCode,
 		},
 	}
 

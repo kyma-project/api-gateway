@@ -171,8 +171,9 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 
 		r.Log.Error(err, "Error getting ApiRule")
 
-		//Nothing is yet processed: StatusSkipped
-		status := cmd.GetStatusForError(err, validation.OnApiRule, gatewayv1beta1.StatusSkipped)
+		statusBase := cmd.GetStatusBase(gatewayv1beta1.StatusSkipped)
+		errorMap := map[validation.ResourceSelector][]error{validation.OnApiRule: {err}}
+		status := processing.GetStatusForErrorMap(errorMap, statusBase)
 		return r.updateStatusOrRetry(ctx, apiRule, status)
 	}
 
@@ -181,7 +182,8 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	if len(configValidationFailures) > 0 {
 		failuresJson, _ := json.Marshal(configValidationFailures)
 		r.Log.Error(err, fmt.Sprintf(`Config validation failure {"controller": "Api", "request": "%s/%s", "failures": %s}`, apiRule.Namespace, apiRule.Name, string(failuresJson)))
-		return r.updateStatusOrRetry(ctx, apiRule, cmd.GetValidationStatusForFailures(configValidationFailures))
+		statusBase := cmd.GetStatusBase(gatewayv1beta1.StatusSkipped)
+		return r.updateStatusOrRetry(ctx, apiRule, processing.GenerateStatusFromFailures(configValidationFailures, statusBase))
 	}
 
 	//Prevent reconciliation after status update. It should be solved by controller-runtime implementation but still isn't.

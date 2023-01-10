@@ -19,12 +19,45 @@ func generateErrorStatus(err error) *gatewayv1beta1.ResourceStatus {
 	return toStatus(gatewayv1beta1.StatusError, err.Error())
 }
 
-func GenerateStatusFromFailures(failures []validation.Failure) *gatewayv1beta1.ResourceStatus {
-	if len(failures) == 0 {
-		return &gatewayv1beta1.ResourceStatus{Code: gatewayv1beta1.StatusOK}
+func generateStatusFromErrors(errors []error) *gatewayv1beta1.ResourceStatus {
+	status := &gatewayv1beta1.ResourceStatus{}
+	if len(errors) == 0 {
+		status.Code = gatewayv1beta1.StatusOK
+		return status
+	}
+	status.Code = gatewayv1beta1.StatusError
+	for _, err := range errors {
+		status.Description = fmt.Sprintf("%s\n%s", status.Description, err.Error())
+	}
+	return status
+}
+
+func GetStatusForErrorMap(errorMap map[validation.ResourceSelector][]error, statusBase ReconciliationStatus) ReconciliationStatus {
+	for key, val := range errorMap {
+		switch key {
+		case validation.OnApiRule:
+			statusBase.ApiRuleStatus = generateStatusFromErrors(val)
+		case validation.OnVirtualService:
+			statusBase.VirtualServiceStatus = generateStatusFromErrors(val)
+		case validation.OnAccessRule:
+			statusBase.AccessRuleStatus = generateStatusFromErrors(val)
+		case validation.OnAuthorizationPolicy:
+			statusBase.AuthorizationPolicyStatus = generateStatusFromErrors(val)
+		case validation.OnRequestAuthentication:
+			statusBase.RequestAuthenticationStatus = generateStatusFromErrors(val)
+		}
 	}
 
-	return &gatewayv1beta1.ResourceStatus{Code: gatewayv1beta1.StatusError, Description: generateValidationDescription(failures)}
+	return statusBase
+}
+
+func GenerateStatusFromFailures(failures []validation.Failure, statusBase ReconciliationStatus) ReconciliationStatus {
+	if len(failures) == 0 {
+		return statusBase
+	}
+	
+	statusBase.ApiRuleStatus = generateValidationStatus(failures)
+	return statusBase
 }
 
 func generateValidationStatus(failures []validation.Failure) *gatewayv1beta1.ResourceStatus {

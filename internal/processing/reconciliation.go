@@ -19,12 +19,8 @@ type ReconciliationCommand interface {
 	// Validate performs provided APIRule validation in context of the provided client cluster
 	Validate(context.Context, client.Client, *gatewayv1beta1.APIRule) ([]validation.Failure, error)
 
-	// GetStatusForError returns ReconciliationStatus status with error in ApiRuleStatus and all other subresources status set to StatusCode
-	GetStatusForError(error, validation.ResourceSelector, gatewayv1beta1.StatusCode) ReconciliationStatus
-
-	// GetValidationStatusForFailures returns ReconciliationStatus status relevant to the encountered validation failures
-	// Returns OK on handler relevant resources if supplied with an empty array
-	GetValidationStatusForFailures([]validation.Failure) ReconciliationStatus
+	// GetStatusBase returns ReconciliationStatus that sets unused subresources status to nil and to StatusCodeOK for all the others
+	GetStatusBase(gatewayv1beta1.StatusCode) ReconciliationStatus
 
 	// GetProcessors returns the processor relevant for the reconciliation of this command.
 	GetProcessors() []ReconciliationProcessor
@@ -43,13 +39,16 @@ func Reconcile(ctx context.Context, client client.Client, log *logr.Logger, cmd 
 	if err != nil {
 		// We set the status to skipped because it was not the validation that failed, but an error occurred during validation.
 		log.Error(err, "Error during reconciliation")
-		return cmd.GetStatusForError(err, validation.OnApiRule, gatewayv1beta1.StatusSkipped)
+		statusBase := cmd.GetStatusBase(gatewayv1beta1.StatusSkipped)
+		errorMap := map[validation.ResourceSelector][]error{validation.OnApiRule: {err}}
+		return GetStatusForErrorMap(errorMap, statusBase)
 	}
 
 	if len(validationFailures) > 0 {
 		failuresJson, _ := json.Marshal(validationFailures)
 		log.Info(fmt.Sprintf(`Validation failure {"controller": "Api", "request": "%s/%s", "failures": %s}`, apiRule.Namespace, apiRule.Name, string(failuresJson)))
-		return cmd.GetValidationStatusForFailures(validationFailures)
+		statusBase := cmd.GetStatusBase(gatewayv1beta1.StatusSkipped)
+		return GenerateStatusFromFailures(validationFailures, statusBase)
 	}
 
 	for _, processor := range cmd.GetProcessors() {
@@ -57,30 +56,36 @@ func Reconcile(ctx context.Context, client client.Client, log *logr.Logger, cmd 
 		objectChanges, err := processor.EvaluateReconciliation(ctx, client, apiRule)
 		if err != nil {
 			log.Error(err, "Error during reconciliation")
-			return cmd.GetStatusForError(err, validation.OnApiRule, gatewayv1beta1.StatusSkipped)
+			statusBase := cmd.GetStatusBase(gatewayv1beta1.StatusSkipped)
+			errorMap := map[validation.ResourceSelector][]error{validation.OnApiRule: {err}}
+			return GetStatusForErrorMap(errorMap, statusBase)
 		}
 
-		res, err := applyChanges(ctx, client, objectChanges...)
-		if err != nil {
+		errorMap := applyChanges(ctx, client, objectChanges...)
+		if len(errorMap) > 0 {
 			log.Error(err, "Error during reconciliation")
-			return cmd.GetStatusForError(err, res, gatewayv1beta1.StatusError)
+			statusBase := cmd.GetStatusBase(gatewayv1beta1.StatusOK)
+			return GetStatusForErrorMap(errorMap, statusBase)
 		}
 	}
 
-	return cmd.GetValidationStatusForFailures([]validation.Failure{})
+	statusBase := cmd.GetStatusBase(gatewayv1beta1.StatusOK)
+	return GenerateStatusFromFailures([]validation.Failure{}, statusBase)
 }
 
 // applyChanges applies the given commands on the cluster
-func applyChanges(ctx context.Context, client client.Client, changes ...*ObjectChange) (validation.ResourceSelector, error) {
-
+// returns map of errors that happened for all subresources
+// the map is empty if no error happened
+func applyChanges(ctx context.Context, client client.Client, changes ...*ObjectChange) map[validation.ResourceSelector][]error {
+	errorMap := make(map[validation.ResourceSelector][]error)
 	for _, change := range changes {
 		res, err := applyChange(ctx, client, change)
 		if err != nil {
-			return res, err
+			errorMap[res] = append(errorMap[res], err)
 		}
 	}
 
-	return 0, nil
+	return errorMap
 }
 
 func applyChange(ctx context.Context, client client.Client, change *ObjectChange) (validation.ResourceSelector, error) {

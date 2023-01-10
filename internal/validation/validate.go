@@ -45,7 +45,6 @@ type APIRule struct {
 
 // Failure carries validation failures for a single attribute of an object.
 type Failure struct {
-	OnResource    ResourceSelector
 	AttributePath string
 	Message       string
 }
