@@ -16,7 +16,7 @@ type ReconciliationCommand interface {
 	// Validate performs provided APIRule validation in context of the provided client cluster
 	Validate(context.Context, client.Client, *gatewayv1beta1.APIRule) ([]validation.Failure, error)
 
-	// GetStatusBase returns ReconciliationStatus that sets unused subresources status to nil and to StatusCodeOK for all the others
+	// GetStatusBase returns ReconciliationStatus that sets unused subresources status to nil and to gatewayv1beta1.StatusCode paramter for all the others
 	GetStatusBase(gatewayv1beta1.StatusCode) ReconciliationStatus
 
 	// GetProcessors returns the processor relevant for the reconciliation of this command.
