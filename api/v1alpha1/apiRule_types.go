@@ -46,16 +46,13 @@ type APIRuleSpec struct {
 
 // APIRuleStatus defines the observed state of ApiRule
 type APIRuleStatus struct {
-	LastProcessedTime    *metav1.Time           `json:"lastProcessedTime,omitempty"`
-	ObservedGeneration   int64                  `json:"observedGeneration,omitempty"`
-	APIRuleStatus        *APIRuleResourceStatus `json:"APIRuleStatus,omitempty"`
-	VirtualServiceStatus *APIRuleResourceStatus `json:"virtualServiceStatus,omitempty"`
-	// +optional
-	AccessRuleStatus *APIRuleResourceStatus `json:"accessRuleStatus,omitempty"`
-	// +optional
+	LastProcessedTime           *metav1.Time           `json:"lastProcessedTime,omitempty"`
+	ObservedGeneration          int64                  `json:"observedGeneration,omitempty"`
+	APIRuleStatus               *APIRuleResourceStatus `json:"APIRuleStatus,omitempty"`
+	VirtualServiceStatus        *APIRuleResourceStatus `json:"virtualServiceStatus,omitempty"`
+	AccessRuleStatus            *APIRuleResourceStatus `json:"accessRuleStatus,omitempty"`
 	RequestAuthenticationStatus *APIRuleResourceStatus `json:"requestAuthenticationStatus,omitempty"`
-	// +optional
-	AuthorizationPolicyStatus *APIRuleResourceStatus `json:"authorizationPolicyStatus,omitempty"`
+	AuthorizationPolicyStatus   *APIRuleResourceStatus `json:"authorizationPolicyStatus,omitempty"`
 }
 
 // APIRule is the Schema for the apis ApiRule
