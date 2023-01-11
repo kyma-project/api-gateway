@@ -60,7 +60,7 @@ func Reconcile(ctx context.Context, client client.Client, log *logr.Logger, cmd 
 
 		errorMap := applyChanges(ctx, client, objectChanges...)
 		if len(errorMap) > 0 {
-			log.Error(err, "Error during reconciliation")
+			log.Error(err, "Error during applying reconciliation")
 			statusBase := cmd.GetStatusBase(gatewayv1beta1.StatusOK)
 			return GetStatusForErrorMap(errorMap, statusBase)
 		}
@@ -100,7 +100,6 @@ func applyChange(ctx context.Context, client client.Client, change *ObjectChange
 	}
 
 	if err != nil {
-		fmt.Printf("An error happened during apply action: %s, ObjectKind: %s", err.Error(), change.Obj.GetObjectKind().GroupVersionKind().Kind)
 		return objectToSelector(change.Obj), err
 	}
 

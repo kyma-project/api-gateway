@@ -56,6 +56,7 @@ func generateStatusFromErrors(errors []error) *gatewayv1beta1.APIRuleResourceSta
 
 func GetStatusForErrorMap(errorMap map[ResourceSelector][]error, statusBase ReconciliationStatus) ReconciliationStatus {
 	for key, val := range errorMap {
+		println(key.String())
 		switch key {
 		case OnApiRule:
 			statusBase.ApiRuleStatus = generateStatusFromErrors(val)
