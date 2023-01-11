@@ -15,10 +15,6 @@ type ReconciliationStatus struct {
 	AuthorizationPolicyStatus   *gatewayv1beta1.ResourceStatus
 }
 
-func generateErrorStatus(err error) *gatewayv1beta1.ResourceStatus {
-	return toStatus(gatewayv1beta1.StatusError, err.Error())
-}
-
 func generateStatusFromErrors(errors []error) *gatewayv1beta1.ResourceStatus {
 	status := &gatewayv1beta1.ResourceStatus{}
 	if len(errors) == 0 {
