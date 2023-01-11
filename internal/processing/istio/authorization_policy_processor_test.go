@@ -160,8 +160,8 @@ var _ = Describe("Authorization Policy Processor", func() {
 
 	It("should produce AP from a rule with two issuers and one path", func() {
 		jwtConfigJSON := fmt.Sprintf(`{
-			"authentications": [{"issuer": "%s", "jwksUri": "%s"}, {"issuer": "%s", "jwksUri": "%s"}]
-			}`, JwtIssuer, JwksUri, JwtIssuer2, JwksUri2)
+			"authentications": [{"issuer": "%s", "jwksUri": "%s", "requiredScopes": ["%s", "%s"]}, {"issuer": "%s", "jwksUri": "%s"}]
+			}`, JwtIssuer, JwksUri, RequiredScopeA, RequiredScopeB, JwtIssuer2, JwksUri2)
 		jwt := &gatewayv1beta1.Authenticator{
 			Handler: &gatewayv1beta1.Handler{
 				Name: "jwt",
