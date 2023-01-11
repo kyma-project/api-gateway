@@ -45,20 +45,23 @@ type APIRuleSpec struct {
 	// Gateway to be used
 	// +kubebuilder:validation:Pattern=`^[0-9a-z-_]+(\/[0-9a-z-_]+|(\.[0-9a-z-_]+)*)$`
 	Gateway *string `json:"gateway"`
-	//Rules represents collection of Rule to apply
+	// Rules represents collection of Rule to apply
 	// +kubebuilder:validation:MinItems=1
 	Rules []Rule `json:"rules"`
 }
 
 // APIRuleStatus defines the observed state of ApiRule
 type APIRuleStatus struct {
-	LastProcessedTime           *metav1.Time           `json:"lastProcessedTime,omitempty"`
-	ObservedGeneration          int64                  `json:"observedGeneration,omitempty"`
-	APIRuleStatus               *APIRuleResourceStatus `json:"APIRuleStatus,omitempty"`
-	VirtualServiceStatus        *APIRuleResourceStatus `json:"virtualServiceStatus,omitempty"`
-	AccessRuleStatus            *APIRuleResourceStatus `json:"accessRuleStatus,omitempty"`
+	LastProcessedTime    *metav1.Time           `json:"lastProcessedTime,omitempty"`
+	ObservedGeneration   int64                  `json:"observedGeneration,omitempty"`
+	APIRuleStatus        *APIRuleResourceStatus `json:"APIRuleStatus,omitempty"`
+	VirtualServiceStatus *APIRuleResourceStatus `json:"virtualServiceStatus,omitempty"`
+	// +optional
+	AccessRuleStatus *APIRuleResourceStatus `json:"accessRuleStatus,omitempty"`
+	// +optional
 	RequestAuthenticationStatus *APIRuleResourceStatus `json:"requestAuthenticationStatus,omitempty"`
-	AuthorizationPolicyStatus   *APIRuleResourceStatus `json:"authorizationPolicyStatus,omitempty"`
+	// +optional
+	AuthorizationPolicyStatus *APIRuleResourceStatus `json:"authorizationPolicyStatus,omitempty"`
 }
 
 // APIRule is the Schema for the apis ApiRule
