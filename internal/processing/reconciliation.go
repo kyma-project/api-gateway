@@ -100,6 +100,7 @@ func applyChange(ctx context.Context, client client.Client, change *ObjectChange
 	}
 
 	if err != nil {
+		fmt.Printf("An error happened during apply action: %s, ObjectKind: %s", err.Error(), change.Obj.GetObjectKind().GroupVersionKind().Kind)
 		return objectToSelector(change.Obj), err
 	}
 
