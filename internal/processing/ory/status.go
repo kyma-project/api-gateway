@@ -6,6 +6,10 @@ import (
 )
 
 func (r Reconciliation) GetStatusBase(statusCode gatewayv1beta1.StatusCode) processing.ReconciliationStatus {
+	return (OryStatusBase(statusCode))
+}
+
+func OryStatusBase(statusCode gatewayv1beta1.StatusCode) processing.ReconciliationStatus {
 	return processing.ReconciliationStatus{
 		ApiRuleStatus: &gatewayv1beta1.ResourceStatus{
 			Code: statusCode,

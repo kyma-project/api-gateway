@@ -6,6 +6,10 @@ import (
 )
 
 func (r Reconciliation) GetStatusBase(statusCode gatewayv1beta1.StatusCode) processing.ReconciliationStatus {
+	return IstioStatusBase(statusCode)
+}
+
+func IstioStatusBase(statusCode gatewayv1beta1.StatusCode) processing.ReconciliationStatus {
 	return processing.ReconciliationStatus{
 		ApiRuleStatus: &gatewayv1beta1.ResourceStatus{
 			Code: statusCode,
@@ -20,5 +24,4 @@ func (r Reconciliation) GetStatusBase(statusCode gatewayv1beta1.StatusCode) proc
 			Code: statusCode,
 		},
 	}
-
 }

@@ -26,7 +26,8 @@ func generateStatusFromErrors(errors []error) *gatewayv1beta1.ResourceStatus {
 		return status
 	}
 	status.Code = gatewayv1beta1.StatusError
-	for _, err := range errors {
+	status.Description = errors[0].Error()
+	for _, err := range errors[1:] {
 		status.Description = fmt.Sprintf("%s\n%s", status.Description, err.Error())
 	}
 	return status
@@ -55,7 +56,7 @@ func GenerateStatusFromFailures(failures []validation.Failure, statusBase Reconc
 	if len(failures) == 0 {
 		return statusBase
 	}
-	
+
 	statusBase.ApiRuleStatus = generateValidationStatus(failures)
 	return statusBase
 }

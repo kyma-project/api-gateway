@@ -108,7 +108,6 @@ func applyChange(ctx context.Context, client client.Client, change *ObjectChange
 
 func objectToSelector(obj client.Object) validation.ResourceSelector {
 	kind := obj.GetObjectKind().GroupVersionKind().Kind
-	println(kind)
 	switch kind {
 	case validation.OnVirtualService.String():
 		return validation.OnVirtualService

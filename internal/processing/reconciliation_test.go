@@ -8,6 +8,8 @@ import (
 	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
 	"github.com/kyma-incubator/api-gateway/internal/builders"
 	"github.com/kyma-incubator/api-gateway/internal/processing"
+	istioHandler "github.com/kyma-incubator/api-gateway/internal/processing/istio"
+	oryHandler "github.com/kyma-incubator/api-gateway/internal/processing/ory"
 	"github.com/kyma-incubator/api-gateway/internal/validation"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -35,8 +37,10 @@ var _ = Describe("Reconcile", func() {
 		// then
 		Expect(status.ApiRuleStatus.Code).To(Equal(gatewayv1beta1.StatusError))
 		Expect(status.ApiRuleStatus.Description).To(Equal("error during validation"))
-		Expect(status.AccessRuleStatus).To(Equal(gatewayv1beta1.StatusSkipped))
+		Expect(status.AccessRuleStatus.Code).To(Equal(gatewayv1beta1.StatusSkipped))
 		Expect(status.VirtualServiceStatus.Code).To(Equal(gatewayv1beta1.StatusSkipped))
+		Expect(status.AuthorizationPolicyStatus).To(BeNil())
+		Expect(status.RequestAuthenticationStatus).To(BeNil())
 	})
 
 	It("should return api status error and vs/ar status skipped when validation failed", func() {
@@ -61,8 +65,8 @@ var _ = Describe("Reconcile", func() {
 		Expect(status.ApiRuleStatus.Description).To(Equal("Validation error: Attribute \"some.path\": The value is not allowed"))
 		Expect(status.AccessRuleStatus.Code).To(Equal(gatewayv1beta1.StatusSkipped))
 		Expect(status.VirtualServiceStatus.Code).To(Equal(gatewayv1beta1.StatusSkipped))
-		Expect(status.AuthorizationPolicyStatus).To(Equal(BeNil()))
-		Expect(status.RequestAuthenticationStatus).To(Equal(BeNil()))
+		Expect(status.AuthorizationPolicyStatus).To(BeNil())
+		Expect(status.RequestAuthenticationStatus).To(BeNil())
 
 	})
 
@@ -92,6 +96,9 @@ var _ = Describe("Reconcile", func() {
 		Expect(status.ApiRuleStatus.Description).To(Equal("error during processor execution"))
 		Expect(status.AccessRuleStatus.Code).To(Equal(gatewayv1beta1.StatusSkipped))
 		Expect(status.VirtualServiceStatus.Code).To(Equal(gatewayv1beta1.StatusSkipped))
+		Expect(status.AuthorizationPolicyStatus).To(BeNil())
+		Expect(status.RequestAuthenticationStatus).To(BeNil())
+
 	})
 
 	It("should return api status error and vs/ar status error when error during apply of changes", func() {
@@ -119,8 +126,11 @@ var _ = Describe("Reconcile", func() {
 		// then
 		Expect(status.ApiRuleStatus.Code).To(Equal(gatewayv1beta1.StatusError))
 		Expect(status.ApiRuleStatus.Description).ToNot(BeEmpty())
-		Expect(status.AccessRuleStatus.Code).To(Equal(gatewayv1beta1.StatusError))
-		Expect(status.VirtualServiceStatus.Code).To(Equal(gatewayv1beta1.StatusError))
+		Expect(status.AccessRuleStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
+		Expect(status.VirtualServiceStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
+		Expect(status.AuthorizationPolicyStatus).To(BeNil())
+		Expect(status.RequestAuthenticationStatus).To(BeNil())
+
 	})
 
 	It("should return status ok for create, update and delete", func() {
@@ -158,6 +168,9 @@ var _ = Describe("Reconcile", func() {
 		Expect(status.ApiRuleStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
 		Expect(status.AccessRuleStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
 		Expect(status.VirtualServiceStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
+		Expect(status.AuthorizationPolicyStatus).To(BeNil())
+		Expect(status.RequestAuthenticationStatus).To(BeNil())
+
 	})
 })
 
@@ -201,31 +214,7 @@ const (
 
 func mockStatusBase(statusCode gatewayv1beta1.StatusCode, handler handler) processing.ReconciliationStatus {
 	if handler == istio {
-		return processing.ReconciliationStatus{
-			ApiRuleStatus: &gatewayv1beta1.ResourceStatus{
-				Code: statusCode,
-			},
-			VirtualServiceStatus: &gatewayv1beta1.ResourceStatus{
-				Code: statusCode,
-			},
-			AuthorizationPolicyStatus: &gatewayv1beta1.ResourceStatus{
-				Code: statusCode,
-			},
-			RequestAuthenticationStatus: &gatewayv1beta1.ResourceStatus{
-				Code: statusCode,
-			},
-		}
+		return istioHandler.IstioStatusBase(statusCode)
 	}
-	return processing.ReconciliationStatus{
-		ApiRuleStatus: &gatewayv1beta1.ResourceStatus{
-			Code: statusCode,
-		},
-		VirtualServiceStatus: &gatewayv1beta1.ResourceStatus{
-			Code: statusCode,
-		},
-		AccessRuleStatus: &gatewayv1beta1.ResourceStatus{
-			Code: statusCode,
-		},
-	}
-
+	return oryHandler.OryStatusBase(statusCode)
 }

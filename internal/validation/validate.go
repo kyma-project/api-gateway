@@ -33,7 +33,7 @@ const (
 	OnRequestAuthentication
 )
 
-func (r ResourceSelector) String() string{
+func (r ResourceSelector) String() string {
 	switch r {
 	case OnVirtualService:
 		return "VirtualService"
