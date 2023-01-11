@@ -18,5 +18,4 @@ var _ = Describe("OryStatusBase", func() {
 		Expect(status.AuthorizationPolicyStatus).To(BeNil())
 		Expect(status.RequestAuthenticationStatus).To(BeNil())
 	})
-
 })

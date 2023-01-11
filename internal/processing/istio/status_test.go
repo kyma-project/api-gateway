@@ -6,7 +6,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var _ = Describe("IstioStatusBase", func () {
+var _ = Describe("IstioStatusBase", func() {
 	It("should create status base with AccessRule set to nil", func() {
 		// when
 		status := IstioStatusBase(gatewayv1beta1.StatusError)
