@@ -11,13 +11,13 @@ func (r Reconciliation) GetStatusBase(statusCode gatewayv1beta1.StatusCode) proc
 
 func OryStatusBase(statusCode gatewayv1beta1.StatusCode) processing.ReconciliationStatus {
 	return processing.ReconciliationStatus{
-		ApiRuleStatus: &gatewayv1beta1.ResourceStatus{
+		ApiRuleStatus: &gatewayv1beta1.APIRuleResourceStatus{
 			Code: statusCode,
 		},
-		VirtualServiceStatus: &gatewayv1beta1.ResourceStatus{
+		VirtualServiceStatus: &gatewayv1beta1.APIRuleResourceStatus{
 			Code: statusCode,
 		},
-		AccessRuleStatus: &gatewayv1beta1.ResourceStatus{
+		AccessRuleStatus: &gatewayv1beta1.APIRuleResourceStatus{
 			Code: statusCode,
 		},
 	}

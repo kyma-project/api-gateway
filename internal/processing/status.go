@@ -8,15 +8,15 @@ import (
 )
 
 type ReconciliationStatus struct {
-	ApiRuleStatus               *gatewayv1beta1.ResourceStatus
-	VirtualServiceStatus        *gatewayv1beta1.ResourceStatus
-	AccessRuleStatus            *gatewayv1beta1.ResourceStatus
-	RequestAuthenticationStatus *gatewayv1beta1.ResourceStatus
-	AuthorizationPolicyStatus   *gatewayv1beta1.ResourceStatus
+	ApiRuleStatus               *gatewayv1beta1.APIRuleResourceStatus
+	VirtualServiceStatus        *gatewayv1beta1.APIRuleResourceStatus
+	AccessRuleStatus            *gatewayv1beta1.APIRuleResourceStatus
+	RequestAuthenticationStatus *gatewayv1beta1.APIRuleResourceStatus
+	AuthorizationPolicyStatus   *gatewayv1beta1.APIRuleResourceStatus
 }
 
-func generateStatusFromErrors(errors []error) *gatewayv1beta1.ResourceStatus {
-	status := &gatewayv1beta1.ResourceStatus{}
+func generateStatusFromErrors(errors []error) *gatewayv1beta1.APIRuleResourceStatus {
+	status := &gatewayv1beta1.APIRuleResourceStatus{}
 	if len(errors) == 0 {
 		status.Code = gatewayv1beta1.StatusOK
 		return status
@@ -57,7 +57,7 @@ func GenerateStatusFromFailures(failures []validation.Failure, statusBase Reconc
 	return statusBase
 }
 
-func generateValidationStatus(failures []validation.Failure) *gatewayv1beta1.ResourceStatus {
+func generateValidationStatus(failures []validation.Failure) *gatewayv1beta1.APIRuleResourceStatus {
 	return toStatus(gatewayv1beta1.StatusError, generateValidationDescription(failures))
 }
 
@@ -81,8 +81,8 @@ func generateValidationDescription(failures []validation.Failure) string {
 	return description
 }
 
-func toStatus(c gatewayv1beta1.StatusCode, desc string) *gatewayv1beta1.ResourceStatus {
-	return &gatewayv1beta1.ResourceStatus{
+func toStatus(c gatewayv1beta1.StatusCode, desc string) *gatewayv1beta1.APIRuleResourceStatus {
+	return &gatewayv1beta1.APIRuleResourceStatus{
 		Code:        c,
 		Description: desc,
 	}

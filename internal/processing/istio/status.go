@@ -11,16 +11,16 @@ func (r Reconciliation) GetStatusBase(statusCode gatewayv1beta1.StatusCode) proc
 
 func IstioStatusBase(statusCode gatewayv1beta1.StatusCode) processing.ReconciliationStatus {
 	return processing.ReconciliationStatus{
-		ApiRuleStatus: &gatewayv1beta1.ResourceStatus{
+		ApiRuleStatus: &gatewayv1beta1.APIRuleResourceStatus{
 			Code: statusCode,
 		},
-		VirtualServiceStatus: &gatewayv1beta1.ResourceStatus{
+		VirtualServiceStatus: &gatewayv1beta1.APIRuleResourceStatus{
 			Code: statusCode,
 		},
-		AuthorizationPolicyStatus: &gatewayv1beta1.ResourceStatus{
+		AuthorizationPolicyStatus: &gatewayv1beta1.APIRuleResourceStatus{
 			Code: statusCode,
 		},
-		RequestAuthenticationStatus: &gatewayv1beta1.ResourceStatus{
+		RequestAuthenticationStatus: &gatewayv1beta1.APIRuleResourceStatus{
 			Code: statusCode,
 		},
 	}

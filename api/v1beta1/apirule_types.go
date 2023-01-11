@@ -52,16 +52,16 @@ type APIRuleSpec struct {
 
 // APIRuleStatus defines the observed state of ApiRule
 type APIRuleStatus struct {
-	LastProcessedTime    *metav1.Time    `json:"lastProcessedTime,omitempty"`
-	ObservedGeneration   int64           `json:"observedGeneration,omitempty"`
-	APIRuleStatus        *ResourceStatus `json:"APIRuleStatus,omitempty"`
-	VirtualServiceStatus *ResourceStatus `json:"virtualServiceStatus,omitempty"`
+	LastProcessedTime    *metav1.Time           `json:"lastProcessedTime,omitempty"`
+	ObservedGeneration   int64                  `json:"observedGeneration,omitempty"`
+	APIRuleStatus        *APIRuleResourceStatus `json:"APIRuleStatus,omitempty"`
+	VirtualServiceStatus *APIRuleResourceStatus `json:"virtualServiceStatus,omitempty"`
 	// +optional
-	AccessRuleStatus *ResourceStatus `json:"accessRuleStatus,omitempty"`
+	AccessRuleStatus *APIRuleResourceStatus `json:"accessRuleStatus,omitempty"`
 	// +optional
-	RequestAuthenticationStatus *ResourceStatus `json:"requestAuthenticationStatus,omitempty"`
+	RequestAuthenticationStatus *APIRuleResourceStatus `json:"requestAuthenticationStatus,omitempty"`
 	// +optional
-	AuthorizationPolicyStatus *ResourceStatus `json:"authorizationPolicyStatus,omitempty"`
+	AuthorizationPolicyStatus *APIRuleResourceStatus `json:"authorizationPolicyStatus,omitempty"`
 }
 
 // APIRule is the Schema for the apis ApiRule
@@ -123,8 +123,8 @@ type Rule struct {
 	Mutators []*Mutator `json:"mutators,omitempty"`
 }
 
-// ResourceStatus .
-type ResourceStatus struct {
+// APIRuleResourceStatus .
+type APIRuleResourceStatus struct {
 	Code        StatusCode `json:"code,omitempty"`
 	Description string     `json:"desc,omitempty"`
 }
