@@ -172,7 +172,7 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		r.Log.Error(err, "Error getting ApiRule")
 
 		statusBase := cmd.GetStatusBase(gatewayv1beta1.StatusSkipped)
-		errorMap := map[validation.ResourceSelector][]error{validation.OnApiRule: {err}}
+		errorMap := map[processing.ResourceSelector][]error{processing.OnApiRule: {err}}
 		status := processing.GetStatusForErrorMap(errorMap, statusBase)
 		return r.updateStatusOrRetry(ctx, apiRule, status)
 	}

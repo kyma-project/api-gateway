@@ -15,6 +15,31 @@ type ReconciliationStatus struct {
 	AuthorizationPolicyStatus   *gatewayv1beta1.APIRuleResourceStatus
 }
 
+type ResourceSelector int
+
+const (
+	OnApiRule ResourceSelector = iota
+	OnVirtualService
+	OnAccessRule
+	OnAuthorizationPolicy
+	OnRequestAuthentication
+)
+
+func (r ResourceSelector) String() string {
+	switch r {
+	case OnVirtualService:
+		return "VirtualService"
+	case OnAccessRule:
+		return "AccessRule"
+	case OnRequestAuthentication:
+		return "RequestAuthentication"
+	case OnAuthorizationPolicy:
+		return "AuthorizationPolicy"
+	default:
+		return "APIRule"
+	}
+}
+
 func generateStatusFromErrors(errors []error) *gatewayv1beta1.APIRuleResourceStatus {
 	status := &gatewayv1beta1.APIRuleResourceStatus{}
 	if len(errors) == 0 {
@@ -29,18 +54,18 @@ func generateStatusFromErrors(errors []error) *gatewayv1beta1.APIRuleResourceSta
 	return status
 }
 
-func GetStatusForErrorMap(errorMap map[validation.ResourceSelector][]error, statusBase ReconciliationStatus) ReconciliationStatus {
+func GetStatusForErrorMap(errorMap map[ResourceSelector][]error, statusBase ReconciliationStatus) ReconciliationStatus {
 	for key, val := range errorMap {
 		switch key {
-		case validation.OnApiRule:
+		case OnApiRule:
 			statusBase.ApiRuleStatus = generateStatusFromErrors(val)
-		case validation.OnVirtualService:
+		case OnVirtualService:
 			statusBase.VirtualServiceStatus = generateStatusFromErrors(val)
-		case validation.OnAccessRule:
+		case OnAccessRule:
 			statusBase.AccessRuleStatus = generateStatusFromErrors(val)
-		case validation.OnAuthorizationPolicy:
+		case OnAuthorizationPolicy:
 			statusBase.AuthorizationPolicyStatus = generateStatusFromErrors(val)
-		case validation.OnRequestAuthentication:
+		case OnRequestAuthentication:
 			statusBase.RequestAuthenticationStatus = generateStatusFromErrors(val)
 		}
 	}

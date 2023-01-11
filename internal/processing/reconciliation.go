@@ -37,7 +37,7 @@ func Reconcile(ctx context.Context, client client.Client, log *logr.Logger, cmd 
 		// We set the status to skipped because it was not the validation that failed, but an error occurred during validation.
 		log.Error(err, "Error during validation")
 		statusBase := cmd.GetStatusBase(gatewayv1beta1.StatusSkipped)
-		errorMap := map[validation.ResourceSelector][]error{validation.OnApiRule: {err}}
+		errorMap := map[ResourceSelector][]error{OnApiRule: {err}}
 		return GetStatusForErrorMap(errorMap, statusBase)
 	}
 
@@ -54,7 +54,7 @@ func Reconcile(ctx context.Context, client client.Client, log *logr.Logger, cmd 
 		if err != nil {
 			log.Error(err, "Error during reconciliation")
 			statusBase := cmd.GetStatusBase(gatewayv1beta1.StatusSkipped)
-			errorMap := map[validation.ResourceSelector][]error{validation.OnApiRule: {err}}
+			errorMap := map[ResourceSelector][]error{OnApiRule: {err}}
 			return GetStatusForErrorMap(errorMap, statusBase)
 		}
 
@@ -73,8 +73,8 @@ func Reconcile(ctx context.Context, client client.Client, log *logr.Logger, cmd 
 // applyChanges applies the given commands on the cluster
 // returns map of errors that happened for all subresources
 // the map is empty if no error happened
-func applyChanges(ctx context.Context, client client.Client, changes ...*ObjectChange) map[validation.ResourceSelector][]error {
-	errorMap := make(map[validation.ResourceSelector][]error)
+func applyChanges(ctx context.Context, client client.Client, changes ...*ObjectChange) map[ResourceSelector][]error {
+	errorMap := make(map[ResourceSelector][]error)
 	for _, change := range changes {
 		res, err := applyChange(ctx, client, change)
 		if err != nil {
@@ -85,7 +85,7 @@ func applyChanges(ctx context.Context, client client.Client, changes ...*ObjectC
 	return errorMap
 }
 
-func applyChange(ctx context.Context, client client.Client, change *ObjectChange) (validation.ResourceSelector, error) {
+func applyChange(ctx context.Context, client client.Client, change *ObjectChange) (ResourceSelector, error) {
 	var err error
 
 	switch change.Action {
@@ -106,18 +106,18 @@ func applyChange(ctx context.Context, client client.Client, change *ObjectChange
 	return objectToSelector(change.Obj), nil
 }
 
-func objectToSelector(obj client.Object) validation.ResourceSelector {
+func objectToSelector(obj client.Object) ResourceSelector {
 	kind := obj.GetObjectKind().GroupVersionKind().Kind
 	switch kind {
-	case validation.OnVirtualService.String():
-		return validation.OnVirtualService
-	case validation.OnAccessRule.String():
-		return validation.OnAccessRule
-	case validation.OnRequestAuthentication.String():
-		return validation.OnRequestAuthentication
-	case validation.OnAuthorizationPolicy.String():
-		return validation.OnAuthorizationPolicy
+	case OnVirtualService.String():
+		return OnVirtualService
+	case OnAccessRule.String():
+		return OnAccessRule
+	case OnRequestAuthentication.String():
+		return OnRequestAuthentication
+	case OnAuthorizationPolicy.String():
+		return OnAuthorizationPolicy
 	default:
-		return validation.OnApiRule
+		return OnApiRule
 	}
 }
