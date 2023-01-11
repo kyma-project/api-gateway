@@ -9,10 +9,9 @@ import (
 var _ = Describe("OryStatusBase", func() {
 	It("should create status base with AP and RA set to nil", func() {
 		// when
-		status := OryStatusBase(gatewayv1beta1.StatusError)
+		status := OryStatusBase(gatewayv1beta1.StatusSkipped)
 
-		Expect(status.ApiRuleStatus.Code).To(Equal(gatewayv1beta1.StatusError))
-		Expect(status.ApiRuleStatus.Description).To(Equal("error during processor execution"))
+		Expect(status.ApiRuleStatus.Code).To(Equal(gatewayv1beta1.StatusSkipped))
 		Expect(status.AccessRuleStatus.Code).To(Equal(gatewayv1beta1.StatusSkipped))
 		Expect(status.VirtualServiceStatus.Code).To(Equal(gatewayv1beta1.StatusSkipped))
 		Expect(status.AuthorizationPolicyStatus).To(BeNil())

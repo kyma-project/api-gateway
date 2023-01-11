@@ -9,13 +9,12 @@ import (
 var _ = Describe("IstioStatusBase", func() {
 	It("should create status base with AccessRule set to nil", func() {
 		// when
-		status := IstioStatusBase(gatewayv1beta1.StatusError)
+		status := IstioStatusBase(gatewayv1beta1.StatusSkipped)
 
-		Expect(status.ApiRuleStatus.Code).To(Equal(gatewayv1beta1.StatusError))
-		Expect(status.ApiRuleStatus.Description).To(Equal("error during processor execution"))
-		Expect(status.AccessRuleStatus.Code).To(BeNil())
+		Expect(status.ApiRuleStatus.Code).To(Equal(gatewayv1beta1.StatusSkipped))
 		Expect(status.VirtualServiceStatus.Code).To(Equal(gatewayv1beta1.StatusSkipped))
-		Expect(status.AuthorizationPolicyStatus).To(Equal(gatewayv1beta1.StatusSkipped))
-		Expect(status.RequestAuthenticationStatus).To(Equal(gatewayv1beta1.StatusSkipped))
+		Expect(status.AuthorizationPolicyStatus.Code).To(Equal(gatewayv1beta1.StatusSkipped))
+		Expect(status.RequestAuthenticationStatus.Code).To(Equal(gatewayv1beta1.StatusSkipped))
+		Expect(status.AccessRuleStatus).To(BeNil())
 	})
 })
