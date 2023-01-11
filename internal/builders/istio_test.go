@@ -1,6 +1,7 @@
 package builders
 
 import (
+	"fmt"
 	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -27,6 +28,12 @@ var _ = Describe("Builder for", func() {
 			testMatchLabelsValue := "httpbin"
 			testMatchLabels := map[string]string{testMatchLabelsKey: testMatchLabelsValue}
 			testRulesSourceRequestPrincipals := "*"
+			testScopeA := "scope-a"
+			testScopeB := "scope-b"
+			testRaw := runtime.RawExtension{Raw: []byte(fmt.Sprintf(`{"authentications": [{"requiredScopes": ["%s", "%s"]}]}`, testScopeA, testScopeB))}
+			testHandler := gatewayv1beta1.Handler{Config: &testRaw}
+			testAuthenticator := gatewayv1beta1.Authenticator{Handler: &testHandler}
+			testAccessStrategies := []*gatewayv1beta1.Authenticator{&testAuthenticator}
 
 			ap := AuthorizationPolicyBuilder().GenerateName(name).Namespace(namespace).
 				Owner(OwnerReference().Name(refName).APIVersion(refVersion).Kind(refKind).UID(refUID).Controller(true)).
@@ -39,7 +46,9 @@ var _ = Describe("Builder for", func() {
 						RuleTo(RuleToBuilder().
 							Operation(OperationBuilder().
 								Path(path).
-								Methods(methods))))).
+								Methods(methods))).
+						RuleCondition(RuleConditionBuilder().
+							From(testAccessStrategies)))).
 				Get()
 
 			Expect(ap.Name).To(BeEmpty())
@@ -54,6 +63,10 @@ var _ = Describe("Builder for", func() {
 			Expect(ap.Spec.Rules[0].From[0].Source.RequestPrincipals[0]).To(Equal(testRulesSourceRequestPrincipals))
 			Expect(ap.Spec.Rules[0].To[0].Operation.Paths[0]).To(Equal(path))
 			Expect(ap.Spec.Rules[0].To[0].Operation.Methods).To(BeEquivalentTo(methods))
+			for i := 0; i < 3; i++ {
+				Expect(ap.Spec.Rules[0].When[i].Key).To(BeElementOf("scp", "scope", "scopes"))
+				Expect(ap.Spec.Rules[0].When[i].Values).To(ContainElements(testScopeA, testScopeB))
+			}
 		})
 	})
 
