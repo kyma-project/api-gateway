@@ -35,7 +35,7 @@ func Reconcile(ctx context.Context, client client.Client, log *logr.Logger, cmd 
 	validationFailures, err := cmd.Validate(ctx, client, apiRule)
 	if err != nil {
 		// We set the status to skipped because it was not the validation that failed, but an error occurred during validation.
-		log.Error(err, "Error during reconciliation")
+		log.Error(err, "Error during validation")
 		statusBase := cmd.GetStatusBase(gatewayv1beta1.StatusSkipped)
 		errorMap := map[validation.ResourceSelector][]error{validation.OnApiRule: {err}}
 		return GetStatusForErrorMap(errorMap, statusBase)
