@@ -172,6 +172,44 @@ var _ = Describe("Reconcile", func() {
 		Expect(status.RequestAuthenticationStatus).To(BeNil())
 
 	})
+
+	It("should return status error for update on non existing VS", func() {
+		// give
+		toBeUpdatedVs := builders.VirtualService().Name("toBeUpdated").Get()
+		toBeUpdatedVs.Kind = "VirtualService"
+		c := []*processing.ObjectChange{
+			processing.NewObjectUpdateAction(toBeUpdatedVs),
+		}
+		p := MockReconciliationProcessor{
+			evaluate: func() ([]*processing.ObjectChange, error) {
+				return c, nil
+			},
+		}
+
+		cmd := MockReconciliationCommand{
+			validateMock:   func() ([]validation.Failure, error) { return []validation.Failure{}, nil },
+			processorMocks: func() []processing.ReconciliationProcessor { return []processing.ReconciliationProcessor{p} },
+			getStatusBaseMock: func() processing.ReconciliationStatus {
+				return mockStatusBase(gatewayv1beta1.StatusOK, ory)
+			},
+		}
+
+		scheme := runtime.NewScheme()
+		err := networkingv1beta1.AddToScheme(scheme)
+		Expect(err).NotTo(HaveOccurred())
+		client := fake.NewClientBuilder().WithScheme(scheme).Build()
+
+		// when
+ 		status := processing.Reconcile(context.TODO(), client, testLogger(), cmd, &gatewayv1beta1.APIRule{})
+
+		// then
+		Expect(status.ApiRuleStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
+		Expect(status.AccessRuleStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
+		Expect(status.VirtualServiceStatus.Code).To(Equal(gatewayv1beta1.StatusError))
+		Expect(status.AuthorizationPolicyStatus).To(BeNil())
+		Expect(status.RequestAuthenticationStatus).To(BeNil())
+
+	})
 })
 
 type MockReconciliationCommand struct {
