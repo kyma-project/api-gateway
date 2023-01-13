@@ -221,17 +221,17 @@ func (rc *RuleCondition) From(val []*gatewayv1beta1.Authenticator) *RuleConditio
 	defaultScopeKeys := []string{"scp", "scope", "scopes"}
 
 	for _, accessStrategy := range val {
-		authentications := &Authentications{
-			Authentications: []*Authentication{},
+		authentications := &Authorizations{
+			Authorizations: []*Authorization{},
 		}
 		if accessStrategy.Config != nil {
 			_ = json.Unmarshal(accessStrategy.Config.Raw, authentications)
 		}
-		for _, authentication := range authentications.Authentications {
+		for _, authorization := range authentications.Authorizations {
 			for _, scope := range defaultScopeKeys {
 				*rc.value = append(*rc.value, &v1beta1.Condition{
 					Key:    scope,
-					Values: authentication.RequiredScopes,
+					Values: authorization.RequiredScopes,
 				})
 			}
 
@@ -240,13 +240,12 @@ func (rc *RuleCondition) From(val []*gatewayv1beta1.Authenticator) *RuleConditio
 	return rc
 }
 
-type Conditions struct {
-	Conditions []*Condition `json:"authentications"`
+type Authorizations struct {
+	Authorizations []*Authorization `json:"authorizations"`
 }
 
-type Condition struct {
-	Key    string   `json:"key"`
-	Values []string `json:"values"`
+type Authorization struct {
+	RequiredScopes []string `json:"requiredScopes"`
 }
 
 // RequestAuthenticationBuilder returns a builder for istio.io/client-go/pkg/apis/security/v1beta1/RequestAuthentication type
