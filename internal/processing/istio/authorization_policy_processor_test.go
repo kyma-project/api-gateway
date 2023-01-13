@@ -41,6 +41,7 @@ var _ = Describe("Authorization Policy Processor", func() {
 			Name: &ServiceName,
 			Port: &ServicePort,
 		}
+		testExpectedScopeKeys := []string{"request.auth.claims[scp]", "request.auth.claims[scope]", "request.auth.claims[scopes]"}
 
 		ruleJwt := GetRuleWithServiceFor(HeadersApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, []*gatewayv1beta1.Authenticator{jwt}, service)
 		ruleJwt2 := GetRuleWithServiceFor(ImgApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, []*gatewayv1beta1.Authenticator{jwt}, service)
@@ -82,7 +83,7 @@ var _ = Describe("Authorization Policy Processor", func() {
 		Expect(ap1.OwnerReferences[0].UID).To(Equal(ApiUID))
 
 		for i := 0; i < 3; i++ {
-			Expect(ap1.Spec.Rules[0].When[i].Key).To(BeElementOf("scp", "scope", "scopes"))
+			Expect(ap1.Spec.Rules[0].When[i].Key).To(BeElementOf(testExpectedScopeKeys))
 			Expect(ap1.Spec.Rules[0].When[i].Values).To(ContainElements(RequiredScopeA, RequiredScopeB))
 		}
 
@@ -109,7 +110,7 @@ var _ = Describe("Authorization Policy Processor", func() {
 		Expect(ap2.OwnerReferences[0].UID).To(Equal(ApiUID))
 
 		for i := 0; i < 3; i++ {
-			Expect(ap2.Spec.Rules[0].When[i].Key).To(BeElementOf("scp", "scope", "scopes"))
+			Expect(ap2.Spec.Rules[0].When[i].Key).To(BeElementOf(testExpectedScopeKeys))
 			Expect(ap2.Spec.Rules[0].When[i].Values).To(ContainElements(RequiredScopeA, RequiredScopeB))
 		}
 	})
@@ -172,6 +173,7 @@ var _ = Describe("Authorization Policy Processor", func() {
 				},
 			},
 		}
+		testExpectedScopeKeys := []string{"request.auth.claims[scp]", "request.auth.claims[scope]", "request.auth.claims[scopes]"}
 		client := GetFakeClient()
 		service := &gatewayv1beta1.Service{
 			Name: &ServiceName,
@@ -209,7 +211,7 @@ var _ = Describe("Authorization Policy Processor", func() {
 		Expect(ap.Spec.Rules[0].To[0].Operation.Paths).To(ContainElements(HeadersApiPath))
 
 		for i := 0; i < 3; i++ {
-			Expect(ap.Spec.Rules[0].When[i].Key).To(BeElementOf("scp", "scope", "scopes"))
+			Expect(ap.Spec.Rules[0].When[i].Key).To(BeElementOf(testExpectedScopeKeys))
 			Expect(ap.Spec.Rules[0].When[i].Values).To(ContainElements(RequiredScopeA, RequiredScopeB))
 		}
 

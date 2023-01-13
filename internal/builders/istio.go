@@ -2,6 +2,7 @@ package builders
 
 import (
 	"encoding/json"
+	"fmt"
 
 	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
 	"istio.io/api/security/v1beta1"
@@ -229,8 +230,9 @@ func (rc *RuleCondition) From(val []*gatewayv1beta1.Authenticator) *RuleConditio
 		}
 		for _, authorization := range authentications.Authorizations {
 			for _, scope := range defaultScopeKeys {
+				scopeKey := fmt.Sprintf("request.auth.claims[%s]", scope)
 				*rc.value = append(*rc.value, &v1beta1.Condition{
-					Key:    scope,
+					Key:    scopeKey,
 					Values: authorization.RequiredScopes,
 				})
 			}

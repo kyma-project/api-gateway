@@ -35,6 +35,8 @@ var _ = Describe("Builder for", func() {
 			testAuthenticator := gatewayv1beta1.Authenticator{Handler: &testHandler}
 			testAccessStrategies := []*gatewayv1beta1.Authenticator{&testAuthenticator}
 
+			testExpectedScopeKeys := []string{"request.auth.claims[scp]", "request.auth.claims[scope]", "request.auth.claims[scopes]"}
+
 			ap := AuthorizationPolicyBuilder().GenerateName(name).Namespace(namespace).
 				Owner(OwnerReference().Name(refName).APIVersion(refVersion).Kind(refKind).UID(refUID).Controller(true)).
 				Spec(AuthorizationPolicySpecBuilder().
@@ -64,7 +66,7 @@ var _ = Describe("Builder for", func() {
 			Expect(ap.Spec.Rules[0].To[0].Operation.Paths[0]).To(Equal(path))
 			Expect(ap.Spec.Rules[0].To[0].Operation.Methods).To(BeEquivalentTo(methods))
 			for i := 0; i < 3; i++ {
-				Expect(ap.Spec.Rules[0].When[i].Key).To(BeElementOf("scp", "scope", "scopes"))
+				Expect(ap.Spec.Rules[0].When[i].Key).To(BeElementOf(testExpectedScopeKeys))
 				Expect(ap.Spec.Rules[0].When[i].Values).To(ContainElements(testScopeA, testScopeB))
 			}
 		})
