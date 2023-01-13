@@ -229,7 +229,7 @@ func getApiRule(authStrategy string, authConfig *runtime.RawExtension) *gatewayv
 func getJWTIstioConfig() *runtime.RawExtension {
 	return getRawConfig(
 		istioint.JwtConfig{
-			Authentications: []istioint.JwtAuth{
+			Authentications: []istioint.JwtAuthentication{
 				{
 					Issuer:  "https://example.com/",
 					JwksUri: "https://example.com/.well-known/jwks.json",

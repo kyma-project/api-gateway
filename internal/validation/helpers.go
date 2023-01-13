@@ -59,6 +59,18 @@ func IsUnsecuredURL(toTest string) (bool, error) {
 	return false, nil
 }
 
+func HasInvalidScopes(toTest []string) (bool, error) {
+	if len(toTest) == 0 {
+		return true, errors.New("value is empty")
+	}
+	for _, scope := range toTest {
+		if scope == "" {
+			return true, errors.New("scope value is empty")
+		}
+	}
+	return false, nil
+}
+
 // ValidateDomainName ?
 func ValidateDomainName(domain string) bool {
 	RegExp := regexp.MustCompile(`^([a-zA-Z0-9][a-zA-Z0-9-_]*\.)*[a-zA-Z0-9]*[a-zA-Z0-9-_]*[[a-zA-Z0-9]+$`)
@@ -78,7 +90,7 @@ func ValidateServiceName(service string) bool {
 }
 
 func validateGatewayName(gateway string) bool {
-	regExp := regexp.MustCompile(`^[0-9a-z-_]+(\/[0-9a-z-_]+|(\.[0-9a-z-_]+)*)$`)
+	regExp := regexp.MustCompile(`^[0-9a-z-_]+(/[0-9a-z-_]+|(\.[0-9a-z-_]+)*)$`)
 	return regExp.MatchString(gateway)
 }
 
@@ -91,7 +103,7 @@ func configEmpty(config *runtime.RawExtension) bool {
 		bytes.Equal(config.Raw, []byte("{}"))
 }
 
-// configNotEmpty Verify if the config object is not empty
+// ConfigNotEmpty Verify if the config object is not empty
 func ConfigNotEmpty(config *runtime.RawExtension) bool {
 	return !configEmpty(config)
 }

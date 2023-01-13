@@ -99,6 +99,43 @@ var _ = Describe("JWT Validator", func() {
 		//then
 		Expect(problems).To(Not(BeEmpty()))
 	})
+
+	It("Should fail for config with empty required scopes", func() {
+		//given
+		handler := &gatewayv1beta1.Handler{Name: "jwt", Config: testURLJWTIstioConfigWithScopes([]string{})}
+
+		//when
+		problems := (&handlerValidator{}).Validate("some.attribute", handler)
+
+		//then
+		Expect(problems).To(HaveLen(1))
+		Expect(problems[0].AttributePath).To(Equal("some.attribute.config.authorizations[0].requiredScopes"))
+		Expect(problems[0].Message).To(Equal("value is empty or has an empty string err=value is empty"))
+	})
+
+	It("Should fail for config with empty string in required scopes", func() {
+		//given
+		handler := &gatewayv1beta1.Handler{Name: "jwt", Config: testURLJWTIstioConfigWithScopes([]string{"scope-a", ""})}
+
+		//when
+		problems := (&handlerValidator{}).Validate("some.attribute", handler)
+
+		//then
+		Expect(problems).To(HaveLen(1))
+		Expect(problems[0].AttributePath).To(Equal("some.attribute.config.authorizations[0].requiredScopes"))
+		Expect(problems[0].Message).To(Equal("value is empty or has an empty string err=scope value is empty"))
+	})
+
+	It("Should fail for config with empty string in required scopes", func() {
+		//given
+		handler := &gatewayv1beta1.Handler{Name: "jwt", Config: testURLJWTIstioConfigWithScopes([]string{"scope-a", "scope-b"})}
+
+		//when
+		problems := (&handlerValidator{}).Validate("some.attribute", handler)
+
+		//then
+		Expect(problems).To(HaveLen(0))
+	})
 })
 
 func emptyJWTIstioConfig() *runtime.RawExtension {
@@ -107,9 +144,9 @@ func emptyJWTIstioConfig() *runtime.RawExtension {
 }
 
 func simpleJWTIstioConfig(trustedIssuers ...string) *runtime.RawExtension {
-	issuers := []istiojwt.JwtAuth{}
+	var issuers []istiojwt.JwtAuthentication
 	for _, issuer := range trustedIssuers {
-		issuers = append(issuers, istiojwt.JwtAuth{
+		issuers = append(issuers, istiojwt.JwtAuthentication{
 			Issuer:  issuer,
 			JwksUri: issuer,
 		})
@@ -121,11 +158,26 @@ func simpleJWTIstioConfig(trustedIssuers ...string) *runtime.RawExtension {
 func testURLJWTIstioConfig(JWKSUrl string, trustedIssuer string) *runtime.RawExtension {
 	return getRawConfig(
 		istiojwt.JwtConfig{
-			Authentications: []istiojwt.JwtAuth{
+			Authentications: []istiojwt.JwtAuthentication{
 				{
 					Issuer:  trustedIssuer,
 					JwksUri: JWKSUrl,
 				},
+			},
+		})
+}
+
+func testURLJWTIstioConfigWithScopes(requiredScopes []string) *runtime.RawExtension {
+	return getRawConfig(
+		istiojwt.JwtConfig{
+			Authentications: []istiojwt.JwtAuthentication{
+				{
+					Issuer:  "https://issuer.test/",
+					JwksUri: "file://.well-known/jwks.json",
+				},
+			},
+			Authorizations: []istiojwt.JwtAuthorization{
+				{RequiredScopes: requiredScopes},
 			},
 		})
 }

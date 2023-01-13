@@ -30,7 +30,6 @@ import (
 const (
 	timeout = time.Second * 10
 
-	kind                        = "APIRule"
 	testGatewayURL              = "kyma-system/kyma-gateway"
 	testOathkeeperSvcURL        = "oathkeeper.kyma-system.svc.cluster.local"
 	testOathkeeperPort   uint32 = 1234
@@ -238,7 +237,7 @@ func testOryJWTHandler(issuer string, scopes []string) *gatewayv1beta1.Handler {
 
 func testIstioJWTHandler(issuer string, jwksUri string) *gatewayv1beta1.Handler {
 	bytes, err := json.Marshal(istioint.JwtConfig{
-		Authentications: []istioint.JwtAuth{
+		Authentications: []istioint.JwtAuthentication{
 			{
 				Issuer:  issuer,
 				JwksUri: jwksUri,

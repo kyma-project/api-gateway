@@ -138,7 +138,7 @@ func testURLJWTConfig(JWKSUrls string, trustedIssuers string) *runtime.RawExtens
 func testURLJWTIstioConfig(JWKSUrl string, trustedIssuer string) *runtime.RawExtension {
 	return getRawConfig(
 		istiojwt.JwtConfig{
-			Authentications: []istiojwt.JwtAuth{
+			Authentications: []istiojwt.JwtAuthentication{
 				{
 					Issuer:  trustedIssuer,
 					JwksUri: JWKSUrl,

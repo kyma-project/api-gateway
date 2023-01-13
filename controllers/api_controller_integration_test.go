@@ -1061,7 +1061,7 @@ func testOryJWTHandler(issuer string, scopes []string) *gatewayv1beta1.Handler {
 func testIstioJWTHandler(issuer string, jwksUri string) *gatewayv1beta1.Handler {
 
 	bytes, err := json.Marshal(istioint.JwtConfig{
-		Authentications: []istioint.JwtAuth{
+		Authentications: []istioint.JwtAuthentication{
 			{
 				Issuer:  issuer,
 				JwksUri: jwksUri,
