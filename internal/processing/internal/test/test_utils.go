@@ -29,6 +29,8 @@ const (
 	JwksUri                     = "https://oauth2.example.com/.well-known/jwks.json"
 	JwtIssuer2                  = "https://oauth2.another.example.com/"
 	JwksUri2                    = "https://oauth2.another.example.com/.well-known/jwks.json"
+	RequiredScopeA              = "scope-a"
+	RequiredScopeB              = "scope-b"
 	OathkeeperSvc               = "fake.oathkeeper"
 	OathkeeperSvcPort uint32    = 1234
 	TestLabelKey                = "key"
@@ -49,8 +51,7 @@ var (
 	TestAllowOrigin  = []*v1beta1.StringMatch{{MatchType: &v1beta1.StringMatch_Regex{Regex: ".*"}}}
 	TestAllowMethods = []string{"GET", "POST", "PUT", "DELETE"}
 	TestAllowHeaders = []string{"header1", "header2"}
-
-	TestCors = &processing.CorsConfig{
+	TestCors         = &processing.CorsConfig{
 		AllowOrigins: TestAllowOrigin,
 		AllowMethods: TestAllowMethods,
 		AllowHeaders: TestAllowHeaders,

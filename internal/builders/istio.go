@@ -2,6 +2,7 @@ package builders
 
 import (
 	"encoding/json"
+	"fmt"
 
 	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
 	"istio.io/api/security/v1beta1"
@@ -118,6 +119,11 @@ func (r *Rule) RuleTo(val *RuleTo) *Rule {
 	return r
 }
 
+func (r *Rule) RuleCondition(val *RuleCondition) *Rule {
+	r.value.When = *val.Get()
+	return r
+}
+
 // RuleFromBuilder returns builder for istio.io/api/security/v1beta1/Rule_From type
 func RuleFromBuilder() *RuleFrom {
 	return &RuleFrom{
@@ -195,6 +201,53 @@ func (o *Operation) Methods(val []string) *Operation {
 func (o *Operation) Path(val string) *Operation {
 	o.value.Paths = append(o.value.Paths, val)
 	return o
+}
+
+// RuleConditionBuilder returns builder for istio.io/apis/security/v1beta1/Condition type
+func RuleConditionBuilder() *RuleCondition {
+	return &RuleCondition{
+		value: &[]*v1beta1.Condition{},
+	}
+}
+
+type RuleCondition struct {
+	value *[]*v1beta1.Condition
+}
+
+func (rc *RuleCondition) Get() *[]*v1beta1.Condition {
+	return rc.value
+}
+
+func (rc *RuleCondition) From(val []*gatewayv1beta1.Authenticator) *RuleCondition {
+	defaultScopeKeys := []string{"scp", "scope", "scopes"}
+
+	for _, accessStrategy := range val {
+		authentications := &Authorizations{
+			Authorizations: []*Authorization{},
+		}
+		if accessStrategy.Config != nil {
+			_ = json.Unmarshal(accessStrategy.Config.Raw, authentications)
+		}
+		for _, authorization := range authentications.Authorizations {
+			for _, scope := range defaultScopeKeys {
+				scopeKey := fmt.Sprintf("request.auth.claims[%s]", scope)
+				*rc.value = append(*rc.value, &v1beta1.Condition{
+					Key:    scopeKey,
+					Values: authorization.RequiredScopes,
+				})
+			}
+
+		}
+	}
+	return rc
+}
+
+type Authorizations struct {
+	Authorizations []*Authorization `json:"authorizations"`
+}
+
+type Authorization struct {
+	RequiredScopes []string `json:"requiredScopes"`
 }
 
 // RequestAuthenticationBuilder returns a builder for istio.io/client-go/pkg/apis/security/v1beta1/RequestAuthentication type
@@ -342,6 +395,7 @@ type Authentications struct {
 }
 
 type Authentication struct {
-	Issuer  string `json:"issuer"`
-	JwksUri string `json:"jwksUri"`
+	Issuer         string   `json:"issuer"`
+	JwksUri        string   `json:"jwksUri"`
+	RequiredScopes []string `json:"requiredScopes"`
 }
