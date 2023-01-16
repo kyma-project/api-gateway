@@ -9,7 +9,7 @@ import (
 var _ = Describe("OryStatusBase", func() {
 	It("should create status base with AP and RA set to nil", func() {
 		// when
-		status := OryStatusBase(gatewayv1beta1.StatusSkipped)
+		status := StatusBase(gatewayv1beta1.StatusSkipped)
 
 		Expect(status.ApiRuleStatus.Code).To(Equal(gatewayv1beta1.StatusSkipped))
 		Expect(status.AccessRuleStatus.Code).To(Equal(gatewayv1beta1.StatusSkipped))

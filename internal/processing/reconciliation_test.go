@@ -8,7 +8,6 @@ import (
 	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
 	"github.com/kyma-incubator/api-gateway/internal/builders"
 	"github.com/kyma-incubator/api-gateway/internal/processing"
-	istioHandler "github.com/kyma-incubator/api-gateway/internal/processing/istio"
 	oryHandler "github.com/kyma-incubator/api-gateway/internal/processing/ory"
 	"github.com/kyma-incubator/api-gateway/internal/validation"
 	. "github.com/onsi/ginkgo/v2"
@@ -26,7 +25,7 @@ var _ = Describe("Reconcile", func() {
 		cmd := MockReconciliationCommand{
 			validateMock: func() ([]validation.Failure, error) { return nil, fmt.Errorf("error during validation") },
 			getStatusBaseMock: func() processing.ReconciliationStatus {
-				return mockStatusBase(gatewayv1beta1.StatusSkipped, ory)
+				return mockStatusBase(gatewayv1beta1.StatusSkipped)
 			},
 		}
 		client := fake.NewClientBuilder().Build()
@@ -52,7 +51,7 @@ var _ = Describe("Reconcile", func() {
 		cmd := MockReconciliationCommand{
 			validateMock: func() ([]validation.Failure, error) { return failures, nil },
 			getStatusBaseMock: func() processing.ReconciliationStatus {
-				return mockStatusBase(gatewayv1beta1.StatusSkipped, ory)
+				return mockStatusBase(gatewayv1beta1.StatusSkipped)
 			},
 		}
 		client := fake.NewClientBuilder().Build()
@@ -82,7 +81,7 @@ var _ = Describe("Reconcile", func() {
 			validateMock:   func() ([]validation.Failure, error) { return []validation.Failure{}, nil },
 			processorMocks: func() []processing.ReconciliationProcessor { return []processing.ReconciliationProcessor{p} },
 			getStatusBaseMock: func() processing.ReconciliationStatus {
-				return mockStatusBase(gatewayv1beta1.StatusSkipped, ory)
+				return mockStatusBase(gatewayv1beta1.StatusSkipped)
 			},
 		}
 
@@ -100,37 +99,38 @@ var _ = Describe("Reconcile", func() {
 		Expect(status.RequestAuthenticationStatus).To(BeNil())
 
 	})
+	Context("when VirtualService is missing kind", func() {
+		It("should return api status error when error happened during apply of changes on VS", func() {
+			// given
+			c := []*processing.ObjectChange{processing.NewObjectCreateAction(builders.VirtualService().Get())}
+			p := MockReconciliationProcessor{
+				evaluate: func() ([]*processing.ObjectChange, error) {
+					return c, nil
+				},
+			}
 
-	It("should return api status error and vs/ar status error when error during apply of changes", func() {
-		// given
-		c := []*processing.ObjectChange{processing.NewObjectCreateAction(builders.VirtualService().Get())}
-		p := MockReconciliationProcessor{
-			evaluate: func() ([]*processing.ObjectChange, error) {
-				return c, nil
-			},
-		}
+			cmd := MockReconciliationCommand{
+				validateMock:   func() ([]validation.Failure, error) { return []validation.Failure{}, nil },
+				processorMocks: func() []processing.ReconciliationProcessor { return []processing.ReconciliationProcessor{p} },
+				getStatusBaseMock: func() processing.ReconciliationStatus {
+					return mockStatusBase(gatewayv1beta1.StatusOK)
+				},
+			}
 
-		cmd := MockReconciliationCommand{
-			validateMock:   func() ([]validation.Failure, error) { return []validation.Failure{}, nil },
-			processorMocks: func() []processing.ReconciliationProcessor { return []processing.ReconciliationProcessor{p} },
-			getStatusBaseMock: func() processing.ReconciliationStatus {
-				return mockStatusBase(gatewayv1beta1.StatusOK, ory)
-			},
-		}
+			client := fake.NewClientBuilder().Build()
 
-		client := fake.NewClientBuilder().Build()
+			// when
+			status := processing.Reconcile(context.TODO(), client, testLogger(), cmd, &gatewayv1beta1.APIRule{})
 
-		// when
-		status := processing.Reconcile(context.TODO(), client, testLogger(), cmd, &gatewayv1beta1.APIRule{})
+			// then
+			Expect(status.ApiRuleStatus.Code).To(Equal(gatewayv1beta1.StatusError))
+			Expect(status.ApiRuleStatus.Description).ToNot(BeEmpty())
+			Expect(status.AccessRuleStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
+			Expect(status.VirtualServiceStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
+			Expect(status.AuthorizationPolicyStatus).To(BeNil())
+			Expect(status.RequestAuthenticationStatus).To(BeNil())
 
-		// then
-		Expect(status.ApiRuleStatus.Code).To(Equal(gatewayv1beta1.StatusError))
-		Expect(status.ApiRuleStatus.Description).ToNot(BeEmpty())
-		Expect(status.AccessRuleStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
-		Expect(status.VirtualServiceStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
-		Expect(status.AuthorizationPolicyStatus).To(BeNil())
-		Expect(status.RequestAuthenticationStatus).To(BeNil())
-
+		})
 	})
 
 	It("should return status ok for create, update and delete", func() {
@@ -152,7 +152,7 @@ var _ = Describe("Reconcile", func() {
 			validateMock:   func() ([]validation.Failure, error) { return []validation.Failure{}, nil },
 			processorMocks: func() []processing.ReconciliationProcessor { return []processing.ReconciliationProcessor{p} },
 			getStatusBaseMock: func() processing.ReconciliationStatus {
-				return mockStatusBase(gatewayv1beta1.StatusOK, ory)
+				return mockStatusBase(gatewayv1beta1.StatusOK)
 			},
 		}
 
@@ -173,7 +173,7 @@ var _ = Describe("Reconcile", func() {
 
 	})
 
-	It("should return status error for update on non existing VS", func() {
+	It("should return status error on APIRule and VS for update on non existing VS", func() {
 		// give
 		toBeUpdatedVs := builders.VirtualService().Name("toBeUpdated").Get()
 		toBeUpdatedVs.Kind = "VirtualService"
@@ -190,7 +190,7 @@ var _ = Describe("Reconcile", func() {
 			validateMock:   func() ([]validation.Failure, error) { return []validation.Failure{}, nil },
 			processorMocks: func() []processing.ReconciliationProcessor { return []processing.ReconciliationProcessor{p} },
 			getStatusBaseMock: func() processing.ReconciliationStatus {
-				return mockStatusBase(gatewayv1beta1.StatusOK, ory)
+				return mockStatusBase(gatewayv1beta1.StatusOK)
 			},
 		}
 
@@ -200,10 +200,11 @@ var _ = Describe("Reconcile", func() {
 		client := fake.NewClientBuilder().WithScheme(scheme).Build()
 
 		// when
- 		status := processing.Reconcile(context.TODO(), client, testLogger(), cmd, &gatewayv1beta1.APIRule{})
+		status := processing.Reconcile(context.TODO(), client, testLogger(), cmd, &gatewayv1beta1.APIRule{})
 
 		// then
-		Expect(status.ApiRuleStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
+		Expect(status.ApiRuleStatus.Code).To(Equal(gatewayv1beta1.StatusError))
+		Expect(status.ApiRuleStatus.Description).To(Equal("Error has happened on subresource VirtualService"))
 		Expect(status.AccessRuleStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
 		Expect(status.VirtualServiceStatus.Code).To(Equal(gatewayv1beta1.StatusError))
 		Expect(status.AuthorizationPolicyStatus).To(BeNil())
@@ -250,9 +251,6 @@ const (
 	ory
 )
 
-func mockStatusBase(statusCode gatewayv1beta1.StatusCode, handler handler) processing.ReconciliationStatus {
-	if handler == istio {
-		return istioHandler.IstioStatusBase(statusCode)
-	}
-	return oryHandler.OryStatusBase(statusCode)
+func mockStatusBase(statusCode gatewayv1beta1.StatusCode) processing.ReconciliationStatus {
+	return oryHandler.StatusBase(statusCode)
 }

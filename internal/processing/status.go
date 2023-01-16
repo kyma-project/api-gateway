@@ -15,6 +15,25 @@ type ReconciliationStatus struct {
 	AuthorizationPolicyStatus   *gatewayv1beta1.APIRuleResourceStatus
 }
 
+func (status ReconciliationStatus) HasError() bool {
+	if status.ApiRuleStatus != nil && status.ApiRuleStatus.Code == gatewayv1beta1.StatusError {
+		return true
+	}
+	if status.VirtualServiceStatus != nil && status.VirtualServiceStatus.Code == gatewayv1beta1.StatusError {
+		return true
+	}
+	if status.AccessRuleStatus != nil && status.AccessRuleStatus.Code == gatewayv1beta1.StatusError {
+		return true
+	}
+	if status.AuthorizationPolicyStatus != nil && status.AuthorizationPolicyStatus.Code == gatewayv1beta1.StatusError {
+		return true
+	}
+	if status.RequestAuthenticationStatus != nil && status.RequestAuthenticationStatus.Code == gatewayv1beta1.StatusError {
+		return true
+	}
+	return false
+}
+
 type ResourceSelector int
 
 const (
@@ -67,6 +86,18 @@ func GetStatusForErrorMap(errorMap map[ResourceSelector][]error, statusBase Reco
 			statusBase.AuthorizationPolicyStatus = generateStatusFromErrors(val)
 		case OnRequestAuthentication:
 			statusBase.RequestAuthenticationStatus = generateStatusFromErrors(val)
+		}
+
+		if key != OnApiRule {
+			if statusBase.ApiRuleStatus == nil || statusBase.ApiRuleStatus.Code == gatewayv1beta1.StatusOK {
+				statusBase.ApiRuleStatus = &gatewayv1beta1.APIRuleResourceStatus{
+					Code:        gatewayv1beta1.StatusError,
+					Description: fmt.Sprintf("Error has happened on subresource %s", key),
+				}
+			} else {
+				statusBase.ApiRuleStatus.Code = gatewayv1beta1.StatusError
+				statusBase.ApiRuleStatus.Description += fmt.Sprintf("\nError has happened on subresource %s", key)
+			}
 		}
 	}
 

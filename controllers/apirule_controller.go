@@ -223,30 +223,11 @@ func (r *APIRuleReconciler) updateStatusOrRetry(ctx context.Context, api *gatewa
 	}
 
 	// If error happened during reconciliation (e.g. VirtualService conflict) requeue for reconciliation earlier
-	if statusHasError(status) {
+	if status.HasError() {
 		return doneReconcileErrorRequeue(r.OnErrorReconcilePeriod)
 	}
 
 	return doneReconcileDefaultRequeue(r.ReconcilePeriod)
-}
-
-func statusHasError(status processing.ReconciliationStatus) bool {
-	if status.ApiRuleStatus != nil && status.ApiRuleStatus.Code == gatewayv1beta1.StatusError {
-		return true
-	}
-	if status.VirtualServiceStatus != nil && status.VirtualServiceStatus.Code == gatewayv1beta1.StatusError {
-		return true
-	}
-	if status.AccessRuleStatus != nil && status.AccessRuleStatus.Code == gatewayv1beta1.StatusError {
-		return true
-	}
-	if status.AuthorizationPolicyStatus != nil && status.AuthorizationPolicyStatus.Code == gatewayv1beta1.StatusError {
-		return true
-	}
-	if status.RequestAuthenticationStatus != nil && status.RequestAuthenticationStatus.Code == gatewayv1beta1.StatusError {
-		return true
-	}
-	return false
 }
 
 func doneReconcileNoRequeue() (ctrl.Result, error) {

@@ -9,7 +9,7 @@ import (
 var _ = Describe("IstioStatusBase", func() {
 	It("should create status base with AccessRule set to nil", func() {
 		// when
-		status := IstioStatusBase(gatewayv1beta1.StatusSkipped)
+		status := StatusBase(gatewayv1beta1.StatusSkipped)
 
 		Expect(status.ApiRuleStatus.Code).To(Equal(gatewayv1beta1.StatusSkipped))
 		Expect(status.VirtualServiceStatus.Code).To(Equal(gatewayv1beta1.StatusSkipped))

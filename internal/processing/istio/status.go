@@ -6,10 +6,10 @@ import (
 )
 
 func (r Reconciliation) GetStatusBase(statusCode gatewayv1beta1.StatusCode) processing.ReconciliationStatus {
-	return IstioStatusBase(statusCode)
+	return StatusBase(statusCode)
 }
 
-func IstioStatusBase(statusCode gatewayv1beta1.StatusCode) processing.ReconciliationStatus {
+func StatusBase(statusCode gatewayv1beta1.StatusCode) processing.ReconciliationStatus {
 	return processing.ReconciliationStatus{
 		ApiRuleStatus: &gatewayv1beta1.APIRuleResourceStatus{
 			Code: statusCode,
