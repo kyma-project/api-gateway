@@ -533,7 +533,24 @@ func SwitchJwtHandler(jwtHandler string) (string, error) {
 	}
 	currentJwtHandler, configMap, err := getConfigMapJwtHandler(mapping.Resource)
 	if err != nil {
-		return "", fmt.Errorf("could not get jwtHandler config:\n %+v", err)
+		configMap := unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"kind":       "ConfigMap",
+				"apiVersion": "v1",
+				"metadata": map[string]interface{}{
+					"name":      configMapName,
+					"namespace": defaultNS,
+				},
+				"data": map[string]interface{}{
+					"api-gateway-config": "jwtHandler: " + jwtHandler,
+				},
+			},
+		}
+		currentJwtHandler = jwtHandler
+		err = resourceManager.CreateResource(k8sClient, mapping.Resource, defaultNS, configMap)
+	}
+	if err != nil {
+		return "", fmt.Errorf("could not get or create jwtHandler config:\n %+v", err)
 	}
 	if currentJwtHandler != jwtHandler {
 		configMap.Object["data"].(map[string]interface{})["api-gateway-config"] = "jwtHandler: " + jwtHandler
