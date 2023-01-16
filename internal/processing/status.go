@@ -36,6 +36,7 @@ func (r ResourceSelector) String() string {
 	case OnAuthorizationPolicy:
 		return "AuthorizationPolicy"
 	default:
+                // If no Kind is resolved from the resource (e.g. subresource CRD is missing)
 		return "APIRule"
 	}
 }
