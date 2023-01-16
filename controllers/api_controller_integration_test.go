@@ -924,6 +924,13 @@ var _ = Describe("APIRule Controller", func() {
 					Expect(err).NotTo(HaveOccurred())
 					updatedApiRule.Spec.Rules = []gatewayv1beta1.Rule{oryJwtRule}
 					err = c.Update(context.TODO(), &updatedApiRule)
+					if err != nil {
+						oldApiRule := gatewayv1beta1.APIRule{}
+						c.Get(context.TODO(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &oldApiRule)
+						j, _ := json.Marshal(updatedApiRule)
+						ja, _ := json.Marshal(oldApiRule)
+						panic(string(j) + "\n" + string(ja))
+					}
 					Expect(err).NotTo(HaveOccurred())
 
 					updateApiRuleReq := reconcile.Request{NamespacedName: types.NamespacedName{Name: apiRuleName, Namespace: testNamespace}}
