@@ -44,12 +44,16 @@ endif
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
 ENVTEST_K8S_VERSION = 1.24.1
 
+GOCMD=go
+
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
-ifeq (,$(shell go env GOBIN))
-GOBIN=$(shell go env GOPATH)/bin
+ifeq (,$(shell $(GOCMD) env GOBIN))
+GOBIN=$(shell $(GOCMD) env GOPATH)/bin
 else
-GOBIN=$(shell go env GOBIN)
+GOBIN=$(shell $(GOCMD) env GOBIN)
 endif
+
+GOTEST=$(GOCMD) test
 
 # Setting SHELL to bash allows bash commands to be executed by recipes.
 # This is a requirement for 'setup-envtest.sh' in the test target.
@@ -108,6 +112,13 @@ test: manifests generate fmt vet envtest ## Generate manifests and run tests.
 .PHONY: test-for-release
 test-for-release: envtest ## Run tests.
 	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" go test ./... -coverprofile cover.out
+
+.PHONY: test-integration
+test-integration: generate fmt vet envtest ## Run integration tests.
+	. ./tests/integration/env_vars.sh
+	./tests/integration/prepare_local.sh
+
+	$(GOTEST) ./tests/integration -v -race -run TestIstioJwt .
 
 ##@ Build
 
@@ -231,28 +242,28 @@ $(KUSTOMIZE): $(LOCALBIN)
 .PHONY: controller-gen
 controller-gen: $(CONTROLLER_GEN) ## Download controller-gen locally if necessary.
 $(CONTROLLER_GEN): $(LOCALBIN)
-	GOBIN=$(LOCALBIN) go install sigs.k8s.io/controller-tools/cmd/controller-gen@$(CONTROLLER_TOOLS_VERSION)
+	GOBIN=$(LOCALBIN) $(GOCMD) install sigs.k8s.io/controller-tools/cmd/controller-gen@$(CONTROLLER_TOOLS_VERSION)
 
 .PHONY: envtest
 envtest: $(ENVTEST) ## Download envtest-setup locally if necessary.
 $(ENVTEST): $(LOCALBIN)
-	GOBIN=$(LOCALBIN) go install sigs.k8s.io/controller-runtime/tools/setup-envtest@latest
+	GOBIN=$(LOCALBIN) $(GOCMD) install sigs.k8s.io/controller-runtime/tools/setup-envtest@latest
 
 .PHONY: client-gen
 client-gen: ## Download client-gen
-	GOBIN=$(LOCALBIN) go install k8s.io/code-generator/cmd/client-gen@v0.23.4
+	GOBIN=$(LOCALBIN) $(GOCMD) install k8s.io/code-generator/cmd/client-gen@v0.23.4
 
 .PHONY: informer-gen
 informer-gen: ## Download informer-gen
-	GOBIN=$(LOCALBIN) go install k8s.io/code-generator/cmd/informer-gen@v0.23.4
+	GOBIN=$(LOCALBIN) $(GOCMD) install k8s.io/code-generator/cmd/informer-gen@v0.23.4
 
 .PHONY: lister-gen
 lister-gen: ## Download lister-gen
-	GOBIN=$(LOCALBIN) go install k8s.io/code-generator/cmd/lister-gen@v0.23.4
+	GOBIN=$(LOCALBIN) $(GOCMD) install k8s.io/code-generator/cmd/lister-gen@v0.23.4
 
 .PHONY: lint
 lint: ## Run golangci-lint against code.
-	GOBIN=$(LOCALBIN) go install github.com/golangci/golangci-lint/cmd/golangci-lint@$(GOLANG_CI_LINT_VERSION)
+	GOBIN=$(LOCALBIN) $(GOCMD) install github.com/golangci/golangci-lint/cmd/golangci-lint@$(GOLANG_CI_LINT_VERSION)
 	$(LOCALBIN)/golangci-lint run
 
 .PHONY: archive
