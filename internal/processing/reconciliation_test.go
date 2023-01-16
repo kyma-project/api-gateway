@@ -244,13 +244,6 @@ func testLogger() *logr.Logger {
 	return &logger
 }
 
-type handler int
-
-const (
-	istio handler = iota
-	ory
-)
-
 func mockStatusBase(statusCode gatewayv1beta1.StatusCode) processing.ReconciliationStatus {
 	return oryHandler.StatusBase(statusCode)
 }
