@@ -2,6 +2,7 @@ package v1alpha1
 
 import (
 	"encoding/json"
+	"errors"
 	"log"
 
 	"github.com/kyma-incubator/api-gateway/api/v1beta1"
@@ -10,7 +11,10 @@ import (
 
 // ConvertTo converts this ApiRule to the Hub version (v1beta1).
 func (src *APIRule) ConvertTo(dstRaw conversion.Hub) error {
-	dst := dstRaw.(*v1beta1.APIRule)
+	dst, ok := dstRaw.(*v1beta1.APIRule)
+	if !ok {
+		return errors.New("Couldn't get v1alpha1 spec")
+	}
 
 	specData, err := json.Marshal(src.Spec)
 	if err != nil {
@@ -47,7 +51,10 @@ func (src *APIRule) ConvertTo(dstRaw conversion.Hub) error {
 
 // ConvertFrom converts this ApiRule from the Hub version (v1beta1).
 func (dst *APIRule) ConvertFrom(srcRaw conversion.Hub) error {
-	src := srcRaw.(*v1beta1.APIRule)
+	src, ok := srcRaw.(*v1beta1.APIRule)
+	if !ok {
+		return errors.New("Couldn't get v1beta1 spec")
+	}
 	specData, err := json.Marshal(src.Spec)
 	if err != nil {
 		return err
