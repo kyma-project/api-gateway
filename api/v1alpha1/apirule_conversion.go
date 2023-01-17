@@ -6,6 +6,7 @@ import (
 	"log"
 
 	"github.com/kyma-incubator/api-gateway/api/v1beta1"
+	"github.com/tidwall/pretty"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
 )
 
@@ -15,6 +16,11 @@ func (src *APIRule) ConvertTo(dstRaw conversion.Hub) error {
 	if !ok {
 		return errors.New("Couldn't get v1alpha1 spec")
 	}
+
+	jsons, _ := json.Marshal(src)
+	log.Default().Println("ConvertTo")
+	log.Default().Println(string(pretty.Pretty(jsons)))
+	log.Default().Println()
 
 	specData, err := json.Marshal(src.Spec)
 	if err != nil {
@@ -40,7 +46,7 @@ func (src *APIRule) ConvertTo(dstRaw conversion.Hub) error {
 	host := ""
 	if src.Spec.Service == nil || src.Spec.Service.Host == nil {
 		log.Default().Printf("conversion from v1alpha1 to v1beta1 wasn't possible as service or service.host was nil for %s", src.Name)
-		
+
 		dst.Spec.Host = &host
 		return nil
 	}
@@ -53,6 +59,11 @@ func (src *APIRule) ConvertTo(dstRaw conversion.Hub) error {
 
 // ConvertFrom converts this ApiRule from the Hub version (v1beta1).
 func (dst *APIRule) ConvertFrom(srcRaw conversion.Hub) error {
+	jsons, _ := json.Marshal(srcRaw)
+	log.Default().Println("ConvertTo")
+	log.Default().Println(string(pretty.Pretty(jsons)))
+	log.Default().Println()
+
 	src, ok := srcRaw.(*v1beta1.APIRule)
 	if !ok {
 		return errors.New("Couldn't get v1beta1 spec")
