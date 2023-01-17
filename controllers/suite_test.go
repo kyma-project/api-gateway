@@ -38,6 +38,14 @@ import (
 	// +kubebuilder:scaffold:imports
 )
 
+const (
+	timeout                     = time.Second * 5
+	testNamespace               = "atgo-system"
+	testGatewayURL              = "kyma-system/kyma-gateway"
+	testOathkeeperSvcURL        = "oathkeeper.kyma-system.svc.cluster.local"
+	testOathkeeperPort   uint32 = 1234
+)
+
 var (
 	cfg       *rest.Config
 	k8sClient client.Client

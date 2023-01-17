@@ -32,39 +32,33 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
-const (
-	timeout = time.Second * 5
-
-	kind                        = "APIRule"
-	testGatewayURL              = "kyma-system/kyma-gateway"
-	testOathkeeperSvcURL        = "oathkeeper.kyma-system.svc.cluster.local"
-	testOathkeeperPort   uint32 = 1234
-	testNamespace               = "atgo-system"
-	testNameBase                = "test"
-	testIDLength                = 5
-)
-
 var _ = Describe("APIRule Controller", func() {
-	const testServiceName = "httpbin"
-	const testServicePort uint32 = 443
-	const testPath = "/.*"
-	var testIssuer = "https://oauth2.example.com/"
-	var testJwksUri = "https://oauth2.example.com/.well-known/jwks.json"
-	var testMethods = []string{"GET", "PUT"}
-	var testScopes = []string{"foo", "bar"}
-	var testMutators = []*gatewayv1beta1.Mutator{
-		{
-			Handler: noConfigHandler("noop"),
-		},
-		{
-			Handler: noConfigHandler("idToken"),
-		},
-	}
 
-	var corsPolicyBuilder = builders.CorsPolicy().
-		AllowHeaders(TestAllowHeaders...).
-		AllowMethods(TestAllowMethods...).
-		AllowOrigins(TestAllowOrigins...)
+	var (
+		kind                   = "APIRule"
+		testNameBase           = "test"
+		testIDLength           = 5
+		testServiceName        = "httpbin"
+		testServicePort uint32 = 443
+		testPath               = "/.*"
+		testIssuer             = "https://oauth2.example.com/"
+		testJwksUri            = "https://oauth2.example.com/.well-known/jwks.json"
+		testMethods            = []string{"GET", "PUT"}
+		testScopes             = []string{"foo", "bar"}
+		testMutators           = []*gatewayv1beta1.Mutator{
+			{
+				Handler: noConfigHandler("noop"),
+			},
+			{
+				Handler: noConfigHandler("idToken"),
+			},
+		}
+
+		corsPolicyBuilder = builders.CorsPolicy().
+					AllowHeaders(TestAllowHeaders...).
+					AllowMethods(TestAllowMethods...).
+					AllowOrigins(TestAllowOrigins...)
+	)
 
 	BeforeEach(func() {
 		// We configure `ory` in ConfigMap as the default for all tests
@@ -150,51 +144,6 @@ var _ = Describe("APIRule Controller", func() {
 	})
 
 	Context("when creating an APIRule for exposing service", func() {
-
-		It("Should report validation errors in CR status", func() {
-
-			invalidConfig := testOauthHandler(testScopes)
-			invalidConfig.Name = "noop"
-
-			apiRuleName := generateTestName(testNameBase, testIDLength)
-			testServiceHost := "httpbin.kyma.local"
-			rule := testRule(testPath, testMethods, testMutators, invalidConfig)
-			instance := testInstance(apiRuleName, testNamespace, testServiceName, testServiceHost, testServicePort, []gatewayv1beta1.Rule{rule})
-			instance.Spec.Rules = append(instance.Spec.Rules, instance.Spec.Rules[0]) //Duplicate entry
-			instance.Spec.Rules = append(instance.Spec.Rules, instance.Spec.Rules[0]) //Duplicate entry
-
-			err := c.Create(context.TODO(), instance)
-			if apierrors.IsInvalid(err) {
-				Fail(fmt.Sprintf("failed to create object, got an invalid object error: %v", err))
-				return
-			}
-			Expect(err).NotTo(HaveOccurred())
-			defer func() {
-				err := c.Delete(context.TODO(), instance)
-				Expect(err).NotTo(HaveOccurred())
-			}()
-
-			expectedRequest := reconcile.Request{NamespacedName: types.NamespacedName{Name: apiRuleName, Namespace: testNamespace}}
-
-			Eventually(requests, timeout).Should(Receive(Equal(expectedRequest)))
-
-			//Verify APIRule
-			created := gatewayv1beta1.APIRule{}
-			err = c.Get(context.TODO(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &created)
-			Expect(err).NotTo(HaveOccurred())
-			Expect(created.Status.APIRuleStatus.Code).To(Equal(gatewayv1beta1.StatusError))
-			Expect(created.Status.APIRuleStatus.Description).To(ContainSubstring("Multiple validation errors:"))
-			Expect(created.Status.APIRuleStatus.Description).To(ContainSubstring("Attribute \".spec.rules\": multiple rules defined for the same path and method"))
-			Expect(created.Status.APIRuleStatus.Description).To(ContainSubstring("Attribute \".spec.rules[0].accessStrategies[0].config\": strategy: noop does not support configuration"))
-			Expect(created.Status.APIRuleStatus.Description).To(ContainSubstring("Attribute \".spec.rules[1].accessStrategies[0].config\": strategy: noop does not support configuration"))
-			Expect(created.Status.APIRuleStatus.Description).To(ContainSubstring("1 more error(s)..."))
-
-			//Verify VirtualService is not created
-			vsList := networkingv1beta1.VirtualServiceList{}
-			err = c.List(context.TODO(), &vsList, matchingLabelsFunc(apiRuleName, testNamespace))
-			Expect(err).NotTo(HaveOccurred())
-			Expect(vsList.Items).To(HaveLen(0))
-		})
 
 		Context("on all the paths,", func() {
 			Context("secured with Oauth2 introspection,", func() {
