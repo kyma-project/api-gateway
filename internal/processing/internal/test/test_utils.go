@@ -134,12 +134,12 @@ func GetAPIRuleFor(rules []apirulev1beta1.Rule) *apirulev1beta1.APIRule {
 			Kind:       ApiKind,
 		},
 		Spec: apirulev1beta1.APIRuleSpec{
-			Gateway: &ApiGateway,
-			Service: &apirulev1beta1.Service{
+			Gateway: ApiGateway,
+			Service: apirulev1beta1.Service{
 				Name: &ServiceName,
 				Port: &ServicePort,
 			},
-			Host:  &ServiceHost,
+			Host:  ServiceHost,
 			Rules: rules,
 		},
 	}

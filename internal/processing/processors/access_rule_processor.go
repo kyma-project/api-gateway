@@ -130,7 +130,7 @@ func GenerateAccessRule(api *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rule, a
 func GenerateAccessRuleSpec(api *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rule, accessStrategies []*gatewayv1beta1.Authenticator, defaultDomainName string) *rulev1alpha1.RuleSpec {
 	accessRuleSpec := builders.AccessRuleSpec().
 		Match(builders.Match().
-			URL(fmt.Sprintf("<http|https>://%s<%s>", helpers.GetHostWithDomain(*api.Spec.Host, defaultDomainName), rule.Path)).
+			URL(fmt.Sprintf("<http|https>://%s<%s>", helpers.GetHostWithDomain(api.Spec.Host, defaultDomainName), rule.Path)).
 			Methods(rule.Methods)).
 		Authorizer(builders.Authorizer().Handler(builders.Handler().
 			Name("allow"))).

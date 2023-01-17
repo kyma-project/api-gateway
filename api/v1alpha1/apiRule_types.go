@@ -35,10 +35,10 @@ const (
 // APIRuleSpec defines the desired state of ApiRule
 type APIRuleSpec struct {
 	// Definition of the service to expose
-	Service *Service `json:"service,omitempty"`
+	Service Service `json:"service,omitempty"`
 	// Gateway to be used
 	// +kubebuilder:validation:Pattern=`^[0-9a-z-_]+(\/[0-9a-z-_]+|(\.[0-9a-z-_]+)*)$`
-	Gateway *string `json:"gateway"`
+	Gateway string `json:"gateway"`
 	//Rules represents collection of Rule to apply
 	// +kubebuilder:validation:MinItems=1
 	Rules []Rule `json:"rules"`

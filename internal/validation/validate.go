@@ -43,16 +43,12 @@ type Failure struct {
 func (v *APIRule) Validate(api *gatewayv1beta1.APIRule, vsList networkingv1beta1.VirtualServiceList) []Failure {
 	res := []Failure{}
 
-	//Validate service on path level if it is created
-	if api.Spec.Service != nil {
-		res = append(res, v.validateService(".spec.service", api)...)
-	}
 	//Validate Host
 	res = append(res, v.validateHost(".spec.host", vsList, api)...)
 	//Validate Gateway
 	res = append(res, v.validateGateway(".spec.gateway", api.Spec.Gateway)...)
 	//Validate Rules
-	res = append(res, v.validateRules(".spec.rules", api.Spec.Service == nil, api)...)
+	res = append(res, v.validateRules(".spec.rules", false, api)...)
 
 	return res
 }
@@ -77,16 +73,9 @@ func (v *APIRule) ValidateConfig(config *helpers.Config) []Failure {
 
 func (v *APIRule) validateHost(attributePath string, vsList networkingv1beta1.VirtualServiceList, api *gatewayv1beta1.APIRule) []Failure {
 	var problems []Failure
-	if api.Spec.Host == nil {
-		problems = append(problems, Failure{
-			AttributePath: attributePath,
-			Message:       "Host was nil",
-		})
-		return problems
-	}
 
-	host := *api.Spec.Host
-	if !helpers.HostIncludesDomain(*api.Spec.Host) {
+	host := api.Spec.Host
+	if !helpers.HostIncludesDomain(api.Spec.Host) {
 		if v.DefaultDomainName == "" {
 			problems = append(problems, Failure{
 				AttributePath: attributePath,
@@ -115,7 +104,7 @@ func (v *APIRule) validateHost(attributePath string, vsList networkingv1beta1.Vi
 	}
 
 	for _, blockedHost := range v.HostBlockList {
-		host := *api.Spec.Host
+		host := api.Spec.Host
 		if blockedHost == host {
 			subdomain := strings.Split(host, ".")[0]
 			problems = append(problems, Failure{
@@ -154,7 +143,7 @@ func (v *APIRule) validateService(attributePath string, api *gatewayv1beta1.APIR
 	return problems
 }
 
-func (v *APIRule) validateGateway(attributePath string, gateway *string) []Failure {
+func (v *APIRule) validateGateway(attributePath string, gateway string) []Failure {
 	return nil
 }
 

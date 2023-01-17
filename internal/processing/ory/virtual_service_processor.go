@@ -37,8 +37,8 @@ func (r virtualServiceCreator) Create(api *gatewayv1beta1.APIRule) *networkingv1
 	ownerRef := processing.GenerateOwnerRef(api)
 
 	vsSpecBuilder := builders.VirtualServiceSpec()
-	vsSpecBuilder.Host(helpers.GetHostWithDomain(*api.Spec.Host, r.defaultDomainName))
-	vsSpecBuilder.Gateway(*api.Spec.Gateway)
+	vsSpecBuilder.Host(helpers.GetHostWithDomain(api.Spec.Host, r.defaultDomainName))
+	vsSpecBuilder.Gateway(api.Spec.Gateway)
 	filteredRules := processing.FilterDuplicatePaths(api.Spec.Rules)
 
 	for _, rule := range filteredRules {
@@ -65,7 +65,7 @@ func (r virtualServiceCreator) Create(api *gatewayv1beta1.APIRule) *networkingv1
 			AllowMethods(r.corsConfig.AllowMethods...).
 			AllowHeaders(r.corsConfig.AllowHeaders...))
 		httpRouteBuilder.Headers(builders.Headers().
-			SetHostHeader(helpers.GetHostWithDomain(*api.Spec.Host, r.defaultDomainName)))
+			SetHostHeader(helpers.GetHostWithDomain(api.Spec.Host, r.defaultDomainName)))
 		vsSpecBuilder.HTTP(httpRouteBuilder)
 
 	}

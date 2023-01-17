@@ -38,13 +38,13 @@ type APIRuleSpec struct {
 	// +kubebuilder:validation:MinLength=3
 	// +kubebuilder:validation:MaxLength=256
 	// +kubebuilder:validation:Pattern=^([a-zA-Z0-9][a-zA-Z0-9-_]*\.)*[a-zA-Z0-9]*[a-zA-Z0-9-_]*[[a-zA-Z0-9]+$
-	Host *string `json:"host"`
+	Host string `json:"host"`
 	// Definition of the service to expose
 	// +optional
-	Service *Service `json:"service,omitempty"`
+	Service Service `json:"service,omitempty"`
 	// Gateway to be used
 	// +kubebuilder:validation:Pattern=`^[0-9a-z-_]+(\/[0-9a-z-_]+|(\.[0-9a-z-_]+)*)$`
-	Gateway *string `json:"gateway"`
+	Gateway string `json:"gateway"`
 	// Rules represents collection of Rule to apply
 	// +kubebuilder:validation:MinItems=1
 	Rules []Rule `json:"rules"`

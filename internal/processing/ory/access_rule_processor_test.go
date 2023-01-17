@@ -41,7 +41,7 @@ var _ = Describe("Access Rule Processor", func() {
 			overrideServiceNamespace := "testName-namespace"
 			overrideServicePort := uint32(8080)
 
-			apiRule.Spec.Service = &gatewayv1beta1.Service{
+			apiRule.Spec.Service = gatewayv1beta1.Service{
 				Name:      &overrideServiceName,
 				Namespace: &overrideServiceNamespace,
 				Port:      &overrideServicePort,
@@ -186,7 +186,7 @@ var _ = Describe("Access Rule Processor", func() {
 			rules := []gatewayv1beta1.Rule{allowRule}
 
 			apiRule := GetAPIRuleFor(rules)
-			apiRule.Spec.Host = &ServiceHostWithNoDomain
+			apiRule.Spec.Host = ServiceHostWithNoDomain
 			client := GetFakeClient()
 			processor := ory.NewAccessRuleProcessor(GetTestConfig())
 
