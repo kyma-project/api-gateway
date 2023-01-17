@@ -37,13 +37,15 @@ func (src *APIRule) ConvertTo(dstRaw conversion.Hub) error {
 	}
 
 	dst.ObjectMeta = src.ObjectMeta
-
+	host := ""
 	if src.Spec.Service == nil || src.Spec.Service.Host == nil {
 		log.Default().Printf("conversion from v1alpha1 to v1beta1 wasn't possible as service or service.host was nil for %s", src.Name)
+		
+		dst.Spec.Host = &host
 		return nil
 	}
 
-	host := *src.Spec.Service.Host
+	host = *src.Spec.Service.Host
 	dst.Spec.Host = &host
 
 	return nil
