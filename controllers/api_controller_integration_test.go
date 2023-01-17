@@ -35,17 +35,17 @@ import (
 var _ = Describe("APIRule Controller", func() {
 
 	var (
-		kind                   = "APIRule"
-		testNameBase           = "test"
-		testIDLength           = 5
-		testServiceName        = "httpbin"
-		testServicePort uint32 = 443
-		testPath               = "/.*"
-		testIssuer             = "https://oauth2.example.com/"
-		testJwksUri            = "https://oauth2.example.com/.well-known/jwks.json"
-		testMethods            = []string{"GET", "PUT"}
-		testScopes             = []string{"foo", "bar"}
-		testMutators           = []*gatewayv1beta1.Mutator{
+		kind                       = "APIRule"
+		testNameBase               = "test"
+		testIDLength               = 5
+		testServiceNameBase        = "httpbin"
+		testServicePort     uint32 = 443
+		testPath                   = "/.*"
+		testIssuer                 = "https://oauth2.example.com/"
+		testJwksUri                = "https://oauth2.example.com/.well-known/jwks.json"
+		testMethods                = []string{"GET", "PUT"}
+		testScopes                 = []string{"foo", "bar"}
+		testMutators               = []*gatewayv1beta1.Mutator{
 			{
 				Handler: noConfigHandler("noop"),
 			},
@@ -73,17 +73,18 @@ var _ = Describe("APIRule Controller", func() {
 			rule3 := testRule("/rule3", []string{"DELETE"}, testMutators, noConfigHandler("anonymous"))
 
 			apiRuleName := generateTestName(testNameBase, testIDLength)
-			testServiceHost := "httpbin5.kyma.local"
+			serviceName := generateTestName(testServiceNameBase, testIDLength)
+			serviceHost := fmt.Sprintf("%s.kyma.local", serviceName)
 
 			matchingLabels := matchingLabelsFunc(apiRuleName, testNamespace)
 
 			pathToURLFunc := func(path string) string {
-				return fmt.Sprintf("<http|https>://%s<%s>", testServiceHost, path)
+				return fmt.Sprintf("<http|https>://%s<%s>", serviceHost, path)
 			}
 
 			By("Create APIRule")
 
-			instance := testInstance(apiRuleName, testNamespace, testServiceName, testServiceHost, testServicePort, []gatewayv1beta1.Rule{rule1, rule2, rule3})
+			instance := testInstance(apiRuleName, testNamespace, serviceName, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule1, rule2, rule3})
 			err := c.Create(context.TODO(), instance)
 
 			if apierrors.IsInvalid(err) {
@@ -102,7 +103,7 @@ var _ = Describe("APIRule Controller", func() {
 
 			ruleList := getRuleList(matchingLabels)
 			verifyRuleList(ruleList, pathToURLFunc, rule1, rule2, rule3)
-			expectedUpstream := fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", testServiceName, testNamespace, testServicePort)
+			expectedUpstream := fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", serviceName, testNamespace, testServicePort)
 			//Verify All Rules point to original Service
 			for i := range ruleList {
 				r := ruleList[i]
@@ -115,7 +116,7 @@ var _ = Describe("APIRule Controller", func() {
 			Expect(err).NotTo(HaveOccurred())
 			rule4 := testRule("/rule4", []string{"POST"}, testMutators, noConfigHandler("cookie_session"))
 			existingInstance.Spec.Rules = []gatewayv1beta1.Rule{rule1, rule4}
-			newServiceName := testServiceName + "new"
+			newServiceName := serviceName + "new"
 			newServicePort := testServicePort + 3
 			existingInstance.Spec.Service.Name = &newServiceName
 			existingInstance.Spec.Service.Port = &newServicePort
@@ -144,15 +145,16 @@ var _ = Describe("APIRule Controller", func() {
 			Context("secured with Oauth2 introspection,", func() {
 				Context("in a happy-path scenario", func() {
 					It("should create a VirtualService and an AccessRule", func() {
-						cm := testConfigMap(helpers.JWT_HANDLER_ORY)
-						err := c.Update(context.TODO(), cm)
-						apiRuleName := generateTestName(testNameBase, testIDLength)
-						Expect(err).NotTo(HaveOccurred())
-						testServiceHost := "httpbin2.kyma.local"
-						rule := testRule(testPath, testMethods, testMutators, testOauthHandler(testScopes))
-						instance := testInstance(apiRuleName, testNamespace, testServiceName, testServiceHost, testServicePort, []gatewayv1beta1.Rule{rule})
+						setHandlerConfigMap(helpers.JWT_HANDLER_ORY)
 
-						err = c.Create(context.TODO(), instance)
+						apiRuleName := generateTestName(testNameBase, testIDLength)
+						serviceName := generateTestName(testServiceNameBase, testIDLength)
+						serviceHost := fmt.Sprintf("%s.kyma.local", serviceName)
+
+						rule := testRule(testPath, testMethods, testMutators, testOauthHandler(testScopes))
+						instance := testInstance(apiRuleName, testNamespace, serviceName, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule})
+
+						err := c.Create(context.TODO(), instance)
 						if apierrors.IsInvalid(err) {
 							Fail(fmt.Sprintf("failed to create object, got an invalid object error: %v", err))
 							return
@@ -183,19 +185,19 @@ var _ = Describe("APIRule Controller", func() {
 						verifyOwnerReference(vs.ObjectMeta, apiRuleName, gatewayv1beta1.GroupVersion.String(), kind)
 
 						expectedSpec := builders.VirtualServiceSpec().
-							Host(testServiceHost).
+							Host(serviceHost).
 							Gateway(testGatewayURL).
 							HTTP(builders.HTTPRoute().
 								Match(builders.MatchRequest().Uri().Regex(testPath)).
 								Route(builders.RouteDestination().Host(testOathkeeperSvcURL).Port(testOathkeeperPort)).
-								Headers(builders.Headers().SetHostHeader(testServiceHost)).
+								Headers(builders.Headers().SetHostHeader(serviceHost)).
 								CorsPolicy(corsPolicyBuilder))
 
 						gotSpec := *expectedSpec.Get()
 						Expect(*vs.Spec.DeepCopy()).To(Equal(*gotSpec.DeepCopy()))
 
 						//Verify Rule
-						expectedRuleMatchURL := fmt.Sprintf("<http|https>://%s<%s>", testServiceHost, testPath)
+						expectedRuleMatchURL := fmt.Sprintf("<http|https>://%s<%s>", serviceHost, testPath)
 
 						rlList := getRuleList(matchingLabels)
 						Expect(rlList).To(HaveLen(1))
@@ -210,12 +212,12 @@ var _ = Describe("APIRule Controller", func() {
 
 						//Spec.Upstream
 						Expect(rl.Spec.Upstream).NotTo(BeNil())
-						Expect(rl.Spec.Upstream.URL).To(Equal(fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", testServiceName, testNamespace, testServicePort)))
+						Expect(rl.Spec.Upstream.URL).To(Equal(fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", serviceName, testNamespace, testServicePort)))
 						Expect(rl.Spec.Upstream.StripPath).To(BeNil())
 						Expect(rl.Spec.Upstream.PreserveHost).To(BeNil())
 						//Spec.Match
 						Expect(rl.Spec.Match).NotTo(BeNil())
-						Expect(rl.Spec.Match.URL).To(Equal(fmt.Sprintf("<http|https>://%s<%s>", testServiceHost, testPath)))
+						Expect(rl.Spec.Match.URL).To(Equal(fmt.Sprintf("<http|https>://%s<%s>", serviceHost, testPath)))
 						Expect(rl.Spec.Match.Methods).To(Equal(testMethods))
 						//Spec.Authenticators
 						Expect(rl.Spec.Authenticators).To(HaveLen(1))
@@ -248,10 +250,12 @@ var _ = Describe("APIRule Controller", func() {
 					Context("in a happy-path scenario", func() {
 						It("should create a VirtualService and an AccessRules", func() {
 							apiRuleName := generateTestName(testNameBase, testIDLength)
-							testServiceHost := "httpbin3.kyma.local"
+							serviceName := generateTestName(testServiceNameBase, testIDLength)
+							serviceHost := fmt.Sprintf("%s.kyma.local", serviceName)
+
 							rule1 := testRule("/img", []string{"GET"}, testMutators, testOryJWTHandler(testIssuer, testScopes))
 							rule2 := testRule("/headers", []string{"GET"}, testMutators, testOryJWTHandler(testIssuer, testScopes))
-							instance := testInstance(apiRuleName, testNamespace, testServiceName, testServiceHost, testServicePort, []gatewayv1beta1.Rule{rule1, rule2})
+							instance := testInstance(apiRuleName, testNamespace, serviceName, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule1, rule2})
 
 							err := c.Create(context.TODO(), instance)
 							if apierrors.IsInvalid(err) {
@@ -281,23 +285,23 @@ var _ = Describe("APIRule Controller", func() {
 							verifyOwnerReference(vs.ObjectMeta, apiRuleName, gatewayv1beta1.GroupVersion.String(), kind)
 
 							expectedSpec := builders.VirtualServiceSpec().
-								Host(testServiceHost).
+								Host(serviceHost).
 								Gateway(testGatewayURL).
 								HTTP(builders.HTTPRoute().
 									Match(builders.MatchRequest().Uri().Regex("/img")).
 									Route(builders.RouteDestination().Host(testOathkeeperSvcURL).Port(testOathkeeperPort)).
-									Headers(builders.Headers().SetHostHeader(testServiceHost)).
+									Headers(builders.Headers().SetHostHeader(serviceHost)).
 									CorsPolicy(corsPolicyBuilder)).
 								HTTP(builders.HTTPRoute().
 									Match(builders.MatchRequest().Uri().Regex("/headers")).
 									Route(builders.RouteDestination().Host(testOathkeeperSvcURL).Port(testOathkeeperPort)).
-									Headers(builders.Headers().SetHostHeader(testServiceHost)).
+									Headers(builders.Headers().SetHostHeader(serviceHost)).
 									CorsPolicy(corsPolicyBuilder))
 							gotSpec := *expectedSpec.Get()
 							Expect(*vs.Spec.DeepCopy()).To(Equal(*gotSpec.DeepCopy()))
 
 							//Verify Rule1
-							expectedRuleMatchURL := fmt.Sprintf("<http|https>://%s<%s>", testServiceHost, "/img")
+							expectedRuleMatchURL := fmt.Sprintf("<http|https>://%s<%s>", serviceHost, "/img")
 
 							rlList := getRuleList(matchingLabels)
 
@@ -316,7 +320,7 @@ var _ = Describe("APIRule Controller", func() {
 
 							//Spec.Upstream
 							Expect(rl.Spec.Upstream).NotTo(BeNil())
-							Expect(rl.Spec.Upstream.URL).To(Equal(fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", testServiceName, testNamespace, testServicePort)))
+							Expect(rl.Spec.Upstream.URL).To(Equal(fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", serviceName, testNamespace, testServicePort)))
 							Expect(rl.Spec.Upstream.StripPath).To(BeNil())
 							Expect(rl.Spec.Upstream.PreserveHost).To(BeNil())
 							//Spec.Match
@@ -349,7 +353,7 @@ var _ = Describe("APIRule Controller", func() {
 							Expect(rl.Spec.Mutators[1].Handler.Name).To(Equal(testMutators[1].Name))
 
 							//Verify Rule2
-							expectedRule2MatchURL := fmt.Sprintf("<http|https>://%s<%s>", testServiceHost, "/headers")
+							expectedRule2MatchURL := fmt.Sprintf("<http|https>://%s<%s>", serviceHost, "/headers")
 							rl2 := rules[expectedRule2MatchURL]
 
 							//Meta
@@ -357,7 +361,7 @@ var _ = Describe("APIRule Controller", func() {
 
 							//Spec.Upstream
 							Expect(rl2.Spec.Upstream).NotTo(BeNil())
-							Expect(rl2.Spec.Upstream.URL).To(Equal(fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", testServiceName, testNamespace, testServicePort)))
+							Expect(rl2.Spec.Upstream.URL).To(Equal(fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", serviceName, testNamespace, testServicePort)))
 							Expect(rl2.Spec.Upstream.StripPath).To(BeNil())
 							Expect(rl2.Spec.Upstream.PreserveHost).To(BeNil())
 							//Spec.Match
@@ -407,11 +411,12 @@ var _ = Describe("APIRule Controller", func() {
 							Eventually(requests, timeout).Should(Receive(Equal(expectedRequest)))
 
 							apiRuleName := generateTestName(testNameBase, testIDLength)
-							testServiceHost := "httpbin-istio-jwt-happy-base.kyma.local"
+							serviceName := testServiceNameBase
+							serviceHost := "httpbin-istio-jwt-happy-base.kyma.local"
 
 							rule1 := testRule("/img", []string{"GET"}, nil, testIstioJWTHandler(testIssuer, testJwksUri))
 							rule2 := testRule("/headers", []string{"GET"}, nil, testIstioJWTHandler(testIssuer, testJwksUri))
-							instance := testInstance(apiRuleName, testNamespace, testServiceName, testServiceHost, testServicePort, []gatewayv1beta1.Rule{rule1, rule2})
+							instance := testInstance(apiRuleName, testNamespace, serviceName, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule1, rule2})
 
 							err = c.Create(context.TODO(), instance)
 							if apierrors.IsInvalid(err) {
@@ -439,17 +444,17 @@ var _ = Describe("APIRule Controller", func() {
 							verifyOwnerReference(vs.ObjectMeta, apiRuleName, gatewayv1beta1.GroupVersion.String(), kind)
 
 							expectedSpec := builders.VirtualServiceSpec().
-								Host(testServiceHost).
+								Host(serviceHost).
 								Gateway(testGatewayURL).
 								HTTP(builders.HTTPRoute().
 									Match(builders.MatchRequest().Uri().Regex("/img")).
-									Route(builders.RouteDestination().Host(fmt.Sprintf("%s.%s.svc.cluster.local", testServiceName, testNamespace)).Port(testServicePort)).
-									Headers(builders.Headers().SetHostHeader(testServiceHost)).
+									Route(builders.RouteDestination().Host(fmt.Sprintf("%s.%s.svc.cluster.local", serviceName, testNamespace)).Port(testServicePort)).
+									Headers(builders.Headers().SetHostHeader(serviceHost)).
 									CorsPolicy(corsPolicyBuilder)).
 								HTTP(builders.HTTPRoute().
 									Match(builders.MatchRequest().Uri().Regex("/headers")).
-									Route(builders.RouteDestination().Host(fmt.Sprintf("%s.%s.svc.cluster.local", testServiceName, testNamespace)).Port(testServicePort)).
-									Headers(builders.Headers().SetHostHeader(testServiceHost)).
+									Route(builders.RouteDestination().Host(fmt.Sprintf("%s.%s.svc.cluster.local", serviceName, testNamespace)).Port(testServicePort)).
+									Headers(builders.Headers().SetHostHeader(serviceHost)).
 									CorsPolicy(corsPolicyBuilder))
 							gotSpec := *expectedSpec.Get()
 							Expect(*vs.Spec.DeepCopy()).To(Equal(*gotSpec.DeepCopy()))
@@ -463,7 +468,7 @@ var _ = Describe("APIRule Controller", func() {
 
 							verifyOwnerReference(ra.ObjectMeta, apiRuleName, gatewayv1beta1.GroupVersion.String(), kind)
 
-							Expect(ra.Spec.Selector.MatchLabels).To(BeEquivalentTo(map[string]string{"app": testServiceName}))
+							Expect(ra.Spec.Selector.MatchLabels).To(BeEquivalentTo(map[string]string{"app": serviceName}))
 							Expect(ra.Spec.JwtRules[0].Issuer).To(Equal(testIssuer))
 							Expect(ra.Spec.JwtRules[0].JwksUri).To(Equal(testJwksUri))
 
@@ -489,7 +494,7 @@ var _ = Describe("APIRule Controller", func() {
 
 								verifyOwnerReference(ap.ObjectMeta, apiRuleName, gatewayv1beta1.GroupVersion.String(), kind)
 
-								Expect(ap.Spec.Selector.MatchLabels).To(BeEquivalentTo(map[string]string{"app": testServiceName}))
+								Expect(ap.Spec.Selector.MatchLabels).To(BeEquivalentTo(map[string]string{"app": serviceName}))
 								Expect(ap.Spec.Rules[0].From[0].Source.RequestPrincipals[0]).To(Equal("*"))
 								Expect(ap.Spec.Rules[0].To[0].Operation.Paths[0]).To(Equal(operationPath))
 								Expect(ap.Spec.Rules[0].To[0].Operation.Methods).To(BeEquivalentTo([]string{"GET"}))
@@ -516,8 +521,10 @@ var _ = Describe("APIRule Controller", func() {
 						rule4 := testRule("/favicon", []string{"GET"}, nil, noConfigHandler("allow"))
 
 						apiRuleName := generateTestName(testNameBase, testIDLength)
-						testServiceHost := "httpbin4.kyma.local"
-						instance := testInstance(apiRuleName, testNamespace, testServiceName, testServiceHost, testServicePort, []gatewayv1beta1.Rule{rule1, rule2, rule3, rule4})
+						serviceName := testServiceNameBase
+						serviceHost := "httpbin4.kyma.local"
+
+						instance := testInstance(apiRuleName, testNamespace, serviceName, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule1, rule2, rule3, rule4})
 
 						err := c.Create(context.TODO(), instance)
 						if apierrors.IsInvalid(err) {
@@ -546,27 +553,27 @@ var _ = Describe("APIRule Controller", func() {
 						verifyOwnerReference(vs.ObjectMeta, apiRuleName, gatewayv1beta1.GroupVersion.String(), kind)
 
 						expectedSpec := builders.VirtualServiceSpec().
-							Host(testServiceHost).
+							Host(serviceHost).
 							Gateway(testGatewayURL).
 							HTTP(builders.HTTPRoute().
 								Match(builders.MatchRequest().Uri().Regex("/img")).
 								Route(builders.RouteDestination().Host(testOathkeeperSvcURL).Port(testOathkeeperPort)).
-								Headers(builders.Headers().SetHostHeader(testServiceHost)).
+								Headers(builders.Headers().SetHostHeader(serviceHost)).
 								CorsPolicy(corsPolicyBuilder)).
 							HTTP(builders.HTTPRoute().
 								Match(builders.MatchRequest().Uri().Regex("/headers")).
 								Route(builders.RouteDestination().Host(testOathkeeperSvcURL).Port(testOathkeeperPort)).
-								Headers(builders.Headers().SetHostHeader(testServiceHost)).
+								Headers(builders.Headers().SetHostHeader(serviceHost)).
 								CorsPolicy(corsPolicyBuilder)).
 							HTTP(builders.HTTPRoute().
 								Match(builders.MatchRequest().Uri().Regex("/status")).
 								Route(builders.RouteDestination().Host(testOathkeeperSvcURL).Port(testOathkeeperPort)).
-								Headers(builders.Headers().SetHostHeader(testServiceHost)).
+								Headers(builders.Headers().SetHostHeader(serviceHost)).
 								CorsPolicy(corsPolicyBuilder)).
 							HTTP(builders.HTTPRoute().
 								Match(builders.MatchRequest().Uri().Regex("/favicon")).
 								Route(builders.RouteDestination().Host("httpbin.atgo-system.svc.cluster.local").Port(443)). // "allow", no oathkeeper rule!
-								Headers(builders.Headers().SetHostHeader(testServiceHost)).
+								Headers(builders.Headers().SetHostHeader(serviceHost)).
 								CorsPolicy(corsPolicyBuilder))
 
 						gotSpec := *expectedSpec.Get()
@@ -582,7 +589,7 @@ var _ = Describe("APIRule Controller", func() {
 							{path: "headers", handler: "oauth2_introspection", config: oauthHandler.Config.Raw},
 							{path: "status", handler: "noop", config: nil},
 						} {
-							expectedRuleMatchURL := fmt.Sprintf("<http|https>://%s</%s>", testServiceHost, tc.path)
+							expectedRuleMatchURL := fmt.Sprintf("<http|https>://%s</%s>", serviceHost, tc.path)
 
 							rlList := getRuleList(matchingLabels)
 							Expect(rlList).To(HaveLen(3))
@@ -600,7 +607,7 @@ var _ = Describe("APIRule Controller", func() {
 
 							//Spec.Upstream
 							Expect(rl.Spec.Upstream).NotTo(BeNil())
-							Expect(rl.Spec.Upstream.URL).To(Equal(fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", testServiceName, testNamespace, testServicePort)))
+							Expect(rl.Spec.Upstream.URL).To(Equal(fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", serviceName, testNamespace, testServicePort)))
 							Expect(rl.Spec.Upstream.StripPath).To(BeNil())
 							Expect(rl.Spec.Upstream.PreserveHost).To(BeNil())
 
@@ -634,7 +641,7 @@ var _ = Describe("APIRule Controller", func() {
 						}
 
 						//make sure no rule for "/favicon" path has been created
-						name := fmt.Sprintf("%s-%s-3", apiRuleName, testServiceName)
+						name := fmt.Sprintf("%s-%s-3", apiRuleName, serviceName)
 						Expect(c.Get(context.TODO(), client.ObjectKey{Name: name, Namespace: testNamespace}, &rulev1alpha1.Rule{})).To(HaveOccurred())
 					})
 				})
@@ -656,7 +663,7 @@ var _ = Describe("APIRule Controller", func() {
 					testServiceHost := fmt.Sprintf("httpbin-%s.kyma.local", apiRuleName)
 
 					rule := testRule("/img", []string{"GET"}, nil, testOryJWTHandler(testIssuer, testScopes))
-					instance := testInstance(apiRuleName, testNamespace, testServiceName, testServiceHost, testServicePort, []gatewayv1beta1.Rule{rule})
+					instance := testInstance(apiRuleName, testNamespace, testServiceNameBase, testServiceHost, testServicePort, []gatewayv1beta1.Rule{rule})
 
 					By("Create ApiRule with Rule using JWT handler")
 					err = c.Create(context.TODO(), instance)
@@ -705,7 +712,7 @@ var _ = Describe("APIRule Controller", func() {
 					testServiceHost := fmt.Sprintf("httpbin-%s.kyma.local", apiRuleName)
 
 					rule := testRule("/img", []string{"GET"}, nil, testOryJWTHandler(testIssuer, testScopes))
-					apiRule := testInstance(apiRuleName, testNamespace, testServiceName, testServiceHost, testServicePort, []gatewayv1beta1.Rule{rule})
+					apiRule := testInstance(apiRuleName, testNamespace, testServiceNameBase, testServiceHost, testServicePort, []gatewayv1beta1.Rule{rule})
 
 					By("Create ApiRule with Rule using JWT handler")
 					err = c.Create(context.TODO(), apiRule)
@@ -781,7 +788,7 @@ var _ = Describe("APIRule Controller", func() {
 					testServiceHost := fmt.Sprintf("httpbin-%s.kyma.local", apiRuleName)
 
 					rule := testRule("/img", []string{"GET"}, nil, testIstioJWTHandler(testIssuer, testJwksUri))
-					instance := testInstance(apiRuleName, testNamespace, testServiceName, testServiceHost, testServicePort, []gatewayv1beta1.Rule{rule})
+					instance := testInstance(apiRuleName, testNamespace, testServiceNameBase, testServiceHost, testServicePort, []gatewayv1beta1.Rule{rule})
 
 					By("Create ApiRule with Rule using JWT handler")
 					err = c.Create(context.TODO(), instance)
@@ -839,7 +846,7 @@ var _ = Describe("APIRule Controller", func() {
 					testServiceHost := fmt.Sprintf("httpbin-%s.kyma.local", apiRuleName)
 
 					rule := testRule("/img", []string{"GET"}, nil, testIstioJWTHandler(testIssuer, testJwksUri))
-					apiRule := testInstance(apiRuleName, testNamespace, testServiceName, testServiceHost, testServicePort, []gatewayv1beta1.Rule{rule})
+					apiRule := testInstance(apiRuleName, testNamespace, testServiceNameBase, testServiceHost, testServicePort, []gatewayv1beta1.Rule{rule})
 
 					By("Create ApiRule with Rule using JWT handler")
 					err = c.Create(context.TODO(), apiRule)
