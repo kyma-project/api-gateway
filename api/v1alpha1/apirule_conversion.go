@@ -60,7 +60,7 @@ func (src *APIRule) ConvertTo(dstRaw conversion.Hub) error {
 // ConvertFrom converts this ApiRule from the Hub version (v1beta1).
 func (dst *APIRule) ConvertFrom(srcRaw conversion.Hub) error {
 	jsons, _ := json.Marshal(srcRaw)
-	log.Default().Println("ConvertTo")
+	log.Default().Println("ConvertFrom")
 	log.Default().Println(string(pretty.Pretty(jsons)))
 	log.Default().Println()
 
