@@ -62,12 +62,7 @@ var _ = Describe("APIRule Controller", func() {
 
 	BeforeEach(func() {
 		// We configure `ory` in ConfigMap as the default for all tests
-		cm := testConfigMap(helpers.JWT_HANDLER_ORY)
-		err := c.Update(context.TODO(), cm)
-		if apierrors.IsInvalid(err) {
-			Fail(fmt.Sprintf("failed to update configmap, got an invalid object error: %v", err))
-		}
-		Expect(err).NotTo(HaveOccurred())
+		setHandlerConfigMap(helpers.JWT_HANDLER_ORY)
 	})
 
 	Context("when updating the APIRule with multiple paths", func() {
@@ -149,7 +144,7 @@ var _ = Describe("APIRule Controller", func() {
 			Context("secured with Oauth2 introspection,", func() {
 				Context("in a happy-path scenario", func() {
 					It("should create a VirtualService and an AccessRule", func() {
-						cm := testConfigMap("ory")
+						cm := testConfigMap(helpers.JWT_HANDLER_ORY)
 						err := c.Update(context.TODO(), cm)
 						apiRuleName := generateTestName(testNameBase, testIDLength)
 						Expect(err).NotTo(HaveOccurred())
@@ -400,7 +395,7 @@ var _ = Describe("APIRule Controller", func() {
 				Context("with Istio as JWT handler,", func() {
 					Context("in a happy-path scenario", func() {
 						It("should create a VirtualService, a RequestAuthentication and AuthorizationPolicies", func() {
-							cm := testConfigMap("istio")
+							cm := testConfigMap(helpers.JWT_HANDLER_ISTIO)
 							err := c.Update(context.TODO(), cm)
 
 							if apierrors.IsInvalid(err) {
@@ -653,7 +648,7 @@ var _ = Describe("APIRule Controller", func() {
 				It("Should have validation errors for APiRule JWT handler configuration and rule is not deleted", func() {
 					// given
 					By("Setting JWT handler config map to ory")
-					cm := testConfigMap("ory")
+					cm := testConfigMap(helpers.JWT_HANDLER_ORY)
 					err := c.Update(context.TODO(), cm)
 					Expect(err).NotTo(HaveOccurred())
 
@@ -675,7 +670,7 @@ var _ = Describe("APIRule Controller", func() {
 					Eventually(requests, timeout).Should(Receive(Equal(initialStateReq)))
 
 					By("Updating JWT handler config map to istio")
-					cm = testConfigMap("istio")
+					cm = testConfigMap(helpers.JWT_HANDLER_ISTIO)
 					err = c.Update(context.TODO(), cm)
 					Expect(err).NotTo(HaveOccurred())
 
@@ -702,7 +697,7 @@ var _ = Describe("APIRule Controller", func() {
 				It("Should create AP and RA and delete JWT Access Rule when ApiRule JWT handler configuration was updated to have valid config for istio", func() {
 					// given
 					By("Setting JWT handler config map to ory")
-					cm := testConfigMap("ory")
+					cm := testConfigMap(helpers.JWT_HANDLER_ORY)
 					err := c.Update(context.TODO(), cm)
 					Expect(err).NotTo(HaveOccurred())
 
@@ -724,7 +719,7 @@ var _ = Describe("APIRule Controller", func() {
 					Eventually(requests, timeout).Should(Receive(Equal(initialStateReq)))
 
 					By("Updating JWT handler config map to istio")
-					cm = testConfigMap("istio")
+					cm = testConfigMap(helpers.JWT_HANDLER_ISTIO)
 					err = c.Update(context.TODO(), cm)
 					Expect(err).NotTo(HaveOccurred())
 
@@ -775,7 +770,7 @@ var _ = Describe("APIRule Controller", func() {
 				It("Should have validation errors for APiRule JWT handler configuration and resources are not deleted", func() {
 					// given
 					By("Setting JWT handler config map to istio")
-					cm := testConfigMap("istio")
+					cm := testConfigMap(helpers.JWT_HANDLER_ISTIO)
 					err := c.Update(context.TODO(), cm)
 					Expect(err).NotTo(HaveOccurred())
 
@@ -800,7 +795,7 @@ var _ = Describe("APIRule Controller", func() {
 					Eventually(requests, timeout).Should(Receive(Equal(initialStateReq)))
 
 					By("Updating JWT handler config map to ory")
-					cm = testConfigMap("ory")
+					cm = testConfigMap(helpers.JWT_HANDLER_ORY)
 					err = c.Update(context.TODO(), cm)
 					Expect(err).NotTo(HaveOccurred())
 
@@ -833,7 +828,7 @@ var _ = Describe("APIRule Controller", func() {
 				It("Should create Access Rule and delete RA and AP when ApiRule JWT handler configuration was updated to have valid config for ory", func() {
 					// given
 					By("Setting JWT handler config map to istio")
-					cm := testConfigMap("istio")
+					cm := testConfigMap(helpers.JWT_HANDLER_ISTIO)
 					err := c.Update(context.TODO(), cm)
 					Expect(err).NotTo(HaveOccurred())
 
@@ -858,7 +853,7 @@ var _ = Describe("APIRule Controller", func() {
 					Eventually(requests, timeout).Should(Receive(Equal(initialStateReq)))
 
 					By("Updating JWT handler config map to ory")
-					cm = testConfigMap("ory")
+					cm = testConfigMap(helpers.JWT_HANDLER_ORY)
 					err = c.Update(context.TODO(), cm)
 					Expect(err).NotTo(HaveOccurred())
 
@@ -1151,4 +1146,13 @@ func triggerApiRuleReconciliation(apiRuleName string) {
 
 	reconcileApiReq := reconcile.Request{NamespacedName: types.NamespacedName{Name: apiRuleName, Namespace: testNamespace}}
 	Eventually(requests, timeout).Should(Receive(Equal(reconcileApiReq)))
+}
+
+func setHandlerConfigMap(handler string) {
+	cm := testConfigMap(handler)
+	err := c.Update(context.TODO(), cm)
+	if apierrors.IsInvalid(err) {
+		Fail(fmt.Sprintf("failed to update configmap, got an invalid object error: %v", err))
+	}
+	Expect(err).NotTo(HaveOccurred())
 }

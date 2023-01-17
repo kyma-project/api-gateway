@@ -39,7 +39,7 @@ var _ = Describe("Resource status", func() {
 
 		It("should return nil for resources not supported by the handler ", func() {
 			// given
-			createHandlerConfigMap(helpers.JWT_HANDLER_ORY)
+			setHandlerConfigMap(helpers.JWT_HANDLER_ORY)
 
 			apiRuleName := generateTestName(testNameBase, testIDLength)
 			serviceName := generateTestName(testServiceName, testIDLength)
@@ -71,13 +71,13 @@ var _ = Describe("Resource status", func() {
 			Expect(created.Status.APIRuleStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
 			Expect(created.Status.VirtualServiceStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
 			Expect(created.Status.AccessRuleStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
-			Expect(created.Status.AuthorizationPolicyStatus.Code).To(BeNil())
-			Expect(created.Status.RequestAuthenticationStatus.Code).To(BeNil())
+			Expect(created.Status.AuthorizationPolicyStatus).To(BeNil())
+			Expect(created.Status.RequestAuthenticationStatus).To(BeNil())
 		})
 
 		It("should report validation errors in ApiRule status", func() {
 			// given
-			createHandlerConfigMap(helpers.JWT_HANDLER_ORY)
+			setHandlerConfigMap(helpers.JWT_HANDLER_ORY)
 
 			apiRuleName := generateTestName(testNameBase, testIDLength)
 			serviceName := generateTestName(testServiceName, testIDLength)
@@ -125,8 +125,8 @@ var _ = Describe("Resource status", func() {
 
 			Expect(created.Status.VirtualServiceStatus.Code).To(Equal(gatewayv1beta1.StatusSkipped))
 			Expect(created.Status.AccessRuleStatus.Code).To(Equal(gatewayv1beta1.StatusSkipped))
-			Expect(created.Status.AuthorizationPolicyStatus.Code).To(BeNil())
-			Expect(created.Status.RequestAuthenticationStatus.Code).To(BeNil())
+			Expect(created.Status.AuthorizationPolicyStatus).To(BeNil())
+			Expect(created.Status.RequestAuthenticationStatus).To(BeNil())
 		})
 	})
 
@@ -134,7 +134,7 @@ var _ = Describe("Resource status", func() {
 
 		It("should return nil for resources not supported by the handler ", func() {
 			// given
-			createHandlerConfigMap(helpers.JWT_HANDLER_ISTIO)
+			setHandlerConfigMap(helpers.JWT_HANDLER_ISTIO)
 
 			apiRuleName := generateTestName(testNameBase, testIDLength)
 			serviceName := generateTestName(testServiceName, testIDLength)
@@ -167,11 +167,11 @@ var _ = Describe("Resource status", func() {
 			Expect(created.Status.VirtualServiceStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
 			Expect(created.Status.AuthorizationPolicyStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
 			Expect(created.Status.RequestAuthenticationStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
-			Expect(created.Status.AccessRuleStatus.Code).To(BeNil())
+			Expect(created.Status.AccessRuleStatus).To(BeNil())
 		})
 
 		It("should report validation errors in ApiRule status", func() {
-			createHandlerConfigMap(helpers.JWT_HANDLER_ISTIO)
+			setHandlerConfigMap(helpers.JWT_HANDLER_ISTIO)
 
 			apiRuleName := generateTestName(testNameBase, testIDLength)
 			serviceName := generateTestName(testServiceName, testIDLength)
@@ -218,17 +218,8 @@ var _ = Describe("Resource status", func() {
 			Expect(created.Status.VirtualServiceStatus.Code).To(Equal(gatewayv1beta1.StatusSkipped))
 			Expect(created.Status.AuthorizationPolicyStatus.Code).To(Equal(gatewayv1beta1.StatusSkipped))
 			Expect(created.Status.RequestAuthenticationStatus.Code).To(Equal(gatewayv1beta1.StatusSkipped))
-			Expect(created.Status.AccessRuleStatus.Code).To(BeNil())
+			Expect(created.Status.AccessRuleStatus).To(BeNil())
 		})
 
 	})
 })
-
-func createHandlerConfigMap(handler string) {
-	cm := testConfigMap(handler)
-	err := c.Update(context.TODO(), cm)
-	if apierrors.IsInvalid(err) {
-		Fail(fmt.Sprintf("failed to update configmap, got an invalid object error: %v", err))
-	}
-	Expect(err).NotTo(HaveOccurred())
-}
