@@ -698,7 +698,7 @@ var _ = Describe("APIRule Controller", func() {
 					Expect(err).NotTo(HaveOccurred())
 
 					Expect(apiRule.Status.APIRuleStatus.Code).To(Equal(gatewayv1beta1.StatusError))
-					Expect(apiRule.Status.APIRuleStatus.Description).NotTo(BeEmpty())
+					Expect(apiRule.Status.APIRuleStatus.Description).To(ContainSubstring("Validation error"))
 				})
 
 				It("Should create AP and RA and delete JWT Access Rule when ApiRule JWT handler configuration was updated to have valid config for istio", func() {
@@ -829,7 +829,7 @@ var _ = Describe("APIRule Controller", func() {
 					Expect(err).NotTo(HaveOccurred())
 
 					Expect(apiRule.Status.APIRuleStatus.Code).To(Equal(gatewayv1beta1.StatusError))
-					Expect(apiRule.Status.APIRuleStatus.Description).NotTo(BeEmpty())
+					Expect(apiRule.Status.APIRuleStatus.Description).To(ContainSubstring("Validation error"))
 				})
 
 				It("Should create Access Rule and delete RA and AP when ApiRule JWT handler configuration was updated to have valid config for ory", func() {
@@ -1145,7 +1145,7 @@ func triggerApiRuleReconciliation(apiRuleName string) {
 	err := c.Get(context.TODO(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &reconciledApiRule)
 	// We check for a different generation before reconciliation of APiRule, therefore we need to do a dummy change to
 	// trigger the reconciliation of the ApiRule.
-	newDummyHost := "dummyChange"
+	newDummyHost := fmt.Sprintf("dummy-change.%s", *reconciledApiRule.Spec.Host)
 	reconciledApiRule.Spec.Host = &newDummyHost
 	Expect(err).NotTo(HaveOccurred())
 	err = c.Update(context.TODO(), &reconciledApiRule)
