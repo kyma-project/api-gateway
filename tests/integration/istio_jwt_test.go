@@ -22,7 +22,7 @@ func InitializeScenarioIstioJWT(ctx *godog.ScenarioContext) {
 
 	scenario := istioJwtScenario{mainScenario}
 
-	ctx.Step(`^IstioJWT: There is an deployment secured with JWT on path /ip$`, scenario.thereIsAnEndpoint)
+	ctx.Step(`^IstioJWT: There is an deployment secured with JWT on path "([^"]*)"$`, scenario.thereIsAnEndpoint)
 	ctx.Step(`^IstioJWT: Calling the "([^"]*)" endpoint without a token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithoutTokenShouldResultInStatusBeetween)
 	ctx.Step(`^IstioJWT: Calling the "([^"]*)" endpoint with a invalid token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithInvalidTokenShouldResultInStatusBeetween)
 	ctx.Step(`^IstioJWT: Calling the "([^"]*)" endpoint with a valid "([^"]*)" token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithValidTokenShouldResultInStatusBeetween)
