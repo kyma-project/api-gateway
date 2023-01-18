@@ -218,22 +218,21 @@ func (rc *RuleCondition) Get() *[]*v1beta1.Condition {
 	return rc.value
 }
 
-func (rc *RuleCondition) From(key string, val []*gatewayv1beta1.Authenticator) *RuleCondition {
-	for _, accessStrategy := range val {
-		authentications := &Authorizations{
-			Authorizations: []*Authorization{},
-		}
-		if accessStrategy.Config != nil {
-			_ = json.Unmarshal(accessStrategy.Config.Raw, authentications)
-		}
-		for _, authorization := range authentications.Authorizations {
-			scopeKey := fmt.Sprintf("request.auth.claims[%s]", key)
-			*rc.value = append(*rc.value, &v1beta1.Condition{
-				Key:    scopeKey,
-				Values: authorization.RequiredScopes,
-			})
-		}
+func (rc *RuleCondition) From(key string, accessStrategy *gatewayv1beta1.Authenticator) *RuleCondition {
+	authorizations := &Authorizations{
+		Authorizations: []*Authorization{},
 	}
+	if accessStrategy.Config != nil {
+		_ = json.Unmarshal(accessStrategy.Config.Raw, authorizations)
+	}
+	for _, authorization := range authorizations.Authorizations {
+		scopeKey := fmt.Sprintf("request.auth.claims[%s]", key)
+		*rc.value = append(*rc.value, &v1beta1.Condition{
+			Key:    scopeKey,
+			Values: authorization.RequiredScopes,
+		})
+	}
+
 	return rc
 }
 

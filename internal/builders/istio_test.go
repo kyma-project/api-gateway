@@ -33,7 +33,6 @@ var _ = Describe("Builder for", func() {
 			testRaw := runtime.RawExtension{Raw: []byte(fmt.Sprintf(`{"authorizations": [{"requiredScopes": ["%s", "%s"]}]}`, testScopeA, testScopeB))}
 			testHandler := gatewayv1beta1.Handler{Config: &testRaw}
 			testAuthenticator := gatewayv1beta1.Authenticator{Handler: &testHandler}
-			testAccessStrategies := []*gatewayv1beta1.Authenticator{&testAuthenticator}
 
 			testExpectedScopeKeys := []string{"request.auth.claims[scp]"}
 
@@ -50,7 +49,7 @@ var _ = Describe("Builder for", func() {
 								Path(path).
 								Methods(methods))).
 						RuleCondition(RuleConditionBuilder().
-							From("scp", testAccessStrategies)))).
+							From("scp", &testAuthenticator)))).
 				Get()
 
 			Expect(ap.Name).To(BeEmpty())
