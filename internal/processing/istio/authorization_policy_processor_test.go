@@ -20,6 +20,8 @@ import (
 )
 
 var _ = Describe("Authorization Policy Processor", func() {
+	testExpectedScopeKeys := []string{"request.auth.claims[scp]", "request.auth.claims[scope]", "request.auth.claims[scopes]"}
+
 	createIstioJwtAccessStrategy := func() *gatewayv1beta1.Authenticator {
 		jwtConfigJSON := fmt.Sprintf(`{
 			"authentications": [{"issuer": "%s", "jwksUri": "%s"}],
@@ -41,7 +43,6 @@ var _ = Describe("Authorization Policy Processor", func() {
 			Name: &ServiceName,
 			Port: &ServicePort,
 		}
-		testExpectedScopeKeys := []string{"request.auth.claims[scp]", "request.auth.claims[scope]", "request.auth.claims[scopes]"}
 
 		ruleJwt := GetRuleWithServiceFor(HeadersApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, []*gatewayv1beta1.Authenticator{jwt}, service)
 		ruleJwt2 := GetRuleWithServiceFor(ImgApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, []*gatewayv1beta1.Authenticator{jwt}, service)
@@ -67,7 +68,7 @@ var _ = Describe("Authorization Policy Processor", func() {
 
 		Expect(ap1.Spec.Selector.MatchLabels[TestSelectorKey]).NotTo(BeNil())
 		Expect(ap1.Spec.Selector.MatchLabels[TestSelectorKey]).To(Equal(ServiceName))
-		Expect(len(ap1.Spec.Rules)).To(Equal(1))
+		Expect(len(ap1.Spec.Rules)).To(Equal(3))
 		Expect(len(ap1.Spec.Rules[0].From)).To(Equal(1))
 		Expect(len(ap1.Spec.Rules[0].From[0].Source.RequestPrincipals)).To(Equal(1))
 		Expect(ap1.Spec.Rules[0].From[0].Source.RequestPrincipals[0]).To(Equal("*"))
@@ -83,8 +84,8 @@ var _ = Describe("Authorization Policy Processor", func() {
 		Expect(ap1.OwnerReferences[0].UID).To(Equal(ApiUID))
 
 		for i := 0; i < 3; i++ {
-			Expect(ap1.Spec.Rules[0].When[i].Key).To(BeElementOf(testExpectedScopeKeys))
-			Expect(ap1.Spec.Rules[0].When[i].Values).To(ContainElements(RequiredScopeA, RequiredScopeB))
+			Expect(ap1.Spec.Rules[i].When[0].Key).To(BeElementOf(testExpectedScopeKeys))
+			Expect(ap1.Spec.Rules[i].When[0].Values).To(ContainElements(RequiredScopeA, RequiredScopeB))
 		}
 
 		Expect(ap2).NotTo(BeNil())
@@ -95,7 +96,7 @@ var _ = Describe("Authorization Policy Processor", func() {
 
 		Expect(ap2.Spec.Selector.MatchLabels[TestSelectorKey]).NotTo(BeNil())
 		Expect(ap2.Spec.Selector.MatchLabels[TestSelectorKey]).To(Equal(ServiceName))
-		Expect(len(ap2.Spec.Rules)).To(Equal(1))
+		Expect(len(ap2.Spec.Rules)).To(Equal(3))
 		Expect(len(ap2.Spec.Rules[0].From)).To(Equal(1))
 		Expect(len(ap2.Spec.Rules[0].From[0].Source.RequestPrincipals)).To(Equal(1))
 		Expect(ap2.Spec.Rules[0].From[0].Source.RequestPrincipals[0]).To(Equal("*"))
@@ -110,8 +111,8 @@ var _ = Describe("Authorization Policy Processor", func() {
 		Expect(ap2.OwnerReferences[0].UID).To(Equal(ApiUID))
 
 		for i := 0; i < 3; i++ {
-			Expect(ap2.Spec.Rules[0].When[i].Key).To(BeElementOf(testExpectedScopeKeys))
-			Expect(ap2.Spec.Rules[0].When[i].Values).To(ContainElements(RequiredScopeA, RequiredScopeB))
+			Expect(ap2.Spec.Rules[i].When[0].Key).To(BeElementOf(testExpectedScopeKeys))
+			Expect(ap2.Spec.Rules[i].When[0].Values).To(ContainElements(RequiredScopeA, RequiredScopeB))
 		}
 	})
 
@@ -200,7 +201,7 @@ var _ = Describe("Authorization Policy Processor", func() {
 
 		Expect(ap.Spec.Selector.MatchLabels[TestSelectorKey]).NotTo(BeNil())
 		Expect(ap.Spec.Selector.MatchLabels[TestSelectorKey]).To(Equal(ServiceName))
-		Expect(len(ap.Spec.Rules)).To(Equal(1))
+		Expect(len(ap.Spec.Rules)).To(Equal(3))
 		Expect(len(ap.Spec.Rules[0].From)).To(Equal(1))
 		Expect(len(ap.Spec.Rules[0].From[0].Source.RequestPrincipals)).To(Equal(1))
 		Expect(ap.Spec.Rules[0].From[0].Source.RequestPrincipals[0]).To(Equal("*"))
@@ -211,8 +212,8 @@ var _ = Describe("Authorization Policy Processor", func() {
 		Expect(ap.Spec.Rules[0].To[0].Operation.Paths).To(ContainElements(HeadersApiPath))
 
 		for i := 0; i < 3; i++ {
-			Expect(ap.Spec.Rules[0].When[i].Key).To(BeElementOf(testExpectedScopeKeys))
-			Expect(ap.Spec.Rules[0].When[i].Values).To(ContainElements(RequiredScopeA, RequiredScopeB))
+			Expect(ap.Spec.Rules[i].When[0].Key).To(BeElementOf(testExpectedScopeKeys))
+			Expect(ap.Spec.Rules[i].When[0].Values).To(ContainElements(RequiredScopeA, RequiredScopeB))
 		}
 
 		Expect(ap.OwnerReferences[0].APIVersion).To(Equal(ApiAPIVersion))
@@ -367,7 +368,6 @@ var _ = Describe("Authorization Policy Processor", func() {
 				ap := result.Obj.(*securityv1beta1.AuthorizationPolicy)
 
 				Expect(ap).NotTo(BeNil())
-				Expect(len(ap.Spec.Rules)).To(Equal(1))
 				Expect(len(ap.Spec.Rules[0].To)).To(Equal(1))
 				Expect(len(ap.Spec.Rules[0].To[0].Operation.Paths)).To(Equal(1))
 
@@ -380,6 +380,16 @@ var _ = Describe("Authorization Policy Processor", func() {
 					Expect(ap.Spec.Rules[0].From[0].Source.Principals[0]).To(Equal("cluster.local/ns/istio-system/sa/istio-ingressgateway-service-account"))
 				case ImgApiPath:
 					Expect(len(ap.Spec.Rules[0].From)).To(Equal(1))
+				}
+
+				Expect(len(ap.Spec.Rules)).To(BeElementOf([]int{1, 3}))
+				if len(ap.Spec.Rules) == 3 {
+					for i := 0; i < 3; i++ {
+						Expect(ap.Spec.Rules[i].When[0].Key).To(BeElementOf(testExpectedScopeKeys))
+						Expect(ap.Spec.Rules[i].When[0].Values).To(ContainElements(RequiredScopeA, RequiredScopeB))
+					}
+				} else {
+					Expect(len(ap.Spec.Rules)).To(Equal(1))
 				}
 			}
 		})
@@ -415,7 +425,6 @@ var _ = Describe("Authorization Policy Processor", func() {
 				ap := result.Obj.(*securityv1beta1.AuthorizationPolicy)
 
 				Expect(ap).NotTo(BeNil())
-				Expect(len(ap.Spec.Rules)).To(Equal(1))
 				Expect(len(ap.Spec.Rules[0].To)).To(Equal(1))
 				Expect(len(ap.Spec.Rules[0].To[0].Operation.Paths)).To(Equal(1))
 
@@ -428,6 +437,16 @@ var _ = Describe("Authorization Policy Processor", func() {
 					Expect(ap.Spec.Rules[0].From[0].Source.Principals[0]).To(Equal("cluster.local/ns/kyma-system/sa/oathkeeper-maester-account"))
 				case ImgApiPath:
 					Expect(len(ap.Spec.Rules[0].From)).To(Equal(1))
+				}
+
+				Expect(len(ap.Spec.Rules)).To(BeElementOf([]int{1, 3}))
+				if len(ap.Spec.Rules) == 3 {
+					for i := 0; i < 3; i++ {
+						Expect(ap.Spec.Rules[i].When[0].Key).To(BeElementOf(testExpectedScopeKeys))
+						Expect(ap.Spec.Rules[i].When[0].Values).To(ContainElements(RequiredScopeA, RequiredScopeB))
+					}
+				} else {
+					Expect(len(ap.Spec.Rules)).To(Equal(1))
 				}
 			}
 		})

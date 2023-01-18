@@ -76,6 +76,23 @@ func generateAuthorizationPolicySpec(api *gatewayv1beta1.APIRule, rule gatewayv1
 		serviceName = *api.Spec.Service.Name
 	}
 
+	authorizationPolicySpec := builders.AuthorizationPolicySpecBuilder().
+		Selector(builders.SelectorBuilder().MatchLabels(processors.AuthorizationPolicyAppSelectorLabel, serviceName))
+
+	defaultScopeKeys := []string{"scp", "scope", "scopes"}
+	for _, scope := range defaultScopeKeys {
+		generatedRule := generateAuthorizationPolicySpecRule(rule, scope)
+		authorizationPolicySpec.Rule(generatedRule)
+		// if requiredScopes are empty, only one rule is needed
+		if generatedRule.Get().When == nil || len(generatedRule.Get().When) == 0 {
+			break
+		}
+	}
+
+	return authorizationPolicySpec.Get()
+}
+
+func generateAuthorizationPolicySpecRule(rule gatewayv1beta1.Rule, scope string) *builders.Rule {
 	ruleBuilder := builders.RuleBuilder().RuleTo(builders.RuleToBuilder().
 		Operation(builders.OperationBuilder().Methods(rule.Methods).Path(rule.Path)))
 
@@ -87,9 +104,7 @@ func generateAuthorizationPolicySpec(api *gatewayv1beta1.APIRule, rule gatewayv1
 		ruleBuilder.RuleFrom(builders.RuleFromBuilder().IngressGatewaySource())
 	}
 
-	authorizationPolicySpec := builders.AuthorizationPolicySpecBuilder().
-		Selector(builders.SelectorBuilder().MatchLabels(processors.AuthorizationPolicyAppSelectorLabel, serviceName)).
-		Rule(ruleBuilder.RuleCondition(builders.RuleConditionBuilder().From(rule.AccessStrategies)))
+	ruleBuilder.RuleCondition(builders.RuleConditionBuilder().From(scope, rule.AccessStrategies))
 
-	return authorizationPolicySpec.Get()
+	return ruleBuilder
 }

@@ -218,9 +218,7 @@ func (rc *RuleCondition) Get() *[]*v1beta1.Condition {
 	return rc.value
 }
 
-func (rc *RuleCondition) From(val []*gatewayv1beta1.Authenticator) *RuleCondition {
-	defaultScopeKeys := []string{"scp", "scope", "scopes"}
-
+func (rc *RuleCondition) From(key string, val []*gatewayv1beta1.Authenticator) *RuleCondition {
 	for _, accessStrategy := range val {
 		authentications := &Authorizations{
 			Authorizations: []*Authorization{},
@@ -229,14 +227,11 @@ func (rc *RuleCondition) From(val []*gatewayv1beta1.Authenticator) *RuleConditio
 			_ = json.Unmarshal(accessStrategy.Config.Raw, authentications)
 		}
 		for _, authorization := range authentications.Authorizations {
-			for _, scope := range defaultScopeKeys {
-				scopeKey := fmt.Sprintf("request.auth.claims[%s]", scope)
-				*rc.value = append(*rc.value, &v1beta1.Condition{
-					Key:    scopeKey,
-					Values: authorization.RequiredScopes,
-				})
-			}
-
+			scopeKey := fmt.Sprintf("request.auth.claims[%s]", key)
+			*rc.value = append(*rc.value, &v1beta1.Condition{
+				Key:    scopeKey,
+				Values: authorization.RequiredScopes,
+			})
 		}
 	}
 	return rc
