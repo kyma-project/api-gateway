@@ -89,8 +89,15 @@ func GetAuthorizationPolicyKey(ap *securityv1beta1.AuthorizationPolicy) string {
 
 	hasRuleInSpec := ap.Spec.Rules != nil && len(ap.Spec.Rules) > 0
 	hasToInFirstRule := ap.Spec.Rules[0].To != nil && len(ap.Spec.Rules[0].To) > 0
+	hasWhenInFirstRule := ap.Spec.Rules[0].When != nil && len(ap.Spec.Rules[0].When) > 0
 
-	if hasRuleInSpec && hasToInFirstRule {
+	if hasRuleInSpec && hasToInFirstRule && hasWhenInFirstRule {
+		key = fmt.Sprintf("%s:%s:%s:%s",
+			ap.Spec.Selector.MatchLabels[AuthorizationPolicyAppSelectorLabel],
+			processing.SliceToString(ap.Spec.Rules[0].To[0].Operation.Paths),
+			processing.SliceToString(ap.Spec.Rules[0].To[0].Operation.Methods),
+			processing.SliceToString(ap.Spec.Rules[0].When[0].Values))
+	} else if hasRuleInSpec && hasToInFirstRule {
 		key = fmt.Sprintf("%s:%s:%s",
 			ap.Spec.Selector.MatchLabels[AuthorizationPolicyAppSelectorLabel],
 			processing.SliceToString(ap.Spec.Rules[0].To[0].Operation.Paths),

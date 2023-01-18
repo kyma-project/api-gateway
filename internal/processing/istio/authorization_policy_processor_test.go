@@ -36,6 +36,20 @@ var _ = Describe("Authorization Policy Processor", func() {
 		}
 	}
 
+	createIstioJwtAccessStrategyTwoAuthorizations := func() *gatewayv1beta1.Authenticator {
+		jwtConfigJSON := fmt.Sprintf(`{
+			"authentications": [{"issuer": "%s", "jwksUri": "%s"}],
+			"authorizations": [{"requiredScopes": ["%s"]}, {"requiredScopes": ["%s"]}]}`, JwtIssuer, JwksUri, RequiredScopeA, RequiredScopeB)
+		return &gatewayv1beta1.Authenticator{
+			Handler: &gatewayv1beta1.Handler{
+				Name: "jwt",
+				Config: &runtime.RawExtension{
+					Raw: []byte(jwtConfigJSON),
+				},
+			},
+		}
+	}
+
 	It("should produce two APs for a rule with one issuer and two paths", func() {
 		// given
 		jwt := createIstioJwtAccessStrategy()
@@ -47,6 +61,85 @@ var _ = Describe("Authorization Policy Processor", func() {
 		ruleJwt := GetRuleWithServiceFor(HeadersApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, []*gatewayv1beta1.Authenticator{jwt}, service)
 		ruleJwt2 := GetRuleWithServiceFor(ImgApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, []*gatewayv1beta1.Authenticator{jwt}, service)
 		apiRule := GetAPIRuleFor([]gatewayv1beta1.Rule{ruleJwt, ruleJwt2})
+		client := GetFakeClient()
+		processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig())
+
+		// when
+		result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
+
+		// then
+		Expect(err).To(BeNil())
+		Expect(result).To(HaveLen(2))
+
+		ap1 := result[0].Obj.(*securityv1beta1.AuthorizationPolicy)
+		ap2 := result[1].Obj.(*securityv1beta1.AuthorizationPolicy)
+
+		Expect(ap1).NotTo(BeNil())
+		Expect(ap1.ObjectMeta.Name).To(BeEmpty())
+		Expect(ap1.ObjectMeta.GenerateName).To(Equal(ApiName + "-"))
+		Expect(ap1.ObjectMeta.Namespace).To(Equal(ApiNamespace))
+		Expect(ap1.ObjectMeta.Labels[TestLabelKey]).To(Equal(TestLabelValue))
+
+		Expect(ap1.Spec.Selector.MatchLabels[TestSelectorKey]).NotTo(BeNil())
+		Expect(ap1.Spec.Selector.MatchLabels[TestSelectorKey]).To(Equal(ServiceName))
+		Expect(len(ap1.Spec.Rules)).To(Equal(3))
+		Expect(len(ap1.Spec.Rules[0].From)).To(Equal(1))
+		Expect(len(ap1.Spec.Rules[0].From[0].Source.RequestPrincipals)).To(Equal(1))
+		Expect(ap1.Spec.Rules[0].From[0].Source.RequestPrincipals[0]).To(Equal("*"))
+		Expect(len(ap1.Spec.Rules[0].To)).To(Equal(1))
+		Expect(len(ap1.Spec.Rules[0].To[0].Operation.Methods)).To(Equal(1))
+		Expect(ap1.Spec.Rules[0].To[0].Operation.Methods).To(ContainElements(ApiMethods))
+		Expect(len(ap1.Spec.Rules[0].To[0].Operation.Paths)).To(Equal(1))
+
+		Expect(len(ap1.OwnerReferences)).To(Equal(1))
+		Expect(ap1.OwnerReferences[0].APIVersion).To(Equal(ApiAPIVersion))
+		Expect(ap1.OwnerReferences[0].Kind).To(Equal(ApiKind))
+		Expect(ap1.OwnerReferences[0].Name).To(Equal(ApiName))
+		Expect(ap1.OwnerReferences[0].UID).To(Equal(ApiUID))
+
+		for i := 0; i < 3; i++ {
+			Expect(ap1.Spec.Rules[i].When[0].Key).To(BeElementOf(testExpectedScopeKeys))
+			Expect(ap1.Spec.Rules[i].When[0].Values).To(ContainElements(RequiredScopeA, RequiredScopeB))
+		}
+
+		Expect(ap2).NotTo(BeNil())
+		Expect(ap2.ObjectMeta.Name).To(BeEmpty())
+		Expect(ap2.ObjectMeta.GenerateName).To(Equal(ApiName + "-"))
+		Expect(ap2.ObjectMeta.Namespace).To(Equal(ApiNamespace))
+		Expect(ap2.ObjectMeta.Labels[TestLabelKey]).To(Equal(TestLabelValue))
+
+		Expect(ap2.Spec.Selector.MatchLabels[TestSelectorKey]).NotTo(BeNil())
+		Expect(ap2.Spec.Selector.MatchLabels[TestSelectorKey]).To(Equal(ServiceName))
+		Expect(len(ap2.Spec.Rules)).To(Equal(3))
+		Expect(len(ap2.Spec.Rules[0].From)).To(Equal(1))
+		Expect(len(ap2.Spec.Rules[0].From[0].Source.RequestPrincipals)).To(Equal(1))
+		Expect(ap2.Spec.Rules[0].From[0].Source.RequestPrincipals[0]).To(Equal("*"))
+		Expect(len(ap2.Spec.Rules[0].To)).To(Equal(1))
+		Expect(len(ap2.Spec.Rules[0].To[0].Operation.Methods)).To(Equal(1))
+		Expect(ap2.Spec.Rules[0].To[0].Operation.Methods).To(ContainElements(ApiMethods))
+		Expect(len(ap2.Spec.Rules[0].To[0].Operation.Paths)).To(Equal(1))
+
+		Expect(ap2.OwnerReferences[0].APIVersion).To(Equal(ApiAPIVersion))
+		Expect(ap2.OwnerReferences[0].Kind).To(Equal(ApiKind))
+		Expect(ap2.OwnerReferences[0].Name).To(Equal(ApiName))
+		Expect(ap2.OwnerReferences[0].UID).To(Equal(ApiUID))
+
+		for i := 0; i < 3; i++ {
+			Expect(ap2.Spec.Rules[i].When[0].Key).To(BeElementOf(testExpectedScopeKeys))
+			Expect(ap2.Spec.Rules[i].When[0].Values).To(ContainElements(RequiredScopeA, RequiredScopeB))
+		}
+	})
+
+	It("should produce two APs for a rule with two authorizations", func() {
+		// given
+		jwt := createIstioJwtAccessStrategyTwoAuthorizations()
+		service := &gatewayv1beta1.Service{
+			Name: &ServiceName,
+			Port: &ServicePort,
+		}
+
+		ruleJwt := GetRuleWithServiceFor(HeadersApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, []*gatewayv1beta1.Authenticator{jwt}, service)
+		apiRule := GetAPIRuleFor([]gatewayv1beta1.Rule{ruleJwt})
 		client := GetFakeClient()
 		processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig())
 
