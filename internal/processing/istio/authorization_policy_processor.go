@@ -54,7 +54,7 @@ func generateAuthorizationPolicies(api *gatewayv1beta1.APIRule, rule gatewayv1be
 	authorizationPolicyList := securityv1beta1.AuthorizationPolicyList{}
 	ruleAuthorizations := rule.GetAuthorizations()
 
-	if ruleAuthorizations == nil || len(ruleAuthorizations) == 0 {
+	if len(ruleAuthorizations) == 0 {
 		ap := generateAuthorizationPolicy(api, rule, additionalLabels, &gatewayv1beta1.Authorization{})
 		authorizationPolicyList.Items = append(authorizationPolicyList.Items, ap)
 	} else {
