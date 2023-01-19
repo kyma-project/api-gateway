@@ -220,11 +220,13 @@ func (rc *RuleCondition) Get() *[]*v1beta1.Condition {
 
 func (rc *RuleCondition) From(key string, authorization *gatewayv1beta1.Authorization) *RuleCondition {
 	if authorization.RequiredScopes != nil && len(authorization.RequiredScopes) > 0 {
-		scopeKey := fmt.Sprintf("request.auth.claims[%s]", key)
-		*rc.value = append(*rc.value, &v1beta1.Condition{
-			Key:    scopeKey,
-			Values: authorization.RequiredScopes,
-		})
+		for _, requiredScope := range authorization.RequiredScopes {
+			scopeKey := fmt.Sprintf("request.auth.claims[%s]", key)
+			*rc.value = append(*rc.value, &v1beta1.Condition{
+				Key:    scopeKey,
+				Values: []string{requiredScope},
+			})
+		}
 	}
 
 	return rc

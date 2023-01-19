@@ -99,7 +99,11 @@ var _ = Describe("Authorization Policy Processor", func() {
 
 		for i := 0; i < 3; i++ {
 			Expect(ap1.Spec.Rules[i].When[0].Key).To(BeElementOf(testExpectedScopeKeys))
-			Expect(ap1.Spec.Rules[i].When[0].Values).To(ContainElements(RequiredScopeA, RequiredScopeB))
+			Expect(ap1.Spec.Rules[i].When).To(HaveLen(2))
+			Expect(ap1.Spec.Rules[i].When[0].Key).To(BeElementOf(testExpectedScopeKeys))
+			Expect(ap1.Spec.Rules[i].When[0].Values[0]).To(BeElementOf(RequiredScopeA, RequiredScopeB))
+			Expect(ap1.Spec.Rules[i].When[1].Key).To(BeElementOf(testExpectedScopeKeys))
+			Expect(ap1.Spec.Rules[i].When[1].Values[0]).To(BeElementOf(RequiredScopeA, RequiredScopeB))
 		}
 
 		Expect(ap2).NotTo(BeNil())
@@ -126,7 +130,11 @@ var _ = Describe("Authorization Policy Processor", func() {
 
 		for i := 0; i < 3; i++ {
 			Expect(ap2.Spec.Rules[i].When[0].Key).To(BeElementOf(testExpectedScopeKeys))
-			Expect(ap2.Spec.Rules[i].When[0].Values).To(ContainElements(RequiredScopeA, RequiredScopeB))
+			Expect(ap2.Spec.Rules[i].When).To(HaveLen(2))
+			Expect(ap2.Spec.Rules[i].When[0].Key).To(BeElementOf(testExpectedScopeKeys))
+			Expect(ap2.Spec.Rules[i].When[0].Values[0]).To(BeElementOf(RequiredScopeA, RequiredScopeB))
+			Expect(ap2.Spec.Rules[i].When[1].Key).To(BeElementOf(testExpectedScopeKeys))
+			Expect(ap2.Spec.Rules[i].When[1].Values[0]).To(BeElementOf(RequiredScopeA, RequiredScopeB))
 		}
 	})
 
@@ -308,7 +316,11 @@ var _ = Describe("Authorization Policy Processor", func() {
 
 		for i := 0; i < 3; i++ {
 			Expect(ap.Spec.Rules[i].When[0].Key).To(BeElementOf(testExpectedScopeKeys))
-			Expect(ap.Spec.Rules[i].When[0].Values).To(ContainElements(RequiredScopeA, RequiredScopeB))
+			Expect(ap.Spec.Rules[i].When).To(HaveLen(2))
+			Expect(ap.Spec.Rules[i].When[0].Key).To(BeElementOf(testExpectedScopeKeys))
+			Expect(ap.Spec.Rules[i].When[0].Values[0]).To(BeElementOf(RequiredScopeA, RequiredScopeB))
+			Expect(ap.Spec.Rules[i].When[1].Key).To(BeElementOf(testExpectedScopeKeys))
+			Expect(ap.Spec.Rules[i].When[1].Values[0]).To(BeElementOf(RequiredScopeA, RequiredScopeB))
 		}
 
 		Expect(ap.OwnerReferences[0].APIVersion).To(Equal(ApiAPIVersion))
@@ -481,7 +493,11 @@ var _ = Describe("Authorization Policy Processor", func() {
 				if len(ap.Spec.Rules) == 3 {
 					for i := 0; i < 3; i++ {
 						Expect(ap.Spec.Rules[i].When[0].Key).To(BeElementOf(testExpectedScopeKeys))
-						Expect(ap.Spec.Rules[i].When[0].Values).To(ContainElements(RequiredScopeA, RequiredScopeB))
+						Expect(ap.Spec.Rules[i].When).To(HaveLen(2))
+						Expect(ap.Spec.Rules[i].When[0].Key).To(BeElementOf(testExpectedScopeKeys))
+						Expect(ap.Spec.Rules[i].When[0].Values[0]).To(BeElementOf(RequiredScopeA, RequiredScopeB))
+						Expect(ap.Spec.Rules[i].When[1].Key).To(BeElementOf(testExpectedScopeKeys))
+						Expect(ap.Spec.Rules[i].When[1].Values[0]).To(BeElementOf(RequiredScopeA, RequiredScopeB))
 					}
 				} else {
 					Expect(len(ap.Spec.Rules)).To(Equal(1))
@@ -538,7 +554,11 @@ var _ = Describe("Authorization Policy Processor", func() {
 				if len(ap.Spec.Rules) == 3 {
 					for i := 0; i < 3; i++ {
 						Expect(ap.Spec.Rules[i].When[0].Key).To(BeElementOf(testExpectedScopeKeys))
-						Expect(ap.Spec.Rules[i].When[0].Values).To(ContainElements(RequiredScopeA, RequiredScopeB))
+						Expect(ap.Spec.Rules[i].When).To(HaveLen(2))
+						Expect(ap.Spec.Rules[i].When[0].Key).To(BeElementOf(testExpectedScopeKeys))
+						Expect(ap.Spec.Rules[i].When[0].Values[0]).To(BeElementOf(RequiredScopeA, RequiredScopeB))
+						Expect(ap.Spec.Rules[i].When[1].Key).To(BeElementOf(testExpectedScopeKeys))
+						Expect(ap.Spec.Rules[i].When[1].Values[0]).To(BeElementOf(RequiredScopeA, RequiredScopeB))
 					}
 				} else {
 					Expect(len(ap.Spec.Rules)).To(Equal(1))
