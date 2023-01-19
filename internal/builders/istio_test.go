@@ -1,7 +1,6 @@
 package builders
 
 import (
-	"fmt"
 	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -30,10 +29,10 @@ var _ = Describe("Builder for", func() {
 			testRulesSourceRequestPrincipals := "*"
 			testScopeA := "scope-a"
 			testScopeB := "scope-b"
-			testRaw := runtime.RawExtension{Raw: []byte(fmt.Sprintf(`{"authorizations": [{"requiredScopes": ["%s", "%s"]}]}`, testScopeA, testScopeB))}
-			testHandler := gatewayv1beta1.Handler{Config: &testRaw}
-			testAuthenticator := gatewayv1beta1.Authenticator{Handler: &testHandler}
-
+			//testRaw := runtime.RawExtension{Raw: []byte(fmt.Sprintf(`{"authorizations": [{"requiredScopes": ["%s", "%s"]}]}`, testScopeA, testScopeB))}
+			//testHandler := gatewayv1beta1.Handler{Config: &testRaw}
+			//testAuthenticator := gatewayv1beta1.Authenticator{Handler: &testHandler}
+			testAuthorization := gatewayv1beta1.Authorization{RequiredScopes: []string{testScopeA, testScopeB}}
 			testExpectedScopeKeys := []string{"request.auth.claims[scp]"}
 
 			ap := AuthorizationPolicyBuilder().GenerateName(name).Namespace(namespace).
@@ -49,7 +48,7 @@ var _ = Describe("Builder for", func() {
 								Path(path).
 								Methods(methods))).
 						RuleCondition(RuleConditionBuilder().
-							From("scp", &testAuthenticator)))).
+							From("scp", &testAuthorization)))).
 				Get()
 
 			Expect(ap.Name).To(BeEmpty())

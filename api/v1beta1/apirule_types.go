@@ -149,3 +149,13 @@ type Handler struct {
 	// +kubebuilder:pruning:PreserveUnknownFields
 	Config *runtime.RawExtension `json:"config,omitempty"`
 }
+
+// Authorizations is an array of Authorization type
+type Authorizations struct {
+	Authorizations []*Authorization `json:"authorizations"`
+}
+
+// Authorization contains an array of required scopes
+type Authorization struct {
+	RequiredScopes []string `json:"requiredScopes"`
+}

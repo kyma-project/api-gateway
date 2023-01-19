@@ -52,13 +52,14 @@ func (r authorizationPolicyCreator) Create(api *gatewayv1beta1.APIRule) map[stri
 
 func generateAuthorizationPolicies(api *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rule, additionalLabels map[string]string) *securityv1beta1.AuthorizationPolicyList {
 	authorizationPolicyList := securityv1beta1.AuthorizationPolicyList{}
+	ruleAuthorizations := rule.GetAuthorizations()
 
-	if rule.AccessStrategies == nil || len(rule.AccessStrategies) == 0 {
-		ap := generateAuthorizationPolicy(api, rule, additionalLabels, &gatewayv1beta1.Authenticator{})
+	if ruleAuthorizations == nil || len(ruleAuthorizations) == 0 {
+		ap := generateAuthorizationPolicy(api, rule, additionalLabels, &gatewayv1beta1.Authorization{})
 		authorizationPolicyList.Items = append(authorizationPolicyList.Items, ap)
 	} else {
-		for _, accessStrategy := range rule.AccessStrategies {
-			ap := generateAuthorizationPolicy(api, rule, additionalLabels, accessStrategy)
+		for _, authorization := range ruleAuthorizations {
+			ap := generateAuthorizationPolicy(api, rule, additionalLabels, authorization)
 			authorizationPolicyList.Items = append(authorizationPolicyList.Items, ap)
 		}
 	}
@@ -66,7 +67,7 @@ func generateAuthorizationPolicies(api *gatewayv1beta1.APIRule, rule gatewayv1be
 	return &authorizationPolicyList
 }
 
-func generateAuthorizationPolicy(api *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rule, additionalLabels map[string]string, accessStrategy *gatewayv1beta1.Authenticator) *securityv1beta1.AuthorizationPolicy {
+func generateAuthorizationPolicy(api *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rule, additionalLabels map[string]string, authorization *gatewayv1beta1.Authorization) *securityv1beta1.AuthorizationPolicy {
 	namePrefix := fmt.Sprintf("%s-", api.ObjectMeta.Name)
 	namespace := api.ObjectMeta.Namespace
 	ownerRef := processing.GenerateOwnerRef(api)
@@ -75,7 +76,7 @@ func generateAuthorizationPolicy(api *gatewayv1beta1.APIRule, rule gatewayv1beta
 		GenerateName(namePrefix).
 		Namespace(namespace).
 		Owner(builders.OwnerReference().From(&ownerRef)).
-		Spec(builders.AuthorizationPolicySpecBuilder().From(generateAuthorizationPolicySpec(api, rule, accessStrategy))).
+		Spec(builders.AuthorizationPolicySpecBuilder().From(generateAuthorizationPolicySpec(api, rule, authorization))).
 		Label(processing.OwnerLabel, fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace)).
 		Label(processing.OwnerLabelv1alpha1, fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace))
 
@@ -86,7 +87,7 @@ func generateAuthorizationPolicy(api *gatewayv1beta1.APIRule, rule gatewayv1beta
 	return apBuilder.Get()
 }
 
-func generateAuthorizationPolicySpec(api *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rule, accessStrategy *gatewayv1beta1.Authenticator) *v1beta1.AuthorizationPolicy {
+func generateAuthorizationPolicySpec(api *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rule, authorization *gatewayv1beta1.Authorization) *v1beta1.AuthorizationPolicy {
 	var serviceName string
 	if rule.Service != nil {
 		serviceName = *rule.Service.Name
@@ -99,7 +100,7 @@ func generateAuthorizationPolicySpec(api *gatewayv1beta1.APIRule, rule gatewayv1
 
 	defaultScopeKeys := []string{"scp", "scope", "scopes"}
 	for _, scope := range defaultScopeKeys {
-		generatedRule := generateAuthorizationPolicySpecRule(rule, scope, accessStrategy)
+		generatedRule := generateAuthorizationPolicySpecRule(rule, scope, authorization)
 		authorizationPolicySpec.Rule(generatedRule)
 		// if requiredScopes are empty, only one rule is needed
 		if generatedRule.Get().When == nil || len(generatedRule.Get().When) == 0 {
@@ -110,7 +111,7 @@ func generateAuthorizationPolicySpec(api *gatewayv1beta1.APIRule, rule gatewayv1
 	return authorizationPolicySpec.Get()
 }
 
-func generateAuthorizationPolicySpecRule(rule gatewayv1beta1.Rule, scope string, accessStrategy *gatewayv1beta1.Authenticator) *builders.Rule {
+func generateAuthorizationPolicySpecRule(rule gatewayv1beta1.Rule, scope string, authorization *gatewayv1beta1.Authorization) *builders.Rule {
 	ruleBuilder := builders.RuleBuilder().RuleTo(builders.RuleToBuilder().
 		Operation(builders.OperationBuilder().Methods(rule.Methods).Path(rule.Path)))
 
@@ -122,7 +123,7 @@ func generateAuthorizationPolicySpecRule(rule gatewayv1beta1.Rule, scope string,
 		ruleBuilder.RuleFrom(builders.RuleFromBuilder().IngressGatewaySource())
 	}
 
-	ruleBuilder.RuleCondition(builders.RuleConditionBuilder().From(scope, accessStrategy))
+	ruleBuilder.RuleCondition(builders.RuleConditionBuilder().From(scope, authorization))
 
 	return ruleBuilder
 }

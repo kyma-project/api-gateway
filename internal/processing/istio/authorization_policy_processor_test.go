@@ -178,7 +178,7 @@ var _ = Describe("Authorization Policy Processor", func() {
 
 		for i := 0; i < 3; i++ {
 			Expect(ap1.Spec.Rules[i].When[0].Key).To(BeElementOf(testExpectedScopeKeys))
-			Expect(ap1.Spec.Rules[i].When[0].Values).To(ContainElements(RequiredScopeA, RequiredScopeB))
+			Expect(ap1.Spec.Rules[i].When[0].Values).To(ContainElement(RequiredScopeA))
 		}
 
 		Expect(ap2).NotTo(BeNil())
@@ -205,7 +205,7 @@ var _ = Describe("Authorization Policy Processor", func() {
 
 		for i := 0; i < 3; i++ {
 			Expect(ap2.Spec.Rules[i].When[0].Key).To(BeElementOf(testExpectedScopeKeys))
-			Expect(ap2.Spec.Rules[i].When[0].Values).To(ContainElements(RequiredScopeA, RequiredScopeB))
+			Expect(ap2.Spec.Rules[i].When[0].Values).To(ContainElement(RequiredScopeB))
 		}
 	})
 
