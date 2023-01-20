@@ -14,32 +14,54 @@ import (
 func DeleteAPIRuleSubresources(k8sClient client.Client, ctx context.Context, apiRule gatewayv1beta1.APIRule) error {
 	labels := GetOwnerLabels(&apiRule)
 
-	subresourceTypes := []client.Object{
-		&securityv1beta1.AuthorizationPolicy{},
-		&securityv1beta1.RequestAuthentication{},
-		&networkingv1beta1.VirtualService{},
-		&rulev1alpha1.Rule{},
+	var apList securityv1beta1.AuthorizationPolicyList
+	err := k8sClient.List(ctx, &apList, client.MatchingLabels(labels))
+	if err != nil {
+		return err
 	}
-
-	// DeleteAllOf requires InNamespace option: https://github.com/kubernetes-sigs/controller-runtime/issues/1842
-	var namespaces []string
-
-	namespaces = append(namespaces, apiRule.Namespace)
-	if apiRule.Spec.Service != nil && apiRule.Spec.Service.Namespace != nil {
-		namespaces = append(namespaces, *apiRule.Spec.Service.Namespace)
-	}
-
-	for _, rule := range apiRule.Spec.Rules {
-		if rule.Service != nil && rule.Service.Namespace != nil {
-			namespaces = append(namespaces, *rule.Service.Namespace)
+	for _, ap := range apList.Items {
+		err := k8sClient.Delete(ctx, ap)
+		if err != nil {
+			return err
 		}
 	}
 
-	for _, subresourceType := range subresourceTypes {
-		for _, namespace := range namespaces {
-			return k8sClient.DeleteAllOf(ctx, subresourceType, client.InNamespace(namespace), client.MatchingLabels(labels))
+	var raList securityv1beta1.RequestAuthenticationList
+	err = k8sClient.List(ctx, &raList, client.MatchingLabels(labels))
+	if err != nil {
+		return err
+	}
+	for _, ra := range raList.Items {
+		err := k8sClient.Delete(ctx, ra)
+		if err != nil {
+			return err
 		}
 	}
+
+	var vsList networkingv1beta1.VirtualServiceList
+	err = k8sClient.List(ctx, &vsList, client.MatchingLabels(labels))
+	if err != nil {
+		return err
+	}
+	for _, vs := range vsList.Items {
+		err := k8sClient.Delete(ctx, vs)
+		if err != nil {
+			return err
+		}
+	}
+
+	var ruleList rulev1alpha1.RuleList
+	err = k8sClient.List(ctx, &ruleList, client.MatchingLabels(labels))
+	if err != nil {
+		return err
+	}
+	for _, rule := range ruleList.Items {
+		err := k8sClient.Delete(ctx, rule)
+		if err != nil {
+			return err
+		}
+	}
+
 
 	return nil
 }
