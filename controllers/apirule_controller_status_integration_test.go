@@ -17,7 +17,7 @@ import (
 
 var _ = Describe("Resource status", func() {
 
-	var (
+	const (
 		testNameBase           = "status-test"
 		testIDLength           = 5
 		testServiceName        = "httpbin"
