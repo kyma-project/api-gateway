@@ -9,6 +9,7 @@ import (
 
 	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 func DeleteAPIRuleSubresources(k8sClient client.Client, ctx context.Context, apiRule gatewayv1beta1.APIRule) error {
@@ -44,6 +45,7 @@ func DeleteAPIRuleSubresources(k8sClient client.Client, ctx context.Context, api
 		return err
 	}
 	for _, vs := range vsList.Items {
+		log.Log.Info("Deleting", vs, vs.Name)
 		err := k8sClient.Delete(ctx, vs)
 		if err != nil {
 			return err
@@ -61,7 +63,6 @@ func DeleteAPIRuleSubresources(k8sClient client.Client, ctx context.Context, api
 			return err
 		}
 	}
-
 
 	return nil
 }
