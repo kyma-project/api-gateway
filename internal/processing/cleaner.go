@@ -45,7 +45,7 @@ func DeleteAPIRuleSubresources(k8sClient client.Client, ctx context.Context, api
 		return err
 	}
 	for _, vs := range vsList.Items {
-		log.Log.Info("Deleting", vs, vs.Name)
+		log.Log.Info("Deleting", "vs", vs.Name)
 		err := k8sClient.Delete(ctx, vs)
 		if err != nil {
 			return err
