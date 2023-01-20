@@ -21,8 +21,24 @@ func DeleteAPIRuleSubresources(k8sClient client.Client, ctx context.Context, api
 		&rulev1alpha1.Rule{},
 	}
 
+	// DeleteAllOf requires InNamespace option: https://github.com/kubernetes-sigs/controller-runtime/issues/1842
+	var namespaces []string
+
+	namespaces = append(namespaces, apiRule.Namespace)
+	if apiRule.Spec.Service != nil && apiRule.Spec.Service.Namespace != nil {
+		namespaces = append(namespaces, *apiRule.Spec.Service.Namespace)
+	}
+
+	for _, rule := range apiRule.Spec.Rules {
+		if rule.Service != nil && rule.Service.Namespace != nil {
+			namespaces = append(namespaces, *rule.Service.Namespace)
+		}
+	}
+
 	for _, subresourceType := range subresourceTypes {
-		return k8sClient.DeleteAllOf(ctx, subresourceType, client.MatchingLabels(labels))
+		for _, namespace := range namespaces {
+			return k8sClient.DeleteAllOf(ctx, subresourceType, client.InNamespace(namespace), client.MatchingLabels(labels))
+		}
 	}
 
 	return nil
