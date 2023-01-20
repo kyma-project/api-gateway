@@ -38,11 +38,6 @@ func (ar *accessRule) Namespace(val string) *accessRule {
 	return ar
 }
 
-func (ar *accessRule) Owner(val *ownerReference) *accessRule {
-	ar.value.OwnerReferences = append(ar.value.OwnerReferences, *val.Get())
-	return ar
-}
-
 func (ar *accessRule) Label(key, val string) *accessRule {
 	if ar.value.Labels == nil {
 		ar.value.Labels = make(map[string]string)

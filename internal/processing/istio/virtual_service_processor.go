@@ -35,7 +35,6 @@ type virtualServiceCreator struct {
 // Create returns the Virtual Service using the configuration of the APIRule.
 func (r virtualServiceCreator) Create(api *gatewayv1beta1.APIRule) *networkingv1beta1.VirtualService {
 	virtualServiceNamePrefix := fmt.Sprintf("%s-", api.ObjectMeta.Name)
-	ownerRef := processing.GenerateOwnerRef(api)
 
 	vsSpecBuilder := builders.VirtualServiceSpec()
 	vsSpecBuilder.Host(helpers.GetHostWithDomain(*api.Spec.Host, r.defaultDomainName))
@@ -85,7 +84,6 @@ func (r virtualServiceCreator) Create(api *gatewayv1beta1.APIRule) *networkingv1
 	vsBuilder := builders.VirtualService().
 		GenerateName(virtualServiceNamePrefix).
 		Namespace(api.ObjectMeta.Namespace).
-		Owner(builders.OwnerReference().From(&ownerRef)).
 		Label(processing.OwnerLabel, fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace)).
 		Label(processing.OwnerLabelv1alpha1, fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace))
 
