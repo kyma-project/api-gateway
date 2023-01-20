@@ -1,14 +1,28 @@
-#!/usr/bin/env bash
+#!/bin/bash
+
+set -eo pipefail
 
 if [[ -z ${KYMA_DOMAIN} ]]; then
-  echo "KYMA_DOMAIN not exported, fallback to default k3d local.kyma.dev"
-  export KYMA_DOMAIN=local.kyma.dev
+  >&2 echo "Environment variable KYMA_DOMAIN not set, fallback to default k3d 'local.kyma.dev'"
+  echo export KYMA_DOMAIN="local.kyma.dev"
 fi
 
-export TEST_HYDRA_ADDRESS="https://oauth2.${KYMA_DOMAIN}"
-export TEST_REQUEST_TIMEOUT="120"
-export TEST_REQUEST_DELAY="10"
-export TEST_DOMAIN="${KYMA_DOMAIN}"
-export TEST_CLIENT_TIMEOUT=30s
-export TEST_CONCURENCY="8"
-export EXPORT_RESULT="true"
+if [[ -z ${CLIENT_ID} ]]; then
+  >&2 echo "Environment variable CLIENT_ID is required but not set"
+  exit 2
+fi
+
+if [[ -z ${CLIENT_SECRET} ]]; then
+  >&2 echo "Environment variable CLIENT_SECRET is required but not set"
+  exit 2
+fi
+
+echo export TEST_IAS_ADDRESS="https://kymagoattest.accounts400.ondemand.com"
+echo export TEST_CLIENT_ID="${CLIENT_ID}"
+echo export TEST_CLIENT_SECRET="${CLIENT_SECRET}"
+echo export TEST_REQUEST_TIMEOUT="120"
+echo export TEST_REQUEST_DELAY="10"
+echo export TEST_DOMAIN="${KYMA_DOMAIN}"
+echo export TEST_CLIENT_TIMEOUT=30s
+echo export TEST_CONCURENCY="8"
+echo export EXPORT_RESULT="true"

@@ -47,30 +47,23 @@ import (
 )
 
 const (
-	testIDLength                   = 8
-	OauthClientSecretLength        = 8
-	OauthClientIDLength            = 8
-	manifestsDirectory             = "manifests/"
-	testingAppFile                 = "testing-app.yaml"
-	twoServicesDeploymentFile      = "two-services-deployment.yaml"
-	globalCommonResourcesFile      = "global-commons.yaml"
-	hydraClientFile                = "hydra-client.yaml"
-	noAccessStrategyApiruleFile    = "no_access_strategy.yaml"
-	twoServicesApiruleFile         = "two-services.yaml"
-	oauthStrategyApiruleFile       = "oauth-strategy.yaml"
-	jwtAndOauthStrategyApiruleFile = "jwt-oauth-strategy.yaml"
-	jwtAndOauthOnePathApiruleFile  = "jwt-oauth-one-path-strategy.yaml"
-	istioJwtApiruleFile            = "istio-jwt-strategy.yaml"
-	resourceSeparator              = "---"
-	defaultHeaderName              = "Authorization"
-	customDomainEnv                = "TEST_CUSTOM_DOMAIN"
-	exportResultVar                = "EXPORT_RESULT"
-	junitFileName                  = "junit-report.xml"
-	cucumberFileName               = "cucumber-report.json"
-	anyToken                       = "any"
-	authorizationHeaderName        = "Authorization"
-	defaultNS                      = "kyma-system"
-	configMapName                  = "api-gateway-config"
+	testIDLength              = 8
+	OauthClientSecretLength   = 8
+	OauthClientIDLength       = 8
+	manifestsDirectory        = "manifests/"
+	testingAppFile            = "testing-app.yaml"
+	globalCommonResourcesFile = "global-commons.yaml"
+	istioJwtApiruleFile       = "istio-jwt-strategy.yaml"
+	resourceSeparator         = "---"
+	defaultHeaderName         = "Authorization"
+	customDomainEnv           = "TEST_CUSTOM_DOMAIN"
+	exportResultVar           = "EXPORT_RESULT"
+	junitFileName             = "junit-report.xml"
+	cucumberFileName          = "cucumber-report.json"
+	anyToken                  = "any"
+	authorizationHeaderName   = "Authorization"
+	defaultNS                 = "kyma-system"
+	configMapName             = "api-gateway-config"
 )
 
 var (
@@ -79,8 +72,8 @@ var (
 	httpClient      *http.Client
 	k8sClient       dynamic.Interface
 	helper          *helpers.Helper
-	jwtConfig       *jwt.Config
 	oauth2Cfg       *clientcredentials.Config
+	jwtConfig       *jwt.Config
 	batch           *resource.Batch
 	namespace       string
 )
@@ -94,7 +87,9 @@ var goDogOpts = godog.Options{
 
 type Config struct {
 	CustomDomain     string        `envconfig:"TEST_CUSTOM_DOMAIN,default=test.domain.kyma"`
-	HydraAddr        string        `envconfig:"TEST_HYDRA_ADDRESS"`
+	IasAddr          string        `envconfig:"TEST_IAS_ADDRESS"`
+	ClientID         string        `envconfig:"TEST_CLIENT_ID"`
+	ClientSecret     string        `envconfig:"TEST_CLIENT_SECRET"`
 	User             string        `envconfig:"TEST_USER_EMAIL,default=admin@kyma.cx"`
 	Pwd              string        `envconfig:"TEST_USER_PASSWORD,default=1234"`
 	ReqTimeout       uint          `envconfig:"TEST_REQUEST_TIMEOUT,default=180"`
@@ -173,28 +168,24 @@ func InitTestSuite() {
 }
 
 func SetupCommonResources(namePrefix string) {
-	oauthClientID := generateRandomString(OauthClientIDLength)
-	oauthClientSecret := generateRandomString(OauthClientSecretLength)
 	namespace = fmt.Sprintf("%s-%s", namePrefix, generateRandomString(6))
 	randomSuffix6 := generateRandomString(6)
 	oauthSecretName := fmt.Sprintf("%s-secret-%s", namePrefix, randomSuffix6)
 	oauthClientName := fmt.Sprintf("%s-client-%s", namePrefix, randomSuffix6)
 	log.Printf("Using namespace: %s\n", namespace)
 	log.Printf("Using OAuth2Client with name: %s, secretName: %s\n", oauthClientName, oauthSecretName)
-
 	oauth2Cfg = &clientcredentials.Config{
-		ClientID:     oauthClientID,
-		ClientSecret: oauthClientSecret,
-		TokenURL:     fmt.Sprintf("%s/oauth2/token", conf.HydraAddr),
+		ClientID:     conf.ClientID,
+		ClientSecret: conf.ClientSecret,
+		TokenURL:     fmt.Sprintf("%s/oauth2/token", conf.IasAddr),
 		Scopes:       []string{"read"},
 		AuthStyle:    oauth2.AuthStyleInHeader,
 	}
-
-	jwtConf, err := jwt.LoadConfig(oauthClientID)
+	config, err := jwt.NewJwtConfig()
 	if err != nil {
 		log.Fatal(err)
 	}
-	jwtConfig = &jwtConf
+	jwtConfig = &config
 	// create common resources for all scenarios
 	globalCommonResources, err := manifestprocessor.ParseFromFileWithTemplate(globalCommonResourcesFile, manifestsDirectory, resourceSeparator, struct {
 		Namespace         string
@@ -203,8 +194,8 @@ func SetupCommonResources(namePrefix string) {
 		OauthSecretName   string
 	}{
 		Namespace:         namespace,
-		OauthClientSecret: base64.StdEncoding.EncodeToString([]byte(oauthClientSecret)),
-		OauthClientID:     base64.StdEncoding.EncodeToString([]byte(oauthClientID)),
+		OauthClientID:     base64.StdEncoding.EncodeToString([]byte(conf.ClientID)),
+		OauthClientSecret: base64.StdEncoding.EncodeToString([]byte(conf.ClientSecret)),
 		OauthSecretName:   oauthSecretName,
 	})
 	if err != nil {
@@ -225,41 +216,6 @@ func SetupCommonResources(namePrefix string) {
 	_, err = batch.CreateResources(k8sClient, globalCommonResources...)
 	if err != nil {
 		log.Fatal(err)
-	}
-
-	time.Sleep(time.Duration(conf.ReqDelay) * time.Second)
-
-	hydraClientResource, err := manifestprocessor.ParseFromFileWithTemplate(hydraClientFile, manifestsDirectory, resourceSeparator, struct {
-		Namespace       string
-		OauthClientName string
-		OauthSecretName string
-	}{
-		Namespace:       namespace,
-		OauthClientName: oauthClientName,
-		OauthSecretName: oauthSecretName,
-	})
-	if err != nil {
-		log.Fatal(err)
-	}
-	log.Printf("Creating hydra client resources")
-
-	_, err = batch.CreateResources(k8sClient, hydraClientResource...)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// Let's wait a bit to register client in hydra
-	time.Sleep(time.Duration(conf.ReqDelay) * time.Second)
-
-	// Get HydraClient Status
-	hydraClientResourceSchema, ns, name := batch.GetResourceSchemaAndNamespace(hydraClientResource[0])
-	clientStatus, err := resourceManager.GetStatus(k8sClient, hydraClientResourceSchema, ns, name)
-	errorStatus, ok := clientStatus["reconciliationError"].(map[string]interface{})
-	if err != nil || !ok {
-		t.Fatalf("Error retrieving Oauth2Client status: %+v | %+v", err, ok)
-	}
-	if len(errorStatus) != 0 {
-		t.Fatalf("Invalid status in Oauth2Client resource: %+v", errorStatus)
 	}
 }
 
@@ -418,56 +374,6 @@ func CreateScenario(templateFileName string, namePrefix string, deploymentFile .
 		return nil, fmt.Errorf("failed to process resource manifest files, details %s", err.Error())
 	}
 	return &Scenario{namespace: namespace, url: fmt.Sprintf("https://httpbin-%s.%s", testID, conf.Domain), apiResource: accessRule}, nil
-}
-
-func CreateTwoStepScenario(templateFileNameOne string, templateFileNameTwo string, namePrefix string) (*TwoStepScenario, error) {
-	testID := generateRandomString(testIDLength)
-
-	// create common resources from files
-	commonResources, err := manifestprocessor.ParseFromFileWithTemplate(testingAppFile, manifestsDirectory, resourceSeparator, struct {
-		Namespace string
-		TestID    string
-	}{
-		Namespace: namespace,
-		TestID:    testID,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to process common manifest files, details %s", err.Error())
-	}
-	_, err = batch.CreateResources(k8sClient, commonResources...)
-
-	if err != nil {
-		return nil, err
-	}
-
-	// create api-rule from file
-	accessRuleOne, err := manifestprocessor.ParseFromFileWithTemplate(templateFileNameOne, manifestsDirectory, resourceSeparator, struct {
-		Namespace        string
-		NamePrefix       string
-		TestID           string
-		Domain           string
-		GatewayName      string
-		GatewayNamespace string
-	}{Namespace: namespace, NamePrefix: namePrefix, TestID: testID, Domain: conf.Domain, GatewayName: conf.GatewayName,
-		GatewayNamespace: conf.GatewayNamespace})
-	if err != nil {
-		return nil, fmt.Errorf("failed to process resource manifest files, details %s", err.Error())
-	}
-
-	accessRuleTwo, err := manifestprocessor.ParseFromFileWithTemplate(templateFileNameTwo, manifestsDirectory, resourceSeparator, struct {
-		Namespace        string
-		NamePrefix       string
-		TestID           string
-		Domain           string
-		GatewayName      string
-		GatewayNamespace string
-	}{Namespace: namespace, NamePrefix: namePrefix, TestID: testID, Domain: conf.Domain, GatewayName: conf.GatewayName,
-		GatewayNamespace: conf.GatewayNamespace})
-	if err != nil {
-		return nil, fmt.Errorf("failed to process resource manifest files, details %s", err.Error())
-	}
-
-	return &TwoStepScenario{namespace: namespace, url: fmt.Sprintf("https://httpbin-%s.%s", testID, conf.Domain), apiResourceOne: accessRuleOne, apiResourceTwo: accessRuleTwo}, nil
 }
 
 func copy(src, dst string) (int64, error) {

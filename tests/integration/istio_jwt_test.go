@@ -35,7 +35,7 @@ func (o *istioJwtScenario) thereIsAnEndpoint() error {
 func (o *istioJwtScenario) callingTheEndpointWithValidTokenShouldResultInStatusBeetween(path, tokenType string, lower, higher int) error {
 	switch tokenType {
 	case "JWT":
-		tokenJWT, err := jwt.Authenticate(oauth2Cfg.ClientID, jwtConfig.OidcHydraConfig)
+		tokenJWT, err := jwt.GetAccessToken(oauth2Cfg, jwtConfig)
 		if err != nil {
 			return fmt.Errorf("failed to fetch an id_token: %s", err.Error())
 		}
