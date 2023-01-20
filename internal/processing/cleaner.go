@@ -21,6 +21,7 @@ func DeleteAPIRuleSubresources(k8sClient client.Client, ctx context.Context, api
 		return err
 	}
 	for _, ap := range apList.Items {
+		log.Log.Info("Removing subresource", "AuthorizationPolicy", ap.Name)
 		err := k8sClient.Delete(ctx, ap)
 		if err != nil {
 			return err
@@ -33,6 +34,7 @@ func DeleteAPIRuleSubresources(k8sClient client.Client, ctx context.Context, api
 		return err
 	}
 	for _, ra := range raList.Items {
+		log.Log.Info("Removing subresource", "RequestAuthentication", ra.Name)
 		err := k8sClient.Delete(ctx, ra)
 		if err != nil {
 			return err
@@ -45,7 +47,7 @@ func DeleteAPIRuleSubresources(k8sClient client.Client, ctx context.Context, api
 		return err
 	}
 	for _, vs := range vsList.Items {
-		log.Log.Info("Deleting", "vs", vs.Name)
+		log.Log.Info("Removing subresource", "VirtualService", vs.Name)
 		err := k8sClient.Delete(ctx, vs)
 		if err != nil {
 			return err
@@ -58,6 +60,7 @@ func DeleteAPIRuleSubresources(k8sClient client.Client, ctx context.Context, api
 		return err
 	}
 	for _, accessRule := range ruleList.Items {
+		log.Log.Info("Removing subresource", "Rule", accessRule.Name)
 		err := k8sClient.Delete(ctx, &accessRule)
 		if err != nil {
 			return err
