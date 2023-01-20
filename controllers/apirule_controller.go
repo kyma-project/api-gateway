@@ -203,6 +203,7 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 				return doneReconcileErrorRequeue(r.OnErrorReconcilePeriod)
 			}
 		}
+		return doneReconcileNoRequeue()
 	}
 
 	r.Log.Info("Validating ApiRule config")
