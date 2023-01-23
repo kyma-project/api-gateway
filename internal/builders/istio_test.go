@@ -29,9 +29,6 @@ var _ = Describe("Builder for", func() {
 			testRulesSourceRequestPrincipals := "*"
 			testScopeA := "scope-a"
 			testScopeB := "scope-b"
-			//testRaw := runtime.RawExtension{Raw: []byte(fmt.Sprintf(`{"authorizations": [{"requiredScopes": ["%s", "%s"]}]}`, testScopeA, testScopeB))}
-			//testHandler := gatewayv1beta1.Handler{Config: &testRaw}
-			//testAuthenticator := gatewayv1beta1.Authenticator{Handler: &testHandler}
 			testAuthorization := gatewayv1beta1.Authorization{RequiredScopes: []string{testScopeA, testScopeB}}
 			testExpectedScopeKeys := []string{"request.auth.claims[scp]"}
 
@@ -48,7 +45,7 @@ var _ = Describe("Builder for", func() {
 								Path(path).
 								Methods(methods))).
 						RuleCondition(RuleConditionBuilder().
-							From("scp", &testAuthorization)))).
+							From("request.auth.claims[scp]", &testAuthorization)))).
 				Get()
 
 			Expect(ap.Name).To(BeEmpty())
@@ -66,10 +63,14 @@ var _ = Describe("Builder for", func() {
 			Expect(ap.Spec.Rules[0].When).To(HaveLen(2))
 			Expect(ap.Spec.Rules[0].When[0].Key).To(BeElementOf(testExpectedScopeKeys))
 			Expect(ap.Spec.Rules[0].When[0].Values).To(HaveLen(1))
-			Expect(ap.Spec.Rules[0].When[0].Values[0]).To(BeElementOf(testScopeA, testScopeB))
 			Expect(ap.Spec.Rules[0].When[1].Values).To(HaveLen(1))
 			Expect(ap.Spec.Rules[0].When[1].Key).To(BeElementOf(testExpectedScopeKeys))
-			Expect(ap.Spec.Rules[0].When[1].Values[0]).To(BeElementOf(testScopeA, testScopeB))
+			if ap.Spec.Rules[0].When[0].Values[0] == testScopeA {
+				Expect(ap.Spec.Rules[0].When[1].Values[0]).To(Equal(testScopeB))
+			} else {
+				Expect(ap.Spec.Rules[0].When[1].Values[0]).To(Equal(testScopeA))
+				Expect(ap.Spec.Rules[0].When[0].Values[0]).To(Equal(testScopeB))
+			}
 		})
 	})
 

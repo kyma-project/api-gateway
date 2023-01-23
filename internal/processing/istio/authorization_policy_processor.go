@@ -98,7 +98,7 @@ func generateAuthorizationPolicySpec(api *gatewayv1beta1.APIRule, rule gatewayv1
 	authorizationPolicySpec := builders.AuthorizationPolicySpecBuilder().
 		Selector(builders.SelectorBuilder().MatchLabels(processors.AuthorizationPolicyAppSelectorLabel, serviceName))
 
-	defaultScopeKeys := []string{"scp", "scope", "scopes"}
+	defaultScopeKeys := []string{"request.auth.claims[scp]", "request.auth.claims[scope]", "request.auth.claims[scopes]"}
 	for _, scope := range defaultScopeKeys {
 		generatedRule := generateAuthorizationPolicySpecRule(rule, scope, authorization)
 		authorizationPolicySpec.Rule(generatedRule)

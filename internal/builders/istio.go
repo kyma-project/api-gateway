@@ -2,8 +2,6 @@ package builders
 
 import (
 	"encoding/json"
-	"fmt"
-
 	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
 	"istio.io/api/security/v1beta1"
 	apiv1beta1 "istio.io/api/type/v1beta1"
@@ -221,9 +219,8 @@ func (rc *RuleCondition) Get() *[]*v1beta1.Condition {
 func (rc *RuleCondition) From(key string, authorization *gatewayv1beta1.Authorization) *RuleCondition {
 	if authorization.RequiredScopes != nil && len(authorization.RequiredScopes) > 0 {
 		for _, requiredScope := range authorization.RequiredScopes {
-			scopeKey := fmt.Sprintf("request.auth.claims[%s]", key)
 			*rc.value = append(*rc.value, &v1beta1.Condition{
-				Key:    scopeKey,
+				Key:    key,
 				Values: []string{requiredScope},
 			})
 		}
