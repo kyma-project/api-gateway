@@ -19,7 +19,7 @@ type AuthorizationPolicyProcessor struct {
 // AuthorizationPolicyCreator provides the creation of AuthorizationPolicies using the configuration in the given APIRule.
 // The key of the map is expected to be unique and comparable with the
 type AuthorizationPolicyCreator interface {
-	Create(api *gatewayv1beta1.APIRule) map[string]*securityv1beta1.AuthorizationPolicy
+	Create(api *gatewayv1beta1.APIRule) []*securityv1beta1.AuthorizationPolicy
 }
 
 // NewAuthorizationPolicyProcessor returns a AuthorizationPolicyProcessor with the desired state handling specific for the Istio handler.
@@ -36,15 +36,13 @@ type authorizationPolicyCreator struct {
 }
 
 // Create returns the Authorization Policy using the configuration of the APIRule.
-func (r authorizationPolicyCreator) Create(api *gatewayv1beta1.APIRule) map[string]*securityv1beta1.AuthorizationPolicy {
-	authorizationPolicies := make(map[string]*securityv1beta1.AuthorizationPolicy)
+func (r authorizationPolicyCreator) Create(api *gatewayv1beta1.APIRule) []*securityv1beta1.AuthorizationPolicy {
+	var authorizationPolicies []*securityv1beta1.AuthorizationPolicy
 	hasJwtRule := processing.HasJwtRule(api)
 	if hasJwtRule {
 		for _, rule := range api.Spec.Rules {
 			aps := generateAuthorizationPolicies(api, rule, r.additionalLabels)
-			for _, ap := range aps.Items {
-				authorizationPolicies[processors.GetAuthorizationPolicyKey(ap)] = ap
-			}
+			authorizationPolicies = append(authorizationPolicies, aps.Items...)
 		}
 	}
 	return authorizationPolicies

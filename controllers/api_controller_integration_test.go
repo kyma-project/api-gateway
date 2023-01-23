@@ -465,8 +465,8 @@ var _ = Describe("APIRule Controller", func() {
 							apiRuleName := generateTestName(testNameBase, testIDLength)
 							testServiceHost := "httpbin-istio-jwt-happy-base.kyma.local"
 
-							rule1 := testRule("/img", []string{"GET"}, nil, testIstioJWTHandler(testIssuer, testJwksUri))
-							rule2 := testRule("/headers", []string{"GET"}, nil, testIstioJWTHandler(testIssuer, testJwksUri))
+							rule1 := testRule("/img", []string{"GET"}, nil, testIstioJWTHandlerWithScopes(testIssuer, testJwksUri, []string{"scope-a", "scope-b"}))
+							rule2 := testRule("/headers", []string{"GET"}, nil, testIstioJWTHandlerWithScopes(testIssuer, testJwksUri, []string{"scope-c"}))
 							instance := testInstance(apiRuleName, testNamespace, testServiceName, testServiceHost, testServicePort, []gatewayv1beta1.Rule{rule1, rule2})
 
 							err = c.Create(context.TODO(), instance)
@@ -529,30 +529,57 @@ var _ = Describe("APIRule Controller", func() {
 							Expect(err).NotTo(HaveOccurred())
 							Expect(apList.Items).To(HaveLen(2))
 
-							hasAuthorizationPolicyWithOperationPath := func(apList []*securityv1beta1.AuthorizationPolicy, operationPath string) {
-
-								getByOperationPath := func(apList []*securityv1beta1.AuthorizationPolicy, path string) (*securityv1beta1.AuthorizationPolicy, error) {
-									for _, ap := range apList {
-										if ap.Spec.Rules[0].To[0].Operation.Paths[0] == path {
-											return ap, nil
-										}
+							getByOperationPath := func(apList []*securityv1beta1.AuthorizationPolicy, path string) (*securityv1beta1.AuthorizationPolicy, error) {
+								for _, ap := range apList {
+									if ap.Spec.Rules[0].To[0].Operation.Paths[0] == path {
+										return ap, nil
 									}
-									return nil, fmt.Errorf("no authorization policy with operation path %s exists", path)
 								}
+								return nil, fmt.Errorf("no authorization policy with operation path %s exists", path)
+							}
 
+							hasAuthorizationPolicyWithOperationPath := func(apList []*securityv1beta1.AuthorizationPolicy, operationPath string, assertWhen func(*securityv1beta1.AuthorizationPolicy)) {
 								ap, err := getByOperationPath(apList, operationPath)
 								Expect(err).NotTo(HaveOccurred())
 
 								verifyOwnerReference(ap.ObjectMeta, apiRuleName, gatewayv1beta1.GroupVersion.String(), kind)
 
 								Expect(ap.Spec.Selector.MatchLabels).To(BeEquivalentTo(map[string]string{"app": testServiceName}))
-								Expect(ap.Spec.Rules[0].From[0].Source.RequestPrincipals[0]).To(Equal("*"))
-								Expect(ap.Spec.Rules[0].To[0].Operation.Paths[0]).To(Equal(operationPath))
-								Expect(ap.Spec.Rules[0].To[0].Operation.Methods).To(BeEquivalentTo([]string{"GET"}))
+								Expect(ap.Spec.Rules).To(HaveLen(3))
+
+								for i := 0; i < 3; i++ {
+									Expect(ap.Spec.Rules[i].From[0].Source.RequestPrincipals[0]).To(Equal("*"))
+									Expect(ap.Spec.Rules[i].To[0].Operation.Paths[0]).To(Equal(operationPath))
+									Expect(ap.Spec.Rules[i].To[0].Operation.Methods).To(BeEquivalentTo([]string{"GET"}))
+								}
+
+								ruleWhenKeys := append([]string{}, ap.Spec.Rules[0].When[0].Key, ap.Spec.Rules[1].When[0].Key, ap.Spec.Rules[2].When[0].Key)
+								Expect(ruleWhenKeys).To(ContainElements("request.auth.claims[scp]", "request.auth.claims[scope]", "request.auth.claims[scopes]"))
+
+								assertWhen(ap)
 							}
 
-							hasAuthorizationPolicyWithOperationPath(apList.Items, "/img")
-							hasAuthorizationPolicyWithOperationPath(apList.Items, "/headers")
+							hasAuthorizationPolicyWithOperationPath(apList.Items, "/img", func(ap *securityv1beta1.AuthorizationPolicy) {
+								Expect(ap.Spec.Rules).To(HaveLen(3))
+								for i := 0; i < 3; i++ {
+									Expect(ap.Spec.Rules[i].When).To(HaveLen(2))
+
+									ruleWhenValues := append([]string{}, ap.Spec.Rules[0].When[0].Values...)
+									ruleWhenValues = append(ruleWhenValues, ap.Spec.Rules[0].When[1].Values...)
+
+									Expect(ruleWhenValues).To(ContainElements("scope-a", "scope-b"))
+
+								}
+							})
+
+							hasAuthorizationPolicyWithOperationPath(apList.Items, "/headers", func(ap *securityv1beta1.AuthorizationPolicy) {
+								Expect(ap.Spec.Rules).To(HaveLen(3))
+								for i := 0; i < 3; i++ {
+									Expect(ap.Spec.Rules[i].When[0].Values).To(ContainElements("scope-c"))
+									Expect(ap.Spec.Rules[i].When[0].Values).To(ContainElements("scope-c"))
+									Expect(ap.Spec.Rules[i].When[0].Values).To(ContainElements("scope-c"))
+								}
+							})
 
 						})
 					})
@@ -1065,6 +1092,30 @@ func testIstioJWTHandler(issuer string, jwksUri string) *gatewayv1beta1.Handler 
 			{
 				Issuer:  issuer,
 				JwksUri: jwksUri,
+			},
+		},
+	})
+	Expect(err).To(BeNil())
+	return &gatewayv1beta1.Handler{
+		Name: "jwt",
+		Config: &runtime.RawExtension{
+			Raw: bytes,
+		},
+	}
+}
+
+func testIstioJWTHandlerWithScopes(issuer string, jwksUri string, authorizationScopes []string) *gatewayv1beta1.Handler {
+
+	bytes, err := json.Marshal(istioint.JwtConfig{
+		Authentications: []istioint.JwtAuthentication{
+			{
+				Issuer:  issuer,
+				JwksUri: jwksUri,
+			},
+		},
+		Authorizations: []istioint.JwtAuthorization{
+			{
+				RequiredScopes: authorizationScopes,
 			},
 		},
 	})

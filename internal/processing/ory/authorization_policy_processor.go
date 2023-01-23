@@ -32,6 +32,6 @@ type authorizationPolicyCreator struct {
 }
 
 // Create returns empty Authorization Policy
-func (r authorizationPolicyCreator) Create(api *gatewayv1beta1.APIRule) map[string]*securityv1beta1.AuthorizationPolicy {
-	return make(map[string]*securityv1beta1.AuthorizationPolicy)
+func (r authorizationPolicyCreator) Create(_ *gatewayv1beta1.APIRule) []*securityv1beta1.AuthorizationPolicy {
+	return []*securityv1beta1.AuthorizationPolicy{}
 }
