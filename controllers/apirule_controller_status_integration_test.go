@@ -23,16 +23,6 @@ var _ = Describe("Resource status", func() {
 		testServiceName        = "httpbin"
 		testServicePort uint32 = 443
 		testPath               = "/.*"
-		testMethods            = []string{"GET", "PUT"}
-		testScopes             = []string{"foo", "bar"}
-		testMutators           = []*gatewayv1beta1.Mutator{
-			{
-				Handler: noConfigHandler("noop"),
-			},
-			{
-				Handler: noConfigHandler("idToken"),
-			},
-		}
 	)
 
 	Context("with ory handler", func() {
@@ -45,7 +35,7 @@ var _ = Describe("Resource status", func() {
 			serviceName := generateTestName(testServiceName, testIDLength)
 			serviceHost := fmt.Sprintf("%s.kyma.local", serviceName)
 
-			rule := testRule(testPath, testMethods, testMutators, noConfigHandler("noop"))
+			rule := testRule(testPath, defaultMethods, defaultMutators, noConfigHandler("noop"))
 			instance := testInstance(apiRuleName, testNamespace, serviceName, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule})
 
 			err := c.Create(context.TODO(), instance)
@@ -63,7 +53,7 @@ var _ = Describe("Resource status", func() {
 			expectedRequest := reconcile.Request{NamespacedName: types.NamespacedName{Name: apiRuleName, Namespace: testNamespace}}
 
 			// then
-			Eventually(requests, timeout).Should(Receive(Equal(expectedRequest)))
+			Eventually(requests, eventuallyTimeout).Should(Receive(Equal(expectedRequest)))
 
 			created := gatewayv1beta1.APIRule{}
 			err = c.Get(context.TODO(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &created)
@@ -83,10 +73,10 @@ var _ = Describe("Resource status", func() {
 			serviceName := generateTestName(testServiceName, testIDLength)
 			serviceHost := fmt.Sprintf("%s.kyma.local", serviceName)
 
-			invalidConfig := testOauthHandler(testScopes)
+			invalidConfig := testOauthHandler(defaultScopes)
 			invalidConfig.Name = "noop"
 
-			rule := testRule(testPath, testMethods, testMutators, invalidConfig)
+			rule := testRule(testPath, defaultMethods, defaultMutators, invalidConfig)
 			instance := testInstance(apiRuleName, testNamespace, serviceName, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule})
 			instance.Spec.Rules = append(instance.Spec.Rules, instance.Spec.Rules[0]) //Duplicate entry
 			instance.Spec.Rules = append(instance.Spec.Rules, instance.Spec.Rules[0]) //Duplicate entry
@@ -106,7 +96,7 @@ var _ = Describe("Resource status", func() {
 			expectedRequest := reconcile.Request{NamespacedName: types.NamespacedName{Name: apiRuleName, Namespace: testNamespace}}
 
 			// then
-			Eventually(requests, timeout).Should(Receive(Equal(expectedRequest)))
+			Eventually(requests, eventuallyTimeout).Should(Receive(Equal(expectedRequest)))
 
 			created := gatewayv1beta1.APIRule{}
 			err = c.Get(context.TODO(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &created)
@@ -140,7 +130,7 @@ var _ = Describe("Resource status", func() {
 			serviceName := generateTestName(testServiceName, testIDLength)
 			serviceHost := fmt.Sprintf("%s.kyma.local", serviceName)
 
-			rule := testRule(testPath, testMethods, testMutators, noConfigHandler("noop"))
+			rule := testRule(testPath, defaultMethods, defaultMutators, noConfigHandler("noop"))
 			instance := testInstance(apiRuleName, testNamespace, serviceName, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule})
 
 			err := c.Create(context.TODO(), instance)
@@ -158,7 +148,7 @@ var _ = Describe("Resource status", func() {
 			expectedRequest := reconcile.Request{NamespacedName: types.NamespacedName{Name: apiRuleName, Namespace: testNamespace}}
 
 			// then
-			Eventually(requests, timeout).Should(Receive(Equal(expectedRequest)))
+			Eventually(requests, eventuallyTimeout).Should(Receive(Equal(expectedRequest)))
 
 			created := gatewayv1beta1.APIRule{}
 			err = c.Get(context.TODO(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &created)
@@ -177,10 +167,10 @@ var _ = Describe("Resource status", func() {
 			serviceName := generateTestName(testServiceName, testIDLength)
 			serviceHost := fmt.Sprintf("%s.kyma.local", serviceName)
 
-			invalidConfig := testOauthHandler(testScopes)
+			invalidConfig := testOauthHandler(defaultScopes)
 			invalidConfig.Name = "noop"
 
-			rule := testRule(testPath, testMethods, testMutators, invalidConfig)
+			rule := testRule(testPath, defaultMethods, defaultMutators, invalidConfig)
 			instance := testInstance(apiRuleName, testNamespace, serviceName, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule})
 			instance.Spec.Rules = append(instance.Spec.Rules, instance.Spec.Rules[0]) //Duplicate entry
 			instance.Spec.Rules = append(instance.Spec.Rules, instance.Spec.Rules[0]) //Duplicate entry
@@ -198,7 +188,7 @@ var _ = Describe("Resource status", func() {
 
 			expectedRequest := reconcile.Request{NamespacedName: types.NamespacedName{Name: apiRuleName, Namespace: testNamespace}}
 
-			Eventually(requests, timeout).Should(Receive(Equal(expectedRequest)))
+			Eventually(requests, eventuallyTimeout).Should(Receive(Equal(expectedRequest)))
 
 			created := gatewayv1beta1.APIRule{}
 			err = c.Get(context.TODO(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &created)

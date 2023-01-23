@@ -3,6 +3,7 @@ package controllers_test
 import (
 	"context"
 	"fmt"
+	"github.com/kyma-incubator/api-gateway/internal/builders"
 	"os"
 	"path/filepath"
 	"testing"
@@ -39,7 +40,7 @@ import (
 )
 
 const (
-	eventuallyTimeout                     = time.Second * 5
+	eventuallyTimeout           = time.Second * 5
 	testNamespace               = "atgo-system"
 	testGatewayURL              = "kyma-system/kyma-gateway"
 	testOathkeeperSvcURL        = "oathkeeper.kyma-system.svc.cluster.local"
@@ -55,9 +56,25 @@ var (
 	ctx       context.Context
 	cancel    context.CancelFunc
 
+	defaultMethods  = []string{"GET", "PUT"}
+	defaultScopes   = []string{"foo", "bar"}
+	defaultMutators = []*gatewayv1beta1.Mutator{
+		{
+			Handler: noConfigHandler("noop"),
+		},
+		{
+			Handler: noConfigHandler("idToken"),
+		},
+	}
+
 	TestAllowOrigins = []*v1beta1.StringMatch{{MatchType: &v1beta1.StringMatch_Regex{Regex: ".*"}}}
 	TestAllowMethods = []string{"GET", "POST", "PUT", "DELETE"}
 	TestAllowHeaders = []string{"header1", "header2"}
+
+	defaultCorsPolicy = builders.CorsPolicy().
+				AllowHeaders(TestAllowHeaders...).
+				AllowMethods(TestAllowMethods...).
+				AllowOrigins(TestAllowOrigins...)
 )
 
 func TestAPIs(t *testing.T) {

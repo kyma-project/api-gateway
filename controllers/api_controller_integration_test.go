@@ -34,7 +34,7 @@ import (
 
 var _ = Describe("APIRule Controller", func() {
 
-	var (
+	const (
 		kind                       = "APIRule"
 		testNameBase               = "test"
 		testIDLength               = 5
@@ -43,21 +43,6 @@ var _ = Describe("APIRule Controller", func() {
 		testPath                   = "/.*"
 		testIssuer                 = "https://oauth2.example.com/"
 		testJwksUri                = "https://oauth2.example.com/.well-known/jwks.json"
-		testMethods                = []string{"GET", "PUT"}
-		testScopes                 = []string{"foo", "bar"}
-		testMutators               = []*gatewayv1beta1.Mutator{
-			{
-				Handler: noConfigHandler("noop"),
-			},
-			{
-				Handler: noConfigHandler("idToken"),
-			},
-		}
-
-		corsPolicyBuilder = builders.CorsPolicy().
-					AllowHeaders(TestAllowHeaders...).
-					AllowMethods(TestAllowMethods...).
-					AllowOrigins(TestAllowOrigins...)
 	)
 
 	BeforeEach(func() {
@@ -68,9 +53,9 @@ var _ = Describe("APIRule Controller", func() {
 	Context("when updating the APIRule with multiple paths", func() {
 
 		It("should create, update and delete rules depending on patch match", func() {
-			rule1 := testRule("/rule1", []string{"GET"}, testMutators, noConfigHandler("noop"))
-			rule2 := testRule("/rule2", []string{"PUT"}, testMutators, noConfigHandler("unauthorized"))
-			rule3 := testRule("/rule3", []string{"DELETE"}, testMutators, noConfigHandler("anonymous"))
+			rule1 := testRule("/rule1", []string{"GET"}, defaultMutators, noConfigHandler("noop"))
+			rule2 := testRule("/rule2", []string{"PUT"}, defaultMutators, noConfigHandler("unauthorized"))
+			rule3 := testRule("/rule3", []string{"DELETE"}, defaultMutators, noConfigHandler("anonymous"))
 
 			apiRuleName := generateTestName(testNameBase, testIDLength)
 			serviceName := generateTestName(testServiceNameBase, testIDLength)
@@ -97,7 +82,7 @@ var _ = Describe("APIRule Controller", func() {
 			}()
 
 			expectedRequest := reconcile.Request{NamespacedName: types.NamespacedName{Name: apiRuleName, Namespace: testNamespace}}
-			Eventually(requests, timeout).Should(Receive(Equal(expectedRequest)))
+			Eventually(requests, eventuallyTimeout).Should(Receive(Equal(expectedRequest)))
 
 			By("Verify before update")
 
@@ -114,7 +99,7 @@ var _ = Describe("APIRule Controller", func() {
 			existingInstance := gatewayv1beta1.APIRule{}
 			err = c.Get(context.TODO(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &existingInstance)
 			Expect(err).NotTo(HaveOccurred())
-			rule4 := testRule("/rule4", []string{"POST"}, testMutators, noConfigHandler("cookie_session"))
+			rule4 := testRule("/rule4", []string{"POST"}, defaultMutators, noConfigHandler("cookie_session"))
 			existingInstance.Spec.Rules = []gatewayv1beta1.Rule{rule1, rule4}
 			newServiceName := serviceName + "new"
 			newServicePort := testServicePort + 3
@@ -124,7 +109,7 @@ var _ = Describe("APIRule Controller", func() {
 			err = c.Update(context.TODO(), &existingInstance)
 			Expect(err).NotTo(HaveOccurred())
 			expectedRequest = reconcile.Request{NamespacedName: types.NamespacedName{Name: apiRuleName, Namespace: testNamespace}}
-			Eventually(requests, timeout).Should(Receive(Equal(expectedRequest)))
+			Eventually(requests, eventuallyTimeout).Should(Receive(Equal(expectedRequest)))
 
 			By("Verify after update")
 			time.Sleep(1 * time.Second) //Otherwise K8s client fetches old Rules.
@@ -151,7 +136,7 @@ var _ = Describe("APIRule Controller", func() {
 						serviceName := generateTestName(testServiceNameBase, testIDLength)
 						serviceHost := fmt.Sprintf("%s.kyma.local", serviceName)
 
-						rule := testRule(testPath, testMethods, testMutators, testOauthHandler(testScopes))
+						rule := testRule(testPath, defaultMethods, defaultMutators, testOauthHandler(defaultScopes))
 						instance := testInstance(apiRuleName, testNamespace, serviceName, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule})
 
 						err := c.Create(context.TODO(), instance)
@@ -167,7 +152,7 @@ var _ = Describe("APIRule Controller", func() {
 
 						expectedRequest := reconcile.Request{NamespacedName: types.NamespacedName{Name: apiRuleName, Namespace: testNamespace}}
 
-						Eventually(requests, timeout).Should(Receive(Equal(expectedRequest)))
+						Eventually(requests, eventuallyTimeout).Should(Receive(Equal(expectedRequest)))
 
 						matchingLabels := matchingLabelsFunc(apiRuleName, testNamespace)
 
@@ -191,7 +176,7 @@ var _ = Describe("APIRule Controller", func() {
 								Match(builders.MatchRequest().Uri().Regex(testPath)).
 								Route(builders.RouteDestination().Host(testOathkeeperSvcURL).Port(testOathkeeperPort)).
 								Headers(builders.Headers().SetHostHeader(serviceHost)).
-								CorsPolicy(corsPolicyBuilder))
+								CorsPolicy(defaultCorsPolicy))
 
 						gotSpec := *expectedSpec.Get()
 						Expect(*vs.Spec.DeepCopy()).To(Equal(*gotSpec.DeepCopy()))
@@ -218,7 +203,7 @@ var _ = Describe("APIRule Controller", func() {
 						//Spec.Match
 						Expect(rl.Spec.Match).NotTo(BeNil())
 						Expect(rl.Spec.Match.URL).To(Equal(fmt.Sprintf("<http|https>://%s<%s>", serviceHost, testPath)))
-						Expect(rl.Spec.Match.Methods).To(Equal(testMethods))
+						Expect(rl.Spec.Match.Methods).To(Equal(defaultMethods))
 						//Spec.Authenticators
 						Expect(rl.Spec.Authenticators).To(HaveLen(1))
 						Expect(rl.Spec.Authenticators[0].Handler).NotTo(BeNil())
@@ -229,7 +214,7 @@ var _ = Describe("APIRule Controller", func() {
 						err = json.Unmarshal(rl.Spec.Authenticators[0].Config.Raw, &handlerConfig)
 						Expect(err).NotTo(HaveOccurred())
 						Expect(handlerConfig).To(HaveLen(1))
-						Expect(asStringSlice(handlerConfig["required_scope"])).To(BeEquivalentTo(testScopes))
+						Expect(asStringSlice(handlerConfig["required_scope"])).To(BeEquivalentTo(defaultScopes))
 						//Spec.Authorizer
 						Expect(rl.Spec.Authorizer).NotTo(BeNil())
 						Expect(rl.Spec.Authorizer.Handler).NotTo(BeNil())
@@ -238,9 +223,9 @@ var _ = Describe("APIRule Controller", func() {
 
 						//Spec.Mutators
 						Expect(rl.Spec.Mutators).NotTo(BeNil())
-						Expect(len(rl.Spec.Mutators)).To(Equal(len(testMutators)))
-						Expect(rl.Spec.Mutators[0].Handler.Name).To(Equal(testMutators[0].Name))
-						Expect(rl.Spec.Mutators[1].Handler.Name).To(Equal(testMutators[1].Name))
+						Expect(len(rl.Spec.Mutators)).To(Equal(len(defaultMutators)))
+						Expect(rl.Spec.Mutators[0].Handler.Name).To(Equal(defaultMutators[0].Name))
+						Expect(rl.Spec.Mutators[1].Handler.Name).To(Equal(defaultMutators[1].Name))
 					})
 				})
 			})
@@ -253,8 +238,8 @@ var _ = Describe("APIRule Controller", func() {
 							serviceName := generateTestName(testServiceNameBase, testIDLength)
 							serviceHost := fmt.Sprintf("%s.kyma.local", serviceName)
 
-							rule1 := testRule("/img", []string{"GET"}, testMutators, testOryJWTHandler(testIssuer, testScopes))
-							rule2 := testRule("/headers", []string{"GET"}, testMutators, testOryJWTHandler(testIssuer, testScopes))
+							rule1 := testRule("/img", []string{"GET"}, defaultMutators, testOryJWTHandler(testIssuer, defaultScopes))
+							rule2 := testRule("/headers", []string{"GET"}, defaultMutators, testOryJWTHandler(testIssuer, defaultScopes))
 							instance := testInstance(apiRuleName, testNamespace, serviceName, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule1, rule2})
 
 							err := c.Create(context.TODO(), instance)
@@ -270,7 +255,7 @@ var _ = Describe("APIRule Controller", func() {
 
 							expectedRequest := reconcile.Request{NamespacedName: types.NamespacedName{Name: apiRuleName, Namespace: testNamespace}}
 
-							Eventually(requests, timeout).Should(Receive(Equal(expectedRequest)))
+							Eventually(requests, eventuallyTimeout).Should(Receive(Equal(expectedRequest)))
 
 							matchingLabels := matchingLabelsFunc(apiRuleName, testNamespace)
 
@@ -291,12 +276,12 @@ var _ = Describe("APIRule Controller", func() {
 									Match(builders.MatchRequest().Uri().Regex("/img")).
 									Route(builders.RouteDestination().Host(testOathkeeperSvcURL).Port(testOathkeeperPort)).
 									Headers(builders.Headers().SetHostHeader(serviceHost)).
-									CorsPolicy(corsPolicyBuilder)).
+									CorsPolicy(defaultCorsPolicy)).
 								HTTP(builders.HTTPRoute().
 									Match(builders.MatchRequest().Uri().Regex("/headers")).
 									Route(builders.RouteDestination().Host(testOathkeeperSvcURL).Port(testOathkeeperPort)).
 									Headers(builders.Headers().SetHostHeader(serviceHost)).
-									CorsPolicy(corsPolicyBuilder))
+									CorsPolicy(defaultCorsPolicy))
 							gotSpec := *expectedSpec.Get()
 							Expect(*vs.Spec.DeepCopy()).To(Equal(*gotSpec.DeepCopy()))
 
@@ -338,7 +323,7 @@ var _ = Describe("APIRule Controller", func() {
 							err = json.Unmarshal(rl.Spec.Authenticators[0].Config.Raw, &handlerConfig)
 							Expect(err).NotTo(HaveOccurred())
 							Expect(handlerConfig).To(HaveLen(3))
-							Expect(asStringSlice(handlerConfig["required_scope"])).To(BeEquivalentTo(testScopes))
+							Expect(asStringSlice(handlerConfig["required_scope"])).To(BeEquivalentTo(defaultScopes))
 							Expect(asStringSlice(handlerConfig["trusted_issuers"])).To(BeEquivalentTo([]string{testIssuer}))
 							//Spec.Authorizer
 							Expect(rl.Spec.Authorizer).NotTo(BeNil())
@@ -348,9 +333,9 @@ var _ = Describe("APIRule Controller", func() {
 
 							//Spec.Mutators
 							Expect(rl.Spec.Mutators).NotTo(BeNil())
-							Expect(len(rl.Spec.Mutators)).To(Equal(len(testMutators)))
-							Expect(rl.Spec.Mutators[0].Handler.Name).To(Equal(testMutators[0].Name))
-							Expect(rl.Spec.Mutators[1].Handler.Name).To(Equal(testMutators[1].Name))
+							Expect(len(rl.Spec.Mutators)).To(Equal(len(defaultMutators)))
+							Expect(rl.Spec.Mutators[0].Handler.Name).To(Equal(defaultMutators[0].Name))
+							Expect(rl.Spec.Mutators[1].Handler.Name).To(Equal(defaultMutators[1].Name))
 
 							//Verify Rule2
 							expectedRule2MatchURL := fmt.Sprintf("<http|https>://%s<%s>", serviceHost, "/headers")
@@ -379,7 +364,7 @@ var _ = Describe("APIRule Controller", func() {
 							err = json.Unmarshal(rl2.Spec.Authenticators[0].Config.Raw, &handlerConfig)
 							Expect(err).NotTo(HaveOccurred())
 							Expect(handlerConfig).To(HaveLen(3))
-							Expect(asStringSlice(handlerConfig["required_scope"])).To(BeEquivalentTo(testScopes))
+							Expect(asStringSlice(handlerConfig["required_scope"])).To(BeEquivalentTo(defaultScopes))
 							Expect(asStringSlice(handlerConfig["trusted_issuers"])).To(BeEquivalentTo([]string{testIssuer}))
 							//Spec.Authorizer
 							Expect(rl2.Spec.Authorizer).NotTo(BeNil())
@@ -389,9 +374,9 @@ var _ = Describe("APIRule Controller", func() {
 
 							//Spec.Mutators
 							Expect(rl2.Spec.Mutators).NotTo(BeNil())
-							Expect(len(rl2.Spec.Mutators)).To(Equal(len(testMutators)))
-							Expect(rl2.Spec.Mutators[0].Handler.Name).To(Equal(testMutators[0].Name))
-							Expect(rl2.Spec.Mutators[1].Handler.Name).To(Equal(testMutators[1].Name))
+							Expect(len(rl2.Spec.Mutators)).To(Equal(len(defaultMutators)))
+							Expect(rl2.Spec.Mutators[0].Handler.Name).To(Equal(defaultMutators[0].Name))
+							Expect(rl2.Spec.Mutators[1].Handler.Name).To(Equal(defaultMutators[1].Name))
 						})
 					})
 				})
@@ -408,7 +393,7 @@ var _ = Describe("APIRule Controller", func() {
 							Expect(err).NotTo(HaveOccurred())
 
 							expectedRequest := reconcile.Request{NamespacedName: types.NamespacedName{Name: cm.Name, Namespace: cm.Namespace}}
-							Eventually(requests, timeout).Should(Receive(Equal(expectedRequest)))
+							Eventually(requests, eventuallyTimeout).Should(Receive(Equal(expectedRequest)))
 
 							apiRuleName := generateTestName(testNameBase, testIDLength)
 							serviceName := testServiceNameBase
@@ -430,7 +415,7 @@ var _ = Describe("APIRule Controller", func() {
 							}()
 
 							expectedRequest = reconcile.Request{NamespacedName: types.NamespacedName{Name: apiRuleName, Namespace: testNamespace}}
-							Eventually(requests, timeout).Should(Receive(Equal(expectedRequest)))
+							Eventually(requests, eventuallyTimeout).Should(Receive(Equal(expectedRequest)))
 
 							matchingLabels := matchingLabelsFunc(apiRuleName, testNamespace)
 
@@ -450,12 +435,12 @@ var _ = Describe("APIRule Controller", func() {
 									Match(builders.MatchRequest().Uri().Regex("/img")).
 									Route(builders.RouteDestination().Host(fmt.Sprintf("%s.%s.svc.cluster.local", serviceName, testNamespace)).Port(testServicePort)).
 									Headers(builders.Headers().SetHostHeader(serviceHost)).
-									CorsPolicy(corsPolicyBuilder)).
+									CorsPolicy(defaultCorsPolicy)).
 								HTTP(builders.HTTPRoute().
 									Match(builders.MatchRequest().Uri().Regex("/headers")).
 									Route(builders.RouteDestination().Host(fmt.Sprintf("%s.%s.svc.cluster.local", serviceName, testNamespace)).Port(testServicePort)).
 									Headers(builders.Headers().SetHostHeader(serviceHost)).
-									CorsPolicy(corsPolicyBuilder))
+									CorsPolicy(defaultCorsPolicy))
 							gotSpec := *expectedSpec.Get()
 							Expect(*vs.Spec.DeepCopy()).To(Equal(*gotSpec.DeepCopy()))
 
@@ -513,11 +498,11 @@ var _ = Describe("APIRule Controller", func() {
 			Context("with multiple endpoints secured with different authentication methods", func() {
 				Context("in the happy path scenario", func() {
 					It("should create a VS with corresponding matchers and access rules for each secured path", func() {
-						jwtHandler := testOryJWTHandler(testIssuer, testScopes)
-						oauthHandler := testOauthHandler(testScopes)
-						rule1 := testRule("/img", []string{"GET"}, testMutators, jwtHandler)
-						rule2 := testRule("/headers", []string{"GET"}, testMutators, oauthHandler)
-						rule3 := testRule("/status", []string{"GET"}, testMutators, noConfigHandler("noop"))
+						jwtHandler := testOryJWTHandler(testIssuer, defaultScopes)
+						oauthHandler := testOauthHandler(defaultScopes)
+						rule1 := testRule("/img", []string{"GET"}, defaultMutators, jwtHandler)
+						rule2 := testRule("/headers", []string{"GET"}, defaultMutators, oauthHandler)
+						rule3 := testRule("/status", []string{"GET"}, defaultMutators, noConfigHandler("noop"))
 						rule4 := testRule("/favicon", []string{"GET"}, nil, noConfigHandler("allow"))
 
 						apiRuleName := generateTestName(testNameBase, testIDLength)
@@ -538,7 +523,7 @@ var _ = Describe("APIRule Controller", func() {
 						}()
 
 						expectedRequest := reconcile.Request{NamespacedName: types.NamespacedName{Name: apiRuleName, Namespace: testNamespace}}
-						Eventually(requests, timeout).Should(Receive(Equal(expectedRequest)))
+						Eventually(requests, eventuallyTimeout).Should(Receive(Equal(expectedRequest)))
 
 						matchingLabels := matchingLabelsFunc(apiRuleName, testNamespace)
 
@@ -559,22 +544,22 @@ var _ = Describe("APIRule Controller", func() {
 								Match(builders.MatchRequest().Uri().Regex("/img")).
 								Route(builders.RouteDestination().Host(testOathkeeperSvcURL).Port(testOathkeeperPort)).
 								Headers(builders.Headers().SetHostHeader(serviceHost)).
-								CorsPolicy(corsPolicyBuilder)).
+								CorsPolicy(defaultCorsPolicy)).
 							HTTP(builders.HTTPRoute().
 								Match(builders.MatchRequest().Uri().Regex("/headers")).
 								Route(builders.RouteDestination().Host(testOathkeeperSvcURL).Port(testOathkeeperPort)).
 								Headers(builders.Headers().SetHostHeader(serviceHost)).
-								CorsPolicy(corsPolicyBuilder)).
+								CorsPolicy(defaultCorsPolicy)).
 							HTTP(builders.HTTPRoute().
 								Match(builders.MatchRequest().Uri().Regex("/status")).
 								Route(builders.RouteDestination().Host(testOathkeeperSvcURL).Port(testOathkeeperPort)).
 								Headers(builders.Headers().SetHostHeader(serviceHost)).
-								CorsPolicy(corsPolicyBuilder)).
+								CorsPolicy(defaultCorsPolicy)).
 							HTTP(builders.HTTPRoute().
 								Match(builders.MatchRequest().Uri().Regex("/favicon")).
 								Route(builders.RouteDestination().Host("httpbin.atgo-system.svc.cluster.local").Port(443)). // "allow", no oathkeeper rule!
 								Headers(builders.Headers().SetHostHeader(serviceHost)).
-								CorsPolicy(corsPolicyBuilder))
+								CorsPolicy(defaultCorsPolicy))
 
 						gotSpec := *expectedSpec.Get()
 						Expect(*vs.Spec.DeepCopy()).To(Equal(*gotSpec.DeepCopy()))
@@ -635,9 +620,9 @@ var _ = Describe("APIRule Controller", func() {
 
 							//Spec.Mutators
 							Expect(rl.Spec.Mutators).NotTo(BeNil())
-							Expect(len(rl.Spec.Mutators)).To(Equal(len(testMutators)))
-							Expect(rl.Spec.Mutators[0].Handler.Name).To(Equal(testMutators[0].Name))
-							Expect(rl.Spec.Mutators[1].Handler.Name).To(Equal(testMutators[1].Name))
+							Expect(len(rl.Spec.Mutators)).To(Equal(len(defaultMutators)))
+							Expect(rl.Spec.Mutators[0].Handler.Name).To(Equal(defaultMutators[0].Name))
+							Expect(rl.Spec.Mutators[1].Handler.Name).To(Equal(defaultMutators[1].Name))
 						}
 
 						//make sure no rule for "/favicon" path has been created
@@ -662,7 +647,7 @@ var _ = Describe("APIRule Controller", func() {
 					apiRuleName := generateTestName(testNameBase, testIDLength)
 					testServiceHost := fmt.Sprintf("httpbin-%s.kyma.local", apiRuleName)
 
-					rule := testRule("/img", []string{"GET"}, nil, testOryJWTHandler(testIssuer, testScopes))
+					rule := testRule("/img", []string{"GET"}, nil, testOryJWTHandler(testIssuer, defaultScopes))
 					instance := testInstance(apiRuleName, testNamespace, testServiceNameBase, testServiceHost, testServicePort, []gatewayv1beta1.Rule{rule})
 
 					By("Create ApiRule with Rule using JWT handler")
@@ -674,7 +659,7 @@ var _ = Describe("APIRule Controller", func() {
 					}()
 
 					initialStateReq := reconcile.Request{NamespacedName: types.NamespacedName{Name: apiRuleName, Namespace: testNamespace}}
-					Eventually(requests, timeout).Should(Receive(Equal(initialStateReq)))
+					Eventually(requests, eventuallyTimeout).Should(Receive(Equal(initialStateReq)))
 
 					By("Updating JWT handler config map to istio")
 					cm = testConfigMap(helpers.JWT_HANDLER_ISTIO)
@@ -682,7 +667,7 @@ var _ = Describe("APIRule Controller", func() {
 					Expect(err).NotTo(HaveOccurred())
 
 					cmChangedReq := reconcile.Request{NamespacedName: types.NamespacedName{Name: cm.Name, Namespace: cm.Namespace}}
-					Eventually(requests, timeout).Should(Receive(Equal(cmChangedReq)))
+					Eventually(requests, eventuallyTimeout).Should(Receive(Equal(cmChangedReq)))
 
 					// when
 					triggerApiRuleReconciliation(apiRuleName)
@@ -711,7 +696,7 @@ var _ = Describe("APIRule Controller", func() {
 					apiRuleName := generateTestName(testNameBase, testIDLength)
 					testServiceHost := fmt.Sprintf("httpbin-%s.kyma.local", apiRuleName)
 
-					rule := testRule("/img", []string{"GET"}, nil, testOryJWTHandler(testIssuer, testScopes))
+					rule := testRule("/img", []string{"GET"}, nil, testOryJWTHandler(testIssuer, defaultScopes))
 					apiRule := testInstance(apiRuleName, testNamespace, testServiceNameBase, testServiceHost, testServicePort, []gatewayv1beta1.Rule{rule})
 
 					By("Create ApiRule with Rule using JWT handler")
@@ -723,7 +708,7 @@ var _ = Describe("APIRule Controller", func() {
 					}()
 
 					initialStateReq := reconcile.Request{NamespacedName: types.NamespacedName{Name: apiRuleName, Namespace: testNamespace}}
-					Eventually(requests, timeout).Should(Receive(Equal(initialStateReq)))
+					Eventually(requests, eventuallyTimeout).Should(Receive(Equal(initialStateReq)))
 
 					By("Updating JWT handler config map to istio")
 					cm = testConfigMap(helpers.JWT_HANDLER_ISTIO)
@@ -731,7 +716,7 @@ var _ = Describe("APIRule Controller", func() {
 					Expect(err).NotTo(HaveOccurred())
 
 					cmRequest := reconcile.Request{NamespacedName: types.NamespacedName{Name: cm.Name, Namespace: cm.Namespace}}
-					Eventually(requests, timeout).Should(Receive(Equal(cmRequest)))
+					Eventually(requests, eventuallyTimeout).Should(Receive(Equal(cmRequest)))
 
 					// when
 					By("Updating JWT handler in ApiRule to be valid for istio")
@@ -744,7 +729,7 @@ var _ = Describe("APIRule Controller", func() {
 					Expect(err).NotTo(HaveOccurred())
 
 					updateApiRuleReq := reconcile.Request{NamespacedName: types.NamespacedName{Name: apiRuleName, Namespace: testNamespace}}
-					Eventually(requests, timeout).Should(Receive(Equal(updateApiRuleReq)))
+					Eventually(requests, eventuallyTimeout).Should(Receive(Equal(updateApiRuleReq)))
 
 					// then
 					matchingLabels := matchingLabelsFunc(apiRuleName, testNamespace)
@@ -782,7 +767,7 @@ var _ = Describe("APIRule Controller", func() {
 					Expect(err).NotTo(HaveOccurred())
 
 					expectedRequest := reconcile.Request{NamespacedName: types.NamespacedName{Name: cm.Name, Namespace: cm.Namespace}}
-					Eventually(requests, timeout).Should(Receive(Equal(expectedRequest)))
+					Eventually(requests, eventuallyTimeout).Should(Receive(Equal(expectedRequest)))
 
 					apiRuleName := generateTestName(testNameBase, testIDLength)
 					testServiceHost := fmt.Sprintf("httpbin-%s.kyma.local", apiRuleName)
@@ -799,7 +784,7 @@ var _ = Describe("APIRule Controller", func() {
 					}()
 
 					initialStateReq := reconcile.Request{NamespacedName: types.NamespacedName{Name: apiRuleName, Namespace: testNamespace}}
-					Eventually(requests, timeout).Should(Receive(Equal(initialStateReq)))
+					Eventually(requests, eventuallyTimeout).Should(Receive(Equal(initialStateReq)))
 
 					By("Updating JWT handler config map to ory")
 					cm = testConfigMap(helpers.JWT_HANDLER_ORY)
@@ -807,7 +792,7 @@ var _ = Describe("APIRule Controller", func() {
 					Expect(err).NotTo(HaveOccurred())
 
 					cmChangedReq := reconcile.Request{NamespacedName: types.NamespacedName{Name: cm.Name, Namespace: cm.Namespace}}
-					Eventually(requests, timeout).Should(Receive(Equal(cmChangedReq)))
+					Eventually(requests, eventuallyTimeout).Should(Receive(Equal(cmChangedReq)))
 
 					// when
 					triggerApiRuleReconciliation(apiRuleName)
@@ -840,7 +825,7 @@ var _ = Describe("APIRule Controller", func() {
 					Expect(err).NotTo(HaveOccurred())
 
 					cmRequest := reconcile.Request{NamespacedName: types.NamespacedName{Name: cm.Name, Namespace: cm.Namespace}}
-					Eventually(requests, timeout).Should(Receive(Equal(cmRequest)))
+					Eventually(requests, eventuallyTimeout).Should(Receive(Equal(cmRequest)))
 
 					apiRuleName := generateTestName(testNameBase, testIDLength)
 					testServiceHost := fmt.Sprintf("httpbin-%s.kyma.local", apiRuleName)
@@ -857,7 +842,7 @@ var _ = Describe("APIRule Controller", func() {
 					}()
 
 					initialStateReq := reconcile.Request{NamespacedName: types.NamespacedName{Name: apiRuleName, Namespace: testNamespace}}
-					Eventually(requests, timeout).Should(Receive(Equal(initialStateReq)))
+					Eventually(requests, eventuallyTimeout).Should(Receive(Equal(initialStateReq)))
 
 					By("Updating JWT handler config map to ory")
 					cm = testConfigMap(helpers.JWT_HANDLER_ORY)
@@ -865,11 +850,11 @@ var _ = Describe("APIRule Controller", func() {
 					Expect(err).NotTo(HaveOccurred())
 
 					cmRequest = reconcile.Request{NamespacedName: types.NamespacedName{Name: cm.Name, Namespace: cm.Namespace}}
-					Eventually(requests, timeout).Should(Receive(Equal(cmRequest)))
+					Eventually(requests, eventuallyTimeout).Should(Receive(Equal(cmRequest)))
 
 					// when
 					By("Updating JWT handler in ApiRule to be valid for ory")
-					oryJwtRule := testRule("/img", []string{"GET"}, nil, testOryJWTHandler(testIssuer, testScopes))
+					oryJwtRule := testRule("/img", []string{"GET"}, nil, testOryJWTHandler(testIssuer, defaultScopes))
 					updatedApiRule := gatewayv1beta1.APIRule{}
 					err = c.Get(context.TODO(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &updatedApiRule)
 					Expect(err).NotTo(HaveOccurred())
@@ -878,7 +863,7 @@ var _ = Describe("APIRule Controller", func() {
 					Expect(err).NotTo(HaveOccurred())
 
 					updateApiRuleReq := reconcile.Request{NamespacedName: types.NamespacedName{Name: apiRuleName, Namespace: testNamespace}}
-					Eventually(requests, timeout).Should(Receive(Equal(updateApiRuleReq)))
+					Eventually(requests, eventuallyTimeout).Should(Receive(Equal(updateApiRuleReq)))
 
 					// then
 					matchingLabels := matchingLabelsFunc(apiRuleName, testNamespace)
@@ -1152,7 +1137,7 @@ func triggerApiRuleReconciliation(apiRuleName string) {
 	Expect(err).NotTo(HaveOccurred())
 
 	reconcileApiReq := reconcile.Request{NamespacedName: types.NamespacedName{Name: apiRuleName, Namespace: testNamespace}}
-	Eventually(requests, timeout).Should(Receive(Equal(reconcileApiReq)))
+	Eventually(requests, eventuallyTimeout).Should(Receive(Equal(reconcileApiReq)))
 }
 
 func setHandlerConfigMap(handler string) {
