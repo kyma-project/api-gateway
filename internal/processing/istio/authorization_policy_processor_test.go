@@ -74,12 +74,6 @@ var _ = Describe("Authorization Policy Processor", func() {
 		Expect(ap1.Spec.Rules[0].To[0].Operation.Methods).To(ContainElements(ApiMethods))
 		Expect(len(ap1.Spec.Rules[0].To[0].Operation.Paths)).To(Equal(1))
 
-		Expect(len(ap1.OwnerReferences)).To(Equal(1))
-		Expect(ap1.OwnerReferences[0].APIVersion).To(Equal(ApiAPIVersion))
-		Expect(ap1.OwnerReferences[0].Kind).To(Equal(ApiKind))
-		Expect(ap1.OwnerReferences[0].Name).To(Equal(ApiName))
-		Expect(ap1.OwnerReferences[0].UID).To(Equal(ApiUID))
-
 		Expect(ap2).NotTo(BeNil())
 		Expect(ap2.ObjectMeta.Name).To(BeEmpty())
 		Expect(ap2.ObjectMeta.GenerateName).To(Equal(ApiName + "-"))
@@ -96,11 +90,6 @@ var _ = Describe("Authorization Policy Processor", func() {
 		Expect(len(ap2.Spec.Rules[0].To[0].Operation.Methods)).To(Equal(1))
 		Expect(ap2.Spec.Rules[0].To[0].Operation.Methods).To(ContainElements(ApiMethods))
 		Expect(len(ap2.Spec.Rules[0].To[0].Operation.Paths)).To(Equal(1))
-
-		Expect(ap2.OwnerReferences[0].APIVersion).To(Equal(ApiAPIVersion))
-		Expect(ap2.OwnerReferences[0].Kind).To(Equal(ApiKind))
-		Expect(ap2.OwnerReferences[0].Name).To(Equal(ApiName))
-		Expect(ap2.OwnerReferences[0].UID).To(Equal(ApiUID))
 	})
 
 	It("should produce one AP for a Rule without service, but service definition on ApiRule level", func() {
@@ -195,11 +184,6 @@ var _ = Describe("Authorization Policy Processor", func() {
 		Expect(ap.Spec.Rules[0].To[0].Operation.Methods).To(ContainElements(ApiMethods))
 		Expect(len(ap.Spec.Rules[0].To[0].Operation.Paths)).To(Equal(1))
 		Expect(ap.Spec.Rules[0].To[0].Operation.Paths).To(ContainElements(HeadersApiPath))
-
-		Expect(ap.OwnerReferences[0].APIVersion).To(Equal(ApiAPIVersion))
-		Expect(ap.OwnerReferences[0].Kind).To(Equal(ApiKind))
-		Expect(ap.OwnerReferences[0].Name).To(Equal(ApiName))
-		Expect(ap.OwnerReferences[0].UID).To(Equal(ApiUID))
 	})
 
 	When("single handler only", func() {

@@ -67,11 +67,6 @@ var _ = Describe("Virtual Service Processor", func() {
 			Expect(vs.ObjectMeta.GenerateName).To(Equal(ApiName + "-"))
 			Expect(vs.ObjectMeta.Namespace).To(Equal(ApiNamespace))
 			Expect(vs.ObjectMeta.Labels[TestLabelKey]).To(Equal(TestLabelValue))
-
-			Expect(vs.ObjectMeta.OwnerReferences[0].APIVersion).To(Equal(ApiAPIVersion))
-			Expect(vs.ObjectMeta.OwnerReferences[0].Kind).To(Equal(ApiKind))
-			Expect(vs.ObjectMeta.OwnerReferences[0].Name).To(Equal(ApiName))
-			Expect(vs.ObjectMeta.OwnerReferences[0].UID).To(Equal(ApiUID))
 		})
 
 		It("should override destination host for specified spec level service namespace", func() {
@@ -397,11 +392,6 @@ var _ = Describe("Virtual Service Processor", func() {
 			Expect(vs.ObjectMeta.GenerateName).To(Equal(ApiName + "-"))
 			Expect(vs.ObjectMeta.Namespace).To(Equal(ApiNamespace))
 			Expect(vs.ObjectMeta.Labels[TestLabelKey]).To(Equal(TestLabelValue))
-
-			Expect(vs.ObjectMeta.OwnerReferences[0].APIVersion).To(Equal(ApiAPIVersion))
-			Expect(vs.ObjectMeta.OwnerReferences[0].Kind).To(Equal(ApiKind))
-			Expect(vs.ObjectMeta.OwnerReferences[0].Name).To(Equal(ApiName))
-			Expect(vs.ObjectMeta.OwnerReferences[0].UID).To(Equal(ApiUID))
 		})
 
 		It("should return service for two same paths and different methods", func() {
@@ -483,11 +473,6 @@ var _ = Describe("Virtual Service Processor", func() {
 			Expect(vs.ObjectMeta.GenerateName).To(Equal(ApiName + "-"))
 			Expect(vs.ObjectMeta.Namespace).To(Equal(ApiNamespace))
 			Expect(vs.ObjectMeta.Labels[TestLabelKey]).To(Equal(TestLabelValue))
-
-			Expect(vs.ObjectMeta.OwnerReferences[0].APIVersion).To(Equal(ApiAPIVersion))
-			Expect(vs.ObjectMeta.OwnerReferences[0].Kind).To(Equal(ApiKind))
-			Expect(vs.ObjectMeta.OwnerReferences[0].Name).To(Equal(ApiName))
-			Expect(vs.ObjectMeta.OwnerReferences[0].UID).To(Equal(ApiUID))
 		})
 
 		It("should return service for two same paths and one different", func() {
@@ -580,11 +565,6 @@ var _ = Describe("Virtual Service Processor", func() {
 			Expect(vs.ObjectMeta.GenerateName).To(Equal(ApiName + "-"))
 			Expect(vs.ObjectMeta.Namespace).To(Equal(ApiNamespace))
 			Expect(vs.ObjectMeta.Labels[TestLabelKey]).To(Equal(TestLabelValue))
-
-			Expect(vs.ObjectMeta.OwnerReferences[0].APIVersion).To(Equal(ApiAPIVersion))
-			Expect(vs.ObjectMeta.OwnerReferences[0].Kind).To(Equal(ApiKind))
-			Expect(vs.ObjectMeta.OwnerReferences[0].Name).To(Equal(ApiName))
-			Expect(vs.ObjectMeta.OwnerReferences[0].UID).To(Equal(ApiUID))
 		})
 
 		It("should return service for jwt & oauth authenticators for given path", func() {
@@ -654,11 +634,6 @@ var _ = Describe("Virtual Service Processor", func() {
 			Expect(vs.ObjectMeta.GenerateName).To(Equal(ApiName + "-"))
 			Expect(vs.ObjectMeta.Namespace).To(Equal(ApiNamespace))
 			Expect(vs.ObjectMeta.Labels[TestLabelKey]).To(Equal(TestLabelValue))
-
-			Expect(vs.ObjectMeta.OwnerReferences[0].APIVersion).To(Equal(ApiAPIVersion))
-			Expect(vs.ObjectMeta.OwnerReferences[0].Kind).To(Equal(ApiKind))
-			Expect(vs.ObjectMeta.OwnerReferences[0].Name).To(Equal(ApiName))
-			Expect(vs.ObjectMeta.OwnerReferences[0].UID).To(Equal(ApiUID))
 		})
 	})
 })

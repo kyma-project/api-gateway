@@ -90,11 +90,6 @@ var _ = Describe("Access Rule Processor", func() {
 			Expect(accessRule.ObjectMeta.GenerateName).To(Equal(ApiName + "-"))
 			Expect(accessRule.ObjectMeta.Namespace).To(Equal(ApiNamespace))
 			Expect(accessRule.ObjectMeta.Labels[TestLabelKey]).To(Equal(TestLabelValue))
-
-			Expect(accessRule.ObjectMeta.OwnerReferences[0].APIVersion).To(Equal(ApiAPIVersion))
-			Expect(accessRule.ObjectMeta.OwnerReferences[0].Kind).To(Equal(ApiKind))
-			Expect(accessRule.ObjectMeta.OwnerReferences[0].Name).To(Equal(ApiName))
-			Expect(accessRule.ObjectMeta.OwnerReferences[0].UID).To(Equal(ApiUID))
 		})
 
 		It("should override rule upstream with rule level service", func() {

@@ -457,7 +457,6 @@ var _ = Describe("Validate function", func() {
 		//given
 		occupiedHost := "occupied-host" + allowlistedDomain
 		existingVS := networkingv1beta1.VirtualService{}
-		existingVS.OwnerReferences = []v1.OwnerReference{{UID: "12345"}}
 		existingVS.Spec.Hosts = []string{occupiedHost}
 
 		input := &gatewayv1beta1.APIRule{
@@ -494,9 +493,6 @@ var _ = Describe("Validate function", func() {
 	It("Should NOT fail for a host that is occupied by a VS exposed by this resource", func() {
 		//given
 		occupiedHost := "occupied-host" + allowlistedDomain
-		existingVS := networkingv1beta1.VirtualService{}
-		existingVS.OwnerReferences = []v1.OwnerReference{{UID: "12345"}}
-		existingVS.Spec.Hosts = []string{occupiedHost}
 
 		input := &gatewayv1beta1.APIRule{
 			ObjectMeta: v1.ObjectMeta{
@@ -516,6 +512,10 @@ var _ = Describe("Validate function", func() {
 				},
 			},
 		}
+
+		existingVS := networkingv1beta1.VirtualService{}
+		existingVS.Labels = getOwnerLabels(input)
+		existingVS.Spec.Hosts = []string{occupiedHost}
 
 		//when
 		problems := (&APIRule{
@@ -743,7 +743,6 @@ var _ = Describe("Validate function", func() {
 		occupiedHost := "occupied-host" + allowlistedDomain
 		notOccupiedHost := "not-occupied-host" + allowlistedDomain
 		existingVS := networkingv1beta1.VirtualService{}
-		existingVS.OwnerReferences = []v1.OwnerReference{{UID: "12345"}}
 		existingVS.Spec.Hosts = []string{occupiedHost}
 
 		input := &gatewayv1beta1.APIRule{
@@ -801,7 +800,6 @@ var _ = Describe("Validate function", func() {
 		occupiedHost := "occupied-host" + allowlistedDomain
 		notOccupiedHost := "not-occupied-host" + allowlistedDomain
 		existingVS := networkingv1beta1.VirtualService{}
-		existingVS.OwnerReferences = []v1.OwnerReference{{UID: "12345"}}
 		existingVS.Spec.Hosts = []string{occupiedHost}
 
 		input := &gatewayv1beta1.APIRule{
