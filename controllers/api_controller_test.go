@@ -40,13 +40,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 )
 
-var (
-	ts                         *testSuite
-	serviceName, host, gateway string
-	servicePort                uint32
-	isExernal                  bool
-)
-
 type FakeConfigMapReader struct {
 	Content string
 }
@@ -56,6 +49,9 @@ func (f FakeConfigMapReader) ReadConfigMap(_ context.Context, _ client.Client) (
 }
 
 var _ = Describe("Controller", func() {
+
+	var ts *testSuite
+
 	Describe("Reconcile", func() {
 		Context("APIRule", func() {
 			It("should update status", func() {
@@ -188,11 +184,14 @@ var _ = Describe("Controller", func() {
 })
 
 func getApiRule(authStrategy string, authConfig *runtime.RawExtension) *gatewayv1beta1.APIRule {
-	serviceName = "test"
-	servicePort = 8000
-	host = "foo.bar"
-	isExernal = false
-	gateway = "some-gateway.some-namespace.foo"
+
+	var (
+		serviceName        = "test"
+		servicePort uint32 = 8000
+		host               = "foo.bar"
+		isExternal         = false
+		gateway            = "some-gateway.some-namespace.foo"
+	)
 
 	return &gatewayv1beta1.APIRule{
 		ObjectMeta: metav1.ObjectMeta{
@@ -205,7 +204,7 @@ func getApiRule(authStrategy string, authConfig *runtime.RawExtension) *gatewayv
 			Service: &gatewayv1beta1.Service{
 				Name:       &serviceName,
 				Port:       &servicePort,
-				IsExternal: &isExernal,
+				IsExternal: &isExternal,
 			},
 			Gateway: &gateway,
 			Rules: []gatewayv1beta1.Rule{
