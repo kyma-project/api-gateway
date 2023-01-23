@@ -7,13 +7,8 @@ if [[ -z ${KYMA_DOMAIN} ]]; then
   echo export KYMA_DOMAIN="local.kyma.dev"
 fi
 
-if [[ -z ${CLIENT_ID} ]]; then
-  >&2 echo "Environment variable CLIENT_ID is required but not set"
-  exit 2
-fi
-
-if [[ -z ${CLIENT_SECRET} ]]; then
-  >&2 echo "Environment variable CLIENT_SECRET is required but not set"
+if [[ -z ${CLIENT_ID} || -z ${CLIENT_SECRET} ]]; then
+  >&2 echo "Environment variable CLIENT_ID and CLIENT_SECRET are required but not set"
   exit 2
 fi
 

@@ -17,5 +17,5 @@ spec:
         - handler: jwt
           config:
             authentications:
-            - issuer: "https://oauth2.{{ .Domain }}/"
-              jwksUri: "https://oauth2.{{ .Domain }}/.well-known/jwks.json"
+            - issuer: "{{ .IasAddr }}"
+              jwksUri: "{{ .IasAddr }}/oauth2/certs"

@@ -368,8 +368,9 @@ func CreateScenario(templateFileName string, namePrefix string, deploymentFile .
 		Domain           string
 		GatewayName      string
 		GatewayNamespace string
+		IasAddr          string
 	}{Namespace: namespace, NamePrefix: namePrefix, TestID: testID, Domain: conf.Domain, GatewayName: conf.GatewayName,
-		GatewayNamespace: conf.GatewayNamespace})
+		GatewayNamespace: conf.GatewayNamespace, IasAddr: conf.IasAddr})
 	if err != nil {
 		return nil, fmt.Errorf("failed to process resource manifest files, details %s", err.Error())
 	}

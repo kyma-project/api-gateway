@@ -33,8 +33,8 @@ func GetAccessToken(oauth2Cfg *clientcredentials.Config, config *Config) (string
 	if !token.Valid() {
 		return "", fmt.Errorf("token invalid. got: %#v", token)
 	}
-	if token.TokenType != "bearer" {
-		return "", fmt.Errorf("token type = %q; want %q", token.TokenType, "bearer")
+	if token.TokenType != "Bearer" {
+		return "", fmt.Errorf("token type = %q; want %q", token.TokenType, "Bearer")
 	}
 	return token.AccessToken, nil
 }
