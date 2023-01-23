@@ -92,26 +92,30 @@ var _ = Describe("APIRule subresources deletion", func() {
 
 		// then
 		vsList := networkingv1beta1.VirtualServiceList{}
-		client.List(context.TODO(), &vsList)
+		err = client.List(context.TODO(), &vsList)
 
+		Expect(err).ShouldNot(HaveOccurred())
 		Expect(vsList.Items).To(HaveLen(1))
 		Expect(vsList.Items[0].Name).To(Equal("test-other-apirule"))
 
 		ruleList := rulev1alpha1.RuleList{}
-		client.List(context.TODO(), &ruleList)
+		err = client.List(context.TODO(), &ruleList)
 
+		Expect(err).ShouldNot(HaveOccurred())
 		Expect(ruleList.Items).To(HaveLen(1))
 		Expect(ruleList.Items[0].Name).To(Equal("test-other-apirule"))
 
 		apList := securityv1beta1.AuthorizationPolicyList{}
-		client.List(context.TODO(), &apList)
+		err = client.List(context.TODO(), &apList)
 
+		Expect(err).ShouldNot(HaveOccurred())
 		Expect(apList.Items).To(HaveLen(1))
 		Expect(apList.Items[0].Name).To(Equal("test-other-apirule"))
 
 		raList := securityv1beta1.RequestAuthenticationList{}
-		client.List(context.TODO(), &raList)
+		err = client.List(context.TODO(), &raList)
 
+		Expect(err).ShouldNot(HaveOccurred())
 		Expect(raList.Items).To(HaveLen(1))
 		Expect(raList.Items[0].Name).To(Equal("test-other-apirule"))
 	})
