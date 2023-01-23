@@ -165,7 +165,7 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	if err != nil {
 		if apierrs.IsNotFound(err) {
 			//There is no APIRule. Nothing to process, dependent objects will be garbage-collected.
-			r.Log.Info("Finishing reconciliation after ApiRule was deleted")
+			r.Log.Info(fmt.Sprintf("Finishing reconciliation as ApiRule '%s' does not exist.", req.NamespacedName))
 			return doneReconcileNoRequeue()
 		}
 
