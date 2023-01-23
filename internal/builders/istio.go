@@ -217,7 +217,7 @@ func (rc *RuleCondition) Get() *[]*v1beta1.Condition {
 }
 
 func (rc *RuleCondition) From(key string, authorization *gatewayv1beta1.Authorization) *RuleCondition {
-	if authorization.RequiredScopes != nil && len(authorization.RequiredScopes) > 0 {
+	if authorization.HasRequiredScopes() {
 		for _, requiredScope := range authorization.RequiredScopes {
 			*rc.value = append(*rc.value, &v1beta1.Condition{
 				Key:    key,
