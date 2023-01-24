@@ -4,13 +4,3 @@ metadata:
   name: "{{.Namespace}}"
   labels:
     istio-injection: enabled
----
-apiVersion: v1
-data:
-  client_id: "{{.OauthClientID}}"
-  client_secret: "{{.OauthClientSecret}}"
-kind: Secret
-metadata:
-  name: "{{.OauthSecretName}}"
-  namespace: "{{.Namespace}}"
-type: Opaque

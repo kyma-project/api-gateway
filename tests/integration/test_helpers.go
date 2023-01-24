@@ -29,7 +29,6 @@ import (
 	"github.com/kyma-incubator/api-gateway/tests/integration/pkg/jwt"
 	"github.com/kyma-incubator/api-gateway/tests/integration/pkg/manifestprocessor"
 	"github.com/kyma-incubator/api-gateway/tests/integration/pkg/resource"
-	"github.com/kyma-project/kyma/common/ingressgateway"
 	"github.com/spf13/pflag"
 	"github.com/tidwall/pretty"
 	"github.com/vrischmann/envconfig"
@@ -87,7 +86,7 @@ var goDogOpts = godog.Options{
 
 type Config struct {
 	CustomDomain     string        `envconfig:"TEST_CUSTOM_DOMAIN,default=test.domain.kyma"`
-	IasAddr          string        `envconfig:"TEST_IAS_ADDRESS"`
+	IssuerUrl        string        `envconfig:"TEST_OIDC_ISSUER_URL"`
 	ClientID         string        `envconfig:"TEST_CLIENT_ID"`
 	ClientSecret     string        `envconfig:"TEST_CLIENT_SECRET"`
 	User             string        `envconfig:"TEST_USER_EMAIL,default=admin@kyma.cx"`
@@ -98,7 +97,6 @@ type Config struct {
 	GatewayName      string        `envconfig:"TEST_GATEWAY_NAME,default=kyma-gateway"`
 	GatewayNamespace string        `envconfig:"TEST_GATEWAY_NAMESPACE,default=kyma-system"`
 	ClientTimeout    time.Duration `envconfig:"TEST_CLIENT_TIMEOUT,default=10s"` // Don't forget the unit!
-	IsMinikubeEnv    bool          `envconfig:"TEST_MINIKUBE_ENV,default=false"`
 	TestConcurency   int           `envconfig:"TEST_CONCURENCY,default=1"`
 }
 
@@ -125,31 +123,18 @@ func InitTestSuite() {
 	if err := envconfig.Init(&conf); err != nil {
 		log.Fatalf("Unable to setup config: %v", err)
 	}
-
-	if conf.IsMinikubeEnv {
-		var err error
-		log.Printf("Using dedicated ingress client")
-		httpClient, err = ingressgateway.FromEnv().Client()
-		if err != nil {
-			log.Fatalf("Unable to initialize ingress gateway client: %v", err)
-		}
-	} else {
-		log.Printf("Fallback to default http client")
-		httpClient = &http.Client{
-			Transport: &http.Transport{
-				TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-			},
-			Timeout: conf.ClientTimeout,
-		}
-		http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+	httpClient = &http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		},
+		Timeout: conf.ClientTimeout,
 	}
-
+	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 	commonRetryOpts := []retry.Option{
 		retry.Delay(time.Duration(conf.ReqDelay) * time.Second),
 		retry.Attempts(conf.ReqTimeout / conf.ReqDelay),
 		retry.DelayType(retry.FixedDelay),
 	}
-
 	helper = helpers.NewHelper(httpClient, commonRetryOpts)
 	mapper, err := client.GetDiscoveryMapper()
 	if err != nil {
@@ -169,15 +154,11 @@ func InitTestSuite() {
 
 func SetupCommonResources(namePrefix string) {
 	namespace = fmt.Sprintf("%s-%s", namePrefix, generateRandomString(6))
-	randomSuffix6 := generateRandomString(6)
-	oauthSecretName := fmt.Sprintf("%s-secret-%s", namePrefix, randomSuffix6)
-	oauthClientName := fmt.Sprintf("%s-client-%s", namePrefix, randomSuffix6)
 	log.Printf("Using namespace: %s\n", namespace)
-	log.Printf("Using OAuth2Client with name: %s, secretName: %s\n", oauthClientName, oauthSecretName)
 	oauth2Cfg = &clientcredentials.Config{
 		ClientID:     conf.ClientID,
 		ClientSecret: conf.ClientSecret,
-		TokenURL:     fmt.Sprintf("%s/oauth2/token", conf.IasAddr),
+		TokenURL:     fmt.Sprintf("%s/oauth2/token", conf.IssuerUrl),
 		Scopes:       []string{"read"},
 		AuthStyle:    oauth2.AuthStyleInHeader,
 	}
@@ -191,12 +172,10 @@ func SetupCommonResources(namePrefix string) {
 		Namespace         string
 		OauthClientSecret string
 		OauthClientID     string
-		OauthSecretName   string
 	}{
 		Namespace:         namespace,
 		OauthClientID:     base64.StdEncoding.EncodeToString([]byte(conf.ClientID)),
 		OauthClientSecret: base64.StdEncoding.EncodeToString([]byte(conf.ClientSecret)),
-		OauthSecretName:   oauthSecretName,
 	})
 	if err != nil {
 		log.Fatal(err)
@@ -229,26 +208,6 @@ func generateRandomString(length int) string {
 		b[i] = letterRunes[rand.Intn(len(letterRunes))]
 	}
 	return string(b)
-}
-
-func getOAUTHToken(oauth2Cfg clientcredentials.Config) (*oauth2.Token, error) {
-	var tokenOAUTH oauth2.Token
-	err := retry.Do(
-		func() error {
-			token, err := oauth2Cfg.Token(context.Background())
-			if err != nil {
-				return fmt.Errorf("error during Token retrival: %+v", err)
-			}
-
-			if token == nil || token.AccessToken == "" {
-				return fmt.Errorf("got empty OAuth2 token")
-			}
-			tokenOAUTH = *token
-
-			return nil
-		},
-		retry.Delay(500*time.Millisecond), retry.Attempts(3))
-	return &tokenOAUTH, err
 }
 
 func generateReport() {
@@ -368,9 +327,9 @@ func CreateScenario(templateFileName string, namePrefix string, deploymentFile .
 		Domain           string
 		GatewayName      string
 		GatewayNamespace string
-		IasAddr          string
+		IssuerUrl        string
 	}{Namespace: namespace, NamePrefix: namePrefix, TestID: testID, Domain: conf.Domain, GatewayName: conf.GatewayName,
-		GatewayNamespace: conf.GatewayNamespace, IasAddr: conf.IasAddr})
+		GatewayNamespace: conf.GatewayNamespace, IssuerUrl: conf.IssuerUrl})
 	if err != nil {
 		return nil, fmt.Errorf("failed to process resource manifest files, details %s", err.Error())
 	}
