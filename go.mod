@@ -9,7 +9,7 @@ require (
 	github.com/ory/oathkeeper-maester v0.1.7
 	istio.io/api v0.0.0-20221208070204-0528cb6ce63b
 	istio.io/client-go v1.16.1
-	k8s.io/apimachinery v0.26.0
+	k8s.io/apimachinery v0.26.1
 	k8s.io/client-go v0.25.6
 	sigs.k8s.io/controller-runtime v0.13.1
 )
@@ -81,7 +81,7 @@ require (
 	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
 	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	k8s.io/api v0.26.0
+	k8s.io/api v0.26.1
 	k8s.io/apiextensions-apiserver v0.25.5
 	k8s.io/component-base v0.25.5 // indirect
 	k8s.io/klog/v2 v2.80.1 // indirect
