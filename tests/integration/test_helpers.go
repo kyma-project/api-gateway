@@ -164,7 +164,6 @@ func SetupCommonResources(namePrefix string) {
 		ClientID:     conf.ClientID,
 		ClientSecret: conf.ClientSecret,
 		TokenURL:     fmt.Sprintf("%s/oauth2/token", conf.IssuerUrl),
-		Scopes:       []string{"read"},
 		AuthStyle:    oauth2.AuthStyleInHeader,
 	}
 
