@@ -3,7 +3,6 @@ package api_gateway
 import (
 	"context"
 	"crypto/tls"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -47,15 +46,11 @@ import (
 
 const (
 	testIDLength              = 8
-	OauthClientSecretLength   = 8
-	OauthClientIDLength       = 8
 	manifestsDirectory        = "manifests/"
 	testingAppFile            = "testing-app.yaml"
 	globalCommonResourcesFile = "global-commons.yaml"
 	istioJwtApiruleFile       = "istio-jwt-strategy.yaml"
 	resourceSeparator         = "---"
-	defaultHeaderName         = "Authorization"
-	customDomainEnv           = "TEST_CUSTOM_DOMAIN"
 	exportResultVar           = "EXPORT_RESULT"
 	junitFileName             = "junit-report.xml"
 	cucumberFileName          = "cucumber-report.json"
@@ -116,6 +111,7 @@ type TwoStepScenario struct {
 func InitTestSuite() {
 	pflag.Parse()
 	goDogOpts.Paths = pflag.Args()
+
 	if os.Getenv(exportResultVar) == "true" {
 		goDogOpts.Format = "pretty,junit:junit-report.xml,cucumber:cucumber-report.json"
 	}
@@ -123,29 +119,37 @@ func InitTestSuite() {
 	if err := envconfig.Init(&conf); err != nil {
 		log.Fatalf("Unable to setup config: %v", err)
 	}
+
 	httpClient = &http.Client{
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 		},
 		Timeout: conf.ClientTimeout,
 	}
+
 	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+
 	commonRetryOpts := []retry.Option{
 		retry.Delay(time.Duration(conf.ReqDelay) * time.Second),
 		retry.Attempts(conf.ReqTimeout / conf.ReqDelay),
 		retry.DelayType(retry.FixedDelay),
 	}
+
 	helper = helpers.NewHelper(httpClient, commonRetryOpts)
+
 	mapper, err := client.GetDiscoveryMapper()
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	client, err := client.GetDynamicClient()
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	k8sClient = client
 	resourceManager = &resource.Manager{RetryOptions: commonRetryOpts}
+
 	batch = &resource.Batch{
 		ResourceManager: resourceManager,
 		Mapper:          mapper,
@@ -155,6 +159,7 @@ func InitTestSuite() {
 func SetupCommonResources(namePrefix string) {
 	namespace = fmt.Sprintf("%s-%s", namePrefix, generateRandomString(6))
 	log.Printf("Using namespace: %s\n", namespace)
+
 	oauth2Cfg = &clientcredentials.Config{
 		ClientID:     conf.ClientID,
 		ClientSecret: conf.ClientSecret,
@@ -162,20 +167,18 @@ func SetupCommonResources(namePrefix string) {
 		Scopes:       []string{"read"},
 		AuthStyle:    oauth2.AuthStyleInHeader,
 	}
+
 	config, err := jwt.NewJwtConfig()
 	if err != nil {
 		log.Fatal(err)
 	}
 	jwtConfig = &config
+
 	// create common resources for all scenarios
 	globalCommonResources, err := manifestprocessor.ParseFromFileWithTemplate(globalCommonResourcesFile, manifestsDirectory, resourceSeparator, struct {
-		Namespace         string
-		OauthClientSecret string
-		OauthClientID     string
+		Namespace string
 	}{
-		Namespace:         namespace,
-		OauthClientID:     base64.StdEncoding.EncodeToString([]byte(conf.ClientID)),
-		OauthClientSecret: base64.StdEncoding.EncodeToString([]byte(conf.ClientSecret)),
+		Namespace: namespace,
 	})
 	if err != nil {
 		log.Fatal(err)

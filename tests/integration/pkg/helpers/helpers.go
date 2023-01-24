@@ -98,7 +98,6 @@ func (s *StatusPredicate) TestPredicate(response *http.Response) bool {
 
 // APIRuleWithRetries tries toExecute function and retries with onRetry if APIRule status is "ERROR"
 func (h *Helper) APIRuleWithRetries(toExecute RetriableApiRule, onRetry RetriableApiRule, k8sClient dynamic.Interface, resources []unstructured.Unstructured) error {
-
 	type status struct {
 		Status struct {
 			APIRuleStatus struct {
