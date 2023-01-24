@@ -115,8 +115,7 @@ test-for-release: envtest ## Run tests.
 
 .PHONY: test-integration
 test-integration: generate fmt vet envtest ## Run integration tests.
-	eval "$(./tests/integration/env_vars.sh)"
-	$(GOTEST) ./tests/integration -v -race -run TestIstioJwt .
+	source ./tests/integration/env_vars.sh && $(GOTEST) ./tests/integration -v -race -run TestIstioJwt .
 
 ##@ Build
 
