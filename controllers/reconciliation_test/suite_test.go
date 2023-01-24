@@ -155,7 +155,7 @@ var _ = BeforeSuite(func(specCtx SpecContext) {
 		Expect(err).ToNot(HaveOccurred(), "failed to run manager")
 	}()
 
-}, NodeTimeout(timeout))
+}, NodeTimeout(60*time.Second))
 
 var _ = AfterSuite(func() {
 	/*

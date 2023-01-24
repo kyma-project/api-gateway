@@ -28,7 +28,7 @@ import (
 )
 
 const (
-	timeout = time.Second * 10
+	eventuallyTimeout = time.Second * 10
 
 	testGatewayURL              = "kyma-system/kyma-gateway"
 	testOathkeeperSvcURL        = "oathkeeper.kyma-system.svc.cluster.local"
@@ -71,7 +71,7 @@ var _ = Describe("APIRule Controller Reconciliation", func() {
 			}()
 
 			initialStateReq := reconcile.Request{NamespacedName: types.NamespacedName{Name: apiRuleName, Namespace: testNamespace}}
-			Eventually(requests, timeout).Should(Receive(Equal(initialStateReq)))
+			Eventually(requests, eventuallyTimeout).Should(Receive(Equal(initialStateReq)))
 
 			// when
 			By("Setting JWT handler config map to istio")
@@ -80,10 +80,10 @@ var _ = Describe("APIRule Controller Reconciliation", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			cmRequest := reconcile.Request{NamespacedName: types.NamespacedName{Name: cm.Name, Namespace: cm.Namespace}}
-			Eventually(requests, timeout).Should(Receive(Equal(cmRequest)))
+			Eventually(requests, eventuallyTimeout).Should(Receive(Equal(cmRequest)))
 
 			updateApiRuleReq := reconcile.Request{NamespacedName: types.NamespacedName{Name: apiRuleName, Namespace: testNamespace}}
-			Eventually(requests, timeout).Should(Receive(Equal(updateApiRuleReq)))
+			Eventually(requests, eventuallyTimeout).Should(Receive(Equal(updateApiRuleReq)))
 
 			// then
 
@@ -116,7 +116,7 @@ var _ = Describe("APIRule Controller Reconciliation", func() {
 			}()
 
 			initialStateReq := reconcile.Request{NamespacedName: types.NamespacedName{Name: apiRuleName, Namespace: testNamespace}}
-			Eventually(requests, timeout).Should(Receive(Equal(initialStateReq)))
+			Eventually(requests, eventuallyTimeout).Should(Receive(Equal(initialStateReq)))
 
 			// when
 			By("Setting JWT handler config map to ory")
@@ -125,10 +125,10 @@ var _ = Describe("APIRule Controller Reconciliation", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			cmRequest := reconcile.Request{NamespacedName: types.NamespacedName{Name: cm.Name, Namespace: cm.Namespace}}
-			Eventually(requests, timeout).Should(Receive(Equal(cmRequest)))
+			Eventually(requests, eventuallyTimeout).Should(Receive(Equal(cmRequest)))
 
 			updateApiRuleReq := reconcile.Request{NamespacedName: types.NamespacedName{Name: apiRuleName, Namespace: testNamespace}}
-			Eventually(requests, timeout).Should(Receive(Equal(updateApiRuleReq)))
+			Eventually(requests, eventuallyTimeout).Should(Receive(Equal(updateApiRuleReq)))
 
 			// then
 
