@@ -150,7 +150,7 @@ type Handler struct {
 	Config *runtime.RawExtension `json:"config,omitempty"`
 }
 
-// Authorizations is an array of Authorization type
+// Authorizations is an array of Authorization type used by raw field Config of Istio jwt Handler
 type Authorizations struct {
 	Authorizations []*Authorization `json:"authorizations"`
 }

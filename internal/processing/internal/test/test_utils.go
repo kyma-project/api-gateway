@@ -29,8 +29,6 @@ const (
 	JwksUri                     = "https://oauth2.example.com/.well-known/jwks.json"
 	JwtIssuer2                  = "https://oauth2.another.example.com/"
 	JwksUri2                    = "https://oauth2.another.example.com/.well-known/jwks.json"
-	RequiredScopeA              = "scope-a"
-	RequiredScopeB              = "scope-b"
 	OathkeeperSvc               = "fake.oathkeeper"
 	OathkeeperSvcPort uint32    = 1234
 	TestLabelKey                = "key"

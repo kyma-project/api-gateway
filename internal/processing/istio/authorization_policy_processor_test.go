@@ -19,6 +19,11 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
+const (
+	RequiredScopeA = "scope-a"
+	RequiredScopeB = "scope-b"
+)
+
 var _ = Describe("Authorization Policy Processor", func() {
 	testExpectedScopeKeys := []string{"request.auth.claims[scp]", "request.auth.claims[scope]", "request.auth.claims[scopes]"}
 

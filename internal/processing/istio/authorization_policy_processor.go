@@ -100,7 +100,8 @@ func generateAuthorizationPolicySpec(api *gatewayv1beta1.APIRule, rule gatewayv1
 	for _, scope := range defaultScopeKeys {
 		generatedRule := generateAuthorizationPolicySpecRule(rule, scope, authorization)
 		authorizationPolicySpec.Rule(generatedRule)
-		// if requiredScopes are empty, only one rule is needed
+		// When scopes are defined, we need multiple rules for all of the above defaultScopeKeys
+		// When scopes are not defined, we just need one rule containing methods and paths
 		if generatedRule.Get().When == nil || len(generatedRule.Get().When) == 0 {
 			break
 		}

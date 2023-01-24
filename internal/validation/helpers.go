@@ -59,18 +59,6 @@ func IsUnsecuredURL(toTest string) (bool, error) {
 	return false, nil
 }
 
-func HasInvalidScopes(toTest []string) (bool, error) {
-	if len(toTest) == 0 {
-		return true, errors.New("value is empty")
-	}
-	for _, scope := range toTest {
-		if scope == "" {
-			return true, errors.New("scope value is empty")
-		}
-	}
-	return false, nil
-}
-
 // ValidateDomainName ?
 func ValidateDomainName(domain string) bool {
 	RegExp := regexp.MustCompile(`^([a-zA-Z0-9][a-zA-Z0-9-_]*\.)*[a-zA-Z0-9]*[a-zA-Z0-9-_]*[[a-zA-Z0-9]+$`)

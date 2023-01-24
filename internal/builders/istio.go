@@ -374,7 +374,6 @@ type Authentications struct {
 }
 
 type Authentication struct {
-	Issuer         string   `json:"issuer"`
-	JwksUri        string   `json:"jwksUri"`
-	RequiredScopes []string `json:"requiredScopes"`
+	Issuer  string `json:"issuer"`
+	JwksUri string `json:"jwksUri"`
 }
