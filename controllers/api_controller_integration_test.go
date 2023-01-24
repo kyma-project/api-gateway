@@ -167,8 +167,6 @@ var _ = Describe("APIRule Controller", func() {
 						Expect(vs.Name).To(HavePrefix(apiRuleName + "-"))
 						Expect(len(vs.Name) > len(apiRuleName)).To(BeTrue())
 
-						verifyOwnerReference(vs.ObjectMeta, apiRuleName, gatewayv1beta1.GroupVersion.String(), kind)
-
 						expectedSpec := builders.VirtualServiceSpec().
 							Host(serviceHost).
 							Gateway(testGatewayURL).
@@ -192,8 +190,6 @@ var _ = Describe("APIRule Controller", func() {
 						//Meta
 						Expect(rl.Name).To(HavePrefix(apiRuleName + "-"))
 						Expect(len(rl.Name) > len(apiRuleName)).To(BeTrue())
-
-						verifyOwnerReference(rl.ObjectMeta, apiRuleName, gatewayv1beta1.GroupVersion.String(), kind)
 
 						//Spec.Upstream
 						Expect(rl.Spec.Upstream).NotTo(BeNil())
@@ -266,9 +262,6 @@ var _ = Describe("APIRule Controller", func() {
 							Expect(vsList.Items).To(HaveLen(1))
 							vs := vsList.Items[0]
 
-							//Meta
-							verifyOwnerReference(vs.ObjectMeta, apiRuleName, gatewayv1beta1.GroupVersion.String(), kind)
-
 							expectedSpec := builders.VirtualServiceSpec().
 								Host(serviceHost).
 								Gateway(testGatewayURL).
@@ -299,9 +292,6 @@ var _ = Describe("APIRule Controller", func() {
 							}
 
 							rl := rules[expectedRuleMatchURL]
-
-							//Meta
-							verifyOwnerReference(rl.ObjectMeta, apiRuleName, gatewayv1beta1.GroupVersion.String(), kind)
 
 							//Spec.Upstream
 							Expect(rl.Spec.Upstream).NotTo(BeNil())
@@ -340,9 +330,6 @@ var _ = Describe("APIRule Controller", func() {
 							//Verify Rule2
 							expectedRule2MatchURL := fmt.Sprintf("<http|https>://%s<%s>", serviceHost, "/headers")
 							rl2 := rules[expectedRule2MatchURL]
-
-							//Meta
-							verifyOwnerReference(rl2.ObjectMeta, apiRuleName, gatewayv1beta1.GroupVersion.String(), "APIRule")
 
 							//Spec.Upstream
 							Expect(rl2.Spec.Upstream).NotTo(BeNil())
@@ -426,8 +413,6 @@ var _ = Describe("APIRule Controller", func() {
 							Expect(vsList.Items).To(HaveLen(1))
 							vs := vsList.Items[0]
 
-							verifyOwnerReference(vs.ObjectMeta, apiRuleName, gatewayv1beta1.GroupVersion.String(), kind)
-
 							expectedSpec := builders.VirtualServiceSpec().
 								Host(serviceHost).
 								Gateway(testGatewayURL).
@@ -450,8 +435,6 @@ var _ = Describe("APIRule Controller", func() {
 							Expect(err).NotTo(HaveOccurred())
 							Expect(raList.Items).To(HaveLen(1))
 							ra := raList.Items[0]
-
-							verifyOwnerReference(ra.ObjectMeta, apiRuleName, gatewayv1beta1.GroupVersion.String(), kind)
 
 							Expect(ra.Spec.Selector.MatchLabels).To(BeEquivalentTo(map[string]string{"app": serviceName}))
 							Expect(ra.Spec.JwtRules[0].Issuer).To(Equal(testIssuer))
@@ -476,9 +459,6 @@ var _ = Describe("APIRule Controller", func() {
 
 								ap, err := getByOperationPath(apList, operationPath)
 								Expect(err).NotTo(HaveOccurred())
-
-								verifyOwnerReference(ap.ObjectMeta, apiRuleName, gatewayv1beta1.GroupVersion.String(), kind)
-
 								Expect(ap.Spec.Selector.MatchLabels).To(BeEquivalentTo(map[string]string{"app": serviceName}))
 								Expect(ap.Spec.Rules[0].From[0].Source.RequestPrincipals[0]).To(Equal("*"))
 								Expect(ap.Spec.Rules[0].To[0].Operation.Paths[0]).To(Equal(operationPath))
@@ -534,9 +514,6 @@ var _ = Describe("APIRule Controller", func() {
 						Expect(vsList.Items).To(HaveLen(1))
 						vs := vsList.Items[0]
 
-						//Meta
-						verifyOwnerReference(vs.ObjectMeta, apiRuleName, gatewayv1beta1.GroupVersion.String(), kind)
-
 						expectedSpec := builders.VirtualServiceSpec().
 							Host(serviceHost).
 							Gateway(testGatewayURL).
@@ -586,9 +563,6 @@ var _ = Describe("APIRule Controller", func() {
 							}
 
 							rl := rules[expectedRuleMatchURL]
-
-							//Meta
-							verifyOwnerReference(rl.ObjectMeta, apiRuleName, gatewayv1beta1.GroupVersion.String(), kind)
 
 							//Spec.Upstream
 							Expect(rl.Spec.Upstream).NotTo(BeNil())
@@ -967,15 +941,6 @@ func testConfigMap(jwtHandler string) *corev1.ConfigMap {
 			helpers.CM_KEY: fmt.Sprintf("jwtHandler: %s", jwtHandler),
 		},
 	}
-}
-
-func verifyOwnerReference(m metav1.ObjectMeta, name, version, kind string) {
-	Expect(m.OwnerReferences).To(HaveLen(1))
-	Expect(m.OwnerReferences[0].APIVersion).To(Equal(version))
-	Expect(m.OwnerReferences[0].Kind).To(Equal(kind))
-	Expect(m.OwnerReferences[0].Name).To(Equal(name))
-	Expect(m.OwnerReferences[0].UID).NotTo(BeEmpty())
-	Expect(*m.OwnerReferences[0].Controller).To(BeTrue())
 }
 
 func testOryJWTHandler(issuer string, scopes []string) *gatewayv1beta1.Handler {

@@ -45,11 +45,6 @@ func (ap *AuthorizationPolicy) Namespace(val string) *AuthorizationPolicy {
 	return ap
 }
 
-func (ap *AuthorizationPolicy) Owner(val *ownerReference) *AuthorizationPolicy {
-	ap.value.OwnerReferences = append(ap.value.OwnerReferences, *val.Get())
-	return ap
-}
-
 func (ap *AuthorizationPolicy) Label(key, val string) *AuthorizationPolicy {
 	if ap.value.Labels == nil {
 		ap.value.Labels = make(map[string]string)
@@ -230,11 +225,6 @@ func (ra *RequestAuthentication) GenerateName(val string) *RequestAuthentication
 
 func (ra *RequestAuthentication) Namespace(val string) *RequestAuthentication {
 	ra.value.Namespace = val
-	return ra
-}
-
-func (ra *RequestAuthentication) Owner(val *ownerReference) *RequestAuthentication {
-	ra.value.OwnerReferences = append(ra.value.OwnerReferences, *val.Get())
 	return ra
 }
 

@@ -41,11 +41,6 @@ func (vs *virtualService) Namespace(val string) *virtualService {
 	return vs
 }
 
-func (vs *virtualService) Owner(val *ownerReference) *virtualService {
-	vs.value.OwnerReferences = append(vs.value.OwnerReferences, *val.Get())
-	return vs
-}
-
 func (vs *virtualService) Label(key, val string) *virtualService {
 	if vs.value.Labels == nil {
 		vs.value.Labels = make(map[string]string)
