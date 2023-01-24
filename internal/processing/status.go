@@ -2,7 +2,7 @@ package processing
 
 import (
 	"fmt"
-	"github.com/go-logr/logr"
+
 	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
 	"github.com/kyma-incubator/api-gateway/internal/validation"
 )
@@ -15,52 +15,103 @@ type ReconciliationStatus struct {
 	AuthorizationPolicyStatus   *gatewayv1beta1.APIRuleResourceStatus
 }
 
-func getStatus(apiStatus *gatewayv1beta1.APIRuleResourceStatus, statusCode gatewayv1beta1.StatusCode) ReconciliationStatus {
-	return ReconciliationStatus{
-		ApiRuleStatus: apiStatus,
-		VirtualServiceStatus: &gatewayv1beta1.APIRuleResourceStatus{
-			Code: statusCode,
-		}, AccessRuleStatus: &gatewayv1beta1.APIRuleResourceStatus{
-			Code: statusCode,
-		}, RequestAuthenticationStatus: &gatewayv1beta1.APIRuleResourceStatus{
-			Code: statusCode,
-		}, AuthorizationPolicyStatus: &gatewayv1beta1.APIRuleResourceStatus{
-			Code: statusCode,
-		},
+func (status ReconciliationStatus) HasError() bool {
+	if status.ApiRuleStatus != nil && status.ApiRuleStatus.Code == gatewayv1beta1.StatusError {
+		return true
+	}
+	if status.VirtualServiceStatus != nil && status.VirtualServiceStatus.Code == gatewayv1beta1.StatusError {
+		return true
+	}
+	if status.AccessRuleStatus != nil && status.AccessRuleStatus.Code == gatewayv1beta1.StatusError {
+		return true
+	}
+	if status.AuthorizationPolicyStatus != nil && status.AuthorizationPolicyStatus.Code == gatewayv1beta1.StatusError {
+		return true
+	}
+	if status.RequestAuthenticationStatus != nil && status.RequestAuthenticationStatus.Code == gatewayv1beta1.StatusError {
+		return true
+	}
+	return false
+}
+
+type ResourceSelector int
+
+const (
+	OnApiRule ResourceSelector = iota
+	OnVirtualService
+	OnAccessRule
+	OnAuthorizationPolicy
+	OnRequestAuthentication
+)
+
+func (r ResourceSelector) String() string {
+	switch r {
+	case OnVirtualService:
+		return "VirtualService"
+	case OnAccessRule:
+		return "Rule"
+	case OnRequestAuthentication:
+		return "RequestAuthentication"
+	case OnAuthorizationPolicy:
+		return "AuthorizationPolicy"
+	default:
+		// If no Kind is resolved from the resource (e.g. subresource CRD is missing)
+		return "APIRule"
 	}
 }
 
-func getOkStatus() ReconciliationStatus {
-	apiRuleStatus := &gatewayv1beta1.APIRuleResourceStatus{
-		Code: gatewayv1beta1.StatusOK,
+func generateStatusFromErrors(errors []error) *gatewayv1beta1.APIRuleResourceStatus {
+	status := &gatewayv1beta1.APIRuleResourceStatus{}
+	if len(errors) == 0 {
+		status.Code = gatewayv1beta1.StatusOK
+		return status
 	}
-	return getStatus(apiRuleStatus, gatewayv1beta1.StatusOK)
-}
-
-// GetStatusForError creates a status with APIRule status in error condition. Accepts an auxiliary status code that is used to report VirtualService and AccessRule status.
-func GetStatusForError(log *logr.Logger, err error, statusCode gatewayv1beta1.StatusCode) ReconciliationStatus {
-	log.Error(err, "Error during reconciliation")
-	return ReconciliationStatus{
-		ApiRuleStatus: generateErrorStatus(err),
-		VirtualServiceStatus: &gatewayv1beta1.APIRuleResourceStatus{
-			Code: statusCode,
-		}, AccessRuleStatus: &gatewayv1beta1.APIRuleResourceStatus{
-			Code: statusCode,
-		}, RequestAuthenticationStatus: &gatewayv1beta1.APIRuleResourceStatus{
-			Code: statusCode,
-		}, AuthorizationPolicyStatus: &gatewayv1beta1.APIRuleResourceStatus{
-			Code: statusCode,
-		},
+	status.Code = gatewayv1beta1.StatusError
+	status.Description = errors[0].Error()
+	for _, err := range errors[1:] {
+		status.Description = fmt.Sprintf("%s\n%s", status.Description, err.Error())
 	}
+	return status
 }
 
-func generateErrorStatus(err error) *gatewayv1beta1.APIRuleResourceStatus {
-	return toStatus(gatewayv1beta1.StatusError, err.Error())
+func GetStatusForErrorMap(errorMap map[ResourceSelector][]error, statusBase ReconciliationStatus) ReconciliationStatus {
+	for key, val := range errorMap {
+		switch key {
+		case OnApiRule:
+			statusBase.ApiRuleStatus = generateStatusFromErrors(val)
+		case OnVirtualService:
+			statusBase.VirtualServiceStatus = generateStatusFromErrors(val)
+		case OnAccessRule:
+			statusBase.AccessRuleStatus = generateStatusFromErrors(val)
+		case OnAuthorizationPolicy:
+			statusBase.AuthorizationPolicyStatus = generateStatusFromErrors(val)
+		case OnRequestAuthentication:
+			statusBase.RequestAuthenticationStatus = generateStatusFromErrors(val)
+		}
+
+		if key != OnApiRule {
+			if statusBase.ApiRuleStatus == nil || statusBase.ApiRuleStatus.Code == gatewayv1beta1.StatusOK {
+				statusBase.ApiRuleStatus = &gatewayv1beta1.APIRuleResourceStatus{
+					Code:        gatewayv1beta1.StatusError,
+					Description: fmt.Sprintf("Error has happened on subresource %s", key),
+				}
+			} else {
+				statusBase.ApiRuleStatus.Code = gatewayv1beta1.StatusError
+				statusBase.ApiRuleStatus.Description += fmt.Sprintf("\nError has happened on subresource %s", key)
+			}
+		}
+	}
+
+	return statusBase
 }
 
-func GetFailedValidationStatus(failures []validation.Failure) ReconciliationStatus {
-	apiRuleStatus := generateValidationStatus(failures)
-	return getStatus(apiRuleStatus, gatewayv1beta1.StatusSkipped)
+func GenerateStatusFromFailures(failures []validation.Failure, statusBase ReconciliationStatus) ReconciliationStatus {
+	if len(failures) == 0 {
+		return statusBase
+	}
+
+	statusBase.ApiRuleStatus = generateValidationStatus(failures)
+	return statusBase
 }
 
 func generateValidationStatus(failures []validation.Failure) *gatewayv1beta1.APIRuleResourceStatus {
