@@ -29,7 +29,7 @@ func NewJwtConfig() (Config, error) {
 	}
 
 	config := Config{EnvConfig: env}
-	config.ClientConfig = clientConfig{ClientTimeout: env.ClientTimeout}
+	config.ClientConfig = clientConfig(env)
 
 	return config, nil
 }
