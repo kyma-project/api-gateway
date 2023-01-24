@@ -11,7 +11,7 @@ import (
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 )
 
-// AuthorizationPolicyProcessor is the generic processor that handles the Istio Authorization Policies in the reconciliation of API Rule.
+// AuthorizationPolicyProcessor is the generic processor that handles the Istio JwtAuthorization Policies in the reconciliation of API Rule.
 type AuthorizationPolicyProcessor struct {
 	Creator AuthorizationPolicyCreator
 }
@@ -35,7 +35,7 @@ type authorizationPolicyCreator struct {
 	additionalLabels map[string]string
 }
 
-// Create returns the Authorization Policy using the configuration of the APIRule.
+// Create returns the JwtAuthorization Policy using the configuration of the APIRule.
 func (r authorizationPolicyCreator) Create(api *gatewayv1beta1.APIRule) []*securityv1beta1.AuthorizationPolicy {
 	var authorizationPolicies []*securityv1beta1.AuthorizationPolicy
 	hasJwtRule := processing.HasJwtRule(api)
@@ -53,7 +53,7 @@ func generateAuthorizationPolicies(api *gatewayv1beta1.APIRule, rule gatewayv1be
 	ruleAuthorizations := rule.GetAuthorizations()
 
 	if len(ruleAuthorizations) == 0 {
-		ap := generateAuthorizationPolicy(api, rule, additionalLabels, &gatewayv1beta1.Authorization{})
+		ap := generateAuthorizationPolicy(api, rule, additionalLabels, &gatewayv1beta1.JwtAuthorization{})
 		authorizationPolicyList.Items = append(authorizationPolicyList.Items, ap)
 	} else {
 		for _, authorization := range ruleAuthorizations {
@@ -65,7 +65,7 @@ func generateAuthorizationPolicies(api *gatewayv1beta1.APIRule, rule gatewayv1be
 	return &authorizationPolicyList
 }
 
-func generateAuthorizationPolicy(api *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rule, additionalLabels map[string]string, authorization *gatewayv1beta1.Authorization) *securityv1beta1.AuthorizationPolicy {
+func generateAuthorizationPolicy(api *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rule, additionalLabels map[string]string, authorization *gatewayv1beta1.JwtAuthorization) *securityv1beta1.AuthorizationPolicy {
 	namePrefix := fmt.Sprintf("%s-", api.ObjectMeta.Name)
 	namespace := api.ObjectMeta.Namespace
 	ownerRef := processing.GenerateOwnerRef(api)
@@ -85,7 +85,7 @@ func generateAuthorizationPolicy(api *gatewayv1beta1.APIRule, rule gatewayv1beta
 	return apBuilder.Get()
 }
 
-func generateAuthorizationPolicySpec(api *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rule, authorization *gatewayv1beta1.Authorization) *v1beta1.AuthorizationPolicy {
+func generateAuthorizationPolicySpec(api *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rule, authorization *gatewayv1beta1.JwtAuthorization) *v1beta1.AuthorizationPolicy {
 	var serviceName string
 	if rule.Service != nil {
 		serviceName = *rule.Service.Name
@@ -110,7 +110,7 @@ func generateAuthorizationPolicySpec(api *gatewayv1beta1.APIRule, rule gatewayv1
 	return authorizationPolicySpec.Get()
 }
 
-func generateAuthorizationPolicySpecRule(rule gatewayv1beta1.Rule, scope string, authorization *gatewayv1beta1.Authorization) *builders.Rule {
+func generateAuthorizationPolicySpecRule(rule gatewayv1beta1.Rule, scope string, authorization *gatewayv1beta1.JwtAuthorization) *builders.Rule {
 	ruleBuilder := builders.RuleBuilder().RuleTo(builders.RuleToBuilder().
 		Operation(builders.OperationBuilder().Methods(rule.Methods).Path(rule.Path)))
 

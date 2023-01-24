@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 
 	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
-	istiojwt "github.com/kyma-incubator/api-gateway/internal/types/istio"
 	"github.com/kyma-incubator/api-gateway/internal/types/ory"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -140,25 +139,25 @@ var _ = Describe("JWT Validator", func() {
 
 func emptyJWTIstioConfig() *runtime.RawExtension {
 	return getRawConfig(
-		&istiojwt.JwtConfig{})
+		&gatewayv1beta1.JwtConfig{})
 }
 
 func simpleJWTIstioConfig(trustedIssuers ...string) *runtime.RawExtension {
-	var issuers []istiojwt.JwtAuthentication
+	var issuers []*gatewayv1beta1.JwtAuthentication
 	for _, issuer := range trustedIssuers {
-		issuers = append(issuers, istiojwt.JwtAuthentication{
+		issuers = append(issuers, &gatewayv1beta1.JwtAuthentication{
 			Issuer:  issuer,
 			JwksUri: issuer,
 		})
 	}
-	jwtConfig := istiojwt.JwtConfig{Authentications: issuers}
+	jwtConfig := gatewayv1beta1.JwtConfig{Authentications: issuers}
 	return getRawConfig(jwtConfig)
 }
 
 func testURLJWTIstioConfig(JWKSUrl string, trustedIssuer string) *runtime.RawExtension {
 	return getRawConfig(
-		istiojwt.JwtConfig{
-			Authentications: []istiojwt.JwtAuthentication{
+		gatewayv1beta1.JwtConfig{
+			Authentications: []*gatewayv1beta1.JwtAuthentication{
 				{
 					Issuer:  trustedIssuer,
 					JwksUri: JWKSUrl,
@@ -169,14 +168,14 @@ func testURLJWTIstioConfig(JWKSUrl string, trustedIssuer string) *runtime.RawExt
 
 func testURLJWTIstioConfigWithScopes(requiredScopes []string) *runtime.RawExtension {
 	return getRawConfig(
-		istiojwt.JwtConfig{
-			Authentications: []istiojwt.JwtAuthentication{
+		gatewayv1beta1.JwtConfig{
+			Authentications: []*gatewayv1beta1.JwtAuthentication{
 				{
 					Issuer:  "https://issuer.test/",
 					JwksUri: "file://.well-known/jwks.json",
 				},
 			},
-			Authorizations: []istiojwt.JwtAuthorization{
+			Authorizations: []*gatewayv1beta1.JwtAuthorization{
 				{RequiredScopes: requiredScopes},
 			},
 		})

@@ -24,7 +24,7 @@ const (
 	RequiredScopeB = "scope-b"
 )
 
-var _ = Describe("Authorization Policy Processor", func() {
+var _ = Describe("JwtAuthorization Policy Processor", func() {
 	testExpectedScopeKeys := []string{"request.auth.claims[scp]", "request.auth.claims[scope]", "request.auth.claims[scopes]"}
 
 	createIstioJwtAccessStrategy := func() *gatewayv1beta1.Authenticator {

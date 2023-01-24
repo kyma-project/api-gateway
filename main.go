@@ -103,7 +103,7 @@ func main() {
 	flag.StringVar(&domainName, "default-domain-name", "", "A default domain name for hostnames with no domain provided. Optional.")
 	flag.StringVar(&corsAllowOrigins, "cors-allow-origins", "regex:.*", "list of allowed origins")
 	flag.StringVar(&corsAllowMethods, "cors-allow-methods", "GET,POST,PUT,DELETE", "list of allowed methods")
-	flag.StringVar(&corsAllowHeaders, "cors-allow-headers", "Authorization,Content-Type,*", "list of allowed headers")
+	flag.StringVar(&corsAllowHeaders, "cors-allow-headers", "JwtAuthorization,Content-Type,*", "list of allowed headers")
 	flag.StringVar(&generatedObjectsLabels, "generated-objects-labels", "", "Comma-separated list of key=value pairs used to label generated objects")
 	flag.UintVar(&reconciliationPeriod, "reconciliation-period", 0, "Default reconciliation period when no error happened in the previous run [s]")
 	flag.UintVar(&errorReconciliationPeriod, "error-reconciliation-period", 0, "Reconciliation period after an error happened in the previous run (e.g. VirtualService confict) [s]")

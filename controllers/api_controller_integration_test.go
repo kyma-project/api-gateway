@@ -6,12 +6,10 @@ import (
 	"math/rand"
 	"time"
 
+	"encoding/json"
 	"github.com/kyma-incubator/api-gateway/internal/builders"
 	"github.com/kyma-incubator/api-gateway/internal/helpers"
 	"github.com/kyma-incubator/api-gateway/internal/processing"
-	istioint "github.com/kyma-incubator/api-gateway/internal/types/istio"
-
-	"encoding/json"
 
 	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
 	. "github.com/onsi/ginkgo/v2"
@@ -1023,8 +1021,8 @@ func testOryJWTHandler(issuer string, scopes []string) *gatewayv1beta1.Handler {
 
 func testIstioJWTHandler(issuer string, jwksUri string) *gatewayv1beta1.Handler {
 
-	bytes, err := json.Marshal(istioint.JwtConfig{
-		Authentications: []istioint.JwtAuthentication{
+	bytes, err := json.Marshal(gatewayv1beta1.JwtConfig{
+		Authentications: []*gatewayv1beta1.JwtAuthentication{
 			{
 				Issuer:  issuer,
 				JwksUri: jwksUri,
@@ -1042,14 +1040,14 @@ func testIstioJWTHandler(issuer string, jwksUri string) *gatewayv1beta1.Handler 
 
 func testIstioJWTHandlerWithScopes(issuer string, jwksUri string, authorizationScopes []string) *gatewayv1beta1.Handler {
 
-	bytes, err := json.Marshal(istioint.JwtConfig{
-		Authentications: []istioint.JwtAuthentication{
+	bytes, err := json.Marshal(gatewayv1beta1.JwtConfig{
+		Authentications: []*gatewayv1beta1.JwtAuthentication{
 			{
 				Issuer:  issuer,
 				JwksUri: jwksUri,
 			},
 		},
-		Authorizations: []istioint.JwtAuthorization{
+		Authorizations: []*gatewayv1beta1.JwtAuthorization{
 			{
 				RequiredScopes: authorizationScopes,
 			},

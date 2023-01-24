@@ -216,7 +216,7 @@ func (rc *RuleCondition) Get() *[]*v1beta1.Condition {
 	return rc.value
 }
 
-func (rc *RuleCondition) From(key string, authorization *gatewayv1beta1.Authorization) *RuleCondition {
+func (rc *RuleCondition) From(key string, authorization *gatewayv1beta1.JwtAuthorization) *RuleCondition {
 	if authorization.HasRequiredScopes() {
 		for _, requiredScope := range authorization.RequiredScopes {
 			*rc.value = append(*rc.value, &v1beta1.Condition{

@@ -29,7 +29,7 @@ var _ = Describe("Builder for", func() {
 			testRulesSourceRequestPrincipals := "*"
 			testScopeA := "scope-a"
 			testScopeB := "scope-b"
-			testAuthorization := gatewayv1beta1.Authorization{RequiredScopes: []string{testScopeA, testScopeB}}
+			testAuthorization := gatewayv1beta1.JwtAuthorization{RequiredScopes: []string{testScopeA, testScopeB}}
 			testExpectedScopeKeys := []string{"request.auth.claims[scp]"}
 
 			ap := AuthorizationPolicyBuilder().GenerateName(name).Namespace(namespace).

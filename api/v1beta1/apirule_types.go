@@ -153,12 +153,19 @@ type Handler struct {
 	Config *runtime.RawExtension `json:"config,omitempty"`
 }
 
-// Authorizations is an array of Authorization type used by raw field Config of Istio jwt Handler
-type Authorizations struct {
-	Authorizations []*Authorization `json:"authorizations"`
+// JwtConfig is an array of JwtAuthorization type used by raw field Config of Istio jwt Handler
+type JwtConfig struct {
+	Authentications []*JwtAuthentication `json:"authentications,omitempty"`
+	Authorizations  []*JwtAuthorization  `json:"authorizations,omitempty"`
 }
 
-// Authorization contains an array of required scopes
-type Authorization struct {
+// JwtAuthorization contains an array of required scopes
+type JwtAuthorization struct {
 	RequiredScopes []string `json:"requiredScopes"`
+}
+
+// JwtAuthentication Config for Jwt istio authentication
+type JwtAuthentication struct {
+	Issuer  string `json:"issuer"`
+	JwksUri string `json:"jwksUri"`
 }
