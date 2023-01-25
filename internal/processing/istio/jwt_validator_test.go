@@ -125,7 +125,7 @@ var _ = Describe("JWT Validator", func() {
 		Expect(problems[0].Message).To(Equal("value is empty or has an empty string err=scope value is empty"))
 	})
 
-	It("Should fail for config with empty string in required scopes", func() {
+	It("Should succeed for config with two required scopes", func() {
 		//given
 		handler := &gatewayv1beta1.Handler{Name: "jwt", Config: testURLJWTIstioConfigWithScopes([]string{"scope-a", "scope-b"})}
 
