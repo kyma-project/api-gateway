@@ -50,7 +50,7 @@ func (r authorizationPolicyCreator) Create(api *gatewayv1beta1.APIRule) []*secur
 
 func generateAuthorizationPolicies(api *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rule, additionalLabels map[string]string) *securityv1beta1.AuthorizationPolicyList {
 	authorizationPolicyList := securityv1beta1.AuthorizationPolicyList{}
-	ruleAuthorizations := rule.GetAuthorizations()
+	ruleAuthorizations := rule.GetJwtIstioAuthorizations()
 
 	if len(ruleAuthorizations) == 0 {
 		ap := generateAuthorizationPolicy(api, rule, additionalLabels, &gatewayv1beta1.JwtAuthorization{})

@@ -35,7 +35,6 @@ import (
 var _ = Describe("APIRule Controller", func() {
 
 	const (
-		kind                       = "APIRule"
 		testNameBase               = "test"
 		testIDLength               = 5
 		testServiceNameBase        = "httpbin"
