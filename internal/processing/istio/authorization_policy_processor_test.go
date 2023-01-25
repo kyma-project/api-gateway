@@ -96,12 +96,6 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 		Expect(ap1.Spec.Rules[0].To[0].Operation.Methods).To(ContainElements(ApiMethods))
 		Expect(len(ap1.Spec.Rules[0].To[0].Operation.Paths)).To(Equal(1))
 
-		Expect(len(ap1.OwnerReferences)).To(Equal(1))
-		Expect(ap1.OwnerReferences[0].APIVersion).To(Equal(ApiAPIVersion))
-		Expect(ap1.OwnerReferences[0].Kind).To(Equal(ApiKind))
-		Expect(ap1.OwnerReferences[0].Name).To(Equal(ApiName))
-		Expect(ap1.OwnerReferences[0].UID).To(Equal(ApiUID))
-
 		for i := 0; i < 3; i++ {
 			Expect(ap1.Spec.Rules[i].When[0].Key).To(BeElementOf(testExpectedScopeKeys))
 			Expect(ap1.Spec.Rules[i].When).To(HaveLen(2))
@@ -183,12 +177,6 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 		Expect(ap1.Spec.Rules[0].To[0].Operation.Methods).To(ContainElements(ApiMethods))
 		Expect(len(ap1.Spec.Rules[0].To[0].Operation.Paths)).To(Equal(1))
 
-		Expect(len(ap1.OwnerReferences)).To(Equal(1))
-		Expect(ap1.OwnerReferences[0].APIVersion).To(Equal(ApiAPIVersion))
-		Expect(ap1.OwnerReferences[0].Kind).To(Equal(ApiKind))
-		Expect(ap1.OwnerReferences[0].Name).To(Equal(ApiName))
-		Expect(ap1.OwnerReferences[0].UID).To(Equal(ApiUID))
-
 		for i := 0; i < 3; i++ {
 			Expect(ap1.Spec.Rules[i].When[0].Key).To(BeElementOf(testExpectedScopeKeys))
 			Expect(ap1.Spec.Rules[i].When[0].Values).To(HaveLen(1))
@@ -211,11 +199,6 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 		Expect(len(ap2.Spec.Rules[0].To[0].Operation.Methods)).To(Equal(1))
 		Expect(ap2.Spec.Rules[0].To[0].Operation.Methods).To(ContainElements(ApiMethods))
 		Expect(len(ap2.Spec.Rules[0].To[0].Operation.Paths)).To(Equal(1))
-
-		Expect(ap2.OwnerReferences[0].APIVersion).To(Equal(ApiAPIVersion))
-		Expect(ap2.OwnerReferences[0].Kind).To(Equal(ApiKind))
-		Expect(ap2.OwnerReferences[0].Name).To(Equal(ApiName))
-		Expect(ap2.OwnerReferences[0].UID).To(Equal(ApiUID))
 
 		for i := 0; i < 3; i++ {
 			Expect(ap2.Spec.Rules[i].When[0].Key).To(BeElementOf(testExpectedScopeKeys))
@@ -328,10 +311,6 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			Expect(ap.Spec.Rules[i].When[1].Values[0]).To(BeElementOf(RequiredScopeA, RequiredScopeB))
 		}
 
-		Expect(ap.OwnerReferences[0].APIVersion).To(Equal(ApiAPIVersion))
-		Expect(ap.OwnerReferences[0].Kind).To(Equal(ApiKind))
-		Expect(ap.OwnerReferences[0].Name).To(Equal(ApiName))
-		Expect(ap.OwnerReferences[0].UID).To(Equal(ApiUID))
 	})
 
 	When("single handler only", func() {

@@ -5,8 +5,6 @@ import (
 
 	gatewayv1alpha1 "github.com/kyma-incubator/api-gateway/api/v1alpha1"
 	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
-	"github.com/kyma-incubator/api-gateway/internal/builders"
-	k8sMeta "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 var (
@@ -44,16 +42,6 @@ func IsSecured(rule gatewayv1beta1.Rule) bool {
 		}
 	}
 	return false
-}
-
-func GenerateOwnerRef(api *gatewayv1beta1.APIRule) k8sMeta.OwnerReference {
-	return *builders.OwnerReference().
-		Name(api.ObjectMeta.Name).
-		APIVersion(api.TypeMeta.APIVersion).
-		Kind(api.TypeMeta.Kind).
-		UID(api.ObjectMeta.UID).
-		Controller(true).
-		Get()
 }
 
 func GetOwnerLabels(api *gatewayv1beta1.APIRule) map[string]string {

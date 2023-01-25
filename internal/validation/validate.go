@@ -7,6 +7,7 @@ import (
 	"github.com/kyma-incubator/api-gateway/internal/helpers"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 
+	gatewayv1alpha1 "github.com/kyma-incubator/api-gateway/api/v1alpha1"
 	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
 	"k8s.io/utils/strings/slices"
 )
@@ -258,10 +259,21 @@ func occupiesHost(vs *networkingv1beta1.VirtualService, host string) bool {
 	return false
 }
 
+func getOwnerLabels(api *gatewayv1beta1.APIRule) map[string]string {
+	OwnerLabelv1alpha1 := fmt.Sprintf("%s.%s", "apirule", gatewayv1alpha1.GroupVersion.String())
+	labels := make(map[string]string)
+	labels[OwnerLabelv1alpha1] = fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace)
+	return labels
+}
+
 func ownedBy(vs *networkingv1beta1.VirtualService, api *gatewayv1beta1.APIRule) bool {
-	for _, or := range vs.OwnerReferences {
-		if or.UID == api.UID {
-			return true
+	ownerLabels := getOwnerLabels(api)
+	vsLabels := vs.GetLabels()
+
+	for key, label := range ownerLabels {
+		val, ok := vsLabels[key]
+		if ok {
+			return val == label
 		}
 	}
 	return false

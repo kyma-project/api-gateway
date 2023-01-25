@@ -9,7 +9,6 @@ import (
 	internalTypes "github.com/kyma-incubator/api-gateway/internal/types/ory"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	k8sTypes "k8s.io/apimachinery/pkg/types"
 )
 
 var _ = Describe("Builder for", func() {
@@ -26,11 +25,6 @@ var _ = Describe("Builder for", func() {
 			name := "testName"
 			namespace := "testNs"
 
-			refName := "refName"
-			refVersion := "v1alpha1"
-			refKind := "APIRule"
-			var refUID k8sTypes.UID = "123"
-
 			testUpstreamURL := fmt.Sprintf("http://%s:%d", destHost, destPort)
 			testMatchURL := fmt.Sprintf("<http|https>://%s<%s>", host, hostPath)
 
@@ -44,7 +38,6 @@ var _ = Describe("Builder for", func() {
 			}
 
 			ar := AccessRule().GenerateName(name).Namespace(namespace).
-				Owner(OwnerReference().Name(refName).APIVersion(refVersion).Kind(refKind).UID(refUID).Controller(true)).
 				Spec(AccessRuleSpec().
 					Upstream(Upstream().
 						URL(testUpstreamURL)).
@@ -67,11 +60,6 @@ var _ = Describe("Builder for", func() {
 			Expect(ar.Name).To(BeEmpty())
 			Expect(ar.GenerateName).To(Equal(name))
 			Expect(ar.Namespace).To(Equal(namespace))
-			Expect(ar.OwnerReferences).To(HaveLen(1))
-			Expect(ar.OwnerReferences[0].Name).To(Equal(refName))
-			Expect(ar.OwnerReferences[0].APIVersion).To(Equal(refVersion))
-			Expect(ar.OwnerReferences[0].Kind).To(Equal(refKind))
-			Expect(ar.OwnerReferences[0].UID).To(BeEquivalentTo(refUID))
 			Expect(ar.Spec.Upstream.URL).To(Equal(testUpstreamURL))
 			Expect(ar.Spec.Match.URL).To(Equal(testMatchURL))
 			Expect(ar.Spec.Match.Methods).To(BeEquivalentTo(methods))

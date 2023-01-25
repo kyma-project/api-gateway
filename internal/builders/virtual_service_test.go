@@ -4,7 +4,6 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
-	k8sTypes "k8s.io/apimachinery/pkg/types"
 )
 
 var _ = Describe("Builder for", func() {
@@ -21,17 +20,11 @@ var _ = Describe("Builder for", func() {
 			name := "testName"
 			namespace := "testNs"
 
-			refName := "refName"
-			refVersion := "v1alpha1"
-			refKind := "APIRule"
-			var refUID k8sTypes.UID = "123"
-
 			initialVs := networkingv1beta1.VirtualService{}
 			initialVs.Name = "shoudBeOverwritten"
 			initialVs.Spec.Hosts = []string{"a,", "b", "c"}
 
 			vs := VirtualService().From(&initialVs).GenerateName(name).Namespace(namespace).
-				Owner(OwnerReference().Name(refName).APIVersion(refVersion).Kind(refKind).UID(refUID).Controller(true)).
 				Spec(
 					VirtualServiceSpec().
 						Host(host).
@@ -40,11 +33,6 @@ var _ = Describe("Builder for", func() {
 			Expect(vs.Name).To(BeEmpty())
 			Expect(vs.GenerateName).To(Equal(name))
 			Expect(vs.Namespace).To(Equal(namespace))
-			Expect(vs.OwnerReferences).To(HaveLen(1))
-			Expect(vs.OwnerReferences[0].Name).To(Equal(refName))
-			Expect(vs.OwnerReferences[0].APIVersion).To(Equal(refVersion))
-			Expect(vs.OwnerReferences[0].Kind).To(Equal(refKind))
-			Expect(vs.OwnerReferences[0].UID).To(BeEquivalentTo(refUID))
 			Expect(vs.Spec.Hosts).To(HaveLen(1))
 			Expect(vs.Spec.Hosts[0]).To(Equal(host))
 			Expect(vs.Spec.Gateways).To(HaveLen(1))

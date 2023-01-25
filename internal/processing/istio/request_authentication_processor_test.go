@@ -60,12 +60,6 @@ var _ = Describe("Request Authentication Processor", func() {
 		Expect(ra.ObjectMeta.Namespace).To(Equal(ApiNamespace))
 		Expect(ra.ObjectMeta.Labels[TestLabelKey]).To(Equal(TestLabelValue))
 
-		Expect(len(ra.OwnerReferences)).To(Equal(1))
-		Expect(ra.OwnerReferences[0].APIVersion).To(Equal(ApiAPIVersion))
-		Expect(ra.OwnerReferences[0].Kind).To(Equal(ApiKind))
-		Expect(ra.OwnerReferences[0].Name).To(Equal(ApiName))
-		Expect(ra.OwnerReferences[0].UID).To(Equal(ApiUID))
-
 		Expect(ra.Spec.Selector.MatchLabels[TestSelectorKey]).NotTo(BeNil())
 		Expect(ra.Spec.Selector.MatchLabels[TestSelectorKey]).To(Equal(ServiceName))
 		Expect(len(ra.Spec.JwtRules)).To(Equal(1))
@@ -153,12 +147,6 @@ var _ = Describe("Request Authentication Processor", func() {
 		Expect(ra.ObjectMeta.GenerateName).To(Equal(ApiName + "-"))
 		Expect(ra.ObjectMeta.Namespace).To(Equal(ApiNamespace))
 		Expect(ra.ObjectMeta.Labels[TestLabelKey]).To(Equal(TestLabelValue))
-
-		Expect(len(ra.OwnerReferences)).To(Equal(1))
-		Expect(ra.OwnerReferences[0].APIVersion).To(Equal(ApiAPIVersion))
-		Expect(ra.OwnerReferences[0].Kind).To(Equal(ApiKind))
-		Expect(ra.OwnerReferences[0].Name).To(Equal(ApiName))
-		Expect(ra.OwnerReferences[0].UID).To(Equal(ApiUID))
 
 		Expect(ra.Spec.Selector.MatchLabels[TestSelectorKey]).NotTo(BeNil())
 		Expect(ra.Spec.Selector.MatchLabels[TestSelectorKey]).To(Equal(ServiceName))
