@@ -55,8 +55,8 @@ func (o *handlerValidator) Validate(attributePath string, handler *gatewayv1beta
 	}
 
 	for i, authorization := range template.Authorizations {
-		invalidScopes, err := validation.HasInvalidScopes(*authorization)
-		if invalidScopes {
+		err := validation.HasInvalidScopes(*authorization)
+		if err != nil {
 			attrPath := fmt.Sprintf("%s%s[%d]%s", attributePath, ".config.authorizations", i, ".requiredScopes")
 			problems = append(problems, validation.Failure{AttributePath: attrPath, Message: fmt.Sprintf("value is empty or has an empty string err=%s", err)})
 		}
