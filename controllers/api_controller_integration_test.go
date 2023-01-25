@@ -3,6 +3,7 @@ package controllers_test
 import (
 	"context"
 	"fmt"
+	gomegatypes "github.com/onsi/gomega/types"
 	"math/rand"
 	"time"
 
@@ -14,6 +15,7 @@ import (
 	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	. "github.com/onsi/gomega/gstruct"
 	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
@@ -513,6 +515,97 @@ var _ = Describe("APIRule Controller", func() {
 								}
 							})
 
+						})
+
+						It("should create and update authorization policies when adding new authorization", func() {
+							// given
+							cm := testConfigMap(helpers.JWT_HANDLER_ISTIO)
+							err := c.Update(context.TODO(), cm)
+
+							if apierrors.IsInvalid(err) {
+								Fail(fmt.Sprintf("failed to update configmap, got an invalid object error: %v", err))
+							}
+							Expect(err).NotTo(HaveOccurred())
+
+							expectedRequest := reconcile.Request{NamespacedName: types.NamespacedName{Name: cm.Name, Namespace: cm.Namespace}}
+							Eventually(requests, eventuallyTimeout).Should(Receive(Equal(expectedRequest)))
+
+							apiRuleName := generateTestName(testNameBase, testIDLength)
+							serviceName := generateTestName(testServiceNameBase, testIDLength)
+							serviceHost := fmt.Sprintf("%s.kyma.local", serviceName)
+
+							authorizations := []*gatewayv1beta1.JwtAuthorization{
+								{
+									RequiredScopes: []string{"scope-a", "scope-b"},
+								},
+							}
+
+							testIstioJWTHandlerWithAuthorizations(testIssuer, testJwksUri, authorizations)
+							rule := testRule("/img", []string{"GET"}, nil, testIstioJWTHandlerWithAuthorizations(testIssuer, testJwksUri, authorizations))
+							instance := testInstance(apiRuleName, testNamespace, serviceName, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule})
+
+							err = c.Create(context.TODO(), instance)
+							if apierrors.IsInvalid(err) {
+								Fail(fmt.Sprintf("failed to create object, got an invalid object error: %v", err))
+								return
+							}
+							Expect(err).NotTo(HaveOccurred())
+							defer func() {
+								err := c.Delete(context.TODO(), instance)
+								Expect(err).NotTo(HaveOccurred())
+							}()
+
+							expectedRequest = reconcile.Request{NamespacedName: types.NamespacedName{Name: apiRuleName, Namespace: testNamespace}}
+							Eventually(requests, eventuallyTimeout).Should(Receive(Equal(expectedRequest)))
+
+							createdApiRule := gatewayv1beta1.APIRule{}
+							err = c.Get(context.TODO(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &createdApiRule)
+							Expect(err).NotTo(HaveOccurred())
+							Expect(createdApiRule.Status.APIRuleStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
+							Expect(createdApiRule.Status.VirtualServiceStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
+							Expect(createdApiRule.Status.AuthorizationPolicyStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
+							Expect(createdApiRule.Status.RequestAuthenticationStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
+
+							// when
+							updatedApiRule := gatewayv1beta1.APIRule{}
+							err = c.Get(context.TODO(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &updatedApiRule)
+							Expect(err).NotTo(HaveOccurred())
+
+							updatedAuthorizations := []*gatewayv1beta1.JwtAuthorization{
+								{
+									RequiredScopes: []string{"scope-a", "scope-c"},
+								},
+								{
+									RequiredScopes: []string{"scope-a", "scope-d"},
+								},
+								{
+									RequiredScopes: []string{"scope-d", "scope-b"},
+								},
+							}
+							ruleWithScopes := testRule("/img", []string{"GET"}, nil, testIstioJWTHandlerWithAuthorizations(testIssuer, testJwksUri, updatedAuthorizations))
+							updatedApiRule.Spec.Rules = []gatewayv1beta1.Rule{ruleWithScopes}
+
+							err = c.Update(context.TODO(), &updatedApiRule)
+							Expect(err).NotTo(HaveOccurred())
+
+							apiRuleUpdated := reconcile.Request{NamespacedName: types.NamespacedName{Name: apiRuleName, Namespace: testNamespace}}
+							Eventually(requests, eventuallyTimeout).Should(Receive(Equal(apiRuleUpdated)))
+							time.Sleep(500 * time.Millisecond)
+
+							// then
+							matchingLabels := matchingLabelsFunc(apiRuleName, testNamespace)
+							apList := securityv1beta1.AuthorizationPolicyList{}
+							err = c.List(context.TODO(), &apList, matchingLabels)
+							Expect(err).NotTo(HaveOccurred())
+							Expect(apList.Items).To(HaveLen(3))
+
+							scopeAScopeCMatcher := getAuthorizationPolicyWhenScopeMatcher("scope-a", "scope-c")
+							scopeAScopeDMatcher := getAuthorizationPolicyWhenScopeMatcher("scope-a", "scope-d")
+							scopeDScopeBMatcher := getAuthorizationPolicyWhenScopeMatcher("scope-d", "scope-b")
+
+							Expect(apList.Items).To(ContainElement(scopeAScopeCMatcher))
+							Expect(apList.Items).To(ContainElement(scopeAScopeDMatcher))
+							Expect(apList.Items).To(ContainElement(scopeDScopeBMatcher))
 						})
 					})
 				})
@@ -1062,6 +1155,26 @@ func testIstioJWTHandlerWithScopes(issuer string, jwksUri string, authorizationS
 	}
 }
 
+func testIstioJWTHandlerWithAuthorizations(issuer string, jwksUri string, authorizations []*gatewayv1beta1.JwtAuthorization) *gatewayv1beta1.Handler {
+
+	bytes, err := json.Marshal(gatewayv1beta1.JwtConfig{
+		Authentications: []*gatewayv1beta1.JwtAuthentication{
+			{
+				Issuer:  issuer,
+				JwksUri: jwksUri,
+			},
+		},
+		Authorizations: authorizations,
+	})
+	Expect(err).To(BeNil())
+	return &gatewayv1beta1.Handler{
+		Name: "jwt",
+		Config: &runtime.RawExtension{
+			Raw: bytes,
+		},
+	}
+}
+
 func testOauthHandler(scopes []string) *gatewayv1beta1.Handler {
 
 	configJSON := fmt.Sprintf(`{
@@ -1196,4 +1309,32 @@ func setHandlerConfigMap(handler string) {
 		Fail(fmt.Sprintf("failed to update configmap, got an invalid object error: %v", err))
 	}
 	Expect(err).NotTo(HaveOccurred())
+}
+
+func getAuthorizationPolicyWhenScopeMatcher(firstScope, secondScope string) gomegatypes.GomegaMatcher {
+
+	var whenMatchers []gomegatypes.GomegaMatcher
+
+	for _, key := range []string{"request.auth.claims[scp]", "request.auth.claims[scope]", "request.auth.claims[scopes]"} {
+		matcher := PointTo(MatchFields(IgnoreExtras, Fields{
+			"When": ContainElements(
+				PointTo(MatchFields(IgnoreExtras, Fields{
+					"Key":    Equal(key),
+					"Values": ContainElement(firstScope),
+				})),
+				PointTo(MatchFields(IgnoreExtras, Fields{
+					"Key":    Equal(key),
+					"Values": ContainElement(secondScope),
+				})),
+			),
+		}))
+		whenMatchers = append(whenMatchers, matcher)
+	}
+
+	return PointTo(MatchFields(IgnoreExtras,
+		Fields{
+			"Spec": MatchFields(IgnoreExtras, Fields{
+				"Rules": ContainElements(whenMatchers),
+			}),
+		}))
 }
