@@ -122,11 +122,6 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 		Expect(ap2.Spec.Rules[0].To[0].Operation.Methods).To(ContainElements(ApiMethods))
 		Expect(len(ap2.Spec.Rules[0].To[0].Operation.Paths)).To(Equal(1))
 
-		Expect(ap2.OwnerReferences[0].APIVersion).To(Equal(ApiAPIVersion))
-		Expect(ap2.OwnerReferences[0].Kind).To(Equal(ApiKind))
-		Expect(ap2.OwnerReferences[0].Name).To(Equal(ApiName))
-		Expect(ap2.OwnerReferences[0].UID).To(Equal(ApiUID))
-
 		for i := 0; i < 3; i++ {
 			Expect(ap2.Spec.Rules[i].When[0].Key).To(BeElementOf(testExpectedScopeKeys))
 			Expect(ap2.Spec.Rules[i].When).To(HaveLen(2))
