@@ -21,6 +21,10 @@ var _ = Describe("Builder for", func() {
 			testMatchLabelsValue := "httpbin"
 			testMatchLabels := map[string]string{testMatchLabelsKey: testMatchLabelsValue}
 			testRulesSourceRequestPrincipals := "*"
+			testScopeA := "scope-a"
+			testScopeB := "scope-b"
+			testAuthorization := gatewayv1beta1.JwtAuthorization{RequiredScopes: []string{testScopeA, testScopeB}}
+			testExpectedScopeKeys := []string{"request.auth.claims[scp]"}
 
 			ap := AuthorizationPolicyBuilder().GenerateName(name).Namespace(namespace).
 				Spec(AuthorizationPolicySpecBuilder().
@@ -32,7 +36,9 @@ var _ = Describe("Builder for", func() {
 						RuleTo(RuleToBuilder().
 							Operation(OperationBuilder().
 								Path(path).
-								Methods(methods))))).
+								Methods(methods))).
+						RuleCondition(RuleConditionBuilder().
+							From("request.auth.claims[scp]", &testAuthorization)))).
 				Get()
 
 			Expect(ap.Name).To(BeEmpty())
@@ -42,6 +48,17 @@ var _ = Describe("Builder for", func() {
 			Expect(ap.Spec.Rules[0].From[0].Source.RequestPrincipals[0]).To(Equal(testRulesSourceRequestPrincipals))
 			Expect(ap.Spec.Rules[0].To[0].Operation.Paths[0]).To(Equal(path))
 			Expect(ap.Spec.Rules[0].To[0].Operation.Methods).To(BeEquivalentTo(methods))
+			Expect(ap.Spec.Rules[0].When).To(HaveLen(2))
+			Expect(ap.Spec.Rules[0].When[0].Key).To(BeElementOf(testExpectedScopeKeys))
+			Expect(ap.Spec.Rules[0].When[0].Values).To(HaveLen(1))
+			Expect(ap.Spec.Rules[0].When[1].Values).To(HaveLen(1))
+			Expect(ap.Spec.Rules[0].When[1].Key).To(BeElementOf(testExpectedScopeKeys))
+			if ap.Spec.Rules[0].When[0].Values[0] == testScopeA {
+				Expect(ap.Spec.Rules[0].When[1].Values[0]).To(Equal(testScopeB))
+			} else {
+				Expect(ap.Spec.Rules[0].When[1].Values[0]).To(Equal(testScopeA))
+				Expect(ap.Spec.Rules[0].When[0].Values[0]).To(Equal(testScopeB))
+			}
 		})
 	})
 

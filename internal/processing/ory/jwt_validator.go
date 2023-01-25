@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
-	istiojwt "github.com/kyma-incubator/api-gateway/internal/types/istio"
 	"github.com/kyma-incubator/api-gateway/internal/types/ory"
 	"github.com/kyma-incubator/api-gateway/internal/validation"
 )
@@ -66,7 +65,7 @@ func (o *handlerValidator) Validate(attributePath string, handler *gatewayv1beta
 }
 
 func checkForIstioConfig(attributePath string, handler *gatewayv1beta1.Handler) (problems []validation.Failure) {
-	var template istiojwt.JwtConfig
+	var template gatewayv1beta1.JwtConfig
 	err := json.Unmarshal(handler.Config.Raw, &template)
 	if err != nil {
 		return []validation.Failure{{AttributePath: attributePath + ".config", Message: "Can't read json: " + err.Error()}}

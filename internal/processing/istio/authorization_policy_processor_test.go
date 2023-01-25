@@ -19,10 +19,32 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
-var _ = Describe("Authorization Policy Processor", func() {
+const (
+	RequiredScopeA = "scope-a"
+	RequiredScopeB = "scope-b"
+)
+
+var _ = Describe("JwtAuthorization Policy Processor", func() {
+	testExpectedScopeKeys := []string{"request.auth.claims[scp]", "request.auth.claims[scope]", "request.auth.claims[scopes]"}
+
 	createIstioJwtAccessStrategy := func() *gatewayv1beta1.Authenticator {
 		jwtConfigJSON := fmt.Sprintf(`{
-			"authentications": [{"issuer": "%s", "jwksUri": "%s"}]}`, JwtIssuer, JwksUri)
+			"authentications": [{"issuer": "%s", "jwksUri": "%s"}],
+			"authorizations": [{"requiredScopes": ["%s", "%s"]}]}`, JwtIssuer, JwksUri, RequiredScopeA, RequiredScopeB)
+		return &gatewayv1beta1.Authenticator{
+			Handler: &gatewayv1beta1.Handler{
+				Name: "jwt",
+				Config: &runtime.RawExtension{
+					Raw: []byte(jwtConfigJSON),
+				},
+			},
+		}
+	}
+
+	createIstioJwtAccessStrategyTwoAuthorizations := func() *gatewayv1beta1.Authenticator {
+		jwtConfigJSON := fmt.Sprintf(`{
+			"authentications": [{"issuer": "%s", "jwksUri": "%s"}],
+			"authorizations": [{"requiredScopes": ["%s"]}, {"requiredScopes": ["%s"]}]}`, JwtIssuer, JwksUri, RequiredScopeA, RequiredScopeB)
 		return &gatewayv1beta1.Authenticator{
 			Handler: &gatewayv1beta1.Handler{
 				Name: "jwt",
@@ -65,7 +87,7 @@ var _ = Describe("Authorization Policy Processor", func() {
 
 		Expect(ap1.Spec.Selector.MatchLabels[TestSelectorKey]).NotTo(BeNil())
 		Expect(ap1.Spec.Selector.MatchLabels[TestSelectorKey]).To(Equal(ServiceName))
-		Expect(len(ap1.Spec.Rules)).To(Equal(1))
+		Expect(len(ap1.Spec.Rules)).To(Equal(3))
 		Expect(len(ap1.Spec.Rules[0].From)).To(Equal(1))
 		Expect(len(ap1.Spec.Rules[0].From[0].Source.RequestPrincipals)).To(Equal(1))
 		Expect(ap1.Spec.Rules[0].From[0].Source.RequestPrincipals[0]).To(Equal("*"))
@@ -73,6 +95,15 @@ var _ = Describe("Authorization Policy Processor", func() {
 		Expect(len(ap1.Spec.Rules[0].To[0].Operation.Methods)).To(Equal(1))
 		Expect(ap1.Spec.Rules[0].To[0].Operation.Methods).To(ContainElements(ApiMethods))
 		Expect(len(ap1.Spec.Rules[0].To[0].Operation.Paths)).To(Equal(1))
+
+		for i := 0; i < 3; i++ {
+			Expect(ap1.Spec.Rules[i].When[0].Key).To(BeElementOf(testExpectedScopeKeys))
+			Expect(ap1.Spec.Rules[i].When).To(HaveLen(2))
+			Expect(ap1.Spec.Rules[i].When[0].Key).To(BeElementOf(testExpectedScopeKeys))
+			Expect(ap1.Spec.Rules[i].When[0].Values[0]).To(BeElementOf(RequiredScopeA, RequiredScopeB))
+			Expect(ap1.Spec.Rules[i].When[1].Key).To(BeElementOf(testExpectedScopeKeys))
+			Expect(ap1.Spec.Rules[i].When[1].Values[0]).To(BeElementOf(RequiredScopeA, RequiredScopeB))
+		}
 
 		Expect(ap2).NotTo(BeNil())
 		Expect(ap2.ObjectMeta.Name).To(BeEmpty())
@@ -82,7 +113,7 @@ var _ = Describe("Authorization Policy Processor", func() {
 
 		Expect(ap2.Spec.Selector.MatchLabels[TestSelectorKey]).NotTo(BeNil())
 		Expect(ap2.Spec.Selector.MatchLabels[TestSelectorKey]).To(Equal(ServiceName))
-		Expect(len(ap2.Spec.Rules)).To(Equal(1))
+		Expect(len(ap2.Spec.Rules)).To(Equal(3))
 		Expect(len(ap2.Spec.Rules[0].From)).To(Equal(1))
 		Expect(len(ap2.Spec.Rules[0].From[0].Source.RequestPrincipals)).To(Equal(1))
 		Expect(ap2.Spec.Rules[0].From[0].Source.RequestPrincipals[0]).To(Equal("*"))
@@ -90,6 +121,85 @@ var _ = Describe("Authorization Policy Processor", func() {
 		Expect(len(ap2.Spec.Rules[0].To[0].Operation.Methods)).To(Equal(1))
 		Expect(ap2.Spec.Rules[0].To[0].Operation.Methods).To(ContainElements(ApiMethods))
 		Expect(len(ap2.Spec.Rules[0].To[0].Operation.Paths)).To(Equal(1))
+
+		for i := 0; i < 3; i++ {
+			Expect(ap2.Spec.Rules[i].When[0].Key).To(BeElementOf(testExpectedScopeKeys))
+			Expect(ap2.Spec.Rules[i].When).To(HaveLen(2))
+			Expect(ap2.Spec.Rules[i].When[0].Key).To(BeElementOf(testExpectedScopeKeys))
+			Expect(ap2.Spec.Rules[i].When[0].Values[0]).To(BeElementOf(RequiredScopeA, RequiredScopeB))
+			Expect(ap2.Spec.Rules[i].When[1].Key).To(BeElementOf(testExpectedScopeKeys))
+			Expect(ap2.Spec.Rules[i].When[1].Values[0]).To(BeElementOf(RequiredScopeA, RequiredScopeB))
+		}
+	})
+
+	It("should produce two APs for a rule with two authorizations", func() {
+		// given
+		jwt := createIstioJwtAccessStrategyTwoAuthorizations()
+		service := &gatewayv1beta1.Service{
+			Name: &ServiceName,
+			Port: &ServicePort,
+		}
+
+		ruleJwt := GetRuleWithServiceFor(HeadersApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, []*gatewayv1beta1.Authenticator{jwt}, service)
+		apiRule := GetAPIRuleFor([]gatewayv1beta1.Rule{ruleJwt})
+		client := GetFakeClient()
+		processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig())
+
+		// when
+		result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
+
+		// then
+		Expect(err).To(BeNil())
+		Expect(result).To(HaveLen(2))
+
+		ap1 := result[0].Obj.(*securityv1beta1.AuthorizationPolicy)
+		ap2 := result[1].Obj.(*securityv1beta1.AuthorizationPolicy)
+
+		Expect(ap1).NotTo(BeNil())
+		Expect(ap1.ObjectMeta.Name).To(BeEmpty())
+		Expect(ap1.ObjectMeta.GenerateName).To(Equal(ApiName + "-"))
+		Expect(ap1.ObjectMeta.Namespace).To(Equal(ApiNamespace))
+		Expect(ap1.ObjectMeta.Labels[TestLabelKey]).To(Equal(TestLabelValue))
+
+		Expect(ap1.Spec.Selector.MatchLabels[TestSelectorKey]).NotTo(BeNil())
+		Expect(ap1.Spec.Selector.MatchLabels[TestSelectorKey]).To(Equal(ServiceName))
+		Expect(len(ap1.Spec.Rules)).To(Equal(3))
+		Expect(len(ap1.Spec.Rules[0].From)).To(Equal(1))
+		Expect(len(ap1.Spec.Rules[0].From[0].Source.RequestPrincipals)).To(Equal(1))
+		Expect(ap1.Spec.Rules[0].From[0].Source.RequestPrincipals[0]).To(Equal("*"))
+		Expect(len(ap1.Spec.Rules[0].To)).To(Equal(1))
+		Expect(len(ap1.Spec.Rules[0].To[0].Operation.Methods)).To(Equal(1))
+		Expect(ap1.Spec.Rules[0].To[0].Operation.Methods).To(ContainElements(ApiMethods))
+		Expect(len(ap1.Spec.Rules[0].To[0].Operation.Paths)).To(Equal(1))
+
+		for i := 0; i < 3; i++ {
+			Expect(ap1.Spec.Rules[i].When[0].Key).To(BeElementOf(testExpectedScopeKeys))
+			Expect(ap1.Spec.Rules[i].When[0].Values).To(HaveLen(1))
+			Expect(ap1.Spec.Rules[i].When[0].Values[0]).To(BeElementOf(RequiredScopeA, RequiredScopeB))
+		}
+
+		Expect(ap2).NotTo(BeNil())
+		Expect(ap2.ObjectMeta.Name).To(BeEmpty())
+		Expect(ap2.ObjectMeta.GenerateName).To(Equal(ApiName + "-"))
+		Expect(ap2.ObjectMeta.Namespace).To(Equal(ApiNamespace))
+		Expect(ap2.ObjectMeta.Labels[TestLabelKey]).To(Equal(TestLabelValue))
+
+		Expect(ap2.Spec.Selector.MatchLabels[TestSelectorKey]).NotTo(BeNil())
+		Expect(ap2.Spec.Selector.MatchLabels[TestSelectorKey]).To(Equal(ServiceName))
+		Expect(len(ap2.Spec.Rules)).To(Equal(3))
+		Expect(len(ap2.Spec.Rules[0].From)).To(Equal(1))
+		Expect(len(ap2.Spec.Rules[0].From[0].Source.RequestPrincipals)).To(Equal(1))
+		Expect(ap2.Spec.Rules[0].From[0].Source.RequestPrincipals[0]).To(Equal("*"))
+		Expect(len(ap2.Spec.Rules[0].To)).To(Equal(1))
+		Expect(len(ap2.Spec.Rules[0].To[0].Operation.Methods)).To(Equal(1))
+		Expect(ap2.Spec.Rules[0].To[0].Operation.Methods).To(ContainElements(ApiMethods))
+		Expect(len(ap2.Spec.Rules[0].To[0].Operation.Paths)).To(Equal(1))
+
+		for i := 0; i < 3; i++ {
+			Expect(ap2.Spec.Rules[i].When[0].Key).To(BeElementOf(testExpectedScopeKeys))
+			Expect(ap2.Spec.Rules[i].When[0].Values).To(HaveLen(1))
+			Expect(ap2.Spec.Rules[i].When[0].Values[0]).To(BeElementOf(RequiredScopeA, RequiredScopeB))
+		}
 	})
 
 	It("should produce one AP for a Rule without service, but service definition on ApiRule level", func() {
@@ -139,8 +249,9 @@ var _ = Describe("Authorization Policy Processor", func() {
 
 	It("should produce AP from a rule with two issuers and one path", func() {
 		jwtConfigJSON := fmt.Sprintf(`{
-			"authentications": [{"issuer": "%s", "jwksUri": "%s"}, {"issuer": "%s", "jwksUri": "%s"}]
-			}`, JwtIssuer, JwksUri, JwtIssuer2, JwksUri2)
+			"authentications": [{"issuer": "%s", "jwksUri": "%s"}, {"issuer": "%s", "jwksUri": "%s"}],
+			"authorizations": [{"requiredScopes": ["%s", "%s"]}]
+			}`, JwtIssuer, JwksUri, JwtIssuer2, JwksUri2, RequiredScopeA, RequiredScopeB)
 		jwt := &gatewayv1beta1.Authenticator{
 			Handler: &gatewayv1beta1.Handler{
 				Name: "jwt",
@@ -149,6 +260,7 @@ var _ = Describe("Authorization Policy Processor", func() {
 				},
 			},
 		}
+		testExpectedScopeKeys := []string{"request.auth.claims[scp]", "request.auth.claims[scope]", "request.auth.claims[scopes]"}
 		client := GetFakeClient()
 		service := &gatewayv1beta1.Service{
 			Name: &ServiceName,
@@ -175,7 +287,7 @@ var _ = Describe("Authorization Policy Processor", func() {
 
 		Expect(ap.Spec.Selector.MatchLabels[TestSelectorKey]).NotTo(BeNil())
 		Expect(ap.Spec.Selector.MatchLabels[TestSelectorKey]).To(Equal(ServiceName))
-		Expect(len(ap.Spec.Rules)).To(Equal(1))
+		Expect(len(ap.Spec.Rules)).To(Equal(3))
 		Expect(len(ap.Spec.Rules[0].From)).To(Equal(1))
 		Expect(len(ap.Spec.Rules[0].From[0].Source.RequestPrincipals)).To(Equal(1))
 		Expect(ap.Spec.Rules[0].From[0].Source.RequestPrincipals[0]).To(Equal("*"))
@@ -184,6 +296,16 @@ var _ = Describe("Authorization Policy Processor", func() {
 		Expect(ap.Spec.Rules[0].To[0].Operation.Methods).To(ContainElements(ApiMethods))
 		Expect(len(ap.Spec.Rules[0].To[0].Operation.Paths)).To(Equal(1))
 		Expect(ap.Spec.Rules[0].To[0].Operation.Paths).To(ContainElements(HeadersApiPath))
+
+		for i := 0; i < 3; i++ {
+			Expect(ap.Spec.Rules[i].When[0].Key).To(BeElementOf(testExpectedScopeKeys))
+			Expect(ap.Spec.Rules[i].When).To(HaveLen(2))
+			Expect(ap.Spec.Rules[i].When[0].Key).To(BeElementOf(testExpectedScopeKeys))
+			Expect(ap.Spec.Rules[i].When[0].Values[0]).To(BeElementOf(RequiredScopeA, RequiredScopeB))
+			Expect(ap.Spec.Rules[i].When[1].Key).To(BeElementOf(testExpectedScopeKeys))
+			Expect(ap.Spec.Rules[i].When[1].Values[0]).To(BeElementOf(RequiredScopeA, RequiredScopeB))
+		}
+
 	})
 
 	When("single handler only", func() {
@@ -332,7 +454,6 @@ var _ = Describe("Authorization Policy Processor", func() {
 				ap := result.Obj.(*securityv1beta1.AuthorizationPolicy)
 
 				Expect(ap).NotTo(BeNil())
-				Expect(len(ap.Spec.Rules)).To(Equal(1))
 				Expect(len(ap.Spec.Rules[0].To)).To(Equal(1))
 				Expect(len(ap.Spec.Rules[0].To[0].Operation.Paths)).To(Equal(1))
 
@@ -345,6 +466,20 @@ var _ = Describe("Authorization Policy Processor", func() {
 					Expect(ap.Spec.Rules[0].From[0].Source.Principals[0]).To(Equal("cluster.local/ns/istio-system/sa/istio-ingressgateway-service-account"))
 				case ImgApiPath:
 					Expect(len(ap.Spec.Rules[0].From)).To(Equal(1))
+				}
+
+				Expect(len(ap.Spec.Rules)).To(BeElementOf([]int{1, 3}))
+				if len(ap.Spec.Rules) == 3 {
+					for i := 0; i < 3; i++ {
+						Expect(ap.Spec.Rules[i].When[0].Key).To(BeElementOf(testExpectedScopeKeys))
+						Expect(ap.Spec.Rules[i].When).To(HaveLen(2))
+						Expect(ap.Spec.Rules[i].When[0].Key).To(BeElementOf(testExpectedScopeKeys))
+						Expect(ap.Spec.Rules[i].When[0].Values[0]).To(BeElementOf(RequiredScopeA, RequiredScopeB))
+						Expect(ap.Spec.Rules[i].When[1].Key).To(BeElementOf(testExpectedScopeKeys))
+						Expect(ap.Spec.Rules[i].When[1].Values[0]).To(BeElementOf(RequiredScopeA, RequiredScopeB))
+					}
+				} else {
+					Expect(len(ap.Spec.Rules)).To(Equal(1))
 				}
 			}
 		})
@@ -380,7 +515,6 @@ var _ = Describe("Authorization Policy Processor", func() {
 				ap := result.Obj.(*securityv1beta1.AuthorizationPolicy)
 
 				Expect(ap).NotTo(BeNil())
-				Expect(len(ap.Spec.Rules)).To(Equal(1))
 				Expect(len(ap.Spec.Rules[0].To)).To(Equal(1))
 				Expect(len(ap.Spec.Rules[0].To[0].Operation.Paths)).To(Equal(1))
 
@@ -393,6 +527,20 @@ var _ = Describe("Authorization Policy Processor", func() {
 					Expect(ap.Spec.Rules[0].From[0].Source.Principals[0]).To(Equal("cluster.local/ns/kyma-system/sa/oathkeeper-maester-account"))
 				case ImgApiPath:
 					Expect(len(ap.Spec.Rules[0].From)).To(Equal(1))
+				}
+
+				Expect(len(ap.Spec.Rules)).To(BeElementOf([]int{1, 3}))
+				if len(ap.Spec.Rules) == 3 {
+					for i := 0; i < 3; i++ {
+						Expect(ap.Spec.Rules[i].When[0].Key).To(BeElementOf(testExpectedScopeKeys))
+						Expect(ap.Spec.Rules[i].When).To(HaveLen(2))
+						Expect(ap.Spec.Rules[i].When[0].Key).To(BeElementOf(testExpectedScopeKeys))
+						Expect(ap.Spec.Rules[i].When[0].Values[0]).To(BeElementOf(RequiredScopeA, RequiredScopeB))
+						Expect(ap.Spec.Rules[i].When[1].Key).To(BeElementOf(testExpectedScopeKeys))
+						Expect(ap.Spec.Rules[i].When[1].Values[0]).To(BeElementOf(RequiredScopeA, RequiredScopeB))
+					}
+				} else {
+					Expect(len(ap.Spec.Rules)).To(Equal(1))
 				}
 			}
 		})
@@ -420,7 +568,7 @@ var _ = Describe("Authorization Policy Processor", func() {
 		Expect(result[0].Action.String()).To(Equal("create"))
 	})
 
-	It("should update existing AP when path, methods and service name didn't change", func() {
+	It("should delete existing AP and create AP again when path, methods and service name didn't change", func() {
 		// given: Cluster state
 		existingAp := securityv1beta1.AuthorizationPolicy{
 			ObjectMeta: metav1.ObjectMeta{
@@ -467,10 +615,10 @@ var _ = Describe("Authorization Policy Processor", func() {
 
 		// then
 		Expect(err).To(BeNil())
-		Expect(result).To(HaveLen(1))
+		Expect(result).To(HaveLen(2))
 
-		resultMatcher := PointTo(MatchFields(IgnoreExtras, Fields{
-			"Action": WithTransform(ActionToString, Equal("update")),
+		deleteMatcher := PointTo(MatchFields(IgnoreExtras, Fields{
+			"Action": WithTransform(ActionToString, Equal("delete")),
 			"Obj": PointTo(MatchFields(IgnoreExtras, Fields{
 				"Spec": MatchFields(IgnoreExtras, Fields{
 					"Selector": PointTo(MatchFields(IgnoreExtras, Fields{
@@ -492,11 +640,34 @@ var _ = Describe("Authorization Policy Processor", func() {
 			})),
 		}))
 
-		Expect(result).To(ContainElements(resultMatcher))
+		createMatcher := PointTo(MatchFields(IgnoreExtras, Fields{
+			"Action": WithTransform(ActionToString, Equal("create")),
+			"Obj": PointTo(MatchFields(IgnoreExtras, Fields{
+				"Spec": MatchFields(IgnoreExtras, Fields{
+					"Selector": PointTo(MatchFields(IgnoreExtras, Fields{
+						"MatchLabels": ContainElement("test-service"),
+					})),
+					"Rules": ContainElements(
+						PointTo(MatchFields(IgnoreExtras, Fields{
+							"To": ContainElements(
+								PointTo(MatchFields(IgnoreExtras, Fields{
+									"Operation": PointTo(MatchFields(IgnoreExtras, Fields{
+										"Methods": ContainElements("GET", "POST"),
+										"Paths":   ContainElements("/"),
+									})),
+								})),
+							),
+						})),
+					),
+				}),
+			})),
+		}))
+
+		Expect(result).To(ContainElements(deleteMatcher, createMatcher))
 	})
 
 	When("Two AP for different services with JWT handler exist", func() {
-		It("should update existing AP when handler changed for one of the AP to noop", func() {
+		It("should delete existing AP and create new AP when handler changed for one of the AP to noop", func() {
 			// given: Cluster state
 			beingUpdatedAp := securityv1beta1.AuthorizationPolicy{
 				ObjectMeta: metav1.ObjectMeta{
@@ -600,10 +771,40 @@ var _ = Describe("Authorization Policy Processor", func() {
 
 			// then
 			Expect(err).To(BeNil())
-			Expect(result).To(HaveLen(2))
+			Expect(result).To(HaveLen(4))
 
-			updatedToNoopMatcher := PointTo(MatchFields(IgnoreExtras, Fields{
-				"Action": WithTransform(ActionToString, Equal("update")),
+			deletedNoopMatcher := PointTo(MatchFields(IgnoreExtras, Fields{
+				"Action": WithTransform(ActionToString, Equal("delete")),
+				"Obj": PointTo(MatchFields(IgnoreExtras, Fields{
+					"Spec": MatchFields(IgnoreExtras, Fields{
+						"Selector": PointTo(MatchFields(IgnoreExtras, Fields{
+							"MatchLabels": ContainElement("test-service"),
+						})),
+						"Rules": ContainElements(
+							PointTo(MatchFields(IgnoreExtras, Fields{
+								"From": ContainElement(
+									PointTo(MatchFields(IgnoreExtras, Fields{
+										"Source": PointTo(MatchFields(IgnoreExtras, Fields{
+											"RequestPrincipals": ContainElements("*"),
+										})),
+									})),
+								),
+								"To": ContainElements(
+									PointTo(MatchFields(IgnoreExtras, Fields{
+										"Operation": PointTo(MatchFields(IgnoreExtras, Fields{
+											"Methods": ContainElements("GET", "POST"),
+											"Paths":   ContainElements("/"),
+										})),
+									})),
+								),
+							})),
+						),
+					}),
+				})),
+			}))
+
+			createdNoopMatcher := PointTo(MatchFields(IgnoreExtras, Fields{
+				"Action": WithTransform(ActionToString, Equal("create")),
 				"Obj": PointTo(MatchFields(IgnoreExtras, Fields{
 					"Spec": MatchFields(IgnoreExtras, Fields{
 						"Selector": PointTo(MatchFields(IgnoreExtras, Fields{
@@ -632,8 +833,8 @@ var _ = Describe("Authorization Policy Processor", func() {
 				})),
 			}))
 
-			notChangedMatcher := PointTo(MatchFields(IgnoreExtras, Fields{
-				"Action": WithTransform(ActionToString, Equal("update")),
+			deletedNotChangedMatcher := PointTo(MatchFields(IgnoreExtras, Fields{
+				"Action": WithTransform(ActionToString, Equal("delete")),
 				"Obj": PointTo(MatchFields(IgnoreExtras, Fields{
 					"Spec": MatchFields(IgnoreExtras, Fields{
 						"Selector": PointTo(MatchFields(IgnoreExtras, Fields{
@@ -662,7 +863,37 @@ var _ = Describe("Authorization Policy Processor", func() {
 				})),
 			}))
 
-			Expect(result).To(ContainElements(updatedToNoopMatcher, notChangedMatcher))
+			createdNotChangedMatcher := PointTo(MatchFields(IgnoreExtras, Fields{
+				"Action": WithTransform(ActionToString, Equal("create")),
+				"Obj": PointTo(MatchFields(IgnoreExtras, Fields{
+					"Spec": MatchFields(IgnoreExtras, Fields{
+						"Selector": PointTo(MatchFields(IgnoreExtras, Fields{
+							"MatchLabels": ContainElement("jwt-secured-service"),
+						})),
+						"Rules": ContainElements(
+							PointTo(MatchFields(IgnoreExtras, Fields{
+								"From": ContainElement(
+									PointTo(MatchFields(IgnoreExtras, Fields{
+										"Source": PointTo(MatchFields(IgnoreExtras, Fields{
+											"RequestPrincipals": ContainElements("*"),
+										})),
+									})),
+								),
+								"To": ContainElements(
+									PointTo(MatchFields(IgnoreExtras, Fields{
+										"Operation": PointTo(MatchFields(IgnoreExtras, Fields{
+											"Methods": ContainElements("GET", "POST"),
+											"Paths":   ContainElements("/"),
+										})),
+									})),
+								),
+							})),
+						),
+					}),
+				})),
+			}))
+
+			Expect(result).To(ContainElements(deletedNoopMatcher, createdNoopMatcher, deletedNotChangedMatcher, createdNotChangedMatcher))
 		})
 
 	})
@@ -735,7 +966,7 @@ var _ = Describe("Authorization Policy Processor", func() {
 	})
 
 	When("AP with RuleTo exists", func() {
-		It("should create new AP when new rule with same methods and service but different path is added to ApiRule", func() {
+		It("should create new AP and re-create existing AP when new rule with same methods and service but different path is added to ApiRule", func() {
 			// given: Cluster state
 			existingAp := securityv1beta1.AuthorizationPolicy{
 				ObjectMeta: metav1.ObjectMeta{
@@ -780,10 +1011,33 @@ var _ = Describe("Authorization Policy Processor", func() {
 
 			// then
 			Expect(err).To(BeNil())
-			Expect(result).To(HaveLen(2))
+			Expect(result).To(HaveLen(3))
 
-			existingApMatcher := PointTo(MatchFields(IgnoreExtras, Fields{
-				"Action": WithTransform(ActionToString, Equal("update")),
+			deleteExistingApMatcher := PointTo(MatchFields(IgnoreExtras, Fields{
+				"Action": WithTransform(ActionToString, Equal("delete")),
+				"Obj": PointTo(MatchFields(IgnoreExtras, Fields{
+					"Spec": MatchFields(IgnoreExtras, Fields{
+						"Selector": PointTo(MatchFields(IgnoreExtras, Fields{
+							"MatchLabels": ContainElement("test-service"),
+						})),
+						"Rules": ContainElements(
+							PointTo(MatchFields(IgnoreExtras, Fields{
+								"To": ContainElements(
+									PointTo(MatchFields(IgnoreExtras, Fields{
+										"Operation": PointTo(MatchFields(IgnoreExtras, Fields{
+											"Methods": ContainElements("GET", "POST"),
+											"Paths":   ContainElements("/"),
+										})),
+									})),
+								),
+							})),
+						),
+					}),
+				})),
+			}))
+
+			recreateExistingApMatcher := PointTo(MatchFields(IgnoreExtras, Fields{
+				"Action": WithTransform(ActionToString, Equal("create")),
 				"Obj": PointTo(MatchFields(IgnoreExtras, Fields{
 					"Spec": MatchFields(IgnoreExtras, Fields{
 						"Selector": PointTo(MatchFields(IgnoreExtras, Fields{
@@ -828,10 +1082,10 @@ var _ = Describe("Authorization Policy Processor", func() {
 				})),
 			}))
 
-			Expect(result).To(ContainElements(existingApMatcher, newApMatcher))
+			Expect(result).To(ContainElements(deleteExistingApMatcher, recreateExistingApMatcher, newApMatcher))
 		})
 
-		It("should create new AP when new rule with same path and service but different methods is added to ApiRule", func() {
+		It("should create new AP and re-create existing AP when new rule with same path and service but different methods is added to ApiRule", func() {
 			// given: Cluster state
 			existingAp := securityv1beta1.AuthorizationPolicy{
 				ObjectMeta: metav1.ObjectMeta{
@@ -876,10 +1130,33 @@ var _ = Describe("Authorization Policy Processor", func() {
 
 			// then
 			Expect(err).To(BeNil())
-			Expect(result).To(HaveLen(2))
+			Expect(result).To(HaveLen(3))
 
-			existingApMatcher := PointTo(MatchFields(IgnoreExtras, Fields{
-				"Action": WithTransform(ActionToString, Equal("update")),
+			deleteExistingApMatcher := PointTo(MatchFields(IgnoreExtras, Fields{
+				"Action": WithTransform(ActionToString, Equal("delete")),
+				"Obj": PointTo(MatchFields(IgnoreExtras, Fields{
+					"Spec": MatchFields(IgnoreExtras, Fields{
+						"Selector": PointTo(MatchFields(IgnoreExtras, Fields{
+							"MatchLabels": ContainElement("test-service"),
+						})),
+						"Rules": ContainElements(
+							PointTo(MatchFields(IgnoreExtras, Fields{
+								"To": ContainElements(
+									PointTo(MatchFields(IgnoreExtras, Fields{
+										"Operation": PointTo(MatchFields(IgnoreExtras, Fields{
+											"Methods": ContainElements("GET", "POST"),
+											"Paths":   ContainElements("/"),
+										})),
+									})),
+								),
+							})),
+						),
+					}),
+				})),
+			}))
+
+			recreateExistingApMatcher := PointTo(MatchFields(IgnoreExtras, Fields{
+				"Action": WithTransform(ActionToString, Equal("create")),
 				"Obj": PointTo(MatchFields(IgnoreExtras, Fields{
 					"Spec": MatchFields(IgnoreExtras, Fields{
 						"Selector": PointTo(MatchFields(IgnoreExtras, Fields{
@@ -924,10 +1201,10 @@ var _ = Describe("Authorization Policy Processor", func() {
 				})),
 			}))
 
-			Expect(result).To(ContainElements(existingApMatcher, newApMatcher))
+			Expect(result).To(ContainElements(deleteExistingApMatcher, recreateExistingApMatcher, newApMatcher))
 		})
 
-		It("should create new AP when new rule with same path and methods, but different service is added to ApiRule", func() {
+		It("should create new AP and recreate existing AP when new rule with same path and methods, but different service is added to ApiRule", func() {
 			//given: Cluster state
 			existingAp := securityv1beta1.AuthorizationPolicy{
 				ObjectMeta: metav1.ObjectMeta{
@@ -972,10 +1249,33 @@ var _ = Describe("Authorization Policy Processor", func() {
 
 			// then
 			Expect(err).To(BeNil())
-			Expect(result).To(HaveLen(2))
+			Expect(result).To(HaveLen(3))
 
-			existingApMatcher := PointTo(MatchFields(IgnoreExtras, Fields{
-				"Action": WithTransform(ActionToString, Equal("update")),
+			deleteExistingApMatcher := PointTo(MatchFields(IgnoreExtras, Fields{
+				"Action": WithTransform(ActionToString, Equal("delete")),
+				"Obj": PointTo(MatchFields(IgnoreExtras, Fields{
+					"Spec": MatchFields(IgnoreExtras, Fields{
+						"Selector": PointTo(MatchFields(IgnoreExtras, Fields{
+							"MatchLabels": ContainElement("test-service"),
+						})),
+						"Rules": ContainElements(
+							PointTo(MatchFields(IgnoreExtras, Fields{
+								"To": ContainElements(
+									PointTo(MatchFields(IgnoreExtras, Fields{
+										"Operation": PointTo(MatchFields(IgnoreExtras, Fields{
+											"Methods": ContainElements("GET", "POST"),
+											"Paths":   ContainElements("/"),
+										})),
+									})),
+								),
+							})),
+						),
+					}),
+				})),
+			}))
+
+			createExistingApMatcher := PointTo(MatchFields(IgnoreExtras, Fields{
+				"Action": WithTransform(ActionToString, Equal("create")),
 				"Obj": PointTo(MatchFields(IgnoreExtras, Fields{
 					"Spec": MatchFields(IgnoreExtras, Fields{
 						"Selector": PointTo(MatchFields(IgnoreExtras, Fields{
@@ -1020,7 +1320,7 @@ var _ = Describe("Authorization Policy Processor", func() {
 				})),
 			}))
 
-			Expect(result).To(ContainElements(existingApMatcher, newApMatcher))
+			Expect(result).To(ContainElements(deleteExistingApMatcher, createExistingApMatcher, newApMatcher))
 		})
 
 		It("should create new AP and delete old AP when path in ApiRule changed", func() {
@@ -1124,7 +1424,7 @@ var _ = Describe("Authorization Policy Processor", func() {
 	})
 
 	When("Two AP with different methods for same path and service exist", func() {
-		It("should create new AP and delete old AP with matching method, when path has changed", func() {
+		It("should create new AP, delete old AP and re-create unchanged AP with matching method, when path has changed", func() {
 			// given: Cluster state
 			unchangedAp := securityv1beta1.AuthorizationPolicy{
 				ObjectMeta: metav1.ObjectMeta{
@@ -1197,10 +1497,33 @@ var _ = Describe("Authorization Policy Processor", func() {
 
 			// then
 			Expect(err).To(BeNil())
-			Expect(result).To(HaveLen(3))
+			Expect(result).To(HaveLen(4))
 
-			unchangedApMatcher := PointTo(MatchFields(IgnoreExtras, Fields{
-				"Action": WithTransform(ActionToString, Equal("update")),
+			deleteUnchangedApMatcher := PointTo(MatchFields(IgnoreExtras, Fields{
+				"Action": WithTransform(ActionToString, Equal("delete")),
+				"Obj": PointTo(MatchFields(IgnoreExtras, Fields{
+					"Spec": MatchFields(IgnoreExtras, Fields{
+						"Selector": PointTo(MatchFields(IgnoreExtras, Fields{
+							"MatchLabels": ContainElement("test-service"),
+						})),
+						"Rules": ContainElements(
+							PointTo(MatchFields(IgnoreExtras, Fields{
+								"To": ContainElements(
+									PointTo(MatchFields(IgnoreExtras, Fields{
+										"Operation": PointTo(MatchFields(IgnoreExtras, Fields{
+											"Methods": ContainElements("DELETE"),
+											"Paths":   ContainElements("/"),
+										})),
+									})),
+								),
+							})),
+						),
+					}),
+				})),
+			}))
+
+			recreateUnchangedApMatcher := PointTo(MatchFields(IgnoreExtras, Fields{
+				"Action": WithTransform(ActionToString, Equal("create")),
 				"Obj": PointTo(MatchFields(IgnoreExtras, Fields{
 					"Spec": MatchFields(IgnoreExtras, Fields{
 						"Selector": PointTo(MatchFields(IgnoreExtras, Fields{
@@ -1268,12 +1591,12 @@ var _ = Describe("Authorization Policy Processor", func() {
 				})),
 			}))
 
-			Expect(result).To(ContainElements(unchangedApMatcher, updatedApMatcher, deleteApMatcher))
+			Expect(result).To(ContainElements(deleteUnchangedApMatcher, recreateUnchangedApMatcher, updatedApMatcher, deleteApMatcher))
 		})
 	})
 
 	When("Two AP with same RuleTo for different services exist", func() {
-		It("should create new AP and delete old AP with matching service, when path has changed", func() {
+		It("should create new AP, recreate unchanged AP and delete old AP with matching service, when path has changed", func() {
 			// given: Cluster state
 			unchangedAp := securityv1beta1.AuthorizationPolicy{
 				ObjectMeta: metav1.ObjectMeta{
@@ -1346,10 +1669,33 @@ var _ = Describe("Authorization Policy Processor", func() {
 
 			// then
 			Expect(err).To(BeNil())
-			Expect(result).To(HaveLen(3))
+			Expect(result).To(HaveLen(4))
 
-			unchangedApMatcher := PointTo(MatchFields(IgnoreExtras, Fields{
-				"Action": WithTransform(ActionToString, Equal("update")),
+			deleteUnchangedApMatcher := PointTo(MatchFields(IgnoreExtras, Fields{
+				"Action": WithTransform(ActionToString, Equal("delete")),
+				"Obj": PointTo(MatchFields(IgnoreExtras, Fields{
+					"Spec": MatchFields(IgnoreExtras, Fields{
+						"Selector": PointTo(MatchFields(IgnoreExtras, Fields{
+							"MatchLabels": ContainElement("first-service"),
+						})),
+						"Rules": ContainElements(
+							PointTo(MatchFields(IgnoreExtras, Fields{
+								"To": ContainElements(
+									PointTo(MatchFields(IgnoreExtras, Fields{
+										"Operation": PointTo(MatchFields(IgnoreExtras, Fields{
+											"Methods": ContainElements("GET"),
+											"Paths":   ContainElements("/"),
+										})),
+									})),
+								),
+							})),
+						),
+					}),
+				})),
+			}))
+
+			recreateUnchangedApMatcher := PointTo(MatchFields(IgnoreExtras, Fields{
+				"Action": WithTransform(ActionToString, Equal("create")),
 				"Obj": PointTo(MatchFields(IgnoreExtras, Fields{
 					"Spec": MatchFields(IgnoreExtras, Fields{
 						"Selector": PointTo(MatchFields(IgnoreExtras, Fields{
@@ -1417,7 +1763,7 @@ var _ = Describe("Authorization Policy Processor", func() {
 				})),
 			}))
 
-			Expect(result).To(ContainElements(unchangedApMatcher, updatedApMatcher, deleteApMatcher))
+			Expect(result).To(ContainElements(deleteUnchangedApMatcher, recreateUnchangedApMatcher, updatedApMatcher, deleteApMatcher))
 		})
 	})
 })

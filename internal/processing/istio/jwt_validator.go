@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
-	istiojwt "github.com/kyma-incubator/api-gateway/internal/types/istio"
 	oryjwt "github.com/kyma-incubator/api-gateway/internal/types/ory"
 	"github.com/kyma-incubator/api-gateway/internal/validation"
 )
@@ -14,7 +13,7 @@ type handlerValidator struct{}
 
 func (o *handlerValidator) Validate(attributePath string, handler *gatewayv1beta1.Handler) []validation.Failure {
 	var problems []validation.Failure
-	var template istiojwt.JwtConfig
+	var template gatewayv1beta1.JwtConfig
 
 	if !validation.ConfigNotEmpty(handler.Config) {
 		problems = append(problems, validation.Failure{AttributePath: attributePath + ".config", Message: "supplied config cannot be empty"})
@@ -29,8 +28,8 @@ func (o *handlerValidator) Validate(attributePath string, handler *gatewayv1beta
 
 	problems = append(problems, checkForOryConfig(attributePath, handler)...)
 
-	for i, auth := range template.Authentications {
-		invalidIssuer, err := validation.IsInvalidURL(auth.Issuer)
+	for i, authentication := range template.Authentications {
+		invalidIssuer, err := validation.IsInvalidURL(authentication.Issuer)
 		if invalidIssuer {
 			attrPath := fmt.Sprintf("%s%s[%d]%s", attributePath, ".config.authentications", i, ".issuer")
 			problems = append(problems, validation.Failure{AttributePath: attrPath, Message: fmt.Sprintf("value is empty or not a valid url err=%s", err)})
@@ -38,20 +37,28 @@ func (o *handlerValidator) Validate(attributePath string, handler *gatewayv1beta
 		// The https:// configuration for TrustedIssuers is not necessary in terms of security best practices,
 		// however it is part of "secure by default" configuration, as this is the most common use case for iss claim.
 		// If we want to allow some weaker configurations, we should have a dedicated configuration which allows that.
-		unsecuredIssuer, err := validation.IsUnsecuredURL(auth.Issuer)
+		unsecuredIssuer, err := validation.IsUnsecuredURL(authentication.Issuer)
 		if unsecuredIssuer {
 			attrPath := fmt.Sprintf("%s%s[%d]%s", attributePath, ".config.authentications", i, ".issuer")
 			problems = append(problems, validation.Failure{AttributePath: attrPath, Message: fmt.Sprintf("value is not a secured url err=%s", err)})
 		}
-		invalidJwksUri, err := validation.IsInvalidURL(auth.JwksUri)
+		invalidJwksUri, err := validation.IsInvalidURL(authentication.JwksUri)
 		if invalidJwksUri {
 			attrPath := fmt.Sprintf("%s%s[%d]%s", attributePath, ".config.authentications", i, ".jwksUri")
 			problems = append(problems, validation.Failure{AttributePath: attrPath, Message: fmt.Sprintf("value is empty or not a valid url err=%s", err)})
 		}
-		unsecuredJwksUri, err := validation.IsUnsecuredURL(auth.JwksUri)
+		unsecuredJwksUri, err := validation.IsUnsecuredURL(authentication.JwksUri)
 		if unsecuredJwksUri {
 			attrPath := fmt.Sprintf("%s%s[%d]%s", attributePath, ".config.authentications", i, ".jwksUri")
 			problems = append(problems, validation.Failure{AttributePath: attrPath, Message: fmt.Sprintf("value is not a secured url err=%s", err)})
+		}
+	}
+
+	for i, authorization := range template.Authorizations {
+		err := validation.HasInvalidScopes(*authorization)
+		if err != nil {
+			attrPath := fmt.Sprintf("%s%s[%d]%s", attributePath, ".config.authorizations", i, ".requiredScopes")
+			problems = append(problems, validation.Failure{AttributePath: attrPath, Message: fmt.Sprintf("value is empty or has an empty string err=%s", err)})
 		}
 	}
 

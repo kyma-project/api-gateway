@@ -49,8 +49,7 @@ var (
 	TestAllowOrigin  = []*v1beta1.StringMatch{{MatchType: &v1beta1.StringMatch_Regex{Regex: ".*"}}}
 	TestAllowMethods = []string{"GET", "POST", "PUT", "DELETE"}
 	TestAllowHeaders = []string{"header1", "header2"}
-
-	TestCors = &processing.CorsConfig{
+	TestCors         = &processing.CorsConfig{
 		AllowOrigins: TestAllowOrigin,
 		AllowMethods: TestAllowMethods,
 		AllowHeaders: TestAllowHeaders,

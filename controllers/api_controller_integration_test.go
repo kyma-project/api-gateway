@@ -3,19 +3,19 @@ package controllers_test
 import (
 	"context"
 	"fmt"
+	gomegatypes "github.com/onsi/gomega/types"
 	"math/rand"
 	"time"
 
+	"encoding/json"
 	"github.com/kyma-incubator/api-gateway/internal/builders"
 	"github.com/kyma-incubator/api-gateway/internal/helpers"
 	"github.com/kyma-incubator/api-gateway/internal/processing"
-	istioint "github.com/kyma-incubator/api-gateway/internal/types/istio"
-
-	"encoding/json"
 
 	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	. "github.com/onsi/gomega/gstruct"
 	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
@@ -35,7 +35,6 @@ import (
 var _ = Describe("APIRule Controller", func() {
 
 	const (
-		kind                       = "APIRule"
 		testNameBase               = "test"
 		testIDLength               = 5
 		testServiceNameBase        = "httpbin"
@@ -386,8 +385,8 @@ var _ = Describe("APIRule Controller", func() {
 							serviceName := testServiceNameBase
 							serviceHost := "httpbin-istio-jwt-happy-base.kyma.local"
 
-							rule1 := testRule("/img", []string{"GET"}, nil, testIstioJWTHandler(testIssuer, testJwksUri))
-							rule2 := testRule("/headers", []string{"GET"}, nil, testIstioJWTHandler(testIssuer, testJwksUri))
+							rule1 := testRule("/img", []string{"GET"}, nil, testIstioJWTHandlerWithScopes(testIssuer, testJwksUri, []string{"scope-a", "scope-b"}))
+							rule2 := testRule("/headers", []string{"GET"}, nil, testIstioJWTHandlerWithScopes(testIssuer, testJwksUri, []string{"scope-c"}))
 							instance := testInstance(apiRuleName, testNamespace, serviceName, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule1, rule2})
 
 							err = c.Create(context.TODO(), instance)
@@ -446,28 +445,146 @@ var _ = Describe("APIRule Controller", func() {
 							Expect(err).NotTo(HaveOccurred())
 							Expect(apList.Items).To(HaveLen(2))
 
-							hasAuthorizationPolicyWithOperationPath := func(apList []*securityv1beta1.AuthorizationPolicy, operationPath string) {
-
-								getByOperationPath := func(apList []*securityv1beta1.AuthorizationPolicy, path string) (*securityv1beta1.AuthorizationPolicy, error) {
-									for _, ap := range apList {
-										if ap.Spec.Rules[0].To[0].Operation.Paths[0] == path {
-											return ap, nil
-										}
+							getByOperationPath := func(apList []*securityv1beta1.AuthorizationPolicy, path string) (*securityv1beta1.AuthorizationPolicy, error) {
+								for _, ap := range apList {
+									if ap.Spec.Rules[0].To[0].Operation.Paths[0] == path {
+										return ap, nil
 									}
-									return nil, fmt.Errorf("no authorization policy with operation path %s exists", path)
 								}
+								return nil, fmt.Errorf("no authorization policy with operation path %s exists", path)
+							}
 
+							hasAuthorizationPolicyWithOperationPath := func(apList []*securityv1beta1.AuthorizationPolicy, operationPath string, assertWhen func(*securityv1beta1.AuthorizationPolicy)) {
 								ap, err := getByOperationPath(apList, operationPath)
 								Expect(err).NotTo(HaveOccurred())
 								Expect(ap.Spec.Selector.MatchLabels).To(BeEquivalentTo(map[string]string{"app": serviceName}))
-								Expect(ap.Spec.Rules[0].From[0].Source.RequestPrincipals[0]).To(Equal("*"))
-								Expect(ap.Spec.Rules[0].To[0].Operation.Paths[0]).To(Equal(operationPath))
-								Expect(ap.Spec.Rules[0].To[0].Operation.Methods).To(BeEquivalentTo([]string{"GET"}))
+								Expect(ap.Spec.Rules).To(HaveLen(3))
+
+								for i := 0; i < 3; i++ {
+									Expect(ap.Spec.Rules[i].From[0].Source.RequestPrincipals[0]).To(Equal("*"))
+									Expect(ap.Spec.Rules[i].To[0].Operation.Paths[0]).To(Equal(operationPath))
+									Expect(ap.Spec.Rules[i].To[0].Operation.Methods).To(BeEquivalentTo([]string{"GET"}))
+								}
+
+								ruleWhenKeys := append([]string{}, ap.Spec.Rules[0].When[0].Key, ap.Spec.Rules[1].When[0].Key, ap.Spec.Rules[2].When[0].Key)
+								Expect(ruleWhenKeys).To(ContainElements("request.auth.claims[scp]", "request.auth.claims[scope]", "request.auth.claims[scopes]"))
+
+								assertWhen(ap)
 							}
 
-							hasAuthorizationPolicyWithOperationPath(apList.Items, "/img")
-							hasAuthorizationPolicyWithOperationPath(apList.Items, "/headers")
+							hasAuthorizationPolicyWithOperationPath(apList.Items, "/img", func(ap *securityv1beta1.AuthorizationPolicy) {
+								Expect(ap.Spec.Rules).To(HaveLen(3))
+								for i := 0; i < 3; i++ {
+									Expect(ap.Spec.Rules[i].When).To(HaveLen(2))
 
+									ruleWhenValues := append([]string{}, ap.Spec.Rules[0].When[0].Values...)
+									ruleWhenValues = append(ruleWhenValues, ap.Spec.Rules[0].When[1].Values...)
+
+									Expect(ruleWhenValues).To(ContainElements("scope-a", "scope-b"))
+
+								}
+							})
+
+							hasAuthorizationPolicyWithOperationPath(apList.Items, "/headers", func(ap *securityv1beta1.AuthorizationPolicy) {
+								Expect(ap.Spec.Rules).To(HaveLen(3))
+								for i := 0; i < 3; i++ {
+									Expect(ap.Spec.Rules[i].When[0].Values).To(ContainElements("scope-c"))
+									Expect(ap.Spec.Rules[i].When[0].Values).To(ContainElements("scope-c"))
+									Expect(ap.Spec.Rules[i].When[0].Values).To(ContainElements("scope-c"))
+								}
+							})
+
+						})
+
+						It("should create and update authorization policies when adding new authorization", func() {
+							// given
+							cm := testConfigMap(helpers.JWT_HANDLER_ISTIO)
+							err := c.Update(context.TODO(), cm)
+
+							if apierrors.IsInvalid(err) {
+								Fail(fmt.Sprintf("failed to update configmap, got an invalid object error: %v", err))
+							}
+							Expect(err).NotTo(HaveOccurred())
+
+							expectedRequest := reconcile.Request{NamespacedName: types.NamespacedName{Name: cm.Name, Namespace: cm.Namespace}}
+							Eventually(requests, eventuallyTimeout).Should(Receive(Equal(expectedRequest)))
+
+							apiRuleName := generateTestName(testNameBase, testIDLength)
+							serviceName := generateTestName(testServiceNameBase, testIDLength)
+							serviceHost := fmt.Sprintf("%s.kyma.local", serviceName)
+
+							authorizations := []*gatewayv1beta1.JwtAuthorization{
+								{
+									RequiredScopes: []string{"scope-a", "scope-b"},
+								},
+							}
+
+							testIstioJWTHandlerWithAuthorizations(testIssuer, testJwksUri, authorizations)
+							rule := testRule("/img", []string{"GET"}, nil, testIstioJWTHandlerWithAuthorizations(testIssuer, testJwksUri, authorizations))
+							instance := testInstance(apiRuleName, testNamespace, serviceName, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule})
+
+							err = c.Create(context.TODO(), instance)
+							if apierrors.IsInvalid(err) {
+								Fail(fmt.Sprintf("failed to create object, got an invalid object error: %v", err))
+								return
+							}
+							Expect(err).NotTo(HaveOccurred())
+							defer func() {
+								err := c.Delete(context.TODO(), instance)
+								Expect(err).NotTo(HaveOccurred())
+							}()
+
+							expectedRequest = reconcile.Request{NamespacedName: types.NamespacedName{Name: apiRuleName, Namespace: testNamespace}}
+							Eventually(requests, eventuallyTimeout).Should(Receive(Equal(expectedRequest)))
+
+							createdApiRule := gatewayv1beta1.APIRule{}
+							err = c.Get(context.TODO(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &createdApiRule)
+							Expect(err).NotTo(HaveOccurred())
+							Expect(createdApiRule.Status.APIRuleStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
+							Expect(createdApiRule.Status.VirtualServiceStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
+							Expect(createdApiRule.Status.AuthorizationPolicyStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
+							Expect(createdApiRule.Status.RequestAuthenticationStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
+
+							// when
+							updatedApiRule := gatewayv1beta1.APIRule{}
+							err = c.Get(context.TODO(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &updatedApiRule)
+							Expect(err).NotTo(HaveOccurred())
+
+							updatedAuthorizations := []*gatewayv1beta1.JwtAuthorization{
+								{
+									RequiredScopes: []string{"scope-a", "scope-c"},
+								},
+								{
+									RequiredScopes: []string{"scope-a", "scope-d"},
+								},
+								{
+									RequiredScopes: []string{"scope-d", "scope-b"},
+								},
+							}
+							ruleWithScopes := testRule("/img", []string{"GET"}, nil, testIstioJWTHandlerWithAuthorizations(testIssuer, testJwksUri, updatedAuthorizations))
+							updatedApiRule.Spec.Rules = []gatewayv1beta1.Rule{ruleWithScopes}
+
+							err = c.Update(context.TODO(), &updatedApiRule)
+							Expect(err).NotTo(HaveOccurred())
+
+							apiRuleUpdated := reconcile.Request{NamespacedName: types.NamespacedName{Name: apiRuleName, Namespace: testNamespace}}
+							Eventually(requests, eventuallyTimeout).Should(Receive(Equal(apiRuleUpdated)))
+							time.Sleep(500 * time.Millisecond)
+
+							// then
+							matchingLabels := matchingLabelsFunc(apiRuleName, testNamespace)
+							apList := securityv1beta1.AuthorizationPolicyList{}
+							err = c.List(context.TODO(), &apList, matchingLabels)
+							Expect(err).NotTo(HaveOccurred())
+							Expect(apList.Items).To(HaveLen(3))
+
+							scopeAScopeCMatcher := getAuthorizationPolicyWhenScopeMatcher("scope-a", "scope-c")
+							scopeAScopeDMatcher := getAuthorizationPolicyWhenScopeMatcher("scope-a", "scope-d")
+							scopeDScopeBMatcher := getAuthorizationPolicyWhenScopeMatcher("scope-d", "scope-b")
+
+							Expect(apList.Items).To(ContainElement(scopeAScopeCMatcher))
+							Expect(apList.Items).To(ContainElement(scopeAScopeDMatcher))
+							Expect(apList.Items).To(ContainElement(scopeDScopeBMatcher))
 						})
 					})
 				})
@@ -961,13 +1078,57 @@ func testOryJWTHandler(issuer string, scopes []string) *gatewayv1beta1.Handler {
 
 func testIstioJWTHandler(issuer string, jwksUri string) *gatewayv1beta1.Handler {
 
-	bytes, err := json.Marshal(istioint.JwtConfig{
-		Authentications: []istioint.JwtAuth{
+	bytes, err := json.Marshal(gatewayv1beta1.JwtConfig{
+		Authentications: []*gatewayv1beta1.JwtAuthentication{
 			{
 				Issuer:  issuer,
 				JwksUri: jwksUri,
 			},
 		},
+	})
+	Expect(err).To(BeNil())
+	return &gatewayv1beta1.Handler{
+		Name: "jwt",
+		Config: &runtime.RawExtension{
+			Raw: bytes,
+		},
+	}
+}
+
+func testIstioJWTHandlerWithScopes(issuer string, jwksUri string, authorizationScopes []string) *gatewayv1beta1.Handler {
+
+	bytes, err := json.Marshal(gatewayv1beta1.JwtConfig{
+		Authentications: []*gatewayv1beta1.JwtAuthentication{
+			{
+				Issuer:  issuer,
+				JwksUri: jwksUri,
+			},
+		},
+		Authorizations: []*gatewayv1beta1.JwtAuthorization{
+			{
+				RequiredScopes: authorizationScopes,
+			},
+		},
+	})
+	Expect(err).To(BeNil())
+	return &gatewayv1beta1.Handler{
+		Name: "jwt",
+		Config: &runtime.RawExtension{
+			Raw: bytes,
+		},
+	}
+}
+
+func testIstioJWTHandlerWithAuthorizations(issuer string, jwksUri string, authorizations []*gatewayv1beta1.JwtAuthorization) *gatewayv1beta1.Handler {
+
+	bytes, err := json.Marshal(gatewayv1beta1.JwtConfig{
+		Authentications: []*gatewayv1beta1.JwtAuthentication{
+			{
+				Issuer:  issuer,
+				JwksUri: jwksUri,
+			},
+		},
+		Authorizations: authorizations,
 	})
 	Expect(err).To(BeNil())
 	return &gatewayv1beta1.Handler{
@@ -1112,4 +1273,32 @@ func setHandlerConfigMap(handler string) {
 		Fail(fmt.Sprintf("failed to update configmap, got an invalid object error: %v", err))
 	}
 	Expect(err).NotTo(HaveOccurred())
+}
+
+func getAuthorizationPolicyWhenScopeMatcher(firstScope, secondScope string) gomegatypes.GomegaMatcher {
+
+	var whenMatchers []gomegatypes.GomegaMatcher
+
+	for _, key := range []string{"request.auth.claims[scp]", "request.auth.claims[scope]", "request.auth.claims[scopes]"} {
+		matcher := PointTo(MatchFields(IgnoreExtras, Fields{
+			"When": ContainElements(
+				PointTo(MatchFields(IgnoreExtras, Fields{
+					"Key":    Equal(key),
+					"Values": ContainElement(firstScope),
+				})),
+				PointTo(MatchFields(IgnoreExtras, Fields{
+					"Key":    Equal(key),
+					"Values": ContainElement(secondScope),
+				})),
+			),
+		}))
+		whenMatchers = append(whenMatchers, matcher)
+	}
+
+	return PointTo(MatchFields(IgnoreExtras,
+		Fields{
+			"Spec": MatchFields(IgnoreExtras, Fields{
+				"Rules": ContainElements(whenMatchers),
+			}),
+		}))
 }

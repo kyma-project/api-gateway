@@ -19,7 +19,6 @@ import (
 	"github.com/kyma-incubator/api-gateway/controllers"
 	"github.com/kyma-incubator/api-gateway/internal/helpers"
 	"github.com/kyma-incubator/api-gateway/internal/processing"
-	istioint "github.com/kyma-incubator/api-gateway/internal/types/istio"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
@@ -227,8 +226,8 @@ func getApiRule(authStrategy string, authConfig *runtime.RawExtension) *gatewayv
 
 func getJWTIstioConfig() *runtime.RawExtension {
 	return getRawConfig(
-		istioint.JwtConfig{
-			Authentications: []istioint.JwtAuth{
+		gatewayv1beta1.JwtConfig{
+			Authentications: []*gatewayv1beta1.JwtAuthentication{
 				{
 					Issuer:  "https://example.com/",
 					JwksUri: "https://example.com/.well-known/jwks.json",

@@ -152,3 +152,20 @@ type Handler struct {
 	// +kubebuilder:pruning:PreserveUnknownFields
 	Config *runtime.RawExtension `json:"config,omitempty"`
 }
+
+// JwtConfig is an array of JwtAuthorization type used by raw field Config of Istio jwt Handler
+type JwtConfig struct {
+	Authentications []*JwtAuthentication `json:"authentications,omitempty"`
+	Authorizations  []*JwtAuthorization  `json:"authorizations,omitempty"`
+}
+
+// JwtAuthorization contains an array of required scopes
+type JwtAuthorization struct {
+	RequiredScopes []string `json:"requiredScopes"`
+}
+
+// JwtAuthentication Config for Jwt istio authentication
+type JwtAuthentication struct {
+	Issuer  string `json:"issuer"`
+	JwksUri string `json:"jwksUri"`
+}

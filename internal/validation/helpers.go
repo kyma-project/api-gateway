@@ -91,7 +91,7 @@ func configEmpty(config *runtime.RawExtension) bool {
 		bytes.Equal(config.Raw, []byte("{}"))
 }
 
-// configNotEmpty Verify if the config object is not empty
+// ConfigNotEmpty Verify if the config object is not empty
 func ConfigNotEmpty(config *runtime.RawExtension) bool {
 	return !configEmpty(config)
 }

@@ -7,7 +7,7 @@ import (
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 )
 
-// AuthorizationPolicyProcessor is the generic processor that handles the Istio Authorization Policies in the reconciliation of API Rule.
+// AuthorizationPolicyProcessor is the generic processor that handles the Istio JwtAuthorization Policies in the reconciliation of API Rule.
 type AuthorizationPolicyProcessor struct {
 	Creator AuthorizationPolicyCreator
 }
@@ -31,7 +31,7 @@ type authorizationPolicyCreator struct {
 	additionalLabels map[string]string
 }
 
-// Create returns empty Authorization Policy
-func (r authorizationPolicyCreator) Create(api *gatewayv1beta1.APIRule) map[string]*securityv1beta1.AuthorizationPolicy {
-	return make(map[string]*securityv1beta1.AuthorizationPolicy)
+// Create returns empty JwtAuthorization Policy
+func (r authorizationPolicyCreator) Create(_ *gatewayv1beta1.APIRule) []*securityv1beta1.AuthorizationPolicy {
+	return []*securityv1beta1.AuthorizationPolicy{}
 }
