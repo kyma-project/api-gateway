@@ -20,6 +20,17 @@ kubectl patch configmap/api-gateway-config -n kyma-system --type merge -p '{"dat
 
 # Using Istio JWT Handler
 
+This table lists all the possible parameters of an istio jwt resource together with their descriptions:
+
+| Field                                                                | Mandatory | Description                                                            |
+|:---------------------------------------------------------------------|:---------:|:-----------------------------------------------------------------------|
+| **spec.rules.accessStrategies.config.authentications**               |  **YES**  | List of authentication objects.                                        |
+| **spec.rules.accessStrategies.config.authentications.issuer**        |  **YES**  | Identifies the issuer that issued the JWT.                             |
+| **spec.rules.accessStrategies.config.authentications.jwksUri**       |  **YES**  | URL of the provider’s public key set to validate signature of the JWT. |
+| **spec.rules.accessStrategies.config.authorizations**                |  **YES**  | List of authorization objects.                                         |
+| **spec.rules.accessStrategies.config.authorizations.requiredScopes** |  **YES**  | List of claim values for the JWT.                                      |
+
+
 When `istio` JWT Handler is enabled you can configure APIRule with Istio JWT like in the example below:
 
 ```yaml
