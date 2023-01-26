@@ -222,6 +222,38 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 		Expect(ap.Spec.Selector.MatchLabels[TestSelectorKey]).To(Equal(ServiceName))
 	})
 
+	It("should produce one AP for a Rule with service with configured namespace, in the configured namespace", func() {
+		// given
+		jwt := createIstioJwtAccessStrategy()
+		ruleServiceName := "rule-scope-example-service"
+		namespace := "other-namespace"
+		service := &gatewayv1beta1.Service{
+			Name:      &ruleServiceName,
+			Port:      &ServicePort,
+			Namespace: &namespace,
+		}
+		client := GetFakeClient()
+		ruleJwt := GetRuleWithServiceFor(HeadersApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, []*gatewayv1beta1.Authenticator{jwt}, service)
+		apiRule := GetAPIRuleFor([]gatewayv1beta1.Rule{ruleJwt})
+		processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig())
+
+		// when
+		result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
+
+		// then
+		Expect(err).To(BeNil())
+		Expect(result).To(HaveLen(1))
+
+		ap := result[0].Obj.(*securityv1beta1.AuthorizationPolicy)
+		Expect(ap).NotTo(BeNil())
+		Expect(ap.Spec.Selector.MatchLabels[TestSelectorKey]).To(Equal(ruleServiceName))
+		// The AP should be in .Service.Namespace
+		Expect(ap.Namespace).To(Equal(namespace))
+		// And the OwnerLabel should point to APIRule namespace
+		Expect(ap.Labels[processing.OwnerLabel]).ToNot(BeEmpty())
+		Expect(ap.Labels[processing.OwnerLabel]).To(Equal(fmt.Sprintf("%s.%s", apiRule.Name, apiRule.Namespace)))
+	})
+
 	It("should produce AP with service from Rule, when service is configured on Rule and ApiRule level", func() {
 		// given
 		jwt := createIstioJwtAccessStrategy()
@@ -575,6 +607,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 				Labels: map[string]string{
 					processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", ApiName, ApiNamespace),
 				},
+				Namespace: ApiNamespace,
 			},
 			Spec: v1beta1.AuthorizationPolicy{
 				Selector: &typev1beta1.WorkloadSelector{
@@ -671,7 +704,8 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			// given: Cluster state
 			beingUpdatedAp := securityv1beta1.AuthorizationPolicy{
 				ObjectMeta: metav1.ObjectMeta{
-					Name: "being-updated-ap",
+					Name:      "being-updated-ap",
+					Namespace: ApiNamespace,
 					Labels: map[string]string{
 						processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", ApiName, ApiNamespace),
 					},
@@ -706,7 +740,8 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 
 			jwtSecuredAp := securityv1beta1.AuthorizationPolicy{
 				ObjectMeta: metav1.ObjectMeta{
-					Name: "jwt-secured-ap",
+					Name:      "jwt-secured-ap",
+					Namespace: ApiNamespace,
 					Labels: map[string]string{
 						processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", ApiName, ApiNamespace),
 					},
@@ -970,6 +1005,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			// given: Cluster state
 			existingAp := securityv1beta1.AuthorizationPolicy{
 				ObjectMeta: metav1.ObjectMeta{
+					Namespace: ApiNamespace,
 					Labels: map[string]string{
 						processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", ApiName, ApiNamespace),
 					},
@@ -1089,6 +1125,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			// given: Cluster state
 			existingAp := securityv1beta1.AuthorizationPolicy{
 				ObjectMeta: metav1.ObjectMeta{
+					Namespace: ApiNamespace,
 					Labels: map[string]string{
 						processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", ApiName, ApiNamespace),
 					},
@@ -1208,6 +1245,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			//given: Cluster state
 			existingAp := securityv1beta1.AuthorizationPolicy{
 				ObjectMeta: metav1.ObjectMeta{
+					Namespace: ApiNamespace,
 					Labels: map[string]string{
 						processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", ApiName, ApiNamespace),
 					},
@@ -1428,7 +1466,8 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			// given: Cluster state
 			unchangedAp := securityv1beta1.AuthorizationPolicy{
 				ObjectMeta: metav1.ObjectMeta{
-					Name: "unchanged-ap",
+					Name:      "unchanged-ap",
+					Namespace: ApiNamespace,
 					Labels: map[string]string{
 						processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", ApiName, ApiNamespace),
 					},
@@ -1456,7 +1495,8 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 
 			toBeUpdateAp := securityv1beta1.AuthorizationPolicy{
 				ObjectMeta: metav1.ObjectMeta{
-					Name: "to-be-updated-ap",
+					Name:      "to-be-updated-ap",
+					Namespace: ApiNamespace,
 					Labels: map[string]string{
 						processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", ApiName, ApiNamespace),
 					},
@@ -1595,12 +1635,117 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 		})
 	})
 
+	When("The APIRule Service.Namespace changes", func() {
+		It("should create new AP in new namespace and delete old AP in old namespace", func() {
+			// given: Cluster state
+			oldAP := securityv1beta1.AuthorizationPolicy{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "unchanged-ap",
+					Namespace: ApiNamespace,
+					Labels: map[string]string{
+						processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", ApiName, ApiNamespace),
+					},
+				},
+				Spec: v1beta1.AuthorizationPolicy{
+					Selector: &typev1beta1.WorkloadSelector{
+						MatchLabels: map[string]string{
+							"app": "test-service",
+						},
+					},
+					Rules: []*v1beta1.Rule{
+						{
+							To: []*v1beta1.Rule_To{
+								{
+									Operation: &v1beta1.Operation{
+										Methods: []string{"DELETE"},
+										Paths:   []string{"/"},
+									},
+								},
+							},
+						},
+					},
+				},
+			}
+
+			ctrlClient := GetFakeClient(&oldAP)
+			processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig())
+
+			// given: New resources
+			movedRule := getRuleForApTest([]string{"DELETE"}, "/", "test-service", "new-namespace")
+			rules := []gatewayv1beta1.Rule{movedRule}
+
+			apiRule := GetAPIRuleFor(rules)
+
+			// when
+			result, err := processor.EvaluateReconciliation(context.TODO(), ctrlClient, apiRule)
+
+			// then
+			Expect(err).To(BeNil())
+			Expect(result).To(HaveLen(2))
+
+			createApMatcher := PointTo(MatchFields(IgnoreExtras, Fields{
+				"Action": WithTransform(ActionToString, Equal("create")),
+				"Obj": PointTo(MatchFields(IgnoreExtras, Fields{
+					"ObjectMeta": MatchFields(IgnoreExtras, Fields{
+						"Namespace": Equal("new-namespace"),
+					}),
+					"Spec": MatchFields(IgnoreExtras, Fields{
+						"Selector": PointTo(MatchFields(IgnoreExtras, Fields{
+							"MatchLabels": ContainElement("test-service"),
+						})),
+						"Rules": ContainElements(
+							PointTo(MatchFields(IgnoreExtras, Fields{
+								"To": ContainElements(
+									PointTo(MatchFields(IgnoreExtras, Fields{
+										"Operation": PointTo(MatchFields(IgnoreExtras, Fields{
+											"Methods": ContainElements("DELETE"),
+											"Paths":   ContainElements("/"),
+										})),
+									})),
+								),
+							})),
+						),
+					}),
+				})),
+			}))
+
+			deleteApMatcher := PointTo(MatchFields(IgnoreExtras, Fields{
+				"Action": WithTransform(ActionToString, Equal("delete")),
+				"Obj": PointTo(MatchFields(IgnoreExtras, Fields{
+					"ObjectMeta": MatchFields(IgnoreExtras, Fields{
+						"Namespace": Equal(ApiNamespace),
+					}),
+					"Spec": MatchFields(IgnoreExtras, Fields{
+						"Selector": PointTo(MatchFields(IgnoreExtras, Fields{
+							"MatchLabels": ContainElement("test-service"),
+						})),
+						"Rules": ContainElements(
+							PointTo(MatchFields(IgnoreExtras, Fields{
+								"To": ContainElements(
+									PointTo(MatchFields(IgnoreExtras, Fields{
+										"Operation": PointTo(MatchFields(IgnoreExtras, Fields{
+											"Methods": ContainElements("DELETE"),
+											"Paths":   ContainElements("/"),
+										})),
+									})),
+								),
+							})),
+						),
+					}),
+				})),
+			}))
+
+			Expect(result).To(ContainElements(createApMatcher, deleteApMatcher))
+		})
+	})
+
 	When("Two AP with same RuleTo for different services exist", func() {
 		It("should create new AP, recreate unchanged AP and delete old AP with matching service, when path has changed", func() {
 			// given: Cluster state
 			unchangedAp := securityv1beta1.AuthorizationPolicy{
 				ObjectMeta: metav1.ObjectMeta{
-					Name: "unchanged-ap",
+					Name:      "unchanged-ap",
+					Namespace: ApiNamespace,
 					Labels: map[string]string{
 						processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", ApiName, ApiNamespace),
 					},
@@ -1628,7 +1773,8 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 
 			toBeUpdateAp := securityv1beta1.AuthorizationPolicy{
 				ObjectMeta: metav1.ObjectMeta{
-					Name: "to-be-updated-ap",
+					Name:      "to-be-updated-ap",
+					Namespace: ApiNamespace,
 					Labels: map[string]string{
 						processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", ApiName, ApiNamespace),
 					},
@@ -1768,7 +1914,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 	})
 })
 
-func getRuleForApTest(methods []string, path string, serviceName string) gatewayv1beta1.Rule {
+func getRuleForApTest(methods []string, path string, serviceName string, namespace ...string) gatewayv1beta1.Rule {
 	jwtConfigJSON := fmt.Sprintf(`{"authentications": [{"issuer": "%s", "jwksUri": "%s"}]}`, JwtIssuer, JwksUri)
 	strategies := []*gatewayv1beta1.Authenticator{
 		{
@@ -1785,6 +1931,9 @@ func getRuleForApTest(methods []string, path string, serviceName string) gateway
 	service := &gatewayv1beta1.Service{
 		Name: &serviceName,
 		Port: &port,
+	}
+	if len(namespace) > 0 {
+		service.Namespace = &namespace[0]
 	}
 
 	return GetRuleWithServiceFor(path, methods, []*gatewayv1beta1.Mutator{}, strategies, service)

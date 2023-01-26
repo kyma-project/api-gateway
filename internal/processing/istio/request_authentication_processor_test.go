@@ -113,6 +113,40 @@ var _ = Describe("Request Authentication Processor", func() {
 		Expect(ra.Spec.Selector.MatchLabels[TestSelectorKey]).To(Equal(ruleServiceName))
 	})
 
+	It("should produce RA for a Rule with service with configured namespace, in the configured namespace", func() {
+		// given
+		jwt := createIstioJwtAccessStrategy()
+		ruleServiceName := "rule-scope-example-service"
+		namespace := "other-namespace"
+		service := &gatewayv1beta1.Service{
+			Name:      &ruleServiceName,
+			Port:      &ServicePort,
+			Namespace: &namespace,
+		}
+		client := GetFakeClient()
+		ruleJwt := GetRuleWithServiceFor(HeadersApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, []*gatewayv1beta1.Authenticator{jwt}, service)
+		apiRule := GetAPIRuleFor([]gatewayv1beta1.Rule{ruleJwt})
+
+		processor := istio.NewRequestAuthenticationProcessor(GetTestConfig())
+
+		// when
+		result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
+
+		// then
+		Expect(err).To(BeNil())
+		Expect(result).To(HaveLen(1))
+
+		ra := result[0].Obj.(*securityv1beta1.RequestAuthentication)
+		Expect(ra).NotTo(BeNil())
+		Expect(ra.Spec.Selector.MatchLabels[TestSelectorKey]).To(Equal(ruleServiceName))
+
+		// The RA should be in .Service.Namespace
+		Expect(ra.Namespace).To(Equal(namespace))
+		// And the OwnerLabel should point to APIRule namespace
+		Expect(ra.Labels[processing.OwnerLabel]).ToNot(BeEmpty())
+		Expect(ra.Labels[processing.OwnerLabel]).To(Equal(fmt.Sprintf("%s.%s", apiRule.Name, apiRule.Namespace)))
+	})
+
 	It("should produce RA from a rule with two issuers and one path", func() {
 		jwtConfigJSON := fmt.Sprintf(`{
 			"authentications": [{"issuer": "%s", "jwksUri": "%s"}, {"issuer": "%s", "jwksUri": "%s"}]
@@ -290,6 +324,7 @@ var _ = Describe("Request Authentication Processor", func() {
 			// given: Cluster state
 			existingRa := securityv1beta1.RequestAuthentication{
 				ObjectMeta: metav1.ObjectMeta{
+					Namespace: ApiNamespace,
 					Labels: map[string]string{
 						processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", ApiName, ApiNamespace),
 					},
@@ -404,6 +439,7 @@ var _ = Describe("Request Authentication Processor", func() {
 			// given: Cluster state
 			existingRa := securityv1beta1.RequestAuthentication{
 				ObjectMeta: metav1.ObjectMeta{
+					Namespace: ApiNamespace,
 					Labels: map[string]string{
 						processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", ApiName, ApiNamespace),
 					},
@@ -580,7 +616,8 @@ var _ = Describe("Request Authentication Processor", func() {
 
 			existingSecondServiceRa := securityv1beta1.RequestAuthentication{
 				ObjectMeta: metav1.ObjectMeta{
-					Name: "secondRa",
+					Name:      "secondRa",
+					Namespace: ApiNamespace,
 					Labels: map[string]string{
 						processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", ApiName, ApiNamespace),
 					},
@@ -674,7 +711,8 @@ var _ = Describe("Request Authentication Processor", func() {
 			// given: Cluster state
 			firstServiceRa := securityv1beta1.RequestAuthentication{
 				ObjectMeta: metav1.ObjectMeta{
-					Name: "firstRa",
+					Name:      "firstRa",
+					Namespace: ApiNamespace,
 					Labels: map[string]string{
 						processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", ApiName, ApiNamespace),
 					},
@@ -696,7 +734,8 @@ var _ = Describe("Request Authentication Processor", func() {
 
 			secondServiceRa := securityv1beta1.RequestAuthentication{
 				ObjectMeta: metav1.ObjectMeta{
-					Name: "secondRa",
+					Name:      "secondRa",
+					Namespace: ApiNamespace,
 					Labels: map[string]string{
 						processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", ApiName, ApiNamespace),
 					},
@@ -772,7 +811,8 @@ var _ = Describe("Request Authentication Processor", func() {
 			// given: Cluster state
 			firstServiceRa := securityv1beta1.RequestAuthentication{
 				ObjectMeta: metav1.ObjectMeta{
-					Name: "firstRa",
+					Name:      "firstRa",
+					Namespace: ApiNamespace,
 					Labels: map[string]string{
 						processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", ApiName, ApiNamespace),
 					},
@@ -794,7 +834,8 @@ var _ = Describe("Request Authentication Processor", func() {
 
 			secondServiceRa := securityv1beta1.RequestAuthentication{
 				ObjectMeta: metav1.ObjectMeta{
-					Name: "secondRa",
+					Name:      "secondRa",
+					Namespace: ApiNamespace,
 					Labels: map[string]string{
 						processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", ApiName, ApiNamespace),
 					},
@@ -883,6 +924,89 @@ var _ = Describe("Request Authentication Processor", func() {
 			}))
 
 			Expect(result).To(ContainElements(firstRaMatcher, secondRaMatcher, newRaMatcher))
+		})
+
+		It("should delete and create new RA when it has different namespace", func() {
+			// given: Cluster state
+			oldRa := securityv1beta1.RequestAuthentication{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "firstRa",
+					Namespace: ApiNamespace,
+					Labels: map[string]string{
+						processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", ApiName, ApiNamespace),
+					},
+				},
+				Spec: v1beta1.RequestAuthentication{
+					Selector: &typev1beta1.WorkloadSelector{
+						MatchLabels: map[string]string{
+							"app": "old-service",
+						},
+					},
+					JwtRules: []*v1beta1.JWTRule{
+						{
+							JwksUri: JwksUri,
+							Issuer:  JwtIssuer,
+						},
+					},
+				},
+			}
+
+			ctrlClient := GetFakeClient(&oldRa)
+			processor := istio.NewRequestAuthenticationProcessor(GetTestConfig())
+
+			// given: New resources
+			firstJwtRule := GetJwtRuleWithService(JwtIssuer, JwksUri, "old-service", "new-namespace")
+			rules := []gatewayv1beta1.Rule{firstJwtRule}
+			apiRule := GetAPIRuleFor(rules)
+
+			// when
+			result, err := processor.EvaluateReconciliation(context.TODO(), ctrlClient, apiRule)
+
+			// then
+			Expect(err).To(BeNil())
+			Expect(result).To(HaveLen(2))
+
+			deletionMatcher := PointTo(MatchFields(IgnoreExtras, Fields{
+				"Action": WithTransform(ActionToString, Equal("delete")),
+				"Obj": PointTo(MatchFields(IgnoreExtras, Fields{
+					"ObjectMeta": MatchFields(IgnoreExtras, Fields{
+						"Namespace": Equal(ApiNamespace),
+					}),
+					"Spec": MatchFields(IgnoreExtras, Fields{
+						"Selector": PointTo(MatchFields(IgnoreExtras, Fields{
+							"MatchLabels": ContainElement("old-service"),
+						})),
+						"JwtRules": ContainElements(
+							PointTo(MatchFields(IgnoreExtras, Fields{
+								"JwksUri": Equal(JwksUri),
+								"Issuer":  Equal(JwtIssuer),
+							})),
+						),
+					}),
+				})),
+			}))
+
+			creationMatcher := PointTo(MatchFields(IgnoreExtras, Fields{
+				"Action": WithTransform(ActionToString, Equal("create")),
+				"Obj": PointTo(MatchFields(IgnoreExtras, Fields{
+					"ObjectMeta": MatchFields(IgnoreExtras, Fields{
+						"Namespace": Equal("new-namespace"),
+					}),
+					"Spec": MatchFields(IgnoreExtras, Fields{
+						"Selector": PointTo(MatchFields(IgnoreExtras, Fields{
+							"MatchLabels": ContainElement("old-service"),
+						})),
+						"JwtRules": ContainElements(
+							PointTo(MatchFields(IgnoreExtras, Fields{
+								"JwksUri": Equal(JwksUri),
+								"Issuer":  Equal(JwtIssuer),
+							})),
+						),
+					}),
+				})),
+			}))
+
+			Expect(result).To(ContainElements(deletionMatcher, creationMatcher))
 		})
 	})
 })

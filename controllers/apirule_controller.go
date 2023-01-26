@@ -43,6 +43,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
+
+	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 )
 
 // APIRuleReconciler reconciles a APIRule object
@@ -233,6 +235,36 @@ func (r *APIRuleReconciler) getReconciliation(config processing.ReconciliationCo
 	}
 	return ory.NewOryReconciliation(config)
 
+}
+
+func (r *APIRuleReconciler) deleteExternalResources(ctx context.Context, apiRule gatewayv1beta1.APIRule) error {
+	labels := processing.GetOwnerLabels(&apiRule)
+
+	var apList securityv1beta1.AuthorizationPolicyList
+	if err := r.List(ctx, &apList, client.MatchingLabels(labels)); err != nil {
+		return err
+	}
+
+	for _, ap := range apList.Items {
+		err := r.Delete(ctx, ap)
+		if err != nil {
+			return err
+		}
+	}
+
+	var raList securityv1beta1.RequestAuthenticationList
+	if err := r.List(ctx, &raList, client.MatchingLabels(labels)); err != nil {
+		return err
+	}
+
+	for _, ra := range raList.Items {
+		err := r.Delete(ctx, ra)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 // SetupWithManager sets up the controller with the Manager.
