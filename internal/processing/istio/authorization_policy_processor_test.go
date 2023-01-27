@@ -11,6 +11,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	. "github.com/onsi/gomega/gstruct"
+	"github.com/onsi/gomega/types"
 	"golang.org/x/exp/slices"
 	"istio.io/api/security/v1beta1"
 	typev1beta1 "istio.io/api/type/v1beta1"
@@ -53,6 +54,79 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 				},
 			},
 		}
+	}
+
+	getRequestAuthentication := func(name string, namespace string, serviceName string, methods []string) securityv1beta1.AuthorizationPolicy {
+		return securityv1beta1.AuthorizationPolicy{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      name,
+				Namespace: namespace,
+				Labels: map[string]string{
+					processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", ApiName, ApiNamespace),
+				},
+			},
+			Spec: v1beta1.AuthorizationPolicy{
+				Selector: &typev1beta1.WorkloadSelector{
+					MatchLabels: map[string]string{
+						"app": serviceName,
+					},
+				},
+				Rules: []*v1beta1.Rule{
+					{
+						From: []*v1beta1.Rule_From{
+							{
+								Source: &v1beta1.Source{
+									RequestPrincipals: []string{"*"},
+								},
+							},
+						},
+						To: []*v1beta1.Rule_To{
+							{
+								Operation: &v1beta1.Operation{
+									Methods: methods,
+									Paths:   []string{"/"},
+								},
+							},
+						},
+					},
+				},
+			},
+		}
+	}
+
+	getActionMatcher := func(action string, namespace string, serviceName string, principalsName string, principals types.GomegaMatcher, methods types.GomegaMatcher, paths types.GomegaMatcher) types.GomegaMatcher {
+		return PointTo(MatchFields(IgnoreExtras, Fields{
+			"Action": WithTransform(ActionToString, Equal(action)),
+			"Obj": PointTo(MatchFields(IgnoreExtras, Fields{
+				"ObjectMeta": MatchFields(IgnoreExtras, Fields{
+					"Namespace": Equal(namespace),
+				}),
+				"Spec": MatchFields(IgnoreExtras, Fields{
+					"Selector": PointTo(MatchFields(IgnoreExtras, Fields{
+						"MatchLabels": ContainElement(serviceName),
+					})),
+					"Rules": ContainElements(
+						PointTo(MatchFields(IgnoreExtras, Fields{
+							"From": ContainElement(
+								PointTo(MatchFields(IgnoreExtras, Fields{
+									"Source": PointTo(MatchFields(IgnoreExtras, Fields{
+										principalsName: principals,
+									})),
+								})),
+							),
+							"To": ContainElements(
+								PointTo(MatchFields(IgnoreExtras, Fields{
+									"Operation": PointTo(MatchFields(IgnoreExtras, Fields{
+										"Methods": methods,
+										"Paths":   paths,
+									})),
+								})),
+							),
+						})),
+					),
+				}),
+			})),
+		}))
 	}
 
 	It("should produce two APs for a rule with one issuer and two paths", func() {
@@ -219,18 +293,48 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 
 		ap := result[0].Obj.(*securityv1beta1.AuthorizationPolicy)
 		Expect(ap).NotTo(BeNil())
+		// The AP should be in .Spec.Service.Namespace
+		Expect(ap.Namespace).To(Equal(ApiNamespace))
 		Expect(ap.Spec.Selector.MatchLabels[TestSelectorKey]).To(Equal(ServiceName))
+	})
+
+	It("should produce AP with service from Rule, when service is configured on Rule and ApiRule level", func() {
+		// given
+		jwt := createIstioJwtAccessStrategy()
+		ruleServiceName := "rule-scope-example-service"
+		specServiceNamespace := "spec-service-namespace"
+		service := &gatewayv1beta1.Service{
+			Name: &ruleServiceName,
+			Port: &ServicePort,
+		}
+		client := GetFakeClient()
+		ruleJwt := GetRuleWithServiceFor(HeadersApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, []*gatewayv1beta1.Authenticator{jwt}, service)
+		apiRule := GetAPIRuleFor([]gatewayv1beta1.Rule{ruleJwt}, specServiceNamespace)
+		processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig())
+
+		// when
+		result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
+
+		// then
+		Expect(err).To(BeNil())
+		Expect(result).To(HaveLen(1))
+
+		ap := result[0].Obj.(*securityv1beta1.AuthorizationPolicy)
+		Expect(ap).NotTo(BeNil())
+		// The RA should be in .Spec.Service.Namespace
+		Expect(ap.Namespace).To(Equal(specServiceNamespace))
+		Expect(ap.Spec.Selector.MatchLabels[TestSelectorKey]).To(Equal(ruleServiceName))
 	})
 
 	It("should produce one AP for a Rule with service with configured namespace, in the configured namespace", func() {
 		// given
 		jwt := createIstioJwtAccessStrategy()
 		ruleServiceName := "rule-scope-example-service"
-		namespace := "other-namespace"
+		ruleServiceNamespace := "rule-service-namespace"
 		service := &gatewayv1beta1.Service{
 			Name:      &ruleServiceName,
 			Port:      &ServicePort,
-			Namespace: &namespace,
+			Namespace: &ruleServiceNamespace,
 		}
 		client := GetFakeClient()
 		ruleJwt := GetRuleWithServiceFor(HeadersApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, []*gatewayv1beta1.Authenticator{jwt}, service)
@@ -248,35 +352,10 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 		Expect(ap).NotTo(BeNil())
 		Expect(ap.Spec.Selector.MatchLabels[TestSelectorKey]).To(Equal(ruleServiceName))
 		// The AP should be in .Service.Namespace
-		Expect(ap.Namespace).To(Equal(namespace))
+		Expect(ap.Namespace).To(Equal(ruleServiceNamespace))
 		// And the OwnerLabel should point to APIRule namespace
 		Expect(ap.Labels[processing.OwnerLabel]).ToNot(BeEmpty())
 		Expect(ap.Labels[processing.OwnerLabel]).To(Equal(fmt.Sprintf("%s.%s", apiRule.Name, apiRule.Namespace)))
-	})
-
-	It("should produce AP with service from Rule, when service is configured on Rule and ApiRule level", func() {
-		// given
-		jwt := createIstioJwtAccessStrategy()
-		ruleServiceName := "rule-scope-example-service"
-		service := &gatewayv1beta1.Service{
-			Name: &ruleServiceName,
-			Port: &ServicePort,
-		}
-		client := GetFakeClient()
-		ruleJwt := GetRuleWithServiceFor(HeadersApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, []*gatewayv1beta1.Authenticator{jwt}, service)
-		apiRule := GetAPIRuleFor([]gatewayv1beta1.Rule{ruleJwt})
-		processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig())
-
-		// when
-		result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
-
-		// then
-		Expect(err).To(BeNil())
-		Expect(result).To(HaveLen(1))
-
-		ap := result[0].Obj.(*securityv1beta1.AuthorizationPolicy)
-		Expect(ap).NotTo(BeNil())
-		Expect(ap.Spec.Selector.MatchLabels[TestSelectorKey]).To(Equal(ruleServiceName))
 	})
 
 	It("should produce AP from a rule with two issuers and one path", func() {
@@ -602,34 +681,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 
 	It("should delete existing AP and create AP again when path, methods and service name didn't change", func() {
 		// given: Cluster state
-		existingAp := securityv1beta1.AuthorizationPolicy{
-			ObjectMeta: metav1.ObjectMeta{
-				Labels: map[string]string{
-					processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", ApiName, ApiNamespace),
-				},
-				Namespace: ApiNamespace,
-			},
-			Spec: v1beta1.AuthorizationPolicy{
-				Selector: &typev1beta1.WorkloadSelector{
-					MatchLabels: map[string]string{
-						"app": "test-service",
-					},
-				},
-				Rules: []*v1beta1.Rule{
-					{
-						To: []*v1beta1.Rule_To{
-							{
-								Operation: &v1beta1.Operation{
-									Methods: []string{"GET", "POST"},
-									Paths:   []string{"/"},
-								},
-							},
-						},
-					},
-				},
-			},
-		}
-
+		existingAp := getRequestAuthentication("raName", ApiNamespace, "test-service", []string{"GET", "POST"})
 		ctrlClient := GetFakeClient(&existingAp)
 		processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig())
 
@@ -650,130 +702,16 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 		Expect(err).To(BeNil())
 		Expect(result).To(HaveLen(2))
 
-		deleteMatcher := PointTo(MatchFields(IgnoreExtras, Fields{
-			"Action": WithTransform(ActionToString, Equal("delete")),
-			"Obj": PointTo(MatchFields(IgnoreExtras, Fields{
-				"Spec": MatchFields(IgnoreExtras, Fields{
-					"Selector": PointTo(MatchFields(IgnoreExtras, Fields{
-						"MatchLabels": ContainElement("test-service"),
-					})),
-					"Rules": ContainElements(
-						PointTo(MatchFields(IgnoreExtras, Fields{
-							"To": ContainElements(
-								PointTo(MatchFields(IgnoreExtras, Fields{
-									"Operation": PointTo(MatchFields(IgnoreExtras, Fields{
-										"Methods": ContainElements("GET", "POST"),
-										"Paths":   ContainElements("/"),
-									})),
-								})),
-							),
-						})),
-					),
-				}),
-			})),
-		}))
-
-		createMatcher := PointTo(MatchFields(IgnoreExtras, Fields{
-			"Action": WithTransform(ActionToString, Equal("create")),
-			"Obj": PointTo(MatchFields(IgnoreExtras, Fields{
-				"Spec": MatchFields(IgnoreExtras, Fields{
-					"Selector": PointTo(MatchFields(IgnoreExtras, Fields{
-						"MatchLabels": ContainElement("test-service"),
-					})),
-					"Rules": ContainElements(
-						PointTo(MatchFields(IgnoreExtras, Fields{
-							"To": ContainElements(
-								PointTo(MatchFields(IgnoreExtras, Fields{
-									"Operation": PointTo(MatchFields(IgnoreExtras, Fields{
-										"Methods": ContainElements("GET", "POST"),
-										"Paths":   ContainElements("/"),
-									})),
-								})),
-							),
-						})),
-					),
-				}),
-			})),
-		}))
-
+		deleteMatcher := getActionMatcher("delete", ApiNamespace, "test-service", "RequestPrincipals", ContainElements("*"), ContainElements("GET", "POST"), ContainElements("/"))
+		createMatcher := getActionMatcher("create", ApiNamespace, "test-service", "RequestPrincipals", ContainElements("*"), ContainElements("GET", "POST"), ContainElements("/"))
 		Expect(result).To(ContainElements(deleteMatcher, createMatcher))
 	})
 
 	When("Two AP for different services with JWT handler exist", func() {
 		It("should delete existing AP and create new AP when handler changed for one of the AP to noop", func() {
 			// given: Cluster state
-			beingUpdatedAp := securityv1beta1.AuthorizationPolicy{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "being-updated-ap",
-					Namespace: ApiNamespace,
-					Labels: map[string]string{
-						processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", ApiName, ApiNamespace),
-					},
-				},
-				Spec: v1beta1.AuthorizationPolicy{
-					Selector: &typev1beta1.WorkloadSelector{
-						MatchLabels: map[string]string{
-							"app": "test-service",
-						},
-					},
-					Rules: []*v1beta1.Rule{
-						{
-							From: []*v1beta1.Rule_From{
-								{
-									Source: &v1beta1.Source{
-										RequestPrincipals: []string{"*"},
-									},
-								},
-							},
-							To: []*v1beta1.Rule_To{
-								{
-									Operation: &v1beta1.Operation{
-										Methods: []string{"GET", "POST"},
-										Paths:   []string{"/"},
-									},
-								},
-							},
-						},
-					},
-				},
-			}
-
-			jwtSecuredAp := securityv1beta1.AuthorizationPolicy{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "jwt-secured-ap",
-					Namespace: ApiNamespace,
-					Labels: map[string]string{
-						processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", ApiName, ApiNamespace),
-					},
-				},
-				Spec: v1beta1.AuthorizationPolicy{
-					Selector: &typev1beta1.WorkloadSelector{
-						MatchLabels: map[string]string{
-							"app": "jwt-secured-service",
-						},
-					},
-					Rules: []*v1beta1.Rule{
-						{
-							From: []*v1beta1.Rule_From{
-								{
-									Source: &v1beta1.Source{
-										RequestPrincipals: []string{"*"},
-									},
-								},
-							},
-							To: []*v1beta1.Rule_To{
-								{
-									Operation: &v1beta1.Operation{
-										Methods: []string{"GET", "POST"},
-										Paths:   []string{"/"},
-									},
-								},
-							},
-						},
-					},
-				},
-			}
-
+			beingUpdatedAp := getRequestAuthentication("being-updated-ap", ApiNamespace, "test-service", []string{"GET", "POST"})
+			jwtSecuredAp := getRequestAuthentication("jwt-secured-ap", ApiNamespace, "jwt-secured-service", []string{"GET", "POST"})
 			ctrlClient := GetFakeClient(&beingUpdatedAp, &jwtSecuredAp)
 			processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig())
 
@@ -796,7 +734,6 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			}
 
 			rule := GetRuleWithServiceFor("/", []string{"GET", "POST"}, []*gatewayv1beta1.Mutator{}, strategies, service)
-
 			rules := []gatewayv1beta1.Rule{rule, jwtRule}
 
 			apiRule := GetAPIRuleFor(rules)
@@ -808,159 +745,17 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			Expect(err).To(BeNil())
 			Expect(result).To(HaveLen(4))
 
-			deletedNoopMatcher := PointTo(MatchFields(IgnoreExtras, Fields{
-				"Action": WithTransform(ActionToString, Equal("delete")),
-				"Obj": PointTo(MatchFields(IgnoreExtras, Fields{
-					"Spec": MatchFields(IgnoreExtras, Fields{
-						"Selector": PointTo(MatchFields(IgnoreExtras, Fields{
-							"MatchLabels": ContainElement("test-service"),
-						})),
-						"Rules": ContainElements(
-							PointTo(MatchFields(IgnoreExtras, Fields{
-								"From": ContainElement(
-									PointTo(MatchFields(IgnoreExtras, Fields{
-										"Source": PointTo(MatchFields(IgnoreExtras, Fields{
-											"RequestPrincipals": ContainElements("*"),
-										})),
-									})),
-								),
-								"To": ContainElements(
-									PointTo(MatchFields(IgnoreExtras, Fields{
-										"Operation": PointTo(MatchFields(IgnoreExtras, Fields{
-											"Methods": ContainElements("GET", "POST"),
-											"Paths":   ContainElements("/"),
-										})),
-									})),
-								),
-							})),
-						),
-					}),
-				})),
-			}))
-
-			createdNoopMatcher := PointTo(MatchFields(IgnoreExtras, Fields{
-				"Action": WithTransform(ActionToString, Equal("create")),
-				"Obj": PointTo(MatchFields(IgnoreExtras, Fields{
-					"Spec": MatchFields(IgnoreExtras, Fields{
-						"Selector": PointTo(MatchFields(IgnoreExtras, Fields{
-							"MatchLabels": ContainElement("test-service"),
-						})),
-						"Rules": ContainElements(
-							PointTo(MatchFields(IgnoreExtras, Fields{
-								"From": ContainElement(
-									PointTo(MatchFields(IgnoreExtras, Fields{
-										"Source": PointTo(MatchFields(IgnoreExtras, Fields{
-											"Principals": ContainElements("cluster.local/ns/kyma-system/sa/oathkeeper-maester-account"),
-										})),
-									})),
-								),
-								"To": ContainElements(
-									PointTo(MatchFields(IgnoreExtras, Fields{
-										"Operation": PointTo(MatchFields(IgnoreExtras, Fields{
-											"Methods": ContainElements("GET", "POST"),
-											"Paths":   ContainElements("/"),
-										})),
-									})),
-								),
-							})),
-						),
-					}),
-				})),
-			}))
-
-			deletedNotChangedMatcher := PointTo(MatchFields(IgnoreExtras, Fields{
-				"Action": WithTransform(ActionToString, Equal("delete")),
-				"Obj": PointTo(MatchFields(IgnoreExtras, Fields{
-					"Spec": MatchFields(IgnoreExtras, Fields{
-						"Selector": PointTo(MatchFields(IgnoreExtras, Fields{
-							"MatchLabels": ContainElement("jwt-secured-service"),
-						})),
-						"Rules": ContainElements(
-							PointTo(MatchFields(IgnoreExtras, Fields{
-								"From": ContainElement(
-									PointTo(MatchFields(IgnoreExtras, Fields{
-										"Source": PointTo(MatchFields(IgnoreExtras, Fields{
-											"RequestPrincipals": ContainElements("*"),
-										})),
-									})),
-								),
-								"To": ContainElements(
-									PointTo(MatchFields(IgnoreExtras, Fields{
-										"Operation": PointTo(MatchFields(IgnoreExtras, Fields{
-											"Methods": ContainElements("GET", "POST"),
-											"Paths":   ContainElements("/"),
-										})),
-									})),
-								),
-							})),
-						),
-					}),
-				})),
-			}))
-
-			createdNotChangedMatcher := PointTo(MatchFields(IgnoreExtras, Fields{
-				"Action": WithTransform(ActionToString, Equal("create")),
-				"Obj": PointTo(MatchFields(IgnoreExtras, Fields{
-					"Spec": MatchFields(IgnoreExtras, Fields{
-						"Selector": PointTo(MatchFields(IgnoreExtras, Fields{
-							"MatchLabels": ContainElement("jwt-secured-service"),
-						})),
-						"Rules": ContainElements(
-							PointTo(MatchFields(IgnoreExtras, Fields{
-								"From": ContainElement(
-									PointTo(MatchFields(IgnoreExtras, Fields{
-										"Source": PointTo(MatchFields(IgnoreExtras, Fields{
-											"RequestPrincipals": ContainElements("*"),
-										})),
-									})),
-								),
-								"To": ContainElements(
-									PointTo(MatchFields(IgnoreExtras, Fields{
-										"Operation": PointTo(MatchFields(IgnoreExtras, Fields{
-											"Methods": ContainElements("GET", "POST"),
-											"Paths":   ContainElements("/"),
-										})),
-									})),
-								),
-							})),
-						),
-					}),
-				})),
-			}))
-
+			deletedNoopMatcher := getActionMatcher("delete", ApiNamespace, "test-service", "RequestPrincipals", ContainElements("*"), ContainElements("GET", "POST"), ContainElements("/"))
+			createdNoopMatcher := getActionMatcher("create", ApiNamespace, "test-service", "Principals", ContainElements("cluster.local/ns/kyma-system/sa/oathkeeper-maester-account"), ContainElements("GET", "POST"), ContainElements("/"))
+			deletedNotChangedMatcher := getActionMatcher("delete", ApiNamespace, "jwt-secured-service", "RequestPrincipals", ContainElements("*"), ContainElements("GET", "POST"), ContainElements("/"))
+			createdNotChangedMatcher := getActionMatcher("create", ApiNamespace, "jwt-secured-service", "RequestPrincipals", ContainElements("*"), ContainElements("GET", "POST"), ContainElements("/"))
 			Expect(result).To(ContainElements(deletedNoopMatcher, createdNoopMatcher, deletedNotChangedMatcher, createdNotChangedMatcher))
 		})
 
 	})
 	It("should delete AP when there is no desired AP", func() {
 		//given: Cluster state
-		existingAp := securityv1beta1.AuthorizationPolicy{
-			ObjectMeta: metav1.ObjectMeta{
-				Labels: map[string]string{
-					processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", ApiName, ApiNamespace),
-				},
-			},
-			Spec: v1beta1.AuthorizationPolicy{
-				Selector: &typev1beta1.WorkloadSelector{
-					MatchLabels: map[string]string{
-						"app": "test-service",
-					},
-				},
-				Rules: []*v1beta1.Rule{
-					{
-						To: []*v1beta1.Rule_To{
-							{
-								Operation: &v1beta1.Operation{
-									Methods: []string{"GET", "POST"},
-									Paths:   []string{"/"},
-								},
-							},
-						},
-					},
-				},
-			},
-		}
-
+		existingAp := getRequestAuthentication("raName", ApiNamespace, "test-service", []string{"GET", "POST"})
 		ctrlClient := GetFakeClient(&existingAp)
 		processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig())
 
@@ -974,63 +769,14 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 		Expect(err).To(BeNil())
 		Expect(result).To(HaveLen(1))
 
-		resultMatcher := PointTo(MatchFields(IgnoreExtras, Fields{
-			"Action": WithTransform(ActionToString, Equal("delete")),
-			"Obj": PointTo(MatchFields(IgnoreExtras, Fields{
-				"Spec": MatchFields(IgnoreExtras, Fields{
-					"Selector": PointTo(MatchFields(IgnoreExtras, Fields{
-						"MatchLabels": ContainElement("test-service"),
-					})),
-					"Rules": ContainElements(
-						PointTo(MatchFields(IgnoreExtras, Fields{
-							"To": ContainElements(
-								PointTo(MatchFields(IgnoreExtras, Fields{
-									"Operation": PointTo(MatchFields(IgnoreExtras, Fields{
-										"Methods": ContainElements("GET", "POST"),
-										"Paths":   ContainElements("/"),
-									})),
-								})),
-							),
-						})),
-					),
-				}),
-			})),
-		}))
-
+		resultMatcher := getActionMatcher("delete", ApiNamespace, "test-service", "RequestPrincipals", ContainElements("*"), ContainElements("GET", "POST"), ContainElements("/"))
 		Expect(result).To(ContainElements(resultMatcher))
 	})
 
 	When("AP with RuleTo exists", func() {
 		It("should create new AP and re-create existing AP when new rule with same methods and service but different path is added to ApiRule", func() {
 			// given: Cluster state
-			existingAp := securityv1beta1.AuthorizationPolicy{
-				ObjectMeta: metav1.ObjectMeta{
-					Namespace: ApiNamespace,
-					Labels: map[string]string{
-						processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", ApiName, ApiNamespace),
-					},
-				},
-				Spec: v1beta1.AuthorizationPolicy{
-					Selector: &typev1beta1.WorkloadSelector{
-						MatchLabels: map[string]string{
-							"app": "test-service",
-						},
-					},
-					Rules: []*v1beta1.Rule{
-						{
-							To: []*v1beta1.Rule_To{
-								{
-									Operation: &v1beta1.Operation{
-										Methods: []string{"GET", "POST"},
-										Paths:   []string{"/"},
-									},
-								},
-							},
-						},
-					},
-				},
-			}
-
+			existingAp := getRequestAuthentication("raName", ApiNamespace, "test-service", []string{"GET", "POST"})
 			ctrlClient := GetFakeClient(&existingAp)
 			processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig())
 
@@ -1049,108 +795,15 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			Expect(err).To(BeNil())
 			Expect(result).To(HaveLen(3))
 
-			deleteExistingApMatcher := PointTo(MatchFields(IgnoreExtras, Fields{
-				"Action": WithTransform(ActionToString, Equal("delete")),
-				"Obj": PointTo(MatchFields(IgnoreExtras, Fields{
-					"Spec": MatchFields(IgnoreExtras, Fields{
-						"Selector": PointTo(MatchFields(IgnoreExtras, Fields{
-							"MatchLabels": ContainElement("test-service"),
-						})),
-						"Rules": ContainElements(
-							PointTo(MatchFields(IgnoreExtras, Fields{
-								"To": ContainElements(
-									PointTo(MatchFields(IgnoreExtras, Fields{
-										"Operation": PointTo(MatchFields(IgnoreExtras, Fields{
-											"Methods": ContainElements("GET", "POST"),
-											"Paths":   ContainElements("/"),
-										})),
-									})),
-								),
-							})),
-						),
-					}),
-				})),
-			}))
-
-			recreateExistingApMatcher := PointTo(MatchFields(IgnoreExtras, Fields{
-				"Action": WithTransform(ActionToString, Equal("create")),
-				"Obj": PointTo(MatchFields(IgnoreExtras, Fields{
-					"Spec": MatchFields(IgnoreExtras, Fields{
-						"Selector": PointTo(MatchFields(IgnoreExtras, Fields{
-							"MatchLabels": ContainElement("test-service"),
-						})),
-						"Rules": ContainElements(
-							PointTo(MatchFields(IgnoreExtras, Fields{
-								"To": ContainElements(
-									PointTo(MatchFields(IgnoreExtras, Fields{
-										"Operation": PointTo(MatchFields(IgnoreExtras, Fields{
-											"Methods": ContainElements("GET", "POST"),
-											"Paths":   ContainElements("/"),
-										})),
-									})),
-								),
-							})),
-						),
-					}),
-				})),
-			}))
-
-			newApMatcher := PointTo(MatchFields(IgnoreExtras, Fields{
-				"Action": WithTransform(ActionToString, Equal("create")),
-				"Obj": PointTo(MatchFields(IgnoreExtras, Fields{
-					"Spec": MatchFields(IgnoreExtras, Fields{
-						"Selector": PointTo(MatchFields(IgnoreExtras, Fields{
-							"MatchLabels": ContainElement("test-service"),
-						})),
-						"Rules": ContainElements(
-							PointTo(MatchFields(IgnoreExtras, Fields{
-								"To": ContainElements(
-									PointTo(MatchFields(IgnoreExtras, Fields{
-										"Operation": PointTo(MatchFields(IgnoreExtras, Fields{
-											"Methods": ContainElements("GET", "POST"),
-											"Paths":   ContainElements("/new-path"),
-										})),
-									})),
-								),
-							})),
-						),
-					}),
-				})),
-			}))
-
+			deleteExistingApMatcher := getActionMatcher("delete", ApiNamespace, "test-service", "RequestPrincipals", ContainElements("*"), ContainElements("GET", "POST"), ContainElements("/"))
+			recreateExistingApMatcher := getActionMatcher("create", ApiNamespace, "test-service", "RequestPrincipals", ContainElements("*"), ContainElements("GET", "POST"), ContainElements("/"))
+			newApMatcher := getActionMatcher("create", ApiNamespace, "test-service", "RequestPrincipals", ContainElements("*"), ContainElements("GET", "POST"), ContainElements("/new-path"))
 			Expect(result).To(ContainElements(deleteExistingApMatcher, recreateExistingApMatcher, newApMatcher))
 		})
 
 		It("should create new AP and re-create existing AP when new rule with same path and service but different methods is added to ApiRule", func() {
 			// given: Cluster state
-			existingAp := securityv1beta1.AuthorizationPolicy{
-				ObjectMeta: metav1.ObjectMeta{
-					Namespace: ApiNamespace,
-					Labels: map[string]string{
-						processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", ApiName, ApiNamespace),
-					},
-				},
-				Spec: v1beta1.AuthorizationPolicy{
-					Selector: &typev1beta1.WorkloadSelector{
-						MatchLabels: map[string]string{
-							"app": "test-service",
-						},
-					},
-					Rules: []*v1beta1.Rule{
-						{
-							To: []*v1beta1.Rule_To{
-								{
-									Operation: &v1beta1.Operation{
-										Methods: []string{"GET", "POST"},
-										Paths:   []string{"/"},
-									},
-								},
-							},
-						},
-					},
-				},
-			}
-
+			existingAp := getRequestAuthentication("raName", ApiNamespace, "test-service", []string{"GET", "POST"})
 			ctrlClient := GetFakeClient(&existingAp)
 			processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig())
 
@@ -1169,108 +822,15 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			Expect(err).To(BeNil())
 			Expect(result).To(HaveLen(3))
 
-			deleteExistingApMatcher := PointTo(MatchFields(IgnoreExtras, Fields{
-				"Action": WithTransform(ActionToString, Equal("delete")),
-				"Obj": PointTo(MatchFields(IgnoreExtras, Fields{
-					"Spec": MatchFields(IgnoreExtras, Fields{
-						"Selector": PointTo(MatchFields(IgnoreExtras, Fields{
-							"MatchLabels": ContainElement("test-service"),
-						})),
-						"Rules": ContainElements(
-							PointTo(MatchFields(IgnoreExtras, Fields{
-								"To": ContainElements(
-									PointTo(MatchFields(IgnoreExtras, Fields{
-										"Operation": PointTo(MatchFields(IgnoreExtras, Fields{
-											"Methods": ContainElements("GET", "POST"),
-											"Paths":   ContainElements("/"),
-										})),
-									})),
-								),
-							})),
-						),
-					}),
-				})),
-			}))
-
-			recreateExistingApMatcher := PointTo(MatchFields(IgnoreExtras, Fields{
-				"Action": WithTransform(ActionToString, Equal("create")),
-				"Obj": PointTo(MatchFields(IgnoreExtras, Fields{
-					"Spec": MatchFields(IgnoreExtras, Fields{
-						"Selector": PointTo(MatchFields(IgnoreExtras, Fields{
-							"MatchLabels": ContainElement("test-service"),
-						})),
-						"Rules": ContainElements(
-							PointTo(MatchFields(IgnoreExtras, Fields{
-								"To": ContainElements(
-									PointTo(MatchFields(IgnoreExtras, Fields{
-										"Operation": PointTo(MatchFields(IgnoreExtras, Fields{
-											"Methods": ContainElements("GET", "POST"),
-											"Paths":   ContainElements("/"),
-										})),
-									})),
-								),
-							})),
-						),
-					}),
-				})),
-			}))
-
-			newApMatcher := PointTo(MatchFields(IgnoreExtras, Fields{
-				"Action": WithTransform(ActionToString, Equal("create")),
-				"Obj": PointTo(MatchFields(IgnoreExtras, Fields{
-					"Spec": MatchFields(IgnoreExtras, Fields{
-						"Selector": PointTo(MatchFields(IgnoreExtras, Fields{
-							"MatchLabels": ContainElement("test-service"),
-						})),
-						"Rules": ContainElements(
-							PointTo(MatchFields(IgnoreExtras, Fields{
-								"To": ContainElements(
-									PointTo(MatchFields(IgnoreExtras, Fields{
-										"Operation": PointTo(MatchFields(IgnoreExtras, Fields{
-											"Methods": ContainElements("DELETE"),
-											"Paths":   ContainElements("/"),
-										})),
-									})),
-								),
-							})),
-						),
-					}),
-				})),
-			}))
-
+			deleteExistingApMatcher := getActionMatcher("delete", ApiNamespace, "test-service", "RequestPrincipals", ContainElements("*"), ContainElements("GET", "POST"), ContainElements("/"))
+			recreateExistingApMatcher := getActionMatcher("create", ApiNamespace, "test-service", "RequestPrincipals", ContainElements("*"), ContainElements("GET", "POST"), ContainElements("/"))
+			newApMatcher := getActionMatcher("create", ApiNamespace, "test-service", "RequestPrincipals", ContainElements("*"), ContainElements("DELETE"), ContainElements("/"))
 			Expect(result).To(ContainElements(deleteExistingApMatcher, recreateExistingApMatcher, newApMatcher))
 		})
 
 		It("should create new AP and recreate existing AP when new rule with same path and methods, but different service is added to ApiRule", func() {
 			//given: Cluster state
-			existingAp := securityv1beta1.AuthorizationPolicy{
-				ObjectMeta: metav1.ObjectMeta{
-					Namespace: ApiNamespace,
-					Labels: map[string]string{
-						processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", ApiName, ApiNamespace),
-					},
-				},
-				Spec: v1beta1.AuthorizationPolicy{
-					Selector: &typev1beta1.WorkloadSelector{
-						MatchLabels: map[string]string{
-							"app": "test-service",
-						},
-					},
-					Rules: []*v1beta1.Rule{
-						{
-							To: []*v1beta1.Rule_To{
-								{
-									Operation: &v1beta1.Operation{
-										Methods: []string{"GET", "POST"},
-										Paths:   []string{"/"},
-									},
-								},
-							},
-						},
-					},
-				},
-			}
-
+			existingAp := getRequestAuthentication("raName", ApiNamespace, "test-service", []string{"GET", "POST"})
 			// given: New resources
 			existingRule := getRuleForApTest([]string{"GET", "POST"}, "/", "test-service")
 			newRule := getRuleForApTest([]string{"GET", "POST"}, "/", "new-service")
@@ -1289,107 +849,15 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			Expect(err).To(BeNil())
 			Expect(result).To(HaveLen(3))
 
-			deleteExistingApMatcher := PointTo(MatchFields(IgnoreExtras, Fields{
-				"Action": WithTransform(ActionToString, Equal("delete")),
-				"Obj": PointTo(MatchFields(IgnoreExtras, Fields{
-					"Spec": MatchFields(IgnoreExtras, Fields{
-						"Selector": PointTo(MatchFields(IgnoreExtras, Fields{
-							"MatchLabels": ContainElement("test-service"),
-						})),
-						"Rules": ContainElements(
-							PointTo(MatchFields(IgnoreExtras, Fields{
-								"To": ContainElements(
-									PointTo(MatchFields(IgnoreExtras, Fields{
-										"Operation": PointTo(MatchFields(IgnoreExtras, Fields{
-											"Methods": ContainElements("GET", "POST"),
-											"Paths":   ContainElements("/"),
-										})),
-									})),
-								),
-							})),
-						),
-					}),
-				})),
-			}))
-
-			createExistingApMatcher := PointTo(MatchFields(IgnoreExtras, Fields{
-				"Action": WithTransform(ActionToString, Equal("create")),
-				"Obj": PointTo(MatchFields(IgnoreExtras, Fields{
-					"Spec": MatchFields(IgnoreExtras, Fields{
-						"Selector": PointTo(MatchFields(IgnoreExtras, Fields{
-							"MatchLabels": ContainElement("test-service"),
-						})),
-						"Rules": ContainElements(
-							PointTo(MatchFields(IgnoreExtras, Fields{
-								"To": ContainElements(
-									PointTo(MatchFields(IgnoreExtras, Fields{
-										"Operation": PointTo(MatchFields(IgnoreExtras, Fields{
-											"Methods": ContainElements("GET", "POST"),
-											"Paths":   ContainElements("/"),
-										})),
-									})),
-								),
-							})),
-						),
-					}),
-				})),
-			}))
-
-			newApMatcher := PointTo(MatchFields(IgnoreExtras, Fields{
-				"Action": WithTransform(ActionToString, Equal("create")),
-				"Obj": PointTo(MatchFields(IgnoreExtras, Fields{
-					"Spec": MatchFields(IgnoreExtras, Fields{
-						"Selector": PointTo(MatchFields(IgnoreExtras, Fields{
-							"MatchLabels": ContainElement("new-service"),
-						})),
-						"Rules": ContainElements(
-							PointTo(MatchFields(IgnoreExtras, Fields{
-								"To": ContainElements(
-									PointTo(MatchFields(IgnoreExtras, Fields{
-										"Operation": PointTo(MatchFields(IgnoreExtras, Fields{
-											"Methods": ContainElements("GET", "POST"),
-											"Paths":   ContainElements("/"),
-										})),
-									})),
-								),
-							})),
-						),
-					}),
-				})),
-			}))
-
+			deleteExistingApMatcher := getActionMatcher("delete", ApiNamespace, "test-service", "RequestPrincipals", ContainElements("*"), ContainElements("GET", "POST"), ContainElements("/"))
+			createExistingApMatcher := getActionMatcher("create", ApiNamespace, "test-service", "RequestPrincipals", ContainElements("*"), ContainElements("GET", "POST"), ContainElements("/"))
+			newApMatcher := getActionMatcher("create", ApiNamespace, "new-service", "RequestPrincipals", ContainElements("*"), ContainElements("GET", "POST"), ContainElements("/"))
 			Expect(result).To(ContainElements(deleteExistingApMatcher, createExistingApMatcher, newApMatcher))
 		})
 
 		It("should create new AP and delete old AP when path in ApiRule changed", func() {
 			// given: Cluster state
-			existingAp := securityv1beta1.AuthorizationPolicy{
-				ObjectMeta: metav1.ObjectMeta{
-					Labels: map[string]string{
-						processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", ApiName, ApiNamespace),
-					},
-				},
-				Spec: v1beta1.AuthorizationPolicy{
-					Selector: &typev1beta1.WorkloadSelector{
-						MatchLabels: map[string]string{
-							"app": "test-service",
-						},
-					},
-					Rules: []*v1beta1.Rule{
-						{
-							To: []*v1beta1.Rule_To{
-								{
-									Operation: &v1beta1.Operation{
-										Methods: []string{"GET", "POST"},
-										Paths:   []string{"/"},
-									},
-								},
-							},
-						},
-					},
-				},
-			}
-
+			existingAp := getRequestAuthentication("raName", ApiNamespace, "test-service", []string{"GET", "POST"})
 			ctrlClient := GetFakeClient(&existingAp)
 			processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig())
 
@@ -1410,52 +878,8 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			Expect(err).To(BeNil())
 			Expect(result).To(HaveLen(2))
 
-			existingApMatcher := PointTo(MatchFields(IgnoreExtras, Fields{
-				"Action": WithTransform(ActionToString, Equal("delete")),
-				"Obj": PointTo(MatchFields(IgnoreExtras, Fields{
-					"Spec": MatchFields(IgnoreExtras, Fields{
-						"Selector": PointTo(MatchFields(IgnoreExtras, Fields{
-							"MatchLabels": ContainElement("test-service"),
-						})),
-						"Rules": ContainElements(
-							PointTo(MatchFields(IgnoreExtras, Fields{
-								"To": ContainElements(
-									PointTo(MatchFields(IgnoreExtras, Fields{
-										"Operation": PointTo(MatchFields(IgnoreExtras, Fields{
-											"Methods": ContainElements("GET", "POST"),
-											"Paths":   ContainElements("/"),
-										})),
-									})),
-								),
-							})),
-						),
-					}),
-				})),
-			}))
-
-			newApMatcher := PointTo(MatchFields(IgnoreExtras, Fields{
-				"Action": WithTransform(ActionToString, Equal("create")),
-				"Obj": PointTo(MatchFields(IgnoreExtras, Fields{
-					"Spec": MatchFields(IgnoreExtras, Fields{
-						"Selector": PointTo(MatchFields(IgnoreExtras, Fields{
-							"MatchLabels": ContainElement("test-service"),
-						})),
-						"Rules": ContainElements(
-							PointTo(MatchFields(IgnoreExtras, Fields{
-								"To": ContainElements(
-									PointTo(MatchFields(IgnoreExtras, Fields{
-										"Operation": PointTo(MatchFields(IgnoreExtras, Fields{
-											"Methods": ContainElements("GET", "POST"),
-											"Paths":   ContainElements("/new-path"),
-										})),
-									})),
-								),
-							})),
-						),
-					}),
-				})),
-			}))
-
+			existingApMatcher := getActionMatcher("delete", ApiNamespace, "test-service", "RequestPrincipals", ContainElements("*"), ContainElements("GET", "POST"), ContainElements("/"))
+			newApMatcher := getActionMatcher("create", ApiNamespace, "test-service", "RequestPrincipals", ContainElements("*"), ContainElements("GET", "POST"), ContainElements("/new-path"))
 			Expect(result).To(ContainElements(existingApMatcher, newApMatcher))
 		})
 
@@ -1464,64 +888,8 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 	When("Two AP with different methods for same path and service exist", func() {
 		It("should create new AP, delete old AP and re-create unchanged AP with matching method, when path has changed", func() {
 			// given: Cluster state
-			unchangedAp := securityv1beta1.AuthorizationPolicy{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "unchanged-ap",
-					Namespace: ApiNamespace,
-					Labels: map[string]string{
-						processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", ApiName, ApiNamespace),
-					},
-				},
-				Spec: v1beta1.AuthorizationPolicy{
-					Selector: &typev1beta1.WorkloadSelector{
-						MatchLabels: map[string]string{
-							"app": "test-service",
-						},
-					},
-					Rules: []*v1beta1.Rule{
-						{
-							To: []*v1beta1.Rule_To{
-								{
-									Operation: &v1beta1.Operation{
-										Methods: []string{"DELETE"},
-										Paths:   []string{"/"},
-									},
-								},
-							},
-						},
-					},
-				},
-			}
-
-			toBeUpdateAp := securityv1beta1.AuthorizationPolicy{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "to-be-updated-ap",
-					Namespace: ApiNamespace,
-					Labels: map[string]string{
-						processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", ApiName, ApiNamespace),
-					},
-				},
-				Spec: v1beta1.AuthorizationPolicy{
-					Selector: &typev1beta1.WorkloadSelector{
-						MatchLabels: map[string]string{
-							"app": "test-service",
-						},
-					},
-					Rules: []*v1beta1.Rule{
-						{
-							To: []*v1beta1.Rule_To{
-								{
-									Operation: &v1beta1.Operation{
-										Methods: []string{"GET"},
-										Paths:   []string{"/"},
-									},
-								},
-							},
-						},
-					},
-				},
-			}
-
+			unchangedAp := getRequestAuthentication("unchanged-ap", ApiNamespace, "test-service", []string{"DELETE"})
+			toBeUpdateAp := getRequestAuthentication("to-be-updated-ap", ApiNamespace, "test-service", []string{"GET"})
 			ctrlClient := GetFakeClient(&toBeUpdateAp, &unchangedAp)
 			processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig())
 
@@ -1539,134 +907,70 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			Expect(err).To(BeNil())
 			Expect(result).To(HaveLen(4))
 
-			deleteUnchangedApMatcher := PointTo(MatchFields(IgnoreExtras, Fields{
-				"Action": WithTransform(ActionToString, Equal("delete")),
-				"Obj": PointTo(MatchFields(IgnoreExtras, Fields{
-					"Spec": MatchFields(IgnoreExtras, Fields{
-						"Selector": PointTo(MatchFields(IgnoreExtras, Fields{
-							"MatchLabels": ContainElement("test-service"),
-						})),
-						"Rules": ContainElements(
-							PointTo(MatchFields(IgnoreExtras, Fields{
-								"To": ContainElements(
-									PointTo(MatchFields(IgnoreExtras, Fields{
-										"Operation": PointTo(MatchFields(IgnoreExtras, Fields{
-											"Methods": ContainElements("DELETE"),
-											"Paths":   ContainElements("/"),
-										})),
-									})),
-								),
-							})),
-						),
-					}),
-				})),
-			}))
-
-			recreateUnchangedApMatcher := PointTo(MatchFields(IgnoreExtras, Fields{
-				"Action": WithTransform(ActionToString, Equal("create")),
-				"Obj": PointTo(MatchFields(IgnoreExtras, Fields{
-					"Spec": MatchFields(IgnoreExtras, Fields{
-						"Selector": PointTo(MatchFields(IgnoreExtras, Fields{
-							"MatchLabels": ContainElement("test-service"),
-						})),
-						"Rules": ContainElements(
-							PointTo(MatchFields(IgnoreExtras, Fields{
-								"To": ContainElements(
-									PointTo(MatchFields(IgnoreExtras, Fields{
-										"Operation": PointTo(MatchFields(IgnoreExtras, Fields{
-											"Methods": ContainElements("DELETE"),
-											"Paths":   ContainElements("/"),
-										})),
-									})),
-								),
-							})),
-						),
-					}),
-				})),
-			}))
-
-			deleteApMatcher := PointTo(MatchFields(IgnoreExtras, Fields{
-				"Action": WithTransform(ActionToString, Equal("delete")),
-				"Obj": PointTo(MatchFields(IgnoreExtras, Fields{
-					"Spec": MatchFields(IgnoreExtras, Fields{
-						"Selector": PointTo(MatchFields(IgnoreExtras, Fields{
-							"MatchLabels": ContainElement("test-service"),
-						})),
-						"Rules": ContainElements(
-							PointTo(MatchFields(IgnoreExtras, Fields{
-								"To": ContainElements(
-									PointTo(MatchFields(IgnoreExtras, Fields{
-										"Operation": PointTo(MatchFields(IgnoreExtras, Fields{
-											"Methods": ContainElements("GET"),
-											"Paths":   ContainElements("/"),
-										})),
-									})),
-								),
-							})),
-						),
-					}),
-				})),
-			}))
-
-			updatedApMatcher := PointTo(MatchFields(IgnoreExtras, Fields{
-				"Action": WithTransform(ActionToString, Equal("create")),
-				"Obj": PointTo(MatchFields(IgnoreExtras, Fields{
-					"Spec": MatchFields(IgnoreExtras, Fields{
-						"Selector": PointTo(MatchFields(IgnoreExtras, Fields{
-							"MatchLabels": ContainElement("test-service"),
-						})),
-						"Rules": ContainElements(
-							PointTo(MatchFields(IgnoreExtras, Fields{
-								"To": ContainElements(
-									PointTo(MatchFields(IgnoreExtras, Fields{
-										"Operation": PointTo(MatchFields(IgnoreExtras, Fields{
-											"Methods": ContainElements("GET"),
-											"Paths":   ContainElements("/new-path"),
-										})),
-									})),
-								),
-							})),
-						),
-					}),
-				})),
-			}))
-
-			Expect(result).To(ContainElements(deleteUnchangedApMatcher, recreateUnchangedApMatcher, updatedApMatcher, deleteApMatcher))
+			deleteUnchangedApMatcher := getActionMatcher("delete", ApiNamespace, "test-service", "RequestPrincipals", ContainElements("*"), ContainElements("DELETE"), ContainElements("/"))
+			recreateUnchangedApMatcher := getActionMatcher("create", ApiNamespace, "test-service", "RequestPrincipals", ContainElements("*"), ContainElements("DELETE"), ContainElements("/"))
+			deleteMatcher := getActionMatcher("delete", ApiNamespace, "test-service", "RequestPrincipals", ContainElements("*"), ContainElements("GET"), ContainElements("/"))
+			updatedMatcher := getActionMatcher("create", ApiNamespace, "test-service", "RequestPrincipals", ContainElements("*"), ContainElements("GET"), ContainElements("/new-path"))
+			Expect(result).To(ContainElements(deleteUnchangedApMatcher, recreateUnchangedApMatcher, updatedMatcher, deleteMatcher))
 		})
 	})
 
-	When("The APIRule Service.Namespace changes", func() {
-		It("should create new AP in new namespace and delete old AP in old namespace", func() {
+	When("Namespace changes", func() {
+		It("should create new AP in new namespace and delete old AP, namespace on APIRule level", func() {
 			// given: Cluster state
-			oldAP := securityv1beta1.AuthorizationPolicy{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "unchanged-ap",
-					Namespace: ApiNamespace,
-					Labels: map[string]string{
-						processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", ApiName, ApiNamespace),
-					},
-				},
-				Spec: v1beta1.AuthorizationPolicy{
-					Selector: &typev1beta1.WorkloadSelector{
-						MatchLabels: map[string]string{
-							"app": "test-service",
-						},
-					},
-					Rules: []*v1beta1.Rule{
-						{
-							To: []*v1beta1.Rule_To{
-								{
-									Operation: &v1beta1.Operation{
-										Methods: []string{"DELETE"},
-										Paths:   []string{"/"},
-									},
-								},
-							},
-						},
-					},
-				},
-			}
+			oldAP := getRequestAuthentication("unchanged-ap", ApiNamespace, "test-service", []string{"DELETE"})
+			ctrlClient := GetFakeClient(&oldAP)
+			processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig())
 
+			// given: New resources
+			movedRule := getRuleForApTest([]string{"DELETE"}, "/", "test-service", "new-namespace")
+			rules := []gatewayv1beta1.Rule{movedRule}
+
+			apiRule := GetAPIRuleFor(rules)
+			specServiceNamespace := "new-namespace"
+			apiRule.Spec.Service.Namespace = &specServiceNamespace
+
+			// when
+			result, err := processor.EvaluateReconciliation(context.TODO(), ctrlClient, apiRule)
+
+			// then
+			Expect(err).To(BeNil())
+			Expect(result).To(HaveLen(2))
+
+			deleteMatcher := getActionMatcher("delete", ApiNamespace, "test-service", "RequestPrincipals", ContainElements("*"), ContainElements("DELETE"), ContainElements("/"))
+			createMatcher := getActionMatcher("create", "new-namespace", "test-service", "RequestPrincipals", ContainElements("*"), ContainElements("DELETE"), ContainElements("/"))
+			Expect(result).To(ContainElements(deleteMatcher, createMatcher))
+		})
+
+		It("should create new AP in new namespace and delete old AP, namespace on spec level", func() {
+			// given: Cluster state
+			oldAP := getRequestAuthentication("unchanged-ap", ApiNamespace, "test-service", []string{"DELETE"})
+			ctrlClient := GetFakeClient(&oldAP)
+			processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig())
+
+			// given: New resources
+			movedRule := getRuleForApTest([]string{"DELETE"}, "/", "test-service")
+			rules := []gatewayv1beta1.Rule{movedRule}
+
+			apiRule := GetAPIRuleFor(rules)
+			specServiceNamespace := "new-namespace"
+			apiRule.Spec.Service.Namespace = &specServiceNamespace
+
+			// when
+			result, err := processor.EvaluateReconciliation(context.TODO(), ctrlClient, apiRule)
+
+			// then
+			Expect(err).To(BeNil())
+			Expect(result).To(HaveLen(2))
+
+			deleteMatcher := getActionMatcher("delete", ApiNamespace, "test-service", "RequestPrincipals", ContainElements("*"), ContainElements("DELETE"), ContainElements("/"))
+			createMatcher := getActionMatcher("create", "new-namespace", "test-service", "RequestPrincipals", ContainElements("*"), ContainElements("DELETE"), ContainElements("/"))
+			Expect(result).To(ContainElements(deleteMatcher, createMatcher))
+		})
+
+		It("should create new AP in new namespace and delete old AP, namespace on rule level", func() {
+			// given: Cluster state
+			oldAP := getRequestAuthentication("unchanged-ap", ApiNamespace, "test-service", []string{"DELETE"})
 			ctrlClient := GetFakeClient(&oldAP)
 			processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig())
 
@@ -1683,123 +987,17 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			Expect(err).To(BeNil())
 			Expect(result).To(HaveLen(2))
 
-			createApMatcher := PointTo(MatchFields(IgnoreExtras, Fields{
-				"Action": WithTransform(ActionToString, Equal("create")),
-				"Obj": PointTo(MatchFields(IgnoreExtras, Fields{
-					"ObjectMeta": MatchFields(IgnoreExtras, Fields{
-						"Namespace": Equal("new-namespace"),
-					}),
-					"Spec": MatchFields(IgnoreExtras, Fields{
-						"Selector": PointTo(MatchFields(IgnoreExtras, Fields{
-							"MatchLabels": ContainElement("test-service"),
-						})),
-						"Rules": ContainElements(
-							PointTo(MatchFields(IgnoreExtras, Fields{
-								"To": ContainElements(
-									PointTo(MatchFields(IgnoreExtras, Fields{
-										"Operation": PointTo(MatchFields(IgnoreExtras, Fields{
-											"Methods": ContainElements("DELETE"),
-											"Paths":   ContainElements("/"),
-										})),
-									})),
-								),
-							})),
-						),
-					}),
-				})),
-			}))
-
-			deleteApMatcher := PointTo(MatchFields(IgnoreExtras, Fields{
-				"Action": WithTransform(ActionToString, Equal("delete")),
-				"Obj": PointTo(MatchFields(IgnoreExtras, Fields{
-					"ObjectMeta": MatchFields(IgnoreExtras, Fields{
-						"Namespace": Equal(ApiNamespace),
-					}),
-					"Spec": MatchFields(IgnoreExtras, Fields{
-						"Selector": PointTo(MatchFields(IgnoreExtras, Fields{
-							"MatchLabels": ContainElement("test-service"),
-						})),
-						"Rules": ContainElements(
-							PointTo(MatchFields(IgnoreExtras, Fields{
-								"To": ContainElements(
-									PointTo(MatchFields(IgnoreExtras, Fields{
-										"Operation": PointTo(MatchFields(IgnoreExtras, Fields{
-											"Methods": ContainElements("DELETE"),
-											"Paths":   ContainElements("/"),
-										})),
-									})),
-								),
-							})),
-						),
-					}),
-				})),
-			}))
-
-			Expect(result).To(ContainElements(createApMatcher, deleteApMatcher))
+			deleteMatcher := getActionMatcher("delete", ApiNamespace, "test-service", "RequestPrincipals", ContainElements("*"), ContainElements("DELETE"), ContainElements("/"))
+			createMatcher := getActionMatcher("create", "new-namespace", "test-service", "RequestPrincipals", ContainElements("*"), ContainElements("DELETE"), ContainElements("/"))
+			Expect(result).To(ContainElements(deleteMatcher, createMatcher))
 		})
 	})
 
 	When("Two AP with same RuleTo for different services exist", func() {
 		It("should create new AP, recreate unchanged AP and delete old AP with matching service, when path has changed", func() {
 			// given: Cluster state
-			unchangedAp := securityv1beta1.AuthorizationPolicy{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "unchanged-ap",
-					Namespace: ApiNamespace,
-					Labels: map[string]string{
-						processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", ApiName, ApiNamespace),
-					},
-				},
-				Spec: v1beta1.AuthorizationPolicy{
-					Selector: &typev1beta1.WorkloadSelector{
-						MatchLabels: map[string]string{
-							"app": "first-service",
-						},
-					},
-					Rules: []*v1beta1.Rule{
-						{
-							To: []*v1beta1.Rule_To{
-								{
-									Operation: &v1beta1.Operation{
-										Methods: []string{"GET"},
-										Paths:   []string{"/"},
-									},
-								},
-							},
-						},
-					},
-				},
-			}
-
-			toBeUpdateAp := securityv1beta1.AuthorizationPolicy{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "to-be-updated-ap",
-					Namespace: ApiNamespace,
-					Labels: map[string]string{
-						processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", ApiName, ApiNamespace),
-					},
-				},
-				Spec: v1beta1.AuthorizationPolicy{
-					Selector: &typev1beta1.WorkloadSelector{
-						MatchLabels: map[string]string{
-							"app": "second-service",
-						},
-					},
-					Rules: []*v1beta1.Rule{
-						{
-							To: []*v1beta1.Rule_To{
-								{
-									Operation: &v1beta1.Operation{
-										Methods: []string{"GET"},
-										Paths:   []string{"/"},
-									},
-								},
-							},
-						},
-					},
-				},
-			}
-
+			unchangedAp := getRequestAuthentication("unchanged-ap", ApiNamespace, "first-service", []string{"GET"})
+			toBeUpdateAp := getRequestAuthentication("to-be-updated-ap", ApiNamespace, "second-service", []string{"GET"})
 			ctrlClient := GetFakeClient(&toBeUpdateAp, &unchangedAp)
 			processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig())
 
@@ -1817,99 +1015,11 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			Expect(err).To(BeNil())
 			Expect(result).To(HaveLen(4))
 
-			deleteUnchangedApMatcher := PointTo(MatchFields(IgnoreExtras, Fields{
-				"Action": WithTransform(ActionToString, Equal("delete")),
-				"Obj": PointTo(MatchFields(IgnoreExtras, Fields{
-					"Spec": MatchFields(IgnoreExtras, Fields{
-						"Selector": PointTo(MatchFields(IgnoreExtras, Fields{
-							"MatchLabels": ContainElement("first-service"),
-						})),
-						"Rules": ContainElements(
-							PointTo(MatchFields(IgnoreExtras, Fields{
-								"To": ContainElements(
-									PointTo(MatchFields(IgnoreExtras, Fields{
-										"Operation": PointTo(MatchFields(IgnoreExtras, Fields{
-											"Methods": ContainElements("GET"),
-											"Paths":   ContainElements("/"),
-										})),
-									})),
-								),
-							})),
-						),
-					}),
-				})),
-			}))
-
-			recreateUnchangedApMatcher := PointTo(MatchFields(IgnoreExtras, Fields{
-				"Action": WithTransform(ActionToString, Equal("create")),
-				"Obj": PointTo(MatchFields(IgnoreExtras, Fields{
-					"Spec": MatchFields(IgnoreExtras, Fields{
-						"Selector": PointTo(MatchFields(IgnoreExtras, Fields{
-							"MatchLabels": ContainElement("first-service"),
-						})),
-						"Rules": ContainElements(
-							PointTo(MatchFields(IgnoreExtras, Fields{
-								"To": ContainElements(
-									PointTo(MatchFields(IgnoreExtras, Fields{
-										"Operation": PointTo(MatchFields(IgnoreExtras, Fields{
-											"Methods": ContainElements("GET"),
-											"Paths":   ContainElements("/"),
-										})),
-									})),
-								),
-							})),
-						),
-					}),
-				})),
-			}))
-
-			deleteApMatcher := PointTo(MatchFields(IgnoreExtras, Fields{
-				"Action": WithTransform(ActionToString, Equal("delete")),
-				"Obj": PointTo(MatchFields(IgnoreExtras, Fields{
-					"Spec": MatchFields(IgnoreExtras, Fields{
-						"Selector": PointTo(MatchFields(IgnoreExtras, Fields{
-							"MatchLabels": ContainElement("second-service"),
-						})),
-						"Rules": ContainElements(
-							PointTo(MatchFields(IgnoreExtras, Fields{
-								"To": ContainElements(
-									PointTo(MatchFields(IgnoreExtras, Fields{
-										"Operation": PointTo(MatchFields(IgnoreExtras, Fields{
-											"Methods": ContainElements("GET"),
-											"Paths":   ContainElements("/"),
-										})),
-									})),
-								),
-							})),
-						),
-					}),
-				})),
-			}))
-
-			updatedApMatcher := PointTo(MatchFields(IgnoreExtras, Fields{
-				"Action": WithTransform(ActionToString, Equal("create")),
-				"Obj": PointTo(MatchFields(IgnoreExtras, Fields{
-					"Spec": MatchFields(IgnoreExtras, Fields{
-						"Selector": PointTo(MatchFields(IgnoreExtras, Fields{
-							"MatchLabels": ContainElement("second-service"),
-						})),
-						"Rules": ContainElements(
-							PointTo(MatchFields(IgnoreExtras, Fields{
-								"To": ContainElements(
-									PointTo(MatchFields(IgnoreExtras, Fields{
-										"Operation": PointTo(MatchFields(IgnoreExtras, Fields{
-											"Methods": ContainElements("GET"),
-											"Paths":   ContainElements("/new-path"),
-										})),
-									})),
-								),
-							})),
-						),
-					}),
-				})),
-			}))
-
-			Expect(result).To(ContainElements(deleteUnchangedApMatcher, recreateUnchangedApMatcher, updatedApMatcher, deleteApMatcher))
+			deleteUnchangedApMatcher := getActionMatcher("delete", ApiNamespace, "first-service", "RequestPrincipals", ContainElements("*"), ContainElements("GET"), ContainElements("/"))
+			recreateUnchangedApMatcher := getActionMatcher("create", ApiNamespace, "first-service", "RequestPrincipals", ContainElements("*"), ContainElements("GET"), ContainElements("/"))
+			deleteMatcher := getActionMatcher("delete", ApiNamespace, "second-service", "RequestPrincipals", ContainElements("*"), ContainElements("GET"), ContainElements("/"))
+			updatedApMatcher := getActionMatcher("create", ApiNamespace, "second-service", "RequestPrincipals", ContainElements("*"), ContainElements("GET"), ContainElements("/new-path"))
+			Expect(result).To(ContainElements(deleteUnchangedApMatcher, recreateUnchangedApMatcher, updatedApMatcher, deleteMatcher))
 		})
 	})
 })

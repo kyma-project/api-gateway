@@ -15,6 +15,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	. "github.com/onsi/gomega/gstruct"
+	gomegatypes "github.com/onsi/gomega/types"
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
@@ -31,6 +32,53 @@ var _ = Describe("Request Authentication Processor", func() {
 				},
 			},
 		}
+	}
+
+	getRequestAuthentication := func(name string, serviceName string, jwksUri string, issuer string) securityv1beta1.RequestAuthentication {
+		return securityv1beta1.RequestAuthentication{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      name,
+				Namespace: ApiNamespace,
+				Labels: map[string]string{
+					processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", ApiName, ApiNamespace),
+				},
+			},
+			Spec: v1beta1.RequestAuthentication{
+				Selector: &typev1beta1.WorkloadSelector{
+					MatchLabels: map[string]string{
+						"app": serviceName,
+					},
+				},
+				JwtRules: []*v1beta1.JWTRule{
+					{
+						JwksUri: jwksUri,
+						Issuer:  issuer,
+					},
+				},
+			},
+		}
+	}
+
+	getActionMatcher := func(action string, namespace string, serviceName string, jwksUri string, issuer string) gomegatypes.GomegaMatcher {
+		return PointTo(MatchFields(IgnoreExtras, Fields{
+			"Action": WithTransform(ActionToString, Equal(action)),
+			"Obj": PointTo(MatchFields(IgnoreExtras, Fields{
+				"ObjectMeta": MatchFields(IgnoreExtras, Fields{
+					"Namespace": Equal(namespace),
+				}),
+				"Spec": MatchFields(IgnoreExtras, Fields{
+					"Selector": PointTo(MatchFields(IgnoreExtras, Fields{
+						"MatchLabels": ContainElement(serviceName),
+					})),
+					"JwtRules": ContainElements(
+						PointTo(MatchFields(IgnoreExtras, Fields{
+							"JwksUri": Equal(jwksUri),
+							"Issuer":  Equal(issuer),
+						})),
+					),
+				}),
+			})),
+		}))
 	}
 
 	It("should produce one RA for a rule with one issuer and two paths", func() {
@@ -84,6 +132,8 @@ var _ = Describe("Request Authentication Processor", func() {
 
 		ra := result[0].Obj.(*securityv1beta1.RequestAuthentication)
 		Expect(ra).NotTo(BeNil())
+		// The RA should be in .Spec.Service.Namespace
+		Expect(ra.Namespace).To(Equal(ApiNamespace))
 		Expect(ra.Spec.Selector.MatchLabels[TestSelectorKey]).To(Equal(ServiceName))
 	})
 
@@ -91,14 +141,14 @@ var _ = Describe("Request Authentication Processor", func() {
 		// given
 		jwt := createIstioJwtAccessStrategy()
 		ruleServiceName := "rule-scope-example-service"
+		specServiceNamespace := "spec-service-namespace"
 		service := &gatewayv1beta1.Service{
 			Name: &ruleServiceName,
 			Port: &ServicePort,
 		}
 		client := GetFakeClient()
 		ruleJwt := GetRuleWithServiceFor(HeadersApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, []*gatewayv1beta1.Authenticator{jwt}, service)
-		apiRule := GetAPIRuleFor([]gatewayv1beta1.Rule{ruleJwt})
-
+		apiRule := GetAPIRuleFor([]gatewayv1beta1.Rule{ruleJwt}, specServiceNamespace)
 		processor := istio.NewRequestAuthenticationProcessor(GetTestConfig())
 
 		// when
@@ -110,6 +160,8 @@ var _ = Describe("Request Authentication Processor", func() {
 
 		ra := result[0].Obj.(*securityv1beta1.RequestAuthentication)
 		Expect(ra).NotTo(BeNil())
+		// The RA should be in .Spec.Service.Namespace
+		Expect(ra.Namespace).To(Equal(specServiceNamespace))
 		Expect(ra.Spec.Selector.MatchLabels[TestSelectorKey]).To(Equal(ruleServiceName))
 	})
 
@@ -117,16 +169,15 @@ var _ = Describe("Request Authentication Processor", func() {
 		// given
 		jwt := createIstioJwtAccessStrategy()
 		ruleServiceName := "rule-scope-example-service"
-		namespace := "other-namespace"
+		ruleServiceNamespace := "rule-service-namespace"
 		service := &gatewayv1beta1.Service{
 			Name:      &ruleServiceName,
 			Port:      &ServicePort,
-			Namespace: &namespace,
+			Namespace: &ruleServiceNamespace,
 		}
 		client := GetFakeClient()
 		ruleJwt := GetRuleWithServiceFor(HeadersApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, []*gatewayv1beta1.Authenticator{jwt}, service)
 		apiRule := GetAPIRuleFor([]gatewayv1beta1.Rule{ruleJwt})
-
 		processor := istio.NewRequestAuthenticationProcessor(GetTestConfig())
 
 		// when
@@ -139,9 +190,8 @@ var _ = Describe("Request Authentication Processor", func() {
 		ra := result[0].Obj.(*securityv1beta1.RequestAuthentication)
 		Expect(ra).NotTo(BeNil())
 		Expect(ra.Spec.Selector.MatchLabels[TestSelectorKey]).To(Equal(ruleServiceName))
-
 		// The RA should be in .Service.Namespace
-		Expect(ra.Namespace).To(Equal(namespace))
+		Expect(ra.Namespace).To(Equal(ruleServiceNamespace))
 		// And the OwnerLabel should point to APIRule namespace
 		Expect(ra.Labels[processing.OwnerLabel]).ToNot(BeEmpty())
 		Expect(ra.Labels[processing.OwnerLabel]).To(Equal(fmt.Sprintf("%s.%s", apiRule.Name, apiRule.Namespace)))
@@ -282,26 +332,7 @@ var _ = Describe("Request Authentication Processor", func() {
 
 	It("should delete RA when there is no rule configured in ApiRule", func() {
 		// given: Cluster state
-		existingRa := securityv1beta1.RequestAuthentication{
-			ObjectMeta: metav1.ObjectMeta{
-				Labels: map[string]string{
-					processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", ApiName, ApiNamespace),
-				},
-			},
-			Spec: v1beta1.RequestAuthentication{
-				Selector: &typev1beta1.WorkloadSelector{
-					MatchLabels: map[string]string{
-						"app": "test-service",
-					},
-				},
-				JwtRules: []*v1beta1.JWTRule{
-					{
-						JwksUri: JwksUri,
-						Issuer:  JwtIssuer,
-					},
-				},
-			},
-		}
+		existingRa := getRequestAuthentication("raName", "test-service", JwksUri, JwtIssuer)
 
 		ctrlClient := GetFakeClient(&existingRa)
 		processor := istio.NewRequestAuthenticationProcessor(GetTestConfig())
@@ -322,27 +353,7 @@ var _ = Describe("Request Authentication Processor", func() {
 
 		It("should update RA when nothing changed", func() {
 			// given: Cluster state
-			existingRa := securityv1beta1.RequestAuthentication{
-				ObjectMeta: metav1.ObjectMeta{
-					Namespace: ApiNamespace,
-					Labels: map[string]string{
-						processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", ApiName, ApiNamespace),
-					},
-				},
-				Spec: v1beta1.RequestAuthentication{
-					Selector: &typev1beta1.WorkloadSelector{
-						MatchLabels: map[string]string{
-							"app": "test-service",
-						},
-					},
-					JwtRules: []*v1beta1.JWTRule{
-						{
-							JwksUri: JwksUri,
-							Issuer:  JwtIssuer,
-						},
-					},
-				},
-			}
+			existingRa := getRequestAuthentication("raName", "test-service", JwksUri, JwtIssuer)
 			ctrlClient := GetFakeClient(&existingRa)
 			processor := istio.NewRequestAuthenticationProcessor(GetTestConfig())
 
@@ -362,27 +373,7 @@ var _ = Describe("Request Authentication Processor", func() {
 
 		It("should delete and create new RA when only service name in JWT Rule has changed", func() {
 			// given: Cluster state
-			existingRa := securityv1beta1.RequestAuthentication{
-				ObjectMeta: metav1.ObjectMeta{
-					Labels: map[string]string{
-						processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", ApiName, ApiNamespace),
-					},
-				},
-				Spec: v1beta1.RequestAuthentication{
-					Selector: &typev1beta1.WorkloadSelector{
-						MatchLabels: map[string]string{
-							"app": "old-service",
-						},
-					},
-					JwtRules: []*v1beta1.JWTRule{
-						{
-							JwksUri: JwksUri,
-							Issuer:  JwtIssuer,
-						},
-					},
-				},
-			}
-
+			existingRa := getRequestAuthentication("raName", "old-service", JwksUri, JwtIssuer)
 			ctrlClient := GetFakeClient(&existingRa)
 			processor := istio.NewRequestAuthenticationProcessor(GetTestConfig())
 
@@ -398,67 +389,14 @@ var _ = Describe("Request Authentication Processor", func() {
 			Expect(err).To(BeNil())
 			Expect(result).To(HaveLen(2))
 
-			deleteMatcher := PointTo(MatchFields(IgnoreExtras, Fields{
-				"Action": WithTransform(ActionToString, Equal("delete")),
-				"Obj": PointTo(MatchFields(IgnoreExtras, Fields{
-					"Spec": MatchFields(IgnoreExtras, Fields{
-						"Selector": PointTo(MatchFields(IgnoreExtras, Fields{
-							"MatchLabels": ContainElement("old-service"),
-						})),
-						"JwtRules": ContainElements(
-							PointTo(MatchFields(IgnoreExtras, Fields{
-								"JwksUri": Equal(JwksUri),
-								"Issuer":  Equal(JwtIssuer),
-							})),
-						),
-					}),
-				})),
-			}))
-
-			createMatcher := PointTo(MatchFields(IgnoreExtras, Fields{
-				"Action": WithTransform(ActionToString, Equal("create")),
-				"Obj": PointTo(MatchFields(IgnoreExtras, Fields{
-					"Spec": MatchFields(IgnoreExtras, Fields{
-						"Selector": PointTo(MatchFields(IgnoreExtras, Fields{
-							"MatchLabels": ContainElement("updated-service"),
-						})),
-						"JwtRules": ContainElements(
-							PointTo(MatchFields(IgnoreExtras, Fields{
-								"JwksUri": Equal(JwksUri),
-								"Issuer":  Equal(JwtIssuer),
-							})),
-						),
-					}),
-				})),
-			}))
-
+			deleteMatcher := getActionMatcher("delete", ApiNamespace, "old-service", JwksUri, JwtIssuer)
+			createMatcher := getActionMatcher("create", ApiNamespace, "updated-service", JwksUri, JwtIssuer)
 			Expect(result).To(ContainElements(deleteMatcher, createMatcher))
 		})
 
 		It("should create new RA when new service with new JWT config is added to ApiRule", func() {
 			// given: Cluster state
-			existingRa := securityv1beta1.RequestAuthentication{
-				ObjectMeta: metav1.ObjectMeta{
-					Namespace: ApiNamespace,
-					Labels: map[string]string{
-						processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", ApiName, ApiNamespace),
-					},
-				},
-				Spec: v1beta1.RequestAuthentication{
-					Selector: &typev1beta1.WorkloadSelector{
-						MatchLabels: map[string]string{
-							"app": "existing-service",
-						},
-					},
-					JwtRules: []*v1beta1.JWTRule{
-						{
-							JwksUri: JwksUri,
-							Issuer:  JwtIssuer,
-						},
-					},
-				},
-			}
-
+			existingRa := getRequestAuthentication("raName", "existing-service", JwksUri, JwtIssuer)
 			ctrlClient := GetFakeClient(&existingRa)
 			processor := istio.NewRequestAuthenticationProcessor(GetTestConfig())
 
@@ -475,66 +413,14 @@ var _ = Describe("Request Authentication Processor", func() {
 			Expect(err).To(BeNil())
 			Expect(result).To(HaveLen(2))
 
-			updateResultMatcher := PointTo(MatchFields(IgnoreExtras, Fields{
-				"Action": WithTransform(ActionToString, Equal("update")),
-				"Obj": PointTo(MatchFields(IgnoreExtras, Fields{
-					"Spec": MatchFields(IgnoreExtras, Fields{
-						"Selector": PointTo(MatchFields(IgnoreExtras, Fields{
-							"MatchLabels": ContainElement("existing-service"),
-						})),
-						"JwtRules": ContainElements(
-							PointTo(MatchFields(IgnoreExtras, Fields{
-								"JwksUri": Equal(JwksUri),
-								"Issuer":  Equal(JwtIssuer),
-							})),
-						),
-					}),
-				})),
-			}))
-
-			createResultMatcher := PointTo(MatchFields(IgnoreExtras, Fields{
-				"Action": WithTransform(ActionToString, Equal("create")),
-				"Obj": PointTo(MatchFields(IgnoreExtras, Fields{
-					"Spec": MatchFields(IgnoreExtras, Fields{
-						"Selector": PointTo(MatchFields(IgnoreExtras, Fields{
-							"MatchLabels": ContainElement("new-service"),
-						})),
-						"JwtRules": ContainElements(
-							PointTo(MatchFields(IgnoreExtras, Fields{
-								"JwksUri": Equal(JwksUri),
-								"Issuer":  Equal("https://new.issuer.com/"),
-							})),
-						),
-					}),
-				})),
-			}))
-
+			updateResultMatcher := getActionMatcher("update", ApiNamespace, "existing-service", JwksUri, JwtIssuer)
+			createResultMatcher := getActionMatcher("create", ApiNamespace, "new-service", JwksUri, "https://new.issuer.com/")
 			Expect(result).To(ContainElements(createResultMatcher, updateResultMatcher))
 		})
 
 		It("should create new RA and delete old RA when JWT ApiRule has new JWKS URI", func() {
 			// given: Cluster state
-			existingRa := securityv1beta1.RequestAuthentication{
-				ObjectMeta: metav1.ObjectMeta{
-					Labels: map[string]string{
-						processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", ApiName, ApiNamespace),
-					},
-				},
-				Spec: v1beta1.RequestAuthentication{
-					Selector: &typev1beta1.WorkloadSelector{
-						MatchLabels: map[string]string{
-							"app": "test-service",
-						},
-					},
-					JwtRules: []*v1beta1.JWTRule{
-						{
-							JwksUri: JwksUri,
-							Issuer:  JwtIssuer,
-						},
-					},
-				},
-			}
-
+			existingRa := getRequestAuthentication("raName", "test-service", JwksUri, JwtIssuer)
 			ctrlClient := GetFakeClient(&existingRa)
 			processor := istio.NewRequestAuthenticationProcessor(GetTestConfig())
 
@@ -550,41 +436,10 @@ var _ = Describe("Request Authentication Processor", func() {
 			Expect(err).To(BeNil())
 			Expect(result).To(HaveLen(2))
 
-			createResultMatcher := PointTo(MatchFields(IgnoreExtras, Fields{
-				"Action": WithTransform(ActionToString, Equal("create")),
-				"Obj": PointTo(MatchFields(IgnoreExtras, Fields{
-					"Spec": MatchFields(IgnoreExtras, Fields{
-						"Selector": PointTo(MatchFields(IgnoreExtras, Fields{
-							"MatchLabels": ContainElement("test-service"),
-						})),
-						"JwtRules": ContainElements(
-							PointTo(MatchFields(IgnoreExtras, Fields{
-								"JwksUri": Equal(JwksUri2),
-								"Issuer":  Equal(JwtIssuer),
-							})),
-						),
-					}),
-				})),
-			}))
+			deleteResultMatcher := getActionMatcher("delete", ApiNamespace, "test-service", JwksUri, JwtIssuer)
+			createResultMatcher := getActionMatcher("create", ApiNamespace, "test-service", JwksUri2, JwtIssuer)
 
-			deleteResultMatcher := PointTo(MatchFields(IgnoreExtras, Fields{
-				"Action": WithTransform(ActionToString, Equal("delete")),
-				"Obj": PointTo(MatchFields(IgnoreExtras, Fields{
-					"Spec": MatchFields(IgnoreExtras, Fields{
-						"Selector": PointTo(MatchFields(IgnoreExtras, Fields{
-							"MatchLabels": ContainElement("test-service"),
-						})),
-						"JwtRules": ContainElements(
-							PointTo(MatchFields(IgnoreExtras, Fields{
-								"JwksUri": Equal(JwksUri),
-								"Issuer":  Equal(JwtIssuer),
-							})),
-						),
-					}),
-				})),
-			}))
-
-			Expect(result).To(ContainElements(createResultMatcher, deleteResultMatcher))
+			Expect(result).To(ContainElements(deleteResultMatcher, createResultMatcher))
 		})
 	})
 
@@ -592,52 +447,9 @@ var _ = Describe("Request Authentication Processor", func() {
 
 		It("should update RAs and create new RA for first-service and delete old RA when JWT issuer in JWT Rule for first-service has changed", func() {
 			// given: Cluster state
-			existingFirstServiceRa := securityv1beta1.RequestAuthentication{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "firstRa",
-					Labels: map[string]string{
-						processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", ApiName, ApiNamespace),
-					},
-				},
-				Spec: v1beta1.RequestAuthentication{
-					Selector: &typev1beta1.WorkloadSelector{
-						MatchLabels: map[string]string{
-							"app": "first-service",
-						},
-					},
-					JwtRules: []*v1beta1.JWTRule{
-						{
-							JwksUri: JwksUri,
-							Issuer:  JwtIssuer,
-						},
-					},
-				},
-			}
-
-			existingSecondServiceRa := securityv1beta1.RequestAuthentication{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "secondRa",
-					Namespace: ApiNamespace,
-					Labels: map[string]string{
-						processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", ApiName, ApiNamespace),
-					},
-				},
-				Spec: v1beta1.RequestAuthentication{
-					Selector: &typev1beta1.WorkloadSelector{
-						MatchLabels: map[string]string{
-							"app": "second-service",
-						},
-					},
-					JwtRules: []*v1beta1.JWTRule{
-						{
-							JwksUri: JwksUri,
-							Issuer:  JwtIssuer,
-						},
-					},
-				},
-			}
-
-			ctrlClient := GetFakeClient(&existingFirstServiceRa, &existingSecondServiceRa)
+			firstServiceRa := getRequestAuthentication("firstRa", "first-service", JwksUri, JwtIssuer)
+			secondServiceRa := getRequestAuthentication("secondRa", "second-service", JwksUri, JwtIssuer)
+			ctrlClient := GetFakeClient(&firstServiceRa, &secondServiceRa)
 			processor := istio.NewRequestAuthenticationProcessor(GetTestConfig())
 
 			// given: New resources
@@ -653,108 +465,16 @@ var _ = Describe("Request Authentication Processor", func() {
 			Expect(err).To(BeNil())
 			Expect(result).To(HaveLen(3))
 
-			createFirstServiceRaResultMatcher := PointTo(MatchFields(IgnoreExtras, Fields{
-				"Action": WithTransform(ActionToString, Equal("create")),
-				"Obj": PointTo(MatchFields(IgnoreExtras, Fields{
-					"Spec": MatchFields(IgnoreExtras, Fields{
-						"Selector": PointTo(MatchFields(IgnoreExtras, Fields{
-							"MatchLabels": ContainElement("first-service"),
-						})),
-						"JwtRules": ContainElements(
-							PointTo(MatchFields(IgnoreExtras, Fields{
-								"JwksUri": Equal(JwksUri),
-								"Issuer":  Equal("https://new.issuer.com/"),
-							})),
-						),
-					}),
-				})),
-			}))
-
-			deleteFirstServiceRaResultMatcher := PointTo(MatchFields(IgnoreExtras, Fields{
-				"Action": WithTransform(ActionToString, Equal("delete")),
-				"Obj": PointTo(MatchFields(IgnoreExtras, Fields{
-					"Spec": MatchFields(IgnoreExtras, Fields{
-						"Selector": PointTo(MatchFields(IgnoreExtras, Fields{
-							"MatchLabels": ContainElement("first-service"),
-						})),
-						"JwtRules": ContainElements(
-							PointTo(MatchFields(IgnoreExtras, Fields{
-								"JwksUri": Equal(JwksUri),
-								"Issuer":  Equal(JwtIssuer),
-							})),
-						),
-					}),
-				})),
-			}))
-
-			secondRaResultMatcher := PointTo(MatchFields(IgnoreExtras, Fields{
-				"Action": WithTransform(ActionToString, Equal("update")),
-				"Obj": PointTo(MatchFields(IgnoreExtras, Fields{
-					"Spec": MatchFields(IgnoreExtras, Fields{
-						"Selector": PointTo(MatchFields(IgnoreExtras, Fields{
-							"MatchLabels": ContainElement("second-service"),
-						})),
-						"JwtRules": ContainElements(
-							PointTo(MatchFields(IgnoreExtras, Fields{
-								"JwksUri": Equal(JwksUri),
-								"Issuer":  Equal(JwtIssuer),
-							})),
-						),
-					}),
-				})),
-			}))
-
-			Expect(result).To(ContainElements(createFirstServiceRaResultMatcher, deleteFirstServiceRaResultMatcher, secondRaResultMatcher))
+			deleteFirstServiceRaResultMatcher := getActionMatcher("delete", ApiNamespace, "first-service", JwksUri, JwtIssuer)
+			createFirstServiceRaResultMatcher := getActionMatcher("create", ApiNamespace, "first-service", JwksUri, "https://new.issuer.com/")
+			secondRaResultMatcher := getActionMatcher("update", ApiNamespace, "second-service", JwksUri, JwtIssuer)
+			Expect(result).To(ContainElements(deleteFirstServiceRaResultMatcher, createFirstServiceRaResultMatcher, secondRaResultMatcher))
 		})
 
 		It("should delete only first-service RA when it was removed from ApiRule", func() {
 			// given: Cluster state
-			firstServiceRa := securityv1beta1.RequestAuthentication{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "firstRa",
-					Namespace: ApiNamespace,
-					Labels: map[string]string{
-						processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", ApiName, ApiNamespace),
-					},
-				},
-				Spec: v1beta1.RequestAuthentication{
-					Selector: &typev1beta1.WorkloadSelector{
-						MatchLabels: map[string]string{
-							"app": "first-service",
-						},
-					},
-					JwtRules: []*v1beta1.JWTRule{
-						{
-							JwksUri: JwksUri,
-							Issuer:  JwtIssuer,
-						},
-					},
-				},
-			}
-
-			secondServiceRa := securityv1beta1.RequestAuthentication{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "secondRa",
-					Namespace: ApiNamespace,
-					Labels: map[string]string{
-						processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", ApiName, ApiNamespace),
-					},
-				},
-				Spec: v1beta1.RequestAuthentication{
-					Selector: &typev1beta1.WorkloadSelector{
-						MatchLabels: map[string]string{
-							"app": "second-service",
-						},
-					},
-					JwtRules: []*v1beta1.JWTRule{
-						{
-							JwksUri: JwksUri,
-							Issuer:  JwtIssuer,
-						},
-					},
-				},
-			}
-
+			firstServiceRa := getRequestAuthentication("firstRa", "first-service", JwksUri, JwtIssuer)
+			secondServiceRa := getRequestAuthentication("secondRa", "second-service", JwksUri, JwtIssuer)
 			ctrlClient := GetFakeClient(&firstServiceRa, &secondServiceRa)
 			processor := istio.NewRequestAuthenticationProcessor(GetTestConfig())
 
@@ -770,91 +490,15 @@ var _ = Describe("Request Authentication Processor", func() {
 			Expect(err).To(BeNil())
 			Expect(result).To(HaveLen(2))
 
-			deleteResultMatcher := PointTo(MatchFields(IgnoreExtras, Fields{
-				"Action": WithTransform(ActionToString, Equal("delete")),
-				"Obj": PointTo(MatchFields(IgnoreExtras, Fields{
-					"Spec": MatchFields(IgnoreExtras, Fields{
-						"Selector": PointTo(MatchFields(IgnoreExtras, Fields{
-							"MatchLabels": ContainElement("first-service"),
-						})),
-						"JwtRules": ContainElements(
-							PointTo(MatchFields(IgnoreExtras, Fields{
-								"JwksUri": Equal(JwksUri),
-								"Issuer":  Equal(JwtIssuer),
-							})),
-						),
-					}),
-				})),
-			}))
-
-			updateResultMatcher := PointTo(MatchFields(IgnoreExtras, Fields{
-				"Action": WithTransform(ActionToString, Equal("update")),
-				"Obj": PointTo(MatchFields(IgnoreExtras, Fields{
-					"Spec": MatchFields(IgnoreExtras, Fields{
-						"Selector": PointTo(MatchFields(IgnoreExtras, Fields{
-							"MatchLabels": ContainElement("second-service"),
-						})),
-						"JwtRules": ContainElements(
-							PointTo(MatchFields(IgnoreExtras, Fields{
-								"JwksUri": Equal(JwksUri),
-								"Issuer":  Equal(JwtIssuer),
-							})),
-						),
-					}),
-				})),
-			}))
-
+			deleteResultMatcher := getActionMatcher("delete", ApiNamespace, "first-service", JwksUri, JwtIssuer)
+			updateResultMatcher := getActionMatcher("update", ApiNamespace, "second-service", JwksUri, JwtIssuer)
 			Expect(result).To(ContainElements(deleteResultMatcher, updateResultMatcher))
 		})
 
 		It("should create new RA when it has different service", func() {
 			// given: Cluster state
-			firstServiceRa := securityv1beta1.RequestAuthentication{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "firstRa",
-					Namespace: ApiNamespace,
-					Labels: map[string]string{
-						processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", ApiName, ApiNamespace),
-					},
-				},
-				Spec: v1beta1.RequestAuthentication{
-					Selector: &typev1beta1.WorkloadSelector{
-						MatchLabels: map[string]string{
-							"app": "first-service",
-						},
-					},
-					JwtRules: []*v1beta1.JWTRule{
-						{
-							JwksUri: JwksUri,
-							Issuer:  JwtIssuer,
-						},
-					},
-				},
-			}
-
-			secondServiceRa := securityv1beta1.RequestAuthentication{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "secondRa",
-					Namespace: ApiNamespace,
-					Labels: map[string]string{
-						processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", ApiName, ApiNamespace),
-					},
-				},
-				Spec: v1beta1.RequestAuthentication{
-					Selector: &typev1beta1.WorkloadSelector{
-						MatchLabels: map[string]string{
-							"app": "second-service",
-						},
-					},
-					JwtRules: []*v1beta1.JWTRule{
-						{
-							JwksUri: JwksUri,
-							Issuer:  JwtIssuer,
-						},
-					},
-				},
-			}
-
+			firstServiceRa := getRequestAuthentication("firstRa", "first-service", JwksUri, JwtIssuer)
+			secondServiceRa := getRequestAuthentication("secondRa", "second-service", JwksUri, JwtIssuer)
 			ctrlClient := GetFakeClient(&firstServiceRa, &secondServiceRa)
 			processor := istio.NewRequestAuthenticationProcessor(GetTestConfig())
 
@@ -872,91 +516,46 @@ var _ = Describe("Request Authentication Processor", func() {
 			Expect(err).To(BeNil())
 			Expect(result).To(HaveLen(3))
 
-			firstRaMatcher := PointTo(MatchFields(IgnoreExtras, Fields{
-				"Action": WithTransform(ActionToString, Equal("update")),
-				"Obj": PointTo(MatchFields(IgnoreExtras, Fields{
-					"Spec": MatchFields(IgnoreExtras, Fields{
-						"Selector": PointTo(MatchFields(IgnoreExtras, Fields{
-							"MatchLabels": ContainElement("first-service"),
-						})),
-						"JwtRules": ContainElements(
-							PointTo(MatchFields(IgnoreExtras, Fields{
-								"JwksUri": Equal(JwksUri),
-								"Issuer":  Equal(JwtIssuer),
-							})),
-						),
-					}),
-				})),
-			}))
-
-			secondRaMatcher := PointTo(MatchFields(IgnoreExtras, Fields{
-				"Action": WithTransform(ActionToString, Equal("update")),
-				"Obj": PointTo(MatchFields(IgnoreExtras, Fields{
-					"Spec": MatchFields(IgnoreExtras, Fields{
-						"Selector": PointTo(MatchFields(IgnoreExtras, Fields{
-							"MatchLabels": ContainElement("second-service"),
-						})),
-						"JwtRules": ContainElements(
-							PointTo(MatchFields(IgnoreExtras, Fields{
-								"JwksUri": Equal(JwksUri),
-								"Issuer":  Equal(JwtIssuer),
-							})),
-						),
-					}),
-				})),
-			}))
-
-			newRaMatcher := PointTo(MatchFields(IgnoreExtras, Fields{
-				"Action": WithTransform(ActionToString, Equal("create")),
-				"Obj": PointTo(MatchFields(IgnoreExtras, Fields{
-					"Spec": MatchFields(IgnoreExtras, Fields{
-						"Selector": PointTo(MatchFields(IgnoreExtras, Fields{
-							"MatchLabels": ContainElement("new-service"),
-						})),
-						"JwtRules": ContainElements(
-							PointTo(MatchFields(IgnoreExtras, Fields{
-								"JwksUri": Equal(JwksUri),
-								"Issuer":  Equal(JwtIssuer),
-							})),
-						),
-					}),
-				})),
-			}))
-
+			firstRaMatcher := getActionMatcher("update", ApiNamespace, "first-service", JwksUri, JwtIssuer)
+			secondRaMatcher := getActionMatcher("update", ApiNamespace, "second-service", JwksUri, JwtIssuer)
+			newRaMatcher := getActionMatcher("create", ApiNamespace, "new-service", JwksUri, JwtIssuer)
 			Expect(result).To(ContainElements(firstRaMatcher, secondRaMatcher, newRaMatcher))
 		})
 
-		It("should delete and create new RA when it has different namespace", func() {
+		It("should delete and create new RA when it has different namespace on spec level", func() {
 			// given: Cluster state
-			oldRa := securityv1beta1.RequestAuthentication{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "firstRa",
-					Namespace: ApiNamespace,
-					Labels: map[string]string{
-						processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", ApiName, ApiNamespace),
-					},
-				},
-				Spec: v1beta1.RequestAuthentication{
-					Selector: &typev1beta1.WorkloadSelector{
-						MatchLabels: map[string]string{
-							"app": "old-service",
-						},
-					},
-					JwtRules: []*v1beta1.JWTRule{
-						{
-							JwksUri: JwksUri,
-							Issuer:  JwtIssuer,
-						},
-					},
-				},
-			}
-
+			oldRa := getRequestAuthentication("firstRa", "old-service", JwksUri, JwtIssuer)
 			ctrlClient := GetFakeClient(&oldRa)
 			processor := istio.NewRequestAuthenticationProcessor(GetTestConfig())
 
 			// given: New resources
-			firstJwtRule := GetJwtRuleWithService(JwtIssuer, JwksUri, "old-service", "new-namespace")
-			rules := []gatewayv1beta1.Rule{firstJwtRule}
+			jwtRule := GetJwtRuleWithService(JwtIssuer, JwksUri, "old-service", "new-namespace")
+			rules := []gatewayv1beta1.Rule{jwtRule}
+			apiRule := GetAPIRuleFor(rules)
+			specServiceNamespace := "new-namespace"
+			apiRule.Spec.Service.Namespace = &specServiceNamespace
+
+			// when
+			result, err := processor.EvaluateReconciliation(context.TODO(), ctrlClient, apiRule)
+
+			// then
+			Expect(err).To(BeNil())
+			Expect(result).To(HaveLen(2))
+
+			deletionMatcher := getActionMatcher("delete", ApiNamespace, "old-service", JwksUri, JwtIssuer)
+			creationMatcher := getActionMatcher("create", "new-namespace", "old-service", JwksUri, JwtIssuer)
+			Expect(result).To(ContainElements(deletionMatcher, creationMatcher))
+		})
+
+		It("should delete and create new RA when it has different namespace on rule level", func() {
+			// given: Cluster state
+			oldRa := getRequestAuthentication("firstRa", "old-service", JwksUri, JwtIssuer)
+			ctrlClient := GetFakeClient(&oldRa)
+			processor := istio.NewRequestAuthenticationProcessor(GetTestConfig())
+
+			// given: New resources
+			jwtRule := GetJwtRuleWithService(JwtIssuer, JwksUri, "old-service", "new-namespace")
+			rules := []gatewayv1beta1.Rule{jwtRule}
 			apiRule := GetAPIRuleFor(rules)
 
 			// when
@@ -966,46 +565,8 @@ var _ = Describe("Request Authentication Processor", func() {
 			Expect(err).To(BeNil())
 			Expect(result).To(HaveLen(2))
 
-			deletionMatcher := PointTo(MatchFields(IgnoreExtras, Fields{
-				"Action": WithTransform(ActionToString, Equal("delete")),
-				"Obj": PointTo(MatchFields(IgnoreExtras, Fields{
-					"ObjectMeta": MatchFields(IgnoreExtras, Fields{
-						"Namespace": Equal(ApiNamespace),
-					}),
-					"Spec": MatchFields(IgnoreExtras, Fields{
-						"Selector": PointTo(MatchFields(IgnoreExtras, Fields{
-							"MatchLabels": ContainElement("old-service"),
-						})),
-						"JwtRules": ContainElements(
-							PointTo(MatchFields(IgnoreExtras, Fields{
-								"JwksUri": Equal(JwksUri),
-								"Issuer":  Equal(JwtIssuer),
-							})),
-						),
-					}),
-				})),
-			}))
-
-			creationMatcher := PointTo(MatchFields(IgnoreExtras, Fields{
-				"Action": WithTransform(ActionToString, Equal("create")),
-				"Obj": PointTo(MatchFields(IgnoreExtras, Fields{
-					"ObjectMeta": MatchFields(IgnoreExtras, Fields{
-						"Namespace": Equal("new-namespace"),
-					}),
-					"Spec": MatchFields(IgnoreExtras, Fields{
-						"Selector": PointTo(MatchFields(IgnoreExtras, Fields{
-							"MatchLabels": ContainElement("old-service"),
-						})),
-						"JwtRules": ContainElements(
-							PointTo(MatchFields(IgnoreExtras, Fields{
-								"JwksUri": Equal(JwksUri),
-								"Issuer":  Equal(JwtIssuer),
-							})),
-						),
-					}),
-				})),
-			}))
-
+			deletionMatcher := getActionMatcher("delete", ApiNamespace, "old-service", JwksUri, JwtIssuer)
+			creationMatcher := getActionMatcher("create", "new-namespace", "old-service", JwksUri, JwtIssuer)
 			Expect(result).To(ContainElements(deletionMatcher, creationMatcher))
 		})
 	})
