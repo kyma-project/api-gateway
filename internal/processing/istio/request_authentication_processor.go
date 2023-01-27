@@ -50,7 +50,7 @@ func (r requestAuthenticationCreator) Create(api *gatewayv1beta1.APIRule) map[st
 
 func generateRequestAuthentication(api *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rule, additionalLabels map[string]string) *securityv1beta1.RequestAuthentication {
 	namePrefix := fmt.Sprintf("%s-", api.ObjectMeta.Name)
-	namespace := api.ObjectMeta.Namespace
+	namespace := helpers.FindServiceNamespace(api, &rule)
 
 	raBuilder := builders.RequestAuthenticationBuilder().
 		GenerateName(namePrefix).
