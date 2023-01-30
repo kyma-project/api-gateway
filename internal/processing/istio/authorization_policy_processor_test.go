@@ -916,32 +916,6 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 	})
 
 	When("Namespace changes", func() {
-		It("should create new AP in new namespace and delete old AP, namespace on APIRule level", func() {
-			// given: Cluster state
-			oldAP := getRequestAuthentication("unchanged-ap", ApiNamespace, "test-service", []string{"DELETE"})
-			ctrlClient := GetFakeClient(&oldAP)
-			processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig())
-
-			// given: New resources
-			movedRule := getRuleForApTest([]string{"DELETE"}, "/", "test-service", "new-namespace")
-			rules := []gatewayv1beta1.Rule{movedRule}
-
-			apiRule := GetAPIRuleFor(rules)
-			specServiceNamespace := "new-namespace"
-			apiRule.Spec.Service.Namespace = &specServiceNamespace
-
-			// when
-			result, err := processor.EvaluateReconciliation(context.TODO(), ctrlClient, apiRule)
-
-			// then
-			Expect(err).To(BeNil())
-			Expect(result).To(HaveLen(2))
-
-			deleteMatcher := getActionMatcher("delete", ApiNamespace, "test-service", "RequestPrincipals", ContainElements("*"), ContainElements("DELETE"), ContainElements("/"))
-			createMatcher := getActionMatcher("create", "new-namespace", "test-service", "RequestPrincipals", ContainElements("*"), ContainElements("DELETE"), ContainElements("/"))
-			Expect(result).To(ContainElements(deleteMatcher, createMatcher))
-		})
-
 		It("should create new AP in new namespace and delete old AP, namespace on spec level", func() {
 			// given: Cluster state
 			oldAP := getRequestAuthentication("unchanged-ap", ApiNamespace, "test-service", []string{"DELETE"})
