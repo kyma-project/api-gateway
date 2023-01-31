@@ -9,7 +9,7 @@ func FindServiceNamespace(api *gatewayv1beta1.APIRule, rule *gatewayv1beta1.Rule
 	if rule != nil && rule.Service != nil && rule.Service.Namespace != nil {
 		return *rule.Service.Namespace
 	}
-	if api.Spec.Service != nil && api.Spec.Service.Namespace != nil {
+	if api != nil && api.Spec.Service != nil && api.Spec.Service.Namespace != nil {
 		return *api.Spec.Service.Namespace
 	}
 	return api.Namespace
