@@ -2,6 +2,7 @@ package processing_test
 
 import (
 	"fmt"
+
 	apirulev1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
 	"github.com/kyma-incubator/api-gateway/internal/processing"
 	"github.com/onsi/gomega"
@@ -99,7 +100,7 @@ func GetRuleWithServiceFor(path string, methods []string, mutators []*apirulev1b
 	}
 }
 
-func GetJwtRuleWithService(jwtIssuer, jwksUri, serviceName string) apirulev1beta1.Rule {
+func GetJwtRuleWithService(jwtIssuer, jwksUri, serviceName string, namespace ...string) apirulev1beta1.Rule {
 	jwtConfigJSON := fmt.Sprintf(`{"authentications": [{"issuer": "%s", "jwksUri": "%s"}]}`, jwtIssuer, jwksUri)
 	jwt := []*apirulev1beta1.Authenticator{
 		{
@@ -117,16 +118,23 @@ func GetJwtRuleWithService(jwtIssuer, jwksUri, serviceName string) apirulev1beta
 		Name: &serviceName,
 		Port: &port,
 	}
+	if len(namespace) > 0 {
+		jwtRuleService.Namespace = &namespace[0]
+	}
 
 	return GetRuleWithServiceFor("path", ApiMethods, []*apirulev1beta1.Mutator{}, jwt, jwtRuleService)
 }
 
-func GetAPIRuleFor(rules []apirulev1beta1.Rule) *apirulev1beta1.APIRule {
+func GetAPIRuleFor(rules []apirulev1beta1.Rule, namespace ...string) *apirulev1beta1.APIRule {
+	apiNamespace := ApiNamespace
+	if len(namespace) > 0 {
+		apiNamespace = namespace[0]
+	}
 	return &apirulev1beta1.APIRule{
 		ObjectMeta: v1.ObjectMeta{
 			Name:      ApiName,
 			UID:       ApiUID,
-			Namespace: ApiNamespace,
+			Namespace: apiNamespace,
 		},
 		TypeMeta: v1.TypeMeta{
 			APIVersion: ApiAPIVersion,
