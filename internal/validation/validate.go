@@ -144,7 +144,7 @@ func (v *APIRule) validateService(attributePath string, api *gatewayv1beta1.APIR
 	for namespace, services := range v.ServiceBlockList {
 		for _, svc := range services {
 			serviceNamespace := helpers.FindServiceNamespace(api, nil)
-			if svc == *api.Spec.Service.Name && namespace == serviceNamespace {
+			if api != nil && svc == *api.Spec.Service.Name && namespace == serviceNamespace {
 				problems = append(problems, Failure{
 					AttributePath: attributePath + ".name",
 					Message:       fmt.Sprintf("Service %s in namespace %s is blocklisted", svc, namespace),
