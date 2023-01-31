@@ -215,13 +215,6 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		return r.updateStatusOrRetry(ctx, apiRule, processing.GenerateStatusFromFailures(configValidationFailures, statusBase))
 	}
 
-	//Prevent reconciliation after status update. It should be solved by controller-runtime implementation but still isn't.
-
-	r.Log.Info("Validating if not status update or temporary annotation set")
-	if apiRule.Generation != apiRule.Status.ObservedGeneration {
-		r.Log.Info("not a status update")
-	}
-
 	status := processing.Reconcile(ctx, r.Client, &r.Log, cmd, apiRule)
 	r.Log.Info("Update status or retry")
 	return r.updateStatusOrRetry(ctx, apiRule, status)
@@ -239,6 +232,7 @@ func (r *APIRuleReconciler) getReconciliation(config processing.ReconciliationCo
 func (r *APIRuleReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&gatewayv1beta1.APIRule{}).
+		WithEventFilter(predicate.GenerationChangedPredicate{}).
 		Watches(&source.Kind{Type: &corev1.ConfigMap{}}, &handler.EnqueueRequestForObject{}).
 		WithEventFilter(&configMapPredicate{Log: r.Log}).
 		Complete(r)
