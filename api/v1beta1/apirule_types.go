@@ -41,7 +41,7 @@ type APIRuleSpec struct {
 	Host *string `json:"host"`
 	// Definition of the service to expose
 	// +optional
-	Service *Service `json:"service"`
+	Service *Service `json:"service,omitempty"`
 	// Gateway to be used
 	// +kubebuilder:validation:Pattern=`^[0-9a-z-_]+(\/[0-9a-z-_]+|(\.[0-9a-z-_]+)*)$`
 	Gateway *string `json:"gateway"`
@@ -111,7 +111,7 @@ type Rule struct {
 	Path string `json:"path"`
 	// Definition of the service to expose, overwrites spec level service if defined
 	// +optional
-	Service *Service `json:"service"`
+	Service *Service `json:"service,omitempty"`
 	// Set of allowed HTTP methods
 	// +kubebuilder:validation:MinItems=1
 	Methods []string `json:"methods"`
