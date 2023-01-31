@@ -17,6 +17,10 @@ func InitializeIstioJwtTests(ctx *godog.TestSuiteContext) {
 	InitializeScenarioIstioJWT(ctx.ScenarioContext())
 }
 
+func InitializeIstioJwtScopesTests(ctx *godog.TestSuiteContext) {
+	InitializeScenarioIstioJWTScopes(ctx.ScenarioContext())
+}
+
 func TestIstioJwt(t *testing.T) {
 	InitTestSuite()
 
@@ -36,6 +40,35 @@ func TestIstioJwt(t *testing.T) {
 		Name:                 "istio-jwt",
 		TestSuiteInitializer: InitializeIstioJwtTests,
 		Options:              &apiGatewayIstioJwtOpts,
+	}
+
+	defer cleanUp(orgJwtHandler)
+
+	testExitCode := apiGatewayIstioJwtSuite.Run()
+	if testExitCode != 0 {
+		t.Fatalf("non-zero status returned, failed to run feature tests, Pod list: %s\n APIRules: %s\n", getPodListReport(), getApiRules())
+	}
+}
+
+func TestIstioJwtScopes(t *testing.T) {
+	InitTestSuite()
+
+	orgJwtHandler, err := SwitchJwtHandler("istio")
+	if err != nil {
+		log.Print(err.Error())
+		t.Fatalf("unable to switch to Istio jwtHandler")
+	}
+
+	SetupCommonResources("istio-jwt")
+
+	apiGatewayIstioJwtScopesOpts := goDogOpts
+	apiGatewayIstioJwtScopesOpts.Paths = []string{"features/istio-jwt/istio_jwt_scopes.feature"}
+	apiGatewayIstioJwtScopesOpts.Concurrency = conf.TestConcurency
+
+	apiGatewayIstioJwtSuite := godog.TestSuite{
+		Name:                 "istio-jwt-scopes",
+		TestSuiteInitializer: InitializeIstioJwtScopesTests,
+		Options:              &apiGatewayIstioJwtScopesOpts,
 	}
 
 	defer cleanUp(orgJwtHandler)
