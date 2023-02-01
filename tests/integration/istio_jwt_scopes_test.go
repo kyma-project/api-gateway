@@ -23,8 +23,6 @@ func InitializeScenarioIstioJWTScopes(ctx *godog.ScenarioContext) {
 	scenario := istioJwtScopesScenario{mainScenario}
 
 	ctx.Step(`^IstioJWTScopes: There is a deployment secured with JWT on path "([^"]*)"$`, scenario.thereIsAnEndpoint)
-	ctx.Step(`^IstioJWTScopes: Calling the "([^"]*)" endpoint without a token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithoutTokenShouldResultInStatusBetween)
-	ctx.Step(`^IstioJWTScopes: Calling the "([^"]*)" endpoint with a invalid token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithInvalidTokenShouldResultInStatusBetween)
 	ctx.Step(`^IstioJWTScopes: Calling the "([^"]*)" endpoint with a valid "([^"]*)" token and valid scopes should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithValidScopesShouldResultInStatusBetween)
 	ctx.Step(`^IstioJWTScopes: Calling the second "([^"]*)" endpoint with a valid "([^"]*)" token and invalid scopes should result in status between (\d+) and (\d+)$`, scenario.callingTheSecondEndpointWithValidTokenWithoutScopesShouldResultInStatusBetween)
 }
@@ -45,14 +43,6 @@ func (o *istioJwtScopesScenario) callingTheEndpointWithValidScopesShouldResultIn
 		return helper.CallEndpointWithHeadersWithRetries(headerVal, authorizationHeaderName, fmt.Sprintf("%s%s", o.url, path), &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher})
 	}
 	return errors.New("should not happen")
-}
-
-func (o *istioJwtScopesScenario) callingTheEndpointWithInvalidTokenShouldResultInStatusBetween(path string, lower, higher int) error {
-	return helper.CallEndpointWithHeadersWithRetries(anyToken, authorizationHeaderName, fmt.Sprintf("%s%s", o.url, path), &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher})
-}
-
-func (o *istioJwtScopesScenario) callingTheEndpointWithoutTokenShouldResultInStatusBetween(path string, lower, higher int) error {
-	return helper.CallEndpointWithRetries(fmt.Sprintf("%s%s", o.url, path), &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher})
 }
 
 func (o *istioJwtScopesScenario) callingTheSecondEndpointWithValidTokenWithoutScopesShouldResultInStatusBetween(path, tokenType string, lower, higher int) error {
