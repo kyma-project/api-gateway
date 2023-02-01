@@ -100,6 +100,7 @@ type Scenario struct {
 	namespace   string
 	url         string
 	apiResource []unstructured.Unstructured
+	secondUrl   string
 }
 
 type TwoStepScenario struct {
@@ -336,7 +337,12 @@ func CreateScenario(templateFileName string, namePrefix string, deploymentFile .
 	if err != nil {
 		return nil, fmt.Errorf("failed to process resource manifest files, details %s", err.Error())
 	}
-	return &Scenario{namespace: namespace, url: fmt.Sprintf("https://httpbin-%s.%s", testID, conf.Domain), apiResource: accessRule}, nil
+	return &Scenario{
+		namespace:   namespace,
+		url:         fmt.Sprintf("https://httpbin-%s.%s", testID, conf.Domain),
+		apiResource: accessRule,
+		secondUrl:   fmt.Sprintf("https://httpbin2-%s.%s", testID, conf.Domain),
+	}, nil
 }
 
 func copy(src, dst string) (int64, error) {

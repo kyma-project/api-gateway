@@ -26,7 +26,7 @@ func InitializeScenarioIstioJWTScopes(ctx *godog.ScenarioContext) {
 	ctx.Step(`^IstioJWTScopes: Calling the "([^"]*)" endpoint without a token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithoutTokenShouldResultInStatusBetween)
 	ctx.Step(`^IstioJWTScopes: Calling the "([^"]*)" endpoint with a invalid token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithInvalidTokenShouldResultInStatusBetween)
 	ctx.Step(`^IstioJWTScopes: Calling the "([^"]*)" endpoint with a valid "([^"]*)" token and valid scopes should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithValidScopesShouldResultInStatusBetween)
-	ctx.Step(`^IstioJWTScopes: Calling the "([^"]*)" endpoint with a valid "([^"]*)" token and invalid scopes should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithValidTokenWithoutScopesShouldResultInStatusBetween)
+	ctx.Step(`^IstioJWTScopes: Calling the second "([^"]*)" endpoint with a valid "([^"]*)" token and invalid scopes should result in status between (\d+) and (\d+)$`, scenario.callingTheSecondEndpointWithValidTokenWithoutScopesShouldResultInStatusBetween)
 }
 
 func (o *istioJwtScopesScenario) thereIsAnEndpoint() error {
@@ -55,7 +55,7 @@ func (o *istioJwtScopesScenario) callingTheEndpointWithoutTokenShouldResultInSta
 	return helper.CallEndpointWithRetries(fmt.Sprintf("%s%s", o.url, path), &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher})
 }
 
-func (o *istioJwtScopesScenario) callingTheEndpointWithValidTokenWithoutScopesShouldResultInStatusBetween(path, tokenType string, lower, higher int) error {
+func (o *istioJwtScopesScenario) callingTheSecondEndpointWithValidTokenWithoutScopesShouldResultInStatusBetween(path, tokenType string, lower, higher int) error {
 	switch tokenType {
 	case "JWT":
 		tokenJWT, err := jwt.GetAccessToken(oauth2Cfg, jwtConfig)
@@ -64,7 +64,7 @@ func (o *istioJwtScopesScenario) callingTheEndpointWithValidTokenWithoutScopesSh
 		}
 		headerVal := fmt.Sprintf("Bearer %s", tokenJWT)
 
-		return helper.CallEndpointWithHeadersWithRetries(headerVal, authorizationHeaderName, fmt.Sprintf("%s%s", o.url, path), &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher})
+		return helper.CallEndpointWithHeadersWithRetries(headerVal, authorizationHeaderName, fmt.Sprintf("%s%s", o.secondUrl, path), &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher})
 	}
 	return errors.New("should not happen")
 }
