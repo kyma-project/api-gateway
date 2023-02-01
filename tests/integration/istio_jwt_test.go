@@ -21,47 +21,47 @@ type istioJwtScenario struct {
 }
 
 func InitScenarioIstioJWT(ctx *godog.ScenarioContext) {
-	initScenarioIstioJWT(ctx)
-	initHappyPathScenario(ctx)
-	initUnhappyPathScenario(ctx)
+	initCommon(ctx)
+	initScopesHappyPath(ctx)
+	initScopesUnhappyPath(ctx)
 }
 
-func initScenarioIstioJWT(ctx *godog.ScenarioContext) {
-	mainScenario, err := CreateScenario(istioJwtApiRuleFile, "istio-jwt")
+func initCommon(ctx *godog.ScenarioContext) {
+	s, err := CreateScenario(istioJwtApiRuleFile, "istio-jwt")
 	if err != nil {
 		t.Fatalf("could not initialize unsecure endpoint scenario err=%s", err)
 	}
 
-	scenario := istioJwtScenario{mainScenario}
+	scenario := istioJwtScenario{s}
 
-	ctx.Step(`^IstioJWT: There is a deployment secured with JWT on path "([^"]*)"$`, scenario.thereIsAnEndpoint)
-	ctx.Step(`^IstioJWT: Calling the "([^"]*)" endpoint without a token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithoutTokenShouldResultInStatusBetween)
-	ctx.Step(`^IstioJWT: Calling the "([^"]*)" endpoint with a invalid token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithInvalidTokenShouldResultInStatusBetween)
-	ctx.Step(`^IstioJWT: Calling the "([^"]*)" endpoint with a valid "([^"]*)" token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithValidTokenShouldResultInStatusBetween)
+	ctx.Step(`^Common: There is a deployment secured with JWT on path "([^"]*)"$`, scenario.thereIsAnEndpoint)
+	ctx.Step(`^Common: Calling the "([^"]*)" endpoint without a token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithoutTokenShouldResultInStatusBetween)
+	ctx.Step(`^Common: Calling the "([^"]*)" endpoint with an invalid token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithInvalidTokenShouldResultInStatusBetween)
+	ctx.Step(`^Common: Calling the "([^"]*)" endpoint with a valid "([^"]*)" token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithValidTokenShouldResultInStatusBetween)
 }
 
-func initHappyPathScenario(ctx *godog.ScenarioContext) {
-	scen, err := CreateScenario(happyPathManifestFile, "istio-jwt-scopes-happy")
+func initScopesHappyPath(ctx *godog.ScenarioContext) {
+	s, err := CreateScenario(happyPathManifestFile, "istio-jwt-scopes-happy")
 	if err != nil {
 		t.Fatalf("could not initialize unsecure endpoint scenario err=%s", err)
 	}
 
-	scenario := istioJwtScenario{scen}
+	scenario := istioJwtScenario{s}
 
-	ctx.Step(`^HappyIstioJWTScopes: There is a deployment secured with JWT on path "([^"]*)"$`, scenario.thereIsAnEndpoint)
-	ctx.Step(`^HappyIstioJWTScopes: Calling the "([^"]*)" endpoint with a valid "([^"]*)" token and valid scopes should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithValidTokenShouldResultInStatusBetween)
+	ctx.Step(`^ScopesHappy: There is a deployment secured with JWT on path "([^"]*)"$`, scenario.thereIsAnEndpoint)
+	ctx.Step(`^ScopesHappy: Calling the "([^"]*)" endpoint with a valid "([^"]*)" token with scopes read and write should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithValidTokenShouldResultInStatusBetween)
 }
 
-func initUnhappyPathScenario(ctx *godog.ScenarioContext) {
-	scen, err := CreateScenario(unhappyPathManifestFile, "istio-jwt-scopes-happy")
+func initScopesUnhappyPath(ctx *godog.ScenarioContext) {
+	s, err := CreateScenario(unhappyPathManifestFile, "istio-jwt-scopes-unhappy")
 	if err != nil {
 		t.Fatalf("could not initialize unsecure endpoint scenario err=%s", err)
 	}
 
-	scenario := istioJwtScenario{scen}
+	scenario := istioJwtScenario{s}
 
-	ctx.Step(`^UnhappyIstioJWTScopes: There is a deployment secured with JWT on path "([^"]*)"$`, scenario.thereIsAnEndpoint)
-	ctx.Step(`^UnhappyIstioJWTScopes: Calling the second "([^"]*)" endpoint with a valid "([^"]*)" token and invalid scopes should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithValidTokenShouldResultInStatusBetween)
+	ctx.Step(`^ScopesUnhappy: There is a deployment secured with JWT on path "([^"]*)"$`, scenario.thereIsAnEndpoint)
+	ctx.Step(`^ScopesUnhappy: Calling the "([^"]*)" endpoint with a valid "([^"]*)" token with scopes read and write should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithValidTokenShouldResultInStatusBetween)
 }
 
 func (o *istioJwtScenario) thereIsAnEndpoint() error {

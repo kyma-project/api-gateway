@@ -21,4 +21,3 @@ spec:
                 jwksUri: "{{ .IssuerUrl }}/oauth2/certs"
             authorizations:
               - requiredScopes: ["read", "write"]
-              - requiredScopes: ["test"]
