@@ -49,8 +49,6 @@ const (
 	manifestsDirectory        = "manifests/"
 	testingAppFile            = "testing-app.yaml"
 	globalCommonResourcesFile = "global-commons.yaml"
-	istioJwtApiRuleFile       = "istio-jwt-strategy.yaml"
-	istioJwtApiRuleScopesFile = "istio-jwt-scopes.yaml"
 	resourceSeparator         = "---"
 	exportResultVar           = "EXPORT_RESULT"
 	junitFileName             = "junit-report.xml"
@@ -100,7 +98,6 @@ type Scenario struct {
 	namespace   string
 	url         string
 	apiResource []unstructured.Unstructured
-	secondUrl   string
 }
 
 type TwoStepScenario struct {
@@ -341,7 +338,6 @@ func CreateScenario(templateFileName string, namePrefix string, deploymentFile .
 		namespace:   namespace,
 		url:         fmt.Sprintf("https://httpbin-%s.%s", testID, conf.Domain),
 		apiResource: accessRule,
-		secondUrl:   fmt.Sprintf("https://httpbin2-%s.%s", testID, conf.Domain),
 	}, nil
 }
 

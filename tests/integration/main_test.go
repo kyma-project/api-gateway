@@ -14,38 +14,6 @@ import (
 )
 
 func TestIstioJwt(t *testing.T) {
-	opts := goDogOpts
-	opts.Paths = []string{"features/istio-jwt/istio_jwt.feature"}
-	opts.Concurrency = conf.TestConcurency
-
-	suite := godog.TestSuite{
-		Name: "istio-jwt",
-		TestSuiteInitializer: func(ctx *godog.TestSuiteContext) {
-			InitializeScenarioIstioJWT(ctx.ScenarioContext())
-		},
-		Options: &opts,
-	}
-
-	runIstioJwtTest(t, suite)
-}
-
-func TestIstioJwtScopes(t *testing.T) {
-	opts := goDogOpts
-	opts.Paths = []string{"features/istio-jwt/istio_jwt_scopes.feature"}
-	opts.Concurrency = conf.TestConcurency
-
-	suite := godog.TestSuite{
-		Name: "istio-jwt-scopes",
-		TestSuiteInitializer: func(ctx *godog.TestSuiteContext) {
-			InitializeScenarioIstioJWTScopes(ctx.ScenarioContext())
-		},
-		Options: &opts,
-	}
-
-	runIstioJwtTest(t, suite)
-}
-
-func runIstioJwtTest(t *testing.T, suite godog.TestSuite) {
 	InitTestSuite()
 
 	orgJwtHandler, err := SwitchJwtHandler("istio")
@@ -56,6 +24,18 @@ func runIstioJwtTest(t *testing.T, suite godog.TestSuite) {
 	defer cleanUp(orgJwtHandler)
 
 	SetupCommonResources("istio-jwt")
+
+	opts := goDogOpts
+	opts.Paths = []string{"features/istio-jwt/istio_jwt.feature"}
+	opts.Concurrency = conf.TestConcurency
+
+	suite := godog.TestSuite{
+		Name: "istio-jwt",
+		TestSuiteInitializer: func(ctx *godog.TestSuiteContext) {
+			InitScenarioIstioJWT(ctx.ScenarioContext())
+		},
+		Options: &opts,
+	}
 
 	testExitCode := suite.Run()
 	if testExitCode != 0 {
