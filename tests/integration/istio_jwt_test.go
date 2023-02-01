@@ -10,29 +10,65 @@ import (
 	"github.com/kyma-incubator/api-gateway/tests/integration/pkg/jwt"
 )
 
+const (
+	istioJwtApiRuleFile     = "istio-jwt-strategy.yaml"
+	happyPathManifestFile   = "istio-jwt-scopes-happy.yaml"
+	unhappyPathManifestFile = "istio-jwt-scopes-unhappy.yaml"
+)
+
 type istioJwtScenario struct {
 	*Scenario
 }
 
-func InitializeScenarioIstioJWT(ctx *godog.ScenarioContext) {
-	mainScenario, err := CreateScenario(istioJwtApiruleFile, "istio-jwt")
+func InitScenarioIstioJWT(ctx *godog.ScenarioContext) {
+	initCommon(ctx)
+	initScopesHappyPath(ctx)
+	initScopesUnhappyPath(ctx)
+}
+
+func initCommon(ctx *godog.ScenarioContext) {
+	s, err := CreateScenario(istioJwtApiRuleFile, "istio-jwt")
 	if err != nil {
 		t.Fatalf("could not initialize unsecure endpoint scenario err=%s", err)
 	}
 
-	scenario := istioJwtScenario{mainScenario}
+	scenario := istioJwtScenario{s}
 
-	ctx.Step(`^IstioJWT: There is a deployment secured with JWT on path "([^"]*)"$`, scenario.thereIsAnEndpoint)
-	ctx.Step(`^IstioJWT: Calling the "([^"]*)" endpoint without a token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithoutTokenShouldResultInStatusBeetween)
-	ctx.Step(`^IstioJWT: Calling the "([^"]*)" endpoint with a invalid token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithInvalidTokenShouldResultInStatusBeetween)
-	ctx.Step(`^IstioJWT: Calling the "([^"]*)" endpoint with a valid "([^"]*)" token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithValidTokenShouldResultInStatusBeetween)
+	ctx.Step(`^Common: There is a deployment secured with JWT on path "([^"]*)"$`, scenario.thereIsAnEndpoint)
+	ctx.Step(`^Common: Calling the "([^"]*)" endpoint without a token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithoutTokenShouldResultInStatusBetween)
+	ctx.Step(`^Common: Calling the "([^"]*)" endpoint with an invalid token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithInvalidTokenShouldResultInStatusBetween)
+	ctx.Step(`^Common: Calling the "([^"]*)" endpoint with a valid "([^"]*)" token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithValidTokenShouldResultInStatusBetween)
+}
+
+func initScopesHappyPath(ctx *godog.ScenarioContext) {
+	s, err := CreateScenario(happyPathManifestFile, "istio-jwt-scopes-happy")
+	if err != nil {
+		t.Fatalf("could not initialize unsecure endpoint scenario err=%s", err)
+	}
+
+	scenario := istioJwtScenario{s}
+
+	ctx.Step(`^ScopesHappy: There is a deployment secured with JWT on path "([^"]*)"$`, scenario.thereIsAnEndpoint)
+	ctx.Step(`^ScopesHappy: Calling the "([^"]*)" endpoint with a valid "([^"]*)" token with scopes read and write should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithValidTokenShouldResultInStatusBetween)
+}
+
+func initScopesUnhappyPath(ctx *godog.ScenarioContext) {
+	s, err := CreateScenario(unhappyPathManifestFile, "istio-jwt-scopes-unhappy")
+	if err != nil {
+		t.Fatalf("could not initialize unsecure endpoint scenario err=%s", err)
+	}
+
+	scenario := istioJwtScenario{s}
+
+	ctx.Step(`^ScopesUnhappy: There is a deployment secured with JWT on path "([^"]*)"$`, scenario.thereIsAnEndpoint)
+	ctx.Step(`^ScopesUnhappy: Calling the "([^"]*)" endpoint with a valid "([^"]*)" token with scopes read and write should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithValidTokenShouldResultInStatusBetween)
 }
 
 func (o *istioJwtScenario) thereIsAnEndpoint() error {
 	return helper.APIRuleWithRetries(batch.CreateResources, batch.UpdateResources, k8sClient, o.apiResource)
 }
 
-func (o *istioJwtScenario) callingTheEndpointWithValidTokenShouldResultInStatusBeetween(path, tokenType string, lower, higher int) error {
+func (o *istioJwtScenario) callingTheEndpointWithValidTokenShouldResultInStatusBetween(path, tokenType string, lower, higher int) error {
 	switch tokenType {
 	case "JWT":
 		tokenJWT, err := jwt.GetAccessToken(oauth2Cfg, jwtConfig)
@@ -46,10 +82,10 @@ func (o *istioJwtScenario) callingTheEndpointWithValidTokenShouldResultInStatusB
 	return errors.New("should not happen")
 }
 
-func (o *istioJwtScenario) callingTheEndpointWithInvalidTokenShouldResultInStatusBeetween(path string, lower, higher int) error {
+func (o *istioJwtScenario) callingTheEndpointWithInvalidTokenShouldResultInStatusBetween(path string, lower, higher int) error {
 	return helper.CallEndpointWithHeadersWithRetries(anyToken, authorizationHeaderName, fmt.Sprintf("%s%s", o.url, path), &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher})
 }
 
-func (o *istioJwtScenario) callingTheEndpointWithoutTokenShouldResultInStatusBeetween(path string, lower, higher int) error {
+func (o *istioJwtScenario) callingTheEndpointWithoutTokenShouldResultInStatusBetween(path string, lower, higher int) error {
 	return helper.CallEndpointWithRetries(fmt.Sprintf("%s%s", o.url, path), &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher})
 }

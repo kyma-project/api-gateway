@@ -24,7 +24,7 @@ func GetAccessToken(oauth2Cfg *clientcredentials.Config, config *Config) (string
 		Timeout: config.ClientConfig.ClientTimeout,
 		Jar:     jar,
 	}
-	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+
 	ctx := context.WithValue(context.Background(), oauth2.HTTPClient, httpClient)
 	token, err := oauth2Cfg.Token(ctx)
 	if err != nil {

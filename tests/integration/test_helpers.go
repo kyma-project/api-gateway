@@ -49,7 +49,6 @@ const (
 	manifestsDirectory        = "manifests/"
 	testingAppFile            = "testing-app.yaml"
 	globalCommonResourcesFile = "global-commons.yaml"
-	istioJwtApiruleFile       = "istio-jwt-strategy.yaml"
 	resourceSeparator         = "---"
 	exportResultVar           = "EXPORT_RESULT"
 	junitFileName             = "junit-report.xml"
@@ -126,8 +125,6 @@ func InitTestSuite() {
 		},
 		Timeout: conf.ClientTimeout,
 	}
-
-	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 
 	commonRetryOpts := []retry.Option{
 		retry.Delay(time.Duration(conf.ReqDelay) * time.Second),
@@ -335,7 +332,11 @@ func CreateScenario(templateFileName string, namePrefix string, deploymentFile .
 	if err != nil {
 		return nil, fmt.Errorf("failed to process resource manifest files, details %s", err.Error())
 	}
-	return &Scenario{namespace: namespace, url: fmt.Sprintf("https://httpbin-%s.%s", testID, conf.Domain), apiResource: accessRule}, nil
+	return &Scenario{
+		namespace:   namespace,
+		url:         fmt.Sprintf("https://httpbin-%s.%s", testID, conf.Domain),
+		apiResource: accessRule,
+	}, nil
 }
 
 func copy(src, dst string) (int64, error) {
