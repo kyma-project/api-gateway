@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	AudianceKey string = "request.auth.audiences"
+	AudienceKey string = "request.auth.audiences"
 )
 
 var (
@@ -114,7 +114,7 @@ func generateAuthorizationPolicySpec(api *gatewayv1beta1.APIRule, rule gatewayv1
 
 			for _, aud := range authorization.Audiences {
 				ruleBuilder.WithWhenCondition(
-					builders.NewConditionBuilder().WithKey(AudianceKey).WithValues([]string{aud}).Get())
+					builders.NewConditionBuilder().WithKey(AudienceKey).WithValues([]string{aud}).Get())
 			}
 
 			authorizationPolicySpecBuilder.WithRule(ruleBuilder.Get())
@@ -123,7 +123,7 @@ func generateAuthorizationPolicySpec(api *gatewayv1beta1.APIRule, rule gatewayv1
 		ruleBuilder := baseRuleBuilder(rule)
 		for _, aud := range authorization.Audiences {
 			ruleBuilder.WithWhenCondition(
-				builders.NewConditionBuilder().WithKey(AudianceKey).WithValues([]string{aud}).Get())
+				builders.NewConditionBuilder().WithKey(AudienceKey).WithValues([]string{aud}).Get())
 		}
 		authorizationPolicySpecBuilder.WithRule(ruleBuilder.Get())
 	}
