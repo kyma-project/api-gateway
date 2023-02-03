@@ -55,7 +55,7 @@ func generateRequestAuthentication(api *gatewayv1beta1.APIRule, rule gatewayv1be
 	raBuilder := builders.NewRequestAuthenticationBuilder().
 		WithGenerateName(namePrefix).
 		WithNamespace(namespace).
-		WithSpec(*builders.NewRequestAuthenticationSpecBuilder().WithFrom(generateRequestAuthenticationSpec(api, rule)).Get()).
+		WithSpec(builders.NewRequestAuthenticationSpecBuilder().WithFrom(generateRequestAuthenticationSpec(api, rule)).Get()).
 		WithLabel(processing.OwnerLabel, fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace)).
 		WithLabel(processing.OwnerLabelv1alpha1, fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace))
 

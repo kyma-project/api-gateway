@@ -58,7 +58,7 @@ func (ap *AuthorizationPolicyBuilder) WithLabel(key, val string) *AuthorizationP
 	return ap
 }
 
-func (ap *AuthorizationPolicyBuilder) WithSpec(val v1beta1.AuthorizationPolicy) *AuthorizationPolicyBuilder {
+func (ap *AuthorizationPolicyBuilder) WithSpec(val *v1beta1.AuthorizationPolicy) *AuthorizationPolicyBuilder {
 	ap.value.Spec = *val.DeepCopy()
 	return ap
 }
@@ -272,7 +272,7 @@ func (ra *RequestAuthenticationBuilder) WithLabel(key, val string) *RequestAuthe
 	return ra
 }
 
-func (ra *RequestAuthenticationBuilder) WithSpec(val v1beta1.RequestAuthentication) *RequestAuthenticationBuilder {
+func (ra *RequestAuthenticationBuilder) WithSpec(val *v1beta1.RequestAuthentication) *RequestAuthenticationBuilder {
 	ra.value.Spec = *val.DeepCopy()
 	return ra
 }

@@ -81,7 +81,7 @@ func generateAuthorizationPolicy(api *gatewayv1beta1.APIRule, rule gatewayv1beta
 	apBuilder := builders.NewAuthorizationPolicyBuilder().
 		WithGenerateName(namePrefix).
 		WithNamespace(namespace).
-		WithSpec(*builders.NewAuthorizationPolicySpecBuilder().FromAP(generateAuthorizationPolicySpec(api, rule, authorization)).Get()).
+		WithSpec(builders.NewAuthorizationPolicySpecBuilder().FromAP(generateAuthorizationPolicySpec(api, rule, authorization)).Get()).
 		WithLabel(processing.OwnerLabel, fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace)).
 		WithLabel(processing.OwnerLabelv1alpha1, fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace))
 

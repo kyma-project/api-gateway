@@ -27,7 +27,7 @@ var _ = Describe("Builder for", func() {
 			testExpectedScopeKeys := []string{"request.auth.claims[scp]"}
 
 			ap := NewAuthorizationPolicyBuilder().WithGenerateName(name).WithNamespace(namespace).
-				WithSpec(*NewAuthorizationPolicySpecBuilder().
+				WithSpec(NewAuthorizationPolicySpecBuilder().
 					WithSelector(NewSelectorBuilder().
 						WithMatchLabels(testMatchLabelsKey, testMatchLabelsValue).Get()).
 					WithRule(NewRuleBuilder().
@@ -69,7 +69,7 @@ var _ = Describe("Builder for", func() {
 			testAccessStrategies := []*gatewayv1beta1.Authenticator{&testAuthenticator}
 
 			ap := NewRequestAuthenticationBuilder().WithGenerateName(name).WithNamespace(namespace).
-				WithSpec(*NewRequestAuthenticationSpecBuilder().
+				WithSpec(NewRequestAuthenticationSpecBuilder().
 					WithSelector(NewSelectorBuilder().WithMatchLabels(testMatchLabelsKey, testMatchLabelsValue).Get()).
 					WithJwtRules(*NewJwtRuleBuilder().From(testAccessStrategies).Get()).
 					Get()).
