@@ -71,7 +71,7 @@ func NewAuthorizationPolicySpecBuilder() *AuthorizationPolicySpecBuilder {
 }
 
 type AuthorizationPolicySpecBuilder struct {
-	value               *v1beta1.AuthorizationPolicy
+	value *v1beta1.AuthorizationPolicy
 }
 
 func (aps *AuthorizationPolicySpecBuilder) Get() *v1beta1.AuthorizationPolicy {

@@ -51,7 +51,7 @@ var _ = Describe("Builder for", func() {
 			Expect(ap.Spec.Rules[0].When).To(HaveLen(1))
 			Expect(ap.Spec.Rules[0].When[0].Key).To(BeElementOf(testExpectedScopeKeys))
 			Expect(ap.Spec.Rules[0].When[0].Values).To(HaveLen(2))
-			Expect(ap.Spec.Rules[0].When[0].Values).To(ContainElements(testScopeA,testScopeB))
+			Expect(ap.Spec.Rules[0].When[0].Values).To(ContainElements(testScopeA, testScopeB))
 		})
 	})
 
