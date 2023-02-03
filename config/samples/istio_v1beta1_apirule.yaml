@@ -22,3 +22,6 @@ spec:
             authentications:
               - issuer: https://example.com/
                 jwksUri: https://example.com/.well-known/jwks.json
+            authorizations:
+              - requiredScopes: ["a", "b"] #scp scope scopes
+                audiences: ["audA","audB"] #aud

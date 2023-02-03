@@ -162,6 +162,7 @@ type JwtConfig struct {
 // JwtAuthorization contains an array of required scopes
 type JwtAuthorization struct {
 	RequiredScopes []string `json:"requiredScopes"`
+	Audiences      []string `json:"audiences"`
 }
 
 // JwtAuthentication Config for Jwt istio authentication
