@@ -72,21 +72,11 @@ func NewAuthorizationPolicySpecBuilder() *AuthorizationPolicySpecBuilder {
 
 type AuthorizationPolicySpecBuilder struct {
 	value               *v1beta1.AuthorizationPolicy
-	//scopeRuleBuilderMap map[string]RuleBuilder
 }
 
 func (aps *AuthorizationPolicySpecBuilder) Get() *v1beta1.AuthorizationPolicy {
 	return aps.value
 }
-
-/*func (aps *AuthorizationPolicySpecBuilder) WithRequiredScopeKey(scopeKey string) *AuthorizationPolicySpecBuilder {
-	if aps.scopeRuleBuilderMap == nil {
-		aps.scopeRuleBuilderMap = make(map[string]RuleBuilder)
-	}
-
-	aps.scopeRuleBuilderMap[scopeKey] = *NewRuleBuilder()
-	return aps
-}*/
 
 func (aps *AuthorizationPolicySpecBuilder) FromAP(val *v1beta1.AuthorizationPolicy) *AuthorizationPolicySpecBuilder {
 	aps.value = val
