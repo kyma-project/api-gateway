@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	audienceKey string = "request.auth.audiences"
+	audienceKey string = "request.auth.claims[aud]"
 )
 
 var (

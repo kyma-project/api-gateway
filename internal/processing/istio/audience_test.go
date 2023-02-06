@@ -73,8 +73,8 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 		Expect(ap1).NotTo(BeNil())
 		Expect(ap1.Spec.Rules).To(HaveLen(1))
 		Expect(ap1.Spec.Rules[0].When).To(HaveLen(2))
-		Expect(ap1.Spec.Rules[0].When).To(ContainElement(builders.NewConditionBuilder().WithKey("request.auth.audiences").WithValues([]string{TestAudience1}).Get()))
-		Expect(ap1.Spec.Rules[0].When).To(ContainElement(builders.NewConditionBuilder().WithKey("request.auth.audiences").WithValues([]string{TestAudience2}).Get()))
+		Expect(ap1.Spec.Rules[0].When).To(ContainElement(builders.NewConditionBuilder().WithKey("request.auth.claims[aud]").WithValues([]string{TestAudience1}).Get()))
+		Expect(ap1.Spec.Rules[0].When).To(ContainElement(builders.NewConditionBuilder().WithKey("request.auth.claims[aud]").WithValues([]string{TestAudience2}).Get()))
 	})
 
 	It("should produce one AP for a rule with two scopes and two audiences", func() {
@@ -102,7 +102,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 		Expect(ap1).NotTo(BeNil())
 		Expect(ap1.Spec.Rules).To(HaveLen(3))
 		Expect(ap1.Spec.Rules[0].When).To(HaveLen(4))
-		Expect(ap1.Spec.Rules[0].When).To(ContainElement(builders.NewConditionBuilder().WithKey("request.auth.audiences").WithValues([]string{TestAudience1}).Get()))
-		Expect(ap1.Spec.Rules[0].When).To(ContainElement(builders.NewConditionBuilder().WithKey("request.auth.audiences").WithValues([]string{TestAudience2}).Get()))
+		Expect(ap1.Spec.Rules[0].When).To(ContainElement(builders.NewConditionBuilder().WithKey("request.auth.claims[aud]").WithValues([]string{TestAudience1}).Get()))
+		Expect(ap1.Spec.Rules[0].When).To(ContainElement(builders.NewConditionBuilder().WithKey("request.auth.claims[aud]").WithValues([]string{TestAudience2}).Get()))
 	})
 })
