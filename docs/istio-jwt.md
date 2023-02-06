@@ -28,7 +28,8 @@ This table lists all the possible parameters of an istio jwt resource together w
 | **spec.rules.accessStrategies.config.authentications.issuer**        | Identifies the issuer that issued the JWT.                             |
 | **spec.rules.accessStrategies.config.authentications.jwksUri**       | URL of the provider’s public key set to validate signature of the JWT. |
 | **spec.rules.accessStrategies.config.authorizations**                | List of authorization objects.                                         |
-| **spec.rules.accessStrategies.config.authorizations.requiredScopes** | List of claim values for the JWT.                                      |
+| **spec.rules.accessStrategies.config.authorizations.requiredScopes** | List of required scope values for the JWT.                             |
+| **spec.rules.accessStrategies.config.authorizations.audiences**      | List of audiences required for the JWT.                                |
 
 
 When `istio` JWT Handler is enabled you can configure APIRule with Istio JWT like in the example below:
@@ -57,7 +58,8 @@ spec:
               jwksUri: $JWKS_URI
             authorizations:
             - requiredScopes: ["test"]
+              audiences: ["example.com"]
             - requiredScopes: ["read", "write"]
 ```
 
-The `authorizations` field defined above will require your JWT to contain either `test` scope OR `read` AND `write` scopes. The scope value has to be in one of the following keys: `scp`, `scope`, `scopes`, to ensure backwards compatibility with ory oathkeeper.
+The `authorizations` field defined above will require your JWT to contain either `test` scope and `example.com` `aud` claim OR `read` AND `write` scopes. The scope value has to be in one of the following keys: `scp`, `scope`, `scopes`, to ensure backwards compatibility with ory oathkeeper.
