@@ -14,12 +14,12 @@ import (
 	"time"
 )
 
-//Manager .
+// Manager .
 type Manager struct {
 	RetryOptions []retry.Option
 }
 
-//CreateResource creates a given k8s resource
+// CreateResource creates a given k8s resource
 func (m *Manager) CreateResource(client dynamic.Interface, resourceSchema schema.GroupVersionResource, namespace string, manifest unstructured.Unstructured) error {
 	return retry.Do(func() error {
 		if _, err := client.Resource(resourceSchema).Namespace(namespace).Create(context.Background(), &manifest, metav1.CreateOptions{}); err != nil {
@@ -29,7 +29,7 @@ func (m *Manager) CreateResource(client dynamic.Interface, resourceSchema schema
 	}, m.RetryOptions...)
 }
 
-//UpdateResource updates a given k8s resource
+// UpdateResource updates a given k8s resource
 func (m *Manager) UpdateResource(client dynamic.Interface, resourceSchema schema.GroupVersionResource, namespace string, name string, updateTo unstructured.Unstructured) error {
 	return retry.Do(func() error {
 		time.Sleep(5 * time.Second) //TODO: delete after waiting for resource creation is implemented
@@ -47,7 +47,7 @@ func (m *Manager) UpdateResource(client dynamic.Interface, resourceSchema schema
 	}, m.RetryOptions...)
 }
 
-//DeleteResource deletes a given k8s resource
+// DeleteResource deletes a given k8s resource
 func (m *Manager) DeleteResource(client dynamic.Interface, resourceSchema schema.GroupVersionResource, namespace string, resourceName string) error {
 	return retry.Do(func() error {
 		deletePolicy := metav1.DeletePropagationForeground
@@ -63,7 +63,7 @@ func (m *Manager) DeleteResource(client dynamic.Interface, resourceSchema schema
 	}, m.RetryOptions...)
 }
 
-//GetResource returns chosed k8s object
+// GetResource returns chosed k8s object
 func (m *Manager) GetResource(client dynamic.Interface, resourceSchema schema.GroupVersionResource, namespace string, resourceName string) (*unstructured.Unstructured, error) {
 	var res *unstructured.Unstructured
 	err := retry.Do(
@@ -81,7 +81,7 @@ func (m *Manager) GetResource(client dynamic.Interface, resourceSchema schema.Gr
 	return res, nil
 }
 
-//GetStatus do a GetResource and extract status field
+// GetStatus do a GetResource and extract status field
 func (m *Manager) GetStatus(client dynamic.Interface, resourceSchema schema.GroupVersionResource, namespace string, resourceName string) (map[string]interface{}, error) {
 	obj, err := m.GetResource(client, resourceSchema, namespace, resourceName)
 	if err != nil {

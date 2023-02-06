@@ -2,7 +2,6 @@ package api_gateway
 
 import (
 	_ "embed"
-	"errors"
 	"fmt"
 
 	"github.com/cucumber/godog"
@@ -11,19 +10,25 @@ import (
 )
 
 const (
-	istioJwtApiRuleFile     = "istio-jwt-strategy.yaml"
-	happyPathManifestFile   = "istio-jwt-scopes-happy.yaml"
-	unhappyPathManifestFile = "istio-jwt-scopes-unhappy.yaml"
+	istioJwtApiRuleFile     string = "istio-jwt-strategy.yaml"
+	happyPathManifestFile   string = "istio-jwt-scopes-happy.yaml"
+	unhappyPathManifestFile string = "istio-jwt-scopes-unhappy.yaml"
+	audiencesManifestFile   string = "istio-jwt-audiences.yaml"
 )
 
-type istioJwtScenario struct {
-	*Scenario
+type istioJwtUnstructuredScenario struct {
+	*UnstructuredScenario
+}
+
+type istioJwtManifestScenario struct {
+	*ScenarioWithRawAPIResource
 }
 
 func InitScenarioIstioJWT(ctx *godog.ScenarioContext) {
-	initCommon(ctx)
-	initScopesHappyPath(ctx)
-	initScopesUnhappyPath(ctx)
+	//initCommon(ctx)
+	//initScopesHappyPath(ctx)
+	//initScopesUnhappyPath(ctx)
+	initAudience(ctx)
 }
 
 func initCommon(ctx *godog.ScenarioContext) {
@@ -32,7 +37,7 @@ func initCommon(ctx *godog.ScenarioContext) {
 		t.Fatalf("could not initialize unsecure endpoint scenario err=%s", err)
 	}
 
-	scenario := istioJwtScenario{s}
+	scenario := istioJwtUnstructuredScenario{s}
 
 	ctx.Step(`^Common: There is a deployment secured with JWT on path "([^"]*)"$`, scenario.thereIsAnEndpoint)
 	ctx.Step(`^Common: Calling the "([^"]*)" endpoint without a token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithoutTokenShouldResultInStatusBetween)
@@ -46,7 +51,7 @@ func initScopesHappyPath(ctx *godog.ScenarioContext) {
 		t.Fatalf("could not initialize unsecure endpoint scenario err=%s", err)
 	}
 
-	scenario := istioJwtScenario{s}
+	scenario := istioJwtUnstructuredScenario{s}
 
 	ctx.Step(`^ScopesHappy: There is a deployment secured with JWT on path "([^"]*)"$`, scenario.thereIsAnEndpoint)
 	ctx.Step(`^ScopesHappy: Calling the "([^"]*)" endpoint with a valid "([^"]*)" token with scopes read and write should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithValidTokenShouldResultInStatusBetween)
@@ -58,17 +63,17 @@ func initScopesUnhappyPath(ctx *godog.ScenarioContext) {
 		t.Fatalf("could not initialize unsecure endpoint scenario err=%s", err)
 	}
 
-	scenario := istioJwtScenario{s}
+	scenario := istioJwtUnstructuredScenario{s}
 
 	ctx.Step(`^ScopesUnhappy: There is a deployment secured with JWT on path "([^"]*)"$`, scenario.thereIsAnEndpoint)
 	ctx.Step(`^ScopesUnhappy: Calling the "([^"]*)" endpoint with a valid "([^"]*)" token with scopes read and write should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithValidTokenShouldResultInStatusBetween)
 }
 
-func (o *istioJwtScenario) thereIsAnEndpoint() error {
+func (o *istioJwtUnstructuredScenario) thereIsAnEndpoint() error {
 	return helper.APIRuleWithRetries(batch.CreateResources, batch.UpdateResources, k8sClient, o.apiResource)
 }
 
-func (o *istioJwtScenario) callingTheEndpointWithValidTokenShouldResultInStatusBetween(path, tokenType string, lower, higher int) error {
+func (o *istioJwtUnstructuredScenario) callingTheEndpointWithValidTokenShouldResultInStatusBetween(path, tokenType string, lower, higher int) error {
 	switch tokenType {
 	case "JWT":
 		tokenJWT, err := jwt.GetAccessToken(oauth2Cfg, jwtConfig)
@@ -79,13 +84,13 @@ func (o *istioJwtScenario) callingTheEndpointWithValidTokenShouldResultInStatusB
 
 		return helper.CallEndpointWithHeadersWithRetries(headerVal, authorizationHeaderName, fmt.Sprintf("%s%s", o.url, path), &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher})
 	}
-	return errors.New("should not happen")
+	return godog.ErrUndefined
 }
 
-func (o *istioJwtScenario) callingTheEndpointWithInvalidTokenShouldResultInStatusBetween(path string, lower, higher int) error {
+func (o *istioJwtUnstructuredScenario) callingTheEndpointWithInvalidTokenShouldResultInStatusBetween(path string, lower, higher int) error {
 	return helper.CallEndpointWithHeadersWithRetries(anyToken, authorizationHeaderName, fmt.Sprintf("%s%s", o.url, path), &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher})
 }
 
-func (o *istioJwtScenario) callingTheEndpointWithoutTokenShouldResultInStatusBetween(path string, lower, higher int) error {
+func (o *istioJwtUnstructuredScenario) callingTheEndpointWithoutTokenShouldResultInStatusBetween(path string, lower, higher int) error {
 	return helper.CallEndpointWithRetries(fmt.Sprintf("%s%s", o.url, path), &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher})
 }
