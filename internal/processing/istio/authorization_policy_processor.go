@@ -13,6 +13,7 @@ import (
 )
 
 const (
+	audienceKey string = "request.auth.audiences"
 )
 
 var (
@@ -113,7 +114,7 @@ func generateAuthorizationPolicySpec(api *gatewayv1beta1.APIRule, rule gatewayv1
 
 			for _, aud := range authorization.Audiences {
 				ruleBuilder.WithWhenCondition(
-					builders.NewConditionBuilder().WithKey(AudienceKey).WithValues([]string{aud}).Get())
+					builders.NewConditionBuilder().WithKey(audienceKey).WithValues([]string{aud}).Get())
 			}
 
 			authorizationPolicySpecBuilder.WithRule(ruleBuilder.Get())
@@ -122,7 +123,7 @@ func generateAuthorizationPolicySpec(api *gatewayv1beta1.APIRule, rule gatewayv1
 		ruleBuilder := baseRuleBuilder(rule)
 		for _, aud := range authorization.Audiences {
 			ruleBuilder.WithWhenCondition(
-				builders.NewConditionBuilder().WithKey(AudienceKey).WithValues([]string{aud}).Get())
+				builders.NewConditionBuilder().WithKey(audienceKey).WithValues([]string{aud}).Get())
 		}
 		authorizationPolicySpecBuilder.WithRule(ruleBuilder.Get())
 	}
@@ -140,7 +141,7 @@ func withTo(b *builders.RuleBuilder, rule gatewayv1beta1.Rule) *builders.RuleBui
 
 func withFrom(b *builders.RuleBuilder, rule gatewayv1beta1.Rule) *builders.RuleBuilder {
 	if processing.IsJwtSecured(rule) {
-		return b.WithFrom(builders.NewFromBuilder().WithJWTRequirement().Get())
+		return b.WithFrom(builders.NewFromBuilder().WithForcedJWTAuthorization().Get())
 	} else if processing.IsSecured(rule) {
 		return b.WithFrom(builders.NewFromBuilder().WithOathkeeperProxySource().Get())
 	}

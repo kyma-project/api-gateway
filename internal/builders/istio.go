@@ -138,8 +138,8 @@ func (rf *FromBuilder) Get() *v1beta1.Rule_From {
 	return rf.value
 }
 
-// WithJWTRequirement adds RequestPrincipals = "*" requirement, forcing requests to use JWT authorization
-func (rf *FromBuilder) WithJWTRequirement() *FromBuilder {
+// WithForcedJWTAuthorization adds RequestPrincipals = "*" requirement, forcing requests to use JWT authorization
+func (rf *FromBuilder) WithForcedJWTAuthorization() *FromBuilder {
 	// Only support one source at the moment
 	source := v1beta1.Source{RequestPrincipals: []string{"*"}}
 	rf.value.Source = &source

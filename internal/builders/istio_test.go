@@ -32,7 +32,7 @@ var _ = Describe("Builder for", func() {
 						WithMatchLabels(testMatchLabelsKey, testMatchLabelsValue).Get()).
 					WithRule(NewRuleBuilder().
 						WithFrom(NewFromBuilder().
-							WithJWTRequirement().Get()).
+							WithForcedJWTAuthorization().Get()).
 						WithTo(NewToBuilder().
 							WithOperation(NewOperationBuilder().
 								WithPath(path).
