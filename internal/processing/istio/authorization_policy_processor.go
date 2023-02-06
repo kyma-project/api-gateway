@@ -12,6 +12,14 @@ import (
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 )
 
+const (
+	audienceKey string = "request.auth.audiences"
+)
+
+var (
+	defaultScopeKeys = []string{"request.auth.claims[scp]", "request.auth.claims[scope]", "request.auth.claims[scopes]"}
+)
+
 // AuthorizationPolicyProcessor is the generic processor that handles the Istio JwtAuthorization Policies in the reconciliation of API Rule.
 type AuthorizationPolicyProcessor struct {
 	Creator AuthorizationPolicyCreator
@@ -70,15 +78,15 @@ func generateAuthorizationPolicy(api *gatewayv1beta1.APIRule, rule gatewayv1beta
 	namePrefix := fmt.Sprintf("%s-", api.ObjectMeta.Name)
 	namespace := helpers.FindServiceNamespace(api, &rule)
 
-	apBuilder := builders.AuthorizationPolicyBuilder().
-		GenerateName(namePrefix).
-		Namespace(namespace).
-		Spec(builders.AuthorizationPolicySpecBuilder().From(generateAuthorizationPolicySpec(api, rule, authorization))).
-		Label(processing.OwnerLabel, fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace)).
-		Label(processing.OwnerLabelv1alpha1, fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace))
+	apBuilder := builders.NewAuthorizationPolicyBuilder().
+		WithGenerateName(namePrefix).
+		WithNamespace(namespace).
+		WithSpec(builders.NewAuthorizationPolicySpecBuilder().FromAP(generateAuthorizationPolicySpec(api, rule, authorization)).Get()).
+		WithLabel(processing.OwnerLabel, fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace)).
+		WithLabel(processing.OwnerLabelv1alpha1, fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace))
 
 	for k, v := range additionalLabels {
-		apBuilder.Label(k, v)
+		apBuilder.WithLabel(k, v)
 	}
 
 	return apBuilder.Get()
@@ -92,36 +100,59 @@ func generateAuthorizationPolicySpec(api *gatewayv1beta1.APIRule, rule gatewayv1
 		serviceName = *api.Spec.Service.Name
 	}
 
-	authorizationPolicySpec := builders.AuthorizationPolicySpecBuilder().
-		Selector(builders.SelectorBuilder().MatchLabels(processors.AuthorizationPolicyAppSelectorLabel, serviceName))
+	authorizationPolicySpecBuilder := builders.NewAuthorizationPolicySpecBuilder().
+		WithSelector(builders.NewSelectorBuilder().WithMatchLabels(processors.AuthorizationPolicyAppSelectorLabel, serviceName).Get())
 
-	defaultScopeKeys := []string{"request.auth.claims[scp]", "request.auth.claims[scope]", "request.auth.claims[scopes]"}
-	for _, scope := range defaultScopeKeys {
-		generatedRule := generateAuthorizationPolicySpecRule(rule, scope, authorization)
-		authorizationPolicySpec.Rule(generatedRule)
-		// When scopes are defined, we need multiple rules for all of the above defaultScopeKeys
-		// When scopes are not defined, we just need one rule containing methods and paths
-		if generatedRule.Get().When == nil || len(generatedRule.Get().When) == 0 {
-			break
+	// If RequiredScopes are configured, we need to generate a seperate Rule for each scopeKey in defaultScopeKeys
+	if len(authorization.RequiredScopes) > 0 {
+		for _, scopeKey := range defaultScopeKeys {
+			ruleBuilder := baseRuleBuilder(rule)
+			for _, scope := range authorization.RequiredScopes {
+				ruleBuilder.WithWhenCondition(
+					builders.NewConditionBuilder().WithKey(scopeKey).WithValues([]string{scope}).Get())
+			}
+
+			for _, aud := range authorization.Audiences {
+				ruleBuilder.WithWhenCondition(
+					builders.NewConditionBuilder().WithKey(audienceKey).WithValues([]string{aud}).Get())
+			}
+
+			authorizationPolicySpecBuilder.WithRule(ruleBuilder.Get())
 		}
+	} else { // Only one AP rule should be generated for other scenarios
+		ruleBuilder := baseRuleBuilder(rule)
+		for _, aud := range authorization.Audiences {
+			ruleBuilder.WithWhenCondition(
+				builders.NewConditionBuilder().WithKey(audienceKey).WithValues([]string{aud}).Get())
+		}
+		authorizationPolicySpecBuilder.WithRule(ruleBuilder.Get())
 	}
 
-	return authorizationPolicySpec.Get()
+	return authorizationPolicySpecBuilder.Get()
 }
 
-func generateAuthorizationPolicySpecRule(rule gatewayv1beta1.Rule, scope string, authorization *gatewayv1beta1.JwtAuthorization) *builders.Rule {
-	ruleBuilder := builders.RuleBuilder().RuleTo(builders.RuleToBuilder().
-		Operation(builders.OperationBuilder().Methods(rule.Methods).Path(rule.Path)))
+func withTo(b *builders.RuleBuilder, rule gatewayv1beta1.Rule) *builders.RuleBuilder {
+	return b.WithTo(
+		builders.NewToBuilder().
+			WithOperation(builders.NewOperationBuilder().
+				WithMethods(rule.Methods).WithPath(rule.Path).Get()).
+			Get())
+}
 
+func withFrom(b *builders.RuleBuilder, rule gatewayv1beta1.Rule) *builders.RuleBuilder {
 	if processing.IsJwtSecured(rule) {
-		ruleBuilder.RuleFrom(builders.RuleFromBuilder().Source())
+		return b.WithFrom(builders.NewFromBuilder().WithForcedJWTAuthorization().Get())
 	} else if processing.IsSecured(rule) {
-		ruleBuilder.RuleFrom(builders.RuleFromBuilder().OathkeeperProxySource())
-	} else {
-		ruleBuilder.RuleFrom(builders.RuleFromBuilder().IngressGatewaySource())
+		return b.WithFrom(builders.NewFromBuilder().WithOathkeeperProxySource().Get())
 	}
+	return b.WithFrom(builders.NewFromBuilder().WithIngressGatewaySource().Get())
+}
 
-	ruleBuilder.RuleCondition(builders.RuleConditionBuilder().From(scope, authorization))
+// baseRuleBuilder returns RuleBuilder with To and From
+func baseRuleBuilder(rule gatewayv1beta1.Rule) *builders.RuleBuilder {
+	builder := builders.NewRuleBuilder()
+	builder = withTo(builder, rule)
+	builder = withFrom(builder, rule)
 
-	return ruleBuilder
+	return builder
 }
