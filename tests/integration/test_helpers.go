@@ -94,15 +94,44 @@ type Config struct {
 	TestConcurency   int           `envconfig:"TEST_CONCURENCY,default=1"`
 }
 
-type Scenario struct {
-	namespace   string
-	url         string
+type Scenario interface {
+	GetApiResource() []unstructured.Unstructured
+	GetUrl() string
+	GetNamespace() string
+}
+
+type BaseScenario struct {
+	namespace string
+	url       string
+}
+
+func (b *BaseScenario) GetUrl() string {
+	return b.url
+}
+
+func (b *BaseScenario) GetNamespace() string {
+	return b.namespace
+}
+
+type UnstructuredScenario struct {
+	BaseScenario
 	apiResource []unstructured.Unstructured
 }
 
+func (u *UnstructuredScenario) GetApiResource() []unstructured.Unstructured {
+	return u.apiResource
+}
+
+// ScenarioWithRawAPIResource is a scenario that doesn't create APIRule on scenario initialization, allowing further templating of APIRule manifest
+type ScenarioWithRawAPIResource struct {
+	BaseScenario
+	apiResourceManifestPath string
+	apiResourceDirectory    string
+	manifestTemplate        map[string]string
+}
+
 type TwoStepScenario struct {
-	namespace      string
-	url            string
+	BaseScenario
 	apiResourceOne []unstructured.Unstructured
 	apiResourceTwo []unstructured.Unstructured
 }
@@ -294,29 +323,33 @@ func getApiRules() string {
 	return string(pretty.Pretty(toPrint))
 }
 
-func CreateScenario(templateFileName string, namePrefix string, deploymentFile ...string) (*Scenario, error) {
+func CreateScenarioWithRawAPIResource(templateFileName string, namePrefix string, deploymentFile ...string) (*ScenarioWithRawAPIResource, error) {
 	testID := generateRandomString(testIDLength)
-	deploymentFileName := testingAppFile
-	if len(deploymentFile) > 0 {
-		deploymentFileName = deploymentFile[0]
-	}
+	createCommonResources(testID, templateFileName, namePrefix, deploymentFile...)
+	template := make(map[string]string)
 
-	// create common resources from files
-	commonResources, err := manifestprocessor.ParseFromFileWithTemplate(deploymentFileName, manifestsDirectory, resourceSeparator, struct {
-		Namespace string
-		TestID    string
-	}{
-		Namespace: namespace,
-		TestID:    testID,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to process common manifest files, details %s", err.Error())
-	}
-	_, err = batch.CreateResources(k8sClient, commonResources...)
+	template["Namespace"] = namespace
+	template["NamePrefix"] = namePrefix
+	template["TestID"] = testID
+	template["Domain"] = conf.Domain
+	template["GatewayName"] = conf.GatewayName
+	template["GatewayNamespace"] = conf.GatewayNamespace
+	template["IssuerUrl"] = conf.IssuerUrl
 
-	if err != nil {
-		return nil, err
-	}
+	return &ScenarioWithRawAPIResource{
+		BaseScenario: BaseScenario{
+			namespace: namespace,
+			url:       fmt.Sprintf("https://httpbin-%s.%s", testID, conf.Domain),
+		},
+		manifestTemplate:        template,
+		apiResourceManifestPath: templateFileName,
+		apiResourceDirectory:    manifestsDirectory,
+	}, nil
+}
+
+func CreateScenario(templateFileName string, namePrefix string, deploymentFile ...string) (*UnstructuredScenario, error) {
+	testID := generateRandomString(testIDLength)
+	createCommonResources(testID, templateFileName, namePrefix, deploymentFile...)
 
 	// create api-rule from file
 	accessRule, err := manifestprocessor.ParseFromFileWithTemplate(templateFileName, manifestsDirectory, resourceSeparator, struct {
@@ -332,11 +365,38 @@ func CreateScenario(templateFileName string, namePrefix string, deploymentFile .
 	if err != nil {
 		return nil, fmt.Errorf("failed to process resource manifest files, details %s", err.Error())
 	}
-	return &Scenario{
-		namespace:   namespace,
-		url:         fmt.Sprintf("https://httpbin-%s.%s", testID, conf.Domain),
+	return &UnstructuredScenario{
+		BaseScenario: BaseScenario{
+			namespace: namespace,
+			url:       fmt.Sprintf("https://httpbin-%s.%s", testID, conf.Domain),
+		},
 		apiResource: accessRule,
 	}, nil
+}
+
+func createCommonResources(testID, templateFileName string, namePrefix string, deploymentFile ...string) error {
+	deploymentFileName := testingAppFile
+	if len(deploymentFile) > 0 {
+		deploymentFileName = deploymentFile[0]
+	}
+
+	// create common resources from files
+	commonResources, err := manifestprocessor.ParseFromFileWithTemplate(deploymentFileName, manifestsDirectory, resourceSeparator, struct {
+		Namespace string
+		TestID    string
+	}{
+		Namespace: namespace,
+		TestID:    testID,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to process common manifest files, details %s", err.Error())
+	}
+	_, err = batch.CreateResources(k8sClient, commonResources...)
+
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func copy(src, dst string) (int64, error) {
