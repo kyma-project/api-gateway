@@ -325,7 +325,11 @@ func getApiRules() string {
 
 func CreateScenarioWithRawAPIResource(templateFileName string, namePrefix string, deploymentFile ...string) (*ScenarioWithRawAPIResource, error) {
 	testID := generateRandomString(testIDLength)
-	createCommonResources(testID, templateFileName, namePrefix, deploymentFile...)
+
+	err := createCommonResources(testID, deploymentFile...)
+	if err != nil {
+		return nil, err
+	}
 	template := make(map[string]string)
 
 	template["Namespace"] = namespace
@@ -347,34 +351,7 @@ func CreateScenarioWithRawAPIResource(templateFileName string, namePrefix string
 	}, nil
 }
 
-func CreateScenario(templateFileName string, namePrefix string, deploymentFile ...string) (*UnstructuredScenario, error) {
-	testID := generateRandomString(testIDLength)
-	createCommonResources(testID, templateFileName, namePrefix, deploymentFile...)
-
-	// create api-rule from file
-	accessRule, err := manifestprocessor.ParseFromFileWithTemplate(templateFileName, manifestsDirectory, resourceSeparator, struct {
-		Namespace        string
-		NamePrefix       string
-		TestID           string
-		Domain           string
-		GatewayName      string
-		GatewayNamespace string
-		IssuerUrl        string
-	}{Namespace: namespace, NamePrefix: namePrefix, TestID: testID, Domain: conf.Domain, GatewayName: conf.GatewayName,
-		GatewayNamespace: conf.GatewayNamespace, IssuerUrl: conf.IssuerUrl})
-	if err != nil {
-		return nil, fmt.Errorf("failed to process resource manifest files, details %s", err.Error())
-	}
-	return &UnstructuredScenario{
-		BaseScenario: BaseScenario{
-			namespace: namespace,
-			url:       fmt.Sprintf("https://httpbin-%s.%s", testID, conf.Domain),
-		},
-		apiResource: accessRule,
-	}, nil
-}
-
-func createCommonResources(testID, templateFileName string, namePrefix string, deploymentFile ...string) error {
+func createCommonResources(testID string, deploymentFile ...string) error {
 	deploymentFileName := testingAppFile
 	if len(deploymentFile) > 0 {
 		deploymentFileName = deploymentFile[0]
