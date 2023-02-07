@@ -4,11 +4,11 @@ go 1.19
 
 require (
 	github.com/go-logr/logr v1.2.3
-	github.com/onsi/ginkgo/v2 v2.7.1
+	github.com/onsi/ginkgo/v2 v2.8.0
 	github.com/onsi/gomega v1.26.0
 	github.com/ory/oathkeeper-maester v0.1.7
-	istio.io/api v0.0.0-20221208070204-0528cb6ce63b
-	istio.io/client-go v1.16.1
+	istio.io/api v0.0.0-20230125212921-f04847bedb29
+	istio.io/client-go v1.16.2
 	k8s.io/apimachinery v0.26.1
 	k8s.io/client-go v0.26.1
 	sigs.k8s.io/controller-runtime v0.14.2
