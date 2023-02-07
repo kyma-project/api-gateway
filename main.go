@@ -42,12 +42,12 @@ import (
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 
-	gatewayv1alpha1 "github.com/kyma-incubator/api-gateway/api/v1alpha1"
-	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
-	"github.com/kyma-incubator/api-gateway/controllers"
-	"github.com/kyma-incubator/api-gateway/internal/helpers"
-	"github.com/kyma-incubator/api-gateway/internal/processing"
-	"github.com/kyma-incubator/api-gateway/internal/validation"
+	gatewayv1alpha1 "github.com/kyma-project/api-gateway/api/v1alpha1"
+	gatewayv1beta1 "github.com/kyma-project/api-gateway/api/v1beta1"
+	"github.com/kyma-project/api-gateway/controllers"
+	"github.com/kyma-project/api-gateway/internal/helpers"
+	"github.com/kyma-project/api-gateway/internal/processing"
+	"github.com/kyma-project/api-gateway/internal/validation"
 	"github.com/pkg/errors"
 	//+kubebuilder:scaffold:imports
 )

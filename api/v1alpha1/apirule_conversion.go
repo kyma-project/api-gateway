@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"log"
 
-	"github.com/kyma-incubator/api-gateway/api/v1beta1"
+	"github.com/kyma-project/api-gateway/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
 )
 

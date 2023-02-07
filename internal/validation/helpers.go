@@ -10,7 +10,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/runtime"
 
-	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
+	gatewayv1beta1 "github.com/kyma-project/api-gateway/api/v1beta1"
 )
 
 func hasPathAndMethodDuplicates(rules []gatewayv1beta1.Rule) bool {

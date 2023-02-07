@@ -3,9 +3,9 @@ package controllers_test
 import (
 	"context"
 	"fmt"
-	"github.com/kyma-incubator/api-gateway/internal/helpers"
+	"github.com/kyma-project/api-gateway/internal/helpers"
 
-	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
+	gatewayv1beta1 "github.com/kyma-project/api-gateway/api/v1beta1"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"

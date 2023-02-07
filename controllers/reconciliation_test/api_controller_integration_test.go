@@ -7,9 +7,9 @@ import (
 	"time"
 
 	"encoding/json"
-	"github.com/kyma-incubator/api-gateway/internal/helpers"
+	"github.com/kyma-project/api-gateway/internal/helpers"
 
-	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
+	gatewayv1beta1 "github.com/kyma-project/api-gateway/api/v1beta1"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
