@@ -25,9 +25,9 @@ type istioJwtManifestScenario struct {
 }
 
 func InitScenarioIstioJWT(ctx *godog.ScenarioContext) {
-	//initCommon(ctx)
-	//initScopesHappyPath(ctx)
-	//initScopesUnhappyPath(ctx)
+	initCommon(ctx)
+	initScopesHappyPath(ctx)
+	initScopesUnhappyPath(ctx)
 	initAudience(ctx)
 }
 
