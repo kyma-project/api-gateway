@@ -1,4 +1,5 @@
 Feature: Exposing one endpoint with Istio JWT authorization strategy
+
   Scenario: Calling an endpoint secured with JWT with a valid token
     Given Common: There is a deployment secured with JWT on path "/ip"
     Then Common: Calling the "/ip" endpoint without a token should result in status between 400 and 403
