@@ -1,12 +1,12 @@
 Feature: Exposing one endpoint with Istio JWT authorization strategy
 
-  Scenario: Calling a httpbin endpoint secured
+  Scenario: Calling an httpbin endpoint secured
     Given Common: There is an endpoint secured with JWT on path "/ip"
     Then Common: Calling the "/ip" endpoint without a token should result in status between 400 and 403
     And Common: Calling the "/ip" endpoint with an invalid token should result in status between 400 and 403
     And Common: Calling the "/ip" endpoint with a valid "JWT" token should result in status between 200 and 299
 
-  Scenario: Calling a httpbin endpoint secured with JWT that requires scopes claims
+  Scenario: Calling an httpbin endpoint secured with JWT that requires scopes claims
     Given Scopes: There is an endpoint secured with JWT on path "/ip" requiring scopes '["read", "write"]'
     And Scopes: There is an endpoint secured with JWT on path "/get" requiring scopes '["test", "write"]'
     And Scopes: There is an endpoint secured with JWT on path "/headers" requiring scopes '["read"]'
