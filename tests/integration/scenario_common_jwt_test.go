@@ -3,7 +3,7 @@ package api_gateway
 import (
 	"fmt"
 	"github.com/cucumber/godog"
-	"github.com/kyma-incubator/api-gateway/tests/integration/pkg/helpers"
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/helpers"
 )
 
 const apiRuleManifestFile string = "istio-jwt-common.yaml"
