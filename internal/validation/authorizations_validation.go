@@ -2,7 +2,7 @@ package validation
 
 import (
 	"errors"
-	"github.com/kyma-incubator/api-gateway/api/v1beta1"
+	"github.com/kyma-project/api-gateway/api/v1beta1"
 )
 
 func HasInvalidScopes(authorization v1beta1.JwtAuthorization) error {

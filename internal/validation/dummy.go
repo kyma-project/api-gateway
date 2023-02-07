@@ -1,7 +1,7 @@
 package validation
 
 import (
-	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
+	gatewayv1beta1 "github.com/kyma-project/api-gateway/api/v1beta1"
 )
 
 // dummy is an handler validator that does nothing

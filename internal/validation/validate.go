@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/kyma-incubator/api-gateway/internal/helpers"
+	"github.com/kyma-project/api-gateway/internal/helpers"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 
-	gatewayv1alpha1 "github.com/kyma-incubator/api-gateway/api/v1alpha1"
-	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
+	gatewayv1alpha1 "github.com/kyma-project/api-gateway/api/v1alpha1"
+	gatewayv1beta1 "github.com/kyma-project/api-gateway/api/v1beta1"
 	"k8s.io/utils/strings/slices"
 )
 
@@ -24,7 +24,7 @@ type accessStrategyValidator interface {
 	Validate(attrPath string, accessStrategies []*gatewayv1beta1.Authenticator) []Failure
 }
 
-// APIRule is used to validate github.com/kyma-incubator/api-gateway/api/v1beta1/APIRule instances
+// APIRule is used to validate github.com/kyma-project/api-gateway/api/v1beta1/APIRule instances
 type APIRule struct {
 	HandlerValidator          handlerValidator
 	AccessStrategiesValidator accessStrategyValidator

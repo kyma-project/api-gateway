@@ -3,8 +3,8 @@ package processing
 import (
 	"fmt"
 
-	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
-	"github.com/kyma-incubator/api-gateway/internal/validation"
+	gatewayv1beta1 "github.com/kyma-project/api-gateway/api/v1beta1"
+	"github.com/kyma-project/api-gateway/internal/validation"
 )
 
 type ReconciliationStatus struct {

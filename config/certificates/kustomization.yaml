@@ -8,5 +8,5 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 images:
 - name: init-certificates
-  newName: kyma-incubator/api-gateway-webhook-certificates
+  newName: kyma-project/api-gateway-webhook-certificates
   newTag: latest

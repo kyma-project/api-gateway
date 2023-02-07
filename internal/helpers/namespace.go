@@ -1,7 +1,7 @@
 package helpers
 
 import (
-	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
+	gatewayv1beta1 "github.com/kyma-project/api-gateway/api/v1beta1"
 )
 
 func FindServiceNamespace(api *gatewayv1beta1.APIRule, rule *gatewayv1beta1.Rule) string {

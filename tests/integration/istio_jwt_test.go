@@ -3,9 +3,9 @@ package api_gateway
 import (
 	_ "embed"
 	"fmt"
-	"github.com/kyma-incubator/api-gateway/tests/integration/pkg/helpers"
-	"github.com/kyma-incubator/api-gateway/tests/integration/pkg/jwt"
-	"github.com/kyma-incubator/api-gateway/tests/integration/pkg/manifestprocessor"
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/helpers"
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/jwt"
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/manifestprocessor"
 
 	"github.com/cucumber/godog"
 )

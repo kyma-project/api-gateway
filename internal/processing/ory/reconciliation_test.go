@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
-	. "github.com/kyma-incubator/api-gateway/internal/processing/internal/test"
-	"github.com/kyma-incubator/api-gateway/internal/processing/ory"
+	gatewayv1beta1 "github.com/kyma-project/api-gateway/api/v1beta1"
+	. "github.com/kyma-project/api-gateway/internal/processing/internal/test"
+	"github.com/kyma-project/api-gateway/internal/processing/ory"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
