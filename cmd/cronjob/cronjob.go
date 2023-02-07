@@ -5,7 +5,7 @@ import (
 	"errors"
 	"os"
 
-	"github.com/kyma-incubator/api-gateway/internal/webhook"
+	"github.com/kyma-project/api-gateway/internal/webhook"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 )
 

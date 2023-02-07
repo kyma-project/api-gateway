@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
-	"github.com/kyma-incubator/api-gateway/internal/processing"
+	gatewayv1beta1 "github.com/kyma-project/api-gateway/api/v1beta1"
+	"github.com/kyma-project/api-gateway/internal/processing"
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 )

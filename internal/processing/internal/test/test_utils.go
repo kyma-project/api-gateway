@@ -3,8 +3,8 @@ package processing_test
 import (
 	"fmt"
 
-	apirulev1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
-	"github.com/kyma-incubator/api-gateway/internal/processing"
+	apirulev1beta1 "github.com/kyma-project/api-gateway/api/v1beta1"
+	"github.com/kyma-project/api-gateway/internal/processing"
 	"github.com/onsi/gomega"
 	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
 	"istio.io/api/networking/v1beta1"

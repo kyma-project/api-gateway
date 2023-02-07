@@ -17,10 +17,10 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 
-	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
-	"github.com/kyma-incubator/api-gateway/controllers"
-	"github.com/kyma-incubator/api-gateway/internal/helpers"
-	"github.com/kyma-incubator/api-gateway/internal/processing"
+	gatewayv1beta1 "github.com/kyma-project/api-gateway/api/v1beta1"
+	"github.com/kyma-project/api-gateway/controllers"
+	"github.com/kyma-project/api-gateway/internal/helpers"
+	"github.com/kyma-project/api-gateway/internal/processing"
 
 	. "github.com/onsi/ginkgo/v2"
 	"github.com/onsi/ginkgo/v2/reporters"

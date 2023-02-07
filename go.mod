@@ -1,4 +1,4 @@
-module github.com/kyma-incubator/api-gateway
+module github.com/kyma-project/api-gateway
 
 go 1.19
 

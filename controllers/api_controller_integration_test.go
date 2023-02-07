@@ -8,11 +8,11 @@ import (
 	"time"
 
 	"encoding/json"
-	"github.com/kyma-incubator/api-gateway/internal/builders"
-	"github.com/kyma-incubator/api-gateway/internal/helpers"
-	"github.com/kyma-incubator/api-gateway/internal/processing"
+	"github.com/kyma-project/api-gateway/internal/builders"
+	"github.com/kyma-project/api-gateway/internal/helpers"
+	"github.com/kyma-project/api-gateway/internal/processing"
 
-	gatewayv1beta1 "github.com/kyma-incubator/api-gateway/api/v1beta1"
+	gatewayv1beta1 "github.com/kyma-project/api-gateway/api/v1beta1"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	. "github.com/onsi/gomega/gstruct"
