@@ -31,8 +31,8 @@ func TestIstioJwt(t *testing.T) {
 
 	suite := godog.TestSuite{
 		Name: "istio-jwt",
-		TestSuiteInitializer: func(ctx *godog.TestSuiteContext) {
-			InitScenarioIstioJWT(ctx.ScenarioContext())
+		ScenarioInitializer: func(ctx *godog.ScenarioContext) {
+			InitScenarioIstioJWT(ctx)
 		},
 		Options: &opts,
 	}

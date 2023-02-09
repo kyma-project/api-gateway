@@ -94,15 +94,44 @@ type Config struct {
 	TestConcurency   int           `envconfig:"TEST_CONCURENCY,default=1"`
 }
 
-type Scenario struct {
-	namespace   string
-	url         string
+type Scenario interface {
+	GetApiResource() []unstructured.Unstructured
+	GetUrl() string
+	GetNamespace() string
+}
+
+type BaseScenario struct {
+	namespace string
+	url       string
+}
+
+func (b *BaseScenario) GetUrl() string {
+	return b.url
+}
+
+func (b *BaseScenario) GetNamespace() string {
+	return b.namespace
+}
+
+type UnstructuredScenario struct {
+	BaseScenario
 	apiResource []unstructured.Unstructured
 }
 
+func (u *UnstructuredScenario) GetApiResource() []unstructured.Unstructured {
+	return u.apiResource
+}
+
+// ScenarioWithRawAPIResource is a scenario that doesn't create APIRule on scenario initialization, allowing further templating of APIRule manifest
+type ScenarioWithRawAPIResource struct {
+	BaseScenario
+	apiResourceManifestPath string
+	apiResourceDirectory    string
+	manifestTemplate        map[string]string
+}
+
 type TwoStepScenario struct {
-	namespace      string
-	url            string
+	BaseScenario
 	apiResourceOne []unstructured.Unstructured
 	apiResourceTwo []unstructured.Unstructured
 }
@@ -294,8 +323,35 @@ func getApiRules() string {
 	return string(pretty.Pretty(toPrint))
 }
 
-func CreateScenario(templateFileName string, namePrefix string, deploymentFile ...string) (*Scenario, error) {
+func CreateScenarioWithRawAPIResource(templateFileName string, namePrefix string, deploymentFile ...string) (*ScenarioWithRawAPIResource, error) {
 	testID := generateRandomString(testIDLength)
+
+	err := createCommonResources(testID, deploymentFile...)
+	if err != nil {
+		return nil, err
+	}
+	template := make(map[string]string)
+
+	template["Namespace"] = namespace
+	template["NamePrefix"] = namePrefix
+	template["TestID"] = testID
+	template["Domain"] = conf.Domain
+	template["GatewayName"] = conf.GatewayName
+	template["GatewayNamespace"] = conf.GatewayNamespace
+	template["IssuerUrl"] = conf.IssuerUrl
+
+	return &ScenarioWithRawAPIResource{
+		BaseScenario: BaseScenario{
+			namespace: namespace,
+			url:       fmt.Sprintf("https://httpbin-%s.%s", testID, conf.Domain),
+		},
+		manifestTemplate:        template,
+		apiResourceManifestPath: templateFileName,
+		apiResourceDirectory:    manifestsDirectory,
+	}, nil
+}
+
+func createCommonResources(testID string, deploymentFile ...string) error {
 	deploymentFileName := testingAppFile
 	if len(deploymentFile) > 0 {
 		deploymentFileName = deploymentFile[0]
@@ -310,33 +366,14 @@ func CreateScenario(templateFileName string, namePrefix string, deploymentFile .
 		TestID:    testID,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to process common manifest files, details %s", err.Error())
+		return fmt.Errorf("failed to process common manifest files, details %s", err.Error())
 	}
 	_, err = batch.CreateResources(k8sClient, commonResources...)
 
 	if err != nil {
-		return nil, err
+		return err
 	}
-
-	// create api-rule from file
-	accessRule, err := manifestprocessor.ParseFromFileWithTemplate(templateFileName, manifestsDirectory, resourceSeparator, struct {
-		Namespace        string
-		NamePrefix       string
-		TestID           string
-		Domain           string
-		GatewayName      string
-		GatewayNamespace string
-		IssuerUrl        string
-	}{Namespace: namespace, NamePrefix: namePrefix, TestID: testID, Domain: conf.Domain, GatewayName: conf.GatewayName,
-		GatewayNamespace: conf.GatewayNamespace, IssuerUrl: conf.IssuerUrl})
-	if err != nil {
-		return nil, fmt.Errorf("failed to process resource manifest files, details %s", err.Error())
-	}
-	return &Scenario{
-		namespace:   namespace,
-		url:         fmt.Sprintf("https://httpbin-%s.%s", testID, conf.Domain),
-		apiResource: accessRule,
-	}, nil
+	return nil
 }
 
 func copy(src, dst string) (int64, error) {

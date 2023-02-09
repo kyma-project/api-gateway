@@ -28,13 +28,14 @@ bin
 
 # Other
 info.json
+*.env
 
 # Sed trash
 *.yaml-e
 *.tmpl-e
 
 # Vscode directory
-.vscode
+*.vscode
 dist/
 
 # Test reports

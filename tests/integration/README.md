@@ -6,7 +6,9 @@ Api-gateway component tests use the [cucumber/godog](https://github.com/cucumber
 
 - Kubernetes cluster provisioned and KUBECONFIG set to point to it
 - Kyma installed
-- JWT with scopes "read" and "write"
+- OIDC issuer for JWT with claims
+  - `scope` with values `read` and `write`
+  - `aud` with values `https://example.com` and `https://example.com/user`
 
 ### Environment variables
 

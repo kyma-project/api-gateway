@@ -60,7 +60,7 @@ func parseTemplateWithData(templateRaw string, data interface{}) (string, error)
 	return resource.String(), nil
 }
 
-//ParseFromFile parse simple yaml manifests
+// ParseFromFile parse simple yaml manifests
 func ParseFromFile(fileName string, directory string, separator string) ([]unstructured.Unstructured, error) {
 	manifestArray, err := getManifestsFromFile(fileName, directory, separator)
 	if err != nil {
@@ -81,22 +81,26 @@ func ParseFromFile(fileName string, directory string, separator string) ([]unstr
 	return resources, nil
 }
 
-//ParseFromFileWithTemplate parse manifests with goTemplate support
+// ParseFromFileWithTemplate parse manifests with goTemplate support
 func ParseFromFileWithTemplate(fileName string, directory string, separator string, templateData interface{}) ([]unstructured.Unstructured, error) {
-	manifestArray, err := getManifestsFromFile(fileName, directory, separator)
+	rawData, err := os.ReadFile(path.Join(directory, fileName))
 	if err != nil {
 		return nil, err
 	}
-	manifestsRaw, err := convert(manifestArray)
+
+	man, err := parseTemplateWithData(string(rawData), templateData)
 	if err != nil {
 		return nil, err
 	}
+
+	manifestArray := strings.Split(man, separator)
+	manifests, err := convert(manifestArray)
+	if err != nil {
+		return nil, err
+	}
+
 	var resources []unstructured.Unstructured
-	for _, raw := range manifestsRaw {
-		man, err := parseTemplateWithData(raw, templateData)
-		if err != nil {
-			return nil, err
-		}
+	for _, man := range manifests {
 		res, err := parseManifest([]byte(man))
 		if err != nil {
 			return nil, err
