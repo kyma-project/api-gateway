@@ -10,7 +10,7 @@ spec:
     name: httpbin-{{.TestID}}
     port: 8000
   rules:
-    - path: /ip
+    - path: {{ .jwtSecuredPath }}
       methods: ["GET"]
       mutators: []
       accessStrategies:
@@ -23,4 +23,9 @@ spec:
       methods: ["GET"]
       mutators: []
       accessStrategies:
-        - handler: allow
+        - handler: {{ .headersEndpointHandler }}
+    - path: /json
+      methods: ["GET"]
+      mutators: []
+      accessStrategies:
+        - handler: {{ .jsonEndpointHandler }}
