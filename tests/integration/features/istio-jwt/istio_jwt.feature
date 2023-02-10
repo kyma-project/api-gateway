@@ -7,9 +7,9 @@ Feature: Exposing one endpoint with Istio JWT authorization strategy
     And Common: Calling the "/ip" endpoint with a valid "JWT" token should result in status between 200 and 299
 
   Scenario: Calling httpbin that has an endpoint secured by JWT and an unrestricted endpoint
-    Given Common: There is an endpoint secured with JWT on path "/ip" and an unrestricted path "/headers"
-    Then Common: Calling the "/ip" endpoint with a valid "JWT" token should result in status between 200 and 299
-    And Common: Calling the "/headers" endpoint without token should result in status between 200 and 299
+    Given JwtAndAllow: There is an endpoint secured with JWT on path "/ip" and an unrestricted path "/headers"
+    Then JwtAndAllow: Calling the "/ip" endpoint with a valid "JWT" token should result in status between 200 and 299
+    And JwtAndAllow: Calling the "/headers" endpoint without token should result in status between 200 and 299
 
   Scenario: Calling an httpbin endpoint secured with JWT that requires scopes claims
     Given Scopes: There is an endpoint secured with JWT on path "/ip" requiring scopes '["read", "write"]'

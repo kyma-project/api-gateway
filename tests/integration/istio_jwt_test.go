@@ -18,6 +18,7 @@ func InitScenarioIstioJWT(ctx *godog.ScenarioContext) {
 	initCommon(ctx)
 	initRequiredScopes(ctx)
 	initAudience(ctx)
+	initJwtAndAllow(ctx)
 }
 
 func (s *istioJwtManifestScenario) theAPIRuleIsApplied() error {
