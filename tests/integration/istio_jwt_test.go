@@ -32,6 +32,10 @@ func (s *istioJwtManifestScenario) callingTheEndpointWithAValidJWTToken(path, to
 	return callingEndpointWithHeadersWithRetries(s.url, path, tokenType, lower, higher)
 }
 
+func (s *istioJwtManifestScenario) callingTheEndpointWithValidTokenShouldResultInStatusBetween(path, tokenType string, lower, higher int) error {
+	return callingEndpointWithHeadersWithRetries(s.url, path, tokenType, lower, higher)
+}
+
 func callingEndpointWithHeadersWithRetries(url string, path string, tokenType string, lower int, higher int) error {
 	switch tokenType {
 	case "JWT":
@@ -44,4 +48,8 @@ func callingEndpointWithHeadersWithRetries(url string, path string, tokenType st
 		return helper.CallEndpointWithHeadersWithRetries(headerVal, authorizationHeaderName, fmt.Sprintf("%s%s", url, path), &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher})
 	}
 	return godog.ErrUndefined
+}
+
+func (s *istioJwtManifestScenario) callingTheEndpointWithoutTokenShouldResultInStatusBetween(path string, lower, higher int) error {
+	return helper.CallEndpointWithRetries(fmt.Sprintf("%s%s", s.url, path), &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher})
 }

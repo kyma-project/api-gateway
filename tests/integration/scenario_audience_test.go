@@ -6,10 +6,8 @@ import (
 	"strings"
 )
 
-const audiencesManifestFile string = "istio-jwt-audiences.yaml"
-
 func initAudience(ctx *godog.ScenarioContext) {
-	s, err := CreateScenarioWithRawAPIResource(audiencesManifestFile, "istio-jwt-audiences")
+	s, err := CreateScenarioWithRawAPIResource("istio-jwt-audiences.yaml", "istio-jwt-audiences")
 	if err != nil {
 		t.Fatalf("could not initialize unsecure endpoint scenario err=%s", err)
 	}

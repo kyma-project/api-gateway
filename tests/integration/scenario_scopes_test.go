@@ -7,10 +7,8 @@ import (
 	"github.com/cucumber/godog"
 )
 
-const requiredScopesManifestFile string = "istio-jwt-scopes.yaml"
-
 func initRequiredScopes(ctx *godog.ScenarioContext) {
-	s, err := CreateScenarioWithRawAPIResource(requiredScopesManifestFile, "istio-jwt-scopes")
+	s, err := CreateScenarioWithRawAPIResource("istio-jwt-scopes.yaml", "istio-jwt-scopes")
 	if err != nil {
 		t.Fatalf("could not initialize unsecure endpoint scenario err=%s", err)
 	}
