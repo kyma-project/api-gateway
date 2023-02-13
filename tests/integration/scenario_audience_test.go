@@ -2,8 +2,9 @@ package api_gateway
 
 import (
 	"fmt"
-	"github.com/cucumber/godog"
 	"strings"
+
+	"github.com/cucumber/godog"
 )
 
 func initAudience(ctx *godog.ScenarioContext) {
@@ -16,7 +17,7 @@ func initAudience(ctx *godog.ScenarioContext) {
 
 	ctx.Step(`Audiences: There is an endpoint secured with JWT on path "([^"]*)" requiring audiences '(\[.*\])'$`, scenario.thereIsAnEndpointWithAudiences)
 	ctx.Step(`Audiences: The APIRule is applied$`, scenario.theAPIRuleIsApplied)
-	ctx.Step(`Audiences: Calling the "([^"]*)" endpoint with a valid "([^"]*)" token with audiences "([^"]*)" and "([^"]*)" should result in status between (\d+) and (\d+)`, scenario.callingTheEndpointWithAValidJWTToken)
+	ctx.Step(`Audiences: Calling the "([^"]*)" endpoint with a valid "([^"]*)" token with audiences "([^"]*)" and "([^"]*)" should result in status between (\d+) and (\d+)`, scenario.callingTheEndpointWithAValidToken)
 }
 
 func (s *istioJwtManifestScenario) thereIsAnEndpointWithAudiences(path string, audiences string) error {

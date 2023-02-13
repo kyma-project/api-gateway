@@ -26,7 +26,7 @@ func TestIstioJwt(t *testing.T) {
 	SetupCommonResources("istio-jwt")
 
 	opts := goDogOpts
-	opts.Paths = []string{"features/istio-jwt/istio_jwt.feature"}
+	opts.Paths = []string{"features/istio-jwt/"}
 	opts.Concurrency = conf.TestConcurency
 
 	suite := godog.TestSuite{
