@@ -15,12 +15,13 @@ type istioJwtManifestScenario struct {
 	*ScenarioWithRawAPIResource
 }
 
-func InitScenarioIstioJWT(ctx *godog.ScenarioContext) {
+func initIstioJwtScenarios(ctx *godog.ScenarioContext) {
 	initCommon(ctx)
 	initRequiredScopes(ctx)
 	initAudience(ctx)
 	initJwtAndAllow(ctx)
 	initJwtTwoNamespaces(ctx)
+	initJwtServiceFallback(ctx)
 }
 
 func (s *istioJwtManifestScenario) theAPIRuleIsApplied() error {
@@ -64,4 +65,8 @@ func (s *istioJwtManifestScenario) thereAreTwoNamespaces() error {
 	}
 	_, err = batch.CreateResources(k8sClient, resources...)
 	return err
+}
+
+func (s *istioJwtManifestScenario) thereIsAnJwtSecuredPath(path string) {
+	s.manifestTemplate["jwtSecuredPath"] = path
 }

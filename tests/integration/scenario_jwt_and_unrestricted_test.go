@@ -24,7 +24,3 @@ func initJwtAndAllow(ctx *godog.ScenarioContext) {
 func (s *istioJwtManifestScenario) thereIsAnEndpointWithHandler(handler, handlerPath string) {
 	s.manifestTemplate[fmt.Sprintf("%sEndpoint%s", strings.TrimPrefix(handlerPath, "/"), "Handler")] = handler
 }
-
-func (s *istioJwtManifestScenario) thereIsAnJwtSecuredPath(path string) {
-	s.manifestTemplate["jwtSecuredPath"] = path
-}
