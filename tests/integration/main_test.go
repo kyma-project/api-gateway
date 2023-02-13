@@ -26,7 +26,7 @@ func TestIstioJwt(t *testing.T) {
 	SetupCommonResources("istio-jwt")
 
 	opts := goDogOpts
-	opts.Paths = []string{"features/istio-jwt/istio_jwt.feature"}
+	opts.Paths = []string{"features/istio-jwt/"}
 	opts.Concurrency = conf.TestConcurency
 
 	suite := godog.TestSuite{
@@ -46,7 +46,11 @@ func TestIstioJwt(t *testing.T) {
 func cleanUp(orgJwtHandler string) {
 	res := schema.GroupVersionResource{Group: "", Version: "v1", Resource: "namespaces"}
 	err := k8sClient.Resource(res).Delete(context.Background(), namespace, v1.DeleteOptions{})
+	if err != nil {
+		log.Print(err.Error())
+	}
 
+	err = k8sClient.Resource(res).Delete(context.Background(), secondNamespace, v1.DeleteOptions{})
 	if err != nil {
 		log.Print(err.Error())
 	}

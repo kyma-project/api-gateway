@@ -46,3 +46,7 @@ spec:
           runAsUser: 65534
           runAsNonRoot: true
           runAsGroup: 65534
+        resources:
+          limits:
+            cpu: "500m"
+            memory: "250Mi"

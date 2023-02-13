@@ -3,6 +3,7 @@ package api_gateway
 import (
 	_ "embed"
 	"fmt"
+
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/helpers"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/jwt"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/manifestprocessor"
@@ -19,6 +20,7 @@ func InitScenarioIstioJWT(ctx *godog.ScenarioContext) {
 	initRequiredScopes(ctx)
 	initAudience(ctx)
 	initJwtAndAllow(ctx)
+	initJwtTwoNamespaces(ctx)
 }
 
 func (s *istioJwtManifestScenario) theAPIRuleIsApplied() error {
@@ -53,4 +55,13 @@ func callingEndpointWithHeadersWithRetries(url string, path string, tokenType st
 
 func (s *istioJwtManifestScenario) callingTheEndpointWithoutTokenShouldResultInStatusBetween(path string, lower, higher int) error {
 	return helper.CallEndpointWithRetries(fmt.Sprintf("%s%s", s.url, path), &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher})
+}
+
+func (s *istioJwtManifestScenario) thereAreTwoNamespaces() error {
+	resources, err := manifestprocessor.ParseFromFileWithTemplate("second-namespace.yaml", s.apiResourceDirectory, resourceSeparator, s.manifestTemplate)
+	if err != nil {
+		return err
+	}
+	_, err = batch.CreateResources(k8sClient, resources...)
+	return err
 }

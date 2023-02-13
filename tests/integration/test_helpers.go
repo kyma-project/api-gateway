@@ -69,6 +69,7 @@ var (
 	jwtConfig       *jwt.Config
 	batch           *resource.Batch
 	namespace       string
+	secondNamespace string
 )
 
 var t *testing.T
@@ -184,6 +185,7 @@ func InitTestSuite() {
 
 func SetupCommonResources(namePrefix string) {
 	namespace = fmt.Sprintf("%s-%s", namePrefix, generateRandomString(6))
+	secondNamespace = fmt.Sprintf("%s-2", namespace)
 	log.Printf("Using namespace: %s\n", namespace)
 
 	oauth2Cfg = &clientcredentials.Config{
