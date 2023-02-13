@@ -7,7 +7,7 @@ import (
 )
 
 func initJwtAndAllow(ctx *godog.ScenarioContext) {
-	s, err := CreateScenarioWithRawAPIResource("istio-jwt-and-unrestricted.yaml", "istio-jwt")
+	s, err := CreateScenarioWithRawAPIResource("istio-jwt-and-unrestricted.yaml", "istio-jwt-unrestricted")
 	if err != nil {
 		t.Fatalf("could not initialize unsecure endpoint scenario err=%s", err)
 	}
@@ -23,8 +23,4 @@ func initJwtAndAllow(ctx *godog.ScenarioContext) {
 
 func (s *istioJwtManifestScenario) thereIsAnEndpointWithHandler(handler, handlerPath string) {
 	s.manifestTemplate[fmt.Sprintf("%sEndpoint%s", strings.TrimPrefix(handlerPath, "/"), "Handler")] = handler
-}
-
-func (s *istioJwtManifestScenario) thereIsAnJwtSecuredPath(path string) {
-	s.manifestTemplate["jwtSecuredPath"] = path
 }

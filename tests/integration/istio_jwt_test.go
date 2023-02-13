@@ -14,11 +14,12 @@ type istioJwtManifestScenario struct {
 	*ScenarioWithRawAPIResource
 }
 
-func InitScenarioIstioJWT(ctx *godog.ScenarioContext) {
+func initIstioJwtScenarios(ctx *godog.ScenarioContext) {
 	initCommon(ctx)
 	initRequiredScopes(ctx)
 	initAudience(ctx)
 	initJwtAndAllow(ctx)
+	initJwtServiceFallback(ctx)
 }
 
 func (s *istioJwtManifestScenario) theAPIRuleIsApplied() error {
@@ -53,4 +54,8 @@ func callingEndpointWithHeadersWithRetries(url string, path string, tokenType st
 
 func (s *istioJwtManifestScenario) callingTheEndpointWithoutTokenShouldResultInStatusBetween(path string, lower, higher int) error {
 	return helper.CallEndpointWithRetries(fmt.Sprintf("%s%s", s.url, path), &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher})
+}
+
+func (s *istioJwtManifestScenario) thereIsAnJwtSecuredPath(path string) {
+	s.manifestTemplate["jwtSecuredPath"] = path
 }

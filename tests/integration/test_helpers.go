@@ -51,7 +51,6 @@ const (
 	globalCommonResourcesFile = "global-commons.yaml"
 	resourceSeparator         = "---"
 	exportResultVar           = "EXPORT_RESULT"
-	junitFileName             = "junit-report.xml"
 	cucumberFileName          = "cucumber-report.json"
 	anyToken                  = "any"
 	authorizationHeaderName   = "Authorization"
@@ -91,7 +90,7 @@ type Config struct {
 	GatewayName      string        `envconfig:"TEST_GATEWAY_NAME,default=kyma-gateway"`
 	GatewayNamespace string        `envconfig:"TEST_GATEWAY_NAMESPACE,default=kyma-system"`
 	ClientTimeout    time.Duration `envconfig:"TEST_CLIENT_TIMEOUT,default=10s"` // Don't forget the unit!
-	TestConcurency   int           `envconfig:"TEST_CONCURENCY,default=1"`
+	TestConcurrency  int           `envconfig:"TEST_CONCURRENCY,default=1"`
 }
 
 type Scenario interface {

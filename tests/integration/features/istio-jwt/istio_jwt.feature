@@ -1,4 +1,4 @@
-Feature: Exposing one endpoint with Istio JWT authorization strategy
+Feature: Exposing endpoints with Istio JWT authorization strategy
 
   Scenario: Calling an httpbin endpoint secured
     Given Common: There is an endpoint secured with JWT on path "/ip"
@@ -32,3 +32,11 @@ Feature: Exposing one endpoint with Istio JWT authorization strategy
     Then Audiences: Calling the "/get" endpoint with a valid "JWT" token with audiences "https://example.com" and "https://example.com/user" should result in status between 200 and 299
     And Audiences: Calling the "/ip" endpoint with a valid "JWT" token with audiences "https://example.com" and "https://example.com/user" should result in status between 200 and 299
     And Audiences: Calling the "/headers" endpoint with a valid "JWT" token with audiences "https://example.com" and "https://example.com/user" should result in status between 400 and 403
+
+
+  Scenario: Endpoints secured by JWT should fallback to service defined on root level when there is no service defined on rule level
+    Given ServiceFallback: There is an endpoint secured with JWT on path "/headers" with service definition
+    And ServiceFallback: There is an endpoint secured with JWT on path "/ip"
+    When ServiceFallback: The APIRule with service on root level is applied
+    Then ServiceFallback: Calling the "/headers" endpoint with a valid "JWT" token should result in status between 200 and 299
+    And ServiceFallback: Calling the "/ip" endpoint with a valid "JWT" token should result in status between 200 and 299

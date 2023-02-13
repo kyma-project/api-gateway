@@ -27,12 +27,12 @@ func TestIstioJwt(t *testing.T) {
 
 	opts := goDogOpts
 	opts.Paths = []string{"features/istio-jwt/istio_jwt.feature"}
-	opts.Concurrency = conf.TestConcurency
+	opts.Concurrency = conf.TestConcurrency
 
 	suite := godog.TestSuite{
 		Name: "istio-jwt",
 		ScenarioInitializer: func(ctx *godog.ScenarioContext) {
-			InitScenarioIstioJWT(ctx)
+			initIstioJwtScenarios(ctx)
 		},
 		Options: &opts,
 	}
