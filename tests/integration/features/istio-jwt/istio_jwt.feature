@@ -48,3 +48,5 @@ Feature: Exposing endpoints with Istio JWT authorization strategy
     When TwoNamespaces: The APIRule is applied
     Then TwoNamespaces: Calling the "/get" endpoint with a valid "JWT" token should result in status between 200 and 299
     And TwoNamespaces: Calling the "/hello" endpoint with a valid "JWT" token should result in status between 200 and 299
+    And TwoNamespaces: Calling the "/get" endpoint without token should result in status between 400 and 403
+    And TwoNamespaces: Calling the "/hello" endpoint without token should result in status between 400 and 403

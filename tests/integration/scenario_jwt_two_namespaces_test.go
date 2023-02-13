@@ -17,6 +17,7 @@ func initJwtTwoNamespaces(ctx *godog.ScenarioContext) {
 	ctx.Step(`TwoNamespaces: There is an endpoint secured with JWT on path "([^"]*)" in different namespace$`, scenario.thereIsAnJwtSecuredPathInDifferentNamespace)
 	ctx.Step(`TwoNamespaces: The APIRule is applied$`, scenario.theAPIRuleIsApplied)
 	ctx.Step(`TwoNamespaces: Calling the "([^"]*)" endpoint with a valid "([^"]*)" token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithValidTokenShouldResultInStatusBetween)
+	ctx.Step(`TwoNamespaces: Calling the "([^"]*)" endpoint without token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithoutTokenShouldResultInStatusBetween)
 }
 
 func (s *istioJwtManifestScenario) thereIsAnJwtSecuredPathInDifferentNamespace(path string) {
