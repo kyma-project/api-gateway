@@ -6,10 +6,8 @@ import (
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/helpers"
 )
 
-const apiRuleManifestFile string = "istio-jwt-common.yaml"
-
 func initCommon(ctx *godog.ScenarioContext) {
-	s, err := CreateScenarioWithRawAPIResource(apiRuleManifestFile, "istio-jwt")
+	s, err := CreateScenarioWithRawAPIResource("istio-jwt-common.yaml", "istio-jwt-common")
 	if err != nil {
 		t.Fatalf("could not initialize unsecure endpoint scenario err=%s", err)
 	}
@@ -24,12 +22,4 @@ func initCommon(ctx *godog.ScenarioContext) {
 
 func (s *istioJwtManifestScenario) callingTheEndpointWithInvalidTokenShouldResultInStatusBetween(path string, lower, higher int) error {
 	return helper.CallEndpointWithHeadersWithRetries(anyToken, authorizationHeaderName, fmt.Sprintf("%s%s", s.url, path), &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher})
-}
-
-func (s *istioJwtManifestScenario) callingTheEndpointWithoutTokenShouldResultInStatusBetween(path string, lower, higher int) error {
-	return helper.CallEndpointWithRetries(fmt.Sprintf("%s%s", s.url, path), &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher})
-}
-
-func (s *istioJwtManifestScenario) callingTheEndpointWithValidTokenShouldResultInStatusBetween(path, tokenType string, lower, higher int) error {
-	return callingEndpointWithHeadersWithRetries(s.url, path, tokenType, lower, higher)
 }

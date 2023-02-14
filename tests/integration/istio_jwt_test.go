@@ -3,6 +3,7 @@ package api_gateway
 import (
 	_ "embed"
 	"fmt"
+
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/helpers"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/jwt"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/manifestprocessor"
@@ -14,10 +15,13 @@ type istioJwtManifestScenario struct {
 	*ScenarioWithRawAPIResource
 }
 
-func InitScenarioIstioJWT(ctx *godog.ScenarioContext) {
+func initIstioJwtScenarios(ctx *godog.ScenarioContext) {
 	initCommon(ctx)
 	initRequiredScopes(ctx)
 	initAudience(ctx)
+	initJwtAndAllow(ctx)
+	initJwtTwoNamespaces(ctx)
+	initJwtServiceFallback(ctx)
 }
 
 func (s *istioJwtManifestScenario) theAPIRuleIsApplied() error {
@@ -29,6 +33,10 @@ func (s *istioJwtManifestScenario) theAPIRuleIsApplied() error {
 }
 
 func (s *istioJwtManifestScenario) callingTheEndpointWithAValidJWTToken(path, tokenType, _, _ string, lower, higher int) error {
+	return callingEndpointWithHeadersWithRetries(s.url, path, tokenType, lower, higher)
+}
+
+func (s *istioJwtManifestScenario) callingTheEndpointWithValidTokenShouldResultInStatusBetween(path, tokenType string, lower, higher int) error {
 	return callingEndpointWithHeadersWithRetries(s.url, path, tokenType, lower, higher)
 }
 
@@ -44,4 +52,21 @@ func callingEndpointWithHeadersWithRetries(url string, path string, tokenType st
 		return helper.CallEndpointWithHeadersWithRetries(headerVal, authorizationHeaderName, fmt.Sprintf("%s%s", url, path), &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher})
 	}
 	return godog.ErrUndefined
+}
+
+func (s *istioJwtManifestScenario) callingTheEndpointWithoutTokenShouldResultInStatusBetween(path string, lower, higher int) error {
+	return helper.CallEndpointWithRetries(fmt.Sprintf("%s%s", s.url, path), &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher})
+}
+
+func (s *istioJwtManifestScenario) thereAreTwoNamespaces() error {
+	resources, err := manifestprocessor.ParseFromFileWithTemplate("second-namespace.yaml", s.apiResourceDirectory, resourceSeparator, s.manifestTemplate)
+	if err != nil {
+		return err
+	}
+	_, err = batch.CreateResources(k8sClient, resources...)
+	return err
+}
+
+func (s *istioJwtManifestScenario) thereIsAnJwtSecuredPath(path string) {
+	s.manifestTemplate["jwtSecuredPath"] = path
 }
