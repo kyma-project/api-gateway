@@ -124,7 +124,7 @@ kyma-cli:
 
 .PHONY: k3d
 k3d:
-	go install github.com/k3d-io/k3d@latest
+	curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | TAG=v5.0.0 bash
 
 .PHONY: provision-k3d
 provision-k3d:
