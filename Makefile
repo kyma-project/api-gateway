@@ -122,6 +122,10 @@ kyma-cli:
 	curl -Lo /usr/bin/kyma https://storage.googleapis.com/kyma-cli-unstable/kyma-linux
 	chmod +x /usr/bin/kyma
 
+.PHONY: k3d
+k3d:
+	go install github.com/k3d-io/k3d@latest
+
 .PHONY: provision-k3d
 provision-k3d:
 	kyma provision k3d --ci
@@ -137,7 +141,7 @@ else ifeq ($(JOB_TYPE), postsubmit)
 endif
 
 .PHONY: test-integration-k3d
-test-integration-k3d: kyma-cli provision-k3d install-kyma ## Run integration tests.
+test-integration-k3d: kyma-cli k3d provision-k3d install-kyma ## Run integration tests.
 	source ./tests/integration/env_vars.sh && $(GOTEST) ./tests/integration -v -race -run TestIstioJwt .
 
 ##@ Build
