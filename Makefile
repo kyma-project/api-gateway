@@ -117,6 +117,11 @@ test-for-release: envtest ## Run tests.
 test-integration: generate fmt vet envtest ## Run integration tests.
 	source ./tests/integration/env_vars.sh && $(GOTEST) ./tests/integration -v -race -run TestIstioJwt .
 
+.PHONY: kyma-cli
+kyma-cli:
+	curl -Lo kyma https://storage.googleapis.com/kyma-cli-unstable/kyma-linux
+	chmod +x kyma
+
 .PHONY: provision-k3d
 provision-k3d:
 	kyma provision k3d --ci
@@ -132,7 +137,7 @@ else ifeq ($(JOB_TYPE), postsubmit)
 endif
 
 .PHONY: test-integration-k3d
-test-integration-k3d: provision-k3d install-kyma ## Run integration tests.
+test-integration-k3d: kyma-cli provision-k3d install-kyma ## Run integration tests.
 	source ./tests/integration/env_vars.sh && $(GOTEST) ./tests/integration -v -race -run TestIstioJwt .
 
 ##@ Build
