@@ -86,7 +86,7 @@ var _ = Describe("APIRule Controller", func() {
 			By("Verify before update")
 
 			Eventually(func(g Gomega) {
-				ruleList := getRuleList(matchingLabels)
+				ruleList := getRuleList(g, matchingLabels)
 				verifyRuleList(g, ruleList, pathToURLFunc, rule1, rule2, rule3)
 
 				//Verify All Rules point to original Service
@@ -117,7 +117,7 @@ var _ = Describe("APIRule Controller", func() {
 			By("Verify after update")
 
 			Eventually(func(g Gomega) {
-				ruleList := getRuleList(matchingLabels)
+				ruleList := getRuleList(g, matchingLabels)
 				verifyRuleList(g, ruleList, pathToURLFunc, rule1, rule4)
 
 				//Verify All Rules point to new Service after update
@@ -192,8 +192,12 @@ var _ = Describe("APIRule Controller", func() {
 						//Verify Rule
 						expectedRuleMatchURL := fmt.Sprintf("<http|https>://%s<%s>", serviceHost, testPath)
 
-						rlList := getRuleList(matchingLabels)
-						Expect(rlList).To(HaveLen(1))
+						var rlList []rulev1alpha1.Rule
+						Eventually(func(g Gomega) {
+							rlList = getRuleList(g, matchingLabels)
+							g.Expect(rlList).To(HaveLen(1))
+						}, eventuallyTimeout).Should(Succeed())
+
 						rl := rlList[0]
 						Expect(rl.Spec.Match.URL).To(Equal(expectedRuleMatchURL))
 
@@ -294,9 +298,11 @@ var _ = Describe("APIRule Controller", func() {
 							//Verify Rule1
 							expectedRuleMatchURL := fmt.Sprintf("<http|https>://%s<%s>", serviceHost, "/img")
 
-							rlList := getRuleList(matchingLabels)
-
-							Expect(rlList).To(HaveLen(2))
+							var rlList []rulev1alpha1.Rule
+							Eventually(func(g Gomega) {
+								rlList = getRuleList(g, matchingLabels)
+								g.Expect(rlList).To(HaveLen(2))
+							}, eventuallyTimeout).Should(Succeed())
 
 							rules := make(map[string]rulev1alpha1.Rule)
 
@@ -447,9 +453,12 @@ var _ = Describe("APIRule Controller", func() {
 
 							// Verify RequestAuthentication
 							raList := securityv1beta1.RequestAuthenticationList{}
-							err = c.List(context.TODO(), &raList, matchingLabels)
-							Expect(err).NotTo(HaveOccurred())
-							Expect(raList.Items).To(HaveLen(1))
+							Eventually(func(g Gomega) {
+								err = c.List(context.TODO(), &raList, matchingLabels)
+								Expect(err).NotTo(HaveOccurred())
+								Expect(raList.Items).To(HaveLen(1))
+							}, eventuallyTimeout).Should(Succeed())
+
 							ra := raList.Items[0]
 
 							Expect(ra.Spec.Selector.MatchLabels).To(BeEquivalentTo(map[string]string{"app": serviceName}))
@@ -458,9 +467,11 @@ var _ = Describe("APIRule Controller", func() {
 
 							// Verify AuthorizationPolicies
 							apList := securityv1beta1.AuthorizationPolicyList{}
-							err = c.List(context.TODO(), &apList, matchingLabels)
-							Expect(err).NotTo(HaveOccurred())
-							Expect(apList.Items).To(HaveLen(2))
+							Eventually(func(g Gomega) {
+								err = c.List(context.TODO(), &apList, matchingLabels)
+								g.Expect(err).NotTo(HaveOccurred())
+								g.Expect(apList.Items).To(HaveLen(2))
+							}, eventuallyTimeout).Should(Succeed())
 
 							getByOperationPath := func(apList []*securityv1beta1.AuthorizationPolicy, path string) (*securityv1beta1.AuthorizationPolicy, error) {
 								for _, ap := range apList {
@@ -695,8 +706,11 @@ var _ = Describe("APIRule Controller", func() {
 						} {
 							expectedRuleMatchURL := fmt.Sprintf("<http|https>://%s</%s>", serviceHost, tc.path)
 
-							rlList := getRuleList(matchingLabels)
-							Expect(rlList).To(HaveLen(3))
+							var rlList []rulev1alpha1.Rule
+							Eventually(func(g Gomega) {
+								rlList = getRuleList(g, matchingLabels)
+								g.Expect(rlList).To(HaveLen(3))
+							}, eventuallyTimeout).Should(Succeed())
 
 							rules := make(map[string]rulev1alpha1.Rule)
 
@@ -1207,10 +1221,10 @@ func generateTestName(name string, length int) string {
 	return name + "-" + string(b)
 }
 
-func getRuleList(matchingLabels client.ListOption) []rulev1alpha1.Rule {
+func getRuleList(g Gomega, matchingLabels client.ListOption) []rulev1alpha1.Rule {
 	res := rulev1alpha1.RuleList{}
 	err := c.List(context.TODO(), &res, matchingLabels)
-	Expect(err).NotTo(HaveOccurred())
+	g.Expect(err).NotTo(HaveOccurred())
 	return res.Items
 }
 
