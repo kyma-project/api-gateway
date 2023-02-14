@@ -85,14 +85,18 @@ var _ = Describe("APIRule Controller", func() {
 
 			By("Verify before update")
 
-			ruleList := getRuleList(matchingLabels)
-			verifyRuleList(ruleList, pathToURLFunc, rule1, rule2, rule3)
-			expectedUpstream := fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", serviceName, testNamespace, testServicePort)
-			//Verify All Rules point to original Service
-			for i := range ruleList {
-				r := ruleList[i]
-				Expect(r.Spec.Upstream.URL).To(Equal(expectedUpstream))
-			}
+			Eventually(func(g Gomega) {
+				ruleList := getRuleList(g, matchingLabels)
+				verifyRuleList(g, ruleList, pathToURLFunc, rule1, rule2, rule3)
+
+				//Verify All Rules point to original Service
+				expectedUpstream := fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", serviceName, testNamespace, testServicePort)
+				for i := range ruleList {
+					r := ruleList[i]
+					g.Expect(r.Spec.Upstream.URL).To(Equal(expectedUpstream))
+				}
+
+			}, eventuallyTimeout).Should(Succeed())
 
 			By("Update APIRule")
 			existingInstance := gatewayv1beta1.APIRule{}
@@ -111,15 +115,20 @@ var _ = Describe("APIRule Controller", func() {
 			Eventually(requests, eventuallyTimeout).Should(Receive(Equal(expectedRequest)))
 
 			By("Verify after update")
-			time.Sleep(1 * time.Second) //Otherwise K8s client fetches old Rules.
-			ruleList = getRuleList(matchingLabels)
-			verifyRuleList(ruleList, pathToURLFunc, rule1, rule4)
-			//Verify All Rules point to new Service after update
-			expectedUpstream = fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", newServiceName, testNamespace, newServicePort)
-			for i := range ruleList {
-				r := ruleList[i]
-				Expect(r.Spec.Upstream.URL).To(Equal(expectedUpstream))
-			}
+
+			Eventually(func(g Gomega) {
+				ruleList := getRuleList(g, matchingLabels)
+				verifyRuleList(g, ruleList, pathToURLFunc, rule1, rule4)
+
+				//Verify All Rules point to new Service after update
+				expectedUpstream := fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", newServiceName, testNamespace, newServicePort)
+				for i := range ruleList {
+					r := ruleList[i]
+					g.Expect(r.Spec.Upstream.URL).To(Equal(expectedUpstream))
+				}
+
+			}, eventuallyTimeout).Should(Succeed())
+
 		})
 	})
 
@@ -157,9 +166,11 @@ var _ = Describe("APIRule Controller", func() {
 
 						//Verify VirtualService
 						vsList := networkingv1beta1.VirtualServiceList{}
-						err = c.List(context.TODO(), &vsList, matchingLabels)
-						Expect(err).NotTo(HaveOccurred())
-						Expect(vsList.Items).To(HaveLen(1))
+						Eventually(func(g Gomega) {
+							err = c.List(context.TODO(), &vsList, matchingLabels)
+							g.Expect(err).NotTo(HaveOccurred())
+							g.Expect(vsList.Items).To(HaveLen(1))
+						}, eventuallyTimeout).Should(Succeed())
 						vs := vsList.Items[0]
 
 						//Meta
@@ -181,8 +192,12 @@ var _ = Describe("APIRule Controller", func() {
 						//Verify Rule
 						expectedRuleMatchURL := fmt.Sprintf("<http|https>://%s<%s>", serviceHost, testPath)
 
-						rlList := getRuleList(matchingLabels)
-						Expect(rlList).To(HaveLen(1))
+						var rlList []rulev1alpha1.Rule
+						Eventually(func(g Gomega) {
+							rlList = getRuleList(g, matchingLabels)
+							g.Expect(rlList).To(HaveLen(1))
+						}, eventuallyTimeout).Should(Succeed())
+
 						rl := rlList[0]
 						Expect(rl.Spec.Match.URL).To(Equal(expectedRuleMatchURL))
 
@@ -256,9 +271,12 @@ var _ = Describe("APIRule Controller", func() {
 
 							//Verify VirtualService
 							vsList := networkingv1beta1.VirtualServiceList{}
-							err = c.List(context.TODO(), &vsList, matchingLabels)
-							Expect(err).NotTo(HaveOccurred())
-							Expect(vsList.Items).To(HaveLen(1))
+							Eventually(func(g Gomega) {
+								err = c.List(context.TODO(), &vsList, matchingLabels)
+								g.Expect(err).NotTo(HaveOccurred())
+								g.Expect(vsList.Items).To(HaveLen(1))
+							}, eventuallyTimeout).Should(Succeed())
+
 							vs := vsList.Items[0]
 
 							expectedSpec := builders.VirtualServiceSpec().
@@ -280,9 +298,11 @@ var _ = Describe("APIRule Controller", func() {
 							//Verify Rule1
 							expectedRuleMatchURL := fmt.Sprintf("<http|https>://%s<%s>", serviceHost, "/img")
 
-							rlList := getRuleList(matchingLabels)
-
-							Expect(rlList).To(HaveLen(2))
+							var rlList []rulev1alpha1.Rule
+							Eventually(func(g Gomega) {
+								rlList = getRuleList(g, matchingLabels)
+								g.Expect(rlList).To(HaveLen(2))
+							}, eventuallyTimeout).Should(Succeed())
 
 							rules := make(map[string]rulev1alpha1.Rule)
 
@@ -407,9 +427,12 @@ var _ = Describe("APIRule Controller", func() {
 
 							//Verify VirtualService
 							vsList := networkingv1beta1.VirtualServiceList{}
-							err = c.List(context.TODO(), &vsList, matchingLabels)
-							Expect(err).NotTo(HaveOccurred())
-							Expect(vsList.Items).To(HaveLen(1))
+							Eventually(func(g Gomega) {
+								err = c.List(context.TODO(), &vsList, matchingLabels)
+								g.Expect(err).NotTo(HaveOccurred())
+								g.Expect(vsList.Items).To(HaveLen(1))
+							}, eventuallyTimeout).Should(Succeed())
+
 							vs := vsList.Items[0]
 
 							expectedSpec := builders.VirtualServiceSpec().
@@ -430,9 +453,12 @@ var _ = Describe("APIRule Controller", func() {
 
 							// Verify RequestAuthentication
 							raList := securityv1beta1.RequestAuthenticationList{}
-							err = c.List(context.TODO(), &raList, matchingLabels)
-							Expect(err).NotTo(HaveOccurred())
-							Expect(raList.Items).To(HaveLen(1))
+							Eventually(func(g Gomega) {
+								err = c.List(context.TODO(), &raList, matchingLabels)
+								Expect(err).NotTo(HaveOccurred())
+								Expect(raList.Items).To(HaveLen(1))
+							}, eventuallyTimeout).Should(Succeed())
+
 							ra := raList.Items[0]
 
 							Expect(ra.Spec.Selector.MatchLabels).To(BeEquivalentTo(map[string]string{"app": serviceName}))
@@ -441,9 +467,11 @@ var _ = Describe("APIRule Controller", func() {
 
 							// Verify AuthorizationPolicies
 							apList := securityv1beta1.AuthorizationPolicyList{}
-							err = c.List(context.TODO(), &apList, matchingLabels)
-							Expect(err).NotTo(HaveOccurred())
-							Expect(apList.Items).To(HaveLen(2))
+							Eventually(func(g Gomega) {
+								err = c.List(context.TODO(), &apList, matchingLabels)
+								g.Expect(err).NotTo(HaveOccurred())
+								g.Expect(apList.Items).To(HaveLen(2))
+							}, eventuallyTimeout).Should(Succeed())
 
 							getByOperationPath := func(apList []*securityv1beta1.AuthorizationPolicy, path string) (*securityv1beta1.AuthorizationPolicy, error) {
 								for _, ap := range apList {
@@ -537,13 +565,15 @@ var _ = Describe("APIRule Controller", func() {
 							expectedRequest = reconcile.Request{NamespacedName: types.NamespacedName{Name: apiRuleName, Namespace: testNamespace}}
 							Eventually(requests, eventuallyTimeout).Should(Receive(Equal(expectedRequest)))
 
-							createdApiRule := gatewayv1beta1.APIRule{}
-							err = c.Get(context.TODO(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &createdApiRule)
-							Expect(err).NotTo(HaveOccurred())
-							Expect(createdApiRule.Status.APIRuleStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
-							Expect(createdApiRule.Status.VirtualServiceStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
-							Expect(createdApiRule.Status.AuthorizationPolicyStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
-							Expect(createdApiRule.Status.RequestAuthenticationStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
+							Eventually(func(g Gomega) {
+								createdApiRule := gatewayv1beta1.APIRule{}
+								err = c.Get(context.TODO(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &createdApiRule)
+								g.Expect(err).NotTo(HaveOccurred())
+								g.Expect(createdApiRule.Status.APIRuleStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
+								g.Expect(createdApiRule.Status.VirtualServiceStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
+								g.Expect(createdApiRule.Status.AuthorizationPolicyStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
+								g.Expect(createdApiRule.Status.RequestAuthenticationStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
+							}, eventuallyTimeout).Should(Succeed())
 
 							// when
 							updatedApiRule := gatewayv1beta1.APIRule{}
@@ -569,14 +599,16 @@ var _ = Describe("APIRule Controller", func() {
 
 							apiRuleUpdated := reconcile.Request{NamespacedName: types.NamespacedName{Name: apiRuleName, Namespace: testNamespace}}
 							Eventually(requests, eventuallyTimeout).Should(Receive(Equal(apiRuleUpdated)))
-							time.Sleep(500 * time.Millisecond)
 
 							// then
 							matchingLabels := matchingLabelsFunc(apiRuleName, testNamespace)
+
 							apList := securityv1beta1.AuthorizationPolicyList{}
-							err = c.List(context.TODO(), &apList, matchingLabels)
-							Expect(err).NotTo(HaveOccurred())
-							Expect(apList.Items).To(HaveLen(3))
+							Eventually(func(g Gomega) {
+								err = c.List(context.TODO(), &apList, matchingLabels)
+								g.Expect(err).NotTo(HaveOccurred())
+								g.Expect(apList.Items).To(HaveLen(3))
+							}, eventuallyTimeout).Should(Succeed())
 
 							scopeAScopeCMatcher := getAuthorizationPolicyWhenScopeMatcher("scope-a", "scope-c")
 							scopeAScopeDMatcher := getAuthorizationPolicyWhenScopeMatcher("scope-a", "scope-d")
@@ -625,10 +657,14 @@ var _ = Describe("APIRule Controller", func() {
 						matchingLabels := matchingLabelsFunc(apiRuleName, testNamespace)
 
 						//Verify VirtualService
+
 						vsList := networkingv1beta1.VirtualServiceList{}
-						err = c.List(context.TODO(), &vsList, matchingLabels)
-						Expect(err).NotTo(HaveOccurred())
-						Expect(vsList.Items).To(HaveLen(1))
+						Eventually(func(g Gomega) {
+							err = c.List(context.TODO(), &vsList, matchingLabels)
+							g.Expect(err).NotTo(HaveOccurred())
+							g.Expect(vsList.Items).To(HaveLen(1))
+						}, eventuallyTimeout).Should(Succeed())
+
 						vs := vsList.Items[0]
 
 						expectedSpec := builders.VirtualServiceSpec().
@@ -670,8 +706,11 @@ var _ = Describe("APIRule Controller", func() {
 						} {
 							expectedRuleMatchURL := fmt.Sprintf("<http|https>://%s</%s>", serviceHost, tc.path)
 
-							rlList := getRuleList(matchingLabels)
-							Expect(rlList).To(HaveLen(3))
+							var rlList []rulev1alpha1.Rule
+							Eventually(func(g Gomega) {
+								rlList = getRuleList(g, matchingLabels)
+								g.Expect(rlList).To(HaveLen(3))
+							}, eventuallyTimeout).Should(Succeed())
 
 							rules := make(map[string]rulev1alpha1.Rule)
 
@@ -764,10 +803,9 @@ var _ = Describe("APIRule Controller", func() {
 					triggerApiRuleReconciliation(apiRuleName)
 
 					// then
-					matchingLabels := matchingLabelsFunc(apiRuleName, testNamespace)
-
-					rlList := getRuleList(matchingLabels)
-					Expect(rlList).To(HaveLen(1))
+					Eventually(func(g Gomega) {
+						shouldHaveRules(g, apiRuleName, testNamespace, 1)
+					}, eventuallyTimeout).Should(Succeed())
 
 					apiRule := gatewayv1beta1.APIRule{}
 					err = c.Get(context.TODO(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &apiRule)
@@ -823,19 +861,17 @@ var _ = Describe("APIRule Controller", func() {
 					Eventually(requests, eventuallyTimeout).Should(Receive(Equal(updateApiRuleReq)))
 
 					// then
-					matchingLabels := matchingLabelsFunc(apiRuleName, testNamespace)
-					raList := securityv1beta1.RequestAuthenticationList{}
-					err = c.List(context.TODO(), &raList, matchingLabels)
-					Expect(err).NotTo(HaveOccurred())
-					Expect(raList.Items).To(HaveLen(1))
+					Eventually(func(g Gomega) {
+						shouldHaveRequestAuthentications(g, apiRuleName, testNamespace, 1)
+					}, eventuallyTimeout).Should(Succeed())
 
-					apList := securityv1beta1.AuthorizationPolicyList{}
-					err = c.List(context.TODO(), &apList, matchingLabels)
-					Expect(err).NotTo(HaveOccurred())
-					Expect(apList.Items).To(HaveLen(1))
+					Eventually(func(g Gomega) {
+						shouldHaveAuthorizationPolicies(g, apiRuleName, testNamespace, 1)
+					}, eventuallyTimeout).Should(Succeed())
 
-					ruleList := getRuleList(matchingLabels)
-					Expect(ruleList).To(HaveLen(0))
+					Eventually(func(g Gomega) {
+						shouldHaveRules(g, apiRuleName, testNamespace, 0)
+					}, eventuallyTimeout).Should(Succeed())
 
 					expectedApiRule := gatewayv1beta1.APIRule{}
 					err = c.Get(context.TODO(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &expectedApiRule)
@@ -889,16 +925,13 @@ var _ = Describe("APIRule Controller", func() {
 					triggerApiRuleReconciliation(apiRuleName)
 
 					// then
-					matchingLabels := matchingLabelsFunc(apiRuleName, testNamespace)
-					raList := securityv1beta1.RequestAuthenticationList{}
-					err = c.List(context.TODO(), &raList, matchingLabels)
-					Expect(err).NotTo(HaveOccurred())
-					Expect(raList.Items).To(HaveLen(1))
+					Eventually(func(g Gomega) {
+						shouldHaveRequestAuthentications(g, apiRuleName, testNamespace, 1)
+					}, eventuallyTimeout).Should(Succeed())
 
-					apList := securityv1beta1.AuthorizationPolicyList{}
-					err = c.List(context.TODO(), &apList, matchingLabels)
-					Expect(err).NotTo(HaveOccurred())
-					Expect(apList.Items).To(HaveLen(1))
+					Eventually(func(g Gomega) {
+						shouldHaveAuthorizationPolicies(g, apiRuleName, testNamespace, 1)
+					}, eventuallyTimeout).Should(Succeed())
 
 					apiRule := gatewayv1beta1.APIRule{}
 					err = c.Get(context.TODO(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &apiRule)
@@ -957,19 +990,17 @@ var _ = Describe("APIRule Controller", func() {
 					Eventually(requests, eventuallyTimeout).Should(Receive(Equal(updateApiRuleReq)))
 
 					// then
-					matchingLabels := matchingLabelsFunc(apiRuleName, testNamespace)
-					raList := securityv1beta1.RequestAuthenticationList{}
-					err = c.List(context.TODO(), &raList, matchingLabels)
-					Expect(err).NotTo(HaveOccurred())
-					Expect(raList.Items).To(HaveLen(0))
+					Eventually(func(g Gomega) {
+						shouldHaveRequestAuthentications(g, apiRuleName, testNamespace, 0)
+					}, eventuallyTimeout).Should(Succeed())
 
-					apList := securityv1beta1.AuthorizationPolicyList{}
-					err = c.List(context.TODO(), &apList, matchingLabels)
-					Expect(err).NotTo(HaveOccurred())
-					Expect(apList.Items).To(HaveLen(0))
+					Eventually(func(g Gomega) {
+						shouldHaveAuthorizationPolicies(g, apiRuleName, testNamespace, 0)
+					}, eventuallyTimeout).Should(Succeed())
 
-					ruleList := getRuleList(matchingLabels)
-					Expect(ruleList).To(HaveLen(1))
+					Eventually(func(g Gomega) {
+						shouldHaveRules(g, apiRuleName, testNamespace, 1)
+					}, eventuallyTimeout).Should(Succeed())
 
 					expectedApiRule := gatewayv1beta1.APIRule{}
 					err = c.Get(context.TODO(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &expectedApiRule)
@@ -1190,16 +1221,16 @@ func generateTestName(name string, length int) string {
 	return name + "-" + string(b)
 }
 
-func getRuleList(matchingLabels client.ListOption) []rulev1alpha1.Rule {
+func getRuleList(g Gomega, matchingLabels client.ListOption) []rulev1alpha1.Rule {
 	res := rulev1alpha1.RuleList{}
 	err := c.List(context.TODO(), &res, matchingLabels)
-	Expect(err).NotTo(HaveOccurred())
+	g.Expect(err).NotTo(HaveOccurred())
 	return res.Items
 }
 
-func verifyRuleList(ruleList []rulev1alpha1.Rule, pathToURLFunc func(string) string, expected ...gatewayv1beta1.Rule) {
+func verifyRuleList(g Gomega, ruleList []rulev1alpha1.Rule, pathToURLFunc func(string) string, expected ...gatewayv1beta1.Rule) {
 
-	Expect(ruleList).To(HaveLen(len(expected)))
+	g.Expect(ruleList).To(HaveLen(len(expected)))
 
 	actual := make(map[string]rulev1alpha1.Rule)
 
@@ -1209,38 +1240,36 @@ func verifyRuleList(ruleList []rulev1alpha1.Rule, pathToURLFunc func(string) str
 
 	for i := range expected {
 		ruleUrl := pathToURLFunc(expected[i].Path)
-		Expect(actual[ruleUrl].Spec.Match.Methods).To(Equal(expected[i].Methods))
-		//Expect(actual[ruleUrl].Spec.Authenticators).To(Equal(expected[i].AccessStrategies))
-		verifyAccessStrategies(actual[ruleUrl].Spec.Authenticators, expected[i].AccessStrategies)
-		//Expect(actual[ruleUrl].Spec.Mutators).To(Equal(expected[i].Mutators))
-		verifyMutators(actual[ruleUrl].Spec.Mutators, expected[i].Mutators)
+		g.Expect(actual[ruleUrl].Spec.Match.Methods).To(Equal(expected[i].Methods))
+		verifyAccessStrategies(g, actual[ruleUrl].Spec.Authenticators, expected[i].AccessStrategies)
+		verifyMutators(g, actual[ruleUrl].Spec.Mutators, expected[i].Mutators)
 	}
 }
-func verifyMutators(actual []*rulev1alpha1.Mutator, expected []*gatewayv1beta1.Mutator) {
+func verifyMutators(g Gomega, actual []*rulev1alpha1.Mutator, expected []*gatewayv1beta1.Mutator) {
 	if expected == nil {
-		Expect(actual).To(BeNil())
+		g.Expect(actual).To(BeNil())
 	} else {
 		for i := 0; i < len(expected); i++ {
-			verifyHandler(actual[i].Handler, expected[i].Handler)
+			verifyHandler(g, actual[i].Handler, expected[i].Handler)
 		}
 	}
 }
-func verifyAccessStrategies(actual []*rulev1alpha1.Authenticator, expected []*gatewayv1beta1.Authenticator) {
+func verifyAccessStrategies(g Gomega, actual []*rulev1alpha1.Authenticator, expected []*gatewayv1beta1.Authenticator) {
 	if expected == nil {
-		Expect(actual).To(BeNil())
+		g.Expect(actual).To(BeNil())
 	} else {
 		for i := 0; i < len(expected); i++ {
-			verifyHandler(actual[i].Handler, expected[i].Handler)
+			verifyHandler(g, actual[i].Handler, expected[i].Handler)
 		}
 	}
 }
 
-func verifyHandler(actual *rulev1alpha1.Handler, expected *gatewayv1beta1.Handler) {
+func verifyHandler(g Gomega, actual *rulev1alpha1.Handler, expected *gatewayv1beta1.Handler) {
 	if expected == nil {
-		Expect(actual).To(BeNil())
+		g.Expect(actual).To(BeNil())
 	} else {
-		Expect(actual.Name).To(Equal(expected.Name))
-		Expect(actual.Config).To(Equal(expected.Config))
+		g.Expect(actual.Name).To(Equal(expected.Name))
+		g.Expect(actual.Config).To(Equal(expected.Config))
 	}
 }
 
