@@ -10,17 +10,24 @@ spec:
     name: httpbin-{{.TestID}}
     port: 8000
   rules:
-    - path: /ip
+    - path: {{ .jwtSecuredPathWithService }}
+      service:
+        name: httpbin-{{.TestID}}
+        port: 8000
       methods: ["GET"]
       mutators: []
       accessStrategies:
         - handler: jwt
           config:
             authentications:
-            - issuer: "{{ .IssuerUrl }}"
-              jwksUri: "{{ .IssuerUrl }}/oauth2/certs"
-    - path: /headers
+              - issuer: "{{ .IssuerUrl }}"
+                jwksUri: "{{ .IssuerUrl }}/oauth2/certs"
+    - path: {{ .jwtSecuredPath }}
       methods: ["GET"]
       mutators: []
       accessStrategies:
-        - handler: allow
+        - handler: jwt
+          config:
+            authentications:
+              - issuer: "{{ .IssuerUrl }}"
+                jwksUri: "{{ .IssuerUrl }}/oauth2/certs"

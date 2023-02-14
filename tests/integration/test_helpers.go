@@ -52,7 +52,6 @@ const (
 	globalCommonResourcesFile = "global-commons.yaml"
 	resourceSeparator         = "---"
 	exportResultVar           = "EXPORT_RESULT"
-	junitFileName             = "junit-report.xml"
 	cucumberFileName          = "cucumber-report.json"
 	anyToken                  = "any"
 	authorizationHeaderName   = "Authorization"
@@ -71,6 +70,7 @@ var (
 	jwtConfig       *jwt.Config
 	batch           *resource.Batch
 	namespace       string
+	secondNamespace string
 )
 
 var t *testing.T
@@ -93,7 +93,7 @@ type Config struct {
 	GatewayName      string        `envconfig:"TEST_GATEWAY_NAME,default=kyma-gateway"`
 	GatewayNamespace string        `envconfig:"TEST_GATEWAY_NAMESPACE,default=kyma-system"`
 	ClientTimeout    time.Duration `envconfig:"TEST_CLIENT_TIMEOUT,default=10s"` // Don't forget the unit!
-	TestConcurency   int           `envconfig:"TEST_CONCURENCY,default=1"`
+	TestConcurrency  int           `envconfig:"TEST_CONCURRENCY,default=1"`
 }
 
 type Scenario interface {
@@ -186,6 +186,7 @@ func InitTestSuite() {
 
 func SetupCommonResources(namePrefix string) {
 	namespace = fmt.Sprintf("%s-%s", namePrefix, generateRandomString(6))
+	secondNamespace = fmt.Sprintf("%s-2", namespace)
 	log.Printf("Using namespace: %s\n", namespace)
 
 	oauth2Cfg = &clientcredentials.Config{

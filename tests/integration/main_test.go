@@ -27,12 +27,13 @@ func TestIstioJwt(t *testing.T) {
 
 	opts := goDogOpts
 	opts.Paths = []string{"features/istio-jwt/"}
-	opts.Concurrency = conf.TestConcurency
+	opts.Concurrency = conf.TestConcurrency
 
 	suite := godog.TestSuite{
 		Name: "istio-jwt",
-		ScenarioInitializer: func(ctx *godog.ScenarioContext) {
-			InitScenarioIstioJWT(ctx)
+		// We are not using ScenarioInitializer, as this function only needs to set up global resources
+		TestSuiteInitializer: func(ctx *godog.TestSuiteContext) {
+			initIstioJwtScenarios(ctx.ScenarioContext())
 		},
 		Options: &opts,
 	}
@@ -46,7 +47,11 @@ func TestIstioJwt(t *testing.T) {
 func cleanUp(orgJwtHandler string) {
 	res := schema.GroupVersionResource{Group: "", Version: "v1", Resource: "namespaces"}
 	err := k8sClient.Resource(res).Delete(context.Background(), namespace, v1.DeleteOptions{})
+	if err != nil {
+		log.Print(err.Error())
+	}
 
+	err = k8sClient.Resource(res).Delete(context.Background(), secondNamespace, v1.DeleteOptions{})
 	if err != nil {
 		log.Print(err.Error())
 	}
