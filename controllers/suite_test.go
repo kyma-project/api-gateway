@@ -236,3 +236,39 @@ func SetupTestReconcile(inner reconcile.Reconciler) (reconcile.Reconciler, chan 
 	})
 	return fn, requests
 }
+
+// shouldHaveVirtualServices verifies that the expected number of virtual services exists for the APIRule
+func shouldHaveVirtualServices(g Gomega, apiRuleName, testNamespace string, len int) {
+	matchingLabels := matchingLabelsFunc(apiRuleName, testNamespace)
+	list := securityv1beta1.RequestAuthenticationList{}
+	err := c.List(context.TODO(), &list, matchingLabels)
+	g.Expect(err).NotTo(HaveOccurred())
+	g.Expect(list.Items).To(HaveLen(len))
+}
+
+// shouldHaveRequestAuthentications verifies that the expected number of request authentications exists for the APIRule
+func shouldHaveRequestAuthentications(g Gomega, apiRuleName, testNamespace string, len int) {
+	matchingLabels := matchingLabelsFunc(apiRuleName, testNamespace)
+	list := securityv1beta1.RequestAuthenticationList{}
+	err := c.List(context.TODO(), &list, matchingLabels)
+	g.Expect(err).NotTo(HaveOccurred())
+	g.Expect(list.Items).To(HaveLen(len))
+}
+
+// shouldHaveAuthorizationPolicies verifies that the expected number of authorization policies exists for the APIRule
+func shouldHaveAuthorizationPolicies(g Gomega, apiRuleName, testNamespace string, len int) {
+	matchingLabels := matchingLabelsFunc(apiRuleName, testNamespace)
+	list := securityv1beta1.AuthorizationPolicyList{}
+	err := c.List(context.TODO(), &list, matchingLabels)
+	g.Expect(err).NotTo(HaveOccurred())
+	g.Expect(list.Items).To(HaveLen(len))
+}
+
+// shouldHaveRules verifies that the expected number of rules exists for the APIRule
+func shouldHaveRules(g Gomega, apiRuleName, testNamespace string, len int) {
+	matchingLabels := matchingLabelsFunc(apiRuleName, testNamespace)
+	list := rulev1alpha1.RuleList{}
+	err := c.List(context.TODO(), &list, matchingLabels)
+	g.Expect(err).NotTo(HaveOccurred())
+	g.Expect(list.Items).To(HaveLen(len))
+}

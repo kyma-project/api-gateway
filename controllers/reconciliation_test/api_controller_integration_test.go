@@ -84,12 +84,12 @@ var _ = Describe("APIRule Controller Reconciliation", func() {
 			Eventually(requests, eventuallyTimeout).Should(Receive(Equal(updateApiRuleReq)))
 
 			// then
-
-			expectedApiRule := gatewayv1beta1.APIRule{}
-			err = c.Get(context.TODO(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &expectedApiRule)
-			Expect(err).NotTo(HaveOccurred())
-
-			Expect(expectedApiRule.Status.APIRuleStatus.Code).To(Equal(gatewayv1beta1.StatusError))
+			Eventually(func(g Gomega) {
+				expectedApiRule := gatewayv1beta1.APIRule{}
+				err = c.Get(context.TODO(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &expectedApiRule)
+				g.Expect(err).NotTo(HaveOccurred())
+				g.Expect(expectedApiRule.Status.APIRuleStatus.Code).To(Equal(gatewayv1beta1.StatusError))
+			}, eventuallyTimeout).Should(Succeed())
 		})
 
 		It("Should update valid Istio APIRule with error from Istio to Ory", func() {
@@ -129,12 +129,12 @@ var _ = Describe("APIRule Controller Reconciliation", func() {
 			Eventually(requests, eventuallyTimeout).Should(Receive(Equal(updateApiRuleReq)))
 
 			// then
-
-			expectedApiRule := gatewayv1beta1.APIRule{}
-			err = c.Get(context.TODO(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &expectedApiRule)
-			Expect(err).NotTo(HaveOccurred())
-
-			Expect(expectedApiRule.Status.APIRuleStatus.Code).To(Equal(gatewayv1beta1.StatusError))
+			Eventually(func(g Gomega) {
+				expectedApiRule := gatewayv1beta1.APIRule{}
+				err = c.Get(context.TODO(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &expectedApiRule)
+				g.Expect(err).NotTo(HaveOccurred())
+				g.Expect(expectedApiRule.Status.APIRuleStatus.Code).To(Equal(gatewayv1beta1.StatusError))
+			}, eventuallyTimeout).Should(Succeed())
 		})
 	})
 })
