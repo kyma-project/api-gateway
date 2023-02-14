@@ -119,8 +119,8 @@ test-integration: generate fmt vet envtest ## Run integration tests.
 
 .PHONY: kyma-cli
 kyma-cli:
-	curl -Lo kyma https://storage.googleapis.com/kyma-cli-unstable/kyma-linux
-	chmod +x kyma
+	curl -Lo /usr/bin/kyma https://storage.googleapis.com/kyma-cli-unstable/kyma-linux
+	chmod +x /usr/bin/kyma
 
 .PHONY: provision-k3d
 provision-k3d:
