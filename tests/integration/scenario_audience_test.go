@@ -2,8 +2,9 @@ package api_gateway
 
 import (
 	"fmt"
-	"github.com/cucumber/godog"
 	"strings"
+
+	"github.com/cucumber/godog"
 )
 
 func initAudience(ctx *godog.ScenarioContext) {

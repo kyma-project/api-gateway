@@ -52,7 +52,7 @@ func (h *Helper) CallEndpointWithHeadersWithRetries(headerValue string, headerNa
 	}, validator.Assert)
 
 	if err != nil {
-		return fmt.Errorf("error calling endpoint %s with \"%s=%s\" err=%s", url, headerName, headerValue, err)
+		return fmt.Errorf("error calling endpoint %s err=%s", url, err)
 	}
 
 	return nil

@@ -6,13 +6,14 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/cookiejar"
+	"net/url"
 
 	"golang.org/x/net/publicsuffix"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/clientcredentials"
 )
 
-func GetAccessToken(oauth2Cfg *clientcredentials.Config, config *Config) (string, error) {
+func GetAccessToken(oauth2Cfg clientcredentials.Config, config *Config, tokenType ...string) (string, error) {
 	jar, err := cookiejar.New(&cookiejar.Options{PublicSuffixList: publicsuffix.List})
 	if err != nil {
 		return "", err
@@ -23,6 +24,11 @@ func GetAccessToken(oauth2Cfg *clientcredentials.Config, config *Config) (string
 		},
 		Timeout: config.ClientConfig.ClientTimeout,
 		Jar:     jar,
+	}
+
+	if len(tokenType) > 0 {
+		oauth2Cfg.EndpointParams = make(url.Values)
+		oauth2Cfg.EndpointParams.Add("token_format", tokenType[0])
 	}
 
 	ctx := context.WithValue(context.Background(), oauth2.HTTPClient, httpClient)

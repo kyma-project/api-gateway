@@ -3,6 +3,7 @@ package api_gateway
 import (
 	"context"
 	"crypto/tls"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -54,6 +55,7 @@ const (
 	cucumberFileName          = "cucumber-report.json"
 	anyToken                  = "any"
 	authorizationHeaderName   = "Authorization"
+	opaqueHeaderName          = "opaque-token"
 	defaultNS                 = "kyma-system"
 	configMapName             = "api-gateway-config"
 )
@@ -340,6 +342,7 @@ func CreateScenarioWithRawAPIResource(templateFileName string, namePrefix string
 	template["GatewayName"] = conf.GatewayName
 	template["GatewayNamespace"] = conf.GatewayNamespace
 	template["IssuerUrl"] = conf.IssuerUrl
+	template["EncodedCredentials"] = base64.RawStdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", conf.ClientID, conf.ClientSecret)))
 
 	return &ScenarioWithRawAPIResource{
 		BaseScenario: BaseScenario{
