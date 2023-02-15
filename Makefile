@@ -117,6 +117,33 @@ test-for-release: envtest ## Run tests.
 test-integration: generate fmt vet envtest ## Run integration tests.
 	source ./tests/integration/env_vars.sh && $(GOTEST) ./tests/integration -v -race -run TestIstioJwt .
 
+.PHONY: kyma-cli
+kyma-cli:
+	curl -Lo /usr/bin/kyma https://storage.googleapis.com/kyma-cli-unstable/kyma-linux
+	chmod +x /usr/bin/kyma
+
+.PHONY: k3d
+k3d:
+	curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | TAG=v5.0.0 bash
+
+.PHONY: provision-k3d
+provision-k3d:
+	kyma provision k3d --ci
+
+.PHONY: install-kyma
+install-kyma:
+ifndef JOB_TYPE
+	kyma deploy --ci -s main -c hack/kyma-components.yaml --value ory.hydra.enabled="false"
+else ifeq ($(JOB_TYPE), presubmit)
+	kyma deploy --ci -s main -c hack/kyma-components.yaml --value ory.hydra.enabled="false" --value api-gateway.global.images.api_gateway_controller.version=PR-${PULL_NUMBER} --value api-gateway.global.images.api-gateway-webhook-certificates.version=PR-${PULL_NUMBER}
+else ifeq ($(JOB_TYPE), postsubmit)
+	kyma deploy --ci -s main -c hack/kyma-components.yaml --value ory.hydra.enabled="false" --value api-gateway.global.images.api_gateway_controller.version=${PULL_BASE_SHA} --value api-gateway.global.images.api-gateway-webhook-certificates.version=${PULL_BASE_SHA}
+endif
+
+.PHONY: test-integration-k3d
+test-integration-k3d: kyma-cli k3d provision-k3d install-kyma ## Run integration tests.
+	source ./tests/integration/env_vars.sh && $(GOTEST) ./tests/integration -v -race -run TestIstioJwt .
+
 ##@ Build
 
 .PHONY: build
