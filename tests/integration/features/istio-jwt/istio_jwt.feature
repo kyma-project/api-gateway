@@ -50,3 +50,11 @@ Feature: Exposing endpoints with Istio JWT authorization strategy
     And TwoNamespaces: Calling the "/hello" endpoint with a valid "JWT" token should result in status between 200 and 299
     And TwoNamespaces: Calling the "/get" endpoint without token should result in status between 400 and 403
     And TwoNamespaces: Calling the "/hello" endpoint without token should result in status between 400 and 403
+
+   Scenario: Exposing different services with same methods
+    Given DiffSvcSameMethods: There is a workload and service for httpbin and helloworld
+    And DiffSvcSameMethods: There is an endpoint secured with JWT on path "/headers" for httpbin service with methods '["GET", "POST"]'
+    And DiffSvcSameMethods: There is an endpoint secured with JWT on path "/hello" for helloworld service with methods '["GET", "POST"]'
+    When DiffSvcSameMethods: The APIRule is applied
+    Then DiffSvcSameMethods: Calling the "/headers" endpoint with a valid "JWT" token should result in status between 200 and 299
+    And DiffSvcSameMethods: Calling the "/hello" endpoint with a valid "JWT" token should result in status between 200 and 299

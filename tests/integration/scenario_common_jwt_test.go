@@ -9,7 +9,7 @@ import (
 func initCommon(ctx *godog.ScenarioContext) {
 	s, err := CreateScenarioWithRawAPIResource("istio-jwt-common.yaml", "istio-jwt-common")
 	if err != nil {
-		t.Fatalf("could not initialize unsecure endpoint scenario err=%s", err)
+		t.Fatalf("could not initialize scenario err=%s", err)
 	}
 
 	scenario := istioJwtManifestScenario{s}

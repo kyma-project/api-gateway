@@ -7,7 +7,7 @@ import (
 func initJwtTwoNamespaces(ctx *godog.ScenarioContext) {
 	s, err := CreateScenarioWithRawAPIResource("istio-jwt-two-namespaces.yaml", "istio-jwt-two-namespaces")
 	if err != nil {
-		t.Fatalf("could not initialize unsecure endpoint scenario err=%s", err)
+		t.Fatalf("could not initialize scenario err=%s", err)
 	}
 
 	scenario := istioJwtManifestScenario{s}

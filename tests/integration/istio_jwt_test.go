@@ -22,6 +22,7 @@ func initIstioJwtScenarios(ctx *godog.ScenarioContext) {
 	initJwtAndAllow(ctx)
 	initJwtTwoNamespaces(ctx)
 	initJwtServiceFallback(ctx)
+	initDiffServiceSameMethods(ctx)
 }
 
 func (s *istioJwtManifestScenario) theAPIRuleIsApplied() error {

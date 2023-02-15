@@ -7,7 +7,7 @@ import (
 func initJwtServiceFallback(ctx *godog.ScenarioContext) {
 	s, err := CreateScenarioWithRawAPIResource("istio-jwt-service-fallback.yaml", "istio-jwt-service-fallback")
 	if err != nil {
-		t.Fatalf("could not initialize unsecure endpoint scenario err=%s", err)
+		t.Fatalf("could not initialize scenario err=%s", err)
 	}
 
 	scenario := istioJwtManifestScenario{s}
