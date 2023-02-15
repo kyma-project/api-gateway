@@ -24,6 +24,7 @@ func initIstioJwtScenarios(ctx *godog.ScenarioContext) {
 	initJwtServiceFallback(ctx)
 	initDiffServiceSameMethods(ctx)
 	initJwtUnavailableIssuer(ctx)
+	initJwtIssuerJwksNotMatch(ctx)
 }
 
 func (s *istioJwtManifestScenario) theAPIRuleIsApplied() error {
@@ -82,4 +83,7 @@ func (s *istioJwtManifestScenario) thereAreTwoNamespaces() error {
 
 func (s *istioJwtManifestScenario) thereIsAnJwtSecuredPath(path string) {
 	s.manifestTemplate["jwtSecuredPath"] = path
+}
+
+func (s *istioJwtManifestScenario) emptyStep() {
 }

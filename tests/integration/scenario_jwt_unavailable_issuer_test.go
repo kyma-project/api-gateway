@@ -16,6 +16,3 @@ func initJwtUnavailableIssuer(ctx *godog.ScenarioContext) {
 	ctx.Step(`JwtIssuerUnavailable: The APIRule is applied$`, scenario.theAPIRuleIsApplied)
 	ctx.Step(`JwtIssuerUnavailable: Calling the "([^"]*)" endpoint with a valid "([^"]*)" token should result in body containing "([^"]*)"$`, scenario.callingTheEndpointWithValidTokenShouldResultInBodyContaining)
 }
-
-func (s *istioJwtManifestScenario) emptyStep() {
-}
