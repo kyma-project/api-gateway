@@ -7,8 +7,8 @@ require (
 	github.com/onsi/ginkgo/v2 v2.8.1
 	github.com/onsi/gomega v1.26.0
 	github.com/ory/oathkeeper-maester v0.1.7
-	istio.io/api v0.0.0-20230125212921-f04847bedb29
-	istio.io/client-go v1.16.2
+	istio.io/api v0.0.0-20230204131218-41d7951eb9e4
+	istio.io/client-go v1.17.0
 	k8s.io/apimachinery v0.26.1
 	k8s.io/client-go v0.26.1
 	sigs.k8s.io/controller-runtime v0.14.4
@@ -52,7 +52,7 @@ require (
 	golang.org/x/time v0.3.0 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.2.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
-	google.golang.org/genproto v0.0.0-20220628213854-d9e0b6570c03 // indirect
+	google.golang.org/genproto v0.0.0-20221018160656-63c7b68cfc55 // indirect
 	google.golang.org/protobuf v1.28.1 // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
