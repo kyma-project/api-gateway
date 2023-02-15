@@ -19,6 +19,7 @@ These environment variables determine how the tests are run on both Prow and you
 Customize `env_vars.sh` if necessary.
 
 To run these tests on your cluster you have to set those environment variables:
+
 ```
 export KYMA_DOMAIN=<YOUR_KYMA_DOMAIN>
 export CLIENT_ID="<YOUR_CLIENT_ID>"
