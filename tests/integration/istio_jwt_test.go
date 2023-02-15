@@ -60,7 +60,7 @@ func callingEndpointWithHeadersWithRetries(url string, path string, tokenType st
 			return fmt.Errorf("failed to fetch an id_token: %s", err.Error())
 		}
 
-		return helper.CallEndpointWithHeadersWithRetries(token, opaqueHeaderName, fmt.Sprintf("%s%s", url, path), &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher})
+		return helper.CallEndpointWithHeadersWithRetries(token, opaqueHeaderName, fmt.Sprintf("%s%s", url, path), asserter)
 	case "JWT":
 		token, err := jwt.GetAccessToken(*oauth2Cfg, jwtConfig, strings.ToLower(tokenType))
 		if err != nil {
