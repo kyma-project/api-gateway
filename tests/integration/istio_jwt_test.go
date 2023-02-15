@@ -35,7 +35,7 @@ func (s *istioJwtManifestScenario) theAPIRuleIsApplied() error {
 	return helper.APIRuleWithRetries(batch.CreateResources, batch.UpdateResources, k8sClient, resource)
 }
 
-func (s *istioJwtManifestScenario) callingTheEndpointWithAValidJWTToken(path, tokenType, _, _ string, lower, higher int) error {
+func (s *istioJwtManifestScenario) callingTheEndpointWithAValidToken(path, tokenType, _, _ string, lower, higher int) error {
 	asserter := &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher}
 	return callingEndpointWithHeadersWithRetries(s.url, path, tokenType, asserter)
 }
