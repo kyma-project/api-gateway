@@ -40,7 +40,7 @@ func TestIstioJwt(t *testing.T) {
 
 	testExitCode := suite.Run()
 	if testExitCode != 0 {
-		t.Fatalf("non-zero status returned, failed to run feature tests, Pod list: %s\n APIRules: %s\n", getPodListReport(), getApiRules())
+		t.Fatalf("non-zero status returned, failed to run feature tests, Pod list: %s\n", getPodListReport())
 	}
 }
 
