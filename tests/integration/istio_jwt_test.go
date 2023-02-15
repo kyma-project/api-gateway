@@ -23,6 +23,7 @@ func initIstioJwtScenarios(ctx *godog.ScenarioContext) {
 	initJwtTwoNamespaces(ctx)
 	initJwtServiceFallback(ctx)
 	initDiffServiceSameMethods(ctx)
+	initJwtUnavailableIssuer(ctx)
 }
 
 func (s *istioJwtManifestScenario) theAPIRuleIsApplied() error {
@@ -34,14 +35,21 @@ func (s *istioJwtManifestScenario) theAPIRuleIsApplied() error {
 }
 
 func (s *istioJwtManifestScenario) callingTheEndpointWithAValidJWTToken(path, tokenType, _, _ string, lower, higher int) error {
-	return callingEndpointWithHeadersWithRetries(s.url, path, tokenType, lower, higher)
+	asserter := &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher}
+	return callingEndpointWithHeadersWithRetries(s.url, path, tokenType, asserter)
 }
 
 func (s *istioJwtManifestScenario) callingTheEndpointWithValidTokenShouldResultInStatusBetween(path, tokenType string, lower, higher int) error {
-	return callingEndpointWithHeadersWithRetries(s.url, path, tokenType, lower, higher)
+	asserter := &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher}
+	return callingEndpointWithHeadersWithRetries(s.url, path, tokenType, asserter)
 }
 
-func callingEndpointWithHeadersWithRetries(url string, path string, tokenType string, lower int, higher int) error {
+func (s *istioJwtManifestScenario) callingTheEndpointWithValidTokenShouldResultInBodyContaining(path, tokenType string, bodyContent string) error {
+	asserter := &helpers.BodyContainsPredicate{Expected: bodyContent}
+	return callingEndpointWithHeadersWithRetries(s.url, path, tokenType, asserter)
+}
+
+func callingEndpointWithHeadersWithRetries(url string, path string, tokenType string, asserter helpers.HttpResponseAsserter) error {
 	switch tokenType {
 	case "JWT":
 		tokenJWT, err := jwt.GetAccessToken(oauth2Cfg, jwtConfig)
@@ -50,13 +58,17 @@ func callingEndpointWithHeadersWithRetries(url string, path string, tokenType st
 		}
 		headerVal := fmt.Sprintf("Bearer %s", tokenJWT)
 
-		return helper.CallEndpointWithHeadersWithRetries(headerVal, authorizationHeaderName, fmt.Sprintf("%s%s", url, path), &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher})
+		return helper.CallEndpointWithHeadersWithRetries(headerVal, authorizationHeaderName, fmt.Sprintf("%s%s", url, path), asserter)
 	}
 	return godog.ErrUndefined
 }
 
 func (s *istioJwtManifestScenario) callingTheEndpointWithoutTokenShouldResultInStatusBetween(path string, lower, higher int) error {
 	return helper.CallEndpointWithRetries(fmt.Sprintf("%s%s", s.url, path), &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher})
+}
+
+func (s *istioJwtManifestScenario) callingTheEndpointTokenShouldResultInBodyContaining(path, bodyContent string) error {
+	return helper.CallEndpointWithRetries(fmt.Sprintf("%s%s", s.url, path), &helpers.BodyContainsPredicate{Expected: bodyContent})
 }
 
 func (s *istioJwtManifestScenario) thereAreTwoNamespaces() error {

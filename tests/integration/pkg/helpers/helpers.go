@@ -3,13 +3,12 @@ package helpers
 import (
 	"encoding/json"
 	"fmt"
-	"io"
-	"net/http"
-
 	"github.com/avast/retry-go"
 	"github.com/pkg/errors"
+	"io"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/dynamic"
+	"net/http"
 )
 
 // RetriableApiRule wraps any function that modifies or creates an APIRule
@@ -28,10 +27,10 @@ func NewHelper(c *http.Client, opts []retry.Option) *Helper {
 }
 
 // CallEndpointWithRetries returns error if the status code is not in between bounds of status predicate after retrying deadline is reached
-func (h *Helper) CallEndpointWithRetries(url string, predicate *StatusPredicate) error {
+func (h *Helper) CallEndpointWithRetries(url string, validator HttpResponseAsserter) error {
 	err := h.withRetries(func() (*http.Response, error) {
 		return h.client.Get(url)
-	}, predicate.TestPredicate)
+	}, validator.Assert)
 
 	if err != nil {
 		return fmt.Errorf("error calling endpoint %s err=%s", url, err)
@@ -41,7 +40,7 @@ func (h *Helper) CallEndpointWithRetries(url string, predicate *StatusPredicate)
 }
 
 // CallEndpointWithHeadersWithRetries returns error if the status code is not in between bounds of status predicate after retrying deadline is reached
-func (h *Helper) CallEndpointWithHeadersWithRetries(headerValue string, headerName, url string, predicate *StatusPredicate) error {
+func (h *Helper) CallEndpointWithHeadersWithRetries(headerValue string, headerName, url string, validator HttpResponseAsserter) error {
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return err
@@ -50,7 +49,7 @@ func (h *Helper) CallEndpointWithHeadersWithRetries(headerValue string, headerNa
 	req.Header.Set(headerName, headerValue)
 	err = h.withRetries(func() (*http.Response, error) {
 		return h.client.Do(req)
-	}, predicate.TestPredicate)
+	}, validator.Assert)
 
 	if err != nil {
 		return fmt.Errorf("error calling endpoint %s with \"%s=%s\" err=%s", url, headerName, headerValue, err)
@@ -84,16 +83,6 @@ func (h *Helper) withRetries(httpCall func() (*http.Response, error), isResponse
 	}
 
 	return nil
-}
-
-// StatusPredicate is a struct representing desired endpoint call response status code, that is between LowerStatusBound and UpperStatusBound
-type StatusPredicate struct {
-	LowerStatusBound int
-	UpperStatusBound int
-}
-
-func (s *StatusPredicate) TestPredicate(response *http.Response) bool {
-	return response.StatusCode >= s.LowerStatusBound && response.StatusCode <= s.UpperStatusBound
 }
 
 // APIRuleWithRetries tries toExecute function and retries with onRetry if APIRule status is "ERROR"
