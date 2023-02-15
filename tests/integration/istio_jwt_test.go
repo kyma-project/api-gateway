@@ -45,14 +45,14 @@ func (s *istioJwtManifestScenario) callingTheEndpointWithValidTokenShouldResultI
 func callingEndpointWithHeadersWithRetries(url string, path string, tokenType string, lower int, higher int) error {
 	switch tokenType {
 	case "Opaque":
-		token, err := jwt.GetAccessToken(oauth2Cfg, jwtConfig, strings.ToLower(tokenType))
+		token, err := jwt.GetAccessToken(*oauth2Cfg, jwtConfig, strings.ToLower(tokenType))
 		if err != nil {
 			return fmt.Errorf("failed to fetch an id_token: %s", err.Error())
 		}
 
 		return helper.CallEndpointWithHeadersWithRetries(token, opaqueHeaderName, fmt.Sprintf("%s%s", url, path), &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher})
 	case "JWT":
-		token, err := jwt.GetAccessToken(oauth2Cfg, jwtConfig, strings.ToLower(tokenType))
+		token, err := jwt.GetAccessToken(*oauth2Cfg, jwtConfig, strings.ToLower(tokenType))
 		if err != nil {
 			return fmt.Errorf("failed to fetch an id_token: %s", err.Error())
 		}
