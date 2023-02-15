@@ -6,11 +6,11 @@ metadata:
 spec:
   gateway: "{{.GatewayNamespace}}/{{.GatewayName}}"
   host: "httpbin-{{.TestID}}.{{.Domain}}"
+  service:
+    name: httpbin-{{.TestID}}
+    port: 8000
   rules:
     - path: {{ .headersJwtSecuredPath }}
-      service:
-        name: httpbin-{{.TestID}}
-        port: 8000
       methods: {{ .headersMethods }}
       mutators: []
       accessStrategies:
