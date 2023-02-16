@@ -24,7 +24,7 @@ func initDiffServiceSameMethods(ctx *godog.ScenarioContext) {
 }
 
 func (s *istioJwtManifestScenario) thereAreTwoServices() error {
-	resources, err := manifestprocessor.ParseFromFileWithTemplate("testing-hellworld-app.yaml", s.apiResourceDirectory, resourceSeparator, s.manifestTemplate)
+	resources, err := manifestprocessor.ParseFromFileWithTemplate("testing-helloworld-app.yaml", s.apiResourceDirectory, resourceSeparator, s.manifestTemplate)
 	if err != nil {
 		return err
 	}
