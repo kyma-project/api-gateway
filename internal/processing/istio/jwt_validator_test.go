@@ -101,6 +101,35 @@ var _ = Describe("JWT Handler validation", func() {
 
 	Context("for authorizations", func() {
 
+		It("Should have failed validations when authorization has no value", func() {
+			//given
+			config := getRawConfig(
+				gatewayv1beta1.JwtConfig{
+					Authentications: []*gatewayv1beta1.JwtAuthentication{
+						{
+							Issuer:  "https://issuer.test/",
+							JwksUri: "file://.well-known/jwks.json",
+						},
+					},
+					Authorizations: []*gatewayv1beta1.JwtAuthorization{
+						nil,
+					},
+				})
+
+			handler := &gatewayv1beta1.Handler{
+				Name:   "jwt",
+				Config: config,
+			}
+
+			//when
+			problems := (&handlerValidator{}).Validate("", handler)
+
+			//then
+			Expect(problems).To(HaveLen(1))
+			Expect(problems[0].AttributePath).To(Equal(".config.authorizations[0]"))
+			Expect(problems[0].Message).To(Equal("authorization is empty"))
+		})
+
 		It("Should successful validate config without authorizations", func() {
 			//given
 			config := getRawConfig(
@@ -208,6 +237,7 @@ var _ = Describe("JWT Handler validation", func() {
 		})
 
 		Context("audiences", func() {
+
 			It("Should have failed validations for config with empty audiences", func() {
 				//given
 				authorizations := []*gatewayv1beta1.JwtAuthorization{

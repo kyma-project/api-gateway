@@ -164,7 +164,7 @@ var _ = Describe("Apirule controller validation", func() {
 
 		Context("JWT config authorizations", func() {
 
-			It("should not allow creation of APIRule with empty audiences in jwt config authorizations", func() {
+			It("should not allow creation of APIRule with empty Audiences in jwt config authorizations", func() {
 				accessStrategies := []*gatewayv1beta1.Authenticator{
 					{
 						Handler: &gatewayv1beta1.Handler{

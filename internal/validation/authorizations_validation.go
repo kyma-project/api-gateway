@@ -47,6 +47,13 @@ func HasInvalidAuthorizations(attributePath string, authorizations []*v1beta1.Jw
 	}
 
 	for i, authorization := range authorizations {
+
+		if authorization == nil {
+			attrPath := fmt.Sprintf("%s%s[%d]", attributePath, ".config.authorizations", i)
+			failures = append(failures, Failure{AttributePath: attrPath, Message: "authorization is empty"})
+			continue
+		}
+
 		err := hasInvalidRequiredScopes(*authorization)
 		if err != nil {
 			attrPath := fmt.Sprintf("%s%s[%d]%s", attributePath, ".config.authorizations", i, ".requiredScopes")
