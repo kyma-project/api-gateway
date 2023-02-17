@@ -1,25 +1,16 @@
 package api_gateway
 
 import (
-	"context"
 	"crypto/tls"
 	"encoding/base64"
-	"encoding/json"
 	"fmt"
-	"io"
-	"io/fs"
 	"log"
 	"math/rand"
 	"net/http"
 	"os"
-	"path/filepath"
-	"regexp"
-	"runtime"
 	"strings"
 	"testing"
 	"time"
-
-	"gitlab.com/rodrigoodhin/gocure/report/html"
 
 	"github.com/avast/retry-go"
 	"github.com/cucumber/godog"
@@ -30,15 +21,10 @@ import (
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/manifestprocessor"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/resource"
 	"github.com/spf13/pflag"
-	"github.com/tidwall/pretty"
 	"github.com/vrischmann/envconfig"
-	"gitlab.com/rodrigoodhin/gocure/models"
-	"gitlab.com/rodrigoodhin/gocure/pkg/gocure"
-
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/clientcredentials"
 
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
@@ -48,7 +34,6 @@ import (
 const (
 	testIDLength              = 8
 	manifestsDirectory        = "manifests/"
-	testingAppFile            = "testing-app.yaml"
 	globalCommonResourcesFile = "global-commons.yaml"
 	resourceSeparator         = "---"
 	exportResultVar           = "EXPORT_RESULT"
@@ -97,31 +82,18 @@ type Config struct {
 }
 
 type Scenario interface {
-	GetApiResource() []unstructured.Unstructured
 	GetUrl() string
 	GetNamespace() string
 }
 
 type BaseScenario struct {
 	namespace string
-	url       string
-}
-
-func (b *BaseScenario) GetUrl() string {
-	return b.url
+	domain    string
+	testID    string
 }
 
 func (b *BaseScenario) GetNamespace() string {
 	return b.namespace
-}
-
-type UnstructuredScenario struct {
-	BaseScenario
-	apiResource []unstructured.Unstructured
-}
-
-func (u *UnstructuredScenario) GetApiResource() []unstructured.Unstructured {
-	return u.apiResource
 }
 
 // ScenarioWithRawAPIResource is a scenario that doesn't create APIRule on scenario initialization, allowing further templating of APIRule manifest
@@ -130,12 +102,7 @@ type ScenarioWithRawAPIResource struct {
 	apiResourceManifestPath string
 	apiResourceDirectory    string
 	manifestTemplate        map[string]string
-}
-
-type TwoStepScenario struct {
-	BaseScenario
-	apiResourceOne []unstructured.Unstructured
-	apiResourceTwo []unstructured.Unstructured
+	url                     string
 }
 
 func InitTestSuite() {
@@ -241,100 +208,10 @@ func generateRandomString(length int) string {
 	return string(b)
 }
 
-func generateReport() {
-	htmlOutputDir := "reports/"
-
-	html := gocure.HTML{
-		Config: html.Data{
-			InputJsonPath:    cucumberFileName,
-			OutputHtmlFolder: htmlOutputDir,
-			Title:            "Kyma API-Gateway component tests",
-			Metadata: models.Metadata{
-				Platform:        runtime.GOOS,
-				TestEnvironment: "Gardener GCP",
-				Parallel:        "Scenarios",
-				Executed:        "Remote",
-				AppVersion:      "main",
-				Browser:         "default",
-			},
-		},
-	}
-	err := html.Generate()
-	if err != nil {
-		log.Fatalf(err.Error())
-	}
-
-	err = filepath.Walk("reports", func(path string, info fs.FileInfo, err error) error {
-		if path == "reports" {
-			return nil
-		}
-
-		data, err1 := os.ReadFile(path)
-		if err1 != nil {
-			return err
-		}
-
-		//Format all patterns like "&lt" to not be replaced later
-		find := regexp.MustCompile(`&\w\w`)
-		formatted := find.ReplaceAllFunc(data, func(b []byte) []byte {
-			return []byte{b[0], ' ', b[1], b[2]}
-		})
-
-		err = os.WriteFile(path, formatted, fs.FileMode(02))
-		if err != nil {
-			return err
-		}
-
-		return nil
-	})
-
-	if err != nil {
-		log.Fatalf(err.Error())
-	}
-
-	if artifactsDir, ok := os.LookupEnv("ARTIFACTS"); ok {
-		err = filepath.Walk("reports", func(path string, info fs.FileInfo, err error) error {
-			if path == "reports" {
-				return nil
-			}
-
-			_, err1 := copy(path, fmt.Sprintf("%s/report.html", artifactsDir))
-			if err1 != nil {
-				return err1
-			}
-			return nil
-		})
-
-		if err != nil {
-			log.Fatalf(err.Error())
-		}
-
-		_, err = copy("./junit-report.xml", fmt.Sprintf("%s/junit-report.xml", artifactsDir))
-		if err != nil {
-			log.Fatalf(err.Error())
-		}
-	}
-
-}
-
-func getApiRules() string {
-	res := schema.GroupVersionResource{Group: "gateway.kyma-project.io", Version: "v1alpha1", Resource: "apirules"}
-	list, _ := k8sClient.Resource(res).List(context.Background(), v1.ListOptions{})
-
-	toPrint, _ := json.Marshal(list)
-
-	return string(pretty.Pretty(toPrint))
-}
-
-func CreateScenarioWithRawAPIResource(templateFileName string, namePrefix string, deploymentFile ...string) (*ScenarioWithRawAPIResource, error) {
+func CreateScenarioWithRawAPIResource(templateFileName string, namePrefix string) (*ScenarioWithRawAPIResource, error) {
 	testID := generateRandomString(testIDLength)
 
-	err := createCommonResources(testID, deploymentFile...)
-	if err != nil {
-		return nil, err
-	}
 	template := make(map[string]string)
-
 	template["Namespace"] = namespace
 	template["NamePrefix"] = namePrefix
 	template["TestID"] = testID
@@ -347,89 +224,13 @@ func CreateScenarioWithRawAPIResource(templateFileName string, namePrefix string
 	return &ScenarioWithRawAPIResource{
 		BaseScenario: BaseScenario{
 			namespace: namespace,
-			url:       fmt.Sprintf("https://httpbin-%s.%s", testID, conf.Domain),
+			testID:    testID,
+			domain:    conf.Domain,
 		},
 		manifestTemplate:        template,
 		apiResourceManifestPath: templateFileName,
 		apiResourceDirectory:    manifestsDirectory,
 	}, nil
-}
-
-func createCommonResources(testID string, deploymentFile ...string) error {
-	deploymentFileName := testingAppFile
-	if len(deploymentFile) > 0 {
-		deploymentFileName = deploymentFile[0]
-	}
-
-	// create common resources from files
-	commonResources, err := manifestprocessor.ParseFromFileWithTemplate(deploymentFileName, manifestsDirectory, resourceSeparator, struct {
-		Namespace string
-		TestID    string
-	}{
-		Namespace: namespace,
-		TestID:    testID,
-	})
-	if err != nil {
-		return fmt.Errorf("failed to process common manifest files, details %s", err.Error())
-	}
-	_, err = batch.CreateResources(k8sClient, commonResources...)
-
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func copy(src, dst string) (int64, error) {
-	sourceFileStat, err := os.Stat(src)
-	if err != nil {
-		return 0, err
-	}
-
-	if !sourceFileStat.Mode().IsRegular() {
-		return 0, fmt.Errorf("%s is not a regular file", src)
-	}
-
-	source, err := os.Open(src)
-	if err != nil {
-		return 0, err
-	}
-	defer source.Close()
-
-	destination, err := os.Create(dst)
-	if err != nil {
-		return 0, err
-	}
-	defer destination.Close()
-	nBytes, err := io.Copy(destination, source)
-	return nBytes, err
-}
-
-func getPodListReport() string {
-	type returnedPodList struct {
-		PodList []struct {
-			Metadata struct {
-				Name              string `json:"name"`
-				CreationTimestamp string `json:"creationTimestamp"`
-			} `json:"metadata"`
-			Status struct {
-				Phase string `json:"phase"`
-			} `json:"status"`
-		} `json:"items"`
-	}
-
-	res := schema.GroupVersionResource{Group: "", Version: "v1", Resource: "pods"}
-
-	list, _ := k8sClient.Resource(res).Namespace("").List(context.Background(), v1.ListOptions{})
-
-	p := returnedPodList{}
-	toMarshal, _ := json.Marshal(list)
-	err := json.Unmarshal(toMarshal, &p)
-	if err != nil {
-		log.Fatalf(err.Error())
-	}
-	toPrint, _ := json.Marshal(p)
-	return string(pretty.Pretty(toPrint))
 }
 
 func SwitchJwtHandler(jwtHandler string) (string, error) {

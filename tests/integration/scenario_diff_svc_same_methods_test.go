@@ -15,6 +15,7 @@ func initDiffServiceSameMethods(ctx *godog.ScenarioContext) {
 
 	scenario := istioJwtManifestScenario{s}
 
+	ctx.Step(`DiffSvcSameMethods: There is a httpbin service$`, scenario.thereIsAHttpbinService)
 	ctx.Step(`DiffSvcSameMethods: There is a workload and service for httpbin and helloworld$`, scenario.thereAreTwoServices)
 	ctx.Step(`DiffSvcSameMethods: There is an endpoint secured with JWT on path "([^"]*)" for httpbin service with methods '(\[.*\])'$`, scenario.thereIsAJwtSecuredPathWithMethods)
 	ctx.Step(`DiffSvcSameMethods: There is an endpoint secured with JWT on path "([^"]*)" for helloworld service with methods '(\[.*\])'$`, scenario.thereIsAJwtSecuredPathWithMethods)

@@ -97,3 +97,18 @@ func (s *istioJwtManifestScenario) thereIsAnJwtSecuredPath(path string) {
 
 func (s *istioJwtManifestScenario) emptyStep() {
 }
+
+func (s *istioJwtManifestScenario) thereIsAHttpbinService() error {
+	resources, err := manifestprocessor.ParseFromFileWithTemplate("testing-app.yaml", s.apiResourceDirectory, resourceSeparator, s.manifestTemplate)
+	if err != nil {
+		return err
+	}
+	_, err = batch.CreateResources(k8sClient, resources...)
+	if err != nil {
+		return err
+	}
+
+	s.url = fmt.Sprintf("https://httpbin-%s.%s", s.testID, s.domain)
+
+	return nil
+}

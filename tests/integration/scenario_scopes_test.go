@@ -15,6 +15,7 @@ func initRequiredScopes(ctx *godog.ScenarioContext) {
 
 	scenario := istioJwtManifestScenario{s}
 
+	ctx.Step(`Scopes: There is a httpbin service$`, scenario.thereIsAHttpbinService)
 	ctx.Step(`Scopes: There is an endpoint secured with JWT on path "([^"]*)" requiring scopes '(\[.*\])'$`, scenario.thereIsAnEndpointWithRequiredScopes)
 	ctx.Step(`Scopes: The APIRule is applied$`, scenario.theAPIRuleIsApplied)
 	ctx.Step(`Scopes: Calling the "([^"]*)" endpoint with a valid "([^"]*)" token with scope claims "([^"]*)" and "([^"]*)" should result in status between (\d+) and (\d+)`, scenario.callingTheEndpointWithAValidToken)

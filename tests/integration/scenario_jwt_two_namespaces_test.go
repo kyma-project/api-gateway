@@ -12,6 +12,7 @@ func initJwtTwoNamespaces(ctx *godog.ScenarioContext) {
 
 	scenario := istioJwtManifestScenario{s}
 
+	ctx.Step(`TwoNamespaces: There is a httpbin service$`, scenario.thereIsAHttpbinService)
 	ctx.Step(`TwoNamespaces: There are two namespaces with workload`, scenario.thereAreTwoNamespaces)
 	ctx.Step(`TwoNamespaces: There is an endpoint secured with JWT on path "([^"]*)" in APIRule Namespace$`, scenario.thereIsAnJwtSecuredPath)
 	ctx.Step(`TwoNamespaces: There is an endpoint secured with JWT on path "([^"]*)" in different namespace$`, scenario.thereIsAnJwtSecuredPathInDifferentNamespace)
