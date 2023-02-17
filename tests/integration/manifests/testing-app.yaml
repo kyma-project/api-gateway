@@ -48,5 +48,8 @@ spec:
           runAsGroup: 65534
         resources:
           limits:
-            cpu: "500m"
+            cpu: "250m"
             memory: "250Mi"
+          requests:
+            cpu: "50m"
+            memory: "50Mi"

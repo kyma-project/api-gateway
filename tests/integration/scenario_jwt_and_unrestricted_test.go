@@ -9,11 +9,12 @@ import (
 func initJwtAndAllow(ctx *godog.ScenarioContext) {
 	s, err := CreateScenarioWithRawAPIResource("istio-jwt-and-unrestricted.yaml", "istio-jwt-unrestricted")
 	if err != nil {
-		t.Fatalf("could not initialize unsecure endpoint scenario err=%s", err)
+		t.Fatalf("could not initialize scenario err=%s", err)
 	}
 
 	scenario := istioJwtManifestScenario{s}
 
+	ctx.Step(`JwtAndUnrestricted: There is a httpbin service$`, scenario.thereIsAHttpbinService)
 	ctx.Step(`JwtAndUnrestricted: There is an endpoint secured with JWT on path "([^"]*)"$`, scenario.thereIsAnJwtSecuredPath)
 	ctx.Step(`JwtAndUnrestricted: There is an endpoint with handler "([^"]*)" on path "([^"]*)"$`, scenario.thereIsAnEndpointWithHandler)
 	ctx.Step(`JwtAndUnrestricted: The APIRule is applied$`, scenario.theAPIRuleIsApplied)

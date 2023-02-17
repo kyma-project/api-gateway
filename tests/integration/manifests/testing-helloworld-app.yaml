@@ -2,7 +2,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: helloworld-{{.TestID}}
-  namespace: "{{.Namespace}}-2"
+  namespace: "{{.Namespace}}"
   labels:
     app: helloworld-{{.TestID}}
 spec:
@@ -17,7 +17,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: helloworld-{{.TestID}}
-  namespace: "{{.Namespace}}-2"
+  namespace: "{{.Namespace}}"
 spec:
   replicas: 1
   selector:
