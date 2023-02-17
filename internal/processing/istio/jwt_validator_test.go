@@ -10,7 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
-var _ = Describe("JWT Validator", func() {
+var _ = Describe("JWT Handler validation", func() {
 	It("Should fail with empty config", func() {
 		//given
 		handler := &gatewayv1beta1.Handler{Name: "jwt", Config: emptyJWTIstioConfig()}
@@ -99,41 +99,225 @@ var _ = Describe("JWT Validator", func() {
 		Expect(problems).To(Not(BeEmpty()))
 	})
 
-	It("Should fail for config with empty required scopes", func() {
-		//given
-		handler := &gatewayv1beta1.Handler{Name: "jwt", Config: testURLJWTIstioConfigWithScopes([]string{})}
+	Context("for authorizations", func() {
 
-		//when
-		problems := (&handlerValidator{}).Validate("some.attribute", handler)
+		It("Should have failed validations when authorization has no value", func() {
+			//given
+			config := getRawConfig(
+				gatewayv1beta1.JwtConfig{
+					Authentications: []*gatewayv1beta1.JwtAuthentication{
+						{
+							Issuer:  "https://issuer.test/",
+							JwksUri: "file://.well-known/jwks.json",
+						},
+					},
+					Authorizations: []*gatewayv1beta1.JwtAuthorization{
+						nil,
+					},
+				})
 
-		//then
-		Expect(problems).To(HaveLen(1))
-		Expect(problems[0].AttributePath).To(Equal("some.attribute.config.authorizations[0].requiredScopes"))
-		Expect(problems[0].Message).To(Equal("value is empty or has an empty string err=value is empty"))
-	})
+			handler := &gatewayv1beta1.Handler{
+				Name:   "jwt",
+				Config: config,
+			}
 
-	It("Should fail for config with empty string in required scopes", func() {
-		//given
-		handler := &gatewayv1beta1.Handler{Name: "jwt", Config: testURLJWTIstioConfigWithScopes([]string{"scope-a", ""})}
+			//when
+			problems := (&handlerValidator{}).Validate("", handler)
 
-		//when
-		problems := (&handlerValidator{}).Validate("some.attribute", handler)
+			//then
+			Expect(problems).To(HaveLen(1))
+			Expect(problems[0].AttributePath).To(Equal(".config.authorizations[0]"))
+			Expect(problems[0].Message).To(Equal("authorization is empty"))
+		})
 
-		//then
-		Expect(problems).To(HaveLen(1))
-		Expect(problems[0].AttributePath).To(Equal("some.attribute.config.authorizations[0].requiredScopes"))
-		Expect(problems[0].Message).To(Equal("value is empty or has an empty string err=scope value is empty"))
-	})
+		It("Should successful validate config without authorizations", func() {
+			//given
+			config := getRawConfig(
+				gatewayv1beta1.JwtConfig{
+					Authentications: []*gatewayv1beta1.JwtAuthentication{
+						{
+							Issuer:  "https://issuer.test/",
+							JwksUri: "file://.well-known/jwks.json",
+						},
+					},
+				})
 
-	It("Should succeed for config with two required scopes", func() {
-		//given
-		handler := &gatewayv1beta1.Handler{Name: "jwt", Config: testURLJWTIstioConfigWithScopes([]string{"scope-a", "scope-b"})}
+			handler := &gatewayv1beta1.Handler{
+				Name:   "jwt",
+				Config: config,
+			}
 
-		//when
-		problems := (&handlerValidator{}).Validate("some.attribute", handler)
+			//when
+			problems := (&handlerValidator{}).Validate("", handler)
 
-		//then
-		Expect(problems).To(HaveLen(0))
+			//then
+			Expect(problems).To(HaveLen(0))
+		})
+
+		Context("required scopes", func() {
+			It("Should fail for config with empty required scopes", func() {
+				//given
+				authorizations := []*gatewayv1beta1.JwtAuthorization{
+					{
+						RequiredScopes: []string{},
+					},
+				}
+				handler := &gatewayv1beta1.Handler{
+					Name:   "jwt",
+					Config: testURLJWTIstioConfigWithAuthorizations(authorizations),
+				}
+
+				//when
+				problems := (&handlerValidator{}).Validate("some.attribute", handler)
+
+				//then
+				Expect(problems).To(HaveLen(1))
+				Expect(problems[0].AttributePath).To(Equal("some.attribute.config.authorizations[0].requiredScopes"))
+				Expect(problems[0].Message).To(Equal("value is empty"))
+			})
+
+			It("Should fail for config with empty string in required scopes", func() {
+				//given
+				authorizations := []*gatewayv1beta1.JwtAuthorization{
+					{
+						RequiredScopes: []string{"scope-a", ""},
+					},
+				}
+				handler := &gatewayv1beta1.Handler{
+					Name:   "jwt",
+					Config: testURLJWTIstioConfigWithAuthorizations(authorizations),
+				}
+
+				//when
+				problems := (&handlerValidator{}).Validate("some.attribute", handler)
+
+				//then
+				Expect(problems).To(HaveLen(1))
+				Expect(problems[0].AttributePath).To(Equal("some.attribute.config.authorizations[0].requiredScopes"))
+				Expect(problems[0].Message).To(Equal("scope value is empty"))
+			})
+
+			It("Should succeed for config with two required scopes", func() {
+				//given
+				authorizations := []*gatewayv1beta1.JwtAuthorization{
+					{
+						RequiredScopes: []string{"scope-a", "scope-b"},
+					},
+				}
+				handler := &gatewayv1beta1.Handler{
+					Name:   "jwt",
+					Config: testURLJWTIstioConfigWithAuthorizations(authorizations),
+				}
+
+				//when
+				problems := (&handlerValidator{}).Validate("some.attribute", handler)
+
+				//then
+				Expect(problems).To(HaveLen(0))
+			})
+
+			It("Should successful validate config without a required scope", func() {
+				//given
+				authorizations := []*gatewayv1beta1.JwtAuthorization{
+					{
+						Audiences: []string{"www.example.com"},
+					},
+				}
+				handler := &gatewayv1beta1.Handler{
+					Name:   "jwt",
+					Config: testURLJWTIstioConfigWithAuthorizations(authorizations),
+				}
+
+				//when
+				problems := (&handlerValidator{}).Validate("", handler)
+
+				//then
+				Expect(problems).To(HaveLen(0))
+			})
+		})
+
+		Context("audiences", func() {
+
+			It("Should have failed validations for config with empty audiences", func() {
+				//given
+				authorizations := []*gatewayv1beta1.JwtAuthorization{
+					{
+						Audiences: []string{},
+					},
+				}
+				handler := &gatewayv1beta1.Handler{
+					Name:   "jwt",
+					Config: testURLJWTIstioConfigWithAuthorizations(authorizations),
+				}
+
+				//when
+				problems := (&handlerValidator{}).Validate("", handler)
+
+				//then
+				Expect(problems).To(HaveLen(1))
+				Expect(problems[0].AttributePath).To(Equal(".config.authorizations[0].audiences"))
+				Expect(problems[0].Message).To(Equal("value is empty"))
+			})
+
+			It("Should have failed validations for config with empty string in audiences", func() {
+				//given
+				authorizations := []*gatewayv1beta1.JwtAuthorization{
+					{
+						Audiences: []string{"www.example.com", ""},
+					},
+				}
+				handler := &gatewayv1beta1.Handler{
+					Name:   "jwt",
+					Config: testURLJWTIstioConfigWithAuthorizations(authorizations),
+				}
+
+				//when
+				problems := (&handlerValidator{}).Validate("", handler)
+
+				//then
+				Expect(problems).To(HaveLen(1))
+				Expect(problems[0].AttributePath).To(Equal(".config.authorizations[0].audiences"))
+				Expect(problems[0].Message).To(Equal("audience value is empty"))
+			})
+
+			It("Should successful validate config with an audience", func() {
+				//given
+				authorizations := []*gatewayv1beta1.JwtAuthorization{
+					{
+						Audiences: []string{"www.example.com"},
+					},
+				}
+				handler := &gatewayv1beta1.Handler{
+					Name:   "jwt",
+					Config: testURLJWTIstioConfigWithAuthorizations(authorizations),
+				}
+
+				//when
+				problems := (&handlerValidator{}).Validate("", handler)
+
+				//then
+				Expect(problems).To(HaveLen(0))
+			})
+
+			It("Should successful validate config without audiences", func() {
+				//given
+				authorizations := []*gatewayv1beta1.JwtAuthorization{
+					{
+						RequiredScopes: []string{"www.example.com"},
+					},
+				}
+				handler := &gatewayv1beta1.Handler{
+					Name:   "jwt",
+					Config: testURLJWTIstioConfigWithAuthorizations(authorizations),
+				}
+
+				//when
+				problems := (&handlerValidator{}).Validate("", handler)
+
+				//then
+				Expect(problems).To(HaveLen(0))
+			})
+		})
 	})
 })
 
@@ -166,7 +350,7 @@ func testURLJWTIstioConfig(JWKSUrl string, trustedIssuer string) *runtime.RawExt
 		})
 }
 
-func testURLJWTIstioConfigWithScopes(requiredScopes []string) *runtime.RawExtension {
+func testURLJWTIstioConfigWithAuthorizations(authorizations []*gatewayv1beta1.JwtAuthorization) *runtime.RawExtension {
 	return getRawConfig(
 		gatewayv1beta1.JwtConfig{
 			Authentications: []*gatewayv1beta1.JwtAuthentication{
@@ -175,9 +359,7 @@ func testURLJWTIstioConfigWithScopes(requiredScopes []string) *runtime.RawExtens
 					JwksUri: "file://.well-known/jwks.json",
 				},
 			},
-			Authorizations: []*gatewayv1beta1.JwtAuthorization{
-				{RequiredScopes: requiredScopes},
-			},
+			Authorizations: authorizations,
 		})
 }
 

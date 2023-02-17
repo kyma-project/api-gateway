@@ -12,27 +12,27 @@ import (
 type handlerValidator struct{}
 
 func (o *handlerValidator) Validate(attributePath string, handler *gatewayv1beta1.Handler) []validation.Failure {
-	var problems []validation.Failure
+	var failures []validation.Failure
 	var template gatewayv1beta1.JwtConfig
 
 	if !validation.ConfigNotEmpty(handler.Config) {
-		problems = append(problems, validation.Failure{AttributePath: attributePath + ".config", Message: "supplied config cannot be empty"})
-		return problems
+		failures = append(failures, validation.Failure{AttributePath: attributePath + ".config", Message: "supplied config cannot be empty"})
+		return failures
 	}
 
 	err := json.Unmarshal(handler.Config.Raw, &template)
 	if err != nil {
-		problems = append(problems, validation.Failure{AttributePath: attributePath + ".config", Message: "Can't read json: " + err.Error()})
-		return problems
+		failures = append(failures, validation.Failure{AttributePath: attributePath + ".config", Message: "Can't read json: " + err.Error()})
+		return failures
 	}
 
-	problems = append(problems, checkForOryConfig(attributePath, handler)...)
+	failures = append(failures, checkForOryConfig(attributePath, handler)...)
 
 	for i, authentication := range template.Authentications {
 		invalidIssuer, err := validation.IsInvalidURL(authentication.Issuer)
 		if invalidIssuer {
 			attrPath := fmt.Sprintf("%s%s[%d]%s", attributePath, ".config.authentications", i, ".issuer")
-			problems = append(problems, validation.Failure{AttributePath: attrPath, Message: fmt.Sprintf("value is empty or not a valid url err=%s", err)})
+			failures = append(failures, validation.Failure{AttributePath: attrPath, Message: fmt.Sprintf("value is empty or not a valid url err=%s", err)})
 		}
 		// The https:// configuration for TrustedIssuers is not necessary in terms of security best practices,
 		// however it is part of "secure by default" configuration, as this is the most common use case for iss claim.
@@ -40,29 +40,24 @@ func (o *handlerValidator) Validate(attributePath string, handler *gatewayv1beta
 		unsecuredIssuer, err := validation.IsUnsecuredURL(authentication.Issuer)
 		if unsecuredIssuer {
 			attrPath := fmt.Sprintf("%s%s[%d]%s", attributePath, ".config.authentications", i, ".issuer")
-			problems = append(problems, validation.Failure{AttributePath: attrPath, Message: fmt.Sprintf("value is not a secured url err=%s", err)})
+			failures = append(failures, validation.Failure{AttributePath: attrPath, Message: fmt.Sprintf("value is not a secured url err=%s", err)})
 		}
 		invalidJwksUri, err := validation.IsInvalidURL(authentication.JwksUri)
 		if invalidJwksUri {
 			attrPath := fmt.Sprintf("%s%s[%d]%s", attributePath, ".config.authentications", i, ".jwksUri")
-			problems = append(problems, validation.Failure{AttributePath: attrPath, Message: fmt.Sprintf("value is empty or not a valid url err=%s", err)})
+			failures = append(failures, validation.Failure{AttributePath: attrPath, Message: fmt.Sprintf("value is empty or not a valid url err=%s", err)})
 		}
 		unsecuredJwksUri, err := validation.IsUnsecuredURL(authentication.JwksUri)
 		if unsecuredJwksUri {
 			attrPath := fmt.Sprintf("%s%s[%d]%s", attributePath, ".config.authentications", i, ".jwksUri")
-			problems = append(problems, validation.Failure{AttributePath: attrPath, Message: fmt.Sprintf("value is not a secured url err=%s", err)})
+			failures = append(failures, validation.Failure{AttributePath: attrPath, Message: fmt.Sprintf("value is not a secured url err=%s", err)})
 		}
 	}
 
-	for i, authorization := range template.Authorizations {
-		err := validation.HasInvalidScopes(*authorization)
-		if err != nil {
-			attrPath := fmt.Sprintf("%s%s[%d]%s", attributePath, ".config.authorizations", i, ".requiredScopes")
-			problems = append(problems, validation.Failure{AttributePath: attrPath, Message: fmt.Sprintf("value is empty or has an empty string err=%s", err)})
-		}
-	}
+	authorizationsFailures := validation.HasInvalidAuthorizations(attributePath, template.Authorizations)
+	failures = append(failures, authorizationsFailures...)
 
-	return problems
+	return failures
 }
 
 func checkForOryConfig(attributePath string, handler *gatewayv1beta1.Handler) (problems []validation.Failure) {

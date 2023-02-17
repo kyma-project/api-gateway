@@ -161,6 +161,69 @@ var _ = Describe("Apirule controller validation", func() {
 
 			testJwtHandlerConfigError(accessStrategies, expectedValidationErrors)
 		})
+
+		Context("JWT config authorizations", func() {
+
+			It("should not allow creation of APIRule with empty Audiences in jwt config authorizations", func() {
+				accessStrategies := []*gatewayv1beta1.Authenticator{
+					{
+						Handler: &gatewayv1beta1.Handler{
+							Name: "jwt",
+							Config: getRawConfig(
+								gatewayv1beta1.JwtConfig{
+									Authentications: []*gatewayv1beta1.JwtAuthentication{
+										{
+											Issuer:  "https://example.com/",
+											JwksUri: "https://example.com/.well-known/jwks.json",
+										},
+									},
+									Authorizations: []*gatewayv1beta1.JwtAuthorization{
+										{
+											Audiences: []string{},
+										},
+									},
+								}),
+						},
+					},
+				}
+
+				expectedValidationErrors := []string{
+					"Attribute \".spec.rules[0].accessStrategies[0].config.authorizations[0].audiences\": value is empty",
+				}
+
+				testJwtHandlerConfigError(accessStrategies, expectedValidationErrors)
+			})
+
+			It("should not allow creation of APIRule with empty RequiredScopes in jwt config authorizations", func() {
+				accessStrategies := []*gatewayv1beta1.Authenticator{
+					{
+						Handler: &gatewayv1beta1.Handler{
+							Name: "jwt",
+							Config: getRawConfig(
+								gatewayv1beta1.JwtConfig{
+									Authentications: []*gatewayv1beta1.JwtAuthentication{
+										{
+											Issuer:  "https://example.com/",
+											JwksUri: "https://example.com/.well-known/jwks.json",
+										},
+									},
+									Authorizations: []*gatewayv1beta1.JwtAuthorization{
+										{
+											RequiredScopes: []string{},
+										},
+									},
+								}),
+						},
+					},
+				}
+
+				expectedValidationErrors := []string{
+					"Attribute \".spec.rules[0].accessStrategies[0].config.authorizations[0].requiredScopes\": value is empty",
+				}
+
+				testJwtHandlerConfigError(accessStrategies, expectedValidationErrors)
+			})
+		})
 	})
 
 })
