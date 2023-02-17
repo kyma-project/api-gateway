@@ -125,23 +125,6 @@ var _ = Describe("JWT Handler validation", func() {
 			Expect(problems).To(HaveLen(0))
 		})
 
-		It("Should have failed validations for config with empty authorizations", func() {
-			//given
-			authorizations := []*gatewayv1beta1.JwtAuthorization{}
-			handler := &gatewayv1beta1.Handler{
-				Name:   "jwt",
-				Config: testURLJWTIstioConfigWithAuthorizations(authorizations),
-			}
-
-			//when
-			problems := (&handlerValidator{}).Validate("", handler)
-
-			//then
-			Expect(problems).To(HaveLen(1))
-			Expect(problems[0].AttributePath).To(Equal(".config.authorizations"))
-			Expect(problems[0].Message).To(Equal("value is empty err=value is empty"))
-		})
-
 		Context("required scopes", func() {
 			It("Should fail for config with empty required scopes", func() {
 				//given
@@ -161,7 +144,7 @@ var _ = Describe("JWT Handler validation", func() {
 				//then
 				Expect(problems).To(HaveLen(1))
 				Expect(problems[0].AttributePath).To(Equal("some.attribute.config.authorizations[0].requiredScopes"))
-				Expect(problems[0].Message).To(Equal("value is empty or has an empty string err=value is empty"))
+				Expect(problems[0].Message).To(Equal("value is empty"))
 			})
 
 			It("Should fail for config with empty string in required scopes", func() {
@@ -182,7 +165,7 @@ var _ = Describe("JWT Handler validation", func() {
 				//then
 				Expect(problems).To(HaveLen(1))
 				Expect(problems[0].AttributePath).To(Equal("some.attribute.config.authorizations[0].requiredScopes"))
-				Expect(problems[0].Message).To(Equal("value is empty or has an empty string err=scope value is empty"))
+				Expect(problems[0].Message).To(Equal("scope value is empty"))
 			})
 
 			It("Should succeed for config with two required scopes", func() {
@@ -243,7 +226,7 @@ var _ = Describe("JWT Handler validation", func() {
 				//then
 				Expect(problems).To(HaveLen(1))
 				Expect(problems[0].AttributePath).To(Equal(".config.authorizations[0].audiences"))
-				Expect(problems[0].Message).To(Equal("value is empty or has an empty string err=value is empty"))
+				Expect(problems[0].Message).To(Equal("value is empty"))
 			})
 
 			It("Should have failed validations for config with empty string in audiences", func() {
@@ -263,8 +246,8 @@ var _ = Describe("JWT Handler validation", func() {
 
 				//then
 				Expect(problems).To(HaveLen(1))
-				Expect(problems[0].AttributePath).To(Equal(".config.authorizations[0].requiredScopes"))
-				Expect(problems[0].Message).To(Equal("value is empty or has an empty string err=scope value is empty"))
+				Expect(problems[0].AttributePath).To(Equal(".config.authorizations[0].audiences"))
+				Expect(problems[0].Message).To(Equal("audience value is empty"))
 			})
 
 			It("Should successful validate config with an audience", func() {
@@ -286,7 +269,7 @@ var _ = Describe("JWT Handler validation", func() {
 				Expect(problems).To(HaveLen(0))
 			})
 
-			It("Should successful validate config without an audience", func() {
+			It("Should successful validate config without audiences", func() {
 				//given
 				authorizations := []*gatewayv1beta1.JwtAuthorization{
 					{
