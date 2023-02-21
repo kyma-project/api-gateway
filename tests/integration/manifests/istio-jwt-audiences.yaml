@@ -46,3 +46,17 @@ spec:
             authorizations:
               - requiredScopes: ["read", "write"]
                 audiences: {{ .getAudiences }}
+    - path: /cache
+      methods: ["GET"]
+      mutators: []
+      accessStrategies:
+        - handler: jwt
+          config:
+            authentications:
+              - issuer: "{{ .IssuerUrl }}"
+                jwksUri: "{{ .IssuerUrl }}/oauth2/certs"
+            authorizations:
+              - requiredScopes: [ "read", "write" ]
+                audiences: ["audienceNotInJWT"]
+              - requiredScopes: ["read", "write"]
+                audiences: ["https://example.com"]
