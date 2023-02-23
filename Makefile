@@ -133,11 +133,11 @@ provision-k3d:
 .PHONY: install-kyma
 install-kyma:
 ifndef JOB_TYPE
-	kyma deploy --ci -s main -c hack/kyma-components.yaml --value ory.hydra.enabled="false"
+	kyma deploy --ci -v -s main -c hack/kyma-components.yaml --value ory.hydra.enabled="false"
 else ifeq ($(JOB_TYPE), presubmit)
-	kyma deploy --ci -s main -c hack/kyma-components.yaml --value ory.hydra.enabled="false" --value api-gateway.global.images.api_gateway_controller.version=PR-${PULL_NUMBER} --value api-gateway.global.images.api-gateway-webhook-certificates.version=PR-${PULL_NUMBER}
+	kyma deploy --ci -v -s main -c hack/kyma-components.yaml --value ory.hydra.enabled="false" --value api-gateway.global.images.api_gateway_controller.version=PR-${PULL_NUMBER} --value api-gateway.global.images.api-gateway-webhook-certificates.version=PR-${PULL_NUMBER}
 else ifeq ($(JOB_TYPE), postsubmit)
-	kyma deploy --ci -s main -c hack/kyma-components.yaml --value ory.hydra.enabled="false" --value api-gateway.global.images.api_gateway_controller.version=${PULL_BASE_SHA} --value api-gateway.global.images.api-gateway-webhook-certificates.version=${PULL_BASE_SHA}
+	kyma deploy --ci -v -s main -c hack/kyma-components.yaml --value ory.hydra.enabled="false" --value api-gateway.global.images.api_gateway_controller.version=${PULL_BASE_SHA} --value api-gateway.global.images.api-gateway-webhook-certificates.version=${PULL_BASE_SHA}
 endif
 
 .PHONY: test-integration-k3d
