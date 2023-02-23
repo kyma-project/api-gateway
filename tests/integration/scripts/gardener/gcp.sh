@@ -54,7 +54,6 @@ gardener::cleanup() {
     exit "${EXIT_STATUS}"
 }
 
-
 gardener::init() {
     requiredVars=(
         KYMA_PROJECT_DIR
@@ -79,7 +78,6 @@ gardener::generate_overrides() {
     # currently only Azure generates anything in this function
     return
 }
-
 
 gardener::provision_cluster() {
     log::info "Provision cluster: \"${CLUSTER_NAME}\""

@@ -58,8 +58,6 @@ function kyma::deploy_kyma() {
             kyma deploy --ci --concurrency=8 --source=local --workspace "${kymaSourcesDir}" --verbose
         fi
     fi
-
-
 }
 
 # kyma::undeploy_kyma uninstalls Kyma
@@ -232,7 +230,7 @@ kyma::install_cli() {
     pushd "/tmp/bin" || exit
 
     log::info "--> Install kyma CLI ${os} locally to /tmp/bin"
-    
+
     if [[ "${KYMA_MAJOR_VERSION-}" == "1" ]]; then
         curl -sSLo kyma.tar.gz "https://github.com/kyma-project/cli/releases/download/1.24.8/kyma_${os}_x86_64.tar.gz"
         tar xvzf kyma.tar.gz
