@@ -16,7 +16,7 @@
 #Please look in each provider script for provider specific requirements
 
 # exit on error, and raise error when variable is not set when used
-set -e
+set -ex
 
 export KYMA_SOURCES_DIR="${KYMA_PROJECT_DIR}/kyma"
 export API_GATEWAY_SOURCES_DIR="${KYMA_PROJECT_DIR}/api-gateway"
