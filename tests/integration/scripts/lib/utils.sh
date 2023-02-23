@@ -3,7 +3,7 @@
 LIBDIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" || exit; pwd)"
 
 # shellcheck source=tests/integration/scripts/lib/log.sh
-source "${LIBDIR}"/log.sh
+source "${LIBDIR}"/../lib/log.sh
 
 # utils::check_required_vars checks if all provided variables are initialized
 #

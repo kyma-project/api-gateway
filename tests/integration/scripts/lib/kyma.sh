@@ -3,7 +3,7 @@
 LIBDIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" || exit; pwd)"
 
 # shellcheck source=tests/integration/scripts/lib/log.sh
-source "${LIBDIR}/log.sh"
+source "${LIBDIR}/../lib/log.sh"
 
 # kyma::deploy_kyma starts Kyma deployment using new installation method
 # Arguments:

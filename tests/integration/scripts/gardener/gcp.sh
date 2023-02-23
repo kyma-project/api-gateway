@@ -16,7 +16,7 @@ source "${LIBDIR}"/../lib/kyma.sh
 # shellcheck source=tests/integration/scripts/lib/utils.sh
 source "${LIBDIR}"/../lib/utils.sh
 # shellcheck source=tests/integration/scripts/gardener/gardener.sh
-source "${LIBDIR}"/gardener.sh
+source "${LIBDIR}"/../gardener/gardener.sh
 
 #!Put cleanup code in this function! Function is executed at exit from the script and on interuption.
 gardener::cleanup() {
