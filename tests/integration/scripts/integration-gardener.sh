@@ -90,7 +90,7 @@ gardener::generate_overrides
 export CLEANUP_CLUSTER="true"
 gardener::provision_cluster
 
-api-gateway::prepare_components_file_istio_only
+api-gateway::prepare_components_file
 api-gateway::prepare_test_env_integration_tests
 
 # generate pod-security-policy list in json

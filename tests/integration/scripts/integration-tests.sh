@@ -25,24 +25,6 @@ components:
 EOF
 }
 
-function api-gateway::prepare_components_file_istio_only() {
-  log::info "Preparing Kyma installation with Istio and API-Gateway"
-
-cat << EOF > "$PWD/components.yaml"
-defaultNamespace: kyma-system
-prerequisites:
-  - name: "cluster-essentials"
-  - name: "istio"
-    namespace: "istio-system"
-  - name: "certificates"
-    namespace: "istio-system"
-components:
-  - name: "istio-resources"
-  - name: "api-gateway"
-  - name: "ory" # Until drop of ory oathkeeper Ory needs to be deployed for noop and OAuth2 scenarios
-EOF
-}
-
 function api-gateway::prepare_test_environments() {
   log::info "Prepare test environment variables"
 
