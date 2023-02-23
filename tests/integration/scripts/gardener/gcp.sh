@@ -10,13 +10,13 @@
 LIBDIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" || exit; pwd)"
 
 # shellcheck source=tests/integration/scripts/lib/log.sh
-source "${LIBDIR}"/log.sh
+source "${LIBDIR}"/../lib/log.sh
 # shellcheck source=tests/integration/scripts/lib/kyma.sh
-source "${LIBDIR}"/kyma.sh
+source "${LIBDIR}"/../lib/kyma.sh
 # shellcheck source=tests/integration/scripts/lib/utils.sh
-source "${LIBDIR}"/utils.sh
+source "${LIBDIR}"/../lib/utils.sh
 # shellcheck source=tests/integration/scripts/gardener/gardener.sh
-source "${LIBDIR}"/../gardener/gardener.sh
+source "${LIBDIR}"/gardener.sh
 
 #!Put cleanup code in this function! Function is executed at exit from the script and on interuption.
 gardener::cleanup() {

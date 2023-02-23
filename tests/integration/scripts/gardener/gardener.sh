@@ -3,9 +3,9 @@
 LIBDIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" || exit; pwd)"
 
 # shellcheck source=tests/integration/scripts/lib/log.sh
-source "${LIBDIR}/log.sh"
+source "${LIBDIR}/../lib/log.sh"
 # shellcheck source=tests/integration/scripts/lib/utils.sh
-source "${LIBDIR}/utils.sh"
+source "${LIBDIR}/../lib/utils.sh"
 
 # gardener::deprovision_cluster removes a Gardener cluster
 #
