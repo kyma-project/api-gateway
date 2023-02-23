@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -ex
+set -e
 
 ROOT_PATH=$(dirname "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)")
 

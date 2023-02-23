@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -ex
+set -e
 
 function integration_tests::install_kyma() {
   log::info "Installing Kyma from local source using components file"
