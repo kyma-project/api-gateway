@@ -7,6 +7,8 @@ import (
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/api/v1beta1"
 )
 
+const HashSumLabelName string = "gateway.kyma-project.io/hash-sum"
+
 var (
 	//OwnerLabel .
 	OwnerLabel = fmt.Sprintf("%s.%s", "apirule", gatewayv1beta1.GroupVersion.String())
