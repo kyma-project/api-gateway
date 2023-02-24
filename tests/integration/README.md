@@ -33,3 +33,7 @@ To start the test suite, run:
 ```
 make test-integration
 ```
+
+## Integration tests run on `presubmit` and `postsubmit` in Prow
+
+Job definitions are specified [in test-infra repository](https://github.com/kyma-project/test-infra/blob/main/templates/data/api-gateway-validation.yaml).
