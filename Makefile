@@ -107,11 +107,11 @@ vet: ## Run go vet against code.
 
 .PHONY: test
 test: manifests generate fmt vet envtest ## Generate manifests and run tests.
-	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" go test ./... -coverprofile cover.out
+	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" $(GOTEST) $(shell go list ./... | grep -v /tests/integration) -coverprofile cover.out
 
 .PHONY: test-for-release
 test-for-release: envtest ## Run tests.
-	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" go test ./... -coverprofile cover.out
+	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" $(GOTEST) $(shell go list ./... | grep -v /tests/integration) -coverprofile cover.out
 
 .PHONY: test-integration
 test-integration: generate fmt vet envtest ## Run integration tests.
