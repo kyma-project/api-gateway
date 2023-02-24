@@ -90,6 +90,9 @@ gardener::generate_overrides
 export CLEANUP_CLUSTER="true"
 gardener::provision_cluster
 
+istio::get_version
+echo "Istio version: ${istio_version}"
+
 api-gateway::prepare_components_file
 api-gateway::prepare_test_env_integration_tests
 

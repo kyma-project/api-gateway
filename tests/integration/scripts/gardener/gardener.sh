@@ -40,7 +40,6 @@ function gardener::deprovision_cluster() {
       esac
   done
 
-
   utils::check_empty_arg "$projectName" "Project name is empty. Exiting..."
   utils::check_empty_arg "$clusterName" "Cluster name is empty. Exiting..."
   utils::check_empty_arg "$kubeconfigFile" "Kubeconfig file path is empty. Exiting..."
@@ -58,7 +57,6 @@ function gardener::deprovision_cluster() {
     --kubeconfig "${kubeconfigFile}" \
     -n "${namespace}"
 }
-
 
 # gardener::reprovision_cluster will generate new cluster name
 # and start provisioning again
