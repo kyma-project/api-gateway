@@ -2,7 +2,8 @@ package processors
 
 import (
 	"context"
-	"sort"
+	"strconv"
+	"strings"
 
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/api/v1beta1"
 	"github.com/kyma-project/api-gateway/internal/helpers"
@@ -47,7 +48,7 @@ func (r AuthorizationPolicyProcessor) getDesiredState(api *gatewayv1beta1.APIRul
 	return aps, nil
 }
 
-func (r AuthorizationPolicyProcessor) getActualState(ctx context.Context, client ctrlclient.Client, api *gatewayv1beta1.APIRule) (map[string][]*securityv1beta1.AuthorizationPolicy, error) {
+func (r AuthorizationPolicyProcessor) getActualState(ctx context.Context, client ctrlclient.Client, api *gatewayv1beta1.APIRule) (map[string]map[string]*securityv1beta1.AuthorizationPolicy, error) {
 	labels := processing.GetOwnerLabels(api)
 
 	var apList securityv1beta1.AuthorizationPolicyList
@@ -55,40 +56,65 @@ func (r AuthorizationPolicyProcessor) getActualState(ctx context.Context, client
 		return nil, err
 	}
 
-	authorizationPolicies := make(map[string][]*securityv1beta1.AuthorizationPolicy)
-	for _, ap := range apList.Items {
-		if hash, ok := ap.Labels[processing.HashToLabelName]; ok {
-			authorizationPolicies[hash] = append(authorizationPolicies[hash], ap)
+	authorizationPolicies := make(map[string]map[string]*securityv1beta1.AuthorizationPolicy)
+	for i, ap := range apList.Items {
+		index, ok := ap.Labels[processing.IndexLabelName]
+		if !ok {
+			// Store unindexed APs so they will be deleted/updated with index
+			index = "-" + strconv.Itoa(i)
+		}
+
+		if hash, ok := ap.Labels[processing.HashLabelName]; ok {
+			if authorizationPolicies[hash] == nil {
+				authorizationPolicies[hash] = make(map[string]*securityv1beta1.AuthorizationPolicy)
+			}
+			authorizationPolicies[hash][index] = ap
 		} else {
 			hashTo, err := helpers.GetAuthorizationPolicyHash(*ap)
 			if err != nil {
 				return nil, err
 			}
-			authorizationPolicies[hashTo] = append(authorizationPolicies[hashTo], ap)
-		}
-	}
 
-	// Sort the APs by name for deterministic order of updates (e.g. first Authorization will always update the first alphabetical AP)
-	for _, aplists := range authorizationPolicies {
-		sort.Slice(aplists, func(i, j int) bool {
-			return aplists[i].Name < aplists[j].Name
-		})
+			if authorizationPolicies[hashTo] == nil {
+				authorizationPolicies[hashTo] = make(map[string]*securityv1beta1.AuthorizationPolicy)
+			}
+			authorizationPolicies[hashTo][index] = ap
+		}
 	}
 
 	return authorizationPolicies, nil
 }
 
-func (r AuthorizationPolicyProcessor) getObjectChanges(desiredAps map[string][]*securityv1beta1.AuthorizationPolicy, actualAps map[string][]*securityv1beta1.AuthorizationPolicy) []*processing.ObjectChange {
+func (r AuthorizationPolicyProcessor) getObjectChanges(desiredAps map[string][]*securityv1beta1.AuthorizationPolicy, actualAps map[string]map[string]*securityv1beta1.AuthorizationPolicy) []*processing.ObjectChange {
 	var apObjectActionsToApply []*processing.ObjectChange
 
 	for hashTo, toDesiredAPs := range desiredAps {
 		for _, ap := range toDesiredAPs {
-			if len(actualAps[hashTo]) > 0 {
-				oldAp := actualAps[hashTo][0]
-				oldAp.Spec = ap.Spec
-				oldAp.Labels = ap.Labels
-				actualAps[hashTo] = actualAps[hashTo][1:]
-				apObjectActionsToApply = append(apObjectActionsToApply, processing.NewObjectUpdateAction(oldAp))
+			// As both the order of Authorizations and APs is static we can update them according to array index
+			index := ap.Labels[processing.IndexLabelName]
+			if oldAP, ok := actualAps[hashTo][index]; ok {
+				oldAP.Spec = ap.Spec
+				oldAP.Labels = ap.Labels
+				delete(actualAps[hashTo], index)
+				apObjectActionsToApply = append(apObjectActionsToApply, processing.NewObjectUpdateAction(oldAP))
+			} else if len(actualAps[hashTo]) > 0 {
+				found := false
+
+				for key, oldAP := range actualAps[hashTo] {
+					found = strings.HasPrefix(key, "-")
+					// APs without already assigned index have negative key
+					if found {
+						oldAP.Spec = ap.Spec
+						oldAP.Labels = ap.Labels
+						delete(actualAps[hashTo], key)
+						apObjectActionsToApply = append(apObjectActionsToApply, processing.NewObjectUpdateAction(oldAP))
+						break
+					}
+				}
+
+				if !found {
+					apObjectActionsToApply = append(apObjectActionsToApply, processing.NewObjectCreateAction(ap))
+				}
 			} else {
 				apObjectActionsToApply = append(apObjectActionsToApply, processing.NewObjectCreateAction(ap))
 			}

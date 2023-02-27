@@ -2,6 +2,7 @@ package istio
 
 import (
 	"fmt"
+	"strconv"
 
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/api/v1beta1"
 	"github.com/kyma-project/api-gateway/internal/builders"
@@ -56,7 +57,7 @@ func (r authorizationPolicyCreator) Create(api *gatewayv1beta1.APIRule) (map[str
 				if err != nil {
 					return nil, err
 				}
-				ap.Labels[processing.HashToLabelName] = hashTo
+				ap.Labels[processing.HashLabelName] = hashTo
 				authorizationPolicies[hashTo] = append(authorizationPolicies[hashTo], ap)
 			}
 		}
@@ -69,10 +70,11 @@ func generateAuthorizationPolicies(api *gatewayv1beta1.APIRule, rule gatewayv1be
 	ruleAuthorizations := rule.GetJwtIstioAuthorizations()
 
 	if len(ruleAuthorizations) == 0 {
-		ap := generateAuthorizationPolicy(api, rule, additionalLabels, &gatewayv1beta1.JwtAuthorization{})
+		ap := generateAuthorizationPolicy(api, rule, additionalLabels, &gatewayv1beta1.JwtAuthorization{}, 0)
 		authorizationPolicyList.Items = append(authorizationPolicyList.Items, ap)
 	} else {
 		for i, authorization := range ruleAuthorizations {
+			// The order of authorizations is static, as described in https://yaml.org/spec/1.2/spec.html#id2764044 under sequence
 			ap := generateAuthorizationPolicy(api, rule, additionalLabels, authorization, i)
 			authorizationPolicyList.Items = append(authorizationPolicyList.Items, ap)
 		}
@@ -83,9 +85,6 @@ func generateAuthorizationPolicies(api *gatewayv1beta1.APIRule, rule gatewayv1be
 
 func generateAuthorizationPolicy(api *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rule, additionalLabels map[string]string, authorization *gatewayv1beta1.JwtAuthorization, index ...int) *securityv1beta1.AuthorizationPolicy {
 	namePrefix := fmt.Sprintf("%s-", api.ObjectMeta.Name)
-	if len(index) > 0 {
-		namePrefix = fmt.Sprintf("%s%d-", namePrefix, index[0])
-	}
 	namespace := helpers.FindServiceNamespace(api, &rule)
 
 	apBuilder := builders.NewAuthorizationPolicyBuilder().
@@ -94,6 +93,10 @@ func generateAuthorizationPolicy(api *gatewayv1beta1.APIRule, rule gatewayv1beta
 		WithSpec(builders.NewAuthorizationPolicySpecBuilder().FromAP(generateAuthorizationPolicySpec(api, rule, authorization)).Get()).
 		WithLabel(processing.OwnerLabel, fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace)).
 		WithLabel(processing.OwnerLabelv1alpha1, fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace))
+
+	if len(index) > 0 {
+		apBuilder.WithLabel(processing.IndexLabelName, strconv.Itoa(index[0]))
+	}
 
 	for k, v := range additionalLabels {
 		apBuilder.WithLabel(k, v)

@@ -8,7 +8,8 @@ import (
 )
 
 const (
-	HashToLabelName   string = "gateway.kyma-project.io/hash-to"
+	HashLabelName string = "gateway.kyma-project.io/hash"
+	IndexLabelName string = "gateway.kyma-project.io/index"
 )
 
 var (
