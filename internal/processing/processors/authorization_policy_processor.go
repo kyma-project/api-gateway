@@ -68,7 +68,12 @@ func (r AuthorizationPolicyProcessor) getActualState(ctx context.Context, client
 			if authorizationPolicies[hash] == nil {
 				authorizationPolicies[hash] = make(map[string]*securityv1beta1.AuthorizationPolicy)
 			}
-			authorizationPolicies[hash][index] = ap
+
+			if _, ok := authorizationPolicies[hash][index]; ok {
+				authorizationPolicies[hash][index+":"+strconv.Itoa(i)] = ap
+			} else {
+				authorizationPolicies[hash][index] = ap
+			}
 		} else {
 			hashTo, err := helpers.GetAuthorizationPolicyHash(*ap)
 			if err != nil {
@@ -78,7 +83,12 @@ func (r AuthorizationPolicyProcessor) getActualState(ctx context.Context, client
 			if authorizationPolicies[hashTo] == nil {
 				authorizationPolicies[hashTo] = make(map[string]*securityv1beta1.AuthorizationPolicy)
 			}
-			authorizationPolicies[hashTo][index] = ap
+
+			if _, ok := authorizationPolicies[hash][index]; ok {
+				authorizationPolicies[hash][index+":"+strconv.Itoa(i)] = ap
+			} else {
+				authorizationPolicies[hash][index] = ap
+			}
 		}
 	}
 
