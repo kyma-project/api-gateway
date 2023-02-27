@@ -679,7 +679,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 		Expect(result[0].Action.String()).To(Equal("create"))
 	})
 
-	It("should delete existing AP and create AP again when path, methods and service name didn't change", func() {
+	It("should update AP when path, methods and service name didn't change", func() {
 		// given: Cluster state
 		existingAp := getRequestAuthentication("raName", ApiNamespace, "test-service", []string{"GET", "POST"})
 		ctrlClient := GetFakeClient(&existingAp)
@@ -700,11 +700,10 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 
 		// then
 		Expect(err).To(BeNil())
-		Expect(result).To(HaveLen(2))
+		Expect(result).To(HaveLen(1))
 
-		deleteMatcher := getActionMatcher("delete", ApiNamespace, "test-service", "RequestPrincipals", ContainElements("*"), ContainElements("GET", "POST"), ContainElements("/"))
-		createMatcher := getActionMatcher("create", ApiNamespace, "test-service", "RequestPrincipals", ContainElements("*"), ContainElements("GET", "POST"), ContainElements("/"))
-		Expect(result).To(ContainElements(deleteMatcher, createMatcher))
+		updateMatcher := getActionMatcher("update", ApiNamespace, "test-service", "RequestPrincipals", ContainElements("*"), ContainElements("GET", "POST"), ContainElements("/"))
+		Expect(result).To(ContainElements(updateMatcher))
 	})
 
 	When("Two AP for different services with JWT handler exist", func() {
@@ -743,13 +742,11 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 
 			// then
 			Expect(err).To(BeNil())
-			Expect(result).To(HaveLen(4))
+			Expect(result).To(HaveLen(2))
 
-			deletedNoopMatcher := getActionMatcher("delete", ApiNamespace, "test-service", "RequestPrincipals", ContainElements("*"), ContainElements("GET", "POST"), ContainElements("/"))
-			createdNoopMatcher := getActionMatcher("create", ApiNamespace, "test-service", "Principals", ContainElements("cluster.local/ns/kyma-system/sa/oathkeeper-maester-account"), ContainElements("GET", "POST"), ContainElements("/"))
-			deletedNotChangedMatcher := getActionMatcher("delete", ApiNamespace, "jwt-secured-service", "RequestPrincipals", ContainElements("*"), ContainElements("GET", "POST"), ContainElements("/"))
-			createdNotChangedMatcher := getActionMatcher("create", ApiNamespace, "jwt-secured-service", "RequestPrincipals", ContainElements("*"), ContainElements("GET", "POST"), ContainElements("/"))
-			Expect(result).To(ContainElements(deletedNoopMatcher, createdNoopMatcher, deletedNotChangedMatcher, createdNotChangedMatcher))
+			updatedNoopMatcher := getActionMatcher("update", ApiNamespace, "test-service", "Principals", ContainElements("cluster.local/ns/kyma-system/sa/oathkeeper-maester-account"), ContainElements("GET", "POST"), ContainElements("/"))
+			updatedNotChangedMatcher := getActionMatcher("update", ApiNamespace, "jwt-secured-service", "RequestPrincipals", ContainElements("*"), ContainElements("GET", "POST"), ContainElements("/"))
+			Expect(result).To(ContainElements(updatedNoopMatcher, updatedNotChangedMatcher))
 		})
 
 	})
@@ -774,7 +771,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 	})
 
 	When("AP with RuleTo exists", func() {
-		It("should create new AP and re-create existing AP when new rule with same methods and service but different path is added to ApiRule", func() {
+		It("should create new AP and update existing AP when new rule with same methods and service but different path is added to ApiRule", func() {
 			// given: Cluster state
 			existingAp := getRequestAuthentication("raName", ApiNamespace, "test-service", []string{"GET", "POST"})
 			ctrlClient := GetFakeClient(&existingAp)
@@ -793,15 +790,14 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 
 			// then
 			Expect(err).To(BeNil())
-			Expect(result).To(HaveLen(3))
+			Expect(result).To(HaveLen(2))
 
-			deleteExistingApMatcher := getActionMatcher("delete", ApiNamespace, "test-service", "RequestPrincipals", ContainElements("*"), ContainElements("GET", "POST"), ContainElements("/"))
-			recreateExistingApMatcher := getActionMatcher("create", ApiNamespace, "test-service", "RequestPrincipals", ContainElements("*"), ContainElements("GET", "POST"), ContainElements("/"))
+			updateExistingApMatcher := getActionMatcher("update", ApiNamespace, "test-service", "RequestPrincipals", ContainElements("*"), ContainElements("GET", "POST"), ContainElements("/"))
 			newApMatcher := getActionMatcher("create", ApiNamespace, "test-service", "RequestPrincipals", ContainElements("*"), ContainElements("GET", "POST"), ContainElements("/new-path"))
-			Expect(result).To(ContainElements(deleteExistingApMatcher, recreateExistingApMatcher, newApMatcher))
+			Expect(result).To(ContainElements(updateExistingApMatcher, newApMatcher))
 		})
 
-		It("should create new AP and re-create existing AP when new rule with same path and service but different methods is added to ApiRule", func() {
+		It("should create new AP and update existing AP when new rule with same path and service but different methods is added to ApiRule", func() {
 			// given: Cluster state
 			existingAp := getRequestAuthentication("raName", ApiNamespace, "test-service", []string{"GET", "POST"})
 			ctrlClient := GetFakeClient(&existingAp)
@@ -820,15 +816,14 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 
 			// then
 			Expect(err).To(BeNil())
-			Expect(result).To(HaveLen(3))
+			Expect(result).To(HaveLen(2))
 
-			deleteExistingApMatcher := getActionMatcher("delete", ApiNamespace, "test-service", "RequestPrincipals", ContainElements("*"), ContainElements("GET", "POST"), ContainElements("/"))
-			recreateExistingApMatcher := getActionMatcher("create", ApiNamespace, "test-service", "RequestPrincipals", ContainElements("*"), ContainElements("GET", "POST"), ContainElements("/"))
+			updateExistingApMatcher := getActionMatcher("update", ApiNamespace, "test-service", "RequestPrincipals", ContainElements("*"), ContainElements("GET", "POST"), ContainElements("/"))
 			newApMatcher := getActionMatcher("create", ApiNamespace, "test-service", "RequestPrincipals", ContainElements("*"), ContainElements("DELETE"), ContainElements("/"))
-			Expect(result).To(ContainElements(deleteExistingApMatcher, recreateExistingApMatcher, newApMatcher))
+			Expect(result).To(ContainElements(updateExistingApMatcher, newApMatcher))
 		})
 
-		It("should create new AP and recreate existing AP when new rule with same path and methods, but different service is added to ApiRule", func() {
+		It("should create new AP and update existing AP when new rule with same path and methods, but different service is added to ApiRule", func() {
 			//given: Cluster state
 			existingAp := getRequestAuthentication("raName", ApiNamespace, "test-service", []string{"GET", "POST"})
 			// given: New resources
@@ -847,15 +842,14 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 
 			// then
 			Expect(err).To(BeNil())
-			Expect(result).To(HaveLen(3))
+			Expect(result).To(HaveLen(2))
 
-			deleteExistingApMatcher := getActionMatcher("delete", ApiNamespace, "test-service", "RequestPrincipals", ContainElements("*"), ContainElements("GET", "POST"), ContainElements("/"))
-			createExistingApMatcher := getActionMatcher("create", ApiNamespace, "test-service", "RequestPrincipals", ContainElements("*"), ContainElements("GET", "POST"), ContainElements("/"))
+			updateExistingApMatcher := getActionMatcher("update", ApiNamespace, "test-service", "RequestPrincipals", ContainElements("*"), ContainElements("GET", "POST"), ContainElements("/"))
 			newApMatcher := getActionMatcher("create", ApiNamespace, "new-service", "RequestPrincipals", ContainElements("*"), ContainElements("GET", "POST"), ContainElements("/"))
-			Expect(result).To(ContainElements(deleteExistingApMatcher, createExistingApMatcher, newApMatcher))
+			Expect(result).To(ContainElements(updateExistingApMatcher, newApMatcher))
 		})
 
-		It("should create new AP and delete old AP when path in ApiRule changed", func() {
+		It("should update AP when path in ApiRule changed", func() {
 			// given: Cluster state
 			existingAp := getRequestAuthentication("raName", ApiNamespace, "test-service", []string{"GET", "POST"})
 			ctrlClient := GetFakeClient(&existingAp)
@@ -876,17 +870,16 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 
 			// then
 			Expect(err).To(BeNil())
-			Expect(result).To(HaveLen(2))
+			Expect(result).To(HaveLen(1))
 
-			existingApMatcher := getActionMatcher("delete", ApiNamespace, "test-service", "RequestPrincipals", ContainElements("*"), ContainElements("GET", "POST"), ContainElements("/"))
-			newApMatcher := getActionMatcher("create", ApiNamespace, "test-service", "RequestPrincipals", ContainElements("*"), ContainElements("GET", "POST"), ContainElements("/new-path"))
-			Expect(result).To(ContainElements(existingApMatcher, newApMatcher))
+			updateMatcher := getActionMatcher("update", ApiNamespace, "test-service", "RequestPrincipals", ContainElements("*"), ContainElements("GET", "POST"), ContainElements("/new-path"))
+			Expect(result).To(ContainElements(updateMatcher))
 		})
 
 	})
 
 	When("Two AP with different methods for same path and service exist", func() {
-		It("should create new AP, delete old AP and re-create unchanged AP with matching method, when path has changed", func() {
+		It("should create new AP, delete old AP and update unchanged AP with matching method, when path has changed", func() {
 			// given: Cluster state
 			unchangedAp := getRequestAuthentication("unchanged-ap", ApiNamespace, "test-service", []string{"DELETE"})
 			toBeUpdateAp := getRequestAuthentication("to-be-updated-ap", ApiNamespace, "test-service", []string{"GET"})
@@ -905,13 +898,11 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 
 			// then
 			Expect(err).To(BeNil())
-			Expect(result).To(HaveLen(4))
+			Expect(result).To(HaveLen(2))
 
-			deleteUnchangedApMatcher := getActionMatcher("delete", ApiNamespace, "test-service", "RequestPrincipals", ContainElements("*"), ContainElements("DELETE"), ContainElements("/"))
-			recreateUnchangedApMatcher := getActionMatcher("create", ApiNamespace, "test-service", "RequestPrincipals", ContainElements("*"), ContainElements("DELETE"), ContainElements("/"))
-			deleteMatcher := getActionMatcher("delete", ApiNamespace, "test-service", "RequestPrincipals", ContainElements("*"), ContainElements("GET"), ContainElements("/"))
-			updatedMatcher := getActionMatcher("create", ApiNamespace, "test-service", "RequestPrincipals", ContainElements("*"), ContainElements("GET"), ContainElements("/new-path"))
-			Expect(result).To(ContainElements(deleteUnchangedApMatcher, recreateUnchangedApMatcher, updatedMatcher, deleteMatcher))
+			updateUnchangedApMatcher := getActionMatcher("update", ApiNamespace, "test-service", "RequestPrincipals", ContainElements("*"), ContainElements("DELETE"), ContainElements("/"))
+			updatedMatcher := getActionMatcher("update", ApiNamespace, "test-service", "RequestPrincipals", ContainElements("*"), ContainElements("GET"), ContainElements("/new-path"))
+			Expect(result).To(ContainElements(updateUnchangedApMatcher, updatedMatcher))
 		})
 	})
 
@@ -968,7 +959,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 	})
 
 	When("Two AP with same RuleTo for different services exist", func() {
-		It("should create new AP, recreate unchanged AP and delete old AP with matching service, when path has changed", func() {
+		It("should update unchanged AP and update AP with matching service, when path has changed", func() {
 			// given: Cluster state
 			unchangedAp := getRequestAuthentication("unchanged-ap", ApiNamespace, "first-service", []string{"GET"})
 			toBeUpdateAp := getRequestAuthentication("to-be-updated-ap", ApiNamespace, "second-service", []string{"GET"})
@@ -987,13 +978,11 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 
 			// then
 			Expect(err).To(BeNil())
-			Expect(result).To(HaveLen(4))
+			Expect(result).To(HaveLen(2))
 
-			deleteUnchangedApMatcher := getActionMatcher("delete", ApiNamespace, "first-service", "RequestPrincipals", ContainElements("*"), ContainElements("GET"), ContainElements("/"))
-			recreateUnchangedApMatcher := getActionMatcher("create", ApiNamespace, "first-service", "RequestPrincipals", ContainElements("*"), ContainElements("GET"), ContainElements("/"))
-			deleteMatcher := getActionMatcher("delete", ApiNamespace, "second-service", "RequestPrincipals", ContainElements("*"), ContainElements("GET"), ContainElements("/"))
-			updatedApMatcher := getActionMatcher("create", ApiNamespace, "second-service", "RequestPrincipals", ContainElements("*"), ContainElements("GET"), ContainElements("/new-path"))
-			Expect(result).To(ContainElements(deleteUnchangedApMatcher, recreateUnchangedApMatcher, updatedApMatcher, deleteMatcher))
+			updateUnchangedApMatcher := getActionMatcher("update", ApiNamespace, "first-service", "RequestPrincipals", ContainElements("*"), ContainElements("GET"), ContainElements("/"))
+			updatedApMatcher := getActionMatcher("update", ApiNamespace, "second-service", "RequestPrincipals", ContainElements("*"), ContainElements("GET"), ContainElements("/new-path"))
+			Expect(result).To(ContainElements(updateUnchangedApMatcher, updatedApMatcher))
 		})
 	})
 })
