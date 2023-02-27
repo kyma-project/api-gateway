@@ -9,7 +9,6 @@ import (
 
 const (
 	HashToLabelName   string = "gateway.kyma-project.io/hash-to"
-	HashSpecLabelName string = "gateway.kyma-project.io/hash-spec"
 )
 
 var (

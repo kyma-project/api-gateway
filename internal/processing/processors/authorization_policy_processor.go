@@ -78,6 +78,7 @@ func (r AuthorizationPolicyProcessor) getObjectChanges(desiredAps map[string][]*
 			if len(actualAps[hashTo]) > 0 {
 				oldAp := actualAps[hashTo][0]
 				oldAp.Spec = ap.Spec
+				oldAp.Labels = ap.Labels
 				actualAps[hashTo] = actualAps[hashTo][1:]
 				apObjectActionsToApply = append(apObjectActionsToApply, processing.NewObjectUpdateAction(oldAp))
 			} else {
