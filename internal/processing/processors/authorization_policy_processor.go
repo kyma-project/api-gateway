@@ -2,6 +2,7 @@ package processors
 
 import (
 	"context"
+	"sort"
 
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/api/v1beta1"
 	"github.com/kyma-project/api-gateway/internal/helpers"
@@ -65,6 +66,13 @@ func (r AuthorizationPolicyProcessor) getActualState(ctx context.Context, client
 			}
 			authorizationPolicies[hashTo] = append(authorizationPolicies[hashTo], ap)
 		}
+	}
+
+	// Sort the APs by name for deterministic order of updates (e.g. first Authorization will always update the first alphabetical AP)
+	for _, aplists := range authorizationPolicies {
+		sort.Slice(aplists, func(i, j int) bool {
+			return aplists[i].Name < aplists[j].Name
+		})
 	}
 
 	return authorizationPolicies, nil
