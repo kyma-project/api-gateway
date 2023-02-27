@@ -72,8 +72,8 @@ func generateAuthorizationPolicies(api *gatewayv1beta1.APIRule, rule gatewayv1be
 		ap := generateAuthorizationPolicy(api, rule, additionalLabels, &gatewayv1beta1.JwtAuthorization{})
 		authorizationPolicyList.Items = append(authorizationPolicyList.Items, ap)
 	} else {
-		for _, authorization := range ruleAuthorizations {
-			ap := generateAuthorizationPolicy(api, rule, additionalLabels, authorization)
+		for i, authorization := range ruleAuthorizations {
+			ap := generateAuthorizationPolicy(api, rule, additionalLabels, authorization, i)
 			authorizationPolicyList.Items = append(authorizationPolicyList.Items, ap)
 		}
 	}
@@ -81,8 +81,11 @@ func generateAuthorizationPolicies(api *gatewayv1beta1.APIRule, rule gatewayv1be
 	return &authorizationPolicyList
 }
 
-func generateAuthorizationPolicy(api *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rule, additionalLabels map[string]string, authorization *gatewayv1beta1.JwtAuthorization) *securityv1beta1.AuthorizationPolicy {
+func generateAuthorizationPolicy(api *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rule, additionalLabels map[string]string, authorization *gatewayv1beta1.JwtAuthorization, index ...int) *securityv1beta1.AuthorizationPolicy {
 	namePrefix := fmt.Sprintf("%s-", api.ObjectMeta.Name)
+	if len(index) > 0 {
+		namePrefix = fmt.Sprintf("%s%d-", namePrefix, index[0])
+	}
 	namespace := helpers.FindServiceNamespace(api, &rule)
 
 	apBuilder := builders.NewAuthorizationPolicyBuilder().
