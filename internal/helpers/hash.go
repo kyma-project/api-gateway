@@ -1,7 +1,6 @@
 package helpers
 
 import (
-	"fmt"
 	"strconv"
 
 	"github.com/mitchellh/hashstructure/v2"
@@ -13,9 +12,5 @@ func GetAuthorizationPolicyHash(ap securityv1beta1.AuthorizationPolicy) (string,
 	if err != nil {
 		return "", err
 	}
-	hashSpec, err := hashstructure.Hash(ap.Spec, hashstructure.FormatV2, &hashstructure.HashOptions{SlicesAsSets: true})
-	if err != nil {
-		return "", err
-	}
-	return fmt.Sprintf("%s.%s", strconv.FormatUint(hashTo, 32), strconv.FormatUint(hashSpec, 32)), nil
+	return strconv.FormatUint(hashTo, 32), nil
 }

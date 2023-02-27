@@ -45,19 +45,19 @@ type authorizationPolicyCreator struct {
 }
 
 // Create returns the JwtAuthorization Policy using the configuration of the APIRule.
-func (r authorizationPolicyCreator) Create(api *gatewayv1beta1.APIRule) (map[string]*securityv1beta1.AuthorizationPolicy, error) {
-	authorizationPolicies := make(map[string]*securityv1beta1.AuthorizationPolicy)
+func (r authorizationPolicyCreator) Create(api *gatewayv1beta1.APIRule) (map[string][]*securityv1beta1.AuthorizationPolicy, error) {
+	authorizationPolicies := make(map[string][]*securityv1beta1.AuthorizationPolicy)
 	hasJwtRule := processing.HasJwtRule(api)
 	if hasJwtRule {
 		for _, rule := range api.Spec.Rules {
 			aps := generateAuthorizationPolicies(api, rule, r.additionalLabels)
 			for _, ap := range aps.Items {
-				hash, err := helpers.GetAuthorizationPolicyHash(*ap)
+				hashTo, err := helpers.GetAuthorizationPolicyHash(*ap)
 				if err != nil {
 					return nil, err
 				}
-				ap.Labels[processing.HashSumLabelName] = hash
-				authorizationPolicies[hash] = ap
+				ap.Labels[processing.HashToLabelName] = hashTo
+				authorizationPolicies[hashTo] = append(authorizationPolicies[hashTo], ap)
 			}
 		}
 	}

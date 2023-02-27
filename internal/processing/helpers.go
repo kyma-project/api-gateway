@@ -7,7 +7,10 @@ import (
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/api/v1beta1"
 )
 
-const HashSumLabelName string = "gateway.kyma-project.io/hash-sum"
+const (
+	HashToLabelName   string = "gateway.kyma-project.io/hash-to"
+	HashSpecLabelName string = "gateway.kyma-project.io/hash-spec"
+)
 
 var (
 	//OwnerLabel .

@@ -32,6 +32,6 @@ type authorizationPolicyCreator struct {
 }
 
 // Create returns empty JwtAuthorization Policy
-func (r authorizationPolicyCreator) Create(_ *gatewayv1beta1.APIRule) (map[string]*securityv1beta1.AuthorizationPolicy, error) {
+func (r authorizationPolicyCreator) Create(_ *gatewayv1beta1.APIRule) (map[string][]*securityv1beta1.AuthorizationPolicy, error) {
 	return nil, nil
 }

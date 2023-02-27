@@ -20,7 +20,7 @@ type AuthorizationPolicyProcessor struct {
 // AuthorizationPolicyCreator provides the creation of AuthorizationPolicies using the configuration in the given APIRule.
 // The key of the map is expected to be unique and comparable with the
 type AuthorizationPolicyCreator interface {
-	Create(api *gatewayv1beta1.APIRule) (map[string]*securityv1beta1.AuthorizationPolicy, error)
+	Create(api *gatewayv1beta1.APIRule) (map[string][]*securityv1beta1.AuthorizationPolicy, error)
 }
 
 func (r AuthorizationPolicyProcessor) EvaluateReconciliation(ctx context.Context, client ctrlclient.Client, apiRule *gatewayv1beta1.APIRule) ([]*processing.ObjectChange, error) {
@@ -38,7 +38,7 @@ func (r AuthorizationPolicyProcessor) EvaluateReconciliation(ctx context.Context
 	return changes, nil
 }
 
-func (r AuthorizationPolicyProcessor) getDesiredState(api *gatewayv1beta1.APIRule) (map[string]*securityv1beta1.AuthorizationPolicy, error) {
+func (r AuthorizationPolicyProcessor) getDesiredState(api *gatewayv1beta1.APIRule) (map[string][]*securityv1beta1.AuthorizationPolicy, error) {
 	aps, err := r.Creator.Create(api)
 	if err != nil {
 		return nil, err
@@ -46,7 +46,7 @@ func (r AuthorizationPolicyProcessor) getDesiredState(api *gatewayv1beta1.APIRul
 	return aps, nil
 }
 
-func (r AuthorizationPolicyProcessor) getActualState(ctx context.Context, client ctrlclient.Client, api *gatewayv1beta1.APIRule) (map[string]*securityv1beta1.AuthorizationPolicy, error) {
+func (r AuthorizationPolicyProcessor) getActualState(ctx context.Context, client ctrlclient.Client, api *gatewayv1beta1.APIRule) (map[string][]*securityv1beta1.AuthorizationPolicy, error) {
 	labels := processing.GetOwnerLabels(api)
 
 	var apList securityv1beta1.AuthorizationPolicyList
@@ -54,33 +54,42 @@ func (r AuthorizationPolicyProcessor) getActualState(ctx context.Context, client
 		return nil, err
 	}
 
-	authorizationPolicies := make(map[string]*securityv1beta1.AuthorizationPolicy)
+	authorizationPolicies := make(map[string][]*securityv1beta1.AuthorizationPolicy)
 	for _, ap := range apList.Items {
-		if hash, ok := ap.Labels[processing.HashSumLabelName]; ok {
-			authorizationPolicies[hash] = ap
+		if hash, ok := ap.Labels[processing.HashToLabelName]; ok {
+			authorizationPolicies[hash] = append(authorizationPolicies[hash], ap)
 		} else {
-			hash, err := helpers.GetAuthorizationPolicyHash(*ap)
+			hashTo, err := helpers.GetAuthorizationPolicyHash(*ap)
 			if err != nil {
 				return nil, err
 			}
-			authorizationPolicies[hash] = ap
+			authorizationPolicies[hashTo] = append(authorizationPolicies[hashTo], ap)
 		}
 	}
 
 	return authorizationPolicies, nil
 }
 
-func (r AuthorizationPolicyProcessor) getObjectChanges(desiredAps map[string]*securityv1beta1.AuthorizationPolicy, actualAps map[string]*securityv1beta1.AuthorizationPolicy) []*processing.ObjectChange {
+func (r AuthorizationPolicyProcessor) getObjectChanges(desiredAps map[string][]*securityv1beta1.AuthorizationPolicy, actualAps map[string][]*securityv1beta1.AuthorizationPolicy) []*processing.ObjectChange {
 	var apObjectActionsToApply []*processing.ObjectChange
 
-	for _, ap := range desiredAps {
-		objectAction := processing.NewObjectCreateAction(ap)
-		apObjectActionsToApply = append(apObjectActionsToApply, objectAction)
+	for hashTo, toDesiredAPs := range desiredAps {
+		for _, ap := range toDesiredAPs {
+			if len(actualAps[hashTo]) > 0 {
+				oldAp := actualAps[hashTo][0]
+				oldAp.Spec = ap.Spec
+				actualAps[hashTo] = actualAps[hashTo][1:]
+				apObjectActionsToApply = append(apObjectActionsToApply, processing.NewObjectUpdateAction(oldAp))
+			} else {
+				apObjectActionsToApply = append(apObjectActionsToApply, processing.NewObjectCreateAction(ap))
+			}
+		}
 	}
 
-	for _, ap := range actualAps {
-		objectAction := processing.NewObjectDeleteAction(ap)
-		apObjectActionsToApply = append(apObjectActionsToApply, objectAction)
+	for _, aps := range actualAps {
+		for _, ap := range aps {
+			apObjectActionsToApply = append(apObjectActionsToApply, processing.NewObjectDeleteAction(ap))
+		}
 	}
 
 	return apObjectActionsToApply
