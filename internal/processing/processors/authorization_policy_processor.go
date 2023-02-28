@@ -75,7 +75,7 @@ func (r AuthorizationPolicyProcessor) getActualState(ctx context.Context, client
 				authorizationPolicies[hash][index] = ap
 			}
 		} else {
-			hashTo, err := helpers.GetAuthorizationPolicyHash(*ap)
+			hashTo, err := helpers.GetAuthorizationPolicyHash(ap)
 			if err != nil {
 				return nil, err
 			}
@@ -103,7 +103,7 @@ func (r AuthorizationPolicyProcessor) getObjectChanges(desiredAps map[string][]*
 			// As both the order of Authorizations and APs is static we can update them according to array index
 			index := ap.Labels[processing.IndexLabelName]
 			if oldAP, ok := actualAps[hashTo][index]; ok {
-				oldAP.Spec = ap.Spec
+				oldAP.Spec = *ap.Spec.DeepCopy()
 				oldAP.Labels = ap.Labels
 				delete(actualAps[hashTo], index)
 				apObjectActionsToApply = append(apObjectActionsToApply, processing.NewObjectUpdateAction(oldAP))
@@ -114,7 +114,7 @@ func (r AuthorizationPolicyProcessor) getObjectChanges(desiredAps map[string][]*
 					found = strings.HasPrefix(key, "-")
 					// APs without already assigned index have negative key
 					if found {
-						oldAP.Spec = ap.Spec
+						oldAP.Spec = *ap.Spec.DeepCopy()
 						oldAP.Labels = ap.Labels
 						delete(actualAps[hashTo], key)
 						apObjectActionsToApply = append(apObjectActionsToApply, processing.NewObjectUpdateAction(oldAP))

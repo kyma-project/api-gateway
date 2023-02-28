@@ -8,7 +8,7 @@ import (
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 )
 
-func GetAuthorizationPolicyHash(ap securityv1beta1.AuthorizationPolicy) (string, error) {
+func GetAuthorizationPolicyHash(ap *securityv1beta1.AuthorizationPolicy) (string, error) {
 	hashService, err := hashstructure.Hash(ap.Spec.Selector, hashstructure.FormatV2, &hashstructure.HashOptions{SlicesAsSets: true})
 	if err != nil {
 		return "", err

@@ -53,7 +53,7 @@ func (r authorizationPolicyCreator) Create(api *gatewayv1beta1.APIRule) (map[str
 		for _, rule := range api.Spec.Rules {
 			aps := generateAuthorizationPolicies(api, rule, r.additionalLabels)
 			for _, ap := range aps.Items {
-				hashTo, err := helpers.GetAuthorizationPolicyHash(*ap)
+				hashTo, err := helpers.GetAuthorizationPolicyHash(ap)
 				if err != nil {
 					return nil, err
 				}
