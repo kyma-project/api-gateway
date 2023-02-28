@@ -84,10 +84,10 @@ func (r AuthorizationPolicyProcessor) getActualState(ctx context.Context, client
 				authorizationPolicies[hashTo] = make(map[string]*securityv1beta1.AuthorizationPolicy)
 			}
 
-			if _, ok := authorizationPolicies[hash][index]; ok {
-				authorizationPolicies[hash][index+":"+strconv.Itoa(i)] = ap
+			if _, ok := authorizationPolicies[hashTo][index]; ok {
+				authorizationPolicies[hashTo][index+":"+strconv.Itoa(i)] = ap
 			} else {
-				authorizationPolicies[hash][index] = ap
+				authorizationPolicies[hashTo][index] = ap
 			}
 		}
 	}
