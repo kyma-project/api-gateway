@@ -3,7 +3,7 @@ module github.com/kyma-project/api-gateway
 go 1.19
 
 require (
-	github.com/avast/retry-go v2.4.1+incompatible
+	github.com/avast/retry-go v3.0.0+incompatible
 	github.com/cucumber/godog v0.12.6
 	github.com/go-logr/logr v1.2.3
 	github.com/onsi/ginkgo/v2 v2.8.4
