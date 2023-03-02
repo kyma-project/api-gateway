@@ -10,7 +10,7 @@ require (
 	istio.io/api v0.0.0-20230215211151-50468cdae908
 	istio.io/client-go v1.16.3
 	k8s.io/apimachinery v0.26.2
-	k8s.io/client-go v0.26.1
+	k8s.io/client-go v0.26.2
 	sigs.k8s.io/controller-runtime v0.14.4
 )
 
@@ -73,7 +73,7 @@ require (
 	golang.org/x/exp v0.0.0-20221217163422-3c43f8badb15
 	golang.org/x/oauth2 v0.0.0-20221006150949-b44042a4b9c1 // indirect
 	gopkg.in/yaml.v2 v2.4.0
-	k8s.io/api v0.26.1
+	k8s.io/api v0.26.2
 	k8s.io/apiextensions-apiserver v0.26.1
 	k8s.io/kube-openapi v0.0.0-20221123214604-86e75ddd809a // indirect
 	k8s.io/utils v0.0.0-20221128185143-99ec85e7a448
