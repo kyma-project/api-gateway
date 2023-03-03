@@ -3,7 +3,6 @@ package processors
 import (
 	"context"
 	"strconv"
-	"strings"
 
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/api/v1beta1"
 	"github.com/kyma-project/api-gateway/internal/helpers"
