@@ -107,24 +107,6 @@ func (r AuthorizationPolicyProcessor) getObjectChanges(desiredAps map[string][]*
 				oldAP.Labels = ap.Labels
 				delete(actualAps[hashTo], index)
 				apObjectActionsToApply = append(apObjectActionsToApply, processing.NewObjectUpdateAction(oldAP))
-			} else if len(actualAps[hashTo]) > 0 {
-				found := false
-
-				for key, oldAP := range actualAps[hashTo] {
-					found = strings.HasPrefix(key, "-")
-					// APs without already assigned index have negative key
-					if found {
-						oldAP.Spec = *ap.Spec.DeepCopy()
-						oldAP.Labels = ap.Labels
-						delete(actualAps[hashTo], key)
-						apObjectActionsToApply = append(apObjectActionsToApply, processing.NewObjectUpdateAction(oldAP))
-						break
-					}
-				}
-
-				if !found {
-					apObjectActionsToApply = append(apObjectActionsToApply, processing.NewObjectCreateAction(ap))
-				}
 			} else {
 				apObjectActionsToApply = append(apObjectActionsToApply, processing.NewObjectCreateAction(ap))
 			}
