@@ -22,7 +22,7 @@ updates:
       include: "scope"
   - package-ecosystem: "gomod"
     directory: "/"
-    target-branch: "release-1.3"
+    target-branch: "release-1.4"
     labels:
       - "go"
       - "area/dependency"
@@ -35,7 +35,7 @@ updates:
       - dependency-name: "*"
         update-types: ["version-update:semver-major", "version-update:semver-minor"]
   - package-ecosystem: "docker"
-    target-branch: "release-1.3"
+    target-branch: "release-1.4"
     directory: "/"
     labels:
       - "docker"
