@@ -61,7 +61,6 @@ GOTEST=$(GOCMD) test
 SHELL = /usr/bin/env bash -o pipefail
 .SHELLFLAGS = -ec
 
-
 .EXPORT_ALL_VARIABLES:
 GO111MODULE = on
 
