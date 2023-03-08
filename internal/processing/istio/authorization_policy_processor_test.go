@@ -3,6 +3,7 @@ package istio_test
 import (
 	"context"
 	"fmt"
+	"github.com/kyma-project/api-gateway/internal/helpers"
 
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/api/v1beta1"
 	"github.com/kyma-project/api-gateway/internal/processing"
@@ -56,8 +57,8 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 		}
 	}
 
-	getRequestAuthentication := func(name string, namespace string, serviceName string, methods []string) securityv1beta1.AuthorizationPolicy {
-		return securityv1beta1.AuthorizationPolicy{
+	getAuthorizationPolicy := func(name string, namespace string, serviceName string, methods []string) *securityv1beta1.AuthorizationPolicy {
+		ap := securityv1beta1.AuthorizationPolicy{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      name,
 				Namespace: namespace,
@@ -92,6 +93,13 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 				},
 			},
 		}
+
+		apHash, err := helpers.GetAuthorizationPolicyHash(&ap)
+		Expect(err).ShouldNot(HaveOccurred())
+		ap.Labels["gateway.kyma-project.io/hash"] = apHash
+		ap.Labels["gateway.kyma-project.io/index"] = "0"
+
+		return &ap
 	}
 
 	getActionMatcher := func(action string, namespace string, serviceName string, principalsName string, principals types.GomegaMatcher, methods types.GomegaMatcher, paths types.GomegaMatcher) types.GomegaMatcher {
@@ -680,8 +688,9 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 
 	It("should update AP when path, methods and service name didn't change", func() {
 		// given: Cluster state
-		existingAp := getRequestAuthentication("raName", ApiNamespace, "test-service", []string{"GET", "POST"})
-		ctrlClient := GetFakeClient(&existingAp)
+		existingAp := getAuthorizationPolicy("raName", ApiNamespace, "test-service", []string{"GET", "POST"})
+
+		ctrlClient := GetFakeClient(existingAp)
 		processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig())
 
 		// given: New resources
@@ -708,9 +717,9 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 	When("Two AP for different services with JWT handler exist", func() {
 		It("should delete existing AP and create new AP when handler changed for one of the AP to noop", func() {
 			// given: Cluster state
-			beingUpdatedAp := getRequestAuthentication("being-updated-ap", ApiNamespace, "test-service", []string{"GET", "POST"})
-			jwtSecuredAp := getRequestAuthentication("jwt-secured-ap", ApiNamespace, "jwt-secured-service", []string{"GET", "POST"})
-			ctrlClient := GetFakeClient(&beingUpdatedAp, &jwtSecuredAp)
+			beingUpdatedAp := getAuthorizationPolicy("being-updated-ap", ApiNamespace, "test-service", []string{"GET", "POST"})
+			jwtSecuredAp := getAuthorizationPolicy("jwt-secured-ap", ApiNamespace, "jwt-secured-service", []string{"GET", "POST"})
+			ctrlClient := GetFakeClient(beingUpdatedAp, jwtSecuredAp)
 			processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig())
 
 			// given: New resources
@@ -751,8 +760,8 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 	})
 	It("should delete AP when there is no desired AP", func() {
 		//given: Cluster state
-		existingAp := getRequestAuthentication("raName", ApiNamespace, "test-service", []string{"GET", "POST"})
-		ctrlClient := GetFakeClient(&existingAp)
+		existingAp := getAuthorizationPolicy("raName", ApiNamespace, "test-service", []string{"GET", "POST"})
+		ctrlClient := GetFakeClient(existingAp)
 		processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig())
 
 		// given: New resources
@@ -772,8 +781,8 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 	When("AP with RuleTo exists", func() {
 		It("should create new AP and update existing AP when new rule with same methods and service but different path is added to ApiRule", func() {
 			// given: Cluster state
-			existingAp := getRequestAuthentication("raName", ApiNamespace, "test-service", []string{"GET", "POST"})
-			ctrlClient := GetFakeClient(&existingAp)
+			existingAp := getAuthorizationPolicy("raName", ApiNamespace, "test-service", []string{"GET", "POST"})
+			ctrlClient := GetFakeClient(existingAp)
 			processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig())
 
 			// given: New resources
@@ -798,8 +807,8 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 
 		It("should create new AP and update existing AP when new rule with same path and service but different methods is added to ApiRule", func() {
 			// given: Cluster state
-			existingAp := getRequestAuthentication("raName", ApiNamespace, "test-service", []string{"GET", "POST"})
-			ctrlClient := GetFakeClient(&existingAp)
+			existingAp := getAuthorizationPolicy("raName", ApiNamespace, "test-service", []string{"GET", "POST"})
+			ctrlClient := GetFakeClient(existingAp)
 			processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig())
 
 			// given: New resources
@@ -824,7 +833,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 
 		It("should create new AP and update existing AP when new rule with same path and methods, but different service is added to ApiRule", func() {
 			//given: Cluster state
-			existingAp := getRequestAuthentication("raName", ApiNamespace, "test-service", []string{"GET", "POST"})
+			existingAp := getAuthorizationPolicy("raName", ApiNamespace, "test-service", []string{"GET", "POST"})
 			// given: New resources
 			existingRule := getRuleForApTest([]string{"GET", "POST"}, "/", "test-service")
 			newRule := getRuleForApTest([]string{"GET", "POST"}, "/", "new-service")
@@ -833,7 +842,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 
 			apiRule := GetAPIRuleFor(rules)
 
-			ctrlClient := GetFakeClient(&existingAp)
+			ctrlClient := GetFakeClient(existingAp)
 			processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig())
 
 			// when
@@ -850,8 +859,8 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 
 		It("should recreate AP when path in ApiRule changed", func() {
 			// given: Cluster state
-			existingAp := getRequestAuthentication("raName", ApiNamespace, "test-service", []string{"GET", "POST"})
-			ctrlClient := GetFakeClient(&existingAp)
+			existingAp := getAuthorizationPolicy("raName", ApiNamespace, "test-service", []string{"GET", "POST"})
+			ctrlClient := GetFakeClient(existingAp)
 			processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig())
 
 			// given: New resources
@@ -881,9 +890,9 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 	When("Two AP with different methods for same path and service exist", func() {
 		It("should create new AP, delete old AP and update unchanged AP with matching method, when path has changed", func() {
 			// given: Cluster state
-			unchangedAp := getRequestAuthentication("unchanged-ap", ApiNamespace, "test-service", []string{"DELETE"})
-			toBeUpdateAp := getRequestAuthentication("to-be-updated-ap", ApiNamespace, "test-service", []string{"GET"})
-			ctrlClient := GetFakeClient(&toBeUpdateAp, &unchangedAp)
+			unchangedAp := getAuthorizationPolicy("unchanged-ap", ApiNamespace, "test-service", []string{"DELETE"})
+			toBeUpdateAp := getAuthorizationPolicy("to-be-updated-ap", ApiNamespace, "test-service", []string{"GET"})
+			ctrlClient := GetFakeClient(toBeUpdateAp, unchangedAp)
 			processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig())
 
 			// given: New resources
@@ -910,8 +919,8 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 	When("Namespace changes", func() {
 		It("should create new AP in new namespace and delete old AP, namespace on spec level", func() {
 			// given: Cluster state
-			oldAP := getRequestAuthentication("unchanged-ap", ApiNamespace, "test-service", []string{"DELETE"})
-			ctrlClient := GetFakeClient(&oldAP)
+			oldAP := getAuthorizationPolicy("unchanged-ap", ApiNamespace, "test-service", []string{"DELETE"})
+			ctrlClient := GetFakeClient(oldAP)
 			processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig())
 
 			// given: New resources
@@ -936,8 +945,8 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 
 		It("should create new AP in new namespace and delete old AP, namespace on rule level", func() {
 			// given: Cluster state
-			oldAP := getRequestAuthentication("unchanged-ap", ApiNamespace, "test-service", []string{"DELETE"})
-			ctrlClient := GetFakeClient(&oldAP)
+			oldAP := getAuthorizationPolicy("unchanged-ap", ApiNamespace, "test-service", []string{"DELETE"})
+			ctrlClient := GetFakeClient(oldAP)
 			processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig())
 
 			// given: New resources
@@ -962,9 +971,9 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 	When("Two AP with same RuleTo for different services exist", func() {
 		It("should update unchanged AP and update AP with matching service, when path has changed", func() {
 			// given: Cluster state
-			unchangedAp := getRequestAuthentication("unchanged-ap", ApiNamespace, "first-service", []string{"GET"})
-			toBeUpdateAp := getRequestAuthentication("to-be-updated-ap", ApiNamespace, "second-service", []string{"GET"})
-			ctrlClient := GetFakeClient(&toBeUpdateAp, &unchangedAp)
+			unchangedAp := getAuthorizationPolicy("unchanged-ap", ApiNamespace, "first-service", []string{"GET"})
+			toBeUpdateAp := getAuthorizationPolicy("to-be-updated-ap", ApiNamespace, "second-service", []string{"GET"})
+			ctrlClient := GetFakeClient(toBeUpdateAp, unchangedAp)
 			processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig())
 
 			// given: New resources

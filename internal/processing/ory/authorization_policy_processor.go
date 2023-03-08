@@ -3,6 +3,7 @@ package ory
 import (
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/api/v1beta1"
 	"github.com/kyma-project/api-gateway/internal/processing"
+	hashablestate "github.com/kyma-project/api-gateway/internal/processing/hashstate"
 	"github.com/kyma-project/api-gateway/internal/processing/processors"
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 )
@@ -32,6 +33,6 @@ type authorizationPolicyCreator struct {
 }
 
 // Create returns empty JwtAuthorization Policy
-func (r authorizationPolicyCreator) Create(_ *gatewayv1beta1.APIRule) (map[string][]*securityv1beta1.AuthorizationPolicy, error) {
-	return nil, nil
+func (r authorizationPolicyCreator) Create(_ *gatewayv1beta1.APIRule) (hashablestate.Desired, error) {
+	return hashablestate.NewDesired(), nil
 }

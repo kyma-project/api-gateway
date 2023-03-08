@@ -2,12 +2,11 @@ package istio
 
 import (
 	"fmt"
-	"strconv"
-
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/api/v1beta1"
 	"github.com/kyma-project/api-gateway/internal/builders"
 	"github.com/kyma-project/api-gateway/internal/helpers"
 	"github.com/kyma-project/api-gateway/internal/processing"
+	hashablestate "github.com/kyma-project/api-gateway/internal/processing/hashstate"
 	"github.com/kyma-project/api-gateway/internal/processing/processors"
 	"istio.io/api/security/v1beta1"
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
@@ -46,44 +45,60 @@ type authorizationPolicyCreator struct {
 }
 
 // Create returns the JwtAuthorization Policy using the configuration of the APIRule.
-func (r authorizationPolicyCreator) Create(api *gatewayv1beta1.APIRule) (map[string][]*securityv1beta1.AuthorizationPolicy, error) {
-	authorizationPolicies := make(map[string][]*securityv1beta1.AuthorizationPolicy)
+func (r authorizationPolicyCreator) Create(api *gatewayv1beta1.APIRule) (hashablestate.Desired, error) {
+	state := hashablestate.NewDesired()
 	hasJwtRule := processing.HasJwtRule(api)
 	if hasJwtRule {
 		for _, rule := range api.Spec.Rules {
-			aps := generateAuthorizationPolicies(api, rule, r.additionalLabels)
+			aps, err := generateAuthorizationPolicies(api, rule, r.additionalLabels)
+			if err != nil {
+				return state, nil
+			}
+
 			for _, ap := range aps.Items {
-				hashTo, err := helpers.GetAuthorizationPolicyHash(ap)
+				err := state.Add(ap)
+
 				if err != nil {
-					return nil, err
+					return state, err
 				}
-				ap.Labels[processing.HashLabelName] = hashTo
-				authorizationPolicies[hashTo] = append(authorizationPolicies[hashTo], ap)
 			}
 		}
 	}
-	return authorizationPolicies, nil
+	return state, nil
 }
 
-func generateAuthorizationPolicies(api *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rule, additionalLabels map[string]string) *securityv1beta1.AuthorizationPolicyList {
+func generateAuthorizationPolicies(api *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rule, additionalLabels map[string]string) (*securityv1beta1.AuthorizationPolicyList, error) {
 	authorizationPolicyList := securityv1beta1.AuthorizationPolicyList{}
 	ruleAuthorizations := rule.GetJwtIstioAuthorizations()
 
 	if len(ruleAuthorizations) == 0 {
-		ap := generateAuthorizationPolicy(api, rule, additionalLabels, &gatewayv1beta1.JwtAuthorization{}, 0)
+		ap := generateAuthorizationPolicy(api, rule, additionalLabels, &gatewayv1beta1.JwtAuthorization{})
+
+		// If there is no other authorization we can safely assume that the index of this authorization in the array
+		// in the yaml is 0.
+		err := hashablestate.AddHashingLabels(ap, 0)
+		if err != nil {
+			return &authorizationPolicyList, err
+		}
+
 		authorizationPolicyList.Items = append(authorizationPolicyList.Items, ap)
 	} else {
-		for i, authorization := range ruleAuthorizations {
-			// The order of authorizations is static, as described in https://yaml.org/spec/1.2/spec.html#id2764044 under sequence
-			ap := generateAuthorizationPolicy(api, rule, additionalLabels, authorization, i)
+		for indexInYaml, authorization := range ruleAuthorizations {
+			ap := generateAuthorizationPolicy(api, rule, additionalLabels, authorization)
+
+			err := hashablestate.AddHashingLabels(ap, indexInYaml)
+			if err != nil {
+				return &authorizationPolicyList, err
+			}
+
 			authorizationPolicyList.Items = append(authorizationPolicyList.Items, ap)
 		}
 	}
 
-	return &authorizationPolicyList
+	return &authorizationPolicyList, nil
 }
 
-func generateAuthorizationPolicy(api *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rule, additionalLabels map[string]string, authorization *gatewayv1beta1.JwtAuthorization, index ...int) *securityv1beta1.AuthorizationPolicy {
+func generateAuthorizationPolicy(api *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rule, additionalLabels map[string]string, authorization *gatewayv1beta1.JwtAuthorization) *securityv1beta1.AuthorizationPolicy {
 	namePrefix := fmt.Sprintf("%s-", api.ObjectMeta.Name)
 	namespace := helpers.FindServiceNamespace(api, &rule)
 
@@ -94,9 +109,10 @@ func generateAuthorizationPolicy(api *gatewayv1beta1.APIRule, rule gatewayv1beta
 		WithLabel(processing.OwnerLabel, fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace)).
 		WithLabel(processing.OwnerLabelv1alpha1, fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace))
 
-	if len(index) > 0 {
-		apBuilder.WithLabel(processing.IndexLabelName, strconv.Itoa(index[0]))
-	}
+	// TODO: Why do we only need to add it in this case? It would be more reliable to always add the label. Of course if a new authorization is added in front of this would be evaluated as a change.
+	//if len(index) > 0 {
+	//	apBuilder.WithLabel(processing.IndexLabelName, strconv.Itoa(index[0]))
+	//}
 
 	for k, v := range additionalLabels {
 		apBuilder.WithLabel(k, v)

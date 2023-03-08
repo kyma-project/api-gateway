@@ -7,11 +7,6 @@ import (
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/api/v1beta1"
 )
 
-const (
-	HashLabelName  string = "gateway.kyma-project.io/hash"
-	IndexLabelName string = "gateway.kyma-project.io/index"
-)
-
 var (
 	//OwnerLabel .
 	OwnerLabel = fmt.Sprintf("%s.%s", "apirule", gatewayv1beta1.GroupVersion.String())

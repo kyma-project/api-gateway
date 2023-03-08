@@ -2,11 +2,9 @@ package processors
 
 import (
 	"context"
-	"strconv"
-
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/api/v1beta1"
-	"github.com/kyma-project/api-gateway/internal/helpers"
 	"github.com/kyma-project/api-gateway/internal/processing"
+	hashablestate "github.com/kyma-project/api-gateway/internal/processing/hashstate"
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -21,7 +19,7 @@ type AuthorizationPolicyProcessor struct {
 // AuthorizationPolicyCreator provides the creation of AuthorizationPolicies using the configuration in the given APIRule.
 // The key of the map is expected to be unique and comparable with the
 type AuthorizationPolicyCreator interface {
-	Create(api *gatewayv1beta1.APIRule) (map[string][]*securityv1beta1.AuthorizationPolicy, error)
+	Create(api *gatewayv1beta1.APIRule) (hashablestate.Desired, error)
 }
 
 func (r AuthorizationPolicyProcessor) EvaluateReconciliation(ctx context.Context, client ctrlclient.Client, apiRule *gatewayv1beta1.APIRule) ([]*processing.ObjectChange, error) {
@@ -39,83 +37,46 @@ func (r AuthorizationPolicyProcessor) EvaluateReconciliation(ctx context.Context
 	return changes, nil
 }
 
-func (r AuthorizationPolicyProcessor) getDesiredState(api *gatewayv1beta1.APIRule) (map[string][]*securityv1beta1.AuthorizationPolicy, error) {
-	aps, err := r.Creator.Create(api)
+func (r AuthorizationPolicyProcessor) getDesiredState(api *gatewayv1beta1.APIRule) (hashablestate.Desired, error) {
+	hashDummy, err := r.Creator.Create(api)
 	if err != nil {
-		return nil, err
+		return hashDummy, err
 	}
-	return aps, nil
+	return hashDummy, nil
 }
 
-func (r AuthorizationPolicyProcessor) getActualState(ctx context.Context, client ctrlclient.Client, api *gatewayv1beta1.APIRule) (map[string]map[string]*securityv1beta1.AuthorizationPolicy, error) {
+func (r AuthorizationPolicyProcessor) getActualState(ctx context.Context, client ctrlclient.Client, api *gatewayv1beta1.APIRule) (hashablestate.Actual, error) {
+	state := hashablestate.NewActual()
+
 	labels := processing.GetOwnerLabels(api)
 
 	var apList securityv1beta1.AuthorizationPolicyList
 	if err := client.List(ctx, &apList, ctrlclient.MatchingLabels(labels)); err != nil {
-		return nil, err
+		return state, err
 	}
 
-	authorizationPolicies := make(map[string]map[string]*securityv1beta1.AuthorizationPolicy)
-	for i, ap := range apList.Items {
-		index, ok := ap.Labels[processing.IndexLabelName]
-		if !ok {
-			// Store unindexed APs so they will be deleted/updated with index
-			index = "-" + strconv.Itoa(i)
-		}
-
-		if hash, ok := ap.Labels[processing.HashLabelName]; ok {
-			if authorizationPolicies[hash] == nil {
-				authorizationPolicies[hash] = make(map[string]*securityv1beta1.AuthorizationPolicy)
-			}
-
-			if _, ok := authorizationPolicies[hash][index]; ok {
-				authorizationPolicies[hash][index+":"+strconv.Itoa(i)] = ap
-			} else {
-				authorizationPolicies[hash][index] = ap
-			}
-		} else {
-			hashTo, err := helpers.GetAuthorizationPolicyHash(ap)
-			if err != nil {
-				return nil, err
-			}
-
-			if authorizationPolicies[hashTo] == nil {
-				authorizationPolicies[hashTo] = make(map[string]*securityv1beta1.AuthorizationPolicy)
-			}
-
-			if _, ok := authorizationPolicies[hashTo][index]; ok {
-				authorizationPolicies[hashTo][index+":"+strconv.Itoa(i)] = ap
-			} else {
-				authorizationPolicies[hashTo][index] = ap
-			}
-		}
+	for _, ap := range apList.Items {
+		state.Add(ap)
 	}
 
-	return authorizationPolicies, nil
+	return state, nil
 }
 
-func (r AuthorizationPolicyProcessor) getObjectChanges(desiredAps map[string][]*securityv1beta1.AuthorizationPolicy, actualAps map[string]map[string]*securityv1beta1.AuthorizationPolicy) []*processing.ObjectChange {
+func (r AuthorizationPolicyProcessor) getObjectChanges(desired hashablestate.Desired, actual hashablestate.Actual) []*processing.ObjectChange {
 	var apObjectActionsToApply []*processing.ObjectChange
 
-	for hashTo, toDesiredAPs := range desiredAps {
-		for _, ap := range toDesiredAPs {
-			// As both the order of Authorizations and APs is static we can update them according to array index
-			index := ap.Labels[processing.IndexLabelName]
-			if oldAP, ok := actualAps[hashTo][index]; ok {
-				oldAP.Spec = *ap.Spec.DeepCopy()
-				oldAP.Labels = ap.Labels
-				delete(actualAps[hashTo], index)
-				apObjectActionsToApply = append(apObjectActionsToApply, processing.NewObjectUpdateAction(oldAP))
-			} else {
-				apObjectActionsToApply = append(apObjectActionsToApply, processing.NewObjectCreateAction(ap))
-			}
-		}
+	changes := hashablestate.GetChanges(desired, actual)
+
+	for _, ap := range changes.Create {
+		apObjectActionsToApply = append(apObjectActionsToApply, processing.NewObjectCreateAction(ap))
 	}
 
-	for _, aps := range actualAps {
-		for _, ap := range aps {
-			apObjectActionsToApply = append(apObjectActionsToApply, processing.NewObjectDeleteAction(ap))
-		}
+	for _, ap := range changes.Update {
+		apObjectActionsToApply = append(apObjectActionsToApply, processing.NewObjectUpdateAction(ap))
+	}
+
+	for _, ap := range changes.Delete {
+		apObjectActionsToApply = append(apObjectActionsToApply, processing.NewObjectDeleteAction(ap))
 	}
 
 	return apObjectActionsToApply
