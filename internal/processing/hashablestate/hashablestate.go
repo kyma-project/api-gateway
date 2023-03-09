@@ -4,6 +4,9 @@
 // The comparison is based on labels for a hash and an index put on a kubernetes object. The hash label holds the hash that
 // represents the object and the index value holds the position of the object in the sequence. Both of this information is
 // then used to identify if an object was changed, removed or newly added.
+//
+// Since this comparison is based on the order of objects, it means that adding a new object before an existing object in the
+// sequence triggers an update for all the following objects, since their position in the sequence has changed.
 package hashablestate
 
 import (

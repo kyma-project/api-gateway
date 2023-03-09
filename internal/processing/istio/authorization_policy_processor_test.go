@@ -137,6 +137,38 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 		}))
 	}
 
+	getAudienceMatcher := func(action string, hashLabelValue string, indexLabelValue string, audiences []string) types.GomegaMatcher {
+
+		var audiencesMatchers []types.GomegaMatcher
+
+		for _, audience := range audiences {
+			m := PointTo(MatchFields(IgnoreExtras, Fields{
+				"Key":    Equal("request.auth.claims[aud]"),
+				"Values": ContainElement(audience),
+			}))
+			audiencesMatchers = append(audiencesMatchers, m)
+		}
+
+		return PointTo(MatchFields(IgnoreExtras, Fields{
+			"Action": WithTransform(ActionToString, Equal(action)),
+			"Obj": PointTo(MatchFields(IgnoreExtras, Fields{
+				"ObjectMeta": MatchFields(IgnoreExtras, Fields{
+					"Labels": And(
+						HaveKeyWithValue("gateway.kyma-project.io/index", indexLabelValue),
+						HaveKeyWithValue("gateway.kyma-project.io/hash", hashLabelValue),
+					),
+				}),
+				"Spec": MatchFields(IgnoreExtras, Fields{
+					"Rules": ContainElements(
+						PointTo(MatchFields(IgnoreExtras, Fields{
+							"When": ContainElements(audiencesMatchers),
+						})),
+					),
+				}),
+			})),
+		}))
+	}
+
 	It("should produce two APs for a rule with one issuer and two paths", func() {
 		// given
 		jwt := createIstioJwtAccessStrategy()
@@ -715,7 +747,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 	})
 
 	When("Two AP for different services with JWT handler exist", func() {
-		It("should delete existing AP and create new AP when handler changed for one of the AP to noop", func() {
+		It("should update APs and update principal when handler changed for one of the AP to noop", func() {
 			// given: Cluster state
 			beingUpdatedAp := getAuthorizationPolicy("being-updated-ap", ApiNamespace, "test-service", []string{"GET", "POST"})
 			jwtSecuredAp := getAuthorizationPolicy("jwt-secured-ap", ApiNamespace, "jwt-secured-service", []string{"GET", "POST"})
@@ -994,6 +1026,354 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			deleteMatcher := getActionMatcher("delete", ApiNamespace, "second-service", "RequestPrincipals", ContainElements("*"), ContainElements("GET"), ContainElements("/"))
 			createdApMatcher := getActionMatcher("create", ApiNamespace, "second-service", "RequestPrincipals", ContainElements("*"), ContainElements("GET"), ContainElements("/new-path"))
 			Expect(result).To(ContainElements(updateUnchangedApMatcher, deleteMatcher, createdApMatcher))
+		})
+	})
+
+	When("Rule with two authorizations resulting in two APs exists", func() {
+		It("should update both APs when audience is updated for both authorizations", func() {
+			// given: Cluster state
+			serviceName := "test-service"
+
+			ap1 := getAuthorizationPolicy("ap1", ApiNamespace, serviceName, []string{"GET"})
+			ap1.Spec.Rules[0].When = []*v1beta1.Condition{
+				{
+					Key:    "request.auth.claims[aud]",
+					Values: []string{"audience1", "audience2"},
+				},
+			}
+
+			ap2 := getAuthorizationPolicy("ap2", ApiNamespace, serviceName, []string{"GET"})
+			ap2.Spec.Rules[0].When = []*v1beta1.Condition{
+				{
+					Key:    "request.auth.claims[aud]",
+					Values: []string{"audience3"},
+				},
+			}
+			// We need to set the index to 1 as this is expected to be the second authorization configured in the rule.
+			ap2.Labels["gateway.kyma-project.io/index"] = "1"
+
+			ctrlClient := GetFakeClient(ap1, ap2)
+			processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig(), &testLogger)
+
+			// given: ApiRule with updated audiences in jwt authorizations
+			authorization1 := `{"audiences": ["audience1", "audience3"]}`
+			authorization2 := `{"audiences": ["audience5", "audience6"]}`
+			jwtConfigJSON := fmt.Sprintf(`{"authentications": [{"issuer": "%s", "jwksUri": "%s"}], "authorizations": [%s, %s]}`,
+				JwtIssuer, JwksUri, authorization1, authorization2)
+			jwtAuth := &gatewayv1beta1.Authenticator{
+				Handler: &gatewayv1beta1.Handler{
+					Name: "jwt",
+					Config: &runtime.RawExtension{
+						Raw: []byte(jwtConfigJSON),
+					},
+				},
+			}
+
+			service := &gatewayv1beta1.Service{
+				Name: &serviceName,
+				Port: &ServicePort,
+			}
+
+			rule := GetRuleWithServiceFor("/", []string{"GET"}, []*gatewayv1beta1.Mutator{}, []*gatewayv1beta1.Authenticator{jwtAuth}, service)
+			rules := []gatewayv1beta1.Rule{rule}
+
+			apiRule := GetAPIRuleFor(rules)
+
+			// when
+			result, err := processor.EvaluateReconciliation(context.TODO(), ctrlClient, apiRule)
+
+			// then
+			Expect(err).To(BeNil())
+			Expect(result).To(HaveLen(2))
+
+			// It's expected that the hash is the same for all the objects, as the fields that were updated are not part of the hash.
+			expectedHash := ap1.Labels["gateway.kyma-project.io/hash"]
+
+			ap1Matcher := getAudienceMatcher("update", expectedHash, "0", []string{"audience1", "audience3"})
+			ap2Matcher := getAudienceMatcher("update", expectedHash, "1", []string{"audience5", "audience6"})
+			Expect(result).To(ContainElements(ap1Matcher, ap2Matcher))
+		})
+
+		It("should create new AP and update existing APs without changes when new authorization is added", func() {
+			// given: Cluster state
+			serviceName := "test-service"
+
+			ap1 := getAuthorizationPolicy("ap1", ApiNamespace, serviceName, []string{"GET"})
+			ap1.Spec.Rules[0].When = []*v1beta1.Condition{
+				{
+					Key:    "request.auth.claims[aud]",
+					Values: []string{"audience1", "audience2"},
+				},
+			}
+
+			ap2 := getAuthorizationPolicy("ap2", ApiNamespace, serviceName, []string{"GET"})
+			ap2.Spec.Rules[0].When = []*v1beta1.Condition{
+				{
+					Key:    "request.auth.claims[aud]",
+					Values: []string{"audience3"},
+				},
+			}
+			// We need to set the index to 1 as this is expected to be the second authorization configured in the rule.
+			ap2.Labels["gateway.kyma-project.io/index"] = "1"
+
+			ctrlClient := GetFakeClient(ap1, ap2)
+			processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig(), &testLogger)
+
+			// given: ApiRule with updated audiences in jwt authorizations
+			authorization1 := `{"audiences": ["audience1", "audience2"]}`
+			authorization2 := `{"audiences": ["audience3"]}`
+			newAuthorization := `{"audiences": ["audience4"]}`
+			jwtConfigJSON := fmt.Sprintf(`{"authentications": [{"issuer": "%s", "jwksUri": "%s"}], "authorizations": [%s, %s, %s]}`,
+				JwtIssuer, JwksUri, authorization1, authorization2, newAuthorization)
+			jwtAuth := &gatewayv1beta1.Authenticator{
+				Handler: &gatewayv1beta1.Handler{
+					Name: "jwt",
+					Config: &runtime.RawExtension{
+						Raw: []byte(jwtConfigJSON),
+					},
+				},
+			}
+
+			service := &gatewayv1beta1.Service{
+				Name: &serviceName,
+				Port: &ServicePort,
+			}
+
+			rule := GetRuleWithServiceFor("/", []string{"GET"}, []*gatewayv1beta1.Mutator{}, []*gatewayv1beta1.Authenticator{jwtAuth}, service)
+			rules := []gatewayv1beta1.Rule{rule}
+
+			apiRule := GetAPIRuleFor(rules)
+
+			// when
+			result, err := processor.EvaluateReconciliation(context.TODO(), ctrlClient, apiRule)
+
+			// then
+			Expect(err).To(BeNil())
+			Expect(result).To(HaveLen(3))
+
+			// It's expected that the hash is the same for all the objects, as the fields that were updated are not part of the hash.
+			expectedHash := ap1.Labels["gateway.kyma-project.io/hash"]
+
+			ap1Matcher := getAudienceMatcher("update", expectedHash, "0", []string{"audience1", "audience2"})
+			ap2Matcher := getAudienceMatcher("update", expectedHash, "1", []string{"audience3"})
+			newApMatcher := getAudienceMatcher("create", expectedHash, "2", []string{"audience4"})
+			Expect(result).To(ContainElements(ap1Matcher, ap2Matcher, newApMatcher))
+		})
+
+		It("should delete existing AP and update existing AP without changes when authorization is removed", func() {
+			// given: Cluster state
+			serviceName := "test-service"
+
+			ap1 := getAuthorizationPolicy("ap1", ApiNamespace, serviceName, []string{"GET"})
+			ap1.Spec.Rules[0].When = []*v1beta1.Condition{
+				{
+					Key:    "request.auth.claims[aud]",
+					Values: []string{"audience1", "audience2"},
+				},
+			}
+
+			ap2 := getAuthorizationPolicy("ap2", ApiNamespace, serviceName, []string{"GET"})
+			ap2.Spec.Rules[0].When = []*v1beta1.Condition{
+				{
+					Key:    "request.auth.claims[aud]",
+					Values: []string{"audience3"},
+				},
+			}
+			// We need to set the index to 1 as this is expected to be the second authorization configured in the rule.
+			ap2.Labels["gateway.kyma-project.io/index"] = "1"
+
+			ctrlClient := GetFakeClient(ap1, ap2)
+			processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig(), &testLogger)
+
+			// given: ApiRule with updated audiences in jwt authorizations
+			authorization1 := `{"audiences": ["audience1", "audience2"]}`
+			jwtConfigJSON := fmt.Sprintf(`{"authentications": [{"issuer": "%s", "jwksUri": "%s"}], "authorizations": [%s]}`,
+				JwtIssuer, JwksUri, authorization1)
+			jwtAuth := &gatewayv1beta1.Authenticator{
+				Handler: &gatewayv1beta1.Handler{
+					Name: "jwt",
+					Config: &runtime.RawExtension{
+						Raw: []byte(jwtConfigJSON),
+					},
+				},
+			}
+
+			service := &gatewayv1beta1.Service{
+				Name: &serviceName,
+				Port: &ServicePort,
+			}
+
+			rule := GetRuleWithServiceFor("/", []string{"GET"}, []*gatewayv1beta1.Mutator{}, []*gatewayv1beta1.Authenticator{jwtAuth}, service)
+			rules := []gatewayv1beta1.Rule{rule}
+
+			apiRule := GetAPIRuleFor(rules)
+
+			// when
+			result, err := processor.EvaluateReconciliation(context.TODO(), ctrlClient, apiRule)
+
+			// then
+			Expect(err).To(BeNil())
+			Expect(result).To(HaveLen(2))
+
+			// It's expected that the hash is the same for all the objects, as the fields that were updated are not part of the hash.
+			expectedHash := ap1.Labels["gateway.kyma-project.io/hash"]
+
+			ap1Matcher := getAudienceMatcher("update", expectedHash, "0", []string{"audience1", "audience2"})
+			ap2Matcher := getAudienceMatcher("delete", expectedHash, "1", []string{"audience3"})
+			Expect(result).To(ContainElements(ap1Matcher, ap2Matcher))
+		})
+	})
+
+	When("Rule with three authorizations resulting in three APs exists", func() {
+		It("should update first two APs and delete third AP when first authorization is removed", func() {
+			// given: Cluster state
+			serviceName := "test-service"
+
+			ap1 := getAuthorizationPolicy("ap1", ApiNamespace, serviceName, []string{"GET"})
+			ap1.Spec.Rules[0].When = []*v1beta1.Condition{
+				{
+					Key:    "request.auth.claims[aud]",
+					Values: []string{"audience1", "audience2"},
+				},
+			}
+
+			ap2 := getAuthorizationPolicy("ap2", ApiNamespace, serviceName, []string{"GET"})
+			ap2.Spec.Rules[0].When = []*v1beta1.Condition{
+				{
+					Key:    "request.auth.claims[aud]",
+					Values: []string{"audience3"},
+				},
+			}
+			// We need to set the index to 1 as this is expected to be the second authorization configured in the rule.
+			ap2.Labels["gateway.kyma-project.io/index"] = "1"
+
+			ap3 := getAuthorizationPolicy("ap3", ApiNamespace, serviceName, []string{"GET"})
+			ap3.Spec.Rules[0].When = []*v1beta1.Condition{
+				{
+					Key:    "request.auth.claims[aud]",
+					Values: []string{"audience4"},
+				},
+			}
+			// We need to set the index to 1 as this is expected to be the second authorization configured in the rule.
+			ap3.Labels["gateway.kyma-project.io/index"] = "2"
+
+			ctrlClient := GetFakeClient(ap1, ap2, ap3)
+			processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig(), &testLogger)
+
+			// given: ApiRule with updated audiences in jwt authorizations
+			authorization2 := `{"audiences": ["audience3"]}`
+			authorization3 := `{"audiences": ["audience4"]}`
+			jwtConfigJSON := fmt.Sprintf(`{"authentications": [{"issuer": "%s", "jwksUri": "%s"}], "authorizations": [%s, %s]}`,
+				JwtIssuer, JwksUri, authorization2, authorization3)
+			jwtAuth := &gatewayv1beta1.Authenticator{
+				Handler: &gatewayv1beta1.Handler{
+					Name: "jwt",
+					Config: &runtime.RawExtension{
+						Raw: []byte(jwtConfigJSON),
+					},
+				},
+			}
+
+			service := &gatewayv1beta1.Service{
+				Name: &serviceName,
+				Port: &ServicePort,
+			}
+
+			rule := GetRuleWithServiceFor("/", []string{"GET"}, []*gatewayv1beta1.Mutator{}, []*gatewayv1beta1.Authenticator{jwtAuth}, service)
+			rules := []gatewayv1beta1.Rule{rule}
+
+			apiRule := GetAPIRuleFor(rules)
+
+			// when
+			result, err := processor.EvaluateReconciliation(context.TODO(), ctrlClient, apiRule)
+
+			// then
+			Expect(err).To(BeNil())
+			Expect(result).To(HaveLen(3))
+
+			// It's expected that the hash is the same for all the objects, as the fields that were updated are not part of the hash.
+			expectedHash := ap1.Labels["gateway.kyma-project.io/hash"]
+
+			ap2Matcher := getAudienceMatcher("update", expectedHash, "0", []string{"audience3"})
+			ap3Matcher := getAudienceMatcher("update", expectedHash, "1", []string{"audience4"})
+			deletedMatcher := getAudienceMatcher("delete", expectedHash, "2", []string{"audience4"})
+			Expect(result).To(ContainElements(ap2Matcher, ap3Matcher, deletedMatcher))
+		})
+	})
+
+	When("AP without hash label exists", func() {
+		It("should delete existing AP and create new AP for same authorization in Rule", func() {
+			// given: Cluster state
+			serviceName := "test-service"
+
+			ap := getAuthorizationPolicy("ap", ApiNamespace, serviceName, []string{"GET"})
+			ap.Spec.Rules[0].When = []*v1beta1.Condition{
+				{
+					Key:    "request.auth.claims[aud]",
+					Values: []string{"audience1"},
+				},
+			}
+
+			// We need to store the hash for comparison later
+			expectedHash := ap.Labels["gateway.kyma-project.io/hash"]
+
+			delete(ap.Labels, "gateway.kyma-project.io/hash")
+
+			ctrlClient := GetFakeClient(ap)
+			processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig(), &testLogger)
+
+			// given: ApiRule with updated audiences in jwt authorizations
+			authorization := `{"audiences": ["audience1"]}`
+			jwtConfigJSON := fmt.Sprintf(`{"authentications": [{"issuer": "%s", "jwksUri": "%s"}], "authorizations": [%s]}`,
+				JwtIssuer, JwksUri, authorization)
+			jwtAuth := &gatewayv1beta1.Authenticator{
+				Handler: &gatewayv1beta1.Handler{
+					Name: "jwt",
+					Config: &runtime.RawExtension{
+						Raw: []byte(jwtConfigJSON),
+					},
+				},
+			}
+
+			service := &gatewayv1beta1.Service{
+				Name: &serviceName,
+				Port: &ServicePort,
+			}
+
+			rule := GetRuleWithServiceFor("/", []string{"GET"}, []*gatewayv1beta1.Mutator{}, []*gatewayv1beta1.Authenticator{jwtAuth}, service)
+			rules := []gatewayv1beta1.Rule{rule}
+
+			apiRule := GetAPIRuleFor(rules)
+
+			// when
+			result, err := processor.EvaluateReconciliation(context.TODO(), ctrlClient, apiRule)
+
+			// then
+			Expect(err).To(BeNil())
+			Expect(result).To(HaveLen(2))
+
+			newMatcher := getAudienceMatcher("create", expectedHash, "0", []string{"audience1"})
+			deletedMatcher := PointTo(MatchFields(IgnoreExtras, Fields{
+				"Action": WithTransform(ActionToString, Equal("delete")),
+				"Obj": PointTo(MatchFields(IgnoreExtras, Fields{
+					"ObjectMeta": MatchFields(IgnoreExtras, Fields{
+						"Labels": HaveKeyWithValue("gateway.kyma-project.io/index", "0"),
+					}),
+					"Spec": MatchFields(IgnoreExtras, Fields{
+						"Rules": ContainElements(
+							PointTo(MatchFields(IgnoreExtras, Fields{
+								"When": ContainElements(
+									PointTo(MatchFields(IgnoreExtras, Fields{
+										"Key":    Equal("request.auth.claims[aud]"),
+										"Values": ContainElement("audience1"),
+									}))),
+							})),
+						),
+					}),
+				})),
+			}))
+
+			Expect(result).To(ContainElements(newMatcher, deletedMatcher))
 		})
 	})
 })
