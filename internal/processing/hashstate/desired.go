@@ -53,3 +53,7 @@ func (d *Desired) containsHashkey(key string) bool {
 	_, ok := d.objects[key]
 	return ok
 }
+
+func (d *Desired) String() string {
+	return mapKeysToString(d.objects)
+}
