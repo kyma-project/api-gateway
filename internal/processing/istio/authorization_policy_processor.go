@@ -2,11 +2,12 @@ package istio
 
 import (
 	"fmt"
+	"github.com/go-logr/logr"
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/api/v1beta1"
 	"github.com/kyma-project/api-gateway/internal/builders"
 	"github.com/kyma-project/api-gateway/internal/helpers"
 	"github.com/kyma-project/api-gateway/internal/processing"
-	hashablestate "github.com/kyma-project/api-gateway/internal/processing/hashstate"
+	"github.com/kyma-project/api-gateway/internal/processing/hashablestate"
 	"github.com/kyma-project/api-gateway/internal/processing/processors"
 	"istio.io/api/security/v1beta1"
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
@@ -20,23 +21,13 @@ var (
 	defaultScopeKeys = []string{"request.auth.claims[scp]", "request.auth.claims[scope]", "request.auth.claims[scopes]"}
 )
 
-// AuthorizationPolicyProcessor is the generic processor that handles the Istio JwtAuthorization Policies in the reconciliation of API Rule.
-type AuthorizationPolicyProcessor struct {
-	Creator AuthorizationPolicyCreator
-}
-
-// AuthorizationPolicyCreator provides the creation of AuthorizationPolicies using the configuration in the given APIRule.
-// The key of the map is expected to be unique and comparable with the
-type AuthorizationPolicyCreator interface {
-	Create(api *gatewayv1beta1.APIRule) []*securityv1beta1.AuthorizationPolicy
-}
-
 // NewAuthorizationPolicyProcessor returns a AuthorizationPolicyProcessor with the desired state handling specific for the Istio handler.
-func NewAuthorizationPolicyProcessor(config processing.ReconciliationConfig) processors.AuthorizationPolicyProcessor {
+func NewAuthorizationPolicyProcessor(config processing.ReconciliationConfig, log *logr.Logger) processors.AuthorizationPolicyProcessor {
 	return processors.AuthorizationPolicyProcessor{
 		Creator: authorizationPolicyCreator{
 			additionalLabels: config.AdditionalLabels,
 		},
+		Log: log,
 	}
 }
 
@@ -108,11 +99,6 @@ func generateAuthorizationPolicy(api *gatewayv1beta1.APIRule, rule gatewayv1beta
 		WithSpec(builders.NewAuthorizationPolicySpecBuilder().FromAP(generateAuthorizationPolicySpec(api, rule, authorization)).Get()).
 		WithLabel(processing.OwnerLabel, fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace)).
 		WithLabel(processing.OwnerLabelv1alpha1, fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace))
-
-	// TODO: Why do we only need to add it in this case? It would be more reliable to always add the label. Of course if a new authorization is added in front of this would be evaluated as a change.
-	//if len(index) > 0 {
-	//	apBuilder.WithLabel(processing.IndexLabelName, strconv.Itoa(index[0]))
-	//}
 
 	for k, v := range additionalLabels {
 		apBuilder.WithLabel(k, v)

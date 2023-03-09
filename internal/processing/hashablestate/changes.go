@@ -1,7 +1,9 @@
 package hashablestate
 
 import (
+	"fmt"
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
+	"strings"
 )
 
 // GetChanges returns the changes that need to be applied to reach the desired state by comparing the hash keys
@@ -41,4 +43,27 @@ type Changes struct {
 	Create []*securityv1beta1.AuthorizationPolicy
 	Delete []*securityv1beta1.AuthorizationPolicy
 	Update []*securityv1beta1.AuthorizationPolicy
+}
+
+func (c Changes) String() string {
+	toCreate := make([]string, len(c.Create))
+	for _, ap := range c.Create {
+		toCreate = append(toCreate, ap.Name)
+	}
+
+	toUpdate := make([]string, len(c.Update))
+	for _, ap := range c.Update {
+		toUpdate = append(toUpdate, ap.Name)
+	}
+
+	toDelete := make([]string, len(c.Delete))
+	for _, ap := range c.Delete {
+		toDelete = append(toDelete, ap.Name)
+	}
+
+	toCreateJoined := strings.Join(toCreate, ", ")
+	toUpdateJoined := strings.Join(toUpdate, ", ")
+	toDeleteJoined := strings.Join(toDelete, ", ")
+
+	return fmt.Sprintf("Create: %s; Delete: %s; Update: %s", toCreateJoined, toUpdateJoined, toDeleteJoined)
 }

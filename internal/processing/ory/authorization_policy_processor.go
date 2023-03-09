@@ -1,30 +1,20 @@
 package ory
 
 import (
+	"github.com/go-logr/logr"
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/api/v1beta1"
 	"github.com/kyma-project/api-gateway/internal/processing"
-	hashablestate "github.com/kyma-project/api-gateway/internal/processing/hashstate"
+	"github.com/kyma-project/api-gateway/internal/processing/hashablestate"
 	"github.com/kyma-project/api-gateway/internal/processing/processors"
-	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 )
 
-// AuthorizationPolicyProcessor is the generic processor that handles the Istio JwtAuthorization Policies in the reconciliation of API Rule.
-type AuthorizationPolicyProcessor struct {
-	Creator AuthorizationPolicyCreator
-}
-
-// AuthorizationPolicyCreator provides the creation of AuthorizationPolicies using the configuration in the given APIRule.
-// The key of the map is expected to be unique and comparable with the
-type AuthorizationPolicyCreator interface {
-	Create(api *gatewayv1beta1.APIRule) map[string]*securityv1beta1.AuthorizationPolicy
-}
-
 // NewAuthorizationPolicyProcessor returns a AuthorizationPolicyProcessor with the desired state handling specific for the Istio handler.
-func NewAuthorizationPolicyProcessor(config processing.ReconciliationConfig) processors.AuthorizationPolicyProcessor {
+func NewAuthorizationPolicyProcessor(config processing.ReconciliationConfig, log *logr.Logger) processors.AuthorizationPolicyProcessor {
 	return processors.AuthorizationPolicyProcessor{
 		Creator: authorizationPolicyCreator{
 			additionalLabels: config.AdditionalLabels,
 		},
+		Log: log,
 	}
 }
 

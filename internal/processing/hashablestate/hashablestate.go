@@ -43,10 +43,11 @@ func AddHashingLabels(ap *securityv1beta1.AuthorizationPolicy, indexInYaml int) 
 }
 
 func mapKeysToString(m map[string]*securityv1beta1.AuthorizationPolicy) string {
-	keys := make([]string, len(m))
-	for key, _ := range m {
-		keys = append(keys, key)
+	s := make([]string, len(m))
+	for key, ap := range m {
+		l := fmt.Sprintf("hash: %s, name: %s", key, ap.Name)
+		s = append(s, l)
 	}
 
-	return fmt.Sprintf("Keys in state: %s", strings.Join(keys, ","))
+	return fmt.Sprintf("Objects in state: %s", strings.Join(s, "; "))
 }
