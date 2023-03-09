@@ -7,7 +7,7 @@ import (
 	"github.com/kyma-project/api-gateway/internal/builders"
 	"github.com/kyma-project/api-gateway/internal/helpers"
 	"github.com/kyma-project/api-gateway/internal/processing"
-	"github.com/kyma-project/api-gateway/internal/processing/hashablestate"
+	"github.com/kyma-project/api-gateway/internal/processing/hashbasedstate"
 	"github.com/kyma-project/api-gateway/internal/processing/processors"
 	"istio.io/api/security/v1beta1"
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
@@ -36,14 +36,14 @@ type authorizationPolicyCreator struct {
 }
 
 // Create returns the JwtAuthorization Policy using the configuration of the APIRule.
-func (r authorizationPolicyCreator) Create(api *gatewayv1beta1.APIRule) (hashablestate.Desired, error) {
-	state := hashablestate.NewDesired()
+func (r authorizationPolicyCreator) Create(api *gatewayv1beta1.APIRule) (hashbasedstate.Desired, error) {
+	state := hashbasedstate.NewDesired()
 	hasJwtRule := processing.HasJwtRule(api)
 	if hasJwtRule {
 		for _, rule := range api.Spec.Rules {
 			aps, err := generateAuthorizationPolicies(api, rule, r.additionalLabels)
 			if err != nil {
-				return state, nil
+				return state, err
 			}
 
 			for _, ap := range aps.Items {
@@ -67,7 +67,7 @@ func generateAuthorizationPolicies(api *gatewayv1beta1.APIRule, rule gatewayv1be
 
 		// If there is no other authorization we can safely assume that the index of this authorization in the array
 		// in the yaml is 0.
-		err := hashablestate.AddHashingLabels(ap, 0)
+		err := hashbasedstate.AddHashingLabels(ap, 0)
 		if err != nil {
 			return &authorizationPolicyList, err
 		}
@@ -77,7 +77,7 @@ func generateAuthorizationPolicies(api *gatewayv1beta1.APIRule, rule gatewayv1be
 		for indexInYaml, authorization := range ruleAuthorizations {
 			ap := generateAuthorizationPolicy(api, rule, additionalLabels, authorization)
 
-			err := hashablestate.AddHashingLabels(ap, indexInYaml)
+			err := hashbasedstate.AddHashingLabels(ap, indexInYaml)
 			if err != nil {
 				return &authorizationPolicyList, err
 			}

@@ -1,11 +1,10 @@
-package helpers
+package hashbasedstate
 
 import (
 	"fmt"
-	"strconv"
-
 	"github.com/mitchellh/hashstructure/v2"
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
+	"strconv"
 )
 
 func GetAuthorizationPolicyHash(ap *securityv1beta1.AuthorizationPolicy) (string, error) {

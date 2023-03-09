@@ -4,7 +4,7 @@ import (
 	"github.com/go-logr/logr"
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/api/v1beta1"
 	"github.com/kyma-project/api-gateway/internal/processing"
-	"github.com/kyma-project/api-gateway/internal/processing/hashablestate"
+	"github.com/kyma-project/api-gateway/internal/processing/hashbasedstate"
 	"github.com/kyma-project/api-gateway/internal/processing/processors"
 )
 
@@ -23,6 +23,6 @@ type authorizationPolicyCreator struct {
 }
 
 // Create returns empty JwtAuthorization Policy
-func (r authorizationPolicyCreator) Create(_ *gatewayv1beta1.APIRule) (hashablestate.Desired, error) {
-	return hashablestate.NewDesired(), nil
+func (r authorizationPolicyCreator) Create(_ *gatewayv1beta1.APIRule) (hashbasedstate.Desired, error) {
+	return hashbasedstate.NewDesired(), nil
 }

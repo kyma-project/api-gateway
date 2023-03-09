@@ -3,7 +3,7 @@ package istio_test
 import (
 	"context"
 	"fmt"
-	"github.com/kyma-project/api-gateway/internal/helpers"
+	"github.com/kyma-project/api-gateway/internal/processing/hashbasedstate"
 
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/api/v1beta1"
 	"github.com/kyma-project/api-gateway/internal/processing"
@@ -94,7 +94,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			},
 		}
 
-		apHash, err := helpers.GetAuthorizationPolicyHash(&ap)
+		apHash, err := hashbasedstate.GetAuthorizationPolicyHash(&ap)
 		Expect(err).ShouldNot(HaveOccurred())
 		ap.Labels["gateway.kyma-project.io/hash"] = apHash
 		ap.Labels["gateway.kyma-project.io/index"] = "0"

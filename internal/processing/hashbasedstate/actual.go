@@ -1,4 +1,4 @@
-package hashablestate
+package hashbasedstate
 
 import (
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"

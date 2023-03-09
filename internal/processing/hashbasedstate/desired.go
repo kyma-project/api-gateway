@@ -1,4 +1,4 @@
-package hashablestate
+package hashbasedstate
 
 import (
 	"fmt"

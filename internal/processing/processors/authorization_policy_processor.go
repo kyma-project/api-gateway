@@ -5,7 +5,7 @@ import (
 	"github.com/go-logr/logr"
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/api/v1beta1"
 	"github.com/kyma-project/api-gateway/internal/processing"
-	"github.com/kyma-project/api-gateway/internal/processing/hashablestate"
+	"github.com/kyma-project/api-gateway/internal/processing/hashbasedstate"
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -21,7 +21,7 @@ type AuthorizationPolicyProcessor struct {
 // AuthorizationPolicyCreator provides the creation of AuthorizationPolicies using the configuration in the given APIRule.
 // The key of the map is expected to be unique and comparable with the
 type AuthorizationPolicyCreator interface {
-	Create(api *gatewayv1beta1.APIRule) (hashablestate.Desired, error)
+	Create(api *gatewayv1beta1.APIRule) (hashbasedstate.Desired, error)
 }
 
 func (r AuthorizationPolicyProcessor) EvaluateReconciliation(ctx context.Context, client ctrlclient.Client, apiRule *gatewayv1beta1.APIRule) ([]*processing.ObjectChange, error) {
@@ -39,7 +39,7 @@ func (r AuthorizationPolicyProcessor) EvaluateReconciliation(ctx context.Context
 	return changes, nil
 }
 
-func (r AuthorizationPolicyProcessor) getDesiredState(api *gatewayv1beta1.APIRule) (hashablestate.Desired, error) {
+func (r AuthorizationPolicyProcessor) getDesiredState(api *gatewayv1beta1.APIRule) (hashbasedstate.Desired, error) {
 	hashDummy, err := r.Creator.Create(api)
 	if err != nil {
 		return hashDummy, err
@@ -47,8 +47,8 @@ func (r AuthorizationPolicyProcessor) getDesiredState(api *gatewayv1beta1.APIRul
 	return hashDummy, nil
 }
 
-func (r AuthorizationPolicyProcessor) getActualState(ctx context.Context, client ctrlclient.Client, api *gatewayv1beta1.APIRule) (hashablestate.Actual, error) {
-	state := hashablestate.NewActual()
+func (r AuthorizationPolicyProcessor) getActualState(ctx context.Context, client ctrlclient.Client, api *gatewayv1beta1.APIRule) (hashbasedstate.Actual, error) {
+	state := hashbasedstate.NewActual()
 
 	labels := processing.GetOwnerLabels(api)
 
@@ -64,11 +64,11 @@ func (r AuthorizationPolicyProcessor) getActualState(ctx context.Context, client
 	return state, nil
 }
 
-func (r AuthorizationPolicyProcessor) getObjectChanges(desired hashablestate.Desired, actual hashablestate.Actual) []*processing.ObjectChange {
+func (r AuthorizationPolicyProcessor) getObjectChanges(desired hashbasedstate.Desired, actual hashbasedstate.Actual) []*processing.ObjectChange {
 	var apObjectActionsToApply []*processing.ObjectChange
 	r.Log.Info("Getting object changes by comparing states", "desired state", desired, "actual state", actual)
 
-	changes := hashablestate.GetChanges(desired, actual)
+	changes := hashbasedstate.GetChanges(desired, actual)
 	r.Log.Info("Changes that will be applied", "changes", changes)
 
 	for _, ap := range changes.Create {
