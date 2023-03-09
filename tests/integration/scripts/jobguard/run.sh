@@ -8,9 +8,10 @@ KYMA_PROJECT_DIR=${KYMA_PROJECT_DIR:-"/home/prow/go/src/github.com/kyma-project"
 JOB_NAME_PATTERN=${JOB_NAME_PATTERN:-"(pre-main-kyma-components-.*)|(pre-main-kyma-tests-.*)|(pre-kyma-components-.*)|(pre-kyma-tests-.*)|(pull-.*-build)"}
 TIMEOUT=${JOBGUARD_TIMEOUT:-"15m"}
 
-if [ -z "$PULL_PULL_SHA" ]; then
-  echo "WORKAROUND: skip jobguard execution - not on PR commit"
-  exit 0
+if [[ "${BUILD_TYPE}" == "pr" ]]; then
+    BASE_REF=${PULL_PULL_SHA}
+else
+    BASE_REF=${PULL_BASE_SHA}
 fi
 
 args=(
@@ -21,7 +22,7 @@ args=(
   "-timeout=$TIMEOUT"
   "-org=$REPO_OWNER"
   "-repo=$REPO_NAME"
-  "-base-ref=$PULL_PULL_SHA"
+  "-base-ref=$BASE_REF"
   "-expected-contexts-regexp=$JOB_NAME_PATTERN"
 )
 
