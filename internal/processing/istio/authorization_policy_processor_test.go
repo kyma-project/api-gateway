@@ -1301,8 +1301,9 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 		})
 	})
 
-	When("AP without hash label exists", func() {
-		It("should delete existing AP and create new AP for same authorization in Rule", func() {
+	for _, missingLabel := range []string{"gateway.kyma-project.io/hash", "gateway.kyma-project.io/index"} {
+
+		It(fmt.Sprintf("should delete existing AP without hashing label %s and create new AP for same authorization in Rule", missingLabel), func() {
 			// given: Cluster state
 			serviceName := "test-service"
 
@@ -1317,7 +1318,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			// We need to store the hash for comparison later
 			expectedHash := ap.Labels["gateway.kyma-project.io/hash"]
 
-			delete(ap.Labels, "gateway.kyma-project.io/hash")
+			delete(ap.Labels, missingLabel)
 
 			ctrlClient := GetFakeClient(ap)
 			processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig(), &testLogger)
@@ -1356,9 +1357,6 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			deletedMatcher := PointTo(MatchFields(IgnoreExtras, Fields{
 				"Action": WithTransform(ActionToString, Equal("delete")),
 				"Obj": PointTo(MatchFields(IgnoreExtras, Fields{
-					"ObjectMeta": MatchFields(IgnoreExtras, Fields{
-						"Labels": HaveKeyWithValue("gateway.kyma-project.io/index", "0"),
-					}),
 					"Spec": MatchFields(IgnoreExtras, Fields{
 						"Rules": ContainElements(
 							PointTo(MatchFields(IgnoreExtras, Fields{
@@ -1375,7 +1373,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 
 			Expect(result).To(ContainElements(newMatcher, deletedMatcher))
 		})
-	})
+	}
 })
 
 func getRuleForApTest(methods []string, path string, serviceName string, namespace ...string) gatewayv1beta1.Rule {
