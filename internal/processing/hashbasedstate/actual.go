@@ -49,7 +49,3 @@ func (a *Actual) containsHashkey(key string) bool {
 	_, ok := a.hashables[key]
 	return ok
 }
-
-func (a *Actual) String() string {
-	return hashablesToString(a.hashables)
-}

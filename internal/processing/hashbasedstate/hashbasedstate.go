@@ -13,7 +13,6 @@ import (
 	"fmt"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"strconv"
-	"strings"
 )
 
 const (
@@ -35,14 +34,4 @@ func addHashingLabels(o client.Object, hash string, indexInYaml int) {
 	o.GetLabels()[indexLabelName] = strconv.Itoa(indexInYaml)
 	o.GetLabels()[hashLabelName] = hash
 
-}
-
-func hashablesToString(m map[string]Hashable) string {
-	s := make([]string, len(m))
-	for key, h := range m {
-		l := fmt.Sprintf("hash: %s, name: %s", key, h.ToObject().GetName())
-		s = append(s, l)
-	}
-
-	return fmt.Sprintf("Objects in state: %s", strings.Join(s, "; "))
 }

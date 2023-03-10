@@ -67,7 +67,6 @@ func (r AuthorizationPolicyProcessor) getActualState(ctx context.Context, client
 
 func (r AuthorizationPolicyProcessor) getObjectChanges(desired hashbasedstate.Desired, actual hashbasedstate.Actual) []*processing.ObjectChange {
 	var apObjectActionsToApply []*processing.ObjectChange
-	r.Log.Info("Getting object changes by comparing states", "desired state", desired, "actual state", actual)
 
 	changes := hashbasedstate.GetChanges(desired, actual)
 	r.Log.Info("Changes that will be applied", "changes", changes)

@@ -54,7 +54,3 @@ func (d *Desired) containsHashkey(key string) bool {
 	_, ok := d.hashables[key]
 	return ok
 }
-
-func (d *Desired) String() string {
-	return hashablesToString(d.hashables)
-}

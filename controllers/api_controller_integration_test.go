@@ -808,6 +808,14 @@ var _ = Describe("APIRule Controller", func() {
 					cmChangedReq := reconcile.Request{NamespacedName: types.NamespacedName{Name: cm.Name, Namespace: cm.Namespace}}
 					Eventually(requests, eventuallyTimeout).Should(Receive(Equal(cmChangedReq)))
 
+					By("Waiting until reconciliation of CM is finished")
+					Eventually(func(g Gomega) {
+						err = c.Get(context.TODO(), client.ObjectKey{Name: cm.Name, Namespace: cm.Namespace}, cm)
+						Expect(err).NotTo(HaveOccurred())
+
+						Expect(cm.Data).To(HaveKeyWithValue(helpers.CM_KEY, "jwtHandler: istio"))
+					}, eventuallyTimeout).Should(Succeed())
+
 					// when
 					triggerApiRuleReconciliation(apiRuleName)
 
@@ -938,6 +946,14 @@ var _ = Describe("APIRule Controller", func() {
 
 					cmChangedReq := reconcile.Request{NamespacedName: types.NamespacedName{Name: cm.Name, Namespace: cm.Namespace}}
 					Eventually(requests, eventuallyTimeout).Should(Receive(Equal(cmChangedReq)))
+
+					By("Waiting until reconciliation of CM is finished")
+					Eventually(func(g Gomega) {
+						err = c.Get(context.TODO(), client.ObjectKey{Name: cm.Name, Namespace: cm.Namespace}, cm)
+						Expect(err).NotTo(HaveOccurred())
+
+						Expect(cm.Data).To(HaveKeyWithValue(helpers.CM_KEY, "jwtHandler: ory"))
+					}, eventuallyTimeout).Should(Succeed())
 
 					// when
 					triggerApiRuleReconciliation(apiRuleName)

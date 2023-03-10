@@ -2,8 +2,6 @@ package hashbasedstate
 
 import (
 	"fmt"
-	"strings"
-
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -61,11 +59,7 @@ func (c Changes) String() string {
 		toDelete = append(toDelete, ap.GetName())
 	}
 
-	toCreateJoined := strings.Join(toCreate, ", ")
-	toUpdateJoined := strings.Join(toUpdate, ", ")
-	toDeleteJoined := strings.Join(toDelete, ", ")
-
-	return fmt.Sprintf("Create: %s; Delete: %s; Update: %s", toCreateJoined, toUpdateJoined, toDeleteJoined)
+	return fmt.Sprintf("Create: %s; Delete: %s; Update: %s", toCreate, toDelete, toUpdate)
 }
 
 type Hashable interface {
