@@ -11,7 +11,7 @@ package hashbasedstate
 
 import (
 	"fmt"
-	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"strconv"
 	"strings"
 )
@@ -26,28 +26,21 @@ func createHashKey(hashValue, indexValue string) string {
 	return fmt.Sprintf("%s:%s", hashValue, indexValue)
 }
 
-// AddHashingLabels adds labels to the desired object to be able to compare it with the actual object in the cluster.
-func AddHashingLabels(ap *securityv1beta1.AuthorizationPolicy, indexInYaml int) error {
+// addHashingLabels adds labels to the desired object to be able to compare it with the actual object in the cluster.
+func addHashingLabels(o client.Object, hash string, indexInYaml int) {
 
 	// We add the index as a label to be able to compare later if something has been changed or not. We can make the assumption
 	// that the index is the same if nothing has changed, since authorizations in yaml are a sequence and the order for sequences
 	// is static (https://yaml.org/spec/1.2/spec.html#id2764044).
-	ap.Labels[indexLabelName] = strconv.Itoa(indexInYaml)
+	o.GetLabels()[indexLabelName] = strconv.Itoa(indexInYaml)
+	o.GetLabels()[hashLabelName] = hash
 
-	hash, err := GetAuthorizationPolicyHash(ap)
-	if err != nil {
-		return err
-	}
-
-	ap.Labels[hashLabelName] = hash
-
-	return nil
 }
 
-func mapKeysToString(m map[string]*securityv1beta1.AuthorizationPolicy) string {
+func hashablesToString(m map[string]Hashable) string {
 	s := make([]string, len(m))
-	for key, ap := range m {
-		l := fmt.Sprintf("hash: %s, name: %s", key, ap.Name)
+	for key, h := range m {
+		l := fmt.Sprintf("hash: %s, name: %s", key, h.value().GetName())
 		s = append(s, l)
 	}
 

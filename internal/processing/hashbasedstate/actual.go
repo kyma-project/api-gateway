@@ -1,8 +1,6 @@
 package hashbasedstate
 
-import (
-	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
-)
+import "sigs.k8s.io/controller-runtime/pkg/client"
 
 const (
 	unhashedValue  = "unhashed"
@@ -11,27 +9,27 @@ const (
 
 func NewActual() Actual {
 	return Actual{
-		objects:           make(map[string]*securityv1beta1.AuthorizationPolicy),
-		markedForDeletion: []*securityv1beta1.AuthorizationPolicy{},
+		hashables:         make(map[string]Hashable),
+		markedForDeletion: []client.Object{},
 	}
 }
 
 type Actual struct {
-	objects map[string]*securityv1beta1.AuthorizationPolicy
+	hashables map[string]Hashable
 	// Objects are marked for deletion for migration reasons. That means objects without required hashing labels must be
 	// deleted as we can't reliably compare them. This field might be removed in the future as no objects without hashing
 	// labels exist anymore.
-	markedForDeletion []*securityv1beta1.AuthorizationPolicy
+	markedForDeletion []client.Object
 }
 
 // Add the value to the desired state. If the value does not have the hash and index labels, an error is returned.
-func (a *Actual) Add(value *securityv1beta1.AuthorizationPolicy) {
-	index, ok := value.Labels[indexLabelName]
+func (a *Actual) Add(hashable Hashable) {
+	index, ok := hashable.value().GetLabels()[indexLabelName]
 	if !ok {
 		index = unindexedValue
 	}
 
-	hash, ok := value.Labels[hashLabelName]
+	hash, ok := hashable.value().GetLabels()[hashLabelName]
 
 	if !ok {
 		hash = unhashedValue
@@ -40,18 +38,18 @@ func (a *Actual) Add(value *securityv1beta1.AuthorizationPolicy) {
 	// If there are objects that do not have a hash or index set, we cannot reliably compare them, so we delete them because
 	// they could be a remnant from an older state without the hash labels.
 	if hash == unhashedValue || index == unindexedValue {
-		a.markedForDeletion = append(a.markedForDeletion, value)
+		a.markedForDeletion = append(a.markedForDeletion, hashable.value())
 	} else {
 		hashKey := createHashKey(hash, index)
-		a.objects[hashKey] = value
+		a.hashables[hashKey] = hashable
 	}
 }
 
 func (a *Actual) containsHashkey(key string) bool {
-	_, ok := a.objects[key]
+	_, ok := a.hashables[key]
 	return ok
 }
 
 func (a *Actual) String() string {
-	return mapKeysToString(a.objects)
+	return hashablesToString(a.hashables)
 }

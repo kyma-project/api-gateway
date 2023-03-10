@@ -47,7 +47,8 @@ func (r authorizationPolicyCreator) Create(api *gatewayv1beta1.APIRule) (hashbas
 			}
 
 			for _, ap := range aps.Items {
-				err := state.Add(ap)
+				h := hashbasedstate.NewAuthorizationPolicy(ap)
+				err := state.Add(&h)
 
 				if err != nil {
 					return state, err
@@ -67,7 +68,7 @@ func generateAuthorizationPolicies(api *gatewayv1beta1.APIRule, rule gatewayv1be
 
 		// If there is no other authorization we can safely assume that the index of this authorization in the array
 		// in the yaml is 0.
-		err := hashbasedstate.AddHashingLabels(ap, 0)
+		err := hashbasedstate.AddLabelsToAuthorizationPolicy(ap, 0)
 		if err != nil {
 			return &authorizationPolicyList, err
 		}
@@ -77,7 +78,7 @@ func generateAuthorizationPolicies(api *gatewayv1beta1.APIRule, rule gatewayv1be
 		for indexInYaml, authorization := range ruleAuthorizations {
 			ap := generateAuthorizationPolicy(api, rule, additionalLabels, authorization)
 
-			err := hashbasedstate.AddHashingLabels(ap, indexInYaml)
+			err := hashbasedstate.AddLabelsToAuthorizationPolicy(ap, indexInYaml)
 			if err != nil {
 				return &authorizationPolicyList, err
 			}

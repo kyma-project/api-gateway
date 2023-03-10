@@ -58,7 +58,8 @@ func (r AuthorizationPolicyProcessor) getActualState(ctx context.Context, client
 	}
 
 	for _, ap := range apList.Items {
-		state.Add(ap)
+		h := hashbasedstate.NewAuthorizationPolicy(ap)
+		state.Add(&h)
 	}
 
 	return state, nil

@@ -2,27 +2,26 @@ package hashbasedstate
 
 import (
 	"fmt"
-	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"strings"
 )
 
 // GetChanges returns the changes that need to be applied to reach the desired state by comparing the hash keys
 // of the objects in the desired and actual state.
 func GetChanges(desiredState Desired, actualState Actual) Changes {
-	var toDelete []*securityv1beta1.AuthorizationPolicy
-	var toUpdate []*securityv1beta1.AuthorizationPolicy
+	var toDelete []client.Object
+	var toUpdate []client.Object
 
-	for actualObjectHashKey, actualObject := range actualState.objects {
+	for actualHashKey, actual := range actualState.hashables {
 
-		if desiredState.containsHashkey(actualObjectHashKey) {
+		if desiredState.containsHashkey(actualHashKey) {
 			// Since not all fields of the object may be included in the hash key, we need to update the desired changes in the object that is applied.
 			// Additionally, we want to make sure that the object is in the expected state and possible manual changes are overwritten.
-			actualObject.Spec = *desiredState.objects[actualObjectHashKey].Spec.DeepCopy()
-			actualObject.Labels = desiredState.objects[actualObjectHashKey].Labels
-			toUpdate = append(toUpdate, actualObject)
+			actual.updateWith(desiredState.hashables[actualHashKey])
+			toUpdate = append(toUpdate, actual.value())
 		} else {
 			// If the actual object is no longer in the desired state we can assume that it was removed and can be deleted.
-			toDelete = append(toDelete, actualObject)
+			toDelete = append(toDelete, actual.value())
 		}
 	}
 
@@ -40,25 +39,25 @@ func GetChanges(desiredState Desired, actualState Actual) Changes {
 
 // Changes that need to be applied to reach the desired state
 type Changes struct {
-	Create []*securityv1beta1.AuthorizationPolicy
-	Delete []*securityv1beta1.AuthorizationPolicy
-	Update []*securityv1beta1.AuthorizationPolicy
+	Create []client.Object
+	Delete []client.Object
+	Update []client.Object
 }
 
 func (c Changes) String() string {
 	toCreate := make([]string, len(c.Create))
 	for _, ap := range c.Create {
-		toCreate = append(toCreate, ap.Name)
+		toCreate = append(toCreate, ap.GetName())
 	}
 
 	toUpdate := make([]string, len(c.Update))
 	for _, ap := range c.Update {
-		toUpdate = append(toUpdate, ap.Name)
+		toUpdate = append(toUpdate, ap.GetName())
 	}
 
 	toDelete := make([]string, len(c.Delete))
 	for _, ap := range c.Delete {
-		toDelete = append(toDelete, ap.Name)
+		toDelete = append(toDelete, ap.GetName())
 	}
 
 	toCreateJoined := strings.Join(toCreate, ", ")
@@ -66,4 +65,11 @@ func (c Changes) String() string {
 	toDeleteJoined := strings.Join(toDelete, ", ")
 
 	return fmt.Sprintf("Create: %s; Delete: %s; Update: %s", toCreateJoined, toUpdateJoined, toDeleteJoined)
+}
+
+type Hashable interface {
+	// value returns the object that is handled as Hashable. Since we also want types from packages not owned by us to implement Hashable
+	// we need a function to access the actual object.
+	value() interface{ client.Object }
+	updateWith(Hashable)
 }

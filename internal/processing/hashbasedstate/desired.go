@@ -2,47 +2,47 @@ package hashbasedstate
 
 import (
 	"fmt"
-	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 func NewDesired() Desired {
 	return Desired{
-		objects: make(map[string]*securityv1beta1.AuthorizationPolicy),
+		hashables: make(map[string]Hashable),
 	}
 }
 
 type Desired struct {
-	objects map[string]*securityv1beta1.AuthorizationPolicy
+	hashables map[string]Hashable
 }
 
-// Add the value to the desired state. To protect against the creation of objects in that do not have the required hash
+// Add the value to the desired state. Since setting the hashing labels is decoupled from adding objects to the state we need to protect against the creation of objects in that do not have the required hash
 // and index labels, this function returns an error if one of these labels is missing.
-func (d *Desired) Add(value *securityv1beta1.AuthorizationPolicy) error {
+func (d *Desired) Add(h Hashable) error {
 
-	index, ok := value.Labels[indexLabelName]
+	index, ok := h.value().GetLabels()[indexLabelName]
 	if !ok {
 		return fmt.Errorf("label %s not found on hashable", indexLabelName)
 	}
 
-	hash, ok := value.Labels[hashLabelName]
+	hash, ok := h.value().GetLabels()[hashLabelName]
 	if !ok {
 		return fmt.Errorf("label %s not found on hashable", hashLabelName)
 	}
 
 	hashKey := createHashKey(hash, index)
-	d.objects[hashKey] = value
+	d.hashables[hashKey] = h
 
 	return nil
 }
 
 // getObjectsNotIn returns all objects in the desired state where the hash key is not present in the actual state.
-func (d *Desired) getObjectsNotIn(actualState Actual) []*securityv1beta1.AuthorizationPolicy {
-	var newObjects []*securityv1beta1.AuthorizationPolicy
+func (d *Desired) getObjectsNotIn(actualState Actual) []client.Object {
+	var newObjects []client.Object
 
-	for desiredHashKey, desiredObject := range d.objects {
+	for desiredHashKey, desiredHashable := range d.hashables {
 
 		if !actualState.containsHashkey(desiredHashKey) {
-			newObjects = append(newObjects, desiredObject)
+			newObjects = append(newObjects, desiredHashable.value())
 		}
 	}
 
@@ -50,10 +50,10 @@ func (d *Desired) getObjectsNotIn(actualState Actual) []*securityv1beta1.Authori
 }
 
 func (d *Desired) containsHashkey(key string) bool {
-	_, ok := d.objects[key]
+	_, ok := d.hashables[key]
 	return ok
 }
 
 func (d *Desired) String() string {
-	return mapKeysToString(d.objects)
+	return hashablesToString(d.hashables)
 }

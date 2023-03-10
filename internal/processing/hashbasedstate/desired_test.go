@@ -20,10 +20,11 @@ var _ = Describe("Desired state", func() {
 				},
 			}
 
+			hashbasedAp := hashbasedstate.NewAuthorizationPolicy(&ap)
 			sut := hashbasedstate.NewDesired()
 
 			// when
-			err := sut.Add(&ap)
+			err := sut.Add(&hashbasedAp)
 
 			// then
 			Expect(err).Should(HaveOccurred())
@@ -39,11 +40,11 @@ var _ = Describe("Desired state", func() {
 					},
 				},
 			}
-
+			hashbasedAp := hashbasedstate.NewAuthorizationPolicy(&ap)
 			sut := hashbasedstate.NewDesired()
 
 			// when
-			err := sut.Add(&ap)
+			err := sut.Add(&hashbasedAp)
 
 			// then
 			Expect(err).Should(HaveOccurred())
