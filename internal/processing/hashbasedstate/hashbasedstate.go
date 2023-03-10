@@ -40,7 +40,7 @@ func addHashingLabels(o client.Object, hash string, indexInYaml int) {
 func hashablesToString(m map[string]Hashable) string {
 	s := make([]string, len(m))
 	for key, h := range m {
-		l := fmt.Sprintf("hash: %s, name: %s", key, h.value().GetName())
+		l := fmt.Sprintf("hash: %s, name: %s", key, h.ToObject().GetName())
 		s = append(s, l)
 	}
 

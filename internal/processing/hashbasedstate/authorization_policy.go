@@ -2,10 +2,11 @@ package hashbasedstate
 
 import (
 	"fmt"
+	"strconv"
+
 	"github.com/mitchellh/hashstructure/v2"
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"strconv"
 )
 
 // AddLabelsToAuthorizationPolicy adds hashing labels.
@@ -43,14 +44,25 @@ type AuthorizationPolicyHashable struct {
 	ap *securityv1beta1.AuthorizationPolicy
 }
 
-func (a *AuthorizationPolicyHashable) value() interface{ client.Object } {
+func (a *AuthorizationPolicyHashable) ToObject() client.Object {
 	return a.ap
 }
 
-func (a *AuthorizationPolicyHashable) updateWith(o Hashable) {
-	ap := o.value().(*securityv1beta1.AuthorizationPolicy)
-	a.ap.Spec = *ap.Spec.DeepCopy()
-	a.ap.Labels = ap.Labels
+func (a *AuthorizationPolicyHashable) hash() (string, bool) {
+	val, ok := a.ap.Labels[hashLabelName]
+	return val, ok
+}
+
+func (a *AuthorizationPolicyHashable) index() (string, bool) {
+	val, ok := a.ap.Labels[indexLabelName]
+	return val, ok
+}
+
+func (a *AuthorizationPolicyHashable) cloneSpec(h Hashable) client.Object {
+	obj := h.ToObject()
+	obj.SetNamespace(a.ap.Namespace)
+	obj.SetName(a.ap.Name)
+	return obj
 }
 
 func NewAuthorizationPolicy(ap *securityv1beta1.AuthorizationPolicy) AuthorizationPolicyHashable {
