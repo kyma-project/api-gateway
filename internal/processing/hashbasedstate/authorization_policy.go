@@ -58,8 +58,10 @@ func (a *AuthorizationPolicyHashable) index() (string, bool) {
 	return val, ok
 }
 
-func (a *AuthorizationPolicyHashable) cloneSpec(h Hashable) client.Object {
+func (a *AuthorizationPolicyHashable) updateSpec(h Hashable) client.Object {
 	obj := h.ToObject()
+	obj.SetResourceVersion(a.ap.ResourceVersion)
+	obj.SetAnnotations(a.ap.Annotations)
 	obj.SetNamespace(a.ap.Namespace)
 	obj.SetName(a.ap.Name)
 	return obj

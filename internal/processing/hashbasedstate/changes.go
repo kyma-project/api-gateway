@@ -18,8 +18,8 @@ func GetChanges(desiredState Desired, actualState Actual) Changes {
 		if desiredState.containsHashkey(actualHashKey) {
 			// Since not all fields of the object may be included in the hash key, we need to update the desired changes in the object that is applied.
 			// Additionally, we want to make sure that the object is in the expected state and possible manual changes are overwritten.
-			actual.cloneSpec(desiredState.hashables[actualHashKey])
-			toUpdate = append(toUpdate, actual.ToObject())
+			updated := actual.updateSpec(desiredState.hashables[actualHashKey])
+			toUpdate = append(toUpdate, updated)
 		} else {
 			// If the actual object is no longer in the desired state we can assume that it was removed and can be deleted.
 			toDelete = append(toDelete, actual.ToObject())
@@ -71,6 +71,6 @@ func (c Changes) String() string {
 type Hashable interface {
 	index() (string, bool)
 	hash() (string, bool)
-	cloneSpec(h Hashable) client.Object
+	updateSpec(h Hashable) client.Object
 	ToObject() client.Object
 }
