@@ -55,7 +55,8 @@ endif
 
 GOTEST=$(GOCMD) test
 
-IMAGE_VERSION=v$(shell (date '+%Y%m%d'))-${PULL_BASE_SHA:0:8}
+PULL_IMAGE_VERSION=PR-${PULL_NUMBER}
+POST_IMAGE_VERSION=v$(shell date '+%Y%m%d')-$(shell printf %.8s ${PULL_BASE_SHA})
 
 # Setting SHELL to bash allows bash commands to be executed by recipes.
 # This is a requirement for 'setup-envtest.sh' in the test target.
@@ -137,9 +138,9 @@ install-kyma:
 ifndef JOB_TYPE
 	kyma deploy --ci -s main -c hack/kyma-components.yaml --value ory.hydra.enabled="false"
 else ifeq ($(JOB_TYPE), presubmit)
-	kyma deploy --ci -s main -c hack/kyma-components.yaml --value ory.hydra.enabled="false" --value api-gateway.global.images.api_gateway_controller.version=PR-${PULL_NUMBER} --value api-gateway.global.images.api-gateway-webhook-certificates.version=PR-${PULL_NUMBER}
+	kyma deploy --ci -s main -c hack/kyma-components.yaml --value ory.hydra.enabled="false" --value api-gateway.global.images.api_gateway_controller.version=${PULL_IMAGE_VERSION} --value api-gateway.global.images.api-gateway-webhook-certificates.version=${PULL_IMAGE_VERSION}
 else ifeq ($(JOB_TYPE), postsubmit)
-	kyma deploy --ci -s main -c hack/kyma-components.yaml --value ory.hydra.enabled="false" --value api-gateway.global.images.api_gateway_controller.version=${IMAGE_VERSION} --value api-gateway.global.images.api-gateway-webhook-certificates.version=${IMAGE_VERSION}
+	kyma deploy --ci -s main -c hack/kyma-components.yaml --value ory.hydra.enabled="false" --value api-gateway.global.images.api_gateway_controller.version=${POST_IMAGE_VERSION} --value api-gateway.global.images.api-gateway-webhook-certificates.version=${POST_IMAGE_VERSION}
 endif
 
 .PHONY: test-integration-k3d
