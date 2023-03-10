@@ -55,7 +55,7 @@ endif
 
 GOTEST=$(GOCMD) test
 
-IMAGE_VERSION=v$(date '+%Y%m%d')-${PULL_BASE_SHA:0:8}
+IMAGE_VERSION=v$(shell (date '+%Y%m%d'))-${PULL_BASE_SHA:0:8}
 
 # Setting SHELL to bash allows bash commands to be executed by recipes.
 # This is a requirement for 'setup-envtest.sh' in the test target.
