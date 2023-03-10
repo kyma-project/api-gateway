@@ -24,12 +24,12 @@ type Actual struct {
 
 // Add the value to the desired state. If the value does not have the hash and index labels, an error is returned.
 func (a *Actual) Add(hashable Hashable) {
-	index, ok := hashable.value().GetLabels()[indexLabelName]
+	index, ok := hashable.index()
 	if !ok {
 		index = unindexedValue
 	}
 
-	hash, ok := hashable.value().GetLabels()[hashLabelName]
+	hash, ok := hashable.hash()
 
 	if !ok {
 		hash = unhashedValue
@@ -38,7 +38,7 @@ func (a *Actual) Add(hashable Hashable) {
 	// If there are objects that do not have a hash or index set, we cannot reliably compare them, so we delete them because
 	// they could be a remnant from an older state without the hash labels.
 	if hash == unhashedValue || index == unindexedValue {
-		a.markedForDeletion = append(a.markedForDeletion, hashable.value())
+		a.markedForDeletion = append(a.markedForDeletion, hashable.ToObject())
 	} else {
 		hashKey := createHashKey(hash, index)
 		a.hashables[hashKey] = hashable

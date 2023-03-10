@@ -2,6 +2,7 @@ package hashbasedstate
 
 import (
 	"fmt"
+
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -19,12 +20,12 @@ type Desired struct {
 // and index labels, this function returns an error if one of these labels is missing.
 func (d *Desired) Add(h Hashable) error {
 
-	index, ok := h.value().GetLabels()[indexLabelName]
+	index, ok := h.index()
 	if !ok {
 		return fmt.Errorf("label %s not found on hashable", indexLabelName)
 	}
 
-	hash, ok := h.value().GetLabels()[hashLabelName]
+	hash, ok := h.hash()
 	if !ok {
 		return fmt.Errorf("label %s not found on hashable", hashLabelName)
 	}
@@ -42,7 +43,7 @@ func (d *Desired) getObjectsNotIn(actualState Actual) []client.Object {
 	for desiredHashKey, desiredHashable := range d.hashables {
 
 		if !actualState.containsHashkey(desiredHashKey) {
-			newObjects = append(newObjects, desiredHashable.value())
+			newObjects = append(newObjects, desiredHashable.ToObject())
 		}
 	}
 
