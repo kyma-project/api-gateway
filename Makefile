@@ -55,6 +55,8 @@ endif
 
 GOTEST=$(GOCMD) test
 
+IMAGE_VERSION=v$(shell (date '+%Y%m%d'))-${PULL_BASE_SHA:0:8}
+
 # Setting SHELL to bash allows bash commands to be executed by recipes.
 # This is a requirement for 'setup-envtest.sh' in the test target.
 # Options are set to exit when a recipe line exits non-zero or a piped command fails.
@@ -137,7 +139,7 @@ ifndef JOB_TYPE
 else ifeq ($(JOB_TYPE), presubmit)
 	kyma deploy --ci -s main -c hack/kyma-components.yaml --value ory.hydra.enabled="false" --value api-gateway.global.images.api_gateway_controller.version=PR-${PULL_NUMBER} --value api-gateway.global.images.api-gateway-webhook-certificates.version=PR-${PULL_NUMBER}
 else ifeq ($(JOB_TYPE), postsubmit)
-	image_version="v$(date '+%Y%m%d')-${PULL_BASE_SHA:0:8}" kyma deploy --ci -s main -c hack/kyma-components.yaml --value ory.hydra.enabled="false" --value api-gateway.global.images.api_gateway_controller.version=${image_version} --value api-gateway.global.images.api-gateway-webhook-certificates.version=${image_version}
+	kyma deploy --ci -s main -c hack/kyma-components.yaml --value ory.hydra.enabled="false" --value api-gateway.global.images.api_gateway_controller.version=${IMAGE_VERSION} --value api-gateway.global.images.api-gateway-webhook-certificates.version=${IMAGE_VERSION}
 endif
 
 .PHONY: test-integration-k3d
