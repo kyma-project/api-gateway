@@ -2,11 +2,12 @@ package istio
 
 import (
 	"fmt"
-
+	"github.com/go-logr/logr"
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/api/v1beta1"
 	"github.com/kyma-project/api-gateway/internal/builders"
 	"github.com/kyma-project/api-gateway/internal/helpers"
 	"github.com/kyma-project/api-gateway/internal/processing"
+	"github.com/kyma-project/api-gateway/internal/processing/hashbasedstate"
 	"github.com/kyma-project/api-gateway/internal/processing/processors"
 	"istio.io/api/security/v1beta1"
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
@@ -20,23 +21,13 @@ var (
 	defaultScopeKeys = []string{"request.auth.claims[scp]", "request.auth.claims[scope]", "request.auth.claims[scopes]"}
 )
 
-// AuthorizationPolicyProcessor is the generic processor that handles the Istio JwtAuthorization Policies in the reconciliation of API Rule.
-type AuthorizationPolicyProcessor struct {
-	Creator AuthorizationPolicyCreator
-}
-
-// AuthorizationPolicyCreator provides the creation of AuthorizationPolicies using the configuration in the given APIRule.
-// The key of the map is expected to be unique and comparable with the
-type AuthorizationPolicyCreator interface {
-	Create(api *gatewayv1beta1.APIRule) []*securityv1beta1.AuthorizationPolicy
-}
-
 // NewAuthorizationPolicyProcessor returns a AuthorizationPolicyProcessor with the desired state handling specific for the Istio handler.
-func NewAuthorizationPolicyProcessor(config processing.ReconciliationConfig) processors.AuthorizationPolicyProcessor {
+func NewAuthorizationPolicyProcessor(config processing.ReconciliationConfig, log *logr.Logger) processors.AuthorizationPolicyProcessor {
 	return processors.AuthorizationPolicyProcessor{
 		Creator: authorizationPolicyCreator{
 			additionalLabels: config.AdditionalLabels,
 		},
+		Log: log,
 	}
 }
 
@@ -45,33 +36,58 @@ type authorizationPolicyCreator struct {
 }
 
 // Create returns the JwtAuthorization Policy using the configuration of the APIRule.
-func (r authorizationPolicyCreator) Create(api *gatewayv1beta1.APIRule) []*securityv1beta1.AuthorizationPolicy {
-	var authorizationPolicies []*securityv1beta1.AuthorizationPolicy
+func (r authorizationPolicyCreator) Create(api *gatewayv1beta1.APIRule) (hashbasedstate.Desired, error) {
+	state := hashbasedstate.NewDesired()
 	hasJwtRule := processing.HasJwtRule(api)
 	if hasJwtRule {
 		for _, rule := range api.Spec.Rules {
-			aps := generateAuthorizationPolicies(api, rule, r.additionalLabels)
-			authorizationPolicies = append(authorizationPolicies, aps.Items...)
+			aps, err := generateAuthorizationPolicies(api, rule, r.additionalLabels)
+			if err != nil {
+				return state, err
+			}
+
+			for _, ap := range aps.Items {
+				h := hashbasedstate.NewAuthorizationPolicy(ap)
+				err := state.Add(&h)
+
+				if err != nil {
+					return state, err
+				}
+			}
 		}
 	}
-	return authorizationPolicies
+	return state, nil
 }
 
-func generateAuthorizationPolicies(api *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rule, additionalLabels map[string]string) *securityv1beta1.AuthorizationPolicyList {
+func generateAuthorizationPolicies(api *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rule, additionalLabels map[string]string) (*securityv1beta1.AuthorizationPolicyList, error) {
 	authorizationPolicyList := securityv1beta1.AuthorizationPolicyList{}
 	ruleAuthorizations := rule.GetJwtIstioAuthorizations()
 
 	if len(ruleAuthorizations) == 0 {
 		ap := generateAuthorizationPolicy(api, rule, additionalLabels, &gatewayv1beta1.JwtAuthorization{})
+
+		// If there is no other authorization we can safely assume that the index of this authorization in the array
+		// in the yaml is 0.
+		err := hashbasedstate.AddLabelsToAuthorizationPolicy(ap, 0)
+		if err != nil {
+			return &authorizationPolicyList, err
+		}
+
 		authorizationPolicyList.Items = append(authorizationPolicyList.Items, ap)
 	} else {
-		for _, authorization := range ruleAuthorizations {
+		for indexInYaml, authorization := range ruleAuthorizations {
 			ap := generateAuthorizationPolicy(api, rule, additionalLabels, authorization)
+
+			err := hashbasedstate.AddLabelsToAuthorizationPolicy(ap, indexInYaml)
+			if err != nil {
+				return &authorizationPolicyList, err
+			}
+
 			authorizationPolicyList.Items = append(authorizationPolicyList.Items, ap)
 		}
 	}
 
-	return &authorizationPolicyList
+	return &authorizationPolicyList, nil
 }
 
 func generateAuthorizationPolicy(api *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rule, additionalLabels map[string]string, authorization *gatewayv1beta1.JwtAuthorization) *securityv1beta1.AuthorizationPolicy {

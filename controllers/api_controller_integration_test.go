@@ -791,6 +791,15 @@ var _ = Describe("APIRule Controller", func() {
 					initialStateReq := reconcile.Request{NamespacedName: types.NamespacedName{Name: apiRuleName, Namespace: testNamespace}}
 					Eventually(requests, eventuallyTimeout).Should(Receive(Equal(initialStateReq)))
 
+					By("Waiting until reconciliation of API Rule is finished")
+					Eventually(func(g Gomega) {
+						apiRule := gatewayv1beta1.APIRule{}
+						err = c.Get(context.TODO(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &apiRule)
+						Expect(err).NotTo(HaveOccurred())
+
+						Expect(apiRule.Status.APIRuleStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
+					}, eventuallyTimeout).Should(Succeed())
+
 					By("Updating JWT handler config map to istio")
 					cm = testConfigMap(helpers.JWT_HANDLER_ISTIO)
 					err = c.Update(context.TODO(), cm)
@@ -798,6 +807,14 @@ var _ = Describe("APIRule Controller", func() {
 
 					cmChangedReq := reconcile.Request{NamespacedName: types.NamespacedName{Name: cm.Name, Namespace: cm.Namespace}}
 					Eventually(requests, eventuallyTimeout).Should(Receive(Equal(cmChangedReq)))
+
+					By("Waiting until reconciliation of CM is finished")
+					Eventually(func(g Gomega) {
+						err = c.Get(context.TODO(), client.ObjectKey{Name: cm.Name, Namespace: cm.Namespace}, cm)
+						Expect(err).NotTo(HaveOccurred())
+
+						Expect(cm.Data).To(HaveKeyWithValue(helpers.CM_KEY, "jwtHandler: istio"))
+					}, eventuallyTimeout).Should(Succeed())
 
 					// when
 					triggerApiRuleReconciliation(apiRuleName)
@@ -913,6 +930,15 @@ var _ = Describe("APIRule Controller", func() {
 					initialStateReq := reconcile.Request{NamespacedName: types.NamespacedName{Name: apiRuleName, Namespace: testNamespace}}
 					Eventually(requests, eventuallyTimeout).Should(Receive(Equal(initialStateReq)))
 
+					By("Waiting until reconciliation of API Rule is finished")
+					Eventually(func(g Gomega) {
+						apiRule := gatewayv1beta1.APIRule{}
+						err = c.Get(context.TODO(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &apiRule)
+						Expect(err).NotTo(HaveOccurred())
+
+						Expect(apiRule.Status.APIRuleStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
+					}, eventuallyTimeout).Should(Succeed())
+
 					By("Updating JWT handler config map to ory")
 					cm = testConfigMap(helpers.JWT_HANDLER_ORY)
 					err = c.Update(context.TODO(), cm)
@@ -920,6 +946,14 @@ var _ = Describe("APIRule Controller", func() {
 
 					cmChangedReq := reconcile.Request{NamespacedName: types.NamespacedName{Name: cm.Name, Namespace: cm.Namespace}}
 					Eventually(requests, eventuallyTimeout).Should(Receive(Equal(cmChangedReq)))
+
+					By("Waiting until reconciliation of CM is finished")
+					Eventually(func(g Gomega) {
+						err = c.Get(context.TODO(), client.ObjectKey{Name: cm.Name, Namespace: cm.Namespace}, cm)
+						Expect(err).NotTo(HaveOccurred())
+
+						Expect(cm.Data).To(HaveKeyWithValue(helpers.CM_KEY, "jwtHandler: ory"))
+					}, eventuallyTimeout).Should(Succeed())
 
 					// when
 					triggerApiRuleReconciliation(apiRuleName)

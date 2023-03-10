@@ -222,9 +222,9 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 
 func (r *APIRuleReconciler) getReconciliation(config processing.ReconciliationConfig) processing.ReconciliationCommand {
 	if r.Config.JWTHandler == helpers.JWT_HANDLER_ISTIO {
-		return istio.NewIstioReconciliation(config)
+		return istio.NewIstioReconciliation(config, &r.Log)
 	}
-	return ory.NewOryReconciliation(config)
+	return ory.NewOryReconciliation(config, &r.Log)
 
 }
 

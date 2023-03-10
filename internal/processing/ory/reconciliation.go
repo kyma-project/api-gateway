@@ -2,6 +2,7 @@ package ory
 
 import (
 	"context"
+	"github.com/go-logr/logr"
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/api/v1beta1"
 	"github.com/kyma-project/api-gateway/internal/processing"
 	"github.com/kyma-project/api-gateway/internal/validation"
@@ -14,10 +15,10 @@ type Reconciliation struct {
 	config     processing.ReconciliationConfig
 }
 
-func NewOryReconciliation(config processing.ReconciliationConfig) Reconciliation {
+func NewOryReconciliation(config processing.ReconciliationConfig, log *logr.Logger) Reconciliation {
 	acProcessor := NewAccessRuleProcessor(config)
 	vsProcessor := NewVirtualServiceProcessor(config)
-	apProcessor := NewAuthorizationPolicyProcessor(config)
+	apProcessor := NewAuthorizationPolicyProcessor(config, log)
 	raProcessor := NewRequestAuthenticationProcessor(config)
 
 	return Reconciliation{
