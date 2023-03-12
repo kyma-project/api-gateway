@@ -184,7 +184,8 @@ var _ = Describe("APIRule Controller", func() {
 								Match(builders.MatchRequest().Uri().Regex(testPath)).
 								Route(builders.RouteDestination().Host(testOathkeeperSvcURL).Port(testOathkeeperPort)).
 								Headers(builders.Headers().SetHostHeader(serviceHost)).
-								CorsPolicy(defaultCorsPolicy))
+								CorsPolicy(defaultCorsPolicy).
+								Timeout(time.Second * helpers.DEFAULT_HTTP_TIMEOUT))
 
 						gotSpec := *expectedSpec.Get()
 						Expect(*vs.Spec.DeepCopy()).To(Equal(*gotSpec.DeepCopy()))
@@ -286,12 +287,14 @@ var _ = Describe("APIRule Controller", func() {
 									Match(builders.MatchRequest().Uri().Regex("/img")).
 									Route(builders.RouteDestination().Host(testOathkeeperSvcURL).Port(testOathkeeperPort)).
 									Headers(builders.Headers().SetHostHeader(serviceHost)).
-									CorsPolicy(defaultCorsPolicy)).
+									CorsPolicy(defaultCorsPolicy).
+									Timeout(time.Second * helpers.DEFAULT_HTTP_TIMEOUT)).
 								HTTP(builders.HTTPRoute().
 									Match(builders.MatchRequest().Uri().Regex("/headers")).
 									Route(builders.RouteDestination().Host(testOathkeeperSvcURL).Port(testOathkeeperPort)).
 									Headers(builders.Headers().SetHostHeader(serviceHost)).
-									CorsPolicy(defaultCorsPolicy))
+									CorsPolicy(defaultCorsPolicy).
+									Timeout(time.Second * helpers.DEFAULT_HTTP_TIMEOUT))
 							gotSpec := *expectedSpec.Get()
 							Expect(*vs.Spec.DeepCopy()).To(Equal(*gotSpec.DeepCopy()))
 
@@ -442,12 +445,14 @@ var _ = Describe("APIRule Controller", func() {
 									Match(builders.MatchRequest().Uri().Regex("/img")).
 									Route(builders.RouteDestination().Host(fmt.Sprintf("%s.%s.svc.cluster.local", serviceName, testNamespace)).Port(testServicePort)).
 									Headers(builders.Headers().SetHostHeader(serviceHost)).
-									CorsPolicy(defaultCorsPolicy)).
+									CorsPolicy(defaultCorsPolicy).
+									Timeout(time.Second * helpers.DEFAULT_HTTP_TIMEOUT)).
 								HTTP(builders.HTTPRoute().
 									Match(builders.MatchRequest().Uri().Regex("/headers")).
 									Route(builders.RouteDestination().Host(fmt.Sprintf("%s.%s.svc.cluster.local", serviceName, testNamespace)).Port(testServicePort)).
 									Headers(builders.Headers().SetHostHeader(serviceHost)).
-									CorsPolicy(defaultCorsPolicy))
+									CorsPolicy(defaultCorsPolicy).
+									Timeout(time.Second * helpers.DEFAULT_HTTP_TIMEOUT))
 							gotSpec := *expectedSpec.Get()
 							Expect(*vs.Spec.DeepCopy()).To(Equal(*gotSpec.DeepCopy()))
 
@@ -674,22 +679,24 @@ var _ = Describe("APIRule Controller", func() {
 								Match(builders.MatchRequest().Uri().Regex("/img")).
 								Route(builders.RouteDestination().Host(testOathkeeperSvcURL).Port(testOathkeeperPort)).
 								Headers(builders.Headers().SetHostHeader(serviceHost)).
-								CorsPolicy(defaultCorsPolicy)).
+								CorsPolicy(defaultCorsPolicy).Timeout(time.Second * helpers.DEFAULT_HTTP_TIMEOUT)).
 							HTTP(builders.HTTPRoute().
 								Match(builders.MatchRequest().Uri().Regex("/headers")).
 								Route(builders.RouteDestination().Host(testOathkeeperSvcURL).Port(testOathkeeperPort)).
 								Headers(builders.Headers().SetHostHeader(serviceHost)).
-								CorsPolicy(defaultCorsPolicy)).
+								CorsPolicy(defaultCorsPolicy).Timeout(time.Second * helpers.DEFAULT_HTTP_TIMEOUT)).
 							HTTP(builders.HTTPRoute().
 								Match(builders.MatchRequest().Uri().Regex("/status")).
 								Route(builders.RouteDestination().Host(testOathkeeperSvcURL).Port(testOathkeeperPort)).
 								Headers(builders.Headers().SetHostHeader(serviceHost)).
-								CorsPolicy(defaultCorsPolicy)).
+								CorsPolicy(defaultCorsPolicy).
+								Timeout(time.Second * helpers.DEFAULT_HTTP_TIMEOUT)).
 							HTTP(builders.HTTPRoute().
 								Match(builders.MatchRequest().Uri().Regex("/favicon")).
 								Route(builders.RouteDestination().Host("httpbin.atgo-system.svc.cluster.local").Port(443)). // "allow", no oathkeeper rule!
 								Headers(builders.Headers().SetHostHeader(serviceHost)).
-								CorsPolicy(defaultCorsPolicy))
+								CorsPolicy(defaultCorsPolicy).
+								Timeout(time.Second * helpers.DEFAULT_HTTP_TIMEOUT))
 
 						gotSpec := *expectedSpec.Get()
 						Expect(*vs.Spec.DeepCopy()).To(Equal(*gotSpec.DeepCopy()))

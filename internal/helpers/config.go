@@ -2,7 +2,6 @@ package helpers
 
 import (
 	"context"
-
 	"gopkg.in/yaml.v2"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -10,8 +9,9 @@ import (
 )
 
 const (
-	JWT_HANDLER_ORY   = "ory"
-	JWT_HANDLER_ISTIO = "istio"
+	JWT_HANDLER_ORY      = "ory"
+	JWT_HANDLER_ISTIO    = "istio"
+	DEFAULT_HTTP_TIMEOUT = 120
 
 	CM_NS   = "kyma-system"
 	CM_NAME = "api-gateway-config"

@@ -123,7 +123,7 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	}
 	r.Log.Info("Checking if it's ConfigMap reconciliation")
 	r.Log.Info("Reconciling for", "namespacedName", req.NamespacedName.String())
-	isCMReconcile := (req.NamespacedName.String() == types.NamespacedName{Namespace: helpers.CM_NS, Name: helpers.CM_NAME}.String())
+	isCMReconcile := req.NamespacedName.String() == types.NamespacedName{Namespace: helpers.CM_NS, Name: helpers.CM_NAME}.String()
 	if isCMReconcile || r.Config.JWTHandler == "" {
 		r.Log.Info("Starting ConfigMap reconciliation")
 		err := r.Config.ReadFromConfigMap(ctx, r.Client)
@@ -149,14 +149,15 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	r.Log.Info("Starting ApiRule reconciliation")
 
 	c := processing.ReconciliationConfig{
-		OathkeeperSvc:     r.OathkeeperSvc,
-		OathkeeperSvcPort: r.OathkeeperSvcPort,
-		CorsConfig:        r.CorsConfig,
-		AdditionalLabels:  r.GeneratedObjectsLabels,
-		DefaultDomainName: r.DefaultDomainName,
-		ServiceBlockList:  r.ServiceBlockList,
-		DomainAllowList:   r.DomainAllowList,
-		HostBlockList:     r.HostBlockList,
+		OathkeeperSvc:       r.OathkeeperSvc,
+		OathkeeperSvcPort:   r.OathkeeperSvcPort,
+		CorsConfig:          r.CorsConfig,
+		AdditionalLabels:    r.GeneratedObjectsLabels,
+		DefaultDomainName:   r.DefaultDomainName,
+		ServiceBlockList:    r.ServiceBlockList,
+		DomainAllowList:     r.DomainAllowList,
+		HostBlockList:       r.HostBlockList,
+		HTTPTimeoutDuration: helpers.DEFAULT_HTTP_TIMEOUT,
 	}
 
 	cmd := r.getReconciliation(c)

@@ -1,8 +1,10 @@
 package builders
 
 import (
+	"google.golang.org/protobuf/types/known/durationpb"
 	"istio.io/api/networking/v1beta1"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
+	"time"
 )
 
 // VirtualService returns builder for istio.io/client-go/pkg/apis/networking/v1beta1/VirtualService type
@@ -121,6 +123,11 @@ func (hr *httpRoute) CorsPolicy(cc *corsPolicy) *httpRoute {
 
 func (hr *httpRoute) Headers(hd *headers) *httpRoute {
 	hr.value.Headers = hd.Get()
+	return hr
+}
+
+func (hr *httpRoute) Timeout(value time.Duration) *httpRoute {
+	hr.value.Timeout = durationpb.New(value)
 	return hr
 }
 
