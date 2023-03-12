@@ -679,12 +679,14 @@ var _ = Describe("APIRule Controller", func() {
 								Match(builders.MatchRequest().Uri().Regex("/img")).
 								Route(builders.RouteDestination().Host(testOathkeeperSvcURL).Port(testOathkeeperPort)).
 								Headers(builders.Headers().SetHostHeader(serviceHost)).
-								CorsPolicy(defaultCorsPolicy).Timeout(time.Second * helpers.DEFAULT_HTTP_TIMEOUT)).
+								CorsPolicy(defaultCorsPolicy).
+								Timeout(time.Second * helpers.DEFAULT_HTTP_TIMEOUT)).
 							HTTP(builders.HTTPRoute().
 								Match(builders.MatchRequest().Uri().Regex("/headers")).
 								Route(builders.RouteDestination().Host(testOathkeeperSvcURL).Port(testOathkeeperPort)).
 								Headers(builders.Headers().SetHostHeader(serviceHost)).
-								CorsPolicy(defaultCorsPolicy).Timeout(time.Second * helpers.DEFAULT_HTTP_TIMEOUT)).
+								CorsPolicy(defaultCorsPolicy).
+								Timeout(time.Second * helpers.DEFAULT_HTTP_TIMEOUT)).
 							HTTP(builders.HTTPRoute().
 								Match(builders.MatchRequest().Uri().Regex("/status")).
 								Route(builders.RouteDestination().Host(testOathkeeperSvcURL).Port(testOathkeeperPort)).
