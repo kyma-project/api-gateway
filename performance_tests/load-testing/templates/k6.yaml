@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: k6
+  name: {{ .Release.Name }}-k6
+spec:
+  selector:
+    matchLabels:
+      app: k6
+  template:
+    metadata:
+      labels:
+        app: k6
+    spec:
+      containers:
+      - image: grafana/k6:0.43.1
+        name: k6-alpine
+        resources: {}
+        command:
+        - watch
+        - free
+        - -m

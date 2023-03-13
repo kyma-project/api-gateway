@@ -1,0 +1,29 @@
+{{ if .Values.istioJWT.enabled }}
+apiVersion: gateway.kyma-project.io/v1beta1
+kind: APIRule
+metadata:
+  name: {{ .Release.Name }}-istio-jwt
+  labels:
+    {{- include "load-testing.labels" . | nindent 4 }}
+spec:
+  host: hello-world-jwt-istio.{{ .Values.domain }}
+  gateway: kyma-system/kyma-gateway
+  rules:
+  - accessStrategies:
+    - handler: jwt
+      config:
+        authentications:
+          - issuer: https://oauth2.{{ .Values.domain }}/
+            jwksUri: https://oauth2.{{ .Values.domain }}/.well-known/jwks.json
+    methods:
+    - GET
+    - POST
+    - PUT
+    - PATCH
+    - DELETE
+    - HEAD
+    path: /.*
+  service:
+    name: {{ .Release.Name }}
+    port: 80
+{{ end }}
