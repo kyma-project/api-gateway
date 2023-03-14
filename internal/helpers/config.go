@@ -11,7 +11,7 @@ import (
 const (
 	JWT_HANDLER_ORY      = "ory"
 	JWT_HANDLER_ISTIO    = "istio"
-	DEFAULT_HTTP_TIMEOUT = 120
+	DEFAULT_HTTP_TIMEOUT = 180
 
 	CM_NS   = "kyma-system"
 	CM_NAME = "api-gateway-config"
