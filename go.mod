@@ -7,7 +7,7 @@ require (
 	github.com/cucumber/godog v0.12.6
 	github.com/go-logr/logr v1.2.3
 	github.com/onsi/ginkgo/v2 v2.9.1
-	github.com/onsi/gomega v1.27.3
+	github.com/onsi/gomega v1.27.4
 	github.com/ory/oathkeeper-maester v0.1.7
 	github.com/spf13/pflag v1.0.5
 	github.com/tidwall/pretty v1.2.1
