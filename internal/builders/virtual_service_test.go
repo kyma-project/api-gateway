@@ -1,9 +1,12 @@
 package builders
 
 import (
+	"github.com/kyma-project/api-gateway/internal/helpers"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	"google.golang.org/protobuf/types/known/durationpb"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
+	"time"
 )
 
 var _ = Describe("Builder for", func() {
@@ -49,6 +52,7 @@ var _ = Describe("Builder for", func() {
 			matchURIRegex3 := "/xyz/foobar"
 			destHost2 := "somehost2.somenamespace.svc.cluster.local"
 			var destPort2 uint32 = 4343
+			timeout := time.Second * 60
 
 			result := VirtualServiceSpec().
 				Host(host).
@@ -59,10 +63,12 @@ var _ = Describe("Builder for", func() {
 					Match(MatchRequest().Uri().Regex(matchURIRegex)).
 					Match(MatchRequest().Uri().Regex(matchURIRegex2)).
 					Headers(Headers().SetHostHeader(host)).
-					Route(RouteDestination().Host(destHost).Port(destPort))).
+					Route(RouteDestination().Host(destHost).Port(destPort)).
+					Timeout(timeout)).
 				HTTP(HTTPRoute().
 					Match(MatchRequest().Uri().Regex(matchURIRegex3)).
-					Route(RouteDestination().Host(destHost2).Port(destPort2))).
+					Route(RouteDestination().Host(destHost2).Port(destPort2)).
+					Timeout(time.Second * helpers.DEFAULT_HTTP_TIMEOUT)).
 				Get()
 
 			Expect(result.Hosts).To(HaveLen(2))
@@ -86,6 +92,9 @@ var _ = Describe("Builder for", func() {
 			Expect(result.Http[0].Route[0].Destination.Port.Number).To(Equal(destPort))
 			//Expect(result.Http[0].Route[0].Destination.Port.Name).To(BeEmpty())
 			Expect(result.Http[0].Route[0].Weight).To(Equal(int32(100)))
+
+			Expect(result.Http[0].Timeout).To(Equal(durationpb.New(timeout)))
+			Expect(result.Http[1].Timeout).To(Equal(durationpb.New(time.Second * helpers.DEFAULT_HTTP_TIMEOUT)))
 
 			//One HTTPMatchRequest element
 			Expect(result.Http[1].Match).To(HaveLen(1))

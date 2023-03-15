@@ -2,6 +2,7 @@ package istio
 
 import (
 	"fmt"
+	"time"
 
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/api/v1beta1"
 	"github.com/kyma-project/api-gateway/internal/builders"
@@ -15,21 +16,23 @@ import (
 func NewVirtualServiceProcessor(config processing.ReconciliationConfig) processors.VirtualServiceProcessor {
 	return processors.VirtualServiceProcessor{
 		Creator: virtualServiceCreator{
-			oathkeeperSvc:     config.OathkeeperSvc,
-			oathkeeperSvcPort: config.OathkeeperSvcPort,
-			corsConfig:        config.CorsConfig,
-			additionalLabels:  config.AdditionalLabels,
-			defaultDomainName: config.DefaultDomainName,
+			oathkeeperSvc:       config.OathkeeperSvc,
+			oathkeeperSvcPort:   config.OathkeeperSvcPort,
+			corsConfig:          config.CorsConfig,
+			additionalLabels:    config.AdditionalLabels,
+			defaultDomainName:   config.DefaultDomainName,
+			httpTimeoutDuration: config.HTTPTimeoutDuration,
 		},
 	}
 }
 
 type virtualServiceCreator struct {
-	oathkeeperSvc     string
-	oathkeeperSvcPort uint32
-	corsConfig        *processing.CorsConfig
-	defaultDomainName string
-	additionalLabels  map[string]string
+	oathkeeperSvc       string
+	oathkeeperSvcPort   uint32
+	corsConfig          *processing.CorsConfig
+	defaultDomainName   string
+	additionalLabels    map[string]string
+	httpTimeoutDuration int
 }
 
 // Create returns the Virtual Service using the configuration of the APIRule.
@@ -77,6 +80,7 @@ func (r virtualServiceCreator) Create(api *gatewayv1beta1.APIRule) *networkingv1
 			AllowHeaders(r.corsConfig.AllowHeaders...))
 		httpRouteBuilder.Headers(builders.Headers().
 			SetHostHeader(helpers.GetHostWithDomain(*api.Spec.Host, r.defaultDomainName)))
+		httpRouteBuilder.Timeout(time.Second * time.Duration(r.httpTimeoutDuration))
 		vsSpecBuilder.HTTP(httpRouteBuilder)
 
 	}
