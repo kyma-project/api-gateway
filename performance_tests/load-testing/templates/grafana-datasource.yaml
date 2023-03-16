@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-grafana-datasources
+  labels:
+    load_test: "1"
+data:
+  datasource.yaml: |-
+    apiVersion: 1
+    datasources:
+      - name: Influxdb
+        type: influxdb
+        access: proxy
+        url: http://{{ .Release.Name }}-influxdb:8086
+        isDefault: true
+        version: 1
+        database: k6
+        editable: true
+      - name: Prometheus
+        type: prometheus
+        access: proxy
+        url: http://monitoring-prometheus.kyma-system:9090
+        version: 1
+        editable: true

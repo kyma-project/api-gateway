@@ -1,0 +1,28 @@
+apiVersion: serverless.kyma-project.io/v1alpha2
+kind: Function
+metadata:
+  name: {{ .Release.Name }}
+  labels:
+    {{- include "load-testing.labels" . | nindent 4 }}
+spec:
+  resourceConfiguration:
+    function:
+      resources:
+        limits:
+          cpu: "2"
+          memory: 2Gi
+        requests:
+          cpu: "1"
+          memory: 256Mi
+  scaleConfig:
+    minReplicas: 4
+    maxReplicas: 4
+  runtime: nodejs16
+  source: 
+    inline:
+      source: |
+        module.exports = {
+          main: function(event, context) {
+            return 'Hello World!'
+          }
+        }

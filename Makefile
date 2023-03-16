@@ -355,3 +355,8 @@ samples-valid: samples-clean
 .PHONY: samples-invalid
 samples-invalid: samples-clean
 	kubectl apply -f config/samples/invalid.yaml
+
+########## Performance Tests ###########
+.PHONY: perf-test
+perf-test:
+	cd performance_tests && ./test.sh
