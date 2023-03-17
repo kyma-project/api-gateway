@@ -27,6 +27,8 @@ func initIstioJwtScenarios(ctx *godog.ScenarioContext) {
 	initDiffServiceSameMethods(ctx)
 	initJwtUnavailableIssuer(ctx)
 	initJwtIssuerJwksNotMatch(ctx)
+	initMutatorCookie(ctx)
+	initMutatorHeader(ctx)
 }
 
 func (s *istioJwtManifestScenario) theAPIRuleIsApplied() error {
