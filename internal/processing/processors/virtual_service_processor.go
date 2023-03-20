@@ -16,11 +16,15 @@ type VirtualServiceProcessor struct {
 
 // VirtualServiceCreator provides the creation of a Virtual Service using the configuration in the given APIRule.
 type VirtualServiceCreator interface {
-	Create(api *gatewayv1beta1.APIRule) *networkingv1beta1.VirtualService
+	Create(api *gatewayv1beta1.APIRule) (*networkingv1beta1.VirtualService, error)
 }
 
 func (r VirtualServiceProcessor) EvaluateReconciliation(ctx context.Context, client ctrlclient.Client, apiRule *gatewayv1beta1.APIRule) ([]*processing.ObjectChange, error) {
-	desired := r.getDesiredState(apiRule)
+	desired, err := r.getDesiredState(apiRule)
+	if err != nil {
+		return make([]*processing.ObjectChange, 0), err
+	}
+
 	actual, err := r.getActualState(ctx, client, apiRule)
 	if err != nil {
 		return make([]*processing.ObjectChange, 0), err
@@ -31,7 +35,7 @@ func (r VirtualServiceProcessor) EvaluateReconciliation(ctx context.Context, cli
 	return []*processing.ObjectChange{changes}, nil
 }
 
-func (r VirtualServiceProcessor) getDesiredState(api *gatewayv1beta1.APIRule) *networkingv1beta1.VirtualService {
+func (r VirtualServiceProcessor) getDesiredState(api *gatewayv1beta1.APIRule) (*networkingv1beta1.VirtualService, error) {
 	return r.Creator.Create(api)
 }
 

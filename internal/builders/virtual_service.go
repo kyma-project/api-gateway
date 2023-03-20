@@ -121,8 +121,8 @@ func (hr *httpRoute) CorsPolicy(cc *corsPolicy) *httpRoute {
 	return hr
 }
 
-func (hr *httpRoute) Headers(hd *headers) *httpRoute {
-	hr.value.Headers = hd.Get()
+func (hr *httpRoute) Headers(h *v1beta1.Headers) *httpRoute {
+	hr.value.Headers = h
 	return hr
 }
 
@@ -231,24 +231,39 @@ func (cp *corsPolicy) AllowOrigins(val ...*v1beta1.StringMatch) *corsPolicy {
 	return cp
 }
 
-// Headers returns builder for istio.io/api/networking/v1beta1/Headers type
-func Headers() *headers {
-	return &headers{&v1beta1.Headers{
-		Request: &v1beta1.Headers_HeaderOperations{},
-	}}
+// NewHttpRouteHeadersBuilder returns builder for istio.io/api/networking/v1beta1/Headers type
+func NewHttpRouteHeadersBuilder() HttpRouteHeadersBuilder {
+	return HttpRouteHeadersBuilder{
+		value: &v1beta1.Headers{
+			Request: &v1beta1.Headers_HeaderOperations{
+				Set: make(map[string]string),
+			},
+		},
+	}
 }
 
-type headers struct {
+type HttpRouteHeadersBuilder struct {
 	value *v1beta1.Headers
 }
 
-func (hd *headers) Get() *v1beta1.Headers {
-	return hd.value
+func (h HttpRouteHeadersBuilder) Get() *v1beta1.Headers {
+	return h.value
 }
 
-func (hd *headers) SetHostHeader(hostname string) *headers {
+func (h HttpRouteHeadersBuilder) SetHostHeader(hostname string) HttpRouteHeadersBuilder {
+	h.value.Request.Set["x-forwarded-host"] = hostname
+	return h
+}
 
-	hd.value.Request.Set = map[string]string{"x-forwarded-host": hostname}
+func (h HttpRouteHeadersBuilder) SetCookies(cookies string) HttpRouteHeadersBuilder {
+	h.value.Request.Set["Cookie"] = cookies
+	return h
+}
 
-	return hd
+func (h HttpRouteHeadersBuilder) AddRequestSetHeaders(headers map[string]string) HttpRouteHeadersBuilder {
+	for name, value := range headers {
+		h.value.Request.Set[name] = value
+	}
+
+	return h
 }

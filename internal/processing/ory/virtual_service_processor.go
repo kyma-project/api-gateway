@@ -35,7 +35,7 @@ type virtualServiceCreator struct {
 }
 
 // Create returns the Virtual Service using the configuration of the APIRule.
-func (r virtualServiceCreator) Create(api *gatewayv1beta1.APIRule) *networkingv1beta1.VirtualService {
+func (r virtualServiceCreator) Create(api *gatewayv1beta1.APIRule) (*networkingv1beta1.VirtualService, error) {
 	virtualServiceNamePrefix := fmt.Sprintf("%s-", api.ObjectMeta.Name)
 
 	vsSpecBuilder := builders.VirtualServiceSpec()
@@ -66,8 +66,8 @@ func (r virtualServiceCreator) Create(api *gatewayv1beta1.APIRule) *networkingv1
 			AllowOrigins(r.corsConfig.AllowOrigins...).
 			AllowMethods(r.corsConfig.AllowMethods...).
 			AllowHeaders(r.corsConfig.AllowHeaders...))
-		httpRouteBuilder.Headers(builders.Headers().
-			SetHostHeader(helpers.GetHostWithDomain(*api.Spec.Host, r.defaultDomainName)))
+		httpRouteBuilder.Headers(builders.NewHttpRouteHeadersBuilder().
+			SetHostHeader(helpers.GetHostWithDomain(*api.Spec.Host, r.defaultDomainName)).Get())
 		httpRouteBuilder.Timeout(time.Second * time.Duration(r.httpTimeoutDuration))
 		vsSpecBuilder.HTTP(httpRouteBuilder)
 
@@ -85,5 +85,5 @@ func (r virtualServiceCreator) Create(api *gatewayv1beta1.APIRule) *networkingv1
 
 	vsBuilder.Spec(vsSpecBuilder)
 
-	return vsBuilder.Get()
+	return vsBuilder.Get(), nil
 }

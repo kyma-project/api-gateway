@@ -81,6 +81,6 @@ var _ = Describe("Virtual Service Processor", func() {
 type mockVirtualServiceCreator struct {
 }
 
-func (r mockVirtualServiceCreator) Create(_ *gatewayv1beta1.APIRule) *networkingv1beta1.VirtualService {
-	return builders.VirtualService().Get()
+func (r mockVirtualServiceCreator) Create(_ *gatewayv1beta1.APIRule) (*networkingv1beta1.VirtualService, error) {
+	return builders.VirtualService().Get(), nil
 }

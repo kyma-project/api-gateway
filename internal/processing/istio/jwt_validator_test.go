@@ -1,7 +1,7 @@
 package istio
 
 import (
-	"encoding/json"
+	processingtest "github.com/kyma-project/api-gateway/internal/processing/internal/test"
 
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/api/v1beta1"
 	"github.com/kyma-project/api-gateway/internal/types/ory"
@@ -103,7 +103,7 @@ var _ = Describe("JWT Handler validation", func() {
 
 		It("Should have failed validations when authorization has no value", func() {
 			//given
-			config := getRawConfig(
+			config := processingtest.GetRawConfig(
 				gatewayv1beta1.JwtConfig{
 					Authentications: []*gatewayv1beta1.JwtAuthentication{
 						{
@@ -132,7 +132,7 @@ var _ = Describe("JWT Handler validation", func() {
 
 		It("Should successful validate config without authorizations", func() {
 			//given
-			config := getRawConfig(
+			config := processingtest.GetRawConfig(
 				gatewayv1beta1.JwtConfig{
 					Authentications: []*gatewayv1beta1.JwtAuthentication{
 						{
@@ -322,7 +322,7 @@ var _ = Describe("JWT Handler validation", func() {
 })
 
 func emptyJWTIstioConfig() *runtime.RawExtension {
-	return getRawConfig(
+	return processingtest.GetRawConfig(
 		&gatewayv1beta1.JwtConfig{})
 }
 
@@ -335,11 +335,11 @@ func simpleJWTIstioConfig(trustedIssuers ...string) *runtime.RawExtension {
 		})
 	}
 	jwtConfig := gatewayv1beta1.JwtConfig{Authentications: issuers}
-	return getRawConfig(jwtConfig)
+	return processingtest.GetRawConfig(jwtConfig)
 }
 
 func testURLJWTIstioConfig(JWKSUrl string, trustedIssuer string) *runtime.RawExtension {
-	return getRawConfig(
+	return processingtest.GetRawConfig(
 		gatewayv1beta1.JwtConfig{
 			Authentications: []*gatewayv1beta1.JwtAuthentication{
 				{
@@ -351,7 +351,7 @@ func testURLJWTIstioConfig(JWKSUrl string, trustedIssuer string) *runtime.RawExt
 }
 
 func testURLJWTIstioConfigWithAuthorizations(authorizations []*gatewayv1beta1.JwtAuthorization) *runtime.RawExtension {
-	return getRawConfig(
+	return processingtest.GetRawConfig(
 		gatewayv1beta1.JwtConfig{
 			Authentications: []*gatewayv1beta1.JwtAuthentication{
 				{
@@ -364,18 +364,10 @@ func testURLJWTIstioConfigWithAuthorizations(authorizations []*gatewayv1beta1.Jw
 }
 
 func testURLJWTOryConfig(JWKSUrls string, trustedIssuers string) *runtime.RawExtension {
-	return getRawConfig(
+	return processingtest.GetRawConfig(
 		&ory.JWTAccStrConfig{
 			JWKSUrls:       []string{JWKSUrls},
 			TrustedIssuers: []string{trustedIssuers},
 			RequiredScopes: []string{"atgo"},
 		})
-}
-
-func getRawConfig(config any) *runtime.RawExtension {
-	bytes, err := json.Marshal(config)
-	Expect(err).To(BeNil())
-	return &runtime.RawExtension{
-		Raw: bytes,
-	}
 }
