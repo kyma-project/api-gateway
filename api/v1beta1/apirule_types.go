@@ -170,3 +170,11 @@ type JwtAuthentication struct {
 	Issuer  string `json:"issuer"`
 	JwksUri string `json:"jwksUri"`
 }
+
+type CookieMutatorConfig struct {
+	Cookies map[string]string `json:"cookies"`
+}
+
+type HeaderMutatorConfig struct {
+	Headers map[string]string `json:"headers"`
+}
