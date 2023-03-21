@@ -16,8 +16,8 @@ func (r *Rule) GetJwtIstioAuthorizations() []*JwtAuthorization {
 	return authorizations.Authorizations
 }
 
-func (r *Rule) GetCookieMutator() (*CookieMutatorConfig, error) {
-	var mutatorConfig *CookieMutatorConfig
+func (r *Rule) GetCookieMutator() (CookieMutatorConfig, error) {
+	var mutatorConfig CookieMutatorConfig
 
 	if r.Mutators == nil {
 		return mutatorConfig, nil
@@ -39,8 +39,8 @@ func (r *Rule) GetCookieMutator() (*CookieMutatorConfig, error) {
 	return mutatorConfig, nil
 }
 
-func (r *Rule) GetHeaderMutator() (*HeaderMutatorConfig, error) {
-	var mutatorConfig *HeaderMutatorConfig
+func (r *Rule) GetHeaderMutator() (HeaderMutatorConfig, error) {
+	var mutatorConfig HeaderMutatorConfig
 
 	if r.Mutators == nil {
 		return mutatorConfig, nil

@@ -57,7 +57,7 @@ func validateHeaderMutator(attributePath string, mutator *v1beta1.Mutator, mutat
 		}
 	}
 
-	if config.Headers == nil || len(config.Headers) == 0 {
+	if !config.HasHeaders() {
 		attrPath := fmt.Sprintf("%s%s[%d]%s", attributePath, ".mutators", mutatorIndex, ".handler.config")
 		return []validation.Failure{
 			{AttributePath: attrPath, Message: "headers cannot be empty"},
@@ -101,7 +101,7 @@ func validateCookieMutator(attributePath string, mutator *v1beta1.Mutator, mutat
 		}
 	}
 
-	if config.Cookies == nil || len(config.Cookies) == 0 {
+	if !config.HasCookies() {
 		attrPath := fmt.Sprintf("%s%s[%d]%s", attributePath, ".mutators", mutatorIndex, ".handler.config")
 		return []validation.Failure{
 			{AttributePath: attrPath, Message: "cookies cannot be empty"},

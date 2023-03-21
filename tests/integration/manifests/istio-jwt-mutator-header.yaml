@@ -18,4 +18,8 @@ spec:
             headers:
               {{ .header }}: {{ .headerValue }}
       accessStrategies:
-        - handler: allow
+        - handler: jwt
+          config:
+            authentications:
+              - issuer: "{{ .IssuerUrl }}"
+                jwksUri: "{{ .IssuerUrl }}/oauth2/certs"
