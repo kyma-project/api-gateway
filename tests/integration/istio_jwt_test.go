@@ -29,6 +29,7 @@ func initIstioJwtScenarios(ctx *godog.ScenarioContext) {
 	initJwtIssuerJwksNotMatch(ctx)
 	initMutatorCookie(ctx)
 	initMutatorHeader(ctx)
+	initMultipleMutators(ctx)
 }
 
 func (s *istioJwtManifestScenario) theAPIRuleIsApplied() error {
@@ -50,7 +51,7 @@ func (s *istioJwtManifestScenario) callingTheEndpointWithValidTokenShouldResultI
 }
 
 func (s *istioJwtManifestScenario) callingTheEndpointWithValidTokenShouldResultInBodyContaining(path, tokenType string, bodyContent string) error {
-	asserter := &helpers.BodyContainsPredicate{Expected: bodyContent}
+	asserter := &helpers.BodyContainsPredicate{Expected: []string{bodyContent}}
 	return callingEndpointWithHeadersWithRetries(s.url, path, tokenType, asserter)
 }
 
@@ -81,7 +82,7 @@ func (s *istioJwtManifestScenario) callingTheEndpointWithoutTokenShouldResultInS
 }
 
 func (s *istioJwtManifestScenario) callingTheEndpointTokenShouldResultInBodyContaining(path, bodyContent string) error {
-	return helper.CallEndpointWithRetries(fmt.Sprintf("%s%s", s.url, path), &helpers.BodyContainsPredicate{Expected: bodyContent})
+	return helper.CallEndpointWithRetries(fmt.Sprintf("%s%s", s.url, path), &helpers.BodyContainsPredicate{Expected: []string{bodyContent}})
 }
 
 func (s *istioJwtManifestScenario) thereAreTwoNamespaces() error {

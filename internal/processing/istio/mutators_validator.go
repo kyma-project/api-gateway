@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/kyma-project/api-gateway/api/v1beta1"
+	"github.com/kyma-project/api-gateway/internal/processing"
 	"github.com/kyma-project/api-gateway/internal/validation"
 )
 
@@ -13,6 +14,10 @@ type mutatorsValidator struct {
 func (m mutatorsValidator) Validate(attributePath string, rule v1beta1.Rule) []validation.Failure {
 	var failures []validation.Failure
 
+	if !processing.IsJwtSecured(rule) {
+		return nil
+	}
+
 	duplicateMutatorFailure := validateMutatorUniqueness(attributePath, rule.Mutators)
 	failures = append(failures, duplicateMutatorFailure...)
 
@@ -21,7 +26,7 @@ func (m mutatorsValidator) Validate(attributePath string, rule v1beta1.Rule) []v
 		switch mutator.Name {
 		case "":
 			attrPath := fmt.Sprintf("%s%s[%d]%s", attributePath, ".mutators", mutatorIndex, ".handler")
-			failures = append(failures, validation.Failure{AttributePath: attrPath, Message: "handler cannot be empty"})
+			failures = append(failures, validation.Failure{AttributePath: attrPath, Message: "mutator handler cannot be empty"})
 		case v1beta1.HeaderMutator:
 			f := validateHeaderMutator(attributePath, mutator, mutatorIndex)
 			failures = append(failures, f...)
@@ -30,7 +35,7 @@ func (m mutatorsValidator) Validate(attributePath string, rule v1beta1.Rule) []v
 			failures = append(failures, f...)
 		default:
 			attrPath := fmt.Sprintf("%s%s[%d]%s", attributePath, ".mutators", mutatorIndex, ".handler")
-			msg := fmt.Sprintf("unsupported handler: %s", mutator.Name)
+			msg := fmt.Sprintf("unsupported mutator: %s", mutator.Name)
 			failures = append(failures, validation.Failure{AttributePath: attrPath, Message: msg})
 		}
 
@@ -64,7 +69,7 @@ func validateHeaderMutator(attributePath string, mutator *v1beta1.Mutator, mutat
 		}
 	}
 
-	for name, value := range config.Headers {
+	for name := range config.Headers {
 		if name == "" {
 			attrPath := fmt.Sprintf("%s%s[%d]%s", attributePath, ".mutators", mutatorIndex, ".handler.config.headers.name")
 			return []validation.Failure{
@@ -72,12 +77,6 @@ func validateHeaderMutator(attributePath string, mutator *v1beta1.Mutator, mutat
 			}
 		}
 
-		if value == "" {
-			attrPath := fmt.Sprintf("%s%s[%d]%s[%s]", attributePath, ".mutators", mutatorIndex, ".handler.config.headers.", name)
-			return []validation.Failure{
-				{AttributePath: attrPath, Message: "header value cannot be empty"},
-			}
-		}
 	}
 
 	return nil
@@ -108,7 +107,7 @@ func validateCookieMutator(attributePath string, mutator *v1beta1.Mutator, mutat
 		}
 	}
 
-	for name, value := range config.Cookies {
+	for name := range config.Cookies {
 		if name == "" {
 			attrPath := fmt.Sprintf("%s%s[%d]%s", attributePath, ".mutators", mutatorIndex, ".handler.config.cookies.name")
 			return []validation.Failure{
@@ -116,12 +115,6 @@ func validateCookieMutator(attributePath string, mutator *v1beta1.Mutator, mutat
 			}
 		}
 
-		if value == "" {
-			attrPath := fmt.Sprintf("%s%s[%d]%s[%s]", attributePath, ".mutators", mutatorIndex, ".handler.config.cookies.", name)
-			return []validation.Failure{
-				{AttributePath: attrPath, Message: "cookie value cannot be empty"},
-			}
-		}
 	}
 
 	return nil

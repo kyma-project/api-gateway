@@ -73,7 +73,9 @@ var _ = Describe("Apirule controller validation", func() {
 		testMutatorConfigError := func(mutator *gatewayv1beta1.Mutator, expectedValidationErrors []string) {
 			a := []*gatewayv1beta1.Authenticator{
 				{
-					Handler: noConfigHandler("allow"),
+					Handler: &gatewayv1beta1.Handler{
+						Name: "jwt",
+					},
 				},
 			}
 
@@ -250,7 +252,7 @@ var _ = Describe("Apirule controller validation", func() {
 				}
 
 				expectedValidationErrors := []string{
-					"Attribute \".spec.rules[0].mutators[0].handler\": unsupported handler: id_token",
+					"Attribute \".spec.rules[0].mutators[0].handler\": unsupported mutator: id_token",
 				}
 
 				testMutatorConfigError(mutator, expectedValidationErrors)
@@ -264,7 +266,7 @@ var _ = Describe("Apirule controller validation", func() {
 				}
 
 				expectedValidationErrors := []string{
-					"Attribute \".spec.rules[0].mutators[0].handler\": unsupported handler: hydrator",
+					"Attribute \".spec.rules[0].mutators[0].handler\": unsupported mutator: hydrator",
 				}
 
 				testMutatorConfigError(mutator, expectedValidationErrors)
@@ -276,7 +278,7 @@ var _ = Describe("Apirule controller validation", func() {
 				}
 
 				expectedValidationErrors := []string{
-					"Attribute \".spec.rules[0].mutators[0].handler\": handler cannot be empty",
+					"Attribute \".spec.rules[0].mutators[0].handler\": mutator handler cannot be empty",
 				}
 
 				testMutatorConfigError(mutator, expectedValidationErrors)

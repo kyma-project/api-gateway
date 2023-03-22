@@ -8,17 +8,31 @@ import (
 )
 
 var _ = Describe("Mutators validator", func() {
+
+	jwtAccessStrategy := []*v1beta1.Authenticator{
+		{
+			Handler: &v1beta1.Handler{
+				Name: "jwt",
+			},
+		},
+	}
+
+	createJwtHandlerRule := func(mutators ...*v1beta1.Mutator) v1beta1.Rule {
+		return v1beta1.Rule{
+			Mutators:         mutators,
+			AccessStrategies: jwtAccessStrategy,
+		}
+	}
+
 	It("Should fail for handler that is not supported", func() {
 		//given
-		rule := v1beta1.Rule{
-			Mutators: []*v1beta1.Mutator{
-				{
-					Handler: &v1beta1.Handler{
-						Name: "unsupported",
-					},
-				},
+		mutator := v1beta1.Mutator{
+			Handler: &v1beta1.Handler{
+				Name: "unsupported",
 			},
 		}
+
+		rule := createJwtHandlerRule(&mutator)
 
 		//when
 		problems := mutatorsValidator{}.Validate("some.attribute", rule)
@@ -26,18 +40,16 @@ var _ = Describe("Mutators validator", func() {
 		//then
 		Expect(problems).To(HaveLen(1))
 		Expect(problems[0].AttributePath).To(Equal("some.attribute.mutators[0].handler"))
-		Expect(problems[0].Message).To(Equal("unsupported handler: unsupported"))
+		Expect(problems[0].Message).To(Equal("unsupported mutator: unsupported"))
 	})
 
 	It("Should fail for empty handler", func() {
 		//given
-		rule := v1beta1.Rule{
-			Mutators: []*v1beta1.Mutator{
-				{
-					Handler: &v1beta1.Handler{},
-				},
-			},
+		mutator := v1beta1.Mutator{
+			Handler: &v1beta1.Handler{},
 		}
+
+		rule := createJwtHandlerRule(&mutator)
 
 		//when
 		problems := mutatorsValidator{}.Validate("some.attribute", rule)
@@ -45,20 +57,18 @@ var _ = Describe("Mutators validator", func() {
 		//then
 		Expect(problems).To(HaveLen(1))
 		Expect(problems[0].AttributePath).To(Equal("some.attribute.mutators[0].handler"))
-		Expect(problems[0].Message).To(Equal("handler cannot be empty"))
+		Expect(problems[0].Message).To(Equal("mutator handler cannot be empty"))
 	})
 
 	It("Should fail for header handler without config", func() {
 		//given
-		rule := v1beta1.Rule{
-			Mutators: []*v1beta1.Mutator{
-				{
-					Handler: &v1beta1.Handler{
-						Name: "header",
-					},
-				},
+		mutator := v1beta1.Mutator{
+			Handler: &v1beta1.Handler{
+				Name: "header",
 			},
 		}
+
+		rule := createJwtHandlerRule(&mutator)
 
 		//when
 		problems := mutatorsValidator{}.Validate("some.attribute", rule)
@@ -71,17 +81,15 @@ var _ = Describe("Mutators validator", func() {
 
 	It("Should fail for header handler without headers", func() {
 		//given
-		rule := v1beta1.Rule{
-			Mutators: []*v1beta1.Mutator{
-				{
-					Handler: &v1beta1.Handler{
-						Name: "header",
-						Config: processingtest.GetRawConfig(
-							v1beta1.HeaderMutatorConfig{}),
-					},
-				},
+		mutator := v1beta1.Mutator{
+			Handler: &v1beta1.Handler{
+				Name: "header",
+				Config: processingtest.GetRawConfig(
+					v1beta1.HeaderMutatorConfig{}),
 			},
 		}
+
+		rule := createJwtHandlerRule(&mutator)
 
 		//when
 		problems := mutatorsValidator{}.Validate("some.attribute", rule)
@@ -94,19 +102,17 @@ var _ = Describe("Mutators validator", func() {
 
 	It("Should fail for header handler with empty headers", func() {
 		//given
-		rule := v1beta1.Rule{
-			Mutators: []*v1beta1.Mutator{
-				{
-					Handler: &v1beta1.Handler{
-						Name: "header",
-						Config: processingtest.GetRawConfig(
-							v1beta1.HeaderMutatorConfig{
-								Headers: map[string]string{},
-							}),
-					},
-				},
+		mutator := v1beta1.Mutator{
+			Handler: &v1beta1.Handler{
+				Name: "header",
+				Config: processingtest.GetRawConfig(
+					v1beta1.HeaderMutatorConfig{
+						Headers: map[string]string{},
+					}),
 			},
 		}
+
+		rule := createJwtHandlerRule(&mutator)
 
 		//when
 		problems := mutatorsValidator{}.Validate("some.attribute", rule)
@@ -119,21 +125,19 @@ var _ = Describe("Mutators validator", func() {
 
 	It("Should fail for header handler without header name", func() {
 		//given
-		rule := v1beta1.Rule{
-			Mutators: []*v1beta1.Mutator{
-				{
-					Handler: &v1beta1.Handler{
-						Name: "header",
-						Config: processingtest.GetRawConfig(
-							v1beta1.HeaderMutatorConfig{
-								Headers: map[string]string{
-									"": "test",
-								},
-							}),
-					},
-				},
+		mutator := v1beta1.Mutator{
+			Handler: &v1beta1.Handler{
+				Name: "header",
+				Config: processingtest.GetRawConfig(
+					v1beta1.HeaderMutatorConfig{
+						Headers: map[string]string{
+							"": "test",
+						},
+					}),
 			},
 		}
+
+		rule := createJwtHandlerRule(&mutator)
 
 		//when
 		problems := mutatorsValidator{}.Validate("some.attribute", rule)
@@ -144,50 +148,21 @@ var _ = Describe("Mutators validator", func() {
 		Expect(problems[0].Message).To(Equal("cannot be empty"))
 	})
 
-	It("Should fail for header handler without header value", func() {
-		//given
-		rule := v1beta1.Rule{
-			Mutators: []*v1beta1.Mutator{
-				{
-					Handler: &v1beta1.Handler{
-						Name: "header",
-						Config: processingtest.GetRawConfig(
-							v1beta1.HeaderMutatorConfig{
-								Headers: map[string]string{
-									"x-test-header": "",
-								},
-							}),
-					},
-				},
-			},
-		}
-
-		//when
-		problems := mutatorsValidator{}.Validate("some.attribute", rule)
-
-		//then
-		Expect(problems).To(HaveLen(1))
-		Expect(problems[0].AttributePath).To(Equal("some.attribute.mutators[0].handler.config.headers.[x-test-header]"))
-		Expect(problems[0].Message).To(Equal("header value cannot be empty"))
-	})
-
 	It("Should have no failures for header handler with headers", func() {
 		//given
-		rule := v1beta1.Rule{
-			Mutators: []*v1beta1.Mutator{
-				{
-					Handler: &v1beta1.Handler{
-						Name: "header",
-						Config: processingtest.GetRawConfig(
-							v1beta1.HeaderMutatorConfig{
-								Headers: map[string]string{
-									"x-test-header": "test",
-								},
-							}),
-					},
-				},
+		mutator := v1beta1.Mutator{
+			Handler: &v1beta1.Handler{
+				Name: "header",
+				Config: processingtest.GetRawConfig(
+					v1beta1.HeaderMutatorConfig{
+						Headers: map[string]string{
+							"x-test-header": "test",
+						},
+					}),
 			},
 		}
+
+		rule := createJwtHandlerRule(&mutator)
 
 		//when
 		problems := mutatorsValidator{}.Validate("some.attribute", rule)
@@ -198,15 +173,13 @@ var _ = Describe("Mutators validator", func() {
 
 	It("Should fail for cookie handler without config", func() {
 		//given
-		rule := v1beta1.Rule{
-			Mutators: []*v1beta1.Mutator{
-				{
-					Handler: &v1beta1.Handler{
-						Name: "cookie",
-					},
-				},
+		mutator := v1beta1.Mutator{
+			Handler: &v1beta1.Handler{
+				Name: "cookie",
 			},
 		}
+
+		rule := createJwtHandlerRule(&mutator)
 
 		//when
 		problems := mutatorsValidator{}.Validate("some.attribute", rule)
@@ -219,17 +192,15 @@ var _ = Describe("Mutators validator", func() {
 
 	It("Should fail for cookie handler without cookies", func() {
 		//given
-		rule := v1beta1.Rule{
-			Mutators: []*v1beta1.Mutator{
-				{
-					Handler: &v1beta1.Handler{
-						Name: "cookie",
-						Config: processingtest.GetRawConfig(
-							v1beta1.CookieMutatorConfig{}),
-					},
-				},
+		mutator := v1beta1.Mutator{
+			Handler: &v1beta1.Handler{
+				Name: "cookie",
+				Config: processingtest.GetRawConfig(
+					v1beta1.CookieMutatorConfig{}),
 			},
 		}
+
+		rule := createJwtHandlerRule(&mutator)
 
 		//when
 		problems := mutatorsValidator{}.Validate("some.attribute", rule)
@@ -242,19 +213,17 @@ var _ = Describe("Mutators validator", func() {
 
 	It("Should fail for cookie handler with empty cookies", func() {
 		//given
-		rule := v1beta1.Rule{
-			Mutators: []*v1beta1.Mutator{
-				{
-					Handler: &v1beta1.Handler{
-						Name: "cookie",
-						Config: processingtest.GetRawConfig(
-							v1beta1.CookieMutatorConfig{
-								Cookies: map[string]string{},
-							}),
-					},
-				},
+		mutator := v1beta1.Mutator{
+			Handler: &v1beta1.Handler{
+				Name: "cookie",
+				Config: processingtest.GetRawConfig(
+					v1beta1.CookieMutatorConfig{
+						Cookies: map[string]string{},
+					}),
 			},
 		}
+
+		rule := createJwtHandlerRule(&mutator)
 
 		//when
 		problems := mutatorsValidator{}.Validate("some.attribute", rule)
@@ -267,21 +236,19 @@ var _ = Describe("Mutators validator", func() {
 
 	It("Should fail for cookie handler without cookie name", func() {
 		//given
-		rule := v1beta1.Rule{
-			Mutators: []*v1beta1.Mutator{
-				{
-					Handler: &v1beta1.Handler{
-						Name: "cookie",
-						Config: processingtest.GetRawConfig(
-							v1beta1.CookieMutatorConfig{
-								Cookies: map[string]string{
-									"": "test",
-								},
-							}),
-					},
-				},
+		mutator := v1beta1.Mutator{
+			Handler: &v1beta1.Handler{
+				Name: "cookie",
+				Config: processingtest.GetRawConfig(
+					v1beta1.CookieMutatorConfig{
+						Cookies: map[string]string{
+							"": "test",
+						},
+					}),
 			},
 		}
+
+		rule := createJwtHandlerRule(&mutator)
 
 		//when
 		problems := mutatorsValidator{}.Validate("some.attribute", rule)
@@ -292,50 +259,21 @@ var _ = Describe("Mutators validator", func() {
 		Expect(problems[0].Message).To(Equal("cannot be empty"))
 	})
 
-	It("Should fail for cookie handler without cookie value", func() {
-		//given
-		rule := v1beta1.Rule{
-			Mutators: []*v1beta1.Mutator{
-				{
-					Handler: &v1beta1.Handler{
-						Name: "cookie",
-						Config: processingtest.GetRawConfig(
-							v1beta1.CookieMutatorConfig{
-								Cookies: map[string]string{
-									"x-test-cookie": "",
-								},
-							}),
-					},
-				},
-			},
-		}
-
-		//when
-		problems := mutatorsValidator{}.Validate("some.attribute", rule)
-
-		//then
-		Expect(problems).To(HaveLen(1))
-		Expect(problems[0].AttributePath).To(Equal("some.attribute.mutators[0].handler.config.cookies.[x-test-cookie]"))
-		Expect(problems[0].Message).To(Equal("cookie value cannot be empty"))
-	})
-
 	It("Should have no failures for cookie handler with cookies", func() {
 		//given
-		rule := v1beta1.Rule{
-			Mutators: []*v1beta1.Mutator{
-				{
-					Handler: &v1beta1.Handler{
-						Name: "cookie",
-						Config: processingtest.GetRawConfig(
-							v1beta1.CookieMutatorConfig{
-								Cookies: map[string]string{
-									"x-test-cookie": "test",
-								},
-							}),
-					},
-				},
+		mutator := v1beta1.Mutator{
+			Handler: &v1beta1.Handler{
+				Name: "cookie",
+				Config: processingtest.GetRawConfig(
+					v1beta1.CookieMutatorConfig{
+						Cookies: map[string]string{
+							"x-test-cookie": "test",
+						},
+					}),
 			},
 		}
+
+		rule := createJwtHandlerRule(&mutator)
 
 		//when
 		problems := mutatorsValidator{}.Validate("some.attribute", rule)
@@ -346,25 +284,25 @@ var _ = Describe("Mutators validator", func() {
 
 	It("Should add failures for multiple mutators", func() {
 		//given
-		rule := v1beta1.Rule{
-			Mutators: []*v1beta1.Mutator{
-				{
-					Handler: &v1beta1.Handler{
-						Name: "unsupported",
-					},
-				},
-				{
-					Handler: &v1beta1.Handler{
-						Name: "",
-					},
-				},
-				{
-					Handler: &v1beta1.Handler{
-						Name: "totally unsupported",
-					},
-				},
+		unsupportedMutator := v1beta1.Mutator{
+			Handler: &v1beta1.Handler{
+				Name: "unsupported",
 			},
 		}
+
+		noNameMutator := v1beta1.Mutator{
+			Handler: &v1beta1.Handler{
+				Name: "",
+			},
+		}
+
+		noConfigMutator := v1beta1.Mutator{
+			Handler: &v1beta1.Handler{
+				Name: "cookie",
+			},
+		}
+
+		rule := createJwtHandlerRule(&unsupportedMutator, &noNameMutator, &noConfigMutator)
 
 		//when
 		problems := mutatorsValidator{}.Validate("some.attribute", rule)
@@ -375,32 +313,31 @@ var _ = Describe("Mutators validator", func() {
 
 	It("Should fail for duplicated handlers", func() {
 		//given
-		rule := v1beta1.Rule{
-			Mutators: []*v1beta1.Mutator{
-				{
-					Handler: &v1beta1.Handler{
-						Name: "cookie",
-						Config: processingtest.GetRawConfig(
-							v1beta1.CookieMutatorConfig{
-								Cookies: map[string]string{
-									"x-test-cookie": "test",
-								},
-							}),
-					},
-				},
-				{
-					Handler: &v1beta1.Handler{
-						Name: "cookie",
-						Config: processingtest.GetRawConfig(
-							v1beta1.CookieMutatorConfig{
-								Cookies: map[string]string{
-									"other-cookie": "test",
-								},
-							}),
-					},
-				},
+
+		cookieMutator := v1beta1.Mutator{
+			Handler: &v1beta1.Handler{
+				Name: "cookie",
+				Config: processingtest.GetRawConfig(
+					v1beta1.CookieMutatorConfig{
+						Cookies: map[string]string{
+							"x-test-cookie": "test",
+						},
+					}),
 			},
 		}
+		anotherCookieMutator := v1beta1.Mutator{
+			Handler: &v1beta1.Handler{
+				Name: "cookie",
+				Config: processingtest.GetRawConfig(
+					v1beta1.CookieMutatorConfig{
+						Cookies: map[string]string{
+							"other-cookie": "test",
+						},
+					}),
+			},
+		}
+
+		rule := createJwtHandlerRule(&cookieMutator, &anotherCookieMutator)
 
 		//when
 		problems := mutatorsValidator{}.Validate("some.attribute", rule)

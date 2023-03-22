@@ -83,20 +83,22 @@ func (r virtualServiceCreator) Create(api *gatewayv1beta1.APIRule) (*networkingv
 		headersBuilder := builders.NewHttpRouteHeadersBuilder().
 			SetHostHeader(helpers.GetHostWithDomain(*api.Spec.Host, r.defaultDomainName))
 
-		cookieMutator, err := rule.GetCookieMutator()
-		if err != nil {
-			return nil, err
-		}
-		if cookieMutator.HasCookies() {
-			headersBuilder.SetCookies(cookieMutator.ToString())
-		}
+		if processing.IsJwtSecured(rule) {
+			cookieMutator, err := rule.GetCookieMutator()
+			if err != nil {
+				return nil, err
+			}
+			if cookieMutator.HasCookies() {
+				headersBuilder.AddCookies(cookieMutator.ToString())
+			}
 
-		headerMutator, err := rule.GetHeaderMutator()
-		if err != nil {
-			return nil, err
-		}
-		if headerMutator.HasHeaders() {
-			headersBuilder.AddRequestSetHeaders(headerMutator.Headers)
+			headerMutator, err := rule.GetHeaderMutator()
+			if err != nil {
+				return nil, err
+			}
+			if headerMutator.HasHeaders() {
+				headersBuilder.AddRequestSetHeaders(headerMutator.Headers)
+			}
 		}
 
 		httpRouteBuilder.Headers(headersBuilder.Get())
