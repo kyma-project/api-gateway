@@ -39,16 +39,19 @@ func (h *Helper) CallEndpointWithRetries(url string, validator HttpResponseAsser
 }
 
 // CallEndpointWithHeadersWithRetries returns error if the status code is not in between bounds of status predicate after retrying deadline is reached
-func (h *Helper) CallEndpointWithHeadersWithRetries(headerValue string, headerName, url string, validators HttpResponseAsserter) error {
+func (h *Helper) CallEndpointWithHeadersWithRetries(requestHeaders map[string]string, url string, validator HttpResponseAsserter) error {
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return err
 	}
 
-	req.Header.Set(headerName, headerValue)
+	for headerName, headerValue := range requestHeaders {
+		req.Header.Set(headerName, headerValue)
+	}
+
 	err = h.withRetries(func() (*http.Response, error) {
 		return h.client.Do(req)
-	}, validators)
+	}, validator)
 
 	if err != nil {
 		return fmt.Errorf("error calling endpoint %s err=%s", url, err)

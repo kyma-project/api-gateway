@@ -46,5 +46,5 @@ func (s *istioJwtManifestScenario) shouldReturnResponseWithKeyValuePairs(path, k
 
 	asserter := &helpers.BodyContainsPredicate{Expected: expectedInBody}
 
-	return callingEndpointWithHeadersWithRetries(s.url, path, "JWT", asserter)
+	return callingEndpointWithHeadersWithRetries(s.url, path, "JWT", asserter, nil)
 }
