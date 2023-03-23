@@ -237,7 +237,6 @@ func NewHttpRouteHeadersBuilder() HttpRouteHeadersBuilder {
 		value: &v1beta1.Headers{
 			Request: &v1beta1.Headers_HeaderOperations{
 				Set: make(map[string]string),
-				Add: make(map[string]string),
 			},
 		},
 	}
@@ -256,14 +255,16 @@ func (h HttpRouteHeadersBuilder) SetHostHeader(hostname string) HttpRouteHeaders
 	return h
 }
 
-func (h HttpRouteHeadersBuilder) AddCookies(cookies string) HttpRouteHeadersBuilder {
-	h.value.Request.Add["Cookie"] = cookies
+// SetRequestCookies sets the Cookie header and expects a string of the form "cookie-name1=cookie-value1; cookie-name2=cookie-value2; ..."
+func (h HttpRouteHeadersBuilder) SetRequestCookies(cookies string) HttpRouteHeadersBuilder {
+	h.value.Request.Set["Cookie"] = cookies
 	return h
 }
 
-func (h HttpRouteHeadersBuilder) AddRequestSetHeaders(headers map[string]string) HttpRouteHeadersBuilder {
+// SetRequestHeaders sets the request headers and expects a map of the form "header-name1": "header-value1", "header-name2": "header-value2", ...
+func (h HttpRouteHeadersBuilder) SetRequestHeaders(headers map[string]string) HttpRouteHeadersBuilder {
 	for name, value := range headers {
-		h.value.Request.Add[name] = value
+		h.value.Request.Set[name] = value
 	}
 
 	return h

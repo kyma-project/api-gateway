@@ -89,7 +89,7 @@ func (r virtualServiceCreator) Create(api *gatewayv1beta1.APIRule) (*networkingv
 				return nil, err
 			}
 			if cookieMutator.HasCookies() {
-				headersBuilder.AddCookies(cookieMutator.ToString())
+				headersBuilder.SetRequestCookies(cookieMutator.ToString())
 			}
 
 			headerMutator, err := rule.GetHeaderMutator()
@@ -97,7 +97,7 @@ func (r virtualServiceCreator) Create(api *gatewayv1beta1.APIRule) (*networkingv
 				return nil, err
 			}
 			if headerMutator.HasHeaders() {
-				headersBuilder.AddRequestSetHeaders(headerMutator.Headers)
+				headersBuilder.SetRequestHeaders(headerMutator.Headers)
 			}
 		}
 

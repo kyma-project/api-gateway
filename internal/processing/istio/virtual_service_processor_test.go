@@ -703,11 +703,11 @@ var _ = Describe("Virtual Service Processor", func() {
 				//verify VS
 				Expect(vs).NotTo(BeNil())
 				Expect(vs.Spec.Http).To(HaveLen(1))
-				Expect(vs.Spec.Http[0].Headers.Request.Add).To(HaveKey("Cookie"))
-				Expect(vs.Spec.Http[0].Headers.Request.Add["Cookie"]).To(ContainSubstring("x-test-cookie-1=cookie-value1"))
-				Expect(vs.Spec.Http[0].Headers.Request.Add["Cookie"]).To(ContainSubstring("x-test-cookie-2=cookie-value2"))
-				Expect(vs.Spec.Http[0].Headers.Request.Add).To(HaveKeyWithValue("x-test-header-1", "header-value1"))
-				Expect(vs.Spec.Http[0].Headers.Request.Add).To(HaveKeyWithValue("x-test-header-2", "header-value2"))
+				Expect(vs.Spec.Http[0].Headers.Request.Set).To(HaveKey("Cookie"))
+				Expect(vs.Spec.Http[0].Headers.Request.Set["Cookie"]).To(ContainSubstring("x-test-cookie-1=cookie-value1"))
+				Expect(vs.Spec.Http[0].Headers.Request.Set["Cookie"]).To(ContainSubstring("x-test-cookie-2=cookie-value2"))
+				Expect(vs.Spec.Http[0].Headers.Request.Set).To(HaveKeyWithValue("x-test-header-1", "header-value1"))
+				Expect(vs.Spec.Http[0].Headers.Request.Set).To(HaveKeyWithValue("x-test-header-2", "header-value2"))
 			})
 
 			It("should not override x-forwarded-for header", func() {
@@ -760,7 +760,7 @@ var _ = Describe("Virtual Service Processor", func() {
 				Expect(vs).NotTo(BeNil())
 				Expect(vs.Spec.Http).To(HaveLen(1))
 				Expect(vs.Spec.Http[0].Headers.Request.Set).To(HaveKeyWithValue("x-forwarded-host", "myService.myDomain.com"))
-				Expect(vs.Spec.Http[0].Headers.Request.Add).To(HaveKeyWithValue("x-test-header-1", "header-value1"))
+				Expect(vs.Spec.Http[0].Headers.Request.Set).To(HaveKeyWithValue("x-test-header-1", "header-value1"))
 			})
 
 		})
