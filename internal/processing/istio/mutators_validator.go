@@ -8,6 +8,8 @@ import (
 	"github.com/kyma-project/api-gateway/internal/validation"
 )
 
+// mutatorsValidator is used to validate Istio-based mutator configurations. Since currently only the jwt access strategy
+// supports these mutators, validation is skipped for rules without jwt access strategy.
 type mutatorsValidator struct {
 }
 

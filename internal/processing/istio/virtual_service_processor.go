@@ -83,6 +83,8 @@ func (r virtualServiceCreator) Create(api *gatewayv1beta1.APIRule) (*networkingv
 		headersBuilder := builders.NewHttpRouteHeadersBuilder().
 			SetHostHeader(helpers.GetHostWithDomain(*api.Spec.Host, r.defaultDomainName))
 
+		// We need to add mutators only for JWT secured rules, since "noop" and "oauth2_introspection" access strategies
+		// create access rules and therefore use ory mutators. The "allow" access strategy does not support mutators at all.
 		if processing.IsJwtSecured(rule) {
 			cookieMutator, err := rule.GetCookieMutator()
 			if err != nil {
