@@ -20,7 +20,7 @@ kubectl patch configmap/api-gateway-config -n kyma-system --type merge -p '{"dat
 
 # Using Istio JWT Handler
 
-This table lists all the possible parameters of an istio jwt resource together with their descriptions:
+This table lists all the possible parameters of an Istio jwt access strategy together with their descriptions:
 
 | Field                                                                | Description                                                            |
 |:---------------------------------------------------------------------|:-----------------------------------------------------------------------|
@@ -57,9 +57,103 @@ spec:
             - issuer: $ISSUER
               jwksUri: $JWKS_URI
             authorizations:
+            # Allow only JWTs with the claim "scp", "scope" or "scopes" with the value "test" and the audience "example.com" and "example.org"
+            # or JWTs with the claim "scp", "scope" or "scopes" with the values "read" and "write"
             - requiredScopes: ["test"]
-              audiences: ["example.com"]
+              audiences: ["example.com", "example.org"]
             - requiredScopes: ["read", "write"]
 ```
 
-The `authorizations` field defined above will require your JWT to contain either `test` scope and `example.com` `aud` claim OR `read` AND `write` scopes. The scope value has to be in one of the following keys: `scp`, `scope`, `scopes`, to ensure backwards compatibility with ory oathkeeper.
+## Authorizations
+The authorizations field is optional. If it's not defined, the authorization will be satisfied if the JWT is valid. 
+Multiple authorizations can be defined for an access strategy. If there are multiple authorizations defined, the request will be allowed if at least one of the authorizations is satisfied.
+
+The requiredScopes and audiences fields are optional. If requiredScopes is defined, the JWT has to contain all the scopes defined in the requiredScopes field in the `scp`, `scope` or `scopes` claim in order to be authorized.
+If audiences is defined, the JWT has to contain all the audiences defined in the audiences field in the `aud` claim in order to be authorized.
+
+## Mutators
+For backward compatibility reasons, different types of mutators are supported depending on the access strategy.
+
+| Access Strategy      | Mutator support                                                     |
+|:---------------------|:--------------------------------------------------------------------|
+| jwt                  | Istio-based cookie and header mutator                               |
+| oauth2_introspection | [Ory mutators](https://www.ory.sh/docs/oathkeeper/pipeline/mutator) |
+| noop                 | [Ory mutators](https://www.ory.sh/docs/oathkeeper/pipeline/mutator) |
+| allow                | No mutators supported                                               |
+
+### Istio-based Mutators
+Mutators can be used to enrich an incoming request with information. The following mutators are supported in combination with 
+the `jwt` access strategy and can be defined for each rule in an `ApiRule`: `header`,`cookie`. 
+It's possible to configure multiple mutators for one rule, but only one mutator of each type is allowed.
+
+#### Header Mutator
+The headers are specified via the `headers` field of the header mutator configuration field. The keys are the names of the headers and the values are a string.
+In the header value it is possible to use [Envoy command operators](https://www.envoyproxy.io/docs/envoy/latest/configuration/observability/access_log/usage#command-operators), 
+e.g. to write an incoming header to a new header.
+The configured headers are set to the request and overwrite all existing headers with the same name.
+
+See the example:
+```yaml
+apiVersion: gateway.kyma-project.io/v1beta1
+kind: APIRule
+metadata:
+  name: service-secured
+  namespace: $NAMESPACE
+spec:
+  gateway: kyma-system/kyma-gateway
+  host: httpbin.$DOMAIN_TO_EXPOSE_WORKLOADS
+  service:
+    name: httpbin
+    port: 8000
+  rules:
+    - path: /headers
+      methods: ["GET"]
+      mutators:
+        - handler: header
+          config:
+            headers:
+              # Add a new header called X-Custom-Auth with the value of the incoming Authorization header
+              X-Custom-Auth: "%REQ(Authorization)%"
+              # Add a new header called X-Some-Data with the value "some-data"
+              X-Some-Data: "some-data"
+      accessStrategies:
+        - handler: jwt
+          config:
+            authentications:
+              - issuer: $ISSUER
+                jwksUri: $JWKS_URI
+```
+
+#### Cookie Mutator
+The cookies are specified via the `cookies` field of the cookie mutator configuration field. The keys are the names of the cookies and the values are a string. 
+In the cookie value it is possible to use [Envoy command operators](https://www.envoyproxy.io/docs/envoy/latest/configuration/observability/access_log/usage#command-operators).
+The configured cookies are set as `Cookie`-header in the request and overwrite an existing `Cookie`-header.
+
+```yaml
+apiVersion: gateway.kyma-project.io/v1beta1
+kind: APIRule
+metadata:
+  name: service-secured
+  namespace: $NAMESPACE
+spec:
+  gateway: kyma-system/kyma-gateway
+  host: httpbin.$DOMAIN_TO_EXPOSE_WORKLOADS
+  service:
+    name: httpbin
+    port: 8000
+  rules:
+    - path: /headers
+      methods: ["GET"]
+      mutators:
+        - handler: cookie
+          config:
+            cookies:
+              # Add a new cookie called some-data with the value "data"
+              some-data: "data"
+      accessStrategies:
+        - handler: jwt
+          config:
+            authentications:
+              - issuer: $ISSUER
+                jwksUri: $JWKS_URI
+```
