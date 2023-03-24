@@ -18,7 +18,7 @@ kubectl patch configmap/api-gateway-config -n kyma-system --type merge -p '{"dat
 kubectl patch configmap/api-gateway-config -n kyma-system --type merge -p '{"data":{"api-gateway-config":"jwtHandler: istio"}}'
 ```
 
-# Using Istio JWT Handler
+## Istio JWT Access Stretegy
 
 This table lists all the possible parameters of an Istio jwt access strategy together with their descriptions:
 
@@ -64,7 +64,7 @@ spec:
             - requiredScopes: ["read", "write"]
 ```
 
-## Authorizations
+### Authorizations
 The authorizations field is optional. If it's not defined, the authorization will be satisfied if the JWT is valid. 
 Multiple authorizations can be defined for an access strategy. If there are multiple authorizations defined, the request will be allowed if at least one of the authorizations is satisfied.
 
