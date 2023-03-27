@@ -818,8 +818,6 @@ var _ = Describe("APIRule Controller", Serial, func() {
 
 					By("Waiting until reconciliation of API Rule is finished")
 					expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusOK)
-
-					By("Updating JWT handler config map to ory")
 					updateJwtHandlerTo(helpers.JWT_HANDLER_ORY)
 					triggerApiRuleReconciliation(apiRuleName)
 
@@ -1112,9 +1110,7 @@ func triggerApiRuleReconciliation(apiRuleName string) {
 	newDummyHost := fmt.Sprintf("dummy-change.%s", *reconciledApiRule.Spec.Host)
 	reconciledApiRule.Spec.Host = &newDummyHost
 
-	Eventually(func(g Gomega) {
-		Expect(c.Update(context.TODO(), &reconciledApiRule)).Should(Succeed())
-	}, eventuallyTimeout).Should(Succeed())
+	Expect(c.Update(context.TODO(), &reconciledApiRule)).Should(Succeed())
 
 }
 
@@ -1124,10 +1120,12 @@ func updateJwtHandlerTo(jwtHandler string) {
 
 	if !strings.Contains(cm.Data[helpers.CM_KEY], jwtHandler) {
 		By(fmt.Sprintf("Updating JWT handler config map to %s", jwtHandler))
-		cm := testConfigMap(jwtHandler)
+		cm.Data = map[string]string{
+			helpers.CM_KEY: fmt.Sprintf("jwtHandler: %s", jwtHandler),
+		}
 		Expect(c.Update(context.TODO(), cm)).To(Succeed())
 
-		By("Waiting until reconciliation of CM is finished")
+		By("Waiting until CM is updated")
 		Eventually(func(g Gomega) {
 			g.Expect(c.Get(context.TODO(), client.ObjectKey{Name: cm.Name, Namespace: cm.Namespace}, cm)).Should(Succeed())
 			g.Expect(cm.Data).To(HaveKeyWithValue(helpers.CM_KEY, fmt.Sprintf("jwtHandler: %s", jwtHandler)))

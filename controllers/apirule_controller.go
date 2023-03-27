@@ -20,6 +20,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"time"
 
 	"github.com/kyma-project/api-gateway/internal/helpers"
@@ -71,35 +72,34 @@ const (
 	API_GATEWAY_FINALIZER         = "gateway.kyma-project.io/subresources"
 )
 
-type configMapPredicate struct {
+type isApiGatewayConfigMapPredicate struct {
 	Log logr.Logger
 	predicate.Funcs
 }
 
-func (p configMapPredicate) Create(e event.CreateEvent) bool {
+func (p isApiGatewayConfigMapPredicate) Create(e event.CreateEvent) bool {
 	return p.Generic(event.GenericEvent(e))
 }
 
-func (p configMapPredicate) DeleteFunc(e event.DeleteEvent) bool {
+func (p isApiGatewayConfigMapPredicate) DeleteFunc(e event.DeleteEvent) bool {
 	return p.Generic(event.GenericEvent{
 		Object: e.Object,
 	})
 }
 
-func (p configMapPredicate) Update(e event.UpdateEvent) bool {
+func (p isApiGatewayConfigMapPredicate) Update(e event.UpdateEvent) bool {
 	return p.Generic(event.GenericEvent{
 		Object: e.ObjectNew,
 	})
 }
 
-func (p configMapPredicate) Generic(e event.GenericEvent) bool {
+func (p isApiGatewayConfigMapPredicate) Generic(e event.GenericEvent) bool {
 	if e.Object == nil {
 		p.Log.Error(nil, "Generic event has no object", "event", e)
 		return false
 	}
-	_, okAP := e.Object.(*gatewayv1beta1.APIRule)
 	configMap, okCM := e.Object.(*corev1.ConfigMap)
-	return okAP || (okCM && configMap.GetNamespace() == CONFIGMAP_NS && configMap.GetName() == CONFIGMAP_NAME)
+	return okCM && configMap.GetNamespace() == CONFIGMAP_NS && configMap.GetName() == CONFIGMAP_NAME
 }
 
 //+kubebuilder:rbac:groups=gateway.kyma-project.io,resources=apirules,verbs=get;list;watch;create;update;patch;delete
@@ -232,11 +232,9 @@ func (r *APIRuleReconciler) getReconciliation(config processing.ReconciliationCo
 // SetupWithManager sets up the controller with the Manager.
 func (r *APIRuleReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&gatewayv1beta1.APIRule{}).
-		// TODO This filter prevents reconciliation of the handler config map and therefore the handler in the reconciler can't be updated.
-		//WithEventFilter(predicate.GenerationChangedPredicate{}).
-		Watches(&source.Kind{Type: &corev1.ConfigMap{}}, &handler.EnqueueRequestForObject{}).
-		WithEventFilter(&configMapPredicate{Log: r.Log}).
+		// We need to filter for generation changes, because we had an issue that on Azure clusters the APIRules were constantly reconciled.
+		For(&gatewayv1beta1.APIRule{}, builder.WithPredicates(predicate.GenerationChangedPredicate{})).
+		Watches(&source.Kind{Type: &corev1.ConfigMap{}}, &handler.EnqueueRequestForObject{}, builder.WithPredicates(&isApiGatewayConfigMapPredicate{Log: r.Log})).
 		Complete(r)
 }
 
