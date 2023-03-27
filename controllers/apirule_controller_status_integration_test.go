@@ -8,13 +8,11 @@ import (
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/api/v1beta1"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
-var _ = Describe("Resource status", func() {
+// Tests needs to be executed serially because of the shared state of the JWT Handler in the API Controller.
+var _ = Describe("Resource status", Serial, func() {
 
 	const (
 		testNameBase           = "status-test"
@@ -28,7 +26,7 @@ var _ = Describe("Resource status", func() {
 
 		It("should return nil for resources not supported by the handler ", func() {
 			// given
-			setHandlerConfigMap(helpers.JWT_HANDLER_ORY)
+			updateJwtHandlerTo(helpers.JWT_HANDLER_ORY)
 
 			apiRuleName := generateTestName(testNameBase, testIDLength)
 			serviceName := generateTestName(testServiceName, testIDLength)
@@ -37,27 +35,17 @@ var _ = Describe("Resource status", func() {
 			rule := testRule(testPath, defaultMethods, defaultMutators, noConfigHandler("noop"))
 			instance := testInstance(apiRuleName, testNamespace, serviceName, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule})
 
-			err := c.Create(context.TODO(), instance)
-			if apierrors.IsInvalid(err) {
-				Fail(fmt.Sprintf("failed to create object, got an invalid object error: %v", err))
-				return
-			}
-			Expect(err).NotTo(HaveOccurred())
+			// when
+			Expect(c.Create(context.TODO(), instance)).Should(Succeed())
 			defer func() {
-				err := c.Delete(context.TODO(), instance)
-				Expect(err).NotTo(HaveOccurred())
+				deleteApiRule(instance)
 			}()
 
-			// when
-			expectedRequest := reconcile.Request{NamespacedName: types.NamespacedName{Name: apiRuleName, Namespace: testNamespace}}
-
 			// then
-			Eventually(requests, eventuallyTimeout).Should(Receive(Equal(expectedRequest)))
-
 			Eventually(func(g Gomega) {
 				created := gatewayv1beta1.APIRule{}
-				err = c.Get(context.TODO(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &created)
-				g.Expect(err).NotTo(HaveOccurred())
+				g.Expect(c.Get(context.TODO(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &created)).Should(Succeed())
+				g.Expect(created.Status.APIRuleStatus).NotTo(BeNil())
 				g.Expect(created.Status.APIRuleStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
 				g.Expect(created.Status.VirtualServiceStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
 				g.Expect(created.Status.AccessRuleStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
@@ -69,7 +57,7 @@ var _ = Describe("Resource status", func() {
 
 		It("should report validation errors in ApiRule status", func() {
 			// given
-			setHandlerConfigMap(helpers.JWT_HANDLER_ORY)
+			updateJwtHandlerTo(helpers.JWT_HANDLER_ORY)
 
 			apiRuleName := generateTestName(testNameBase, testIDLength)
 			serviceName := generateTestName(testServiceName, testIDLength)
@@ -83,27 +71,18 @@ var _ = Describe("Resource status", func() {
 			instance.Spec.Rules = append(instance.Spec.Rules, instance.Spec.Rules[0]) //Duplicate entry
 			instance.Spec.Rules = append(instance.Spec.Rules, instance.Spec.Rules[0]) //Duplicate entry
 
-			err := c.Create(context.TODO(), instance)
-			if apierrors.IsInvalid(err) {
-				Fail(fmt.Sprintf("failed to create object, got an invalid object error: %v", err))
-				return
-			}
-			Expect(err).NotTo(HaveOccurred())
+			// when
+			Expect(c.Create(context.TODO(), instance)).Should(Succeed())
 			defer func() {
-				err := c.Delete(context.TODO(), instance)
-				Expect(err).NotTo(HaveOccurred())
+				deleteApiRule(instance)
 			}()
 
-			// when
-			expectedRequest := reconcile.Request{NamespacedName: types.NamespacedName{Name: apiRuleName, Namespace: testNamespace}}
-
 			// then
-			Eventually(requests, eventuallyTimeout).Should(Receive(Equal(expectedRequest)))
-
-			created := gatewayv1beta1.APIRule{}
 			Eventually(func(g Gomega) {
-				err = c.Get(context.TODO(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &created)
-				Expect(err).NotTo(HaveOccurred())
+				created := gatewayv1beta1.APIRule{}
+				Expect(c.Get(context.TODO(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &created)).Should(Succeed())
+
+				g.Expect(created.Status.APIRuleStatus).NotTo(BeNil())
 				g.Expect(created.Status.APIRuleStatus.Code).To(Equal(gatewayv1beta1.StatusError))
 				g.Expect(created.Status.APIRuleStatus.Description).To(ContainSubstring("Multiple validation errors:"))
 				g.Expect(created.Status.APIRuleStatus.Description).To(ContainSubstring("Attribute \".spec.rules\": multiple rules defined for the same path and method"))
@@ -115,9 +94,7 @@ var _ = Describe("Resource status", func() {
 				g.Expect(created.Status.AccessRuleStatus.Code).To(Equal(gatewayv1beta1.StatusSkipped))
 				g.Expect(created.Status.AuthorizationPolicyStatus).To(BeNil())
 				g.Expect(created.Status.RequestAuthenticationStatus).To(BeNil())
-			}, eventuallyTimeout).Should(Succeed())
 
-			Eventually(func(g Gomega) {
 				shouldHaveVirtualServices(g, apiRuleName, testNamespace, 0)
 			}, eventuallyTimeout).Should(Succeed())
 
@@ -128,7 +105,7 @@ var _ = Describe("Resource status", func() {
 
 		It("should return nil for resources not supported by the handler ", func() {
 			// given
-			setHandlerConfigMap(helpers.JWT_HANDLER_ISTIO)
+			updateJwtHandlerTo(helpers.JWT_HANDLER_ISTIO)
 
 			apiRuleName := generateTestName(testNameBase, testIDLength)
 			serviceName := generateTestName(testServiceName, testIDLength)
@@ -137,27 +114,17 @@ var _ = Describe("Resource status", func() {
 			rule := testRule(testPath, defaultMethods, defaultMutators, noConfigHandler("noop"))
 			instance := testInstance(apiRuleName, testNamespace, serviceName, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule})
 
-			err := c.Create(context.TODO(), instance)
-			if apierrors.IsInvalid(err) {
-				Fail(fmt.Sprintf("failed to create object, got an invalid object error: %v", err))
-				return
-			}
-			Expect(err).NotTo(HaveOccurred())
+			// when
+			Expect(c.Create(context.TODO(), instance)).Should(Succeed())
 			defer func() {
-				err := c.Delete(context.TODO(), instance)
-				Expect(err).NotTo(HaveOccurred())
+				deleteApiRule(instance)
 			}()
 
-			// when
-			expectedRequest := reconcile.Request{NamespacedName: types.NamespacedName{Name: apiRuleName, Namespace: testNamespace}}
-
 			// then
-			Eventually(requests, eventuallyTimeout).Should(Receive(Equal(expectedRequest)))
-
 			Eventually(func(g Gomega) {
 				created := gatewayv1beta1.APIRule{}
-				err = c.Get(context.TODO(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &created)
-				g.Expect(err).NotTo(HaveOccurred())
+				Expect(c.Get(context.TODO(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &created)).Should(Succeed())
+				g.Expect(created.Status.APIRuleStatus).NotTo(BeNil())
 				g.Expect(created.Status.APIRuleStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
 				g.Expect(created.Status.VirtualServiceStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
 				g.Expect(created.Status.AuthorizationPolicyStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
@@ -167,7 +134,8 @@ var _ = Describe("Resource status", func() {
 		})
 
 		It("should report validation errors in ApiRule status", func() {
-			setHandlerConfigMap(helpers.JWT_HANDLER_ISTIO)
+			// given
+			updateJwtHandlerTo(helpers.JWT_HANDLER_ISTIO)
 
 			apiRuleName := generateTestName(testNameBase, testIDLength)
 			serviceName := generateTestName(testServiceName, testIDLength)
@@ -181,25 +149,17 @@ var _ = Describe("Resource status", func() {
 			instance.Spec.Rules = append(instance.Spec.Rules, instance.Spec.Rules[0]) //Duplicate entry
 			instance.Spec.Rules = append(instance.Spec.Rules, instance.Spec.Rules[0]) //Duplicate entry
 
-			err := c.Create(context.TODO(), instance)
-			if apierrors.IsInvalid(err) {
-				Fail(fmt.Sprintf("failed to create object, got an invalid object error: %v", err))
-				return
-			}
-			Expect(err).NotTo(HaveOccurred())
+			// when
+			Expect(c.Create(context.TODO(), instance)).Should(Succeed())
 			defer func() {
-				err := c.Delete(context.TODO(), instance)
-				Expect(err).NotTo(HaveOccurred())
+				deleteApiRule(instance)
 			}()
 
-			expectedRequest := reconcile.Request{NamespacedName: types.NamespacedName{Name: apiRuleName, Namespace: testNamespace}}
-
-			Eventually(requests, eventuallyTimeout).Should(Receive(Equal(expectedRequest)))
-
+			// then
 			Eventually(func(g Gomega) {
 				created := gatewayv1beta1.APIRule{}
-				err = c.Get(context.TODO(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &created)
-				g.Expect(err).NotTo(HaveOccurred())
+				Expect(c.Get(context.TODO(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &created)).Should(Succeed())
+				g.Expect(created.Status.APIRuleStatus).NotTo(BeNil())
 				g.Expect(created.Status.APIRuleStatus.Code).To(Equal(gatewayv1beta1.StatusError))
 				g.Expect(created.Status.APIRuleStatus.Description).To(ContainSubstring("Multiple validation errors:"))
 				g.Expect(created.Status.APIRuleStatus.Description).To(ContainSubstring("Attribute \".spec.rules\": multiple rules defined for the same path and method"))
@@ -211,12 +171,9 @@ var _ = Describe("Resource status", func() {
 				g.Expect(created.Status.AuthorizationPolicyStatus.Code).To(Equal(gatewayv1beta1.StatusSkipped))
 				g.Expect(created.Status.RequestAuthenticationStatus.Code).To(Equal(gatewayv1beta1.StatusSkipped))
 				g.Expect(created.Status.AccessRuleStatus).To(BeNil())
-			}, eventuallyTimeout).Should(Succeed())
 
-			Eventually(func(g Gomega) {
 				shouldHaveVirtualServices(g, apiRuleName, testNamespace, 0)
 			}, eventuallyTimeout).Should(Succeed())
-
 		})
 
 	})

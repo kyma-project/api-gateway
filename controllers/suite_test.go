@@ -34,8 +34,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
-	"sigs.k8s.io/controller-runtime/pkg/manager"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -51,7 +49,6 @@ var (
 	cfg       *rest.Config
 	k8sClient client.Client
 	testEnv   *envtest.Environment
-	requests  chan reconcile.Request
 	c         client.Client
 	ctx       context.Context
 	cancel    context.CancelFunc
@@ -118,7 +115,10 @@ var _ = BeforeSuite(func(specCtx SpecContext) {
 	err = corev1.AddToScheme(s)
 	Expect(err).NotTo(HaveOccurred())
 
-	mgr, err := manager.New(cfg, manager.Options{Scheme: s, MetricsBindAddress: "0"})
+	mgr, err := ctrl.NewManager(cfg, ctrl.Options{
+		Scheme:             s,
+		MetricsBindAddress: "0",
+	})
 	Expect(err).NotTo(HaveOccurred())
 
 	c, err = client.New(cfg, client.Options{Scheme: s})
@@ -152,6 +152,7 @@ var _ = BeforeSuite(func(specCtx SpecContext) {
 
 	apiReconciler := &controllers.APIRuleReconciler{
 		Client:            mgr.GetClient(),
+		Scheme:            mgr.GetScheme(),
 		Log:               ctrl.Log.WithName("controllers").WithName("Api"),
 		OathkeeperSvc:     testOathkeeperSvcURL,
 		OathkeeperSvcPort: testOathkeeperPort,
@@ -165,14 +166,13 @@ var _ = BeforeSuite(func(specCtx SpecContext) {
 		Config:                 &helpers.Config{},
 
 		// Run the suite with period that won't interfere with tests
-		ReconcilePeriod:        time.Hour * 24,
-		OnErrorReconcilePeriod: time.Hour * 24,
+		ReconcilePeriod:        time.Hour * 2,
+		OnErrorReconcilePeriod: time.Hour * 2,
 	}
 	Expect(err).NotTo(HaveOccurred())
 
-	var recFn reconcile.Reconciler
-	recFn, requests = SetupTestReconcile(apiReconciler)
-	Expect(add(mgr, recFn)).To(Succeed())
+	err = apiReconciler.SetupWithManager(mgr)
+	Expect(err).NotTo(HaveOccurred())
 
 	go func() {
 		defer GinkgoRecover()
@@ -225,24 +225,11 @@ var _ = ReportAfterSuite("custom reporter", func(report types.Report) {
 	}
 })
 
-// SetupTestReconcile returns a reconcile.Reconcile implementation that delegates to inner and
-// writes the request to requests after Reconcile is finished.
-func SetupTestReconcile(inner reconcile.Reconciler) (reconcile.Reconciler, chan reconcile.Request) {
-	requests := make(chan reconcile.Request)
-	fn := reconcile.Func(func(ctx context.Context, req reconcile.Request) (reconcile.Result, error) {
-		result, err := inner.Reconcile(ctx, req)
-		requests <- req
-		return result, err
-	})
-	return fn, requests
-}
-
 // shouldHaveVirtualServices verifies that the expected number of virtual services exists for the APIRule
 func shouldHaveVirtualServices(g Gomega, apiRuleName, testNamespace string, len int) {
 	matchingLabels := matchingLabelsFunc(apiRuleName, testNamespace)
 	list := securityv1beta1.RequestAuthenticationList{}
-	err := c.List(context.TODO(), &list, matchingLabels)
-	g.Expect(err).NotTo(HaveOccurred())
+	g.Expect(c.List(context.TODO(), &list, matchingLabels)).Should(Succeed())
 	g.Expect(list.Items).To(HaveLen(len))
 }
 
@@ -250,8 +237,7 @@ func shouldHaveVirtualServices(g Gomega, apiRuleName, testNamespace string, len 
 func shouldHaveRequestAuthentications(g Gomega, apiRuleName, testNamespace string, len int) {
 	matchingLabels := matchingLabelsFunc(apiRuleName, testNamespace)
 	list := securityv1beta1.RequestAuthenticationList{}
-	err := c.List(context.TODO(), &list, matchingLabels)
-	g.Expect(err).NotTo(HaveOccurred())
+	g.Expect(c.List(context.TODO(), &list, matchingLabels)).Should(Succeed())
 	g.Expect(list.Items).To(HaveLen(len))
 }
 
@@ -259,8 +245,7 @@ func shouldHaveRequestAuthentications(g Gomega, apiRuleName, testNamespace strin
 func shouldHaveAuthorizationPolicies(g Gomega, apiRuleName, testNamespace string, len int) {
 	matchingLabels := matchingLabelsFunc(apiRuleName, testNamespace)
 	list := securityv1beta1.AuthorizationPolicyList{}
-	err := c.List(context.TODO(), &list, matchingLabels)
-	g.Expect(err).NotTo(HaveOccurred())
+	g.Expect(c.List(context.TODO(), &list, matchingLabels)).Should(Succeed())
 	g.Expect(list.Items).To(HaveLen(len))
 }
 
@@ -268,7 +253,6 @@ func shouldHaveAuthorizationPolicies(g Gomega, apiRuleName, testNamespace string
 func shouldHaveRules(g Gomega, apiRuleName, testNamespace string, len int) {
 	matchingLabels := matchingLabelsFunc(apiRuleName, testNamespace)
 	list := rulev1alpha1.RuleList{}
-	err := c.List(context.TODO(), &list, matchingLabels)
-	g.Expect(err).NotTo(HaveOccurred())
+	g.Expect(c.List(context.TODO(), &list, matchingLabels)).Should(Succeed())
 	g.Expect(list.Items).To(HaveLen(len))
 }

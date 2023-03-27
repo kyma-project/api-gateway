@@ -113,7 +113,7 @@ func (p configMapPredicate) Generic(e event.GenericEvent) bool {
 //+kubebuilder:rbac:groups="",resources=configmaps,verbs=get;list;watch;create;update;patch;delete
 
 func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	r.Log.Info("Starting reconciliation")
+	r.Log.Info("Starting reconciliation", "namespacedName", req.NamespacedName.String())
 
 	validator := validation.APIRule{
 		ServiceBlockList:  r.ServiceBlockList,
@@ -121,8 +121,7 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		HostBlockList:     r.HostBlockList,
 		DefaultDomainName: r.DefaultDomainName,
 	}
-	r.Log.Info("Checking if it's ConfigMap reconciliation")
-	r.Log.Info("Reconciling for", "namespacedName", req.NamespacedName.String())
+
 	isCMReconcile := req.NamespacedName.String() == types.NamespacedName{Namespace: helpers.CM_NS, Name: helpers.CM_NAME}.String()
 	if isCMReconcile || r.Config.JWTHandler == "" {
 		r.Log.Info("Starting ConfigMap reconciliation")
@@ -138,15 +137,16 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		}
 		if isCMReconcile {
 			configValidationFailures := validator.ValidateConfig(r.Config)
-			r.Log.Info("ConfigMap changed")
+			r.Log.Info("ConfigMap changed", "config", r.Config)
 			if len(configValidationFailures) > 0 {
 				failuresJson, _ := json.Marshal(configValidationFailures)
 				r.Log.Error(err, fmt.Sprintf(`Config validation failure {"controller": "Api", "failures": %s}`, string(failuresJson)))
 			}
+			r.Log.Info("ConfigMap reconciliation finished")
 			return doneReconcileNoRequeue()
 		}
 	}
-	r.Log.Info("Starting ApiRule reconciliation")
+	r.Log.Info("Starting ApiRule reconciliation", "jwtHandler", r.Config.JWTHandler)
 
 	c := processing.ReconciliationConfig{
 		OathkeeperSvc:       r.OathkeeperSvc,
@@ -161,7 +161,6 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	}
 
 	cmd := r.getReconciliation(c)
-	r.Log.Info("Process reconcile")
 
 	apiRule := &gatewayv1beta1.APIRule{}
 	err := r.Client.Get(ctx, req.NamespacedName, apiRule)
@@ -179,6 +178,8 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		status := processing.GetStatusForErrorMap(errorMap, statusBase)
 		return r.updateStatusOrRetry(ctx, apiRule, status)
 	}
+
+	r.Log.Info("Reconciling ApiRule", "name", apiRule.Name, "namespace", apiRule.Namespace, "resource version", apiRule.ResourceVersion)
 
 	if apiRule.DeletionTimestamp.IsZero() {
 		if !controllerutil.ContainsFinalizer(apiRule, API_GATEWAY_FINALIZER) {
@@ -217,7 +218,6 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	}
 
 	status := processing.Reconcile(ctx, r.Client, &r.Log, cmd, apiRule)
-	r.Log.Info("Update status or retry")
 	return r.updateStatusOrRetry(ctx, apiRule, status)
 }
 
@@ -233,7 +233,8 @@ func (r *APIRuleReconciler) getReconciliation(config processing.ReconciliationCo
 func (r *APIRuleReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&gatewayv1beta1.APIRule{}).
-		WithEventFilter(predicate.GenerationChangedPredicate{}).
+		// TODO This filter prevents reconciliation of the handler config map and therefore the handler in the reconciler can't be updated.
+		//WithEventFilter(predicate.GenerationChangedPredicate{}).
 		Watches(&source.Kind{Type: &corev1.ConfigMap{}}, &handler.EnqueueRequestForObject{}).
 		WithEventFilter(&configMapPredicate{Log: r.Log}).
 		Complete(r)
@@ -241,28 +242,32 @@ func (r *APIRuleReconciler) SetupWithManager(mgr ctrl.Manager) error {
 
 // Updates api status. If there was an error during update, returns the error so that entire reconcile loop is retried. If there is no error, returns a "reconcile success" value.
 func (r *APIRuleReconciler) updateStatusOrRetry(ctx context.Context, api *gatewayv1beta1.APIRule, status processing.ReconciliationStatus) (ctrl.Result, error) {
-	_, updateStatusErr := r.updateStatus(ctx, api, status)
+	_, updateStatusErr := r.updateStatus(ctx, api, status, &r.Log)
 	if updateStatusErr != nil {
+		r.Log.Error(updateStatusErr, "Error updating ApiRule status, retrying")
 		return retryReconcile(updateStatusErr) //controller retries to set the correct status eventually.
 	}
 
 	// If error happened during reconciliation (e.g. VirtualService conflict) requeue for reconciliation earlier
 	if status.HasError() {
+		r.Log.Info("Requeue for reconciliation because the status has an error")
 		return doneReconcileErrorRequeue(r.OnErrorReconcilePeriod)
 	}
 
-	return doneReconcileDefaultRequeue(r.ReconcilePeriod)
+	return doneReconcileDefaultRequeue(r.ReconcilePeriod, &r.Log)
 }
 
 func doneReconcileNoRequeue() (ctrl.Result, error) {
 	return ctrl.Result{}, nil
 }
 
-func doneReconcileDefaultRequeue(reconcilerPeriod time.Duration) (ctrl.Result, error) {
+func doneReconcileDefaultRequeue(reconcilerPeriod time.Duration, logger *logr.Logger) (ctrl.Result, error) {
 	after := DEFAULT_RECONCILIATION_PERIOD
 	if reconcilerPeriod != 0 {
 		after = reconcilerPeriod
 	}
+
+	logger.Info("Finished reconciliation and requeue", "requeue period", after)
 	return ctrl.Result{RequeueAfter: after}, nil
 }
 
@@ -278,7 +283,7 @@ func retryReconcile(err error) (ctrl.Result, error) {
 	return reconcile.Result{Requeue: true}, err
 }
 
-func (r *APIRuleReconciler) updateStatus(ctx context.Context, api *gatewayv1beta1.APIRule, status processing.ReconciliationStatus) (*gatewayv1beta1.APIRule, error) {
+func (r *APIRuleReconciler) updateStatus(ctx context.Context, api *gatewayv1beta1.APIRule, status processing.ReconciliationStatus, logger *logr.Logger) (*gatewayv1beta1.APIRule, error) {
 	api.Status.ObservedGeneration = api.Generation
 	api.Status.LastProcessedTime = &v1.Time{Time: time.Now()}
 	api.Status.APIRuleStatus = status.ApiRuleStatus
@@ -287,6 +292,7 @@ func (r *APIRuleReconciler) updateStatus(ctx context.Context, api *gatewayv1beta
 	api.Status.RequestAuthenticationStatus = status.RequestAuthenticationStatus
 	api.Status.AuthorizationPolicyStatus = status.AuthorizationPolicyStatus
 
+	logger.Info("Updating ApiRule status", "status", api.Status)
 	err := r.Client.Status().Update(ctx, api)
 	if err != nil {
 		return nil, err
