@@ -154,8 +154,8 @@ var _ = BeforeSuite(func(specCtx SpecContext) {
 		Config:                 &helpers.Config{},
 
 		// Run the suite with period that won't interfere with tests
-		ReconcilePeriod:        time.Hour * 2,
-		OnErrorReconcilePeriod: time.Hour * 2,
+		ReconcilePeriod:        time.Second * 2,
+		OnErrorReconcilePeriod: time.Second * 2,
 	}
 
 	Expect(apiReconciler.SetupWithManager(mgr)).Should(Succeed())
