@@ -42,10 +42,10 @@ else
     rm cover.out
 fi
 
-if (( $(echo "$coverage_pr < $coverage_main" |bc -l) )); then
-	echo -e "${RED}✗ Code coverage is lower due to this PR! Please add tests.\\n${NC}"
+if (( $(echo "${coverage_pr} < ${coverage_main}" | bc -l) )); then
+	echo -e "${RED}✗ This PR lowering code coverage compared to main branch! Please add tests.\\n${NC}"
 	exit 1
 else
 	echo -e ""
-	echo -e "${GREEN}√ Thanks for keeping/increasing code coverage!"
+	echo -e "${GREEN}√ Thanks for keeping / increasing code coverage!"
 fi
