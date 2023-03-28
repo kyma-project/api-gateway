@@ -900,18 +900,6 @@ func testInstance(name, namespace, serviceName, serviceHost string, servicePort 
 	}
 }
 
-func testConfigMap(jwtHandler string) *corev1.ConfigMap {
-	return &corev1.ConfigMap{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      helpers.CM_NAME,
-			Namespace: helpers.CM_NS,
-		},
-		Data: map[string]string{
-			helpers.CM_KEY: fmt.Sprintf("jwtHandler: %s", jwtHandler),
-		},
-	}
-}
-
 func testOryJWTHandler(issuer string, scopes []string) *gatewayv1beta1.Handler {
 
 	configJSON := fmt.Sprintf(`{
@@ -1031,7 +1019,7 @@ func asStringSlice(in interface{}) []string {
 
 func generateTestName(name string, length int) string {
 
-	rand.Seed(time.Now().UnixNano())
+	rand.NewSource(time.Now().UnixNano())
 
 	letterRunes := []rune("abcdefghijklmnopqrstuvwxyz")
 

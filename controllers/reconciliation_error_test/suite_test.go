@@ -1,9 +1,8 @@
-package controllers_test
+package reconciliation_test
 
 import (
 	"context"
 	"fmt"
-	"github.com/kyma-project/api-gateway/internal/builders"
 	"os"
 	"path/filepath"
 	"testing"
@@ -34,59 +33,37 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	// +kubebuilder:scaffold:imports
-)
-
-const (
-	eventuallyTimeout           = time.Second * 5
-	testNamespace               = "atgo-system"
-	testGatewayURL              = "kyma-system/kyma-gateway"
-	testOathkeeperSvcURL        = "oathkeeper.kyma-system.svc.cluster.local"
-	testOathkeeperPort   uint32 = 1234
 )
 
 var (
 	cfg       *rest.Config
 	k8sClient client.Client
 	testEnv   *envtest.Environment
+	requests  chan reconcile.Request
 	c         client.Client
 	ctx       context.Context
 	cancel    context.CancelFunc
 
-	defaultMethods  = []string{"GET", "PUT"}
-	defaultScopes   = []string{"foo", "bar"}
-	defaultMutators = []*gatewayv1beta1.Mutator{
-		{
-			Handler: noConfigHandler("noop"),
-		},
-		{
-			Handler: noConfigHandler("idToken"),
-		},
-	}
-
 	TestAllowOrigins = []*v1beta1.StringMatch{{MatchType: &v1beta1.StringMatch_Regex{Regex: ".*"}}}
 	TestAllowMethods = []string{"GET", "POST", "PUT", "DELETE"}
 	TestAllowHeaders = []string{"header1", "header2"}
-
-	defaultCorsPolicy = builders.CorsPolicy().
-				AllowHeaders(TestAllowHeaders...).
-				AllowMethods(TestAllowMethods...).
-				AllowOrigins(TestAllowOrigins...)
 )
 
-func TestAPIs(t *testing.T) {
+func TestAPIGatewayReconciliation(t *testing.T) {
 	RegisterFailHandler(Fail)
 
-	RunSpecs(t, "Controller Suite")
+	RunSpecs(t, "Reconciliation Suite")
 }
 
 var _ = BeforeSuite(func(specCtx SpecContext) {
 	logf.SetLogger(zap.New(zap.UseDevMode(true), zap.WriteTo(GinkgoWriter)))
 	ctx, cancel = context.WithCancel(context.TODO())
 
-	By("bootstrapping test environment")
+	By("bootstrapping test environment for reconciliation")
 	testEnv = &envtest.Environment{
-		CRDDirectoryPaths: []string{filepath.Join("..", "config", "crd", "bases"), filepath.Join("..", "hack")},
+		CRDDirectoryPaths: []string{filepath.Join("..", "..", "config", "crd", "bases"), filepath.Join("..", "..", "hack")},
 	}
 
 	var err error
@@ -100,11 +77,20 @@ var _ = BeforeSuite(func(specCtx SpecContext) {
 
 	s := runtime.NewScheme()
 
-	Expect(gatewayv1beta1.AddToScheme(s)).Should(Succeed())
-	Expect(rulev1alpha1.AddToScheme(s)).Should(Succeed())
-	Expect(networkingv1beta1.AddToScheme(s)).Should(Succeed())
-	Expect(securityv1beta1.AddToScheme(s)).Should(Succeed())
-	Expect(corev1.AddToScheme(s)).Should(Succeed())
+	err = gatewayv1beta1.AddToScheme(s)
+	Expect(err).NotTo(HaveOccurred())
+
+	err = rulev1alpha1.AddToScheme(s)
+	Expect(err).NotTo(HaveOccurred())
+
+	err = networkingv1beta1.AddToScheme(s)
+	Expect(err).NotTo(HaveOccurred())
+
+	err = securityv1beta1.AddToScheme(s)
+	Expect(err).NotTo(HaveOccurred())
+
+	err = corev1.AddToScheme(s)
+	Expect(err).NotTo(HaveOccurred())
 
 	mgr, err := ctrl.NewManager(cfg, ctrl.Options{
 		Scheme:             s,
@@ -119,13 +105,15 @@ var _ = BeforeSuite(func(specCtx SpecContext) {
 		ObjectMeta: metav1.ObjectMeta{Name: testNamespace},
 		Spec:       corev1.NamespaceSpec{},
 	}
-	Expect(c.Create(context.TODO(), ns)).Should(Succeed())
+	err = c.Create(context.TODO(), ns)
+	Expect(err).NotTo(HaveOccurred())
 
 	nsKyma := &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{Name: helpers.CM_NS},
 		Spec:       corev1.NamespaceSpec{},
 	}
-	Expect(c.Create(context.TODO(), nsKyma)).Should(Succeed())
+	err = c.Create(context.TODO(), nsKyma)
+	Expect(err).NotTo(HaveOccurred())
 
 	cm := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
@@ -136,11 +124,11 @@ var _ = BeforeSuite(func(specCtx SpecContext) {
 			helpers.CM_KEY: fmt.Sprintf("jwtHandler: %s", helpers.JWT_HANDLER_ORY),
 		},
 	}
-	Expect(c.Create(context.TODO(), cm)).Should(Succeed())
+	err = c.Create(context.TODO(), cm)
+	Expect(err).NotTo(HaveOccurred())
 
 	apiReconciler := &controllers.APIRuleReconciler{
 		Client:            mgr.GetClient(),
-		Scheme:            mgr.GetScheme(),
 		Log:               ctrl.Log.WithName("controllers").WithName("Api"),
 		OathkeeperSvc:     testOathkeeperSvcURL,
 		OathkeeperSvcPort: testOathkeeperPort,
@@ -153,16 +141,19 @@ var _ = BeforeSuite(func(specCtx SpecContext) {
 		GeneratedObjectsLabels: map[string]string{},
 		Config:                 &helpers.Config{},
 
-		// Run the suite with period that won't interfere with tests
-		ReconcilePeriod:        time.Hour * 2,
-		OnErrorReconcilePeriod: time.Hour * 2,
+		// Run the suite with small period so reconcilation should happen very often
+		ReconcilePeriod:        time.Second,
+		OnErrorReconcilePeriod: time.Second,
 	}
+	Expect(err).NotTo(HaveOccurred())
 
-	Expect(apiReconciler.SetupWithManager(mgr)).Should(Succeed())
+	err = apiReconciler.SetupWithManager(mgr)
+	Expect(err).NotTo(HaveOccurred())
 
 	go func() {
 		defer GinkgoRecover()
-		Expect(mgr.Start(ctx)).Should(Succeed())
+		err = mgr.Start(ctx)
+		Expect(err).ToNot(HaveOccurred(), "failed to run manager")
 	}()
 
 }, NodeTimeout(60*time.Second))
@@ -173,6 +164,7 @@ var _ = AfterSuite(func() {
 			https://github.com/kubernetes-sigs/controller-runtime/issues/1571#issuecomment-1005575071
 	*/
 	cancel()
+
 	By("tearing down the test environment,but I do nothing here.")
 	err := testEnv.Stop()
 	// Set 4 with random
@@ -186,9 +178,8 @@ var _ = AfterSuite(func() {
 
 var _ = ReportAfterSuite("custom reporter", func(report types.Report) {
 	logger := zap.New(zap.UseDevMode(true), zap.WriteTo(GinkgoWriter))
-
 	if key, ok := os.LookupEnv("ARTIFACTS"); ok {
-		reportsFilename := fmt.Sprintf("%s/%s", key, "junit-controller.xml")
+		reportsFilename := fmt.Sprintf("%s/%s", key, "junit-reconciliation.xml")
 		logger.Info("Generating reports at", "location", reportsFilename)
 		err := reporters.GenerateJUnitReport(report, reportsFilename)
 
@@ -196,11 +187,11 @@ var _ = ReportAfterSuite("custom reporter", func(report types.Report) {
 			logger.Error(err, "Junit Report Generation Error")
 		}
 	} else {
-		if err := os.MkdirAll("../reports", 0755); err != nil {
+		if err := os.MkdirAll("../../reports", 0755); err != nil {
 			logger.Error(err, "could not create directory")
 		}
 
-		reportsFilename := fmt.Sprintf("%s/%s", "../reports", "junit-controller.xml")
+		reportsFilename := fmt.Sprintf("%s/%s", "../../reports", "junit-reconciliation.xml")
 		logger.Info("Generating reports at", "location", reportsFilename)
 		err := reporters.GenerateJUnitReport(report, reportsFilename)
 
@@ -209,35 +200,3 @@ var _ = ReportAfterSuite("custom reporter", func(report types.Report) {
 		}
 	}
 })
-
-// shouldHaveVirtualServices verifies that the expected number of virtual services exists for the APIRule
-func shouldHaveVirtualServices(g Gomega, apiRuleName, testNamespace string, len int) {
-	matchingLabels := matchingLabelsFunc(apiRuleName, testNamespace)
-	list := securityv1beta1.RequestAuthenticationList{}
-	g.Expect(c.List(context.TODO(), &list, matchingLabels)).Should(Succeed())
-	g.Expect(list.Items).To(HaveLen(len))
-}
-
-// shouldHaveRequestAuthentications verifies that the expected number of request authentications exists for the APIRule
-func shouldHaveRequestAuthentications(g Gomega, apiRuleName, testNamespace string, len int) {
-	matchingLabels := matchingLabelsFunc(apiRuleName, testNamespace)
-	list := securityv1beta1.RequestAuthenticationList{}
-	g.Expect(c.List(context.TODO(), &list, matchingLabels)).Should(Succeed())
-	g.Expect(list.Items).To(HaveLen(len))
-}
-
-// shouldHaveAuthorizationPolicies verifies that the expected number of authorization policies exists for the APIRule
-func shouldHaveAuthorizationPolicies(g Gomega, apiRuleName, testNamespace string, len int) {
-	matchingLabels := matchingLabelsFunc(apiRuleName, testNamespace)
-	list := securityv1beta1.AuthorizationPolicyList{}
-	g.Expect(c.List(context.TODO(), &list, matchingLabels)).Should(Succeed())
-	g.Expect(list.Items).To(HaveLen(len))
-}
-
-// shouldHaveRules verifies that the expected number of rules exists for the APIRule
-func shouldHaveRules(g Gomega, apiRuleName, testNamespace string, len int) {
-	matchingLabels := matchingLabelsFunc(apiRuleName, testNamespace)
-	list := rulev1alpha1.RuleList{}
-	g.Expect(c.List(context.TODO(), &list, matchingLabels)).Should(Succeed())
-	g.Expect(list.Items).To(HaveLen(len))
-}
