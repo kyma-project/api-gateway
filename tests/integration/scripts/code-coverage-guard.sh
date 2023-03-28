@@ -10,7 +10,7 @@ if [ -z "$PULL_PULL_SHA" ]; then
   exit 0
 fi
 
-cd "${KYMA_PROJECT_DIR}/api-gateway" || exit 1
+cd "${API_GATEWAY_PROJECT_DIR}" || exit 1
 
 echo -e "Code coverage guard (ensures PRs do not lower code coverage)"
 echo -e "Running tests on PR: PR-${PULL_NUMBER}"
