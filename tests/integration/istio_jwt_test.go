@@ -86,10 +86,6 @@ func (s *istioJwtManifestScenario) callingTheEndpointWithoutTokenShouldResultInS
 	return helper.CallEndpointWithRetries(fmt.Sprintf("%s%s", s.url, path), &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher})
 }
 
-func (s *istioJwtManifestScenario) callingTheEndpointTokenShouldResultInBodyContaining(path, bodyContent string) error {
-	return helper.CallEndpointWithRetries(fmt.Sprintf("%s%s", s.url, path), &helpers.BodyContainsPredicate{Expected: []string{bodyContent}})
-}
-
 func (s *istioJwtManifestScenario) thereAreTwoNamespaces() error {
 	resources, err := manifestprocessor.ParseFromFileWithTemplate("second-namespace.yaml", s.apiResourceDirectory, resourceSeparator, s.manifestTemplate)
 	if err != nil {

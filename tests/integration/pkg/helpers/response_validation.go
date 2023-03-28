@@ -21,16 +21,9 @@ type StatusPredicate struct {
 func (s *StatusPredicate) Assert(response http.Response) (bool, string) {
 	if response.StatusCode >= s.LowerStatusBound && response.StatusCode <= s.UpperStatusBound {
 		return true, ""
-	} else {
-		failureMsg := fmt.Sprintf("Status code %d is not between %d and %d", response.StatusCode, s.LowerStatusBound, s.UpperStatusBound)
-
-		bodyBytes, err := io.ReadAll(response.Body)
-		if err != nil {
-			return false, fmt.Sprintf("%s - failed to read response body", failureMsg)
-		}
-		bodyString := string(bodyBytes)
-		return false, fmt.Sprintf("%s - Response body: %s", failureMsg, bodyString)
 	}
+
+	return false, fmt.Sprintf("Status code %d is not between %d and %d", response.StatusCode, s.LowerStatusBound, s.UpperStatusBound)
 }
 
 // BodyContainsPredicate is a struct representing desired HTTP response body containing expected strings
@@ -57,7 +50,7 @@ func (s *BodyContainsPredicate) Assert(response http.Response) (bool, string) {
 	if len(notContained) == 0 {
 		return true, ""
 	} else {
-		return false, fmt.Sprintf("Body '%s' didn't contain '%s'", bodyString, strings.Join(notContained, "', '"))
+		return false, fmt.Sprintf("Body didn't contain '%s'", strings.Join(notContained, "', '"))
 	}
 
 }

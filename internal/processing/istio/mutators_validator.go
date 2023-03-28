@@ -20,25 +20,26 @@ func (m mutatorsValidator) Validate(attributePath string, rule v1beta1.Rule) []v
 		return nil
 	}
 
-	duplicateMutatorFailure := validateMutatorUniqueness(attributePath, rule.Mutators)
+	basePath := fmt.Sprintf("%s%s", attributePath, ".mutators")
+	duplicateMutatorFailure := validateMutatorUniqueness(basePath, rule.Mutators)
 	failures = append(failures, duplicateMutatorFailure...)
 
 	for mutatorIndex, mutator := range rule.Mutators {
 
+		handlerPath := fmt.Sprintf("%s[%d]%s", basePath, mutatorIndex, ".handler")
+
 		switch mutator.Name {
 		case "":
-			attrPath := fmt.Sprintf("%s%s[%d]%s", attributePath, ".mutators", mutatorIndex, ".handler")
-			failures = append(failures, validation.Failure{AttributePath: attrPath, Message: "mutator handler cannot be empty"})
+			failures = append(failures, validation.Failure{AttributePath: handlerPath, Message: "mutator handler cannot be empty"})
 		case v1beta1.HeaderMutator:
-			f := validateHeaderMutator(attributePath, mutator, mutatorIndex)
+			f := validateHeaderMutator(handlerPath, mutator)
 			failures = append(failures, f...)
 		case v1beta1.CookieMutator:
-			f := validateCookieMutator(attributePath, mutator, mutatorIndex)
+			f := validateCookieMutator(handlerPath, mutator)
 			failures = append(failures, f...)
 		default:
-			attrPath := fmt.Sprintf("%s%s[%d]%s", attributePath, ".mutators", mutatorIndex, ".handler")
 			msg := fmt.Sprintf("unsupported mutator: %s", mutator.Name)
-			failures = append(failures, validation.Failure{AttributePath: attrPath, Message: msg})
+			failures = append(failures, validation.Failure{AttributePath: handlerPath, Message: msg})
 		}
 
 	}
@@ -46,10 +47,12 @@ func (m mutatorsValidator) Validate(attributePath string, rule v1beta1.Rule) []v
 	return failures
 }
 
-func validateHeaderMutator(attributePath string, mutator *v1beta1.Mutator, mutatorIndex int) []validation.Failure {
+func validateHeaderMutator(handlerPath string, mutator *v1beta1.Mutator) []validation.Failure {
+
+	configPath := fmt.Sprintf("%s%s", handlerPath, ".config")
 
 	if mutator.Config == nil {
-		attrPath := fmt.Sprintf("%s%s[%d]%s", attributePath, ".mutators", mutatorIndex, ".handler.config")
+		attrPath := fmt.Sprintf("%s%s", handlerPath, ".config")
 		return []validation.Failure{
 			{AttributePath: attrPath, Message: "headers cannot be empty"},
 		}
@@ -60,20 +63,19 @@ func validateHeaderMutator(attributePath string, mutator *v1beta1.Mutator, mutat
 
 	if err != nil {
 		return []validation.Failure{
-			{AttributePath: attributePath + ".config", Message: "Can't read json: " + err.Error()},
+			{AttributePath: configPath, Message: "Can't read json: " + err.Error()},
 		}
 	}
 
 	if !config.HasHeaders() {
-		attrPath := fmt.Sprintf("%s%s[%d]%s", attributePath, ".mutators", mutatorIndex, ".handler.config")
 		return []validation.Failure{
-			{AttributePath: attrPath, Message: "headers cannot be empty"},
+			{AttributePath: configPath, Message: "headers cannot be empty"},
 		}
 	}
 
 	for name := range config.Headers {
 		if name == "" {
-			attrPath := fmt.Sprintf("%s%s[%d]%s", attributePath, ".mutators", mutatorIndex, ".handler.config.headers.name")
+			attrPath := fmt.Sprintf("%s%s", configPath, ".headers.name")
 			return []validation.Failure{
 				{AttributePath: attrPath, Message: "cannot be empty"},
 			}
@@ -84,12 +86,13 @@ func validateHeaderMutator(attributePath string, mutator *v1beta1.Mutator, mutat
 	return nil
 }
 
-func validateCookieMutator(attributePath string, mutator *v1beta1.Mutator, mutatorIndex int) []validation.Failure {
+func validateCookieMutator(handlerPath string, mutator *v1beta1.Mutator) []validation.Failure {
+
+	configPath := fmt.Sprintf("%s%s", handlerPath, ".config")
 
 	if mutator.Config == nil {
-		attrPath := fmt.Sprintf("%s%s[%d]%s", attributePath, ".mutators", mutatorIndex, ".handler.config")
 		return []validation.Failure{
-			{AttributePath: attrPath, Message: "cookies cannot be empty"},
+			{AttributePath: configPath, Message: "cookies cannot be empty"},
 		}
 	}
 
@@ -98,20 +101,19 @@ func validateCookieMutator(attributePath string, mutator *v1beta1.Mutator, mutat
 
 	if err != nil {
 		return []validation.Failure{
-			{AttributePath: attributePath + ".config", Message: "Can't read json: " + err.Error()},
+			{AttributePath: configPath, Message: "Can't read json: " + err.Error()},
 		}
 	}
 
 	if !config.HasCookies() {
-		attrPath := fmt.Sprintf("%s%s[%d]%s", attributePath, ".mutators", mutatorIndex, ".handler.config")
 		return []validation.Failure{
-			{AttributePath: attrPath, Message: "cookies cannot be empty"},
+			{AttributePath: configPath, Message: "cookies cannot be empty"},
 		}
 	}
 
 	for name := range config.Cookies {
 		if name == "" {
-			attrPath := fmt.Sprintf("%s%s[%d]%s", attributePath, ".mutators", mutatorIndex, ".handler.config.cookies.name")
+			attrPath := fmt.Sprintf("%s%s", configPath, ".cookies.name")
 			return []validation.Failure{
 				{AttributePath: attrPath, Message: "cannot be empty"},
 			}
@@ -122,13 +124,13 @@ func validateCookieMutator(attributePath string, mutator *v1beta1.Mutator, mutat
 	return nil
 }
 
-func validateMutatorUniqueness(attributePath string, mutators []*v1beta1.Mutator) []validation.Failure {
+func validateMutatorUniqueness(basePath string, mutators []*v1beta1.Mutator) []validation.Failure {
 	var failures []validation.Failure
 	mutatorsSet := make(map[string]bool)
 
 	for i, mutator := range mutators {
 		if mutatorsSet[mutator.Name] {
-			attrPath := fmt.Sprintf("%s%s[%d]%s%s", attributePath, ".mutators", i, ".handler.", mutator.Name)
+			attrPath := fmt.Sprintf("%s[%d]%s%s", basePath, i, ".handler.", mutator.Name)
 			failures = append(failures, validation.Failure{AttributePath: attrPath, Message: "mutator for same handler already exists"})
 		}
 		mutatorsSet[mutator.Name] = true

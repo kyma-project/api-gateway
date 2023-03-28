@@ -1,8 +1,8 @@
 package v1beta1
 
 import (
-  "strings"
-  "fmt"
+	"fmt"
+	"strings"
 )
 
 const (
@@ -15,13 +15,13 @@ type CookieMutatorConfig struct {
 }
 
 func (c *CookieMutatorConfig) HasCookies() bool {
-	return c.Cookies != nil && len(c.Cookies) > 0
+	return len(c.Cookies) > 0
 }
 
 func (c *CookieMutatorConfig) ToString() string {
 	var cookies []string
 	for name, value := range c.Cookies {
-		cookies = append(cookies, fmt.Sprintf("%s=%s,name,value))
+		cookies = append(cookies, fmt.Sprintf("%s=%s", name, value))
 	}
 
 	return strings.Join(cookies, "; ")
@@ -32,5 +32,5 @@ type HeaderMutatorConfig struct {
 }
 
 func (h *HeaderMutatorConfig) HasHeaders() bool {
-	return h.Headers != nil && len(h.Headers) > 0
+	return len(h.Headers) > 0
 }
