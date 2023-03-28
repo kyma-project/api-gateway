@@ -1,6 +1,9 @@
 package v1beta1
 
-import "strings"
+import (
+  "strings"
+  "fmt"
+)
 
 const (
 	CookieMutator = "cookie"
@@ -18,7 +21,7 @@ func (c *CookieMutatorConfig) HasCookies() bool {
 func (c *CookieMutatorConfig) ToString() string {
 	var cookies []string
 	for name, value := range c.Cookies {
-		cookies = append(cookies, name+"="+value)
+		cookies = append(cookies, fmt.Sprintf("%s=%s,name,value))
 	}
 
 	return strings.Join(cookies, "; ")

@@ -47,7 +47,6 @@ requiredVars=(
 utils::check_required_vars "${requiredVars[@]}"
 
 # Temporary fix for unsupported kubernetes version
-GARDENER_CLUSTER_VERSION="1.25"
 
 if [[ $GARDENER_PROVIDER == "gcp" ]]; then
     # shellcheck source=tests/integration/scripts/gardener/gcp.sh
