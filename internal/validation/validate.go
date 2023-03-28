@@ -24,10 +24,15 @@ type accessStrategyValidator interface {
 	Validate(attrPath string, accessStrategies []*gatewayv1beta1.Authenticator) []Failure
 }
 
+type mutatorValidator interface {
+	Validate(attrPath string, rule gatewayv1beta1.Rule) []Failure
+}
+
 // APIRule is used to validate github.com/kyma-project/api-gateway/api/v1beta1/APIRule instances
 type APIRule struct {
 	HandlerValidator          handlerValidator
 	AccessStrategiesValidator accessStrategyValidator
+	MutatorsValidator         mutatorValidator
 	ServiceBlockList          map[string][]string
 	DomainAllowList           []string
 	HostBlockList             []string
@@ -42,7 +47,7 @@ type Failure struct {
 
 // Validate performs APIRule validation
 func (v *APIRule) Validate(api *gatewayv1beta1.APIRule, vsList networkingv1beta1.VirtualServiceList) []Failure {
-	res := []Failure{}
+	var res []Failure
 
 	//Validate service on path level if it is created
 	if api.Spec.Service != nil {
@@ -194,6 +199,12 @@ func (v *APIRule) validateRules(attributePath string, checkForService bool, api 
 				}
 			}
 		}
+
+		if v.MutatorsValidator != nil {
+			mutatorFailures := v.MutatorsValidator.Validate(attributePathWithRuleIndex, r)
+			problems = append(problems, mutatorFailures...)
+		}
+
 	}
 
 	return problems

@@ -62,7 +62,7 @@ var _ = Describe("Builder for", func() {
 				HTTP(HTTPRoute().
 					Match(MatchRequest().Uri().Regex(matchURIRegex)).
 					Match(MatchRequest().Uri().Regex(matchURIRegex2)).
-					Headers(Headers().SetHostHeader(host)).
+					Headers(NewHttpRouteHeadersBuilder().SetHostHeader(host).Get()).
 					Route(RouteDestination().Host(destHost).Port(destPort)).
 					Timeout(timeout)).
 				HTTP(HTTPRoute().

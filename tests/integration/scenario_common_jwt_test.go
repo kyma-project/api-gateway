@@ -22,5 +22,6 @@ func initCommon(ctx *godog.ScenarioContext) {
 }
 
 func (s *istioJwtManifestScenario) callingTheEndpointWithInvalidTokenShouldResultInStatusBetween(path string, lower, higher int) error {
-	return helper.CallEndpointWithHeadersWithRetries(anyToken, authorizationHeaderName, fmt.Sprintf("%s%s", s.url, path), &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher})
+	requestHeaders := map[string]string{authorizationHeaderName: anyToken}
+	return helper.CallEndpointWithHeadersWithRetries(requestHeaders, fmt.Sprintf("%s%s", s.url, path), &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher})
 }

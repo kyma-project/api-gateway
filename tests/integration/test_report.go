@@ -1,17 +1,12 @@
 package api_gateway
 
 import (
-	"context"
-	"encoding/json"
 	"fmt"
-	"github.com/tidwall/pretty"
 	"gitlab.com/rodrigoodhin/gocure/models"
 	"gitlab.com/rodrigoodhin/gocure/pkg/gocure"
 	"gitlab.com/rodrigoodhin/gocure/report/html"
 	"io"
 	"io/fs"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"log"
 	"os"
 	"path/filepath"
@@ -117,31 +112,4 @@ func copy(src, dst string) (int64, error) {
 	defer destination.Close()
 	nBytes, err := io.Copy(destination, source)
 	return nBytes, err
-}
-
-func getPodListReport() string {
-	type returnedPodList struct {
-		PodList []struct {
-			Metadata struct {
-				Name              string `json:"name"`
-				CreationTimestamp string `json:"creationTimestamp"`
-			} `json:"metadata"`
-			Status struct {
-				Phase string `json:"phase"`
-			} `json:"status"`
-		} `json:"items"`
-	}
-
-	res := schema.GroupVersionResource{Group: "", Version: "v1", Resource: "pods"}
-
-	list, _ := k8sClient.Resource(res).Namespace("").List(context.Background(), v1.ListOptions{})
-
-	p := returnedPodList{}
-	toMarshal, _ := json.Marshal(list)
-	err := json.Unmarshal(toMarshal, &p)
-	if err != nil {
-		log.Fatalf(err.Error())
-	}
-	toPrint, _ := json.Marshal(p)
-	return string(pretty.Pretty(toPrint))
 }

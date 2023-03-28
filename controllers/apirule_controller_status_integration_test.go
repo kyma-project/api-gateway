@@ -134,7 +134,7 @@ var _ = Describe("Resource status", func() {
 			serviceName := generateTestName(testServiceName, testIDLength)
 			serviceHost := fmt.Sprintf("%s.kyma.local", serviceName)
 
-			rule := testRule(testPath, defaultMethods, defaultMutators, noConfigHandler("noop"))
+			rule := testRule(testPath, defaultMethods, []*gatewayv1beta1.Mutator{}, noConfigHandler("noop"))
 			instance := testInstance(apiRuleName, testNamespace, serviceName, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule})
 
 			err := c.Create(context.TODO(), instance)
@@ -176,7 +176,7 @@ var _ = Describe("Resource status", func() {
 			invalidConfig := testOauthHandler(defaultScopes)
 			invalidConfig.Name = "noop"
 
-			rule := testRule(testPath, defaultMethods, defaultMutators, invalidConfig)
+			rule := testRule(testPath, defaultMethods, []*gatewayv1beta1.Mutator{}, invalidConfig)
 			instance := testInstance(apiRuleName, testNamespace, serviceName, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule})
 			instance.Spec.Rules = append(instance.Spec.Rules, instance.Spec.Rules[0]) //Duplicate entry
 			instance.Spec.Rules = append(instance.Spec.Rules, instance.Spec.Rules[0]) //Duplicate entry

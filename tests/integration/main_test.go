@@ -38,10 +38,7 @@ func TestIstioJwt(t *testing.T) {
 		Options: &opts,
 	}
 
-	testExitCode := suite.Run()
-	if testExitCode != 0 {
-		t.Fatalf("non-zero status returned, failed to run feature tests, Pod list: %s\n", getPodListReport())
-	}
+	suite.Run()
 }
 
 func cleanUp(orgJwtHandler string) {

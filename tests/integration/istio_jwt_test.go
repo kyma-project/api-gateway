@@ -27,6 +27,10 @@ func initIstioJwtScenarios(ctx *godog.ScenarioContext) {
 	initDiffServiceSameMethods(ctx)
 	initJwtUnavailableIssuer(ctx)
 	initJwtIssuerJwksNotMatch(ctx)
+	initMutatorCookie(ctx)
+	initMutatorHeader(ctx)
+	initMultipleMutators(ctx)
+	initMutatorsOverwrite(ctx)
 }
 
 func (s *istioJwtManifestScenario) theAPIRuleIsApplied() error {
@@ -39,47 +43,47 @@ func (s *istioJwtManifestScenario) theAPIRuleIsApplied() error {
 
 func (s *istioJwtManifestScenario) callingTheEndpointWithAValidToken(path, tokenType, _, _ string, lower, higher int) error {
 	asserter := &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher}
-	return callingEndpointWithHeadersWithRetries(s.url, path, tokenType, asserter)
+	return callingEndpointWithHeadersWithRetries(s.url, path, tokenType, asserter, nil)
 }
 
 func (s *istioJwtManifestScenario) callingTheEndpointWithValidTokenShouldResultInStatusBetween(path, tokenType string, lower, higher int) error {
 	asserter := &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher}
-	return callingEndpointWithHeadersWithRetries(s.url, path, tokenType, asserter)
+	return callingEndpointWithHeadersWithRetries(s.url, path, tokenType, asserter, nil)
 }
 
 func (s *istioJwtManifestScenario) callingTheEndpointWithValidTokenShouldResultInBodyContaining(path, tokenType string, bodyContent string) error {
-	asserter := &helpers.BodyContainsPredicate{Expected: bodyContent}
-	return callingEndpointWithHeadersWithRetries(s.url, path, tokenType, asserter)
+	asserter := &helpers.BodyContainsPredicate{Expected: []string{bodyContent}}
+	return callingEndpointWithHeadersWithRetries(s.url, path, tokenType, asserter, nil)
 }
 
-func callingEndpointWithHeadersWithRetries(url string, path string, tokenType string, asserter helpers.HttpResponseAsserter) error {
+func callingEndpointWithHeadersWithRetries(url string, path string, tokenType string, asserter helpers.HttpResponseAsserter, requestHeaders map[string]string) error {
+
+	if requestHeaders == nil {
+		requestHeaders = make(map[string]string)
+	}
+
 	switch tokenType {
 	case "Opaque":
 		token, err := jwt.GetAccessToken(*oauth2Cfg, jwtConfig, strings.ToLower(tokenType))
 		if err != nil {
 			return fmt.Errorf("failed to fetch an id_token: %s", err.Error())
 		}
-
-		return helper.CallEndpointWithHeadersWithRetries(token, opaqueHeaderName, fmt.Sprintf("%s%s", url, path), asserter)
+		requestHeaders[opaqueHeaderName] = token
 	case "JWT":
 		token, err := jwt.GetAccessToken(*oauth2Cfg, jwtConfig, strings.ToLower(tokenType))
 		if err != nil {
 			return fmt.Errorf("failed to fetch an id_token: %s", err.Error())
 		}
-		headerVal := fmt.Sprintf("Bearer %s", token)
-
-		return helper.CallEndpointWithHeadersWithRetries(headerVal, authorizationHeaderName, fmt.Sprintf("%s%s", url, path), asserter)
+		requestHeaders[authorizationHeaderName] = fmt.Sprintf("Bearer %s", token)
+	default:
+		return fmt.Errorf("unsupported token type: %s", tokenType)
 	}
 
-	return godog.ErrUndefined
+	return helper.CallEndpointWithHeadersWithRetries(requestHeaders, fmt.Sprintf("%s%s", url, path), asserter)
 }
 
 func (s *istioJwtManifestScenario) callingTheEndpointWithoutTokenShouldResultInStatusBetween(path string, lower, higher int) error {
 	return helper.CallEndpointWithRetries(fmt.Sprintf("%s%s", s.url, path), &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher})
-}
-
-func (s *istioJwtManifestScenario) callingTheEndpointTokenShouldResultInBodyContaining(path, bodyContent string) error {
-	return helper.CallEndpointWithRetries(fmt.Sprintf("%s%s", s.url, path), &helpers.BodyContainsPredicate{Expected: bodyContent})
 }
 
 func (s *istioJwtManifestScenario) thereAreTwoNamespaces() error {

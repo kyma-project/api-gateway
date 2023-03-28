@@ -36,7 +36,7 @@ type virtualServiceCreator struct {
 }
 
 // Create returns the Virtual Service using the configuration of the APIRule.
-func (r virtualServiceCreator) Create(api *gatewayv1beta1.APIRule) *networkingv1beta1.VirtualService {
+func (r virtualServiceCreator) Create(api *gatewayv1beta1.APIRule) (*networkingv1beta1.VirtualService, error) {
 	virtualServiceNamePrefix := fmt.Sprintf("%s-", api.ObjectMeta.Name)
 
 	vsSpecBuilder := builders.VirtualServiceSpec()
@@ -78,9 +78,33 @@ func (r virtualServiceCreator) Create(api *gatewayv1beta1.APIRule) *networkingv1
 			AllowOrigins(r.corsConfig.AllowOrigins...).
 			AllowMethods(r.corsConfig.AllowMethods...).
 			AllowHeaders(r.corsConfig.AllowHeaders...))
-		httpRouteBuilder.Headers(builders.Headers().
-			SetHostHeader(helpers.GetHostWithDomain(*api.Spec.Host, r.defaultDomainName)))
 		httpRouteBuilder.Timeout(time.Second * time.Duration(r.httpTimeoutDuration))
+
+		headersBuilder := builders.NewHttpRouteHeadersBuilder().
+			SetHostHeader(helpers.GetHostWithDomain(*api.Spec.Host, r.defaultDomainName))
+
+		// We need to add mutators only for JWT secured rules, since "noop" and "oauth2_introspection" access strategies
+		// create access rules and therefore use ory mutators. The "allow" access strategy does not support mutators at all.
+		if processing.IsJwtSecured(rule) {
+			cookieMutator, err := rule.GetCookieMutator()
+			if err != nil {
+				return nil, err
+			}
+			if cookieMutator.HasCookies() {
+				headersBuilder.SetRequestCookies(cookieMutator.ToString())
+			}
+
+			headerMutator, err := rule.GetHeaderMutator()
+			if err != nil {
+				return nil, err
+			}
+			if headerMutator.HasHeaders() {
+				headersBuilder.SetRequestHeaders(headerMutator.Headers)
+			}
+		}
+
+		httpRouteBuilder.Headers(headersBuilder.Get())
+
 		vsSpecBuilder.HTTP(httpRouteBuilder)
 
 	}
@@ -97,5 +121,5 @@ func (r virtualServiceCreator) Create(api *gatewayv1beta1.APIRule) *networkingv1
 
 	vsBuilder.Spec(vsSpecBuilder)
 
-	return vsBuilder.Get()
+	return vsBuilder.Get(), nil
 }

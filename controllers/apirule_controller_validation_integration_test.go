@@ -25,7 +25,7 @@ var _ = Describe("Apirule controller validation", func() {
 
 	Context("with istio handler", func() {
 
-		testJwtHandlerConfigError := func(accessStrategies []*gatewayv1beta1.Authenticator, expectedValidationErrors []string) {
+		testConfigError := func(accessStrategies []*gatewayv1beta1.Authenticator, mutators []*gatewayv1beta1.Mutator, expectedValidationErrors []string) {
 			// given
 			setHandlerConfigMap(helpers.JWT_HANDLER_ISTIO)
 
@@ -36,7 +36,7 @@ var _ = Describe("Apirule controller validation", func() {
 			rule := gatewayv1beta1.Rule{
 				Path:             testPath,
 				Methods:          defaultMethods,
-				Mutators:         defaultMutators,
+				Mutators:         mutators,
 				AccessStrategies: accessStrategies,
 			}
 			instance := testInstance(apiRuleName, testNamespace, serviceName, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule})
@@ -68,6 +68,23 @@ var _ = Describe("Apirule controller validation", func() {
 					g.Expect(created.Status.APIRuleStatus.Description).To(ContainSubstring(expected))
 				}
 			}, eventuallyTimeout).Should(Succeed())
+		}
+
+		testMutatorConfigError := func(mutator *gatewayv1beta1.Mutator, expectedValidationErrors []string) {
+			a := []*gatewayv1beta1.Authenticator{
+				{
+					Handler: &gatewayv1beta1.Handler{
+						Name: "jwt",
+					},
+				},
+			}
+
+			mutators := []*gatewayv1beta1.Mutator{mutator}
+			testConfigError(a, mutators, expectedValidationErrors)
+		}
+
+		testJwtHandlerConfigError := func(accessStrategies []*gatewayv1beta1.Authenticator, expectedValidationErrors []string) {
+			testConfigError(accessStrategies, []*gatewayv1beta1.Mutator{}, expectedValidationErrors)
 		}
 
 		It("should not allow creation of APIRule without config in jwt handler", func() {
@@ -223,6 +240,88 @@ var _ = Describe("Apirule controller validation", func() {
 
 				testJwtHandlerConfigError(accessStrategies, expectedValidationErrors)
 			})
+		})
+
+		Context("mutators", func() {
+
+			It("should not allow creation of APIRule with id_token mutator", func() {
+				mutator := &gatewayv1beta1.Mutator{
+					Handler: &gatewayv1beta1.Handler{
+						Name: "id_token",
+					},
+				}
+
+				expectedValidationErrors := []string{
+					"Attribute \".spec.rules[0].mutators[0].handler\": unsupported mutator: id_token",
+				}
+
+				testMutatorConfigError(mutator, expectedValidationErrors)
+			})
+
+			It("should not allow creation of APIRule with hydrator mutator", func() {
+				mutator := &gatewayv1beta1.Mutator{
+					Handler: &gatewayv1beta1.Handler{
+						Name: "hydrator",
+					},
+				}
+
+				expectedValidationErrors := []string{
+					"Attribute \".spec.rules[0].mutators[0].handler\": unsupported mutator: hydrator",
+				}
+
+				testMutatorConfigError(mutator, expectedValidationErrors)
+			})
+
+			It("should not allow creation of APIRule without handler in mutator", func() {
+				mutator := &gatewayv1beta1.Mutator{
+					Handler: &gatewayv1beta1.Handler{},
+				}
+
+				expectedValidationErrors := []string{
+					"Attribute \".spec.rules[0].mutators[0].handler\": mutator handler cannot be empty",
+				}
+
+				testMutatorConfigError(mutator, expectedValidationErrors)
+			})
+
+			It("should not allow creation of APIRule with header mutator without headers", func() {
+				mutator := &gatewayv1beta1.Mutator{
+					Handler: &gatewayv1beta1.Handler{
+						Name: "header",
+						Config: getRawConfig(
+							gatewayv1beta1.HeaderMutatorConfig{
+								Headers: map[string]string{},
+							},
+						),
+					},
+				}
+
+				expectedValidationErrors := []string{
+					"Attribute \".spec.rules[0].mutators[0].handler.config\": headers cannot be empty",
+				}
+
+				testMutatorConfigError(mutator, expectedValidationErrors)
+			})
+
+			It("should not allow creation of APIRule with cookie mutator without cookies", func() {
+				mutator := &gatewayv1beta1.Mutator{
+					Handler: &gatewayv1beta1.Handler{
+						Name: "cookie",
+						Config: getRawConfig(
+							gatewayv1beta1.CookieMutatorConfig{
+								Cookies: map[string]string{},
+							},
+						),
+					},
+				}
+
+				expectedValidationErrors := []string{
+					"Attribute \".spec.rules[0].mutators[0].handler.config\": cookies cannot be empty",
+				}
+
+				testMutatorConfigError(mutator, expectedValidationErrors)
+			})
+
 		})
 	})
 

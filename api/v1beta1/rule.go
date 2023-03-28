@@ -15,3 +15,48 @@ func (r *Rule) GetJwtIstioAuthorizations() []*JwtAuthorization {
 
 	return authorizations.Authorizations
 }
+
+func (r *Rule) GetCookieMutator() (CookieMutatorConfig, error) {
+	var mutatorConfig CookieMutatorConfig
+
+	if r.Mutators == nil {
+		return mutatorConfig, nil
+	}
+
+	for _, mutator := range r.Mutators {
+		if mutator.Handler.Name == CookieMutator {
+
+			err := json.Unmarshal(mutator.Handler.Config.Raw, &mutatorConfig)
+
+			if err != nil {
+				return mutatorConfig, err
+			}
+
+			return mutatorConfig, nil
+		}
+	}
+
+	return mutatorConfig, nil
+}
+
+func (r *Rule) GetHeaderMutator() (HeaderMutatorConfig, error) {
+	var mutatorConfig HeaderMutatorConfig
+
+	if r.Mutators == nil {
+		return mutatorConfig, nil
+	}
+
+	for _, mutator := range r.Mutators {
+		if mutator.Handler.Name == HeaderMutator {
+			err := json.Unmarshal(mutator.Handler.Config.Raw, &mutatorConfig)
+
+			if err != nil {
+				return mutatorConfig, err
+			}
+
+			return mutatorConfig, err
+		}
+	}
+
+	return mutatorConfig, nil
+}
