@@ -32,6 +32,7 @@ else
     rm cover.out
 fi
 
+git checkout . && git clean -xffd
 git fetch && git checkout $PULL_BASE_SHA
 
 echo -e "Running tests on: main (${PULL_BASE_SHA})"
