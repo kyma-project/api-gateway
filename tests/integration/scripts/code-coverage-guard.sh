@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -eox pipefail
+set -eo pipefail
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -48,7 +48,7 @@ else
 fi
 
 if awk "BEGIN {exit !($coverage_pr >= $coverage_main)}"; then
-	echo -e "${GREEN}√ Thanks for keeping / increasing code coverage!"
+	echo -e "${GREEN}√ Thanks for keeping & increasing code coverage!"
 else
 	echo -e "${RED}✗ This PR lowering code coverage compared to main branch! Please add tests.\\n${NC}"
 	exit 1
