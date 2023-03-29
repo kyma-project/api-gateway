@@ -20,9 +20,8 @@ cd "${SCRIPT_DIR}/../../../" || exit 1
 
 echo -e "Code coverage guard (ensures PRs do not lower code coverage)"
 echo -e "Running tests on: PR-${PULL_NUMBER} (${PULL_PULL_SHA})"
-make test
 
-if [[ $? != 0 ]]; then
+if ! make test; then
 	echo -e "${RED}✗ make test\\n${NC}"
 	exit 1
 else
@@ -36,9 +35,8 @@ git checkout . && git clean -xffd
 git fetch && git checkout $PULL_BASE_SHA
 
 echo -e "Running tests on: main (${PULL_BASE_SHA})"
-make test
 
-if [[ $? != 0 ]]; then
+if ! make test; then
 	echo -e "${RED}✗ make test\\n${NC}"
 	exit 1
 else
