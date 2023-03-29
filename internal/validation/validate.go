@@ -31,7 +31,7 @@ type mutatorValidator interface {
 }
 
 type injectionValidator interface {
-	Validate(attrPath string, service apiv1beta1.WorkloadSelector, namespace string) ([]Failure, error)
+	Validate(attrPath string, service *apiv1beta1.WorkloadSelector, namespace string) ([]Failure, error)
 }
 
 // APIRuleValidator is used to validate github.com/kyma-project/api-gateway/api/v1beta1/APIRule instances
@@ -193,7 +193,7 @@ func (v *APIRuleValidator) validateRules(attributePath string, checkForService b
 			problems = append(problems, Failure{AttributePath: attributePathWithRuleIndex + ".service", Message: "No service defined with no main service on spec level"})
 		}
 		if r.Service != nil {
-			problems = append(problems, v.validateAccessStrategies(attributePathWithRuleIndex+".accessStrategies", r.AccessStrategies, *builders.SelectorFromService(r.Service), helpers.FindServiceNamespace(api, &r))...)
+			problems = append(problems, v.validateAccessStrategies(attributePathWithRuleIndex+".accessStrategies", r.AccessStrategies, builders.SelectorFromService(r.Service), helpers.FindServiceNamespace(api, &r))...)
 			for namespace, services := range v.ServiceBlockList {
 				for _, svc := range services {
 					serviceNamespace := helpers.FindServiceNamespace(api, &r)
@@ -206,7 +206,7 @@ func (v *APIRuleValidator) validateRules(attributePath string, checkForService b
 				}
 			}
 		} else if api.Spec.Service != nil {
-			problems = append(problems, v.validateAccessStrategies(attributePathWithRuleIndex+".accessStrategies", r.AccessStrategies, *builders.SelectorFromService(api.Spec.Service), helpers.FindServiceNamespace(api, &r))...)
+			problems = append(problems, v.validateAccessStrategies(attributePathWithRuleIndex+".accessStrategies", r.AccessStrategies, builders.SelectorFromService(api.Spec.Service), helpers.FindServiceNamespace(api, &r))...)
 		}
 
 		if v.MutatorsValidator != nil {
@@ -223,7 +223,7 @@ func (v *APIRuleValidator) validateMethods(attributePath string, methods []strin
 	return nil
 }
 
-func (v *APIRuleValidator) validateAccessStrategies(attributePath string, accessStrategies []*gatewayv1beta1.Authenticator, selector apiv1beta1.WorkloadSelector, namespace string) []Failure {
+func (v *APIRuleValidator) validateAccessStrategies(attributePath string, accessStrategies []*gatewayv1beta1.Authenticator, selector *apiv1beta1.WorkloadSelector, namespace string) []Failure {
 	var problems []Failure
 
 	if len(accessStrategies) == 0 {
@@ -241,7 +241,7 @@ func (v *APIRuleValidator) validateAccessStrategies(attributePath string, access
 	return problems
 }
 
-func (v *APIRuleValidator) validateAccessStrategy(attributePath string, accessStrategy *gatewayv1beta1.Authenticator, selector apiv1beta1.WorkloadSelector, namespace string) []Failure {
+func (v *APIRuleValidator) validateAccessStrategy(attributePath string, accessStrategy *gatewayv1beta1.Authenticator, selector *apiv1beta1.WorkloadSelector, namespace string) []Failure {
 	var problems []Failure
 	var vld handlerValidator
 
