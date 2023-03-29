@@ -19,7 +19,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" || exit; pwd)"
 cd "${SCRIPT_DIR}/../../../" || exit 1
 
 echo -e "Code coverage guard (ensures PRs do not lower code coverage)"
-echo -e "Running tests on PR: PR-${PULL_NUMBER}"
+echo -e "Running tests on: PR-${PULL_NUMBER} (${PULL_PULL_SHA})"
 make test
 
 if [[ $? != 0 ]]; then
@@ -34,7 +34,7 @@ fi
 
 git fetch && git checkout $PULL_BASE_SHA
 
-echo -e "Running tests on main branch"
+echo -e "Running tests on: main (${PULL_BASE_SHA})"
 make test
 
 if [[ $? != 0 ]]; then
