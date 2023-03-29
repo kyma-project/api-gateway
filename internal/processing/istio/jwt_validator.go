@@ -1,12 +1,20 @@
 package istio
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/api/v1beta1"
 	oryjwt "github.com/kyma-project/api-gateway/internal/types/ory"
 	"github.com/kyma-project/api-gateway/internal/validation"
+	apiv1beta1 "istio.io/api/type/v1beta1"
+	corev1 "k8s.io/api/core/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+)
+
+const (
+	istioSidecarContainerName string = "istio-proxy"
 )
 
 type handlerValidator struct{}
@@ -80,4 +88,37 @@ func checkForOryConfig(attributePath string, handler *gatewayv1beta1.Handler) (p
 	}
 
 	return problems
+}
+
+type injectionValidator struct {
+	ctx    context.Context
+	client client.Client
+}
+
+func (v *injectionValidator) Validate(attributePath string, selector apiv1beta1.WorkloadSelector, namespace string) (problems []validation.Failure, err error) {
+	var podList corev1.PodList
+	err = v.client.List(v.ctx, &podList, client.MatchingLabels(selector.MatchLabels))
+	if err != nil {
+		return nil, err
+	}
+	for _, pod := range podList.Items {
+		if !containsSidecar(pod) {
+			problems = append(problems, validation.Failure{AttributePath: attributePath, Message: fmt.Sprintf("Pod %s/%s doesn't have an injected sidecar", pod.Namespace, pod.Name)})
+		}
+	}
+	return problems, nil
+}
+
+func containsSidecar(pod corev1.Pod) bool {
+	// If the pod has one container it is not injected
+	// This skips IngressGateway pods, as those only have istio-proxy
+	if len(pod.Spec.Containers) == 1 {
+		return false
+	}
+	for _, container := range pod.Spec.Containers {
+		if container.Name == istioSidecarContainerName {
+			return true
+		}
+	}
+	return false
 }

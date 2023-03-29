@@ -115,7 +115,7 @@ func (p configMapPredicate) Generic(e event.GenericEvent) bool {
 func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	r.Log.Info("Starting reconciliation")
 
-	validator := validation.APIRule{
+	validator := validation.APIRuleValidator{
 		ServiceBlockList:  r.ServiceBlockList,
 		DomainAllowList:   r.DomainAllowList,
 		HostBlockList:     r.HostBlockList,
