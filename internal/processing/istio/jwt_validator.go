@@ -102,12 +102,10 @@ func (v *injectionValidator) Validate(attributePath string, selector *apiv1beta1
 	if err != nil {
 		return nil, err
 	}
-	if len(podList.Items)==0 {
-		return nil, errors.New("could not find pod")
-	}
+	
 	for _, pod := range podList.Items {
 		if !containsSidecar(pod) {
-			problems = append(problems, validation.Failure{AttributePath: attributePath, Message: fmt.Sprintf("Pod %s/%s doesn't have an injected sidecar", pod.Namespace, pod.Name)})
+			problems = append(problems, validation.Failure{AttributePath: attributePath, Message: fmt.Sprintf("Pod %s/%s does not have an injected istio sidecar", pod.Namespace, pod.Name)})
 		}
 	}
 	return problems, nil
