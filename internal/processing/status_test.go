@@ -58,10 +58,5 @@ var _ = Describe("Status", func() {
 			Expect(failureLines[3]).To(Equal("Attribute \"service.name\": is too short"))
 			Expect(failureLines[4]).To(Equal("2 more error(s)..."))
 		})
-
-		// It("should test IntMin function", func() {
-		// 	ans := IntMin(2, -2)
-		// 	Expect(ans).To(Equal(-2))
-		// })
 	})
 })
