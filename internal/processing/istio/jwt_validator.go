@@ -111,11 +111,6 @@ func (v *injectionValidator) Validate(attributePath string, selector *apiv1beta1
 }
 
 func containsSidecar(pod corev1.Pod) bool {
-	// If the pod has one container it is not injected
-	// This skips IngressGateway pods, as those only have istio-proxy
-	if len(pod.Spec.Containers) == 1 {
-		return false
-	}
 	for _, container := range pod.Spec.Containers {
 		if container.Name == istioSidecarContainerName {
 			return true
