@@ -28,8 +28,9 @@ else
 fi
 
 git fetch
-git checkout main
-git pull -p
+git remote -v
+git log -n 5 --graph --pretty=format:"%Cred%h%Creset %C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset" --abbrev-commit --date=relative
+git checkout $PULL_BASE_SHA
 
 echo -e "Running tests on main branch"
 make test
