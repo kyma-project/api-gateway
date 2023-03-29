@@ -28,7 +28,8 @@ else
 fi
 
 git fetch
-git reset --hard origin/main
+git checkout main
+git pull -p
 
 echo -e "Running tests on main branch"
 make test
