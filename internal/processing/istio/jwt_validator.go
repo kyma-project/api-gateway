@@ -3,7 +3,6 @@ package istio
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/api/v1beta1"
@@ -102,7 +101,7 @@ func (v *injectionValidator) Validate(attributePath string, selector *apiv1beta1
 	if err != nil {
 		return nil, err
 	}
-	
+
 	for _, pod := range podList.Items {
 		if !containsSidecar(pod) {
 			problems = append(problems, validation.Failure{AttributePath: attributePath, Message: fmt.Sprintf("Pod %s/%s does not have an injected istio sidecar", pod.Namespace, pod.Name)})
