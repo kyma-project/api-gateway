@@ -10,7 +10,8 @@ if [ -z "$PULL_PULL_SHA" ]; then
   exit 0
 fi
 
-cd "${API_GATEWAY_PROJECT_DIR}" || exit 1
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" || exit; pwd)"
+cd "${SCRIPT_DIR}/../../../" || exit 1
 
 echo -e "Code coverage guard (ensures PRs do not lower code coverage)"
 echo -e "Running tests on PR: PR-${PULL_NUMBER}"
