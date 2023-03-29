@@ -50,5 +50,5 @@ if awk "BEGIN {exit !($coverage_pr >= $coverage_main)}"; then
 	echo -e "${GREEN}√ Thanks for keeping & increasing code coverage!"
 else
 	echo -e "${RED}✗ This PR lowering code coverage compared to main branch! Please add tests.\\n${NC}"
-	exit 1
+	exit 0 # DO NOT FAIL for now, let get team approval first
 fi

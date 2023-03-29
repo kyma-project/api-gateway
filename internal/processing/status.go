@@ -144,10 +144,3 @@ func toStatus(c gatewayv1beta1.StatusCode, desc string) *gatewayv1beta1.APIRuleR
 		Description: desc,
 	}
 }
-
-func IntMin(a, b int) int {
-    if a < b {
-        return a
-    }
-    return b
-}
