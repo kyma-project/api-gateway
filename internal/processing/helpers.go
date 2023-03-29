@@ -87,10 +87,3 @@ func SliceToString(ss []string) (s string) {
 	}
 	return
 }
-
-func IntMin(a, b int) int {
-    if a < b {
-        return a
-    }
-    return b
-}
