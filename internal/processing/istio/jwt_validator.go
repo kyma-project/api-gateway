@@ -3,6 +3,7 @@ package istio
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/api/v1beta1"
@@ -100,6 +101,9 @@ func (v *injectionValidator) Validate(attributePath string, selector *apiv1beta1
 	err = v.client.List(v.ctx, &podList, client.MatchingLabels(selector.MatchLabels))
 	if err != nil {
 		return nil, err
+	}
+	if len(podList.Items)==0 {
+		return nil, errors.New("could not find pod")
 	}
 	for _, pod := range podList.Items {
 		if !containsSidecar(pod) {
