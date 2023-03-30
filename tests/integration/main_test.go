@@ -38,7 +38,10 @@ func TestIstioJwt(t *testing.T) {
 		Options: &opts,
 	}
 
-	suite.Run()
+	testExitCode := suite.Run()
+	if testExitCode != 0 {
+		t.Fatalf("non-zero status returned, failed to run feature tests")
+	}
 }
 
 func cleanUp(orgJwtHandler string) {
