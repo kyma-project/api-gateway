@@ -265,7 +265,7 @@ func (v *APIRuleValidator) validateAccessStrategy(attributePath string, accessSt
 		if v.InjectionValidator != nil {
 			injectionProblems, err := v.InjectionValidator.Validate(attributePath+".injection", selector, namespace)
 			if err != nil {
-				problems = append(problems, Failure{AttributePath: attributePath + ".handler", Message: "Could not find pod for selected service"})
+				problems = append(problems, Failure{AttributePath: attributePath + ".handler", Message: fmt.Sprintf("Could not find pod for selected service, err: %s", err)})
 			} else {
 				problems = append(problems, injectionProblems...)
 			}

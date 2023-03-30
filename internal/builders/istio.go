@@ -12,7 +12,7 @@ import (
 const (
 	istioIngressGatewayPrincipal        string = "cluster.local/ns/istio-system/sa/istio-ingressgateway-service-account"
 	oathkeeperMaesterAccountPrincipal   string = "cluster.local/ns/kyma-system/sa/oathkeeper-maester-account"
-	AuthorizationPolicyAppSelectorLabel string = "app"
+	authorizationPolicyAppSelectorLabel string = "app"
 )
 
 // NewAuthorizationPolicyBuilder returns a builder for istio.io/client-go/pkg/apis/security/v1beta1/AuthorizationPolicy type
@@ -375,6 +375,6 @@ type Authentication struct {
 
 func SelectorFromService(service *gatewayv1beta1.Service) *apiv1beta1.WorkloadSelector {
 	return &apiv1beta1.WorkloadSelector{
-		MatchLabels: map[string]string{AuthorizationPolicyAppSelectorLabel: *service.Name},
+		MatchLabels: map[string]string{authorizationPolicyAppSelectorLabel: *service.Name},
 	}
 }
