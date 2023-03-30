@@ -17,6 +17,7 @@ func initMutatorHeader(ctx *godog.ScenarioContext) {
 	ctx.Step(`JwtMutatorHeader: There is an endpoint on path "([^"]*)" with a header mutator setting "([^"]*)" header to "([^"]*)"$`, scenario.thereIsAnEndpointWithHeaderMutator)
 	ctx.Step(`JwtMutatorHeader: The APIRule is applied$`, scenario.theAPIRuleIsApplied)
 	ctx.Step(`JwtMutatorHeader: Calling the "([^"]*)" endpoint should return response with header "([^"]*)" with value "([^"]*)"$`, scenario.shouldReturnResponseWithHeader)
+	ctx.Step(`JwtMutatorHeader: Teardown httpbin service$`, scenario.teardownHttpbinService)
 }
 
 func (s *istioJwtManifestScenario) thereIsAnEndpointWithHeaderMutator(_, header, headerValue string) error {

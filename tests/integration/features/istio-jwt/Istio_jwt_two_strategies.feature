@@ -13,3 +13,4 @@ Feature: Exposing different endpoints with different handlers
     And OAuth2: Calling the "/get" endpoint with an invalid token should result in status between 400 and 403
     And OAuth2: Calling the "/get" endpoint with a valid "Opaque" token should result in status between 200 and 299
     And OAuth2: Calling the "/get" endpoint with a valid "JWT" token should result in status between 400 and 403
+    And OAuth2: Teardown httpbin service

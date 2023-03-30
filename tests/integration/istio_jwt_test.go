@@ -116,3 +116,18 @@ func (s *istioJwtManifestScenario) thereIsAHttpbinService() error {
 
 	return nil
 }
+
+func (s *istioJwtManifestScenario) teardownHttpbinService() error {
+	resources, err := manifestprocessor.ParseFromFileWithTemplate("testing-app.yaml", s.apiResourceDirectory, resourceSeparator, s.manifestTemplate)
+	if err != nil {
+		return err
+	}
+	err = batch.DeleteResources(k8sClient, resources...)
+	if err != nil {
+		return err
+	}
+
+	s.url = ""
+
+	return nil
+}

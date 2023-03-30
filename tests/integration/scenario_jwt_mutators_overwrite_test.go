@@ -20,6 +20,7 @@ func initMutatorsOverwrite(ctx *godog.ScenarioContext) {
 	ctx.Step(`JwtMutatorsOverwrite: The APIRule is applied$`, scenario.theAPIRuleIsApplied)
 	ctx.Step(`JwtMutatorsOverwrite: Calling the "([^"]*)" endpoint with a request having cookie header with value "([^"]*)" should return cookie header with value "([^"]*)"$`, scenario.shouldOverwriteCookieValue)
 	ctx.Step(`JwtMutatorsOverwrite: Calling the "([^"]*)" endpoint with a request having header "([^"]*)" with value "([^"]*)" should return same header with value "([^"]*)"$`, scenario.shouldOverwriteHeaderValue)
+	ctx.Step(`JwtMutatorsOverwrite: Teardown httpbin service$`, scenario.teardownHttpbinService)
 }
 
 func (s *istioJwtManifestScenario) shouldOverwriteHeaderValue(path, headerName, requestValue, responseValue string) error {

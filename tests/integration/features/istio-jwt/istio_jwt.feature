@@ -6,6 +6,7 @@ Feature: Exposing endpoints with Istio JWT authorization strategy
     Then Common: Calling the "/ip" endpoint without a token should result in status between 400 and 403
     And Common: Calling the "/ip" endpoint with an invalid token should result in status between 400 and 403
     And Common: Calling the "/ip" endpoint with a valid "JWT" token should result in status between 200 and 299
+    And Common: Teardown httpbin service
 
   Scenario: Calling httpbin that has an endpoint secured by JWT and unrestricted endpoints
     Given JwtAndUnrestricted: There is a httpbin service
@@ -16,6 +17,7 @@ Feature: Exposing endpoints with Istio JWT authorization strategy
     Then JwtAndUnrestricted: Calling the "/ip" endpoint with a valid "JWT" token should result in status between 200 and 299
     And JwtAndUnrestricted: Calling the "/headers" endpoint without token should result in status between 200 and 299
     And JwtAndUnrestricted: Calling the "/json" endpoint without token should result in status between 200 and 299
+    And JwtAndUnrestricted: Teardown httpbin service
 
   Scenario: Calling a httpbin endpoint secured with JWT that requires scopes claims
     Given Scopes: There is a httpbin service
@@ -26,6 +28,7 @@ Feature: Exposing endpoints with Istio JWT authorization strategy
     Then Scopes: Calling the "/ip" endpoint with a valid "JWT" token with scope claims "read" and "write" should result in status between 200 and 299
     And Scopes: Calling the "/get" endpoint with a valid "JWT" token with scope claims "read" and "write" should result in status between 400 and 403
     And Scopes: Calling the "/headers" endpoint with a valid "JWT" token with scope claims "read" and "write" should result in status between 200 and 299
+    And Scopes: Teardown httpbin service
 
   Scenario: Calling a httpbin endpoint secured with JWT that requires aud claim
     Given Audiences: There is a httpbin service
@@ -38,6 +41,7 @@ Feature: Exposing endpoints with Istio JWT authorization strategy
     And Audiences: Calling the "/ip" endpoint with a valid "JWT" token with audiences "https://example.com" and "https://example.com/user" should result in status between 200 and 299
     And Audiences: Calling the "/cache" endpoint with a valid "JWT" token with audiences "https://example.com" and "https://example.com/user" should result in status between 200 and 299
     And Audiences: Calling the "/headers" endpoint with a valid "JWT" token with audiences "https://example.com" and "https://example.com/user" should result in status between 400 and 403
+    And Audiences: Teardown httpbin service
 
 
   Scenario: Endpoints secured by JWT should fallback to service defined on root level when there is no service defined on rule level
@@ -47,6 +51,7 @@ Feature: Exposing endpoints with Istio JWT authorization strategy
     When ServiceFallback: The APIRule with service on root level is applied
     Then ServiceFallback: Calling the "/headers" endpoint with a valid "JWT" token should result in status between 200 and 299
     And ServiceFallback: Calling the "/ip" endpoint with a valid "JWT" token should result in status between 200 and 299
+    And ServiceFallback: Teardown httpbin service
 
   Scenario: Calling a httpbin endpoint secured with JWT in two namespaces
     Given TwoNamespaces: There is a httpbin service
@@ -58,6 +63,7 @@ Feature: Exposing endpoints with Istio JWT authorization strategy
     And TwoNamespaces: Calling the "/hello" endpoint with a valid "JWT" token should result in status between 200 and 299
     And TwoNamespaces: Calling the "/get" endpoint without token should result in status between 400 and 403
     And TwoNamespaces: Calling the "/hello" endpoint without token should result in status between 400 and 403
+    And TwoNamespaces: Teardown httpbin service
 
   Scenario: Exposing different services with same methods
    Given DiffSvcSameMethods: There is a httpbin service
@@ -67,15 +73,18 @@ Feature: Exposing endpoints with Istio JWT authorization strategy
    When DiffSvcSameMethods: The APIRule is applied
    Then DiffSvcSameMethods: Calling the "/headers" endpoint with a valid "JWT" token should result in status between 200 and 299
    And DiffSvcSameMethods: Calling the "/hello" endpoint with a valid "JWT" token should result in status between 200 and 299
+   And DiffSvcSameMethods: Teardown httpbin service
 
   Scenario: Exposing a JWT secured endpoint with unavailable issuer and jwks URL
     Given JwtIssuerUnavailable: There is a httpbin service
     Given JwtIssuerUnavailable: There is an endpoint secured with JWT on path "/ip" with invalid issuer and jwks
     When JwtIssuerUnavailable: The APIRule is applied
     And JwtIssuerUnavailable: Calling the "/ip" endpoint with a valid "JWT" token should result in body containing "Jwt issuer is not configured"
+    And JwtIssuerUnavailable: Teardown httpbin service
 
   Scenario: Exposing a JWT secured endpoint where issuer URL doesn't belong to jwks URL
     Given JwtIssuerJwksNotMatch: There is a httpbin service
     And JwtIssuerJwksNotMatch: There is an endpoint secured with JWT on path "/ip" with invalid issuer and jwks
     When JwtIssuerJwksNotMatch: The APIRule is applied
     And JwtIssuerJwksNotMatch: Calling the "/ip" endpoint with a valid "JWT" token should result in body containing "Jwks doesn't have key to match kid or alg from Jwt"
+    And JwtIssuerJwksNotMatch: Teardown httpbin service
