@@ -10,7 +10,6 @@ import (
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-const AuthorizationPolicyAppSelectorLabel = "app"
 
 // AuthorizationPolicyProcessor is the generic processor that handles the Istio JwtAuthorization Policies in the reconciliation of API Rule.
 type AuthorizationPolicyProcessor struct {

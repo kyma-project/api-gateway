@@ -44,7 +44,7 @@ var (
 var _ = Describe("ValidateConfig function", func() {
 	It("Should fail for missing config", func() {
 		//when
-		problems := (&APIRule{}).ValidateConfig(nil)
+		problems := (&APIRuleValidator{}).ValidateConfig(nil)
 
 		//then
 		Expect(problems).To(HaveLen(1))
@@ -56,7 +56,7 @@ var _ = Describe("ValidateConfig function", func() {
 		input := &helpers.Config{JWTHandler: "foo"}
 
 		//when
-		problems := (&APIRule{}).ValidateConfig(input)
+		problems := (&APIRuleValidator{}).ValidateConfig(input)
 
 		//then
 		Expect(problems).To(HaveLen(1))
@@ -77,7 +77,7 @@ var _ = Describe("Validate function", func() {
 		}
 
 		//when
-		problems := (&APIRule{
+		problems := (&APIRuleValidator{
 			HandlerValidator:          handlerValidatorMock,
 			AccessStrategiesValidator: asValidatorMock,
 			DomainAllowList:           testAllowList,
@@ -115,7 +115,7 @@ var _ = Describe("Validate function", func() {
 			}}
 
 		//when
-		problems := (&APIRule{
+		problems := (&APIRuleValidator{
 			HandlerValidator:          handlerValidatorMock,
 			AccessStrategiesValidator: asValidatorMock,
 			ServiceBlockList:          testBlockList,
@@ -155,7 +155,7 @@ var _ = Describe("Validate function", func() {
 			}}
 
 		//when
-		problems := (&APIRule{
+		problems := (&APIRuleValidator{
 			HandlerValidator:          handlerValidatorMock,
 			AccessStrategiesValidator: asValidatorMock,
 			ServiceBlockList:          testBlockList,
@@ -190,7 +190,7 @@ var _ = Describe("Validate function", func() {
 			}}
 
 		//when
-		problems := (&APIRule{
+		problems := (&APIRuleValidator{
 			HandlerValidator:          handlerValidatorMock,
 			AccessStrategiesValidator: asValidatorMock,
 			ServiceBlockList:          testBlockList,
@@ -227,7 +227,7 @@ var _ = Describe("Validate function", func() {
 			}}
 
 		//when
-		problems := (&APIRule{
+		problems := (&APIRuleValidator{
 			HandlerValidator:          handlerValidatorMock,
 			AccessStrategiesValidator: asValidatorMock,
 			ServiceBlockList:          testBlockList,
@@ -268,7 +268,7 @@ var _ = Describe("Validate function", func() {
 			}}
 
 		//when
-		problems := (&APIRule{
+		problems := (&APIRuleValidator{
 			HandlerValidator:          handlerValidatorMock,
 			AccessStrategiesValidator: asValidatorMock,
 			ServiceBlockList:          testBlockList,
@@ -303,7 +303,7 @@ var _ = Describe("Validate function", func() {
 			}}
 
 		//when
-		problems := (&APIRule{
+		problems := (&APIRuleValidator{
 			HandlerValidator:          handlerValidatorMock,
 			AccessStrategiesValidator: asValidatorMock,
 			ServiceBlockList:          testBlockList,
@@ -336,7 +336,7 @@ var _ = Describe("Validate function", func() {
 			}}
 
 		//when
-		problems := (&APIRule{
+		problems := (&APIRuleValidator{
 			HandlerValidator:          handlerValidatorMock,
 			AccessStrategiesValidator: asValidatorMock,
 			ServiceBlockList:          testBlockList,
@@ -371,7 +371,7 @@ var _ = Describe("Validate function", func() {
 			}}
 
 		//when
-		problems := (&APIRule{
+		problems := (&APIRuleValidator{
 			HandlerValidator:          handlerValidatorMock,
 			AccessStrategiesValidator: asValidatorMock,
 			ServiceBlockList:          testBlockList,
@@ -406,7 +406,7 @@ var _ = Describe("Validate function", func() {
 			}}
 
 		//when
-		problems := (&APIRule{
+		problems := (&APIRuleValidator{
 			HandlerValidator:          handlerValidatorMock,
 			AccessStrategiesValidator: asValidatorMock,
 			ServiceBlockList:          testBlockList,
@@ -440,7 +440,7 @@ var _ = Describe("Validate function", func() {
 			}}
 
 		//when
-		problems := (&APIRule{
+		problems := (&APIRuleValidator{
 			HandlerValidator:          handlerValidatorMock,
 			AccessStrategiesValidator: asValidatorMock,
 			ServiceBlockList:          testBlockList,
@@ -479,7 +479,7 @@ var _ = Describe("Validate function", func() {
 		}
 
 		//when
-		problems := (&APIRule{
+		problems := (&APIRuleValidator{
 			HandlerValidator:          handlerValidatorMock,
 			AccessStrategiesValidator: asValidatorMock,
 			DomainAllowList:           testDomainAllowlist,
@@ -518,7 +518,7 @@ var _ = Describe("Validate function", func() {
 		existingVS.Spec.Hosts = []string{occupiedHost}
 
 		//when
-		problems := (&APIRule{
+		problems := (&APIRuleValidator{
 			HandlerValidator:          handlerValidatorMock,
 			AccessStrategiesValidator: asValidatorMock,
 			DomainAllowList:           testDomainAllowlist,
@@ -543,7 +543,7 @@ var _ = Describe("Validate function", func() {
 			},
 		}
 		//when
-		problems := (&APIRule{
+		problems := (&APIRuleValidator{
 			AccessStrategiesValidator: asValidatorMock,
 			DomainAllowList:           testDomainAllowlist,
 		}).Validate(input, networkingv1beta1.VirtualServiceList{})
@@ -587,7 +587,7 @@ var _ = Describe("Validate function", func() {
 			},
 		}
 		//when
-		problems := (&APIRule{
+		problems := (&APIRuleValidator{
 			AccessStrategiesValidator: asValidatorMock,
 			ServiceBlockList:          testBlockList,
 			DomainAllowList:           testDomainAllowlist,
@@ -633,7 +633,7 @@ var _ = Describe("Validate function", func() {
 			},
 		}
 		//when
-		problems := (&APIRule{
+		problems := (&APIRuleValidator{
 			AccessStrategiesValidator: asValidatorMock,
 			ServiceBlockList:          testBlockList,
 			DomainAllowList:           testDomainAllowlist,
@@ -678,7 +678,7 @@ var _ = Describe("Validate function", func() {
 			},
 		}
 		//when
-		problems := (&APIRule{
+		problems := (&APIRuleValidator{
 			AccessStrategiesValidator: asValidatorMock,
 			DomainAllowList:           testDomainAllowlist,
 		}).Validate(input, networkingv1beta1.VirtualServiceList{})
@@ -727,7 +727,7 @@ var _ = Describe("Validate function", func() {
 			},
 		}
 		//when
-		problems := (&APIRule{
+		problems := (&APIRuleValidator{
 			AccessStrategiesValidator: asValidatorMock,
 			DomainAllowList:           testDomainAllowlist,
 		}).Validate(input, networkingv1beta1.VirtualServiceList{})
@@ -785,7 +785,7 @@ var _ = Describe("Validate function", func() {
 			},
 		}
 		//when
-		problems := (&APIRule{
+		problems := (&APIRuleValidator{
 			HandlerValidator:          handlerValidatorMock,
 			AccessStrategiesValidator: asValidatorMock,
 			DomainAllowList:           testDomainAllowlist,
@@ -830,7 +830,7 @@ var _ = Describe("Validate function", func() {
 			},
 		}
 		//when
-		problems := (&APIRule{
+		problems := (&APIRuleValidator{
 			HandlerValidator:          handlerValidatorMock,
 			AccessStrategiesValidator: asValidatorMock,
 			DomainAllowList:           testDomainAllowlist,
