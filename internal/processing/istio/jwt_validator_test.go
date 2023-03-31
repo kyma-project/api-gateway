@@ -24,7 +24,7 @@ var _ = Describe("JWT Handler validation", func() {
 
 		k8sfakeClient := fake.NewClientBuilder().Build()
 
-		It("Should fail when the Pod for which the serrvice is specified is not istio injected", func() {
+		It("Should fail when the Pod for which the service is specified is not istio injected", func() {
 			//given
 			err := k8sfakeClient.Create(context.TODO(), &corev1.Pod{
 				ObjectMeta: v1.ObjectMeta{
@@ -160,6 +160,63 @@ var _ = Describe("JWT Handler validation", func() {
 
 		//then
 		Expect(problems).To(Not(BeEmpty()))
+	})
+
+	Context("for authentications", func() {
+
+		It("Should have failed validations when authentication has more than one fromHeaders", func() {
+			//given
+			config := processingtest.GetRawConfig(
+				gatewayv1beta1.JwtConfig{
+					Authentications: []*gatewayv1beta1.JwtAuthentication{
+						{
+							Issuer:      "https://issuer.test/",
+							JwksUri:     "file://.well-known/jwks.json",
+							FromHeaders: []*gatewayv1beta1.JwtHeader{{Name: "header1"}, {Name: "header2"}},
+						},
+					},
+				})
+
+			handler := &gatewayv1beta1.Handler{
+				Name:   "jwt",
+				Config: config,
+			}
+
+			//when
+			problems := (&handlerValidator{}).Validate("", handler)
+
+			//then
+			Expect(problems).To(HaveLen(1))
+			Expect(problems[0].AttributePath).To(Equal(".config.authentications[0].fromHeaders"))
+			Expect(problems[0].Message).To(Equal("multiple fromHeaders are not supported"))
+		})
+
+		It("Should have failed validations when authentication has more than one fromParams", func() {
+			//given
+			config := processingtest.GetRawConfig(
+				gatewayv1beta1.JwtConfig{
+					Authentications: []*gatewayv1beta1.JwtAuthentication{
+						{
+							Issuer:     "https://issuer.test/",
+							JwksUri:    "file://.well-known/jwks.json",
+							FromParams: []string{"param1", "param2"},
+						},
+					},
+				})
+
+			handler := &gatewayv1beta1.Handler{
+				Name:   "jwt",
+				Config: config,
+			}
+
+			//when
+			problems := (&handlerValidator{}).Validate("", handler)
+
+			//then
+			Expect(problems).To(HaveLen(1))
+			Expect(problems[0].AttributePath).To(Equal(".config.authentications[0].fromParams"))
+			Expect(problems[0].Message).To(Equal("multiple fromParams are not supported"))
+		})
 	})
 
 	Context("for authorizations", func() {
