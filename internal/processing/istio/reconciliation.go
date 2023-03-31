@@ -2,6 +2,8 @@ package istio
 
 import (
 	"context"
+
+	"github.com/go-logr/logr"
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/api/v1beta1"
 	"github.com/kyma-project/api-gateway/internal/processing"
 	"github.com/kyma-project/api-gateway/internal/validation"
@@ -14,10 +16,10 @@ type Reconciliation struct {
 	config     processing.ReconciliationConfig
 }
 
-func NewIstioReconciliation(config processing.ReconciliationConfig) Reconciliation {
+func NewIstioReconciliation(config processing.ReconciliationConfig, log *logr.Logger) Reconciliation {
 	acProcessor := NewAccessRuleProcessor(config)
 	vsProcessor := NewVirtualServiceProcessor(config)
-	apProcessor := NewAuthorizationPolicyProcessor(config)
+	apProcessor := NewAuthorizationPolicyProcessor(config, log)
 	raProcessor := NewRequestAuthenticationProcessor(config)
 
 	return Reconciliation{
@@ -32,9 +34,11 @@ func (r Reconciliation) Validate(ctx context.Context, client client.Client, apiR
 		return make([]validation.Failure, 0), err
 	}
 
-	validator := validation.APIRule{
+	validator := validation.APIRuleValidator{
 		HandlerValidator:          &handlerValidator{},
 		AccessStrategiesValidator: &asValidator{},
+		MutatorsValidator:         mutatorsValidator{},
+		InjectionValidator:        &injectionValidator{ctx: ctx, client: client},
 		ServiceBlockList:          r.config.ServiceBlockList,
 		DomainAllowList:           r.config.DomainAllowList,
 		HostBlockList:             r.config.HostBlockList,

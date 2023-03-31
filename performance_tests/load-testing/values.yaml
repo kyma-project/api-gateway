@@ -1,0 +1,20 @@
+domain: "<YOUR_CLUSTER_DOMAIN>"
+
+istioJWT:
+  enabled: true
+
+influxdb:
+  initScripts:
+    enabled: true
+    scripts:
+      init.iql: |+
+        CREATE DATABASE "k6"
+
+grafana:
+  sidecar:
+    dashboards:
+      enabled: true
+      label: load_test
+    datasources:
+      enabled: true
+      label: load_test

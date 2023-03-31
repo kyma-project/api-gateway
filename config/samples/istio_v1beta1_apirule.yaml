@@ -15,7 +15,16 @@ spec:
         name: orders-service
         port: 80
       methods: ["GET","POST"]
-      mutators: []
+      mutators:
+        - handler: header
+          config:
+            headers:
+              X-Custom-Auth: "%REQ(Authorization)%"
+              X-Some-Data: "some-data"
+        - handler: cookie
+          config:
+            cookies:
+              some-data: "data"
       accessStrategies:
         - handler: jwt
           config:

@@ -1,0 +1,24 @@
+apiVersion: gateway.kyma-project.io/v1beta1
+kind: APIRule
+metadata:
+  name: {{ .Release.Name }}
+  labels:
+    {{- include "load-testing.labels" . | nindent 4 }}
+spec:
+  gateway: kyma-system/kyma-gateway
+  host: hello.{{ .Values.domain }}
+  rules:
+  - accessStrategies:
+    - config: {}
+      handler: allow
+    methods:
+    - GET
+    - POST
+    - PUT
+    - PATCH
+    - DELETE
+    - HEAD
+    path: /.*
+  service:
+    name: {{ .Release.Name }}
+    port: 80

@@ -1,8 +1,9 @@
-package istio
+package istio_test
 
 import (
 	"fmt"
 	"os"
+	ctrl "sigs.k8s.io/controller-runtime"
 	"testing"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -42,3 +43,5 @@ var _ = ReportAfterSuite("custom reporter", func(report types.Report) {
 		}
 	}
 })
+
+var testLogger = ctrl.Log.WithName("istio-test")
