@@ -40,7 +40,8 @@ curl -Lo kyma.tar.gz "https://github.com/kyma-project/cli/releases/latest/downlo
 chmod +x kyma
 ./kyma version --client
 
-CLUSTER_NAME=$(uuidgen)
+CLUSTER_NAME=$(LC_ALL=C tr -dc 'a-z0-9' < /dev/urandom | head -c6)
+
 ./kyma provision gardener gcp \
         --secret "${GARDENER_KYMA_PROW_PROVIDER_SECRET_NAME}" \
         --name "${CLUSTER_NAME}" \
@@ -49,8 +50,8 @@ CLUSTER_NAME=$(uuidgen)
         --region "${GARDENER_REGION}" \
         -z "${GARDENER_ZONES}" \
         -t "n1-standard-4" \
-        --scaler-max 4 \
-        --scaler-min 2 \
+        --scaler-max 3 \
+        --scaler-min 1 \
         --kube-version="${GARDENER_CLUSTER_VERSION}" \
         --attempts 1 \
         --verbose
