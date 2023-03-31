@@ -60,6 +60,14 @@ func (o *handlerValidator) Validate(attributePath string, handler *gatewayv1beta
 			attrPath := fmt.Sprintf("%s%s[%d]%s", attributePath, ".config.authentications", i, ".jwksUri")
 			failures = append(failures, validation.Failure{AttributePath: attrPath, Message: fmt.Sprintf("value is not a secured url err=%s", err)})
 		}
+		if len(authentication.FromHeaders) > 1 {
+			attrPath := fmt.Sprintf("%s%s[%d]%s", attributePath, ".config.authentications", i, ".fromHeaders")
+			failures = append(failures, validation.Failure{AttributePath: attrPath, Message: "multiple fromHeaders are not supported"})
+		}
+		if len(authentication.FromParams) > 1 {
+			attrPath := fmt.Sprintf("%s%s[%d]%s", attributePath, ".config.authentications", i, ".fromParams")
+			failures = append(failures, validation.Failure{AttributePath: attrPath, Message: "multiple fromParams are not supported"})
+		}
 	}
 
 	authorizationsFailures := validation.HasInvalidAuthorizations(attributePath, template.Authorizations)

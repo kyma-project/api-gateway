@@ -38,9 +38,9 @@ var _ = Describe("JWT Handler validation", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			//when
-			problems, err := (&injectionValidator{ctx: context.TODO(), client: k8sfakeClient}).Validate("some.attribute", &v1beta1.WorkloadSelector{MatchLabels: map[string]string{"app": "test"}},"default")
+			problems, err := (&injectionValidator{ctx: context.TODO(), client: k8sfakeClient}).Validate("some.attribute", &v1beta1.WorkloadSelector{MatchLabels: map[string]string{"app": "test"}}, "default")
 			Expect(err).NotTo(HaveOccurred())
-			
+
 			//then
 			Expect(problems).To(HaveLen(1))
 			Expect(problems[0].AttributePath).To(Equal("some.attribute"))
@@ -66,9 +66,9 @@ var _ = Describe("JWT Handler validation", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			//when
-			problems, err := (&injectionValidator{ctx: context.TODO(), client: k8sfakeClient}).Validate("some.attribute", &v1beta1.WorkloadSelector{MatchLabels: map[string]string{"app": "test-injected"}},"default")
+			problems, err := (&injectionValidator{ctx: context.TODO(), client: k8sfakeClient}).Validate("some.attribute", &v1beta1.WorkloadSelector{MatchLabels: map[string]string{"app": "test-injected"}}, "default")
 			Expect(err).NotTo(HaveOccurred())
-			
+
 			//then
 			Expect(problems).To(HaveLen(0))
 		})

@@ -13,7 +13,7 @@ var _ = Describe("Builder for", func() {
 	methods := []string{"GET", "POST"}
 
 	Describe("AuthorizationPolicy", func() {
-		It("should build the object", func() {
+		It("should build an AuthorizationPolicy", func() {
 			name := "testName"
 			namespace := "testNs"
 
@@ -56,13 +56,14 @@ var _ = Describe("Builder for", func() {
 	})
 
 	Describe("RequestAuthentication", func() {
-		It("should build the object", func() {
-			name := "testName"
-			namespace := "testNs"
+		name := "testName"
+		namespace := "testNs"
 
-			testMatchLabelsKey := "app"
-			testMatchLabelsValue := "httpbin"
-			testMatchLabels := map[string]string{testMatchLabelsKey: testMatchLabelsValue}
+		testMatchLabelsKey := "app"
+		testMatchLabelsValue := "httpbin"
+		testMatchLabels := map[string]string{testMatchLabelsKey: testMatchLabelsValue}
+
+		It("should build an RequestAuthentication", func() {
 			testRaw := runtime.RawExtension{Raw: []byte(`{"authentications": [{"issuer": "testIssuer", "jwksUri": "testJwksUri"}]}`)}
 			testHandler := gatewayv1beta1.Handler{Config: &testRaw}
 			testAuthenticator := gatewayv1beta1.Authenticator{Handler: &testHandler}
@@ -79,8 +80,77 @@ var _ = Describe("Builder for", func() {
 			Expect(ap.GenerateName).To(Equal(name))
 			Expect(ap.Namespace).To(Equal(namespace))
 			Expect(ap.Spec.Selector.MatchLabels).To(BeEquivalentTo(testMatchLabels))
+			Expect(ap.Spec.JwtRules).To(HaveLen(1))
 			Expect(ap.Spec.JwtRules[0].Issuer).To(Equal("testIssuer"))
 			Expect(ap.Spec.JwtRules[0].JwksUri).To(Equal("testJwksUri"))
+			Expect(ap.Spec.JwtRules[0].FromHeaders).To(BeEmpty())
+			Expect(ap.Spec.JwtRules[0].FromParams).To(BeEmpty())
+		})
+
+		It("should build an RequestAuthentication with 2 JwtRules", func() {
+			testRaw := runtime.RawExtension{Raw: []byte(`{"authentications": [{"issuer": "testIssuer1", "jwksUri": "testJwksUri1"}, {"issuer": "testIssuer2", "jwksUri": "testJwksUri2"}]}`)}
+			testHandler := gatewayv1beta1.Handler{Config: &testRaw}
+			testAuthenticator := gatewayv1beta1.Authenticator{Handler: &testHandler}
+			testAccessStrategies := []*gatewayv1beta1.Authenticator{&testAuthenticator}
+
+			ap := NewRequestAuthenticationBuilder().WithGenerateName(name).WithNamespace(namespace).
+				WithSpec(NewRequestAuthenticationSpecBuilder().
+					WithSelector(NewSelectorBuilder().WithMatchLabels(testMatchLabelsKey, testMatchLabelsValue).Get()).
+					WithJwtRules(*NewJwtRuleBuilder().From(testAccessStrategies).Get()).
+					Get()).
+				Get()
+
+			Expect(ap.Spec.JwtRules).To(HaveLen(2))
+			Expect(ap.Spec.JwtRules[0].Issuer).To(Equal("testIssuer1"))
+			Expect(ap.Spec.JwtRules[0].JwksUri).To(Equal("testJwksUri1"))
+			Expect(ap.Spec.JwtRules[0].FromHeaders).To(BeEmpty())
+			Expect(ap.Spec.JwtRules[0].FromParams).To(BeEmpty())
+			Expect(ap.Spec.JwtRules[1].Issuer).To(Equal("testIssuer2"))
+			Expect(ap.Spec.JwtRules[1].JwksUri).To(Equal("testJwksUri2"))
+			Expect(ap.Spec.JwtRules[1].FromHeaders).To(BeEmpty())
+			Expect(ap.Spec.JwtRules[1].FromParams).To(BeEmpty())
+		})
+
+		It("should build an RequestAuthentication with fromHeaders", func() {
+			testRaw := runtime.RawExtension{Raw: []byte(`{"authentications": [{"issuer": "testIssuer", "jwksUri": "testJwksUri", "fromHeaders": [{"Name": "testHeader1"}, {"Name": "testHeader2", "Prefix": "testPrefix2"}]}]}`)}
+			testHandler := gatewayv1beta1.Handler{Config: &testRaw}
+			testAuthenticator := gatewayv1beta1.Authenticator{Handler: &testHandler}
+			testAccessStrategies := []*gatewayv1beta1.Authenticator{&testAuthenticator}
+
+			ap := NewRequestAuthenticationBuilder().WithGenerateName(name).WithNamespace(namespace).
+				WithSpec(NewRequestAuthenticationSpecBuilder().
+					WithSelector(NewSelectorBuilder().WithMatchLabels(testMatchLabelsKey, testMatchLabelsValue).Get()).
+					WithJwtRules(*NewJwtRuleBuilder().From(testAccessStrategies).Get()).
+					Get()).
+				Get()
+
+			Expect(ap.Spec.JwtRules).To(HaveLen(1))
+			Expect(ap.Spec.JwtRules[0].FromHeaders).To(HaveLen(2))
+			Expect(ap.Spec.JwtRules[0].FromHeaders[0].Name).To(Equal("testHeader1"))
+			Expect(ap.Spec.JwtRules[0].FromHeaders[0].Prefix).To(BeEmpty())
+			Expect(ap.Spec.JwtRules[0].FromHeaders[1].Name).To(Equal("testHeader2"))
+			Expect(ap.Spec.JwtRules[0].FromHeaders[1].Prefix).To(Equal("testPrefix2"))
+			Expect(ap.Spec.JwtRules[0].FromParams).To(BeEmpty())
+		})
+
+		It("should build an RequestAuthentication with fromParams", func() {
+			testRaw := runtime.RawExtension{Raw: []byte(`{"authentications": [{"issuer": "testIssuer", "jwksUri": "testJwksUri", "fromParams": ["param1", "param2"]}]}`)}
+			testHandler := gatewayv1beta1.Handler{Config: &testRaw}
+			testAuthenticator := gatewayv1beta1.Authenticator{Handler: &testHandler}
+			testAccessStrategies := []*gatewayv1beta1.Authenticator{&testAuthenticator}
+
+			ap := NewRequestAuthenticationBuilder().WithGenerateName(name).WithNamespace(namespace).
+				WithSpec(NewRequestAuthenticationSpecBuilder().
+					WithSelector(NewSelectorBuilder().WithMatchLabels(testMatchLabelsKey, testMatchLabelsValue).Get()).
+					WithJwtRules(*NewJwtRuleBuilder().From(testAccessStrategies).Get()).
+					Get()).
+				Get()
+
+			Expect(ap.Spec.JwtRules).To(HaveLen(1))
+			Expect(ap.Spec.JwtRules[0].FromParams).To(HaveLen(2))
+			Expect(ap.Spec.JwtRules[0].FromParams[0]).To(Equal("param1"))
+			Expect(ap.Spec.JwtRules[0].FromParams[1]).To(Equal("param2"))
+			Expect(ap.Spec.JwtRules[0].FromHeaders).To(BeEmpty())
 		})
 	})
 })

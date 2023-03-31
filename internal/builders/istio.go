@@ -332,10 +332,20 @@ func (jr *JwtRuleBuilder) From(val []*gatewayv1beta1.Authenticator) *JwtRuleBuil
 			_ = json.Unmarshal(accessStrategy.Config.Raw, authentications)
 		}
 		for _, authentication := range authentications.Authentications {
-			*jr.value = append(*jr.value, &v1beta1.JWTRule{
+			jwtRule := v1beta1.JWTRule{
 				Issuer:  authentication.Issuer,
 				JwksUri: authentication.JwksUri,
-			})
+			}
+			for _, fromHeader := range authentication.FromHeaders {
+				jwtRule.FromHeaders = append(jwtRule.FromHeaders, &v1beta1.JWTHeader{
+					Name:   fromHeader.Name,
+					Prefix: fromHeader.Prefix,
+				})
+			}
+			if authentication.FromParams != nil {
+				jwtRule.FromParams = authentication.FromParams
+			}
+			*jr.value = append(*jr.value, &jwtRule)
 		}
 	}
 	return jr
@@ -369,8 +379,15 @@ type Authentications struct {
 }
 
 type Authentication struct {
-	Issuer  string `json:"issuer"`
-	JwksUri string `json:"jwksUri"`
+	Issuer      string       `json:"issuer"`
+	JwksUri     string       `json:"jwksUri"`
+	FromHeaders []*JwtHeader `json:"fromHeaders"`
+	FromParams  []string     `json:"fromParams"`
+}
+
+type JwtHeader struct {
+	Name   string `json:"name"`
+	Prefix string `json:"prefix"`
 }
 
 func SelectorFromService(service *gatewayv1beta1.Service) *apiv1beta1.WorkloadSelector {
