@@ -38,11 +38,14 @@ curl -Lo kyma.tar.gz "https://github.com/kyma-project/cli/releases/latest/downlo
 && rm -f kyma.tar.gz
 
 chmod +x kyma
-./kyma version --client
+
+# Add pwd to path to be able to use Kyma binary
+export PATH="${PATH}:${PWD}"
+kyma version --client
 
 CLUSTER_NAME=$(LC_ALL=C tr -dc 'a-z0-9' < /dev/urandom | head -c6)
 
-./kyma provision gardener gcp \
+kyma provision gardener gcp \
         --secret "${GARDENER_KYMA_PROW_PROVIDER_SECRET_NAME}" \
         --name "${CLUSTER_NAME}" \
         --project "${GARDENER_KYMA_PROW_PROJECT_NAME}" \
