@@ -44,8 +44,8 @@ requiredVars=(
     GARDENER_KYMA_PROW_PROVIDER_SECRET_NAME
 )
 
-utils::check_required_vars "${requiredVars[@]}"
-
+#utils::check_required_vars "${requiredVars[@]}"
+#
 #if [[ $GARDENER_PROVIDER == "gcp" ]]; then
 #    # shellcheck source=tests/integration/scripts/gardener/gcp.sh
 #    source "${API_GATEWAY_SOURCES_DIR}/tests/integration/scripts/gardener/gcp.sh"
@@ -53,14 +53,14 @@ utils::check_required_vars "${requiredVars[@]}"
 #    log::error "GARDENER_PROVIDER ${GARDENER_PROVIDER} is not yet supported"
 #    exit 1
 #fi
-
-# nice cleanup on exit, be it succesful or on fail
-trap gardener::cleanup EXIT INT
-
-#Used to detect errors for logging purposes
-ERROR_LOGGING_GUARD="true"
-export ERROR_LOGGING_GUARD
-
+#
+## nice cleanup on exit, be it succesful or on fail
+#trap gardener::cleanup EXIT INT
+#
+##Used to detect errors for logging purposes
+#ERROR_LOGGING_GUARD="true"
+#export ERROR_LOGGING_GUARD
+#
 #readonly COMMON_NAME_PREFIX="grd"
 #utils::generate_commonName -n "${COMMON_NAME_PREFIX}"
 #COMMON_NAME="${utils_generate_commonName_return_commonName:?}"
@@ -106,7 +106,7 @@ export ERROR_LOGGING_GUARD
 #fi
 #
 #"${API_GATEWAY_SOURCES_DIR}/tests/integration/scripts/jobguard/run.sh"
-#api-gateway::launch_integration_tests
+api-gateway::launch_integration_tests
 
 #!!! Must be at the end of the script !!!
 ERROR_LOGGING_GUARD="false"

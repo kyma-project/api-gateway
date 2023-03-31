@@ -28,7 +28,7 @@ function api-gateway::prepare_test_env_integration_tests() {
 function api-gateway::launch_integration_tests() {
   log::info "Running API-Gateway integration tests"
   pushd "${API_GATEWAY_SOURCES_DIR}"
-  make install-kyma
+#  make install-kyma
   make test-integration
   popd
 
