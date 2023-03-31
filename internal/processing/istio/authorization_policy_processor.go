@@ -2,6 +2,7 @@ package istio
 
 import (
 	"fmt"
+
 	"github.com/go-logr/logr"
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/api/v1beta1"
 	"github.com/kyma-project/api-gateway/internal/builders"
@@ -109,15 +110,15 @@ func generateAuthorizationPolicy(api *gatewayv1beta1.APIRule, rule gatewayv1beta
 }
 
 func generateAuthorizationPolicySpec(api *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rule, authorization *gatewayv1beta1.JwtAuthorization) *v1beta1.AuthorizationPolicy {
-	var serviceName string
+	var service *gatewayv1beta1.Service
 	if rule.Service != nil {
-		serviceName = *rule.Service.Name
+		service = rule.Service
 	} else {
-		serviceName = *api.Spec.Service.Name
+		service = api.Spec.Service
 	}
 
 	authorizationPolicySpecBuilder := builders.NewAuthorizationPolicySpecBuilder().
-		WithSelector(builders.NewSelectorBuilder().WithMatchLabels(processors.AuthorizationPolicyAppSelectorLabel, serviceName).Get())
+		WithSelector(builders.SelectorFromService(service))
 
 	// If RequiredScopes are configured, we need to generate a seperate Rule for each scopeKey in defaultScopeKeys
 	if len(authorization.RequiredScopes) > 0 {

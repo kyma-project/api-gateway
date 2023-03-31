@@ -1,11 +1,12 @@
 package processing_test
 
 import (
+	"encoding/json"
 	"fmt"
-
 	apirulev1beta1 "github.com/kyma-project/api-gateway/api/v1beta1"
 	"github.com/kyma-project/api-gateway/internal/processing"
 	"github.com/onsi/gomega"
+	. "github.com/onsi/gomega"
 	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
 	"istio.io/api/networking/v1beta1"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
@@ -167,3 +168,11 @@ func ToCSVList(input []string) string {
 }
 
 var ActionToString = func(a processing.Action) string { return a.String() }
+
+func GetRawConfig(config any) *runtime.RawExtension {
+	bytes, err := json.Marshal(config)
+	Expect(err).To(BeNil())
+	return &runtime.RawExtension{
+		Raw: bytes,
+	}
+}

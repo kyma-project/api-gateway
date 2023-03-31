@@ -3,10 +3,10 @@ package istio_test
 import (
 	"context"
 	"fmt"
-
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/api/v1beta1"
 	"github.com/kyma-project/api-gateway/internal/processing"
 	. "github.com/kyma-project/api-gateway/internal/processing/internal/test"
+	processingtest "github.com/kyma-project/api-gateway/internal/processing/internal/test"
 	"github.com/kyma-project/api-gateway/internal/processing/istio"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -634,6 +634,282 @@ var _ = Describe("Virtual Service Processor", func() {
 			Expect(vs.ObjectMeta.GenerateName).To(Equal(ApiName + "-"))
 			Expect(vs.ObjectMeta.Namespace).To(Equal(ApiNamespace))
 			Expect(vs.ObjectMeta.Labels[TestLabelKey]).To(Equal(TestLabelValue))
+		})
+	})
+
+	Context("mutators are defined", func() {
+		When("access strategy is JWT", func() {
+			It("should return VS cookie and header configuration set", func() {
+
+				jwtConfigJSON := fmt.Sprintf(`{"trusted_issuers": ["%s"],"jwks": [],}`, JwtIssuer)
+
+				strategies := []*gatewayv1beta1.Authenticator{
+					{
+						Handler: &gatewayv1beta1.Handler{
+							Name: "jwt",
+							Config: &runtime.RawExtension{
+								Raw: []byte(jwtConfigJSON),
+							},
+						},
+					},
+				}
+
+				mutators := []*gatewayv1beta1.Mutator{
+					{
+						Handler: &gatewayv1beta1.Handler{
+							Name: "cookie",
+							Config: processingtest.GetRawConfig(
+								gatewayv1beta1.CookieMutatorConfig{
+									Cookies: map[string]string{
+										"x-test-cookie-1": "cookie-value1",
+										"x-test-cookie-2": "cookie-value2",
+									},
+								},
+							),
+						},
+					},
+					{
+						Handler: &gatewayv1beta1.Handler{
+							Name: "header",
+							Config: processingtest.GetRawConfig(
+								gatewayv1beta1.HeaderMutatorConfig{
+									Headers: map[string]string{
+										"x-test-header-1": "header-value1",
+										"x-test-header-2": "header-value2",
+									},
+								},
+							),
+						},
+					},
+				}
+
+				allowRule := GetRuleFor(ApiPath, ApiMethods, mutators, strategies)
+				rules := []gatewayv1beta1.Rule{allowRule}
+
+				apiRule := GetAPIRuleFor(rules)
+				apiRule.Spec.Host = &ServiceHostWithNoDomain
+				client := GetFakeClient()
+				processor := istio.NewVirtualServiceProcessor(GetTestConfig())
+
+				// when
+				result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
+
+				// then
+				Expect(err).To(BeNil())
+				Expect(result).To(HaveLen(1))
+
+				vs := result[0].Obj.(*networkingv1beta1.VirtualService)
+
+				//verify VS
+				Expect(vs).NotTo(BeNil())
+				Expect(vs.Spec.Http).To(HaveLen(1))
+				Expect(vs.Spec.Http[0].Headers.Request.Set).To(HaveKey("Cookie"))
+				Expect(vs.Spec.Http[0].Headers.Request.Set["Cookie"]).To(ContainSubstring("x-test-cookie-1=cookie-value1"))
+				Expect(vs.Spec.Http[0].Headers.Request.Set["Cookie"]).To(ContainSubstring("x-test-cookie-2=cookie-value2"))
+				Expect(vs.Spec.Http[0].Headers.Request.Set).To(HaveKeyWithValue("x-test-header-1", "header-value1"))
+				Expect(vs.Spec.Http[0].Headers.Request.Set).To(HaveKeyWithValue("x-test-header-2", "header-value2"))
+			})
+
+			It("should not override x-forwarded-for header", func() {
+				jwtConfigJSON := fmt.Sprintf(`{"trusted_issuers": ["%s"],"jwks": [],}`, JwtIssuer)
+
+				strategies := []*gatewayv1beta1.Authenticator{
+					{
+						Handler: &gatewayv1beta1.Handler{
+							Name: "jwt",
+							Config: &runtime.RawExtension{
+								Raw: []byte(jwtConfigJSON),
+							},
+						},
+					},
+				}
+
+				mutators := []*gatewayv1beta1.Mutator{
+					{
+						Handler: &gatewayv1beta1.Handler{
+							Name: "header",
+							Config: processingtest.GetRawConfig(
+								gatewayv1beta1.HeaderMutatorConfig{
+									Headers: map[string]string{
+										"x-test-header-1": "header-value1",
+									},
+								},
+							),
+						},
+					},
+				}
+
+				allowRule := GetRuleFor(ApiPath, ApiMethods, mutators, strategies)
+				rules := []gatewayv1beta1.Rule{allowRule}
+
+				apiRule := GetAPIRuleFor(rules)
+				apiRule.Spec.Host = &ServiceHostWithNoDomain
+				client := GetFakeClient()
+				processor := istio.NewVirtualServiceProcessor(GetTestConfig())
+
+				// when
+				result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
+
+				// then
+				Expect(err).To(BeNil())
+				Expect(result).To(HaveLen(1))
+
+				vs := result[0].Obj.(*networkingv1beta1.VirtualService)
+
+				//verify VS
+				Expect(vs).NotTo(BeNil())
+				Expect(vs.Spec.Http).To(HaveLen(1))
+				Expect(vs.Spec.Http[0].Headers.Request.Set).To(HaveKeyWithValue("x-forwarded-host", "myService.myDomain.com"))
+				Expect(vs.Spec.Http[0].Headers.Request.Set).To(HaveKeyWithValue("x-test-header-1", "header-value1"))
+			})
+
+		})
+
+		It("should not add mutator config to VS when access strategy is allow", func() {
+
+			strategies := []*gatewayv1beta1.Authenticator{
+				{
+					Handler: &gatewayv1beta1.Handler{
+						Name: "allow",
+					},
+				},
+			}
+
+			mutators := []*gatewayv1beta1.Mutator{
+				{
+					Handler: &gatewayv1beta1.Handler{
+						Name: "header",
+						Config: processingtest.GetRawConfig(
+							gatewayv1beta1.HeaderMutatorConfig{
+								Headers: map[string]string{
+									"x-test-header-1": "header-value1",
+								},
+							},
+						),
+					},
+				},
+			}
+
+			allowRule := GetRuleFor(ApiPath, ApiMethods, mutators, strategies)
+			rules := []gatewayv1beta1.Rule{allowRule}
+
+			apiRule := GetAPIRuleFor(rules)
+			apiRule.Spec.Host = &ServiceHostWithNoDomain
+			client := GetFakeClient()
+			processor := istio.NewVirtualServiceProcessor(GetTestConfig())
+
+			// when
+			result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
+
+			// then
+			Expect(err).To(BeNil())
+			Expect(result).To(HaveLen(1))
+
+			vs := result[0].Obj.(*networkingv1beta1.VirtualService)
+
+			//verify VS
+			Expect(vs).NotTo(BeNil())
+			Expect(vs.Spec.Http).To(HaveLen(1))
+			Expect(vs.Spec.Http[0].Headers.Request.Set).ToNot(HaveKey("Cookie"))
+			Expect(vs.Spec.Http[0].Headers.Request.Set).ToNot(HaveKeyWithValue("x-test-header-1", "header-value1"))
+		})
+
+		It("should not add mutator config to VS when access strategy is noop", func() {
+
+			strategies := []*gatewayv1beta1.Authenticator{
+				{
+					Handler: &gatewayv1beta1.Handler{
+						Name: "noop",
+					},
+				},
+			}
+
+			mutators := []*gatewayv1beta1.Mutator{
+				{
+					Handler: &gatewayv1beta1.Handler{
+						Name: "header",
+						Config: processingtest.GetRawConfig(
+							gatewayv1beta1.HeaderMutatorConfig{
+								Headers: map[string]string{
+									"x-test-header-1": "header-value1",
+								},
+							},
+						),
+					},
+				},
+			}
+
+			allowRule := GetRuleFor(ApiPath, ApiMethods, mutators, strategies)
+			rules := []gatewayv1beta1.Rule{allowRule}
+
+			apiRule := GetAPIRuleFor(rules)
+			apiRule.Spec.Host = &ServiceHostWithNoDomain
+			client := GetFakeClient()
+			processor := istio.NewVirtualServiceProcessor(GetTestConfig())
+
+			// when
+			result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
+
+			// then
+			Expect(err).To(BeNil())
+			Expect(result).To(HaveLen(1))
+
+			vs := result[0].Obj.(*networkingv1beta1.VirtualService)
+
+			//verify VS
+			Expect(vs).NotTo(BeNil())
+			Expect(vs.Spec.Http).To(HaveLen(1))
+			Expect(vs.Spec.Http[0].Headers.Request.Set).ToNot(HaveKey("Cookie"))
+			Expect(vs.Spec.Http[0].Headers.Request.Set).ToNot(HaveKeyWithValue("x-test-header-1", "header-value1"))
+		})
+
+		It("should not add mutator config to VS when access strategy is oauth2_introspection", func() {
+
+			strategies := []*gatewayv1beta1.Authenticator{
+				{
+					Handler: &gatewayv1beta1.Handler{
+						Name: "oauth2_introspection",
+					},
+				},
+			}
+
+			mutators := []*gatewayv1beta1.Mutator{
+				{
+					Handler: &gatewayv1beta1.Handler{
+						Name: "header",
+						Config: processingtest.GetRawConfig(
+							gatewayv1beta1.HeaderMutatorConfig{
+								Headers: map[string]string{
+									"x-test-header-1": "header-value1",
+								},
+							},
+						),
+					},
+				},
+			}
+
+			allowRule := GetRuleFor(ApiPath, ApiMethods, mutators, strategies)
+			rules := []gatewayv1beta1.Rule{allowRule}
+
+			apiRule := GetAPIRuleFor(rules)
+			apiRule.Spec.Host = &ServiceHostWithNoDomain
+			client := GetFakeClient()
+			processor := istio.NewVirtualServiceProcessor(GetTestConfig())
+
+			// when
+			result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
+
+			// then
+			Expect(err).To(BeNil())
+			Expect(result).To(HaveLen(1))
+
+			vs := result[0].Obj.(*networkingv1beta1.VirtualService)
+
+			//verify VS
+			Expect(vs).NotTo(BeNil())
+			Expect(vs.Spec.Http).To(HaveLen(1))
+			Expect(vs.Spec.Http[0].Headers.Request.Set).ToNot(HaveKey("Cookie"))
+			Expect(vs.Spec.Http[0].Headers.Request.Set).ToNot(HaveKeyWithValue("x-test-header-1", "header-value1"))
 		})
 	})
 })

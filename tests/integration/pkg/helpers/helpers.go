@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/avast/retry-go"
 	"github.com/pkg/errors"
-	"io"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/dynamic"
 	"net/http"
@@ -30,7 +29,7 @@ func NewHelper(c *http.Client, opts []retry.Option) *Helper {
 func (h *Helper) CallEndpointWithRetries(url string, validator HttpResponseAsserter) error {
 	err := h.withRetries(func() (*http.Response, error) {
 		return h.client.Get(url)
-	}, validator.Assert)
+	}, validator)
 
 	if err != nil {
 		return fmt.Errorf("error calling endpoint %s err=%s", url, err)
@@ -40,16 +39,19 @@ func (h *Helper) CallEndpointWithRetries(url string, validator HttpResponseAsser
 }
 
 // CallEndpointWithHeadersWithRetries returns error if the status code is not in between bounds of status predicate after retrying deadline is reached
-func (h *Helper) CallEndpointWithHeadersWithRetries(headerValue string, headerName, url string, validator HttpResponseAsserter) error {
+func (h *Helper) CallEndpointWithHeadersWithRetries(requestHeaders map[string]string, url string, validator HttpResponseAsserter) error {
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return err
 	}
 
-	req.Header.Set(headerName, headerValue)
+	for headerName, headerValue := range requestHeaders {
+		req.Header.Set(headerName, headerValue)
+	}
+
 	err = h.withRetries(func() (*http.Response, error) {
 		return h.client.Do(req)
-	}, validator.Assert)
+	}, validator)
 
 	if err != nil {
 		return fmt.Errorf("error calling endpoint %s err=%s", url, err)
@@ -58,7 +60,7 @@ func (h *Helper) CallEndpointWithHeadersWithRetries(headerValue string, headerNa
 	return nil
 }
 
-func (h *Helper) withRetries(httpCall func() (*http.Response, error), isResponseValid func(*http.Response) bool) error {
+func (h *Helper) withRetries(httpCall func() (*http.Response, error), validator HttpResponseAsserter) error {
 
 	if err := retry.Do(func() error {
 
@@ -67,12 +69,8 @@ func (h *Helper) withRetries(httpCall func() (*http.Response, error), isResponse
 			return callErr
 		}
 
-		if !isResponseValid(response) {
-			body, err := io.ReadAll(response.Body)
-			if err != nil {
-				return errors.Errorf("unexpected response %s. Reason unknown: unable to parse response body: %s.", response.Status, err.Error())
-			}
-			return errors.Errorf("unexpected response %s: %s", response.Status, string(body))
+		if isValid, failureMsg := validator.Assert(*response); !isValid {
+			return errors.New(failureMsg)
 		}
 
 		return nil

@@ -2,6 +2,7 @@ package istio
 
 import (
 	"context"
+
 	"github.com/go-logr/logr"
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/api/v1beta1"
 	"github.com/kyma-project/api-gateway/internal/processing"
@@ -33,9 +34,11 @@ func (r Reconciliation) Validate(ctx context.Context, client client.Client, apiR
 		return make([]validation.Failure, 0), err
 	}
 
-	validator := validation.APIRule{
+	validator := validation.APIRuleValidator{
 		HandlerValidator:          &handlerValidator{},
 		AccessStrategiesValidator: &asValidator{},
+		MutatorsValidator:         mutatorsValidator{},
+		InjectionValidator:        &injectionValidator{ctx: ctx, client: client},
 		ServiceBlockList:          r.config.ServiceBlockList,
 		DomainAllowList:           r.config.DomainAllowList,
 		HostBlockList:             r.config.HostBlockList,
