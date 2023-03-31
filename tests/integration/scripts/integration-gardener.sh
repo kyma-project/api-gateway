@@ -11,104 +11,57 @@
 # - GARDENER_KYMA_PROW_KUBECONFIG - Kubeconfig of the Gardener service account
 # - GARDENER_KYMA_PROW_PROJECT_NAME - Name of the gardener project where the cluster will be integrated.
 # - GARDENER_KYMA_PROW_PROVIDER_SECRET_NAME - Name of the secret configured in the gardener project to access the cloud provider
-# - MACHINE_TYPE - (optional) machine type
 #
 #Please look in each provider script for provider specific requirements
 
 # exit on error, and raise error when variable is not set when used
 set -e
 
-export KYMA_SOURCES_DIR="${KYMA_PROJECT_DIR}/kyma"
-export API_GATEWAY_SOURCES_DIR="${KYMA_PROJECT_DIR}/api-gateway"
+cleanup() {
+kubectl annotate shoot "${CLUSTER_NAME}" confirmation.gardener.cloud/deletion=true \
+    --overwrite \
+    -n "garden-${GARDENER_KYMA_PROW_PROJECT_NAME}" \
+    --kubeconfig "${GARDENER_KYMA_PROW_KUBECONFIG}"
 
-# shellcheck source=tests/integration/scripts/lib/log.sh
-source "${API_GATEWAY_SOURCES_DIR}/tests/integration/scripts/lib/log.sh"
-# shellcheck source=tests/integration/scripts/lib/utils.sh
-source "${API_GATEWAY_SOURCES_DIR}/tests/integration/scripts/lib/utils.sh"
-# shellcheck source=tests/integration/scripts/lib/kyma.sh
-source "${API_GATEWAY_SOURCES_DIR}/tests/integration/scripts/lib/kyma.sh"
-# shellcheck source=tests/integration/scripts/gardener/gardener.sh
-source "${API_GATEWAY_SOURCES_DIR}/tests/integration/scripts/gardener/gardener.sh"
-# shellcheck source=tests/integration/scripts/integration-tests.sh
-source "${API_GATEWAY_SOURCES_DIR}/tests/integration/scripts/integration-tests.sh"
+kubectl delete shoot "${CLUSTER_NAME}" \
+  --wait="false" \
+  --kubeconfig "${GARDENER_KYMA_PROW_KUBECONFIG}" \
+  -n "garden-${GARDENER_KYMA_PROW_PROJECT_NAME}"
+}
 
-# All provides require these values, each of them may check for additional variables
-requiredVars=(
-    GARDENER_PROVIDER
-    KYMA_PROJECT_DIR
-    GARDENER_REGION
-    GARDENER_ZONES
-    GARDENER_CLUSTER_VERSION
-    GARDENER_KYMA_PROW_KUBECONFIG
-    GARDENER_KYMA_PROW_PROJECT_NAME
-    GARDENER_KYMA_PROW_PROVIDER_SECRET_NAME
-)
+# nice cleanup on exit, be it successful or on fail
+trap cleanup EXIT INT
 
-utils::check_required_vars "${requiredVars[@]}"
 
-# Temporary fix for unsupported kubernetes version
+echo "--> Install kyma CLI locally to /tmp/bin"
+curl -Lo kyma.tar.gz "https://github.com/kyma-project/cli/releases/latest/download/kyma_linux_x86_64.tar.gz" \
+&& tar -zxvf kyma.tar.gz && chmod +x kyma \
+&& rm -f kyma.tar.gz
 
-if [[ $GARDENER_PROVIDER == "gcp" ]]; then
-    # shellcheck source=tests/integration/scripts/gardener/gcp.sh
-    source "${API_GATEWAY_SOURCES_DIR}/tests/integration/scripts/gardener/gcp.sh"
-else
-    log::error "GARDENER_PROVIDER ${GARDENER_PROVIDER} is not yet supported"
-    exit 1
-fi
+chmod +x kyma
+kyma_version=$(kyma version --client)
+echo "--> Kyma CLI version: ${kyma_version}"
 
-# nice cleanup on exit, be it succesful or on fail
-trap gardener::cleanup EXIT INT
 
-#Used to detect errors for logging purposes
-ERROR_LOGGING_GUARD="true"
-export ERROR_LOGGING_GUARD
+CLUSTER_NAME=$(uuidgen)
+kyma provision gardener gcp \
+        --secret "${GARDENER_KYMA_PROW_PROVIDER_SECRET_NAME}" \
+        --name "${CLUSTER_NAME}" \
+        --project "${GARDENER_KYMA_PROW_PROJECT_NAME}" \
+        --credentials "${GARDENER_KYMA_PROW_KUBECONFIG}" \
+        --region "${GARDENER_REGION}" \
+        -z "${GARDENER_ZONES}" \
+        -t "n1-standard-4" \
+        --scaler-max 4 \
+        --scaler-min 2 \
+        --kube-version="${GARDENER_CLUSTER_VERSION}" \
+        --attempts 1 \
+        --verbose
 
-readonly COMMON_NAME_PREFIX="grd"
-utils::generate_commonName -n "${COMMON_NAME_PREFIX}"
-COMMON_NAME="${utils_generate_commonName_return_commonName:?}"
-export COMMON_NAME
+export KYMA_DOMAIN="${CLUSTER_NAME}.${GARDENER_KYMA_PROW_PROJECT_NAME}.shoot.live.k8s-hana.ondemand.com"
 
-export CLUSTER_NAME="${COMMON_NAME}"
+./tests/integration/scripts/jobguard/run.sh
 
-# set KYMA_SOURCE used by kyma deploy
-utils::generate_vars_for_build \
-    -b "$BUILD_TYPE" \
-    -p "$PULL_NUMBER" \
-    -s "$PULL_BASE_SHA" \
-    -n "$JOB_NAME"
-export KYMA_SOURCE=${utils_generate_vars_for_build_return_kymaSource:?}
+make install-kyma
+make test-integration
 
-# checks required vars and initializes gcloud/docker if necessary
-gardener::init
-
-# if MACHINE_TYPE is not set then use default one
-gardener::set_machine_type
-
-kyma::install_cli
-
-# currently only Azure generates overrides, but this may change in the future
-gardener::generate_overrides
-
-export CLEANUP_CLUSTER="true"
-gardener::provision_cluster
-
-istio::get_version
-echo "Istio version: ${istio_version}"
-
-api-gateway::prepare_components_file
-api-gateway::prepare_test_env_integration_tests
-
-# generate pod-security-policy list in json
-utils::save_psp_list "${ARTIFACTS}/kyma-psp.json"
-
-if [[ "${HIBERNATION_ENABLED}" == "true" ]]; then
-    gardener::hibernate_kyma
-    sleep 120
-    gardener::wake_up_kyma
-fi
-
-"${API_GATEWAY_SOURCES_DIR}/tests/integration/scripts/jobguard/run.sh"
-api-gateway::launch_integration_tests
-
-#!!! Must be at the end of the script !!!
-ERROR_LOGGING_GUARD="false"
