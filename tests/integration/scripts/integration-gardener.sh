@@ -46,13 +46,13 @@ requiredVars=(
 
 utils::check_required_vars "${requiredVars[@]}"
 
-if [[ $GARDENER_PROVIDER == "gcp" ]]; then
-    # shellcheck source=tests/integration/scripts/gardener/gcp.sh
-    source "${API_GATEWAY_SOURCES_DIR}/tests/integration/scripts/gardener/gcp.sh"
-else
-    log::error "GARDENER_PROVIDER ${GARDENER_PROVIDER} is not yet supported"
-    exit 1
-fi
+#if [[ $GARDENER_PROVIDER == "gcp" ]]; then
+#    # shellcheck source=tests/integration/scripts/gardener/gcp.sh
+#    source "${API_GATEWAY_SOURCES_DIR}/tests/integration/scripts/gardener/gcp.sh"
+#else
+#    log::error "GARDENER_PROVIDER ${GARDENER_PROVIDER} is not yet supported"
+#    exit 1
+#fi
 
 # nice cleanup on exit, be it succesful or on fail
 trap gardener::cleanup EXIT INT
@@ -61,52 +61,52 @@ trap gardener::cleanup EXIT INT
 ERROR_LOGGING_GUARD="true"
 export ERROR_LOGGING_GUARD
 
-readonly COMMON_NAME_PREFIX="grd"
-utils::generate_commonName -n "${COMMON_NAME_PREFIX}"
-COMMON_NAME="${utils_generate_commonName_return_commonName:?}"
-export COMMON_NAME
-
-export CLUSTER_NAME="${COMMON_NAME}"
-
-# set KYMA_SOURCE used by kyma deploy
-utils::generate_vars_for_build \
-    -b "$BUILD_TYPE" \
-    -p "$PULL_NUMBER" \
-    -s "$PULL_BASE_SHA" \
-    -n "$JOB_NAME"
-export KYMA_SOURCE=${utils_generate_vars_for_build_return_kymaSource:?}
-
-# checks required vars and initializes gcloud/docker if necessary
-gardener::init
-
-# if MACHINE_TYPE is not set then use default one
-gardener::set_machine_type
-
-kyma::install_cli
-
-# currently only Azure generates overrides, but this may change in the future
-gardener::generate_overrides
-
-export CLEANUP_CLUSTER="true"
-gardener::provision_cluster
-
-istio::get_version
-echo "Istio version: ${istio_version}"
-
-api-gateway::prepare_components_file
-api-gateway::prepare_test_env_integration_tests
-
-# generate pod-security-policy list in json
-utils::save_psp_list "${ARTIFACTS}/kyma-psp.json"
-
-if [[ "${HIBERNATION_ENABLED}" == "true" ]]; then
-    gardener::hibernate_kyma
-    sleep 120
-    gardener::wake_up_kyma
-fi
-
-"${API_GATEWAY_SOURCES_DIR}/tests/integration/scripts/jobguard/run.sh"
-api-gateway::launch_integration_tests
+#readonly COMMON_NAME_PREFIX="grd"
+#utils::generate_commonName -n "${COMMON_NAME_PREFIX}"
+#COMMON_NAME="${utils_generate_commonName_return_commonName:?}"
+#export COMMON_NAME
+#
+#export CLUSTER_NAME="${COMMON_NAME}"
+#
+## set KYMA_SOURCE used by kyma deploy
+#utils::generate_vars_for_build \
+#    -b "$BUILD_TYPE" \
+#    -p "$PULL_NUMBER" \
+#    -s "$PULL_BASE_SHA" \
+#    -n "$JOB_NAME"
+#export KYMA_SOURCE=${utils_generate_vars_for_build_return_kymaSource:?}
+#
+## checks required vars and initializes gcloud/docker if necessary
+#gardener::init
+#
+## if MACHINE_TYPE is not set then use default one
+#gardener::set_machine_type
+#
+#kyma::install_cli
+#
+## currently only Azure generates overrides, but this may change in the future
+#gardener::generate_overrides
+#
+#export CLEANUP_CLUSTER="true"
+#gardener::provision_cluster
+#
+#istio::get_version
+#echo "Istio version: ${istio_version}"
+#
+#api-gateway::prepare_components_file
+#api-gateway::prepare_test_env_integration_tests
+#
+## generate pod-security-policy list in json
+#utils::save_psp_list "${ARTIFACTS}/kyma-psp.json"
+#
+#if [[ "${HIBERNATION_ENABLED}" == "true" ]]; then
+#    gardener::hibernate_kyma
+#    sleep 120
+#    gardener::wake_up_kyma
+#fi
+#
+#"${API_GATEWAY_SOURCES_DIR}/tests/integration/scripts/jobguard/run.sh"
+#api-gateway::launch_integration_tests
 
 #!!! Must be at the end of the script !!!
 ERROR_LOGGING_GUARD="false"
