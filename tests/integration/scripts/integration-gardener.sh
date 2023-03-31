@@ -32,19 +32,16 @@ kubectl delete shoot "${CLUSTER_NAME}" \
 # nice cleanup on exit, be it successful or on fail
 trap cleanup EXIT INT
 
-
 echo "--> Install kyma CLI locally to /tmp/bin"
 curl -Lo kyma.tar.gz "https://github.com/kyma-project/cli/releases/latest/download/kyma_linux_x86_64.tar.gz" \
 && tar -zxvf kyma.tar.gz && chmod +x kyma \
 && rm -f kyma.tar.gz
 
 chmod +x kyma
-kyma_version=$(kyma version --client)
-echo "--> Kyma CLI version: ${kyma_version}"
-
+./kyma version --client
 
 CLUSTER_NAME=$(uuidgen)
-kyma provision gardener gcp \
+./kyma provision gardener gcp \
         --secret "${GARDENER_KYMA_PROW_PROVIDER_SECRET_NAME}" \
         --name "${CLUSTER_NAME}" \
         --project "${GARDENER_KYMA_PROW_PROJECT_NAME}" \
