@@ -84,7 +84,7 @@ var _ = BeforeSuite(func(specCtx SpecContext) {
 	logf.SetLogger(zap.New(zap.UseDevMode(true), zap.WriteTo(GinkgoWriter)))
 	ctx, cancel = context.WithCancel(context.TODO())
 
-	By("bootstrapping test environment")
+	By("Bootstrapping test environment")
 	testEnv = &envtest.Environment{
 		CRDDirectoryPaths: []string{filepath.Join("..", "config", "crd", "bases"), filepath.Join("..", "hack")},
 	}
@@ -153,7 +153,6 @@ var _ = BeforeSuite(func(specCtx SpecContext) {
 		GeneratedObjectsLabels: map[string]string{},
 		Config:                 &helpers.Config{},
 
-		// Run the suite with period that won't interfere with tests
 		ReconcilePeriod:        time.Second * 2,
 		OnErrorReconcilePeriod: time.Second * 2,
 	}
@@ -173,7 +172,7 @@ var _ = AfterSuite(func() {
 			https://github.com/kubernetes-sigs/controller-runtime/issues/1571#issuecomment-1005575071
 	*/
 	cancel()
-	By("tearing down the test environment,but I do nothing here.")
+	By("Tearing down the test environment")
 	err := testEnv.Stop()
 	// Set 4 with random
 	if err != nil {

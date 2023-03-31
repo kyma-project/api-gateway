@@ -81,7 +81,7 @@ func (p isApiGatewayConfigMapPredicate) Create(e event.CreateEvent) bool {
 	return p.Generic(event.GenericEvent(e))
 }
 
-func (p isApiGatewayConfigMapPredicate) DeleteFunc(e event.DeleteEvent) bool {
+func (p isApiGatewayConfigMapPredicate) Delete(e event.DeleteEvent) bool {
 	return p.Generic(event.GenericEvent{
 		Object: e.Object,
 	})
@@ -240,7 +240,7 @@ func (r *APIRuleReconciler) SetupWithManager(mgr ctrl.Manager) error {
 
 // Updates api status. If there was an error during update, returns the error so that entire reconcile loop is retried. If there is no error, returns a "reconcile success" value.
 func (r *APIRuleReconciler) updateStatusOrRetry(ctx context.Context, api *gatewayv1beta1.APIRule, status processing.ReconciliationStatus) (ctrl.Result, error) {
-	_, updateStatusErr := r.updateStatus(ctx, api, status, &r.Log)
+	_, updateStatusErr := r.updateStatus(ctx, api, status)
 	if updateStatusErr != nil {
 		r.Log.Error(updateStatusErr, "Error updating ApiRule status, retrying")
 		return retryReconcile(updateStatusErr) //controller retries to set the correct status eventually.
@@ -281,7 +281,7 @@ func retryReconcile(err error) (ctrl.Result, error) {
 	return reconcile.Result{Requeue: true}, err
 }
 
-func (r *APIRuleReconciler) updateStatus(ctx context.Context, api *gatewayv1beta1.APIRule, status processing.ReconciliationStatus, logger *logr.Logger) (*gatewayv1beta1.APIRule, error) {
+func (r *APIRuleReconciler) updateStatus(ctx context.Context, api *gatewayv1beta1.APIRule, status processing.ReconciliationStatus) (*gatewayv1beta1.APIRule, error) {
 	api.Status.ObservedGeneration = api.Generation
 	api.Status.LastProcessedTime = &v1.Time{Time: time.Now()}
 	api.Status.APIRuleStatus = status.ApiRuleStatus
@@ -290,7 +290,7 @@ func (r *APIRuleReconciler) updateStatus(ctx context.Context, api *gatewayv1beta
 	api.Status.RequestAuthenticationStatus = status.RequestAuthenticationStatus
 	api.Status.AuthorizationPolicyStatus = status.AuthorizationPolicyStatus
 
-	logger.Info("Updating ApiRule status", "status", api.Status)
+	r.Log.Info("Updating ApiRule status", "status", api.Status)
 	err := r.Client.Status().Update(ctx, api)
 	if err != nil {
 		return nil, err
