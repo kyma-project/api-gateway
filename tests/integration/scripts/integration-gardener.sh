@@ -43,7 +43,7 @@ chmod +x kyma
 export PATH="${PATH}:${PWD}"
 kyma version --client
 
-CLUSTER_NAME=$(LC_ALL=C tr -dc 'a-z0-9' < /dev/urandom | head -c6)
+CLUSTER_NAME=$(LC_ALL=C tr -dc 'a-z' < /dev/urandom | head -c10)
 
 kyma provision gardener gcp \
         --secret "${GARDENER_KYMA_PROW_PROVIDER_SECRET_NAME}" \
