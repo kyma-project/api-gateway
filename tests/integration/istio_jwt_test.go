@@ -2,6 +2,7 @@ package api_gateway
 
 import (
 	_ "embed"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -11,6 +12,12 @@ import (
 
 	"github.com/cucumber/godog"
 )
+
+type tokenFrom struct {
+	TokenFrom string
+	Prefix    string
+	AsHeader  bool
+}
 
 type istioJwtManifestScenario struct {
 	*ScenarioWithRawAPIResource
@@ -31,6 +38,7 @@ func initIstioJwtScenarios(ctx *godog.ScenarioContext) {
 	initMutatorHeader(ctx)
 	initMultipleMutators(ctx)
 	initMutatorsOverwrite(ctx)
+	initTokenFrom(ctx)
 }
 
 func (s *istioJwtManifestScenario) theAPIRuleIsApplied() error {
@@ -43,20 +51,54 @@ func (s *istioJwtManifestScenario) theAPIRuleIsApplied() error {
 
 func (s *istioJwtManifestScenario) callingTheEndpointWithAValidToken(path, tokenType, _, _ string, lower, higher int) error {
 	asserter := &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher}
-	return callingEndpointWithHeadersWithRetries(s.url, path, tokenType, asserter, nil)
+	tokenFrom := tokenFrom{
+		TokenFrom: authorizationHeaderName,
+		Prefix:    authorizationHeaderPrefix,
+		AsHeader:  true,
+	}
+	return callingEndpointWithHeadersWithRetries(s.url, path, tokenType, asserter, nil, &tokenFrom)
 }
 
 func (s *istioJwtManifestScenario) callingTheEndpointWithValidTokenShouldResultInStatusBetween(path, tokenType string, lower, higher int) error {
 	asserter := &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher}
-	return callingEndpointWithHeadersWithRetries(s.url, path, tokenType, asserter, nil)
+	tokenFrom := tokenFrom{
+		TokenFrom: authorizationHeaderName,
+		Prefix:    authorizationHeaderPrefix,
+		AsHeader:  true,
+	}
+	return callingEndpointWithHeadersWithRetries(s.url, path, tokenType, asserter, nil, &tokenFrom)
+}
+
+func (s *istioJwtManifestScenario) callingTheEndpointWithValidTokenFromHeaderShouldResultInStatusBetween(path, tokenType string, fromHeader string, prefix string, lower, higher int) error {
+	asserter := &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher}
+	tokenFrom := tokenFrom{
+		TokenFrom: fromHeader,
+		Prefix:    prefix,
+		AsHeader:  true,
+	}
+	return callingEndpointWithHeadersWithRetries(s.url, path, tokenType, asserter, nil, &tokenFrom)
+}
+
+func (s *istioJwtManifestScenario) callingTheEndpointWithValidTokenFromParameterShouldResultInStatusBetween(path, tokenType string, fromParameter string, lower, higher int) error {
+	asserter := &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher}
+	tokenFrom := tokenFrom{
+		TokenFrom: fromParameter,
+		AsHeader:  false,
+	}
+	return callingEndpointWithHeadersWithRetries(s.url, path, tokenType, asserter, nil, &tokenFrom)
 }
 
 func (s *istioJwtManifestScenario) callingTheEndpointWithValidTokenShouldResultInBodyContaining(path, tokenType string, bodyContent string) error {
 	asserter := &helpers.BodyContainsPredicate{Expected: []string{bodyContent}}
-	return callingEndpointWithHeadersWithRetries(s.url, path, tokenType, asserter, nil)
+	tokenFrom := tokenFrom{
+		TokenFrom: authorizationHeaderName,
+		Prefix:    authorizationHeaderPrefix,
+		AsHeader:  true,
+	}
+	return callingEndpointWithHeadersWithRetries(s.url, path, tokenType, asserter, nil, &tokenFrom)
 }
 
-func callingEndpointWithHeadersWithRetries(url string, path string, tokenType string, asserter helpers.HttpResponseAsserter, requestHeaders map[string]string) error {
+func callingEndpointWithHeadersWithRetries(url string, path string, tokenType string, asserter helpers.HttpResponseAsserter, requestHeaders map[string]string, tokenFrom *tokenFrom) error {
 
 	if requestHeaders == nil {
 		requestHeaders = make(map[string]string)
@@ -74,7 +116,17 @@ func callingEndpointWithHeadersWithRetries(url string, path string, tokenType st
 		if err != nil {
 			return fmt.Errorf("failed to fetch an id_token: %s", err.Error())
 		}
-		requestHeaders[authorizationHeaderName] = fmt.Sprintf("Bearer %s", token)
+		if tokenFrom.TokenFrom == "" {
+			return errors.New("jwt header or parameter name not specified")
+		}
+		if tokenFrom.AsHeader {
+			if tokenFrom.Prefix != "" {
+				token = fmt.Sprintf("%s %s", tokenFrom.Prefix, token)
+			}
+			requestHeaders[tokenFrom.TokenFrom] = token
+		} else {
+			path = fmt.Sprintf("%s?%s=%s", path, tokenFrom.TokenFrom, token)
+		}
 	default:
 		return fmt.Errorf("unsupported token type: %s", tokenType)
 	}

@@ -2,7 +2,7 @@ Feature: Exposing endpoints with Istio JWT authorization strategy
 
   Scenario: Calling a httpbin endpoint secured
     Given Common: There is a httpbin service
-    When Common: Common: The APIRule with an endpoint secured with JWT on path /ip is applied
+    When Common: Common: The APIRule is applied
     Then Common: Calling the "/ip" endpoint without a token should result in status between 400 and 403
     And Common: Calling the "/ip" endpoint with an invalid token should result in status between 400 and 403
     And Common: Calling the "/ip" endpoint with a valid "JWT" token should result in status between 200 and 299
@@ -38,7 +38,6 @@ Feature: Exposing endpoints with Istio JWT authorization strategy
     And Audiences: Calling the "/ip" endpoint with a valid "JWT" token with audiences "https://example.com" and "https://example.com/user" should result in status between 200 and 299
     And Audiences: Calling the "/cache" endpoint with a valid "JWT" token with audiences "https://example.com" and "https://example.com/user" should result in status between 200 and 299
     And Audiences: Calling the "/headers" endpoint with a valid "JWT" token with audiences "https://example.com" and "https://example.com/user" should result in status between 400 and 403
-
 
   Scenario: Endpoints secured by JWT should fallback to service defined on root level when there is no service defined on rule level
     Given ServiceFallback: There is a httpbin service
@@ -79,3 +78,11 @@ Feature: Exposing endpoints with Istio JWT authorization strategy
     And JwtIssuerJwksNotMatch: There is an endpoint secured with JWT on path "/ip" with invalid issuer and jwks
     When JwtIssuerJwksNotMatch: The APIRule is applied
     And JwtIssuerJwksNotMatch: Calling the "/ip" endpoint with a valid "JWT" token should result in body containing "Jwks doesn't have key to match kid or alg from Jwt"
+
+  Scenario: Calling a httpbin endpoint secured with different token from options
+    Given JwtTokenFrom: There is a httpbin service
+    When JwtTokenFrom: Common: The APIRule is applied
+    Then JwtTokenFrom: Calling the "/headers" endpoint without a token should result in status between 400 and 403
+    And JwtTokenFrom: Calling the "/headers" endpoint with a valid "JWT" token from header "x-jwt-token" and prefix "JwtToken" should result in status between 200 and 299
+    And JwtTokenFrom: Calling the "/ip" endpoint without a token should result in status between 400 and 403
+    And JwtTokenFrom: Calling the "/ip" endpoint with a valid "JWT" token from parameter "jwt_token" should result in status between 200 and 299
