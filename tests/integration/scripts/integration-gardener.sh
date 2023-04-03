@@ -26,22 +26,21 @@ kubectl delete shoot "${CLUSTER_NAME}" \
   -n "garden-${GARDENER_KYMA_PROW_PROJECT_NAME}"
 }
 
-# nice cleanup on exit, be it successful or on fail
-#trap cleanup EXIT INT
+# Cleanup on exit, be it successful or on fail
+trap cleanup EXIT INT
 
+# Install Kyma CLI in latest version
 echo "--> Install kyma CLI locally to /tmp/bin"
 curl -Lo kyma.tar.gz "https://github.com/kyma-project/cli/releases/latest/download/kyma_linux_x86_64.tar.gz" \
 && tar -zxvf kyma.tar.gz && chmod +x kyma \
 && rm -f kyma.tar.gz
-
 chmod +x kyma
-
 # Add pwd to path to be able to use Kyma binary
 export PATH="${PATH}:${PWD}"
 kyma version --client
 
+# Provision gardener cluster
 CLUSTER_NAME=$(LC_ALL=C tr -dc 'a-z' < /dev/urandom | head -c10)
-
 kyma provision gardener gcp \
         --secret "${GARDENER_KYMA_PROW_PROVIDER_SECRET_NAME}" \
         --name "${CLUSTER_NAME}" \
@@ -56,10 +55,10 @@ kyma provision gardener gcp \
         --attempts 1 \
         --verbose
 
-export KYMA_DOMAIN="${CLUSTER_NAME}.${GARDENER_KYMA_PROW_PROJECT_NAME}.shoot.live.k8s-hana.ondemand.com"
-
 ./tests/integration/scripts/jobguard.sh
-
 make install-kyma
+
+# KYMA_DOMAIN is required by the tests
+export KYMA_DOMAIN="${CLUSTER_NAME}.${GARDENER_KYMA_PROW_PROJECT_NAME}.shoot.live.k8s-hana.ondemand.com"
 make test-integration
 
