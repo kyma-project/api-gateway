@@ -13,7 +13,7 @@ import (
 	"github.com/cucumber/godog"
 )
 
-type tokenFrom struct {
+type TokenFrom struct {
 	TokenFrom string
 	Prefix    string
 	AsHeader  bool
@@ -51,7 +51,7 @@ func (s *istioJwtManifestScenario) theAPIRuleIsApplied() error {
 
 func (s *istioJwtManifestScenario) callingTheEndpointWithAValidToken(path, tokenType, _, _ string, lower, higher int) error {
 	asserter := &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher}
-	tokenFrom := tokenFrom{
+	tokenFrom := TokenFrom{
 		TokenFrom: authorizationHeaderName,
 		Prefix:    authorizationHeaderPrefix,
 		AsHeader:  true,
@@ -61,7 +61,7 @@ func (s *istioJwtManifestScenario) callingTheEndpointWithAValidToken(path, token
 
 func (s *istioJwtManifestScenario) callingTheEndpointWithValidTokenShouldResultInStatusBetween(path, tokenType string, lower, higher int) error {
 	asserter := &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher}
-	tokenFrom := tokenFrom{
+	tokenFrom := TokenFrom{
 		TokenFrom: authorizationHeaderName,
 		Prefix:    authorizationHeaderPrefix,
 		AsHeader:  true,
@@ -71,7 +71,7 @@ func (s *istioJwtManifestScenario) callingTheEndpointWithValidTokenShouldResultI
 
 func (s *istioJwtManifestScenario) callingTheEndpointWithValidTokenFromHeaderShouldResultInStatusBetween(path, tokenType string, fromHeader string, prefix string, lower, higher int) error {
 	asserter := &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher}
-	tokenFrom := tokenFrom{
+	tokenFrom := TokenFrom{
 		TokenFrom: fromHeader,
 		Prefix:    prefix,
 		AsHeader:  true,
@@ -81,7 +81,7 @@ func (s *istioJwtManifestScenario) callingTheEndpointWithValidTokenFromHeaderSho
 
 func (s *istioJwtManifestScenario) callingTheEndpointWithValidTokenFromParameterShouldResultInStatusBetween(path, tokenType string, fromParameter string, lower, higher int) error {
 	asserter := &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher}
-	tokenFrom := tokenFrom{
+	tokenFrom := TokenFrom{
 		TokenFrom: fromParameter,
 		AsHeader:  false,
 	}
@@ -90,7 +90,7 @@ func (s *istioJwtManifestScenario) callingTheEndpointWithValidTokenFromParameter
 
 func (s *istioJwtManifestScenario) callingTheEndpointWithValidTokenShouldResultInBodyContaining(path, tokenType string, bodyContent string) error {
 	asserter := &helpers.BodyContainsPredicate{Expected: []string{bodyContent}}
-	tokenFrom := tokenFrom{
+	tokenFrom := TokenFrom{
 		TokenFrom: authorizationHeaderName,
 		Prefix:    authorizationHeaderPrefix,
 		AsHeader:  true,
@@ -98,7 +98,7 @@ func (s *istioJwtManifestScenario) callingTheEndpointWithValidTokenShouldResultI
 	return callingEndpointWithHeadersWithRetries(s.url, path, tokenType, asserter, nil, &tokenFrom)
 }
 
-func callingEndpointWithHeadersWithRetries(url string, path string, tokenType string, asserter helpers.HttpResponseAsserter, requestHeaders map[string]string, tokenFrom *tokenFrom) error {
+func callingEndpointWithHeadersWithRetries(url string, path string, tokenType string, asserter helpers.HttpResponseAsserter, requestHeaders map[string]string, tokenFrom *TokenFrom) error {
 
 	if requestHeaders == nil {
 		requestHeaders = make(map[string]string)
