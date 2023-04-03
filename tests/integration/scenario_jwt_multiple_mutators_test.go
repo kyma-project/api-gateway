@@ -46,10 +46,10 @@ func (s *istioJwtManifestScenario) shouldReturnResponseWithKeyValuePairs(path, k
 	}
 
 	asserter := &helpers.BodyContainsPredicate{Expected: expectedInBody}
-	tokenFrom := TokenFrom{
-		TokenFrom: authorizationHeaderName,
-		Prefix:    authorizationHeaderPrefix,
-		AsHeader:  true,
+	tokenFrom := tokenFrom{
+		From:     authorizationHeaderName,
+		Prefix:   authorizationHeaderPrefix,
+		AsHeader: true,
 	}
 
 	return callingEndpointWithHeadersWithRetries(s.url, path, "JWT", asserter, nil, &tokenFrom)

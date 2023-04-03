@@ -28,10 +28,10 @@ func (s *istioJwtManifestScenario) shouldOverwriteHeaderValue(path, headerName, 
 
 	expectedInBody := []string{fmt.Sprintf(`"%s": "%s"`, headerName, responseValue)}
 	asserter := &helpers.BodyContainsPredicate{Expected: expectedInBody}
-	tokenFrom := TokenFrom{
-		TokenFrom: authorizationHeaderName,
-		Prefix:    authorizationHeaderPrefix,
-		AsHeader:  true,
+	tokenFrom := tokenFrom{
+		From:     authorizationHeaderName,
+		Prefix:   authorizationHeaderPrefix,
+		AsHeader: true,
 	}
 
 	return callingEndpointWithHeadersWithRetries(s.url, path, "JWT", asserter, requestHeaders, &tokenFrom)
@@ -42,10 +42,10 @@ func (s *istioJwtManifestScenario) shouldOverwriteCookieValue(path, requestValue
 
 	expectedInBody := []string{fmt.Sprintf(`"%s": "%s"`, "Cookie", responseValue)}
 	asserter := &helpers.BodyContainsPredicate{Expected: expectedInBody}
-	tokenFrom := TokenFrom{
-		TokenFrom: authorizationHeaderName,
-		Prefix:    authorizationHeaderPrefix,
-		AsHeader:  true,
+	tokenFrom := tokenFrom{
+		From:     authorizationHeaderName,
+		Prefix:   authorizationHeaderPrefix,
+		AsHeader: true,
 	}
 
 	return callingEndpointWithHeadersWithRetries(s.url, path, "JWT", asserter, requestHeaders, &tokenFrom)
