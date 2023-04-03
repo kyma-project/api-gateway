@@ -59,13 +59,13 @@ Feature: Exposing endpoints with Istio JWT authorization strategy
     And TwoNamespaces: Calling the "/hello" endpoint without token should result in status between 400 and 403
 
   Scenario: Exposing different services with same methods
-   Given DiffSvcSameMethods: There is a httpbin service
+    Given DiffSvcSameMethods: There is a httpbin service
     And DiffSvcSameMethods: There is a workload and service for httpbin and helloworld
-   And DiffSvcSameMethods: There is an endpoint secured with JWT on path "/headers" for httpbin service with methods '["GET", "POST"]'
-   And DiffSvcSameMethods: There is an endpoint secured with JWT on path "/hello" for helloworld service with methods '["GET", "POST"]'
-   When DiffSvcSameMethods: The APIRule is applied
-   Then DiffSvcSameMethods: Calling the "/headers" endpoint with a valid "JWT" token should result in status between 200 and 299
-   And DiffSvcSameMethods: Calling the "/hello" endpoint with a valid "JWT" token should result in status between 200 and 299
+    And DiffSvcSameMethods: There is an endpoint secured with JWT on path "/headers" for httpbin service with methods '["GET", "POST"]'
+    And DiffSvcSameMethods: There is an endpoint secured with JWT on path "/hello" for helloworld service with methods '["GET", "POST"]'
+    When DiffSvcSameMethods: The APIRule is applied
+    Then DiffSvcSameMethods: Calling the "/headers" endpoint with a valid "JWT" token should result in status between 200 and 299
+    And DiffSvcSameMethods: Calling the "/hello" endpoint with a valid "JWT" token should result in status between 200 and 299
 
   Scenario: Exposing a JWT secured endpoint with unavailable issuer and jwks URL
     Given JwtIssuerUnavailable: There is a httpbin service
@@ -79,7 +79,7 @@ Feature: Exposing endpoints with Istio JWT authorization strategy
     When JwtIssuerJwksNotMatch: The APIRule is applied
     And JwtIssuerJwksNotMatch: Calling the "/ip" endpoint with a valid "JWT" token should result in body containing "Jwks doesn't have key to match kid or alg from Jwt"
 
-  Scenario: Calling a httpbin endpoint secured with different token from options
+  Scenario: Calling a httpbin endpoint secured with different JWT token from options
     Given JwtTokenFrom: There is a httpbin service
     When JwtTokenFrom: Common: The APIRule is applied
     Then JwtTokenFrom: Calling the "/headers" endpoint without a token should result in status between 400 and 403

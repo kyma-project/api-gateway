@@ -116,7 +116,7 @@ func callingEndpointWithHeadersWithRetries(url string, path string, tokenType st
 			return fmt.Errorf("failed to fetch an id_token: %s", err.Error())
 		}
 		if tokenFrom.From == "" {
-			return errors.New("jwt header or parameter name not specified")
+			return errors.New("jwt from header or parameter name not specified")
 		}
 		if tokenFrom.AsHeader {
 			if tokenFrom.Prefix != "" {
