@@ -10,7 +10,6 @@ import (
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-const AuthorizationPolicyAppSelectorLabel = "app"
 
 // AuthorizationPolicyProcessor is the generic processor that handles the Istio JwtAuthorization Policies in the reconciliation of API Rule.
 type AuthorizationPolicyProcessor struct {
@@ -69,7 +68,7 @@ func (r AuthorizationPolicyProcessor) getObjectChanges(desired hashbasedstate.De
 	var apObjectActionsToApply []*processing.ObjectChange
 
 	changes := hashbasedstate.GetChanges(desired, actual)
-	r.Log.Info("Changes that will be applied", "changes", changes)
+	r.Log.Info("Authorization policy changes that will be applied", "changes", changes)
 
 	for _, ap := range changes.Create {
 		apObjectActionsToApply = append(apObjectActionsToApply, processing.NewObjectCreateAction(ap))

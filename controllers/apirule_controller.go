@@ -20,6 +20,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"time"
 
 	"github.com/kyma-project/api-gateway/internal/helpers"
@@ -71,35 +72,34 @@ const (
 	API_GATEWAY_FINALIZER         = "gateway.kyma-project.io/subresources"
 )
 
-type configMapPredicate struct {
+type isApiGatewayConfigMapPredicate struct {
 	Log logr.Logger
 	predicate.Funcs
 }
 
-func (p configMapPredicate) Create(e event.CreateEvent) bool {
+func (p isApiGatewayConfigMapPredicate) Create(e event.CreateEvent) bool {
 	return p.Generic(event.GenericEvent(e))
 }
 
-func (p configMapPredicate) DeleteFunc(e event.DeleteEvent) bool {
+func (p isApiGatewayConfigMapPredicate) Delete(e event.DeleteEvent) bool {
 	return p.Generic(event.GenericEvent{
 		Object: e.Object,
 	})
 }
 
-func (p configMapPredicate) Update(e event.UpdateEvent) bool {
+func (p isApiGatewayConfigMapPredicate) Update(e event.UpdateEvent) bool {
 	return p.Generic(event.GenericEvent{
 		Object: e.ObjectNew,
 	})
 }
 
-func (p configMapPredicate) Generic(e event.GenericEvent) bool {
+func (p isApiGatewayConfigMapPredicate) Generic(e event.GenericEvent) bool {
 	if e.Object == nil {
 		p.Log.Error(nil, "Generic event has no object", "event", e)
 		return false
 	}
-	_, okAP := e.Object.(*gatewayv1beta1.APIRule)
 	configMap, okCM := e.Object.(*corev1.ConfigMap)
-	return okAP || (okCM && configMap.GetNamespace() == CONFIGMAP_NS && configMap.GetName() == CONFIGMAP_NAME)
+	return okCM && configMap.GetNamespace() == CONFIGMAP_NS && configMap.GetName() == CONFIGMAP_NAME
 }
 
 //+kubebuilder:rbac:groups=gateway.kyma-project.io,resources=apirules,verbs=get;list;watch;create;update;patch;delete
@@ -111,18 +111,18 @@ func (p configMapPredicate) Generic(e event.GenericEvent) bool {
 //+kubebuilder:rbac:groups=security.istio.io,resources=requestauthentications,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups="apiextensions.k8s.io",resources=customresourcedefinitions,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups="",resources=configmaps,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups="",resources=pods,verbs=get;list;watch
 
 func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	r.Log.Info("Starting reconciliation")
+	r.Log.Info("Starting reconciliation", "namespacedName", req.NamespacedName.String())
 
-	validator := validation.APIRule{
+	validator := validation.APIRuleValidator{
 		ServiceBlockList:  r.ServiceBlockList,
 		DomainAllowList:   r.DomainAllowList,
 		HostBlockList:     r.HostBlockList,
 		DefaultDomainName: r.DefaultDomainName,
 	}
-	r.Log.Info("Checking if it's ConfigMap reconciliation")
-	r.Log.Info("Reconciling for", "namespacedName", req.NamespacedName.String())
+
 	isCMReconcile := req.NamespacedName.String() == types.NamespacedName{Namespace: helpers.CM_NS, Name: helpers.CM_NAME}.String()
 	if isCMReconcile || r.Config.JWTHandler == "" {
 		r.Log.Info("Starting ConfigMap reconciliation")
@@ -138,15 +138,16 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		}
 		if isCMReconcile {
 			configValidationFailures := validator.ValidateConfig(r.Config)
-			r.Log.Info("ConfigMap changed")
+			r.Log.Info("ConfigMap changed", "config", r.Config)
 			if len(configValidationFailures) > 0 {
 				failuresJson, _ := json.Marshal(configValidationFailures)
 				r.Log.Error(err, fmt.Sprintf(`Config validation failure {"controller": "Api", "failures": %s}`, string(failuresJson)))
 			}
+			r.Log.Info("ConfigMap reconciliation finished")
 			return doneReconcileNoRequeue()
 		}
 	}
-	r.Log.Info("Starting ApiRule reconciliation")
+	r.Log.Info("Starting ApiRule reconciliation", "jwtHandler", r.Config.JWTHandler)
 
 	c := processing.ReconciliationConfig{
 		OathkeeperSvc:       r.OathkeeperSvc,
@@ -161,7 +162,6 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	}
 
 	cmd := r.getReconciliation(c)
-	r.Log.Info("Process reconcile")
 
 	apiRule := &gatewayv1beta1.APIRule{}
 	err := r.Client.Get(ctx, req.NamespacedName, apiRule)
@@ -179,6 +179,8 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		status := processing.GetStatusForErrorMap(errorMap, statusBase)
 		return r.updateStatusOrRetry(ctx, apiRule, status)
 	}
+
+	r.Log.Info("Reconciling ApiRule", "name", apiRule.Name, "namespace", apiRule.Namespace, "resource version", apiRule.ResourceVersion)
 
 	if apiRule.DeletionTimestamp.IsZero() {
 		if !controllerutil.ContainsFinalizer(apiRule, API_GATEWAY_FINALIZER) {
@@ -217,7 +219,6 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	}
 
 	status := processing.Reconcile(ctx, r.Client, &r.Log, cmd, apiRule)
-	r.Log.Info("Update status or retry")
 	return r.updateStatusOrRetry(ctx, apiRule, status)
 }
 
@@ -232,10 +233,9 @@ func (r *APIRuleReconciler) getReconciliation(config processing.ReconciliationCo
 // SetupWithManager sets up the controller with the Manager.
 func (r *APIRuleReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&gatewayv1beta1.APIRule{}).
-		WithEventFilter(predicate.GenerationChangedPredicate{}).
-		Watches(&source.Kind{Type: &corev1.ConfigMap{}}, &handler.EnqueueRequestForObject{}).
-		WithEventFilter(&configMapPredicate{Log: r.Log}).
+		// We need to filter for generation changes, because we had an issue that on Azure clusters the APIRules were constantly reconciled.
+		For(&gatewayv1beta1.APIRule{}, builder.WithPredicates(predicate.GenerationChangedPredicate{})).
+		Watches(&source.Kind{Type: &corev1.ConfigMap{}}, &handler.EnqueueRequestForObject{}, builder.WithPredicates(&isApiGatewayConfigMapPredicate{Log: r.Log})).
 		Complete(r)
 }
 
@@ -243,26 +243,30 @@ func (r *APIRuleReconciler) SetupWithManager(mgr ctrl.Manager) error {
 func (r *APIRuleReconciler) updateStatusOrRetry(ctx context.Context, api *gatewayv1beta1.APIRule, status processing.ReconciliationStatus) (ctrl.Result, error) {
 	_, updateStatusErr := r.updateStatus(ctx, api, status)
 	if updateStatusErr != nil {
+		r.Log.Error(updateStatusErr, "Error updating ApiRule status, retrying")
 		return retryReconcile(updateStatusErr) //controller retries to set the correct status eventually.
 	}
 
 	// If error happened during reconciliation (e.g. VirtualService conflict) requeue for reconciliation earlier
 	if status.HasError() {
+		r.Log.Info("Requeue for reconciliation because the status has an error")
 		return doneReconcileErrorRequeue(r.OnErrorReconcilePeriod)
 	}
 
-	return doneReconcileDefaultRequeue(r.ReconcilePeriod)
+	return doneReconcileDefaultRequeue(r.ReconcilePeriod, &r.Log)
 }
 
 func doneReconcileNoRequeue() (ctrl.Result, error) {
 	return ctrl.Result{}, nil
 }
 
-func doneReconcileDefaultRequeue(reconcilerPeriod time.Duration) (ctrl.Result, error) {
+func doneReconcileDefaultRequeue(reconcilerPeriod time.Duration, logger *logr.Logger) (ctrl.Result, error) {
 	after := DEFAULT_RECONCILIATION_PERIOD
 	if reconcilerPeriod != 0 {
 		after = reconcilerPeriod
 	}
+
+	logger.Info("Finished reconciliation and requeue", "requeue period", after)
 	return ctrl.Result{RequeueAfter: after}, nil
 }
 
@@ -287,6 +291,7 @@ func (r *APIRuleReconciler) updateStatus(ctx context.Context, api *gatewayv1beta
 	api.Status.RequestAuthenticationStatus = status.RequestAuthenticationStatus
 	api.Status.AuthorizationPolicyStatus = status.AuthorizationPolicyStatus
 
+	r.Log.Info("Updating ApiRule status", "status", api.Status)
 	err := r.Client.Status().Update(ctx, api)
 	if err != nil {
 		return nil, err

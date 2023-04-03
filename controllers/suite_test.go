@@ -34,8 +34,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
-	"sigs.k8s.io/controller-runtime/pkg/manager"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -51,7 +49,6 @@ var (
 	cfg       *rest.Config
 	k8sClient client.Client
 	testEnv   *envtest.Environment
-	requests  chan reconcile.Request
 	c         client.Client
 	ctx       context.Context
 	cancel    context.CancelFunc
@@ -87,7 +84,7 @@ var _ = BeforeSuite(func(specCtx SpecContext) {
 	logf.SetLogger(zap.New(zap.UseDevMode(true), zap.WriteTo(GinkgoWriter)))
 	ctx, cancel = context.WithCancel(context.TODO())
 
-	By("bootstrapping test environment")
+	By("Bootstrapping test environment")
 	testEnv = &envtest.Environment{
 		CRDDirectoryPaths: []string{filepath.Join("..", "config", "crd", "bases"), filepath.Join("..", "hack")},
 	}
@@ -103,22 +100,16 @@ var _ = BeforeSuite(func(specCtx SpecContext) {
 
 	s := runtime.NewScheme()
 
-	err = gatewayv1beta1.AddToScheme(s)
-	Expect(err).NotTo(HaveOccurred())
+	Expect(gatewayv1beta1.AddToScheme(s)).Should(Succeed())
+	Expect(rulev1alpha1.AddToScheme(s)).Should(Succeed())
+	Expect(networkingv1beta1.AddToScheme(s)).Should(Succeed())
+	Expect(securityv1beta1.AddToScheme(s)).Should(Succeed())
+	Expect(corev1.AddToScheme(s)).Should(Succeed())
 
-	err = rulev1alpha1.AddToScheme(s)
-	Expect(err).NotTo(HaveOccurred())
-
-	err = networkingv1beta1.AddToScheme(s)
-	Expect(err).NotTo(HaveOccurred())
-
-	err = securityv1beta1.AddToScheme(s)
-	Expect(err).NotTo(HaveOccurred())
-
-	err = corev1.AddToScheme(s)
-	Expect(err).NotTo(HaveOccurred())
-
-	mgr, err := manager.New(cfg, manager.Options{Scheme: s, MetricsBindAddress: "0"})
+	mgr, err := ctrl.NewManager(cfg, ctrl.Options{
+		Scheme:             s,
+		MetricsBindAddress: "0",
+	})
 	Expect(err).NotTo(HaveOccurred())
 
 	c, err = client.New(cfg, client.Options{Scheme: s})
@@ -128,15 +119,13 @@ var _ = BeforeSuite(func(specCtx SpecContext) {
 		ObjectMeta: metav1.ObjectMeta{Name: testNamespace},
 		Spec:       corev1.NamespaceSpec{},
 	}
-	err = c.Create(context.TODO(), ns)
-	Expect(err).NotTo(HaveOccurred())
+	Expect(c.Create(context.TODO(), ns)).Should(Succeed())
 
 	nsKyma := &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{Name: helpers.CM_NS},
 		Spec:       corev1.NamespaceSpec{},
 	}
-	err = c.Create(context.TODO(), nsKyma)
-	Expect(err).NotTo(HaveOccurred())
+	Expect(c.Create(context.TODO(), nsKyma)).Should(Succeed())
 
 	cm := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
@@ -147,11 +136,11 @@ var _ = BeforeSuite(func(specCtx SpecContext) {
 			helpers.CM_KEY: fmt.Sprintf("jwtHandler: %s", helpers.JWT_HANDLER_ORY),
 		},
 	}
-	err = c.Create(context.TODO(), cm)
-	Expect(err).NotTo(HaveOccurred())
+	Expect(c.Create(context.TODO(), cm)).Should(Succeed())
 
 	apiReconciler := &controllers.APIRuleReconciler{
 		Client:            mgr.GetClient(),
+		Scheme:            mgr.GetScheme(),
 		Log:               ctrl.Log.WithName("controllers").WithName("Api"),
 		OathkeeperSvc:     testOathkeeperSvcURL,
 		OathkeeperSvcPort: testOathkeeperPort,
@@ -164,20 +153,15 @@ var _ = BeforeSuite(func(specCtx SpecContext) {
 		GeneratedObjectsLabels: map[string]string{},
 		Config:                 &helpers.Config{},
 
-		// Run the suite with period that won't interfere with tests
-		ReconcilePeriod:        time.Hour * 24,
-		OnErrorReconcilePeriod: time.Hour * 24,
+		ReconcilePeriod:        time.Second * 2,
+		OnErrorReconcilePeriod: time.Second * 2,
 	}
-	Expect(err).NotTo(HaveOccurred())
 
-	var recFn reconcile.Reconciler
-	recFn, requests = SetupTestReconcile(apiReconciler)
-	Expect(add(mgr, recFn)).To(Succeed())
+	Expect(apiReconciler.SetupWithManager(mgr)).Should(Succeed())
 
 	go func() {
 		defer GinkgoRecover()
-		err = mgr.Start(ctx)
-		Expect(err).ToNot(HaveOccurred(), "failed to run manager")
+		Expect(mgr.Start(ctx)).Should(Succeed())
 	}()
 
 }, NodeTimeout(60*time.Second))
@@ -188,7 +172,7 @@ var _ = AfterSuite(func() {
 			https://github.com/kubernetes-sigs/controller-runtime/issues/1571#issuecomment-1005575071
 	*/
 	cancel()
-	By("tearing down the test environment,but I do nothing here.")
+	By("Tearing down the test environment")
 	err := testEnv.Stop()
 	// Set 4 with random
 	if err != nil {
@@ -225,24 +209,11 @@ var _ = ReportAfterSuite("custom reporter", func(report types.Report) {
 	}
 })
 
-// SetupTestReconcile returns a reconcile.Reconcile implementation that delegates to inner and
-// writes the request to requests after Reconcile is finished.
-func SetupTestReconcile(inner reconcile.Reconciler) (reconcile.Reconciler, chan reconcile.Request) {
-	requests := make(chan reconcile.Request)
-	fn := reconcile.Func(func(ctx context.Context, req reconcile.Request) (reconcile.Result, error) {
-		result, err := inner.Reconcile(ctx, req)
-		requests <- req
-		return result, err
-	})
-	return fn, requests
-}
-
 // shouldHaveVirtualServices verifies that the expected number of virtual services exists for the APIRule
 func shouldHaveVirtualServices(g Gomega, apiRuleName, testNamespace string, len int) {
 	matchingLabels := matchingLabelsFunc(apiRuleName, testNamespace)
 	list := securityv1beta1.RequestAuthenticationList{}
-	err := c.List(context.TODO(), &list, matchingLabels)
-	g.Expect(err).NotTo(HaveOccurred())
+	g.Expect(c.List(context.TODO(), &list, matchingLabels)).Should(Succeed())
 	g.Expect(list.Items).To(HaveLen(len))
 }
 
@@ -250,8 +221,7 @@ func shouldHaveVirtualServices(g Gomega, apiRuleName, testNamespace string, len 
 func shouldHaveRequestAuthentications(g Gomega, apiRuleName, testNamespace string, len int) {
 	matchingLabels := matchingLabelsFunc(apiRuleName, testNamespace)
 	list := securityv1beta1.RequestAuthenticationList{}
-	err := c.List(context.TODO(), &list, matchingLabels)
-	g.Expect(err).NotTo(HaveOccurred())
+	g.Expect(c.List(context.TODO(), &list, matchingLabels)).Should(Succeed())
 	g.Expect(list.Items).To(HaveLen(len))
 }
 
@@ -259,8 +229,7 @@ func shouldHaveRequestAuthentications(g Gomega, apiRuleName, testNamespace strin
 func shouldHaveAuthorizationPolicies(g Gomega, apiRuleName, testNamespace string, len int) {
 	matchingLabels := matchingLabelsFunc(apiRuleName, testNamespace)
 	list := securityv1beta1.AuthorizationPolicyList{}
-	err := c.List(context.TODO(), &list, matchingLabels)
-	g.Expect(err).NotTo(HaveOccurred())
+	g.Expect(c.List(context.TODO(), &list, matchingLabels)).Should(Succeed())
 	g.Expect(list.Items).To(HaveLen(len))
 }
 
@@ -268,7 +237,6 @@ func shouldHaveAuthorizationPolicies(g Gomega, apiRuleName, testNamespace string
 func shouldHaveRules(g Gomega, apiRuleName, testNamespace string, len int) {
 	matchingLabels := matchingLabelsFunc(apiRuleName, testNamespace)
 	list := rulev1alpha1.RuleList{}
-	err := c.List(context.TODO(), &list, matchingLabels)
-	g.Expect(err).NotTo(HaveOccurred())
+	g.Expect(c.List(context.TODO(), &list, matchingLabels)).Should(Succeed())
 	g.Expect(list.Items).To(HaveLen(len))
 }
