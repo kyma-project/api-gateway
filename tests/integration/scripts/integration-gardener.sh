@@ -1,10 +1,8 @@
 #!/usr/bin/env bash
 
-#Description: Kyma CLI Integration plan on Gardener. This scripts implements a pipeline that consists of many steps. The purpose is to install and test Kyma using the CLI on a real Gardener cluster.
+#Description: This scripts installs and test Kyma using the CLI on a real Gardener GCP cluster.
 #
 #Expected common vars:
-# - JOB_TYPE - set up by prow (presubmit, postsubmit, periodic)
-# - KYMA_PROJECT_DIR - directory path with Kyma sources to use for installation
 # - GARDENER_REGION - Gardener compute region
 # - GARDENER_ZONES - Gardener compute zones inside the region
 # - GARDENER_CLUSTER_VERSION - Version of the Kubernetes cluster
@@ -12,7 +10,6 @@
 # - GARDENER_KYMA_PROW_PROJECT_NAME - Name of the gardener project where the cluster will be integrated.
 # - GARDENER_KYMA_PROW_PROVIDER_SECRET_NAME - Name of the secret configured in the gardener project to access the cloud provider
 #
-#Please look in each provider script for provider specific requirements
 
 # exit on error, and raise error when variable is not set when used
 set -e
@@ -30,7 +27,7 @@ kubectl delete shoot "${CLUSTER_NAME}" \
 }
 
 # nice cleanup on exit, be it successful or on fail
-trap cleanup EXIT INT
+#trap cleanup EXIT INT
 
 echo "--> Install kyma CLI locally to /tmp/bin"
 curl -Lo kyma.tar.gz "https://github.com/kyma-project/cli/releases/latest/download/kyma_linux_x86_64.tar.gz" \
@@ -61,7 +58,7 @@ kyma provision gardener gcp \
 
 export KYMA_DOMAIN="${CLUSTER_NAME}.${GARDENER_KYMA_PROW_PROJECT_NAME}.shoot.live.k8s-hana.ondemand.com"
 
-./tests/integration/scripts/jobguard/run.sh
+./tests/integration/scripts/jobguard.sh
 
 make install-kyma
 make test-integration
