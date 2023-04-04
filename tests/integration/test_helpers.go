@@ -40,7 +40,7 @@ const (
 	cucumberFileName          = "cucumber-report.json"
 	anyToken                  = "any"
 	authorizationHeaderName   = "Authorization"
-	authorizationHeaderPrefix = "Baerer"
+	authorizationHeaderPrefix = "Bearer"
 	opaqueHeaderName          = "opaque-token"
 	defaultNS                 = "kyma-system"
 	configMapName             = "api-gateway-config"
