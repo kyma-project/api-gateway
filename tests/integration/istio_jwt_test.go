@@ -116,3 +116,20 @@ func (s *istioJwtManifestScenario) thereIsAHttpbinService() error {
 
 	return nil
 }
+
+// teardownHttpbinService deletes the httpbin service and reset the url in the scenario. This should be considered a temporary solution
+// to reduce resource conumption until we implement a better way to clean up the resources by a scenario. If the test fails before this step the teardown won't be executed.
+func (s *istioJwtManifestScenario) teardownHttpbinService() error {
+	resources, err := manifestprocessor.ParseFromFileWithTemplate("testing-app.yaml", s.apiResourceDirectory, resourceSeparator, s.manifestTemplate)
+	if err != nil {
+		return err
+	}
+	err = batch.DeleteResources(k8sClient, resources...)
+	if err != nil {
+		return err
+	}
+
+	s.url = ""
+
+	return nil
+}

@@ -20,6 +20,7 @@ func initAudience(ctx *godog.ScenarioContext) {
 	ctx.Step(`Audiences: There is an endpoint secured with JWT on path "([^"]*)" requiring audience '(\[.*\])' or '(\[.*\])'$`, scenario.emptyStep)
 	ctx.Step(`Audiences: The APIRule is applied$`, scenario.theAPIRuleIsApplied)
 	ctx.Step(`Audiences: Calling the "([^"]*)" endpoint with a valid "([^"]*)" token with audiences "([^"]*)" and "([^"]*)" should result in status between (\d+) and (\d+)`, scenario.callingTheEndpointWithAValidToken)
+	ctx.Step(`Audiences: Teardown httpbin service$`, scenario.teardownHttpbinService)
 }
 
 func (s *istioJwtManifestScenario) thereIsAnEndpointWithAudiences(path string, audiences string) error {

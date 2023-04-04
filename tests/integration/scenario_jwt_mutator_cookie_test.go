@@ -17,6 +17,7 @@ func initMutatorCookie(ctx *godog.ScenarioContext) {
 	ctx.Step(`JwtMutatorCookie: There is an endpoint on path "([^"]*)" with a cookie mutator setting "([^"]*)" cookie to "([^"]*)"$`, scenario.thereIsAnEndpointWithCookieMutator)
 	ctx.Step(`JwtMutatorCookie: The APIRule is applied$`, scenario.theAPIRuleIsApplied)
 	ctx.Step(`JwtMutatorCookie: Calling the "([^"]*)" endpoint should return response with cookie "([^"]*)" with value "([^"]*)"$`, scenario.shouldReturnResponseWithCookie)
+	ctx.Step(`JwtMutatorCookie: Teardown httpbin service$`, scenario.teardownHttpbinService)
 }
 
 func (s *istioJwtManifestScenario) thereIsAnEndpointWithCookieMutator(_, header, headerValue string) error {

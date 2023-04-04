@@ -22,6 +22,7 @@ func initDiffServiceSameMethods(ctx *godog.ScenarioContext) {
 	ctx.Step(`DiffSvcSameMethods: The APIRule is applied$`, scenario.theAPIRuleIsApplied)
 	ctx.Step(`DiffSvcSameMethods: Calling the "([^"]*)" endpoint with a valid "([^"]*)" token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithValidTokenShouldResultInStatusBetween)
 	ctx.Step(`DiffSvcSameMethods: Calling the "([^"]*)" endpoint without token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithoutTokenShouldResultInStatusBetween)
+	ctx.Step(`DiffSvcSameMethods: Teardown httpbin service$`, scenario.teardownHttpbinService)
 }
 
 func (s *istioJwtManifestScenario) thereAreTwoServices() error {
