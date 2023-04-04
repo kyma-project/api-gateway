@@ -68,8 +68,9 @@ var _ = Describe("APIRule Controller", Serial, func() {
 				deleteApiRule(instance)
 			}()
 
-			By("Verifying APIRule before update")
+			expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusOK)
 
+			By("Verifying created access rules")
 			Eventually(func(g Gomega) {
 				ruleList := getRuleList(g, matchingLabels)
 				verifyRuleList(g, ruleList, pathToURLFunc, rule1, rule2, rule3)
@@ -133,79 +134,82 @@ var _ = Describe("APIRule Controller", Serial, func() {
 							deleteApiRule(instance)
 						}()
 
+						expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusOK)
+
 						matchingLabels := matchingLabelsFunc(apiRuleName, testNamespace)
 
-						//Verify VirtualService
+						By("Verifying created virtual service")
 						vsList := networkingv1beta1.VirtualServiceList{}
 						Eventually(func(g Gomega) {
 							g.Expect(c.List(context.TODO(), &vsList, matchingLabels)).Should(Succeed())
 							g.Expect(vsList.Items).To(HaveLen(1))
+
+							vs := vsList.Items[0]
+
+							//Meta
+							g.Expect(vs.Name).To(HavePrefix(apiRuleName + "-"))
+							g.Expect(len(vs.Name) > len(apiRuleName)).To(BeTrue())
+
+							expectedSpec := builders.VirtualServiceSpec().
+								Host(serviceHost).
+								Gateway(testGatewayURL).
+								HTTP(builders.HTTPRoute().
+									Match(builders.MatchRequest().Uri().Regex(testPath)).
+									Route(builders.RouteDestination().Host(testOathkeeperSvcURL).Port(testOathkeeperPort)).
+									Headers(builders.NewHttpRouteHeadersBuilder().SetHostHeader(serviceHost).Get()).
+									CorsPolicy(defaultCorsPolicy).
+									Timeout(time.Second * helpers.DEFAULT_HTTP_TIMEOUT))
+
+							gotSpec := *expectedSpec.Get()
+							g.Expect(*vs.Spec.DeepCopy()).To(Equal(*gotSpec.DeepCopy()))
 						}, eventuallyTimeout).Should(Succeed())
-						vs := vsList.Items[0]
 
-						//Meta
-						Expect(vs.Name).To(HavePrefix(apiRuleName + "-"))
-						Expect(len(vs.Name) > len(apiRuleName)).To(BeTrue())
-
-						expectedSpec := builders.VirtualServiceSpec().
-							Host(serviceHost).
-							Gateway(testGatewayURL).
-							HTTP(builders.HTTPRoute().
-								Match(builders.MatchRequest().Uri().Regex(testPath)).
-								Route(builders.RouteDestination().Host(testOathkeeperSvcURL).Port(testOathkeeperPort)).
-								Headers(builders.NewHttpRouteHeadersBuilder().SetHostHeader(serviceHost).Get()).
-								CorsPolicy(defaultCorsPolicy).
-								Timeout(time.Second * helpers.DEFAULT_HTTP_TIMEOUT))
-
-						gotSpec := *expectedSpec.Get()
-						Expect(*vs.Spec.DeepCopy()).To(Equal(*gotSpec.DeepCopy()))
-
-						//Verify Rule
+						By("Verifying created access rules")
 						expectedRuleMatchURL := fmt.Sprintf("<http|https>://%s<%s>", serviceHost, testPath)
 
 						var rlList []rulev1alpha1.Rule
 						Eventually(func(g Gomega) {
 							rlList = getRuleList(g, matchingLabels)
 							g.Expect(rlList).To(HaveLen(1))
+
+							rl := rlList[0]
+							g.Expect(rl.Spec.Match.URL).To(Equal(expectedRuleMatchURL))
+
+							//Meta
+							g.Expect(rl.Name).To(HavePrefix(apiRuleName + "-"))
+							g.Expect(len(rl.Name) > len(apiRuleName)).To(BeTrue())
+
+							//Spec.Upstream
+							g.Expect(rl.Spec.Upstream).NotTo(BeNil())
+							g.Expect(rl.Spec.Upstream.URL).To(Equal(fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", serviceName, testNamespace, testServicePort)))
+							g.Expect(rl.Spec.Upstream.StripPath).To(BeNil())
+							g.Expect(rl.Spec.Upstream.PreserveHost).To(BeNil())
+							//Spec.Match
+							g.Expect(rl.Spec.Match).NotTo(BeNil())
+							g.Expect(rl.Spec.Match.URL).To(Equal(fmt.Sprintf("<http|https>://%s<%s>", serviceHost, testPath)))
+							g.Expect(rl.Spec.Match.Methods).To(Equal(defaultMethods))
+							//Spec.Authenticators
+							g.Expect(rl.Spec.Authenticators).To(HaveLen(1))
+							g.Expect(rl.Spec.Authenticators[0].Handler).NotTo(BeNil())
+							g.Expect(rl.Spec.Authenticators[0].Handler.Name).To(Equal("oauth2_introspection"))
+							g.Expect(rl.Spec.Authenticators[0].Handler.Config).NotTo(BeNil())
+							//Authenticators[0].Handler.Config validation
+							handlerConfig := map[string]interface{}{}
+							g.Expect(json.Unmarshal(rl.Spec.Authenticators[0].Config.Raw, &handlerConfig)).Should(Succeed())
+							g.Expect(handlerConfig).To(HaveLen(1))
+							g.Expect(asStringSlice(handlerConfig["required_scope"])).To(BeEquivalentTo(defaultScopes))
+							//Spec.Authorizer
+							g.Expect(rl.Spec.Authorizer).NotTo(BeNil())
+							g.Expect(rl.Spec.Authorizer.Handler).NotTo(BeNil())
+							g.Expect(rl.Spec.Authorizer.Handler.Name).To(Equal("allow"))
+							g.Expect(rl.Spec.Authorizer.Handler.Config).To(BeNil())
+
+							//Spec.Mutators
+							g.Expect(rl.Spec.Mutators).NotTo(BeNil())
+							g.Expect(len(rl.Spec.Mutators)).To(Equal(len(defaultMutators)))
+							g.Expect(rl.Spec.Mutators[0].Handler.Name).To(Equal(defaultMutators[0].Name))
+							g.Expect(rl.Spec.Mutators[1].Handler.Name).To(Equal(defaultMutators[1].Name))
 						}, eventuallyTimeout).Should(Succeed())
-
-						rl := rlList[0]
-						Expect(rl.Spec.Match.URL).To(Equal(expectedRuleMatchURL))
-
-						//Meta
-						Expect(rl.Name).To(HavePrefix(apiRuleName + "-"))
-						Expect(len(rl.Name) > len(apiRuleName)).To(BeTrue())
-
-						//Spec.Upstream
-						Expect(rl.Spec.Upstream).NotTo(BeNil())
-						Expect(rl.Spec.Upstream.URL).To(Equal(fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", serviceName, testNamespace, testServicePort)))
-						Expect(rl.Spec.Upstream.StripPath).To(BeNil())
-						Expect(rl.Spec.Upstream.PreserveHost).To(BeNil())
-						//Spec.Match
-						Expect(rl.Spec.Match).NotTo(BeNil())
-						Expect(rl.Spec.Match.URL).To(Equal(fmt.Sprintf("<http|https>://%s<%s>", serviceHost, testPath)))
-						Expect(rl.Spec.Match.Methods).To(Equal(defaultMethods))
-						//Spec.Authenticators
-						Expect(rl.Spec.Authenticators).To(HaveLen(1))
-						Expect(rl.Spec.Authenticators[0].Handler).NotTo(BeNil())
-						Expect(rl.Spec.Authenticators[0].Handler.Name).To(Equal("oauth2_introspection"))
-						Expect(rl.Spec.Authenticators[0].Handler.Config).NotTo(BeNil())
-						//Authenticators[0].Handler.Config validation
-						handlerConfig := map[string]interface{}{}
-						Expect(json.Unmarshal(rl.Spec.Authenticators[0].Config.Raw, &handlerConfig)).Should(Succeed())
-						Expect(handlerConfig).To(HaveLen(1))
-						Expect(asStringSlice(handlerConfig["required_scope"])).To(BeEquivalentTo(defaultScopes))
-						//Spec.Authorizer
-						Expect(rl.Spec.Authorizer).NotTo(BeNil())
-						Expect(rl.Spec.Authorizer.Handler).NotTo(BeNil())
-						Expect(rl.Spec.Authorizer.Handler.Name).To(Equal("allow"))
-						Expect(rl.Spec.Authorizer.Handler.Config).To(BeNil())
-
-						//Spec.Mutators
-						Expect(rl.Spec.Mutators).NotTo(BeNil())
-						Expect(len(rl.Spec.Mutators)).To(Equal(len(defaultMutators)))
-						Expect(rl.Spec.Mutators[0].Handler.Name).To(Equal(defaultMutators[0].Name))
-						Expect(rl.Spec.Mutators[1].Handler.Name).To(Equal(defaultMutators[1].Name))
 					})
 				})
 			})
@@ -228,122 +232,122 @@ var _ = Describe("APIRule Controller", Serial, func() {
 							defer func() {
 								deleteApiRule(instance)
 							}()
+							expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusOK)
 
 							matchingLabels := matchingLabelsFunc(apiRuleName, testNamespace)
 
-							//Verify VirtualService
+							By("Verifying created virtual service")
 							vsList := networkingv1beta1.VirtualServiceList{}
 							Eventually(func(g Gomega) {
 								g.Expect(c.List(context.TODO(), &vsList, matchingLabels)).Should(Succeed())
 								g.Expect(vsList.Items).To(HaveLen(1))
+								vs := vsList.Items[0]
+
+								expectedSpec := builders.VirtualServiceSpec().
+									Host(serviceHost).
+									Gateway(testGatewayURL).
+									HTTP(builders.HTTPRoute().
+										Match(builders.MatchRequest().Uri().Regex("/img")).
+										Route(builders.RouteDestination().Host(testOathkeeperSvcURL).Port(testOathkeeperPort)).
+										Headers(builders.NewHttpRouteHeadersBuilder().SetHostHeader(serviceHost).Get()).
+										CorsPolicy(defaultCorsPolicy).
+										Timeout(time.Second * helpers.DEFAULT_HTTP_TIMEOUT)).
+									HTTP(builders.HTTPRoute().
+										Match(builders.MatchRequest().Uri().Regex("/headers")).
+										Route(builders.RouteDestination().Host(testOathkeeperSvcURL).Port(testOathkeeperPort)).
+										Headers(builders.NewHttpRouteHeadersBuilder().SetHostHeader(serviceHost).Get()).
+										CorsPolicy(defaultCorsPolicy).
+										Timeout(time.Second * helpers.DEFAULT_HTTP_TIMEOUT))
+								gotSpec := *expectedSpec.Get()
+								g.Expect(*vs.Spec.DeepCopy()).To(Equal(*gotSpec.DeepCopy()))
 							}, eventuallyTimeout).Should(Succeed())
 
-							vs := vsList.Items[0]
-
-							expectedSpec := builders.VirtualServiceSpec().
-								Host(serviceHost).
-								Gateway(testGatewayURL).
-								HTTP(builders.HTTPRoute().
-									Match(builders.MatchRequest().Uri().Regex("/img")).
-									Route(builders.RouteDestination().Host(testOathkeeperSvcURL).Port(testOathkeeperPort)).
-									Headers(builders.NewHttpRouteHeadersBuilder().SetHostHeader(serviceHost).Get()).
-									CorsPolicy(defaultCorsPolicy).
-									Timeout(time.Second * helpers.DEFAULT_HTTP_TIMEOUT)).
-								HTTP(builders.HTTPRoute().
-									Match(builders.MatchRequest().Uri().Regex("/headers")).
-									Route(builders.RouteDestination().Host(testOathkeeperSvcURL).Port(testOathkeeperPort)).
-									Headers(builders.NewHttpRouteHeadersBuilder().SetHostHeader(serviceHost).Get()).
-									CorsPolicy(defaultCorsPolicy).
-									Timeout(time.Second * helpers.DEFAULT_HTTP_TIMEOUT))
-							gotSpec := *expectedSpec.Get()
-							Expect(*vs.Spec.DeepCopy()).To(Equal(*gotSpec.DeepCopy()))
-
-							//Verify Rule1
+							By("Verifying created access rules")
 							expectedRuleMatchURL := fmt.Sprintf("<http|https>://%s<%s>", serviceHost, "/img")
 
 							var rlList []rulev1alpha1.Rule
 							Eventually(func(g Gomega) {
 								rlList = getRuleList(g, matchingLabels)
 								g.Expect(rlList).To(HaveLen(2))
+
+								rules := make(map[string]rulev1alpha1.Rule)
+
+								for _, rule := range rlList {
+									rules[rule.Spec.Match.URL] = rule
+								}
+
+								rl := rules[expectedRuleMatchURL]
+
+								//Spec.Upstream
+								g.Expect(rl.Spec.Upstream).NotTo(BeNil())
+								g.Expect(rl.Spec.Upstream.URL).To(Equal(fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", serviceName, testNamespace, testServicePort)))
+								g.Expect(rl.Spec.Upstream.StripPath).To(BeNil())
+								g.Expect(rl.Spec.Upstream.PreserveHost).To(BeNil())
+								//Spec.Match
+								g.Expect(rl.Spec.Match).NotTo(BeNil())
+								g.Expect(rl.Spec.Match.URL).To(Equal(expectedRuleMatchURL))
+								g.Expect(rl.Spec.Match.Methods).To(Equal([]string{"GET"}))
+								//Spec.Authenticators
+								g.Expect(rl.Spec.Authenticators).To(HaveLen(1))
+								g.Expect(rl.Spec.Authenticators[0].Handler).NotTo(BeNil())
+								g.Expect(rl.Spec.Authenticators[0].Handler.Name).To(Equal("jwt"))
+								g.Expect(rl.Spec.Authenticators[0].Handler.Config).NotTo(BeNil())
+								//Authenticators[0].Handler.Config validation
+								handlerConfig := map[string]interface{}{}
+
+								g.Expect(json.Unmarshal(rl.Spec.Authenticators[0].Config.Raw, &handlerConfig)).Should(Succeed())
+								g.Expect(handlerConfig).To(HaveLen(3))
+								g.Expect(asStringSlice(handlerConfig["required_scope"])).To(BeEquivalentTo(defaultScopes))
+								g.Expect(asStringSlice(handlerConfig["trusted_issuers"])).To(BeEquivalentTo([]string{testIssuer}))
+								//Spec.Authorizer
+								g.Expect(rl.Spec.Authorizer).NotTo(BeNil())
+								g.Expect(rl.Spec.Authorizer.Handler).NotTo(BeNil())
+								g.Expect(rl.Spec.Authorizer.Handler.Name).To(Equal("allow"))
+								g.Expect(rl.Spec.Authorizer.Handler.Config).To(BeNil())
+
+								//Spec.Mutators
+								g.Expect(rl.Spec.Mutators).NotTo(BeNil())
+								g.Expect(len(rl.Spec.Mutators)).To(Equal(len(defaultMutators)))
+								g.Expect(rl.Spec.Mutators[0].Handler.Name).To(Equal(defaultMutators[0].Name))
+								g.Expect(rl.Spec.Mutators[1].Handler.Name).To(Equal(defaultMutators[1].Name))
+
+								//Verify Rule2
+								expectedRule2MatchURL := fmt.Sprintf("<http|https>://%s<%s>", serviceHost, "/headers")
+								rl2 := rules[expectedRule2MatchURL]
+
+								//Spec.Upstream
+								g.Expect(rl2.Spec.Upstream).NotTo(BeNil())
+								g.Expect(rl2.Spec.Upstream.URL).To(Equal(fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", serviceName, testNamespace, testServicePort)))
+								g.Expect(rl2.Spec.Upstream.StripPath).To(BeNil())
+								g.Expect(rl2.Spec.Upstream.PreserveHost).To(BeNil())
+								//Spec.Match
+								g.Expect(rl2.Spec.Match).NotTo(BeNil())
+								g.Expect(rl2.Spec.Match.URL).To(Equal(expectedRule2MatchURL))
+								g.Expect(rl2.Spec.Match.Methods).To(Equal([]string{"GET"}))
+								//Spec.Authenticators
+								g.Expect(rl2.Spec.Authenticators).To(HaveLen(1))
+								g.Expect(rl2.Spec.Authenticators[0].Handler).NotTo(BeNil())
+								g.Expect(rl2.Spec.Authenticators[0].Handler.Name).To(Equal("jwt"))
+								g.Expect(rl2.Spec.Authenticators[0].Handler.Config).NotTo(BeNil())
+								//Authenticators[0].Handler.Config validation
+								handlerConfig = map[string]interface{}{}
+
+								g.Expect(json.Unmarshal(rl2.Spec.Authenticators[0].Config.Raw, &handlerConfig)).Should(Succeed())
+								g.Expect(handlerConfig).To(HaveLen(3))
+								g.Expect(asStringSlice(handlerConfig["required_scope"])).To(BeEquivalentTo(defaultScopes))
+								g.Expect(asStringSlice(handlerConfig["trusted_issuers"])).To(BeEquivalentTo([]string{testIssuer}))
+								//Spec.Authorizer
+								g.Expect(rl2.Spec.Authorizer).NotTo(BeNil())
+								g.Expect(rl2.Spec.Authorizer.Handler).NotTo(BeNil())
+								g.Expect(rl2.Spec.Authorizer.Handler.Name).To(Equal("allow"))
+								g.Expect(rl2.Spec.Authorizer.Handler.Config).To(BeNil())
+
+								//Spec.Mutators
+								g.Expect(rl2.Spec.Mutators).NotTo(BeNil())
+								g.Expect(len(rl2.Spec.Mutators)).To(Equal(len(defaultMutators)))
+								g.Expect(rl2.Spec.Mutators[0].Handler.Name).To(Equal(defaultMutators[0].Name))
+								g.Expect(rl2.Spec.Mutators[1].Handler.Name).To(Equal(defaultMutators[1].Name))
 							}, eventuallyTimeout).Should(Succeed())
-
-							rules := make(map[string]rulev1alpha1.Rule)
-
-							for _, rule := range rlList {
-								rules[rule.Spec.Match.URL] = rule
-							}
-
-							rl := rules[expectedRuleMatchURL]
-
-							//Spec.Upstream
-							Expect(rl.Spec.Upstream).NotTo(BeNil())
-							Expect(rl.Spec.Upstream.URL).To(Equal(fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", serviceName, testNamespace, testServicePort)))
-							Expect(rl.Spec.Upstream.StripPath).To(BeNil())
-							Expect(rl.Spec.Upstream.PreserveHost).To(BeNil())
-							//Spec.Match
-							Expect(rl.Spec.Match).NotTo(BeNil())
-							Expect(rl.Spec.Match.URL).To(Equal(expectedRuleMatchURL))
-							Expect(rl.Spec.Match.Methods).To(Equal([]string{"GET"}))
-							//Spec.Authenticators
-							Expect(rl.Spec.Authenticators).To(HaveLen(1))
-							Expect(rl.Spec.Authenticators[0].Handler).NotTo(BeNil())
-							Expect(rl.Spec.Authenticators[0].Handler.Name).To(Equal("jwt"))
-							Expect(rl.Spec.Authenticators[0].Handler.Config).NotTo(BeNil())
-							//Authenticators[0].Handler.Config validation
-							handlerConfig := map[string]interface{}{}
-
-							Expect(json.Unmarshal(rl.Spec.Authenticators[0].Config.Raw, &handlerConfig)).Should(Succeed())
-							Expect(handlerConfig).To(HaveLen(3))
-							Expect(asStringSlice(handlerConfig["required_scope"])).To(BeEquivalentTo(defaultScopes))
-							Expect(asStringSlice(handlerConfig["trusted_issuers"])).To(BeEquivalentTo([]string{testIssuer}))
-							//Spec.Authorizer
-							Expect(rl.Spec.Authorizer).NotTo(BeNil())
-							Expect(rl.Spec.Authorizer.Handler).NotTo(BeNil())
-							Expect(rl.Spec.Authorizer.Handler.Name).To(Equal("allow"))
-							Expect(rl.Spec.Authorizer.Handler.Config).To(BeNil())
-
-							//Spec.Mutators
-							Expect(rl.Spec.Mutators).NotTo(BeNil())
-							Expect(len(rl.Spec.Mutators)).To(Equal(len(defaultMutators)))
-							Expect(rl.Spec.Mutators[0].Handler.Name).To(Equal(defaultMutators[0].Name))
-							Expect(rl.Spec.Mutators[1].Handler.Name).To(Equal(defaultMutators[1].Name))
-
-							//Verify Rule2
-							expectedRule2MatchURL := fmt.Sprintf("<http|https>://%s<%s>", serviceHost, "/headers")
-							rl2 := rules[expectedRule2MatchURL]
-
-							//Spec.Upstream
-							Expect(rl2.Spec.Upstream).NotTo(BeNil())
-							Expect(rl2.Spec.Upstream.URL).To(Equal(fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", serviceName, testNamespace, testServicePort)))
-							Expect(rl2.Spec.Upstream.StripPath).To(BeNil())
-							Expect(rl2.Spec.Upstream.PreserveHost).To(BeNil())
-							//Spec.Match
-							Expect(rl2.Spec.Match).NotTo(BeNil())
-							Expect(rl2.Spec.Match.URL).To(Equal(expectedRule2MatchURL))
-							Expect(rl2.Spec.Match.Methods).To(Equal([]string{"GET"}))
-							//Spec.Authenticators
-							Expect(rl2.Spec.Authenticators).To(HaveLen(1))
-							Expect(rl2.Spec.Authenticators[0].Handler).NotTo(BeNil())
-							Expect(rl2.Spec.Authenticators[0].Handler.Name).To(Equal("jwt"))
-							Expect(rl2.Spec.Authenticators[0].Handler.Config).NotTo(BeNil())
-							//Authenticators[0].Handler.Config validation
-							handlerConfig = map[string]interface{}{}
-
-							Expect(json.Unmarshal(rl2.Spec.Authenticators[0].Config.Raw, &handlerConfig)).Should(Succeed())
-							Expect(handlerConfig).To(HaveLen(3))
-							Expect(asStringSlice(handlerConfig["required_scope"])).To(BeEquivalentTo(defaultScopes))
-							Expect(asStringSlice(handlerConfig["trusted_issuers"])).To(BeEquivalentTo([]string{testIssuer}))
-							//Spec.Authorizer
-							Expect(rl2.Spec.Authorizer).NotTo(BeNil())
-							Expect(rl2.Spec.Authorizer.Handler).NotTo(BeNil())
-							Expect(rl2.Spec.Authorizer.Handler.Name).To(Equal("allow"))
-							Expect(rl2.Spec.Authorizer.Handler.Config).To(BeNil())
-
-							//Spec.Mutators
-							Expect(rl2.Spec.Mutators).NotTo(BeNil())
-							Expect(len(rl2.Spec.Mutators)).To(Equal(len(defaultMutators)))
-							Expect(rl2.Spec.Mutators[0].Handler.Name).To(Equal(defaultMutators[0].Name))
-							Expect(rl2.Spec.Mutators[1].Handler.Name).To(Equal(defaultMutators[1].Name))
 						})
 					})
 				})
@@ -366,55 +370,50 @@ var _ = Describe("APIRule Controller", Serial, func() {
 								deleteApiRule(instance)
 							}()
 
+							expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusOK)
+
 							ApiRuleNameMatchingLabels := matchingLabelsFunc(apiRuleName, testNamespace)
 
-							//Verify VirtualService
+							By("Verifying virtual service")
 							vsList := networkingv1beta1.VirtualServiceList{}
 							Eventually(func(g Gomega) {
 								g.Expect(c.List(context.TODO(), &vsList, ApiRuleNameMatchingLabels)).Should(Succeed())
 								g.Expect(vsList.Items).To(HaveLen(1))
+								vs := vsList.Items[0]
+
+								expectedSpec := builders.VirtualServiceSpec().
+									Host(serviceHost).
+									Gateway(testGatewayURL).
+									HTTP(builders.HTTPRoute().
+										Match(builders.MatchRequest().Uri().Regex("/img")).
+										Route(builders.RouteDestination().Host(fmt.Sprintf("%s.%s.svc.cluster.local", serviceName, testNamespace)).Port(testServicePort)).
+										Headers(builders.NewHttpRouteHeadersBuilder().SetHostHeader(serviceHost).Get()).
+										CorsPolicy(defaultCorsPolicy).
+										Timeout(time.Second * helpers.DEFAULT_HTTP_TIMEOUT)).
+									HTTP(builders.HTTPRoute().
+										Match(builders.MatchRequest().Uri().Regex("/headers")).
+										Route(builders.RouteDestination().Host(fmt.Sprintf("%s.%s.svc.cluster.local", serviceName, testNamespace)).Port(testServicePort)).
+										Headers(builders.NewHttpRouteHeadersBuilder().SetHostHeader(serviceHost).Get()).
+										CorsPolicy(defaultCorsPolicy).
+										Timeout(time.Second * helpers.DEFAULT_HTTP_TIMEOUT))
+								gotSpec := *expectedSpec.Get()
+								g.Expect(*vs.Spec.DeepCopy()).To(Equal(*gotSpec.DeepCopy()))
 							}, eventuallyTimeout).Should(Succeed())
 
-							vs := vsList.Items[0]
-
-							expectedSpec := builders.VirtualServiceSpec().
-								Host(serviceHost).
-								Gateway(testGatewayURL).
-								HTTP(builders.HTTPRoute().
-									Match(builders.MatchRequest().Uri().Regex("/img")).
-									Route(builders.RouteDestination().Host(fmt.Sprintf("%s.%s.svc.cluster.local", serviceName, testNamespace)).Port(testServicePort)).
-									Headers(builders.NewHttpRouteHeadersBuilder().SetHostHeader(serviceHost).Get()).
-									CorsPolicy(defaultCorsPolicy).
-									Timeout(time.Second * helpers.DEFAULT_HTTP_TIMEOUT)).
-								HTTP(builders.HTTPRoute().
-									Match(builders.MatchRequest().Uri().Regex("/headers")).
-									Route(builders.RouteDestination().Host(fmt.Sprintf("%s.%s.svc.cluster.local", serviceName, testNamespace)).Port(testServicePort)).
-									Headers(builders.NewHttpRouteHeadersBuilder().SetHostHeader(serviceHost).Get()).
-									CorsPolicy(defaultCorsPolicy).
-									Timeout(time.Second * helpers.DEFAULT_HTTP_TIMEOUT))
-							gotSpec := *expectedSpec.Get()
-							Expect(*vs.Spec.DeepCopy()).To(Equal(*gotSpec.DeepCopy()))
-
-							// Verify RequestAuthentication
+							By("Verifying request authentication")
 							raList := securityv1beta1.RequestAuthenticationList{}
 							Eventually(func(g Gomega) {
 								g.Expect(c.List(context.TODO(), &raList, ApiRuleNameMatchingLabels)).Should(Succeed())
 								g.Expect(raList.Items).To(HaveLen(1))
+
+								ra := raList.Items[0]
+
+								g.Expect(ra.Spec.Selector.MatchLabels).To(BeEquivalentTo(map[string]string{"app": serviceName}))
+								g.Expect(ra.Spec.JwtRules[0].Issuer).To(Equal(testIssuer))
+								g.Expect(ra.Spec.JwtRules[0].JwksUri).To(Equal(testJwksUri))
 							}, eventuallyTimeout).Should(Succeed())
 
-							ra := raList.Items[0]
-
-							Expect(ra.Spec.Selector.MatchLabels).To(BeEquivalentTo(map[string]string{"app": serviceName}))
-							Expect(ra.Spec.JwtRules[0].Issuer).To(Equal(testIssuer))
-							Expect(ra.Spec.JwtRules[0].JwksUri).To(Equal(testJwksUri))
-
-							// Verify AuthorizationPolicies
-							apList := securityv1beta1.AuthorizationPolicyList{}
-							Eventually(func(g Gomega) {
-								g.Expect(c.List(context.TODO(), &apList, ApiRuleNameMatchingLabels)).Should(Succeed())
-								g.Expect(apList.Items).To(HaveLen(2))
-							}, eventuallyTimeout).Should(Succeed())
-
+							By("Verifying authorization policies")
 							getByOperationPath := func(apList []*securityv1beta1.AuthorizationPolicy, path string) (*securityv1beta1.AuthorizationPolicy, error) {
 								for _, ap := range apList {
 									if ap.Spec.Rules[0].To[0].Operation.Paths[0] == path {
@@ -424,46 +423,51 @@ var _ = Describe("APIRule Controller", Serial, func() {
 								return nil, fmt.Errorf("no authorization policy with operation path %s exists", path)
 							}
 
-							hasAuthorizationPolicyWithOperationPath := func(apList []*securityv1beta1.AuthorizationPolicy, operationPath string, assertWhen func(*securityv1beta1.AuthorizationPolicy)) {
-								ap, err := getByOperationPath(apList, operationPath)
-								Expect(err).NotTo(HaveOccurred())
-								Expect(ap.Spec.Selector.MatchLabels).To(BeEquivalentTo(map[string]string{"app": serviceName}))
-								Expect(ap.Spec.Rules).To(HaveLen(3))
+							apList := securityv1beta1.AuthorizationPolicyList{}
+							Eventually(func(g Gomega) {
+								g.Expect(c.List(context.TODO(), &apList, ApiRuleNameMatchingLabels)).Should(Succeed())
+								g.Expect(apList.Items).To(HaveLen(2))
 
-								for i := 0; i < 3; i++ {
-									Expect(ap.Spec.Rules[i].From[0].Source.RequestPrincipals[0]).To(Equal("*"))
-									Expect(ap.Spec.Rules[i].To[0].Operation.Paths[0]).To(Equal(operationPath))
-									Expect(ap.Spec.Rules[i].To[0].Operation.Methods).To(BeEquivalentTo([]string{"GET"}))
+								hasAuthorizationPolicyWithOperationPath := func(apList []*securityv1beta1.AuthorizationPolicy, operationPath string, assertWhen func(*securityv1beta1.AuthorizationPolicy)) {
+									ap, err := getByOperationPath(apList, operationPath)
+									g.Expect(err).NotTo(HaveOccurred())
+									g.Expect(ap.Spec.Selector.MatchLabels).To(BeEquivalentTo(map[string]string{"app": serviceName}))
+									g.Expect(ap.Spec.Rules).To(HaveLen(3))
+
+									for i := 0; i < 3; i++ {
+										g.Expect(ap.Spec.Rules[i].From[0].Source.RequestPrincipals[0]).To(Equal("*"))
+										g.Expect(ap.Spec.Rules[i].To[0].Operation.Paths[0]).To(Equal(operationPath))
+										g.Expect(ap.Spec.Rules[i].To[0].Operation.Methods).To(BeEquivalentTo([]string{"GET"}))
+									}
+
+									ruleWhenKeys := append([]string{}, ap.Spec.Rules[0].When[0].Key, ap.Spec.Rules[1].When[0].Key, ap.Spec.Rules[2].When[0].Key)
+									g.Expect(ruleWhenKeys).To(ContainElements("request.auth.claims[scp]", "request.auth.claims[scope]", "request.auth.claims[scopes]"))
+
+									assertWhen(ap)
 								}
 
-								ruleWhenKeys := append([]string{}, ap.Spec.Rules[0].When[0].Key, ap.Spec.Rules[1].When[0].Key, ap.Spec.Rules[2].When[0].Key)
-								Expect(ruleWhenKeys).To(ContainElements("request.auth.claims[scp]", "request.auth.claims[scope]", "request.auth.claims[scopes]"))
+								hasAuthorizationPolicyWithOperationPath(apList.Items, "/img", func(ap *securityv1beta1.AuthorizationPolicy) {
+									g.Expect(ap.Spec.Rules).To(HaveLen(3))
+									for i := 0; i < 3; i++ {
+										g.Expect(ap.Spec.Rules[i].When).To(HaveLen(2))
 
-								assertWhen(ap)
-							}
+										ruleWhenValues := append([]string{}, ap.Spec.Rules[0].When[0].Values...)
+										ruleWhenValues = append(ruleWhenValues, ap.Spec.Rules[0].When[1].Values...)
 
-							hasAuthorizationPolicyWithOperationPath(apList.Items, "/img", func(ap *securityv1beta1.AuthorizationPolicy) {
-								Expect(ap.Spec.Rules).To(HaveLen(3))
-								for i := 0; i < 3; i++ {
-									Expect(ap.Spec.Rules[i].When).To(HaveLen(2))
+										g.Expect(ruleWhenValues).To(ContainElements("scope-a", "scope-b"))
 
-									ruleWhenValues := append([]string{}, ap.Spec.Rules[0].When[0].Values...)
-									ruleWhenValues = append(ruleWhenValues, ap.Spec.Rules[0].When[1].Values...)
+									}
+								})
 
-									Expect(ruleWhenValues).To(ContainElements("scope-a", "scope-b"))
-
-								}
-							})
-
-							hasAuthorizationPolicyWithOperationPath(apList.Items, "/headers", func(ap *securityv1beta1.AuthorizationPolicy) {
-								Expect(ap.Spec.Rules).To(HaveLen(3))
-								for i := 0; i < 3; i++ {
-									Expect(ap.Spec.Rules[i].When[0].Values).To(ContainElements("scope-c"))
-									Expect(ap.Spec.Rules[i].When[0].Values).To(ContainElements("scope-c"))
-									Expect(ap.Spec.Rules[i].When[0].Values).To(ContainElements("scope-c"))
-								}
-							})
-
+								hasAuthorizationPolicyWithOperationPath(apList.Items, "/headers", func(ap *securityv1beta1.AuthorizationPolicy) {
+									g.Expect(ap.Spec.Rules).To(HaveLen(3))
+									for i := 0; i < 3; i++ {
+										g.Expect(ap.Spec.Rules[i].When[0].Values).To(ContainElements("scope-c"))
+										g.Expect(ap.Spec.Rules[i].When[0].Values).To(ContainElements("scope-c"))
+										g.Expect(ap.Spec.Rules[i].When[0].Values).To(ContainElements("scope-c"))
+									}
+								})
+							}, eventuallyTimeout).Should(Succeed())
 						})
 
 						It("should create and update authorization policies when adding new authorization", func() {
@@ -568,49 +572,51 @@ var _ = Describe("APIRule Controller", Serial, func() {
 							deleteApiRule(instance)
 						}()
 
+						expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusOK)
+
 						matchingLabels := matchingLabelsFunc(apiRuleName, testNamespace)
 
-						//Verify VirtualService
+						By("Verifying that virtual service")
 						vsList := networkingv1beta1.VirtualServiceList{}
 						Eventually(func(g Gomega) {
 							g.Expect(c.List(context.TODO(), &vsList, matchingLabels)).Should(Succeed())
 							g.Expect(vsList.Items).To(HaveLen(1))
+
+							vs := vsList.Items[0]
+
+							expectedSpec := builders.VirtualServiceSpec().
+								Host(serviceHost).
+								Gateway(testGatewayURL).
+								HTTP(builders.HTTPRoute().
+									Match(builders.MatchRequest().Uri().Regex("/img")).
+									Route(builders.RouteDestination().Host(testOathkeeperSvcURL).Port(testOathkeeperPort)).
+									Headers(builders.NewHttpRouteHeadersBuilder().SetHostHeader(serviceHost).Get()).
+									CorsPolicy(defaultCorsPolicy).
+									Timeout(time.Second * helpers.DEFAULT_HTTP_TIMEOUT)).
+								HTTP(builders.HTTPRoute().
+									Match(builders.MatchRequest().Uri().Regex("/headers")).
+									Route(builders.RouteDestination().Host(testOathkeeperSvcURL).Port(testOathkeeperPort)).
+									Headers(builders.NewHttpRouteHeadersBuilder().SetHostHeader(serviceHost).Get()).
+									CorsPolicy(defaultCorsPolicy).
+									Timeout(time.Second * helpers.DEFAULT_HTTP_TIMEOUT)).
+								HTTP(builders.HTTPRoute().
+									Match(builders.MatchRequest().Uri().Regex("/status")).
+									Route(builders.RouteDestination().Host(testOathkeeperSvcURL).Port(testOathkeeperPort)).
+									Headers(builders.NewHttpRouteHeadersBuilder().SetHostHeader(serviceHost).Get()).
+									CorsPolicy(defaultCorsPolicy).
+									Timeout(time.Second * helpers.DEFAULT_HTTP_TIMEOUT)).
+								HTTP(builders.HTTPRoute().
+									Match(builders.MatchRequest().Uri().Regex("/favicon")).
+									Route(builders.RouteDestination().Host("httpbin.atgo-system.svc.cluster.local").Port(443)). // "allow", no oathkeeper rule!
+									Headers(builders.NewHttpRouteHeadersBuilder().SetHostHeader(serviceHost).Get()).
+									CorsPolicy(defaultCorsPolicy).
+									Timeout(time.Second * helpers.DEFAULT_HTTP_TIMEOUT))
+
+							gotSpec := *expectedSpec.Get()
+							g.Expect(*vs.Spec.DeepCopy()).To(Equal(*gotSpec.DeepCopy()))
 						}, eventuallyTimeout).Should(Succeed())
 
-						vs := vsList.Items[0]
-
-						expectedSpec := builders.VirtualServiceSpec().
-							Host(serviceHost).
-							Gateway(testGatewayURL).
-							HTTP(builders.HTTPRoute().
-								Match(builders.MatchRequest().Uri().Regex("/img")).
-								Route(builders.RouteDestination().Host(testOathkeeperSvcURL).Port(testOathkeeperPort)).
-								Headers(builders.NewHttpRouteHeadersBuilder().SetHostHeader(serviceHost).Get()).
-								CorsPolicy(defaultCorsPolicy).
-								Timeout(time.Second * helpers.DEFAULT_HTTP_TIMEOUT)).
-							HTTP(builders.HTTPRoute().
-								Match(builders.MatchRequest().Uri().Regex("/headers")).
-								Route(builders.RouteDestination().Host(testOathkeeperSvcURL).Port(testOathkeeperPort)).
-								Headers(builders.NewHttpRouteHeadersBuilder().SetHostHeader(serviceHost).Get()).
-								CorsPolicy(defaultCorsPolicy).
-								Timeout(time.Second * helpers.DEFAULT_HTTP_TIMEOUT)).
-							HTTP(builders.HTTPRoute().
-								Match(builders.MatchRequest().Uri().Regex("/status")).
-								Route(builders.RouteDestination().Host(testOathkeeperSvcURL).Port(testOathkeeperPort)).
-								Headers(builders.NewHttpRouteHeadersBuilder().SetHostHeader(serviceHost).Get()).
-								CorsPolicy(defaultCorsPolicy).
-								Timeout(time.Second * helpers.DEFAULT_HTTP_TIMEOUT)).
-							HTTP(builders.HTTPRoute().
-								Match(builders.MatchRequest().Uri().Regex("/favicon")).
-								Route(builders.RouteDestination().Host("httpbin.atgo-system.svc.cluster.local").Port(443)). // "allow", no oathkeeper rule!
-								Headers(builders.NewHttpRouteHeadersBuilder().SetHostHeader(serviceHost).Get()).
-								CorsPolicy(defaultCorsPolicy).
-								Timeout(time.Second * helpers.DEFAULT_HTTP_TIMEOUT))
-
-						gotSpec := *expectedSpec.Get()
-						Expect(*vs.Spec.DeepCopy()).To(Equal(*gotSpec.DeepCopy()))
-
-						//Verify Rules
+						By("Verifying that access rules")
 						for _, tc := range []struct {
 							path    string
 							handler string
@@ -626,49 +632,49 @@ var _ = Describe("APIRule Controller", Serial, func() {
 							Eventually(func(g Gomega) {
 								rlList = getRuleList(g, matchingLabels)
 								g.Expect(rlList).To(HaveLen(3))
+
+								rules := make(map[string]rulev1alpha1.Rule)
+
+								for _, rule := range rlList {
+									rules[rule.Spec.Match.URL] = rule
+								}
+
+								rl := rules[expectedRuleMatchURL]
+
+								//Spec.Upstream
+								g.Expect(rl.Spec.Upstream).NotTo(BeNil())
+								g.Expect(rl.Spec.Upstream.URL).To(Equal(fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", serviceName, testNamespace, testServicePort)))
+								g.Expect(rl.Spec.Upstream.StripPath).To(BeNil())
+								g.Expect(rl.Spec.Upstream.PreserveHost).To(BeNil())
+
+								//Spec.Match
+								g.Expect(rl.Spec.Match).NotTo(BeNil())
+								g.Expect(rl.Spec.Match.Methods).To(Equal([]string{"GET"}))
+								g.Expect(rl.Spec.Match.URL).To(Equal(expectedRuleMatchURL))
+
+								//Spec.Authenticators
+								g.Expect(rl.Spec.Authenticators).To(HaveLen(1))
+								g.Expect(rl.Spec.Authenticators[0].Handler).NotTo(BeNil())
+								g.Expect(rl.Spec.Authenticators[0].Handler.Name).To(Equal(tc.handler))
+
+								if tc.config != nil {
+									//Authenticators[0].Handler.Config validation
+									g.Expect(rl.Spec.Authenticators[0].Handler.Config).NotTo(BeNil())
+									g.Expect(rl.Spec.Authenticators[0].Handler.Config.Raw).To(MatchJSON(tc.config))
+								}
+
+								//Spec.Authorizer
+								g.Expect(rl.Spec.Authorizer).NotTo(BeNil())
+								g.Expect(rl.Spec.Authorizer.Handler).NotTo(BeNil())
+								g.Expect(rl.Spec.Authorizer.Handler.Name).To(Equal("allow"))
+								g.Expect(rl.Spec.Authorizer.Handler.Config).To(BeNil())
+
+								//Spec.Mutators
+								g.Expect(rl.Spec.Mutators).NotTo(BeNil())
+								g.Expect(len(rl.Spec.Mutators)).To(Equal(len(defaultMutators)))
+								g.Expect(rl.Spec.Mutators[0].Handler.Name).To(Equal(defaultMutators[0].Name))
+								g.Expect(rl.Spec.Mutators[1].Handler.Name).To(Equal(defaultMutators[1].Name))
 							}, eventuallyTimeout).Should(Succeed())
-
-							rules := make(map[string]rulev1alpha1.Rule)
-
-							for _, rule := range rlList {
-								rules[rule.Spec.Match.URL] = rule
-							}
-
-							rl := rules[expectedRuleMatchURL]
-
-							//Spec.Upstream
-							Expect(rl.Spec.Upstream).NotTo(BeNil())
-							Expect(rl.Spec.Upstream.URL).To(Equal(fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", serviceName, testNamespace, testServicePort)))
-							Expect(rl.Spec.Upstream.StripPath).To(BeNil())
-							Expect(rl.Spec.Upstream.PreserveHost).To(BeNil())
-
-							//Spec.Match
-							Expect(rl.Spec.Match).NotTo(BeNil())
-							Expect(rl.Spec.Match.Methods).To(Equal([]string{"GET"}))
-							Expect(rl.Spec.Match.URL).To(Equal(expectedRuleMatchURL))
-
-							//Spec.Authenticators
-							Expect(rl.Spec.Authenticators).To(HaveLen(1))
-							Expect(rl.Spec.Authenticators[0].Handler).NotTo(BeNil())
-							Expect(rl.Spec.Authenticators[0].Handler.Name).To(Equal(tc.handler))
-
-							if tc.config != nil {
-								//Authenticators[0].Handler.Config validation
-								Expect(rl.Spec.Authenticators[0].Handler.Config).NotTo(BeNil())
-								Expect(rl.Spec.Authenticators[0].Handler.Config.Raw).To(MatchJSON(tc.config))
-							}
-
-							//Spec.Authorizer
-							Expect(rl.Spec.Authorizer).NotTo(BeNil())
-							Expect(rl.Spec.Authorizer.Handler).NotTo(BeNil())
-							Expect(rl.Spec.Authorizer.Handler.Name).To(Equal("allow"))
-							Expect(rl.Spec.Authorizer.Handler.Config).To(BeNil())
-
-							//Spec.Mutators
-							Expect(rl.Spec.Mutators).NotTo(BeNil())
-							Expect(len(rl.Spec.Mutators)).To(Equal(len(defaultMutators)))
-							Expect(rl.Spec.Mutators[0].Handler.Name).To(Equal(defaultMutators[0].Name))
-							Expect(rl.Spec.Mutators[1].Handler.Name).To(Equal(defaultMutators[1].Name))
 						}
 
 						//make sure no rule for "/favicon" path has been created
