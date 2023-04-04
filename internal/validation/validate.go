@@ -34,12 +34,17 @@ type injectionValidator interface {
 	Validate(attrPath string, service *apiv1beta1.WorkloadSelector, namespace string) ([]Failure, error)
 }
 
+type rulesValidator interface {
+	Validate(attrPath string, rules []gatewayv1beta1.Rule) []Failure
+}
+
 // APIRuleValidator is used to validate github.com/kyma-project/api-gateway/api/v1beta1/APIRule instances
 type APIRuleValidator struct {
 	HandlerValidator          handlerValidator
 	AccessStrategiesValidator accessStrategyValidator
 	MutatorsValidator         mutatorValidator
 	InjectionValidator        injectionValidator
+	RulesValidator            rulesValidator
 	ServiceBlockList          map[string][]string
 	DomainAllowList           []string
 	HostBlockList             []string
@@ -213,7 +218,11 @@ func (v *APIRuleValidator) validateRules(attributePath string, checkForService b
 			mutatorFailures := v.MutatorsValidator.Validate(attributePathWithRuleIndex, r)
 			problems = append(problems, mutatorFailures...)
 		}
+	}
 
+	if v.RulesValidator != nil {
+		rulesFailures := v.RulesValidator.Validate(".spec.rules", rules)
+		problems = append(problems, rulesFailures...)
 	}
 
 	return problems

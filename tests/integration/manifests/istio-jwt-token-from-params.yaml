@@ -10,18 +10,6 @@ spec:
     name: httpbin-{{.TestID}}
     port: 8000
   rules:
-    - path: /headers
-      methods: ["GET"]
-      mutators: []
-      accessStrategies:
-        - handler: jwt
-          config:
-            authentications:
-            - issuer: "{{ .IssuerUrl }}"
-              jwksUri: "{{ .IssuerUrl }}/oauth2/certs"
-              fromHeaders:
-              - name: x-jwt-token
-                prefix: "JwtToken "
     - path: /ip
       methods: ["GET"]
       mutators: []

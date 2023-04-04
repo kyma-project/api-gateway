@@ -38,7 +38,8 @@ func initIstioJwtScenarios(ctx *godog.ScenarioContext) {
 	initMutatorHeader(ctx)
 	initMultipleMutators(ctx)
 	initMutatorsOverwrite(ctx)
-	initTokenFrom(ctx)
+	initTokenFromHeaders(ctx)
+	initTokenFromParams(ctx)
 }
 
 func (s *istioJwtManifestScenario) theAPIRuleIsApplied() error {
@@ -85,6 +86,7 @@ func (s *istioJwtManifestScenario) callingTheEndpointWithValidTokenFromParameter
 		From:     fromParameter,
 		AsHeader: false,
 	}
+	fmt.Printf("callingTheEndpointWithValidTokenFromParameterShouldResultInStatusBetween: %s", fromParameter)
 	return callingEndpointWithHeadersWithRetries(s.url, path, tokenType, asserter, nil, &tokenFrom)
 }
 
@@ -125,6 +127,7 @@ func callingEndpointWithHeadersWithRetries(url string, path string, tokenType st
 			requestHeaders[tokenFrom.From] = token
 		} else {
 			path = fmt.Sprintf("%s?%s=%s", path, tokenFrom.From, token)
+			fmt.Printf("Adjusting request path: %s", path)
 		}
 	default:
 		return fmt.Errorf("unsupported token type: %s", tokenType)

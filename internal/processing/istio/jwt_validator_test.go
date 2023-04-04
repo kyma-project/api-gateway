@@ -2,6 +2,7 @@ package istio
 
 import (
 	"context"
+	"encoding/json"
 
 	processingtest "github.com/kyma-project/api-gateway/internal/processing/internal/test"
 	"istio.io/api/type/v1beta1"
@@ -164,7 +165,7 @@ var _ = Describe("JWT Handler validation", func() {
 
 	Context("for authentications", func() {
 
-		It("Should have failed validations when authentication has more than one fromHeaders", func() {
+		It("Should fail validation when authentication has more than one fromHeaders", func() {
 			//given
 			config := processingtest.GetRawConfig(
 				gatewayv1beta1.JwtConfig{
@@ -191,7 +192,7 @@ var _ = Describe("JWT Handler validation", func() {
 			Expect(problems[0].Message).To(Equal("multiple fromHeaders are not supported"))
 		})
 
-		It("Should have failed validations when authentication has more than one fromParams", func() {
+		It("Should fail validation when authentication has more than one fromParams", func() {
 			//given
 			config := processingtest.GetRawConfig(
 				gatewayv1beta1.JwtConfig{
@@ -217,11 +218,43 @@ var _ = Describe("JWT Handler validation", func() {
 			Expect(problems[0].AttributePath).To(Equal(".config.authentications[0].fromParams"))
 			Expect(problems[0].Message).To(Equal("multiple fromParams are not supported"))
 		})
+
+		It("Should fail validation when multiple authentications have mixture of fromHeaders and fromParams", func() {
+			//given
+			config := processingtest.GetRawConfig(
+				gatewayv1beta1.JwtConfig{
+					Authentications: []*gatewayv1beta1.JwtAuthentication{
+						{
+							Issuer:     "https://issuer.test/",
+							JwksUri:    "file://.well-known/jwks.json",
+							FromParams: []string{"param1"},
+						},
+						{
+							Issuer:      "https://issuer.test/",
+							JwksUri:     "file://.well-known/jwks.json",
+							FromHeaders: []*gatewayv1beta1.JwtHeader{{Name: "header1"}},
+						},
+					},
+				})
+
+			handler := &gatewayv1beta1.Handler{
+				Name:   "jwt",
+				Config: config,
+			}
+
+			//when
+			problems := (&handlerValidator{}).Validate("", handler)
+
+			//then
+			Expect(problems).To(HaveLen(1))
+			Expect(problems[0].AttributePath).To(Equal(".config.authentications[1].fromHeaders"))
+			Expect(problems[0].Message).To(Equal("mixture of multiple fromHeaders and fromParams is not supported"))
+		})
 	})
 
 	Context("for authorizations", func() {
 
-		It("Should have failed validations when authorization has no value", func() {
+		It("Should fail validation when authorization has no value", func() {
 			//given
 			config := processingtest.GetRawConfig(
 				gatewayv1beta1.JwtConfig{
@@ -358,7 +391,7 @@ var _ = Describe("JWT Handler validation", func() {
 
 		Context("audiences", func() {
 
-			It("Should have failed validations for config with empty audiences", func() {
+			It("Should fail validation for config with empty audiences", func() {
 				//given
 				authorizations := []*gatewayv1beta1.JwtAuthorization{
 					{
@@ -379,7 +412,7 @@ var _ = Describe("JWT Handler validation", func() {
 				Expect(problems[0].Message).To(Equal("value is empty"))
 			})
 
-			It("Should have failed validations for config with empty string in audiences", func() {
+			It("Should fail validation for config with empty string in audiences", func() {
 				//given
 				authorizations := []*gatewayv1beta1.JwtAuthorization{
 					{
@@ -439,6 +472,55 @@ var _ = Describe("JWT Handler validation", func() {
 			})
 		})
 	})
+
+	Context("Istio rules validation", func() {
+		It("Should fail when multiple jwt handlers specify different token from configuration", func() {
+			//given
+			ruleFromHeaders := gatewayv1beta1.Rule{
+				AccessStrategies: []*gatewayv1beta1.Authenticator{{
+					Handler: &gatewayv1beta1.Handler{
+						Name: "jwt",
+						Config: getRawConfig(
+							gatewayv1beta1.JwtConfig{
+								Authentications: []*gatewayv1beta1.JwtAuthentication{
+									{
+										Issuer:      "https://issuer.test/",
+										JwksUri:     "file://.well-known/jwks.json",
+										FromHeaders: []*gatewayv1beta1.JwtHeader{{Name: "header1"}},
+									},
+								},
+							}),
+					}},
+				},
+			}
+
+			ruleFromParams := gatewayv1beta1.Rule{
+				AccessStrategies: []*gatewayv1beta1.Authenticator{{
+					Handler: &gatewayv1beta1.Handler{
+						Name: "jwt",
+						Config: getRawConfig(
+							gatewayv1beta1.JwtConfig{
+								Authentications: []*gatewayv1beta1.JwtAuthentication{
+									{
+										Issuer:     "https://issuer.test/",
+										JwksUri:    "file://.well-known/jwks.json",
+										FromParams: []string{"param1"},
+									},
+								},
+							}),
+					}},
+				},
+			}
+
+			//when
+			problems := (&rulesValidator{}).Validate(".spec.rules", []gatewayv1beta1.Rule{ruleFromHeaders, ruleFromParams})
+
+			//then
+			Expect(problems).To(HaveLen(1))
+			Expect(problems[0].AttributePath).To(Equal(".spec.rules[1].accessStrategy[0].config.authentications[0]"))
+			Expect(problems[0].Message).To(Equal("multiple fromHeaders and/or fromParams configuration for different rules is not supported"))
+		})
+	})
 })
 
 func emptyJWTIstioConfig() *runtime.RawExtension {
@@ -490,4 +572,12 @@ func testURLJWTOryConfig(JWKSUrls string, trustedIssuers string) *runtime.RawExt
 			TrustedIssuers: []string{trustedIssuers},
 			RequiredScopes: []string{"atgo"},
 		})
+}
+
+func getRawConfig(config any) *runtime.RawExtension {
+	b, err := json.Marshal(config)
+	Expect(err).To(BeNil())
+	return &runtime.RawExtension{
+		Raw: b,
+	}
 }

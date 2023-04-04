@@ -79,10 +79,14 @@ Feature: Exposing endpoints with Istio JWT authorization strategy
     When JwtIssuerJwksNotMatch: The APIRule is applied
     And JwtIssuerJwksNotMatch: Calling the "/ip" endpoint with a valid "JWT" token should result in body containing "Jwks doesn't have key to match kid or alg from Jwt"
 
-  Scenario: Calling a httpbin endpoint secured with different JWT token from options
-    Given JwtTokenFrom: There is a httpbin service
-    When JwtTokenFrom: The APIRule is applied
-    Then JwtTokenFrom: Calling the "/headers" endpoint without a token should result in status between 400 and 403
-    And JwtTokenFrom: Calling the "/headers" endpoint with a valid "JWT" token from header "x-jwt-token" and prefix "JwtToken" should result in status between 200 and 299
-    And JwtTokenFrom: Calling the "/ip" endpoint without a token should result in status between 400 and 403
-    And JwtTokenFrom: Calling the "/ip" endpoint with a valid "JWT" token from parameter "jwt_token" should result in status between 200 and 299
+  Scenario: Calling a httpbin endpoint secured with different JWT token from headers
+    Given JwtTokenFromHeaders: There is a httpbin service
+    When JwtTokenFromHeaders: The APIRule is applied
+    Then JwtTokenFromHeaders: Calling the "/headers" endpoint without a token should result in status between 400 and 403
+    And JwtTokenFromHeaders: Calling the "/headers" endpoint with a valid "JWT" token from header "x-jwt-token" and prefix "JwtToken" should result in status between 200 and 299
+
+  Scenario: Calling a httpbin endpoint secured with different JWT token from params
+    Given JwtTokenFromParams: There is a httpbin service
+    When JwtTokenFromParams: The APIRule is applied
+    And JwtTokenFromParams: Calling the "/ip" endpoint without a token should result in status between 400 and 403
+    And JwtTokenFromParams: Calling the "/ip" endpoint with a valid "JWT" token from parameter "jwt_token" should result in status between 200 and 299
