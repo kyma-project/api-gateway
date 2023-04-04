@@ -127,7 +127,6 @@ func callingEndpointWithHeadersWithRetries(url string, path string, tokenType st
 			requestHeaders[tokenFrom.From] = token
 		} else {
 			path = fmt.Sprintf("%s?%s=%s", path, tokenFrom.From, token)
-			fmt.Printf("Adjusting request path: %s", path)
 		}
 	default:
 		return fmt.Errorf("unsupported token type: %s", tokenType)
