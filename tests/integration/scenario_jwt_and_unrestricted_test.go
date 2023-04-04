@@ -20,6 +20,7 @@ func initJwtAndAllow(ctx *godog.ScenarioContext) {
 	ctx.Step(`JwtAndUnrestricted: The APIRule is applied$`, scenario.theAPIRuleIsApplied)
 	ctx.Step(`JwtAndUnrestricted: Calling the "([^"]*)" endpoint with a valid "([^"]*)" token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithValidTokenShouldResultInStatusBetween)
 	ctx.Step(`JwtAndUnrestricted: Calling the "([^"]*)" endpoint without token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithoutTokenShouldResultInStatusBetween)
+	ctx.Step(`JwtAndUnrestricted: Teardown httpbin service$`, scenario.teardownHttpbinService)
 }
 
 func (s *istioJwtManifestScenario) thereIsAnEndpointWithHandler(handler, handlerPath string) {

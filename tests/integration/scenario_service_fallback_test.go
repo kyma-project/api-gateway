@@ -17,6 +17,7 @@ func initJwtServiceFallback(ctx *godog.ScenarioContext) {
 	ctx.Step(`ServiceFallback: There is an endpoint secured with JWT on path "([^"]*)"$`, scenario.thereIsAnJwtSecuredPath)
 	ctx.Step(`ServiceFallback: The APIRule with service on root level is applied$`, scenario.theAPIRuleIsApplied)
 	ctx.Step(`ServiceFallback: Calling the "([^"]*)" endpoint with a valid "([^"]*)" token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithValidTokenShouldResultInStatusBetween)
+	ctx.Step(`ServiceFallback: Teardown httpbin service$`, scenario.teardownHttpbinService)
 }
 
 func (s *istioJwtManifestScenario) thereIsAnEndpointWithServiceDefinition(path string) {

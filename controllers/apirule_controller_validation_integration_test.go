@@ -7,13 +7,11 @@ import (
 	"github.com/kyma-project/api-gateway/internal/helpers"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
-var _ = Describe("Apirule controller validation", func() {
+// Tests needs to be executed serially because of the shared state of the JWT Handler in the API Controller.
+var _ = Describe("Apirule controller validation", Serial, func() {
 
 	const (
 		testNameBase           = "status-test"
@@ -27,7 +25,7 @@ var _ = Describe("Apirule controller validation", func() {
 
 		testConfigError := func(accessStrategies []*gatewayv1beta1.Authenticator, mutators []*gatewayv1beta1.Mutator, expectedValidationErrors []string) {
 			// given
-			setHandlerConfigMap(helpers.JWT_HANDLER_ISTIO)
+			updateJwtHandlerTo(helpers.JWT_HANDLER_ISTIO)
 
 			apiRuleName := generateTestName(testNameBase, testIDLength)
 			serviceName := generateTestName(testServiceName, testIDLength)
@@ -41,29 +39,18 @@ var _ = Describe("Apirule controller validation", func() {
 			}
 			instance := testInstance(apiRuleName, testNamespace, serviceName, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule})
 
-			err := c.Create(context.TODO(), instance)
-			if apierrors.IsInvalid(err) {
-				Fail(fmt.Sprintf("failed to create object, got an invalid object error: %v", err))
-				return
-			}
-			Expect(err).NotTo(HaveOccurred())
+			// when
+			Expect(c.Create(context.TODO(), instance)).Should(Succeed())
 			defer func() {
-				err := c.Delete(context.TODO(), instance)
-				Expect(err).NotTo(HaveOccurred())
+				deleteApiRule(instance)
 			}()
 
-			// when
-			expectedRequest := reconcile.Request{NamespacedName: types.NamespacedName{Name: apiRuleName, Namespace: testNamespace}}
-
 			// then
-			Eventually(requests, eventuallyTimeout).Should(Receive(Equal(expectedRequest)))
-
 			Eventually(func(g Gomega) {
 				created := gatewayv1beta1.APIRule{}
-				err = c.Get(context.TODO(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &created)
-				g.Expect(err).NotTo(HaveOccurred())
+				g.Expect(c.Get(context.TODO(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &created)).Should(Succeed())
+				g.Expect(created.Status.APIRuleStatus).NotTo(BeNil())
 				g.Expect(created.Status.APIRuleStatus.Code).To(Equal(gatewayv1beta1.StatusError))
-
 				for _, expected := range expectedValidationErrors {
 					g.Expect(created.Status.APIRuleStatus.Description).To(ContainSubstring(expected))
 				}

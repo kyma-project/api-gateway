@@ -21,6 +21,7 @@ func initMultipleMutators(ctx *godog.ScenarioContext) {
 	ctx.Step(`JwtMultipleMutators: The APIRule is applied$`, scenario.theAPIRuleIsApplied)
 	ctx.Step(`JwtMultipleMutators: Calling the "([^"]*)" endpoint should return response with cookies "([^"]*)" with value "([^"]*)" and "([^"]*)" with value "([^"]*)"$`, scenario.shouldReturnResponseWithKeyValuePairs)
 	ctx.Step(`JwtMultipleMutators: Calling the "([^"]*)" endpoint should return response with headers "([^"]*)" with value "([^"]*)" and "([^"]*)" with value "([^"]*)"$`, scenario.shouldReturnResponseWithKeyValuePairs)
+	ctx.Step(`JwtMultipleMutators: Teardown httpbin service$`, scenario.teardownHttpbinService)
 }
 
 func (s *istioJwtManifestScenario) thereIsAnEndpointWithHeaderMutatorWithTwoHeaders(_, header1, header1Value, header2, header2Value string) error {
