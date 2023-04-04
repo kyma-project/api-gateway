@@ -81,7 +81,7 @@ Feature: Exposing endpoints with Istio JWT authorization strategy
 
   Scenario: Calling a httpbin endpoint secured with different JWT token from options
     Given JwtTokenFrom: There is a httpbin service
-    When JwtTokenFrom: Common: The APIRule is applied
+    When JwtTokenFrom: The APIRule is applied
     Then JwtTokenFrom: Calling the "/headers" endpoint without a token should result in status between 400 and 403
     And JwtTokenFrom: Calling the "/headers" endpoint with a valid "JWT" token from header "x-jwt-token" and prefix "JwtToken" should result in status between 200 and 299
     And JwtTokenFrom: Calling the "/ip" endpoint without a token should result in status between 400 and 403
