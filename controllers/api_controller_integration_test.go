@@ -616,7 +616,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 							g.Expect(*vs.Spec.DeepCopy()).To(Equal(*gotSpec.DeepCopy()))
 						}, eventuallyTimeout).Should(Succeed())
 
-						By("Verifying that access rules")
+						By("Verifying created access rules")
 						for _, tc := range []struct {
 							path    string
 							handler string
