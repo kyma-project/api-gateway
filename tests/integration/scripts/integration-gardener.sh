@@ -40,7 +40,7 @@ export PATH="${PATH}:${PWD}"
 kyma version --client
 
 # Provision gardener cluster
-CLUSTER_NAME=persistentcluster
+CLUSTER_NAME=persist
 kyma provision gardener gcp \
         --secret "${GARDENER_KYMA_PROW_PROVIDER_SECRET_NAME}" \
         --name "${CLUSTER_NAME}" \
