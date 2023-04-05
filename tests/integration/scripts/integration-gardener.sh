@@ -15,7 +15,7 @@
 set -e
 
 cleanup() {
-kubectl annotate shoot "persistentcluster" confirmation.gardener.cloud/deletion=true \
+kubectl annotate shoot "${CLUSTER_NAME}" confirmation.gardener.cloud/deletion=true \
     --overwrite \
     -n "garden-${GARDENER_KYMA_PROW_PROJECT_NAME}" \
     --kubeconfig "${GARDENER_KYMA_PROW_KUBECONFIG}"
@@ -40,10 +40,10 @@ export PATH="${PATH}:${PWD}"
 kyma version --client
 
 # Provision gardener cluster
-CLUSTER_NAME=$(LC_ALL=C tr -dc 'a-z' < /dev/urandom | head -c10)
+CLUSTER_NAME=persistentcluster
 kyma provision gardener gcp \
         --secret "${GARDENER_KYMA_PROW_PROVIDER_SECRET_NAME}" \
-        --name "persistentcluster" \
+        --name "${CLUSTER_NAME}" \
         --project "${GARDENER_KYMA_PROW_PROJECT_NAME}" \
         --credentials "${GARDENER_KYMA_PROW_KUBECONFIG}" \
         --region "${GARDENER_REGION}" \
