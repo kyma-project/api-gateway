@@ -576,7 +576,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 
 						matchingLabels := matchingLabelsFunc(apiRuleName, testNamespace)
 
-						By("Verifying that virtual service")
+						By("Verifying created virtual service")
 						vsList := networkingv1beta1.VirtualServiceList{}
 						Eventually(func(g Gomega) {
 							g.Expect(c.List(context.TODO(), &vsList, matchingLabels)).Should(Succeed())
