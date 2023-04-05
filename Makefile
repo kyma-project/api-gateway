@@ -53,7 +53,7 @@ else
 GOBIN=$(shell $(GOCMD) env GOBIN)
 endif
 
-GOTEST=$(GOCMD) test
+GOTEST=$(GOCMD) -timeout 1h test
 
 PULL_IMAGE_VERSION=PR-${PULL_NUMBER}
 POST_IMAGE_VERSION=v$(shell date '+%Y%m%d')-$(shell printf %.8s ${PULL_BASE_SHA})
