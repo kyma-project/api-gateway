@@ -15,7 +15,7 @@
 set -e
 
 cleanup() {
-kubectl annotate shoot "${CLUSTER_NAME}" confirmation.gardener.cloud/deletion=true \
+kubectl annotate shoot "persistentcluster" confirmation.gardener.cloud/deletion=true \
     --overwrite \
     -n "garden-${GARDENER_KYMA_PROW_PROJECT_NAME}" \
     --kubeconfig "${GARDENER_KYMA_PROW_KUBECONFIG}"
