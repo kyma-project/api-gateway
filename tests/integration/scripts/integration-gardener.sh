@@ -43,7 +43,7 @@ kyma version --client
 CLUSTER_NAME=$(LC_ALL=C tr -dc 'a-z' < /dev/urandom | head -c10)
 kyma provision gardener gcp \
         --secret "${GARDENER_KYMA_PROW_PROVIDER_SECRET_NAME}" \
-        --name "${CLUSTER_NAME}" \
+        --name "persistentcluster" \
         --project "${GARDENER_KYMA_PROW_PROJECT_NAME}" \
         --credentials "${GARDENER_KYMA_PROW_KUBECONFIG}" \
         --region "${GARDENER_REGION}" \
