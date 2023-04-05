@@ -27,7 +27,7 @@ kubectl delete shoot "${CLUSTER_NAME}" \
 }
 
 # Cleanup on exit, be it successful or on fail
-trap cleanup EXIT INT
+# trap cleanup EXIT INT
 
 # Install Kyma CLI in latest version
 echo "--> Install kyma CLI locally to /tmp/bin"
