@@ -213,8 +213,7 @@ type rulesValidator struct {
 
 func (v *rulesValidator) Validate(attrPath string, rules []gatewayv1beta1.Rule) []validation.Failure {
 	var failures []validation.Failure
-	var fromHeader *v1beta1.JwtHeader
-	fromParam := ""
+	jwtAuths := map[string]*gatewayv1beta1.JwtAuthentication{}
 	for i, rule := range rules {
 		for j, accessStrategy := range rule.AccessStrategies {
 			attributePath := fmt.Sprintf("%s[%d].accessStrategy[%d]", attrPath, i, j)
@@ -227,21 +226,28 @@ func (v *rulesValidator) Validate(attrPath string, rules []gatewayv1beta1.Rule) 
 				}
 
 				for k, authentication := range template.Authentications {
-					if len(authentication.FromHeaders) > 0 {
-						fmt.Printf("authentication[%d].FromHeaders[0].Name: %s", k, authentication.FromHeaders[0].Name)
-						if fromParam != "" || (fromHeader != nil && !compareFromHeader(fromHeader, authentication.FromHeaders[0])) {
-							attributeSubPath := fmt.Sprintf("%s%s[%d]", attributePath, ".config.authentications", k)
-							failures = append(failures, validation.Failure{AttributePath: attributeSubPath, Message: "multiple fromHeaders and/or fromParams configuration for different rules is not supported"})
-						}
-						fromHeader = authentication.FromHeaders[0]
+					jwtAuthKey := authentication.Issuer + authentication.JwksUri
+					if jwtAuths[jwtAuthKey] != nil && !isJwtAuthenticationsEqual(authentication, jwtAuths[jwtAuthKey]) {
+						attributeSubPath := fmt.Sprintf("%s%s[%d]", attributePath, ".config.authentications", k)
+						failures = append(failures, validation.Failure{AttributePath: attributeSubPath, Message: "multiple jwt configurations that differ for the same issuer"})
+					} else {
+						jwtAuths[jwtAuthKey] = authentication
 					}
-					if len(authentication.FromParams) > 0 {
-						if fromHeader != nil || (fromParam != "" && fromParam != authentication.FromParams[0]) {
-							attributeSubPath := fmt.Sprintf("%s%s[%d]", attributePath, ".config.authentications", k)
-							failures = append(failures, validation.Failure{AttributePath: attributeSubPath, Message: "multiple fromHeaders and/or fromParams configuration for different rules is not supported"})
-						}
-						fromParam = authentication.FromParams[0]
-					}
+					// if len(authentication.FromHeaders) > 0 {
+					// 	fmt.Printf("authentication[%d].FromHeaders[0].Name: %s", k, authentication.FromHeaders[0].Name)
+					// 	if fromParam != "" || (fromHeader != nil && !compareFromHeader(fromHeader, authentication.FromHeaders[0])) {
+					// 		attributeSubPath := fmt.Sprintf("%s%s[%d]", attributePath, ".config.authentications", k)
+					// 		failures = append(failures, validation.Failure{AttributePath: attributeSubPath, Message: "multiple fromHeaders and/or fromParams configuration for different rules is not supported"})
+					// 	}
+					// 	fromHeader = authentication.FromHeaders[0]
+					// }
+					// if len(authentication.FromParams) > 0 {
+					// 	if fromHeader != nil || (fromParam != "" && fromParam != authentication.FromParams[0]) {
+					// 		attributeSubPath := fmt.Sprintf("%s%s[%d]", attributePath, ".config.authentications", k)
+					// 		failures = append(failures, validation.Failure{AttributePath: attributeSubPath, Message: "multiple fromHeaders and/or fromParams configuration for different rules is not supported"})
+					// 	}
+					// 	fromParam = authentication.FromParams[0]
+					// }
 				}
 			}
 		}
@@ -249,9 +255,32 @@ func (v *rulesValidator) Validate(attrPath string, rules []gatewayv1beta1.Rule) 
 	return failures
 }
 
-func compareFromHeader(h1 *v1beta1.JwtHeader, h2 *v1beta1.JwtHeader) bool {
-	if h1 == nil || h2 == nil {
+func isJwtAuthenticationsEqual(auth1 *gatewayv1beta1.JwtAuthentication, auth2 *gatewayv1beta1.JwtAuthentication) bool {
+	if auth1.Issuer != auth2.Issuer || auth1.JwksUri != auth2.JwksUri {
 		return false
 	}
-	return h1.Name == h2.Name && h1.Prefix == h2.Prefix
+	if len(auth1.FromHeaders) != len(auth2.FromHeaders) {
+		return false
+	}
+	for i, auth1FromHeader := range auth1.FromHeaders {
+		if auth1FromHeader.Name != auth2.FromHeaders[i].Name || auth1FromHeader.Prefix != auth2.FromHeaders[i].Prefix {
+			return false
+		}
+	}
+	if len(auth1.FromParams) != len(auth2.FromParams) {
+		return false
+	}
+	for i, auth1FromParam := range auth1.FromParams {
+		if auth1FromParam != auth2.FromParams[i] {
+			return false
+		}
+	}
+	return true
 }
+
+// func compareFromHeader(h1 *v1beta1.JwtHeader, h2 *v1beta1.JwtHeader) bool {
+// 	if h1 == nil || h2 == nil {
+// 		return false
+// 	}
+// 	return h1.Name == h2.Name && h1.Prefix == h2.Prefix
+// }

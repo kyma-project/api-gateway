@@ -18,6 +18,7 @@ import (
 )
 
 var _ = Describe("JWT Handler validation", func() {
+
 	Context("Istio injection validation", func() {
 		scheme := runtime.NewScheme()
 		err := gatewayv1beta1.AddToScheme(scheme)
@@ -473,7 +474,76 @@ var _ = Describe("JWT Handler validation", func() {
 		})
 	})
 
-	Context("Istio rules validation", func() {
+	Context("for rules validation", func() {
+
+		It("Should fail validation when multiple authentications fromHeaders configuration", func() {
+			//given
+			ruleFromHeaders := gatewayv1beta1.Rule{
+				AccessStrategies: []*gatewayv1beta1.Authenticator{{
+					Handler: &gatewayv1beta1.Handler{
+						Name: "jwt",
+						Config: getRawConfig(
+							gatewayv1beta1.JwtConfig{
+								Authentications: []*gatewayv1beta1.JwtAuthentication{
+									{
+										Issuer:      "https://issuer.test/",
+										JwksUri:     "file://.well-known/jwks.json",
+										FromHeaders: []*gatewayv1beta1.JwtHeader{{Name: "header1"}},
+									},
+									{
+										Issuer:      "https://issuer.test/",
+										JwksUri:     "file://.well-known/jwks.json",
+										FromHeaders: []*gatewayv1beta1.JwtHeader{{Name: "header2"}},
+									},
+								},
+							}),
+					}},
+				},
+			}
+
+			//when
+			problems := (&rulesValidator{}).Validate(".spec.rules", []gatewayv1beta1.Rule{ruleFromHeaders})
+
+			//then
+			Expect(problems).To(HaveLen(1))
+			Expect(problems[0].AttributePath).To(Equal(".spec.rules[0].accessStrategy[0].config.authentications[1]"))
+			Expect(problems[0].Message).To(Equal("multiple jwt configurations that differ for the same issuer"))
+		})
+
+		It("Should fail validation when multiple authentications fromParams configuration", func() {
+			//given
+			ruleFromHeaders := gatewayv1beta1.Rule{
+				AccessStrategies: []*gatewayv1beta1.Authenticator{{
+					Handler: &gatewayv1beta1.Handler{
+						Name: "jwt",
+						Config: getRawConfig(
+							gatewayv1beta1.JwtConfig{
+								Authentications: []*gatewayv1beta1.JwtAuthentication{
+									{
+										Issuer:     "https://issuer.test/",
+										JwksUri:    "file://.well-known/jwks.json",
+										FromParams: []string{"param1"},
+									},
+									{
+										Issuer:     "https://issuer.test/",
+										JwksUri:    "file://.well-known/jwks.json",
+										FromParams: []string{"param2"},
+									},
+								},
+							}),
+					}},
+				},
+			}
+
+			//when
+			problems := (&rulesValidator{}).Validate(".spec.rules", []gatewayv1beta1.Rule{ruleFromHeaders})
+
+			//then
+			Expect(problems).To(HaveLen(1))
+			Expect(problems[0].AttributePath).To(Equal(".spec.rules[0].accessStrategy[0].config.authentications[1]"))
+			Expect(problems[0].Message).To(Equal("multiple jwt configurations that differ for the same issuer"))
+		})
+
 		It("Should fail when multiple jwt handlers specify different token from types of configurations", func() {
 			//given
 			ruleFromHeaders := gatewayv1beta1.Rule{
@@ -518,7 +588,7 @@ var _ = Describe("JWT Handler validation", func() {
 			//then
 			Expect(problems).To(HaveLen(1))
 			Expect(problems[0].AttributePath).To(Equal(".spec.rules[1].accessStrategy[0].config.authentications[0]"))
-			Expect(problems[0].Message).To(Equal("multiple fromHeaders and/or fromParams configuration for different rules is not supported"))
+			Expect(problems[0].Message).To(Equal("multiple jwt configurations that differ for the same issuer"))
 		})
 
 		It("Should fail when multiple jwt handlers specify different token from headers configuration", func() {
@@ -565,7 +635,52 @@ var _ = Describe("JWT Handler validation", func() {
 			//then
 			Expect(problems).To(HaveLen(1))
 			Expect(problems[0].AttributePath).To(Equal(".spec.rules[1].accessStrategy[0].config.authentications[0]"))
-			Expect(problems[0].Message).To(Equal("multiple fromHeaders and/or fromParams configuration for different rules is not supported"))
+			Expect(problems[0].Message).To(Equal("multiple jwt configurations that differ for the same issuer"))
+		})
+
+		It("Should succeed when multiple jwt handlers specify same token from headers configuration", func() {
+			//given
+			ruleFromHeaders := gatewayv1beta1.Rule{
+				AccessStrategies: []*gatewayv1beta1.Authenticator{{
+					Handler: &gatewayv1beta1.Handler{
+						Name: "jwt",
+						Config: getRawConfig(
+							gatewayv1beta1.JwtConfig{
+								Authentications: []*gatewayv1beta1.JwtAuthentication{
+									{
+										Issuer:      "https://issuer.test/",
+										JwksUri:     "file://.well-known/jwks.json",
+										FromHeaders: []*gatewayv1beta1.JwtHeader{{Name: "header1"}},
+									},
+								},
+							}),
+					}},
+				},
+			}
+
+			ruleFromParams := gatewayv1beta1.Rule{
+				AccessStrategies: []*gatewayv1beta1.Authenticator{{
+					Handler: &gatewayv1beta1.Handler{
+						Name: "jwt",
+						Config: getRawConfig(
+							gatewayv1beta1.JwtConfig{
+								Authentications: []*gatewayv1beta1.JwtAuthentication{
+									{
+										Issuer:      "https://issuer.test/",
+										JwksUri:     "file://.well-known/jwks.json",
+										FromHeaders: []*gatewayv1beta1.JwtHeader{{Name: "header1"}},
+									},
+								},
+							}),
+					}},
+				},
+			}
+
+			//when
+			problems := (&rulesValidator{}).Validate(".spec.rules", []gatewayv1beta1.Rule{ruleFromHeaders, ruleFromParams})
+
+			//then
+			Expect(problems).To(HaveLen(0))
 		})
 	})
 })
