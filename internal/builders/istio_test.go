@@ -63,7 +63,7 @@ var _ = Describe("Builder for", func() {
 		testMatchLabelsValue := "httpbin"
 		testMatchLabels := map[string]string{testMatchLabelsKey: testMatchLabelsValue}
 
-		It("should build an RequestAuthentication", func() {
+		It("should build a RequestAuthentication", func() {
 			testRaw := runtime.RawExtension{Raw: []byte(`{"authentications": [{"issuer": "testIssuer", "jwksUri": "testJwksUri"}]}`)}
 			testHandler := gatewayv1beta1.Handler{Config: &testRaw}
 			testAuthenticator := gatewayv1beta1.Authenticator{Handler: &testHandler}
