@@ -14,6 +14,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 var _ = Describe("JWT Handler validation", func() {
@@ -21,10 +22,57 @@ var _ = Describe("JWT Handler validation", func() {
 		scheme := runtime.NewScheme()
 		err := gatewayv1beta1.AddToScheme(scheme)
 		Expect(err).NotTo(HaveOccurred())
+		var k8sfakeClient client.WithWatch
 
-		k8sfakeClient := fake.NewClientBuilder().Build()
+		BeforeEach(func() {
+			k8sfakeClient = fake.NewClientBuilder().Build()
+		})
 
-		It("Should fail when the Pod for which the serrvice is specified is not istio injected", func() {
+		It("Should not fail when the Pod for which the service is specified is in different ns", func() {
+			//given
+			err := k8sfakeClient.Create(context.TODO(), &corev1.Pod{
+				ObjectMeta: v1.ObjectMeta{
+					Name:      "test-pod",
+					Namespace: "test",
+					Labels: map[string]string{
+						"app": "test",
+					},
+				},
+			})
+			Expect(err).NotTo(HaveOccurred())
+
+			//when
+			problems, err := (&injectionValidator{ctx: context.TODO(), client: k8sfakeClient}).Validate("some.attribute", &v1beta1.WorkloadSelector{MatchLabels: map[string]string{"app": "test"}}, "default")
+			Expect(err).NotTo(HaveOccurred())
+
+			//then
+			Expect(problems).To(HaveLen(0))
+		})
+
+		It("Should fail when the Pod for which the service is specified is not istio injected and in the same not default namespace", func() {
+			//given
+			err := k8sfakeClient.Create(context.TODO(), &corev1.Pod{
+				ObjectMeta: v1.ObjectMeta{
+					Name:      "test-pod",
+					Namespace: "test",
+					Labels: map[string]string{
+						"app": "test",
+					},
+				},
+			})
+			Expect(err).NotTo(HaveOccurred())
+
+			//when
+			problems, err := (&injectionValidator{ctx: context.TODO(), client: k8sfakeClient}).Validate("some.attribute", &v1beta1.WorkloadSelector{MatchLabels: map[string]string{"app": "test"}}, "test")
+			Expect(err).NotTo(HaveOccurred())
+
+			//then
+			Expect(problems).To(HaveLen(1))
+			Expect(problems[0].AttributePath).To(Equal("some.attribute"))
+			Expect(problems[0].Message).To(Equal("Pod test/test-pod does not have an injected istio sidecar"))
+		})
+
+		It("Should fail when the Pod for which the service is specified is not istio injected", func() {
 			//given
 			err := k8sfakeClient.Create(context.TODO(), &corev1.Pod{
 				ObjectMeta: v1.ObjectMeta{
@@ -38,9 +86,9 @@ var _ = Describe("JWT Handler validation", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			//when
-			problems, err := (&injectionValidator{ctx: context.TODO(), client: k8sfakeClient}).Validate("some.attribute", &v1beta1.WorkloadSelector{MatchLabels: map[string]string{"app": "test"}},"default")
+			problems, err := (&injectionValidator{ctx: context.TODO(), client: k8sfakeClient}).Validate("some.attribute", &v1beta1.WorkloadSelector{MatchLabels: map[string]string{"app": "test"}}, "default")
 			Expect(err).NotTo(HaveOccurred())
-			
+
 			//then
 			Expect(problems).To(HaveLen(1))
 			Expect(problems[0].AttributePath).To(Equal("some.attribute"))
@@ -66,9 +114,9 @@ var _ = Describe("JWT Handler validation", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			//when
-			problems, err := (&injectionValidator{ctx: context.TODO(), client: k8sfakeClient}).Validate("some.attribute", &v1beta1.WorkloadSelector{MatchLabels: map[string]string{"app": "test-injected"}},"default")
+			problems, err := (&injectionValidator{ctx: context.TODO(), client: k8sfakeClient}).Validate("some.attribute", &v1beta1.WorkloadSelector{MatchLabels: map[string]string{"app": "test-injected"}}, "default")
 			Expect(err).NotTo(HaveOccurred())
-			
+
 			//then
 			Expect(problems).To(HaveLen(0))
 		})
