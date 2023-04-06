@@ -92,6 +92,7 @@ Feature: Exposing endpoints with Istio JWT authorization strategy
     Given JwtTokenFromHeaders: There is a httpbin service
     When JwtTokenFromHeaders: The APIRule is applied
     Then JwtTokenFromHeaders: Calling the "/headers" endpoint without a token should result in status between 400 and 403
+    And JwtTokenFromHeaders: Calling the "/headers" endpoint with a valid "JWT" token from default header should result in status between 400 and 403
     And JwtTokenFromHeaders: Calling the "/headers" endpoint with a valid "JWT" token from header "x-jwt-token" and prefix "JwtToken" should result in status between 200 and 299
     And JwtTokenFromHeaders: Teardown httpbin service
 
@@ -99,5 +100,6 @@ Feature: Exposing endpoints with Istio JWT authorization strategy
     Given JwtTokenFromParams: There is a httpbin service
     When JwtTokenFromParams: The APIRule is applied
     And JwtTokenFromParams: Calling the "/ip" endpoint without a token should result in status between 400 and 403
+    And JwtTokenFromParams: Calling the "/ip" endpoint with a valid "JWT" token from default header should result in status between 400 and 403
     And JwtTokenFromParams: Calling the "/ip" endpoint with a valid "JWT" token from parameter "jwt_token" should result in status between 200 and 299
     And JwtTokenFromParams: Teardown httpbin service
