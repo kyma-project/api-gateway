@@ -20,4 +20,4 @@ spec:
             - issuer: "{{ .IssuerUrl }}"
               jwksUri: "{{ .IssuerUrl }}/oauth2/certs"
               fromParams:
-              - "jwt_token"
+              -  {{ .FromParamName }}
