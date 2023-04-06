@@ -233,21 +233,6 @@ func (v *rulesValidator) Validate(attrPath string, rules []gatewayv1beta1.Rule) 
 					} else {
 						jwtAuths[jwtAuthKey] = authentication
 					}
-					// if len(authentication.FromHeaders) > 0 {
-					// 	fmt.Printf("authentication[%d].FromHeaders[0].Name: %s", k, authentication.FromHeaders[0].Name)
-					// 	if fromParam != "" || (fromHeader != nil && !compareFromHeader(fromHeader, authentication.FromHeaders[0])) {
-					// 		attributeSubPath := fmt.Sprintf("%s%s[%d]", attributePath, ".config.authentications", k)
-					// 		failures = append(failures, validation.Failure{AttributePath: attributeSubPath, Message: "multiple fromHeaders and/or fromParams configuration for different rules is not supported"})
-					// 	}
-					// 	fromHeader = authentication.FromHeaders[0]
-					// }
-					// if len(authentication.FromParams) > 0 {
-					// 	if fromHeader != nil || (fromParam != "" && fromParam != authentication.FromParams[0]) {
-					// 		attributeSubPath := fmt.Sprintf("%s%s[%d]", attributePath, ".config.authentications", k)
-					// 		failures = append(failures, validation.Failure{AttributePath: attributeSubPath, Message: "multiple fromHeaders and/or fromParams configuration for different rules is not supported"})
-					// 	}
-					// 	fromParam = authentication.FromParams[0]
-					// }
 				}
 			}
 		}
@@ -277,10 +262,3 @@ func isJwtAuthenticationsEqual(auth1 *gatewayv1beta1.JwtAuthentication, auth2 *g
 	}
 	return true
 }
-
-// func compareFromHeader(h1 *v1beta1.JwtHeader, h2 *v1beta1.JwtHeader) bool {
-// 	if h1 == nil || h2 == nil {
-// 		return false
-// 	}
-// 	return h1.Name == h2.Name && h1.Prefix == h2.Prefix
-// }
