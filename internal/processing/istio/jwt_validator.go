@@ -186,7 +186,7 @@ type injectionValidator struct {
 
 func (v *injectionValidator) Validate(attributePath string, selector *apiv1beta1.WorkloadSelector, namespace string) (problems []validation.Failure, err error) {
 	var podList corev1.PodList
-	err = v.client.List(v.ctx, &podList, client.MatchingLabels(selector.MatchLabels))
+	err = v.client.List(v.ctx, &podList, client.InNamespace(namespace), client.MatchingLabels(selector.MatchLabels))
 	if err != nil {
 		return nil, err
 	}
