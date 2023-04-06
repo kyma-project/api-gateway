@@ -5,6 +5,8 @@ import (
 )
 
 func initTokenFromHeaders(ctx *godog.ScenarioContext) {
+	jwtHeaderName = "x-jwt-token"
+
 	s, err := CreateScenarioWithRawAPIResource("istio-jwt-token-from-headers.yaml", "istio-jwt-token-from-headers")
 	if err != nil {
 		t.Fatalf("could not initialize scenario err=%s", err)
@@ -20,6 +22,8 @@ func initTokenFromHeaders(ctx *godog.ScenarioContext) {
 }
 
 func initTokenFromParams(ctx *godog.ScenarioContext) {
+	fromParamName = "jwt_token"
+
 	s, err := CreateScenarioWithRawAPIResource("istio-jwt-token-from-params.yaml", "istio-jwt-token-from-params")
 	if err != nil {
 		t.Fatalf("could not initialize scenario err=%s", err)

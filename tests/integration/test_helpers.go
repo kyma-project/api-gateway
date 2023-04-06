@@ -57,6 +57,8 @@ var (
 	batch           *resource.Batch
 	namespace       string
 	secondNamespace string
+	jwtHeaderName   string
+	fromParamName   string
 )
 
 var t *testing.T
@@ -220,6 +222,8 @@ func CreateScenarioWithRawAPIResource(templateFileName string, namePrefix string
 	template["GatewayName"] = conf.GatewayName
 	template["GatewayNamespace"] = conf.GatewayNamespace
 	template["IssuerUrl"] = conf.IssuerUrl
+	template["FromParamName"] = conf.IssuerUrl
+	template["JWTHeaderName"] = conf.IssuerUrl
 	template["EncodedCredentials"] = base64.RawStdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", conf.ClientID, conf.ClientSecret)))
 
 	return &ScenarioWithRawAPIResource{
