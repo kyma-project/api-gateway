@@ -149,6 +149,13 @@ func generateAuthorizationPolicySpec(api *gatewayv1beta1.APIRule, rule gatewayv1
 }
 
 func withTo(b *builders.RuleBuilder, rule gatewayv1beta1.Rule) *builders.RuleBuilder {
+	if rule.Path == "/.*" {
+		return b.WithTo(
+			builders.NewToBuilder().
+				WithOperation(builders.NewOperationBuilder().
+					WithMethods(rule.Methods).WithPath("/*").Get()).
+				Get())
+	}
 	return b.WithTo(
 		builders.NewToBuilder().
 			WithOperation(builders.NewOperationBuilder().

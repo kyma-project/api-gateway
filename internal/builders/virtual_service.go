@@ -161,6 +161,11 @@ func (st *stringMatch) Regex(val string) *matchRequest {
 	return st.parent()
 }
 
+func (st *stringMatch) Prefix(val string) *matchRequest {
+	st.value.MatchType = &v1beta1.StringMatch_Prefix{Prefix: val}
+	return st.parent()
+}
+
 // RouteDestination returns builder for istio.io/api/networking/v1beta1/HTTPRouteDestination type
 func RouteDestination() *routeDestination {
 	return &routeDestination{&v1beta1.HTTPRouteDestination{
