@@ -165,8 +165,19 @@ type JwtAuthorization struct {
 	Audiences      []string `json:"audiences"`
 }
 
-// JwtAuthentication Config for Jwt istio authentication
+// JwtAuthentication Config for Jwt Istio authentication
 type JwtAuthentication struct {
 	Issuer  string `json:"issuer"`
 	JwksUri string `json:"jwksUri"`
+	// +optional
+	FromHeaders []*JwtHeader `json:"fromHeaders,omitempty"`
+	// +optional
+	FromParams []string `json:"fromParams,omitempty"`
+}
+
+// JwtHeader for specifying from header for the Jwt token
+type JwtHeader struct {
+	Name string `json:"name"`
+	// +optional
+	Prefix string `json:"prefix,omitempty"`
 }

@@ -2,6 +2,7 @@ package api_gateway
 
 import (
 	"fmt"
+
 	"github.com/cucumber/godog"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/helpers"
 )
@@ -46,6 +47,11 @@ func (s *istioJwtManifestScenario) shouldReturnResponseWithKeyValuePairs(path, k
 	}
 
 	asserter := &helpers.BodyContainsPredicate{Expected: expectedInBody}
+	tokenFrom := tokenFrom{
+		From:     authorizationHeaderName,
+		Prefix:   authorizationHeaderPrefix,
+		AsHeader: true,
+	}
 
-	return callingEndpointWithHeadersWithRetries(s.url, path, "JWT", asserter, nil)
+	return callingEndpointWithHeadersWithRetries(s.url, path, "JWT", asserter, nil, &tokenFrom)
 }

@@ -3,8 +3,10 @@ package istio
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 
+	"github.com/kyma-project/api-gateway/api/v1beta1"
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/api/v1beta1"
 	oryjwt "github.com/kyma-project/api-gateway/internal/types/ory"
 	"github.com/kyma-project/api-gateway/internal/validation"
@@ -36,6 +38,8 @@ func (o *handlerValidator) Validate(attributePath string, handler *gatewayv1beta
 
 	failures = append(failures, checkForOryConfig(attributePath, handler)...)
 
+	hasFromHeaders, hasFromParams := false, false
+
 	for i, authentication := range template.Authentications {
 		invalidIssuer, err := validation.IsInvalidURL(authentication.Issuer)
 		if invalidIssuer {
@@ -60,9 +64,31 @@ func (o *handlerValidator) Validate(attributePath string, handler *gatewayv1beta
 			attrPath := fmt.Sprintf("%s%s[%d]%s", attributePath, ".config.authentications", i, ".jwksUri")
 			failures = append(failures, validation.Failure{AttributePath: attrPath, Message: fmt.Sprintf("value is not a secured url err=%s", err)})
 		}
+		if len(authentication.FromHeaders) > 0 {
+			if hasFromParams {
+				attrPath := fmt.Sprintf("%s%s[%d]%s", attributePath, ".config.authentications", i, ".fromHeaders")
+				failures = append(failures, validation.Failure{AttributePath: attrPath, Message: "mixture of multiple fromHeaders and fromParams is not supported"})
+			}
+			hasFromHeaders = true
+		}
+		if len(authentication.FromParams) > 0 {
+			if hasFromHeaders {
+				attrPath := fmt.Sprintf("%s%s[%d]%s", attributePath, ".config.authentications", i, ".fromParams")
+				failures = append(failures, validation.Failure{AttributePath: attrPath, Message: "mixture of multiple fromHeaders and fromParams is not supported"})
+			}
+			hasFromParams = true
+		}
+		if len(authentication.FromHeaders) > 1 {
+			attrPath := fmt.Sprintf("%s%s[%d]%s", attributePath, ".config.authentications", i, ".fromHeaders")
+			failures = append(failures, validation.Failure{AttributePath: attrPath, Message: "multiple fromHeaders are not supported"})
+		}
+		if len(authentication.FromParams) > 1 {
+			attrPath := fmt.Sprintf("%s%s[%d]%s", attributePath, ".config.authentications", i, ".fromParams")
+			failures = append(failures, validation.Failure{AttributePath: attrPath, Message: "multiple fromParams are not supported"})
+		}
 	}
 
-	authorizationsFailures := validation.HasInvalidAuthorizations(attributePath, template.Authorizations)
+	authorizationsFailures := hasInvalidAuthorizations(attributePath, template.Authorizations)
 	failures = append(failures, authorizationsFailures...)
 
 	return failures
@@ -88,6 +114,69 @@ func checkForOryConfig(attributePath string, handler *gatewayv1beta1.Handler) (p
 	}
 
 	return problems
+}
+
+func hasInvalidRequiredScopes(authorization v1beta1.JwtAuthorization) error {
+	if authorization.RequiredScopes == nil {
+		return nil
+	}
+	if len(authorization.RequiredScopes) == 0 {
+		return errors.New("value is empty")
+	}
+	for _, scope := range authorization.RequiredScopes {
+		if scope == "" {
+			return errors.New("scope value is empty")
+		}
+	}
+	return nil
+}
+
+func hasInvalidAudiences(authorization v1beta1.JwtAuthorization) error {
+	if authorization.Audiences == nil {
+		return nil
+	}
+	if len(authorization.Audiences) == 0 {
+		return errors.New("value is empty")
+	}
+	for _, audience := range authorization.Audiences {
+		if audience == "" {
+			return errors.New("audience value is empty")
+		}
+	}
+	return nil
+}
+
+func hasInvalidAuthorizations(attributePath string, authorizations []*v1beta1.JwtAuthorization) (failures []validation.Failure) {
+	if authorizations == nil {
+		return nil
+	}
+	if len(authorizations) == 0 {
+		attrPath := fmt.Sprintf("%s%s", attributePath, ".config.authorizations")
+		failures = append(failures, validation.Failure{AttributePath: attrPath, Message: "value is empty"})
+		return
+	}
+
+	for i, authorization := range authorizations {
+		if authorization == nil {
+			attrPath := fmt.Sprintf("%s%s[%d]", attributePath, ".config.authorizations", i)
+			failures = append(failures, validation.Failure{AttributePath: attrPath, Message: "authorization is empty"})
+			continue
+		}
+
+		err := hasInvalidRequiredScopes(*authorization)
+		if err != nil {
+			attrPath := fmt.Sprintf("%s%s[%d]%s", attributePath, ".config.authorizations", i, ".requiredScopes")
+			failures = append(failures, validation.Failure{AttributePath: attrPath, Message: err.Error()})
+		}
+
+		err = hasInvalidAudiences(*authorization)
+		if err != nil {
+			attrPath := fmt.Sprintf("%s%s[%d]%s", attributePath, ".config.authorizations", i, ".audiences")
+			failures = append(failures, validation.Failure{AttributePath: attrPath, Message: err.Error()})
+		}
+	}
+
+	return
 }
 
 type injectionValidator struct {
@@ -117,4 +206,59 @@ func containsSidecar(pod corev1.Pod) bool {
 		}
 	}
 	return false
+}
+
+type rulesValidator struct {
+}
+
+func (v *rulesValidator) Validate(attrPath string, rules []gatewayv1beta1.Rule) []validation.Failure {
+	var failures []validation.Failure
+	jwtAuths := map[string]*gatewayv1beta1.JwtAuthentication{}
+	for i, rule := range rules {
+		for j, accessStrategy := range rule.AccessStrategies {
+			attributePath := fmt.Sprintf("%s[%d].accessStrategy[%d]", attrPath, i, j)
+			if accessStrategy.Config != nil {
+				var template gatewayv1beta1.JwtConfig
+				err := json.Unmarshal(accessStrategy.Config.Raw, &template)
+				if err != nil {
+					failures = append(failures, validation.Failure{AttributePath: attributePath, Message: "Can't read json: " + err.Error()})
+					return failures
+				}
+
+				for k, authentication := range template.Authentications {
+					jwtAuthKey := authentication.Issuer + authentication.JwksUri
+					if jwtAuths[jwtAuthKey] != nil && !isJwtAuthenticationsEqual(authentication, jwtAuths[jwtAuthKey]) {
+						attributeSubPath := fmt.Sprintf("%s%s[%d]", attributePath, ".config.authentications", k)
+						failures = append(failures, validation.Failure{AttributePath: attributeSubPath, Message: "multiple jwt configurations that differ for the same issuer"})
+					} else {
+						jwtAuths[jwtAuthKey] = authentication
+					}
+				}
+			}
+		}
+	}
+	return failures
+}
+
+func isJwtAuthenticationsEqual(auth1 *gatewayv1beta1.JwtAuthentication, auth2 *gatewayv1beta1.JwtAuthentication) bool {
+	if auth1.Issuer != auth2.Issuer || auth1.JwksUri != auth2.JwksUri {
+		return false
+	}
+	if len(auth1.FromHeaders) != len(auth2.FromHeaders) {
+		return false
+	}
+	for i, auth1FromHeader := range auth1.FromHeaders {
+		if auth1FromHeader.Name != auth2.FromHeaders[i].Name || auth1FromHeader.Prefix != auth2.FromHeaders[i].Prefix {
+			return false
+		}
+	}
+	if len(auth1.FromParams) != len(auth2.FromParams) {
+		return false
+	}
+	for i, auth1FromParam := range auth1.FromParams {
+		if auth1FromParam != auth2.FromParams[i] {
+			return false
+		}
+	}
+	return true
 }

@@ -40,6 +40,7 @@ const (
 	cucumberFileName          = "cucumber-report.json"
 	anyToken                  = "any"
 	authorizationHeaderName   = "Authorization"
+	authorizationHeaderPrefix = "Bearer"
 	opaqueHeaderName          = "opaque-token"
 	defaultNS                 = "kyma-system"
 	configMapName             = "api-gateway-config"
@@ -56,6 +57,8 @@ var (
 	batch           *resource.Batch
 	namespace       string
 	secondNamespace string
+	jwtHeaderName   string
+	fromParamName   string
 )
 
 var t *testing.T
@@ -219,6 +222,8 @@ func CreateScenarioWithRawAPIResource(templateFileName string, namePrefix string
 	template["GatewayName"] = conf.GatewayName
 	template["GatewayNamespace"] = conf.GatewayNamespace
 	template["IssuerUrl"] = conf.IssuerUrl
+	template["JWTHeaderName"] = jwtHeaderName
+	template["FromParamName"] = fromParamName
 	template["EncodedCredentials"] = base64.RawStdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", conf.ClientID, conf.ClientSecret)))
 
 	return &ScenarioWithRawAPIResource{
