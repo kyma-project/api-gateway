@@ -75,7 +75,7 @@ func (r virtualServiceCreator) Create(api *gatewayv1beta1.APIRule) (*networkingv
 		httpRouteBuilder.Route(builders.RouteDestination().Host(host).Port(port))
 
 		if rule.Path == "/*" {
-			httpRouteBuilder.Match(builders.MatchRequest().Uri().Prefix(rule.Path))
+			httpRouteBuilder.Match(builders.MatchRequest().Uri().Prefix("/"))
 		} else {
 			httpRouteBuilder.Match(builders.MatchRequest().Uri().Regex(rule.Path))
 		}
