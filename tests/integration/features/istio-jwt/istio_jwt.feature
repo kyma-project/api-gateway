@@ -21,7 +21,7 @@ Feature: Exposing endpoints with Istio JWT authorization strategy
 
   Scenario: Calling a httpbin endpoint secured on wildcard `/*` path
         Given Common: There is a httpbin service
-        When Common: Common: The APIRule with an endpoint secured with JWT on path /.* is applied
+        When Common: Common: The APIRule with an endpoint secured with JWT on path /* is applied
         Then Common: Calling the "/ip" endpoint without a token should result in status between 400 and 403
         And Common: Calling the "/ip" endpoint with an invalid token should result in status between 400 and 403
         And Common: Calling the "/ip" endpoint with a valid "JWT" token should result in status between 200 and 299
