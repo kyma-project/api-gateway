@@ -169,6 +169,31 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 		}))
 	}
 
+	It("should set path to `/*` when the Rule path is `/.*`", func() {
+		// given
+		jwt := createIstioJwtAccessStrategy()
+		service := &gatewayv1beta1.Service{
+			Name: &ServiceName,
+			Port: &ServicePort,
+		}
+
+		ruleJwt := GetRuleWithServiceFor("/.*", ApiMethods, []*gatewayv1beta1.Mutator{}, []*gatewayv1beta1.Authenticator{jwt}, service)
+		apiRule := GetAPIRuleFor([]gatewayv1beta1.Rule{ruleJwt})
+		client := GetFakeClient()
+		processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig(), &testLogger)
+
+		// when
+		result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
+
+		Expect(err).To(BeNil())
+		Expect(result).To(HaveLen(1))
+
+		ap := result[0].Obj.(*securityv1beta1.AuthorizationPolicy)
+
+		Expect(len(ap.Spec.Rules[0].To[0].Operation.Paths)).To(Equal(1))
+		Expect(ap.Spec.Rules[0].To[0].Operation.Paths).To(ContainElement("/*"))
+	})
+
 	It("should produce two APs for a rule with one issuer and two paths", func() {
 		// given
 		jwt := createIstioJwtAccessStrategy()

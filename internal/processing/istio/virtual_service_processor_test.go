@@ -637,6 +637,36 @@ var _ = Describe("Virtual Service Processor", func() {
 		})
 	})
 
+	When("the path is `/*`", func() {
+		It("should set the match to prefix `/`", func() {
+			strategies := []*gatewayv1beta1.Authenticator{
+				{
+					Handler: &gatewayv1beta1.Handler{
+						Name: "allow",
+					},
+				},
+			}
+
+			allowRule := GetRuleFor("/*", ApiMethods, []*gatewayv1beta1.Mutator{}, strategies)
+			rules := []gatewayv1beta1.Rule{allowRule}
+
+			apiRule := GetAPIRuleFor(rules)
+			client := GetFakeClient()
+			processor := istio.NewVirtualServiceProcessor(GetTestConfig())
+
+			// when
+			result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
+
+			Expect(err).NotTo(HaveOccurred())
+			Expect(result).To(HaveLen(1))
+
+			resultVs := result[0].Obj.(*networkingv1beta1.VirtualService)
+
+			Expect(resultVs.Spec.Http).To(HaveLen(1))
+			Expect(resultVs.Spec.Http[0].Match).To(HaveLen(1))
+			Expect(resultVs.Spec.Http[0].Match[0].Uri.GetPrefix()).To(Equal("/"))
+		})
+	})
 	Context("mutators are defined", func() {
 		When("access strategy is JWT", func() {
 			It("should return VS cookie and header configuration set", func() {
