@@ -7,8 +7,8 @@ release:
   prerelease: auto
   header: |
     Images published in {{ .Tag }} release:
-    - [https://eu.gcr.io/kyma-project/api-gateway-controller:{{ .Tag }}](https://eu.gcr.io/kyma-project/api-gateway-controller:{{ .Tag }})
-    - [https://eu.gcr.io/kyma-project/api-gateway-webhook-certificates:{{ .Tag }}](https://eu.gcr.io/kyma-project/api-gateway-webhook-certificates:{{ .Tag }})
+    - [https://europe-docker.pkg.dev/kyma-project/prod/api-gateway-controller:{{ .Tag }}](https://europe-docker.pkg.dev/kyma-project/prod/api-gateway-controller:{{ .Tag }})
+    - [https://europe-docker.pkg.dev/kyma-project/prod/api-gateway-webhook-certificates:{{ .Tag }}](https://europe-docker.pkg.dev/kyma-project/prod/api-gateway-webhook-certificates:{{ .Tag }})
 builds:
 - env:
   - CGO_ENABLED=0
