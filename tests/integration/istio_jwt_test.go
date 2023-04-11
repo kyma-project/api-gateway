@@ -25,6 +25,8 @@ type istioJwtManifestScenario struct {
 
 func initIstioJwtScenarios(ctx *godog.ScenarioContext) {
 	initCommon(ctx)
+	initPrefix(ctx)
+	initRegex(ctx)
 	initRequiredScopes(ctx)
 	initAudience(ctx)
 	initJwtAndAllow(ctx)

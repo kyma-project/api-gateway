@@ -200,7 +200,7 @@ func SetupCommonResources(namePrefix string) {
 }
 
 func generateRandomString(length int) string {
-	rand.Seed(time.Now().UnixNano())
+	rand.NewSource(time.Now().UnixNano())
 
 	letterRunes := []rune("abcdefghijklmnopqrstuvwxyz")
 

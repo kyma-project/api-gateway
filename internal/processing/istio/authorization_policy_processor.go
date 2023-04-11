@@ -149,6 +149,15 @@ func generateAuthorizationPolicySpec(api *gatewayv1beta1.APIRule, rule gatewayv1
 }
 
 func withTo(b *builders.RuleBuilder, rule gatewayv1beta1.Rule) *builders.RuleBuilder {
+        // APIRule and VirtualService supported a regex match. Since AuthorizationPolicy supports only prefix, suffix and wildcard 
+        // and we have clusters with "/.*" in APIRule, we need special handling of this case.
+	if rule.Path == "/.*" {
+		return b.WithTo(
+			builders.NewToBuilder().
+				WithOperation(builders.NewOperationBuilder().
+					WithMethods(rule.Methods).WithPath("/*").Get()).
+				Get())
+	}
 	return b.WithTo(
 		builders.NewToBuilder().
 			WithOperation(builders.NewOperationBuilder().
