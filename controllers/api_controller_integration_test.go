@@ -915,6 +915,57 @@ var _ = Describe("APIRule Controller", Serial, func() {
 			g.Expect(vsList.Items).To(HaveLen(1))
 		}, eventuallyTimeout).Should(Succeed())
 	})
+
+	It("APIRule in status OK should reconcile to status ERROR when an", func() {
+		// given
+		updateJwtHandlerTo(helpers.JWT_HANDLER_ISTIO)
+
+		apiRuleName := generateTestName(testNameBase, testIDLength)
+		serviceName := generateTestName(testServiceNameBase, testIDLength)
+		serviceHost := fmt.Sprintf("%s.kyma.local", serviceName)
+		vsName := generateTestName("duplicated-host-vs", testIDLength)
+
+		By(fmt.Sprintf("Creating APIRule with host %s", serviceHost))
+		rule := testRule("/headers", []string{"GET"}, nil, testIstioJWTHandler(testIssuer, testJwksUri))
+		instance := testInstance(apiRuleName, testNamespace, serviceName, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule})
+
+		Expect(c.Create(context.TODO(), instance)).Should(Succeed())
+		defer func() {
+			deleteApiRule(instance)
+		}()
+
+		expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusOK)
+
+		By(fmt.Sprintf("Creating virtual service for host %s", serviceHost))
+		vs := virtualService(vsName, serviceHost)
+		Expect(c.Create(context.TODO(), vs)).Should(Succeed())
+		defer func() {
+			By(fmt.Sprintf("Deleting VirtualService %s as part of teardown", vs.Name))
+			Eventually(func(g Gomega) {
+				_ = c.Delete(context.TODO(), vs)
+				v := networkingv1beta1.VirtualService{}
+				err := c.Get(context.TODO(), client.ObjectKey{Name: vs.Name, Namespace: testNamespace}, &v)
+				g.Expect(errors.IsNotFound(err)).To(BeTrue())
+			}, eventuallyTimeout).Should(Succeed())
+		}()
+
+		By("Verifying virtual service has been created")
+		Eventually(func(g Gomega) {
+			createdVs := networkingv1beta1.VirtualService{}
+			g.Expect(c.Get(context.TODO(), client.ObjectKey{Name: vsName, Namespace: testNamespace}, &createdVs)).Should(Succeed())
+		}, eventuallyTimeout).Should(Succeed())
+
+		By("Waiting until APIRule is reconciled after error")
+		expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusError)
+
+		By("Verifying APIRule status description")
+		Eventually(func(g Gomega) {
+			expectedApiRule := gatewayv1beta1.APIRule{}
+			g.Expect(c.Get(context.TODO(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &expectedApiRule)).Should(Succeed())
+			g.Expect(expectedApiRule.Status.APIRuleStatus).NotTo(BeNil())
+			g.Expect(expectedApiRule.Status.APIRuleStatus.Description).To(ContainSubstring("This host is occupied by another Virtual Service"))
+		}, eventuallyTimeout).Should(Succeed())
+	})
 })
 
 func toCSVList(input []string) string {
