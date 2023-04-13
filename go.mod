@@ -15,7 +15,7 @@ require (
 	google.golang.org/protobuf v1.30.0
 	istio.io/api v0.0.0-20230217221049-9d422bf48675
 	istio.io/client-go v1.17.1
-	k8s.io/apimachinery v0.26.3
+	k8s.io/apimachinery v0.26.4
 	k8s.io/client-go v0.26.3
 	sigs.k8s.io/controller-runtime v0.14.6
 	sigs.k8s.io/yaml v1.3.0
