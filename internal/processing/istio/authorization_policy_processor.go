@@ -120,7 +120,7 @@ func generateAuthorizationPolicySpec(api *gatewayv1beta1.APIRule, rule gatewayv1
 	authorizationPolicySpecBuilder := builders.NewAuthorizationPolicySpecBuilder().
 		WithSelector(builders.SelectorFromService(service))
 
-	// If RequiredScopes are configured, we need to generate a seperate Rule for each scopeKey in defaultScopeKeys
+	// If RequiredScopes are configured, we need to generate a separate Rule for each scopeKey in defaultScopeKeys
 	if len(authorization.RequiredScopes) > 0 {
 		for _, scopeKey := range defaultScopeKeys {
 			ruleBuilder := baseRuleBuilder(rule)
@@ -149,8 +149,8 @@ func generateAuthorizationPolicySpec(api *gatewayv1beta1.APIRule, rule gatewayv1
 }
 
 func withTo(b *builders.RuleBuilder, rule gatewayv1beta1.Rule) *builders.RuleBuilder {
-        // APIRule and VirtualService supported a regex match. Since AuthorizationPolicy supports only prefix, suffix and wildcard 
-        // and we have clusters with "/.*" in APIRule, we need special handling of this case.
+	// APIRule and VirtualService supported a regex match. Since AuthorizationPolicy supports only prefix, suffix and wildcard
+	// and we have clusters with "/.*" in APIRule, we need special handling of this case.
 	if rule.Path == "/.*" {
 		return b.WithTo(
 			builders.NewToBuilder().
@@ -167,7 +167,7 @@ func withTo(b *builders.RuleBuilder, rule gatewayv1beta1.Rule) *builders.RuleBui
 
 func withFrom(b *builders.RuleBuilder, rule gatewayv1beta1.Rule) *builders.RuleBuilder {
 	if processing.IsJwtSecured(rule) {
-		return b.WithFrom(builders.NewFromBuilder().WithForcedJWTAuthorization().Get())
+		return b.WithFrom(builders.NewFromBuilder().WithForcedJWTAuthorization(rule.AccessStrategies).Get())
 	} else if processing.IsSecured(rule) {
 		return b.WithFrom(builders.NewFromBuilder().WithOathkeeperProxySource().Get())
 	}

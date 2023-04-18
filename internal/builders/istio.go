@@ -2,6 +2,7 @@ package builders
 
 import (
 	"encoding/json"
+	"fmt"
 
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/api/v1beta1"
 	"istio.io/api/security/v1beta1"
@@ -139,10 +140,25 @@ func (rf *FromBuilder) Get() *v1beta1.Rule_From {
 	return rf.value
 }
 
-// WithForcedJWTAuthorization adds RequestPrincipals = "*" requirement, forcing requests to use JWT authorization
-func (rf *FromBuilder) WithForcedJWTAuthorization() *FromBuilder {
+// WithForcedJWTAuthorization adds RequestPrincipals = "ISSUER/*" for every issuer, forcing requests to use JWT authorization
+func (rf *FromBuilder) WithForcedJWTAuthorization(accessStrategies []*gatewayv1beta1.Authenticator) *FromBuilder {
 	// Only support one source at the moment
-	source := v1beta1.Source{RequestPrincipals: []string{"*"}}
+	var requestPrincipals []string
+	for _, strategy := range accessStrategies {
+		if strategy.Name == "jwt" {
+			authentications := &Authentications{
+				Authentications: []*Authentication{},
+			}
+			if strategy.Config != nil {
+				_ = json.Unmarshal(strategy.Config.Raw, authentications)
+			}
+			for _, authentication := range authentications.Authentications {
+				requestPrincipals = append(requestPrincipals, fmt.Sprintf("%s/*", authentication.Issuer))
+			}
+			break
+		}
+	}
+	source := v1beta1.Source{RequestPrincipals: requestPrincipals}
 	rf.value.Source = &source
 	return rf
 }

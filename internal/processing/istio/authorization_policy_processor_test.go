@@ -228,7 +228,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 		Expect(len(ap1.Spec.Rules)).To(Equal(3))
 		Expect(len(ap1.Spec.Rules[0].From)).To(Equal(1))
 		Expect(len(ap1.Spec.Rules[0].From[0].Source.RequestPrincipals)).To(Equal(1))
-		Expect(ap1.Spec.Rules[0].From[0].Source.RequestPrincipals[0]).To(Equal("*"))
+		Expect(ap1.Spec.Rules[0].From[0].Source.RequestPrincipals[0]).To(Equal(fmt.Sprintf("%s/*", JwtIssuer)))
 		Expect(len(ap1.Spec.Rules[0].To)).To(Equal(1))
 		Expect(len(ap1.Spec.Rules[0].To[0].Operation.Methods)).To(Equal(1))
 		Expect(ap1.Spec.Rules[0].To[0].Operation.Methods).To(ContainElements(ApiMethods))
@@ -254,7 +254,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 		Expect(len(ap2.Spec.Rules)).To(Equal(3))
 		Expect(len(ap2.Spec.Rules[0].From)).To(Equal(1))
 		Expect(len(ap2.Spec.Rules[0].From[0].Source.RequestPrincipals)).To(Equal(1))
-		Expect(ap2.Spec.Rules[0].From[0].Source.RequestPrincipals[0]).To(Equal("*"))
+		Expect(ap2.Spec.Rules[0].From[0].Source.RequestPrincipals[0]).To(Equal(fmt.Sprintf("%s/*", JwtIssuer)))
 		Expect(len(ap2.Spec.Rules[0].To)).To(Equal(1))
 		Expect(len(ap2.Spec.Rules[0].To[0].Operation.Methods)).To(Equal(1))
 		Expect(ap2.Spec.Rules[0].To[0].Operation.Methods).To(ContainElements(ApiMethods))
@@ -304,7 +304,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 		Expect(len(ap1.Spec.Rules)).To(Equal(3))
 		Expect(len(ap1.Spec.Rules[0].From)).To(Equal(1))
 		Expect(len(ap1.Spec.Rules[0].From[0].Source.RequestPrincipals)).To(Equal(1))
-		Expect(ap1.Spec.Rules[0].From[0].Source.RequestPrincipals[0]).To(Equal("*"))
+		Expect(ap1.Spec.Rules[0].From[0].Source.RequestPrincipals[0]).To(Equal(fmt.Sprintf("%s/*", JwtIssuer)))
 		Expect(len(ap1.Spec.Rules[0].To)).To(Equal(1))
 		Expect(len(ap1.Spec.Rules[0].To[0].Operation.Methods)).To(Equal(1))
 		Expect(ap1.Spec.Rules[0].To[0].Operation.Methods).To(ContainElements(ApiMethods))
@@ -327,7 +327,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 		Expect(len(ap2.Spec.Rules)).To(Equal(3))
 		Expect(len(ap2.Spec.Rules[0].From)).To(Equal(1))
 		Expect(len(ap2.Spec.Rules[0].From[0].Source.RequestPrincipals)).To(Equal(1))
-		Expect(ap2.Spec.Rules[0].From[0].Source.RequestPrincipals[0]).To(Equal("*"))
+		Expect(ap2.Spec.Rules[0].From[0].Source.RequestPrincipals[0]).To(Equal(fmt.Sprintf("%s/*", JwtIssuer)))
 		Expect(len(ap2.Spec.Rules[0].To)).To(Equal(1))
 		Expect(len(ap2.Spec.Rules[0].To[0].Operation.Methods)).To(Equal(1))
 		Expect(ap2.Spec.Rules[0].To[0].Operation.Methods).To(ContainElements(ApiMethods))
@@ -464,8 +464,9 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 		Expect(ap.Spec.Selector.MatchLabels[TestSelectorKey]).To(Equal(ServiceName))
 		Expect(len(ap.Spec.Rules)).To(Equal(3))
 		Expect(len(ap.Spec.Rules[0].From)).To(Equal(1))
-		Expect(len(ap.Spec.Rules[0].From[0].Source.RequestPrincipals)).To(Equal(1))
-		Expect(ap.Spec.Rules[0].From[0].Source.RequestPrincipals[0]).To(Equal("*"))
+		Expect(len(ap.Spec.Rules[0].From[0].Source.RequestPrincipals)).To(Equal(2))
+		Expect(ap.Spec.Rules[0].From[0].Source.RequestPrincipals[0]).To(Equal(fmt.Sprintf("%s/*", JwtIssuer)))
+		Expect(ap.Spec.Rules[0].From[0].Source.RequestPrincipals[1]).To(Equal(fmt.Sprintf("%s/*", JwtIssuer2)))
 		Expect(len(ap.Spec.Rules[0].To)).To(Equal(1))
 		Expect(len(ap.Spec.Rules[0].To[0].Operation.Methods)).To(Equal(1))
 		Expect(ap.Spec.Rules[0].To[0].Operation.Methods).To(ContainElements(ApiMethods))
@@ -767,7 +768,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 		Expect(err).To(BeNil())
 		Expect(result).To(HaveLen(1))
 
-		updateMatcher := getActionMatcher("update", ApiNamespace, "test-service", "RequestPrincipals", ContainElements("*"), ContainElements("GET", "POST"), ContainElements("/"))
+		updateMatcher := getActionMatcher("update", ApiNamespace, "test-service", "RequestPrincipals", ContainElements("https://oauth2.example.com//*"), ContainElements("GET", "POST"), ContainElements("/"))
 		Expect(result).To(ContainElements(updateMatcher))
 	})
 
@@ -810,7 +811,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			Expect(result).To(HaveLen(2))
 
 			updatedNoopMatcher := getActionMatcher("update", ApiNamespace, "test-service", "Principals", ContainElements("cluster.local/ns/kyma-system/sa/oathkeeper-maester-account"), ContainElements("GET", "POST"), ContainElements("/"))
-			updatedNotChangedMatcher := getActionMatcher("update", ApiNamespace, "jwt-secured-service", "RequestPrincipals", ContainElements("*"), ContainElements("GET", "POST"), ContainElements("/"))
+			updatedNotChangedMatcher := getActionMatcher("update", ApiNamespace, "jwt-secured-service", "RequestPrincipals", ContainElements("https://oauth2.example.com//*"), ContainElements("GET", "POST"), ContainElements("/"))
 			Expect(result).To(ContainElements(updatedNoopMatcher, updatedNotChangedMatcher))
 		})
 
@@ -857,8 +858,8 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			Expect(err).To(BeNil())
 			Expect(result).To(HaveLen(2))
 
-			updateExistingApMatcher := getActionMatcher("update", ApiNamespace, "test-service", "RequestPrincipals", ContainElements("*"), ContainElements("GET", "POST"), ContainElements("/"))
-			newApMatcher := getActionMatcher("create", ApiNamespace, "test-service", "RequestPrincipals", ContainElements("*"), ContainElements("GET", "POST"), ContainElements("/new-path"))
+			updateExistingApMatcher := getActionMatcher("update", ApiNamespace, "test-service", "RequestPrincipals", ContainElements("https://oauth2.example.com//*"), ContainElements("GET", "POST"), ContainElements("/"))
+			newApMatcher := getActionMatcher("create", ApiNamespace, "test-service", "RequestPrincipals", ContainElements("https://oauth2.example.com//*"), ContainElements("GET", "POST"), ContainElements("/new-path"))
 			Expect(result).To(ContainElements(updateExistingApMatcher, newApMatcher))
 		})
 
@@ -883,8 +884,8 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			Expect(err).To(BeNil())
 			Expect(result).To(HaveLen(2))
 
-			updateExistingApMatcher := getActionMatcher("update", ApiNamespace, "test-service", "RequestPrincipals", ContainElements("*"), ContainElements("GET", "POST"), ContainElements("/"))
-			newApMatcher := getActionMatcher("create", ApiNamespace, "test-service", "RequestPrincipals", ContainElements("*"), ContainElements("DELETE"), ContainElements("/"))
+			updateExistingApMatcher := getActionMatcher("update", ApiNamespace, "test-service", "RequestPrincipals", ContainElements("https://oauth2.example.com//*"), ContainElements("GET", "POST"), ContainElements("/"))
+			newApMatcher := getActionMatcher("create", ApiNamespace, "test-service", "RequestPrincipals", ContainElements("https://oauth2.example.com//*"), ContainElements("DELETE"), ContainElements("/"))
 			Expect(result).To(ContainElements(updateExistingApMatcher, newApMatcher))
 		})
 
@@ -909,8 +910,8 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			Expect(err).To(BeNil())
 			Expect(result).To(HaveLen(2))
 
-			updateExistingApMatcher := getActionMatcher("update", ApiNamespace, "test-service", "RequestPrincipals", ContainElements("*"), ContainElements("GET", "POST"), ContainElements("/"))
-			newApMatcher := getActionMatcher("create", ApiNamespace, "new-service", "RequestPrincipals", ContainElements("*"), ContainElements("GET", "POST"), ContainElements("/"))
+			updateExistingApMatcher := getActionMatcher("update", ApiNamespace, "test-service", "RequestPrincipals", ContainElements("https://oauth2.example.com//*"), ContainElements("GET", "POST"), ContainElements("/"))
+			newApMatcher := getActionMatcher("create", ApiNamespace, "new-service", "RequestPrincipals", ContainElements("https://oauth2.example.com//*"), ContainElements("GET", "POST"), ContainElements("/"))
 			Expect(result).To(ContainElements(updateExistingApMatcher, newApMatcher))
 		})
 
@@ -938,7 +939,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			Expect(result).To(HaveLen(2))
 
 			existingApMatcher := getActionMatcher("delete", ApiNamespace, "test-service", "RequestPrincipals", ContainElements("*"), ContainElements("GET", "POST"), ContainElements("/"))
-			newApMatcher := getActionMatcher("create", ApiNamespace, "test-service", "RequestPrincipals", ContainElements("*"), ContainElements("GET", "POST"), ContainElements("/new-path"))
+			newApMatcher := getActionMatcher("create", ApiNamespace, "test-service", "RequestPrincipals", ContainElements("https://oauth2.example.com//*"), ContainElements("GET", "POST"), ContainElements("/new-path"))
 			Expect(result).To(ContainElements(existingApMatcher, newApMatcher))
 		})
 
@@ -966,9 +967,9 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			Expect(err).To(BeNil())
 			Expect(result).To(HaveLen(3))
 
-			updateUnchangedApMatcher := getActionMatcher("update", ApiNamespace, "test-service", "RequestPrincipals", ContainElements("*"), ContainElements("DELETE"), ContainElements("/"))
+			updateUnchangedApMatcher := getActionMatcher("update", ApiNamespace, "test-service", "RequestPrincipals", ContainElements("https://oauth2.example.com//*"), ContainElements("DELETE"), ContainElements("/"))
 			deleteMatcher := getActionMatcher("delete", ApiNamespace, "test-service", "RequestPrincipals", ContainElements("*"), ContainElements("GET"), ContainElements("/"))
-			createdMatcher := getActionMatcher("create", ApiNamespace, "test-service", "RequestPrincipals", ContainElements("*"), ContainElements("GET"), ContainElements("/new-path"))
+			createdMatcher := getActionMatcher("create", ApiNamespace, "test-service", "RequestPrincipals", ContainElements("https://oauth2.example.com//*"), ContainElements("GET"), ContainElements("/new-path"))
 			Expect(result).To(ContainElements(updateUnchangedApMatcher, deleteMatcher, createdMatcher))
 		})
 	})
@@ -996,7 +997,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			Expect(result).To(HaveLen(2))
 
 			deleteMatcher := getActionMatcher("delete", ApiNamespace, "test-service", "RequestPrincipals", ContainElements("*"), ContainElements("DELETE"), ContainElements("/"))
-			createMatcher := getActionMatcher("create", "new-namespace", "test-service", "RequestPrincipals", ContainElements("*"), ContainElements("DELETE"), ContainElements("/"))
+			createMatcher := getActionMatcher("create", "new-namespace", "test-service", "RequestPrincipals", ContainElements("https://oauth2.example.com//*"), ContainElements("DELETE"), ContainElements("/"))
 			Expect(result).To(ContainElements(deleteMatcher, createMatcher))
 		})
 
@@ -1020,7 +1021,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			Expect(result).To(HaveLen(2))
 
 			deleteMatcher := getActionMatcher("delete", ApiNamespace, "test-service", "RequestPrincipals", ContainElements("*"), ContainElements("DELETE"), ContainElements("/"))
-			createMatcher := getActionMatcher("create", "new-namespace", "test-service", "RequestPrincipals", ContainElements("*"), ContainElements("DELETE"), ContainElements("/"))
+			createMatcher := getActionMatcher("create", "new-namespace", "test-service", "RequestPrincipals", ContainElements("https://oauth2.example.com//*"), ContainElements("DELETE"), ContainElements("/"))
 			Expect(result).To(ContainElements(deleteMatcher, createMatcher))
 		})
 	})
@@ -1047,9 +1048,9 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			Expect(err).To(BeNil())
 			Expect(result).To(HaveLen(3))
 
-			updateUnchangedApMatcher := getActionMatcher("update", ApiNamespace, "first-service", "RequestPrincipals", ContainElements("*"), ContainElements("GET"), ContainElements("/"))
+			updateUnchangedApMatcher := getActionMatcher("update", ApiNamespace, "first-service", "RequestPrincipals", ContainElements("https://oauth2.example.com//*"), ContainElements("GET"), ContainElements("/"))
 			deleteMatcher := getActionMatcher("delete", ApiNamespace, "second-service", "RequestPrincipals", ContainElements("*"), ContainElements("GET"), ContainElements("/"))
-			createdApMatcher := getActionMatcher("create", ApiNamespace, "second-service", "RequestPrincipals", ContainElements("*"), ContainElements("GET"), ContainElements("/new-path"))
+			createdApMatcher := getActionMatcher("create", ApiNamespace, "second-service", "RequestPrincipals", ContainElements("https://oauth2.example.com//*"), ContainElements("GET"), ContainElements("/new-path"))
 			Expect(result).To(ContainElements(updateUnchangedApMatcher, deleteMatcher, createdApMatcher))
 		})
 	})
