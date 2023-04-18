@@ -28,6 +28,7 @@ var _ = Describe("Builder for", func() {
 			testHandler := gatewayv1beta1.Handler{Name: "jwt", Config: &testRaw}
 			testAuthenticator := gatewayv1beta1.Authenticator{Handler: &testHandler}
 			testAccessStrategies := []*gatewayv1beta1.Authenticator{&testAuthenticator}
+			testRequestPrincipal := "testIssuer/*"
 
 			ap := NewAuthorizationPolicyBuilder().WithGenerateName(name).WithNamespace(namespace).
 				WithSpec(NewAuthorizationPolicySpecBuilder().
@@ -48,7 +49,7 @@ var _ = Describe("Builder for", func() {
 			Expect(ap.GenerateName).To(Equal(name))
 			Expect(ap.Namespace).To(Equal(namespace))
 			Expect(ap.Spec.Selector.MatchLabels).To(BeEquivalentTo(testMatchLabels))
-			Expect(ap.Spec.Rules[0].From[0].Source.RequestPrincipals[0]).To(Equal("testIssuer/*"))
+			Expect(ap.Spec.Rules[0].From[0].Source.RequestPrincipals[0]).To(Equal(testRequestPrincipal))
 			Expect(ap.Spec.Rules[0].To[0].Operation.Paths[0]).To(Equal(path))
 			Expect(ap.Spec.Rules[0].To[0].Operation.Methods).To(BeEquivalentTo(methods))
 			Expect(ap.Spec.Rules[0].When).To(HaveLen(1))
