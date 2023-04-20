@@ -40,21 +40,14 @@ Job definitions are specified [in test-infra repository](https://github.com/kyma
 
 ## Usage for custom-domain test suite
 
-### Prepare a secret with cloud credentials to manage DNS.
-
-Create the secret in the default namespace:
-
-```
-kubectl create secret generic google-credentials -n default --from-file=serviceaccount.json=serviceaccount.json
-```
-
 ### Set the environment variables with custom domain
 
-- `TEST_CUSTOM_DOMAIN` - set this environment variable with your desired custom domain.
+If you are using Gardener cluster make sure your k8s cluster have cert & dns extensions. See [here](https://github.com/kyma-project/control-plane/issues/875)
+Obtain a service account access key with permissions to maintain custom domain DNS entries and export it as json. See [here](https://cloud.google.com/iam/docs/keys-create-delete).
+
 - `TEST_DOMAIN` - set this environment variable with your installed by default Kyma domain.
-
-After exporting these domains, run `make setup-custom-domain` to finish the default test setup.
-
+- `TEST_CUSTOM_DOMAIN` - set this environment variable with your custom domain.
+- `TEST_SA_ACCESS_KEY_PATH` - set this environment variable with path to a service account access key, exported as a json.
 
 ### Run the tests
 
