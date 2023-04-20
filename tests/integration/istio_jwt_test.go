@@ -113,7 +113,6 @@ func callingEndpointWithHeadersWithRetries(url string, tokenType string, asserte
 		if err != nil {
 			return fmt.Errorf("failed to fetch an id_token: %s", err.Error())
 		}
-		//logrus.Info(token)
 		requestHeaders[opaqueHeaderName] = token
 	case "JWT":
 		token, err := jwt.GetAccessToken(*oauth2Cfg, jwtConfig, strings.ToLower(tokenType))
