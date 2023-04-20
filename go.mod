@@ -9,6 +9,7 @@ require (
 	github.com/onsi/ginkgo/v2 v2.9.2
 	github.com/onsi/gomega v1.27.6
 	github.com/ory/oathkeeper-maester v0.1.7
+	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/pflag v1.0.5
 	gitlab.com/rodrigoodhin/gocure v0.0.0-20230214115050-efed6aac536a
 	golang.org/x/net v0.9.0

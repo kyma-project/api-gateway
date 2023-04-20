@@ -1,39 +1,25 @@
-# Api-gateway component tests
+## Usage for custom-domain test suite
 
-Api-gateway component tests use the [cucumber/godog](https://github.com/cucumber/godog) library.
+### Prepare a secret with cloud credentials to manage DNS.
 
-## Prerequisites
+Create the secret in the default namespace:
 
-- Kubernetes cluster provisioned and KUBECONFIG set to point to it
-- Kyma installed
-- OIDC issuer for JWT with claims
-  - `scope` with values `read` and `write`
-  - `aud` with values `https://example.com` and `https://example.com/user`
-
-### Environment variables
-
-These environment variables determine how the tests are run on both Prow and your local machine:
-
-- `EXPORT_RESULT` - set this environment variable to `true` if you want to export test results to JUnit XML, Cucumber JSON, and HTML report. The default value is `false`.
-
-Customize `env_vars.sh` if necessary.
-
-To run these tests on your cluster you have to set those environment variables:
 ```
-export KYMA_DOMAIN=<YOUR_KYMA_DOMAIN>
-export CLIENT_ID="<YOUR_CLIENT_ID>"
-export CLIENT_SECRET="<YOUR_CLIENT_SECRET>"
-export OIDC_ISSUER_URL="<YOUR_OIDC_ISSUER_URL>"
+kubectl create secret generic google-credentials -n default --from-file=serviceaccount.json=serviceaccount.json
 ```
 
-## Usage for standard API Gateway test suite
+### Set the environment variables with custom domain
+
+- `TEST_CUSTOM_DOMAIN` - set this environment variable with your desired custom domain.
+- `TEST_DOMAIN` - set this environment variable with your installed by default Kyma domain.
+
+After exporting these domains, run `make setup-custom-domain` to finish the default test setup.
+
+
+### Run the tests
 
 To start the test suite, run:
 
 ```
-make test-integration
+make test-custom-domain
 ```
-
-## Integration tests run on `presubmit` and `postsubmit` in Prow
-
-Job definitions are specified [in test-infra repository](https://github.com/kyma-project/test-infra/blob/main/templates/data/api-gateway-validation.yaml).

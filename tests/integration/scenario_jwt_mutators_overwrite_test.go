@@ -2,6 +2,7 @@ package api_gateway
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/cucumber/godog"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/helpers"
@@ -24,7 +25,7 @@ func initMutatorsOverwrite(ctx *godog.ScenarioContext) {
 	ctx.Step(`JwtMutatorsOverwrite: Teardown httpbin service$`, scenario.teardownHttpbinService)
 }
 
-func (s *istioJwtManifestScenario) shouldOverwriteHeaderValue(path, headerName, requestValue, responseValue string) error {
+func (s *istioJwtManifestScenario) shouldOverwriteHeaderValue(endpoint, headerName, requestValue, responseValue string) error {
 	requestHeaders := map[string]string{headerName: requestValue}
 
 	expectedInBody := []string{fmt.Sprintf(`"%s": "%s"`, headerName, responseValue)}
@@ -35,10 +36,10 @@ func (s *istioJwtManifestScenario) shouldOverwriteHeaderValue(path, headerName, 
 		AsHeader: true,
 	}
 
-	return callingEndpointWithHeadersWithRetries(s.url, path, "JWT", asserter, requestHeaders, &tokenFrom)
+	return callingEndpointWithHeadersWithRetries(fmt.Sprintf("%s/%s", s.url, strings.TrimLeft(endpoint, "/")), "JWT", asserter, requestHeaders, &tokenFrom)
 }
 
-func (s *istioJwtManifestScenario) shouldOverwriteCookieValue(path, requestValue, responseValue string) error {
+func (s *istioJwtManifestScenario) shouldOverwriteCookieValue(endpoint, requestValue, responseValue string) error {
 	requestHeaders := map[string]string{"Cookie": requestValue}
 
 	expectedInBody := []string{fmt.Sprintf(`"%s": "%s"`, "Cookie", responseValue)}
@@ -49,5 +50,5 @@ func (s *istioJwtManifestScenario) shouldOverwriteCookieValue(path, requestValue
 		AsHeader: true,
 	}
 
-	return callingEndpointWithHeadersWithRetries(s.url, path, "JWT", asserter, requestHeaders, &tokenFrom)
+	return callingEndpointWithHeadersWithRetries(fmt.Sprintf("%s/%s", s.url, strings.TrimLeft(endpoint, "/")), "JWT", asserter, requestHeaders, &tokenFrom)
 }

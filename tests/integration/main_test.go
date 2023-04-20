@@ -44,6 +44,49 @@ func TestIstioJwt(t *testing.T) {
 	}
 }
 
+func TestCustomDomain(t *testing.T) {
+	InitTestSuite()
+	SetupCommonResources("custom-domain")
+
+	customDomainOpts := goDogOpts
+	customDomainOpts.Paths = []string{"features/custom-domain/custom_domain.feature"}
+	customDomainOpts.Concurrency = conf.TestConcurrency
+	if os.Getenv(exportResultVar) == "true" {
+		customDomainOpts.Format = "pretty,junit:junit-report.xml,cucumber:cucumber-report.json"
+	}
+	customDomainSuite := godog.TestSuite{
+		Name: "custom-domain",
+		TestSuiteInitializer: func(ctx *godog.TestSuiteContext) {
+			InitializeScenarioCustomDomain(ctx.ScenarioContext())
+		},
+		Options: &customDomainOpts,
+	}
+
+	testExitCode := customDomainSuite.Run()
+
+	//Remove namespace
+	res := schema.GroupVersionResource{Group: "", Version: "v1", Resource: "namespaces"}
+	err := k8sClient.Resource(res).Delete(context.Background(), namespace, v1.DeleteOptions{})
+	if err != nil {
+		log.Print(err.Error())
+	}
+
+	//Remove certificate
+	res = schema.GroupVersionResource{Group: "cert.gardener.cloud", Version: "v1alpha1", Resource: "certificates"}
+	err = k8sClient.Resource(res).Namespace("istio-system").DeleteCollection(context.TODO(), v1.DeleteOptions{}, v1.ListOptions{LabelSelector: "owner=custom-domain-test"})
+	if err != nil {
+		log.Print(err.Error())
+	}
+
+	if os.Getenv(exportResultVar) == "true" {
+		generateReport()
+	}
+
+	if testExitCode != 0 {
+		t.Fatalf("non-zero status returned, failed to run feature tests")
+	}
+}
+
 func cleanUp(orgJwtHandler string) {
 	res := schema.GroupVersionResource{Group: "", Version: "v1", Resource: "namespaces"}
 	err := k8sClient.Resource(res).Delete(context.Background(), namespace, v1.DeleteOptions{})

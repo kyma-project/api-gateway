@@ -2,6 +2,7 @@ package api_gateway
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/cucumber/godog"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/helpers"
@@ -40,7 +41,7 @@ func (s *istioJwtManifestScenario) thereIsAnEndpointWithCookieMutatorWithTwoCook
 	return nil
 }
 
-func (s *istioJwtManifestScenario) shouldReturnResponseWithKeyValuePairs(path, k1, v1, k2, v2 string) error {
+func (s *istioJwtManifestScenario) shouldReturnResponseWithKeyValuePairs(endpoint, k1, v1, k2, v2 string) error {
 	expectedInBody := []string{
 		fmt.Sprintf(`"%s": "%s"`, k1, v1),
 		fmt.Sprintf(`"%s": "%s"`, k2, v2),
@@ -53,5 +54,5 @@ func (s *istioJwtManifestScenario) shouldReturnResponseWithKeyValuePairs(path, k
 		AsHeader: true,
 	}
 
-	return callingEndpointWithHeadersWithRetries(s.url, path, "JWT", asserter, nil, &tokenFrom)
+	return callingEndpointWithHeadersWithRetries(fmt.Sprintf("%s/%s", s.url, strings.TrimLeft(endpoint, "/")), "JWT", asserter, nil, &tokenFrom)
 }
