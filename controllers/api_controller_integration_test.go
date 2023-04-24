@@ -435,7 +435,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 									g.Expect(ap.Spec.Rules).To(HaveLen(3))
 
 									for i := 0; i < 3; i++ {
-										g.Expect(ap.Spec.Rules[i].From[0].Source.RequestPrincipals[0]).To(Equal("*"))
+										g.Expect(ap.Spec.Rules[i].From[0].Source.RequestPrincipals[0]).To(Equal("https://oauth2.example.com//*"))
 										g.Expect(ap.Spec.Rules[i].To[0].Operation.Paths[0]).To(Equal(operationPath))
 										g.Expect(ap.Spec.Rules[i].To[0].Operation.Methods).To(BeEquivalentTo([]string{"GET"}))
 									}
