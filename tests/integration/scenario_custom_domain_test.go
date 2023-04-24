@@ -4,12 +4,6 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
-	"log"
-	"net"
-	"path"
-	"strings"
-	"time"
-
 	"github.com/cucumber/godog"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/helpers"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/manifestprocessor"
@@ -17,6 +11,11 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/wait"
+	"log"
+	"net"
+	"path"
+	"strings"
+	"time"
 )
 
 type CustomDomainScenario struct {
@@ -133,7 +132,11 @@ func (c *CustomDomainScenario) thereIsAnCloudCredentialsSecret(secretName string
 }
 
 func (c *CustomDomainScenario) isDNSReady() error {
-	err := wait.Poll(5*time.Second, 1*time.Minute, func() (done bool, err error) {
+	err := wait.ExponentialBackoff(wait.Backoff{
+		Duration: time.Second,
+		Factor:   2,
+		Steps:    5,
+	}, func() (done bool, err error) {
 		testName := generateRandomString(3)
 		ips, err := net.LookupIP(fmt.Sprintf("%s.%s.%s", testName, c.testID, c.domain))
 		if err != nil {
