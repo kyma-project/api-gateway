@@ -35,7 +35,7 @@ This table lists all the possible parameters of the Istio JWT access strategy to
 | **spec.rules.accessStrategies.config.authorizations.requiredScopes**      | List of required scope values for the JWT.                             |
 | **spec.rules.accessStrategies.config.authorizations.audiences**           | List of audiences required for the JWT.                                |
 
->**NOTE:** Currently we support only a single `fromHeader` or a single `fromParameter`, mixture of both for a JWT issuer is also not supported.
+>**NOTE:** Currently, we support only a single `fromHeader` or a single `fromParameter`. Specifying both of these fields for a JWT issuer is not supported.
 
 When `istio` JWT Handler is enabled you can configure APIRule with Istio JWT like in the example below:
 
