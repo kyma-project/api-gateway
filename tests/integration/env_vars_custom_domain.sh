@@ -17,7 +17,21 @@ if [[ -z ${TEST_SA_ACCESS_KEY_PATH} ]]; then
   exit 2
 fi
 
-export TEST_HYDRA_ADDRESS="https://oauth2.${TEST_DOMAIN}"
+if [[ -z ${TEST_OIDC_ISSUER_URL} ]]; then
+  >&2 echo "Environment variable TEST_OIDC_ISSUER_URL is required but not set"
+  exit 2
+fi
+
+if [[ -z ${TEST_CLIENT_ID} ]]; then
+  >&2 echo "Environment variable TEST_CLIENT_ID is required but not set"
+  exit 2
+fi
+
+if [[ -z ${TEST_CLIENT_SECRET} ]]; then
+  >&2 echo "Environment variable TEST_CLIENT_SECRET is required but not set"
+  exit 2
+fi
+
 export TEST_REQUEST_TIMEOUT="180"
 export TEST_REQUEST_DELAY="2"
 export TEST_CLIENT_TIMEOUT=30s
