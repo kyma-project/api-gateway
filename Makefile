@@ -120,6 +120,11 @@ test-for-release: envtest ## Run tests.
 test-integration: generate fmt vet envtest ## Run integration tests.
 	source ./tests/integration/env_vars.sh && $(GOTEST) ./tests/integration -v -race -run TestIstioJwt .
 
+test-custom-domain:
+	source ./tests/integration/env_vars_custom_domain.sh && bash -c "trap 'kubectl delete secret google-credentials -n default' EXIT; \
+             kubectl create secret generic google-credentials -n default --from-file=serviceaccount.json=${TEST_SA_ACCESS_KEY_PATH}; \
+             GODEBUG=netdns=cgo CGO_ENABLED=1 $(GOTEST) ./tests/integration -run "^TestCustomDomain$$" -v -race"
+
 .PHONY: kyma-cli
 kyma-cli:
 	curl -Lo /usr/bin/kyma https://storage.googleapis.com/kyma-cli-unstable/kyma-linux

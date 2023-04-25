@@ -33,7 +33,8 @@ import (
 
 const (
 	testIDLength              = 8
-	manifestsDirectory        = "manifests/"
+	manifestsDirectory        = "manifests"
+	customDomainDirectory     = "custom-domain"
 	globalCommonResourcesFile = "global-commons.yaml"
 	resourceSeparator         = "---"
 	exportResultVar           = "EXPORT_RESULT"

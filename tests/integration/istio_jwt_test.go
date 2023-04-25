@@ -52,57 +52,57 @@ func (s *istioJwtManifestScenario) theAPIRuleIsApplied() error {
 	return helper.APIRuleWithRetries(batch.CreateResources, batch.UpdateResources, k8sClient, resource)
 }
 
-func (s *istioJwtManifestScenario) callingTheEndpointWithAValidToken(path, tokenType, _, _ string, lower, higher int) error {
+func (s *istioJwtManifestScenario) callingTheEndpointWithAValidToken(endpoint, tokenType, _, _ string, lower, higher int) error {
 	asserter := &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher}
 	tokenFrom := tokenFrom{
 		From:     authorizationHeaderName,
 		Prefix:   authorizationHeaderPrefix,
 		AsHeader: true,
 	}
-	return callingEndpointWithHeadersWithRetries(s.url, path, tokenType, asserter, nil, &tokenFrom)
+	return callingEndpointWithHeadersWithRetries(fmt.Sprintf("%s/%s", s.url, strings.TrimLeft(endpoint, "/")), tokenType, asserter, nil, &tokenFrom)
 }
 
-func (s *istioJwtManifestScenario) callingTheEndpointWithValidTokenShouldResultInStatusBetween(path, tokenType string, lower, higher int) error {
+func (s *istioJwtManifestScenario) callingTheEndpointWithValidTokenShouldResultInStatusBetween(endpoint, tokenType string, lower, higher int) error {
 	asserter := &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher}
 	tokenFrom := tokenFrom{
 		From:     authorizationHeaderName,
 		Prefix:   authorizationHeaderPrefix,
 		AsHeader: true,
 	}
-	return callingEndpointWithHeadersWithRetries(s.url, path, tokenType, asserter, nil, &tokenFrom)
+	return callingEndpointWithHeadersWithRetries(fmt.Sprintf("%s/%s", s.url, strings.TrimLeft(endpoint, "/")), tokenType, asserter, nil, &tokenFrom)
 }
 
-func (s *istioJwtManifestScenario) callingTheEndpointWithValidTokenFromHeaderShouldResultInStatusBetween(path, tokenType string, fromHeader string, prefix string, lower, higher int) error {
+func (s *istioJwtManifestScenario) callingTheEndpointWithValidTokenFromHeaderShouldResultInStatusBetween(endpoint, tokenType string, fromHeader string, prefix string, lower, higher int) error {
 	asserter := &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher}
 	tokenFrom := tokenFrom{
 		From:     fromHeader,
 		Prefix:   prefix,
 		AsHeader: true,
 	}
-	return callingEndpointWithHeadersWithRetries(s.url, path, tokenType, asserter, nil, &tokenFrom)
+	return callingEndpointWithHeadersWithRetries(fmt.Sprintf("%s/%s", s.url, strings.TrimLeft(endpoint, "/")), tokenType, asserter, nil, &tokenFrom)
 }
 
-func (s *istioJwtManifestScenario) callingTheEndpointWithValidTokenFromParameterShouldResultInStatusBetween(path, tokenType string, fromParameter string, lower, higher int) error {
+func (s *istioJwtManifestScenario) callingTheEndpointWithValidTokenFromParameterShouldResultInStatusBetween(endpoint, tokenType string, fromParameter string, lower, higher int) error {
 	asserter := &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher}
 	tokenFrom := tokenFrom{
 		From:     fromParameter,
 		AsHeader: false,
 	}
 	fmt.Printf("callingTheEndpointWithValidTokenFromParameterShouldResultInStatusBetween: %s", fromParameter)
-	return callingEndpointWithHeadersWithRetries(s.url, path, tokenType, asserter, nil, &tokenFrom)
+	return callingEndpointWithHeadersWithRetries(fmt.Sprintf("%s/%s", s.url, strings.TrimLeft(endpoint, "/")), tokenType, asserter, nil, &tokenFrom)
 }
 
-func (s *istioJwtManifestScenario) callingTheEndpointWithValidTokenShouldResultInBodyContaining(path, tokenType string, bodyContent string) error {
+func (s *istioJwtManifestScenario) callingTheEndpointWithValidTokenShouldResultInBodyContaining(endpoint, tokenType string, bodyContent string) error {
 	asserter := &helpers.BodyContainsPredicate{Expected: []string{bodyContent}}
 	tokenFrom := tokenFrom{
 		From:     authorizationHeaderName,
 		Prefix:   authorizationHeaderPrefix,
 		AsHeader: true,
 	}
-	return callingEndpointWithHeadersWithRetries(s.url, path, tokenType, asserter, nil, &tokenFrom)
+	return callingEndpointWithHeadersWithRetries(fmt.Sprintf("%s/%s", s.url, strings.TrimLeft(endpoint, "/")), tokenType, asserter, nil, &tokenFrom)
 }
 
-func callingEndpointWithHeadersWithRetries(url string, path string, tokenType string, asserter helpers.HttpResponseAsserter, requestHeaders map[string]string, tokenFrom *tokenFrom) error {
+func callingEndpointWithHeadersWithRetries(url string, tokenType string, asserter helpers.HttpResponseAsserter, requestHeaders map[string]string, tokenFrom *tokenFrom) error {
 	if requestHeaders == nil {
 		requestHeaders = make(map[string]string)
 	}
@@ -128,17 +128,17 @@ func callingEndpointWithHeadersWithRetries(url string, path string, tokenType st
 			}
 			requestHeaders[tokenFrom.From] = token
 		} else {
-			path = fmt.Sprintf("%s?%s=%s", path, tokenFrom.From, token)
+			url = fmt.Sprintf("%s?%s=%s", url, tokenFrom.From, token)
 		}
 	default:
 		return fmt.Errorf("unsupported token type: %s", tokenType)
 	}
 
-	return helper.CallEndpointWithHeadersWithRetries(requestHeaders, fmt.Sprintf("%s%s", url, path), asserter)
+	return helper.CallEndpointWithHeadersWithRetries(requestHeaders, url, asserter)
 }
 
-func (s *istioJwtManifestScenario) callingTheEndpointWithoutTokenShouldResultInStatusBetween(path string, lower, higher int) error {
-	return helper.CallEndpointWithRetries(fmt.Sprintf("%s%s", s.url, path), &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher})
+func (s *istioJwtManifestScenario) callingTheEndpointWithoutTokenShouldResultInStatusBetween(endpoint string, lower, higher int) error {
+	return helper.CallEndpointWithRetries(fmt.Sprintf("%s/%s", s.url, strings.TrimLeft(endpoint, "/")), &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher})
 }
 
 func (s *istioJwtManifestScenario) thereAreTwoNamespaces() error {
