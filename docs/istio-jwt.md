@@ -20,19 +20,24 @@ kubectl patch configmap/api-gateway-config -n kyma-system --type merge -p '{"dat
 
 ## Istio JWT Access Stretegy
 
-This table lists all the possible parameters of an Istio jwt access strategy together with their descriptions:
+This table lists all the possible parameters of the Istio JWT access strategy together with their descriptions:
 
-| Field                                                                | Description                                                            |
-|:---------------------------------------------------------------------|:-----------------------------------------------------------------------|
-| **spec.rules.accessStrategies.config.authentications**               | List of authentication objects.                                        |
-| **spec.rules.accessStrategies.config.authentications.issuer**        | Identifies the issuer that issued the JWT.                             |
-| **spec.rules.accessStrategies.config.authentications.jwksUri**       | URL of the provider’s public key set to validate signature of the JWT. |
-| **spec.rules.accessStrategies.config.authorizations**                | List of authorization objects.                                         |
-| **spec.rules.accessStrategies.config.authorizations.requiredScopes** | List of required scope values for the JWT.                             |
-| **spec.rules.accessStrategies.config.authorizations.audiences**      | List of audiences required for the JWT.                                |
+| Field                                                                     | Description                                                            |
+|:--------------------------------------------------------------------------|:-----------------------------------------------------------------------|
+| **spec.rules.accessStrategies.config.authentications**                    | List of authentication objects.                                        |
+| **spec.rules.accessStrategies.config.authentications.issuer**             | Identifies the issuer that issued the JWT.                             |
+| **spec.rules.accessStrategies.config.authentications.jwksUri**            | URL of the provider’s public key set to validate the signature of the JWT. |
+| **spec.rules.accessStrategies.config.authentications.fromHeaders**        | List of headers from which the JWT token is taken.             |
+| **spec.rules.accessStrategies.config.authentications.fromHeaders.name**   | Name of the header.                                                    |
+| **spec.rules.accessStrategies.config.authentications.fromHeaders.prefix** | Prefix used before the JWT header. The default is `Bearer`.                    |
+| **spec.rules.accessStrategies.config.authentications.fromParams**         | List of parameters from which the JWT token is taken.          |
+| **spec.rules.accessStrategies.config.authorizations**                     | List of authorization objects.                                         |
+| **spec.rules.accessStrategies.config.authorizations.requiredScopes**      | List of required scope values for the JWT.                             |
+| **spec.rules.accessStrategies.config.authorizations.audiences**           | List of audiences required for the JWT.                                |
 
+>**NOTE:** Currently, we support only a single `fromHeader` or a single `fromParameter`. Specifying both of these fields for a JWT issuer is not supported.
 
-When `istio` JWT Handler is enabled you can configure APIRule with Istio JWT like in the example below:
+When Istio JWT Handler is enabled, you can configure an APIRule with Istio JWT as in the following example:
 
 ```yaml
 apiVersion: gateway.kyma-project.io/v1beta1
@@ -56,6 +61,13 @@ spec:
             authentications:
             - issuer: $ISSUER
               jwksUri: $JWKS_URI
+              fromHeaders:
+              - name: x-jwt-assertion
+                prefix: "Kyma "
+            - issuer: $ISSUER2
+              jwksUri: $JWKS_URI2
+              fromParameters:
+              - "jwt_token"
             authorizations:
             # Allow only JWTs with the claim "scp", "scope" or "scopes" with the value "test" and the audience "example.com" and "example.org"
             # or JWTs with the claim "scp", "scope" or "scopes" with the values "read" and "write"
