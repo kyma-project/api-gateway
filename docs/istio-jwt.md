@@ -65,7 +65,7 @@ spec:
 ```
 
 ### Authentications
-Under the hood, authentications array will create corresponding [requestPrincipals](https://istio.io/latest/docs/reference/config/security/authorization-policy/#Source) array in Istio Authorization Policy resource.
+Under the hood, an authentications array creates a corresponding [requestPrincipals](https://istio.io/latest/docs/reference/config/security/authorization-policy/#Source) array in the Istio Authorization Policy resource.
 Every `requestPrincipals` string will be formatted as `<ISSUSER>/*`.
 
 ### Authorizations
