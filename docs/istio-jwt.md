@@ -64,6 +64,10 @@ spec:
             - requiredScopes: ["read", "write"]
 ```
 
+### Authentications
+Under the hood, authentications array will create corresponding [requestPrincipals](https://istio.io/latest/docs/reference/config/security/authorization-policy/#Source) array in Istio Authorization Policy resource.
+Every `requestPrincipals` string will be formatted as `<ISSUSER>/*`.
+
 ### Authorizations
 The authorizations field is optional. If it's not defined, the authorization will be satisfied if the JWT is valid. 
 Multiple authorizations can be defined for an access strategy. If there are multiple authorizations defined, the request will be allowed if at least one of the authorizations is satisfied.
