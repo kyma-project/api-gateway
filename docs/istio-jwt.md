@@ -37,7 +37,7 @@ This table lists all the possible parameters of the Istio JWT access strategy to
 
 >**NOTE:** Currently, we support only a single `fromHeader` or a single `fromParameter`. Specifying both of these fields for a JWT issuer is not supported.
 
-When `istio` JWT Handler is enabled you can configure APIRule with Istio JWT like in the example below:
+When Istio JWT Handler is enabled, you can configure an APIRule with Istio JWT as in the following example:
 
 ```yaml
 apiVersion: gateway.kyma-project.io/v1beta1
