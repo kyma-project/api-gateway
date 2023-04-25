@@ -66,7 +66,7 @@ spec:
 
 ### Authentications
 Under the hood, an authentications array creates a corresponding [requestPrincipals](https://istio.io/latest/docs/reference/config/security/authorization-policy/#Source) array in the Istio Authorization Policy resource.
-Every `requestPrincipals` string will be formatted as `<ISSUSER>/*`.
+Every `requestPrincipals` string is formatted as `<ISSUSER>/*`.
 
 ### Authorizations
 The authorizations field is optional. If it's not defined, the authorization will be satisfied if the JWT is valid. 
