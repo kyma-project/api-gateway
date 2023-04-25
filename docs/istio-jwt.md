@@ -26,7 +26,7 @@ This table lists all the possible parameters of the Istio JWT access strategy to
 |:--------------------------------------------------------------------------|:-----------------------------------------------------------------------|
 | **spec.rules.accessStrategies.config.authentications**                    | List of authentication objects.                                        |
 | **spec.rules.accessStrategies.config.authentications.issuer**             | Identifies the issuer that issued the JWT.                             |
-| **spec.rules.accessStrategies.config.authentications.jwksUri**            | URL of the provider’s public key set to validate signature of the JWT. |
+| **spec.rules.accessStrategies.config.authentications.jwksUri**            | URL of the provider’s public key set to validate the signature of the JWT. |
 | **spec.rules.accessStrategies.config.authentications.fromHeaders**        | List of headers from which the JWT token is taken.             |
 | **spec.rules.accessStrategies.config.authentications.fromHeaders.name**   | Name of the header.                                                    |
 | **spec.rules.accessStrategies.config.authentications.fromHeaders.prefix** | Prefix used before the JWT header. The default is `Bearer`.                    |
