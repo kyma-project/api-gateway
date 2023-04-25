@@ -70,7 +70,7 @@ Every `requestPrincipals` string is formatted as `<ISSUSER>/*`.
 
 ### Authorizations
 The authorizations field is optional. When not defined, the authorization is satisfied if the JWT is valid. 
-Multiple authorizations can be defined for an access strategy. If there are multiple authorizations defined, the request will be allowed if at least one of the authorizations is satisfied.
+You can define multiple authorizations for an access strategy. When multiple authorizations are defined, the request is allowed if at least one of them is satisfied.
 
 The requiredScopes and audiences fields are optional. If requiredScopes is defined, the JWT has to contain all the scopes defined in the requiredScopes field in the `scp`, `scope` or `scopes` claim in order to be authorized.
 If audiences is defined, the JWT has to contain all the audiences defined in the audiences field in the `aud` claim in order to be authorized.
