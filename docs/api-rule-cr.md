@@ -194,17 +194,17 @@ The `requiredScopes` and `audiences` fields are optional. If `requiredScopes` is
 ### Mutators
 Different types of mutators are supported depending on the access strategy.
 
-| Access Strategy      | Mutator support                                                     |
-|:---------------------|:--------------------------------------------------------------------|
-| jwt                  | Istio cookie and header mutator                               |
-| oauth2_introspection | [Ory mutators](https://www.ory.sh/docs/oathkeeper/pipeline/mutator) |
-| noop                 | [Ory mutators](https://www.ory.sh/docs/oathkeeper/pipeline/mutator) |
-| allow                | No mutators supported                                               |
+| Access Strategy      | Mutator support                                                           |
+|:---------------------|:--------------------------------------------------------------------------|
+| jwt                  | Istio cookie and header mutator                                           |
+| oauth2_introspection | [Oathkeeper](https://www.ory.sh/docs/oathkeeper/pipeline/mutator) mutator |
+| noop                 | [Oathkeeper](https://www.ory.sh/docs/oathkeeper/pipeline/mutator) mutator |
+| allow                | No mutators supported                                                     |
 
-### Istio Mutators
+### Istio mutators
 Mutators can be used to enrich an incoming request with information. The following mutators are supported in combination with the `jwt` access strategy and can be defined for each rule in an `ApiRule`: `header`,`cookie`. It's possible to configure multiple mutators for one rule, but only one mutator of each type is allowed.
 
-#### Header Mutator
+#### Header mutator
 The headers are specified via the `headers` field of the header mutator configuration field. The keys are the names of the headers and the values are a string. In the header value it is possible to use [Envoy command operators](https://www.envoyproxy.io/docs/envoy/latest/configuration/observability/access_log/usage#command-operators), e.g. to write an incoming header to a new header. The configured headers are set to the request and overwrite all existing headers with the same name.
 
 <div tabs name="api-rule" group="sample-cr">
@@ -247,7 +247,7 @@ spec:
   </details>
 </div>
 
-#### Cookie Mutator
+#### Cookie mutator
 The cookies are specified via the `cookies` field of the cookie mutator configuration field. The keys are the names of the cookies and the values are a string. In the cookie value it is possible to use [Envoy command operators](https://www.envoyproxy.io/docs/envoy/latest/configuration/observability/access_log/usage#command-operators). The configured cookies are set as `Cookie`-header in the request and overwrite an existing `Cookie`-header.
 
 <div tabs name="api-rule" group="sample-cr">
