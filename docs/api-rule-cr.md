@@ -213,6 +213,8 @@ The headers are specified via the `headers` field of the header mutator configur
   Example
   </summary>
 
+In the following example, two different headers are specified: **X-Custom-Auth**, which uses the incoming Authorization header as a value, and **X-Some-Data** with the value `some-data`.
+
 ```yaml
 apiVersion: gateway.kyma-project.io/v1beta1
 kind: APIRule
