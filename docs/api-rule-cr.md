@@ -250,7 +250,7 @@ spec:
 </div>
 
 #### Cookie mutator
-The cookies are specified via the `cookies` field of the cookie mutator configuration field. The keys are the names of the cookies and the values are a string. In the cookie value it is possible to use [Envoy command operators](https://www.envoyproxy.io/docs/envoy/latest/configuration/observability/access_log/usage#command-operators). The configured cookies are set as `Cookie`-header in the request and overwrite an existing `Cookie`-header.
+The cookies are specified in the **cookies** field of the cookie mutator configuration field. The keys are the names of the cookies, and each value is a string. In the cookie value, it is possible to use [Envoy command operators](https://www.envoyproxy.io/docs/envoy/latest/configuration/observability/access_log/usage#command-operators). The configured cookies are set as `Cookie`-header in the request and overwrite an existing one.
 
 <div tabs name="api-rule" group="sample-cr">
   <details>
