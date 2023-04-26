@@ -112,6 +112,8 @@ kubectl patch configmap/api-gateway-config -n kyma-system --type merge -p '{"dat
 
 #### Switching back to Oathkeeper JWT
 
+To enable Oathkeeper JWT, run the following command:
+
 ``` sh
 kubectl patch configmap/api-gateway-config -n kyma-system --type merge -p '{"data":{"api-gateway-config":"jwtHandler: ory"}}'
 ```
