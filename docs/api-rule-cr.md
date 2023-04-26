@@ -258,6 +258,8 @@ The cookies are specified via the `cookies` field of the cookie mutator configur
   Example
   </summary>
 
+The following APIRule example has a new cookie added with the name `some-data` and the value `data`.
+
 ```yaml
 apiVersion: gateway.kyma-project.io/v1beta1
 kind: APIRule
