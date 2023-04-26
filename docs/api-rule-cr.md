@@ -91,7 +91,7 @@ This table lists all the possible parameters of a given resource together with t
 | **spec.rules.service.port** | **NO** | Specifies the communication port of the exposed service. |
 | **spec.rules.path** | **YES** | Specifies the path of the exposed service. |
 | **spec.rules.methods** | **NO** | Specifies the list of HTTP request methods available for **spec.rules.path**. |
-| **spec.rules.mutators** | **NO** | Specifies the list of [Oathkeeper mutators](https://www.ory.sh/docs/next/oathkeeper/pipeline/mutator). |
+| **spec.rules.mutators** | **NO** | Specifies the list of [Oathkeeper](https://www.ory.sh/docs/next/oathkeeper/pipeline/mutator) or Istio mutators. |
 | **spec.rules.accessStrategies** | **YES** | Specifies the list of access strategies. Supported are [Oathkeeper](https://www.ory.sh/docs/next/oathkeeper/pipeline/authn) `oauth2_introspection`, `jwt`, `noop` and `allow`. We also support `jwt` as [Istio](https://istio.io/latest/docs/tasks/security/authorization/authz-jwt/) access strategy. |
 
 >**CAUTION:** If `service` is not defined at **spec.service** level, all defined rules must have `service` defined at **spec.rules.service** level, otherwise the validation fails.
@@ -201,7 +201,7 @@ Different types of mutators are supported depending on the access strategy.
 | noop                 | [Ory mutators](https://www.ory.sh/docs/oathkeeper/pipeline/mutator) |
 | allow                | No mutators supported                                               |
 
-#### Istio-based Mutators
+### Istio Mutators
 Mutators can be used to enrich an incoming request with information. The following mutators are supported in combination with the `jwt` access strategy and can be defined for each rule in an `ApiRule`: `header`,`cookie`. It's possible to configure multiple mutators for one rule, but only one mutator of each type is allowed.
 
 #### Header Mutator
