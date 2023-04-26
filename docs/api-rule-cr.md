@@ -207,7 +207,7 @@ Different types of mutators are supported depending on the access strategy.
 Mutators can be used to enrich an incoming request with information. The following mutators are supported in combination with the `jwt` access strategy and can be defined for each rule in an `ApiRule`: `header`,`cookie`. It's possible to configure multiple mutators for one rule, but only one mutator of each type is allowed.
 
 #### Header mutator
-The headers are specified via the `headers` field of the header mutator configuration field. The keys are the names of the headers and the values are a string. In the header value it is possible to use [Envoy command operators](https://www.envoyproxy.io/docs/envoy/latest/configuration/observability/access_log/usage#command-operators), e.g. to write an incoming header to a new header. The configured headers are set to the request and overwrite all existing headers with the same name.
+The headers are specified in the **headers** field of the header mutator configuration field. The keys are the names of the headers, and each value is a string. In the header value, it is possible to use [Envoy command operators](https://www.envoyproxy.io/docs/envoy/latest/configuration/observability/access_log/usage#command-operators), for example, to write an incoming header into a new header. The configured headers are set to the request and overwrite all existing headers with the same name.
 
 <div tabs name="api-rule" group="sample-cr">
   <details>
