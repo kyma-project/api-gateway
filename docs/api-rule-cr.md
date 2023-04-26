@@ -196,7 +196,7 @@ Different types of mutators are supported depending on the access strategy.
 
 | Access Strategy      | Mutator support                                                     |
 |:---------------------|:--------------------------------------------------------------------|
-| jwt                  | Istio-based cookie and header mutator                               |
+| jwt                  | Istio cookie and header mutator                               |
 | oauth2_introspection | [Ory mutators](https://www.ory.sh/docs/oathkeeper/pipeline/mutator) |
 | noop                 | [Ory mutators](https://www.ory.sh/docs/oathkeeper/pipeline/mutator) |
 | allow                | No mutators supported                                               |
