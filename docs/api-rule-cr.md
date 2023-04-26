@@ -104,6 +104,8 @@ This table lists all the possible parameters of a given resource together with t
 
 #### Enabling Istio JWT
 
+To enable Istio JWT, run the following command:
+
 ``` sh
 kubectl patch configmap/api-gateway-config -n kyma-system --type merge -p '{"data":{"api-gateway-config":"jwtHandler: istio"}}'
 ```
