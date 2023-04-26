@@ -135,7 +135,7 @@ This table lists all the possible parameters of the Istio JWT access strategy to
 | **spec.rules.accessStrategies.config.authorizations.requiredScopes**      | List of required scope values for the JWT.                                 |
 | **spec.rules.accessStrategies.config.authorizations.audiences**           | List of audiences required for the JWT.                                    |
 
->**CAUTION:** You can define multiple **but** different JWT issuers.
+>**CAUTION:** You can define multiple JWT issuers, but each of them must be unique.
 
 >**CAUTION:** Currently, we support only a single `fromHeader` **or** a single `fromParameter`. Specifying both of these fields for a JWT issuer is not supported.
 
