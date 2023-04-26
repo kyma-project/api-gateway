@@ -141,6 +141,8 @@ This table lists all the possible parameters of the Istio JWT access strategy to
   Example
   </summary>
 
+In the following example, the APIRule has two defined issuers. `ISSUER` uses a JWT token taken from the HTTP header, which is called `X-JWT-Assertion` and has a `Kyma ` prefix. `ISSUER2` uses a JWT token taken from the URL parameter, which is called `jwt-token`. The **requiredScopes** defined in the **authorizations** field allow only JWTs with the claims `scp`, `scope` or `scopes`, the value `test`, and the audiences `example.com` and `example.org` or JWTs with the claims `scp`, `scope` or `scopes` and the values `read` and `write`.
+
 ```yaml
 apiVersion: gateway.kyma-project.io/v1beta1
 kind: APIRule
