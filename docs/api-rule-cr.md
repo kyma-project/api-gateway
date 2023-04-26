@@ -114,7 +114,7 @@ kubectl patch configmap/api-gateway-config -n kyma-system --type merge -p '{"dat
 kubectl patch configmap/api-gateway-config -n kyma-system --type merge -p '{"data":{"api-gateway-config":"jwtHandler: istio"}}'
 ```
 
-#### Istio JWT access strategy configuration
+#### Istio JWT configuration
 
 This table lists all the possible parameters of the Istio JWT access strategy together with their descriptions:
 
