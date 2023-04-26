@@ -236,7 +236,6 @@ spec:
         - handler: header
           config:
             headers:
-              # Add a new header called X-Custom-Auth with the value of the incoming Authorization header
               X-Custom-Auth: "%REQ(Authorization)%"
               # Add a new header called X-Some-Data with the value "some-data"
               X-Some-Data: "some-data"
