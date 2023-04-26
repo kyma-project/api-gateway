@@ -96,7 +96,7 @@ This table lists all the possible parameters of a given resource together with t
 
 >**CAUTION:** If `service` is not defined at **spec.service** level, all defined rules must have `service` defined at **spec.rules.service** level, otherwise the validation fails.
 
->**CAUTION:** We do not support having both Oathkeeper and Istio `jwt` access strategies at the same time. Access strategies `noop` or `allow` can not be used with any other on the same `spec.rules.path`.
+>**CAUTION:** We do not support having both Oathkeeper and Istio `jwt` access strategies at the same time. Access strategies `noop` or `allow` can **not** be used with any other on the same `spec.rules.path`.
 
 ### JWT access strategy
 
