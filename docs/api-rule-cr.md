@@ -1,5 +1,5 @@
 ---
-title: API Rule
+title: APIRule
 ---
 
 The `apirules.gateway.kyma-project.io` CustomResourceDefinition (CRD) describes the kind and the format of data the API Gateway Controller listens for. To get the up-to-date CRD in the `yaml` format, run the following command:
