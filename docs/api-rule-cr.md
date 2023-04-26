@@ -102,16 +102,16 @@ This table lists all the possible parameters of a given resource together with t
 
 >**CAUTION:** Istio JWT is **not** production ready feature and API can change
 
-#### Enabling Oathkeeper JWT
-
-``` sh
-kubectl patch configmap/api-gateway-config -n kyma-system --type merge -p '{"data":{"api-gateway-config":"jwtHandler: ory"}}'
-```
-
 #### Enabling Istio JWT
 
 ``` sh
 kubectl patch configmap/api-gateway-config -n kyma-system --type merge -p '{"data":{"api-gateway-config":"jwtHandler: istio"}}'
+```
+
+#### Switching back to Oathkeeper JWT
+
+``` sh
+kubectl patch configmap/api-gateway-config -n kyma-system --type merge -p '{"data":{"api-gateway-config":"jwtHandler: ory"}}'
 ```
 
 #### Istio JWT configuration
