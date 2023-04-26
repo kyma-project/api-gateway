@@ -170,7 +170,6 @@ spec:
             - issuer: $ISSUER
               jwksUri: $JWKS_URI
               fromHeaders:
-              # JWT token must be taken from a HTTP header called X-JWT-Assertion and it will have a "Kyma " prefix
               - name: X-JWT-Assertion
                 prefix: "Kyma "
             - issuer: $ISSUER2
