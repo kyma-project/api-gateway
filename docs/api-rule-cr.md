@@ -173,7 +173,6 @@ spec:
               # JWT token must be taken from URL parameter called jwt_token
               - "jwt_token"
             authorizations:
-            # Allow only JWTs with the claim "scp", "scope" or "scopes" with the value "test" and the audience "example.com" and "example.org"
             # or JWTs with the claim "scp", "scope" or "scopes" with the values "read" and "write"
             - requiredScopes: ["test"]
               audiences: ["example.com", "example.org"]
