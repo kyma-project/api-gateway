@@ -100,7 +100,7 @@ This table lists all the possible parameters of a given resource together with t
 
 ### JWT access strategy
 
->**CAUTION:** Istio JWT is **not** production ready feature and API can change
+>**CAUTION:** Istio JWT is **not** a production-ready feature, and API might change.
 
 #### Enabling Istio JWT
 
