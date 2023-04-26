@@ -175,7 +175,6 @@ spec:
             - issuer: $ISSUER2
               jwksUri: $JWKS_URI2
               fromParameters:
-              # JWT token must be taken from URL parameter called jwt_token
               - "jwt_token"
             authorizations:
             - requiredScopes: ["test"]
