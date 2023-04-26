@@ -40,14 +40,15 @@ Job definitions are specified [in test-infra repository](https://github.com/kyma
 
 ## Usage for custom-domain test suite
 
-### Set the environment variables with custom domain
+### Set the custom domain environment variables
 
-If you are using Gardener cluster make sure your k8s cluster have cert & dns extensions. See [here](https://github.com/kyma-project/control-plane/issues/875)
-Obtain a service account access key with permissions to maintain custom domain DNS entries and export it as json. See [here](https://cloud.google.com/iam/docs/keys-create-delete).
+If you are using Gardener, make sure that your Kubernetes cluster has the `shoot-cert-service` and `shoot-dns-service` extensions enabled. The desired shoot specification is mentioned in the description of this [issue](https://github.com/kyma-project/control-plane/issues/875).
+Obtain a service account access key with permissions to maintain custom domain DNS entries and export it as a JSON file. To learn how to do it, follow this [guide](https://cloud.google.com/iam/docs/keys-create-delete).
 
-- `TEST_DOMAIN` - set this environment variable with your installed by default Kyma domain.
-- `TEST_CUSTOM_DOMAIN` - set this environment variable with your custom domain.
-- `TEST_SA_ACCESS_KEY_PATH` - set this environment variable with path to a service account access key, exported as a json.
+Set the following environment variables:
+- `TEST_DOMAIN` - your default Kyma domain, e.g. `c1f643b.stage.kyma.ondemand.com`
+- `TEST_CUSTOM_DOMAIN` - your custom domain, e.g. `custom.domain.build.kyma-project.io`
+- `TEST_SA_ACCESS_KEY_PATH` - the path to the service account access key exported as a JSON file, e.g. `/Users/user/gcp/service-account.json`
 
 ### Run the tests
 
