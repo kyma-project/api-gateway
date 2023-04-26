@@ -10,7 +10,7 @@ kubectl get crd apirules.gateway.kyma-project.io -o yaml
 
 ## Sample custom resource
 
-This is a sample custom resource (CR) that the API Gateway Controller listens for to expose a service. The following example has the **rules** section specified which makes the API Gateway Controller create an Oathkeeper Access Rule for the service.
+This is a sample custom resource (CR) that the API Gateway Controller listens for to expose a service. The following example has the **rules** section specified which makes API Gateway Controller create an Oathkeeper Access Rule for the service.
 
 <div tabs name="api-rule" group="sample-cr">
   <details>
