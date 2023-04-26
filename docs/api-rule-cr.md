@@ -189,7 +189,7 @@ Under the hood, an authentications array creates a corresponding [requestPrincip
 ##### Authorizations
 The authorizations field is optional. When not defined, the authorization is satisfied if the JWT is valid. You can define multiple authorizations for an access strategy. When multiple authorizations are defined, the request is allowed if at least one of them is satisfied.
 
-The `requiredScopes` and `audiences` fields are optional. If `requiredScopes` is defined, the JWT has to contain all the scopes in the `scp`, `scope` or `scopes` claims as in the `requiredScopes` field in order to be authorized. If `audiences` is defined, the JWT has to contain all the audiences in the `aud` claim as in the `audiences` field in order to be authorized.
+The **requiredScopes** and **audiences** fields are optional. If **requiredScopes** are defined, the JWT has to contain all the scopes in the `scp`, `scope`, or `scopes` claims to be authorized. If **audiences** are defined, the JWT has to contain all the audiences in the `aud` claim to be authorized.
 
 ### Mutators
 Different types of mutators are supported depending on the access strategy.
