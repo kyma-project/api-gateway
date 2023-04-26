@@ -134,7 +134,7 @@ func (c *CustomDomainScenario) thereIsAnCloudCredentialsSecret(secretName string
 func (c *CustomDomainScenario) isDNSReady() error {
 	err := wait.ExponentialBackoff(wait.Backoff{
 		Duration: time.Second,
-		Factor:   2,
+		Factor:   10,
 		Steps:    5,
 	}, func() (done bool, err error) {
 		testName := generateRandomString(3)
