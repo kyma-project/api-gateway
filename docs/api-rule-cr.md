@@ -279,7 +279,6 @@ spec:
         - handler: cookie
           config:
             cookies:
-              # Add a new cookie called some-data with the value "data"
               some-data: "data"
       accessStrategies:
         - handler: jwt
