@@ -100,8 +100,6 @@ This table lists all the possible parameters of a given resource together with t
 
 ### JWT access strategy
 
->**CAUTION:** Istio JWT is **not** a production-ready feature, and API might change.
-
 #### Enabling Istio JWT
 
 To enable Istio JWT, run the following command:
@@ -119,6 +117,8 @@ kubectl patch configmap/api-gateway-config -n kyma-system --type merge -p '{"dat
 ```
 
 #### Istio JWT configuration
+
+>**CAUTION:** Istio JWT is **not** a production-ready feature, and API might change.
 
 This table lists all the possible parameters of the Istio JWT access strategy together with their descriptions:
 
