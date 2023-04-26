@@ -237,7 +237,6 @@ spec:
           config:
             headers:
               X-Custom-Auth: "%REQ(Authorization)%"
-              # Add a new header called X-Some-Data with the value "some-data"
               X-Some-Data: "some-data"
       accessStrategies:
         - handler: jwt
