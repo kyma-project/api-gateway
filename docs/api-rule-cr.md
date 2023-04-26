@@ -92,29 +92,29 @@ This table lists all the possible parameters of a given resource together with t
 | **spec.rules.path** | **YES** | Specifies the path of the exposed service. |
 | **spec.rules.methods** | **NO** | Specifies the list of HTTP request methods available for **spec.rules.path**. |
 | **spec.rules.mutators** | **NO** | Specifies the list of [Oathkeeper mutators](https://www.ory.sh/docs/next/oathkeeper/pipeline/mutator). |
-| **spec.rules.accessStrategies** | **YES** | Specifies the list of access strategies. Supported are [Oathkeeper](https://www.ory.sh/docs/next/oathkeeper/pipeline/authn) `oauth2_introspection`, `jwt`, `noop` and `allow`. We also support `jwt` as [Istio JWT](https://istio.io/latest/docs/tasks/security/authorization/authz-jwt/) access strategy. |
+| **spec.rules.accessStrategies** | **YES** | Specifies the list of access strategies. Supported are [Oathkeeper](https://www.ory.sh/docs/next/oathkeeper/pipeline/authn) `oauth2_introspection`, `jwt`, `noop` and `allow`. We also support `jwt` as [Istio](https://istio.io/latest/docs/tasks/security/authorization/authz-jwt/) access strategy. |
 
 >**CAUTION:** If `service` is not defined at **spec.service** level, all defined rules must have `service` defined at **spec.rules.service** level, otherwise the validation fails.
 
 >**CAUTION:** We do not support having both Oathkeeper and Istio `jwt` access strategies at the same time. Access strategies `noop` or `allow` can not be used with any other on the same `spec.rules.path`.
 
-## Switching between Oathkeeper and Istio JWT access strategies
+### JWT access strategies
 
 >**CAUTION:** Istio JWT support is not production ready feature and API can change
 
-### Enabling Oathkeeper JWT handler
+#### Enabling Oathkeeper JWT
 
 ``` sh
 kubectl patch configmap/api-gateway-config -n kyma-system --type merge -p '{"data":{"api-gateway-config":"jwtHandler: ory"}}'
 ```
 
-### Enabling Istio JWT handler
+#### Enabling Istio JWT
 
 ``` sh
 kubectl patch configmap/api-gateway-config -n kyma-system --type merge -p '{"data":{"api-gateway-config":"jwtHandler: istio"}}'
 ```
 
-### Istio JWT access strategy configuration
+#### Istio JWT access strategy configuration
 
 This table lists all the possible parameters of the Istio JWT access strategy together with their descriptions:
 
@@ -181,15 +181,15 @@ spec:
   </details>
 </div>
 
-#### Authentications
+##### Authentications
 Under the hood, an authentications array creates a corresponding [requestPrincipals](https://istio.io/latest/docs/reference/config/security/authorization-policy/#Source) array in the Istio's [Authorization Policy](https://istio.io/latest/docs/reference/config/security/authorization-policy/) resource. Every `requestPrincipals` string is formatted as `<ISSUSER>/*`.
 
-#### Authorizations
+##### Authorizations
 The authorizations field is optional. When not defined, the authorization is satisfied if the JWT is valid. You can define multiple authorizations for an access strategy. When multiple authorizations are defined, the request is allowed if at least one of them is satisfied.
 
 The `requiredScopes` and `audiences` fields are optional. If `requiredScopes` is defined, the JWT has to contain all the scopes in the `scp`, `scope` or `scopes` claims as in the `requiredScopes` field in order to be authorized. If `audiences` is defined, the JWT has to contain all the audiences in the `aud` claim as in the `audiences` field in order to be authorized.
 
-### Mutators
+#### Mutators
 Different types of mutators are supported depending on the access strategy.
 
 | Access Strategy      | Mutator support                                                     |
@@ -199,10 +199,10 @@ Different types of mutators are supported depending on the access strategy.
 | noop                 | [Ory mutators](https://www.ory.sh/docs/oathkeeper/pipeline/mutator) |
 | allow                | No mutators supported                                               |
 
-#### Istio-based Mutators
+##### Istio-based Mutators
 Mutators can be used to enrich an incoming request with information. The following mutators are supported in combination with the `jwt` access strategy and can be defined for each rule in an `ApiRule`: `header`,`cookie`. It's possible to configure multiple mutators for one rule, but only one mutator of each type is allowed.
 
-#### Header Mutator
+##### Header Mutator
 The headers are specified via the `headers` field of the header mutator configuration field. The keys are the names of the headers and the values are a string. In the header value it is possible to use [Envoy command operators](https://www.envoyproxy.io/docs/envoy/latest/configuration/observability/access_log/usage#command-operators), e.g. to write an incoming header to a new header. The configured headers are set to the request and overwrite all existing headers with the same name.
 
 <div tabs name="api-rule" group="sample-cr">
@@ -245,7 +245,7 @@ spec:
   </details>
 </div>
 
-#### Cookie Mutator
+##### Cookie Mutator
 The cookies are specified via the `cookies` field of the cookie mutator configuration field. The keys are the names of the cookies and the values are a string. In the cookie value it is possible to use [Envoy command operators](https://www.envoyproxy.io/docs/envoy/latest/configuration/observability/access_log/usage#command-operators). The configured cookies are set as `Cookie`-header in the request and overwrite an existing `Cookie`-header.
 
 <div tabs name="api-rule" group="sample-cr">
