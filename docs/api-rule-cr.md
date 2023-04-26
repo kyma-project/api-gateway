@@ -94,7 +94,7 @@ This table lists all the possible parameters of a given resource together with t
 | **spec.rules.mutators** | **NO** | Specifies the list of [Oathkeeper](https://www.ory.sh/docs/next/oathkeeper/pipeline/mutator) or Istio mutators. |
 | **spec.rules.accessStrategies** | **YES** | Specifies the list of access strategies. Supported are [Oathkeeper](https://www.ory.sh/docs/next/oathkeeper/pipeline/authn) `oauth2_introspection`, `jwt`, `noop` and `allow`. We also support `jwt` as [Istio](https://istio.io/latest/docs/tasks/security/authorization/authz-jwt/) access strategy. |
 
->**CAUTION:** If `service` is not defined at **spec.service** level, all defined rules must have `service` defined at **spec.rules.service** level, otherwise the validation fails.
+>**CAUTION:** If `service` is not defined at **spec.service** level, all defined rules must have `service` defined at **spec.rules.service** level. Otherwise, the validation fails.
 
 >**CAUTION:** We do not support having both Oathkeeper and Istio `jwt` access strategies at the same time. Access strategies `noop` or `allow` can **not** be used with any other on the same `spec.rules.path`.
 
