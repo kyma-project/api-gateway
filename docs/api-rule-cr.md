@@ -305,7 +305,7 @@ When you fetch an existing APIRule CR, the system adds the **status** section wh
 
 ### Status codes
 
-These are the status codes used to describe the VirtualServices and Oathkeeper Access Rules:
+These are the status codes used to describe VirtualServices and Oathkeeper Access Rules:
 
 | Code   |  Description |
 |---|---|
