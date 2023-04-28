@@ -76,23 +76,23 @@ spec:
 
 This table lists all the possible parameters of a given resource together with their descriptions:
 
-| Field   |      Mandatory      |  Description |
-|---|:---:|---|
-| **metadata.name** | **YES** | Specifies the name of the exposed API. |
-| **spec.gateway** | **YES** | Specifies the Istio Gateway. |
-| **spec.host** | **YES** | Specifies the service's communication address for inbound external traffic. If only the leftmost label is provided, the default domain name will be used. |
-| **spec.service.name** | **NO** | Specifies the name of the exposed service. |
-| **spec.service.namespace** | **NO** | Specifies the Namespace of the exposed service. |
-| **spec.service.port** | **NO** | Specifies the communication port of the exposed service. |
-| **spec.rules** | **YES** | Specifies the list of Oathkeeper access rules. |
-| **spec.rules.service** | **NO** | Services definitions at this level have higher precedence than the service definition at the **spec.service** level.|
-| **spec.rules.service.name** | **NO** | Specifies the name of the exposed service. |
-| **spec.rules.service.namespace** | **NO** | Specifies the Namespace of the exposed service. |
-| **spec.rules.service.port** | **NO** | Specifies the communication port of the exposed service. |
-| **spec.rules.path** | **YES** | Specifies the path of the exposed service. |
-| **spec.rules.methods** | **NO** | Specifies the list of HTTP request methods available for **spec.rules.path**. |
-| **spec.rules.mutators** | **NO** | Specifies the list of [Oathkeeper](https://www.ory.sh/docs/next/oathkeeper/pipeline/mutator) or Istio mutators. |
-| **spec.rules.accessStrategies** | **YES** | Specifies the list of access strategies. Supported are [Oathkeeper](https://www.ory.sh/docs/next/oathkeeper/pipeline/authn) `oauth2_introspection`, `jwt`, `noop` and `allow`. We also support `jwt` as [Istio](https://istio.io/latest/docs/tasks/security/authorization/authz-jwt/) access strategy. |
+| Field                            | Mandatory  | Description                                                                                                                                                                                                                                                                                            |
+|----------------------------------|:----------:|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **metadata.name**                |  **YES**   | Specifies the name of the exposed API.                                                                                                                                                                                                                                                                 |
+| **spec.gateway**                 |  **YES**   | Specifies the Istio Gateway.                                                                                                                                                                                                                                                                           |
+| **spec.host**                    |  **YES**   | Specifies the service's communication address for inbound external traffic. If only the leftmost label is provided, the default domain name will be used.                                                                                                                                              |
+| **spec.service.name**            |   **NO**   | Specifies the name of the exposed service.                                                                                                                                                                                                                                                             |
+| **spec.service.namespace**       |   **NO**   | Specifies the Namespace of the exposed service.                                                                                                                                                                                                                                                        |
+| **spec.service.port**            |   **NO**   | Specifies the communication port of the exposed service.                                                                                                                                                                                                                                               |
+| **spec.rules**                   |  **YES**   | Specifies the list of Oathkeeper access rules.                                                                                                                                                                                                                                                         |
+| **spec.rules.service**           |   **NO**   | Services definitions at this level have higher precedence than the service definition at the **spec.service** level.                                                                                                                                                                                   |
+| **spec.rules.service.name**      |   **NO**   | Specifies the name of the exposed service.                                                                                                                                                                                                                                                             |
+| **spec.rules.service.namespace** |   **NO**   | Specifies the Namespace of the exposed service.                                                                                                                                                                                                                                                        |
+| **spec.rules.service.port**      |   **NO**   | Specifies the communication port of the exposed service.                                                                                                                                                                                                                                               |
+| **spec.rules.path**              |  **YES**   | Specifies the path of the exposed service.                                                                                                                                                                                                                                                             |
+| **spec.rules.methods**           |   **NO**   | Specifies the list of HTTP request methods available for **spec.rules.path**.                                                                                                                                                                                                                          |
+| **spec.rules.mutators**          |   **NO**   | Specifies the list of [Oathkeeper](https://www.ory.sh/docs/next/oathkeeper/pipeline/mutator) or Istio mutators.                                                                                                                                                                                        |
+| **spec.rules.accessStrategies**  |  **YES**   | Specifies the list of access strategies. Supported are [Oathkeeper](https://www.ory.sh/docs/next/oathkeeper/pipeline/authn) `oauth2_introspection`, `jwt`, `noop` and `allow`. We also support `jwt` as [Istio](https://istio.io/latest/docs/tasks/security/authorization/authz-jwt/) access strategy. |
 
 >**CAUTION:** If `service` is not defined at **spec.service** level, all defined rules must have `service` defined at **spec.rules.service** level. Otherwise, the validation fails.
 
@@ -122,18 +122,19 @@ kubectl patch configmap/api-gateway-config -n kyma-system --type merge -p '{"dat
 
 This table lists all the possible parameters of the Istio JWT access strategy together with their descriptions:
 
-| Field                                                                     | Description                                                                |
-|:--------------------------------------------------------------------------|:---------------------------------------------------------------------------|
-| **spec.rules.accessStrategies.config.authentications**                    | List of authentication objects.                                            |
-| **spec.rules.accessStrategies.config.authentications.issuer**             | Identifies the issuer that issued the JWT.                                 |
-| **spec.rules.accessStrategies.config.authentications.jwksUri**            | URL of the provider’s public key set to validate the signature of the JWT. |
-| **spec.rules.accessStrategies.config.authentications.fromHeaders**        | List of headers from which the JWT token is taken.                         |
-| **spec.rules.accessStrategies.config.authentications.fromHeaders.name**   | Name of the header.                                                        |
-| **spec.rules.accessStrategies.config.authentications.fromHeaders.prefix** | Prefix used before the JWT token. The default is `Bearer `.                |
-| **spec.rules.accessStrategies.config.authentications.fromParams**         | List of parameters from which the JWT token is taken.                      |
-| **spec.rules.accessStrategies.config.authorizations**                     | List of authorization objects.                                             |
-| **spec.rules.accessStrategies.config.authorizations.requiredScopes**      | List of required scope values for the JWT.                                 |
-| **spec.rules.accessStrategies.config.authorizations.audiences**           | List of audiences required for the JWT.                                    |
+| Field                                                                     | Mandatory | Description                                                                           |
+|:--------------------------------------------------------------------------|:----------|:--------------------------------------------------------------------------------------| 
+| **spec.rules.accessStrategies.config**                                    | **YES**   | Access strategy configuration, must contain at least authentication or authorization. |
+| **spec.rules.accessStrategies.config.authentications**                    | **NO**    | List of authentication objects.                                                       |
+| **spec.rules.accessStrategies.config.authentications.issuer**             | **YES**   | Identifies the issuer that issued the JWT.                                            |
+| **spec.rules.accessStrategies.config.authentications.jwksUri**            | **YES**   | URL of the provider’s public key set to validate the signature of the JWT.            |
+| **spec.rules.accessStrategies.config.authentications.fromHeaders**        | **NO**    | List of headers from which the JWT token is taken.                                    |
+| **spec.rules.accessStrategies.config.authentications.fromHeaders.name**   | **YES**   | Name of the header.                                                                   |
+| **spec.rules.accessStrategies.config.authentications.fromHeaders.prefix** | **NO**    | Prefix used before the JWT token. The default is `Bearer `.                           |
+| **spec.rules.accessStrategies.config.authentications.fromParams**         | **NO**    | List of parameters from which the JWT token is taken.                                 |
+| **spec.rules.accessStrategies.config.authorizations**                     | **NO**    | List of authorization objects.                                                        |
+| **spec.rules.accessStrategies.config.authorizations.requiredScopes**      | **NO**    | List of required scope values for the JWT.                                            |
+| **spec.rules.accessStrategies.config.authorizations.audiences**           | **NO**    | List of audiences required for the JWT.                                               |
 
 >**CAUTION:** You can define multiple JWT issuers, but each of them must be unique.
 
