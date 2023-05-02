@@ -1,6 +1,7 @@
 package istio
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/go-logr/logr"
@@ -12,10 +13,13 @@ import (
 	"github.com/kyma-project/api-gateway/internal/processing/processors"
 	"istio.io/api/security/v1beta1"
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
-	audienceKey string = "request.auth.claims[aud]"
+	audienceKey          string = "request.auth.claims[aud]"
+	appSelectorLabel     string = "app"
+	serviceSelectorLabel string = "service"
 )
 
 var (
@@ -37,12 +41,12 @@ type authorizationPolicyCreator struct {
 }
 
 // Create returns the JwtAuthorization Policy using the configuration of the APIRule.
-func (r authorizationPolicyCreator) Create(api *gatewayv1beta1.APIRule) (hashbasedstate.Desired, error) {
+func (r authorizationPolicyCreator) Create(ctx context.Context, client client.Client, api *gatewayv1beta1.APIRule) (hashbasedstate.Desired, error) {
 	state := hashbasedstate.NewDesired()
 	hasJwtRule := processing.HasJwtRule(api)
 	if hasJwtRule {
 		for _, rule := range api.Spec.Rules {
-			aps, err := generateAuthorizationPolicies(api, rule, r.additionalLabels)
+			aps, err := generateAuthorizationPolicies(ctx, client, api, rule, r.additionalLabels)
 			if err != nil {
 				return state, err
 			}
@@ -60,16 +64,19 @@ func (r authorizationPolicyCreator) Create(api *gatewayv1beta1.APIRule) (hashbas
 	return state, nil
 }
 
-func generateAuthorizationPolicies(api *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rule, additionalLabels map[string]string) (*securityv1beta1.AuthorizationPolicyList, error) {
+func generateAuthorizationPolicies(ctx context.Context, client client.Client, api *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rule, additionalLabels map[string]string) (*securityv1beta1.AuthorizationPolicyList, error) {
 	authorizationPolicyList := securityv1beta1.AuthorizationPolicyList{}
 	ruleAuthorizations := rule.GetJwtIstioAuthorizations()
 
 	if len(ruleAuthorizations) == 0 {
-		ap := generateAuthorizationPolicy(api, rule, additionalLabels, &gatewayv1beta1.JwtAuthorization{})
+		ap, err := generateAuthorizationPolicy(ctx, client, api, rule, additionalLabels, &gatewayv1beta1.JwtAuthorization{})
+		if err != nil {
+			return &authorizationPolicyList, err
+		}
 
 		// If there is no other authorization we can safely assume that the index of this authorization in the array
 		// in the yaml is 0.
-		err := hashbasedstate.AddLabelsToAuthorizationPolicy(ap, 0)
+		err = hashbasedstate.AddLabelsToAuthorizationPolicy(ap, 0)
 		if err != nil {
 			return &authorizationPolicyList, err
 		}
@@ -77,9 +84,12 @@ func generateAuthorizationPolicies(api *gatewayv1beta1.APIRule, rule gatewayv1be
 		authorizationPolicyList.Items = append(authorizationPolicyList.Items, ap)
 	} else {
 		for indexInYaml, authorization := range ruleAuthorizations {
-			ap := generateAuthorizationPolicy(api, rule, additionalLabels, authorization)
+			ap, err := generateAuthorizationPolicy(ctx, client, api, rule, additionalLabels, authorization)
+			if err != nil {
+				return &authorizationPolicyList, err
+			}
 
-			err := hashbasedstate.AddLabelsToAuthorizationPolicy(ap, indexInYaml)
+			err = hashbasedstate.AddLabelsToAuthorizationPolicy(ap, indexInYaml)
 			if err != nil {
 				return &authorizationPolicyList, err
 			}
@@ -91,14 +101,19 @@ func generateAuthorizationPolicies(api *gatewayv1beta1.APIRule, rule gatewayv1be
 	return &authorizationPolicyList, nil
 }
 
-func generateAuthorizationPolicy(api *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rule, additionalLabels map[string]string, authorization *gatewayv1beta1.JwtAuthorization) *securityv1beta1.AuthorizationPolicy {
+func generateAuthorizationPolicy(ctx context.Context, client client.Client, api *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rule, additionalLabels map[string]string, authorization *gatewayv1beta1.JwtAuthorization) (*securityv1beta1.AuthorizationPolicy, error) {
 	namePrefix := fmt.Sprintf("%s-", api.ObjectMeta.Name)
 	namespace := helpers.FindServiceNamespace(api, &rule)
+
+	spec, err := generateAuthorizationPolicySpec(ctx, client, api, rule, authorization)
+	if err != nil {
+		return nil, err
+	}
 
 	apBuilder := builders.NewAuthorizationPolicyBuilder().
 		WithGenerateName(namePrefix).
 		WithNamespace(namespace).
-		WithSpec(builders.NewAuthorizationPolicySpecBuilder().FromAP(generateAuthorizationPolicySpec(api, rule, authorization)).Get()).
+		WithSpec(builders.NewAuthorizationPolicySpecBuilder().FromAP(spec).Get()).
 		WithLabel(processing.OwnerLabel, fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace)).
 		WithLabel(processing.OwnerLabelv1alpha1, fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace))
 
@@ -106,10 +121,10 @@ func generateAuthorizationPolicy(api *gatewayv1beta1.APIRule, rule gatewayv1beta
 		apBuilder.WithLabel(k, v)
 	}
 
-	return apBuilder.Get()
+	return apBuilder.Get(), nil
 }
 
-func generateAuthorizationPolicySpec(api *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rule, authorization *gatewayv1beta1.JwtAuthorization) *v1beta1.AuthorizationPolicy {
+func generateAuthorizationPolicySpec(ctx context.Context, client client.Client, api *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rule, authorization *gatewayv1beta1.JwtAuthorization) (*v1beta1.AuthorizationPolicy, error) {
 	var service *gatewayv1beta1.Service
 	if rule.Service != nil {
 		service = rule.Service
@@ -117,8 +132,12 @@ func generateAuthorizationPolicySpec(api *gatewayv1beta1.APIRule, rule gatewayv1
 		service = api.Spec.Service
 	}
 
-	authorizationPolicySpecBuilder := builders.NewAuthorizationPolicySpecBuilder().
-		WithSelector(builders.SelectorFromService(service))
+	labelSelector, err := helpers.GetLabelSelectorFromService(ctx, client, service)
+	if err != nil {
+		return nil, err
+	}
+
+	authorizationPolicySpecBuilder := builders.NewAuthorizationPolicySpecBuilder().WithSelector(labelSelector)
 
 	// If RequiredScopes are configured, we need to generate a separate Rule for each scopeKey in defaultScopeKeys
 	if len(authorization.RequiredScopes) > 0 {
@@ -145,7 +164,7 @@ func generateAuthorizationPolicySpec(api *gatewayv1beta1.APIRule, rule gatewayv1
 		authorizationPolicySpecBuilder.WithRule(ruleBuilder.Get())
 	}
 
-	return authorizationPolicySpecBuilder.Get()
+	return authorizationPolicySpecBuilder.Get(), nil
 }
 
 func withTo(b *builders.RuleBuilder, rule gatewayv1beta1.Rule) *builders.RuleBuilder {

@@ -45,7 +45,7 @@ func (r Reconciliation) Validate(ctx context.Context, client client.Client, apiR
 		HostBlockList:             r.config.HostBlockList,
 		DefaultDomainName:         r.config.DefaultDomainName,
 	}
-	return validator.Validate(apiRule, vsList), nil
+	return validator.Validate(ctx, client, apiRule, vsList), nil
 }
 
 func (r Reconciliation) GetProcessors() []processing.ReconciliationProcessor {

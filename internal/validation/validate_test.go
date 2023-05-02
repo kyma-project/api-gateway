@@ -1,11 +1,14 @@
 package validation
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
 
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -18,7 +21,10 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	"github.com/onsi/ginkgo/v2/reporters"
 	"github.com/onsi/ginkgo/v2/types"
+	"github.com/onsi/gomega"
 	. "github.com/onsi/gomega"
+	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
+	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
@@ -39,7 +45,20 @@ var (
 	testDomainAllowlist  = []string{"foo.bar", "bar.foo", "kyma.local"}
 	handlerValidatorMock = &dummyHandlerValidator{}
 	asValidatorMock      = &dummyAccessStrategiesValidator{}
+	fakeClient           = GetFakeClient()
 )
+
+func GetFakeClient(objs ...client.Object) client.Client {
+	scheme := runtime.NewScheme()
+	err := networkingv1beta1.AddToScheme(scheme)
+	gomega.Expect(err).NotTo(gomega.HaveOccurred())
+	err = rulev1alpha1.AddToScheme(scheme)
+	gomega.Expect(err).NotTo(gomega.HaveOccurred())
+	err = securityv1beta1.AddToScheme(scheme)
+	gomega.Expect(err).NotTo(gomega.HaveOccurred())
+
+	return fake.NewClientBuilder().WithScheme(scheme).WithObjects(objs...).Build()
+}
 
 var _ = Describe("ValidateConfig function", func() {
 	It("Should fail for missing config", func() {
@@ -81,7 +100,7 @@ var _ = Describe("Validate function", func() {
 			HandlerValidator:          handlerValidatorMock,
 			AccessStrategiesValidator: asValidatorMock,
 			DomainAllowList:           testAllowList,
-		}).Validate(input, networkingv1beta1.VirtualServiceList{})
+		}).Validate(context.TODO(), fakeClient, input, networkingv1beta1.VirtualServiceList{})
 
 		//then
 		Expect(problems).To(HaveLen(1))
@@ -120,7 +139,7 @@ var _ = Describe("Validate function", func() {
 			AccessStrategiesValidator: asValidatorMock,
 			ServiceBlockList:          testBlockList,
 			DomainAllowList:           testDomainAllowlist,
-		}).Validate(input, networkingv1beta1.VirtualServiceList{})
+		}).Validate(context.TODO(), fakeClient, input, networkingv1beta1.VirtualServiceList{})
 
 		//then
 		Expect(problems).To(HaveLen(1))
@@ -160,7 +179,7 @@ var _ = Describe("Validate function", func() {
 			AccessStrategiesValidator: asValidatorMock,
 			ServiceBlockList:          testBlockList,
 			DomainAllowList:           testDomainAllowlist,
-		}).Validate(input, networkingv1beta1.VirtualServiceList{})
+		}).Validate(context.TODO(), fakeClient, input, networkingv1beta1.VirtualServiceList{})
 
 		//then
 		Expect(problems).To(HaveLen(1))
@@ -195,7 +214,7 @@ var _ = Describe("Validate function", func() {
 			AccessStrategiesValidator: asValidatorMock,
 			ServiceBlockList:          testBlockList,
 			DomainAllowList:           testDomainAllowlist,
-		}).Validate(input, networkingv1beta1.VirtualServiceList{})
+		}).Validate(context.TODO(), fakeClient, input, networkingv1beta1.VirtualServiceList{})
 
 		//then
 		Expect(problems).To(HaveLen(1))
@@ -234,7 +253,7 @@ var _ = Describe("Validate function", func() {
 			DomainAllowList:           testDomainAllowlist,
 			HostBlockList:             testHostBlockList,
 			DefaultDomainName:         testDefaultDomain,
-		}).Validate(input, networkingv1beta1.VirtualServiceList{})
+		}).Validate(context.TODO(), fakeClient, input, networkingv1beta1.VirtualServiceList{})
 
 		//then
 		Expect(problems).To(HaveLen(1))
@@ -275,7 +294,7 @@ var _ = Describe("Validate function", func() {
 			DomainAllowList:           testDomainAllowlist,
 			HostBlockList:             testHostBlockList,
 			DefaultDomainName:         testDefaultDomain,
-		}).Validate(input, networkingv1beta1.VirtualServiceList{})
+		}).Validate(context.TODO(), fakeClient, input, networkingv1beta1.VirtualServiceList{})
 
 		//then
 		Expect(problems).To(HaveLen(0))
@@ -308,7 +327,7 @@ var _ = Describe("Validate function", func() {
 			AccessStrategiesValidator: asValidatorMock,
 			ServiceBlockList:          testBlockList,
 			DomainAllowList:           []string{},
-		}).Validate(input, networkingv1beta1.VirtualServiceList{})
+		}).Validate(context.TODO(), fakeClient, input, networkingv1beta1.VirtualServiceList{})
 
 		//then
 		Expect(problems).To(HaveLen(0))
@@ -341,7 +360,7 @@ var _ = Describe("Validate function", func() {
 			AccessStrategiesValidator: asValidatorMock,
 			ServiceBlockList:          testBlockList,
 			DomainAllowList:           testDomainAllowlist,
-		}).Validate(input, networkingv1beta1.VirtualServiceList{})
+		}).Validate(context.TODO(), fakeClient, input, networkingv1beta1.VirtualServiceList{})
 
 		//then
 		Expect(problems).To(HaveLen(1))
@@ -376,7 +395,7 @@ var _ = Describe("Validate function", func() {
 			AccessStrategiesValidator: asValidatorMock,
 			ServiceBlockList:          testBlockList,
 			DomainAllowList:           testDomainAllowlist,
-		}).Validate(input, networkingv1beta1.VirtualServiceList{})
+		}).Validate(context.TODO(), fakeClient, input, networkingv1beta1.VirtualServiceList{})
 
 		//then
 		Expect(problems).To(HaveLen(1))
@@ -412,7 +431,7 @@ var _ = Describe("Validate function", func() {
 			ServiceBlockList:          testBlockList,
 			DomainAllowList:           testDomainAllowlist,
 			DefaultDomainName:         testDefaultDomain,
-		}).Validate(input, networkingv1beta1.VirtualServiceList{})
+		}).Validate(context.TODO(), fakeClient, input, networkingv1beta1.VirtualServiceList{})
 
 		//then
 		Expect(problems).To(HaveLen(0))
@@ -445,7 +464,7 @@ var _ = Describe("Validate function", func() {
 			AccessStrategiesValidator: asValidatorMock,
 			ServiceBlockList:          testBlockList,
 			DomainAllowList:           testDomainAllowlist,
-		}).Validate(input, networkingv1beta1.VirtualServiceList{})
+		}).Validate(context.TODO(), fakeClient, input, networkingv1beta1.VirtualServiceList{})
 
 		//then
 		Expect(problems).To(HaveLen(1))
@@ -483,7 +502,7 @@ var _ = Describe("Validate function", func() {
 			HandlerValidator:          handlerValidatorMock,
 			AccessStrategiesValidator: asValidatorMock,
 			DomainAllowList:           testDomainAllowlist,
-		}).Validate(input, networkingv1beta1.VirtualServiceList{Items: []*networkingv1beta1.VirtualService{&existingVS}})
+		}).Validate(context.TODO(), fakeClient, input, networkingv1beta1.VirtualServiceList{Items: []*networkingv1beta1.VirtualService{&existingVS}})
 
 		Expect(problems).To(HaveLen(1))
 		Expect(problems[0].AttributePath).To(Equal(".spec.host"))
@@ -522,7 +541,7 @@ var _ = Describe("Validate function", func() {
 			HandlerValidator:          handlerValidatorMock,
 			AccessStrategiesValidator: asValidatorMock,
 			DomainAllowList:           testDomainAllowlist,
-		}).Validate(input, networkingv1beta1.VirtualServiceList{Items: []*networkingv1beta1.VirtualService{&existingVS}})
+		}).Validate(context.TODO(), fakeClient, input, networkingv1beta1.VirtualServiceList{Items: []*networkingv1beta1.VirtualService{&existingVS}})
 
 		Expect(problems).To(HaveLen(0))
 	})
@@ -546,7 +565,7 @@ var _ = Describe("Validate function", func() {
 		problems := (&APIRuleValidator{
 			AccessStrategiesValidator: asValidatorMock,
 			DomainAllowList:           testDomainAllowlist,
-		}).Validate(input, networkingv1beta1.VirtualServiceList{})
+		}).Validate(context.TODO(), fakeClient, input, networkingv1beta1.VirtualServiceList{})
 
 		//then
 		Expect(problems).To(HaveLen(1))
@@ -591,7 +610,7 @@ var _ = Describe("Validate function", func() {
 			AccessStrategiesValidator: asValidatorMock,
 			ServiceBlockList:          testBlockList,
 			DomainAllowList:           testDomainAllowlist,
-		}).Validate(input, networkingv1beta1.VirtualServiceList{})
+		}).Validate(context.TODO(), fakeClient, input, networkingv1beta1.VirtualServiceList{})
 
 		//then
 		Expect(problems).To(HaveLen(1))
@@ -637,7 +656,7 @@ var _ = Describe("Validate function", func() {
 			AccessStrategiesValidator: asValidatorMock,
 			ServiceBlockList:          testBlockList,
 			DomainAllowList:           testDomainAllowlist,
-		}).Validate(input, networkingv1beta1.VirtualServiceList{})
+		}).Validate(context.TODO(), fakeClient, input, networkingv1beta1.VirtualServiceList{})
 
 		//then
 		Expect(problems).To(HaveLen(1))
@@ -681,7 +700,7 @@ var _ = Describe("Validate function", func() {
 		problems := (&APIRuleValidator{
 			AccessStrategiesValidator: asValidatorMock,
 			DomainAllowList:           testDomainAllowlist,
-		}).Validate(input, networkingv1beta1.VirtualServiceList{})
+		}).Validate(context.TODO(), fakeClient, input, networkingv1beta1.VirtualServiceList{})
 
 		//then
 		Expect(problems).To(HaveLen(5))
@@ -730,7 +749,7 @@ var _ = Describe("Validate function", func() {
 		problems := (&APIRuleValidator{
 			AccessStrategiesValidator: asValidatorMock,
 			DomainAllowList:           testDomainAllowlist,
-		}).Validate(input, networkingv1beta1.VirtualServiceList{})
+		}).Validate(context.TODO(), fakeClient, input, networkingv1beta1.VirtualServiceList{})
 
 		//then
 		Expect(problems).To(HaveLen(1))
@@ -789,7 +808,7 @@ var _ = Describe("Validate function", func() {
 			HandlerValidator:          handlerValidatorMock,
 			AccessStrategiesValidator: asValidatorMock,
 			DomainAllowList:           testDomainAllowlist,
-		}).Validate(input, networkingv1beta1.VirtualServiceList{Items: []*networkingv1beta1.VirtualService{&existingVS}})
+		}).Validate(context.TODO(), fakeClient, input, networkingv1beta1.VirtualServiceList{Items: []*networkingv1beta1.VirtualService{&existingVS}})
 
 		//then
 		Expect(problems).To(HaveLen(0))
@@ -834,7 +853,7 @@ var _ = Describe("Validate function", func() {
 			HandlerValidator:          handlerValidatorMock,
 			AccessStrategiesValidator: asValidatorMock,
 			DomainAllowList:           testDomainAllowlist,
-		}).Validate(input, networkingv1beta1.VirtualServiceList{Items: []*networkingv1beta1.VirtualService{&existingVS}})
+		}).Validate(context.TODO(), fakeClient, input, networkingv1beta1.VirtualServiceList{Items: []*networkingv1beta1.VirtualService{&existingVS}})
 
 		//then
 		Expect(problems).To(HaveLen(0))
