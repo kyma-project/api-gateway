@@ -23,6 +23,7 @@ import (
 	. "github.com/onsi/gomega"
 	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -55,14 +56,13 @@ var _ = Describe("Controller", func() {
 		Context("APIRule", func() {
 			It("should update status", func() {
 				testAPI := getApiRule("noop", nil)
-
-				ts = getTestSuite(testAPI)
+				svc := getService(*testAPI.Spec.Service.Name)
+				ts = getTestSuite(testAPI, svc)
 				reconciler := getAPIReconciler(ts.mgr)
 				ctx := context.Background()
 
 				fakeReader := FakeConfigMapReader{Content: fmt.Sprintf("jwtHandler: %s", helpers.JWT_HANDLER_ORY)}
 				helpers.ReadConfigMapHandle = fakeReader.ReadConfigMap
-
 				defer func() {
 					helpers.ReadConfigMapHandle = helpers.ReadConfigMap
 				}()
@@ -153,8 +153,8 @@ var _ = Describe("Controller", func() {
 			Context("when the jwt handler is istio", func() {
 				It("should update status", func() {
 					testAPI := getApiRule("jwt", getJWTIstioConfig())
-
-					ts = getTestSuite(testAPI)
+					svc := getService(*testAPI.Spec.Service.Name)
+					ts = getTestSuite(testAPI, svc)
 					reconciler := getAPIReconciler(ts.mgr)
 					ctx := context.Background()
 
@@ -183,7 +183,6 @@ var _ = Describe("Controller", func() {
 })
 
 func getApiRule(authStrategy string, authConfig *runtime.RawExtension) *gatewayv1beta1.APIRule {
-
 	var (
 		serviceName        = "test"
 		servicePort uint32 = 8000
@@ -219,6 +218,19 @@ func getApiRule(authStrategy string, authConfig *runtime.RawExtension) *gatewayv
 						},
 					},
 				},
+			},
+		},
+	}
+}
+
+func getService(name string) *corev1.Service {
+	return &corev1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: name,
+		},
+		Spec: corev1.ServiceSpec{
+			Selector: map[string]string{
+				"app": name,
 			},
 		},
 	}

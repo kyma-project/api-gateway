@@ -12,6 +12,8 @@ import (
 	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -45,13 +47,23 @@ var _ = Describe("Reconciliation", func() {
 			rules := []gatewayv1beta1.Rule{allowRule, jwtRule}
 
 			apiRule := GetAPIRuleFor(rules)
-			faceClient := GetFakeClient()
+			service := corev1.Service{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: ServiceName,
+				},
+				Spec: corev1.ServiceSpec{
+					Selector: map[string]string{
+						"app": ServiceName,
+					},
+				},
+			}
+			fakeClient := GetFakeClient(&service)
 
 			// when
 			var createdObjects []client.Object
 			reconciliation := istio.NewIstioReconciliation(GetTestConfig(), &testLogger)
 			for _, processor := range reconciliation.GetProcessors() {
-				results, err := processor.EvaluateReconciliation(context.TODO(), faceClient, apiRule)
+				results, err := processor.EvaluateReconciliation(context.TODO(), fakeClient, apiRule)
 				Expect(err).To(BeNil())
 				for _, result := range results {
 					createdObjects = append(createdObjects, result.Obj)
@@ -109,13 +121,23 @@ var _ = Describe("Reconciliation", func() {
 			rules := []gatewayv1beta1.Rule{oauthRule, jwtRule}
 
 			apiRule := GetAPIRuleFor(rules)
-			faceClient := GetFakeClient()
+			service := corev1.Service{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: ServiceName,
+				},
+				Spec: corev1.ServiceSpec{
+					Selector: map[string]string{
+						"app": ServiceName,
+					},
+				},
+			}
+			fakeClient := GetFakeClient(&service)
 
 			// when
 			var createdObjects []client.Object
 			reconciliation := istio.NewIstioReconciliation(GetTestConfig(), &testLogger)
 			for _, processor := range reconciliation.GetProcessors() {
-				results, err := processor.EvaluateReconciliation(context.TODO(), faceClient, apiRule)
+				results, err := processor.EvaluateReconciliation(context.TODO(), fakeClient, apiRule)
 				Expect(err).To(BeNil())
 				for _, result := range results {
 					createdObjects = append(createdObjects, result.Obj)
@@ -175,13 +197,23 @@ var _ = Describe("Reconciliation", func() {
 			rules := []gatewayv1beta1.Rule{noopRule, jwtRule}
 
 			apiRule := GetAPIRuleFor(rules)
-			faceClient := GetFakeClient()
+			service := corev1.Service{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: ServiceName,
+				},
+				Spec: corev1.ServiceSpec{
+					Selector: map[string]string{
+						"app": ServiceName,
+					},
+				},
+			}
+			fakeClient := GetFakeClient(&service)
 
 			// when
 			var createdObjects []client.Object
 			reconciliation := istio.NewIstioReconciliation(GetTestConfig(), &testLogger)
 			for _, processor := range reconciliation.GetProcessors() {
-				results, err := processor.EvaluateReconciliation(context.TODO(), faceClient, apiRule)
+				results, err := processor.EvaluateReconciliation(context.TODO(), fakeClient, apiRule)
 				Expect(err).To(BeNil())
 				for _, result := range results {
 					createdObjects = append(createdObjects, result.Obj)

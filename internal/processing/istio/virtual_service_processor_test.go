@@ -3,10 +3,10 @@ package istio_test
 import (
 	"context"
 	"fmt"
+
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/api/v1beta1"
 	"github.com/kyma-project/api-gateway/internal/processing"
 	. "github.com/kyma-project/api-gateway/internal/processing/internal/test"
-	processingtest "github.com/kyma-project/api-gateway/internal/processing/internal/test"
 	"github.com/kyma-project/api-gateway/internal/processing/istio"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -688,7 +688,7 @@ var _ = Describe("Virtual Service Processor", func() {
 					{
 						Handler: &gatewayv1beta1.Handler{
 							Name: "cookie",
-							Config: processingtest.GetRawConfig(
+							Config: GetRawConfig(
 								gatewayv1beta1.CookieMutatorConfig{
 									Cookies: map[string]string{
 										"x-test-cookie-1": "cookie-value1",
@@ -701,7 +701,7 @@ var _ = Describe("Virtual Service Processor", func() {
 					{
 						Handler: &gatewayv1beta1.Handler{
 							Name: "header",
-							Config: processingtest.GetRawConfig(
+							Config: GetRawConfig(
 								gatewayv1beta1.HeaderMutatorConfig{
 									Headers: map[string]string{
 										"x-test-header-1": "header-value1",
@@ -758,7 +758,7 @@ var _ = Describe("Virtual Service Processor", func() {
 					{
 						Handler: &gatewayv1beta1.Handler{
 							Name: "header",
-							Config: processingtest.GetRawConfig(
+							Config: GetRawConfig(
 								gatewayv1beta1.HeaderMutatorConfig{
 									Headers: map[string]string{
 										"x-test-header-1": "header-value1",
@@ -809,7 +809,7 @@ var _ = Describe("Virtual Service Processor", func() {
 				{
 					Handler: &gatewayv1beta1.Handler{
 						Name: "header",
-						Config: processingtest.GetRawConfig(
+						Config: GetRawConfig(
 							gatewayv1beta1.HeaderMutatorConfig{
 								Headers: map[string]string{
 									"x-test-header-1": "header-value1",
@@ -858,7 +858,7 @@ var _ = Describe("Virtual Service Processor", func() {
 				{
 					Handler: &gatewayv1beta1.Handler{
 						Name: "header",
-						Config: processingtest.GetRawConfig(
+						Config: GetRawConfig(
 							gatewayv1beta1.HeaderMutatorConfig{
 								Headers: map[string]string{
 									"x-test-header-1": "header-value1",
@@ -907,7 +907,7 @@ var _ = Describe("Virtual Service Processor", func() {
 				{
 					Handler: &gatewayv1beta1.Handler{
 						Name: "header",
-						Config: processingtest.GetRawConfig(
+						Config: GetRawConfig(
 							gatewayv1beta1.HeaderMutatorConfig{
 								Headers: map[string]string{
 									"x-test-header-1": "header-value1",

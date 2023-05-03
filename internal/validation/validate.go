@@ -202,8 +202,8 @@ func (v *APIRuleValidator) validateRules(ctx context.Context, client client.Clie
 			labelSelector, err := helpers.GetLabelSelectorFromService(ctx, client, r.Service)
 			if err != nil {
 				problems = append(problems, Failure{
-					AttributePath: attributePathWithRuleIndex + ".service.name",
-					Message:       fmt.Sprintf("No workload selectors found for service %s in namespace %s", *r.Service.Name, *r.Service.Namespace),
+					AttributePath: attributePathWithRuleIndex + ".service",
+					Message:       "No workload selectors found for service",
 				})
 			}
 			problems = append(problems, v.validateAccessStrategies(attributePathWithRuleIndex+".accessStrategies", r.AccessStrategies, labelSelector, helpers.FindServiceNamespace(api, &r))...)
@@ -222,8 +222,8 @@ func (v *APIRuleValidator) validateRules(ctx context.Context, client client.Clie
 			labelSelector, err := helpers.GetLabelSelectorFromService(ctx, client, api.Spec.Service)
 			if err != nil {
 				problems = append(problems, Failure{
-					AttributePath: attributePathWithRuleIndex + ".service.name",
-					Message:       fmt.Sprintf("No workload selectors found for service %s in namespace %s", *api.Spec.Service.Name, *api.Spec.Service.Namespace),
+					AttributePath: attributePathWithRuleIndex + ".service",
+					Message:       "No workload selectors found for service",
 				})
 			}
 			problems = append(problems, v.validateAccessStrategies(attributePathWithRuleIndex+".accessStrategies", r.AccessStrategies, labelSelector, helpers.FindServiceNamespace(api, &r))...)

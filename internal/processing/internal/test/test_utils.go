@@ -3,7 +3,9 @@ package processing_test
 import (
 	"encoding/json"
 	"fmt"
+
 	apirulev1beta1 "github.com/kyma-project/api-gateway/api/v1beta1"
+	gatewayv1beta1 "github.com/kyma-project/api-gateway/api/v1beta1"
 	"github.com/kyma-project/api-gateway/internal/processing"
 	"github.com/onsi/gomega"
 	. "github.com/onsi/gomega"
@@ -11,6 +13,7 @@ import (
 	"istio.io/api/networking/v1beta1"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
+	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -77,6 +80,10 @@ func GetFakeClient(objs ...client.Object) client.Client {
 	err = rulev1alpha1.AddToScheme(scheme)
 	gomega.Expect(err).NotTo(gomega.HaveOccurred())
 	err = securityv1beta1.AddToScheme(scheme)
+	gomega.Expect(err).NotTo(gomega.HaveOccurred())
+	err = gatewayv1beta1.AddToScheme(scheme)
+	gomega.Expect(err).NotTo(gomega.HaveOccurred())
+	err = corev1.AddToScheme(scheme)
 	gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 	return fake.NewClientBuilder().WithScheme(scheme).WithObjects(objs...).Build()

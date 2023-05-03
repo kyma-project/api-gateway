@@ -11,8 +11,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	"testing"
 
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/api/v1beta1"
@@ -25,6 +23,8 @@ import (
 	. "github.com/onsi/gomega"
 	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
@@ -45,16 +45,19 @@ var (
 	testDomainAllowlist  = []string{"foo.bar", "bar.foo", "kyma.local"}
 	handlerValidatorMock = &dummyHandlerValidator{}
 	asValidatorMock      = &dummyAccessStrategiesValidator{}
-	fakeClient           = GetFakeClient()
 )
 
-func GetFakeClient(objs ...client.Object) client.Client {
+func buildFakeClient(objs ...client.Object) client.Client {
 	scheme := runtime.NewScheme()
 	err := networkingv1beta1.AddToScheme(scheme)
 	gomega.Expect(err).NotTo(gomega.HaveOccurred())
 	err = rulev1alpha1.AddToScheme(scheme)
 	gomega.Expect(err).NotTo(gomega.HaveOccurred())
 	err = securityv1beta1.AddToScheme(scheme)
+	gomega.Expect(err).NotTo(gomega.HaveOccurred())
+	err = gatewayv1beta1.AddToScheme(scheme)
+	gomega.Expect(err).NotTo(gomega.HaveOccurred())
+	err = corev1.AddToScheme(scheme)
 	gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 	return fake.NewClientBuilder().WithScheme(scheme).WithObjects(objs...).Build()
@@ -95,6 +98,18 @@ var _ = Describe("Validate function", func() {
 			},
 		}
 
+		service := corev1.Service{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: sampleServiceName,
+			},
+			Spec: corev1.ServiceSpec{
+				Selector: map[string]string{
+					"app": sampleServiceName,
+				},
+			},
+		}
+		fakeClient := buildFakeClient(&service)
+
 		//when
 		problems := (&APIRuleValidator{
 			HandlerValidator:          handlerValidatorMock,
@@ -116,7 +131,7 @@ var _ = Describe("Validate function", func() {
 			"default": {sampleBlocklistedService, "kube-dns"},
 			"example": {"service"}}
 		input := &gatewayv1beta1.APIRule{
-			ObjectMeta: v1.ObjectMeta{
+			ObjectMeta: metav1.ObjectMeta{
 				Namespace: "default",
 			},
 			Spec: gatewayv1beta1.APIRuleSpec{
@@ -132,6 +147,18 @@ var _ = Describe("Validate function", func() {
 					},
 				},
 			}}
+
+		service := corev1.Service{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: sampleBlocklistedService,
+			},
+			Spec: corev1.ServiceSpec{
+				Selector: map[string]string{
+					"app": sampleBlocklistedService,
+				},
+			},
+		}
+		fakeClient := buildFakeClient(&service)
 
 		//when
 		problems := (&APIRuleValidator{
@@ -156,7 +183,7 @@ var _ = Describe("Validate function", func() {
 			"default":                  {"kube-dns"},
 			sampleBlocklistedNamespace: {sampleBlocklistedService}}
 		input := &gatewayv1beta1.APIRule{
-			ObjectMeta: v1.ObjectMeta{
+			ObjectMeta: metav1.ObjectMeta{
 				Namespace: "default",
 			},
 			Spec: gatewayv1beta1.APIRuleSpec{
@@ -172,6 +199,19 @@ var _ = Describe("Validate function", func() {
 					},
 				},
 			}}
+
+		service := corev1.Service{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      sampleBlocklistedService,
+				Namespace: sampleBlocklistedNamespace,
+			},
+			Spec: corev1.ServiceSpec{
+				Selector: map[string]string{
+					"app": sampleBlocklistedService,
+				},
+			},
+		}
+		fakeClient := buildFakeClient(&service)
 
 		//when
 		problems := (&APIRuleValidator{
@@ -207,6 +247,18 @@ var _ = Describe("Validate function", func() {
 					},
 				},
 			}}
+
+		service := corev1.Service{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: sampleServiceName,
+			},
+			Spec: corev1.ServiceSpec{
+				Selector: map[string]string{
+					"app": sampleServiceName,
+				},
+			},
+		}
+		fakeClient := buildFakeClient(&service)
 
 		//when
 		problems := (&APIRuleValidator{
@@ -244,6 +296,18 @@ var _ = Describe("Validate function", func() {
 					},
 				},
 			}}
+
+		service := corev1.Service{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: sampleServiceName,
+			},
+			Spec: corev1.ServiceSpec{
+				Selector: map[string]string{
+					"app": sampleServiceName,
+				},
+			},
+		}
+		fakeClient := buildFakeClient(&service)
 
 		//when
 		problems := (&APIRuleValidator{
@@ -286,6 +350,18 @@ var _ = Describe("Validate function", func() {
 				},
 			}}
 
+		service := corev1.Service{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: sampleServiceName,
+			},
+			Spec: corev1.ServiceSpec{
+				Selector: map[string]string{
+					"app": sampleServiceName,
+				},
+			},
+		}
+		fakeClient := buildFakeClient(&service)
+
 		//when
 		problems := (&APIRuleValidator{
 			HandlerValidator:          handlerValidatorMock,
@@ -321,6 +397,18 @@ var _ = Describe("Validate function", func() {
 				},
 			}}
 
+		service := corev1.Service{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: sampleServiceName,
+			},
+			Spec: corev1.ServiceSpec{
+				Selector: map[string]string{
+					"app": sampleServiceName,
+				},
+			},
+		}
+		fakeClient := buildFakeClient(&service)
+
 		//when
 		problems := (&APIRuleValidator{
 			HandlerValidator:          handlerValidatorMock,
@@ -353,6 +441,18 @@ var _ = Describe("Validate function", func() {
 					},
 				},
 			}}
+
+		service := corev1.Service{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: sampleServiceName,
+			},
+			Spec: corev1.ServiceSpec{
+				Selector: map[string]string{
+					"app": sampleServiceName,
+				},
+			},
+		}
+		fakeClient := buildFakeClient(&service)
 
 		//when
 		problems := (&APIRuleValidator{
@@ -389,6 +489,18 @@ var _ = Describe("Validate function", func() {
 				},
 			}}
 
+		service := corev1.Service{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: sampleServiceName,
+			},
+			Spec: corev1.ServiceSpec{
+				Selector: map[string]string{
+					"app": sampleServiceName,
+				},
+			},
+		}
+		fakeClient := buildFakeClient(&service)
+
 		//when
 		problems := (&APIRuleValidator{
 			HandlerValidator:          handlerValidatorMock,
@@ -424,6 +536,18 @@ var _ = Describe("Validate function", func() {
 				},
 			}}
 
+		service := corev1.Service{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: sampleServiceName,
+			},
+			Spec: corev1.ServiceSpec{
+				Selector: map[string]string{
+					"app": sampleServiceName,
+				},
+			},
+		}
+		fakeClient := buildFakeClient(&service)
+
 		//when
 		problems := (&APIRuleValidator{
 			HandlerValidator:          handlerValidatorMock,
@@ -458,6 +582,18 @@ var _ = Describe("Validate function", func() {
 				},
 			}}
 
+		service := corev1.Service{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: sampleServiceName,
+			},
+			Spec: corev1.ServiceSpec{
+				Selector: map[string]string{
+					"app": sampleServiceName,
+				},
+			},
+		}
+		fakeClient := buildFakeClient(&service)
+
 		//when
 		problems := (&APIRuleValidator{
 			HandlerValidator:          handlerValidatorMock,
@@ -479,7 +615,7 @@ var _ = Describe("Validate function", func() {
 		existingVS.Spec.Hosts = []string{occupiedHost}
 
 		input := &gatewayv1beta1.APIRule{
-			ObjectMeta: v1.ObjectMeta{
+			ObjectMeta: metav1.ObjectMeta{
 				UID: "67890",
 			},
 			Spec: gatewayv1beta1.APIRuleSpec{
@@ -496,6 +632,18 @@ var _ = Describe("Validate function", func() {
 				},
 			},
 		}
+
+		service := corev1.Service{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: sampleServiceName,
+			},
+			Spec: corev1.ServiceSpec{
+				Selector: map[string]string{
+					"app": sampleServiceName,
+				},
+			},
+		}
+		fakeClient := buildFakeClient(&service)
 
 		//when
 		problems := (&APIRuleValidator{
@@ -514,7 +662,7 @@ var _ = Describe("Validate function", func() {
 		occupiedHost := "occupied-host" + allowlistedDomain
 
 		input := &gatewayv1beta1.APIRule{
-			ObjectMeta: v1.ObjectMeta{
+			ObjectMeta: metav1.ObjectMeta{
 				UID: "12345",
 			},
 			Spec: gatewayv1beta1.APIRuleSpec{
@@ -531,6 +679,18 @@ var _ = Describe("Validate function", func() {
 				},
 			},
 		}
+
+		service := corev1.Service{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: sampleServiceName,
+			},
+			Spec: corev1.ServiceSpec{
+				Selector: map[string]string{
+					"app": sampleServiceName,
+				},
+			},
+		}
+		fakeClient := buildFakeClient(&service)
 
 		existingVS := networkingv1beta1.VirtualService{}
 		existingVS.Labels = getOwnerLabels(input)
@@ -561,6 +721,20 @@ var _ = Describe("Validate function", func() {
 				},
 			},
 		}
+
+		service := corev1.Service{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      sampleServiceName,
+				Namespace: "default",
+			},
+			Spec: corev1.ServiceSpec{
+				Selector: map[string]string{
+					"app": sampleServiceName,
+				},
+			},
+		}
+		fakeClient := buildFakeClient(&service)
+
 		//when
 		problems := (&APIRuleValidator{
 			AccessStrategiesValidator: asValidatorMock,
@@ -582,7 +756,7 @@ var _ = Describe("Validate function", func() {
 			"example": {"service"}}
 
 		input := &gatewayv1beta1.APIRule{
-			ObjectMeta: v1.ObjectMeta{
+			ObjectMeta: metav1.ObjectMeta{
 				Namespace: "default",
 			},
 			Spec: gatewayv1beta1.APIRuleSpec{
@@ -605,6 +779,29 @@ var _ = Describe("Validate function", func() {
 				},
 			},
 		}
+
+		service1 := corev1.Service{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: sampleServiceName,
+			},
+			Spec: corev1.ServiceSpec{
+				Selector: map[string]string{
+					"app": sampleServiceName,
+				},
+			},
+		}
+		service2 := corev1.Service{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: sampleBlocklistedService,
+			},
+			Spec: corev1.ServiceSpec{
+				Selector: map[string]string{
+					"app": sampleBlocklistedService,
+				},
+			},
+		}
+		fakeClient := buildFakeClient(&service1, &service2)
+
 		//when
 		problems := (&APIRuleValidator{
 			AccessStrategiesValidator: asValidatorMock,
@@ -628,7 +825,7 @@ var _ = Describe("Validate function", func() {
 			sampleBlocklistedNamespace: {sampleBlocklistedService}}
 
 		input := &gatewayv1beta1.APIRule{
-			ObjectMeta: v1.ObjectMeta{
+			ObjectMeta: metav1.ObjectMeta{
 				Namespace: "default",
 			},
 			Spec: gatewayv1beta1.APIRuleSpec{
@@ -651,6 +848,30 @@ var _ = Describe("Validate function", func() {
 				},
 			},
 		}
+
+		service1 := corev1.Service{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: sampleServiceName,
+			},
+			Spec: corev1.ServiceSpec{
+				Selector: map[string]string{
+					"app": sampleServiceName,
+				},
+			},
+		}
+		service2 := corev1.Service{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      sampleBlocklistedService,
+				Namespace: sampleBlocklistedNamespace,
+			},
+			Spec: corev1.ServiceSpec{
+				Selector: map[string]string{
+					"app": sampleBlocklistedService,
+				},
+			},
+		}
+		fakeClient := buildFakeClient(&service1, &service2)
+
 		//when
 		problems := (&APIRuleValidator{
 			AccessStrategiesValidator: asValidatorMock,
@@ -696,6 +917,19 @@ var _ = Describe("Validate function", func() {
 				},
 			},
 		}
+
+		service := corev1.Service{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: sampleServiceName,
+			},
+			Spec: corev1.ServiceSpec{
+				Selector: map[string]string{
+					"app": sampleServiceName,
+				},
+			},
+		}
+		fakeClient := buildFakeClient(&service)
+
 		//when
 		problems := (&APIRuleValidator{
 			AccessStrategiesValidator: asValidatorMock,
@@ -745,6 +979,19 @@ var _ = Describe("Validate function", func() {
 				},
 			},
 		}
+
+		service := corev1.Service{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: sampleServiceName,
+			},
+			Spec: corev1.ServiceSpec{
+				Selector: map[string]string{
+					"app": sampleServiceName,
+				},
+			},
+		}
+		fakeClient := buildFakeClient(&service)
+
 		//when
 		problems := (&APIRuleValidator{
 			AccessStrategiesValidator: asValidatorMock,
@@ -765,7 +1012,7 @@ var _ = Describe("Validate function", func() {
 		existingVS.Spec.Hosts = []string{occupiedHost}
 
 		input := &gatewayv1beta1.APIRule{
-			ObjectMeta: v1.ObjectMeta{
+			ObjectMeta: metav1.ObjectMeta{
 				UID: "67890",
 			},
 			Spec: gatewayv1beta1.APIRuleSpec{
@@ -803,6 +1050,19 @@ var _ = Describe("Validate function", func() {
 				},
 			},
 		}
+
+		service := corev1.Service{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: sampleServiceName,
+			},
+			Spec: corev1.ServiceSpec{
+				Selector: map[string]string{
+					"app": sampleServiceName,
+				},
+			},
+		}
+		fakeClient := buildFakeClient(&service)
+
 		//when
 		problems := (&APIRuleValidator{
 			HandlerValidator:          handlerValidatorMock,
@@ -822,7 +1082,7 @@ var _ = Describe("Validate function", func() {
 		existingVS.Spec.Hosts = []string{occupiedHost}
 
 		input := &gatewayv1beta1.APIRule{
-			ObjectMeta: v1.ObjectMeta{
+			ObjectMeta: metav1.ObjectMeta{
 				UID: "67890",
 			},
 			Spec: gatewayv1beta1.APIRuleSpec{
@@ -848,6 +1108,19 @@ var _ = Describe("Validate function", func() {
 				},
 			},
 		}
+
+		service := corev1.Service{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: sampleServiceName,
+			},
+			Spec: corev1.ServiceSpec{
+				Selector: map[string]string{
+					"app": sampleServiceName,
+				},
+			},
+		}
+		fakeClient := buildFakeClient(&service)
+
 		//when
 		problems := (&APIRuleValidator{
 			HandlerValidator:          handlerValidatorMock,

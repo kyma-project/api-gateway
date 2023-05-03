@@ -3,6 +3,7 @@ package controllers_test
 import (
 	"context"
 	"fmt"
+
 	"github.com/kyma-project/api-gateway/internal/helpers"
 
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/api/v1beta1"
@@ -33,12 +34,15 @@ var _ = Describe("Resource status", Serial, func() {
 			serviceHost := fmt.Sprintf("%s.kyma.local", serviceName)
 
 			rule := testRule(testPath, defaultMethods, defaultMutators, noConfigHandler("noop"))
-			instance := testInstance(apiRuleName, testNamespace, serviceName, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule})
+			instance := testApiRule(apiRuleName, testNamespace, serviceName, testNamespace, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule})
+			svc := testService(serviceName, testNamespace, testServicePort)
 
 			// when
+			Expect(c.Create(context.TODO(), svc)).Should(Succeed())
 			Expect(c.Create(context.TODO(), instance)).Should(Succeed())
 			defer func() {
 				deleteApiRule(instance)
+				deleteService(svc)
 			}()
 
 			// then
@@ -67,14 +71,17 @@ var _ = Describe("Resource status", Serial, func() {
 			invalidConfig.Name = "noop"
 
 			rule := testRule(testPath, defaultMethods, defaultMutators, invalidConfig)
-			instance := testInstance(apiRuleName, testNamespace, serviceName, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule})
+			instance := testApiRule(apiRuleName, testNamespace, serviceName, testNamespace, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule})
 			instance.Spec.Rules = append(instance.Spec.Rules, instance.Spec.Rules[0]) //Duplicate entry
 			instance.Spec.Rules = append(instance.Spec.Rules, instance.Spec.Rules[0]) //Duplicate entry
+			svc := testService(serviceName, testNamespace, testServicePort)
 
 			// when
+			Expect(c.Create(context.TODO(), svc)).Should(Succeed())
 			Expect(c.Create(context.TODO(), instance)).Should(Succeed())
 			defer func() {
 				deleteApiRule(instance)
+				deleteService(svc)
 			}()
 
 			// then
@@ -112,12 +119,15 @@ var _ = Describe("Resource status", Serial, func() {
 			serviceHost := fmt.Sprintf("%s.kyma.local", serviceName)
 
 			rule := testRule(testPath, defaultMethods, []*gatewayv1beta1.Mutator{}, noConfigHandler("noop"))
-			instance := testInstance(apiRuleName, testNamespace, serviceName, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule})
+			instance := testApiRule(apiRuleName, testNamespace, serviceName, testNamespace, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule})
+			svc := testService(serviceName, testNamespace, testServicePort)
 
 			// when
+			Expect(c.Create(context.TODO(), svc)).Should(Succeed())
 			Expect(c.Create(context.TODO(), instance)).Should(Succeed())
 			defer func() {
 				deleteApiRule(instance)
+				deleteService(svc)
 			}()
 
 			// then
@@ -145,14 +155,17 @@ var _ = Describe("Resource status", Serial, func() {
 			invalidConfig.Name = "noop"
 
 			rule := testRule(testPath, defaultMethods, []*gatewayv1beta1.Mutator{}, invalidConfig)
-			instance := testInstance(apiRuleName, testNamespace, serviceName, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule})
+			instance := testApiRule(apiRuleName, testNamespace, serviceName, testNamespace, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule})
 			instance.Spec.Rules = append(instance.Spec.Rules, instance.Spec.Rules[0]) //Duplicate entry
 			instance.Spec.Rules = append(instance.Spec.Rules, instance.Spec.Rules[0]) //Duplicate entry
+			svc := testService(serviceName, testNamespace, testServicePort)
 
 			// when
+			Expect(c.Create(context.TODO(), svc)).Should(Succeed())
 			Expect(c.Create(context.TODO(), instance)).Should(Succeed())
 			defer func() {
 				deleteApiRule(instance)
+				deleteService(svc)
 			}()
 
 			// then

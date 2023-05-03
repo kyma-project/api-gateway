@@ -24,8 +24,15 @@ func FindServiceNamespace(api *gatewayv1beta1.APIRule, rule *gatewayv1beta1.Rule
 
 func GetLabelSelectorFromService(ctx context.Context, client client.Client, service *gatewayv1beta1.Service) (*apiv1beta1.WorkloadSelector, error) {
 	selector := apiv1beta1.WorkloadSelector{}
+	if service == nil || service.Name == nil {
+		return &selector, fmt.Errorf("service name is required but missing")
+	}
+	nsName := types.NamespacedName{Name: *service.Name}
+	if service.Namespace != nil {
+		nsName.Namespace = *service.Namespace
+	}
 	svc := &corev1.Service{}
-	err := client.Get(ctx, types.NamespacedName{Namespace: *service.Namespace, Name: *service.Name}, svc)
+	err := client.Get(ctx, nsName, svc)
 	if err != nil {
 		return &selector, err
 	}
@@ -33,5 +40,5 @@ func GetLabelSelectorFromService(ctx context.Context, client client.Client, serv
 		selector.MatchLabels = map[string]string{name: value}
 		return &selector, nil
 	}
-	return &selector, fmt.Errorf("no selectors defined for service %s/%s", *service.Namespace, *service.Name)
+	return &selector, fmt.Errorf("no selectors defined for service %s", *service.Name)
 }

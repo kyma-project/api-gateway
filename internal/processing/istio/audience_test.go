@@ -11,6 +11,8 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
@@ -58,7 +60,18 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 
 		ruleJwt := GetRuleWithServiceFor(HeadersApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, []*gatewayv1beta1.Authenticator{jwt}, service)
 		apiRule := GetAPIRuleFor([]gatewayv1beta1.Rule{ruleJwt})
-		client := GetFakeClient()
+
+		svc := &corev1.Service{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: ServiceName,
+			},
+			Spec: corev1.ServiceSpec{
+				Selector: map[string]string{
+					"app": ServiceName,
+				},
+			},
+		}
+		client := GetFakeClient(svc)
 		processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig(), &testLogger)
 
 		// when
@@ -87,7 +100,18 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 
 		ruleJwt := GetRuleWithServiceFor(HeadersApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, []*gatewayv1beta1.Authenticator{jwt}, service)
 		apiRule := GetAPIRuleFor([]gatewayv1beta1.Rule{ruleJwt})
-		client := GetFakeClient()
+
+		svc := &corev1.Service{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: ServiceName,
+			},
+			Spec: corev1.ServiceSpec{
+				Selector: map[string]string{
+					"app": ServiceName,
+				},
+			},
+		}
+		client := GetFakeClient(svc)
 		processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig(), &testLogger)
 
 		// when
