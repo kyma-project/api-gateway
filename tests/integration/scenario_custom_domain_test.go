@@ -134,8 +134,8 @@ func (c *CustomDomainScenario) thereIsAnCloudCredentialsSecret(secretName string
 func (c *CustomDomainScenario) isDNSReady() error {
 	err := wait.ExponentialBackoff(wait.Backoff{
 		Duration: time.Second,
-		Factor:   10,
-		Steps:    5,
+		Factor:   2,
+		Steps:    10,
 	}, func() (done bool, err error) {
 		testName := generateRandomString(3)
 		ips, err := net.LookupIP(fmt.Sprintf("%s.%s.%s", testName, c.testID, c.domain))
