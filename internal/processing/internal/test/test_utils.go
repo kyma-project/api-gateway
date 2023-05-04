@@ -14,6 +14,7 @@ import (
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -158,6 +159,23 @@ func GetAPIRuleFor(rules []apirulev1beta1.Rule, namespace ...string) *apirulev1b
 			Rules: rules,
 		},
 	}
+}
+
+func GetService(name string, namespace ...string) *corev1.Service {
+	svc := &corev1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: name,
+		},
+		Spec: corev1.ServiceSpec{
+			Selector: map[string]string{
+				"app": name,
+			},
+		},
+	}
+	if len(namespace) > 0 {
+		svc.ObjectMeta.Namespace = namespace[0]
+	}
+	return svc
 }
 
 func ToCSVList(input []string) string {

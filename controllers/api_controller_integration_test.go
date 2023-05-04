@@ -576,6 +576,82 @@ var _ = Describe("APIRule Controller", Serial, func() {
 					})
 				})
 			})
+
+			Context("when service has custom label selectors,", func() {
+				It("should create a AuthorizationPolicy with custom label selector from service", func() {
+					updateJwtHandlerTo(helpers.JWT_HANDLER_ISTIO)
+
+					apiRuleName := generateTestName(testNameBase, testIDLength)
+					serviceName := testServiceNameBase
+					serviceHost := fmt.Sprintf("%s.kyma.local", serviceName)
+
+					rule1 := testRule("/img", []string{"GET"}, nil, testIstioJWTHandler(testIssuer, testJwksUri))
+					apiRule := testApiRule(apiRuleName, testNamespace, serviceName, testNamespace, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule1})
+					svc := testService(serviceName, testNamespace, testServicePort)
+					delete(svc.Spec.Selector, "app")
+					svc.Spec.Selector["custom"] = serviceName
+
+					// when
+					Expect(c.Create(context.TODO(), svc)).Should(Succeed())
+					Expect(c.Create(context.TODO(), apiRule)).Should(Succeed())
+					defer func() {
+						deleteApiRule(apiRule)
+						deleteService(svc)
+					}()
+
+					expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusOK)
+
+					ApiRuleNameMatchingLabels := matchingLabelsFunc(apiRuleName, testNamespace)
+
+					By("Verifying authorization policy")
+
+					apList := securityv1beta1.AuthorizationPolicyList{}
+					Eventually(func(g Gomega) {
+						g.Expect(c.List(context.TODO(), &apList, ApiRuleNameMatchingLabels)).Should(Succeed())
+						g.Expect(apList.Items).To(HaveLen(1))
+						g.Expect(apList.Items[0].Spec.Selector.MatchLabels).To(HaveLen(1))
+						g.Expect(apList.Items[0].Spec.Selector.MatchLabels).To(HaveKeyWithValue("custom", serviceName))
+					}, eventuallyTimeout).Should(Succeed())
+				})
+
+				It("should create a AuthorizationPolicy with multiple custom label selectors from service", func() {
+					updateJwtHandlerTo(helpers.JWT_HANDLER_ISTIO)
+
+					apiRuleName := generateTestName(testNameBase, testIDLength)
+					serviceName := testServiceNameBase
+					serviceHost := fmt.Sprintf("%s.kyma.local", serviceName)
+
+					rule1 := testRule("/img", []string{"GET"}, nil, testIstioJWTHandler(testIssuer, testJwksUri))
+					apiRule := testApiRule(apiRuleName, testNamespace, serviceName, testNamespace, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule1})
+					svc := testService(serviceName, testNamespace, testServicePort)
+					delete(svc.Spec.Selector, "app")
+					svc.Spec.Selector["custom"] = serviceName
+					svc.Spec.Selector["second-custom"] = "blah"
+
+					// when
+					Expect(c.Create(context.TODO(), svc)).Should(Succeed())
+					Expect(c.Create(context.TODO(), apiRule)).Should(Succeed())
+					defer func() {
+						deleteApiRule(apiRule)
+						deleteService(svc)
+					}()
+
+					expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusOK)
+
+					ApiRuleNameMatchingLabels := matchingLabelsFunc(apiRuleName, testNamespace)
+
+					By("Verifying authorization policy")
+
+					apList := securityv1beta1.AuthorizationPolicyList{}
+					Eventually(func(g Gomega) {
+						g.Expect(c.List(context.TODO(), &apList, ApiRuleNameMatchingLabels)).Should(Succeed())
+						g.Expect(apList.Items).To(HaveLen(1))
+						g.Expect(apList.Items[0].Spec.Selector.MatchLabels).To(HaveLen(2))
+						g.Expect(apList.Items[0].Spec.Selector.MatchLabels).To(HaveKeyWithValue("custom", serviceName))
+						g.Expect(apList.Items[0].Spec.Selector.MatchLabels).To(HaveKeyWithValue("second-custom", "blah"))
+					}, eventuallyTimeout).Should(Succeed())
+				})
+			})
 		})
 
 		Context("on specified paths", func() {

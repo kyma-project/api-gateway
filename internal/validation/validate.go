@@ -203,7 +203,7 @@ func (v *APIRuleValidator) validateRules(ctx context.Context, client client.Clie
 			if err != nil {
 				problems = append(problems, Failure{
 					AttributePath: attributePathWithRuleIndex + ".service",
-					Message:       "No workload selectors found for service",
+					Message:       "No label selectors found for service",
 				})
 			}
 			problems = append(problems, v.validateAccessStrategies(attributePathWithRuleIndex+".accessStrategies", r.AccessStrategies, labelSelector, helpers.FindServiceNamespace(api, &r))...)
@@ -223,7 +223,7 @@ func (v *APIRuleValidator) validateRules(ctx context.Context, client client.Clie
 			if err != nil {
 				problems = append(problems, Failure{
 					AttributePath: attributePathWithRuleIndex + ".service",
-					Message:       "No workload selectors found for service",
+					Message:       "No label selectors found for service",
 				})
 			}
 			problems = append(problems, v.validateAccessStrategies(attributePathWithRuleIndex+".accessStrategies", r.AccessStrategies, labelSelector, helpers.FindServiceNamespace(api, &r))...)
