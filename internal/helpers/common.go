@@ -22,7 +22,7 @@ func FindServiceNamespace(api *gatewayv1beta1.APIRule, rule *gatewayv1beta1.Rule
 	return api.Namespace
 }
 
-func GetLabelSelectorFromService(ctx context.Context, client client.Client, service *gatewayv1beta1.Service) (*apiv1beta1.WorkloadSelector, error) {
+func GetLabelSelectorFromService(ctx context.Context, client client.Client, service *gatewayv1beta1.Service, api *gatewayv1beta1.APIRule, rule *gatewayv1beta1.Rule) (*apiv1beta1.WorkloadSelector, error) {
 	workloadSelector := apiv1beta1.WorkloadSelector{}
 	if service == nil || service.Name == nil {
 		return &workloadSelector, fmt.Errorf("service name is required but missing")
@@ -30,6 +30,8 @@ func GetLabelSelectorFromService(ctx context.Context, client client.Client, serv
 	nsName := types.NamespacedName{Name: *service.Name}
 	if service.Namespace != nil {
 		nsName.Namespace = *service.Namespace
+	} else {
+		nsName.Namespace = FindServiceNamespace(api, rule)
 	}
 	svc := &corev1.Service{}
 	err := client.Get(ctx, nsName, svc)

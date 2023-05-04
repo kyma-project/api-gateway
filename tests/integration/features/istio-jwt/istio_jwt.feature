@@ -128,3 +128,11 @@ Feature: Exposing endpoints with Istio JWT authorization strategy
     And JwtTokenFromParams: Calling the "/ip" endpoint with a valid "JWT" token from default header should result in status between 400 and 403
     And JwtTokenFromParams: Calling the "/ip" endpoint with a valid "JWT" token from parameter "jwt_token" should result in status between 200 and 299
     And JwtTokenFromParams: Teardown httpbin service
+
+  Scenario: Calling a helloworld endpoint with custom label selector service
+    Given CustomLabelSelector: There is a helloworld service with custom label selector name "custom-name"
+    And CustomLabelSelector: There is an endpoint secured with JWT on path "/ip"
+    When CustomLabelSelector: The APIRule is applied
+    Then CustomLabelSelector: Calling the "/ip" endpoint without a token should result in status between 400 and 403
+    And CustomLabelSelector: Calling the "/ip" endpoint with a valid "JWT" token should result in status between 200 and 299
+    And CustomLabelSelector: Teardown helloworld service

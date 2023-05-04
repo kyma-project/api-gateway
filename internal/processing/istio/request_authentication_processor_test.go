@@ -92,7 +92,8 @@ var _ = Describe("Request Authentication Processor", func() {
 		ruleJwt := GetRuleWithServiceFor(HeadersApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, []*gatewayv1beta1.Authenticator{jwt}, service)
 		ruleJwt2 := GetRuleWithServiceFor(ImgApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, []*gatewayv1beta1.Authenticator{jwt}, service)
 		apiRule := GetAPIRuleFor([]gatewayv1beta1.Rule{ruleJwt, ruleJwt2})
-		client := GetFakeClient()
+		svc := GetService(ServiceName)
+		client := GetFakeClient(svc)
 		processor := istio.NewRequestAuthenticationProcessor(GetTestConfig())
 
 		// when
@@ -118,7 +119,8 @@ var _ = Describe("Request Authentication Processor", func() {
 	It("should produce RA for a Rule without service, but service definition on ApiRule level", func() {
 		// given
 		jwt := createIstioJwtAccessStrategy()
-		client := GetFakeClient()
+		svc := GetService(ServiceName)
+		client := GetFakeClient(svc)
 		ruleJwt := GetRuleFor(HeadersApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, []*gatewayv1beta1.Authenticator{jwt})
 		apiRule := GetAPIRuleFor([]gatewayv1beta1.Rule{ruleJwt})
 		processor := istio.NewRequestAuthenticationProcessor(GetTestConfig())
@@ -146,7 +148,8 @@ var _ = Describe("Request Authentication Processor", func() {
 			Name: &ruleServiceName,
 			Port: &ServicePort,
 		}
-		client := GetFakeClient()
+		svc := GetService(ruleServiceName, specServiceNamespace)
+		client := GetFakeClient(svc)
 		ruleJwt := GetRuleWithServiceFor(HeadersApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, []*gatewayv1beta1.Authenticator{jwt}, service)
 		apiRule := GetAPIRuleFor([]gatewayv1beta1.Rule{ruleJwt}, specServiceNamespace)
 		processor := istio.NewRequestAuthenticationProcessor(GetTestConfig())
@@ -175,7 +178,8 @@ var _ = Describe("Request Authentication Processor", func() {
 			Port:      &ServicePort,
 			Namespace: &ruleServiceNamespace,
 		}
-		client := GetFakeClient()
+		svc := GetService(ruleServiceName, ruleServiceNamespace)
+		client := GetFakeClient(svc)
 		ruleJwt := GetRuleWithServiceFor(HeadersApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, []*gatewayv1beta1.Authenticator{jwt}, service)
 		apiRule := GetAPIRuleFor([]gatewayv1beta1.Rule{ruleJwt})
 		processor := istio.NewRequestAuthenticationProcessor(GetTestConfig())
@@ -209,7 +213,8 @@ var _ = Describe("Request Authentication Processor", func() {
 				},
 			},
 		}
-		client := GetFakeClient()
+		svc := GetService(ServiceName)
+		client := GetFakeClient(svc)
 		service := &gatewayv1beta1.Service{
 			Name: &ServiceName,
 			Port: &ServicePort,
@@ -317,12 +322,13 @@ var _ = Describe("Request Authentication Processor", func() {
 		// given: New resources
 		jwtRule := GetJwtRuleWithService(JwtIssuer, JwksUri, "test-service")
 		rules := []gatewayv1beta1.Rule{jwtRule}
-
+		svc := GetService("test-service")
+		client := GetFakeClient(svc)
 		apiRule := GetAPIRuleFor(rules)
 		processor := istio.NewRequestAuthenticationProcessor(GetTestConfig())
 
 		// when
-		result, err := processor.EvaluateReconciliation(context.TODO(), GetFakeClient(), apiRule)
+		result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
 
 		// then
 		Expect(err).To(BeNil())
@@ -354,7 +360,8 @@ var _ = Describe("Request Authentication Processor", func() {
 		It("should update RA when nothing changed", func() {
 			// given: Cluster state
 			existingRa := getRequestAuthentication("raName", "test-service", JwksUri, JwtIssuer)
-			ctrlClient := GetFakeClient(&existingRa)
+			svc := GetService("test-service")
+			ctrlClient := GetFakeClient(&existingRa, svc)
 			processor := istio.NewRequestAuthenticationProcessor(GetTestConfig())
 
 			// given: New resources
@@ -374,7 +381,9 @@ var _ = Describe("Request Authentication Processor", func() {
 		It("should delete and create new RA when only service name in JWT Rule has changed", func() {
 			// given: Cluster state
 			existingRa := getRequestAuthentication("raName", "old-service", JwksUri, JwtIssuer)
-			ctrlClient := GetFakeClient(&existingRa)
+			svcOld := GetService("old-service")
+			svcUpdated := GetService("updated-service")
+			ctrlClient := GetFakeClient(&existingRa, svcOld, svcUpdated)
 			processor := istio.NewRequestAuthenticationProcessor(GetTestConfig())
 
 			// given: New resources
@@ -397,7 +406,9 @@ var _ = Describe("Request Authentication Processor", func() {
 		It("should create new RA when new service with new JWT config is added to ApiRule", func() {
 			// given: Cluster state
 			existingRa := getRequestAuthentication("raName", "existing-service", JwksUri, JwtIssuer)
-			ctrlClient := GetFakeClient(&existingRa)
+			svcExisting := GetService("existing-service")
+			svcNew := GetService("new-service")
+			ctrlClient := GetFakeClient(&existingRa, svcExisting, svcNew)
 			processor := istio.NewRequestAuthenticationProcessor(GetTestConfig())
 
 			// given: New resources
@@ -421,7 +432,8 @@ var _ = Describe("Request Authentication Processor", func() {
 		It("should create new RA and delete old RA when JWT ApiRule has new JWKS URI", func() {
 			// given: Cluster state
 			existingRa := getRequestAuthentication("raName", "test-service", JwksUri, JwtIssuer)
-			ctrlClient := GetFakeClient(&existingRa)
+			svc := GetService("test-service")
+			ctrlClient := GetFakeClient(&existingRa, svc)
 			processor := istio.NewRequestAuthenticationProcessor(GetTestConfig())
 
 			// given: New resources
@@ -449,7 +461,9 @@ var _ = Describe("Request Authentication Processor", func() {
 			// given: Cluster state
 			firstServiceRa := getRequestAuthentication("firstRa", "first-service", JwksUri, JwtIssuer)
 			secondServiceRa := getRequestAuthentication("secondRa", "second-service", JwksUri, JwtIssuer)
-			ctrlClient := GetFakeClient(&firstServiceRa, &secondServiceRa)
+			svcFirst := GetService("first-service")
+			svcSecond := GetService("second-service")
+			ctrlClient := GetFakeClient(&firstServiceRa, &secondServiceRa, svcFirst, svcSecond)
 			processor := istio.NewRequestAuthenticationProcessor(GetTestConfig())
 
 			// given: New resources
@@ -475,7 +489,9 @@ var _ = Describe("Request Authentication Processor", func() {
 			// given: Cluster state
 			firstServiceRa := getRequestAuthentication("firstRa", "first-service", JwksUri, JwtIssuer)
 			secondServiceRa := getRequestAuthentication("secondRa", "second-service", JwksUri, JwtIssuer)
-			ctrlClient := GetFakeClient(&firstServiceRa, &secondServiceRa)
+			svcFirst := GetService("first-service")
+			svcSecond := GetService("second-service")
+			ctrlClient := GetFakeClient(&firstServiceRa, &secondServiceRa, svcFirst, svcSecond)
 			processor := istio.NewRequestAuthenticationProcessor(GetTestConfig())
 
 			// given: New resources
@@ -499,7 +515,10 @@ var _ = Describe("Request Authentication Processor", func() {
 			// given: Cluster state
 			firstServiceRa := getRequestAuthentication("firstRa", "first-service", JwksUri, JwtIssuer)
 			secondServiceRa := getRequestAuthentication("secondRa", "second-service", JwksUri, JwtIssuer)
-			ctrlClient := GetFakeClient(&firstServiceRa, &secondServiceRa)
+			svcFirst := GetService("first-service")
+			svcSecond := GetService("second-service")
+			svcNew := GetService("new-service")
+			ctrlClient := GetFakeClient(&firstServiceRa, &secondServiceRa, svcFirst, svcSecond, svcNew)
 			processor := istio.NewRequestAuthenticationProcessor(GetTestConfig())
 
 			// given: New resources
@@ -525,7 +544,9 @@ var _ = Describe("Request Authentication Processor", func() {
 		It("should delete and create new RA when it has different namespace on spec level", func() {
 			// given: Cluster state
 			oldRa := getRequestAuthentication("firstRa", "old-service", JwksUri, JwtIssuer)
-			ctrlClient := GetFakeClient(&oldRa)
+			svcOld := GetService("old-service")
+			svcNewNS := GetService("old-service", "new-namespace")
+			ctrlClient := GetFakeClient(&oldRa, svcOld, svcNewNS)
 			processor := istio.NewRequestAuthenticationProcessor(GetTestConfig())
 
 			// given: New resources
@@ -550,7 +571,9 @@ var _ = Describe("Request Authentication Processor", func() {
 		It("should delete and create new RA when it has different namespace on rule level", func() {
 			// given: Cluster state
 			oldRa := getRequestAuthentication("firstRa", "old-service", JwksUri, JwtIssuer)
-			ctrlClient := GetFakeClient(&oldRa)
+			svcOld := GetService("old-service")
+			svcNewNS := GetService("old-service", "new-namespace")
+			ctrlClient := GetFakeClient(&oldRa, svcOld, svcNewNS)
 			processor := istio.NewRequestAuthenticationProcessor(GetTestConfig())
 
 			// given: New resources
@@ -568,6 +591,102 @@ var _ = Describe("Request Authentication Processor", func() {
 			deletionMatcher := getActionMatcher("delete", ApiNamespace, "old-service", JwksUri, JwtIssuer)
 			creationMatcher := getActionMatcher("create", "new-namespace", "old-service", JwksUri, JwtIssuer)
 			Expect(result).To(ContainElements(deletionMatcher, creationMatcher))
+		})
+	})
+
+	When("Service has custom selector spec", func() {
+		It("should create RA with selector from service", func() {
+			// given: New resources
+			methods := []string{"GET"}
+			path := "/"
+			serviceName := "test-service"
+
+			rule := getRuleForApTest(methods, path, serviceName)
+			rules := []gatewayv1beta1.Rule{rule}
+			apiRule := GetAPIRuleFor(rules)
+			svc := GetService(serviceName)
+			delete(svc.Spec.Selector, "app")
+			svc.Spec.Selector["custom"] = serviceName
+			client := GetFakeClient(svc)
+
+			processor := istio.NewRequestAuthenticationProcessor(GetTestConfig())
+
+			// when
+			result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
+
+			// then
+			Expect(err).To(BeNil())
+			Expect(result).To(HaveLen(1))
+
+			ra := result[0].Obj.(*securityv1beta1.RequestAuthentication)
+
+			Expect(ra).NotTo(BeNil())
+			Expect(ra.Spec.Selector.MatchLabels).To(HaveLen(1))
+			Expect(ra.Spec.Selector.MatchLabels["custom"]).To(Equal(serviceName))
+		})
+
+		It("should create RA with selector from service in different namespace", func() {
+			// given: New resources
+			methods := []string{"GET"}
+			path := "/"
+			serviceName := "test-service"
+			differentNamespace := "different-namespace"
+
+			rule := getRuleForApTest(methods, path, serviceName)
+			rule.Service.Namespace = &differentNamespace
+			rules := []gatewayv1beta1.Rule{rule}
+			apiRule := GetAPIRuleFor(rules)
+			svc := GetService(serviceName, differentNamespace)
+			delete(svc.Spec.Selector, "app")
+			svc.Spec.Selector["custom"] = serviceName
+			client := GetFakeClient(svc)
+
+			processor := istio.NewRequestAuthenticationProcessor(GetTestConfig())
+
+			// when
+			result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
+
+			// then
+			Expect(err).To(BeNil())
+			Expect(result).To(HaveLen(1))
+
+			ra := result[0].Obj.(*securityv1beta1.RequestAuthentication)
+
+			Expect(ra).NotTo(BeNil())
+			Expect(ra.Spec.Selector.MatchLabels).To(HaveLen(1))
+			Expect(ra.Spec.Selector.MatchLabels["custom"]).To(Equal(serviceName))
+		})
+
+		It("should create RA with selector from service with multiple selector labels", func() {
+			// given: New resources
+			methods := []string{"GET"}
+			path := "/"
+			serviceName := "test-service"
+
+			rule := getRuleForApTest(methods, path, serviceName)
+			rules := []gatewayv1beta1.Rule{rule}
+			apiRule := GetAPIRuleFor(rules)
+			svc := GetService(serviceName)
+			delete(svc.Spec.Selector, "app")
+			svc.Spec.Selector["custom"] = serviceName
+			svc.Spec.Selector["second-custom"] = "blah"
+			client := GetFakeClient(svc)
+
+			processor := istio.NewRequestAuthenticationProcessor(GetTestConfig())
+
+			// when
+			result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
+
+			// then
+			Expect(err).To(BeNil())
+			Expect(result).To(HaveLen(1))
+
+			ra := result[0].Obj.(*securityv1beta1.RequestAuthentication)
+
+			Expect(ra).NotTo(BeNil())
+			Expect(ra.Spec.Selector.MatchLabels).To(HaveLen(2))
+			Expect(ra.Spec.Selector.MatchLabels).To(HaveKeyWithValue("custom", serviceName))
+			Expect(ra.Spec.Selector.MatchLabels).To(HaveKeyWithValue("second-custom", "blah"))
 		})
 	})
 })

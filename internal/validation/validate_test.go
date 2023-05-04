@@ -135,9 +135,11 @@ var _ = Describe("Validate function", func() {
 		}).Validate(context.TODO(), fakeClient, input, networkingv1beta1.VirtualServiceList{})
 
 		//then
-		Expect(problems).To(HaveLen(1))
+		Expect(problems).To(HaveLen(2))
 		Expect(problems[0].AttributePath).To(Equal(".spec.service.name"))
 		Expect(problems[0].Message).To(Equal("Service kubernetes in namespace default is blocklisted"))
+		Expect(problems[1].AttributePath).To(Equal(".spec.service"))
+		Expect(problems[1].Message).To(Equal("No label selectors found for service"))
 	})
 
 	It("Should fail for blocklisted service for specific namespace", func() {
@@ -648,9 +650,13 @@ var _ = Describe("Validate function", func() {
 		}).Validate(context.TODO(), fakeClient, input, networkingv1beta1.VirtualServiceList{})
 
 		//then
-		Expect(problems).To(HaveLen(1))
-		Expect(problems[0].AttributePath).To(Equal(".spec.rules[1].service.name"))
-		Expect(problems[0].Message).To(Equal(fmt.Sprintf("Service %s in namespace default is blocklisted", sampleBlocklistedService)))
+		Expect(problems).To(HaveLen(3))
+		Expect(problems[0].AttributePath).To(Equal(".spec.rules[0].service"))
+		Expect(problems[0].Message).To(Equal("No label selectors found for service"))
+		Expect(problems[1].AttributePath).To(Equal(".spec.rules[1].service"))
+		Expect(problems[1].Message).To(Equal("No label selectors found for service"))
+		Expect(problems[2].AttributePath).To(Equal(".spec.rules[1].service.name"))
+		Expect(problems[2].Message).To(Equal(fmt.Sprintf("Service %s in namespace default is blocklisted", sampleBlocklistedService)))
 	})
 
 	It("Should return an error when rule is defined with blocklisted service in specific namespace", func() {
@@ -699,9 +705,11 @@ var _ = Describe("Validate function", func() {
 		}).Validate(context.TODO(), fakeClient, input, networkingv1beta1.VirtualServiceList{})
 
 		//then
-		Expect(problems).To(HaveLen(1))
-		Expect(problems[0].AttributePath).To(Equal(".spec.rules[1].service.name"))
-		Expect(problems[0].Message).To(Equal(fmt.Sprintf("Service %s in namespace %s is blocklisted", sampleBlocklistedService, sampleBlocklistedNamespace)))
+		Expect(problems).To(HaveLen(2))
+		Expect(problems[0].AttributePath).To(Equal(".spec.rules[0].service"))
+		Expect(problems[0].Message).To(Equal("No label selectors found for service"))
+		Expect(problems[1].AttributePath).To(Equal(".spec.rules[1].service.name"))
+		Expect(problems[1].Message).To(Equal(fmt.Sprintf("Service %s in namespace %s is blocklisted", sampleBlocklistedService, sampleBlocklistedNamespace)))
 	})
 
 	It("Should detect several problems", func() {
@@ -946,7 +954,7 @@ var _ = Describe("Validate function", func() {
 
 		//then
 		Expect(problems).To(HaveLen(1))
-		Expect(problems[0].AttributePath).To(Equal(".spec.rules[0].service"))
+		Expect(problems[0].AttributePath).To(Equal(".spec.service"))
 		Expect(problems[0].Message).To(Equal("No label selectors found for service"))
 	})
 
@@ -983,6 +991,70 @@ var _ = Describe("Validate function", func() {
 		Expect(problems).To(HaveLen(1))
 		Expect(problems[0].AttributePath).To(Equal(".spec.rules[0].service"))
 		Expect(problems[0].Message).To(Equal("No label selectors found for service"))
+	})
+
+	It("Should succeed with service without namespace", func() {
+		//given
+		input := &gatewayv1beta1.APIRule{
+			Spec: gatewayv1beta1.APIRuleSpec{
+				Rules: []gatewayv1beta1.Rule{
+					{
+						Path: "/abc",
+						AccessStrategies: []*gatewayv1beta1.Authenticator{
+							toAuthenticator("noop", emptyConfig()),
+						},
+						Methods: []string{"POST"},
+					},
+				},
+				Service: getApiRuleService(sampleServiceName, uint32(8080)),
+				Host:    getHost(sampleValidHost),
+			},
+		}
+
+		service := getService(sampleServiceName)
+		fakeClient := buildFakeClient(service)
+
+		//when
+		problems := (&APIRuleValidator{
+			HandlerValidator:          handlerValidatorMock,
+			AccessStrategiesValidator: asValidatorMock,
+			DomainAllowList:           testDomainAllowlist,
+		}).Validate(context.TODO(), fakeClient, input, networkingv1beta1.VirtualServiceList{})
+
+		//then
+		Expect(problems).To(HaveLen(0))
+	})
+
+	It("Should succeed with service on path level without namespace", func() {
+		//given
+		input := &gatewayv1beta1.APIRule{
+			Spec: gatewayv1beta1.APIRuleSpec{
+				Rules: []gatewayv1beta1.Rule{
+					{
+						Path:    "/abc",
+						Service: getApiRuleService(sampleServiceName, uint32(8080)),
+						AccessStrategies: []*gatewayv1beta1.Authenticator{
+							toAuthenticator("noop", emptyConfig()),
+						},
+						Methods: []string{"POST"},
+					},
+				},
+				Host: getHost(sampleValidHost),
+			},
+		}
+
+		service := getService(sampleServiceName)
+		fakeClient := buildFakeClient(service)
+
+		//when
+		problems := (&APIRuleValidator{
+			HandlerValidator:          handlerValidatorMock,
+			AccessStrategiesValidator: asValidatorMock,
+			DomainAllowList:           testDomainAllowlist,
+		}).Validate(context.TODO(), fakeClient, input, networkingv1beta1.VirtualServiceList{})
+
+		//then
+		Expect(problems).To(HaveLen(0))
 	})
 })
 

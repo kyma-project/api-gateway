@@ -64,7 +64,7 @@ func (v *APIRuleValidator) Validate(ctx context.Context, client client.Client, a
 
 	//Validate service on path level if it is created
 	if api.Spec.Service != nil {
-		res = append(res, v.validateService(".spec.service", api)...)
+		res = append(res, v.validateService(ctx, client, ".spec.service", api)...)
 	}
 	//Validate Host
 	res = append(res, v.validateHost(".spec.host", vsList, api)...)
@@ -156,7 +156,7 @@ func (v *APIRuleValidator) validateHost(attributePath string, vsList networkingv
 	return problems
 }
 
-func (v *APIRuleValidator) validateService(attributePath string, api *gatewayv1beta1.APIRule) []Failure {
+func (v *APIRuleValidator) validateService(ctx context.Context, client client.Client, attributePath string, api *gatewayv1beta1.APIRule) []Failure {
 	var problems []Failure
 
 	for namespace, services := range v.ServiceBlockList {
@@ -170,6 +170,15 @@ func (v *APIRuleValidator) validateService(attributePath string, api *gatewayv1b
 			}
 		}
 	}
+
+	_, err := helpers.GetLabelSelectorFromService(ctx, client, api.Spec.Service, api, nil)
+	if err != nil {
+		problems = append(problems, Failure{
+			AttributePath: attributePath,
+			Message:       "No label selectors found for service",
+		})
+	}
+
 	return problems
 }
 
@@ -199,7 +208,7 @@ func (v *APIRuleValidator) validateRules(ctx context.Context, client client.Clie
 			problems = append(problems, Failure{AttributePath: attributePathWithRuleIndex + ".service", Message: "No service defined with no main service on spec level"})
 		}
 		if r.Service != nil {
-			labelSelector, err := helpers.GetLabelSelectorFromService(ctx, client, r.Service)
+			labelSelector, err := helpers.GetLabelSelectorFromService(ctx, client, r.Service, api, &r)
 			if err != nil {
 				problems = append(problems, Failure{
 					AttributePath: attributePathWithRuleIndex + ".service",
@@ -219,13 +228,7 @@ func (v *APIRuleValidator) validateRules(ctx context.Context, client client.Clie
 				}
 			}
 		} else if api.Spec.Service != nil {
-			labelSelector, err := helpers.GetLabelSelectorFromService(ctx, client, api.Spec.Service)
-			if err != nil {
-				problems = append(problems, Failure{
-					AttributePath: attributePathWithRuleIndex + ".service",
-					Message:       "No label selectors found for service",
-				})
-			}
+			labelSelector, _ := helpers.GetLabelSelectorFromService(ctx, client, api.Spec.Service, api, nil)
 			problems = append(problems, v.validateAccessStrategies(attributePathWithRuleIndex+".accessStrategies", r.AccessStrategies, labelSelector, helpers.FindServiceNamespace(api, &r))...)
 		}
 

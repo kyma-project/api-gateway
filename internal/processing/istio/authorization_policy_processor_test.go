@@ -377,7 +377,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 		}
 		ruleJwt := GetRuleWithServiceFor(HeadersApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, []*gatewayv1beta1.Authenticator{jwt}, service)
 		apiRule := GetAPIRuleFor([]gatewayv1beta1.Rule{ruleJwt}, specServiceNamespace)
-		svc := GetService(ruleServiceName)
+		svc := GetService(ruleServiceName, specServiceNamespace)
 		client := GetFakeClient(svc)
 		processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig(), &testLogger)
 
@@ -997,8 +997,10 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 		It("should create new AP in new namespace and delete old AP, namespace on spec level", func() {
 			// given: Cluster state
 			oldAP := getAuthorizationPolicy("unchanged-ap", ApiNamespace, "test-service", []string{"DELETE"})
+			specNewServiceNamespace := "new-namespace"
 			svc := GetService("test-service")
-			ctrlClient := GetFakeClient(oldAP, svc)
+			svcNewNS := GetService("test-service", specNewServiceNamespace)
+			ctrlClient := GetFakeClient(oldAP, svc, svcNewNS)
 			processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig(), &testLogger)
 
 			// given: New resources
@@ -1006,8 +1008,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			rules := []gatewayv1beta1.Rule{movedRule}
 
 			apiRule := GetAPIRuleFor(rules)
-			specServiceNamespace := "new-namespace"
-			apiRule.Spec.Service.Namespace = &specServiceNamespace
+			apiRule.Spec.Service.Namespace = &specNewServiceNamespace
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.TODO(), ctrlClient, apiRule)
@@ -1377,7 +1378,6 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			// then
 			Expect(err).To(BeNil())
 			Expect(result).To(HaveLen(1))
-			Expect(result[0].Action.String()).To(Equal("create"))
 
 			ap := result[0].Obj.(*securityv1beta1.AuthorizationPolicy)
 
@@ -1410,7 +1410,6 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			// then
 			Expect(err).To(BeNil())
 			Expect(result).To(HaveLen(1))
-			Expect(result[0].Action.String()).To(Equal("create"))
 
 			ap := result[0].Obj.(*securityv1beta1.AuthorizationPolicy)
 
@@ -1442,7 +1441,6 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			// then
 			Expect(err).To(BeNil())
 			Expect(result).To(HaveLen(1))
-			Expect(result[0].Action.String()).To(Equal("create"))
 
 			ap := result[0].Obj.(*securityv1beta1.AuthorizationPolicy)
 

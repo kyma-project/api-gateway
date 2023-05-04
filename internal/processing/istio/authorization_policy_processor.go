@@ -132,7 +132,7 @@ func generateAuthorizationPolicySpec(ctx context.Context, client client.Client, 
 		service = api.Spec.Service
 	}
 
-	labelSelector, err := helpers.GetLabelSelectorFromService(ctx, client, service)
+	labelSelector, err := helpers.GetLabelSelectorFromService(ctx, client, service, api, &rule)
 	if err != nil {
 		return nil, err
 	}

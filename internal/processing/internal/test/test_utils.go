@@ -135,15 +135,11 @@ func GetJwtRuleWithService(jwtIssuer, jwksUri, serviceName string, namespace ...
 }
 
 func GetAPIRuleFor(rules []apirulev1beta1.Rule, namespace ...string) *apirulev1beta1.APIRule {
-	apiNamespace := ApiNamespace
-	if len(namespace) > 0 {
-		apiNamespace = namespace[0]
-	}
-	return &apirulev1beta1.APIRule{
+	apiRule := apirulev1beta1.APIRule{
 		ObjectMeta: v1.ObjectMeta{
 			Name:      ApiName,
 			UID:       ApiUID,
-			Namespace: apiNamespace,
+			Namespace: ApiNamespace,
 		},
 		TypeMeta: v1.TypeMeta{
 			APIVersion: ApiAPIVersion,
@@ -159,12 +155,17 @@ func GetAPIRuleFor(rules []apirulev1beta1.Rule, namespace ...string) *apirulev1b
 			Rules: rules,
 		},
 	}
+	if len(namespace) > 0 {
+		apiRule.ObjectMeta.Namespace = namespace[0]
+	}
+	return &apiRule
 }
 
 func GetService(name string, namespace ...string) *corev1.Service {
 	svc := &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: name,
+			Name:      name,
+			Namespace: ApiNamespace,
 		},
 		Spec: corev1.ServiceSpec{
 			Selector: map[string]string{

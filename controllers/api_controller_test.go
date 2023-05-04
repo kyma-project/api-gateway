@@ -226,7 +226,8 @@ func getApiRule(authStrategy string, authConfig *runtime.RawExtension) *gatewayv
 func getService(name string) *corev1.Service {
 	return &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: name,
+			Name:      name,
+			Namespace: "some-namespace",
 		},
 		Spec: corev1.ServiceSpec{
 			Selector: map[string]string{

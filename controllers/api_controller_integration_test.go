@@ -578,7 +578,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 			})
 
 			Context("when service has custom label selectors,", func() {
-				It("should create a AuthorizationPolicy with custom label selector from service", func() {
+				It("should create a RequestAuthentication and AuthorizationPolicy with custom label selector from service", func() {
 					updateJwtHandlerTo(helpers.JWT_HANDLER_ISTIO)
 
 					apiRuleName := generateTestName(testNameBase, testIDLength)
@@ -603,6 +603,16 @@ var _ = Describe("APIRule Controller", Serial, func() {
 
 					ApiRuleNameMatchingLabels := matchingLabelsFunc(apiRuleName, testNamespace)
 
+					By("Verifying request authentication")
+
+					raList := securityv1beta1.RequestAuthenticationList{}
+					Eventually(func(g Gomega) {
+						g.Expect(c.List(context.TODO(), &raList, ApiRuleNameMatchingLabels)).Should(Succeed())
+						g.Expect(raList.Items).To(HaveLen(1))
+						g.Expect(raList.Items[0].Spec.Selector.MatchLabels).To(HaveLen(1))
+						g.Expect(raList.Items[0].Spec.Selector.MatchLabels).To(HaveKeyWithValue("custom", serviceName))
+					}, eventuallyTimeout).Should(Succeed())
+
 					By("Verifying authorization policy")
 
 					apList := securityv1beta1.AuthorizationPolicyList{}
@@ -614,7 +624,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 					}, eventuallyTimeout).Should(Succeed())
 				})
 
-				It("should create a AuthorizationPolicy with multiple custom label selectors from service", func() {
+				It("should create a RequestAuthentication and AuthorizationPolicy with multiple custom label selectors from service", func() {
 					updateJwtHandlerTo(helpers.JWT_HANDLER_ISTIO)
 
 					apiRuleName := generateTestName(testNameBase, testIDLength)
@@ -639,6 +649,17 @@ var _ = Describe("APIRule Controller", Serial, func() {
 					expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusOK)
 
 					ApiRuleNameMatchingLabels := matchingLabelsFunc(apiRuleName, testNamespace)
+
+					By("Verifying request authentication")
+
+					raList := securityv1beta1.RequestAuthenticationList{}
+					Eventually(func(g Gomega) {
+						g.Expect(c.List(context.TODO(), &raList, ApiRuleNameMatchingLabels)).Should(Succeed())
+						g.Expect(raList.Items).To(HaveLen(1))
+						g.Expect(raList.Items[0].Spec.Selector.MatchLabels).To(HaveLen(2))
+						g.Expect(raList.Items[0].Spec.Selector.MatchLabels).To(HaveKeyWithValue("custom", serviceName))
+						g.Expect(raList.Items[0].Spec.Selector.MatchLabels).To(HaveKeyWithValue("second-custom", "blah"))
+					}, eventuallyTimeout).Should(Succeed())
 
 					By("Verifying authorization policy")
 
