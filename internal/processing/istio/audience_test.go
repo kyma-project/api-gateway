@@ -58,7 +58,8 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 
 		ruleJwt := GetRuleWithServiceFor(HeadersApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, []*gatewayv1beta1.Authenticator{jwt}, service)
 		apiRule := GetAPIRuleFor([]gatewayv1beta1.Rule{ruleJwt})
-		client := GetFakeClient()
+		svc := GetService(*apiRule.Spec.Service.Name)
+		client := GetFakeClient(svc)
 		processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig(), &testLogger)
 
 		// when
@@ -87,7 +88,8 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 
 		ruleJwt := GetRuleWithServiceFor(HeadersApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, []*gatewayv1beta1.Authenticator{jwt}, service)
 		apiRule := GetAPIRuleFor([]gatewayv1beta1.Rule{ruleJwt})
-		client := GetFakeClient()
+		svc := GetService(*apiRule.Spec.Service.Name)
+		client := GetFakeClient(svc)
 		processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig(), &testLogger)
 
 		// when

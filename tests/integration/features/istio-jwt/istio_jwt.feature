@@ -10,28 +10,28 @@ Feature: Exposing endpoints with Istio JWT authorization strategy
     And Common: Teardown httpbin service
 
   Scenario: Calling a httpbin endpoint secured on wildcard `/.*` path
-      Given Regex: There is a httpbin service
-      And Regex: There is an endpoint secured with JWT on path "/.*"
-      When Regex: The APIRule is applied
-      Then Regex: Calling the "/ip" endpoint without a token should result in status between 400 and 403
-      And Regex: Calling the "/ip" endpoint with an invalid token should result in status between 400 and 403
-      And Regex: Calling the "/ip" endpoint with a valid "JWT" token should result in status between 200 and 299
-      Then Regex: Calling the "/headers" endpoint without a token should result in status between 400 and 403
-      And Regex: Calling the "/headers" endpoint with an invalid token should result in status between 400 and 403
-      And Regex: Calling the "/headers" endpoint with a valid "JWT" token should result in status between 200 and 299
-      And Regex: Teardown httpbin service
+    Given Regex: There is a httpbin service
+    And Regex: There is an endpoint secured with JWT on path "/.*"
+    When Regex: The APIRule is applied
+    Then Regex: Calling the "/ip" endpoint without a token should result in status between 400 and 403
+    And Regex: Calling the "/ip" endpoint with an invalid token should result in status between 400 and 403
+    And Regex: Calling the "/ip" endpoint with a valid "JWT" token should result in status between 200 and 299
+    Then Regex: Calling the "/headers" endpoint without a token should result in status between 400 and 403
+    And Regex: Calling the "/headers" endpoint with an invalid token should result in status between 400 and 403
+    And Regex: Calling the "/headers" endpoint with a valid "JWT" token should result in status between 200 and 299
+    And Regex: Teardown httpbin service
 
   Scenario: Calling a httpbin endpoint secured on wildcard `/*` path
-        Given Prefix: There is a httpbin service
-        And Prefix: There is an endpoint secured with JWT on path "/*"
-        When Prefix: The APIRule is applied
-        Then Prefix: Calling the "/ip" endpoint without a token should result in status between 400 and 403
-        And Prefix: Calling the "/ip" endpoint with an invalid token should result in status between 400 and 403
-        And Prefix: Calling the "/ip" endpoint with a valid "JWT" token should result in status between 200 and 299
-        Then Prefix: Calling the "/headers" endpoint without a token should result in status between 400 and 403
-        And Prefix: Calling the "/headers" endpoint with an invalid token should result in status between 400 and 403
-        And Prefix: Calling the "/headers" endpoint with a valid "JWT" token should result in status between 200 and 299
-        And Prefix: Teardown httpbin service
+    Given Prefix: There is a httpbin service
+    And Prefix: There is an endpoint secured with JWT on path "/*"
+    When Prefix: The APIRule is applied
+    Then Prefix: Calling the "/ip" endpoint without a token should result in status between 400 and 403
+    And Prefix: Calling the "/ip" endpoint with an invalid token should result in status between 400 and 403
+    And Prefix: Calling the "/ip" endpoint with a valid "JWT" token should result in status between 200 and 299
+    Then Prefix: Calling the "/headers" endpoint without a token should result in status between 400 and 403
+    And Prefix: Calling the "/headers" endpoint with an invalid token should result in status between 400 and 403
+    And Prefix: Calling the "/headers" endpoint with a valid "JWT" token should result in status between 200 and 299
+    And Prefix: Teardown httpbin service
 
   Scenario: Calling httpbin that has an endpoint secured by JWT and unrestricted endpoints
     Given JwtAndUnrestricted: There is a httpbin service
@@ -128,3 +128,11 @@ Feature: Exposing endpoints with Istio JWT authorization strategy
     And JwtTokenFromParams: Calling the "/ip" endpoint with a valid "JWT" token from default header should result in status between 400 and 403
     And JwtTokenFromParams: Calling the "/ip" endpoint with a valid "JWT" token from parameter "jwt_token" should result in status between 200 and 299
     And JwtTokenFromParams: Teardown httpbin service
+
+  Scenario: Calling a helloworld endpoint with custom label selector service
+    Given CustomLabelSelector: There is a helloworld service with custom label selector name "custom-name"
+    And CustomLabelSelector: There is an endpoint secured with JWT on path "/hello"
+    When CustomLabelSelector: The APIRule is applied
+    Then CustomLabelSelector: Calling the "/hello" endpoint without a token should result in status between 400 and 403
+    And CustomLabelSelector: Calling the "/hello" endpoint with a valid "JWT" token should result in status between 200 and 299
+    And CustomLabelSelector: Teardown helloworld service

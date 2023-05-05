@@ -45,13 +45,14 @@ var _ = Describe("Reconciliation", func() {
 			rules := []gatewayv1beta1.Rule{allowRule, jwtRule}
 
 			apiRule := GetAPIRuleFor(rules)
-			faceClient := GetFakeClient()
+			service := GetService(ServiceName)
+			fakeClient := GetFakeClient(service)
 
 			// when
 			var createdObjects []client.Object
 			reconciliation := istio.NewIstioReconciliation(GetTestConfig(), &testLogger)
 			for _, processor := range reconciliation.GetProcessors() {
-				results, err := processor.EvaluateReconciliation(context.TODO(), faceClient, apiRule)
+				results, err := processor.EvaluateReconciliation(context.TODO(), fakeClient, apiRule)
 				Expect(err).To(BeNil())
 				for _, result := range results {
 					createdObjects = append(createdObjects, result.Obj)
@@ -109,13 +110,14 @@ var _ = Describe("Reconciliation", func() {
 			rules := []gatewayv1beta1.Rule{oauthRule, jwtRule}
 
 			apiRule := GetAPIRuleFor(rules)
-			faceClient := GetFakeClient()
+			service := GetService(ServiceName)
+			fakeClient := GetFakeClient(service)
 
 			// when
 			var createdObjects []client.Object
 			reconciliation := istio.NewIstioReconciliation(GetTestConfig(), &testLogger)
 			for _, processor := range reconciliation.GetProcessors() {
-				results, err := processor.EvaluateReconciliation(context.TODO(), faceClient, apiRule)
+				results, err := processor.EvaluateReconciliation(context.TODO(), fakeClient, apiRule)
 				Expect(err).To(BeNil())
 				for _, result := range results {
 					createdObjects = append(createdObjects, result.Obj)
@@ -175,13 +177,14 @@ var _ = Describe("Reconciliation", func() {
 			rules := []gatewayv1beta1.Rule{noopRule, jwtRule}
 
 			apiRule := GetAPIRuleFor(rules)
-			faceClient := GetFakeClient()
+			service := GetService(ServiceName)
+			fakeClient := GetFakeClient(service)
 
 			// when
 			var createdObjects []client.Object
 			reconciliation := istio.NewIstioReconciliation(GetTestConfig(), &testLogger)
 			for _, processor := range reconciliation.GetProcessors() {
-				results, err := processor.EvaluateReconciliation(context.TODO(), faceClient, apiRule)
+				results, err := processor.EvaluateReconciliation(context.TODO(), fakeClient, apiRule)
 				Expect(err).To(BeNil())
 				for _, result := range results {
 					createdObjects = append(createdObjects, result.Obj)

@@ -20,11 +20,14 @@ type RequestAuthenticationProcessor struct {
 // RequestAuthenticationCreator provides the creation of RequestAuthentications using the configuration in the given APIRule.
 // The key of the map is expected to be unique and comparable with the
 type RequestAuthenticationCreator interface {
-	Create(api *gatewayv1beta1.APIRule) map[string]*securityv1beta1.RequestAuthentication
+	Create(ctx context.Context, client ctrlclient.Client, api *gatewayv1beta1.APIRule) (map[string]*securityv1beta1.RequestAuthentication, error)
 }
 
 func (r RequestAuthenticationProcessor) EvaluateReconciliation(ctx context.Context, client ctrlclient.Client, apiRule *gatewayv1beta1.APIRule) ([]*processing.ObjectChange, error) {
-	desired := r.getDesiredState(apiRule)
+	desired, err := r.getDesiredState(ctx, client, apiRule)
+	if err != nil {
+		return make([]*processing.ObjectChange, 0), err
+	}
 	actual, err := r.getActualState(ctx, client, apiRule)
 	if err != nil {
 		return make([]*processing.ObjectChange, 0), err
@@ -35,8 +38,8 @@ func (r RequestAuthenticationProcessor) EvaluateReconciliation(ctx context.Conte
 	return changes, nil
 }
 
-func (r RequestAuthenticationProcessor) getDesiredState(api *gatewayv1beta1.APIRule) map[string]*securityv1beta1.RequestAuthentication {
-	return r.Creator.Create(api)
+func (r RequestAuthenticationProcessor) getDesiredState(ctx context.Context, client ctrlclient.Client, api *gatewayv1beta1.APIRule) (map[string]*securityv1beta1.RequestAuthentication, error) {
+	return r.Creator.Create(ctx, client, api)
 }
 
 func (r RequestAuthenticationProcessor) getActualState(ctx context.Context, client ctrlclient.Client, api *gatewayv1beta1.APIRule) (map[string]*securityv1beta1.RequestAuthentication, error) {

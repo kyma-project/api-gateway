@@ -3,6 +3,7 @@ package controllers_test
 import (
 	"context"
 	"fmt"
+
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/api/v1beta1"
 	"github.com/kyma-project/api-gateway/internal/helpers"
 	. "github.com/onsi/ginkgo/v2"
@@ -37,12 +38,15 @@ var _ = Describe("Apirule controller validation", Serial, func() {
 				Mutators:         mutators,
 				AccessStrategies: accessStrategies,
 			}
-			instance := testInstance(apiRuleName, testNamespace, serviceName, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule})
+			instance := testApiRule(apiRuleName, testNamespace, serviceName, testNamespace, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule})
+			svc := testService(serviceName, testNamespace, testServicePort)
 
 			// when
+			Expect(c.Create(context.TODO(), svc)).Should(Succeed())
 			Expect(c.Create(context.TODO(), instance)).Should(Succeed())
 			defer func() {
 				deleteApiRule(instance)
+				deleteService(svc)
 			}()
 
 			// then

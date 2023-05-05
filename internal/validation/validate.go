@@ -1,10 +1,10 @@
 package validation
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
-	"github.com/kyma-project/api-gateway/internal/builders"
 	"github.com/kyma-project/api-gateway/internal/helpers"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 
@@ -12,6 +12,7 @@ import (
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/api/v1beta1"
 	apiv1beta1 "istio.io/api/type/v1beta1"
 	"k8s.io/utils/strings/slices"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // Validators for AccessStrategies
@@ -58,19 +59,19 @@ type Failure struct {
 }
 
 // Validate performs APIRule validation
-func (v *APIRuleValidator) Validate(api *gatewayv1beta1.APIRule, vsList networkingv1beta1.VirtualServiceList) []Failure {
+func (v *APIRuleValidator) Validate(ctx context.Context, client client.Client, api *gatewayv1beta1.APIRule, vsList networkingv1beta1.VirtualServiceList) []Failure {
 	var res []Failure
 
 	//Validate service on path level if it is created
 	if api.Spec.Service != nil {
-		res = append(res, v.validateService(".spec.service", api)...)
+		res = append(res, v.validateService(ctx, client, ".spec.service", api)...)
 	}
 	//Validate Host
 	res = append(res, v.validateHost(".spec.host", vsList, api)...)
 	//Validate Gateway
 	res = append(res, v.validateGateway(".spec.gateway", api.Spec.Gateway)...)
 	//Validate Rules
-	res = append(res, v.validateRules(".spec.rules", api.Spec.Service == nil, api)...)
+	res = append(res, v.validateRules(ctx, client, ".spec.rules", api.Spec.Service == nil, api)...)
 
 	return res
 }
@@ -155,7 +156,7 @@ func (v *APIRuleValidator) validateHost(attributePath string, vsList networkingv
 	return problems
 }
 
-func (v *APIRuleValidator) validateService(attributePath string, api *gatewayv1beta1.APIRule) []Failure {
+func (v *APIRuleValidator) validateService(ctx context.Context, client client.Client, attributePath string, api *gatewayv1beta1.APIRule) []Failure {
 	var problems []Failure
 
 	for namespace, services := range v.ServiceBlockList {
@@ -169,6 +170,15 @@ func (v *APIRuleValidator) validateService(attributePath string, api *gatewayv1b
 			}
 		}
 	}
+
+	_, err := helpers.GetLabelSelectorFromService(ctx, client, api.Spec.Service, api, nil)
+	if err != nil {
+		problems = append(problems, Failure{
+			AttributePath: attributePath,
+			Message:       "No label selectors found for service",
+		})
+	}
+
 	return problems
 }
 
@@ -178,7 +188,7 @@ func (v *APIRuleValidator) validateGateway(attributePath string, gateway *string
 
 // Validates whether all rules are defined correctly
 // Checks whether all rules have service defined for them if checkForService is true
-func (v *APIRuleValidator) validateRules(attributePath string, checkForService bool, api *gatewayv1beta1.APIRule) []Failure {
+func (v *APIRuleValidator) validateRules(ctx context.Context, client client.Client, attributePath string, checkForService bool, api *gatewayv1beta1.APIRule) []Failure {
 	var problems []Failure
 
 	rules := api.Spec.Rules
@@ -198,7 +208,14 @@ func (v *APIRuleValidator) validateRules(attributePath string, checkForService b
 			problems = append(problems, Failure{AttributePath: attributePathWithRuleIndex + ".service", Message: "No service defined with no main service on spec level"})
 		}
 		if r.Service != nil {
-			problems = append(problems, v.validateAccessStrategies(attributePathWithRuleIndex+".accessStrategies", r.AccessStrategies, builders.SelectorFromService(r.Service), helpers.FindServiceNamespace(api, &r))...)
+			labelSelector, err := helpers.GetLabelSelectorFromService(ctx, client, r.Service, api, &r)
+			if err != nil {
+				problems = append(problems, Failure{
+					AttributePath: attributePathWithRuleIndex + ".service",
+					Message:       "No label selectors found for service",
+				})
+			}
+			problems = append(problems, v.validateAccessStrategies(attributePathWithRuleIndex+".accessStrategies", r.AccessStrategies, labelSelector, helpers.FindServiceNamespace(api, &r))...)
 			for namespace, services := range v.ServiceBlockList {
 				for _, svc := range services {
 					serviceNamespace := helpers.FindServiceNamespace(api, &r)
@@ -211,7 +228,8 @@ func (v *APIRuleValidator) validateRules(attributePath string, checkForService b
 				}
 			}
 		} else if api.Spec.Service != nil {
-			problems = append(problems, v.validateAccessStrategies(attributePathWithRuleIndex+".accessStrategies", r.AccessStrategies, builders.SelectorFromService(api.Spec.Service), helpers.FindServiceNamespace(api, &r))...)
+			labelSelector, _ := helpers.GetLabelSelectorFromService(ctx, client, api.Spec.Service, api, nil)
+			problems = append(problems, v.validateAccessStrategies(attributePathWithRuleIndex+".accessStrategies", r.AccessStrategies, labelSelector, helpers.FindServiceNamespace(api, &r))...)
 		}
 
 		if v.MutatorsValidator != nil {

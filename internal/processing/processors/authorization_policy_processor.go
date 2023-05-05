@@ -2,6 +2,7 @@ package processors
 
 import (
 	"context"
+
 	"github.com/go-logr/logr"
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/api/v1beta1"
 	"github.com/kyma-project/api-gateway/internal/processing"
@@ -19,11 +20,11 @@ type AuthorizationPolicyProcessor struct {
 // AuthorizationPolicyCreator provides the creation of AuthorizationPolicies using the configuration in the given APIRule.
 // The key of the map is expected to be unique and comparable with the
 type AuthorizationPolicyCreator interface {
-	Create(api *gatewayv1beta1.APIRule) (hashbasedstate.Desired, error)
+	Create(ctx context.Context, client ctrlclient.Client, api *gatewayv1beta1.APIRule) (hashbasedstate.Desired, error)
 }
 
 func (r AuthorizationPolicyProcessor) EvaluateReconciliation(ctx context.Context, client ctrlclient.Client, apiRule *gatewayv1beta1.APIRule) ([]*processing.ObjectChange, error) {
-	desired, err := r.getDesiredState(apiRule)
+	desired, err := r.getDesiredState(ctx, client, apiRule)
 	if err != nil {
 		return nil, err
 	}
@@ -37,8 +38,8 @@ func (r AuthorizationPolicyProcessor) EvaluateReconciliation(ctx context.Context
 	return changes, nil
 }
 
-func (r AuthorizationPolicyProcessor) getDesiredState(api *gatewayv1beta1.APIRule) (hashbasedstate.Desired, error) {
-	hashDummy, err := r.Creator.Create(api)
+func (r AuthorizationPolicyProcessor) getDesiredState(ctx context.Context, client ctrlclient.Client, api *gatewayv1beta1.APIRule) (hashbasedstate.Desired, error) {
+	hashDummy, err := r.Creator.Create(ctx, client, api)
 	if err != nil {
 		return hashDummy, err
 	}

@@ -1,14 +1,15 @@
 package validation
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
 
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
-
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"testing"
 
@@ -18,7 +19,12 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	"github.com/onsi/ginkgo/v2/reporters"
 	"github.com/onsi/ginkgo/v2/types"
+	"github.com/onsi/gomega"
 	. "github.com/onsi/gomega"
+	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
+	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
@@ -71,17 +77,20 @@ var _ = Describe("Validate function", func() {
 		input := &gatewayv1beta1.APIRule{
 			Spec: gatewayv1beta1.APIRuleSpec{
 				Rules:   nil,
-				Service: getService(sampleServiceName, uint32(8080)),
+				Service: getApiRuleService(sampleServiceName, uint32(8080)),
 				Host:    getHost(sampleValidHost),
 			},
 		}
+
+		service := getService(sampleServiceName)
+		fakeClient := buildFakeClient(service)
 
 		//when
 		problems := (&APIRuleValidator{
 			HandlerValidator:          handlerValidatorMock,
 			AccessStrategiesValidator: asValidatorMock,
 			DomainAllowList:           testAllowList,
-		}).Validate(input, networkingv1beta1.VirtualServiceList{})
+		}).Validate(context.TODO(), fakeClient, input, networkingv1beta1.VirtualServiceList{})
 
 		//then
 		Expect(problems).To(HaveLen(1))
@@ -97,11 +106,11 @@ var _ = Describe("Validate function", func() {
 			"default": {sampleBlocklistedService, "kube-dns"},
 			"example": {"service"}}
 		input := &gatewayv1beta1.APIRule{
-			ObjectMeta: v1.ObjectMeta{
+			ObjectMeta: metav1.ObjectMeta{
 				Namespace: "default",
 			},
 			Spec: gatewayv1beta1.APIRuleSpec{
-				Service: getService(sampleBlocklistedService, uint32(443)),
+				Service: getApiRuleService(sampleBlocklistedService, uint32(443)),
 				Host:    getHost(validHost),
 				Rules: []gatewayv1beta1.Rule{
 					{
@@ -114,18 +123,23 @@ var _ = Describe("Validate function", func() {
 				},
 			}}
 
+		service := getService(sampleBlocklistedService)
+		fakeClient := buildFakeClient(service)
+
 		//when
 		problems := (&APIRuleValidator{
 			HandlerValidator:          handlerValidatorMock,
 			AccessStrategiesValidator: asValidatorMock,
 			ServiceBlockList:          testBlockList,
 			DomainAllowList:           testDomainAllowlist,
-		}).Validate(input, networkingv1beta1.VirtualServiceList{})
+		}).Validate(context.TODO(), fakeClient, input, networkingv1beta1.VirtualServiceList{})
 
 		//then
-		Expect(problems).To(HaveLen(1))
+		Expect(problems).To(HaveLen(2))
 		Expect(problems[0].AttributePath).To(Equal(".spec.service.name"))
 		Expect(problems[0].Message).To(Equal("Service kubernetes in namespace default is blocklisted"))
+		Expect(problems[1].AttributePath).To(Equal(".spec.service"))
+		Expect(problems[1].Message).To(Equal("No label selectors found for service"))
 	})
 
 	It("Should fail for blocklisted service for specific namespace", func() {
@@ -137,11 +151,11 @@ var _ = Describe("Validate function", func() {
 			"default":                  {"kube-dns"},
 			sampleBlocklistedNamespace: {sampleBlocklistedService}}
 		input := &gatewayv1beta1.APIRule{
-			ObjectMeta: v1.ObjectMeta{
+			ObjectMeta: metav1.ObjectMeta{
 				Namespace: "default",
 			},
 			Spec: gatewayv1beta1.APIRuleSpec{
-				Service: getService(sampleBlocklistedService, uint32(443), &sampleBlocklistedNamespace),
+				Service: getApiRuleService(sampleBlocklistedService, uint32(443), &sampleBlocklistedNamespace),
 				Host:    getHost(validHost),
 				Rules: []gatewayv1beta1.Rule{
 					{
@@ -154,13 +168,16 @@ var _ = Describe("Validate function", func() {
 				},
 			}}
 
+		service := getService(sampleBlocklistedService, sampleBlocklistedNamespace)
+		fakeClient := buildFakeClient(service)
+
 		//when
 		problems := (&APIRuleValidator{
 			HandlerValidator:          handlerValidatorMock,
 			AccessStrategiesValidator: asValidatorMock,
 			ServiceBlockList:          testBlockList,
 			DomainAllowList:           testDomainAllowlist,
-		}).Validate(input, networkingv1beta1.VirtualServiceList{})
+		}).Validate(context.TODO(), fakeClient, input, networkingv1beta1.VirtualServiceList{})
 
 		//then
 		Expect(problems).To(HaveLen(1))
@@ -176,7 +193,7 @@ var _ = Describe("Validate function", func() {
 			"example": {"service"}}
 		input := &gatewayv1beta1.APIRule{
 			Spec: gatewayv1beta1.APIRuleSpec{
-				Service: getService(sampleServiceName, uint32(8080)),
+				Service: getApiRuleService(sampleServiceName, uint32(8080)),
 				Host:    getHost(invalidHost),
 				Rules: []gatewayv1beta1.Rule{
 					{
@@ -189,13 +206,16 @@ var _ = Describe("Validate function", func() {
 				},
 			}}
 
+		service := getService(sampleServiceName)
+		fakeClient := buildFakeClient(service)
+
 		//when
 		problems := (&APIRuleValidator{
 			HandlerValidator:          handlerValidatorMock,
 			AccessStrategiesValidator: asValidatorMock,
 			ServiceBlockList:          testBlockList,
 			DomainAllowList:           testDomainAllowlist,
-		}).Validate(input, networkingv1beta1.VirtualServiceList{})
+		}).Validate(context.TODO(), fakeClient, input, networkingv1beta1.VirtualServiceList{})
 
 		//then
 		Expect(problems).To(HaveLen(1))
@@ -213,7 +233,7 @@ var _ = Describe("Validate function", func() {
 		testHostBlockList := []string{blockedhost}
 		input := &gatewayv1beta1.APIRule{
 			Spec: gatewayv1beta1.APIRuleSpec{
-				Service: getService(sampleServiceName, uint32(8080)),
+				Service: getApiRuleService(sampleServiceName, uint32(8080)),
 				Host:    getHost(blockedhost),
 				Rules: []gatewayv1beta1.Rule{
 					{
@@ -226,6 +246,9 @@ var _ = Describe("Validate function", func() {
 				},
 			}}
 
+		service := getService(sampleServiceName)
+		fakeClient := buildFakeClient(service)
+
 		//when
 		problems := (&APIRuleValidator{
 			HandlerValidator:          handlerValidatorMock,
@@ -234,7 +257,7 @@ var _ = Describe("Validate function", func() {
 			DomainAllowList:           testDomainAllowlist,
 			HostBlockList:             testHostBlockList,
 			DefaultDomainName:         testDefaultDomain,
-		}).Validate(input, networkingv1beta1.VirtualServiceList{})
+		}).Validate(context.TODO(), fakeClient, input, networkingv1beta1.VirtualServiceList{})
 
 		//then
 		Expect(problems).To(HaveLen(1))
@@ -254,7 +277,7 @@ var _ = Describe("Validate function", func() {
 		testHostBlockList := []string{blockedhost}
 		input := &gatewayv1beta1.APIRule{
 			Spec: gatewayv1beta1.APIRuleSpec{
-				Service: getService(sampleServiceName, uint32(8080)),
+				Service: getApiRuleService(sampleServiceName, uint32(8080)),
 				Host:    getHost(customHost),
 				Rules: []gatewayv1beta1.Rule{
 					{
@@ -267,6 +290,9 @@ var _ = Describe("Validate function", func() {
 				},
 			}}
 
+		service := getService(sampleServiceName)
+		fakeClient := buildFakeClient(service)
+
 		//when
 		problems := (&APIRuleValidator{
 			HandlerValidator:          handlerValidatorMock,
@@ -275,7 +301,7 @@ var _ = Describe("Validate function", func() {
 			DomainAllowList:           testDomainAllowlist,
 			HostBlockList:             testHostBlockList,
 			DefaultDomainName:         testDefaultDomain,
-		}).Validate(input, networkingv1beta1.VirtualServiceList{})
+		}).Validate(context.TODO(), fakeClient, input, networkingv1beta1.VirtualServiceList{})
 
 		//then
 		Expect(problems).To(HaveLen(0))
@@ -289,7 +315,7 @@ var _ = Describe("Validate function", func() {
 			"example": {"service"}}
 		input := &gatewayv1beta1.APIRule{
 			Spec: gatewayv1beta1.APIRuleSpec{
-				Service: getService(sampleServiceName, uint32(8080)),
+				Service: getApiRuleService(sampleServiceName, uint32(8080)),
 				Host:    getHost(validHost),
 				Rules: []gatewayv1beta1.Rule{
 					{
@@ -302,13 +328,16 @@ var _ = Describe("Validate function", func() {
 				},
 			}}
 
+		service := getService(sampleServiceName)
+		fakeClient := buildFakeClient(service)
+
 		//when
 		problems := (&APIRuleValidator{
 			HandlerValidator:          handlerValidatorMock,
 			AccessStrategiesValidator: asValidatorMock,
 			ServiceBlockList:          testBlockList,
 			DomainAllowList:           []string{},
-		}).Validate(input, networkingv1beta1.VirtualServiceList{})
+		}).Validate(context.TODO(), fakeClient, input, networkingv1beta1.VirtualServiceList{})
 
 		//then
 		Expect(problems).To(HaveLen(0))
@@ -322,7 +351,7 @@ var _ = Describe("Validate function", func() {
 			"example": {"service"}}
 		input := &gatewayv1beta1.APIRule{
 			Spec: gatewayv1beta1.APIRuleSpec{
-				Service: getService(sampleServiceName, uint32(8080)),
+				Service: getApiRuleService(sampleServiceName, uint32(8080)),
 				Host:    getHost(invalidHost),
 				Rules: []gatewayv1beta1.Rule{
 					{
@@ -335,13 +364,16 @@ var _ = Describe("Validate function", func() {
 				},
 			}}
 
+		service := getService(sampleServiceName)
+		fakeClient := buildFakeClient(service)
+
 		//when
 		problems := (&APIRuleValidator{
 			HandlerValidator:          handlerValidatorMock,
 			AccessStrategiesValidator: asValidatorMock,
 			ServiceBlockList:          testBlockList,
 			DomainAllowList:           testDomainAllowlist,
-		}).Validate(input, networkingv1beta1.VirtualServiceList{})
+		}).Validate(context.TODO(), fakeClient, input, networkingv1beta1.VirtualServiceList{})
 
 		//then
 		Expect(problems).To(HaveLen(1))
@@ -357,7 +389,7 @@ var _ = Describe("Validate function", func() {
 			"example": {"service"}}
 		input := &gatewayv1beta1.APIRule{
 			Spec: gatewayv1beta1.APIRuleSpec{
-				Service: getService(sampleServiceName, uint32(8080)),
+				Service: getApiRuleService(sampleServiceName, uint32(8080)),
 				Host:    getHost(hostWithoutDomain),
 				Rules: []gatewayv1beta1.Rule{
 					{
@@ -370,13 +402,16 @@ var _ = Describe("Validate function", func() {
 				},
 			}}
 
+		service := getService(sampleServiceName)
+		fakeClient := buildFakeClient(service)
+
 		//when
 		problems := (&APIRuleValidator{
 			HandlerValidator:          handlerValidatorMock,
 			AccessStrategiesValidator: asValidatorMock,
 			ServiceBlockList:          testBlockList,
 			DomainAllowList:           testDomainAllowlist,
-		}).Validate(input, networkingv1beta1.VirtualServiceList{})
+		}).Validate(context.TODO(), fakeClient, input, networkingv1beta1.VirtualServiceList{})
 
 		//then
 		Expect(problems).To(HaveLen(1))
@@ -392,7 +427,7 @@ var _ = Describe("Validate function", func() {
 			"example": {"service"}}
 		input := &gatewayv1beta1.APIRule{
 			Spec: gatewayv1beta1.APIRuleSpec{
-				Service: getService(sampleServiceName, uint32(8080)),
+				Service: getApiRuleService(sampleServiceName, uint32(8080)),
 				Host:    getHost(hostWithoutDomain),
 				Rules: []gatewayv1beta1.Rule{
 					{
@@ -405,6 +440,9 @@ var _ = Describe("Validate function", func() {
 				},
 			}}
 
+		service := getService(sampleServiceName)
+		fakeClient := buildFakeClient(service)
+
 		//when
 		problems := (&APIRuleValidator{
 			HandlerValidator:          handlerValidatorMock,
@@ -412,7 +450,7 @@ var _ = Describe("Validate function", func() {
 			ServiceBlockList:          testBlockList,
 			DomainAllowList:           testDomainAllowlist,
 			DefaultDomainName:         testDefaultDomain,
-		}).Validate(input, networkingv1beta1.VirtualServiceList{})
+		}).Validate(context.TODO(), fakeClient, input, networkingv1beta1.VirtualServiceList{})
 
 		//then
 		Expect(problems).To(HaveLen(0))
@@ -426,7 +464,7 @@ var _ = Describe("Validate function", func() {
 			"example": {"service"}}
 		input := &gatewayv1beta1.APIRule{
 			Spec: gatewayv1beta1.APIRuleSpec{
-				Service: getService(sampleServiceName, uint32(8080)),
+				Service: getApiRuleService(sampleServiceName, uint32(8080)),
 				Host:    getHost(invalidHost),
 				Rules: []gatewayv1beta1.Rule{
 					{
@@ -439,13 +477,16 @@ var _ = Describe("Validate function", func() {
 				},
 			}}
 
+		service := getService(sampleServiceName)
+		fakeClient := buildFakeClient(service)
+
 		//when
 		problems := (&APIRuleValidator{
 			HandlerValidator:          handlerValidatorMock,
 			AccessStrategiesValidator: asValidatorMock,
 			ServiceBlockList:          testBlockList,
 			DomainAllowList:           testDomainAllowlist,
-		}).Validate(input, networkingv1beta1.VirtualServiceList{})
+		}).Validate(context.TODO(), fakeClient, input, networkingv1beta1.VirtualServiceList{})
 
 		//then
 		Expect(problems).To(HaveLen(1))
@@ -460,11 +501,11 @@ var _ = Describe("Validate function", func() {
 		existingVS.Spec.Hosts = []string{occupiedHost}
 
 		input := &gatewayv1beta1.APIRule{
-			ObjectMeta: v1.ObjectMeta{
+			ObjectMeta: metav1.ObjectMeta{
 				UID: "67890",
 			},
 			Spec: gatewayv1beta1.APIRuleSpec{
-				Service: getService(sampleServiceName, uint32(8080)),
+				Service: getApiRuleService(sampleServiceName, uint32(8080)),
 				Host:    getHost(occupiedHost),
 				Rules: []gatewayv1beta1.Rule{
 					{
@@ -478,12 +519,15 @@ var _ = Describe("Validate function", func() {
 			},
 		}
 
+		service := getService(sampleServiceName)
+		fakeClient := buildFakeClient(service)
+
 		//when
 		problems := (&APIRuleValidator{
 			HandlerValidator:          handlerValidatorMock,
 			AccessStrategiesValidator: asValidatorMock,
 			DomainAllowList:           testDomainAllowlist,
-		}).Validate(input, networkingv1beta1.VirtualServiceList{Items: []*networkingv1beta1.VirtualService{&existingVS}})
+		}).Validate(context.TODO(), fakeClient, input, networkingv1beta1.VirtualServiceList{Items: []*networkingv1beta1.VirtualService{&existingVS}})
 
 		Expect(problems).To(HaveLen(1))
 		Expect(problems[0].AttributePath).To(Equal(".spec.host"))
@@ -495,11 +539,11 @@ var _ = Describe("Validate function", func() {
 		occupiedHost := "occupied-host" + allowlistedDomain
 
 		input := &gatewayv1beta1.APIRule{
-			ObjectMeta: v1.ObjectMeta{
+			ObjectMeta: metav1.ObjectMeta{
 				UID: "12345",
 			},
 			Spec: gatewayv1beta1.APIRuleSpec{
-				Service: getService(sampleServiceName, uint32(8080)),
+				Service: getApiRuleService(sampleServiceName, uint32(8080)),
 				Host:    getHost(occupiedHost),
 				Rules: []gatewayv1beta1.Rule{
 					{
@@ -513,6 +557,9 @@ var _ = Describe("Validate function", func() {
 			},
 		}
 
+		service := getService(sampleServiceName)
+		fakeClient := buildFakeClient(service)
+
 		existingVS := networkingv1beta1.VirtualService{}
 		existingVS.Labels = getOwnerLabels(input)
 		existingVS.Spec.Hosts = []string{occupiedHost}
@@ -522,7 +569,7 @@ var _ = Describe("Validate function", func() {
 			HandlerValidator:          handlerValidatorMock,
 			AccessStrategiesValidator: asValidatorMock,
 			DomainAllowList:           testDomainAllowlist,
-		}).Validate(input, networkingv1beta1.VirtualServiceList{Items: []*networkingv1beta1.VirtualService{&existingVS}})
+		}).Validate(context.TODO(), fakeClient, input, networkingv1beta1.VirtualServiceList{Items: []*networkingv1beta1.VirtualService{&existingVS}})
 
 		Expect(problems).To(HaveLen(0))
 	})
@@ -542,11 +589,15 @@ var _ = Describe("Validate function", func() {
 				},
 			},
 		}
+
+		service := getService(sampleServiceName, "default")
+		fakeClient := buildFakeClient(service)
+
 		//when
 		problems := (&APIRuleValidator{
 			AccessStrategiesValidator: asValidatorMock,
 			DomainAllowList:           testDomainAllowlist,
-		}).Validate(input, networkingv1beta1.VirtualServiceList{})
+		}).Validate(context.TODO(), fakeClient, input, networkingv1beta1.VirtualServiceList{})
 
 		//then
 		Expect(problems).To(HaveLen(1))
@@ -563,7 +614,7 @@ var _ = Describe("Validate function", func() {
 			"example": {"service"}}
 
 		input := &gatewayv1beta1.APIRule{
-			ObjectMeta: v1.ObjectMeta{
+			ObjectMeta: metav1.ObjectMeta{
 				Namespace: "default",
 			},
 			Spec: gatewayv1beta1.APIRuleSpec{
@@ -574,29 +625,38 @@ var _ = Describe("Validate function", func() {
 						AccessStrategies: []*gatewayv1beta1.Authenticator{
 							toAuthenticator("noop", emptyConfig()),
 						},
-						Service: getService(sampleServiceName, uint32(8080)),
+						Service: getApiRuleService(sampleServiceName, uint32(8080)),
 					},
 					{
 						Path: "/abcd",
 						AccessStrategies: []*gatewayv1beta1.Authenticator{
 							toAuthenticator("noop", emptyConfig()),
 						},
-						Service: getService(sampleBlocklistedService, uint32(8080)),
+						Service: getApiRuleService(sampleBlocklistedService, uint32(8080)),
 					},
 				},
 			},
 		}
+
+		service1 := getService(sampleServiceName)
+		service2 := getService(sampleBlocklistedService)
+		fakeClient := buildFakeClient(service1, service2)
+
 		//when
 		problems := (&APIRuleValidator{
 			AccessStrategiesValidator: asValidatorMock,
 			ServiceBlockList:          testBlockList,
 			DomainAllowList:           testDomainAllowlist,
-		}).Validate(input, networkingv1beta1.VirtualServiceList{})
+		}).Validate(context.TODO(), fakeClient, input, networkingv1beta1.VirtualServiceList{})
 
 		//then
-		Expect(problems).To(HaveLen(1))
-		Expect(problems[0].AttributePath).To(Equal(".spec.rules[1].service.name"))
-		Expect(problems[0].Message).To(Equal(fmt.Sprintf("Service %s in namespace default is blocklisted", sampleBlocklistedService)))
+		Expect(problems).To(HaveLen(3))
+		Expect(problems[0].AttributePath).To(Equal(".spec.rules[0].service"))
+		Expect(problems[0].Message).To(Equal("No label selectors found for service"))
+		Expect(problems[1].AttributePath).To(Equal(".spec.rules[1].service"))
+		Expect(problems[1].Message).To(Equal("No label selectors found for service"))
+		Expect(problems[2].AttributePath).To(Equal(".spec.rules[1].service.name"))
+		Expect(problems[2].Message).To(Equal(fmt.Sprintf("Service %s in namespace default is blocklisted", sampleBlocklistedService)))
 	})
 
 	It("Should return an error when rule is defined with blocklisted service in specific namespace", func() {
@@ -609,7 +669,7 @@ var _ = Describe("Validate function", func() {
 			sampleBlocklistedNamespace: {sampleBlocklistedService}}
 
 		input := &gatewayv1beta1.APIRule{
-			ObjectMeta: v1.ObjectMeta{
+			ObjectMeta: metav1.ObjectMeta{
 				Namespace: "default",
 			},
 			Spec: gatewayv1beta1.APIRuleSpec{
@@ -620,36 +680,43 @@ var _ = Describe("Validate function", func() {
 						AccessStrategies: []*gatewayv1beta1.Authenticator{
 							toAuthenticator("noop", emptyConfig()),
 						},
-						Service: getService(sampleServiceName, uint32(8080)),
+						Service: getApiRuleService(sampleServiceName, uint32(8080)),
 					},
 					{
 						Path: "/abcd",
 						AccessStrategies: []*gatewayv1beta1.Authenticator{
 							toAuthenticator("noop", emptyConfig()),
 						},
-						Service: getService(sampleBlocklistedService, uint32(8080), &sampleBlocklistedNamespace),
+						Service: getApiRuleService(sampleBlocklistedService, uint32(8080), &sampleBlocklistedNamespace),
 					},
 				},
 			},
 		}
+
+		service1 := getService(sampleServiceName)
+		service2 := getService(sampleBlocklistedService, sampleBlocklistedNamespace)
+		fakeClient := buildFakeClient(service1, service2)
+
 		//when
 		problems := (&APIRuleValidator{
 			AccessStrategiesValidator: asValidatorMock,
 			ServiceBlockList:          testBlockList,
 			DomainAllowList:           testDomainAllowlist,
-		}).Validate(input, networkingv1beta1.VirtualServiceList{})
+		}).Validate(context.TODO(), fakeClient, input, networkingv1beta1.VirtualServiceList{})
 
 		//then
-		Expect(problems).To(HaveLen(1))
-		Expect(problems[0].AttributePath).To(Equal(".spec.rules[1].service.name"))
-		Expect(problems[0].Message).To(Equal(fmt.Sprintf("Service %s in namespace %s is blocklisted", sampleBlocklistedService, sampleBlocklistedNamespace)))
+		Expect(problems).To(HaveLen(2))
+		Expect(problems[0].AttributePath).To(Equal(".spec.rules[0].service"))
+		Expect(problems[0].Message).To(Equal("No label selectors found for service"))
+		Expect(problems[1].AttributePath).To(Equal(".spec.rules[1].service.name"))
+		Expect(problems[1].Message).To(Equal(fmt.Sprintf("Service %s in namespace %s is blocklisted", sampleBlocklistedService, sampleBlocklistedNamespace)))
 	})
 
 	It("Should detect several problems", func() {
 		//given
 		input := &gatewayv1beta1.APIRule{
 			Spec: gatewayv1beta1.APIRuleSpec{
-				Service: getService(sampleServiceName, uint32(8080)),
+				Service: getApiRuleService(sampleServiceName, uint32(8080)),
 				Host:    getHost(sampleValidHost),
 				Rules: []gatewayv1beta1.Rule{
 					{
@@ -677,11 +744,15 @@ var _ = Describe("Validate function", func() {
 				},
 			},
 		}
+
+		service := getService(sampleServiceName)
+		fakeClient := buildFakeClient(service)
+
 		//when
 		problems := (&APIRuleValidator{
 			AccessStrategiesValidator: asValidatorMock,
 			DomainAllowList:           testDomainAllowlist,
-		}).Validate(input, networkingv1beta1.VirtualServiceList{})
+		}).Validate(context.TODO(), fakeClient, input, networkingv1beta1.VirtualServiceList{})
 
 		//then
 		Expect(problems).To(HaveLen(5))
@@ -706,7 +777,7 @@ var _ = Describe("Validate function", func() {
 		//given
 		input := &gatewayv1beta1.APIRule{
 			Spec: gatewayv1beta1.APIRuleSpec{
-				Service: getService(sampleServiceName, uint32(8080)),
+				Service: getApiRuleService(sampleServiceName, uint32(8080)),
 				Host:    getHost(sampleValidHost),
 				Rules: []gatewayv1beta1.Rule{
 					{
@@ -726,11 +797,15 @@ var _ = Describe("Validate function", func() {
 				},
 			},
 		}
+
+		service := getService(sampleServiceName)
+		fakeClient := buildFakeClient(service)
+
 		//when
 		problems := (&APIRuleValidator{
 			AccessStrategiesValidator: asValidatorMock,
 			DomainAllowList:           testDomainAllowlist,
-		}).Validate(input, networkingv1beta1.VirtualServiceList{})
+		}).Validate(context.TODO(), fakeClient, input, networkingv1beta1.VirtualServiceList{})
 
 		//then
 		Expect(problems).To(HaveLen(1))
@@ -746,11 +821,11 @@ var _ = Describe("Validate function", func() {
 		existingVS.Spec.Hosts = []string{occupiedHost}
 
 		input := &gatewayv1beta1.APIRule{
-			ObjectMeta: v1.ObjectMeta{
+			ObjectMeta: metav1.ObjectMeta{
 				UID: "67890",
 			},
 			Spec: gatewayv1beta1.APIRuleSpec{
-				Service: getService(sampleServiceName, uint32(8080)),
+				Service: getApiRuleService(sampleServiceName, uint32(8080)),
 				Host:    getHost(notOccupiedHost),
 				Rules: []gatewayv1beta1.Rule{
 					{
@@ -784,12 +859,16 @@ var _ = Describe("Validate function", func() {
 				},
 			},
 		}
+
+		service := getService(sampleServiceName)
+		fakeClient := buildFakeClient(service)
+
 		//when
 		problems := (&APIRuleValidator{
 			HandlerValidator:          handlerValidatorMock,
 			AccessStrategiesValidator: asValidatorMock,
 			DomainAllowList:           testDomainAllowlist,
-		}).Validate(input, networkingv1beta1.VirtualServiceList{Items: []*networkingv1beta1.VirtualService{&existingVS}})
+		}).Validate(context.TODO(), fakeClient, input, networkingv1beta1.VirtualServiceList{Items: []*networkingv1beta1.VirtualService{&existingVS}})
 
 		//then
 		Expect(problems).To(HaveLen(0))
@@ -803,11 +882,11 @@ var _ = Describe("Validate function", func() {
 		existingVS.Spec.Hosts = []string{occupiedHost}
 
 		input := &gatewayv1beta1.APIRule{
-			ObjectMeta: v1.ObjectMeta{
+			ObjectMeta: metav1.ObjectMeta{
 				UID: "67890",
 			},
 			Spec: gatewayv1beta1.APIRuleSpec{
-				Service: getService(sampleServiceName, uint32(8080)),
+				Service: getApiRuleService(sampleServiceName, uint32(8080)),
 				Host:    getHost(notOccupiedHost),
 				Rules: []gatewayv1beta1.Rule{
 					{
@@ -829,12 +908,150 @@ var _ = Describe("Validate function", func() {
 				},
 			},
 		}
+
+		service := getService(sampleServiceName)
+		fakeClient := buildFakeClient(service)
+
 		//when
 		problems := (&APIRuleValidator{
 			HandlerValidator:          handlerValidatorMock,
 			AccessStrategiesValidator: asValidatorMock,
 			DomainAllowList:           testDomainAllowlist,
-		}).Validate(input, networkingv1beta1.VirtualServiceList{Items: []*networkingv1beta1.VirtualService{&existingVS}})
+		}).Validate(context.TODO(), fakeClient, input, networkingv1beta1.VirtualServiceList{Items: []*networkingv1beta1.VirtualService{&existingVS}})
+
+		//then
+		Expect(problems).To(HaveLen(0))
+	})
+
+	It("Should fail with service without labels selector", func() {
+		//given
+		input := &gatewayv1beta1.APIRule{
+			Spec: gatewayv1beta1.APIRuleSpec{
+				Rules: []gatewayv1beta1.Rule{
+					{
+						Path: "/abc",
+						AccessStrategies: []*gatewayv1beta1.Authenticator{
+							toAuthenticator("noop", emptyConfig()),
+						},
+						Methods: []string{"POST"},
+					},
+				},
+				Service: getApiRuleService(sampleServiceName, uint32(8080)),
+				Host:    getHost(sampleValidHost),
+			},
+		}
+
+		service := getService(sampleServiceName)
+		service.Spec.Selector = map[string]string{}
+		fakeClient := buildFakeClient(service)
+
+		//when
+		problems := (&APIRuleValidator{
+			HandlerValidator:          handlerValidatorMock,
+			AccessStrategiesValidator: asValidatorMock,
+			DomainAllowList:           testDomainAllowlist,
+		}).Validate(context.TODO(), fakeClient, input, networkingv1beta1.VirtualServiceList{})
+
+		//then
+		Expect(problems).To(HaveLen(1))
+		Expect(problems[0].AttributePath).To(Equal(".spec.service"))
+		Expect(problems[0].Message).To(Equal("No label selectors found for service"))
+	})
+
+	It("Should fail with service on path level without labels selector", func() {
+		//given
+		input := &gatewayv1beta1.APIRule{
+			Spec: gatewayv1beta1.APIRuleSpec{
+				Rules: []gatewayv1beta1.Rule{
+					{
+						Path:    "/abc",
+						Service: getApiRuleService(sampleServiceName, uint32(8080)),
+						AccessStrategies: []*gatewayv1beta1.Authenticator{
+							toAuthenticator("noop", emptyConfig()),
+						},
+						Methods: []string{"POST"},
+					},
+				},
+				Host: getHost(sampleValidHost),
+			},
+		}
+
+		service := getService(sampleServiceName)
+		service.Spec.Selector = map[string]string{}
+		fakeClient := buildFakeClient(service)
+
+		//when
+		problems := (&APIRuleValidator{
+			HandlerValidator:          handlerValidatorMock,
+			AccessStrategiesValidator: asValidatorMock,
+			DomainAllowList:           testDomainAllowlist,
+		}).Validate(context.TODO(), fakeClient, input, networkingv1beta1.VirtualServiceList{})
+
+		//then
+		Expect(problems).To(HaveLen(1))
+		Expect(problems[0].AttributePath).To(Equal(".spec.rules[0].service"))
+		Expect(problems[0].Message).To(Equal("No label selectors found for service"))
+	})
+
+	It("Should succeed with service without namespace", func() {
+		//given
+		input := &gatewayv1beta1.APIRule{
+			Spec: gatewayv1beta1.APIRuleSpec{
+				Rules: []gatewayv1beta1.Rule{
+					{
+						Path: "/abc",
+						AccessStrategies: []*gatewayv1beta1.Authenticator{
+							toAuthenticator("noop", emptyConfig()),
+						},
+						Methods: []string{"POST"},
+					},
+				},
+				Service: getApiRuleService(sampleServiceName, uint32(8080)),
+				Host:    getHost(sampleValidHost),
+			},
+		}
+
+		service := getService(sampleServiceName)
+		fakeClient := buildFakeClient(service)
+
+		//when
+		problems := (&APIRuleValidator{
+			HandlerValidator:          handlerValidatorMock,
+			AccessStrategiesValidator: asValidatorMock,
+			DomainAllowList:           testDomainAllowlist,
+		}).Validate(context.TODO(), fakeClient, input, networkingv1beta1.VirtualServiceList{})
+
+		//then
+		Expect(problems).To(HaveLen(0))
+	})
+
+	It("Should succeed with service on path level without namespace", func() {
+		//given
+		input := &gatewayv1beta1.APIRule{
+			Spec: gatewayv1beta1.APIRuleSpec{
+				Rules: []gatewayv1beta1.Rule{
+					{
+						Path:    "/abc",
+						Service: getApiRuleService(sampleServiceName, uint32(8080)),
+						AccessStrategies: []*gatewayv1beta1.Authenticator{
+							toAuthenticator("noop", emptyConfig()),
+						},
+						Methods: []string{"POST"},
+					},
+				},
+				Host: getHost(sampleValidHost),
+			},
+		}
+
+		service := getService(sampleServiceName)
+		fakeClient := buildFakeClient(service)
+
+		//when
+		problems := (&APIRuleValidator{
+			HandlerValidator:          handlerValidatorMock,
+			AccessStrategiesValidator: asValidatorMock,
+			DomainAllowList:           testDomainAllowlist,
+		}).Validate(context.TODO(), fakeClient, input, networkingv1beta1.VirtualServiceList{})
 
 		//then
 		Expect(problems).To(HaveLen(0))
@@ -851,6 +1068,7 @@ var _ = Describe("Validator for", func() {
 			problems := (&noConfigAccStrValidator{}).Validate("some.attribute", handler)
 
 			//then
+			Expect(problems).NotTo(BeNil())
 			Expect(problems).To(HaveLen(1))
 			Expect(problems[0].AttributePath).To(Equal("some.attribute.config"))
 			Expect(problems[0].Message).To(Equal("strategy: noop does not support configuration"))
@@ -880,6 +1098,39 @@ var _ = Describe("Validator for", func() {
 	})
 
 })
+
+func buildFakeClient(objs ...client.Object) client.Client {
+	scheme := runtime.NewScheme()
+	err := networkingv1beta1.AddToScheme(scheme)
+	gomega.Expect(err).NotTo(gomega.HaveOccurred())
+	err = rulev1alpha1.AddToScheme(scheme)
+	gomega.Expect(err).NotTo(gomega.HaveOccurred())
+	err = securityv1beta1.AddToScheme(scheme)
+	gomega.Expect(err).NotTo(gomega.HaveOccurred())
+	err = gatewayv1beta1.AddToScheme(scheme)
+	gomega.Expect(err).NotTo(gomega.HaveOccurred())
+	err = corev1.AddToScheme(scheme)
+	gomega.Expect(err).NotTo(gomega.HaveOccurred())
+
+	return fake.NewClientBuilder().WithScheme(scheme).WithObjects(objs...).Build()
+}
+
+func getService(name string, namespace ...string) *corev1.Service {
+	svc := corev1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: name,
+		},
+		Spec: corev1.ServiceSpec{
+			Selector: map[string]string{
+				"app": name,
+			},
+		},
+	}
+	if len(namespace) > 0 {
+		svc.ObjectMeta.Namespace = namespace[0]
+	}
+	return &svc
+}
 
 func emptyConfig() *runtime.RawExtension {
 	return getRawConfig(
@@ -912,16 +1163,15 @@ func toAuthenticator(name string, config *runtime.RawExtension) *gatewayv1beta1.
 	}
 }
 
-func getService(serviceName string, servicePort uint32, namespace ...*string) *gatewayv1beta1.Service {
-	var serviceNamespace *string
+func getApiRuleService(serviceName string, servicePort uint32, namespace ...*string) *gatewayv1beta1.Service {
+	svc := gatewayv1beta1.Service{
+		Name: &serviceName,
+		Port: &servicePort,
+	}
 	if len(namespace) > 0 {
-		serviceNamespace = namespace[0]
+		svc.Namespace = namespace[0]
 	}
-	return &gatewayv1beta1.Service{
-		Name:      &serviceName,
-		Namespace: serviceNamespace,
-		Port:      &servicePort,
-	}
+	return &svc
 }
 
 func getHost(host string) *string {

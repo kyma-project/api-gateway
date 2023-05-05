@@ -42,6 +42,7 @@ func initIstioJwtScenarios(ctx *godog.ScenarioContext) {
 	initMutatorsOverwrite(ctx)
 	initTokenFromHeaders(ctx)
 	initTokenFromParams(ctx)
+	initCustomLabelSelector(ctx)
 }
 
 func (s *istioJwtManifestScenario) theAPIRuleIsApplied() error {

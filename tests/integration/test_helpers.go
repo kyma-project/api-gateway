@@ -45,6 +45,7 @@ const (
 	opaqueHeaderName          = "opaque-token"
 	defaultNS                 = "kyma-system"
 	configMapName             = "api-gateway-config"
+	serviceLabelSelector      = "app"
 )
 
 var (
