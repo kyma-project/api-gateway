@@ -18,8 +18,6 @@ import (
 
 const (
 	audienceKey          string = "request.auth.claims[aud]"
-	appSelectorLabel     string = "app"
-	serviceSelectorLabel string = "service"
 )
 
 var (
