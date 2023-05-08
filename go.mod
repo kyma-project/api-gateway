@@ -90,7 +90,7 @@ require (
 	golang.org/x/exp v0.0.0-20221217163422-3c43f8badb15
 	golang.org/x/oauth2 v0.7.0
 	gopkg.in/yaml.v2 v2.4.0
-	k8s.io/api v0.26.3
+	k8s.io/api v0.26.4
 	k8s.io/apiextensions-apiserver v0.26.3
 	k8s.io/utils v0.0.0-20230209194617-a36077c30491
 )
