@@ -35,7 +35,7 @@ spec:
               - $JWKS_URI2
 ```
 
-Configuration for JWT access strategy is translated directly as [authenticator configuration](https://www.ory.sh/docs/oathkeeper/api-access-rules#handler-configuration) in the [Ory Oathkeeper access rule CR](https://www.ory.sh/docs/oathkeeper/api-access-rules), for more details please refer to official Ory Oathkeeper [JWT authenticator documentation](https://www.ory.sh/docs/oathkeeper/pipeline/authn#jwt)
+Configuration for JWT access strategy is translated directly as [authenticator configuration](https://www.ory.sh/docs/oathkeeper/api-access-rules#handler-configuration) in the [Ory Oathkeeper access rule CR](https://www.ory.sh/docs/oathkeeper/api-access-rules), for more details please refer to official Ory Oathkeeper [JWT authenticator documentation](https://www.ory.sh/docs/oathkeeper/pipeline/authn#jwt).
 
 This table lists all the possible parameters of the Ory Oathkeeper JWT access strategy together with their descriptions:
 
@@ -118,4 +118,4 @@ This table lists all the possible parameters of the Istio JWT access strategy to
 
 * Istio doesn't support regex type of path matching on Authorization Policies, which were suported on Ory Oathkeeper rules and are supported by Virtual Service.
 
-* Istio doesn't support JWT token from `cookie` configuration for RequestAuthentication (RA), which were supported with Ory Oathkeeper. Istio supports only `fromHeaders` and `fromParams` configurations.
+* Istio doesn't support JWT token from `cookie` configuration, which was supported with Ory Oathkeeper. Istio supports only `fromHeaders` and `fromParams` configurations.
