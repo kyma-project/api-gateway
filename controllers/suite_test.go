@@ -43,6 +43,7 @@ const (
 	testGatewayURL              = "kyma-system/kyma-gateway"
 	testOathkeeperSvcURL        = "oathkeeper.kyma-system.svc.cluster.local"
 	testOathkeeperPort   uint32 = 1234
+	testBlockedHost             = "api.kyma.local"
 )
 
 var (
@@ -151,8 +152,9 @@ var _ = BeforeSuite(func(specCtx SpecContext) {
 			AllowHeaders: TestAllowHeaders,
 		},
 		GeneratedObjectsLabels: map[string]string{},
+		HostBlockList:          []string{testBlockedHost},
+		DefaultDomainName:      "kyma.local",
 		Config:                 &helpers.Config{},
-
 		ReconcilePeriod:        time.Second * 2,
 		OnErrorReconcilePeriod: time.Second * 2,
 	}

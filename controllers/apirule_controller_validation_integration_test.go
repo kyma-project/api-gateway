@@ -12,54 +12,25 @@ import (
 )
 
 // Tests needs to be executed serially because of the shared state of the JWT Handler in the API Controller.
-var _ = Describe("Apirule controller validation", Serial, func() {
+var _ = Describe("Apirule controller validation", Serial, Ordered, func() {
 
-	const (
-		testNameBase           = "status-test"
-		testIDLength           = 5
-		testServiceName        = "httpbin"
-		testServicePort uint32 = 443
-		testPath               = "/.*"
-	)
+	Context("with Ory handler", func() {
+
+		BeforeAll(func() {
+			updateJwtHandlerTo(helpers.JWT_HANDLER_ORY)
+		})
+
+		It("should not allow creation of APIRule with blocklisted subdomain api", func() {
+			testHostInBlockList()
+		})
+
+	})
 
 	Context("with istio handler", func() {
 
-		testConfigError := func(accessStrategies []*gatewayv1beta1.Authenticator, mutators []*gatewayv1beta1.Mutator, expectedValidationErrors []string) {
-			// given
+		BeforeAll(func() {
 			updateJwtHandlerTo(helpers.JWT_HANDLER_ISTIO)
-
-			apiRuleName := generateTestName(testNameBase, testIDLength)
-			serviceName := generateTestName(testServiceName, testIDLength)
-			serviceHost := fmt.Sprintf("%s.kyma.local", serviceName)
-
-			rule := gatewayv1beta1.Rule{
-				Path:             testPath,
-				Methods:          defaultMethods,
-				Mutators:         mutators,
-				AccessStrategies: accessStrategies,
-			}
-			instance := testApiRule(apiRuleName, testNamespace, serviceName, testNamespace, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule})
-			svc := testService(serviceName, testNamespace, testServicePort)
-
-			// when
-			Expect(c.Create(context.TODO(), svc)).Should(Succeed())
-			Expect(c.Create(context.TODO(), instance)).Should(Succeed())
-			defer func() {
-				deleteApiRule(instance)
-				deleteService(svc)
-			}()
-
-			// then
-			Eventually(func(g Gomega) {
-				created := gatewayv1beta1.APIRule{}
-				g.Expect(c.Get(context.TODO(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &created)).Should(Succeed())
-				g.Expect(created.Status.APIRuleStatus).NotTo(BeNil())
-				g.Expect(created.Status.APIRuleStatus.Code).To(Equal(gatewayv1beta1.StatusError))
-				for _, expected := range expectedValidationErrors {
-					g.Expect(created.Status.APIRuleStatus.Description).To(ContainSubstring(expected))
-				}
-			}, eventuallyTimeout).Should(Succeed())
-		}
+		})
 
 		testMutatorConfigError := func(mutator *gatewayv1beta1.Mutator, expectedValidationErrors []string) {
 			a := []*gatewayv1beta1.Authenticator{
@@ -77,6 +48,10 @@ var _ = Describe("Apirule controller validation", Serial, func() {
 		testJwtHandlerConfigError := func(accessStrategies []*gatewayv1beta1.Authenticator, expectedValidationErrors []string) {
 			testConfigError(accessStrategies, []*gatewayv1beta1.Mutator{}, expectedValidationErrors)
 		}
+
+		It("should not allow creation of APIRule with blocklisted subdomain api", func() {
+			testHostInBlockList()
+		})
 
 		It("should not allow creation of APIRule without config in jwt handler", func() {
 			accessStrategies := []*gatewayv1beta1.Authenticator{
@@ -317,3 +292,65 @@ var _ = Describe("Apirule controller validation", Serial, func() {
 	})
 
 })
+
+func testConfigError(accessStrategies []*gatewayv1beta1.Authenticator, mutators []*gatewayv1beta1.Mutator, expectedValidationErrors []string) {
+	// given
+	serviceName := generateTestName("httpbin", 5)
+	serviceHost := fmt.Sprintf("%s.kyma.local", serviceName)
+	testConfigErrorWithServiceAndHost(serviceName, serviceHost, accessStrategies, mutators, expectedValidationErrors)
+}
+
+func testConfigErrorWithServiceAndHost(serviceName string, host string, accessStrategies []*gatewayv1beta1.Authenticator, mutators []*gatewayv1beta1.Mutator, expectedValidationErrors []string) {
+	// given
+	const (
+		testNameBase           = "status-test"
+		testIDLength           = 5
+		testServicePort uint32 = 443
+		testPath               = "/.*"
+	)
+
+	apiRuleName := generateTestName(testNameBase, testIDLength)
+
+	rule := gatewayv1beta1.Rule{
+		Path:             testPath,
+		Methods:          defaultMethods,
+		Mutators:         mutators,
+		AccessStrategies: accessStrategies,
+	}
+	instance := testApiRule(apiRuleName, testNamespace, serviceName, testNamespace, host, testServicePort, []gatewayv1beta1.Rule{rule})
+	svc := testService(serviceName, testNamespace, testServicePort)
+
+	// when
+	Expect(c.Create(context.TODO(), svc)).Should(Succeed())
+	Expect(c.Create(context.TODO(), instance)).Should(Succeed())
+	defer func() {
+		deleteApiRule(instance)
+		deleteService(svc)
+	}()
+
+	// then
+	Eventually(func(g Gomega) {
+		created := gatewayv1beta1.APIRule{}
+		g.Expect(c.Get(context.TODO(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &created)).Should(Succeed())
+		g.Expect(created.Status.APIRuleStatus).NotTo(BeNil())
+		g.Expect(created.Status.APIRuleStatus.Code).To(Equal(gatewayv1beta1.StatusError))
+		for _, expected := range expectedValidationErrors {
+			g.Expect(created.Status.APIRuleStatus.Description).To(ContainSubstring(expected))
+		}
+	}, eventuallyTimeout).Should(Succeed())
+}
+
+func testHostInBlockList() {
+	accessStrategies := []*gatewayv1beta1.Authenticator{
+		{
+			Handler: &gatewayv1beta1.Handler{
+				Name: "noop",
+			},
+		},
+	}
+
+	serviceName := generateTestName("httpbin", 5)
+
+	expectedErrors := []string{"Validation error: Attribute \".spec.host\": The subdomain api is blocklisted for kyma.local domain"}
+	testConfigErrorWithServiceAndHost(serviceName, testBlockedHost, accessStrategies, nil, expectedErrors)
+}
