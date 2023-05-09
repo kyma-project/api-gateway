@@ -35,10 +35,8 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	apierrs "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
@@ -46,24 +44,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 )
-
-// APIRuleReconciler reconciles a APIRule object
-type APIRuleReconciler struct {
-	client.Client
-	Log                    logr.Logger
-	OathkeeperSvc          string
-	OathkeeperSvcPort      uint32
-	CorsConfig             *processing.CorsConfig
-	GeneratedObjectsLabels map[string]string
-	ServiceBlockList       map[string][]string
-	DomainAllowList        []string
-	HostBlockList          []string
-	DefaultDomainName      string
-	Scheme                 *runtime.Scheme
-	Config                 *helpers.Config
-	ReconcilePeriod        time.Duration
-	OnErrorReconcilePeriod time.Duration
-}
 
 const (
 	CONFIGMAP_NAME                = "api-gateway-config"
@@ -151,19 +131,7 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	}
 	r.Log.Info("Starting ApiRule reconciliation", "jwtHandler", r.Config.JWTHandler)
 
-	c := processing.ReconciliationConfig{
-		OathkeeperSvc:       r.OathkeeperSvc,
-		OathkeeperSvcPort:   r.OathkeeperSvcPort,
-		CorsConfig:          r.CorsConfig,
-		AdditionalLabels:    r.GeneratedObjectsLabels,
-		DefaultDomainName:   r.DefaultDomainName,
-		ServiceBlockList:    r.ServiceBlockList,
-		DomainAllowList:     r.DomainAllowList,
-		HostBlockList:       r.HostBlockList,
-		HTTPTimeoutDuration: helpers.DEFAULT_HTTP_TIMEOUT,
-	}
-
-	cmd := r.getReconciliation(c)
+	cmd := r.getReconciliation()
 
 	apiRule := &gatewayv1beta1.APIRule{}
 	err := r.Client.Get(ctx, req.NamespacedName, apiRule)
@@ -224,11 +192,11 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	return r.updateStatusOrRetry(ctx, apiRule, status)
 }
 
-func (r *APIRuleReconciler) getReconciliation(config processing.ReconciliationConfig) processing.ReconciliationCommand {
+func (r *APIRuleReconciler) getReconciliation() processing.ReconciliationCommand {
 	if r.Config.JWTHandler == helpers.JWT_HANDLER_ISTIO {
-		return istio.NewIstioReconciliation(config, &r.Log)
+		return istio.NewIstioReconciliation(r.ReconciliationConfig, &r.Log)
 	}
-	return ory.NewOryReconciliation(config, &r.Log)
+	return ory.NewOryReconciliation(r.ReconciliationConfig, &r.Log)
 
 }
 

@@ -21,8 +21,6 @@ import (
 	"fmt"
 	"os"
 	"strings"
-	"time"
-
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
 
@@ -45,8 +43,6 @@ import (
 	gatewayv1alpha1 "github.com/kyma-project/api-gateway/api/v1alpha1"
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/api/v1beta1"
 	"github.com/kyma-project/api-gateway/controllers"
-	"github.com/kyma-project/api-gateway/internal/helpers"
-	"github.com/kyma-project/api-gateway/internal/processing"
 	"github.com/kyma-project/api-gateway/internal/validation"
 	"github.com/pkg/errors"
 	//+kubebuilder:scaffold:imports
@@ -163,27 +159,27 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err = (&controllers.APIRuleReconciler{
-		Client:            mgr.GetClient(),
-		Log:               ctrl.Log.WithName("controllers").WithName("Api"),
-		OathkeeperSvc:     oathkeeperSvcAddr,
-		OathkeeperSvcPort: uint32(oathkeeperSvcPort),
-		ServiceBlockList:  getNamespaceServiceMap(blockListedServices),
-		DomainAllowList:   getList(allowListedDomains),
-		HostBlockList:     getHostBlockListFrom(blockListedSubdomains, domainName),
-		DefaultDomainName: domainName,
-		CorsConfig: &processing.CorsConfig{
-			AllowHeaders: getList(corsAllowHeaders),
-			AllowMethods: getList(corsAllowMethods),
-			AllowOrigins: getStringMatch(corsAllowOrigins),
-		},
-		GeneratedObjectsLabels: additionalLabels,
-		Scheme:                 mgr.GetScheme(),
-		Config:                 &helpers.Config{},
-		ReconcilePeriod:        time.Duration(reconciliationPeriod) * time.Second,
-		OnErrorReconcilePeriod: time.Duration(errorReconciliationPeriod) * time.Second,
-	}).SetupWithManager(mgr); err != nil {
+	config := controllers.ApiRuleReconcilerConfiguration{
+		OathkeeperSvcAddr:         oathkeeperSvcAddr,
+		OathkeeperSvcPort:         oathkeeperSvcPort,
+		AllowListedDomains:        allowListedDomains,
+		BlockListedServices:       blockListedServices,
+		DomainName:                domainName,
+		CorsAllowOrigins:          corsAllowOrigins,
+		CorsAllowMethods:          corsAllowMethods,
+		CorsAllowHeaders:          corsAllowHeaders,
+		AdditionalLabels:          additionalLabels,
+		ReconciliationPeriod:      reconciliationPeriod,
+		ErrorReconciliationPeriod: errorReconciliationPeriod,
+	}
+
+	reconciler, err := controllers.NewApiRuleReconciler(mgr, config)
+	if err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "APIRule")
+		os.Exit(1)
+	}
+	if err = reconciler.SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to setup controller", "controller", "APIRule")
 		os.Exit(1)
 	}
 	if err = (&gatewayv1beta1.APIRule{}).SetupWebhookWithManager(mgr); err != nil {

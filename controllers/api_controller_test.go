@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/kyma-project/api-gateway/internal/processing"
 	"io"
 	"net/http"
 
@@ -18,7 +19,6 @@ import (
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/api/v1beta1"
 	"github.com/kyma-project/api-gateway/controllers"
 	"github.com/kyma-project/api-gateway/internal/helpers"
-	"github.com/kyma-project/api-gateway/internal/processing"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
@@ -258,17 +258,19 @@ func getRawConfig(config any) *runtime.RawExtension {
 }
 
 func getAPIReconciler(mgr manager.Manager) reconcile.Reconciler {
+
 	return &controllers.APIRuleReconciler{
-		Client:          mgr.GetClient(),
-		Log:             ctrl.Log.WithName("controllers").WithName("Api"),
-		DomainAllowList: []string{"bar", "kyma.local"},
-		CorsConfig: &processing.CorsConfig{
-			AllowOrigins: TestAllowOrigins,
-			AllowMethods: TestAllowMethods,
-			AllowHeaders: TestAllowHeaders,
+		Client: mgr.GetClient(),
+		Log:    ctrl.Log.WithName("controllers").WithName("Api"),
+		Config: &helpers.Config{},
+		ReconciliationConfig: processing.ReconciliationConfig{
+			CorsConfig: &processing.CorsConfig{
+				AllowOrigins: TestAllowOrigins,
+				AllowMethods: TestAllowMethods,
+				AllowHeaders: TestAllowHeaders,
+			},
+			DomainAllowList: []string{"bar", "kyma.local"},
 		},
-		GeneratedObjectsLabels: map[string]string{},
-		Config:                 &helpers.Config{},
 	}
 }
 

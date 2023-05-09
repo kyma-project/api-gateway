@@ -352,5 +352,5 @@ func testHostInBlockList() {
 	serviceName := generateTestName("httpbin", 5)
 
 	expectedErrors := []string{"Validation error: Attribute \".spec.host\": The subdomain api is blocklisted for kyma.local domain"}
-	testConfigErrorWithServiceAndHost(serviceName, testBlockedHost, accessStrategies, nil, expectedErrors)
+	testConfigErrorWithServiceAndHost(serviceName, "api.kyma.local", accessStrategies, nil, expectedErrors)
 }
