@@ -109,9 +109,9 @@ This table lists all possible configuration properties of the Ory Oathkeeper JWT
 | **jwks_urls** | **YES** | &rarr; | **authentications.jwksUri** | **YES** |
 | **trusted_issuers** | **NO** | &rarr; | **authentications.issuer** | **YES** |
 | **token_from** | **NO** | &rarr; | **authentications.fromHeaders.name**<br/>**authentications.fromHeaders.prefix**<br/>**authentications.fromParams**| **NO** |
-| **scope_strategy** | **NO** | &rarr; | **authorizations.requiredScopes** | **NO** |
 | **target_audience** | **NO** | &rarr; | **authorizations.audiences** | **NO** |
 | **required_scope** | **NO** | &rarr; | **authorizations.requiredScopes** | **NO** |
+| **scope_strategy** | **NO** | &rarr; | *Not Supported* | **-** |
 | **jwks_max_wait** | **NO** | &rarr; | *Not Supported* | **-** |
 | **jwks_ttl** | **NO** | &rarr; | *Not Supported* | **-** |
 | **allowed_algorithms** | **NO** | &rarr; | *Not Supported* | **-** |
