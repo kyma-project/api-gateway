@@ -140,7 +140,6 @@ var _ = BeforeSuite(func(specCtx SpecContext) {
 		OathkeeperSvcAddr:         testOathkeeperSvcURL,
 		OathkeeperSvcPort:         testOathkeeperPort,
 		AllowListedDomains:        "bar, kyma.local",
-		BlockListedServices:       "",
 		DomainName:                "kyma.local",
 		CorsAllowOrigins:          "regex:.*",
 		CorsAllowMethods:          "GET,POST,PUT,DELETE",

@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/kyma-project/api-gateway/internal/processing"
 	"io"
 	"net/http"
 
@@ -31,7 +30,6 @@ import (
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/record"
-	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
@@ -259,19 +257,17 @@ func getRawConfig(config any) *runtime.RawExtension {
 
 func getAPIReconciler(mgr manager.Manager) reconcile.Reconciler {
 
-	return &controllers.APIRuleReconciler{
-		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("controllers").WithName("Api"),
-		Config: &helpers.Config{},
-		ReconciliationConfig: processing.ReconciliationConfig{
-			CorsConfig: &processing.CorsConfig{
-				AllowOrigins: TestAllowOrigins,
-				AllowMethods: TestAllowMethods,
-				AllowHeaders: TestAllowHeaders,
-			},
-			DomainAllowList: []string{"bar", "kyma.local"},
-		},
+	reconcilerConfig := controllers.ApiRuleReconcilerConfiguration{
+		AllowListedDomains: "bar, kyma.local",
+		CorsAllowOrigins:   "regex:.*",
+		CorsAllowMethods:   "GET,POST,PUT,DELETE",
+		CorsAllowHeaders:   "header1,header2",
 	}
+
+	apiReconciler, err := controllers.NewApiRuleReconciler(mgr, reconcilerConfig)
+	Expect(err).NotTo(HaveOccurred())
+
+	return apiReconciler
 }
 
 type testSuite struct {
