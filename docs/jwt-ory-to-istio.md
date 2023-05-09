@@ -97,7 +97,7 @@ This table lists all the possible parameters of the Istio JWT access strategy to
 
 | Field | Mandatory | Description |
 |-|:-:|-|
-| **authentications** | **NO** | List of authentication objects. |
+| **authentications** | **YES** | List of authentication objects. |
 | **authentications.issuer** | **YES** | Identifies the issuer that issued the JWT. <br/>Must be an URL starting with `https://`. |
 | **authentications.jwksUri** | **YES** | URL of the provider’s public key set to validate the signature of the JWT. <br/>Must be an URL starting with `https://`. |
 | **authentications.fromHeaders** | **NO** | List of headers from which the JWT token is taken. |
