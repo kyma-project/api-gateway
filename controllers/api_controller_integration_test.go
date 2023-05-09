@@ -1051,11 +1051,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 		expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusError)
 
 		By("Verifying virtual service for APIRule has not been created")
-		Eventually(func(g Gomega) {
-			vsList := networkingv1beta1.VirtualServiceList{}
-			g.Expect(c.List(context.TODO(), &vsList, apiRuleLabelMatcher)).Should(Succeed())
-			g.Expect(vsList.Items).To(HaveLen(0))
-		}, eventuallyTimeout).Should(Succeed())
+		verifyVirtualServiceCount(c, apiRuleLabelMatcher, 0)
 
 		By("Deleting existing virtual service with duplicated host configuration")
 		deleteVirtualService(vs)
@@ -1064,11 +1060,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 		expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusOK)
 
 		By("Verifying virtual service for APIRule has been created")
-		Eventually(func(g Gomega) {
-			vsList := networkingv1beta1.VirtualServiceList{}
-			g.Expect(c.List(context.TODO(), &vsList, apiRuleLabelMatcher)).Should(Succeed())
-			g.Expect(vsList.Items).To(HaveLen(1))
-		}, eventuallyTimeout).Should(Succeed())
+		verifyVirtualServiceCount(c, apiRuleLabelMatcher, 1)
 	})
 
 	It("APIRule in status OK should reconcile to status ERROR when an", func() {
@@ -1147,43 +1139,38 @@ var _ = Describe("APIRule Controller", Serial, func() {
 
 		expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusOK)
 
-		ApiRuleNameMatchingLabels := matchingLabelsFunc(apiRuleName, testNamespace)
+		apiRuleNameMatchingLabels := matchingLabelsFunc(apiRuleName, testNamespace)
 
-		By("Verifying virtual service exists and deleting it")
-		vsList := networkingv1beta1.VirtualServiceList{}
+		By("Verifying that resources are created")
+		verifyVirtualServiceCount(c, apiRuleNameMatchingLabels, 1)
+		verifyRequestAuthenticationCount(c, apiRuleNameMatchingLabels, 1)
+		verifyAuthorizationPolicyCount(c, apiRuleNameMatchingLabels, 1)
+
+		By("Deleting Virtual Service")
 		Eventually(func(g Gomega) {
-			g.Expect(c.List(context.TODO(), &vsList, ApiRuleNameMatchingLabels)).Should(Succeed())
-			g.Expect(vsList.Items).To(HaveLen(1))
+			vsList := networkingv1beta1.VirtualServiceList{}
+			g.Expect(c.List(context.TODO(), &vsList, apiRuleNameMatchingLabels)).Should(Succeed())
 			g.Expect(c.Delete(context.TODO(), vsList.Items[0])).Should(Succeed())
 		}, eventuallyTimeout).Should(Succeed())
 
-		By("Verifying request authentication exists and deleting it")
+		By("Deleting Request Authentication")
 		raList := securityv1beta1.RequestAuthenticationList{}
 		Eventually(func(g Gomega) {
-			g.Expect(c.List(context.TODO(), &raList, ApiRuleNameMatchingLabels)).Should(Succeed())
-			g.Expect(raList.Items).To(HaveLen(1))
+			g.Expect(c.List(context.TODO(), &raList, apiRuleNameMatchingLabels)).Should(Succeed())
 			g.Expect(c.Delete(context.TODO(), raList.Items[0])).Should(Succeed())
 		}, eventuallyTimeout).Should(Succeed())
 
-		By("Verifying authorization policy exists and deleting it")
+		By("Deleting Authorization Policy")
 		apList := securityv1beta1.AuthorizationPolicyList{}
 		Eventually(func(g Gomega) {
-			g.Expect(c.List(context.TODO(), &apList, ApiRuleNameMatchingLabels)).Should(Succeed())
-			g.Expect(apList.Items).To(HaveLen(1))
+			g.Expect(c.List(context.TODO(), &apList, apiRuleNameMatchingLabels)).Should(Succeed())
 			g.Expect(c.Delete(context.TODO(), apList.Items[0])).Should(Succeed())
 		}, eventuallyTimeout).Should(Succeed())
 
 		By("Verifying deleted resources are recreated")
-		Eventually(func(g Gomega) {
-			g.Expect(c.List(context.TODO(), &vsList, ApiRuleNameMatchingLabels)).Should(Succeed())
-			g.Expect(vsList.Items).To(HaveLen(1))
-
-			g.Expect(c.List(context.TODO(), &raList, ApiRuleNameMatchingLabels)).Should(Succeed())
-			g.Expect(raList.Items).To(HaveLen(1))
-
-			g.Expect(c.List(context.TODO(), &apList, ApiRuleNameMatchingLabels)).Should(Succeed())
-			g.Expect(apList.Items).To(HaveLen(1))
-		}, eventuallyTimeout).Should(Succeed())
+		verifyVirtualServiceCount(c, apiRuleNameMatchingLabels, 1)
+		verifyRequestAuthenticationCount(c, apiRuleNameMatchingLabels, 1)
+		verifyAuthorizationPolicyCount(c, apiRuleNameMatchingLabels, 1)
 	})
 
 	It("Should delete created resources when APIRule is deleted", func() {
@@ -1206,41 +1193,47 @@ var _ = Describe("APIRule Controller", Serial, func() {
 		}()
 
 		expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusOK)
-		ApiRuleNameMatchingLabels := matchingLabelsFunc(apiRuleName, testNamespace)
+		apiRuleNameMatchingLabels := matchingLabelsFunc(apiRuleName, testNamespace)
 
-		By("Verifying resources are created")
-		Eventually(func(g Gomega) {
-			vsList := networkingv1beta1.VirtualServiceList{}
-			g.Expect(c.List(context.TODO(), &vsList, ApiRuleNameMatchingLabels)).Should(Succeed())
-			g.Expect(vsList.Items).To(HaveLen(1))
-
-			raList := securityv1beta1.RequestAuthenticationList{}
-			g.Expect(c.List(context.TODO(), &raList, ApiRuleNameMatchingLabels)).Should(Succeed())
-			g.Expect(raList.Items).To(HaveLen(1))
-
-			apList := securityv1beta1.AuthorizationPolicyList{}
-			g.Expect(c.List(context.TODO(), &apList, ApiRuleNameMatchingLabels)).Should(Succeed())
-			g.Expect(apList.Items).To(HaveLen(1))
-		}, eventuallyTimeout).Should(Succeed())
+		verifyVirtualServiceCount(c, apiRuleNameMatchingLabels, 1)
+		verifyRequestAuthenticationCount(c, apiRuleNameMatchingLabels, 1)
+		verifyAuthorizationPolicyCount(c, apiRuleNameMatchingLabels, 1)
 
 		deleteApiRule(apiRule)
 
 		By("Verifying resources are deleted")
-		Eventually(func(g Gomega) {
-			vsList := networkingv1beta1.VirtualServiceList{}
-			g.Expect(c.List(context.TODO(), &vsList, ApiRuleNameMatchingLabels)).Should(Succeed())
-			g.Expect(vsList.Items).To(HaveLen(0))
-
-			raList := securityv1beta1.RequestAuthenticationList{}
-			g.Expect(c.List(context.TODO(), &raList, ApiRuleNameMatchingLabels)).Should(Succeed())
-			g.Expect(raList.Items).To(HaveLen(0))
-
-			apList := securityv1beta1.AuthorizationPolicyList{}
-			g.Expect(c.List(context.TODO(), &apList, ApiRuleNameMatchingLabels)).Should(Succeed())
-			g.Expect(apList.Items).To(HaveLen(0))
-		}, eventuallyTimeout).Should(Succeed())
+		verifyVirtualServiceCount(c, apiRuleNameMatchingLabels, 0)
+		verifyRequestAuthenticationCount(c, apiRuleNameMatchingLabels, 0)
+		verifyAuthorizationPolicyCount(c, apiRuleNameMatchingLabels, 0)
 	})
 })
+
+func verifyVirtualServiceCount(c client.Client, option client.ListOption, count int) {
+	By(fmt.Sprintf("Verifying %d Virtual Service exist", count))
+	Eventually(func(g Gomega) {
+		vsList := networkingv1beta1.VirtualServiceList{}
+		g.Expect(c.List(context.TODO(), &vsList, option)).Should(Succeed())
+		g.Expect(vsList.Items).To(HaveLen(count))
+	}, eventuallyTimeout).Should(Succeed())
+}
+
+func verifyRequestAuthenticationCount(c client.Client, option client.ListOption, count int) {
+	By(fmt.Sprintf("Verifying %d Request Authentication exist", count))
+	Eventually(func(g Gomega) {
+		raList := securityv1beta1.RequestAuthenticationList{}
+		g.Expect(c.List(context.TODO(), &raList, option)).Should(Succeed())
+		g.Expect(raList.Items).To(HaveLen(count))
+	}, eventuallyTimeout).Should(Succeed())
+}
+
+func verifyAuthorizationPolicyCount(c client.Client, option client.ListOption, count int) {
+	By(fmt.Sprintf("Verifying %d Authorization Policy exist", count))
+	Eventually(func(g Gomega) {
+		apList := securityv1beta1.AuthorizationPolicyList{}
+		g.Expect(c.List(context.TODO(), &apList, option)).Should(Succeed())
+		g.Expect(apList.Items).To(HaveLen(count))
+	}, eventuallyTimeout).Should(Succeed())
+}
 
 func toCSVList(input []string) string {
 	if len(input) == 0 {
