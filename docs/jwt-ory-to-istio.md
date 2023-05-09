@@ -10,9 +10,9 @@ For JWT access strategy we are transitioning from Ory Oathkeeper to Istio. Here 
 
 These are sample APIRule custom resources of both Ory Oathkeeper and Istio JWT access strategy configuration for a service.
 
-<div tabs name="api-rule" group="sample-cr">
+<div tabs name="api-rule">
   <details>
-  <summary label="Ory Oathkeeper">
+  <summary>
   Ory Oathkeeper
   </summary>
 
@@ -45,7 +45,7 @@ spec:
 
   </details>
   <details>
-  <summary label="Istio">
+  <summary>
   Istio
   </summary>
 
