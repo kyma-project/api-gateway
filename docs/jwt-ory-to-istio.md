@@ -102,19 +102,19 @@ For Istio, for each `authentications` entry we create an Istio's [Request Authen
 
 ## Ory-to-Istio JWT corresponding configuration properties
 
-This table lists all the possible configuration properties of the Ory Oathkeeper JWT access strategy and their corresponding properties in Istio JWT:
+This table lists all possible configuration properties of the Ory Oathkeeper JWT access strategy and their corresponding properties in Istio:
 
 | Ory Oathkeeper | Required | | Istio | Required |
 |-|:-:|-|-|:-:|
 | **jwks_urls** | **YES** | &rarr; | **authentications.jwksUri** | **YES** |
 | **trusted_issuers** | **NO** | &rarr; | **authentications.issuer** | **YES** |
+| **token_from** | **NO** | &rarr; | **authentications.fromHeaders.name**<br/>**authentications.fromHeaders.prefix**<br/>**authentications.fromParams**| **NO** |
 | **scope_strategy** | **NO** | &rarr; | **authorizations.requiredScopes** | **NO** |
 | **target_audience** | **NO** | &rarr; | **authorizations.audiences** | **NO** |
 | **required_scope** | **NO** | &rarr; | **authorizations.requiredScopes** | **NO** |
 | **jwks_max_wait** | **NO** | &rarr; | *Not Supported* | **-** |
 | **jwks_ttl** | **NO** | &rarr; | *Not Supported* | **-** |
 | **allowed_algorithms** | **NO** | &rarr; | *Not Supported* | **-** |
-| **token_from** | **NO** | &rarr; | **authentications.fromHeaders.name**<br/>**authentications.fromHeaders.prefix**<br/>**authentications.fromParams**| **NO** |
 
 For more details on Istio JWT configuration properties please check our [APIRule CR documentation](https://github.com/kyma-project/api-gateway/blob/main/docs/api-rule-cr.md#istio-jwt-configuration).
 
