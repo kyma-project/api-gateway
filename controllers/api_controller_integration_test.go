@@ -854,7 +854,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 						apiRule := gatewayv1beta1.APIRule{}
 						g.Expect(c.Get(context.TODO(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &apiRule)).Should(Succeed())
 						g.Expect(apiRule.Status.APIRuleStatus.Code).To(Equal(gatewayv1beta1.StatusError))
-						g.Expect(apiRule.Status.APIRuleStatus.Description).To(ContainSubstring("Validation error"))
+						g.Expect(apiRule.Status.APIRuleStatus.Description).To(ContainSubstring("Multiple validation errors"))
 
 						shouldHaveRules(g, apiRuleName, testNamespace, 1)
 					}, eventuallyTimeout).Should(Succeed())
