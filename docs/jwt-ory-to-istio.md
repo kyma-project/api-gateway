@@ -128,4 +128,4 @@ Istio doesn't support regex type of path matching in Authorization Policies, whi
 
 Istio doesn't support configuring a JWT token from `cookie`, and Ory Oathkeeper does. Istio supports only `fromHeaders` and `fromParams` configurations.
 
-Using Istio as JWT access strategy requires the workload behind the service to be in the service mesh, e.g. having Istio proxy. More information on how to add workloads into Istio service mesh [in here](https://istio.io/latest/docs/ops/common-problems/injection/).
+Using Istio as JWT access strategy requires the workload behind the service to be in the service mesh, for example, to have the Istio proxy. To learn how to add workloads to the Istio service mesh read the [Istio documentation](https://istio.io/latest/docs/ops/common-problems/injection/).
