@@ -100,7 +100,7 @@ For Ory Oathkeeper, APIRule JWT access strategy configuration is translated dire
 
 For Istio, for each `authentications` entry we create an Istio's [Request Authentication](https://istio.io/latest/docs/reference/config/security/request_authentication/) resource and for each `authorizations` entry we create an [Authorization Policy](https://istio.io/latest/docs/reference/config/security/authorization-policy/) resource respectively.
 
-## Ory-to-Istio JWT corresponding configuration properties
+## Corresponding JWT configuration properties in Ory Oathkeeper and Istio
 
 This table lists all possible configuration properties of the Ory Oathkeeper JWT access strategy and their corresponding properties in Istio:
 
