@@ -122,7 +122,7 @@ For more details, check the description of Istio JWT configuration properties in
 
 ## How Istio differs from Ory Oathkeeper JWT access strategy
 
-Only `header` and `cookie` mutators are supported with Istio JWT access strategy. For more info please take a look at our [APIRule CR](https://github.com/kyma-project/api-gateway/blob/main/docs/api-rule-cr.md#mutators) reference documentation.
+Istio JWT access strategy only supports `header` and `cookie` mutators. For more information, take a look at the [APIRule CR reference documentation](https://github.com/kyma-project/api-gateway/blob/main/docs/api-rule-cr.md#mutators).
 
 Istio doesn't support regex type of path matching in Authorization Policies, which are supported by Ory Oathkeeper rules and by Virtual Service.
 
