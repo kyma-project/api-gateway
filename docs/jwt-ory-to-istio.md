@@ -2,7 +2,7 @@
 title: JWT access strategies with Ory Oathkeeper to Istio
 ---
 
-For JWT access strategy we are transitioning from Ory Oathkeeper to Istio. Here is a description on how Ory Oathkeeper JWT access strategy configuration looks like and respectively differs to Istio.
+We are in the process of transitioning from Ory Oathkeeper to Istio JWT access strategy. This document explains the differences between those two strategies and compares their configuration.
 
 ## Comparison of Ory Oathkeeper and Istio JWT access strategy configurations
 
