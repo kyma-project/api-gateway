@@ -38,58 +38,8 @@ func (o *handlerValidator) Validate(attributePath string, handler *gatewayv1beta
 
 	failures = append(failures, checkForOryConfig(attributePath, handler)...)
 
-	hasFromHeaders, hasFromParams := false, false
-
-	for i, authentication := range template.Authentications {
-		invalidIssuer, err := validation.IsInvalidURL(authentication.Issuer)
-		if invalidIssuer {
-			attrPath := fmt.Sprintf("%s%s[%d]%s", attributePath, ".config.authentications", i, ".issuer")
-			failures = append(failures, validation.Failure{AttributePath: attrPath, Message: fmt.Sprintf("value is empty or not a valid url err=%s", err)})
-		}
-		// The https:// configuration for TrustedIssuers is not necessary in terms of security best practices,
-		// however it is part of "secure by default" configuration, as this is the most common use case for iss claim.
-		// If we want to allow some weaker configurations, we should have a dedicated configuration which allows that.
-		unsecuredIssuer, err := validation.IsUnsecuredURL(authentication.Issuer)
-		if unsecuredIssuer {
-			attrPath := fmt.Sprintf("%s%s[%d]%s", attributePath, ".config.authentications", i, ".issuer")
-			failures = append(failures, validation.Failure{AttributePath: attrPath, Message: fmt.Sprintf("value is not a secured url err=%s", err)})
-		}
-		invalidJwksUri, err := validation.IsInvalidURL(authentication.JwksUri)
-		if invalidJwksUri {
-			attrPath := fmt.Sprintf("%s%s[%d]%s", attributePath, ".config.authentications", i, ".jwksUri")
-			failures = append(failures, validation.Failure{AttributePath: attrPath, Message: fmt.Sprintf("value is empty or not a valid url err=%s", err)})
-		}
-		unsecuredJwksUri, err := validation.IsUnsecuredURL(authentication.JwksUri)
-		if unsecuredJwksUri {
-			attrPath := fmt.Sprintf("%s%s[%d]%s", attributePath, ".config.authentications", i, ".jwksUri")
-			failures = append(failures, validation.Failure{AttributePath: attrPath, Message: fmt.Sprintf("value is not a secured url err=%s", err)})
-		}
-		if len(authentication.FromHeaders) > 0 {
-			if hasFromParams {
-				attrPath := fmt.Sprintf("%s%s[%d]%s", attributePath, ".config.authentications", i, ".fromHeaders")
-				failures = append(failures, validation.Failure{AttributePath: attrPath, Message: "mixture of multiple fromHeaders and fromParams is not supported"})
-			}
-			hasFromHeaders = true
-		}
-		if len(authentication.FromParams) > 0 {
-			if hasFromHeaders {
-				attrPath := fmt.Sprintf("%s%s[%d]%s", attributePath, ".config.authentications", i, ".fromParams")
-				failures = append(failures, validation.Failure{AttributePath: attrPath, Message: "mixture of multiple fromHeaders and fromParams is not supported"})
-			}
-			hasFromParams = true
-		}
-		if len(authentication.FromHeaders) > 1 {
-			attrPath := fmt.Sprintf("%s%s[%d]%s", attributePath, ".config.authentications", i, ".fromHeaders")
-			failures = append(failures, validation.Failure{AttributePath: attrPath, Message: "multiple fromHeaders are not supported"})
-		}
-		if len(authentication.FromParams) > 1 {
-			attrPath := fmt.Sprintf("%s%s[%d]%s", attributePath, ".config.authentications", i, ".fromParams")
-			failures = append(failures, validation.Failure{AttributePath: attrPath, Message: "multiple fromParams are not supported"})
-		}
-	}
-
-	authorizationsFailures := hasInvalidAuthorizations(attributePath, template.Authorizations)
-	failures = append(failures, authorizationsFailures...)
+	failures = append(failures, hasInvalidAuthorizations(attributePath, template.Authorizations)...)
+	failures = append(failures, hasInvalidAuthentications(attributePath, template.Authentications)...)
 
 	return failures
 }
@@ -144,6 +94,66 @@ func hasInvalidAudiences(authorization v1beta1.JwtAuthorization) error {
 		}
 	}
 	return nil
+}
+
+func hasInvalidAuthentications(attributePath string, authentications []*v1beta1.JwtAuthentication) (failures []validation.Failure) {
+	hasFromHeaders, hasFromParams := false, false
+	if len(authentications) == 0 {
+		return []validation.Failure{
+			{
+				AttributePath: attributePath,
+				Message:       "Authentications are required when using JWT access handler",
+			},
+		}
+	}
+	for i, authentication := range authentications {
+		invalidIssuer, err := validation.IsInvalidURL(authentication.Issuer)
+		if invalidIssuer {
+			attrPath := fmt.Sprintf("%s%s[%d]%s", attributePath, ".config.authentications", i, ".issuer")
+			failures = append(failures, validation.Failure{AttributePath: attrPath, Message: fmt.Sprintf("value is empty or not a valid url err=%s", err)})
+		}
+		// The https:// configuration for TrustedIssuers is not necessary in terms of security best practices,
+		// however it is part of "secure by default" configuration, as this is the most common use case for iss claim.
+		// If we want to allow some weaker configurations, we should have a dedicated configuration which allows that.
+		unsecuredIssuer, err := validation.IsUnsecuredURL(authentication.Issuer)
+		if unsecuredIssuer {
+			attrPath := fmt.Sprintf("%s%s[%d]%s", attributePath, ".config.authentications", i, ".issuer")
+			failures = append(failures, validation.Failure{AttributePath: attrPath, Message: fmt.Sprintf("value is not a secured url err=%s", err)})
+		}
+		invalidJwksUri, err := validation.IsInvalidURL(authentication.JwksUri)
+		if invalidJwksUri {
+			attrPath := fmt.Sprintf("%s%s[%d]%s", attributePath, ".config.authentications", i, ".jwksUri")
+			failures = append(failures, validation.Failure{AttributePath: attrPath, Message: fmt.Sprintf("value is empty or not a valid url err=%s", err)})
+		}
+		unsecuredJwksUri, err := validation.IsUnsecuredURL(authentication.JwksUri)
+		if unsecuredJwksUri {
+			attrPath := fmt.Sprintf("%s%s[%d]%s", attributePath, ".config.authentications", i, ".jwksUri")
+			failures = append(failures, validation.Failure{AttributePath: attrPath, Message: fmt.Sprintf("value is not a secured url err=%s", err)})
+		}
+		if len(authentication.FromHeaders) > 0 {
+			if hasFromParams {
+				attrPath := fmt.Sprintf("%s%s[%d]%s", attributePath, ".config.authentications", i, ".fromHeaders")
+				failures = append(failures, validation.Failure{AttributePath: attrPath, Message: "mixture of multiple fromHeaders and fromParams is not supported"})
+			}
+			hasFromHeaders = true
+		}
+		if len(authentication.FromParams) > 0 {
+			if hasFromHeaders {
+				attrPath := fmt.Sprintf("%s%s[%d]%s", attributePath, ".config.authentications", i, ".fromParams")
+				failures = append(failures, validation.Failure{AttributePath: attrPath, Message: "mixture of multiple fromHeaders and fromParams is not supported"})
+			}
+			hasFromParams = true
+		}
+		if len(authentication.FromHeaders) > 1 {
+			attrPath := fmt.Sprintf("%s%s[%d]%s", attributePath, ".config.authentications", i, ".fromHeaders")
+			failures = append(failures, validation.Failure{AttributePath: attrPath, Message: "multiple fromHeaders are not supported"})
+		}
+		if len(authentication.FromParams) > 1 {
+			attrPath := fmt.Sprintf("%s%s[%d]%s", attributePath, ".config.authentications", i, ".fromParams")
+			failures = append(failures, validation.Failure{AttributePath: attrPath, Message: "multiple fromParams are not supported"})
+		}
+	}
+	return failures
 }
 
 func hasInvalidAuthorizations(attributePath string, authorizations []*v1beta1.JwtAuthorization) (failures []validation.Failure) {

@@ -214,6 +214,30 @@ var _ = Describe("JWT Handler validation", func() {
 
 	Context("for authentications", func() {
 
+		It("Should fail validation when authentications are empty", func() {
+			//given
+			config := processingtest.GetRawConfig(
+				gatewayv1beta1.JwtConfig{
+					Authorizations: []*gatewayv1beta1.JwtAuthorization{
+						{
+							RequiredScopes: []string{"scope-a", "scope-b"},
+						},
+					},
+				})
+
+			handler := &gatewayv1beta1.Handler{
+				Name:   "jwt",
+				Config: config,
+			}
+
+			//when
+			problems := (&handlerValidator{}).Validate("", handler)
+
+			//then
+			Expect(problems).To(HaveLen(1))
+			Expect(problems[0].Message).To(Equal("Authentications are required when using JWT access handler"))
+		})
+
 		It("Should fail validation when authentication has more than one fromHeaders", func() {
 			//given
 			config := processingtest.GetRawConfig(
