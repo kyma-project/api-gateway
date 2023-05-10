@@ -124,7 +124,7 @@ For more details on Istio JWT configuration properties please check our [APIRule
 
 Only `header` and `cookie` mutators are supported with Istio JWT access strategy. For more info please take a look at our [APIRule CR](https://github.com/kyma-project/api-gateway/blob/main/docs/api-rule-cr.md#mutators) reference documentation.
 
-Istio doesn't support regex type of path matching on Authorization Policies, which were suported on Ory Oathkeeper rules and are supported by Virtual Service.
+Istio doesn't support regex type of path matching in Authorization Policies, which are supported by Ory Oathkeeper rules and by Virtual Service.
 
 Istio doesn't support configuring a JWT token from `cookie`, and Ory Oathkeeper does. Istio supports only `fromHeaders` and `fromParams` configurations.
 
