@@ -123,9 +123,9 @@ kubectl patch configmap/api-gateway-config -n kyma-system --type merge -p '{"dat
 This table lists all the possible parameters of the Istio JWT access strategy together with their descriptions:
 
 | Field                                                                     | Mandatory | Description                                                                                                              |
-|:--------------------------------------------------------------------------|:----------|:-------------------------------------------------------------------------------------------------------------------------| 
+|:--------------------------------------------------------------------------|:----------|:-------------------------------------------------------------------------------------------------------------------------|
 | **spec.rules.accessStrategies.config**                                    | **YES**   | Access strategy configuration, must contain at least authentication or authorization.                                    |
-| **spec.rules.accessStrategies.config.authentications**                    | **NO**    | List of authentication objects.                                                                                          |
+| **spec.rules.accessStrategies.config.authentications**                    | **YES**   | List of authentication objects.                                                                                          |
 | **spec.rules.accessStrategies.config.authentications.issuer**             | **YES**   | Identifies the issuer that issued the JWT. <br/>Must be an URL starting with `https://`.                                 |
 | **spec.rules.accessStrategies.config.authentications.jwksUri**            | **YES**   | URL of the provider’s public key set to validate the signature of the JWT. <br/>Must be an URL starting with `https://`. |
 | **spec.rules.accessStrategies.config.authentications.fromHeaders**        | **NO**    | List of headers from which the JWT token is taken.                                                                       |
