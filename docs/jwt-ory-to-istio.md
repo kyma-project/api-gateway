@@ -94,7 +94,7 @@ spec:
 
 >**CAUTION:** We support only a single `fromHeader` **or** a single `fromParameter` for a JWT issuer.
 
-## Configuration properties handling into Ory Oathkeeper and Istio resources
+## Configuration of properties handling in Ory Oathkeeper and Istio resources
 
 For Ory Oathkeeper, APIRule JWT access strategy configuration is translated directly as [authenticator configuration](https://www.ory.sh/docs/oathkeeper/api-access-rules#handler-configuration) in the [Ory Oathkeeper access rule CR](https://www.ory.sh/docs/oathkeeper/api-access-rules). More details are available in the official Ory Oathkeeper [JWT authenticator documentation](https://www.ory.sh/docs/oathkeeper/pipeline/authn#jwt).
 
