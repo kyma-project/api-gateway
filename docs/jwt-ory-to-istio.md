@@ -120,7 +120,7 @@ This table lists all possible configuration properties of the Ory Oathkeeper JWT
 
 For more details, check the description of Istio JWT configuration properties in the [APIRule CR documentation](https://github.com/kyma-project/api-gateway/blob/main/docs/api-rule-cr.md#istio-jwt-configuration).
 
-## Differences and deprecation coming with Istio JWT access strategy
+## How Istio differs from Ory Oathkeeper JWT access strategy
 
 Only `header` and `cookie` mutators are supported with Istio JWT access strategy. For more info please take a look at our [APIRule CR](https://github.com/kyma-project/api-gateway/blob/main/docs/api-rule-cr.md#mutators) reference documentation.
 
