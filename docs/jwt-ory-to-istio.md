@@ -41,6 +41,13 @@ spec:
             jwks_urls:
               - $JWKS_URI1
               - $JWKS_URI2
+            required_scope:
+              - "test"
+            target_audience:
+              - "example.com"
+              - "example.org"
+            token_from:
+              header: X-JWT-Assertion
 ```
 
   </details>
@@ -70,8 +77,8 @@ spec:
         - handler: jwt
           config:
             authentications:
-            - issuer: $ISSUER
-              jwksUri: $JWKS_URI
+            - issuer: $ISSUER1
+              jwksUri: $JWKS_URI1
               fromHeaders:
               - name: X-JWT-Assertion
                 prefix: "Kyma "
