@@ -21,8 +21,6 @@ import (
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/api/v1beta1"
 	"github.com/kyma-project/api-gateway/controllers"
 	"github.com/kyma-project/api-gateway/internal/helpers"
-	"github.com/kyma-project/api-gateway/internal/processing"
-
 	. "github.com/onsi/ginkgo/v2"
 	"github.com/onsi/ginkgo/v2/reporters"
 	"github.com/onsi/ginkgo/v2/types"
@@ -38,11 +36,11 @@ import (
 )
 
 const (
-	eventuallyTimeout           = time.Second * 5
-	testNamespace               = "atgo-system"
-	testGatewayURL              = "kyma-system/kyma-gateway"
-	testOathkeeperSvcURL        = "oathkeeper.kyma-system.svc.cluster.local"
-	testOathkeeperPort   uint32 = 1234
+	eventuallyTimeout    = time.Second * 5
+	testNamespace        = "atgo-system"
+	testGatewayURL       = "kyma-system/kyma-gateway"
+	testOathkeeperSvcURL = "oathkeeper.kyma-system.svc.cluster.local"
+	testOathkeeperPort   = 1234
 )
 
 var (
@@ -138,24 +136,20 @@ var _ = BeforeSuite(func(specCtx SpecContext) {
 	}
 	Expect(c.Create(context.TODO(), cm)).Should(Succeed())
 
-	apiReconciler := &controllers.APIRuleReconciler{
-		Client:            mgr.GetClient(),
-		Scheme:            mgr.GetScheme(),
-		Log:               ctrl.Log.WithName("controllers").WithName("Api"),
-		OathkeeperSvc:     testOathkeeperSvcURL,
-		OathkeeperSvcPort: testOathkeeperPort,
-		DomainAllowList:   []string{"bar", "kyma.local"},
-		CorsConfig: &processing.CorsConfig{
-			AllowOrigins: TestAllowOrigins,
-			AllowMethods: TestAllowMethods,
-			AllowHeaders: TestAllowHeaders,
-		},
-		GeneratedObjectsLabels: map[string]string{},
-		Config:                 &helpers.Config{},
-
-		ReconcilePeriod:        time.Second * 2,
-		OnErrorReconcilePeriod: time.Second * 2,
+	reconcilerConfig := controllers.ApiRuleReconcilerConfiguration{
+		OathkeeperSvcAddr:         testOathkeeperSvcURL,
+		OathkeeperSvcPort:         testOathkeeperPort,
+		AllowListedDomains:        "bar, kyma.local",
+		DomainName:                "kyma.local",
+		CorsAllowOrigins:          "regex:.*",
+		CorsAllowMethods:          "GET,POST,PUT,DELETE",
+		CorsAllowHeaders:          "header1,header2",
+		ReconciliationPeriod:      2,
+		ErrorReconciliationPeriod: 2,
 	}
+
+	apiReconciler, err := controllers.NewApiRuleReconciler(mgr, reconcilerConfig)
+	Expect(err).NotTo(HaveOccurred())
 
 	Expect(apiReconciler.SetupWithManager(mgr)).Should(Succeed())
 

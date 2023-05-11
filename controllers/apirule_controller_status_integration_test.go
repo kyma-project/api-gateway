@@ -41,8 +41,8 @@ var _ = Describe("Resource status", Serial, func() {
 			Expect(c.Create(context.TODO(), svc)).Should(Succeed())
 			Expect(c.Create(context.TODO(), instance)).Should(Succeed())
 			defer func() {
-				deleteApiRule(instance)
-				deleteService(svc)
+				apiRuleTeardown(instance)
+				serviceTeardown(svc)
 			}()
 
 			// then
@@ -80,8 +80,8 @@ var _ = Describe("Resource status", Serial, func() {
 			Expect(c.Create(context.TODO(), svc)).Should(Succeed())
 			Expect(c.Create(context.TODO(), instance)).Should(Succeed())
 			defer func() {
-				deleteApiRule(instance)
-				deleteService(svc)
+				apiRuleTeardown(instance)
+				serviceTeardown(svc)
 			}()
 
 			// then
@@ -126,8 +126,8 @@ var _ = Describe("Resource status", Serial, func() {
 			Expect(c.Create(context.TODO(), svc)).Should(Succeed())
 			Expect(c.Create(context.TODO(), instance)).Should(Succeed())
 			defer func() {
-				deleteApiRule(instance)
-				deleteService(svc)
+				apiRuleTeardown(instance)
+				serviceTeardown(svc)
 			}()
 
 			// then
@@ -164,8 +164,8 @@ var _ = Describe("Resource status", Serial, func() {
 			Expect(c.Create(context.TODO(), svc)).Should(Succeed())
 			Expect(c.Create(context.TODO(), instance)).Should(Succeed())
 			defer func() {
-				deleteApiRule(instance)
-				deleteService(svc)
+				apiRuleTeardown(instance)
+				serviceTeardown(svc)
 			}()
 
 			// then

@@ -70,8 +70,8 @@ var _ = Describe("APIRule Controller", Serial, func() {
 			Expect(c.Create(context.TODO(), svc)).Should(Succeed())
 			Expect(c.Create(context.TODO(), apiRule)).Should(Succeed())
 			defer func() {
-				deleteApiRule(apiRule)
-				deleteService(svc)
+				apiRuleTeardown(apiRule)
+				serviceTeardown(svc)
 			}()
 
 			expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusOK)
@@ -104,7 +104,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 			svcNew := testService(newServiceName, testNamespace, newServicePort)
 			Expect(c.Create(context.TODO(), svcNew)).Should(Succeed())
 			defer func() {
-				deleteService(svcNew)
+				serviceTeardown(svcNew)
 			}()
 
 			Expect(c.Update(context.TODO(), &existingInstance)).Should(Succeed())
@@ -146,8 +146,8 @@ var _ = Describe("APIRule Controller", Serial, func() {
 						Expect(c.Create(context.TODO(), svc)).Should(Succeed())
 						Expect(c.Create(context.TODO(), apiRule)).Should(Succeed())
 						defer func() {
-							deleteApiRule(apiRule)
-							deleteService(svc)
+							apiRuleTeardown(apiRule)
+							serviceTeardown(svc)
 						}()
 
 						expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusOK)
@@ -249,8 +249,8 @@ var _ = Describe("APIRule Controller", Serial, func() {
 							Expect(c.Create(context.TODO(), svc)).Should(Succeed())
 							Expect(c.Create(context.TODO(), apiRule)).Should(Succeed())
 							defer func() {
-								deleteApiRule(apiRule)
-								deleteService(svc)
+								apiRuleTeardown(apiRule)
+								serviceTeardown(svc)
 							}()
 
 							expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusOK)
@@ -391,8 +391,8 @@ var _ = Describe("APIRule Controller", Serial, func() {
 							Expect(c.Create(context.TODO(), svc)).Should(Succeed())
 							Expect(c.Create(context.TODO(), apiRule)).Should(Succeed())
 							defer func() {
-								deleteApiRule(apiRule)
-								deleteService(svc)
+								apiRuleTeardown(apiRule)
+								serviceTeardown(svc)
 							}()
 
 							expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusOK)
@@ -520,8 +520,8 @@ var _ = Describe("APIRule Controller", Serial, func() {
 							Expect(c.Create(context.TODO(), svc)).Should(Succeed())
 							Expect(c.Create(context.TODO(), apiRule)).Should(Succeed())
 							defer func() {
-								deleteApiRule(apiRule)
-								deleteService(svc)
+								apiRuleTeardown(apiRule)
+								serviceTeardown(svc)
 							}()
 
 							Eventually(func(g Gomega) {
@@ -595,8 +595,8 @@ var _ = Describe("APIRule Controller", Serial, func() {
 					Expect(c.Create(context.TODO(), svc)).Should(Succeed())
 					Expect(c.Create(context.TODO(), apiRule)).Should(Succeed())
 					defer func() {
-						deleteApiRule(apiRule)
-						deleteService(svc)
+						apiRuleTeardown(apiRule)
+						serviceTeardown(svc)
 					}()
 
 					expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusOK)
@@ -642,8 +642,8 @@ var _ = Describe("APIRule Controller", Serial, func() {
 					Expect(c.Create(context.TODO(), svc)).Should(Succeed())
 					Expect(c.Create(context.TODO(), apiRule)).Should(Succeed())
 					defer func() {
-						deleteApiRule(apiRule)
-						deleteService(svc)
+						apiRuleTeardown(apiRule)
+						serviceTeardown(svc)
 					}()
 
 					expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusOK)
@@ -699,8 +699,8 @@ var _ = Describe("APIRule Controller", Serial, func() {
 						Expect(c.Create(context.TODO(), svc)).Should(Succeed())
 						Expect(c.Create(context.TODO(), apiRule)).Should(Succeed())
 						defer func() {
-							deleteApiRule(apiRule)
-							deleteService(svc)
+							apiRuleTeardown(apiRule)
+							serviceTeardown(svc)
 						}()
 
 						expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusOK)
@@ -840,8 +840,8 @@ var _ = Describe("APIRule Controller", Serial, func() {
 					Expect(c.Create(context.TODO(), svc)).Should(Succeed())
 					Expect(c.Create(context.TODO(), apiRule)).Should(Succeed())
 					defer func() {
-						deleteApiRule(apiRule)
-						deleteService(svc)
+						apiRuleTeardown(apiRule)
+						serviceTeardown(svc)
 					}()
 
 					expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusOK)
@@ -877,8 +877,8 @@ var _ = Describe("APIRule Controller", Serial, func() {
 					Expect(c.Create(context.TODO(), svc)).Should(Succeed())
 					Expect(c.Create(context.TODO(), apiRule)).Should(Succeed())
 					defer func() {
-						deleteApiRule(apiRule)
-						deleteService(svc)
+						apiRuleTeardown(apiRule)
+						serviceTeardown(svc)
 					}()
 
 					expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusOK)
@@ -927,8 +927,8 @@ var _ = Describe("APIRule Controller", Serial, func() {
 					Expect(c.Create(context.TODO(), svc)).Should(Succeed())
 					Expect(c.Create(context.TODO(), apiRule)).Should(Succeed())
 					defer func() {
-						deleteApiRule(apiRule)
-						deleteService(svc)
+						apiRuleTeardown(apiRule)
+						serviceTeardown(svc)
 					}()
 
 					By("Waiting until reconciliation of API Rule has finished")
@@ -966,8 +966,8 @@ var _ = Describe("APIRule Controller", Serial, func() {
 					Expect(c.Create(context.TODO(), svc)).Should(Succeed())
 					Expect(c.Create(context.TODO(), apiRule)).Should(Succeed())
 					defer func() {
-						deleteApiRule(apiRule)
-						deleteService(svc)
+						apiRuleTeardown(apiRule)
+						serviceTeardown(svc)
 					}()
 
 					By("Waiting until reconciliation of API Rule has finished")
@@ -1044,18 +1044,14 @@ var _ = Describe("APIRule Controller", Serial, func() {
 		Expect(c.Create(context.TODO(), svc)).Should(Succeed())
 		Expect(c.Create(context.TODO(), apiRule)).Should(Succeed())
 		defer func() {
-			deleteApiRule(apiRule)
-			deleteService(svc)
+			apiRuleTeardown(apiRule)
+			serviceTeardown(svc)
 		}()
 
 		expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusError)
 
 		By("Verifying virtual service for APIRule has not been created")
-		Eventually(func(g Gomega) {
-			vsList := networkingv1beta1.VirtualServiceList{}
-			g.Expect(c.List(context.TODO(), &vsList, apiRuleLabelMatcher)).Should(Succeed())
-			g.Expect(vsList.Items).To(HaveLen(0))
-		}, eventuallyTimeout).Should(Succeed())
+		verifyVirtualServiceCount(c, apiRuleLabelMatcher, 0)
 
 		By("Deleting existing virtual service with duplicated host configuration")
 		deleteVirtualService(vs)
@@ -1064,11 +1060,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 		expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusOK)
 
 		By("Verifying virtual service for APIRule has been created")
-		Eventually(func(g Gomega) {
-			vsList := networkingv1beta1.VirtualServiceList{}
-			g.Expect(c.List(context.TODO(), &vsList, apiRuleLabelMatcher)).Should(Succeed())
-			g.Expect(vsList.Items).To(HaveLen(1))
-		}, eventuallyTimeout).Should(Succeed())
+		verifyVirtualServiceCount(c, apiRuleLabelMatcher, 1)
 	})
 
 	It("APIRule in status OK should reconcile to status ERROR when an", func() {
@@ -1089,8 +1081,8 @@ var _ = Describe("APIRule Controller", Serial, func() {
 		Expect(c.Create(context.TODO(), svc)).Should(Succeed())
 		Expect(c.Create(context.TODO(), apiRule)).Should(Succeed())
 		defer func() {
-			deleteApiRule(apiRule)
-			deleteService(svc)
+			apiRuleTeardown(apiRule)
+			serviceTeardown(svc)
 		}()
 
 		expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusOK)
@@ -1125,7 +1117,123 @@ var _ = Describe("APIRule Controller", Serial, func() {
 			g.Expect(expectedApiRule.Status.APIRuleStatus.Description).To(ContainSubstring("This host is occupied by another Virtual Service"))
 		}, eventuallyTimeout).Should(Succeed())
 	})
+
+	It("Should recreate resources created by reconciler when they are manually deleted", func() {
+		updateJwtHandlerTo(helpers.JWT_HANDLER_ISTIO)
+
+		apiRuleName := generateTestName(testNameBase, testIDLength)
+		serviceName := testServiceNameBase
+		serviceHost := "httpbin-recreate-resources.kyma.local"
+
+		rule := testRule("/img", []string{"GET"}, nil, testIstioJWTHandlerWithScopes(testIssuer, testJwksUri, []string{"scope-a"}))
+		apiRule := testApiRule(apiRuleName, testNamespace, serviceName, testNamespace, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule})
+		svc := testService(serviceName, testNamespace, testServicePort)
+
+		// when
+		Expect(c.Create(context.TODO(), svc)).Should(Succeed())
+		Expect(c.Create(context.TODO(), apiRule)).Should(Succeed())
+		defer func() {
+			apiRuleTeardown(apiRule)
+			serviceTeardown(svc)
+		}()
+
+		expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusOK)
+
+		apiRuleNameMatchingLabels := matchingLabelsFunc(apiRuleName, testNamespace)
+
+		By("Verifying that resources are created")
+		verifyVirtualServiceCount(c, apiRuleNameMatchingLabels, 1)
+		verifyRequestAuthenticationCount(c, apiRuleNameMatchingLabels, 1)
+		verifyAuthorizationPolicyCount(c, apiRuleNameMatchingLabels, 1)
+
+		By("Deleting Virtual Service")
+		Eventually(func(g Gomega) {
+			vsList := networkingv1beta1.VirtualServiceList{}
+			g.Expect(c.List(context.TODO(), &vsList, apiRuleNameMatchingLabels)).Should(Succeed())
+			g.Expect(c.Delete(context.TODO(), vsList.Items[0])).Should(Succeed())
+		}, eventuallyTimeout).Should(Succeed())
+
+		By("Deleting Request Authentication")
+		raList := securityv1beta1.RequestAuthenticationList{}
+		Eventually(func(g Gomega) {
+			g.Expect(c.List(context.TODO(), &raList, apiRuleNameMatchingLabels)).Should(Succeed())
+			g.Expect(c.Delete(context.TODO(), raList.Items[0])).Should(Succeed())
+		}, eventuallyTimeout).Should(Succeed())
+
+		By("Deleting Authorization Policy")
+		apList := securityv1beta1.AuthorizationPolicyList{}
+		Eventually(func(g Gomega) {
+			g.Expect(c.List(context.TODO(), &apList, apiRuleNameMatchingLabels)).Should(Succeed())
+			g.Expect(c.Delete(context.TODO(), apList.Items[0])).Should(Succeed())
+		}, eventuallyTimeout).Should(Succeed())
+
+		By("Verifying deleted resources are recreated")
+		verifyVirtualServiceCount(c, apiRuleNameMatchingLabels, 1)
+		verifyRequestAuthenticationCount(c, apiRuleNameMatchingLabels, 1)
+		verifyAuthorizationPolicyCount(c, apiRuleNameMatchingLabels, 1)
+	})
+
+	It("Should delete created resources when APIRule is deleted", func() {
+		updateJwtHandlerTo(helpers.JWT_HANDLER_ISTIO)
+
+		apiRuleName := generateTestName(testNameBase, testIDLength)
+		serviceName := testServiceNameBase
+		serviceHost := "httpbin-delete-resources.kyma.local"
+
+		rule := testRule("/img", []string{"GET"}, nil, testIstioJWTHandlerWithScopes(testIssuer, testJwksUri, []string{"scope-a"}))
+		apiRule := testApiRule(apiRuleName, testNamespace, serviceName, testNamespace, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule})
+		svc := testService(serviceName, testNamespace, testServicePort)
+
+		// when
+		Expect(c.Create(context.TODO(), svc)).Should(Succeed())
+		Expect(c.Create(context.TODO(), apiRule)).Should(Succeed())
+		defer func() {
+			apiRuleTeardown(apiRule)
+			serviceTeardown(svc)
+		}()
+
+		expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusOK)
+		apiRuleNameMatchingLabels := matchingLabelsFunc(apiRuleName, testNamespace)
+
+		verifyVirtualServiceCount(c, apiRuleNameMatchingLabels, 1)
+		verifyRequestAuthenticationCount(c, apiRuleNameMatchingLabels, 1)
+		verifyAuthorizationPolicyCount(c, apiRuleNameMatchingLabels, 1)
+
+		deleteApiRule(apiRule)
+
+		By("Verifying resources are deleted")
+		verifyVirtualServiceCount(c, apiRuleNameMatchingLabels, 0)
+		verifyRequestAuthenticationCount(c, apiRuleNameMatchingLabels, 0)
+		verifyAuthorizationPolicyCount(c, apiRuleNameMatchingLabels, 0)
+	})
 })
+
+func verifyVirtualServiceCount(c client.Client, option client.ListOption, count int) {
+	By(fmt.Sprintf("Verifying %d Virtual Service exist", count))
+	Eventually(func(g Gomega) {
+		vsList := networkingv1beta1.VirtualServiceList{}
+		g.Expect(c.List(context.TODO(), &vsList, option)).Should(Succeed())
+		g.Expect(vsList.Items).To(HaveLen(count))
+	}, eventuallyTimeout).Should(Succeed())
+}
+
+func verifyRequestAuthenticationCount(c client.Client, option client.ListOption, count int) {
+	By(fmt.Sprintf("Verifying %d Request Authentication exist", count))
+	Eventually(func(g Gomega) {
+		raList := securityv1beta1.RequestAuthenticationList{}
+		g.Expect(c.List(context.TODO(), &raList, option)).Should(Succeed())
+		g.Expect(raList.Items).To(HaveLen(count))
+	}, eventuallyTimeout).Should(Succeed())
+}
+
+func verifyAuthorizationPolicyCount(c client.Client, option client.ListOption, count int) {
+	By(fmt.Sprintf("Verifying %d Authorization Policy exist", count))
+	Eventually(func(g Gomega) {
+		apList := securityv1beta1.AuthorizationPolicyList{}
+		g.Expect(c.List(context.TODO(), &apList, option)).Should(Succeed())
+		g.Expect(apList.Items).To(HaveLen(count))
+	}, eventuallyTimeout).Should(Succeed())
+}
 
 func toCSVList(input []string) string {
 	if len(input) == 0 {
@@ -1431,7 +1539,7 @@ func getAuthorizationPolicyWhenScopeMatcher(firstScope, secondScope string) gome
 }
 
 func deleteApiRule(apiRule *gatewayv1beta1.APIRule) {
-	By(fmt.Sprintf("Deleting ApiRule %s as part of teardown", apiRule.Name))
+	By(fmt.Sprintf("Deleting ApiRule %s", apiRule.Name))
 	Expect(c.Delete(context.TODO(), apiRule)).Should(Succeed())
 	Eventually(func(g Gomega) {
 		a := gatewayv1beta1.APIRule{}
@@ -1440,9 +1548,29 @@ func deleteApiRule(apiRule *gatewayv1beta1.APIRule) {
 	}, eventuallyTimeout).Should(Succeed())
 }
 
-func deleteService(svc *corev1.Service) {
+func apiRuleTeardown(apiRule *gatewayv1beta1.APIRule) {
+	By(fmt.Sprintf("Deleting ApiRule %s as part of teardown", apiRule.Name))
+	err := c.Delete(context.TODO(), apiRule)
+
+	if err != nil {
+		Expect(errors.IsNotFound(err)).To(BeTrue())
+	}
+
+	Eventually(func(g Gomega) {
+		a := gatewayv1beta1.APIRule{}
+		err := c.Get(context.TODO(), client.ObjectKey{Name: apiRule.Name, Namespace: testNamespace}, &a)
+		g.Expect(errors.IsNotFound(err)).To(BeTrue())
+	}, eventuallyTimeout).Should(Succeed())
+}
+
+func serviceTeardown(svc *corev1.Service) {
 	By(fmt.Sprintf("Deleting Service %s as part of teardown", svc.Name))
-	Expect(c.Delete(context.TODO(), svc)).Should(Succeed())
+	err := c.Delete(context.TODO(), svc)
+
+	if err != nil {
+		Expect(errors.IsNotFound(err)).To(BeTrue())
+	}
+
 	Eventually(func(g Gomega) {
 		a := corev1.Service{}
 		err := c.Get(context.TODO(), client.ObjectKey{Name: svc.Name, Namespace: testNamespace}, &a)
