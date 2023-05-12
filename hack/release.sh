@@ -1,16 +1,18 @@
 #!/usr/bin/env bash
+# meant to run in Prow env from the root of the repo
 
-# standard bash error handling
-set -o nounset # treat unset variables as an error and exit immediately.
-set -o errexit # exit immediately when a command fails.
-set -E         # needs to be set if we want the ERR trap
+set -e
 
-readonly API_GATEWAY_DIR="/home/prow/go/src/github.com/kyma-project/api-gateway"
+if [[ "$CI" != "true" ]]; then
+    echo "Not in CI. Exiting..."
+    exit 1
+fi
 
-main() {
-    git remote add origin git@github.com:kyma-project/api-gateway.git
-    # release api-gateway with goreleaser
-    curl -sL https://git.io/goreleaser | VERSION=v1.11.2 bash -s --
-}
+GORELEASER_VERSION="${GORELEASER_VERSION:-v1.18.2}"
 
-main
+JOB_NAME_PATTERN="rel-.*-integration" tests/integration/scripts/jobguard.sh
+curl -sfLo /tmp/goreleaser_Linux_x86_64.tar.gz "https://github.com/goreleaser/goreleaser/releases/download/${GORELEASER_VERSION}/goreleaser_Linux_x86_64.tar.gz"
+tar xf /tmp/goreleaser_Linux_x86_64.tar.gz -C /tmp
+
+git remote add origin "https://github.com/$REPO_OWNER/$REPO_NAME"
+/tmp/goreleaser release
