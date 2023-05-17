@@ -33,7 +33,7 @@ func TestIstioJwt(t *testing.T) {
 		Name: "istio-jwt",
 		// We are not using ScenarioInitializer, as this function only needs to set up global resources
 		TestSuiteInitializer: func(ctx *godog.TestSuiteContext) {
-			initIstioJwtScenarios(ctx.ScenarioContext())
+			initIstioJwtTestsuite(ctx.ScenarioContext())
 		},
 		Options: &opts,
 	}
@@ -57,7 +57,7 @@ func TestCustomDomain(t *testing.T) {
 	customDomainSuite := godog.TestSuite{
 		Name: "custom-domain",
 		TestSuiteInitializer: func(ctx *godog.TestSuiteContext) {
-			InitializeScenarioCustomDomain(ctx.ScenarioContext())
+			initCustomDomainTestsuite(ctx.ScenarioContext())
 		},
 		Options: &customDomainOpts,
 	}

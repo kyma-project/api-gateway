@@ -8,7 +8,7 @@ import (
 	"math/rand"
 	"net/http"
 	"os"
-	"strings"
+	"path"
 	"testing"
 	"time"
 
@@ -25,8 +25,6 @@ import (
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/clientcredentials"
 
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 )
@@ -34,7 +32,6 @@ import (
 const (
 	testIDLength              = 8
 	manifestsDirectory        = "manifests"
-	customDomainDirectory     = "custom-domain"
 	globalCommonResourcesFile = "global-commons.yaml"
 	resourceSeparator         = "---"
 	exportResultVar           = "EXPORT_RESULT"
@@ -45,7 +42,6 @@ const (
 	opaqueHeaderName          = "opaque-token"
 	defaultNS                 = "kyma-system"
 	configMapName             = "api-gateway-config"
-	serviceLabelSelector      = "app"
 )
 
 var (
@@ -213,7 +209,7 @@ func generateRandomString(length int) string {
 	return string(b)
 }
 
-func CreateScenarioWithRawAPIResource(templateFileName string, namePrefix string) (*ScenarioWithRawAPIResource, error) {
+func CreateIstioJwtScenario(templateFileName string, namePrefix string) (*ScenarioWithRawAPIResource, error) {
 	testID := generateRandomString(testIDLength)
 
 	template := make(map[string]string)
@@ -236,58 +232,6 @@ func CreateScenarioWithRawAPIResource(templateFileName string, namePrefix string
 		},
 		manifestTemplate:        template,
 		apiResourceManifestPath: templateFileName,
-		apiResourceDirectory:    manifestsDirectory,
+		apiResourceDirectory:    path.Join(manifestsDirectory, "istio-jwt"),
 	}, nil
-}
-
-func SwitchJwtHandler(jwtHandler string) (string, error) {
-	mapper, err := client.GetDiscoveryMapper()
-	if err != nil {
-		return "", err
-	}
-	mapping, err := mapper.RESTMapping(schema.ParseGroupKind("ConfigMap"))
-	if err != nil {
-		return "", err
-	}
-	currentJwtHandler, configMap, err := getConfigMapJwtHandler(mapping.Resource)
-	if err != nil {
-		configMap := unstructured.Unstructured{
-			Object: map[string]interface{}{
-				"kind":       "ConfigMap",
-				"apiVersion": "v1",
-				"metadata": map[string]interface{}{
-					"name":      configMapName,
-					"namespace": defaultNS,
-				},
-				"data": map[string]interface{}{
-					"api-gateway-config": "jwtHandler: " + jwtHandler,
-				},
-			},
-		}
-		currentJwtHandler = jwtHandler
-		err = resourceManager.CreateResource(k8sClient, mapping.Resource, defaultNS, configMap)
-	}
-	if err != nil {
-		return "", fmt.Errorf("could not get or create jwtHandler config:\n %+v", err)
-	}
-	if currentJwtHandler != jwtHandler {
-		configMap.Object["data"].(map[string]interface{})["api-gateway-config"] = "jwtHandler: " + jwtHandler
-		err = resourceManager.UpdateResource(k8sClient, mapping.Resource, defaultNS, configMapName, *configMap)
-		if err != nil {
-			return "", fmt.Errorf("unable to update ConfigMap:\n %+v", err)
-		}
-	}
-	return currentJwtHandler, err
-}
-
-func getConfigMapJwtHandler(gvr schema.GroupVersionResource) (string, *unstructured.Unstructured, error) {
-	res, err := resourceManager.GetResource(k8sClient, gvr, defaultNS, configMapName)
-	if err != nil {
-		return "", res, fmt.Errorf("could not get ConfigMap:\n %+v", err)
-	}
-	data, found, err := unstructured.NestedMap(res.Object, "data")
-	if err != nil || !found {
-		return "", res, fmt.Errorf("could not find data in the ConfigMap:\n %+v", err)
-	}
-	return strings.Split(data["api-gateway-config"].(string), ": ")[1], res, nil
 }

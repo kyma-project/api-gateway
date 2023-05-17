@@ -6,7 +6,7 @@ import (
 )
 
 func initMutatorHeader(ctx *godog.ScenarioContext) {
-	s, err := CreateScenarioWithRawAPIResource("istio-jwt-mutator-header.yaml", "istio-jwt-mutator-header")
+	s, err := CreateIstioJwtScenario("istio-jwt-mutator-header.yaml", "istio-jwt-mutator-header")
 	if err != nil {
 		t.Fatalf("could not initialize scenario err=%s", err)
 	}

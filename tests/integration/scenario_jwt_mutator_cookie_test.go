@@ -6,7 +6,7 @@ import (
 )
 
 func initMutatorCookie(ctx *godog.ScenarioContext) {
-	s, err := CreateScenarioWithRawAPIResource("istio-jwt-mutator-cookie.yaml", "istio-jwt-mutator-cookie")
+	s, err := CreateIstioJwtScenario("istio-jwt-mutator-cookie.yaml", "istio-jwt-mutator-cookie")
 	if err != nil {
 		t.Fatalf("could not initialize scenario err=%s", err)
 	}

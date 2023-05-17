@@ -9,7 +9,7 @@ import (
 )
 
 func initMutatorsOverwrite(ctx *godog.ScenarioContext) {
-	s, err := CreateScenarioWithRawAPIResource("istio-jwt-mutators-overwrite.yaml", "istio-jwt-mutators-overwrite")
+	s, err := CreateIstioJwtScenario("istio-jwt-mutators-overwrite.yaml", "istio-jwt-mutators-overwrite")
 	if err != nil {
 		t.Fatalf("could not initialize scenario err=%s", err)
 	}

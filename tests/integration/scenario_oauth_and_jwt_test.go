@@ -5,7 +5,7 @@ import (
 )
 
 func initJwtAndOauth(ctx *godog.ScenarioContext) {
-	s, err := CreateScenarioWithRawAPIResource("istio-jwt-and-oauth.yaml", "istio-oauth")
+	s, err := CreateIstioJwtScenario("istio-jwt-and-oauth.yaml", "istio-oauth")
 	if err != nil {
 		t.Fatalf("could not initialize unsecure endpoint scenario err=%s", err)
 	}

@@ -5,7 +5,7 @@ import (
 )
 
 func initJwtUnavailableIssuer(ctx *godog.ScenarioContext) {
-	s, err := CreateScenarioWithRawAPIResource("istio-jwt-unavailable-issuer.yaml", "jwt-unavailable-issuer")
+	s, err := CreateIstioJwtScenario("istio-jwt-unavailable-issuer.yaml", "jwt-unavailable-issuer")
 	if err != nil {
 		t.Fatalf("could not initialize scenario err=%s", err)
 	}

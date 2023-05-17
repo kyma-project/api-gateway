@@ -8,7 +8,7 @@ import (
 )
 
 func initDiffServiceSameMethods(ctx *godog.ScenarioContext) {
-	s, err := CreateScenarioWithRawAPIResource("istio-jwt-diff-svc-same-methods.yaml", "istio-diff-service-same-methods")
+	s, err := CreateIstioJwtScenario("istio-jwt-diff-svc-same-methods.yaml", "istio-diff-service-same-methods")
 	if err != nil {
 		t.Fatalf("could not initialize scenario err=%s", err)
 	}

@@ -8,7 +8,7 @@ import (
 )
 
 func initAudience(ctx *godog.ScenarioContext) {
-	s, err := CreateScenarioWithRawAPIResource("istio-jwt-audiences.yaml", "istio-jwt-audiences")
+	s, err := CreateIstioJwtScenario("istio-jwt-audiences.yaml", "istio-jwt-audiences")
 	if err != nil {
 		t.Fatalf("could not initialize scenario err=%s", err)
 	}

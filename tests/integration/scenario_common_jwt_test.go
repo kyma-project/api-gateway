@@ -8,7 +8,7 @@ import (
 )
 
 func initCommon(ctx *godog.ScenarioContext) {
-	s, err := CreateScenarioWithRawAPIResource("istio-jwt-common.yaml", "istio-jwt-common")
+	s, err := CreateIstioJwtScenario("istio-jwt-common.yaml", "istio-jwt-common")
 	if err != nil {
 		t.Fatalf("could not initialize scenario err=%s", err)
 	}
@@ -25,7 +25,7 @@ func initCommon(ctx *godog.ScenarioContext) {
 }
 
 func initRegex(ctx *godog.ScenarioContext) {
-	s, err := CreateScenarioWithRawAPIResource("istio-jwt-common.yaml", "istio-jwt-common")
+	s, err := CreateIstioJwtScenario("istio-jwt-common.yaml", "istio-jwt-common")
 	if err != nil {
 		t.Fatalf("could not initialize scenario err=%s", err)
 	}
@@ -42,7 +42,7 @@ func initRegex(ctx *godog.ScenarioContext) {
 }
 
 func initPrefix(ctx *godog.ScenarioContext) {
-	s, err := CreateScenarioWithRawAPIResource("istio-jwt-common.yaml", "istio-jwt-common")
+	s, err := CreateIstioJwtScenario("istio-jwt-common.yaml", "istio-jwt-common")
 	if err != nil {
 		t.Fatalf("could not initialize scenario err=%s", err)
 	}

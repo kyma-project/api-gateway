@@ -50,7 +50,7 @@ func InitializeScenarioCustomDomain(ctx *godog.ScenarioContext) {
 
 func CreateCustomDomainScenario(templateFileNameOne string, templateFileNameTwo string, namePrefix string, deploymentFile string) (*CustomDomainScenario, error) {
 	testID := generateRandomString(testIDLength)
-	customDomainManifestDirectory := path.Join(manifestsDirectory, customDomainDirectory)
+	customDomainManifestDirectory := path.Join(manifestsDirectory, "custom-domain")
 
 	// create common resources from files
 	commonResources, err := manifestprocessor.ParseFromFileWithTemplate(deploymentFile, customDomainManifestDirectory, resourceSeparator, struct {

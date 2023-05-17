@@ -8,7 +8,7 @@ import (
 )
 
 func initRequiredScopes(ctx *godog.ScenarioContext) {
-	s, err := CreateScenarioWithRawAPIResource("istio-jwt-scopes.yaml", "istio-jwt-scopes")
+	s, err := CreateIstioJwtScenario("istio-jwt-scopes.yaml", "istio-jwt-scopes")
 	if err != nil {
 		t.Fatalf("could not initialize scenario err=%s", err)
 	}

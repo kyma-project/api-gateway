@@ -9,7 +9,7 @@ import (
 )
 
 func initMultipleMutators(ctx *godog.ScenarioContext) {
-	s, err := CreateScenarioWithRawAPIResource("istio-jwt-multiple-mutators.yaml", "istio-jwt-multiple-mutators")
+	s, err := CreateIstioJwtScenario("istio-jwt-multiple-mutators.yaml", "istio-jwt-multiple-mutators")
 	if err != nil {
 		t.Fatalf("could not initialize scenario err=%s", err)
 	}

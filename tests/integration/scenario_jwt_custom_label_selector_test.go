@@ -8,7 +8,7 @@ import (
 )
 
 func initCustomLabelSelector(ctx *godog.ScenarioContext) {
-	s, err := CreateScenarioWithRawAPIResource("istio-jwt-custom-label-selector.yaml", "istio-jwt-custom-label-selector")
+	s, err := CreateIstioJwtScenario("istio-jwt-custom-label-selector.yaml", "istio-jwt-custom-label-selector")
 	if err != nil {
 		t.Fatalf("could not initialize scenario err=%s", err)
 	}

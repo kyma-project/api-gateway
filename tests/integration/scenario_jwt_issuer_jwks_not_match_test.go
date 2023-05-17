@@ -5,7 +5,7 @@ import (
 )
 
 func initJwtIssuerJwksNotMatch(ctx *godog.ScenarioContext) {
-	s, err := CreateScenarioWithRawAPIResource("istio-jwt-issuer-jwks-not-match.yaml", "jwt-issuer-jwks-not-match")
+	s, err := CreateIstioJwtScenario("istio-jwt-issuer-jwks-not-match.yaml", "jwt-issuer-jwks-not-match")
 	if err != nil {
 		t.Fatalf("could not initialize scenario err=%s", err)
 	}

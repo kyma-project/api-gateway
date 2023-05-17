@@ -23,7 +23,7 @@ type istioJwtManifestScenario struct {
 	*ScenarioWithRawAPIResource
 }
 
-func initIstioJwtScenarios(ctx *godog.ScenarioContext) {
+func initIstioJwtTestsuite(ctx *godog.ScenarioContext) {
 	initCommon(ctx)
 	initPrefix(ctx)
 	initRegex(ctx)
