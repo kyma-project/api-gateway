@@ -192,7 +192,7 @@ func (c *scenario) thereIsAnExposedService(svcName string, svcNamespace string) 
 	}
 
 	ingress, found, err := unstructured.NestedSlice(svc.Object, "status", "loadBalancer", "ingress")
-	if err != nil || found != true {
+	if err != nil || !found {
 		return fmt.Errorf("could not get load balancer status from the service: %s", err)
 	}
 	loadBalancerIngress, _ := ingress[0].(map[string]interface{})
