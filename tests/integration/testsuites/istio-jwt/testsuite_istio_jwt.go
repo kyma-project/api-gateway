@@ -50,7 +50,7 @@ func (t *testsuite) createScenario(templateFileName string, scenarioName string)
 		Domain:                  t.Config.Domain,
 		ManifestTemplate:        template,
 		ApiResourceManifestPath: templateFileName,
-		ApiResourceDirectory:    path.Join(testcontext.ManifestsDirectory, "istio-jwt"),
+		ApiResourceDirectory:    path.Dir("testsuites/istio-jwt/manifests/"),
 		k8sClient:               t.K8sClient,
 		oauth2Cfg:               t.CommonResources.Oauth2Cfg,
 		httpClient:              t.HttpClient,
@@ -161,13 +161,13 @@ func (s *istioJwtScenario) callingEndpointWithHeadersWithRetries(url string, tok
 
 	switch tokenType {
 	case "Opaque":
-		token, err := jwt.GetAccessToken(s.oauth2Cfg, strings.ToLower(tokenType))
+		token, err := jwt.GetAccessToken(*s.oauth2Cfg, strings.ToLower(tokenType))
 		if err != nil {
 			return fmt.Errorf("failed to fetch an id_token: %s", err.Error())
 		}
 		requestHeaders[testcontext.OpaqueHeaderName] = token
 	case "JWT":
-		token, err := jwt.GetAccessToken(s.oauth2Cfg, strings.ToLower(tokenType))
+		token, err := jwt.GetAccessToken(*s.oauth2Cfg, strings.ToLower(tokenType))
 		if err != nil {
 			return fmt.Errorf("failed to fetch an id_token: %s", err.Error())
 		}

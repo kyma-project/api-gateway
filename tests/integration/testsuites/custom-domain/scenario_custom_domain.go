@@ -226,7 +226,7 @@ func (c *CustomDomainScenario) callingTheEndpointWithAValidTokenShouldResultInSt
 
 	requestHeaders := make(map[string]string)
 
-	token, err := jwt.GetAccessToken(c.oauth2Cfg, strings.ToLower("Opaque"))
+	token, err := jwt.GetAccessToken(*c.oauth2Cfg, strings.ToLower("Opaque"))
 	if err != nil {
 		return fmt.Errorf("failed to fetch an id_token: %s", err.Error())
 	}

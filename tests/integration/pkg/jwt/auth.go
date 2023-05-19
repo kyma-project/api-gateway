@@ -14,7 +14,7 @@ import (
 	"golang.org/x/oauth2/clientcredentials"
 )
 
-func GetAccessToken(oauth2Cfg *clientcredentials.Config, tokenType ...string) (string, error) {
+func GetAccessToken(oauth2Cfg clientcredentials.Config, tokenType ...string) (string, error) {
 	jar, err := cookiejar.New(&cookiejar.Options{PublicSuffixList: publicsuffix.List})
 	if err != nil {
 		return "", err

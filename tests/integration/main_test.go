@@ -26,7 +26,7 @@ func TestIstioJwt(t *testing.T) {
 	}
 	defer cleanUp(ts, orgJwtHandler)
 
-	opts := createGoDogOpts(t, "features/istio-jwt/", config.TestConcurrency)
+	opts := createGoDogOpts(t, "testsuites/istio-jwt/features/", config.TestConcurrency)
 	suite := godog.TestSuite{
 		Name: ts.Name,
 		// We are not using ScenarioInitializer, as this function only needs to set up global resources
