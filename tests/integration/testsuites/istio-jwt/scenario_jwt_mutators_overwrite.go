@@ -1,20 +1,16 @@
-package api_gateway
+package istiojwt
 
 import (
 	"fmt"
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
 	"strings"
 
 	"github.com/cucumber/godog"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/helpers"
 )
 
-func initMutatorsOverwrite(ctx *godog.ScenarioContext) {
-	s, err := CreateIstioJwtScenario("istio-jwt-mutators-overwrite.yaml", "istio-jwt-mutators-overwrite")
-	if err != nil {
-		t.Fatalf("could not initialize scenario err=%s", err)
-	}
-
-	scenario := istioJwtManifestScenario{s}
+func initMutatorsOverwrite(ctx *godog.ScenarioContext, ts *testsuite) {
+	scenario := ts.createScenario("istio-jwt-mutators-overwrite.yaml", "istio-jwt-mutators-overwrite")
 
 	ctx.Step(`JwtMutatorsOverwrite: There is a httpbin service$`, scenario.thereIsAHttpbinService)
 	ctx.Step(`JwtMutatorsOverwrite: There is an endpoint on path "([^"]*)" with a header mutator setting "([^"]*)" header to "([^"]*)"$`, scenario.thereIsAnEndpointWithHeaderMutator)
@@ -25,30 +21,30 @@ func initMutatorsOverwrite(ctx *godog.ScenarioContext) {
 	ctx.Step(`JwtMutatorsOverwrite: Teardown httpbin service$`, scenario.teardownHttpbinService)
 }
 
-func (s *istioJwtManifestScenario) shouldOverwriteHeaderValue(endpoint, headerName, requestValue, responseValue string) error {
+func (s *istioJwtScenario) shouldOverwriteHeaderValue(endpoint, headerName, requestValue, responseValue string) error {
 	requestHeaders := map[string]string{headerName: requestValue}
 
 	expectedInBody := []string{fmt.Sprintf(`"%s": "%s"`, headerName, responseValue)}
 	asserter := &helpers.BodyContainsPredicate{Expected: expectedInBody}
 	tokenFrom := tokenFrom{
-		From:     authorizationHeaderName,
-		Prefix:   authorizationHeaderPrefix,
+		From:     testcontext.AuthorizationHeaderName,
+		Prefix:   testcontext.AuthorizationHeaderPrefix,
 		AsHeader: true,
 	}
 
-	return callingEndpointWithHeadersWithRetries(fmt.Sprintf("%s/%s", s.url, strings.TrimLeft(endpoint, "/")), "JWT", asserter, requestHeaders, &tokenFrom)
+	return s.callingEndpointWithHeadersWithRetries(fmt.Sprintf("%s/%s", s.Url, strings.TrimLeft(endpoint, "/")), "JWT", asserter, requestHeaders, &tokenFrom)
 }
 
-func (s *istioJwtManifestScenario) shouldOverwriteCookieValue(endpoint, requestValue, responseValue string) error {
+func (s *istioJwtScenario) shouldOverwriteCookieValue(endpoint, requestValue, responseValue string) error {
 	requestHeaders := map[string]string{"Cookie": requestValue}
 
 	expectedInBody := []string{fmt.Sprintf(`"%s": "%s"`, "Cookie", responseValue)}
 	asserter := &helpers.BodyContainsPredicate{Expected: expectedInBody}
 	tokenFrom := tokenFrom{
-		From:     authorizationHeaderName,
-		Prefix:   authorizationHeaderPrefix,
+		From:     testcontext.AuthorizationHeaderName,
+		Prefix:   testcontext.AuthorizationHeaderPrefix,
 		AsHeader: true,
 	}
 
-	return callingEndpointWithHeadersWithRetries(fmt.Sprintf("%s/%s", s.url, strings.TrimLeft(endpoint, "/")), "JWT", asserter, requestHeaders, &tokenFrom)
+	return s.callingEndpointWithHeadersWithRetries(fmt.Sprintf("%s/%s", s.Url, strings.TrimLeft(endpoint, "/")), "JWT", asserter, requestHeaders, &tokenFrom)
 }

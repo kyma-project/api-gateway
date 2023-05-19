@@ -1,4 +1,4 @@
-package api_gateway
+package istiojwt
 
 import (
 	"fmt"
@@ -6,13 +6,8 @@ import (
 	"strings"
 )
 
-func initJwtAndAllow(ctx *godog.ScenarioContext) {
-	s, err := CreateIstioJwtScenario("istio-jwt-and-unrestricted.yaml", "istio-jwt-unrestricted")
-	if err != nil {
-		t.Fatalf("could not initialize scenario err=%s", err)
-	}
-
-	scenario := istioJwtManifestScenario{s}
+func initJwtAndAllow(ctx *godog.ScenarioContext, ts *testsuite) {
+	scenario := ts.createScenario("istio-jwt-and-unrestricted.yaml", "istio-jwt-unrestricted")
 
 	ctx.Step(`JwtAndUnrestricted: There is a httpbin service$`, scenario.thereIsAHttpbinService)
 	ctx.Step(`JwtAndUnrestricted: There is an endpoint secured with JWT on path "([^"]*)"$`, scenario.thereIsAnJwtSecuredPath)
@@ -23,6 +18,6 @@ func initJwtAndAllow(ctx *godog.ScenarioContext) {
 	ctx.Step(`JwtAndUnrestricted: Teardown httpbin service$`, scenario.teardownHttpbinService)
 }
 
-func (s *istioJwtManifestScenario) thereIsAnEndpointWithHandler(handler, handlerPath string) {
-	s.manifestTemplate[fmt.Sprintf("%sEndpoint%s", strings.TrimPrefix(handlerPath, "/"), "Handler")] = handler
+func (s *istioJwtScenario) thereIsAnEndpointWithHandler(handler, handlerPath string) {
+	s.ManifestTemplate[fmt.Sprintf("%sEndpoint%s", strings.TrimPrefix(handlerPath, "/"), "Handler")] = handler
 }

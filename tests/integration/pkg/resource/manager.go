@@ -3,20 +3,97 @@ package resource
 import (
 	"context"
 	"fmt"
-
 	"github.com/avast/retry-go"
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/client"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"log"
+	"time"
+
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
-
-	"time"
+	"k8s.io/client-go/restmapper"
 )
 
-// Manager .
 type Manager struct {
-	RetryOptions []retry.Option
+	retryOptions []retry.Option
+	mapper       *restmapper.DeferredDiscoveryRESTMapper
+}
+
+func NewManager(retryOpts []retry.Option) *Manager {
+
+	mapper, err := client.GetDiscoveryMapper()
+	if err != nil {
+		panic(err)
+	}
+
+	return &Manager{
+		retryOptions: retryOpts,
+		mapper:       mapper,
+	}
+}
+
+func (m *Manager) CreateResources(k8sClient dynamic.Interface, resources ...unstructured.Unstructured) (*unstructured.Unstructured, error) {
+	gotRes := &unstructured.Unstructured{}
+	for _, res := range resources {
+		resourceSchema, ns, _ := m.GetResourceSchemaAndNamespace(res)
+		err := m.CreateResource(k8sClient, resourceSchema, ns, res)
+		if err != nil {
+			return nil, err
+		}
+		gotRes, err = m.GetResource(k8sClient, resourceSchema, ns, res.GetName())
+		if err != nil {
+			return nil, err
+		}
+	}
+	return gotRes, nil
+}
+
+func (m *Manager) UpdateResources(k8sClient dynamic.Interface, resources ...unstructured.Unstructured) (*unstructured.Unstructured, error) {
+	gotRes := &unstructured.Unstructured{}
+	for _, res := range resources {
+		resourceSchema, ns, _ := m.GetResourceSchemaAndNamespace(res)
+		err := m.UpdateResource(k8sClient, resourceSchema, ns, res.GetName(), res)
+		if err != nil {
+			return nil, err
+		}
+		gotRes, err = m.GetResource(k8sClient, resourceSchema, ns, res.GetName())
+		if err != nil {
+			return nil, err
+		}
+	}
+	return gotRes, nil
+}
+
+func (m *Manager) DeleteResources(k8sClient dynamic.Interface, resources ...unstructured.Unstructured) error {
+	for _, res := range resources {
+		resourceSchema, ns, name := m.GetResourceSchemaAndNamespace(res)
+		err := m.DeleteResource(k8sClient, resourceSchema, ns, name)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (m *Manager) GetResourceSchemaAndNamespace(manifest unstructured.Unstructured) (schema.GroupVersionResource, string, string) {
+	namespace := manifest.GetNamespace()
+	if namespace == "" {
+		namespace = "default"
+	}
+	resourceName := manifest.GetName()
+
+	if manifest.GroupVersionKind().Kind == "Namespace" {
+		namespace = ""
+	}
+
+	mapping, err := m.mapper.RESTMapping(manifest.GroupVersionKind().GroupKind(), manifest.GroupVersionKind().Version)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return mapping.Resource, namespace, resourceName
 }
 
 // CreateResource creates a given k8s resource
@@ -26,7 +103,7 @@ func (m *Manager) CreateResource(client dynamic.Interface, resourceSchema schema
 			return err
 		}
 		return nil
-	}, m.RetryOptions...)
+	}, m.retryOptions...)
 }
 
 // UpdateResource updates a given k8s resource
@@ -44,7 +121,7 @@ func (m *Manager) UpdateResource(client dynamic.Interface, resourceSchema schema
 		}
 
 		return nil
-	}, m.RetryOptions...)
+	}, m.retryOptions...)
 }
 
 // DeleteResource deletes a given k8s resource
@@ -60,7 +137,7 @@ func (m *Manager) DeleteResource(client dynamic.Interface, resourceSchema schema
 			}
 		}
 		return nil
-	}, m.RetryOptions...)
+	}, m.retryOptions...)
 }
 
 // GetResource returns chosed k8s object
@@ -74,7 +151,7 @@ func (m *Manager) GetResource(client dynamic.Interface, resourceSchema schema.Gr
 				return err
 			}
 			return nil
-		}, m.RetryOptions...)
+		}, m.retryOptions...)
 	if err != nil {
 		return nil, err
 	}

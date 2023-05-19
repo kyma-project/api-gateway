@@ -1,16 +1,11 @@
-package api_gateway
+package istiojwt
 
 import (
 	"github.com/cucumber/godog"
 )
 
-func initJwtAndOauth(ctx *godog.ScenarioContext) {
-	s, err := CreateIstioJwtScenario("istio-jwt-and-oauth.yaml", "istio-oauth")
-	if err != nil {
-		t.Fatalf("could not initialize unsecure endpoint scenario err=%s", err)
-	}
-
-	scenario := istioJwtManifestScenario{s}
+func initJwtAndOauth(ctx *godog.ScenarioContext, ts *testsuite) {
+	scenario := ts.createScenario("istio-jwt-and-oauth.yaml", "istio-oauth")
 
 	ctx.Step(`OAuth2: There is a httpbin service$`, scenario.thereIsAHttpbinService)
 	ctx.Step(`OAuth2: There is an endpoint secured with JWT on path "([^"]*)" requiring scopes '(\[.*\])'$`, scenario.thereIsAnEndpointWithRequiredScopes)

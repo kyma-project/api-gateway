@@ -1,4 +1,4 @@
-package api_gateway
+package istiojwt
 
 import (
 	"fmt"
@@ -7,13 +7,8 @@ import (
 	"github.com/cucumber/godog"
 )
 
-func initAudience(ctx *godog.ScenarioContext) {
-	s, err := CreateIstioJwtScenario("istio-jwt-audiences.yaml", "istio-jwt-audiences")
-	if err != nil {
-		t.Fatalf("could not initialize scenario err=%s", err)
-	}
-
-	scenario := istioJwtManifestScenario{s}
+func initAudience(ctx *godog.ScenarioContext, ts *testsuite) {
+	scenario := ts.createScenario("istio-jwt-audiences.yaml", "istio-jwt-audiences")
 
 	ctx.Step(`Audiences: There is a httpbin service$`, scenario.thereIsAHttpbinService)
 	ctx.Step(`Audiences: There is an endpoint secured with JWT on path "([^"]*)" requiring audiences '(\[.*\])'$`, scenario.thereIsAnEndpointWithAudiences)
@@ -23,7 +18,7 @@ func initAudience(ctx *godog.ScenarioContext) {
 	ctx.Step(`Audiences: Teardown httpbin service$`, scenario.teardownHttpbinService)
 }
 
-func (s *istioJwtManifestScenario) thereIsAnEndpointWithAudiences(path string, audiences string) error {
-	s.manifestTemplate[fmt.Sprintf("%s%s", strings.TrimPrefix(path, "/"), "Audiences")] = audiences
+func (s *istioJwtScenario) thereIsAnEndpointWithAudiences(path string, audiences string) error {
+	s.ManifestTemplate[fmt.Sprintf("%s%s", strings.TrimPrefix(path, "/"), "Audiences")] = audiences
 	return nil
 }
