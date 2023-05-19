@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/cucumber/godog"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/manifestprocessor"
-	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
 	"strings"
 )
 
@@ -22,7 +21,7 @@ func initDiffServiceSameMethods(ctx *godog.ScenarioContext, ts *testsuite) {
 }
 
 func (s *istioJwtScenario) thereAreTwoServices() error {
-	resources, err := manifestprocessor.ParseFromFileWithTemplate("testing-helloworld-app.yaml", s.ApiResourceDirectory, testcontext.ResourceSeparator, s.ManifestTemplate)
+	resources, err := manifestprocessor.ParseFromFileWithTemplate("testing-helloworld-app.yaml", s.ApiResourceDirectory, s.ManifestTemplate)
 	if err != nil {
 		return err
 	}

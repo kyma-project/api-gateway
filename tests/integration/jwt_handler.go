@@ -12,7 +12,12 @@ import (
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/client"
 )
 
-func SwitchJwtHandler(ts testcontext.Testsuite, jwtHandler string) (string, error) {
+const (
+	configMapNs   = "kyma-system"
+	configMapName = "api-gateway-config"
+)
+
+func SwitchJwtHandler(ts testcontext.Context, jwtHandler string) (string, error) {
 	mapper, err := client.GetDiscoveryMapper()
 	if err != nil {
 		return "", err
@@ -28,8 +33,8 @@ func SwitchJwtHandler(ts testcontext.Testsuite, jwtHandler string) (string, erro
 				"kind":       "ConfigMap",
 				"apiVersion": "v1",
 				"metadata": map[string]interface{}{
-					"name":      testcontext.ConfigMapName,
-					"namespace": testcontext.DefaultNS,
+					"name":      configMapName,
+					"namespace": configMapNs,
 				},
 				"data": map[string]interface{}{
 					"api-gateway-config": "jwtHandler: " + jwtHandler,
@@ -37,14 +42,14 @@ func SwitchJwtHandler(ts testcontext.Testsuite, jwtHandler string) (string, erro
 			},
 		}
 		currentJwtHandler = jwtHandler
-		err = ts.ResourceManager.CreateResource(ts.K8sClient, mapping.Resource, testcontext.DefaultNS, configMap)
+		err = ts.ResourceManager.CreateResource(ts.K8sClient, mapping.Resource, configMapNs, configMap)
 	}
 	if err != nil {
 		return "", fmt.Errorf("could not get or create jwtHandler config:\n %+v", err)
 	}
 	if currentJwtHandler != jwtHandler {
 		configMap.Object["data"].(map[string]interface{})["api-gateway-config"] = "jwtHandler: " + jwtHandler
-		err = ts.ResourceManager.UpdateResource(ts.K8sClient, mapping.Resource, testcontext.DefaultNS, testcontext.ConfigMapName, *configMap)
+		err = ts.ResourceManager.UpdateResource(ts.K8sClient, mapping.Resource, configMapNs, configMapName, *configMap)
 		if err != nil {
 			return "", fmt.Errorf("unable to update ConfigMap:\n %+v", err)
 		}
@@ -53,7 +58,7 @@ func SwitchJwtHandler(ts testcontext.Testsuite, jwtHandler string) (string, erro
 }
 
 func getConfigMapJwtHandler(resourceManager *resource.Manager, k8sClient dynamic.Interface, gvr schema.GroupVersionResource) (string, *unstructured.Unstructured, error) {
-	res, err := resourceManager.GetResource(k8sClient, gvr, testcontext.DefaultNS, testcontext.ConfigMapName)
+	res, err := resourceManager.GetResource(k8sClient, gvr, configMapNs, configMapName)
 	if err != nil {
 		return "", res, fmt.Errorf("could not get ConfigMap:\n %+v", err)
 	}

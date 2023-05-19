@@ -23,27 +23,16 @@ import (
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 )
 
-// ScenarioWithRawAPIResource is a scenario that doesn't create APIRule on scenario initialization, allowing further templating of APIRule manifest
-type ScenarioWithRawAPIResource struct {
-	Namespace               string
-	TestID                  string
-	Domain                  string
-	ApiResourceManifestPath string
-	ApiResourceDirectory    string
-	ManifestTemplate        map[string]string
-	Url                     string
-}
-
-type Testsuite struct {
+type Context struct {
 	Name            string
 	HttpClient      *helpers.RetryableHttpClient
 	K8sClient       dynamic.Interface
 	ResourceManager *resource.Manager
-	Config          TestRunConfig
+	Config          Config
 	CommonResources commonResources
 }
 
-func NewTestSuite(name string, config TestRunConfig) Testsuite {
+func New(name string, config Config) Context {
 	pflag.Parse()
 
 	if err := envconfig.Init(&config); err != nil {
@@ -66,7 +55,7 @@ func NewTestSuite(name string, config TestRunConfig) Testsuite {
 
 	rm := resource.NewManager(GetRetryOpts(config))
 
-	t := Testsuite{
+	t := Context{
 		Name:            name,
 		HttpClient:      retryingHttpClient,
 		K8sClient:       k8sClient,
@@ -84,7 +73,7 @@ type commonResources struct {
 	secondNamespace string
 }
 
-func (t *Testsuite) setupCommonResources(config TestRunConfig) {
+func (t *Context) setupCommonResources(config Config) {
 	namespace := fmt.Sprintf("%s-%s", t.Name, helpers.GenerateRandomString(6))
 	secondNamespace := fmt.Sprintf("%s-2", namespace)
 	log.Printf("Using namespace: %s\n", namespace)
@@ -97,7 +86,7 @@ func (t *Testsuite) setupCommonResources(config TestRunConfig) {
 	}
 
 	// create common resources for all scenarios
-	globalCommonResources, err := manifestprocessor.ParseFromFileWithTemplate(globalCommonResourcesFile, ManifestsDirectory, ResourceSeparator, struct {
+	globalCommonResources, err := manifestprocessor.ParseFromFileWithTemplate("global-commons.yaml", "manifests", struct {
 		Namespace string
 	}{
 		Namespace: namespace,
@@ -129,7 +118,7 @@ func (t *Testsuite) setupCommonResources(config TestRunConfig) {
 	}
 }
 
-func (t *Testsuite) TearDownCommonResources() {
+func (t *Context) TearDownCommonResources() {
 	res := schema.GroupVersionResource{Group: "", Version: "v1", Resource: "namespaces"}
 	err := t.K8sClient.Resource(res).Delete(context.Background(), t.CommonResources.Namespace, v1.DeleteOptions{})
 	if err != nil {

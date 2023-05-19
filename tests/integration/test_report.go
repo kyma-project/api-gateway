@@ -2,7 +2,6 @@ package api_gateway
 
 import (
 	"fmt"
-	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
 	"gitlab.com/rodrigoodhin/gocure/models"
 	"gitlab.com/rodrigoodhin/gocure/pkg/gocure"
 	"gitlab.com/rodrigoodhin/gocure/report/html"
@@ -20,7 +19,7 @@ func generateReport() {
 
 	h := gocure.HTML{
 		Config: html.Data{
-			InputJsonPath:    testcontext.CucumberFileName,
+			InputJsonPath:    "cucumber-report.json",
 			OutputHtmlFolder: htmlOutputDir,
 			Title:            "Kyma API-Gateway component tests",
 			Metadata: models.Metadata{

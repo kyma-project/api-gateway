@@ -2,8 +2,6 @@ package istiojwt
 
 import (
 	"fmt"
-	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
-
 	"github.com/cucumber/godog"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/manifestprocessor"
 )
@@ -21,7 +19,7 @@ func initCustomLabelSelector(ctx *godog.ScenarioContext, ts *testsuite) {
 
 func (s *istioJwtScenario) thereIsHelloworldCustomLabelService(labelName string) error {
 	s.ManifestTemplate["CustomLabelName"] = labelName
-	resources, err := manifestprocessor.ParseFromFileWithTemplate("testing-helloworld-custom-label-app.yaml", s.ApiResourceDirectory, testcontext.ResourceSeparator, s.ManifestTemplate)
+	resources, err := manifestprocessor.ParseFromFileWithTemplate("testing-helloworld-custom-label-app.yaml", s.ApiResourceDirectory, s.ManifestTemplate)
 	if err != nil {
 		return err
 	}
@@ -33,7 +31,7 @@ func (s *istioJwtScenario) thereIsHelloworldCustomLabelService(labelName string)
 }
 
 func (s *istioJwtScenario) teardownHelloworldCustomLabelService() error {
-	resources, err := manifestprocessor.ParseFromFileWithTemplate("testing-helloworld-custom-label-app.yaml", s.ApiResourceDirectory, testcontext.ResourceSeparator, s.ManifestTemplate)
+	resources, err := manifestprocessor.ParseFromFileWithTemplate("testing-helloworld-custom-label-app.yaml", s.ApiResourceDirectory, s.ManifestTemplate)
 	if err != nil {
 		return err
 	}

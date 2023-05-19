@@ -18,20 +18,20 @@ import (
 
 func TestIstioJwt(t *testing.T) {
 	config := testcontext.GetConfig()
-	ts := testcontext.NewTestSuite("istio-jwt", config)
-	orgJwtHandler, err := SwitchJwtHandler(ts, "istio")
+	testCtx := testcontext.New("istio-jwt", config)
+	orgJwtHandler, err := SwitchJwtHandler(testCtx, "istio")
 	if err != nil {
 		log.Print(err.Error())
 		t.Fatalf("unable to switch to Istio jwtHandler")
 	}
-	defer cleanUp(ts, orgJwtHandler)
+	defer cleanUp(testCtx, orgJwtHandler)
 
 	opts := createGoDogOpts(t, "testsuites/istio-jwt/features/", config.TestConcurrency)
 	suite := godog.TestSuite{
-		Name: ts.Name,
+		Name: testCtx.Name,
 		// We are not using ScenarioInitializer, as this function only needs to set up global resources
 		TestSuiteInitializer: func(ctx *godog.TestSuiteContext) {
-			istiojwt.Init(ctx.ScenarioContext(), ts)
+			istiojwt.Init(ctx.ScenarioContext(), &testCtx)
 		},
 		Options: &opts,
 	}
@@ -44,14 +44,14 @@ func TestIstioJwt(t *testing.T) {
 
 func TestCustomDomain(t *testing.T) {
 	config := testcontext.GetConfig()
-	ts := testcontext.NewTestSuite("custom-domain", config)
-	defer ts.TearDownCommonResources()
-	opts := createGoDogOpts(t, "features/custom-domain/custom_domain.feature", config.TestConcurrency)
+	testCtx := testcontext.New("custom-domain", config)
+	defer testCtx.TearDownCommonResources()
+	opts := createGoDogOpts(t, "testsuites/custom-domain/features/", config.TestConcurrency)
 
 	customDomainSuite := godog.TestSuite{
-		Name: ts.Name,
+		Name: testCtx.Name,
 		TestSuiteInitializer: func(ctx *godog.TestSuiteContext) {
-			customdomain.Init(ctx.ScenarioContext(), ts)
+			customdomain.Init(ctx.ScenarioContext(), &testCtx)
 		},
 		Options: &opts,
 	}
@@ -60,12 +60,12 @@ func TestCustomDomain(t *testing.T) {
 
 	//Remove certificate
 	res := schema.GroupVersionResource{Group: "cert.gardener.cloud", Version: "v1alpha1", Resource: "certificates"}
-	err := ts.K8sClient.Resource(res).Namespace("istio-system").DeleteCollection(context.TODO(), v1.DeleteOptions{}, v1.ListOptions{LabelSelector: "owner=custom-domain-test"})
+	err := testCtx.K8sClient.Resource(res).Namespace("istio-system").DeleteCollection(context.TODO(), v1.DeleteOptions{}, v1.ListOptions{LabelSelector: "owner=custom-domain-test"})
 	if err != nil {
 		log.Print(err.Error())
 	}
 
-	if os.Getenv(testcontext.ExportResultVar) == "true" {
+	if shouldExportResults() {
 		generateReport()
 	}
 
@@ -83,24 +83,28 @@ func createGoDogOpts(t *testing.T, featuresPath string, concurrency int) godog.O
 		TestingT:    t,
 	}
 
-	if os.Getenv(testcontext.ExportResultVar) == "true" {
+	if shouldExportResults() {
 		goDogOpts.Format = "pretty,junit:junit-report.xml,cucumber:cucumber-report.json"
 	}
 
 	return goDogOpts
 }
 
-func cleanUp(ts testcontext.Testsuite, orgJwtHandler string) {
+func cleanUp(c testcontext.Context, orgJwtHandler string) {
 
-	ts.TearDownCommonResources()
+	c.TearDownCommonResources()
 
-	if os.Getenv(testcontext.ExportResultVar) == "true" {
+	if shouldExportResults() {
 		generateReport()
 	}
 
-	_, err := SwitchJwtHandler(ts, orgJwtHandler)
+	_, err := SwitchJwtHandler(c, orgJwtHandler)
 	if err != nil {
 		log.Print(err.Error())
 		panic("unable to switch back to original jwtHandler")
 	}
+}
+
+func shouldExportResults() bool {
+	return os.Getenv("EXPORT_RESULT") == "true"
 }

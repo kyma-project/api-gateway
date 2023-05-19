@@ -25,7 +25,7 @@ type tokenFrom struct {
 }
 
 type testsuite struct {
-	testcontext.Testsuite
+	*testcontext.Context
 }
 
 func (t *testsuite) createScenario(templateFileName string, scenarioName string) *istioJwtScenario {
@@ -41,8 +41,6 @@ func (t *testsuite) createScenario(templateFileName string, scenarioName string)
 	template["GatewayNamespace"] = t.Config.GatewayNamespace
 	template["IssuerUrl"] = t.Config.IssuerUrl
 	template["EncodedCredentials"] = base64.RawStdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", t.Config.ClientID, t.Config.ClientSecret)))
-
-	// TODO: ADD verification that the template file exists otherwise panic
 
 	return &istioJwtScenario{
 		Namespace:               ns,
@@ -71,11 +69,11 @@ type istioJwtScenario struct {
 	oauth2Cfg               *clientcredentials.Config
 	httpClient              *helpers.RetryableHttpClient
 	resourceManager         *resource.Manager
-	config                  testcontext.TestRunConfig
+	config                  testcontext.Config
 }
 
-func Init(ctx *godog.ScenarioContext, t testcontext.Testsuite) {
-	ts := &testsuite{t}
+func Init(ctx *godog.ScenarioContext, testCtx *testcontext.Context) {
+	ts := &testsuite{testCtx}
 	initCommon(ctx, ts)
 	initPrefix(ctx, ts)
 	initRegex(ctx, ts)
@@ -98,7 +96,7 @@ func Init(ctx *godog.ScenarioContext, t testcontext.Testsuite) {
 }
 
 func (s *istioJwtScenario) theAPIRuleIsApplied() error {
-	r, err := manifestprocessor.ParseFromFileWithTemplate(s.ApiResourceManifestPath, s.ApiResourceDirectory, testcontext.ResourceSeparator, s.ManifestTemplate)
+	r, err := manifestprocessor.ParseFromFileWithTemplate(s.ApiResourceManifestPath, s.ApiResourceDirectory, s.ManifestTemplate)
 	if err != nil {
 		return err
 	}
@@ -194,7 +192,7 @@ func (s *istioJwtScenario) callingTheEndpointWithoutTokenShouldResultInStatusBet
 }
 
 func (s *istioJwtScenario) thereAreTwoNamespaces() error {
-	resources, err := manifestprocessor.ParseFromFileWithTemplate("second-namespace.yaml", s.ApiResourceDirectory, testcontext.ResourceSeparator, s.ManifestTemplate)
+	resources, err := manifestprocessor.ParseFromFileWithTemplate("second-namespace.yaml", s.ApiResourceDirectory, s.ManifestTemplate)
 	if err != nil {
 		return err
 	}
@@ -210,7 +208,7 @@ func (s *istioJwtScenario) emptyStep() {
 }
 
 func (s *istioJwtScenario) thereIsAHttpbinService() error {
-	resources, err := manifestprocessor.ParseFromFileWithTemplate("testing-app.yaml", s.ApiResourceDirectory, testcontext.ResourceSeparator, s.ManifestTemplate)
+	resources, err := manifestprocessor.ParseFromFileWithTemplate("testing-app.yaml", s.ApiResourceDirectory, s.ManifestTemplate)
 	if err != nil {
 		return err
 	}
@@ -227,7 +225,7 @@ func (s *istioJwtScenario) thereIsAHttpbinService() error {
 // teardownHttpbinService deletes the httpbin service and reset the url in the scenario. This should be considered a temporary solution
 // to reduce resource conumption until we implement a better way to clean up the resources by a scenario. If the test fails before this step the teardown won't be executed.
 func (s *istioJwtScenario) teardownHttpbinService() error {
-	resources, err := manifestprocessor.ParseFromFileWithTemplate("testing-app.yaml", s.ApiResourceDirectory, testcontext.ResourceSeparator, s.ManifestTemplate)
+	resources, err := manifestprocessor.ParseFromFileWithTemplate("testing-app.yaml", s.ApiResourceDirectory, s.ManifestTemplate)
 	if err != nil {
 		return err
 	}
