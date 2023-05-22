@@ -16,7 +16,7 @@ require (
 	istio.io/api v0.0.0-20230217221049-9d422bf48675
 	istio.io/client-go v1.17.1
 	k8s.io/apimachinery v0.27.2
-	k8s.io/client-go v0.26.3
+	k8s.io/client-go v0.27.2
 	sigs.k8s.io/controller-runtime v0.14.6
 	sigs.k8s.io/yaml v1.3.0
 )
@@ -59,7 +59,6 @@ require (
 	github.com/prometheus/client_model v0.3.0 // indirect
 	github.com/prometheus/common v0.37.0 // indirect
 	github.com/prometheus/procfs v0.8.0 // indirect
-	github.com/rogpeppe/go-internal v1.10.0 // indirect
 	github.com/tdewolff/minify/v2 v2.10.0 // indirect
 	github.com/tdewolff/parse/v2 v2.5.27 // indirect
 	go.uber.org/zap v1.24.0 // indirect
@@ -73,7 +72,7 @@ require (
 	google.golang.org/genproto v0.0.0-20221018160656-63c7b68cfc55 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	k8s.io/component-base v0.26.3 // indirect
+	k8s.io/component-base v0.27.2 // indirect
 	k8s.io/klog/v2 v2.90.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20230501164219-8b0f38b5fd1f // indirect
 	sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd // indirect
@@ -90,7 +89,7 @@ require (
 	golang.org/x/exp v0.0.0-20221217163422-3c43f8badb15
 	golang.org/x/oauth2 v0.8.0
 	gopkg.in/yaml.v2 v2.4.0
-	k8s.io/api v0.26.3
-	k8s.io/apiextensions-apiserver v0.26.3
+	k8s.io/api v0.27.2
+	k8s.io/apiextensions-apiserver v0.27.2
 	k8s.io/utils v0.0.0-20230209194617-a36077c30491
 )
