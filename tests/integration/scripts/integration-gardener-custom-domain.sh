@@ -28,32 +28,29 @@ curl -Lo kyma.tar.gz "https://github.com/kyma-project/cli/releases/latest/downlo
 && tar -zxvf kyma.tar.gz && chmod +x kyma \
 && rm -f kyma.tar.gz
 chmod +x kyma
+
 # Add pwd to path to be able to use Kyma binary
 export PATH="${PATH}:${PWD}"
 kyma version --client
 
 # Provision gardener cluster
 CLUSTER_NAME=$(LC_ALL=C tr -dc 'a-z' < /dev/urandom | head -c10)
-GARDENER_REGION="europe-west4"
-GARDENER_ZONES="europe-west4-b"
-kyma provision gardener gcp \
+kyma provision gardener ${GARDENER_PROVIDER} \
         --secret "${GARDENER_KYMA_PROW_PROVIDER_SECRET_NAME}" \
         --name "${CLUSTER_NAME}" \
         --project "${GARDENER_KYMA_PROW_PROJECT_NAME}" \
         --credentials "${GARDENER_KYMA_PROW_KUBECONFIG}" \
         --region "${GARDENER_REGION}" \
         -z "${GARDENER_ZONES}" \
-        -t "n1-standard-4" \
+        -t "${MACHINE_TYPE}" \
         --scaler-max 3 \
         --scaler-min 1 \
         --kube-version="${GARDENER_CLUSTER_VERSION}" \
         --attempts 1 \
         --verbose
 
-echo "sleeping for 60 seconds..." && sleep 60
-# KYMA_DOMAIN is required by the tests
-export TEST_DOMAIN="${CLUSTER_NAME}.${GARDENER_KYMA_PROW_PROJECT_NAME}.shoot.live.k8s-hana.ondemand.com"
-export TEST_CUSTOM_DOMAIN="a.build.kyma-project.io"
+echo "waiting for Gardener to finish shoot reconcile..."
+kubectl wait --for=jsonpath='{.status.lastOperation.state}'=Succeeded --timeout=300s "shoots/${CLUSTER_NAME}"
 
 cat <<EOF > patch.yaml
 spec:
@@ -72,7 +69,15 @@ spec:
         shootIssuers:
           enabled: true
 EOF
+
 kubectl patch shoot "$CLUSTER_NAME" --patch-file patch.yaml --kubeconfig "${GARDENER_KYMA_PROW_KUBECONFIG}"
 make install-kyma
-echo "Sleeping for 60 seconds..." && sleep 60
+
+echo "waiting for Gardener to finish shoot reconcile..."
+kubectl wait --for=jsonpath='{.status.lastOperation.state}'=Succeeded --timeout=300s "shoots/${CLUSTER_NAME}"
+
+# KYMA_DOMAIN is required by the tests
+export TEST_DOMAIN="${CLUSTER_NAME}.${GARDENER_KYMA_PROW_PROJECT_NAME}.shoot.live.k8s-hana.ondemand.com"
+export TEST_CUSTOM_DOMAIN="a.build.kyma-project.io"
+
 make test-custom-domain
