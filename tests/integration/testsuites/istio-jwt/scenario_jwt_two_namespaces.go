@@ -17,6 +17,6 @@ func initJwtTwoNamespaces(ctx *godog.ScenarioContext, ts *testsuite) {
 	ctx.Step(`TwoNamespaces: Teardown httpbin service$`, scenario.teardownHttpbinService)
 }
 
-func (s *istioJwtScenario) thereIsAnJwtSecuredPathInDifferentNamespace(path string) {
+func (s *scenario) thereIsAnJwtSecuredPathInDifferentNamespace(path string) {
 	s.ManifestTemplate["otherNamespacePath"] = path
 }

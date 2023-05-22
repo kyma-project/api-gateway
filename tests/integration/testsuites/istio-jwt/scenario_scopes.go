@@ -17,7 +17,7 @@ func initRequiredScopes(ctx *godog.ScenarioContext, ts *testsuite) {
 	ctx.Step(`Scopes: Teardown httpbin service$`, scenario.teardownHttpbinService)
 }
 
-func (s *istioJwtScenario) thereIsAnEndpointWithRequiredScopes(path string, scopes string) error {
+func (s *scenario) thereIsAnEndpointWithRequiredScopes(path string, scopes string) error {
 	s.ManifestTemplate[fmt.Sprintf("%s%s", strings.TrimPrefix(path, "/"), "RequiredScopes")] = scopes
 	return nil
 }

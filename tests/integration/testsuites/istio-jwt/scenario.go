@@ -1,8 +1,6 @@
 package istiojwt
 
 import (
-	_ "embed"
-	"encoding/base64"
 	"errors"
 	"fmt"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/helpers"
@@ -12,52 +10,10 @@ import (
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
 	"golang.org/x/oauth2/clientcredentials"
 	"k8s.io/client-go/dynamic"
-	"path"
 	"strings"
-
-	"github.com/cucumber/godog"
 )
 
-type tokenFrom struct {
-	From     string
-	Prefix   string
-	AsHeader bool
-}
-
-type testsuite struct {
-	*testcontext.Context
-}
-
-func (t *testsuite) createScenario(templateFileName string, scenarioName string) *istioJwtScenario {
-	ns := t.CommonResources.Namespace
-	testId := helpers.GenerateRandomTestId()
-
-	template := make(map[string]string)
-	template["Namespace"] = ns
-	template["NamePrefix"] = scenarioName
-	template["TestID"] = testId
-	template["Domain"] = t.Config.Domain
-	template["GatewayName"] = t.Config.GatewayName
-	template["GatewayNamespace"] = t.Config.GatewayNamespace
-	template["IssuerUrl"] = t.Config.IssuerUrl
-	template["EncodedCredentials"] = base64.RawStdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", t.Config.ClientID, t.Config.ClientSecret)))
-
-	return &istioJwtScenario{
-		Namespace:               ns,
-		TestID:                  testId,
-		Domain:                  t.Config.Domain,
-		ManifestTemplate:        template,
-		ApiResourceManifestPath: templateFileName,
-		ApiResourceDirectory:    path.Dir("testsuites/istio-jwt/manifests/"),
-		k8sClient:               t.K8sClient,
-		oauth2Cfg:               t.CommonResources.Oauth2Cfg,
-		httpClient:              t.HttpClient,
-		resourceManager:         t.ResourceManager,
-		config:                  t.Config,
-	}
-}
-
-type istioJwtScenario struct {
+type scenario struct {
 	Namespace               string
 	TestID                  string
 	Domain                  string
@@ -72,30 +28,7 @@ type istioJwtScenario struct {
 	config                  testcontext.Config
 }
 
-func Init(ctx *godog.ScenarioContext, testCtx *testcontext.Context) {
-	ts := &testsuite{testCtx}
-	initCommon(ctx, ts)
-	initPrefix(ctx, ts)
-	initRegex(ctx, ts)
-	initRequiredScopes(ctx, ts)
-	initAudience(ctx, ts)
-	initJwtAndAllow(ctx, ts)
-	initJwtAndOauth(ctx, ts)
-	initJwtTwoNamespaces(ctx, ts)
-	initJwtServiceFallback(ctx, ts)
-	initDiffServiceSameMethods(ctx, ts)
-	initJwtUnavailableIssuer(ctx, ts)
-	initJwtIssuerJwksNotMatch(ctx, ts)
-	initMutatorCookie(ctx, ts)
-	initMutatorHeader(ctx, ts)
-	initMultipleMutators(ctx, ts)
-	initMutatorsOverwrite(ctx, ts)
-	initTokenFromHeaders(ctx, ts)
-	initTokenFromParams(ctx, ts)
-	initCustomLabelSelector(ctx, ts)
-}
-
-func (s *istioJwtScenario) theAPIRuleIsApplied() error {
+func (s *scenario) theAPIRuleIsApplied() error {
 	r, err := manifestprocessor.ParseFromFileWithTemplate(s.ApiResourceManifestPath, s.ApiResourceDirectory, s.ManifestTemplate)
 	if err != nil {
 		return err
@@ -103,7 +36,7 @@ func (s *istioJwtScenario) theAPIRuleIsApplied() error {
 	return helpers.ApplyApiRule(s.resourceManager.CreateResources, s.resourceManager.UpdateResources, s.k8sClient, testcontext.GetRetryOpts(s.config), r)
 }
 
-func (s *istioJwtScenario) callingTheEndpointWithAValidToken(endpoint, tokenType, _, _ string, lower, higher int) error {
+func (s *scenario) callingTheEndpointWithAValidToken(endpoint, tokenType, _, _ string, lower, higher int) error {
 	asserter := &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher}
 	tokenFrom := tokenFrom{
 		From:     testcontext.AuthorizationHeaderName,
@@ -113,7 +46,7 @@ func (s *istioJwtScenario) callingTheEndpointWithAValidToken(endpoint, tokenType
 	return s.callingEndpointWithHeadersWithRetries(fmt.Sprintf("%s/%s", s.Url, strings.TrimLeft(endpoint, "/")), tokenType, asserter, nil, &tokenFrom)
 }
 
-func (s *istioJwtScenario) callingTheEndpointWithValidTokenShouldResultInStatusBetween(endpoint, tokenType string, lower, higher int) error {
+func (s *scenario) callingTheEndpointWithValidTokenShouldResultInStatusBetween(endpoint, tokenType string, lower, higher int) error {
 	asserter := &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher}
 	tokenFrom := tokenFrom{
 		From:     testcontext.AuthorizationHeaderName,
@@ -123,7 +56,7 @@ func (s *istioJwtScenario) callingTheEndpointWithValidTokenShouldResultInStatusB
 	return s.callingEndpointWithHeadersWithRetries(fmt.Sprintf("%s/%s", s.Url, strings.TrimLeft(endpoint, "/")), tokenType, asserter, nil, &tokenFrom)
 }
 
-func (s *istioJwtScenario) callingTheEndpointWithValidTokenFromHeaderShouldResultInStatusBetween(endpoint, tokenType string, fromHeader string, prefix string, lower, higher int) error {
+func (s *scenario) callingTheEndpointWithValidTokenFromHeaderShouldResultInStatusBetween(endpoint, tokenType string, fromHeader string, prefix string, lower, higher int) error {
 	asserter := &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher}
 	tokenFrom := tokenFrom{
 		From:     fromHeader,
@@ -133,7 +66,7 @@ func (s *istioJwtScenario) callingTheEndpointWithValidTokenFromHeaderShouldResul
 	return s.callingEndpointWithHeadersWithRetries(fmt.Sprintf("%s/%s", s.Url, strings.TrimLeft(endpoint, "/")), tokenType, asserter, nil, &tokenFrom)
 }
 
-func (s *istioJwtScenario) callingTheEndpointWithValidTokenFromParameterShouldResultInStatusBetween(endpoint, tokenType string, fromParameter string, lower, higher int) error {
+func (s *scenario) callingTheEndpointWithValidTokenFromParameterShouldResultInStatusBetween(endpoint, tokenType string, fromParameter string, lower, higher int) error {
 	asserter := &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher}
 	tokenFrom := tokenFrom{
 		From:     fromParameter,
@@ -142,7 +75,7 @@ func (s *istioJwtScenario) callingTheEndpointWithValidTokenFromParameterShouldRe
 	return s.callingEndpointWithHeadersWithRetries(fmt.Sprintf("%s/%s", s.Url, strings.TrimLeft(endpoint, "/")), tokenType, asserter, nil, &tokenFrom)
 }
 
-func (s *istioJwtScenario) callingTheEndpointWithValidTokenShouldResultInBodyContaining(endpoint, tokenType string, bodyContent string) error {
+func (s *scenario) callingTheEndpointWithValidTokenShouldResultInBodyContaining(endpoint, tokenType string, bodyContent string) error {
 	asserter := &helpers.BodyContainsPredicate{Expected: []string{bodyContent}}
 	tokenFrom := tokenFrom{
 		From:     testcontext.AuthorizationHeaderName,
@@ -152,7 +85,7 @@ func (s *istioJwtScenario) callingTheEndpointWithValidTokenShouldResultInBodyCon
 	return s.callingEndpointWithHeadersWithRetries(fmt.Sprintf("%s/%s", s.Url, strings.TrimLeft(endpoint, "/")), tokenType, asserter, nil, &tokenFrom)
 }
 
-func (s *istioJwtScenario) callingEndpointWithHeadersWithRetries(url string, tokenType string, asserter helpers.HttpResponseAsserter, requestHeaders map[string]string, tokenFrom *tokenFrom) error {
+func (s *scenario) callingEndpointWithHeadersWithRetries(url string, tokenType string, asserter helpers.HttpResponseAsserter, requestHeaders map[string]string, tokenFrom *tokenFrom) error {
 	if requestHeaders == nil {
 		requestHeaders = make(map[string]string)
 	}
@@ -187,11 +120,11 @@ func (s *istioJwtScenario) callingEndpointWithHeadersWithRetries(url string, tok
 	return s.httpClient.CallEndpointWithHeadersWithRetries(requestHeaders, url, asserter)
 }
 
-func (s *istioJwtScenario) callingTheEndpointWithoutTokenShouldResultInStatusBetween(endpoint string, lower, higher int) error {
+func (s *scenario) callingTheEndpointWithoutTokenShouldResultInStatusBetween(endpoint string, lower, higher int) error {
 	return s.httpClient.CallEndpointWithRetries(fmt.Sprintf("%s/%s", s.Url, strings.TrimLeft(endpoint, "/")), &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher})
 }
 
-func (s *istioJwtScenario) thereAreTwoNamespaces() error {
+func (s *scenario) thereAreTwoNamespaces() error {
 	resources, err := manifestprocessor.ParseFromFileWithTemplate("second-namespace.yaml", s.ApiResourceDirectory, s.ManifestTemplate)
 	if err != nil {
 		return err
@@ -200,14 +133,14 @@ func (s *istioJwtScenario) thereAreTwoNamespaces() error {
 	return err
 }
 
-func (s *istioJwtScenario) thereIsAnJwtSecuredPath(path string) {
+func (s *scenario) thereIsAnJwtSecuredPath(path string) {
 	s.ManifestTemplate["jwtSecuredPath"] = path
 }
 
-func (s *istioJwtScenario) emptyStep() {
+func (s *scenario) emptyStep() {
 }
 
-func (s *istioJwtScenario) thereIsAHttpbinService() error {
+func (s *scenario) thereIsAHttpbinService() error {
 	resources, err := manifestprocessor.ParseFromFileWithTemplate("testing-app.yaml", s.ApiResourceDirectory, s.ManifestTemplate)
 	if err != nil {
 		return err
@@ -224,7 +157,7 @@ func (s *istioJwtScenario) thereIsAHttpbinService() error {
 
 // teardownHttpbinService deletes the httpbin service and reset the url in the scenario. This should be considered a temporary solution
 // to reduce resource conumption until we implement a better way to clean up the resources by a scenario. If the test fails before this step the teardown won't be executed.
-func (s *istioJwtScenario) teardownHttpbinService() error {
+func (s *scenario) teardownHttpbinService() error {
 	resources, err := manifestprocessor.ParseFromFileWithTemplate("testing-app.yaml", s.ApiResourceDirectory, s.ManifestTemplate)
 	if err != nil {
 		return err

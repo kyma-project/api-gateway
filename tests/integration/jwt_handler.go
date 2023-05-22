@@ -17,7 +17,7 @@ const (
 	configMapName = "api-gateway-config"
 )
 
-func SwitchJwtHandler(ts testcontext.Context, jwtHandler string) (string, error) {
+func SwitchJwtHandler(ts testcontext.Testsuite, jwtHandler string) (string, error) {
 	mapper, err := client.GetDiscoveryMapper()
 	if err != nil {
 		return "", err
@@ -26,7 +26,7 @@ func SwitchJwtHandler(ts testcontext.Context, jwtHandler string) (string, error)
 	if err != nil {
 		return "", err
 	}
-	currentJwtHandler, configMap, err := getConfigMapJwtHandler(ts.ResourceManager, ts.K8sClient, mapping.Resource)
+	currentJwtHandler, configMap, err := getConfigMapJwtHandler(ts.ResourceManager(), ts.K8sClient(), mapping.Resource)
 	if err != nil {
 		configMap := unstructured.Unstructured{
 			Object: map[string]interface{}{
@@ -42,14 +42,14 @@ func SwitchJwtHandler(ts testcontext.Context, jwtHandler string) (string, error)
 			},
 		}
 		currentJwtHandler = jwtHandler
-		err = ts.ResourceManager.CreateResource(ts.K8sClient, mapping.Resource, configMapNs, configMap)
+		err = ts.ResourceManager().CreateResource(ts.K8sClient(), mapping.Resource, configMapNs, configMap)
 	}
 	if err != nil {
 		return "", fmt.Errorf("could not get or create jwtHandler config:\n %+v", err)
 	}
 	if currentJwtHandler != jwtHandler {
 		configMap.Object["data"].(map[string]interface{})["api-gateway-config"] = "jwtHandler: " + jwtHandler
-		err = ts.ResourceManager.UpdateResource(ts.K8sClient, mapping.Resource, configMapNs, configMapName, *configMap)
+		err = ts.ResourceManager().UpdateResource(ts.K8sClient(), mapping.Resource, configMapNs, configMapName, *configMap)
 		if err != nil {
 			return "", fmt.Errorf("unable to update ConfigMap:\n %+v", err)
 		}

@@ -15,13 +15,13 @@ func initMutatorCookie(ctx *godog.ScenarioContext, ts *testsuite) {
 	ctx.Step(`JwtMutatorCookie: Teardown httpbin service$`, scenario.teardownHttpbinService)
 }
 
-func (s *istioJwtScenario) thereIsAnEndpointWithCookieMutator(_, header, headerValue string) error {
+func (s *scenario) thereIsAnEndpointWithCookieMutator(_, header, headerValue string) error {
 	s.ManifestTemplate["cookie"] = header
 	s.ManifestTemplate["cookieValue"] = headerValue
 	return nil
 }
 
-func (s *istioJwtScenario) shouldReturnResponseWithCookie(path, cookie, cookieValue string) error {
+func (s *scenario) shouldReturnResponseWithCookie(path, cookie, cookieValue string) error {
 	bodyContent := fmt.Sprintf(`"%s": "%s"`, cookie, cookieValue)
 	return s.callingTheEndpointWithValidTokenShouldResultInBodyContaining(path, "JWT", bodyContent)
 }

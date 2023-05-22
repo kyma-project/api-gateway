@@ -17,7 +17,7 @@ func initCustomLabelSelector(ctx *godog.ScenarioContext, ts *testsuite) {
 	ctx.Step(`CustomLabelSelector: Teardown helloworld service$`, scenario.teardownHelloworldCustomLabelService)
 }
 
-func (s *istioJwtScenario) thereIsHelloworldCustomLabelService(labelName string) error {
+func (s *scenario) thereIsHelloworldCustomLabelService(labelName string) error {
 	s.ManifestTemplate["CustomLabelName"] = labelName
 	resources, err := manifestprocessor.ParseFromFileWithTemplate("testing-helloworld-custom-label-app.yaml", s.ApiResourceDirectory, s.ManifestTemplate)
 	if err != nil {
@@ -30,7 +30,7 @@ func (s *istioJwtScenario) thereIsHelloworldCustomLabelService(labelName string)
 	return err
 }
 
-func (s *istioJwtScenario) teardownHelloworldCustomLabelService() error {
+func (s *scenario) teardownHelloworldCustomLabelService() error {
 	resources, err := manifestprocessor.ParseFromFileWithTemplate("testing-helloworld-custom-label-app.yaml", s.ApiResourceDirectory, s.ManifestTemplate)
 	if err != nil {
 		return err

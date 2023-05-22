@@ -20,7 +20,7 @@ func initDiffServiceSameMethods(ctx *godog.ScenarioContext, ts *testsuite) {
 	ctx.Step(`DiffSvcSameMethods: Teardown httpbin service$`, scenario.teardownHttpbinService)
 }
 
-func (s *istioJwtScenario) thereAreTwoServices() error {
+func (s *scenario) thereAreTwoServices() error {
 	resources, err := manifestprocessor.ParseFromFileWithTemplate("testing-helloworld-app.yaml", s.ApiResourceDirectory, s.ManifestTemplate)
 	if err != nil {
 		return err
@@ -29,7 +29,7 @@ func (s *istioJwtScenario) thereAreTwoServices() error {
 	return err
 }
 
-func (s *istioJwtScenario) thereIsAJwtSecuredPathWithMethods(path string, methods string) {
+func (s *scenario) thereIsAJwtSecuredPathWithMethods(path string, methods string) {
 	pathName := strings.TrimPrefix(path, "/")
 	s.ManifestTemplate[fmt.Sprintf("%s%s", pathName, "Methods")] = methods
 	s.ManifestTemplate[fmt.Sprintf("%sJwtSecuredPath", pathName)] = path

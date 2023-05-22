@@ -3,6 +3,7 @@ package customdomain
 import (
 	"context"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"github.com/cucumber/godog"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/helpers"
@@ -40,8 +41,15 @@ type scenario struct {
 	config          testcontext.Config
 }
 
-func Init(ctx *godog.ScenarioContext, testCtx *testcontext.Context) {
-	scenario, err := createScenario(testCtx, "custom-domain")
+func Init(ctx *godog.ScenarioContext, test testcontext.Testsuite) error {
+
+	ts, ok := test.(*testsuite)
+
+	if !ok {
+		return errors.New("testsuite is not custom domain")
+	}
+
+	scenario, err := createScenario(ts, "custom-domain")
 
 	if err != nil {
 		log.Fatalf("could not initialize custom domain endpoint err=%s", err)
@@ -58,10 +66,12 @@ func Init(ctx *godog.ScenarioContext, testCtx *testcontext.Context) {
 	ctx.Step(`^calling the "([^"]*)" endpoint with an invalid token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithAInvalidTokenShouldResultInStatusBetween)
 	ctx.Step(`^calling the "([^"]*)" endpoint with a valid token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithAValidTokenShouldResultInStatusBetween)
 	ctx.Step(`^calling the "([^"]*)" endpoint without a token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithoutATokenShouldResultInStatusBetween)
+
+	return nil
 }
 
-func createScenario(t *testcontext.Context, namePrefix string) (*scenario, error) {
-	ns := t.CommonResources.Namespace
+func createScenario(t *testsuite, namePrefix string) (*scenario, error) {
+	ns := t.namespace
 	testID := helpers.GenerateRandomTestId()
 	customDomainManifestDirectory := path.Dir(manifestsPath)
 
@@ -70,13 +80,13 @@ func createScenario(t *testcontext.Context, namePrefix string) (*scenario, error
 		Namespace string
 		TestID    string
 	}{
-		Namespace: t.CommonResources.Namespace,
+		Namespace: t.namespace,
 		TestID:    testID,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to process common manifest files, details %s", err.Error())
 	}
-	_, err = t.ResourceManager.CreateResources(t.K8sClient, commonResources...)
+	_, err = t.resourceManager.CreateResources(t.k8sClient, commonResources...)
 
 	if err != nil {
 		return nil, err
@@ -90,7 +100,7 @@ func createScenario(t *testcontext.Context, namePrefix string) (*scenario, error
 		Domain           string
 		GatewayName      string
 		GatewayNamespace string
-	}{Namespace: ns, NamePrefix: namePrefix, TestID: testID, Domain: fmt.Sprintf("%s.%s", testID, t.Config.CustomDomain), GatewayName: fmt.Sprintf("%s-%s", namePrefix, testID),
+	}{Namespace: ns, NamePrefix: namePrefix, TestID: testID, Domain: fmt.Sprintf("%s.%s", testID, t.config.CustomDomain), GatewayName: fmt.Sprintf("%s-%s", namePrefix, testID),
 		GatewayNamespace: ns})
 	if err != nil {
 		return nil, fmt.Errorf("failed to process resource manifest files, details %s", err.Error())
@@ -104,23 +114,23 @@ func createScenario(t *testcontext.Context, namePrefix string) (*scenario, error
 		GatewayNamespace   string
 		IssuerUrl          string
 		EncodedCredentials string
-	}{Namespace: ns, NamePrefix: namePrefix, TestID: testID, Domain: fmt.Sprintf("%s.%s", testID, t.Config.CustomDomain), GatewayName: fmt.Sprintf("%s-%s", namePrefix, testID), GatewayNamespace: ns, IssuerUrl: t.Config.IssuerUrl, EncodedCredentials: base64.RawStdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", t.Config.ClientID, t.Config.ClientSecret)))})
+	}{Namespace: ns, NamePrefix: namePrefix, TestID: testID, Domain: fmt.Sprintf("%s.%s", testID, t.config.CustomDomain), GatewayName: fmt.Sprintf("%s-%s", namePrefix, testID), GatewayNamespace: ns, IssuerUrl: t.config.IssuerUrl, EncodedCredentials: base64.RawStdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", t.config.ClientID, t.config.ClientSecret)))})
 	if err != nil {
 		return nil, fmt.Errorf("failed to process resource manifest files, details %s", err.Error())
 	}
 
 	return &scenario{
-		domain:          t.Config.CustomDomain,
+		domain:          t.config.CustomDomain,
 		testID:          testID,
 		namespace:       ns,
-		url:             fmt.Sprintf("https://httpbin-%s.%s.%s", testID, testID, t.Config.CustomDomain),
+		url:             fmt.Sprintf("https://httpbin-%s.%s.%s", testID, testID, t.config.CustomDomain),
 		apiResourceOne:  accessRuleOne,
 		apiResourceTwo:  accessRuleTwo,
-		k8sClient:       t.K8sClient,
-		httpClient:      t.HttpClient,
-		oauth2Cfg:       t.CommonResources.Oauth2Cfg,
-		resourceManager: t.ResourceManager,
-		config:          t.Config,
+		k8sClient:       t.k8sClient,
+		httpClient:      t.httpClient,
+		oauth2Cfg:       t.oauth2Cfg,
+		resourceManager: t.resourceManager,
+		config:          t.config,
 	}, nil
 }
 

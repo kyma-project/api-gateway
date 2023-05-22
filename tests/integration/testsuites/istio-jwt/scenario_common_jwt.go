@@ -43,7 +43,7 @@ func initPrefix(ctx *godog.ScenarioContext, ts *testsuite) {
 	ctx.Step(`Prefix: Teardown httpbin service$`, scenario.teardownHttpbinService)
 }
 
-func (s *istioJwtScenario) callingTheEndpointWithInvalidTokenShouldResultInStatusBetween(path string, lower, higher int) error {
+func (s *scenario) callingTheEndpointWithInvalidTokenShouldResultInStatusBetween(path string, lower, higher int) error {
 	requestHeaders := map[string]string{testcontext.AuthorizationHeaderName: testcontext.AnyToken}
 	return s.httpClient.CallEndpointWithHeadersWithRetries(requestHeaders, fmt.Sprintf("%s%s", s.Url, path), &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher})
 }

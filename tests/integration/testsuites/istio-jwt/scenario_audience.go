@@ -18,7 +18,7 @@ func initAudience(ctx *godog.ScenarioContext, ts *testsuite) {
 	ctx.Step(`Audiences: Teardown httpbin service$`, scenario.teardownHttpbinService)
 }
 
-func (s *istioJwtScenario) thereIsAnEndpointWithAudiences(path string, audiences string) error {
+func (s *scenario) thereIsAnEndpointWithAudiences(path string, audiences string) error {
 	s.ManifestTemplate[fmt.Sprintf("%s%s", strings.TrimPrefix(path, "/"), "Audiences")] = audiences
 	return nil
 }

@@ -21,7 +21,7 @@ func initMutatorsOverwrite(ctx *godog.ScenarioContext, ts *testsuite) {
 	ctx.Step(`JwtMutatorsOverwrite: Teardown httpbin service$`, scenario.teardownHttpbinService)
 }
 
-func (s *istioJwtScenario) shouldOverwriteHeaderValue(endpoint, headerName, requestValue, responseValue string) error {
+func (s *scenario) shouldOverwriteHeaderValue(endpoint, headerName, requestValue, responseValue string) error {
 	requestHeaders := map[string]string{headerName: requestValue}
 
 	expectedInBody := []string{fmt.Sprintf(`"%s": "%s"`, headerName, responseValue)}
@@ -35,7 +35,7 @@ func (s *istioJwtScenario) shouldOverwriteHeaderValue(endpoint, headerName, requ
 	return s.callingEndpointWithHeadersWithRetries(fmt.Sprintf("%s/%s", s.Url, strings.TrimLeft(endpoint, "/")), "JWT", asserter, requestHeaders, &tokenFrom)
 }
 
-func (s *istioJwtScenario) shouldOverwriteCookieValue(endpoint, requestValue, responseValue string) error {
+func (s *scenario) shouldOverwriteCookieValue(endpoint, requestValue, responseValue string) error {
 	requestHeaders := map[string]string{"Cookie": requestValue}
 
 	expectedInBody := []string{fmt.Sprintf(`"%s": "%s"`, "Cookie", responseValue)}

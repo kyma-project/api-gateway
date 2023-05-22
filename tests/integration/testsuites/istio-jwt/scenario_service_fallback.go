@@ -15,6 +15,6 @@ func initJwtServiceFallback(ctx *godog.ScenarioContext, ts *testsuite) {
 	ctx.Step(`ServiceFallback: Teardown httpbin service$`, scenario.teardownHttpbinService)
 }
 
-func (s *istioJwtScenario) thereIsAnEndpointWithServiceDefinition(path string) {
+func (s *scenario) thereIsAnEndpointWithServiceDefinition(path string) {
 	s.ManifestTemplate["jwtSecuredPathWithService"] = path
 }

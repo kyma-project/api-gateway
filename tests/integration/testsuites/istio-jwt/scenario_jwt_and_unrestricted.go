@@ -18,6 +18,6 @@ func initJwtAndAllow(ctx *godog.ScenarioContext, ts *testsuite) {
 	ctx.Step(`JwtAndUnrestricted: Teardown httpbin service$`, scenario.teardownHttpbinService)
 }
 
-func (s *istioJwtScenario) thereIsAnEndpointWithHandler(handler, handlerPath string) {
+func (s *scenario) thereIsAnEndpointWithHandler(handler, handlerPath string) {
 	s.ManifestTemplate[fmt.Sprintf("%sEndpoint%s", strings.TrimPrefix(handlerPath, "/"), "Handler")] = handler
 }

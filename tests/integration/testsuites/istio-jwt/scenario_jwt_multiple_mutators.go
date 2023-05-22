@@ -21,7 +21,7 @@ func initMultipleMutators(ctx *godog.ScenarioContext, ts *testsuite) {
 	ctx.Step(`JwtMultipleMutators: Teardown httpbin service$`, scenario.teardownHttpbinService)
 }
 
-func (s *istioJwtScenario) thereIsAnEndpointWithHeaderMutatorWithTwoHeaders(_, header1, header1Value, header2, header2Value string) error {
+func (s *scenario) thereIsAnEndpointWithHeaderMutatorWithTwoHeaders(_, header1, header1Value, header2, header2Value string) error {
 	s.ManifestTemplate["header1"] = header1
 	s.ManifestTemplate["header1Value"] = header1Value
 	s.ManifestTemplate["header2"] = header2
@@ -29,7 +29,7 @@ func (s *istioJwtScenario) thereIsAnEndpointWithHeaderMutatorWithTwoHeaders(_, h
 	return nil
 }
 
-func (s *istioJwtScenario) thereIsAnEndpointWithCookieMutatorWithTwoCookies(_, cookie1, cookie1Value, cookie2, cookie2Value string) error {
+func (s *scenario) thereIsAnEndpointWithCookieMutatorWithTwoCookies(_, cookie1, cookie1Value, cookie2, cookie2Value string) error {
 	s.ManifestTemplate["cookie1"] = cookie1
 	s.ManifestTemplate["cookie1Value"] = cookie1Value
 	s.ManifestTemplate["cookie2"] = cookie2
@@ -37,7 +37,7 @@ func (s *istioJwtScenario) thereIsAnEndpointWithCookieMutatorWithTwoCookies(_, c
 	return nil
 }
 
-func (s *istioJwtScenario) shouldReturnResponseWithKeyValuePairs(endpoint, k1, v1, k2, v2 string) error {
+func (s *scenario) shouldReturnResponseWithKeyValuePairs(endpoint, k1, v1, k2, v2 string) error {
 	expectedInBody := []string{
 		fmt.Sprintf(`"%s": "%s"`, k1, v1),
 		fmt.Sprintf(`"%s": "%s"`, k2, v2),
