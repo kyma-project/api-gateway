@@ -4,6 +4,32 @@
 ## exit on error, and raise error when variable is not set when used
 set -e
 
+function check_required_vars() {
+  local requiredVarMissing=false
+  for var in "$@"; do
+    if [ -z "${!var}" ]; then
+      >&2 echo "Environment variable ${var} is required but not set"
+      requiredVarMissing=true
+    fi
+  done
+  if [ "${requiredVarMissing}" = true ] ; then
+    exit 2
+  fi
+}
+
+requiredVars=(
+    GARDENER_PROVIDER
+    GARDENER_REGION
+    GARDENER_ZONES
+    GARDENER_KYMA_PROW_KUBECONFIG
+    GARDENER_KYMA_PROW_PROJECT_NAME
+    GARDENER_KYMA_PROW_PROVIDER_SECRET_NAME
+    GARDENER_CLUSTER_VERSION
+    MACHINE_TYPE
+)
+
+check_required_vars "${requiredVars[@]}"
+
 cleanup() {
 kubectl annotate shoot "${CLUSTER_NAME}" confirmation.gardener.cloud/deletion=true \
     --overwrite \
