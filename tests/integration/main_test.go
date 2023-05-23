@@ -6,6 +6,7 @@ import (
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
 	"github.com/kyma-project/api-gateway/tests/integration/testsuites/custom-domain"
 	"github.com/kyma-project/api-gateway/tests/integration/testsuites/istio-jwt"
+	"github.com/kyma-project/api-gateway/tests/integration/testsuites/ory"
 	"log"
 	"os"
 	"testing"
@@ -15,13 +16,16 @@ import (
 
 func TestIstioJwt(t *testing.T) {
 	config := testcontext.GetConfig()
-	testsuite := testcontext.New(config, istiojwt.NewTestsuite)
-	orgJwtHandler, err := SwitchJwtHandler(testsuite, "istio")
+	testsuite, err := testcontext.New(config, istiojwt.NewTestsuite)
+	if err != nil {
+		t.Fatalf("Failed to create Istio JWT testsuite %s", err.Error())
+	}
+	originalJwtHandler, err := SwitchJwtHandler(testsuite, "istio")
 	if err != nil {
 		log.Print(err.Error())
 		t.Fatalf("unable to switch to Istio jwtHandler")
 	}
-	defer cleanUp(testsuite, orgJwtHandler)
+	defer cleanUp(testsuite, originalJwtHandler)
 
 	opts := createGoDogOpts(t, "testsuites/istio-jwt/features/", config.TestConcurrency)
 	suite := godog.TestSuite{
@@ -44,7 +48,10 @@ func TestIstioJwt(t *testing.T) {
 
 func TestCustomDomain(t *testing.T) {
 	config := testcontext.GetConfig()
-	testsuite := testcontext.New(config, customdomain.NewTestsuite)
+	testsuite, err := testcontext.New(config, customdomain.NewTestsuite)
+	if err != nil {
+		t.Fatalf("Failed to create Custom domain testsuite %s", err.Error())
+	}
 	defer testsuite.TearDown()
 	opts := createGoDogOpts(t, "testsuites/custom-domain/features/", config.TestConcurrency)
 
@@ -65,6 +72,38 @@ func TestCustomDomain(t *testing.T) {
 		generateReport()
 	}
 
+	if testExitCode != 0 {
+		t.Fatalf("non-zero status returned, failed to run feature tests")
+	}
+}
+
+func TestOry(t *testing.T) {
+	config := testcontext.GetConfig()
+	testsuite, err := testcontext.New(config, ory.NewTestsuite)
+	if err != nil {
+		t.Fatalf("Failed to create Ory testsuite %s", err.Error())
+	}
+	originalJwtHandler, err := SwitchJwtHandler(testsuite, "ory")
+	if err != nil {
+		log.Print(err.Error())
+		t.Fatalf("unable to switch to Ory jwtHandler")
+	}
+	defer cleanUp(testsuite, originalJwtHandler)
+
+	opts := createGoDogOpts(t, "testsuites/ory/features/", config.TestConcurrency)
+	suite := godog.TestSuite{
+		Name: testsuite.Name(),
+		// We are not using ScenarioInitializer, as this function only needs to set up global resources
+		TestSuiteInitializer: func(ctx *godog.TestSuiteContext) {
+			err := ory.Init(ctx.ScenarioContext(), testsuite)
+			if err != nil {
+				t.Fatalf("Failed to initialize Ory testsuite %s", err.Error())
+			}
+		},
+		Options: &opts,
+	}
+
+	testExitCode := suite.Run()
 	if testExitCode != 0 {
 		t.Fatalf("non-zero status returned, failed to run feature tests")
 	}

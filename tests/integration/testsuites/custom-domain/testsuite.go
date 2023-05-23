@@ -39,7 +39,7 @@ func (t *testsuite) K8sClient() dynamic.Interface {
 	return t.k8sClient
 }
 
-func (t *testsuite) Setup() {
+func (t *testsuite) Setup() error {
 	namespace := fmt.Sprintf("%s-%s", t.name, helpers.GenerateRandomString(6))
 	log.Printf("Using namespace: %s\n", namespace)
 
@@ -57,7 +57,7 @@ func (t *testsuite) Setup() {
 		Namespace: namespace,
 	})
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	// delete test namespace if the previous test namespace persists
@@ -65,7 +65,7 @@ func (t *testsuite) Setup() {
 	log.Printf("Delete test namespace, if exists: %s\n", name)
 	err = t.resourceManager.DeleteResource(t.k8sClient, nsResourceSchema, ns, name)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	time.Sleep(time.Duration(t.config.ReqDelay) * time.Second)
@@ -73,11 +73,13 @@ func (t *testsuite) Setup() {
 	log.Printf("Creating common tests resources")
 	_, err = t.resourceManager.CreateResources(t.k8sClient, globalCommonResources...)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	t.oauth2Cfg = oauth2Cfg
 	t.namespace = namespace
+
+	return nil
 }
 
 func (t *testsuite) TearDown() {
