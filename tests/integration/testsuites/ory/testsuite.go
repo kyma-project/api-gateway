@@ -66,6 +66,7 @@ func Init(ctx *godog.ScenarioContext, test testcontext.Testsuite) error {
 	initScenarioServicePerPath(ctx, ts)
 	initScenarioUnsecuredEndpoint(ctx, ts)
 	initScenarioSecuredToUnsecuredEndpoint(ctx, ts)
+	initScenarioUnsecuredToSecuredEndpointOauthJwt(ctx, ts)
 
 	return nil
 }
