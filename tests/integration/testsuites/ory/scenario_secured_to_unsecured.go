@@ -3,6 +3,9 @@ package ory
 import (
 	_ "embed"
 	"github.com/cucumber/godog"
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/helpers"
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/manifestprocessor"
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
 )
 
 type secureToUnsecureScenario struct {
@@ -14,23 +17,18 @@ func initScenarioSecuredToUnsecuredEndpoint(ctx *godog.ScenarioContext, ts *test
 
 	scenario := secureToUnsecureScenario{s}
 
-	ctx.Step(`^SecureToUnsecure: There is an endpoint secured with OAuth2$`, scenario.thereIsAnOauth2Endpoint)
+	ctx.Step(`^SecureToUnsecure: There is an httpbin application secured with OAuth2$`, scenario.thereIsAnOauth2Endpoint)
 	ctx.Step(`^SecureToUnsecure: Calling the "([^"]*)" endpoint with a valid "([^"]*)" token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithValidTokenShouldResultInStatusBetween)
-	//ctx.Step(`^SecureToUnsecure: Endpoint is exposed with noop strategy$`, scenario.unsecureTheEndpoint)
-	//ctx.Step(`^SecureToUnsecure: Calling the endpoint with any token should result in status beetween (\d+) and (\d+)$`, scenario.callingTheEndpointWithAnyTokenShouldResultInStatusBeetween)
-	//ctx.Step(`^SecureToUnsecure: Calling the endpoint without a token should result in status beetween (\d+) and (\d+)$`, scenario.callingTheEndpointWithoutATokenShouldResultInStatusBeetween)
-	//ctx.Step(`^SecureToUnsecure: Teardown httpbin service$`, scenario.teardownHttpbinService)
+	ctx.Step(`^SecureToUnsecure: Update APIRule to expose the endpoint with noop strategy$`, scenario.updateApiRuleToMakeEndpointUnsecured)
+	ctx.Step(`^SecureToUnsecure: Calling the "([^"]*)" endpoint with any token should result in status beetween (\d+) and (\d+)$`, scenario.callingTheEndpointWithInvalidTokenShouldResultInStatusBetween)
+	ctx.Step(`^SecureToUnsecure: Calling the "([^"]*)" endpoint without a token should result in status beetween (\d+) and (\d+)$`, scenario.callingTheEndpointWithoutTokenShouldResultInStatusBetween)
+	ctx.Step(`^SecureToUnsecure: Teardown httpbin service$`, scenario.teardownHttpbinService)
 }
 
-// TODO
-//func (u *secureToUnsecureScenario) unsecureTheEndpoint() error {
-//	return helper.APIRuleWithRetries(batch.UpdateResources, batch.UpdateResources, k8sClient, u.apiResourceTwo)
-//}
-//
-//func (u *secureToUnsecureScenario) callingTheEndpointWithAnyTokenShouldResultInStatusBeetween(lower int, higher int) error {
-//	return helper.CallEndpointWithHeadersWithRetries(anyToken, authorizationHeaderName, u.url, &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher})
-//}
-//
-//func (u *secureToUnsecureScenario) callingTheEndpointWithoutATokenShouldResultInStatusBeetween(lower int, higher int) error {
-//	return helper.CallEndpointWithRetries(u.url, &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher})
-//}
+func (s *secureToUnsecureScenario) updateApiRuleToMakeEndpointUnsecured() error {
+	r, err := manifestprocessor.ParseFromFileWithTemplate("secured-to-unsecured-2.yaml", s.ApiResourceDirectory, s.ManifestTemplate)
+	if err != nil {
+		return err
+	}
+	return helpers.ApplyApiRule(s.resourceManager.UpdateResources, s.resourceManager.UpdateResources, s.k8sClient, testcontext.GetRetryOpts(s.config), r)
+}
