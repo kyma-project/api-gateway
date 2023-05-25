@@ -118,7 +118,7 @@ test-for-release: envtest ## Run tests.
 
 .PHONY: test-integration
 test-integration: generate fmt vet envtest ## Run integration tests.
-	source ./tests/integration/env_vars.sh && $(GOTEST) ./tests/integration -v -race -run TestIstioJwt .
+	source ./tests/integration/env_vars.sh && $(GOTEST) ./tests/integration -v -race -run TestIstioJwt . && $(GOTEST) ./tests/integration -v -race -run TestOryJwt .
 
 test-custom-domain:
 	source ./tests/integration/env_vars_custom_domain.sh && bash -c "trap 'kubectl delete secret google-credentials -n default' EXIT; \
@@ -153,8 +153,8 @@ else ifeq ($(JOB_TYPE), postsubmit)
 endif
 
 .PHONY: test-integration-k3d
-test-integration-k3d: kyma-cli k3d provision-k3d install-kyma ## Run integration tests.
-	source ./tests/integration/env_vars.sh && $(GOTEST) ./tests/integration -v -race -run TestIstioJwt .
+test-integration-k3d: kyma-cli k3d provision-k3d install-kyma test-integration ## Run integration tests.
+	source ./tests/integration/env_vars.sh && $(GOTEST) ./tests/integration -v -race -run TestIstioJwt . && $(GOTEST) ./tests/integration -v -race -run TestOryJwt .
 
 ##@ Build
 

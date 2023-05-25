@@ -41,6 +41,11 @@ func TestIstioJwt(t *testing.T) {
 	}
 
 	testExitCode := suite.Run()
+
+	if shouldExportResults() {
+		generateReport(testsuite)
+	}
+
 	if testExitCode != 0 {
 		t.Fatalf("non-zero status returned, failed to run feature tests")
 	}
@@ -69,7 +74,7 @@ func TestCustomDomain(t *testing.T) {
 	testExitCode := customDomainSuite.Run()
 
 	if shouldExportResults() {
-		generateReport()
+		generateReport(testsuite)
 	}
 
 	if testExitCode != 0 {
@@ -77,7 +82,7 @@ func TestCustomDomain(t *testing.T) {
 	}
 }
 
-func TestOry(t *testing.T) {
+func TestOryJwt(t *testing.T) {
 	config := testcontext.GetConfig()
 	testsuite, err := testcontext.New(config, ory.NewTestsuite)
 	if err != nil {
@@ -104,6 +109,11 @@ func TestOry(t *testing.T) {
 	}
 
 	testExitCode := suite.Run()
+
+	if shouldExportResults() {
+		generateReport(testsuite)
+	}
+
 	if testExitCode != 0 {
 		t.Fatalf("non-zero status returned, failed to run feature tests")
 	}
@@ -128,10 +138,6 @@ func createGoDogOpts(t *testing.T, featuresPath string, concurrency int) godog.O
 func cleanUp(c testcontext.Testsuite, orgJwtHandler string) {
 
 	c.TearDown()
-
-	if shouldExportResults() {
-		generateReport()
-	}
 
 	_, err := SwitchJwtHandler(c, orgJwtHandler)
 	if err != nil {
