@@ -1,19 +1,14 @@
-package api_gateway
+package istiojwt
 
 import (
 	"fmt"
-
 	"github.com/cucumber/godog"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/helpers"
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
 )
 
-func initCommon(ctx *godog.ScenarioContext) {
-	s, err := CreateScenarioWithRawAPIResource("istio-jwt-common.yaml", "istio-jwt-common")
-	if err != nil {
-		t.Fatalf("could not initialize scenario err=%s", err)
-	}
-
-	scenario := istioJwtManifestScenario{s}
+func initCommon(ctx *godog.ScenarioContext, ts *testsuite) {
+	scenario := ts.createScenario("istio-jwt-common.yaml", "istio-jwt-common")
 
 	ctx.Step(`Common: There is a httpbin service$`, scenario.thereIsAHttpbinService)
 	ctx.Step(`Common: There is an endpoint secured with JWT on path "([^"]*)"`, scenario.thereIsAnJwtSecuredPath)
@@ -24,13 +19,8 @@ func initCommon(ctx *godog.ScenarioContext) {
 	ctx.Step(`Common: Teardown httpbin service$`, scenario.teardownHttpbinService)
 }
 
-func initRegex(ctx *godog.ScenarioContext) {
-	s, err := CreateScenarioWithRawAPIResource("istio-jwt-common.yaml", "istio-jwt-common")
-	if err != nil {
-		t.Fatalf("could not initialize scenario err=%s", err)
-	}
-
-	scenario := istioJwtManifestScenario{s}
+func initRegex(ctx *godog.ScenarioContext, ts *testsuite) {
+	scenario := ts.createScenario("istio-jwt-common.yaml", "istio-jwt-common")
 
 	ctx.Step(`Regex: There is a httpbin service$`, scenario.thereIsAHttpbinService)
 	ctx.Step(`Regex: There is an endpoint secured with JWT on path "([^"]*)"`, scenario.thereIsAnJwtSecuredPath)
@@ -41,13 +31,8 @@ func initRegex(ctx *godog.ScenarioContext) {
 	ctx.Step(`Regex: Teardown httpbin service$`, scenario.teardownHttpbinService)
 }
 
-func initPrefix(ctx *godog.ScenarioContext) {
-	s, err := CreateScenarioWithRawAPIResource("istio-jwt-common.yaml", "istio-jwt-common")
-	if err != nil {
-		t.Fatalf("could not initialize scenario err=%s", err)
-	}
-
-	scenario := istioJwtManifestScenario{s}
+func initPrefix(ctx *godog.ScenarioContext, ts *testsuite) {
+	scenario := ts.createScenario("istio-jwt-common.yaml", "istio-jwt-common")
 
 	ctx.Step(`Prefix: There is a httpbin service$`, scenario.thereIsAHttpbinService)
 	ctx.Step(`Prefix: There is an endpoint secured with JWT on path "([^"]*)"`, scenario.thereIsAnJwtSecuredPath)
@@ -58,7 +43,7 @@ func initPrefix(ctx *godog.ScenarioContext) {
 	ctx.Step(`Prefix: Teardown httpbin service$`, scenario.teardownHttpbinService)
 }
 
-func (s *istioJwtManifestScenario) callingTheEndpointWithInvalidTokenShouldResultInStatusBetween(path string, lower, higher int) error {
-	requestHeaders := map[string]string{authorizationHeaderName: anyToken}
-	return helper.CallEndpointWithHeadersWithRetries(requestHeaders, fmt.Sprintf("%s%s", s.url, path), &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher})
+func (s *scenario) callingTheEndpointWithInvalidTokenShouldResultInStatusBetween(path string, lower, higher int) error {
+	requestHeaders := map[string]string{testcontext.AuthorizationHeaderName: testcontext.AnyToken}
+	return s.httpClient.CallEndpointWithHeadersWithRetries(requestHeaders, fmt.Sprintf("%s%s", s.Url, path), &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher})
 }

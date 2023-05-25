@@ -1,20 +1,16 @@
-package api_gateway
+package istiojwt
 
 import (
 	"fmt"
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
 	"strings"
 
 	"github.com/cucumber/godog"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/helpers"
 )
 
-func initMultipleMutators(ctx *godog.ScenarioContext) {
-	s, err := CreateScenarioWithRawAPIResource("istio-jwt-multiple-mutators.yaml", "istio-jwt-multiple-mutators")
-	if err != nil {
-		t.Fatalf("could not initialize scenario err=%s", err)
-	}
-
-	scenario := istioJwtManifestScenario{s}
+func initMultipleMutators(ctx *godog.ScenarioContext, ts *testsuite) {
+	scenario := ts.createScenario("istio-jwt-multiple-mutators.yaml", "istio-jwt-multiple-mutators")
 
 	ctx.Step(`JwtMultipleMutators: There is a httpbin service$`, scenario.thereIsAHttpbinService)
 	ctx.Step(`JwtMultipleMutators: There is an endpoint on path "([^"]*)" with a header mutator setting "([^"]*)" header to "([^"]*)" and "([^"]*)" header to "([^"]*)"$`, scenario.thereIsAnEndpointWithHeaderMutatorWithTwoHeaders)
@@ -25,23 +21,23 @@ func initMultipleMutators(ctx *godog.ScenarioContext) {
 	ctx.Step(`JwtMultipleMutators: Teardown httpbin service$`, scenario.teardownHttpbinService)
 }
 
-func (s *istioJwtManifestScenario) thereIsAnEndpointWithHeaderMutatorWithTwoHeaders(_, header1, header1Value, header2, header2Value string) error {
-	s.manifestTemplate["header1"] = header1
-	s.manifestTemplate["header1Value"] = header1Value
-	s.manifestTemplate["header2"] = header2
-	s.manifestTemplate["header2Value"] = header2Value
+func (s *scenario) thereIsAnEndpointWithHeaderMutatorWithTwoHeaders(_, header1, header1Value, header2, header2Value string) error {
+	s.ManifestTemplate["header1"] = header1
+	s.ManifestTemplate["header1Value"] = header1Value
+	s.ManifestTemplate["header2"] = header2
+	s.ManifestTemplate["header2Value"] = header2Value
 	return nil
 }
 
-func (s *istioJwtManifestScenario) thereIsAnEndpointWithCookieMutatorWithTwoCookies(_, cookie1, cookie1Value, cookie2, cookie2Value string) error {
-	s.manifestTemplate["cookie1"] = cookie1
-	s.manifestTemplate["cookie1Value"] = cookie1Value
-	s.manifestTemplate["cookie2"] = cookie2
-	s.manifestTemplate["cookie2Value"] = cookie2Value
+func (s *scenario) thereIsAnEndpointWithCookieMutatorWithTwoCookies(_, cookie1, cookie1Value, cookie2, cookie2Value string) error {
+	s.ManifestTemplate["cookie1"] = cookie1
+	s.ManifestTemplate["cookie1Value"] = cookie1Value
+	s.ManifestTemplate["cookie2"] = cookie2
+	s.ManifestTemplate["cookie2Value"] = cookie2Value
 	return nil
 }
 
-func (s *istioJwtManifestScenario) shouldReturnResponseWithKeyValuePairs(endpoint, k1, v1, k2, v2 string) error {
+func (s *scenario) shouldReturnResponseWithKeyValuePairs(endpoint, k1, v1, k2, v2 string) error {
 	expectedInBody := []string{
 		fmt.Sprintf(`"%s": "%s"`, k1, v1),
 		fmt.Sprintf(`"%s": "%s"`, k2, v2),
@@ -49,10 +45,10 @@ func (s *istioJwtManifestScenario) shouldReturnResponseWithKeyValuePairs(endpoin
 
 	asserter := &helpers.BodyContainsPredicate{Expected: expectedInBody}
 	tokenFrom := tokenFrom{
-		From:     authorizationHeaderName,
-		Prefix:   authorizationHeaderPrefix,
+		From:     testcontext.AuthorizationHeaderName,
+		Prefix:   testcontext.AuthorizationHeaderPrefix,
 		AsHeader: true,
 	}
 
-	return callingEndpointWithHeadersWithRetries(fmt.Sprintf("%s/%s", s.url, strings.TrimLeft(endpoint, "/")), "JWT", asserter, nil, &tokenFrom)
+	return s.callingEndpointWithHeadersWithRetries(fmt.Sprintf("%s/%s", s.Url, strings.TrimLeft(endpoint, "/")), "JWT", asserter, nil, &tokenFrom)
 }

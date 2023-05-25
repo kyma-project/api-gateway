@@ -1,4 +1,4 @@
-package api_gateway
+package istiojwt
 
 import (
 	"fmt"
@@ -7,13 +7,8 @@ import (
 	"strings"
 )
 
-func initDiffServiceSameMethods(ctx *godog.ScenarioContext) {
-	s, err := CreateScenarioWithRawAPIResource("istio-jwt-diff-svc-same-methods.yaml", "istio-diff-service-same-methods")
-	if err != nil {
-		t.Fatalf("could not initialize scenario err=%s", err)
-	}
-
-	scenario := istioJwtManifestScenario{s}
+func initDiffServiceSameMethods(ctx *godog.ScenarioContext, ts *testsuite) {
+	scenario := ts.createScenario("istio-jwt-diff-svc-same-methods.yaml", "istio-diff-service-same-methods")
 
 	ctx.Step(`DiffSvcSameMethods: There is a httpbin service$`, scenario.thereIsAHttpbinService)
 	ctx.Step(`DiffSvcSameMethods: There is a workload and service for httpbin and helloworld$`, scenario.thereAreTwoServices)
@@ -25,17 +20,17 @@ func initDiffServiceSameMethods(ctx *godog.ScenarioContext) {
 	ctx.Step(`DiffSvcSameMethods: Teardown httpbin service$`, scenario.teardownHttpbinService)
 }
 
-func (s *istioJwtManifestScenario) thereAreTwoServices() error {
-	resources, err := manifestprocessor.ParseFromFileWithTemplate("testing-helloworld-app.yaml", s.apiResourceDirectory, resourceSeparator, s.manifestTemplate)
+func (s *scenario) thereAreTwoServices() error {
+	resources, err := manifestprocessor.ParseFromFileWithTemplate("testing-helloworld-app.yaml", s.ApiResourceDirectory, s.ManifestTemplate)
 	if err != nil {
 		return err
 	}
-	_, err = batch.CreateResources(k8sClient, resources...)
+	_, err = s.resourceManager.CreateResources(s.k8sClient, resources...)
 	return err
 }
 
-func (s *istioJwtManifestScenario) thereIsAJwtSecuredPathWithMethods(path string, methods string) {
+func (s *scenario) thereIsAJwtSecuredPathWithMethods(path string, methods string) {
 	pathName := strings.TrimPrefix(path, "/")
-	s.manifestTemplate[fmt.Sprintf("%s%s", pathName, "Methods")] = methods
-	s.manifestTemplate[fmt.Sprintf("%sJwtSecuredPath", pathName)] = path
+	s.ManifestTemplate[fmt.Sprintf("%s%s", pathName, "Methods")] = methods
+	s.ManifestTemplate[fmt.Sprintf("%sJwtSecuredPath", pathName)] = path
 }

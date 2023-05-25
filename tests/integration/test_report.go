@@ -17,9 +17,9 @@ import (
 func generateReport() {
 	htmlOutputDir := "reports/"
 
-	html := gocure.HTML{
+	h := gocure.HTML{
 		Config: html.Data{
-			InputJsonPath:    cucumberFileName,
+			InputJsonPath:    "cucumber-report.json",
 			OutputHtmlFolder: htmlOutputDir,
 			Title:            "Kyma API-Gateway component tests",
 			Metadata: models.Metadata{
@@ -32,7 +32,7 @@ func generateReport() {
 			},
 		},
 	}
-	err := html.Generate()
+	err := h.Generate()
 	if err != nil {
 		log.Fatalf(err.Error())
 	}
@@ -71,7 +71,7 @@ func generateReport() {
 				return nil
 			}
 
-			_, err1 := copy(path, fmt.Sprintf("%s/report.html", artifactsDir))
+			_, err1 := copyReport(path, fmt.Sprintf("%s/report.html", artifactsDir))
 			if err1 != nil {
 				return err1
 			}
@@ -82,14 +82,14 @@ func generateReport() {
 			log.Fatalf(err.Error())
 		}
 
-		_, err = copy("./junit-report.xml", fmt.Sprintf("%s/junit-report.xml", artifactsDir))
+		_, err = copyReport("./junit-report.xml", fmt.Sprintf("%s/junit-report.xml", artifactsDir))
 		if err != nil {
 			log.Fatalf(err.Error())
 		}
 	}
 }
 
-func copy(src, dst string) (int64, error) {
+func copyReport(src, dst string) (int64, error) {
 	sourceFileStat, err := os.Stat(src)
 	if err != nil {
 		return 0, err

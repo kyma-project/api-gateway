@@ -1,19 +1,13 @@
-package api_gateway
+package istiojwt
 
 import (
 	"fmt"
-
 	"github.com/cucumber/godog"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/manifestprocessor"
 )
 
-func initCustomLabelSelector(ctx *godog.ScenarioContext) {
-	s, err := CreateScenarioWithRawAPIResource("istio-jwt-custom-label-selector.yaml", "istio-jwt-custom-label-selector")
-	if err != nil {
-		t.Fatalf("could not initialize scenario err=%s", err)
-	}
-
-	scenario := istioJwtManifestScenario{s}
+func initCustomLabelSelector(ctx *godog.ScenarioContext, ts *testsuite) {
+	scenario := ts.createScenario("istio-jwt-custom-label-selector.yaml", "istio-jwt-custom-label-selector")
 
 	ctx.Step(`CustomLabelSelector: There is a helloworld service with custom label selector name "([^"]*)"$`, scenario.thereIsHelloworldCustomLabelService)
 	ctx.Step(`CustomLabelSelector: There is an endpoint secured with JWT on path "([^"]*)"`, scenario.thereIsAnJwtSecuredPath)
@@ -23,30 +17,30 @@ func initCustomLabelSelector(ctx *godog.ScenarioContext) {
 	ctx.Step(`CustomLabelSelector: Teardown helloworld service$`, scenario.teardownHelloworldCustomLabelService)
 }
 
-func (s *istioJwtManifestScenario) thereIsHelloworldCustomLabelService(labelName string) error {
-	s.manifestTemplate["CustomLabelName"] = labelName
-	resources, err := manifestprocessor.ParseFromFileWithTemplate("testing-helloworld-custom-label-app.yaml", s.apiResourceDirectory, resourceSeparator, s.manifestTemplate)
+func (s *scenario) thereIsHelloworldCustomLabelService(labelName string) error {
+	s.ManifestTemplate["CustomLabelName"] = labelName
+	resources, err := manifestprocessor.ParseFromFileWithTemplate("testing-helloworld-custom-label-app.yaml", s.ApiResourceDirectory, s.ManifestTemplate)
 	if err != nil {
 		return err
 	}
-	_, err = batch.CreateResources(k8sClient, resources...)
+	_, err = s.resourceManager.CreateResources(s.k8sClient, resources...)
 
-	s.url = fmt.Sprintf("https://helloworld-%s.%s", s.testID, s.domain)
+	s.Url = fmt.Sprintf("https://helloworld-%s.%s", s.TestID, s.Domain)
 
 	return err
 }
 
-func (s *istioJwtManifestScenario) teardownHelloworldCustomLabelService() error {
-	resources, err := manifestprocessor.ParseFromFileWithTemplate("testing-helloworld-custom-label-app.yaml", s.apiResourceDirectory, resourceSeparator, s.manifestTemplate)
+func (s *scenario) teardownHelloworldCustomLabelService() error {
+	resources, err := manifestprocessor.ParseFromFileWithTemplate("testing-helloworld-custom-label-app.yaml", s.ApiResourceDirectory, s.ManifestTemplate)
 	if err != nil {
 		return err
 	}
-	err = batch.DeleteResources(k8sClient, resources...)
+	err = s.resourceManager.DeleteResources(s.k8sClient, resources...)
 	if err != nil {
 		return err
 	}
 
-	s.url = ""
+	s.Url = ""
 
 	return nil
 }

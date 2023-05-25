@@ -1,18 +1,12 @@
-package api_gateway
+package istiojwt
 
 import (
 	"github.com/cucumber/godog"
 )
 
-func initTokenFromHeaders(ctx *godog.ScenarioContext) {
-	jwtHeaderName = "x-jwt-token"
-
-	s, err := CreateScenarioWithRawAPIResource("istio-jwt-token-from-headers.yaml", "istio-jwt-token-from-headers")
-	if err != nil {
-		t.Fatalf("could not initialize scenario err=%s", err)
-	}
-
-	scenario := istioJwtManifestScenario{s}
+func initTokenFromHeaders(ctx *godog.ScenarioContext, ts *testsuite) {
+	scenario := ts.createScenario("istio-jwt-token-from-headers.yaml", "istio-jwt-token-from-headers")
+	scenario.ManifestTemplate["JWTHeaderName"] = "x-jwt-token"
 
 	ctx.Step(`JwtTokenFromHeaders: There is a httpbin service$`, scenario.thereIsAHttpbinService)
 	ctx.Step(`JwtTokenFromHeaders: The APIRule is applied$`, scenario.theAPIRuleIsApplied)
@@ -22,15 +16,9 @@ func initTokenFromHeaders(ctx *godog.ScenarioContext) {
 	ctx.Step(`JwtTokenFromHeaders: Teardown httpbin service$`, scenario.teardownHttpbinService)
 }
 
-func initTokenFromParams(ctx *godog.ScenarioContext) {
-	fromParamName = "jwt_token"
-
-	s, err := CreateScenarioWithRawAPIResource("istio-jwt-token-from-params.yaml", "istio-jwt-token-from-params")
-	if err != nil {
-		t.Fatalf("could not initialize scenario err=%s", err)
-	}
-
-	scenario := istioJwtManifestScenario{s}
+func initTokenFromParams(ctx *godog.ScenarioContext, ts *testsuite) {
+	scenario := ts.createScenario("istio-jwt-token-from-params.yaml", "istio-jwt-token-from-params")
+	scenario.ManifestTemplate["FromParamName"] = "jwt_token"
 
 	ctx.Step(`JwtTokenFromParams: There is a httpbin service$`, scenario.thereIsAHttpbinService)
 	ctx.Step(`JwtTokenFromParams: The APIRule is applied$`, scenario.theAPIRuleIsApplied)

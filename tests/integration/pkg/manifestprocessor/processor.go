@@ -12,6 +12,8 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
+const resourceSeparator = "---"
+
 func parseManifest(input []byte) (*unstructured.Unstructured, error) {
 	var middleware map[string]interface{}
 	err := json.Unmarshal(input, &middleware)
@@ -82,7 +84,7 @@ func ParseFromFile(fileName string, directory string, separator string) ([]unstr
 }
 
 // ParseFromFileWithTemplate parse manifests with goTemplate support
-func ParseFromFileWithTemplate(fileName string, directory string, separator string, templateData interface{}) ([]unstructured.Unstructured, error) {
+func ParseFromFileWithTemplate(fileName string, directory string, templateData interface{}) ([]unstructured.Unstructured, error) {
 	rawData, err := os.ReadFile(path.Join(directory, fileName))
 	if err != nil {
 		return nil, err
@@ -93,7 +95,7 @@ func ParseFromFileWithTemplate(fileName string, directory string, separator stri
 		return nil, err
 	}
 
-	manifestArray := strings.Split(man, separator)
+	manifestArray := strings.Split(man, resourceSeparator)
 	manifests, err := convert(manifestArray)
 	if err != nil {
 		return nil, err

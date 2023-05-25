@@ -1,16 +1,11 @@
-package api_gateway
+package istiojwt
 
 import (
 	"github.com/cucumber/godog"
 )
 
-func initJwtTwoNamespaces(ctx *godog.ScenarioContext) {
-	s, err := CreateScenarioWithRawAPIResource("istio-jwt-two-namespaces.yaml", "istio-jwt-two-namespaces")
-	if err != nil {
-		t.Fatalf("could not initialize scenario err=%s", err)
-	}
-
-	scenario := istioJwtManifestScenario{s}
+func initJwtTwoNamespaces(ctx *godog.ScenarioContext, ts *testsuite) {
+	scenario := ts.createScenario("istio-jwt-two-namespaces.yaml", "istio-jwt-two-namespaces")
 
 	ctx.Step(`TwoNamespaces: There is a httpbin service$`, scenario.thereIsAHttpbinService)
 	ctx.Step(`TwoNamespaces: There are two namespaces with workload`, scenario.thereAreTwoNamespaces)
@@ -22,6 +17,6 @@ func initJwtTwoNamespaces(ctx *godog.ScenarioContext) {
 	ctx.Step(`TwoNamespaces: Teardown httpbin service$`, scenario.teardownHttpbinService)
 }
 
-func (s *istioJwtManifestScenario) thereIsAnJwtSecuredPathInDifferentNamespace(path string) {
-	s.manifestTemplate["otherNamespacePath"] = path
+func (s *scenario) thereIsAnJwtSecuredPathInDifferentNamespace(path string) {
+	s.ManifestTemplate["otherNamespacePath"] = path
 }

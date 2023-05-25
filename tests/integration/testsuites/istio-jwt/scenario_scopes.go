@@ -1,4 +1,4 @@
-package api_gateway
+package istiojwt
 
 import (
 	"fmt"
@@ -7,13 +7,8 @@ import (
 	"github.com/cucumber/godog"
 )
 
-func initRequiredScopes(ctx *godog.ScenarioContext) {
-	s, err := CreateScenarioWithRawAPIResource("istio-jwt-scopes.yaml", "istio-jwt-scopes")
-	if err != nil {
-		t.Fatalf("could not initialize scenario err=%s", err)
-	}
-
-	scenario := istioJwtManifestScenario{s}
+func initRequiredScopes(ctx *godog.ScenarioContext, ts *testsuite) {
+	scenario := ts.createScenario("istio-jwt-scopes.yaml", "istio-jwt-scopes")
 
 	ctx.Step(`Scopes: There is a httpbin service$`, scenario.thereIsAHttpbinService)
 	ctx.Step(`Scopes: There is an endpoint secured with JWT on path "([^"]*)" requiring scopes '(\[.*\])'$`, scenario.thereIsAnEndpointWithRequiredScopes)
@@ -22,7 +17,7 @@ func initRequiredScopes(ctx *godog.ScenarioContext) {
 	ctx.Step(`Scopes: Teardown httpbin service$`, scenario.teardownHttpbinService)
 }
 
-func (s *istioJwtManifestScenario) thereIsAnEndpointWithRequiredScopes(path string, scopes string) error {
-	s.manifestTemplate[fmt.Sprintf("%s%s", strings.TrimPrefix(path, "/"), "RequiredScopes")] = scopes
+func (s *scenario) thereIsAnEndpointWithRequiredScopes(path string, scopes string) error {
+	s.ManifestTemplate[fmt.Sprintf("%s%s", strings.TrimPrefix(path, "/"), "RequiredScopes")] = scopes
 	return nil
 }

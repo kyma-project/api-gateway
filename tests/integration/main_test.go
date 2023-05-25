@@ -1,39 +1,37 @@
 package api_gateway
 
 import (
-	"context"
+	"github.com/cucumber/godog"
+	"github.com/cucumber/godog/colors"
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
+	"github.com/kyma-project/api-gateway/tests/integration/testsuites/custom-domain"
+	"github.com/kyma-project/api-gateway/tests/integration/testsuites/istio-jwt"
 	"log"
 	"os"
 	"testing"
 
-	"github.com/cucumber/godog"
-
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 )
 
 func TestIstioJwt(t *testing.T) {
-	InitTestSuite()
-
-	orgJwtHandler, err := SwitchJwtHandler("istio")
+	config := testcontext.GetConfig()
+	testsuite := testcontext.New(config, istiojwt.NewTestsuite)
+	orgJwtHandler, err := SwitchJwtHandler(testsuite, "istio")
 	if err != nil {
 		log.Print(err.Error())
 		t.Fatalf("unable to switch to Istio jwtHandler")
 	}
-	defer cleanUp(orgJwtHandler)
+	defer cleanUp(testsuite, orgJwtHandler)
 
-	SetupCommonResources("istio-jwt")
-
-	opts := goDogOpts
-	opts.Paths = []string{"features/istio-jwt/"}
-	opts.Concurrency = conf.TestConcurrency
-
+	opts := createGoDogOpts(t, "testsuites/istio-jwt/features/", config.TestConcurrency)
 	suite := godog.TestSuite{
-		Name: "istio-jwt",
+		Name: testsuite.Name(),
 		// We are not using ScenarioInitializer, as this function only needs to set up global resources
 		TestSuiteInitializer: func(ctx *godog.TestSuiteContext) {
-			initIstioJwtScenarios(ctx.ScenarioContext())
+			err := istiojwt.Init(ctx.ScenarioContext(), testsuite)
+			if err != nil {
+				t.Fatalf("Failed to initialize Istio JWT testsuite %s", err.Error())
+			}
 		},
 		Options: &opts,
 	}
@@ -45,40 +43,25 @@ func TestIstioJwt(t *testing.T) {
 }
 
 func TestCustomDomain(t *testing.T) {
-	InitTestSuite()
-	SetupCommonResources("custom-domain")
+	config := testcontext.GetConfig()
+	testsuite := testcontext.New(config, customdomain.NewTestsuite)
+	defer testsuite.TearDown()
+	opts := createGoDogOpts(t, "testsuites/custom-domain/features/", config.TestConcurrency)
 
-	customDomainOpts := goDogOpts
-	customDomainOpts.Paths = []string{"features/custom-domain/custom_domain.feature"}
-	customDomainOpts.Concurrency = conf.TestConcurrency
-	if os.Getenv(exportResultVar) == "true" {
-		customDomainOpts.Format = "pretty,junit:junit-report.xml,cucumber:cucumber-report.json"
-	}
 	customDomainSuite := godog.TestSuite{
-		Name: "custom-domain",
+		Name: testsuite.Name(),
 		TestSuiteInitializer: func(ctx *godog.TestSuiteContext) {
-			InitializeScenarioCustomDomain(ctx.ScenarioContext())
+			err := customdomain.Init(ctx.ScenarioContext(), testsuite)
+			if err != nil {
+				t.Fatalf("Failed to initialize Custom domain testsuite %s", err.Error())
+			}
 		},
-		Options: &customDomainOpts,
+		Options: &opts,
 	}
 
 	testExitCode := customDomainSuite.Run()
 
-	//Remove namespace
-	res := schema.GroupVersionResource{Group: "", Version: "v1", Resource: "namespaces"}
-	err := k8sClient.Resource(res).Delete(context.Background(), namespace, v1.DeleteOptions{})
-	if err != nil {
-		log.Print(err.Error())
-	}
-
-	//Remove certificate
-	res = schema.GroupVersionResource{Group: "cert.gardener.cloud", Version: "v1alpha1", Resource: "certificates"}
-	err = k8sClient.Resource(res).Namespace("istio-system").DeleteCollection(context.TODO(), v1.DeleteOptions{}, v1.ListOptions{LabelSelector: "owner=custom-domain-test"})
-	if err != nil {
-		log.Print(err.Error())
-	}
-
-	if os.Getenv(exportResultVar) == "true" {
+	if shouldExportResults() {
 		generateReport()
 	}
 
@@ -87,25 +70,37 @@ func TestCustomDomain(t *testing.T) {
 	}
 }
 
-func cleanUp(orgJwtHandler string) {
-	res := schema.GroupVersionResource{Group: "", Version: "v1", Resource: "namespaces"}
-	err := k8sClient.Resource(res).Delete(context.Background(), namespace, v1.DeleteOptions{})
-	if err != nil {
-		log.Print(err.Error())
+func createGoDogOpts(t *testing.T, featuresPath string, concurrency int) godog.Options {
+	goDogOpts := godog.Options{
+		Output:      colors.Colored(os.Stdout),
+		Format:      "pretty",
+		Paths:       []string{featuresPath},
+		Concurrency: concurrency,
+		TestingT:    t,
 	}
 
-	err = k8sClient.Resource(res).Delete(context.Background(), secondNamespace, v1.DeleteOptions{})
-	if err != nil {
-		log.Print(err.Error())
+	if shouldExportResults() {
+		goDogOpts.Format = "pretty,junit:junit-report.xml,cucumber:cucumber-report.json"
 	}
 
-	if os.Getenv(exportResultVar) == "true" {
+	return goDogOpts
+}
+
+func cleanUp(c testcontext.Testsuite, orgJwtHandler string) {
+
+	c.TearDown()
+
+	if shouldExportResults() {
 		generateReport()
 	}
 
-	_, err = SwitchJwtHandler(orgJwtHandler)
+	_, err := SwitchJwtHandler(c, orgJwtHandler)
 	if err != nil {
 		log.Print(err.Error())
-		t.Fatalf("unable to switch back to original jwtHandler")
+		panic("unable to switch back to original jwtHandler")
 	}
+}
+
+func shouldExportResults() bool {
+	return os.Getenv("EXPORT_RESULT") == "true"
 }

@@ -1,17 +1,12 @@
-package api_gateway
+package istiojwt
 
 import (
 	"fmt"
 	"github.com/cucumber/godog"
 )
 
-func initMutatorHeader(ctx *godog.ScenarioContext) {
-	s, err := CreateScenarioWithRawAPIResource("istio-jwt-mutator-header.yaml", "istio-jwt-mutator-header")
-	if err != nil {
-		t.Fatalf("could not initialize scenario err=%s", err)
-	}
-
-	scenario := istioJwtManifestScenario{s}
+func initMutatorHeader(ctx *godog.ScenarioContext, ts *testsuite) {
+	scenario := ts.createScenario("istio-jwt-mutator-header.yaml", "istio-jwt-mutator-header")
 
 	ctx.Step(`JwtMutatorHeader: There is a httpbin service$`, scenario.thereIsAHttpbinService)
 	ctx.Step(`JwtMutatorHeader: There is an endpoint on path "([^"]*)" with a header mutator setting "([^"]*)" header to "([^"]*)"$`, scenario.thereIsAnEndpointWithHeaderMutator)
@@ -20,13 +15,13 @@ func initMutatorHeader(ctx *godog.ScenarioContext) {
 	ctx.Step(`JwtMutatorHeader: Teardown httpbin service$`, scenario.teardownHttpbinService)
 }
 
-func (s *istioJwtManifestScenario) thereIsAnEndpointWithHeaderMutator(_, header, headerValue string) error {
-	s.manifestTemplate["header"] = header
-	s.manifestTemplate["headerValue"] = headerValue
+func (s *scenario) thereIsAnEndpointWithHeaderMutator(_, header, headerValue string) error {
+	s.ManifestTemplate["header"] = header
+	s.ManifestTemplate["headerValue"] = headerValue
 	return nil
 }
 
-func (s *istioJwtManifestScenario) shouldReturnResponseWithHeader(path, header, headerValue string) error {
+func (s *scenario) shouldReturnResponseWithHeader(path, header, headerValue string) error {
 	bodyContent := fmt.Sprintf(`"%s": "%s"`, header, headerValue)
 	return s.callingTheEndpointWithValidTokenShouldResultInBodyContaining(path, "JWT", bodyContent)
 }

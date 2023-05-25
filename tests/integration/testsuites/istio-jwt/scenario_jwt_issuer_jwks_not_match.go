@@ -1,16 +1,11 @@
-package api_gateway
+package istiojwt
 
 import (
 	"github.com/cucumber/godog"
 )
 
-func initJwtIssuerJwksNotMatch(ctx *godog.ScenarioContext) {
-	s, err := CreateScenarioWithRawAPIResource("istio-jwt-issuer-jwks-not-match.yaml", "jwt-issuer-jwks-not-match")
-	if err != nil {
-		t.Fatalf("could not initialize scenario err=%s", err)
-	}
-
-	scenario := istioJwtManifestScenario{s}
+func initJwtIssuerJwksNotMatch(ctx *godog.ScenarioContext, ts *testsuite) {
+	scenario := ts.createScenario("istio-jwt-issuer-jwks-not-match.yaml", "jwt-issuer-jwks-not-match")
 
 	ctx.Step(`JwtIssuerJwksNotMatch: There is a httpbin service$`, scenario.thereIsAHttpbinService)
 	ctx.Step(`JwtIssuerJwksNotMatch: There is an endpoint secured with JWT on path "([^"]*)" with invalid issuer and jwks$`, scenario.emptyStep)

@@ -1,16 +1,11 @@
-package api_gateway
+package istiojwt
 
 import (
 	"github.com/cucumber/godog"
 )
 
-func initJwtUnavailableIssuer(ctx *godog.ScenarioContext) {
-	s, err := CreateScenarioWithRawAPIResource("istio-jwt-unavailable-issuer.yaml", "jwt-unavailable-issuer")
-	if err != nil {
-		t.Fatalf("could not initialize scenario err=%s", err)
-	}
-
-	scenario := istioJwtManifestScenario{s}
+func initJwtUnavailableIssuer(ctx *godog.ScenarioContext, ts *testsuite) {
+	scenario := ts.createScenario("istio-jwt-unavailable-issuer.yaml", "jwt-unavailable-issuer")
 
 	ctx.Step(`JwtIssuerUnavailable: There is a httpbin service$`, scenario.thereIsAHttpbinService)
 	ctx.Step(`JwtIssuerUnavailable: There is an endpoint secured with JWT on path "([^"]*)" with invalid issuer and jwks$`, scenario.emptyStep)
