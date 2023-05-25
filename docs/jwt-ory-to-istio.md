@@ -135,17 +135,14 @@ Istio doesn't support regex type of path matching in Authorization Policies, whi
 
 Istio doesn't support configuring a JWT token from `cookie`, and Ory Oathkeeper does. Istio supports only `fromHeaders` and `fromParams` configurations.
 
-Using Istio as JWT access strategy requires the workload behind the service to be in the service mesh, for example, to have the Istio proxy. To learn how to add workloads to the Istio service mesh read the [Istio documentation](https://istio.io/latest/docs/ops/common-problems/injection/).
+Using Istio as JWT access strategy requires the workload behind the service to be in the service mesh, for example, to have the Istio proxy. To learn how to add workloads to the Istio service mesh, read the [Istio documentation](https://istio.io/latest/docs/ops/common-problems/injection/).
 
-## Change of status `401` to `403` when calling an endpoint without `Authorization` header
+### Change of status `401` to `403` when calling an endpoint without the `Authorization` header
 
 With the introduction of Istio JWT the calls without a token will now fail on `AuthorizationPolicy` that forces `requestPrincipals` to not be empty. This results in a behaviour of requests without an `Authorization` header to fail on `AuthorizationPolicy` validation step, instead of `RequestAuthentication` that allows tokens without the header. In conclusion this behaviour will make the request fail with code `403` instead of `401`, which was the case for Oathkeeper JWT.
 
-References:
-- https://istio.io/latest/docs/concepts/security/#request-authentication
-- https://istio.io/latest/docs/reference/config/security/authorization-policy
 
-## Blocking of in cluster connectivity to an endpoint
+### Blocking of the in-cluster connectivity to an endpoint
 
 With the introduction of Istio JWT the validation of requests now happens in context of the target Pod (i.e. istio-sidecar). This behaviour results in in-cluster requests that where allowed in context of `ory-oathkeeper` (as request validation happened in context of `ory-oathkeeper` Pod) to fail if not explicitly allowed.
 
