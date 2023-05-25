@@ -8,7 +8,7 @@ import (
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/helpers"
 )
 
-func initScenarioOAuth2JWTOnePath(ctx *godog.ScenarioContext, ts *testsuite) {
+func initOAuth2JWTOnePath(ctx *godog.ScenarioContext, ts *testsuite) {
 	scenario := ts.createScenario("jwt-oauth-one-path-strategy.yaml", "oauth2-jwt-one-path")
 
 	ctx.Step(`^OAuth2JWT1Path: There is an deployment secured with both JWT and OAuth2 introspection on path /image$`, scenario.thereIsAHttpbinServiceAndApiRuleIsApplied)

@@ -6,7 +6,7 @@ import (
 	"github.com/cucumber/godog"
 )
 
-func initScenarioUnsecuredEndpoint(ctx *godog.ScenarioContext, ts *testsuite) {
+func initUnsecured(ctx *godog.ScenarioContext, ts *testsuite) {
 	scenario := ts.createScenario("unsecured.yaml", "unsecured")
 
 	ctx.Step(`^Unsecured: There is a httpbin service$`, scenario.thereIsAHttpbinService)

@@ -5,7 +5,7 @@ import (
 	"github.com/cucumber/godog"
 )
 
-func initScenarioOAuth2JWTTwoPaths(ctx *godog.ScenarioContext, ts *testsuite) {
+func initOAuth2JWTTwoPaths(ctx *godog.ScenarioContext, ts *testsuite) {
 	scenario := ts.createScenario("jwt-oauth-strategy.yaml", "oauth2-jwt-two-paths")
 
 	ctx.Step(`^OAuth2JWTTwoPaths: There is a deployment secured with OAuth2 on path /headers and JWT on path /image$`, scenario.thereIsAHttpbinServiceAndApiRuleIsApplied)

@@ -13,7 +13,7 @@ type unsecuredToSecured struct {
 	*scenario
 }
 
-func initScenarioUnsecuredToSecuredEndpointOauthJwt(ctx *godog.ScenarioContext, ts *testsuite) {
+func initUnsecuredToSecured(ctx *godog.ScenarioContext, ts *testsuite) {
 	s := ts.createScenario("unsecured-to-secured.yaml", "unsecured-to-secured")
 	scenario := unsecuredToSecured{s}
 

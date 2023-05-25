@@ -64,13 +64,13 @@ type testsuite struct {
 }
 
 func (t *testsuite) InitScenarios(ctx *godog.ScenarioContext) {
-	initScenarioOAuth2JWTOnePath(ctx, t)
-	initScenarioOAuth2JWTTwoPaths(ctx, t)
-	initScenarioOAuth2Endpoint(ctx, t)
-	initScenarioServicePerPath(ctx, t)
-	initScenarioUnsecuredEndpoint(ctx, t)
-	initScenarioSecuredToUnsecuredEndpoint(ctx, t)
-	initScenarioUnsecuredToSecuredEndpointOauthJwt(ctx, t)
+	initOAuth2JWTOnePath(ctx, t)
+	initOAuth2JWTTwoPaths(ctx, t)
+	initOAuth2Endpoint(ctx, t)
+	initServicePerPath(ctx, t)
+	initUnsecured(ctx, t)
+	initSecuredToUnsecuredEndpoint(ctx, t)
+	initUnsecuredToSecured(ctx, t)
 }
 
 func (t *testsuite) FeaturePath() string {

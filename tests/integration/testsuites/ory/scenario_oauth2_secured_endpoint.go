@@ -5,7 +5,7 @@ import (
 	"github.com/cucumber/godog"
 )
 
-func initScenarioOAuth2Endpoint(ctx *godog.ScenarioContext, ts *testsuite) {
+func initOAuth2Endpoint(ctx *godog.ScenarioContext, ts *testsuite) {
 	scenario := ts.createScenario("oauth-strategy.yaml", "oauth2-secured")
 
 	ctx.Step(`^OAuth2: There is an endpoint secured with OAuth2 introspection$`, scenario.thereIsAHttpbinServiceAndApiRuleIsApplied)

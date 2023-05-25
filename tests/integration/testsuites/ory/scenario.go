@@ -120,19 +120,3 @@ func (s *scenario) teardownHttpbinService() error {
 
 	return nil
 }
-
-func (s *scenario) callingTheEndpointsWithInvalidTokenShouldResultInStatusBetween(path1, path2 string, lower, higher int) error {
-	err := s.callingTheEndpointWithInvalidTokenShouldResultInStatusBetween(path1, lower, higher)
-	if err != nil {
-		return err
-	}
-	return s.callingTheEndpointWithInvalidTokenShouldResultInStatusBetween(path2, lower, higher)
-}
-
-func (s *scenario) callingTheEndpointsWithoutTokenShouldResultInStatusBetween(path1, path2 string, lower, higher int) error {
-	err := s.callingTheEndpointWithoutTokenShouldResultInStatusBetween(path1, lower, higher)
-	if err != nil {
-		return err
-	}
-	return s.callingTheEndpointWithoutTokenShouldResultInStatusBetween(path2, lower, higher)
-}

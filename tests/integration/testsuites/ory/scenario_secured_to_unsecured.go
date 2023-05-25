@@ -12,7 +12,7 @@ type secureToUnsecureScenario struct {
 	*scenario
 }
 
-func initScenarioSecuredToUnsecuredEndpoint(ctx *godog.ScenarioContext, ts *testsuite) {
+func initSecuredToUnsecuredEndpoint(ctx *godog.ScenarioContext, ts *testsuite) {
 	s := ts.createScenario("secured-to-unsecured.yaml", "secured-to-unsecured")
 
 	scenario := secureToUnsecureScenario{s}
