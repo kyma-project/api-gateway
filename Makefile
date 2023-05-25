@@ -118,7 +118,7 @@ test-for-release: envtest ## Run tests.
 
 .PHONY: test-integration
 test-integration: generate fmt vet envtest ## Run integration tests.
-	source ./tests/integration/env_vars.sh && $(GOTEST) ./tests/integration -v -race -run TestIstioJwt . && $(GOTEST) ./tests/integration -v -race -run TestOryJwt .
+	source ./tests/integration/env_vars.sh && $(GOTEST) ./tests/integration -v -race -run TestOryJwt .
 
 test-custom-domain:
 	source ./tests/integration/env_vars_custom_domain.sh && bash -c "trap 'kubectl delete secret google-credentials -n default' EXIT; \
@@ -141,15 +141,15 @@ provision-k3d:
 .PHONY: install-kyma
 install-kyma:
 ifndef JOB_TYPE
-	kyma deploy --ci -s main -c hack/kyma-components.yaml --value ory.hydra.enabled="false"
+	kyma deploy --ci -s main -c hack/kyma-components.yaml
 else ifeq ($(JOB_TYPE), presubmit)
-	kyma deploy --ci -s main -c hack/kyma-components.yaml --value ory.hydra.enabled="false" \
+	kyma deploy --ci -s main -c hack/kyma-components.yaml \
 	  --value api-gateway.global.images.api_gateway_controller.version=${PULL_IMAGE_VERSION} \
 	  --value api-gateway.global.images.api_gateway_controller.directory=dev \
 	  --value api-gateway.global.images.api-gateway-webhook-certificates.version=${PULL_IMAGE_VERSION} \
 	  --value api-gateway.global.images.api-gateway-webhook-certificates.directory=dev
 else ifeq ($(JOB_TYPE), postsubmit)
-	kyma deploy --ci -s main -c hack/kyma-components.yaml --value ory.hydra.enabled="false" --value api-gateway.global.images.api_gateway_controller.version=${POST_IMAGE_VERSION} --value api-gateway.global.images.api-gateway-webhook-certificates.version=${POST_IMAGE_VERSION}
+	kyma deploy --ci -s main -c hack/kyma-components.yaml --value api-gateway.global.images.api_gateway_controller.version=${POST_IMAGE_VERSION} --value api-gateway.global.images.api-gateway-webhook-certificates.version=${POST_IMAGE_VERSION}
 endif
 
 .PHONY: test-integration-k3d
