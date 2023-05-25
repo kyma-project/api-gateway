@@ -4,6 +4,7 @@ import (
 	"context"
 	_ "embed"
 	"fmt"
+	"github.com/cucumber/godog"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/helpers"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/manifestprocessor"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/resource"
@@ -25,6 +26,14 @@ type testsuite struct {
 	resourceManager *resource.Manager
 	config          testcontext.Config
 	oauth2Cfg       *clientcredentials.Config
+}
+
+func (t *testsuite) InitScenarios(ctx *godog.ScenarioContext) {
+	initScenario(ctx, t)
+}
+
+func (t *testsuite) FeaturePath() string {
+	return "testsuites/custom-domain/features/"
 }
 
 func (t *testsuite) Name() string {

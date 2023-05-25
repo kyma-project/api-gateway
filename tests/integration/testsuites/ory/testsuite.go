@@ -4,7 +4,6 @@ import (
 	"context"
 	_ "embed"
 	"encoding/base64"
-	"errors"
 	"fmt"
 	"github.com/cucumber/godog"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/helpers"
@@ -53,24 +52,6 @@ func (t *testsuite) createScenario(templateFileName string, scenarioName string)
 	}
 }
 
-func Init(ctx *godog.ScenarioContext, test testcontext.Testsuite) error {
-	ts, ok := test.(*testsuite)
-
-	if !ok {
-		return errors.New("test suite is not ory")
-	}
-
-	initScenarioOAuth2JWTOnePath(ctx, ts)
-	initScenarioOAuth2JWTTwoPaths(ctx, ts)
-	initScenarioOAuth2Endpoint(ctx, ts)
-	initScenarioServicePerPath(ctx, ts)
-	initScenarioUnsecuredEndpoint(ctx, ts)
-	initScenarioSecuredToUnsecuredEndpoint(ctx, ts)
-	initScenarioUnsecuredToSecuredEndpointOauthJwt(ctx, ts)
-
-	return nil
-}
-
 type testsuite struct {
 	name            string
 	namespace       string
@@ -80,6 +61,20 @@ type testsuite struct {
 	config          testcontext.Config
 	oauth2Cfg       *clientcredentials.Config
 	jwtConfig       *clientcredentials.Config
+}
+
+func (t *testsuite) InitScenarios(ctx *godog.ScenarioContext) {
+	initScenarioOAuth2JWTOnePath(ctx, t)
+	initScenarioOAuth2JWTTwoPaths(ctx, t)
+	initScenarioOAuth2Endpoint(ctx, t)
+	initScenarioServicePerPath(ctx, t)
+	initScenarioUnsecuredEndpoint(ctx, t)
+	initScenarioSecuredToUnsecuredEndpoint(ctx, t)
+	initScenarioUnsecuredToSecuredEndpointOauthJwt(ctx, t)
+}
+
+func (t *testsuite) FeaturePath() string {
+	return "testsuites/ory/features/"
 }
 
 func (t *testsuite) Name() string {

@@ -2,6 +2,7 @@ package testcontext
 
 import (
 	"crypto/tls"
+	"github.com/cucumber/godog"
 	"log"
 	"net/http"
 	"time"
@@ -17,6 +18,8 @@ import (
 
 type Testsuite interface {
 	Name() string
+	FeaturePath() string
+	InitScenarios(ctx *godog.ScenarioContext)
 	Setup() error
 	TearDown()
 	ResourceManager() *resource.Manager
@@ -43,7 +46,7 @@ func New(config Config, factory TestsuiteFactory) (Testsuite, error) {
 
 	k8sClient, err := client.GetDynamicClient()
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	rm := resource.NewManager(GetRetryOpts(config))

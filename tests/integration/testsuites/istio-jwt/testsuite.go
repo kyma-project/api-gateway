@@ -4,7 +4,6 @@ import (
 	"context"
 	_ "embed"
 	"encoding/base64"
-	"errors"
 	"fmt"
 	"github.com/cucumber/godog"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/helpers"
@@ -58,36 +57,6 @@ func (t *testsuite) createScenario(templateFileName string, scenarioName string)
 	}
 }
 
-func Init(ctx *godog.ScenarioContext, test testcontext.Testsuite) error {
-	ts, ok := test.(*testsuite)
-
-	if !ok {
-		return errors.New("test suite is not istio jwt")
-	}
-
-	initCommon(ctx, ts)
-	initPrefix(ctx, ts)
-	initRegex(ctx, ts)
-	initRequiredScopes(ctx, ts)
-	initAudience(ctx, ts)
-	initJwtAndAllow(ctx, ts)
-	initJwtAndOauth(ctx, ts)
-	initJwtTwoNamespaces(ctx, ts)
-	initJwtServiceFallback(ctx, ts)
-	initDiffServiceSameMethods(ctx, ts)
-	initJwtUnavailableIssuer(ctx, ts)
-	initJwtIssuerJwksNotMatch(ctx, ts)
-	initMutatorCookie(ctx, ts)
-	initMutatorHeader(ctx, ts)
-	initMultipleMutators(ctx, ts)
-	initMutatorsOverwrite(ctx, ts)
-	initTokenFromHeaders(ctx, ts)
-	initTokenFromParams(ctx, ts)
-	initCustomLabelSelector(ctx, ts)
-
-	return nil
-}
-
 type testsuite struct {
 	name            string
 	namespace       string
@@ -97,6 +66,32 @@ type testsuite struct {
 	resourceManager *resource.Manager
 	config          testcontext.Config
 	oauth2Cfg       *clientcredentials.Config
+}
+
+func (t *testsuite) InitScenarios(ctx *godog.ScenarioContext) {
+	initCommon(ctx, t)
+	initPrefix(ctx, t)
+	initRegex(ctx, t)
+	initRequiredScopes(ctx, t)
+	initAudience(ctx, t)
+	initJwtAndAllow(ctx, t)
+	initJwtAndOauth(ctx, t)
+	initJwtTwoNamespaces(ctx, t)
+	initJwtServiceFallback(ctx, t)
+	initDiffServiceSameMethods(ctx, t)
+	initJwtUnavailableIssuer(ctx, t)
+	initJwtIssuerJwksNotMatch(ctx, t)
+	initMutatorCookie(ctx, t)
+	initMutatorHeader(ctx, t)
+	initMultipleMutators(ctx, t)
+	initMutatorsOverwrite(ctx, t)
+	initTokenFromHeaders(ctx, t)
+	initTokenFromParams(ctx, t)
+	initCustomLabelSelector(ctx, t)
+}
+
+func (t *testsuite) FeaturePath() string {
+	return "testsuites/istio-jwt/features/"
 }
 
 func (t *testsuite) Name() string {

@@ -3,7 +3,6 @@ package customdomain
 import (
 	"context"
 	"encoding/base64"
-	"errors"
 	"fmt"
 	"github.com/cucumber/godog"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/helpers"
@@ -41,13 +40,7 @@ type scenario struct {
 	config          testcontext.Config
 }
 
-func Init(ctx *godog.ScenarioContext, test testcontext.Testsuite) error {
-
-	ts, ok := test.(*testsuite)
-
-	if !ok {
-		return errors.New("testsuite is not custom domain")
-	}
+func initScenario(ctx *godog.ScenarioContext, ts *testsuite) {
 
 	scenario, err := createScenario(ts, "custom-domain")
 
@@ -66,8 +59,6 @@ func Init(ctx *godog.ScenarioContext, test testcontext.Testsuite) error {
 	ctx.Step(`^calling the "([^"]*)" endpoint with an invalid token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithAInvalidTokenShouldResultInStatusBetween)
 	ctx.Step(`^calling the "([^"]*)" endpoint with a valid token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithAValidTokenShouldResultInStatusBetween)
 	ctx.Step(`^calling the "([^"]*)" endpoint without a token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithoutATokenShouldResultInStatusBetween)
-
-	return nil
 }
 
 func createScenario(t *testsuite, namePrefix string) (*scenario, error) {
