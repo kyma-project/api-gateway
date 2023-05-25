@@ -4,8 +4,8 @@ import (
 	_ "embed"
 	"fmt"
 	"github.com/cucumber/godog"
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/auth"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/helpers"
-	"github.com/kyma-project/api-gateway/tests/integration/pkg/jwt"
 )
 
 func initScenarioOAuth2JWTOnePath(ctx *godog.ScenarioContext, ts *testsuite) {
@@ -22,7 +22,7 @@ func initScenarioOAuth2JWTOnePath(ctx *godog.ScenarioContext, ts *testsuite) {
 func (s *scenario) callingTheEndpointWithValidOauthTokenInTokenFromHeader(path string, tokenHeader string, lower, higher int) error {
 	asserter := &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher}
 
-	token, err := jwt.GetHydraOAuth2AccessToken(*s.oauth2Cfg)
+	token, err := auth.GetHydraOAuth2AccessToken(*s.oauth2Cfg)
 	if err != nil {
 		return err
 	}

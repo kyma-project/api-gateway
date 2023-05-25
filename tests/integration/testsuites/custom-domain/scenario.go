@@ -5,8 +5,8 @@ import (
 	"encoding/base64"
 	"fmt"
 	"github.com/cucumber/godog"
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/auth"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/helpers"
-	"github.com/kyma-project/api-gateway/tests/integration/pkg/jwt"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/manifestprocessor"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/resource"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
@@ -229,7 +229,7 @@ func (c *scenario) callingTheEndpointWithAValidTokenShouldResultInStatusBetween(
 
 	requestHeaders := make(map[string]string)
 
-	token, err := jwt.GetAccessToken(*c.oauth2Cfg, strings.ToLower("Opaque"))
+	token, err := auth.GetAccessToken(*c.oauth2Cfg, strings.ToLower("Opaque"))
 	if err != nil {
 		return fmt.Errorf("failed to fetch an id_token: %s", err.Error())
 	}

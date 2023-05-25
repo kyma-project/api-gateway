@@ -3,8 +3,8 @@ package ory
 import (
 	_ "embed"
 	"fmt"
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/auth"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/helpers"
-	jwt "github.com/kyma-project/api-gateway/tests/integration/pkg/jwt"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/manifestprocessor"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/resource"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
@@ -40,14 +40,14 @@ func (s *scenario) callingTheEndpointWithValidToken(url string, tokenType string
 
 	switch tokenType {
 	case "JWT":
-		tokenJwt, err := jwt.GetAccessToken(*s.jwtConfig, strings.ToLower(tokenType))
+		tokenJwt, err := auth.GetAccessToken(*s.jwtConfig, strings.ToLower(tokenType))
 		if err != nil {
 			return fmt.Errorf("failed to fetch an id_token: %s", err.Error())
 		}
 		requestHeaders[testcontext.AuthorizationHeaderName] = fmt.Sprintf("Bearer %s", tokenJwt)
 
 	case "OAuth2":
-		tokenOauth, err := jwt.GetHydraOAuth2AccessToken(*s.oauth2Cfg)
+		tokenOauth, err := auth.GetHydraOAuth2AccessToken(*s.oauth2Cfg)
 		if err != nil {
 			return err
 		}
