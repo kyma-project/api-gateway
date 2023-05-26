@@ -63,10 +63,11 @@ chmod +x kyma
 
 # Add pwd to path to be able to use Kyma binary
 export PATH="${PATH}:${PWD}"
-kyma version --client
 
 # Provision gardener cluster
 CLUSTER_NAME=$(LC_ALL=C tr -dc '[:lower:]' < /dev/urandom | head -c10)
+
+kyma version --client
 kyma provision gardener ${GARDENER_PROVIDER} \
         --secret "${GARDENER_KYMA_PROW_PROVIDER_SECRET_NAME}" \
         --name "${CLUSTER_NAME}" \
