@@ -72,7 +72,7 @@ func generateReport(ts testcontext.Testsuite) {
 				return nil
 			}
 
-			_, err1 := copyReport(path, fmt.Sprintf("%s/%s-report.html", artifactsDir, ts.Name()))
+			_, err1 := copyReport(path, fmt.Sprintf("%s/report-%s.html", artifactsDir, ts.Name()))
 			if err1 != nil {
 				return err1
 			}
@@ -83,7 +83,7 @@ func generateReport(ts testcontext.Testsuite) {
 			log.Fatalf(err.Error())
 		}
 
-		_, err = copyReport("./junit-report.xml", fmt.Sprintf("%s/%s-junit-report.xml", artifactsDir, ts.Name()))
+		_, err = copyReport("./junit-report.xml", fmt.Sprintf("%s/junit-report-%s.xml", artifactsDir, ts.Name()))
 		if err != nil {
 			log.Fatalf(err.Error())
 		}
