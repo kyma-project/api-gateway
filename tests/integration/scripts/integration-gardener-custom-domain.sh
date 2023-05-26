@@ -27,6 +27,10 @@ requiredVars=(
     GARDENER_KYMA_PROW_PROVIDER_SECRET_NAME
     GARDENER_CLUSTER_VERSION
     MACHINE_TYPE
+    DISK_SIZE
+    DISK_TYPE
+    SCALER_MAX
+    SCALER_MIN
 )
 
 check_required_vars "${requiredVars[@]}"
@@ -68,10 +72,12 @@ kyma provision gardener ${GARDENER_PROVIDER} \
         --project "${GARDENER_KYMA_PROW_PROJECT_NAME}" \
         --credentials "${GARDENER_KYMA_PROW_KUBECONFIG}" \
         --region "${GARDENER_REGION}" \
-        -z "${GARDENER_ZONES}" \
-        -t "${MACHINE_TYPE}" \
-        --scaler-max 3 \
-        --scaler-min 1 \
+        --zones "${GARDENER_ZONES}" \
+        --type "${MACHINE_TYPE}" \
+        --disk-size $DISK_SIZE \
+        --disk-type "${DISK_TYPE}" \
+        --scaler-max $SCALER_MAX \
+        --scaler-min $SCALER_MIN \
         --kube-version="${GARDENER_CLUSTER_VERSION}" \
         --attempts 1 \
         --verbose
