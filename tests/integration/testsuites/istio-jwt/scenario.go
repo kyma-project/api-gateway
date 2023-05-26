@@ -3,8 +3,8 @@ package istiojwt
 import (
 	"errors"
 	"fmt"
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/auth"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/helpers"
-	"github.com/kyma-project/api-gateway/tests/integration/pkg/jwt"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/manifestprocessor"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/resource"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
@@ -90,18 +90,15 @@ func (s *scenario) callingEndpointWithHeadersWithRetries(url string, tokenType s
 		requestHeaders = make(map[string]string)
 	}
 
+	token, err := auth.GetAccessToken(*s.oauth2Cfg, strings.ToLower(tokenType))
+	if err != nil {
+		return fmt.Errorf("failed to fetch an id_token: %s", err.Error())
+	}
+
 	switch tokenType {
 	case "Opaque":
-		token, err := jwt.GetAccessToken(*s.oauth2Cfg, strings.ToLower(tokenType))
-		if err != nil {
-			return fmt.Errorf("failed to fetch an id_token: %s", err.Error())
-		}
 		requestHeaders[testcontext.OpaqueHeaderName] = token
 	case "JWT":
-		token, err := jwt.GetAccessToken(*s.oauth2Cfg, strings.ToLower(tokenType))
-		if err != nil {
-			return fmt.Errorf("failed to fetch an id_token: %s", err.Error())
-		}
 		if tokenFrom.From == "" {
 			return errors.New("jwt from header or parameter name not specified")
 		}

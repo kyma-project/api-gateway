@@ -2,6 +2,7 @@ package api_gateway
 
 import (
 	"fmt"
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
 	"gitlab.com/rodrigoodhin/gocure/models"
 	"gitlab.com/rodrigoodhin/gocure/pkg/gocure"
 	"gitlab.com/rodrigoodhin/gocure/report/html"
@@ -14,7 +15,7 @@ import (
 	"runtime"
 )
 
-func generateReport() {
+func generateReport(ts testcontext.Testsuite) {
 	htmlOutputDir := "reports/"
 
 	h := gocure.HTML{
@@ -71,7 +72,7 @@ func generateReport() {
 				return nil
 			}
 
-			_, err1 := copyReport(path, fmt.Sprintf("%s/report.html", artifactsDir))
+			_, err1 := copyReport(path, fmt.Sprintf("%s/report-%s.html", artifactsDir, ts.Name()))
 			if err1 != nil {
 				return err1
 			}
@@ -82,7 +83,7 @@ func generateReport() {
 			log.Fatalf(err.Error())
 		}
 
-		_, err = copyReport("./junit-report.xml", fmt.Sprintf("%s/junit-report.xml", artifactsDir))
+		_, err = copyReport("./junit-report.xml", fmt.Sprintf("%s/junit-report-%s.xml", artifactsDir, ts.Name()))
 		if err != nil {
 			log.Fatalf(err.Error())
 		}

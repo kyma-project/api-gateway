@@ -41,4 +41,5 @@ dist/
 # Test reports
 reports
 cucumber-report.json
-junit-report.xml
+junit-report*.xml
+report*.html
