@@ -7,10 +7,9 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"sigs.k8s.io/controller-runtime/pkg/config"
 
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
-
-	"sigs.k8s.io/controller-runtime/pkg/config/v1alpha1"
 
 	"github.com/go-logr/logr"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
@@ -274,7 +273,7 @@ type testSuite struct {
 	mgr manager.Manager
 }
 
-func getTestSuite(objects ...runtime.Object) *testSuite {
+func getTestSuite(objects ...client.Object) *testSuite {
 	err := gatewayv1beta1.AddToScheme(scheme.Scheme)
 	Expect(err).NotTo(HaveOccurred())
 	err = networkingv1beta1.AddToScheme(scheme.Scheme)
@@ -285,7 +284,7 @@ func getTestSuite(objects ...runtime.Object) *testSuite {
 	Expect(err).NotTo(HaveOccurred())
 
 	return &testSuite{
-		mgr: getFakeManager(fake.NewClientBuilder().WithScheme(scheme.Scheme).WithRuntimeObjects(objects...).Build(), scheme.Scheme),
+		mgr: getFakeManager(fake.NewClientBuilder().WithScheme(scheme.Scheme).WithObjects(objects...).WithStatusSubresource(objects...).Build(), scheme.Scheme),
 	}
 }
 
@@ -294,8 +293,8 @@ type fakeManager struct {
 	sch    *runtime.Scheme
 }
 
-func (f fakeManager) GetControllerOptions() v1alpha1.ControllerConfigurationSpec {
-	return v1alpha1.ControllerConfigurationSpec{}
+func (f fakeManager) GetControllerOptions() config.Controller {
+	return config.Controller{}
 }
 
 func (f fakeManager) Elected() <-chan struct{} {
@@ -359,7 +358,7 @@ func (f fakeManager) GetAPIReader() client.Reader {
 	return nil
 }
 
-func (f fakeManager) GetWebhookServer() *webhook.Server {
+func (f fakeManager) GetWebhookServer() webhook.Server {
 	return nil
 }
 
@@ -372,6 +371,10 @@ func (f fakeManager) GetLogger() logr.Logger {
 }
 
 func (f fakeManager) Stop() meta.RESTMapper {
+	return nil
+}
+
+func (f fakeManager) GetHTTPClient() *http.Client {
 	return nil
 }
 
