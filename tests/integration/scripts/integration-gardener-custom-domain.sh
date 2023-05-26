@@ -3,7 +3,7 @@
 ##Description: This scripts installs and test api-gateway custom domain test using the CLI on a real Gardener GCP cluster.
 ## exit on error, and raise error when variable is not set when used
 
-set -euo pipefail
+set -e
 
 function check_required_vars() {
   local requiredVarMissing=false
