@@ -65,7 +65,7 @@ chmod +x kyma
 export PATH="${PATH}:${PWD}"
 
 # Provision gardener cluster
-CLUSTER_NAME=$(LC_ALL=C tr -dc '[:lower:]' < /dev/urandom | head -c10)
+CLUSTER_NAME=$(echo $RANDOM | md5sum | head -c10)
 
 kyma version --client
 kyma provision gardener ${GARDENER_PROVIDER} \
