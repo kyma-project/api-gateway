@@ -144,6 +144,6 @@ With the introduction of Istio JWT the calls without a token will now fail on `A
 
 ### Blocking of the in-cluster connectivity to an endpoint
 
-With the introduction of Istio JWT the validation of requests now happens in context of the target Pod (i.e. istio-sidecar). This behaviour results in in-cluster requests that where allowed in context of `ory-oathkeeper` (as request validation happened in context of `ory-oathkeeper` Pod) to fail if not explicitly allowed.
+Istio JWT uses the `istio-sidecar` container to validate requests in the context of the target Pod. Previously, in-cluster requests were allowed in the `ory-oathkeeper` context because request validation happened within the `ory-oathkeeper` Pod. Now, these requests fail unless they are explicitly permitted.
 
 
