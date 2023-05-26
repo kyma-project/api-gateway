@@ -1,9 +1,10 @@
-##!/usr/bin/env bash
+#!/usr/bin/env bash
+
 #
 ##Description: This scripts installs and test api-gateway custom domain test using the CLI on a real Gardener GCP cluster.
 ## exit on error, and raise error when variable is not set when used
 
-set -e
+set -euo pipefail
 
 function check_required_vars() {
   local requiredVarMissing=false
@@ -65,7 +66,7 @@ export PATH="${PATH}:${PWD}"
 kyma version --client
 
 # Provision gardener cluster
-CLUSTER_NAME=$(LC_ALL=C tr -dc 'a-z' < /dev/urandom | head -c10)
+CLUSTER_NAME=$(LC_ALL=C tr -dc '[:lower:]' < /dev/urandom | head -c10)
 kyma provision gardener ${GARDENER_PROVIDER} \
         --secret "${GARDENER_KYMA_PROW_PROVIDER_SECRET_NAME}" \
         --name "${CLUSTER_NAME}" \
