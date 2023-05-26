@@ -36,16 +36,16 @@ requiredVars=(
 
 check_required_vars "${requiredVars[@]}"
 
-cleanup() {
-kubectl annotate shoot "${CLUSTER_NAME}" confirmation.gardener.cloud/deletion=true \
-    --overwrite \
-    -n "garden-${GARDENER_KYMA_PROW_PROJECT_NAME}" \
-    --kubeconfig "${GARDENER_KYMA_PROW_KUBECONFIG}"
+function cleanup() {
+  kubectl annotate shoot "${CLUSTER_NAME}" confirmation.gardener.cloud/deletion=true \
+      --overwrite \
+      -n "garden-${GARDENER_KYMA_PROW_PROJECT_NAME}" \
+      --kubeconfig "${GARDENER_KYMA_PROW_KUBECONFIG}"
 
-kubectl delete shoot "${CLUSTER_NAME}" \
-  --wait="false" \
-  --kubeconfig "${GARDENER_KYMA_PROW_KUBECONFIG}" \
-  -n "garden-${GARDENER_KYMA_PROW_PROJECT_NAME}"
+  kubectl delete shoot "${CLUSTER_NAME}" \
+    --wait="false" \
+    --kubeconfig "${GARDENER_KYMA_PROW_KUBECONFIG}" \
+    -n "garden-${GARDENER_KYMA_PROW_PROJECT_NAME}"
 }
 
 # Cleanup on exit, be it successful or on fail
