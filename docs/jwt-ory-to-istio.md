@@ -135,4 +135,15 @@ Istio doesn't support regex type of path matching in Authorization Policies, whi
 
 Istio doesn't support configuring a JWT token from `cookie`, and Ory Oathkeeper does. Istio supports only `fromHeaders` and `fromParams` configurations.
 
-Using Istio as JWT access strategy requires the workload behind the service to be in the service mesh, for example, to have the Istio proxy. To learn how to add workloads to the Istio service mesh read the [Istio documentation](https://istio.io/latest/docs/ops/common-problems/injection/).
+Using Istio as JWT access strategy requires the workload behind the service to be in the service mesh, for example, to have the Istio proxy. To learn how to add workloads to the Istio service mesh, read the [Istio documentation](https://istio.io/latest/docs/ops/common-problems/injection/).
+
+### Change of status `401` to `403` when calling an endpoint without the `Authorization` header
+
+Previously, when using ORY Oathkeeper, if you called a secured workload without a JWT token, it resulted in the `401` error. This behavior has changed with the implementation of Istio-based JWT. Now, calls made without a token result in the `403` error. To learn more, read the Istio documentation on [RequestAuthentication](https://istio.io/latest/docs/concepts/security/#request-authentication) and [AuthorizationPolicy](https://istio.io/latest/docs/reference/config/security/authorization-policy).
+
+
+### Blocking of the in-cluster connectivity to an endpoint
+
+Istio JWT uses the `istio-sidecar` container to validate requests in the context of the target Pod. Previously, in-cluster requests were allowed in the `ory-oathkeeper` context because request validation happened within the `ory-oathkeeper` Pod. Now, these requests fail unless they are explicitly permitted.
+
+
