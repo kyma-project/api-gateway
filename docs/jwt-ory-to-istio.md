@@ -139,7 +139,7 @@ Using Istio as JWT access strategy requires the workload behind the service to b
 
 ### Change of status `401` to `403` when calling an endpoint without the `Authorization` header
 
-With the introduction of Istio JWT the calls without a token will now fail on `AuthorizationPolicy` that forces `requestPrincipals` to not be empty. This results in a behaviour of requests without an `Authorization` header to fail on `AuthorizationPolicy` validation step, instead of `RequestAuthentication` that allows tokens without the header. In conclusion this behaviour will make the request fail with code `403` instead of `401`, which was the case for Oathkeeper JWT.
+Previously, when using ORY Oathkeeper, if you called a secured workload without a JWT token, it resulted in the `401` error. This behavior has changed with the implementation of Istio-based JWT. Now, calls made without a token result in the `403` error. To learn more, read the Istio documentation on [RequestAuthentication](https://istio.io/latest/docs/concepts/security/#request-authentication) and [AuthorizationPolicy](https://istio.io/latest/docs/reference/config/security/authorization-policy).
 
 
 ### Blocking of the in-cluster connectivity to an endpoint
