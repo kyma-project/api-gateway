@@ -81,7 +81,7 @@ kyma provision gardener ${GARDENER_PROVIDER} \
         --scaler-max $SCALER_MAX \
         --scaler-min $SCALER_MIN \
         --kube-version="${GARDENER_CLUSTER_VERSION}" \
-        --attempts 1 \
+        --attempts 3 \
         --verbose
 
 echo "waiting for Gardener to finish shoot reconcile..."
