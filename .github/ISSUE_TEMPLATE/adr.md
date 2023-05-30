@@ -1,7 +1,7 @@
 ---
 name: ADR
 about: Create architecture decision record
-title: '[ADR] Title'
+title: "[ADR] Title"
 labels: decision
 assignees: ''
 
@@ -19,4 +19,4 @@ assignees: ''
 <!--- What is the change that we're proposing and/or doing and why? --> 
 
 ## Consequences
-<!--- What becomes easier or more difficult to do because of this change? --> 
+<!--- What becomes easier or more difficult to do because of this change? -->
