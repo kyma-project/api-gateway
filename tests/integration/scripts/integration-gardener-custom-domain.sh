@@ -85,7 +85,7 @@ kyma provision gardener ${GARDENER_PROVIDER} \
         --verbose
 
 echo "waiting for Gardener to finish shoot reconcile..."
-kubectl wait --for=jsonpath='{.status.lastOperation.state}'=Succeeded --timeout=300s shoot.core.gardener.cloud/$CLUSTER_NAME
+kubectl wait --kubeconfig "${GARDENER_KYMA_PROW_KUBECONFIG}" --for=jsonpath='{.status.lastOperation.state}'=Succeeded --timeout=300s "shoots/${CLUSTER_NAME}"
 
 cat <<EOF > patch.yaml
 spec:
@@ -105,11 +105,11 @@ spec:
           enabled: true
 EOF
 
-kubectl patch shoot $CLUSTER_NAME --patch-file patch.yaml --kubeconfig "${GARDENER_KYMA_PROW_KUBECONFIG}"
+kubectl patch shoot "${CLUSTER_NAME}" --patch-file patch.yaml --kubeconfig "${GARDENER_KYMA_PROW_KUBECONFIG}"
 make install-kyma
 
 echo "waiting for Gardener to finish shoot reconcile..."
-kubectl wait --for=jsonpath='{.status.lastOperation.state}'=Succeeded --timeout=300s shoot.core.gardener.cloud/$CLUSTER_NAME
+kubectl wait --kubeconfig "${GARDENER_KYMA_PROW_KUBECONFIG}" --for=jsonpath='{.status.lastOperation.state}'=Succeeded --timeout=300s "shoots/${CLUSTER_NAME}"
 
 # KYMA_DOMAIN is required by the tests
 export TEST_DOMAIN="${CLUSTER_NAME}.${GARDENER_KYMA_PROW_PROJECT_NAME}.shoot.live.k8s-hana.ondemand.com"
