@@ -52,7 +52,8 @@ function cleanup() {
 trap cleanup EXIT INT
 
 # wait for build job
-JOB_NAME_PATTERN="rel-.*-build" ./tests/integration/scripts/jobguard.sh
+#JOB_NAME_PATTERN="rel-.*-build" ./tests/integration/scripts/jobguard.sh
+JOB_NAME_PATTERN="pull-.*-build" ./tests/integration/scripts/jobguard.sh
 
 # Install Kyma CLI in latest version
 echo "--> Install kyma CLI locally to /tmp/bin"
