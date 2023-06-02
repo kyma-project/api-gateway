@@ -1,1 +1,4 @@
 *  @kyma-project/goat
+
+# All .md files
+*.md @kyma-project/technical-writers
