@@ -89,6 +89,7 @@ var _ = Describe("Builder for", func() {
 			Expect(ap.Spec.JwtRules[0].JwksUri).To(Equal("testJwksUri"))
 			Expect(ap.Spec.JwtRules[0].FromHeaders).To(BeEmpty())
 			Expect(ap.Spec.JwtRules[0].FromParams).To(BeEmpty())
+			Expect(ap.Spec.JwtRules[0].ForwardOriginalToken).To(BeTrue())
 		})
 
 		It("should build an RequestAuthentication with 2 JwtRules", func() {
@@ -109,10 +110,13 @@ var _ = Describe("Builder for", func() {
 			Expect(ap.Spec.JwtRules[0].JwksUri).To(Equal("testJwksUri1"))
 			Expect(ap.Spec.JwtRules[0].FromHeaders).To(BeEmpty())
 			Expect(ap.Spec.JwtRules[0].FromParams).To(BeEmpty())
+			Expect(ap.Spec.JwtRules[0].ForwardOriginalToken).To(BeTrue())
 			Expect(ap.Spec.JwtRules[1].Issuer).To(Equal("testIssuer2"))
 			Expect(ap.Spec.JwtRules[1].JwksUri).To(Equal("testJwksUri2"))
 			Expect(ap.Spec.JwtRules[1].FromHeaders).To(BeEmpty())
 			Expect(ap.Spec.JwtRules[1].FromParams).To(BeEmpty())
+			Expect(ap.Spec.JwtRules[1].ForwardOriginalToken).To(BeTrue())
+
 		})
 
 		It("should build an RequestAuthentication with fromHeaders", func() {
@@ -135,6 +139,7 @@ var _ = Describe("Builder for", func() {
 			Expect(ap.Spec.JwtRules[0].FromHeaders[1].Name).To(Equal("testHeader2"))
 			Expect(ap.Spec.JwtRules[0].FromHeaders[1].Prefix).To(Equal("testPrefix2"))
 			Expect(ap.Spec.JwtRules[0].FromParams).To(BeEmpty())
+			Expect(ap.Spec.JwtRules[0].ForwardOriginalToken).To(BeTrue())
 		})
 
 		It("should build an RequestAuthentication with fromParams", func() {
@@ -155,6 +160,7 @@ var _ = Describe("Builder for", func() {
 			Expect(ap.Spec.JwtRules[0].FromParams[0]).To(Equal("param1"))
 			Expect(ap.Spec.JwtRules[0].FromParams[1]).To(Equal("param2"))
 			Expect(ap.Spec.JwtRules[0].FromHeaders).To(BeEmpty())
+			Expect(ap.Spec.JwtRules[0].ForwardOriginalToken).To(BeTrue())
 		})
 	})
 })

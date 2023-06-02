@@ -348,8 +348,9 @@ func (jr *JwtRuleBuilder) From(val []*gatewayv1beta1.Authenticator) *JwtRuleBuil
 		}
 		for _, authentication := range authentications.Authentications {
 			jwtRule := v1beta1.JWTRule{
-				Issuer:  authentication.Issuer,
-				JwksUri: authentication.JwksUri,
+				Issuer:               authentication.Issuer,
+				JwksUri:              authentication.JwksUri,
+				ForwardOriginalToken: true,
 			}
 			for _, fromHeader := range authentication.FromHeaders {
 				jwtRule.FromHeaders = append(jwtRule.FromHeaders, &v1beta1.JWTHeader{
