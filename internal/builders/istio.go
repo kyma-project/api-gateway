@@ -350,6 +350,9 @@ func (jr *JwtRuleBuilder) From(val []*gatewayv1beta1.Authenticator) *JwtRuleBuil
 			jwtRule := v1beta1.JWTRule{
 				Issuer:  authentication.Issuer,
 				JwksUri: authentication.JwksUri,
+				// We decided to change the default behavior of Istio to provide the same behavior as ORY
+				// so there's no breaking change
+				ForwardOriginalToken: true,
 			}
 			for _, fromHeader := range authentication.FromHeaders {
 				jwtRule.FromHeaders = append(jwtRule.FromHeaders, &v1beta1.JWTHeader{
