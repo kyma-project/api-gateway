@@ -83,6 +83,7 @@ func createGoDogOpts(t *testing.T, featuresPath string, concurrency int) godog.O
 		Paths:       []string{featuresPath},
 		Concurrency: concurrency,
 		TestingT:    t,
+		Strict:      true,
 	}
 
 	if shouldExportResults() {
