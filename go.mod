@@ -13,8 +13,8 @@ require (
 	gitlab.com/rodrigoodhin/gocure v0.0.0-20230214115050-efed6aac536a
 	golang.org/x/net v0.11.0
 	google.golang.org/protobuf v1.30.0
-	istio.io/api v0.0.0-20230523222408-21e7bb4b66a2
-	istio.io/client-go v1.17.3
+	istio.io/api v0.0.0-20230524015941-fa6c5f7916bf
+	istio.io/client-go v1.18.0
 	k8s.io/apimachinery v0.27.3
 	k8s.io/client-go v0.27.3
 	sigs.k8s.io/controller-runtime v0.15.0
@@ -69,7 +69,7 @@ require (
 	golang.org/x/tools v0.9.3 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.3.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
-	google.golang.org/genproto v0.0.0-20221018160656-63c7b68cfc55 // indirect
+	google.golang.org/genproto v0.0.0-20230410155749-daa745c078e1 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	k8s.io/component-base v0.27.3 // indirect
