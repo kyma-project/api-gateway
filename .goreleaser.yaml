@@ -9,6 +9,8 @@ release:
     Images published in {{ .Tag }} release:
     - [https://europe-docker.pkg.dev/kyma-project/prod/api-gateway-controller:{{ .Tag }}](https://europe-docker.pkg.dev/kyma-project/prod/api-gateway-controller:{{ .Tag }})
     - [https://europe-docker.pkg.dev/kyma-project/prod/api-gateway-webhook-certificates:{{ .Tag }}](https://europe-docker.pkg.dev/kyma-project/prod/api-gateway-webhook-certificates:{{ .Tag }})
+builds:
+  - skip: true
 checksum:
   name_template: 'checksums.txt'
 snapshot:
