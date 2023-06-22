@@ -51,6 +51,17 @@ var _ = Describe("JWT Handler validation", func() {
 			Expect(problems).To(HaveLen(0))
 		})
 
+		It("Should fail when the workload selector is nil", func() {
+			//when
+			problems, err := (&injectionValidator{ctx: context.TODO(), client: k8sfakeClient}).Validate("some.attribute", nil, "default")
+			Expect(err).NotTo(HaveOccurred())
+
+			//then
+			Expect(problems).To(HaveLen(1))
+			Expect(problems[0].AttributePath).To(Equal("some.attribute.injection"))
+			Expect(problems[0].Message).To(Equal("Service cannot have empty label selectors when the API Rule strategy is JWT"))
+		})
+
 		It("Should fail when the Pod for which the service is specified is not istio injected and in the same not default namespace", func() {
 			//given
 			err := k8sfakeClient.Create(context.TODO(), &corev1.Pod{

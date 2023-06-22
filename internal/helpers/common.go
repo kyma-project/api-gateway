@@ -33,13 +33,21 @@ func GetLabelSelectorFromService(ctx context.Context, client client.Client, serv
 	} else {
 		nsName.Namespace = FindServiceNamespace(api, rule)
 	}
+
+	if nsName.Namespace == "" {
+		nsName.Namespace = "default"
+	}
+
 	svc := &corev1.Service{}
 	err := client.Get(ctx, nsName, svc)
 	if err != nil {
 		return &workloadSelector, err
 	}
+
+	fmt.Printf("[&123] %#v len: %d\n", svc.Spec.Selector, len(svc.Spec.Selector))
+
 	if len(svc.Spec.Selector) == 0 {
-		return &workloadSelector, fmt.Errorf("no label selectors defined for service %s", *service.Name)
+		return nil, nil
 	}
 	workloadSelector.MatchLabels = map[string]string{}
 	for label, value := range svc.Spec.Selector {

@@ -171,14 +171,6 @@ func (v *APIRuleValidator) validateService(ctx context.Context, client client.Cl
 		}
 	}
 
-	_, err := helpers.GetLabelSelectorFromService(ctx, client, api.Spec.Service, api, nil)
-	if err != nil {
-		problems = append(problems, Failure{
-			AttributePath: attributePath,
-			Message:       "No label selectors found for service",
-		})
-	}
-
 	return problems
 }
 
@@ -212,7 +204,7 @@ func (v *APIRuleValidator) validateRules(ctx context.Context, client client.Clie
 			if err != nil {
 				problems = append(problems, Failure{
 					AttributePath: attributePathWithRuleIndex + ".service",
-					Message:       "No label selectors found for service",
+					Message:       "Couldn't get label selectors for service",
 				})
 			}
 			problems = append(problems, v.validateAccessStrategies(attributePathWithRuleIndex+".accessStrategies", r.AccessStrategies, labelSelector, helpers.FindServiceNamespace(api, &r))...)
