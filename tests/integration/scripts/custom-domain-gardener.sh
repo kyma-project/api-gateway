@@ -54,35 +54,8 @@ trap cleanup EXIT INT
 # wait for build job
 JOB_NAME_PATTERN="rel-.*-build" ./tests/integration/scripts/jobguard.sh
 
-# Install Kyma CLI in latest version
-echo "--> Install kyma CLI locally to /tmp/bin"
-curl -Lo kyma.tar.gz "https://github.com/kyma-project/cli/releases/latest/download/kyma_linux_x86_64.tar.gz" \
-&& tar -zxvf kyma.tar.gz && chmod +x kyma \
-&& rm -f kyma.tar.gz
-chmod +x kyma
-
-# Add pwd to path to be able to use Kyma binary
-export PATH="${PATH}:${PWD}"
-
-# Provision gardener cluster
 CLUSTER_NAME=ag-$(echo $RANDOM | md5sum | head -c 7)
-
-kyma version --client
-kyma provision gardener ${GARDENER_PROVIDER} \
-        --secret "${GARDENER_KYMA_PROW_PROVIDER_SECRET_NAME}" \
-        --name "${CLUSTER_NAME}" \
-        --project "${GARDENER_KYMA_PROW_PROJECT_NAME}" \
-        --credentials "${GARDENER_KYMA_PROW_KUBECONFIG}" \
-        --region "${GARDENER_REGION}" \
-        --zones "${GARDENER_ZONES}" \
-        --type "${MACHINE_TYPE}" \
-        --disk-size $DISK_SIZE \
-        --disk-type "${DISK_TYPE}" \
-        --scaler-max $SCALER_MAX \
-        --scaler-min $SCALER_MIN \
-        --kube-version="${GARDENER_CLUSTER_VERSION}" \
-        --attempts 3 \
-        --verbose
+./tests/integration/scripts/provision-gardener.sh
 
 echo "waiting for Gardener to finish shoot reconcile..."
 kubectl wait --kubeconfig "${GARDENER_KYMA_PROW_KUBECONFIG}" --for=jsonpath='{.status.lastOperation.state}'=Succeeded --timeout=600s "shoots/${CLUSTER_NAME}"

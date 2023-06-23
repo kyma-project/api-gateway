@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-#Description: This scripts installs and test Kyma using the CLI on a real Gardener GCP cluster.
+#Description: This scripts installs and test Kyma using the CLI on a real Gardener AWS cluster.
 #
 #Expected common vars:
 # - GARDENER_REGION - Gardener compute region
@@ -13,6 +13,9 @@
 
 # exit on error, and raise error when variable is not set when used
 set -e
+
+CLUSTER_NAME=$(LC_ALL=C tr -dc 'a-z' < /dev/urandom | head -c10)
+export CLUSTER_NAME
 
 cleanup() {
 kubectl annotate shoot "${CLUSTER_NAME}" confirmation.gardener.cloud/deletion=true \
@@ -29,31 +32,7 @@ kubectl delete shoot "${CLUSTER_NAME}" \
 # Cleanup on exit, be it successful or on fail
 trap cleanup EXIT INT
 
-# Install Kyma CLI in latest version
-echo "--> Install kyma CLI locally to /tmp/bin"
-curl -Lo kyma.tar.gz "https://github.com/kyma-project/cli/releases/latest/download/kyma_linux_x86_64.tar.gz" \
-&& tar -zxvf kyma.tar.gz && chmod +x kyma \
-&& rm -f kyma.tar.gz
-chmod +x kyma
-# Add pwd to path to be able to use Kyma binary
-export PATH="${PATH}:${PWD}"
-kyma version --client
-
-# Provision gardener cluster
-CLUSTER_NAME=$(LC_ALL=C tr -dc 'a-z' < /dev/urandom | head -c10)
-kyma provision gardener gcp \
-        --secret "${GARDENER_KYMA_PROW_PROVIDER_SECRET_NAME}" \
-        --name "${CLUSTER_NAME}" \
-        --project "${GARDENER_KYMA_PROW_PROJECT_NAME}" \
-        --credentials "${GARDENER_KYMA_PROW_KUBECONFIG}" \
-        --region "${GARDENER_REGION}" \
-        -z "${GARDENER_ZONES}" \
-        -t "n1-standard-4" \
-        --scaler-max 3 \
-        --scaler-min 1 \
-        --kube-version="${GARDENER_CLUSTER_VERSION}" \
-        --attempts 1 \
-        --verbose
+./tests/integration/scripts/provision-gardener.sh
 
 ./tests/integration/scripts/jobguard.sh
 make install-kyma
