@@ -14,9 +14,6 @@
 # exit on error, and raise error when variable is not set when used
 set -e
 
-CLUSTER_NAME=$(LC_ALL=C tr -dc 'a-z' < /dev/urandom | head -c10)
-export CLUSTER_NAME
-
 cleanup() {
 kubectl annotate shoot "${CLUSTER_NAME}" confirmation.gardener.cloud/deletion=true \
     --overwrite \
@@ -31,6 +28,12 @@ kubectl delete shoot "${CLUSTER_NAME}" \
 
 # Cleanup on exit, be it successful or on fail
 trap cleanup EXIT INT
+
+# Add pwd to path to be able to use binaries downloaded in scripts
+export PATH="${PATH}:${PWD}"
+
+CLUSTER_NAME=$(LC_ALL=C tr -dc 'a-z' < /dev/urandom | head -c10)
+export CLUSTER_NAME
 
 ./tests/integration/scripts/provision-gardener.sh
 

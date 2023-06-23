@@ -11,7 +11,7 @@ export DISK_SIZE=50
 export DISK_TYPE="pd-standard"
 export SCALER_MAX=3
 export SCALER_MIN=1
-export GARDENER_PROVIDER="aws"
+export GARDENER_PROVIDER="gcp"
 export GARDENER_REGION="europe-west3"
 export GARDENER_ZONES="europe-west3-c,europe-west3-b,europe-west3-a"
 

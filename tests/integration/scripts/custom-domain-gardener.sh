@@ -51,6 +51,9 @@ function cleanup() {
 # Cleanup on exit, be it successful or on fail
 trap cleanup EXIT INT
 
+# Add pwd to path to be able to use binaries downloaded in scripts
+export PATH="${PATH}:${PWD}"
+
 # wait for build job
 JOB_NAME_PATTERN="rel-.*-build" ./tests/integration/scripts/jobguard.sh
 

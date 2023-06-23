@@ -43,9 +43,6 @@ curl -Lo kyma.tar.gz "https://github.com/kyma-project/cli/releases/latest/downlo
 && rm -f kyma.tar.gz
 chmod +x kyma
 
-# Add pwd to path to be able to use Kyma binary
-export PATH="${PATH}:${PWD}"
-
 kyma version --client
 kyma provision gardener ${GARDENER_PROVIDER} \
         --secret "${GARDENER_KYMA_PROW_PROVIDER_SECRET_NAME}" \
