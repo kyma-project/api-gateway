@@ -948,6 +948,39 @@ var _ = Describe("Validate function", func() {
 		Expect(problems).To(HaveLen(0))
 	})
 
+	It("Should not fail with service on path level by default", func() {
+		//given
+		input := &gatewayv1beta1.APIRule{
+			Spec: gatewayv1beta1.APIRuleSpec{
+				Rules: []gatewayv1beta1.Rule{
+					{
+						Path:    "/abc",
+						Service: getApiRuleService(sampleServiceName, uint32(8080)),
+						AccessStrategies: []*gatewayv1beta1.Authenticator{
+							toAuthenticator("noop", emptyConfig()),
+						},
+						Methods: []string{"POST"},
+					},
+				},
+				Host: getHost(sampleValidHost),
+			},
+		}
+
+		service := getService(sampleServiceName)
+		service.Spec.Selector = map[string]string{}
+		fakeClient := buildFakeClient(service)
+
+		//when
+		problems := (&APIRuleValidator{
+			HandlerValidator:          handlerValidatorMock,
+			AccessStrategiesValidator: asValidatorMock,
+			DomainAllowList:           testDomainAllowlist,
+		}).Validate(context.TODO(), fakeClient, input, networkingv1beta1.VirtualServiceList{})
+
+		//then
+		Expect(problems).To(HaveLen(0))
+	})
+
 	It("Should succeed with service without namespace", func() {
 		//given
 		input := &gatewayv1beta1.APIRule{
