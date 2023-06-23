@@ -44,8 +44,6 @@ func GetLabelSelectorFromService(ctx context.Context, client client.Client, serv
 		return &workloadSelector, err
 	}
 
-	fmt.Printf("[&123] %#v len: %d\n", svc.Spec.Selector, len(svc.Spec.Selector))
-
 	if len(svc.Spec.Selector) == 0 {
 		return nil, nil
 	}
