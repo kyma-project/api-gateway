@@ -195,6 +195,15 @@ type injectionValidator struct {
 }
 
 func (v *injectionValidator) Validate(attributePath string, selector *apiv1beta1.WorkloadSelector, namespace string) (problems []validation.Failure, err error) {
+	if selector == nil {
+		problems = append(problems, validation.Failure{
+			AttributePath: attributePath + ".injection",
+			Message:       "Service cannot have empty label selectors when the API Rule strategy is JWT",
+		})
+
+		return problems, nil
+	}
+
 	var podList corev1.PodList
 	err = v.client.List(v.ctx, &podList, client.InNamespace(namespace), client.MatchingLabels(selector.MatchLabels))
 	if err != nil {

@@ -96,6 +96,7 @@ func (p isApiGatewayConfigMapPredicate) Generic(e event.GenericEvent) bool {
 
 func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	r.Log.Info("Starting reconciliation", "namespacedName", req.NamespacedName.String())
+	ctx = logr.NewContext(ctx, r.Log)
 
 	validator := validation.APIRuleValidator{
 		ServiceBlockList:  r.ServiceBlockList,
