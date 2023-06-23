@@ -3,6 +3,8 @@ package validation
 import (
 	"context"
 	"fmt"
+	"github.com/go-logr/logr"
+	"google.golang.org/appengine/log"
 	"strings"
 
 	"github.com/kyma-project/api-gateway/internal/helpers"
@@ -171,14 +173,6 @@ func (v *APIRuleValidator) validateService(ctx context.Context, client client.Cl
 		}
 	}
 
-	_, err := helpers.GetLabelSelectorFromService(ctx, client, api.Spec.Service, api, nil)
-	if err != nil {
-		problems = append(problems, Failure{
-			AttributePath: attributePath,
-			Message:       "No label selectors found for service",
-		})
-	}
-
 	return problems
 }
 
@@ -210,10 +204,12 @@ func (v *APIRuleValidator) validateRules(ctx context.Context, client client.Clie
 		if r.Service != nil {
 			labelSelector, err := helpers.GetLabelSelectorFromService(ctx, client, r.Service, api, &r)
 			if err != nil {
-				problems = append(problems, Failure{
-					AttributePath: attributePathWithRuleIndex + ".service",
-					Message:       "No label selectors found for service",
-				})
+				l, errorCtx := logr.FromContext(ctx)
+				if errorCtx != nil {
+					log.Errorf(ctx, "No logger in context: %s", errorCtx)
+				} else {
+					l.Info("Couldn't get label selectors for service", "error", err)
+				}
 			}
 			problems = append(problems, v.validateAccessStrategies(attributePathWithRuleIndex+".accessStrategies", r.AccessStrategies, labelSelector, helpers.FindServiceNamespace(api, &r))...)
 			for namespace, services := range v.ServiceBlockList {
@@ -228,7 +224,15 @@ func (v *APIRuleValidator) validateRules(ctx context.Context, client client.Clie
 				}
 			}
 		} else if api.Spec.Service != nil {
-			labelSelector, _ := helpers.GetLabelSelectorFromService(ctx, client, api.Spec.Service, api, nil)
+			labelSelector, err := helpers.GetLabelSelectorFromService(ctx, client, api.Spec.Service, api, nil)
+			if err != nil {
+				l, errorCtx := logr.FromContext(ctx)
+				if errorCtx != nil {
+					log.Errorf(ctx, "No logger in context: %s", errorCtx)
+				} else {
+					l.Info("Couldn't get label selectors for service", "error", err)
+				}
+			}
 			problems = append(problems, v.validateAccessStrategies(attributePathWithRuleIndex+".accessStrategies", r.AccessStrategies, labelSelector, helpers.FindServiceNamespace(api, &r))...)
 		}
 
