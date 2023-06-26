@@ -10,7 +10,7 @@ fi
 
 GORELEASER_VERSION="${GORELEASER_VERSION:-v1.18.2}"
 
-JOB_NAME_PATTERN="rel-.*-integration" tests/integration/scripts/jobguard.sh
+JOB_NAME_PATTERN="rel-.*-build" tests/integration/scripts/jobguard.sh
 curl -sfLo /tmp/goreleaser_Linux_x86_64.tar.gz "https://github.com/goreleaser/goreleaser/releases/download/${GORELEASER_VERSION}/goreleaser_Linux_x86_64.tar.gz"
 tar xf /tmp/goreleaser_Linux_x86_64.tar.gz -C /tmp
 
