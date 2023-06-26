@@ -15,4 +15,4 @@ export GARDENER_PROVIDER="gcp"
 export GARDENER_REGION="europe-west3"
 export GARDENER_ZONES="europe-west3-c,europe-west3-b,europe-west3-a"
 
-./tests/integration/scripts/test-gardener.sh
+./tests/integration/scripts/custom-domain-gardner.sh
