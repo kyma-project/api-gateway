@@ -144,12 +144,12 @@ ifndef JOB_TYPE
 	kyma deploy --ci -s main -c hack/kyma-components.yaml
 else ifeq ($(JOB_TYPE), presubmit)
 	kyma deploy --ci -s main -c hack/kyma-components.yaml \
-	  --value api-gateway.global.images.api_gateway_controller.version=${PULL_IMAGE_VERSION} \
+	  --value api-gateway.global.images.api_gateway_controller.version=PR-404 \
 	  --value api-gateway.global.images.api_gateway_controller.directory=dev \
-	  --value api-gateway.global.images.api-gateway-webhook-certificates.version=${PULL_IMAGE_VERSION} \
+	  --value api-gateway.global.images.api-gateway-webhook-certificates.version=PR-404 \
 	  --value api-gateway.global.images.api-gateway-webhook-certificates.directory=dev
 else ifeq ($(JOB_TYPE), postsubmit)
-	kyma deploy --ci -s main -c hack/kyma-components.yaml --value api-gateway.global.images.api_gateway_controller.version=${POST_IMAGE_VERSION} --value api-gateway.global.images.api-gateway-webhook-certificates.version=${POST_IMAGE_VERSION}
+	kyma deploy --ci -s main -c hack/kyma-components.yaml --value api-gateway.global.images.api_gateway_controller.version=v20230622-07bcdc9c --value api-gateway.global.images.api-gateway-webhook-certificates.version=v20230622-07bcdc9c
 endif
 
 .PHONY: test-integration-k3d
