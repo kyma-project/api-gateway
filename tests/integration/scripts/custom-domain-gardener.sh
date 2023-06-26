@@ -9,7 +9,7 @@ set -euo pipefail
 function check_required_vars() {
   local requiredVarMissing=false
   for var in "$@"; do
-    if [ -z "${!var}" ]; then
+    if [ -z "${var}" ]; then
       >&2 echo "Environment variable ${var} is required but not set"
       requiredVarMissing=true
     fi
@@ -20,18 +20,8 @@ function check_required_vars() {
 }
 
 requiredVars=(
-    GARDENER_PROVIDER
-    GARDENER_REGION
-    GARDENER_ZONES
     GARDENER_KYMA_PROW_KUBECONFIG
     GARDENER_KYMA_PROW_PROJECT_NAME
-    GARDENER_KYMA_PROW_PROVIDER_SECRET_NAME
-    GARDENER_CLUSTER_VERSION
-    MACHINE_TYPE
-    DISK_SIZE
-    DISK_TYPE
-    SCALER_MAX
-    SCALER_MIN
 )
 
 check_required_vars "${requiredVars[@]}"
@@ -58,6 +48,7 @@ export PATH="${PATH}:${PWD}"
 JOB_NAME_PATTERN="rel-.*-build" ./tests/integration/scripts/jobguard.sh
 
 CLUSTER_NAME=ag-$(echo $RANDOM | md5sum | head -c 7)
+export CLUSTER_NAME
 ./tests/integration/scripts/provision-gardener.sh
 
 echo "waiting for Gardener to finish shoot reconcile..."

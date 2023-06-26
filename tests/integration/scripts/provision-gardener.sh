@@ -8,7 +8,7 @@ set -euo pipefail
 function check_required_vars() {
   local requiredVarMissing=false
   for var in "$@"; do
-    if [ -z "${!var}" ]; then
+    if [ -z "${var}" ]; then
       >&2 echo "Environment variable ${var} is required but not set"
       requiredVarMissing=true
     fi
