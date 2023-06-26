@@ -45,7 +45,7 @@ trap cleanup EXIT INT
 export PATH="${PATH}:${PWD}"
 
 # wait for build job
-JOB_NAME_PATTERN="rel-.*-build" ./tests/integration/scripts/jobguard.sh
+./tests/integration/scripts/jobguard.sh
 
 CLUSTER_NAME=ag-$(echo $RANDOM | md5sum | head -c 7)
 export CLUSTER_NAME
