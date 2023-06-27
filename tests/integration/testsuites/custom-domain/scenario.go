@@ -58,12 +58,13 @@ func initScenario(ctx *godog.ScenarioContext, ts *testsuite) {
 	ctx.Step(`^endpoint is secured with OAuth2$`, scenario.secureWithOAuth2)
 	ctx.Step(`^calling the "([^"]*)" endpoint with an invalid token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithAInvalidTokenShouldResultInStatusBetween)
 	ctx.Step(`^calling the "([^"]*)" endpoint with a valid token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithAValidTokenShouldResultInStatusBetween)
-	ctx.Step(`^calling the "([^"]*)" endpoint without a token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithoutATokenShouldResultInStatusBetween)
 }
 
 func createScenario(t *testsuite, namePrefix string) (*scenario, error) {
 	ns := t.namespace
 	testID := helpers.GenerateRandomTestId()
+	log.Println(fmt.Sprintf("Generated TestID: %s", testID))
+	log.Println(fmt.Sprintf("Test Domain: %s.%s", testID, t.config.CustomDomain))
 	customDomainManifestDirectory := path.Dir(manifestsPath)
 
 	// create common resources from files
@@ -109,7 +110,6 @@ func createScenario(t *testsuite, namePrefix string) (*scenario, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to process resource manifest files, details %s", err.Error())
 	}
-
 	return &scenario{
 		domain:          t.config.CustomDomain,
 		testID:          testID,
