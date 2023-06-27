@@ -1,8 +1,8 @@
 package helpers
 
 import (
-	"hash/maphash"
 	"math/rand"
+	"time"
 )
 
 func GenerateRandomTestId() string {
@@ -10,13 +10,13 @@ func GenerateRandomTestId() string {
 }
 
 func GenerateRandomString(length int) string {
-	rand.NewSource(int64(new(maphash.Hash).Sum64()))
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 
 	letterRunes := []rune("abcdefghijklmnopqrstuvwxyz")
 
 	b := make([]rune, length)
 	for i := range b {
-		b[i] = letterRunes[rand.Intn(len(letterRunes))]
+		b[i] = letterRunes[r.Intn(len(letterRunes))]
 	}
 	return string(b)
 }
