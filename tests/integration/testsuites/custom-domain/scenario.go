@@ -63,8 +63,6 @@ func initScenario(ctx *godog.ScenarioContext, ts *testsuite) {
 func createScenario(t *testsuite, namePrefix string) (*scenario, error) {
 	ns := t.namespace
 	testID := helpers.GenerateRandomTestId()
-	log.Println(fmt.Sprintf("Generated TestID: %s", testID))
-	log.Println(fmt.Sprintf("Test Domain: %s.%s", testID, t.config.CustomDomain))
 	customDomainManifestDirectory := path.Dir(manifestsPath)
 
 	// create common resources from files
@@ -110,6 +108,7 @@ func createScenario(t *testsuite, namePrefix string) (*scenario, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to process resource manifest files, details %s", err.Error())
 	}
+
 	return &scenario{
 		domain:          t.config.CustomDomain,
 		testID:          testID,
