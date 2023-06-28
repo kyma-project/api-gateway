@@ -10,13 +10,13 @@ func GenerateRandomTestId() string {
 }
 
 func GenerateRandomString(length int) string {
-	rand.NewSource(time.Now().UnixNano())
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 
 	letterRunes := []rune("abcdefghijklmnopqrstuvwxyz")
 
 	b := make([]rune, length)
 	for i := range b {
-		b[i] = letterRunes[rand.Intn(len(letterRunes))]
+		b[i] = letterRunes[r.Intn(len(letterRunes))]
 	}
 	return string(b)
 }
