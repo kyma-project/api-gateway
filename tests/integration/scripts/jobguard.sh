@@ -2,8 +2,8 @@
 
 set -e
 
-JOB_NAME_PATTERN=${JOB_NAME_PATTERN:-"(pre-main-kyma-components-.*)|(pre-main-kyma-tests-.*)|(pre-kyma-components-.*)|(pre-kyma-tests-.*)|(pull-.*-build)"}
-TIMEOUT=${JOBGUARD_TIMEOUT:-"60m"}
+JOB_NAME_PATTERN=${JOB_NAME_PATTERN:-"(post-.*-build)|(pull-.*-build)"}
+TIMEOUT=${JOBGUARD_TIMEOUT:-"10m"}
 
 if [[ "${BUILD_TYPE}" == "pr" ]]; then
     BASE_REF=${PULL_PULL_SHA}
