@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 #
-##Description: This script provisions a Gardener cluster with config specified in environmental variables and runs Istio module integration tests
+##Description: This script provisions a Gardener cluster with config specified in environmental variables
 
 set -euo pipefail
 

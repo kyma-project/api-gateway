@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-#Description: This scripts installs and test Kyma using the CLI on a real Gardener AWS cluster.
+#Description: This scripts installs and test Kyma using the CLI on a real Gardener cluster.
 #
 #Expected common vars:
 # - GARDENER_REGION - Gardener compute region
