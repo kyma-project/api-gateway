@@ -14,7 +14,7 @@ require (
 	golang.org/x/net v0.11.0
 	google.golang.org/appengine v1.6.7
 	google.golang.org/protobuf v1.31.0
-	istio.io/api v0.0.0-20230524015941-fa6c5f7916bf
+	istio.io/api v1.19.0-alpha.1
 	istio.io/client-go v1.18.0
 	k8s.io/apimachinery v0.27.3
 	k8s.io/client-go v0.27.3
