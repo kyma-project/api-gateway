@@ -6,11 +6,11 @@ The API Gateway Controller manages Istio VirtualServices and Oathkeeper Rule. Th
 
 ## Prerequisites
 
-- recent version of Go language with support for modules (e.g: 1.12.6)
+- recent version of Go language with support for modules (e.g: 1.20)
 - make
 - kubectl
-- kustomize
-- access to K8s environment: minikube or a remote K8s cluster
+- k3d
+- access to K8s environment: k3d or a remote K8s cluster
 
 ## Details
 
@@ -27,19 +27,18 @@ Deploys the officially released Controller version to the cluster.
 
 This procedure is the fastest way to run the Controller, useful for development purposes
 
-- start Minikube or ensure the access to a Kubernetes cluster is configured in `~/.kube/config`
+- use k3d or ensure the access to a Kubernetes cluster is configured in `~/.kube/config`
 - `make install` to install necessary Custom Resource Definitions
 - export `OATHKEEPER_SVC_ADDRESS`, `OATHKEEPER_SVC_PORT` and `DOMAIN_ALLOWLIST` variables
 - `go run main.go --oathkeeper-svc-address="$OATHKEEPER_SVC_ADDRESS" --oathkeeper-svc-port=$OATHKEEPER_SVC_PORT --domain-allowlist=$DOMAIN_ALLOWLIST`
 
 ### Deploy a custom Controller build to the local Minikube cluster
 
-This procedure is useful to test your own Controller build end-to-end in a local Minikube cluster.
+This procedure is useful to test your own Controller build end-to-end in a local k3d cluster.
 
-- start Minikube
+- provision k3d cluster
 - `make build` to build the binary and run tests
-- `eval $(minikube docker-env)`
-- `make build-image` to put the docker image inside running Minikube
+- `make docker-build` to build the docker image of the operator
 - `make install` to install necessary Custom Resource Definitions
 - export `OATHKEEPER_SVC_ADDRESS`, `OATHKEEPER_SVC_PORT` and `DOMAIN_ALLOWLIST` variables
 - `make deploy-dev` to deploy controller
