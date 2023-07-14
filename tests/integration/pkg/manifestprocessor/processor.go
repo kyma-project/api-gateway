@@ -2,52 +2,15 @@ package manifestprocessor
 
 import (
 	"bytes"
-	"encoding/json"
+	"fmt"
+	"gopkg.in/yaml.v3"
+	"io"
 	"os"
 	"path"
-	"strings"
 	"text/template"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"sigs.k8s.io/yaml"
 )
-
-const resourceSeparator = "---"
-
-func parseManifest(input []byte) (*unstructured.Unstructured, error) {
-	var middleware map[string]interface{}
-	err := json.Unmarshal(input, &middleware)
-	if err != nil {
-		return nil, err
-	}
-
-	resource := &unstructured.Unstructured{
-		Object: middleware,
-	}
-	return resource, nil
-}
-
-func getManifestsFromFile(fileName string, directory string, separator string) ([]string, error) {
-	data, err := os.ReadFile(path.Join(directory, fileName))
-	if err != nil {
-		return nil, err
-	}
-	return strings.Split(string(data), separator), nil
-}
-
-func convert(inputYAML []string) ([]string, error) {
-	var result []string
-	for _, input := range inputYAML {
-		json, err := yaml.YAMLToJSON([]byte(input))
-		if err != nil {
-			return nil, err
-		}
-		if string(json) != "null" {
-			result = append(result, string(json))
-		}
-	}
-	return result, nil
-}
 
 func parseTemplateWithData(templateRaw string, data interface{}) (string, error) {
 	tmpl, err := template.New("tmpl").Parse(templateRaw)
@@ -62,27 +25,6 @@ func parseTemplateWithData(templateRaw string, data interface{}) (string, error)
 	return resource.String(), nil
 }
 
-// ParseFromFile parse simple yaml manifests
-func ParseFromFile(fileName string, directory string, separator string) ([]unstructured.Unstructured, error) {
-	manifestArray, err := getManifestsFromFile(fileName, directory, separator)
-	if err != nil {
-		return nil, err
-	}
-	manifests, err := convert(manifestArray)
-	if err != nil {
-		return nil, err
-	}
-	var resources []unstructured.Unstructured
-	for _, man := range manifests {
-		res, err := parseManifest([]byte(man))
-		if err != nil {
-			return nil, err
-		}
-		resources = append(resources, *res)
-	}
-	return resources, nil
-}
-
 // ParseFromFileWithTemplate parse manifests with goTemplate support
 func ParseFromFileWithTemplate(fileName string, directory string, templateData interface{}) ([]unstructured.Unstructured, error) {
 	rawData, err := os.ReadFile(path.Join(directory, fileName))
@@ -95,19 +37,18 @@ func ParseFromFileWithTemplate(fileName string, directory string, templateData i
 		return nil, err
 	}
 
-	manifestArray := strings.Split(man, resourceSeparator)
-	manifests, err := convert(manifestArray)
-	if err != nil {
-		return nil, err
+	var manifests []unstructured.Unstructured
+	decoder := yaml.NewDecoder(bytes.NewBufferString(man))
+	for {
+		var d map[string]interface{}
+		if err := decoder.Decode(&d); err != nil {
+			if err == io.EOF {
+				break
+			}
+			return nil, fmt.Errorf("Document decode failed: %w", err)
+		}
+		manifests = append(manifests, unstructured.Unstructured{Object: d})
 	}
 
-	var resources []unstructured.Unstructured
-	for _, man := range manifests {
-		res, err := parseManifest([]byte(man))
-		if err != nil {
-			return nil, err
-		}
-		resources = append(resources, *res)
-	}
-	return resources, nil
+	return manifests, nil
 }
