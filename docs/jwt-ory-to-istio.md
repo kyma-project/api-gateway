@@ -95,7 +95,7 @@ spec:
   </details>
 </div>
 
->**CAUTION:** Both `jwks_urls` and `trusted_issuers` must be valid `https` URLs.
+>**CAUTION:** Both `jwks_urls` and `trusted_issuers` must be valid URLs, please consider using HTTPS endpoints only, however HTTP is also allowed.
 
 >**CAUTION:** You can define multiple JWT issuers, but each of them must be unique.
 

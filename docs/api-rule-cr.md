@@ -122,19 +122,19 @@ kubectl patch configmap/api-gateway-config -n kyma-system --type merge -p '{"dat
 
 This table lists all the possible parameters of the Istio JWT access strategy together with their descriptions:
 
-| Field                                                                     | Mandatory | Description                                                                                                              |
-|:--------------------------------------------------------------------------|:----------|:-------------------------------------------------------------------------------------------------------------------------|
-| **spec.rules.accessStrategies.config**                                    | **YES**   | Access strategy configuration, must contain at least authentication or authorization.                                    |
-| **spec.rules.accessStrategies.config.authentications**                    | **YES**   | List of authentication objects.                                                                                          |
-| **spec.rules.accessStrategies.config.authentications.issuer**             | **YES**   | Identifies the issuer that issued the JWT. <br/>Must be an URL starting with `https://`.                                 |
-| **spec.rules.accessStrategies.config.authentications.jwksUri**            | **YES**   | URL of the provider’s public key set to validate the signature of the JWT. <br/>Must be an URL starting with `https://`. |
-| **spec.rules.accessStrategies.config.authentications.fromHeaders**        | **NO**    | List of headers from which the JWT token is taken.                                                                       |
-| **spec.rules.accessStrategies.config.authentications.fromHeaders.name**   | **YES**   | Name of the header.                                                                                                      |
-| **spec.rules.accessStrategies.config.authentications.fromHeaders.prefix** | **NO**    | Prefix used before the JWT token. The default is `Bearer `.                                                              |
-| **spec.rules.accessStrategies.config.authentications.fromParams**         | **NO**    | List of parameters from which the JWT token is taken.                                                                    |
-| **spec.rules.accessStrategies.config.authorizations**                     | **NO**    | List of authorization objects.                                                                                           |
-| **spec.rules.accessStrategies.config.authorizations.requiredScopes**      | **NO**    | List of required scope values for the JWT.                                                                               |
-| **spec.rules.accessStrategies.config.authorizations.audiences**           | **NO**    | List of audiences required for the JWT.                                                                                  |
+| Field                                                                     | Mandatory | Description                                                                                                                                                               |
+|:--------------------------------------------------------------------------|:----------|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **spec.rules.accessStrategies.config**                                    | **YES**   | Access strategy configuration, must contain at least authentication or authorization.                                                                                     |
+| **spec.rules.accessStrategies.config.authentications**                    | **YES**   | List of authentication objects.                                                                                                                                           |
+| **spec.rules.accessStrategies.config.authentications.issuer**             | **YES**   | Identifies the issuer that issued the JWT. <br/>Must be an URL, please consider using HTTPS endpoints only, however HTTP is also allowed.                                 |
+| **spec.rules.accessStrategies.config.authentications.jwksUri**            | **YES**   | URL of the provider’s public key set to validate the signature of the JWT. <br/>Must be an URL, please consider using HTTPS endpoints only, however HTTP is also allowed. |
+| **spec.rules.accessStrategies.config.authentications.fromHeaders**        | **NO**    | List of headers from which the JWT token is taken.                                                                                                                        |
+| **spec.rules.accessStrategies.config.authentications.fromHeaders.name**   | **YES**   | Name of the header.                                                                                                                                                       |
+| **spec.rules.accessStrategies.config.authentications.fromHeaders.prefix** | **NO**    | Prefix used before the JWT token. The default is `Bearer`.                                                                                                                |
+| **spec.rules.accessStrategies.config.authentications.fromParams**         | **NO**    | List of parameters from which the JWT token is taken.                                                                                                                     |
+| **spec.rules.accessStrategies.config.authorizations**                     | **NO**    | List of authorization objects.                                                                                                                                            |
+| **spec.rules.accessStrategies.config.authorizations.requiredScopes**      | **NO**    | List of required scope values for the JWT.                                                                                                                                |
+| **spec.rules.accessStrategies.config.authorizations.audiences**           | **NO**    | List of audiences required for the JWT.                                                                                                                                   |
 
 >**CAUTION:** You can define multiple JWT issuers, but each of them must be unique.
 
