@@ -12,7 +12,6 @@ require (
 	github.com/spf13/pflag v1.0.5
 	gitlab.com/rodrigoodhin/gocure v0.0.0-20230214115050-efed6aac536a
 	golang.org/x/net v0.11.0
-	google.golang.org/appengine v1.6.7
 	google.golang.org/protobuf v1.30.0
 	istio.io/api v0.0.0-20230713061407-06047cce866f
 	istio.io/client-go v1.18.1
