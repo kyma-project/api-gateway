@@ -42,11 +42,11 @@ var _ = Describe("Apirule controller validation", Serial, Ordered, func() {
 			}
 
 			mutators := []*gatewayv1beta1.Mutator{mutator}
-			testConfigError(a, mutators, expectedValidationErrors)
+			testConfig(a, mutators, gatewayv1beta1.StatusError, expectedValidationErrors)
 		}
 
-		testJwtHandlerConfigError := func(accessStrategies []*gatewayv1beta1.Authenticator, expectedValidationErrors []string) {
-			testConfigError(accessStrategies, []*gatewayv1beta1.Mutator{}, expectedValidationErrors)
+		testJwtHandlerConfig := func(accessStrategies []*gatewayv1beta1.Authenticator, expectedStatusCode gatewayv1beta1.StatusCode, expectedValidationErrors []string) {
+			testConfig(accessStrategies, []*gatewayv1beta1.Mutator{}, expectedStatusCode, expectedValidationErrors)
 		}
 
 		It("should not allow creation of APIRule with blocklisted subdomain api", func() {
@@ -66,7 +66,7 @@ var _ = Describe("Apirule controller validation", Serial, Ordered, func() {
 				"Validation error: Attribute \".spec.rules[0].accessStrategies[0].config\": supplied config cannot be empty",
 			}
 
-			testJwtHandlerConfigError(accessStrategies, expectedValidationErrors)
+			testJwtHandlerConfig(accessStrategies, gatewayv1beta1.StatusError, expectedValidationErrors)
 		})
 
 		It("should not allow creation of APIRule jwks configuration in jwt handler", func() {
@@ -90,10 +90,10 @@ var _ = Describe("Apirule controller validation", Serial, Ordered, func() {
 				"Attribute \".spec.rules[0].accessStrategies[0].config.authentications[0].jwksUri\": value is empty or not a valid url err=value is empty",
 			}
 
-			testJwtHandlerConfigError(accessStrategies, expectedValidationErrors)
+			testJwtHandlerConfig(accessStrategies, gatewayv1beta1.StatusError, expectedValidationErrors)
 		})
 
-		It("should not allow creation of APIRule with insecure issuer and jwks in jwt config", func() {
+		It("should allow creation of APIRule with insecure issuer and jwks in jwt config", func() {
 			accessStrategies := []*gatewayv1beta1.Authenticator{
 				{
 					Handler: &gatewayv1beta1.Handler{
@@ -111,12 +111,9 @@ var _ = Describe("Apirule controller validation", Serial, Ordered, func() {
 				},
 			}
 
-			expectedValidationErrors := []string{
-				"Attribute \".spec.rules[0].accessStrategies[0].config.authentications[0].issuer\": value is not a secured url err=value is unsecure",
-				"Attribute \".spec.rules[0].accessStrategies[0].config.authentications[0].jwksUri\": value is not a secured url err=value is unsecure",
-			}
+			expectedValidationErrors := []string{}
 
-			testJwtHandlerConfigError(accessStrategies, expectedValidationErrors)
+			testJwtHandlerConfig(accessStrategies, gatewayv1beta1.StatusOK, expectedValidationErrors)
 		})
 
 		It("should not allow creation of APIRule with invalid url issuer and jwks in jwt config", func() {
@@ -142,7 +139,7 @@ var _ = Describe("Apirule controller validation", Serial, Ordered, func() {
 				"Attribute \".spec.rules[0].accessStrategies[0].config.authentications[0].jwksUri\": value is empty or not a valid url err=parse \"example.com/.well-known/jwks.json\": invalid URI for request",
 			}
 
-			testJwtHandlerConfigError(accessStrategies, expectedValidationErrors)
+			testJwtHandlerConfig(accessStrategies, gatewayv1beta1.StatusError, expectedValidationErrors)
 		})
 
 		Context("JWT config authorizations", func() {
@@ -174,7 +171,7 @@ var _ = Describe("Apirule controller validation", Serial, Ordered, func() {
 					"Attribute \".spec.rules[0].accessStrategies[0].config.authorizations[0].audiences\": value is empty",
 				}
 
-				testJwtHandlerConfigError(accessStrategies, expectedValidationErrors)
+				testJwtHandlerConfig(accessStrategies, gatewayv1beta1.StatusError, expectedValidationErrors)
 			})
 
 			It("should not allow creation of APIRule with empty RequiredScopes in jwt config authorizations", func() {
@@ -204,7 +201,7 @@ var _ = Describe("Apirule controller validation", Serial, Ordered, func() {
 					"Attribute \".spec.rules[0].accessStrategies[0].config.authorizations[0].requiredScopes\": value is empty",
 				}
 
-				testJwtHandlerConfigError(accessStrategies, expectedValidationErrors)
+				testJwtHandlerConfig(accessStrategies, gatewayv1beta1.StatusError, expectedValidationErrors)
 			})
 		})
 
@@ -293,14 +290,14 @@ var _ = Describe("Apirule controller validation", Serial, Ordered, func() {
 
 })
 
-func testConfigError(accessStrategies []*gatewayv1beta1.Authenticator, mutators []*gatewayv1beta1.Mutator, expectedValidationErrors []string) {
+func testConfig(accessStrategies []*gatewayv1beta1.Authenticator, mutators []*gatewayv1beta1.Mutator, expectedStatusCode gatewayv1beta1.StatusCode, expectedValidationErrors []string) {
 	// given
 	serviceName := generateTestName("httpbin", 5)
 	serviceHost := fmt.Sprintf("%s.kyma.local", serviceName)
-	testConfigErrorWithServiceAndHost(serviceName, serviceHost, accessStrategies, mutators, expectedValidationErrors)
+	testConfigWithServiceAndHost(serviceName, serviceHost, accessStrategies, mutators, expectedStatusCode, expectedValidationErrors)
 }
 
-func testConfigErrorWithServiceAndHost(serviceName string, host string, accessStrategies []*gatewayv1beta1.Authenticator, mutators []*gatewayv1beta1.Mutator, expectedValidationErrors []string) {
+func testConfigWithServiceAndHost(serviceName string, host string, accessStrategies []*gatewayv1beta1.Authenticator, mutators []*gatewayv1beta1.Mutator, expectedStatusCode gatewayv1beta1.StatusCode, expectedValidationErrors []string) {
 	// given
 	const (
 		testNameBase           = "status-test"
@@ -333,7 +330,7 @@ func testConfigErrorWithServiceAndHost(serviceName string, host string, accessSt
 		created := gatewayv1beta1.APIRule{}
 		g.Expect(c.Get(context.TODO(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &created)).Should(Succeed())
 		g.Expect(created.Status.APIRuleStatus).NotTo(BeNil())
-		g.Expect(created.Status.APIRuleStatus.Code).To(Equal(gatewayv1beta1.StatusError))
+		g.Expect(created.Status.APIRuleStatus.Code).To(Equal(expectedStatusCode))
 		for _, expected := range expectedValidationErrors {
 			g.Expect(created.Status.APIRuleStatus.Description).To(ContainSubstring(expected))
 		}
@@ -352,5 +349,5 @@ func testHostInBlockList() {
 	serviceName := generateTestName("httpbin", 5)
 
 	expectedErrors := []string{"Validation error: Attribute \".spec.host\": The subdomain api is blocklisted for kyma.local domain"}
-	testConfigErrorWithServiceAndHost(serviceName, "api.kyma.local", accessStrategies, nil, expectedErrors)
+	testConfigWithServiceAndHost(serviceName, "api.kyma.local", accessStrategies, nil, gatewayv1beta1.StatusError, expectedErrors)
 }

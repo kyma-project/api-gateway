@@ -69,12 +69,12 @@ spec:
                             properties:
                               jwks_urls:
                                 items:
-                                  pattern: ^(https://|file://).*$
+                                  pattern: ^(http://|https://|file://)[^\s]+$
                                   type: string
                                 type: array
                               trusted_issuers:
                                 items:
-                                  pattern: ^(https://|file://).*$
+                                  pattern: ^(http://|https://|file://)[^\s]+$
                                   type: string
                                 type: array
                             type: object
@@ -252,12 +252,12 @@ spec:
                             properties:
                               jwks_urls:
                                 items:
-                                  pattern: ^(https://|file://).*$
+                                  pattern: ^(http://|https://|file://)[^\s]+$
                                   type: string
                                 type: array
                               trusted_issuers:
                                 items:
-                                  pattern: ^(https://|file://).*$
+                                  pattern: ^(http://|https://|file://)[^\s]+$
                                   type: string
                                 type: array
                             type: object

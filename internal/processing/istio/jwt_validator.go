@@ -112,23 +112,10 @@ func hasInvalidAuthentications(attributePath string, authentications []*v1beta1.
 			attrPath := fmt.Sprintf("%s%s[%d]%s", attributePath, ".config.authentications", i, ".issuer")
 			failures = append(failures, validation.Failure{AttributePath: attrPath, Message: fmt.Sprintf("value is empty or not a valid url err=%s", err)})
 		}
-		// The https:// configuration for TrustedIssuers is not necessary in terms of security best practices,
-		// however it is part of "secure by default" configuration, as this is the most common use case for iss claim.
-		// If we want to allow some weaker configurations, we should have a dedicated configuration which allows that.
-		unsecuredIssuer, err := validation.IsUnsecuredURL(authentication.Issuer)
-		if unsecuredIssuer {
-			attrPath := fmt.Sprintf("%s%s[%d]%s", attributePath, ".config.authentications", i, ".issuer")
-			failures = append(failures, validation.Failure{AttributePath: attrPath, Message: fmt.Sprintf("value is not a secured url err=%s", err)})
-		}
 		invalidJwksUri, err := validation.IsInvalidURL(authentication.JwksUri)
 		if invalidJwksUri {
 			attrPath := fmt.Sprintf("%s%s[%d]%s", attributePath, ".config.authentications", i, ".jwksUri")
 			failures = append(failures, validation.Failure{AttributePath: attrPath, Message: fmt.Sprintf("value is empty or not a valid url err=%s", err)})
-		}
-		unsecuredJwksUri, err := validation.IsUnsecuredURL(authentication.JwksUri)
-		if unsecuredJwksUri {
-			attrPath := fmt.Sprintf("%s%s[%d]%s", attributePath, ".config.authentications", i, ".jwksUri")
-			failures = append(failures, validation.Failure{AttributePath: attrPath, Message: fmt.Sprintf("value is not a secured url err=%s", err)})
 		}
 		if len(authentication.FromHeaders) > 0 {
 			if hasFromParams {
