@@ -48,6 +48,14 @@ type APIRuleSpec struct {
 	// Rules represents collection of Rule to apply
 	// +kubebuilder:validation:MinItems=1
 	Rules []Rule `json:"rules"`
+	// Timeout for HTTP requests. The timeout can be configured up to 65 minutes.
+	// This is a Duration value; accepting only milliseconds, seconds, minutes and hours.
+	// See https://pkg.go.dev/time#ParseDuration for additional details on format.
+	// +kubebuilder:validation:Type=string
+	// +kubebuilder:validation:Format=duration
+	// +kubebuilder:validation:Pattern="^([0-9]+(\\.[0-9]+)?(ms|s|m|h))+$"
+	// +optional
+	Timeout *metav1.Duration `json:"timeout,omitempty"` // We additional restrict the pattern to milliseconds, seconds and minutes, because of the issue https://github.com/kubernetes/apiextensions-apiserver/issues/56
 }
 
 // APIRuleStatus defines the observed state of ApiRule
@@ -121,6 +129,14 @@ type Rule struct {
 	// Mutators to be used
 	// +optional
 	Mutators []*Mutator `json:"mutators,omitempty"`
+	// Timeout for HTTP requests. The timeout can be configured up to 65 minutes.
+	// This is a Duration value; accepting only milliseconds, seconds, minutes and hours.
+	// See https://pkg.go.dev/time#ParseDuration for additional details on format.
+	// +kubebuilder:validation:Type=string
+	// +kubebuilder:validation:Format=duration
+	// +kubebuilder:validation:Pattern="^([0-9]+(\\.[0-9]+)?(ms|s|m|h))+$"
+	// +optional
+	Timeout *metav1.Duration `json:"timeout,omitempty"` // We additional restrict the pattern to milliseconds, seconds and minutes, because of the issue https://github.com/kubernetes/apiextensions-apiserver/issues/56
 }
 
 // APIRuleResourceStatus .

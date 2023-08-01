@@ -2,12 +2,15 @@ package processors
 
 import (
 	"context"
+	"time"
 
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/api/v1beta1"
 	"github.com/kyma-project/api-gateway/internal/processing"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
+
+const defaultHttpTimeout = time.Second * 180
 
 // VirtualServiceProcessor is the generic processor that handles the Virtual Service in the reconciliation of API Rule.
 type VirtualServiceProcessor struct {
@@ -61,4 +64,16 @@ func (r VirtualServiceProcessor) getObjectChanges(desiredVs *networkingv1beta1.V
 	} else {
 		return processing.NewObjectCreateAction(desiredVs)
 	}
+}
+
+func GetVirtualServiceHttpTimeout(apiRuleSpec gatewayv1beta1.APIRuleSpec, rule gatewayv1beta1.Rule) time.Duration {
+	if rule.Timeout != nil {
+		return rule.Timeout.Duration
+	}
+
+	if apiRuleSpec.Timeout != nil {
+		return apiRuleSpec.Timeout.Duration
+	}
+
+	return defaultHttpTimeout
 }

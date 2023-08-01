@@ -48,6 +48,7 @@ type APIRuleValidator struct {
 	MutatorsValidator         mutatorValidator
 	InjectionValidator        injectionValidator
 	RulesValidator            rulesValidator
+	timeoutValidator          timeoutValidator
 	ServiceBlockList          map[string][]string
 	DomainAllowList           []string
 	HostBlockList             []string
@@ -62,20 +63,18 @@ type Failure struct {
 
 // Validate performs APIRule validation
 func (v *APIRuleValidator) Validate(ctx context.Context, client client.Client, api *gatewayv1beta1.APIRule, vsList networkingv1beta1.VirtualServiceList) []Failure {
-	var res []Failure
+	var failures []Failure
 
 	//Validate service on path level if it is created
 	if api.Spec.Service != nil {
-		res = append(res, v.validateService(ctx, client, ".spec.service", api)...)
+		failures = append(failures, v.validateService(".spec.service", api)...)
 	}
-	//Validate Host
-	res = append(res, v.validateHost(".spec.host", vsList, api)...)
-	//Validate Gateway
-	res = append(res, v.validateGateway(".spec.gateway", api.Spec.Gateway)...)
-	//Validate Rules
-	res = append(res, v.validateRules(ctx, client, ".spec.rules", api.Spec.Service == nil, api)...)
+	failures = append(failures, v.validateHost(".spec.host", vsList, api)...)
+	failures = append(failures, v.validateGateway(".spec.gateway", api.Spec.Gateway)...)
+	failures = append(failures, v.timeoutValidator.validateApiRule(*api)...)
+	failures = append(failures, v.validateRules(ctx, client, ".spec.rules", api.Spec.Service == nil, api)...)
 
-	return res
+	return failures
 }
 
 func (v *APIRuleValidator) ValidateConfig(config *helpers.Config) []Failure {
@@ -158,7 +157,7 @@ func (v *APIRuleValidator) validateHost(attributePath string, vsList networkingv
 	return problems
 }
 
-func (v *APIRuleValidator) validateService(ctx context.Context, client client.Client, attributePath string, api *gatewayv1beta1.APIRule) []Failure {
+func (v *APIRuleValidator) validateService(attributePath string, api *gatewayv1beta1.APIRule) []Failure {
 	var problems []Failure
 
 	for namespace, services := range v.ServiceBlockList {
@@ -240,6 +239,8 @@ func (v *APIRuleValidator) validateRules(ctx context.Context, client client.Clie
 			mutatorFailures := v.MutatorsValidator.Validate(attributePathWithRuleIndex, r)
 			problems = append(problems, mutatorFailures...)
 		}
+
+		problems = append(problems, v.timeoutValidator.validateRule(r, attributePathWithRuleIndex)...)
 	}
 
 	if v.RulesValidator != nil {

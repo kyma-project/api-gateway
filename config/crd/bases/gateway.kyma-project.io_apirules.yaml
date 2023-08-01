@@ -311,6 +311,14 @@ spec:
                       - name
                       - port
                       type: object
+                    timeout:
+                      description: Timeout for HTTP requests. The timeout can be configured
+                        up to 65 minutes. This is a Duration value; accepting only
+                        milliseconds, seconds, minutes and hours. See https://pkg.go.dev/time#ParseDuration
+                        for additional details on format.
+                      format: duration
+                      pattern: ^([0-9]+(\.[0-9]+)?(ms|s|m|h))+$
+                      type: string
                   required:
                   - accessStrategies
                   - methods
@@ -343,6 +351,14 @@ spec:
                 - name
                 - port
                 type: object
+              timeout:
+                description: Timeout for HTTP requests. The timeout can be configured
+                  up to 65 minutes. This is a Duration value; accepting only milliseconds,
+                  seconds, minutes and hours. See https://pkg.go.dev/time#ParseDuration
+                  for additional details on format.
+                format: duration
+                pattern: ^([0-9]+(\.[0-9]+)?(ms|s|m|h))+$
+                type: string
             required:
             - gateway
             - host

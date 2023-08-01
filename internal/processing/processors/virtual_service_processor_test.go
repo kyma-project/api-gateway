@@ -3,6 +3,7 @@ package processors_test
 import (
 	"context"
 	"fmt"
+	"time"
 
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/api/v1beta1"
 	"github.com/kyma-project/api-gateway/internal/builders"
@@ -76,6 +77,73 @@ var _ = Describe("Virtual Service Processor", func() {
 		Expect(result).To(HaveLen(1))
 		Expect(result[0].Action.String()).To(Equal("update"))
 	})
+})
+
+var _ = Describe("GetVirtualServiceHttpTimeout", func() {
+	It("should return default when no timeout is set", func() {
+		// given
+		apiRuleSpec := gatewayv1beta1.APIRuleSpec{}
+		rule := gatewayv1beta1.Rule{}
+
+		// when
+		timeout := processors.GetVirtualServiceHttpTimeout(apiRuleSpec, rule)
+
+		// then
+		Expect(timeout).To(Equal(time.Second * 180))
+	})
+
+	It("should return timeout from rule when timeout is set on rule only", func() {
+		// given
+		apiRuleSpec := gatewayv1beta1.APIRuleSpec{}
+		rule := gatewayv1beta1.Rule{
+			Timeout: &metav1.Duration{
+				Duration: time.Second * 10,
+			},
+		}
+
+		// when
+		timeout := processors.GetVirtualServiceHttpTimeout(apiRuleSpec, rule)
+
+		// then
+		Expect(timeout).To(Equal(time.Second * 10))
+	})
+
+	It("should return timeout from apiRule when timeout is set on apiRule only", func() {
+		// given
+		apiRuleSpec := gatewayv1beta1.APIRuleSpec{
+			Timeout: &metav1.Duration{
+				Duration: time.Second * 20,
+			},
+		}
+		rule := gatewayv1beta1.Rule{}
+
+		// when
+		timeout := processors.GetVirtualServiceHttpTimeout(apiRuleSpec, rule)
+
+		// then
+		Expect(timeout).To(Equal(time.Second * 20))
+	})
+
+	It("should return timeout from rule when timeout is set on both apiRule and rule", func() {
+		// given
+		apiRuleSpec := gatewayv1beta1.APIRuleSpec{
+			Timeout: &metav1.Duration{
+				Duration: time.Second * 20,
+			},
+		}
+		rule := gatewayv1beta1.Rule{
+			Timeout: &metav1.Duration{
+				Duration: time.Second * 10,
+			},
+		}
+
+		// when
+		timeout := processors.GetVirtualServiceHttpTimeout(apiRuleSpec, rule)
+
+		// then
+		Expect(timeout).To(Equal(time.Second * 10))
+	})
+
 })
 
 type mockVirtualServiceCreator struct {
