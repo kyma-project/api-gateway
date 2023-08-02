@@ -48,7 +48,7 @@ type APIRuleSpec struct {
 	// Rules represents collection of Rule to apply
 	// +kubebuilder:validation:MinItems=1
 	Rules []Rule `json:"rules"`
-	// Timeout for HTTP requests. The timeout can be configured up to 65 minutes.
+	// Timeout for HTTP requests. The maximum timeout is limited to 65 minutes.
 	// This is a Duration value; accepting only milliseconds, seconds, minutes and hours.
 	// See https://pkg.go.dev/time#ParseDuration for additional details on format.
 	// +kubebuilder:validation:Type=string
@@ -129,7 +129,8 @@ type Rule struct {
 	// Mutators to be used
 	// +optional
 	Mutators []*Mutator `json:"mutators,omitempty"`
-	// Timeout for HTTP requests. The timeout can be configured up to 65 minutes.
+	// Timeout for HTTP requests. Timeout for HTTP requests. The maximum timeout is limited to 65 minutes.
+	// Timeout definitions at this level have a higher precedence than the timeout definition at the spec.timeout level.
 	// This is a Duration value; accepting only milliseconds, seconds, minutes and hours.
 	// See https://pkg.go.dev/time#ParseDuration for additional details on format.
 	// +kubebuilder:validation:Type=string
