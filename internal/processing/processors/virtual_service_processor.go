@@ -68,11 +68,11 @@ func (r VirtualServiceProcessor) getObjectChanges(desiredVs *networkingv1beta1.V
 
 func GetVirtualServiceHttpTimeout(apiRuleSpec gatewayv1beta1.APIRuleSpec, rule gatewayv1beta1.Rule) time.Duration {
 	if rule.Timeout != nil {
-		return rule.Timeout.Duration
+		return time.Duration(*rule.Timeout) * time.Second
 	}
 
 	if apiRuleSpec.Timeout != nil {
-		return apiRuleSpec.Timeout.Duration
+		return time.Duration(*apiRuleSpec.Timeout) * time.Second
 	}
 
 	return defaultHttpTimeout

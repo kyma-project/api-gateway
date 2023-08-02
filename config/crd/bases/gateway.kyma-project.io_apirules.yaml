@@ -312,15 +312,11 @@ spec:
                       - port
                       type: object
                     timeout:
-                      description: Timeout for HTTP requests. Timeout for HTTP requests.
-                        The maximum timeout is limited to 65 minutes. Timeout definitions
-                        at this level have a higher precedence than the timeout definition
-                        at the spec.timeout level. This is a Duration value; accepting
-                        only milliseconds, seconds, minutes and hours. See https://pkg.go.dev/time#ParseDuration
-                        for additional details on format.
-                      format: duration
-                      pattern: ^([0-9]+(\.[0-9]+)?(ms|s|m|h))+$
-                      type: string
+                      description: Timeout for HTTP requests in seconds. The timeout
+                        can be configured up to 3900 seconds (65 minutes).
+                      maximum: 3900
+                      minimum: 1
+                      type: integer
                   required:
                   - accessStrategies
                   - methods
@@ -354,13 +350,11 @@ spec:
                 - port
                 type: object
               timeout:
-                description: Timeout for HTTP requests. The maximum timeout is limited
-                  to 65 minutes. This is a Duration value; accepting only milliseconds,
-                  seconds, minutes and hours. See https://pkg.go.dev/time#ParseDuration
-                  for additional details on format.
-                format: duration
-                pattern: ^([0-9]+(\.[0-9]+)?(ms|s|m|h))+$
-                type: string
+                description: Timeout for HTTP requests in seconds. The timeout can
+                  be configured up to 3900 seconds (65 minutes).
+                maximum: 3900
+                minimum: 1
+                type: integer
             required:
             - gateway
             - host

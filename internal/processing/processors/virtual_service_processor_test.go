@@ -18,6 +18,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
+var (
+	timeout10s gatewayv1beta1.Timeout = 10
+	timeout20s gatewayv1beta1.Timeout = 20
+)
+
 var _ = Describe("Virtual Service Processor", func() {
 	It("should create virtual service when no virtual service exists", func() {
 		// given
@@ -96,9 +101,7 @@ var _ = Describe("GetVirtualServiceHttpTimeout", func() {
 		// given
 		apiRuleSpec := gatewayv1beta1.APIRuleSpec{}
 		rule := gatewayv1beta1.Rule{
-			Timeout: &metav1.Duration{
-				Duration: time.Second * 10,
-			},
+			Timeout: &timeout10s,
 		}
 
 		// when
@@ -111,9 +114,7 @@ var _ = Describe("GetVirtualServiceHttpTimeout", func() {
 	It("should return timeout from apiRule when timeout is set on apiRule only", func() {
 		// given
 		apiRuleSpec := gatewayv1beta1.APIRuleSpec{
-			Timeout: &metav1.Duration{
-				Duration: time.Second * 20,
-			},
+			Timeout: &timeout20s,
 		}
 		rule := gatewayv1beta1.Rule{}
 
@@ -127,14 +128,10 @@ var _ = Describe("GetVirtualServiceHttpTimeout", func() {
 	It("should return timeout from rule when timeout is set on both apiRule and rule", func() {
 		// given
 		apiRuleSpec := gatewayv1beta1.APIRuleSpec{
-			Timeout: &metav1.Duration{
-				Duration: time.Second * 20,
-			},
+			Timeout: &timeout20s,
 		}
 		rule := gatewayv1beta1.Rule{
-			Timeout: &metav1.Duration{
-				Duration: time.Second * 10,
-			},
+			Timeout: &timeout10s,
 		}
 
 		// when

@@ -22,7 +22,6 @@ limitations under the License.
 package v1beta1
 
 import (
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
@@ -127,7 +126,7 @@ func (in *APIRuleSpec) DeepCopyInto(out *APIRuleSpec) {
 	}
 	if in.Timeout != nil {
 		in, out := &in.Timeout, &out.Timeout
-		*out = new(v1.Duration)
+		*out = new(Timeout)
 		**out = **in
 	}
 }
@@ -435,7 +434,7 @@ func (in *Rule) DeepCopyInto(out *Rule) {
 	}
 	if in.Timeout != nil {
 		in, out := &in.Timeout, &out.Timeout
-		*out = new(v1.Duration)
+		*out = new(Timeout)
 		**out = **in
 	}
 }

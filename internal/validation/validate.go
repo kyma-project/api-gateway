@@ -48,7 +48,6 @@ type APIRuleValidator struct {
 	MutatorsValidator         mutatorValidator
 	InjectionValidator        injectionValidator
 	RulesValidator            rulesValidator
-	timeoutValidator          timeoutValidator
 	ServiceBlockList          map[string][]string
 	DomainAllowList           []string
 	HostBlockList             []string
@@ -71,7 +70,6 @@ func (v *APIRuleValidator) Validate(ctx context.Context, client client.Client, a
 	}
 	failures = append(failures, v.validateHost(".spec.host", vsList, api)...)
 	failures = append(failures, v.validateGateway(".spec.gateway", api.Spec.Gateway)...)
-	failures = append(failures, v.timeoutValidator.validateApiRule(*api)...)
 	failures = append(failures, v.validateRules(ctx, client, ".spec.rules", api.Spec.Service == nil, api)...)
 
 	return failures
@@ -240,7 +238,6 @@ func (v *APIRuleValidator) validateRules(ctx context.Context, client client.Clie
 			problems = append(problems, mutatorFailures...)
 		}
 
-		problems = append(problems, v.timeoutValidator.validateRule(r, attributePathWithRuleIndex)...)
 	}
 
 	if v.RulesValidator != nil {

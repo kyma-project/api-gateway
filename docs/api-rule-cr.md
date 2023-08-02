@@ -30,7 +30,7 @@ spec:
     name: foo-service
     namespace: foo-namespace
     port: 8080
-  timeout: 5m  
+  timeout: 360  
   rules:
     - path: /.*
       methods: ["GET"]
@@ -85,7 +85,7 @@ This table lists all the possible parameters of a given resource together with t
 | **spec.service.name**            |  **NO**   | Specifies the name of the exposed service.                                                                                                                                                                                                                                                             |
 | **spec.service.namespace**       |  **NO**   | Specifies the Namespace of the exposed service.                                                                                                                                                                                                                                                        |
 | **spec.service.port**            |  **NO**   | Specifies the communication port of the exposed service.                                                                                                                                                                                                                                               |
-| **spec.timeout**                 |  **NO**   | Specifies the timeout for HTTP requests for all Oathkeeper access rules, but can be overridden for each rule. The maximum timeout is limited to 65 minutes. </br> If no timeout is specified, the default timeout of 180 seconds applies.                                                              |
+| **spec.timeout**                 |  **NO**   | Specifies the timeout for HTTP requests in seconds for all Oathkeeper access rules, but can be overridden for each rule. The maximum timeout is limited to 3900 seconds (65 minutes). </br> If no timeout is specified, the default timeout of 180 seconds applies.                                    |
 | **spec.rules**                   |  **YES**  | Specifies the list of Oathkeeper access rules.                                                                                                                                                                                                                                                         |
 | **spec.rules.service**           |  **NO**   | Services definitions at this level have higher precedence than the service definition at the **spec.service** level.                                                                                                                                                                                   |
 | **spec.rules.service.name**      |  **NO**   | Specifies the name of the exposed service.                                                                                                                                                                                                                                                             |
@@ -95,7 +95,7 @@ This table lists all the possible parameters of a given resource together with t
 | **spec.rules.methods**           |  **NO**   | Specifies the list of HTTP request methods available for **spec.rules.path**.                                                                                                                                                                                                                          |
 | **spec.rules.mutators**          |  **NO**   | Specifies the list of [Oathkeeper](https://www.ory.sh/docs/next/oathkeeper/pipeline/mutator) or Istio mutators.                                                                                                                                                                                        |
 | **spec.rules.accessStrategies**  |  **YES**  | Specifies the list of access strategies. Supported are [Oathkeeper](https://www.ory.sh/docs/next/oathkeeper/pipeline/authn) `oauth2_introspection`, `jwt`, `noop` and `allow`. We also support `jwt` as [Istio](https://istio.io/latest/docs/tasks/security/authorization/authz-jwt/) access strategy. |
-| **spec.rules.timeout**           |  **NO**   | Specifies the timeout for HTTP requests for the rule. The maximum timeout is limited to 65 minutes. Timeout definitions at this level have a higher precedence than the timeout definition at the **spec.timeout** level.                                                                              |
+| **spec.rules.timeout**           |  **NO**   | Specifies the timeout for HTTP requests for the rule in seconds. The maximum timeout is limited to 3900 seconds (65 minutes). Timeout definitions at this level have a higher precedence than the timeout definition at the **spec.timeout** level.                                                    |
 
 >**CAUTION:** If `service` is not defined at **spec.service** level, all defined rules must have `service` defined at **spec.rules.service** level. Otherwise, the validation fails.
 

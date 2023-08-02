@@ -10,8 +10,6 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // Tests needs to be executed serially because of the shared state of the JWT Handler in the API Controller.
@@ -85,9 +83,9 @@ var _ = Describe("APIRule timeout", Serial, func() {
 			})
 		})
 
-		Context("with 5m timeout", func() {
+		Context("with 40s timeout", func() {
 
-			timeout := 5 * time.Minute
+			var timeout gatewayv1beta1.Timeout = 40
 
 			testTimeoutOnRootLevel := func(jwtHandler *gatewayv1beta1.Handler) {
 				rule := testRule("/img", []string{"GET"}, nil, jwtHandler)
@@ -97,7 +95,7 @@ var _ = Describe("APIRule timeout", Serial, func() {
 				serviceHost := fmt.Sprintf("httpbin-%s.kyma.local", apiRuleName)
 
 				apiRule := testApiRule(apiRuleName, testNamespace, serviceName, testNamespace, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule})
-				apiRule.Spec.Timeout = &metav1.Duration{Duration: timeout}
+				apiRule.Spec.Timeout = &timeout
 
 				svc := testService(serviceName, testNamespace, testServicePort)
 
@@ -120,12 +118,12 @@ var _ = Describe("APIRule timeout", Serial, func() {
 					g.Expect(vsList.Items).To(HaveLen(1))
 
 					vs := vsList.Items[0]
-					g.Expect(vs.Spec.Http[0].Timeout.AsDuration()).To(Equal(5 * time.Minute))
+					g.Expect(vs.Spec.Http[0].Timeout.AsDuration()).To(Equal(40 * time.Second))
 				}, eventuallyTimeout).Should(Succeed())
 			}
 			testTimeoutOnRuleLevel := func(jwtHandler *gatewayv1beta1.Handler) {
 				rule := testRule("/img", []string{"GET"}, nil, jwtHandler)
-				rule.Timeout = &metav1.Duration{Duration: timeout}
+				rule.Timeout = &timeout
 				apiRuleName := generateTestName(testNameBase, testIDLength)
 				serviceName := testServiceNameBase
 				serviceHost := fmt.Sprintf("httpbin-%s.kyma.local", apiRuleName)
@@ -153,7 +151,7 @@ var _ = Describe("APIRule timeout", Serial, func() {
 					g.Expect(vsList.Items).To(HaveLen(1))
 
 					vs := vsList.Items[0]
-					g.Expect(vs.Spec.Http[0].Timeout.AsDuration()).To(Equal(timeout))
+					g.Expect(vs.Spec.Http[0].Timeout.AsDuration()).To(Equal(40 * time.Second))
 				}, eventuallyTimeout).Should(Succeed())
 			}
 
@@ -196,9 +194,9 @@ var _ = Describe("APIRule timeout", Serial, func() {
 			})
 		})
 
-		Context("with 80m timeout", func() {
+		Context("with 4800s timeout", func() {
 
-			timeout := 80 * time.Minute
+			var timeout gatewayv1beta1.Timeout = 4800
 
 			testTimeoutOnRootLevel := func(jwtHandler *gatewayv1beta1.Handler) {
 				rule := testRule("/img", []string{"GET"}, nil, jwtHandler)
@@ -208,56 +206,107 @@ var _ = Describe("APIRule timeout", Serial, func() {
 				serviceHost := fmt.Sprintf("httpbin-%s.kyma.local", apiRuleName)
 
 				apiRule := testApiRule(apiRuleName, testNamespace, serviceName, testNamespace, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule})
-				apiRule.Spec.Timeout = &metav1.Duration{Duration: timeout}
-
-				svc := testService(serviceName, testNamespace, testServicePort)
+				apiRule.Spec.Timeout = &timeout
 
 				// when
-				Expect(c.Create(context.TODO(), svc)).Should(Succeed())
-				Expect(c.Create(context.TODO(), apiRule)).Should(Succeed())
-				defer func() {
-					apiRuleTeardown(apiRule)
-					serviceTeardown(svc)
-				}()
+				err := c.Create(context.TODO(), apiRule)
 
-				expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusError)
-
-				By("Verifying APIRule status description")
-				Eventually(func(g Gomega) {
-					expectedApiRule := gatewayv1beta1.APIRule{}
-					g.Expect(c.Get(context.TODO(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &expectedApiRule)).Should(Succeed())
-					g.Expect(expectedApiRule.Status.APIRuleStatus).NotTo(BeNil())
-					g.Expect(expectedApiRule.Status.APIRuleStatus.Description).To(ContainSubstring("Validation error: Attribute \"spec.timeout\": Timeout must not exceed 65m"))
-				}, eventuallyTimeout).Should(Succeed())
+				// then
+				Expect(err).Should(HaveOccurred())
+				Expect(err.Error()).To(ContainSubstring("spec.timeout: Invalid value: 4800: spec.timeout in body should be less than or equal to 3900"))
 			}
 			testTimeoutOnRuleLevel := func(jwtHandler *gatewayv1beta1.Handler) {
 				rule := testRule("/img", []string{"GET"}, nil, jwtHandler)
-				rule.Timeout = &metav1.Duration{Duration: timeout}
+				rule.Timeout = &timeout
 				apiRuleName := generateTestName(testNameBase, testIDLength)
 				serviceName := testServiceNameBase
 				serviceHost := fmt.Sprintf("httpbin-%s.kyma.local", apiRuleName)
 
 				apiRule := testApiRule(apiRuleName, testNamespace, serviceName, testNamespace, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule})
 
-				svc := testService(serviceName, testNamespace, testServicePort)
+				// when
+				err := c.Create(context.TODO(), apiRule)
+
+				// then
+				Expect(err).Should(HaveOccurred())
+				Expect(err.Error()).To(ContainSubstring("spec.rules[0].timeout: Invalid value: 4800: spec.rules[0].timeout in body should be less than or equal to 3900"))
+			}
+
+			Context("with Ory JWT handler", func() {
+				Context("on APIRule root level", func() {
+					It("should set Status to Error and have validation error in ApiRule", func() {
+						updateJwtHandlerTo(helpers.JWT_HANDLER_ORY)
+						jwtHandler := testOryJWTHandler(testIssuer, defaultScopes)
+						testTimeoutOnRootLevel(jwtHandler)
+
+					})
+				})
+				Context("on rule level", func() {
+					It("should set Status to Error and have validation error in ApiRule", func() {
+						updateJwtHandlerTo(helpers.JWT_HANDLER_ORY)
+						jwtHandler := testOryJWTHandler(testIssuer, defaultScopes)
+						testTimeoutOnRuleLevel(jwtHandler)
+					})
+
+				})
+			})
+
+			Context("with Istio JWT handler", func() {
+				Context("on APIRule root level", func() {
+					It("should set Status to Error and have validation error in ApiRule", func() {
+						updateJwtHandlerTo(helpers.JWT_HANDLER_ISTIO)
+						jwtHandler := testIstioJWTHandler(testIssuer, testJwksUri)
+						testTimeoutOnRootLevel(jwtHandler)
+
+					})
+				})
+				Context("on rule level", func() {
+					It("should set Status to Error and have validation error in ApiRule", func() {
+						updateJwtHandlerTo(helpers.JWT_HANDLER_ISTIO)
+						jwtHandler := testIstioJWTHandler(testIssuer, testJwksUri)
+						testTimeoutOnRuleLevel(jwtHandler)
+					})
+
+				})
+			})
+		})
+
+		Context("with 0s timeout", func() {
+
+			var timeout gatewayv1beta1.Timeout = 0
+
+			testTimeoutOnRootLevel := func(jwtHandler *gatewayv1beta1.Handler) {
+				rule := testRule("/img", []string{"GET"}, nil, jwtHandler)
+
+				apiRuleName := generateTestName(testNameBase, testIDLength)
+				serviceName := testServiceNameBase
+				serviceHost := fmt.Sprintf("httpbin-%s.kyma.local", apiRuleName)
+
+				apiRule := testApiRule(apiRuleName, testNamespace, serviceName, testNamespace, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule})
+				apiRule.Spec.Timeout = &timeout
 
 				// when
-				Expect(c.Create(context.TODO(), svc)).Should(Succeed())
-				Expect(c.Create(context.TODO(), apiRule)).Should(Succeed())
-				defer func() {
-					apiRuleTeardown(apiRule)
-					serviceTeardown(svc)
-				}()
+				err := c.Create(context.TODO(), apiRule)
 
-				expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusError)
+				// then
+				Expect(err).Should(HaveOccurred())
+				Expect(err.Error()).To(ContainSubstring("spec.timeout: Invalid value: 0: spec.timeout in body should be greater than or equal to 1"))
+			}
+			testTimeoutOnRuleLevel := func(jwtHandler *gatewayv1beta1.Handler) {
+				rule := testRule("/img", []string{"GET"}, nil, jwtHandler)
+				rule.Timeout = &timeout
+				apiRuleName := generateTestName(testNameBase, testIDLength)
+				serviceName := testServiceNameBase
+				serviceHost := fmt.Sprintf("httpbin-%s.kyma.local", apiRuleName)
 
-				By("Verifying APIRule status description")
-				Eventually(func(g Gomega) {
-					expectedApiRule := gatewayv1beta1.APIRule{}
-					g.Expect(c.Get(context.TODO(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &expectedApiRule)).Should(Succeed())
-					g.Expect(expectedApiRule.Status.APIRuleStatus).NotTo(BeNil())
-					g.Expect(expectedApiRule.Status.APIRuleStatus.Description).To(ContainSubstring(".spec.rules[0].timeout\": Timeout must not exceed 65m"))
-				}, eventuallyTimeout).Should(Succeed())
+				apiRule := testApiRule(apiRuleName, testNamespace, serviceName, testNamespace, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule})
+
+				// when
+				err := c.Create(context.TODO(), apiRule)
+
+				// then
+				Expect(err).Should(HaveOccurred())
+				Expect(err.Error()).To(ContainSubstring("spec.rules[0].timeout: Invalid value: 0: spec.rules[0].timeout in body should be greater than or equal to 1"))
 			}
 
 			Context("with Ory JWT handler", func() {

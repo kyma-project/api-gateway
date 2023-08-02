@@ -945,6 +945,12 @@ var _ = Describe("Virtual Service Processor", func() {
 	})
 
 	Context("timeout", func() {
+
+		var (
+			timeout10s gatewayv1beta1.Timeout = 10
+			timeout20s gatewayv1beta1.Timeout = 20
+		)
+
 		It("should set default timeout when timeout is not configured", func() {
 			// given
 			strategies := []*gatewayv1beta1.Authenticator{
@@ -989,9 +995,7 @@ var _ = Describe("Virtual Service Processor", func() {
 			rules := []gatewayv1beta1.Rule{rule}
 
 			apiRule := GetAPIRuleFor(rules)
-			apiRule.Spec.Timeout = &metav1.Duration{
-				Duration: 10 * time.Second,
-			}
+			apiRule.Spec.Timeout = &timeout10s
 			client := GetFakeClient()
 			processor := istio.NewVirtualServiceProcessor(GetTestConfig())
 
@@ -1019,15 +1023,11 @@ var _ = Describe("Virtual Service Processor", func() {
 			}
 
 			rule := GetRuleFor(ApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, strategies)
-			rule.Timeout = &metav1.Duration{
-				Duration: 20 * time.Second,
-			}
+			rule.Timeout = &timeout20s
 			rules := []gatewayv1beta1.Rule{rule}
 
 			apiRule := GetAPIRuleFor(rules)
-			apiRule.Spec.Timeout = &metav1.Duration{
-				Duration: 10 * time.Second,
-			}
+			apiRule.Spec.Timeout = &timeout10s
 			client := GetFakeClient()
 			processor := istio.NewVirtualServiceProcessor(GetTestConfig())
 
@@ -1055,15 +1055,11 @@ var _ = Describe("Virtual Service Processor", func() {
 			}
 			ruleWithoutTimeout := GetRuleFor("/api-rule-spec-timeout", ApiMethods, []*gatewayv1beta1.Mutator{}, strategies)
 			ruleWithTimeout := GetRuleFor("/rule-timeout", ApiMethods, []*gatewayv1beta1.Mutator{}, strategies)
-			ruleWithTimeout.Timeout = &metav1.Duration{
-				Duration: 20 * time.Second,
-			}
+			ruleWithTimeout.Timeout = &timeout20s
 			rules := []gatewayv1beta1.Rule{ruleWithoutTimeout, ruleWithTimeout}
 
 			apiRule := GetAPIRuleFor(rules)
-			apiRule.Spec.Timeout = &metav1.Duration{
-				Duration: 10 * time.Second,
-			}
+			apiRule.Spec.Timeout = &timeout10s
 			client := GetFakeClient()
 			processor := istio.NewVirtualServiceProcessor(GetTestConfig())
 
@@ -1092,9 +1088,7 @@ var _ = Describe("Virtual Service Processor", func() {
 			}
 			ruleWithoutTimeout := GetRuleFor("/default-timeout", ApiMethods, []*gatewayv1beta1.Mutator{}, strategies)
 			ruleWithTimeout := GetRuleFor("/rule-timeout", ApiMethods, []*gatewayv1beta1.Mutator{}, strategies)
-			ruleWithTimeout.Timeout = &metav1.Duration{
-				Duration: 20 * time.Second,
-			}
+			ruleWithTimeout.Timeout = &timeout20s
 			rules := []gatewayv1beta1.Rule{ruleWithoutTimeout, ruleWithTimeout}
 
 			apiRule := GetAPIRuleFor(rules)
