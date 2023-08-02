@@ -85,7 +85,7 @@ var _ = Describe("Virtual Service Processor", func() {
 })
 
 var _ = Describe("GetVirtualServiceHttpTimeout", func() {
-	It("should return default when no timeout is set", func() {
+	It("should return default of 180s when no timeout is set", func() {
 		// given
 		apiRuleSpec := gatewayv1beta1.APIRuleSpec{}
 		rule := gatewayv1beta1.Rule{}
