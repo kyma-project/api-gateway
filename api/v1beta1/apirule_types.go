@@ -48,6 +48,8 @@ type APIRuleSpec struct {
 	// Rules represents collection of Rule to apply
 	// +kubebuilder:validation:MinItems=1
 	Rules []Rule `json:"rules"`
+	// +optional
+	Timeout *Timeout `json:"timeout,omitempty"`
 }
 
 // APIRuleStatus defines the observed state of ApiRule
@@ -121,6 +123,8 @@ type Rule struct {
 	// Mutators to be used
 	// +optional
 	Mutators []*Mutator `json:"mutators,omitempty"`
+	// +optional
+	Timeout *Timeout `json:"timeout,omitempty"`
 }
 
 // APIRuleResourceStatus .
@@ -181,3 +185,8 @@ type JwtHeader struct {
 	// +optional
 	Prefix string `json:"prefix,omitempty"`
 }
+
+// Timeout for HTTP requests in seconds. The timeout can be configured up to 3900 seconds (65 minutes).
+// +kubebuilder:validation:Minimum=1
+// +kubebuilder:validation:Maximum=3900
+type Timeout uint16 // We use unit16 instead of a time.Duration because there is a bug with duration that requires additional validation of the format. Issue: checking https://github.com/kubernetes/apiextensions-apiserver/issues/56

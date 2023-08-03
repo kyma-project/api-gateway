@@ -40,6 +40,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 		testPath                   = "/.*"
 		testIssuer                 = "https://oauth2.example.com/"
 		testJwksUri                = "https://oauth2.example.com/.well-known/jwks.json"
+		defaultHttpTimeout         = time.Second * 180
 	)
 
 	Context("when updating the APIRule with multiple paths", func() {
@@ -174,7 +175,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 									Route(builders.RouteDestination().Host(testOathkeeperSvcURL).Port(testOathkeeperPort)).
 									Headers(builders.NewHttpRouteHeadersBuilder().SetHostHeader(serviceHost).Get()).
 									CorsPolicy(defaultCorsPolicy).
-									Timeout(time.Second * helpers.DEFAULT_HTTP_TIMEOUT))
+									Timeout(defaultHttpTimeout))
 
 							gotSpec := *expectedSpec.Get()
 							g.Expect(*vs.Spec.DeepCopy()).To(Equal(*gotSpec.DeepCopy()))
@@ -272,13 +273,13 @@ var _ = Describe("APIRule Controller", Serial, func() {
 										Route(builders.RouteDestination().Host(testOathkeeperSvcURL).Port(testOathkeeperPort)).
 										Headers(builders.NewHttpRouteHeadersBuilder().SetHostHeader(serviceHost).Get()).
 										CorsPolicy(defaultCorsPolicy).
-										Timeout(time.Second * helpers.DEFAULT_HTTP_TIMEOUT)).
+										Timeout(defaultHttpTimeout)).
 									HTTP(builders.HTTPRoute().
 										Match(builders.MatchRequest().Uri().Regex("/headers")).
 										Route(builders.RouteDestination().Host(testOathkeeperSvcURL).Port(testOathkeeperPort)).
 										Headers(builders.NewHttpRouteHeadersBuilder().SetHostHeader(serviceHost).Get()).
 										CorsPolicy(defaultCorsPolicy).
-										Timeout(time.Second * helpers.DEFAULT_HTTP_TIMEOUT))
+										Timeout(defaultHttpTimeout))
 								gotSpec := *expectedSpec.Get()
 								g.Expect(*vs.Spec.DeepCopy()).To(Equal(*gotSpec.DeepCopy()))
 							}, eventuallyTimeout).Should(Succeed())
@@ -414,13 +415,13 @@ var _ = Describe("APIRule Controller", Serial, func() {
 										Route(builders.RouteDestination().Host(fmt.Sprintf("%s.%s.svc.cluster.local", serviceName, testNamespace)).Port(testServicePort)).
 										Headers(builders.NewHttpRouteHeadersBuilder().SetHostHeader(serviceHost).Get()).
 										CorsPolicy(defaultCorsPolicy).
-										Timeout(time.Second * helpers.DEFAULT_HTTP_TIMEOUT)).
+										Timeout(defaultHttpTimeout)).
 									HTTP(builders.HTTPRoute().
 										Match(builders.MatchRequest().Uri().Regex("/headers")).
 										Route(builders.RouteDestination().Host(fmt.Sprintf("%s.%s.svc.cluster.local", serviceName, testNamespace)).Port(testServicePort)).
 										Headers(builders.NewHttpRouteHeadersBuilder().SetHostHeader(serviceHost).Get()).
 										CorsPolicy(defaultCorsPolicy).
-										Timeout(time.Second * helpers.DEFAULT_HTTP_TIMEOUT))
+										Timeout(defaultHttpTimeout))
 								gotSpec := *expectedSpec.Get()
 								g.Expect(*vs.Spec.DeepCopy()).To(Equal(*gotSpec.DeepCopy()))
 							}, eventuallyTimeout).Should(Succeed())
@@ -723,25 +724,25 @@ var _ = Describe("APIRule Controller", Serial, func() {
 									Route(builders.RouteDestination().Host(testOathkeeperSvcURL).Port(testOathkeeperPort)).
 									Headers(builders.NewHttpRouteHeadersBuilder().SetHostHeader(serviceHost).Get()).
 									CorsPolicy(defaultCorsPolicy).
-									Timeout(time.Second * helpers.DEFAULT_HTTP_TIMEOUT)).
+									Timeout(defaultHttpTimeout)).
 								HTTP(builders.HTTPRoute().
 									Match(builders.MatchRequest().Uri().Regex("/headers")).
 									Route(builders.RouteDestination().Host(testOathkeeperSvcURL).Port(testOathkeeperPort)).
 									Headers(builders.NewHttpRouteHeadersBuilder().SetHostHeader(serviceHost).Get()).
 									CorsPolicy(defaultCorsPolicy).
-									Timeout(time.Second * helpers.DEFAULT_HTTP_TIMEOUT)).
+									Timeout(defaultHttpTimeout)).
 								HTTP(builders.HTTPRoute().
 									Match(builders.MatchRequest().Uri().Regex("/status")).
 									Route(builders.RouteDestination().Host(testOathkeeperSvcURL).Port(testOathkeeperPort)).
 									Headers(builders.NewHttpRouteHeadersBuilder().SetHostHeader(serviceHost).Get()).
 									CorsPolicy(defaultCorsPolicy).
-									Timeout(time.Second * helpers.DEFAULT_HTTP_TIMEOUT)).
+									Timeout(defaultHttpTimeout)).
 								HTTP(builders.HTTPRoute().
 									Match(builders.MatchRequest().Uri().Regex("/favicon")).
 									Route(builders.RouteDestination().Host("httpbin.atgo-system.svc.cluster.local").Port(443)). // "allow", no oathkeeper rule!
 									Headers(builders.NewHttpRouteHeadersBuilder().SetHostHeader(serviceHost).Get()).
 									CorsPolicy(defaultCorsPolicy).
-									Timeout(time.Second * helpers.DEFAULT_HTTP_TIMEOUT))
+									Timeout(defaultHttpTimeout))
 
 							gotSpec := *expectedSpec.Get()
 							g.Expect(*vs.Spec.DeepCopy()).To(Equal(*gotSpec.DeepCopy()))

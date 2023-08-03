@@ -19,7 +19,6 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	"github.com/onsi/ginkgo/v2/reporters"
 	"github.com/onsi/ginkgo/v2/types"
-	"github.com/onsi/gomega"
 	. "github.com/onsi/gomega"
 	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
@@ -1090,15 +1089,15 @@ var _ = Describe("Validator for", func() {
 func buildFakeClient(objs ...client.Object) client.Client {
 	scheme := runtime.NewScheme()
 	err := networkingv1beta1.AddToScheme(scheme)
-	gomega.Expect(err).NotTo(gomega.HaveOccurred())
+	Expect(err).NotTo(HaveOccurred())
 	err = rulev1alpha1.AddToScheme(scheme)
-	gomega.Expect(err).NotTo(gomega.HaveOccurred())
+	Expect(err).NotTo(HaveOccurred())
 	err = securityv1beta1.AddToScheme(scheme)
-	gomega.Expect(err).NotTo(gomega.HaveOccurred())
+	Expect(err).NotTo(HaveOccurred())
 	err = gatewayv1beta1.AddToScheme(scheme)
-	gomega.Expect(err).NotTo(gomega.HaveOccurred())
+	Expect(err).NotTo(HaveOccurred())
 	err = corev1.AddToScheme(scheme)
-	gomega.Expect(err).NotTo(gomega.HaveOccurred())
+	Expect(err).NotTo(HaveOccurred())
 
 	return fake.NewClientBuilder().WithScheme(scheme).WithObjects(objs...).Build()
 }

@@ -59,13 +59,12 @@ type CorsConfig struct {
 }
 
 type ReconciliationConfig struct {
-	OathkeeperSvc       string
-	OathkeeperSvcPort   uint32
-	CorsConfig          *CorsConfig
-	AdditionalLabels    map[string]string
-	DefaultDomainName   string
-	ServiceBlockList    map[string][]string
-	DomainAllowList     []string
-	HostBlockList       []string
-	HTTPTimeoutDuration int
+	OathkeeperSvc     string
+	OathkeeperSvcPort uint32
+	CorsConfig        *CorsConfig
+	AdditionalLabels  map[string]string
+	DefaultDomainName string
+	ServiceBlockList  map[string][]string
+	DomainAllowList   []string
+	HostBlockList     []string
 }

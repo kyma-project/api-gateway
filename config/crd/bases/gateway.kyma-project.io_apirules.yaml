@@ -311,6 +311,12 @@ spec:
                       - name
                       - port
                       type: object
+                    timeout:
+                      description: Timeout for HTTP requests in seconds. The timeout
+                        can be configured up to 3900 seconds (65 minutes).
+                      maximum: 3900
+                      minimum: 1
+                      type: integer
                   required:
                   - accessStrategies
                   - methods
@@ -343,6 +349,12 @@ spec:
                 - name
                 - port
                 type: object
+              timeout:
+                description: Timeout for HTTP requests in seconds. The timeout can
+                  be configured up to 3900 seconds (65 minutes).
+                maximum: 3900
+                minimum: 1
+                type: integer
             required:
             - gateway
             - host

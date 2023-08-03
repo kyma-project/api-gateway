@@ -8,30 +8,27 @@ import (
 	"github.com/kyma-project/api-gateway/internal/processing"
 	"github.com/kyma-project/api-gateway/internal/processing/processors"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
-	"time"
 )
 
 // NewVirtualServiceProcessor returns a VirtualServiceProcessor with the desired state handling specific for the Ory handler.
 func NewVirtualServiceProcessor(config processing.ReconciliationConfig) processors.VirtualServiceProcessor {
 	return processors.VirtualServiceProcessor{
 		Creator: virtualServiceCreator{
-			oathkeeperSvc:       config.OathkeeperSvc,
-			oathkeeperSvcPort:   config.OathkeeperSvcPort,
-			corsConfig:          config.CorsConfig,
-			additionalLabels:    config.AdditionalLabels,
-			defaultDomainName:   config.DefaultDomainName,
-			httpTimeoutDuration: config.HTTPTimeoutDuration,
+			oathkeeperSvc:     config.OathkeeperSvc,
+			oathkeeperSvcPort: config.OathkeeperSvcPort,
+			corsConfig:        config.CorsConfig,
+			additionalLabels:  config.AdditionalLabels,
+			defaultDomainName: config.DefaultDomainName,
 		},
 	}
 }
 
 type virtualServiceCreator struct {
-	oathkeeperSvc       string
-	oathkeeperSvcPort   uint32
-	corsConfig          *processing.CorsConfig
-	defaultDomainName   string
-	additionalLabels    map[string]string
-	httpTimeoutDuration int
+	oathkeeperSvc     string
+	oathkeeperSvcPort uint32
+	corsConfig        *processing.CorsConfig
+	defaultDomainName string
+	additionalLabels  map[string]string
 }
 
 // Create returns the Virtual Service using the configuration of the APIRule.
@@ -68,7 +65,7 @@ func (r virtualServiceCreator) Create(api *gatewayv1beta1.APIRule) (*networkingv
 			AllowHeaders(r.corsConfig.AllowHeaders...))
 		httpRouteBuilder.Headers(builders.NewHttpRouteHeadersBuilder().
 			SetHostHeader(helpers.GetHostWithDomain(*api.Spec.Host, r.defaultDomainName)).Get())
-		httpRouteBuilder.Timeout(time.Second * time.Duration(r.httpTimeoutDuration))
+		httpRouteBuilder.Timeout(processors.GetVirtualServiceHttpTimeout(api.Spec, rule))
 		vsSpecBuilder.HTTP(httpRouteBuilder)
 
 	}
