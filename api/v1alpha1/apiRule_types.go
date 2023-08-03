@@ -121,7 +121,7 @@ func init() {
 	SchemeBuilder.Register(&APIRule{}, &APIRuleList{})
 }
 
-// Represents a handler that authenticates provided credentials. See the corresponding type in the oathkeeper-maester project. provided credentials. See the corresponding type in the oathkeeper-maester project.
+// Represents a handler that authenticates provided credentials. See the corresponding type in the oathkeeper-maester project.
 type Authenticator struct {
 	*Handler `json:",inline"`
 }
