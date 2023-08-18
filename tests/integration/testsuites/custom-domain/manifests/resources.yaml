@@ -62,4 +62,3 @@ spec:
       tls:
         credentialName: "{{.NamePrefix}}-{{.TestID}}"
         mode: SIMPLE
----

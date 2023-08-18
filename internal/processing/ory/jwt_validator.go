@@ -38,11 +38,6 @@ func (o *handlerValidator) Validate(attributePath string, handler *gatewayv1beta
 				attrPath := fmt.Sprintf("%s[%d]", attributePath+".config.trusted_issuers", i)
 				problems = append(problems, validation.Failure{AttributePath: attrPath, Message: fmt.Sprintf("value is empty or not a valid url err=%s", err)})
 			}
-			unsecured, err := validation.IsUnsecuredURL(template.TrustedIssuers[i])
-			if unsecured {
-				attrPath := fmt.Sprintf("%s[%d]", attributePath+".config.trusted_issuers", i)
-				problems = append(problems, validation.Failure{AttributePath: attrPath, Message: fmt.Sprintf("value is not a secured url err=%s", err)})
-			}
 		}
 	}
 
@@ -52,11 +47,6 @@ func (o *handlerValidator) Validate(attributePath string, handler *gatewayv1beta
 			if invalid {
 				attrPath := fmt.Sprintf("%s[%d]", attributePath+".config.jwks_urls", i)
 				problems = append(problems, validation.Failure{AttributePath: attrPath, Message: fmt.Sprintf("value is empty or not a valid url err=%s", err)})
-			}
-			unsecured, err := validation.IsUnsecuredURL(template.JWKSUrls[i])
-			if unsecured {
-				attrPath := fmt.Sprintf("%s[%d]", attributePath+".config.jwks_urls", i)
-				problems = append(problems, validation.Failure{AttributePath: attrPath, Message: fmt.Sprintf("value is not a secured url err=%s", err)})
 			}
 		}
 	}

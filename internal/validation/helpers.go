@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/url"
 	"regexp"
-	"strings"
 
 	"k8s.io/apimachinery/pkg/runtime"
 
@@ -45,16 +44,6 @@ func IsInvalidURL(toTest string) (bool, error) {
 	_, err := url.ParseRequestURI(toTest)
 	if err != nil {
 		return true, err
-	}
-	return false, nil
-}
-
-func IsUnsecuredURL(toTest string) (bool, error) {
-	if len(toTest) == 0 {
-		return true, errors.New("value is empty")
-	}
-	if strings.HasPrefix(toTest, "http://") {
-		return true, errors.New("value is unsecure")
 	}
 	return false, nil
 }
