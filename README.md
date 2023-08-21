@@ -6,7 +6,7 @@ The API Gateway Controller manages Istio VirtualServices and Oathkeeper Rule. Th
 
 ## Prerequisites
 
-- recent version of Go language with support for modules (e.g: 1.20)
+- recent version of Go language with support for modules (e.g: 1.21)
 - make
 - kubectl
 - k3d
