@@ -143,7 +143,7 @@ install-kyma:
 ifndef JOB_TYPE
 	kyma deploy --ci -s main -c hack/kyma-components.yaml
 else ifeq ($(JOB_TYPE), presubmit)
-	kyma deploy --ci -s main -c hack/kyma-components.yaml \
+	kyma deploy -t 40m --ci -s main -c hack/kyma-components.yaml \
 	  --value api-gateway.global.images.api_gateway_controller.version=${PULL_IMAGE_VERSION} \
 	  --value api-gateway.global.images.api_gateway_controller.directory=dev \
 	  --value api-gateway.global.images.api-gateway-webhook-certificates.version=${PULL_IMAGE_VERSION} \
