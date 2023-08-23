@@ -58,7 +58,18 @@ export CLUSTER_NAME
 ./tests/integration/scripts/provision-gardener.sh
 
 ./tests/integration/scripts/jobguard.sh
-make install-kyma
+
+attempts_counter=1
+max_attempts=3
+success=false
+
+while [ $success = false ] && [ $attempts_counter -le $max_attempts ]; do
+  if make install-kyma; then
+    success=true
+  else
+    attempts_counter=$(( attempts_counter + 1 ))
+  fi
+done
 
 # KYMA_DOMAIN is required by the tests
 export KYMA_DOMAIN="${CLUSTER_NAME}.${GARDENER_KYMA_PROW_PROJECT_NAME}.shoot.live.k8s-hana.ondemand.com"
