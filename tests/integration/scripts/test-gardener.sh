@@ -56,7 +56,6 @@ CLUSTER_NAME=$(LC_ALL=C tr -dc 'a-z' < /dev/urandom | head -c10)
 export CLUSTER_NAME
 
 ./tests/integration/scripts/provision-gardener.sh
-sleep 60
 ./tests/integration/scripts/jobguard.sh
 
 attempts_counter=1
@@ -68,6 +67,7 @@ while [ $success = false ] && [ $attempts_counter -le $max_attempts ]; do
     success=true
   else
     attempts_counter=$(( attempts_counter + 1 ))
+    sleep 180
   fi
 done
 
