@@ -66,6 +66,6 @@ status:
   state: "Warning"
   description: "Cannot have same host on two gateways"
   conditions:
-  - '[...]'
+  - '[...]' # array of *metav1.Condition
 
 ```
