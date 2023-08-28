@@ -10,6 +10,10 @@ updates:
     commit-message:
       prefix: "gomod"
       include: "scope"
+    groups:
+      k8s-dependencies:
+        patterns:
+          - "k8s.io/*"
   - package-ecosystem: "docker"
     directory: "/"
     labels:
@@ -31,6 +35,10 @@ updates:
     commit-message:
       prefix: "gomod"
       include: "scope"
+    groups:
+      k8s-dependencies:
+        patterns:
+          - "k8s.io/*"
     ignore:
       - dependency-name: "*"
         update-types: ["version-update:semver-major", "version-update:semver-minor"]
