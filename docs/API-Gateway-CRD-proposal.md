@@ -51,9 +51,9 @@ spec:
             name: https
             protocol: HTTPS
         - hosts:
-          DNSEntry: "goat-dns" # If not defined, generate Gardener DNSEntry
             - "goat.example.com"
             - "goat1.example.com"
+          DNSEntry: "goat-dns" # If not defined, generate Gardener DNSEntry
           port:
             number: 80
             name: http
