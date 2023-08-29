@@ -19,7 +19,7 @@ require (
 	istio.io/client-go v1.18.1
 	k8s.io/apimachinery v0.27.5
 	k8s.io/client-go v0.27.5
-	sigs.k8s.io/controller-runtime v0.15.1
+	sigs.k8s.io/controller-runtime v0.15.2
 )
 
 require (
