@@ -58,10 +58,12 @@ spec:
             protocol: HTTP
           httpsRedirect: true # If on Protocol = HTTPS, set Warning
         # We should consider configuration for MTLS gateway
-  gardenCertificates: # Adding certificates in non-Gardener cluster should result in Warning/Error
+    gardenCertificates: # Adding certificates in non-Gardener cluster should result in Warning/Error
     - namespace: "some-ns" # Required
       name: "goat-certificate" # Required
       commonName: "*.example.com" # Required
+    gardenDNSEntries: # Adding DNSEntries in non-Gardener cluster should result in Warning/Error
+    - commonName: "*.example.com" # Required
 status:
   state: "Warning"
   description: "Cannot have same host on two gateways"
