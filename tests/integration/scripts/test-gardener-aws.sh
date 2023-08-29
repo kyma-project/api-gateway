@@ -20,7 +20,7 @@ export DISK_TYPE="gp2"
 export SCALER_MAX=3
 export SCALER_MIN=1
 export GARDENER_PROVIDER="aws"
-export GARDENER_REGION="eu-central-1"
-export GARDENER_ZONES="eu-central-1b,eu-central-1c,eu-central-1a"
+export GARDENER_REGION="eu-north-1"
+export GARDENER_ZONES="eu-north-1b,eu-north-1c,eu-north-1a"
 
 ./tests/integration/scripts/test-gardener.sh
