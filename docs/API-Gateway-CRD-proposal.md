@@ -41,7 +41,8 @@ spec:
     - namespace: "some-ns" # Required
       name: "gateway1" # Required
       servers:
-        - credentialName: "goat-certificate" # Required if Protocol = HTTPS
+        - certificate: "goat-certificate" # If not defined, generate Gardener certificate
+          DNSEntry: "goat-dns" # If not defined, generate Gardener DNSEntry
           hosts: # Creating  more than one for the same host:port configuration should result in  Warning
             - "goat.example.com"
             - "goat1.example.com"
@@ -50,6 +51,7 @@ spec:
             name: https
             protocol: HTTPS
         - hosts:
+          DNSEntry: "goat-dns" # If not defined, generate Gardener DNSEntry
             - "goat.example.com"
             - "goat1.example.com"
           port:
@@ -58,12 +60,12 @@ spec:
             protocol: HTTP
           httpsRedirect: true # If on Protocol = HTTPS, set Warning
         # We should consider configuration for MTLS gateway
-    gardenCertificates: # Adding certificates in non-Gardener cluster should result in Warning/Error
-    - namespace: "some-ns" # Required
-      name: "goat-certificate" # Required
-      commonName: "*.example.com" # Required
-    gardenDNSEntries: # Adding DNSEntries in non-Gardener cluster should result in Warning/Error
-    - commonName: "*.example.com" # Required
+    #gardenCertificates: # Adding certificates in non-Gardener cluster should result in Warning/Error
+    #- namespace: "some-ns" # Required
+    #  name: "goat-certificate" # Required
+    #  commonName: "*.example.com" # Required
+    #gardenDNSEntries: # Adding DNSEntries in non-Gardener cluster should result in Warning/Error
+    #- commonName: "*.example.com" # Required
 status:
   state: "Warning"
   description: "Cannot have same host on two gateways"
