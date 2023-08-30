@@ -3,12 +3,13 @@ package controllers_test
 import (
 	"context"
 	"fmt"
-	"github.com/kyma-project/api-gateway/internal/builders"
 	"os"
 	"path/filepath"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"testing"
 	"time"
+
+	"github.com/kyma-project/api-gateway/internal/builders"
 
 	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
 	"istio.io/api/networking/v1beta1"
