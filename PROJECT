@@ -6,7 +6,7 @@ domain: kyma-project.io
 layout:
 - go.kubebuilder.io/v3
 multigroup: true
-projectName: api-gateway-manager
+projectName: api-gateway
 repo: github.com/kyma-project/api-gateway
 resources:
 - api:
