@@ -1,10 +1,12 @@
-package controllers_test
+package gateway_test
 
 import (
 	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
+	"github.com/kyma-project/api-gateway/controllers/gateway"
 	"io"
 	"net/http"
 	"sigs.k8s.io/controller-runtime/pkg/config"
@@ -14,8 +16,6 @@ import (
 	"github.com/go-logr/logr"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 
-	gatewayv1beta1 "github.com/kyma-project/api-gateway/api/v1beta1"
-	"github.com/kyma-project/api-gateway/controllers"
 	"github.com/kyma-project/api-gateway/internal/helpers"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -68,12 +68,12 @@ var _ = Describe("Controller", func() {
 				Expect(err).ToNot(HaveOccurred())
 				Expect(result.Requeue).To(BeFalse())
 
-				apiRule := gatewayv1beta1.APIRule{}
+				apiRule := v1beta1.APIRule{}
 				err = ts.mgr.GetClient().Get(context.Background(), types.NamespacedName{Namespace: testAPI.Namespace, Name: testAPI.Name}, &apiRule)
 				Expect(err).ToNot(HaveOccurred())
-				Expect(apiRule.Status.APIRuleStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
-				Expect(apiRule.Status.AccessRuleStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
-				Expect(apiRule.Status.VirtualServiceStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
+				Expect(apiRule.Status.APIRuleStatus.Code).To(Equal(v1beta1.StatusOK))
+				Expect(apiRule.Status.AccessRuleStatus.Code).To(Equal(v1beta1.StatusOK))
+				Expect(apiRule.Status.VirtualServiceStatus.Code).To(Equal(v1beta1.StatusOK))
 			})
 
 			It("should fail if config is empty", func() {
@@ -93,10 +93,10 @@ var _ = Describe("Controller", func() {
 				_, err := reconciler.Reconcile(ctx, reconcile.Request{NamespacedName: types.NamespacedName{Namespace: testAPI.Namespace, Name: testAPI.Name}})
 				Expect(err).ToNot(HaveOccurred())
 
-				apiRule := gatewayv1beta1.APIRule{}
+				apiRule := v1beta1.APIRule{}
 				err = ts.mgr.GetClient().Get(context.Background(), types.NamespacedName{Namespace: testAPI.Namespace, Name: testAPI.Name}, &apiRule)
 				Expect(err).ToNot(HaveOccurred())
-				Expect(apiRule.Status.APIRuleStatus.Code).To(Equal(gatewayv1beta1.StatusError))
+				Expect(apiRule.Status.APIRuleStatus.Code).To(Equal(v1beta1.StatusError))
 			})
 
 			It("should fail if config is in wrong format", func() {
@@ -116,10 +116,10 @@ var _ = Describe("Controller", func() {
 				_, err := reconciler.Reconcile(ctx, reconcile.Request{NamespacedName: types.NamespacedName{Namespace: testAPI.Namespace, Name: testAPI.Name}})
 				Expect(err).ToNot(HaveOccurred())
 
-				apiRule := gatewayv1beta1.APIRule{}
+				apiRule := v1beta1.APIRule{}
 				err = ts.mgr.GetClient().Get(context.Background(), types.NamespacedName{Namespace: testAPI.Namespace, Name: testAPI.Name}, &apiRule)
 				Expect(err).ToNot(HaveOccurred())
-				Expect(apiRule.Status.APIRuleStatus.Code).To(Equal(gatewayv1beta1.StatusError))
+				Expect(apiRule.Status.APIRuleStatus.Code).To(Equal(v1beta1.StatusError))
 			})
 
 			It("should fail if config is unsupported", func() {
@@ -139,10 +139,10 @@ var _ = Describe("Controller", func() {
 				_, err := reconciler.Reconcile(ctx, reconcile.Request{NamespacedName: types.NamespacedName{Namespace: testAPI.Namespace, Name: testAPI.Name}})
 				Expect(err).ToNot(HaveOccurred())
 
-				apiRule := gatewayv1beta1.APIRule{}
+				apiRule := v1beta1.APIRule{}
 				err = ts.mgr.GetClient().Get(context.Background(), types.NamespacedName{Namespace: testAPI.Namespace, Name: testAPI.Name}, &apiRule)
 				Expect(err).ToNot(HaveOccurred())
-				Expect(apiRule.Status.APIRuleStatus.Code).To(Equal(gatewayv1beta1.StatusError))
+				Expect(apiRule.Status.APIRuleStatus.Code).To(Equal(v1beta1.StatusError))
 
 				Expect(apiRule.Status.APIRuleStatus.Description).To(Equal(`Validation error: Attribute "": Unsupported JWT Handler: foo`))
 			})
@@ -166,20 +166,20 @@ var _ = Describe("Controller", func() {
 					Expect(err).ToNot(HaveOccurred())
 					Expect(result.Requeue).To(BeFalse())
 
-					apiRule := gatewayv1beta1.APIRule{}
+					apiRule := v1beta1.APIRule{}
 					err = ts.mgr.GetClient().Get(context.Background(), types.NamespacedName{Namespace: testAPI.Namespace, Name: testAPI.Name}, &apiRule)
 					Expect(err).ToNot(HaveOccurred())
-					Expect(apiRule.Status.APIRuleStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
-					Expect(apiRule.Status.VirtualServiceStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
-					Expect(apiRule.Status.RequestAuthenticationStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
-					Expect(apiRule.Status.AuthorizationPolicyStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
+					Expect(apiRule.Status.APIRuleStatus.Code).To(Equal(v1beta1.StatusOK))
+					Expect(apiRule.Status.VirtualServiceStatus.Code).To(Equal(v1beta1.StatusOK))
+					Expect(apiRule.Status.RequestAuthenticationStatus.Code).To(Equal(v1beta1.StatusOK))
+					Expect(apiRule.Status.AuthorizationPolicyStatus.Code).To(Equal(v1beta1.StatusOK))
 				})
 			})
 		})
 	})
 })
 
-func getApiRule(authStrategy string, authConfig *runtime.RawExtension) *gatewayv1beta1.APIRule {
+func getApiRule(authStrategy string, authConfig *runtime.RawExtension) *v1beta1.APIRule {
 	var (
 		serviceName        = "test"
 		servicePort uint32 = 8000
@@ -188,27 +188,27 @@ func getApiRule(authStrategy string, authConfig *runtime.RawExtension) *gatewayv
 		gateway            = "some-gateway.some-namespace.foo"
 	)
 
-	return &gatewayv1beta1.APIRule{
+	return &v1beta1.APIRule{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:       "test",
 			Namespace:  "some-namespace",
 			Generation: 1,
 		},
-		Spec: gatewayv1beta1.APIRuleSpec{
+		Spec: v1beta1.APIRuleSpec{
 			Host: &host,
-			Service: &gatewayv1beta1.Service{
+			Service: &v1beta1.Service{
 				Name:       &serviceName,
 				Port:       &servicePort,
 				IsExternal: &isExternal,
 			},
 			Gateway: &gateway,
-			Rules: []gatewayv1beta1.Rule{
+			Rules: []v1beta1.Rule{
 				{
 					Path:    "/.*",
 					Methods: []string{"GET"},
-					AccessStrategies: []*gatewayv1beta1.Authenticator{
+					AccessStrategies: []*v1beta1.Authenticator{
 						{
-							Handler: &gatewayv1beta1.Handler{
+							Handler: &v1beta1.Handler{
 								Name:   authStrategy,
 								Config: authConfig,
 							},
@@ -236,8 +236,8 @@ func getService(name string) *corev1.Service {
 
 func getJWTIstioConfig() *runtime.RawExtension {
 	return getRawConfig(
-		gatewayv1beta1.JwtConfig{
-			Authentications: []*gatewayv1beta1.JwtAuthentication{
+		v1beta1.JwtConfig{
+			Authentications: []*v1beta1.JwtAuthentication{
 				{
 					Issuer:  "https://example.com/",
 					JwksUri: "https://example.com/.well-known/jwks.json",
@@ -256,14 +256,14 @@ func getRawConfig(config any) *runtime.RawExtension {
 
 func getAPIReconciler(mgr manager.Manager) reconcile.Reconciler {
 
-	reconcilerConfig := controllers.ApiRuleReconcilerConfiguration{
+	reconcilerConfig := gateway.ApiRuleReconcilerConfiguration{
 		AllowListedDomains: "bar, kyma.local",
 		CorsAllowOrigins:   "regex:.*",
 		CorsAllowMethods:   "GET,POST,PUT,DELETE",
 		CorsAllowHeaders:   "header1,header2",
 	}
 
-	apiReconciler, err := controllers.NewApiRuleReconciler(mgr, reconcilerConfig)
+	apiReconciler, err := gateway.NewApiRuleReconciler(mgr, reconcilerConfig)
 	Expect(err).NotTo(HaveOccurred())
 
 	return apiReconciler
@@ -274,7 +274,7 @@ type testSuite struct {
 }
 
 func getTestSuite(objects ...client.Object) *testSuite {
-	err := gatewayv1beta1.AddToScheme(scheme.Scheme)
+	err := v1beta1.AddToScheme(scheme.Scheme)
 	Expect(err).NotTo(HaveOccurred())
 	err = networkingv1beta1.AddToScheme(scheme.Scheme)
 	Expect(err).NotTo(HaveOccurred())

@@ -1,8 +1,10 @@
-package controllers_test
+package gateway_test
 
 import (
 	"context"
 	"fmt"
+	v1beta12 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
+	"github.com/kyma-project/api-gateway/controllers/gateway"
 	"github.com/kyma-project/api-gateway/internal/builders"
 	"os"
 	"path/filepath"
@@ -19,8 +21,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 
-	gatewayv1beta1 "github.com/kyma-project/api-gateway/api/v1beta1"
-	"github.com/kyma-project/api-gateway/controllers"
 	"github.com/kyma-project/api-gateway/internal/helpers"
 	. "github.com/onsi/ginkgo/v2"
 	"github.com/onsi/ginkgo/v2/reporters"
@@ -54,7 +54,7 @@ var (
 
 	defaultMethods  = []string{"GET", "PUT"}
 	defaultScopes   = []string{"foo", "bar"}
-	defaultMutators = []*gatewayv1beta1.Mutator{
+	defaultMutators = []*v1beta12.Mutator{
 		{
 			Handler: noConfigHandler("noop"),
 		},
@@ -99,7 +99,7 @@ var _ = BeforeSuite(func(specCtx SpecContext) {
 
 	s := runtime.NewScheme()
 
-	Expect(gatewayv1beta1.AddToScheme(s)).Should(Succeed())
+	Expect(v1beta12.AddToScheme(s)).Should(Succeed())
 	Expect(rulev1alpha1.AddToScheme(s)).Should(Succeed())
 	Expect(networkingv1beta1.AddToScheme(s)).Should(Succeed())
 	Expect(securityv1beta1.AddToScheme(s)).Should(Succeed())
@@ -139,7 +139,7 @@ var _ = BeforeSuite(func(specCtx SpecContext) {
 	}
 	Expect(c.Create(context.TODO(), cm)).Should(Succeed())
 
-	reconcilerConfig := controllers.ApiRuleReconcilerConfiguration{
+	reconcilerConfig := gateway.ApiRuleReconcilerConfiguration{
 		OathkeeperSvcAddr:         testOathkeeperSvcURL,
 		OathkeeperSvcPort:         testOathkeeperPort,
 		AllowListedDomains:        "bar, kyma.local",
@@ -151,7 +151,7 @@ var _ = BeforeSuite(func(specCtx SpecContext) {
 		ErrorReconciliationPeriod: 2,
 	}
 
-	apiReconciler, err := controllers.NewApiRuleReconciler(mgr, reconcilerConfig)
+	apiReconciler, err := gateway.NewApiRuleReconciler(mgr, reconcilerConfig)
 	Expect(err).NotTo(HaveOccurred())
 
 	Expect(apiReconciler.SetupWithManager(mgr)).Should(Succeed())

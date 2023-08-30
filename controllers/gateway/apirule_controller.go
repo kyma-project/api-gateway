@@ -14,12 +14,13 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package controllers
+package gateway
 
 import (
 	"context"
 	"encoding/json"
 	"fmt"
+	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"time"
 
 	"sigs.k8s.io/controller-runtime/pkg/builder"
@@ -30,7 +31,6 @@ import (
 	"github.com/kyma-project/api-gateway/internal/validation"
 
 	"github.com/go-logr/logr"
-	gatewayv1beta1 "github.com/kyma-project/api-gateway/api/v1beta1"
 	"github.com/kyma-project/api-gateway/internal/processing"
 	corev1 "k8s.io/api/core/v1"
 	apierrs "k8s.io/apimachinery/pkg/api/errors"

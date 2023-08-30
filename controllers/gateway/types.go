@@ -1,4 +1,4 @@
-package controllers
+package gateway
 
 import (
 	"github.com/go-logr/logr"

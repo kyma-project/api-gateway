@@ -2,9 +2,9 @@ package v1alpha1
 
 import (
 	"encoding/json"
+	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"log"
 
-	"github.com/kyma-project/api-gateway/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
 )
 

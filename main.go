@@ -19,9 +19,14 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/kyma-project/api-gateway/controllers/gateway"
 	"os"
-	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"strings"
+
+	gatewayv1alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v1alpha1"
+	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
+	"sigs.k8s.io/controller-runtime/pkg/webhook"
+
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
 
@@ -42,11 +47,11 @@ import (
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 
-	gatewayv1alpha1 "github.com/kyma-project/api-gateway/api/v1alpha1"
-	gatewayv1beta1 "github.com/kyma-project/api-gateway/api/v1beta1"
-	"github.com/kyma-project/api-gateway/controllers"
 	"github.com/kyma-project/api-gateway/internal/validation"
 	"github.com/pkg/errors"
+
+	operatorv1alpha1 "github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
+	operatorcontrollers "github.com/kyma-project/api-gateway/controllers/operator"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -71,6 +76,7 @@ func init() {
 	utilruntime.Must(networkingv1beta1.AddToScheme(scheme))
 	utilruntime.Must(rulev1alpha1.AddToScheme(scheme))
 	utilruntime.Must(securityv1beta1.AddToScheme(scheme))
+	utilruntime.Must(operatorv1alpha1.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
 }
 
@@ -165,7 +171,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	config := controllers.ApiRuleReconcilerConfiguration{
+	config := gateway.ApiRuleReconcilerConfiguration{
 		OathkeeperSvcAddr:         oathkeeperSvcAddr,
 		OathkeeperSvcPort:         oathkeeperSvcPort,
 		AllowListedDomains:        allowListedDomains,
@@ -179,7 +185,7 @@ func main() {
 		ErrorReconciliationPeriod: errorReconciliationPeriod,
 	}
 
-	reconciler, err := controllers.NewApiRuleReconciler(mgr, config)
+	reconciler, err := gateway.NewApiRuleReconciler(mgr, config)
 	if err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "APIRule")
 		os.Exit(1)
@@ -190,6 +196,13 @@ func main() {
 	}
 	if err = (&gatewayv1beta1.APIRule{}).SetupWebhookWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create webhook", "webhook", "APIRule")
+		os.Exit(1)
+	}
+	if err = (&operatorcontrollers.APIGatewayReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "APIGateway")
 		os.Exit(1)
 	}
 	//+kubebuilder:scaffold:builder

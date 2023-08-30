@@ -3,8 +3,8 @@ package processors_test
 import (
 	"context"
 	"fmt"
+	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 
-	gatewayv1beta1 "github.com/kyma-project/api-gateway/api/v1beta1"
 	"github.com/kyma-project/api-gateway/internal/builders"
 	"github.com/kyma-project/api-gateway/internal/processing"
 	. "github.com/kyma-project/api-gateway/internal/processing/internal/test"
@@ -22,7 +22,7 @@ import (
 var _ = Describe("Access Rule Processor", func() {
 	It("should create access rule when no exists", func() {
 		// given
-		apiRule := &gatewayv1beta1.APIRule{}
+		apiRule := &v1beta1.APIRule{}
 
 		processor := processors.AccessRuleProcessor{
 			Creator: mockCreator{
@@ -47,16 +47,16 @@ var _ = Describe("Access Rule Processor", func() {
 
 	It("should update access rule when path exists", func() {
 		// given
-		noop := []*gatewayv1beta1.Authenticator{
+		noop := []*v1beta1.Authenticator{
 			{
-				Handler: &gatewayv1beta1.Handler{
+				Handler: &v1beta1.Handler{
 					Name: "noop",
 				},
 			},
 		}
 
-		noopRule := GetRuleFor("path", ApiMethods, []*gatewayv1beta1.Mutator{}, noop)
-		rules := []gatewayv1beta1.Rule{noopRule}
+		noopRule := GetRuleFor("path", ApiMethods, []*v1beta1.Mutator{}, noop)
+		rules := []v1beta1.Rule{noopRule}
 
 		apiRule := GetAPIRuleFor(rules)
 
@@ -86,7 +86,7 @@ var _ = Describe("Access Rule Processor", func() {
 		Expect(err).NotTo(HaveOccurred())
 		err = networkingv1beta1.AddToScheme(scheme)
 		Expect(err).NotTo(HaveOccurred())
-		err = gatewayv1beta1.AddToScheme(scheme)
+		err = v1beta1.AddToScheme(scheme)
 		Expect(err).NotTo(HaveOccurred())
 
 		client := fake.NewClientBuilder().WithScheme(scheme).WithObjects(&rule, &vs).Build()
@@ -113,16 +113,16 @@ var _ = Describe("Access Rule Processor", func() {
 
 	It("should delete access rule", func() {
 		// given
-		noop := []*gatewayv1beta1.Authenticator{
+		noop := []*v1beta1.Authenticator{
 			{
-				Handler: &gatewayv1beta1.Handler{
+				Handler: &v1beta1.Handler{
 					Name: "noop",
 				},
 			},
 		}
 
-		noopRule := GetRuleFor("same", ApiMethods, []*gatewayv1beta1.Mutator{}, noop)
-		rules := []gatewayv1beta1.Rule{noopRule}
+		noopRule := GetRuleFor("same", ApiMethods, []*v1beta1.Mutator{}, noop)
+		rules := []v1beta1.Rule{noopRule}
 
 		apiRule := GetAPIRuleFor(rules)
 
@@ -152,7 +152,7 @@ var _ = Describe("Access Rule Processor", func() {
 		Expect(err).NotTo(HaveOccurred())
 		err = networkingv1beta1.AddToScheme(scheme)
 		Expect(err).NotTo(HaveOccurred())
-		err = gatewayv1beta1.AddToScheme(scheme)
+		err = v1beta1.AddToScheme(scheme)
 		Expect(err).NotTo(HaveOccurred())
 
 		client := fake.NewClientBuilder().WithScheme(scheme).WithObjects(&rule, &vs).Build()
@@ -176,16 +176,16 @@ var _ = Describe("Access Rule Processor", func() {
 	When("rule exists and rule path is different", func() {
 		It("should create new rule and delete old rule", func() {
 			// given
-			noop := []*gatewayv1beta1.Authenticator{
+			noop := []*v1beta1.Authenticator{
 				{
-					Handler: &gatewayv1beta1.Handler{
+					Handler: &v1beta1.Handler{
 						Name: "noop",
 					},
 				},
 			}
 
-			noopRule := GetRuleFor("newPath", ApiMethods, []*gatewayv1beta1.Mutator{}, noop)
-			rules := []gatewayv1beta1.Rule{noopRule}
+			noopRule := GetRuleFor("newPath", ApiMethods, []*v1beta1.Mutator{}, noop)
+			rules := []v1beta1.Rule{noopRule}
 
 			apiRule := GetAPIRuleFor(rules)
 
@@ -215,7 +215,7 @@ var _ = Describe("Access Rule Processor", func() {
 			Expect(err).NotTo(HaveOccurred())
 			err = networkingv1beta1.AddToScheme(scheme)
 			Expect(err).NotTo(HaveOccurred())
-			err = gatewayv1beta1.AddToScheme(scheme)
+			err = v1beta1.AddToScheme(scheme)
 			Expect(err).NotTo(HaveOccurred())
 
 			client := fake.NewClientBuilder().WithScheme(scheme).WithObjects(&rule, &vs).Build()
@@ -269,7 +269,7 @@ type mockCreator struct {
 	createMock func() map[string]*rulev1alpha1.Rule
 }
 
-func (r mockCreator) Create(_ *gatewayv1beta1.APIRule) map[string]*rulev1alpha1.Rule {
+func (r mockCreator) Create(_ *v1beta1.APIRule) map[string]*rulev1alpha1.Rule {
 	return r.createMock()
 }
 

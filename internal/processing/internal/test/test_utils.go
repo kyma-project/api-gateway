@@ -3,9 +3,8 @@ package processing_test
 import (
 	"encoding/json"
 	"fmt"
+	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 
-	apirulev1beta1 "github.com/kyma-project/api-gateway/api/v1beta1"
-	gatewayv1beta1 "github.com/kyma-project/api-gateway/api/v1beta1"
 	"github.com/kyma-project/api-gateway/internal/processing"
 	"github.com/onsi/gomega"
 	. "github.com/onsi/gomega"
@@ -90,8 +89,8 @@ func GetFakeClient(objs ...client.Object) client.Client {
 	return fake.NewClientBuilder().WithScheme(scheme).WithObjects(objs...).Build()
 }
 
-func GetRuleFor(path string, methods []string, mutators []*apirulev1beta1.Mutator, accessStrategies []*apirulev1beta1.Authenticator) apirulev1beta1.Rule {
-	return apirulev1beta1.Rule{
+func GetRuleFor(path string, methods []string, mutators []*gatewayv1beta1.Mutator, accessStrategies []*gatewayv1beta1.Authenticator) gatewayv1beta1.Rule {
+	return gatewayv1beta1.Rule{
 		Path:             path,
 		Methods:          methods,
 		Mutators:         mutators,
@@ -99,8 +98,8 @@ func GetRuleFor(path string, methods []string, mutators []*apirulev1beta1.Mutato
 	}
 }
 
-func GetRuleWithServiceFor(path string, methods []string, mutators []*apirulev1beta1.Mutator, accessStrategies []*apirulev1beta1.Authenticator, service *apirulev1beta1.Service) apirulev1beta1.Rule {
-	return apirulev1beta1.Rule{
+func GetRuleWithServiceFor(path string, methods []string, mutators []*gatewayv1beta1.Mutator, accessStrategies []*gatewayv1beta1.Authenticator, service *gatewayv1beta1.Service) gatewayv1beta1.Rule {
+	return gatewayv1beta1.Rule{
 		Path:             path,
 		Methods:          methods,
 		Mutators:         mutators,
@@ -109,11 +108,11 @@ func GetRuleWithServiceFor(path string, methods []string, mutators []*apirulev1b
 	}
 }
 
-func GetJwtRuleWithService(jwtIssuer, jwksUri, serviceName string, namespace ...string) apirulev1beta1.Rule {
+func GetJwtRuleWithService(jwtIssuer, jwksUri, serviceName string, namespace ...string) gatewayv1beta1.Rule {
 	jwtConfigJSON := fmt.Sprintf(`{"authentications": [{"issuer": "%s", "jwksUri": "%s"}]}`, jwtIssuer, jwksUri)
-	jwt := []*apirulev1beta1.Authenticator{
+	jwt := []*gatewayv1beta1.Authenticator{
 		{
-			Handler: &apirulev1beta1.Handler{
+			Handler: &gatewayv1beta1.Handler{
 				Name: "jwt",
 				Config: &runtime.RawExtension{
 					Raw: []byte(jwtConfigJSON),
@@ -123,7 +122,7 @@ func GetJwtRuleWithService(jwtIssuer, jwksUri, serviceName string, namespace ...
 	}
 
 	port := uint32(8080)
-	jwtRuleService := &apirulev1beta1.Service{
+	jwtRuleService := &gatewayv1beta1.Service{
 		Name: &serviceName,
 		Port: &port,
 	}
@@ -131,11 +130,11 @@ func GetJwtRuleWithService(jwtIssuer, jwksUri, serviceName string, namespace ...
 		jwtRuleService.Namespace = &namespace[0]
 	}
 
-	return GetRuleWithServiceFor("path", ApiMethods, []*apirulev1beta1.Mutator{}, jwt, jwtRuleService)
+	return GetRuleWithServiceFor("path", ApiMethods, []*gatewayv1beta1.Mutator{}, jwt, jwtRuleService)
 }
 
-func GetAPIRuleFor(rules []apirulev1beta1.Rule, namespace ...string) *apirulev1beta1.APIRule {
-	apiRule := apirulev1beta1.APIRule{
+func GetAPIRuleFor(rules []gatewayv1beta1.Rule, namespace ...string) *gatewayv1beta1.APIRule {
+	apiRule := gatewayv1beta1.APIRule{
 		ObjectMeta: v1.ObjectMeta{
 			Name:      ApiName,
 			UID:       ApiUID,
@@ -145,9 +144,9 @@ func GetAPIRuleFor(rules []apirulev1beta1.Rule, namespace ...string) *apirulev1b
 			APIVersion: ApiAPIVersion,
 			Kind:       ApiKind,
 		},
-		Spec: apirulev1beta1.APIRuleSpec{
+		Spec: gatewayv1beta1.APIRuleSpec{
 			Gateway: &ApiGateway,
-			Service: &apirulev1beta1.Service{
+			Service: &gatewayv1beta1.Service{
 				Name: &ServiceName,
 				Port: &ServicePort,
 			},

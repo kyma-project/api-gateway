@@ -4,12 +4,11 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"net/url"
 	"regexp"
 
 	"k8s.io/apimachinery/pkg/runtime"
-
-	gatewayv1beta1 "github.com/kyma-project/api-gateway/api/v1beta1"
 )
 
 func hasPathAndMethodDuplicates(rules []gatewayv1beta1.Rule) bool {
