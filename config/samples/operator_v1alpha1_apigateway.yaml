@@ -1,12 +1,6 @@
 apiVersion: operator.kyma-project.io/v1alpha1
 kind: APIGateway
 metadata:
-  labels:
-    app.kubernetes.io/name: apigateway
-    app.kubernetes.io/instance: apigateway-sample
-    app.kubernetes.io/part-of: api-gateway
-    app.kubernetes.io/managed-by: kustomize
-    app.kubernetes.io/created-by: api-gateway
-  name: apigateway-sample
+  name: default
+  namespace: kyma-system
 spec:
-  # TODO(user): Add fields here
