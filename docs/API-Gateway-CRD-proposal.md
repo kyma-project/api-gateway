@@ -57,6 +57,7 @@ spec:
             protocol: HTTPS
         - hosts:
             - dnsName: "goat.example.com"
+              default: true # Use as deafult domain for API Rules
             - dnsName: "goat1.example.com"
               DNSProviderSecret: "my-namespace/dns-secret" # If provided generate a DNS Entry with Gardener 
           port:
