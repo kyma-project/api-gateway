@@ -106,7 +106,7 @@ func defineFlagVar() *FlagVar {
 	flag.StringVar(&flagVar.allowListedDomains, "domain-allowlist", "", "List of domains to be allowed.")
 	flag.StringVar(&flagVar.domainName, "default-domain-name", "", "A default domain name for hostnames with no domain provided. Optional.")
 	flag.StringVar(&flagVar.corsAllowOrigins, "cors-allow-origins", "regex:.*", "list of allowed origins")
-	flag.StringVar(&flagVar.corsAllowMethods, "cors-allow-methods", "GET,POST,PUT,DELETE", "list of allowed methods")
+	flag.StringVar(&flagVar.corsAllowMethods, "cors-allow-methods", "GET,POST,PUT,DELETE,PATCH", "list of allowed methods")
 	flag.StringVar(&flagVar.corsAllowHeaders, "cors-allow-headers", "Authorization,Content-Type,*", "list of allowed headers")
 	flag.StringVar(&flagVar.generatedObjectsLabels, "generated-objects-labels", "", "Comma-separated list of key=value pairs used to label generated objects")
 	flag.DurationVar(&flagVar.reconciliationInterval, "reconciliation-interval", 1*time.Hour, "Indicates the time based reconciliation interval.")
@@ -149,6 +149,9 @@ func main() {
 	}
 
 	config := gateway.ApiRuleReconcilerConfiguration{
+		// TODO: What to do with Oathkeeper config, since the module shouldn't rely on Oathkeeper.
+		OathkeeperSvcAddr:         "ory-oathkeeper-proxy.kyma-system.svc.cluster.local",
+		OathkeeperSvcPort:         4455,
 		AllowListedDomains:        flagVar.allowListedDomains,
 		BlockListedServices:       flagVar.blockListedServices,
 		DomainName:                flagVar.domainName,
