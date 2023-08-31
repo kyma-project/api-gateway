@@ -109,9 +109,9 @@ func defineFlagVar() *FlagVar {
 	flag.StringVar(&flagVar.corsAllowMethods, "cors-allow-methods", "GET,POST,PUT,DELETE", "list of allowed methods")
 	flag.StringVar(&flagVar.corsAllowHeaders, "cors-allow-headers", "Authorization,Content-Type,*", "list of allowed headers")
 	flag.StringVar(&flagVar.generatedObjectsLabels, "generated-objects-labels", "", "Comma-separated list of key=value pairs used to label generated objects")
-	flag.DurationVar(&flagVar.reconciliationInterval, "reconciliation-interval", 10*time.Hour, "Indicates the time based reconciliation interval.")
+	flag.DurationVar(&flagVar.reconciliationInterval, "reconciliation-interval", 1*time.Hour, "Indicates the time based reconciliation interval.")
 	// TODO we don't have an error reconciliation period in istio operator and therefore might want to remove it here too to have the same handling.
-	flag.UintVar(&flagVar.errorReconciliationPeriod, "error-reconciliation-period", 0, "Reconciliation period after an error happened in the previous run [s]")
+	flag.UintVar(&flagVar.errorReconciliationPeriod, "error-reconciliation-period", 60, "Reconciliation period after an error happened in the previous run [s]")
 
 	return flagVar
 }
