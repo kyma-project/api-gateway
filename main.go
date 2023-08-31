@@ -160,20 +160,17 @@ func main() {
 		ErrorReconciliationPeriod: flagVar.errorReconciliationPeriod,
 	}
 
-	reconciler, err := gateway.NewApiRuleReconciler(mgr, config)
+	apiRuleReconciler, err := gateway.NewApiRuleReconciler(mgr, config)
 	if err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "APIRule")
 		os.Exit(1)
 	}
-	if err = reconciler.SetupWithManager(mgr); err != nil {
+	if err = apiRuleReconciler.SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to setup controller", "controller", "APIRule")
 		os.Exit(1)
 	}
-
-	if err = (&operatorcontrollers.APIGatewayReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
+	apiGatewayReconciler := operatorcontrollers.NewAPIGatewayReconciler(mgr)
+	if err = (apiGatewayReconciler).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "APIGateway")
 		os.Exit(1)
 	}

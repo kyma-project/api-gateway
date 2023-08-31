@@ -18,19 +18,20 @@ package operator
 
 import (
 	"context"
-
-	"k8s.io/apimachinery/pkg/runtime"
-	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/log"
-
 	operatorv1alpha1 "github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/manager"
 )
 
-// APIGatewayReconciler reconciles a APIGateway object
-type APIGatewayReconciler struct {
-	client.Client
-	Scheme *runtime.Scheme
+func NewAPIGatewayReconciler(mgr manager.Manager) *APIGatewayReconciler {
+	return &APIGatewayReconciler{
+		Client:        mgr.GetClient(),
+		Scheme:        mgr.GetScheme(),
+		log:           mgr.GetLogger(),
+		statusHandler: newStatusHandler(mgr.GetClient()),
+	}
 }
 
 //+kubebuilder:rbac:groups=operator.kyma-project.io,resources=apigateways,verbs=get;list;watch;create;update;patch;delete
@@ -49,7 +50,22 @@ type APIGatewayReconciler struct {
 func (r *APIGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	_ = log.FromContext(ctx)
 
-	// TODO(user): your logic here
+	apiGatewayCR := operatorv1alpha1.APIGateway{}
+	if err := r.Client.Get(ctx, req.NamespacedName, &apiGatewayCR); err != nil {
+		if apierrors.IsNotFound(err) {
+			r.log.Info("Skipped reconciliation, because ApiGateway CR was not found")
+			return ctrl.Result{}, nil
+		}
+		r.log.Info("Could not get istio CR")
+		return ctrl.Result{}, err
+	}
+
+	if err := r.statusHandler.updateToReady(ctx, &apiGatewayCR); err != nil {
+		r.log.Error(err, "Update status to ready failed")
+		return ctrl.Result{}, err
+	} else {
+		r.log.Info("Reconciled status successfully")
+	}
 
 	return ctrl.Result{}, nil
 }
