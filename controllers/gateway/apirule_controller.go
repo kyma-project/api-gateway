@@ -27,7 +27,6 @@ import (
 
 	"github.com/kyma-project/api-gateway/internal/helpers"
 	"github.com/kyma-project/api-gateway/internal/processing/istio"
-	"github.com/kyma-project/api-gateway/internal/processing/ory"
 	"github.com/kyma-project/api-gateway/internal/validation"
 
 	"github.com/go-logr/logr"
@@ -90,7 +89,6 @@ func (p isApiGatewayConfigMapPredicate) Generic(e event.GenericEvent) bool {
 //+kubebuilder:rbac:groups=security.istio.io,resources=authorizationpolicies,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=security.istio.io,resources=requestauthentications,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups="apiextensions.k8s.io",resources=customresourcedefinitions,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups="",resources=configmaps,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups="",resources=pods,verbs=get;list;watch
 //+kubebuilder:rbac:groups="",resources=services,verbs=get;list;watch
 
@@ -193,11 +191,7 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 }
 
 func (r *APIRuleReconciler) getReconciliation() processing.ReconciliationCommand {
-	if r.Config.JWTHandler == helpers.JWT_HANDLER_ISTIO {
-		return istio.NewIstioReconciliation(r.ReconciliationConfig, &r.Log)
-	}
-	return ory.NewOryReconciliation(r.ReconciliationConfig, &r.Log)
-
+	return istio.NewIstioReconciliation(r.ReconciliationConfig, &r.Log)
 }
 
 // SetupWithManager sets up the controller with the Manager.

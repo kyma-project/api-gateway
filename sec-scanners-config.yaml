@@ -1,4 +1,4 @@
-module-name: istio
+module-name: api-gateway
 protecode:
   #- europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:0.1
 whitesource:
