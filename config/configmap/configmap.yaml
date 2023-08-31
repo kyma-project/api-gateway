@@ -4,4 +4,4 @@ metadata:
   name: config
 data:
   api-gateway-config: >
-    jwtHandler: "ory"
+    jwtHandler: "istio"

@@ -1,0 +1,9 @@
+module-name: istio
+protecode:
+  #- europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:0.1
+whitesource:
+  language: golang-mod
+  subprojects: false
+  exclude:
+    - "**/tests/**"
+    - "**/*_test.go"

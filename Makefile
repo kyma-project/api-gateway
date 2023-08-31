@@ -1,75 +1,58 @@
-APP_NAME = api-gateway-controller
-IMG = $(DOCKER_PUSH_REPOSITORY)$(DOCKER_PUSH_DIRECTORY)/$(APP_NAME)
-TAG = $(DOCKER_TAG)
+include .env
 
-CERTIFICATES_APP_NAME = api-gateway-webhook-certificates
-CERTIFICATES_IMG = $(DOCKER_PUSH_REPOSITORY)$(DOCKER_PUSH_DIRECTORY)/$(CERTIFICATES_APP_NAME)
-CERTIFICATES_TAG = $(DOCKER_TAG)
+# Module Name used for bundling the OCI Image and later on for referencing in the Kyma Modules
+MODULE_NAME ?= api-gateway
 
-CRD_OPTIONS ?= "crd:trivialVersions=true,crdVersions=v1"
+# Module Registry used for pushing the image
+MODULE_REGISTRY_PORT ?= 8888
+MODULE_REGISTRY ?= op-kcp-registry.localhost:$(MODULE_REGISTRY_PORT)/unsigned
+# Desired Channel of the Generated Module Template
+MODULE_TEMPLATE_CHANNEL ?= stable
+MODULE_CHANNEL ?= fast
 
-# Example ory-oathkeeper
-ifndef OATHKEEPER_SVC_ADDRESS
-override OATHKEEPER_SVC_ADDRESS = change-me
-endif
+# Operating system architecture
+OS_ARCH ?= $(shell uname -m)
 
-# Example 4455
-ifndef OATHKEEPER_SVC_PORT
-override OATHKEEPER_SVC_PORT = change-me
-endif
-
-# kubernetes.default service.namespace
-ifndef SERVICE_BLOCKLIST
-override SERVICE_BLOCKLIST = change-me
-endif
-
-# kyma.local foo.bar bar
-ifndef DOMAIN_ALLOWLIST
-override DOMAIN_ALLOWLIST = change-me
-endif
-
-# CORS
-ifndef CORS_ALLOW_ORIGINS
-override CORS_ALLOW_ORIGINS = regex:.*
-endif
-
-ifndef CORS_ALLOW_METHODS
-override CORS_ALLOW_METHODS = GET,POST,PUT,DELETE
-endif
-
-ifndef CORS_ALLOW_HEADERS
-override CORS_ALLOW_HEADERS = Authorization,Content-Type,*
-endif
+# Operating system type
+OS_TYPE ?= $(shell uname)
 
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
-ENVTEST_K8S_VERSION = 1.24.1
-
-GOCMD=go
+ENVTEST_K8S_VERSION = 1.24.2
 
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
-ifeq (,$(shell $(GOCMD) env GOBIN))
-GOBIN=$(shell $(GOCMD) env GOPATH)/bin
+ifeq (,$(shell go env GOBIN))
+GOBIN=$(shell go env GOPATH)/bin
 else
-GOBIN=$(shell $(GOCMD) env GOBIN)
+GOBIN=$(shell go env GOBIN)
 endif
 
-GOTEST=$(GOCMD) test -timeout 1h
-
-PULL_IMAGE_VERSION=PR-${PULL_NUMBER}
-POST_IMAGE_VERSION=v$(shell date '+%Y%m%d')-$(shell printf %.8s ${PULL_BASE_SHA})
-
 # Setting SHELL to bash allows bash commands to be executed by recipes.
-# This is a requirement for 'setup-envtest.sh' in the test target.
 # Options are set to exit when a recipe line exits non-zero or a piped command fails.
 SHELL = /usr/bin/env bash -o pipefail
 .SHELLFLAGS = -ec
 
+APP_NAME = api-gateway-manager
 
-.EXPORT_ALL_VARIABLES:
-GO111MODULE = on
+# Image URL to use all building/pushing image targets
+IMG_REGISTRY_PORT ?= $(MODULE_REGISTRY_PORT)
+IMG_REGISTRY ?= op-skr-registry.localhost:$(IMG_REGISTRY_PORT)/unsigned/operator-images
+IMG ?= $(IMG_REGISTRY)/$(MODULE_NAME)-operator:$(MODULE_VERSION)
 
-.PHONY: all
-all: build
+COMPONENT_CLI_VERSION ?= latest
+
+# It is required for upgrade integration test
+TARGET_BRANCH ?= ""
+
+# This will change the flags of the `kyma alpha module create` command in case we spot credentials
+# Otherwise we will assume http-based local registries without authentication (e.g. for k3d)
+ifneq (,$(PROW_JOB_ID))
+GCP_ACCESS_TOKEN=$(shell gcloud auth application-default print-access-token)
+MODULE_CREATION_FLAGS=--registry $(MODULE_REGISTRY) --module-archive-version-overwrite -c oauth2accesstoken:$(GCP_ACCESS_TOKEN)
+else ifeq (,$(MODULE_CREDENTIALS))
+MODULE_CREATION_FLAGS=--registry $(MODULE_REGISTRY) --module-archive-version-overwrite --insecure
+else
+MODULE_CREATION_FLAGS=--registry $(MODULE_REGISTRY) --module-archive-version-overwrite -c $(MODULE_CREDENTIALS)
+endif
 
 ##@ General
 
@@ -110,51 +93,16 @@ vet: ## Run go vet against code.
 
 .PHONY: test
 test: manifests generate fmt vet envtest ## Generate manifests and run tests.
-	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" $(GOTEST) $(shell go list ./... | grep -v /tests/integration) -coverprofile cover.out
-
-.PHONY: test-for-release
-test-for-release: envtest ## Run tests.
-	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" $(GOTEST) $(shell go list ./... | grep -v /tests/integration) -coverprofile cover.out
+	KUBEBUILDER_CONTROLPLANE_START_TIMEOUT=2m KUBEBUILDER_CONTROLPLANE_STOP_TIMEOUT=2m KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" go test $(shell go list ./... | grep -v /tests/integration) -coverprofile cover.out
 
 .PHONY: test-integration
 test-integration: generate fmt vet envtest ## Run integration tests.
-	source ./tests/integration/env_vars.sh && $(GOTEST) ./tests/integration -v -race -run TestIstioJwt . && $(GOTEST) ./tests/integration -v -race -run TestOryJwt .
+	source ./tests/integration/env_vars.sh && go test -timeout 1h ./tests/integration -v -race -run TestIstioJwt . && $(GOTEST) ./tests/integration -v -race -run TestOryJwt .
 
 test-custom-domain:
 	source ./tests/integration/env_vars_custom_domain.sh && bash -c "trap 'kubectl delete secret google-credentials -n default' EXIT; \
              kubectl create secret generic google-credentials -n default --from-file=serviceaccount.json=${TEST_SA_ACCESS_KEY_PATH}; \
-             GODEBUG=netdns=cgo CGO_ENABLED=1 $(GOTEST) ./tests/integration -run "^TestCustomDomain$$" -v -race"
-
-.PHONY: kyma-cli
-kyma-cli:
-	curl -Lo /usr/bin/kyma https://storage.googleapis.com/kyma-cli-unstable/kyma-linux
-	chmod +x /usr/bin/kyma
-
-.PHONY: k3d
-k3d:
-	curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | TAG=v5.0.0 bash
-
-.PHONY: provision-k3d
-provision-k3d:
-	kyma provision k3d --ci
-
-.PHONY: install-kyma
-install-kyma:
-ifndef JOB_TYPE
-	kyma deploy --ci -s main -c hack/kyma-components.yaml
-else ifeq ($(JOB_TYPE), presubmit)
-	kyma deploy --ci -s main -c hack/kyma-components.yaml \
-	  --value api-gateway.global.images.api_gateway_controller.version=${PULL_IMAGE_VERSION} \
-	  --value api-gateway.global.images.api_gateway_controller.directory=dev \
-	  --value api-gateway.global.images.api-gateway-webhook-certificates.version=${PULL_IMAGE_VERSION} \
-	  --value api-gateway.global.images.api-gateway-webhook-certificates.directory=dev
-else ifeq ($(JOB_TYPE), postsubmit)
-	kyma deploy --ci -s main -c hack/kyma-components.yaml --value api-gateway.global.images.api_gateway_controller.version=${POST_IMAGE_VERSION} --value api-gateway.global.images.api-gateway-webhook-certificates.version=${POST_IMAGE_VERSION}
-endif
-
-.PHONY: test-integration-k3d
-test-integration-k3d: kyma-cli k3d provision-k3d install-kyma test-integration ## Run integration tests.
-	source ./tests/integration/env_vars.sh && $(GOTEST) ./tests/integration -v -race -run TestIstioJwt . && $(GOTEST) ./tests/integration -v -race -run TestOryJwt .
+             GODEBUG=netdns=cgo CGO_ENABLED=1 go test -timeout 1h ./tests/integration -run "^TestCustomDomain$$" -v -race"
 
 ##@ Build
 
@@ -162,57 +110,17 @@ test-integration-k3d: kyma-cli k3d provision-k3d install-kyma test-integration #
 build: generate fmt vet ## Build manager binary.
 	go build -o bin/manager main.go
 
-.PHONY: build-release
-build-release: generate
-	go build -o bin/manager main.go
-
 .PHONY: run
-run: build
-	go run . --oathkeeper-svc-address=${OATHKEEPER_SVC_ADDRESS} --oathkeeper-svc-port=${OATHKEEPER_SVC_PORT} --service-blocklist=${SERVICE_BLOCKLIST} --domain-allowlist=${DOMAIN_ALLOWLIST}
+run: manifests build
+	go run ./main.go
 
 .PHONY: docker-build
-docker-build: pull-licenses test ## Build docker image with the manager.
-	docker build -t $(APP_NAME):latest .
-
-.PHONY: docker-build-release
-docker-build-release: pull-licenses test-for-release ## Build docker image with the manager.
-	docker build -t $(APP_NAME):latest .
-
-.PHONY: docker-build-certificates
-docker-build-certificates: ## Build docker image for certificates management
-	docker build -f Dockerfile-certificates -t $(CERTIFICATES_APP_NAME):latest .
+docker-build:
+	IMG=$(IMG) docker build -t ${IMG} --build-arg TARGETOS=${TARGETOS} --build-arg TARGETARCH=${TARGETARCH} .
 
 .PHONY: docker-push
-docker-push:
-	docker tag $(APP_NAME) $(IMG):$(TAG)
-	docker push $(IMG):$(TAG)
-ifeq ($(JOB_TYPE), postsubmit)
-	@echo "Sign image with Cosign"
-	cosign version
-	cosign sign -key ${KMS_KEY_URL} $(IMG):$(TAG)
-else
-	@echo "Image signing skipped"
-endif
-
-.PHONY: docker-push-certificates
-docker-push-certificates:
-	docker tag $(CERTIFICATES_APP_NAME) $(CERTIFICATES_IMG):$(CERTIFICATES_TAG)
-	docker push $(CERTIFICATES_IMG):$(CERTIFICATES_TAG)
-ifeq ($(JOB_TYPE), postsubmit)
-	@echo "Sign image with Cosign"
-	cosign version
-	cosign sign -key ${KMS_KEY_URL} $(CERTIFICATES_IMG):$(CERTIFICATES_TAG)
-else
-	@echo "Image signing skipped"
-endif
-
-.PHONY: pull-licenses
-pull-licenses:
-ifdef LICENSE_PULLER_PATH
-	bash $(LICENSE_PULLER_PATH)
-else
-	mkdir -p licenses
-endif
+docker-push: ## Push docker image with the manager.
+	docker push ${IMG}
 
 ##@ Deployment
 
@@ -222,10 +130,9 @@ endif
 
 # Install CRDs into a cluster
 .PHONY: install
-install: manifests
-	kustomize build config/crd | kubectl apply -f -
+install: manifests kustomize
+	$(KUSTOMIZE) build config/crd | kubectl apply -f -
 	@if ! kubectl get crd virtualservices.networking.istio.io > /dev/null 2>&1 ; then kubectl apply -f hack/networking.istio.io_virtualservice.yaml; fi;
-	@if ! kubectl get crd rules.oathkeeper.ory.sh > /dev/null 2>&1 ; then kubectl apply -f hack/oathkeeper.ory.sh_rules.yaml; fi;
 	@if ! kubectl get crd authorizationpolicies.security.istio.io > /dev/null 2>&1 ; then kubectl apply -f hack/security.istio.io_authorizationpolicy.yaml; fi;
 	@if ! kubectl get crd requestauthentications.security.istio.io > /dev/null 2>&1 ; then kubectl apply -f hack/security.istio.io_requestauthentication.yaml; fi;
 
@@ -233,13 +140,8 @@ install: manifests
 uninstall: manifests kustomize ## Uninstall CRDs from the K8s cluster specified in ~/.kube/config. Call with ignore-not-found=true to ignore resource not found errors during deletion.
 	$(KUSTOMIZE) build config/crd | kubectl delete --ignore-not-found=$(ignore-not-found) -f -
 
-# Deploy the controller using "api-gateway-controller:latest" Docker image to the Kubernetes cluster configured in ~/.kube/config
-.PHONY: deploy-dev
-deploy-dev: manifests patch-gen
-	$(KUSTOMIZE) build config/development | kubectl apply -f -
-
 .PHONY: deploy
-deploy: generate manifests patch-gen kustomize install ## Deploy controller to the K8s cluster specified in ~/.kube/config.
+deploy: manifests kustomize ## Deploy controller to the K8s cluster specified in ~/.kube/config.
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
 	$(KUSTOMIZE) build config/default | kubectl apply -f -
 
@@ -258,112 +160,72 @@ $(LOCALBIN):
 KUSTOMIZE ?= $(LOCALBIN)/kustomize
 CONTROLLER_GEN ?= $(LOCALBIN)/controller-gen
 ENVTEST ?= $(LOCALBIN)/setup-envtest
-CLIENT_GEN ?= $(LOCALBIN)/client-gen
-INFORMER_GEN = $(LOCALBIN)/informer-gen
-LISTER_GEN = $(LOCALBIN)/lister-gen
-GOLANG_CI_LINT = $(LOCALBIN)/golangci-lint
+YQUERY ?= $(LOCALBIN)/yq
 
 ## Tool Versions
-KUSTOMIZE_VERSION ?= v3.8.7
-CONTROLLER_TOOLS_VERSION ?= v0.9.2
-GOLANG_CI_LINT_VERSION ?= v1.46.2
+KUSTOMIZE_VERSION ?= v4.5.5
+CONTROLLER_TOOLS_VERSION ?= v0.10.0
+YQ_VERSION ?= v4
 
 KUSTOMIZE_INSTALL_SCRIPT ?= "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh"
 .PHONY: kustomize
 kustomize: $(KUSTOMIZE) ## Download kustomize locally if necessary.
 $(KUSTOMIZE): $(LOCALBIN)
-	curl -s $(KUSTOMIZE_INSTALL_SCRIPT) | bash -s -- $(subst v,,$(KUSTOMIZE_VERSION)) $(LOCALBIN)
-
+	test -s $(LOCALBIN)/kustomize || { curl -s $(KUSTOMIZE_INSTALL_SCRIPT) | bash -s -- $(subst v,,$(KUSTOMIZE_VERSION)) $(LOCALBIN); }
 
 .PHONY: controller-gen
 controller-gen: $(CONTROLLER_GEN) ## Download controller-gen locally if necessary.
 $(CONTROLLER_GEN): $(LOCALBIN)
-	GOBIN=$(LOCALBIN) $(GOCMD) install sigs.k8s.io/controller-tools/cmd/controller-gen@$(CONTROLLER_TOOLS_VERSION)
+	test -s $(LOCALBIN)/controller-gen || GOBIN=$(LOCALBIN) go install sigs.k8s.io/controller-tools/cmd/controller-gen@$(CONTROLLER_TOOLS_VERSION)
+
+.PHONY: yq
+yq: $(YQUERY) ## Download yq locally if necessary.
+$(YQUERY): $(LOCALBIN)
+	test -s $(LOCALBIN)/yq || { go get github.com/mikefarah/yq/$(YQ_VERSION) ; GOBIN=$(LOCALBIN) go install github.com/mikefarah/yq/$(YQ_VERSION) ; }
 
 .PHONY: envtest
 envtest: $(ENVTEST) ## Download envtest-setup locally if necessary.
 $(ENVTEST): $(LOCALBIN)
-	GOBIN=$(LOCALBIN) $(GOCMD) install sigs.k8s.io/controller-runtime/tools/setup-envtest@latest
+	test -s $(LOCALBIN)/setup-envtest || GOBIN=$(LOCALBIN) go install sigs.k8s.io/controller-runtime/tools/setup-envtest@latest
 
-.PHONY: client-gen
-client-gen: ## Download client-gen
-	GOBIN=$(LOCALBIN) $(GOCMD) install k8s.io/code-generator/cmd/client-gen@v0.23.4
+##@ Module
+.PHONY: all
+all: module-build
 
-.PHONY: informer-gen
-informer-gen: ## Download informer-gen
-	GOBIN=$(LOCALBIN) $(GOCMD) install k8s.io/code-generator/cmd/informer-gen@v0.23.4
+.PHONY: module-image
+module-image: docker-build docker-push ## Build the Module Image and push it to a registry defined in IMG_REGISTRY
+	echo "built and pushed module image $(IMG)"
 
-.PHONY: lister-gen
-lister-gen: ## Download lister-gen
-	GOBIN=$(LOCALBIN) $(GOCMD) install k8s.io/code-generator/cmd/lister-gen@v0.23.4
+.PHONY: module-build
+module-build: kyma kustomize ## Build the Module and push it to a registry defined in MODULE_REGISTRY
+	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
+	@$(KYMA) alpha create module --kubebuilder-project --channel=${MODULE_CHANNEL} --name kyma-project.io/module/$(MODULE_NAME) --version $(MODULE_VERSION) --default-cr ./config/samples/operator_v1alpha1_apigateway.yaml --path . --output "template-${MODULE_CHANNEL}.yaml" $(MODULE_CREATION_FLAGS)
 
-.PHONY: lint
-lint: ## Run golangci-lint against code.
-	GOBIN=$(LOCALBIN) $(GOCMD) install github.com/golangci/golangci-lint/cmd/golangci-lint@$(GOLANG_CI_LINT_VERSION)
-	$(LOCALBIN)/golangci-lint run
+.PHONY: generate-manifests
+generate-manifests: kustomize
+	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
+	$(KUSTOMIZE) build config/default > api-gateway-manager.yaml
 
-.PHONY: archive
-archive:
-	cp -r bin/* $(ARTIFACTS)
+##@ Tools
 
-.PHONY: release
-release:
-	./hack/release.sh
+########## Kyma CLI ###########
+KYMA_STABILITY ?= unstable
 
-##@ ci targets
-.PHONY: ci-pr
-ci-pr: build test docker-build docker-push docker-build-certificates docker-push-certificates
+# $(call os_error, os-type, os-architecture)
+define os_error
+$(error Error: unsuported platform OS_TYPE:$1, OS_ARCH:$2; to mitigate this problem set variable KYMA with absolute path to kyma-cli binary compatible with your operating system and architecture)
+endef
 
-.PHONY: ci-main
-ci-main: build docker-build docker-push docker-build-certificates docker-push-certificates
+KYMA_FILE_NAME ?= $(shell ./hack/get_kyma_file_name.sh ${OS_TYPE} ${OS_ARCH})
 
-.PHONY: ci-release
-ci-release: TAG=${shell git describe --abbrev=0 --tags}
-ci-release: CERTIFICATES_TAG=$(TAG)
-ci-release: build-release docker-build-release docker-push docker-build-certificates docker-push-certificates archive release
+KYMA ?= $(LOCALBIN)/kyma-$(KYMA_STABILITY)
+kyma: $(LOCALBIN) $(KYMA) ## Download kyma locally if necessary.
+$(KYMA):
+	## Detect if operating system
+	$(if $(KYMA_FILE_NAME),,$(call os_error, ${OS_TYPE}, ${OS_ARCH}))
+	test -f $@ || curl -s -Lo $(KYMA) https://storage.googleapis.com/kyma-cli-$(KYMA_STABILITY)/$(KYMA_FILE_NAME)
+	chmod 0100 $(KYMA)
 
-.PHONY: clean
-clean:
-	rm -rf bin
-
-# Augment kustomize patch files with env-specific variables
-patch-gen:
-	@cat config/default/manager_args_patch.yaml.tmpl |\
-		sed -e 's|OATHKEEPER_SVC_ADDRESS|${OATHKEEPER_SVC_ADDRESS}|g' |\
-		sed -e 's|OATHKEEPER_SVC_PORT|${OATHKEEPER_SVC_PORT}|g' |\
-		sed -e 's|SERVICE_BLOCKLIST|${SERVICE_BLOCKLIST}|g' |\
-		sed -e 's|DOMAIN_ALLOWLIST|${DOMAIN_ALLOWLIST}|g' |\
-		sed -e 's|CORS_ALLOW_ORIGINS|${CORS_ALLOW_ORIGINS}|g' |\
-		sed -e 's|CORS_ALLOW_METHODS|${CORS_ALLOW_METHODS}|g' |\
-		sed -e 's|CORS_ALLOW_HEADERS|${CORS_ALLOW_HEADERS}|g' > config/default/manager_args_patch.yaml
-
-# Generate static installation files
-static: manifests patch-gen
-	kustomize build config/released -o install/k8s
-
-
-# Deploy controller using a released Docker image to the Kubernetes cluster configured in ~/.kube/config
-deploy: manifests patch-gen
-	kustomize build config/default | kubectl apply -f -
-
-# Generate CRD with patches
-gen-crd:
-	kustomize build config/crd > config/crd/apirules.gateway.crd.yaml
-
-samples-clean:
-	kubectl delete -f config/samples/valid.yaml --ignore-not-found=true
-	kubectl delete -f config/samples/invalid.yaml --ignore-not-found=true
-
-.PHONY: samples
-samples: samples-valid
-
-.PHONY: samples-valid
-samples-valid: samples-clean
-	kubectl apply -f config/samples/valid.yaml
-
-.PHONY: samples-invalid
-samples-invalid: samples-clean
-	kubectl apply -f config/samples/invalid.yaml
 
 ########## Performance Tests ###########
 .PHONY: perf-test

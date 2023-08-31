@@ -1,6 +1,7 @@
 package gateway
 
 import (
+	"fmt"
 	"github.com/go-logr/logr"
 	"github.com/kyma-project/api-gateway/internal/helpers"
 	"github.com/kyma-project/api-gateway/internal/processing"
@@ -8,6 +9,7 @@ import (
 	"github.com/pkg/errors"
 	"istio.io/api/networking/v1beta1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"os"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
@@ -41,6 +43,15 @@ type ApiRuleReconcilerConfiguration struct {
 func NewApiRuleReconciler(mgr manager.Manager, config ApiRuleReconcilerConfiguration) (*APIRuleReconciler, error) {
 
 	const blockListedSubdomains string = "api"
+
+	if config.AllowListedDomains != "" {
+		for _, domain := range getList(config.AllowListedDomains) {
+			if !validation.ValidateDomainName(domain) {
+				ctrl.Log.Error(fmt.Errorf("invalid domain in domain-allowlist"), "unable to create controller", "controller", "Api")
+				os.Exit(1)
+			}
+		}
+	}
 
 	serviceBlockList, err := getNamespaceServiceMap(config.BlockListedServices)
 	if err != nil {
