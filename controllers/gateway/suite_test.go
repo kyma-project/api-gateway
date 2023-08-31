@@ -3,7 +3,7 @@ package gateway_test
 import (
 	"context"
 	"fmt"
-	v1beta12 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
+	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"github.com/kyma-project/api-gateway/controllers/gateway"
 	"github.com/kyma-project/api-gateway/internal/builders"
 	"os"
@@ -54,7 +54,7 @@ var (
 
 	defaultMethods  = []string{"GET", "PUT"}
 	defaultScopes   = []string{"foo", "bar"}
-	defaultMutators = []*v1beta12.Mutator{
+	defaultMutators = []*gatewayv1beta1.Mutator{
 		{
 			Handler: noConfigHandler("noop"),
 		},
@@ -85,7 +85,7 @@ var _ = BeforeSuite(func(specCtx SpecContext) {
 
 	By("Bootstrapping test environment")
 	testEnv = &envtest.Environment{
-		CRDDirectoryPaths: []string{filepath.Join("..", "config", "crd", "bases"), filepath.Join("..", "hack")},
+		CRDDirectoryPaths: []string{filepath.Join("..", "..", "config", "crd", "bases"), filepath.Join("..", "..", "hack")},
 	}
 
 	var err error
@@ -99,7 +99,7 @@ var _ = BeforeSuite(func(specCtx SpecContext) {
 
 	s := runtime.NewScheme()
 
-	Expect(v1beta12.AddToScheme(s)).Should(Succeed())
+	Expect(gatewayv1beta1.AddToScheme(s)).Should(Succeed())
 	Expect(rulev1alpha1.AddToScheme(s)).Should(Succeed())
 	Expect(networkingv1beta1.AddToScheme(s)).Should(Succeed())
 	Expect(securityv1beta1.AddToScheme(s)).Should(Succeed())
