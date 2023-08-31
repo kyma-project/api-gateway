@@ -1,5 +1,3 @@
-include .env
-
 # Module Name used for bundling the OCI Image and later on for referencing in the Kyma Modules
 MODULE_NAME ?= api-gateway
 
@@ -9,6 +7,10 @@ MODULE_REGISTRY ?= op-kcp-registry.localhost:$(MODULE_REGISTRY_PORT)/unsigned
 # Desired Channel of the Generated Module Template
 MODULE_TEMPLATE_CHANNEL ?= stable
 MODULE_CHANNEL ?= fast
+
+ifndef MODULE_VERSION
+    MODULE_VERSION = 0.0.1
+endif
 
 # Operating system architecture
 OS_ARCH ?= $(shell uname -m)

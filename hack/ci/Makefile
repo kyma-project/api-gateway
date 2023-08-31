@@ -1,6 +1,8 @@
 PROJECT_ROOT ?= ../..
 
-include ${PROJECT_ROOT}/.env
+ifndef MODULE_VERSION
+    MODULE_VERSION = 0.0.1
+endif
 
 ifndef MODULE_SHA
     MODULE_SHA = ${shell git rev-parse --short HEAD}
