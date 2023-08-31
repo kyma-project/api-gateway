@@ -64,14 +64,10 @@ type FlagVar struct {
 	rateLimiterFailureMaxDelay  time.Duration
 	rateLimiterFrequency        int
 	rateLimiterBurst            int
-	// TODO: Remove not-relevant startup flags, e.g. cors, domainName
-	blockListedServices                                  string
-	allowListedDomains                                   string
-	domainName                                           string
-	corsAllowOrigins, corsAllowMethods, corsAllowHeaders string
-	generatedObjectsLabels                               string
-	reconciliationInterval                               time.Duration
-	errorReconciliationPeriod                            uint
+	blockListedServices         string
+	allowListedDomains          string
+	generatedObjectsLabels      string
+	reconciliationInterval      time.Duration
 }
 
 func init() {
@@ -104,14 +100,8 @@ func defineFlagVar() *FlagVar {
 		"Indicates the failure max delay.")
 	flag.StringVar(&flagVar.blockListedServices, "service-blocklist", "kubernetes.default,kube-dns.kube-system", "List of services to be blocklisted from exposure.")
 	flag.StringVar(&flagVar.allowListedDomains, "domain-allowlist", "", "List of domains to be allowed.")
-	flag.StringVar(&flagVar.domainName, "default-domain-name", "", "A default domain name for hostnames with no domain provided. Optional.")
-	flag.StringVar(&flagVar.corsAllowOrigins, "cors-allow-origins", "regex:.*", "list of allowed origins")
-	flag.StringVar(&flagVar.corsAllowMethods, "cors-allow-methods", "GET,POST,PUT,DELETE,PATCH", "list of allowed methods")
-	flag.StringVar(&flagVar.corsAllowHeaders, "cors-allow-headers", "Authorization,Content-Type,*", "list of allowed headers")
 	flag.StringVar(&flagVar.generatedObjectsLabels, "generated-objects-labels", "", "Comma-separated list of key=value pairs used to label generated objects")
-	flag.DurationVar(&flagVar.reconciliationInterval, "reconciliation-interval", 1*time.Hour, "Indicates the time based reconciliation interval.")
-	// TODO we don't have an error reconciliation period in istio operator and therefore might want to remove it here too to have the same handling.
-	flag.UintVar(&flagVar.errorReconciliationPeriod, "error-reconciliation-period", 60, "Reconciliation period after an error happened in the previous run [s]")
+	flag.DurationVar(&flagVar.reconciliationInterval, "reconciliation-interval", 1*time.Hour, "Indicates the time based reconciliation interval of APIRule.")
 
 	return flagVar
 }
@@ -149,18 +139,18 @@ func main() {
 	}
 
 	config := gateway.ApiRuleReconcilerConfiguration{
-		// TODO: What to do with Oathkeeper config, since the module shouldn't rely on Oathkeeper.
-		OathkeeperSvcAddr:         "ory-oathkeeper-proxy.kyma-system.svc.cluster.local",
-		OathkeeperSvcPort:         4455,
-		AllowListedDomains:        flagVar.allowListedDomains,
-		BlockListedServices:       flagVar.blockListedServices,
-		DomainName:                flagVar.domainName,
-		CorsAllowOrigins:          flagVar.corsAllowOrigins,
-		CorsAllowMethods:          flagVar.corsAllowMethods,
-		CorsAllowHeaders:          flagVar.corsAllowHeaders,
+		OathkeeperSvcAddr:   "ory-oathkeeper-proxy.kyma-system.svc.cluster.local",
+		OathkeeperSvcPort:   4455,
+		AllowListedDomains:  flagVar.allowListedDomains,
+		BlockListedServices: flagVar.blockListedServices,
+		// DomainName will be removed in the future
+		DomainName:                "",
+		CorsAllowOrigins:          "regex:.*",
+		CorsAllowMethods:          "GET,POST,PUT,DELETE,PATCH",
+		CorsAllowHeaders:          "Authorization,Content-Type,*",
 		AdditionalLabels:          additionalLabels,
 		ReconciliationPeriod:      uint(flagVar.reconciliationInterval.Seconds()),
-		ErrorReconciliationPeriod: flagVar.errorReconciliationPeriod,
+		ErrorReconciliationPeriod: 60,
 	}
 
 	apiRuleReconciler, err := gateway.NewApiRuleReconciler(mgr, config)
