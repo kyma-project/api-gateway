@@ -124,6 +124,16 @@ docker-build:
 docker-push: ## Push docker image with the manager.
 	docker push ${IMG}
 
+##@ Local
+
+.PHONY: local-run
+local-run:
+	make -C hack/local run
+
+.PHONY: local-stop
+local-stop:
+	make -C hack/local stop
+
 ##@ Deployment
 
 ifndef ignore-not-found

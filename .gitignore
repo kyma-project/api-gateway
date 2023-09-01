@@ -45,5 +45,6 @@ junit-report*.xml
 report*.html
 
 # module generation files
+template-k3d.yaml
 template-fast.yaml
 template-regular.yaml
