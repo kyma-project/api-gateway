@@ -20,6 +20,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/kyma-project/api-gateway/controllers/gateway"
+	operatorcontrollers "github.com/kyma-project/api-gateway/controllers/operator"
 	"os"
 	"strings"
 	"time"
@@ -47,7 +48,6 @@ import (
 	"github.com/pkg/errors"
 
 	operatorv1alpha1 "github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
-	operatorcontrollers "github.com/kyma-project/api-gateway/controllers/operator"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -116,8 +116,6 @@ func main() {
 
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 
-	// TODO: Add RateLimiter
-
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme: scheme,
 		Metrics: metricsserver.Options{
@@ -155,15 +153,14 @@ func main() {
 
 	apiRuleReconciler, err := gateway.NewApiRuleReconciler(mgr, config)
 	if err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "APIRule")
+		setupLog.Error(err, "unable to create APIRule reconciler", "controller", "APIRule")
 		os.Exit(1)
 	}
 	if err = apiRuleReconciler.SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to setup controller", "controller", "APIRule")
 		os.Exit(1)
 	}
-	apiGatewayReconciler := operatorcontrollers.NewAPIGatewayReconciler(mgr)
-	if err = (apiGatewayReconciler).SetupWithManager(mgr); err != nil {
+	if err = operatorcontrollers.NewAPIGatewayReconciler(mgr).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "APIGateway")
 		os.Exit(1)
 	}

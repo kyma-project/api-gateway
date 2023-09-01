@@ -34,21 +34,22 @@ spec:
             type: object
           spec:
             description: APIGatewaySpec defines the desired state of APIGateway
-            properties:
-              foo:
-                description: Foo is an example field of APIGateway. Edit apigateway_types.go
-                  to remove/update
-                type: string
             type: object
           status:
             description: APIGatewayStatus defines the observed state of APIGateway
             properties:
+              description:
+                description: Description of APIGateway status
+                type: string
               state:
-                description: 'INSERT ADDITIONAL STATUS FIELD - define observed state
-                  of cluster Important: Run "make" to regenerate code after modifying
-                  this file'
+                description: State signifies current state of APIGateway. Value can
+                  be one of ("Ready", "Processing", "Error", "Deleting", "Warning").
                 enum:
+                - Processing
+                - Deleting
                 - Ready
+                - Error
+                - Warning
                 type: string
             required:
             - state

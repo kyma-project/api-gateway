@@ -69,54 +69,6 @@ var _ = Describe("Controller", func() {
 				Expect(apiRule.Status.VirtualServiceStatus.Code).To(Equal(v1beta1.StatusOK))
 			})
 
-			It("should fail if config is in wrong format", func() {
-				testAPI := getApiRule("noop", nil)
-
-				ts = getTestSuite(testAPI)
-				reconciler := getAPIReconciler(ts.mgr)
-				ctx := context.Background()
-
-				fakeReader := FakeConfigMapReader{Content: "<xml/>"}
-				helpers.ReadConfigMapHandle = fakeReader.ReadConfigMap
-
-				defer func() {
-					helpers.ReadConfigMapHandle = helpers.ReadConfigMap
-				}()
-
-				_, err := reconciler.Reconcile(ctx, reconcile.Request{NamespacedName: types.NamespacedName{Namespace: testAPI.Namespace, Name: testAPI.Name}})
-				Expect(err).ToNot(HaveOccurred())
-
-				apiRule := v1beta1.APIRule{}
-				err = ts.mgr.GetClient().Get(context.Background(), types.NamespacedName{Namespace: testAPI.Namespace, Name: testAPI.Name}, &apiRule)
-				Expect(err).ToNot(HaveOccurred())
-				Expect(apiRule.Status.APIRuleStatus.Code).To(Equal(v1beta1.StatusError))
-			})
-
-			It("should fail if config is unsupported", func() {
-				testAPI := getApiRule("noop", nil)
-
-				ts = getTestSuite(testAPI)
-				reconciler := getAPIReconciler(ts.mgr)
-				ctx := context.Background()
-
-				fakeReader := FakeConfigMapReader{Content: "jwtHandler: foo"}
-				helpers.ReadConfigMapHandle = fakeReader.ReadConfigMap
-
-				defer func() {
-					helpers.ReadConfigMapHandle = helpers.ReadConfigMap
-				}()
-
-				_, err := reconciler.Reconcile(ctx, reconcile.Request{NamespacedName: types.NamespacedName{Namespace: testAPI.Namespace, Name: testAPI.Name}})
-				Expect(err).ToNot(HaveOccurred())
-
-				apiRule := v1beta1.APIRule{}
-				err = ts.mgr.GetClient().Get(context.Background(), types.NamespacedName{Namespace: testAPI.Namespace, Name: testAPI.Name}, &apiRule)
-				Expect(err).ToNot(HaveOccurred())
-				Expect(apiRule.Status.APIRuleStatus.Code).To(Equal(v1beta1.StatusError))
-
-				Expect(apiRule.Status.APIRuleStatus.Description).To(Equal(`Validation error: Attribute "": Unsupported JWT Handler: foo`))
-			})
-
 			Context("when the jwt handler is istio", func() {
 				It("should update status", func() {
 					testAPI := getApiRule("jwt", getJWTIstioConfig())

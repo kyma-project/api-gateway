@@ -23,28 +23,25 @@ import (
 type State string
 
 const (
-	Ready State = "Ready"
+	Ready      State = "Ready"
+	Processing State = "Processing"
+	Error      State = "Error"
+	Deleting   State = "Deleting"
+	Warning    State = "Warning"
 )
-
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
 // APIGatewaySpec defines the desired state of APIGateway
 type APIGatewaySpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
-
-	// Foo is an example field of APIGateway. Edit apigateway_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
 }
 
 // APIGatewayStatus defines the observed state of APIGateway
 type APIGatewayStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	// State signifies current state of APIGateway. Value can be one of ("Ready", "Processing", "Error", "Deleting", "Warning").
 	// +kubebuilder:validation:Required
-	// +kubebuilder:validation:Enum=Ready;
+	// +kubebuilder:validation:Enum=Processing;Deleting;Ready;Error;Warning
 	State State `json:"state"`
+	// Description of APIGateway status
+	Description string `json:"description,omitempty"`
 }
 
 //+kubebuilder:object:root=true
