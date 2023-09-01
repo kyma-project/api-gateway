@@ -14,16 +14,13 @@ var _ = Describe("status", func() {
 		cr := operatorv1alpha1.APIGateway{
 			ObjectMeta: metav1.ObjectMeta{Name: "test", Namespace: testNamespace},
 		}
-		err := k8sClient.Create(context.TODO(), &cr)
+		Expect(k8sClient.Create(context.TODO(), &cr)).To(Succeed())
 
 		handler := newStatusHandler(k8sClient)
 
-		err = handler.updateToReady(context.TODO(), &cr)
+		Expect(handler.updateToReady(context.TODO(), &cr)).To(Succeed())
 
-		Expect(err).ToNot(HaveOccurred())
-
-		err = k8sClient.Get(context.TODO(), types.NamespacedName{Name: "test", Namespace: "default"}, &cr)
-		Expect(err).ToNot(HaveOccurred())
+		Expect(k8sClient.Get(context.TODO(), types.NamespacedName{Name: "test", Namespace: "default"}, &cr)).To(Succeed())
 		Expect(cr.Status.State).To(Equal(operatorv1alpha1.Ready))
 	})
 })
