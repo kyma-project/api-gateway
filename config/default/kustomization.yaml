@@ -16,6 +16,7 @@ bases:
   - ../crd
   - ../rbac
   - ../manager
+  - ../configmap
   - ../scheduling
 
 patchesStrategicMerge:

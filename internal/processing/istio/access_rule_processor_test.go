@@ -3,7 +3,7 @@ package istio_test
 import (
 	"context"
 	"fmt"
-	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
+	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 
 	"github.com/kyma-project/api-gateway/internal/processing"
 	. "github.com/kyma-project/api-gateway/internal/processing/internal/test"
@@ -22,16 +22,16 @@ var _ = Describe("Access Rule Processor", func() {
 	When("handler is allow", func() {
 		It("should not create access rules", func() {
 			// given
-			strategies := []*v1beta1.Authenticator{
+			strategies := []*gatewayv1beta1.Authenticator{
 				{
-					Handler: &v1beta1.Handler{
+					Handler: &gatewayv1beta1.Handler{
 						Name: "allow",
 					},
 				},
 			}
 
-			allowRule := GetRuleFor(ApiPath, ApiMethods, []*v1beta1.Mutator{}, strategies)
-			rules := []v1beta1.Rule{allowRule}
+			allowRule := GetRuleFor(ApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, strategies)
+			rules := []gatewayv1beta1.Rule{allowRule}
 
 			apiRule := GetAPIRuleFor(rules)
 
@@ -39,7 +39,7 @@ var _ = Describe("Access Rule Processor", func() {
 			overrideServiceNamespace := "testName-namespace"
 			overrideServicePort := uint32(8080)
 
-			apiRule.Spec.Service = &v1beta1.Service{
+			apiRule.Spec.Service = &gatewayv1beta1.Service{
 				Name:      &overrideServiceName,
 				Namespace: &overrideServiceNamespace,
 				Port:      &overrideServicePort,
@@ -60,16 +60,16 @@ var _ = Describe("Access Rule Processor", func() {
 	When("handler is jwt", func() {
 		It("should not create access rules", func() {
 			// given
-			strategies := []*v1beta1.Authenticator{
+			strategies := []*gatewayv1beta1.Authenticator{
 				{
-					Handler: &v1beta1.Handler{
+					Handler: &gatewayv1beta1.Handler{
 						Name: "jwt",
 					},
 				},
 			}
 
-			allowRule := GetRuleFor(ApiPath, ApiMethods, []*v1beta1.Mutator{}, strategies)
-			rules := []v1beta1.Rule{allowRule}
+			allowRule := GetRuleFor(ApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, strategies)
+			rules := []gatewayv1beta1.Rule{allowRule}
 
 			apiRule := GetAPIRuleFor(rules)
 
@@ -77,7 +77,7 @@ var _ = Describe("Access Rule Processor", func() {
 			overrideServiceNamespace := "testName-namespace"
 			overrideServicePort := uint32(8080)
 
-			apiRule.Spec.Service = &v1beta1.Service{
+			apiRule.Spec.Service = &gatewayv1beta1.Service{
 				Name:      &overrideServiceName,
 				Namespace: &overrideServiceNamespace,
 				Port:      &overrideServicePort,
@@ -98,16 +98,16 @@ var _ = Describe("Access Rule Processor", func() {
 	When("handler is noop", func() {
 		It("should override rule with meta data", func() {
 			// given
-			strategies := []*v1beta1.Authenticator{
+			strategies := []*gatewayv1beta1.Authenticator{
 				{
-					Handler: &v1beta1.Handler{
+					Handler: &gatewayv1beta1.Handler{
 						Name: "noop",
 					},
 				},
 			}
 
-			allowRule := GetRuleWithServiceFor(ApiPath, ApiMethods, []*v1beta1.Mutator{}, strategies, nil)
-			rules := []v1beta1.Rule{allowRule}
+			allowRule := GetRuleWithServiceFor(ApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, strategies, nil)
+			rules := []gatewayv1beta1.Rule{allowRule}
 
 			apiRule := GetAPIRuleFor(rules)
 			client := GetFakeClient()
@@ -131,9 +131,9 @@ var _ = Describe("Access Rule Processor", func() {
 
 		It("should override rule upstream with rule level service", func() {
 			// given
-			strategies := []*v1beta1.Authenticator{
+			strategies := []*gatewayv1beta1.Authenticator{
 				{
-					Handler: &v1beta1.Handler{
+					Handler: &gatewayv1beta1.Handler{
 						Name: "noop",
 					},
 				},
@@ -142,13 +142,13 @@ var _ = Describe("Access Rule Processor", func() {
 			overrideServiceName := "testName"
 			overrideServicePort := uint32(8080)
 
-			service := &v1beta1.Service{
+			service := &gatewayv1beta1.Service{
 				Name: &overrideServiceName,
 				Port: &overrideServicePort,
 			}
 
-			allowRule := GetRuleWithServiceFor(ApiPath, ApiMethods, []*v1beta1.Mutator{}, strategies, service)
-			rules := []v1beta1.Rule{allowRule}
+			allowRule := GetRuleWithServiceFor(ApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, strategies, service)
+			rules := []gatewayv1beta1.Rule{allowRule}
 
 			apiRule := GetAPIRuleFor(rules)
 			client := GetFakeClient()
@@ -168,9 +168,9 @@ var _ = Describe("Access Rule Processor", func() {
 
 		It("should override rule upstream with rule level service for specified namespace", func() {
 			// given
-			strategies := []*v1beta1.Authenticator{
+			strategies := []*gatewayv1beta1.Authenticator{
 				{
-					Handler: &v1beta1.Handler{
+					Handler: &gatewayv1beta1.Handler{
 						Name: "noop",
 					},
 				},
@@ -180,14 +180,14 @@ var _ = Describe("Access Rule Processor", func() {
 			overrideServiceNamespace := "testName-namespace"
 			overrideServicePort := uint32(8080)
 
-			service := &v1beta1.Service{
+			service := &gatewayv1beta1.Service{
 				Name:      &overrideServiceName,
 				Namespace: &overrideServiceNamespace,
 				Port:      &overrideServicePort,
 			}
 
-			allowRule := GetRuleWithServiceFor(ApiPath, ApiMethods, []*v1beta1.Mutator{}, strategies, service)
-			rules := []v1beta1.Rule{allowRule}
+			allowRule := GetRuleWithServiceFor(ApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, strategies, service)
+			rules := []gatewayv1beta1.Rule{allowRule}
 
 			apiRule := GetAPIRuleFor(rules)
 			client := GetFakeClient()
@@ -206,16 +206,16 @@ var _ = Describe("Access Rule Processor", func() {
 		})
 
 		It("should return rule with default domain name when the hostname does not contain domain name", func() {
-			strategies := []*v1beta1.Authenticator{
+			strategies := []*gatewayv1beta1.Authenticator{
 				{
-					Handler: &v1beta1.Handler{
+					Handler: &gatewayv1beta1.Handler{
 						Name: "noop",
 					},
 				},
 			}
 
-			allowRule := GetRuleFor(ApiPath, ApiMethods, []*v1beta1.Mutator{}, strategies)
-			rules := []v1beta1.Rule{allowRule}
+			allowRule := GetRuleFor(ApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, strategies)
+			rules := []gatewayv1beta1.Rule{allowRule}
 
 			apiRule := GetAPIRuleFor(rules)
 			apiRule.Spec.Host = &ServiceHostWithNoDomain
@@ -238,16 +238,16 @@ var _ = Describe("Access Rule Processor", func() {
 		Context("when existing rule has owner v1alpha1 owner label", func() {
 			It("should get and update match methods of rule", func() {
 				// given
-				noop := []*v1beta1.Authenticator{
+				noop := []*gatewayv1beta1.Authenticator{
 					{
-						Handler: &v1beta1.Handler{
+						Handler: &gatewayv1beta1.Handler{
 							Name: "noop",
 						},
 					},
 				}
 
-				noopRule := GetRuleFor(ApiPath, ApiMethods, []*v1beta1.Mutator{}, noop)
-				rules := []v1beta1.Rule{noopRule}
+				noopRule := GetRuleFor(ApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, noop)
+				rules := []gatewayv1beta1.Rule{noopRule}
 
 				apiRule := GetAPIRuleFor(rules)
 
@@ -279,7 +279,7 @@ var _ = Describe("Access Rule Processor", func() {
 				Expect(err).NotTo(HaveOccurred())
 				err = networkingv1beta1.AddToScheme(scheme)
 				Expect(err).NotTo(HaveOccurred())
-				err = v1beta1.AddToScheme(scheme)
+				err = gatewayv1beta1.AddToScheme(scheme)
 				Expect(err).NotTo(HaveOccurred())
 
 				client := fake.NewClientBuilder().WithScheme(scheme).WithObjects(&rule, &vs).Build()
@@ -303,8 +303,8 @@ var _ = Describe("Access Rule Processor", func() {
 		It("should return rule for oauth authenticators for given path", func() {
 			// given
 			oauthConfigJSON := fmt.Sprintf(`{"required_scope": [%s]}`, ToCSVList(ApiScopes))
-			oauth := &v1beta1.Authenticator{
-				Handler: &v1beta1.Handler{
+			oauth := &gatewayv1beta1.Authenticator{
+				Handler: &gatewayv1beta1.Handler{
 					Name: "oauth2_introspection",
 					Config: &runtime.RawExtension{
 						Raw: []byte(oauthConfigJSON),
@@ -312,10 +312,10 @@ var _ = Describe("Access Rule Processor", func() {
 				},
 			}
 
-			strategies := []*v1beta1.Authenticator{oauth}
+			strategies := []*gatewayv1beta1.Authenticator{oauth}
 
-			allowRule := GetRuleFor(ApiPath, ApiMethods, []*v1beta1.Mutator{}, strategies)
-			rules := []v1beta1.Rule{allowRule}
+			allowRule := GetRuleFor(ApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, strategies)
+			rules := []gatewayv1beta1.Rule{allowRule}
 
 			apiRule := GetAPIRuleFor(rules)
 			client := GetFakeClient()

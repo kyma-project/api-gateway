@@ -1,7 +1,7 @@
 package istio
 
 import (
-	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
+	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	processingtest "github.com/kyma-project/api-gateway/internal/processing/internal/test"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -9,16 +9,16 @@ import (
 
 var _ = Describe("Mutators validator", func() {
 
-	jwtAccessStrategy := []*gatewayv1beta1.Authenticator{
+	jwtAccessStrategy := []*v1beta1.Authenticator{
 		{
-			Handler: &gatewayv1beta1.Handler{
+			Handler: &v1beta1.Handler{
 				Name: "jwt",
 			},
 		},
 	}
 
-	createJwtHandlerRule := func(mutators ...*gatewayv1beta1.Mutator) gatewayv1beta1.Rule {
-		return gatewayv1beta1.Rule{
+	createJwtHandlerRule := func(mutators ...*v1beta1.Mutator) v1beta1.Rule {
+		return v1beta1.Rule{
 			Mutators:         mutators,
 			AccessStrategies: jwtAccessStrategy,
 		}
@@ -26,8 +26,8 @@ var _ = Describe("Mutators validator", func() {
 
 	It("Should fail for handler that is not supported", func() {
 		//given
-		mutator := gatewayv1beta1.Mutator{
-			Handler: &gatewayv1beta1.Handler{
+		mutator := v1beta1.Mutator{
+			Handler: &v1beta1.Handler{
 				Name: "unsupported",
 			},
 		}
@@ -45,8 +45,8 @@ var _ = Describe("Mutators validator", func() {
 
 	It("Should fail for empty handler", func() {
 		//given
-		mutator := gatewayv1beta1.Mutator{
-			Handler: &gatewayv1beta1.Handler{},
+		mutator := v1beta1.Mutator{
+			Handler: &v1beta1.Handler{},
 		}
 
 		rule := createJwtHandlerRule(&mutator)
@@ -62,8 +62,8 @@ var _ = Describe("Mutators validator", func() {
 
 	It("Should fail for header handler without config", func() {
 		//given
-		mutator := gatewayv1beta1.Mutator{
-			Handler: &gatewayv1beta1.Handler{
+		mutator := v1beta1.Mutator{
+			Handler: &v1beta1.Handler{
 				Name: "header",
 			},
 		}
@@ -81,11 +81,11 @@ var _ = Describe("Mutators validator", func() {
 
 	It("Should fail for header handler without headers", func() {
 		//given
-		mutator := gatewayv1beta1.Mutator{
-			Handler: &gatewayv1beta1.Handler{
+		mutator := v1beta1.Mutator{
+			Handler: &v1beta1.Handler{
 				Name: "header",
 				Config: processingtest.GetRawConfig(
-					gatewayv1beta1.HeaderMutatorConfig{}),
+					v1beta1.HeaderMutatorConfig{}),
 			},
 		}
 
@@ -102,11 +102,11 @@ var _ = Describe("Mutators validator", func() {
 
 	It("Should fail for header handler with empty headers", func() {
 		//given
-		mutator := gatewayv1beta1.Mutator{
-			Handler: &gatewayv1beta1.Handler{
+		mutator := v1beta1.Mutator{
+			Handler: &v1beta1.Handler{
 				Name: "header",
 				Config: processingtest.GetRawConfig(
-					gatewayv1beta1.HeaderMutatorConfig{
+					v1beta1.HeaderMutatorConfig{
 						Headers: map[string]string{},
 					}),
 			},
@@ -125,11 +125,11 @@ var _ = Describe("Mutators validator", func() {
 
 	It("Should fail for header handler without header name", func() {
 		//given
-		mutator := gatewayv1beta1.Mutator{
-			Handler: &gatewayv1beta1.Handler{
+		mutator := v1beta1.Mutator{
+			Handler: &v1beta1.Handler{
 				Name: "header",
 				Config: processingtest.GetRawConfig(
-					gatewayv1beta1.HeaderMutatorConfig{
+					v1beta1.HeaderMutatorConfig{
 						Headers: map[string]string{
 							"": "test",
 						},
@@ -150,11 +150,11 @@ var _ = Describe("Mutators validator", func() {
 
 	It("Should have no failures for header handler with headers", func() {
 		//given
-		mutator := gatewayv1beta1.Mutator{
-			Handler: &gatewayv1beta1.Handler{
+		mutator := v1beta1.Mutator{
+			Handler: &v1beta1.Handler{
 				Name: "header",
 				Config: processingtest.GetRawConfig(
-					gatewayv1beta1.HeaderMutatorConfig{
+					v1beta1.HeaderMutatorConfig{
 						Headers: map[string]string{
 							"x-test-header": "test",
 						},
@@ -173,8 +173,8 @@ var _ = Describe("Mutators validator", func() {
 
 	It("Should fail for cookie handler without config", func() {
 		//given
-		mutator := gatewayv1beta1.Mutator{
-			Handler: &gatewayv1beta1.Handler{
+		mutator := v1beta1.Mutator{
+			Handler: &v1beta1.Handler{
 				Name: "cookie",
 			},
 		}
@@ -192,11 +192,11 @@ var _ = Describe("Mutators validator", func() {
 
 	It("Should fail for cookie handler without cookies", func() {
 		//given
-		mutator := gatewayv1beta1.Mutator{
-			Handler: &gatewayv1beta1.Handler{
+		mutator := v1beta1.Mutator{
+			Handler: &v1beta1.Handler{
 				Name: "cookie",
 				Config: processingtest.GetRawConfig(
-					gatewayv1beta1.CookieMutatorConfig{}),
+					v1beta1.CookieMutatorConfig{}),
 			},
 		}
 
@@ -213,11 +213,11 @@ var _ = Describe("Mutators validator", func() {
 
 	It("Should fail for cookie handler with empty cookies", func() {
 		//given
-		mutator := gatewayv1beta1.Mutator{
-			Handler: &gatewayv1beta1.Handler{
+		mutator := v1beta1.Mutator{
+			Handler: &v1beta1.Handler{
 				Name: "cookie",
 				Config: processingtest.GetRawConfig(
-					gatewayv1beta1.CookieMutatorConfig{
+					v1beta1.CookieMutatorConfig{
 						Cookies: map[string]string{},
 					}),
 			},
@@ -236,11 +236,11 @@ var _ = Describe("Mutators validator", func() {
 
 	It("Should fail for cookie handler without cookie name", func() {
 		//given
-		mutator := gatewayv1beta1.Mutator{
-			Handler: &gatewayv1beta1.Handler{
+		mutator := v1beta1.Mutator{
+			Handler: &v1beta1.Handler{
 				Name: "cookie",
 				Config: processingtest.GetRawConfig(
-					gatewayv1beta1.CookieMutatorConfig{
+					v1beta1.CookieMutatorConfig{
 						Cookies: map[string]string{
 							"": "test",
 						},
@@ -261,11 +261,11 @@ var _ = Describe("Mutators validator", func() {
 
 	It("Should have no failures for cookie handler with cookies", func() {
 		//given
-		mutator := gatewayv1beta1.Mutator{
-			Handler: &gatewayv1beta1.Handler{
+		mutator := v1beta1.Mutator{
+			Handler: &v1beta1.Handler{
 				Name: "cookie",
 				Config: processingtest.GetRawConfig(
-					gatewayv1beta1.CookieMutatorConfig{
+					v1beta1.CookieMutatorConfig{
 						Cookies: map[string]string{
 							"x-test-cookie": "test",
 						},
@@ -284,20 +284,20 @@ var _ = Describe("Mutators validator", func() {
 
 	It("Should add failures for multiple mutators", func() {
 		//given
-		unsupportedMutator := gatewayv1beta1.Mutator{
-			Handler: &gatewayv1beta1.Handler{
+		unsupportedMutator := v1beta1.Mutator{
+			Handler: &v1beta1.Handler{
 				Name: "unsupported",
 			},
 		}
 
-		noNameMutator := gatewayv1beta1.Mutator{
-			Handler: &gatewayv1beta1.Handler{
+		noNameMutator := v1beta1.Mutator{
+			Handler: &v1beta1.Handler{
 				Name: "",
 			},
 		}
 
-		noConfigMutator := gatewayv1beta1.Mutator{
-			Handler: &gatewayv1beta1.Handler{
+		noConfigMutator := v1beta1.Mutator{
+			Handler: &v1beta1.Handler{
 				Name: "cookie",
 			},
 		}
@@ -314,22 +314,22 @@ var _ = Describe("Mutators validator", func() {
 	It("Should fail for duplicated handlers", func() {
 		//given
 
-		cookieMutator := gatewayv1beta1.Mutator{
-			Handler: &gatewayv1beta1.Handler{
+		cookieMutator := v1beta1.Mutator{
+			Handler: &v1beta1.Handler{
 				Name: "cookie",
 				Config: processingtest.GetRawConfig(
-					gatewayv1beta1.CookieMutatorConfig{
+					v1beta1.CookieMutatorConfig{
 						Cookies: map[string]string{
 							"x-test-cookie": "test",
 						},
 					}),
 			},
 		}
-		anotherCookieMutator := gatewayv1beta1.Mutator{
-			Handler: &gatewayv1beta1.Handler{
+		anotherCookieMutator := v1beta1.Mutator{
+			Handler: &v1beta1.Handler{
 				Name: "cookie",
 				Config: processingtest.GetRawConfig(
-					gatewayv1beta1.CookieMutatorConfig{
+					v1beta1.CookieMutatorConfig{
 						Cookies: map[string]string{
 							"other-cookie": "test",
 						},

@@ -3,7 +3,7 @@ package istio
 import (
 	"encoding/json"
 	"fmt"
-	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
+	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"github.com/kyma-project/api-gateway/internal/processing"
 	"github.com/kyma-project/api-gateway/internal/validation"
 )
@@ -13,7 +13,7 @@ import (
 type mutatorsValidator struct {
 }
 
-func (m mutatorsValidator) Validate(attributePath string, rule gatewayv1beta1.Rule) []validation.Failure {
+func (m mutatorsValidator) Validate(attributePath string, rule v1beta1.Rule) []validation.Failure {
 	var failures []validation.Failure
 
 	if !processing.IsJwtSecured(rule) {
@@ -31,10 +31,10 @@ func (m mutatorsValidator) Validate(attributePath string, rule gatewayv1beta1.Ru
 		switch mutator.Name {
 		case "":
 			failures = append(failures, validation.Failure{AttributePath: handlerPath, Message: "mutator handler cannot be empty"})
-		case gatewayv1beta1.HeaderMutator:
+		case v1beta1.HeaderMutator:
 			f := validateHeaderMutator(handlerPath, mutator)
 			failures = append(failures, f...)
-		case gatewayv1beta1.CookieMutator:
+		case v1beta1.CookieMutator:
 			f := validateCookieMutator(handlerPath, mutator)
 			failures = append(failures, f...)
 		default:
@@ -47,7 +47,7 @@ func (m mutatorsValidator) Validate(attributePath string, rule gatewayv1beta1.Ru
 	return failures
 }
 
-func validateHeaderMutator(handlerPath string, mutator *gatewayv1beta1.Mutator) []validation.Failure {
+func validateHeaderMutator(handlerPath string, mutator *v1beta1.Mutator) []validation.Failure {
 
 	configPath := fmt.Sprintf("%s%s", handlerPath, ".config")
 
@@ -58,7 +58,7 @@ func validateHeaderMutator(handlerPath string, mutator *gatewayv1beta1.Mutator) 
 		}
 	}
 
-	var config gatewayv1beta1.HeaderMutatorConfig
+	var config v1beta1.HeaderMutatorConfig
 	err := json.Unmarshal(mutator.Config.Raw, &config)
 
 	if err != nil {
@@ -86,7 +86,7 @@ func validateHeaderMutator(handlerPath string, mutator *gatewayv1beta1.Mutator) 
 	return nil
 }
 
-func validateCookieMutator(handlerPath string, mutator *gatewayv1beta1.Mutator) []validation.Failure {
+func validateCookieMutator(handlerPath string, mutator *v1beta1.Mutator) []validation.Failure {
 
 	configPath := fmt.Sprintf("%s%s", handlerPath, ".config")
 
@@ -96,7 +96,7 @@ func validateCookieMutator(handlerPath string, mutator *gatewayv1beta1.Mutator) 
 		}
 	}
 
-	var config gatewayv1beta1.CookieMutatorConfig
+	var config v1beta1.CookieMutatorConfig
 	err := json.Unmarshal(mutator.Config.Raw, &config)
 
 	if err != nil {
@@ -124,7 +124,7 @@ func validateCookieMutator(handlerPath string, mutator *gatewayv1beta1.Mutator) 
 	return nil
 }
 
-func validateMutatorUniqueness(basePath string, mutators []*gatewayv1beta1.Mutator) []validation.Failure {
+func validateMutatorUniqueness(basePath string, mutators []*v1beta1.Mutator) []validation.Failure {
 	var failures []validation.Failure
 	mutatorsSet := make(map[string]bool)
 

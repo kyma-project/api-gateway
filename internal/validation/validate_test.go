@@ -14,6 +14,7 @@ import (
 
 	"testing"
 
+	"github.com/kyma-project/api-gateway/internal/helpers"
 	"github.com/kyma-project/api-gateway/internal/types/ory"
 	. "github.com/onsi/ginkgo/v2"
 	"github.com/onsi/ginkgo/v2/reporters"
@@ -53,6 +54,18 @@ var _ = Describe("ValidateConfig function", func() {
 		//then
 		Expect(problems).To(HaveLen(1))
 		Expect(problems[0].Message).To(Equal("Configuration is missing"))
+	})
+
+	It("Should fail for wrong config", func() {
+		//given
+		input := &helpers.Config{JWTHandler: "foo"}
+
+		//when
+		problems := (&APIRuleValidator{}).ValidateConfig(input)
+
+		//then
+		Expect(problems).To(HaveLen(1))
+		Expect(problems[0].Message).To(Equal("Unsupported JWT Handler: foo"))
 	})
 })
 

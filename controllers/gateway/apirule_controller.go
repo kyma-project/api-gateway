@@ -27,7 +27,9 @@ import (
 
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 
+	"github.com/kyma-project/api-gateway/internal/helpers"
 	"github.com/kyma-project/api-gateway/internal/processing/istio"
+	"github.com/kyma-project/api-gateway/internal/processing/ory"
 	"github.com/kyma-project/api-gateway/internal/validation"
 
 	"github.com/go-logr/logr"
@@ -35,9 +37,11 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	apierrs "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/event"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
@@ -88,6 +92,7 @@ func (p isApiGatewayConfigMapPredicate) Generic(e event.GenericEvent) bool {
 //+kubebuilder:rbac:groups=security.istio.io,resources=authorizationpolicies,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=security.istio.io,resources=requestauthentications,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups="apiextensions.k8s.io",resources=customresourcedefinitions,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups="",resources=configmaps,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups="",resources=pods,verbs=get;list;watch
 //+kubebuilder:rbac:groups="",resources=services,verbs=get;list;watch
 
@@ -102,7 +107,31 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		DefaultDomainName: r.DefaultDomainName,
 	}
 
-	r.Log.Info("Starting ApiRule reconciliation")
+	isCMReconcile := req.NamespacedName.String() == types.NamespacedName{Namespace: helpers.CM_NS, Name: helpers.CM_NAME}.String()
+	if isCMReconcile || r.Config.JWTHandler == "" {
+		r.Log.Info("Starting ConfigMap reconciliation")
+		err := r.Config.ReadFromConfigMap(ctx, r.Client)
+		if err != nil {
+			if apierrs.IsNotFound(err) {
+				r.Log.Info(fmt.Sprintf(`ConfigMap %s in namespace %s was not found {"controller": "Api"}, will use default config`, helpers.CM_NAME, helpers.CM_NS))
+				r.Config.ResetToDefault()
+			} else {
+				r.Log.Error(err, fmt.Sprintf(`could not read ConfigMap %s in namespace %s {"controller": "Api"}`, helpers.CM_NAME, helpers.CM_NS))
+				r.Config.Reset()
+			}
+		}
+		if isCMReconcile {
+			configValidationFailures := validator.ValidateConfig(r.Config)
+			r.Log.Info("ConfigMap changed", "config", r.Config)
+			if len(configValidationFailures) > 0 {
+				failuresJson, _ := json.Marshal(configValidationFailures)
+				r.Log.Error(err, fmt.Sprintf(`Config validation failure {"controller": "Api", "failures": %s}`, string(failuresJson)))
+			}
+			r.Log.Info("ConfigMap reconciliation finished")
+			return doneReconcileNoRequeue()
+		}
+	}
+	r.Log.Info("Starting ApiRule reconciliation", "jwtHandler", r.Config.JWTHandler)
 
 	cmd := r.getReconciliation()
 
@@ -166,7 +195,11 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 }
 
 func (r *APIRuleReconciler) getReconciliation() processing.ReconciliationCommand {
-	return istio.NewIstioReconciliation(r.ReconciliationConfig, &r.Log)
+	if r.Config.JWTHandler == helpers.JWT_HANDLER_ISTIO {
+		return istio.NewIstioReconciliation(r.ReconciliationConfig, &r.Log)
+	}
+	return ory.NewOryReconciliation(r.ReconciliationConfig, &r.Log)
+
 }
 
 // SetupWithManager sets up the controller with the Manager.
@@ -174,6 +207,7 @@ func (r *APIRuleReconciler) SetupWithManager(mgr ctrl.Manager, c controllers.Rat
 	return ctrl.NewControllerManagedBy(mgr).
 		// We need to filter for generation changes, because we had an issue that on Azure clusters the APIRules were constantly reconciled.
 		For(&gatewayv1beta1.APIRule{}, builder.WithPredicates(predicate.GenerationChangedPredicate{})).
+		Watches(&corev1.ConfigMap{}, &handler.EnqueueRequestForObject{}, builder.WithPredicates(&isApiGatewayConfigMapPredicate{Log: r.Log})).
 		WithOptions(controller.Options{
 			RateLimiter: controllers.NewRateLimiter(c),
 		}).

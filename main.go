@@ -91,13 +91,13 @@ func defineFlagVar() *FlagVar {
 	flag.BoolVar(&flagVar.enableLeaderElection, "leader-elect", false,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
-	flag.IntVar(&flagVar.rateLimiterBurst, "rate-limiter-burst", 200,
+	flag.IntVar(&flagVar.rateLimiterBurst, "rate-limiter-burst", controllers.RateLimiterBurst,
 		"Indicates the burst value for the bucket rate limiter.")
-	flag.IntVar(&flagVar.rateLimiterFrequency, "rate-limiter-frequency", 30,
+	flag.IntVar(&flagVar.rateLimiterFrequency, "rate-limiter-frequency", controllers.RateLimiterFrequency,
 		"Indicates the bucket rate limiter frequency, signifying no. of events per second.")
-	flag.DurationVar(&flagVar.rateLimiterFailureBaseDelay, "failure-base-delay", 1*time.Second,
+	flag.DurationVar(&flagVar.rateLimiterFailureBaseDelay, "failure-base-delay", controllers.RateLimiterFailureBaseDelay,
 		"Indicates the failure base delay for rate limiter.")
-	flag.DurationVar(&flagVar.rateLimiterFailureMaxDelay, "failure-max-delay", 1000*time.Second,
+	flag.DurationVar(&flagVar.rateLimiterFailureMaxDelay, "failure-max-delay", controllers.RateLimiterFailureMaxDelay,
 		"Indicates the failure max delay for rate limiter. .")
 	flag.StringVar(&flagVar.blockListedServices, "service-blocklist", "kubernetes.default,kube-dns.kube-system", "List of services to be blocklisted from exposure.")
 	flag.StringVar(&flagVar.allowListedDomains, "domain-allowlist", "", "List of domains to be allowed.")

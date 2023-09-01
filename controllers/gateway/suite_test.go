@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
+	"github.com/kyma-project/api-gateway/controllers"
 	"github.com/kyma-project/api-gateway/controllers/gateway"
 	"github.com/kyma-project/api-gateway/internal/builders"
 	"os"
@@ -154,7 +155,14 @@ var _ = BeforeSuite(func(specCtx SpecContext) {
 	apiReconciler, err := gateway.NewApiRuleReconciler(mgr, reconcilerConfig)
 	Expect(err).NotTo(HaveOccurred())
 
-	Expect(apiReconciler.SetupWithManager(mgr)).Should(Succeed())
+	rateLimiterCfg := controllers.RateLimiterConfig{
+		Burst:            200,
+		Frequency:        30,
+		FailureBaseDelay: 1 * time.Second,
+		FailureMaxDelay:  10 * time.Second,
+	}
+
+	Expect(apiReconciler.SetupWithManager(mgr, rateLimiterCfg)).Should(Succeed())
 
 	go func() {
 		defer GinkgoRecover()

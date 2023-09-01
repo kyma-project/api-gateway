@@ -7,6 +7,13 @@ import (
 	"time"
 )
 
+const (
+	RateLimiterBurst            = 200
+	RateLimiterFrequency        = 30
+	RateLimiterFailureBaseDelay = 1 * time.Second
+	RateLimiterFailureMaxDelay  = 1000 * time.Second
+)
+
 type RateLimiterConfig struct {
 	Burst            int
 	Frequency        int

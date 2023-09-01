@@ -58,6 +58,12 @@ var _ = Describe("Controller", func() {
 				reconciler := getAPIReconciler(ts.mgr)
 				ctx := context.Background()
 
+				fakeReader := FakeConfigMapReader{Content: fmt.Sprintf("jwtHandler: %s", helpers.JWT_HANDLER_ORY)}
+				helpers.ReadConfigMapHandle = fakeReader.ReadConfigMap
+				defer func() {
+					helpers.ReadConfigMapHandle = helpers.ReadConfigMap
+				}()
+
 				result, err := reconciler.Reconcile(ctx, reconcile.Request{NamespacedName: types.NamespacedName{Namespace: testAPI.Namespace, Name: testAPI.Name}})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(result.Requeue).To(BeFalse())
@@ -66,7 +72,79 @@ var _ = Describe("Controller", func() {
 				err = ts.mgr.GetClient().Get(context.Background(), types.NamespacedName{Namespace: testAPI.Namespace, Name: testAPI.Name}, &apiRule)
 				Expect(err).ToNot(HaveOccurred())
 				Expect(apiRule.Status.APIRuleStatus.Code).To(Equal(v1beta1.StatusOK))
+				Expect(apiRule.Status.AccessRuleStatus.Code).To(Equal(v1beta1.StatusOK))
 				Expect(apiRule.Status.VirtualServiceStatus.Code).To(Equal(v1beta1.StatusOK))
+			})
+
+			It("should fail if config is empty", func() {
+				testAPI := getApiRule("noop", nil)
+
+				ts = getTestSuite(testAPI)
+				reconciler := getAPIReconciler(ts.mgr)
+				ctx := context.Background()
+
+				errorReader := FakeConfigMapReader{}
+				helpers.ReadConfigMapHandle = errorReader.ReadConfigMap
+
+				defer func() {
+					helpers.ReadConfigMapHandle = helpers.ReadConfigMap
+				}()
+
+				_, err := reconciler.Reconcile(ctx, reconcile.Request{NamespacedName: types.NamespacedName{Namespace: testAPI.Namespace, Name: testAPI.Name}})
+				Expect(err).ToNot(HaveOccurred())
+
+				apiRule := v1beta1.APIRule{}
+				err = ts.mgr.GetClient().Get(context.Background(), types.NamespacedName{Namespace: testAPI.Namespace, Name: testAPI.Name}, &apiRule)
+				Expect(err).ToNot(HaveOccurred())
+				Expect(apiRule.Status.APIRuleStatus.Code).To(Equal(v1beta1.StatusError))
+			})
+
+			It("should fail if config is in wrong format", func() {
+				testAPI := getApiRule("noop", nil)
+
+				ts = getTestSuite(testAPI)
+				reconciler := getAPIReconciler(ts.mgr)
+				ctx := context.Background()
+
+				fakeReader := FakeConfigMapReader{Content: "<xml/>"}
+				helpers.ReadConfigMapHandle = fakeReader.ReadConfigMap
+
+				defer func() {
+					helpers.ReadConfigMapHandle = helpers.ReadConfigMap
+				}()
+
+				_, err := reconciler.Reconcile(ctx, reconcile.Request{NamespacedName: types.NamespacedName{Namespace: testAPI.Namespace, Name: testAPI.Name}})
+				Expect(err).ToNot(HaveOccurred())
+
+				apiRule := v1beta1.APIRule{}
+				err = ts.mgr.GetClient().Get(context.Background(), types.NamespacedName{Namespace: testAPI.Namespace, Name: testAPI.Name}, &apiRule)
+				Expect(err).ToNot(HaveOccurred())
+				Expect(apiRule.Status.APIRuleStatus.Code).To(Equal(v1beta1.StatusError))
+			})
+
+			It("should fail if config is unsupported", func() {
+				testAPI := getApiRule("noop", nil)
+
+				ts = getTestSuite(testAPI)
+				reconciler := getAPIReconciler(ts.mgr)
+				ctx := context.Background()
+
+				fakeReader := FakeConfigMapReader{Content: "jwtHandler: foo"}
+				helpers.ReadConfigMapHandle = fakeReader.ReadConfigMap
+
+				defer func() {
+					helpers.ReadConfigMapHandle = helpers.ReadConfigMap
+				}()
+
+				_, err := reconciler.Reconcile(ctx, reconcile.Request{NamespacedName: types.NamespacedName{Namespace: testAPI.Namespace, Name: testAPI.Name}})
+				Expect(err).ToNot(HaveOccurred())
+
+				apiRule := v1beta1.APIRule{}
+				err = ts.mgr.GetClient().Get(context.Background(), types.NamespacedName{Namespace: testAPI.Namespace, Name: testAPI.Name}, &apiRule)
+				Expect(err).ToNot(HaveOccurred())
+				Expect(apiRule.Status.APIRuleStatus.Code).To(Equal(v1beta1.StatusError))
+
+				Expect(apiRule.Status.APIRuleStatus.Description).To(Equal(`Validation error: Attribute "": Unsupported JWT Handler: foo`))
 			})
 
 			Context("when the jwt handler is istio", func() {

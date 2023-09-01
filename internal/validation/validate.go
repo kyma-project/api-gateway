@@ -13,6 +13,7 @@ import (
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 
 	apiv1beta1 "istio.io/api/type/v1beta1"
+	"k8s.io/utils/strings/slices"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -81,6 +82,12 @@ func (v *APIRuleValidator) ValidateConfig(config *helpers.Config) []Failure {
 		problems = append(problems, Failure{
 			Message: "Configuration is missing",
 		})
+	} else {
+		if !slices.Contains([]string{helpers.JWT_HANDLER_ORY, helpers.JWT_HANDLER_ISTIO}, config.JWTHandler) {
+			problems = append(problems, Failure{
+				Message: fmt.Sprintf("Unsupported JWT Handler: %s", config.JWTHandler),
+			})
+		}
 	}
 
 	return problems

@@ -43,13 +43,97 @@ var _ = Describe("APIRule Controller", Serial, func() {
 		defaultHttpTimeout         = time.Second * 180
 	)
 
+	Context("when updating the APIRule with multiple paths", func() {
+
+		It("should create, update and delete rules depending on patch match", func() {
+			updateJwtHandlerTo(helpers.JWT_HANDLER_ORY)
+
+			rule1 := testRule("/rule1", []string{"GET"}, defaultMutators, noConfigHandler("noop"))
+			rule2 := testRule("/rule2", []string{"PUT"}, defaultMutators, noConfigHandler("unauthorized"))
+			rule3 := testRule("/rule3", []string{"DELETE"}, defaultMutators, noConfigHandler("anonymous"))
+
+			apiRuleName := generateTestName(testNameBase, testIDLength)
+			serviceName := generateTestName(testServiceNameBase, testIDLength)
+			serviceHost := fmt.Sprintf("%s.kyma.local", serviceName)
+
+			matchingLabels := matchingLabelsFunc(apiRuleName, testNamespace)
+
+			pathToURLFunc := func(path string) string {
+				return fmt.Sprintf("<http|https>://%s<%s>", serviceHost, path)
+			}
+
+			By("Creating APIRule")
+
+			apiRule := testApiRule(apiRuleName, testNamespace, serviceName, testNamespace, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule1, rule2, rule3})
+			svc := testService(serviceName, testNamespace, testServicePort)
+
+			// when
+			Expect(c.Create(context.TODO(), svc)).Should(Succeed())
+			Expect(c.Create(context.TODO(), apiRule)).Should(Succeed())
+			defer func() {
+				apiRuleTeardown(apiRule)
+				serviceTeardown(svc)
+			}()
+
+			expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusOK)
+
+			By("Verifying created access rules")
+			Eventually(func(g Gomega) {
+				ruleList := getRuleList(g, matchingLabels)
+				verifyRuleList(g, ruleList, pathToURLFunc, rule1, rule2, rule3)
+
+				//Verify All Rules point to original Service
+				expectedUpstream := fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", serviceName, testNamespace, testServicePort)
+				for i := range ruleList {
+					r := ruleList[i]
+					g.Expect(r.Spec.Upstream.URL).To(Equal(expectedUpstream))
+				}
+
+			}, eventuallyTimeout).Should(Succeed())
+
+			By("Updating APIRule")
+			existingInstance := gatewayv1beta1.APIRule{}
+			Expect(c.Get(context.TODO(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &existingInstance)).Should(Succeed())
+
+			rule4 := testRule("/rule4", []string{"POST"}, defaultMutators, noConfigHandler("cookie_session"))
+			existingInstance.Spec.Rules = []gatewayv1beta1.Rule{rule1, rule4}
+			newServiceName := serviceName + "new"
+			newServicePort := testServicePort + 3
+			existingInstance.Spec.Service.Name = &newServiceName
+			existingInstance.Spec.Service.Port = &newServicePort
+
+			svcNew := testService(newServiceName, testNamespace, newServicePort)
+			Expect(c.Create(context.TODO(), svcNew)).Should(Succeed())
+			defer func() {
+				serviceTeardown(svcNew)
+			}()
+
+			Expect(c.Update(context.TODO(), &existingInstance)).Should(Succeed())
+
+			By("Verifying APIRule after update")
+
+			Eventually(func(g Gomega) {
+				ruleList := getRuleList(g, matchingLabels)
+				verifyRuleList(g, ruleList, pathToURLFunc, rule1, rule4)
+
+				//Verify All Rules point to new Service after update
+				expectedUpstream := fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", newServiceName, testNamespace, newServicePort)
+				for i := range ruleList {
+					r := ruleList[i]
+					g.Expect(r.Spec.Upstream.URL).To(Equal(expectedUpstream))
+				}
+			}, eventuallyTimeout).Should(Succeed())
+
+		})
+	})
+
 	Context("when creating an APIRule for exposing service", func() {
 
 		Context("on all the paths,", func() {
 			Context("secured with Oauth2 introspection,", func() {
 				Context("in a happy-path scenario", func() {
 					It("should create a VirtualService and an AccessRule", func() {
-						updateJwtHandlerTo(helpers.JWT_HANDLER_ISTIO)
+						updateJwtHandlerTo(helpers.JWT_HANDLER_ORY)
 
 						apiRuleName := generateTestName(testNameBase, testIDLength)
 						serviceName := generateTestName(testServiceNameBase, testIDLength)
@@ -148,6 +232,147 @@ var _ = Describe("APIRule Controller", Serial, func() {
 			})
 
 			Context("secured with JWT token authentication,", func() {
+				Context("with ORY as JWT handler,", func() {
+					Context("in a happy-path scenario", func() {
+						It("should create a VirtualService and an AccessRules", func() {
+							updateJwtHandlerTo(helpers.JWT_HANDLER_ORY)
+
+							apiRuleName := generateTestName(testNameBase, testIDLength)
+							serviceName := generateTestName(testServiceNameBase, testIDLength)
+							serviceHost := fmt.Sprintf("%s.kyma.local", serviceName)
+
+							rule1 := testRule("/img", []string{"GET"}, defaultMutators, testOryJWTHandler(testIssuer, defaultScopes))
+							rule2 := testRule("/headers", []string{"GET"}, defaultMutators, testOryJWTHandler(testIssuer, defaultScopes))
+							apiRule := testApiRule(apiRuleName, testNamespace, serviceName, testNamespace, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule1, rule2})
+							svc := testService(serviceName, testNamespace, testServicePort)
+
+							// when
+							Expect(c.Create(context.TODO(), svc)).Should(Succeed())
+							Expect(c.Create(context.TODO(), apiRule)).Should(Succeed())
+							defer func() {
+								apiRuleTeardown(apiRule)
+								serviceTeardown(svc)
+							}()
+
+							expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusOK)
+
+							matchingLabels := matchingLabelsFunc(apiRuleName, testNamespace)
+
+							By("Verifying created virtual service")
+							vsList := networkingv1beta1.VirtualServiceList{}
+							Eventually(func(g Gomega) {
+								g.Expect(c.List(context.TODO(), &vsList, matchingLabels)).Should(Succeed())
+								g.Expect(vsList.Items).To(HaveLen(1))
+								vs := vsList.Items[0]
+
+								expectedSpec := builders.VirtualServiceSpec().
+									Host(serviceHost).
+									Gateway(testGatewayURL).
+									HTTP(builders.HTTPRoute().
+										Match(builders.MatchRequest().Uri().Regex("/img")).
+										Route(builders.RouteDestination().Host(testOathkeeperSvcURL).Port(testOathkeeperPort)).
+										Headers(builders.NewHttpRouteHeadersBuilder().SetHostHeader(serviceHost).Get()).
+										CorsPolicy(defaultCorsPolicy).
+										Timeout(defaultHttpTimeout)).
+									HTTP(builders.HTTPRoute().
+										Match(builders.MatchRequest().Uri().Regex("/headers")).
+										Route(builders.RouteDestination().Host(testOathkeeperSvcURL).Port(testOathkeeperPort)).
+										Headers(builders.NewHttpRouteHeadersBuilder().SetHostHeader(serviceHost).Get()).
+										CorsPolicy(defaultCorsPolicy).
+										Timeout(defaultHttpTimeout))
+								gotSpec := *expectedSpec.Get()
+								g.Expect(*vs.Spec.DeepCopy()).To(Equal(*gotSpec.DeepCopy()))
+							}, eventuallyTimeout).Should(Succeed())
+
+							By("Verifying created access rules")
+							expectedRuleMatchURL := fmt.Sprintf("<http|https>://%s<%s>", serviceHost, "/img")
+
+							var rlList []rulev1alpha1.Rule
+							Eventually(func(g Gomega) {
+								rlList = getRuleList(g, matchingLabels)
+								g.Expect(rlList).To(HaveLen(2))
+
+								rules := make(map[string]rulev1alpha1.Rule)
+
+								for _, rule := range rlList {
+									rules[rule.Spec.Match.URL] = rule
+								}
+
+								rl := rules[expectedRuleMatchURL]
+
+								//Spec.Upstream
+								g.Expect(rl.Spec.Upstream).NotTo(BeNil())
+								g.Expect(rl.Spec.Upstream.URL).To(Equal(fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", serviceName, testNamespace, testServicePort)))
+								g.Expect(rl.Spec.Upstream.StripPath).To(BeNil())
+								g.Expect(rl.Spec.Upstream.PreserveHost).To(BeNil())
+								//Spec.Match
+								g.Expect(rl.Spec.Match).NotTo(BeNil())
+								g.Expect(rl.Spec.Match.URL).To(Equal(expectedRuleMatchURL))
+								g.Expect(rl.Spec.Match.Methods).To(Equal([]string{"GET"}))
+								//Spec.Authenticators
+								g.Expect(rl.Spec.Authenticators).To(HaveLen(1))
+								g.Expect(rl.Spec.Authenticators[0].Handler).NotTo(BeNil())
+								g.Expect(rl.Spec.Authenticators[0].Handler.Name).To(Equal("jwt"))
+								g.Expect(rl.Spec.Authenticators[0].Handler.Config).NotTo(BeNil())
+								//Authenticators[0].Handler.Config validation
+								handlerConfig := map[string]interface{}{}
+
+								g.Expect(json.Unmarshal(rl.Spec.Authenticators[0].Config.Raw, &handlerConfig)).Should(Succeed())
+								g.Expect(handlerConfig).To(HaveLen(3))
+								g.Expect(asStringSlice(handlerConfig["required_scope"])).To(BeEquivalentTo(defaultScopes))
+								g.Expect(asStringSlice(handlerConfig["trusted_issuers"])).To(BeEquivalentTo([]string{testIssuer}))
+								//Spec.Authorizer
+								g.Expect(rl.Spec.Authorizer).NotTo(BeNil())
+								g.Expect(rl.Spec.Authorizer.Handler).NotTo(BeNil())
+								g.Expect(rl.Spec.Authorizer.Handler.Name).To(Equal("allow"))
+								g.Expect(rl.Spec.Authorizer.Handler.Config).To(BeNil())
+
+								//Spec.Mutators
+								g.Expect(rl.Spec.Mutators).NotTo(BeNil())
+								g.Expect(len(rl.Spec.Mutators)).To(Equal(len(defaultMutators)))
+								g.Expect(rl.Spec.Mutators[0].Handler.Name).To(Equal(defaultMutators[0].Name))
+								g.Expect(rl.Spec.Mutators[1].Handler.Name).To(Equal(defaultMutators[1].Name))
+
+								//Verify Rule2
+								expectedRule2MatchURL := fmt.Sprintf("<http|https>://%s<%s>", serviceHost, "/headers")
+								rl2 := rules[expectedRule2MatchURL]
+
+								//Spec.Upstream
+								g.Expect(rl2.Spec.Upstream).NotTo(BeNil())
+								g.Expect(rl2.Spec.Upstream.URL).To(Equal(fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", serviceName, testNamespace, testServicePort)))
+								g.Expect(rl2.Spec.Upstream.StripPath).To(BeNil())
+								g.Expect(rl2.Spec.Upstream.PreserveHost).To(BeNil())
+								//Spec.Match
+								g.Expect(rl2.Spec.Match).NotTo(BeNil())
+								g.Expect(rl2.Spec.Match.URL).To(Equal(expectedRule2MatchURL))
+								g.Expect(rl2.Spec.Match.Methods).To(Equal([]string{"GET"}))
+								//Spec.Authenticators
+								g.Expect(rl2.Spec.Authenticators).To(HaveLen(1))
+								g.Expect(rl2.Spec.Authenticators[0].Handler).NotTo(BeNil())
+								g.Expect(rl2.Spec.Authenticators[0].Handler.Name).To(Equal("jwt"))
+								g.Expect(rl2.Spec.Authenticators[0].Handler.Config).NotTo(BeNil())
+								//Authenticators[0].Handler.Config validation
+								handlerConfig = map[string]interface{}{}
+
+								g.Expect(json.Unmarshal(rl2.Spec.Authenticators[0].Config.Raw, &handlerConfig)).Should(Succeed())
+								g.Expect(handlerConfig).To(HaveLen(3))
+								g.Expect(asStringSlice(handlerConfig["required_scope"])).To(BeEquivalentTo(defaultScopes))
+								g.Expect(asStringSlice(handlerConfig["trusted_issuers"])).To(BeEquivalentTo([]string{testIssuer}))
+								//Spec.Authorizer
+								g.Expect(rl2.Spec.Authorizer).NotTo(BeNil())
+								g.Expect(rl2.Spec.Authorizer.Handler).NotTo(BeNil())
+								g.Expect(rl2.Spec.Authorizer.Handler.Name).To(Equal("allow"))
+								g.Expect(rl2.Spec.Authorizer.Handler.Config).To(BeNil())
+
+								//Spec.Mutators
+								g.Expect(rl2.Spec.Mutators).NotTo(BeNil())
+								g.Expect(len(rl2.Spec.Mutators)).To(Equal(len(defaultMutators)))
+								g.Expect(rl2.Spec.Mutators[0].Handler.Name).To(Equal(defaultMutators[0].Name))
+								g.Expect(rl2.Spec.Mutators[1].Handler.Name).To(Equal(defaultMutators[1].Name))
+							}, eventuallyTimeout).Should(Succeed())
+						})
+					})
+				})
 
 				Context("with Istio as JWT handler,", func() {
 					Context("in a happy-path scenario", func() {
@@ -450,6 +675,335 @@ var _ = Describe("APIRule Controller", Serial, func() {
 				})
 			})
 		})
+
+		Context("on specified paths", func() {
+			Context("with multiple endpoints secured with different authentication methods", func() {
+				Context("in the happy path scenario", func() {
+					It("should create a VS with corresponding matchers and access rules for each secured path", func() {
+						updateJwtHandlerTo(helpers.JWT_HANDLER_ORY)
+
+						jwtHandler := testOryJWTHandler(testIssuer, defaultScopes)
+						oauthHandler := testOauthHandler(defaultScopes)
+						rule1 := testRule("/img", []string{"GET"}, defaultMutators, jwtHandler)
+						rule2 := testRule("/headers", []string{"GET"}, defaultMutators, oauthHandler)
+						rule3 := testRule("/status", []string{"GET"}, defaultMutators, noConfigHandler("noop"))
+						rule4 := testRule("/favicon", []string{"GET"}, nil, noConfigHandler("allow"))
+
+						apiRuleName := generateTestName(testNameBase, testIDLength)
+						serviceName := testServiceNameBase
+						serviceHost := "httpbin4.kyma.local"
+
+						apiRule := testApiRule(apiRuleName, testNamespace, serviceName, testNamespace, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule1, rule2, rule3, rule4})
+						svc := testService(serviceName, testNamespace, testServicePort)
+
+						// when
+						Expect(c.Create(context.TODO(), svc)).Should(Succeed())
+						Expect(c.Create(context.TODO(), apiRule)).Should(Succeed())
+						defer func() {
+							apiRuleTeardown(apiRule)
+							serviceTeardown(svc)
+						}()
+
+						expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusOK)
+
+						matchingLabels := matchingLabelsFunc(apiRuleName, testNamespace)
+
+						By("Verifying created virtual service")
+						vsList := networkingv1beta1.VirtualServiceList{}
+						Eventually(func(g Gomega) {
+							g.Expect(c.List(context.TODO(), &vsList, matchingLabels)).Should(Succeed())
+							g.Expect(vsList.Items).To(HaveLen(1))
+
+							vs := vsList.Items[0]
+
+							expectedSpec := builders.VirtualServiceSpec().
+								Host(serviceHost).
+								Gateway(testGatewayURL).
+								HTTP(builders.HTTPRoute().
+									Match(builders.MatchRequest().Uri().Regex("/img")).
+									Route(builders.RouteDestination().Host(testOathkeeperSvcURL).Port(testOathkeeperPort)).
+									Headers(builders.NewHttpRouteHeadersBuilder().SetHostHeader(serviceHost).Get()).
+									CorsPolicy(defaultCorsPolicy).
+									Timeout(defaultHttpTimeout)).
+								HTTP(builders.HTTPRoute().
+									Match(builders.MatchRequest().Uri().Regex("/headers")).
+									Route(builders.RouteDestination().Host(testOathkeeperSvcURL).Port(testOathkeeperPort)).
+									Headers(builders.NewHttpRouteHeadersBuilder().SetHostHeader(serviceHost).Get()).
+									CorsPolicy(defaultCorsPolicy).
+									Timeout(defaultHttpTimeout)).
+								HTTP(builders.HTTPRoute().
+									Match(builders.MatchRequest().Uri().Regex("/status")).
+									Route(builders.RouteDestination().Host(testOathkeeperSvcURL).Port(testOathkeeperPort)).
+									Headers(builders.NewHttpRouteHeadersBuilder().SetHostHeader(serviceHost).Get()).
+									CorsPolicy(defaultCorsPolicy).
+									Timeout(defaultHttpTimeout)).
+								HTTP(builders.HTTPRoute().
+									Match(builders.MatchRequest().Uri().Regex("/favicon")).
+									Route(builders.RouteDestination().Host("httpbin.atgo-system.svc.cluster.local").Port(443)). // "allow", no oathkeeper rule!
+									Headers(builders.NewHttpRouteHeadersBuilder().SetHostHeader(serviceHost).Get()).
+									CorsPolicy(defaultCorsPolicy).
+									Timeout(defaultHttpTimeout))
+
+							gotSpec := *expectedSpec.Get()
+							g.Expect(*vs.Spec.DeepCopy()).To(Equal(*gotSpec.DeepCopy()))
+						}, eventuallyTimeout).Should(Succeed())
+
+						By("Verifying created access rules")
+						for _, tc := range []struct {
+							path    string
+							handler string
+							config  []byte
+						}{
+							{path: "img", handler: "jwt", config: jwtHandler.Config.Raw},
+							{path: "headers", handler: "oauth2_introspection", config: oauthHandler.Config.Raw},
+							{path: "status", handler: "noop", config: nil},
+						} {
+							expectedRuleMatchURL := fmt.Sprintf("<http|https>://%s</%s>", serviceHost, tc.path)
+
+							var rlList []rulev1alpha1.Rule
+							Eventually(func(g Gomega) {
+								rlList = getRuleList(g, matchingLabels)
+								g.Expect(rlList).To(HaveLen(3))
+
+								rules := make(map[string]rulev1alpha1.Rule)
+
+								for _, rule := range rlList {
+									rules[rule.Spec.Match.URL] = rule
+								}
+
+								rl := rules[expectedRuleMatchURL]
+
+								//Spec.Upstream
+								g.Expect(rl.Spec.Upstream).NotTo(BeNil())
+								g.Expect(rl.Spec.Upstream.URL).To(Equal(fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", serviceName, testNamespace, testServicePort)))
+								g.Expect(rl.Spec.Upstream.StripPath).To(BeNil())
+								g.Expect(rl.Spec.Upstream.PreserveHost).To(BeNil())
+
+								//Spec.Match
+								g.Expect(rl.Spec.Match).NotTo(BeNil())
+								g.Expect(rl.Spec.Match.Methods).To(Equal([]string{"GET"}))
+								g.Expect(rl.Spec.Match.URL).To(Equal(expectedRuleMatchURL))
+
+								//Spec.Authenticators
+								g.Expect(rl.Spec.Authenticators).To(HaveLen(1))
+								g.Expect(rl.Spec.Authenticators[0].Handler).NotTo(BeNil())
+								g.Expect(rl.Spec.Authenticators[0].Handler.Name).To(Equal(tc.handler))
+
+								if tc.config != nil {
+									//Authenticators[0].Handler.Config validation
+									g.Expect(rl.Spec.Authenticators[0].Handler.Config).NotTo(BeNil())
+									g.Expect(rl.Spec.Authenticators[0].Handler.Config.Raw).To(MatchJSON(tc.config))
+								}
+
+								//Spec.Authorizer
+								g.Expect(rl.Spec.Authorizer).NotTo(BeNil())
+								g.Expect(rl.Spec.Authorizer.Handler).NotTo(BeNil())
+								g.Expect(rl.Spec.Authorizer.Handler.Name).To(Equal("allow"))
+								g.Expect(rl.Spec.Authorizer.Handler.Config).To(BeNil())
+
+								//Spec.Mutators
+								g.Expect(rl.Spec.Mutators).NotTo(BeNil())
+								g.Expect(len(rl.Spec.Mutators)).To(Equal(len(defaultMutators)))
+								g.Expect(rl.Spec.Mutators[0].Handler.Name).To(Equal(defaultMutators[0].Name))
+								g.Expect(rl.Spec.Mutators[1].Handler.Name).To(Equal(defaultMutators[1].Name))
+							}, eventuallyTimeout).Should(Succeed())
+						}
+
+						//make sure no rule for "/favicon" path has been created
+						Eventually(func(g Gomega) {
+							name := fmt.Sprintf("%s-%s-3", apiRuleName, serviceName)
+							g.Expect(c.Get(context.TODO(), client.ObjectKey{Name: name, Namespace: testNamespace}, &rulev1alpha1.Rule{})).To(HaveOccurred())
+						}, eventuallyTimeout).Should(Succeed())
+
+					})
+				})
+			})
+		})
+	})
+
+	Context("Changing JWT handler in config map", func() {
+		Context("Handler is ory and ApiRule with JWT handler rule exists", func() {
+			Context("changing jwt handler to istio", func() {
+				It("Should have validation errors for APiRule JWT handler configuration and rule is not deleted", func() {
+					// given
+					updateJwtHandlerTo(helpers.JWT_HANDLER_ORY)
+
+					apiRuleName := generateTestName(testNameBase, testIDLength)
+					testServiceHost := fmt.Sprintf("httpbin-%s.kyma.local", apiRuleName)
+
+					rule := testRule("/img", []string{"GET"}, nil, testOryJWTHandler(testIssuer, defaultScopes))
+					apiRule := testApiRule(apiRuleName, testNamespace, testServiceNameBase, testNamespace, testServiceHost, testServicePort, []gatewayv1beta1.Rule{rule})
+					svc := testService(testServiceNameBase, testNamespace, testServicePort)
+
+					By("Creating ApiRule with Rule using Ory JWT handler configuration")
+
+					// when
+					Expect(c.Create(context.TODO(), svc)).Should(Succeed())
+					Expect(c.Create(context.TODO(), apiRule)).Should(Succeed())
+					defer func() {
+						apiRuleTeardown(apiRule)
+						serviceTeardown(svc)
+					}()
+
+					expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusOK)
+
+					// when
+					updateJwtHandlerTo(helpers.JWT_HANDLER_ISTIO)
+
+					// then
+					Eventually(func(g Gomega) {
+						apiRule := gatewayv1beta1.APIRule{}
+						g.Expect(c.Get(context.TODO(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &apiRule)).Should(Succeed())
+						g.Expect(apiRule.Status.APIRuleStatus.Code).To(Equal(gatewayv1beta1.StatusError))
+						g.Expect(apiRule.Status.APIRuleStatus.Description).To(ContainSubstring("Multiple validation errors"))
+
+						shouldHaveRules(g, apiRuleName, testNamespace, 1)
+					}, eventuallyTimeout).Should(Succeed())
+				})
+
+				It("Should create AP and RA and delete JWT Access Rule when ApiRule JWT handler configuration was updated to have valid config for istio", func() {
+					// given
+					updateJwtHandlerTo(helpers.JWT_HANDLER_ORY)
+
+					apiRuleName := generateTestName(testNameBase, testIDLength)
+					testServiceHost := fmt.Sprintf("httpbin-%s.kyma.local", apiRuleName)
+
+					rule := testRule("/img", []string{"GET"}, nil, testOryJWTHandler(testIssuer, defaultScopes))
+					apiRule := testApiRule(apiRuleName, testNamespace, testServiceNameBase, testNamespace, testServiceHost, testServicePort, []gatewayv1beta1.Rule{rule})
+					svc := testService(testServiceNameBase, testNamespace, testServicePort)
+
+					By("Creating ApiRule with Rule using Ory JWT handler")
+
+					// when
+					Expect(c.Create(context.TODO(), svc)).Should(Succeed())
+					Expect(c.Create(context.TODO(), apiRule)).Should(Succeed())
+					defer func() {
+						apiRuleTeardown(apiRule)
+						serviceTeardown(svc)
+					}()
+
+					expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusOK)
+					updateJwtHandlerTo(helpers.JWT_HANDLER_ISTIO)
+					expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusError)
+
+					// when
+					By("Updating JWT handler configuration in ApiRule to be valid for istio")
+					istioJwtRule := testRule("/img", []string{"GET"}, nil, testIstioJWTHandler(testIssuer, testJwksUri))
+					Eventually(func(g Gomega) {
+						updatedApiRule := gatewayv1beta1.APIRule{}
+						g.Expect(c.Get(context.TODO(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &updatedApiRule)).Should(Succeed())
+						updatedApiRule.Spec.Rules = []gatewayv1beta1.Rule{istioJwtRule}
+						g.Expect(c.Update(context.TODO(), &updatedApiRule)).Should(Succeed())
+					}, eventuallyTimeout).Should(Succeed())
+
+					// then
+					expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusOK)
+
+					Eventually(func(g Gomega) {
+						shouldHaveRequestAuthentications(g, apiRuleName, testNamespace, 1)
+						shouldHaveAuthorizationPolicies(g, apiRuleName, testNamespace, 1)
+						shouldHaveRules(g, apiRuleName, testNamespace, 0)
+					}, eventuallyTimeout).Should(Succeed())
+				})
+			})
+		})
+
+		Context("Handler is istio and ApiRule with JWT handler specific resources exists", func() {
+
+			Context("changing jwt handler to ory", func() {
+				It("Should have validation errors for APiRule JWT handler configuration and resources are not deleted", func() {
+					// given
+					updateJwtHandlerTo(helpers.JWT_HANDLER_ISTIO)
+
+					apiRuleName := generateTestName(testNameBase, testIDLength)
+					testServiceHost := fmt.Sprintf("httpbin-%s.kyma.local", apiRuleName)
+
+					rule := testRule("/img", []string{"GET"}, nil, testIstioJWTHandler(testIssuer, testJwksUri))
+					apiRule := testApiRule(apiRuleName, testNamespace, testServiceNameBase, testNamespace, testServiceHost, testServicePort, []gatewayv1beta1.Rule{rule})
+					svc := testService(testServiceNameBase, testNamespace, testServicePort)
+
+					By("Creating ApiRule with Rule using Istio JWT handler configuration")
+
+					// when
+					Expect(c.Create(context.TODO(), svc)).Should(Succeed())
+					Expect(c.Create(context.TODO(), apiRule)).Should(Succeed())
+					defer func() {
+						apiRuleTeardown(apiRule)
+						serviceTeardown(svc)
+					}()
+
+					By("Waiting until reconciliation of API Rule has finished")
+					expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusOK)
+
+					// when
+					updateJwtHandlerTo(helpers.JWT_HANDLER_ORY)
+
+					// then
+					Eventually(func(g Gomega) {
+						apiRule := gatewayv1beta1.APIRule{}
+						g.Expect(c.Get(context.TODO(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &apiRule)).Should(Succeed())
+						g.Expect(apiRule.Status.APIRuleStatus.Code).To(Equal(gatewayv1beta1.StatusError))
+						g.Expect(apiRule.Status.APIRuleStatus.Description).To(ContainSubstring("Validation error"))
+
+						shouldHaveRequestAuthentications(g, apiRuleName, testNamespace, 1)
+						shouldHaveAuthorizationPolicies(g, apiRuleName, testNamespace, 1)
+					}, eventuallyTimeout).Should(Succeed())
+				})
+
+				It("Should create Access Rule and delete RA and AP when ApiRule JWT handler configuration was updated to have valid config for ory", func() {
+					// given
+					updateJwtHandlerTo(helpers.JWT_HANDLER_ISTIO)
+
+					apiRuleName := generateTestName(testNameBase, testIDLength)
+					testServiceHost := fmt.Sprintf("httpbin-%s.kyma.local", apiRuleName)
+
+					rule := testRule("/img", []string{"GET"}, nil, testIstioJWTHandler(testIssuer, testJwksUri))
+					apiRule := testApiRule(apiRuleName, testNamespace, testServiceNameBase, testNamespace, testServiceHost, testServicePort, []gatewayv1beta1.Rule{rule})
+					svc := testService(testServiceNameBase, testNamespace, testServicePort)
+
+					By("Creating ApiRule with Rule using JWT handler configuration")
+
+					// when
+					Expect(c.Create(context.TODO(), svc)).Should(Succeed())
+					Expect(c.Create(context.TODO(), apiRule)).Should(Succeed())
+					defer func() {
+						apiRuleTeardown(apiRule)
+						serviceTeardown(svc)
+					}()
+
+					By("Waiting until reconciliation of API Rule has finished")
+					expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusOK)
+					updateJwtHandlerTo(helpers.JWT_HANDLER_ORY)
+
+					By("Waiting until reconciliation of API Rule has finished")
+					Eventually(func(g Gomega) {
+						apiRule := gatewayv1beta1.APIRule{}
+						g.Expect(c.Get(context.TODO(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &apiRule)).Should(Succeed())
+						g.Expect(apiRule.Status.APIRuleStatus).NotTo(BeNil())
+						g.Expect(apiRule.Status.APIRuleStatus.Code).To(Equal(gatewayv1beta1.StatusError))
+					}, eventuallyTimeout).Should(Succeed())
+
+					// when
+					By("Updating JWT handler in ApiRule to be valid for ory")
+					Eventually(func(g Gomega) {
+						oryJwtRule := testRule("/img", []string{"GET"}, nil, testOryJWTHandler(testIssuer, defaultScopes))
+						updatedApiRule := gatewayv1beta1.APIRule{}
+						Expect(c.Get(context.TODO(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &updatedApiRule)).Should(Succeed())
+						updatedApiRule.Spec.Rules = []gatewayv1beta1.Rule{oryJwtRule}
+						Expect(c.Update(context.TODO(), &updatedApiRule)).Should(Succeed())
+					}, eventuallyTimeout).Should(Succeed())
+
+					// then
+					expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusOK)
+
+					Eventually(func(g Gomega) {
+						shouldHaveRequestAuthentications(g, apiRuleName, testNamespace, 0)
+						shouldHaveAuthorizationPolicies(g, apiRuleName, testNamespace, 0)
+						shouldHaveRules(g, apiRuleName, testNamespace, 1)
+					}, eventuallyTimeout).Should(Succeed())
+				})
+			})
+		})
 	})
 
 	It("APIRule in status Error should reconcile to status OK when root cause of error is fixed", func() {
@@ -746,6 +1300,22 @@ func testService(name, namespace string, servicePort uint32) *corev1.Service {
 					Port: int32(servicePort),
 				},
 			},
+		},
+	}
+}
+
+func testOryJWTHandler(issuer string, scopes []string) *gatewayv1beta1.Handler {
+
+	configJSON := fmt.Sprintf(`{
+			"trusted_issuers": ["%s"],
+			"jwks": [],
+			"required_scope": [%s]
+		}`, issuer, toCSVList(scopes))
+
+	return &gatewayv1beta1.Handler{
+		Name: "jwt",
+		Config: &runtime.RawExtension{
+			Raw: []byte(configJSON),
 		},
 	}
 }

@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
+	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 
 	oryjwt "github.com/kyma-project/api-gateway/internal/types/ory"
 	"github.com/kyma-project/api-gateway/internal/validation"
@@ -20,9 +20,9 @@ const (
 
 type handlerValidator struct{}
 
-func (o *handlerValidator) Validate(attributePath string, handler *gatewayv1beta1.Handler) []validation.Failure {
+func (o *handlerValidator) Validate(attributePath string, handler *v1beta1.Handler) []validation.Failure {
 	var failures []validation.Failure
-	var template gatewayv1beta1.JwtConfig
+	var template v1beta1.JwtConfig
 
 	if !validation.ConfigNotEmpty(handler.Config) {
 		failures = append(failures, validation.Failure{AttributePath: attributePath + ".config", Message: "supplied config cannot be empty"})
@@ -43,7 +43,7 @@ func (o *handlerValidator) Validate(attributePath string, handler *gatewayv1beta
 	return failures
 }
 
-func checkForOryConfig(attributePath string, handler *gatewayv1beta1.Handler) (problems []validation.Failure) {
+func checkForOryConfig(attributePath string, handler *v1beta1.Handler) (problems []validation.Failure) {
 	var template oryjwt.JWTAccStrConfig
 	err := json.Unmarshal(handler.Config.Raw, &template)
 	if err != nil {
@@ -65,7 +65,7 @@ func checkForOryConfig(attributePath string, handler *gatewayv1beta1.Handler) (p
 	return problems
 }
 
-func hasInvalidRequiredScopes(authorization gatewayv1beta1.JwtAuthorization) error {
+func hasInvalidRequiredScopes(authorization v1beta1.JwtAuthorization) error {
 	if authorization.RequiredScopes == nil {
 		return nil
 	}
@@ -80,7 +80,7 @@ func hasInvalidRequiredScopes(authorization gatewayv1beta1.JwtAuthorization) err
 	return nil
 }
 
-func hasInvalidAudiences(authorization gatewayv1beta1.JwtAuthorization) error {
+func hasInvalidAudiences(authorization v1beta1.JwtAuthorization) error {
 	if authorization.Audiences == nil {
 		return nil
 	}
@@ -95,7 +95,7 @@ func hasInvalidAudiences(authorization gatewayv1beta1.JwtAuthorization) error {
 	return nil
 }
 
-func hasInvalidAuthentications(attributePath string, authentications []*gatewayv1beta1.JwtAuthentication) (failures []validation.Failure) {
+func hasInvalidAuthentications(attributePath string, authentications []*v1beta1.JwtAuthentication) (failures []validation.Failure) {
 	hasFromHeaders, hasFromParams := false, false
 	if len(authentications) == 0 {
 		return []validation.Failure{
@@ -142,7 +142,7 @@ func hasInvalidAuthentications(attributePath string, authentications []*gatewayv
 	return failures
 }
 
-func hasInvalidAuthorizations(attributePath string, authorizations []*gatewayv1beta1.JwtAuthorization) (failures []validation.Failure) {
+func hasInvalidAuthorizations(attributePath string, authorizations []*v1beta1.JwtAuthorization) (failures []validation.Failure) {
 	if authorizations == nil {
 		return nil
 	}
@@ -216,14 +216,14 @@ func containsSidecar(pod corev1.Pod) bool {
 type rulesValidator struct {
 }
 
-func (v *rulesValidator) Validate(attrPath string, rules []gatewayv1beta1.Rule) []validation.Failure {
+func (v *rulesValidator) Validate(attrPath string, rules []v1beta1.Rule) []validation.Failure {
 	var failures []validation.Failure
-	jwtAuths := map[string]*gatewayv1beta1.JwtAuthentication{}
+	jwtAuths := map[string]*v1beta1.JwtAuthentication{}
 	for i, rule := range rules {
 		for j, accessStrategy := range rule.AccessStrategies {
 			attributePath := fmt.Sprintf("%s[%d].accessStrategy[%d]", attrPath, i, j)
 			if accessStrategy.Config != nil {
-				var template gatewayv1beta1.JwtConfig
+				var template v1beta1.JwtConfig
 				err := json.Unmarshal(accessStrategy.Config.Raw, &template)
 				if err != nil {
 					failures = append(failures, validation.Failure{AttributePath: attributePath, Message: "Can't read json: " + err.Error()})
@@ -245,7 +245,7 @@ func (v *rulesValidator) Validate(attrPath string, rules []gatewayv1beta1.Rule) 
 	return failures
 }
 
-func isJwtAuthenticationsEqual(auth1 *gatewayv1beta1.JwtAuthentication, auth2 *gatewayv1beta1.JwtAuthentication) bool {
+func isJwtAuthenticationsEqual(auth1 *v1beta1.JwtAuthentication, auth2 *v1beta1.JwtAuthentication) bool {
 	if auth1.Issuer != auth2.Issuer || auth1.JwksUri != auth2.JwksUri {
 		return false
 	}
