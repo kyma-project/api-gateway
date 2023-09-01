@@ -61,11 +61,11 @@ func (r *APIGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *APIGatewayReconciler) SetupWithManager(mgr ctrl.Manager) error {
+func (r *APIGatewayReconciler) SetupWithManager(mgr ctrl.Manager, c controllers.RateLimiterConfig) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&operatorv1alpha1.APIGateway{}).
 		WithOptions(controller.Options{
-			RateLimiter: controllers.NewRateLimiter(),
+			RateLimiter: controllers.NewRateLimiter(c),
 		}).
 		Complete(r)
 }

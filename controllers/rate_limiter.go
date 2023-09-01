@@ -7,16 +7,16 @@ import (
 	"time"
 )
 
-const (
-	rateLimiterBurst     = 200
-	rateLimiterFrequency = 30
-	failureBaseDelay     = 1 * time.Second
-	failureMaxDelay      = 1000 * time.Second
-)
+type RateLimiterConfig struct {
+	Burst            int
+	Frequency        int
+	FailureBaseDelay time.Duration
+	FailureMaxDelay  time.Duration
+}
 
 // NewRateLimiter returns a rate limiter for a client-go.workqueue.  It has both an overall (token bucket) and per-item (exponential) rate limiting.
-func NewRateLimiter() ratelimiter.RateLimiter {
+func NewRateLimiter(c RateLimiterConfig) ratelimiter.RateLimiter {
 	return workqueue.NewMaxOfRateLimiter(
-		workqueue.NewItemExponentialFailureRateLimiter(failureBaseDelay, failureMaxDelay),
-		&workqueue.BucketRateLimiter{Limiter: rate.NewLimiter(rate.Limit(rateLimiterFrequency), rateLimiterBurst)})
+		workqueue.NewItemExponentialFailureRateLimiter(c.FailureBaseDelay, c.FailureMaxDelay),
+		&workqueue.BucketRateLimiter{Limiter: rate.NewLimiter(rate.Limit(c.Frequency), c.Burst)})
 }

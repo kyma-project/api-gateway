@@ -19,6 +19,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/kyma-project/api-gateway/controllers"
 	"github.com/kyma-project/api-gateway/controllers/gateway"
 	operatorcontrollers "github.com/kyma-project/api-gateway/controllers/operator"
 	"os"
@@ -85,8 +86,8 @@ func init() {
 
 func defineFlagVar() *FlagVar {
 	flagVar := new(FlagVar)
-	flag.StringVar(&flagVar.metricsAddr, "metrics-bind-address", ":8090", "The address the metric endpoint binds to.")
-	flag.StringVar(&flagVar.probeAddr, "health-probe-bind-address", ":8091", "The address the probe endpoint binds to.")
+	flag.StringVar(&flagVar.metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
+	flag.StringVar(&flagVar.probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
 	flag.BoolVar(&flagVar.enableLeaderElection, "leader-elect", false,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
@@ -97,7 +98,7 @@ func defineFlagVar() *FlagVar {
 	flag.DurationVar(&flagVar.rateLimiterFailureBaseDelay, "failure-base-delay", 1*time.Second,
 		"Indicates the failure base delay for rate limiter.")
 	flag.DurationVar(&flagVar.rateLimiterFailureMaxDelay, "failure-max-delay", 1000*time.Second,
-		"Indicates the failure max delay.")
+		"Indicates the failure max delay for rate limiter. .")
 	flag.StringVar(&flagVar.blockListedServices, "service-blocklist", "kubernetes.default,kube-dns.kube-system", "List of services to be blocklisted from exposure.")
 	flag.StringVar(&flagVar.allowListedDomains, "domain-allowlist", "", "List of domains to be allowed.")
 	flag.StringVar(&flagVar.generatedObjectsLabels, "generated-objects-labels", "", "Comma-separated list of key=value pairs used to label generated objects")
@@ -151,16 +152,23 @@ func main() {
 		ErrorReconciliationPeriod: 60,
 	}
 
+	rateLimiterCfg := controllers.RateLimiterConfig{
+		Burst:            flagVar.rateLimiterBurst,
+		Frequency:        flagVar.rateLimiterFrequency,
+		FailureBaseDelay: flagVar.rateLimiterFailureBaseDelay,
+		FailureMaxDelay:  flagVar.rateLimiterFailureMaxDelay,
+	}
+
 	apiRuleReconciler, err := gateway.NewApiRuleReconciler(mgr, config)
 	if err != nil {
 		setupLog.Error(err, "unable to create APIRule reconciler", "controller", "APIRule")
 		os.Exit(1)
 	}
-	if err = apiRuleReconciler.SetupWithManager(mgr); err != nil {
+	if err = apiRuleReconciler.SetupWithManager(mgr, rateLimiterCfg); err != nil {
 		setupLog.Error(err, "unable to setup controller", "controller", "APIRule")
 		os.Exit(1)
 	}
-	if err = operatorcontrollers.NewAPIGatewayReconciler(mgr).SetupWithManager(mgr); err != nil {
+	if err = operatorcontrollers.NewAPIGatewayReconciler(mgr).SetupWithManager(mgr, rateLimiterCfg); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "APIGateway")
 		os.Exit(1)
 	}

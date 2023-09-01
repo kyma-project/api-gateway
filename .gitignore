@@ -43,3 +43,7 @@ reports
 cucumber-report.json
 junit-report*.xml
 report*.html
+
+# module generation files
+template-fast.yaml
+template-regular.yaml

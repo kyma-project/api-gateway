@@ -170,12 +170,12 @@ func (r *APIRuleReconciler) getReconciliation() processing.ReconciliationCommand
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *APIRuleReconciler) SetupWithManager(mgr ctrl.Manager) error {
+func (r *APIRuleReconciler) SetupWithManager(mgr ctrl.Manager, c controllers.RateLimiterConfig) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		// We need to filter for generation changes, because we had an issue that on Azure clusters the APIRules were constantly reconciled.
 		For(&gatewayv1beta1.APIRule{}, builder.WithPredicates(predicate.GenerationChangedPredicate{})).
 		WithOptions(controller.Options{
-			RateLimiter: controllers.NewRateLimiter(),
+			RateLimiter: controllers.NewRateLimiter(c),
 		}).
 		Complete(r)
 }
