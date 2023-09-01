@@ -3,4 +3,3 @@ kind: APIGateway
 metadata:
   name: default
   namespace: kyma-system
-spec:
