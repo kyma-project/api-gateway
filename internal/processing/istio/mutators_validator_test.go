@@ -1,7 +1,7 @@
 package istio
 
 import (
-	"github.com/kyma-project/api-gateway/api/v1beta1"
+	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	processingtest "github.com/kyma-project/api-gateway/internal/processing/internal/test"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"

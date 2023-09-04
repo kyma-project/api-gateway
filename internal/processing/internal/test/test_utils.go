@@ -3,9 +3,8 @@ package processing_test
 import (
 	"encoding/json"
 	"fmt"
+	apirulev1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 
-	apirulev1beta1 "github.com/kyma-project/api-gateway/api/v1beta1"
-	gatewayv1beta1 "github.com/kyma-project/api-gateway/api/v1beta1"
 	"github.com/kyma-project/api-gateway/internal/processing"
 	"github.com/onsi/gomega"
 	. "github.com/onsi/gomega"
@@ -82,7 +81,7 @@ func GetFakeClient(objs ...client.Object) client.Client {
 	gomega.Expect(err).NotTo(gomega.HaveOccurred())
 	err = securityv1beta1.AddToScheme(scheme)
 	gomega.Expect(err).NotTo(gomega.HaveOccurred())
-	err = gatewayv1beta1.AddToScheme(scheme)
+	err = apirulev1beta1.AddToScheme(scheme)
 	gomega.Expect(err).NotTo(gomega.HaveOccurred())
 	err = corev1.AddToScheme(scheme)
 	gomega.Expect(err).NotTo(gomega.HaveOccurred())

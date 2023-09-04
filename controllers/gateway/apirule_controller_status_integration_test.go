@@ -1,0 +1,193 @@
+package gateway_test
+
+import (
+	"context"
+	"fmt"
+	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
+
+	"github.com/kyma-project/api-gateway/internal/helpers"
+
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+)
+
+// Tests needs to be executed serially because of the shared state of the JWT Handler in the API Controller.
+var _ = Describe("Resource status", Serial, func() {
+
+	const (
+		testNameBase           = "status-test"
+		testIDLength           = 5
+		testServiceName        = "httpbin"
+		testServicePort uint32 = 443
+		testPath               = "/.*"
+	)
+
+	Context("with ory handler", func() {
+
+		It("should return nil for resources not supported by the handler ", func() {
+			// given
+			updateJwtHandlerTo(helpers.JWT_HANDLER_ORY)
+
+			apiRuleName := generateTestName(testNameBase, testIDLength)
+			serviceName := generateTestName(testServiceName, testIDLength)
+			serviceHost := fmt.Sprintf("%s.kyma.local", serviceName)
+
+			rule := testRule(testPath, defaultMethods, defaultMutators, noConfigHandler("noop"))
+			instance := testApiRule(apiRuleName, testNamespace, serviceName, testNamespace, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule})
+			svc := testService(serviceName, testNamespace, testServicePort)
+
+			// when
+			Expect(c.Create(context.TODO(), svc)).Should(Succeed())
+			Expect(c.Create(context.TODO(), instance)).Should(Succeed())
+			defer func() {
+				apiRuleTeardown(instance)
+				serviceTeardown(svc)
+			}()
+
+			// then
+			Eventually(func(g Gomega) {
+				created := gatewayv1beta1.APIRule{}
+				g.Expect(c.Get(context.TODO(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &created)).Should(Succeed())
+				g.Expect(created.Status.APIRuleStatus).NotTo(BeNil())
+				g.Expect(created.Status.APIRuleStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
+				g.Expect(created.Status.VirtualServiceStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
+				g.Expect(created.Status.AccessRuleStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
+				g.Expect(created.Status.AuthorizationPolicyStatus).To(BeNil())
+				g.Expect(created.Status.RequestAuthenticationStatus).To(BeNil())
+			}, eventuallyTimeout).Should(Succeed())
+
+		})
+
+		It("should report validation errors in ApiRule status", func() {
+			// given
+			updateJwtHandlerTo(helpers.JWT_HANDLER_ORY)
+
+			apiRuleName := generateTestName(testNameBase, testIDLength)
+			serviceName := generateTestName(testServiceName, testIDLength)
+			serviceHost := fmt.Sprintf("%s.kyma.local", serviceName)
+
+			invalidConfig := testOauthHandler(defaultScopes)
+			invalidConfig.Name = "noop"
+
+			rule := testRule(testPath, defaultMethods, defaultMutators, invalidConfig)
+			instance := testApiRule(apiRuleName, testNamespace, serviceName, testNamespace, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule})
+			instance.Spec.Rules = append(instance.Spec.Rules, instance.Spec.Rules[0]) //Duplicate entry
+			instance.Spec.Rules = append(instance.Spec.Rules, instance.Spec.Rules[0]) //Duplicate entry
+			svc := testService(serviceName, testNamespace, testServicePort)
+
+			// when
+			Expect(c.Create(context.TODO(), svc)).Should(Succeed())
+			Expect(c.Create(context.TODO(), instance)).Should(Succeed())
+			defer func() {
+				apiRuleTeardown(instance)
+				serviceTeardown(svc)
+			}()
+
+			// then
+			Eventually(func(g Gomega) {
+				created := gatewayv1beta1.APIRule{}
+				Expect(c.Get(context.TODO(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &created)).Should(Succeed())
+
+				g.Expect(created.Status.APIRuleStatus).NotTo(BeNil())
+				g.Expect(created.Status.APIRuleStatus.Code).To(Equal(gatewayv1beta1.StatusError))
+				g.Expect(created.Status.APIRuleStatus.Description).To(ContainSubstring("Multiple validation errors:"))
+				g.Expect(created.Status.APIRuleStatus.Description).To(ContainSubstring("Attribute \".spec.rules\": multiple rules defined for the same path and method"))
+				g.Expect(created.Status.APIRuleStatus.Description).To(ContainSubstring("Attribute \".spec.rules[0].accessStrategies[0].config\": strategy: noop does not support configuration"))
+				g.Expect(created.Status.APIRuleStatus.Description).To(ContainSubstring("Attribute \".spec.rules[1].accessStrategies[0].config\": strategy: noop does not support configuration"))
+				g.Expect(created.Status.APIRuleStatus.Description).To(ContainSubstring("1 more error(s)..."))
+
+				g.Expect(created.Status.VirtualServiceStatus.Code).To(Equal(gatewayv1beta1.StatusSkipped))
+				g.Expect(created.Status.AccessRuleStatus.Code).To(Equal(gatewayv1beta1.StatusSkipped))
+				g.Expect(created.Status.AuthorizationPolicyStatus).To(BeNil())
+				g.Expect(created.Status.RequestAuthenticationStatus).To(BeNil())
+
+				shouldHaveVirtualServices(g, apiRuleName, testNamespace, 0)
+			}, eventuallyTimeout).Should(Succeed())
+
+		})
+	})
+
+	Context("with istio handler", func() {
+
+		It("should return nil for resources not supported by the handler ", func() {
+			// given
+			updateJwtHandlerTo(helpers.JWT_HANDLER_ISTIO)
+
+			apiRuleName := generateTestName(testNameBase, testIDLength)
+			serviceName := generateTestName(testServiceName, testIDLength)
+			serviceHost := fmt.Sprintf("%s.kyma.local", serviceName)
+
+			rule := testRule(testPath, defaultMethods, []*gatewayv1beta1.Mutator{}, noConfigHandler("noop"))
+			instance := testApiRule(apiRuleName, testNamespace, serviceName, testNamespace, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule})
+			svc := testService(serviceName, testNamespace, testServicePort)
+
+			// when
+			Expect(c.Create(context.TODO(), svc)).Should(Succeed())
+			Expect(c.Create(context.TODO(), instance)).Should(Succeed())
+			defer func() {
+				apiRuleTeardown(instance)
+				serviceTeardown(svc)
+			}()
+
+			// then
+			Eventually(func(g Gomega) {
+				created := gatewayv1beta1.APIRule{}
+				Expect(c.Get(context.TODO(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &created)).Should(Succeed())
+				g.Expect(created.Status.APIRuleStatus).NotTo(BeNil())
+				g.Expect(created.Status.APIRuleStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
+				g.Expect(created.Status.VirtualServiceStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
+				g.Expect(created.Status.AuthorizationPolicyStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
+				g.Expect(created.Status.RequestAuthenticationStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
+				g.Expect(created.Status.AccessRuleStatus).To(BeNil())
+			}, eventuallyTimeout).Should(Succeed())
+		})
+
+		It("should report validation errors in ApiRule status", func() {
+			// given
+			updateJwtHandlerTo(helpers.JWT_HANDLER_ISTIO)
+
+			apiRuleName := generateTestName(testNameBase, testIDLength)
+			serviceName := generateTestName(testServiceName, testIDLength)
+			serviceHost := fmt.Sprintf("%s.kyma.local", serviceName)
+
+			invalidConfig := testOauthHandler(defaultScopes)
+			invalidConfig.Name = "noop"
+
+			rule := testRule(testPath, defaultMethods, []*gatewayv1beta1.Mutator{}, invalidConfig)
+			instance := testApiRule(apiRuleName, testNamespace, serviceName, testNamespace, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule})
+			instance.Spec.Rules = append(instance.Spec.Rules, instance.Spec.Rules[0]) //Duplicate entry
+			instance.Spec.Rules = append(instance.Spec.Rules, instance.Spec.Rules[0]) //Duplicate entry
+			svc := testService(serviceName, testNamespace, testServicePort)
+
+			// when
+			Expect(c.Create(context.TODO(), svc)).Should(Succeed())
+			Expect(c.Create(context.TODO(), instance)).Should(Succeed())
+			defer func() {
+				apiRuleTeardown(instance)
+				serviceTeardown(svc)
+			}()
+
+			// then
+			Eventually(func(g Gomega) {
+				created := gatewayv1beta1.APIRule{}
+				Expect(c.Get(context.TODO(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &created)).Should(Succeed())
+				g.Expect(created.Status.APIRuleStatus).NotTo(BeNil())
+				g.Expect(created.Status.APIRuleStatus.Code).To(Equal(gatewayv1beta1.StatusError))
+				g.Expect(created.Status.APIRuleStatus.Description).To(ContainSubstring("Multiple validation errors:"))
+				g.Expect(created.Status.APIRuleStatus.Description).To(ContainSubstring("Attribute \".spec.rules\": multiple rules defined for the same path and method"))
+				g.Expect(created.Status.APIRuleStatus.Description).To(ContainSubstring("Attribute \".spec.rules[0].accessStrategies[0].config\": strategy: noop does not support configuration"))
+				g.Expect(created.Status.APIRuleStatus.Description).To(ContainSubstring("Attribute \".spec.rules[1].accessStrategies[0].config\": strategy: noop does not support configuration"))
+				g.Expect(created.Status.APIRuleStatus.Description).To(ContainSubstring("1 more error(s)..."))
+
+				g.Expect(created.Status.VirtualServiceStatus.Code).To(Equal(gatewayv1beta1.StatusSkipped))
+				g.Expect(created.Status.AuthorizationPolicyStatus.Code).To(Equal(gatewayv1beta1.StatusSkipped))
+				g.Expect(created.Status.RequestAuthenticationStatus.Code).To(Equal(gatewayv1beta1.StatusSkipped))
+				g.Expect(created.Status.AccessRuleStatus).To(BeNil())
+
+				shouldHaveVirtualServices(g, apiRuleName, testNamespace, 0)
+			}, eventuallyTimeout).Should(Succeed())
+		})
+
+	})
+})

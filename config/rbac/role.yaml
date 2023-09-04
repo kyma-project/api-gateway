@@ -96,6 +96,32 @@ rules:
   - update
   - watch
 - apiGroups:
+  - operator.kyma-project.io
+  resources:
+  - apigateways
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - operator.kyma-project.io
+  resources:
+  - apigateways/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - operator.kyma-project.io
+  resources:
+  - apigateways/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
   - security.istio.io
   resources:
   - authorizationpolicies

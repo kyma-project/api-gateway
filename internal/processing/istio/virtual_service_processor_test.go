@@ -3,9 +3,9 @@ package istio_test
 import (
 	"context"
 	"fmt"
+	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"time"
 
-	gatewayv1beta1 "github.com/kyma-project/api-gateway/api/v1beta1"
 	"github.com/kyma-project/api-gateway/internal/processing"
 	. "github.com/kyma-project/api-gateway/internal/processing/internal/test"
 	"github.com/kyma-project/api-gateway/internal/processing/istio"
@@ -22,16 +22,16 @@ var _ = Describe("Virtual Service Processor", func() {
 	When("handler is allow", func() {
 		It("should create for allow authenticator", func() {
 			// given
-			strategies := []*gatewayv1beta1.Authenticator{
+			strategies := []*v1beta1.Authenticator{
 				{
-					Handler: &gatewayv1beta1.Handler{
+					Handler: &v1beta1.Handler{
 						Name: "allow",
 					},
 				},
 			}
 
-			allowRule := GetRuleFor(ApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, strategies)
-			rules := []gatewayv1beta1.Rule{allowRule}
+			allowRule := GetRuleFor(ApiPath, ApiMethods, []*v1beta1.Mutator{}, strategies)
+			rules := []v1beta1.Rule{allowRule}
 
 			apiRule := GetAPIRuleFor(rules)
 			client := GetFakeClient()
@@ -72,16 +72,16 @@ var _ = Describe("Virtual Service Processor", func() {
 
 		It("should override destination host for specified spec level service namespace", func() {
 			// given
-			strategies := []*gatewayv1beta1.Authenticator{
+			strategies := []*v1beta1.Authenticator{
 				{
-					Handler: &gatewayv1beta1.Handler{
+					Handler: &v1beta1.Handler{
 						Name: "allow",
 					},
 				},
 			}
 
-			allowRule := GetRuleFor(ApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, strategies)
-			rules := []gatewayv1beta1.Rule{allowRule}
+			allowRule := GetRuleFor(ApiPath, ApiMethods, []*v1beta1.Mutator{}, strategies)
+			rules := []v1beta1.Rule{allowRule}
 
 			apiRule := GetAPIRuleFor(rules)
 
@@ -89,7 +89,7 @@ var _ = Describe("Virtual Service Processor", func() {
 			overrideServiceNamespace := "testName-namespace"
 			overrideServicePort := uint32(8080)
 
-			apiRule.Spec.Service = &gatewayv1beta1.Service{
+			apiRule.Spec.Service = &v1beta1.Service{
 				Name:      &overrideServiceName,
 				Namespace: &overrideServiceNamespace,
 				Port:      &overrideServicePort,
@@ -112,9 +112,9 @@ var _ = Describe("Virtual Service Processor", func() {
 
 		It("should override destination host with rule level service namespace", func() {
 			// given
-			strategies := []*gatewayv1beta1.Authenticator{
+			strategies := []*v1beta1.Authenticator{
 				{
-					Handler: &gatewayv1beta1.Handler{
+					Handler: &v1beta1.Handler{
 						Name: "allow",
 					},
 				},
@@ -124,14 +124,14 @@ var _ = Describe("Virtual Service Processor", func() {
 			overrideServiceNamespace := "testName-namespace"
 			overrideServicePort := uint32(8080)
 
-			service := &gatewayv1beta1.Service{
+			service := &v1beta1.Service{
 				Name:      &overrideServiceName,
 				Namespace: &overrideServiceNamespace,
 				Port:      &overrideServicePort,
 			}
 
-			allowRule := GetRuleWithServiceFor(ApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, strategies, service)
-			rules := []gatewayv1beta1.Rule{allowRule}
+			allowRule := GetRuleWithServiceFor(ApiPath, ApiMethods, []*v1beta1.Mutator{}, strategies, service)
+			rules := []v1beta1.Rule{allowRule}
 
 			apiRule := GetAPIRuleFor(rules)
 			client := GetFakeClient()
@@ -153,16 +153,16 @@ var _ = Describe("Virtual Service Processor", func() {
 		})
 
 		It("should return VS with default domain name when the hostname does not contain domain name", func() {
-			strategies := []*gatewayv1beta1.Authenticator{
+			strategies := []*v1beta1.Authenticator{
 				{
-					Handler: &gatewayv1beta1.Handler{
+					Handler: &v1beta1.Handler{
 						Name: "allow",
 					},
 				},
 			}
 
-			allowRule := GetRuleFor(ApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, strategies)
-			rules := []gatewayv1beta1.Rule{allowRule}
+			allowRule := GetRuleFor(ApiPath, ApiMethods, []*v1beta1.Mutator{}, strategies)
+			rules := []v1beta1.Rule{allowRule}
 
 			apiRule := GetAPIRuleFor(rules)
 			apiRule.Spec.Host = &ServiceHostWithNoDomain
@@ -189,9 +189,9 @@ var _ = Describe("Virtual Service Processor", func() {
 	When("handler is noop", func() {
 		It("should not override Oathkeeper service destination host with spec level service", func() {
 			// given
-			strategies := []*gatewayv1beta1.Authenticator{
+			strategies := []*v1beta1.Authenticator{
 				{
-					Handler: &gatewayv1beta1.Handler{
+					Handler: &v1beta1.Handler{
 						Name: "noop",
 					},
 				},
@@ -200,13 +200,13 @@ var _ = Describe("Virtual Service Processor", func() {
 			overrideServiceName := "testName"
 			overrideServicePort := uint32(8080)
 
-			service := &gatewayv1beta1.Service{
+			service := &v1beta1.Service{
 				Name: &overrideServiceName,
 				Port: &overrideServicePort,
 			}
 
-			allowRule := GetRuleWithServiceFor(ApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, strategies, service)
-			rules := []gatewayv1beta1.Rule{allowRule}
+			allowRule := GetRuleWithServiceFor(ApiPath, ApiMethods, []*v1beta1.Mutator{}, strategies, service)
+			rules := []v1beta1.Rule{allowRule}
 
 			apiRule := GetAPIRuleFor(rules)
 			client := GetFakeClient()
@@ -228,16 +228,16 @@ var _ = Describe("Virtual Service Processor", func() {
 		When("existing virtual service has owner v1alpha1 owner label", func() {
 			It("should get and update", func() {
 				// given
-				noop := []*gatewayv1beta1.Authenticator{
+				noop := []*v1beta1.Authenticator{
 					{
-						Handler: &gatewayv1beta1.Handler{
+						Handler: &v1beta1.Handler{
 							Name: "noop",
 						},
 					},
 				}
 
-				noopRule := GetRuleFor(ApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, noop)
-				rules := []gatewayv1beta1.Rule{noopRule}
+				noopRule := GetRuleFor(ApiPath, ApiMethods, []*v1beta1.Mutator{}, noop)
+				rules := []v1beta1.Rule{noopRule}
 
 				apiRule := GetAPIRuleFor(rules)
 
@@ -267,7 +267,7 @@ var _ = Describe("Virtual Service Processor", func() {
 				Expect(err).NotTo(HaveOccurred())
 				err = networkingv1beta1.AddToScheme(scheme)
 				Expect(err).NotTo(HaveOccurred())
-				err = gatewayv1beta1.AddToScheme(scheme)
+				err = v1beta1.AddToScheme(scheme)
 				Expect(err).NotTo(HaveOccurred())
 
 				client := fake.NewClientBuilder().WithScheme(scheme).WithObjects(&rule, &vs).Build()
@@ -307,9 +307,9 @@ var _ = Describe("Virtual Service Processor", func() {
 	When("multiple handler", func() {
 		It("should return service for given paths", func() {
 			// given
-			noop := []*gatewayv1beta1.Authenticator{
+			noop := []*v1beta1.Authenticator{
 				{
-					Handler: &gatewayv1beta1.Handler{
+					Handler: &v1beta1.Handler{
 						Name: "noop",
 					},
 				},
@@ -322,9 +322,9 @@ var _ = Describe("Virtual Service Processor", func() {
 							"required_scope": [%s]
 					}`, JwtIssuer, ToCSVList(ApiScopes))
 
-			jwt := []*gatewayv1beta1.Authenticator{
+			jwt := []*v1beta1.Authenticator{
 				{
-					Handler: &gatewayv1beta1.Handler{
+					Handler: &v1beta1.Handler{
 						Name: "jwt",
 						Config: &runtime.RawExtension{
 							Raw: []byte(jwtConfigJSON),
@@ -333,22 +333,22 @@ var _ = Describe("Virtual Service Processor", func() {
 				},
 			}
 
-			testMutators := []*gatewayv1beta1.Mutator{
+			testMutators := []*v1beta1.Mutator{
 				{
-					Handler: &gatewayv1beta1.Handler{
+					Handler: &v1beta1.Handler{
 						Name: "noop",
 					},
 				},
 				{
-					Handler: &gatewayv1beta1.Handler{
+					Handler: &v1beta1.Handler{
 						Name: "idtoken",
 					},
 				},
 			}
 
-			noopRule := GetRuleFor(ApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, noop)
+			noopRule := GetRuleFor(ApiPath, ApiMethods, []*v1beta1.Mutator{}, noop)
 			jwtRule := GetRuleFor(HeadersApiPath, ApiMethods, testMutators, jwt)
-			rules := []gatewayv1beta1.Rule{noopRule, jwtRule}
+			rules := []v1beta1.Rule{noopRule, jwtRule}
 
 			apiRule := GetAPIRuleFor(rules)
 			client := GetFakeClient()
@@ -397,9 +397,9 @@ var _ = Describe("Virtual Service Processor", func() {
 
 		It("should return service for two same paths and different methods", func() {
 			// given
-			noop := []*gatewayv1beta1.Authenticator{
+			noop := []*v1beta1.Authenticator{
 				{
-					Handler: &gatewayv1beta1.Handler{
+					Handler: &v1beta1.Handler{
 						Name: "noop",
 					},
 				},
@@ -412,9 +412,9 @@ var _ = Describe("Virtual Service Processor", func() {
 							"required_scope": [%s]
 					}`, JwtIssuer, ToCSVList(ApiScopes))
 
-			jwt := []*gatewayv1beta1.Authenticator{
+			jwt := []*v1beta1.Authenticator{
 				{
-					Handler: &gatewayv1beta1.Handler{
+					Handler: &v1beta1.Handler{
 						Name: "jwt",
 						Config: &runtime.RawExtension{
 							Raw: []byte(jwtConfigJSON),
@@ -423,23 +423,23 @@ var _ = Describe("Virtual Service Processor", func() {
 				},
 			}
 
-			testMutators := []*gatewayv1beta1.Mutator{
+			testMutators := []*v1beta1.Mutator{
 				{
-					Handler: &gatewayv1beta1.Handler{
+					Handler: &v1beta1.Handler{
 						Name: "noop",
 					},
 				},
 				{
-					Handler: &gatewayv1beta1.Handler{
+					Handler: &v1beta1.Handler{
 						Name: "idtoken",
 					},
 				},
 			}
 			getMethod := []string{"GET"}
 			postMethod := []string{"POST"}
-			noopRule := GetRuleFor(ApiPath, getMethod, []*gatewayv1beta1.Mutator{}, noop)
+			noopRule := GetRuleFor(ApiPath, getMethod, []*v1beta1.Mutator{}, noop)
 			jwtRule := GetRuleFor(ApiPath, postMethod, testMutators, jwt)
-			rules := []gatewayv1beta1.Rule{noopRule, jwtRule}
+			rules := []v1beta1.Rule{noopRule, jwtRule}
 
 			apiRule := GetAPIRuleFor(rules)
 			client := GetFakeClient()
@@ -478,9 +478,9 @@ var _ = Describe("Virtual Service Processor", func() {
 
 		It("should return service for two same paths and one different", func() {
 			// given
-			noop := []*gatewayv1beta1.Authenticator{
+			noop := []*v1beta1.Authenticator{
 				{
-					Handler: &gatewayv1beta1.Handler{
+					Handler: &v1beta1.Handler{
 						Name: "noop",
 					},
 				},
@@ -493,9 +493,9 @@ var _ = Describe("Virtual Service Processor", func() {
 							"required_scope": [%s]
 					}`, JwtIssuer, ToCSVList(ApiScopes))
 
-			jwt := []*gatewayv1beta1.Authenticator{
+			jwt := []*v1beta1.Authenticator{
 				{
-					Handler: &gatewayv1beta1.Handler{
+					Handler: &v1beta1.Handler{
 						Name: "jwt",
 						Config: &runtime.RawExtension{
 							Raw: []byte(jwtConfigJSON),
@@ -504,24 +504,24 @@ var _ = Describe("Virtual Service Processor", func() {
 				},
 			}
 
-			testMutators := []*gatewayv1beta1.Mutator{
+			testMutators := []*v1beta1.Mutator{
 				{
-					Handler: &gatewayv1beta1.Handler{
+					Handler: &v1beta1.Handler{
 						Name: "noop",
 					},
 				},
 				{
-					Handler: &gatewayv1beta1.Handler{
+					Handler: &v1beta1.Handler{
 						Name: "idtoken",
 					},
 				},
 			}
 			getMethod := []string{"GET"}
 			postMethod := []string{"POST"}
-			noopGetRule := GetRuleFor(ApiPath, getMethod, []*gatewayv1beta1.Mutator{}, noop)
-			noopPostRule := GetRuleFor(ApiPath, postMethod, []*gatewayv1beta1.Mutator{}, noop)
+			noopGetRule := GetRuleFor(ApiPath, getMethod, []*v1beta1.Mutator{}, noop)
+			noopPostRule := GetRuleFor(ApiPath, postMethod, []*v1beta1.Mutator{}, noop)
 			jwtRule := GetRuleFor(HeadersApiPath, ApiMethods, testMutators, jwt)
-			rules := []gatewayv1beta1.Rule{noopGetRule, noopPostRule, jwtRule}
+			rules := []v1beta1.Rule{noopGetRule, noopPostRule, jwtRule}
 
 			apiRule := GetAPIRuleFor(rules)
 			client := GetFakeClient()
@@ -579,16 +579,16 @@ var _ = Describe("Virtual Service Processor", func() {
 							"required_scope": [%s]
 					}`, JwtIssuer, ToCSVList(ApiScopes))
 
-			jwt := &gatewayv1beta1.Authenticator{
-				Handler: &gatewayv1beta1.Handler{
+			jwt := &v1beta1.Authenticator{
+				Handler: &v1beta1.Handler{
 					Name: "jwt",
 					Config: &runtime.RawExtension{
 						Raw: []byte(jwtConfigJSON),
 					},
 				},
 			}
-			oauth := &gatewayv1beta1.Authenticator{
-				Handler: &gatewayv1beta1.Handler{
+			oauth := &v1beta1.Authenticator{
+				Handler: &v1beta1.Handler{
 					Name: "oauth2_introspection",
 					Config: &runtime.RawExtension{
 						Raw: []byte(oauthConfigJSON),
@@ -596,10 +596,10 @@ var _ = Describe("Virtual Service Processor", func() {
 				},
 			}
 
-			strategies := []*gatewayv1beta1.Authenticator{jwt, oauth}
+			strategies := []*v1beta1.Authenticator{jwt, oauth}
 
-			allowRule := GetRuleFor(ApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, strategies)
-			rules := []gatewayv1beta1.Rule{allowRule}
+			allowRule := GetRuleFor(ApiPath, ApiMethods, []*v1beta1.Mutator{}, strategies)
+			rules := []v1beta1.Rule{allowRule}
 
 			apiRule := GetAPIRuleFor(rules)
 			client := GetFakeClient()
@@ -640,16 +640,16 @@ var _ = Describe("Virtual Service Processor", func() {
 
 	When("the path is `/*`", func() {
 		It("should set the match to prefix `/`", func() {
-			strategies := []*gatewayv1beta1.Authenticator{
+			strategies := []*v1beta1.Authenticator{
 				{
-					Handler: &gatewayv1beta1.Handler{
+					Handler: &v1beta1.Handler{
 						Name: "allow",
 					},
 				},
 			}
 
-			allowRule := GetRuleFor("/*", ApiMethods, []*gatewayv1beta1.Mutator{}, strategies)
-			rules := []gatewayv1beta1.Rule{allowRule}
+			allowRule := GetRuleFor("/*", ApiMethods, []*v1beta1.Mutator{}, strategies)
+			rules := []v1beta1.Rule{allowRule}
 
 			apiRule := GetAPIRuleFor(rules)
 			client := GetFakeClient()
@@ -674,9 +674,9 @@ var _ = Describe("Virtual Service Processor", func() {
 
 				jwtConfigJSON := fmt.Sprintf(`{"trusted_issuers": ["%s"],"jwks": [],}`, JwtIssuer)
 
-				strategies := []*gatewayv1beta1.Authenticator{
+				strategies := []*v1beta1.Authenticator{
 					{
-						Handler: &gatewayv1beta1.Handler{
+						Handler: &v1beta1.Handler{
 							Name: "jwt",
 							Config: &runtime.RawExtension{
 								Raw: []byte(jwtConfigJSON),
@@ -685,12 +685,12 @@ var _ = Describe("Virtual Service Processor", func() {
 					},
 				}
 
-				mutators := []*gatewayv1beta1.Mutator{
+				mutators := []*v1beta1.Mutator{
 					{
-						Handler: &gatewayv1beta1.Handler{
+						Handler: &v1beta1.Handler{
 							Name: "cookie",
 							Config: GetRawConfig(
-								gatewayv1beta1.CookieMutatorConfig{
+								v1beta1.CookieMutatorConfig{
 									Cookies: map[string]string{
 										"x-test-cookie-1": "cookie-value1",
 										"x-test-cookie-2": "cookie-value2",
@@ -700,10 +700,10 @@ var _ = Describe("Virtual Service Processor", func() {
 						},
 					},
 					{
-						Handler: &gatewayv1beta1.Handler{
+						Handler: &v1beta1.Handler{
 							Name: "header",
 							Config: GetRawConfig(
-								gatewayv1beta1.HeaderMutatorConfig{
+								v1beta1.HeaderMutatorConfig{
 									Headers: map[string]string{
 										"x-test-header-1": "header-value1",
 										"x-test-header-2": "header-value2",
@@ -715,7 +715,7 @@ var _ = Describe("Virtual Service Processor", func() {
 				}
 
 				allowRule := GetRuleFor(ApiPath, ApiMethods, mutators, strategies)
-				rules := []gatewayv1beta1.Rule{allowRule}
+				rules := []v1beta1.Rule{allowRule}
 
 				apiRule := GetAPIRuleFor(rules)
 				apiRule.Spec.Host = &ServiceHostWithNoDomain
@@ -744,9 +744,9 @@ var _ = Describe("Virtual Service Processor", func() {
 			It("should not override x-forwarded-for header", func() {
 				jwtConfigJSON := fmt.Sprintf(`{"trusted_issuers": ["%s"],"jwks": [],}`, JwtIssuer)
 
-				strategies := []*gatewayv1beta1.Authenticator{
+				strategies := []*v1beta1.Authenticator{
 					{
-						Handler: &gatewayv1beta1.Handler{
+						Handler: &v1beta1.Handler{
 							Name: "jwt",
 							Config: &runtime.RawExtension{
 								Raw: []byte(jwtConfigJSON),
@@ -755,12 +755,12 @@ var _ = Describe("Virtual Service Processor", func() {
 					},
 				}
 
-				mutators := []*gatewayv1beta1.Mutator{
+				mutators := []*v1beta1.Mutator{
 					{
-						Handler: &gatewayv1beta1.Handler{
+						Handler: &v1beta1.Handler{
 							Name: "header",
 							Config: GetRawConfig(
-								gatewayv1beta1.HeaderMutatorConfig{
+								v1beta1.HeaderMutatorConfig{
 									Headers: map[string]string{
 										"x-test-header-1": "header-value1",
 									},
@@ -771,7 +771,7 @@ var _ = Describe("Virtual Service Processor", func() {
 				}
 
 				allowRule := GetRuleFor(ApiPath, ApiMethods, mutators, strategies)
-				rules := []gatewayv1beta1.Rule{allowRule}
+				rules := []v1beta1.Rule{allowRule}
 
 				apiRule := GetAPIRuleFor(rules)
 				apiRule.Spec.Host = &ServiceHostWithNoDomain
@@ -798,20 +798,20 @@ var _ = Describe("Virtual Service Processor", func() {
 
 		It("should not add mutator config to VS when access strategy is allow", func() {
 
-			strategies := []*gatewayv1beta1.Authenticator{
+			strategies := []*v1beta1.Authenticator{
 				{
-					Handler: &gatewayv1beta1.Handler{
+					Handler: &v1beta1.Handler{
 						Name: "allow",
 					},
 				},
 			}
 
-			mutators := []*gatewayv1beta1.Mutator{
+			mutators := []*v1beta1.Mutator{
 				{
-					Handler: &gatewayv1beta1.Handler{
+					Handler: &v1beta1.Handler{
 						Name: "header",
 						Config: GetRawConfig(
-							gatewayv1beta1.HeaderMutatorConfig{
+							v1beta1.HeaderMutatorConfig{
 								Headers: map[string]string{
 									"x-test-header-1": "header-value1",
 								},
@@ -822,7 +822,7 @@ var _ = Describe("Virtual Service Processor", func() {
 			}
 
 			allowRule := GetRuleFor(ApiPath, ApiMethods, mutators, strategies)
-			rules := []gatewayv1beta1.Rule{allowRule}
+			rules := []v1beta1.Rule{allowRule}
 
 			apiRule := GetAPIRuleFor(rules)
 			apiRule.Spec.Host = &ServiceHostWithNoDomain
@@ -847,20 +847,20 @@ var _ = Describe("Virtual Service Processor", func() {
 
 		It("should not add mutator config to VS when access strategy is noop", func() {
 
-			strategies := []*gatewayv1beta1.Authenticator{
+			strategies := []*v1beta1.Authenticator{
 				{
-					Handler: &gatewayv1beta1.Handler{
+					Handler: &v1beta1.Handler{
 						Name: "noop",
 					},
 				},
 			}
 
-			mutators := []*gatewayv1beta1.Mutator{
+			mutators := []*v1beta1.Mutator{
 				{
-					Handler: &gatewayv1beta1.Handler{
+					Handler: &v1beta1.Handler{
 						Name: "header",
 						Config: GetRawConfig(
-							gatewayv1beta1.HeaderMutatorConfig{
+							v1beta1.HeaderMutatorConfig{
 								Headers: map[string]string{
 									"x-test-header-1": "header-value1",
 								},
@@ -871,7 +871,7 @@ var _ = Describe("Virtual Service Processor", func() {
 			}
 
 			allowRule := GetRuleFor(ApiPath, ApiMethods, mutators, strategies)
-			rules := []gatewayv1beta1.Rule{allowRule}
+			rules := []v1beta1.Rule{allowRule}
 
 			apiRule := GetAPIRuleFor(rules)
 			apiRule.Spec.Host = &ServiceHostWithNoDomain
@@ -896,20 +896,20 @@ var _ = Describe("Virtual Service Processor", func() {
 
 		It("should not add mutator config to VS when access strategy is oauth2_introspection", func() {
 
-			strategies := []*gatewayv1beta1.Authenticator{
+			strategies := []*v1beta1.Authenticator{
 				{
-					Handler: &gatewayv1beta1.Handler{
+					Handler: &v1beta1.Handler{
 						Name: "oauth2_introspection",
 					},
 				},
 			}
 
-			mutators := []*gatewayv1beta1.Mutator{
+			mutators := []*v1beta1.Mutator{
 				{
-					Handler: &gatewayv1beta1.Handler{
+					Handler: &v1beta1.Handler{
 						Name: "header",
 						Config: GetRawConfig(
-							gatewayv1beta1.HeaderMutatorConfig{
+							v1beta1.HeaderMutatorConfig{
 								Headers: map[string]string{
 									"x-test-header-1": "header-value1",
 								},
@@ -920,7 +920,7 @@ var _ = Describe("Virtual Service Processor", func() {
 			}
 
 			allowRule := GetRuleFor(ApiPath, ApiMethods, mutators, strategies)
-			rules := []gatewayv1beta1.Rule{allowRule}
+			rules := []v1beta1.Rule{allowRule}
 
 			apiRule := GetAPIRuleFor(rules)
 			apiRule.Spec.Host = &ServiceHostWithNoDomain
@@ -947,22 +947,22 @@ var _ = Describe("Virtual Service Processor", func() {
 	Context("timeout", func() {
 
 		var (
-			timeout10s gatewayv1beta1.Timeout = 10
-			timeout20s gatewayv1beta1.Timeout = 20
+			timeout10s v1beta1.Timeout = 10
+			timeout20s v1beta1.Timeout = 20
 		)
 
 		It("should set default timeout when timeout is not configured", func() {
 			// given
-			strategies := []*gatewayv1beta1.Authenticator{
+			strategies := []*v1beta1.Authenticator{
 				{
-					Handler: &gatewayv1beta1.Handler{
+					Handler: &v1beta1.Handler{
 						Name: "allow",
 					},
 				},
 			}
 
-			rule := GetRuleFor(ApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, strategies)
-			rules := []gatewayv1beta1.Rule{rule}
+			rule := GetRuleFor(ApiPath, ApiMethods, []*v1beta1.Mutator{}, strategies)
+			rules := []v1beta1.Rule{rule}
 
 			apiRule := GetAPIRuleFor(rules)
 			client := GetFakeClient()
@@ -983,16 +983,16 @@ var _ = Describe("Virtual Service Processor", func() {
 
 		It("should set timeout from APIRule spec level when no timeout is configured for rule", func() {
 			// given
-			strategies := []*gatewayv1beta1.Authenticator{
+			strategies := []*v1beta1.Authenticator{
 				{
-					Handler: &gatewayv1beta1.Handler{
+					Handler: &v1beta1.Handler{
 						Name: "allow",
 					},
 				},
 			}
 
-			rule := GetRuleFor(ApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, strategies)
-			rules := []gatewayv1beta1.Rule{rule}
+			rule := GetRuleFor(ApiPath, ApiMethods, []*v1beta1.Mutator{}, strategies)
+			rules := []v1beta1.Rule{rule}
 
 			apiRule := GetAPIRuleFor(rules)
 			apiRule.Spec.Timeout = &timeout10s
@@ -1014,17 +1014,17 @@ var _ = Describe("Virtual Service Processor", func() {
 
 		It("should set timeout from rule level when timeout is configured for APIRule spec and rule", func() {
 			// given
-			strategies := []*gatewayv1beta1.Authenticator{
+			strategies := []*v1beta1.Authenticator{
 				{
-					Handler: &gatewayv1beta1.Handler{
+					Handler: &v1beta1.Handler{
 						Name: "allow",
 					},
 				},
 			}
 
-			rule := GetRuleFor(ApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, strategies)
+			rule := GetRuleFor(ApiPath, ApiMethods, []*v1beta1.Mutator{}, strategies)
 			rule.Timeout = &timeout20s
-			rules := []gatewayv1beta1.Rule{rule}
+			rules := []v1beta1.Rule{rule}
 
 			apiRule := GetAPIRuleFor(rules)
 			apiRule.Spec.Timeout = &timeout10s
@@ -1046,17 +1046,17 @@ var _ = Describe("Virtual Service Processor", func() {
 
 		It("should set timeout on rule with explicit timeout configuration and on rule that doesn't have timeout when there are multiple rules and timeout on api rule spec is configured", func() {
 			// given
-			strategies := []*gatewayv1beta1.Authenticator{
+			strategies := []*v1beta1.Authenticator{
 				{
-					Handler: &gatewayv1beta1.Handler{
+					Handler: &v1beta1.Handler{
 						Name: "allow",
 					},
 				},
 			}
-			ruleWithoutTimeout := GetRuleFor("/api-rule-spec-timeout", ApiMethods, []*gatewayv1beta1.Mutator{}, strategies)
-			ruleWithTimeout := GetRuleFor("/rule-timeout", ApiMethods, []*gatewayv1beta1.Mutator{}, strategies)
+			ruleWithoutTimeout := GetRuleFor("/api-rule-spec-timeout", ApiMethods, []*v1beta1.Mutator{}, strategies)
+			ruleWithTimeout := GetRuleFor("/rule-timeout", ApiMethods, []*v1beta1.Mutator{}, strategies)
 			ruleWithTimeout.Timeout = &timeout20s
-			rules := []gatewayv1beta1.Rule{ruleWithoutTimeout, ruleWithTimeout}
+			rules := []v1beta1.Rule{ruleWithoutTimeout, ruleWithTimeout}
 
 			apiRule := GetAPIRuleFor(rules)
 			apiRule.Spec.Timeout = &timeout10s
@@ -1079,17 +1079,17 @@ var _ = Describe("Virtual Service Processor", func() {
 
 		It("should set timeout on rule with explicit timeout configuration and default timeout on rule that doesn't have a timeout when there are multiple rules", func() {
 			// given
-			strategies := []*gatewayv1beta1.Authenticator{
+			strategies := []*v1beta1.Authenticator{
 				{
-					Handler: &gatewayv1beta1.Handler{
+					Handler: &v1beta1.Handler{
 						Name: "allow",
 					},
 				},
 			}
-			ruleWithoutTimeout := GetRuleFor("/default-timeout", ApiMethods, []*gatewayv1beta1.Mutator{}, strategies)
-			ruleWithTimeout := GetRuleFor("/rule-timeout", ApiMethods, []*gatewayv1beta1.Mutator{}, strategies)
+			ruleWithoutTimeout := GetRuleFor("/default-timeout", ApiMethods, []*v1beta1.Mutator{}, strategies)
+			ruleWithTimeout := GetRuleFor("/rule-timeout", ApiMethods, []*v1beta1.Mutator{}, strategies)
 			ruleWithTimeout.Timeout = &timeout20s
-			rules := []gatewayv1beta1.Rule{ruleWithoutTimeout, ruleWithTimeout}
+			rules := []v1beta1.Rule{ruleWithoutTimeout, ruleWithTimeout}
 
 			apiRule := GetAPIRuleFor(rules)
 			client := GetFakeClient()

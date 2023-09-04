@@ -3,13 +3,13 @@ package istio_test
 import (
 	"context"
 	"fmt"
+	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 
 	"github.com/kyma-project/api-gateway/internal/processing"
 	"istio.io/api/security/v1beta1"
 	typev1beta1 "istio.io/api/type/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	gatewayv1beta1 "github.com/kyma-project/api-gateway/api/v1beta1"
 	. "github.com/kyma-project/api-gateway/internal/processing/internal/test"
 	"github.com/kyma-project/api-gateway/internal/processing/istio"
 	. "github.com/onsi/ginkgo/v2"
