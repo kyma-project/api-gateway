@@ -13,9 +13,13 @@ spec:
     listKind: APIGatewayList
     plural: apigateways
     singular: apigateway
-  scope: Namespaced
+  scope: Cluster
   versions:
-  - name: v1alpha1
+  - additionalPrinterColumns:
+    - jsonPath: .status.state
+      name: State
+      type: string
+    name: v1alpha1
     schema:
       openAPIV3Schema:
         description: APIGateway is the Schema for the apigateways API
