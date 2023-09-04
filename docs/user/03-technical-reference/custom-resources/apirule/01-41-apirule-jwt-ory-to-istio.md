@@ -111,19 +111,19 @@ With Istio JWT access strategy, for each `authentications` entry, an Istio's [Re
 
 This table lists all possible configuration properties of the Ory Oathkeeper JWT access strategy and their corresponding properties in Istio:
 
-| Ory Oathkeeper | Required | | Istio | Required |
-|-|:-:|-|-|:-:|
-| **jwks_urls** | **YES** | &rarr; | **authentications.jwksUri** | **YES** |
-| **trusted_issuers** | **NO** | &rarr; | **authentications.issuer** | **YES** |
-| **token_from.header** | **NO** | &rarr; | **authentications.fromHeaders.name**<br/>**authentications.fromHeaders.prefix** | **NO** |
-| **token_from.query_parameter** | **NO** | &rarr; | **authentications.fromParams** | **NO** |
-| **token_from.cookie** | **NO** | &rarr; | *Not Supported* | **-** |
-| **target_audience** | **NO** | &rarr; | **authorizations.audiences** | **NO** |
-| **required_scope** | **NO** | &rarr; | **authorizations.requiredScopes** | **NO** |
-| **scope_strategy** | **NO** | &rarr; | *Not Supported* | **-** |
-| **jwks_max_wait** | **NO** | &rarr; | *Not Supported* | **-** |
-| **jwks_ttl** | **NO** | &rarr; | *Not Supported* | **-** |
-| **allowed_algorithms** | **NO** | &rarr; | *Not Supported* | **-** |
+| Ory Oathkeeper                 | Required  |        | Istio                                                                           | Required |
+|--------------------------------|:---------:|--------|---------------------------------------------------------------------------------|:--------:|
+| **jwks_urls**                  | **YES**   | &rarr; | **authentications.jwksUri**                                                     | **YES**  |
+| **trusted_issuers**            |  **NO**   | &rarr; | **authentications.issuer**                                                      | **YES**  |
+| **token_from.header**          |  **NO**   | &rarr; | **authentications.fromHeaders.name**<br/>**authentications.fromHeaders.prefix** |  **NO**  |
+| **token_from.query_parameter** |  **NO**   | &rarr; | **authentications.fromParams**                                                  |  **NO**  |
+| **token_from.cookie**          |  **NO**   | &rarr; | *Not Supported*                                                                 |  **-**   |
+| **target_audience**            |  **NO**   | &rarr; | **authorizations.audiences**                                                    |  **NO**  |
+| **required_scope**             |  **NO**   | &rarr; | **authorizations.requiredScopes**                                               |  **NO**  |
+| **scope_strategy**             |  **NO**   | &rarr; | *Not Supported*                                                                 |  **-**   |
+| **jwks_max_wait**              |  **NO**   | &rarr; | *Not Supported*                                                                 |  **-**   |
+| **jwks_ttl**                   |  **NO**   | &rarr; | *Not Supported*                                                                 |  **-**   |
+| **allowed_algorithms**         |  **NO**   | &rarr; | *Not Supported*                                                                 |  **-**   |
 
 For more details, check the description of Istio JWT configuration properties in the [APIRule CR documentation](https://github.com/kyma-project/api-gateway/blob/main/docs/api-rule-cr.md#istio-jwt-configuration).
 

@@ -2,7 +2,7 @@
 
 ## Templating support
 
-Ory rules have support for templating in mutators. Simple cases can be implemented with the help of envoy filter, such as the one presented in [id-token-envoyfilter](./id-token-envoyfilter) directory.
+Ory rules have support for templating in mutators. Simple cases can be implemented with the help of envoy filter, such as the one presented in [id-token-envoyfilter](id-token-envoyfilter) directory.
 
 ## Mutators
 
