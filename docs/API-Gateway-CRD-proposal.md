@@ -7,6 +7,7 @@ This document describes proposed API for installing APIGateway component.
 ```yaml
 kind: APIGateway
 spec:
+  enableKymaGateway: true # Part of the custom resource gby default (or true if not defined)
   gateways:
     - namespace: "some-ns" # Required
       name: "gateway1" # Required
