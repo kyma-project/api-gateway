@@ -39,7 +39,7 @@ func GetConfig() Config {
 func GetRetryOpts(config Config) []retry.Option {
 	return []retry.Option{
 		retry.Delay(time.Duration(config.ReqDelay) * time.Second),
-		retry.Attempts(5),
+		retry.Attempts(config.ReqTimeout / config.ReqDelay),
 		retry.DelayType(retry.FixedDelay),
 	}
 }
