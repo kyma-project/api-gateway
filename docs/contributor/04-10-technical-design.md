@@ -2,7 +2,7 @@
 
 ## Kyma API Gateway Operator
 
-The API Gateway Operator consists of two controllers that are reonciling different CRs. The decision why to use one operator with multiple controllers instead of multiple operators is described in an [Architecture Decision Record](#TODO add link).
+The API Gateway Operator consists of two controllers that are reonciling different CRs. The decision why to use one operator with multiple controllers instead of multiple operators is described in an [Architecture Decision Record](https://github.com/kyma-project/api-gateway/issues/495).
 The operator has a dependency on [Istio](https://istio.io/) and [Ory Oathkeeper](https://www.ory.sh/docs/oathkeeper), with the latter being installed by the operator itself.
 
 The following diagram illustrates the APIRule reconciliation process and the resources created in the process:
