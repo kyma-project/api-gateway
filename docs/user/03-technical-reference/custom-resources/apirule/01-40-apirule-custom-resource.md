@@ -1,10 +1,14 @@
-# APIGateway custom resource
+# APIRule custom resource
 
 The `apirules.gateway.kyma-project.io` CustomResourceDefinition (CRD) describes the kind and the format of data the API Gateway Controller listens for. To get the up-to-date CRD in the `yaml` format, run the following command:
 
 ```shell
 kubectl get crd apirules.gateway.kyma-project.io -o yaml
 ```
+
+The following diagram visualizes the process of the APIRule reconciliation and the resources it creates:
+
+![APIRule CR Reconciliation](../../../../assets/api-rule-reconciliation-sequence.svg)
 
 ## Specification
 
