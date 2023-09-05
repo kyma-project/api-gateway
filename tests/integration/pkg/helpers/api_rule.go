@@ -3,7 +3,7 @@ package helpers
 import (
 	"encoding/json"
 	"errors"
-	"github.com/avast/retry-go"
+	"github.com/avast/retry-go/v4"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/dynamic"
 )

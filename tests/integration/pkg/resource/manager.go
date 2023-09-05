@@ -3,7 +3,7 @@ package resource
 import (
 	"context"
 	"fmt"
-	"github.com/avast/retry-go"
+	"github.com/avast/retry-go/v4"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/client"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -61,6 +61,31 @@ func (m *Manager) UpdateResources(k8sClient dynamic.Interface, resources ...unst
 		gotRes, err = m.GetResource(k8sClient, resourceSchema, ns, res.GetName())
 		if err != nil {
 			return nil, err
+		}
+	}
+	return gotRes, nil
+}
+
+func (m *Manager) CreateOrUpdateResources(k8sClient dynamic.Interface, resources ...unstructured.Unstructured) (*unstructured.Unstructured, error) {
+	gotRes := &unstructured.Unstructured{}
+	for _, res := range resources {
+		resourceSchema, ns, _ := m.GetResourceSchemaAndNamespace(res)
+		_, err := m.GetResource(k8sClient, resourceSchema, ns, res.GetName())
+
+		if err != nil {
+			if apierrors.IsNotFound(retry.Error{err}.Unwrap()) {
+				err := m.CreateResource(k8sClient, resourceSchema, ns, res)
+				if err != nil {
+					return nil, err
+				}
+			} else {
+				return nil, err
+			}
+		} else {
+			err = m.UpdateResource(k8sClient, resourceSchema, ns, res.GetName(), res)
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 	return gotRes, nil

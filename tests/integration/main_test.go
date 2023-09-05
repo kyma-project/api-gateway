@@ -7,6 +7,7 @@ import (
 	"github.com/kyma-project/api-gateway/tests/integration/testsuites/custom-domain"
 	"github.com/kyma-project/api-gateway/tests/integration/testsuites/istio-jwt"
 	"github.com/kyma-project/api-gateway/tests/integration/testsuites/ory"
+	"github.com/kyma-project/api-gateway/tests/integration/testsuites/upgrade"
 	"log"
 	"os"
 	"testing"
@@ -35,6 +36,23 @@ func TestCustomDomain(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create Custom domain testsuite %s", err.Error())
 	}
+	defer ts.TearDown()
+	runTestsuite(t, ts, config)
+}
+
+func TestUpgrade(t *testing.T) {
+	config := testcontext.GetConfig()
+	ts, err := testcontext.New(config, upgrade.NewTestsuite)
+
+	if err != nil {
+		t.Fatalf("Failed to create Upgrade testsuite %s", err.Error())
+	}
+	originalJwtHandler, err := SwitchJwtHandler(ts, "istio")
+	if err != nil {
+		log.Print(err.Error())
+		t.Fatalf("unable to switch to Istio jwtHandler")
+	}
+	defer cleanUp(ts, originalJwtHandler)
 	defer ts.TearDown()
 	runTestsuite(t, ts, config)
 }

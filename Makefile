@@ -1,5 +1,5 @@
 APP_NAME = api-gateway-controller
-IMG = $(DOCKER_PUSH_REPOSITORY)$(DOCKER_PUSH_DIRECTORY)/$(APP_NAME)
+IMG ?= $(DOCKER_PUSH_REPOSITORY)$(DOCKER_PUSH_DIRECTORY)/$(APP_NAME)
 TAG = $(DOCKER_TAG)
 
 CERTIFICATES_APP_NAME = api-gateway-webhook-certificates
@@ -120,6 +120,10 @@ test-for-release: envtest ## Run tests.
 test-integration: generate fmt vet envtest ## Run integration tests.
 	source ./tests/integration/env_vars.sh && $(GOTEST) ./tests/integration -v -race -run TestIstioJwt . && $(GOTEST) ./tests/integration -v -race -run TestOryJwt .
 
+.PHONY: test-upgrade
+test-upgrade: generate fmt vet envtest install ## Run API Gateway upgrade tests.
+	source ./tests/integration/env_vars.sh && $(GOTEST) ./tests/integration -v -race -run TestUpgrade .
+
 test-custom-domain:
 	source ./tests/integration/env_vars_custom_domain.sh && bash -c "trap 'kubectl delete secret google-credentials -n default' EXIT; \
              kubectl create secret generic google-credentials -n default --from-file=serviceaccount.json=${TEST_SA_ACCESS_KEY_PATH}; \
@@ -142,6 +146,8 @@ provision-k3d:
 install-kyma:
 ifndef JOB_TYPE
 	kyma deploy --ci -s main -c hack/kyma-components.yaml
+else ifeq ($(UPGRADE_JOB), true)
+	kyma deploy --ci -c hack/kyma-components.yaml
 else ifeq ($(JOB_TYPE), presubmit)
 	kyma deploy --ci -s main -c hack/kyma-components.yaml \
 	  --value api-gateway.global.images.api_gateway_controller.version=${PULL_IMAGE_VERSION} \
