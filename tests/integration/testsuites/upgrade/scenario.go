@@ -30,6 +30,7 @@ type scenario struct {
 	httpClient              *helpers.RetryableHttpClient
 	resourceManager         *resource.Manager
 	config                  testcontext.Config
+	APIGatewayImageVersion  string
 }
 
 func (s *scenario) theAPIRuleIsApplied() error {
@@ -144,7 +145,7 @@ func (s *scenario) upgradeApiGateway() error {
 		return err
 	}
 
-	dep.Spec.Template.Spec.Containers[0].Image = s.config.APIGatewayImageVersion
+	dep.Spec.Template.Spec.Containers[0].Image = s.APIGatewayImageVersion
 
 	apiGatewayDeployment.Object, err = runtime.DefaultUnstructuredConverter.ToUnstructured(&dep)
 	if err != nil {

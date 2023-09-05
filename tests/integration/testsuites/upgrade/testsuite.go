@@ -16,11 +16,13 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 	"log"
+	"os"
 	"path"
 	"time"
 )
 
 const manifestsDirectory = "testsuites/upgrade/manifests/"
+const upgradeImageEnv = "TEST_UPGRADE_IMG"
 
 type tokenFrom struct {
 	From     string
@@ -49,12 +51,21 @@ func (t *testsuite) createScenario(templateFileName string, scenarioName string)
 		ManifestTemplate:        template,
 		ApiResourceManifestPath: templateFileName,
 		ApiResourceDirectory:    path.Dir(manifestsDirectory),
+		APIGatewayImageVersion:  getUpgradeImageVersion(),
 		k8sClient:               t.K8sClient(),
 		oauth2Cfg:               t.oauth2Cfg,
 		httpClient:              t.httpClient,
 		resourceManager:         t.ResourceManager(),
 		config:                  t.config,
 	}
+}
+
+func getUpgradeImageVersion() string {
+	imageVersion, ok := os.LookupEnv(upgradeImageEnv)
+	if !ok {
+		panic("could not get TEST_UPGRADE_IMG")
+	}
+	return imageVersion
 }
 
 type testsuite struct {
