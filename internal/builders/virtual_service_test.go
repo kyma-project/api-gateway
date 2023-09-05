@@ -1,7 +1,6 @@
 package builders
 
 import (
-	"github.com/kyma-project/api-gateway/internal/helpers"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"google.golang.org/protobuf/types/known/durationpb"
@@ -68,7 +67,7 @@ var _ = Describe("Builder for", func() {
 				HTTP(HTTPRoute().
 					Match(MatchRequest().Uri().Regex(matchURIRegex3)).
 					Route(RouteDestination().Host(destHost2).Port(destPort2)).
-					Timeout(time.Second * helpers.DEFAULT_HTTP_TIMEOUT)).
+					Timeout(time.Second * 180)).
 				Get()
 
 			Expect(result.Hosts).To(HaveLen(2))
@@ -94,7 +93,7 @@ var _ = Describe("Builder for", func() {
 			Expect(result.Http[0].Route[0].Weight).To(Equal(int32(100)))
 
 			Expect(result.Http[0].Timeout).To(Equal(durationpb.New(timeout)))
-			Expect(result.Http[1].Timeout).To(Equal(durationpb.New(time.Second * helpers.DEFAULT_HTTP_TIMEOUT)))
+			Expect(result.Http[1].Timeout).To(Equal(durationpb.New(time.Second * 180)))
 
 			//One HTTPMatchRequest element
 			Expect(result.Http[1].Match).To(HaveLen(1))

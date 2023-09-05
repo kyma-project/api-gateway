@@ -3,6 +3,7 @@ package processors_test
 import (
 	"context"
 	"fmt"
+	"time"
 
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/api/v1beta1"
 	"github.com/kyma-project/api-gateway/internal/builders"
@@ -15,6 +16,11 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
+)
+
+var (
+	timeout10s gatewayv1beta1.Timeout = 10
+	timeout20s gatewayv1beta1.Timeout = 20
 )
 
 var _ = Describe("Virtual Service Processor", func() {
@@ -76,6 +82,65 @@ var _ = Describe("Virtual Service Processor", func() {
 		Expect(result).To(HaveLen(1))
 		Expect(result[0].Action.String()).To(Equal("update"))
 	})
+})
+
+var _ = Describe("GetVirtualServiceHttpTimeout", func() {
+	It("should return default of 180s when no timeout is set", func() {
+		// given
+		apiRuleSpec := gatewayv1beta1.APIRuleSpec{}
+		rule := gatewayv1beta1.Rule{}
+
+		// when
+		timeout := processors.GetVirtualServiceHttpTimeout(apiRuleSpec, rule)
+
+		// then
+		Expect(timeout).To(Equal(time.Second * 180))
+	})
+
+	It("should return timeout from rule when timeout is set on rule only", func() {
+		// given
+		apiRuleSpec := gatewayv1beta1.APIRuleSpec{}
+		rule := gatewayv1beta1.Rule{
+			Timeout: &timeout10s,
+		}
+
+		// when
+		timeout := processors.GetVirtualServiceHttpTimeout(apiRuleSpec, rule)
+
+		// then
+		Expect(timeout).To(Equal(time.Second * 10))
+	})
+
+	It("should return timeout from apiRule when timeout is set on apiRule only", func() {
+		// given
+		apiRuleSpec := gatewayv1beta1.APIRuleSpec{
+			Timeout: &timeout20s,
+		}
+		rule := gatewayv1beta1.Rule{}
+
+		// when
+		timeout := processors.GetVirtualServiceHttpTimeout(apiRuleSpec, rule)
+
+		// then
+		Expect(timeout).To(Equal(time.Second * 20))
+	})
+
+	It("should return timeout from rule when timeout is set on both apiRule and rule", func() {
+		// given
+		apiRuleSpec := gatewayv1beta1.APIRuleSpec{
+			Timeout: &timeout20s,
+		}
+		rule := gatewayv1beta1.Rule{
+			Timeout: &timeout10s,
+		}
+
+		// when
+		timeout := processors.GetVirtualServiceHttpTimeout(apiRuleSpec, rule)
+
+		// then
+		Expect(timeout).To(Equal(time.Second * 10))
+	})
+
 })
 
 type mockVirtualServiceCreator struct {

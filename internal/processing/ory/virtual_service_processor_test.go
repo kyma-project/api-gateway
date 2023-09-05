@@ -3,6 +3,7 @@ package ory_test
 import (
 	"context"
 	"fmt"
+	"time"
 
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/api/v1beta1"
 	"github.com/kyma-project/api-gateway/internal/processing"
@@ -634,4 +635,181 @@ var _ = Describe("Virtual Service Processor", func() {
 			Expect(vs.ObjectMeta.Labels[TestLabelKey]).To(Equal(TestLabelValue))
 		})
 	})
+
+	Context("timeout", func() {
+
+		var (
+			timeout10s gatewayv1beta1.Timeout = 10
+			timeout20s gatewayv1beta1.Timeout = 20
+		)
+
+		It("should set default timeout when timeout is not configured", func() {
+			// given
+			strategies := []*gatewayv1beta1.Authenticator{
+				{
+					Handler: &gatewayv1beta1.Handler{
+						Name: "allow",
+					},
+				},
+			}
+
+			rule := GetRuleFor(ApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, strategies)
+			rules := []gatewayv1beta1.Rule{rule}
+
+			apiRule := GetAPIRuleFor(rules)
+			client := GetFakeClient()
+			processor := ory.NewVirtualServiceProcessor(GetTestConfig())
+
+			// when
+			result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
+
+			// then
+			Expect(err).To(BeNil())
+			Expect(result).To(HaveLen(1))
+
+			vs := result[0].Obj.(*networkingv1beta1.VirtualService)
+			Expect(len(vs.Spec.Http)).To(Equal(1))
+
+			Expect(vs.Spec.Http[0].Timeout.AsDuration()).To(Equal(180 * time.Second))
+		})
+
+		It("should set timeout from APIRule spec level when no timeout is configured for rule", func() {
+			// given
+			strategies := []*gatewayv1beta1.Authenticator{
+				{
+					Handler: &gatewayv1beta1.Handler{
+						Name: "allow",
+					},
+				},
+			}
+
+			rule := GetRuleFor(ApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, strategies)
+			rules := []gatewayv1beta1.Rule{rule}
+
+			apiRule := GetAPIRuleFor(rules)
+			apiRule.Spec.Timeout = &timeout10s
+			client := GetFakeClient()
+			processor := ory.NewVirtualServiceProcessor(GetTestConfig())
+
+			// when
+			result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
+
+			// then
+			Expect(err).To(BeNil())
+			Expect(result).To(HaveLen(1))
+
+			vs := result[0].Obj.(*networkingv1beta1.VirtualService)
+			Expect(len(vs.Spec.Http)).To(Equal(1))
+
+			Expect(vs.Spec.Http[0].Timeout.AsDuration()).To(Equal(10 * time.Second))
+		})
+
+		It("should set timeout from rule level when timeout is configured for APIRule spec and rule", func() {
+			// given
+			strategies := []*gatewayv1beta1.Authenticator{
+				{
+					Handler: &gatewayv1beta1.Handler{
+						Name: "allow",
+					},
+				},
+			}
+
+			rule := GetRuleFor(ApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, strategies)
+			rule.Timeout = &timeout20s
+			rules := []gatewayv1beta1.Rule{rule}
+
+			apiRule := GetAPIRuleFor(rules)
+			apiRule.Spec.Timeout = &timeout10s
+			client := GetFakeClient()
+			processor := ory.NewVirtualServiceProcessor(GetTestConfig())
+
+			// when
+			result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
+
+			// then
+			Expect(err).To(BeNil())
+			Expect(result).To(HaveLen(1))
+
+			vs := result[0].Obj.(*networkingv1beta1.VirtualService)
+			Expect(len(vs.Spec.Http)).To(Equal(1))
+
+			Expect(vs.Spec.Http[0].Timeout.AsDuration()).To(Equal(20 * time.Second))
+		})
+
+		It("should set timeout on rule with explicit timeout configuration and on rule that doesn't have timeout when there are multiple rules and timeout on api rule spec is configured", func() {
+			// given
+			strategies := []*gatewayv1beta1.Authenticator{
+				{
+					Handler: &gatewayv1beta1.Handler{
+						Name: "allow",
+					},
+				},
+			}
+			ruleWithoutTimeout := GetRuleFor("/api-rule-spec-timeout", ApiMethods, []*gatewayv1beta1.Mutator{}, strategies)
+			ruleWithTimeout := GetRuleFor("/rule-timeout", ApiMethods, []*gatewayv1beta1.Mutator{}, strategies)
+			ruleWithTimeout.Timeout = &timeout20s
+			rules := []gatewayv1beta1.Rule{ruleWithoutTimeout, ruleWithTimeout}
+
+			apiRule := GetAPIRuleFor(rules)
+			apiRule.Spec.Timeout = &timeout10s
+			client := GetFakeClient()
+			processor := ory.NewVirtualServiceProcessor(GetTestConfig())
+
+			// when
+			result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
+
+			// then
+			Expect(err).To(BeNil())
+			Expect(result).To(HaveLen(1))
+
+			vs := result[0].Obj.(*networkingv1beta1.VirtualService)
+			Expect(len(vs.Spec.Http)).To(Equal(2))
+
+			Expect(getTimeoutByPath(vs, "/api-rule-spec-timeout")).To(Equal(10 * time.Second))
+			Expect(getTimeoutByPath(vs, "/rule-timeout")).To(Equal(20 * time.Second))
+		})
+
+		It("should set timeout on rule with explicit timeout configuration and default timeout on rule that doesn't have a timeout when there are multiple rules", func() {
+			// given
+			strategies := []*gatewayv1beta1.Authenticator{
+				{
+					Handler: &gatewayv1beta1.Handler{
+						Name: "allow",
+					},
+				},
+			}
+			ruleWithoutTimeout := GetRuleFor("/default-timeout", ApiMethods, []*gatewayv1beta1.Mutator{}, strategies)
+			ruleWithTimeout := GetRuleFor("/rule-timeout", ApiMethods, []*gatewayv1beta1.Mutator{}, strategies)
+			ruleWithTimeout.Timeout = &timeout20s
+			rules := []gatewayv1beta1.Rule{ruleWithoutTimeout, ruleWithTimeout}
+
+			apiRule := GetAPIRuleFor(rules)
+			client := GetFakeClient()
+			processor := ory.NewVirtualServiceProcessor(GetTestConfig())
+
+			// when
+			result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
+
+			// then
+			Expect(err).To(BeNil())
+			Expect(result).To(HaveLen(1))
+
+			vs := result[0].Obj.(*networkingv1beta1.VirtualService)
+			Expect(len(vs.Spec.Http)).To(Equal(2))
+
+			Expect(getTimeoutByPath(vs, "/default-timeout")).To(Equal(180 * time.Second))
+			Expect(getTimeoutByPath(vs, "/rule-timeout")).To(Equal(20 * time.Second))
+		})
+	})
 })
+
+func getTimeoutByPath(vs *networkingv1beta1.VirtualService, path string) time.Duration {
+	for _, route := range vs.Spec.Http {
+		if route.Match[0].Uri.GetRegex() == path {
+			return route.Timeout.AsDuration()
+		}
+	}
+
+	Fail(fmt.Sprintf("Path '%s' not found on virtual service", path))
+	return 0
+}

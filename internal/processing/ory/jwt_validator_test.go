@@ -39,7 +39,7 @@ var _ = Describe("JWT Validator", func() {
 		Expect(problems[1].Message).To(ContainSubstring("value is empty or not a valid url"))
 	})
 
-	It("Should fail for config with plain HTTP JWKSUrls and trustedIssuers", func() {
+	It("Should succeed for config with plain HTTP JWKSUrls and trustedIssuers", func() {
 		//given
 		handler := &gatewayv1beta1.Handler{Name: "jwt", Config: testURLJWTConfig("http://issuer.test/.well-known/jwks.json", "http://issuer.test/")}
 
@@ -47,11 +47,7 @@ var _ = Describe("JWT Validator", func() {
 		problems := (&handlerValidator{}).Validate("some.attribute", handler)
 
 		//then
-		Expect(problems).To(HaveLen(2))
-		Expect(problems[0].AttributePath).To(Equal("some.attribute.config.trusted_issuers[0]"))
-		Expect(problems[0].Message).To(ContainSubstring("value is not a secured url"))
-		Expect(problems[1].AttributePath).To(Equal("some.attribute.config.jwks_urls[0]"))
-		Expect(problems[1].Message).To(ContainSubstring("value is not a secured url"))
+		Expect(problems).To(HaveLen(0))
 	})
 
 	It("Should succeed for config with file JWKSUrls and HTTPS trustedIssuers", func() {

@@ -6,6 +6,7 @@ import (
 	"github.com/kyma-project/api-gateway/internal/builders"
 	"os"
 	"path/filepath"
+	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"testing"
 	"time"
 
@@ -105,8 +106,10 @@ var _ = BeforeSuite(func(specCtx SpecContext) {
 	Expect(corev1.AddToScheme(s)).Should(Succeed())
 
 	mgr, err := ctrl.NewManager(cfg, ctrl.Options{
-		Scheme:             s,
-		MetricsBindAddress: "0",
+		Scheme: s,
+		Metrics: metricsserver.Options{
+			BindAddress: "0",
+		},
 	})
 	Expect(err).NotTo(HaveOccurred())
 
