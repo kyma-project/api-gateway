@@ -1,0 +1,44 @@
+# This workflow is responsible for all kinds of integration tests run on pull request.
+# Those tests depend on a container image so in the first job we wait for the image build to succeed.
+
+name: Pull Request integration tests
+
+on:
+  pull_request:
+    types: [synchronize, opened, reopened, ready_for_review]
+    paths-ignore:
+      - "docs/**"
+      - "**/*.md"
+      - "tests/performance/**"
+      - "OWNERS"
+      - "CODEOWNERS"
+      - "sec-scanners-config.yaml"
+      - ".github/**" #Ignoring since build job isn't triggered on the workflow directory changes
+    branches:
+      - main
+      - 'release-**'
+
+jobs:
+  wait-for-image-build:
+    name: Wait for image build
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/wait-for-job-succeed-or-fail
+        with:
+          job-name: 'pull-api-gateway-build'
+          github-auth-token: ${{ secrets.GITHUB_TOKEN }}
+
+  api-gateway-upgrade-test:
+    name: Istio upgrade integration test
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false
+    needs: [wait-for-image-build]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/upgrade-integration-test
+        with:
+          operator-image-name: "europe-docker.pkg.dev/kyma-project/prod/api-gateway-controller:PR-${{github.event.number}}"
