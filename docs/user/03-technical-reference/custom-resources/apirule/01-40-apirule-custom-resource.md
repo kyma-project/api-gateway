@@ -6,10 +6,6 @@ The `apirules.gateway.kyma-project.io` CustomResourceDefinition (CRD) describes 
 kubectl get crd apirules.gateway.kyma-project.io -o yaml
 ```
 
-The following diagram visualizes the process of the APIRule reconciliation and the resources it creates:
-
-![APIRule CR Reconciliation](../../../../assets/api-rule-reconciliation-sequence.svg)
-
 ## Specification
 
 This table lists all the possible parameters of the given resource together with their descriptions:
