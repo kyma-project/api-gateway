@@ -40,47 +40,8 @@ func (s *scenario) theAPIRuleIsApplied() error {
 	return helpers.ApplyApiRule(s.resourceManager.CreateOrUpdateResources, s.resourceManager.UpdateResources, s.k8sClient, testcontext.GetRetryOpts(s.config), r)
 }
 
-func (s *scenario) callingTheEndpointWithAValidToken(endpoint, tokenType, _, _ string, lower, higher int) error {
-	asserter := &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher}
-	tokenFrom := tokenFrom{
-		From:     testcontext.AuthorizationHeaderName,
-		Prefix:   testcontext.AuthorizationHeaderPrefix,
-		AsHeader: true,
-	}
-	return s.callingEndpointWithHeadersWithRetries(fmt.Sprintf("%s/%s", s.Url, strings.TrimLeft(endpoint, "/")), tokenType, asserter, nil, &tokenFrom)
-}
-
 func (s *scenario) callingTheEndpointWithValidTokenShouldResultInStatusBetween(endpoint, tokenType string, lower, higher int) error {
 	asserter := &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher}
-	tokenFrom := tokenFrom{
-		From:     testcontext.AuthorizationHeaderName,
-		Prefix:   testcontext.AuthorizationHeaderPrefix,
-		AsHeader: true,
-	}
-	return s.callingEndpointWithHeadersWithRetries(fmt.Sprintf("%s/%s", s.Url, strings.TrimLeft(endpoint, "/")), tokenType, asserter, nil, &tokenFrom)
-}
-
-func (s *scenario) callingTheEndpointWithValidTokenFromHeaderShouldResultInStatusBetween(endpoint, tokenType string, fromHeader string, prefix string, lower, higher int) error {
-	asserter := &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher}
-	tokenFrom := tokenFrom{
-		From:     fromHeader,
-		Prefix:   prefix,
-		AsHeader: true,
-	}
-	return s.callingEndpointWithHeadersWithRetries(fmt.Sprintf("%s/%s", s.Url, strings.TrimLeft(endpoint, "/")), tokenType, asserter, nil, &tokenFrom)
-}
-
-func (s *scenario) callingTheEndpointWithValidTokenFromParameterShouldResultInStatusBetween(endpoint, tokenType string, fromParameter string, lower, higher int) error {
-	asserter := &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher}
-	tokenFrom := tokenFrom{
-		From:     fromParameter,
-		AsHeader: false,
-	}
-	return s.callingEndpointWithHeadersWithRetries(fmt.Sprintf("%s/%s", s.Url, strings.TrimLeft(endpoint, "/")), tokenType, asserter, nil, &tokenFrom)
-}
-
-func (s *scenario) callingTheEndpointWithValidTokenShouldResultInBodyContaining(endpoint, tokenType string, bodyContent string) error {
-	asserter := &helpers.BodyContainsPredicate{Expected: []string{bodyContent}}
 	tokenFrom := tokenFrom{
 		From:     testcontext.AuthorizationHeaderName,
 		Prefix:   testcontext.AuthorizationHeaderPrefix,
@@ -202,7 +163,7 @@ func (s *scenario) upgradeApiGateway() error {
 }
 
 func initCommon(ctx *godog.ScenarioContext, ts *testsuite) {
-	scenario := ts.createScenario("istio-jwt-common.yaml", "istio-jwt-common")
+	scenario := ts.createScenario("istio-jwt-common.yaml", "api-gateway-upgrade")
 
 	ctx.Step(`Upgrade: There is a httpbin service$`, scenario.thereIsAHttpbinService)
 	ctx.Step(`Upgrade: There is an endpoint secured with JWT on path "([^"]*)"`, scenario.thereIsAnJwtSecuredPath)

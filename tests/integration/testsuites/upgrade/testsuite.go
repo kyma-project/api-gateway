@@ -58,14 +58,13 @@ func (t *testsuite) createScenario(templateFileName string, scenarioName string)
 }
 
 type testsuite struct {
-	name                   string
-	namespace              string
-	httpClient             *helpers.RetryableHttpClient
-	k8sClient              dynamic.Interface
-	resourceManager        *resource.Manager
-	config                 testcontext.Config
-	oauth2Cfg              *clientcredentials.Config
-	apiGatewayImageVersion string
+	name            string
+	namespace       string
+	httpClient      *helpers.RetryableHttpClient
+	k8sClient       dynamic.Interface
+	resourceManager *resource.Manager
+	config          testcontext.Config
+	oauth2Cfg       *clientcredentials.Config
 }
 
 func (t *testsuite) ResourceManager() *resource.Manager {
