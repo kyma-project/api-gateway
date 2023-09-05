@@ -25,7 +25,7 @@ type Config struct {
 	GatewayName            string `envconfig:"TEST_GATEWAY_NAME,default=kyma-gateway"`
 	GatewayNamespace       string `envconfig:"TEST_GATEWAY_NAMESPACE,default=kyma-system"`
 	TestConcurrency        int    `envconfig:"TEST_CONCURRENCY,default=4"`
-	APIGatewayImageVersion string `envconfig:"TEST_UPGRADE_IMG"`
+	APIGatewayImageVersion string `envconfig:"TEST_UPGRADE_IMG,default="`
 }
 
 func GetConfig() Config {

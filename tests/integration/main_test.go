@@ -42,6 +42,7 @@ func TestCustomDomain(t *testing.T) {
 
 func TestUpgrade(t *testing.T) {
 	config := testcontext.GetConfig()
+	config.TestConcurrency = 1
 	ts, err := testcontext.New(config, upgrade.NewTestsuite)
 
 	if err != nil {

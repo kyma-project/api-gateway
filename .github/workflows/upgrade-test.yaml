@@ -42,3 +42,7 @@ jobs:
       - uses: ./.github/actions/upgrade-integration-test
         with:
           operator-image-name: "europe-docker.pkg.dev/kyma-project/prod/api-gateway-controller:PR-${{github.event.number}}"
+        env:
+          CLIENT_ID: ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+          OIDC_ISSUER_URL: ${{ secrets.OIDC_ISSUER_URL }}
