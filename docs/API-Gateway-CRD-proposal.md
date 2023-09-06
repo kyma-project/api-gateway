@@ -8,7 +8,7 @@ This document describes proposed API for installing APIGateway component.
 kind: APIGateway
 spec:
   enableKymaGateway: true # Part of the custom resource gby default (or true if not defined)
-  defaultHost: "example.com" # Use as deafult host for API Rules, if not defined use Kyma host if `enableKymaGateway: true`, if both are false, require full host in API Gateway
+  defaultHost: "example.com" # Use as default host for API Rules, if not defined use Kyma host if `enableKymaGateway: true`, if both are false, require full host in API Gateway
   gateways:
     - namespace: "some-ns" # Required
       name: "gateway1" # Required
