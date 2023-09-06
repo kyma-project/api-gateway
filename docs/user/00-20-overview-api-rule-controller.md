@@ -2,8 +2,7 @@
 
 ## Overview
 
-API Rule Controller is part of Kyma API Gateway Operator. It uses [Ory Oathkeeper](https://www.ory.sh/docs/oathkeeper) and [Istio Service Mesh](https://istio.io/) resources to expose and secure APIs. The controller is responsible for:
-- Configure the exposure and security of APIs
+API Rule Controller is part of Kyma API Gateway Operator. It uses [Ory Oathkeeper](https://www.ory.sh/docs/oathkeeper) and [Istio Service Mesh](https://istio.io/) resources to expose and secure APIs.
 
 ## APIRule CR
 
@@ -15,7 +14,7 @@ The `api-gateway-config` ConfigMap contains the configuration of the JWT Handler
 
 ## Status codes
 
-The APIRule CR contains status for all created sub resource, but the field **apiRuleStatus** is the one reflecting the status of the controller reconciliation. Details can be found in the [APIRule CR documentation](./03-technical-reference/custom-resources/apirule/01-40-apirule-custom-resource.md):
+The APIRule CR includes status information for all created sub-resources. However, the field **apiRuleStatus** specifically reflects the status of the controller reconciliation. For more information, read the [APIRule CR documentation](./03-technical-reference/custom-resources/apirule/01-40-apirule-custom-resource.md):
 
 | Code          | Description                               |
 |---------------|-------------------------------------------|
