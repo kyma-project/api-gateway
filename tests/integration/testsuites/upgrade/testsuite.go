@@ -63,7 +63,7 @@ func (t *testsuite) createScenario(templateFileName string, scenarioName string)
 func getUpgradeImageVersion() string {
 	imageVersion, ok := os.LookupEnv(upgradeImageEnv)
 	if !ok {
-		panic("could not get TEST_UPGRADE_IMG")
+		panic(fmt.Sprintf("could not get %s", upgradeImageEnv))
 	}
 	return imageVersion
 }

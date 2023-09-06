@@ -3,7 +3,9 @@ package upgrade
 import (
 	"errors"
 	"fmt"
+	"github.com/avast/retry-go/v4"
 	"github.com/cucumber/godog"
+	apirulev1beta1 "github.com/kyma-project/api-gateway/api/v1beta1"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/auth"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/helpers"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/manifestprocessor"
@@ -15,7 +17,16 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 	"strings"
+	"time"
 )
+
+var deploymentGVR = schema.GroupVersionResource{
+	Group:    "apps",
+	Version:  "v1",
+	Resource: "deployments",
+}
+
+const apiGatewayNS, apiGatewayName = "kyma-system", "api-gateway"
 
 type scenario struct {
 	Namespace               string
@@ -129,11 +140,7 @@ func (s *scenario) thereIsAnJwtSecuredPath(path string) {
 }
 
 func (s *scenario) upgradeApiGateway() error {
-	apiGatewayDeployment, err := s.resourceManager.GetResource(s.k8sClient, schema.GroupVersionResource{
-		Group:    "apps",
-		Version:  "v1",
-		Resource: "deployments",
-	}, "kyma-system", "api-gateway")
+	apiGatewayDeployment, err := s.resourceManager.GetResource(s.k8sClient, deploymentGVR, apiGatewayNS, apiGatewayName)
 
 	if err != nil {
 		return err
@@ -152,15 +159,57 @@ func (s *scenario) upgradeApiGateway() error {
 		return err
 	}
 
-	err = s.resourceManager.UpdateResource(s.k8sClient, schema.GroupVersionResource{
-		Group:    "apps",
-		Version:  "v1",
-		Resource: "deployments",
-	}, "kyma-system", "api-gateway", *apiGatewayDeployment)
+	err = s.resourceManager.UpdateResource(s.k8sClient, deploymentGVR, apiGatewayNS, apiGatewayName, *apiGatewayDeployment)
 	if err != nil {
 		return err
 	}
-	return nil
+
+	return retry.Do(func() error {
+		res, err := s.resourceManager.GetResource(s.k8sClient, deploymentGVR, apiGatewayNS, apiGatewayName)
+		if err != nil {
+			return err
+		}
+		err = runtime.DefaultUnstructuredConverter.FromUnstructured(res.UnstructuredContent(), &dep)
+		if err != nil {
+			return err
+		}
+
+		if dep.Spec.Template.Spec.Containers[0].Image != s.APIGatewayImageVersion || dep.Status.UnavailableReplicas > 0 {
+			return errors.New("api-gateway deployment not yet ready")
+		}
+		return nil
+	}, testcontext.GetRetryOpts(s.config)...)
+}
+
+func (s *scenario) reconciliationHappened(numberOfSeconds int) error {
+	apiRules, err := manifestprocessor.ParseFromFileWithTemplate(s.ApiResourceManifestPath, s.ApiResourceDirectory, s.ManifestTemplate)
+	if err != nil {
+		return err
+	}
+
+	return retry.Do(func() error {
+		for _, apiRule := range apiRules {
+			var apiRuleStructured apirulev1beta1.APIRule
+			res, err := s.resourceManager.GetResource(s.k8sClient, schema.GroupVersionResource{
+				Group:    apirulev1beta1.GroupVersion.Group,
+				Version:  apirulev1beta1.GroupVersion.Version,
+				Resource: "apirules",
+			}, apiRule.GetName(), apiRule.GetNamespace())
+			if err != nil {
+				return err
+			}
+
+			err = runtime.DefaultUnstructuredConverter.FromUnstructured(res.UnstructuredContent(), &apiRuleStructured)
+			if err != nil {
+				return err
+			}
+
+			if time.Since(apiRuleStructured.Status.LastProcessedTime.Time) > time.Second*time.Duration(numberOfSeconds) {
+				return fmt.Errorf("reconcilation didn't happened in last %d seconds", numberOfSeconds)
+			}
+		}
+		return nil
+	}, testcontext.GetRetryOpts(s.config)...)
 }
 
 func initCommon(ctx *godog.ScenarioContext, ts *testsuite) {
@@ -174,4 +223,5 @@ func initCommon(ctx *godog.ScenarioContext, ts *testsuite) {
 	ctx.Step(`Upgrade: Calling the "([^"]*)" endpoint with a valid "([^"]*)" token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithValidTokenShouldResultInStatusBetween)
 	ctx.Step(`Upgrade: API Gateway is upgraded to current branch version$`, scenario.upgradeApiGateway)
 	ctx.Step(`Upgrade: Teardown httpbin service$`, scenario.teardownHttpbinService)
+	ctx.Step(`Upgrade: A reconciliation happened in the last (\d+) seconds$`, scenario.reconciliationHappened)
 }
