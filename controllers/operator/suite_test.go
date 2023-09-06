@@ -17,13 +17,23 @@ limitations under the License.
 package operator
 
 import (
+	"context"
+	"fmt"
+	"github.com/kyma-project/api-gateway/controllers"
+	"github.com/onsi/ginkgo/v2/reporters"
+	"github.com/onsi/ginkgo/v2/types"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/util/retry"
+	"os"
 	"path/filepath"
+	ctrl "sigs.k8s.io/controller-runtime"
+	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"testing"
+	"time"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
@@ -34,25 +44,28 @@ import (
 	//+kubebuilder:scaffold:imports
 )
 
-// These tests use Ginkgo (BDD-style Go testing framework). Refer to
-// http://onsi.github.io/ginkgo/ to learn more about Ginkgo.
-
 const (
-	testNamespace = "default"
+	eventuallyTimeout = time.Second * 5
+	testNamespace     = "default"
 )
 
-var cfg *rest.Config
-var k8sClient client.Client
-var testEnv *envtest.Environment
+var (
+	cfg       *rest.Config
+	k8sClient client.Client
+	testEnv   *envtest.Environment
+	ctx       context.Context
+	cancel    context.CancelFunc
+)
 
 func TestAPIs(t *testing.T) {
 	RegisterFailHandler(Fail)
 
-	RunSpecs(t, "Controller Suite")
+	RunSpecs(t, "API Gateway Controller Suite")
 }
 
 var _ = BeforeSuite(func() {
 	logf.SetLogger(zap.New(zap.WriteTo(GinkgoWriter), zap.UseDevMode(true)))
+	ctx, cancel = context.WithCancel(context.TODO())
 
 	By("bootstrapping test environment")
 	testEnv = &envtest.Environment{
@@ -66,19 +79,75 @@ var _ = BeforeSuite(func() {
 	Expect(err).NotTo(HaveOccurred())
 	Expect(cfg).NotTo(BeNil())
 
-	err = operatorv1alpha1.AddToScheme(scheme.Scheme)
-	Expect(err).NotTo(HaveOccurred())
+	s := runtime.NewScheme()
+	Expect(operatorv1alpha1.AddToScheme(s)).Should(Succeed())
 
 	//+kubebuilder:scaffold:scheme
 
-	k8sClient, err = client.New(cfg, client.Options{Scheme: scheme.Scheme})
+	k8sClient, err = client.New(cfg, client.Options{Scheme: s})
 	Expect(err).NotTo(HaveOccurred())
 	Expect(k8sClient).NotTo(BeNil())
 
+	mgr, err := ctrl.NewManager(cfg, ctrl.Options{
+		Scheme: s,
+		Metrics: metricsserver.Options{
+			BindAddress: "0",
+		},
+	})
+	Expect(err).NotTo(HaveOccurred())
+
+	rateLimiterCfg := controllers.RateLimiterConfig{
+		Burst:            200,
+		Frequency:        30,
+		FailureBaseDelay: 1 * time.Second,
+		FailureMaxDelay:  10 * time.Second,
+	}
+
+	Expect(NewAPIGatewayReconciler(mgr).SetupWithManager(mgr, rateLimiterCfg)).Should(Succeed())
+
+	go func() {
+		defer GinkgoRecover()
+		Expect(mgr.Start(ctx)).Should(Succeed())
+	}()
 })
 
 var _ = AfterSuite(func() {
-	By("tearing down the test environment")
-	err := testEnv.Stop()
+	/*
+		 Provided solution for timeout issue waiting for kubeapiserver
+			https://github.com/kubernetes-sigs/controller-runtime/issues/1571#issuecomment-1005575071
+	*/
+	cancel()
+	By("Tearing down the test environment")
+	err := retry.OnError(retry.DefaultBackoff, func(err error) bool {
+		return true
+	}, func() error {
+		return testEnv.Stop()
+	})
 	Expect(err).NotTo(HaveOccurred())
+})
+
+var _ = ReportAfterSuite("custom reporter", func(report types.Report) {
+	logger := zap.New(zap.UseDevMode(true), zap.WriteTo(GinkgoWriter))
+
+	if key, ok := os.LookupEnv("ARTIFACTS"); ok {
+		reportsFilename := fmt.Sprintf("%s/%s", key, "junit-api-gateway-controller.xml")
+		logger.Info("Generating reports at", "location", reportsFilename)
+		err := reporters.GenerateJUnitReport(report, reportsFilename)
+
+		if err != nil {
+			logger.Error(err, "Junit Report Generation Error")
+		}
+	} else {
+		if err := os.MkdirAll("../../reports", 0755); err != nil {
+			logger.Error(err, "could not create directory")
+		}
+
+		reportsFilename := "../../reports/junit-api-gateway-controller.xml"
+		logger.Info("Generating reports at", "location", reportsFilename)
+		err := reporters.GenerateJUnitReport(report, reportsFilename)
+
+		if err != nil {
+			logger.Error(err, "Junit Report Generation Error")
+		}
+	}
 })
