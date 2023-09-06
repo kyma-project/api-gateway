@@ -1,6 +1,6 @@
 # API Gateway Operator parameters 
 
-You can configure the [API Gateway Controller](../../00-10-overview-api-gateway-controller.md) and [API Rule Controller](../../00-20-overview-api-rule-controller.md) using various parameters. All options are listed in this document.
+You can configure the [API Gateway Controller](../00-10-overview-api-gateway-controller.md) and [API Rule Controller](../00-20-overview-api-rule-controller.md) using various parameters. All options are listed in this document.
 
 ## Reconciliation interval
 
