@@ -106,6 +106,10 @@ test-custom-domain:
              kubectl create secret generic google-credentials -n default --from-file=serviceaccount.json=${TEST_SA_ACCESS_KEY_PATH}; \
              GODEBUG=netdns=cgo CGO_ENABLED=1 go test -timeout 1h ./tests/integration -run "^TestCustomDomain$$" -v -race"
 
+.PHONY: install-kyma
+install-kyma:
+	kyma deploy --ci -s main -c hack/kyma-components.yaml
+
 ##@ Build
 
 .PHONY: build
