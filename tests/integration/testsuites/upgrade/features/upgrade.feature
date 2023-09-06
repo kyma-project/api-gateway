@@ -10,7 +10,7 @@ Feature: Upgrading API Gateway version
     And Upgrade: Calling the "/ip" endpoint with a valid "JWT" token should result in status between 200 and 299
     And Upgrade: Teardown httpbin service
 
-  Scenario: Create an APIRule with new controller
+  Scenario: Create an APIRule with upgraded controller version
     Given Upgrade: There is a httpbin service
     And Upgrade: There is an endpoint secured with JWT on path "/headers"
     When Upgrade: The APIRule is applied
