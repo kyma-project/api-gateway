@@ -8,6 +8,7 @@ This document describes proposed API for installing APIGateway component.
 kind: APIGateway
 spec:
   enableKymaGateway: true # Part of the custom resource gby default (or true if not defined)
+  defaultHost: "example.com" # Use as deafult host for API Rules, if not defined use Kyma host if `enableKymaGateway: true`, if both are false, require full host in API Gateway
   gateways:
     - namespace: "some-ns" # Required
       name: "gateway1" # Required
@@ -24,7 +25,6 @@ spec:
             TLS: MUTUAL
         - hosts:
             - host: "*.goat.example.com"
-              default: true # Use as deafult host for API Rules
             - host: "goat1.example.com"
               dnsProviderSecret: "my-namespace/dns-secret" # If provided generate a DNS Entry with Gardener 
           port:
