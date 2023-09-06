@@ -70,7 +70,7 @@ func (m *Manager) CreateOrUpdateResources(k8sClient dynamic.Interface, resources
 	gotRes := &unstructured.Unstructured{}
 	for _, res := range resources {
 		resourceSchema, ns, _ := m.GetResourceSchemaAndNamespace(res)
-		_, err := m.GetResource(k8sClient, resourceSchema, ns, res.GetName())
+		_, err := m.GetResource(k8sClient, resourceSchema, ns, res.GetName(), retry.Attempts(2), retry.Delay(1))
 
 		if err != nil {
 			if apierrors.IsNotFound(retry.Error{err}.Unwrap()) {
@@ -166,20 +166,36 @@ func (m *Manager) DeleteResource(client dynamic.Interface, resourceSchema schema
 }
 
 // GetResource returns chosed k8s object
-func (m *Manager) GetResource(client dynamic.Interface, resourceSchema schema.GroupVersionResource, namespace string, resourceName string) (*unstructured.Unstructured, error) {
+func (m *Manager) GetResource(client dynamic.Interface, resourceSchema schema.GroupVersionResource, namespace string, resourceName string, opts ...retry.Option) (*unstructured.Unstructured, error) {
 	var res *unstructured.Unstructured
-	err := retry.Do(
-		func() error {
-			var err error
-			res, err = client.Resource(resourceSchema).Namespace(namespace).Get(context.Background(), resourceName, metav1.GetOptions{})
-			if err != nil {
-				return err
-			}
-			return nil
-		}, m.retryOptions...)
-	if err != nil {
-		return nil, err
+	if len(opts) == 0 {
+		err := retry.Do(
+			func() error {
+				var err error
+				res, err = client.Resource(resourceSchema).Namespace(namespace).Get(context.Background(), resourceName, metav1.GetOptions{})
+				if err != nil {
+					return err
+				}
+				return nil
+			}, m.retryOptions...)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		err := retry.Do(
+			func() error {
+				var err error
+				res, err = client.Resource(resourceSchema).Namespace(namespace).Get(context.Background(), resourceName, metav1.GetOptions{})
+				if err != nil {
+					return err
+				}
+				return nil
+			}, opts...)
+		if err != nil {
+			return nil, err
+		}
 	}
+
 	return res, nil
 }
 

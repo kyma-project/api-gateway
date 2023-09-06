@@ -194,7 +194,7 @@ func (s *scenario) reconciliationHappened(numberOfSeconds int) error {
 				Group:    apirulev1beta1.GroupVersion.Group,
 				Version:  apirulev1beta1.GroupVersion.Version,
 				Resource: "apirules",
-			}, apiRule.GetName(), apiRule.GetNamespace())
+			}, apiRule.GetNamespace(), apiRule.GetName(), retry.Attempts(1))
 			if err != nil {
 				return err
 			}
@@ -209,7 +209,7 @@ func (s *scenario) reconciliationHappened(numberOfSeconds int) error {
 			}
 		}
 		return nil
-	}, testcontext.GetRetryOpts(s.config)...)
+	}, retry.Attempts(uint(numberOfSeconds)), retry.Delay(time.Second))
 }
 
 func initCommon(ctx *godog.ScenarioContext, ts *testsuite) {
