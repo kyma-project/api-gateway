@@ -1,4 +1,5 @@
 Feature: Upgrading API Gateway version
+  # Scenarios in this feature rely on the execution order to be valid test cases, since the first scenario deploys an upgraded controller and the following scenarios verify the behaviour of the new controller version.
   Scenario: Upgrade from latest release to current version
     Given Upgrade: There is a httpbin service
     And Upgrade: There is an endpoint secured with JWT on path "/ip"
