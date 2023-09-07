@@ -1,0 +1,27 @@
+name: 'Wait for job'
+description: 'Waits for given job (check) to succeed or fails'
+inputs:
+  job-name:
+    description: 'Job name (check) for which we want to wait'
+    required: true
+  github-auth-token:
+    description: 'Github token which comes from secrets.GITHUB_TOKEN'
+    required: true
+  timeout:
+    description: 'Timeout for job finish'
+    required: false
+    default: "1800"
+runs:
+  using: "composite"
+  steps:
+    - name: Wait for job to succeed
+      uses: autotelic/action-wait-for-status-check@6556cf50c8fb6608412945382eae73581f56cbb4 # not versioned
+      id: wait-for-status
+      with:
+        token: ${{ inputs.github-auth-token }}
+        statusName: ${{ inputs.job-name }}
+        timeoutSeconds: ${{ inputs.timeout }}
+    - name: Check if build status is success
+      if: steps.wait-for-status.outputs.state != 'success'
+      run: exit 1
+      shell: bash
