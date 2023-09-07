@@ -156,7 +156,8 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		if !controllerutil.ContainsFinalizer(apiRule, API_GATEWAY_FINALIZER) {
 			controllerutil.AddFinalizer(apiRule, API_GATEWAY_FINALIZER)
 			if err := r.Update(ctx, apiRule); err != nil {
-				return doneReconcileErrorRequeue(r.OnErrorReconcilePeriod)
+				return ctrl.Result{}, err
+				//return doneReconcileErrorRequeue(r.OnErrorReconcilePeriod)
 			}
 		}
 	} else {
@@ -214,13 +215,15 @@ func (r *APIRuleReconciler) updateStatusOrRetry(ctx context.Context, api *gatewa
 	_, updateStatusErr := r.updateStatus(ctx, api, status)
 	if updateStatusErr != nil {
 		r.Log.Error(updateStatusErr, "Error updating ApiRule status, retrying")
-		return retryReconcile(updateStatusErr) //controller retries to set the correct status eventually.
+		// TODO: Remove - testing if conflict also happens without retryReconcile
+		//return retryReconcile(updateStatusErr) //controller retries to set the correct status eventually.
 	}
 
 	// If error happened during reconciliation (e.g. VirtualService conflict) requeue for reconciliation earlier
 	if status.HasError() {
 		r.Log.Info("Requeue for reconciliation because the status has an error")
-		return doneReconcileErrorRequeue(r.OnErrorReconcilePeriod)
+		// TODO: Remove - testing if conflict also happens without retryReconcile
+		//return doneReconcileErrorRequeue(r.OnErrorReconcilePeriod)
 	}
 
 	return doneReconcileDefaultRequeue(r.ReconcilePeriod, &r.Log)
