@@ -211,7 +211,11 @@ module-image: docker-build docker-push ## Build the Module Image and push it to 
 .PHONY: module-build
 module-build: kyma kustomize ## Build the Module and push it to a registry defined in MODULE_REGISTRY
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
-	@$(KYMA) alpha create module --kubebuilder-project --channel=${MODULE_CHANNEL} --name kyma-project.io/module/$(MODULE_NAME) --version $(MODULE_VERSION) --default-cr ./config/samples/operator_v1alpha1_apigateway.yaml --path . --output "template-${MODULE_CHANNEL}.yaml" $(MODULE_CREATION_FLAGS)
+	$(KYMA) alpha create module \
+		--kubebuilder-project $(SECURITY_SCAN_OPTIONS) --channel=${MODULE_CHANNEL} \
+		--name kyma-project.io/module/$(MODULE_NAME) --version $(MODULE_VERSION) \
+		--default-cr ./config/samples/operator_v1alpha1_apigateway.yaml \
+		--path . --output "template-${MODULE_CHANNEL}.yaml" $(MODULE_CREATION_FLAGS)
 
 .PHONY: generate-manifests
 generate-manifests: kustomize
@@ -229,7 +233,6 @@ $(error Error: unsuported platform OS_TYPE:$1, OS_ARCH:$2; to mitigate this prob
 endef
 
 KYMA_FILE_NAME ?= $(shell ./hack/get_kyma_file_name.sh ${OS_TYPE} ${OS_ARCH})
-
 KYMA ?= $(LOCALBIN)/kyma-$(KYMA_STABILITY)
 kyma: $(LOCALBIN) $(KYMA) ## Download kyma locally if necessary.
 $(KYMA):
