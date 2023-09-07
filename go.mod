@@ -8,7 +8,7 @@ require (
 	github.com/go-logr/logr v1.2.4
 	github.com/onsi/ginkgo/v2 v2.11.0
 	github.com/onsi/gomega v1.27.10
-	github.com/ory/oathkeeper-maester v0.1.8
+	github.com/ory/oathkeeper-maester v0.1.9
 	github.com/spf13/pflag v1.0.5
 	gitlab.com/rodrigoodhin/gocure v0.0.0-20230214115050-efed6aac536a
 	golang.org/x/net v0.13.0
