@@ -36,6 +36,7 @@ import (
 	apierrs "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/util/retry"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/event"
@@ -190,7 +191,8 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	}
 
 	status := processing.Reconcile(ctx, r.Client, &r.Log, cmd, apiRule)
-	return r.updateStatusOrRetry(ctx, apiRule, status)
+	//return r.updateStatusOrRetry(ctx, apiRule, status)
+	return r.updateStatusOrTrueRetry(ctx, apiRule, status)
 }
 
 func (r *APIRuleReconciler) getReconciliation() processing.ReconciliationCommand {
@@ -215,18 +217,28 @@ func (r *APIRuleReconciler) updateStatusOrRetry(ctx context.Context, api *gatewa
 	_, updateStatusErr := r.updateStatus(ctx, api, status)
 	if updateStatusErr != nil {
 		r.Log.Error(updateStatusErr, "Error updating ApiRule status, retrying")
-		// TODO: Remove - testing if conflict also happens without retryReconcile
-		//return retryReconcile(updateStatusErr) //controller retries to set the correct status eventually.
+		return retryReconcile(updateStatusErr) //controller retries to set the correct status eventually.
 	}
 
 	// If error happened during reconciliation (e.g. VirtualService conflict) requeue for reconciliation earlier
 	if status.HasError() {
 		r.Log.Info("Requeue for reconciliation because the status has an error")
-		// TODO: Remove - testing if conflict also happens without retryReconcile
-		//return doneReconcileErrorRequeue(r.OnErrorReconcilePeriod)
+		return doneReconcileErrorRequeue(r.OnErrorReconcilePeriod)
 	}
 
 	return doneReconcileDefaultRequeue(r.ReconcilePeriod, &r.Log)
+}
+
+func (r *APIRuleReconciler) updateStatusOrTrueRetry(ctx context.Context, api *gatewayv1beta1.APIRule, status processing.ReconciliationStatus) (ctrl.Result, error) {
+	return ctrl.Result{}, retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		_, updateStatusErr := r.updateStatus(ctx, api, status)
+
+		if updateStatusErr != nil {
+			return updateStatusErr
+		}
+
+		return nil
+	})
 }
 
 func doneReconcileNoRequeue() (ctrl.Result, error) {
