@@ -19,12 +19,21 @@ on:
       - 'release-**'
 
 jobs:
+  check-access:
+    if: ${{ github.event.pull_request.author_association == 'COLLABORATOR' || github.event.pull_request.author_association == 'OWNER' }}
+    steps: 
+      - shell: bash
+        run: exit 1
+    runs-on: ubuntu-latest
   wait-for-image-build:
     name: Wait for image build
     runs-on: ubuntu-latest
+    needs: check-access
     if: github.event.pull_request.draft == false
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }} # This is dangerous without the first access check
       - uses: ./.github/actions/wait-for-job-succeed-or-fail
         with:
           job-name: 'pull-api-gateway-build'
@@ -32,7 +41,6 @@ jobs:
 
   api-gateway-upgrade-test:
     name: Istio upgrade integration test
-    environment: 'external'
     runs-on: ubuntu-latest
     if: github.event.pull_request.draft == false
     needs: [wait-for-image-build]
