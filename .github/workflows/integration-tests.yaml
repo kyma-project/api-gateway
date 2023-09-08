@@ -20,7 +20,7 @@ on:
 
 jobs:
   check-access:
-    if: ${{ github.event.pull_request.author_association == 'COLLABORATOR' || github.event.pull_request.author_association == 'OWNER' }}
+    if: ${{ github.event.pull_request.author_association != 'COLLABORATOR' && github.event.pull_request.author_association != 'OWNER' }}
     steps: 
       - shell: bash
         run: exit 1
