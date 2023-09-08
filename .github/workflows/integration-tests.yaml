@@ -30,6 +30,7 @@ jobs:
 
   wait-for-image-build:
     name: Wait for image build
+    needs: [authorize]
     runs-on: ubuntu-latest
     if: github.event.pull_request.draft == false
     steps:
