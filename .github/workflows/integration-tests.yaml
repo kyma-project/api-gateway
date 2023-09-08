@@ -19,16 +19,8 @@ on:
       - 'release-**'
 
 jobs:
-  authorize:
-    environment:
-      'external'
-    runs-on: ubuntu-latest
-    steps:
-      - run: "true"
-
   wait-for-image-build:
     name: Wait for image build
-    needs: [authorize]
     runs-on: ubuntu-latest
     if: github.event.pull_request.draft == false
     steps:
@@ -40,6 +32,7 @@ jobs:
 
   api-gateway-upgrade-test:
     name: Istio upgrade integration test
+    environment: 'external'
     runs-on: ubuntu-latest
     if: github.event.pull_request.draft == false
     needs: [wait-for-image-build]
