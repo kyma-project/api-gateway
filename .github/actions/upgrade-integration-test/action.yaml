@@ -4,6 +4,15 @@ inputs:
   upgrade-image-name:
     description: 'Image that will api-gateway be upgraded to'
     required: true
+  oidc_issuer_url:
+    description: 'Image that will api-gateway be upgraded to'
+    required: true
+  client_secret:
+    description: 'Image that will api-gateway be upgraded to'
+    required: true
+  client_id:
+    description: 'Image that will api-gateway be upgraded to'
+    required: true
 runs:
   using: "composite"
   steps:
@@ -18,6 +27,9 @@ runs:
       env:
         KYMA_DOMAIN: "local.kyma.dev"
         TEST_UPGRADE_IMG: ${{ inputs.upgrade-image-name }}
+        OIDC_ISSUER_URL: ${{ inputs.oidc_issuer_url }}
+        CLIENT_SECRET: ${{ inputs.client_secret }}
+        CLIENT_ID: ${{ inputs.client_id }}
       run: |
         wget -q -O - https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | sudo bash
         sudo curl -Lo /usr/bin/kyma https://storage.googleapis.com/kyma-cli-unstable/kyma-linux
