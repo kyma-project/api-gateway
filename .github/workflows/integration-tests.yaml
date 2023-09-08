@@ -20,10 +20,10 @@ on:
 
 jobs:
   check-access:
-    if: ${{ github.event.pull_request.author_association != 'COLLABORATOR' && github.event.pull_request.author_association != 'OWNER' }}
+    if: ${{ github.event.pull_request.author_association == 'COLLABORATOR' || github.event.pull_request.author_association == 'OWNER' }}
     steps: 
       - shell: bash
-        run: exit 1
+        run: exit 0
     runs-on: ubuntu-latest
   wait-for-image-build:
     name: Wait for image build
