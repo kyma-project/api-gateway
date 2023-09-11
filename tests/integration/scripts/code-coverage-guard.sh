@@ -26,10 +26,10 @@ if ! make test; then
 	echo -e "${RED}✗ make test\\n${NC}"
 	exit 1
 else
-    coverage_pr=$(go tool cover -func=cover.out | grep total | awk '{print substr($3,1,length($3)-1)}')
+  coverage_pr=$(go tool cover -func=cover.out | grep total | awk '{print substr($3,1,length($3)-1)}')
 	echo -e "Total coverage on PR-${PULL_NUMBER}: ${coverage_pr}%\\n"
 	echo -e "${GREEN}√ make test\\n${NC}"
-    rm cover.out
+  rm cover.out
 fi
 
 git checkout . && git clean -xffd
@@ -41,10 +41,10 @@ if ! make test; then
 	echo -e "${RED}✗ make test\\n${NC}"
 	exit 1
 else
-    coverage_main=$(go tool cover -func=cover.out | grep total | awk '{print substr($3,1,length($3)-1)}')
+  coverage_main=$(go tool cover -func=cover.out | grep total | awk '{print substr($3,1,length($3)-1)}')
 	echo -e "Total coverage on main: ${coverage_main}%\\n"
 	echo -e "${GREEN}√ make test\\n${NC}"
-    rm cover.out
+  rm cover.out
 fi
 
 if awk "BEGIN {exit !($coverage_pr >= $coverage_main)}"; then
