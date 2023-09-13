@@ -4,8 +4,6 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/kyma-project/api-gateway/internal/helpers"
 	"github.com/kyma-project/api-gateway/internal/processing"
-	"github.com/kyma-project/api-gateway/internal/validation"
-	"github.com/pkg/errors"
 	"istio.io/api/networking/v1beta1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -54,20 +52,6 @@ func NewApiRuleReconciler(mgr manager.Manager, config ApiRuleReconcilerConfigura
 		ReconcilePeriod:        time.Duration(config.ReconciliationPeriod) * time.Second,
 		OnErrorReconcilePeriod: time.Duration(config.ErrorReconciliationPeriod) * time.Second,
 	}, nil
-}
-
-func getNamespaceServiceMap(raw string) (map[string][]string, error) {
-	result := make(map[string][]string)
-	for _, s := range getList(raw) {
-		if !validation.ValidateServiceName(s) {
-			return nil, errors.Errorf("invalid service in service-blocklist")
-		}
-		namespacedService := strings.Split(s, ".")
-		namespace := namespacedService[1]
-		service := namespacedService[0]
-		result[namespace] = append(result[namespace], service)
-	}
-	return result, nil
 }
 
 func getList(raw string) []string {
