@@ -64,7 +64,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 				Name:      name,
 				Namespace: namespace,
 				Labels: map[string]string{
-					processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", ApiName, ApiNamespace),
+					processing.OwnerLabel: fmt.Sprintf("%s.%s", ApiName, ApiNamespace),
 				},
 			},
 			Spec: v1beta1.AuthorizationPolicy{

@@ -6,7 +6,6 @@ import (
 	"strconv"
 
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/api/v1beta1"
-	"github.com/kyma-project/api-gateway/internal/processing"
 	. "github.com/kyma-project/api-gateway/internal/processing/internal/test"
 	"github.com/kyma-project/api-gateway/internal/processing/ory"
 	. "github.com/onsi/ginkgo/v2"
@@ -14,10 +13,7 @@ import (
 	. "github.com/onsi/gomega/gstruct"
 	"github.com/onsi/gomega/types"
 	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
-	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
 var _ = Describe("Access Rule Processor", func() {
@@ -198,68 +194,64 @@ var _ = Describe("Access Rule Processor", func() {
 			Expect(accessRule.Spec.Match.URL).To(Equal(expectedRuleMatchURL))
 		})
 
-		Context("when existing rule has owner v1alpha1 owner label", func() {
-			It("should get and update match methods of rule", func() {
-				// given
-				noop := []*gatewayv1beta1.Authenticator{
-					{
-						Handler: &gatewayv1beta1.Handler{
-							Name: "noop",
-						},
-					},
-				}
+		// Context("when existing rule has owner v1alpha1 owner label", func() {
+		// 	It("should get and update match methods of rule", func() {
+		// 		// given
+		// 		noop := []*gatewayv1beta1.Authenticator{
+		// 			{
+		// 				Handler: &gatewayv1beta1.Handler{
+		// 					Name: "noop",
+		// 				},
+		// 			},
+		// 		}
 
-				noopRule := GetRuleFor(ApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, noop)
-				rules := []gatewayv1beta1.Rule{noopRule}
+		// 		noopRule := GetRuleFor(ApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, noop)
+		// 		rules := []gatewayv1beta1.Rule{noopRule}
 
-				apiRule := GetAPIRuleFor(rules)
+		// 		apiRule := GetAPIRuleFor(rules)
 
-				rule := rulev1alpha1.Rule{
+		// 		rule := rulev1alpha1.Rule{
 
-					ObjectMeta: metav1.ObjectMeta{
-						Labels: map[string]string{
-							processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", apiRule.ObjectMeta.Name, apiRule.ObjectMeta.Namespace),
-						},
-					},
-					Spec: rulev1alpha1.RuleSpec{
-						Match: &rulev1alpha1.Match{
-							URL:     fmt.Sprintf("<http|https>://%s<%s>", ServiceHost, ApiPath),
-							Methods: []string{"DELETE"},
-						},
-					},
-				}
+		// 			ObjectMeta: metav1.ObjectMeta{},
+		// 			Spec: rulev1alpha1.RuleSpec{
+		// 				Match: &rulev1alpha1.Match{
+		// 					URL:     fmt.Sprintf("<http|https>://%s<%s>", ServiceHost, ApiPath),
+		// 					Methods: []string{"DELETE"},
+		// 				},
+		// 			},
+		// 		}
 
-				vs := networkingv1beta1.VirtualService{
-					ObjectMeta: metav1.ObjectMeta{
-						Labels: map[string]string{
-							processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", apiRule.ObjectMeta.Name, apiRule.ObjectMeta.Namespace),
-						},
-					},
-				}
+		// 		vs := networkingv1beta1.VirtualService{
+		// 			ObjectMeta: metav1.ObjectMeta{
+		// 				Labels: map[string]string{
+		// 					processing.OwnerLabel: fmt.Sprintf("%s.%s", apiRule.ObjectMeta.Name, apiRule.ObjectMeta.Namespace),
+		// 				},
+		// 			},
+		// 		}
 
-				scheme := runtime.NewScheme()
-				err := rulev1alpha1.AddToScheme(scheme)
-				Expect(err).NotTo(HaveOccurred())
-				err = networkingv1beta1.AddToScheme(scheme)
-				Expect(err).NotTo(HaveOccurred())
-				err = gatewayv1beta1.AddToScheme(scheme)
-				Expect(err).NotTo(HaveOccurred())
+		// 		scheme := runtime.NewScheme()
+		// 		err := rulev1alpha1.AddToScheme(scheme)
+		// 		Expect(err).NotTo(HaveOccurred())
+		// 		err = networkingv1beta1.AddToScheme(scheme)
+		// 		Expect(err).NotTo(HaveOccurred())
+		// 		err = gatewayv1beta1.AddToScheme(scheme)
+		// 		Expect(err).NotTo(HaveOccurred())
 
-				client := fake.NewClientBuilder().WithScheme(scheme).WithObjects(&rule, &vs).Build()
-				processor := ory.NewAccessRuleProcessor(GetTestConfig())
+		// 		client := fake.NewClientBuilder().WithScheme(scheme).WithObjects(&rule, &vs).Build()
+		// 		processor := ory.NewAccessRuleProcessor(GetTestConfig())
 
-				// when
-				result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
+		// 		// when
+		// 		result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
 
-				// then
-				Expect(err).To(BeNil())
-				Expect(result).To(HaveLen(1))
-				Expect(result[0].Action.String()).To(Equal("update"))
+		// 		// then
+		// 		Expect(err).To(BeNil())
+		// 		Expect(result).To(HaveLen(1))
+		// 		Expect(result[0].Action.String()).To(Equal("update"))
 
-				accessRule := result[0].Obj.(*rulev1alpha1.Rule)
-				Expect(accessRule.Spec.Match.Methods).To(Equal([]string{"GET"}))
-			})
-		})
+		// 		accessRule := result[0].Obj.(*rulev1alpha1.Rule)
+		// 		Expect(accessRule.Spec.Match.Methods).To(Equal([]string{"GET"}))
+		// 	})
+		// })
 	})
 
 	When("multiple handler", func() {

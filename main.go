@@ -20,8 +20,10 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"strings"
+
+	"sigs.k8s.io/controller-runtime/pkg/webhook"
+
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
 
@@ -37,12 +39,10 @@ import (
 
 	"istio.io/api/networking/v1beta1"
 
-	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
 	"github.com/vrischmann/envconfig"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 
-	gatewayv1alpha1 "github.com/kyma-project/api-gateway/api/v1alpha1"
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/api/v1beta1"
 	"github.com/kyma-project/api-gateway/controllers"
 	"github.com/kyma-project/api-gateway/internal/validation"
@@ -65,11 +65,9 @@ var (
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 
-	utilruntime.Must(gatewayv1alpha1.AddToScheme(scheme))
 	utilruntime.Must(gatewayv1beta1.AddToScheme(scheme))
 
 	utilruntime.Must(networkingv1beta1.AddToScheme(scheme))
-	utilruntime.Must(rulev1alpha1.AddToScheme(scheme))
 	utilruntime.Must(securityv1beta1.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
 }

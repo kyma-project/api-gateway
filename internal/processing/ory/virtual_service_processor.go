@@ -2,6 +2,7 @@ package ory
 
 import (
 	"fmt"
+
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/api/v1beta1"
 	"github.com/kyma-project/api-gateway/internal/builders"
 	"github.com/kyma-project/api-gateway/internal/helpers"
@@ -73,8 +74,7 @@ func (r virtualServiceCreator) Create(api *gatewayv1beta1.APIRule) (*networkingv
 	vsBuilder := builders.VirtualService().
 		GenerateName(virtualServiceNamePrefix).
 		Namespace(api.ObjectMeta.Namespace).
-		Label(processing.OwnerLabel, fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace)).
-		Label(processing.OwnerLabelv1alpha1, fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace))
+		Label(processing.OwnerLabel, fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace))
 
 	for k, v := range r.additionalLabels {
 		vsBuilder.Label(k, v)

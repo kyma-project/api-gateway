@@ -40,7 +40,7 @@ var _ = Describe("Request Authentication Processor", func() {
 				Name:      name,
 				Namespace: ApiNamespace,
 				Labels: map[string]string{
-					processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", ApiName, ApiNamespace),
+					processing.OwnerLabel: fmt.Sprintf("%s.%s", ApiName, ApiNamespace),
 				},
 			},
 			Spec: v1beta1.RequestAuthentication{
