@@ -102,8 +102,12 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 
 	defaultDomainName, err := helpers.GetDefaultDomainFromKymaGateway(ctx, r.Client)
 	if err != nil {
-		r.Log.Error(err, "Error getting default domain")
-		return doneReconcileErrorRequeue(ERROR_RECONCILIATION_PERIOD)
+		if apierrs.IsNotFound(err) {
+			r.Log.Error(err, "Default domain wasn't found. APIRules will require full host")
+		} else {
+			r.Log.Error(err, "Error getting default domain")
+			return doneReconcileErrorRequeue(ERROR_RECONCILIATION_PERIOD)
+		}
 	}
 
 	validator := validation.APIRuleValidator{
