@@ -212,6 +212,7 @@ spec:
                     description: Status code describing APIRule.
                     type: string
                   desc:
+                    description: Explains the status of APIRule.
                     type: string
                 type: object
               accessRuleStatus:
