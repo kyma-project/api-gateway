@@ -39,6 +39,7 @@ import (
 
 	"istio.io/api/networking/v1beta1"
 
+	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
 	"github.com/vrischmann/envconfig"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
@@ -68,6 +69,7 @@ func init() {
 	utilruntime.Must(gatewayv1beta1.AddToScheme(scheme))
 
 	utilruntime.Must(networkingv1beta1.AddToScheme(scheme))
+	utilruntime.Must(rulev1alpha1.AddToScheme(scheme))
 	utilruntime.Must(securityv1beta1.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
 }
