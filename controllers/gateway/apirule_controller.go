@@ -100,11 +100,14 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	r.Log.Info("Starting reconciliation", "namespacedName", req.NamespacedName.String())
 	ctx = logr.NewContext(ctx, r.Log)
 
+	defaultDomainName, err := helpers.GetDefaultDomainFromKymaGateway(ctx, r.Client)
+	if err != nil {
+		r.Log.Error(err, "Error getting default domain")
+		return doneReconcileErrorRequeue(ERROR_RECONCILIATION_PERIOD)
+	}
+
 	validator := validation.APIRuleValidator{
-		ServiceBlockList:  r.ServiceBlockList,
-		DomainAllowList:   r.DomainAllowList,
-		HostBlockList:     r.HostBlockList,
-		DefaultDomainName: r.DefaultDomainName,
+		DefaultDomainName: defaultDomainName,
 	}
 
 	isCMReconcile := req.NamespacedName.String() == types.NamespacedName{Namespace: helpers.CM_NS, Name: helpers.CM_NAME}.String()
@@ -133,10 +136,10 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	}
 	r.Log.Info("Starting ApiRule reconciliation", "jwtHandler", r.Config.JWTHandler)
 
-	cmd := r.getReconciliation()
+	cmd := r.getReconciliation(defaultDomainName)
 
 	apiRule := &gatewayv1beta1.APIRule{}
-	err := r.Client.Get(ctx, req.NamespacedName, apiRule)
+	err = r.Client.Get(ctx, req.NamespacedName, apiRule)
 	if err != nil {
 		if apierrs.IsNotFound(err) {
 			//There is no APIRule. Nothing to process, dependent objects will be garbage-collected.
@@ -194,11 +197,13 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	return r.updateStatusOrRetry(ctx, apiRule, status)
 }
 
-func (r *APIRuleReconciler) getReconciliation() processing.ReconciliationCommand {
+func (r *APIRuleReconciler) getReconciliation(defaultDomain string) processing.ReconciliationCommand {
+	config := r.ReconciliationConfig
+	config.DefaultDomainName = defaultDomain
 	if r.Config.JWTHandler == helpers.JWT_HANDLER_ISTIO {
-		return istio.NewIstioReconciliation(r.ReconciliationConfig, &r.Log)
+		return istio.NewIstioReconciliation(config, &r.Log)
 	}
-	return ory.NewOryReconciliation(r.ReconciliationConfig, &r.Log)
+	return ory.NewOryReconciliation(config, &r.Log)
 
 }
 

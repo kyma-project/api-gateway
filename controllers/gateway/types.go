@@ -1,7 +1,6 @@
 package gateway
 
 import (
-	"fmt"
 	"github.com/go-logr/logr"
 	"github.com/kyma-project/api-gateway/internal/helpers"
 	"github.com/kyma-project/api-gateway/internal/processing"
@@ -9,7 +8,6 @@ import (
 	"github.com/pkg/errors"
 	"istio.io/api/networking/v1beta1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"os"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
@@ -31,9 +29,6 @@ type APIRuleReconciler struct {
 type ApiRuleReconcilerConfiguration struct {
 	OathkeeperSvcAddr                                    string
 	OathkeeperSvcPort                                    uint
-	AllowListedDomains                                   string
-	BlockListedServices                                  string
-	DomainName                                           string
 	CorsAllowOrigins, CorsAllowMethods, CorsAllowHeaders string
 	AdditionalLabels                                     map[string]string
 	ReconciliationPeriod                                 uint
@@ -41,28 +36,6 @@ type ApiRuleReconcilerConfiguration struct {
 }
 
 func NewApiRuleReconciler(mgr manager.Manager, config ApiRuleReconcilerConfiguration) (*APIRuleReconciler, error) {
-
-	const blockListedSubdomains string = "api"
-
-	if config.AllowListedDomains != "" {
-		for _, domain := range getList(config.AllowListedDomains) {
-			if !validation.ValidateDomainName(domain) {
-				ctrl.Log.Error(fmt.Errorf("invalid domain in domain-allowlist"), "unable to create controller", "controller", "Api")
-				os.Exit(1)
-			}
-		}
-	}
-
-	serviceBlockList, err := getNamespaceServiceMap(config.BlockListedServices)
-	if err != nil {
-		return nil, err
-	}
-
-	hostBlockList, err := getHostBlockListFrom(blockListedSubdomains, config.DomainName)
-	if err != nil {
-		return nil, err
-	}
-
 	return &APIRuleReconciler{
 		Client: mgr.GetClient(),
 		Log:    ctrl.Log.WithName("controllers").WithName("Api"),
@@ -74,29 +47,13 @@ func NewApiRuleReconciler(mgr manager.Manager, config ApiRuleReconcilerConfigura
 				AllowMethods: getList(config.CorsAllowMethods),
 				AllowOrigins: getStringMatch(config.CorsAllowOrigins),
 			},
-			AdditionalLabels:  config.AdditionalLabels,
-			DefaultDomainName: config.DomainName,
-			ServiceBlockList:  serviceBlockList,
-			DomainAllowList:   getList(config.AllowListedDomains),
-			HostBlockList:     hostBlockList,
+			AdditionalLabels: config.AdditionalLabels,
 		},
 		Scheme:                 mgr.GetScheme(),
 		Config:                 &helpers.Config{},
 		ReconcilePeriod:        time.Duration(config.ReconciliationPeriod) * time.Second,
 		OnErrorReconcilePeriod: time.Duration(config.ErrorReconciliationPeriod) * time.Second,
 	}, nil
-}
-
-func getHostBlockListFrom(blockListedSubdomains string, domainName string) ([]string, error) {
-	var result []string
-	for _, subdomain := range getList(blockListedSubdomains) {
-		if !validation.ValidateSubdomainName(subdomain) {
-			return nil, errors.Errorf("invalid subdomain in subdomain-blocklist")
-		}
-		blockedHost := strings.Join([]string{subdomain, domainName}, ".")
-		result = append(result, blockedHost)
-	}
-	return result, nil
 }
 
 func getNamespaceServiceMap(raw string) (map[string][]string, error) {

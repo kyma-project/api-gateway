@@ -143,8 +143,6 @@ var _ = BeforeSuite(func(specCtx SpecContext) {
 	reconcilerConfig := gateway.ApiRuleReconcilerConfiguration{
 		OathkeeperSvcAddr:         testOathkeeperSvcURL,
 		OathkeeperSvcPort:         testOathkeeperPort,
-		AllowListedDomains:        "bar, kyma.local",
-		DomainName:                "kyma.local",
 		CorsAllowOrigins:          "regex:.*",
 		CorsAllowMethods:          "GET,POST,PUT,DELETE",
 		CorsAllowHeaders:          "header1,header2",
