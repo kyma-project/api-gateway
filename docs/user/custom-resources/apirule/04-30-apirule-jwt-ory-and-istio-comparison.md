@@ -119,7 +119,7 @@ spec:
 
 >**CAUTION:** We support only a single `fromHeader` or a single `fromParameter` for a JWT issuer.
 
-## How Istio differs from Ory Oathkeeper JWT access strategy
+## How Istio JWT access strategy differs from Ory Oathkeeper JWT access strategy
 
 ### Configuration of properties handling in Ory Oathkeeper and Istio resources
 

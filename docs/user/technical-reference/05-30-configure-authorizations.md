@@ -2,7 +2,7 @@
 title: Configure Authorization (OAuth2, JWT)
 ---
 
-With the API Gateway Controller, you can secure the services you expose in the following ways:
+With the API Gateway Controller, you can secure the Services you expose in the following ways:
 
 - with OAuth2 tokens
 - with JWT tokens

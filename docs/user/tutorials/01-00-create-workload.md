@@ -1,8 +1,9 @@
----
-title: Create a workload
----
+# Create a workload
 
 This tutorial explains how to create a sample HttpBin service deployment and a sample Function.
+
+## Prerequisites
+- [Install the Serverless module](https://github.com/kyma-project/serverless-manager/blob/main/docs/contributor/01-10-manual-installation-on-k3d.md) to be able to deploy a Function
 
 ## Steps
 

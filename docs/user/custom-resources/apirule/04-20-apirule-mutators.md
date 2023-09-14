@@ -4,7 +4,7 @@ Different types of mutators are supported depending on the access strategy.
 
 | Access Strategy      | Mutator support                                                           |
 |:---------------------|:--------------------------------------------------------------------------|
-| jwt                  | Istio cookie and header mutator                                           |
+| jwt                  | Istio `cookie` and `header` mutators                                           |
 | oauth2_introspection | [Oathkeeper](https://www.ory.sh/docs/oathkeeper/pipeline/mutator) mutator |
 | noop                 | [Oathkeeper](https://www.ory.sh/docs/oathkeeper/pipeline/mutator) mutator |
 | allow                | No mutators supported                                                     |
@@ -103,7 +103,7 @@ spec:
 
 Ory Rules have support for templating in mutators. Simple cases can be implemented with the help of envoy filter, such as the one presented in [id-token-envoyfilter](id-token-envoyfilter) directory.
 
-### Headers
+### Header mutator
 
 `Headers` type mutator can be handled with Istio with the help of Virtual Service [HeaderOperations](https://istio.io/latest/docs/reference/config/networking/virtual-service/#Headers-HeaderOperations). With HeaderOperations it is only possible to add static data, but in the case of [Ory Headers Mutator](https://www.ory.sh/docs/oathkeeper/pipeline/mutator#headers) templating is supported which receives the current Authentication Session. To support similar capabilities in Istio an [EnvoyFilter](https://istio.io/latest/docs/reference/config/networking/envoy-filter/) must be used.
 
@@ -130,7 +130,7 @@ spec:
             X-Some-Arbitrary-Data: "test"
 ```
 
-### Cookie
+### Cookie mutator
 
 The mutator of type `Cookie` can be handled the same as the mutator [Headers](#headers) with Istio using Virtual Service HeaderOperations. Here applies the same limitiations for Istio as only static data can be added, but [Ory Cookie Mutator](https://www.ory.sh/docs/oathkeeper/pipeline/mutator#cookie) supports templating.
 
@@ -157,11 +157,11 @@ spec:
             Cookie: "user=test"
 ```
 
-### Id_token
+### Id_token mutator
 
 It seems not to be possible to support the same functionality as `id_token` mutator as this requires a mechanism for encoding and signing the response from OAuth2 server (e.g. Ory Hydra) into a JWT. 
 The other issue is that the JWKS used for signing this JWT is deployed as a secret `ory-oathkeeper-jwks-secret` that would have to be fetched in context of the implementation or mounted into the component doing the encoding.
 
-### Hydrator
+### Hydrator mutator
 
 Support for Hydrator token would require to call external APIs in context of Istio proxy. This mutator also influences other mutators by running before others and supplying them with the outcome of running.

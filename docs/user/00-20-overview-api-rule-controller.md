@@ -25,8 +25,7 @@ The APIRule CR includes status information for all created sub-resources. Howeve
 
 ## Controller limitations
 
-The APIRule controller is not a critical component of the Kyma networking infrastructure since it relies on Istio and Ory Custom Resources to provide routing capabilities. In terms of persistence, the controller depends on APIRules stored in the Kubernetes cluster. No other persistence solution is present.
-
+APIRule Controller relies on Istio and Ory Custom Resources to provide routing capabilities. In terms of persistence, the controller depends only on APIRules stored in the Kubernetes cluster.
 In terms of the resource configuration, the following requirements are set on the API Gateway controller:
 
 |          | CPU  | Memory |

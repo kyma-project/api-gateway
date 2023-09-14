@@ -1,0 +1,29 @@
+  ```bash
+    cat <<EOF | kubectl apply -f -
+    apiVersion: gateway.kyma-project.io/v1beta1
+    kind: APIRule
+    metadata:
+      name: httpbin
+      namespace: $NAMESPACE
+    spec:
+      host: httpbin.$DOMAIN_TO_EXPOSE_WORKLOADS
+      service:
+        name: httpbin
+        namespace: $NAMESPACE
+        port: 8000
+      gateway: $GATEWAY
+      rules:
+        - path: /.*
+          methods: ["GET"]
+          accessStrategies:
+            - handler: noop
+          mutators:
+            - handler: noop
+        - path: /post
+          methods: ["POST"]
+          accessStrategies:
+            - handler: noop
+          mutators:
+            - handler: noop
+    EOF
+  ```

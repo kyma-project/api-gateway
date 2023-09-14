@@ -8,7 +8,7 @@ kubectl get crd apirules.gateway.kyma-project.io -o yaml
 
 ## Specification
 
-This table lists all the possible parameters of the given resource together with their descriptions:
+This table lists all the possible parameters of APIRule CRD together with their descriptions:
 
 **Spec:**
 
@@ -31,9 +31,9 @@ This table lists all the possible parameters of the given resource together with
 | **rules.accessStrategies**    |  **YES**  | Specifies the list of access strategies. Supported are [Oathkeeper](https://www.ory.sh/docs/next/oathkeeper/pipeline/authn) `oauth2_introspection`, `jwt`, `noop` and `allow`. We also support `jwt` as [Istio](https://istio.io/latest/docs/tasks/security/authorization/authz-jwt/) access strategy. |
 | **rules.timeout**             |  **NO**   | Specifies the timeout, in seconds, for HTTP requests made to **spec.rules.path**. The maximum timeout is limited to 3900 seconds (65 minutes). Timeout definitions set at this level take precedence over any timeout defined at the **spec.timeout** level.                                                    |
 
->**CAUTION:** If `service` is not defined at **spec.service** level, all defined rules must have `service` defined at **spec.rules.service** level. Otherwise, the validation fails.
+>**CAUTION:** If `service` is not defined at **spec.service** level, all defined Rules must have `service` defined at **spec.rules.service** level. Otherwise, the validation fails.
 
->**CAUTION:** We do not support having both Oathkeeper and Istio `jwt` access strategies defined. Access strategies `noop` or `allow` **cannot** be used with any other access strategy on the same **spec.rules.path**.
+>**CAUTION:** Having both Oathkeeper and Istio `jwt` access strategies defined is not supported. Access strategies `noop` or `allow` cannot be used with any other access strategy on the same **spec.rules.path**.
 
 **Status:**
 
@@ -49,7 +49,7 @@ When you fetch an existing APIRule CR, the system adds the **status** section wh
 
 **Status codes:**
 
-These are the status codes used to describe VirtualServices and Oathkeeper Access Rules:
+The following status codes describe VirtualServices and Oathkeeper Access Rules:
 
 | Code          | Description                    |
 |---------------|--------------------------------|
@@ -59,7 +59,7 @@ These are the status codes used to describe VirtualServices and Oathkeeper Acces
 
 ## Sample custom resource
 
-This is a sample custom resource (CR) that the API Gateway Controller listens for to expose a service. The following example has the **rules** section specified which makes API Gateway Controller create an Oathkeeper Access Rule for the service.
+This is a sample custom resource (CR) that the API Gateway Controller listens for to expose a service. The following example has the **rules** section specified, which makes API Gateway Controller create an Oathkeeper Access Rule for the Service.
 
 ```yaml
 apiVersion: gateway.kyma-project.io/v1beta1

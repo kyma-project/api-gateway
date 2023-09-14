@@ -50,7 +50,7 @@ Follow these steps:
 
 1. Expose an instance of the HttpBin service by creating APIRule CR in your Namespace. Run:
 
-    ```bash
+  ```bash
     cat <<EOF | kubectl apply -f -
     apiVersion: gateway.kyma-project.io/v1beta1
     kind: APIRule
@@ -78,7 +78,7 @@ Follow these steps:
           mutators:
             - handler: noop
     EOF
-    ```
+  ```
   
   >**NOTE:** If you are running Kyma on k3d, add `httpbin.kyma.local` to the entry with k3d IP in your system's `/etc/hosts` file.
 
