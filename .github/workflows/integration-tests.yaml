@@ -20,7 +20,7 @@ on:
 
 jobs:
   wait-for-image-build:
-    environment: ${{ (github.event.pull_request.author_association == 'COLLABORATOR' || github.event.pull_request.author_association == 'OWNER') && internal || restricted }}
+    environment: ${{ (github.event.pull_request.author_association == 'COLLABORATOR' || github.event.pull_request.author_association == 'OWNER') && 'internal' || 'restricted' }}
     name: Wait for image build
     runs-on: ubuntu-latest
     needs: check-access
