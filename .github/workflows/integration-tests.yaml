@@ -35,7 +35,7 @@ jobs:
           github-auth-token: ${{ secrets.GITHUB_TOKEN }}
 
   api-gateway-upgrade-test:
-    environment: ${{ (github.event.pull_request.author_association == 'COLLABORATOR' || github.event.pull_request.author_association == 'OWNER') && internal || restricted }}
+    environment: ${{ github.event.pull_request.author_association != 'COLLABORATOR' && github.event.pull_request.author_association != 'OWNER' && 'restricted' || 'internal' }}
     name: Istio upgrade integration test
     runs-on: ubuntu-latest
     if: github.event.pull_request.draft == false
