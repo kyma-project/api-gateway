@@ -15,17 +15,12 @@ on:
       - "sec-scanners-config.yaml"
       - ".github/**" #Ignoring since build job isn't triggered on the workflow directory changes
     branches:
-      - main
+      - fix-gha
       - 'release-**'
 
 jobs:
-  check-access:
-    if: ${{ github.event.pull_request.author_association == 'COLLABORATOR' || github.event.pull_request.author_association == 'OWNER' }}
-    steps: 
-      - shell: bash
-        run: exit 0
-    runs-on: ubuntu-latest
   wait-for-image-build:
+    environment: ${{ (github.event.pull_request.author_association == 'COLLABORATOR' || github.event.pull_request.author_association == 'OWNER') && internal || restricted }}
     name: Wait for image build
     runs-on: ubuntu-latest
     needs: check-access
@@ -33,20 +28,22 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.head.sha }} # This is dangerous without the first access check
+          ref: ${{ github.event.pull_request.head.sha }} # This is dangerous without the environment check
       - uses: ./.github/actions/wait-for-job-succeed-or-fail
         with:
           job-name: 'pull-api-gateway-build'
           github-auth-token: ${{ secrets.GITHUB_TOKEN }}
 
   api-gateway-upgrade-test:
+    environment: ${{ (github.event.pull_request.author_association == 'COLLABORATOR' || github.event.pull_request.author_association == 'OWNER') && internal || restricted }}
     name: Istio upgrade integration test
     runs-on: ubuntu-latest
     if: github.event.pull_request.draft == false
     needs: [check-access, wait-for-image-build]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4 # This is dangerous without the environment check
         with:
+          ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
       - uses: ./.github/actions/upgrade-integration-test
         env:
