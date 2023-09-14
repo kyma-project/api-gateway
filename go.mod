@@ -11,7 +11,7 @@ require (
 	github.com/ory/oathkeeper-maester v0.1.9
 	github.com/spf13/pflag v1.0.5
 	github.com/thoas/go-funk v0.9.3
-	gitlab.com/rodrigoodhin/gocure v0.0.0-20230214115050-efed6aac536a\
+	gitlab.com/rodrigoodhin/gocure v0.0.0-20230214115050-efed6aac536a
 	golang.org/x/net v0.15.0
 	golang.org/x/time v0.3.0
 	google.golang.org/appengine v1.6.8
