@@ -15,7 +15,7 @@ on:
       - "sec-scanners-config.yaml"
       - ".github/**" #Ignoring since build job isn't triggered on the workflow directory changes
     branches:
-      - fix-gha
+      - main
       - 'release-**'
 
 jobs:
