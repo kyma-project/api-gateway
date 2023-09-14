@@ -22,8 +22,6 @@ import (
 	"os"
 	"strings"
 
-	"sigs.k8s.io/controller-runtime/pkg/webhook"
-
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
 
@@ -149,10 +147,6 @@ func main() {
 		HealthProbeBindAddress: healthProbeAddr,
 		LeaderElection:         enableLeaderElection,
 		LeaderElectionID:       "69358922.kyma-project.io",
-		WebhookServer: webhook.NewServer(webhook.Options{
-			Port:    9443,
-			CertDir: "/tmp/k8s-webhook-server/serving-certs",
-		}),
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")
