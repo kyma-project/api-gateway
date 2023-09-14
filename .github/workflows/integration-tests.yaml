@@ -43,7 +43,7 @@ jobs:
     name: Istio upgrade integration test
     runs-on: ubuntu-latest
     if: github.event.pull_request.draft == false
-    needs: [wait-for-image-build]
+    needs: [check-access, wait-for-image-build]
     steps:
       - uses: actions/checkout@v4
         with:
