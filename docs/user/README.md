@@ -13,6 +13,6 @@ Kyma API Gateway Operator is a component of the Kyma runtime that handles the re
 
 ## Useful links
 
-To learn how to use Kyma Istio Operator, read the documentation in the [`user`](../user/) directory. 
+To learn how to use Kyma API Gateway, read the documentation in the [`user`](../user/) directory. 
 
 If you are interested in the detailed documentation of Kyma API Gateway Operator's design and technical aspects, check the [`contributor`](../contributor/) directory.

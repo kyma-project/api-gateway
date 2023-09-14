@@ -21,3 +21,17 @@ The APIRule CR includes status information for all created sub-resources. Howeve
 | **OK**        | Controller finished reconciliation.       |
 | **SKIPPED**   | Controller skipped reconciliation.        |
 | **ERROR**     | An error occurred during reconciliation.  |
+
+
+## Controller limitations
+
+The APIRule controller is not a critical component of the Kyma networking infrastructure since it relies on Istio and Ory Custom Resources to provide routing capabilities. In terms of persistence, the controller depends on APIRules stored in the Kubernetes cluster. No other persistence solution is present.
+
+In terms of the resource configuration, the following requirements are set on the API Gateway controller:
+
+|          | CPU  | Memory |
+|----------|------|--------|
+| Limits   | 100m | 128Mi  |
+| Requests | 10m  | 64Mi   |
+
+The number of APIRules you can create is not limited. 

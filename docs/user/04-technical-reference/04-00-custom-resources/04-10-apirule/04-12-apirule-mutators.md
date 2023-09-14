@@ -1,0 +1,167 @@
+# Mutators
+
+Different types of mutators are supported depending on the access strategy.
+
+| Access Strategy      | Mutator support                                                           |
+|:---------------------|:--------------------------------------------------------------------------|
+| jwt                  | Istio cookie and header mutator                                           |
+| oauth2_introspection | [Oathkeeper](https://www.ory.sh/docs/oathkeeper/pipeline/mutator) mutator |
+| noop                 | [Oathkeeper](https://www.ory.sh/docs/oathkeeper/pipeline/mutator) mutator |
+| allow                | No mutators supported                                                     |
+
+## Istio mutators
+Mutators can be used to enrich an incoming request with information. The following mutators are supported in combination with the `jwt` access strategy and can be defined for each rule in an `ApiRule`: `header`,`cookie`. It's possible to configure multiple mutators for one rule, but only one mutator of each type is allowed.
+
+### Header mutator
+The headers are specified in the **headers** field of the header mutator configuration field. The keys are the names of the headers, and each value is a string. In the header value, it is possible to use [Envoy command operators](https://www.envoyproxy.io/docs/envoy/latest/configuration/observability/access_log/usage#command-operators), for example, to write an incoming header into a new header. The configured headers are set to the request and overwrite all existing headers with the same name.
+
+<div tabs name="api-rule" group="sample-cr">
+  <details>
+  <summary label="Example">
+  Example
+  </summary>
+
+In the following example, two different headers are specified: **X-Custom-Auth**, which uses the incoming Authorization header as a value, and **X-Some-Data** with the value `some-data`.
+
+```yaml
+apiVersion: gateway.kyma-project.io/v1beta1
+kind: APIRule
+metadata:
+  name: service-secured
+  namespace: $NAMESPACE
+spec:
+  gateway: kyma-system/kyma-gateway
+  host: httpbin.$DOMAIN_TO_EXPOSE_WORKLOADS
+  service:
+    name: httpbin
+    port: 8000
+  rules:
+    - path: /headers
+      methods: ["GET"]
+      mutators:
+        - handler: header
+          config:
+            headers:
+              X-Custom-Auth: "%REQ(Authorization)%"
+              X-Some-Data: "some-data"
+      accessStrategies:
+        - handler: jwt
+          config:
+            authentications:
+              - issuer: $ISSUER
+                jwksUri: $JWKS_URI
+```
+
+  </details>
+</div>
+
+### Cookie mutator
+The cookies are specified in the **cookies** field of the cookie mutator configuration field. The keys are the names of the cookies, and each value is a string. In the cookie value, it is possible to use [Envoy command operators](https://www.envoyproxy.io/docs/envoy/latest/configuration/observability/access_log/usage#command-operators). The configured cookies are set as `Cookie`-header in the request and overwrite an existing one.
+
+<div tabs name="api-rule" group="sample-cr">
+  <details>
+  <summary label="Example">
+  Example
+  </summary>
+
+The following APIRule example has a new cookie added with the name `some-data` and the value `data`.
+
+```yaml
+apiVersion: gateway.kyma-project.io/v1beta1
+kind: APIRule
+metadata:
+  name: service-secured
+  namespace: $NAMESPACE
+spec:
+  gateway: kyma-system/kyma-gateway
+  host: httpbin.$DOMAIN_TO_EXPOSE_WORKLOADS
+  service:
+    name: httpbin
+    port: 8000
+  rules:
+    - path: /headers
+      methods: ["GET"]
+      mutators:
+        - handler: cookie
+          config:
+            cookies:
+              some-data: "data"
+      accessStrategies:
+        - handler: jwt
+          config:
+            authentications:
+              - issuer: $ISSUER
+                jwksUri: $JWKS_URI
+```
+
+  </details>
+</div>
+
+## Support for Ory Oathkeeper mutators with Istio
+
+### Templating support
+
+Ory Rules have support for templating in mutators. Simple cases can be implemented with the help of envoy filter, such as the one presented in [id-token-envoyfilter](id-token-envoyfilter) directory.
+
+### Headers
+
+`Headers` type mutator can be handled with Istio with the help of Virtual Service [HeaderOperations](https://istio.io/latest/docs/reference/config/networking/virtual-service/#Headers-HeaderOperations). With HeaderOperations it is only possible to add static data, but in the case of [Ory Headers Mutator](https://www.ory.sh/docs/oathkeeper/pipeline/mutator#headers) templating is supported which receives the current Authentication Session. To support similar capabilities in Istio an [EnvoyFilter](https://istio.io/latest/docs/reference/config/networking/envoy-filter/) must be used.
+
+Ory configuration:
+
+```yaml
+...
+mutators:
+  - config:
+      headers:
+        X-Some-Arbitrary-Data: "test"
+    handler: header
+...
+```
+
+Coresponding Istio Virtual Service configuration:
+
+```yaml
+spec:
+  http:
+    - headers:
+        request:
+          set:
+            X-Some-Arbitrary-Data: "test"
+```
+
+### Cookie
+
+The mutator of type `Cookie` can be handled the same as the mutator [Headers](#headers) with Istio using Virtual Service HeaderOperations. Here applies the same limitiations for Istio as only static data can be added, but [Ory Cookie Mutator](https://www.ory.sh/docs/oathkeeper/pipeline/mutator#cookie) supports templating.
+
+Ory configuration:
+
+```yaml
+...
+mutators:
+  - config:
+      cookies:
+        user: "test"
+    handler: cookie
+...
+```
+
+Coresponding Istio Virtual Service configuration:
+
+```yaml
+spec:
+  http:
+    - headers:
+        request:
+          set:
+            Cookie: "user=test"
+```
+
+### Id_token
+
+It seems not to be possible to support the same functionality as `id_token` mutator as this requires a mechanism for encoding and signing the response from OAuth2 server (e.g. Ory Hydra) into a JWT. 
+The other issue is that the JWKS used for signing this JWT is deployed as a secret `ory-oathkeeper-jwks-secret` that would have to be fetched in context of the implementation or mounted into the component doing the encoding.
+
+### Hydrator
+
+Support for Hydrator token would require to call external APIs in context of Istio proxy. This mutator also influences other mutators by running before others and supplying them with the outcome of running.
