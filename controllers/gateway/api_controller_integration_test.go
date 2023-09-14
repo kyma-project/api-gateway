@@ -70,7 +70,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 
 			expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusError)
 
-			Context("Setting a full host for the APIRule should resolve the error")
+			By("Setting a full host for the APIRule should resolve the error")
 
 			By("Updating APIRule")
 			existingInstance := gatewayv1beta1.APIRule{}
