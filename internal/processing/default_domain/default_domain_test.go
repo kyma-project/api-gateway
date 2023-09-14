@@ -1,4 +1,4 @@
-package helpers
+package default_domain
 
 import (
 	"context"
@@ -62,11 +62,13 @@ var _ = Describe("Default APIRule domain", func() {
 			Spec: apinetworkingv1beta1.Gateway{
 				Servers: []*apinetworkingv1beta1.Server{
 					{
+						Port: &apinetworkingv1beta1.Port{Protocol: "HTTPS"},
 						Hosts: []string{
 							"*.local.kyma.dev",
 						},
 					},
 					{
+						Port: &apinetworkingv1beta1.Port{Protocol: "HTTP"},
 						Hosts: []string{
 							"*.local.kyma.dev",
 						},
@@ -85,7 +87,7 @@ var _ = Describe("Default APIRule domain", func() {
 		Expect(host).To(Equal("local.kyma.dev"))
 	})
 
-	It("should return error if gateway does not have to servers", func() {
+	It("should return error if gateway does not have an HTTPS server", func() {
 
 		// given
 		gateway := networkingv1beta1.Gateway{
@@ -93,6 +95,7 @@ var _ = Describe("Default APIRule domain", func() {
 			Spec: apinetworkingv1beta1.Gateway{
 				Servers: []*apinetworkingv1beta1.Server{
 					{
+						Port: &apinetworkingv1beta1.Port{Protocol: "HTTP"},
 						Hosts: []string{
 							"*.local.kyma.dev",
 						},
@@ -111,15 +114,18 @@ var _ = Describe("Default APIRule domain", func() {
 		Expect(host).To(Equal(""))
 	})
 
-	It("should return error if gateway does not have to servers", func() {
+	It("should return error if gateway does not have an HTTPS server when gateway has multiple servers", func() {
 
 		// given
 		gateway := networkingv1beta1.Gateway{
 			ObjectMeta: metav1.ObjectMeta{Name: gatewayName, Namespace: gatewayNamespace},
 			Spec: apinetworkingv1beta1.Gateway{
 				Servers: []*apinetworkingv1beta1.Server{
-					{},
 					{
+						Port: &apinetworkingv1beta1.Port{Protocol: "HTTP"},
+					},
+					{
+						Port: &apinetworkingv1beta1.Port{Protocol: "HTTP"},
 						Hosts: []string{
 							"*.local.kyma.dev",
 						},

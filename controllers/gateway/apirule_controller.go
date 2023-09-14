@@ -22,6 +22,7 @@ import (
 	"fmt"
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"github.com/kyma-project/api-gateway/controllers"
+	"github.com/kyma-project/api-gateway/internal/processing/default_domain"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"time"
 
@@ -88,7 +89,7 @@ func (p isApiGatewayConfigMapPredicate) Generic(e event.GenericEvent) bool {
 //+kubebuilder:rbac:groups=gateway.kyma-project.io,resources=apirules/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=gateway.kyma-project.io,resources=apirules/finalizers,verbs=update
 //+kubebuilder:rbac:groups=networking.istio.io,resources=virtualservices,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=networking.istio.io,resources=gateways,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=networking.istio.io,resources=gateways,verbs=get;list;watch
 //+kubebuilder:rbac:groups=oathkeeper.ory.sh,resources=rules,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=security.istio.io,resources=authorizationpolicies,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=security.istio.io,resources=requestauthentications,verbs=get;list;watch;create;update;patch;delete
@@ -101,7 +102,7 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	r.Log.Info("Starting reconciliation", "namespacedName", req.NamespacedName.String())
 	ctx = logr.NewContext(ctx, r.Log)
 
-	defaultDomainName, err := helpers.GetDefaultDomainFromKymaGateway(ctx, r.Client)
+	defaultDomainName, err := default_domain.GetDefaultDomainFromKymaGateway(ctx, r.Client)
 	if err != nil {
 		if apierrs.IsNotFound(err) {
 			r.Log.Error(err, "Default domain wasn't found. APIRules will require full host")
