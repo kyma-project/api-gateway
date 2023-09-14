@@ -47,7 +47,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 	Context("check default domain logic", func() {
 
 		It("should have an error when creating an APIRule without a domain in cluster without kyma-gateway", func() {
-			updateJwtHandlerTo(helpers.JWT_HANDLER_ORY)
+			updateJwtHandlerTo(helpers.JWT_HANDLER_ISTIO)
 
 			rule1 := testRule("/rule1", []string{"GET"}, defaultMutators, noConfigHandler("allow"))
 
@@ -97,7 +97,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 		})
 
 		It("should succeed when creating an APIRule without a domain in cluster with kyma-gateway", func() {
-			updateJwtHandlerTo(helpers.JWT_HANDLER_ORY)
+			updateJwtHandlerTo(helpers.JWT_HANDLER_ISTIO)
 
 			By("Creating Kyma gateway")
 
