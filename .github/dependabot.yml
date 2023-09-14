@@ -1,5 +1,6 @@
 version: 2
 updates:
+# main branch configuration
   - package-ecosystem: "gomod"
     directory: "/"
     labels:
@@ -24,6 +25,8 @@ updates:
     commit-message:
       prefix: "docker"
       include: "scope"
+
+# release branch  configuration
   - package-ecosystem: "gomod"
     directory: "/"
     target-branch: "release-1.8"
@@ -56,3 +59,31 @@ updates:
     ignore:
       - dependency-name: "*"
         update-types: ["version-update:semver-major", "version-update:semver-minor"]
+
+# mod-dev branch configuration
+  - package-ecosystem: "gomod"
+    target-branch: "mod-dev"
+    directory: "/"
+    labels:
+      - "go"
+      - "area/dependency"
+    schedule:
+      interval: "daily"
+    commit-message:
+      prefix: "gomod"
+      include: "scope"
+    groups:
+      k8s-dependencies:
+        patterns:
+          - "k8s.io/*"
+  - package-ecosystem: "docker"
+    target-branch: "mod-dev"
+    directory: "/"
+    labels:
+      - "docker"
+      - "area/dependency"
+    schedule:
+      interval: "daily"
+    commit-message:
+      prefix: "docker"
+      include: "scope"
