@@ -53,7 +53,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 
 			apiRuleName := generateTestName(testNameBase, testIDLength)
 			serviceName := generateTestName(testServiceNameBase, testIDLength)
-			serviceHost := fmt.Sprintf("%s", serviceName)
+			serviceHost := serviceName
 
 			By("Creating APIRule")
 
@@ -133,7 +133,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 
 			apiRuleName := generateTestName(testNameBase, testIDLength)
 			serviceName := generateTestName(testServiceNameBase, testIDLength)
-			serviceHost := fmt.Sprintf("%s", serviceName)
+			serviceHost := serviceName
 
 			apiRule := testApiRule(apiRuleName, testNamespace, serviceName, testNamespace, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule1})
 			svc := testService(serviceName, testNamespace, testServicePort)
