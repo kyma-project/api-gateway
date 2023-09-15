@@ -20,7 +20,7 @@ import (
 	"context"
 	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
 	"github.com/kyma-project/api-gateway/controllers"
-	"github.com/kyma-project/api-gateway/internal/reconciliations/gateway"
+	"github.com/kyma-project/api-gateway/internal/gateway"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
@@ -52,7 +52,7 @@ func (r *APIGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		return ctrl.Result{}, err
 	}
 
-	if kymaGatewayErr := gateway.ReconcileKymaGateway(ctx, r.Client, apiGatewayCR); kymaGatewayErr != nil {
+	if kymaGatewayErr := gateway.Reconcile(ctx, r.Client, apiGatewayCR); kymaGatewayErr != nil {
 		return r.requeueReconciliation(ctx, apiGatewayCR, kymaGatewayErr, "Reconciliation Kyma Gateway failed")
 	}
 

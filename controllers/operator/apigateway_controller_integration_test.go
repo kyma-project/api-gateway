@@ -75,6 +75,53 @@ var _ = Describe("API Gateway Controller", Serial, func() {
 				g.Expect(errors.IsNotFound(err)).To(BeTrue())
 			}, eventuallyTimeout).Should(Succeed())
 		})
+
+		It("should delete Kyma Gateway when it's disabled after it was enabled", func() {
+			// given
+			apiGateway := v1alpha1.APIGateway{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: generateApiGatewayName(),
+				},
+				Spec: v1alpha1.APIGatewaySpec{
+					EnableKymaGateway: ptr.To(true),
+				},
+			}
+
+			By("Creating APIGateway with Kyma Gateway enabled")
+			Expect(k8sClient.Create(ctx, &apiGateway)).Should(Succeed())
+			defer func() {
+				apiGatewayTeardown(&apiGateway)
+				kymaGatewayTeardown()
+			}()
+
+			By("Verifying that APIGateway CR reconciliation was successful and Kyma gateway was created")
+			Eventually(func(g Gomega) {
+				g.Expect(k8sClient.Get(ctx, client.ObjectKey{Name: apiGateway.Name}, &apiGateway)).Should(Succeed())
+				g.Expect(apiGateway.Status.State).To(Equal(v1alpha1.Ready))
+
+				kymaGw := v1alpha3.Gateway{}
+				g.Expect(k8sClient.Get(ctx, client.ObjectKey{Name: "kyma-gateway", Namespace: "kyma-system"}, &kymaGw)).Should(Succeed())
+			}, eventuallyTimeout).Should(Succeed())
+
+			By("Updating APIGateway CR with Kyma Gateway disabled")
+			apiGateway.Spec.EnableKymaGateway = ptr.To(false)
+
+			// when
+			Expect(k8sClient.Update(ctx, &apiGateway)).Should(Succeed())
+
+			// then
+			By("Verifying that APIGateway CR reconciliation was successful and Kyma gateway was deleted")
+			Eventually(func(g Gomega) {
+				g.Expect(k8sClient.Get(ctx, client.ObjectKey{Name: apiGateway.Name}, &apiGateway)).Should(Succeed())
+				g.Expect(apiGateway.Status.State).To(Equal(v1alpha1.Ready))
+
+				kymaGw := v1alpha3.Gateway{}
+				err := k8sClient.Get(ctx, client.ObjectKey{Name: "kyma-gateway", Namespace: "kyma-system"}, &kymaGw)
+				g.Expect(err).To(HaveOccurred())
+				g.Expect(errors.IsNotFound(err)).To(BeTrue())
+			}, eventuallyTimeout).Should(Succeed())
+
+		})
 	})
 })
 
@@ -106,7 +153,7 @@ func apiGatewayTeardown(apiGateway *v1alpha1.APIGateway) {
 	}, eventuallyTimeout).Should(Succeed())
 }
 
-// TODO: Remove this since this is a workaround until it'S clarified how we handle ownership issue of Kyma Gateway
+// TODO: Remove this since this is a workaround until it's clarified how we handle ownership issue of Kyma Gateway
 func kymaGatewayTeardown() {
 	By("Deleting Gateway kyma-gateway as part of teardown")
 	Eventually(func(g Gomega) {
