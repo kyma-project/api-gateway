@@ -27,7 +27,7 @@ jobs:
         with:
           job-name: 'post-api-gateway-build'
           github-auth-token: ${{ secrets.GITHUB_TOKEN }}
-          commit-ref: ${{ github.event.pull_request.head.sha }}
+          commit-ref: ${{ github.sha }}
 
   integration-tests:
     name: Integration tests
