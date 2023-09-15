@@ -15,6 +15,7 @@ inputs:
     description: 'Commit ref on which the status check will be done'
     required: false
     default: ${{ github.event.pull_request.head.sha }}
+
 runs:
   using: "composite"
   steps:
