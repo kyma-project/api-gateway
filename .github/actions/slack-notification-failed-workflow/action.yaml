@@ -1,0 +1,21 @@
+# To modify the message content go to Slack workflow in #goat-int channel
+
+name: 'Slack notification on failed workflow'
+description: 'Sends slack notification on failed workflow'
+inputs:
+  SLACK_WEBHOOK_URL:
+    description: 'Slack workflow webhook url'
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - name: Notify
+      uses: slackapi/slack-github-action@e28cf165c92ffef168d23c5c9000cffc8a25e117 # v1.24.0
+      with:
+        payload: |
+          {
+            "repository": "${{ github.repository }}",
+            "workflow": "${{ github.workflow }}"
+          }
+      env:
+        SLACK_WEBHOOK_URL: ${{ inputs.SLACK_WEBHOOK_URL }}

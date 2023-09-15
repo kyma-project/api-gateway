@@ -1,11 +1,10 @@
 # This workflow is responsible for all kinds of integration tests run on pull request.
 # Those tests depend on a container image so in the first job we wait for the image build to succeed.
 
-name: PR integration tests
+name: main integration tests
 
 on:
-  pull_request_target:
-    types: [synchronize, opened, reopened, ready_for_review]
+  push:
     paths-ignore:
       - "docs/**"
       - "**/*.md"
@@ -16,42 +15,45 @@ on:
       - ".github/**" #Ignoring since build job isn't triggered on the workflow directory changes
     branches:
       - main
-      - 'release-**'
 
 jobs:
   wait-for-image-build:
-  # Checking out the PR with 'actions/checkout' is dangerous as the PR can contain malicious code, so it needs to be safeguarded by running in 'restricted' environment that needs approval to run
-    environment: ${{ github.event.pull_request.author_association != 'COLLABORATOR' && github.event.pull_request.author_association != 'OWNER' && 'restricted' || 'internal' }}
     name: Wait for image build
     runs-on: ubuntu-latest
     if: github.event.pull_request.draft == false
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
       - uses: ./.github/actions/wait-for-job-succeed-or-fail
         with:
-          job-name: 'pull-api-gateway-build'
+          job-name: 'post-api-gateway-build'
           github-auth-token: ${{ secrets.GITHUB_TOKEN }}
           commit-ref: ${{ github.event.pull_request.head.sha }}
 
   integration-tests:
-    environment: ${{ github.event.pull_request.author_association != 'COLLABORATOR' && github.event.pull_request.author_association != 'OWNER' && 'restricted' || 'internal' }}
     name: Integration tests
     runs-on: ubuntu-latest
     if: github.event.pull_request.draft == false
     needs: [wait-for-image-build]
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          fetch-depth: 0
       - uses: ./.github/actions/integration-tests
         env:
           CLIENT_ID: ${{ secrets.CLIENT_ID }}
           CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
           OIDC_ISSUER_URL: ${{ secrets.OIDC_ISSUER_URL }}
-          JOB_TYPE: presubmit
-          PULL_NUMBER: PR-${{github.event.number}}
+          JOB_TYPE: postsubmit
+          PULL_BASE_SHA: ${{github.sha}}
         with:
-          upgrade-image-name: "europe-docker.pkg.dev/kyma-project/dev/api-gateway-controller:PR-${{github.event.number}}"
+          upgrade-image-name: ""
+
+  slack_failed_notification:
+    name: Slack Notification
+    runs-on: ubuntu-latest
+    if: ${{ failure() }}
+    needs: [integration-tests]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Notify
+        uses: ./.github/actions/slack-notification-failed-workflow
+        with:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
