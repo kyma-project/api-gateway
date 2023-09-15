@@ -42,7 +42,7 @@ jobs:
           CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
           OIDC_ISSUER_URL: ${{ secrets.OIDC_ISSUER_URL }}
           JOB_TYPE: postsubmit
-          PULL_BASE_SHA: ${{github.sha}}
+          PULL_BASE_SHA: ${{ github.sha }}
         with:
           upgrade-image-name: ""
 

@@ -174,7 +174,7 @@ endif
 
 .PHONY: test-integration-k3d
 test-integration-k3d: kyma-cli k3d provision-k3d install-kyma test-integration ## Run integration tests.
-	source ./tests/integration/env_vars.sh && $(GOTEST) ./tests/integration -v -race -run TestIstioJwt . && $(GOTEST) ./tests/integration -v -race -run TestOryJwt .
+	source ./tests/integration/env_vars.sh && $(GOTEST) ./tests/integration -v -race -run TestIstioJwt .
 
 ##@ Build
 

@@ -49,6 +49,6 @@ jobs:
           CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
           OIDC_ISSUER_URL: ${{ secrets.OIDC_ISSUER_URL }}
           JOB_TYPE: presubmit
-          PULL_NUMBER: ${{github.event.number}}
+          PULL_NUMBER: ${{ github.event.number }}
         with:
-          upgrade-image-name: "europe-docker.pkg.dev/kyma-project/dev/api-gateway-controller:PR-${{github.event.number}}"
+          upgrade-image-name: "europe-docker.pkg.dev/kyma-project/dev/api-gateway-controller:PR-${{ github.event.number }}"
