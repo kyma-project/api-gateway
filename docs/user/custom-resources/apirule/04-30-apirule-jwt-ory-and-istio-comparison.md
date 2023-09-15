@@ -20,7 +20,7 @@ This table lists all possible configuration properties of the Ory Oathkeeper JWT
 | **jwks_ttl**                   |  **NO**   | &rarr; | *Not Supported*                                                                 |  **-**   |
 | **allowed_algorithms**         |  **NO**   | &rarr; | *Not Supported*                                                                 |  **-**   |
 
-For more details, check the description of Istio JWT configuration properties in the [APIRule CR documentation](https://github.com/kyma-project/api-gateway/blob/main/docs/api-rule-cr.md#istio-jwt-configuration).
+For more details, check the description of [Istio JWT configuration properties](./04-20-apirule-jwt-access-strategy.md).
 
 ## Examplary APIRule custom resources
 
@@ -128,21 +128,21 @@ When you use Ory Oathkeeper, APIRule JWT access strategy configuration is transl
 With Istio JWT access strategy, for each `authentications` entry, an Istio's [Request Authentication](https://istio.io/latest/docs/reference/config/security/request_authentication/) resource is created, and for each `authorizations` entry, an [Authorization Policy](https://istio.io/latest/docs/reference/config/security/authorization-policy/) resource is created.
 
 ### Header support
-Istio JWT access strategy only supports `header` and `cookie` mutators. For more information, take a look at the [APIRule CR reference documentation](https://github.com/kyma-project/api-gateway/blob/main/docs/api-rule-cr.md#mutators).
+Istio JWT access strategy only supports `header` and `cookie` mutators. Learn more about [supported mutators](./04-40-apirule-mutators.md).
 
 ### Regex type of path matching
-Istio doesn't support regex type of path matching in Authorization Policies, which are supported by Ory Oathkeeper rules and by Virtual Service.
+Istio doesn't support regex type of path matching in Authorization Policies. Ory Oathkeeper Rules and Virtual Service do support this feature.
 
 ### Configuring a JWT token from `cookie`
 Istio doesn't support configuring a JWT token from `cookie`, and Ory Oathkeeper does. Istio supports only `fromHeaders` and `fromParams` configurations.
 
 ### Workload in the service mesh
-Using Istio as JWT access strategy requires the workload behind the service to be in the service mesh, for example, to have the Istio proxy. To learn how to add workloads to the Istio service mesh, read the [Istio documentation](https://istio.io/latest/docs/ops/common-problems/injection/).
+Using Istio as JWT access strategy requires the workload behind the Service to be in the service mesh, for example, to have the Istio proxy injected. Learn how to [add workloads to Istio Service Mesh](https://istio.io/latest/docs/ops/common-problems/injection/).
 
 ### Change of status `401` to `403` when calling an endpoint without the `Authorization` header
 Previously, when using ORY Oathkeeper, if you called a secured workload without a JWT token, it resulted in the `401` error. This behavior has changed with the implementation of Istio-based JWT. Now, calls made without a token result in the `403` error. To learn more, read the Istio documentation on [RequestAuthentication](https://istio.io/latest/docs/concepts/security/#request-authentication) and [AuthorizationPolicy](https://istio.io/latest/docs/reference/config/security/authorization-policy).
 
-### Blocking of the in-cluster connectivity to an endpoint
+### Blocking of in-cluster connectivity to an endpoint
 Istio JWT uses the `istio-sidecar` container to validate requests in the context of the target Pod. Previously, in-cluster requests were allowed in the `ory-oathkeeper` context because request validation happened within the `ory-oathkeeper` Pod. Now, these requests fail unless they are explicitly permitted.
 
 

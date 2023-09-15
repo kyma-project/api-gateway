@@ -1,5 +1,5 @@
 ---
-title: Set up or update a custom domain TLS certificate in Kyma
+title: Set up or update a custom domain TLS certificate
 ---
 
 The TLS certificate is a vital security element. Follow this tutorial to set up your custom TLS certificate in Kyma or update a manually rotated one.

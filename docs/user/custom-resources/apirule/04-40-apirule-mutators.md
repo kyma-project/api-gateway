@@ -1,19 +1,21 @@
 # Mutators
 
-Different types of mutators are supported depending on the access strategy.
+You can use mutators to enrich an incoming request with information. Different types of mutators are supported depending on the access strategy you use:
 
 | Access Strategy      | Mutator support                                                           |
 |:---------------------|:--------------------------------------------------------------------------|
-| jwt                  | Istio `cookie` and `header` mutators                                           |
-| oauth2_introspection | [Oathkeeper](https://www.ory.sh/docs/oathkeeper/pipeline/mutator) mutator |
-| noop                 | [Oathkeeper](https://www.ory.sh/docs/oathkeeper/pipeline/mutator) mutator |
-| allow                | No mutators supported                                                     |
+| `jwt`                  | Istio `cookie` and `header` mutators                                           |
+| `oauth2_introspection` | [Oathkeeper](https://www.ory.sh/docs/oathkeeper/pipeline/mutator) mutator |
+| `noop`                 | [Oathkeeper](https://www.ory.sh/docs/oathkeeper/pipeline/mutator) mutator |
+| `allow`                | No mutators supported                                                     |
+
+This document explains and provides examples of Istio mutators that are compatible with JWT access strategy. Additionally, it explores the possibility of using Oathkeeper mutators with Istio, and provides guidance on how to configure them.
 
 ## Istio mutators
-Mutators can be used to enrich an incoming request with information. The following mutators are supported in combination with the `jwt` access strategy and can be defined for each rule in an `ApiRule`: `header`,`cookie`. It's possible to configure multiple mutators for one rule, but only one mutator of each type is allowed.
+The `cookie` and `header` mutators are supported in combination with the JWT access strategy. You are allowed to configure multiple mutators for one APIRule, but only one mutator of each type is allowed.
 
 ### Header mutator
-The headers are specified in the **headers** field of the header mutator configuration field. The keys are the names of the headers, and each value is a string. In the header value, it is possible to use [Envoy command operators](https://www.envoyproxy.io/docs/envoy/latest/configuration/observability/access_log/usage#command-operators), for example, to write an incoming header into a new header. The configured headers are set to the request and overwrite all existing headers with the same name.
+The headers are defined in the **headers** field of the header mutator configuration. The keys represent the names of the headers, and each value is a string. You can use [Envoy command operators](https://www.envoyproxy.io/docs/envoy/latest/configuration/observability/access_log/usage#command-operators) in the header value to perform operations such as copying an incoming header to a new header. The configured headers are applied to the request. They overwrite any existing headers with the same name.
 
 <div tabs name="api-rule" group="sample-cr">
   <details>
@@ -21,7 +23,7 @@ The headers are specified in the **headers** field of the header mutator configu
   Example
   </summary>
 
-In the following example, two different headers are specified: **X-Custom-Auth**, which uses the incoming Authorization header as a value, and **X-Some-Data** with the value `some-data`.
+In the following example, two different headers are configured: **X-Custom-Auth**, which uses the incoming Authorization header as a value, and **X-Some-Data** with the value `some-data`.
 
 ```yaml
 apiVersion: gateway.kyma-project.io/v1beta1
@@ -56,7 +58,7 @@ spec:
 </div>
 
 ### Cookie mutator
-The cookies are specified in the **cookies** field of the cookie mutator configuration field. The keys are the names of the cookies, and each value is a string. In the cookie value, it is possible to use [Envoy command operators](https://www.envoyproxy.io/docs/envoy/latest/configuration/observability/access_log/usage#command-operators). The configured cookies are set as `Cookie`-header in the request and overwrite an existing one.
+To configure cookies, use the **cookies** mutator configuration field. The keys represent the names of the cookies, and each value is a string. As the cookie value, you can use [Envoy command operators](https://www.envoyproxy.io/docs/envoy/latest/configuration/observability/access_log/usage#command-operators). The configured cookies are set as `cookie`-header in the request and overwrite any existing cookies.
 
 <div tabs name="api-rule" group="sample-cr">
   <details>
@@ -132,7 +134,7 @@ spec:
 
 ### Cookie mutator
 
-The mutator of type `Cookie` can be handled the same as the mutator [Headers](#headers) with Istio using Virtual Service HeaderOperations. Here applies the same limitiations for Istio as only static data can be added, but [Ory Cookie Mutator](https://www.ory.sh/docs/oathkeeper/pipeline/mutator#cookie) supports templating.
+The mutator of type `cookie` can be handled the same as the `header` mutator with Istio using Virtual Service HeaderOperations. Here applies the same limitiations for Istio as only static data can be added, but [Ory Cookie Mutator](https://www.ory.sh/docs/oathkeeper/pipeline/mutator#cookie) supports templating.
 
 Ory configuration:
 

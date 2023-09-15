@@ -1,6 +1,4 @@
----
-title: Troubleshooting - API Exposure
----
+# Troubleshooting guides
 
 The troubleshooting section aims to identify the most common recurring problems the users face when they expose APIs in Kyma, as well as the most suitable solutions to these problems.
 

@@ -10,11 +10,11 @@ The `apirules.gateway.kyma-project.io` CustomResourceDefinition (CRD) describes 
 
 ## api-gateway-config ConfigMap
 
-The `api-gateway-config` ConfigMap contains the configuration of the JWT Handler. To learn more about how to enable the JWT handling by Istio, read the [APIRule CR documentation](custom-resources/apirule/01-40-apirule-custom-resource.md).
+The `api-gateway-config` ConfigMap contains the configuration of the JWT Handler. To learn more about how to [enable Istio the JWT handling](./custom-resources/apirule/04-10-apirule-jwt-access-strategy.md).
 
 ## Status codes
 
-The APIRule CR includes status information for all created sub-resources. However, the field **apiRuleStatus** specifically reflects the status of the controller reconciliation. For more information, read the [APIRule CR documentation](custom-resources/apirule/01-40-apirule-custom-resource.md):
+The APIRule CR includes status information for all created sub-resources. However, the field **apiRuleStatus** specifically reflects the status of the controller's reconciliation.
 
 | Code          | Description                               |
 |---------------|-------------------------------------------|
@@ -26,7 +26,7 @@ The APIRule CR includes status information for all created sub-resources. Howeve
 ## Controller limitations
 
 APIRule Controller relies on Istio and Ory Custom Resources to provide routing capabilities. In terms of persistence, the controller depends only on APIRules stored in the Kubernetes cluster.
-In terms of the resource configuration, the following requirements are set on the API Gateway controller:
+In terms of the resource configuration, the following requirements are set on API Gateway Controller:
 
 |          | CPU  | Memory |
 |----------|------|--------|

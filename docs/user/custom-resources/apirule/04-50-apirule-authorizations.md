@@ -1,6 +1,4 @@
----
-title: Configure Authorization (OAuth2, JWT)
----
+# Configure Authorization (OAuth2, JWT)
 
 With the API Gateway Controller, you can secure the Services you expose in the following ways:
 
@@ -8,9 +6,9 @@ With the API Gateway Controller, you can secure the Services you expose in the f
 - with JWT tokens
 - with both OAuth2 and JWT tokens
 
-If you secure a service with either OAuth2 or JWT tokens, by default, you must include a valid OAuth2 or JWT token in the `Authorization` header of the call to the service.
+If you secure a Service with either OAuth2 or JWT tokens, by default, you must include a valid OAuth2 or JWT token in the `Authorization` header of the call to the Service.
 
-If you secure a service with both OAuth2 and JWT, by default, the Oathkeeper proxy expects OAuth2 tokens in the `Authorization` header of incoming calls. For endpoints secured with JWT, you must define the header from which the system extracts the JWT token for every **accessStrategy** you define. Set the **token_from.location** parameter to `header:{NAME}` to extract the JWT token from a specific header. You can use any header name different from `Authorization`.
+If you secure a Service with both OAuth2 and JWT, by default, the Oathkeeper proxy expects OAuth2 tokens in the `Authorization` header of incoming calls. For endpoints secured with JWT, you must define the header from which the system extracts the JWT token for every **accessStrategy** you define. Set the **token_from.location** parameter to `header:{NAME}` to extract the JWT token from a specific header. You can use any header name different from `Authorization`.
 
 Alternatively, you can set the **token_from.location** parameter to `query_parameter:{NAME}` to extract the token from a specific query parameter.
 
@@ -18,7 +16,7 @@ Alternatively, you can set the **token_from.location** parameter to `query_param
 
 ## Examples
 
-See these sample excerpts from APIRule custom resources that show the **rules** attribute for services secured with OAuth2, JWT, and an OAuth2 and JWT combination.
+See these sample excerpts from APIRule custom resources that show the **rules** attribute for Services secured with OAuth2, JWT, and an OAuth2 and JWT combination.
 
 
 <div tabs>
@@ -83,6 +81,3 @@ See these sample excerpts from APIRule custom resources that show the **rules** 
   </details>
 
 </div>
-
->**TIP:** To learn more, read about the [APIRule custom resource](./00-custom-resources/apix-01-apirule.md). You can also follow the [tutorials](../03-tutorials/00-api-exposure/apix-05-expose-and-secure-a-workload/apix-05-01-expose-and-secure-workload-oauth2.md) to learn how to expose and secure services.
-

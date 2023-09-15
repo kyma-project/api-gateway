@@ -45,7 +45,8 @@ This table lists all the possible parameters of the Istio JWT access strategy to
   Example
   </summary>
 
-In the following example, the APIRule has two defined Issuers. `ISSUER` uses a JWT token taken from the HTTP header, which is called `X-JWT-Assertion` and has a `Kyma` prefix. `ISSUER2` uses a JWT token taken from the URL parameter, which is called `jwt-token`. The **requiredScopes** defined in the **authorizations** field allow only JWTs with the claims `scp`, `scope` or `scopes`, the value `test`, and the audiences `example.com` and `example.org` or JWTs with the claims `scp`, `scope` or `scopes` and the values `read` and `write`.
+In the following example, the APIRule has two defined Issuers. The first Issuer, called `ISSUER`, uses a JWT token extracted from the HTTP header. The header is named `X-JWT-Assertion` and has a prefix of `Kyma`. The second Issuer, called `ISSUER2`, uses a JWT token extracted from a URL parameter named `jwt-token`.  
+The **requiredScopes** defined in the **authorizations** field allow only allow JWTs that have the claims `scp`, `scope`, or `scopes` with a value of `test`. Additionally, the JWTs must have an audience of either `example.com` or `example.org`. Alternatively, the JWTs can have the same claims with the values `read` and `write`.
 
 ```yaml
 apiVersion: gateway.kyma-project.io/v1beta1
@@ -89,6 +90,6 @@ spec:
 Under the hood, an authentications array creates a corresponding [requestPrincipals](https://istio.io/latest/docs/reference/config/security/authorization-policy/#Source) array in the Istio's [Authorization Policy](https://istio.io/latest/docs/reference/config/security/authorization-policy/) resource. Every `requestPrincipals` string is formatted as `<ISSUSER>/*`.
 
 ### Authorizations
-The authorizations field is optional. When not defined, the authorization is satisfied if the JWT is valid. You can define multiple authorizations for an access strategy. When multiple authorizations are defined, the request is allowed if at least one of them is satisfied.
+The authorizations field is optional. When not defined, the authorization is satisfied if the JWT is valid. You can define multiple authorizations for an access strategy. The request is allowed if at least one of them is satisfied.
 
-The **requiredScopes** and **audiences** fields are optional. If **requiredScopes** are defined, the JWT has to contain all the scopes in the `scp`, `scope`, or `scopes` claims to be authorized. If **audiences** are defined, the JWT has to contain all the audiences in the `aud` claim to be authorized.
+The **requiredScopes** and **audiences** fields are optional. If **requiredScopes** are defined, the JWT must contain all the scopes in the `scp`, `scope`, or `scopes` claims to be authorized. If **audiences** are defined, the JWT has to contain all the audiences in the `aud` claim to be authorized.

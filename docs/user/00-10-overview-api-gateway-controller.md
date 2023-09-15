@@ -10,7 +10,7 @@ API Gateway Controller is part of Kyma API Gateway Operator. Its role is to mana
 
 ## APIGateway CR
 
-The `apigateways.operator.kyma-project.io` CustomResourceDefinition (CRD) describes the APIGateway CR that is used to manage the API Gateway resources. To learn more, read the [APIGateway CR documentation](custom-resources/apigateway/01-30-apigateway-custom-resource.md).
+The `apigateways.operator.kyma-project.io` CustomResourceDefinition (CRD) describes the APIGateway CR that is used to manage the API Gateway resources. To learn more, read the [APIGateway CR documentation](./custom-resources/apigateway/04-00-apigateway-custom-resource.md).
 
 ## Status codes
 

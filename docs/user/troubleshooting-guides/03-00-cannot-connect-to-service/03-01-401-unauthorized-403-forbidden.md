@@ -4,7 +4,7 @@ title: 401 Unauthorized or 403 Forbidden
 
 ## Symptom
 
-When you try to reach your service, you get `401 Unauthorized` or `403 Forbidden` in response.
+When you try to reach your Service, you get `401 Unauthorized` or `403 Forbidden` in response.
 
 ## Remedy
 
