@@ -20,10 +20,6 @@ var _ = Describe("Apirule controller validation", Serial, Ordered, func() {
 			updateJwtHandlerTo(helpers.JWT_HANDLER_ORY)
 		})
 
-		It("should not allow creation of APIRule with blocklisted subdomain api", func() {
-			testHostInBlockList()
-		})
-
 	})
 
 	Context("with istio handler", func() {
@@ -48,10 +44,6 @@ var _ = Describe("Apirule controller validation", Serial, Ordered, func() {
 		testJwtHandlerConfig := func(accessStrategies []*gatewayv1beta1.Authenticator, expectedStatusCode gatewayv1beta1.StatusCode, expectedValidationErrors []string) {
 			testConfig(accessStrategies, []*gatewayv1beta1.Mutator{}, expectedStatusCode, expectedValidationErrors)
 		}
-
-		It("should not allow creation of APIRule with blocklisted subdomain api", func() {
-			testHostInBlockList()
-		})
 
 		It("should not allow creation of APIRule without config in jwt handler", func() {
 			accessStrategies := []*gatewayv1beta1.Authenticator{
@@ -335,19 +327,4 @@ func testConfigWithServiceAndHost(serviceName string, host string, accessStrateg
 			g.Expect(created.Status.APIRuleStatus.Description).To(ContainSubstring(expected))
 		}
 	}, eventuallyTimeout).Should(Succeed())
-}
-
-func testHostInBlockList() {
-	accessStrategies := []*gatewayv1beta1.Authenticator{
-		{
-			Handler: &gatewayv1beta1.Handler{
-				Name: "noop",
-			},
-		},
-	}
-
-	serviceName := generateTestName("httpbin", 5)
-
-	expectedErrors := []string{"Validation error: Attribute \".spec.host\": The subdomain api is blocklisted for kyma.local domain"}
-	testConfigWithServiceAndHost(serviceName, "api.kyma.local", accessStrategies, nil, gatewayv1beta1.StatusError, expectedErrors)
 }

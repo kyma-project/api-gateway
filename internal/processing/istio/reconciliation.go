@@ -40,9 +40,6 @@ func (r Reconciliation) Validate(ctx context.Context, client client.Client, apiR
 		MutatorsValidator:         &mutatorsValidator{},
 		InjectionValidator:        &injectionValidator{ctx: ctx, client: client},
 		RulesValidator:            &rulesValidator{},
-		ServiceBlockList:          r.config.ServiceBlockList,
-		DomainAllowList:           r.config.DomainAllowList,
-		HostBlockList:             r.config.HostBlockList,
 		DefaultDomainName:         r.config.DefaultDomainName,
 	}
 	return validator.Validate(ctx, client, apiRule, vsList), nil

@@ -257,10 +257,9 @@ func getRawConfig(config any) *runtime.RawExtension {
 func getAPIReconciler(mgr manager.Manager) reconcile.Reconciler {
 
 	reconcilerConfig := gateway.ApiRuleReconcilerConfiguration{
-		AllowListedDomains: "bar, kyma.local",
-		CorsAllowOrigins:   "regex:.*",
-		CorsAllowMethods:   "GET,POST,PUT,DELETE",
-		CorsAllowHeaders:   "header1,header2",
+		CorsAllowOrigins: "regex:.*",
+		CorsAllowMethods: "GET,POST,PUT,DELETE",
+		CorsAllowHeaders: "header1,header2",
 	}
 
 	apiReconciler, err := gateway.NewApiRuleReconciler(mgr, reconcilerConfig)

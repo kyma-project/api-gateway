@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
+	apinetworkingv1beta1 "istio.io/api/networking/v1beta1"
 	"math/rand"
 	"strings"
 	"time"
@@ -42,6 +43,129 @@ var _ = Describe("APIRule Controller", Serial, func() {
 		testJwksUri                = "https://oauth2.example.com/.well-known/jwks.json"
 		defaultHttpTimeout         = time.Second * 180
 	)
+
+	Context("check default domain logic", func() {
+
+		It("should have an error when creating an APIRule without a domain in cluster without kyma-gateway", func() {
+			updateJwtHandlerTo(helpers.JWT_HANDLER_ISTIO)
+
+			rule1 := testRule("/rule1", []string{"GET"}, defaultMutators, noConfigHandler("allow"))
+
+			apiRuleName := generateTestName(testNameBase, testIDLength)
+			serviceName := generateTestName(testServiceNameBase, testIDLength)
+			serviceHost := serviceName
+
+			By("Creating APIRule")
+
+			apiRule := testApiRule(apiRuleName, testNamespace, serviceName, testNamespace, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule1})
+			svc := testService(serviceName, testNamespace, testServicePort)
+
+			// when
+			Expect(c.Create(context.TODO(), svc)).Should(Succeed())
+			Expect(c.Create(context.TODO(), apiRule)).Should(Succeed())
+			defer func() {
+				apiRuleTeardown(apiRule)
+				serviceTeardown(svc)
+			}()
+
+			expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusError)
+
+			By("Setting a full host for the APIRule should resolve the error")
+
+			By("Updating APIRule")
+			existingInstance := gatewayv1beta1.APIRule{}
+			Expect(c.Get(context.TODO(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &existingInstance)).Should(Succeed())
+
+			serviceHost = fmt.Sprintf("%s.local.kyma.dev", serviceName)
+			existingInstance.Spec.Host = &serviceHost
+
+			Expect(c.Update(context.TODO(), &existingInstance)).Should(Succeed())
+
+			By("Verifying APIRule after update")
+
+			matchingLabels := matchingLabelsFunc(apiRuleName, testNamespace)
+
+			Eventually(func(g Gomega) {
+				ruleList := getRuleList(g, matchingLabels)
+
+				//Verify All Rules point to new Service after update
+				expectedUpstream := fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", serviceName, testNamespace, testServicePort)
+				for i := range ruleList {
+					r := ruleList[i]
+					g.Expect(r.Spec.Upstream.URL).To(Equal(expectedUpstream))
+				}
+			}, eventuallyTimeout).Should(Succeed())
+
+		})
+
+		It("should succeed when creating an APIRule without a domain in cluster with kyma-gateway", func() {
+			updateJwtHandlerTo(helpers.JWT_HANDLER_ISTIO)
+
+			By("Creating Kyma gateway")
+
+			gateway := networkingv1beta1.Gateway{
+				ObjectMeta: metav1.ObjectMeta{Name: "kyma-gateway", Namespace: "kyma-system"},
+				Spec: apinetworkingv1beta1.Gateway{
+					Servers: []*apinetworkingv1beta1.Server{
+						{
+							Port: &apinetworkingv1beta1.Port{
+								Protocol: "HTTPS",
+							},
+							Hosts: []string{
+								"*.local.kyma.dev",
+							},
+						},
+						{
+							Port: &apinetworkingv1beta1.Port{
+								Protocol: "HTTP",
+							},
+							Hosts: []string{
+								"*.local.kyma.dev",
+							},
+						},
+					},
+				},
+			}
+
+			Expect(c.Create(context.TODO(), &gateway)).Should(Succeed())
+
+			By("Creating APIRule")
+
+			rule1 := testRule("/rule1", []string{"GET"}, defaultMutators, noConfigHandler("allow"))
+
+			apiRuleName := generateTestName(testNameBase, testIDLength)
+			serviceName := generateTestName(testServiceNameBase, testIDLength)
+			serviceHost := serviceName
+
+			apiRule := testApiRule(apiRuleName, testNamespace, serviceName, testNamespace, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule1})
+			svc := testService(serviceName, testNamespace, testServicePort)
+
+			// when
+			Expect(c.Create(context.TODO(), svc)).Should(Succeed())
+			Expect(c.Create(context.TODO(), apiRule)).Should(Succeed())
+			defer func() {
+				apiRuleTeardown(apiRule)
+				serviceTeardown(svc)
+			}()
+
+			expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusOK)
+
+			By("Verifying APIRule after update")
+
+			matchingLabels := matchingLabelsFunc(apiRuleName, testNamespace)
+
+			Eventually(func(g Gomega) {
+				ruleList := getRuleList(g, matchingLabels)
+
+				//Verify All Rules point to new Service after update
+				expectedUpstream := fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", serviceName, testNamespace, testServicePort)
+				for i := range ruleList {
+					r := ruleList[i]
+					g.Expect(r.Spec.Upstream.URL).To(Equal(expectedUpstream))
+				}
+			}, eventuallyTimeout).Should(Succeed())
+		})
+	})
 
 	Context("when updating the APIRule with multiple paths", func() {
 
