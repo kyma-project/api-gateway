@@ -50,10 +50,7 @@ import (
 )
 
 type config struct {
-	SystemNamespace    string `envconfig:"default=kyma-system"`
-	WebhookServiceName string `envconfig:"default=api-gateway-webhook-service"`
-	WebhookSecretName  string `envconfig:"default=api-gateway-webhook-service"`
-	WebhookPort        int    `envconfig:"default=9443"`
+	SystemNamespace string `envconfig:"default=kyma-system"`
 }
 
 var (
@@ -180,10 +177,6 @@ func main() {
 	}
 	if err = reconciler.SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to setup controller", "controller", "APIRule")
-		os.Exit(1)
-	}
-	if err = (&gatewayv1beta1.APIRule{}).SetupWebhookWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create webhook", "webhook", "APIRule")
 		os.Exit(1)
 	}
 	//+kubebuilder:scaffold:builder
