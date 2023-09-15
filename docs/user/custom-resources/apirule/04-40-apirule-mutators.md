@@ -1,4 +1,4 @@
-# Mutators
+# APIRule Mutators
 
 You can use mutators to enrich an incoming request with information. Different types of mutators are supported depending on the access strategy you use:
 

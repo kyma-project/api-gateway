@@ -121,7 +121,7 @@ spec:
 
 ### Configuration of properties handling in Ory Oathkeeper and Istio resources
 
-When you use Ory Oathkeeper, APIRule JWT access strategy configuration is translated directly as [authenticator configuration](https://www.ory.sh/docs/oathkeeper/api-access-rules#handler-configuration) in the [Ory Oathkeeper access rule CR](https://www.ory.sh/docs/oathkeeper/api-access-rules). See the official Ory Oathkeeper [JWT authenticator documentation](https://www.ory.sh/docs/oathkeeper/pipeline/authn#jwt) to learn more.
+When you use Ory Oathkeeper, APIRule JWT access strategy configuration is translated directly as [authenticator configuration](https://www.ory.sh/docs/oathkeeper/api-access-rules#handler-configuration) in the [Ory Oathkeeper Access Rule CR](https://www.ory.sh/docs/oathkeeper/api-access-rules). See the official Ory Oathkeeper [JWT authenticator documentation](https://www.ory.sh/docs/oathkeeper/pipeline/authn#jwt) to learn more.
 
 With Istio JWT access strategy, for each `authentications` entry, an Istio's [Request Authentication](https://istio.io/latest/docs/reference/config/security/request_authentication/) resource is created, and for each `authorizations` entry, an [Authorization Policy](https://istio.io/latest/docs/reference/config/security/authorization-policy/) resource is created.
 
