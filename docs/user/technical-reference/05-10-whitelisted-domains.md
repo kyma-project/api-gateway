@@ -4,6 +4,4 @@ API Gateway Controller uses an allowlist of domains for which it allows to expos
 
 If the domain does not match the allowlist, API Gateway Controller sets an appropriate validation status on the APIRule CR created for that service.
 
->**TIP:** For more information, read about the [APIRule CR statuses](./04-00-custom-resources/04-01-apirule/04-01-apirule-custom-resource.md#specification).
-
 By default, the only allowed domain is the domain of the Kyma cluster.

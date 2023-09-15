@@ -10,7 +10,7 @@ The `apirules.gateway.kyma-project.io` CustomResourceDefinition (CRD) describes 
 
 ## api-gateway-config ConfigMap
 
-The `api-gateway-config` ConfigMap contains the configuration of the JWT Handler. To learn more about how to [enable Istio the JWT handling](./custom-resources/apirule/04-10-apirule-jwt-access-strategy.md).
+The `api-gateway-config` ConfigMap contains the configuration of the JWT Handler. To learn more about how to [enable Istio the JWT handling](./custom-resources/apirule/04-20-apirule-istio-jwt-access-strategy.md).
 
 ## Status codes
 

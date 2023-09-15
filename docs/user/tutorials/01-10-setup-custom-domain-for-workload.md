@@ -8,7 +8,7 @@ This tutorial shows how to set up a custom domain and prepare a certificate requ
 
 ## Prerequisites
 
-* Deploy [a sample HttpBin service and a sample Function](./apix-01-create-workload.md).
+* Deploy [a sample HttpBin service and a sample Function](./01-00-create-workload.md).
 * If you use a cluster not managed by Gardener, install the [External DNS Management](https://github.com/gardener/external-dns-management#quick-start) and [Certificate Management](https://github.com/gardener/cert-management) components manually in a dedicated Namespace.
 
 ## Steps
@@ -113,6 +113,6 @@ This tutorial shows how to set up a custom domain and prepare a certificate requ
         kubectl get certificate httpbin-cert -n istio-system
         ```
        
-5. [Set up a TLS Gateway](./apix-03-set-up-tls-gateway.md).
+5. [Set up a TLS Gateway](./01-20-set-up-tls-gateway.md).
 
 Visit the [Gardener external DNS management documentation](https://github.com/gardener/external-dns-management/tree/master/examples) to see more examples of custom resources for services and ingresses.

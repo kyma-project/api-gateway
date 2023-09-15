@@ -4,12 +4,12 @@ title: Expose workloads in multiple Namespaces with a single APIRule definition
 
 This tutorial shows how to expose service endpoints in multiple Namespaces using API Gateway Controller.
 
-   > **CAUTION:** Exposing a workload to the outside world causes a potential security vulnerability, so tread carefully. In a production environment, secure the workload you expose with [OAuth2](../apix-05-expose-and-secure-a-workload/apix-05-01-expose-and-secure-workload-oauth2.md) or [JWT](../apix-05-expose-and-secure-a-workload/apix-05-03-expose-and-secure-workload-jwt.md).
+   > **CAUTION:** Exposing a workload to the outside world causes a potential security vulnerability, so tread carefully. In a production environment, secure the workload you expose with [OAuth2](../01-50-expose-and-secure-a-workload/01-50-expose-and-secure-workload-oauth2.md) or [JWT](../01-50-expose-and-secure-a-workload/01-52-expose-and-secure-workload-jwt.md).
 
 
 ##  Prerequisites
 
-1. Create three Namespaces: one for an instance of the HttpBin service, one for a sample Function, and one for an APIRule custom resource (CR). Deploy an instance of the HttpBin service and a sample Function in their respective Namespaces. To learn how to do it, follow the [Create a workload](../apix-01-create-workload.md) tutorial. 
+1. Create three Namespaces: one for an instance of the HttpBin service, one for a sample Function, and one for an APIRule custom resource (CR). Deploy an instance of the HttpBin service and a sample Function in their respective Namespaces. To learn how to do it, follow the [Create a workload](../01-00-create-workload.md) tutorial. 
 
   >**NOTE:** Remember to [enable the Istio sidecar proxy injection](https://kyma-project.io/#/istio/user/02-operation-guides/operations/02-20-enable-sidecar-injection) in each Namespace.
 

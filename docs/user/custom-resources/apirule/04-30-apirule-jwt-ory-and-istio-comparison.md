@@ -20,8 +20,6 @@ This table lists all possible configuration properties of the Ory Oathkeeper JWT
 | **jwks_ttl**                   |  **NO**   | &rarr; | *Not Supported*                                                                 |  **-**   |
 | **allowed_algorithms**         |  **NO**   | &rarr; | *Not Supported*                                                                 |  **-**   |
 
-For more details, check the description of [Istio JWT configuration properties](./04-20-apirule-jwt-access-strategy.md).
-
 ## Examplary APIRule custom resources
 
 >**CAUTION:** Istio JWT is **not** a production-ready feature, and API might change.
