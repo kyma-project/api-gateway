@@ -13,8 +13,7 @@ inputs:
     default: "1800"
   ref:
     description: 'Optional ref that will be used for commit fetching'
-    required: false
-    default: "1800"
+    required: true
 runs:
   using: "composite"
   steps:
