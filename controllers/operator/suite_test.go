@@ -24,6 +24,7 @@ import (
 	"github.com/onsi/ginkgo/v2/types"
 	networkingv1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/client-go/util/retry"
@@ -46,7 +47,6 @@ import (
 
 const (
 	eventuallyTimeout = time.Second * 5
-	testNamespace     = "default"
 )
 
 var (
@@ -69,7 +69,7 @@ var _ = BeforeSuite(func() {
 
 	By("bootstrapping test environment")
 	testEnv = &envtest.Environment{
-		CRDDirectoryPaths:     []string{filepath.Join("..", "..", "config", "crd", "bases")},
+		CRDDirectoryPaths:     []string{filepath.Join("..", "..", "config", "crd", "bases"), filepath.Join("..", "..", "hack")},
 		ErrorIfCRDPathMissing: true,
 	}
 
@@ -89,6 +89,8 @@ var _ = BeforeSuite(func() {
 	k8sClient, err = client.New(cfg, client.Options{Scheme: s})
 	Expect(err).NotTo(HaveOccurred())
 	Expect(k8sClient).NotTo(BeNil())
+
+	createCommonTestResources(k8sClient)
 
 	mgr, err := ctrl.NewManager(cfg, ctrl.Options{
 		Scheme: s,
@@ -131,3 +133,11 @@ var _ = AfterSuite(func() {
 var _ = ReportAfterSuite("custom reporter", func(report types.Report) {
 	tests.GenerateGinkgoJunitReport("api-gateway-controller-suite", report)
 })
+
+func createCommonTestResources(k8sClient client.Client) {
+	KymaSystemNs := &corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{Name: "kyma-system"},
+		Spec:       corev1.NamespaceSpec{},
+	}
+	Expect(k8sClient.Create(context.TODO(), KymaSystemNs)).Should(Succeed())
+}
