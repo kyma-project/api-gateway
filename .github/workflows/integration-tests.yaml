@@ -54,6 +54,7 @@ jobs:
           OIDC_ISSUER_URL: ${{ secrets.OIDC_ISSUER_URL }}
 
   upgrade-tests:
+    environment: ${{ github.event.pull_request.author_association != 'COLLABORATOR' && github.event.pull_request.author_association != 'OWNER' && 'restricted' || 'internal' }}
     name: Upgrade integration tests
     runs-on: ubuntu-latest
     if: github.event.pull_request.draft == false
