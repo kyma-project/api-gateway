@@ -1,0 +1,59 @@
+# This workflow is responsible for all kinds of integration tests run on pull request.
+# Those tests depend on a container image so in the first job we wait for the image build to succeed.
+
+name: main integration tests
+
+on:
+  push:
+    paths-ignore:
+      - "docs/**"
+      - "**/*.md"
+      - "tests/performance/**"
+      - "OWNERS"
+      - "CODEOWNERS"
+      - "sec-scanners-config.yaml"
+      - ".github/**" #Ignoring since build job isn't triggered on the workflow directory changes
+    branches:
+      - main
+
+jobs:
+  wait-for-image-build:
+    name: Wait for image build
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/wait-for-job-succeed-or-fail
+        with:
+          job-name: 'post-api-gateway-build'
+          github-auth-token: ${{ secrets.GITHUB_TOKEN }}
+          commit-ref: ${{ github.sha }}
+
+  integration-tests:
+    name: Integration tests
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false
+    needs: [wait-for-image-build]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/integration-tests
+        env:
+          CLIENT_ID: ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+          OIDC_ISSUER_URL: ${{ secrets.OIDC_ISSUER_URL }}
+          JOB_TYPE: postsubmit
+          PULL_BASE_SHA: ${{github.sha}}
+        with:
+          upgrade-image-name: ""
+
+  slack_failed_notification:
+    name: Slack Notification
+    runs-on: ubuntu-latest
+    if: ${{ failure() }}
+    needs: [integration-tests]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Notify
+        uses: ./.github/actions/slack-notification-failed-workflow
+        with:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

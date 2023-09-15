@@ -7,6 +7,7 @@ CERTIFICATES_IMG = $(DOCKER_PUSH_REPOSITORY)$(DOCKER_PUSH_DIRECTORY)/$(CERTIFICA
 CERTIFICATES_TAG = $(DOCKER_TAG)
 
 CRD_OPTIONS ?= "crd:trivialVersions=true,crdVersions=v1"
+KYMA_COMPONENTS ?= "hack/kyma-components.yaml"
 
 # Example ory-oathkeeper
 ifndef OATHKEEPER_SVC_ADDRESS
@@ -57,6 +58,12 @@ GOTEST=$(GOCMD) test -timeout 1h
 
 PULL_IMAGE_VERSION=PR-${PULL_NUMBER}
 POST_IMAGE_VERSION=v$(shell date '+%Y%m%d')-$(shell printf %.8s ${PULL_BASE_SHA})
+
+ifeq ($(JOB_TYPE), postsubmit)
+ifeq ($(TEST_UPGRADE_IMG),)
+	TEST_UPGRADE_IMG="europe-docker.pkg.dev/kyma-project/dev/api-gateway-controller:${POST_IMAGE_VERSION}"
+endif
+endif
 
 # Setting SHELL to bash allows bash commands to be executed by recipes.
 # This is a requirement for 'setup-envtest.sh' in the test target.
@@ -144,18 +151,25 @@ provision-k3d:
 
 .PHONY: install-kyma
 install-kyma:
+ifeq ($(KYMA_COMPONENTS), hack/kyma-components-no-istio.yaml)
+	kubectl apply -f https://github.com/kyma-project/istio/releases/latest/download/istio-manager.yaml
+	kubectl apply -f https://github.com/kyma-project/istio/releases/latest/download/istio-default-cr.yaml
+	kubectl wait -n kyma-system istios/default --for=jsonpath='{.status.state}'=Ready --timeout=300s
+endif
 ifndef JOB_TYPE
-	kyma deploy --ci -s main -c hack/kyma-components.yaml
+	kyma deploy --ci -s main -c ${KYMA_COMPONENTS}
 else ifeq ($(UPGRADE_JOB), true)
-	kyma deploy --ci -c hack/kyma-components.yaml
+	kyma deploy --ci -c ${KYMA_COMPONENTS}
 else ifeq ($(JOB_TYPE), presubmit)
-	kyma deploy --ci -s main -c hack/kyma-components.yaml \
+	kyma deploy --ci -s main -c ${KYMA_COMPONENTS} \
 	  --value api-gateway.global.images.api_gateway_controller.version=${PULL_IMAGE_VERSION} \
 	  --value api-gateway.global.images.api_gateway_controller.directory=dev \
 	  --value api-gateway.global.images.api-gateway-webhook-certificates.version=${PULL_IMAGE_VERSION} \
 	  --value api-gateway.global.images.api-gateway-webhook-certificates.directory=dev
 else ifeq ($(JOB_TYPE), postsubmit)
-	kyma deploy --ci -s main -c hack/kyma-components.yaml --value api-gateway.global.images.api_gateway_controller.version=${POST_IMAGE_VERSION} --value api-gateway.global.images.api-gateway-webhook-certificates.version=${POST_IMAGE_VERSION}
+	kyma deploy --ci -s main -c ${KYMA_COMPONENTS} \
+	  --value api-gateway.global.images.api_gateway_controller.version=${POST_IMAGE_VERSION} \
+	  --value api-gateway.global.images.api-gateway-webhook-certificates.version=${POST_IMAGE_VERSION}
 endif
 
 .PHONY: test-integration-k3d

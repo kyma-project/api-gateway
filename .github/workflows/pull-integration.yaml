@@ -1,7 +1,7 @@
 # This workflow is responsible for all kinds of integration tests run on pull request.
 # Those tests depend on a container image so in the first job we wait for the image build to succeed.
 
-name: Pull Request integration tests
+name: PR integration tests
 
 on:
   pull_request_target:
@@ -35,10 +35,9 @@ jobs:
           github-auth-token: ${{ secrets.GITHUB_TOKEN }}
           commit-ref: ${{ github.event.pull_request.head.sha }}
 
-  api-gateway-upgrade-test:
-  # Checking out the PR with 'actions/checkout' is dangerous as the PR can contain malicious code, so it needs to be safeguarded by running in 'restricted' environment that needs approval to run
+  integration-tests:
     environment: ${{ github.event.pull_request.author_association != 'COLLABORATOR' && github.event.pull_request.author_association != 'OWNER' && 'restricted' || 'internal' }}
-    name: Istio upgrade integration test
+    name: Integration tests
     runs-on: ubuntu-latest
     if: github.event.pull_request.draft == false
     needs: [wait-for-image-build]
@@ -47,10 +46,12 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
-      - uses: ./.github/actions/upgrade-integration-test
+      - uses: ./.github/actions/integration-tests
         env:
           CLIENT_ID: ${{ secrets.CLIENT_ID }}
           CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
           OIDC_ISSUER_URL: ${{ secrets.OIDC_ISSUER_URL }}
+          JOB_TYPE: presubmit
+          PULL_NUMBER: PR-${{github.event.number}}
         with:
           upgrade-image-name: "europe-docker.pkg.dev/kyma-project/dev/api-gateway-controller:PR-${{github.event.number}}"
