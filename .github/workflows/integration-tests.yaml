@@ -33,7 +33,7 @@ jobs:
         with:
           job-name: 'pull-api-gateway-build'
           github-auth-token: ${{ secrets.GITHUB_TOKEN }}
-          commit-ref: "refs/pull/${{ github.event.number }}/merge"
+          commit-ref: ${{ github.event.pull_request.head.sha }}
       # Important security check: https://github.com/actions/checkout/issues/518
       - name: Sanity check
         shell: bash
