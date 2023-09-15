@@ -20,8 +20,6 @@ on:
 
 jobs:
   wait-for-image-build:
-  # Checking out the PR with 'actions/checkout' is dangerous as the PR can contain malicious code, so it needs to be safeguarded by running in 'restricted' environment that needs approval to run
-    environment: ${{ github.event.pull_request.author_association != 'COLLABORATOR' && github.event.pull_request.author_association != 'OWNER' && 'restricted' || 'internal' }}
     name: Wait for image build
     runs-on: ubuntu-latest
     if: github.event.pull_request.draft == false
@@ -36,7 +34,6 @@ jobs:
           commit-ref: ${{ github.event.pull_request.head.sha }}
 
   integration-tests:
-    environment: ${{ github.event.pull_request.author_association != 'COLLABORATOR' && github.event.pull_request.author_association != 'OWNER' && 'restricted' || 'internal' }}
     name: Integration tests
     runs-on: ubuntu-latest
     if: github.event.pull_request.draft == false
