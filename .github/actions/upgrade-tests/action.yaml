@@ -1,5 +1,5 @@
-name: 'Upgrade integration test'
-description: 'Runs upgrade suite of integration tests'
+name: 'Upgrade integration tests'
+description: 'Runs upgrade integration tests'
 inputs:
   upgrade-image-name:
     description: 'Image that will api-gateway be upgraded to'
@@ -14,7 +14,7 @@ runs:
       shell: bash
       run: |
         sudo echo "127.0.0.1 local.kyma.dev" | sudo tee -a /etc/hosts
-    - name: Run upgrade integration test
+    - name: Run upgrade integration tests
       env:
         KYMA_DOMAIN: "local.kyma.dev"
         TEST_UPGRADE_IMG: ${{ inputs.upgrade-image-name }}

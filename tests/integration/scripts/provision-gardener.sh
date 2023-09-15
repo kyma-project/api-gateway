@@ -41,7 +41,6 @@ echo "--> Install kyma CLI locally to /tmp/bin"
 curl -Lo kyma.tar.gz "https://github.com/kyma-project/cli/releases/latest/download/kyma_linux_x86_64.tar.gz" \
 && tar -zxvf kyma.tar.gz && chmod +x kyma \
 && rm -f kyma.tar.gz
-chmod +x kyma
 
 kyma version --client
 kyma provision gardener ${GARDENER_PROVIDER} \

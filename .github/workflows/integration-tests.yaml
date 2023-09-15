@@ -30,8 +30,8 @@ jobs:
           job-name: 'pull-api-gateway-build'
           github-auth-token: ${{ secrets.GITHUB_TOKEN }}
 
-  api-gateway-upgrade-test:
-    name: Istio upgrade integration test
+  integration-tests:
+    name: Integration tests
     runs-on: ubuntu-latest
     if: github.event.pull_request.draft == false
     needs: [wait-for-image-build]
@@ -39,7 +39,24 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: ./.github/actions/upgrade-integration-test
+      - uses: ./.github/actions/integration-tests
+        with:
+          operator-image-name: "europe-docker.pkg.dev/kyma-project/prod/api-gateway-controller:PR-${{github.event.number}}"
+        env:
+          CLIENT_ID: ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+          OIDC_ISSUER_URL: ${{ secrets.OIDC_ISSUER_URL }}
+
+  upgrade-tests:
+    name: Upgrade integration tests
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false
+    needs: [wait-for-image-build]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/upgrade-tests
         with:
           operator-image-name: "europe-docker.pkg.dev/kyma-project/prod/api-gateway-controller:PR-${{github.event.number}}"
         env:
