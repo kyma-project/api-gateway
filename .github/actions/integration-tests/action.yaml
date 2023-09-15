@@ -1,5 +1,9 @@
 name: 'Integration tests'
 description: 'Runs integration tests'
+inputs:
+  upgrade-image-name:
+    description: 'Image that will api-gateway be upgraded to'
+    required: true
 runs:
   using: "composite"
   steps:
@@ -30,6 +34,17 @@ runs:
         sudo chmod +x /usr/bin/kyma
         sudo kyma provision k3d
         KUBECONFIG=$(k3d kubeconfig merge kyma) EXPORT_RESULT=true make install-kyma test-integration
+      shell: bash
+    - name: Run upgrade integration tests
+      env:
+        KYMA_DOMAIN: "local.kyma.dev"
+        TEST_UPGRADE_IMG: ${{ inputs.upgrade-image-name }}
+      run: |
+        wget -q -O - https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | sudo bash
+        sudo curl -Lo /usr/bin/kyma https://storage.googleapis.com/kyma-cli-unstable/kyma-linux
+        sudo chmod +x /usr/bin/kyma
+        sudo kyma provision k3d
+        KUBECONFIG=$(k3d kubeconfig merge kyma) EXPORT_RESULT=true make install-kyma test-upgrade
       shell: bash
     - uses: actions/upload-artifact@v3
       with:
