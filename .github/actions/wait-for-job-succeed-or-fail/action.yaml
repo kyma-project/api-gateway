@@ -11,6 +11,11 @@ inputs:
     description: 'Timeout for job finish'
     required: false
     default: "1800"
+  commit-ref:
+    description: 'Commit ref on which the status check will be done'
+    required: false
+    default: ${{ github.event.pull_request.head.sha }}
+
 runs:
   using: "composite"
   steps:
@@ -21,6 +26,7 @@ runs:
         token: ${{ inputs.github-auth-token }}
         statusName: ${{ inputs.job-name }}
         timeoutSeconds: ${{ inputs.timeout }}
+        ref: ${{ inputs.commit-ref }}
     - name: Check if build status is success
       if: steps.wait-for-status.outputs.state != 'success'
       run: exit 1
