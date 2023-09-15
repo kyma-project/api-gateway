@@ -4,7 +4,7 @@
 name: Pull Request integration tests
 
 on:
-  pull_request:
+  pull_request_target:
     types: [synchronize, opened, reopened, ready_for_review]
     paths-ignore:
       - "docs/**"
@@ -20,17 +20,22 @@ on:
 
 jobs:
   wait-for-image-build:
+  # Checking out the PR with 'actions/checkout' is dangerous as the PR can contain malicious code, so it needs to be safeguarded by running in 'restricted' environment that needs approval to run
+    environment: ${{ github.event.pull_request.author_association != 'COLLABORATOR' && github.event.pull_request.author_association != 'OWNER' && 'restricted' || 'internal' }}
     name: Wait for image build
     runs-on: ubuntu-latest
     if: github.event.pull_request.draft == false
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
       - uses: ./.github/actions/wait-for-job-succeed-or-fail
         with:
           job-name: 'pull-api-gateway-build'
           github-auth-token: ${{ secrets.GITHUB_TOKEN }}
 
   integration-tests:
+    environment: ${{ github.event.pull_request.author_association != 'COLLABORATOR' && github.event.pull_request.author_association != 'OWNER' && 'restricted' || 'internal' }}
     name: Integration tests
     runs-on: ubuntu-latest
     if: github.event.pull_request.draft == false
@@ -38,6 +43,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
       - uses: ./.github/actions/integration-tests
         with:
@@ -63,3 +69,5 @@ jobs:
           CLIENT_ID: ${{ secrets.CLIENT_ID }}
           CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
           OIDC_ISSUER_URL: ${{ secrets.OIDC_ISSUER_URL }}
+        with:
+          upgrade-image-name: "europe-docker.pkg.dev/kyma-project/dev/api-gateway-controller:PR-${{github.event.number}}"
