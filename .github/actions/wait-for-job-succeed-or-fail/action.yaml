@@ -19,6 +19,9 @@ inputs:
 runs:
   using: "composite"
   steps:
+    - name: test
+      shell: bash
+      run: echo test
     - name: Wait for job to succeed
       uses: autotelic/action-wait-for-status-check@6556cf50c8fb6608412945382eae73581f56cbb4 # not versioned
       id: wait-for-status
