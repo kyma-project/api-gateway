@@ -24,7 +24,7 @@ The API Rule Controller is a [Kubernetes controller](https://kubernetes.io/docs/
 The controller is responsible for handling the [APIRule CR](../user/custom-resources/apirule/01-40-apirule-custom-resource.md).  
 Additionally, the controller watches the [`api-gateway-config`](../user/custom-resources/apirule/01-40-apirule-custom-resource.md#jwt-access-strategy) to configure the JWT handler.
 
-The API Rule Controller has a conditional dependency to API Gateway controller in terms of default API Rule domain. If no domain is configured in API Gateway CR (currently not yet possible), API Rule controller will use default kyma gateway domain as the default value for created Virtual Services.
+API Rule Controller has a conditional dependency to API Gateway Controller in terms of the default APIRule domain. If no domain is configured in APIGateway CR, API Rule Controller uses the default Kyma Gateway domain as the default value for creating Virtual Services.
 
 #### Reconciliation
 The [APIRule CR](../user/custom-resources/apirule/01-40-apirule-custom-resource.md) is reconciled with each change. If no changes have been made, process occurs at the default interval of 10 hours.
