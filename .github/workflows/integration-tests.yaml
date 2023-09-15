@@ -33,7 +33,12 @@ jobs:
         with:
           job-name: 'pull-api-gateway-build'
           github-auth-token: ${{ secrets.GITHUB_TOKEN }}
-          commit-ref: ${{ github.event.pull_request.merge_commit_sha }}
+          commit-ref: "refs/pull/${{ github.event.number }}/merge"
+      # Important security check: https://github.com/actions/checkout/issues/518
+      - name: Sanity check
+        shell: bash
+        run: |
+          [[ "$(git rev-parse 'HEAD^')" == "${{ github.event.pull_request.head.sha }}" ]]
 
   api-gateway-upgrade-test:
   # Checking out the PR with 'actions/checkout' is dangerous as the PR can contain malicious code, so it needs to be safeguarded by running in 'restricted' environment that needs approval to run
