@@ -11,7 +11,7 @@ inputs:
     description: 'Timeout for job finish'
     required: false
     default: "1800"
-  ref:
+  commit-ref:
     description: 'Optional ref that will be used for commit fetching'
     required: true
 runs:
@@ -24,7 +24,7 @@ runs:
         token: ${{ inputs.github-auth-token }}
         statusName: ${{ inputs.job-name }}
         timeoutSeconds: ${{ inputs.timeout }}
-        ref: ${{ inputs.ref }}
+        ref: ${{ inputs.commit-ref }}
     - name: Check if build status is success
       if: steps.wait-for-status.outputs.state != 'success'
       run: exit 1
