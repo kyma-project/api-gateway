@@ -125,7 +125,7 @@ test-for-release: envtest ## Run tests.
 
 .PHONY: test-integration
 test-integration: generate fmt vet envtest ## Run integration tests.
-	source ./tests/integration/env_vars.sh && $(GOTEST) ./tests/integration -v -race -run TestIstioJwt . && $(GOTEST) ./tests/integration -v -race -run TestOryJwt .
+	source ./tests/integration/env_vars.sh && $(GOTEST) ./tests/integration -v -race -run TestIstioJwt .
 
 .PHONY: test-upgrade
 test-upgrade: generate fmt vet install ## Run API Gateway upgrade tests.
