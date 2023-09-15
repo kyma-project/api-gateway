@@ -6,7 +6,7 @@ This tutorial shows how to set up a TLS Gateway in both manual and simple modes.
 
 ## Prerequisites
 
-* Deploy [a sample HttpBin service and a sample Function](./01-00-create-workload.md).
+* Deploy [a sample HttpBin Service and a sample Function](./01-00-create-workload.md).
 * Set up [your custom domain](./01-10-setup-custom-domain-for-workload.md) and export the following values as environment variables:
 
   ```bash

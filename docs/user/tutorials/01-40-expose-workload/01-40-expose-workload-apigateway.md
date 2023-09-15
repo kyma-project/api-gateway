@@ -8,7 +8,7 @@ This tutorial shows how to expose an unsecured instance of the HttpBin Service o
 
 ## Prerequisites
 
-* Deploy [a sample HttpBin service and a sample Function](../01-00-create-workload.md).
+* Deploy [a sample HttpBin Service and a sample Function](../01-00-create-workload.md).
 * Set up [your custom domain](../01-10-setup-custom-domain-for-workload.md) or use a Kyma domain instead. 
 * Depending on whether you use your custom domain or a Kyma domain, export the necessary values as environment variables:
   
@@ -48,7 +48,7 @@ Follow these steps:
   HttpBin
   </summary>
 
-1. Expose an instance of the HttpBin service by creating APIRule CR in your Namespace. Run:
+1. Expose an instance of the HttpBin Service by creating APIRule CR in your Namespace. Run:
 
   ```bash
     cat <<EOF | kubectl apply -f -
@@ -82,16 +82,16 @@ Follow these steps:
   
   >**NOTE:** If you are running Kyma on k3d, add `httpbin.kyma.local` to the entry with k3d IP in your system's `/etc/hosts` file.
 
-  >**NOTE:** If you don't specify a Namespace for your service, the default APIRule Namespace is used.
+  >**NOTE:** If you don't specify a Namespace for your Service, the default APIRule Namespace is used.
 
-2. Call the endpoint by sending a `GET` request to the HttpBin service:
+2. Call the endpoint by sending a `GET` request to the HttpBin Service:
 
     ```bash
     curl -ik -X GET https://httpbin.$DOMAIN_TO_EXPOSE_WORKLOADS/ip
     ```
   If successful, the call returns the code `200 OK` response.
 
-3. Call the endpoint by sending a `POST` request to the HttpBin service:
+3. Call the endpoint by sending a `POST` request to the HttpBin Service:
 
     ```bash
     curl -ik -X POST https://httpbin.$DOMAIN_TO_EXPOSE_WORKLOADS/post -d "test data"
@@ -131,7 +131,7 @@ Follow these steps:
 
    >**NOTE:** If you are running Kyma on k3d, add `httpbin.kyma.local` to the entry with k3d IP in your system's `/etc/hosts` file.
 
-   >**NOTE:** If you don't specify a Namespace for your service, the default APIRule Namespace is used.
+   >**NOTE:** If you don't specify a Namespace for your Service, the default APIRule Namespace is used.
 
 2. Send a `GET` request to the Function:
 

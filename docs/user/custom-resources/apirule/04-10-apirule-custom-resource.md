@@ -1,4 +1,12 @@
-# Specification of APIRule custom resource
+# APIRule custom resource
+
+The `apirules.gateway.kyma-project.io` CustomResourceDefinition (CRD) describes the kind and the format of data the API Gateway Controller listens for. To get the up-to-date CRD in the `yaml` format, run the following command:
+
+```shell
+kubectl get crd apirules.gateway.kyma-project.io -o yaml
+```
+
+## Specification of APIRule custom resource
 
 This table lists all parameters of APIRule CRD together with their descriptions:
 
@@ -7,17 +15,14 @@ This table lists all parameters of APIRule CRD together with their descriptions:
 | Field                         | Mandatory | Description                                                                                                                                                                                                                                                                                            |
 |-------------------------------|:---------:|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------| 
 | **gateway**                   |  **YES**  | Specifies the Istio Gateway.                                                                                                                                                                                                                                                                           |
-| **host**                      |  **YES**  | Specifies the service's communication address for inbound external traffic. If only the leftmost label is provided, the default domain name will be used.                                                                                                                                              |
-| **service.name**              |  **NO**   | Specifies the name of the exposed service.                                                                                                                                                                                                                                                             |
-| **service.namespace**         |  **NO**   | Specifies the Namespace of the exposed service.                                                                                                                                                                                                                                                        |
-| **service.port**              |  **NO**   | Specifies the communication port of the exposed service.                                                                                                                                                                                                                                               |
+| **host**                      |  **YES**  | Specifies the Service's communication address for inbound external traffic. If only the leftmost label is provided, the default domain name will be used.                                                                                                                                              |
+| **service.name**              |  **NO**   | Specifies the name of the exposed Service.                                                                                                                                                                                                                                                             |
+| **service.namespace**         |  **NO**   | Specifies the Namespace of the exposed Service.                                                                                                                                                                                                                                                        |
+| **service.port**              |  **NO**   | Specifies the communication port of the exposed Service.                                                                                                                                                                                                                                               |
 | **timeout**                   |  **NO**   | Specifies the timeout for HTTP requests in seconds for all Oathkeeper access rules, but can be overridden for each rule. The maximum timeout is limited to 3900 seconds (65 minutes). </br> If no timeout is specified, the default timeout of 180 seconds applies.                                    |
 | **rules**                     |  **YES**  | Specifies the list of Oathkeeper access rules.                                                                                                                                                                                                                                                         |
-| **rules.service**             |  **NO**   | Services definitions at this level have higher precedence than the service definition at the **spec.service** level.                                                                                                                                                                                   |
-| **rules.service.name**        |  **NO**   | Specifies the name of the exposed service.                                                                                                                                                                                                                                                             |
-| **rules.service.namespace**   |  **NO**   | Specifies the Namespace of the exposed service.                                                                                                                                                                                                                                                        |
-| **rules.service.port**        |  **NO**   | Specifies the communication port of the exposed service.                                                                                                                                                                                                                                               |
-| **rules.path**                |  **YES**  | Specifies the path of the exposed service.                                                                                                                                                                                                                                                             |
+| **rules.service**             |  **NO**   | Services definitions at this level have higher precedence than the Service definition at the **spec.service** level.                                                                                                                                                                                   |
+| **rules.path**                |  **YES**  | Specifies the path of the exposed Service.                                                                                                                                                                                                                                                             |
 | **rules.methods**             |  **NO**   | Specifies the list of HTTP request methods available for **spec.rules.path**.                                                                                                                                                                                                                          |
 | **rules.mutators**            |  **NO**   | Specifies the list of [Oathkeeper](https://www.ory.sh/docs/next/oathkeeper/pipeline/mutator) or Istio mutators.                                                                                                                                                                                        |
 | **rules.accessStrategies**    |  **YES**  | Specifies the list of access strategies. Supported are [Oathkeeper](https://www.ory.sh/docs/next/oathkeeper/pipeline/authn) `oauth2_introspection`, `jwt`, `noop` and `allow`. We also support `jwt` as [Istio](https://istio.io/latest/docs/tasks/security/authorization/authz-jwt/) access strategy. |
@@ -51,7 +56,7 @@ The following status codes describe VirtualServices and Oathkeeper Access Rules:
 
 ## Sample custom resource
 
-This is a sample custom resource (CR) that the API Gateway Controller listens for to expose a service. The following example has the **rules** section specified, which makes API Gateway Controller create an Oathkeeper Access Rule for the Service.
+This is a sample custom resource (CR) that the API Gateway Controller listens for to expose a Service. The following example has the **rules** section specified, which makes API Gateway Controller create an Oathkeeper Access Rule for the Service.
 
 ```yaml
 apiVersion: gateway.kyma-project.io/v1beta1

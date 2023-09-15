@@ -29,7 +29,7 @@ API Rule Controller has a conditional dependency to API Gateway Controller in te
 **NOTE:** For now, you can only use the default domain in APIGateway CR. The option to configure your own domain will be added at a later time. See the [epic task](https://github.com/kyma-project/api-gateway/issues/130).
 
 #### Reconciliation
-The [APIRule CR](../user/custom-resources/apirule/04-10-apirule-custom-resource.md) is reconciled with each change. If no changes have been made, process occurs at the default interval of 10 hours.
+[APIRule CR](../user/custom-resources/apirule/04-10-apirule-custom-resource.md) is reconciled with each change. If no changes have been made, process occurs at the default interval of 10 hours.
 You can use the [API Gateway Operator paramteres](../user/technical-reference/05-00-api-gateway-operator-parameters.md) to adjust this interval.  
 In the event of a failure during the reconciliation, the controller performs the reconciliation again after one minute.
 

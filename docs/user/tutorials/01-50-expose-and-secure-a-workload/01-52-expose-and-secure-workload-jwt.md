@@ -2,11 +2,11 @@
 title: Expose and secure a workload with JWT
 ---
 
-This tutorial shows how to expose and secure services or Functions using API Gateway Controller. The Controller reacts to an instance of the APIRule custom resource (CR) and creates an Istio VirtualService and [Oathkeeper Access Rules](https://www.ory.sh/docs/oathkeeper/api-access-rules) according to the details specified in the CR. To interact with the secured workloads, the tutorial uses a JWT token.
+This tutorial shows how to expose and secure Services or Functions using API Gateway Controller. The Controller reacts to an instance of the APIRule custom resource (CR) and creates an Istio VirtualService and [Oathkeeper Access Rules](https://www.ory.sh/docs/oathkeeper/api-access-rules) according to the details specified in the CR. To interact with the secured workloads, the tutorial uses a JWT token.
 
 ## Prerequisites
 
-* [Sample HttpBin service and sample Function](../01-00-create-workload.md) deployed
+* [Sample HttpBin Service and sample Function](../01-00-create-workload.md) deployed
 * [JSON Web Token (JWT)](./01-51-get-jwt.md)
 * Set up [your custom domain](../01-10-setup-custom-domain-for-workload.md) or use a Kyma domain instead. 
 * Depending on whether you use your custom domain or a Kyma domain, export the necessary values as environment variables:
@@ -45,7 +45,7 @@ This tutorial shows how to expose and secure services or Functions using API Gat
   HttpBin
   </summary>
 
-1. Expose the service and secure it by creating an APIRule CR in your Namespace. Run:
+1. Expose the Service and secure it by creating an APIRule CR in your Namespace. Run:
 
    ```bash
    cat <<EOF | kubectl apply -f -
@@ -74,7 +74,7 @@ This tutorial shows how to expose and secure services or Functions using API Gat
 
    >**NOTE:** If you are running Kyma on k3d, add `httpbin.kyma.local` to the entry with k3d IP in your system's `/etc/hosts` file.
 
-2. To access the secured service, call it using the JWT access token:
+2. To access the secured Service, call it using the JWT access token:
 
    ```bash
    curl -ik https://httpbin.$DOMAIN_TO_EXPOSE_WORKLOADS/headers -H "Authorization: Bearer $ACCESS_TOKEN"

@@ -8,14 +8,14 @@ This tutorial shows how to set up a custom domain and prepare a certificate requ
 
 ## Prerequisites
 
-* Deploy [a sample HttpBin service and a sample Function](./01-00-create-workload.md).
+* Deploy [a sample HttpBin Service and a sample Function](./01-00-create-workload.md).
 * If you use a cluster not managed by Gardener, install the [External DNS Management](https://github.com/gardener/external-dns-management#quick-start) and [Certificate Management](https://github.com/gardener/cert-management) components manually in a dedicated Namespace.
 
 ## Steps
 
-1. Create a Secret containing credentials for the DNS cloud service provider account in your Namespace.
+1. Create a Secret containing credentials for the DNS cloud Service provider account in your Namespace.
 
-     * Choose your DNS cloud service provider and create a Secret in your Namespace. To learn how to do it, follow [the guidelines](https://github.com/gardener/external-dns-management/blob/master/README.md#external-dns-management) provided in the External DNS Management documentation. 
+     * Choose your DNS cloud Service provider and create a Secret in your Namespace. To learn how to do it, follow [the guidelines](https://github.com/gardener/external-dns-management/blob/master/README.md#external-dns-management) provided in the External DNS Management documentation. 
      * Export the name of the created Secret as an environment variable:
 
        ```bash
@@ -105,7 +105,7 @@ This tutorial shows how to set up a custom domain and prepare a certificate requ
           commonName: $DOMAIN_TO_EXPOSE_WORKLOADS
         EOF
         ```
-        >**NOTE:** While using the default configuration, certificates with the Let's Encrypt Issuer are valid for 90 days and automatically renewed 30 days before their validity expires. For more information, read the documentation on [Gardener Certificate Management](https://github.com/gardener/cert-management#requesting-a-certificate) and [Gardener extensions for certificate services](https://gardener.cloud/docs/extensions/others/gardener-extension-shoot-cert-service/).
+        >**NOTE:** While using the default configuration, certificates with the Let's Encrypt Issuer are valid for 90 days and automatically renewed 30 days before their validity expires. For more information, read the documentation on [Gardener Certificate Management](https://github.com/gardener/cert-management#requesting-a-certificate) and [Gardener extensions for certificate Services](https://gardener.cloud/docs/extensions/others/gardener-extension-shoot-cert-service/).
 
      * To check the certificate status, run: 
      
@@ -115,4 +115,4 @@ This tutorial shows how to set up a custom domain and prepare a certificate requ
        
 5. [Set up a TLS Gateway](./01-20-set-up-tls-gateway.md).
 
-Visit the [Gardener external DNS management documentation](https://github.com/gardener/external-dns-management/tree/master/examples) to see more examples of custom resources for services and ingresses.
+Visit the [Gardener external DNS management documentation](https://github.com/gardener/external-dns-management/tree/master/examples) to see more examples of custom resources for Services and ingresses.

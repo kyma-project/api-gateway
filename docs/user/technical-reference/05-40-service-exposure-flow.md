@@ -1,12 +1,12 @@
 # Service exposure flow 
 
-This diagram illustrates the workflow that leads to exposing a service in Kyma:
+This diagram illustrates the workflow that leads to exposing a Service in Kyma:
 
 ![service-exposure-flow](../../assets/service-exposure-flow.svg)
 
-- [API Gateway Controller](../00-10-overview-api-gateway-controller.md) listens for newly created custom resources (CR) that follow the set `apirule.gateway.kyma-project.io` CustomResourceDefinition (CRD), which describes the details of exposing services in Kyma.
+- [API Gateway Controller](../00-10-overview-api-gateway-controller.md) listens for newly created custom resources (CR) that follow the set `apirule.gateway.kyma-project.io` CustomResourceDefinition (CRD), which describes the details of exposing Services in Kyma.
 
-- [Istio VirtualService](https://istio.io/latest/docs/reference/config/networking/virtual-service/) specifies the services visible outside the cluster. API Gateway Controller creates a VirtualService for the hostname defined in the `apirule.gateway.kyma-project.io` CRD. The convention is to create a hostname using the name of the service as the subdomain, and the domain of the Kyma cluster.
+- [Istio VirtualService](https://istio.io/latest/docs/reference/config/networking/virtual-service/) specifies the Services visible outside the cluster. API Gateway Controller creates a VirtualService for the hostname defined in the `apirule.gateway.kyma-project.io` CRD. The convention is to create a hostname using the name of the Service as the subdomain, and the domain of the Kyma cluster.
 
 To get the list of VirtualServices in Kyma, run:
 
@@ -14,7 +14,7 @@ To get the list of VirtualServices in Kyma, run:
   kubectl get virtualservices.networking.istio.io --all-namespaces
   ```
 
-- [Oathkeeper Access Rule](https://www.ory.sh/oathkeeper/docs/api-access-rules) allows operators to specify authentication requirements for a service. It is an optional resource, created only when the CR specifies the desired authentication method, the trusted token issuer, allowed methods and paths, and required scopes.
+- [Oathkeeper Access Rule](https://www.ory.sh/oathkeeper/docs/api-access-rules) allows operators to specify authentication requirements for a Service. It is an optional resource, created only when the CR specifies the desired authentication method, the trusted token issuer, allowed methods and paths, and required scopes.
 
 To get the list of Oathkeeper Access Rules created in Kyma, run:
 

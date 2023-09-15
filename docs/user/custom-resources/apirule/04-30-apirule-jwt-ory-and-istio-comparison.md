@@ -24,7 +24,7 @@ This table lists all possible configuration properties of the Ory Oathkeeper JWT
 
 >**CAUTION:** Istio JWT is **not** a production-ready feature, and API might change.
 
-These are sample APIRule custom resources of both Ory Oathkeeper and Istio JWT access strategy configuration for a service.
+These are sample APIRule custom resources of both Ory Oathkeeper and Istio JWT access strategy configuration for a Service.
 
 <div tabs name="api-rule">
   <details>
@@ -135,7 +135,7 @@ Istio doesn't support regex type of path matching in Authorization Policies. Ory
 Istio doesn't support configuring a JWT token from `cookie`, and Ory Oathkeeper does. Istio supports only `fromHeaders` and `fromParams` configurations.
 
 ### Workload in the service mesh
-Using Istio as JWT access strategy requires the workload behind the Service to be in the service mesh, for example, to have the Istio proxy injected. Learn how to [add workloads to Istio Service Mesh](https://istio.io/latest/docs/ops/common-problems/injection/).
+Using Istio as JWT access strategy requires the workload behind the Service to be in the service mesh, for example, to have the Istio proxy injected. Learn how to [add workloads to the Istio service mesh](https://istio.io/latest/docs/ops/common-problems/injection/).
 
 ### Change of status `401` to `403` when calling an endpoint without the `Authorization` header
 Previously, when using ORY Oathkeeper, if you called a secured workload without a JWT token, it resulted in the `401` error. This behavior has changed with the implementation of Istio-based JWT. Now, calls made without a token result in the `403` error. To learn more, read the Istio documentation on [RequestAuthentication](https://istio.io/latest/docs/concepts/security/#request-authentication) and [AuthorizationPolicy](https://istio.io/latest/docs/reference/config/security/authorization-policy).

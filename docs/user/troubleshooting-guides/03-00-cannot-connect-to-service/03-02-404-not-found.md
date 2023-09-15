@@ -4,7 +4,7 @@ title: 404 Not Found
 
 ## Symptom
 
-When you try to reach your service, you get `404 Not Found` in response.
+When you try to reach your Service, you get `404 Not Found` in response.
 
 ## Remedy
 

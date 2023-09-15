@@ -6,7 +6,7 @@ This tutorial shows how to expose and secure a workload with mutual authenticati
 
 ## Prerequisites
 
-* Deploy [a sample HttpBin service and sample Function](../01-00-create-workload.md).
+* Deploy [a sample HttpBin Service and sample Function](../01-00-create-workload.md).
 * Set up [your custom domain](../01-10-setup-custom-domain-for-workload.md).
 * Set up [a mutual TLS Gateway](../01-20-set-up-tls-gateway.md) and export the bundle certificates.
 * To learn how to create your own self-signed Client Root CA and Certificate, see [this tutorial](../01-60-security/01-61-mtls-selfsign-client-certicate.md). This step is optional.
@@ -152,7 +152,7 @@ The following instructions describe how to secure an mTLS service or a Function.
     </details>
   </div>
 
-4. Call the secured endpoints of the HttpBin service or the secured Function.
+4. Call the secured endpoints of the HttpBin Service or the secured Function.
 
   <div tabs>
 
@@ -161,7 +161,7 @@ The following instructions describe how to secure an mTLS service or a Function.
     HttpBin
     </summary>
 
-  Send a `GET` request to the HttpBin service with the client certificates that you used to create mTLS Gateway:
+  Send a `GET` request to the HttpBin Service with the client certificates that you used to create mTLS Gateway:
 
     ```shell
     curl --key ${CLIENT_CERT_KEY_FILE} \
@@ -170,7 +170,7 @@ The following instructions describe how to secure an mTLS service or a Function.
           -ik -X GET https://httpbin-vs.$DOMAIN_TO_EXPOSE_WORKLOADS/headers
     ```
 
-  If successful, the call returns the code `200 OK` response. If you call the service without the proper certificates or with invalid ones, you get the code `403` response.
+  If successful, the call returns the code `200 OK` response. If you call the Service without the proper certificates or with invalid ones, you get the code `403` response.
 
     </details>
 

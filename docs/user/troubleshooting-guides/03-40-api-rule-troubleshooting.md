@@ -13,7 +13,7 @@ NAME      STATUS   HOST
 httpbin   ERROR    httpbin.xxx.shoot.canary.k8s-hana.ondemand.com
 ```
 
-The error may result in an inconsistent state of the APIRule resource in which Ory CR, Istio CR, or both are missing. Your service then cannot be properly exposed.
+The error may result in an inconsistent state of the APIRule resource in which Ory CR, Istio CR, or both are missing. Your Service then cannot be properly exposed.
 To check the error message of the APIRule resource, run:
 
 ```bash
@@ -134,7 +134,7 @@ Decide on one configuration you want to use. You can either `allow` access to th
 ## Service defined in APIRule is on the block list
 #### Cause
 
-The following APIRule has the `istio-ingressgateway` service specified:
+The following APIRule has the `istio-ingressgateway` Service specified:
 
 ```yaml
 spec:
@@ -144,7 +144,7 @@ spec:
     namespace: istio-system
 ```
 
-The `istio-ingressgateway` service is included in the block list. If your APIRule has a blocked service defined, the following `APIRuleStatus` error appears:
+The `istio-ingressgateway` Service is included in the block list. If your APIRule has a blocked Service defined, the following `APIRuleStatus` error appears:
 
 ```
 {"code":"ERROR","desc":"Validation error: Attribute \".spec.service.name\": Service istio-ingressgateway in namespace istio-system is blocklisted"}

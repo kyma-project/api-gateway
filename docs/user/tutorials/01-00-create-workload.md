@@ -1,6 +1,6 @@
 # Create a workload
 
-This tutorial explains how to create a sample HttpBin service deployment and a sample Function.
+This tutorial explains how to create a sample HttpBin Service deployment and a sample Function.
 
 ## Prerequisites
 - [Install the Serverless module](https://github.com/kyma-project/serverless-manager/blob/main/docs/contributor/01-10-manual-installation-on-k3d.md) to be able to deploy a Function
@@ -14,7 +14,7 @@ This tutorial explains how to create a sample HttpBin service deployment and a s
    kubectl create ns $NAMESPACE
    kubectl label namespace $NAMESPACE istio-injection=enabled --overwrite
    ```
-2. Deploy an instance of the HttpBin service or a sample Function.
+2. Deploy an instance of the HttpBin Service or a sample Function.
    
   <div tabs name="create">
 
@@ -23,7 +23,7 @@ This tutorial explains how to create a sample HttpBin service deployment and a s
     HttpBin
     </summary>
 
-    To deploy an instance of the HttpBin service in your Namespace using the [sample code](https://raw.githubusercontent.com/istio/istio/master/samples/httpbin/httpbin.yaml), run:
+    To deploy an instance of the HttpBin Service in your Namespace using the [sample code](https://raw.githubusercontent.com/istio/istio/master/samples/httpbin/httpbin.yaml), run:
 
     ```shell
     kubectl -n $NAMESPACE create -f https://raw.githubusercontent.com/istio/istio/master/samples/httpbin/httpbin.yaml
@@ -45,7 +45,7 @@ This tutorial explains how to create a sample HttpBin service deployment and a s
     </details>
   </div>
 
-3. Verify if an instance of the HttpBin service or a sample Function is successfully created.
+3. Verify if an instance of the HttpBin Service or a sample Function is successfully created.
    
   <div tabs name="verify">
 
@@ -54,7 +54,7 @@ This tutorial explains how to create a sample HttpBin service deployment and a s
     HttpBin
     </summary>
 
-    To verify if an instance of the HttpBin service is created, run:
+    To verify if an instance of the HttpBin Service is created, run:
 
       ```shell
         kubectl get pods -l app=httpbin -n $NAMESPACE
