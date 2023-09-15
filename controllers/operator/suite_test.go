@@ -18,13 +18,15 @@ package operator
 
 import (
 	"context"
-	"fmt"
+	operatorv1alpha1 "github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
 	"github.com/kyma-project/api-gateway/controllers"
-	"github.com/onsi/ginkgo/v2/reporters"
+	"github.com/kyma-project/api-gateway/tests"
 	"github.com/onsi/ginkgo/v2/types"
+	networkingv1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/client-go/util/retry"
-	"os"
 	"path/filepath"
 	ctrl "sigs.k8s.io/controller-runtime"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
@@ -39,8 +41,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
-
-	operatorv1alpha1 "github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -80,7 +80,9 @@ var _ = BeforeSuite(func() {
 	Expect(cfg).NotTo(BeNil())
 
 	s := runtime.NewScheme()
-	Expect(operatorv1alpha1.AddToScheme(s)).Should(Succeed())
+	utilruntime.Must(networkingv1alpha3.AddToScheme(s))
+	utilruntime.Must(operatorv1alpha1.AddToScheme(s))
+	utilruntime.Must(corev1.AddToScheme(s))
 
 	//+kubebuilder:scaffold:scheme
 
@@ -127,27 +129,5 @@ var _ = AfterSuite(func() {
 })
 
 var _ = ReportAfterSuite("custom reporter", func(report types.Report) {
-	logger := zap.New(zap.UseDevMode(true), zap.WriteTo(GinkgoWriter))
-
-	if key, ok := os.LookupEnv("ARTIFACTS"); ok {
-		reportsFilename := fmt.Sprintf("%s/%s", key, "junit-api-gateway-controller.xml")
-		logger.Info("Generating reports at", "location", reportsFilename)
-		err := reporters.GenerateJUnitReport(report, reportsFilename)
-
-		if err != nil {
-			logger.Error(err, "Junit Report Generation Error")
-		}
-	} else {
-		if err := os.MkdirAll("../../reports", 0755); err != nil {
-			logger.Error(err, "could not create directory")
-		}
-
-		reportsFilename := "../../reports/junit-api-gateway-controller.xml"
-		logger.Info("Generating reports at", "location", reportsFilename)
-		err := reporters.GenerateJUnitReport(report, reportsFilename)
-
-		if err != nil {
-			logger.Error(err, "Junit Report Generation Error")
-		}
-	}
+	tests.GenerateGinkgoJunitReport("api-gateway-controller-suite", report)
 })

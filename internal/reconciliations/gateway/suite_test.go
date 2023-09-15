@@ -3,6 +3,7 @@ package gateway
 import (
 	"fmt"
 	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
+	"github.com/kyma-project/api-gateway/tests"
 	. "github.com/onsi/ginkgo/v2"
 	"github.com/onsi/ginkgo/v2/reporters"
 	"github.com/onsi/ginkgo/v2/types"
@@ -21,6 +22,10 @@ func TestValidators(t *testing.T) {
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "Gateway Suite")
 }
+
+var _ = ReportAfterSuite("custom reporter", func(report types.Report) {
+	tests.GenerateGinkgoJunitReport("gateway-suite", report)
+})
 
 var _ = ReportAfterSuite("custom reporter", func(report types.Report) {
 	logger := zap.New(zap.UseDevMode(true), zap.WriteTo(GinkgoWriter))

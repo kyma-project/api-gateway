@@ -2,6 +2,7 @@ package operator
 
 import (
 	"github.com/go-logr/logr"
+	"github.com/kyma-project/api-gateway/controllers"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -11,5 +12,5 @@ type APIGatewayReconciler struct {
 	client.Client
 	Scheme        *runtime.Scheme
 	log           logr.Logger
-	statusHandler status
+	statusHandler controllers.StatusHandler
 }

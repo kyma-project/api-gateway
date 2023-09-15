@@ -18,8 +18,9 @@ package operator
 
 import (
 	"context"
-	operatorv1alpha1 "github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
+	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
 	"github.com/kyma-project/api-gateway/controllers"
+	"github.com/kyma-project/api-gateway/internal/reconciliations/gateway"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
@@ -30,8 +31,8 @@ func NewAPIGatewayReconciler(mgr manager.Manager) *APIGatewayReconciler {
 	return &APIGatewayReconciler{
 		Client:        mgr.GetClient(),
 		Scheme:        mgr.GetScheme(),
-		log:           mgr.GetLogger(),
-		statusHandler: newStatusHandler(mgr.GetClient()),
+		log:           mgr.GetLogger().WithName("apigateway-controller"),
+		statusHandler: controllers.NewStatusHandler(mgr.GetClient()),
 	}
 }
 
@@ -41,7 +42,7 @@ func NewAPIGatewayReconciler(mgr manager.Manager) *APIGatewayReconciler {
 //+kubebuilder:rbac:groups=networking.istio.io,resources=gateways,verbs=get;list;watch;create;update;patch;delete
 
 func (r *APIGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	apiGatewayCR := operatorv1alpha1.APIGateway{}
+	apiGatewayCR := v1alpha1.APIGateway{}
 	if err := r.Client.Get(ctx, req.NamespacedName, &apiGatewayCR); err != nil {
 		if apierrors.IsNotFound(err) {
 			r.log.Info("Skipped reconciliation, because ApiGateway CR was not found")
@@ -51,22 +52,43 @@ func (r *APIGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		return ctrl.Result{}, err
 	}
 
-	if err := r.statusHandler.updateToReady(ctx, &apiGatewayCR); err != nil {
-		r.log.Error(err, "Update status to ready failed")
-		return ctrl.Result{}, err
-	} else {
-		r.log.Info("Reconciled status successfully")
+	if kymaGatewayErr := gateway.ReconcileKymaGateway(ctx, r.Client, apiGatewayCR); kymaGatewayErr != nil {
+		return r.requeueReconciliation(ctx, apiGatewayCR, kymaGatewayErr, "Reconciliation Kyma Gateway failed")
 	}
 
-	return ctrl.Result{}, nil
+	return r.finishReconcile(ctx, apiGatewayCR)
 }
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *APIGatewayReconciler) SetupWithManager(mgr ctrl.Manager, c controllers.RateLimiterConfig) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&operatorv1alpha1.APIGateway{}).
+		For(&v1alpha1.APIGateway{}).
 		WithOptions(controller.Options{
 			RateLimiter: controllers.NewRateLimiter(c),
 		}).
 		Complete(r)
+}
+
+// requeueReconciliation cancels the reconciliation and requeues the request.
+func (r *APIGatewayReconciler) requeueReconciliation(ctx context.Context, cr v1alpha1.APIGateway, err error, description string) (ctrl.Result, error) {
+	r.log.Error(err, "Reconcile failed")
+
+	statusUpdateErr := r.statusHandler.UpdateToError(ctx, &cr, description)
+	if statusUpdateErr != nil {
+		r.log.Error(statusUpdateErr, "Error during updating status to error")
+	}
+
+	return ctrl.Result{}, err
+}
+
+func (r *APIGatewayReconciler) finishReconcile(ctx context.Context, cr v1alpha1.APIGateway) (ctrl.Result, error) {
+
+	if err := r.statusHandler.UpdateToReady(ctx, &cr); err != nil {
+		r.log.Error(err, "Update status to ready failed")
+		return ctrl.Result{}, err
+	}
+
+	r.log.Info("Reconciled status successfully")
+
+	return ctrl.Result{}, nil
 }
