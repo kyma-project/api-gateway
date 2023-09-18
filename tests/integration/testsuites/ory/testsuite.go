@@ -90,23 +90,13 @@ func (t *testsuite) K8sClient() dynamic.Interface {
 }
 
 func (t *testsuite) Setup() error {
-	oauthClientID := helpers.GenerateRandomString(8)
-	oauthClientSecret := helpers.GenerateRandomString(8)
-
-	oauthSuffix := helpers.GenerateRandomString(6)
-	oauthSecretName := fmt.Sprintf("%s-secret-%s", t.name, oauthSuffix)
-	oauthClientName := fmt.Sprintf("%s-client-%s", t.name, oauthSuffix)
-
 	namespace := fmt.Sprintf("%s-%s", t.name, helpers.GenerateRandomString(6))
 	log.Printf("Using namespace: %s\n", namespace)
-	log.Printf("Using OAuth2Client with name: %s, secretName: %s\n", oauthClientName, oauthSecretName)
-
-	hydraAddress := fmt.Sprintf("oauth2.%s", t.config.Domain)
 
 	oauth2Cfg := &clientcredentials.Config{
-		ClientID:     oauthClientID,
-		ClientSecret: oauthClientSecret,
-		TokenURL:     fmt.Sprintf("https://%s/oauth2/token", hydraAddress),
+		ClientID:     t.config.ClientID,
+		ClientSecret: t.config.ClientSecret,
+		TokenURL:     fmt.Sprintf("%s/oauth2/token", t.config.IssuerUrl),
 		Scopes:       []string{"read"},
 		AuthStyle:    oauth2.AuthStyleInHeader,
 	}
@@ -120,15 +110,9 @@ func (t *testsuite) Setup() error {
 
 	// create common resources for all scenarios
 	globalCommonResources, err := manifestprocessor.ParseFromFileWithTemplate("global-commons.yaml", manifestsDirectory, struct {
-		Namespace         string
-		OauthClientSecret string
-		OauthClientID     string
-		OauthSecretName   string
+		Namespace string
 	}{
-		Namespace:         namespace,
-		OauthClientSecret: base64.StdEncoding.EncodeToString([]byte(oauthClientSecret)),
-		OauthClientID:     base64.StdEncoding.EncodeToString([]byte(oauthClientID)),
-		OauthSecretName:   oauthSecretName,
+		Namespace: namespace,
 	})
 	if err != nil {
 		return err
@@ -150,38 +134,7 @@ func (t *testsuite) Setup() error {
 		return err
 	}
 
-	hydraClientResource, err := manifestprocessor.ParseFromFileWithTemplate("hydra-client.yaml", manifestsDirectory, struct {
-		Namespace       string
-		OauthClientName string
-		OauthSecretName string
-	}{
-		Namespace:       namespace,
-		OauthClientName: oauthClientName,
-		OauthSecretName: oauthSecretName,
-	})
-	if err != nil {
-		return err
-	}
-	log.Printf("Creating hydra client resources")
-
-	_, err = t.resourceManager.CreateResources(t.k8sClient, hydraClientResource...)
-	if err != nil {
-		return err
-	}
-
-	// Let's wait a bit to register client in hydra
 	time.Sleep(time.Duration(t.config.ReqDelay) * time.Second)
-
-	// Get HydraClient Status
-	hydraClientResourceSchema, ns, name := t.resourceManager.GetResourceSchemaAndNamespace(hydraClientResource[0])
-	clientStatus, err := t.resourceManager.GetStatus(t.k8sClient, hydraClientResourceSchema, ns, name)
-	errorStatus, ok := clientStatus["reconciliationError"].(map[string]interface{})
-	if err != nil || !ok {
-		return fmt.Errorf("error retrieving Oauth2Client status: %+v | %+v", err, ok)
-	}
-	if len(errorStatus) != 0 {
-		return fmt.Errorf("Invalid status in Oauth2Client resource: %+v", errorStatus)
-	}
 
 	t.oauth2Cfg = oauth2Cfg
 	t.namespace = namespace
