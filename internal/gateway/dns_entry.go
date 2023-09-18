@@ -1,7 +1,6 @@
 package gateway
 
 import (
-	"bytes"
 	"context"
 	_ "embed"
 	"fmt"
@@ -10,13 +9,9 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/apimachinery/pkg/util/yaml"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-	"text/template"
 )
 
 const (
@@ -48,44 +43,13 @@ func reconcileKymaGatewayDnsEntry(ctx context.Context, k8sClient client.Client, 
 
 func reconcileDnsEntry(ctx context.Context, k8sClient client.Client, name, namespace, domain, ingressGatewayIp string) error {
 
-	resourceTemplate, err := template.New("tmpl").Option("missingkey=error").Parse(string(dnsEntryManifest))
-	if err != nil {
-		return fmt.Errorf("failed to parse template yaml for DNSEntry %s/%s: %v", namespace, name, err)
-	}
-
 	templateValues := make(map[string]string)
 	templateValues["Name"] = name
 	templateValues["Namespace"] = namespace
 	templateValues["Domain"] = domain
 	templateValues["IngressGatewayServiceIp"] = ingressGatewayIp
 
-	var resourceBuffer bytes.Buffer
-	err = resourceTemplate.Execute(&resourceBuffer, templateValues)
-	if err != nil {
-		return fmt.Errorf("failed to apply parsed template yaml for DNSEntry %s/%s: %v", namespace, name, err)
-	}
-
-	var dnsEntry unstructured.Unstructured
-	err = yaml.Unmarshal(resourceBuffer.Bytes(), &dnsEntry)
-	if err != nil {
-		return fmt.Errorf("failed to decode yaml for DNSEntry %s/%s: %v", namespace, name, err)
-	}
-
-	spec := dnsEntry.Object["spec"]
-	_, err = controllerutil.CreateOrUpdate(ctx, k8sClient, &dnsEntry, func() error {
-		annotations := map[string]string{
-			disclaimerKey: disclaimerValue,
-		}
-		dnsEntry.SetAnnotations(annotations)
-		dnsEntry.Object["spec"] = spec
-		return nil
-	})
-	if err != nil {
-		return fmt.Errorf("failed to create or update DNSEntry %s/%s: %v", namespace, name, err)
-	}
-
-	return nil
-
+	return reconcileResource(ctx, k8sClient, dnsEntryManifest, templateValues)
 }
 
 func deleteDnsEntry(k8sClient client.Client, name, namespace string) error {

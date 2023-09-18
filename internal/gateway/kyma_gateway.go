@@ -1,7 +1,6 @@
 package gateway
 
 import (
-	"bytes"
 	"context"
 	_ "embed"
 	"fmt"
@@ -11,12 +10,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 
 	"istio.io/client-go/pkg/apis/networking/v1alpha3"
-	"k8s.io/apimachinery/pkg/util/yaml"
-
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-	"text/template"
 )
 
 const (
@@ -35,47 +29,12 @@ func reconcileKymaGateway(ctx context.Context, k8sClient client.Client, apiGatew
 		return deleteKymaGateway(k8sClient)
 	}
 
-	return reconcileGateway(ctx, k8sClient, kymaGatewayName, kymaGatewayNamespace, domain)
-}
-
-func reconcileGateway(ctx context.Context, k8sClient client.Client, name, namespace, domain string) error {
-
-	resourceTemplate, err := template.New("tmpl").Option("missingkey=error").Parse(string(kymaGatewayManifest))
-	if err != nil {
-		return fmt.Errorf("failed to parse template for gateway %s/%s: %v", namespace, name, err)
-	}
-
 	templateValues := make(map[string]string)
-	templateValues["Name"] = name
-	templateValues["Namespace"] = namespace
+	templateValues["Name"] = kymaGatewayName
+	templateValues["Namespace"] = kymaGatewayNamespace
 	templateValues["Domain"] = domain
 
-	var resourceBuffer bytes.Buffer
-	err = resourceTemplate.Execute(&resourceBuffer, templateValues)
-	if err != nil {
-		return fmt.Errorf("failed to apply parsed template for gateway %s/%s: %v", namespace, name, err)
-	}
-
-	var gateway unstructured.Unstructured
-	err = yaml.Unmarshal(resourceBuffer.Bytes(), &gateway)
-	if err != nil {
-		return fmt.Errorf("failed to decode gateway yaml for %s/%s: %v", namespace, name, err)
-	}
-
-	spec := gateway.Object["spec"]
-	_, err = controllerutil.CreateOrUpdate(ctx, k8sClient, &gateway, func() error {
-		annotations := map[string]string{
-			disclaimerKey: disclaimerValue,
-		}
-		gateway.SetAnnotations(annotations)
-		gateway.Object["spec"] = spec
-		return nil
-	})
-	if err != nil {
-		return fmt.Errorf("failed to create or update gateway %s/%s: %v", namespace, name, err)
-	}
-
-	return nil
+	return reconcileResource(ctx, k8sClient, kymaGatewayManifest, templateValues)
 }
 
 func isKymaGatewayEnabled(cr v1alpha1.APIGateway) bool {
