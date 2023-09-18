@@ -1,0 +1,13 @@
+name: "Create release"
+
+on:
+  workflow_dispatch:
+    inputs:
+      name:
+        description: "Create release"
+        default: ""
+        required: true
+      since:
+        description: "Changelog since"
+        default: ""
+        required: false
