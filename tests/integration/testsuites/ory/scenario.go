@@ -40,7 +40,11 @@ func (s *scenario) callingTheEndpointWithValidToken(url string, tokenType string
 
 	switch tokenType {
 	case "OAuth2":
-		fallthrough
+		tokenJwt, err := auth.GetAccessToken(*s.oauth2Cfg, strings.ToLower(tokenType))
+		if err != nil {
+			return fmt.Errorf("failed to fetch an id_token: %s", err.Error())
+		}
+		requestHeaders[testcontext.AuthorizationHeaderName] = fmt.Sprintf("Bearer %s", tokenJwt)
 	case "JWT":
 		tokenJwt, err := auth.GetAccessToken(*s.jwtConfig, strings.ToLower(tokenType))
 		if err != nil {

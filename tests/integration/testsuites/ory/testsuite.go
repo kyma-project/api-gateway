@@ -90,16 +90,8 @@ func (t *testsuite) K8sClient() dynamic.Interface {
 }
 
 func (t *testsuite) Setup() error {
-	oauthClientID := helpers.GenerateRandomString(8)
-	oauthClientSecret := helpers.GenerateRandomString(8)
-
-	oauthSuffix := helpers.GenerateRandomString(6)
-	oauthSecretName := fmt.Sprintf("%s-secret-%s", t.name, oauthSuffix)
-	oauthClientName := fmt.Sprintf("%s-client-%s", t.name, oauthSuffix)
-
 	namespace := fmt.Sprintf("%s-%s", t.name, helpers.GenerateRandomString(6))
 	log.Printf("Using namespace: %s\n", namespace)
-	log.Printf("Using OAuth2Client with name: %s, secretName: %s\n", oauthClientName, oauthSecretName)
 
 	oauth2Cfg := &clientcredentials.Config{
 		ClientID:     t.config.ClientID,
@@ -118,15 +110,9 @@ func (t *testsuite) Setup() error {
 
 	// create common resources for all scenarios
 	globalCommonResources, err := manifestprocessor.ParseFromFileWithTemplate("global-commons.yaml", manifestsDirectory, struct {
-		Namespace         string
-		OauthClientSecret string
-		OauthClientID     string
-		OauthSecretName   string
+		Namespace string
 	}{
-		Namespace:         namespace,
-		OauthClientSecret: base64.StdEncoding.EncodeToString([]byte(oauthClientSecret)),
-		OauthClientID:     base64.StdEncoding.EncodeToString([]byte(oauthClientID)),
-		OauthSecretName:   oauthSecretName,
+		Namespace: namespace,
 	})
 	if err != nil {
 		return err
@@ -149,7 +135,7 @@ func (t *testsuite) Setup() error {
 	}
 
 	time.Sleep(time.Duration(t.config.ReqDelay) * time.Second)
-	
+
 	t.oauth2Cfg = oauth2Cfg
 	t.namespace = namespace
 	t.jwtConfig = jwtConfig
