@@ -101,12 +101,10 @@ func (t *testsuite) Setup() error {
 	log.Printf("Using namespace: %s\n", namespace)
 	log.Printf("Using OAuth2Client with name: %s, secretName: %s\n", oauthClientName, oauthSecretName)
 
-	hydraAddress := fmt.Sprintf("oauth2.%s", t.config.Domain)
-
 	oauth2Cfg := &clientcredentials.Config{
-		ClientID:     oauthClientID,
-		ClientSecret: oauthClientSecret,
-		TokenURL:     fmt.Sprintf("https://%s/oauth2/token", hydraAddress),
+		ClientID:     t.config.ClientID,
+		ClientSecret: t.config.ClientSecret,
+		TokenURL:     fmt.Sprintf("%s/oauth2/token", t.config.IssuerUrl),
 		Scopes:       []string{"read"},
 		AuthStyle:    oauth2.AuthStyleInHeader,
 	}
@@ -150,39 +148,8 @@ func (t *testsuite) Setup() error {
 		return err
 	}
 
-	hydraClientResource, err := manifestprocessor.ParseFromFileWithTemplate("hydra-client.yaml", manifestsDirectory, struct {
-		Namespace       string
-		OauthClientName string
-		OauthSecretName string
-	}{
-		Namespace:       namespace,
-		OauthClientName: oauthClientName,
-		OauthSecretName: oauthSecretName,
-	})
-	if err != nil {
-		return err
-	}
-	log.Printf("Creating hydra client resources")
-
-	_, err = t.resourceManager.CreateResources(t.k8sClient, hydraClientResource...)
-	if err != nil {
-		return err
-	}
-
-	// Let's wait a bit to register client in hydra
 	time.Sleep(time.Duration(t.config.ReqDelay) * time.Second)
-
-	// Get HydraClient Status
-	hydraClientResourceSchema, ns, name := t.resourceManager.GetResourceSchemaAndNamespace(hydraClientResource[0])
-	clientStatus, err := t.resourceManager.GetStatus(t.k8sClient, hydraClientResourceSchema, ns, name)
-	errorStatus, ok := clientStatus["reconciliationError"].(map[string]interface{})
-	if err != nil || !ok {
-		return fmt.Errorf("error retrieving Oauth2Client status: %+v | %+v", err, ok)
-	}
-	if len(errorStatus) != 0 {
-		return fmt.Errorf("Invalid status in Oauth2Client resource: %+v", errorStatus)
-	}
-
+	
 	t.oauth2Cfg = oauth2Cfg
 	t.namespace = namespace
 	t.jwtConfig = jwtConfig
