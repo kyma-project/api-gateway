@@ -11,3 +11,14 @@ on:
         description: "Changelog since"
         default: ""
         required: false
+
+jobs:
+  create-draft:
+    name: Create draft release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Create lightweight tag
+        run: |
+          git tag ${{ github.event.inputs.name }}
+          git push origin ${{ github.event.inputs.name }}
