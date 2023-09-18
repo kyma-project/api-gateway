@@ -1,7 +1,7 @@
 module-name: api-gateway
 dev-branch: mod-dev
 protecode:
-  - europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:v20230915-c7c18f82
+  - europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:v20230915-f545715d
 whitesource:
   language: golang-mod
   subprojects: false
