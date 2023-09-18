@@ -125,7 +125,7 @@ test-for-release: envtest ## Run tests.
 
 .PHONY: test-integration
 test-integration: generate fmt vet envtest ## Run integration tests.
-	source ./tests/integration/env_vars.sh && $(GOTEST) ./tests/integration -v -race -run TestIstioJwt .
+	source ./tests/integration/env_vars.sh && $(GOTEST) ./tests/integration -v -race -run TestIstioJwt . && $(GOTEST) ./tests/integration -v -race -run TestOryJwt .
 
 .PHONY: test-upgrade
 test-upgrade: generate fmt vet install ## Run API Gateway upgrade tests.
@@ -174,7 +174,7 @@ endif
 
 .PHONY: test-integration-k3d
 test-integration-k3d: kyma-cli k3d provision-k3d install-kyma test-integration ## Run integration tests.
-	source ./tests/integration/env_vars.sh && $(GOTEST) ./tests/integration -v -race -run TestIstioJwt .
+	source ./tests/integration/env_vars.sh && $(GOTEST) ./tests/integration -v -race -run TestIstioJwt . && $(GOTEST) ./tests/integration -v -race -run TestOryJwt .
 
 ##@ Build
 
