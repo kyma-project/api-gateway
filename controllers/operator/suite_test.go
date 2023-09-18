@@ -18,6 +18,7 @@ package operator
 
 import (
 	"context"
+	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	operatorv1alpha1 "github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
 	"github.com/kyma-project/api-gateway/controllers"
 	"github.com/kyma-project/api-gateway/tests"
@@ -83,6 +84,7 @@ var _ = BeforeSuite(func() {
 	utilruntime.Must(networkingv1alpha3.AddToScheme(s))
 	utilruntime.Must(operatorv1alpha1.AddToScheme(s))
 	utilruntime.Must(corev1.AddToScheme(s))
+	utilruntime.Must(v1beta1.AddToScheme(s))
 
 	//+kubebuilder:scaffold:scheme
 

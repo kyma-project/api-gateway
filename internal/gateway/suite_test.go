@@ -2,6 +2,7 @@ package gateway
 
 import (
 	"fmt"
+	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
 	"github.com/kyma-project/api-gateway/tests"
 	. "github.com/onsi/ginkgo/v2"
@@ -57,6 +58,7 @@ func createFakeClient(objects ...client.Object) client.Client {
 	Expect(v1alpha1.AddToScheme(scheme.Scheme)).Should(Succeed())
 	Expect(corev1.AddToScheme(scheme.Scheme)).Should(Succeed())
 	Expect(v1alpha3.AddToScheme(scheme.Scheme)).Should(Succeed())
+	Expect(v1beta1.AddToScheme(scheme.Scheme)).Should(Succeed())
 
 	return fake.NewClientBuilder().WithScheme(scheme.Scheme).WithObjects(objects...).Build()
 }

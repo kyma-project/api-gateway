@@ -2,6 +2,7 @@ package gateway
 
 import (
 	"context"
+	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -157,7 +158,7 @@ var _ = Describe("Kyma gateway", func() {
 			"DO NOT EDIT - This resource is managed by Kyma.\nAny modifications are discarded and the resource is reverted to the original state."))
 	})
 
-	It("should delete Kyma gateway when EnableKymaGateway changed to false", func() {
+	It("should delete Kyma gateway when EnableKymaGateway is updated to false", func() {
 		updatedApiGateway := v1alpha1.APIGateway{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "test",
@@ -169,13 +170,49 @@ var _ = Describe("Kyma gateway", func() {
 		testShouldDeleteKymaGateway(updatedApiGateway)
 	})
 
-	It("should delete Kyma gateway when EnableKymaGateway is not set", func() {
+	It("should delete Kyma gateway when EnableKymaGateway is removed in updated APIGateway", func() {
 		updatedApiGateway := v1alpha1.APIGateway{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "test",
 			},
 		}
 		testShouldDeleteKymaGateway(updatedApiGateway)
+	})
+
+	It("should not delete Kyma Gateway when EnableKymaGateway is updated to false, but any APIRule exists", func() {
+		// given
+		apiGateway := v1alpha1.APIGateway{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "test",
+			},
+			Spec: v1alpha1.APIGatewaySpec{
+				EnableKymaGateway: ptr.To(true),
+			},
+		}
+
+		apiRule := v1beta1.APIRule{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "test",
+			},
+		}
+
+		k8sClient := createFakeClient(&apiGateway, &apiRule)
+		err := Reconcile(context.TODO(), k8sClient, apiGateway)
+		kymaGateway := v1alpha3.Gateway{}
+		Expect(k8sClient.Get(context.TODO(), client.ObjectKey{Name: kymaGatewayName, Namespace: kymaGatewayNamespace}, &kymaGateway)).Should(Succeed())
+
+		updatedApiGateway := v1alpha1.APIGateway{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "test",
+			},
+		}
+
+		// when
+		err = Reconcile(context.TODO(), k8sClient, updatedApiGateway)
+
+		// then
+		err = k8sClient.Get(context.TODO(), client.ObjectKey{Name: kymaGatewayName, Namespace: kymaGatewayNamespace}, &kymaGateway)
+		Expect(err).ShouldNot(HaveOccurred())
 	})
 
 })

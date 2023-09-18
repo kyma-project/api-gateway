@@ -5,6 +5,7 @@ import (
 	"context"
 	_ "embed"
 	"fmt"
+	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -30,6 +31,22 @@ const (
 var manifest []byte
 
 func Reconcile(ctx context.Context, k8sClient client.Client, apiGatewayCR v1alpha1.APIGateway) error {
+
+	if !isKymaGatewayEnabled(apiGatewayCR) {
+
+		apiRuleExists, err := anyApiRuleExists(ctx, k8sClient)
+		if err != nil {
+			return err
+		}
+
+		// We might want to be more selective in the future and only block deletion of Kyma Gateway if it's actually used
+		// by an APIRule. But for now we use the simpler implementation.
+		if apiRuleExists {
+			ctrl.Log.Info("Kyma Gateway is not disabled since there are existing APIRules")
+			return nil
+		}
+	}
+
 	return reconcileKymaGateway(ctx, k8sClient, apiGatewayCR)
 }
 
@@ -106,4 +123,14 @@ func deleteKymaGateway(k8sClient client.Client) error {
 	}
 
 	return nil
+}
+
+func anyApiRuleExists(ctx context.Context, k8sClient client.Client) (bool, error) {
+	apiRuleList := v1beta1.APIRuleList{}
+	err := k8sClient.List(ctx, &apiRuleList)
+	if err != nil {
+		return false, err
+	}
+
+	return len(apiRuleList.Items) > 0, nil
 }
