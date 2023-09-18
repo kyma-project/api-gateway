@@ -72,7 +72,7 @@ This tutorial shows how to expose and secure Services or Functions using API Gat
    EOF
    ```
 
-   >**NOTE:** If you are running Kyma on k3d, add `httpbin.kyma.local` to the entry with k3d IP in your system's `/etc/hosts` file.
+   >**NOTE:** If you are using k3d, add `httpbin.kyma.local` to the entry with k3d IP in your system's `/etc/hosts` file.
 
 2. To access the secured Service, call it using the JWT access token:
 

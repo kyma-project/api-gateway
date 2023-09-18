@@ -154,7 +154,7 @@ The `istio-ingressgateway` Service is included in the block list. If your APIRul
 
 Learn more about [the block list of Services in API Gateway](../technical-reference/05-20-blacklisted-services.md).
 
-To see which Services are blocked in Kyma by default, check the [serviceBlockList](https://github.com/kyma-project/kyma/blob/main/resources/api-gateway/values.yaml).
+To see which Services are blocked by default, check the [serviceBlockList](https://github.com/kyma-project/kyma/blob/main/resources/api-gateway/values.yaml).
 
 ---
 ## Occupied host

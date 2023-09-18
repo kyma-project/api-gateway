@@ -86,7 +86,7 @@ This tutorial shows how to expose Service endpoints in multiple Namespaces using
    EOF
    ```
 
-   >**NOTE:** If you are running Kyma on k3d, add `httpbin.kyma.local` to the entry with k3d IP in your system's `/etc/hosts` file.
+   >**NOTE:** If you are using k3d, add `httpbin.kyma.local` to the entry with k3d IP in your system's `/etc/hosts` file.
 
 2. Call the HttpBin endpoint by sending a `GET` request to the HttpBin service:
 

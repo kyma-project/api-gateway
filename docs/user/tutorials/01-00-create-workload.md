@@ -3,7 +3,7 @@
 This tutorial explains how to create a sample HttpBin Service deployment and a sample Function.
 
 ## Prerequisites
-- [Install the Serverless module](https://github.com/kyma-project/serverless-manager/blob/main/docs/contributor/01-10-manual-installation-on-k3d.md) to be able to deploy a Function
+- Install the [Serverless module](https://kyma-project.io/#/serverless-manager/user/README) to be able to deploy Functions
 
 ## Steps
 
