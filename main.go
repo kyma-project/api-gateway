@@ -65,8 +65,6 @@ type FlagVar struct {
 	rateLimiterFailureMaxDelay  time.Duration
 	rateLimiterFrequency        int
 	rateLimiterBurst            int
-	blockListedServices         string
-	allowListedDomains          string
 	generatedObjectsLabels      string
 	reconciliationInterval      time.Duration
 }
@@ -99,8 +97,6 @@ func defineFlagVar() *FlagVar {
 		"Indicates the failure base delay for rate limiter.")
 	flag.DurationVar(&flagVar.rateLimiterFailureMaxDelay, "failure-max-delay", controllers.RateLimiterFailureMaxDelay,
 		"Indicates the failure max delay for rate limiter. .")
-	flag.StringVar(&flagVar.blockListedServices, "service-blocklist", "kubernetes.default,kube-dns.kube-system", "List of services to be blocklisted from exposure.")
-	flag.StringVar(&flagVar.allowListedDomains, "domain-allowlist", "", "List of domains to be allowed.")
 	flag.StringVar(&flagVar.generatedObjectsLabels, "generated-objects-labels", "", "Comma-separated list of key=value pairs used to label generated objects")
 	flag.DurationVar(&flagVar.reconciliationInterval, "reconciliation-interval", 1*time.Hour, "Indicates the time based reconciliation interval of APIRule.")
 
@@ -138,12 +134,8 @@ func main() {
 	}
 
 	config := gateway.ApiRuleReconcilerConfiguration{
-		OathkeeperSvcAddr:   "ory-oathkeeper-proxy.kyma-system.svc.cluster.local",
-		OathkeeperSvcPort:   4455,
-		AllowListedDomains:  flagVar.allowListedDomains,
-		BlockListedServices: flagVar.blockListedServices,
-		// DomainName will be removed in the future
-		DomainName:                "",
+		OathkeeperSvcAddr:         "ory-oathkeeper-proxy.kyma-system.svc.cluster.local",
+		OathkeeperSvcPort:         4455,
 		CorsAllowOrigins:          "regex:.*",
 		CorsAllowMethods:          "GET,POST,PUT,DELETE,PATCH",
 		CorsAllowHeaders:          "Authorization,Content-Type,*",

@@ -1,0 +1,88 @@
+name: "Create release"
+
+on:
+  workflow_dispatch:
+    inputs:
+      name:
+        description: "Create release"
+        default: ""
+        required: true
+      since:
+        description: "Changelog since"
+        default: ""
+        required: false
+
+jobs:
+  create-draft:
+    name: Create draft release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Create changelog
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: ./scripts/create_changelog.sh ${{ github.event.inputs.name }} ${{ github.event.inputs.since }}
+
+      - name: Create draft release
+        id: create-draft
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          RELEASE_ID=$(./scripts/create_draft_release.sh ${{ github.event.inputs.name }})
+          echo "release_id=$RELEASE_ID" >> $GITHUB_OUTPUT
+
+      - name: Create lightweight tag
+        run: |
+          git tag ${{ github.event.inputs.name }}
+          git push origin ${{ github.event.inputs.name }}
+
+    outputs:
+      release_id: ${{ steps.create-draft.outputs.release_id }}
+
+  publish-release:
+    name: Publish release
+    needs: [create-draft]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - uses: autotelic/action-wait-for-status-check@6556cf50c8fb6608412945382eae73581f56cbb4
+        name: Build image
+        id: wait-for-build
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          statusName: "post-api-gateway-manager-build"
+          timeoutSeconds: "1800"
+      - name: Check that build status is success
+        if: steps.wait-for-build.outputs.state != 'success'
+        run: exit 1
+
+      - uses: autotelic/action-wait-for-status-check@6556cf50c8fb6608412945382eae73581f56cbb4
+        name: Build module
+        id: wait-for-module
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          statusName: "post-api-gateway-module-build"
+          timeoutSeconds: "1800"
+      - name: Check that module build status is success
+        if: steps.wait-for-module.outputs.state != 'success'
+        run: exit 1
+
+      - name: Publish release assets
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: ./scripts/publish_assets.sh ${{ github.event.inputs.name }} ${{ needs.create-draft.outputs.release_id }}
+
+      - name: Publish release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: ./scripts/publish_release.sh ${{ needs.create-draft.outputs.release_id }}

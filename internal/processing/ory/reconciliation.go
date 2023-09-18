@@ -37,9 +37,6 @@ func (r Reconciliation) Validate(ctx context.Context, client client.Client, apiR
 	validator := validation.APIRuleValidator{
 		HandlerValidator:          &handlerValidator{},
 		AccessStrategiesValidator: &asValidator{},
-		ServiceBlockList:          r.config.ServiceBlockList,
-		DomainAllowList:           r.config.DomainAllowList,
-		HostBlockList:             r.config.HostBlockList,
 		DefaultDomainName:         r.config.DefaultDomainName,
 	}
 	return validator.Validate(ctx, client, apiRule, vsList), nil
