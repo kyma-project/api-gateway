@@ -15,6 +15,7 @@ runs:
       run: |
         sudo echo "127.0.0.1 local.kyma.dev" | sudo tee -a /etc/hosts
     - name: Provision k3d
+      shell: bash
       run: |
         wget -q -O - https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | sudo bash
         sudo curl -Lo /usr/bin/kyma https://storage.googleapis.com/kyma-cli-unstable/kyma-linux
@@ -23,23 +24,23 @@ runs:
     - name: Run integration tests
       env:
         KYMA_DOMAIN: "local.kyma.dev"
+      shell: bash
       run: |
         KUBECONFIG=$(k3d kubeconfig merge kyma) EXPORT_RESULT=true make install-kyma test-integration
-      shell: bash
     - name: Run integration tests with Istio module
       env:
         KYMA_DOMAIN: "local.kyma.dev"
         KYMA_COMPONENTS: "hack/kyma-components-no-istio.yaml"
+      shell: bash
       run: |
         KUBECONFIG=$(k3d kubeconfig merge kyma) EXPORT_RESULT=true make install-kyma test-integration
-      shell: bash
     - name: Run upgrade integration tests
       env:
         KYMA_DOMAIN: "local.kyma.dev"
         TEST_UPGRADE_IMG: ${{ inputs.upgrade-image-name }}
+      shell: bash
       run: |
         KUBECONFIG=$(k3d kubeconfig merge kyma) EXPORT_RESULT=true make install-kyma test-upgrade
-      shell: bash
     - uses: actions/upload-artifact@v3
       with:
         name: html-reports
