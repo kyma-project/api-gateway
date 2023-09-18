@@ -1,0 +1,8 @@
+apiVersion: cert.gardener.cloud/v1alpha1
+kind: Certificate
+metadata:
+  name: {{.Name}}
+  namespace: istio-system # Per default the Cert needs to be in the same namespace as the gateway using it
+spec:
+  secretName: {{.SecretName}}
+  commonName: "*.{{.Domain}}"

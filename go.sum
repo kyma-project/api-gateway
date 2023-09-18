@@ -121,6 +121,8 @@ github.com/fsnotify/fsnotify v1.4.9/go.mod h1:znqG4EE+3YCdAaPaxE2ZRY/06pZUdp0tY4
 github.com/fsnotify/fsnotify v1.5.1/go.mod h1:T3375wBYaZdLLcVNkcVbzGHY7f1l/uK5T5Ai1i3InKU=
 github.com/fsnotify/fsnotify v1.6.0 h1:n+5WquG0fcWoWp6xPWfHdbskMCQaFnG6PfBrh1Ky4HY=
 github.com/fsnotify/fsnotify v1.6.0/go.mod h1:sl3t1tCWJFWoRz9R8WJCbQihKKwmorjAbSClcnxKAGw=
+github.com/gardener/cert-management v0.11.1 h1:l/oeGNYtOuBHIBkicxBiTY+3WPpKKjilQdo6mnzVp2s=
+github.com/gardener/cert-management v0.11.1/go.mod h1:bEGeVzet8y6PjZA123NGHG5eavEl1m3yC9ul6GlgLDI=
 github.com/gardener/external-dns-management v0.15.8 h1:YQMjxmSfGbrh2Eim4jfoOrhI/3MACCMGYUwKAwlE+z8=
 github.com/gardener/external-dns-management v0.15.8/go.mod h1:TK6nWd+j+e0Ypp7FDhYRnUQqqh9YxlOHBeEraepSdgA=
 github.com/ghodss/yaml v0.0.0-20150909031657-73d445a93680/go.mod h1:4dBDuWmgqj2HViK6kFavaiC9ZROes6MMH2rRYeMEF04=

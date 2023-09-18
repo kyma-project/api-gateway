@@ -28,7 +28,7 @@ var _ = Describe("DNSEntry", func() {
 			Expect(createdDnsEntry.Spec.Targets).To(ContainElement("10.0.0.1"))
 		})
 
-		It("should apply disclaimer annotation on DNSEntry when it was removed", func() {
+		It("should reapply disclaimer annotation on DNSEntry when it was removed", func() {
 			// given
 			k8sClient := createFakeClient()
 			Expect(reconcileDnsEntry(context.TODO(), k8sClient, "test", "test-ns", "test-domain.com", "10.0.0.1")).Should(Succeed())

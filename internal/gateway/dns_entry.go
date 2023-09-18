@@ -50,7 +50,7 @@ func reconcileDnsEntry(ctx context.Context, k8sClient client.Client, name, names
 
 	resourceTemplate, err := template.New("tmpl").Option("missingkey=error").Parse(string(dnsEntryManifest))
 	if err != nil {
-		return fmt.Errorf("failed to parse template for DNSEntry yaml: %v", err)
+		return fmt.Errorf("failed to parse template yaml for DNSEntry %s/%s: %v", namespace, name, err)
 	}
 
 	templateValues := make(map[string]string)
@@ -62,13 +62,13 @@ func reconcileDnsEntry(ctx context.Context, k8sClient client.Client, name, names
 	var resourceBuffer bytes.Buffer
 	err = resourceTemplate.Execute(&resourceBuffer, templateValues)
 	if err != nil {
-		return fmt.Errorf("failed to apply parsed template for DNSEntry yaml: %v", err)
+		return fmt.Errorf("failed to apply parsed template yaml for DNSEntry %s/%s: %v", namespace, name, err)
 	}
 
 	var dnsEntry unstructured.Unstructured
 	err = yaml.Unmarshal(resourceBuffer.Bytes(), &dnsEntry)
 	if err != nil {
-		return fmt.Errorf("failed to decode DNSEntry yaml: %v", err)
+		return fmt.Errorf("failed to decode yaml for DNSEntry %s/%s: %v", namespace, name, err)
 	}
 
 	spec := dnsEntry.Object["spec"]
@@ -81,7 +81,7 @@ func reconcileDnsEntry(ctx context.Context, k8sClient client.Client, name, names
 		return nil
 	})
 	if err != nil {
-		return fmt.Errorf("failed to create or update DNSEntry: %v", err)
+		return fmt.Errorf("failed to create or update DNSEntry %s/%s: %v", namespace, name, err)
 	}
 
 	return nil

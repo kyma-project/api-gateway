@@ -30,7 +30,7 @@ var _ = Describe("Gateway", func() {
 			}
 		})
 
-		It("should apply disclaimer annotation on gateway when it was removed", func() {
+		It("should reapply disclaimer annotation on gateway when it was removed", func() {
 			// given
 			k8sClient := createFakeClient()
 			Expect(reconcileGateway(context.TODO(), k8sClient, "test", "test-ns", "test-domain.com")).Should(Succeed())
