@@ -29,10 +29,9 @@ import (
 
 func NewAPIGatewayReconciler(mgr manager.Manager) *APIGatewayReconciler {
 	return &APIGatewayReconciler{
-		Client:        mgr.GetClient(),
-		Scheme:        mgr.GetScheme(),
-		log:           mgr.GetLogger().WithName("apigateway-controller"),
-		statusHandler: controllers.NewStatusHandler(mgr.GetClient()),
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+		log:    mgr.GetLogger().WithName("apigateway-controller"),
 	}
 }
 
@@ -52,8 +51,8 @@ func (r *APIGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		return ctrl.Result{}, err
 	}
 
-	if kymaGatewayErr := gateway.Reconcile(ctx, r.Client, apiGatewayCR); kymaGatewayErr != nil {
-		return r.requeueReconciliation(ctx, apiGatewayCR, kymaGatewayErr, "Reconciliation Kyma Gateway failed")
+	if kymaGatewayStatus := gateway.Reconcile(ctx, r.Client, apiGatewayCR); !kymaGatewayStatus.IsSuccessful() {
+		return r.requeueReconciliation(ctx, apiGatewayCR, kymaGatewayStatus)
 	}
 
 	return r.finishReconcile(ctx, apiGatewayCR)
@@ -70,21 +69,22 @@ func (r *APIGatewayReconciler) SetupWithManager(mgr ctrl.Manager, c controllers.
 }
 
 // requeueReconciliation cancels the reconciliation and requeues the request.
-func (r *APIGatewayReconciler) requeueReconciliation(ctx context.Context, cr v1alpha1.APIGateway, err error, description string) (ctrl.Result, error) {
-	r.log.Error(err, "Reconcile failed")
+func (r *APIGatewayReconciler) requeueReconciliation(ctx context.Context, cr v1alpha1.APIGateway, status controllers.Status) (ctrl.Result, error) {
 
-	statusUpdateErr := r.statusHandler.UpdateToError(ctx, &cr, description)
+	r.log.Error(status.NestedError(), "Reconcile failed")
+
+	statusUpdateErr := controllers.UpdateApiGatewayStatus(ctx, r.Client, &cr, status)
 	if statusUpdateErr != nil {
-		r.log.Error(statusUpdateErr, "Error during updating status to error")
+		r.log.Error(statusUpdateErr, "Update status failed")
 	}
 
-	return ctrl.Result{}, err
+	return ctrl.Result{}, status.NestedError()
 }
 
 func (r *APIGatewayReconciler) finishReconcile(ctx context.Context, cr v1alpha1.APIGateway) (ctrl.Result, error) {
 
-	if err := r.statusHandler.UpdateToReady(ctx, &cr); err != nil {
-		r.log.Error(err, "Update status to ready failed")
+	if err := controllers.UpdateApiGatewayStatus(ctx, r.Client, &cr, controllers.NewSuccessfulStatus()); err != nil {
+		r.log.Error(err, "Update status failed")
 		return ctrl.Result{}, err
 	}
 

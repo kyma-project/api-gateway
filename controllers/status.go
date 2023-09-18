@@ -2,52 +2,113 @@ package controllers
 
 import (
 	"context"
+	"fmt"
 	operatorv1alpha1 "github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
 	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-type StatusHandler interface {
-	UpdateToReady(ctx context.Context, apiGatewayCR *operatorv1alpha1.APIGateway) error
-	UpdateToError(ctx context.Context, apiGatewayCR *operatorv1alpha1.APIGateway, description string) error
+type state int
+
+const (
+	Successful state = 0
+	Error      state = 1
+	Warning    state = 2
+)
+
+type Status interface {
+	NestedError() error
+	ToAPIGatewayStatus() (operatorv1alpha1.APIGatewayStatus, error)
+	IsSuccessful() bool
+	IsWarning() bool
+	IsError() bool
 }
 
-type Handler struct {
-	client client.Client
+type status struct {
+	err         error
+	description string
+	state       state
 }
 
-func NewStatusHandler(client client.Client) Handler {
-	return Handler{
-		client: client,
+func NewErrorStatus(err error, description string) Status {
+
+	return status{
+		err:         err,
+		description: description,
+		state:       Error,
 	}
 }
 
-func (d Handler) update(ctx context.Context, apiGatewayCR *operatorv1alpha1.APIGateway) error {
-	newStatus := apiGatewayCR.Status
+func NewWarningStatus(err error, description string) Status {
+	return status{
+		err:         err,
+		description: description,
+		state:       Warning,
+	}
+}
+
+func NewSuccessfulStatus() Status {
+	return status{
+		description: "Successfully reconciled",
+		state:       Successful,
+	}
+}
+
+func (s status) NestedError() error {
+	return s.err
+}
+
+func (s status) ToAPIGatewayStatus() (operatorv1alpha1.APIGatewayStatus, error) {
+
+	switch s.state {
+	case Successful:
+		return operatorv1alpha1.APIGatewayStatus{
+			State:       operatorv1alpha1.Ready,
+			Description: "Successfully reconciled",
+		}, nil
+	case Warning:
+		return operatorv1alpha1.APIGatewayStatus{
+			State:       operatorv1alpha1.Warning,
+			Description: s.description,
+		}, nil
+	case Error:
+		return operatorv1alpha1.APIGatewayStatus{
+			State:       operatorv1alpha1.Error,
+			Description: s.description,
+		}, nil
+	default:
+		return operatorv1alpha1.APIGatewayStatus{}, fmt.Errorf("unsupported status: %v", s.state)
+	}
+}
+
+func (s status) IsError() bool {
+	return s.state == Error
+}
+
+func (s status) IsWarning() bool {
+	return s.state == Warning
+}
+
+func (s status) IsSuccessful() bool {
+	return s.state == Successful
+}
+
+func UpdateApiGatewayStatus(ctx context.Context, k8sClient client.Client, apiGatewayCR *operatorv1alpha1.APIGateway, status Status) error {
+	newStatus, err := status.ToAPIGatewayStatus()
+	if err != nil {
+		return err
+	}
 	return retry.RetryOnConflict(retry.DefaultRetry, func() error {
-		if getErr := d.client.Get(ctx, client.ObjectKeyFromObject(apiGatewayCR), apiGatewayCR); getErr != nil {
+		if getErr := k8sClient.Get(ctx, client.ObjectKeyFromObject(apiGatewayCR), apiGatewayCR); getErr != nil {
 			return getErr
 		}
 
 		apiGatewayCR.Status = newStatus
 
-		if updateErr := d.client.Status().Update(ctx, apiGatewayCR); updateErr != nil {
+		if updateErr := k8sClient.Status().Update(ctx, apiGatewayCR); updateErr != nil {
 			return updateErr
 		}
 
 		return nil
 	})
-}
-
-func (d Handler) UpdateToReady(ctx context.Context, apiGatewayCR *operatorv1alpha1.APIGateway) error {
-	apiGatewayCR.Status.State = operatorv1alpha1.Ready
-	apiGatewayCR.Status.Description = "Successfully reconciled"
-	return d.update(ctx, apiGatewayCR)
-}
-
-func (d Handler) UpdateToError(ctx context.Context, apiGatewayCR *operatorv1alpha1.APIGateway, description string) error {
-	apiGatewayCR.Status.State = operatorv1alpha1.Error
-
-	apiGatewayCR.Status.Description = description
-	return d.update(ctx, apiGatewayCR)
 }

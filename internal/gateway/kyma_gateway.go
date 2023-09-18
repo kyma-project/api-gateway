@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
+	"github.com/kyma-project/api-gateway/controllers"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -30,24 +31,28 @@ const (
 //go:embed kyma_gateway.yaml
 var manifest []byte
 
-func Reconcile(ctx context.Context, k8sClient client.Client, apiGatewayCR v1alpha1.APIGateway) error {
+// Reconcile returns a status reflecting
+func Reconcile(ctx context.Context, k8sClient client.Client, apiGatewayCR v1alpha1.APIGateway) controllers.Status {
 
 	if !isKymaGatewayEnabled(apiGatewayCR) {
 
 		apiRuleExists, err := anyApiRuleExists(ctx, k8sClient)
 		if err != nil {
-			return err
+			return controllers.NewErrorStatus(err, "Error during evaluation of Kyma Gateway reconciliation")
 		}
 
-		// We might want to be more selective in the future and only block deletion of Kyma Gateway if it's actually used
-		// by an APIRule. But for now we use the simpler implementation.
+		// In the future, we want to be more selective and block the deletion of the Kyma gateway only if it is actually
+		// used by an APIRule, since currently an APIRule and no Kyma gateway always result in an error status.
 		if apiRuleExists {
-			ctrl.Log.Info("Kyma Gateway is not disabled since there are existing APIRules")
-			return nil
+			return controllers.NewWarningStatus(fmt.Errorf("kyma gateway deletion blocked by APIRules"), "Kyma Gateway cannot be disabled because APIRules exist.")
 		}
 	}
 
-	return reconcileKymaGateway(ctx, k8sClient, apiGatewayCR)
+	if err := reconcileKymaGateway(ctx, k8sClient, apiGatewayCR); err != nil {
+		return controllers.NewErrorStatus(err, "Error during Kyma Gateway reconciliation")
+	}
+
+	return controllers.NewSuccessfulStatus()
 }
 
 func reconcileKymaGateway(ctx context.Context, k8sClient client.Client, apiGatewayCR v1alpha1.APIGateway) error {
