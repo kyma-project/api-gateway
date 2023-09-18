@@ -156,7 +156,8 @@ install: manifests kustomize
 	@if ! kubectl get crd authorizationpolicies.security.istio.io > /dev/null 2>&1 ; then kubectl apply -f hack/security.istio.io_authorizationpolicy.yaml; fi;
 	@if ! kubectl get crd requestauthentications.security.istio.io > /dev/null 2>&1 ; then kubectl apply -f hack/security.istio.io_requestauthentication.yaml; fi;
 	@if ! kubectl get crd gateways.networking.istio.io > /dev/null 2>&1 ; then kubectl apply -f hack/networking.istio.io_gateways.yaml; fi;
-	@if ! kubectl get crd dnsentries.dns.gardener.cloudo > /dev/null 2>&1 ; then kubectl apply -f hack/dns.gardener.cloud_dnsentry.yaml; fi;
+	@if ! kubectl get crd dnsentries.dns.gardener.cloud > /dev/null 2>&1 ; then kubectl apply -f hack/dns.gardener.cloud_dnsentry.yaml; fi;
+	@if ! kubectl get crd certificates.cert.gardener.cloud > /dev/null 2>&1 ; then kubectl apply -f hack/cert.gardener.cloud_certificate.yaml; fi;
 
 .PHONY: uninstall
 uninstall: manifests kustomize ## Uninstall CRDs from the K8s cluster specified in ~/.kube/config. Call with ignore-not-found=true to ignore resource not found errors during deletion.
