@@ -21,5 +21,8 @@ spec:
         - handler: oauth2_introspection
           config:
             required_scope: [ "read" ]
+            introspection_url: "{{ .IssuerUrl }}/oauth2/introspect"
+            introspection_request_headers:
+              Authorization: "Basic {{ .EncodedCredentials }}"
             token_from:
               header: "oauth2-access-token"
