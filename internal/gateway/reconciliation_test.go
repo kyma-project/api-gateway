@@ -2,6 +2,7 @@ package gateway
 
 import (
 	"context"
+	certv1alpha1 "github.com/gardener/cert-management/pkg/apis/cert/v1alpha1"
 	dnsv1alpha1 "github.com/gardener/external-dns-management/pkg/apis/dns/v1alpha1"
 	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
@@ -94,7 +95,24 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 		Expect(errors.IsNotFound(err)).To(BeTrue())
 	})
 
-	It("should create gateway and DNSEntry with shoot-info domain when EnableKymaGateway is true and Gardener shoot-info exists", func() {
+	It("should not create Certificate when EnableKymaGateway is true and no Gardener shoot-info exists", func() {
+		// given
+		apiGateway := getApiGateway(true)
+
+		k8sClient := createFakeClient(&apiGateway)
+
+		// when
+		status := Reconcile(context.TODO(), k8sClient, apiGateway)
+
+		// then
+		Expect(status.IsSuccessful()).To(BeTrue())
+
+		created := certv1alpha1.Certificate{}
+		err := k8sClient.Get(context.TODO(), client.ObjectKey{Name: kymaGatewayCertificateName, Namespace: certificateDefaultNamespace}, &created)
+		Expect(errors.IsNotFound(err)).To(BeTrue())
+	})
+
+	It("should create gateway, DNSEntry and Certificate with shoot-info domain when EnableKymaGateway is true and Gardener shoot-info exists", func() {
 		// given
 		apiGateway := getApiGateway(true)
 		cm := getTestShootInfo()
@@ -108,6 +126,7 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 		// then
 		Expect(status.IsSuccessful()).To(BeTrue())
 
+		By("Validating Kyma Gateway")
 		createdGateway := v1alpha3.Gateway{}
 		Expect(k8sClient.Get(context.TODO(), client.ObjectKey{Name: kymaGatewayName, Namespace: kymaGatewayNamespace}, &createdGateway)).Should(Succeed())
 
@@ -115,10 +134,17 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 			Expect(server.Hosts).To(ContainElement("*.some.gardener.domain"))
 		}
 
+		By("Validating DNSEntry")
 		createdDnsEntry := dnsv1alpha1.DNSEntry{}
 		Expect(k8sClient.Get(context.TODO(), client.ObjectKey{Name: kymaGatewayDnsEntryName, Namespace: kymaGatewayDnsEntryNamespace}, &createdDnsEntry)).Should(Succeed())
 		Expect(createdDnsEntry.Spec.DNSName).To(Equal("*.some.gardener.domain"))
 		Expect(createdDnsEntry.Spec.Targets).To(ContainElement(testIstioIngressGatewayLoadBalancerIp))
+
+		By("Validating Certificate")
+		createdCert := certv1alpha1.Certificate{}
+		Expect(k8sClient.Get(context.TODO(), client.ObjectKey{Name: kymaGatewayCertificateName, Namespace: "istio-system"}, &createdCert)).Should(Succeed())
+		Expect(*createdCert.Spec.SecretName).To(Equal(kymaGatewayCertSecretName))
+		Expect(*createdCert.Spec.CommonName).To(Equal("*.some.gardener.domain"))
 	})
 
 	It("should delete Kyma gateway when EnableKymaGateway is updated to false", func() {
@@ -136,12 +162,12 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 		testShouldDeleteKymaGateway(updatedApiGateway)
 	})
 
-	It("should delete Kyma Gateway and DNSEntry when shoot-info exists and EnableKymaGateway is updated to false", func() {
+	It("should delete Kyma Gateway, DNSEntry and Certificate when shoot-info exists and EnableKymaGateway is updated to false", func() {
 		updatedApiGateway := getApiGateway(false)
 		testShouldDeleteKymaGatewayResources(updatedApiGateway)
 	})
 
-	It("should delete Kyma Gateway and DNSEntry when shoot-info exists and EnableKymaGateway is removed in updated APIGateway", func() {
+	It("should delete Kyma Gateway, DNSEntry and Certificate when shoot-info exists and EnableKymaGateway is removed in updated APIGateway", func() {
 		updatedApiGateway := v1alpha1.APIGateway{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "test",
@@ -233,10 +259,18 @@ func testShouldDeleteKymaGatewayResources(updatedApiGateway v1alpha1.APIGateway)
 
 	// then
 	Expect(status.IsSuccessful()).To(BeTrue())
+	By("Validating that Gateway is deleted")
 	err := k8sClient.Get(context.TODO(), client.ObjectKey{Name: kymaGatewayName, Namespace: kymaGatewayNamespace}, &kymaGateway)
 	Expect(errors.IsNotFound(err)).To(BeTrue())
+
+	By("Validating that DNSEntry is deleted")
 	dnsEntry := dnsv1alpha1.DNSEntry{}
 	err = k8sClient.Get(context.TODO(), client.ObjectKey{Name: kymaGatewayDnsEntryName, Namespace: kymaGatewayDnsEntryNamespace}, &dnsEntry)
+	Expect(errors.IsNotFound(err)).To(BeTrue())
+
+	By("Validating that Certificate is deleted")
+	cert := certv1alpha1.Certificate{}
+	err = k8sClient.Get(context.TODO(), client.ObjectKey{Name: kymaGatewayCertificateName, Namespace: certificateDefaultNamespace}, &cert)
 	Expect(errors.IsNotFound(err)).To(BeTrue())
 }
 

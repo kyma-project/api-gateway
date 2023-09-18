@@ -54,13 +54,13 @@ func reconcileDnsEntry(ctx context.Context, k8sClient client.Client, name, names
 
 func deleteDnsEntry(k8sClient client.Client, name, namespace string) error {
 	ctrl.Log.Info("Deleting DNSEntry if it exists", "Name", name, "Namespace", namespace)
-	gw := dnsv1alpha1.DNSEntry{
+	d := dnsv1alpha1.DNSEntry{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: namespace,
 		},
 	}
-	err := k8sClient.Delete(context.TODO(), &gw)
+	err := k8sClient.Delete(context.TODO(), &d)
 
 	if err != nil && !k8serrors.IsNotFound(err) {
 		return fmt.Errorf("failed to delete DNSEntry %s/%s: %v", namespace, name, err)

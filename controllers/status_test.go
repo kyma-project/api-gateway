@@ -21,7 +21,7 @@ var _ = Describe("status", func() {
 				ObjectMeta: metav1.ObjectMeta{Name: "test", Namespace: "default"},
 			}
 
-			newStatus := NewErrorStatus(fmt.Errorf("test error"), "test description")
+			newStatus := ErrorStatus(fmt.Errorf("test error"), "test description")
 			k8sClient := createFakeClient(&cr)
 			// when
 			err := UpdateApiGatewayStatus(context.TODO(), k8sClient, &cr, newStatus)
@@ -39,7 +39,7 @@ var _ = Describe("status", func() {
 				ObjectMeta: metav1.ObjectMeta{Name: "test", Namespace: "default"},
 			}
 
-			newStatus := NewSuccessfulStatus()
+			newStatus := SuccessfulStatus()
 			k8sClient := fake.NewClientBuilder().Build()
 			// when
 			err := UpdateApiGatewayStatus(context.TODO(), k8sClient, &cr, newStatus)
@@ -53,7 +53,7 @@ var _ = Describe("status", func() {
 
 		It("Should return Error with description set", func() {
 			// given
-			status := NewErrorStatus(fmt.Errorf("test error"), "test description")
+			status := ErrorStatus(fmt.Errorf("test error"), "test description")
 
 			// when
 			apiGatewayStatus, err := status.ToAPIGatewayStatus()
@@ -66,7 +66,7 @@ var _ = Describe("status", func() {
 
 		It("Should return Warning with description set", func() {
 			// given
-			status := NewWarningStatus(fmt.Errorf("test error"), "test description")
+			status := WarningStatus(fmt.Errorf("test error"), "test description")
 
 			// when
 			apiGatewayStatus, err := status.ToAPIGatewayStatus()
@@ -79,7 +79,7 @@ var _ = Describe("status", func() {
 
 		It("Should return Ready with default description", func() {
 			// given
-			status := NewSuccessfulStatus()
+			status := SuccessfulStatus()
 
 			// when
 			apiGatewayStatus, err := status.ToAPIGatewayStatus()
@@ -95,7 +95,7 @@ var _ = Describe("status", func() {
 	Context("IsError", func() {
 		It("Should return true if status is Error", func() {
 			// given
-			status := NewErrorStatus(fmt.Errorf("test error"), "test description")
+			status := ErrorStatus(fmt.Errorf("test error"), "test description")
 
 			// when
 			isError := status.IsError()
@@ -105,7 +105,7 @@ var _ = Describe("status", func() {
 		})
 		It("Should return false if status is not Error", func() {
 			// given
-			status := NewWarningStatus(fmt.Errorf("test error"), "test description")
+			status := WarningStatus(fmt.Errorf("test error"), "test description")
 
 			// when
 			isError := status.IsError()
@@ -118,7 +118,7 @@ var _ = Describe("status", func() {
 	Context("IsWarning", func() {
 		It("Should return true if status is Warning", func() {
 			// given
-			status := NewWarningStatus(fmt.Errorf("test error"), "test description")
+			status := WarningStatus(fmt.Errorf("test error"), "test description")
 
 			// when
 			isWarning := status.IsWarning()
@@ -128,7 +128,7 @@ var _ = Describe("status", func() {
 		})
 		It("Should return false if status is not Warning", func() {
 			// given
-			status := NewErrorStatus(fmt.Errorf("test error"), "test description")
+			status := ErrorStatus(fmt.Errorf("test error"), "test description")
 
 			// when
 			isWarning := status.IsWarning()
@@ -141,7 +141,7 @@ var _ = Describe("status", func() {
 	Context("IsSuccessful", func() {
 		It("Should return true if status is Successful", func() {
 			// given
-			status := NewSuccessfulStatus()
+			status := SuccessfulStatus()
 
 			// when
 			isSuccessful := status.IsSuccessful()
@@ -151,7 +151,7 @@ var _ = Describe("status", func() {
 		})
 		It("Should return false if status is not Successful", func() {
 			// given
-			status := NewErrorStatus(fmt.Errorf("test error"), "test description")
+			status := ErrorStatus(fmt.Errorf("test error"), "test description")
 
 			// when
 			isSuccessful := status.IsSuccessful()

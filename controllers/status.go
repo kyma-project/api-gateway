@@ -30,7 +30,7 @@ type status struct {
 	state       state
 }
 
-func NewErrorStatus(err error, description string) Status {
+func ErrorStatus(err error, description string) Status {
 
 	return status{
 		err:         err,
@@ -39,7 +39,7 @@ func NewErrorStatus(err error, description string) Status {
 	}
 }
 
-func NewWarningStatus(err error, description string) Status {
+func WarningStatus(err error, description string) Status {
 	return status{
 		err:         err,
 		description: description,
@@ -47,7 +47,7 @@ func NewWarningStatus(err error, description string) Status {
 	}
 }
 
-func NewSuccessfulStatus() Status {
+func SuccessfulStatus() Status {
 	return status{
 		description: "Successfully reconciled",
 		state:       Successful,

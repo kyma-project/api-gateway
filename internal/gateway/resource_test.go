@@ -18,6 +18,7 @@ var _ = Describe("Resource", func() {
 
 			templateValues := make(map[string]string)
 			templateValues["Name"] = "test"
+			templateValues["Namespace"] = "istio-system"
 			templateValues["Domain"] = "test-domain.com"
 			templateValues["SecretName"] = "cert-secret"
 

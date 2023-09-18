@@ -83,7 +83,7 @@ func (r *APIGatewayReconciler) requeueReconciliation(ctx context.Context, cr v1a
 
 func (r *APIGatewayReconciler) finishReconcile(ctx context.Context, cr v1alpha1.APIGateway) (ctrl.Result, error) {
 
-	if err := controllers.UpdateApiGatewayStatus(ctx, r.Client, &cr, controllers.NewSuccessfulStatus()); err != nil {
+	if err := controllers.UpdateApiGatewayStatus(ctx, r.Client, &cr, controllers.SuccessfulStatus()); err != nil {
 		r.log.Error(err, "Update status failed")
 		return ctrl.Result{}, err
 	}

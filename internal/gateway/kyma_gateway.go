@@ -33,6 +33,7 @@ func reconcileKymaGateway(ctx context.Context, k8sClient client.Client, apiGatew
 	templateValues["Name"] = kymaGatewayName
 	templateValues["Namespace"] = kymaGatewayNamespace
 	templateValues["Domain"] = domain
+	templateValues["CertificateSecretName"] = kymaGatewayCertSecretName
 
 	return reconcileResource(ctx, k8sClient, kymaGatewayManifest, templateValues)
 }
