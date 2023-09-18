@@ -16,7 +16,7 @@ spec:
       mode: SIMPLE
       credentialName: kyma-gateway-certs
     hosts:
-      - "*.{{.DomainName}}"
+      - "*.{{.Domain}}"
   - port:
       number: 80
       name: http
@@ -24,4 +24,4 @@ spec:
     tls:
       httpsRedirect: true # automatic 301 redirect from http to https
     hosts:
-      - "*.{{.DomainName}}"
+      - "*.{{.Domain}}"

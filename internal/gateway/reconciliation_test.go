@@ -2,6 +2,7 @@ package gateway
 
 import (
 	"context"
+	dnsv1alpha1 "github.com/gardener/external-dns-management/pkg/apis/dns/v1alpha1"
 	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
 	. "github.com/onsi/ginkgo/v2"
@@ -14,7 +15,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-var _ = Describe("Kyma gateway", func() {
+const testIstioIngressGatewayLoadBalancerIp = "172.0.0.1"
+
+var _ = Describe("Kyma Gateway reconciliation", func() {
 
 	It("should not create gateway when Spec doesn't contain EnableKymaGateway flag", func() {
 		// given
@@ -39,14 +42,7 @@ var _ = Describe("Kyma gateway", func() {
 
 	It("should not create gateway when EnableKymaGateway is false", func() {
 		// given
-		apiGateway := v1alpha1.APIGateway{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "test",
-			},
-			Spec: v1alpha1.APIGatewaySpec{
-				EnableKymaGateway: ptr.To(false),
-			},
-		}
+		apiGateway := getApiGateway(false)
 
 		k8sClient := createFakeClient(&apiGateway)
 
@@ -63,14 +59,7 @@ var _ = Describe("Kyma gateway", func() {
 
 	It("should create gateway with *.local.kyma.dev hosts when EnableKymaGateway is true and no Gardener shoot-info exists", func() {
 		// given
-		apiGateway := v1alpha1.APIGateway{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "test",
-			},
-			Spec: v1alpha1.APIGatewaySpec{
-				EnableKymaGateway: ptr.To(true),
-			},
-		}
+		apiGateway := getApiGateway(true)
 
 		k8sClient := createFakeClient(&apiGateway)
 
@@ -88,86 +77,53 @@ var _ = Describe("Kyma gateway", func() {
 		}
 	})
 
-	It("should create gateway with hosts from shoot-info domain when EnableKymaGateway is true and Gardener shoot-info exists", func() {
+	It("should not create DNSEntry when EnableKymaGateway is true and no Gardener shoot-info exists", func() {
 		// given
-		apiGateway := v1alpha1.APIGateway{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "test",
-			},
-			Spec: v1alpha1.APIGatewaySpec{
-				EnableKymaGateway: ptr.To(true),
-			},
-		}
-
-		cm := corev1.ConfigMap{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "shoot-info",
-				Namespace: "kube-system",
-			},
-			Data: map[string]string{
-				"domain": "some.gardener.domain",
-			},
-		}
-
-		k8sClient := createFakeClient(&apiGateway, &cm)
-
-		// when
-		status := Reconcile(context.TODO(), k8sClient, apiGateway)
-
-		// then
-		Expect(status.IsSuccessful()).To(BeTrue())
-
-		created := v1alpha3.Gateway{}
-		Expect(k8sClient.Get(context.TODO(), client.ObjectKey{Name: kymaGatewayName, Namespace: kymaGatewayNamespace}, &created)).Should(Succeed())
-
-		for _, server := range created.Spec.GetServers() {
-			Expect(server.Hosts).To(ContainElement("*.some.gardener.domain"))
-		}
-	})
-
-	It("should apply disclaimer annotation on Kyma gateway when it was removed", func() {
-		// given
-		apiGateway := v1alpha1.APIGateway{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "test",
-			},
-			Spec: v1alpha1.APIGatewaySpec{
-				EnableKymaGateway: ptr.To(true),
-			},
-		}
+		apiGateway := getApiGateway(true)
 
 		k8sClient := createFakeClient(&apiGateway)
-		status := Reconcile(context.TODO(), k8sClient, apiGateway)
-		Expect(status.IsSuccessful()).To(BeTrue())
-
-		By("removing disclaimer annotation from Kyma gateway")
-		kymaGateway := v1alpha3.Gateway{}
-		Expect(k8sClient.Get(context.TODO(), client.ObjectKey{Name: kymaGatewayName, Namespace: kymaGatewayNamespace}, &kymaGateway)).Should(Succeed())
-		kymaGateway.Annotations = nil
-		Expect(k8sClient.Update(context.TODO(), &kymaGateway)).Should(Succeed())
 
 		// when
-		status = Reconcile(context.TODO(), k8sClient, apiGateway)
+		status := Reconcile(context.TODO(), k8sClient, apiGateway)
 
 		// then
 		Expect(status.IsSuccessful()).To(BeTrue())
 
-		created := v1alpha3.Gateway{}
-		Expect(k8sClient.Get(context.TODO(), client.ObjectKey{Name: kymaGatewayName, Namespace: kymaGatewayNamespace}, &created)).Should(Succeed())
+		created := dnsv1alpha1.DNSEntry{}
+		err := k8sClient.Get(context.TODO(), client.ObjectKey{Name: kymaGatewayDnsEntryName, Namespace: kymaGatewayDnsEntryNamespace}, &created)
+		Expect(errors.IsNotFound(err)).To(BeTrue())
+	})
 
-		Expect(created.Annotations).To(HaveKeyWithValue("apigateways.operator.kyma-project.io/managed-by-disclaimer",
-			"DO NOT EDIT - This resource is managed by Kyma.\nAny modifications are discarded and the resource is reverted to the original state."))
+	It("should create gateway and DNSEntry with shoot-info domain when EnableKymaGateway is true and Gardener shoot-info exists", func() {
+		// given
+		apiGateway := getApiGateway(true)
+		cm := getTestShootInfo()
+		igwService := getTestIstioIngressGatewayService()
+
+		k8sClient := createFakeClient(&apiGateway, &cm, &igwService)
+
+		// when
+		status := Reconcile(context.TODO(), k8sClient, apiGateway)
+
+		// then
+		Expect(status.IsSuccessful()).To(BeTrue())
+
+		createdGateway := v1alpha3.Gateway{}
+		Expect(k8sClient.Get(context.TODO(), client.ObjectKey{Name: kymaGatewayName, Namespace: kymaGatewayNamespace}, &createdGateway)).Should(Succeed())
+
+		for _, server := range createdGateway.Spec.GetServers() {
+			Expect(server.Hosts).To(ContainElement("*.some.gardener.domain"))
+		}
+
+		createdDnsEntry := dnsv1alpha1.DNSEntry{}
+		Expect(k8sClient.Get(context.TODO(), client.ObjectKey{Name: kymaGatewayDnsEntryName, Namespace: kymaGatewayDnsEntryNamespace}, &createdDnsEntry)).Should(Succeed())
+		Expect(createdDnsEntry.Spec.DNSName).To(Equal("*.some.gardener.domain"))
+		Expect(createdDnsEntry.Spec.Targets).To(ContainElement(testIstioIngressGatewayLoadBalancerIp))
 	})
 
 	It("should delete Kyma gateway when EnableKymaGateway is updated to false", func() {
-		updatedApiGateway := v1alpha1.APIGateway{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "test",
-			},
-			Spec: v1alpha1.APIGatewaySpec{
-				EnableKymaGateway: ptr.To(false),
-			},
-		}
+		updatedApiGateway := getApiGateway(false)
+
 		testShouldDeleteKymaGateway(updatedApiGateway)
 	})
 
@@ -180,16 +136,23 @@ var _ = Describe("Kyma gateway", func() {
 		testShouldDeleteKymaGateway(updatedApiGateway)
 	})
 
-	It("should not delete Kyma Gateway when EnableKymaGateway is updated to false, but any APIRule exists", func() {
-		// given
-		apiGateway := v1alpha1.APIGateway{
+	It("should delete Kyma Gateway and DNSEntry when shoot-info exists and EnableKymaGateway is updated to false", func() {
+		updatedApiGateway := getApiGateway(false)
+		testShouldDeleteKymaGatewayResources(updatedApiGateway)
+	})
+
+	It("should delete Kyma Gateway and DNSEntry when shoot-info exists and EnableKymaGateway is removed in updated APIGateway", func() {
+		updatedApiGateway := v1alpha1.APIGateway{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "test",
 			},
-			Spec: v1alpha1.APIGatewaySpec{
-				EnableKymaGateway: ptr.To(true),
-			},
 		}
+		testShouldDeleteKymaGatewayResources(updatedApiGateway)
+	})
+
+	It("should not delete Kyma Gateway when EnableKymaGateway is updated to false, but any APIRule exists", func() {
+		// given
+		apiGateway := getApiGateway(true)
 
 		apiRule := v1beta1.APIRule{
 			ObjectMeta: metav1.ObjectMeta{
@@ -244,4 +207,78 @@ func testShouldDeleteKymaGateway(updatedApiGateway v1alpha1.APIGateway) {
 	Expect(status.IsSuccessful()).To(BeTrue())
 	err := k8sClient.Get(context.TODO(), client.ObjectKey{Name: kymaGatewayName, Namespace: kymaGatewayNamespace}, &kymaGateway)
 	Expect(errors.IsNotFound(err)).To(BeTrue())
+}
+
+func testShouldDeleteKymaGatewayResources(updatedApiGateway v1alpha1.APIGateway) {
+	// given
+	apiGateway := v1alpha1.APIGateway{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "test",
+		},
+		Spec: v1alpha1.APIGatewaySpec{
+			EnableKymaGateway: ptr.To(true),
+		},
+	}
+	cm := getTestShootInfo()
+	igwService := getTestIstioIngressGatewayService()
+
+	k8sClient := createFakeClient(&apiGateway, &cm, &igwService)
+	status := Reconcile(context.TODO(), k8sClient, apiGateway)
+	Expect(status.IsSuccessful()).To(BeTrue())
+	kymaGateway := v1alpha3.Gateway{}
+	Expect(k8sClient.Get(context.TODO(), client.ObjectKey{Name: kymaGatewayName, Namespace: kymaGatewayNamespace}, &kymaGateway)).Should(Succeed())
+
+	// when
+	status = Reconcile(context.TODO(), k8sClient, updatedApiGateway)
+
+	// then
+	Expect(status.IsSuccessful()).To(BeTrue())
+	err := k8sClient.Get(context.TODO(), client.ObjectKey{Name: kymaGatewayName, Namespace: kymaGatewayNamespace}, &kymaGateway)
+	Expect(errors.IsNotFound(err)).To(BeTrue())
+	dnsEntry := dnsv1alpha1.DNSEntry{}
+	err = k8sClient.Get(context.TODO(), client.ObjectKey{Name: kymaGatewayDnsEntryName, Namespace: kymaGatewayDnsEntryNamespace}, &dnsEntry)
+	Expect(errors.IsNotFound(err)).To(BeTrue())
+}
+
+func getApiGateway(enableKymaGateway bool) v1alpha1.APIGateway {
+	return v1alpha1.APIGateway{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "test",
+		},
+		Spec: v1alpha1.APIGatewaySpec{
+			EnableKymaGateway: ptr.To(enableKymaGateway),
+		},
+	}
+}
+
+func getTestIstioIngressGatewayService() corev1.Service {
+	return corev1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "istio-ingressgateway",
+			Namespace: "istio-system",
+		},
+		Spec: corev1.ServiceSpec{
+			ClusterIP: "10.43.158.160",
+		}, Status: corev1.ServiceStatus{
+			LoadBalancer: corev1.LoadBalancerStatus{
+				Ingress: []corev1.LoadBalancerIngress{
+					{
+						IP: testIstioIngressGatewayLoadBalancerIp,
+					},
+				},
+			},
+		},
+	}
+}
+
+func getTestShootInfo() corev1.ConfigMap {
+	return corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "shoot-info",
+			Namespace: "kube-system",
+		},
+		Data: map[string]string{
+			"domain": "some.gardener.domain",
+		},
+	}
 }

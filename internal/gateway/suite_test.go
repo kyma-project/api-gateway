@@ -1,21 +1,18 @@
 package gateway
 
 import (
-	"fmt"
+	dnsv1alpha1 "github.com/gardener/external-dns-management/pkg/apis/dns/v1alpha1"
 	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
 	"github.com/kyma-project/api-gateway/tests"
 	. "github.com/onsi/ginkgo/v2"
-	"github.com/onsi/ginkgo/v2/reporters"
 	"github.com/onsi/ginkgo/v2/types"
 	. "github.com/onsi/gomega"
 	"istio.io/client-go/pkg/apis/networking/v1alpha3"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes/scheme"
-	"os"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
-	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"testing"
 )
 
@@ -28,37 +25,12 @@ var _ = ReportAfterSuite("custom reporter", func(report types.Report) {
 	tests.GenerateGinkgoJunitReport("gateway-suite", report)
 })
 
-var _ = ReportAfterSuite("custom reporter", func(report types.Report) {
-	logger := zap.New(zap.UseDevMode(true), zap.WriteTo(GinkgoWriter))
-
-	if key, ok := os.LookupEnv("ARTIFACTS"); ok {
-		reportsFilename := fmt.Sprintf("%s/%s", key, "junit-processing.xml")
-		logger.Info("Generating reports at", "location", reportsFilename)
-		err := reporters.GenerateJUnitReport(report, reportsFilename)
-
-		if err != nil {
-			logger.Error(err, "Junit Report Generation Error")
-		}
-	} else {
-		if err := os.MkdirAll("../../reports", 0755); err != nil {
-			logger.Error(err, "could not create directory")
-		}
-
-		reportsFilename := fmt.Sprintf("%s/%s", "../../reports", "junit-processing.xml")
-		logger.Info("Generating reports at", "location", reportsFilename)
-		err := reporters.GenerateJUnitReport(report, reportsFilename)
-
-		if err != nil {
-			logger.Error(err, "Junit Report Generation Error")
-		}
-	}
-})
-
 func createFakeClient(objects ...client.Object) client.Client {
 	Expect(v1alpha1.AddToScheme(scheme.Scheme)).Should(Succeed())
 	Expect(corev1.AddToScheme(scheme.Scheme)).Should(Succeed())
 	Expect(v1alpha3.AddToScheme(scheme.Scheme)).Should(Succeed())
 	Expect(v1beta1.AddToScheme(scheme.Scheme)).Should(Succeed())
+	Expect(dnsv1alpha1.AddToScheme(scheme.Scheme)).Should(Succeed())
 
 	return fake.NewClientBuilder().WithScheme(scheme.Scheme).WithObjects(objects...).Build()
 }
