@@ -12,12 +12,6 @@ kubectl get crd apirules.gateway.kyma-project.io -o yaml
 
 This is a sample custom resource (CR) that the API Gateway Controller listens for to expose a service. The following example has the **rules** section specified which makes API Gateway Controller create an Oathkeeper Access Rule for the service.
 
-<div tabs name="api-rule" group="sample-cr">
-  <details>
-  <summary label="v1beta1">
-  v1beta1
-  </summary>
-
 ```yaml
 apiVersion: gateway.kyma-project.io/v1beta1
 kind: APIRule
@@ -40,38 +34,6 @@ spec:
           config:
             required_scope: ["read"]
 ```
-
-  </details>
-  <details>
-  <summary label="v1alpha1">
-  v1alpha1
-  </summary>
-
->**NOTE:** Since Kyma 2.5 the `v1alpha1` resource has been deprecated. However, you can still create it. It is stored as `v1beta1`.
-
-```yaml
-apiVersion: gateway.kyma-project.io/v1alpha1
-kind: APIRule
-metadata:
-  name: service-secured
-spec:
-  gateway: kyma-system/kyma-gateway
-  service:
-    name: foo-service
-    port: 8080
-    host: foo.bar
-  rules:
-    - path: /.*
-      methods: ["GET"]
-      mutators: []
-      accessStrategies:
-        - handler: oauth2_introspection
-          config:
-            required_scope: ["read"]
-```
-
-  </details>
-</div>
 
 ## Specification
 
