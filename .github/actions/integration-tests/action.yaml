@@ -42,6 +42,7 @@ runs:
       run: |
         sudo kyma provision k3d
         KUBECONFIG=$(k3d kubeconfig merge kyma) EXPORT_RESULT=true make install-kyma test-upgrade
+        echo "!!!!!image!!!!!!: $TEST_UPGRADE_IMG"
         sudo k3d cluster delete kyma
     - uses: actions/upload-artifact@v3
       with:

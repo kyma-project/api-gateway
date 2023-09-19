@@ -3,6 +3,10 @@ package upgrade
 import (
 	"errors"
 	"fmt"
+	"log"
+	"strings"
+	"time"
+
 	"github.com/avast/retry-go/v4"
 	"github.com/cucumber/godog"
 	apirulev1beta1 "github.com/kyma-project/api-gateway/api/v1beta1"
@@ -16,8 +20,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
-	"strings"
-	"time"
 )
 
 var deploymentGVR = schema.GroupVersionResource{
@@ -153,6 +155,7 @@ func (s *scenario) upgradeApiGateway() error {
 	}
 
 	dep.Spec.Template.Spec.Containers[0].Image = s.APIGatewayImageVersion
+	log.Printf("API Gateway image to upgrade: %s", s.APIGatewayImageVersion)
 
 	apiGatewayDeployment.Object, err = runtime.DefaultUnstructuredConverter.ToUnstructured(&dep)
 	if err != nil {
@@ -173,8 +176,8 @@ func (s *scenario) upgradeApiGateway() error {
 		if err != nil {
 			return err
 		}
-
-		if dep.Spec.Template.Spec.Containers[0].Image != s.APIGatewayImageVersion || dep.Status.UnavailableReplicas > 0 {
+		log.Printf("Compare: %s to %s", dep.Spec.Template.Spec.Containers[0].Image, s.APIGatewayImageVersion)
+		if dep.Spec.Template.Spec.Containers[0].Image != s.APIGatewayImageVersion {
 			return errors.New("api-gateway deployment not yet ready")
 		}
 		return nil
@@ -189,6 +192,7 @@ func (s *scenario) reconciliationHappened(numberOfSeconds int) error {
 
 	return retry.Do(func() error {
 		for _, apiRule := range apiRules {
+			log.Printf("Getting APIRules")
 			var apiRuleStructured apirulev1beta1.APIRule
 			res, err := s.resourceManager.GetResource(s.k8sClient, schema.GroupVersionResource{
 				Group:    apirulev1beta1.GroupVersion.Group,
@@ -203,11 +207,12 @@ func (s *scenario) reconciliationHappened(numberOfSeconds int) error {
 			if err != nil {
 				return err
 			}
-
+			log.Printf("APIRule: %s (%s > %s)", apiRuleStructured.Name, apiRuleStructured.Status.LastProcessedTime.Time, time.Second*time.Duration(numberOfSeconds))
 			if time.Since(apiRuleStructured.Status.LastProcessedTime.Time) > time.Second*time.Duration(numberOfSeconds) {
 				return fmt.Errorf("reconcilation didn't happened in last %d seconds", numberOfSeconds)
 			}
 		}
+		log.Printf("ALL GOOD!!!!")
 		return nil
 	}, retry.Attempts(uint(numberOfSeconds)), retry.Delay(time.Second))
 }
