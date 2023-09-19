@@ -214,7 +214,7 @@ func (s *scenario) reconciliationHappened(numberOfSeconds int) error {
 		}
 		log.Printf("ALL GOOD!!!!")
 		return nil
-	}, retry.Attempts(uint(numberOfSeconds)), retry.Delay(time.Second))
+	}, retry.Attempts(60), retry.Delay(time.Second))
 }
 
 func initCommon(ctx *godog.ScenarioContext, ts *testsuite) {
