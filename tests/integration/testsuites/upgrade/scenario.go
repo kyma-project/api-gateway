@@ -16,8 +16,9 @@ import (
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/resource"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
 	"golang.org/x/oauth2/clientcredentials"
-	corev1 "k8s.io/api/core/v1"
 	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
@@ -29,10 +30,10 @@ var deploymentGVR = schema.GroupVersionResource{
 	Resource: "deployments",
 }
 
-var podGVR := schema.GroupVersionResource{
-    Group:    "",
-    Version:  "v1",
-    Resource: "pods",
+var podGVR = schema.GroupVersionResource{
+	Group:    "",
+	Version:  "v1",
+	Resource: "pods",
 }
 
 const apiGatewayNS, apiGatewayName = "kyma-system", "api-gateway"
@@ -181,11 +182,11 @@ func (s *scenario) upgradeApiGateway() error {
 		listOptions := metav1.ListOptions{
 			LabelSelector: "app.kubernetes.io/instance=api-gateway",
 		}
-		resList, err := s.resourceManager.List(s.k8sClient, podGVR, listOptions)
+		resList, err := s.resourceManager.List(s.k8sClient, podGVR, apiGatewayNS, listOptions)
 		if err != nil {
 			return err
 		}
-		for _, res := range resList {
+		for _, res := range resList.Items {
 			var pod corev1.Pod
 
 			err = runtime.DefaultUnstructuredConverter.FromUnstructured(res.UnstructuredContent(), &pod)
