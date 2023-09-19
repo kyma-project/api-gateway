@@ -1,0 +1,28 @@
+name: "Create release"
+
+on:
+  workflow_dispatch:
+    inputs:
+      name:
+        description: "Create release"
+        default: ""
+        required: true
+      since:
+        description: "Changelog since"
+        default: ""
+        required: false
+
+jobs:
+  create-draft:
+    name: Create draft release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Create lightweight tag
+        run: |
+          git tag ${{ github.event.inputs.name }}
+          git push origin ${{ github.event.inputs.name }}
