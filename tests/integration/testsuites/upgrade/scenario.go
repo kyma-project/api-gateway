@@ -207,7 +207,7 @@ func (s *scenario) reconciliationHappened(numberOfSeconds int) error {
 			if err != nil {
 				return err
 			}
-			log.Printf("APIRule: %s (%s > %s)", apiRuleStructured.Name, apiRuleStructured.Status.LastProcessedTime.Time, time.Second*time.Duration(numberOfSeconds))
+			log.Printf("APIRule: %s (%s > %s)", apiRuleStructured.Name, time.Since(apiRuleStructured.Status.LastProcessedTime.Time), time.Second*time.Duration(numberOfSeconds))
 			if time.Since(apiRuleStructured.Status.LastProcessedTime.Time) > time.Second*time.Duration(numberOfSeconds) {
 				return fmt.Errorf("reconcilation didn't happened in last %d seconds", numberOfSeconds)
 			}
