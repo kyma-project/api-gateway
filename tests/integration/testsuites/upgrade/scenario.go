@@ -16,7 +16,8 @@ import (
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/resource"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
 	"golang.org/x/oauth2/clientcredentials"
-	v1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
+	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
@@ -26,6 +27,12 @@ var deploymentGVR = schema.GroupVersionResource{
 	Group:    "apps",
 	Version:  "v1",
 	Resource: "deployments",
+}
+
+var podGVR := schema.GroupVersionResource{
+    Group:    "",
+    Version:  "v1",
+    Resource: "pods",
 }
 
 const apiGatewayNS, apiGatewayName = "kyma-system", "api-gateway"
@@ -148,14 +155,17 @@ func (s *scenario) upgradeApiGateway() error {
 		return err
 	}
 
-	var dep v1.Deployment
+	var dep appsv1.Deployment
 	err = runtime.DefaultUnstructuredConverter.FromUnstructured(apiGatewayDeployment.UnstructuredContent(), &dep)
 	if err != nil {
 		return err
 	}
 
+	if dep.Spec.Template.Spec.Containers[0].Image == s.APIGatewayImageVersion {
+		return errors.New("trying to upgrade to same version of api-gateway controller")
+	}
+
 	dep.Spec.Template.Spec.Containers[0].Image = s.APIGatewayImageVersion
-	log.Printf("API Gateway image to upgrade: %s", s.APIGatewayImageVersion)
 
 	apiGatewayDeployment.Object, err = runtime.DefaultUnstructuredConverter.ToUnstructured(&dep)
 	if err != nil {
@@ -168,17 +178,22 @@ func (s *scenario) upgradeApiGateway() error {
 	}
 
 	return retry.Do(func() error {
-		res, err := s.resourceManager.GetResource(s.k8sClient, deploymentGVR, apiGatewayNS, apiGatewayName)
+		listOptions := metav1.ListOptions{
+			LabelSelector: "app.kubernetes.io/instance=api-gateway",
+		}
+		resList, err := s.resourceManager.List(s.k8sClient, podGVR, listOptions)
 		if err != nil {
 			return err
 		}
-		err = runtime.DefaultUnstructuredConverter.FromUnstructured(res.UnstructuredContent(), &dep)
-		if err != nil {
-			return err
-		}
-		log.Printf("Compare: %s to %s", dep.Spec.Template.Spec.Containers[0].Image, s.APIGatewayImageVersion)
-		if dep.Spec.Template.Spec.Containers[0].Image != s.APIGatewayImageVersion {
-			return errors.New("api-gateway deployment not yet ready")
+		for _, res := range resList {
+			var pod corev1.Pod
+			err = runtime.DefaultUnstructuredConverter.FromUnstructured(res.UnstructuredContent(), &pod)
+			if err != nil {
+				return err
+			}
+			if pod.Spec.Containers[0].Image != s.APIGatewayImageVersion || pod.Status.Phase != corev1.PodRunning {
+				return errors.New("api-gateway pod container not having desired image version or not running")
+			}
 		}
 		return nil
 	}, testcontext.GetRetryOpts(s.config)...)
