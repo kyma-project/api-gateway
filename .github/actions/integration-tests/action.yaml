@@ -38,10 +38,10 @@ runs:
       env:
         KYMA_DOMAIN: "local.kyma.dev"
         TEST_UPGRADE_IMG: ${{ inputs.upgrade-image-name }}
+        KYMA_COMPONENTS: "hack/kyma-components.yaml"
       shell: bash
       run: |
         sudo kyma provision k3d
-        echo "!!!!!image!!!!!!: $TEST_UPGRADE_IMG"
         KUBECONFIG=$(k3d kubeconfig merge kyma) EXPORT_RESULT=true make install-kyma test-upgrade
         sudo k3d cluster delete kyma
     - uses: actions/upload-artifact@v3
