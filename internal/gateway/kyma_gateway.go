@@ -26,7 +26,7 @@ func reconcileKymaGateway(ctx context.Context, k8sClient client.Client, apiGatew
 	ctrl.Log.Info("Reconciling Kyma gateway", "KymaGatewayEnabled", isEnabled)
 
 	if !isEnabled {
-		return deleteKymaGateway(k8sClient)
+		return deleteKymaGateway(ctx, k8sClient)
 	}
 
 	templateValues := make(map[string]string)
@@ -35,14 +35,14 @@ func reconcileKymaGateway(ctx context.Context, k8sClient client.Client, apiGatew
 	templateValues["Domain"] = domain
 	templateValues["CertificateSecretName"] = kymaGatewayCertSecretName
 
-	return reconcileResource(ctx, k8sClient, kymaGatewayManifest, templateValues)
+	return applyResource(ctx, k8sClient, kymaGatewayManifest, templateValues)
 }
 
 func isKymaGatewayEnabled(cr v1alpha1.APIGateway) bool {
 	return cr.Spec.EnableKymaGateway != nil && *cr.Spec.EnableKymaGateway == true
 }
 
-func deleteKymaGateway(k8sClient client.Client) error {
+func deleteKymaGateway(ctx context.Context, k8sClient client.Client) error {
 	ctrl.Log.Info("Deleting Kyma gateway if it exists")
 	gw := v1alpha3.Gateway{
 		ObjectMeta: metav1.ObjectMeta{
@@ -50,10 +50,10 @@ func deleteKymaGateway(k8sClient client.Client) error {
 			Namespace: kymaGatewayNamespace,
 		},
 	}
-	err := k8sClient.Delete(context.TODO(), &gw)
+	err := k8sClient.Delete(ctx, &gw)
 
 	if err != nil && !errors.IsNotFound(err) {
-		return fmt.Errorf("failed to delete Kyma gateway")
+		return fmt.Errorf("failed to delete Kyma gateway: %v", err)
 	}
 
 	if err == nil {

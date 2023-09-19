@@ -35,10 +35,11 @@ var _ = Describe("Certificate", func() {
 
 		It("should create Certificate with default name and namespace", func() {
 			// given
+			apiGateway := getApiGateway(true)
 			k8sClient := createFakeClient()
 
 			// when
-			err := reconcileNonGardenerCertificateSecret(context.TODO(), k8sClient)
+			err := reconcileNonGardenerCertificateSecret(context.TODO(), k8sClient, apiGateway)
 
 			// then
 			Expect(err).ShouldNot(HaveOccurred())

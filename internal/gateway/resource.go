@@ -11,38 +11,68 @@ import (
 	"text/template"
 )
 
-func reconcileResource(ctx context.Context, k8sClient client.Client, resourceManifest []byte, templateValues map[string]string) error {
+func applyResource(ctx context.Context, k8sClient client.Client, resourceManifest []byte, templateValues map[string]string) error {
+
+	resourceBuffer, err := applyTemplateValuesToResourceManifest(resourceManifest, templateValues)
+	if err != nil {
+		return fmt.Errorf("failed to apply template values to resource manifest: %v", err)
+	}
+
+	resource, err := unmarshalResourceBuffer(resourceBuffer.Bytes())
+	if err != nil {
+		return fmt.Errorf("failed to unmarshall yaml: %v", err)
+	}
+
+	return createOrUpdateResource(ctx, k8sClient, resource)
+}
+
+func applyTemplateValuesToResourceManifest(resourceManifest []byte, templateValues map[string]string) (bytes.Buffer, error) {
+	var resourceBuffer bytes.Buffer
 
 	resourceTemplate, err := template.New("tmpl").Option("missingkey=error").Parse(string(resourceManifest))
 	if err != nil {
-		return fmt.Errorf("failed to parse template yaml: %v", err)
+		return resourceBuffer, err
 	}
 
-	var resourceBuffer bytes.Buffer
 	err = resourceTemplate.Execute(&resourceBuffer, templateValues)
 	if err != nil {
-		return fmt.Errorf("failed to apply parsed template yaml: %v", err)
+		return resourceBuffer, err
 	}
 
+	return resourceBuffer, nil
+}
+
+func unmarshalResourceBuffer(resourceBuffer []byte) (unstructured.Unstructured, error) {
 	var resource unstructured.Unstructured
-	err = yaml.Unmarshal(resourceBuffer.Bytes(), &resource)
+
+	err := yaml.Unmarshal(resourceBuffer, &resource)
 	if err != nil {
-		return fmt.Errorf("failed to decode yaml: %v", err)
+		return resource, err
 	}
 
-	spec := resource.Object["spec"]
-	_, err = controllerutil.CreateOrUpdate(ctx, k8sClient, &resource, func() error {
+	return resource, nil
+}
+
+func createOrUpdateResource(ctx context.Context, k8sClient client.Client, resource unstructured.Unstructured) error {
+	spec, specExist := resource.Object["spec"]
+	data, dataExist := resource.Object["data"]
+
+	_, err := controllerutil.CreateOrUpdate(ctx, k8sClient, &resource, func() error {
 		annotations := map[string]string{
 			disclaimerKey: disclaimerValue,
 		}
 		resource.SetAnnotations(annotations)
-		resource.Object["spec"] = spec
+
+		if dataExist {
+			resource.Object["data"] = data
+		}
+
+		if specExist {
+			resource.Object["spec"] = spec
+		}
+
 		return nil
 	})
-	if err != nil {
-		return fmt.Errorf("failed to create or update: %v", err)
-	}
 
-	return nil
-
+	return err
 }

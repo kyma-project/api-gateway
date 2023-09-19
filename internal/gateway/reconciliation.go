@@ -63,7 +63,7 @@ func Reconcile(ctx context.Context, k8sClient client.Client, apiGatewayCR v1alph
 			return controllers.ErrorStatus(err, "Error during Kyma Gateway reconciliation")
 		}
 
-		if err := reconcileNonGardenerCertificateSecret(ctx, k8sClient); err != nil {
+		if err := reconcileNonGardenerCertificateSecret(ctx, k8sClient, apiGatewayCR); err != nil {
 			return controllers.ErrorStatus(err, "Error during Kyma Gateway Certificate Secret reconciliation")
 		}
 	}

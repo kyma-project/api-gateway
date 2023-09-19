@@ -6,6 +6,7 @@ import (
 	"fmt"
 	certv1alpha1 "github.com/gardener/cert-management/pkg/apis/cert/v1alpha1"
 	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
+	v1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -14,7 +15,7 @@ import (
 
 const (
 	kymaGatewayCertificateName = "kyma-gateway"
-	// Per default the certificate secret needs to be in the same namespace as the gateway using it
+	// Istio IngressGateway requires the TLS secret to be present in the same namespace, that's why we have to use istio-system
 	certificateDefaultNamespace = "istio-system"
 	kymaGatewayCertSecretName   = "kyma-gateway-certs"
 )
@@ -46,7 +47,7 @@ func reconcileCertificate(ctx context.Context, k8sClient client.Client, name, do
 	templateValues["Domain"] = domain
 	templateValues["SecretName"] = certSecretName
 
-	return reconcileResource(ctx, k8sClient, certificateManifest, templateValues)
+	return applyResource(ctx, k8sClient, certificateManifest, templateValues)
 }
 
 func deleteCertificate(k8sClient client.Client, name string) error {
@@ -60,22 +61,51 @@ func deleteCertificate(k8sClient client.Client, name string) error {
 	err := k8sClient.Delete(context.TODO(), &c)
 
 	if err != nil && !k8serrors.IsNotFound(err) {
-		return fmt.Errorf("failed to delete DNSEntry %s/%s: %v", certificateDefaultNamespace, name, err)
+		return fmt.Errorf("failed to delete Certificate %s/%s: %v", certificateDefaultNamespace, name, err)
 	}
 
 	if err == nil {
-		ctrl.Log.Info("Successfully deleted DNSEntry", "Name", name, "Namespace", certificateDefaultNamespace)
+		ctrl.Log.Info("Successfully deleted Certificate", "Name", name, "Namespace", certificateDefaultNamespace)
 	}
 
 	return nil
 }
 
-func reconcileNonGardenerCertificateSecret(ctx context.Context, k8sClient client.Client) error {
+func reconcileNonGardenerCertificateSecret(ctx context.Context, k8sClient client.Client, apiGatewayCR v1alpha1.APIGateway) error {
+
+	isEnabled := isKymaGatewayEnabled(apiGatewayCR)
+	ctrl.Log.Info("Reconciling Certificate Secret", "KymaGatewayEnabled", isEnabled, "Name", kymaGatewayCertSecretName, "Namespace", certificateDefaultNamespace)
+
+	if !isEnabled {
+		// We don't use a OwnerReference for cleanup, because the Certificate is created in a different namespace
+		return deleteSecret(k8sClient, kymaGatewayCertSecretName, certificateDefaultNamespace)
+	}
 
 	ctrl.Log.Info("Reconciling fallback certificate secret", "Name", kymaGatewayCertSecretName, "Namespace", certificateDefaultNamespace)
 	templateValues := make(map[string]string)
 	templateValues["Name"] = kymaGatewayCertSecretName
 	templateValues["Namespace"] = certificateDefaultNamespace
 
-	return reconcileResource(ctx, k8sClient, nonGardenerCertificateSecretManifest, templateValues)
+	return applyResource(ctx, k8sClient, nonGardenerCertificateSecretManifest, templateValues)
+}
+
+func deleteSecret(k8sClient client.Client, name, namespace string) error {
+	ctrl.Log.Info("Deleting certificate secret if it exists", "Name", name, "Namespace", namespace)
+	s := v1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: namespace,
+		},
+	}
+	err := k8sClient.Delete(context.TODO(), &s)
+
+	if err != nil && !k8serrors.IsNotFound(err) {
+		return fmt.Errorf("failed to delete certificate secret %s/%s: %v", certificateDefaultNamespace, name, err)
+	}
+
+	if err == nil {
+		ctrl.Log.Info("Successfully deleted certificate secret", "Name", name, "Namespace", namespace)
+	}
+
+	return nil
 }

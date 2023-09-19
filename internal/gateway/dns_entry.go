@@ -49,7 +49,7 @@ func reconcileDnsEntry(ctx context.Context, k8sClient client.Client, name, names
 	templateValues["Domain"] = domain
 	templateValues["IngressGatewayServiceIp"] = ingressGatewayIp
 
-	return reconcileResource(ctx, k8sClient, dnsEntryManifest, templateValues)
+	return applyResource(ctx, k8sClient, dnsEntryManifest, templateValues)
 }
 
 func deleteDnsEntry(k8sClient client.Client, name, namespace string) error {
@@ -86,8 +86,19 @@ func fetchIstioIngressGatewayIp(ctx context.Context, k8sClient client.Client) (s
 	}
 
 	if len(svc.Status.LoadBalancer.Ingress) == 0 {
-		return "", fmt.Errorf("no ingress ip set for %s", istioIngressGatewayNamespaceName.String())
+		return "", fmt.Errorf("no ingress exists for %s", istioIngressGatewayNamespaceName.String())
 	}
 
-	return svc.Status.LoadBalancer.Ingress[0].IP, nil
+	if svc.Status.LoadBalancer.Ingress[0].IP != "" {
+		return svc.Status.LoadBalancer.Ingress[0].IP, nil
+	}
+
+	ctrl.Log.Info("Load balancer ingress IP is not set, trying to get hostname", "Service", svc.Name, "Namespace", svc.Namespace)
+
+	if svc.Status.LoadBalancer.Ingress[0].Hostname != "" {
+		return svc.Status.LoadBalancer.Ingress[0].Hostname, nil
+	}
+
+	ctrl.Log.Info("Load balancer ingress hostname and IP is not set", "Service", svc.Name, "Namespace", svc.Namespace)
+	return "", fmt.Errorf("no ingress ip set for %s", istioIngressGatewayNamespaceName.String())
 }

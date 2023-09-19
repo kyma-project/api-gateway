@@ -134,7 +134,7 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 		// given
 		apiGateway := getApiGateway(true)
 		cm := getTestShootInfo()
-		igwService := getTestIstioIngressGatewayService()
+		igwService := getTestIstioIngressGatewayIpBasedService()
 
 		k8sClient := createFakeClient(&apiGateway, &cm, &igwService)
 
@@ -165,19 +165,19 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 		Expect(*createdCert.Spec.CommonName).To(Equal("*.some.gardener.domain"))
 	})
 
-	It("should delete Kyma gateway when EnableKymaGateway is updated to false", func() {
+	It("should delete Kyma gateway and certificate secret when EnableKymaGateway is updated to false", func() {
 		updatedApiGateway := getApiGateway(false)
 
-		testShouldDeleteKymaGateway(updatedApiGateway)
+		testShouldDeleteKymaGatewayNonGardenerResources(updatedApiGateway)
 	})
 
-	It("should delete Kyma gateway when EnableKymaGateway is removed in updated APIGateway", func() {
+	It("should delete Kyma gateway and certificate secret when EnableKymaGateway is removed in updated APIGateway", func() {
 		updatedApiGateway := v1alpha1.APIGateway{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "test",
 			},
 		}
-		testShouldDeleteKymaGateway(updatedApiGateway)
+		testShouldDeleteKymaGatewayNonGardenerResources(updatedApiGateway)
 	})
 
 	It("should delete Kyma Gateway, DNSEntry and Certificate when shoot-info exists and EnableKymaGateway is updated to false", func() {
@@ -227,16 +227,9 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 
 })
 
-func testShouldDeleteKymaGateway(updatedApiGateway v1alpha1.APIGateway) {
+func testShouldDeleteKymaGatewayNonGardenerResources(updatedApiGateway v1alpha1.APIGateway) {
 	// given
-	apiGateway := v1alpha1.APIGateway{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: "test",
-		},
-		Spec: v1alpha1.APIGatewaySpec{
-			EnableKymaGateway: ptr.To(true),
-		},
-	}
+	apiGateway := getApiGateway(true)
 
 	k8sClient := createFakeClient(&apiGateway)
 	status := Reconcile(context.TODO(), k8sClient, apiGateway)
@@ -251,20 +244,17 @@ func testShouldDeleteKymaGateway(updatedApiGateway v1alpha1.APIGateway) {
 	Expect(status.IsSuccessful()).To(BeTrue())
 	err := k8sClient.Get(context.TODO(), client.ObjectKey{Name: kymaGatewayName, Namespace: kymaGatewayNamespace}, &kymaGateway)
 	Expect(errors.IsNotFound(err)).To(BeTrue())
+
+	s := corev1.Secret{}
+	err = k8sClient.Get(context.TODO(), client.ObjectKey{Name: kymaGatewayCertSecretName, Namespace: certificateDefaultNamespace}, &s)
+	Expect(errors.IsNotFound(err)).To(BeTrue())
 }
 
 func testShouldDeleteKymaGatewayResources(updatedApiGateway v1alpha1.APIGateway) {
 	// given
-	apiGateway := v1alpha1.APIGateway{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: "test",
-		},
-		Spec: v1alpha1.APIGatewaySpec{
-			EnableKymaGateway: ptr.To(true),
-		},
-	}
+	apiGateway := getApiGateway(true)
 	cm := getTestShootInfo()
-	igwService := getTestIstioIngressGatewayService()
+	igwService := getTestIstioIngressGatewayIpBasedService()
 
 	k8sClient := createFakeClient(&apiGateway, &cm, &igwService)
 	status := Reconcile(context.TODO(), k8sClient, apiGateway)
@@ -303,7 +293,7 @@ func getApiGateway(enableKymaGateway bool) v1alpha1.APIGateway {
 	}
 }
 
-func getTestIstioIngressGatewayService() corev1.Service {
+func getTestIstioIngressGatewayIpBasedService() corev1.Service {
 	return corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "istio-ingressgateway",

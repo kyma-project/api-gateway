@@ -10,7 +10,7 @@ import (
 
 var _ = Describe("Resource", func() {
 
-	Context("reconcileResource", func() {
+	Context("applyResource", func() {
 
 		It("should reapply disclaimer annotation on resource when it was removed", func() {
 			// given
@@ -22,7 +22,7 @@ var _ = Describe("Resource", func() {
 			templateValues["Domain"] = "test-domain.com"
 			templateValues["SecretName"] = "cert-secret"
 
-			Expect(reconcileResource(context.TODO(), k8sClient, certificateManifest, templateValues)).Should(Succeed())
+			Expect(applyResource(context.TODO(), k8sClient, certificateManifest, templateValues)).Should(Succeed())
 
 			By("removing disclaimer annotation from certificate")
 			cert := v1alpha1.Certificate{}
@@ -31,7 +31,7 @@ var _ = Describe("Resource", func() {
 			Expect(k8sClient.Update(context.TODO(), &cert)).Should(Succeed())
 
 			// when
-			Expect(reconcileResource(context.TODO(), k8sClient, certificateManifest, templateValues)).Should(Succeed())
+			Expect(applyResource(context.TODO(), k8sClient, certificateManifest, templateValues)).Should(Succeed())
 
 			// then
 			Expect(k8sClient.Get(context.TODO(), client.ObjectKey{Name: "test", Namespace: "istio-system"}, &cert)).Should(Succeed())
