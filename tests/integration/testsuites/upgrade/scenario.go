@@ -187,10 +187,12 @@ func (s *scenario) upgradeApiGateway() error {
 		}
 		for _, res := range resList {
 			var pod corev1.Pod
+
 			err = runtime.DefaultUnstructuredConverter.FromUnstructured(res.UnstructuredContent(), &pod)
 			if err != nil {
 				return err
 			}
+
 			if pod.Spec.Containers[0].Image != s.APIGatewayImageVersion || pod.Status.Phase != corev1.PodRunning {
 				return errors.New("api-gateway pod container not having desired image version or not running")
 			}
