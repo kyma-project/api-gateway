@@ -20,8 +20,8 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"strings"
+
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
 
@@ -42,7 +42,6 @@ import (
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 
-	gatewayv1alpha1 "github.com/kyma-project/api-gateway/api/v1alpha1"
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/api/v1beta1"
 	"github.com/kyma-project/api-gateway/controllers"
 	"github.com/kyma-project/api-gateway/internal/validation"
@@ -51,10 +50,7 @@ import (
 )
 
 type config struct {
-	SystemNamespace    string `envconfig:"default=kyma-system"`
-	WebhookServiceName string `envconfig:"default=api-gateway-webhook-service"`
-	WebhookSecretName  string `envconfig:"default=api-gateway-webhook-service"`
-	WebhookPort        int    `envconfig:"default=9443"`
+	SystemNamespace string `envconfig:"default=kyma-system"`
 }
 
 var (
@@ -65,7 +61,6 @@ var (
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 
-	utilruntime.Must(gatewayv1alpha1.AddToScheme(scheme))
 	utilruntime.Must(gatewayv1beta1.AddToScheme(scheme))
 
 	utilruntime.Must(networkingv1beta1.AddToScheme(scheme))
@@ -149,10 +144,6 @@ func main() {
 		HealthProbeBindAddress: healthProbeAddr,
 		LeaderElection:         enableLeaderElection,
 		LeaderElectionID:       "69358922.kyma-project.io",
-		WebhookServer: webhook.NewServer(webhook.Options{
-			Port:    9443,
-			CertDir: "/tmp/k8s-webhook-server/serving-certs",
-		}),
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")
@@ -186,10 +177,6 @@ func main() {
 	}
 	if err = reconciler.SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to setup controller", "controller", "APIRule")
-		os.Exit(1)
-	}
-	if err = (&gatewayv1beta1.APIRule{}).SetupWebhookWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create webhook", "webhook", "APIRule")
 		os.Exit(1)
 	}
 	//+kubebuilder:scaffold:builder

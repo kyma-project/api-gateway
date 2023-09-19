@@ -115,8 +115,7 @@ func GenerateAccessRule(api *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rule, a
 		GenerateName(namePrefix).
 		Namespace(namespace).
 		Spec(builders.AccessRuleSpec().From(GenerateAccessRuleSpec(api, rule, accessStrategies, defaultDomainName))).
-		Label(processing.OwnerLabel, fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace)).
-		Label(processing.OwnerLabelv1alpha1, fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace))
+		Label(processing.OwnerLabel, fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace))
 
 	for k, v := range additionalLabels {
 		arBuilder.Label(k, v)

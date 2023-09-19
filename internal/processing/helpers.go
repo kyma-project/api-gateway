@@ -3,15 +3,12 @@ package processing
 import (
 	"fmt"
 
-	gatewayv1alpha1 "github.com/kyma-project/api-gateway/api/v1alpha1"
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/api/v1beta1"
 )
 
 var (
 	//OwnerLabel .
 	OwnerLabel = fmt.Sprintf("%s.%s", "apirule", gatewayv1beta1.GroupVersion.String())
-	//OwnerLabelv1alpha1 .
-	OwnerLabelv1alpha1 = fmt.Sprintf("%s.%s", "apirule", gatewayv1alpha1.GroupVersion.String())
 )
 
 func HasJwtRule(api *gatewayv1beta1.APIRule) bool {
@@ -46,7 +43,7 @@ func IsSecured(rule gatewayv1beta1.Rule) bool {
 
 func GetOwnerLabels(api *gatewayv1beta1.APIRule) map[string]string {
 	labels := make(map[string]string)
-	labels[OwnerLabelv1alpha1] = fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace)
+	labels[OwnerLabel] = fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace)
 	return labels
 }
 
