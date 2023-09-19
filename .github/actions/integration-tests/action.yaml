@@ -20,6 +20,7 @@ runs:
     # - name: Run integration tests
     #   env:
     #     KYMA_DOMAIN: "local.kyma.dev"
+    #     KYMA_COMPONENTS: "hack/kyma-components.yaml"
     #   shell: bash
     #   run: |
     #     sudo kyma provision k3d
@@ -36,6 +37,7 @@ runs:
     #     sudo k3d cluster delete kyma
     - name: Run upgrade integration tests
       env:
+        UPGRADE_JOB: "true"
         KYMA_DOMAIN: "local.kyma.dev"
         TEST_UPGRADE_IMG: ${{ inputs.upgrade-image-name }}
         KYMA_COMPONENTS: "hack/kyma-components.yaml"
