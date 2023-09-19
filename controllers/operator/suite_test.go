@@ -138,9 +138,15 @@ var _ = ReportAfterSuite("custom reporter", func(report types.Report) {
 })
 
 func createCommonTestResources(k8sClient client.Client) {
-	KymaSystemNs := &corev1.Namespace{
+	kymaSystemNs := &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{Name: testNamespace},
 		Spec:       corev1.NamespaceSpec{},
 	}
-	Expect(k8sClient.Create(context.TODO(), KymaSystemNs)).Should(Succeed())
+	Expect(k8sClient.Create(context.TODO(), kymaSystemNs)).Should(Succeed())
+
+	istioSystemNs := &corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{Name: "istio-system"},
+		Spec:       corev1.NamespaceSpec{},
+	}
+	Expect(k8sClient.Create(context.TODO(), istioSystemNs)).Should(Succeed())
 }

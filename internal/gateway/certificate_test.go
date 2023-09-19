@@ -5,6 +5,7 @@ import (
 	"github.com/gardener/cert-management/pkg/apis/cert/v1alpha1"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	v1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -28,5 +29,24 @@ var _ = Describe("Certificate", func() {
 			Expect(*cert.Spec.CommonName).To(Equal("*.test-domain.com"))
 		})
 
+	})
+
+	Context("reconcileNonGardenerCertificateSecret", func() {
+
+		It("should create Certificate with default name and namespace", func() {
+			// given
+			k8sClient := createFakeClient()
+
+			// when
+			err := reconcileNonGardenerCertificateSecret(context.TODO(), k8sClient)
+
+			// then
+			Expect(err).ShouldNot(HaveOccurred())
+
+			secret := v1.Secret{}
+			Expect(k8sClient.Get(context.TODO(), client.ObjectKey{Name: "kyma-gateway-certs", Namespace: "istio-system"}, &secret)).Should(Succeed())
+			Expect(secret.Data).To(HaveKey("tls.key"))
+			Expect(secret.Data).To(HaveKey("tls.crt"))
+		})
 	})
 })

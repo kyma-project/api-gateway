@@ -22,6 +22,9 @@ const (
 //go:embed certificate.yaml
 var certificateManifest []byte
 
+//go:embed certificate_secret_fallback.yaml
+var nonGardenerCertificateSecretManifest []byte
+
 func reconcileKymaGatewayCertificate(ctx context.Context, k8sClient client.Client, apiGatewayCR v1alpha1.APIGateway, domain string) error {
 
 	isEnabled := isKymaGatewayEnabled(apiGatewayCR)
@@ -65,4 +68,14 @@ func deleteCertificate(k8sClient client.Client, name string) error {
 	}
 
 	return nil
+}
+
+func reconcileNonGardenerCertificateSecret(ctx context.Context, k8sClient client.Client) error {
+
+	ctrl.Log.Info("Reconciling fallback certificate secret", "Name", kymaGatewayCertSecretName, "Namespace", certificateDefaultNamespace)
+	templateValues := make(map[string]string)
+	templateValues["Name"] = kymaGatewayCertSecretName
+	templateValues["Namespace"] = certificateDefaultNamespace
+
+	return reconcileResource(ctx, k8sClient, nonGardenerCertificateSecretManifest, templateValues)
 }

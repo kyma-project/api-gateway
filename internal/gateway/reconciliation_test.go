@@ -78,6 +78,24 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 		}
 	})
 
+	It("should create secret with default certificate when EnableKymaGateway is true and no Gardener shoot-info exists", func() {
+		// given
+		apiGateway := getApiGateway(true)
+
+		k8sClient := createFakeClient(&apiGateway)
+
+		// when
+		status := Reconcile(context.TODO(), k8sClient, apiGateway)
+
+		// then
+		Expect(status.IsSuccessful()).To(BeTrue())
+
+		secret := corev1.Secret{}
+		Expect(k8sClient.Get(context.TODO(), client.ObjectKey{Name: "kyma-gateway-certs", Namespace: "istio-system"}, &secret)).Should(Succeed())
+		Expect(secret.Data).To(HaveKey("tls.key"))
+		Expect(secret.Data).To(HaveKey("tls.crt"))
+	})
+
 	It("should not create DNSEntry when EnableKymaGateway is true and no Gardener shoot-info exists", func() {
 		// given
 		apiGateway := getApiGateway(true)
