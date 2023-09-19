@@ -3,7 +3,6 @@ package upgrade
 import (
 	"errors"
 	"fmt"
-	"log"
 	"strings"
 	"time"
 
@@ -210,7 +209,6 @@ func (s *scenario) reconciliationHappened(numberOfSeconds int) error {
 
 	return retry.Do(func() error {
 		for _, apiRule := range apiRules {
-			log.Printf("Getting APIRules")
 			var apiRuleStructured apirulev1beta1.APIRule
 			res, err := s.resourceManager.GetResource(s.k8sClient, schema.GroupVersionResource{
 				Group:    apirulev1beta1.GroupVersion.Group,
@@ -225,12 +223,11 @@ func (s *scenario) reconciliationHappened(numberOfSeconds int) error {
 			if err != nil {
 				return err
 			}
-			log.Printf("APIRule: %s (%s > %s)", apiRuleStructured.Name, time.Since(apiRuleStructured.Status.LastProcessedTime.Time), time.Second*time.Duration(numberOfSeconds))
+
 			if time.Since(apiRuleStructured.Status.LastProcessedTime.Time) > time.Second*time.Duration(numberOfSeconds) {
 				return fmt.Errorf("reconcilation didn't happened in last %d seconds", numberOfSeconds)
 			}
 		}
-		log.Printf("ALL GOOD!!!!")
 		return nil
 	}, retry.Attempts(60), retry.Delay(time.Second))
 }
