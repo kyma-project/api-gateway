@@ -2,10 +2,6 @@ APP_NAME = api-gateway-controller
 IMG ?= $(DOCKER_PUSH_REPOSITORY)$(DOCKER_PUSH_DIRECTORY)/$(APP_NAME)
 TAG = $(DOCKER_TAG)
 
-CERTIFICATES_APP_NAME = api-gateway-webhook-certificates
-CERTIFICATES_IMG = $(DOCKER_PUSH_REPOSITORY)$(DOCKER_PUSH_DIRECTORY)/$(CERTIFICATES_APP_NAME)
-CERTIFICATES_TAG = $(DOCKER_TAG)
-
 CRD_OPTIONS ?= "crd:trivialVersions=true,crdVersions=v1"
 KYMA_COMPONENTS ?= "hack/kyma-components.yaml"
 
@@ -163,14 +159,12 @@ else ifeq ($(UPGRADE_JOB), true)
 else ifeq ($(JOB_TYPE), presubmit)
 	kyma deploy --ci -s main -c ${KYMA_COMPONENTS} \
 	  --value api-gateway.global.images.api_gateway_controller.version=${PULL_IMAGE_VERSION} \
-	  --value api-gateway.global.images.api_gateway_controller.directory=dev \
-	  --value api-gateway.global.images.api-gateway-webhook-certificates.version=${PULL_IMAGE_VERSION} \
-	  --value api-gateway.global.images.api-gateway-webhook-certificates.directory=dev
+	  --value api-gateway.global.images.api_gateway_controller.directory=dev
 else ifeq ($(JOB_TYPE), postsubmit)
 	kyma deploy --ci -s main -c ${KYMA_COMPONENTS} \
-	  --value api-gateway.global.images.api_gateway_controller.version=${POST_IMAGE_VERSION} \
-	  --value api-gateway.global.images.api-gateway-webhook-certificates.version=${POST_IMAGE_VERSION}
+	  --value api-gateway.global.images.api_gateway_controller.version=${POST_IMAGE_VERSION}
 endif
+	make install
 
 .PHONY: test-integration-k3d
 test-integration-k3d: kyma-cli k3d provision-k3d install-kyma test-integration ## Run integration tests.
@@ -198,10 +192,6 @@ docker-build: pull-licenses test ## Build docker image with the manager.
 docker-build-release: pull-licenses test-for-release ## Build docker image with the manager.
 	docker build -t $(APP_NAME):latest .
 
-.PHONY: docker-build-certificates
-docker-build-certificates: ## Build docker image for certificates management
-	docker build -f Dockerfile-certificates -t $(CERTIFICATES_APP_NAME):latest .
-
 .PHONY: docker-push
 docker-push:
 	docker tag $(APP_NAME) $(IMG):$(TAG)
@@ -210,18 +200,6 @@ ifeq ($(JOB_TYPE), postsubmit)
 	@echo "Sign image with Cosign"
 	cosign version
 	cosign sign -key ${KMS_KEY_URL} $(IMG):$(TAG)
-else
-	@echo "Image signing skipped"
-endif
-
-.PHONY: docker-push-certificates
-docker-push-certificates:
-	docker tag $(CERTIFICATES_APP_NAME) $(CERTIFICATES_IMG):$(CERTIFICATES_TAG)
-	docker push $(CERTIFICATES_IMG):$(CERTIFICATES_TAG)
-ifeq ($(JOB_TYPE), postsubmit)
-	@echo "Sign image with Cosign"
-	cosign version
-	cosign sign -key ${KMS_KEY_URL} $(CERTIFICATES_IMG):$(CERTIFICATES_TAG)
 else
 	@echo "Image signing skipped"
 endif
@@ -332,15 +310,14 @@ release:
 
 ##@ ci targets
 .PHONY: ci-pr
-ci-pr: build test docker-build docker-push docker-build-certificates docker-push-certificates
+ci-pr: build test docker-build docker-push
 
 .PHONY: ci-main
-ci-main: build docker-build docker-push docker-build-certificates docker-push-certificates
+ci-main: build docker-build docker-push
 
 .PHONY: ci-release
 ci-release: TAG=${shell git describe --abbrev=0 --tags}
-ci-release: CERTIFICATES_TAG=$(TAG)
-ci-release: build-release docker-build-release docker-push docker-build-certificates docker-push-certificates archive release
+ci-release: build-release docker-build-release docker-push archive release
 
 .PHONY: clean
 clean:

@@ -3,14 +3,14 @@ package validation
 import (
 	"context"
 	"fmt"
+	"strings"
+
 	"github.com/go-logr/logr"
 	"google.golang.org/appengine/log"
-	"strings"
 
 	"github.com/kyma-project/api-gateway/internal/helpers"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 
-	gatewayv1alpha1 "github.com/kyma-project/api-gateway/api/v1alpha1"
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/api/v1beta1"
 	apiv1beta1 "istio.io/api/type/v1beta1"
 	"k8s.io/utils/strings/slices"
@@ -316,9 +316,9 @@ func occupiesHost(vs *networkingv1beta1.VirtualService, host string) bool {
 }
 
 func getOwnerLabels(api *gatewayv1beta1.APIRule) map[string]string {
-	OwnerLabelv1alpha1 := fmt.Sprintf("%s.%s", "apirule", gatewayv1alpha1.GroupVersion.String())
+	OwnerLabelv1beta1 := fmt.Sprintf("%s.%s", "apirule", gatewayv1beta1.GroupVersion.String())
 	labels := make(map[string]string)
-	labels[OwnerLabelv1alpha1] = fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace)
+	labels[OwnerLabelv1beta1] = fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace)
 	return labels
 }
 
