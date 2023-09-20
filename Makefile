@@ -208,7 +208,7 @@ endif
 # Install CRDs into a cluster
 .PHONY: install
 install: manifests
-	$(KUSTOMIZE) build config/crd | kubectl apply -f -
+	kustomize build config/crd | kubectl apply -f -
 	@if ! kubectl get crd virtualservices.networking.istio.io > /dev/null 2>&1 ; then kubectl apply -f hack/networking.istio.io_virtualservice.yaml; fi;
 	@if ! kubectl get crd rules.oathkeeper.ory.sh > /dev/null 2>&1 ; then kubectl apply -f hack/oathkeeper.ory.sh_rules.yaml; fi;
 	@if ! kubectl get crd authorizationpolicies.security.istio.io > /dev/null 2>&1 ; then kubectl apply -f hack/security.istio.io_authorizationpolicy.yaml; fi;
@@ -323,16 +323,16 @@ patch-gen:
 
 # Generate static installation files
 static: manifests patch-gen
-	$(KUSTOMIZE) build config/released -o install/k8s
+	kustomize build config/released -o install/k8s
 
 
 # Deploy controller using a released Docker image to the Kubernetes cluster configured in ~/.kube/config
 deploy: manifests patch-gen
-	$(KUSTOMIZE) build config/default | kubectl apply -f -
+	kustomize build config/default | kubectl apply -f -
 
 # Generate CRD with patches
 gen-crd:
-	$(KUSTOMIZE) build config/crd > config/crd/apirules.gateway.crd.yaml
+	kustomize build config/crd > config/crd/apirules.gateway.crd.yaml
 
 samples-clean:
 	kubectl delete -f config/samples/valid.yaml --ignore-not-found=true
