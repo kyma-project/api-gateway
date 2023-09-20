@@ -70,7 +70,7 @@ rules:
   - update
   - watch
 - apiGroups:
-  - cert.gardener.cloud
+  - dns.gardener.cloud
   resources:
   - dnsentries
   verbs:

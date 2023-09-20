@@ -41,7 +41,7 @@ func NewAPIGatewayReconciler(mgr manager.Manager) *APIGatewayReconciler {
 //+kubebuilder:rbac:groups=networking.istio.io,resources=gateways,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups="",resources=secrets,verbs=get;list;watch;update;patch;create;delete
 //+kubebuilder:rbac:groups="cert.gardener.cloud",resources=certificates,verbs=get;list;watch;update;patch;create;delete
-//+kubebuilder:rbac:groups="cert.gardener.cloud",resources=dnsentries,verbs=get;list;watch;update;patch;create;delete
+//+kubebuilder:rbac:groups="dns.gardener.cloud",resources=dnsentries,verbs=get;list;watch;update;patch;create;delete
 
 func (r *APIGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	r.log.Info("Received reconciliation request", "name", req.Name)
