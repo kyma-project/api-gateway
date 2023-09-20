@@ -54,7 +54,7 @@ func (r *APIGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		return ctrl.Result{}, err
 	}
 
-	if kymaGatewayStatus := gateway.Reconcile(ctx, r.Client, apiGatewayCR); !kymaGatewayStatus.IsSuccessful() {
+	if kymaGatewayStatus := gateway.ReconcileKymaGateway(ctx, r.Client, apiGatewayCR); !kymaGatewayStatus.IsSuccessful() {
 		return r.requeueReconciliation(ctx, apiGatewayCR, kymaGatewayStatus)
 	}
 

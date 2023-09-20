@@ -28,7 +28,7 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 		k8sClient := createFakeClient(&apiGateway)
 
 		// when
-		status := Reconcile(context.TODO(), k8sClient, apiGateway)
+		status := ReconcileKymaGateway(context.TODO(), k8sClient, apiGateway)
 
 		// then
 		Expect(status.IsSuccessful()).To(BeTrue())
@@ -50,7 +50,7 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 			k8sClient := createFakeClient(&apiGateway)
 
 			// when
-			status := Reconcile(context.TODO(), k8sClient, apiGateway)
+			status := ReconcileKymaGateway(context.TODO(), k8sClient, apiGateway)
 
 			// then
 			Expect(status.IsSuccessful()).To(BeTrue())
@@ -67,7 +67,7 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 			k8sClient := createFakeClient(&apiGateway)
 
 			// when
-			status := Reconcile(context.TODO(), k8sClient, apiGateway)
+			status := ReconcileKymaGateway(context.TODO(), k8sClient, apiGateway)
 
 			// then
 			Expect(status.IsSuccessful()).To(BeTrue())
@@ -84,7 +84,7 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 			k8sClient := createFakeClient(&apiGateway)
 
 			// when
-			status := Reconcile(context.TODO(), k8sClient, apiGateway)
+			status := ReconcileKymaGateway(context.TODO(), k8sClient, apiGateway)
 
 			// then
 			Expect(status.IsSuccessful()).To(BeTrue())
@@ -104,7 +104,7 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 			k8sClient := createFakeClient(&apiGateway)
 
 			// when
-			status := Reconcile(context.TODO(), k8sClient, apiGateway)
+			status := ReconcileKymaGateway(context.TODO(), k8sClient, apiGateway)
 
 			// then
 			Expect(status.IsSuccessful()).To(BeTrue())
@@ -122,7 +122,7 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 			k8sClient := createFakeClient(&apiGateway)
 
 			// when
-			status := Reconcile(context.TODO(), k8sClient, apiGateway)
+			status := ReconcileKymaGateway(context.TODO(), k8sClient, apiGateway)
 
 			// then
 			Expect(status.IsSuccessful()).To(BeTrue())
@@ -173,7 +173,7 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 			k8sClient := createFakeClient(&apiGateway, &cm, &igwService)
 
 			// when
-			status := Reconcile(context.TODO(), k8sClient, apiGateway)
+			status := ReconcileKymaGateway(context.TODO(), k8sClient, apiGateway)
 
 			// then
 			Expect(status.IsSuccessful()).To(BeTrue())
@@ -211,7 +211,7 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 			k8sClient := createFakeClient(&apiGateway, &cm)
 
 			// when
-			status := Reconcile(context.TODO(), k8sClient, apiGateway)
+			status := ReconcileKymaGateway(context.TODO(), k8sClient, apiGateway)
 
 			// then
 			Expect(status.IsSuccessful()).To(BeTrue())
@@ -229,7 +229,7 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 			k8sClient := createFakeClient(&apiGateway, &cm)
 
 			// when
-			status := Reconcile(context.TODO(), k8sClient, apiGateway)
+			status := ReconcileKymaGateway(context.TODO(), k8sClient, apiGateway)
 
 			// then
 			Expect(status.IsSuccessful()).To(BeTrue())
@@ -276,7 +276,7 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 		}
 
 		k8sClient := createFakeClient(&apiGateway, &apiRule)
-		status := Reconcile(context.TODO(), k8sClient, apiGateway)
+		status := ReconcileKymaGateway(context.TODO(), k8sClient, apiGateway)
 		Expect(status.IsSuccessful()).To(BeTrue())
 		kymaGateway := v1alpha3.Gateway{}
 		Expect(k8sClient.Get(context.TODO(), client.ObjectKey{Name: kymaGatewayName, Namespace: kymaGatewayNamespace}, &kymaGateway)).Should(Succeed())
@@ -288,7 +288,7 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 		}
 
 		// when
-		status = Reconcile(context.TODO(), k8sClient, updatedApiGateway)
+		status = ReconcileKymaGateway(context.TODO(), k8sClient, updatedApiGateway)
 
 		// then
 		Expect(status.IsWarning()).To(BeTrue())
@@ -303,13 +303,13 @@ func testShouldDeleteKymaGatewayNonGardenerResources(updatedApiGateway v1alpha1.
 	apiGateway := getApiGateway(true, kymaGatewayFinalizer)
 
 	k8sClient := createFakeClient(&apiGateway)
-	status := Reconcile(context.TODO(), k8sClient, apiGateway)
+	status := ReconcileKymaGateway(context.TODO(), k8sClient, apiGateway)
 	Expect(status.IsSuccessful()).To(BeTrue())
 	kymaGateway := v1alpha3.Gateway{}
 	Expect(k8sClient.Get(context.TODO(), client.ObjectKey{Name: kymaGatewayName, Namespace: kymaGatewayNamespace}, &kymaGateway)).Should(Succeed())
 
 	// when
-	status = Reconcile(context.TODO(), k8sClient, updatedApiGateway)
+	status = ReconcileKymaGateway(context.TODO(), k8sClient, updatedApiGateway)
 
 	// then
 	Expect(status.IsSuccessful()).To(BeTrue())
@@ -335,13 +335,13 @@ func testShouldDeleteKymaGatewayResources(updatedApiGateway v1alpha1.APIGateway)
 	igwService := getTestIstioIngressGatewayIpBasedService()
 
 	k8sClient := createFakeClient(&apiGateway, &cm, &igwService)
-	status := Reconcile(context.TODO(), k8sClient, apiGateway)
+	status := ReconcileKymaGateway(context.TODO(), k8sClient, apiGateway)
 	Expect(status.IsSuccessful()).To(BeTrue())
 	kymaGateway := v1alpha3.Gateway{}
 	Expect(k8sClient.Get(context.TODO(), client.ObjectKey{Name: kymaGatewayName, Namespace: kymaGatewayNamespace}, &kymaGateway)).Should(Succeed())
 
 	// when
-	status = Reconcile(context.TODO(), k8sClient, updatedApiGateway)
+	status = ReconcileKymaGateway(context.TODO(), k8sClient, updatedApiGateway)
 
 	// then
 	Expect(status.IsSuccessful()).To(BeTrue())

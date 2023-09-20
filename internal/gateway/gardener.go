@@ -24,6 +24,7 @@ func getGardenerDomain(ctx context.Context, k8sClient client.Client) (string, er
 	return cm.Data["domain"], nil
 }
 
+// runsOnGardnerCluster returns true if the cluster is a Gardener cluster validated by the presence of the shoot-info configmap.
 func runsOnGardnerCluster(ctx context.Context, k8sClient client.Client) (bool, error) {
 	_, err := getGardenerShootInfo(ctx, k8sClient)
 
