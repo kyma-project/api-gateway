@@ -44,6 +44,8 @@ func NewAPIGatewayReconciler(mgr manager.Manager) *APIGatewayReconciler {
 //+kubebuilder:rbac:groups="cert.gardener.cloud",resources=dnsentries,verbs=get;list;watch;update;patch;create;delete
 
 func (r *APIGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+	r.log.Info("Received reconciliation request", "name", req.Name)
+
 	apiGatewayCR := v1alpha1.APIGateway{}
 	if err := r.Client.Get(ctx, req.NamespacedName, &apiGatewayCR); err != nil {
 		if apierrors.IsNotFound(err) {
@@ -54,8 +56,17 @@ func (r *APIGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		return ctrl.Result{}, err
 	}
 
-	if kymaGatewayStatus := gateway.ReconcileKymaGateway(ctx, r.Client, apiGatewayCR); !kymaGatewayStatus.IsSuccessful() {
+	r.log.Info("Reconciling APIGateway CR", "name", apiGatewayCR.Name, "isInDeletion", apiGatewayCR.IsInGracefulDeletion())
+
+	if kymaGatewayStatus := gateway.ReconcileKymaGateway(ctx, r.Client, &apiGatewayCR); !kymaGatewayStatus.IsSuccessful() {
 		return r.requeueReconciliation(ctx, apiGatewayCR, kymaGatewayStatus)
+	}
+
+	// If there are no finalizers left, we must assume that the resource is deleted and therefore must stop the reconciliation
+	// to prevent accidental read or write to the resource.
+	if apiGatewayCR.IsInGracefulDeletion() && !apiGatewayCR.HasFinalizer() {
+		r.log.Info("End reconciliation because all finalizers have been removed")
+		return ctrl.Result{}, nil
 	}
 
 	return r.finishReconcile(ctx, apiGatewayCR)

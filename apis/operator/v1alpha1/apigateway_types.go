@@ -79,3 +79,7 @@ func init() {
 func (a *APIGateway) IsInGracefulDeletion() bool {
 	return !a.DeletionTimestamp.IsZero()
 }
+
+func (a *APIGateway) HasFinalizer() bool {
+	return len(a.Finalizers) > 0
+}

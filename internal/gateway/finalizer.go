@@ -3,7 +3,6 @@ package gateway
 import (
 	"context"
 	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
-	"k8s.io/client-go/util/retry"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -17,34 +16,12 @@ func hasKymaGatewayFinalizer(apiGatewayCR v1alpha1.APIGateway) bool {
 
 func addKymaGatewayFinalizer(ctx context.Context, k8sClient client.Client, apiGatewayCR *v1alpha1.APIGateway) error {
 	ctrl.Log.Info("Adding finalizer", "finalizer", kymaGatewayFinalizer)
-	return retry.RetryOnConflict(retry.DefaultRetry, func() error {
-		if err := k8sClient.Get(ctx, client.ObjectKeyFromObject(apiGatewayCR), apiGatewayCR); err != nil {
-			return err
-		}
-
-		controllerutil.AddFinalizer(apiGatewayCR, kymaGatewayFinalizer)
-
-		if err := k8sClient.Update(ctx, apiGatewayCR); err != nil {
-			return err
-		}
-
-		return nil
-	})
+	controllerutil.AddFinalizer(apiGatewayCR, kymaGatewayFinalizer)
+	return k8sClient.Update(ctx, apiGatewayCR)
 }
 
 func removeKymaGatewayFinalizer(ctx context.Context, k8sClient client.Client, apiGatewayCR *v1alpha1.APIGateway) error {
 	ctrl.Log.Info("Removing finalizer", "finalizer", kymaGatewayFinalizer)
-	return retry.RetryOnConflict(retry.DefaultRetry, func() error {
-		if err := k8sClient.Get(ctx, client.ObjectKeyFromObject(apiGatewayCR), apiGatewayCR); err != nil {
-			return err
-		}
-
-		controllerutil.RemoveFinalizer(apiGatewayCR, kymaGatewayFinalizer)
-
-		if err := k8sClient.Update(ctx, apiGatewayCR); err != nil {
-			return err
-		}
-
-		return nil
-	})
+	controllerutil.RemoveFinalizer(apiGatewayCR, kymaGatewayFinalizer)
+	return k8sClient.Update(ctx, apiGatewayCR)
 }
