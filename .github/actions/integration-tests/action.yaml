@@ -15,14 +15,14 @@ runs:
       run: |
         sudo echo "127.0.0.1 local.kyma.dev" | sudo tee -a /etc/hosts
         wget -q -O - https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | sudo bash
-        sudo curl -Lo /usr/bin/kyma https://storage.googleapis.com/kyma-cli-unstable/kyma-linux
-        sudo chmod +x /usr/bin/kyma
     - name: Run integration tests
       env:
         KYMA_DOMAIN: "local.kyma.dev"
         KYMA_COMPONENTS: "hack/kyma-components.yaml"
       shell: bash
       run: |
+        sudo curl -Lo /usr/bin/kyma https://storage.googleapis.com/kyma-cli-unstable/kyma-linux
+        sudo chmod +x /usr/bin/kyma
         sudo kyma provision k3d
         KUBECONFIG=$(k3d kubeconfig merge kyma) EXPORT_RESULT=true make install-kyma test-integration
         sudo k3d cluster delete kyma
@@ -32,6 +32,8 @@ runs:
         KYMA_COMPONENTS: "hack/kyma-components-no-istio.yaml"
       shell: bash
       run: |
+        sudo curl -Lo /usr/bin/kyma https://storage.googleapis.com/kyma-cli-unstable/kyma-linux
+        sudo chmod +x /usr/bin/kyma
         sudo kyma provision k3d
         KUBECONFIG=$(k3d kubeconfig merge kyma) EXPORT_RESULT=true make install-kyma test-integration
         sudo k3d cluster delete kyma
@@ -43,6 +45,10 @@ runs:
         KYMA_COMPONENTS: "hack/kyma-components.yaml"
       shell: bash
       run: |
+        sudo curl -Lo kyma.tar.gz "https://github.com/kyma-project/cli/releases/latest/download/kyma_linux_x86_64.tar.gz"
+        sudo tar -zxvf kyma.tar.gz -C /usr/bin
+        sudo rm -f kyma.tar.gz
+        sudo chmod +x /usr/bin/kyma
         sudo kyma provision k3d
         KUBECONFIG=$(k3d kubeconfig merge kyma) EXPORT_RESULT=true make install-kyma test-upgrade
         sudo k3d cluster delete kyma
