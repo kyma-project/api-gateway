@@ -136,7 +136,7 @@ test-custom-domain:
 kyma-cli:
 ifeq ($(UPGRADE_JOB), true)
 	curl -Lo kyma.tar.gz "https://github.com/kyma-project/cli/releases/latest/download/kyma_linux_x86_64.tar.gz"
-	tar -zxvf kyma.tar.gz -C /usr/bin
+	tar -C /usr/bin -zxvf kyma.tar.gz kyma
 	rm -f kyma.tar.gz
 	chmod +x /usr/bin/kyma
 else

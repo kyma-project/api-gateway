@@ -46,7 +46,7 @@ runs:
       shell: bash
       run: |
         sudo curl -Lo kyma.tar.gz "https://github.com/kyma-project/cli/releases/latest/download/kyma_linux_x86_64.tar.gz"
-        sudo tar -zxvf kyma.tar.gz -C /usr/bin
+        sudo tar -C /usr/bin -zxvf kyma.tar.gz kyma
         sudo rm -f kyma.tar.gz
         sudo chmod +x /usr/bin/kyma
         sudo kyma provision k3d
