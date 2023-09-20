@@ -134,8 +134,15 @@ test-custom-domain:
 
 .PHONY: kyma-cli
 kyma-cli:
+ifeq ($(UPGRADE_JOB), true)
+	curl -Lo kyma.tar.gz "https://github.com/kyma-project/cli/releases/latest/download/kyma_linux_x86_64.tar.gz"
+	tar -zxvf kyma.tar.gz -C /usr/bin
+	rm -f kyma.tar.gz
+	chmod +x /usr/bin/kyma
+else
 	curl -Lo /usr/bin/kyma https://storage.googleapis.com/kyma-cli-unstable/kyma-linux
 	chmod +x /usr/bin/kyma
+endif
 
 .PHONY: k3d
 k3d:
