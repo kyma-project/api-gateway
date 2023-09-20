@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/avast/retry-go/v4"
 	"github.com/cucumber/godog"
-	apirulev1beta1 "github.com/kyma-project/api-gateway/api/v1beta1"
+	apirulev1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/auth"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/helpers"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/manifestprocessor"
