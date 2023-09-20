@@ -43,7 +43,7 @@ func reconcileKymaGateway(ctx context.Context, k8sClient client.Client, apiGatew
 }
 
 func isKymaGatewayEnabled(cr v1alpha1.APIGateway) bool {
-	return cr.Spec.EnableKymaGateway != nil && *cr.Spec.EnableKymaGateway == true
+	return cr.Spec.EnableKymaGateway != nil && *cr.Spec.EnableKymaGateway
 }
 
 func deleteKymaGateway(ctx context.Context, k8sClient client.Client, kymaGateway unstructured.Unstructured) error {
