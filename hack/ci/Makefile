@@ -15,6 +15,7 @@ module-build:
 		MODULE_REGISTRY=${MODULE_REGISTRY} \
 		MODULE_VERSION=${MODULE_VERSION}-${MODULE_SHA} \
 		MODULE_CHANNEL=fast
+	@echo "\n- creating template for regular channel"
 	@sed -e 's/([- ])fast/\\1regular/g' <${PROJECT_ROOT}/template-fast.yaml >${PROJECT_ROOT}/template-regular.yaml
 
 .PHONY: module-template-arifact
