@@ -21,6 +21,7 @@ runs:
         KYMA_COMPONENTS: "hack/kyma-components.yaml"
       shell: bash
       run: |
+        set -x
         sudo curl -Lo /usr/bin/kyma https://storage.googleapis.com/kyma-cli-unstable/kyma-linux
         sudo chmod +x /usr/bin/kyma
         sudo kyma version
@@ -33,6 +34,7 @@ runs:
         KYMA_COMPONENTS: "hack/kyma-components-no-istio.yaml"
       shell: bash
       run: |
+        set -x
         sudo curl -Lo /usr/bin/kyma https://storage.googleapis.com/kyma-cli-unstable/kyma-linux
         sudo chmod +x /usr/bin/kyma
         sudo kyma version
@@ -47,6 +49,7 @@ runs:
         KYMA_COMPONENTS: "hack/kyma-components.yaml"
       shell: bash
       run: |
+        set -x
         sudo rm -f /usr/bin/kyma
         sudo curl -Lo kyma.tar.gz "https://github.com/kyma-project/cli/releases/latest/download/kyma_linux_x86_64.tar.gz"
         sudo tar -C /usr/bin -zxvf kyma.tar.gz kyma
