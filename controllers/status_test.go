@@ -18,7 +18,7 @@ var _ = Describe("status", func() {
 		It("Should Update APIGateway CR state and set description", func() {
 			// given
 			cr := operatorv1alpha1.APIGateway{
-				ObjectMeta: metav1.ObjectMeta{Name: "test", Namespace: "default"},
+				ObjectMeta: metav1.ObjectMeta{Name: "test"},
 			}
 
 			newStatus := ErrorStatus(fmt.Errorf("test error"), "test description")
@@ -28,7 +28,7 @@ var _ = Describe("status", func() {
 
 			// then
 			Expect(err).ToNot(HaveOccurred())
-			Expect(k8sClient.Get(context.TODO(), types.NamespacedName{Name: "test", Namespace: "default"}, &cr)).To(Succeed())
+			Expect(k8sClient.Get(context.TODO(), types.NamespacedName{Name: "test"}, &cr)).To(Succeed())
 			Expect(cr.Status.State).To(Equal(operatorv1alpha1.Error))
 			Expect(cr.Status.Description).To(Equal("test description"))
 		})
@@ -36,7 +36,7 @@ var _ = Describe("status", func() {
 		It("Should return error if update status fails", func() {
 			// given
 			cr := operatorv1alpha1.APIGateway{
-				ObjectMeta: metav1.ObjectMeta{Name: "test", Namespace: "default"},
+				ObjectMeta: metav1.ObjectMeta{Name: "test"},
 			}
 
 			newStatus := SuccessfulStatus()

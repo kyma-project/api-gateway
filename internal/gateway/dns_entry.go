@@ -29,7 +29,7 @@ func reconcileKymaGatewayDnsEntry(ctx context.Context, k8sClient client.Client, 
 	isEnabled := isKymaGatewayEnabled(apiGatewayCR)
 	ctrl.Log.Info("Reconciling DNS entry", "KymaGatewayEnabled", isEnabled, "Name", name, "Namespace", namespace)
 
-	if !isEnabled {
+	if !isEnabled || apiGatewayCR.IsInGracefulDeletion() {
 		return deleteDnsEntry(k8sClient, name, namespace)
 	}
 
@@ -66,9 +66,7 @@ func deleteDnsEntry(k8sClient client.Client, name, namespace string) error {
 		return fmt.Errorf("failed to delete DNSEntry %s/%s: %v", namespace, name, err)
 	}
 
-	if err == nil {
-		ctrl.Log.Info("Successfully deleted DNSEntry", "Name", name, "Namespace", namespace)
-	}
+	ctrl.Log.Info("Successfully deleted DNSEntry", "Name", name, "Namespace", namespace)
 
 	return nil
 }

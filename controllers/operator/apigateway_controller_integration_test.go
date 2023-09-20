@@ -37,7 +37,6 @@ var _ = Describe("API Gateway Controller", Serial, func() {
 			Expect(k8sClient.Create(ctx, &apiGateway)).Should(Succeed())
 			defer func() {
 				apiGatewayTeardown(&apiGateway)
-				kymaGatewayTeardown()
 			}()
 			// then
 			Eventually(func(g Gomega) {
@@ -92,7 +91,6 @@ var _ = Describe("API Gateway Controller", Serial, func() {
 			Expect(k8sClient.Create(ctx, &apiGateway)).Should(Succeed())
 			defer func() {
 				apiGatewayTeardown(&apiGateway)
-				kymaGatewayTeardown()
 			}()
 
 			By("Verifying that APIGateway CR reconciliation was successful and Kyma gateway was created")
@@ -139,7 +137,6 @@ var _ = Describe("API Gateway Controller", Serial, func() {
 			Expect(k8sClient.Create(ctx, &apiGateway)).Should(Succeed())
 			defer func() {
 				apiGatewayTeardown(&apiGateway)
-				kymaGatewayTeardown()
 			}()
 
 			By("Creating APIRule")
@@ -204,28 +201,6 @@ func apiGatewayTeardown(apiGateway *v1alpha1.APIGateway) {
 
 		a := v1alpha1.APIGateway{}
 		err = k8sClient.Get(context.TODO(), client.ObjectKey{Name: apiGateway.Name}, &a)
-		g.Expect(errors.IsNotFound(err)).To(BeTrue())
-	}, eventuallyTimeout).Should(Succeed())
-}
-
-// TODO: Remove this since this is a workaround until it's clarified how we handle ownership issue of Kyma Gateway
-func kymaGatewayTeardown() {
-	By("Deleting Gateway kyma-gateway as part of teardown")
-	Eventually(func(g Gomega) {
-		gw := v1alpha3.Gateway{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "kyma-gateway",
-				Namespace: "kyma-system",
-			},
-		}
-		err := k8sClient.Delete(context.TODO(), &gw)
-
-		if err != nil {
-			Expect(errors.IsNotFound(err)).To(BeTrue())
-		}
-
-		a := v1alpha3.Gateway{}
-		err = k8sClient.Get(context.TODO(), client.ObjectKey{Name: gw.Name, Namespace: gw.Namespace}, &a)
 		g.Expect(errors.IsNotFound(err)).To(BeTrue())
 	}, eventuallyTimeout).Should(Succeed())
 }

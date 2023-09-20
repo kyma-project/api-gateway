@@ -31,7 +31,7 @@ func reconcileKymaGatewayCertificate(ctx context.Context, k8sClient client.Clien
 	isEnabled := isKymaGatewayEnabled(apiGatewayCR)
 	ctrl.Log.Info("Reconciling Certificate", "KymaGatewayEnabled", isEnabled, "Name", kymaGatewayCertificateName, "Namespace", certificateDefaultNamespace)
 
-	if !isEnabled {
+	if !isEnabled || apiGatewayCR.IsInGracefulDeletion() {
 		return deleteCertificate(k8sClient, kymaGatewayCertificateName)
 	}
 
@@ -64,9 +64,7 @@ func deleteCertificate(k8sClient client.Client, name string) error {
 		return fmt.Errorf("failed to delete Certificate %s/%s: %v", certificateDefaultNamespace, name, err)
 	}
 
-	if err == nil {
-		ctrl.Log.Info("Successfully deleted Certificate", "Name", name, "Namespace", certificateDefaultNamespace)
-	}
+	ctrl.Log.Info("Successfully deleted Certificate", "Name", name, "Namespace", certificateDefaultNamespace)
 
 	return nil
 }
@@ -76,12 +74,10 @@ func reconcileNonGardenerCertificateSecret(ctx context.Context, k8sClient client
 	isEnabled := isKymaGatewayEnabled(apiGatewayCR)
 	ctrl.Log.Info("Reconciling Certificate Secret", "KymaGatewayEnabled", isEnabled, "Name", kymaGatewayCertSecretName, "Namespace", certificateDefaultNamespace)
 
-	if !isEnabled {
-		// We don't use a OwnerReference for cleanup, because the Certificate is created in a different namespace
+	if !isEnabled || apiGatewayCR.IsInGracefulDeletion() {
 		return deleteSecret(k8sClient, kymaGatewayCertSecretName, certificateDefaultNamespace)
 	}
 
-	ctrl.Log.Info("Reconciling fallback certificate secret", "Name", kymaGatewayCertSecretName, "Namespace", certificateDefaultNamespace)
 	templateValues := make(map[string]string)
 	templateValues["Name"] = kymaGatewayCertSecretName
 	templateValues["Namespace"] = certificateDefaultNamespace
@@ -103,9 +99,7 @@ func deleteSecret(k8sClient client.Client, name, namespace string) error {
 		return fmt.Errorf("failed to delete certificate secret %s/%s: %v", certificateDefaultNamespace, name, err)
 	}
 
-	if err == nil {
-		ctrl.Log.Info("Successfully deleted certificate secret", "Name", name, "Namespace", namespace)
-	}
+	ctrl.Log.Info("Successfully deleted certificate secret", "Name", name, "Namespace", namespace)
 
 	return nil
 }

@@ -11,19 +11,33 @@ import (
 	"text/template"
 )
 
+const (
+	disclaimerKey   = "apigateways.operator.kyma-project.io/managed-by-disclaimer"
+	disclaimerValue = "DO NOT EDIT - This resource is managed by Kyma.\nAny modifications are discarded and the resource is reverted to the original state."
+)
+
 func applyResource(ctx context.Context, k8sClient client.Client, resourceManifest []byte, templateValues map[string]string) error {
 
+	resource, err := createUnstructuredResource(resourceManifest, templateValues)
+	if err != nil {
+		return err
+	}
+
+	return createOrUpdateResource(ctx, k8sClient, resource)
+}
+
+func createUnstructuredResource(resourceManifest []byte, templateValues map[string]string) (unstructured.Unstructured, error) {
 	resourceBuffer, err := applyTemplateValuesToResourceManifest(resourceManifest, templateValues)
 	if err != nil {
-		return fmt.Errorf("failed to apply template values to resource manifest: %v", err)
+		return unstructured.Unstructured{}, fmt.Errorf("failed to apply template values to resource manifest: %v", err)
 	}
 
 	resource, err := unmarshalResourceBuffer(resourceBuffer.Bytes())
 	if err != nil {
-		return fmt.Errorf("failed to unmarshall yaml: %v", err)
+		return unstructured.Unstructured{}, fmt.Errorf("failed to unmarshall yaml: %v", err)
 	}
 
-	return createOrUpdateResource(ctx, k8sClient, resource)
+	return resource, nil
 }
 
 func applyTemplateValuesToResourceManifest(resourceManifest []byte, templateValues map[string]string) (bytes.Buffer, error) {

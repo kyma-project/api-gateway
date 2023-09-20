@@ -7,20 +7,26 @@ import (
 	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
 	"github.com/kyma-project/api-gateway/controllers"
+	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
 	nonGardenerDomainName = "local.kyma.dev"
-	disclaimerKey         = "apigateways.operator.kyma-project.io/managed-by-disclaimer"
-	disclaimerValue       = "DO NOT EDIT - This resource is managed by Kyma.\nAny modifications are discarded and the resource is reverted to the original state."
 )
 
 // Reconcile returns a status reflecting
 func Reconcile(ctx context.Context, k8sClient client.Client, apiGatewayCR v1alpha1.APIGateway) controllers.Status {
 
-	if !isKymaGatewayEnabled(apiGatewayCR) {
+	isKymaGatewayEnable := isKymaGatewayEnabled(apiGatewayCR)
 
+	if isKymaGatewayEnable {
+		if !hasKymaGatewayFinalizer(apiGatewayCR) {
+			if err := addKymaGatewayFinalizer(ctx, k8sClient, &apiGatewayCR); err != nil {
+				return controllers.ErrorStatus(err, "Failed to add finalizer during Kyma Gateway reconciliation")
+			}
+		}
+	} else {
 		apiRuleExists, err := anyApiRuleExists(ctx, k8sClient)
 		if err != nil {
 			return controllers.ErrorStatus(err, "Error during evaluation of Kyma Gateway reconciliation")
@@ -31,6 +37,11 @@ func Reconcile(ctx context.Context, k8sClient client.Client, apiGatewayCR v1alph
 		if apiRuleExists {
 			return controllers.WarningStatus(fmt.Errorf("kyma gateway deletion blocked by APIRules"), "Kyma Gateway cannot be disabled because APIRules exist.")
 		}
+
+		if !hasKymaGatewayFinalizer(apiGatewayCR) {
+			ctrl.Log.Info("Kyma Gateway is disabled and no finalizer exists, reconciliation is skipped.")
+			return controllers.SuccessfulStatus()
+		}
 	}
 
 	isGardenerCluster, err := runsOnGardnerCluster(ctx, k8sClient)
@@ -38,33 +49,21 @@ func Reconcile(ctx context.Context, k8sClient client.Client, apiGatewayCR v1alph
 		return controllers.ErrorStatus(err, "Error during Kyma Gateway reconciliation")
 	}
 
+	var reconcileErr error
 	if isGardenerCluster {
-
-		domain, err := getGardenerDomain(ctx, k8sClient)
-		if err != nil {
-			err = fmt.Errorf("failed to get Kyma gateway domain: %v", err)
-			return controllers.ErrorStatus(err, "Error during Kyma Gateway reconciliation")
-		}
-
-		if err := reconcileKymaGatewayDnsEntry(ctx, k8sClient, apiGatewayCR, domain); err != nil {
-			return controllers.ErrorStatus(err, "Error during Kyma Gateway DNSEntry reconciliation")
-		}
-
-		if err := reconcileKymaGatewayCertificate(ctx, k8sClient, apiGatewayCR, domain); err != nil {
-			return controllers.ErrorStatus(err, "Error during Kyma Gateway Certificate reconciliation")
-		}
-
-		if err := reconcileKymaGateway(ctx, k8sClient, apiGatewayCR, domain); err != nil {
-			return controllers.ErrorStatus(err, "Error during Kyma Gateway reconciliation")
-		}
-
+		reconcileErr = reconcileGardenerKymaGateway(ctx, k8sClient, apiGatewayCR)
 	} else {
-		if err := reconcileKymaGateway(ctx, k8sClient, apiGatewayCR, nonGardenerDomainName); err != nil {
-			return controllers.ErrorStatus(err, "Error during Kyma Gateway reconciliation")
-		}
+		reconcileErr = reconcileNonGardenerKymaGateway(ctx, k8sClient, apiGatewayCR)
+	}
 
-		if err := reconcileNonGardenerCertificateSecret(ctx, k8sClient, apiGatewayCR); err != nil {
-			return controllers.ErrorStatus(err, "Error during Kyma Gateway Certificate Secret reconciliation")
+	if reconcileErr != nil {
+		return controllers.ErrorStatus(reconcileErr, "Error during Kyma Gateway reconciliation")
+	}
+
+	// Besides on disabling the Kyma gateway, we also need to remove the finalizer on APIGateway deletion to make sure we are not blocking the deletion of the CR.
+	if !isKymaGatewayEnable || apiGatewayCR.IsInGracefulDeletion() {
+		if err := removeKymaGatewayFinalizer(ctx, k8sClient, &apiGatewayCR); err != nil {
+			return controllers.ErrorStatus(err, "Failed to remove finalizer during Kyma Gateway reconciliation")
 		}
 	}
 
@@ -79,4 +78,29 @@ func anyApiRuleExists(ctx context.Context, k8sClient client.Client) (bool, error
 	}
 
 	return len(apiRuleList.Items) > 0, nil
+}
+
+func reconcileGardenerKymaGateway(ctx context.Context, k8sClient client.Client, apiGatewayCR v1alpha1.APIGateway) error {
+	domain, err := getGardenerDomain(ctx, k8sClient)
+	if err != nil {
+		return fmt.Errorf("failed to get Kyma gateway domain: %v", err)
+	}
+
+	if err := reconcileKymaGatewayDnsEntry(ctx, k8sClient, apiGatewayCR, domain); err != nil {
+		return err
+	}
+
+	if err := reconcileKymaGatewayCertificate(ctx, k8sClient, apiGatewayCR, domain); err != nil {
+		return err
+	}
+
+	return reconcileKymaGateway(ctx, k8sClient, apiGatewayCR, domain)
+}
+
+func reconcileNonGardenerKymaGateway(ctx context.Context, k8sClient client.Client, apiGatewayCR v1alpha1.APIGateway) error {
+	if err := reconcileNonGardenerCertificateSecret(ctx, k8sClient, apiGatewayCR); err != nil {
+		return err
+	}
+
+	return reconcileKymaGateway(ctx, k8sClient, apiGatewayCR, nonGardenerDomainName)
 }

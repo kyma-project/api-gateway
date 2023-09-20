@@ -74,3 +74,8 @@ type APIGatewayList struct {
 func init() {
 	SchemeBuilder.Register(&APIGateway{}, &APIGatewayList{})
 }
+
+// IsInGracefulDeletion returns true if the APIGateway is in deletion process, false otherwise.
+func (a *APIGateway) IsInGracefulDeletion() bool {
+	return !a.DeletionTimestamp.IsZero()
+}
