@@ -1,9 +1,5 @@
 name: 'Integration tests'
 description: 'Runs integration tests'
-inputs:
-  upgrade-image-name:
-    description: 'Image that will api-gateway be upgraded to'
-    required: true
 runs:
   using: "composite"
   steps:
@@ -39,12 +35,10 @@ runs:
       env:
         UPGRADE_JOB: "true"
         KYMA_DOMAIN: "local.kyma.dev"
-        TEST_UPGRADE_IMG: ${{ inputs.upgrade-image-name }}
         KYMA_COMPONENTS: "hack/kyma-components.yaml"
       shell: bash
       run: |
-        set -x
-        sudo rm -f /usr/bin/kyma
+        sudo rm -f /home/runner/.kyma
         sudo curl -Lo kyma.tar.gz "https://github.com/kyma-project/cli/releases/latest/download/kyma_linux_x86_64.tar.gz"
         sudo tar -C /usr/bin -zxvf kyma.tar.gz kyma
         sudo rm -f kyma.tar.gz

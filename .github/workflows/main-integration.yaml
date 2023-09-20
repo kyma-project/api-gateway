@@ -16,6 +16,11 @@ on:
     branches:
       - main
   workflow_dispatch:
+    inputs:
+      istio_version:
+        description: 'Istio version to deploy for testing'
+        type: environment
+        required: true
 
 jobs:
   wait-for-image-build:
@@ -44,8 +49,8 @@ jobs:
           OIDC_ISSUER_URL: ${{ secrets.OIDC_ISSUER_URL }}
           JOB_TYPE: postsubmit
           PULL_BASE_SHA: ${{ github.sha }}
-        with:
-          upgrade-image-name: ""
+          ISTIO_VERSION: ${{ inputs.istio_version }}
+          TEST_UPGRADE_IMG: ""
 
   slack_failed_notification:
     name: Slack Notification
