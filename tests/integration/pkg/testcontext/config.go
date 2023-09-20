@@ -2,7 +2,7 @@ package testcontext
 
 import (
 	"fmt"
-	"github.com/avast/retry-go"
+	"github.com/avast/retry-go/v4"
 	"github.com/vrischmann/envconfig"
 	"time"
 )

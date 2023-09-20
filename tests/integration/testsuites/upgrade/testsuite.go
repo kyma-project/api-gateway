@@ -1,4 +1,4 @@
-package ory
+package upgrade
 
 import (
 	"context"
@@ -16,11 +16,19 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 	"log"
+	"os"
 	"path"
 	"time"
 )
 
-const manifestsDirectory = "testsuites/ory/manifests/"
+const manifestsDirectory = "testsuites/upgrade/manifests/"
+const upgradeImageEnv = "TEST_UPGRADE_IMG"
+
+type tokenFrom struct {
+	From     string
+	Prefix   string
+	AsHeader bool
+}
 
 func (t *testsuite) createScenario(templateFileName string, scenarioName string) *scenario {
 	ns := t.namespace
@@ -43,13 +51,21 @@ func (t *testsuite) createScenario(templateFileName string, scenarioName string)
 		ManifestTemplate:        template,
 		ApiResourceManifestPath: templateFileName,
 		ApiResourceDirectory:    path.Dir(manifestsDirectory),
+		APIGatewayImageVersion:  getUpgradeImageVersion(),
 		k8sClient:               t.K8sClient(),
 		oauth2Cfg:               t.oauth2Cfg,
 		httpClient:              t.httpClient,
 		resourceManager:         t.ResourceManager(),
 		config:                  t.config,
-		jwtConfig:               t.jwtConfig,
 	}
+}
+
+func getUpgradeImageVersion() string {
+	imageVersion, ok := os.LookupEnv(upgradeImageEnv)
+	if !ok {
+		panic(fmt.Sprintf("could not get %s", upgradeImageEnv))
+	}
+	return imageVersion
 }
 
 type testsuite struct {
@@ -60,25 +76,6 @@ type testsuite struct {
 	resourceManager *resource.Manager
 	config          testcontext.Config
 	oauth2Cfg       *clientcredentials.Config
-	jwtConfig       *clientcredentials.Config
-}
-
-func (t *testsuite) InitScenarios(ctx *godog.ScenarioContext) {
-	initOAuth2JWTOnePath(ctx, t)
-	initOAuth2JWTTwoPaths(ctx, t)
-	initOAuth2Endpoint(ctx, t)
-	initServicePerPath(ctx, t)
-	initUnsecured(ctx, t)
-	initSecuredToUnsecuredEndpoint(ctx, t)
-	initUnsecuredToSecured(ctx, t)
-}
-
-func (t *testsuite) FeaturePath() string {
-	return "testsuites/ory/features/"
-}
-
-func (t *testsuite) Name() string {
-	return t.name
 }
 
 func (t *testsuite) ResourceManager() *resource.Manager {
@@ -94,14 +91,6 @@ func (t *testsuite) Setup() error {
 	log.Printf("Using namespace: %s\n", namespace)
 
 	oauth2Cfg := &clientcredentials.Config{
-		ClientID:     t.config.ClientID,
-		ClientSecret: t.config.ClientSecret,
-		TokenURL:     fmt.Sprintf("%s/oauth2/token", t.config.IssuerUrl),
-		Scopes:       []string{"read"},
-		AuthStyle:    oauth2.AuthStyleInHeader,
-	}
-
-	jwtConfig := &clientcredentials.Config{
 		ClientID:     t.config.ClientID,
 		ClientSecret: t.config.ClientSecret,
 		TokenURL:     fmt.Sprintf("%s/oauth2/token", t.config.IssuerUrl),
@@ -134,12 +123,8 @@ func (t *testsuite) Setup() error {
 		return err
 	}
 
-	time.Sleep(time.Duration(t.config.ReqDelay) * time.Second)
-
 	t.oauth2Cfg = oauth2Cfg
 	t.namespace = namespace
-	t.jwtConfig = jwtConfig
-
 	return nil
 }
 
@@ -151,10 +136,22 @@ func (t *testsuite) TearDown() {
 	}
 }
 
+func (t *testsuite) FeaturePath() string {
+	return "testsuites/upgrade/features/"
+}
+
+func (t *testsuite) Name() string {
+	return t.name
+}
+
+func (t *testsuite) InitScenarios(ctx *godog.ScenarioContext) {
+	initCommon(ctx, t)
+}
+
 func NewTestsuite(httpClient *helpers.RetryableHttpClient, k8sClient dynamic.Interface, rm *resource.Manager, config testcontext.Config) testcontext.Testsuite {
 
 	return &testsuite{
-		name:            "ory",
+		name:            "upgrade",
 		httpClient:      httpClient,
 		k8sClient:       k8sClient,
 		resourceManager: rm,
