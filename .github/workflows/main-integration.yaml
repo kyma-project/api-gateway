@@ -15,6 +15,7 @@ on:
       - ".github/**" #Ignoring since build job isn't triggered on the workflow directory changes
     branches:
       - main
+  workflow_dispatch:
 
 jobs:
   wait-for-image-build:
