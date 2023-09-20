@@ -138,7 +138,7 @@ k3d:
 provision-k3d:
 	kyma provision k3d --ci
 
-.PHONY: install-kyma
+.PHONY: kustomize install-kyma
 install-kyma:
 ifndef JOB_TYPE
 	kyma deploy --ci -s main -c hack/kyma-components.yaml
