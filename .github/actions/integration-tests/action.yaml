@@ -24,7 +24,7 @@ runs:
       shell: bash
       run: |
         sudo kyma provision k3d
-        KUBECONFIG=$(k3d kubeconfig merge kyma) EXPORT_RESULT=true kyma version && make install-kyma test-integration
+        KUBECONFIG=$(k3d kubeconfig merge kyma) EXPORT_RESULT=true make install-kyma test-integration
         sudo k3d cluster delete kyma
     - name: Run integration tests with Istio module
       env:
@@ -33,7 +33,7 @@ runs:
       shell: bash
       run: |
         sudo kyma provision k3d
-        KUBECONFIG=$(k3d kubeconfig merge kyma) EXPORT_RESULT=true kyma version && make install-kyma test-integration
+        KUBECONFIG=$(k3d kubeconfig merge kyma) EXPORT_RESULT=true make install-kyma test-integration
         sudo k3d cluster delete kyma
     - name: Run upgrade integration tests
       env:
@@ -50,7 +50,7 @@ runs:
         sudo rm -f kyma.tar.gz
         sudo chmod +x /usr/bin/kyma
         sudo kyma provision k3d
-        KUBECONFIG=$(k3d kubeconfig merge kyma) EXPORT_RESULT=true kyma version && make install-kyma test-upgrade
+        KUBECONFIG=$(k3d kubeconfig merge kyma) EXPORT_RESULT=true make install-kyma test-upgrade
         sudo k3d cluster delete kyma
     - uses: actions/upload-artifact@v3
       with:

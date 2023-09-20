@@ -154,6 +154,7 @@ provision-k3d:
 
 .PHONY: kustomize install-kyma
 install-kyma:
+	kyma version
 ifeq ($(KYMA_COMPONENTS), hack/kyma-components-no-istio.yaml)
 	kubectl apply -f https://github.com/kyma-project/istio/releases/latest/download/istio-manager.yaml
 	kubectl apply -f https://github.com/kyma-project/istio/releases/latest/download/istio-default-cr.yaml
