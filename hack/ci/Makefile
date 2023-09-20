@@ -24,12 +24,15 @@ module-template-artifact:
 
 .PHONY: module-template-print
 module-template-print:
-	@echo -e "\n~~~~~~~~~~~~BEGINNING OF MODULE TEMPLATE FAST CHANNEL~~~~~~~~~~~~~~"
+	@echo
+	@echo "~~~~~~~~~~~~BEGINNING OF MODULE TEMPLATE FAST CHANNEL~~~~~~~~~~~~~~"
 	@cat ${PROJECT_ROOT}/template-fast.yaml
-	@echo -e "\n~~~~~~~~~~~~~~~END OF MODULE TEMPLATE FAST CHANNEL~~~~~~~~~~~~~~~~"
-	@echo "-e \n~~~~~~~~~~~~BEGINNING OF MODULE TEMPLATE REGULAR CHANNEL~~~~~~~~~~~~~~"
+	@echo "~~~~~~~~~~~~~~~END OF MODULE TEMPLATE FAST CHANNEL~~~~~~~~~~~~~~~~"
+	@echo
+	@echo "~~~~~~~~~~~~BEGINNING OF MODULE TEMPLATE REGULAR CHANNEL~~~~~~~~~~~~~~"
 	@cat ${PROJECT_ROOT}/template-regular.yaml
-	@echo -e "\n~~~~~~~~~~~~~~~END OF MODULE TEMPLATE REGULAR CHANNEL~~~~~~~~~~~~~~~~"
+	@echo "~~~~~~~~~~~~~~~END OF MODULE TEMPLATE REGULAR CHANNEL~~~~~~~~~~~~~~~~"
 
 .PHONY: module-build-and-print
 all: module-build module-template-artifact module-template-print
+
