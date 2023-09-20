@@ -11,7 +11,7 @@ You have a deployed APIRule that looks similar to the following one:
     kind: APIRule
     metadata:
       name: sample-apirule
-      namespace: $NAMSEPSACE
+      namespace: $NAMESPACE
     spec:
       gateway: kyma-system/kyma-gateway
       host: httpbin.$DOMAIN
@@ -53,7 +53,7 @@ To resolve the issue, follow these guidelines:
     kind: APIRule
     metadata:
       name: sample-apirule
-      namespace: $NAMSEPSACE
+      namespace: $NAMESPACE
     spec:
       gateway: kyma-system/kyma-gateway
       host: httpbin.$DOMAIN
@@ -72,7 +72,7 @@ To resolve the issue, follow these guidelines:
     kind: APIRule
     metadata:
       name: sample-apirule-secured
-      namespace: $NAMSEPSACE
+      namespace: $NAMESPACE
     spec:
       gateway: kyma-system/kyma-gateway
       host: httpbin-secured.$DOMAIN
@@ -95,7 +95,7 @@ To resolve the issue, follow these guidelines:
     kind: APIRule
     metadata:
       name: sample-apirule
-      namespace: $NAMSEPSACE
+      namespace: $NAMESPACE
     spec:
       gateway: kyma-system/kyma-gateway
       host: httpbin.$DOMAIN
