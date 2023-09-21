@@ -18,7 +18,7 @@ This tutorial explains how to create a sample HttpBin Service deployment.
     export SERVICE_NAME={SERVICE_NAME}
     ```
 
-1. Deploy a sample instance of the HttpBin Service.
+3. Deploy a sample instance of the HttpBin Service.
 
     ```shell
     cat <<EOF | kubectl -n $NAMESPACE apply -f -
@@ -68,7 +68,7 @@ This tutorial explains how to create a sample HttpBin Service deployment.
     EOF
     ```
 
-3. Verify if an instance of the HttpBin Service is successfully created.
+4. Verify if an instance of the HttpBin Service is successfully created.
    
     ```shell
     kubectl get pods -l app=httpbin -n $NAMESPACE

@@ -9,15 +9,17 @@ This tutorial shows how to expose Service endpoints in multiple Namespaces using
 
 ##  Prerequisites
 
-1. Create three Namespaces: one for an instance of the HttpBin Service, one for a sample Function, and one for an APIRule custom resource (CR). Deploy an instance of the HttpBin Service and a sample Function in their respective Namespaces. To learn how to do it, follow the [Create a workload](../01-00-create-workload.md) tutorial. 
+1. Create three Namespaces. Deploy two instances of the HttpBin Service, each in a separate Namespace. To learn how to do it, follow the [Create a workload](../01-00-create-workload.md) tutorial. Reserve the third Namespace for creating an APIRule.
 
   >**NOTE:** Remember to [enable the Istio sidecar proxy injection](https://kyma-project.io/#/istio/user/02-operation-guides/operations/02-20-enable-sidecar-injection) in each Namespace.
 
-2. Export the Namespaces' names as environment variables:
+1. Export the Namespaces' and Services' names as environment variables:
 
   ```bash
-  export NAMESPACE_HTTPBIN={NAMESPACE_NAME}
-  export NAMESPACE_FUNCTION={NAMESPACE_NAME}
+  export FIRST_SERVICE={SERVICE_NAME}
+  export SECOND_SERVICE={SERVICE_NAME}
+  export NAMESPACE_FIRST_SERVICE={NAMESPACE_NAME}
+  export NAMESPACE_SECOND_SERVICE={NAMESPACE_NAME}
   export NAMESPACE_APIRULE={NAMESPACE_NAME}
   ```
   
@@ -50,35 +52,35 @@ This tutorial shows how to expose Service endpoints in multiple Namespaces using
 
 ## Expose and access your workloads in multiple Namespaces
 
-1. Expose the HttpBin and Function Services in their respective Namespaces by creating an APIRule CR in its own Namespace. Run:
+1. Expose the HttpBin Services in their respective Namespaces by creating an APIRule CR in its own Namespace. Run:
 
    ```bash
    cat <<EOF | kubectl apply -f -
    apiVersion: gateway.kyma-project.io/v1beta1
    kind: APIRule
    metadata:
-     name: httpbin-and-function
+     name: httpbin-services
      namespace: $NAMESPACE_APIRULE
    spec:
-     host: httpbin-and-function.$DOMAIN_TO_EXPOSE_WORKLOADS
+     host: httpbin-services.$DOMAIN_TO_EXPOSE_WORKLOADS
      gateway: $GATEWAY
      rules:
        - path: /headers
          methods: ["GET"]
          service:
-           name: httpbin
-           namespace: $NAMESPACE_HTTPBIN
+           name: $FIRST_SERVICE
+           namespace: $NAMESPACE_FIRST_SERVICE
            port: 8000
          accessStrategies:
            - handler: noop
          mutators:
            - handler: noop
-       - path: /function
+       - path: /get
          methods: ["GET"]
          service:
-           name: function
-           namespace: $NAMESPACE_FUNCTION
-           port: 80
+           name: $SECOND_SERVICE
+           namespace: $NAMESPACE_SECOND_SERVICE
+           port: 8000
          accessStrategies:
            - handler: noop
          mutators:
@@ -88,17 +90,13 @@ This tutorial shows how to expose Service endpoints in multiple Namespaces using
 
    >**NOTE:** If you are using k3d, add `httpbin.kyma.local` to the entry with k3d IP in your system's `/etc/hosts` file.
 
-2. Call the HttpBin endpoint by sending a `GET` request to the HttpBin service:
+2. Call the HttpBin endpoints by sending a `GET` request to the HttpBin Services:
 
    ```bash
-   curl -ik -X GET https://httpbin-and-function.$DOMAIN_TO_EXPOSE_WORKLOADS/headers
+   curl -ik -X GET https://httpbin-services.$DOMAIN_TO_EXPOSE_WORKLOADS/headers
    ```
-
-  If successful, the call returns the code `200 OK` response.
-
-3. Call the Function endpoint by sending a `GET` request to the Function service:
-
    ```bash
-   curl -ik -X GET https://httpbin-and-function.$DOMAIN_TO_EXPOSE_WORKLOADS/function
+   curl -ik -X GET https://httpbin-services.$DOMAIN_TO_EXPOSE_WORKLOADS/get
    ```
-  If successful, the call returns the code `200 OK` response.
+
+  If successful, the calls return the code `200 OK` response.

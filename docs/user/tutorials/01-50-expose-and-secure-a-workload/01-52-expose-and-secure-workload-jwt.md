@@ -6,7 +6,11 @@ This tutorial shows how to expose and secure Services or Functions using API Gat
 
 ## Prerequisites
 
-* [Sample HttpBin Service and sample Function](../01-00-create-workload.md) deployed
+* Deploy a [sample HttpBin Service](../01-00-create-workload.md) and export its name as enviroment variable.
+  
+  ```bash
+  export SERVICE_NAME={SERVICE_NAME}
+  ```  
 * [JSON Web Token (JWT)](./01-51-get-jwt.md)
 * Set up [your custom domain](../01-10-setup-custom-domain-for-workload.md) or use a Kyma domain instead. 
 * Depending on whether you use your custom domain or a Kyma domain, export the necessary values as environment variables:
@@ -38,12 +42,6 @@ This tutorial shows how to expose and secure Services or Functions using API Gat
 
 ## Expose, secure, and access your workload
 
-<div tabs>
-
-  <details>
-  <summary>
-  HttpBin
-  </summary>
 
 1. Expose the Service and secure it by creating an APIRule CR in your Namespace. Run:
 
@@ -57,7 +55,7 @@ This tutorial shows how to expose and secure Services or Functions using API Gat
    spec:
      host: httpbin.$DOMAIN_TO_EXPOSE_WORKLOADS   
      service:
-       name: httpbin
+       name: $SERVICE_NAME
        port: 8000
      gateway: $GATEWAY
      rules:
@@ -81,48 +79,3 @@ This tutorial shows how to expose and secure Services or Functions using API Gat
    ```
 
   If successful, the call returns the code `200 OK` response.
-   
-  </details>
-
-  <details>
-  <summary>
-  Function
-  </summary>
-
-1. Expose the Function and secure it by creating an APIRule CR in your Namespace. Run:
-
-   ```bash
-   cat <<EOF | kubectl apply -f -
-   apiVersion: gateway.kyma-project.io/v1beta1
-   kind: APIRule
-   metadata:
-     name: function
-     namespace: $NAMESPACE
-   spec:
-     host: function-example.$DOMAIN_TO_EXPOSE_WORKLOADS   
-     service:
-       name: function
-       port: 80
-     gateway: $GATEWAY
-     rules:
-       - accessStrategies:
-         - handler: jwt
-           config:
-             jwks_urls:
-             - $JWKS_URI
-         methods:
-           - GET
-         path: /.*
-   EOF
-   ```
-
-3. To access the secured Function, call it using the JWT access token:
-
-   ```bash
-   curl -ik https://function-example.$DOMAIN_TO_EXPOSE_WORKLOADS/function -H "Authorization: Bearer $ACCESS_TOKEN"
-   ```
-
-  If successful, the call returns the code `200 OK` response.
-
-  </details>
-</div>

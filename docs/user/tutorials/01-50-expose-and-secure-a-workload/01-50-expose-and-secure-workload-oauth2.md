@@ -6,7 +6,7 @@ This tutorial shows how to expose and secure Services or Functions using API Gat
 
 ## Prerequisites
 
-* Deploy [a sample HttpBin Service and a sample Function](../01-00-create-workload.md).
+* Deploy [a sample HttpBin Service](../01-00-create-workload.md).
 * Set up [your custom domain](../01-10-setup-custom-domain-for-workload.md) or use a Kyma domain instead. 
 * Depending on whether you use your custom domain or a Kyma domain, export the necessary values as environment variables:
   
@@ -93,13 +93,6 @@ This tutorial shows how to expose and secure Services or Functions using API Gat
 
 Follow the instructions to expose an instance of the HttpBin Service or a sample Function, and secure them with Oauth2 scopes.
 
-<div tabs>
-
-  <details>
-  <summary>
-  HttpBin
-  </summary>
-
 1. Expose the Service and secure it by creating an APIRule CR in your Namespace. Run:
 
   ```shell
@@ -114,7 +107,7 @@ Follow the instructions to expose an instance of the HttpBin Service or a sample
     gateway: $GATEWAY
     host: httpbin.$DOMAIN_TO_EXPOSE_WORKLOADS
     service:
-      name: httpbin
+      name: $SERVICE_NAME
       port: 8000
     rules:
       - path: /.*
@@ -142,60 +135,12 @@ Follow the instructions to expose an instance of the HttpBin Service or a sample
 
   The exposed Service requires tokens with `read` scope for `GET` requests in the entire Service, and tokens with `write` scope for `POST` requests to the `/post` endpoint of the Service.
 
-  </details>
-
-  <details>
-  <summary>
-  Function
-  </summary>
-
-1. Expose the Function and secure it by creating an APIRule CR in your Namespace. Run:
-
-   ```shell
-   cat <<EOF | kubectl apply -f -
-   apiVersion: gateway.kyma-project.io/v1beta1
-   kind: APIRule
-   metadata:
-     name: function
-     namespace: $NAMESPACE
-   spec:
-     gateway: $GATEWAY
-     host: function-example.$DOMAIN_TO_EXPOSE_WORKLOADS
-     service:
-       name: function
-       port: 80
-     rules:
-       - path: /function
-         methods: ["GET"]
-         accessStrategies:
-          - handler: oauth2_introspection
-            config:
-              required_scope: ["read"]
-              introspection_url: "$INTROSPECTION_URL"
-              introspection_request_headers:
-                Authorization: "Basic $ENCODED_CREDENTIALS"
-   EOF
-   ```
-
-   >**NOTE:** If you are using k3d, add `httpbin.kyma.local` to the entry with k3d IP in your system's `/etc/hosts` file.
-
-   The exposed Function requires all `GET` requests to have a valid token with the `read` scope.
-
-  </details>
-</div>
-
+  
 >**CAUTION:** When you secure a workload, don't create overlapping Access Rules for paths. Doing so can cause unexpected behavior and reduce the security of your implementation.
 
 ## Access the secured resources
 
 Follow the instructions to call the secured Service or Functions using the tokens issued for the client you registered.
-
-<div tabs>
-
-  <details>
-  <summary>
-  HttpBin
-  </summary>
 
 1. Send a `GET` request with a token that has the `read` scope to the HttpBin service:
 
@@ -210,23 +155,5 @@ Follow the instructions to call the secured Service or Functions using the token
    ```
 
 If successful, the call returns the code `200 OK` response. If you call the Service without a token, you get the code `401` response. If you call the Service or its secured endpoint with a token with the wrong scope, you get the code `403` response.
-
-  </details>
-
-  <details>
-  <summary>
-  Function
-  </summary>
-
-Send a `GET` request with a token that has the `read` scope to the Function:
-
-   ```shell
-   curl -ik https://function-example.$DOMAIN_TO_EXPOSE_WORKLOADS/function -H "Authorization: bearer $ACCESS_TOKEN_READ"
-   ```
-
-If successful, the call returns the code `200 OK` response. If you call the Function without a token, you get the code `401` response. If you call the Function with a token with the wrong scope, you get the code `403` response.
-
-  </details>
-</div>
 
 To learn more about the security options, read the document describing [authorization configuration](../../custom-resources/apirule/04-50-apirule-authorizations.md).

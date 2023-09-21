@@ -6,7 +6,7 @@ This tutorial shows how to expose and secure a workload using Istio's built-in s
 
 ## Prerequisites
 
-* [Sample HttpBin Service and sample Function](../01-00-create-workload.md) deployed
+* Deploy a [sample HttpBin Service](../01-00-create-workload.md).
 * [JSON Web Token (JWT)](./01-51-get-jwt.md).
 * Set up [your custom domain](../01-10-setup-custom-domain-for-workload.md) or use a Kyma domain instead. 
 * Depending on whether you use your custom domain or a Kyma domain, export the necessary values as environment variables:
@@ -38,14 +38,7 @@ This tutorial shows how to expose and secure a workload using Istio's built-in s
 
 ## Expose your workload using a Virtual Service
 
-Follow the instructions in the tabs to expose the HttpBin workload or the Function using a VirtualService.
-
-<div tabs>
-
-  <details>
-  <summary>
-  Expose the HttpBin workload
-  </summary>
+Follow the instructions in the tabs to expose the HttpBin workload using a VirtualService.
 
 1. Create a VirtualService:
 
@@ -72,52 +65,10 @@ Follow the instructions in the tabs to expose the HttpBin workload or the Functi
            host: httpbin.$NAMESPACE.svc.cluster.local
    EOF
    ```
-  </details>
 
-  <details>
-  <summary>
-  Expose the Function
-  </summary>
-
-1. Create a VirtualService:
-
-   ```shell
-   cat <<EOF | kubectl apply -f -
-   apiVersion: networking.istio.io/v1alpha3
-   kind: VirtualService
-   metadata:
-     name: function
-     namespace: $NAMESPACE
-   spec:
-     hosts:
-     - "function.$DOMAIN_TO_EXPOSE_WORKLOADS"
-     gateways:
-     - $GATEWAY
-     http:
-     - match:
-       - uri:
-           prefix: /
-       route:
-       - destination:
-           port:
-             number: 80
-           host: function.$NAMESPACE.svc.cluster.local
-   EOF
-   ```
-
-  </details>
-</div>
-
-## Secure a workload or the Function using a JWT
+## Secure a workload using a JWT
 
 To secure the HttpBin workload or the Function using a JWT, create a Request Authentication with Authorization Policy. Workloads with the `matchLabels` parameter specified require a JWT for all requests. Follow the instructions in the tabs:
-
-<div tabs>
-
-  <details>
-  <summary>
-  Secure the Httpbin workload
-  </summary>
 
 1. Create the Request Authentication and Authorization Policy resources:
 
@@ -163,53 +114,14 @@ To secure the HttpBin workload or the Function using a JWT, create a Request Aut
    ```shell
    curl -ik -X GET https://httpbin.$DOMAIN_TO_EXPOSE_WORKLOADS/status/200 --header "Authorization:Bearer $ACCESS_TOKEN"
    ```
-  </details>
 
-  <details>
-  <summary>
-  Secure the Function
-  </summary>
-
-1. Create the Request Authentication and Authorization Policy resources:
-
-   ```shell
-   cat <<EOF | kubectl apply -f -
-   apiVersion: security.istio.io/v1beta1
-   kind: RequestAuthentication
-   metadata:
-     name: jwt-auth-function
-     namespace: $NAMESPACE
-   spec:
-     selector:
-       matchLabels:
-         app: function
-     jwtRules:
-     - issuer: $ISSUER
-       jwksUri: $JWKS_URI
-   ---
-   apiVersion: security.istio.io/v1beta1
-   kind: AuthorizationPolicy
-   metadata:
-     name: function
-     namespace: $NAMESPACE
-   spec:
-     selector:
-       matchLabels:
-         app: function
-     rules:
-     - from:
-       - source:
-           requestPrincipals: ["*"]
-   EOF
-   ```
-
-2. Access the workload you secured. You get the code `403 Forbidden` error.
+4. Access the workload you secured. You get the code `403 Forbidden` error.
 
    ```shell
    curl -ik -X GET https://function.$DOMAIN_TO_EXPOSE_WORKLOADS/status/200
    ```
 
-3. Now, access the secured workload using the correct JWT. You get the code `200 OK` response.
+5. Now, access the secured workload using the correct JWT. You get the code `200 OK` response.
 
    ```shell
    curl -ik -X GET https://function.$DOMAIN_TO_EXPOSE_WORKLOADS/status/200 --header "Authorization:Bearer $ACCESS_TOKEN"

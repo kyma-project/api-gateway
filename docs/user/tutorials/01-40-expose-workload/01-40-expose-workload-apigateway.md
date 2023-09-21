@@ -48,10 +48,10 @@ Follow these steps:
   apiVersion: gateway.kyma-project.io/v1beta1
   kind: APIRule
   metadata:
-    name: $SERVICE_NAME
+    name: httpbin
     namespace: $NAMESPACE
   spec:
-    host: $SERVICE_NAME.$DOMAIN_TO_EXPOSE_WORKLOADS
+    host: httpbin.$DOMAIN_TO_EXPOSE_WORKLOADS
     service:
       name: $SERVICE_NAME
       namespace: $NAMESPACE
@@ -80,13 +80,13 @@ Follow these steps:
 2. Call the endpoint by sending a `GET` request to the HttpBin Service.
 
     ```bash
-    curl -ik -X GET https://$SERVICE_NAME.$DOMAIN_TO_EXPOSE_WORKLOADS/ip
+    curl -ik -X GET https://httpbin.$DOMAIN_TO_EXPOSE_WORKLOADS/ip
     ```
   If successful, the call returns the code `200 OK` response.
 
 3. Call the endpoint by sending a `POST` request to the HttpBin Service.
 
     ```bash
-    curl -ik -X POST https://$SERVICE_NAME.$DOMAIN_TO_EXPOSE_WORKLOADS/post -d "test data"
+    curl -ik -X POST https://httpbin.$DOMAIN_TO_EXPOSE_WORKLOADS/post -d "test data"
     ```
   If successful, the call returns the code `200 OK` response.
