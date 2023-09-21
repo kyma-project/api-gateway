@@ -5,7 +5,6 @@ import (
 	"github.com/cucumber/godog/colors"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
 	"github.com/kyma-project/api-gateway/tests/integration/testsuites/custom-domain"
-	"github.com/kyma-project/api-gateway/tests/integration/testsuites/gateway"
 	"github.com/kyma-project/api-gateway/tests/integration/testsuites/istio-jwt"
 	"github.com/kyma-project/api-gateway/tests/integration/testsuites/ory"
 	"github.com/kyma-project/api-gateway/tests/integration/testsuites/upgrade"
@@ -71,16 +70,6 @@ func TestOryJwt(t *testing.T) {
 		t.Fatalf("unable to switch to Ory jwtHandler")
 	}
 	defer cleanUp(ts, originalJwtHandler)
-	runTestsuite(t, ts, config)
-}
-
-func TestGateway(t *testing.T) {
-	config := testcontext.GetConfig()
-	ts, err := testcontext.New(config, gateway.NewTestsuite)
-	if err != nil {
-		t.Fatalf("Failed to create Gateway testsuite %s", err.Error())
-	}
-	defer ts.TearDown()
 	runTestsuite(t, ts, config)
 }
 
