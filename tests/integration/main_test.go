@@ -13,11 +13,8 @@ import (
 	"os"
 	"testing"
 
-	flag "github.com/spf13/pflag"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 )
-
-var opts godog.Options
 
 func TestIstioJwt(t *testing.T) {
 	config := testcontext.GetConfig()
@@ -87,15 +84,8 @@ func TestGateway(t *testing.T) {
 	runTestsuite(t, ts, config)
 }
 
-func init() {
-	godog.BindCommandLineFlags("godog.", &opts)
-}
-
 func runTestsuite(t *testing.T, testsuite testcontext.Testsuite, config testcontext.Config) {
 	opts := createGoDogOpts(t, testsuite.FeaturePath(), config.TestConcurrency)
-	flag.Parse()
-	opts.Paths = flag.Args()
-
 	suite := godog.TestSuite{
 		Name: testsuite.Name(),
 		// We are not using ScenarioInitializer, as this function only needs to set up global resources

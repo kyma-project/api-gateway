@@ -110,11 +110,8 @@ test-custom-domain:
              kubectl create secret generic google-credentials -n default --from-file=serviceaccount.json=${TEST_SA_ACCESS_KEY_PATH}; \
              GODEBUG=netdns=cgo CGO_ENABLED=1 go test -timeout 1h ./tests/integration -run "^TestCustomDomain$$" -v -race"
 
-test-integration-gateway-k3d:
-	source ./tests/integration/env_vars.sh && go test -timeout 1h ./tests/integration -run "^TestGateway$$" -v -race --godog.tags=k3d
-
-test-integration-gateway-gardener:
-	source ./tests/integration/env_vars.sh && go test -timeout 1h ./tests/integration -run "^TestGateway$$" -v -race --godog.tags=gardener
+test-gateway:
+	source ./tests/integration/env_vars.sh && go test -timeout 1h ./tests/integration -run "^TestGateway$$" -v -race
 
 .PHONY: install-kyma
 install-kyma:
