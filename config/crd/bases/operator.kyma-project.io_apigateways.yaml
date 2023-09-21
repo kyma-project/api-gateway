@@ -40,7 +40,8 @@ spec:
             description: APIGatewaySpec defines the desired state of APIGateway
             properties:
               enableKymaGateway:
-                description: Specifies if the default Kyma Gateway is created or not.
+                description: Specifies whether the default Kyma Gateway kyma-gateway
+                  in kyma-system Namespace is created.
                 type: boolean
             type: object
           status:

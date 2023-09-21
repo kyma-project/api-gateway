@@ -33,7 +33,7 @@ const (
 // APIGatewaySpec defines the desired state of APIGateway
 type APIGatewaySpec struct {
 
-	// Specifies if the default Kyma Gateway is created or not.
+	// Specifies whether the default Kyma Gateway kyma-gateway in kyma-system Namespace is created.
 	// +optional
 	EnableKymaGateway *bool `json:"enableKymaGateway,omitempty"`
 }
