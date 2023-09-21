@@ -129,32 +129,6 @@ The handlers' combination in the above example is not supported. If an APIRule h
 Decide on one configuration you want to use. You can either `allow` access to the specific path or restrict it using the JWT security token. Defining both configuration methods on the same path is not allowed.
 
 ---
-## Service defined in APIRule is on the block list
-#### Cause
-
-The following APIRule has the `istio-ingressgateway` Service specified:
-
-```yaml
-spec:
-  ...
-  service:
-    name: istio-ingressgateway
-    namespace: istio-system
-```
-
-The `istio-ingressgateway` Service is included in the block list. If your APIRule has a blocked Service defined, the following `APIRuleStatus` error appears:
-
-```
-{"code":"ERROR","desc":"Validation error: Attribute \".spec.service.name\": Service istio-ingressgateway in namespace istio-system is blocklisted"}
-```
-
-#### Remedy
-
-Learn more about [the block list of Services in API Gateway](../technical-reference/05-20-blacklisted-services.md).
-
-To see which Services are blocked by default, check the [serviceBlockList](https://github.com/kyma-project/kyma/blob/main/resources/api-gateway/values.yaml).
-
----
 ## Occupied host
 #### Cause
 
