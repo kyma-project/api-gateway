@@ -68,7 +68,7 @@ Follow the instructions in the tabs to expose the HttpBin workload using a Virtu
 
 ## Secure a workload using a JWT
 
-To secure the HttpBin workload or the Function using a JWT, create a Request Authentication with Authorization Policy. Workloads with the `matchLabels` parameter specified require a JWT for all requests. Follow the instructions in the tabs:
+To secure the HttpBin workload using a JWT, create a Request Authentication with Authorization Policy. Workloads with the `matchLabels` parameter specified require a JWT for all requests. Follow the instructions:
 
 1. Create the Request Authentication and Authorization Policy resources:
 
@@ -114,17 +114,3 @@ To secure the HttpBin workload or the Function using a JWT, create a Request Aut
    ```shell
    curl -ik -X GET https://httpbin.$DOMAIN_TO_EXPOSE_WORKLOADS/status/200 --header "Authorization:Bearer $ACCESS_TOKEN"
    ```
-
-4. Access the workload you secured. You get the code `403 Forbidden` error.
-
-   ```shell
-   curl -ik -X GET https://function.$DOMAIN_TO_EXPOSE_WORKLOADS/status/200
-   ```
-
-5. Now, access the secured workload using the correct JWT. You get the code `200 OK` response.
-
-   ```shell
-   curl -ik -X GET https://function.$DOMAIN_TO_EXPOSE_WORKLOADS/status/200 --header "Authorization:Bearer $ACCESS_TOKEN"
-   ```
-  </details>
-</div>

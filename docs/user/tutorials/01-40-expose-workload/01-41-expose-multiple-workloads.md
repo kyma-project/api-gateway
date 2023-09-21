@@ -81,7 +81,7 @@ Follow the instructions to expose the instances of the HttpBin Service on differ
    EOF
    ```
 
-2. To call the endpoints, send `GET` requests to the HttpBin Service and the sample Function:
+2. To call the endpoints, send `GET` requests to the HttpBin Services:
 
     ```bash
     curl -ik -X GET https://multiple-service-example.$DOMAIN_TO_EXPOSE_WORKLOADS/headers
@@ -92,11 +92,9 @@ Follow the instructions to expose the instances of the HttpBin Service on differ
 
 ## Define a Service at the root level
 
-You can also define a Service at the root level. Such a definition is applied to all the paths specified at the `spec.rules` which do not have their own Services defined. 
+You can also define a Service at the root level. Such a definition is applied to all the paths specified at the `spec.rules` which do not have their own Services defined.
  
  > **NOTE:** Services definitions at the `spec.rules` level have precedence over Service definition at the `spec.service` level.
-
-Follow the instructions to expose the instances of the HttpBin Service on different paths with a Service defined at the root level.
 
 1. To expose the instances of the HttpBin Service, create an APIRule CR in your Namespace. Run:
 
@@ -132,7 +130,7 @@ Follow the instructions to expose the instances of the HttpBin Service on differ
   ```
   In the above APIRule, the HttpBin Service on port 8000 is defined at the `spec.service` level. This Service definition is applied to the `/headers` path. The `/get` path has the service definition overwritten.
 
-1. To call the endpoints, send `GET` requests to the HttpBin Service and the sample Function:
+1. To call the endpoints, send `GET` requests to the HttpBin Services:
 
     ```bash
     curl -ik -X GET https://multiple-service-example.$DOMAIN_TO_EXPOSE_WORKLOADS/headers
