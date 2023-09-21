@@ -1,6 +1,6 @@
 # API Gateway Operator parameters 
 
-You can configure [API Gateway Controller](../00-10-overview-api-gateway-controller.md) and [API Rule Controller](../00-20-overview-api-rule-controller.md) using various parameters. This document contains all the options.
+You can configure [APIGateway Controller](../00-10-overview-api-gateway-controller.md) and [APIRule Controller](../00-20-overview-api-rule-controller.md) using various parameters. This document contains all the options.
 
 ## Reconciliation interval
 
@@ -16,7 +16,7 @@ By default, Kyma API Gateway Operator reconciles APIRules every 60 minutes or wh
 |-------------------------------|:--------:|-----------------------------------------------------------------------------------------------------------------------|--------------------------------------------------|
 | **metrics-bind-address**      |    NO    | The address the metric endpoint binds to.                                                                             | `:8080`                                          |
 | **health-probe-bind-address** |    NO    | The address the probe endpoint binds to.                                                                              | `:8081`                                          |
-| **leader-elect**              |    NO    | Enable leader election for API Gateway Operator. Enabling this ensures there is only one active API Gateway Controller. | `true`                                           |
+| **leader-elect**              |    NO    | Enable leader election for API Gateway Operator. Enabling this ensures there is only one active APIGateway Controller. | `true`                                           |
 | **rate-limiter-burst**        |    NO    | Indicates the burst value for the controller's bucket rate limiter.                                                     | 200                                              |
 | **rate-limiter-frequency**    |    NO    | Indicates the controller's bucket rate limiter frequency, signifying no. of events per second.                          | 30                                               |
 | **failure-base-delay**        |    NO    | Indicates the failure-based delay for rate limiter.                                                                    | `1s`                                             |

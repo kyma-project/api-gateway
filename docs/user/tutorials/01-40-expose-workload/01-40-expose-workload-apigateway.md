@@ -1,6 +1,4 @@
----
-title: Expose a workload
----
+# Expose a workload
 
 This tutorial shows how to expose an unsecured instance of the HttpBin Service and call its endpoints.
 

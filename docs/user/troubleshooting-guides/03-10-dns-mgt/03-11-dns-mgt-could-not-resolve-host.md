@@ -1,6 +1,4 @@
----
-title: Could not resolve host
----
+# Could not resolve host
 
 ## Symptom
 

@@ -1,6 +1,4 @@
----
-title: Set up a custom identity provider
----
+# Set up a custom identity provider
 
 Kyma sits on top of Kubernetes and leverages [authentication strategies](https://kubernetes.io/docs/reference/access-authn-authz/authentication/) from it. The purpose of all of those authentication strategies is to associate the identity of the caller with the request to the API server and evaluate access based on roles (RBAC).
 

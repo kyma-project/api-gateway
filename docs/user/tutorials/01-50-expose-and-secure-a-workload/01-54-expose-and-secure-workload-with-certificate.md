@@ -1,6 +1,4 @@
----
-title: Expose and secure a workload with a certificate
----
+# Expose and secure a workload with a certificate
 
 This tutorial shows how to expose and secure a workload with mutual authentication using TLS Gateway.
 

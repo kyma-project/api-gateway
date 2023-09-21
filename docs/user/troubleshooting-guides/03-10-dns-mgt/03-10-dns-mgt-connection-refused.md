@@ -1,6 +1,4 @@
----
-title: Connection refused or timeout
----
+# Connection refused or timeout
 
 ## Symptom
 

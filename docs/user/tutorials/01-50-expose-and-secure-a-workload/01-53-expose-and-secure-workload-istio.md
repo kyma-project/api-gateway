@@ -1,6 +1,4 @@
----
-title: Expose and secure a workload with Istio
----
+# Expose and secure a workload with Istio
 
 This tutorial shows how to expose and secure a workload using Istio's built-in security features. You will expose the workload by creating a [VirtualService](https://istio.io/latest/docs/reference/config/networking/virtual-service/). Then, you will secure access to your workload by adding the JWT validation verified by the Istio security configuration with [Authorization Policy](https://istio.io/latest/docs/reference/config/security/authorization-policy/) and [Request Authentication](https://istio.io/latest/docs/reference/config/security/request_authentication/).
 

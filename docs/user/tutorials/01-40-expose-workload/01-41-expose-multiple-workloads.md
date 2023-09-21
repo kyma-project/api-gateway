@@ -1,6 +1,4 @@
----
-title: Expose multiple workloads on the same host
----
+# Expose multiple workloads on the same host
 
 This tutorial shows how to expose multiple workloads on different paths by defining a Service at the root level and by defining Services on each path separately.
 

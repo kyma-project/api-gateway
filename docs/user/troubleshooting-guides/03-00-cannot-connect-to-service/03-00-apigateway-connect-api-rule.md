@@ -1,6 +1,4 @@
----
-title: Basic diagnostics
----
+# Basic diagnostics
 
 API Gateway is a Kubernetes controller, which operates on APIRule custom resources (CRs). To diagnose problems, inspect the [`status` code](../../custom-resources/apirule/04-10-apirule-custom-resource.md) of the APIRule CR:
 

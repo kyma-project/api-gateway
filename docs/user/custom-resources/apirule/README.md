@@ -1,6 +1,6 @@
 # APIRule custom resource
 
-The `apirules.gateway.kyma-project.io` CustomResourceDefinition (CRD) describes the kind and the format of data the API Gateway Controller listens for.
+The `apirules.gateway.kyma-project.io` CustomResourceDefinition (CRD) describes the kind and the format of data the APIGateway Controller listens for.
 
 In this directory, you can find all documentation related to APIRule CR:
 - [Specification of APIRule custom resource](./04-10-apirule-custom-resource.md) describing all primery parameters of APIRule CR

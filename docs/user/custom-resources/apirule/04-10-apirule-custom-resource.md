@@ -1,6 +1,6 @@
 # APIRule custom resource
 
-The `apirules.gateway.kyma-project.io` CustomResourceDefinition (CRD) describes the kind and the format of data the API Gateway Controller listens for. To get the up-to-date CRD in the `yaml` format, run the following command:
+The `apirules.gateway.kyma-project.io` CustomResourceDefinition (CRD) describes the kind and the format of data the APIGateway Controller listens for. To get the up-to-date CRD in the `yaml` format, run the following command:
 
 ```shell
 kubectl get crd apirules.gateway.kyma-project.io -o yaml
@@ -56,7 +56,7 @@ The following status codes describe VirtualServices and Oathkeeper Access Rules:
 
 ## Sample custom resource
 
-This is a sample custom resource (CR) that the API Gateway Controller listens for to expose a Service. The following example has the **rules** section specified, which makes API Gateway Controller create an Oathkeeper Access Rule for the Service.
+This is a sample custom resource (CR) that the APIGateway Controller listens for to expose a Service. The following example has the **rules** section specified, which makes APIGateway Controller create an Oathkeeper Access Rule for the Service.
 
 ```yaml
 apiVersion: gateway.kyma-project.io/v1beta1

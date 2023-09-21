@@ -1,8 +1,8 @@
-# API Gateway Controller
+# APIGateway Controller
 
 ## Overview
 
-API Gateway Controller is part of Kyma API Gateway Operator. Its role is to manage the installation of [Ory Oathkeeper](https://www.ory.sh/docs/oathkeeper) and handle the configuration of Kyma Gateway and the resources defined by the [APIGateway custom resource (CR)](./custom-resources/apigateway/04-00-apigateway-custom-resource.md). The controller is responsible for:
+APIGateway Controller is part of Kyma API Gateway Operator. Its role is to manage the installation of [Ory Oathkeeper](https://www.ory.sh/docs/oathkeeper) and handle the configuration of Kyma Gateway and the resources defined by the [APIGateway custom resource (CR)](./custom-resources/apigateway/04-00-apigateway-custom-resource.md). The controller is responsible for:
 - Installing, upgrading, and uninstalling Ory Oathkeeper
 - Configuring Kyma Gateway
 - Managing Certificates and DNS entries

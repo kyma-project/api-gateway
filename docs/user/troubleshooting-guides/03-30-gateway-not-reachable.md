@@ -1,6 +1,4 @@
----
-title: Kyma Gateway - not reachable
----
+# Kyma Gateway - not reachable
 
 ## Symptom
 

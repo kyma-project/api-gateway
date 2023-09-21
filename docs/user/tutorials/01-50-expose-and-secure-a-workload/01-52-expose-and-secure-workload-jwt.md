@@ -1,16 +1,10 @@
----
-title: Expose and secure a workload with JWT
----
+# Expose and secure a workload with JWT
 
-This tutorial shows how to expose and secure Services using API Gateway Controller. The Controller reacts to an instance of the APIRule custom resource (CR) and creates an Istio VirtualService and [Oathkeeper Access Rules](https://www.ory.sh/docs/oathkeeper/api-access-rules) according to the details specified in the CR. To interact with the secured workloads, the tutorial uses a JWT token.
+This tutorial shows how to expose and secure Services using APIGateway Controller. The Controller reacts to an instance of the APIRule custom resource (CR) and creates an Istio VirtualService and [Oathkeeper Access Rules](https://www.ory.sh/docs/oathkeeper/api-access-rules) according to the details specified in the CR. To interact with the secured workloads, the tutorial uses a JWT token.
 
 ## Prerequisites
 
-* Deploy a [sample HttpBin Service](../01-00-create-workload.md) and export its name as enviroment variable.
-  
-  ```bash
-  export SERVICE_NAME={SERVICE_NAME}
-  ```  
+* Deploy a [sample HttpBin Service](../01-00-create-workload.md).
 * [JSON Web Token (JWT)](./01-51-get-jwt.md)
 * Set up [your custom domain](../01-10-setup-custom-domain-for-workload.md) or use a Kyma domain instead. 
 * Depending on whether you use your custom domain or a Kyma domain, export the necessary values as environment variables:

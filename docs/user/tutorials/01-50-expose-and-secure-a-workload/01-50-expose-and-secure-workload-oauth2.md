@@ -1,8 +1,6 @@
----
-title: Expose and secure a workload with OAuth2
----
+# Expose and secure a workload with OAuth2
 
-This tutorial shows how to expose and secure Services using API Gateway Controller. The controller reacts to an instance of the APIRule custom resource (CR) and creates an Istio VirtualService and [Oathkeeper Access Rules](https://www.ory.sh/docs/oathkeeper/api-access-rules) according to the details specified in the CR.
+This tutorial shows how to expose and secure Services using APIGateway Controller. The controller reacts to an instance of the APIRule custom resource (CR) and creates an Istio VirtualService and [Oathkeeper Access Rules](https://www.ory.sh/docs/oathkeeper/api-access-rules) according to the details specified in the CR.
 
 ## Prerequisites
 

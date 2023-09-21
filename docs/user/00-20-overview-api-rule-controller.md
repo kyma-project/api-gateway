@@ -1,8 +1,8 @@
-# API Rule Controller
+# APIRule Controller
 
 ## Overview
 
-API Rule Controller is part of Kyma API Gateway Operator. It uses [Ory Oathkeeper](https://www.ory.sh/docs/oathkeeper) and [Istio Service Mesh](https://istio.io/) resources to expose and secure APIs.
+APIRule Controller is part of Kyma API Gateway Operator. It uses [Ory Oathkeeper](https://www.ory.sh/docs/oathkeeper) and [Istio Service Mesh](https://istio.io/) resources to expose and secure APIs.
 
 ## APIRule CR
 
@@ -26,7 +26,7 @@ The APIRule CR includes status information for all created sub-resources. Howeve
 ## Controller limitations
 
 APIRule Controller relies on Istio and Ory Custom Resources to provide routing capabilities. In terms of persistence, the controller depends only on APIRules stored in the Kubernetes cluster.
-In terms of the resource configuration, the following requirements are set on API Gateway Controller:
+In terms of the resource configuration, the following requirements are set on APIGateway Controller:
 
 |          | CPU  | Memory |
 |----------|------|--------|
