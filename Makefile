@@ -169,13 +169,8 @@ else ifeq ($(JOB_TYPE), presubmit)
 	  --value api-gateway.global.images.api_gateway_controller.version=${PULL_IMAGE_VERSION} \
 	  --value api-gateway.global.images.api_gateway_controller.directory=dev
 else ifeq ($(JOB_TYPE), postsubmit)
-	ifeq ($(ISTIO_VERSION),)
-		kyma deploy --ci -s main -c ${KYMA_COMPONENTS} \
-			--value api-gateway.global.images.api_gateway_controller.version=${POST_IMAGE_VERSION}
-	else
-		kyma deploy --ci -s main -c ${KYMA_COMPONENTS} \
-			--value api-gateway.global.images.api_gateway_controller.version=${POST_IMAGE_VERSION}
-			--value istio.global.images.istio_operator_image.version=${ISTIO_VERSION}
+	kyma deploy --ci -s main -c ${KYMA_COMPONENTS} \
+		--value api-gateway.global.images.api_gateway_controller.version=${POST_IMAGE_VERSION}
 endif
 	make install
 
