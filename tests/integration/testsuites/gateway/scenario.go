@@ -46,7 +46,7 @@ func createScenario(t *testsuite) (*scenario, error) {
 }
 
 func (c *scenario) thereIsAKymaGateway(name string, namespace string) error {
-	res := schema.GroupVersionResource{Group: "networking.istio.io", Version: "v1alpha3", Resource: "gateways"}
+	res := schema.GroupVersionResource{Group: "networking.istio.io", Version: "v1alpha3", Resource: "Gateway"}
 	_, err := c.k8sClient.Resource(res).Namespace(namespace).Get(context.Background(), name, v1.GetOptions{})
 
 	if err != nil {

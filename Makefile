@@ -111,7 +111,7 @@ test-custom-domain:
              GODEBUG=netdns=cgo CGO_ENABLED=1 go test -timeout 1h ./tests/integration -run "^TestCustomDomain$$" -v -race"
 
 test-gateway:
-	source ./tests/integration/env_vars.sh && go test -timeout 1h ./tests/integration -run "^TestGateway$$" -v -race
+	go test -timeout 1h ./tests/integration -run "^TestGateway$$" -v -race
 
 .PHONY: install-kyma
 install-kyma:
