@@ -6,7 +6,7 @@ require (
 	github.com/avast/retry-go/v4 v4.5.0
 	github.com/cucumber/godog v0.13.0
 	github.com/go-logr/logr v1.2.4
-	github.com/onsi/ginkgo/v2 v2.12.0
+	github.com/onsi/ginkgo/v2 v2.12.1
 	github.com/onsi/gomega v1.27.10
 	github.com/ory/oathkeeper-maester v0.1.9
 	github.com/spf13/pflag v1.0.5
@@ -90,6 +90,6 @@ require (
 	golang.org/x/oauth2 v0.12.0
 	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/api v0.28.2
-	k8s.io/apiextensions-apiserver v0.28.2
+	k8s.io/apiextensions-apiserver v0.28.2 // indirect
 	k8s.io/utils v0.0.0-20230726121419-3b25d923346b
 )
