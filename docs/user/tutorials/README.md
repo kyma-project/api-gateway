@@ -18,6 +18,5 @@ Browse the API Gateway tutorials to learn how to set up your custom domain, crea
 
 Browse the Security tutorials to learn how to prepare certificates and set up a custom identity provider:
 
-- [Set up or update a custom domain TLS certificate](./01-60-security/01-60-tls-certificates-security.md)
 - [Prepare self-signed root CA and client certificates](./01-60-security/01-61-mtls-selfsign-client-certicate.md)
 - [Set up a custom identity provider](./01-60-security/01-62-set-up-idp.md)

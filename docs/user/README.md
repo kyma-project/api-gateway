@@ -15,7 +15,7 @@ Kyma API Gateway Operator is a component of the Kyma runtime that handles resour
 
 To learn how to use Kyma API Gateway, read the documentation in the [`user`](../user/) directory. It contains:
 - Overview documentation of [APIGateway Controller](./00-10-overview-api-gateway-controller.md) and [APIRule Controller](./00-20-overview-api-rule-controller.md)
-- [Tutorials](./01-tutorials/) that provide step-by-step instructions on creating, exposing, and securing workloads
+- [Tutorials](./tutorials/) that provide step-by-step instructions on creating, exposing, and securing workloads
 - Documentation on [APIRule and APIGateway custom resources](./custom-resources/)
 - Other [technical reference documentation](./technical-reference/)
 
