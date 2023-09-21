@@ -1,90 +1,82 @@
 # Create a workload
 
-This tutorial explains how to create a sample HttpBin Service deployment and a sample Function.
-
-## Prerequisites
-- Install the [Serverless module](https://kyma-project.io/#/serverless-manager/user/README) to be able to deploy Functions
+This tutorial explains how to create a sample HttpBin Service deployment.
 
 ## Steps
 
 1. Create a Namespace and export its value as an environment variable. Run:
 
-   ```bash
-   export NAMESPACE={NAMESPACE_NAME}
-   kubectl create ns $NAMESPACE
-   kubectl label namespace $NAMESPACE istio-injection=enabled --overwrite
-   ```
-2. Deploy an instance of the HttpBin Service or a sample Function.
-   
-  <div tabs name="create">
-
-    <details>
-    <summary>
-    HttpBin
-    </summary>
-
-    To deploy an instance of the HttpBin Service in your Namespace using the [sample code](https://raw.githubusercontent.com/istio/istio/master/samples/httpbin/httpbin.yaml), run:
-
-    ```shell
-    kubectl -n $NAMESPACE create -f https://raw.githubusercontent.com/istio/istio/master/samples/httpbin/httpbin.yaml
+    ```bash
+    export NAMESPACE={NAMESPACE_NAME}
+    kubectl create ns $NAMESPACE
+    kubectl label namespace $NAMESPACE istio-injection=enabled --overwrite
     ```
 
-    </details>
+2. Choose a name for your HttpBin Service instance and export it as an environment variable.
 
-    <details>
-    <summary>
-    Function
-    </summary>
-
-    To create a Function in your Namespace using the [sample code](https://raw.githubusercontent.com/kyma-project/kyma/main/docs/03-tutorials/00-api-exposure/assets/function.yaml), run:
-
-    ```shell
-    kubectl -n $NAMESPACE apply -f https://raw.githubusercontent.com/kyma-project/kyma/main/docs/03-tutorials/00-api-exposure/assets/function.yaml
+    ```bash
+    export SERVICE_NAME={SERVICE_NAME}
     ```
 
-    </details>
-  </div>
+1. Deploy a sample instance of the HttpBin Service.
 
-3. Verify if an instance of the HttpBin Service or a sample Function is successfully created.
+    ```shell
+    cat <<EOF | kubectl -n $NAMESPACE apply -f -
+    apiVersion: v1
+    kind: ServiceAccount
+    metadata:
+      name: $SERVICE_NAME
+    ---
+    apiVersion: v1
+    kind: Service
+    metadata:
+      name: $SERVICE_NAME
+      labels:
+        app: httpbin
+        service: httpbin
+    spec:
+      ports:
+      - name: http
+        port: 8000
+        targetPort: 80
+      selector:
+        app: httpbin
+    ---
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: $SERVICE_NAME
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: httpbin
+          version: v1
+      template:
+        metadata:
+          labels:
+            app: httpbin
+            version: v1
+        spec:
+          serviceAccountName: $SERVICE_NAME
+          containers:
+          - image: docker.io/kong/httpbin
+            imagePullPolicy: IfNotPresent
+            name: httpbin
+            ports:
+            - containerPort: 80
+    EOF
+    ```
+
+3. Verify if an instance of the HttpBin Service is successfully created.
    
-  <div tabs name="verify">
-
-    <details>
-    <summary>
-    HttpBin
-    </summary>
-
-    To verify if an instance of the HttpBin Service is created, run:
-
-      ```shell
-        kubectl get pods -l app=httpbin -n $NAMESPACE
-      ```
+    ```shell
+    kubectl get pods -l app=httpbin -n $NAMESPACE
+    ```
     
     You should get a result similar to this one:
     
-      ```shell
-        NAME             READY    STATUS     RESTARTS    AGE
-        httpbin-test     2/2      Running    0           96s
-      ```
-
-    </details>
-
-    <details>
-    <summary>
-    Function
-    </summary>
-
-    To verify if a Function is created, run:
-
-      ```shell
-        kubectl get functions $NAME -n $NAMESPACE
-      ```
-
-    You should get a result similar to this one:
-    
-      ```shell
-        NAME            CONFIGURED   BUILT     RUNNING   RUNTIME    VERSION   AGE
-        test-function   True         True      True      nodejs18   1         96s
-      ```
-    </details>
-  </div>
+    ```shell
+    NAME                        READY    STATUS     RESTARTS    AGE
+    {SERVICE_NAME}-{SUFFIX}     2/2      Running    0           96s
+    ```
