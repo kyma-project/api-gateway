@@ -25,5 +25,5 @@ runs:
     - name: Uploads artifacts
       uses: actions/upload-artifact@v3
       with:
-        name: html-reports
+        name: html-reports-${{ github.job }}
         path: tests/integration/reports/
