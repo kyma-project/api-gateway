@@ -45,7 +45,6 @@ jobs:
           OIDC_ISSUER_URL: ${{ secrets.OIDC_ISSUER_URL }}
           JOB_TYPE: postsubmit
           PULL_BASE_SHA: ${{ github.sha }}
-          ISTIO_VERSION: ${{ inputs.istio_version }}
           TEST_UPGRADE_IMG: ""
 
   slack_failed_notification:
