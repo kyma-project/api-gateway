@@ -4,7 +4,7 @@
 name: PR
 
 on:
-  pull_request_target:
+  pull_request:
     types: [synchronize, opened, reopened, ready_for_review]
     paths-ignore:
       - "docs/**"
@@ -45,9 +45,52 @@ jobs:
           fetch-depth: 0
       - uses: ./.github/actions/integration-tests
         env:
+          JOB_TYPE: presubmit
           CLIENT_ID: ${{ secrets.CLIENT_ID }}
           CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
           OIDC_ISSUER_URL: ${{ secrets.OIDC_ISSUER_URL }}
+          KYMA_CLI_UNSTABLE: true
+          MAKE_TARGET_TESTS: test-integration
+          PULL_NUMBER: ${{ github.event.number }}
+
+  integration-tests-istio-module:
+    name: Integration tests with Istio module
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false
+    needs: [wait-for-image-build]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+      - uses: ./.github/actions/integration-tests
+        env:
           JOB_TYPE: presubmit
+          CLIENT_ID: ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+          OIDC_ISSUER_URL: ${{ secrets.OIDC_ISSUER_URL }}
+          KYMA_CLI_UNSTABLE: true
+          MAKE_TARGET_TESTS: test-integration
+          KYMA_COMPONENTS: "hack/kyma-components-no-istio.yaml"
+          PULL_NUMBER: ${{ github.event.number }}
+
+  upgrade-tests:
+    name: Upgrade tests
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false
+    needs: [wait-for-image-build]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+      - uses: ./.github/actions/integration-tests
+        env:
+          JOB_TYPE: presubmit
+          CLIENT_ID: ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+          OIDC_ISSUER_URL: ${{ secrets.OIDC_ISSUER_URL }}
+          MAKE_TARGET_TESTS: test-upgrade
+          UPGRADE_JOB: true
           PULL_NUMBER: ${{ github.event.number }}
           TEST_UPGRADE_IMG: "europe-docker.pkg.dev/kyma-project/dev/api-gateway-controller:PR-${{ github.event.number }}"

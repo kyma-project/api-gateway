@@ -1,5 +1,5 @@
-name: 'Integration tests'
-description: 'Runs integration tests'
+name: 'Integration tests (k3d)'
+description: 'Runs integration tests on k3d'
 runs:
   using: "composite"
   steps:
@@ -11,39 +11,19 @@ runs:
       run: |
         sudo echo "127.0.0.1 local.kyma.dev" | sudo tee -a /etc/hosts
         wget -q -O - https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | sudo bash
-        sudo curl -Lo /usr/bin/kyma https://storage.googleapis.com/kyma-cli-unstable/kyma-linux && sudo chmod +x /usr/bin/kyma
-    - name: Run integration tests
+        [ -n "${KYMA_CLI_UNSTABLE}" ] && sudo curl -Lo /usr/bin/kyma https://storage.googleapis.com/kyma-cli-unstable/kyma-linux
+        [ -z "${KYMA_CLI_UNSTABLE}" ] && sudo curl -L "https://github.com/kyma-project/cli/releases/latest/download/kyma_linux_x86_64.tar.gz" && sudo tar -C /usr/bin -zxvf kyma_linux_x86_64.tar.gz kyma
+        sudo chmod +x /usr/bin/kyma
+    - name: Provision Kyma and run tests
       env:
         KYMA_DOMAIN: "local.kyma.dev"
-        KYMA_COMPONENTS: "hack/kyma-components.yaml"
       shell: bash
       run: |
         sudo kyma provision k3d
-        KUBECONFIG=$(k3d kubeconfig merge kyma) EXPORT_RESULT=true make install-kyma test-integration
+        KUBECONFIG=$(k3d kubeconfig merge kyma) EXPORT_RESULT=true make install-kyma $MAKE_TARGET_TESTS
         sudo k3d cluster delete kyma
-    - name: Run integration tests with Istio module
-      env:
-        KYMA_DOMAIN: "local.kyma.dev"
-        KYMA_COMPONENTS: "hack/kyma-components-no-istio.yaml"
-      shell: bash
-      run: |
-        sudo kyma provision k3d
-        KUBECONFIG=$(k3d kubeconfig merge kyma) EXPORT_RESULT=true make install-kyma test-integration
-        sudo k3d cluster delete kyma
-    - name: Run upgrade integration tests
-      if: github.event_name != 'schedule'
-      env:
-        UPGRADE_JOB: "true"
-        KYMA_DOMAIN: "local.kyma.dev"
-        KYMA_COMPONENTS: "hack/kyma-components.yaml"
-      shell: bash
-      run: |
-        sudo curl -Lo kyma.tar.gz "https://github.com/kyma-project/cli/releases/latest/download/kyma_linux_x86_64.tar.gz"
-        sudo tar -C /usr/bin -zxvf kyma.tar.gz kyma && sudo rm -f kyma.tar.gz && sudo chmod +x /usr/bin/kyma
-        sudo kyma provision k3d
-        KUBECONFIG=$(k3d kubeconfig merge kyma) EXPORT_RESULT=true make install-kyma test-upgrade
-        sudo k3d cluster delete kyma
-    - uses: actions/upload-artifact@v3
+    - name: Uploads artifacts
+      uses: actions/upload-artifact@v3
       with:
         name: html-reports
         path: tests/integration/reports/
