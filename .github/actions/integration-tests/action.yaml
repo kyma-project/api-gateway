@@ -31,6 +31,7 @@ runs:
         KUBECONFIG=$(k3d kubeconfig merge kyma) EXPORT_RESULT=true make install-kyma test-integration
         sudo k3d cluster delete kyma
     - name: Run upgrade integration tests
+      if: {{ github.event_name != 'schedule' }}
       env:
         UPGRADE_JOB: "true"
         KYMA_DOMAIN: "local.kyma.dev"

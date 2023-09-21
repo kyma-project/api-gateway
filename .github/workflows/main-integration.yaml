@@ -15,12 +15,8 @@ on:
       - ".github/**" #Ignoring since build job isn't triggered on the workflow directory changes
     branches:
       - main
-  workflow_dispatch:
-    inputs:
-      istio_version:
-        description: 'Istio version to deploy for testing'
-        type: environment
-        required: true
+  schedule:
+    - cron: '0 5 * * *' # Run every day at 05:00 AM
 
 jobs:
   wait-for-image-build:
