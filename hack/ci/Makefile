@@ -15,6 +15,7 @@ module-build:
 		MODULE_REGISTRY=${MODULE_REGISTRY} \
 		MODULE_VERSION=${MODULE_VERSION}-${MODULE_SHA} \
 		MODULE_CHANNEL=fast
+	@echo "\n- creating template for regular channel"
 	@sed -e 's/([- ])fast/\\1regular/g' <${PROJECT_ROOT}/template-fast.yaml >${PROJECT_ROOT}/template-regular.yaml
 
 .PHONY: module-template-arifact
@@ -24,12 +25,13 @@ module-template-artifact:
 
 .PHONY: module-template-print
 module-template-print:
-	@echo -e "\n~~~~~~~~~~~~BEGINNING OF MODULE TEMPLATE FAST CHANNEL~~~~~~~~~~~~~~"
+	@echo "\n~~~~~~~~~~~~BEGINNING OF MODULE TEMPLATE FAST CHANNEL~~~~~~~~~~~~~~"
 	@cat ${PROJECT_ROOT}/template-fast.yaml
-	@echo -e "\n~~~~~~~~~~~~~~~END OF MODULE TEMPLATE FAST CHANNEL~~~~~~~~~~~~~~~~"
-	@echo "-e \n~~~~~~~~~~~~BEGINNING OF MODULE TEMPLATE REGULAR CHANNEL~~~~~~~~~~~~~~"
+	@echo "\n~~~~~~~~~~~~~~~END OF MODULE TEMPLATE FAST CHANNEL~~~~~~~~~~~~~~~~"
+	@echo "\n~~~~~~~~~~~~BEGINNING OF MODULE TEMPLATE REGULAR CHANNEL~~~~~~~~~~~~~~"
 	@cat ${PROJECT_ROOT}/template-regular.yaml
-	@echo -e "\n~~~~~~~~~~~~~~~END OF MODULE TEMPLATE REGULAR CHANNEL~~~~~~~~~~~~~~~~"
+	@echo "\n~~~~~~~~~~~~~~~END OF MODULE TEMPLATE REGULAR CHANNEL~~~~~~~~~~~~~~~~"
 
 .PHONY: module-build-and-print
 all: module-build module-template-artifact module-template-print
+
