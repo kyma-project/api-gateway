@@ -4,11 +4,11 @@
 
 ## What is API Gateway?
 
-API Gateway provides functionalities that allow you to expose and secure APIs by using [Ory Oathkeeper](https://www.ory.sh/docs/oathkeeper) and the [Istio Service Mesh](https://istio.io/) resources.
+API Gateway provides functionalities that allow you to expose and secure APIs by using [Ory Oathkeeper](https://www.ory.sh/docs/oathkeeper) and the [Istio service mesh](https://istio.io/) resources.
 
-## Kyma API Gateway Operator
+## API Gateway Operator
 
-Kyma API Gateway Operator is a component of the Kyma runtime that handles resource reconciliation and manages the application of API Gateway configuration. Within the API Gateway Operator, there are two controllers: the [APIGateway Controller](./00-10-overview-api-gateway-controller.md), which applies the configuration specified in the APIGateway CR, and the [APIRule Controller](./00-20-overview-api-rule-controller.md), which applies the configuration specified in the APIRule CR.
+API Gateway Operator is a component of the Kyma runtime that handles resource reconciliation and manages the application of API Gateway configuration. Within API Gateway Operator, there are two controllers: [APIGateway Controller](./00-10-overview-api-gateway-controller.md), which applies the configuration specified in APIGateway CR, and [APIRule Controller](./00-20-overview-api-rule-controller.md), which applies the configuration specified in APIRule CR.
 
 ![Kyma API Gateway Operator Overview](./docs/assets/operator-overview.svg)
 
