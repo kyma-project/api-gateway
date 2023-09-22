@@ -1,0 +1,29 @@
+name: 'Integration tests (k3d)'
+description: 'Runs integration tests on k3d'
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/setup-go@v4
+      with:
+        go-version: "1.20"
+    - name: Set up environment
+      shell: bash
+      run: |
+        sudo echo "127.0.0.1 local.kyma.dev" | sudo tee -a /etc/hosts
+        wget -q -O - https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | sudo bash
+        [ -n "${KYMA_CLI_UNSTABLE}" ] && sudo curl -Lo /usr/bin/kyma https://storage.googleapis.com/kyma-cli-unstable/kyma-linux
+        [ -z "${KYMA_CLI_UNSTABLE}" ] && sudo curl -Lo kyma.tar.gz "https://github.com/kyma-project/cli/releases/latest/download/kyma_linux_x86_64.tar.gz" && sudo tar -C /usr/bin -zxvf kyma.tar.gz kyma
+        sudo chmod +x /usr/bin/kyma
+    - name: Provision Kyma and run tests
+      env:
+        KYMA_DOMAIN: "local.kyma.dev"
+      shell: bash
+      run: |
+        sudo kyma provision k3d
+        KUBECONFIG=$(k3d kubeconfig merge kyma) EXPORT_RESULT=true make install-kyma $MAKE_TARGET_TESTS
+        sudo k3d cluster delete kyma
+    - name: Uploads artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: html-reports-${{ github.job }}
+        path: tests/integration/reports/
