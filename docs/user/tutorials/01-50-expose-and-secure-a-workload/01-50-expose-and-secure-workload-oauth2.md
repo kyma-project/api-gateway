@@ -33,7 +33,7 @@ This tutorial shows how to expose and secure Services using APIGateway Controlle
     </details>
   </div>  
 
-* Configure your client ID and client secret using an OAuth2-compliant provider. Then, export the following values as environment variables:
+* Configure your client ID and client Secret using an OAuth2-compliant provider. Then, export the following values as environment variables:
   ```shell
     export CLIENT_ID={CLIENT_ID}
     export CLIENT_SECRET={CLIENT_SECRET}
@@ -89,7 +89,7 @@ This tutorial shows how to expose and secure Services using APIGateway Controlle
 
 ## Expose and secure your workload
 
-Follow the instructions to expose an instance of the HttpBin Service, and secure it with Oauth2 scopes.
+Follow the instructions to expose an instance of the HttpBin Service, and secure it with OAuth2 scopes.
 
 1. Expose the Service and secure it by creating an APIRule CR in your Namespace. Run:
 

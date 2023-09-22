@@ -6,13 +6,13 @@ With the APIGateway Controller, you can secure the Services you expose in the fo
 - with JWT tokens
 - with both OAuth2 and JWT tokens
 
-If you secure a Service with either OAuth2 or JWT tokens, by default, you must include a valid OAuth2 or JWT token in the `Authorization` header of the call to the Service.
+If you secure a Service with either OAuth2 or JWT tokens, you must include a valid OAuth2 or JWT token in the `Authorization` header of the call to the Service.
 
-If you secure a Service with both OAuth2 and JWT, by default, the Oathkeeper proxy expects OAuth2 tokens in the `Authorization` header of incoming calls. For endpoints secured with JWT, you must define the header from which the system extracts the JWT token for every **accessStrategy** you define. Set the **token_from.location** parameter to `header:{NAME}` to extract the JWT token from a specific header. You can use any header name different from `Authorization`.
+If you secure a Service with both OAuth2 and JWT, the Oathkeeper proxy expects the OAuth2 tokens in the `Authorization` header of incoming calls. For endpoints secured with JWT, you must define the header from which the system extracts the JWT token for every **accessStrategy** you define. Set the **token_from.location** parameter to `header:{NAME}` to extract the JWT token from a specific header. You can use any header name different from `Authorization`.
 
 Alternatively, you can set the **token_from.location** parameter to `query_parameter:{NAME}` to extract the token from a specific query parameter.
 
->**TIP:** You can define the location of OAuth2 token through the **token_from.location** parameter. However, by default, OAuth2 tokens are extracted from the `Authorization` header.
+>**TIP:** You can define the location of the OAuth2 token through the **token_from.location** parameter. However, by default, OAuth2 tokens are extracted from the `Authorization` header.
 
 ## Examples
 

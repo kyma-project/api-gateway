@@ -25,7 +25,7 @@ The APIRule CR includes status information for all created sub-resources. Howeve
 
 ## Controller limitations
 
-APIRule Controller relies on Istio and Ory Custom Resources to provide routing capabilities. In terms of persistence, the controller depends only on APIRules stored in the Kubernetes cluster.
+APIRule Controller relies on Istio and Ory custom resources to provide routing capabilities. In terms of persistence, the controller depends only on APIRules stored in the Kubernetes cluster.
 In terms of the resource configuration, the following requirements are set on APIGateway Controller:
 
 |          | CPU  | Memory |

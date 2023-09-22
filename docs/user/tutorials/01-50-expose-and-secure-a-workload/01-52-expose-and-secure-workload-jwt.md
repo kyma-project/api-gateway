@@ -36,7 +36,6 @@ This tutorial shows how to expose and secure Services using APIGateway Controlle
 
 ## Expose, secure, and access your workload
 
-
 1. Expose the Service and secure it by creating an APIRule CR in your Namespace. Run:
 
    ```bash

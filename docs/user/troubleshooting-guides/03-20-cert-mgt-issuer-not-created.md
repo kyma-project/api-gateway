@@ -2,11 +2,11 @@
 
 ## Symptom
 
-When you try to create an Issuer CR using `cert.gardener.cloud/v1alpha1`, the resource is not created. There are no logs in the `cert-management` controller.
+When you try to create an Issuer custom resource (CR) using `cert.gardener.cloud/v1alpha1`, the resource is not created. There are no logs in the `cert-management` controller.
 
 ## Cause
 
-The Namespace in which the Issuer CR was created is incorrect. By default, the `cert-management` watches the `default` Namespace for all Issuer CRs.
+The Namespace in which the Issuer CR was created is incorrect. By default, `cert-management` watches the `default` Namespace for all Issuer CRs.
 
 ## Remedy
 

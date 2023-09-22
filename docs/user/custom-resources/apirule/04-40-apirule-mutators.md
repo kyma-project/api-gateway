@@ -9,13 +9,13 @@ You can use mutators to enrich an incoming request with information. Different t
 | `noop`                 | [Oathkeeper](https://www.ory.sh/docs/oathkeeper/pipeline/mutator) mutator |
 | `allow`                | No mutators supported                                                     |
 
-This document explains and provides examples of Istio mutators that are compatible with JWT access strategy. Additionally, it explores the possibility of using Oathkeeper mutators with Istio, and provides guidance on how to configure them.
+This document explains and provides examples of Istio mutators compatible with the JWT access strategy. Additionally, it explores the possibility of using Oathkeeper mutators with Istio and provides guidance on configuring them.
 
 ## Istio mutators
 The `cookie` and `header` mutators are supported in combination with the JWT access strategy. You are allowed to configure multiple mutators for one APIRule, but only one mutator of each type is allowed.
 
 ### Header mutator
-The headers are defined in the **headers** field of the header mutator configuration. The keys represent the names of the headers, and each value is a string. You can use [Envoy command operators](https://www.envoyproxy.io/docs/envoy/latest/configuration/observability/access_log/usage#command-operators) in the header value to perform operations such as copying an incoming header to a new header. The configured headers are applied to the request. They overwrite any existing headers with the same name.
+The headers are defined in the **headers** field of the header mutator configuration. The keys represent the names of the headers, and each value is a string. You can use [Envoy command operators](https://www.envoyproxy.io/docs/envoy/latest/configuration/observability/access_log/usage#command-operators) in the header value to perform operations such as copying an incoming header to a new one. The configured headers are applied to the request. They overwrite any existing headers with the same name.
 
 <div tabs name="api-rule" group="sample-cr">
   <details>
@@ -121,7 +121,7 @@ mutators:
 ...
 ```
 
-Coresponding Istio Virtual Service configuration:
+Corresponding Istio Virtual Service configuration:
 
 ```yaml
 spec:
@@ -148,7 +148,7 @@ mutators:
 ...
 ```
 
-Coresponding Istio Virtual Service configuration:
+Corresponding Istio Virtual Service configuration:
 
 ```yaml
 spec:
@@ -162,8 +162,8 @@ spec:
 ### Id_token mutator
 
 The functionality of the `id_token` mutator cannot be supported because it would require a mechanism for encoding and signing the response from the OAuth2 server, such as Ory Hydra, into a JWT. 
-Additionally, the JWKS used for signing this JWT is deployed as a `ory-oathkeeper-jwks-secret` Secret, which would have to be fetched in the implementation context or mounted into the component responsible for the encoding.
+Additionally, the JWKS used for signing this JWT is deployed as the `ory-oathkeeper-jwks-secret` Secret, which would have to be fetched in the implementation context or mounted into the component responsible for the encoding.
 
 ### Hydrator mutator
 
-Support for Hydrator token would require to call external APIs in the context of the Istio proxy. This mutator also influences other mutators as it runs before them and supplies them with the outcome of of its execution.
+Support for the Hydrator token would require to call external APIs in the context of the Istio proxy. This mutator also influences other mutators as it runs before them and supplies them with the outcome of its execution.

@@ -19,7 +19,7 @@ kubectl get apirule -n <namespace> <api-rule-name> -o=jsonpath='{.status.APIRule
 ```
 ---
 ## JWT handler's **trusted_issuers** configuration is missing
-#### Cause
+### Cause
 
 The following APIRule is missing the **trusted_issuers** configuration for the JWT handler:
 
@@ -39,7 +39,7 @@ If your APIRule is missing the **trusted_issuers** configuration for the JWT han
 {"code":"ERROR","desc":"Validation error: Attribute \".spec.rules[0].accessStrategies[0].config\": supplied config cannot be empty"}
 ```
 
-#### Remedy
+### Remedy
 
 Add JWT configuration for the **trusted_issuers** or ``. Here's an example of a valid configuration:
 
@@ -56,7 +56,7 @@ spec:
 ```
 ---
 ## Invalid **trusted_issuers** for the JWT handler
-#### Cause
+### Cause
 
 Here's an example of an APIRule with the **trusted_issuers** URL configured:
 
@@ -84,7 +84,7 @@ If the **trusted_issuers** URL is an unsecured HTTP URL, or the **trusted_issuer
 The APIRule "httpbin" is invalid: spec.rules[0].accessStrategies[0].config.trusted_issuers[0]: Invalid value: "some-url": spec.rules[0].accessStrategies[0].config.trusted_issuers[0] in body should match '^(https://|file://).*$'
 ```
 
-#### Remedy
+### Remedy
 
 The JWT **trusted-issuers** must be a valid HTTPS URL, for example:
 
@@ -101,7 +101,7 @@ spec:
 ```
 ---
 ## Unsupported handlers' combination
-#### Cause
+### Cause
 
 The following APIRule has both `allow` and `jwt` handlers defined on the same path:
 
@@ -124,13 +124,13 @@ The handlers' combination in the above example is not supported. If an APIRule h
 {"code":"ERROR","desc":"Validation error: Attribute \".spec.rules[0].accessStrategies.accessStrategies[0].handler\": allow access strategy is not allowed in combination with other access strategies"}
 ```
 
-#### Remedy
+### Remedy
 
 Decide on one configuration you want to use. You can either `allow` access to the specific path or restrict it using the JWT security token. Defining both configuration methods on the same path is not allowed.
 
 ---
 ## Occupied host
-#### Cause
+### Cause
 
 The following APIRules use the same host:
 
@@ -147,7 +147,7 @@ If your APIRule specifies a host that is already used by another APIRule or Virt
 {"code":"ERROR","desc":"Validation error: Attribute \".spec.host\": This host is occupied by another Virtual Service"}
 ```
 
-#### Remedy
+### Remedy
 
 Use a different host for the second APIRule, for example:
 
@@ -159,7 +159,7 @@ spec:
 
 ---
 ## Configuration of `noop` and `allow` handlers 
-#### Cause
+### Cause
 
 In the following APIRule, the `noop` handler has the **trusted-issuers** field configured:
 
@@ -181,7 +181,7 @@ If your APIRule uses either the `noop` or `allow` handler and has some further h
 {"code":"ERROR","desc":"Validation error: Attribute \".spec.rules[0].accessStrategies[0].config\": strategy: noop does not support configuration"}
 ```
 
-#### Remedy
+### Remedy
 
 Use the `noop` and `allow` handlers without any further configuration, for example:
 

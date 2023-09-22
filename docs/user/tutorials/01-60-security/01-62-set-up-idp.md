@@ -47,7 +47,7 @@ For example, if you use Gardener as a managed Kubernetes offering, see the [OIDC
 
 ### Configure role-based access to identities provided by your OIDC server
 
-Including the JWT token in the call to the API server, enables the API server to validate and extract the associated identity from the **username** and **group** claims of the JWT token.
+Including the JWT token in the call to the API server enables the API server to validate and extract the associated identity from the **username** and **group** claims of the JWT token.
 
 Now, define which individuals or groups should have access to which Kyma resources. The default setup does not provide access to any. You need to model permissions using the [RBAC concept](https://kubernetes.io/docs/reference/access-authn-authz/rbac/).
 
@@ -74,7 +74,7 @@ With this step, you will set up the OIDC provider in the `kubeconfig` file to en
         - --oidc-issuer-url=ISSUER_URL
         - --oidc-client-id=YOUR_CLIENT_ID
     ```
-    > **NOTE:** The `--oidc-client-secret=YOUR_CLIENT_SECRET` is not required if your OICS server supports the PKCE authentication flow.
+    > **NOTE:** `--oidc-client-secret=YOUR_CLIENT_SECRET` is not required if your OICS server supports the PKCE authentication flow.
 
 4. To enforce the OIDC login, set the OIDC user as a default user in the context.
 
@@ -84,4 +84,4 @@ With this step, you will set up the OIDC provider in the `kubeconfig` file to en
         user: oidc
     ```
 
-5. Now, you can share the modified `kubeconfig` file with the members of your team or organization. When they use it, your identity provider will handle the authentication. The Kubernetes API server will make sure they have access to resources according to the roles bound to them as individuals or group members.     
+5. Now, you can share the modified kubeconfig file with the members of your team or organization. When they use it, your identity provider will handle the authentication. The Kubernetes API server will make sure they have access to resources according to the roles bound to them as individuals or group members.     

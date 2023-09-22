@@ -36,7 +36,7 @@ This table lists all the possible parameters of the Istio JWT access strategy to
 
 >**CAUTION:** You can define multiple JWT issuers, but each of them must be unique.
 
->**CAUTION:** Currently, we support only a single `fromHeader` **or** a single `fromParameter`. Specifying both of these fields for a JWT issuer is not supported.
+>**CAUTION:** Currently, we support only a single `fromHeader` or a single `fromParameter`. Specifying both of these fields for a JWT issuer is not supported.
 
 
 <div tabs name="api-rule" group="sample-cr">
@@ -46,7 +46,7 @@ This table lists all the possible parameters of the Istio JWT access strategy to
   </summary>
 
 In the following example, the APIRule has two defined Issuers. The first Issuer, called `ISSUER`, uses a JWT token extracted from the HTTP header. The header is named `X-JWT-Assertion` and has a prefix of `Kyma`. The second Issuer, called `ISSUER2`, uses a JWT token extracted from a URL parameter named `jwt-token`.  
-The **requiredScopes** defined in the **authorizations** field allow only allow JWTs that have the claims `scp`, `scope`, or `scopes` with a value of `test`. Additionally, the JWTs must have an audience of either `example.com` or `example.org`. Alternatively, the JWTs can have the same claims with the values `read` and `write`.
+**requiredScopes** defined in the **authorizations** field allow only for JWTs that have the claims `scp`, `scope`, or `scopes` with a value of `test`. Additionally, the JWTs must have an audience of either `example.com` or `example.org`. Alternatively, the JWTs can have the same claims with the `read` and `write` values.
 
 ```yaml
 apiVersion: gateway.kyma-project.io/v1beta1

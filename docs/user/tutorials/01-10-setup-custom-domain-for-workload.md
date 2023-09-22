@@ -1,6 +1,6 @@
 # Set up a custom domain for a workload
 
-This tutorial shows how to set up a custom domain and prepare a certificate required for exposing a workload. It uses Gardener [External DNS Management](https://github.com/gardener/external-dns-management) and [Certificate Management](https://github.com/gardener/cert-management) components.
+This tutorial shows how to set up a custom domain and prepare a certificate required for exposing a workload. It uses the Gardener [External DNS Management](https://github.com/gardener/external-dns-management) and [Certificate Management](https://github.com/gardener/cert-management) components.
 
 >**NOTE:** Skip this tutorial if you use a Kyma domain instead of your custom domain.
 
@@ -20,17 +20,17 @@ This tutorial shows how to set up a custom domain and prepare a certificate requ
        export SECRET={SECRET_NAME}
        ```
 
-2. Create a `DNSProvider` custom resource (CR).
+2. Create a DNSProvider custom resource (CR).
 
      * Export the following values as environment variables. 
-        >**NOTE:** As the `SPEC_TYPE`, use the relevant provider type. The `DOMAIN_NAME` value specifies the name of a domain that you own, for example, `mydomain.com`. 
+        >**NOTE:** As `SPEC_TYPE`, use the relevant provider type. The `DOMAIN_NAME` value specifies the name of a domain that you own, for example, `mydomain.com`. 
 
         ```bash
         export SPEC_TYPE={PROVIDER_TYPE}
         export DOMAIN_TO_EXPOSE_WORKLOADS={DOMAIN_NAME} 
         ````
   
-     * To create a `DNSProvider` CR, run: 
+     * To create a DNSProvider CR, run: 
 
        ```bash
        cat <<EOF | kubectl apply -f -
@@ -51,7 +51,7 @@ This tutorial shows how to set up a custom domain and prepare a certificate requ
        EOF
        ```
   
-3. Create a `DNSEntry` CR.
+3. Create a DNSEntry CR.
    
      * Export the following values as environment variables:
 
@@ -60,7 +60,7 @@ This tutorial shows how to set up a custom domain and prepare a certificate requ
        ```
         >**NOTE:** For some cluster providers you need to replace the `ip` with the `hostname`, for example, in AWS, set `jsonpath='{.status.loadBalancer.ingress[0].hostname}'`.
 
-     * To create a `DNSEntry` CR, run:
+     * To create a DNSEntry CR, run:
 
        ```bash
        cat <<EOF | kubectl apply -f -
@@ -83,7 +83,7 @@ This tutorial shows how to set up a custom domain and prepare a certificate requ
 
      * Export the following values as environment variables:
 
-        >**NOTE:** The `TLS_SECRET` is the name of the TLS Secret, for example `httpbin-tls-credentials`.
+        >**NOTE:** `TLS_SECRET` is the name of the TLS Secret, for example, `httpbin-tls-credentials`.
 
         ```bash
         export TLS_SECRET={TLS_SECRET_NAME}
@@ -113,4 +113,4 @@ This tutorial shows how to set up a custom domain and prepare a certificate requ
        
 5. [Set up a TLS Gateway](./01-20-set-up-tls-gateway.md).
 
-Visit the [Gardener external DNS management documentation](https://github.com/gardener/external-dns-management/tree/master/examples) to see more examples of custom resources for Services and ingresses.
+Visit the [Gardener external DNS management documentation](https://github.com/gardener/external-dns-management/tree/master/examples) to see more examples of CRs for Services and ingresses.

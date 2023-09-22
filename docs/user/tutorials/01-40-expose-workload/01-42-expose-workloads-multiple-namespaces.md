@@ -50,7 +50,7 @@ This tutorial shows how to expose Service endpoints in multiple Namespaces using
 
 ## Expose and access your workloads in multiple Namespaces
 
-1. Expose the HttpBin Services in their respective Namespaces by creating an APIRule CR in its own Namespace. Run:
+1. Expose the HttpBin Services in their respective Namespaces by creating an APIRule custom resource (CR) in its own Namespace. Run:
 
    ```bash
    cat <<EOF | kubectl apply -f -

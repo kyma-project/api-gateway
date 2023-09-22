@@ -1,6 +1,6 @@
 # APIGateway custom resource
 
-The `apigateways.operator.kyma-project.io` CustomResourceDefinition (CRD) describes the kind and the format of data that APIGateway Controller uses to configure the API Gateway resources. Applying the CR triggers the installation of API Gateway resources, and deleting it triggers the uninstallation of those resources. To get the up-to-date CRD in the `yaml` format, run the following command:
+The `apigateways.operator.kyma-project.io` CustomResourceDefinition (CRD) describes the kind and the format of data that APIGateway Controller uses to configure the API Gateway resources. Applying the custom resource (CR) triggers the installation of API Gateway resources, and deleting it triggers the uninstallation of those resources. To get the up-to-date CRD in the `yaml` format, run the following command:
 
 ```shell
 kubectl get crd apigateways.operator.kyma-project.io -o yaml
