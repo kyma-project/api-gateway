@@ -215,6 +215,7 @@ func (s *scenario) reconciliationHappened(numberOfSeconds int) error {
 				Version:  apirulev1beta1.GroupVersion.Version,
 				Resource: "apirules",
 			}, apiRule.GetNamespace(), apiRule.GetName(), retry.Attempts(1))
+
 			if err != nil {
 				return err
 			}
