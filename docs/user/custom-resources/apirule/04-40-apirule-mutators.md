@@ -58,7 +58,7 @@ spec:
 </div>
 
 ### Cookie mutator
-To configure cookies, use the **cookies** mutator configuration field. The keys represent the names of the cookies, and each value is a string. As the cookie value, you can use [Envoy command operators](https://www.envoyproxy.io/docs/envoy/latest/configuration/observability/access_log/usage#command-operators). The configured cookies are set as `cookie`-header in the request and overwrite any existing cookies.
+To configure cookies, use the **cookies** mutator configuration field. The keys represent the names of the cookies, and each value is a string. As the cookie value, you can use [Envoy command operators](https://www.envoyproxy.io/docs/envoy/latest/configuration/observability/access_log/usage#command-operators). The configured cookies are set as the `cookie` header in the request and overwrite any existing cookies.
 
 <div tabs name="api-rule" group="sample-cr">
   <details>
@@ -103,11 +103,11 @@ spec:
 
 ### Templating support
 
-Ory Rules have support for templating in mutators. Simple cases can be implemented with the help of EnvoyFilter, such as the one presented in [id-token-envoyfilter](id-token-envoyfilter) directory.
+The Ory Access Rules have support for templating in mutators. Simple cases can be implemented with the help of EnvoyFilter, such as the one presented in [id-token-envoyfilter](id-token-envoyfilter) directory.
 
 ### Header mutator
 
-To handle the `header` type mutator in Istio, you can use the VirtualService [HeaderOperations](https://istio.io/latest/docs/reference/config/networking/virtual-service/#Headers-HeaderOperations). HeaderOperations only allow you to add static data. However, [Ory Headers Mutator](https://www.ory.sh/docs/oathkeeper/pipeline/mutator#headers) supports templating, which receives the current Authentication Session. To support similar capabilities in Istio, you must use [EnvoyFilter](https://istio.io/latest/docs/reference/config/networking/envoy-filter/).
+To handle the `header` type mutator in Istio, you can use the VirtualService [HeaderOperations](https://istio.io/latest/docs/reference/config/networking/virtual-service/#Headers-HeaderOperations). HeaderOperations only allow you to add static data. However, [Ory Headers Mutator](https://www.ory.sh/docs/oathkeeper/pipeline/mutator#headers) supports templating, which receives the current AuthenticationSession. To support similar capabilities in Istio, you must use [EnvoyFilter](https://istio.io/latest/docs/reference/config/networking/envoy-filter/).
 
 Ory configuration:
 
@@ -134,7 +134,7 @@ spec:
 
 ### Cookie mutator
 
-The mutator of type `cookie` can be handled the same as the `header` mutator with Istio using Virtual Service HeaderOperations. Like with the `header` mutator, Istio has the limitation of only allowing static data.However, [Ory Cookie Mutator](https://www.ory.sh/docs/oathkeeper/pipeline/mutator#cookie) supports templating.
+The mutator of type `cookie` can be handled the same as the `header` mutator with Istio using Virtual Service HeaderOperations. Like with the `header` mutator, Istio has the limitation of only allowing static data. However, the [Ory Cookie Mutator](https://www.ory.sh/docs/oathkeeper/pipeline/mutator#cookie) supports templating.
 
 Ory configuration:
 
