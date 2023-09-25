@@ -106,6 +106,9 @@ jobs:
     needs: [wait-for-image-build]
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
       - id: test-upgrade-img
         run: |
           echo "TEST_UPGRADE_IMG=europe-docker.pkg.dev/kyma-project/prod/api-gateway-controller:v$(git show -s --date=format:'%Y%m%d' --format=%cd 2c9b692be280cec58315737ad95226c4938aba4a)-$(printf %.8s 2c9b692be280cec58315737ad95226c4938aba4a)" >> $GITHUB_OUTPUT
