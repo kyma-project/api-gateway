@@ -134,7 +134,7 @@ spec:
 
 ### Cookie mutator
 
-The mutator of type `cookie` can be handled the same as the `header` mutator with Istio using Virtual Service HeaderOperations. Like with the `header` mutator, Istio has the limitation of only allowing static data. However, the [Ory Cookie Mutator](https://www.ory.sh/docs/oathkeeper/pipeline/mutator#cookie) supports templating.
+The mutator of type `cookie` can be handled the same as the `header` mutator with Istio using Virtual Service HeaderOperations. Like with the `header` mutator, Istio has the limitation of only allowing static data. However, the [Ory cookie mutator](https://www.ory.sh/docs/oathkeeper/pipeline/mutator#cookie) supports templating.
 
 Ory configuration:
 
