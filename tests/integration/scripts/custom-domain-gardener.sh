@@ -3,7 +3,7 @@
 #
 ##Description: This scripts installs and test api-gateway custom domain test using the CLI on a real Gardener GCP cluster.
 ## exit on error, and raise error when variable is not set when used
-## IMG env variable expected for make deploy which points to the image in the registry
+## IMG env variable expected (for make deploy), which points to the image in the registry
 
 set -euo pipefail
 
