@@ -98,27 +98,3 @@ jobs:
           UPGRADE_JOB: true
           PULL_NUMBER: ${{ github.event.number }}
           TEST_UPGRADE_IMG: "europe-docker.pkg.dev/kyma-project/dev/api-gateway-controller:PR-${{ github.event.number }}"
-
-  test-upgrade-tests:
-    name: Upgrade tests test
-    runs-on: ubuntu-latest
-    if: github.event_name != 'schedule'
-    needs: [wait-for-image-build]
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          fetch-depth: 0
-      - id: test-upgrade-img
-        run: |
-          echo "TEST_UPGRADE_IMG=europe-docker.pkg.dev/kyma-project/prod/api-gateway-controller:v$(git show -s --date=format:'%Y%m%d' --format=%cd 2c9b692be280cec58315737ad95226c4938aba4a)-$(printf %.8s 2c9b692be280cec58315737ad95226c4938aba4a)" >> $GITHUB_OUTPUT
-      - uses: ./.github/actions/integration-tests
-        env:
-          JOB_TYPE: postsubmit
-          CLIENT_ID: ${{ secrets.CLIENT_ID }}
-          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
-          OIDC_ISSUER_URL: ${{ secrets.OIDC_ISSUER_URL }}
-          MAKE_TARGET_TESTS: test-upgrade
-          UPGRADE_JOB: true
-          PULL_BASE_SHA: 2c9b692be280cec58315737ad95226c4938aba4a
-          TEST_UPGRADE_IMG: ${{ steps.test-upgrade-img.outputs.TEST_UPGRADE_IMG }}
