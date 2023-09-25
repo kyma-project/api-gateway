@@ -12,6 +12,9 @@ ifndef MODULE_VERSION
     MODULE_VERSION = 0.0.1
 endif
 
+#latest api-gateway release
+LATEST_RELEASE = $(shell curl -sS "https://api.github.com/repos/kyma-project/api-gateway/releases/latest" | jq -r '.tag_name')
+
 # Operating system architecture
 OS_ARCH ?= $(shell uname -m)
 
@@ -100,6 +103,10 @@ test: manifests generate fmt vet envtest ## Generate manifests and run tests.
 .PHONY: test-integration
 test-integration: generate fmt vet envtest ## Run integration tests.
 	source ./tests/integration/env_vars.sh && go test -timeout 1h ./tests/integration -v -race -run TestIstioJwt . && go test -timeout 1h ./tests/integration -v -race -run TestOryJwt .
+
+.PHONY: test-upgrade
+test-upgrade: generate fmt vet install ## Run API Gateway upgrade tests.
+	source ./tests/integration/env_vars.sh && $(GOTEST) ./tests/integration -v -race -run TestUpgrade .
 
 test-custom-domain:
 	source ./tests/integration/env_vars_custom_domain.sh && bash -c "trap 'kubectl delete secret google-credentials -n default' EXIT; \
@@ -229,6 +236,13 @@ generate-manifests: kustomize
 
 ##@ Tools
 
+REPOSITORY=
+GITHUB_URL=
+
+.PHONY: get-latest-release
+get-latest-release:
+	@echo $(LATEST_RELEASE)
+
 ########## Kyma CLI ###########
 KYMA_STABILITY ?= unstable
 
@@ -241,7 +255,7 @@ KYMA_FILE_NAME ?= $(shell ./hack/get_kyma_file_name.sh ${OS_TYPE} ${OS_ARCH})
 KYMA ?= $(LOCALBIN)/kyma-$(KYMA_STABILITY)
 kyma: $(LOCALBIN) $(KYMA) ## Download kyma locally if necessary.
 $(KYMA):
-	## Detect if operating system
+	## Detecting operating system to download proper kyma CLI binary
 	$(if $(KYMA_FILE_NAME),,$(call os_error, ${OS_TYPE}, ${OS_ARCH}))
 	test -f $@ || curl -s -Lo $(KYMA) https://storage.googleapis.com/kyma-cli-$(KYMA_STABILITY)/$(KYMA_FILE_NAME)
 	chmod 0100 $(KYMA)

@@ -39,19 +39,18 @@ func (s *scenario) callingTheEndpointWithValidToken(url string, tokenType string
 	requestHeaders := make(map[string]string)
 
 	switch tokenType {
+	case "OAuth2":
+		tokenJwt, err := auth.GetAccessToken(*s.oauth2Cfg, strings.ToLower(tokenType))
+		if err != nil {
+			return fmt.Errorf("failed to fetch an id_token: %s", err.Error())
+		}
+		requestHeaders[testcontext.AuthorizationHeaderName] = fmt.Sprintf("Bearer %s", tokenJwt)
 	case "JWT":
 		tokenJwt, err := auth.GetAccessToken(*s.jwtConfig, strings.ToLower(tokenType))
 		if err != nil {
 			return fmt.Errorf("failed to fetch an id_token: %s", err.Error())
 		}
 		requestHeaders[testcontext.AuthorizationHeaderName] = fmt.Sprintf("Bearer %s", tokenJwt)
-
-	case "OAuth2":
-		tokenOauth, err := auth.GetHydraOAuth2AccessToken(*s.oauth2Cfg)
-		if err != nil {
-			return err
-		}
-		requestHeaders[testcontext.AuthorizationHeaderName] = fmt.Sprintf("Bearer %s", tokenOauth)
 	default:
 		return fmt.Errorf("unsupported token type: %s", tokenType)
 	}
