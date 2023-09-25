@@ -6,7 +6,7 @@ When you try to reach your Service, you get `404 Not Found` in response.
 
 ## Cause 
 
-The error occurs when the resource you try to reach cannot be found. 
+The error occurs when the server can't find the resource you try to reach. 
 Sometimes, the Oathkeeper Maester controller stops reconciling Access Rules on long-living clusters. As a result, Oathkeeper may not have the necessary Access Rules to accurately reflect the current state of the cluster, leading to random `404 Not Found` responses.
 
 ## Remedy
