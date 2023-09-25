@@ -70,6 +70,9 @@ jobs:
     needs: [wait-for-image-build]
     steps:
       - uses: actions/checkout@v4
+      - id: test-upgrade-img
+        run: |
+          echo "TEST_UPGRADE_IMG=europe-docker.pkg.dev/kyma-project/prod/api-gateway-controller:v$(git show -s --date=format:'%Y%m%d' --format=%cd ${{ github.sha }})-$(printf %.8s ${{ github.sha }})" >> $GITHUB_OUTPUT
       - uses: ./.github/actions/integration-tests
         env:
           JOB_TYPE: postsubmit
@@ -79,6 +82,7 @@ jobs:
           MAKE_TARGET_TESTS: test-upgrade
           UPGRADE_JOB: true
           PULL_BASE_SHA: ${{ github.sha }}
+          TEST_UPGRADE_IMG: ${{ steps.test-upgrade-img.outputs.TEST_UPGRADE_IMG }}
 
   slack_failed_notification:
     name: Slack Notification

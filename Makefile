@@ -53,7 +53,7 @@ endif
 GOTEST=$(GOCMD) test -timeout 1h
 
 PULL_IMAGE_VERSION=PR-${PULL_NUMBER}
-POST_IMAGE_VERSION=v$(shell date '+%Y%m%d')-$(shell printf %.8s ${PULL_BASE_SHA})
+POST_IMAGE_VERSION=v$(shell git show -s --date=format:'%Y%m%d' --format=%cd ${PULL_BASE_SHA})-$(shell printf %.8s ${PULL_BASE_SHA})
 
 ifeq ($(JOB_TYPE), postsubmit)
 ifeq ($(TEST_UPGRADE_IMG),)
