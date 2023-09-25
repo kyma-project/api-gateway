@@ -4,6 +4,11 @@
 
 When you try to reach your Service, you get `404 Not Found` in response.
 
+## Cause 
+
+The error occurs when the resource you try to reach cannot be found. 
+Sometimes, the Oathkeeper Maester controller stops reconciling Access Rules on long-living clusters. As a result, Oathkeeper may not have the necessary Access Rules to accurately reflect the current state of the cluster, leading to random `404 Not Found` responses.
+
 ## Remedy
 
 Make sure that the following conditions are met:
@@ -24,7 +29,7 @@ Make sure that the following conditions are met:
 
   >**TIP:** The name of the VirtualService consists of the name of the APIRule and a random suffix.
 
-Sometimes, the Oathkeeper Maester controller stops reconciling Access Rules on long-living clusters. This behavior might result in the random `404 Not Found` responses because Oathkeeper does not contain Access Rules reflecting the actual state of the cluster. A simple restart of the Pod resolves the problem. To verify if that it is the cause of the issue you encountered, follow these steps:
+If you suspect you are experiencing an issue caused by the Oathkeeper Maester controller not reconciling Access Rules, resolve the problem by restarting the Oathkeeper Pods. To confirm whether this is indeed the cause of the issue, follow these steps:
 
 1. Fetch all Oathkeeper Pods' names:
 
@@ -40,10 +45,10 @@ Sometimes, the Oathkeeper Maester controller stops reconciling Access Rules on l
 
 3. If you have more than one instance of Oathkeeper, compare whether the files contain the same Access Rules. Because Oathkeeper stores Access Rules as JSON files, you can use [jd](https://github.com/josephburnett/jd) to automate the comparison:
 
-    ```bash
-   jd -set {FIRST_FILE} {SECOND_FILE} 
-   ```
+  ```bash
+  jd -set {FIRST_FILE} {SECOND_FILE} 
+  ```
 
-    The files are considered different by jd if there are any differences between the files other than the order of Access Rules.
+  The files are considered different by jd if there are any differences between the files other than the order of Access Rules.
    
 4. Compare Access Rules in the files with those present in the cluster. If the files are different, Oathkeeper Pods are out of sync.
