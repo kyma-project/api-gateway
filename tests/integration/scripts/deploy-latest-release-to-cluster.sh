@@ -23,6 +23,6 @@ set -o pipefail
 
 git checkout mod-dev
 MOD_DEV_SHA=$(git log -n 1 --pretty=format:"%H" mod-dev)
-IMG=api-gateway-controller:v$(git show -s --date=format:'%Y%m%d' --format=%cd "$MOD_DEV_SHA")-$(printf %.8s "$MOD_DEV_SHA")
+IMG=api-gateway-manager:v$(git show -s --date=format:'%Y%m%d' --format=%cd "$MOD_DEV_SHA")-$(printf %.8s "$MOD_DEV_SHA")
 echo "$IMG"
 #make deploy
