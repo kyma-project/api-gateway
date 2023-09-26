@@ -18,6 +18,12 @@ package operator
 
 import (
 	"context"
+	"fmt"
+	"os"
+	"path/filepath"
+	"testing"
+	"time"
+
 	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	operatorv1alpha1 "github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
 	"github.com/kyma-project/api-gateway/controllers"
@@ -31,6 +37,7 @@ import (
 	"k8s.io/client-go/util/retry"
 	"path/filepath"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"testing"
 	"time"
@@ -149,4 +156,15 @@ func createCommonTestResources(k8sClient client.Client) {
 		Spec:       corev1.NamespaceSpec{},
 	}
 	Expect(k8sClient.Create(context.TODO(), istioSystemNs)).Should(Succeed())
+}
+
+func createFakeClient(objects ...client.Object) client.Client {
+	return fake.NewClientBuilder().WithScheme(getTestScheme()).WithObjects(objects...).WithStatusSubresource(objects...).Build()
+}
+
+func getTestScheme() *runtime.Scheme {
+	scheme := runtime.NewScheme()
+	Expect(operatorv1alpha1.AddToScheme(scheme)).Should(Succeed())
+
+	return scheme
 }

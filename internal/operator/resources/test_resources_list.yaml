@@ -1,0 +1,8 @@
+resources:
+  - GroupVersionKind:
+      group: gateway.kyma-project.io
+      version: v1beta1
+      kind: APIRule
+    ControlledList:
+      - name: "api-rule-\\d\\.\\d\\d"
+        namespace: "managed-namespace"
