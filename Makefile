@@ -106,7 +106,7 @@ test-integration: generate fmt vet envtest ## Run integration tests.
 
 .PHONY: test-upgrade
 test-upgrade: generate fmt vet install ## Run API Gateway upgrade tests.
-	source ./tests/integration/env_vars.sh && $(GOTEST) ./tests/integration -v -race -run TestUpgrade .
+	source ./tests/integration/env_vars.sh && go test -timeout 1h ./tests/integration -v -race -run TestUpgrade .
 
 test-custom-domain:
 	source ./tests/integration/env_vars_custom_domain.sh && bash -c "trap 'kubectl delete secret google-credentials -n default' EXIT; \
