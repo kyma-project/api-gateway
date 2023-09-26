@@ -6,4 +6,3 @@ prerequisites:
     namespace: "istio-system"
 components:
   - name: "ory"
-  - name: "api-gateway"

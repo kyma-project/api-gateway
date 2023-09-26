@@ -3,12 +3,13 @@ package resource
 import (
 	"context"
 	"fmt"
+	"log"
+	"time"
+
 	"github.com/avast/retry-go/v4"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/client"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"log"
-	"time"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -194,6 +195,25 @@ func (m *Manager) GetResource(client dynamic.Interface, resourceSchema schema.Gr
 		if err != nil {
 			return nil, err
 		}
+	}
+
+	return res, nil
+}
+
+func (m *Manager) List(client dynamic.Interface, resourceSchema schema.GroupVersionResource, namespace string, listOptions metav1.ListOptions) (*unstructured.UnstructuredList, error) {
+	var res *unstructured.UnstructuredList
+
+	err := retry.Do(
+		func() error {
+			var err error
+			res, err = client.Resource(resourceSchema).Namespace(namespace).List(context.Background(), listOptions)
+			if err != nil {
+				return err
+			}
+			return nil
+		}, m.retryOptions...)
+	if err != nil {
+		return nil, err
 	}
 
 	return res, nil
