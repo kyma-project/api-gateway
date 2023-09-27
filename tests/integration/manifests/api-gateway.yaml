@@ -1,0 +1,7 @@
+apiVersion: operator.kyma-project.io/v1alpha1
+kind: APIGateway
+metadata:
+  name: "{{.NamePrefix}}-{{.TestID}}"
+  namespace: "{{.Namespace}}"
+spec:
+  enableKymaGateway: true

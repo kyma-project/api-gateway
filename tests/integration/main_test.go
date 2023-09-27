@@ -3,8 +3,13 @@ package api_gateway
 import (
 	"github.com/cucumber/godog"
 	"github.com/cucumber/godog/colors"
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/client"
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/helpers"
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/manifestprocessor"
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/resource"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
 	"github.com/kyma-project/api-gateway/tests/integration/testsuites/custom-domain"
+	"github.com/kyma-project/api-gateway/tests/integration/testsuites/gateway"
 	"github.com/kyma-project/api-gateway/tests/integration/testsuites/istio-jwt"
 	"github.com/kyma-project/api-gateway/tests/integration/testsuites/ory"
 	"github.com/kyma-project/api-gateway/tests/integration/testsuites/upgrade"
@@ -73,12 +78,28 @@ func TestOryJwt(t *testing.T) {
 	runTestsuite(t, ts, config)
 }
 
+func TestGateway(t *testing.T) {
+	config := testcontext.GetConfig()
+	ts, err := testcontext.New(config, gateway.NewTestsuite)
+	if err != nil {
+		t.Fatalf("Failed to create Gateway testsuite %s", err.Error())
+	}
+	defer ts.TearDown()
+	runTestsuite(t, ts, config)
+}
+
 func runTestsuite(t *testing.T, testsuite testcontext.Testsuite, config testcontext.Config) {
 	opts := createGoDogOpts(t, testsuite.FeaturePath(), config.TestConcurrency)
 	suite := godog.TestSuite{
 		Name: testsuite.Name(),
 		// We are not using ScenarioInitializer, as this function only needs to set up global resources
 		TestSuiteInitializer: func(ctx *godog.TestSuiteContext) {
+			ctx.BeforeSuite(func() {
+				if err := createApiGatewayCR(config); err != nil {
+					t.Fatalf("Cannot create api-gateway CR: %s", err.Error())
+				}
+			})
+
 			testsuite.InitScenarios(ctx.ScenarioContext())
 		},
 		Options: &opts,
@@ -125,4 +146,33 @@ func cleanUp(c testcontext.Testsuite, orgJwtHandler string) {
 
 func shouldExportResults() bool {
 	return os.Getenv("EXPORT_RESULT") == "true"
+}
+
+func createApiGatewayCR(config testcontext.Config) error {
+	ns := "kyma-system"
+	namePrefix := "test-gateway"
+	testID := helpers.GenerateRandomTestId()
+
+	apiGatewayCR, err := manifestprocessor.ParseFromFileWithTemplate("api-gateway.yaml", "manifests/", struct {
+		Namespace  string
+		NamePrefix string
+		TestID     string
+	}{Namespace: ns, NamePrefix: namePrefix, TestID: testID})
+	if err != nil {
+		log.Fatalf("failed to process api-gateway manifest file, details %v", err)
+		return err
+	}
+
+	k8sClient, err := client.GetDynamicClient()
+	if err != nil {
+		return err
+	}
+
+	rm := resource.NewManager(testcontext.GetRetryOpts(config))
+	_, err = rm.CreateResources(k8sClient, apiGatewayCR...)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

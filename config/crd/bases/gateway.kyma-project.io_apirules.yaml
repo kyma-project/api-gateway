@@ -46,6 +46,7 @@ spec:
                 description: Represents the array of Oathkeeper access rules to be
                   applied.
                 items:
+                  description: Rule .
                   properties:
                     accessStrategies:
                       description: Specifies the list of access strategies. All strategies
@@ -61,22 +62,6 @@ spec:
                               vary per handler.
                             type: object
                             x-kubernetes-preserve-unknown-fields: true
-                            properties:
-                              jwks_urls:
-                                description: Specifies the array of URLs from which Ory Oathkeeper can retrieve JSON Web Keys for validating JSON Web Token.
-                                  Must start with either "http://", "https://" or "file://".
-                                type: array
-                                items:
-                                  type: string
-                                  pattern: ^(http://|https://|file://).*$
-                              trusted_issuers:
-                                description: If the **trusted_issuers** field is set, the JWT must contain a value for the claim `iss`
-                                  that matches exactly (case-sensitive) one of the values of **trusted_issuers**.
-                                  Must start with either "http://", "https://" or "file://".
-                                type: array
-                                items:
-                                  type: string
-                                  pattern: ^(http://|https://|file://).*$
                           handler:
                             description: Specifies the name of the handler.
                             type: string
@@ -165,35 +150,48 @@ spec:
                     description: Status code describing APIRule.
                     type: string
                   desc:
-                    description: Explains the status of APIRule.
                     type: string
                 type: object
               accessRuleStatus:
-                description: Describes the status of ORY Oathkeeper Rule.
+                description: Describes the status of APIRule.
                 properties:
                   code:
-                    description: Status code describing ORY Oathkeeper Rule.
+                    description: Status code describing APIRule.
                     type: string
                   desc:
-                    description: Explains the status of ORY Oathkeeper Rule.
+                    type: string
+                type: object
+              authorizationPolicyStatus:
+                description: Describes the status of APIRule.
+                properties:
+                  code:
+                    description: Status code describing APIRule.
+                    type: string
+                  desc:
                     type: string
                 type: object
               lastProcessedTime:
-                description: Indicates the timestamp when the API Gateway controller last processed APIRule.
                 format: date-time
                 type: string
               observedGeneration:
-                description: Specifies the generation of the resource that was observed by the API Gateway controller.
                 format: int64
                 type: integer
-              virtualServiceStatus:
-                description: Describes the status of Istio VirtualService.
+              requestAuthenticationStatus:
+                description: Describes the status of APIRule.
                 properties:
                   code:
-                    description: Status code describing Istio VirtualService.
+                    description: Status code describing APIRule.
                     type: string
                   desc:
-                    description: Explains the status of Istio VirtualService.
+                    type: string
+                type: object
+              virtualServiceStatus:
+                description: Describes the status of APIRule.
+                properties:
+                  code:
+                    description: Status code describing APIRule.
+                    type: string
+                  desc:
                     type: string
                 type: object
             type: object
@@ -243,6 +241,7 @@ spec:
                 description: Represents the array of Oathkeeper access rules to be
                   applied.
                 items:
+                  description: Rule .
                   properties:
                     accessStrategies:
                       description: Specifies the list of access strategies. All strategies
@@ -258,22 +257,6 @@ spec:
                               vary per handler.
                             type: object
                             x-kubernetes-preserve-unknown-fields: true
-                            properties:
-                              jwks_urls:
-                                description: Specifies the array of URLs from which Ory Oathkeeper can retrieve JSON Web Keys for validating JSON Web Token.
-                                  Must start with either "http://", "https://" or "file://".
-                                type: array
-                                items:
-                                  type: string
-                                  pattern: ^(http://|https://|file://).*$
-                              trusted_issuers:
-                                description: If the **trusted_issuers** field is set, the JWT must contain a value for the claim `iss` 
-                                  that matches exactly (case-sensitive) one of the values of **trusted_issuers**.
-                                  Must start with either "http://", "https://" or "file://".
-                                type: array
-                                items:
-                                  type: string
-                                  pattern: ^(http://|https://|file://).*$
                           handler:
                             description: Specifies the name of the handler.
                             type: string
@@ -399,55 +382,48 @@ spec:
                     description: Status code describing APIRule.
                     type: string
                   desc:
-                    description: Explains the status of APIRule.
                     type: string
                 type: object
               accessRuleStatus:
-                description: Describes the status of ORY Oathkeeper Rule.
+                description: Describes the status of APIRule.
                 properties:
                   code:
-                    description: Status code describing ORY Oathkeeper Rule.
+                    description: Status code describing APIRule.
                     type: string
                   desc:
-                    description: Explains the status of ORY Oathkeeper Rule.
                     type: string
                 type: object
               authorizationPolicyStatus:
-                description: Describes the status of the Istio Authorization Policy subresource.
+                description: Describes the status of APIRule.
                 properties:
                   code:
-                    description: Status code describing the Istio Authorization Policy subresource.
+                    description: Status code describing APIRule.
                     type: string
                   desc:
-                    description: Explains the status of the Istio Authorization Policy subresource.
                     type: string
                 type: object
               lastProcessedTime:
-                description: Indicates the timestamp when the API Gateway controller last processed APIRule.
                 format: date-time
                 type: string
               observedGeneration:
-                description: Specifies the generation of the resource that was observed by the API Gateway controller.
                 format: int64
                 type: integer
               requestAuthenticationStatus:
-                description: Describes the status of the Istio Request Authentication subresource.
+                description: Describes the status of APIRule.
                 properties:
                   code:
-                    description: Status code describing the state of the Istio Authorization Policy subresource.
+                    description: Status code describing APIRule.
                     type: string
                   desc:
-                    description: Explains the status of the Istio Request Authentication subresource.
                     type: string
                 type: object
               virtualServiceStatus:
-                description: Describes the status of Istio VirtualService.
+                description: Describes the status of APIRule.
                 properties:
                   code:
-                    description: Status code describing Istio VirtualService.
+                    description: Status code describing APIRule.
                     type: string
                   desc:
-                    description: Explains the status of Istio VirtualService.
                     type: string
                 type: object
             type: object
