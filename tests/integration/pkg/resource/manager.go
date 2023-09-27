@@ -74,11 +74,9 @@ func (m *Manager) CreateOrUpdateResources(k8sClient dynamic.Interface, resources
 		_, err := m.GetResource(k8sClient, resourceSchema, ns, res.GetName(), retry.Attempts(2), retry.Delay(1))
 
 		if err != nil {
-			println("internal view", err.Error())
 			if apierrors.IsNotFound(retry.Error{err}.Unwrap()) {
 				err := m.CreateResource(k8sClient, resourceSchema, ns, res)
 				if err != nil {
-					println("but cannot create ", err.Error())
 					return nil, err
 				}
 			} else {
@@ -234,29 +232,76 @@ func (m *Manager) GetStatus(client dynamic.Interface, resourceSchema schema.Grou
 	return status, nil
 }
 
-func (m *Manager) MergeResources(client dynamic.Interface, resources []unstructured.Unstructured) error {
-	for i, resource := range resources {
-		gvk := resource.GroupVersionKind()
-		m, err := m.mapper.RESTMapping(schema.GroupKind{
-			Group: gvk.Group,
-			Kind:  gvk.Kind,
-		})
+func (m *Manager) MergeAndUpdateOrCreateResources(client dynamic.Interface, resources []unstructured.Unstructured) error {
+	for _, resource := range resources {
+		gvr, err := getGvrFromUnstructured(m, resource)
 		if err != nil {
 			return err
 		}
-		res := m.Resource.Resource
-		gvr := schema.GroupVersionResource{
-			Group:    gvk.Group,
-			Version:  gvk.Version,
-			Resource: res,
-		}
-		r, err := client.Resource(gvr).Namespace(resource.GetNamespace()).Get(context.TODO(), resource.GetName(), metav1.GetOptions{})
+		r, err := client.Resource(*gvr).Namespace(resource.GetNamespace()).Get(context.TODO(), resource.GetName(), metav1.GetOptions{})
 
 		if err != nil {
-			println(i, ":not good ", err.Error())
+			if apierrors.IsNotFound(err) {
+				_, err := client.Resource(*gvr).Namespace(resource.GetNamespace()).Create(context.TODO(), &resource, metav1.CreateOptions{})
+				if err != nil {
+					return err
+				}
+			} else {
+				return err
+			}
 		} else {
-			println("here number:", i, r.GetName())
+			updatedResource := mergeUnstructured(r, &resource)
+			gvr, err := getGvrFromUnstructured(m, *updatedResource)
+			if err != nil {
+				return err
+			}
+			_, err = client.Resource(*gvr).Namespace(updatedResource.GetNamespace()).Update(context.TODO(), updatedResource, metav1.UpdateOptions{})
+			if err != nil {
+				return err
+			}
 		}
 	}
 	return nil
+}
+
+func getGvrFromUnstructured(m *Manager, resource unstructured.Unstructured) (*schema.GroupVersionResource, error) {
+	gvk := resource.GroupVersionKind()
+	mapping, err := m.mapper.RESTMapping(schema.GroupKind{
+		Group: gvk.Group,
+		Kind:  gvk.Kind,
+	})
+	if err != nil {
+		return nil, err
+	}
+	res := mapping.Resource.Resource
+	gvr := &schema.GroupVersionResource{
+		Group:    gvk.Group,
+		Version:  gvk.Version,
+		Resource: res,
+	}
+
+	return gvr, nil
+}
+
+func mergeUnstructured(old, new *unstructured.Unstructured) *unstructured.Unstructured {
+	oldMap := old.Object
+	newMap := new.Object
+	mergeMaps(oldMap, newMap)
+	return &unstructured.Unstructured{Object: oldMap}
+}
+
+func mergeMaps(o, n map[string]any) {
+	for k, nv := range n {
+		if ov, ok := o[k]; ok {
+			ovm, oldIsMap := ov.(map[string]any)
+			nvm, newIsMap := nv.(map[string]any)
+			if oldIsMap && newIsMap {
+				mergeMaps(ovm, nvm)
+			} else {
+				o[k] = nv
+			}
+		} else {
+			o[k] = nv
+		}
+	}
 }

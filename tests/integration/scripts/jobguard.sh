@@ -23,4 +23,9 @@ args=(
   "-expected-contexts-regexp=$JOB_NAME_PATTERN"
 )
 
-jobguard "${args[@]}"
+if [ -x "/prow-tools/jobguard" ]; then
+  /prow-tools/jobguard "${args[@]}"
+else
+  echo "Can not find jobguard in /prow-tools"
+  exit 1
+fi

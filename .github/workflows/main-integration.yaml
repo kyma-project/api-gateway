@@ -34,14 +34,14 @@ jobs:
     needs: [wait-for-image-build]
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: mod-dev
+          fetch-depth: 0
       - uses: ./.github/actions/integration-tests
         env:
-          JOB_TYPE: postsubmit
           CLIENT_ID: ${{ secrets.CLIENT_ID }}
           CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
           OIDC_ISSUER_URL: ${{ secrets.OIDC_ISSUER_URL }}
-          KYMA_CLI_UNSTABLE: true
-          MAKE_TARGET_TESTS: test-integration
           PULL_BASE_SHA: ${{ github.sha }}
 
   integration-tests-istio-module:
@@ -50,35 +50,33 @@ jobs:
     needs: [wait-for-image-build]
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: mod-dev
+          fetch-depth: 0
       - uses: ./.github/actions/integration-tests
         env:
-          JOB_TYPE: postsubmit
           CLIENT_ID: ${{ secrets.CLIENT_ID }}
           CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
           OIDC_ISSUER_URL: ${{ secrets.OIDC_ISSUER_URL }}
-          KYMA_CLI_UNSTABLE: true
-          MAKE_TARGET_TESTS: test-integration
-          KYMA_COMPONENTS: "hack/kyma-components-no-istio.yaml"
           PULL_BASE_SHA: ${{ github.sha }}
 
   upgrade-tests:
     name: Upgrade tests
     runs-on: ubuntu-latest
-    if: github.event_name != 'schedule'
     needs: [wait-for-image-build]
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: mod-dev
+          fetch-depth: 0
       - id: test-upgrade-img
         run: |
           echo "TEST_UPGRADE_IMG=europe-docker.pkg.dev/kyma-project/prod/api-gateway-controller:v$(git show -s --date=format:'%Y%m%d' --format=%cd ${{ github.sha }})-$(printf %.8s ${{ github.sha }})" >> $GITHUB_OUTPUT
-      - uses: ./.github/actions/integration-tests
+      - uses: ./.github/actions/upgrade-tests
         env:
-          JOB_TYPE: postsubmit
           CLIENT_ID: ${{ secrets.CLIENT_ID }}
           CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
           OIDC_ISSUER_URL: ${{ secrets.OIDC_ISSUER_URL }}
-          MAKE_TARGET_TESTS: test-upgrade
-          UPGRADE_JOB: true
           PULL_BASE_SHA: ${{ github.sha }}
           TEST_UPGRADE_IMG: ${{ steps.test-upgrade-img.outputs.TEST_UPGRADE_IMG }}
 

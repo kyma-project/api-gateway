@@ -47,6 +47,7 @@ COMPONENT_CLI_VERSION ?= latest
 
 # It is required for upgrade integration test
 TARGET_BRANCH ?= ""
+TEST_UPGRADE_IMG ?= ""
 
 # This will change the flags of the `kyma alpha module create` command in case we spot credentials
 # Otherwise we will assume http-based local registries without authentication (e.g. for k3d)
@@ -85,7 +86,7 @@ manifests: controller-gen ## Generate WebhookConfiguration, ClusterRole and Cust
 
 .PHONY: generate-upgrade-test-manifest
 generate-upgrade-test-manifest: manifests kustomize
-	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
+	cd config/manager && $(KUSTOMIZE) edit set image controller=${TEST_UPGRADE_IMG}
 	$(KUSTOMIZE) build config/default -o tests/integration/testsuites/upgrade/manifests/upgrade-test-generated-operator-manifest.yaml
 
 # Generate code

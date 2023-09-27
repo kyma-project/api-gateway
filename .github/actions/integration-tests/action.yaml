@@ -20,7 +20,7 @@ runs:
       shell: bash
       run: |
         sudo kyma provision k3d
-        KUBECONFIG=$(k3d kubeconfig merge kyma) EXPORT_RESULT=true make install-kyma deploy $MAKE_TARGET_TESTS
+        KUBECONFIG=$(k3d kubeconfig merge kyma) EXPORT_RESULT=true make install-kyma deploy test-integration
         sudo k3d cluster delete kyma
     - name: Uploads artifacts
       uses: actions/upload-artifact@v3

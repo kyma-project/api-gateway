@@ -3,6 +3,7 @@ package upgrade
 import (
 	"errors"
 	"fmt"
+	v1 "k8s.io/api/apps/v1"
 	"strings"
 	"time"
 
@@ -155,60 +156,43 @@ func (s *scenario) upgradeApiGateway() error {
 	}
 
 	return retry.Do(func() error {
-		err := s.resourceManager.MergeResources(s.k8sClient, manifestCrds)
+		var apiGatewayDeployment v1.Deployment
+
+		apiGatewayUnstructured, err := s.resourceManager.GetResource(s.k8sClient, deploymentGVR, apiGatewayNS, apiGatewayName)
 		if err != nil {
-			println("some error", err.Error())
 			return err
 		}
 
-		println("all good")
+		err = runtime.DefaultUnstructuredConverter.FromUnstructured(apiGatewayUnstructured.UnstructuredContent(), &apiGatewayDeployment)
+		if err != nil {
+			return err
+		}
+		if currentImage := apiGatewayDeployment.Spec.Template.Spec.Containers[0].Image; currentImage == s.APIGatewayImageVersion {
+			return errors.New("trying to update to the same version of image")
+		}
+
+		err = s.resourceManager.MergeAndUpdateOrCreateResources(s.k8sClient, manifestCrds)
+		if err != nil {
+			return err
+		}
+
+		apiGatewayUnstructured, err = s.resourceManager.GetResource(s.k8sClient, deploymentGVR, apiGatewayNS, apiGatewayName)
+		if err != nil {
+			return err
+		}
+
+		err = runtime.DefaultUnstructuredConverter.FromUnstructured(apiGatewayUnstructured.UnstructuredContent(), &apiGatewayDeployment)
+		if err != nil {
+			return err
+		}
+
+		if currentImage := apiGatewayDeployment.Spec.Template.Spec.Containers[0].Image; currentImage != s.APIGatewayImageVersion {
+			return fmt.Errorf("image is not updated, expected: %s, got: %s", s.APIGatewayImageVersion, currentImage)
+		}
+
 		return nil
 	}, testcontext.GetRetryOpts(s.config)...)
 
-	//var dep appsv1.Deployment
-	//err = runtime.DefaultUnstructuredConverter.FromUnstructured(apiGatewayDeployment.UnstructuredContent(), &dep)
-	//if err != nil {
-	//	return err
-	//}
-	//
-	//if dep.Spec.Template.Spec.Containers[0].Image == s.APIGatewayImageVersion {
-	//	return errors.New("trying to upgrade to same version of api-gateway controller")
-	//}
-	//
-	//dep.Spec.Template.Spec.Containers[0].Image = s.APIGatewayImageVersion
-	//
-	//apiGatewayDeployment.Object, err = runtime.DefaultUnstructuredConverter.ToUnstructured(&dep)
-	//if err != nil {
-	//	return err
-	//}
-	//
-	//err = s.resourceManager.UpdateResource(s.k8sClient, deploymentGVR, apiGatewayNS, apiGatewayName, *apiGatewayDeployment)
-	//if err != nil {
-	//	return err
-	//}
-	//
-	//return retry.Do(func() error {
-	//	listOptions := metav1.ListOptions{
-	//		LabelSelector: "app.kubernetes.io/instance=api-gateway",
-	//	}
-	//	resList, err := s.resourceManager.List(s.k8sClient, podGVR, apiGatewayNS, listOptions)
-	//	if err != nil {
-	//		return err
-	//	}
-	//	for _, res := range resList.Items {
-	//		var pod corev1.Pod
-	//
-	//		err = runtime.DefaultUnstructuredConverter.FromUnstructured(res.UnstructuredContent(), &pod)
-	//		if err != nil {
-	//			return err
-	//		}
-	//
-	//		if pod.Spec.Containers[0].Image != s.APIGatewayImageVersion || pod.Status.Phase != corev1.PodRunning {
-	//			return errors.New("api-gateway pod container not having desired image version or not running")
-	//		}
-	//	}
-	//	return nil
-	//}, testcontext.GetRetryOpts(s.config)...)
 }
 
 func (s *scenario) reconciliationHappened(numberOfSeconds int) error {
@@ -242,8 +226,6 @@ func (s *scenario) reconciliationHappened(numberOfSeconds int) error {
 		return nil
 	}, retry.Attempts(uint(numberOfSeconds)), retry.Delay(time.Second))
 }
-
-func upgradeCrd() {}
 
 func initCommon(ctx *godog.ScenarioContext, ts *testsuite) {
 	scenario := ts.createScenario("istio-jwt-common.yaml", "api-gateway-upgrade")

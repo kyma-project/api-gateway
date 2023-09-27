@@ -47,12 +47,9 @@ jobs:
           fetch-depth: 0
       - uses: ./.github/actions/integration-tests
         env:
-          JOB_TYPE: presubmit
           CLIENT_ID: ${{ secrets.CLIENT_ID }}
           CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
           OIDC_ISSUER_URL: ${{ secrets.OIDC_ISSUER_URL }}
-          KYMA_CLI_UNSTABLE: true
-          MAKE_TARGET_TESTS: test-integration
           PULL_NUMBER: ${{ github.event.number }}
 
   integration-tests-istio-module:
@@ -68,13 +65,9 @@ jobs:
           fetch-depth: 0
       - uses: ./.github/actions/integration-tests
         env:
-          JOB_TYPE: presubmit
           CLIENT_ID: ${{ secrets.CLIENT_ID }}
           CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
           OIDC_ISSUER_URL: ${{ secrets.OIDC_ISSUER_URL }}
-          KYMA_CLI_UNSTABLE: true
-          MAKE_TARGET_TESTS: test-integration
-          KYMA_COMPONENTS: "hack/kyma-components-no-istio.yaml"
           PULL_NUMBER: ${{ github.event.number }}
 
   upgrade-tests:
@@ -90,8 +83,7 @@ jobs:
           fetch-depth: 0
       - uses: ./.github/actions/upgrade-test
         env:
-          JOB_TYPE: presubmit
           CLIENT_ID: ${{ secrets.CLIENT_ID }}
           CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
           OIDC_ISSUER_URL: ${{ secrets.OIDC_ISSUER_URL }}
-          TEST_UPGRADE_IMG: "europe-docker.pkg.dev/kyma-project/dev/api-gateway-controller:PR-${{ github.event.number }}"
+          TEST_UPGRADE_IMG: "europe-docker.pkg.dev/kyma-project/dev/api-gateway-manager:PR-${{ github.event.number }}"

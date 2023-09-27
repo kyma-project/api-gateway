@@ -1,5 +1,9 @@
 name: 'Integration test - upgrade (k3d)'
 description: 'Runs integration tests - upgrade on k3d'
+inputs:
+  upgrade-image-name:
+    description: 'Image that will api-gateway be upgraded to'
+    required: true
 runs:
   using: "composite"
   steps:
@@ -36,6 +40,9 @@ runs:
         git checkout ${{ github.event.pull_request.head.sha }}
     - name: Run test
       shell: bash
+      env:
+        KYMA_DOMAIN: "local.kyma.dev"
+        TEST_UPGRADE_IMG: ${{ inputs.upgrade-image-name }}
       run: |
         EXPORT_RESULT=true make test-upgrade
     - name: Uploads artifacts
