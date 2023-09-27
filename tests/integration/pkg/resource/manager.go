@@ -150,6 +150,35 @@ func (m *Manager) UpdateResource(client dynamic.Interface, resourceSchema schema
 	}, m.retryOptions...)
 }
 
+// CreateGateway creates a gateway resource
+func (m *Manager) CreateGateway(k8sClient dynamic.Interface, resources ...unstructured.Unstructured) (*unstructured.Unstructured, error) {
+	gotRes := &unstructured.Unstructured{}
+
+	for _, res := range resources {
+		resourceSchema, ns, _ := m.GetResourceSchemaAndNamespace(res)
+		err := m.CreateResourceWithoutNS(k8sClient, resourceSchema, ns, res)
+		if err != nil {
+			return nil, err
+		}
+		gotRes, err = m.GetResource(k8sClient, resourceSchema, ns, res.GetName())
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return gotRes, nil
+}
+
+// CreateResourceWithoutNS creates a given k8s resource without namespace
+func (m *Manager) CreateResourceWithoutNS(client dynamic.Interface, resourceSchema schema.GroupVersionResource, namespace string, manifest unstructured.Unstructured) error {
+	return retry.Do(func() error {
+		if _, err := client.Resource(resourceSchema).Create(context.Background(), &manifest, metav1.CreateOptions{}); err != nil {
+			return err
+		}
+		return nil
+	}, m.retryOptions...)
+}
+
 // DeleteResource deletes a given k8s resource
 func (m *Manager) DeleteResource(client dynamic.Interface, resourceSchema schema.GroupVersionResource, namespace string, resourceName string) error {
 	return retry.Do(func() error {
