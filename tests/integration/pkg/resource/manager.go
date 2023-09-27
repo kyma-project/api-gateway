@@ -74,9 +74,11 @@ func (m *Manager) CreateOrUpdateResources(k8sClient dynamic.Interface, resources
 		_, err := m.GetResource(k8sClient, resourceSchema, ns, res.GetName(), retry.Attempts(2), retry.Delay(1))
 
 		if err != nil {
+			println("internal view", err.Error())
 			if apierrors.IsNotFound(retry.Error{err}.Unwrap()) {
 				err := m.CreateResource(k8sClient, resourceSchema, ns, res)
 				if err != nil {
+					println("but cannot create ", err.Error())
 					return nil, err
 				}
 			} else {
@@ -230,4 +232,31 @@ func (m *Manager) GetStatus(client dynamic.Interface, resourceSchema schema.Grou
 		return nil, fmt.Errorf("could not retrive status, or status not found:\n %+v", err)
 	}
 	return status, nil
+}
+
+func (m *Manager) MergeResources(client dynamic.Interface, resources []unstructured.Unstructured) error {
+	for i, resource := range resources {
+		gvk := resource.GroupVersionKind()
+		m, err := m.mapper.RESTMapping(schema.GroupKind{
+			Group: gvk.Group,
+			Kind:  gvk.Kind,
+		})
+		if err != nil {
+			return err
+		}
+		res := m.Resource.Resource
+		gvr := schema.GroupVersionResource{
+			Group:    gvk.Group,
+			Version:  gvk.Version,
+			Resource: res,
+		}
+		r, err := client.Resource(gvr).Namespace(resource.GetNamespace()).Get(context.TODO(), resource.GetName(), metav1.GetOptions{})
+
+		if err != nil {
+			println(i, ":not good ", err.Error())
+		} else {
+			println("here number:", i, r.GetName())
+		}
+	}
+	return nil
 }

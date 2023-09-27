@@ -1,0 +1,45 @@
+name: 'Integration test - upgrade (k3d)'
+description: 'Runs integration tests - upgrade on k3d'
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/setup-go@v4
+      with:
+        go-version: "1.20"
+    - name: Set up environment
+      shell: bash
+      run: |
+        sudo echo "127.0.0.1 local.kyma.dev" | sudo tee -a /etc/hosts
+        wget -q -O - https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | sudo bash
+        [ -n "${KYMA_CLI_UNSTABLE}" ] && sudo curl -Lo /usr/bin/kyma https://storage.googleapis.com/kyma-cli-unstable/kyma-linux
+        [ -z "${KYMA_CLI_UNSTABLE}" ] && sudo curl -Lo kyma.tar.gz "https://github.com/kyma-project/cli/releases/latest/download/kyma_linux_x86_64.tar.gz" && sudo tar -C /usr/bin -zxvf kyma.tar.gz kyma
+        sudo chmod +x /usr/bin/kyma
+    - name: Provision k3d
+      env:
+        KYMA_DOMAIN: "local.kyma.dev"
+      shell: bash
+      run: |
+        sudo kyma provision k3d
+    - name: Deploy prerequisite components
+      shell: bash
+      run: |
+        kyma deploy -s main -c hack/kyma-components.yaml
+    - name: Deploy mod-dev version of manager #this step should be removed after first api gateway manager release. This behavior should be moved to for example some deploy-latest-release-script
+      shell: bash
+      run: |
+        git checkout mod-dev
+        MOD_DEV_SHA=$(git log -n 1 --pretty=format:"%H" mod-dev)
+        IMG=europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:v$(git show -s --date=format:'%Y%m%d' --format=%cd "$MOD_DEV_SHA")-$(printf %.8s "$MOD_DEV_SHA")
+        echo $IMG
+        make deploy
+        git restore .
+        git checkout ${{ github.event.pull_request.head.sha }}
+    - name: Run test
+      shell: bash
+      run: |
+        EXPORT_RESULT=true make test-upgrade
+    - name: Uploads artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: html-reports-${{ github.job }}
+        path: tests/integration/reports/

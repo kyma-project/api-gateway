@@ -88,13 +88,10 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
-      - uses: ./.github/actions/integration-tests
+      - uses: ./.github/actions/upgrade-test
         env:
           JOB_TYPE: presubmit
           CLIENT_ID: ${{ secrets.CLIENT_ID }}
           CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
           OIDC_ISSUER_URL: ${{ secrets.OIDC_ISSUER_URL }}
-          MAKE_TARGET_TESTS: test-upgrade
-          UPGRADE_JOB: true
-          PULL_NUMBER: ${{ github.event.number }}
           TEST_UPGRADE_IMG: "europe-docker.pkg.dev/kyma-project/dev/api-gateway-controller:PR-${{ github.event.number }}"

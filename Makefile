@@ -83,6 +83,11 @@ help: ## Display this help.
 manifests: controller-gen ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
 	$(CONTROLLER_GEN) rbac:roleName=manager-role crd webhook paths="./..." output:crd:artifacts:config=config/crd/bases
 
+.PHONY: generate-upgrade-test-manifest
+generate-upgrade-test-manifest: manifests kustomize
+	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
+	$(KUSTOMIZE) build config/default -o tests/integration/testsuites/upgrade/manifests/upgrade-test-generated-operator-manifest.yaml
+
 # Generate code
 .PHONY: generate
 generate: controller-gen ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
@@ -105,7 +110,7 @@ test-integration: generate fmt vet envtest ## Run integration tests.
 	source ./tests/integration/env_vars.sh && go test -timeout 1h ./tests/integration -v -race -run TestIstioJwt . && go test -timeout 1h ./tests/integration -v -race -run TestOryJwt .
 
 .PHONY: test-upgrade
-test-upgrade: generate fmt vet install ## Run API Gateway upgrade tests.
+test-upgrade: generate fmt vet generate-upgrade-test-manifest ## Run API Gateway upgrade tests.
 	source ./tests/integration/env_vars.sh && go test -timeout 1h ./tests/integration -v -race -run TestUpgrade .
 
 test-custom-domain:
