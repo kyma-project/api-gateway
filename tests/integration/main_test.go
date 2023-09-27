@@ -149,15 +149,13 @@ func shouldExportResults() bool {
 }
 
 func createApiGatewayCR(config testcontext.Config) error {
-	ns := "kyma-system"
 	namePrefix := "test-gateway"
 	testID := helpers.GenerateRandomTestId()
 
 	apiGatewayCR, err := manifestprocessor.ParseFromFileWithTemplate("api-gateway.yaml", "manifests/", struct {
-		Namespace  string
 		NamePrefix string
 		TestID     string
-	}{Namespace: ns, NamePrefix: namePrefix, TestID: testID})
+	}{NamePrefix: namePrefix, TestID: testID})
 	if err != nil {
 		log.Fatalf("failed to process api-gateway manifest file, details %v", err)
 		return err
@@ -169,7 +167,7 @@ func createApiGatewayCR(config testcontext.Config) error {
 	}
 
 	rm := resource.NewManager(testcontext.GetRetryOpts(config))
-	_, err = rm.CreateResources(k8sClient, apiGatewayCR...)
+	_, err = rm.CreateGateway(k8sClient, apiGatewayCR...)
 	if err != nil {
 		return err
 	}
