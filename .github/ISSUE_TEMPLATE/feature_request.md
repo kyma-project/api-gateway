@@ -25,6 +25,7 @@ assignees: ''
 - [ ] release notes and What's New updates for Kyma customers
 - [ ] provide unit tests
 - [ ] provide integration tests
+- [ ] check outcome of all related pipelines
 - [ ] test on production-like environment
 - [ ] verify resource limits
 - [ ] followup issue
