@@ -4,14 +4,14 @@ import (
 	"context"
 	"fmt"
 
-	"golang.org/x/exp/slices"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/util/retry"
 
 	operatorv1alpha1 "github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
 	"github.com/kyma-project/api-gateway/internal/described_errors"
 	"github.com/kyma-project/api-gateway/internal/operator/resources"
-
+	networkingv1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -27,7 +27,8 @@ type Reconciliation struct {
 
 const (
 	reconciliationFinalizer string = "api-gateway.operator.kyma-project.io/api-gateway-reconciliation"
-	dafaultGateway          string = "kyma-system/kyma-gateway"
+	dafaultGatewayName      string = "kyma-gateway"
+	dafaultGatewayNS        string = "kyma-system"
 )
 
 var checkDefaultGatewayReference = func(ctx context.Context, c client.Client, res resources.Resource) bool {
@@ -44,23 +45,19 @@ var checkDefaultGatewayReference = func(ctx context.Context, c client.Client, re
 	}
 
 	if res.GVK.Kind == "APIRule" {
-		s, found, err := unstructured.NestedString(u.Object, "gateway")
-		if err != nil {
-			ctrl.Log.Error(err, "Error happened during checking gateway of an APIRule")
-		}
-		return found && s == dafaultGateway
+		return u.Object["spec"].(map[string]interface{})["gateway"] == dafaultGatewayNS+"/"+dafaultGatewayName
 	} else if res.GVK.Kind == "VirtualService" {
-		strSlice, found, err := unstructured.NestedStringSlice(u.Object, "gateways")
-		if err != nil {
-			ctrl.Log.Error(err, "Error happened during checking gateways of a VirtualService")
+		gateways := u.Object["spec"].(map[string]interface{})["gateways"].([]interface{})
+		for _, gateway := range gateways {
+			if gateway == dafaultGatewayNS+"/"+dafaultGatewayName {
+				return true
+			}
 		}
-		return found && slices.Contains(strSlice, dafaultGateway)
 	}
 
-	return true
+	return false
 }
 
-// Reconcile runs API-Gateway reconciliation to install, upgrade or uninstall API-Gateway and returns the updated API-Gateway CR.
 func (i *Reconciliation) Reconcile(ctx context.Context, apiGatewayCR operatorv1alpha1.APIGateway, apiGatewayResourceListPath string) (operatorv1alpha1.APIGateway, described_errors.DescribedError) {
 	if shouldDelete(apiGatewayCR) && hasReconciliationFinalizer(apiGatewayCR) {
 		ctrl.Log.Info("Starting API-Gateway deletion")
@@ -84,8 +81,14 @@ func (i *Reconciliation) Reconcile(ctx context.Context, apiGatewayCR operatorv1a
 				"There are custom resource(s) that block the deletion. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning").DisableErrorWrap().SetWarning()
 		}
 
+		//Temporarily having this simple solution for deletion of Kyma default gateway before we migrate whole management of Kyma default gateway from Istio component
+		if err := deleteDefaultGateway(ctx, i.Client); err != nil {
+			ctrl.Log.Error(err, "Error happened during API-Gateway reconciliation on default gateway removal")
+			return apiGatewayCR, described_errors.NewDescribedError(err, "Could not remove Kyma default gateway")
+		}
+
 		if err := removeReconciliationFinalizer(ctx, i.Client, &apiGatewayCR); err != nil {
-			ctrl.Log.Error(err, "Error happened during API-Gateway reconciliation finalizer removal")
+			ctrl.Log.Error(err, "Error happened during API-Gateway reconciliation on finalizer removal")
 			return apiGatewayCR, described_errors.NewDescribedError(err, "Could not remove finalizer")
 		}
 
@@ -127,5 +130,15 @@ func removeReconciliationFinalizer(ctx context.Context, apiClient client.Client,
 		ctrl.Log.Info("Successfully removed API-Gateway installation finalizer")
 
 		return nil
+	})
+}
+
+func deleteDefaultGateway(ctx context.Context, client client.Client) error {
+	ctrl.Log.Info("Delete Kyma default gateway", "name", dafaultGatewayName, "namespace", dafaultGatewayNS)
+	return client.Delete(ctx, &networkingv1alpha3.Gateway{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      dafaultGatewayName,
+			Namespace: dafaultGatewayNS,
+		},
 	})
 }

@@ -48,7 +48,7 @@ var _ = Describe("API-Gateway reconciliation", func() {
 		Expect(reconciledCR.GetObjectMeta().GetFinalizers()).To(ContainElement(reconciliationFinalizer))
 	})
 
-	It("should remove finalizer on API-Gateway CR deletion if there are no user created resources", func() {
+	It("should delete default gateway and remove finalizer on API-Gateway CR deletion if there are no user created resources", func() {
 		// given
 		now := metav1.NewTime(time.Now())
 		apiGatewayCR := operatorv1alpha1.APIGateway{ObjectMeta: metav1.ObjectMeta{
@@ -59,8 +59,13 @@ var _ = Describe("API-Gateway reconciliation", func() {
 		},
 			Spec: operatorv1alpha1.APIGatewaySpec{},
 		}
-
-		c := createFakeClient(&apiGatewayCR)
+		defaultGateway := &networkingv1alpha3.Gateway{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      dafaultGatewayName,
+				Namespace: dafaultGatewayNS,
+			},
+		}
+		c := createFakeClient(&apiGatewayCR, defaultGateway)
 		reconciliation := Reconciliation{
 			Client: c,
 		}
@@ -71,9 +76,10 @@ var _ = Describe("API-Gateway reconciliation", func() {
 		// then
 		Expect(err).ShouldNot(HaveOccurred())
 		Expect(reconciledCR.GetObjectMeta().GetFinalizers()).To(BeEmpty())
+		Expect(c.Get(context.TODO(), client.ObjectKey{Name: dafaultGatewayName, Namespace: dafaultGatewayNS}, defaultGateway)).ShouldNot(Succeed())
 	})
 
-	It("should remove finalizer on API-Gateway CR deletion if there are only user resources not referring Kyma default gateway", func() {
+	It("should delete default gateway and remove finalizer on API-Gateway CR deletion if there are only user resources not referring Kyma default gateway", func() {
 		// given
 		now := metav1.NewTime(time.Now())
 		apiGatewayCR := operatorv1alpha1.APIGateway{ObjectMeta: metav1.ObjectMeta{
@@ -83,6 +89,12 @@ var _ = Describe("API-Gateway reconciliation", func() {
 			Finalizers:        []string{reconciliationFinalizer},
 		},
 			Spec: operatorv1alpha1.APIGatewaySpec{},
+		}
+		defaultGateway := &networkingv1alpha3.Gateway{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      dafaultGatewayName,
+				Namespace: dafaultGatewayNS,
+			},
 		}
 		unmanagedGateway := "unmanaged-namespace/gateway"
 		apiRule := &gatewayv1beta1.APIRule{
@@ -103,7 +115,7 @@ var _ = Describe("API-Gateway reconciliation", func() {
 				Gateways: []string{unmanagedGateway},
 			},
 		}
-		c := createFakeClient(&apiGatewayCR, apiRule, virtualService)
+		c := createFakeClient(&apiGatewayCR, defaultGateway, apiRule, virtualService)
 		reconciliation := Reconciliation{
 			Client: c,
 		}
@@ -114,9 +126,10 @@ var _ = Describe("API-Gateway reconciliation", func() {
 		// then
 		Expect(err).ShouldNot(HaveOccurred())
 		Expect(reconciledCR.GetObjectMeta().GetFinalizers()).To(BeEmpty())
+		Expect(c.Get(context.TODO(), client.ObjectKey{Name: dafaultGatewayName, Namespace: dafaultGatewayNS}, defaultGateway)).ShouldNot(Succeed())
 	})
 
-	It("should not remove finalizer and block deletion of API-Gateway CR if there is APIRule referring Kyma default gateway", func() {
+	It("should not remove finalizer and block deletion of API-Gateway CR if there is an APIRule referring Kyma default gateway", func() {
 		// given
 		now := metav1.NewTime(time.Now())
 		apiGatewayCR := operatorv1alpha1.APIGateway{ObjectMeta: metav1.ObjectMeta{
@@ -127,7 +140,7 @@ var _ = Describe("API-Gateway reconciliation", func() {
 		},
 			Spec: operatorv1alpha1.APIGatewaySpec{},
 		}
-		managedGateway := dafaultGateway
+		managedGateway := dafaultGatewayNS + "/" + dafaultGatewayName
 		apiRule := &gatewayv1beta1.APIRule{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "api-rule",
@@ -152,7 +165,7 @@ var _ = Describe("API-Gateway reconciliation", func() {
 		Expect(reconciledCR.GetObjectMeta().GetFinalizers()).ToNot(BeEmpty())
 	})
 
-	It("should not remove finalizer and block deletion of API-Gateway CR if there is VirtualService referring Kyma default gateway", func() {
+	It("should not remove finalizer and block deletion of API-Gateway CR if there is a VirtualService referring Kyma default gateway", func() {
 		// given
 		now := metav1.NewTime(time.Now())
 		apiGatewayCR := operatorv1alpha1.APIGateway{ObjectMeta: metav1.ObjectMeta{
@@ -163,7 +176,7 @@ var _ = Describe("API-Gateway reconciliation", func() {
 		},
 			Spec: operatorv1alpha1.APIGatewaySpec{},
 		}
-		managedGateway := dafaultGateway
+		managedGateway := dafaultGatewayNS + "/" + dafaultGatewayName
 		virtualService := &networkingv1beta1.VirtualService{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "virtual-service",
