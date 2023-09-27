@@ -27,12 +27,6 @@ var deploymentGVR = schema.GroupVersionResource{
 	Resource: "deployments",
 }
 
-var podGVR = schema.GroupVersionResource{
-	Group:    "",
-	Version:  "v1",
-	Resource: "pods",
-}
-
 const apiGatewayNS, apiGatewayName = "kyma-system", "api-gateway-controller-manager"
 
 type scenario struct {
