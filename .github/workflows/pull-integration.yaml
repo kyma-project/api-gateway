@@ -84,7 +84,7 @@ jobs:
           echo "IMG=europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:v$(git show -s --date=format:'%Y%m%d' --format=%cd "$MOD_DEV_SHA")-$(printf %.8s "$MOD_DEV_SHA")" >> $GITHUB_OUTPUT
       - uses: ./.github/actions/upgrade-test
         with:
-          manager_image: ${{ steps.test-get-test-img.outputs.IMG }}
+          manager_image: ${{ steps.get-test-img.outputs.IMG }}
           test_upgrade_img: "europe-docker.pkg.dev/kyma-project/dev/api-gateway-manager:PR-${{ github.event.number }}"
           client_id: ${{ secrets.CLIENT_ID }}
           client_secret: ${{ secrets.CLIENT_SECRET }}
