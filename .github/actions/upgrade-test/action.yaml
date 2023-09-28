@@ -27,7 +27,7 @@ runs:
     - name: Deploy prerequisite components
       shell: bash
       run: |
-        kyma deploy -s main -c hack/kyma-components.yaml
+        KUBECONFIG=$(k3d kubeconfig merge kyma) kyma deploy -s main -c hack/kyma-components.yaml
     - name: Deploy mod-dev version of manager #this step should be removed after first api gateway manager release. This behavior should be moved to for example some deploy-latest-release-script
       shell: bash
       run: |
@@ -35,7 +35,7 @@ runs:
         MOD_DEV_SHA=$(git log -n 1 --pretty=format:"%H" mod-dev)
         IMG=europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:v$(git show -s --date=format:'%Y%m%d' --format=%cd "$MOD_DEV_SHA")-$(printf %.8s "$MOD_DEV_SHA")
         echo $IMG
-        make deploy
+        KUBECONFIG=$(k3d kubeconfig merge kyma) make deploy
         git restore .
         git checkout ${{ github.event.pull_request.head.sha }}
     - name: Run test
