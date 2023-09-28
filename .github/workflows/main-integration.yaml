@@ -39,7 +39,7 @@ jobs:
       - uses: ./.github/actions/integration-tests
         with:
           prerequisites_target: install-prerequisites
-          manager-image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:${{ github.sha }}"
+          manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:${{ github.sha }}"
           client_id: ${{ secrets.CLIENT_ID }}
           client_secret: ${{ secrets.CLIENT_SECRET }}
           oidc_issuer_url: ${{ secrets.OIDC_ISSUER_URL }}
@@ -55,7 +55,7 @@ jobs:
       - uses: ./.github/actions/integration-tests
         with:
           prerequisites_target: install-prerequisites-with-istio-from-manifest
-          manager-image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:${{ github.sha }}"
+          manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:${{ github.sha }}"
           client_id: ${{ secrets.CLIENT_ID }}
           client_secret: ${{ secrets.CLIENT_SECRET }}
           oidc_issuer_url: ${{ secrets.OIDC_ISSUER_URL }}
@@ -77,7 +77,7 @@ jobs:
           echo "$IMG" >> $GITHUB_OUTPUT
       - uses: ./.github/actions/upgrade-tests
         with:
-          manager-name: ${{ steps.test-get-test-img.outputs.IMG }}
+          manager_image: ${{ steps.test-get-test-img.outputs.IMG }}
           test_upgrade_img: ${{ steps.get-test-img.outputs.TEST_UPGRADE_IMG }}
           client_id: ${{ secrets.CLIENT_ID }}
           client_secret: ${{ secrets.CLIENT_SECRET }}
