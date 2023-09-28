@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/util/retry"
 
@@ -26,7 +27,7 @@ type Reconciliation struct {
 }
 
 const (
-	reconciliationFinalizer string = "api-gateway.operator.kyma-project.io/api-gateway-reconciliation"
+	reconciliationFinalizer string = "apigateways.operator.kyma-project.io/api-gateway-reconciliation"
 	dafaultGatewayName      string = "kyma-gateway"
 	dafaultGatewayNS        string = "kyma-system"
 )
@@ -44,13 +45,15 @@ var checkDefaultGatewayReference = func(ctx context.Context, c client.Client, re
 		ctrl.Log.Error(err, "Error happened during obtaining user created object")
 	}
 
-	if res.GVK.Kind == "APIRule" {
+	if res.GVK.Kind == "APIRule" && u.Object["spec"] != nil {
 		return u.Object["spec"].(map[string]interface{})["gateway"] == dafaultGatewayNS+"/"+dafaultGatewayName
-	} else if res.GVK.Kind == "VirtualService" {
-		gateways := u.Object["spec"].(map[string]interface{})["gateways"].([]interface{})
-		for _, gateway := range gateways {
-			if gateway == dafaultGatewayNS+"/"+dafaultGatewayName {
-				return true
+	} else if res.GVK.Kind == "VirtualService" && u.Object["spec"] != nil {
+		gateways := u.Object["spec"].(map[string]interface{})["gateways"]
+		if gateways != nil {
+			for _, gateway := range gateways.([]interface{}) {
+				if gateway == dafaultGatewayNS+"/"+dafaultGatewayName {
+					return true
+				}
 			}
 		}
 	}
@@ -83,8 +86,10 @@ func (i *Reconciliation) Reconcile(ctx context.Context, apiGatewayCR operatorv1a
 
 		//Temporarily having this simple solution for deletion of Kyma default gateway before we migrate whole management of Kyma default gateway from Istio component
 		if err := deleteDefaultGateway(ctx, i.Client); err != nil {
-			ctrl.Log.Error(err, "Error happened during API-Gateway reconciliation on default gateway removal")
-			return apiGatewayCR, described_errors.NewDescribedError(err, "Could not remove Kyma default gateway")
+			if !errors.IsNotFound(err) {
+				ctrl.Log.Error(err, "Error happened during API-Gateway reconciliation on default gateway removal")
+				return apiGatewayCR, described_errors.NewDescribedError(err, "Could not remove Kyma default gateway")
+			}
 		}
 
 		if err := removeReconciliationFinalizer(ctx, i.Client, &apiGatewayCR); err != nil {

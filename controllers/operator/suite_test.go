@@ -27,6 +27,8 @@ import (
 	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	operatorv1alpha1 "github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
 	"github.com/kyma-project/api-gateway/controllers"
+	"github.com/kyma-project/api-gateway/internal/operator/resources"
+	"github.com/onsi/ginkgo/v2/reporters"
 	"github.com/kyma-project/api-gateway/tests"
 	"github.com/onsi/ginkgo/v2/types"
 	networkingv1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
@@ -34,6 +36,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+	"github.com/kyma-project/api-gateway/internal/operator/resources"
+	"github.com/onsi/ginkgo/v2/reporters"
 	"k8s.io/client-go/util/retry"
 	"path/filepath"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -50,12 +54,39 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
+
+	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
+	operatorv1alpha1 "github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
+	networkingv1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
+	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
+	corev1 "k8s.io/api/core/v1"
 	//+kubebuilder:scaffold:imports
 )
 
 const (
 	testNamespace     = "kyma-system"
+	apiGatewayCRName = "default"
+
 	eventuallyTimeout = time.Second * 5
+
+	kymaNamespace   = "kyma-system"
+	kymaGatewayName = "kyma-gateway"
+
+	controlledList = `
+resources:
+- GroupVersionKind:
+    group: gateway.kyma-project.io
+    version: v1beta1
+    kind: APIRule
+- GroupVersionKind:
+    group: networking.istio.io
+    version: v1alpha3
+    kind: VirtualService
+- GroupVersionKind:
+    group: networking.istio.io
+    version: v1beta1
+    kind: VirtualService
+`
 )
 
 var (
@@ -88,11 +119,7 @@ var _ = BeforeSuite(func() {
 	Expect(err).NotTo(HaveOccurred())
 	Expect(cfg).NotTo(BeNil())
 
-	s := runtime.NewScheme()
-	utilruntime.Must(networkingv1alpha3.AddToScheme(s))
-	utilruntime.Must(operatorv1alpha1.AddToScheme(s))
-	utilruntime.Must(corev1.AddToScheme(s))
-	utilruntime.Must(v1beta1.AddToScheme(s))
+	s := getTestScheme()
 
 	//+kubebuilder:scaffold:scheme
 
@@ -115,6 +142,10 @@ var _ = BeforeSuite(func() {
 		Frequency:        30,
 		FailureBaseDelay: 1 * time.Second,
 		FailureMaxDelay:  10 * time.Second,
+	}
+
+	resources.ReadFileHandle = func(name string) ([]byte, error) {
+		return []byte(controlledList), nil
 	}
 
 	Expect(NewAPIGatewayReconciler(mgr).SetupWithManager(mgr, rateLimiterCfg)).Should(Succeed())
@@ -164,7 +195,11 @@ func createFakeClient(objects ...client.Object) client.Client {
 
 func getTestScheme() *runtime.Scheme {
 	scheme := runtime.NewScheme()
+	Expect(corev1.AddToScheme(scheme)).Should(Succeed())
 	Expect(operatorv1alpha1.AddToScheme(scheme)).Should(Succeed())
+	Expect(gatewayv1beta1.AddToScheme(scheme)).Should(Succeed())
+	Expect(networkingv1alpha3.AddToScheme(scheme)).Should(Succeed())
+	Expect(networkingv1beta1.AddToScheme(scheme)).Should(Succeed())
 
 	return scheme
 }

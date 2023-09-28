@@ -65,7 +65,13 @@ func (r *APIGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 
 	r.log.Info("Reconciling APIGateway CR", "name", apiGatewayCR.Name, "isInDeletion", apiGatewayCR.IsInDeletion())
 
-	if !apiGatewayCR.DeletionTimestamp.IsZero() {
+	if apiGatewayCR.DeletionTimestamp.IsZero() {
+		if err := r.statusHandler.updateToProcessing(ctx, "Reconciling API-Gateway resources", &apiGatewayCR); err != nil {
+			r.log.Error(err, "Update status to processing failed")
+			// We don't update the status to error, because the status update already failed and to avoid another status update error we simply requeue the request.
+			return ctrl.Result{}, err
+		}
+	} else {
 		if err := r.statusHandler.updateToDeleting(ctx, &apiGatewayCR); err != nil {
 			r.log.Error(err, "Update status to deleting failed")
 			// We don't update the status to error, because the status update already failed and to avoid another status update error we simply requeue the request.

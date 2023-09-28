@@ -20,7 +20,7 @@ import (
 )
 
 const (
-	resourceListPath string = "test/test_controlled_resource_list.yaml"
+	resourceListPath string = "test_assets/test_controlled_resource_list.yaml"
 	testKey          string = "key"
 	testValue        string = "value"
 )
