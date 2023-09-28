@@ -24,10 +24,11 @@ runs:
       shell: bash
       run: |
         sudo kyma provision k3d
+        KUBECONFIG=$(k3d kubeconfig merge kyma)
     - name: Deploy prerequisite components
       shell: bash
       run: |
-        KUBECONFIG=$(k3d kubeconfig merge kyma) kyma deploy -s main -c hack/kyma-components.yaml
+        kyma deploy -s main -c hack/kyma-components.yaml
     - name: Deploy mod-dev version of manager #this step should be removed after first api gateway manager release. This behavior should be moved to for example some deploy-latest-release-script
       shell: bash
       run: |
@@ -35,7 +36,7 @@ runs:
         MOD_DEV_SHA=$(git log -n 1 --pretty=format:"%H" mod-dev)
         IMG=europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:v$(git show -s --date=format:'%Y%m%d' --format=%cd "$MOD_DEV_SHA")-$(printf %.8s "$MOD_DEV_SHA")
         echo $IMG
-        KUBECONFIG=$(k3d kubeconfig merge kyma) make deploy
+        make deploy
         git restore .
         git checkout ${{ github.event.pull_request.head.sha }}
     - name: Run test
@@ -44,7 +45,7 @@ runs:
         KYMA_DOMAIN: "local.kyma.dev"
         TEST_UPGRADE_IMG: ${{ inputs.test_upgrade_img }}
       run: |
-        KUBECONFIG=$(k3d kubeconfig merge kyma) EXPORT_RESULT=true make test-upgrade
+        EXPORT_RESULT=true make test-upgrade
     - name: Uploads artifacts
       uses: actions/upload-artifact@v3
       with:
