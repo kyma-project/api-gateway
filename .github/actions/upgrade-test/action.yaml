@@ -44,7 +44,7 @@ runs:
         KYMA_DOMAIN: "local.kyma.dev"
         TEST_UPGRADE_IMG: ${{ inputs.upgrade-image-name }}
       run: |
-        EXPORT_RESULT=true make test-upgrade
+        KUBECONFIG=$(k3d kubeconfig merge kyma) EXPORT_RESULT=true make test-upgrade
     - name: Uploads artifacts
       uses: actions/upload-artifact@v3
       with:
