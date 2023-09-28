@@ -70,11 +70,9 @@ jobs:
           fetch-depth: 0
       - id: get-test-img # after merge to main it should be replaced by install-latest-release script
         run: |
-          TEST_UPGRADE_IMG=europe-docker.pkg.dev/kyma-project/prod/api-gateway-controller:v$(git show -s --date=format:'%Y%m%d' --format=%cd ${{ github.sha }})-$(printf %.8s ${{ github.sha }})
-          MOD_DEV_SHA=$(git log -n 2 --pretty=format:"%H" mod-dev | tail -n 1)
-          IMG=europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:v$(git show -s --date=format:'%Y%m%d' --format=%cd "$MOD_DEV_SHA")-$(printf %.8s "$MOD_DEV_SHA")
-          echo "$TEST_UPGRADE_IMG" >> $GITHUB_OUTPUT
-          echo "$IMG" >> $GITHUB_OUTPUT
+          echo "TEST_UPGRADE_IMG=europe-docker.pkg.dev/kyma-project/prod/api-gateway-controller:v$(git show -s --date=format:'%Y%m%d' --format=%cd ${{ github.sha }})-$(printf %.8s ${{ github.sha }})" >> $GITHUB_OUTPUT
+          MOD_DEV_SHA=$(git log -n 2 --pretty=format:"%H" origin/mod-dev | tail -n 1)
+          echo "IMG=europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:v$(git show -s --date=format:'%Y%m%d' --format=%cd "$MOD_DEV_SHA")-$(printf %.8s "$MOD_DEV_SHA")" >> $GITHUB_OUTPUT
       - uses: ./.github/actions/upgrade-tests
         with:
           manager_image: ${{ steps.test-get-test-img.outputs.IMG }}
