@@ -119,9 +119,16 @@ test-custom-domain:
              kubectl create secret generic google-credentials -n default --from-file=serviceaccount.json=${TEST_SA_ACCESS_KEY_PATH}; \
              GODEBUG=netdns=cgo CGO_ENABLED=1 go test -timeout 1h ./tests/integration -run "^TestCustomDomain$$" -v -race"
 
-.PHONY: install-kyma
-install-kyma:
+.PHONY: install-prerequisites
+install-prerequisites:
 	kyma deploy --ci -s main -c hack/kyma-components.yaml
+
+.PHONY: install-prerequisites-with-istio-from-manifest
+install-prerequisites-with-istio-from-manifest:
+	kubectl apply -f https://github.com/kyma-project/istio/releases/latest/download/istio-manager.yaml
+	kubectl apply -f https://github.com/kyma-project/istio/releases/latest/download/istio-default-cr.yaml
+	kubectl wait -n kyma-system istios/default --for=jsonpath='{.status.state}'=Ready --timeout=300s
+	kyma deploy --ci -s main -c hack/kyma-components-no-istio.yaml
 
 ##@ Build
 

@@ -1,5 +1,9 @@
 name: 'Integration tests (k3d)'
 description: 'Runs integration tests on k3d'
+inputs:
+  prerequisites_target:
+    description: 'Which make target to use to install prerequisites'
+    required: true
 runs:
   using: "composite"
   steps:
@@ -20,8 +24,8 @@ runs:
       shell: bash
       run: |
         sudo kyma provision k3d
-        KUBECONFIG=$(k3d kubeconfig merge kyma) EXPORT_RESULT=true make install-kyma deploy test-integration
-        sudo k3d cluster delete kyma
+        KUBECONFIG=$(k3d kubeconfig merge kyma) EXPORT_RESULT=true \
+        make ${{ inputs.prerequisites_target }} deploy test-integration
     - name: Uploads artifacts
       uses: actions/upload-artifact@v3
       with:

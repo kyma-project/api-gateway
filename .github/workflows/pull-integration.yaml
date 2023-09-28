@@ -42,6 +42,8 @@ jobs:
         with:
           fetch-depth: 0
       - uses: ./.github/actions/integration-tests
+        with:
+          prerequisites_target: make install-prerequisites
         env:
           CLIENT_ID: ${{ secrets.CLIENT_ID }}
           CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
@@ -59,6 +61,8 @@ jobs:
         with:
           fetch-depth: 0
       - uses: ./.github/actions/integration-tests
+        with:
+          prerequisites_target: install-prerequisites-with-istio-from-manifest
         env:
           CLIENT_ID: ${{ secrets.CLIENT_ID }}
           CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
