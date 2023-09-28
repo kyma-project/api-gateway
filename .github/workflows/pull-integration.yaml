@@ -28,6 +28,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
+      - run: git log --oneline
       - uses: ./.github/actions/wait-for-job-succeed-or-fail
         with:
           job-name: 'pull-api-gateway-manager-build'
