@@ -42,7 +42,7 @@ runs:
     - name: Deploy mod-dev version of manager #this step should be removed after first api gateway manager release. This behavior should be moved to for example some deploy-latest-release-script
       shell: bash
       env:
-        IMG: ${{ inputs.manager_name }}
+        IMG: ${{ inputs.manager_image}}
       run: |
         git checkout mod-dev
         echo $IMG
