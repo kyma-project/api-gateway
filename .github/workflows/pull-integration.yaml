@@ -76,8 +76,9 @@ jobs:
         with:
           fetch-depth: 0
       - uses: ./.github/actions/upgrade-test
+        with:
+          test_upgrade_img: "europe-docker.pkg.dev/kyma-project/dev/api-gateway-manager:PR-${{ github.event.number }}"
         env:
           CLIENT_ID: ${{ secrets.CLIENT_ID }}
           CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
           OIDC_ISSUER_URL: ${{ secrets.OIDC_ISSUER_URL }}
-          TEST_UPGRADE_IMG: "europe-docker.pkg.dev/kyma-project/dev/api-gateway-manager:PR-${{ github.event.number }}"

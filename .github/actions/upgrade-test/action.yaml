@@ -1,7 +1,7 @@
 name: 'Integration test - upgrade (k3d)'
 description: 'Runs integration tests - upgrade on k3d'
 inputs:
-  upgrade-image-name:
+  test_upgrade_img:
     description: 'Image that will api-gateway be upgraded to'
     required: true
 runs:
@@ -42,7 +42,7 @@ runs:
       shell: bash
       env:
         KYMA_DOMAIN: "local.kyma.dev"
-        TEST_UPGRADE_IMG: ${{ inputs.upgrade-image-name }}
+        TEST_UPGRADE_IMG: ${{ inputs.test_upgrade_img }}
       run: |
         KUBECONFIG=$(k3d kubeconfig merge kyma) EXPORT_RESULT=true make test-upgrade
     - name: Uploads artifacts
