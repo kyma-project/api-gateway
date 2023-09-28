@@ -79,8 +79,7 @@ jobs:
           fetch-depth: 0
       - id: get-test-img # after merge to main it should be replaced by install-latest-release script
         run: |
-          git branch -a
-          MOD_DEV_SHA=$(git log -n 1 --pretty=format:"%H" mod-dev)
+          MOD_DEV_SHA=$(git log -n 1 --pretty=format:"%H" origin/mod-dev)
           IMG=europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:v$(git show -s --date=format:'%Y%m%d' --format=%cd "$MOD_DEV_SHA")-$(printf %.8s "$MOD_DEV_SHA")
           echo "$IMG" >> $GITHUB_OUTPUT
       - uses: ./.github/actions/upgrade-test

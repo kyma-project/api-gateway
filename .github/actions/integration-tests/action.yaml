@@ -37,7 +37,7 @@ runs:
         CLIENT_ID: ${{ inputs.client_id }}
         CLIENT_SECRET: ${{ inputs.client_secret }}
         OIDC_ISSUER_URL: ${{ inputs.oidc_issuer_url }}
-        IMG: ${{ inputs.manager-image }}
+        IMG: ${{ inputs.manager_image }}
       run: |
         sudo kyma provision k3d
         KUBECONFIG=$(k3d kubeconfig merge kyma) EXPORT_RESULT=true \
