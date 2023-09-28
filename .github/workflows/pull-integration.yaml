@@ -26,8 +26,6 @@ jobs:
     if: github.event.pull_request.draft == false
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
       - run: git log --oneline
       - uses: ./.github/actions/wait-for-job-succeed-or-fail
         with:
