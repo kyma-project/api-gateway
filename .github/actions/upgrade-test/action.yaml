@@ -4,7 +4,7 @@ inputs:
   test_upgrade_img:
     description: 'Image that will api-gateway be upgraded to'
     required: true
-  manager-image: # This is required here to replace latest release deploy script, it's temporary and later can be removed
+  manager_image: # This is required here to replace latest release deploy script, it's temporary and later can be removed
     description: 'Manager image used for test'
     required: true
   client_id:
