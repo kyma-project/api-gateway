@@ -73,7 +73,7 @@ spec:
 EOF
 
 kubectl patch shoot "${CLUSTER_NAME}" --patch-file patch.yaml --kubeconfig "${GARDENER_KYMA_PROW_KUBECONFIG}"
-make install-kyma
+make install-prerequisites
 
 echo "waiting for Gardener to finish shoot reconcile..."
 kubectl wait --kubeconfig "${GARDENER_KYMA_PROW_KUBECONFIG}" --for=jsonpath='{.status.lastOperation.state}'=Succeeded --timeout=600s "shoots/${CLUSTER_NAME}"
