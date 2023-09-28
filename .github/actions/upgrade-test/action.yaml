@@ -24,7 +24,7 @@ runs:
       shell: bash
       run: |
         sudo kyma provision k3d
-        KUBECONFIG=$(k3d kubeconfig merge kyma)
+        export KUBECONFIG=$(k3d kubeconfig merge kyma)
     - name: Deploy prerequisite components
       shell: bash
       run: |
