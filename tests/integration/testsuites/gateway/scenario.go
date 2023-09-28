@@ -29,7 +29,7 @@ func initScenario(ctx *godog.ScenarioContext, ts *testsuite) {
 		log.Fatalf("could not initialize custom domain endpoint err=%s", err)
 	}
 
-	ctx.Step(`^there is a "([^"]*)" Gateway in "([^"]*)" namespace$`, scenario.thereIsAKymaGateway)
+	ctx.Step(`^there is an APIGateway operator$`, scenario.thereIsAnAPIGatewayOperator)
 }
 
 func createScenario(t *testsuite) (*scenario, error) {
@@ -45,9 +45,9 @@ func createScenario(t *testsuite) (*scenario, error) {
 	}, nil
 }
 
-func (c *scenario) thereIsAKymaGateway(name string, namespace string) error {
-	res := schema.GroupVersionResource{Group: "networking.istio.io", Version: "v1alpha3", Resource: "Gateway"}
-	_, err := c.k8sClient.Resource(res).Namespace(namespace).Get(context.Background(), name, v1.GetOptions{})
+func (c *scenario) thereIsAnAPIGatewayOperator() error {
+	res := schema.GroupVersionResource{Group: "operator.kyma-project.io", Version: "v1alpha1", Resource: "apigateways"}
+	_, err := c.k8sClient.Resource(res).Get(context.Background(), resource.TestGatewayOperatorName, v1.GetOptions{})
 
 	if err != nil {
 		return fmt.Errorf("gateway could not be found")

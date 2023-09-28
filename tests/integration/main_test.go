@@ -4,7 +4,6 @@ import (
 	"github.com/cucumber/godog"
 	"github.com/cucumber/godog/colors"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/client"
-	"github.com/kyma-project/api-gateway/tests/integration/pkg/helpers"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/manifestprocessor"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/resource"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
@@ -101,6 +100,12 @@ func runTestsuite(t *testing.T, testsuite testcontext.Testsuite, config testcont
 			})
 
 			testsuite.InitScenarios(ctx.ScenarioContext())
+
+			ctx.AfterSuite(func() {
+				if err := deleteApiGatewayCR(config); err != nil {
+					t.Fatalf("Cannot delete api-gateway CR: %s", err.Error())
+				}
+			})
 		},
 		Options: &opts,
 	}
@@ -149,13 +154,9 @@ func shouldExportResults() bool {
 }
 
 func createApiGatewayCR(config testcontext.Config) error {
-	namePrefix := "test-gateway"
-	testID := helpers.GenerateRandomTestId()
-
 	apiGatewayCR, err := manifestprocessor.ParseFromFileWithTemplate("api-gateway.yaml", "manifests/", struct {
 		NamePrefix string
-		TestID     string
-	}{NamePrefix: namePrefix, TestID: testID})
+	}{NamePrefix: resource.TestGatewayOperatorName})
 	if err != nil {
 		log.Fatalf("failed to process api-gateway manifest file, details %v", err)
 		return err
@@ -168,6 +169,29 @@ func createApiGatewayCR(config testcontext.Config) error {
 
 	rm := resource.NewManager(testcontext.GetRetryOpts(config))
 	_, err = rm.CreateGateway(k8sClient, apiGatewayCR...)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func deleteApiGatewayCR(config testcontext.Config) error {
+	apiGatewayCR, err := manifestprocessor.ParseFromFileWithTemplate("api-gateway.yaml", "manifests/", struct {
+		NamePrefix string
+	}{NamePrefix: resource.TestGatewayOperatorName})
+	if err != nil {
+		log.Fatalf("failed to process api-gateway manifest file, details %v", err)
+		return err
+	}
+
+	k8sClient, err := client.GetDynamicClient()
+	if err != nil {
+		return err
+	}
+
+	rm := resource.NewManager(testcontext.GetRetryOpts(config))
+	err = rm.DeleteResourcesWithoutNS(k8sClient, apiGatewayCR...)
 	if err != nil {
 		return err
 	}
