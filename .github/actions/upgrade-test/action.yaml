@@ -2,7 +2,7 @@ name: 'Integration test - upgrade (k3d)'
 description: 'Runs integration tests - upgrade on k3d'
 inputs:
   test_upgrade_img:
-    description: 'Image that will api-gateway be upgraded to'
+    description: 'Image that api-gateway will be upgraded to'
     required: true
   manager_image: # This is required here to replace latest release deploy script, it's temporary and later can be removed
     description: 'Manager image used for test'
@@ -45,7 +45,6 @@ runs:
         IMG: ${{ inputs.manager_image}}
       run: |
         git checkout mod-dev
-        echo $IMG
         KUBECONFIG=$(k3d kubeconfig merge kyma) make deploy
         git restore .
         git checkout ${{ github.event.pull_request.head.sha }}

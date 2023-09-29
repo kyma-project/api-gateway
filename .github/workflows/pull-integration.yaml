@@ -4,7 +4,9 @@
 name: PR Integration
 
 on:
-  pull_request:
+  # pull_request_target runs workflows from the base of PR
+  # It allows the workflow to get the repository secrets
+  pull_request_target:
     types: [ synchronize, opened, reopened, ready_for_review ]
     paths-ignore:
       - "docs/**"
@@ -77,14 +79,9 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - id: get-test-img # after merge to main it should be replaced by install-latest-release script
-        name: get-test-img
-        run: |
-          MOD_DEV_SHA=$(git log -n 1 --pretty=format:"%H" origin/mod-dev)
-          echo "IMG=europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:v$(git show -s --date=format:'%Y%m%d' --format=%cd "$MOD_DEV_SHA")-$(printf %.8s "$MOD_DEV_SHA")" >> $GITHUB_OUTPUT
       - uses: ./.github/actions/upgrade-test
         with:
-          manager_image: ${{ steps.get-test-img.outputs.IMG }}
+          manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:${{ github.event.pull_request.base.sha }}"
           test_upgrade_img: "europe-docker.pkg.dev/kyma-project/dev/api-gateway-manager:PR-${{ github.event.number }}"
           client_id: ${{ secrets.CLIENT_ID }}
           client_secret: ${{ secrets.CLIENT_SECRET }}

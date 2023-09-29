@@ -69,13 +69,14 @@ jobs:
         with:
           fetch-depth: 0
       - id: get-test-img # after merge to main it should be replaced by install-latest-release script
+        # it sets TEST_UPGRADE_IMG to latest commit on mod-dev and IMG to the previous commit so we test upgrade between these two
         run: |
-          echo "TEST_UPGRADE_IMG=europe-docker.pkg.dev/kyma-project/prod/api-gateway-controller:v$(git show -s --date=format:'%Y%m%d' --format=%cd ${{ github.sha }})-$(printf %.8s ${{ github.sha }})" >> $GITHUB_OUTPUT
-          MOD_DEV_SHA=$(git log -n 2 --pretty=format:"%H" origin/mod-dev | tail -n 1)
-          echo "IMG=europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:v$(git show -s --date=format:'%Y%m%d' --format=%cd "$MOD_DEV_SHA")-$(printf %.8s "$MOD_DEV_SHA")" >> $GITHUB_OUTPUT
+          echo "TEST_UPGRADE_IMG=europe-docker.pkg.dev/kyma-project/prod/api-gateway-controller:${{ github.sha }}" >> $GITHUB_OUTPUT
+          PREV_SHA=$(git log -n 2 --pretty=format:"%H" origin/mod-dev | tail -n 1)
+          echo "IMG=europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:$PREV_SHA" >> $GITHUB_OUTPUT
       - uses: ./.github/actions/upgrade-tests
         with:
-          manager_image: ${{ steps.test-get-test-img.outputs.IMG }}
+          manager_image: ${{ steps.get-test-img.outputs.IMG }}
           test_upgrade_img: ${{ steps.get-test-img.outputs.TEST_UPGRADE_IMG }}
           client_id: ${{ secrets.CLIENT_ID }}
           client_secret: ${{ secrets.CLIENT_SECRET }}
