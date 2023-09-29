@@ -8,9 +8,12 @@ import (
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/resource"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/dynamic"
 	"log"
+	"time"
 )
 
 type scenario struct {
@@ -29,7 +32,7 @@ func initScenario(ctx *godog.ScenarioContext, ts *testsuite) {
 		log.Fatalf("could not initialize custom domain endpoint err=%s", err)
 	}
 
-	ctx.Step(`^there is an APIGateway operator$`, scenario.thereIsAnAPIGatewayOperator)
+	ctx.Step(`^there is an APIGateway operator in "([^"]*)" state$`, scenario.thereIsAnAPIGatewayOperator)
 }
 
 func createScenario(t *testsuite) (*scenario, error) {
@@ -45,13 +48,28 @@ func createScenario(t *testsuite) (*scenario, error) {
 	}, nil
 }
 
-func (c *scenario) thereIsAnAPIGatewayOperator() error {
-	res := schema.GroupVersionResource{Group: "operator.kyma-project.io", Version: "v1alpha1", Resource: "apigateways"}
-	_, err := c.k8sClient.Resource(res).Get(context.Background(), resource.TestGatewayOperatorName, v1.GetOptions{})
+func (c *scenario) thereIsAnAPIGatewayOperator(state string) error {
+	err := wait.ExponentialBackoff(wait.Backoff{
+		Duration: time.Second,
+		Factor:   2,
+		Steps:    10,
+	}, func() (done bool, err error) {
+		res := schema.GroupVersionResource{Group: "operator.kyma-project.io", Version: "v1alpha1", Resource: "apigateways"}
+		gateway, err := c.k8sClient.Resource(res).Get(context.Background(), resource.TestGatewayOperatorName, v1.GetOptions{})
+		if err != nil {
+			return false, fmt.Errorf("gateway could not be found")
+		}
 
+		gatewayState, found, err := unstructured.NestedString(gateway.Object, "status", "state")
+		if err != nil || !found {
+			return false, err
+		} else if gatewayState != state {
+			return false, fmt.Errorf("gateway state %s, is not in the expected state %s", gatewayState, state)
+		}
+		return true, nil
+	})
 	if err != nil {
-		return fmt.Errorf("gateway could not be found")
+		return fmt.Errorf("could not get gateway status: %s", err)
 	}
-
 	return nil
 }
