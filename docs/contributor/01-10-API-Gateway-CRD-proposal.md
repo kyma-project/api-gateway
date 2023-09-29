@@ -79,7 +79,7 @@ spec:
 
 Because it is a managed Kyma cluster (SKR), a DNSProvider with the provided Secret and a DNSEntry are created. If the user does not configure the port type, Istio Gateway is generated with both HTTP and HTTPS. An additional Gardener Certificate is also created and provided for HTTPS.
 
-The user can now expose their services under the hosts `test.example.com` and `test2.example.com`.
+The user can now expose their Services under the hosts `test.example.com` and `test2.example.com`.
 
 ### The user wants to expose their Mongo instance
 

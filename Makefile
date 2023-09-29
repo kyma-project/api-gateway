@@ -12,6 +12,9 @@ ifndef MODULE_VERSION
     MODULE_VERSION = 0.0.1
 endif
 
+#latest api-gateway release
+LATEST_RELEASE = $(shell curl -sS "https://api.github.com/repos/kyma-project/api-gateway/releases/latest" | jq -r '.tag_name')
+
 # Operating system architecture
 OS_ARCH ?= $(shell uname -m)
 
@@ -234,6 +237,13 @@ generate-manifests: kustomize
 	$(KUSTOMIZE) build config/default > api-gateway-manager.yaml
 
 ##@ Tools
+
+REPOSITORY=
+GITHUB_URL=
+
+.PHONY: get-latest-release
+get-latest-release:
+	@echo $(LATEST_RELEASE)
 
 ########## Kyma CLI ###########
 KYMA_STABILITY ?= unstable
