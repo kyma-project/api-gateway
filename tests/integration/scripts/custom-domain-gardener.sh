@@ -74,7 +74,8 @@ spec:
 EOF
 
 kubectl patch shoot "${CLUSTER_NAME}" --patch-file patch.yaml --kubeconfig "${GARDENER_KYMA_PROW_KUBECONFIG}"
-make install-kyma
+
+make install-prerequisites
 make deploy
 
 echo "waiting for Gardener to finish shoot reconcile..."

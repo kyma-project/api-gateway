@@ -3,6 +3,10 @@ package upgrade
 import (
 	"errors"
 	"fmt"
+	v1 "k8s.io/api/apps/v1"
+	"strings"
+	"time"
+
 	"github.com/avast/retry-go/v4"
 	"github.com/cucumber/godog"
 	apirulev1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
@@ -12,12 +16,9 @@ import (
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/resource"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
 	"golang.org/x/oauth2/clientcredentials"
-	v1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
-	"strings"
-	"time"
 )
 
 var deploymentGVR = schema.GroupVersionResource{
@@ -26,7 +27,7 @@ var deploymentGVR = schema.GroupVersionResource{
 	Resource: "deployments",
 }
 
-const apiGatewayNS, apiGatewayName = "kyma-system", "api-gateway"
+const apiGatewayNS, apiGatewayName = "kyma-system", "api-gateway-controller-manager"
 
 type scenario struct {
 	Namespace               string
@@ -140,45 +141,52 @@ func (s *scenario) thereIsAnJwtSecuredPath(path string) {
 }
 
 func (s *scenario) upgradeApiGateway() error {
-	apiGatewayDeployment, err := s.resourceManager.GetResource(s.k8sClient, deploymentGVR, apiGatewayNS, apiGatewayName)
+	const manifestDirectory = "testsuites/upgrade/manifests"
+	const manifestFileName = "upgrade-test-generated-operator-manifest.yaml"
 
-	if err != nil {
-		return err
-	}
-
-	var dep v1.Deployment
-	err = runtime.DefaultUnstructuredConverter.FromUnstructured(apiGatewayDeployment.UnstructuredContent(), &dep)
-	if err != nil {
-		return err
-	}
-
-	dep.Spec.Template.Spec.Containers[0].Image = s.APIGatewayImageVersion
-
-	apiGatewayDeployment.Object, err = runtime.DefaultUnstructuredConverter.ToUnstructured(&dep)
-	if err != nil {
-		return err
-	}
-
-	err = s.resourceManager.UpdateResource(s.k8sClient, deploymentGVR, apiGatewayNS, apiGatewayName, *apiGatewayDeployment)
+	manifestCrds, err := manifestprocessor.ParseFromFileWithTemplate(manifestFileName, manifestDirectory, nil)
 	if err != nil {
 		return err
 	}
 
 	return retry.Do(func() error {
-		res, err := s.resourceManager.GetResource(s.k8sClient, deploymentGVR, apiGatewayNS, apiGatewayName)
-		if err != nil {
-			return err
-		}
-		err = runtime.DefaultUnstructuredConverter.FromUnstructured(res.UnstructuredContent(), &dep)
+		var apiGatewayDeployment v1.Deployment
+
+		apiGatewayUnstructured, err := s.resourceManager.GetResource(s.k8sClient, deploymentGVR, apiGatewayNS, apiGatewayName)
 		if err != nil {
 			return err
 		}
 
-		if dep.Spec.Template.Spec.Containers[0].Image != s.APIGatewayImageVersion || dep.Status.UnavailableReplicas > 0 {
-			return errors.New("api-gateway deployment not yet ready")
+		err = runtime.DefaultUnstructuredConverter.FromUnstructured(apiGatewayUnstructured.UnstructuredContent(), &apiGatewayDeployment)
+		if err != nil {
+			return err
 		}
+		if currentImage := apiGatewayDeployment.Spec.Template.Spec.Containers[0].Image; currentImage == s.APIGatewayImageVersion {
+			return errors.New("trying to update to the same version of image")
+		}
+
+		err = s.resourceManager.MergeAndUpdateOrCreateResources(s.k8sClient, manifestCrds)
+		if err != nil {
+			return err
+		}
+
+		apiGatewayUnstructured, err = s.resourceManager.GetResource(s.k8sClient, deploymentGVR, apiGatewayNS, apiGatewayName)
+		if err != nil {
+			return err
+		}
+
+		err = runtime.DefaultUnstructuredConverter.FromUnstructured(apiGatewayUnstructured.UnstructuredContent(), &apiGatewayDeployment)
+		if err != nil {
+			return err
+		}
+
+		if currentImage := apiGatewayDeployment.Spec.Template.Spec.Containers[0].Image; currentImage != s.APIGatewayImageVersion {
+			return fmt.Errorf("image is not updated, expected: %s, got: %s", s.APIGatewayImageVersion, currentImage)
+		}
+
 		return nil
 	}, testcontext.GetRetryOpts(s.config)...)
+
 }
 
 func (s *scenario) reconciliationHappened(numberOfSeconds int) error {
@@ -195,6 +203,7 @@ func (s *scenario) reconciliationHappened(numberOfSeconds int) error {
 				Version:  apirulev1beta1.GroupVersion.Version,
 				Resource: "apirules",
 			}, apiRule.GetNamespace(), apiRule.GetName(), retry.Attempts(1))
+
 			if err != nil {
 				return err
 			}
