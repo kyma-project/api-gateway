@@ -71,10 +71,10 @@ jobs:
       - id: get-test-img # after merge to main it should be replaced by install-latest-release script
         # it sets TEST_UPGRADE_IMG to latest commit on mod-dev and IMG to the previous commit so we test upgrade between these two
         run: |
-          echo "TEST_UPGRADE_IMG=europe-docker.pkg.dev/kyma-project/prod/api-gateway-controller:${{ github.sha }}" >> $GITHUB_OUTPUT
+          echo "TEST_UPGRADE_IMG=europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:${{ github.sha }}" >> $GITHUB_OUTPUT
           PREV_SHA=$(git log -n 2 --pretty=format:"%H" origin/mod-dev | tail -n 1)
           echo "IMG=europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:$PREV_SHA" >> $GITHUB_OUTPUT
-      - uses: ./.github/actions/upgrade-tests
+      - uses: ./.github/actions/upgrade-test
         with:
           manager_image: ${{ steps.get-test-img.outputs.IMG }}
           test_upgrade_img: ${{ steps.get-test-img.outputs.TEST_UPGRADE_IMG }}
