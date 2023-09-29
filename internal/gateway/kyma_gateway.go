@@ -61,7 +61,7 @@ func ReconcileKymaGateway(ctx context.Context, k8sClient client.Client, apiGatew
 	}
 
 	// Besides on disabling the Kyma gateway, we also need to remove the finalizer on APIGateway deletion to make sure we are not blocking the deletion of the CR.
-	if !isKymaGatewayEnabled(*apiGatewayCR) || apiGatewayCR.IsInGracefulDeletion() {
+	if !isKymaGatewayEnabled(*apiGatewayCR) || apiGatewayCR.IsInDeletion() {
 		if err := removeKymaGatewayFinalizer(ctx, k8sClient, apiGatewayCR); err != nil {
 			return controllers.ErrorStatus(err, "Failed to remove finalizer during Kyma Gateway reconciliation")
 		}

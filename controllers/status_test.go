@@ -138,26 +138,26 @@ var _ = Describe("status", func() {
 		})
 	})
 
-	Context("IsSuccessful", func() {
-		It("Should return true if status is Successful", func() {
+	Context("IsReady", func() {
+		It("Should return true if status is Ready", func() {
 			// given
 			status := SuccessfulStatus()
 
 			// when
-			isSuccessful := status.IsSuccessful()
+			result := status.IsReady()
 
 			// then
-			Expect(isSuccessful).To(BeTrue())
+			Expect(result).To(BeTrue())
 		})
-		It("Should return false if status is not Successful", func() {
+		It("Should return false if status is not Ready", func() {
 			// given
 			status := ErrorStatus(fmt.Errorf("test error"), "test description")
 
 			// when
-			isSuccessful := status.IsSuccessful()
+			result := status.IsReady()
 
 			// then
-			Expect(isSuccessful).To(BeFalse())
+			Expect(result).To(BeFalse())
 		})
 	})
 })

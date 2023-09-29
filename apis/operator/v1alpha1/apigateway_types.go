@@ -75,8 +75,8 @@ func init() {
 	SchemeBuilder.Register(&APIGateway{}, &APIGatewayList{})
 }
 
-// IsInGracefulDeletion returns true if the APIGateway is in deletion process, false otherwise.
-func (a *APIGateway) IsInGracefulDeletion() bool {
+// IsInDeletion returns true if the APIGateway is in deletion process, false otherwise.
+func (a *APIGateway) IsInDeletion() bool {
 	return !a.DeletionTimestamp.IsZero()
 }
 

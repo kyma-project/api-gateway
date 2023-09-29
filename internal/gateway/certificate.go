@@ -25,9 +25,9 @@ var certificateManifest []byte
 func reconcileKymaGatewayCertificate(ctx context.Context, k8sClient client.Client, apiGatewayCR v1alpha1.APIGateway, domain string) error {
 
 	isEnabled := isKymaGatewayEnabled(apiGatewayCR)
-	ctrl.Log.Info("Reconciling Certificate", "KymaGatewayEnabled", isEnabled, "Name", kymaGatewayCertificateName, "Namespace", certificateDefaultNamespace)
+	ctrl.Log.Info("Reconciling Certificate", "KymaGatewayEnabled", isEnabled, "name", kymaGatewayCertificateName, "namespace", certificateDefaultNamespace)
 
-	if !isEnabled || apiGatewayCR.IsInGracefulDeletion() {
+	if !isEnabled || apiGatewayCR.IsInDeletion() {
 		return deleteCertificate(k8sClient, kymaGatewayCertificateName)
 	}
 
@@ -36,7 +36,7 @@ func reconcileKymaGatewayCertificate(ctx context.Context, k8sClient client.Clien
 
 func reconcileCertificate(ctx context.Context, k8sClient client.Client, name, domain, certSecretName string) error {
 
-	ctrl.Log.Info("Reconciling Certificate", "Name", name, "Namespace", certificateDefaultNamespace, "Domain", domain, "SecretName", certSecretName)
+	ctrl.Log.Info("Reconciling Certificate", "name", name, "namespace", certificateDefaultNamespace, "domain", domain, "secretName", certSecretName)
 	templateValues := make(map[string]string)
 	templateValues["Name"] = name
 	templateValues["Namespace"] = certificateDefaultNamespace
@@ -47,7 +47,7 @@ func reconcileCertificate(ctx context.Context, k8sClient client.Client, name, do
 }
 
 func deleteCertificate(k8sClient client.Client, name string) error {
-	ctrl.Log.Info("Deleting Certificate if it exists", "Name", name, "Namespace", certificateDefaultNamespace)
+	ctrl.Log.Info("Deleting Certificate if it exists", "name", name, "namespace", certificateDefaultNamespace)
 	c := certv1alpha1.Certificate{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
@@ -60,7 +60,11 @@ func deleteCertificate(k8sClient client.Client, name string) error {
 		return fmt.Errorf("failed to delete Certificate %s/%s: %v", certificateDefaultNamespace, name, err)
 	}
 
-	ctrl.Log.Info("Successfully deleted Certificate", "Name", name, "Namespace", certificateDefaultNamespace)
+	if k8serrors.IsNotFound(err) {
+		ctrl.Log.Info("Skipped deletion of Certificate as it wasn't present", "name", name, "namespace", certificateDefaultNamespace)
+	} else {
+		ctrl.Log.Info("Successfully deleted Certificate", "name", name, "namespace", certificateDefaultNamespace)
+	}
 
 	return nil
 }

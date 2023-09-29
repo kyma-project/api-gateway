@@ -18,9 +18,9 @@ var nonGardenerCertificateSecretManifest []byte
 func reconcileNonGardenerCertificateSecret(ctx context.Context, k8sClient client.Client, apiGatewayCR v1alpha1.APIGateway) error {
 
 	isEnabled := isKymaGatewayEnabled(apiGatewayCR)
-	ctrl.Log.Info("Reconciling Certificate Secret", "KymaGatewayEnabled", isEnabled, "Name", kymaGatewayCertSecretName, "Namespace", certificateDefaultNamespace)
+	ctrl.Log.Info("Reconciling Certificate Secret", "KymaGatewayEnabled", isEnabled, "name", kymaGatewayCertSecretName, "namespace", certificateDefaultNamespace)
 
-	if !isEnabled || apiGatewayCR.IsInGracefulDeletion() {
+	if !isEnabled || apiGatewayCR.IsInDeletion() {
 		return deleteSecret(k8sClient, kymaGatewayCertSecretName, certificateDefaultNamespace)
 	}
 
@@ -32,7 +32,7 @@ func reconcileNonGardenerCertificateSecret(ctx context.Context, k8sClient client
 }
 
 func deleteSecret(k8sClient client.Client, name, namespace string) error {
-	ctrl.Log.Info("Deleting certificate secret if it exists", "Name", name, "Namespace", namespace)
+	ctrl.Log.Info("Deleting certificate secret if it exists", "name", name, "namespace", namespace)
 	s := v1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
@@ -45,7 +45,7 @@ func deleteSecret(k8sClient client.Client, name, namespace string) error {
 		return fmt.Errorf("failed to delete certificate secret %s/%s: %v", certificateDefaultNamespace, name, err)
 	}
 
-	ctrl.Log.Info("Successfully deleted certificate secret", "Name", name, "Namespace", namespace)
+	ctrl.Log.Info("Successfully deleted certificate secret", "name", name, "namespace", namespace)
 
 	return nil
 }

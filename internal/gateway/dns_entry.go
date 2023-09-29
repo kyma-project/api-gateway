@@ -27,9 +27,9 @@ func reconcileKymaGatewayDnsEntry(ctx context.Context, k8sClient client.Client, 
 	namespace := kymaGatewayDnsEntryNamespace
 
 	isEnabled := isKymaGatewayEnabled(apiGatewayCR)
-	ctrl.Log.Info("Reconciling DNS entry", "KymaGatewayEnabled", isEnabled, "Name", name, "Namespace", namespace)
+	ctrl.Log.Info("Reconciling DNS entry", "KymaGatewayEnabled", isEnabled, "name", name, "namespace", namespace)
 
-	if !isEnabled || apiGatewayCR.IsInGracefulDeletion() {
+	if !isEnabled || apiGatewayCR.IsInDeletion() {
 		return deleteDnsEntry(k8sClient, name, namespace)
 	}
 
@@ -53,7 +53,7 @@ func reconcileDnsEntry(ctx context.Context, k8sClient client.Client, name, names
 }
 
 func deleteDnsEntry(k8sClient client.Client, name, namespace string) error {
-	ctrl.Log.Info("Deleting DNSEntry if it exists", "Name", name, "Namespace", namespace)
+	ctrl.Log.Info("Deleting DNSEntry if it exists", "name", name, "namespace", namespace)
 	d := dnsv1alpha1.DNSEntry{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
@@ -66,7 +66,11 @@ func deleteDnsEntry(k8sClient client.Client, name, namespace string) error {
 		return fmt.Errorf("failed to delete DNSEntry %s/%s: %v", namespace, name, err)
 	}
 
-	ctrl.Log.Info("Successfully deleted DNSEntry", "Name", name, "Namespace", namespace)
+	if k8serrors.IsNotFound(err) {
+		ctrl.Log.Info("Skipped deletion of DNSEntry as it wasn't present", "name", name, "namespace", namespace)
+	} else {
+		ctrl.Log.Info("Successfully deleted DNSEntry", "name", name, "namespace", namespace)
+	}
 
 	return nil
 }
@@ -91,12 +95,12 @@ func fetchIstioIngressGatewayIp(ctx context.Context, k8sClient client.Client) (s
 		return svc.Status.LoadBalancer.Ingress[0].IP, nil
 	}
 
-	ctrl.Log.Info("Load balancer ingress IP is not set, trying to get hostname", "Service", svc.Name, "Namespace", svc.Namespace)
+	ctrl.Log.Info("Load balancer ingress IP is not set, trying to get hostname", "service", svc.Name, "namespace", svc.Namespace)
 
 	if svc.Status.LoadBalancer.Ingress[0].Hostname != "" {
 		return svc.Status.LoadBalancer.Ingress[0].Hostname, nil
 	}
 
-	ctrl.Log.Info("Load balancer ingress hostname and IP is not set", "Service", svc.Name, "Namespace", svc.Namespace)
+	ctrl.Log.Info("Load balancer ingress hostname and IP is not set", "service", svc.Name, "namespace", svc.Namespace)
 	return "", fmt.Errorf("no ingress ip set for %s", istioIngressGatewayNamespaceName.String())
 }

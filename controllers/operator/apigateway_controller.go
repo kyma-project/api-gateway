@@ -56,15 +56,15 @@ func (r *APIGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		return ctrl.Result{}, err
 	}
 
-	r.log.Info("Reconciling APIGateway CR", "name", apiGatewayCR.Name, "isInDeletion", apiGatewayCR.IsInGracefulDeletion())
+	r.log.Info("Reconciling APIGateway CR", "name", apiGatewayCR.Name, "isInDeletion", apiGatewayCR.IsInDeletion())
 
-	if kymaGatewayStatus := gateway.ReconcileKymaGateway(ctx, r.Client, &apiGatewayCR); !kymaGatewayStatus.IsSuccessful() {
+	if kymaGatewayStatus := gateway.ReconcileKymaGateway(ctx, r.Client, &apiGatewayCR); !kymaGatewayStatus.IsReady() {
 		return r.requeueReconciliation(ctx, apiGatewayCR, kymaGatewayStatus)
 	}
 
 	// If there are no finalizers left, we must assume that the resource is deleted and therefore must stop the reconciliation
 	// to prevent accidental read or write to the resource.
-	if apiGatewayCR.IsInGracefulDeletion() && !apiGatewayCR.HasFinalizer() {
+	if apiGatewayCR.IsInDeletion() && !apiGatewayCR.HasFinalizer() {
 		r.log.Info("End reconciliation because all finalizers have been removed")
 		return ctrl.Result{}, nil
 	}

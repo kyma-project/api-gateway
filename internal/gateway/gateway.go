@@ -35,7 +35,7 @@ func reconcileKymaGateway(ctx context.Context, k8sClient client.Client, apiGatew
 		return err
 	}
 
-	if !isEnabled || apiGatewayCR.IsInGracefulDeletion() {
+	if !isEnabled || apiGatewayCR.IsInDeletion() {
 		return deleteKymaGateway(ctx, k8sClient, resource)
 	}
 
@@ -47,13 +47,18 @@ func isKymaGatewayEnabled(cr v1alpha1.APIGateway) bool {
 }
 
 func deleteKymaGateway(ctx context.Context, k8sClient client.Client, kymaGateway unstructured.Unstructured) error {
-	ctrl.Log.Info("Deleting Kyma gateway if it exists")
+	ctrl.Log.Info("Deleting Kyma gateway")
 	err := k8sClient.Delete(ctx, &kymaGateway)
 
 	if err != nil && !errors.IsNotFound(err) {
 		return fmt.Errorf("failed to delete Kyma gateway: %v", err)
 	}
 
-	ctrl.Log.Info("Successfully deleted Kyma gateway")
+	if errors.IsNotFound(err) {
+		ctrl.Log.Info("Skipped deletion of Kyma gateway as it wasn't present")
+	} else {
+		ctrl.Log.Info("Successfully deleted Kyma gateway")
+	}
+
 	return nil
 }
