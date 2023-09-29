@@ -3,6 +3,7 @@
 #
 ##Description: This scripts installs and test api-gateway custom domain test using the CLI on a real Gardener GCP cluster.
 ## exit on error, and raise error when variable is not set when used
+## IMG env variable expected (for make deploy), which points to the image in the registry
 
 set -euo pipefail
 
@@ -74,6 +75,7 @@ EOF
 
 kubectl patch shoot "${CLUSTER_NAME}" --patch-file patch.yaml --kubeconfig "${GARDENER_KYMA_PROW_KUBECONFIG}"
 make install-kyma
+make deploy
 
 echo "waiting for Gardener to finish shoot reconcile..."
 kubectl wait --kubeconfig "${GARDENER_KYMA_PROW_KUBECONFIG}" --for=jsonpath='{.status.lastOperation.state}'=Succeeded --timeout=600s "shoots/${CLUSTER_NAME}"
