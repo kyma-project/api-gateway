@@ -16,7 +16,6 @@ on:
       - './github/dependabot.yml'
     branches:
       - "mod-dev"
-      - "mod-dev-release-**"
 
 permissions:
   contents: read

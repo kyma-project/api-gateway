@@ -47,6 +47,7 @@ COMPONENT_CLI_VERSION ?= latest
 
 # It is required for upgrade integration test
 TARGET_BRANCH ?= ""
+TEST_UPGRADE_IMG ?= ""
 
 # This will change the flags of the `kyma alpha module create` command in case we spot credentials
 # Otherwise we will assume http-based local registries without authentication (e.g. for k3d)
@@ -83,6 +84,11 @@ help: ## Display this help.
 manifests: controller-gen ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
 	$(CONTROLLER_GEN) rbac:roleName=manager-role crd webhook paths="./..." output:crd:artifacts:config=config/crd/bases
 
+.PHONY: generate-upgrade-test-manifest
+generate-upgrade-test-manifest: manifests kustomize
+	cd config/manager && $(KUSTOMIZE) edit set image controller=${TEST_UPGRADE_IMG}
+	$(KUSTOMIZE) build config/default -o tests/integration/testsuites/upgrade/manifests/upgrade-test-generated-operator-manifest.yaml
+
 # Generate code
 .PHONY: generate
 generate: controller-gen ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
@@ -105,17 +111,24 @@ test-integration: generate fmt vet envtest ## Run integration tests.
 	source ./tests/integration/env_vars.sh && go test -timeout 1h ./tests/integration -v -race -run TestIstioJwt . && go test -timeout 1h ./tests/integration -v -race -run TestOryJwt .
 
 .PHONY: test-upgrade
-test-upgrade: generate fmt vet install ## Run API Gateway upgrade tests.
-	source ./tests/integration/env_vars.sh && $(GOTEST) ./tests/integration -v -race -run TestUpgrade .
+test-upgrade: generate fmt vet generate-upgrade-test-manifest ## Run API Gateway upgrade tests.
+	source ./tests/integration/env_vars.sh && go test -timeout 1h ./tests/integration -v -race -run TestUpgrade .
 
 test-custom-domain:
 	source ./tests/integration/env_vars_custom_domain.sh && bash -c "trap 'kubectl delete secret google-credentials -n default' EXIT; \
              kubectl create secret generic google-credentials -n default --from-file=serviceaccount.json=${TEST_SA_ACCESS_KEY_PATH}; \
              GODEBUG=netdns=cgo CGO_ENABLED=1 go test -timeout 1h ./tests/integration -run "^TestCustomDomain$$" -v -race"
 
-.PHONY: install-kyma
-install-kyma:
+.PHONY: install-prerequisites
+install-prerequisites:
 	kyma deploy --ci -s main -c hack/kyma-components.yaml
+
+.PHONY: install-prerequisites-with-istio-from-manifest
+install-prerequisites-with-istio-from-manifest:
+	kubectl apply -f https://github.com/kyma-project/istio/releases/latest/download/istio-manager.yaml
+	kubectl apply -f https://github.com/kyma-project/istio/releases/latest/download/istio-default-cr.yaml
+	kubectl wait -n kyma-system istios/default --for=jsonpath='{.status.state}'=Ready --timeout=300s
+	kyma deploy --ci -s main -c hack/kyma-components-no-istio.yaml
 
 ##@ Build
 
