@@ -48,8 +48,11 @@ export PATH="${PATH}:${PWD}"
 # wait for build job
 ./tests/integration/scripts/jobguard.sh
 
+set -x
 CLUSTER_NAME=ag-$(echo $RANDOM | md5sum | head -c 7)
 export CLUSTER_NAME
+set +x
+
 ./tests/integration/scripts/provision-gardener.sh
 
 echo "waiting for Gardener to finish shoot reconcile..."
