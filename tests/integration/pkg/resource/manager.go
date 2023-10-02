@@ -182,12 +182,47 @@ func (m *Manager) CreateGateway(k8sClient dynamic.Interface, resources ...unstru
 	return gotRes, nil
 }
 
+// UpdateGateway updates a gateway resource
+func (m *Manager) UpdateGateway(k8sClient dynamic.Interface, resources ...unstructured.Unstructured) (*unstructured.Unstructured, error) {
+	gotRes := &unstructured.Unstructured{}
+	for _, res := range resources {
+		resourceSchema, _, _ := m.GetResourceSchemaAndNamespace(res)
+		err := m.UpdateResourceWithoutNS(k8sClient, resourceSchema, res.GetName(), res)
+		if err != nil {
+			return nil, err
+		}
+		gotRes, err = m.GetResourceWithoutNS(k8sClient, resourceSchema, res.GetName())
+		if err != nil {
+			return nil, err
+		}
+	}
+	return gotRes, nil
+}
+
 // CreateResourceWithoutNS creates a given k8s resource without namespace
 func (m *Manager) CreateResourceWithoutNS(client dynamic.Interface, resourceSchema schema.GroupVersionResource, namespace string, manifest unstructured.Unstructured) error {
 	return retry.Do(func() error {
 		if _, err := client.Resource(resourceSchema).Create(context.Background(), &manifest, metav1.CreateOptions{}); err != nil {
 			return err
 		}
+		return nil
+	}, m.retryOptions...)
+}
+
+// UpdateResourceWithoutNS updates a given k8s resource without namespace
+func (m *Manager) UpdateResourceWithoutNS(client dynamic.Interface, resourceSchema schema.GroupVersionResource, name string, updateTo unstructured.Unstructured) error {
+	return retry.Do(func() error {
+		time.Sleep(5 * time.Second) //TODO: delete after waiting for resource creation is implemented
+		toUpdate, err := client.Resource(resourceSchema).Get(context.Background(), name, metav1.GetOptions{})
+		if err != nil {
+			return err
+		}
+		updateTo.SetResourceVersion(toUpdate.GetResourceVersion())
+		_, err = client.Resource(resourceSchema).Update(context.Background(), &updateTo, metav1.UpdateOptions{})
+		if err != nil {
+			return err
+		}
+
 		return nil
 	}, m.retryOptions...)
 }
