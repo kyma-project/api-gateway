@@ -26,7 +26,7 @@ var _ = Describe("Gardener", func() {
 			k8sClient := createFakeClient(&cm)
 
 			// when
-			domain, err := getGardenerDomain(context.TODO(), k8sClient)
+			domain, err := getGardenerDomain(context.Background(), k8sClient)
 
 			// then
 			Expect(err).ShouldNot(HaveOccurred())
@@ -38,7 +38,7 @@ var _ = Describe("Gardener", func() {
 			k8sClient := createFakeClient()
 
 			// when
-			_, err := getGardenerDomain(context.TODO(), k8sClient)
+			_, err := getGardenerDomain(context.Background(), k8sClient)
 
 			// then
 			Expect(err).Should(HaveOccurred())
@@ -56,7 +56,7 @@ var _ = Describe("Gardener", func() {
 			k8sClient := createFakeClient(&cm)
 
 			// when
-			_, err := getGardenerDomain(context.TODO(), k8sClient)
+			_, err := getGardenerDomain(context.Background(), k8sClient)
 
 			// then
 			Expect(err).To(HaveOccurred())
@@ -78,7 +78,7 @@ var _ = Describe("Gardener", func() {
 			k8sClient := createFakeClient(&cm)
 
 			// when
-			runsOnGardner, err := runsOnGardnerCluster(context.TODO(), k8sClient)
+			runsOnGardner, err := runsOnGardnerCluster(context.Background(), k8sClient)
 
 			// then
 			Expect(err).ShouldNot(HaveOccurred())
@@ -90,7 +90,7 @@ var _ = Describe("Gardener", func() {
 			k8sClient := createFakeClient()
 
 			// when
-			runsOnGardner, err := runsOnGardnerCluster(context.TODO(), k8sClient)
+			runsOnGardner, err := runsOnGardnerCluster(context.Background(), k8sClient)
 
 			// then
 			Expect(err).ShouldNot(HaveOccurred())

@@ -1,0 +1,13 @@
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  namespace: {{ .Namespace }}
+  name: ory-oathkeeper-keys-job-role
+rules:
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["get", "update", "patch"]
+    resourceNames: ["{{ .OathkeeperName }}-jwks-secret"]
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["create"]

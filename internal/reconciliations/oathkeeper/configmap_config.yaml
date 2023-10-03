@@ -1,0 +1,81 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Name }}
+  namespace: {{ .Namespace }}
+  labels:
+    app: oathkeeper
+    app.kubernetes.io/name: oathkeeper
+data:
+  "config.yaml": |
+    access_rules:
+      repositories:
+        - file:///etc/rules/access-rules.json
+    authenticators:
+      anonymous:
+        config:
+          subject: anonymous
+        enabled: true
+      cookie_session:
+        config:
+          check_session_url: https://session-store-host
+          only:
+            - sessionid
+        enabled: false
+      jwt:
+        config:
+          jwks_urls:
+            - http://ory-hydra-public.hydra-deprecated.svc.cluster.local:4444/.well-known/jwks.json
+          scope_strategy: wildcard
+        enabled: true
+      noop:
+        enabled: true
+      oauth2_client_credentials:
+        config:
+          token_url: http://ory-hydra-public.hydra-deprecated.svc.cluster.local:4444/oauth2/token
+        enabled: true
+      oauth2_introspection:
+        config:
+          introspection_url: http://ory-hydra-admin.hydra-deprecated.svc.cluster.local:4445/oauth2/introspect
+          scope_strategy: exact
+        enabled: true
+      unauthorized:
+        enabled: true
+    authorizers:
+      allow:
+        enabled: true
+      deny:
+        enabled: true
+    mutators:
+      cookie:
+        config:
+          cookies:
+            processedWith: oathkeeper
+        enabled: true
+      header:
+        config:
+          headers:
+            X-Server: oathkeeper
+        enabled: true
+      hydrator:
+        config:
+          api:
+            url: http://compass-director.compass-system.svc.cluster.local:3000/tenant-mapping
+        enabled: true
+      id_token:
+        config:
+          issuer_url: https://oathkeeper.{{ .Values.global.domainName }}/
+          jwks_url: file:///etc/secrets/jwks.json
+          ttl: 60s
+        enabled: true
+      noop:
+        enabled: true
+    serve:
+      api:
+        port: 4456
+      proxy:
+        port: 4455
+        timeout:
+          idle: 60m
+          read: 60m
+          write: 60m

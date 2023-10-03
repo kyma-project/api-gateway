@@ -1,4 +1,4 @@
-package gateway
+package reconciliations
 
 import (
 	"bytes"
@@ -16,17 +16,17 @@ const (
 	disclaimerValue = "DO NOT EDIT - This resource is managed by Kyma.\nAny modifications are discarded and the resource is reverted to the original state."
 )
 
-func applyResource(ctx context.Context, k8sClient client.Client, resourceManifest []byte, templateValues map[string]string) error {
+func ApplyResource(ctx context.Context, k8sClient client.Client, resourceManifest []byte, templateValues map[string]string) error {
 
-	resource, err := createUnstructuredResource(resourceManifest, templateValues)
+	resource, err := CreateUnstructuredResource(resourceManifest, templateValues)
 	if err != nil {
 		return err
 	}
 
-	return createOrUpdateResource(ctx, k8sClient, resource)
+	return CreateOrUpdateResource(ctx, k8sClient, resource)
 }
 
-func createUnstructuredResource(resourceManifest []byte, templateValues map[string]string) (unstructured.Unstructured, error) {
+func CreateUnstructuredResource(resourceManifest []byte, templateValues map[string]string) (unstructured.Unstructured, error) {
 	resourceBuffer, err := applyTemplateValuesToResourceManifest(resourceManifest, templateValues)
 	if err != nil {
 		return unstructured.Unstructured{}, fmt.Errorf("failed to apply template values to resource manifest: %v", err)
@@ -67,7 +67,7 @@ func unmarshalResourceBuffer(resourceBuffer []byte) (unstructured.Unstructured, 
 	return resource, nil
 }
 
-func createOrUpdateResource(ctx context.Context, k8sClient client.Client, resource unstructured.Unstructured) error {
+func CreateOrUpdateResource(ctx context.Context, k8sClient client.Client, resource unstructured.Unstructured) error {
 	spec, specExist := resource.Object["spec"]
 	data, dataExist := resource.Object["data"]
 

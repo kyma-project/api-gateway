@@ -18,13 +18,13 @@ var _ = Describe("Certificate", func() {
 			k8sClient := createFakeClient()
 
 			// when
-			err := reconcileCertificate(context.TODO(), k8sClient, "test", "test-domain.com", "test-cert-secret")
+			err := reconcileCertificate(context.Background(), k8sClient, "test", "test-domain.com", "test-cert-secret")
 
 			// then
 			Expect(err).ShouldNot(HaveOccurred())
 
 			cert := v1alpha1.Certificate{}
-			Expect(k8sClient.Get(context.TODO(), client.ObjectKey{Name: "test", Namespace: "istio-system"}, &cert)).Should(Succeed())
+			Expect(k8sClient.Get(context.Background(), client.ObjectKey{Name: "test", Namespace: "istio-system"}, &cert)).Should(Succeed())
 			Expect(*cert.Spec.SecretName).To(Equal("test-cert-secret"))
 			Expect(*cert.Spec.CommonName).To(Equal("*.test-domain.com"))
 		})
@@ -39,13 +39,13 @@ var _ = Describe("Certificate", func() {
 			k8sClient := createFakeClient()
 
 			// when
-			err := reconcileNonGardenerCertificateSecret(context.TODO(), k8sClient, apiGateway)
+			err := reconcileNonGardenerCertificateSecret(context.Background(), k8sClient, apiGateway)
 
 			// then
 			Expect(err).ShouldNot(HaveOccurred())
 
 			secret := v1.Secret{}
-			Expect(k8sClient.Get(context.TODO(), client.ObjectKey{Name: "kyma-gateway-certs", Namespace: "istio-system"}, &secret)).Should(Succeed())
+			Expect(k8sClient.Get(context.Background(), client.ObjectKey{Name: "kyma-gateway-certs", Namespace: "istio-system"}, &secret)).Should(Succeed())
 			Expect(secret.Data).To(HaveKey("tls.key"))
 			Expect(secret.Data).To(HaveKey("tls.crt"))
 		})

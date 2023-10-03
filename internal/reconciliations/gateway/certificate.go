@@ -6,6 +6,7 @@ import (
 	"fmt"
 	certv1alpha1 "github.com/gardener/cert-management/pkg/apis/cert/v1alpha1"
 	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
+	"github.com/kyma-project/api-gateway/internal/reconciliations"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -43,7 +44,7 @@ func reconcileCertificate(ctx context.Context, k8sClient client.Client, name, do
 	templateValues["Domain"] = domain
 	templateValues["SecretName"] = certSecretName
 
-	return applyResource(ctx, k8sClient, certificateManifest, templateValues)
+	return reconciliations.ApplyResource(ctx, k8sClient, certificateManifest, templateValues)
 }
 
 func deleteCertificate(k8sClient client.Client, name string) error {
@@ -54,7 +55,7 @@ func deleteCertificate(k8sClient client.Client, name string) error {
 			Namespace: certificateDefaultNamespace,
 		},
 	}
-	err := k8sClient.Delete(context.TODO(), &c)
+	err := k8sClient.Delete(context.Background(), &c)
 
 	if err != nil && !k8serrors.IsNotFound(err) {
 		return fmt.Errorf("failed to delete Certificate %s/%s: %v", certificateDefaultNamespace, name, err)

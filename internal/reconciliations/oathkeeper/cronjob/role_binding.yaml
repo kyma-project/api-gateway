@@ -1,0 +1,13 @@
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: ory-oathkeeper-keys-job-role-binding
+  namespace: {{ .Namespace }}
+subjects:
+  - kind: ServiceAccount
+    name: ory-oathkeeper-keys-service-account
+    namespace: {{ .Namespace }}
+roleRef:
+  kind: Role
+  name: ory-oathkeeper-keys-job-role
+  apiGroup: rbac.authorization.k8s.io
