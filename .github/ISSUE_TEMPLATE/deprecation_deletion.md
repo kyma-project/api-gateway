@@ -14,23 +14,21 @@ assignees: ''
 
 **Description**
 
-<!-- Provide a clear and concise description of the problem.
-Describe where it appears, when it occurred, and what it affects.  -->
-
-<!-- Provide relevant technical details such as the Kubernetes version, the cluster name and provider, the Kyma version, the browser name and version, or the operating system. -->
+<!-- Indicate which feature is being considered for deletion or deprecation, and explain the reasons behind this decision.
+Describe the potential effects the deletion or deprecation might have. -->
 
 **Acceptance criteria**
 
-<!-- Describe what need to be done to fullfill requirements -->
+<!-- Define requirements that must be fulfilled to consider the deprecation or deletion process complete. -->
 
 - [ ] AC
 
 **DoD:**
-- [ ] followup issue - check status of customers migration
-- [ ] provide documentation
-- [ ] release notes and What's New updates for Kyma customers
-- [ ] test on production-like environment
-- [ ] check outcome of all related pipelines
-- [ ] verify resource limits
-- [ ] create release and bump in kyma
-- [ ] PR reviewer will verify code coverage and evaluate if it is acceptable
+- [ ] Create a follow-up issue to check the status of customers' migration.
+- [ ] Provide documentation.
+- [ ] Add release notes and What's New notes for Kyma customers.
+- [ ] Test on a production-like environment.
+- [ ] Check the outcome of all related pipelines.
+- [ ] Verify resource limits.
+- [ ] Create a release and bump in Kyma.
+- [ ] As a PR reviewer, verify code coverage and evaluate if it is acceptable.
