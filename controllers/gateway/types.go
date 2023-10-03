@@ -36,7 +36,7 @@ type ApiRuleReconcilerConfiguration struct {
 func NewApiRuleReconciler(mgr manager.Manager, config ApiRuleReconcilerConfiguration) (*APIRuleReconciler, error) {
 	return &APIRuleReconciler{
 		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("controllers").WithName("Api"),
+		Log:    ctrl.Log.WithName("apirule-controller"),
 		ReconciliationConfig: processing.ReconciliationConfig{
 			OathkeeperSvc:     config.OathkeeperSvcAddr,
 			OathkeeperSvcPort: uint32(config.OathkeeperSvcPort),

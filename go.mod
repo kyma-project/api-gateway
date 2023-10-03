@@ -5,6 +5,8 @@ go 1.20
 require (
 	github.com/avast/retry-go/v4 v4.5.0
 	github.com/cucumber/godog v0.13.0
+	github.com/gardener/cert-management v0.11.1
+	github.com/gardener/external-dns-management v0.15.8
 	github.com/go-logr/logr v1.2.4
 	github.com/onsi/ginkgo/v2 v2.12.1
 	github.com/onsi/gomega v1.28.0
