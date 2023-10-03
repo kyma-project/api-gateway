@@ -19,6 +19,12 @@ inputs:
 runs:
   using: "composite"
   steps:
+    - name: Checkout to PR branch
+      shell: bash
+      if: ${{ github.event.type == 'PullRequestEvent' }}
+      run: |
+        git fetch origin pull/${{ github.event.pull_request.number }}/head:${{ github.head_ref }}
+        git checkout ${{ github.head_ref }}
     - uses: actions/setup-go@v4
       with:
         go-version: "1.20"
