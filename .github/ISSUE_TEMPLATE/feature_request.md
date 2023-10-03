@@ -25,11 +25,12 @@ assignees: ''
 - [ ] Provide unit tests.
 - [ ] Provide integration tests.
 - [ ] Provide documentation.
-- [ ] Add release notes and What's New notes for Kyma customers.
 - [ ] Test on a production-like environment.
 - [ ] Check the outcome of all related pipelines.
 - [ ] Verify resource limits.
 - [ ] As a PR reviewer, verify code coverage and evaluate if it is acceptable.
+- [ ] Create a release and bump in Kyma.
+- [ ] Add release notes and What's New notes for Kyma customers.
 
 **Attachments**
 
