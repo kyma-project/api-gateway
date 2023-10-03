@@ -24,7 +24,6 @@ type scenario struct {
 	testID          string
 	namespace       string
 	k8sClient       dynamic.Interface
-	httpClient      *helpers.RetryableHttpClient
 	resourceManager *resource.Manager
 	config          testcontext.Config
 }
@@ -41,6 +40,8 @@ func initScenario(ctx *godog.ScenarioContext, ts *testsuite) {
 	ctx.Step(`^there is a "([^"]*)" secret in "([^"]*)" namespace$`, scenario.thereIsACertificate)
 	ctx.Step(`^there is an "([^"]*)" APIRule$`, scenario.thereIsAnAPIRule)
 	ctx.Step(`^disabling kyma gateway will result in "([^"]*)" due to existing APIRule$`, scenario.gatewayErrorWhenKymaGatewayDisabled)
+	ctx.Step(`^removing an APIRule will also remove "([^"]*)" in "([^"]*)" namespace$`, scenario.removingAPIRuleUnblocksGatewayDeletion)
+
 }
 
 func createScenario(t *testsuite) (*scenario, error) {
@@ -130,7 +131,6 @@ func (c *scenario) thereIsAnAPIRule(name string) error {
 
 func (c *scenario) gatewayErrorWhenKymaGatewayDisabled(state string) error {
 	customDomainManifestDirectory := path.Dir(manifestsPath)
-
 	kymaGatewayDisabled, err := manifestprocessor.ParseFromFileWithTemplate("kyma-gateway-disabled.yaml", customDomainManifestDirectory, struct {
 		NamePrefix string
 	}{
@@ -167,4 +167,38 @@ func (c *scenario) gatewayErrorWhenKymaGatewayDisabled(state string) error {
 		return fmt.Errorf("could not get gateway status: %s", err)
 	}
 	return nil
+}
+
+func (c *scenario) removingAPIRuleUnblocksGatewayDeletion(name, namespace string) error {
+	customDomainManifestDirectory := path.Dir(manifestsPath)
+	apiRule, err := manifestprocessor.ParseFromFileWithTemplate("apirule.yaml", customDomainManifestDirectory, struct {
+		Namespace string
+	}{
+		Namespace: c.namespace,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to process apirule.yaml, details %s", err.Error())
+	}
+	err = c.resourceManager.DeleteResources(c.k8sClient, apiRule...)
+	if err != nil {
+		return err
+	}
+
+	err = wait.ExponentialBackoff(wait.Backoff{
+		Duration: time.Second,
+		Factor:   2,
+		Steps:    10,
+	}, func() (done bool, err error) {
+		res := schema.GroupVersionResource{Group: "networking.istio.io", Version: "v1beta1", Resource: "gateways"}
+		_, err = c.k8sClient.Resource(res).Namespace(namespace).Get(context.Background(), name, v1.GetOptions{})
+		if err != nil {
+			return true, err
+		}
+		return false, nil
+	})
+	if err != nil {
+		return nil
+	}
+
+	return fmt.Errorf("%s stil exists", name)
 }
