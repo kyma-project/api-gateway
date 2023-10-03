@@ -42,12 +42,12 @@ runs:
     - name: Deploy mod-dev version of manager #this step should be removed after first api gateway manager release. This behavior should be moved to for example some deploy-latest-release-script
       shell: bash
       env:
-        IMG: ${{ inputs.manager_image}}
+        IMG: ${{ inputs.manager_image }}
       run: |
         git checkout mod-dev
         KUBECONFIG=$(k3d kubeconfig merge kyma) make deploy
         git restore .
-        git checkout ${{ github.event.pull_request.head.sha }}
+        git checkout ${{ github.head_ref }}
     - name: Run test
       shell: bash
       env:
