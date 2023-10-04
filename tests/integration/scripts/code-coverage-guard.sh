@@ -47,7 +47,7 @@ else
   rm cover.out
 fi
 
-if awk "BEGIN {exit !($coverage_pr >= $coverage_main)}"; then
+if [[ $(echo "$coverage_pr >= $coverage_main" | bc) -ne 0 ]]; then
 	echo -e "${GREEN}√ Thanks for keeping & increasing code coverage!\\n${NC}"
 else
 	echo -e "${RED}✗ This PR is lowering code coverage compared to main branch! Please add tests.\\n${NC}"
