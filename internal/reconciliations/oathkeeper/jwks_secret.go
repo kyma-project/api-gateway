@@ -1,4 +1,4 @@
-package gateway
+package oathkeeper
 
 import (
 	"context"
@@ -19,21 +19,21 @@ var jwksSecret []byte
 const secretName = "ory-oathkeeper-jwks-secret"
 
 func reconcileOryJWKSSecret(ctx context.Context, k8sClient client.Client, apiGatewayCR v1alpha1.APIGateway) error {
-	ctrl.Log.Info("Reconciling Ory Config ConfigMap", "name", configMapName, "namespace", namespace)
+	ctrl.Log.Info("Reconciling Ory Config ConfigMap", "name", configMapName, "Namespace", reconciliations.Namespace)
 
 	if apiGatewayCR.IsInDeletion() {
-		return deleteSecret(k8sClient, secretName, namespace)
+		return deleteSecret(k8sClient, secretName, reconciliations.Namespace)
 	}
 
 	templateValues := make(map[string]string)
 	templateValues["Name"] = secretName
-	templateValues["Namespace"] = namespace
+	templateValues["Namespace"] = reconciliations.Namespace
 
-	return reconciliations.ApplyResource(ctx, k8sClient, configmapConfig, templateValues)
+	return reconciliations.ApplyResource(ctx, k8sClient, jwksSecret, templateValues)
 }
 
 func deleteSecret(k8sClient client.Client, name, namespace string) error {
-	ctrl.Log.Info("Deleting Oathkeeper JWKS Secret if it exists", "name", name, "namespace", namespace)
+	ctrl.Log.Info("Deleting Oathkeeper JWKS Secret if it exists", "name", name, "Namespace", namespace)
 	s := corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
@@ -46,7 +46,7 @@ func deleteSecret(k8sClient client.Client, name, namespace string) error {
 		return fmt.Errorf("failed to delete Oathkeeper Secret %s/%s: %v", namespace, name, err)
 	}
 
-	ctrl.Log.Info("Successfully deleted Oathkeeper Secret", "name", name, "namespace", namespace)
+	ctrl.Log.Info("Successfully deleted Oathkeeper Secret", "name", name, "Namespace", namespace)
 
 	return nil
 }

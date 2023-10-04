@@ -1,7 +1,8 @@
 apiVersion: batch/v1
 kind: CronJob
 metadata:
-  name: oathkeeper-jwks-rotator
+  name: {{ .Name }}
+  namespace: {{ .Namespace }}
 spec:
   schedule: "0 0 1 * *"
   successfulJobsHistoryLimit: 1
@@ -60,4 +61,4 @@ spec:
           - name: {{ .OathkeeperName }}-keys-volume
             emptyDir: {}
           restartPolicy: OnFailure
-          serviceAccountName: ory-oathkeeper-keys-service-account
+          serviceAccountName: {{ .ServiceAccountName }}

@@ -14,6 +14,7 @@ import (
 const (
 	disclaimerKey   = "apigateways.operator.kyma-project.io/managed-by-disclaimer"
 	disclaimerValue = "DO NOT EDIT - This resource is managed by Kyma.\nAny modifications are discarded and the resource is reverted to the original state."
+	Namespace       = "kyma-system"
 )
 
 func ApplyResource(ctx context.Context, k8sClient client.Client, resourceManifest []byte, templateValues map[string]string) error {

@@ -7,6 +7,7 @@ import (
 	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
 	"github.com/kyma-project/api-gateway/controllers"
+	"github.com/kyma-project/api-gateway/internal/reconciliations"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -44,7 +45,7 @@ func ReconcileKymaGateway(ctx context.Context, k8sClient client.Client, apiGatew
 		}
 	}
 
-	isGardenerCluster, err := runsOnGardnerCluster(ctx, k8sClient)
+	isGardenerCluster, err := reconciliations.RunsOnGardenerCluster(ctx, k8sClient)
 	if err != nil {
 		return controllers.ErrorStatus(err, "Error during Kyma Gateway reconciliation")
 	}
@@ -81,7 +82,7 @@ func anyApiRuleExists(ctx context.Context, k8sClient client.Client) (bool, error
 }
 
 func reconcileGardenerKymaGateway(ctx context.Context, k8sClient client.Client, apiGatewayCR v1alpha1.APIGateway) error {
-	domain, err := getGardenerDomain(ctx, k8sClient)
+	domain, err := reconciliations.GetGardenerDomain(ctx, k8sClient)
 	if err != nil {
 		return fmt.Errorf("failed to get Kyma gateway domain: %v", err)
 	}

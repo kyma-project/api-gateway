@@ -21,6 +21,7 @@ import (
 	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
 	"github.com/kyma-project/api-gateway/controllers"
 	"github.com/kyma-project/api-gateway/internal/reconciliations/gateway"
+	"github.com/kyma-project/api-gateway/internal/reconciliations/oathkeeper"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
@@ -60,6 +61,10 @@ func (r *APIGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 
 	if kymaGatewayStatus := gateway.ReconcileKymaGateway(ctx, r.Client, &apiGatewayCR); !kymaGatewayStatus.IsReady() {
 		return r.requeueReconciliation(ctx, apiGatewayCR, kymaGatewayStatus)
+	}
+
+	if oryOathkeeperStatus := oathkeeper.ReconcileOathkeeper(ctx, r.Client, &apiGatewayCR); !oryOathkeeperStatus.IsReady() {
+		return r.requeueReconciliation(ctx, apiGatewayCR, oryOathkeeperStatus)
 	}
 
 	// If there are no finalizers left, we must assume that the resource is deleted and therefore must stop the reconciliation

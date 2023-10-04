@@ -1,4 +1,4 @@
-package gateway
+package oathkeeper
 
 import (
 	"context"
@@ -19,21 +19,35 @@ var configmapConfig []byte
 const configMapName = "ory-oathkeeper-config"
 
 func reconcileOryOathkeeperConfigConfigMap(ctx context.Context, k8sClient client.Client, apiGatewayCR v1alpha1.APIGateway) error {
-	ctrl.Log.Info("Reconciling Ory Config ConfigMap", "name", configMapName, "namespace", namespace)
+	ctrl.Log.Info("Reconciling Ory Config ConfigMap", "name", configMapName, "Namespace", reconciliations.Namespace)
 
 	if apiGatewayCR.IsInDeletion() {
-		return deleteConfigmap(k8sClient, configMapName, namespace)
+		return deleteConfigmap(k8sClient, configMapName, reconciliations.Namespace)
+	}
+
+	isGardenerCluster, err := reconciliations.RunsOnGardenerCluster(ctx, k8sClient)
+	if err != nil {
+		return err
+	}
+
+	domain := "local.kyma.dev"
+	if isGardenerCluster {
+		domain, err = reconciliations.GetGardenerDomain(ctx, k8sClient)
+		if err != nil {
+			return err
+		}
 	}
 
 	templateValues := make(map[string]string)
 	templateValues["Name"] = configMapName
-	templateValues["Namespace"] = namespace
+	templateValues["Namespace"] = reconciliations.Namespace
+	templateValues["Domain"] = domain
 
 	return reconciliations.ApplyResource(ctx, k8sClient, configmapConfig, templateValues)
 }
 
 func deleteConfigmap(k8sClient client.Client, name, namespace string) error {
-	ctrl.Log.Info("Deleting Oathkeeper ConfigMap if it exists", "name", name, "namespace", namespace)
+	ctrl.Log.Info("Deleting Oathkeeper ConfigMap if it exists", "name", name, "Namespace", namespace)
 	s := corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
@@ -46,7 +60,7 @@ func deleteConfigmap(k8sClient client.Client, name, namespace string) error {
 		return fmt.Errorf("failed to delete Oathkeeper ConfigMap %s/%s: %v", namespace, name, err)
 	}
 
-	ctrl.Log.Info("Successfully deleted Oathkeeper ConfigMap", "name", name, "namespace", namespace)
+	ctrl.Log.Info("Successfully deleted Oathkeeper ConfigMap", "name", name, "Namespace", namespace)
 
 	return nil
 }

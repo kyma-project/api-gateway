@@ -9,7 +9,6 @@ metadata:
     app.kubernetes.io/instance: ory
     app.kubernetes.io/name: oathkeeper
 spec:
-  replicas: 1
   selector:
     matchLabels:
       app.kubernetes.io/name: oathkeeper
@@ -72,9 +71,9 @@ spec:
           resources:
             limits:
               cpu: 100m
-              memory: 128Mi
+              memory: 512Mi
             requests:
-              cpu: 10m
+              cpu: 100m
               memory: 64Mi
           securityContext:
             allowPrivilegeEscalation: false
@@ -125,11 +124,11 @@ spec:
               protocol: TCP
           resources:
             limits:
-              cpu: 100m
-              memory: 50Mi
+              cpu: 400m
+              memory: 1Gi
             requests:
               cpu: 10m
-              memory: 20Mi
+              memory: 32Mi
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:
@@ -175,9 +174,18 @@ spec:
       securityContext:
         seccompProfile:
           type: RuntimeDefault
-      serviceAccount: oathkeeper-maester-account
-      serviceAccountName: oathkeeper-maester-account
+      serviceAccount: {{ .ServiceAccountName }}
+      serviceAccountName: {{ .ServiceAccountName }}
       priorityClassName: "api-gateway-priority-class"
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app: oathkeeper
+                topologyKey: "kubernetes.io/hostname"
       volumes:
         - configMap:
             name: ory-oathkeeper-config

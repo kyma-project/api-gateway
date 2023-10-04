@@ -1,4 +1,4 @@
-package gateway
+package oathkeeper
 
 import (
 	"context"
@@ -21,14 +21,17 @@ const (
 //go:embed deployment_light.yaml
 var deploymentLight []byte
 
-func reconcileOathkeeperDeployment(ctx context.Context, k8sClient client.Client, apiGatewayCR v1alpha1.APIGateway, domain string) error {
+//go:embed deployment.yaml
+var deployment []byte
+
+func reconcileOathkeeperDeployment(ctx context.Context, k8sClient client.Client, apiGatewayCR v1alpha1.APIGateway) error {
 
 	clusterSize, err := clusterconfig.EvaluateClusterSize(ctx, k8sClient)
 	if err != nil {
 		return err
 	}
 
-	ctrl.Log.Info("Reconciling Ory Oathkeeper Deployment", "Cluster size", clusterSize, "name", deploymentName, "namespace", namespace)
+	ctrl.Log.Info("Reconciling Ory Oathkeeper Deployment", "Cluster size", clusterSize, "name", deploymentName, "Namespace", reconciliations.Namespace)
 
 	if apiGatewayCR.IsInDeletion() {
 		return deleteDeployment(k8sClient, deploymentName)
@@ -37,37 +40,38 @@ func reconcileOathkeeperDeployment(ctx context.Context, k8sClient client.Client,
 	if clusterSize == clusterconfig.Evaluation {
 		return reconcileDeployment(ctx, k8sClient, deploymentName, &deploymentLight)
 	}
-	return reconcileDeployment(ctx, k8sClient, deploymentName, &[]byte{})
+	return reconcileDeployment(ctx, k8sClient, deploymentName, &deployment)
 }
 
 func reconcileDeployment(ctx context.Context, k8sClient client.Client, name string, deploymentManifest *[]byte) error {
 
-	ctrl.Log.Info("Reconciling Deployment", "name", name, "namespace", namespace)
+	ctrl.Log.Info("Reconciling Deployment", "name", name, "Namespace", reconciliations.Namespace)
 	templateValues := make(map[string]string)
 	templateValues["Name"] = name
-	templateValues["Namespace"] = namespace
+	templateValues["Namespace"] = reconciliations.Namespace
+	templateValues["ServiceAccountName"] = serviceAccountName
 
 	return reconciliations.ApplyResource(ctx, k8sClient, *deploymentManifest, templateValues)
 }
 
 func deleteDeployment(k8sClient client.Client, name string) error {
-	ctrl.Log.Info("Deleting Deployment if it exists", "name", name, "namespace", namespace)
+	ctrl.Log.Info("Deleting Deployment if it exists", "name", name, "Namespace", reconciliations.Namespace)
 	c := appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
-			Namespace: namespace,
+			Namespace: reconciliations.Namespace,
 		},
 	}
 	err := k8sClient.Delete(context.Background(), &c)
 
 	if err != nil && !k8serrors.IsNotFound(err) {
-		return fmt.Errorf("failed to delete Deployment %s/%s: %v", namespace, name, err)
+		return fmt.Errorf("failed to delete Deployment %s/%s: %v", reconciliations.Namespace, name, err)
 	}
 
 	if k8serrors.IsNotFound(err) {
-		ctrl.Log.Info("Skipped deletion of Deployment as it wasn't present", "name", name, "namespace", namespace)
+		ctrl.Log.Info("Skipped deletion of Deployment as it wasn't present", "name", name, "Namespace", reconciliations.Namespace)
 	} else {
-		ctrl.Log.Info("Successfully deleted Deployment", "name", name, "namespace", deploymentName)
+		ctrl.Log.Info("Successfully deleted Deployment", "name", name, "Namespace", deploymentName)
 	}
 
 	return nil
