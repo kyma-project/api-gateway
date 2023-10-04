@@ -29,6 +29,7 @@ func reconcileOryOathkeeperCronjobRoleBinding(ctx context.Context, k8sClient cli
 	templateValues["Name"] = roleBindingName
 	templateValues["Namespace"] = reconciliations.Namespace
 	templateValues["ServiceAccountName"] = serviceAccountName
+	templateValues["RoleName"] = roleName
 
 	return reconciliations.ApplyResource(ctx, k8sClient, roleBinding, templateValues)
 }

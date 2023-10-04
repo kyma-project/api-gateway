@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    prometheus.io/port: "8080"
+    prometheus.io/scheme: http
+    prometheus.io/scrape: "true"
+  labels:
+    app.kubernetes.io/instance: ory
+    app.kubernetes.io/name: oathkeeper-maester
+    mode: sidecar
+  name: ory-oathkeeper-maester-metrics
+  namespace: kyma-system
+spec:
+  type: ClusterIP
+  ports:
+    - name: http-metrics
+      port: 8080
+      protocol: TCP
+      targetPort: 8080
+  selector:
+    app.kubernetes.io/instance: ory
+    app.kubernetes.io/name: oathkeeper

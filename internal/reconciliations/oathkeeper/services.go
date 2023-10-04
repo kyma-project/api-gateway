@@ -1,0 +1,71 @@
+package oathkeeper
+
+import (
+	"context"
+	_ "embed"
+	"errors"
+	"fmt"
+	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
+	"github.com/kyma-project/api-gateway/internal/reconciliations"
+	corev1 "k8s.io/api/core/v1"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+)
+
+//go:embed service-api.yaml
+var serviceApi []byte
+
+//go:embed service-metrics.yaml
+var serviceMetrics []byte
+
+//go:embed service-proxy.yaml
+var serviceProxy []byte
+
+const (
+	apiServiceName     = "ory-oathkeeper-api"
+	proxyServiceName   = "ory-oathkeeper-proxy"
+	metricsServiceName = "ory-oathkeeper-maester-metrics"
+)
+
+func reconcileOryOathkeeperServices(ctx context.Context, k8sClient client.Client, apiGatewayCR v1alpha1.APIGateway) error {
+	ctrl.Log.Info("Reconciling Ory Oathkeepers Services", "name", peerAuthenticationName, "Namespace", reconciliations.Namespace)
+
+	if apiGatewayCR.IsInDeletion() {
+		return errors.Join(
+			deleteService(k8sClient, apiServiceName, reconciliations.Namespace),
+			deleteService(k8sClient, metricsServiceName, reconciliations.Namespace),
+			deleteService(k8sClient, proxyServiceName, reconciliations.Namespace),
+		)
+	}
+
+	templateValues := make(map[string]string)
+	templateValues["Name"] = peerAuthenticationName
+	templateValues["Namespace"] = reconciliations.Namespace
+
+	return errors.Join(
+		reconciliations.ApplyResource(ctx, k8sClient, serviceApi, templateValues),
+		reconciliations.ApplyResource(ctx, k8sClient, serviceMetrics, templateValues),
+		reconciliations.ApplyResource(ctx, k8sClient, serviceProxy, templateValues),
+	)
+}
+
+func deleteService(k8sClient client.Client, name, namespace string) error {
+	ctrl.Log.Info("Deleting Oathkeeper Service if it exists", "name", name, "Namespace", namespace)
+	s := corev1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: namespace,
+		},
+	}
+	err := k8sClient.Delete(context.Background(), &s)
+
+	if err != nil && !k8serrors.IsNotFound(err) {
+		return fmt.Errorf("failed to delete Oathkeeper Service %s/%s: %v", namespace, name, err)
+	}
+
+	ctrl.Log.Info("Successfully deleted Oathkeeper Service", "name", name, "Namespace", namespace)
+
+	return nil
+}

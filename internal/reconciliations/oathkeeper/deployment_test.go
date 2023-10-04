@@ -11,21 +11,19 @@ import (
 
 var _ = Describe("Oathkeeper reconciliation", func() {
 
-	It("Successfully reconcile Oathkeeper", func() {
-		apiGateway := createApiGateway(nil)
+	It("Should Successfully reconcile Oathkeeper", func() {
+		apiGateway := createApiGateway()
 		k8sClient := createFakeClient(apiGateway)
 		status := oathkeeper.ReconcileOathkeeper(context.Background(), k8sClient, apiGateway)
-		Expect(status.IsReady()).To(BeTrue())
+		Expect(status.IsReady()).To(BeTrue(), "%#v", status)
 	})
 
 })
 
-func createApiGateway(enableKymaGateway *bool) *v1alpha1.APIGateway {
+func createApiGateway() *v1alpha1.APIGateway {
 	return &v1alpha1.APIGateway{
 		ObjectMeta: metav1.ObjectMeta{},
-		Spec: v1alpha1.APIGatewaySpec{
-			EnableKymaGateway: enableKymaGateway,
-		},
+		Spec:       v1alpha1.APIGatewaySpec{},
 	}
 
 }

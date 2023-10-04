@@ -175,8 +175,8 @@ spec:
       securityContext:
         seccompProfile:
           type: RuntimeDefault
-      serviceAccount: oathkeeper-maester-account
-      serviceAccountName: oathkeeper-maester-account
+      serviceAccount: {{ .ServiceAccountName }}
+      serviceAccountName: {{ .ServiceAccountName }}
       priorityClassName: "api-gateway-priority-class"
       volumes:
         - configMap:

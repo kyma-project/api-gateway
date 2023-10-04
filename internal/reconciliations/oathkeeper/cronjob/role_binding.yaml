@@ -9,5 +9,5 @@ subjects:
     namespace: {{ .Namespace }}
 roleRef:
   kind: Role
-  name: ory-oathkeeper-keys-job-role
+  name: {{ .RoleName }}
   apiGroup: rbac.authorization.k8s.io

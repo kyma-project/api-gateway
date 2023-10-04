@@ -1,4 +1,4 @@
-package oathkeeper
+package maester
 
 import (
 	"context"
@@ -18,8 +18,8 @@ var serviceAccount []byte
 
 const serviceAccountName = "oathkeeper-maester-account"
 
-func reconcileOryOathkeeperServiceAccount(ctx context.Context, k8sClient client.Client, apiGatewayCR v1alpha1.APIGateway) error {
-	ctrl.Log.Info("Reconciling Ory Oathkeeper ServiceAccount", "name", serviceAccountName, "Namespace", reconciliations.Namespace)
+func reconcileOryOathkeeperMaesterServiceAccount(ctx context.Context, k8sClient client.Client, apiGatewayCR v1alpha1.APIGateway) error {
+	ctrl.Log.Info("Reconciling Ory Maester ServiceAccount", "name", serviceAccountName, "Namespace", reconciliations.Namespace)
 
 	if apiGatewayCR.IsInDeletion() {
 		return deleteServiceAccount(k8sClient, serviceAccountName, reconciliations.Namespace)
@@ -33,7 +33,7 @@ func reconcileOryOathkeeperServiceAccount(ctx context.Context, k8sClient client.
 }
 
 func deleteServiceAccount(k8sClient client.Client, name, namespace string) error {
-	ctrl.Log.Info("Deleting Oathkeeper ServiceAccount if it exists", "name", name, "Namespace", namespace)
+	ctrl.Log.Info("Deleting Oathkeeper Maester ServiceAccount if it exists", "name", name, "Namespace", namespace)
 	s := corev1.ServiceAccount{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
@@ -46,7 +46,7 @@ func deleteServiceAccount(k8sClient client.Client, name, namespace string) error
 		return fmt.Errorf("failed to delete Oathkeeper ConfigMap %s/%s: %v", namespace, name, err)
 	}
 
-	ctrl.Log.Info("Successfully deleted Oathkeeper ServiceAccount", "name", name, "Namespace", namespace)
+	ctrl.Log.Info("Successfully deleted Oathkeeper Maester ServiceAccount", "name", name, "Namespace", namespace)
 
 	return nil
 }
