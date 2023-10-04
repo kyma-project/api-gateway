@@ -55,8 +55,7 @@ var _ = Describe("API Gateway Controller", Serial, func() {
 			// given
 			apiGateway := v1alpha1.APIGateway{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:       generateName(),
-					Finalizers: []string{"apigateways.operator.kyma-project.io/api-gateway-reconciliation"},
+					Name: generateName(),
 				},
 			}
 
@@ -90,39 +89,43 @@ var _ = Describe("API Gateway Controller", Serial, func() {
 			apiRule := getApiRule()
 			apiGateway := v1alpha1.APIGateway{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:       generateName(),
-					Finalizers: []string{"apigateways.operator.kyma-project.io/api-gateway-reconciliation"},
+					Name: generateName(),
+				},
+				Spec: v1alpha1.APIGatewaySpec{
+					EnableKymaGateway: ptr.To(true),
 				},
 			}
 
 			// when
+			By("Creating APIRule")
 			Expect(k8sClient.Create(ctx, &apiRule)).Should(Succeed())
+			By("Creating APIGateway")
 			Expect(k8sClient.Create(ctx, &apiGateway)).Should(Succeed())
 			defer func() {
 				apiRuleTeardown(&apiRule)
 				apiGatewayTeardown(&apiGateway)
 			}()
+
+			By("Validating APIGateway is ready")
 			Eventually(func(g Gomega) {
 				created := v1alpha1.APIGateway{}
 				g.Expect(k8sClient.Get(ctx, client.ObjectKey{Name: apiGateway.Name}, &created)).Should(Succeed())
-				g.Expect(created.ObjectMeta.Finalizers).To(HaveLen(1))
-				g.Expect(created.ObjectMeta.Finalizers[0]).To(Equal("apigateways.operator.kyma-project.io/api-gateway-reconciliation"))
+				g.Expect(created.ObjectMeta.Finalizers).To(ContainElement("apigateways.operator.kyma-project.io/api-gateway-reconciliation"))
 				g.Expect(created.Status.State).To(Equal(v1alpha1.Ready))
 			}, eventuallyTimeout).Should(Succeed())
 
+			By("Deleting APIGateway")
 			Expect(k8sClient.Delete(ctx, &apiGateway)).Should(Succeed())
 
 			// then
+			By("Validating APIGateway is in warning state")
 			Eventually(func(g Gomega) {
 				deleted := v1alpha1.APIGateway{}
 				g.Expect(k8sClient.Get(ctx, client.ObjectKey{Name: apiGateway.Name}, &deleted)).Should(Succeed())
-				g.Expect(deleted.ObjectMeta.Finalizers).To(HaveLen(1))
-				g.Expect(deleted.ObjectMeta.Finalizers[0]).To(Equal("apigateways.operator.kyma-project.io/api-gateway-reconciliation"))
+				g.Expect(deleted.ObjectMeta.Finalizers).To(ContainElement("apigateways.operator.kyma-project.io/api-gateway-reconciliation"))
 				g.Expect(deleted.Status.State).To(Equal(v1alpha1.Warning))
 				g.Expect(deleted.Status.Description).To(Equal("There are custom resource(s) that block the deletion. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning"))
 			}, eventuallyTimeout).Should(Succeed())
-
-			Expect(k8sClient.Delete(ctx, &apiRule)).Should(Succeed())
 		})
 
 		It("Should block deletion of APIGateway CR when there is VirtualService blocking", func() {
@@ -131,8 +134,7 @@ var _ = Describe("API Gateway Controller", Serial, func() {
 			vs := getVirtualService()
 			apiGateway := v1alpha1.APIGateway{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:       generateName(),
-					Finalizers: []string{"apigateways.operator.kyma-project.io/api-gateway-reconciliation"},
+					Name: generateName(),
 				},
 			}
 
@@ -253,11 +255,12 @@ var _ = Describe("API Gateway Controller", Serial, func() {
 			}, eventuallyTimeout).Should(Succeed())
 
 			By("Updating APIGateway CR with Kyma Gateway disabled")
-			apiGateway = fetchLatestApiGateway(apiGateway)
-			apiGateway.Spec.EnableKymaGateway = ptr.To(false)
-
 			// when
-			Expect(k8sClient.Update(ctx, &apiGateway)).Should(Succeed())
+			Eventually(func(g Gomega) {
+				apiGateway = fetchLatestApiGateway(apiGateway)
+				apiGateway.Spec.EnableKymaGateway = ptr.To(false)
+				Expect(k8sClient.Update(ctx, &apiGateway)).Should(Succeed())
+			}, eventuallyTimeout).Should(Succeed())
 
 			// then
 			By("Verifying that APIGateway CR reconciliation was successful and Kyma gateway was deleted")
