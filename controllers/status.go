@@ -11,9 +11,11 @@ import (
 type state int
 
 const (
-	Ready   state = 0
-	Error   state = 1
-	Warning state = 2
+	Ready      state = 0
+	Error      state = 1
+	Warning    state = 2
+	Deleting   state = 3
+	Processing state = 4
 )
 
 type Status interface {
@@ -22,6 +24,7 @@ type Status interface {
 	IsReady() bool
 	IsWarning() bool
 	IsError() bool
+	Description() string
 }
 
 type status struct {
@@ -47,15 +50,31 @@ func WarningStatus(err error, description string) Status {
 	}
 }
 
-func SuccessfulStatus() Status {
+func ReadyStatus() Status {
 	return status{
 		description: "Successfully reconciled",
 		state:       Ready,
 	}
 }
 
+func DeletingStatus() Status {
+	return status{
+		state: Deleting,
+	}
+}
+
+func ProcessingStatus() Status {
+	return status{
+		state: Processing,
+	}
+}
+
 func (s status) NestedError() error {
 	return s.err
+}
+
+func (s status) Description() string {
+	return s.description
 }
 
 func (s status) ToAPIGatewayStatus() (operatorv1alpha1.APIGatewayStatus, error) {
@@ -64,11 +83,21 @@ func (s status) ToAPIGatewayStatus() (operatorv1alpha1.APIGatewayStatus, error) 
 	case Ready:
 		return operatorv1alpha1.APIGatewayStatus{
 			State:       operatorv1alpha1.Ready,
-			Description: "Successfully reconciled",
+			Description: s.description,
+		}, nil
+	case Processing:
+		return operatorv1alpha1.APIGatewayStatus{
+			State:       operatorv1alpha1.Processing,
+			Description: s.description,
 		}, nil
 	case Warning:
 		return operatorv1alpha1.APIGatewayStatus{
 			State:       operatorv1alpha1.Warning,
+			Description: s.description,
+		}, nil
+	case Deleting:
+		return operatorv1alpha1.APIGatewayStatus{
+			State:       operatorv1alpha1.Deleting,
 			Description: s.description,
 		}, nil
 	case Error:

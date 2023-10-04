@@ -40,7 +40,7 @@ func ReconcileKymaGateway(ctx context.Context, k8sClient client.Client, apiGatew
 
 		if !hasKymaGatewayFinalizer(*apiGatewayCR) {
 			ctrl.Log.Info("Kyma Gateway is disabled and no finalizer exists, reconciliation is skipped.")
-			return controllers.SuccessfulStatus()
+			return controllers.ReadyStatus()
 		}
 	}
 
@@ -67,7 +67,7 @@ func ReconcileKymaGateway(ctx context.Context, k8sClient client.Client, apiGatew
 		}
 	}
 
-	return controllers.SuccessfulStatus()
+	return controllers.ReadyStatus()
 }
 
 func anyApiRuleExists(ctx context.Context, k8sClient client.Client) (bool, error) {

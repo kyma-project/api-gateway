@@ -35,9 +35,9 @@ const (
 
 func NewAPIGatewayReconciler(mgr manager.Manager) *APIGatewayReconciler {
 	return &APIGatewayReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-		log:    mgr.GetLogger().WithName("apigateway-controller"),
+		Client:                   mgr.GetClient(),
+		Scheme:                   mgr.GetScheme(),
+		log:                      mgr.GetLogger().WithName("apigateway-controller"),
 		apiGatewayReconciliation: &api_gateway.Reconciliation{Client: mgr.GetClient()},
 	}
 }
@@ -66,22 +66,22 @@ func (r *APIGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	r.log.Info("Reconciling APIGateway CR", "name", apiGatewayCR.Name, "isInDeletion", apiGatewayCR.IsInDeletion())
 
 	if apiGatewayCR.DeletionTimestamp.IsZero() {
-		if err := r.statusHandler.updateToProcessing(ctx, "Reconciling API-Gateway resources", &apiGatewayCR); err != nil {
+		if err := controllers.UpdateApiGatewayStatus(ctx, r.Client, &apiGatewayCR, controllers.ProcessingStatus()); err != nil {
 			r.log.Error(err, "Update status to processing failed")
 			// We don't update the status to error, because the status update already failed and to avoid another status update error we simply requeue the request.
 			return ctrl.Result{}, err
 		}
 	} else {
-		if err := r.statusHandler.updateToDeleting(ctx, &apiGatewayCR); err != nil {
+		if err := controllers.UpdateApiGatewayStatus(ctx, r.Client, &apiGatewayCR, controllers.DeletingStatus()); err != nil {
 			r.log.Error(err, "Update status to deleting failed")
 			// We don't update the status to error, because the status update already failed and to avoid another status update error we simply requeue the request.
 			return ctrl.Result{}, err
 		}
 	}
 
-	apiGatewayCR, reconciliationErr := r.apiGatewayReconciliation.Reconcile(ctx, apiGatewayCR, APIGatewayResourceListDefaultPath)
-	if reconciliationErr != nil {
-		return r.requeueReconciliation(ctx, apiGatewayCR, reconciliationErr)
+	apiGatewayCR, apiGatewayStatus := r.apiGatewayReconciliation.Reconcile(ctx, apiGatewayCR, APIGatewayResourceListDefaultPath)
+	if apiGatewayStatus.IsError() || apiGatewayStatus.IsWarning() {
+		return r.requeueReconciliation(ctx, apiGatewayCR, apiGatewayStatus)
 	}
 
 	// If there are no finalizers left, we must assume that the resource is deleted and therefore must stop the reconciliation
@@ -91,7 +91,7 @@ func (r *APIGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		return ctrl.Result{}, nil
 	}
 
-	if kymaGatewayStatus := gateway.ReconcileKymaGateway(ctx, r.Client, &apiGatewayCR); !kymaGatewayStatus.IsReady() {
+	if kymaGatewayStatus := gateway.ReconcileKymaGateway(ctx, r.Client, &apiGatewayCR); kymaGatewayStatus.IsError() || kymaGatewayStatus.IsWarning() {
 		return r.requeueReconciliation(ctx, apiGatewayCR, kymaGatewayStatus)
 	}
 
@@ -130,12 +130,12 @@ func (r *APIGatewayReconciler) requeueReconciliation(ctx context.Context, cr ope
 
 func (r *APIGatewayReconciler) finishReconcile(ctx context.Context, cr operatorv1alpha1.APIGateway) (ctrl.Result, error) {
 
-	if err := controllers.UpdateApiGatewayStatus(ctx, r.Client, &cr, controllers.SuccessfulStatus()); err != nil {
+	if err := controllers.UpdateApiGatewayStatus(ctx, r.Client, &cr, controllers.ReadyStatus()); err != nil {
 		r.log.Error(err, "Update status failed")
 		return ctrl.Result{}, err
 	}
 
-	r.log.Info("Reconciled status successfully")
+	r.log.Info("Successfully reconciled")
 
 	return ctrl.Result{}, nil
 }

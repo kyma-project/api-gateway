@@ -21,8 +21,6 @@ import (
 
 const (
 	resourceListPath string = "test_assets/test_controlled_resource_list.yaml"
-	testKey          string = "key"
-	testValue        string = "value"
 )
 
 var _ = Describe("API-Gateway reconciliation", func() {
@@ -41,10 +39,10 @@ var _ = Describe("API-Gateway reconciliation", func() {
 		}
 
 		// when
-		reconciledCR, err := reconciliation.Reconcile(context.TODO(), apiGatewayCR, resourceListPath)
+		reconciledCR, status := reconciliation.Reconcile(context.TODO(), apiGatewayCR, resourceListPath)
 
 		// then
-		Expect(err).ShouldNot(HaveOccurred())
+		Expect(status.IsReady()).Should(BeTrue())
 		Expect(reconciledCR.GetObjectMeta().GetFinalizers()).To(ContainElement(reconciliationFinalizer))
 	})
 
@@ -71,10 +69,10 @@ var _ = Describe("API-Gateway reconciliation", func() {
 		}
 
 		// when
-		reconciledCR, err := reconciliation.Reconcile(context.TODO(), apiGatewayCR, resourceListPath)
+		reconciledCR, status := reconciliation.Reconcile(context.TODO(), apiGatewayCR, resourceListPath)
 
 		// then
-		Expect(err).ShouldNot(HaveOccurred())
+		Expect(status.IsReady()).Should(BeTrue())
 		Expect(reconciledCR.GetObjectMeta().GetFinalizers()).To(BeEmpty())
 		Expect(c.Get(context.TODO(), client.ObjectKey{Name: dafaultGatewayName, Namespace: dafaultGatewayNS}, defaultGateway)).ShouldNot(Succeed())
 	})
@@ -121,10 +119,10 @@ var _ = Describe("API-Gateway reconciliation", func() {
 		}
 
 		// when
-		reconciledCR, err := reconciliation.Reconcile(context.TODO(), apiGatewayCR, resourceListPath)
+		reconciledCR, status := reconciliation.Reconcile(context.TODO(), apiGatewayCR, resourceListPath)
 
 		// then
-		Expect(err).ShouldNot(HaveOccurred())
+		Expect(status.IsReady()).Should(BeTrue())
 		Expect(reconciledCR.GetObjectMeta().GetFinalizers()).To(BeEmpty())
 		Expect(c.Get(context.TODO(), client.ObjectKey{Name: dafaultGatewayName, Namespace: dafaultGatewayNS}, defaultGateway)).ShouldNot(Succeed())
 	})
@@ -156,12 +154,12 @@ var _ = Describe("API-Gateway reconciliation", func() {
 		}
 
 		// when
-		reconciledCR, err := reconciliation.Reconcile(context.TODO(), apiGatewayCR, resourceListPath)
+		reconciledCR, status := reconciliation.Reconcile(context.TODO(), apiGatewayCR, resourceListPath)
 
 		// then
-		Expect(err).Should(HaveOccurred())
-		Expect(err.Error()).To(Equal("could not delete API-Gateway module instance since there are 1 custom resource(s) present that block its deletion"))
-		Expect(err.Description()).To(Equal("There are custom resource(s) that block the deletion. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning"))
+		Expect(status.IsWarning()).Should(BeTrue())
+		Expect(status.NestedError().Error()).To(Equal("could not delete API-Gateway module instance since there are 1 custom resource(s) present that block its deletion"))
+		Expect(status.Description()).To(Equal("There are custom resource(s) that block the deletion. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning"))
 		Expect(reconciledCR.GetObjectMeta().GetFinalizers()).ToNot(BeEmpty())
 	})
 
@@ -192,12 +190,12 @@ var _ = Describe("API-Gateway reconciliation", func() {
 		}
 
 		// when
-		reconciledCR, err := reconciliation.Reconcile(context.TODO(), apiGatewayCR, resourceListPath)
+		reconciledCR, status := reconciliation.Reconcile(context.TODO(), apiGatewayCR, resourceListPath)
 
 		// then
-		Expect(err).Should(HaveOccurred())
-		Expect(err.Error()).To(Equal("could not delete API-Gateway module instance since there are 1 custom resource(s) present that block its deletion"))
-		Expect(err.Description()).To(Equal("There are custom resource(s) that block the deletion. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning"))
+		Expect(status.IsWarning()).Should(BeTrue())
+		Expect(status.NestedError().Error()).To(Equal("could not delete API-Gateway module instance since there are 1 custom resource(s) present that block its deletion"))
+		Expect(status.Description()).To(Equal("There are custom resource(s) that block the deletion. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning"))
 		Expect(reconciledCR.GetObjectMeta().GetFinalizers()).ToNot(BeEmpty())
 	})
 })

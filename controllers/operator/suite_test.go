@@ -18,36 +18,23 @@ package operator
 
 import (
 	"context"
-	"fmt"
-	"os"
 	"path/filepath"
 	"testing"
 	"time"
 
-	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
-	operatorv1alpha1 "github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
 	"github.com/kyma-project/api-gateway/controllers"
 	"github.com/kyma-project/api-gateway/internal/operator/resources"
-	"github.com/onsi/ginkgo/v2/reporters"
 	"github.com/kyma-project/api-gateway/tests"
+	. "github.com/onsi/ginkgo/v2"
 	"github.com/onsi/ginkgo/v2/types"
-	networkingv1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
+	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
-	"github.com/kyma-project/api-gateway/internal/operator/resources"
-	"github.com/onsi/ginkgo/v2/reporters"
 	"k8s.io/client-go/util/retry"
-	"path/filepath"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
-	"testing"
-	"time"
-
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
 
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -59,12 +46,11 @@ import (
 	operatorv1alpha1 "github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
 	networkingv1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
-	corev1 "k8s.io/api/core/v1"
 	//+kubebuilder:scaffold:imports
 )
 
 const (
-	testNamespace     = "kyma-system"
+	testNamespace    = "kyma-system"
 	apiGatewayCRName = "default"
 
 	eventuallyTimeout = time.Second * 5

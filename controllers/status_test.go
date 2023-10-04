@@ -39,7 +39,7 @@ var _ = Describe("status", func() {
 				ObjectMeta: metav1.ObjectMeta{Name: "test"},
 			}
 
-			newStatus := SuccessfulStatus()
+			newStatus := ReadyStatus()
 			k8sClient := fake.NewClientBuilder().Build()
 			// when
 			err := UpdateApiGatewayStatus(context.TODO(), k8sClient, &cr, newStatus)
@@ -79,7 +79,7 @@ var _ = Describe("status", func() {
 
 		It("Should return Ready with default description", func() {
 			// given
-			status := SuccessfulStatus()
+			status := ReadyStatus()
 
 			// when
 			apiGatewayStatus, err := status.ToAPIGatewayStatus()
@@ -141,7 +141,7 @@ var _ = Describe("status", func() {
 	Context("IsReady", func() {
 		It("Should return true if status is Ready", func() {
 			// given
-			status := SuccessfulStatus()
+			status := ReadyStatus()
 
 			// when
 			result := status.IsReady()
