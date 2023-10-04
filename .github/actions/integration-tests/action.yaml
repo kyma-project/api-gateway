@@ -19,7 +19,7 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Checkout the PR branch
+    - name: Checkout the PR head
       shell: bash
       if: ${{ github.event.type == 'PullRequestEvent' }}
       run: |
