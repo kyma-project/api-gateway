@@ -47,6 +47,7 @@ else
   rm cover.out
 fi
 
+coverage_not_worse=$(echo "$coverage_pr >= $coverage_main" | bc)
 if awk "BEGIN {exit !($coverage_pr >= $coverage_main)}"; then
 	echo -e "${GREEN}√ Thanks for keeping & increasing code coverage!\\n${NC}"
 else
