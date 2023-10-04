@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/kyma-project/api-gateway/controllers"
+	internalgateway "github.com/kyma-project/api-gateway/internal/gateway"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -27,10 +28,10 @@ type Reconciliation struct {
 }
 
 const (
-	reconciliationFinalizer string = "apigateways.operator.kyma-project.io/api-gateway-reconciliation"
-	dafaultGatewayName      string = "kyma-gateway"
-	dafaultGatewayNS        string = "kyma-system"
+	reconciliationFinalizer string = "gateways.operator.kyma-project.io/api-gateway-reconciliation"
 )
+
+var kymaGatewayFullName = fmt.Sprintf("%s/%s", internalgateway.KymaGatewayNamespace, internalgateway.KymaGatewayName)
 
 var checkDefaultGatewayReference = func(ctx context.Context, c client.Client, res resources.Resource) bool {
 	u := &unstructured.Unstructured{}
@@ -46,12 +47,12 @@ var checkDefaultGatewayReference = func(ctx context.Context, c client.Client, re
 	}
 
 	if res.GVK.Kind == "APIRule" && u.Object["spec"] != nil {
-		return u.Object["spec"].(map[string]interface{})["gateway"] == dafaultGatewayNS+"/"+dafaultGatewayName
+		return u.Object["spec"].(map[string]interface{})["gateway"] == kymaGatewayFullName
 	} else if res.GVK.Kind == "VirtualService" && u.Object["spec"] != nil {
 		gateways := u.Object["spec"].(map[string]interface{})["gateways"]
 		if gateways != nil {
 			for _, gateway := range gateways.([]interface{}) {
-				if gateway == dafaultGatewayNS+"/"+dafaultGatewayName {
+				if gateway == kymaGatewayFullName {
 					return true
 				}
 			}
@@ -62,7 +63,7 @@ var checkDefaultGatewayReference = func(ctx context.Context, c client.Client, re
 }
 
 func (i *Reconciliation) Reconcile(ctx context.Context, apiGatewayCR operatorv1alpha1.APIGateway, apiGatewayResourceListPath string) (operatorv1alpha1.APIGateway, controllers.Status) {
-	if shouldDelete(apiGatewayCR) && hasReconciliationFinalizer(apiGatewayCR) {
+	if apiGatewayCR.IsInDeletion() && hasReconciliationFinalizer(apiGatewayCR) {
 		ctrl.Log.Info("Starting API-Gateway deletion")
 
 		resourceFinder, err := resources.NewResourcesFinderFromConfigYaml(ctx, i.Client, ctrl.Log, apiGatewayResourceListPath)
@@ -111,11 +112,6 @@ func (i *Reconciliation) Reconcile(ctx context.Context, apiGatewayCR operatorv1a
 	return apiGatewayCR, controllers.ReadyStatus()
 }
 
-// shouldDelete returns true when API-Gateway should be deleted
-func shouldDelete(apiGatewayCR operatorv1alpha1.APIGateway) bool {
-	return !apiGatewayCR.DeletionTimestamp.IsZero()
-}
-
 func hasReconciliationFinalizer(apiGatewayCR operatorv1alpha1.APIGateway) bool {
 	return controllerutil.ContainsFinalizer(&apiGatewayCR, reconciliationFinalizer)
 }
@@ -139,11 +135,11 @@ func removeReconciliationFinalizer(ctx context.Context, apiClient client.Client,
 }
 
 func deleteDefaultGateway(ctx context.Context, client client.Client) error {
-	ctrl.Log.Info("Delete Kyma default gateway", "name", dafaultGatewayName, "namespace", dafaultGatewayNS)
+	ctrl.Log.Info("Delete Kyma default gateway", "name", internalgateway.KymaGatewayName, "namespace", internalgateway.KymaGatewayNamespace)
 	return client.Delete(ctx, &networkingv1alpha3.Gateway{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      dafaultGatewayName,
-			Namespace: dafaultGatewayNS,
+			Name:      internalgateway.KymaGatewayName,
+			Namespace: internalgateway.KymaGatewayNamespace,
 		},
 	})
 }

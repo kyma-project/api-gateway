@@ -73,7 +73,7 @@ var _ = Describe("API-Gateway Controller", func() {
 					Name:      apiGatewayCRName,
 					Namespace: testNamespace,
 					Finalizers: []string{
-						"apigateways.operator.kyma-project.io/api-gateway-reconciliation",
+						"gateways.operator.kyma-project.io/api-gateway-reconciliation",
 					},
 				},
 			}
@@ -107,7 +107,7 @@ var _ = Describe("API-Gateway Controller", func() {
 					Name:      apiGatewayCRName,
 					Namespace: testNamespace,
 					Finalizers: []string{
-						"apigateways.operator.kyma-project.io/api-gateway-reconciliation",
+						"gateways.operator.kyma-project.io/api-gateway-reconciliation",
 					},
 				},
 			}

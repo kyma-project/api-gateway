@@ -44,7 +44,7 @@ var _ = Describe("API Gateway Controller", Serial, func() {
 				created := v1alpha1.APIGateway{}
 				g.Expect(k8sClient.Get(ctx, client.ObjectKey{Name: apiGateway.Name}, &created)).Should(Succeed())
 				g.Expect(created.ObjectMeta.Finalizers).To(HaveLen(1))
-				g.Expect(created.ObjectMeta.Finalizers[0]).To(Equal("apigateways.operator.kyma-project.io/api-gateway-reconciliation"))
+				g.Expect(created.ObjectMeta.Finalizers[0]).To(Equal("gateways.operator.kyma-project.io/api-gateway-reconciliation"))
 				g.Expect(created.Status.State).To(Equal(v1alpha1.Ready))
 			}, eventuallyTimeout).Should(Succeed())
 
@@ -69,7 +69,7 @@ var _ = Describe("API Gateway Controller", Serial, func() {
 				created := v1alpha1.APIGateway{}
 				g.Expect(k8sClient.Get(ctx, client.ObjectKey{Name: apiGateway.Name}, &created)).Should(Succeed())
 				g.Expect(created.ObjectMeta.Finalizers).To(HaveLen(1))
-				g.Expect(created.ObjectMeta.Finalizers[0]).To(Equal("apigateways.operator.kyma-project.io/api-gateway-reconciliation"))
+				g.Expect(created.ObjectMeta.Finalizers[0]).To(Equal("gateways.operator.kyma-project.io/api-gateway-reconciliation"))
 				g.Expect(created.Status.State).To(Equal(v1alpha1.Ready))
 			}, eventuallyTimeout).Should(Succeed())
 
@@ -110,7 +110,7 @@ var _ = Describe("API Gateway Controller", Serial, func() {
 			Eventually(func(g Gomega) {
 				created := v1alpha1.APIGateway{}
 				g.Expect(k8sClient.Get(ctx, client.ObjectKey{Name: apiGateway.Name}, &created)).Should(Succeed())
-				g.Expect(created.ObjectMeta.Finalizers).To(ContainElement("apigateways.operator.kyma-project.io/api-gateway-reconciliation"))
+				g.Expect(created.ObjectMeta.Finalizers).To(ContainElement("gateways.operator.kyma-project.io/api-gateway-reconciliation"))
 				g.Expect(created.Status.State).To(Equal(v1alpha1.Ready))
 			}, eventuallyTimeout).Should(Succeed())
 
@@ -122,7 +122,7 @@ var _ = Describe("API Gateway Controller", Serial, func() {
 			Eventually(func(g Gomega) {
 				deleted := v1alpha1.APIGateway{}
 				g.Expect(k8sClient.Get(ctx, client.ObjectKey{Name: apiGateway.Name}, &deleted)).Should(Succeed())
-				g.Expect(deleted.ObjectMeta.Finalizers).To(ContainElement("apigateways.operator.kyma-project.io/api-gateway-reconciliation"))
+				g.Expect(deleted.ObjectMeta.Finalizers).To(ContainElement("gateways.operator.kyma-project.io/api-gateway-reconciliation"))
 				g.Expect(deleted.Status.State).To(Equal(v1alpha1.Warning))
 				g.Expect(deleted.Status.Description).To(Equal("There are custom resource(s) that block the deletion. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning"))
 			}, eventuallyTimeout).Should(Succeed())
@@ -151,7 +151,7 @@ var _ = Describe("API Gateway Controller", Serial, func() {
 				created := v1alpha1.APIGateway{}
 				g.Expect(k8sClient.Get(ctx, client.ObjectKey{Name: apiGateway.Name}, &created)).Should(Succeed())
 				g.Expect(created.ObjectMeta.Finalizers).To(HaveLen(1))
-				g.Expect(created.ObjectMeta.Finalizers[0]).To(Equal("apigateways.operator.kyma-project.io/api-gateway-reconciliation"))
+				g.Expect(created.ObjectMeta.Finalizers[0]).To(Equal("gateways.operator.kyma-project.io/api-gateway-reconciliation"))
 				g.Expect(created.Status.State).To(Equal(v1alpha1.Ready))
 			}, eventuallyTimeout).Should(Succeed())
 
@@ -164,7 +164,7 @@ var _ = Describe("API Gateway Controller", Serial, func() {
 				deleted := v1alpha1.APIGateway{}
 				g.Expect(k8sClient.Get(ctx, client.ObjectKey{Name: apiGateway.Name}, &deleted)).Should(Succeed())
 				g.Expect(deleted.ObjectMeta.Finalizers).To(HaveLen(1))
-				g.Expect(deleted.ObjectMeta.Finalizers[0]).To(Equal("apigateways.operator.kyma-project.io/api-gateway-reconciliation"))
+				g.Expect(deleted.ObjectMeta.Finalizers[0]).To(Equal("gateways.operator.kyma-project.io/api-gateway-reconciliation"))
 				g.Expect(deleted.Status.State).To(Equal(v1alpha1.Warning))
 				g.Expect(deleted.Status.Description).To(Equal("There are custom resource(s) that block the deletion. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning"))
 			}, eventuallyTimeout).Should(Succeed())
@@ -294,7 +294,7 @@ var _ = Describe("API Gateway Controller", Serial, func() {
 			}()
 
 			By("Creating APIRule")
-			apiRule := testApiRule()
+			apiRule := getApiRule()
 			Expect(k8sClient.Create(ctx, &apiRule)).Should(Succeed())
 			defer func() {
 				apiRuleTeardown(&apiRule)
@@ -403,48 +403,8 @@ func apiRuleTeardown(apiRule *v1beta1.APIRule) {
 	}, eventuallyTimeout).Should(Succeed())
 }
 
-func testApiRule() v1beta1.APIRule {
-	rule := v1beta1.Rule{
-		Path: "/.*",
-		Methods: []string{
-			"GET",
-		},
-		AccessStrategies: []*v1beta1.Authenticator{
-			{
-				Handler: &v1beta1.Handler{
-					Name: "allow",
-				},
-			},
-		},
-	}
-
-	var port uint32 = 8080
-	return v1beta1.APIRule{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      generateName(),
-			Namespace: testNamespace,
-		},
-		Spec: v1beta1.APIRuleSpec{
-			Host:    ptr.To("test-host"),
-			Gateway: ptr.To("kyma-system/kyma-gateway"),
-			Service: &v1beta1.Service{
-				Name:      ptr.To("test-service"),
-				Namespace: ptr.To(testNamespace),
-				Port:      ptr.To(port),
-			},
-			Rules: []v1beta1.Rule{rule},
-		},
-	}
-}
-
 func getApiRule() gatewayv1beta1.APIRule {
-	var (
-		serviceName        = "test"
-		servicePort uint32 = 8000
-		host               = "foo.bar"
-		isExternal         = false
-		gateway            = "kyma-system/kyma-gateway"
-	)
+	var servicePort uint32 = 8080
 
 	return gatewayv1beta1.APIRule{
 		ObjectMeta: metav1.ObjectMeta{
@@ -453,13 +413,12 @@ func getApiRule() gatewayv1beta1.APIRule {
 			Generation: 1,
 		},
 		Spec: gatewayv1beta1.APIRuleSpec{
-			Host: &host,
+			Host: ptr.To("test-host"),
 			Service: &gatewayv1beta1.Service{
-				Name:       &serviceName,
-				Port:       &servicePort,
-				IsExternal: &isExternal,
+				Name: ptr.To("test-service"),
+				Port: &servicePort,
 			},
-			Gateway: &gateway,
+			Gateway: ptr.To("kyma-system/kyma-gateway"),
 			Rules: []gatewayv1beta1.Rule{
 				{
 					Path:    "/.*",

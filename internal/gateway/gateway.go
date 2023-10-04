@@ -13,8 +13,8 @@ import (
 )
 
 const (
-	kymaGatewayName      = "kyma-gateway"
-	kymaGatewayNamespace = "kyma-system"
+	KymaGatewayName      = "kyma-gateway"
+	KymaGatewayNamespace = "kyma-system"
 )
 
 //go:embed kyma_gateway.yaml
@@ -25,8 +25,8 @@ func reconcileKymaGateway(ctx context.Context, k8sClient client.Client, apiGatew
 	ctrl.Log.Info("Reconciling Kyma gateway", "KymaGatewayEnabled", isEnabled)
 
 	templateValues := make(map[string]string)
-	templateValues["Name"] = kymaGatewayName
-	templateValues["Namespace"] = kymaGatewayNamespace
+	templateValues["Name"] = KymaGatewayName
+	templateValues["Namespace"] = KymaGatewayNamespace
 	templateValues["Domain"] = domain
 	templateValues["CertificateSecretName"] = kymaGatewayCertSecretName
 

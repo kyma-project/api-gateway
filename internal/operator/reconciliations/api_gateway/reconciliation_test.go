@@ -59,8 +59,8 @@ var _ = Describe("API-Gateway reconciliation", func() {
 		}
 		defaultGateway := &networkingv1alpha3.Gateway{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      dafaultGatewayName,
-				Namespace: dafaultGatewayNS,
+				Name:      "kyma-gateway",
+				Namespace: "kyma-system",
 			},
 		}
 		c := createFakeClient(&apiGatewayCR, defaultGateway)
@@ -74,7 +74,7 @@ var _ = Describe("API-Gateway reconciliation", func() {
 		// then
 		Expect(status.IsReady()).Should(BeTrue())
 		Expect(reconciledCR.GetObjectMeta().GetFinalizers()).To(BeEmpty())
-		Expect(c.Get(context.TODO(), client.ObjectKey{Name: dafaultGatewayName, Namespace: dafaultGatewayNS}, defaultGateway)).ShouldNot(Succeed())
+		Expect(c.Get(context.TODO(), client.ObjectKey{Name: "kyma-gateway", Namespace: "kyma-system"}, defaultGateway)).ShouldNot(Succeed())
 	})
 
 	It("should delete default gateway and remove finalizer on API-Gateway CR deletion if there are only user resources not referring Kyma default gateway", func() {
@@ -90,8 +90,8 @@ var _ = Describe("API-Gateway reconciliation", func() {
 		}
 		defaultGateway := &networkingv1alpha3.Gateway{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      dafaultGatewayName,
-				Namespace: dafaultGatewayNS,
+				Name:      "kyma-gateway",
+				Namespace: "kyma-system",
 			},
 		}
 		unmanagedGateway := "unmanaged-namespace/gateway"
@@ -124,7 +124,7 @@ var _ = Describe("API-Gateway reconciliation", func() {
 		// then
 		Expect(status.IsReady()).Should(BeTrue())
 		Expect(reconciledCR.GetObjectMeta().GetFinalizers()).To(BeEmpty())
-		Expect(c.Get(context.TODO(), client.ObjectKey{Name: dafaultGatewayName, Namespace: dafaultGatewayNS}, defaultGateway)).ShouldNot(Succeed())
+		Expect(c.Get(context.TODO(), client.ObjectKey{Name: "kyma-gateway", Namespace: "kyma-system"}, defaultGateway)).ShouldNot(Succeed())
 	})
 
 	It("should not remove finalizer and block deletion of API-Gateway CR if there is an APIRule referring Kyma default gateway", func() {
@@ -138,7 +138,7 @@ var _ = Describe("API-Gateway reconciliation", func() {
 		},
 			Spec: operatorv1alpha1.APIGatewaySpec{},
 		}
-		managedGateway := dafaultGatewayNS + "/" + dafaultGatewayName
+		managedGateway := "kyma-system/kyma-gateway"
 		apiRule := &gatewayv1beta1.APIRule{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "api-rule",
@@ -174,7 +174,7 @@ var _ = Describe("API-Gateway reconciliation", func() {
 		},
 			Spec: operatorv1alpha1.APIGatewaySpec{},
 		}
-		managedGateway := dafaultGatewayNS + "/" + dafaultGatewayName
+		managedGateway := "kyma-system/kyma-gateway"
 		virtualService := &networkingv1beta1.VirtualService{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "virtual-service",
