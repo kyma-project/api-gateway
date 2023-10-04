@@ -1,4 +1,4 @@
-package oathkeeper
+package maester
 
 import (
 	"context"

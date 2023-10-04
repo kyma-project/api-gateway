@@ -26,11 +26,11 @@ func reconcileOryOathkeeperCronjob(ctx context.Context, k8sClient client.Client,
 	ctrl.Log.Info("Reconciling Ory Oathkeeper Cronjob", "name", cronjobName, "Namespace", reconciliations.Namespace)
 
 	if apiGatewayCR.IsInDeletion() {
-		return deleteCronjob(k8sClient, roleName, reconciliations.Namespace)
+		return deleteCronjob(k8sClient, cronjobName, reconciliations.Namespace)
 	}
 
 	templateValues := make(map[string]string)
-	templateValues["Name"] = roleName
+	templateValues["Name"] = cronjobName
 	templateValues["Namespace"] = reconciliations.Namespace
 	templateValues["OathkeeperName"] = oathkeeperName
 	templateValues["ServiceAccountName"] = serviceAccountName

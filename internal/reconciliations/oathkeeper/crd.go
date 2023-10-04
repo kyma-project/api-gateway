@@ -19,10 +19,10 @@ var crd []byte
 const crdName = "rules.oathkeeper.ory.sh"
 
 func reconcileOryOathkeeperRuleCRD(ctx context.Context, k8sClient client.Client, apiGatewayCR v1alpha1.APIGateway) error {
-	ctrl.Log.Info("Reconciling Ory Config PeerAuthentication", "name", peerAuthenticationName)
+	ctrl.Log.Info("Reconciling Ory Config PeerAuthentication", "name", crdName)
 
 	if apiGatewayCR.IsInDeletion() {
-		return deleteCRD(k8sClient, peerAuthenticationName)
+		return deleteCRD(k8sClient, crdName)
 	}
 
 	templateValues := make(map[string]string)

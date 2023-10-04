@@ -9,8 +9,8 @@ metadata:
     app.kubernetes.io/instance: ory
     app.kubernetes.io/name: oathkeeper-maester
     mode: sidecar
-  name: ory-oathkeeper-maester-metrics
-  namespace: kyma-system
+  name: {{ .Name }}
+  namespace: {{ .Namespace }}
 spec:
   type: ClusterIP
   ports:

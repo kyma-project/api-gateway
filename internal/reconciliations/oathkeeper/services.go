@@ -30,7 +30,7 @@ const (
 )
 
 func reconcileOryOathkeeperServices(ctx context.Context, k8sClient client.Client, apiGatewayCR v1alpha1.APIGateway) error {
-	ctrl.Log.Info("Reconciling Ory Oathkeepers Services", "name", peerAuthenticationName, "Namespace", reconciliations.Namespace)
+	ctrl.Log.Info("Reconciling Ory Oathkeepers Services", "names", []string{apiServiceName, proxyServiceName, metricsServiceName}, "Namespace", reconciliations.Namespace)
 
 	if apiGatewayCR.IsInDeletion() {
 		return errors.Join(
@@ -40,14 +40,22 @@ func reconcileOryOathkeeperServices(ctx context.Context, k8sClient client.Client
 		)
 	}
 
-	templateValues := make(map[string]string)
-	templateValues["Name"] = peerAuthenticationName
-	templateValues["Namespace"] = reconciliations.Namespace
+	templateValuesApi := make(map[string]string)
+	templateValuesApi["Name"] = apiServiceName
+	templateValuesApi["Namespace"] = reconciliations.Namespace
+
+	templateValuesMetrics := make(map[string]string)
+	templateValuesMetrics["Name"] = metricsServiceName
+	templateValuesMetrics["Namespace"] = reconciliations.Namespace
+
+	templateValuesProxy := make(map[string]string)
+	templateValuesProxy["Name"] = proxyServiceName
+	templateValuesProxy["Namespace"] = reconciliations.Namespace
 
 	return errors.Join(
-		reconciliations.ApplyResource(ctx, k8sClient, serviceApi, templateValues),
-		reconciliations.ApplyResource(ctx, k8sClient, serviceMetrics, templateValues),
-		reconciliations.ApplyResource(ctx, k8sClient, serviceProxy, templateValues),
+		reconciliations.ApplyResource(ctx, k8sClient, serviceApi, templateValuesApi),
+		reconciliations.ApplyResource(ctx, k8sClient, serviceMetrics, templateValuesMetrics),
+		reconciliations.ApplyResource(ctx, k8sClient, serviceProxy, templateValuesProxy),
 	)
 }
 

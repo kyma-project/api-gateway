@@ -16,7 +16,7 @@ import (
 //go:embed service_account.yaml
 var serviceAccount []byte
 
-const serviceAccountName = "oathkeeper-maester-account"
+const serviceAccountName = "ory-oathkeeper"
 
 func reconcileOryOathkeeperServiceAccount(ctx context.Context, k8sClient client.Client, apiGatewayCR v1alpha1.APIGateway) error {
 	ctrl.Log.Info("Reconciling Ory Oathkeeper ServiceAccount", "name", serviceAccountName, "Namespace", reconciliations.Namespace)
@@ -43,7 +43,7 @@ func deleteServiceAccount(k8sClient client.Client, name, namespace string) error
 	err := k8sClient.Delete(context.Background(), &s)
 
 	if err != nil && !k8serrors.IsNotFound(err) {
-		return fmt.Errorf("failed to delete Oathkeeper ConfigMap %s/%s: %v", namespace, name, err)
+		return fmt.Errorf("failed to delete Oathkeeper ServiceAccount %s/%s: %v", namespace, name, err)
 	}
 
 	ctrl.Log.Info("Successfully deleted Oathkeeper ServiceAccount", "name", name, "Namespace", namespace)

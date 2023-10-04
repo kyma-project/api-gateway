@@ -6,8 +6,8 @@ metadata:
     app.kubernetes.io/component: proxy
     app.kubernetes.io/instance: ory
     app.kubernetes.io/name: oathkeeper
-  name: ory-oathkeeper-proxy
-  namespace: kyma-system
+  name: {{ .Name }}
+  namespace: {{ .Namespace }}
 spec:
   type: ClusterIP
   ports:

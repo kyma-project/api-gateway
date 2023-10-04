@@ -15,7 +15,6 @@ func ReconcileOathkeeper(ctx context.Context, k8sClient client.Client, apiGatewa
 		reconcileOryOathkeeperRuleCRD(ctx, k8sClient, *apiGatewayCR),
 		reconcileOryJWKSSecret(ctx, k8sClient, *apiGatewayCR),
 		reconcileOryOathkeeperConfigConfigMap(ctx, k8sClient, *apiGatewayCR),
-		reconcileOryOathkeeperPeerAuthentication(ctx, k8sClient, *apiGatewayCR),
 		reconcileOathkeeperHPA(ctx, k8sClient, *apiGatewayCR),
 		reconcileOryOathkeeperServiceAccount(ctx, k8sClient, *apiGatewayCR),
 		reconcileOathkeeperDeployment(ctx, k8sClient, *apiGatewayCR),
