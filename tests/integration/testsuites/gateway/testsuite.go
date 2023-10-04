@@ -14,6 +14,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 	"log"
+	"os"
 	"time"
 )
 
@@ -31,8 +32,13 @@ func (t *testsuite) InitScenarios(ctx *godog.ScenarioContext) {
 	initScenario(ctx, t)
 }
 
-func (t *testsuite) FeaturePath() string {
-	return "testsuites/gateway/features/"
+func (t *testsuite) FeaturePath() []string {
+	isGardener := os.Getenv("IS_GARDENER")
+	if isGardener == "true" {
+		return []string{"testsuites/gateway/features/gateway.feature", "testsuites/gateway/features/gateway_gardener.feature"}
+	}
+
+	return []string{"testsuites/gateway/features/gateway.feature"}
 }
 
 func (t *testsuite) Name() string {
@@ -91,7 +97,6 @@ func (t *testsuite) TearDown() {
 }
 
 func NewTestsuite(httpClient *helpers.RetryableHttpClient, k8sClient dynamic.Interface, rm *resource.Manager, config testcontext.Config) testcontext.Testsuite {
-
 	return &testsuite{
 		name:            "gateway",
 		httpClient:      httpClient,

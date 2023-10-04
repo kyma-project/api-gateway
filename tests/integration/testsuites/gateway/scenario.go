@@ -41,7 +41,8 @@ func initScenario(ctx *godog.ScenarioContext, ts *testsuite) {
 	ctx.Step(`^there is an "([^"]*)" APIRule$`, scenario.thereIsAnAPIRule)
 	ctx.Step(`^disabling kyma gateway will result in "([^"]*)" due to existing APIRule$`, scenario.gatewayErrorWhenKymaGatewayDisabled)
 	ctx.Step(`^removing an APIRule will also remove "([^"]*)" in "([^"]*)" namespace$`, scenario.removingAPIRuleUnblocksGatewayDeletion)
-
+	ctx.Step(`^there is a "([^"]*)" Certificate CR$`, scenario.thereIsACertificateCR)
+	ctx.Step(`^there is a "([^"]*)" DNSEntry CR$`, scenario.thereIsADNSEntryCR)
 }
 
 func createScenario(t *testsuite) (*scenario, error) {
@@ -201,4 +202,24 @@ func (c *scenario) removingAPIRuleUnblocksGatewayDeletion(name, namespace string
 	}
 
 	return fmt.Errorf("%s stil exists", name)
+}
+
+func (c *scenario) thereIsACertificateCR(name string) error {
+	res := schema.GroupVersionResource{Group: "cert.gardener.cloud", Version: "v1alpha1", Resource: "certificates"}
+	_, err := c.k8sClient.Resource(res).Get(context.Background(), name, v1.GetOptions{})
+	if err != nil {
+		return fmt.Errorf("%s could not be found", name)
+	}
+
+	return nil
+}
+
+func (c *scenario) thereIsADNSEntryCR(name string) error {
+	res := schema.GroupVersionResource{Group: "dns.gardener.cloud", Version: "v1alpha1", Resource: "dnsentries"}
+	_, err := c.k8sClient.Resource(res).Get(context.Background(), name, v1.GetOptions{})
+	if err != nil {
+		return fmt.Errorf("%s could not be found", name)
+	}
+
+	return nil
 }

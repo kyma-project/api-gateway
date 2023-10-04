@@ -121,11 +121,11 @@ func runTestsuite(t *testing.T, testsuite testcontext.Testsuite, config testcont
 	}
 }
 
-func createGoDogOpts(t *testing.T, featuresPath string, concurrency int) godog.Options {
+func createGoDogOpts(t *testing.T, featuresPath []string, concurrency int) godog.Options {
 	goDogOpts := godog.Options{
 		Output:      colors.Colored(os.Stdout),
 		Format:      "pretty",
-		Paths:       []string{featuresPath},
+		Paths:       featuresPath,
 		Concurrency: concurrency,
 		TestingT:    t,
 		Strict:      true,

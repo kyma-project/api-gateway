@@ -73,8 +73,8 @@ func (t *testsuite) InitScenarios(ctx *godog.ScenarioContext) {
 	initUnsecuredToSecured(ctx, t)
 }
 
-func (t *testsuite) FeaturePath() string {
-	return "testsuites/ory/features/"
+func (t *testsuite) FeaturePath() []string {
+	return []string{"testsuites/ory/features/"}
 }
 
 func (t *testsuite) Name() string {
