@@ -47,7 +47,12 @@ runs:
         git checkout mod-dev
         KUBECONFIG=$(k3d kubeconfig merge kyma) make deploy
         git restore .
-        git checkout ${{ github.event.pull_request.head.sha }}
+    - name: Checkout the PR branch
+      shell: bash
+      if: ${{ github.event.type == 'PullRequestEvent' }}
+      run: |
+        git fetch origin pull/${{ github.event.pull_request.number }}/head:PR-${{ github.event.pull_request.number }}
+        git checkout PR-${{ github.event.pull_request.number }}
     - name: Run test
       shell: bash
       env:
