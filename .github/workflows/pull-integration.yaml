@@ -17,8 +17,8 @@ on:
       - "sec-scanners-config.yaml"
       - ".github/**" #Ignoring since build job isn't triggered on the workflow directory changes
     branches:
-      - mod-dev
-      - 'release-**'
+      - "mod-dev"
+      - "release-**"
 
 jobs:
   wait-for-image-build:
