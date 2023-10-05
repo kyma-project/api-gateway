@@ -33,7 +33,7 @@ func reconcileOryOathkeeperPeerAuthentication(ctx context.Context, k8sClient cli
 }
 
 func deletePeerAuthentication(k8sClient client.Client, name, namespace string) error {
-	ctrl.Log.Info("Deleting Oathkeeper PeerAuthentication if it exists", "name", name, "Namespace", namespace)
+	ctrl.Log.Info("Deleting Oathkeeper Maester PeerAuthentication if it exists", "name", name, "Namespace", namespace)
 	s := securityv1beta1.PeerAuthentication{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
@@ -43,10 +43,14 @@ func deletePeerAuthentication(k8sClient client.Client, name, namespace string) e
 	err := k8sClient.Delete(context.Background(), &s)
 
 	if err != nil && !k8serrors.IsNotFound(err) {
-		return fmt.Errorf("failed to delete Oathkeeper PeerAuthentication %s/%s: %v", namespace, name, err)
+		return fmt.Errorf("failed to delete Oathkeeper Maester PeerAuthentication %s/%s: %v", namespace, name, err)
 	}
 
-	ctrl.Log.Info("Successfully deleted Oathkeeper PeerAuthentication", "name", name, "Namespace", namespace)
+	if k8serrors.IsNotFound(err) {
+		ctrl.Log.Info("Skipped deletion of Oathkeeper Maester PeerAuthentication as it wasn't present", "name", name, "Namespace", namespace)
+	} else {
+		ctrl.Log.Info("Successfully deleted Oathkeeper Maester PeerAuthentication", "name", name, "Namespace", namespace)
+	}
 
 	return nil
 }

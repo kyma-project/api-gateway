@@ -44,7 +44,11 @@ func deleteCRD(k8sClient client.Client, name string) error {
 		return fmt.Errorf("failed to delete Oathkeeper Rule CRD %s: %v", name, err)
 	}
 
-	ctrl.Log.Info("Successfully deleted Oathkeeper Rule CRD", "name", name)
+	if k8serrors.IsNotFound(err) {
+		ctrl.Log.Info("Skipped deletion of Oathkeeper Rule CRD as it wasn't present", "name", name)
+	} else {
+		ctrl.Log.Info("Successfully deleted Oathkeeper Rule CRD", "name", name)
+	}
 
 	return nil
 }

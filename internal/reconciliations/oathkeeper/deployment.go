@@ -7,6 +7,7 @@ import (
 	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
 	"github.com/kyma-project/api-gateway/internal/clusterconfig"
 	"github.com/kyma-project/api-gateway/internal/reconciliations"
+	"github.com/kyma-project/api-gateway/internal/reconciliations/oathkeeper/maester"
 	appsv1 "k8s.io/api/apps/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -49,7 +50,7 @@ func reconcileDeployment(ctx context.Context, k8sClient client.Client, name stri
 	templateValues := make(map[string]string)
 	templateValues["Name"] = name
 	templateValues["Namespace"] = reconciliations.Namespace
-	templateValues["ServiceAccountName"] = serviceAccountName
+	templateValues["ServiceAccountName"] = maester.ServiceAccountName
 
 	return reconciliations.ApplyResource(ctx, k8sClient, *deploymentManifest, templateValues)
 }

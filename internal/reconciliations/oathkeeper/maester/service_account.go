@@ -16,17 +16,17 @@ import (
 //go:embed service_account.yaml
 var serviceAccount []byte
 
-const serviceAccountName = "oathkeeper-maester-account"
+const ServiceAccountName = "oathkeeper-maester-account"
 
 func reconcileOryOathkeeperMaesterServiceAccount(ctx context.Context, k8sClient client.Client, apiGatewayCR v1alpha1.APIGateway) error {
-	ctrl.Log.Info("Reconciling Ory Maester ServiceAccount", "name", serviceAccountName, "Namespace", reconciliations.Namespace)
+	ctrl.Log.Info("Reconciling Ory Maester ServiceAccount", "name", ServiceAccountName, "Namespace", reconciliations.Namespace)
 
 	if apiGatewayCR.IsInDeletion() {
-		return deleteServiceAccount(k8sClient, serviceAccountName, reconciliations.Namespace)
+		return deleteServiceAccount(k8sClient, ServiceAccountName, reconciliations.Namespace)
 	}
 
 	templateValues := make(map[string]string)
-	templateValues["Name"] = serviceAccountName
+	templateValues["Name"] = ServiceAccountName
 	templateValues["Namespace"] = reconciliations.Namespace
 
 	return reconciliations.ApplyResource(ctx, k8sClient, serviceAccount, templateValues)
@@ -43,10 +43,14 @@ func deleteServiceAccount(k8sClient client.Client, name, namespace string) error
 	err := k8sClient.Delete(context.Background(), &s)
 
 	if err != nil && !k8serrors.IsNotFound(err) {
-		return fmt.Errorf("failed to delete Oathkeeper ConfigMap %s/%s: %v", namespace, name, err)
+		return fmt.Errorf("failed to delete Oathkeeper Maester ServiceAccount %s/%s: %v", namespace, name, err)
 	}
 
-	ctrl.Log.Info("Successfully deleted Oathkeeper Maester ServiceAccount", "name", name, "Namespace", namespace)
+	if k8serrors.IsNotFound(err) {
+		ctrl.Log.Info("Skipped deletion of Oathkeeper Maester ServiceAccount as it wasn't present", "name", name, "Namespace", namespace)
+	} else {
+		ctrl.Log.Info("Successfully deleted Oathkeeper Maester ServiceAccount", "name", name, "Namespace", namespace)
+	}
 
 	return nil
 }

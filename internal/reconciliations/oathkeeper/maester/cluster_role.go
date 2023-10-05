@@ -44,7 +44,11 @@ func deleteClusterRole(k8sClient client.Client, name string) error {
 		return fmt.Errorf("failed to delete Oathkeeper Maester ClusterRole %s: %v", name, err)
 	}
 
-	ctrl.Log.Info("Successfully deleted Oathkeeper Maester ClusterRole", "name", name)
+	if k8serrors.IsNotFound(err) {
+		ctrl.Log.Info("Skipped deletion of Oathkeeper Maester ClusterRole as it wasn't present", "name", name)
+	} else {
+		ctrl.Log.Info("Successfully deleted Oathkeeper Maester ClusterRole", "name", name)
+	}
 
 	return nil
 }

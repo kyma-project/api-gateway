@@ -13,24 +13,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-//go:embed role.yaml
-var role []byte
-
 const roleName = "ory-oathkeeper-keys-job-role"
 
-func reconcileOryOathkeeperCronjobRole(ctx context.Context, k8sClient client.Client, apiGatewayCR v1alpha1.APIGateway) error {
-	ctrl.Log.Info("Reconciling Ory Oathkeeper Cronjob Role", "name", roleName, "Namespace", reconciliations.Namespace)
-
-	if apiGatewayCR.IsInDeletion() {
-		return deleteRole(k8sClient, roleName, reconciliations.Namespace)
-	}
-
-	templateValues := make(map[string]string)
-	templateValues["Name"] = roleName
-	templateValues["Namespace"] = reconciliations.Namespace
-	templateValues["OathkeeperName"] = oathkeeperName
-
-	return reconciliations.ApplyResource(ctx, k8sClient, role, templateValues)
+func reconcileOryOathkeeperCronjobRole(_ context.Context, k8sClient client.Client, _ v1alpha1.APIGateway) error {
+	return deleteRole(k8sClient, roleName, reconciliations.Namespace)
 }
 
 func deleteRole(k8sClient client.Client, name, namespace string) error {
@@ -47,7 +33,11 @@ func deleteRole(k8sClient client.Client, name, namespace string) error {
 		return fmt.Errorf("failed to delete Oathkeeper Role %s/%s: %v", namespace, name, err)
 	}
 
-	ctrl.Log.Info("Successfully deleted Oathkeeper Cronjob Role", "name", name, "Namespace", namespace)
+	if k8serrors.IsNotFound(err) {
+		ctrl.Log.Info("Skipped deletion of Oathkeeper Cronjob Role as it wasn't present", "name", name, "Namespace", namespace)
+	} else {
+		ctrl.Log.Info("Successfully deleted Oathkeeper Cronjob Role", "name", name, "Namespace", namespace)
+	}
 
 	return nil
 }

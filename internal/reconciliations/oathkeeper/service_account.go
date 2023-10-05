@@ -46,7 +46,11 @@ func deleteServiceAccount(k8sClient client.Client, name, namespace string) error
 		return fmt.Errorf("failed to delete Oathkeeper ServiceAccount %s/%s: %v", namespace, name, err)
 	}
 
-	ctrl.Log.Info("Successfully deleted Oathkeeper ServiceAccount", "name", name, "Namespace", namespace)
+	if k8serrors.IsNotFound(err) {
+		ctrl.Log.Info("Skipped deletion of Oathkeeper ServiceAccount as it wasn't present", "name", name, "Namespace", namespace)
+	} else {
+		ctrl.Log.Info("Successfully deleted Oathkeeper ServiceAccount", "name", name, "Namespace", namespace)
+	}
 
 	return nil
 }

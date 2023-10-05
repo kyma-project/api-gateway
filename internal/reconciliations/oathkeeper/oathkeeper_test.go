@@ -95,42 +95,6 @@ var resourceList = []deployedResource{
 		},
 	},
 	{
-		name:       "ory-oathkeeper-keys-service-account",
-		namespaced: true,
-		GVK: schema.GroupVersionKind{
-			Group:   "",
-			Version: "v1",
-			Kind:    "ServiceAccount",
-		},
-	},
-	{
-		name:       "ory-oathkeeper-keys-job-role",
-		namespaced: true,
-		GVK: schema.GroupVersionKind{
-			Group:   "rbac.authorization.k8s.io",
-			Version: "v1",
-			Kind:    "Role",
-		},
-	},
-	{
-		name:       "ory-oathkeeper-keys-job-role-binding",
-		namespaced: true,
-		GVK: schema.GroupVersionKind{
-			Group:   "rbac.authorization.k8s.io",
-			Version: "v1",
-			Kind:    "RoleBinding",
-		},
-	},
-	{
-		name:       "ory-oathkeeper-keys-job-role",
-		namespaced: true,
-		GVK: schema.GroupVersionKind{
-			Group:   "rbac.authorization.k8s.io",
-			Version: "v1",
-			Kind:    "Role",
-		},
-	},
-	{
 		name:       "ory-oathkeeper-maester-metrics",
 		namespaced: true,
 		GVK: schema.GroupVersionKind{

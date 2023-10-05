@@ -14,28 +14,12 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-//go:embed cronjob.yaml
-var cronjob []byte
-
 const (
-	cronjobName    = "oathkeeper-jwks-rotator"
-	oathkeeperName = "ory-oathkeeper"
+	cronjobName = "oathkeeper-jwks-rotator"
 )
 
-func reconcileOryOathkeeperCronjob(ctx context.Context, k8sClient client.Client, apiGatewayCR v1alpha1.APIGateway) error {
-	ctrl.Log.Info("Reconciling Ory Oathkeeper Cronjob", "name", cronjobName, "Namespace", reconciliations.Namespace)
-
-	if apiGatewayCR.IsInDeletion() {
-		return deleteCronjob(k8sClient, cronjobName, reconciliations.Namespace)
-	}
-
-	templateValues := make(map[string]string)
-	templateValues["Name"] = cronjobName
-	templateValues["Namespace"] = reconciliations.Namespace
-	templateValues["OathkeeperName"] = oathkeeperName
-	templateValues["ServiceAccountName"] = serviceAccountName
-
-	return reconciliations.ApplyResource(ctx, k8sClient, cronjob, templateValues)
+func reconcileOryOathkeeperCronjob(_ context.Context, k8sClient client.Client, _ v1alpha1.APIGateway) error {
+	return deleteCronjob(k8sClient, cronjobName, reconciliations.Namespace)
 }
 
 func deleteCronjob(k8sClient client.Client, name, namespace string) error {
@@ -52,7 +36,11 @@ func deleteCronjob(k8sClient client.Client, name, namespace string) error {
 		return fmt.Errorf("failed to delete Oathkeeper Cronjob %s/%s: %v", namespace, name, err)
 	}
 
-	ctrl.Log.Info("Successfully deleted Oathkeeper Cronjob", "name", name, "Namespace", namespace)
+	if k8serrors.IsNotFound(err) {
+		ctrl.Log.Info("Skipped deletion of Oathkeeper Cronjob as it wasn't present", "name", name, "Namespace", namespace)
+	} else {
+		ctrl.Log.Info("Successfully deleted Oathkeeper Cronjob", "name", name, "Namespace", namespace)
+	}
 
 	return nil
 }

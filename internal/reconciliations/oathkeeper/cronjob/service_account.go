@@ -13,27 +13,14 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-//go:embed service_account.yaml
-var serviceAccount []byte
-
 const serviceAccountName = "ory-oathkeeper-keys-service-account"
 
-func reconcileOryOathkeeperCronjobServiceAccount(ctx context.Context, k8sClient client.Client, apiGatewayCR v1alpha1.APIGateway) error {
-	ctrl.Log.Info("Reconciling Ory Cronjob ServiceAccount", "name", serviceAccountName, "Namespace", reconciliations.Namespace)
-
-	if apiGatewayCR.IsInDeletion() {
-		return deleteServiceAccount(k8sClient, serviceAccountName, reconciliations.Namespace)
-	}
-
-	templateValues := make(map[string]string)
-	templateValues["Name"] = serviceAccountName
-	templateValues["Namespace"] = reconciliations.Namespace
-
-	return reconciliations.ApplyResource(ctx, k8sClient, serviceAccount, templateValues)
+func reconcileOryOathkeeperCronjobServiceAccount(_ context.Context, k8sClient client.Client, _ v1alpha1.APIGateway) error {
+	return deleteServiceAccount(k8sClient, serviceAccountName, reconciliations.Namespace)
 }
 
 func deleteServiceAccount(k8sClient client.Client, name, namespace string) error {
-	ctrl.Log.Info("Deleting Oathkeeper ServiceAccount if it exists", "name", name, "Namespace", namespace)
+	ctrl.Log.Info("Deleting Oathkeeper Cronjob ServiceAccount if it exists", "name", name, "Namespace", namespace)
 	s := corev1.ServiceAccount{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
@@ -46,7 +33,11 @@ func deleteServiceAccount(k8sClient client.Client, name, namespace string) error
 		return fmt.Errorf("failed to delete Oathkeeper ConfigMap %s/%s: %v", namespace, name, err)
 	}
 
-	ctrl.Log.Info("Successfully deleted Oathkeeper ServiceAccount", "name", name, "Namespace", namespace)
+	if k8serrors.IsNotFound(err) {
+		ctrl.Log.Info("Skipped deletion of Oathkeeper Cronjob ServiceAccount it wasn't present", "name", name, "Namespace", namespace)
+	} else {
+		ctrl.Log.Info("Successfully deleted Oathkeeper Cronjob ServiceAccount", "name", name, "Namespace", namespace)
+	}
 
 	return nil
 }

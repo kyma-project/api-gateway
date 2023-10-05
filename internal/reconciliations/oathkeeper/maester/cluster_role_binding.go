@@ -27,7 +27,7 @@ func reconcileOryOathkeeperMaesterClusterRoleBinding(ctx context.Context, k8sCli
 
 	templateValues := make(map[string]string)
 	templateValues["Name"] = roleBindingName
-	templateValues["ServiceAccountName"] = serviceAccountName
+	templateValues["ServiceAccountName"] = ServiceAccountName
 	templateValues["ServiceAccountNamespace"] = reconciliations.Namespace
 	templateValues["ClusterRoleName"] = roleName
 
@@ -44,10 +44,14 @@ func deleteRoleBinding(k8sClient client.Client, name string) error {
 	err := k8sClient.Delete(context.Background(), &s)
 
 	if err != nil && !k8serrors.IsNotFound(err) {
-		return fmt.Errorf("failed to delete Oathkeeper RoleBinding %s: %v", name, err)
+		return fmt.Errorf("failed to delete Oathkeeper Maester ClusterRoleBinding %s: %v", name, err)
 	}
 
-	ctrl.Log.Info("Successfully deleted Oathkeeper Maester ClusterRoleBinding", "name", name)
+	if k8serrors.IsNotFound(err) {
+		ctrl.Log.Info("Skipped deletion of Oathkeeper Maester ClusterRoleBinding as it wasn't present", "name", name)
+	} else {
+		ctrl.Log.Info("Successfully deleted Oathkeeper Maester ClusterRoleBinding", "name", name)
+	}
 
 	return nil
 }
