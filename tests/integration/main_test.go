@@ -121,6 +121,7 @@ func cleanUp(c testcontext.Testsuite, orgJwtHandler string) {
 		log.Print(err.Error())
 		panic("unable to switch back to original jwtHandler")
 	}
+
 }
 
 func shouldExportResults() bool {
