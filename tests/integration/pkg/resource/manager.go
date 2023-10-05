@@ -54,6 +54,24 @@ func (m *Manager) CreateResources(k8sClient dynamic.Interface, resources ...unst
 	return gotRes, nil
 }
 
+func (m *Manager) CreateResourcesWithoutNS(k8sClient dynamic.Interface, resources ...unstructured.Unstructured) (*unstructured.Unstructured, error) {
+	gotRes := &unstructured.Unstructured{}
+
+	for _, res := range resources {
+		resourceSchema, _, _ := m.GetResourceSchemaAndNamespace(res)
+		err := m.CreateResourceWithoutNS(k8sClient, resourceSchema, res)
+		if err != nil {
+			return nil, err
+		}
+		gotRes, err = m.GetResourceWithoutNS(k8sClient, resourceSchema, res.GetName())
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return gotRes, nil
+}
+
 func (m *Manager) UpdateResources(k8sClient dynamic.Interface, resources ...unstructured.Unstructured) (*unstructured.Unstructured, error) {
 	gotRes := &unstructured.Unstructured{}
 	for _, res := range resources {
@@ -63,6 +81,22 @@ func (m *Manager) UpdateResources(k8sClient dynamic.Interface, resources ...unst
 			return nil, err
 		}
 		gotRes, err = m.GetResource(k8sClient, resourceSchema, ns, res.GetName())
+		if err != nil {
+			return nil, err
+		}
+	}
+	return gotRes, nil
+}
+
+func (m *Manager) UpdateResourcesWithoutNS(k8sClient dynamic.Interface, resources ...unstructured.Unstructured) (*unstructured.Unstructured, error) {
+	gotRes := &unstructured.Unstructured{}
+	for _, res := range resources {
+		resourceSchema, _, _ := m.GetResourceSchemaAndNamespace(res)
+		err := m.UpdateResourceWithoutNS(k8sClient, resourceSchema, res.GetName(), res)
+		if err != nil {
+			return nil, err
+		}
+		gotRes, err = m.GetResourceWithoutNS(k8sClient, resourceSchema, res.GetName())
 		if err != nil {
 			return nil, err
 		}
@@ -87,6 +121,31 @@ func (m *Manager) CreateOrUpdateResources(k8sClient dynamic.Interface, resources
 			}
 		} else {
 			err = m.UpdateResource(k8sClient, resourceSchema, ns, res.GetName(), res)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+	return gotRes, nil
+}
+
+func (m *Manager) CreateOrUpdateResourcesWithoutNS(k8sClient dynamic.Interface, resources ...unstructured.Unstructured) (*unstructured.Unstructured, error) {
+	gotRes := &unstructured.Unstructured{}
+	for _, res := range resources {
+		resourceSchema, _, _ := m.GetResourceSchemaAndNamespace(res)
+		_, err := m.GetResourceWithoutNS(k8sClient, resourceSchema, res.GetName(), retry.Attempts(2), retry.Delay(1))
+
+		if err != nil {
+			if apierrors.IsNotFound(retry.Error{err}.Unwrap()) {
+				err := m.CreateResourceWithoutNS(k8sClient, resourceSchema, res)
+				if err != nil {
+					return nil, err
+				}
+			} else {
+				return nil, err
+			}
+		} else {
+			err = m.UpdateResourceWithoutNS(k8sClient, resourceSchema, res.GetName(), res)
 			if err != nil {
 				return nil, err
 			}
@@ -146,6 +205,16 @@ func (m *Manager) CreateResource(client dynamic.Interface, resourceSchema schema
 	}, m.retryOptions...)
 }
 
+// CreateResourceWithoutNS creates a given k8s resource without namespace
+func (m *Manager) CreateResourceWithoutNS(client dynamic.Interface, resourceSchema schema.GroupVersionResource, manifest unstructured.Unstructured) error {
+	return retry.Do(func() error {
+		if _, err := client.Resource(resourceSchema).Create(context.Background(), &manifest, metav1.CreateOptions{}); err != nil {
+			return err
+		}
+		return nil
+	}, m.retryOptions...)
+}
+
 // UpdateResource updates a given k8s resource
 func (m *Manager) UpdateResource(client dynamic.Interface, resourceSchema schema.GroupVersionResource, namespace string, name string, updateTo unstructured.Unstructured) error {
 	return retry.Do(func() error {
@@ -160,52 +229,6 @@ func (m *Manager) UpdateResource(client dynamic.Interface, resourceSchema schema
 			return err
 		}
 
-		return nil
-	}, m.retryOptions...)
-}
-
-// CreateGateway creates a gateway resource
-func (m *Manager) CreateGateway(k8sClient dynamic.Interface, resources ...unstructured.Unstructured) (*unstructured.Unstructured, error) {
-	gotRes := &unstructured.Unstructured{}
-
-	for _, res := range resources {
-		resourceSchema, ns, _ := m.GetResourceSchemaAndNamespace(res)
-		err := m.CreateResourceWithoutNS(k8sClient, resourceSchema, ns, res)
-		if err != nil {
-			return nil, err
-		}
-		gotRes, err = m.GetResourceWithoutNS(k8sClient, resourceSchema, res.GetName())
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return gotRes, nil
-}
-
-// UpdateGateway updates a gateway resource
-func (m *Manager) UpdateGateway(k8sClient dynamic.Interface, resources ...unstructured.Unstructured) (*unstructured.Unstructured, error) {
-	gotRes := &unstructured.Unstructured{}
-	for _, res := range resources {
-		resourceSchema, _, _ := m.GetResourceSchemaAndNamespace(res)
-		err := m.UpdateResourceWithoutNS(k8sClient, resourceSchema, res.GetName(), res)
-		if err != nil {
-			return nil, err
-		}
-		gotRes, err = m.GetResourceWithoutNS(k8sClient, resourceSchema, res.GetName())
-		if err != nil {
-			return nil, err
-		}
-	}
-	return gotRes, nil
-}
-
-// CreateResourceWithoutNS creates a given k8s resource without namespace
-func (m *Manager) CreateResourceWithoutNS(client dynamic.Interface, resourceSchema schema.GroupVersionResource, namespace string, manifest unstructured.Unstructured) error {
-	return retry.Do(func() error {
-		if _, err := client.Resource(resourceSchema).Create(context.Background(), &manifest, metav1.CreateOptions{}); err != nil {
-			return err
-		}
 		return nil
 	}, m.retryOptions...)
 }

@@ -9,7 +9,6 @@ import (
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/manifestprocessor"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/resource"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
-	"golang.org/x/oauth2/clientcredentials"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
@@ -25,7 +24,6 @@ type testsuite struct {
 	k8sClient       dynamic.Interface
 	resourceManager *resource.Manager
 	config          testcontext.Config
-	oauth2Cfg       *clientcredentials.Config
 }
 
 func (t *testsuite) InitScenarios(ctx *godog.ScenarioContext) {
@@ -97,6 +95,7 @@ func (t *testsuite) TearDown() {
 }
 
 func NewTestsuite(httpClient *helpers.RetryableHttpClient, k8sClient dynamic.Interface, rm *resource.Manager, config testcontext.Config) testcontext.Testsuite {
+
 	return &testsuite{
 		name:            "gateway",
 		httpClient:      httpClient,

@@ -123,7 +123,7 @@ test-custom-domain: generate fmt vet
              GODEBUG=netdns=cgo CGO_ENABLED=1 go test -timeout 1h ./tests/integration -run "^TestCustomDomain$$" -v -race"
 
 test-integration-gateway:
-	source ./tests/integration/env_vars.sh && go test -timeout 1h ./tests/integration -run "^TestGateway$$" -v -race
+	source ./tests/integration/env_vars.sh && TEST_CONCURRENCY=1 go test -timeout 1h ./tests/integration -run "^TestGateway$$" -v -race
 
 .PHONY: install-prerequisites
 install-prerequisites:

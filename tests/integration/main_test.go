@@ -168,7 +168,7 @@ func createApiGatewayCR(config testcontext.Config) error {
 	}
 
 	rm := resource.NewManager(testcontext.GetRetryOpts(config))
-	_, err = rm.CreateGateway(k8sClient, apiGatewayCR...)
+	_, err = rm.CreateResourcesWithoutNS(k8sClient, apiGatewayCR...)
 	if err != nil {
 		return err
 	}

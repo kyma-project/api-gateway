@@ -40,9 +40,10 @@ func initScenario(ctx *godog.ScenarioContext, ts *testsuite) {
 	ctx.Step(`^there is a "([^"]*)" secret in "([^"]*)" namespace$`, scenario.thereIsACertificate)
 	ctx.Step(`^there is an "([^"]*)" APIRule$`, scenario.thereIsAnAPIRule)
 	ctx.Step(`^disabling kyma gateway will result in "([^"]*)" due to existing APIRule$`, scenario.gatewayErrorWhenKymaGatewayDisabled)
-	ctx.Step(`^removing an APIRule will also remove "([^"]*)" in "([^"]*)" namespace$`, scenario.removingAPIRuleUnblocksGatewayDeletion)
-	ctx.Step(`^there is a "([^"]*)" Certificate CR$`, scenario.thereIsACertificateCR)
-	ctx.Step(`^there is a "([^"]*)" DNSEntry CR$`, scenario.thereIsADNSEntryCR)
+	ctx.Step(`^enabling kyma gateway back will result in "([^"]*)" state$`, scenario.gatewayReadyWhenEnabled)
+	ctx.Step(`^removing an APIRule and APIGateway operator will also remove "([^"]*)" in "([^"]*)" namespace$`, scenario.removingAPIRuleUnblocksGatewayDeletion)
+	ctx.Step(`^there is a "([^"]*)" Gardener Certificate CR in "([^"]*)" namespace$`, scenario.thereIsACertificateCR)
+	ctx.Step(`^there is a "([^"]*)" Gardener DNSEntry CR in "([^"]*)" namespace$`, scenario.thereIsADNSEntryCR)
 }
 
 func createScenario(t *testsuite) (*scenario, error) {
@@ -140,7 +141,47 @@ func (c *scenario) gatewayErrorWhenKymaGatewayDisabled(state string) error {
 	if err != nil {
 		return fmt.Errorf("failed to process kyma-gateway-disabled.yaml, details %s", err.Error())
 	}
-	_, err = c.resourceManager.UpdateGateway(c.k8sClient, kymaGatewayDisabled...)
+	_, err = c.resourceManager.UpdateResourcesWithoutNS(c.k8sClient, kymaGatewayDisabled...)
+	if err != nil {
+		return err
+	}
+
+	err = wait.ExponentialBackoff(wait.Backoff{
+		Duration: time.Second,
+		Factor:   2,
+		Steps:    10,
+	}, func() (done bool, err error) {
+		res := schema.GroupVersionResource{Group: "operator.kyma-project.io", Version: "v1alpha1", Resource: "apigateways"}
+		gateway, err := c.k8sClient.Resource(res).Get(context.Background(), resource.TestGatewayOperatorName, v1.GetOptions{})
+		if err != nil {
+			return false, fmt.Errorf("gateway could not be found")
+		}
+
+		gatewayState, found, err := unstructured.NestedString(gateway.Object, "status", "state")
+		if err != nil || !found {
+			return false, err
+		} else if gatewayState != state {
+			return false, fmt.Errorf("gateway state %s, is not in the expected state %s", gatewayState, state)
+		}
+		return true, nil
+	})
+	if err != nil {
+		return fmt.Errorf("could not get gateway status: %s", err)
+	}
+	return nil
+}
+
+func (c *scenario) gatewayReadyWhenEnabled(state string) error {
+	customDomainManifestDirectory := path.Dir(manifestsPath)
+	kymaGatewayEnabled, err := manifestprocessor.ParseFromFileWithTemplate("kyma-gateway-enabled.yaml", customDomainManifestDirectory, struct {
+		NamePrefix string
+	}{
+		NamePrefix: resource.TestGatewayOperatorName,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to process kyma-gateway-enabled.yaml, details %s", err.Error())
+	}
+	_, err = c.resourceManager.CreateOrUpdateResourcesWithoutNS(c.k8sClient, kymaGatewayEnabled...)
 	if err != nil {
 		return err
 	}
@@ -180,7 +221,20 @@ func (c *scenario) removingAPIRuleUnblocksGatewayDeletion(name, namespace string
 	if err != nil {
 		return fmt.Errorf("failed to process apirule.yaml, details %s", err.Error())
 	}
+	kymaGateway, err := manifestprocessor.ParseFromFileWithTemplate("kyma-gateway-enabled.yaml", customDomainManifestDirectory, struct {
+		NamePrefix string
+	}{
+		NamePrefix: resource.TestGatewayOperatorName,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to process apirule.yaml, details %s", err.Error())
+	}
+
 	err = c.resourceManager.DeleteResources(c.k8sClient, apiRule...)
+	if err != nil {
+		return err
+	}
+	err = c.resourceManager.DeleteResourcesWithoutNS(c.k8sClient, kymaGateway...)
 	if err != nil {
 		return err
 	}
@@ -204,9 +258,9 @@ func (c *scenario) removingAPIRuleUnblocksGatewayDeletion(name, namespace string
 	return fmt.Errorf("%s stil exists", name)
 }
 
-func (c *scenario) thereIsACertificateCR(name string) error {
+func (c *scenario) thereIsACertificateCR(name, namespace string) error {
 	res := schema.GroupVersionResource{Group: "cert.gardener.cloud", Version: "v1alpha1", Resource: "certificates"}
-	_, err := c.k8sClient.Resource(res).Get(context.Background(), name, v1.GetOptions{})
+	_, err := c.k8sClient.Resource(res).Namespace(namespace).Get(context.Background(), name, v1.GetOptions{})
 	if err != nil {
 		return fmt.Errorf("%s could not be found", name)
 	}
@@ -214,9 +268,9 @@ func (c *scenario) thereIsACertificateCR(name string) error {
 	return nil
 }
 
-func (c *scenario) thereIsADNSEntryCR(name string) error {
+func (c *scenario) thereIsADNSEntryCR(name, namespace string) error {
 	res := schema.GroupVersionResource{Group: "dns.gardener.cloud", Version: "v1alpha1", Resource: "dnsentries"}
-	_, err := c.k8sClient.Resource(res).Get(context.Background(), name, v1.GetOptions{})
+	_, err := c.k8sClient.Resource(res).Namespace(namespace).Get(context.Background(), name, v1.GetOptions{})
 	if err != nil {
 		return fmt.Errorf("%s could not be found", name)
 	}
