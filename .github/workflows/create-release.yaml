@@ -60,7 +60,7 @@ jobs:
         id: wait-for-build
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          statusName: "post-api-gateway-manager-build"
+          statusName: "rel-api-gateway-manager-build"
           timeoutSeconds: "1800"
       - name: Check that build status is success
         if: steps.wait-for-build.outputs.state != 'success'
@@ -71,7 +71,7 @@ jobs:
         id: wait-for-module
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          statusName: "post-api-gateway-module-build"
+          statusName: "rel-api-gateway-module-build"
           timeoutSeconds: "1800"
       - name: Check that module build status is success
         if: steps.wait-for-module.outputs.state != 'success'
