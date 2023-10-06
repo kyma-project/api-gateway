@@ -37,7 +37,7 @@ func (t *testsuite) FeaturePath() []string {
 		return []string{"testsuites/gateway/features/kyma_gateway.feature", "testsuites/gateway/features/kyma_gateway_gardener.feature"}
 	}
 
-	return []string{"testsuites/gateway/features/kyma_gateway.feature"}
+	return []string{"testsuites/gateway/features/kyma_gateway.feature", "testsuites/gateway/features/kyma_gateway_k3d.feature"}
 }
 
 func (t *testsuite) Name() string {

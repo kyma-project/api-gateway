@@ -65,7 +65,7 @@ func (c *scenario) applyAPIGatewayCR() error {
 	kymaGatewayEnabled, err := manifestprocessor.ParseFromFileWithTemplate("kyma-gateway-enabled.yaml", customDomainManifestDirectory, struct {
 		NamePrefix string
 	}{
-		NamePrefix: resource.TestGatewayOperatorName,
+		NamePrefix: c.config.GatewayCRName,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to process kyma-gateway-enabled.yaml, details %s", err.Error())
@@ -81,7 +81,7 @@ func (c *scenario) applyAPIGatewayCR() error {
 func (c *scenario) thereIsAnAPIGatewayCR(state string) error {
 	return retry.Do(func() error {
 		res := schema.GroupVersionResource{Group: "operator.kyma-project.io", Version: "v1alpha1", Resource: "apigateways"}
-		gateway, err := c.k8sClient.Resource(res).Get(context.Background(), resource.TestGatewayOperatorName, v1.GetOptions{})
+		gateway, err := c.k8sClient.Resource(res).Get(context.Background(), c.config.GatewayCRName, v1.GetOptions{})
 		if err != nil {
 			return fmt.Errorf("gateway could not be found")
 		}
@@ -177,7 +177,7 @@ func (c *scenario) deleteGateway(name string) error {
 	gateway, err := manifestprocessor.ParseFromFileWithTemplate("kyma-gateway-enabled.yaml", customDomainManifestDirectory, struct {
 		NamePrefix string
 	}{
-		NamePrefix: resource.TestGatewayOperatorName,
+		NamePrefix: c.config.GatewayCRName,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to process kyma-gateway-enabled.yaml, details %s", err.Error())
@@ -204,7 +204,7 @@ func (c *scenario) disableKymaGatewayAndCheckStatus(state string) error {
 	kymaGatewayDisabled, err := manifestprocessor.ParseFromFileWithTemplate("kyma-gateway-disabled.yaml", customDomainManifestDirectory, struct {
 		NamePrefix string
 	}{
-		NamePrefix: resource.TestGatewayOperatorName,
+		NamePrefix: c.config.GatewayCRName,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to process kyma-gateway-disabled.yaml, details %s", err.Error())
@@ -216,7 +216,7 @@ func (c *scenario) disableKymaGatewayAndCheckStatus(state string) error {
 
 	return retry.Do(func() error {
 		res := schema.GroupVersionResource{Group: "operator.kyma-project.io", Version: "v1alpha1", Resource: "apigateways"}
-		gateway, err := c.k8sClient.Resource(res).Get(context.Background(), resource.TestGatewayOperatorName, v1.GetOptions{})
+		gateway, err := c.k8sClient.Resource(res).Get(context.Background(), c.config.GatewayCRName, v1.GetOptions{})
 		if err != nil {
 			return fmt.Errorf("gateway could not be found")
 		}

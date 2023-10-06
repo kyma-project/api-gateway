@@ -3,10 +3,6 @@ Feature: Checking default kyma gateway
     Given APIGateway CR is applied
     Then APIGateway CR is in "Ready" state
 
-  Scenario: Kyma gateway is deployed
-    Given there is a "kyma-gateway" gateway in "kyma-system" namespace
-    Then there is a "kyma-gateway-certs" secret in "istio-system" namespace
-
   Scenario: Kyma gateway is not removed when there is an APIRule
     Given there is an "kyma-rule" APIRule
     Then disabling kyma gateway will result in "Warning" state

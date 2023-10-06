@@ -17,9 +17,6 @@ import (
 	"k8s.io/client-go/restmapper"
 )
 
-// TestGatewayOperatorName contains name for APIGateway operator resource
-const TestGatewayOperatorName = "test-gateway"
-
 type Manager struct {
 	retryOptions []retry.Option
 	mapper       *restmapper.DeferredDiscoveryRESTMapper

@@ -156,7 +156,7 @@ func shouldExportResults() bool {
 func createApiGatewayCR(config testcontext.Config) error {
 	apiGatewayCR, err := manifestprocessor.ParseFromFileWithTemplate("api-gateway.yaml", "manifests/", struct {
 		NamePrefix string
-	}{NamePrefix: resource.TestGatewayOperatorName})
+	}{NamePrefix: config.GatewayCRName})
 	if err != nil {
 		log.Fatalf("failed to process api-gateway manifest file, details %v", err)
 		return err
@@ -179,7 +179,7 @@ func createApiGatewayCR(config testcontext.Config) error {
 func deleteApiGatewayCR(config testcontext.Config) error {
 	apiGatewayCR, err := manifestprocessor.ParseFromFileWithTemplate("api-gateway.yaml", "manifests/", struct {
 		NamePrefix string
-	}{NamePrefix: resource.TestGatewayOperatorName})
+	}{NamePrefix: config.GatewayCRName})
 	if err != nil {
 		log.Fatalf("failed to process api-gateway manifest file, details %v", err)
 		return err
