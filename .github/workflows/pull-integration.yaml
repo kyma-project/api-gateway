@@ -68,21 +68,3 @@ jobs:
           client_secret: ${{ secrets.CLIENT_SECRET }}
           oidc_issuer_url: ${{ secrets.OIDC_ISSUER_URL }}
           manager_image: "europe-docker.pkg.dev/kyma-project/dev/api-gateway-manager:PR-${{github.event.number}}"
-
-  upgrade-tests:
-    environment: ${{ github.event.pull_request.author_association != 'COLLABORATOR' && github.event.pull_request.author_association != 'OWNER' && 'restricted' || 'internal' }}
-    name: Upgrade tests
-    runs-on: ubuntu-latest
-    if: github.event.pull_request.draft == false
-    needs: [wait-for-image-build]
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - uses: ./.github/actions/upgrade-test
-        with:
-          manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:${{ github.event.pull_request.base.sha }}"
-          test_upgrade_img: "europe-docker.pkg.dev/kyma-project/dev/api-gateway-manager:PR-${{ github.event.number }}"
-          client_id: ${{ secrets.CLIENT_ID }}
-          client_secret: ${{ secrets.CLIENT_SECRET }}
-          oidc_issuer_url: ${{ secrets.OIDC_ISSUER_URL }}

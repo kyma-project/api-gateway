@@ -8,14 +8,15 @@ kubectl get crd apigateways.operator.kyma-project.io -o yaml
 
 ## Specification
 
-**NOTE:** The specification of APIGateway CR has not been established yet. Once it is, you will be able to find the details in the following tables.
+>**NOTE:** The specification of APIGateway CR has not been established yet. Once it is, you will be able to find the details in the following tables.
 
 This table lists all the possible parameters of the given resource together with their descriptions:
 
 **Spec:**
 
-| Parameter                                               | Type      | Description                                                                                                                                                                                                                                                                                                                                 |
-|---------------------------------------------------------|-----------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Parameter             | Type     | Description                                                                                                             |
+|-----------------------|----------|-------------------------------------------------------------------------------------------------------------------------|
+| **enableKymaGateway** | **NO**   | Specifies whether the default [Kyma Gateway](./04-10-kyma-gateway.md), named `kyma-gateway`, should be created in the `kyma-system` Namespace. |
 
 **Status:**
 

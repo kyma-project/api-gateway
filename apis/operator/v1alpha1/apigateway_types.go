@@ -32,6 +32,10 @@ const (
 
 // APIGatewaySpec defines the desired state of APIGateway
 type APIGatewaySpec struct {
+
+	// Specifies whether the default Kyma Gateway kyma-gateway in kyma-system Namespace is created.
+	// +optional
+	EnableKymaGateway *bool `json:"enableKymaGateway,omitempty"`
 }
 
 // APIGatewayStatus defines the observed state of APIGateway
@@ -69,4 +73,13 @@ type APIGatewayList struct {
 
 func init() {
 	SchemeBuilder.Register(&APIGateway{}, &APIGatewayList{})
+}
+
+// IsInDeletion returns true if the APIGateway is in deletion process, false otherwise.
+func (a *APIGateway) IsInDeletion() bool {
+	return !a.DeletionTimestamp.IsZero()
+}
+
+func (a *APIGateway) HasFinalizer() bool {
+	return len(a.Finalizers) > 0
 }
