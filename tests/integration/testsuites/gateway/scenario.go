@@ -3,6 +3,11 @@ package gateway
 import (
 	"context"
 	"fmt"
+	"log"
+	"path"
+	"time"
+
+	"github.com/avast/retry-go/v4"
 	"github.com/cucumber/godog"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/helpers"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/manifestprocessor"
@@ -13,9 +18,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/dynamic"
-	"log"
-	"path"
-	"time"
 )
 
 const manifestsPath = "testsuites/gateway/manifests/"
@@ -35,13 +37,13 @@ func initScenario(ctx *godog.ScenarioContext, ts *testsuite) {
 		log.Fatalf("could not initialize custom domain endpoint err=%s", err)
 	}
 
-	ctx.Step(`^there is an APIGateway operator in "([^"]*)" state$`, scenario.thereIsAnAPIGatewayOperator)
+	ctx.Step(`^there is an APIGateway CR in "([^"]*)" state$`, scenario.thereIsAnAPIGatewayOperator)
 	ctx.Step(`^there is a "([^"]*)" gateway in "([^"]*)" namespace$`, scenario.thereIsAGateway)
 	ctx.Step(`^there is a "([^"]*)" secret in "([^"]*)" namespace$`, scenario.thereIsACertificate)
 	ctx.Step(`^there is an "([^"]*)" APIRule$`, scenario.thereIsAnAPIRule)
 	ctx.Step(`^disabling kyma gateway will result in "([^"]*)" due to existing APIRule$`, scenario.gatewayErrorWhenKymaGatewayDisabled)
 	ctx.Step(`^enabling kyma gateway back will result in "([^"]*)" state$`, scenario.gatewayReadyWhenEnabled)
-	ctx.Step(`^removing an APIRule and APIGateway operator will also remove "([^"]*)" in "([^"]*)" namespace$`, scenario.removingAPIRuleUnblocksGatewayDeletion)
+	ctx.Step(`^removing an APIRule and APIGateway CR will also remove "([^"]*)" in "([^"]*)" namespace$`, scenario.removingAPIRuleUnblocksGatewayDeletion)
 	ctx.Step(`^there is a "([^"]*)" Gardener Certificate CR in "([^"]*)" namespace$`, scenario.thereIsACertificateCR)
 	ctx.Step(`^there is a "([^"]*)" Gardener DNSEntry CR in "([^"]*)" namespace$`, scenario.thereIsADNSEntryCR)
 }
@@ -186,29 +188,22 @@ func (c *scenario) gatewayReadyWhenEnabled(state string) error {
 		return err
 	}
 
-	err = wait.ExponentialBackoff(wait.Backoff{
-		Duration: time.Second,
-		Factor:   2,
-		Steps:    10,
-	}, func() (done bool, err error) {
+	return retry.Do(func() error {
 		res := schema.GroupVersionResource{Group: "operator.kyma-project.io", Version: "v1alpha1", Resource: "apigateways"}
 		gateway, err := c.k8sClient.Resource(res).Get(context.Background(), resource.TestGatewayOperatorName, v1.GetOptions{})
 		if err != nil {
-			return false, fmt.Errorf("gateway could not be found")
+			return fmt.Errorf("gateway could not be found")
 		}
 
 		gatewayState, found, err := unstructured.NestedString(gateway.Object, "status", "state")
 		if err != nil || !found {
-			return false, err
+			return err
 		} else if gatewayState != state {
-			return false, fmt.Errorf("gateway state %s, is not in the expected state %s", gatewayState, state)
+			return fmt.Errorf("gateway state %s, is not in the expected state %s", gatewayState, state)
 		}
-		return true, nil
-	})
-	if err != nil {
-		return fmt.Errorf("could not get gateway status: %s", err)
-	}
-	return nil
+
+		return nil
+	}, testcontext.GetRetryOpts(c.config)...)
 }
 
 func (c *scenario) removingAPIRuleUnblocksGatewayDeletion(name, namespace string) error {
