@@ -24,7 +24,12 @@ import (
 	"github.com/kyma-project/api-gateway/tests"
 	"github.com/onsi/ginkgo/v2/types"
 	networkingv1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
+	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
+	autoscalingv2 "k8s.io/api/autoscaling/v2"
+	schedulingv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
@@ -86,6 +91,11 @@ var _ = BeforeSuite(func() {
 	utilruntime.Must(operatorv1alpha1.AddToScheme(s))
 	utilruntime.Must(corev1.AddToScheme(s))
 	utilruntime.Must(v1beta1.AddToScheme(s))
+	utilruntime.Must(rbacv1.AddToScheme(s))
+	utilruntime.Must(autoscalingv2.AddToScheme(s))
+	utilruntime.Must(securityv1beta1.AddToScheme(s))
+	utilruntime.Must(schedulingv1.AddToScheme(s))
+	utilruntime.Must(apiextensionsv1.AddToScheme(s))
 
 	//+kubebuilder:scaffold:scheme
 
