@@ -32,8 +32,8 @@ func (t *testsuite) InitScenarios(ctx *godog.ScenarioContext) {
 	initScenario(ctx, t)
 }
 
-func (t *testsuite) FeaturePath() string {
-	return "testsuites/custom-domain/features/"
+func (t *testsuite) FeaturePath() []string {
+	return []string{"testsuites/custom-domain/features/"}
 }
 
 func (t *testsuite) Name() string {
