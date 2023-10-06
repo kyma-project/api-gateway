@@ -130,6 +130,15 @@ var resourceList = []deployedResource{
 			Kind:    "ClusterRole",
 		},
 	},
+	{
+		name:       "ory-oathkeeper-maester-metrics",
+		namespaced: true,
+		GVK: schema.GroupVersionKind{
+			Group:   "security.istio.io",
+			Version: "v1beta1",
+			Kind:    "PeerAuthentication",
+		},
+	},
 }
 
 var _ = Describe("Oathkeeper reconciliation", func() {
