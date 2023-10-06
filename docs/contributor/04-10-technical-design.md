@@ -28,7 +28,7 @@ Additionally, the controller watches the [`api-gateway-config`](../user/custom-r
 
 APIRule Controller has a conditional dependency to APIGateway Controller in terms of the default APIRule domain. If no domain is configured in APIGateway CR, APIRule Controller uses the default Kyma Gateway domain as the default value for creating Virtual Services.
 
-**NOTE:** For now, you can only use the default domain in APIGateway CR. The option to configure your own domain will be added at a later time. See the [epic task](https://github.com/kyma-project/api-gateway/issues/130).
+>**NOTE:** For now, you can only use the default domain in APIGateway CR. The option to configure your own domain will be added at a later time. See the [epic task](https://github.com/kyma-project/api-gateway/issues/130).
 
 #### Reconciliation
 [APIRule CR](../user/custom-resources/apirule/04-10-apirule-custom-resource.md) is reconciled with each change. If no changes have been made, process occurs at the default interval of 10 hours.

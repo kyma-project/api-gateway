@@ -17,5 +17,5 @@ Istio Gateway uses a default certificate for the domain `local.kyma.dev` that is
 ![Kyma Gateway Resources Open Source](../../../assets/kyma-gateway-resources-os.svg)
 
 ## Disable or enable Kyma Gateway
-By default, Kyma Gateway is enabled. You can disable it by removing the `enableKymaGateway` field in the [APIGateway CR](04-00-apigateway-custom-resource-avoid-conflict.md) or setting it to `false`.
+By default, Kyma Gateway is enabled. You can disable it by removing the `enableKymaGateway` field in the [APIGateway CR](./04-00-apigateway-custom-resource.md) or setting it to `false`.
 Kyma Gateway can be disabled only if no APIRules are configured on the cluster.
