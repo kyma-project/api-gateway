@@ -41,6 +41,7 @@ func initScenario(ctx *godog.ScenarioContext, ts *testsuite) {
 	ctx.Step(`^there is an "([^"]*)" APIRule$`, scenario.thereIsAnAPIRule)
 	ctx.Step(`^APIRule "([^"]*)" is removed$`, scenario.deleteAPIRule)
 	ctx.Step(`^disabling kyma gateway will result in "([^"]*)" state$`, scenario.disableKymaGatewayAndCheckStatus)
+	ctx.Step(`^gateway "([^"]*)" is removed$`, scenario.deleteGateway)
 	ctx.Step(`^gateway "([^"]*)" in "([^"]*)" namespace does not exist$`, scenario.thereIsNoGateway)
 	ctx.Step(`^there is a "([^"]*)" Gardener Certificate CR in "([^"]*)" namespace$`, scenario.thereIsACertificateCR)
 	ctx.Step(`^there is a "([^"]*)" Gardener DNSEntry CR in "([^"]*)" namespace$`, scenario.thereIsADNSEntryCR)
@@ -97,13 +98,15 @@ func (c *scenario) thereIsAnAPIGatewayCR(state string) error {
 }
 
 func (c *scenario) thereIsAGateway(name string, namespace string) error {
-	res := schema.GroupVersionResource{Group: "networking.istio.io", Version: "v1beta1", Resource: "gateways"}
-	_, err := c.k8sClient.Resource(res).Namespace(namespace).Get(context.Background(), name, v1.GetOptions{})
-	if err != nil {
-		return fmt.Errorf("%s could not be found", name)
-	}
+	return retry.Do(func() error {
+		res := schema.GroupVersionResource{Group: "networking.istio.io", Version: "v1beta1", Resource: "gateways"}
+		_, err := c.k8sClient.Resource(res).Namespace(namespace).Get(context.Background(), name, v1.GetOptions{})
+		if err != nil {
+			return fmt.Errorf("%s could not be found", name)
+		}
 
-	return nil
+		return nil
+	}, testcontext.GetRetryOpts(c.config)...)
 }
 
 func (c *scenario) thereIsACertificate(name string, namespace string) error {
@@ -169,6 +172,33 @@ func (c *scenario) deleteAPIRule(name string) error {
 	}, testcontext.GetRetryOpts(c.config)...)
 }
 
+func (c *scenario) deleteGateway(name string) error {
+	customDomainManifestDirectory := path.Dir(manifestsPath)
+	gateway, err := manifestprocessor.ParseFromFileWithTemplate("kyma-gateway-enabled.yaml", customDomainManifestDirectory, struct {
+		NamePrefix string
+	}{
+		NamePrefix: resource.TestGatewayOperatorName,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to process kyma-gateway-enabled.yaml, details %s", err.Error())
+	}
+
+	err = c.resourceManager.DeleteResourcesWithoutNS(c.k8sClient, gateway...)
+	if err != nil {
+		return err
+	}
+
+	return retry.Do(func() error {
+		res := schema.GroupVersionResource{Group: "operator.kyma-project.io", Version: "v1alpha1", Resource: "apigateways"}
+		_, err = c.k8sClient.Resource(res).Get(context.Background(), name, v1.GetOptions{})
+		if err != nil {
+			return nil
+		}
+
+		return fmt.Errorf("%s stil exists", name)
+	}, testcontext.GetRetryOpts(c.config)...)
+}
+
 func (c *scenario) disableKymaGatewayAndCheckStatus(state string) error {
 	customDomainManifestDirectory := path.Dir(manifestsPath)
 	kymaGatewayDisabled, err := manifestprocessor.ParseFromFileWithTemplate("kyma-gateway-disabled.yaml", customDomainManifestDirectory, struct {
@@ -207,7 +237,7 @@ func (c *scenario) thereIsNoGateway(name, namespace string) error {
 		res := schema.GroupVersionResource{Group: "networking.istio.io", Version: "v1beta1", Resource: "gateways"}
 		_, err := c.k8sClient.Resource(res).Namespace(namespace).Get(context.Background(), name, v1.GetOptions{})
 		if err != nil {
-			return err
+			return nil
 		}
 
 		return fmt.Errorf("%s stil exists", name)
