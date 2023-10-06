@@ -64,7 +64,7 @@ data:
         enabled: true
       id_token:
         config:
-          issuer_url: https://oathkeeper.{{ .Domain }}"/
+          issuer_url: https://oathkeeper.{{ .Domain }}
           jwks_url: file:///etc/secrets/jwks.json
           ttl: 60s
         enabled: true

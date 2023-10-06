@@ -14,7 +14,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
-var _ = Describe("Oathkeeper reconciliation", func() {
+var _ = Describe("Oathkeeper Deployment reconciliation", func() {
 
 	It("Should deploy light version of Deployment on small cluster", func() {
 		smallNode := corev1.Node{
