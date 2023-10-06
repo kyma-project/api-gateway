@@ -98,7 +98,7 @@ func (t *testsuite) TearDown() {
 func NewTestsuite(httpClient *helpers.RetryableHttpClient, k8sClient dynamic.Interface, rm *resource.Manager, config testcontext.Config) testcontext.Testsuite {
 
 	return &testsuite{
-		name:            "upgrade",
+		name:            "gateway",
 		httpClient:      httpClient,
 		k8sClient:       k8sClient,
 		resourceManager: rm,
