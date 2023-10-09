@@ -9,8 +9,12 @@ import (
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/manifestprocessor"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/resource"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
+	v12 "k8s.io/api/apps/v1"
+	v2 "k8s.io/api/autoscaling/v2"
+	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 	"log"
@@ -18,6 +22,47 @@ import (
 )
 
 const manifestsPath = "testsuites/gateway/manifests/"
+
+type godogResourceMapping int
+
+func (k godogResourceMapping) String() string {
+	switch k {
+	case Deployment:
+		return "Deployment"
+	case Service:
+		return "Service"
+	case HorizontalPodAutoscaler:
+		return "HorizontalPodAutoscaler"
+	case ConfigMap:
+		return "ConfigMap"
+	case Secret:
+		return "Secret"
+	case CustomResourceDefinition:
+		return "CustomResourceDefinition"
+	case ServiceAccount:
+		return "ServiceAccount"
+	case ClusterRole:
+		return "ClusterRole"
+	case ClusterRoleBinding:
+		return "ClusterRoleBinding"
+	case PeerAuthentication:
+		return "PeerAuthentication"
+	}
+	panic(fmt.Errorf("%#v has unimplemented String() method", k))
+}
+
+const (
+	Deployment godogResourceMapping = iota
+	Service
+	HorizontalPodAutoscaler
+	ConfigMap
+	Secret
+	CustomResourceDefinition
+	ServiceAccount
+	ClusterRole
+	ClusterRoleBinding
+	PeerAuthentication
+)
 
 type scenario struct {
 	testID          string
@@ -45,6 +90,9 @@ func initScenario(ctx *godog.ScenarioContext, ts *testsuite) {
 	ctx.Step(`^gateway "([^"]*)" in "([^"]*)" namespace does not exist$`, scenario.thereIsNoGateway)
 	ctx.Step(`^there is a "([^"]*)" Gardener Certificate CR in "([^"]*)" namespace$`, scenario.thereIsACertificateCR)
 	ctx.Step(`^there is a "([^"]*)" Gardener DNSEntry CR in "([^"]*)" namespace$`, scenario.thereIsADNSEntryCR)
+	ctx.Step(`there is a "([^"]*)" "([^"]*)" in the cluster`, scenario.resourceIsPresent)
+	ctx.Step(`there is a "([^"]*)" "([^"]*)" in namespace "([^"]*)"`, scenario.namespacedResourceIsPresent)
+	ctx.Step(`"([^"]*)" "([^"]*)" in namespace "([^"]*)" has status "([^"]*)"`, scenario.namespacedResourceHasStatusReady)
 }
 
 func createScenario(t *testsuite) (*scenario, error) {
@@ -262,4 +310,134 @@ func (c *scenario) thereIsADNSEntryCR(name, namespace string) error {
 	}
 
 	return nil
+}
+
+func (c *scenario) resourceIsPresent(kind, name string) error {
+	return retry.Do(func() error {
+		gvr := getResourceGvr(kind, name)
+		_, err := c.k8sClient.Resource(gvr).Get(context.Background(), name, v1.GetOptions{})
+		if err != nil {
+			if errors.IsNotFound(err) {
+				return fmt.Errorf("could not find non namespaced resource %s, named: %s", kind, name)
+			}
+			return err
+		}
+		return nil
+	}, testcontext.GetRetryOpts(c.config)...)
+}
+
+func (c *scenario) namespacedResourceIsPresent(kind, name, namespace string) error {
+	return retry.Do(func() error {
+		gvr := getResourceGvr(kind, name)
+		_, err := c.k8sClient.Resource(gvr).Namespace(namespace).Get(context.Background(), name, v1.GetOptions{})
+		if err != nil {
+			if errors.IsNotFound(err) {
+				return fmt.Errorf("could not find resource: %s, named: %s, in namespace %s", kind, name, namespace)
+			}
+			return err
+		}
+		return nil
+	}, testcontext.GetRetryOpts(c.config)...)
+}
+
+func (c *scenario) namespacedResourceHasStatusReady(kind, name, namespace string) error {
+	return retry.Do(func() error {
+		gvr := getResourceGvr(kind, name)
+		unstr, err := c.k8sClient.Resource(gvr).Namespace(namespace).Get(context.Background(), name, v1.GetOptions{})
+		if err != nil {
+			return fmt.Errorf("could not get resource: %s, named: %s, in namespace %s", kind, name, namespace)
+		}
+		switch kind {
+		case Deployment.String():
+			var dep v12.Deployment
+			err := runtime.DefaultUnstructuredConverter.FromUnstructured(unstr.UnstructuredContent(), &dep)
+			if err != nil {
+				return fmt.Errorf("cannot convert unstructured to structured kind: %s, name: %s, namespace: %s", kind, name, namespace)
+			}
+			if dep.Status.UnavailableReplicas != 0 {
+				return fmt.Errorf("kind: %s, name %s, namespace %s, is not Ready", kind, name, namespace)
+			}
+		case HorizontalPodAutoscaler.String():
+			var hpa v2.HorizontalPodAutoscaler
+			err := runtime.DefaultUnstructuredConverter.FromUnstructured(unstr.UnstructuredContent(), &hpa)
+			if err != nil {
+				return fmt.Errorf("cannot convert unstructured to structured kind: %s, name: %s, namespace: %s", kind, name, namespace)
+			}
+			if hpa.Status.CurrentReplicas != hpa.Status.DesiredReplicas {
+				return fmt.Errorf("kind: %s, name %s, namespace %s, is not Ready", kind, name, namespace)
+			}
+		default:
+			panic(fmt.Errorf("not implemented yet for kind: %s", kind))
+		}
+		return nil
+	}, testcontext.GetRetryOpts(c.config)...)
+}
+
+func getResourceGvr(kind, name string) schema.GroupVersionResource {
+	var gvr schema.GroupVersionResource
+	switch kind {
+	case Deployment.String():
+		gvr = schema.GroupVersionResource{
+			Group:    "apps",
+			Version:  "v1",
+			Resource: "deployments",
+		}
+	case Service.String():
+		gvr = schema.GroupVersionResource{
+			Group:    "",
+			Version:  "v1",
+			Resource: "services",
+		}
+	case HorizontalPodAutoscaler.String():
+		gvr = schema.GroupVersionResource{
+			Group:    "autoscaling",
+			Version:  "v2",
+			Resource: "horizontalpodautoscalers",
+		}
+	case ConfigMap.String():
+		gvr = schema.GroupVersionResource{
+			Group:    "",
+			Version:  "v1",
+			Resource: "configmaps",
+		}
+	case Secret.String():
+		gvr = schema.GroupVersionResource{
+			Group:    "",
+			Version:  "v1",
+			Resource: "secrets",
+		}
+	case CustomResourceDefinition.String():
+		gvr = schema.GroupVersionResource{
+			Group:    "apiextensions.k8s.io",
+			Version:  "v1",
+			Resource: "customresourcedefinitions",
+		}
+	case ServiceAccount.String():
+		gvr = schema.GroupVersionResource{
+			Group:    "",
+			Version:  "v1",
+			Resource: "serviceaccounts",
+		}
+	case ClusterRole.String():
+		gvr = schema.GroupVersionResource{
+			Group:    "rbac.authorization.k8s.io",
+			Version:  "v1",
+			Resource: "clusterroles",
+		}
+	case ClusterRoleBinding.String():
+		gvr = schema.GroupVersionResource{
+			Group:    "rbac.authorization.k8s.io",
+			Version:  "v1",
+			Resource: "clusterrolebindings",
+		}
+	case PeerAuthentication.String():
+		gvr = schema.GroupVersionResource{
+			Group:    "security.istio.io",
+			Version:  "v1beta1",
+			Resource: "peerauthentications",
+		}
+	default:
+		panic(fmt.Errorf("cannot get gvr for kind: %s, name: %s", kind, name))
+	}
+	return gvr
 }
