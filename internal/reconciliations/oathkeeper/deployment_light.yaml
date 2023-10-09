@@ -4,6 +4,7 @@ metadata:
   name: {{ .Name }}
   namespace: {{ .Namespace }}
   labels:
+    sidecar.istio.io/inject: true
     mode: sidecar
     app: oathkeeper
     app.kubernetes.io/instance: ory
