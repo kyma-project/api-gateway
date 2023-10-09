@@ -3,9 +3,10 @@ package upgrade
 import (
 	"errors"
 	"fmt"
-	v1 "k8s.io/api/apps/v1"
 	"strings"
 	"time"
+
+	v1 "k8s.io/api/apps/v1"
 
 	"github.com/avast/retry-go/v4"
 	"github.com/cucumber/godog"

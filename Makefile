@@ -49,6 +49,8 @@ COMPONENT_CLI_VERSION ?= latest
 TARGET_BRANCH ?= ""
 TEST_UPGRADE_IMG ?= ""
 
+IS_GARDENER ?= false
+
 # This will change the flags of the `kyma alpha module create` command in case we spot credentials
 # Otherwise we will assume http-based local registries without authentication (e.g. for k3d)
 ifneq (,$(PROW_JOB_ID))
@@ -114,10 +116,14 @@ test-integration: generate fmt vet envtest ## Run integration tests.
 test-upgrade: generate fmt vet generate-upgrade-test-manifest ## Run API Gateway upgrade tests.
 	source ./tests/integration/env_vars.sh && go test -timeout 1h ./tests/integration -v -race -run TestUpgrade .
 
-test-custom-domain:
-	source ./tests/integration/env_vars_custom_domain.sh && bash -c "trap 'kubectl delete secret google-credentials -n default' EXIT; \
+.PHONY: test-custom-domain
+test-custom-domain: generate fmt vet
+	source IS_GARDENER=$(IS_GARDENER) ./tests/integration/env_vars_custom_domain.sh && bash -c "trap 'kubectl delete secret google-credentials -n default' EXIT; \
              kubectl create secret generic google-credentials -n default --from-file=serviceaccount.json=${TEST_SA_ACCESS_KEY_PATH}; \
              GODEBUG=netdns=cgo CGO_ENABLED=1 go test -timeout 1h ./tests/integration -run "^TestCustomDomain$$" -v -race"
+
+test-integration-gateway:
+	source ./tests/integration/env_vars.sh && TEST_CONCURRENCY=1 go test -timeout 1h ./tests/integration -run "^TestGateway$$" -v -race
 
 .PHONY: install-prerequisites
 install-prerequisites:

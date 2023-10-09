@@ -90,8 +90,8 @@ func (t *testsuite) InitScenarios(ctx *godog.ScenarioContext) {
 	initCustomLabelSelector(ctx, t)
 }
 
-func (t *testsuite) FeaturePath() string {
-	return "testsuites/istio-jwt/features/"
+func (t *testsuite) FeaturePath() []string {
+	return []string{"testsuites/istio-jwt/features/"}
 }
 
 func (t *testsuite) Name() string {

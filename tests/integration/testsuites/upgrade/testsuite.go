@@ -136,8 +136,8 @@ func (t *testsuite) TearDown() {
 	}
 }
 
-func (t *testsuite) FeaturePath() string {
-	return "testsuites/upgrade/features/"
+func (t *testsuite) FeaturePath() []string {
+	return []string{"testsuites/upgrade/features/"}
 }
 
 func (t *testsuite) Name() string {
