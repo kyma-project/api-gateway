@@ -23,9 +23,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-//go:embed jwks_secret.yaml
-var jwksSecret []byte
-
 const (
 	jwksAlg  = "RSA256"
 	jwksBits = 2048

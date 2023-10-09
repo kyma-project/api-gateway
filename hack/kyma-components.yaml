@@ -4,5 +4,3 @@ prerequisites:
     namespace: "istio-system"
   - name: "certificates"
     namespace: "istio-system"
-components:
-  - name: "ory"
