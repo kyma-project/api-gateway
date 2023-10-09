@@ -18,6 +18,7 @@ package operator
 
 import (
 	"context"
+
 	operatorv1alpha1 "github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
 	"github.com/kyma-project/api-gateway/controllers"
 	"github.com/kyma-project/api-gateway/internal/gateway"
@@ -79,25 +80,17 @@ func (r *APIGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		}
 	}
 
-	apiGatewayCR, apiGatewayStatus := r.apiGatewayReconciliation.Reconcile(ctx, apiGatewayCR, APIGatewayResourceListDefaultPath)
-	if apiGatewayStatus.IsError() || apiGatewayStatus.IsWarning() {
+	if kymaGatewayStatus := gateway.ReconcileKymaGateway(ctx, r.Client, &apiGatewayCR, APIGatewayResourceListDefaultPath); kymaGatewayStatus.IsError() || kymaGatewayStatus.IsWarning() {
+		return r.requeueReconciliation(ctx, apiGatewayCR, kymaGatewayStatus)
+	}
+
+	if apiGatewayStatus := r.apiGatewayReconciliation.Reconcile(ctx, &apiGatewayCR); apiGatewayStatus.IsError() || apiGatewayStatus.IsWarning() {
 		return r.requeueReconciliation(ctx, apiGatewayCR, apiGatewayStatus)
 	}
 
 	// If there are no finalizers left, we must assume that the resource is deleted and therefore must stop the reconciliation
 	// to prevent accidental read or write to the resource.
 	if !apiGatewayCR.HasFinalizer() {
-		r.log.Info("End reconciliation because all finalizers have been removed")
-		return ctrl.Result{}, nil
-	}
-
-	if kymaGatewayStatus := gateway.ReconcileKymaGateway(ctx, r.Client, &apiGatewayCR); kymaGatewayStatus.IsError() || kymaGatewayStatus.IsWarning() {
-		return r.requeueReconciliation(ctx, apiGatewayCR, kymaGatewayStatus)
-	}
-
-	// If there are no finalizers left, we must assume that the resource is deleted and therefore must stop the reconciliation
-	// to prevent accidental read or write to the resource.
-	if apiGatewayCR.IsInDeletion() && !apiGatewayCR.HasFinalizer() {
 		r.log.Info("End reconciliation because all finalizers have been removed")
 		return ctrl.Result{}, nil
 	}

@@ -8,6 +8,7 @@ import (
 	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -20,6 +21,7 @@ var sc *runtime.Scheme
 var _ = Describe("Resources", func() {
 	sc = runtime.NewScheme()
 	Expect(v1beta1.AddToScheme(sc)).To(Succeed())
+	Expect(networkingv1beta1.AddToScheme(sc)).To(Succeed())
 
 	DescribeTable("FindUserCreatedIstioResourcesDescribe", func(ctx context.Context, logger logr.Logger, c client.Client, configuration resourceFinderConfiguration, conditionResult bool, want []Resource, wantErr bool) {
 		i := &ResourcesFinder{
@@ -98,6 +100,45 @@ var _ = Describe("Resources", func() {
 						Group:   "gateway.kyma-project.io",
 						Version: "v1beta1",
 						Kind:    "APIRule",
+					},
+				},
+			},
+			false,
+		), Entry("Should get resource if there is a customer resource present in a specific version only", context.TODO(),
+			logr.Discard(),
+			fake.NewClientBuilder().WithScheme(sc).WithObjects(&networkingv1beta1.VirtualService{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "unmanaged-namespace",
+					Name:      "user-vs",
+				},
+			}).Build(),
+			resourceFinderConfiguration{Resources: []ResourceConfiguration{
+				{
+					GroupVersionKind: schema.GroupVersionKind{
+						Group:   "networking.istio.io",
+						Version: "v1alpha3",
+						Kind:    "VirtualService",
+					},
+				},
+				{
+					GroupVersionKind: schema.GroupVersionKind{
+						Group:   "networking.istio.io",
+						Version: "v1beta1",
+						Kind:    "VirtualService",
+					},
+				},
+			},
+			},
+			true,
+			[]Resource{
+				{
+					ResourceMeta: ResourceMeta{
+						Namespace: "unmanaged-namespace",
+						Name:      "user-vs",
+					}, GVK: schema.GroupVersionKind{
+						Group:   "networking.istio.io",
+						Version: "v1beta1",
+						Kind:    "VirtualService",
 					},
 				},
 			},

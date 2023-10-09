@@ -2,9 +2,11 @@ package operator
 
 import (
 	"context"
+
 	"github.com/go-logr/logr"
 	operatorv1alpha1 "github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
 	"github.com/kyma-project/api-gateway/controllers"
+	"github.com/kyma-project/api-gateway/internal/operator/reconciliations/api_gateway"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -73,7 +75,7 @@ var _ = Describe("API-Gateway Controller", func() {
 					Name:      apiGatewayCRName,
 					Namespace: testNamespace,
 					Finalizers: []string{
-						"gateways.operator.kyma-project.io/api-gateway-reconciliation",
+						api_gateway.ApiGatewayFinalizer,
 					},
 				},
 			}
@@ -107,7 +109,7 @@ var _ = Describe("API-Gateway Controller", func() {
 					Name:      apiGatewayCRName,
 					Namespace: testNamespace,
 					Finalizers: []string{
-						"gateways.operator.kyma-project.io/api-gateway-reconciliation",
+						api_gateway.ApiGatewayFinalizer,
 					},
 				},
 			}
@@ -142,6 +144,6 @@ type apiGatewayReconciliationMock struct {
 	status controllers.Status
 }
 
-func (i *apiGatewayReconciliationMock) Reconcile(_ context.Context, apiGatewayCR operatorv1alpha1.APIGateway, _ string) (operatorv1alpha1.APIGateway, controllers.Status) {
-	return apiGatewayCR, i.status
+func (i *apiGatewayReconciliationMock) Reconcile(_ context.Context, apiGatewayCR *operatorv1alpha1.APIGateway) controllers.Status {
+	return i.status
 }

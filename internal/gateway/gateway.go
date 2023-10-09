@@ -4,6 +4,7 @@ import (
 	"context"
 	_ "embed"
 	"fmt"
+
 	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -15,6 +16,7 @@ import (
 const (
 	KymaGatewayName      = "kyma-gateway"
 	KymaGatewayNamespace = "kyma-system"
+	KymaGatewayFullName  = "kyma-system/kyma-gateway"
 )
 
 //go:embed kyma_gateway.yaml

@@ -2,6 +2,7 @@ package gateway
 
 import (
 	"context"
+
 	dnsv1alpha1 "github.com/gardener/external-dns-management/pkg/apis/dns/v1alpha1"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -84,8 +85,8 @@ var _ = Describe("DNSEntry", func() {
 func getTestIstioIngressGatewayDnsBasedService() corev1.Service {
 	return corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "istio-ingressgateway",
-			Namespace: "istio-system",
+			Name:      KymaGatewayName,
+			Namespace: KymaGatewayNamespace,
 		},
 		Spec: corev1.ServiceSpec{
 			ClusterIP: "10.43.158.160",

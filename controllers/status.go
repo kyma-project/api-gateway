@@ -3,19 +3,20 @@ package controllers
 import (
 	"context"
 	"fmt"
+
 	operatorv1alpha1 "github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
 	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-type state int
+type State int
 
 const (
-	Ready      state = 0
-	Error      state = 1
-	Warning    state = 2
-	Deleting   state = 3
-	Processing state = 4
+	Ready      State = 0
+	Error      State = 1
+	Warning    State = 2
+	Deleting   State = 3
+	Processing State = 4
 )
 
 type Status interface {
@@ -24,13 +25,14 @@ type Status interface {
 	IsReady() bool
 	IsWarning() bool
 	IsError() bool
+	State() State
 	Description() string
 }
 
 type status struct {
 	err         error
 	description string
-	state       state
+	state       State
 }
 
 func ErrorStatus(err error, description string) Status {
@@ -78,7 +80,6 @@ func (s status) Description() string {
 }
 
 func (s status) ToAPIGatewayStatus() (operatorv1alpha1.APIGatewayStatus, error) {
-
 	switch s.state {
 	case Ready:
 		return operatorv1alpha1.APIGatewayStatus{
@@ -120,6 +121,10 @@ func (s status) IsWarning() bool {
 
 func (s status) IsReady() bool {
 	return s.state == Ready
+}
+
+func (s status) State() State {
+	return s.state
 }
 
 func UpdateApiGatewayStatus(ctx context.Context, k8sClient client.Client, apiGatewayCR *operatorv1alpha1.APIGateway, status Status) error {
