@@ -5,6 +5,5 @@ prerequisites:
   - name: "certificates"
     namespace: "istio-system"
 components:
-  - name: "istio-resources" # remove it after Kyma 2.19 is released, needed for upgrade test atm
   - name: "ory"
   - name: "api-gateway"
