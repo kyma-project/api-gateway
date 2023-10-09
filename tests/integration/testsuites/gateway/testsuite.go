@@ -1,56 +1,22 @@
-package ory
+package gateway
 
 import (
 	"context"
 	_ "embed"
-	"encoding/base64"
 	"fmt"
+	"log"
+	"os"
+	"time"
+
 	"github.com/cucumber/godog"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/helpers"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/manifestprocessor"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/resource"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
-	"golang.org/x/oauth2"
-	"golang.org/x/oauth2/clientcredentials"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
-	"log"
-	"path"
-	"time"
 )
-
-const manifestsDirectory = "testsuites/ory/manifests/"
-
-func (t *testsuite) createScenario(templateFileName string, scenarioName string) *scenario {
-	ns := t.namespace
-	testId := helpers.GenerateRandomTestId()
-
-	template := make(map[string]string)
-	template["Namespace"] = ns
-	template["NamePrefix"] = scenarioName
-	template["TestID"] = testId
-	template["Domain"] = t.config.Domain
-	template["GatewayName"] = t.config.GatewayName
-	template["GatewayNamespace"] = t.config.GatewayNamespace
-	template["IssuerUrl"] = t.config.IssuerUrl
-	template["EncodedCredentials"] = base64.RawStdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", t.config.ClientID, t.config.ClientSecret)))
-
-	return &scenario{
-		Namespace:               ns,
-		TestID:                  testId,
-		Domain:                  t.config.Domain,
-		ManifestTemplate:        template,
-		ApiResourceManifestPath: templateFileName,
-		ApiResourceDirectory:    path.Dir(manifestsDirectory),
-		k8sClient:               t.K8sClient(),
-		oauth2Cfg:               t.oauth2Cfg,
-		httpClient:              t.httpClient,
-		resourceManager:         t.ResourceManager(),
-		config:                  t.config,
-		jwtConfig:               t.jwtConfig,
-	}
-}
 
 type testsuite struct {
 	name            string
@@ -59,22 +25,19 @@ type testsuite struct {
 	k8sClient       dynamic.Interface
 	resourceManager *resource.Manager
 	config          testcontext.Config
-	oauth2Cfg       *clientcredentials.Config
-	jwtConfig       *clientcredentials.Config
 }
 
 func (t *testsuite) InitScenarios(ctx *godog.ScenarioContext) {
-	initOAuth2JWTOnePath(ctx, t)
-	initOAuth2JWTTwoPaths(ctx, t)
-	initOAuth2Endpoint(ctx, t)
-	initServicePerPath(ctx, t)
-	initUnsecured(ctx, t)
-	initSecuredToUnsecuredEndpoint(ctx, t)
-	initUnsecuredToSecured(ctx, t)
+	initScenario(ctx, t)
 }
 
 func (t *testsuite) FeaturePath() []string {
-	return []string{"testsuites/ory/features/"}
+	isGardener := os.Getenv("IS_GARDENER")
+	if isGardener == "true" {
+		return []string{"testsuites/gateway/features/kyma_gateway.feature", "testsuites/gateway/features/kyma_gateway_gardener.feature"}
+	}
+
+	return []string{"testsuites/gateway/features/kyma_gateway.feature", "testsuites/gateway/features/kyma_gateway_k3d.feature"}
 }
 
 func (t *testsuite) Name() string {
@@ -93,23 +56,8 @@ func (t *testsuite) Setup() error {
 	namespace := fmt.Sprintf("%s-%s", t.name, helpers.GenerateRandomString(6))
 	log.Printf("Using namespace: %s\n", namespace)
 
-	oauth2Cfg := &clientcredentials.Config{
-		ClientID:     t.config.ClientID,
-		ClientSecret: t.config.ClientSecret,
-		TokenURL:     fmt.Sprintf("%s/oauth2/token", t.config.IssuerUrl),
-		Scopes:       []string{"read"},
-		AuthStyle:    oauth2.AuthStyleInHeader,
-	}
-
-	jwtConfig := &clientcredentials.Config{
-		ClientID:     t.config.ClientID,
-		ClientSecret: t.config.ClientSecret,
-		TokenURL:     fmt.Sprintf("%s/oauth2/token", t.config.IssuerUrl),
-		AuthStyle:    oauth2.AuthStyleInHeader,
-	}
-
 	// create common resources for all scenarios
-	globalCommonResources, err := manifestprocessor.ParseFromFileWithTemplate("global-commons.yaml", manifestsDirectory, struct {
+	globalCommonResources, err := manifestprocessor.ParseFromFileWithTemplate("global-commons.yaml", manifestsPath, struct {
 		Namespace string
 	}{
 		Namespace: namespace,
@@ -134,11 +82,7 @@ func (t *testsuite) Setup() error {
 		return err
 	}
 
-	time.Sleep(time.Duration(t.config.ReqDelay) * time.Second)
-
-	t.oauth2Cfg = oauth2Cfg
 	t.namespace = namespace
-	t.jwtConfig = jwtConfig
 
 	return nil
 }
@@ -154,7 +98,7 @@ func (t *testsuite) TearDown() {
 func NewTestsuite(httpClient *helpers.RetryableHttpClient, k8sClient dynamic.Interface, rm *resource.Manager, config testcontext.Config) testcontext.Testsuite {
 
 	return &testsuite{
-		name:            "ory",
+		name:            "gateway",
 		httpClient:      httpClient,
 		k8sClient:       k8sClient,
 		resourceManager: rm,

@@ -18,7 +18,7 @@ import (
 
 type Testsuite interface {
 	Name() string
-	FeaturePath() string
+	FeaturePath() []string
 	InitScenarios(ctx *godog.ScenarioContext)
 	Setup() error
 	TearDown()
