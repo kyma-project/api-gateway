@@ -10,7 +10,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-func TestAPIs(t *testing.T) {
+func TestClusterConfig(t *testing.T) {
 	RegisterFailHandler(Fail)
 
 	RunSpecs(t, "Clusterconfig Suite")
