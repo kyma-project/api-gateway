@@ -1,7 +1,7 @@
 Feature: Checking default kyma gateway
   Background:
     Given APIGateway CR is applied
-    Then APIGateway CR is in "Ready" state
+    Then APIGateway CR is in "Ready" state with description ""
 
   Scenario: Kyma gateway is not removed when there is an APIRule
     Given there is an "kyma-rule" APIRule

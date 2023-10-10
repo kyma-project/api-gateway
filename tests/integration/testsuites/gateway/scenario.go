@@ -2,7 +2,11 @@ package gateway
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"log"
+	"path"
+
 	"github.com/avast/retry-go/v4"
 	"github.com/cucumber/godog"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/helpers"
@@ -13,8 +17,6 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
-	"log"
-	"path"
 )
 
 const manifestsPath = "testsuites/gateway/manifests/"
@@ -35,7 +37,7 @@ func initScenario(ctx *godog.ScenarioContext, ts *testsuite) {
 	}
 
 	ctx.Step(`APIGateway CR is applied`, scenario.applyAPIGatewayCR)
-	ctx.Step(`^APIGateway CR is in "([^"]*)" state$`, scenario.thereIsAnAPIGatewayCR)
+	ctx.Step(`^APIGateway CR is in "([^"]*)" state with description "([^"]*)"$`, scenario.thereIsAnAPIGatewayCR)
 	ctx.Step(`^there is a "([^"]*)" gateway in "([^"]*)" namespace$`, scenario.thereIsAGateway)
 	ctx.Step(`^there is a "([^"]*)" secret in "([^"]*)" namespace$`, scenario.thereIsACertificate)
 	ctx.Step(`^there is an "([^"]*)" APIRule$`, scenario.thereIsAnAPIRule)
@@ -78,19 +80,34 @@ func (c *scenario) applyAPIGatewayCR() error {
 	return nil
 }
 
-func (c *scenario) thereIsAnAPIGatewayCR(state string) error {
+func (c *scenario) thereIsAnAPIGatewayCR(state, description string) error {
 	return retry.Do(func() error {
 		res := schema.GroupVersionResource{Group: "operator.kyma-project.io", Version: "v1alpha1", Resource: "apigateways"}
-		gateway, err := c.k8sClient.Resource(res).Get(context.Background(), c.config.GatewayCRName, v1.GetOptions{})
+		cr, err := c.k8sClient.Resource(res).Get(context.Background(), c.config.GatewayCRName, v1.GetOptions{})
 		if err != nil {
-			return fmt.Errorf("gateway could not be found")
+			return fmt.Errorf("API-Gateway CR could not be found")
 		}
 
-		gatewayState, found, err := unstructured.NestedString(gateway.Object, "status", "state")
-		if err != nil || !found {
+		crState, found, err := unstructured.NestedString(cr.Object, "status", "state")
+		if err != nil {
 			return err
-		} else if gatewayState != state {
-			return fmt.Errorf("gateway state %s, is not in the expected state %s", gatewayState, state)
+		}
+		if !found {
+			return errors.New("unable to find API-Gateway CR status.state")
+		} else if crState != state {
+			return fmt.Errorf("API-Gateway CR status.state %s, is not as expected %s", crState, state)
+		}
+
+		if description != "" {
+			apiGatewayCRDesc, found, err := unstructured.NestedString(cr.Object, "status", "description")
+			if err != nil {
+				return err
+			}
+			if !found {
+				return errors.New("unable to find API-Gateway CR status.description")
+			} else if apiGatewayCRDesc != description {
+				return fmt.Errorf("API-Gateway CR status.description %s, is not as expected %s", apiGatewayCRDesc, description)
+			}
 		}
 
 		return nil

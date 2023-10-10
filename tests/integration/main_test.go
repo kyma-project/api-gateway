@@ -1,20 +1,22 @@
 package api_gateway
 
 import (
+	"log"
+	"os"
+	"testing"
+
 	"github.com/cucumber/godog"
 	"github.com/cucumber/godog/colors"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/client"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/manifestprocessor"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/resource"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
-	"github.com/kyma-project/api-gateway/tests/integration/testsuites/custom-domain"
+	customdomain "github.com/kyma-project/api-gateway/tests/integration/testsuites/custom-domain"
 	"github.com/kyma-project/api-gateway/tests/integration/testsuites/gateway"
-	"github.com/kyma-project/api-gateway/tests/integration/testsuites/istio-jwt"
+	istiojwt "github.com/kyma-project/api-gateway/tests/integration/testsuites/istio-jwt"
+	"github.com/kyma-project/api-gateway/tests/integration/testsuites/operator"
 	"github.com/kyma-project/api-gateway/tests/integration/testsuites/ory"
 	"github.com/kyma-project/api-gateway/tests/integration/testsuites/upgrade"
-	"log"
-	"os"
-	"testing"
 
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 )
@@ -82,6 +84,16 @@ func TestGateway(t *testing.T) {
 	ts, err := testcontext.New(config, gateway.NewTestsuite)
 	if err != nil {
 		t.Fatalf("Failed to create Gateway testsuite %s", err.Error())
+	}
+	defer ts.TearDown()
+	runTestsuite(t, ts, config)
+}
+
+func TestOperator(t *testing.T) {
+	config := testcontext.GetConfig()
+	ts, err := testcontext.New(config, operator.NewTestsuite)
+	if err != nil {
+		t.Fatalf("Failed to create Operator testsuite %s", err.Error())
 	}
 	defer ts.TearDown()
 	runTestsuite(t, ts, config)
