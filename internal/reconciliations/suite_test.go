@@ -36,5 +36,5 @@ func TestResources(t *testing.T) {
 }
 
 var _ = ReportAfterSuite("custom reporter", func(report types.Report) {
-	tests.GenerateGinkgoJunitReport("oauthkeeper-suite", report)
+	tests.GenerateGinkgoJunitReport("resources-suite", report)
 })
