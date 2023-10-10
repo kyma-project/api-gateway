@@ -11,6 +11,7 @@ import (
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
 	v12 "k8s.io/api/apps/v1"
 	v2 "k8s.io/api/autoscaling/v2"
+	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -85,24 +86,33 @@ func (c *scenario) applyAPIGatewayCR() error {
 	return nil
 }
 
-func (c *scenario) thereIsAnAPIGatewayCR(present string) error {
+func (c *scenario) thereIsAnAPIGatewayCR(isPresent string) error {
 	const (
 		is   = "is"
 		isNo = "is no"
 	)
-	if present != is && present != isNo {
-		panic(fmt.Errorf("choose %s or %s", is, isNo))
-	}
+
 	return retry.Do(func() error {
 		res := schema.GroupVersionResource{Group: "operator.kyma-project.io", Version: "v1alpha1", Resource: "apigateways"}
 		_, err := c.k8sClient.Resource(res).Get(context.Background(), c.config.GatewayCRName, v1.GetOptions{})
-		if present == is && err != nil {
-			return fmt.Errorf("apigateway should be present but is not")
-		} else if present != is && err == nil {
-			return fmt.Errorf("apigateway should not be present but is")
+		if isPresent == is {
+			if err != nil {
+				if errors.IsNotFound(err) {
+					return fmt.Errorf("apigateway cr should be present but is not")
+				}
+				return err
+			}
+			return nil
 		}
 
-		return nil
+		if isPresent == isNo {
+			if err == nil {
+				return fmt.Errorf("apigateway cr, should not be present but is")
+			}
+			return nil
+		}
+		return fmt.Errorf("choose between %s and %s", is, isNo)
+
 	}, testcontext.GetRetryOpts(c.config)...)
 }
 
@@ -294,20 +304,28 @@ func (c *scenario) resourceIsPresent(isPresent, kind, name string) error {
 		is   = "is"
 		isNo = "is no"
 	)
-	if isPresent != is && isPresent != isNo {
-		panic(fmt.Errorf("choose %s or %s", is, isNo))
-	}
 
 	return retry.Do(func() error {
 		gvr := resource.GetResourceGvr(kind, name)
 		_, err := c.k8sClient.Resource(gvr).Get(context.Background(), name, v1.GetOptions{})
-		if isPresent == is && err != nil {
-			return fmt.Errorf("kind: %s, name: %s, should be present but is not", kind, name)
-		} else if isPresent != is && err == nil {
-			return fmt.Errorf("kind: %s, name %s, should not be present but is", kind, name)
+		if isPresent == is {
+			if err != nil {
+				if errors.IsNotFound(err) {
+					return fmt.Errorf("kind: %s, name: %s, should be present but is not", kind, name)
+				}
+				return err
+			}
+
+			return nil
 		}
 
-		return nil
+		if isPresent == isNo {
+			if err == nil {
+				return fmt.Errorf("kind: %s, name: %s, should not be present but is", kind, name)
+			}
+			return nil
+		}
+		return fmt.Errorf("choose between %s and %s", is, isNo)
 	}, testcontext.GetRetryOpts(c.config)...)
 }
 
@@ -316,20 +334,28 @@ func (c *scenario) namespacedResourceIsPresent(isPresent, kind, name, namespace 
 		is   = "is"
 		isNo = "is no"
 	)
-	if isPresent != is && isPresent != isNo {
-		panic(fmt.Errorf("choose %s or %s", is, isNo))
-	}
 	return retry.Do(func() error {
 		gvr := resource.GetResourceGvr(kind, name)
 		_, err := c.k8sClient.Resource(gvr).Namespace(namespace).Get(context.Background(), name, v1.GetOptions{})
 
-		if isPresent == is && err != nil {
-			return fmt.Errorf("kind: %s, name: %s, namespace: %s, should be present but is not", kind, name, namespace)
-		} else if isPresent != is && err == nil {
-			return fmt.Errorf("kind: %s, name: %s, namespace: %s,  should not be present but is", kind, name, namespace)
+		if isPresent == is {
+			if err != nil {
+				if errors.IsNotFound(err) {
+					return fmt.Errorf("kind: %s, name: %s, should be present but is not", kind, name)
+				}
+				return err
+			}
+			return nil
 		}
 
-		return nil
+		if isPresent == isNo {
+			if err == nil {
+				return fmt.Errorf("kind: %s, name: %s, should not be present but is", kind, name)
+			}
+			return nil
+		}
+		return fmt.Errorf("choose between %s and %s", is, isNo)
+
 	}, testcontext.GetRetryOpts(c.config)...)
 }
 
