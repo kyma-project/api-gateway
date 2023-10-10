@@ -227,13 +227,11 @@ func deleteBlockingResources(config testcontext.Config) error {
 		err = k8sClient.Resource(resApiRule).DeleteCollection(context.TODO(), metav1.DeleteOptions{}, metav1.ListOptions{})
 		if err != nil {
 			log.Fatalf("failed to delete apirules, details %v", err)
-			return err
 		}
 		resVS := schema.GroupVersionResource{Group: "networking.istio.io", Version: "v1beta1", Resource: "virtualservices"}
 		err = k8sClient.Resource(resVS).DeleteCollection(context.TODO(), metav1.DeleteOptions{}, metav1.ListOptions{})
 		if err != nil {
 			log.Fatalf("failed to delete virtualservices, details %v", err)
-			return err
 		}
 		return nil
 	}, testcontext.GetRetryOpts(config)...)
