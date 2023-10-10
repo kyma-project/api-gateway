@@ -17,5 +17,5 @@ func TestAPIs(t *testing.T) {
 }
 
 var _ = ReportAfterSuite("custom reporter", func(report types.Report) {
-	tests.GenerateGinkgoJunitReport("gateway-suite", report)
+	tests.GenerateGinkgoJunitReport("clusterconfig-suite", report)
 })
