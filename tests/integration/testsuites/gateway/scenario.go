@@ -302,9 +302,9 @@ func (c *scenario) resourceIsPresent(isPresent, kind, name string) error {
 		gvr := resource.GetResourceGvr(kind, name)
 		_, err := c.k8sClient.Resource(gvr).Get(context.Background(), name, v1.GetOptions{})
 		if isPresent == is && err != nil {
-			return fmt.Errorf("apigateway should be present but is not")
+			return fmt.Errorf("kind: %s, name: %s, should be present but is not", kind, name)
 		} else if isPresent != is && err == nil {
-			return fmt.Errorf("apigateway should not be present but is")
+			return fmt.Errorf("kind: %s, name %s, should not be present but is", kind, name)
 		}
 
 		return nil
@@ -324,9 +324,9 @@ func (c *scenario) namespacedResourceIsPresent(isPresent, kind, name, namespace 
 		_, err := c.k8sClient.Resource(gvr).Namespace(namespace).Get(context.Background(), name, v1.GetOptions{})
 
 		if isPresent == is && err != nil {
-			return fmt.Errorf("apigateway should be present but is not")
+			return fmt.Errorf("kind: %s, name: %s, namespace: %s, should be present but is not", kind, name, namespace)
 		} else if isPresent != is && err == nil {
-			return fmt.Errorf("apigateway should not be present but is")
+			return fmt.Errorf("kind: %s, name: %s, namespace: %s,  should not be present but is", kind, name, namespace)
 		}
 
 		return nil
@@ -343,7 +343,7 @@ func (c *scenario) namespacedResourceHasStatusReady(kind, name, namespace string
 		switch kind {
 		case resource.Deployment.String():
 			var dep v12.Deployment
-			err := runtime.DefaultUnstructuredConverter.FromUnstructured(unstr.UnstructuredContent(), &dep)
+			err = runtime.DefaultUnstructuredConverter.FromUnstructured(unstr.UnstructuredContent(), &dep)
 			if err != nil {
 				return fmt.Errorf("cannot convert unstructured to structured kind: %s, name: %s, namespace: %s", kind, name, namespace)
 			}
@@ -352,7 +352,7 @@ func (c *scenario) namespacedResourceHasStatusReady(kind, name, namespace string
 			}
 		case resource.HorizontalPodAutoscaler.String():
 			var hpa v2.HorizontalPodAutoscaler
-			err := runtime.DefaultUnstructuredConverter.FromUnstructured(unstr.UnstructuredContent(), &hpa)
+			err = runtime.DefaultUnstructuredConverter.FromUnstructured(unstr.UnstructuredContent(), &hpa)
 			if err != nil {
 				return fmt.Errorf("cannot convert unstructured to structured kind: %s, name: %s, namespace: %s", kind, name, namespace)
 			}
