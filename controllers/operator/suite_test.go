@@ -129,6 +129,11 @@ var _ = BeforeSuite(func() {
 })
 
 var _ = AfterSuite(func() {
+	/*
+		 Provided solution for timeout issue waiting for kubeapiserver
+			https://github.com/kubernetes-sigs/controller-runtime/issues/1571#issuecomment-1005575071
+	*/
+	cancel()
 	By("Tearing down the test environment")
 	err := retry.OnError(retry.DefaultBackoff, func(err error) bool {
 		return true
