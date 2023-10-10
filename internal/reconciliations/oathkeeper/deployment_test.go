@@ -93,7 +93,7 @@ var _ = Describe("Oathkeeper Deployment reconciliation", func() {
 			return c.Name == "oathkeeper-maester"
 		}).(corev1.Container)
 
-		Expect(oathkeeperContainter.Resources.Limits.Cpu().String()).To(Equal("100m"))
+		Expect(oathkeeperContainter.Resources.Limits.Cpu().String()).To(Equal("10"))
 		Expect(oathkeeperContainter.Resources.Limits.Memory().String()).To(Equal("512Mi"))
 		Expect(oathkeeperContainter.Resources.Requests.Cpu().String()).To(Equal("100m"))
 		Expect(oathkeeperContainter.Resources.Requests.Memory().String()).To(Equal("64Mi"))
