@@ -109,7 +109,10 @@ func (c *scenario) thereIsAnAPIGatewayCR(isPresent string) error {
 			if err == nil {
 				return fmt.Errorf("apigateway cr, should not be present but is")
 			}
-			return nil
+			if errors.IsNotFound(err) {
+				return nil
+			}
+			return err
 		}
 		return fmt.Errorf("choose between %s and %s", is, isNo)
 
@@ -121,6 +124,9 @@ func (c *scenario) APIGatewayCRisReady() error {
 	return retry.Do(func() error {
 		res := schema.GroupVersionResource{Group: "operator.kyma-project.io", Version: "v1alpha1", Resource: "apigateways"}
 		gateway, err := c.k8sClient.Resource(res).Get(context.Background(), c.config.GatewayCRName, v1.GetOptions{})
+		if err != nil {
+			return err
+		}
 
 		gatewayState, found, err := unstructured.NestedString(gateway.Object, "status", "state")
 		if err != nil || !found {
@@ -323,7 +329,10 @@ func (c *scenario) resourceIsPresent(isPresent, kind, name string) error {
 			if err == nil {
 				return fmt.Errorf("kind: %s, name: %s, should not be present but is", kind, name)
 			}
-			return nil
+			if errors.IsNotFound(err) {
+				return nil
+			}
+			return err
 		}
 		return fmt.Errorf("choose between %s and %s", is, isNo)
 	}, testcontext.GetRetryOpts(c.config)...)
@@ -352,7 +361,10 @@ func (c *scenario) namespacedResourceIsPresent(isPresent, kind, name, namespace 
 			if err == nil {
 				return fmt.Errorf("kind: %s, name: %s, should not be present but is", kind, name)
 			}
-			return nil
+			if errors.IsNotFound(err) {
+				return nil
+			}
+			return err
 		}
 		return fmt.Errorf("choose between %s and %s", is, isNo)
 
