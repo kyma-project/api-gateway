@@ -17,6 +17,47 @@ import (
 	"k8s.io/client-go/restmapper"
 )
 
+type godogResourceMapping int
+
+func (k godogResourceMapping) String() string {
+	switch k {
+	case Deployment:
+		return "Deployment"
+	case Service:
+		return "Service"
+	case HorizontalPodAutoscaler:
+		return "HorizontalPodAutoscaler"
+	case ConfigMap:
+		return "ConfigMap"
+	case Secret:
+		return "Secret"
+	case CustomResourceDefinition:
+		return "CustomResourceDefinition"
+	case ServiceAccount:
+		return "ServiceAccount"
+	case ClusterRole:
+		return "ClusterRole"
+	case ClusterRoleBinding:
+		return "ClusterRoleBinding"
+	case PeerAuthentication:
+		return "PeerAuthentication"
+	}
+	panic(fmt.Errorf("%#v has unimplemented String() method", k))
+}
+
+const (
+	Deployment godogResourceMapping = iota
+	Service
+	HorizontalPodAutoscaler
+	ConfigMap
+	Secret
+	CustomResourceDefinition
+	ServiceAccount
+	ClusterRole
+	ClusterRoleBinding
+	PeerAuthentication
+)
+
 type Manager struct {
 	retryOptions []retry.Option
 	mapper       *restmapper.DeferredDiscoveryRESTMapper
@@ -452,4 +493,72 @@ func mergeMaps(o, n map[string]any) {
 			o[k] = nv
 		}
 	}
+}
+func GetResourceGvr(kind, name string) schema.GroupVersionResource {
+	var gvr schema.GroupVersionResource
+	switch kind {
+	case Deployment.String():
+		gvr = schema.GroupVersionResource{
+			Group:    "apps",
+			Version:  "v1",
+			Resource: "deployments",
+		}
+	case Service.String():
+		gvr = schema.GroupVersionResource{
+			Group:    "",
+			Version:  "v1",
+			Resource: "services",
+		}
+	case HorizontalPodAutoscaler.String():
+		gvr = schema.GroupVersionResource{
+			Group:    "autoscaling",
+			Version:  "v2",
+			Resource: "horizontalpodautoscalers",
+		}
+	case ConfigMap.String():
+		gvr = schema.GroupVersionResource{
+			Group:    "",
+			Version:  "v1",
+			Resource: "configmaps",
+		}
+	case Secret.String():
+		gvr = schema.GroupVersionResource{
+			Group:    "",
+			Version:  "v1",
+			Resource: "secrets",
+		}
+	case CustomResourceDefinition.String():
+		gvr = schema.GroupVersionResource{
+			Group:    "apiextensions.k8s.io",
+			Version:  "v1",
+			Resource: "customresourcedefinitions",
+		}
+	case ServiceAccount.String():
+		gvr = schema.GroupVersionResource{
+			Group:    "",
+			Version:  "v1",
+			Resource: "serviceaccounts",
+		}
+	case ClusterRole.String():
+		gvr = schema.GroupVersionResource{
+			Group:    "rbac.authorization.k8s.io",
+			Version:  "v1",
+			Resource: "clusterroles",
+		}
+	case ClusterRoleBinding.String():
+		gvr = schema.GroupVersionResource{
+			Group:    "rbac.authorization.k8s.io",
+			Version:  "v1",
+			Resource: "clusterrolebindings",
+		}
+	case PeerAuthentication.String():
+		gvr = schema.GroupVersionResource{
+			Group:    "security.istio.io",
+			Version:  "v1beta1",
+			Resource: "peerauthentications",
+		}
+	default:
+		panic(fmt.Errorf("cannot get gvr for kind: %s, name: %s", kind, name))
+	}
+	return gvr
 }
