@@ -3,16 +3,20 @@ package oathkeeper
 import (
 	"context"
 	_ "embed"
+	"errors"
 	"fmt"
+	"github.com/avast/retry-go/v4"
 	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
 	"github.com/kyma-project/api-gateway/internal/clusterconfig"
 	"github.com/kyma-project/api-gateway/internal/reconciliations"
 	"github.com/kyma-project/api-gateway/internal/reconciliations/oathkeeper/maester"
 	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"time"
 )
 
 const (
@@ -52,7 +56,29 @@ func reconcileDeployment(ctx context.Context, k8sClient client.Client, name stri
 	templateValues["Namespace"] = reconciliations.Namespace
 	templateValues["ServiceAccountName"] = maester.ServiceAccountName
 
-	return reconciliations.ApplyResource(ctx, k8sClient, *deploymentManifest, templateValues)
+	err := reconciliations.ApplyResource(ctx, k8sClient, *deploymentManifest, templateValues)
+	if err != nil {
+		return err
+	}
+
+	return retry.Do(func() error {
+		var podList corev1.PodList
+		err := k8sClient.List(context.Background(), &podList, client.MatchingLabels{
+			"app.kubernetes.io/instance": "ory",
+			"app.kubernetes.io/name":     "oathkeeper",
+		})
+
+		if err != nil {
+			return err
+		}
+
+		for _, pod := range podList.Items {
+			if pod.Status.Phase != "Running" {
+				return errors.New("ory oathkeeper deployment is not ready")
+			}
+		}
+		return nil
+	}, retry.Attempts(60), retry.Delay(2*time.Second))
 }
 
 func deleteDeployment(k8sClient client.Client, name string) error {
