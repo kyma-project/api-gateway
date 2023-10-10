@@ -22,7 +22,7 @@ func reconcileNonGardenerCertificateSecret(ctx context.Context, k8sClient client
 	ctrl.Log.Info("Reconciling Certificate Secret", "KymaGatewayEnabled", isEnabled, "name", kymaGatewayCertSecretName, "namespace", certificateDefaultNamespace)
 
 	if !isEnabled || apiGatewayCR.IsInDeletion() {
-		return deleteSecret(k8sClient, kymaGatewayCertSecretName, certificateDefaultNamespace)
+		return deleteSecret(ctx, k8sClient, kymaGatewayCertSecretName, certificateDefaultNamespace)
 	}
 
 	templateValues := make(map[string]string)
@@ -32,7 +32,7 @@ func reconcileNonGardenerCertificateSecret(ctx context.Context, k8sClient client
 	return reconciliations.ApplyResource(ctx, k8sClient, nonGardenerCertificateSecretManifest, templateValues)
 }
 
-func deleteSecret(k8sClient client.Client, name, namespace string) error {
+func deleteSecret(ctx context.Context, k8sClient client.Client, name, namespace string) error {
 	ctrl.Log.Info("Deleting certificate secret if it exists", "name", name, "namespace", namespace)
 	s := v1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
@@ -40,7 +40,7 @@ func deleteSecret(k8sClient client.Client, name, namespace string) error {
 			Namespace: namespace,
 		},
 	}
-	err := k8sClient.Delete(context.Background(), &s)
+	err := k8sClient.Delete(ctx, &s)
 
 	if err != nil && !k8serrors.IsNotFound(err) {
 		return fmt.Errorf("failed to delete certificate secret %s/%s: %v", certificateDefaultNamespace, name, err)

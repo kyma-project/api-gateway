@@ -34,7 +34,7 @@ func reconcileOryJWKSSecret(ctx context.Context, k8sClient client.Client, apiGat
 	ctrl.Log.Info("Reconciling Ory Config ConfigMap", "name", configMapName, "Namespace", reconciliations.Namespace)
 
 	if apiGatewayCR.IsInDeletion() {
-		return deleteSecret(k8sClient, secretName, reconciliations.Namespace)
+		return deleteSecret(ctx, k8sClient, secretName, reconciliations.Namespace)
 	}
 
 	data, err := generateJWKS()
@@ -63,7 +63,7 @@ func reconcileOryJWKSSecret(ctx context.Context, k8sClient client.Client, apiGat
 	return reconciliations.CreateOrUpdateResource(ctx, k8sClient, secretUnstructured)
 }
 
-func deleteSecret(k8sClient client.Client, name, namespace string) error {
+func deleteSecret(ctx context.Context, k8sClient client.Client, name, namespace string) error {
 	ctrl.Log.Info("Deleting Oathkeeper JWKS Secret if it exists", "name", name, "Namespace", namespace)
 	s := corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
@@ -71,7 +71,7 @@ func deleteSecret(k8sClient client.Client, name, namespace string) error {
 			Namespace: namespace,
 		},
 	}
-	err := k8sClient.Delete(context.Background(), &s)
+	err := k8sClient.Delete(ctx, &s)
 
 	if err != nil && !k8serrors.IsNotFound(err) {
 		return fmt.Errorf("failed to delete Oathkeeper Secret %s/%s: %v", namespace, name, err)

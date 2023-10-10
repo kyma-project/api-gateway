@@ -15,11 +15,11 @@ import (
 
 const roleBindingName = "ory-oathkeeper-keys-job-role-binding"
 
-func reconcileOryOathkeeperCronjobRoleBinding(_ context.Context, k8sClient client.Client, _ v1alpha1.APIGateway) error {
-	return deleteRoleBinding(k8sClient, roleBindingName, reconciliations.Namespace)
+func reconcileOryOathkeeperCronjobRoleBinding(ctx context.Context, k8sClient client.Client, _ v1alpha1.APIGateway) error {
+	return deleteRoleBinding(ctx, k8sClient, roleBindingName, reconciliations.Namespace)
 }
 
-func deleteRoleBinding(k8sClient client.Client, name, namespace string) error {
+func deleteRoleBinding(ctx context.Context, k8sClient client.Client, name, namespace string) error {
 	ctrl.Log.Info("Deleting Oathkeeper Cronjob RoleBinding if it exists", "name", name, "Namespace", namespace)
 	s := rbacv1.RoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
@@ -27,7 +27,7 @@ func deleteRoleBinding(k8sClient client.Client, name, namespace string) error {
 			Namespace: namespace,
 		},
 	}
-	err := k8sClient.Delete(context.Background(), &s)
+	err := k8sClient.Delete(ctx, &s)
 
 	if err != nil && !k8serrors.IsNotFound(err) {
 		return fmt.Errorf("failed to delete Oathkeeper RoleBinding %s/%s: %v", namespace, name, err)

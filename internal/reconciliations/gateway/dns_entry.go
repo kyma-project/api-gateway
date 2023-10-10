@@ -31,7 +31,7 @@ func reconcileKymaGatewayDnsEntry(ctx context.Context, k8sClient client.Client, 
 	ctrl.Log.Info("Reconciling DNS entry", "KymaGatewayEnabled", isEnabled, "name", name, "namespace", namespace)
 
 	if !isEnabled || apiGatewayCR.IsInDeletion() {
-		return deleteDnsEntry(k8sClient, name, namespace)
+		return deleteDnsEntry(ctx, k8sClient, name, namespace)
 	}
 
 	istioIngressIp, err := fetchIstioIngressGatewayIp(ctx, k8sClient)
@@ -53,7 +53,7 @@ func reconcileDnsEntry(ctx context.Context, k8sClient client.Client, name, names
 	return reconciliations.ApplyResource(ctx, k8sClient, dnsEntryManifest, templateValues)
 }
 
-func deleteDnsEntry(k8sClient client.Client, name, namespace string) error {
+func deleteDnsEntry(ctx context.Context, k8sClient client.Client, name, namespace string) error {
 	ctrl.Log.Info("Deleting DNSEntry if it exists", "name", name, "namespace", namespace)
 	d := dnsv1alpha1.DNSEntry{
 		ObjectMeta: metav1.ObjectMeta{
@@ -61,7 +61,7 @@ func deleteDnsEntry(k8sClient client.Client, name, namespace string) error {
 			Namespace: namespace,
 		},
 	}
-	err := k8sClient.Delete(context.Background(), &d)
+	err := k8sClient.Delete(ctx, &d)
 
 	if err != nil && !k8serrors.IsNotFound(err) {
 		return fmt.Errorf("failed to delete DNSEntry %s/%s: %v", namespace, name, err)

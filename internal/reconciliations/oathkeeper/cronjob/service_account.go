@@ -15,11 +15,11 @@ import (
 
 const serviceAccountName = "ory-oathkeeper-keys-service-account"
 
-func reconcileOryOathkeeperCronjobServiceAccount(_ context.Context, k8sClient client.Client, _ v1alpha1.APIGateway) error {
-	return deleteServiceAccount(k8sClient, serviceAccountName, reconciliations.Namespace)
+func reconcileOryOathkeeperCronjobServiceAccount(ctx context.Context, k8sClient client.Client, _ v1alpha1.APIGateway) error {
+	return deleteServiceAccount(ctx, k8sClient, serviceAccountName, reconciliations.Namespace)
 }
 
-func deleteServiceAccount(k8sClient client.Client, name, namespace string) error {
+func deleteServiceAccount(ctx context.Context, k8sClient client.Client, name, namespace string) error {
 	ctrl.Log.Info("Deleting Oathkeeper Cronjob ServiceAccount if it exists", "name", name, "Namespace", namespace)
 	s := corev1.ServiceAccount{
 		ObjectMeta: metav1.ObjectMeta{
@@ -27,7 +27,7 @@ func deleteServiceAccount(k8sClient client.Client, name, namespace string) error
 			Namespace: namespace,
 		},
 	}
-	err := k8sClient.Delete(context.Background(), &s)
+	err := k8sClient.Delete(ctx, &s)
 
 	if err != nil && !k8serrors.IsNotFound(err) {
 		return fmt.Errorf("failed to delete Oathkeeper ConfigMap %s/%s: %v", namespace, name, err)

@@ -50,7 +50,7 @@ func EvaluateClusterSize(ctx context.Context, k8sClient client.Client) (ClusterS
 			memoryCapacity.Add(*nodeMemoryCap)
 		}
 	}
-	
+
 	if cpuCapacity.Cmp(*resource.NewQuantity(ProductionClusterCpuThreshold, resource.DecimalSI)) == -1 ||
 		memoryCapacity.Cmp(*resource.NewScaledQuantity(ProductionClusterMemoryThresholdGi, resource.Giga)) == -1 {
 		return Evaluation, nil

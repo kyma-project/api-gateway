@@ -29,7 +29,7 @@ func reconcileKymaGatewayCertificate(ctx context.Context, k8sClient client.Clien
 	ctrl.Log.Info("Reconciling Certificate", "KymaGatewayEnabled", isEnabled, "name", kymaGatewayCertificateName, "namespace", certificateDefaultNamespace)
 
 	if !isEnabled || apiGatewayCR.IsInDeletion() {
-		return deleteCertificate(k8sClient, kymaGatewayCertificateName)
+		return deleteCertificate(ctx, k8sClient, kymaGatewayCertificateName)
 	}
 
 	return reconcileCertificate(ctx, k8sClient, kymaGatewayCertificateName, domain, kymaGatewayCertSecretName)
@@ -47,7 +47,7 @@ func reconcileCertificate(ctx context.Context, k8sClient client.Client, name, do
 	return reconciliations.ApplyResource(ctx, k8sClient, certificateManifest, templateValues)
 }
 
-func deleteCertificate(k8sClient client.Client, name string) error {
+func deleteCertificate(ctx context.Context, k8sClient client.Client, name string) error {
 	ctrl.Log.Info("Deleting Certificate if it exists", "name", name, "namespace", certificateDefaultNamespace)
 	c := certv1alpha1.Certificate{
 		ObjectMeta: metav1.ObjectMeta{
@@ -55,7 +55,7 @@ func deleteCertificate(k8sClient client.Client, name string) error {
 			Namespace: certificateDefaultNamespace,
 		},
 	}
-	err := k8sClient.Delete(context.Background(), &c)
+	err := k8sClient.Delete(ctx, &c)
 
 	if err != nil && !k8serrors.IsNotFound(err) {
 		return fmt.Errorf("failed to delete Certificate %s/%s: %v", certificateDefaultNamespace, name, err)

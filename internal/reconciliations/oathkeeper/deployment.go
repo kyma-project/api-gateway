@@ -39,7 +39,7 @@ func reconcileOathkeeperDeployment(ctx context.Context, k8sClient client.Client,
 	ctrl.Log.Info("Reconciling Ory Oathkeeper Deployment", "Cluster size", clusterSize, "name", deploymentName, "Namespace", reconciliations.Namespace)
 
 	if apiGatewayCR.IsInDeletion() {
-		return deleteDeployment(k8sClient, deploymentName)
+		return deleteDeployment(ctx, k8sClient, deploymentName)
 	}
 
 	if clusterSize == clusterconfig.Evaluation {
@@ -81,7 +81,7 @@ func reconcileDeployment(ctx context.Context, k8sClient client.Client, name stri
 	}, retry.Attempts(60), retry.Delay(2*time.Second))
 }
 
-func deleteDeployment(k8sClient client.Client, name string) error {
+func deleteDeployment(ctx context.Context, k8sClient client.Client, name string) error {
 	ctrl.Log.Info("Deleting Deployment if it exists", "name", name, "Namespace", reconciliations.Namespace)
 	c := appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
@@ -89,7 +89,7 @@ func deleteDeployment(k8sClient client.Client, name string) error {
 			Namespace: reconciliations.Namespace,
 		},
 	}
-	err := k8sClient.Delete(context.Background(), &c)
+	err := k8sClient.Delete(ctx, &c)
 
 	if err != nil && !k8serrors.IsNotFound(err) {
 		return fmt.Errorf("failed to delete Deployment %s/%s: %v", reconciliations.Namespace, name, err)

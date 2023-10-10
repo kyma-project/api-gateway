@@ -22,7 +22,7 @@ func reconcileOryOathkeeperMaesterServiceAccount(ctx context.Context, k8sClient 
 	ctrl.Log.Info("Reconciling Ory Maester ServiceAccount", "name", ServiceAccountName, "Namespace", reconciliations.Namespace)
 
 	if apiGatewayCR.IsInDeletion() {
-		return deleteServiceAccount(k8sClient, ServiceAccountName, reconciliations.Namespace)
+		return deleteServiceAccount(ctx, k8sClient, ServiceAccountName, reconciliations.Namespace)
 	}
 
 	templateValues := make(map[string]string)
@@ -32,7 +32,7 @@ func reconcileOryOathkeeperMaesterServiceAccount(ctx context.Context, k8sClient 
 	return reconciliations.ApplyResource(ctx, k8sClient, serviceAccount, templateValues)
 }
 
-func deleteServiceAccount(k8sClient client.Client, name, namespace string) error {
+func deleteServiceAccount(ctx context.Context, k8sClient client.Client, name, namespace string) error {
 	ctrl.Log.Info("Deleting Oathkeeper Maester ServiceAccount if it exists", "name", name, "Namespace", namespace)
 	s := corev1.ServiceAccount{
 		ObjectMeta: metav1.ObjectMeta{
@@ -40,7 +40,7 @@ func deleteServiceAccount(k8sClient client.Client, name, namespace string) error
 			Namespace: namespace,
 		},
 	}
-	err := k8sClient.Delete(context.Background(), &s)
+	err := k8sClient.Delete(ctx, &s)
 
 	if err != nil && !k8serrors.IsNotFound(err) {
 		return fmt.Errorf("failed to delete Oathkeeper Maester ServiceAccount %s/%s: %v", namespace, name, err)

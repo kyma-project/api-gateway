@@ -26,7 +26,7 @@ func reconcileOryOathkeeperRuleCRD(ctx context.Context, k8sClient client.Client,
 	ctrl.Log.Info("Reconciling Ory Config PeerAuthentication", "name", crdName)
 
 	if apiGatewayCR.IsInDeletion() {
-		return deleteCRD(k8sClient, crdName)
+		return deleteCRD(ctx, k8sClient, crdName)
 	}
 
 	templateValues := make(map[string]string)
@@ -35,14 +35,14 @@ func reconcileOryOathkeeperRuleCRD(ctx context.Context, k8sClient client.Client,
 	return reconciliations.ApplyResource(ctx, k8sClient, crd, templateValues)
 }
 
-func deleteCRD(k8sClient client.Client, name string) error {
+func deleteCRD(ctx context.Context, k8sClient client.Client, name string) error {
 	ctrl.Log.Info("Deleting Oathkeeper Rule CRD if it exists", "name", name)
 	s := apiextensionsv1.CustomResourceDefinition{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: name,
 		},
 	}
-	err := k8sClient.Delete(context.Background(), &s)
+	err := k8sClient.Delete(ctx, &s)
 
 	if err != nil && !k8serrors.IsNotFound(err) {
 		return fmt.Errorf("failed to delete Oathkeeper Rule CRD %s: %v", name, err)

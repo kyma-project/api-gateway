@@ -22,7 +22,7 @@ func reconcileOryOathkeeperPeerAuthentication(ctx context.Context, k8sClient cli
 	ctrl.Log.Info("Reconciling Ory Config PeerAuthentication", "name", peerAuthenticationName, "Namespace", reconciliations.Namespace)
 
 	if apiGatewayCR.IsInDeletion() {
-		return deletePeerAuthentication(k8sClient, peerAuthenticationName, reconciliations.Namespace)
+		return deletePeerAuthentication(ctx, k8sClient, peerAuthenticationName, reconciliations.Namespace)
 	}
 
 	templateValues := make(map[string]string)
@@ -32,7 +32,7 @@ func reconcileOryOathkeeperPeerAuthentication(ctx context.Context, k8sClient cli
 	return reconciliations.ApplyResource(ctx, k8sClient, peerAuthentication, templateValues)
 }
 
-func deletePeerAuthentication(k8sClient client.Client, name, namespace string) error {
+func deletePeerAuthentication(ctx context.Context, k8sClient client.Client, name, namespace string) error {
 	ctrl.Log.Info("Deleting Oathkeeper Maester PeerAuthentication if it exists", "name", name, "Namespace", namespace)
 	s := securityv1beta1.PeerAuthentication{
 		ObjectMeta: metav1.ObjectMeta{
@@ -40,7 +40,7 @@ func deletePeerAuthentication(k8sClient client.Client, name, namespace string) e
 			Namespace: namespace,
 		},
 	}
-	err := k8sClient.Delete(context.Background(), &s)
+	err := k8sClient.Delete(ctx, &s)
 
 	if err != nil && !k8serrors.IsNotFound(err) {
 		return fmt.Errorf("failed to delete Oathkeeper Maester PeerAuthentication %s/%s: %v", namespace, name, err)
