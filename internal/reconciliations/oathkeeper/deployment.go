@@ -63,7 +63,7 @@ func reconcileDeployment(ctx context.Context, k8sClient client.Client, name stri
 
 	return retry.Do(func() error {
 		var podList corev1.PodList
-		err := k8sClient.List(context.Background(), &podList, client.MatchingLabels{
+		err := k8sClient.List(ctx, &podList, client.MatchingLabels{
 			"app.kubernetes.io/instance": "ory",
 			"app.kubernetes.io/name":     "oathkeeper",
 		})
@@ -73,7 +73,7 @@ func reconcileDeployment(ctx context.Context, k8sClient client.Client, name stri
 		}
 
 		for _, pod := range podList.Items {
-			if pod.Status.Phase != "Running" {
+			if pod.Status.Phase != corev1.PodRunning {
 				return errors.New("ory oathkeeper deployment is not ready")
 			}
 		}

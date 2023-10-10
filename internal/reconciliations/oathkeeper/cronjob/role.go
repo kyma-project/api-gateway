@@ -30,7 +30,7 @@ func deleteRole(ctx context.Context, k8sClient client.Client, name, namespace st
 	err := k8sClient.Delete(ctx, &s)
 
 	if err != nil && !k8serrors.IsNotFound(err) {
-		return fmt.Errorf("failed to delete Oathkeeper Role %s/%s: %v", namespace, name, err)
+		return fmt.Errorf("failed to delete Oathkeeper Cronjob Role %s/%s: %v", namespace, name, err)
 	}
 
 	if k8serrors.IsNotFound(err) {

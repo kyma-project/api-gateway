@@ -30,7 +30,7 @@ func deleteServiceAccount(ctx context.Context, k8sClient client.Client, name, na
 	err := k8sClient.Delete(ctx, &s)
 
 	if err != nil && !k8serrors.IsNotFound(err) {
-		return fmt.Errorf("failed to delete Oathkeeper ConfigMap %s/%s: %v", namespace, name, err)
+		return fmt.Errorf("failed to delete Oathkeeper Cronjob ServiceAccount %s/%s: %v", namespace, name, err)
 	}
 
 	if k8serrors.IsNotFound(err) {

@@ -31,7 +31,7 @@ const (
 const secretName = "ory-oathkeeper-jwks-secret"
 
 func reconcileOryJWKSSecret(ctx context.Context, k8sClient client.Client, apiGatewayCR v1alpha1.APIGateway) error {
-	ctrl.Log.Info("Reconciling Ory Config ConfigMap", "name", configMapName, "Namespace", reconciliations.Namespace)
+	ctrl.Log.Info("Reconciling Ory JWKS Secret", "name", secretName, "Namespace", reconciliations.Namespace)
 
 	if apiGatewayCR.IsInDeletion() {
 		return deleteSecret(ctx, k8sClient, secretName, reconciliations.Namespace)
