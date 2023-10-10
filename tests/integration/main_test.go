@@ -1,10 +1,12 @@
 package api_gateway
 
 import (
+	"context"
 	"log"
 	"os"
 	"testing"
 
+	"github.com/avast/retry-go/v4"
 	"github.com/cucumber/godog"
 	"github.com/cucumber/godog/colors"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/client"
@@ -17,7 +19,8 @@ import (
 	"github.com/kyma-project/api-gateway/tests/integration/testsuites/operator"
 	"github.com/kyma-project/api-gateway/tests/integration/testsuites/ory"
 	"github.com/kyma-project/api-gateway/tests/integration/testsuites/upgrade"
-
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 )
 
@@ -114,6 +117,9 @@ func runTestsuite(t *testing.T, testsuite testcontext.Testsuite, config testcont
 			testsuite.InitScenarios(ctx.ScenarioContext())
 
 			ctx.AfterSuite(func() {
+				if err := deleteBlockingResources(config); err != nil {
+					t.Fatalf("Cannot delete blocking resources: %s", err.Error())
+				}
 				if err := deleteApiGatewayCR(config); err != nil {
 					t.Fatalf("Cannot delete api-gateway CR: %s", err.Error())
 				}
@@ -209,4 +215,26 @@ func deleteApiGatewayCR(config testcontext.Config) error {
 	}
 
 	return nil
+}
+
+func deleteBlockingResources(config testcontext.Config) error {
+	return retry.Do(func() error {
+		k8sClient, err := client.GetDynamicClient()
+		if err != nil {
+			return err
+		}
+		resApiRule := schema.GroupVersionResource{Group: "gateway.kyma-project.io", Version: "v1beta1", Resource: "apirules"}
+		err = k8sClient.Resource(resApiRule).DeleteCollection(context.TODO(), metav1.DeleteOptions{}, metav1.ListOptions{})
+		if err != nil {
+			log.Fatalf("failed to delete apirules, details %v", err)
+			return err
+		}
+		resVS := schema.GroupVersionResource{Group: "networking.istio.io", Version: "v1beta1", Resource: "virtualservices"}
+		err = k8sClient.Resource(resVS).DeleteCollection(context.TODO(), metav1.DeleteOptions{}, metav1.ListOptions{})
+		if err != nil {
+			log.Fatalf("failed to delete virtualservices, details %v", err)
+			return err
+		}
+		return nil
+	}, testcontext.GetRetryOpts(config)...)
 }
