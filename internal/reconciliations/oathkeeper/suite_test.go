@@ -17,7 +17,7 @@ import (
 	"testing"
 )
 
-func TestValidators(t *testing.T) {
+func TestOathkeeper(t *testing.T) {
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "Oathkeeper Suite")
 }
