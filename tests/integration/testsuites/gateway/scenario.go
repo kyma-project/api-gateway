@@ -6,6 +6,7 @@ import (
 	"github.com/avast/retry-go/v4"
 	"github.com/cucumber/godog"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/helpers"
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/hooks"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/manifestprocessor"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/resource"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
@@ -33,6 +34,10 @@ func initScenario(ctx *godog.ScenarioContext, ts *testsuite) {
 	if err != nil {
 		log.Fatalf("could not initialize custom domain endpoint err=%s", err)
 	}
+
+	ctx.Before(hooks.ApplyApiGatewayCr)
+	// TODO implement separate teardown for scenarios
+	//ctx.After(hooks.ApiGatewayCrTearDown)
 
 	ctx.Step(`APIGateway CR is applied`, scenario.applyAPIGatewayCR)
 	ctx.Step(`^APIGateway CR is in "([^"]*)" state$`, scenario.thereIsAnAPIGatewayCR)
@@ -94,7 +99,7 @@ func (c *scenario) thereIsAnAPIGatewayCR(state string) error {
 		}
 
 		return nil
-	}, testcontext.GetRetryOpts(c.config)...)
+	}, testcontext.GetRetryOpts()...)
 }
 
 func (c *scenario) thereIsAGateway(name string, namespace string) error {
@@ -106,7 +111,7 @@ func (c *scenario) thereIsAGateway(name string, namespace string) error {
 		}
 
 		return nil
-	}, testcontext.GetRetryOpts(c.config)...)
+	}, testcontext.GetRetryOpts()...)
 }
 
 func (c *scenario) thereIsACertificate(name string, namespace string) error {
@@ -118,7 +123,7 @@ func (c *scenario) thereIsACertificate(name string, namespace string) error {
 		}
 
 		return nil
-	}, testcontext.GetRetryOpts(c.config)...)
+	}, testcontext.GetRetryOpts()...)
 }
 
 func (c *scenario) thereIsAnAPIRule(name string) error {
@@ -169,7 +174,7 @@ func (c *scenario) deleteAPIRule(name string) error {
 		}
 
 		return fmt.Errorf("%s stil exists", name)
-	}, testcontext.GetRetryOpts(c.config)...)
+	}, testcontext.GetRetryOpts()...)
 }
 
 func (c *scenario) deleteGateway(name string) error {
@@ -196,7 +201,7 @@ func (c *scenario) deleteGateway(name string) error {
 		}
 
 		return fmt.Errorf("%s stil exists", name)
-	}, testcontext.GetRetryOpts(c.config)...)
+	}, testcontext.GetRetryOpts()...)
 }
 
 func (c *scenario) disableKymaGatewayAndCheckStatus(state string) error {
@@ -229,7 +234,7 @@ func (c *scenario) disableKymaGatewayAndCheckStatus(state string) error {
 		}
 
 		return nil
-	}, testcontext.GetRetryOpts(c.config)...)
+	}, testcontext.GetRetryOpts()...)
 }
 
 func (c *scenario) thereIsNoGateway(name, namespace string) error {
@@ -241,7 +246,7 @@ func (c *scenario) thereIsNoGateway(name, namespace string) error {
 		}
 
 		return fmt.Errorf("%s stil exists", name)
-	}, testcontext.GetRetryOpts(c.config)...)
+	}, testcontext.GetRetryOpts()...)
 }
 
 func (c *scenario) thereIsACertificateCR(name, namespace string) error {

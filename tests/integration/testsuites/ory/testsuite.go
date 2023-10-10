@@ -5,6 +5,11 @@ import (
 	_ "embed"
 	"encoding/base64"
 	"fmt"
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/hooks"
+	"log"
+	"path"
+	"time"
+
 	"github.com/cucumber/godog"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/helpers"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/manifestprocessor"
@@ -15,9 +20,6 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
-	"log"
-	"path"
-	"time"
 )
 
 const manifestsDirectory = "testsuites/ory/manifests/"
@@ -149,6 +151,14 @@ func (t *testsuite) TearDown() {
 	if err != nil {
 		log.Print(err.Error())
 	}
+}
+
+func (t *testsuite) BeforeSuiteHooks() []func(d dynamic.Interface) error {
+	return []func(d dynamic.Interface) error{hooks.ApplyAndVerifyApiGatewayCr}
+}
+
+func (t *testsuite) AfterSuiteHooks() []func(d dynamic.Interface) error {
+	return []func(d dynamic.Interface) error{hooks.ApiGatewayCrTearDown}
 }
 
 func NewTestsuite(httpClient *helpers.RetryableHttpClient, k8sClient dynamic.Interface, rm *resource.Manager, config testcontext.Config) testcontext.Testsuite {

@@ -28,6 +28,10 @@ type Config struct {
 	GatewayCRName    string `envconfig:"GATEWAY_CR_NAME,default=test-gateway"`
 }
 
+var (
+	retryOpts []retry.Option
+)
+
 func GetConfig() Config {
 	var config Config
 	if err := envconfig.Init(&config); err != nil {
@@ -36,10 +40,20 @@ func GetConfig() Config {
 	return config
 }
 
-func GetRetryOpts(config Config) []retry.Option {
-	return []retry.Option{
-		retry.Delay(time.Duration(config.ReqDelay) * time.Second),
-		retry.Attempts(config.ReqTimeout / config.ReqDelay),
-		retry.DelayType(retry.FixedDelay),
+func GetRetryOpts() []retry.Option {
+	if retryOpts == nil {
+
+		var config Config
+		if err := envconfig.Init(&config); err != nil {
+			panic(fmt.Sprintf("Unable to setup test config: %v", err))
+		}
+
+		retryOpts = []retry.Option{
+			retry.Delay(time.Duration(config.ReqDelay) * time.Second),
+			retry.Attempts(config.ReqTimeout / config.ReqDelay),
+			retry.DelayType(retry.FixedDelay),
+		}
 	}
+
+	return retryOpts
 }

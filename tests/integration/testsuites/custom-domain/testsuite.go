@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/cucumber/godog"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/helpers"
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/hooks"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/manifestprocessor"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/resource"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
@@ -104,6 +105,14 @@ func (t *testsuite) TearDown() {
 	if err != nil {
 		log.Print(err.Error())
 	}
+}
+
+func (t *testsuite) BeforeSuiteHooks() []func(d dynamic.Interface) error {
+	return []func(d dynamic.Interface) error{hooks.ApplyAndVerifyApiGatewayCr}
+}
+
+func (t *testsuite) AfterSuiteHooks() []func(d dynamic.Interface) error {
+	return []func(d dynamic.Interface) error{hooks.ApiGatewayCrTearDown}
 }
 
 func NewTestsuite(httpClient *helpers.RetryableHttpClient, k8sClient dynamic.Interface, rm *resource.Manager, config testcontext.Config) testcontext.Testsuite {

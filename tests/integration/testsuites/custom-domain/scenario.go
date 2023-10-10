@@ -207,7 +207,7 @@ func (c *scenario) thereIsAnExposedService(svcName string, svcNamespace string) 
 }
 
 func (c *scenario) thereIsAnUnsecuredEndpoint() error {
-	return helpers.ApplyApiRule(c.resourceManager.CreateResources, c.resourceManager.UpdateResources, c.k8sClient, testcontext.GetRetryOpts(c.config), c.apiResourceOne)
+	return helpers.ApplyApiRule(c.resourceManager.CreateResources, c.resourceManager.UpdateResources, c.k8sClient, testcontext.GetRetryOpts(), c.apiResourceOne)
 }
 
 func (c *scenario) callingTheEndpointWithAnyTokenShouldResultInStatusBetween(endpoint string, arg1, arg2 int) error {
@@ -215,7 +215,7 @@ func (c *scenario) callingTheEndpointWithAnyTokenShouldResultInStatusBetween(end
 }
 
 func (c *scenario) secureWithOAuth2() error {
-	return helpers.ApplyApiRule(c.resourceManager.UpdateResources, c.resourceManager.UpdateResources, c.k8sClient, testcontext.GetRetryOpts(c.config), c.apiResourceTwo)
+	return helpers.ApplyApiRule(c.resourceManager.UpdateResources, c.resourceManager.UpdateResources, c.k8sClient, testcontext.GetRetryOpts(), c.apiResourceTwo)
 }
 
 func (c *scenario) callingTheEndpointWithAInvalidTokenShouldResultInStatusBetween(endpoint string, lower int, higher int) error {

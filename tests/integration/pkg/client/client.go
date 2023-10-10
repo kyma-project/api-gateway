@@ -2,6 +2,7 @@ package client
 
 import (
 	"os"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"k8s.io/client-go/discovery"
 	memory "k8s.io/client-go/discovery/cached/memory"
@@ -62,4 +63,18 @@ func GetDiscoveryMapper() (*restmapper.DeferredDiscoveryRESTMapper, error) {
 	mapper := restmapper.NewDeferredDiscoveryRESTMapper(memory.NewMemCacheClient(dc))
 
 	return mapper, nil
+}
+
+func GetK8sClient() client.Client {
+	config, err := loadKubeConfigOrDie()
+	if err != nil {
+		panic(err)
+	}
+
+	c, err := client.New(config, client.Options{})
+	if err != nil {
+		panic(err)
+	}
+
+	return c
 }

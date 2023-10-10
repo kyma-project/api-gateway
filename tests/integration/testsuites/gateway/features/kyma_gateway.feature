@@ -1,5 +1,6 @@
 Feature: Checking default kyma gateway
   Background:
+    # TODO
     Given APIGateway CR is applied
     Then APIGateway CR is in "Ready" state
 

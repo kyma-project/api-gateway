@@ -95,6 +95,14 @@ func (t *testsuite) TearDown() {
 	}
 }
 
+func (t *testsuite) BeforeSuiteHooks() []func(d dynamic.Interface) error {
+	return []func(d dynamic.Interface) error{}
+}
+
+func (t *testsuite) AfterSuiteHooks() []func(d dynamic.Interface) error {
+	return []func(d dynamic.Interface) error{}
+}
+
 func NewTestsuite(httpClient *helpers.RetryableHttpClient, k8sClient dynamic.Interface, rm *resource.Manager, config testcontext.Config) testcontext.Testsuite {
 
 	return &testsuite{
