@@ -84,7 +84,6 @@ func init() {
 	utilruntime.Must(rulev1alpha1.AddToScheme(scheme))
 	utilruntime.Must(securityv1beta1.AddToScheme(scheme))
 	utilruntime.Must(operatorv1alpha1.AddToScheme(scheme))
-	utilruntime.Must(operatorv1alpha1.AddToScheme(scheme))
 	utilruntime.Must(apiextensionsv1.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
 }
