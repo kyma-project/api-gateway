@@ -23,7 +23,7 @@ func TestOathkeeper(t *testing.T) {
 }
 
 var _ = ReportAfterSuite("custom reporter", func(report types.Report) {
-	tests.GenerateGinkgoJunitReport("oauthkeeper-suite", report)
+	tests.GenerateGinkgoJunitReport("oathkeeper-suite", report)
 })
 
 func createFakeClient(objects ...client.Object) client.Client {
