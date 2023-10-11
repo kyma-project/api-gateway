@@ -32,7 +32,11 @@ func ParseFromFileWithTemplate(fileName string, directory string, templateData i
 		return nil, err
 	}
 
-	man, err := parseTemplateWithData(string(rawData), templateData)
+	return ParseWithTemplate(rawData, templateData)
+}
+
+func ParseWithTemplate(manifest []byte, templateData interface{}) ([]unstructured.Unstructured, error) {
+	man, err := parseTemplateWithData(string(manifest), templateData)
 	if err != nil {
 		return nil, err
 	}

@@ -18,6 +18,6 @@ spec:
           config:
             authentications:
             - issuer: "{{ .IssuerUrl }}"
-              jwksUri: "{{ .IssuerUrl }}/oauth2/certs"
+              jwksUri: "{{ .IssuerUrl }}/jwks"
               fromParams:
               -  {{ .FromParamName }}

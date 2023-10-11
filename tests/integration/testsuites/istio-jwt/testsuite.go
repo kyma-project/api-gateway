@@ -12,6 +12,7 @@ import (
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/hooks"
 
 	"github.com/cucumber/godog"
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/auth"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/helpers"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/manifestprocessor"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/resource"
@@ -116,13 +117,6 @@ func (t *testsuite) Setup() error {
 	secondNamespace := fmt.Sprintf("%s-2", namespace)
 	log.Printf("Using namespace: %s\n", namespace)
 
-	oauth2Cfg := &clientcredentials.Config{
-		ClientID:     t.config.ClientID,
-		ClientSecret: t.config.ClientSecret,
-		TokenURL:     fmt.Sprintf("%s/oauth2/token", t.config.IssuerUrl),
-		AuthStyle:    oauth2.AuthStyleInHeader,
-	}
-
 	// create common resources for all scenarios
 	globalCommonResources, err := manifestprocessor.ParseFromFileWithTemplate("global-commons.yaml", manifestsDirectory, struct {
 		Namespace string
@@ -149,7 +143,20 @@ func (t *testsuite) Setup() error {
 		return err
 	}
 
-	t.oauth2Cfg = oauth2Cfg
+	issuerUrl, err := auth.ApplyOAuth2MockServer(t.resourceManager, t.k8sClient, namespace, t.config.Domain)
+	if err != nil {
+		return err
+	}
+	t.config.IssuerUrl = issuerUrl
+
+	t.oauth2Cfg = &clientcredentials.Config{
+		ClientID:     t.config.ClientID,
+		ClientSecret: t.config.ClientSecret,
+		TokenURL:     fmt.Sprintf("%s/token", t.config.IssuerUrl),
+		AuthStyle:    oauth2.AuthStyleInHeader,
+		Scopes:       []string{"read"},
+	}
+
 	t.namespace = namespace
 	t.secondNamespace = secondNamespace
 	return nil

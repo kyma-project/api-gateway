@@ -6,6 +6,7 @@ import (
 
 	"github.com/avast/retry-go/v4"
 	"github.com/vrischmann/envconfig"
+	"time"
 )
 
 const (
@@ -17,9 +18,9 @@ const (
 
 type Config struct {
 	CustomDomain     string `envconfig:"TEST_CUSTOM_DOMAIN,default=test.domain.kyma"`
-	IssuerUrl        string `envconfig:"TEST_OIDC_ISSUER_URL"`
-	ClientID         string `envconfig:"TEST_CLIENT_ID"`
-	ClientSecret     string `envconfig:"TEST_CLIENT_SECRET"`
+	IssuerUrl        string `envconfig:"TEST_OIDC_ISSUER_URL,default=overwrite-me"`
+	ClientID         string `envconfig:"TEST_CLIENT_ID,default=mocked-client-id"`
+	ClientSecret     string `envconfig:"TEST_CLIENT_SECRET,default=mocked-client-secret"`
 	ReqTimeout       uint   `envconfig:"TEST_REQUEST_TIMEOUT,default=240"`
 	ReqDelay         uint   `envconfig:"TEST_REQUEST_DELAY,default=5"`
 	Domain           string `envconfig:"TEST_DOMAIN,default=local.kyma.dev"`

@@ -17,13 +17,13 @@ spec:
         - handler: jwt
           config:
             jwks_urls:
-              - "{{ .IssuerUrl }}/oauth2/certs"
+              - "{{ .IssuerUrl }}/jwks"
     - path: /headers
       methods: ["GET"]
       accessStrategies:
         - handler: oauth2_introspection
           config:
             required_scope: ["read"]
-            introspection_url: "{{ .IssuerUrl }}/oauth2/introspect"
+            introspection_url: "{{ .IssuerUrl }}/introspect"
             introspection_request_headers:
               Authorization: "Basic {{ .EncodedCredentials }}"
