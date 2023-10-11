@@ -17,7 +17,6 @@ import (
 	customdomain "github.com/kyma-project/api-gateway/tests/integration/testsuites/custom-domain"
 	"github.com/kyma-project/api-gateway/tests/integration/testsuites/gateway"
 	istiojwt "github.com/kyma-project/api-gateway/tests/integration/testsuites/istio-jwt"
-	"github.com/kyma-project/api-gateway/tests/integration/testsuites/operator"
 	"github.com/kyma-project/api-gateway/tests/integration/testsuites/ory"
 	"github.com/kyma-project/api-gateway/tests/integration/testsuites/upgrade"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -88,16 +87,6 @@ func TestGateway(t *testing.T) {
 	ts, err := testcontext.New(config, gateway.NewTestsuite)
 	if err != nil {
 		t.Fatalf("Failed to create Gateway testsuite %s", err.Error())
-	}
-	defer ts.TearDown()
-	runTestsuite(t, ts, config)
-}
-
-func TestOperator(t *testing.T) {
-	config := testcontext.GetConfig()
-	ts, err := testcontext.New(config, operator.NewTestsuite)
-	if err != nil {
-		t.Fatalf("Failed to create Operator testsuite %s", err.Error())
 	}
 	defer ts.TearDown()
 	runTestsuite(t, ts, config)
