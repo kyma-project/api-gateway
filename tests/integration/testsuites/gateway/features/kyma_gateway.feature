@@ -1,6 +1,6 @@
 Feature: Checking default kyma gateway
   Background:
-    Given APIGateway CR is in "Ready" state
+    Given APIGateway CR is in Ready state
 
   Scenario: Oathkeeper is installed and uninstalled depending on APIGateway presence
     Given there is APIGateway CR "kyma-gateway" in "kyma-system" namespace
@@ -35,8 +35,7 @@ Feature: Checking default kyma gateway
     And there "is no" "PeerAuthentication" "ory-oathkeeper-maester-metrics" in namespace "kyma-system"
 
   Scenario: Kyma gateway is not removed when there is an APIRule
-    Given APIGateway CR is applied
-    And APIGateway CR is in Ready state
+    Given APIGateway CR is in Ready state
     Then there is an "kyma-rule" APIRule
     Then disabling kyma gateway will result in "Warning" state
     And there is APIGateway CR "kyma-gateway" in "kyma-system" namespace

@@ -126,7 +126,7 @@ func (c *scenario) APIGatewayCRisReady() error {
 	const state = "Ready"
 	return retry.Do(func() error {
 		res := schema.GroupVersionResource{Group: "operator.kyma-project.io", Version: "v1alpha1", Resource: "apigateways"}
-		gateway, err := c.k8sClient.Resource(res).Get(context.Background(),  hooks.ApiGatewayCRName, v1.GetOptions{})
+		gateway, err := c.k8sClient.Resource(res).Get(context.Background(), hooks.ApiGatewayCRName, v1.GetOptions{})
 		if err != nil {
 			return err
 		}
