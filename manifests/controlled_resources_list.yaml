@@ -5,9 +5,5 @@ resources:
       kind: APIRule
   - GroupVersionKind:
       group: networking.istio.io
-      version: v1alpha3
-      kind: VirtualService
-  - GroupVersionKind:
-      group: networking.istio.io
       version: v1beta1
       kind: VirtualService

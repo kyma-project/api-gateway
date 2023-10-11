@@ -8,6 +8,7 @@ import (
 	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	networkingv1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -21,6 +22,7 @@ var sc *runtime.Scheme
 var _ = Describe("Resources", func() {
 	sc = runtime.NewScheme()
 	Expect(v1beta1.AddToScheme(sc)).To(Succeed())
+	Expect(networkingv1alpha3.AddToScheme(sc)).To(Succeed())
 	Expect(networkingv1beta1.AddToScheme(sc)).To(Succeed())
 
 	DescribeTable("FindUserCreatedIstioResourcesDescribe", func(ctx context.Context, logger logr.Logger, c client.Client, configuration resourceFinderConfiguration, conditionResult bool, want []Resource, wantErr bool) {
