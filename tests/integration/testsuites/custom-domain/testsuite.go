@@ -107,12 +107,12 @@ func (t *testsuite) TearDown() {
 	}
 }
 
-func (t *testsuite) BeforeSuiteHooks() []func(d dynamic.Interface) error {
-	return []func(d dynamic.Interface) error{hooks.ApplyAndVerifyApiGatewayCr}
+func (t *testsuite) BeforeSuiteHooks() []func() error {
+	return []func() error{hooks.ApplyAndVerifyApiGatewayCrSuiteHook}
 }
 
-func (t *testsuite) AfterSuiteHooks() []func(d dynamic.Interface) error {
-	return []func(d dynamic.Interface) error{hooks.ApiGatewayCrTearDown}
+func (t *testsuite) AfterSuiteHooks() []func() error {
+	return []func() error{hooks.ApiGatewayCrTearDownSuiteHook}
 }
 
 func NewTestsuite(httpClient *helpers.RetryableHttpClient, k8sClient dynamic.Interface, rm *resource.Manager, config testcontext.Config) testcontext.Testsuite {

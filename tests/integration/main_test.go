@@ -9,8 +9,6 @@ import (
 	"github.com/cucumber/godog"
 	"github.com/cucumber/godog/colors"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/client"
-	"github.com/kyma-project/api-gateway/tests/integration/pkg/manifestprocessor"
-	"github.com/kyma-project/api-gateway/tests/integration/pkg/resource"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
 	customdomain "github.com/kyma-project/api-gateway/tests/integration/testsuites/custom-domain"
 	"github.com/kyma-project/api-gateway/tests/integration/testsuites/gateway"
@@ -96,36 +94,24 @@ func runTestsuite(t *testing.T, testsuite testcontext.Testsuite, config testcont
 		// We are not using ScenarioInitializer, as this function only needs to set up global resources
 		TestSuiteInitializer: func(ctx *godog.TestSuiteContext) {
 			ctx.BeforeSuite(func() {
-				for _, h := range testsuite.BeforeSuiteHooks() {
-					err := h(testsuite.K8sClient())
+				for _, hook := range testsuite.BeforeSuiteHooks() {
+					err := hook()
 					if err != nil {
 						t.Fatalf("Cannot run before suite hooks: %s", err.Error())
 					}
 				}
 			})
 
+			testsuite.InitScenarios(ctx.ScenarioContext())
+
 			ctx.AfterSuite(func() {
-				for _, h := range testsuite.AfterSuiteHooks() {
-					err := h(testsuite.K8sClient())
+				for _, hook := range testsuite.AfterSuiteHooks() {
+					err := hook()
 					if err != nil {
 						t.Fatalf("Cannot run after suite hooks: %s", err.Error())
 					}
 				}
 			})
-
-			//ctx.BeforeSuite(func() {
-			//	if err := createApiGatewayCR(config); err != nil {
-			//		t.Fatalf("Cannot create api-gateway CR: %s", err.Error())
-			//	}
-			//})
-
-			testsuite.InitScenarios(ctx.ScenarioContext())
-
-			//ctx.AfterSuite(func() {
-			//	if err := deleteApiGatewayCR(config); err != nil {
-			//		t.Fatalf("Cannot delete api-gateway CR: %s", err.Error())
-			//	}
-			//})
 		},
 		Options: &opts,
 	}
@@ -177,50 +163,4 @@ func shouldExportResults() bool {
 func createDefaultContext(t *testing.T) context.Context {
 	ctx := testcontext.SetK8sClientInContext(context.Background(), client.GetK8sClient())
 	return testcontext.SetTestingInContext(ctx, t)
-}
-
-func createApiGatewayCR(config testcontext.Config) error {
-	apiGatewayCR, err := manifestprocessor.ParseFromFileWithTemplate("api-gateway.yaml", "manifests/", struct {
-		NamePrefix string
-	}{NamePrefix: config.GatewayCRName})
-	if err != nil {
-		log.Fatalf("failed to process api-gateway manifest file, details %v", err)
-		return err
-	}
-
-	k8sClient, err := client.GetDynamicClient()
-	if err != nil {
-		return err
-	}
-
-	rm := resource.NewManager(testcontext.GetRetryOpts())
-	_, err = rm.CreateResourcesWithoutNS(k8sClient, apiGatewayCR...)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func deleteApiGatewayCR(config testcontext.Config) error {
-	apiGatewayCR, err := manifestprocessor.ParseFromFileWithTemplate("api-gateway.yaml", "manifests/", struct {
-		NamePrefix string
-	}{NamePrefix: config.GatewayCRName})
-	if err != nil {
-		log.Fatalf("failed to process api-gateway manifest file, details %v", err)
-		return err
-	}
-
-	k8sClient, err := client.GetDynamicClient()
-	if err != nil {
-		return err
-	}
-
-	rm := resource.NewManager(testcontext.GetRetryOpts())
-	err = rm.DeleteResourcesWithoutNS(k8sClient, apiGatewayCR...)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }

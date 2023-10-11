@@ -25,8 +25,8 @@ type Testsuite interface {
 	TearDown()
 	ResourceManager() *resource.Manager
 	K8sClient() dynamic.Interface
-	BeforeSuiteHooks() []func(dynamic.Interface) error
-	AfterSuiteHooks() []func(p dynamic.Interface) error
+	BeforeSuiteHooks() []func() error
+	AfterSuiteHooks() []func() error
 }
 
 type TestsuiteFactory func(httpClient *helpers.RetryableHttpClient, k8sClient dynamic.Interface, rm *resource.Manager, config Config) Testsuite

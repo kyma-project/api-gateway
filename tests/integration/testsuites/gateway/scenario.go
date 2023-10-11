@@ -35,11 +35,9 @@ func initScenario(ctx *godog.ScenarioContext, ts *testsuite) {
 		log.Fatalf("could not initialize custom domain endpoint err=%s", err)
 	}
 
-	ctx.Before(hooks.ApplyApiGatewayCr)
-	// TODO implement separate teardown for scenarios
-	//ctx.After(hooks.ApiGatewayCrTearDown)
+	ctx.Before(hooks.ApplyApiGatewayCrScenarioHook)
+	ctx.After(hooks.ApiGatewayCrTearDownScenarioHook)
 
-	ctx.Step(`APIGateway CR is applied`, scenario.applyAPIGatewayCR)
 	ctx.Step(`^APIGateway CR is in "([^"]*)" state$`, scenario.thereIsAnAPIGatewayCR)
 	ctx.Step(`^there is a "([^"]*)" gateway in "([^"]*)" namespace$`, scenario.thereIsAGateway)
 	ctx.Step(`^there is a "([^"]*)" secret in "([^"]*)" namespace$`, scenario.thereIsACertificate)
@@ -70,7 +68,7 @@ func (c *scenario) applyAPIGatewayCR() error {
 	kymaGatewayEnabled, err := manifestprocessor.ParseFromFileWithTemplate("kyma-gateway-enabled.yaml", customDomainManifestDirectory, struct {
 		NamePrefix string
 	}{
-		NamePrefix: c.config.GatewayCRName,
+		NamePrefix: hooks.ApiGatewayCRName,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to process kyma-gateway-enabled.yaml, details %s", err.Error())
@@ -86,7 +84,7 @@ func (c *scenario) applyAPIGatewayCR() error {
 func (c *scenario) thereIsAnAPIGatewayCR(state string) error {
 	return retry.Do(func() error {
 		res := schema.GroupVersionResource{Group: "operator.kyma-project.io", Version: "v1alpha1", Resource: "apigateways"}
-		gateway, err := c.k8sClient.Resource(res).Get(context.Background(), c.config.GatewayCRName, v1.GetOptions{})
+		gateway, err := c.k8sClient.Resource(res).Get(context.Background(), hooks.ApiGatewayCRName, v1.GetOptions{})
 		if err != nil {
 			return fmt.Errorf("gateway could not be found")
 		}
@@ -182,7 +180,7 @@ func (c *scenario) deleteGateway(name string) error {
 	gateway, err := manifestprocessor.ParseFromFileWithTemplate("kyma-gateway-enabled.yaml", customDomainManifestDirectory, struct {
 		NamePrefix string
 	}{
-		NamePrefix: c.config.GatewayCRName,
+		NamePrefix: hooks.ApiGatewayCRName,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to process kyma-gateway-enabled.yaml, details %s", err.Error())
@@ -209,7 +207,7 @@ func (c *scenario) disableKymaGatewayAndCheckStatus(state string) error {
 	kymaGatewayDisabled, err := manifestprocessor.ParseFromFileWithTemplate("kyma-gateway-disabled.yaml", customDomainManifestDirectory, struct {
 		NamePrefix string
 	}{
-		NamePrefix: c.config.GatewayCRName,
+		NamePrefix: hooks.ApiGatewayCRName,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to process kyma-gateway-disabled.yaml, details %s", err.Error())
@@ -221,7 +219,7 @@ func (c *scenario) disableKymaGatewayAndCheckStatus(state string) error {
 
 	return retry.Do(func() error {
 		res := schema.GroupVersionResource{Group: "operator.kyma-project.io", Version: "v1alpha1", Resource: "apigateways"}
-		gateway, err := c.k8sClient.Resource(res).Get(context.Background(), c.config.GatewayCRName, v1.GetOptions{})
+		gateway, err := c.k8sClient.Resource(res).Get(context.Background(), hooks.ApiGatewayCRName, v1.GetOptions{})
 		if err != nil {
 			return fmt.Errorf("gateway could not be found")
 		}

@@ -10,6 +10,8 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/restmapper"
 	"k8s.io/client-go/tools/clientcmd"
+
+	agopv1alpha1 "github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
 )
 
 const kubeconfigEnvName = "KUBECONFIG"
@@ -72,6 +74,11 @@ func GetK8sClient() client.Client {
 	}
 
 	c, err := client.New(config, client.Options{})
+	if err != nil {
+		panic(err)
+	}
+
+	err = agopv1alpha1.AddToScheme(c.Scheme())
 	if err != nil {
 		panic(err)
 	}
