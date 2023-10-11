@@ -33,6 +33,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/util/retry"
 	"path/filepath"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -135,7 +136,10 @@ var _ = AfterSuite(func() {
 	*/
 	cancel()
 	By("Tearing down the test environment")
-	err := retry.OnError(retry.DefaultBackoff, func(err error) bool {
+	err := retry.OnError(wait.Backoff{
+		Duration: 500 * time.Millisecond,
+		Steps:    120,
+	}, func(err error) bool {
 		return true
 	}, func() error {
 		return testEnv.Stop()
