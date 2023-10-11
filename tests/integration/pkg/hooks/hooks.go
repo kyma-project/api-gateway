@@ -28,6 +28,9 @@ var ApplyApiGatewayCrScenarioHook = func(ctx context.Context, sc *godog.Scenario
 	}
 
 	apiGateway, err := createApiGatewayCRObjectFromTemplate(ApiGatewayCRName)
+	if err != nil {
+		return ctx, err
+	}
 
 	err = retry.Do(func() error {
 		err := k8sClient.Create(ctx, &apiGateway)
@@ -37,6 +40,9 @@ var ApplyApiGatewayCrScenarioHook = func(ctx context.Context, sc *godog.Scenario
 		ctx = testcontext.AddApiGatewayCRIntoContext(ctx, &apiGateway)
 		return nil
 	}, testcontext.GetRetryOpts()...)
+	if err != nil {
+		return ctx, err
+	}
 
 	return ctx, nil
 }
@@ -98,6 +104,10 @@ var ApplyAndVerifyApiGatewayCrSuiteHook = func() error {
 
 		return nil
 	}, testcontext.GetRetryOpts()...)
+
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

@@ -71,24 +71,6 @@ func createScenario(t *testsuite) (*scenario, error) {
 	}, nil
 }
 
-func (c *scenario) applyAPIGatewayCR() error {
-	customDomainManifestDirectory := path.Dir(manifestsPath)
-	kymaGatewayEnabled, err := manifestprocessor.ParseFromFileWithTemplate("kyma-gateway-enabled.yaml", customDomainManifestDirectory, struct {
-		NamePrefix string
-	}{
-		NamePrefix: hooks.ApiGatewayCRName,
-	})
-	if err != nil {
-		return fmt.Errorf("failed to process kyma-gateway-enabled.yaml, details %s", err.Error())
-	}
-	_, err = c.resourceManager.CreateOrUpdateResourcesWithoutNS(c.k8sClient, kymaGatewayEnabled...)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func (c *scenario) thereIsAnAPIGatewayCR(isPresent string) error {
 	const (
 		is   = "is"
