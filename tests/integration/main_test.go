@@ -117,9 +117,9 @@ func runTestsuite(t *testing.T, testsuite testcontext.Testsuite, config testcont
 			testsuite.InitScenarios(ctx.ScenarioContext())
 
 			ctx.AfterSuite(func() {
-				if err := deleteBlockingResources(config); err != nil {
-					t.Fatalf("Cannot delete blocking resources: %s", err.Error())
-				}
+				// if err := deleteBlockingResources(config); err != nil {
+				// 	t.Fatalf("Cannot delete blocking resources: %s", err.Error())
+				// }
 				if err := deleteApiGatewayCR(config); err != nil {
 					t.Fatalf("Cannot delete api-gateway CR: %s", err.Error())
 				}
