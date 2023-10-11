@@ -28,6 +28,7 @@ const (
 )
 
 func (i *Reconciliation) Reconcile(ctx context.Context, apiGatewayCR *operatorv1alpha1.APIGateway) controllers.Status {
+	ctrl.Log.Info("Reconcile API-Gateway CR")
 	if !apiGatewayCR.IsInDeletion() && !hasFinalizer(apiGatewayCR) {
 		controllerutil.AddFinalizer(apiGatewayCR, ApiGatewayFinalizer)
 		if err := i.Client.Update(ctx, apiGatewayCR); err != nil {

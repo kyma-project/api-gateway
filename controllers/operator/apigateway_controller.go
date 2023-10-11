@@ -110,7 +110,6 @@ func (r *APIGatewayReconciler) SetupWithManager(mgr ctrl.Manager, c controllers.
 
 // requeueReconciliation cancels the reconciliation and requeues the request.
 func (r *APIGatewayReconciler) requeueReconciliation(ctx context.Context, cr operatorv1alpha1.APIGateway, status controllers.Status) (ctrl.Result, error) {
-
 	r.log.Error(status.NestedError(), "Reconcile failed")
 
 	statusUpdateErr := controllers.UpdateApiGatewayStatus(ctx, r.Client, &cr, status)
@@ -122,13 +121,11 @@ func (r *APIGatewayReconciler) requeueReconciliation(ctx context.Context, cr ope
 }
 
 func (r *APIGatewayReconciler) finishReconcile(ctx context.Context, cr operatorv1alpha1.APIGateway) (ctrl.Result, error) {
-
 	if err := controllers.UpdateApiGatewayStatus(ctx, r.Client, &cr, controllers.ReadyStatus()); err != nil {
 		r.log.Error(err, "Update status failed")
 		return ctrl.Result{}, err
 	}
 
 	r.log.Info("Successfully reconciled")
-
 	return ctrl.Result{}, nil
 }

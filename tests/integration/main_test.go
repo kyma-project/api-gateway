@@ -227,23 +227,23 @@ func deleteBlockingResources(config testcontext.Config) error {
 		gvrApiRule := schema.GroupVersionResource{Group: "gateway.kyma-project.io", Version: "v1beta1", Resource: "apirules"}
 		apiRules, err := k8sClient.Resource(gvrApiRule).List(context.TODO(), metav1.ListOptions{})
 		if err != nil {
-			log.Fatalf("failed to list apirules, details %v", err)
+			log.Printf("failed to list apirules, details %v", err)
 		}
 		for _, apiRule := range apiRules.Items {
 			err := k8sClient.Resource(gvrApiRule).Namespace(apiRule.GetNamespace()).Delete(context.TODO(), apiRule.GetName(), metav1.DeleteOptions{})
 			if err != nil {
-				log.Fatalf("failed to delete apirule %s, details %v", fmt.Sprintf("%s/%s", apiRule.GetNamespace(), apiRule.GetName()), err)
+				log.Printf("unable to delete apirule %s, details %v", fmt.Sprintf("%s/%s", apiRule.GetNamespace(), apiRule.GetName()), err)
 			}
 		}
 		gvrVS := schema.GroupVersionResource{Group: "networking.istio.io", Version: "v1beta1", Resource: "virtualservices"}
 		virtualServices, err := k8sClient.Resource(gvrVS).List(context.TODO(), metav1.ListOptions{})
 		if err != nil {
-			log.Fatalf("failed to list virtualservices, details %v", err)
+			log.Printf("failed to list virtualservices, details %v", err)
 		}
 		for _, vs := range virtualServices.Items {
 			err := k8sClient.Resource(gvrVS).Namespace(vs.GetNamespace()).Delete(context.TODO(), vs.GetName(), metav1.DeleteOptions{})
 			if err != nil {
-				log.Fatalf("failed to delete virtual service %s, details %v", fmt.Sprintf("%s/%s", vs.GetNamespace(), vs.GetName()), err)
+				log.Printf("unable to delete virtual service %s, details %v", fmt.Sprintf("%s/%s", vs.GetNamespace(), vs.GetName()), err)
 			}
 		}
 		return nil
