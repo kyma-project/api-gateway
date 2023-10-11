@@ -9,6 +9,7 @@ import (
 // APIGatewayReconciler reconciles a APIGateway object
 type APIGatewayReconciler struct {
 	client.Client
-	Scheme *runtime.Scheme
-	log    logr.Logger
+	Scheme               *runtime.Scheme
+	log                  logr.Logger
+	ReconciliationConfig ApiGatewayReconcilerConfiguration
 }

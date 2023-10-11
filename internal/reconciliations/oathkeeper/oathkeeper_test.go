@@ -146,7 +146,7 @@ var _ = Describe("Oathkeeper reconciliation", func() {
 	It("Should successfully reconcile Oathkeeper", func() {
 		apiGateway := createApiGateway()
 		k8sClient := createFakeClient(apiGateway)
-		status := oathkeeper.ReconcileOathkeeper(context.Background(), k8sClient, apiGateway)
+		status := oathkeeper.Reconciler{ShouldWaitForDeployment: false}.ReconcileOathkeeper(context.Background(), k8sClient, apiGateway)
 		Expect(status.IsReady()).To(BeTrue(), "%#v", status)
 
 		for _, resource := range resourceList {
@@ -171,12 +171,12 @@ var _ = Describe("Oathkeeper reconciliation", func() {
 	It("Should remove Oathkeeper resources on deletion", func() {
 		apiGateway := createApiGateway()
 		k8sClient := createFakeClient(apiGateway)
-		status := oathkeeper.ReconcileOathkeeper(context.Background(), k8sClient, apiGateway)
+		status := oathkeeper.Reconciler{ShouldWaitForDeployment: false}.ReconcileOathkeeper(context.Background(), k8sClient, apiGateway)
 		Expect(status.IsReady()).To(BeTrue(), "%#v", status.NestedError())
 
 		apiGateway.DeletionTimestamp = &metav1.Time{Time: time.Now()}
 
-		status = oathkeeper.ReconcileOathkeeper(context.Background(), k8sClient, apiGateway)
+		status = oathkeeper.Reconciler{ShouldWaitForDeployment: false}.ReconcileOathkeeper(context.Background(), k8sClient, apiGateway)
 		Expect(status.IsReady()).To(BeTrue(), "%#v", status.NestedError())
 
 		for _, resource := range resourceList {
@@ -251,7 +251,7 @@ var _ = Describe("Oathkeeper reconciliation", func() {
 			Expect(k8sClient.Create(context.Background(), &r)).To(Succeed())
 		}
 
-		status := oathkeeper.ReconcileOathkeeper(context.Background(), k8sClient, apiGateway)
+		status := oathkeeper.Reconciler{ShouldWaitForDeployment: false}.ReconcileOathkeeper(context.Background(), k8sClient, apiGateway)
 		Expect(status.IsReady()).To(BeTrue(), "%#v", status.NestedError())
 
 		for _, resource := range cronjobResources {

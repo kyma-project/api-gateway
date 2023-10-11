@@ -11,9 +11,10 @@ import (
 type state int
 
 const (
-	Ready   state = 0
-	Error   state = 1
-	Warning state = 2
+	Ready state = iota
+	Error
+	Warning
+	Processing
 )
 
 type Status interface {
@@ -22,6 +23,7 @@ type Status interface {
 	IsReady() bool
 	IsWarning() bool
 	IsError() bool
+	IsProcessing() bool
 }
 
 type status struct {
@@ -54,6 +56,13 @@ func SuccessfulStatus() Status {
 	}
 }
 
+func ProcessingStatus() Status {
+	return status{
+		description: "API Gateway is being reconciled",
+		state:       Processing,
+	}
+}
+
 func (s status) NestedError() error {
 	return s.err
 }
@@ -65,6 +74,11 @@ func (s status) ToAPIGatewayStatus() (operatorv1alpha1.APIGatewayStatus, error) 
 		return operatorv1alpha1.APIGatewayStatus{
 			State:       operatorv1alpha1.Ready,
 			Description: "Successfully reconciled",
+		}, nil
+	case Processing:
+		return operatorv1alpha1.APIGatewayStatus{
+			State:       operatorv1alpha1.Processing,
+			Description: "API Gateway is being reconciled",
 		}, nil
 	case Warning:
 		return operatorv1alpha1.APIGatewayStatus{
@@ -91,6 +105,10 @@ func (s status) IsWarning() bool {
 
 func (s status) IsReady() bool {
 	return s.state == Ready
+}
+
+func (s status) IsProcessing() bool {
+	return s.state == Processing
 }
 
 func UpdateApiGatewayStatus(ctx context.Context, k8sClient client.Client, apiGatewayCR *operatorv1alpha1.APIGateway, status Status) error {

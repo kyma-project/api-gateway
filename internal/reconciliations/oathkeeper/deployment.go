@@ -11,9 +11,9 @@ import (
 	"github.com/kyma-project/api-gateway/internal/reconciliations"
 	"github.com/kyma-project/api-gateway/internal/reconciliations/oathkeeper/maester"
 	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"time"
@@ -56,27 +56,7 @@ func reconcileDeployment(ctx context.Context, k8sClient client.Client, name stri
 	templateValues["Namespace"] = reconciliations.Namespace
 	templateValues["ServiceAccountName"] = maester.ServiceAccountName
 
-	err := reconciliations.ApplyResource(ctx, k8sClient, *deploymentManifest, templateValues)
-	if err != nil {
-		return err
-	}
-
-	return retry.Do(func() error {
-		var deployment appsv1.Deployment
-		err := k8sClient.Get(ctx, types.NamespacedName{
-			Namespace: reconciliations.Namespace,
-			Name:      deploymentName,
-		}, &deployment)
-
-		if err != nil {
-			return err
-		}
-
-		if deployment.Status.UnavailableReplicas != 0 {
-			return errors.New("ory oathkeeper deployment is not ready")
-		}
-		return nil
-	}, retry.Attempts(60), retry.Delay(2*time.Second))
+	return reconciliations.ApplyResource(ctx, k8sClient, *deploymentManifest, templateValues)
 }
 
 func deleteDeployment(ctx context.Context, k8sClient client.Client, name string) error {
@@ -100,4 +80,29 @@ func deleteDeployment(ctx context.Context, k8sClient client.Client, name string)
 	}
 
 	return nil
+}
+
+func waitForDeploymentToBeReady(ctx context.Context, k8sClient client.Client) error {
+	return retry.Do(func() error {
+		var podList corev1.PodList
+		err := k8sClient.List(ctx, &podList, client.MatchingLabels{
+			"app.kubernetes.io/instance": "ory",
+			"app.kubernetes.io/name":     "oathkeeper",
+		})
+
+		if err != nil {
+			return err
+		}
+
+		if len(podList.Items) == 0 {
+			return errors.New("ory oathkeeper deployment is not ready")
+		}
+
+		for _, pod := range podList.Items {
+			if pod.Status.Phase != corev1.PodRunning {
+				return errors.New("ory oathkeeper deployment is not ready")
+			}
+		}
+		return nil
+	}, retry.Attempts(60), retry.Delay(2*time.Second))
 }

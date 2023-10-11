@@ -33,6 +33,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/client-go/util/retry"
 	"path/filepath"
 	ctrl "sigs.k8s.io/controller-runtime"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
@@ -119,7 +121,11 @@ var _ = BeforeSuite(func() {
 		FailureMaxDelay:  10 * time.Second,
 	}
 
-	Expect(NewAPIGatewayReconciler(mgr).SetupWithManager(mgr, rateLimiterCfg)).Should(Succeed())
+	config := ApiGatewayReconcilerConfiguration{
+		ShouldWaitForDeploymentsToBeReady: false,
+	}
+
+	Expect(NewAPIGatewayReconciler(mgr, config).SetupWithManager(mgr, rateLimiterCfg)).Should(Succeed())
 
 	go func() {
 		defer GinkgoRecover()
@@ -134,11 +140,14 @@ var _ = AfterSuite(func() {
 	*/
 	cancel()
 	By("Tearing down the test environment")
-	err := testEnv.Stop()
-	// Set 4 with random
-	if err != nil {
-		time.Sleep(4 * time.Second)
-	}
+	err := retry.OnError(wait.Backoff{
+		Duration: 500 * time.Millisecond,
+		Steps:    120,
+	}, func(err error) bool {
+		return true
+	}, func() error {
+		return testEnv.Stop()
+	})
 	err = testEnv.Stop()
 	Expect(err).NotTo(HaveOccurred())
 })

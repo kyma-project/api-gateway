@@ -28,11 +28,12 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 )
 
-func NewAPIGatewayReconciler(mgr manager.Manager) *APIGatewayReconciler {
+func NewAPIGatewayReconciler(mgr manager.Manager, config ApiGatewayReconcilerConfiguration) *APIGatewayReconciler {
 	return &APIGatewayReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-		log:    mgr.GetLogger().WithName("apigateway-controller"),
+		Client:               mgr.GetClient(),
+		Scheme:               mgr.GetScheme(),
+		log:                  mgr.GetLogger().WithName("apigateway-controller"),
+		ReconciliationConfig: config,
 	}
 }
 
@@ -64,13 +65,20 @@ func (r *APIGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		return ctrl.Result{}, err
 	}
 
+	err := controllers.UpdateApiGatewayStatus(ctx, r.Client, &apiGatewayCR, controllers.ProcessingStatus())
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
 	r.log.Info("Reconciling APIGateway CR", "name", apiGatewayCR.Name, "isInDeletion", apiGatewayCR.IsInDeletion())
 
 	if kymaGatewayStatus := gateway.ReconcileKymaGateway(ctx, r.Client, &apiGatewayCR); !kymaGatewayStatus.IsReady() {
 		return r.requeueReconciliation(ctx, apiGatewayCR, kymaGatewayStatus)
 	}
 
-	if oryOathkeeperStatus := oathkeeper.ReconcileOathkeeper(ctx, r.Client, &apiGatewayCR); !oryOathkeeperStatus.IsReady() {
+	oathkeeperReconciler := oathkeeper.Reconciler{ShouldWaitForDeployment: r.ReconciliationConfig.ShouldWaitForDeploymentsToBeReady}
+
+	if oryOathkeeperStatus := oathkeeperReconciler.ReconcileOathkeeper(ctx, r.Client, &apiGatewayCR); !oryOathkeeperStatus.IsReady() {
 		return r.requeueReconciliation(ctx, apiGatewayCR, oryOathkeeperStatus)
 	}
 

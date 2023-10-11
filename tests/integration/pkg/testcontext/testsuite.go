@@ -4,6 +4,9 @@ import (
 	"crypto/tls"
 	"log"
 	"net/http"
+	"os"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"time"
 
 	"github.com/cucumber/godog"
@@ -51,6 +54,7 @@ func New(config Config, factory TestsuiteFactory) (Testsuite, error) {
 	if err != nil {
 		return nil, err
 	}
+	logf.SetLogger(zap.New(zap.WriteTo(os.Stdout), zap.UseDevMode(true)))
 
 	rm := resource.NewManager(GetRetryOpts())
 
