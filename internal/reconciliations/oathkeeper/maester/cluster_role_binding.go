@@ -22,7 +22,7 @@ func reconcileOryOathkeeperMaesterClusterRoleBinding(ctx context.Context, k8sCli
 	ctrl.Log.Info("Reconciling Ory Oathkeeper Maester ClusterRoleBinding", "name", roleBindingName)
 
 	if apiGatewayCR.IsInDeletion() {
-		return deleteRoleBinding(k8sClient, roleBindingName)
+		return deleteRoleBinding(ctx, k8sClient, roleBindingName)
 	}
 
 	templateValues := make(map[string]string)
@@ -34,14 +34,14 @@ func reconcileOryOathkeeperMaesterClusterRoleBinding(ctx context.Context, k8sCli
 	return reconciliations.ApplyResource(ctx, k8sClient, clusterRoleBinding, templateValues)
 }
 
-func deleteRoleBinding(k8sClient client.Client, name string) error {
+func deleteRoleBinding(ctx context.Context, k8sClient client.Client, name string) error {
 	ctrl.Log.Info("Deleting Oathkeeper Maester ClusterRoleBinding if it exists", "name", name)
 	s := rbacv1.ClusterRoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: name,
 		},
 	}
-	err := k8sClient.Delete(context.Background(), &s)
+	err := k8sClient.Delete(ctx, &s)
 
 	if err != nil && !k8serrors.IsNotFound(err) {
 		return fmt.Errorf("failed to delete Oathkeeper Maester ClusterRoleBinding %s: %v", name, err)

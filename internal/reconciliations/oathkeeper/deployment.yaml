@@ -25,6 +25,7 @@ spec:
   template:
     metadata:
       labels:
+        sidecar.istio.io/inject: "true"
         app.kubernetes.io/instance: ory
         app.kubernetes.io/name: oathkeeper
       annotations:
@@ -70,7 +71,7 @@ spec:
             timeoutSeconds: 1
           resources:
             limits:
-              cpu: 100m
+              cpu: 10
               memory: 512Mi
             requests:
               cpu: 100m

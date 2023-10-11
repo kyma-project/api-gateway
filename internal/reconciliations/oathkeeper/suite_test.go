@@ -17,13 +17,13 @@ import (
 	"testing"
 )
 
-func TestValidators(t *testing.T) {
+func TestOathkeeper(t *testing.T) {
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "Oathkeeper Suite")
 }
 
 var _ = ReportAfterSuite("custom reporter", func(report types.Report) {
-	tests.GenerateGinkgoJunitReport("oauthkeeper-suite", report)
+	tests.GenerateGinkgoJunitReport("oathkeeper-suite", report)
 })
 
 func createFakeClient(objects ...client.Object) client.Client {

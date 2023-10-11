@@ -10,12 +10,12 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-func TestAPIs(t *testing.T) {
+func TestClusterConfig(t *testing.T) {
 	RegisterFailHandler(Fail)
 
 	RunSpecs(t, "Clusterconfig Suite")
 }
 
 var _ = ReportAfterSuite("custom reporter", func(report types.Report) {
-	tests.GenerateGinkgoJunitReport("gateway-suite", report)
+	tests.GenerateGinkgoJunitReport("clusterconfig-suite", report)
 })

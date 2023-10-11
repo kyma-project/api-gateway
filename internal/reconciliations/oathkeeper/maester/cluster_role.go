@@ -22,7 +22,7 @@ func reconcileOryOathkeeperMaesterClusterRole(ctx context.Context, k8sClient cli
 	ctrl.Log.Info("Reconciling Ory Oathkeeper Maester ClusterRole", "name", roleName)
 
 	if apiGatewayCR.IsInDeletion() {
-		return deleteClusterRole(k8sClient, roleName)
+		return deleteClusterRole(ctx, k8sClient, roleName)
 	}
 
 	templateValues := make(map[string]string)
@@ -31,14 +31,14 @@ func reconcileOryOathkeeperMaesterClusterRole(ctx context.Context, k8sClient cli
 	return reconciliations.ApplyResource(ctx, k8sClient, clusterRole, templateValues)
 }
 
-func deleteClusterRole(k8sClient client.Client, name string) error {
+func deleteClusterRole(ctx context.Context, k8sClient client.Client, name string) error {
 	ctrl.Log.Info("Deleting Oathkeeper Maester ClusterRole if it exists", "name", name)
 	s := rbacv1.ClusterRole{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: name,
 		},
 	}
-	err := k8sClient.Delete(context.Background(), &s)
+	err := k8sClient.Delete(ctx, &s)
 
 	if err != nil && !k8serrors.IsNotFound(err) {
 		return fmt.Errorf("failed to delete Oathkeeper Maester ClusterRole %s: %v", name, err)

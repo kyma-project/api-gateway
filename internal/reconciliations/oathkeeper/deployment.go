@@ -3,16 +3,20 @@ package oathkeeper
 import (
 	"context"
 	_ "embed"
+	"errors"
 	"fmt"
+	"github.com/avast/retry-go/v4"
 	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
 	"github.com/kyma-project/api-gateway/internal/clusterconfig"
 	"github.com/kyma-project/api-gateway/internal/reconciliations"
 	"github.com/kyma-project/api-gateway/internal/reconciliations/oathkeeper/maester"
 	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"time"
 )
 
 const (
@@ -35,7 +39,7 @@ func reconcileOathkeeperDeployment(ctx context.Context, k8sClient client.Client,
 	ctrl.Log.Info("Reconciling Ory Oathkeeper Deployment", "Cluster size", clusterSize, "name", deploymentName, "Namespace", reconciliations.Namespace)
 
 	if apiGatewayCR.IsInDeletion() {
-		return deleteDeployment(k8sClient, deploymentName)
+		return deleteDeployment(ctx, k8sClient, deploymentName)
 	}
 
 	if clusterSize == clusterconfig.Evaluation {
@@ -52,10 +56,32 @@ func reconcileDeployment(ctx context.Context, k8sClient client.Client, name stri
 	templateValues["Namespace"] = reconciliations.Namespace
 	templateValues["ServiceAccountName"] = maester.ServiceAccountName
 
-	return reconciliations.ApplyResource(ctx, k8sClient, *deploymentManifest, templateValues)
+	err := reconciliations.ApplyResource(ctx, k8sClient, *deploymentManifest, templateValues)
+	if err != nil {
+		return err
+	}
+
+	return retry.Do(func() error {
+		var podList corev1.PodList
+		err := k8sClient.List(ctx, &podList, client.MatchingLabels{
+			"app.kubernetes.io/instance": "ory",
+			"app.kubernetes.io/name":     "oathkeeper",
+		})
+
+		if err != nil {
+			return err
+		}
+
+		for _, pod := range podList.Items {
+			if pod.Status.Phase != corev1.PodRunning {
+				return errors.New("ory oathkeeper deployment is not ready")
+			}
+		}
+		return nil
+	}, retry.Attempts(60), retry.Delay(2*time.Second))
 }
 
-func deleteDeployment(k8sClient client.Client, name string) error {
+func deleteDeployment(ctx context.Context, k8sClient client.Client, name string) error {
 	ctrl.Log.Info("Deleting Deployment if it exists", "name", name, "Namespace", reconciliations.Namespace)
 	c := appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
@@ -63,7 +89,7 @@ func deleteDeployment(k8sClient client.Client, name string) error {
 			Namespace: reconciliations.Namespace,
 		},
 	}
-	err := k8sClient.Delete(context.Background(), &c)
+	err := k8sClient.Delete(ctx, &c)
 
 	if err != nil && !k8serrors.IsNotFound(err) {
 		return fmt.Errorf("failed to delete Deployment %s/%s: %v", reconciliations.Namespace, name, err)

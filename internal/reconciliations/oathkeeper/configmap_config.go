@@ -22,7 +22,7 @@ func reconcileOryOathkeeperConfigConfigMap(ctx context.Context, k8sClient client
 	ctrl.Log.Info("Reconciling Ory Config ConfigMap", "name", configMapName, "Namespace", reconciliations.Namespace)
 
 	if apiGatewayCR.IsInDeletion() {
-		return deleteConfigmap(k8sClient, configMapName, reconciliations.Namespace)
+		return deleteConfigmap(ctx, k8sClient, configMapName, reconciliations.Namespace)
 	}
 
 	isGardenerCluster, err := reconciliations.RunsOnGardenerCluster(ctx, k8sClient)
@@ -46,7 +46,7 @@ func reconcileOryOathkeeperConfigConfigMap(ctx context.Context, k8sClient client
 	return reconciliations.ApplyResource(ctx, k8sClient, configmapConfig, templateValues)
 }
 
-func deleteConfigmap(k8sClient client.Client, name, namespace string) error {
+func deleteConfigmap(ctx context.Context, k8sClient client.Client, name, namespace string) error {
 	ctrl.Log.Info("Deleting Oathkeeper ConfigMap if it exists", "name", name, "Namespace", namespace)
 	s := corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
@@ -54,7 +54,7 @@ func deleteConfigmap(k8sClient client.Client, name, namespace string) error {
 			Namespace: namespace,
 		},
 	}
-	err := k8sClient.Delete(context.Background(), &s)
+	err := k8sClient.Delete(ctx, &s)
 
 	if err != nil && !k8serrors.IsNotFound(err) {
 		return fmt.Errorf("failed to delete Oathkeeper ConfigMap %s/%s: %v", namespace, name, err)

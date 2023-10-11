@@ -15,11 +15,11 @@ import (
 
 const roleName = "ory-oathkeeper-keys-job-role"
 
-func reconcileOryOathkeeperCronjobRole(_ context.Context, k8sClient client.Client, _ v1alpha1.APIGateway) error {
-	return deleteRole(k8sClient, roleName, reconciliations.Namespace)
+func reconcileOryOathkeeperCronjobRole(ctx context.Context, k8sClient client.Client, _ v1alpha1.APIGateway) error {
+	return deleteRole(ctx, k8sClient, roleName, reconciliations.Namespace)
 }
 
-func deleteRole(k8sClient client.Client, name, namespace string) error {
+func deleteRole(ctx context.Context, k8sClient client.Client, name, namespace string) error {
 	ctrl.Log.Info("Deleting Oathkeeper Cronjob Role if it exists", "name", name, "Namespace", namespace)
 	s := rbacv1.Role{
 		ObjectMeta: metav1.ObjectMeta{
@@ -27,10 +27,10 @@ func deleteRole(k8sClient client.Client, name, namespace string) error {
 			Namespace: namespace,
 		},
 	}
-	err := k8sClient.Delete(context.Background(), &s)
+	err := k8sClient.Delete(ctx, &s)
 
 	if err != nil && !k8serrors.IsNotFound(err) {
-		return fmt.Errorf("failed to delete Oathkeeper Role %s/%s: %v", namespace, name, err)
+		return fmt.Errorf("failed to delete Oathkeeper Cronjob Role %s/%s: %v", namespace, name, err)
 	}
 
 	if k8serrors.IsNotFound(err) {

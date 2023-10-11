@@ -34,9 +34,9 @@ func reconcileOryOathkeeperServices(ctx context.Context, k8sClient client.Client
 
 	if apiGatewayCR.IsInDeletion() {
 		return errors.Join(
-			deleteService(k8sClient, apiServiceName, reconciliations.Namespace),
-			deleteService(k8sClient, metricsServiceName, reconciliations.Namespace),
-			deleteService(k8sClient, proxyServiceName, reconciliations.Namespace),
+			deleteService(ctx, k8sClient, apiServiceName, reconciliations.Namespace),
+			deleteService(ctx, k8sClient, metricsServiceName, reconciliations.Namespace),
+			deleteService(ctx, k8sClient, proxyServiceName, reconciliations.Namespace),
 		)
 	}
 
@@ -59,7 +59,7 @@ func reconcileOryOathkeeperServices(ctx context.Context, k8sClient client.Client
 	)
 }
 
-func deleteService(k8sClient client.Client, name, namespace string) error {
+func deleteService(ctx context.Context, k8sClient client.Client, name, namespace string) error {
 	ctrl.Log.Info("Deleting Oathkeeper Service if it exists", "name", name, "Namespace", namespace)
 	s := corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
@@ -67,7 +67,7 @@ func deleteService(k8sClient client.Client, name, namespace string) error {
 			Namespace: namespace,
 		},
 	}
-	err := k8sClient.Delete(context.Background(), &s)
+	err := k8sClient.Delete(ctx, &s)
 
 	if err != nil && !k8serrors.IsNotFound(err) {
 		return fmt.Errorf("failed to delete Oathkeeper Service %s/%s: %v", namespace, name, err)

@@ -31,7 +31,7 @@ func reconcileOathkeeperHPA(ctx context.Context, k8sClient client.Client, apiGat
 	ctrl.Log.Info("Reconciling Ory Oathkeeper HPA", "Cluster size", clusterSize, "name", hpaName, "Namespace", reconciliations.Namespace)
 
 	if clusterSize == clusterconfig.Evaluation || apiGatewayCR.IsInDeletion() {
-		return deleteHPA(k8sClient, hpaName)
+		return deleteHPA(ctx, k8sClient, hpaName)
 	}
 
 	templateValues := make(map[string]string)
@@ -42,7 +42,7 @@ func reconcileOathkeeperHPA(ctx context.Context, k8sClient client.Client, apiGat
 	return reconciliations.ApplyResource(ctx, k8sClient, hpa, templateValues)
 }
 
-func deleteHPA(k8sClient client.Client, name string) error {
+func deleteHPA(ctx context.Context, k8sClient client.Client, name string) error {
 	ctrl.Log.Info("Deleting HPA if it exists", "name", name, "Namespace", reconciliations.Namespace)
 	c := autoscalingv2.HorizontalPodAutoscaler{
 		ObjectMeta: metav1.ObjectMeta{
@@ -50,7 +50,7 @@ func deleteHPA(k8sClient client.Client, name string) error {
 			Namespace: reconciliations.Namespace,
 		},
 	}
-	err := k8sClient.Delete(context.Background(), &c)
+	err := k8sClient.Delete(ctx, &c)
 
 	if err != nil && !k8serrors.IsNotFound(err) {
 		return fmt.Errorf("failed to delete HPA %s/%s: %v", reconciliations.Namespace, name, err)

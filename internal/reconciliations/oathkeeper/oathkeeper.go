@@ -23,7 +23,7 @@ func ReconcileOathkeeper(ctx context.Context, k8sClient client.Client, apiGatewa
 		reconcileOathkeeperDeployment(ctx, k8sClient, *apiGatewayCR),
 	)
 	if err != nil {
-		return controllers.ErrorStatus(err, "Oathkeeper did not reconcile succefully")
+		return controllers.ErrorStatus(err, "Oathkeeper did not reconcile successfully")
 	}
 
 	return controllers.SuccessfulStatus()

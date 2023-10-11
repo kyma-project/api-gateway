@@ -10,7 +10,7 @@ import (
 )
 
 var _ = Describe("Gardener", func() {
-	Context("reconciliations.GetGardenerDomain", func() {
+	Context("GetGardenerDomain", func() {
 
 		It("should return the domain name from the Gardener shoot-info config", func() {
 			// given

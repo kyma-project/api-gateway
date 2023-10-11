@@ -18,11 +18,11 @@ const (
 	cronjobName = "oathkeeper-jwks-rotator"
 )
 
-func reconcileOryOathkeeperCronjob(_ context.Context, k8sClient client.Client, _ v1alpha1.APIGateway) error {
-	return deleteCronjob(k8sClient, cronjobName, reconciliations.Namespace)
+func reconcileOryOathkeeperCronjob(ctx context.Context, k8sClient client.Client, _ v1alpha1.APIGateway) error {
+	return deleteCronjob(ctx, k8sClient, cronjobName, reconciliations.Namespace)
 }
 
-func deleteCronjob(k8sClient client.Client, name, namespace string) error {
+func deleteCronjob(ctx context.Context, k8sClient client.Client, name, namespace string) error {
 	ctrl.Log.Info("Deleting Oathkeeper Cronjob if it exists", "name", name, "Namespace", namespace)
 	s := schedulingv1.CronJob{
 		ObjectMeta: metav1.ObjectMeta{
@@ -30,7 +30,7 @@ func deleteCronjob(k8sClient client.Client, name, namespace string) error {
 			Namespace: namespace,
 		},
 	}
-	err := k8sClient.Delete(context.Background(), &s)
+	err := k8sClient.Delete(ctx, &s)
 
 	if err != nil && !k8serrors.IsNotFound(err) {
 		return fmt.Errorf("failed to delete Oathkeeper Cronjob %s/%s: %v", namespace, name, err)
