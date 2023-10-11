@@ -148,7 +148,6 @@ var _ = AfterSuite(func() {
 	}, func() error {
 		return testEnv.Stop()
 	})
-	err = testEnv.Stop()
 	Expect(err).NotTo(HaveOccurred())
 })
 
