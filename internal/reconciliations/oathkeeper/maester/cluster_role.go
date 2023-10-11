@@ -4,13 +4,16 @@ import (
 	"context"
 	_ "embed"
 	"fmt"
+	"github.com/avast/retry-go/v4"
 	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
 	"github.com/kyma-project/api-gateway/internal/reconciliations"
 	rbacv1 "k8s.io/api/rbac/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"time"
 )
 
 //go:embed cluster_role.yaml
@@ -28,7 +31,12 @@ func reconcileOryOathkeeperMaesterClusterRole(ctx context.Context, k8sClient cli
 	templateValues := make(map[string]string)
 	templateValues["Name"] = roleName
 
-	return reconciliations.ApplyResource(ctx, k8sClient, clusterRole, templateValues)
+	err := reconciliations.ApplyResource(ctx, k8sClient, clusterRole, templateValues)
+	if err != nil {
+		return err
+	}
+
+	return waitForClusterRole(ctx, k8sClient)
 }
 
 func deleteClusterRole(ctx context.Context, k8sClient client.Client, name string) error {
@@ -51,4 +59,11 @@ func deleteClusterRole(ctx context.Context, k8sClient client.Client, name string
 	}
 
 	return nil
+}
+
+func waitForClusterRole(ctx context.Context, k8sClient client.Client) error {
+	return retry.Do(func() error {
+		var clusterRole rbacv1.ClusterRole
+		return k8sClient.Get(ctx, types.NamespacedName{Name: roleName}, &clusterRole)
+	}, retry.Attempts(60), retry.Delay(2*time.Second))
 }
