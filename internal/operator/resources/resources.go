@@ -10,6 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
 )
@@ -93,6 +94,10 @@ func (i *ResourcesFinder) FindUserCreatedResources(checkIf resourceCondition) ([
 			return nil, err
 		}
 		for _, item := range u.Items {
+			groupVersion := fmt.Sprintf("%s/%s", resource.GroupVersionKind.Group, resource.GroupVersionKind.Version)
+			if item.GetAPIVersion() != groupVersion {
+				ctrl.Log.Info("Inconsistent find for %s/%s: %s", groupVersion, item.GetAPIVersion())
+			}
 			res := Resource{
 				GVK: resource.GroupVersionKind,
 				ResourceMeta: ResourceMeta{
