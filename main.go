@@ -167,9 +167,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	apiGatewayConfig := operatorcontrollers.ApiGatewayReconcilerConfiguration{ShouldWaitForDeploymentsToBeReady: true}
-
-	if err = operatorcontrollers.NewAPIGatewayReconciler(mgr, apiGatewayConfig).SetupWithManager(mgr, rateLimiterCfg); err != nil {
+	if err = operatorcontrollers.NewAPIGatewayReconciler(mgr).SetupWithManager(mgr, rateLimiterCfg); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "APIGateway")
 		os.Exit(1)
 	}

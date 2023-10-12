@@ -3,7 +3,6 @@ package oathkeeper
 import (
 	"context"
 	_ "embed"
-	"errors"
 	"fmt"
 	"github.com/avast/retry-go/v4"
 	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
@@ -11,7 +10,6 @@ import (
 	"github.com/kyma-project/api-gateway/internal/reconciliations"
 	"github.com/kyma-project/api-gateway/internal/reconciliations/oathkeeper/maester"
 	appsv1 "k8s.io/api/apps/v1"
-	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -84,25 +82,21 @@ func deleteDeployment(ctx context.Context, k8sClient client.Client, name string)
 
 func waitForDeploymentToBeReady(ctx context.Context, k8sClient client.Client) error {
 	return retry.Do(func() error {
-		var podList corev1.PodList
-		err := k8sClient.List(ctx, &podList, client.MatchingLabels{
-			"app.kubernetes.io/instance": "ory",
-			"app.kubernetes.io/name":     "oathkeeper",
-		})
+		var dep appsv1.Deployment
+		err := k8sClient.Get(ctx, client.ObjectKey{
+			Namespace: reconciliations.Namespace,
+			Name:      deploymentName,
+		}, &dep)
 
 		if err != nil {
 			return err
 		}
+		ctrl.Log.Info("replicas:", "unavailable replicas", dep.Status.UnavailableReplicas)
 
-		if len(podList.Items) == 0 {
-			return errors.New("ory oathkeeper deployment is not ready")
+		if dep.Status.UnavailableReplicas > 0 {
+			return fmt.Errorf("unavailable replicas %d", dep.Status.UnavailableReplicas)
 		}
 
-		for _, pod := range podList.Items {
-			if pod.Status.Phase != corev1.PodRunning {
-				return errors.New("ory oathkeeper deployment is not ready")
-			}
-		}
 		return nil
-	}, retry.Attempts(60), retry.Delay(2*time.Second))
+	}, retry.Attempts(60), retry.Delay(2*time.Second), retry.DelayType(retry.FixedDelay))
 }

@@ -28,12 +28,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 )
 
-func NewAPIGatewayReconciler(mgr manager.Manager, config ApiGatewayReconcilerConfiguration) *APIGatewayReconciler {
+func NewAPIGatewayReconciler(mgr manager.Manager) *APIGatewayReconciler {
 	return &APIGatewayReconciler{
-		Client:               mgr.GetClient(),
-		Scheme:               mgr.GetScheme(),
-		log:                  mgr.GetLogger().WithName("apigateway-controller"),
-		ReconciliationConfig: config,
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+		log:    mgr.GetLogger().WithName("apigateway-controller"),
 	}
 }
 
@@ -71,7 +70,7 @@ func (r *APIGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		return r.requeueReconciliation(ctx, apiGatewayCR, kymaGatewayStatus)
 	}
 
-	oathkeeperReconciler := oathkeeper.Reconciler{ShouldWaitForDeployment: r.ReconciliationConfig.ShouldWaitForDeploymentsToBeReady}
+	oathkeeperReconciler := oathkeeper.Reconciler{}
 
 	if oryOathkeeperStatus := oathkeeperReconciler.ReconcileOathkeeper(ctx, r.Client, &apiGatewayCR); !oryOathkeeperStatus.IsReady() {
 		return r.requeueReconciliation(ctx, apiGatewayCR, oryOathkeeperStatus)

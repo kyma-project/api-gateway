@@ -121,11 +121,7 @@ var _ = BeforeSuite(func() {
 		FailureMaxDelay:  10 * time.Second,
 	}
 
-	config := ApiGatewayReconcilerConfiguration{
-		ShouldWaitForDeploymentsToBeReady: false,
-	}
-
-	Expect(NewAPIGatewayReconciler(mgr, config).SetupWithManager(mgr, rateLimiterCfg)).Should(Succeed())
+	Expect(NewAPIGatewayReconciler(mgr).SetupWithManager(mgr, rateLimiterCfg)).Should(Succeed())
 
 	go func() {
 		defer GinkgoRecover()
