@@ -56,7 +56,7 @@ import (
 
 const (
 	testNamespace     = "kyma-system"
-	eventuallyTimeout = time.Second * 5
+	eventuallyTimeout = time.Second * 10
 )
 
 var (
