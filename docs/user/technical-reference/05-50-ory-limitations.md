@@ -1,8 +1,9 @@
 # Ory limitations
 
 ## Resource configuration
+The resources of the Ory components are configured differently based on the size of the cluster. Smaller clusters are defined as having less than 5 CPU capability or less than 10 Gi of memory capability, while larger clusters exceed these values.
 
-By default, the Ory components' resources have the following configuration for bigger clusters:
+The default configuration for larger clusters includes the following settings for the Ory components' resources:
 
 | Component          |          | CPU         | Memory |
 |--------------------|----------|-------------|--------|
@@ -11,7 +12,7 @@ By default, the Ory components' resources have the following configuration for b
 | Oathkeeper Maester | Limits   | 400m        | 1Gi    |
 | Oathkeeper Maester | Requests | 10m         | 32Mi   |
 
-For smaller clusters with less then 5 Cpu capability or less then 10 Gi of memory capability, the Ory components' resources have the following configuration:
+The default configuration for smaller clusters includes the following settings for the Ory components' resources:
 
 | Component          |          | CPU  | Memory |
 |--------------------|----------|------|--------|
