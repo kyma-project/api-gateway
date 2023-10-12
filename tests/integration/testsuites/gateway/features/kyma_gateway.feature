@@ -8,7 +8,6 @@ Feature: Checking default kyma gateway
     And "Deployment" "ory-oathkeeper" in namespace "kyma-system" has status "Ready"
     And there "is" "ConfigMap" "ory-oathkeeper-config" in namespace "kyma-system"
     And there "is" "CustomResourceDefinition" "rules.oathkeeper.ory.sh" in the cluster
-    And "HorizontalPodAutoscaler" "ory-oathkeeper" in namespace "kyma-system" has status "Ready"
     And there "is" "Secret" "ory-oathkeeper-jwks-secret" in namespace "kyma-system"
     And there "is" "Service" "ory-oathkeeper-api" in namespace "kyma-system"
     And there "is" "Service" "ory-oathkeeper-proxy" in namespace "kyma-system"

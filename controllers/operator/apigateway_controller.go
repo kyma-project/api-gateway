@@ -26,6 +26,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 )
 
 func NewAPIGatewayReconciler(mgr manager.Manager) *APIGatewayReconciler {
@@ -66,6 +67,12 @@ func (r *APIGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 
 	r.log.Info("Reconciling APIGateway CR", "name", apiGatewayCR.Name, "isInDeletion", apiGatewayCR.IsInDeletion())
 
+	if err := controllers.UpdateApiGatewayStatus(ctx, r.Client, &apiGatewayCR, controllers.ProcessingStatus()); err != nil {
+		r.log.Error(err, "Update status to processing failed")
+		// We don't update the status to error, because the status update already failed and to avoid another status update error we simply requeue the request.
+		return ctrl.Result{}, err
+	}
+
 	if kymaGatewayStatus := gateway.ReconcileKymaGateway(ctx, r.Client, &apiGatewayCR); !kymaGatewayStatus.IsReady() {
 		return r.requeueReconciliation(ctx, apiGatewayCR, kymaGatewayStatus)
 	}
@@ -88,6 +95,7 @@ func (r *APIGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 func (r *APIGatewayReconciler) SetupWithManager(mgr ctrl.Manager, c controllers.RateLimiterConfig) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&v1alpha1.APIGateway{}).
+		WithEventFilter(predicate.GenerationChangedPredicate{}).
 		WithOptions(controller.Options{
 			RateLimiter: controllers.NewRateLimiter(c),
 		}).
@@ -109,7 +117,7 @@ func (r *APIGatewayReconciler) requeueReconciliation(ctx context.Context, cr v1a
 
 func (r *APIGatewayReconciler) finishReconcile(ctx context.Context, cr v1alpha1.APIGateway) (ctrl.Result, error) {
 
-	if err := controllers.UpdateApiGatewayStatus(ctx, r.Client, &cr, controllers.SuccessfulStatus()); err != nil {
+	if err := controllers.UpdateApiGatewayStatus(ctx, r.Client, &cr, controllers.ReadyStatus()); err != nil {
 		r.log.Error(err, "Update status failed")
 		return ctrl.Result{}, err
 	}
