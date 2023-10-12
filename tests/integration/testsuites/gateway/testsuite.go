@@ -34,10 +34,10 @@ func (t *testsuite) InitScenarios(ctx *godog.ScenarioContext) {
 func (t *testsuite) FeaturePath() []string {
 	isGardener := os.Getenv("IS_GARDENER")
 	if isGardener == "true" {
-		return []string{"testsuites/gateway/features/api_gateway_deletion.feature", "testsuites/gateway/features/kyma_gateway.feature", "testsuites/gateway/features/kyma_gateway_gardener.feature"}
+		return []string{"testsuites/gateway/features/kyma_gateway.feature", "testsuites/gateway/features/kyma_gateway_gardener.feature"}
 	}
 
-	return []string{"testsuites/gateway/features/api_gateway_deletion.feature", "testsuites/gateway/features/kyma_gateway.feature", "testsuites/gateway/features/kyma_gateway_k3d.feature"}
+	return []string{"testsuites/gateway/features/kyma_gateway.feature", "testsuites/gateway/features/kyma_gateway_k3d.feature"}
 }
 
 func (t *testsuite) Name() string {
@@ -93,6 +93,14 @@ func (t *testsuite) TearDown() {
 	if err != nil {
 		log.Print(err.Error())
 	}
+}
+
+func (t *testsuite) BeforeSuiteHooks() []func() error {
+	return []func() error{}
+}
+
+func (t *testsuite) AfterSuiteHooks() []func() error {
+	return []func() error{}
 }
 
 func NewTestsuite(httpClient *helpers.RetryableHttpClient, k8sClient dynamic.Interface, rm *resource.Manager, config testcontext.Config) testcontext.Testsuite {

@@ -56,10 +56,11 @@ func ReconcileKymaGateway(ctx context.Context, k8sClient client.Client, apiGatew
 		if err := addKymaGatewayFinalizer(ctx, k8sClient, apiGatewayCR); err != nil {
 			return controllers.ErrorStatus(err, "Failed to add finalizer during Kyma Gateway reconciliation")
 		}
+		ctrl.Log.Info("Kyma Gateway finalizer added")
 	}
 
 	if !hasKymaGatewayFinalizer(*apiGatewayCR) {
-		ctrl.Log.Info("Kyma Gateway is disabled or there is no finalizer, reconciliation is skipped")
+		ctrl.Log.Info("There is no Kyma Gateway finalizer, reconciliation is skipped")
 		return controllers.ReadyStatus()
 	}
 
@@ -109,6 +110,7 @@ func ReconcileKymaGateway(ctx context.Context, k8sClient client.Client, apiGatew
 		if err := removeKymaGatewayFinalizer(ctx, k8sClient, apiGatewayCR); err != nil {
 			return controllers.ErrorStatus(err, "Failed to remove finalizer during Kyma Gateway reconciliation")
 		}
+		ctrl.Log.Info("Kyma Gateway finalizer removed")
 	}
 
 	return controllers.ReadyStatus()
