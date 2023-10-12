@@ -2,9 +2,10 @@ package testcontext
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/avast/retry-go/v4"
 	"github.com/vrischmann/envconfig"
-	"time"
 )
 
 const (

@@ -27,6 +27,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 )
 
 const (
@@ -102,6 +103,7 @@ func (r *APIGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 func (r *APIGatewayReconciler) SetupWithManager(mgr ctrl.Manager, c controllers.RateLimiterConfig) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&operatorv1alpha1.APIGateway{}).
+		WithEventFilter(predicate.GenerationChangedPredicate{}).
 		WithOptions(controller.Options{
 			RateLimiter: controllers.NewRateLimiter(c),
 		}).

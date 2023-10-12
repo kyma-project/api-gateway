@@ -50,7 +50,7 @@ var checkDefaultGatewayReference = func(ctx context.Context, c client.Client, re
 // APIGateway CR and handles the deletion of the resources if the APIGateway CR is deleted.
 // Returns a Status object with the result of the reconciliation and an error if the reconciliation failed.
 func ReconcileKymaGateway(ctx context.Context, k8sClient client.Client, apiGatewayCR *v1alpha1.APIGateway, apiGatewayResourceListPath string) controllers.Status {
-	ctrl.Log.Info("Reconcile Kyma Gateway")
+	ctrl.Log.Info(fmt.Sprintf("Reconcile Kyma Gateway (Enabled: %v)", apiGatewayCR.Spec.EnableKymaGateway))
 	if isKymaGatewayEnabled(*apiGatewayCR) && !apiGatewayCR.IsInDeletion() && !hasKymaGatewayFinalizer(*apiGatewayCR) {
 		ctrl.Log.Info("Adding Kyma Gateway finalizer")
 		if err := addKymaGatewayFinalizer(ctx, k8sClient, apiGatewayCR); err != nil {

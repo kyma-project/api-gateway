@@ -8,10 +8,12 @@ import (
 
 	"github.com/avast/retry-go/v4"
 	"github.com/cucumber/godog"
+	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
 	k8sclient "github.com/kyma-project/api-gateway/tests/integration/pkg/client"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
 	"github.com/pkg/errors"
+	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -20,6 +22,50 @@ import (
 
 const templateFileName string = "pkg/hooks/manifests/apigateway_cr_template.yaml"
 const ApiGatewayCRName string = "test-gateway"
+
+var DeleteBlockingResourcesScenarioHook = func(ctx context.Context, sc *godog.Scenario) (context.Context, error) {
+	k8sClient, err := testcontext.GetK8sClientFromContext(ctx)
+	if err != nil {
+		return ctx, err
+	}
+	apiRuleList := v1beta1.APIRuleList{}
+	err = k8sClient.List(ctx, &apiRuleList)
+	if err != nil {
+		return ctx, err
+	}
+	for _, apiRule := range apiRuleList.Items {
+		err = retry.Do(func() error {
+			err := k8sClient.Delete(ctx, &apiRule)
+			if err != nil {
+				return fmt.Errorf("failed to delete APIRule %s", apiRule.GetName())
+			}
+			return nil
+		}, testcontext.GetRetryOpts()...)
+		if err != nil {
+			return ctx, err
+		}
+	}
+
+	vsList := networkingv1beta1.VirtualServiceList{}
+	err = k8sClient.List(ctx, &vsList)
+	if err != nil {
+		return ctx, err
+	}
+	for _, vs := range vsList.Items {
+		err = retry.Do(func() error {
+			err := k8sClient.Delete(ctx, vs)
+			if err != nil {
+				return fmt.Errorf("failed to delete VirtualService %s", vs.GetName())
+			}
+			return nil
+		}, testcontext.GetRetryOpts()...)
+		if err != nil {
+			return ctx, err
+		}
+	}
+
+	return ctx, nil
+}
 
 var ApplyApiGatewayCrScenarioHook = func(ctx context.Context, sc *godog.Scenario) (context.Context, error) {
 	k8sClient, err := testcontext.GetK8sClientFromContext(ctx)
