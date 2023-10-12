@@ -110,7 +110,7 @@ test: manifests generate fmt vet envtest ## Generate manifests and run tests.
 
 .PHONY: test-integration
 test-integration: generate fmt vet envtest ## Run integration tests.
-	source ./tests/integration/env_vars.sh && go test -timeout 1h ./tests/integration -v -race -run TestIstioJwt . && go test -timeout 1h ./tests/integration -v -race -run TestOryJwt .
+	source ./tests/integration/env_vars.sh && go test -timeout 1h ./tests/integration -v -race -run TestIstioJwt . && go test -timeout 1h ./tests/integration -v -race -run TestOryJwt . && go test -timeout 1h ./tests/integration -v -race -run TestGateway .
 
 .PHONY: test-upgrade
 test-upgrade: generate fmt vet generate-upgrade-test-manifest ## Run API Gateway upgrade tests.
