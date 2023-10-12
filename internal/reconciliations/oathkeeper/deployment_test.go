@@ -61,7 +61,7 @@ var _ = Describe("Oathkeeper Deployment reconciliation", func() {
 	})
 
 	It("Should deploy full version of Deployment on big cluster", func() {
-		smallNode := corev1.Node{
+		node := corev1.Node{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "node1",
 			},
@@ -74,7 +74,7 @@ var _ = Describe("Oathkeeper Deployment reconciliation", func() {
 		}
 
 		apiGateway := createApiGateway()
-		k8sClient := createFakeClient(&smallNode, apiGateway)
+		k8sClient := createFakeClient(&node, apiGateway)
 		status := oathkeeper.ReconcileOathkeeper(context.Background(), k8sClient, apiGateway)
 		Expect(status.IsReady()).To(BeTrue(), "%#v", status)
 
@@ -104,4 +104,41 @@ var _ = Describe("Oathkeeper Deployment reconciliation", func() {
 		Expect(oathkeeperMaesterContainter.Resources.Requests.Memory().String()).To(Equal("32Mi"))
 	})
 
+	It("Should not overwrite number of existing deployment replicas", func() {
+		node := corev1.Node{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "node1",
+			},
+			Status: corev1.NodeStatus{
+				Capacity: map[corev1.ResourceName]resource.Quantity{
+					"cpu":    *resource.NewQuantity(clusterconfig.ProductionClusterCpuThreshold+1, resource.DecimalSI),
+					"memory": *resource.NewScaledQuantity(int64(32), resource.Giga),
+				},
+			},
+		}
+
+		var initialReplicas = int32(4)
+		initialDeployment := appsv1.Deployment{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "ory-oathkeeper",
+				Namespace: "kyma-system",
+			},
+			Spec: appsv1.DeploymentSpec{
+				Replicas: &initialReplicas,
+			},
+		}
+
+		apiGateway := createApiGateway()
+		k8sClient := createFakeClient(&node, apiGateway, &initialDeployment)
+		status := oathkeeper.ReconcileOathkeeper(context.Background(), k8sClient, apiGateway)
+		Expect(status.IsReady()).To(BeTrue(), "%#v", status)
+
+		var deployment appsv1.Deployment
+		Expect(k8sClient.Get(context.Background(), types.NamespacedName{
+			Namespace: "kyma-system",
+			Name:      "ory-oathkeeper",
+		}, &deployment)).Should(Succeed())
+
+		Expect(*deployment.Spec.Replicas).To(Equal(initialReplicas))
+	})
 })
