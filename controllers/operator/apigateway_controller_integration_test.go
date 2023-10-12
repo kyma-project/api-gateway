@@ -183,7 +183,7 @@ func generateName() string {
 
 func deleteApiGateways() {
 	Eventually(func(g Gomega) {
-		By(fmt.Sprintf("Checking if APIGatewayexists as part of teardown"))
+		By("Checking if APIGateway exists as part of teardown")
 		list := v1alpha1.APIGatewayList{}
 		Expect(k8sClient.List(context.TODO(), &list)).Should(Succeed())
 
@@ -210,7 +210,7 @@ func apiGatewayTeardown(apiGateway *v1alpha1.APIGateway) {
 
 func deleteApiRules() {
 	Eventually(func(g Gomega) {
-		By(fmt.Sprintf("Checking if APIGatewayexists as part of teardown"))
+		By("Checking if APIRules exists as part of teardown")
 		list := v1beta1.APIRuleList{}
 		Expect(k8sClient.List(context.TODO(), &list)).Should(Succeed())
 
