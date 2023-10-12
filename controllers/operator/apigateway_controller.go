@@ -70,9 +70,7 @@ func (r *APIGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		return r.requeueReconciliation(ctx, apiGatewayCR, kymaGatewayStatus)
 	}
 
-	oathkeeperReconciler := oathkeeper.Reconciler{}
-
-	if oryOathkeeperStatus := oathkeeperReconciler.ReconcileOathkeeper(ctx, r.Client, &apiGatewayCR); !oryOathkeeperStatus.IsReady() {
+	if oryOathkeeperStatus := oathkeeper.ReconcileOathkeeper(ctx, r.Client, &apiGatewayCR); !oryOathkeeperStatus.IsReady() {
 		return r.requeueReconciliation(ctx, apiGatewayCR, oryOathkeeperStatus)
 	}
 

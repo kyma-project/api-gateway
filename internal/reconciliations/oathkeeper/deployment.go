@@ -14,6 +14,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"strconv"
 	"time"
 )
 
@@ -47,14 +48,25 @@ func reconcileOathkeeperDeployment(ctx context.Context, k8sClient client.Client,
 }
 
 func reconcileDeployment(ctx context.Context, k8sClient client.Client, name string, deploymentManifest *[]byte) error {
-
 	ctrl.Log.Info("Reconciling Deployment", "name", name, "Namespace", reconciliations.Namespace)
+
+	replicas, err := getReplicasForDeployment(ctx, k8sClient)
+	if err != nil {
+		return err
+	}
+
 	templateValues := make(map[string]string)
 	templateValues["Name"] = name
 	templateValues["Namespace"] = reconciliations.Namespace
+	templateValues["Replicas"] = replicas
 	templateValues["ServiceAccountName"] = maester.ServiceAccountName
 
-	return reconciliations.ApplyResource(ctx, k8sClient, *deploymentManifest, templateValues)
+	err = reconciliations.ApplyResource(ctx, k8sClient, *deploymentManifest, templateValues)
+	if err != nil {
+		return err
+	}
+
+	return waitForDeploymentToBeReady(ctx, k8sClient)
 }
 
 func deleteDeployment(ctx context.Context, k8sClient client.Client, name string) error {
@@ -91,7 +103,6 @@ func waitForDeploymentToBeReady(ctx context.Context, k8sClient client.Client) er
 		if err != nil {
 			return err
 		}
-		ctrl.Log.Info("replicas:", "unavailable replicas", dep.Status.UnavailableReplicas)
 
 		if dep.Status.UnavailableReplicas > 0 {
 			return fmt.Errorf("unavailable replicas %d", dep.Status.UnavailableReplicas)
@@ -99,4 +110,24 @@ func waitForDeploymentToBeReady(ctx context.Context, k8sClient client.Client) er
 
 		return nil
 	}, retry.Attempts(60), retry.Delay(2*time.Second), retry.DelayType(retry.FixedDelay))
+}
+
+func getReplicasForDeployment(ctx context.Context, k8sClient client.Client) (string, error) {
+	var dep appsv1.Deployment
+	err := k8sClient.Get(ctx, client.ObjectKey{
+		Namespace: reconciliations.Namespace,
+		Name:      deploymentName,
+	}, &dep)
+
+	if k8serrors.IsNotFound(err) {
+		return "1", nil
+	} else if err != nil {
+		return "1", err
+	}
+
+	if dep.Spec.Replicas == nil {
+		return "1", nil
+	}
+
+	return strconv.Itoa(int(*dep.Spec.Replicas)), nil
 }
