@@ -3,6 +3,7 @@ package controllers
 import (
 	"context"
 	"fmt"
+
 	operatorv1alpha1 "github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
 	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -59,7 +60,6 @@ func (s status) NestedError() error {
 }
 
 func (s status) ToAPIGatewayStatus() (operatorv1alpha1.APIGatewayStatus, error) {
-
 	switch s.state {
 	case Ready:
 		return operatorv1alpha1.APIGatewayStatus{
