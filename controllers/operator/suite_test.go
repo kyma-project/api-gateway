@@ -25,6 +25,7 @@ import (
 	"github.com/onsi/ginkgo/v2/types"
 	networkingv1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
+	appsv1 "k8s.io/api/apps/v1"
 	autoscalingv2 "k8s.io/api/autoscaling/v2"
 	schedulingv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -92,6 +93,7 @@ var _ = BeforeSuite(func() {
 	utilruntime.Must(operatorv1alpha1.AddToScheme(s))
 	utilruntime.Must(corev1.AddToScheme(s))
 	utilruntime.Must(v1beta1.AddToScheme(s))
+	utilruntime.Must(appsv1.AddToScheme(s))
 	utilruntime.Must(rbacv1.AddToScheme(s))
 	utilruntime.Must(autoscalingv2.AddToScheme(s))
 	utilruntime.Must(securityv1beta1.AddToScheme(s))
