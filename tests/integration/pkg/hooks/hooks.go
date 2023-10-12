@@ -113,7 +113,6 @@ var ApplyAndVerifyApiGatewayCrSuiteHook = func() error {
 }
 
 var ApiGatewayCrTearDownSuiteHook = func() error {
-	// TODO check if it's working
 	k8sClient := k8sclient.GetK8sClient()
 
 	apiGateway, err := createApiGatewayCRObjectFromTemplate(ApiGatewayCRName)

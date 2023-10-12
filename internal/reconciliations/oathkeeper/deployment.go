@@ -50,6 +50,8 @@ func reconcileOathkeeperDeployment(ctx context.Context, k8sClient client.Client,
 func reconcileDeployment(ctx context.Context, k8sClient client.Client, name string, deploymentManifest *[]byte) error {
 	ctrl.Log.Info("Reconciling Deployment", "name", name, "Namespace", reconciliations.Namespace)
 
+	// As we have no replicas configured in the manifest for production because it is set by HPA, we read the replicas from the current configuration.
+	// This way we avoid that the replicas are reset to 1 by the configuration in the manifest during reconciliation and then updated again by the HPA.
 	replicas, err := getReplicasForDeployment(ctx, k8sClient)
 	if err != nil {
 		return err

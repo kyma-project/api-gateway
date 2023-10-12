@@ -57,7 +57,7 @@ func deleteCRD(ctx context.Context, k8sClient client.Client, name string) error 
 	// Wait for CRD to be successfully deleted, giving time for Oathkeeper maester to clean up Rule CRs
 	return retry.Do(func() error {
 		var crd apiextensionsv1.CustomResourceDefinition
-		err := k8sClient.Get(context.Background(), types.NamespacedName{
+		err := k8sClient.Get(ctx, types.NamespacedName{
 			Name: crdName,
 		}, &crd)
 

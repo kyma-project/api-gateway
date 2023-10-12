@@ -129,9 +129,8 @@ var _ = BeforeSuite(func() {
 	go func() {
 		defer GinkgoRecover()
 		err := mgr.Start(ctx)
-		// Bellow it's a hack introduced because of error DeadlineExceeded occurring during the teardown.
-		// We should find a way later to handle graceful teardown without skipping on the particular error.
-		// It should just run successfully
+		// A workaround for DeadlineExceeded error is introduced, since this started occurring during the teardown
+		// after adding Oathkeeper reconciliation.
 		if !errors.Is(err, context.DeadlineExceeded) {
 			Expect(err).Should(Succeed())
 		} else {

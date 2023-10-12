@@ -45,6 +45,8 @@ func deleteCronjob(ctx context.Context, k8sClient client.Client, name, namespace
 	return nil
 }
 
+// ReconcileCronjob deletes the Oathkeeper Cronjob resources if they exist. This is only relevant for the initial release of the module,
+// therefore this function is deprecated after the initial release.
 func ReconcileCronjob(ctx context.Context, k8sClient client.Client, apiGatewayCR v1alpha1.APIGateway) error {
 	return errors.Join(
 		reconcileOryOathkeeperCronjobServiceAccount(ctx, k8sClient, apiGatewayCR),
