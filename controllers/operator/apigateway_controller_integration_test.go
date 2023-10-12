@@ -20,6 +20,11 @@ import (
 // Tests needs to be executed serially because of the shared cluster-wide resources like the APIGateway CR.
 var _ = Describe("API Gateway Controller", Serial, func() {
 
+	AfterEach(func() {
+		deleteApiRules()
+		deleteApiGateways()
+	})
+
 	Context("Kyma Gateway reconciliation", func() {
 
 		It("should create Kyma Gateway when it's enabled", func() {
@@ -35,9 +40,7 @@ var _ = Describe("API Gateway Controller", Serial, func() {
 
 			// when
 			Expect(k8sClient.Create(ctx, &apiGateway)).Should(Succeed())
-			defer func() {
-				apiGatewayTeardown(&apiGateway)
-			}()
+
 			// then
 			Eventually(func(g Gomega) {
 				created := v1alpha1.APIGateway{}
@@ -59,9 +62,6 @@ var _ = Describe("API Gateway Controller", Serial, func() {
 
 			// when
 			Expect(k8sClient.Create(ctx, &apiGateway)).Should(Succeed())
-			defer func() {
-				apiGatewayTeardown(&apiGateway)
-			}()
 
 			// then
 			Eventually(func(g Gomega) {
@@ -89,9 +89,6 @@ var _ = Describe("API Gateway Controller", Serial, func() {
 
 			By("Creating APIGateway with Kyma Gateway enabled")
 			Expect(k8sClient.Create(ctx, &apiGateway)).Should(Succeed())
-			defer func() {
-				apiGatewayTeardown(&apiGateway)
-			}()
 
 			By("Verifying that APIGateway CR reconciliation was successful and Kyma gateway was created")
 			Eventually(func(g Gomega) {
@@ -135,16 +132,10 @@ var _ = Describe("API Gateway Controller", Serial, func() {
 
 			By("Creating APIGateway with Kyma Gateway enabled")
 			Expect(k8sClient.Create(ctx, &apiGateway)).Should(Succeed())
-			defer func() {
-				apiGatewayTeardown(&apiGateway)
-			}()
 
 			By("Creating APIRule")
 			apiRule := testApiRule()
 			Expect(k8sClient.Create(ctx, &apiRule)).Should(Succeed())
-			defer func() {
-				apiRuleTeardown(&apiRule)
-			}()
 
 			By("Verifying that APIGateway CR reconciliation was successful and Kyma gateway was created")
 			Eventually(func(g Gomega) {
@@ -190,6 +181,18 @@ func generateName() string {
 	return fmt.Sprintf("test-%s", string(b))
 }
 
+func deleteApiGateways() {
+	Eventually(func(g Gomega) {
+		By(fmt.Sprintf("Checking if APIGatewayexists as part of teardown"))
+		list := v1alpha1.APIGatewayList{}
+		Expect(k8sClient.List(context.TODO(), &list)).Should(Succeed())
+
+		for _, item := range list.Items {
+			apiGatewayTeardown(&item)
+		}
+	}, eventuallyTimeout).Should(Succeed())
+}
+
 func apiGatewayTeardown(apiGateway *v1alpha1.APIGateway) {
 	By(fmt.Sprintf("Deleting APIGateway %s as part of teardown", apiGateway.Name))
 	Eventually(func(g Gomega) {
@@ -202,6 +205,18 @@ func apiGatewayTeardown(apiGateway *v1alpha1.APIGateway) {
 		a := v1alpha1.APIGateway{}
 		err = k8sClient.Get(context.TODO(), client.ObjectKey{Name: apiGateway.Name}, &a)
 		g.Expect(errors.IsNotFound(err)).To(BeTrue())
+	}, eventuallyTimeout).Should(Succeed())
+}
+
+func deleteApiRules() {
+	Eventually(func(g Gomega) {
+		By(fmt.Sprintf("Checking if APIGatewayexists as part of teardown"))
+		list := v1beta1.APIRuleList{}
+		Expect(k8sClient.List(context.TODO(), &list)).Should(Succeed())
+
+		for _, item := range list.Items {
+			apiRuleTeardown(&item)
+		}
 	}, eventuallyTimeout).Should(Succeed())
 }
 

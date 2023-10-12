@@ -140,7 +140,7 @@ var _ = AfterSuite(func() {
 	By("Tearing down the test environment")
 	err := retry.OnError(wait.Backoff{
 		Duration: 500 * time.Millisecond,
-		Steps:    120,
+		Steps:    150,
 	}, func(err error) bool {
 		return true
 	}, func() error {
