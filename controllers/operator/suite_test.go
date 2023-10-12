@@ -18,6 +18,7 @@ package operator
 
 import (
 	"context"
+	"errors"
 	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	operatorv1alpha1 "github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
 	"github.com/kyma-project/api-gateway/controllers"
@@ -127,7 +128,10 @@ var _ = BeforeSuite(func() {
 
 	go func() {
 		defer GinkgoRecover()
-		Expect(mgr.Start(ctx)).Should(Succeed())
+		err := mgr.Start(ctx)
+		if !errors.Is(err, context.DeadlineExceeded) {
+			Expect(err).Should(Succeed())
+		}
 	}()
 })
 
