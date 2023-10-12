@@ -70,12 +70,15 @@ func (c *scenario) applyAPIGatewayCR() error {
 	if err != nil {
 		return fmt.Errorf("failed to process kyma-gateway-enabled.yaml, details %s", err.Error())
 	}
-	_, err = c.resourceManager.CreateOrUpdateResourcesWithoutNS(c.k8sClient, kymaGatewayEnabled...)
-	if err != nil {
-		return err
-	}
 
-	return nil
+	return retry.Do(func() error {
+		_, err = c.resourceManager.CreateOrUpdateResourcesWithoutNS(c.k8sClient, kymaGatewayEnabled...)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	}, testcontext.GetRetryOpts(c.config)...)
 }
 
 func (c *scenario) thereIsAnAPIGatewayCR(state string) error {
