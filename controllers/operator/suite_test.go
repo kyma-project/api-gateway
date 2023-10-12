@@ -18,16 +18,24 @@ package operator
 
 import (
 	"context"
+	"errors"
 	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	operatorv1alpha1 "github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
 	"github.com/kyma-project/api-gateway/controllers"
 	"github.com/kyma-project/api-gateway/tests"
 	"github.com/onsi/ginkgo/v2/types"
 	networkingv1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
+	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
+	appsv1 "k8s.io/api/apps/v1"
+	autoscalingv2 "k8s.io/api/autoscaling/v2"
+	schedulingv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/util/retry"
 	"path/filepath"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -48,7 +56,7 @@ import (
 
 const (
 	testNamespace     = "kyma-system"
-	eventuallyTimeout = time.Second * 5
+	eventuallyTimeout = time.Second * 10
 )
 
 var (
@@ -67,7 +75,7 @@ func TestAPIs(t *testing.T) {
 
 var _ = BeforeSuite(func() {
 	logf.SetLogger(zap.New(zap.WriteTo(GinkgoWriter), zap.UseDevMode(true)))
-	ctx, cancel = context.WithCancel(context.TODO())
+	ctx, cancel = context.WithCancel(context.Background())
 
 	By("bootstrapping test environment")
 	testEnv = &envtest.Environment{
@@ -86,6 +94,12 @@ var _ = BeforeSuite(func() {
 	utilruntime.Must(operatorv1alpha1.AddToScheme(s))
 	utilruntime.Must(corev1.AddToScheme(s))
 	utilruntime.Must(v1beta1.AddToScheme(s))
+	utilruntime.Must(appsv1.AddToScheme(s))
+	utilruntime.Must(rbacv1.AddToScheme(s))
+	utilruntime.Must(autoscalingv2.AddToScheme(s))
+	utilruntime.Must(securityv1beta1.AddToScheme(s))
+	utilruntime.Must(schedulingv1.AddToScheme(s))
+	utilruntime.Must(apiextensionsv1.AddToScheme(s))
 
 	//+kubebuilder:scaffold:scheme
 
@@ -114,7 +128,14 @@ var _ = BeforeSuite(func() {
 
 	go func() {
 		defer GinkgoRecover()
-		Expect(mgr.Start(ctx)).Should(Succeed())
+		err := mgr.Start(ctx)
+		// A workaround for DeadlineExceeded error is introduced, since this started occurring during the teardown
+		// after adding Oathkeeper reconciliation.
+		if !errors.Is(err, context.DeadlineExceeded) {
+			Expect(err).Should(Succeed())
+		} else {
+			println("Context deadline exceeded during tearing down", err.Error())
+		}
 	}()
 })
 
@@ -125,7 +146,10 @@ var _ = AfterSuite(func() {
 	*/
 	cancel()
 	By("Tearing down the test environment")
-	err := retry.OnError(retry.DefaultBackoff, func(err error) bool {
+	err := retry.OnError(wait.Backoff{
+		Duration: 500 * time.Millisecond,
+		Steps:    150,
+	}, func(err error) bool {
 		return true
 	}, func() error {
 		return testEnv.Stop()

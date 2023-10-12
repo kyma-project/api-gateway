@@ -22,6 +22,7 @@ import (
 	"github.com/kyma-project/api-gateway/controllers"
 	"github.com/kyma-project/api-gateway/controllers/gateway"
 	operatorcontrollers "github.com/kyma-project/api-gateway/controllers/operator"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"os"
 	"strings"
 	"time"
@@ -83,7 +84,7 @@ func init() {
 	utilruntime.Must(rulev1alpha1.AddToScheme(scheme))
 	utilruntime.Must(securityv1beta1.AddToScheme(scheme))
 	utilruntime.Must(operatorv1alpha1.AddToScheme(scheme))
-	utilruntime.Must(operatorv1alpha1.AddToScheme(scheme))
+	utilruntime.Must(apiextensionsv1.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
 }
 
@@ -165,6 +166,7 @@ func main() {
 		setupLog.Error(err, "unable to setup controller", "controller", "APIRule")
 		os.Exit(1)
 	}
+
 	if err = operatorcontrollers.NewAPIGatewayReconciler(mgr).SetupWithManager(mgr, rateLimiterCfg); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "APIGateway")
 		os.Exit(1)

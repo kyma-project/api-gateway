@@ -1,0 +1,13 @@
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: {{ .Name }}
+  namespace: {{ .Namespace }}
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: ory
+      app.kubernetes.io/name: oathkeeper
+  portLevelMtls:
+    "8080":
+      mode: PERMISSIVE

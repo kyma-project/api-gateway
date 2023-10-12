@@ -1,0 +1,195 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Name }}
+  namespace: {{ .Namespace }}
+  labels:
+    mode: sidecar
+    app: oathkeeper
+    app.kubernetes.io/instance: ory
+    app.kubernetes.io/name: oathkeeper
+spec:
+  replicas: {{ .Replicas }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: ory
+      app.kubernetes.io/name: oathkeeper
+  strategy:
+    rollingUpdate:
+      maxSurge: 50%
+      maxUnavailable: 0%
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        sidecar.istio.io/inject: "true"
+        app.kubernetes.io/instance: ory
+        app.kubernetes.io/name: oathkeeper
+      annotations:
+        readiness.status.sidecar.istio.io/initialDelaySeconds: "10"
+    spec:
+      containers:
+        - command:
+            - oathkeeper
+            - serve
+            - --config
+            - /etc/config/config.yaml
+          env:
+            - name: MUTATORS_ID_TOKEN_CONFIG_JWKS_URL
+              value: file:///etc/secrets/jwks.json
+          image: europe-docker.pkg.dev/kyma-project/prod/external/oryd/oathkeeper:v0.38.25-beta.1
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            failureThreshold: 10
+            httpGet:
+              path: /health/alive
+              port: http-api
+              scheme: HTTP
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+          name: oathkeeper
+          ports:
+            - containerPort: 4456
+              name: http-api
+              protocol: TCP
+            - containerPort: 4455
+              name: http-proxy
+              protocol: TCP
+          readinessProbe:
+            failureThreshold: 40
+            httpGet:
+              path: /health/ready
+              port: http-api
+              scheme: HTTP
+            initialDelaySeconds: 45
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+          resources:
+            limits:
+              cpu: 10
+              memory: 512Mi
+            requests:
+              cpu: 100m
+              memory: 64Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            privileged: false
+            runAsGroup: 10001
+            runAsNonRoot: true
+            runAsUser: 10000
+          startupProbe:
+            failureThreshold: 30
+            httpGet:
+              path: /health/alive
+              port: http-api
+              scheme: HTTP
+            initialDelaySeconds: 45
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+            - mountPath: /etc/config
+              name: oathkeeper-config-volume
+              readOnly: true
+            - mountPath: /etc/rules
+              name: oathkeeper-rules-volume
+              readOnly: true
+            - mountPath: /etc/secrets
+              name: oathkeeper-secrets-volume
+              readOnly: true
+        - args:
+            - --metrics-addr=0.0.0.0:8080
+            - sidecar
+            - --rulesFilePath=/etc/rules/access-rules.json
+          command:
+            - /manager
+          env:
+            - name: mutatorsAvailable
+              value: noop,id_token,header,cookie,hydrator
+          image: europe-docker.pkg.dev/kyma-project/prod/external/oryd/oathkeeper-maester:v0.1.5
+          imagePullPolicy: IfNotPresent
+          name: oathkeeper-maester
+          ports:
+            - containerPort: 8080
+              name: metrics
+              protocol: TCP
+          resources:
+            limits:
+              cpu: 400m
+              memory: 1Gi
+            requests:
+              cpu: 10m
+              memory: 32Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            privileged: false
+            runAsGroup: 10011
+            runAsNonRoot: true
+            runAsUser: 10010
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+            - mountPath: /etc/rules
+              name: oathkeeper-rules-volume
+      dnsPolicy: ClusterFirst
+      initContainers:
+      - command:
+          - sh
+          - -c
+          - |
+            touch /etc/rules/access-rules.json
+            chmod 666 /etc/rules/access-rules.json
+        image: europe-docker.pkg.dev/kyma-project/prod/external/busybox:1.34.1-v1
+        imagePullPolicy: IfNotPresent
+        name: init
+        resources: { }
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
+          privileged: false
+          runAsGroup: 65534
+          runAsNonRoot: true
+          runAsUser: 65534
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+          - mountPath: /etc/rules
+            name: oathkeeper-rules-volume
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+      serviceAccount: {{ .ServiceAccountName }}
+      serviceAccountName: {{ .ServiceAccountName }}
+      priorityClassName: "api-gateway-priority-class"
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app: oathkeeper
+                topologyKey: "kubernetes.io/hostname"
+      volumes:
+        - configMap:
+            name: ory-oathkeeper-config
+          name: oathkeeper-config-volume
+        - emptyDir: { }
+          name: oathkeeper-rules-volume
+        - name: oathkeeper-secrets-volume
+          secret:
+            secretName: ory-oathkeeper-jwks-secret

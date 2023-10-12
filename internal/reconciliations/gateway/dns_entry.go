@@ -6,6 +6,7 @@ import (
 	"fmt"
 	dnsv1alpha1 "github.com/gardener/external-dns-management/pkg/apis/dns/v1alpha1"
 	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
+	"github.com/kyma-project/api-gateway/internal/reconciliations"
 	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -30,7 +31,7 @@ func reconcileKymaGatewayDnsEntry(ctx context.Context, k8sClient client.Client, 
 	ctrl.Log.Info("Reconciling DNS entry", "KymaGatewayEnabled", isEnabled, "name", name, "namespace", namespace)
 
 	if !isEnabled || apiGatewayCR.IsInDeletion() {
-		return deleteDnsEntry(k8sClient, name, namespace)
+		return deleteDnsEntry(ctx, k8sClient, name, namespace)
 	}
 
 	istioIngressIp, err := fetchIstioIngressGatewayIp(ctx, k8sClient)
@@ -49,10 +50,10 @@ func reconcileDnsEntry(ctx context.Context, k8sClient client.Client, name, names
 	templateValues["Domain"] = domain
 	templateValues["IngressGatewayServiceIp"] = ingressGatewayIp
 
-	return applyResource(ctx, k8sClient, dnsEntryManifest, templateValues)
+	return reconciliations.ApplyResource(ctx, k8sClient, dnsEntryManifest, templateValues)
 }
 
-func deleteDnsEntry(k8sClient client.Client, name, namespace string) error {
+func deleteDnsEntry(ctx context.Context, k8sClient client.Client, name, namespace string) error {
 	ctrl.Log.Info("Deleting DNSEntry if it exists", "name", name, "namespace", namespace)
 	d := dnsv1alpha1.DNSEntry{
 		ObjectMeta: metav1.ObjectMeta{
@@ -60,7 +61,7 @@ func deleteDnsEntry(k8sClient client.Client, name, namespace string) error {
 			Namespace: namespace,
 		},
 	}
-	err := k8sClient.Delete(context.TODO(), &d)
+	err := k8sClient.Delete(ctx, &d)
 
 	if err != nil && !k8serrors.IsNotFound(err) {
 		return fmt.Errorf("failed to delete DNSEntry %s/%s: %v", namespace, name, err)

@@ -1,4 +1,4 @@
-package gateway
+package reconciliations
 
 import (
 	"context"
@@ -9,8 +9,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-// getGardenerDomain returns the domain name from the Gardener shoot-info config.
-func getGardenerDomain(ctx context.Context, k8sClient client.Client) (string, error) {
+// GetGardenerDomain returns the domain name from the Gardener shoot-info config.
+func GetGardenerDomain(ctx context.Context, k8sClient client.Client) (string, error) {
 
 	cm, err := getGardenerShootInfo(ctx, k8sClient)
 	if err != nil {
@@ -24,8 +24,8 @@ func getGardenerDomain(ctx context.Context, k8sClient client.Client) (string, er
 	return cm.Data["domain"], nil
 }
 
-// runsOnGardnerCluster returns true if the cluster is a Gardener cluster validated by the presence of the shoot-info configmap.
-func runsOnGardnerCluster(ctx context.Context, k8sClient client.Client) (bool, error) {
+// RunsOnGardenerCluster returns true if the cluster is a Gardener cluster validated by the presence of the shoot-info configmap.
+func RunsOnGardenerCluster(ctx context.Context, k8sClient client.Client) (bool, error) {
 	_, err := getGardenerShootInfo(ctx, k8sClient)
 
 	if err != nil && k8serrors.IsNotFound(err) {

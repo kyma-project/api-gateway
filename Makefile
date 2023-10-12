@@ -176,6 +176,7 @@ endif
 install: manifests kustomize
 	$(KUSTOMIZE) build config/crd | kubectl apply -f -
 	@if ! kubectl get crd virtualservices.networking.istio.io > /dev/null 2>&1 ; then kubectl apply -f hack/networking.istio.io_virtualservice.yaml; fi;
+	@if ! kubectl get crd peerauthentications.security.istio.io > /dev/null 2>&1 ; then kubectl apply -f hack/security.istio.io_peerauthentication.yaml; fi;
 	@if ! kubectl get crd authorizationpolicies.security.istio.io > /dev/null 2>&1 ; then kubectl apply -f hack/security.istio.io_authorizationpolicy.yaml; fi;
 	@if ! kubectl get crd requestauthentications.security.istio.io > /dev/null 2>&1 ; then kubectl apply -f hack/security.istio.io_requestauthentication.yaml; fi;
 	@if ! kubectl get crd gateways.networking.istio.io > /dev/null 2>&1 ; then kubectl apply -f hack/networking.istio.io_gateways.yaml; fi;

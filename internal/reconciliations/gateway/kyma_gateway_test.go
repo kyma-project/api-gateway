@@ -27,12 +27,12 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 		k8sClient := createFakeClient(&apiGateway)
 
 		// when
-		status := ReconcileKymaGateway(context.TODO(), k8sClient, &apiGateway)
+		status := ReconcileKymaGateway(context.Background(), k8sClient, &apiGateway)
 
 		// then
 		Expect(status.IsReady()).To(BeTrue())
 
-		Expect(k8sClient.Get(context.TODO(), client.ObjectKeyFromObject(&apiGateway), &apiGateway)).Should(Succeed())
+		Expect(k8sClient.Get(context.Background(), client.ObjectKeyFromObject(&apiGateway), &apiGateway)).Should(Succeed())
 		Expect(apiGateway.GetFinalizers()).To(ContainElement(kymaGatewayFinalizer))
 	})
 
@@ -49,13 +49,13 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 			k8sClient := createFakeClient(&apiGateway)
 
 			// when
-			status := ReconcileKymaGateway(context.TODO(), k8sClient, &apiGateway)
+			status := ReconcileKymaGateway(context.Background(), k8sClient, &apiGateway)
 
 			// then
 			Expect(status.IsReady()).To(BeTrue())
 
 			created := v1alpha3.Gateway{}
-			err := k8sClient.Get(context.TODO(), client.ObjectKey{Name: kymaGatewayName, Namespace: kymaGatewayNamespace}, &created)
+			err := k8sClient.Get(context.Background(), client.ObjectKey{Name: kymaGatewayName, Namespace: kymaGatewayNamespace}, &created)
 			Expect(errors.IsNotFound(err)).To(BeTrue())
 		})
 
@@ -66,13 +66,13 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 			k8sClient := createFakeClient(&apiGateway)
 
 			// when
-			status := ReconcileKymaGateway(context.TODO(), k8sClient, &apiGateway)
+			status := ReconcileKymaGateway(context.Background(), k8sClient, &apiGateway)
 
 			// then
 			Expect(status.IsReady()).To(BeTrue())
 
 			created := v1alpha3.Gateway{}
-			err := k8sClient.Get(context.TODO(), client.ObjectKey{Name: kymaGatewayName, Namespace: kymaGatewayNamespace}, &created)
+			err := k8sClient.Get(context.Background(), client.ObjectKey{Name: kymaGatewayName, Namespace: kymaGatewayNamespace}, &created)
 			Expect(errors.IsNotFound(err)).To(BeTrue())
 		})
 
@@ -83,13 +83,13 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 			k8sClient := createFakeClient(&apiGateway)
 
 			// when
-			status := ReconcileKymaGateway(context.TODO(), k8sClient, &apiGateway)
+			status := ReconcileKymaGateway(context.Background(), k8sClient, &apiGateway)
 
 			// then
 			Expect(status.IsReady()).To(BeTrue())
 
 			created := v1alpha3.Gateway{}
-			Expect(k8sClient.Get(context.TODO(), client.ObjectKey{Name: kymaGatewayName, Namespace: kymaGatewayNamespace}, &created)).Should(Succeed())
+			Expect(k8sClient.Get(context.Background(), client.ObjectKey{Name: kymaGatewayName, Namespace: kymaGatewayNamespace}, &created)).Should(Succeed())
 
 			for _, server := range created.Spec.GetServers() {
 				Expect(server.Hosts).To(ContainElement("*.local.kyma.dev"))
@@ -103,13 +103,13 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 			k8sClient := createFakeClient(&apiGateway)
 
 			// when
-			status := ReconcileKymaGateway(context.TODO(), k8sClient, &apiGateway)
+			status := ReconcileKymaGateway(context.Background(), k8sClient, &apiGateway)
 
 			// then
 			Expect(status.IsReady()).To(BeTrue())
 
 			secret := corev1.Secret{}
-			Expect(k8sClient.Get(context.TODO(), client.ObjectKey{Name: "kyma-gateway-certs", Namespace: "istio-system"}, &secret)).Should(Succeed())
+			Expect(k8sClient.Get(context.Background(), client.ObjectKey{Name: "kyma-gateway-certs", Namespace: "istio-system"}, &secret)).Should(Succeed())
 			Expect(secret.Data).To(HaveKey("tls.key"))
 			Expect(secret.Data).To(HaveKey("tls.crt"))
 		})
@@ -121,17 +121,17 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 			k8sClient := createFakeClient(&apiGateway)
 
 			// when
-			status := ReconcileKymaGateway(context.TODO(), k8sClient, &apiGateway)
+			status := ReconcileKymaGateway(context.Background(), k8sClient, &apiGateway)
 
 			// then
 			Expect(status.IsReady()).To(BeTrue())
 
 			cert := certv1alpha1.Certificate{}
-			err := k8sClient.Get(context.TODO(), client.ObjectKey{Name: kymaGatewayCertificateName, Namespace: certificateDefaultNamespace}, &cert)
+			err := k8sClient.Get(context.Background(), client.ObjectKey{Name: kymaGatewayCertificateName, Namespace: certificateDefaultNamespace}, &cert)
 			Expect(errors.IsNotFound(err)).To(BeTrue())
 
 			dnsEntry := dnsv1alpha1.DNSEntry{}
-			err = k8sClient.Get(context.TODO(), client.ObjectKey{Name: kymaGatewayDnsEntryName, Namespace: kymaGatewayDnsEntryNamespace}, &dnsEntry)
+			err = k8sClient.Get(context.Background(), client.ObjectKey{Name: kymaGatewayDnsEntryName, Namespace: kymaGatewayDnsEntryNamespace}, &dnsEntry)
 			Expect(errors.IsNotFound(err)).To(BeTrue())
 		})
 
@@ -161,14 +161,14 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 			k8sClient := createFakeClient(&apiGateway, &cm, &igwService)
 
 			// when
-			status := ReconcileKymaGateway(context.TODO(), k8sClient, &apiGateway)
+			status := ReconcileKymaGateway(context.Background(), k8sClient, &apiGateway)
 
 			// then
 			Expect(status.IsReady()).To(BeTrue())
 
 			By("Validating Kyma Gateway")
 			createdGateway := v1alpha3.Gateway{}
-			Expect(k8sClient.Get(context.TODO(), client.ObjectKey{Name: kymaGatewayName, Namespace: kymaGatewayNamespace}, &createdGateway)).Should(Succeed())
+			Expect(k8sClient.Get(context.Background(), client.ObjectKey{Name: kymaGatewayName, Namespace: kymaGatewayNamespace}, &createdGateway)).Should(Succeed())
 
 			for _, server := range createdGateway.Spec.GetServers() {
 				Expect(server.Hosts).To(ContainElement("*.some.gardener.domain"))
@@ -176,13 +176,13 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 
 			By("Validating DNSEntry")
 			createdDnsEntry := dnsv1alpha1.DNSEntry{}
-			Expect(k8sClient.Get(context.TODO(), client.ObjectKey{Name: kymaGatewayDnsEntryName, Namespace: kymaGatewayDnsEntryNamespace}, &createdDnsEntry)).Should(Succeed())
+			Expect(k8sClient.Get(context.Background(), client.ObjectKey{Name: kymaGatewayDnsEntryName, Namespace: kymaGatewayDnsEntryNamespace}, &createdDnsEntry)).Should(Succeed())
 			Expect(createdDnsEntry.Spec.DNSName).To(Equal("*.some.gardener.domain"))
 			Expect(createdDnsEntry.Spec.Targets).To(ContainElement(testIstioIngressGatewayLoadBalancerIp))
 
 			By("Validating Certificate")
 			createdCert := certv1alpha1.Certificate{}
-			Expect(k8sClient.Get(context.TODO(), client.ObjectKey{Name: kymaGatewayCertificateName, Namespace: "istio-system"}, &createdCert)).Should(Succeed())
+			Expect(k8sClient.Get(context.Background(), client.ObjectKey{Name: kymaGatewayCertificateName, Namespace: "istio-system"}, &createdCert)).Should(Succeed())
 			Expect(*createdCert.Spec.SecretName).To(Equal(kymaGatewayCertSecretName))
 			Expect(*createdCert.Spec.CommonName).To(Equal("*.some.gardener.domain"))
 		})
@@ -199,13 +199,13 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 			k8sClient := createFakeClient(&apiGateway, &cm)
 
 			// when
-			status := ReconcileKymaGateway(context.TODO(), k8sClient, &apiGateway)
+			status := ReconcileKymaGateway(context.Background(), k8sClient, &apiGateway)
 
 			// then
 			Expect(status.IsReady()).To(BeTrue())
 
 			created := v1alpha3.Gateway{}
-			err := k8sClient.Get(context.TODO(), client.ObjectKey{Name: kymaGatewayName, Namespace: kymaGatewayNamespace}, &created)
+			err := k8sClient.Get(context.Background(), client.ObjectKey{Name: kymaGatewayName, Namespace: kymaGatewayNamespace}, &created)
 			Expect(errors.IsNotFound(err)).To(BeTrue())
 		})
 
@@ -217,13 +217,13 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 			k8sClient := createFakeClient(&apiGateway, &cm)
 
 			// when
-			status := ReconcileKymaGateway(context.TODO(), k8sClient, &apiGateway)
+			status := ReconcileKymaGateway(context.Background(), k8sClient, &apiGateway)
 
 			// then
 			Expect(status.IsReady()).To(BeTrue())
 
 			created := v1alpha3.Gateway{}
-			err := k8sClient.Get(context.TODO(), client.ObjectKey{Name: kymaGatewayName, Namespace: kymaGatewayNamespace}, &created)
+			err := k8sClient.Get(context.Background(), client.ObjectKey{Name: kymaGatewayName, Namespace: kymaGatewayNamespace}, &created)
 			Expect(errors.IsNotFound(err)).To(BeTrue())
 		})
 
@@ -254,10 +254,10 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 		}
 
 		k8sClient := createFakeClient(&apiGateway, &apiRule)
-		status := ReconcileKymaGateway(context.TODO(), k8sClient, &apiGateway)
+		status := ReconcileKymaGateway(context.Background(), k8sClient, &apiGateway)
 		Expect(status.IsReady()).To(BeTrue())
 		kymaGateway := v1alpha3.Gateway{}
-		Expect(k8sClient.Get(context.TODO(), client.ObjectKey{Name: kymaGatewayName, Namespace: kymaGatewayNamespace}, &kymaGateway)).Should(Succeed())
+		Expect(k8sClient.Get(context.Background(), client.ObjectKey{Name: kymaGatewayName, Namespace: kymaGatewayNamespace}, &kymaGateway)).Should(Succeed())
 
 		updatedApiGateway := v1alpha1.APIGateway{
 			ObjectMeta: metav1.ObjectMeta{
@@ -266,11 +266,11 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 		}
 
 		// when
-		status = ReconcileKymaGateway(context.TODO(), k8sClient, &updatedApiGateway)
+		status = ReconcileKymaGateway(context.Background(), k8sClient, &updatedApiGateway)
 
 		// then
 		Expect(status.IsWarning()).To(BeTrue())
-		err := k8sClient.Get(context.TODO(), client.ObjectKey{Name: kymaGatewayName, Namespace: kymaGatewayNamespace}, &kymaGateway)
+		err := k8sClient.Get(context.Background(), client.ObjectKey{Name: kymaGatewayName, Namespace: kymaGatewayNamespace}, &kymaGateway)
 		Expect(err).ShouldNot(HaveOccurred())
 	})
 
@@ -281,30 +281,30 @@ func testShouldDeleteKymaGatewayNonGardenerResources(updateApiGateway func(gw v1
 	apiGateway := getApiGateway(true, kymaGatewayFinalizer)
 
 	k8sClient := createFakeClient(&apiGateway)
-	status := ReconcileKymaGateway(context.TODO(), k8sClient, &apiGateway)
+	status := ReconcileKymaGateway(context.Background(), k8sClient, &apiGateway)
 	Expect(status.IsReady()).To(BeTrue())
 	kymaGateway := v1alpha3.Gateway{}
-	Expect(k8sClient.Get(context.TODO(), client.ObjectKey{Name: kymaGatewayName, Namespace: kymaGatewayNamespace}, &kymaGateway)).Should(Succeed())
+	Expect(k8sClient.Get(context.Background(), client.ObjectKey{Name: kymaGatewayName, Namespace: kymaGatewayNamespace}, &kymaGateway)).Should(Succeed())
 
 	apiGateway = updateApiGateway(apiGateway)
 
 	// when
-	status = ReconcileKymaGateway(context.TODO(), k8sClient, &apiGateway)
+	status = ReconcileKymaGateway(context.Background(), k8sClient, &apiGateway)
 
 	// then
 	Expect(status.IsReady()).To(BeTrue())
 
 	By("Validating that Gateway is deleted")
-	err := k8sClient.Get(context.TODO(), client.ObjectKey{Name: kymaGatewayName, Namespace: kymaGatewayNamespace}, &kymaGateway)
+	err := k8sClient.Get(context.Background(), client.ObjectKey{Name: kymaGatewayName, Namespace: kymaGatewayNamespace}, &kymaGateway)
 	Expect(errors.IsNotFound(err)).To(BeTrue())
 
 	By("Validating that Certificate Secret is deleted")
 	s := corev1.Secret{}
-	err = k8sClient.Get(context.TODO(), client.ObjectKey{Name: kymaGatewayCertSecretName, Namespace: certificateDefaultNamespace}, &s)
+	err = k8sClient.Get(context.Background(), client.ObjectKey{Name: kymaGatewayCertSecretName, Namespace: certificateDefaultNamespace}, &s)
 	Expect(errors.IsNotFound(err)).To(BeTrue())
 
 	By("Validating that finalizer is removed")
-	Expect(k8sClient.Get(context.TODO(), client.ObjectKey{Name: apiGateway.Name}, &apiGateway)).To(Succeed())
+	Expect(k8sClient.Get(context.Background(), client.ObjectKey{Name: apiGateway.Name}, &apiGateway)).To(Succeed())
 	Expect(apiGateway.GetFinalizers()).ToNot(ContainElement(kymaGatewayFinalizer))
 }
 
@@ -315,34 +315,34 @@ func testShouldDeleteKymaGatewayResources(updateApiGateway func(gw v1alpha1.APIG
 	igwService := getTestIstioIngressGatewayIpBasedService()
 
 	k8sClient := createFakeClient(&apiGateway, &cm, &igwService)
-	status := ReconcileKymaGateway(context.TODO(), k8sClient, &apiGateway)
+	status := ReconcileKymaGateway(context.Background(), k8sClient, &apiGateway)
 	Expect(status.IsReady()).To(BeTrue())
 	kymaGateway := v1alpha3.Gateway{}
-	Expect(k8sClient.Get(context.TODO(), client.ObjectKey{Name: kymaGatewayName, Namespace: kymaGatewayNamespace}, &kymaGateway)).Should(Succeed())
+	Expect(k8sClient.Get(context.Background(), client.ObjectKey{Name: kymaGatewayName, Namespace: kymaGatewayNamespace}, &kymaGateway)).Should(Succeed())
 
 	apiGateway = updateApiGateway(apiGateway)
 
 	// when
-	status = ReconcileKymaGateway(context.TODO(), k8sClient, &apiGateway)
+	status = ReconcileKymaGateway(context.Background(), k8sClient, &apiGateway)
 
 	// then
 	Expect(status.IsReady()).To(BeTrue())
 	By("Validating that Gateway is deleted")
-	err := k8sClient.Get(context.TODO(), client.ObjectKey{Name: kymaGatewayName, Namespace: kymaGatewayNamespace}, &kymaGateway)
+	err := k8sClient.Get(context.Background(), client.ObjectKey{Name: kymaGatewayName, Namespace: kymaGatewayNamespace}, &kymaGateway)
 	Expect(errors.IsNotFound(err)).To(BeTrue())
 
 	By("Validating that DNSEntry is deleted")
 	dnsEntry := dnsv1alpha1.DNSEntry{}
-	err = k8sClient.Get(context.TODO(), client.ObjectKey{Name: kymaGatewayDnsEntryName, Namespace: kymaGatewayDnsEntryNamespace}, &dnsEntry)
+	err = k8sClient.Get(context.Background(), client.ObjectKey{Name: kymaGatewayDnsEntryName, Namespace: kymaGatewayDnsEntryNamespace}, &dnsEntry)
 	Expect(errors.IsNotFound(err)).To(BeTrue())
 
 	By("Validating that Certificate is deleted")
 	cert := certv1alpha1.Certificate{}
-	err = k8sClient.Get(context.TODO(), client.ObjectKey{Name: kymaGatewayCertificateName, Namespace: certificateDefaultNamespace}, &cert)
+	err = k8sClient.Get(context.Background(), client.ObjectKey{Name: kymaGatewayCertificateName, Namespace: certificateDefaultNamespace}, &cert)
 	Expect(errors.IsNotFound(err)).To(BeTrue())
 
 	By("Validating that finalizer is removed")
-	Expect(k8sClient.Get(context.TODO(), client.ObjectKey{Name: apiGateway.Name}, &apiGateway)).To(Succeed())
+	Expect(k8sClient.Get(context.Background(), client.ObjectKey{Name: apiGateway.Name}, &apiGateway)).To(Succeed())
 	Expect(apiGateway.GetFinalizers()).ToNot(ContainElement(kymaGatewayFinalizer))
 }
 

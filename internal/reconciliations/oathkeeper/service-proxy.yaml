@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: oathkeeper
+    app.kubernetes.io/component: proxy
+    app.kubernetes.io/instance: ory
+    app.kubernetes.io/name: oathkeeper
+  name: {{ .Name }}
+  namespace: {{ .Namespace }}
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 4455
+      protocol: TCP
+      targetPort: http-proxy
+    - name: tcp-status-port
+      port: 15020
+      protocol: TCP
+      targetPort: 15020
+  selector:
+    app.kubernetes.io/instance: ory
+    app.kubernetes.io/name: oathkeeper

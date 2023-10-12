@@ -31,5 +31,5 @@ func (u *unsecuredToSecured) secureWithOAuth2JWT() error {
 	if err != nil {
 		return err
 	}
-	return helpers.ApplyApiRule(u.resourceManager.UpdateResources, u.resourceManager.UpdateResources, u.k8sClient, testcontext.GetRetryOpts(u.config), r)
+	return helpers.ApplyApiRule(u.resourceManager.UpdateResources, u.resourceManager.UpdateResources, u.k8sClient, testcontext.GetRetryOpts(), r)
 }

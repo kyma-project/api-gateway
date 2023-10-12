@@ -1,7 +1,8 @@
-package gateway
+package reconciliations_test
 
 import (
 	"context"
+	"github.com/kyma-project/api-gateway/internal/reconciliations"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
@@ -9,7 +10,7 @@ import (
 )
 
 var _ = Describe("Gardener", func() {
-	Context("getGardenerDomain", func() {
+	Context("GetGardenerDomain", func() {
 
 		It("should return the domain name from the Gardener shoot-info config", func() {
 			// given
@@ -26,7 +27,7 @@ var _ = Describe("Gardener", func() {
 			k8sClient := createFakeClient(&cm)
 
 			// when
-			domain, err := getGardenerDomain(context.TODO(), k8sClient)
+			domain, err := reconciliations.GetGardenerDomain(context.Background(), k8sClient)
 
 			// then
 			Expect(err).ShouldNot(HaveOccurred())
@@ -38,7 +39,7 @@ var _ = Describe("Gardener", func() {
 			k8sClient := createFakeClient()
 
 			// when
-			_, err := getGardenerDomain(context.TODO(), k8sClient)
+			_, err := reconciliations.GetGardenerDomain(context.Background(), k8sClient)
 
 			// then
 			Expect(err).Should(HaveOccurred())
@@ -56,7 +57,7 @@ var _ = Describe("Gardener", func() {
 			k8sClient := createFakeClient(&cm)
 
 			// when
-			_, err := getGardenerDomain(context.TODO(), k8sClient)
+			_, err := reconciliations.GetGardenerDomain(context.Background(), k8sClient)
 
 			// then
 			Expect(err).To(HaveOccurred())
@@ -64,7 +65,7 @@ var _ = Describe("Gardener", func() {
 		})
 	})
 
-	Context("runsOnGardnerCluster", func() {
+	Context("runsOnGardenerCluster", func() {
 
 		It("should return true if the Gardener shoot-info is available", func() {
 			// given
@@ -78,11 +79,11 @@ var _ = Describe("Gardener", func() {
 			k8sClient := createFakeClient(&cm)
 
 			// when
-			runsOnGardner, err := runsOnGardnerCluster(context.TODO(), k8sClient)
+			runsOnGardener, err := reconciliations.RunsOnGardenerCluster(context.Background(), k8sClient)
 
 			// then
 			Expect(err).ShouldNot(HaveOccurred())
-			Expect(runsOnGardner).To(BeTrue())
+			Expect(runsOnGardener).To(BeTrue())
 		})
 
 		It("should return false and no error if the Gardener shoot-info is not available", func() {
@@ -90,11 +91,11 @@ var _ = Describe("Gardener", func() {
 			k8sClient := createFakeClient()
 
 			// when
-			runsOnGardner, err := runsOnGardnerCluster(context.TODO(), k8sClient)
+			runsOnGardener, err := reconciliations.RunsOnGardenerCluster(context.Background(), k8sClient)
 
 			// then
 			Expect(err).ShouldNot(HaveOccurred())
-			Expect(runsOnGardner).To(BeFalse())
+			Expect(runsOnGardener).To(BeFalse())
 		})
 
 	})
