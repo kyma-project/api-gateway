@@ -14,9 +14,9 @@ Make sure that you are using an access token with proper scopes, and it is activ
 
 ### JWT
 
-1. Decode JWT
+1. Decode the JWT.
 
-2. Check the access token validity and scopes:
+2. Check the validity and scopes of the access token:
 
       ```bash
       {
@@ -47,13 +47,13 @@ Make sure that you are using an access token with proper scopes, and it is activ
       export ENCODED_CREDENTIALS=$(echo -n "$CLIENT_ID:$CLIENT_SECRET" | base64)
       ```
 
-3. Export introspection URL that can be found in well-known OPENID configuration:
+3. Export the introspection URL. You can find it in the well-known OPENID configuration.
 
       ```bash
       export INTROSPECTION_URL={INTROSPECTION_URL}
       ```
 
-4. Check the access token status:
+4. Check the access token's status:
 
       ```bash
       curl -X POST "$INTROSPECTION_URL" -H "Authorization: Basic $ENCODED_CREDENTIALS" -F "token={ACCESS_TOKEN}"
