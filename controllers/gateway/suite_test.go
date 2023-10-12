@@ -86,7 +86,7 @@ var _ = BeforeSuite(func(specCtx SpecContext) {
 
 	By("Bootstrapping test environment")
 	testEnv = &envtest.Environment{
-		CRDDirectoryPaths: []string{filepath.Join("..", "..", "config", "crd", "bases"), filepath.Join("..", "..", "hack")},
+		CRDDirectoryPaths: []string{filepath.Join("..", "..", "config", "crd", "bases"), filepath.Join("..", "..", "hack"), filepath.Join("integration_test_crds")},
 	}
 
 	var err error
