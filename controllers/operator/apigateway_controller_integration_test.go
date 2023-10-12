@@ -39,16 +39,16 @@ var _ = Describe("API Gateway Controller", Serial, func() {
 			}
 
 			// when
-			Expect(k8sClient.Create(ctx, &apiGateway)).Should(Succeed())
+			Expect(k8sClient.Create(context.Background(), &apiGateway)).Should(Succeed())
 
 			// then
 			Eventually(func(g Gomega) {
 				created := v1alpha1.APIGateway{}
-				g.Expect(k8sClient.Get(ctx, client.ObjectKey{Name: apiGateway.Name}, &created)).Should(Succeed())
+				g.Expect(k8sClient.Get(context.Background(), client.ObjectKey{Name: apiGateway.Name}, &created)).Should(Succeed())
 				g.Expect(created.Status.State).To(Equal(v1alpha1.Ready))
 
 				kymaGw := v1alpha3.Gateway{}
-				g.Expect(k8sClient.Get(ctx, client.ObjectKey{Name: "kyma-gateway", Namespace: "kyma-system"}, &kymaGw)).Should(Succeed())
+				g.Expect(k8sClient.Get(context.Background(), client.ObjectKey{Name: "kyma-gateway", Namespace: "kyma-system"}, &kymaGw)).Should(Succeed())
 			}, eventuallyTimeout).Should(Succeed())
 		})
 
@@ -61,16 +61,16 @@ var _ = Describe("API Gateway Controller", Serial, func() {
 			}
 
 			// when
-			Expect(k8sClient.Create(ctx, &apiGateway)).Should(Succeed())
+			Expect(k8sClient.Create(context.Background(), &apiGateway)).Should(Succeed())
 
 			// then
 			Eventually(func(g Gomega) {
 				created := v1alpha1.APIGateway{}
-				g.Expect(k8sClient.Get(ctx, client.ObjectKey{Name: apiGateway.Name}, &created)).Should(Succeed())
+				g.Expect(k8sClient.Get(context.Background(), client.ObjectKey{Name: apiGateway.Name}, &created)).Should(Succeed())
 				g.Expect(created.Status.State).To(Equal(v1alpha1.Ready))
 
 				kymaGw := v1alpha3.Gateway{}
-				err := k8sClient.Get(ctx, client.ObjectKey{Name: "kyma-gateway", Namespace: "kyma-system"}, &kymaGw)
+				err := k8sClient.Get(context.Background(), client.ObjectKey{Name: "kyma-gateway", Namespace: "kyma-system"}, &kymaGw)
 				g.Expect(err).To(HaveOccurred())
 				g.Expect(errors.IsNotFound(err)).To(BeTrue())
 			}, eventuallyTimeout).Should(Succeed())
@@ -88,31 +88,31 @@ var _ = Describe("API Gateway Controller", Serial, func() {
 			}
 
 			By("Creating APIGateway with Kyma Gateway enabled")
-			Expect(k8sClient.Create(ctx, &apiGateway)).Should(Succeed())
+			Expect(k8sClient.Create(context.Background(), &apiGateway)).Should(Succeed())
 
 			By("Verifying that APIGateway CR reconciliation was successful and Kyma gateway was created")
 			Eventually(func(g Gomega) {
-				g.Expect(k8sClient.Get(ctx, client.ObjectKey{Name: apiGateway.Name}, &apiGateway)).Should(Succeed())
+				g.Expect(k8sClient.Get(context.Background(), client.ObjectKey{Name: apiGateway.Name}, &apiGateway)).Should(Succeed())
 				g.Expect(apiGateway.Status.State).To(Equal(v1alpha1.Ready))
 
 				kymaGw := v1alpha3.Gateway{}
-				g.Expect(k8sClient.Get(ctx, client.ObjectKey{Name: "kyma-gateway", Namespace: "kyma-system"}, &kymaGw)).Should(Succeed())
+				g.Expect(k8sClient.Get(context.Background(), client.ObjectKey{Name: "kyma-gateway", Namespace: "kyma-system"}, &kymaGw)).Should(Succeed())
 			}, eventuallyTimeout).Should(Succeed())
 
 			By("Updating APIGateway CR with Kyma Gateway disabled")
 			apiGateway.Spec.EnableKymaGateway = ptr.To(false)
 
 			// when
-			Expect(k8sClient.Update(ctx, &apiGateway)).Should(Succeed())
+			Expect(k8sClient.Update(context.Background(), &apiGateway)).Should(Succeed())
 
 			// then
 			By("Verifying that APIGateway CR reconciliation was successful and Kyma gateway was deleted")
 			Eventually(func(g Gomega) {
-				g.Expect(k8sClient.Get(ctx, client.ObjectKey{Name: apiGateway.Name}, &apiGateway)).Should(Succeed())
+				g.Expect(k8sClient.Get(context.Background(), client.ObjectKey{Name: apiGateway.Name}, &apiGateway)).Should(Succeed())
 				g.Expect(apiGateway.Status.State).To(Equal(v1alpha1.Ready))
 
 				kymaGw := v1alpha3.Gateway{}
-				err := k8sClient.Get(ctx, client.ObjectKey{Name: "kyma-gateway", Namespace: "kyma-system"}, &kymaGw)
+				err := k8sClient.Get(context.Background(), client.ObjectKey{Name: "kyma-gateway", Namespace: "kyma-system"}, &kymaGw)
 				g.Expect(err).To(HaveOccurred())
 				g.Expect(errors.IsNotFound(err)).To(BeTrue())
 			}, eventuallyTimeout).Should(Succeed())
@@ -131,36 +131,36 @@ var _ = Describe("API Gateway Controller", Serial, func() {
 			}
 
 			By("Creating APIGateway with Kyma Gateway enabled")
-			Expect(k8sClient.Create(ctx, &apiGateway)).Should(Succeed())
+			Expect(k8sClient.Create(context.Background(), &apiGateway)).Should(Succeed())
 
 			By("Creating APIRule")
 			apiRule := testApiRule()
-			Expect(k8sClient.Create(ctx, &apiRule)).Should(Succeed())
+			Expect(k8sClient.Create(context.Background(), &apiRule)).Should(Succeed())
 
 			By("Verifying that APIGateway CR reconciliation was successful and Kyma gateway was created")
 			Eventually(func(g Gomega) {
-				g.Expect(k8sClient.Get(ctx, client.ObjectKey{Name: apiGateway.Name}, &apiGateway)).Should(Succeed())
+				g.Expect(k8sClient.Get(context.Background(), client.ObjectKey{Name: apiGateway.Name}, &apiGateway)).Should(Succeed())
 				g.Expect(apiGateway.Status.State).To(Equal(v1alpha1.Ready))
 
 				kymaGw := v1alpha3.Gateway{}
-				g.Expect(k8sClient.Get(ctx, client.ObjectKey{Name: "kyma-gateway", Namespace: "kyma-system"}, &kymaGw)).Should(Succeed())
+				g.Expect(k8sClient.Get(context.Background(), client.ObjectKey{Name: "kyma-gateway", Namespace: "kyma-system"}, &kymaGw)).Should(Succeed())
 			}, eventuallyTimeout).Should(Succeed())
 
 			By("Disabling Kyma Gateway")
 			apiGateway.Spec.EnableKymaGateway = ptr.To(false)
 
 			// when
-			Expect(k8sClient.Update(ctx, &apiGateway)).Should(Succeed())
+			Expect(k8sClient.Update(context.Background(), &apiGateway)).Should(Succeed())
 
 			// then
 			By("Verifying that APIGateway CR has Warning state and Kyma gateway was not deleted")
 			Eventually(func(g Gomega) {
-				g.Expect(k8sClient.Get(ctx, client.ObjectKey{Name: apiGateway.Name}, &apiGateway)).Should(Succeed())
+				g.Expect(k8sClient.Get(context.Background(), client.ObjectKey{Name: apiGateway.Name}, &apiGateway)).Should(Succeed())
 				g.Expect(apiGateway.Status.State).To(Equal(v1alpha1.Warning))
 				g.Expect(apiGateway.Status.Description).To(Equal("Kyma Gateway cannot be disabled because APIRules exist."))
 
 				kymaGw := v1alpha3.Gateway{}
-				err := k8sClient.Get(ctx, client.ObjectKey{Name: "kyma-gateway", Namespace: "kyma-system"}, &kymaGw)
+				err := k8sClient.Get(context.Background(), client.ObjectKey{Name: "kyma-gateway", Namespace: "kyma-system"}, &kymaGw)
 				g.Expect(err).To(Not(HaveOccurred()))
 			}, eventuallyTimeout).Should(Succeed())
 
