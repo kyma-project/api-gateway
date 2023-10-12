@@ -12,11 +12,11 @@ The error `401 Unauthorized` occurs when you try to access a Service that requir
 
 Make sure that you are using an access token with proper scopes, and it is active. Depending on the type of your access token, follow the relevant steps.
 
-### JWT
+### JSON Web Token
 
-1. Decode the JWT.
+1. Decode the JSON Web Token (JWT).
 
-2. Check the validity and scopes of the access token:
+2. Check the validity and scopes of the JWT:
 
       ```bash
       {
@@ -30,7 +30,7 @@ Make sure that you are using an access token with proper scopes, and it is activ
       }
       ```
 
-3. Generate a [new access token](../../tutorials/01-50-expose-and-secure-a-workload/01-51-get-jwt.md) if needed.
+3. Generate a [new JWT](../../tutorials/01-50-expose-and-secure-a-workload/01-51-get-jwt.md) if needed.
 
 ### Opaque access token
 
