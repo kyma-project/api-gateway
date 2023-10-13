@@ -20,5 +20,6 @@ func GenerateGinkgoJunitReport(reportName string, report types.Report) {
 		if err != nil {
 			logger.Error(err, "Junit Report Generation Error")
 		}
+	
 	}
 }
