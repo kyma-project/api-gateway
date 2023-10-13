@@ -19,10 +19,12 @@ package operator
 import (
 	"context"
 
+	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
 	operatorv1alpha1 "github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
 	"github.com/kyma-project/api-gateway/controllers"
-	"github.com/kyma-project/api-gateway/internal/gateway"
-	"github.com/kyma-project/api-gateway/internal/operator/reconciliations/api_gateway"
+	"github.com/kyma-project/api-gateway/internal/reconciliations/custom_resource"
+	"github.com/kyma-project/api-gateway/internal/reconciliations/gateway"
+	"github.com/kyma-project/api-gateway/internal/reconciliations/oathkeeper"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
@@ -40,7 +42,7 @@ func NewAPIGatewayReconciler(mgr manager.Manager) *APIGatewayReconciler {
 		Client:                   mgr.GetClient(),
 		Scheme:                   mgr.GetScheme(),
 		log:                      mgr.GetLogger().WithName("apigateway-controller"),
-		apiGatewayReconciliation: &api_gateway.Reconciliation{Client: mgr.GetClient()},
+		apiGatewayReconciliation: &custom_resource.Reconciliation{Client: mgr.GetClient()},
 	}
 }
 
@@ -48,7 +50,14 @@ func NewAPIGatewayReconciler(mgr manager.Manager) *APIGatewayReconciler {
 //+kubebuilder:rbac:groups=operator.kyma-project.io,resources=apigateways/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=operator.kyma-project.io,resources=apigateways/finalizers,verbs=update
 //+kubebuilder:rbac:groups=networking.istio.io,resources=gateways,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups="",resources=secrets,verbs=get;list;watch;update;patch;create;delete
+//+kubebuilder:rbac:groups=security.istio.io,resources=peerauthentications,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups="",resources=nodes,verbs=get;list;watch
+//+kubebuilder:rbac:groups="",resources=secrets;deployments;services;serviceaccounts,verbs=get;list;watch;update;patch;create;delete
+//+kubebuilder:rbac:groups="batch",resources=cronjobs,verbs=get;list;watch;update;patch;create;delete
+//+kubebuilder:rbac:groups="oathkeeper.ory.sh",resources=rules,verbs=*
+//+kubebuilder:rbac:groups="rbac.authorization.k8s.io",resources=roles;rolebindings;clusterroles;clusterrolebindings,verbs=get;list;watch;update;patch;create;delete
+//+kubebuilder:rbac:groups="autoscaling",resources=horizontalpodautoscalers,verbs=get;list;watch;update;patch;create;delete
+//+kubebuilder:rbac:groups="apps",resources=deployments,verbs=get;list;watch;update;patch;create;delete
 //+kubebuilder:rbac:groups="cert.gardener.cloud",resources=certificates,verbs=get;list;watch;update;patch;create;delete
 //+kubebuilder:rbac:groups="dns.gardener.cloud",resources=dnsentries,verbs=get;list;watch;update;patch;create;delete
 
@@ -67,18 +76,10 @@ func (r *APIGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 
 	r.log.Info("Reconciling APIGateway CR", "name", apiGatewayCR.Name, "isInDeletion", apiGatewayCR.IsInDeletion())
 
-	if apiGatewayCR.DeletionTimestamp.IsZero() {
-		if err := controllers.UpdateApiGatewayStatus(ctx, r.Client, &apiGatewayCR, controllers.ProcessingStatus()); err != nil {
-			r.log.Error(err, "Update status to processing failed")
-			// We don't update the status to error, because the status update already failed and to avoid another status update error we simply requeue the request.
-			return ctrl.Result{}, err
-		}
-	} else {
-		if err := controllers.UpdateApiGatewayStatus(ctx, r.Client, &apiGatewayCR, controllers.DeletingStatus()); err != nil {
-			r.log.Error(err, "Update status to deleting failed")
-			// We don't update the status to error, because the status update already failed and to avoid another status update error we simply requeue the request.
-			return ctrl.Result{}, err
-		}
+	if err := controllers.UpdateApiGatewayStatus(ctx, r.Client, &apiGatewayCR, controllers.ProcessingStatus()); err != nil {
+		r.log.Error(err, "Update status to processing failed")
+		// We don't update the status to error, because the status update already failed and to avoid another status update error we simply requeue the request.
+		return ctrl.Result{}, err
 	}
 
 	if kymaGatewayStatus := gateway.ReconcileKymaGateway(ctx, r.Client, &apiGatewayCR, APIGatewayResourceListDefaultPath); kymaGatewayStatus.IsError() || kymaGatewayStatus.IsWarning() {
@@ -87,6 +88,10 @@ func (r *APIGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 
 	if apiGatewayStatus := r.apiGatewayReconciliation.Reconcile(ctx, &apiGatewayCR); apiGatewayStatus.IsError() || apiGatewayStatus.IsWarning() {
 		return r.requeueReconciliation(ctx, apiGatewayCR, apiGatewayStatus)
+	}
+
+	if oryOathkeeperStatus := oathkeeper.ReconcileOathkeeper(ctx, r.Client, &apiGatewayCR); !oryOathkeeperStatus.IsReady() {
+		return r.requeueReconciliation(ctx, apiGatewayCR, oryOathkeeperStatus)
 	}
 
 	// If there are no finalizers left, we must assume that the resource is deleted and therefore must stop the reconciliation
@@ -122,7 +127,7 @@ func (r *APIGatewayReconciler) requeueReconciliation(ctx context.Context, cr ope
 	return ctrl.Result{}, status.NestedError()
 }
 
-func (r *APIGatewayReconciler) finishReconcile(ctx context.Context, cr operatorv1alpha1.APIGateway) (ctrl.Result, error) {
+func (r *APIGatewayReconciler) finishReconcile(ctx context.Context, cr v1alpha1.APIGateway) (ctrl.Result, error) {
 	if err := controllers.UpdateApiGatewayStatus(ctx, r.Client, &cr, controllers.ReadyStatus()); err != nil {
 		r.log.Error(err, "Update status failed")
 		return ctrl.Result{}, err

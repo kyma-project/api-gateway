@@ -34,10 +34,10 @@ func (t *testsuite) InitScenarios(ctx *godog.ScenarioContext) {
 func (t *testsuite) FeaturePath() []string {
 	isGardener := os.Getenv("IS_GARDENER")
 	if isGardener == "true" {
-		return []string{"testsuites/gateway/features/api_gateway_deletion.feature", "testsuites/gateway/features/kyma_gateway.feature", "testsuites/gateway/features/kyma_gateway_gardener.feature"}
+		return []string{"testsuites/gateway/features/custom_resource_deletion.feature", "testsuites/gateway/features/kyma_gateway.feature", "testsuites/gateway/features/kyma_gateway_gardener.feature"}
 	}
 
-	return []string{"testsuites/gateway/features/api_gateway_deletion.feature", "testsuites/gateway/features/kyma_gateway.feature", "testsuites/gateway/features/kyma_gateway_k3d.feature"}
+	return []string{"testsuites/gateway/features/custom_resource_deletion.feature", "testsuites/gateway/features/kyma_gateway.feature", "testsuites/gateway/features/kyma_gateway_k3d.feature"}
 }
 
 func (t *testsuite) Name() string {

@@ -13,15 +13,42 @@ import (
 	k8sclient "github.com/kyma-project/api-gateway/tests/integration/pkg/client"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
 	"github.com/pkg/errors"
-	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
+
+	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 )
 
 const templateFileName string = "pkg/hooks/manifests/apigateway_cr_template.yaml"
 const ApiGatewayCRName string = "test-gateway"
+
+var ApplyApiGatewayCrScenarioHook = func(ctx context.Context, sc *godog.Scenario) (context.Context, error) {
+	k8sClient, err := testcontext.GetK8sClientFromContext(ctx)
+	if err != nil {
+		return ctx, err
+	}
+
+	apiGateway, err := createApiGatewayCRObjectFromTemplate(ApiGatewayCRName)
+	if err != nil {
+		return ctx, err
+	}
+
+	err = retry.Do(func() error {
+		err := k8sClient.Create(ctx, &apiGateway)
+		if err != nil {
+			return err
+		}
+		ctx = testcontext.AddApiGatewayCRIntoContext(ctx, &apiGateway)
+		return nil
+	}, testcontext.GetRetryOpts()...)
+	if err != nil {
+		return ctx, err
+	}
+
+	return ctx, nil
+}
 
 var DeleteBlockingResourcesScenarioHook = func(ctx context.Context, sc *godog.Scenario) (context.Context, error) {
 	k8sClient, err := testcontext.GetK8sClientFromContext(ctx)
@@ -35,6 +62,13 @@ var DeleteBlockingResourcesScenarioHook = func(ctx context.Context, sc *godog.Sc
 	}
 	for _, apiRule := range apiRuleList.Items {
 		err = retry.Do(func() error {
+			if apiRule.Finalizers != nil {
+				apiRule.Finalizers = nil
+				err = k8sClient.Update(ctx, &apiRule)
+				if err != nil {
+					return err
+				}
+			}
 			err := k8sClient.Delete(ctx, &apiRule)
 			if err != nil {
 				return fmt.Errorf("failed to delete APIRule %s", apiRule.GetName())
@@ -62,32 +96,6 @@ var DeleteBlockingResourcesScenarioHook = func(ctx context.Context, sc *godog.Sc
 		if err != nil {
 			return ctx, err
 		}
-	}
-
-	return ctx, nil
-}
-
-var ApplyApiGatewayCrScenarioHook = func(ctx context.Context, sc *godog.Scenario) (context.Context, error) {
-	k8sClient, err := testcontext.GetK8sClientFromContext(ctx)
-	if err != nil {
-		return ctx, err
-	}
-
-	apiGateway, err := createApiGatewayCRObjectFromTemplate(ApiGatewayCRName)
-	if err != nil {
-		return ctx, err
-	}
-
-	err = retry.Do(func() error {
-		err := k8sClient.Create(ctx, &apiGateway)
-		if err != nil {
-			return err
-		}
-		ctx = testcontext.AddApiGatewayCRIntoContext(ctx, &apiGateway)
-		return nil
-	}, testcontext.GetRetryOpts()...)
-	if err != nil {
-		return ctx, err
 	}
 
 	return ctx, nil
@@ -159,7 +167,6 @@ var ApplyAndVerifyApiGatewayCrSuiteHook = func() error {
 }
 
 var ApiGatewayCrTearDownSuiteHook = func() error {
-	// TODO check if it's working
 	k8sClient := k8sclient.GetK8sClient()
 
 	apiGateway, err := createApiGatewayCRObjectFromTemplate(ApiGatewayCRName)

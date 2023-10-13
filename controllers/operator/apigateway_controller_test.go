@@ -6,7 +6,7 @@ import (
 	"github.com/go-logr/logr"
 	operatorv1alpha1 "github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
 	"github.com/kyma-project/api-gateway/controllers"
-	"github.com/kyma-project/api-gateway/internal/operator/reconciliations/api_gateway"
+	"github.com/kyma-project/api-gateway/internal/reconciliations/custom_resource"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -75,7 +75,7 @@ var _ = Describe("API-Gateway Controller", func() {
 					Name:      apiGatewayCRName,
 					Namespace: testNamespace,
 					Finalizers: []string{
-						api_gateway.ApiGatewayFinalizer,
+						custom_resource.ApiGatewayFinalizer,
 					},
 				},
 			}
@@ -109,7 +109,7 @@ var _ = Describe("API-Gateway Controller", func() {
 					Name:      apiGatewayCRName,
 					Namespace: testNamespace,
 					Finalizers: []string{
-						api_gateway.ApiGatewayFinalizer,
+						custom_resource.ApiGatewayFinalizer,
 					},
 				},
 			}
@@ -120,7 +120,7 @@ var _ = Describe("API-Gateway Controller", func() {
 				Client: apiClient,
 				Scheme: getTestScheme(),
 				apiGatewayReconciliation: &apiGatewayReconciliationMock{
-					status: controllers.ErrorStatus(errors.New("API-Gateway test error"), "Test error description"),
+					status: controllers.ErrorStatus(errors.New("API-Gateway CR reconciliation error"), "Test error description"),
 				},
 				log: logr.Discard(),
 			}
@@ -130,7 +130,7 @@ var _ = Describe("API-Gateway Controller", func() {
 
 			// then
 			Expect(err).Should(HaveOccurred())
-			Expect(err.Error()).To(ContainSubstring("API-Gateway test error"))
+			Expect(err.Error()).To(ContainSubstring("API-Gateway CR reconciliation error"))
 			Expect(result).Should(Equal(reconcile.Result{}))
 
 			Expect(apiClient.Get(context.TODO(), client.ObjectKeyFromObject(apiGatewayCR), apiGatewayCR)).Should(Succeed())

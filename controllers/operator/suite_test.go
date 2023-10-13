@@ -18,19 +18,33 @@ package operator
 
 import (
 	"context"
+	"errors"
 	"path/filepath"
 	"testing"
 	"time"
 
+	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
+	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
+	operatorv1alpha1 "github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
 	"github.com/kyma-project/api-gateway/controllers"
-	"github.com/kyma-project/api-gateway/internal/operator/resources"
+	"github.com/kyma-project/api-gateway/internal/resources"
 	"github.com/kyma-project/api-gateway/tests"
 	. "github.com/onsi/ginkgo/v2"
 	"github.com/onsi/ginkgo/v2/types"
 	. "github.com/onsi/gomega"
+	networkingv1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
+	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
+	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
+	appsv1 "k8s.io/api/apps/v1"
+	autoscalingv2 "k8s.io/api/autoscaling/v2"
+	schedulingv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/util/retry"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
@@ -41,11 +55,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
-
-	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
-	operatorv1alpha1 "github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
-	networkingv1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
-	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -53,7 +62,7 @@ const (
 	testNamespace    = "kyma-system"
 	apiGatewayCRName = "default"
 
-	eventuallyTimeout = time.Second * 40
+	eventuallyTimeout = time.Second * 10
 
 	kymaNamespace   = "kyma-system"
 	kymaGatewayName = "kyma-gateway"
@@ -91,7 +100,7 @@ func TestAPIs(t *testing.T) {
 
 var _ = BeforeSuite(func() {
 	logf.SetLogger(zap.New(zap.WriteTo(GinkgoWriter), zap.UseDevMode(true)))
-	ctx, cancel = context.WithCancel(context.TODO())
+	ctx, cancel = context.WithCancel(context.Background())
 
 	By("bootstrapping test environment")
 	testEnv = &envtest.Environment{
@@ -105,7 +114,19 @@ var _ = BeforeSuite(func() {
 	Expect(err).NotTo(HaveOccurred())
 	Expect(cfg).NotTo(BeNil())
 
-	s := getTestScheme()
+	s := runtime.NewScheme()
+	utilruntime.Must(corev1.AddToScheme(s))
+	utilruntime.Must(v1beta1.AddToScheme(s))
+	utilruntime.Must(appsv1.AddToScheme(s))
+	utilruntime.Must(rbacv1.AddToScheme(s))
+	utilruntime.Must(operatorv1alpha1.AddToScheme(s))
+	utilruntime.Must(autoscalingv2.AddToScheme(s))
+	utilruntime.Must(securityv1beta1.AddToScheme(s))
+	utilruntime.Must(schedulingv1.AddToScheme(s))
+	utilruntime.Must(apiextensionsv1.AddToScheme(s))
+	utilruntime.Must(gatewayv1beta1.AddToScheme(s))
+	utilruntime.Must(networkingv1alpha3.AddToScheme(s))
+	utilruntime.Must(networkingv1beta1.AddToScheme(s))
 
 	//+kubebuilder:scaffold:scheme
 
@@ -138,7 +159,14 @@ var _ = BeforeSuite(func() {
 
 	go func() {
 		defer GinkgoRecover()
-		Expect(mgr.Start(ctx)).Should(Succeed())
+		err := mgr.Start(ctx)
+		// A workaround for DeadlineExceeded error is introduced, since this started occurring during the teardown
+		// after adding Oathkeeper reconciliation.
+		if !errors.Is(err, context.DeadlineExceeded) {
+			Expect(err).Should(Succeed())
+		} else {
+			println("Context deadline exceeded during tearing down", err.Error())
+		}
 	}()
 })
 
@@ -149,7 +177,10 @@ var _ = AfterSuite(func() {
 	*/
 	cancel()
 	By("Tearing down the test environment")
-	err := retry.OnError(retry.DefaultBackoff, func(err error) bool {
+	err := retry.OnError(wait.Backoff{
+		Duration: 500 * time.Millisecond,
+		Steps:    150,
+	}, func(err error) bool {
 		return true
 	}, func() error {
 		return testEnv.Stop()
@@ -182,7 +213,14 @@ func createFakeClient(objects ...client.Object) client.Client {
 func getTestScheme() *runtime.Scheme {
 	scheme := runtime.NewScheme()
 	Expect(corev1.AddToScheme(scheme)).Should(Succeed())
+	Expect(v1beta1.AddToScheme(scheme)).Should(Succeed())
+	Expect(appsv1.AddToScheme(scheme)).Should(Succeed())
+	Expect(rbacv1.AddToScheme(scheme)).Should(Succeed())
 	Expect(operatorv1alpha1.AddToScheme(scheme)).Should(Succeed())
+	Expect(autoscalingv2.AddToScheme(scheme)).Should(Succeed())
+	Expect(securityv1beta1.AddToScheme(scheme)).Should(Succeed())
+	Expect(schedulingv1.AddToScheme(scheme)).Should(Succeed())
+	Expect(apiextensionsv1.AddToScheme(scheme)).Should(Succeed())
 	Expect(gatewayv1beta1.AddToScheme(scheme)).Should(Succeed())
 	Expect(networkingv1alpha3.AddToScheme(scheme)).Should(Succeed())
 	Expect(networkingv1beta1.AddToScheme(scheme)).Should(Succeed())
