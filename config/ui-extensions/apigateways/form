@@ -1,0 +1,12 @@
+- path: spec
+  simple: true
+  name: General
+  widget: FormGroup
+  defaultExpanded: true
+  children:
+  - path: enableKymaGateway
+    simple: true
+    name: enableKymaGateway
+    inputInfo: inputInfo.enableKymaGateway
+    value:
+      type: boolean
