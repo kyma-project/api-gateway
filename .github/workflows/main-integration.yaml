@@ -8,8 +8,6 @@ on:
     paths-ignore:
       - "docs/**"
       - "**/*.md"
-      - "tests/performance/**"
-      - "OWNERS"
       - "CODEOWNERS"
       - "sec-scanners-config.yaml"
       - ".github/**" #Ignoring since build job isn't triggered on the workflow directory changes
@@ -64,7 +62,7 @@ jobs:
     name: Slack Notification
     runs-on: ubuntu-latest
     if: ${{ failure() }}
-    needs: [integration-tests,integration-tests-istio-module,upgrade-tests]
+    needs: [integration-tests,integration-tests-istio-module]
     steps:
       - uses: actions/checkout@v4
       - name: Notify
