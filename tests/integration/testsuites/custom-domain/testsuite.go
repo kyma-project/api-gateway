@@ -4,6 +4,9 @@ import (
 	"context"
 	_ "embed"
 	"fmt"
+	"log"
+	"time"
+
 	"github.com/cucumber/godog"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/helpers"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/hooks"
@@ -15,8 +18,6 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
-	"log"
-	"time"
 )
 
 type testsuite struct {
@@ -108,7 +109,7 @@ func (t *testsuite) TearDown() {
 }
 
 func (t *testsuite) BeforeSuiteHooks() []func() error {
-	return []func() error{hooks.ApplyAndVerifyApiGatewayCrSuiteHook}
+	return []func() error{hooks.DeleteBlockingResourcesSuiteHook, hooks.ApplyAndVerifyApiGatewayCrSuiteHook}
 }
 
 func (t *testsuite) AfterSuiteHooks() []func() error {

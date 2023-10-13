@@ -220,32 +220,6 @@ func (c *scenario) thereIsAVirtualService(name, gateway string) error {
 }
 
 func (c *scenario) deleteAPIRule(name string) error {
-	// res := schema.GroupVersionResource{Group: "gateway.kyma-project.io", Version: "v1beta1", Resource: "apirules"}
-	// apiRule, err := c.k8sClient.Resource(res).Namespace(c.namespace).Get(context.Background(), name, v1.GetOptions{})
-	// if err != nil {
-	// 	return err
-	// }
-
-	// if apiRule.Object["metadata"].(map[string]interface{})["finalizers"] != nil {
-	// 	apiRule.Object["metadata"].(map[string]interface{})["finalizers"] = nil
-	// 	_, err = c.k8sClient.Resource(res).Namespace(c.namespace).Update(context.Background(), apiRule, v1.UpdateOptions{})
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// }
-	// res := schema.GroupVersionResource{Group: "networking.istio.io", Version: "v1alpha3", Resource: "virtualservices"}
-	// vsList, err := c.k8sClient.Resource(res).Namespace(c.namespace).List(context.Background(), v1.ListOptions{})
-	// if err != nil {
-	// 	return err
-	// }
-	// for _, vs := range vsList.Items {
-	// 	if strings.HasPrefix(vs.GetName(), fmt.Sprintf("%s-", name)) {
-	// 		err = c.deleteVirtualService(vs.GetName())
-	// 		if err != nil {
-	// 			return err
-	// 		}
-	// 	}
-	// }
 	res := schema.GroupVersionResource{Group: "gateway.kyma-project.io", Version: "v1beta1", Resource: "apirules"}
 	err := c.k8sClient.Resource(res).Namespace(c.namespace).Delete(context.Background(), name, v1.DeleteOptions{})
 	if err != nil {

@@ -5,10 +5,11 @@ import (
 	_ "embed"
 	"encoding/base64"
 	"fmt"
-	"github.com/kyma-project/api-gateway/tests/integration/pkg/hooks"
 	"log"
 	"path"
 	"time"
+
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/hooks"
 
 	"github.com/cucumber/godog"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/helpers"
@@ -166,7 +167,7 @@ func (t *testsuite) TearDown() {
 }
 
 func (t *testsuite) BeforeSuiteHooks() []func() error {
-	return []func() error{hooks.ApplyAndVerifyApiGatewayCrSuiteHook}
+	return []func() error{hooks.DeleteBlockingResourcesSuiteHook, hooks.ApplyAndVerifyApiGatewayCrSuiteHook}
 }
 
 func (t *testsuite) AfterSuiteHooks() []func() error {

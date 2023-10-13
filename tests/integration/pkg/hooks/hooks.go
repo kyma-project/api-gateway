@@ -51,54 +51,7 @@ var ApplyApiGatewayCrScenarioHook = func(ctx context.Context, sc *godog.Scenario
 }
 
 var DeleteBlockingResourcesScenarioHook = func(ctx context.Context, sc *godog.Scenario) (context.Context, error) {
-	k8sClient, err := testcontext.GetK8sClientFromContext(ctx)
-	if err != nil {
-		return ctx, err
-	}
-	apiRuleList := v1beta1.APIRuleList{}
-	err = k8sClient.List(ctx, &apiRuleList)
-	if err != nil {
-		return ctx, err
-	}
-	for _, apiRule := range apiRuleList.Items {
-		err = retry.Do(func() error {
-			if apiRule.Finalizers != nil {
-				apiRule.Finalizers = nil
-				err = k8sClient.Update(ctx, &apiRule)
-				if err != nil {
-					return err
-				}
-			}
-			err := k8sClient.Delete(ctx, &apiRule)
-			if err != nil {
-				return fmt.Errorf("failed to delete APIRule %s", apiRule.GetName())
-			}
-			return nil
-		}, testcontext.GetRetryOpts()...)
-		if err != nil {
-			return ctx, err
-		}
-	}
-
-	vsList := networkingv1beta1.VirtualServiceList{}
-	err = k8sClient.List(ctx, &vsList)
-	if err != nil {
-		return ctx, err
-	}
-	for _, vs := range vsList.Items {
-		err = retry.Do(func() error {
-			err := k8sClient.Delete(ctx, vs)
-			if err != nil {
-				return fmt.Errorf("failed to delete VirtualService %s", vs.GetName())
-			}
-			return nil
-		}, testcontext.GetRetryOpts()...)
-		if err != nil {
-			return ctx, err
-		}
-	}
-
-	return ctx, nil
+	return ctx, deleteBlockingResources(ctx)
 }
 
 var ApiGatewayCrTearDownScenarioHook = func(ctx context.Context, sc *godog.Scenario, _ error) (context.Context, error) {
@@ -164,6 +117,10 @@ var ApplyAndVerifyApiGatewayCrSuiteHook = func() error {
 	}
 
 	return nil
+}
+
+var DeleteBlockingResourcesSuiteHook = func() error {
+	return deleteBlockingResources(context.Background())
 }
 
 var ApiGatewayCrTearDownSuiteHook = func() error {
@@ -268,4 +225,55 @@ func createApiGatewayCRObjectFromTemplate(name string) (v1alpha1.APIGateway, err
 
 	apiGateway.Name = name
 	return apiGateway, nil
+}
+
+func deleteBlockingResources(ctx context.Context) error {
+	k8sClient, err := testcontext.GetK8sClientFromContext(ctx)
+	if err != nil {
+		return err
+	}
+	apiRuleList := v1beta1.APIRuleList{}
+	err = k8sClient.List(ctx, &apiRuleList)
+	if err != nil {
+		return err
+	}
+	for _, apiRule := range apiRuleList.Items {
+		err = retry.Do(func() error {
+			if apiRule.Finalizers != nil {
+				apiRule.Finalizers = nil
+				err = k8sClient.Update(ctx, &apiRule)
+				if err != nil {
+					return err
+				}
+			}
+			err := k8sClient.Delete(ctx, &apiRule)
+			if err != nil {
+				return fmt.Errorf("failed to delete APIRule %s", apiRule.GetName())
+			}
+			return nil
+		}, testcontext.GetRetryOpts()...)
+		if err != nil {
+			return err
+		}
+	}
+
+	vsList := networkingv1beta1.VirtualServiceList{}
+	err = k8sClient.List(ctx, &vsList)
+	if err != nil {
+		return err
+	}
+	for _, vs := range vsList.Items {
+		err = retry.Do(func() error {
+			err := k8sClient.Delete(ctx, vs)
+			if err != nil {
+				return fmt.Errorf("failed to delete VirtualService %s", vs.GetName())
+			}
+			return nil
+		}, testcontext.GetRetryOpts()...)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
