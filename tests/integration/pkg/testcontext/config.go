@@ -42,7 +42,6 @@ func GetConfig() Config {
 
 func GetRetryOpts() []retry.Option {
 	if retryOpts == nil {
-
 		var config Config
 		if err := envconfig.Init(&config); err != nil {
 			panic(fmt.Sprintf("Unable to setup test config: %v", err))

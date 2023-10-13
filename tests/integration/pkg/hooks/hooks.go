@@ -230,13 +230,15 @@ func createApiGatewayCRObjectFromTemplate(name string) (v1alpha1.APIGateway, err
 func deleteBlockingResources(ctx context.Context) error {
 	k8sClient, err := testcontext.GetK8sClientFromContext(ctx)
 	if err != nil {
-		return err
+		k8sClient = k8sclient.GetK8sClient()
 	}
+
 	apiRuleList := v1beta1.APIRuleList{}
 	err = k8sClient.List(ctx, &apiRuleList)
 	if err != nil {
 		return err
 	}
+
 	for _, apiRule := range apiRuleList.Items {
 		err = retry.Do(func() error {
 			if apiRule.Finalizers != nil {
@@ -262,6 +264,7 @@ func deleteBlockingResources(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+
 	for _, vs := range vsList.Items {
 		err = retry.Do(func() error {
 			err := k8sClient.Delete(ctx, vs)
