@@ -41,7 +41,6 @@ type scenario struct {
 }
 
 func initScenario(ctx *godog.ScenarioContext, ts *testsuite) {
-
 	scenario, err := createScenario(ts, "custom-domain")
 
 	if err != nil {
