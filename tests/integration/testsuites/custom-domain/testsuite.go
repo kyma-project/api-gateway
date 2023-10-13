@@ -113,7 +113,7 @@ func (t *testsuite) BeforeSuiteHooks() []func() error {
 }
 
 func (t *testsuite) AfterSuiteHooks() []func() error {
-	return []func() error{hooks.ApiGatewayCrTearDownSuiteHook}
+	return []func() error{hooks.DeleteBlockingResourcesSuiteHook, hooks.ApiGatewayCrTearDownSuiteHook}
 }
 
 func NewTestsuite(httpClient *helpers.RetryableHttpClient, k8sClient dynamic.Interface, rm *resource.Manager, config testcontext.Config) testcontext.Testsuite {
