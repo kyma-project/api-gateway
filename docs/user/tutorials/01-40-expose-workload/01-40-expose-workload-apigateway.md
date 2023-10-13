@@ -39,7 +39,7 @@ This tutorial shows how to expose an unsecured instance of the HttpBin Service a
 
 Follow these steps:
 
-1. Expose an instance of the HttpBin Service by creating APIRule CR in your Namespace.
+1. Expose an instance of the HttpBin Service by creating APIRule custom resource in your Namespace.
 
   ```bash
   cat <<EOF | kubectl apply -f -
