@@ -2,12 +2,13 @@ header:
 - name: Ready
   source: status.state
   widget: Badge
+  description: status.description
   highlights:
     positive:
       - 'Ready'
-     negative:
+    negative:
       - 'Error'
-     critical:
+    critical:
       - 'Warning'
 body:
 - widget: Tabs
