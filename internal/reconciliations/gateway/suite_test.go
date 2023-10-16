@@ -34,7 +34,6 @@ func createFakeClient(objects ...client.Object) client.Client {
 	Expect(v1alpha3.AddToScheme(scheme.Scheme)).Should(Succeed())
 	Expect(v1beta1.AddToScheme(scheme.Scheme)).Should(Succeed())
 	Expect(dnsv1alpha1.AddToScheme(scheme.Scheme)).Should(Succeed())
-	Expect(dnsv1alpha1.AddToScheme(scheme.Scheme)).Should(Succeed())
 	Expect(certv1alpha1.AddToScheme(scheme.Scheme)).Should(Succeed())
 	Expect(networkingv1beta1.AddToScheme(scheme.Scheme)).Should(Succeed())
 

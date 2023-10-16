@@ -41,6 +41,8 @@ func (k godogResourceMapping) String() string {
 		return "ClusterRoleBinding"
 	case PeerAuthentication:
 		return "PeerAuthentication"
+	case VirtualService:
+		return "VirtualService"
 	}
 	panic(fmt.Errorf("%#v has unimplemented String() method", k))
 }
@@ -56,6 +58,7 @@ const (
 	ClusterRole
 	ClusterRoleBinding
 	PeerAuthentication
+	VirtualService
 )
 
 type Manager struct {
@@ -556,6 +559,12 @@ func GetResourceGvr(kind, name string) schema.GroupVersionResource {
 			Group:    "security.istio.io",
 			Version:  "v1beta1",
 			Resource: "peerauthentications",
+		}
+	case VirtualService.String():
+		gvr = schema.GroupVersionResource{
+			Group:    "networking.istio.io",
+			Version:  "v1beta1",
+			Resource: "virtualservices",
 		}
 	default:
 		panic(fmt.Errorf("cannot get gvr for kind: %s, name: %s", kind, name))
