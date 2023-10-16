@@ -2,6 +2,7 @@ package gateway
 
 import (
 	"context"
+
 	"github.com/gardener/cert-management/pkg/apis/cert/v1alpha1"
 	"github.com/kyma-project/api-gateway/internal/reconciliations"
 	. "github.com/onsi/ginkgo/v2"
@@ -10,9 +11,7 @@ import (
 )
 
 var _ = Describe("Resource", func() {
-
 	Context("ApplyResource", func() {
-
 		It("should reapply disclaimer annotation on resource when it was removed", func() {
 			// given
 			k8sClient := createFakeClient()

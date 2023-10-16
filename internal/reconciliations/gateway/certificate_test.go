@@ -2,6 +2,7 @@ package gateway
 
 import (
 	"context"
+
 	"github.com/gardener/cert-management/pkg/apis/cert/v1alpha1"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -10,9 +11,7 @@ import (
 )
 
 var _ = Describe("Certificate", func() {
-
 	Context("reconcileCertificate", func() {
-
 		It("should create Certificate with secret name and domain", func() {
 			// given
 			k8sClient := createFakeClient()
@@ -24,7 +23,7 @@ var _ = Describe("Certificate", func() {
 			Expect(err).ShouldNot(HaveOccurred())
 
 			cert := v1alpha1.Certificate{}
-			Expect(k8sClient.Get(context.Background(), client.ObjectKey{Name: "test", Namespace: "istio-system"}, &cert)).Should(Succeed())
+			Expect(k8sClient.Get(context.Background(), client.ObjectKey{Name: "test", Namespace: certificateDefaultNamespace}, &cert)).Should(Succeed())
 			Expect(*cert.Spec.SecretName).To(Equal("test-cert-secret"))
 			Expect(*cert.Spec.CommonName).To(Equal("*.test-domain.com"))
 		})
@@ -32,7 +31,6 @@ var _ = Describe("Certificate", func() {
 	})
 
 	Context("reconcileNonGardenerCertificateSecret", func() {
-
 		It("should create Certificate with default name and namespace", func() {
 			// given
 			apiGateway := getApiGateway(true)
@@ -45,7 +43,7 @@ var _ = Describe("Certificate", func() {
 			Expect(err).ShouldNot(HaveOccurred())
 
 			secret := v1.Secret{}
-			Expect(k8sClient.Get(context.Background(), client.ObjectKey{Name: "kyma-gateway-certs", Namespace: "istio-system"}, &secret)).Should(Succeed())
+			Expect(k8sClient.Get(context.Background(), client.ObjectKey{Name: kymaGatewayCertSecretName, Namespace: certificateDefaultNamespace}, &secret)).Should(Succeed())
 			Expect(secret.Data).To(HaveKey("tls.key"))
 			Expect(secret.Data).To(HaveKey("tls.crt"))
 		})
