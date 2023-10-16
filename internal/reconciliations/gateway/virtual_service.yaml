@@ -11,9 +11,9 @@ spec:
   http:
     - match:
         - uri:
-            prefix: /
+            exact: /healthz/ready
       route:
         - destination:
             port:
               number: {{.Port}}
-            host: "*.{{.Domain}}"
+            host: "{{.IngressGateway}}"
