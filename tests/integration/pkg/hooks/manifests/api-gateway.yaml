@@ -3,4 +3,4 @@ kind: APIGateway
 metadata:
   name: "{{.NamePrefix}}"
 spec:
-  enableKymaGateway: false
+  enableKymaGateway: true

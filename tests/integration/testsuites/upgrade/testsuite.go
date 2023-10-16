@@ -5,11 +5,12 @@ import (
 	_ "embed"
 	"encoding/base64"
 	"fmt"
-	"github.com/kyma-project/api-gateway/tests/integration/pkg/hooks"
 	"log"
 	"os"
 	"path"
 	"time"
+
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/hooks"
 
 	"github.com/cucumber/godog"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/helpers"
@@ -155,11 +156,10 @@ func (t *testsuite) BeforeSuiteHooks() []func() error {
 }
 
 func (t *testsuite) AfterSuiteHooks() []func() error {
-	return []func() error{hooks.ApiGatewayCrTearDownSuiteHook}
+	return []func() error{hooks.DeleteBlockingResourcesSuiteHook, hooks.ApiGatewayCrTearDownSuiteHook}
 }
 
 func NewTestsuite(httpClient *helpers.RetryableHttpClient, k8sClient dynamic.Interface, rm *resource.Manager, config testcontext.Config) testcontext.Testsuite {
-
 	return &testsuite{
 		name:            "upgrade",
 		httpClient:      httpClient,
