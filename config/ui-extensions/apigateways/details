@@ -5,6 +5,8 @@ header:
   highlights:
     positive:
       - 'Ready'
+     negative:
+      - 'Error'
 body:
 - widget: Tabs
   children:

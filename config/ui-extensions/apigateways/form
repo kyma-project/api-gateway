@@ -7,6 +7,6 @@
   - path: enableKymaGateway
     simple: true
     name: enableKymaGateway
-    inputInfo: inputInfo.enableKymaGateway
+    inputInfo: enableKymaGateway
     value:
       type: boolean
