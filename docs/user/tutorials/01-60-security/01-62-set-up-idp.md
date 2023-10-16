@@ -7,7 +7,7 @@ One of the strategies enables you to use your own identity provider. This is ver
 ## Prerequisites
 
 * Generate a `kubeconfig` file for the Kubernetes cluster that hosts the Kyma instance.
-* Kubernetes supports OpenID Connect (OIDC) JSON Web Tokens (JWTs). Use an identity provider compliant with OIDC.
+* Kubernetes supports OpenID Connect (OIDC) JSON Web Tokens (JWTs). Use an identity provider that is compliant with OIDC.
 
 ## Steps
 
