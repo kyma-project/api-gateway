@@ -107,5 +107,9 @@ func reconcileNonGardenerKymaGateway(ctx context.Context, k8sClient client.Clien
 		return err
 	}
 
+	if err := reconcileKymaGatewayVirtualService(ctx, k8sClient, apiGatewayCR, nonGardenerDomainName); err != nil {
+		return err
+	}
+
 	return reconcileKymaGateway(ctx, k8sClient, apiGatewayCR, nonGardenerDomainName)
 }

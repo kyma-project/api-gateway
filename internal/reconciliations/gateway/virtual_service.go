@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	kymaGatewayVirtualServiceName      = "kyma-gateway"
+	kymaGatewayVirtualServiceName      = "istio-healthz"
 	kymaGatewayVirtualServiceNamespace = "istio-system"
 )
 
@@ -22,16 +22,14 @@ const (
 var virtualServiceManifest []byte
 
 func reconcileKymaGatewayVirtualService(ctx context.Context, k8sClient client.Client, apiGatewayCR v1alpha1.APIGateway, domain string) error {
-	name := kymaGatewayVirtualServiceName
-	namespace := kymaGatewayVirtualServiceNamespace
 	isEnabled := isKymaGatewayEnabled(apiGatewayCR)
-	ctrl.Log.Info("Reconciling Virtual Service entry", "KymaGatewayEnabled", isEnabled, "name", name, "namespace", namespace)
+	ctrl.Log.Info("Reconciling Virtual Service entry", "KymaGatewayEnabled", isEnabled, "name", kymaGatewayVirtualServiceName, "namespace", kymaGatewayVirtualServiceNamespace)
 
 	if !isEnabled || apiGatewayCR.IsInDeletion() {
-		return deleteVirtualService(ctx, k8sClient, name, namespace)
+		return deleteVirtualService(ctx, k8sClient, kymaGatewayVirtualServiceName, kymaGatewayVirtualServiceNamespace)
 	}
 
-	return reconcileVirtualService(ctx, k8sClient, name, namespace, domain)
+	return reconcileVirtualService(ctx, k8sClient, kymaGatewayVirtualServiceName, kymaGatewayVirtualServiceNamespace, domain)
 }
 
 func reconcileVirtualService(ctx context.Context, k8sClient client.Client, name, namespace, domain string) error {
