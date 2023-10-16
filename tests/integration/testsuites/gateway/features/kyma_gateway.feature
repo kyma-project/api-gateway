@@ -34,7 +34,7 @@ Feature: Checking default kyma gateway
   Scenario: Kyma Gateway is not removed when there is an APIRule
     Given there is an "kyma-rule" APIRule with Gateway "kyma-system/kyma-gateway"
     When disabling Kyma gateway
-    Then APIGateway CR is in "Warning" state with description "There are custom resources that block the deletion. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning"
+    Then APIGateway CR is in "Warning" state with description "There are custom resources that block the deletion of Kyma Gateway. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning"
     And there is Istio Gateway "kyma-gateway" in "kyma-system" namespace
     And APIRule "kyma-rule" is removed
     And APIGateway CR is in "Ready" state with description ""
@@ -42,7 +42,7 @@ Feature: Checking default kyma gateway
   Scenario: Kyma Gateway is not removed when there is a VirtualService
     Given there is an "kyma-vs" VirtualService with Gateway "kyma-system/kyma-gateway"
     When disabling Kyma gateway
-    Then APIGateway CR is in "Warning" state with description "There are custom resources that block the deletion. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning"
+    Then APIGateway CR is in "Warning" state with description "There are custom resources that block the deletion of Kyma Gateway. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning"
     And there is Istio Gateway "kyma-gateway" in "kyma-system" namespace
     And VirtualService "kyma-vs" is removed
     And APIGateway CR is in "Ready" state with description ""

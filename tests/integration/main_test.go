@@ -1,4 +1,4 @@
-package custom_resource
+package api_gateway
 
 import (
 	"context"

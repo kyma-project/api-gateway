@@ -253,7 +253,7 @@ var _ = Describe("API Gateway Controller", Serial, func() {
 				g.Expect(deleted.ObjectMeta.Finalizers).To(ContainElement(custom_resource.ApiGatewayFinalizer))
 				g.Expect(deleted.ObjectMeta.Finalizers).To(ContainElement(gateway.KymaGatewayFinalizer))
 				g.Expect(deleted.Status.State).To(Equal(v1alpha1.Warning))
-				g.Expect(deleted.Status.Description).To(Equal("There are custom resources that block the deletion. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning"))
+				g.Expect(deleted.Status.Description).To(Equal("There are custom resources that block the deletion of Kyma Gateway. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning"))
 			}, eventuallyTimeout).Should(Succeed())
 		})
 
@@ -297,7 +297,7 @@ var _ = Describe("API Gateway Controller", Serial, func() {
 				g.Expect(deleted.ObjectMeta.Finalizers).To(ContainElement(custom_resource.ApiGatewayFinalizer))
 				g.Expect(deleted.ObjectMeta.Finalizers).To(ContainElement(gateway.KymaGatewayFinalizer))
 				g.Expect(deleted.Status.State).To(Equal(v1alpha1.Warning))
-				g.Expect(deleted.Status.Description).To(Equal("There are custom resources that block the deletion. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning"))
+				g.Expect(deleted.Status.Description).To(Equal("There are custom resources that block the deletion of Kyma Gateway. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning"))
 			}, eventuallyTimeout).Should(Succeed())
 		})
 	})

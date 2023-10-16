@@ -85,8 +85,8 @@ var _ = Describe("DNSEntry", func() {
 func getTestIstioIngressGatewayDnsBasedService() corev1.Service {
 	return corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      KymaGatewayName,
-			Namespace: KymaGatewayNamespace,
+			Name:      "istio-ingressgateway",
+			Namespace: "istio-system",
 		},
 		Spec: corev1.ServiceSpec{
 			ClusterIP: "10.43.158.160",

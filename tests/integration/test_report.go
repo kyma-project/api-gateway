@@ -1,11 +1,7 @@
-package custom_resource
+package api_gateway
 
 import (
 	"fmt"
-	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
-	"gitlab.com/rodrigoodhin/gocure/models"
-	"gitlab.com/rodrigoodhin/gocure/pkg/gocure"
-	"gitlab.com/rodrigoodhin/gocure/report/html"
 	"io"
 	"io/fs"
 	"log"
@@ -13,6 +9,11 @@ import (
 	"path/filepath"
 	"regexp"
 	"runtime"
+
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
+	"gitlab.com/rodrigoodhin/gocure/models"
+	"gitlab.com/rodrigoodhin/gocure/pkg/gocure"
+	"gitlab.com/rodrigoodhin/gocure/report/html"
 )
 
 func generateReport(ts testcontext.Testsuite) {

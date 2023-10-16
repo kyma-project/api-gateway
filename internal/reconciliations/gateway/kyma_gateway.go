@@ -28,7 +28,7 @@ var checkDefaultGatewayReference = func(ctx context.Context, c client.Client, re
 	}, u)
 
 	if err != nil {
-		ctrl.Log.Error(err, "Error happened during obtaining user created object")
+		ctrl.Log.Error(err, "Error happened during getting object")
 	}
 
 	if res.GVK.Kind == "APIRule" && u.Object["spec"] != nil {

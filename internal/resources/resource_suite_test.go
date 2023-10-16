@@ -3,7 +3,7 @@ package resources
 import (
 	"testing"
 
-	"github.com/kyma-project/api-gateway/internal/tests"
+	"github.com/kyma-project/api-gateway/tests"
 	"github.com/onsi/ginkgo/v2/types"
 
 	. "github.com/onsi/ginkgo/v2"

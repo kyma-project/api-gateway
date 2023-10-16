@@ -79,8 +79,8 @@ func deleteDnsEntry(ctx context.Context, k8sClient client.Client, name, namespac
 
 func fetchIstioIngressGatewayIp(ctx context.Context, k8sClient client.Client) (string, error) {
 	istioIngressGatewayNamespaceName := types.NamespacedName{
-		Name:      KymaGatewayName,
-		Namespace: KymaGatewayNamespace,
+		Name:      "istio-ingressgateway",
+		Namespace: "istio-system",
 	}
 
 	svc := corev1.Service{}

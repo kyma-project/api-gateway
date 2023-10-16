@@ -80,7 +80,7 @@ func NewResourcesFinderFromConfigYaml(ctx context.Context, client client.Client,
 	}, nil
 }
 
-func (i *ResourcesFinder) FindUserCreatedResources(checkIf resourceCondition) ([]Resource, error) {
+func (i *ResourcesFinder) FindUserCreatedResources(isResourceRelevant resourceCondition) ([]Resource, error) {
 	var userResources []Resource
 	for _, resource := range i.configuration.Resources {
 		var u unstructured.UnstructuredList
@@ -104,7 +104,7 @@ func (i *ResourcesFinder) FindUserCreatedResources(checkIf resourceCondition) ([
 			if err != nil {
 				return nil, err
 			}
-			if !managed && checkIf(i.ctx, i.client, res) {
+			if !managed && isResourceRelevant(i.ctx, i.client, res) {
 				userResources = append(userResources, res)
 			}
 		}
