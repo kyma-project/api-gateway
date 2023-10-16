@@ -7,14 +7,14 @@ The configuration of Kyma Gateway varies depending on whether you use a managed 
 In a managed SAP BTP, Kyma runtime cluster, Kyma Gateway uses the Gardener Shoot domain. For this domain, an Istio Gateway CR exposes the HTTPS port (`443`) and the HTTP port (`80`) with a redirect to port `443`.  
 Additionally, Istio Gateway uses a certificate managed by a [Gardener Certificate CR](https://gardener.cloud/docs/guides/networking/certificate-extension/#using-the-custom-certificate-resource). 
 The Gardener [DNSEntry CR](https://gardener.cloud/docs/guides/networking/dns-extension/#creating-a-dnsentry-resource-explicitly) creates a DNS record for the specified domain with the Istio Ingress Gateway Load Balancer Service as the target.
-An Istio Virtual Service exposing the Istio readiness endpoint `/healthz/ready` on the domain `healthz.{GARDENER SHOOT DOMAIN}` is created.
+An Istio Virtual Service exposing the Istio readiness endpoint on `healthz.{GARDENER SHOOT DOMAIN}/healthz/ready` is created.
 
 ![Kyma Gateway Resources Gardener](../../../assets/kyma-gateway-resources-gardener.svg)
 
 ## Open-source Kyma
 In an open-source Kyma cluster, Kyma Gateway uses the domain `local.kyma.dev`. For this domain, an Istio Gateway CR exposes the HTTPS port (`443`) and the HTTP port (`80`) with a redirect to port `443`.
 Istio Gateway uses a default certificate for the domain `local.kyma.dev` that is valid until July 2030.
-An Istio Virtual Service exposing the Istio readiness endpoint `/healthz/ready` on the domain `healthz.local.kyma.dev` is created.
+An Istio Virtual Service exposing the Istio readiness endpoint on `healthz.local.kyma.dev/healthz/ready` is created.
 
 ![Kyma Gateway Resources Open Source](../../../assets/kyma-gateway-resources-os.svg)
 
