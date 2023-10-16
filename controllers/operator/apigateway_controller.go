@@ -20,6 +20,10 @@ import (
 	"context"
 	"fmt"
 
+	oryv1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
+
+	"errors"
+
 	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
 	operatorv1alpha1 "github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
@@ -151,14 +155,19 @@ func (i *APIGatewayReconciler) reconcileFinalizer(ctx context.Context, apiGatewa
 	}
 
 	if apiGatewayCR.IsInDeletion() && hasFinalizer(apiGatewayCR) {
-		apiRulesCount, err := apiRulesCount(ctx, i.Client)
+		apiRulesFound, err := apiRulesExist(ctx, i.Client)
 		if err != nil {
 			return controllers.ErrorStatus(err, "Error during listing existing APIRules")
 		}
 
-		if apiRulesCount > 0 {
-			return controllers.WarningStatus(fmt.Errorf("could not delete API-Gateway CR since there are %d APIRule(s) present that block its deletion", apiRulesCount),
-				"There are APIRule(s) that block the deletion of API-Gateway CR. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning")
+		oryRulesFound, err := oryRulesExist(ctx, i.Client)
+		if err != nil {
+			return controllers.ErrorStatus(err, "Error during listing existing ORY Oathkeeper Rules")
+		}
+
+		if apiRulesFound || oryRulesFound {
+			return controllers.WarningStatus(errors.New("could not delete API-Gateway CR since there are custom resources that block its deletion"),
+				"There are custom resources that block the deletion of API-Gateway CR. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning")
 		}
 
 		if err := removeFinalizer(ctx, i.Client, apiGatewayCR); err != nil {
@@ -170,14 +179,24 @@ func (i *APIGatewayReconciler) reconcileFinalizer(ctx context.Context, apiGatewa
 	return controllers.ReadyStatus()
 }
 
-func apiRulesCount(ctx context.Context, k8sClient client.Client) (int, error) {
+func apiRulesExist(ctx context.Context, k8sClient client.Client) (bool, error) {
 	apiRuleList := v1beta1.APIRuleList{}
 	err := k8sClient.List(ctx, &apiRuleList)
 	if err != nil {
-		return 0, err
+		return false, err
 	}
+	ctrl.Log.Info(fmt.Sprintf("Blocking deletion because %d APIRules found on cluster", len(apiRuleList.Items)))
+	return len(apiRuleList.Items) > 0, nil
+}
 
-	return len(apiRuleList.Items), nil
+func oryRulesExist(ctx context.Context, k8sClient client.Client) (bool, error) {
+	oryRulesList := oryv1alpha1.RuleList{}
+	err := k8sClient.List(ctx, &oryRulesList)
+	if err != nil {
+		return false, err
+	}
+	ctrl.Log.Info(fmt.Sprintf("Blocking deletion because %d ORY Oathkeeper Rules found on cluster", len(oryRulesList.Items)))
+	return len(oryRulesList.Items) > 0, nil
 }
 
 func hasFinalizer(apiGatewayCR *operatorv1alpha1.APIGateway) bool {

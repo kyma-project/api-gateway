@@ -12,6 +12,7 @@ import (
 	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
 	k8sclient "github.com/kyma-project/api-gateway/tests/integration/pkg/client"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
+	oryv1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
 	"github.com/pkg/errors"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -29,12 +30,10 @@ var ApplyApiGatewayCrScenarioHook = func(ctx context.Context, sc *godog.Scenario
 	if err != nil {
 		return ctx, err
 	}
-
 	apiGateway, err := createApiGatewayCRObjectFromTemplate(ApiGatewayCRName)
 	if err != nil {
 		return ctx, err
 	}
-
 	err = retry.Do(func() error {
 		err := k8sClient.Create(ctx, &apiGateway)
 		if err != nil {
@@ -43,11 +42,7 @@ var ApplyApiGatewayCrScenarioHook = func(ctx context.Context, sc *godog.Scenario
 		ctx = testcontext.AddApiGatewayCRIntoContext(ctx, &apiGateway)
 		return nil
 	}, testcontext.GetRetryOpts()...)
-	if err != nil {
-		return ctx, err
-	}
-
-	return ctx, nil
+	return ctx, err
 }
 
 var DeleteBlockingResourcesScenarioHook = func(ctx context.Context, sc *godog.Scenario) (context.Context, error) {
@@ -71,7 +66,6 @@ var ApiGatewayCrTearDownScenarioHook = func(ctx context.Context, sc *godog.Scena
 			}
 		}
 	}
-
 	return ctx, nil
 }
 
@@ -275,6 +269,23 @@ func deleteBlockingResources(ctx context.Context) error {
 		}, testcontext.GetRetryOpts()...)
 		if err != nil {
 			return err
+		}
+	}
+
+	oryRuleList := oryv1alpha1.RuleList{}
+	err = k8sClient.List(ctx, &oryRuleList)
+	if err == nil {
+		for _, oryRule := range oryRuleList.Items {
+			err = retry.Do(func() error {
+				err := k8sClient.Delete(ctx, &oryRule)
+				if err != nil {
+					return fmt.Errorf("failed to delete ORY Oathkeeper Rule %s", oryRule.GetName())
+				}
+				return nil
+			}, testcontext.GetRetryOpts()...)
+			if err != nil {
+				return err
+			}
 		}
 	}
 

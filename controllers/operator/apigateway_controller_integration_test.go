@@ -113,7 +113,7 @@ var _ = Describe("API Gateway Controller", Serial, func() {
 			Eventually(func(g Gomega) {
 				g.Expect(k8sClient.Get(context.Background(), client.ObjectKey{Name: apiGateway.Name}, &apiGateway)).Should(Succeed())
 				g.Expect(apiGateway.Status.State).To(Equal(v1alpha1.Warning))
-				g.Expect(apiGateway.Status.Description).To(Equal("There are APIRule(s) that block the deletion of API-Gateway CR. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning"))
+				g.Expect(apiGateway.Status.Description).To(Equal("There are custom resources that block the deletion of API-Gateway CR. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning"))
 			}, eventuallyTimeout).Should(Succeed())
 		})
 	})
@@ -252,7 +252,7 @@ var _ = Describe("API Gateway Controller", Serial, func() {
 				g.Expect(deleted.ObjectMeta.Finalizers).To(ContainElement(ApiGatewayFinalizer))
 				g.Expect(deleted.ObjectMeta.Finalizers).To(ContainElement(gateway.KymaGatewayFinalizer))
 				g.Expect(deleted.Status.State).To(Equal(v1alpha1.Warning))
-				g.Expect(deleted.Status.Description).To(Equal("There are APIRule(s) that block the deletion of API-Gateway CR. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning"))
+				g.Expect(deleted.Status.Description).To(Equal("There are custom resources that block the deletion of API-Gateway CR. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning"))
 			}, eventuallyTimeout).Should(Succeed())
 		})
 
