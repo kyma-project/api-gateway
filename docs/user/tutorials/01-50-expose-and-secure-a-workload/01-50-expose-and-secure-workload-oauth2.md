@@ -50,51 +50,51 @@ This tutorial shows how to expose and secure Services using APIGateway Controlle
 
 2. Get tokens to interact with secured resources using the client credentials flow:
 
-  <div tabs name="export-values">
-  <details>
-  <summary>
-  Token with `read` scope
-  </summary>
-    
-  * Export the following value as an environment variable:
+    <div tabs name="export-values">
+    <details>
+    <summary>
+    Token with `read` scope
+    </summary>
+      
+    * Export the following value as an environment variable:
       ```bash
       export KYMA_DOMAIN={KYMA_DOMAIN_NAME}
       ```
-      
-  * Get the opaque token:
+        
+    * Get the opaque token:
       ```bash
       curl --location --request POST "$TOKEN_URL?grant_type=client_credentials" --header "Content-Type: application/x-www-form-urlencoded" --header "Authorization: Basic $ENCODED_CREDENTIALS"
       ```
-      
-  * Export the issued token as an environment variable:
+        
+    * Export the issued token as an environment variable:
       ```bash
       export ACCESS_TOKEN_READ={ISSUED_READ_TOKEN}
       ```
-           
-  </details>
-
-  <details>
-  <summary>
-  Token with `write` scope
-  </summary>
-
-  * Export the following value as an environment variable:
+             
+    </details>
+  
+    <details>
+    <summary>
+    Token with `write` scope
+    </summary>
+  
+    * Export the following value as an environment variable:
       ```bash
       export KYMA_DOMAIN={KYMA_DOMAIN_NAME}
       ```
-      
-  * Get the opaque token:
+        
+    * Get the opaque token:
       ```bash
       curl --location --request POST "$TOKEN_URL?grant_type=client_credentials" --header "Content-Type: application/x-www-form-urlencoded" --header "Authorization: Basic $ENCODED_CREDENTIALS"
       ```
-      
-  * Export the issued token as an environment variable:
+        
+    * Export the issued token as an environment variable:
       ```bash
       export ACCESS_TOKEN_WRITE={ISSUED_WRITE_TOKEN}
       ```
-      
-  </details>
-  </div>
+        
+    </details>
+    </div>
 
 ## Expose and secure your workload
 
