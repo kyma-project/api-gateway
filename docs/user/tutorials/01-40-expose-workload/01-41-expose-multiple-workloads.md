@@ -13,7 +13,7 @@ This tutorial shows how to expose multiple workloads on different paths by defin
     export SECOND_SERVICE={SERVICE_NAME}
   ```
 
-* Set up [your custom domain](../01-10-setup-custom-domain-for-workload.md) or use a Kyma domain instead. 
+* [Set up your custom domain](../01-10-setup-custom-domain-for-workload.md) or use a Kyma domain instead. 
 * Depending on whether you use your custom domain or a Kyma domain, export the necessary values as environment variables:
   
   <div tabs name="export-values">

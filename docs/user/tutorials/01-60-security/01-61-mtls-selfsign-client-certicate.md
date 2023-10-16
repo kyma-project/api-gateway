@@ -1,4 +1,4 @@
-# Prepare self-signed root CA and client certificates
+# Prepare self-signed root certificate authority and client certificates
 
 This tutorial shows how to create a self-signed root certificate authority (CA) and how to use it to sign a client certificate.
 
@@ -23,7 +23,7 @@ This tutorial shows how to create a self-signed root certificate authority (CA) 
    openssl req -x509 -sha256 -nodes -days 365 -newkey rsa:2048 -subj '/O=${CLIENT_ROOT_CA_ORG}/CN=${CLIENT_ROOT_CA_CN}' -keyout ${CLIENT_ROOT_CA_KEY_FILE} -out ${CLIENT_ROOT_CA_CRT_FILE}
    ```
    
-## Prepare client certificate
+## Prepare a client certificate
 
 1. Export the following values as environment variables:
 

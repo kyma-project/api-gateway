@@ -4,12 +4,10 @@ Kyma sits on top of Kubernetes and leverages [authentication strategies](https:/
 
 One of the strategies enables you to use your own identity provider. This is very convenient because you can delegate the verification of who the users are to a separate user management entity and even reuse it in different systems.
 
-> **NOTE:** Kubernetes supports OpenID Connect (OIDC) JWT Access tokens, so make sure your identity provider is OIDC-compliant.
-
 ## Prerequisites
 
 * Generate a `kubeconfig` file for the Kubernetes cluster that hosts the Kyma instance.
-* Use an OIDC-compliant identity provider.
+* Kubernetes supports OpenID Connect (OIDC) JSON Web Tokens (JWTs). Use an identity provider compliant with OIDC.
 
 ## Steps
 

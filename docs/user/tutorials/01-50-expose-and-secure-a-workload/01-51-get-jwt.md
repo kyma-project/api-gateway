@@ -1,12 +1,12 @@
 # Get a JSON Web Token
 
-This tutorial shows how to get a JSON Web Token (JWT), which can be used to access secured endpoints created in the [Expose and secure a workload with Istio](./01-53-expose-and-secure-workload-istio.md) and [Expose and secure a workload with JWT](./01-52-expose-and-secure-workload-jwt.md) tutorials.
+This tutorial shows how to get a JSON Web Token (JWT), which can be used to access secured endpoints created in the [Expose and secure a workload with Istio](./01-53-expose-and-secure-workload-istio.md) and [Expose and secure a workload with a JWT](./01-52-expose-and-secure-workload-jwt.md) tutorials.
 
 ## Prerequisites
 
 * Use an OpenID Connect-compliant (OIDC-compliant) identity provider.
 
-## Get a JWT
+## Procedure
 
 1. In your OIDC-compliant identity provider, create an application to get your client credentials such as Client ID and Client Secret. 
 
