@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
-	"github.com/kyma-project/api-gateway/internal/reconciliations/custom_resource"
 	"github.com/kyma-project/api-gateway/internal/reconciliations/gateway"
 	. "github.com/onsi/gomega"
 	"istio.io/client-go/pkg/apis/networking/v1alpha3"
@@ -49,7 +48,7 @@ var _ = Describe("API Gateway Controller", Serial, func() {
 				created := v1alpha1.APIGateway{}
 				g.Expect(k8sClient.Get(context.Background(), client.ObjectKey{Name: apiGateway.Name}, &created)).Should(Succeed())
 				g.Expect(created.ObjectMeta.Finalizers).To(HaveLen(1))
-				g.Expect(created.ObjectMeta.Finalizers[0]).To(Equal(custom_resource.ApiGatewayFinalizer))
+				g.Expect(created.ObjectMeta.Finalizers[0]).To(Equal(ApiGatewayFinalizer))
 				g.Expect(created.Status.State).To(Equal(v1alpha1.Ready))
 			}, eventuallyTimeout).Should(Succeed())
 
@@ -71,7 +70,7 @@ var _ = Describe("API Gateway Controller", Serial, func() {
 				created := v1alpha1.APIGateway{}
 				g.Expect(k8sClient.Get(context.Background(), client.ObjectKey{Name: apiGateway.Name}, &created)).Should(Succeed())
 				g.Expect(created.ObjectMeta.Finalizers).To(HaveLen(1))
-				g.Expect(created.ObjectMeta.Finalizers[0]).To(Equal(custom_resource.ApiGatewayFinalizer))
+				g.Expect(created.ObjectMeta.Finalizers[0]).To(Equal(ApiGatewayFinalizer))
 				g.Expect(created.Status.State).To(Equal(v1alpha1.Ready))
 			}, eventuallyTimeout).Should(Succeed())
 
@@ -114,7 +113,7 @@ var _ = Describe("API Gateway Controller", Serial, func() {
 			Eventually(func(g Gomega) {
 				g.Expect(k8sClient.Get(context.Background(), client.ObjectKey{Name: apiGateway.Name}, &apiGateway)).Should(Succeed())
 				g.Expect(apiGateway.Status.State).To(Equal(v1alpha1.Warning))
-				g.Expect(apiGateway.Status.Description).To(Equal("There are APIRule(s) that block the deletion. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning"))
+				g.Expect(apiGateway.Status.Description).To(Equal("There are APIRule(s) that block the deletion of API-Gateway CR. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning"))
 			}, eventuallyTimeout).Should(Succeed())
 		})
 	})
@@ -237,7 +236,7 @@ var _ = Describe("API Gateway Controller", Serial, func() {
 				created := v1alpha1.APIGateway{}
 				g.Expect(k8sClient.Get(context.Background(), client.ObjectKey{Name: apiGateway.Name}, &created)).Should(Succeed())
 				g.Expect(created.ObjectMeta.Finalizers).To(HaveLen(2))
-				g.Expect(created.ObjectMeta.Finalizers).To(ContainElement(custom_resource.ApiGatewayFinalizer))
+				g.Expect(created.ObjectMeta.Finalizers).To(ContainElement(ApiGatewayFinalizer))
 				g.Expect(created.ObjectMeta.Finalizers).To(ContainElement(gateway.KymaGatewayFinalizer))
 				g.Expect(created.Status.State).To(Equal(v1alpha1.Ready))
 			}, eventuallyTimeout).Should(Succeed())
@@ -250,10 +249,10 @@ var _ = Describe("API Gateway Controller", Serial, func() {
 			Eventually(func(g Gomega) {
 				deleted := v1alpha1.APIGateway{}
 				g.Expect(k8sClient.Get(context.Background(), client.ObjectKey{Name: apiGateway.Name}, &deleted)).Should(Succeed())
-				g.Expect(deleted.ObjectMeta.Finalizers).To(ContainElement(custom_resource.ApiGatewayFinalizer))
+				g.Expect(deleted.ObjectMeta.Finalizers).To(ContainElement(ApiGatewayFinalizer))
 				g.Expect(deleted.ObjectMeta.Finalizers).To(ContainElement(gateway.KymaGatewayFinalizer))
 				g.Expect(deleted.Status.State).To(Equal(v1alpha1.Warning))
-				g.Expect(deleted.Status.Description).To(Equal("There are custom resources that block the deletion of Kyma Gateway. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning"))
+				g.Expect(deleted.Status.Description).To(Equal("There are APIRule(s) that block the deletion of API-Gateway CR. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning"))
 			}, eventuallyTimeout).Should(Succeed())
 		})
 
@@ -280,7 +279,7 @@ var _ = Describe("API Gateway Controller", Serial, func() {
 				created := v1alpha1.APIGateway{}
 				g.Expect(k8sClient.Get(context.Background(), client.ObjectKey{Name: apiGateway.Name}, &created)).Should(Succeed())
 				g.Expect(created.ObjectMeta.Finalizers).To(HaveLen(2))
-				g.Expect(created.ObjectMeta.Finalizers).To(ContainElement(custom_resource.ApiGatewayFinalizer))
+				g.Expect(created.ObjectMeta.Finalizers).To(ContainElement(ApiGatewayFinalizer))
 				g.Expect(created.ObjectMeta.Finalizers).To(ContainElement(gateway.KymaGatewayFinalizer))
 				g.Expect(created.Status.State).To(Equal(v1alpha1.Ready))
 			}, eventuallyTimeout).Should(Succeed())
@@ -293,8 +292,7 @@ var _ = Describe("API Gateway Controller", Serial, func() {
 			Eventually(func(g Gomega) {
 				deleted := v1alpha1.APIGateway{}
 				g.Expect(k8sClient.Get(context.Background(), client.ObjectKey{Name: apiGateway.Name}, &deleted)).Should(Succeed())
-				g.Expect(deleted.ObjectMeta.Finalizers).To(HaveLen(2))
-				g.Expect(deleted.ObjectMeta.Finalizers).To(ContainElement(custom_resource.ApiGatewayFinalizer))
+				g.Expect(deleted.ObjectMeta.Finalizers).To(HaveLen(1))
 				g.Expect(deleted.ObjectMeta.Finalizers).To(ContainElement(gateway.KymaGatewayFinalizer))
 				g.Expect(deleted.Status.State).To(Equal(v1alpha1.Warning))
 				g.Expect(deleted.Status.Description).To(Equal("There are custom resources that block the deletion of Kyma Gateway. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning"))

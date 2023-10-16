@@ -10,5 +10,5 @@ Feature: Deleting API-Gateway CR
     Given there is an "kyma-rule" APIRule with Gateway "kyma-system/some-other-gateway"
     When APIGateway CR "test-gateway" is removed
     Then APIGateway CR "test-gateway" "is" present
-    And APIGateway CR is in "Warning" state with description "There are APIRule(s) that block the deletion. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning"
+    And APIGateway CR is in "Warning" state with description "There are APIRule(s) that block the deletion of API-Gateway CR. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning"
     And APIRule "kyma-rule" is removed

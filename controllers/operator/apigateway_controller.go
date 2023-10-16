@@ -18,16 +18,20 @@ package operator
 
 import (
 	"context"
+	"fmt"
 
+	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
 	operatorv1alpha1 "github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
 	"github.com/kyma-project/api-gateway/controllers"
-	"github.com/kyma-project/api-gateway/internal/reconciliations/custom_resource"
 	"github.com/kyma-project/api-gateway/internal/reconciliations/gateway"
 	"github.com/kyma-project/api-gateway/internal/reconciliations/oathkeeper"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/client-go/util/retry"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 )
@@ -35,14 +39,14 @@ import (
 const (
 	namespace                         = "kyma-system"
 	APIGatewayResourceListDefaultPath = "manifests/controlled_resources_list.yaml"
+	ApiGatewayFinalizer               = "gateways.operator.kyma-project.io/api-gateway"
 )
 
 func NewAPIGatewayReconciler(mgr manager.Manager) *APIGatewayReconciler {
 	return &APIGatewayReconciler{
-		Client:                   mgr.GetClient(),
-		Scheme:                   mgr.GetScheme(),
-		log:                      mgr.GetLogger().WithName("apigateway-controller"),
-		apiGatewayReconciliation: &custom_resource.Reconciliation{Client: mgr.GetClient()},
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+		log:    mgr.GetLogger().WithName("apigateway-controller"),
 	}
 }
 
@@ -82,12 +86,12 @@ func (r *APIGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		return ctrl.Result{}, err
 	}
 
-	if kymaGatewayStatus := gateway.ReconcileKymaGateway(ctx, r.Client, &apiGatewayCR, APIGatewayResourceListDefaultPath); kymaGatewayStatus.IsError() || kymaGatewayStatus.IsWarning() {
-		return r.requeueReconciliation(ctx, apiGatewayCR, kymaGatewayStatus)
+	if finalizerStatus := r.reconcileFinalizer(ctx, &apiGatewayCR); !finalizerStatus.IsReady() {
+		return r.requeueReconciliation(ctx, apiGatewayCR, finalizerStatus)
 	}
 
-	if apiGatewayStatus := r.apiGatewayReconciliation.Reconcile(ctx, &apiGatewayCR); apiGatewayStatus.IsError() || apiGatewayStatus.IsWarning() {
-		return r.requeueReconciliation(ctx, apiGatewayCR, apiGatewayStatus)
+	if kymaGatewayStatus := gateway.ReconcileKymaGateway(ctx, r.Client, &apiGatewayCR, APIGatewayResourceListDefaultPath); !kymaGatewayStatus.IsReady() {
+		return r.requeueReconciliation(ctx, apiGatewayCR, kymaGatewayStatus)
 	}
 
 	if oryOathkeeperStatus := oathkeeper.ReconcileOathkeeper(ctx, r.Client, &apiGatewayCR); !oryOathkeeperStatus.IsReady() {
@@ -135,4 +139,64 @@ func (r *APIGatewayReconciler) finishReconcile(ctx context.Context, cr v1alpha1.
 
 	r.log.Info("Successfully reconciled")
 	return ctrl.Result{}, nil
+}
+
+func (i *APIGatewayReconciler) reconcileFinalizer(ctx context.Context, apiGatewayCR *operatorv1alpha1.APIGateway) controllers.Status {
+	if !apiGatewayCR.IsInDeletion() && !hasFinalizer(apiGatewayCR) {
+		controllerutil.AddFinalizer(apiGatewayCR, ApiGatewayFinalizer)
+		if err := i.Client.Update(ctx, apiGatewayCR); err != nil {
+			ctrl.Log.Error(err, "Failed to add API-Gateway CR finalizer")
+			return controllers.ErrorStatus(err, "Could not add API-Gateway CR finalizer")
+		}
+	}
+
+	if apiGatewayCR.IsInDeletion() && hasFinalizer(apiGatewayCR) {
+		apiRulesCount, err := apiRulesCount(ctx, i.Client)
+		if err != nil {
+			return controllers.ErrorStatus(err, "Error during listing existing APIRules")
+		}
+
+		if apiRulesCount > 0 {
+			return controllers.WarningStatus(fmt.Errorf("could not delete API-Gateway CR since there are %d APIRule(s) present that block its deletion", apiRulesCount),
+				"There are APIRule(s) that block the deletion of API-Gateway CR. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning")
+		}
+
+		if err := removeFinalizer(ctx, i.Client, apiGatewayCR); err != nil {
+			ctrl.Log.Error(err, "Error happened during API-Gateway CR finalizer removal")
+			return controllers.ErrorStatus(err, "Could not remove finalizer")
+		}
+	}
+
+	return controllers.ReadyStatus()
+}
+
+func apiRulesCount(ctx context.Context, k8sClient client.Client) (int, error) {
+	apiRuleList := v1beta1.APIRuleList{}
+	err := k8sClient.List(ctx, &apiRuleList)
+	if err != nil {
+		return 0, err
+	}
+
+	return len(apiRuleList.Items), nil
+}
+
+func hasFinalizer(apiGatewayCR *operatorv1alpha1.APIGateway) bool {
+	return controllerutil.ContainsFinalizer(apiGatewayCR, ApiGatewayFinalizer)
+}
+
+func removeFinalizer(ctx context.Context, apiClient client.Client, apiGatewayCR *operatorv1alpha1.APIGateway) error {
+	ctrl.Log.Info("Removing API-Gateway CR finalizer")
+	return retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		if getErr := apiClient.Get(ctx, client.ObjectKeyFromObject(apiGatewayCR), apiGatewayCR); getErr != nil {
+			return getErr
+		}
+
+		controllerutil.RemoveFinalizer(apiGatewayCR, ApiGatewayFinalizer)
+		if updateErr := apiClient.Update(ctx, apiGatewayCR); updateErr != nil {
+			return updateErr
+		}
+
+		ctrl.Log.Info("Successfully removed API-Gateway CR finalizer")
+		return nil
+	})
 }

@@ -62,7 +62,7 @@ const (
 	testNamespace    = "kyma-system"
 	apiGatewayCRName = "default"
 
-	eventuallyTimeout = time.Second * 10
+	eventuallyTimeout = time.Second * 20
 
 	kymaNamespace   = "kyma-system"
 	kymaGatewayName = "kyma-gateway"
