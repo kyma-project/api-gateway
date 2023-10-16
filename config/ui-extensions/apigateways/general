@@ -7,5 +7,5 @@ category: Kyma
 name: APIGateway
 scope: cluster
 description: >-
-  {{[APIGateway CR](https://github.com/kyma-project/api-gateway/blob/mod-dev/config/samples/operator_v1alpha1_apigateway.yaml)}}
+  See the description of the {{[APIGateway custom resource](https://github.com/kyma-project/api-gateway/blob/mod-dev/config/samples/operator_v1alpha1_apigateway.yaml)}}.
   describes the APIGateway CR
