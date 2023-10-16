@@ -17,7 +17,6 @@ import (
 var nonGardenerCertificateSecretManifest []byte
 
 func reconcileNonGardenerCertificateSecret(ctx context.Context, k8sClient client.Client, apiGatewayCR v1alpha1.APIGateway) error {
-
 	isEnabled := isKymaGatewayEnabled(apiGatewayCR)
 	ctrl.Log.Info("Reconciling Certificate Secret", "KymaGatewayEnabled", isEnabled, "name", kymaGatewayCertSecretName, "namespace", certificateDefaultNamespace)
 
