@@ -19,7 +19,7 @@ var _ = Describe("VirtualService", func() {
 			k8sClient := createFakeClient()
 
 			// when
-			err := reconcileVirtualService(context.Background(), k8sClient, "test", "test-ns", "test-domain.com", "15021", "istio-ingressgateway.istio-system.svc.cluster.local")
+			err := reconcileVirtualService(context.Background(), k8sClient, "test", "test-ns", "test-domain.com")
 
 			// then
 			Expect(err).ShouldNot(HaveOccurred())

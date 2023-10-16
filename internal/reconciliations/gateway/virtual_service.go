@@ -14,10 +14,8 @@ import (
 )
 
 const (
-	kymaGatewayVirtualServiceName           = "kyma-gateway"
-	kymaGatewayVirtualServiceNamespace      = "kyma-system"
-	kymaGatewayVirtualServicePort           = "15021"
-	kymaGatewayVirtualServiceIngressGateway = "istio-ingressgateway.istio-system.svc.cluster.local"
+	kymaGatewayVirtualServiceName      = "kyma-gateway"
+	kymaGatewayVirtualServiceNamespace = "istio-system"
 )
 
 //go:embed virtual_service.yaml
@@ -26,9 +24,6 @@ var virtualServiceManifest []byte
 func reconcileKymaGatewayVirtualService(ctx context.Context, k8sClient client.Client, apiGatewayCR v1alpha1.APIGateway, domain string) error {
 	name := kymaGatewayVirtualServiceName
 	namespace := kymaGatewayVirtualServiceNamespace
-	port := kymaGatewayVirtualServicePort
-	ingressGateway := kymaGatewayVirtualServiceIngressGateway
-
 	isEnabled := isKymaGatewayEnabled(apiGatewayCR)
 	ctrl.Log.Info("Reconciling Virtual Service entry", "KymaGatewayEnabled", isEnabled, "name", name, "namespace", namespace)
 
@@ -36,10 +31,10 @@ func reconcileKymaGatewayVirtualService(ctx context.Context, k8sClient client.Cl
 		return deleteVirtualService(ctx, k8sClient, name, namespace)
 	}
 
-	return reconcileVirtualService(ctx, k8sClient, name, namespace, domain, port, ingressGateway)
+	return reconcileVirtualService(ctx, k8sClient, name, namespace, domain)
 }
 
-func reconcileVirtualService(ctx context.Context, k8sClient client.Client, name, namespace, domain, port, ingressGateway string) error {
+func reconcileVirtualService(ctx context.Context, k8sClient client.Client, name, namespace, domain string) error {
 	gateway := fmt.Sprintf("%s/%s", kymaGatewayName, kymaGatewayNamespace)
 
 	templateValues := make(map[string]string)
@@ -47,8 +42,6 @@ func reconcileVirtualService(ctx context.Context, k8sClient client.Client, name,
 	templateValues["Namespace"] = namespace
 	templateValues["Domain"] = domain
 	templateValues["Gateway"] = gateway
-	templateValues["Port"] = port
-	templateValues["IngressGateway"] = ingressGateway
 
 	return reconciliations.ApplyResource(ctx, k8sClient, virtualServiceManifest, templateValues)
 }

@@ -15,5 +15,5 @@ spec:
       route:
         - destination:
             port:
-              number: {{.Port}}
-            host: "{{.IngressGateway}}"
+              number: 15021
+            host: istio-ingressgateway.istio-system.svc.cluster.local
