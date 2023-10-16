@@ -33,13 +33,12 @@ func reconcileKymaGatewayVirtualService(ctx context.Context, k8sClient client.Cl
 }
 
 func reconcileVirtualService(ctx context.Context, k8sClient client.Client, name, namespace, domain string) error {
-	gateway := fmt.Sprintf("%s/%s", kymaGatewayName, kymaGatewayNamespace)
 
 	templateValues := make(map[string]string)
 	templateValues["Name"] = name
 	templateValues["Namespace"] = namespace
 	templateValues["Domain"] = domain
-	templateValues["Gateway"] = gateway
+	templateValues["Gateway"] = KymaGatewayFullName
 
 	return reconciliations.ApplyResource(ctx, k8sClient, virtualServiceManifest, templateValues)
 }

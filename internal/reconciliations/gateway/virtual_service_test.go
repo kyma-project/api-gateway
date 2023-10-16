@@ -2,7 +2,6 @@ package gateway
 
 import (
 	"context"
-	"fmt"
 	"istio.io/client-go/pkg/apis/networking/v1beta1"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -27,7 +26,7 @@ var _ = Describe("VirtualService", func() {
 			createdVirtualService := v1beta1.VirtualService{}
 			Expect(k8sClient.Get(context.Background(), client.ObjectKey{Name: "test", Namespace: "test-ns"}, &createdVirtualService)).Should(Succeed())
 			Expect(createdVirtualService.Spec.Hosts).To(ContainElement("*.test-domain.com"))
-			Expect(createdVirtualService.Spec.Gateways).To(ContainElement(fmt.Sprintf("%s/%s", kymaGatewayName, kymaGatewayNamespace)))
+			Expect(createdVirtualService.Spec.Gateways).To(ContainElement("kyma-system/kyma-gateway"))
 			Expect(createdVirtualService.Spec.Http).To(HaveLen(1))
 			Expect(createdVirtualService.Spec.Http[0].Match).To(HaveLen(1))
 			Expect(createdVirtualService.Spec.Http[0].Match[0].Uri).To(ContainSubstring("/healthz/ready"))
