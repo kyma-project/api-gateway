@@ -25,7 +25,7 @@ var _ = Describe("VirtualService", func() {
 
 			createdVirtualService := v1beta1.VirtualService{}
 			Expect(k8sClient.Get(context.Background(), client.ObjectKey{Name: "test", Namespace: "test-ns"}, &createdVirtualService)).Should(Succeed())
-			Expect(createdVirtualService.Spec.Hosts).To(ContainElement("*.test-domain.com"))
+			Expect(createdVirtualService.Spec.Hosts).To(ContainElement("healthz.test-domain.com"))
 			Expect(createdVirtualService.Spec.Gateways).To(ContainElement("kyma-system/kyma-gateway"))
 			Expect(createdVirtualService.Spec.Http).To(HaveLen(1))
 			Expect(createdVirtualService.Spec.Http[0].Match).To(HaveLen(1))
