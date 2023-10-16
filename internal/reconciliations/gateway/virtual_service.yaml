@@ -5,7 +5,7 @@ metadata:
   namespace: {{.Namespace}}
 spec:
   hosts:
-    - "*.{{.Domain}}"
+    - "healthz.{{.Domain}}"
   gateways:
     - "{{.Gateway}}"
   http:

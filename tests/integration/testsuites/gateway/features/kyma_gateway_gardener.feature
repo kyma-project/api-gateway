@@ -5,3 +5,4 @@ Feature: Checking default kyma gateway on gardener
     And there is a "kyma-gateway" Gardener Certificate CR in "istio-system" namespace
     And there is a "kyma-gateway" Gardener DNSEntry CR in "kyma-system" namespace
     And there is a "kyma-gateway-certs" secret in "istio-system" namespace
+    And there "is" "VirtualService" "istio-healthz" in namespace "istio-system"
