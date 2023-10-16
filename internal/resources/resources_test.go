@@ -25,7 +25,7 @@ var _ = Describe("Resources", func() {
 	Expect(networkingv1alpha3.AddToScheme(sc)).To(Succeed())
 	Expect(networkingv1beta1.AddToScheme(sc)).To(Succeed())
 
-	DescribeTable("FindUserCreatedIstioResourcesDescribe", func(ctx context.Context, logger logr.Logger, c client.Client, configuration resourceFinderConfiguration, conditionResult bool, want []Resource, wantErr bool) {
+	DescribeTable("FindUserCreatedResourcesDescribe", func(ctx context.Context, logger logr.Logger, c client.Client, configuration resourceFinderConfiguration, conditionResult bool, want []Resource, wantErr bool) {
 		i := &ResourcesFinder{
 			ctx:           ctx,
 			logger:        logger,
