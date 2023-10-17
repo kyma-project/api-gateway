@@ -162,17 +162,17 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		return r.updateStatusOrRetry(ctx, apiRule, status)
 	}
 
-	if dependenciesStatus := dependencies.NewAPIRule().Check(ctx, r.Client); !dependenciesStatus.IsReady() {
-		apiGatewayStatus, err := dependenciesStatus.ToAPIRuleStatus()
-		if err != nil {
-			return doneReconcileErrorRequeue(r.OnErrorReconcilePeriod)
-		}
-		return r.updateStatusOrRetry(ctx, apiRule, apiGatewayStatus)
-	}
-
 	r.Log.Info("Reconciling ApiRule", "name", apiRule.Name, "namespace", apiRule.Namespace, "resource version", apiRule.ResourceVersion)
 
 	if apiRule.DeletionTimestamp.IsZero() {
+		if dependenciesStatus := dependencies.NewAPIRule().Check(ctx, r.Client); !dependenciesStatus.IsReady() {
+			apiGatewayStatus, err := dependenciesStatus.ToAPIRuleStatus()
+			if err != nil {
+				return doneReconcileErrorRequeue(r.OnErrorReconcilePeriod)
+			}
+			return r.updateStatusOrRetry(ctx, apiRule, apiGatewayStatus)
+		}
+
 		if !controllerutil.ContainsFinalizer(apiRule, API_GATEWAY_FINALIZER) {
 			controllerutil.AddFinalizer(apiRule, API_GATEWAY_FINALIZER)
 			if err := r.Update(ctx, apiRule); err != nil {

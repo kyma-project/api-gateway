@@ -39,7 +39,6 @@ import (
 )
 
 const (
-	namespace                         = "kyma-system"
 	APIGatewayResourceListDefaultPath = "manifests/controlled_resources_list.yaml"
 	ApiGatewayFinalizer               = "gateways.operator.kyma-project.io/api-gateway"
 )
@@ -88,18 +87,20 @@ func (r *APIGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		return ctrl.Result{}, err
 	}
 
-	isGardenerCluster, err := reconciliations.RunsOnGardenerCluster(ctx, r.Client)
-	if err != nil {
-		return r.requeueReconciliation(ctx, apiGatewayCR, controllers.ErrorStatus(err, "Error during discovering if cluster is Gardener"))
-	}
-
-	if isGardenerCluster {
-		if dependenciesStatus := dependencies.NewGardenerAPIGateway().Check(ctx, r.Client); !dependenciesStatus.IsReady() {
-			return r.requeueReconciliation(ctx, apiGatewayCR, dependenciesStatus)
+	if !apiGatewayCR.IsInDeletion() {
+		isGardenerCluster, err := reconciliations.RunsOnGardenerCluster(ctx, r.Client)
+		if err != nil {
+			return r.requeueReconciliation(ctx, apiGatewayCR, controllers.ErrorStatus(err, "Error during discovering if cluster is Gardener"))
 		}
-	} else {
-		if dependenciesStatus := dependencies.NewAPIGateway().Check(ctx, r.Client); !dependenciesStatus.IsReady() {
-			return r.requeueReconciliation(ctx, apiGatewayCR, dependenciesStatus)
+
+		if isGardenerCluster {
+			if dependenciesStatus := dependencies.NewGardenerAPIGateway().Check(ctx, r.Client); !dependenciesStatus.IsReady() {
+				return r.requeueReconciliation(ctx, apiGatewayCR, dependenciesStatus)
+			}
+		} else {
+			if dependenciesStatus := dependencies.NewAPIGateway().Check(ctx, r.Client); !dependenciesStatus.IsReady() {
+				return r.requeueReconciliation(ctx, apiGatewayCR, dependenciesStatus)
+			}
 		}
 	}
 
