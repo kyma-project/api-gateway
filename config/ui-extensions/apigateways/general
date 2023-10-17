@@ -8,4 +8,3 @@ name: APIGateway
 scope: cluster
 description: >-
   See the description of the {{[APIGateway custom resource](https://github.com/kyma-project/api-gateway/blob/mod-dev/config/samples/operator_v1alpha1_apigateway.yaml)}}.
-  describes the APIGateway CR
