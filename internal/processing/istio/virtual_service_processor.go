@@ -2,11 +2,11 @@ package istio
 
 import (
 	"fmt"
-
-	gatewayv1beta1 "github.com/kyma-project/api-gateway/api/v1beta1"
+	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"github.com/kyma-project/api-gateway/internal/builders"
 	"github.com/kyma-project/api-gateway/internal/helpers"
 	"github.com/kyma-project/api-gateway/internal/processing"
+	"github.com/kyma-project/api-gateway/internal/processing/default_domain"
 	"github.com/kyma-project/api-gateway/internal/processing/processors"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 )
@@ -37,7 +37,7 @@ func (r virtualServiceCreator) Create(api *gatewayv1beta1.APIRule) (*networkingv
 	virtualServiceNamePrefix := fmt.Sprintf("%s-", api.ObjectMeta.Name)
 
 	vsSpecBuilder := builders.VirtualServiceSpec()
-	vsSpecBuilder.Host(helpers.GetHostWithDomain(*api.Spec.Host, r.defaultDomainName))
+	vsSpecBuilder.Host(default_domain.GetHostWithDomain(*api.Spec.Host, r.defaultDomainName))
 	vsSpecBuilder.Gateway(*api.Spec.Gateway)
 	filteredRules := processing.FilterDuplicatePaths(api.Spec.Rules)
 
@@ -57,11 +57,11 @@ func (r virtualServiceCreator) Create(api *gatewayv1beta1.APIRule) (*networkingv
 		if routeDirectlyToService {
 			// Use rule level service if it exists
 			if rule.Service != nil {
-				host = helpers.GetHostLocalDomain(*rule.Service.Name, serviceNamespace)
+				host = default_domain.GetHostLocalDomain(*rule.Service.Name, serviceNamespace)
 				port = *rule.Service.Port
 			} else {
 				// Otherwise use service defined on APIRule spec level
-				host = helpers.GetHostLocalDomain(*api.Spec.Service.Name, serviceNamespace)
+				host = default_domain.GetHostLocalDomain(*api.Spec.Service.Name, serviceNamespace)
 				port = *api.Spec.Service.Port
 			}
 		} else {
@@ -83,7 +83,7 @@ func (r virtualServiceCreator) Create(api *gatewayv1beta1.APIRule) (*networkingv
 		httpRouteBuilder.Timeout(processors.GetVirtualServiceHttpTimeout(api.Spec, rule))
 
 		headersBuilder := builders.NewHttpRouteHeadersBuilder().
-			SetHostHeader(helpers.GetHostWithDomain(*api.Spec.Host, r.defaultDomainName))
+			SetHostHeader(default_domain.GetHostWithDomain(*api.Spec.Host, r.defaultDomainName))
 
 		// We need to add mutators only for JWT secured rules, since "noop" and "oauth2_introspection" access strategies
 		// create access rules and therefore use ory mutators. The "allow" access strategy does not support mutators at all.

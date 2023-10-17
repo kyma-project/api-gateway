@@ -3,12 +3,12 @@ package istio
 import (
 	"context"
 	"encoding/json"
+	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 
 	processingtest "github.com/kyma-project/api-gateway/internal/processing/internal/test"
 	"istio.io/api/type/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
-	gatewayv1beta1 "github.com/kyma-project/api-gateway/api/v1beta1"
 	"github.com/kyma-project/api-gateway/internal/types/ory"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"

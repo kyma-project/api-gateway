@@ -1,0 +1,19 @@
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: {{.Name}}
+  namespace: {{.Namespace}}
+spec:
+  hosts:
+    - "healthz.{{.Domain}}"
+  gateways:
+    - "{{.Gateway}}"
+  http:
+    - match:
+        - uri:
+            exact: /healthz/ready
+      route:
+        - destination:
+            port:
+              number: 15021
+            host: istio-ingressgateway.istio-system.svc.cluster.local

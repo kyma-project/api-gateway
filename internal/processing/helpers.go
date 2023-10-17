@@ -2,8 +2,7 @@ package processing
 
 import (
 	"fmt"
-
-	gatewayv1beta1 "github.com/kyma-project/api-gateway/api/v1beta1"
+	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 )
 
 var (

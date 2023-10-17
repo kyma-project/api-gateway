@@ -1,0 +1,66 @@
+name: 'Integration test - upgrade (k3d)'
+description: 'Runs integration tests - upgrade on k3d'
+inputs:
+  test_upgrade_img:
+    description: 'Image that api-gateway will be upgraded to'
+    required: true
+  manager_image: # This is required here to replace latest release deploy script, it's temporary and later can be removed
+    description: 'Manager image used for test'
+    required: true
+  client_id:
+    description: "Client id for oidc"
+    required: true
+  client_secret:
+    description: "Client secret for oidc"
+    required: true
+  oidc_issuer_url:
+    description: "OIDC issuer url"
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/setup-go@v4
+      with:
+        go-version: "1.20"
+    - name: Set up environment
+      shell: bash
+      run: |
+        sudo echo "127.0.0.1 local.kyma.dev" | sudo tee -a /etc/hosts
+        wget -q -O - https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | sudo bash
+        [ -n "${KYMA_CLI_UNSTABLE}" ] && sudo curl -Lo /usr/bin/kyma https://storage.googleapis.com/kyma-cli-unstable/kyma-linux
+        [ -z "${KYMA_CLI_UNSTABLE}" ] && sudo curl -Lo kyma.tar.gz "https://github.com/kyma-project/cli/releases/latest/download/kyma_linux_x86_64.tar.gz" && sudo tar -C /usr/bin -zxvf kyma.tar.gz kyma
+        sudo chmod +x /usr/bin/kyma
+    - name: Provision k3d
+      shell: bash
+      run: |
+        sudo kyma provision k3d
+    - name: Deploy prerequisite components
+      shell: bash
+      run: |
+        KUBECONFIG=$(k3d kubeconfig merge kyma) kyma deploy -s main -c hack/kyma-components.yaml
+    - name: Deploy mod-dev version of manager #this step should be removed after first api gateway manager release. This behavior should be moved to for example some deploy-latest-release-script
+      shell: bash
+      env:
+        IMG: ${{ inputs.manager_image}}
+      run: |
+        git checkout mod-dev
+        KUBECONFIG=$(k3d kubeconfig merge kyma) make deploy
+        git restore .
+        git checkout ${{ github.event.pull_request.head.sha }}
+    - name: Run test
+      shell: bash
+      env:
+        KYMA_DOMAIN: "local.kyma.dev"
+        TEST_UPGRADE_IMG: ${{ inputs.test_upgrade_img }}
+        CLIENT_ID: ${{ inputs.client_id }}
+        CLIENT_SECRET: ${{ inputs.client_secret }}
+        OIDC_ISSUER_URL: ${{ inputs.oidc_issuer_url }}
+      run: |
+        KUBECONFIG=$(k3d kubeconfig merge kyma) EXPORT_RESULT=true \
+        make test-upgrade
+    - name: Uploads artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: html-reports-${{ github.job }}
+        path: tests/integration/reports/

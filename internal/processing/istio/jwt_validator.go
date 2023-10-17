@@ -5,9 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 
-	"github.com/kyma-project/api-gateway/api/v1beta1"
-	gatewayv1beta1 "github.com/kyma-project/api-gateway/api/v1beta1"
 	oryjwt "github.com/kyma-project/api-gateway/internal/types/ory"
 	"github.com/kyma-project/api-gateway/internal/validation"
 	apiv1beta1 "istio.io/api/type/v1beta1"
@@ -66,7 +65,7 @@ func checkForOryConfig(attributePath string, handler *gatewayv1beta1.Handler) (p
 	return problems
 }
 
-func hasInvalidRequiredScopes(authorization v1beta1.JwtAuthorization) error {
+func hasInvalidRequiredScopes(authorization gatewayv1beta1.JwtAuthorization) error {
 	if authorization.RequiredScopes == nil {
 		return nil
 	}
@@ -81,7 +80,7 @@ func hasInvalidRequiredScopes(authorization v1beta1.JwtAuthorization) error {
 	return nil
 }
 
-func hasInvalidAudiences(authorization v1beta1.JwtAuthorization) error {
+func hasInvalidAudiences(authorization gatewayv1beta1.JwtAuthorization) error {
 	if authorization.Audiences == nil {
 		return nil
 	}
@@ -96,7 +95,7 @@ func hasInvalidAudiences(authorization v1beta1.JwtAuthorization) error {
 	return nil
 }
 
-func hasInvalidAuthentications(attributePath string, authentications []*v1beta1.JwtAuthentication) (failures []validation.Failure) {
+func hasInvalidAuthentications(attributePath string, authentications []*gatewayv1beta1.JwtAuthentication) (failures []validation.Failure) {
 	hasFromHeaders, hasFromParams := false, false
 	if len(authentications) == 0 {
 		return []validation.Failure{
@@ -143,7 +142,7 @@ func hasInvalidAuthentications(attributePath string, authentications []*v1beta1.
 	return failures
 }
 
-func hasInvalidAuthorizations(attributePath string, authorizations []*v1beta1.JwtAuthorization) (failures []validation.Failure) {
+func hasInvalidAuthorizations(attributePath string, authorizations []*gatewayv1beta1.JwtAuthorization) (failures []validation.Failure) {
 	if authorizations == nil {
 		return nil
 	}

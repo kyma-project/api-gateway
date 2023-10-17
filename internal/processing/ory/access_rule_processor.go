@@ -1,7 +1,7 @@
 package ory
 
 import (
-	gatewayv1beta1 "github.com/kyma-project/api-gateway/api/v1beta1"
+	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"github.com/kyma-project/api-gateway/internal/processing"
 	"github.com/kyma-project/api-gateway/internal/processing/processors"
 	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"

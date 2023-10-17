@@ -30,5 +30,5 @@ func (s *secureToUnsecureScenario) updateApiRuleToMakeEndpointUnsecured() error 
 	if err != nil {
 		return err
 	}
-	return helpers.ApplyApiRule(s.resourceManager.UpdateResources, s.resourceManager.UpdateResources, s.k8sClient, testcontext.GetRetryOpts(s.config), r)
+	return helpers.ApplyApiRule(s.resourceManager.UpdateResources, s.resourceManager.UpdateResources, s.k8sClient, testcontext.GetRetryOpts(), r)
 }

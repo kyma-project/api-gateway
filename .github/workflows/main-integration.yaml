@@ -1,22 +1,18 @@
 # This workflow is responsible for all kinds of integration tests run on pull request.
 # Those tests depend on a container image so in the first job we wait for the image build to succeed.
 
-name: main
+name: Main Integration
 
 on:
   push:
     paths-ignore:
       - "docs/**"
       - "**/*.md"
-      - "tests/performance/**"
-      - "OWNERS"
       - "CODEOWNERS"
       - "sec-scanners-config.yaml"
       - ".github/**" #Ignoring since build job isn't triggered on the workflow directory changes
     branches:
       - main
-  schedule:
-    - cron: '0 5 * * *' # Run every day at 05:00 AM
 
 jobs:
   wait-for-image-build:
@@ -26,7 +22,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/wait-for-job-succeed-or-fail
         with:
-          job-name: 'post-api-gateway-build'
+          job-name: 'post-api-gateway-manager-build'
           github-auth-token: ${{ secrets.GITHUB_TOKEN }}
           commit-ref: ${{ github.sha }}
 
@@ -36,15 +32,15 @@ jobs:
     needs: [wait-for-image-build]
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: ./.github/actions/integration-tests
-        env:
-          JOB_TYPE: postsubmit
-          CLIENT_ID: ${{ secrets.CLIENT_ID }}
-          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
-          OIDC_ISSUER_URL: ${{ secrets.OIDC_ISSUER_URL }}
-          KYMA_CLI_UNSTABLE: true
-          MAKE_TARGET_TESTS: test-integration
-          PULL_BASE_SHA: ${{ github.sha }}
+        with:
+          prerequisites_target: install-prerequisites
+          manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:${{ github.sha }}"
+          client_id: ${{ secrets.CLIENT_ID }}
+          client_secret: ${{ secrets.CLIENT_SECRET }}
+          oidc_issuer_url: ${{ secrets.OIDC_ISSUER_URL }}
 
   integration-tests-istio-module:
     name: Integration tests with Istio module
@@ -52,37 +48,37 @@ jobs:
     needs: [wait-for-image-build]
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: ./.github/actions/integration-tests
-        env:
-          JOB_TYPE: postsubmit
-          CLIENT_ID: ${{ secrets.CLIENT_ID }}
-          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
-          OIDC_ISSUER_URL: ${{ secrets.OIDC_ISSUER_URL }}
-          KYMA_CLI_UNSTABLE: true
-          MAKE_TARGET_TESTS: test-integration
-          KYMA_COMPONENTS: "hack/kyma-components-no-istio.yaml"
-          PULL_BASE_SHA: ${{ github.sha }}
+        with:
+          prerequisites_target: install-prerequisites-with-istio-from-manifest
+          manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:${{ github.sha }}"
+          client_id: ${{ secrets.CLIENT_ID }}
+          client_secret: ${{ secrets.CLIENT_SECRET }}
+          oidc_issuer_url: ${{ secrets.OIDC_ISSUER_URL }}
 
   upgrade-tests:
     name: Upgrade tests
     runs-on: ubuntu-latest
-    if: github.event_name != 'schedule'
     needs: [wait-for-image-build]
     steps:
       - uses: actions/checkout@v4
-      - id: test-upgrade-img
+        with:
+          fetch-depth: 0
+      - id: get-test-img # after merge to main it should be replaced by install-latest-release script
+        # it sets TEST_UPGRADE_IMG to latest commit on mod-dev and IMG to the previous commit so we test upgrade between these two
         run: |
-          echo "TEST_UPGRADE_IMG=europe-docker.pkg.dev/kyma-project/prod/api-gateway-controller:v$(git show -s --date=format:'%Y%m%d' --format=%cd ${{ github.sha }})-$(printf %.8s ${{ github.sha }})" >> $GITHUB_OUTPUT
-      - uses: ./.github/actions/integration-tests
-        env:
-          JOB_TYPE: postsubmit
-          CLIENT_ID: ${{ secrets.CLIENT_ID }}
-          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
-          OIDC_ISSUER_URL: ${{ secrets.OIDC_ISSUER_URL }}
-          MAKE_TARGET_TESTS: test-upgrade
-          UPGRADE_JOB: true
-          PULL_BASE_SHA: ${{ github.sha }}
-          TEST_UPGRADE_IMG: ${{ steps.test-upgrade-img.outputs.TEST_UPGRADE_IMG }}
+          echo "TEST_UPGRADE_IMG=europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:${{ github.sha }}" >> $GITHUB_OUTPUT
+          PREV_SHA=$(git log -n 2 --pretty=format:"%H" origin/mod-dev | tail -n 1)
+          echo "IMG=europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:$PREV_SHA" >> $GITHUB_OUTPUT
+      - uses: ./.github/actions/upgrade-test
+        with:
+          manager_image: ${{ steps.get-test-img.outputs.IMG }}
+          test_upgrade_img: ${{ steps.get-test-img.outputs.TEST_UPGRADE_IMG }}
+          client_id: ${{ secrets.CLIENT_ID }}
+          client_secret: ${{ secrets.CLIENT_SECRET }}
+          oidc_issuer_url: ${{ secrets.OIDC_ISSUER_URL }}
 
   slack_failed_notification:
     name: Slack Notification

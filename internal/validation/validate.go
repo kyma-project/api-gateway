@@ -6,12 +6,13 @@ import (
 	"strings"
 
 	"github.com/go-logr/logr"
+	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
+	"github.com/kyma-project/api-gateway/internal/processing/default_domain"
 	"google.golang.org/appengine/log"
 
 	"github.com/kyma-project/api-gateway/internal/helpers"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 
-	gatewayv1beta1 "github.com/kyma-project/api-gateway/api/v1beta1"
 	apiv1beta1 "istio.io/api/type/v1beta1"
 	"k8s.io/utils/strings/slices"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -104,14 +105,14 @@ func (v *APIRuleValidator) validateHost(attributePath string, vsList networkingv
 	}
 
 	host := *api.Spec.Host
-	if !helpers.HostIncludesDomain(*api.Spec.Host) {
+	if !default_domain.HostIncludesDomain(*api.Spec.Host) {
 		if v.DefaultDomainName == "" {
 			problems = append(problems, Failure{
 				AttributePath: attributePath,
 				Message:       "Host does not contain a domain name and no default domain name is configured",
 			})
 		}
-		host = helpers.GetHostWithDefaultDomain(host, v.DefaultDomainName)
+		host = default_domain.GetHostWithDefaultDomain(host, v.DefaultDomainName)
 	} else if len(v.DomainAllowList) > 0 {
 		// Do the allowList check only if the list is actually provided AND the default domain name is not used.
 		domainFound := false

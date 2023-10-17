@@ -1,16 +1,20 @@
 package api_gateway
 
 import (
-	"github.com/cucumber/godog"
-	"github.com/cucumber/godog/colors"
-	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
-	"github.com/kyma-project/api-gateway/tests/integration/testsuites/custom-domain"
-	"github.com/kyma-project/api-gateway/tests/integration/testsuites/istio-jwt"
-	"github.com/kyma-project/api-gateway/tests/integration/testsuites/ory"
-	"github.com/kyma-project/api-gateway/tests/integration/testsuites/upgrade"
+	"context"
 	"log"
 	"os"
 	"testing"
+
+	"github.com/cucumber/godog"
+	"github.com/cucumber/godog/colors"
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/client"
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
+	customdomain "github.com/kyma-project/api-gateway/tests/integration/testsuites/custom-domain"
+	"github.com/kyma-project/api-gateway/tests/integration/testsuites/gateway"
+	istiojwt "github.com/kyma-project/api-gateway/tests/integration/testsuites/istio-jwt"
+	"github.com/kyma-project/api-gateway/tests/integration/testsuites/ory"
+	"github.com/kyma-project/api-gateway/tests/integration/testsuites/upgrade"
 
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 )
@@ -73,13 +77,41 @@ func TestOryJwt(t *testing.T) {
 	runTestsuite(t, ts, config)
 }
 
+func TestGateway(t *testing.T) {
+	config := testcontext.GetConfig()
+	ts, err := testcontext.New(config, gateway.NewTestsuite)
+	if err != nil {
+		t.Fatalf("Failed to create Gateway testsuite %s", err.Error())
+	}
+	defer ts.TearDown()
+	runTestsuite(t, ts, config)
+}
+
 func runTestsuite(t *testing.T, testsuite testcontext.Testsuite, config testcontext.Config) {
 	opts := createGoDogOpts(t, testsuite.FeaturePath(), config.TestConcurrency)
 	suite := godog.TestSuite{
 		Name: testsuite.Name(),
 		// We are not using ScenarioInitializer, as this function only needs to set up global resources
 		TestSuiteInitializer: func(ctx *godog.TestSuiteContext) {
+			ctx.BeforeSuite(func() {
+				for _, hook := range testsuite.BeforeSuiteHooks() {
+					err := hook()
+					if err != nil {
+						t.Fatalf("Cannot run before suite hooks: %s", err.Error())
+					}
+				}
+			})
+
 			testsuite.InitScenarios(ctx.ScenarioContext())
+
+			ctx.AfterSuite(func() {
+				for _, hook := range testsuite.AfterSuiteHooks() {
+					err := hook()
+					if err != nil {
+						t.Fatalf("Cannot run after suite hooks: %s", err.Error())
+					}
+				}
+			})
 		},
 		Options: &opts,
 	}
@@ -95,14 +127,15 @@ func runTestsuite(t *testing.T, testsuite testcontext.Testsuite, config testcont
 	}
 }
 
-func createGoDogOpts(t *testing.T, featuresPath string, concurrency int) godog.Options {
+func createGoDogOpts(t *testing.T, featuresPath []string, concurrency int) godog.Options {
 	goDogOpts := godog.Options{
-		Output:      colors.Colored(os.Stdout),
-		Format:      "pretty",
-		Paths:       []string{featuresPath},
-		Concurrency: concurrency,
-		TestingT:    t,
-		Strict:      true,
+		Output:         colors.Colored(os.Stdout),
+		Format:         "pretty",
+		Paths:          featuresPath,
+		Concurrency:    concurrency,
+		TestingT:       t,
+		Strict:         true,
+		DefaultContext: createDefaultContext(t),
 	}
 
 	if shouldExportResults() {
@@ -125,4 +158,9 @@ func cleanUp(c testcontext.Testsuite, orgJwtHandler string) {
 
 func shouldExportResults() bool {
 	return os.Getenv("EXPORT_RESULT") == "true"
+}
+
+func createDefaultContext(t *testing.T) context.Context {
+	ctx := testcontext.SetK8sClientInContext(context.Background(), client.GetK8sClient())
+	return testcontext.SetTestingInContext(ctx, t)
 }

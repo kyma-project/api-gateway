@@ -3,8 +3,8 @@ package helpers
 import (
 	"context"
 	"fmt"
+	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 
-	gatewayv1beta1 "github.com/kyma-project/api-gateway/api/v1beta1"
 	apiv1beta1 "istio.io/api/type/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -24,6 +24,7 @@ func FindServiceNamespace(api *gatewayv1beta1.APIRule, rule *gatewayv1beta1.Rule
 
 func GetLabelSelectorFromService(ctx context.Context, client client.Client, service *gatewayv1beta1.Service, api *gatewayv1beta1.APIRule, rule *gatewayv1beta1.Rule) (*apiv1beta1.WorkloadSelector, error) {
 	workloadSelector := apiv1beta1.WorkloadSelector{}
+
 	if service == nil || service.Name == nil {
 		return &workloadSelector, fmt.Errorf("service name is required but missing")
 	}
