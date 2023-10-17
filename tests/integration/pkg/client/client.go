@@ -2,8 +2,11 @@ package client
 
 import (
 	"os"
+
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
+	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	"k8s.io/client-go/discovery"
 	memory "k8s.io/client-go/discovery/cached/memory"
 	"k8s.io/client-go/dynamic"
@@ -79,6 +82,14 @@ func GetK8sClient() client.Client {
 	}
 
 	err = agopv1alpha1.AddToScheme(c.Scheme())
+	if err != nil {
+		panic(err)
+	}
+	err = v1beta1.AddToScheme(c.Scheme())
+	if err != nil {
+		panic(err)
+	}
+	err = networkingv1beta1.AddToScheme(c.Scheme())
 	if err != nil {
 		panic(err)
 	}

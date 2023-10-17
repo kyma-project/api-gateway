@@ -9,7 +9,7 @@ spec:
     name: httpbin
     namespace: "{{.Namespace}}"
     port: 8000
-  gateway: kyma-system/kyma-gateway
+  gateway: {{.Gateway}}
   rules:
     - path: /.*
       methods: ["GET"]

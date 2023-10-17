@@ -4,6 +4,7 @@ import (
 	"context"
 	_ "embed"
 	"fmt"
+
 	dnsv1alpha1 "github.com/gardener/external-dns-management/pkg/apis/dns/v1alpha1"
 	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
 	"github.com/kyma-project/api-gateway/internal/reconciliations"
@@ -77,7 +78,6 @@ func deleteDnsEntry(ctx context.Context, k8sClient client.Client, name, namespac
 }
 
 func fetchIstioIngressGatewayIp(ctx context.Context, k8sClient client.Client) (string, error) {
-
 	istioIngressGatewayNamespaceName := types.NamespacedName{
 		Name:      "istio-ingressgateway",
 		Namespace: "istio-system",
