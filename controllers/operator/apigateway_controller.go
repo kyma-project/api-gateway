@@ -20,6 +20,8 @@ import (
 	"context"
 	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
 	"github.com/kyma-project/api-gateway/controllers"
+	"github.com/kyma-project/api-gateway/internal/dependencies"
+	"github.com/kyma-project/api-gateway/internal/reconciliations"
 	"github.com/kyma-project/api-gateway/internal/reconciliations/gateway"
 	"github.com/kyma-project/api-gateway/internal/reconciliations/oathkeeper"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -71,6 +73,21 @@ func (r *APIGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		r.log.Error(err, "Update status to processing failed")
 		// We don't update the status to error, because the status update already failed and to avoid another status update error we simply requeue the request.
 		return ctrl.Result{}, err
+	}
+
+	isGardenerCluster, err := reconciliations.RunsOnGardenerCluster(ctx, r.Client)
+	if err != nil {
+		return r.requeueReconciliation(ctx, apiGatewayCR, controllers.ErrorStatus(err, "Error during discovering if cluster is Gardener"))
+	}
+
+	if isGardenerCluster {
+		if dependenciesStatus := dependencies.NewGardenerAPIGateway().Check(ctx, r.Client); !dependenciesStatus.IsReady() {
+			return r.requeueReconciliation(ctx, apiGatewayCR, dependenciesStatus)
+		}
+	} else {
+		if dependenciesStatus := dependencies.NewAPIGateway().Check(ctx, r.Client); !dependenciesStatus.IsReady() {
+			return r.requeueReconciliation(ctx, apiGatewayCR, dependenciesStatus)
+		}
 	}
 
 	if kymaGatewayStatus := gateway.ReconcileKymaGateway(ctx, r.Client, &apiGatewayCR); !kymaGatewayStatus.IsReady() {

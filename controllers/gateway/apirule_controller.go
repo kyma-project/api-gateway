@@ -22,6 +22,7 @@ import (
 	"fmt"
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"github.com/kyma-project/api-gateway/controllers"
+	"github.com/kyma-project/api-gateway/internal/dependencies"
 	"github.com/kyma-project/api-gateway/internal/processing/default_domain"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"time"
@@ -159,6 +160,14 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		errorMap := map[processing.ResourceSelector][]error{processing.OnApiRule: {err}}
 		status := processing.GetStatusForErrorMap(errorMap, statusBase)
 		return r.updateStatusOrRetry(ctx, apiRule, status)
+	}
+
+	if dependenciesStatus := dependencies.NewAPIRule().Check(ctx, r.Client); !dependenciesStatus.IsReady() {
+		apiGatewayStatus, err := dependenciesStatus.ToAPIRuleStatus()
+		if err != nil {
+			return doneReconcileErrorRequeue(r.OnErrorReconcilePeriod)
+		}
+		return r.updateStatusOrRetry(ctx, apiRule, apiGatewayStatus)
 	}
 
 	r.Log.Info("Reconciling ApiRule", "name", apiRule.Name, "namespace", apiRule.Namespace, "resource version", apiRule.ResourceVersion)
