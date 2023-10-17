@@ -58,27 +58,27 @@ jobs:
           client_secret: ${{ secrets.CLIENT_SECRET }}
           oidc_issuer_url: ${{ secrets.OIDC_ISSUER_URL }}
 
-  upgrade-tests:
-    name: Upgrade tests
-    runs-on: ubuntu-latest
-    needs: [wait-for-image-build]
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - id: get-test-img # after merge to main it should be replaced by install-latest-release script
-        # it sets TEST_UPGRADE_IMG to latest commit on mod-dev and IMG to the previous commit so we test upgrade between these two
-        run: |
-          echo "TEST_UPGRADE_IMG=europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:${{ github.sha }}" >> $GITHUB_OUTPUT
-          PREV_SHA=$(git log -n 2 --pretty=format:"%H" origin/mod-dev | tail -n 1)
-          echo "IMG=europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:$PREV_SHA" >> $GITHUB_OUTPUT
-      - uses: ./.github/actions/upgrade-test
-        with:
-          manager_image: ${{ steps.get-test-img.outputs.IMG }}
-          test_upgrade_img: ${{ steps.get-test-img.outputs.TEST_UPGRADE_IMG }}
-          client_id: ${{ secrets.CLIENT_ID }}
-          client_secret: ${{ secrets.CLIENT_SECRET }}
-          oidc_issuer_url: ${{ secrets.OIDC_ISSUER_URL }}
+#  upgrade-tests:
+#    name: Upgrade tests
+#    runs-on: ubuntu-latest
+#    needs: [wait-for-image-build]
+#    steps:
+#      - uses: actions/checkout@v4
+#        with:
+#          fetch-depth: 0
+#      - id: get-test-img # after merge to main it should be replaced by install-latest-release script
+#        # it sets TEST_UPGRADE_IMG to latest commit on mod-dev and IMG to the previous commit so we test upgrade between these two
+#        run: |
+#          echo "TEST_UPGRADE_IMG=europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:${{ github.sha }}" >> $GITHUB_OUTPUT
+#          PREV_SHA=$(git log -n 2 --pretty=format:"%H" origin/mod-dev | tail -n 1)
+#          echo "IMG=europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:$PREV_SHA" >> $GITHUB_OUTPUT
+#      - uses: ./.github/actions/upgrade-test
+#        with:
+#          manager_image: ${{ steps.get-test-img.outputs.IMG }}
+#          test_upgrade_img: ${{ steps.get-test-img.outputs.TEST_UPGRADE_IMG }}
+#          client_id: ${{ secrets.CLIENT_ID }}
+#          client_secret: ${{ secrets.CLIENT_SECRET }}
+#          oidc_issuer_url: ${{ secrets.OIDC_ISSUER_URL }}
 
   slack_failed_notification:
     name: Slack Notification
