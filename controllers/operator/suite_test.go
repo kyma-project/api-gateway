@@ -206,7 +206,37 @@ func createCommonTestResources(k8sClient client.Client) {
 }
 
 func createFakeClient(objects ...client.Object) client.Client {
-	return fake.NewClientBuilder().WithScheme(getTestScheme()).WithObjects(objects...).WithStatusSubresource(objects...).Build()
+
+	crds := []apiextensionsv1.CustomResourceDefinition{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "gateways.networking.istio.io",
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "virtualservices.networking.istio.io",
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "dnsentries.dns.gardener.cloud",
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "certificates.cert.gardener.cloud",
+			},
+		},
+	}
+
+	fakeClient := fake.NewClientBuilder().WithScheme(getTestScheme()).WithObjects(objects...).WithStatusSubresource(objects...).Build()
+
+	for _, crd := range crds {
+		Expect(fakeClient.Create(context.Background(), &crd)).To(Succeed())
+	}
+
+	return fakeClient
 }
 
 func getTestScheme() *runtime.Scheme {
