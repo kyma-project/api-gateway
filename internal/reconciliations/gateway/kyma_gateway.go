@@ -124,11 +124,19 @@ func reconcileGardenerKymaGateway(ctx context.Context, k8sClient client.Client, 
 		return err
 	}
 
+	if err := reconcileKymaGatewayVirtualService(ctx, k8sClient, apiGatewayCR, domain); err != nil {
+		return err
+	}
+
 	return reconcileKymaGateway(ctx, k8sClient, apiGatewayCR, domain)
 }
 
 func reconcileNonGardenerKymaGateway(ctx context.Context, k8sClient client.Client, apiGatewayCR v1alpha1.APIGateway) error {
 	if err := reconcileNonGardenerCertificateSecret(ctx, k8sClient, apiGatewayCR); err != nil {
+		return err
+	}
+
+	if err := reconcileKymaGatewayVirtualService(ctx, k8sClient, apiGatewayCR, nonGardenerDomainName); err != nil {
 		return err
 	}
 

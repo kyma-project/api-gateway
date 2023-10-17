@@ -7,3 +7,6 @@ resources:
       group: networking.istio.io
       version: v1beta1
       kind: VirtualService
+    ControlledList:
+      - name: "istio-healthz"
+        namespace: "istio-system"

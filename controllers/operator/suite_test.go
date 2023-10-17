@@ -69,18 +69,17 @@ const (
 
 	controlledList = `
 resources:
-- GroupVersionKind:
-    group: gateway.kyma-project.io
-    version: v1beta1
-    kind: APIRule
-- GroupVersionKind:
-    group: networking.istio.io
-    version: v1alpha3
-    kind: VirtualService
-- GroupVersionKind:
-    group: networking.istio.io
-    version: v1beta1
-    kind: VirtualService
+  - GroupVersionKind:
+      group: gateway.kyma-project.io
+      version: v1beta1
+      kind: APIRule
+  - GroupVersionKind:
+      group: networking.istio.io
+      version: v1beta1
+      kind: VirtualService
+    ControlledList:
+      - name: "istio-healthz"
+        namespace: "istio-system"
 `
 )
 
