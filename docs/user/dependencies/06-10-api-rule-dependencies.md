@@ -2,7 +2,7 @@
 
 ## Istio
 
-Creation of APIRules require the pre-requisite of Istio installed on the cluster as the controler may create `VirtualService`, `AuthorizationPolicy` and `RequestAuthentication`.
+APIRules require Istio installed on the cluster. This is required as the APIRule controller creates the custom resources `VirtualService`, `AuthorizationPolicy` and `RequestAuthentication` provided by Istio.
 
 ## Ory Oathkeeper
 
