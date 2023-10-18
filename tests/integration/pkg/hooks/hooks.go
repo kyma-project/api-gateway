@@ -15,7 +15,6 @@ import (
 	oryv1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
 	"github.com/pkg/errors"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
 
@@ -192,10 +191,7 @@ func removeObjectFromCluster(ctx context.Context, object client.Object) error {
 		return err
 	}
 
-	deletePolicy := metav1.DeletePropagationForeground
-	err = k8sClient.Delete(context.TODO(), object, &client.DeleteOptions{
-		PropagationPolicy: &deletePolicy,
-	})
+	err = k8sClient.Delete(context.TODO(), object, &client.DeleteOptions{})
 	if err != nil && !k8serrors.IsNotFound(err) {
 		return err
 	}
