@@ -120,7 +120,7 @@ var _ = Describe("API-Gateway Controller", func() {
 			Expect(errors.IsNotFound(c.Get(context.TODO(), client.ObjectKeyFromObject(apiGatewayCR), apiGatewayCR))).To(BeTrue())
 		})
 
-		It("Should not delete API-Gateway CR if there is any APIRules on cluster", func() {
+		It("Should not delete API-Gateway CR if there are any APIRules on cluster", func() {
 			// given
 			now := metav1.NewTime(time.Now())
 			apiGatewayCR := &operatorv1alpha1.APIGateway{ObjectMeta: metav1.ObjectMeta{
