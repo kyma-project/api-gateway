@@ -1,10 +1,10 @@
-name: 'Integration tests (k3d)'
-description: 'Runs integration tests on k3d'
+name: 'Integration test - upgrade (k3d)'
+description: 'Runs integration tests - upgrade on k3d'
 inputs:
-  prerequisites_target:
-    description: 'Which make target to use to install prerequisites'
+  test_upgrade_img:
+    description: 'Image that api-gateway will be upgraded to'
     required: true
-  manager_image:
+  manager_image: # This is required here to replace latest release deploy script, it's temporary and later can be removed
     description: 'Manager image used for test'
     required: true
   client_id:
@@ -16,15 +16,10 @@ inputs:
   oidc_issuer_url:
     description: "OIDC issuer url"
     required: true
+
 runs:
   using: "composite"
   steps:
-    - name: Checkout to PR branch
-      shell: bash
-      if: ${{ github.event.type == 'PullRequestEvent' }}
-      run: |
-        git fetch origin pull/${{ github.event.pull_request.number }}/head:PR-${{ github.event.pull_request.number }}
-        git checkout PR-${{ github.event.pull_request.number }}
     - uses: actions/setup-go@v4
       with:
         go-version: "1.20"
@@ -36,18 +31,34 @@ runs:
         [ -n "${KYMA_CLI_UNSTABLE}" ] && sudo curl -Lo /usr/bin/kyma https://storage.googleapis.com/kyma-cli-unstable/kyma-linux
         [ -z "${KYMA_CLI_UNSTABLE}" ] && sudo curl -Lo kyma.tar.gz "https://github.com/kyma-project/cli/releases/latest/download/kyma_linux_x86_64.tar.gz" && sudo tar -C /usr/bin -zxvf kyma.tar.gz kyma
         sudo chmod +x /usr/bin/kyma
-    - name: Provision Kyma and run tests
+    - name: Provision k3d
+      shell: bash
+      run: |
+        sudo kyma provision k3d
+    - name: Deploy prerequisite components
+      shell: bash
+      run: |
+        KUBECONFIG=$(k3d kubeconfig merge kyma) kyma deploy -s main -c hack/kyma-components.yaml
+    - name: Deploy manager #this step should be removed after first api gateway manager release. This behavior should be moved to for example some deploy-latest-release-script
+      shell: bash
+      env:
+        IMG: ${{ inputs.manager_image}}
+      run: |
+        git checkout main
+        KUBECONFIG=$(k3d kubeconfig merge kyma) make deploy
+        git restore .
+        git checkout ${{ github.event.pull_request.head.sha }}
+    - name: Run test
       shell: bash
       env:
         KYMA_DOMAIN: "local.kyma.dev"
+        TEST_UPGRADE_IMG: ${{ inputs.test_upgrade_img }}
         CLIENT_ID: ${{ inputs.client_id }}
         CLIENT_SECRET: ${{ inputs.client_secret }}
         OIDC_ISSUER_URL: ${{ inputs.oidc_issuer_url }}
-        IMG: ${{ inputs.manager_image }}
       run: |
-        sudo kyma provision k3d
         KUBECONFIG=$(k3d kubeconfig merge kyma) EXPORT_RESULT=true \
-        make ${{ inputs.prerequisites_target }} deploy test-integration
+        make test-upgrade
     - name: Uploads artifacts
       uses: actions/upload-artifact@v3
       with:
