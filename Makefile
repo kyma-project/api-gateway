@@ -135,7 +135,6 @@ install-prerequisites-with-istio-from-manifest:
 	kubectl apply -f https://github.com/kyma-project/istio/releases/latest/download/istio-manager.yaml
 	kubectl apply -f https://github.com/kyma-project/istio/releases/latest/download/istio-default-cr.yaml
 	kubectl wait -n kyma-system istios/default --for=jsonpath='{.status.state}'=Ready --timeout=300s
-	kyma deploy --ci -s main -c hack/kyma-components-no-istio.yaml
 
 ##@ Build
 
