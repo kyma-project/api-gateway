@@ -15,7 +15,7 @@ on:
       - 'sec-scanners-config.yaml'
       - './github/dependabot.yml'
     branches:
-      - "mod-dev"
+      - "main"
 
 permissions:
   contents: read
