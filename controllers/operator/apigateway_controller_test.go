@@ -136,8 +136,14 @@ var _ = Describe("API-Gateway Controller", func() {
 					Namespace: "default",
 				},
 			}
+			oryRule := &oryv1alpha1.Rule{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "ory-rule",
+					Namespace: "default",
+				},
+			}
 
-			c := createFakeClient(apiGatewayCR, apiRule)
+			c := createFakeClient(apiGatewayCR, apiRule, oryRule)
 			agr := &APIGatewayReconciler{
 				Client: c,
 				Scheme: getTestScheme(),
@@ -149,12 +155,12 @@ var _ = Describe("API-Gateway Controller", func() {
 
 			// then
 			Expect(err).Should(HaveOccurred())
-			Expect(err.Error()).To(Equal("could not delete API-Gateway CR since there are custom resources that block its deletion"))
+			Expect(err.Error()).To(Equal("could not delete API-Gateway CR since there are APIRule(s) that block its deletion"))
 			Expect(result).Should(Equal(reconcile.Result{}))
 
 			Expect(c.Get(context.TODO(), client.ObjectKeyFromObject(apiGatewayCR), apiGatewayCR)).Should(Succeed())
 			Expect(apiGatewayCR.Status.State).To(Equal(operatorv1alpha1.Warning))
-			Expect(apiGatewayCR.Status.Description).To(Equal("There are custom resources that block the deletion of API-Gateway CR. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning"))
+			Expect(apiGatewayCR.Status.Description).To(Equal("There are APIRule(s) that block the deletion of API-Gateway CR. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning"))
 			Expect(apiGatewayCR.GetObjectMeta().GetFinalizers()).To(ContainElement(ApiGatewayFinalizer))
 		})
 
@@ -187,12 +193,12 @@ var _ = Describe("API-Gateway Controller", func() {
 
 			// then
 			Expect(err).Should(HaveOccurred())
-			Expect(err.Error()).To(Equal("could not delete API-Gateway CR since there are custom resources that block its deletion"))
+			Expect(err.Error()).To(Equal("could not delete API-Gateway CR since there are ORY Oathkeeper Rule(s) that block its deletion"))
 			Expect(result).Should(Equal(reconcile.Result{}))
 
 			Expect(c.Get(context.TODO(), client.ObjectKeyFromObject(apiGatewayCR), apiGatewayCR)).Should(Succeed())
 			Expect(apiGatewayCR.Status.State).To(Equal(operatorv1alpha1.Warning))
-			Expect(apiGatewayCR.Status.Description).To(Equal("There are custom resources that block the deletion of API-Gateway CR. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning"))
+			Expect(apiGatewayCR.Status.Description).To(Equal("There are ORY Oathkeeper Rule(s) that block the deletion of API-Gateway CR. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning"))
 			Expect(apiGatewayCR.GetObjectMeta().GetFinalizers()).To(ContainElement(ApiGatewayFinalizer))
 		})
 	})

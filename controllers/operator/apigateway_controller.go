@@ -159,15 +159,18 @@ func (i *APIGatewayReconciler) reconcileFinalizer(ctx context.Context, apiGatewa
 		if err != nil {
 			return controllers.ErrorStatus(err, "Error during listing existing APIRules")
 		}
+		if apiRulesFound {
+			return controllers.WarningStatus(errors.New("could not delete API-Gateway CR since there are APIRule(s) that block its deletion"),
+				"There are APIRule(s) that block the deletion of API-Gateway CR. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning")
+		}
 
 		oryRulesFound, err := oryRulesExist(ctx, i.Client)
 		if err != nil {
 			return controllers.ErrorStatus(err, "Error during listing existing ORY Oathkeeper Rules")
 		}
-
-		if apiRulesFound || oryRulesFound {
-			return controllers.WarningStatus(errors.New("could not delete API-Gateway CR since there are custom resources that block its deletion"),
-				"There are custom resources that block the deletion of API-Gateway CR. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning")
+		if oryRulesFound {
+			return controllers.WarningStatus(errors.New("could not delete API-Gateway CR since there are ORY Oathkeeper Rule(s) that block its deletion"),
+				"There are ORY Oathkeeper Rule(s) that block the deletion of API-Gateway CR. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning")
 		}
 
 		if err := removeFinalizer(ctx, i.Client, apiGatewayCR); err != nil {
@@ -185,7 +188,7 @@ func apiRulesExist(ctx context.Context, k8sClient client.Client) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	ctrl.Log.Info(fmt.Sprintf("Blocking deletion because %d APIRules found on cluster", len(apiRuleList.Items)))
+	ctrl.Log.Info(fmt.Sprintf("There are %d APIRule(s) found on cluster", len(apiRuleList.Items)))
 	return len(apiRuleList.Items) > 0, nil
 }
 
@@ -195,7 +198,7 @@ func oryRulesExist(ctx context.Context, k8sClient client.Client) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	ctrl.Log.Info(fmt.Sprintf("Blocking deletion because %d ORY Oathkeeper Rules found on cluster", len(oryRulesList.Items)))
+	ctrl.Log.Info(fmt.Sprintf("There are %d ORY Oathkeeper Rule(s) found on cluster", len(oryRulesList.Items)))
 	return len(oryRulesList.Items) > 0, nil
 }
 
