@@ -1,0 +1,29 @@
+header:
+- name: Ready
+  source: status.state
+  widget: Badge
+  description: status.description
+  highlights:
+    positive:
+      - 'Ready'
+    negative:
+      - 'Error'
+    critical:
+      - 'Warning'
+body:
+- widget: Tabs
+  children:
+  - name: General
+    children:
+    - widget: Panel
+      name: Configuration
+      children:
+        - source: spec.enableKymaGateway
+          name: enableKymaGateway
+          visibility: '$exists($value)'
+  - name: Reconciliation
+    children:
+    - widget: EventList
+      filter: '$matchEvents($$, $root.kind, $root.metadata.name)'
+      name: Events
+      defaultType: information
