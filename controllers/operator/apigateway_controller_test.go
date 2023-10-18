@@ -158,7 +158,7 @@ var _ = Describe("API-Gateway Controller", func() {
 			Expect(apiGatewayCR.GetObjectMeta().GetFinalizers()).To(ContainElement(ApiGatewayFinalizer))
 		})
 
-		It("Should not delete API-Gateway CR if there is any ORY Oathkeeper Rules on cluster", func() {
+		It("Should not delete API-Gateway CR if there are any ORY Oathkeeper Rules on cluster", func() {
 			// given
 			now := metav1.NewTime(time.Now())
 			apiGatewayCR := &operatorv1alpha1.APIGateway{ObjectMeta: metav1.ObjectMeta{
