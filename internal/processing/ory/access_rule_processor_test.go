@@ -3,9 +3,9 @@ package ory_test
 import (
 	"context"
 	"fmt"
+	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"strconv"
 
-	gatewayv1beta1 "github.com/kyma-project/api-gateway/api/v1beta1"
 	"github.com/kyma-project/api-gateway/internal/processing"
 	. "github.com/kyma-project/api-gateway/internal/processing/internal/test"
 	"github.com/kyma-project/api-gateway/internal/processing/ory"

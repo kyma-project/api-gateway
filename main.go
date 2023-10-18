@@ -21,6 +21,14 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
+
+	"github.com/kyma-project/api-gateway/controllers"
+	"github.com/kyma-project/api-gateway/controllers/gateway"
+	operatorcontrollers "github.com/kyma-project/api-gateway/controllers/operator"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+
+	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
@@ -35,93 +43,73 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 
-	"istio.io/api/networking/v1beta1"
-
+	certv1alpha1 "github.com/gardener/cert-management/pkg/apis/cert/v1alpha1"
+	dnsv1alpha1 "github.com/gardener/external-dns-management/pkg/apis/dns/v1alpha1"
+	operatorv1alpha1 "github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
 	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
-	"github.com/vrischmann/envconfig"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 
-	gatewayv1beta1 "github.com/kyma-project/api-gateway/api/v1beta1"
-	"github.com/kyma-project/api-gateway/controllers"
 	"github.com/kyma-project/api-gateway/internal/validation"
 	"github.com/pkg/errors"
 	//+kubebuilder:scaffold:imports
 )
-
-type config struct {
-	SystemNamespace string `envconfig:"default=kyma-system"`
-}
 
 var (
 	scheme   = runtime.NewScheme()
 	setupLog = ctrl.Log.WithName("setup")
 )
 
+type FlagVar struct {
+	metricsAddr                 string
+	enableLeaderElection        bool
+	probeAddr                   string
+	rateLimiterFailureBaseDelay time.Duration
+	rateLimiterFailureMaxDelay  time.Duration
+	rateLimiterFrequency        int
+	rateLimiterBurst            int
+	generatedObjectsLabels      string
+	reconciliationInterval      time.Duration
+}
+
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 
 	utilruntime.Must(gatewayv1beta1.AddToScheme(scheme))
+	utilruntime.Must(dnsv1alpha1.AddToScheme(scheme))
+	utilruntime.Must(certv1alpha1.AddToScheme(scheme))
 
 	utilruntime.Must(networkingv1beta1.AddToScheme(scheme))
 	utilruntime.Must(rulev1alpha1.AddToScheme(scheme))
 	utilruntime.Must(securityv1beta1.AddToScheme(scheme))
+	utilruntime.Must(operatorv1alpha1.AddToScheme(scheme))
+	utilruntime.Must(apiextensionsv1.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
 }
 
+func defineFlagVar() *FlagVar {
+	flagVar := new(FlagVar)
+	flag.StringVar(&flagVar.metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
+	flag.StringVar(&flagVar.probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
+	flag.BoolVar(&flagVar.enableLeaderElection, "leader-elect", false,
+		"Enable leader election for controller manager. "+
+			"Enabling this will ensure there is only one active controller manager.")
+	flag.IntVar(&flagVar.rateLimiterBurst, "rate-limiter-burst", controllers.RateLimiterBurst,
+		"Indicates the burst value for the bucket rate limiter.")
+	flag.IntVar(&flagVar.rateLimiterFrequency, "rate-limiter-frequency", controllers.RateLimiterFrequency,
+		"Indicates the bucket rate limiter frequency, signifying no. of events per second.")
+	flag.DurationVar(&flagVar.rateLimiterFailureBaseDelay, "failure-base-delay", controllers.RateLimiterFailureBaseDelay,
+		"Indicates the failure base delay for rate limiter.")
+	flag.DurationVar(&flagVar.rateLimiterFailureMaxDelay, "failure-max-delay", controllers.RateLimiterFailureMaxDelay,
+		"Indicates the failure max delay for rate limiter. .")
+	flag.StringVar(&flagVar.generatedObjectsLabels, "generated-objects-labels", "", "Comma-separated list of key=value pairs used to label generated objects")
+	flag.DurationVar(&flagVar.reconciliationInterval, "reconciliation-interval", 1*time.Hour, "Indicates the time based reconciliation interval of APIRule.")
+
+	return flagVar
+}
+
 func main() {
-	var metricsAddr string
-	var healthProbeAddr string
-	var enableLeaderElection bool
-	var oathkeeperSvcAddr string
-	var oathkeeperSvcPort uint
-	var blockListedServices string
-	var allowListedDomains string
-	var domainName string
-	var corsAllowOrigins, corsAllowMethods, corsAllowHeaders string
-	var generatedObjectsLabels string
-	var reconciliationPeriod uint
-	var errorReconciliationPeriod uint
-
-	const blockListedSubdomains string = "api"
-
-	flag.StringVar(&oathkeeperSvcAddr, "oathkeeper-svc-address", "", "Oathkeeper proxy service")
-	flag.UintVar(&oathkeeperSvcPort, "oathkeeper-svc-port", 0, "Oathkeeper proxy service port")
-	flag.StringVar(&metricsAddr, "metrics-addr", ":8080", "The address the metric endpoint binds to.")
-	flag.StringVar(&healthProbeAddr, "health-probe-addr", ":8081", "The address the health probe endpoint binds to.")
-	flag.BoolVar(&enableLeaderElection, "enable-leader-election", false,
-		"Enable leader election for controller manager. Enabling this will ensure there is only one active controller manager.")
-	flag.StringVar(&blockListedServices, "service-blocklist", "kubernetes.default,kube-dns.kube-system", "List of services to be blocklisted from exposure.")
-	flag.StringVar(&allowListedDomains, "domain-allowlist", "", "List of domains to be allowed.")
-	flag.StringVar(&domainName, "default-domain-name", "", "A default domain name for hostnames with no domain provided. Optional.")
-	flag.StringVar(&corsAllowOrigins, "cors-allow-origins", "regex:.*", "list of allowed origins")
-	flag.StringVar(&corsAllowMethods, "cors-allow-methods", "GET,POST,PUT,DELETE", "list of allowed methods")
-	flag.StringVar(&corsAllowHeaders, "cors-allow-headers", "JwtAuthorization,Content-Type,*", "list of allowed headers")
-	flag.StringVar(&generatedObjectsLabels, "generated-objects-labels", "", "Comma-separated list of key=value pairs used to label generated objects")
-	flag.UintVar(&reconciliationPeriod, "reconciliation-period", 0, "Default reconciliation period when no error happened in the previous run [s]")
-	flag.UintVar(&errorReconciliationPeriod, "error-reconciliation-period", 0, "Reconciliation period after an error happened in the previous run (e.g. VirtualService confict) [s]")
-
-	flag.Parse()
-
-	ctrl.SetLogger(zap.New(zap.UseDevMode(true)))
-
-	if oathkeeperSvcAddr == "" {
-		setupLog.Error(fmt.Errorf("oathkeeper-svc-address can't be empty"), "unable to create controller", "controller", "Api")
-		os.Exit(1)
-	}
-	if oathkeeperSvcPort == 0 {
-		setupLog.Error(fmt.Errorf("oathkeeper-svc-port can't be empty"), "unable to create controller", "controller", "Api")
-		os.Exit(1)
-	}
-	if allowListedDomains != "" {
-		for _, domain := range getList(allowListedDomains) {
-			if !validation.ValidateDomainName(domain) {
-				setupLog.Error(fmt.Errorf("invalid domain in domain-allowlist"), "unable to create controller", "controller", "Api")
-				os.Exit(1)
-			}
-		}
-	}
-
+	flagVar := defineFlagVar()
 	opts := zap.Options{
 		Development: true,
 	}
@@ -130,19 +118,13 @@ func main() {
 
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 
-	cfg := &config{}
-	setupLog.Info("reading webhook configuration")
-	if err := envconfig.Init(cfg); err != nil {
-		panic(errors.Wrap(err, "while reading env variables"))
-	}
-
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme: scheme,
 		Metrics: metricsserver.Options{
-			BindAddress: metricsAddr,
+			BindAddress: flagVar.metricsAddr,
 		},
-		HealthProbeBindAddress: healthProbeAddr,
-		LeaderElection:         enableLeaderElection,
+		HealthProbeBindAddress: flagVar.probeAddr,
+		LeaderElection:         flagVar.enableLeaderElection,
 		LeaderElectionID:       "69358922.kyma-project.io",
 	})
 	if err != nil {
@@ -150,33 +132,42 @@ func main() {
 		os.Exit(1)
 	}
 
-	additionalLabels, err := parseLabels(generatedObjectsLabels)
+	additionalLabels, err := parseLabels(flagVar.generatedObjectsLabels)
 	if err != nil {
 		setupLog.Error(err, "parsing labels failed")
 		os.Exit(1)
 	}
 
-	config := controllers.ApiRuleReconcilerConfiguration{
-		OathkeeperSvcAddr:         oathkeeperSvcAddr,
-		OathkeeperSvcPort:         oathkeeperSvcPort,
-		AllowListedDomains:        allowListedDomains,
-		BlockListedServices:       blockListedServices,
-		DomainName:                domainName,
-		CorsAllowOrigins:          corsAllowOrigins,
-		CorsAllowMethods:          corsAllowMethods,
-		CorsAllowHeaders:          corsAllowHeaders,
+	config := gateway.ApiRuleReconcilerConfiguration{
+		OathkeeperSvcAddr:         "ory-oathkeeper-proxy.kyma-system.svc.cluster.local",
+		OathkeeperSvcPort:         4455,
+		CorsAllowOrigins:          "regex:.*",
+		CorsAllowMethods:          "GET,POST,PUT,DELETE,PATCH",
+		CorsAllowHeaders:          "Authorization,Content-Type,*",
 		AdditionalLabels:          additionalLabels,
-		ReconciliationPeriod:      reconciliationPeriod,
-		ErrorReconciliationPeriod: errorReconciliationPeriod,
+		ReconciliationPeriod:      uint(flagVar.reconciliationInterval.Seconds()),
+		ErrorReconciliationPeriod: 60,
 	}
 
-	reconciler, err := controllers.NewApiRuleReconciler(mgr, config)
+	rateLimiterCfg := controllers.RateLimiterConfig{
+		Burst:            flagVar.rateLimiterBurst,
+		Frequency:        flagVar.rateLimiterFrequency,
+		FailureBaseDelay: flagVar.rateLimiterFailureBaseDelay,
+		FailureMaxDelay:  flagVar.rateLimiterFailureMaxDelay,
+	}
+
+	apiRuleReconciler, err := gateway.NewApiRuleReconciler(mgr, config)
 	if err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "APIRule")
+		setupLog.Error(err, "unable to create APIRule reconciler", "controller", "APIRule")
 		os.Exit(1)
 	}
-	if err = reconciler.SetupWithManager(mgr); err != nil {
+	if err = apiRuleReconciler.SetupWithManager(mgr, rateLimiterCfg); err != nil {
 		setupLog.Error(err, "unable to setup controller", "controller", "APIRule")
+		os.Exit(1)
+	}
+
+	if err = operatorcontrollers.NewAPIGatewayReconciler(mgr).SetupWithManager(mgr, rateLimiterCfg); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "APIGateway")
 		os.Exit(1)
 	}
 	//+kubebuilder:scaffold:builder
@@ -195,65 +186,6 @@ func main() {
 		setupLog.Error(err, "problem running manager")
 		os.Exit(1)
 	}
-}
-
-func getList(raw string) []string {
-	var result []string
-	for _, s := range strings.Split(raw, ",") {
-		trim := strings.TrimSpace(s)
-		if trim != "" {
-			result = append(result, trim)
-		}
-	}
-	return result
-}
-
-func getStringMatch(raw string) []*v1beta1.StringMatch {
-	var result []*v1beta1.StringMatch
-	for _, s := range getList(raw) {
-		matchTypePair := strings.SplitN(s, ":", 2)
-		matchType := matchTypePair[0]
-		value := matchTypePair[1]
-		var stringMatch *v1beta1.StringMatch
-		switch {
-		case matchType == "regex":
-			stringMatch = regex(value)
-		case matchType == "prefix":
-			stringMatch = prefix(value)
-		case matchType == "exact":
-			stringMatch = exact(value)
-		}
-		result = append(result, stringMatch)
-	}
-	return result
-}
-
-func getNamespaceServiceMap(raw string) map[string][]string {
-	result := make(map[string][]string)
-	for _, s := range getList(raw) {
-		if !validation.ValidateServiceName(s) {
-			setupLog.Error(fmt.Errorf("invalid service in service-blocklist"), "unable to create controller", "controller", "Api")
-			os.Exit(1)
-		}
-		namespacedService := strings.Split(s, ".")
-		namespace := namespacedService[1]
-		service := namespacedService[0]
-		result[namespace] = append(result[namespace], service)
-	}
-	return result
-}
-
-func getHostBlockListFrom(blockListedSubdomains string, domainName string) []string {
-	var result []string
-	for _, subdomain := range getList(blockListedSubdomains) {
-		if !validation.ValidateSubdomainName(subdomain) {
-			setupLog.Error(fmt.Errorf("invalid subdomain in subdomain-blocklist"), "unable to create controller", "controller", "Api")
-			os.Exit(1)
-		}
-		blockedHost := strings.Join([]string{subdomain, domainName}, ".")
-		result = append(result, blockedHost)
-	}
-	return result
 }
 
 func parseLabels(labelsString string) (map[string]string, error) {
@@ -294,22 +226,4 @@ func parseLabels(labelsString string) (map[string]string, error) {
 	}
 
 	return output, nil
-}
-
-func regex(val string) *v1beta1.StringMatch {
-	return &v1beta1.StringMatch{
-		MatchType: &v1beta1.StringMatch_Regex{Regex: val},
-	}
-}
-
-func prefix(val string) *v1beta1.StringMatch {
-	return &v1beta1.StringMatch{
-		MatchType: &v1beta1.StringMatch_Prefix{Prefix: val},
-	}
-}
-
-func exact(val string) *v1beta1.StringMatch {
-	return &v1beta1.StringMatch{
-		MatchType: &v1beta1.StringMatch_Exact{Exact: val},
-	}
 }

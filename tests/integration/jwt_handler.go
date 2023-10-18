@@ -2,12 +2,13 @@ package api_gateway
 
 import (
 	"fmt"
+	"strings"
+
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/resource"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
-	"strings"
 
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/client"
 )

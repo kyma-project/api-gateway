@@ -5,6 +5,12 @@ import (
 	_ "embed"
 	"encoding/base64"
 	"fmt"
+	"log"
+	"path"
+	"time"
+
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/hooks"
+
 	"github.com/cucumber/godog"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/helpers"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/manifestprocessor"
@@ -15,9 +21,6 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
-	"log"
-	"path"
-	"time"
 )
 
 const manifestsDirectory = "testsuites/istio-jwt/manifests/"
@@ -90,8 +93,8 @@ func (t *testsuite) InitScenarios(ctx *godog.ScenarioContext) {
 	initCustomLabelSelector(ctx, t)
 }
 
-func (t *testsuite) FeaturePath() string {
-	return "testsuites/istio-jwt/features/"
+func (t *testsuite) FeaturePath() []string {
+	return []string{"testsuites/istio-jwt/features/"}
 }
 
 func (t *testsuite) Name() string {
@@ -163,8 +166,15 @@ func (t *testsuite) TearDown() {
 	}
 }
 
-func NewTestsuite(httpClient *helpers.RetryableHttpClient, k8sClient dynamic.Interface, rm *resource.Manager, config testcontext.Config) testcontext.Testsuite {
+func (t *testsuite) BeforeSuiteHooks() []func() error {
+	return []func() error{hooks.ApplyAndVerifyApiGatewayCrSuiteHook}
+}
 
+func (t *testsuite) AfterSuiteHooks() []func() error {
+	return []func() error{hooks.DeleteBlockingResourcesSuiteHook, hooks.ApiGatewayCrTearDownSuiteHook}
+}
+
+func NewTestsuite(httpClient *helpers.RetryableHttpClient, k8sClient dynamic.Interface, rm *resource.Manager, config testcontext.Config) testcontext.Testsuite {
 	return &testsuite{
 		name:            "istio-jwt",
 		httpClient:      httpClient,

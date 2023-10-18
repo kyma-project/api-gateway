@@ -1,9 +1,9 @@
 package processing
 
 import (
+	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"strings"
 
-	gatewayv1beta1 "github.com/kyma-project/api-gateway/api/v1beta1"
 	"github.com/kyma-project/api-gateway/internal/validation"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"

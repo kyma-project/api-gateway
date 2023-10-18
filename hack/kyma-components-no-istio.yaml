@@ -2,6 +2,3 @@ defaultNamespace: kyma-system
 prerequisites:
   - name: "certificates"
     namespace: "istio-system"
-components:
-  - name: "ory"
-  - name: "api-gateway"

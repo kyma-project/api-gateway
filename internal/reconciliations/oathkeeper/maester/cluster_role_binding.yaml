@@ -1,0 +1,12 @@
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: {{ .Name }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ .ServiceAccountName }} # Service account assigned to the controller pod.
+    namespace:  {{ .ServiceAccountNamespace }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ .ClusterRoleName }}
