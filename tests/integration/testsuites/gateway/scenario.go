@@ -272,7 +272,7 @@ func (c *scenario) deleteVirtualService(name string) error {
 	}, testcontext.GetRetryOpts()...)
 }
 
-func (c *scenario) deleteORIRule(name string) error {
+func (c *scenario) deleteORYRule(name string) error {
 	res := schema.GroupVersionResource{Group: "oathkeeper.ory.sh", Version: "v1alpha1", Resource: "rules"}
 	err := c.k8sClient.Resource(res).Namespace(c.namespace).Delete(context.Background(), name, metav1.DeleteOptions{})
 	if err != nil {
