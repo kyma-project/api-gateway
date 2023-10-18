@@ -94,12 +94,12 @@ func (r *APIGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		}
 
 		if isGardenerCluster {
-			if dependenciesStatus := dependencies.NewGardenerAPIGateway().Check(ctx, r.Client); !dependenciesStatus.IsReady() {
-				return r.requeueReconciliation(ctx, apiGatewayCR, dependenciesStatus)
+			if name, dependenciesErr := dependencies.NewGardenerAPIGateway().AreAvailable(ctx, r.Client); dependenciesErr != nil {
+				return r.requeueReconciliation(ctx, apiGatewayCR, handleDependenciesError(name, dependenciesErr))
 			}
 		} else {
-			if dependenciesStatus := dependencies.NewAPIGateway().Check(ctx, r.Client); !dependenciesStatus.IsReady() {
-				return r.requeueReconciliation(ctx, apiGatewayCR, dependenciesStatus)
+			if name, dependenciesErr := dependencies.NewAPIGateway().AreAvailable(ctx, r.Client); dependenciesErr != nil {
+				return r.requeueReconciliation(ctx, apiGatewayCR, handleDependenciesError(name, dependenciesErr))
 			}
 		}
 	}
@@ -124,6 +124,14 @@ func (r *APIGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	}
 
 	return r.finishReconcile(ctx, apiGatewayCR)
+}
+
+func handleDependenciesError(name string, err error) controllers.Status {
+	if apierrors.IsNotFound(err) {
+		return controllers.WarningStatus(err, fmt.Sprintf("CRD %s is not present. Make sure to install required dependencies for the component", name))
+	} else {
+		return controllers.ErrorStatus(err, "Error happened during discovering dependencies")
+	}
 }
 
 // SetupWithManager sets up the controller with the Manager.

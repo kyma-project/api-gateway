@@ -2,16 +2,14 @@ package dependencies
 
 import (
 	"context"
-	"fmt"
 	"github.com/kyma-project/api-gateway/controllers"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
-	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type Dependencies interface {
-	Check(context.Context, client.Client) controllers.Status
+	AreAvailable(context.Context, client.Client) controllers.Status
 }
 
 func NewAPIGateway() *dependecies {
@@ -49,16 +47,13 @@ type dependecies struct {
 	CRDNames []string
 }
 
-func (d dependecies) Check(ctx context.Context, k8sClient client.Client) controllers.Status {
+// AreAvailable checks whether pre-requisite CRDs are present on the cluster. It returns the name of the not found CRD and an error if it is not found.
+func (d dependecies) AreAvailable(ctx context.Context, k8sClient client.Client) (string, error) {
 	for _, name := range d.CRDNames {
 		err := k8sClient.Get(ctx, types.NamespacedName{Name: name}, &apiextensionsv1.CustomResourceDefinition{})
 		if err != nil {
-			if k8serrors.IsNotFound(err) {
-				return controllers.WarningStatus(err, fmt.Sprintf("CRD %s is not present. Make sure to install required dependencies for the component", name))
-			} else {
-				return controllers.ErrorStatus(err, "Error happened during discovering dependencies")
-			}
+			return name, err
 		}
 	}
-	return controllers.ReadyStatus()
+	return "", nil
 }

@@ -13,9 +13,9 @@ var _ = Describe("Check", func() {
 	Context("APIRule dependencies", func() {
 		It("Should fail if required CRDs are missing", func() {
 			k8sClient := createFakeClient()
-			status := dependencies.NewAPIRule().Check(context.Background(), k8sClient)
-			Expect(status.IsReady()).To(BeFalse())
-			Expect(status.Description()).To(Equal("CRD virtualservices.networking.istio.io is not present. Make sure to install required dependencies for the component"))
+			name, err := dependencies.NewAPIRule().AreAvailable(context.Background(), k8sClient)
+			Expect(err).To(HaveOccurred())
+			Expect(name).To(Equal("virtualservices.networking.istio.io"))
 		})
 
 		It("Should not fail if required CRDs are present", func() {
@@ -48,16 +48,17 @@ var _ = Describe("Check", func() {
 			for _, crd := range crds {
 				Expect(k8sClient.Create(context.Background(), &crd)).To(Succeed())
 			}
-			status := dependencies.NewAPIRule().Check(context.Background(), k8sClient)
-			Expect(status.IsReady()).To(BeTrue())
+			name, err := dependencies.NewAPIRule().AreAvailable(context.Background(), k8sClient)
+			Expect(err).To(Not(HaveOccurred()))
+			Expect(name).To(BeEmpty())
 		})
 	})
 	Context("APIGateway dependencies", func() {
 		It("Should fail if required CRDs are missing", func() {
 			k8sClient := createFakeClient()
-			status := dependencies.NewAPIGateway().Check(context.Background(), k8sClient)
-			Expect(status.IsReady()).To(BeFalse())
-			Expect(status.Description()).To(Equal("CRD gateways.networking.istio.io is not present. Make sure to install required dependencies for the component"))
+			name, err := dependencies.NewAPIGateway().AreAvailable(context.Background(), k8sClient)
+			Expect(err).To(HaveOccurred())
+			Expect(name).To(Equal("gateways.networking.istio.io"))
 		})
 
 		It("Should not fail if required CRDs are present", func() {
@@ -80,16 +81,17 @@ var _ = Describe("Check", func() {
 			for _, crd := range crds {
 				Expect(k8sClient.Create(context.Background(), &crd)).To(Succeed())
 			}
-			status := dependencies.NewAPIGateway().Check(context.Background(), k8sClient)
-			Expect(status.IsReady()).To(BeTrue())
+			name, err := dependencies.NewAPIGateway().AreAvailable(context.Background(), k8sClient)
+			Expect(err).To(Not(HaveOccurred()))
+			Expect(name).To(BeEmpty())
 		})
 	})
 	Context("APIGateway Gardener dependencies", func() {
 		It("Should fail if required CRDs are missing", func() {
 			k8sClient := createFakeClient()
-			status := dependencies.NewGardenerAPIGateway().Check(context.Background(), k8sClient)
-			Expect(status.IsReady()).To(BeFalse())
-			Expect(status.Description()).To(Equal("CRD gateways.networking.istio.io is not present. Make sure to install required dependencies for the component"))
+			name, err := dependencies.NewGardenerAPIGateway().AreAvailable(context.Background(), k8sClient)
+			Expect(err).To(HaveOccurred())
+			Expect(name).To(Equal("gateways.networking.istio.io"))
 		})
 
 		It("Should not fail if required CRDs are present", func() {
@@ -122,8 +124,9 @@ var _ = Describe("Check", func() {
 			for _, crd := range crds {
 				Expect(k8sClient.Create(context.Background(), &crd)).To(Succeed())
 			}
-			status := dependencies.NewGardenerAPIGateway().Check(context.Background(), k8sClient)
-			Expect(status.IsReady()).To(BeTrue())
+			name, err := dependencies.NewGardenerAPIGateway().AreAvailable(context.Background(), k8sClient)
+			Expect(err).To(Not(HaveOccurred()))
+			Expect(name).To(BeEmpty())
 		})
 	})
 })
