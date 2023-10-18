@@ -291,8 +291,7 @@ func (c *scenario) deleteORIRule(name string) error {
 
 func (c *scenario) deleteAPIGatewayCR(name string) error {
 	res := schema.GroupVersionResource{Group: "operator.kyma-project.io", Version: "v1alpha1", Resource: "apigateways"}
-	deletePolicy := metav1.DeletePropagationForeground
-	err := c.k8sClient.Resource(res).Delete(context.Background(), name, metav1.DeleteOptions{PropagationPolicy: &deletePolicy})
+	err := c.k8sClient.Resource(res).Delete(context.Background(), name, metav1.DeleteOptions{})
 	if err != nil {
 		return err
 	}
