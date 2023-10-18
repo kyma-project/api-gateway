@@ -213,7 +213,7 @@ func (c *scenario) thereIsAVirtualService(name, gateway string) error {
 	return nil
 }
 
-func (c *scenario) thereIsAnORIRule(name string) error {
+func (c *scenario) thereIsAnORYRule(name string) error {
 	// switch to typed k8s client because of flaky issue dynamic client not abled to find ORY Rule CRD
 	k8sClient := client.GetK8sClient()
 	manifestDir := path.Dir(manifestsPath)
