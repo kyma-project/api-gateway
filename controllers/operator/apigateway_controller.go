@@ -94,11 +94,11 @@ func (r *APIGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		}
 
 		if isGardenerCluster {
-			if name, dependenciesErr := dependencies.NewGardenerAPIGateway().AreAvailable(ctx, r.Client); dependenciesErr != nil {
+			if name, dependenciesErr := dependencies.GardenerAPIGateway().AreAvailable(ctx, r.Client); dependenciesErr != nil {
 				return r.requeueReconciliation(ctx, apiGatewayCR, handleDependenciesError(name, dependenciesErr))
 			}
 		} else {
-			if name, dependenciesErr := dependencies.NewAPIGateway().AreAvailable(ctx, r.Client); dependenciesErr != nil {
+			if name, dependenciesErr := dependencies.ApiGateway().AreAvailable(ctx, r.Client); dependenciesErr != nil {
 				return r.requeueReconciliation(ctx, apiGatewayCR, handleDependenciesError(name, dependenciesErr))
 			}
 		}

@@ -165,7 +165,7 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	r.Log.Info("Reconciling ApiRule", "name", apiRule.Name, "namespace", apiRule.Namespace, "resource version", apiRule.ResourceVersion)
 
 	if apiRule.DeletionTimestamp.IsZero() {
-		if name, err := dependencies.NewAPIRule().AreAvailable(ctx, r.Client); err != nil {
+		if name, err := dependencies.APIRule().AreAvailable(ctx, r.Client); err != nil {
 			status, err := handleDependenciesError(name, err).ToAPIRuleStatus()
 			if err != nil {
 				return doneReconcileErrorRequeue(r.OnErrorReconcilePeriod)

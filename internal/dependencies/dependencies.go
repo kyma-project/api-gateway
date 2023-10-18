@@ -12,7 +12,7 @@ type Dependencies interface {
 	AreAvailable(context.Context, client.Client) controllers.Status
 }
 
-func NewAPIGateway() *dependecies {
+func ApiGateway() *dependecies {
 	return &dependecies{
 		CRDNames: []string{
 			"gateways.networking.istio.io",
@@ -21,7 +21,7 @@ func NewAPIGateway() *dependecies {
 	}
 }
 
-func NewGardenerAPIGateway() *dependecies {
+func GardenerAPIGateway() *dependecies {
 	return &dependecies{
 		CRDNames: []string{
 			"gateways.networking.istio.io",
@@ -32,7 +32,7 @@ func NewGardenerAPIGateway() *dependecies {
 	}
 }
 
-func NewAPIRule() *dependecies {
+func APIRule() *dependecies {
 	return &dependecies{
 		CRDNames: []string{
 			"virtualservices.networking.istio.io",
