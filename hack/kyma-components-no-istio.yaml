@@ -1,4 +1,0 @@
-defaultNamespace: kyma-system
-prerequisites:
-  - name: "certificates"
-    namespace: "istio-system"
