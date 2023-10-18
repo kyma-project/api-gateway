@@ -55,10 +55,6 @@ import (
 	//+kubebuilder:scaffold:imports
 )
 
-type config struct {
-	SystemNamespace string `envconfig:"default=kyma-system"`
-}
-
 var (
 	scheme   = runtime.NewScheme()
 	setupLog = ctrl.Log.WithName("setup")
