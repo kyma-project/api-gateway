@@ -21,15 +21,16 @@ assignees: ''
 <!-- Explain why we should add this feature. Provide use cases to illustrate its benefits. -->
 
 **DoD:**
-- [ ] provide documentation
-- [ ] release notes and What's New updates for Kyma customers
-- [ ] provide unit tests
-- [ ] provide integration tests
-- [ ] test on production-like environment
-- [ ] verify resource limits
-- [ ] followup issue
-- [ ] create release and bump in kyma
-- [ ] PR reviewer will verify code coverage and evaluate if it is acceptable
+- [ ] Create a follow-up issue.
+- [ ] Provide unit tests.
+- [ ] Provide integration tests.
+- [ ] Provide documentation.
+- [ ] Test on a production-like environment.
+- [ ] Check the outcome of all related pipelines.
+- [ ] Verify resource limits.
+- [ ] As a PR reviewer, verify code coverage and evaluate if it is acceptable.
+- [ ] Create a release and bump in Kyma.
+- [ ] Add release notes and What's New notes for Kyma customers.
 
 **Attachments**
 

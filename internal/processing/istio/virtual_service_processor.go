@@ -114,8 +114,7 @@ func (r virtualServiceCreator) Create(api *gatewayv1beta1.APIRule) (*networkingv
 	vsBuilder := builders.VirtualService().
 		GenerateName(virtualServiceNamePrefix).
 		Namespace(api.ObjectMeta.Namespace).
-		Label(processing.OwnerLabel, fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace)).
-		Label(processing.OwnerLabelv1alpha1, fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace))
+		Label(processing.OwnerLabel, fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace))
 
 	for k, v := range r.additionalLabels {
 		vsBuilder.Label(k, v)

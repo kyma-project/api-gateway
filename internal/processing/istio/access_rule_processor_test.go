@@ -235,7 +235,7 @@ var _ = Describe("Access Rule Processor", func() {
 			Expect(accessRule.Spec.Match.URL).To(Equal(expectedRuleMatchURL))
 		})
 
-		Context("when existing rule has owner v1alpha1 owner label", func() {
+		Context("when existing rule has owner v1beta1 owner label", func() {
 			It("should get and update match methods of rule", func() {
 				// given
 				noop := []*gatewayv1beta1.Authenticator{
@@ -255,7 +255,7 @@ var _ = Describe("Access Rule Processor", func() {
 
 					ObjectMeta: metav1.ObjectMeta{
 						Labels: map[string]string{
-							processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", apiRule.ObjectMeta.Name, apiRule.ObjectMeta.Namespace),
+							processing.OwnerLabel: fmt.Sprintf("%s.%s", apiRule.ObjectMeta.Name, apiRule.ObjectMeta.Namespace),
 						},
 					},
 					Spec: rulev1alpha1.RuleSpec{
@@ -269,7 +269,7 @@ var _ = Describe("Access Rule Processor", func() {
 				vs := networkingv1beta1.VirtualService{
 					ObjectMeta: metav1.ObjectMeta{
 						Labels: map[string]string{
-							processing.OwnerLabelv1alpha1: fmt.Sprintf("%s.%s", apiRule.ObjectMeta.Name, apiRule.ObjectMeta.Namespace),
+							processing.OwnerLabel: fmt.Sprintf("%s.%s", apiRule.ObjectMeta.Name, apiRule.ObjectMeta.Namespace),
 						},
 					},
 				}

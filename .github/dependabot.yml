@@ -1,5 +1,6 @@
 version: 2
 updates:
+# main branch configuration
   - package-ecosystem: "gomod"
     directory: "/"
     labels:
@@ -24,6 +25,8 @@ updates:
     commit-message:
       prefix: "docker"
       include: "scope"
+
+# release branch  configuration
   - package-ecosystem: "gomod"
     directory: "/"
     target-branch: "release-1.8"
