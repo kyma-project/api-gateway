@@ -2,7 +2,7 @@
 
 ## Istio
 
-API Gateway requires Istio installed on the cluster. This pre-requisite is needed as API Gateway creates Custom Resources provided by Istio `Gateway` and `VirtualService`. Recomended solution for installing Istio on a cluster is [Kyma Istio Operator](https://github.com/kyma-project/istio#install-kyma-istio-operator-and-istio-from-the-latest-release)
+API Gateway requires Istio installed on the cluster. This is required as API Gateway creates the custom resources `Gateway` and `VirtualService` provided by Istio. The recommended installation option for Istio is the [Kyma Istio Operator](https://github.com/kyma-project/istio#install-kyma-istio-operator-and-istio-from-the-latest-release).
 
 ## Dependecies in BTP Kyma Runtime
 
