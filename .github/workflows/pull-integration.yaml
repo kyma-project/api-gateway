@@ -73,7 +73,7 @@ jobs:
 
   k8s-compatibility-check:
     environment: ${{ github.event.pull_request.author_association != 'COLLABORATOR' && github.event.pull_request.author_association != 'OWNER' && 'restricted' || 'internal' }}
-    name: Integration tests with Istio module
+    name: Integration tests with API-Gateway module
     runs-on: ubuntu-latest
     if: github.event.pull_request.draft == false
     needs: [ wait-for-image-build ]
