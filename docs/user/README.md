@@ -1,6 +1,6 @@
-# API Gateway
+# API Gateway module
 
-## What is API Gateway
+## What is API Gateway?
 
 API Gateway provides functionalities that allow you to expose and secure APIs by using [Ory Oathkeeper](https://www.ory.sh/docs/oathkeeper) and the [Istio Service Mesh](https://istio.io/) resources.
 
@@ -10,6 +10,9 @@ Kyma API Gateway Operator is a component of the Kyma runtime that handles resour
 
 ![Kyma API Gateway Operator Overview](../assets/operator-overview.svg)
 
+## Prerequisites
+
+To use the API Gateway module, you must enable the Istio module.
 
 ## Useful links
 
