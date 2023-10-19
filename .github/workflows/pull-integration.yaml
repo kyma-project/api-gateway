@@ -71,6 +71,25 @@ jobs:
           oidc_issuer_url: ${{ secrets.OIDC_ISSUER_URL }}
           manager_image: "europe-docker.pkg.dev/kyma-project/dev/api-gateway-manager:PR-${{github.event.number}}"
 
+  k8s-compatibility-check:
+    environment: ${{ github.event.pull_request.author_association != 'COLLABORATOR' && github.event.pull_request.author_association != 'OWNER' && 'restricted' || 'internal' }}
+    name: Integration tests with Istio module
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false
+    needs: [ wait-for-image-build ]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+      - uses: ./.github/actions/integration-tests
+        with:
+          prerequisites_target: install-prerequisites-with-istio-from-manifest
+          client_id: ${{ secrets.CLIENT_ID }}
+          client_secret: ${{ secrets.CLIENT_SECRET }}
+          oidc_issuer_url: ${{ secrets.OIDC_ISSUER_URL }}
+          manager_image: "europe-docker.pkg.dev/kyma-project/dev/api-gateway-manager:PR-${{github.event.number}}"
+
 #  upgrade-tests:
 #    name: Upgrade tests
 #    runs-on: ubuntu-latest
