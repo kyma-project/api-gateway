@@ -1,0 +1,78 @@
+name: 'Kubernetes version compatibility check'
+description: 'Runs Kubernetes version compatibility check'
+inputs:
+  prerequisites_target:
+    description: 'Which make target to use to install prerequisites'
+    required: true
+  manager_image:
+    description: 'Manager image used for test'
+    required: true
+  client_id:
+    description: "Client id for oidc"
+    required: true
+  client_secret:
+    description: "Client secret for oidc"
+    required: true
+  oidc_issuer_url:
+    description: "OIDC issuer url"
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/setup-go@v4
+      with:
+        go-version: "1.20"
+    - name: Checkout to PR branch # to remove after getting rid of pull_request_target
+      shell: bash
+      if: ${{ github.event.type == 'PullRequestEvent' }}
+      run: |
+        git fetch origin pull/${{ github.event.pull_request.number }}/head:PR-${{ github.event.pull_request.number }}
+        git checkout PR-${{ github.event.pull_request.number }}
+    - name: Create Single Cluster
+      uses: AbsaOSS/k3d-action@4e8b3239042be1dc0aed6c5eb80c13b18200fc79 #v2.4.0
+      with:
+        cluster-name: "test-cluster-1"
+        args: >-
+          --agents 2
+          --image docker.io/rancher/k3s:v1.28.2-k3s1
+          --servers-memory=16g
+          --port 80:80@loadbalancer
+          --port 443:443@loadbalancer
+          --k3s-arg "--disable=traefik@server:0"
+    - name: Set up environment
+      shell: bash
+      run: |
+        sudo echo "127.0.0.1 local.kyma.dev" | sudo tee -a /etc/hosts
+        wget -q -O - https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | sudo bash
+        [ -n "${KYMA_CLI_UNSTABLE}" ] && sudo curl -Lo /usr/bin/kyma https://storage.googleapis.com/kyma-cli-unstable/kyma-linux
+        [ -z "${KYMA_CLI_UNSTABLE}" ] && sudo curl -Lo kyma.tar.gz "https://github.com/kyma-project/cli/releases/latest/download/kyma_linux_x86_64.tar.gz" && sudo tar -C /usr/bin -zxvf kyma.tar.gz kyma
+        sudo chmod +x /usr/bin/kyma
+    - name: Provision Kyma and run tests
+      shell: bash
+      env:
+        KYMA_DOMAIN: "local.kyma.dev"
+        CLIENT_ID: ${{ inputs.client_id }}
+        CLIENT_SECRET: ${{ inputs.client_secret }}
+        OIDC_ISSUER_URL: ${{ inputs.oidc_issuer_url }}
+        IMG: ${{ inputs.manager_image }}
+      run: |
+        sudo kyma provision k3d
+        KUBECONFIG=$(k3d kubeconfig merge kyma) EXPORT_RESULT=true \
+        make ${{ inputs.prerequisites_target }} deploy test-integration
+    - name: Check deprecations
+      run: |
+          set -eou pipefail
+          GO111MODULE=on go install github.com/prometheus/prom2json/cmd/prom2json@v1.3.3
+          kubectl get --context k3d-test-cluster-1 --raw /metrics | prom2json | jq '.[] | select(.name=="apiserver_requested_deprecated_apis").metrics[].labels' > deprecations.txt
+      shell: bash
+    - uses: actions/upload-artifact@v3
+      with:
+        name: html-reports
+        path: tests/integration/reports/
+    - uses: actions/upload-artifact@v3
+      with:
+        name: deprecation-report
+        path: deprecations.txt
+    - name: Check that deprecations are empty
+      run: if [[ $(wc -l deprecations.txt | awk '{print $1}' ) != '0' ]]; then exit 1; fi
+      shell: bash
