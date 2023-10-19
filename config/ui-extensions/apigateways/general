@@ -1,0 +1,10 @@
+resource:
+  kind: APIGateway
+  group: operator.kyma-project.io
+  version: v1alpha1
+urlPath: apigateways
+category: Kyma
+name: APIGateway
+scope: cluster
+description: >-
+  See the description of the {{[APIGateway custom resource](https://github.com/kyma-project/api-gateway/blob/main/config/samples/operator_v1alpha1_apigateway.yaml)}}.
