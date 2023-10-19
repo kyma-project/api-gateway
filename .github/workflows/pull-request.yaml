@@ -16,6 +16,7 @@ on:
       - './github/dependabot.yml'
     branches:
       - "main"
+      - 'release-**'
 
 permissions:
   contents: read
