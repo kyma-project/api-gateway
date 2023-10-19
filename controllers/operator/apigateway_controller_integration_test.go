@@ -85,7 +85,7 @@ var _ = Describe("API Gateway Controller", Serial, func() {
 			}, eventuallyTimeout).Should(Succeed())
 		})
 
-		It("Should set APIGateway in warning state on deletion when APIRule exist", func() {
+		It("Should set APIGateway CR in Warning state on deletion when APIRule exist", func() {
 			// given
 			apiGateway := v1alpha1.APIGateway{
 				ObjectMeta: metav1.ObjectMeta{

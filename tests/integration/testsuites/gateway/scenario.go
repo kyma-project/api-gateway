@@ -1,23 +1,28 @@
 package gateway
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
 	"log"
+	"os"
 	"path"
 
 	"github.com/avast/retry-go/v4"
 	"github.com/cucumber/godog"
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/client"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/helpers"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/hooks"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/manifestprocessor"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/resource"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
-	v12 "k8s.io/api/apps/v1"
+	oryv1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
+	"gopkg.in/yaml.v2"
+	appsv1 "k8s.io/api/apps/v1"
 	v2 "k8s.io/api/autoscaling/v2"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -53,6 +58,8 @@ func initScenario(ctx *godog.ScenarioContext, ts *testsuite) {
 	ctx.Step(`^there is an "([^"]*)" VirtualService with Gateway "([^"]*)"$`, scenario.thereIsAVirtualService)
 	ctx.Step(`^APIRule "([^"]*)" is removed$`, scenario.deleteAPIRule)
 	ctx.Step(`^VirtualService "([^"]*)" is removed$`, scenario.deleteVirtualService)
+	ctx.Step(`^there is an "([^"]*)" ORY Oathkeeper Rule$`, scenario.thereIsAnORYRule)
+	ctx.Step(`^ORY Oathkeeper Rule "([^"]*)" is removed$`, scenario.deleteORYRule)
 	ctx.Step(`^disabling Kyma gateway$`, scenario.disableKymaGateway)
 	ctx.Step(`^APIGateway CR "([^"]*)" is removed$`, scenario.deleteAPIGatewayCR)
 	ctx.Step(`^gateway "([^"]*)" in "([^"]*)" namespace does not exist$`, scenario.thereIsNoGateway)
@@ -84,7 +91,7 @@ func (c *scenario) thereIsAnAPIGatewayCR(name, isPresent string) error {
 
 	return retry.Do(func() error {
 		res := schema.GroupVersionResource{Group: "operator.kyma-project.io", Version: "v1alpha1", Resource: "apigateways"}
-		_, err := c.k8sClient.Resource(res).Get(context.Background(), name, v1.GetOptions{})
+		_, err := c.k8sClient.Resource(res).Get(context.Background(), name, metav1.GetOptions{})
 		if isPresent == is {
 			if err != nil {
 				if k8serrors.IsNotFound(err) {
@@ -111,11 +118,10 @@ func (c *scenario) thereIsAnAPIGatewayCR(name, isPresent string) error {
 func (c *scenario) checkAPIGatewayCRState(state, description string) error {
 	return retry.Do(func() error {
 		res := schema.GroupVersionResource{Group: "operator.kyma-project.io", Version: "v1alpha1", Resource: "apigateways"}
-		gateway, err := c.k8sClient.Resource(res).Get(context.Background(), hooks.ApiGatewayCRName, v1.GetOptions{})
+		gateway, err := c.k8sClient.Resource(res).Get(context.Background(), hooks.ApiGatewayCRName, metav1.GetOptions{})
 		if err != nil {
 			return err
 		}
-
 		gatewayState, found, err := unstructured.NestedString(gateway.Object, "status", "state")
 		if err != nil {
 			return err
@@ -146,7 +152,7 @@ func (c *scenario) checkAPIGatewayCRState(state, description string) error {
 func (c *scenario) thereIsAGateway(name string, namespace string) error {
 	return retry.Do(func() error {
 		res := schema.GroupVersionResource{Group: "networking.istio.io", Version: "v1beta1", Resource: "gateways"}
-		_, err := c.k8sClient.Resource(res).Namespace(namespace).Get(context.Background(), name, v1.GetOptions{})
+		_, err := c.k8sClient.Resource(res).Namespace(namespace).Get(context.Background(), name, metav1.GetOptions{})
 		if err != nil {
 			return fmt.Errorf("%s could not be found", name)
 		}
@@ -158,7 +164,7 @@ func (c *scenario) thereIsAGateway(name string, namespace string) error {
 func (c *scenario) thereIsACertificate(name string, namespace string) error {
 	return retry.Do(func() error {
 		res := schema.GroupVersionResource{Group: "", Version: "v1", Resource: "secrets"}
-		_, err := c.k8sClient.Resource(res).Namespace(namespace).Get(context.Background(), name, v1.GetOptions{})
+		_, err := c.k8sClient.Resource(res).Namespace(namespace).Get(context.Background(), name, metav1.GetOptions{})
 		if err != nil {
 			return fmt.Errorf("%s could not be found", name)
 		}
@@ -168,8 +174,8 @@ func (c *scenario) thereIsACertificate(name string, namespace string) error {
 }
 
 func (c *scenario) thereIsAnAPIRule(name, gateway string) error {
-	customDomainManifestDirectory := path.Dir(manifestsPath)
-	apiRule, err := manifestprocessor.ParseFromFileWithTemplate("apirule.yaml", customDomainManifestDirectory, struct {
+	manifestDir := path.Dir(manifestsPath)
+	apiRule, err := manifestprocessor.ParseFromFileWithTemplate("apirule.yaml", manifestDir, struct {
 		Namespace string
 		Gateway   string
 	}{
@@ -181,21 +187,15 @@ func (c *scenario) thereIsAnAPIRule(name, gateway string) error {
 	}
 	_, err = c.resourceManager.CreateResources(c.k8sClient, apiRule...)
 	if err != nil {
-		return err
-	}
-
-	res := schema.GroupVersionResource{Group: "gateway.kyma-project.io", Version: "v1beta1", Resource: "apirules"}
-	_, err = c.k8sClient.Resource(res).Namespace(c.namespace).Get(context.Background(), name, v1.GetOptions{})
-	if err != nil {
-		return fmt.Errorf("%s could not be found", name)
+		return fmt.Errorf("could not create api rule: %s, details %s", name, err.Error())
 	}
 
 	return nil
 }
 
 func (c *scenario) thereIsAVirtualService(name, gateway string) error {
-	customDomainManifestDirectory := path.Dir(manifestsPath)
-	vs, err := manifestprocessor.ParseFromFileWithTemplate("virtual-service.yaml", customDomainManifestDirectory, struct {
+	manifestDir := path.Dir(manifestsPath)
+	vs, err := manifestprocessor.ParseFromFileWithTemplate("virtual-service.yaml", manifestDir, struct {
 		Namespace string
 		Gateway   string
 	}{
@@ -207,27 +207,46 @@ func (c *scenario) thereIsAVirtualService(name, gateway string) error {
 	}
 	_, err = c.resourceManager.CreateResources(c.k8sClient, vs...)
 	if err != nil {
-		return err
-	}
-
-	res := schema.GroupVersionResource{Group: "networking.istio.io", Version: "v1alpha3", Resource: "virtualservices"}
-	_, err = c.k8sClient.Resource(res).Namespace(c.namespace).Get(context.Background(), name, v1.GetOptions{})
-	if err != nil {
-		return fmt.Errorf("%s could not be found", name)
+		return fmt.Errorf("could not create virtual service: %s, details %s", name, err.Error())
 	}
 
 	return nil
 }
 
+func (c *scenario) thereIsAnORYRule(name string) error {
+	// switch to typed k8s client because of flaky issue dynamic client not abled to find ORY Rule CRD
+	k8sClient := client.GetK8sClient()
+	manifestDir := path.Dir(manifestsPath)
+	apiGatewayCRYaml, err := os.ReadFile(path.Join(manifestDir, "oryrule.yaml"))
+	if err != nil {
+		return err
+	}
+	resource := bytes.NewBuffer(apiGatewayCRYaml)
+	var oryRule oryv1alpha1.Rule
+	err = yaml.Unmarshal(resource.Bytes(), &oryRule)
+	if err != nil {
+		return err
+	}
+	oryRule.Name = name
+	oryRule.Namespace = c.namespace
+	return retry.Do(func() error {
+		err := k8sClient.Create(context.Background(), &oryRule)
+		if err != nil {
+			return fmt.Errorf("can not create ory rule")
+		}
+		return nil
+	}, testcontext.GetRetryOpts()...)
+}
+
 func (c *scenario) deleteAPIRule(name string) error {
 	res := schema.GroupVersionResource{Group: "gateway.kyma-project.io", Version: "v1beta1", Resource: "apirules"}
-	err := c.k8sClient.Resource(res).Namespace(c.namespace).Delete(context.Background(), name, v1.DeleteOptions{})
+	err := c.k8sClient.Resource(res).Namespace(c.namespace).Delete(context.Background(), name, metav1.DeleteOptions{})
 	if err != nil {
 		return err
 	}
 
 	return retry.Do(func() error {
-		_, err = c.k8sClient.Resource(res).Namespace(c.namespace).Get(context.Background(), name, v1.GetOptions{})
+		_, err = c.k8sClient.Resource(res).Namespace(c.namespace).Get(context.Background(), name, metav1.GetOptions{})
 		if err != nil {
 			return nil
 		}
@@ -238,13 +257,30 @@ func (c *scenario) deleteAPIRule(name string) error {
 
 func (c *scenario) deleteVirtualService(name string) error {
 	res := schema.GroupVersionResource{Group: "networking.istio.io", Version: "v1alpha3", Resource: "virtualservices"}
-	err := c.k8sClient.Resource(res).Namespace(c.namespace).Delete(context.Background(), name, v1.DeleteOptions{})
+	err := c.k8sClient.Resource(res).Namespace(c.namespace).Delete(context.Background(), name, metav1.DeleteOptions{})
 	if err != nil {
 		return err
 	}
 
 	return retry.Do(func() error {
-		_, err = c.k8sClient.Resource(res).Namespace(c.namespace).Get(context.Background(), name, v1.GetOptions{})
+		_, err = c.k8sClient.Resource(res).Namespace(c.namespace).Get(context.Background(), name, metav1.GetOptions{})
+		if err != nil {
+			return nil
+		}
+
+		return fmt.Errorf("%s still exists", name)
+	}, testcontext.GetRetryOpts()...)
+}
+
+func (c *scenario) deleteORYRule(name string) error {
+	res := schema.GroupVersionResource{Group: "oathkeeper.ory.sh", Version: "v1alpha1", Resource: "rules"}
+	err := c.k8sClient.Resource(res).Namespace(c.namespace).Delete(context.Background(), name, metav1.DeleteOptions{})
+	if err != nil {
+		return err
+	}
+
+	return retry.Do(func() error {
+		_, err = c.k8sClient.Resource(res).Namespace(c.namespace).Get(context.Background(), name, metav1.GetOptions{})
 		if err != nil {
 			return nil
 		}
@@ -255,7 +291,7 @@ func (c *scenario) deleteVirtualService(name string) error {
 
 func (c *scenario) deleteAPIGatewayCR(name string) error {
 	res := schema.GroupVersionResource{Group: "operator.kyma-project.io", Version: "v1alpha1", Resource: "apigateways"}
-	err := c.k8sClient.Resource(res).Delete(context.Background(), name, v1.DeleteOptions{})
+	err := c.k8sClient.Resource(res).Delete(context.Background(), name, metav1.DeleteOptions{})
 	if err != nil {
 		return err
 	}
@@ -264,12 +300,12 @@ func (c *scenario) deleteAPIGatewayCR(name string) error {
 
 func (c *scenario) disableKymaGateway() error {
 	res := schema.GroupVersionResource{Group: "operator.kyma-project.io", Version: "v1alpha1", Resource: "apigateways"}
-	apiGatewayCR, err := c.k8sClient.Resource(res).Get(context.Background(), hooks.ApiGatewayCRName, v1.GetOptions{})
+	apiGatewayCR, err := c.k8sClient.Resource(res).Get(context.Background(), hooks.ApiGatewayCRName, metav1.GetOptions{})
 	if err != nil {
 		return err
 	}
 	apiGatewayCR.Object["spec"].(map[string]interface{})["enableKymaGateway"] = false
-	_, err = c.k8sClient.Resource(res).Update(context.Background(), apiGatewayCR, v1.UpdateOptions{})
+	_, err = c.k8sClient.Resource(res).Update(context.Background(), apiGatewayCR, metav1.UpdateOptions{})
 	if err != nil {
 		return err
 	}
@@ -279,7 +315,7 @@ func (c *scenario) disableKymaGateway() error {
 func (c *scenario) thereIsNoGateway(name, namespace string) error {
 	return retry.Do(func() error {
 		res := schema.GroupVersionResource{Group: "networking.istio.io", Version: "v1beta1", Resource: "gateways"}
-		_, err := c.k8sClient.Resource(res).Namespace(namespace).Get(context.Background(), name, v1.GetOptions{})
+		_, err := c.k8sClient.Resource(res).Namespace(namespace).Get(context.Background(), name, metav1.GetOptions{})
 		if err != nil {
 			return nil
 		}
@@ -290,7 +326,7 @@ func (c *scenario) thereIsNoGateway(name, namespace string) error {
 
 func (c *scenario) thereIsACertificateCR(name, namespace string) error {
 	res := schema.GroupVersionResource{Group: "cert.gardener.cloud", Version: "v1alpha1", Resource: "certificates"}
-	_, err := c.k8sClient.Resource(res).Namespace(namespace).Get(context.Background(), name, v1.GetOptions{})
+	_, err := c.k8sClient.Resource(res).Namespace(namespace).Get(context.Background(), name, metav1.GetOptions{})
 	if err != nil {
 		return fmt.Errorf("%s could not be found", name)
 	}
@@ -300,7 +336,7 @@ func (c *scenario) thereIsACertificateCR(name, namespace string) error {
 
 func (c *scenario) thereIsADNSEntryCR(name, namespace string) error {
 	res := schema.GroupVersionResource{Group: "dns.gardener.cloud", Version: "v1alpha1", Resource: "dnsentries"}
-	_, err := c.k8sClient.Resource(res).Namespace(namespace).Get(context.Background(), name, v1.GetOptions{})
+	_, err := c.k8sClient.Resource(res).Namespace(namespace).Get(context.Background(), name, metav1.GetOptions{})
 	if err != nil {
 		return fmt.Errorf("%s could not be found", name)
 	}
@@ -316,7 +352,7 @@ func (c *scenario) resourceIsPresent(isPresent, kind, name string) error {
 
 	return retry.Do(func() error {
 		gvr := resource.GetResourceGvr(kind, name)
-		_, err := c.k8sClient.Resource(gvr).Get(context.Background(), name, v1.GetOptions{})
+		_, err := c.k8sClient.Resource(gvr).Get(context.Background(), name, metav1.GetOptions{})
 		if isPresent == is {
 			if err != nil {
 				if k8serrors.IsNotFound(err) {
@@ -348,7 +384,7 @@ func (c *scenario) namespacedResourceIsPresent(isPresent, kind, name, namespace 
 	)
 	return retry.Do(func() error {
 		gvr := resource.GetResourceGvr(kind, name)
-		_, err := c.k8sClient.Resource(gvr).Namespace(namespace).Get(context.Background(), name, v1.GetOptions{})
+		_, err := c.k8sClient.Resource(gvr).Namespace(namespace).Get(context.Background(), name, metav1.GetOptions{})
 
 		if isPresent == is {
 			if err != nil {
@@ -377,13 +413,13 @@ func (c *scenario) namespacedResourceIsPresent(isPresent, kind, name, namespace 
 func (c *scenario) namespacedResourceHasStatusReady(kind, name, namespace string) error {
 	return retry.Do(func() error {
 		gvr := resource.GetResourceGvr(kind, name)
-		unstr, err := c.k8sClient.Resource(gvr).Namespace(namespace).Get(context.Background(), name, v1.GetOptions{})
+		unstr, err := c.k8sClient.Resource(gvr).Namespace(namespace).Get(context.Background(), name, metav1.GetOptions{})
 		if err != nil {
 			return fmt.Errorf("could not get resource: %s, named: %s, in namespace %s", kind, name, namespace)
 		}
 		switch kind {
 		case resource.Deployment.String():
-			var dep v12.Deployment
+			var dep appsv1.Deployment
 			err = runtime.DefaultUnstructuredConverter.FromUnstructured(unstr.UnstructuredContent(), &dep)
 			if err != nil {
 				return fmt.Errorf("cannot convert unstructured to structured kind: %s, name: %s, namespace: %s", kind, name, namespace)
