@@ -14,7 +14,7 @@ API Gateway Operator is a component of the Kyma runtime that handles resource re
 
 ## Prerequisites
 
-To use API Gateway, you must install Istio and Ory Oathkeeper in your cluster. Learn more on API Gateway's dependencies and APIrules' dependencies.
+To use API Gateway, you must install Istio and Ory Oathkeeper in your cluster. Learn more on [API Gateway's dependencies](./docs/contributor/) and APIrules' dependencies.
 
 ## Installation
 
