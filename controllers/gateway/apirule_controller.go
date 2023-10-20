@@ -22,6 +22,7 @@ import (
 	"fmt"
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"github.com/kyma-project/api-gateway/controllers"
+	"github.com/kyma-project/api-gateway/internal/dependencies"
 	"github.com/kyma-project/api-gateway/internal/processing/default_domain"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"time"
@@ -164,6 +165,14 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	r.Log.Info("Reconciling ApiRule", "name", apiRule.Name, "namespace", apiRule.Namespace, "resource version", apiRule.ResourceVersion)
 
 	if apiRule.DeletionTimestamp.IsZero() {
+		if name, err := dependencies.APIRule().AreAvailable(ctx, r.Client); err != nil {
+			status, err := handleDependenciesError(name, err).ToAPIRuleStatus()
+			if err != nil {
+				return doneReconcileErrorRequeue(r.OnErrorReconcilePeriod)
+			}
+			return r.updateStatusOrRetry(ctx, apiRule, status)
+		}
+
 		if !controllerutil.ContainsFinalizer(apiRule, API_GATEWAY_FINALIZER) {
 			controllerutil.AddFinalizer(apiRule, API_GATEWAY_FINALIZER)
 			if err := r.Update(ctx, apiRule); err != nil {
@@ -201,6 +210,14 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 
 	status := processing.Reconcile(ctx, r.Client, &r.Log, cmd, apiRule)
 	return r.updateStatusOrRetry(ctx, apiRule, status)
+}
+
+func handleDependenciesError(name string, err error) controllers.Status {
+	if apierrs.IsNotFound(err) {
+		return controllers.WarningStatus(err, fmt.Sprintf("CRD %s is not present. Make sure to install required dependencies for the component", name))
+	} else {
+		return controllers.ErrorStatus(err, "Error happened during discovering dependencies")
+	}
 }
 
 func (r *APIRuleReconciler) getReconciliation(defaultDomain string) processing.ReconciliationCommand {

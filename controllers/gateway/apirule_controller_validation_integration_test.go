@@ -2,14 +2,24 @@ package gateway_test
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
+	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/kyma-project/api-gateway/internal/helpers"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
+
+func getRawConfig(config any) *runtime.RawExtension {
+	b, err := json.Marshal(config)
+	Expect(err).To(BeNil())
+	return &runtime.RawExtension{
+		Raw: b,
+	}
+}
 
 // Tests needs to be executed serially because of the shared state of the JWT Handler in the API Controller.
 var _ = Describe("Apirule controller validation", Serial, Ordered, func() {

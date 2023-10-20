@@ -28,6 +28,8 @@ import (
 	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
 	operatorv1alpha1 "github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
 	"github.com/kyma-project/api-gateway/controllers"
+	"github.com/kyma-project/api-gateway/internal/dependencies"
+	"github.com/kyma-project/api-gateway/internal/reconciliations"
 	"github.com/kyma-project/api-gateway/internal/reconciliations/gateway"
 	"github.com/kyma-project/api-gateway/internal/reconciliations/oathkeeper"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -41,7 +43,6 @@ import (
 )
 
 const (
-	namespace                         = "kyma-system"
 	APIGatewayResourceListDefaultPath = "manifests/controlled_resources_list.yaml"
 	ApiGatewayFinalizer               = "gateways.operator.kyma-project.io/api-gateway"
 )
@@ -90,6 +91,23 @@ func (r *APIGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		return ctrl.Result{}, err
 	}
 
+	if !apiGatewayCR.IsInDeletion() {
+		isGardenerCluster, err := reconciliations.RunsOnGardenerCluster(ctx, r.Client)
+		if err != nil {
+			return r.requeueReconciliation(ctx, apiGatewayCR, controllers.ErrorStatus(err, "Error during discovering if cluster is Gardener"))
+		}
+
+		if isGardenerCluster {
+			if name, dependenciesErr := dependencies.GardenerAPIGateway().AreAvailable(ctx, r.Client); dependenciesErr != nil {
+				return r.requeueReconciliation(ctx, apiGatewayCR, handleDependenciesError(name, dependenciesErr))
+			}
+		} else {
+			if name, dependenciesErr := dependencies.ApiGateway().AreAvailable(ctx, r.Client); dependenciesErr != nil {
+				return r.requeueReconciliation(ctx, apiGatewayCR, handleDependenciesError(name, dependenciesErr))
+			}
+		}
+	}
+
 	if finalizerStatus := r.reconcileFinalizer(ctx, &apiGatewayCR); !finalizerStatus.IsReady() {
 		return r.requeueReconciliation(ctx, apiGatewayCR, finalizerStatus)
 	}
@@ -110,6 +128,14 @@ func (r *APIGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	}
 
 	return r.finishReconcile(ctx, apiGatewayCR)
+}
+
+func handleDependenciesError(name string, err error) controllers.Status {
+	if apierrors.IsNotFound(err) {
+		return controllers.WarningStatus(err, fmt.Sprintf("CRD %s is not present. Make sure to install required dependencies for the component", name))
+	} else {
+		return controllers.ErrorStatus(err, "Error happened during discovering dependencies")
+	}
 }
 
 // SetupWithManager sets up the controller with the Manager.
