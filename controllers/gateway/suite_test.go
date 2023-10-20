@@ -12,6 +12,7 @@ import (
 	"github.com/kyma-project/api-gateway/controllers"
 	"github.com/kyma-project/api-gateway/controllers/gateway"
 	"github.com/kyma-project/api-gateway/internal/builders"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 
 	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
@@ -106,6 +107,7 @@ var _ = BeforeSuite(func(specCtx SpecContext) {
 	Expect(networkingv1beta1.AddToScheme(s)).Should(Succeed())
 	Expect(securityv1beta1.AddToScheme(s)).Should(Succeed())
 	Expect(corev1.AddToScheme(s)).Should(Succeed())
+	Expect(apiextensionsv1.AddToScheme(s)).Should(Succeed())
 
 	mgr, err := ctrl.NewManager(cfg, ctrl.Options{
 		Scheme: s,
