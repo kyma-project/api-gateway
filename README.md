@@ -8,13 +8,13 @@ API Gateway provides functionalities that allow you to expose and secure APIs by
 
 ## API Gateway Operator
 
-API Gateway Operator is a component of the Kyma runtime that handles resource reconciliation and manages the application of the API Gateway configuration. Within the API Gateway Operator, there are two controllers: [APIGateway Controller](./docs/user/00-10-overview-api-gateway-controller.md), which applies the configuration specified in APIGateway custom resource (CR), and [APIRule Controller](./docs/user/00-20-overview-api-rule-controller.md), which applies the configuration specified in APIRule CR.
+API Gateway Operator is a component of the Kyma runtime that handles resource reconciliation and manages the application of the API Gateway configuration. Within the API Gateway Operator, there are two controllers: [APIGateway Controller](./docs/user/00-10-overview-api-gateway-controller.md), which applies the configuration specified in [APIGateway custom resource](./docs/user/custom-resources/apigateway/), and [APIRule Controller](./docs/user/00-20-overview-api-rule-controller.md), which applies the configuration specified in [APIRule custom resource](./docs/user/custom-resources/apirule/).
 
 ![Kyma API Gateway Operator Overview](./docs/assets/operator-overview.svg)
 
 ## Prerequisites
 
-To use API Gateway, you must install Istio and Ory Oathkeeper in your cluster. Learn more on the [API Gateway module's dependencies](./docs/contributor/01-20-api-gateway-dependencies.md) and [APIrules' dependencies](./docs/contributor/01-30-api-rule-dependencies.md).
+To use API Gateway, you must install Istio and Ory Oathkeeper in your cluster. Learn more about the [API Gateway's dependencies](./docs/contributor/01-20-api-gateway-dependencies.md) and [APIrules' dependencies](./docs/contributor/01-30-api-rule-dependencies.md).
 
 ## Installation
 
