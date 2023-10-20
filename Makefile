@@ -43,6 +43,9 @@ IMG_REGISTRY_PORT ?= $(MODULE_REGISTRY_PORT)
 IMG_REGISTRY ?= op-skr-registry.localhost:$(IMG_REGISTRY_PORT)/unsigned/operator-images
 IMG ?= $(IMG_REGISTRY)/$(MODULE_NAME)-operator:$(MODULE_VERSION)
 
+# It is required for upgrade integration test
+ TARGET_BRANCH ?= ""
+
 COMPONENT_CLI_VERSION ?= latest
 
 # It is required for upgrade integration test
@@ -91,6 +94,10 @@ generate-upgrade-test-manifest: manifests kustomize
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${TEST_UPGRADE_IMG}
 	$(KUSTOMIZE) build config/default -o tests/integration/testsuites/upgrade/manifests/upgrade-test-generated-operator-manifest.yaml
 
+.PHONT: deploy-latest-release
+deploy-latest-release:
+	./tests/integration/scripts/deploy-latest-release-to-cluster.sh $(TARGET_BRANCH)
+
 # Generate code
 .PHONY: generate
 generate: controller-gen ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
@@ -113,7 +120,7 @@ test-integration: generate fmt vet envtest ## Run integration tests.
 	source ./tests/integration/env_vars.sh && go test -timeout 1h ./tests/integration -v -race -run TestIstioJwt . && go test -timeout 1h ./tests/integration -v -race -run TestOryJwt . && TEST_CONCURRENCY=1 go test -timeout 1h ./tests/integration -v -race -run TestGateway .
 
 .PHONY: test-upgrade
-test-upgrade: generate fmt vet generate-upgrade-test-manifest ## Run API Gateway upgrade tests.
+test-upgrade: generate fmt vet generate-upgrade-test-manifest install-prerequisites-with-istio-from-manifest deploy-latest-release ## Run API Gateway upgrade tests.
 	source ./tests/integration/env_vars.sh && go test -timeout 1h ./tests/integration -v -race -run TestUpgrade .
 
 .PHONY: test-custom-domain
