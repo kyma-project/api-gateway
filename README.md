@@ -6,9 +6,9 @@
 
 API Gateway provides functionalities that allow you to expose and secure APIs by using [Ory Oathkeeper](https://www.ory.sh/docs/oathkeeper) and the [Istio service mesh](https://istio.io/) resources.
 
-## API Gateway Operator
+## Kyma API Gateway Operator
 
-API Gateway Operator is an extension to the Kyma runtime manages the application of API Gateway's configuration and handles resource reconciliation. Within the API Gateway Operator, there are two controllers: [APIGateway Controller](./docs/user/00-10-overview-api-gateway-controller.md), which applies the configuration specified in [APIGateway custom resource (CR)](./docs/user/custom-resources/apigateway/), and [APIRule Controller](./docs/user/00-20-overview-api-rule-controller.md), which applies the configuration specified in [APIRule CR](./docs/user/custom-resources/apirule/).
+Kyma API Gateway Operator is an extension to the Kyma runtime manages the application of API Gateway's configuration and handles resource reconciliation. Within the API Gateway Operator, there are two controllers: [APIGateway Controller](./docs/user/00-10-overview-api-gateway-controller.md), which applies the configuration specified in [APIGateway custom resource (CR)](./docs/user/custom-resources/apigateway/), and [APIRule Controller](./docs/user/00-20-overview-api-rule-controller.md), which applies the configuration specified in [APIRule CR](./docs/user/custom-resources/apirule/).
 
 ![Kyma API Gateway Operator Overview](./docs/assets/operator-overview.svg)
 
