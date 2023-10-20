@@ -1,0 +1,15 @@
+configMapGenerator:
+  - name: ui.operator.kyma-project.io
+    namespace: kyma-system
+    files:
+      - general
+      - form
+      - list
+      - details
+      - translations
+    options:
+      disableNameSuffixHash: true
+      labels:
+        app.kubernetes.io/name: apigateways.operator.kyma-project.io
+        busola.io/extension: resource
+        busola.io/extension-version: "0.5"
