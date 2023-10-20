@@ -133,7 +133,7 @@ var ApiGatewayCrTearDownSuiteHook = func() error {
 
 	err = retry.Do(func() error {
 		err := k8sClient.Delete(context.Background(), &apiGateway)
-		if err != nil {
+		if err != nil && !k8serrors.IsNotFound(err) {
 			return err
 		}
 		return nil
@@ -148,7 +148,7 @@ var ApiGatewayCrTearDownSuiteHook = func() error {
 			Name:      apiGateway.GetName(),
 		}, &apiGateway)
 
-		if err == nil {
+		if err == nil && !k8serrors.IsNotFound(err) {
 			return fmt.Errorf("ApiGatewayCrTearDownSuiteHook did not delete APIGateway CR")
 		}
 
