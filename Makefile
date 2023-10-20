@@ -94,7 +94,7 @@ generate-upgrade-test-manifest: manifests kustomize
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${TEST_UPGRADE_IMG}
 	$(KUSTOMIZE) build config/default -o tests/integration/testsuites/upgrade/manifests/upgrade-test-generated-operator-manifest.yaml
 
-.PHONT: deploy-latest-release
+.PHONY: deploy-latest-release
 deploy-latest-release:
 	./tests/integration/scripts/deploy-latest-release-to-cluster.sh $(TARGET_BRANCH)
 
