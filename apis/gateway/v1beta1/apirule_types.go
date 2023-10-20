@@ -24,12 +24,14 @@ import (
 type StatusCode string
 
 const (
-	//StatusOK .
+	//StatusOK is set when the reconciliation finished succefully
 	StatusOK StatusCode = "OK"
-	//StatusSkipped .
+	//StatusSkipped is set when reconcilation of the APIRule component was skipped
 	StatusSkipped StatusCode = "SKIPPED"
-	//StatusError .
+	//StatusError is set when an error happened during reconciliation of the APIRule
 	StatusError StatusCode = "ERROR"
+	//StatusWarning is set if an user action is required
+	StatusWarning StatusCode = "WARNING"
 )
 
 // Defines the desired state of ApiRule.
