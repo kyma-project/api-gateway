@@ -3,12 +3,11 @@ package validation
 import (
 	"context"
 	"fmt"
-	"strings"
-
 	"github.com/go-logr/logr"
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"github.com/kyma-project/api-gateway/internal/processing/default_domain"
 	"google.golang.org/appengine/log"
+	"strings"
 
 	"github.com/kyma-project/api-gateway/internal/helpers"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"

@@ -142,7 +142,7 @@ var ApiGatewayCrTearDownSuiteHook = func() error {
 		}, &apiGateway)
 
 		if err == nil {
-			return fmt.Errorf("ApiGatewayCrTearDownSuiteHook did not delete APIGateway CR")
+			return fmt.Errorf("ApiGatewayCrTearDownSuiteHook did not delete APIGateway CR, state: %s description: %s", apiGateway.Status.State, apiGateway.Status.Description)
 		}
 
 		return nil
