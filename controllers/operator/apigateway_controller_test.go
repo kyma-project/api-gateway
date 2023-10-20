@@ -7,6 +7,7 @@ import (
 	"github.com/go-logr/logr"
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	operatorv1alpha1 "github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
+	oryv1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -119,7 +120,7 @@ var _ = Describe("API-Gateway Controller", func() {
 			Expect(errors.IsNotFound(c.Get(context.TODO(), client.ObjectKeyFromObject(apiGatewayCR), apiGatewayCR))).To(BeTrue())
 		})
 
-		It("Should not delete API-Gateway CR if there is any APIRule on cluster", func() {
+		It("Should not delete API-Gateway CR if there are any APIRules on cluster", func() {
 			// given
 			now := metav1.NewTime(time.Now())
 			apiGatewayCR := &operatorv1alpha1.APIGateway{ObjectMeta: metav1.ObjectMeta{
@@ -135,8 +136,14 @@ var _ = Describe("API-Gateway Controller", func() {
 					Namespace: "default",
 				},
 			}
+			oryRule := &oryv1alpha1.Rule{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "ory-rule",
+					Namespace: "default",
+				},
+			}
 
-			c := createFakeClient(apiGatewayCR, apiRule)
+			c := createFakeClient(apiGatewayCR, apiRule, oryRule)
 			agr := &APIGatewayReconciler{
 				Client: c,
 				Scheme: getTestScheme(),
@@ -148,12 +155,50 @@ var _ = Describe("API-Gateway Controller", func() {
 
 			// then
 			Expect(err).Should(HaveOccurred())
-			Expect(err.Error()).To(Equal("could not delete API-Gateway CR since there are 1 APIRule(s) present that block its deletion"))
+			Expect(err.Error()).To(Equal("could not delete API-Gateway CR since there are APIRule(s) that block its deletion"))
 			Expect(result).Should(Equal(reconcile.Result{}))
 
 			Expect(c.Get(context.TODO(), client.ObjectKeyFromObject(apiGatewayCR), apiGatewayCR)).Should(Succeed())
 			Expect(apiGatewayCR.Status.State).To(Equal(operatorv1alpha1.Warning))
 			Expect(apiGatewayCR.Status.Description).To(Equal("There are APIRule(s) that block the deletion of API-Gateway CR. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning"))
+			Expect(apiGatewayCR.GetObjectMeta().GetFinalizers()).To(ContainElement(ApiGatewayFinalizer))
+		})
+
+		It("Should not delete API-Gateway CR if there are any ORY Oathkeeper Rules on cluster", func() {
+			// given
+			now := metav1.NewTime(time.Now())
+			apiGatewayCR := &operatorv1alpha1.APIGateway{ObjectMeta: metav1.ObjectMeta{
+				Name:              apiGatewayCRName,
+				Namespace:         testNamespace,
+				DeletionTimestamp: &now,
+				Finalizers:        []string{ApiGatewayFinalizer},
+			},
+			}
+			oryRule := &oryv1alpha1.Rule{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "ory-rule",
+					Namespace: "default",
+				},
+			}
+
+			c := createFakeClient(apiGatewayCR, oryRule)
+			agr := &APIGatewayReconciler{
+				Client: c,
+				Scheme: getTestScheme(),
+				log:    logr.Discard(),
+			}
+
+			// when
+			result, err := agr.Reconcile(context.Background(), reconcile.Request{NamespacedName: types.NamespacedName{Namespace: testNamespace, Name: apiGatewayCRName}})
+
+			// then
+			Expect(err).Should(HaveOccurred())
+			Expect(err.Error()).To(Equal("could not delete API-Gateway CR since there are ORY Oathkeeper Rule(s) that block its deletion"))
+			Expect(result).Should(Equal(reconcile.Result{}))
+
+			Expect(c.Get(context.TODO(), client.ObjectKeyFromObject(apiGatewayCR), apiGatewayCR)).Should(Succeed())
+			Expect(apiGatewayCR.Status.State).To(Equal(operatorv1alpha1.Warning))
+			Expect(apiGatewayCR.Status.Description).To(Equal("There are ORY Oathkeeper Rule(s) that block the deletion of API-Gateway CR. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning"))
 			Expect(apiGatewayCR.GetObjectMeta().GetFinalizers()).To(ContainElement(ApiGatewayFinalizer))
 		})
 	})

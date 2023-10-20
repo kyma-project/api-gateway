@@ -32,6 +32,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	"github.com/onsi/ginkgo/v2/types"
 	. "github.com/onsi/gomega"
+	oryv1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
 	networkingv1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
@@ -126,6 +127,7 @@ var _ = BeforeSuite(func() {
 	utilruntime.Must(gatewayv1beta1.AddToScheme(s))
 	utilruntime.Must(networkingv1alpha3.AddToScheme(s))
 	utilruntime.Must(networkingv1beta1.AddToScheme(s))
+	utilruntime.Must(oryv1alpha1.AddToScheme(s))
 
 	//+kubebuilder:scaffold:scheme
 
@@ -253,6 +255,7 @@ func getTestScheme() *runtime.Scheme {
 	Expect(gatewayv1beta1.AddToScheme(scheme)).Should(Succeed())
 	Expect(networkingv1alpha3.AddToScheme(scheme)).Should(Succeed())
 	Expect(networkingv1beta1.AddToScheme(scheme)).Should(Succeed())
+	Expect(oryv1alpha1.AddToScheme(scheme)).Should(Succeed())
 
 	return scheme
 }

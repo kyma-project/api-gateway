@@ -12,11 +12,12 @@ namePrefix: api-gateway-
 commonLabels:
   app.kubernetes.io/component: api-gateway-operator.kyma-project.io
 
-bases:
+resources:
   - ../crd
   - ../rbac
   - ../manager
   - ../scheduling
+  - ../ui-extensions
 
 patchesStrategicMerge:
   # Protect the /metrics endpoint by putting it behind auth.
