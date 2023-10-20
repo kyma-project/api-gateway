@@ -168,7 +168,6 @@ func (c *scenario) isDNSReady() error {
 		}
 		if len(ips) != 0 {
 			for _, ip := range ips {
-
 				if ip.Equal(c.loadBalancerIP) {
 					fmt.Printf("Found %s.%s.%s. IN A %s\n", testName, c.testID, c.domain, ip.String())
 					return true, nil

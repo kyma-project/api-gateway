@@ -5,6 +5,8 @@ import (
 	_ "embed"
 	"errors"
 	"fmt"
+	"time"
+
 	"github.com/avast/retry-go/v4"
 	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
 	"github.com/kyma-project/api-gateway/internal/reconciliations"
@@ -14,7 +16,6 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"time"
 )
 
 //go:embed crd.yaml
@@ -23,7 +24,7 @@ var crd []byte
 const crdName = "rules.oathkeeper.ory.sh"
 
 func reconcileOryOathkeeperRuleCRD(ctx context.Context, k8sClient client.Client, apiGatewayCR v1alpha1.APIGateway) error {
-	ctrl.Log.Info("Reconciling Ory Config PeerAuthentication", "name", crdName)
+	ctrl.Log.Info("Reconciling Oathkeeper Rule CRD", "name", crdName)
 
 	if apiGatewayCR.IsInDeletion() {
 		return deleteCRD(ctx, k8sClient, crdName)
