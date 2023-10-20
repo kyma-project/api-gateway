@@ -8,7 +8,7 @@ API Gateway provides functionalities that allow you to expose and secure APIs by
 
 ## API Gateway Operator
 
-API Gateway Operator is a component of the Kyma runtime that handles resource reconciliation and manages the application of the API Gateway configuration. Within the API Gateway Operator, there are two controllers: [APIGateway Controller](./docs/user/00-10-overview-api-gateway-controller.md), which applies the configuration specified in [APIGateway custom resource](./docs/user/custom-resources/apigateway/), and [APIRule Controller](./docs/user/00-20-overview-api-rule-controller.md), which applies the configuration specified in [APIRule custom resource](./docs/user/custom-resources/apirule/).
+API Gateway Operator is a component of the Kyma runtime that handles resource reconciliation and manages the application of the API Gateway configuration. Within the API Gateway Operator, there are two controllers: [APIGateway Controller](./docs/user/00-10-overview-api-gateway-controller.md), which applies the configuration specified in [APIGateway custom resource (CR)](./docs/user/custom-resources/apigateway/), and [APIRule Controller](./docs/user/00-20-overview-api-rule-controller.md), which applies the configuration specified in [APIRule CR](./docs/user/custom-resources/apirule/).
 
 ![Kyma API Gateway Operator Overview](./docs/assets/operator-overview.svg)
 
