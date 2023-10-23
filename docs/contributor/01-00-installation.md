@@ -73,7 +73,7 @@ make docker-build
 make deploy
 ```
 
-## Install the API Gateway module with Lifecycle Manager locally on k3d
+## Install API Gateway module with Lifecycle Manager locally on k3d
 
 Use make to install the API Gateway module with Lifecycle Manager locally.
 
@@ -91,3 +91,43 @@ make local-run
 make local-stop
 ```
 
+## Install API Gateway module from the latest release
+
+### Procedure
+
+1. To install API Gateway, you must install the latest version of Kyma API Gateway Operator and API Gateway CRD first. Run:
+
+   ```bash
+   kubectl apply -f https://github.com/kyma-project/api-gateway/releases/latest/download/api-gateway-manager.yaml
+   ```
+
+2. To get API Gateway installed, apply the default API Gateway CR:
+
+   ```bash
+   kubectl apply -f https://github.com/kyma-project/api-gateway/releases/latest/download/apigateway-default-cr.yaml
+   ```
+
+   You should get a result similar to this example:
+
+   ```bash
+   apigateways.operator.kyma-project.io/default created
+   ```
+
+3. Check the state of API Gateway CR to verify if API Gateway was installed successfully:
+
+   ```bash
+   kubectl get apigateways/default
+   ```
+
+   After successful installation, you get the following output:
+
+   ```bash
+   NAME      STATE
+   default   Ready
+   ```
+
+## Useful links
+
+To learn how to use Kyma API Gateway Operator, read the documentation in the [`user`](/docs/user) directory.
+
+If you are interested in the detailed documentation of the Kyma API Gateway Operator's design and technical aspects, check the [`contributor`](/docs/contributor/) directory.
