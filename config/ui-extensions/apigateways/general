@@ -6,5 +6,9 @@ urlPath: apigateways
 category: Kyma
 name: APIGateway
 scope: cluster
+features:
+  actions:
+    disableCreate: true
+    disableDelete: true
 description: >-
   See the description of the {{[APIGateway custom resource](https://github.com/kyma-project/api-gateway/blob/main/config/samples/operator_v1alpha1_apigateway.yaml)}}.
