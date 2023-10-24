@@ -1,0 +1,8 @@
+* [Home](/)
+* [API Gateway module](./README.md)
+* [Resources](../README.md)
+  * [APIGateway custom resource](./apigateway/)
+    * [APIGateway custom resource](./04-00-apigateway-custom-resource.md)
+    * [Kyma Gateway](.04-10-kyma-gateway.md)
+    * [Oathkeeper dependency](.04-20-oathkeeper.md)
+  * [APIRule custom resource](../apirule/04-10-apirule-custom-resource.md)
