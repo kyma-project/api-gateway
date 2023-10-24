@@ -91,7 +91,7 @@ make local-run
 make local-stop
 ```
 
-## Install API Gateway module from the latest release
+## Install the API Gateway module from the latest release
 
 ### Procedure
 
