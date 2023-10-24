@@ -1,5 +1,5 @@
 * [Home](/)
-* [API Gateway module](./README.md)
-* [Resources](../README.md)
+* [API Gateway module](../README.md)
+* [Resources](./README.md)
   * [APIGateway custom resource](./apigateway/)
   * [APIRule custom resource](./apirule/)
