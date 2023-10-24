@@ -1,6 +1,6 @@
 # Custom resources
 
-## APIRule custom resource {docsify-ignore}
+## APIRule custom resource <!-- {docsify-ignore} -->
 
 The `apirules.gateway.kyma-project.io` CustomResourceDefinition (CRD) describes the kind and the format of data the APIRule Controller uses to configure the resources.
 
@@ -11,7 +11,7 @@ Browse the documentation related to the APIRule custom resource (CR):
 - [APIRule Mutators](./04-40-apirule-mutators.md)
 - [OAuth2 and JWT authorization](./04-50-apirule-authorizations.md)
 
-## APIGateway custom resource {docsify-ignore}
+## APIGateway custom resource <!-- {docsify-ignore} -->
 
 The `apigateways.operator.kyma-project.io` CRD describes the kind and the format of data that APIGateway Controller uses to configure the resources.
 
