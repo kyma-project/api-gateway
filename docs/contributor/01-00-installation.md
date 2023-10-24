@@ -73,7 +73,7 @@ make docker-build
 make deploy
 ```
 
-## Install API Gateway module with Lifecycle Manager locally on k3d
+## Install the API Gateway module with Lifecycle Manager locally on k3d
 
 Use make to install the API Gateway module with Lifecycle Manager locally.
 
