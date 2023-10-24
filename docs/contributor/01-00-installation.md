@@ -95,7 +95,7 @@ make local-stop
 
 ### Procedure
 
-1. To install API Gateway, you must install the latest version of Kyma API Gateway Operator and API Gateway CRD first. Run:
+1. To install API Gateway, you must install the latest version of Kyma API Gateway Operator and API Gateway CustomResourceDefinition first. Run:
 
    ```bash
    kubectl apply -f https://github.com/kyma-project/api-gateway/releases/latest/download/api-gateway-manager.yaml
