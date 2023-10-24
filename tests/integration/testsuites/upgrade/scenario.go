@@ -162,9 +162,6 @@ func (s *scenario) upgradeApiGateway() error {
 		if err != nil {
 			return err
 		}
-		if currentImage := apiGatewayDeployment.Spec.Template.Spec.Containers[0].Image; currentImage == s.APIGatewayImageVersion {
-			return errors.New("trying to update to the same version of image")
-		}
 
 		err = s.resourceManager.MergeAndUpdateOrCreateResources(s.k8sClient, manifestCrds)
 		if err != nil {
