@@ -101,7 +101,7 @@ make local-stop
    kubectl apply -f https://github.com/kyma-project/api-gateway/releases/latest/download/api-gateway-manager.yaml
    ```
 
-2. To get API Gateway installed, apply the default API Gateway CR:
+2. Apply the default API Gateway custom resource (CR):
 
    ```bash
    kubectl apply -f https://github.com/kyma-project/api-gateway/releases/latest/download/apigateway-default-cr.yaml
