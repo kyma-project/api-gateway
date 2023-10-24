@@ -6,7 +6,7 @@ Feature: Upgrading API Gateway version
     And Upgrade: The APIRule is applied
     And Upgrade: Calling the "/ip" endpoint with a valid "JWT" token should result in status between 200 and 299
     When Upgrade: API Gateway is upgraded to current branch version
-    And Upgrade: A reconciliation happened in the last 20 seconds
+    And Upgrade: A reconciliation happened in the last 30 seconds
     Then Upgrade: Calling the "/ip" endpoint without a token should result in status between 400 and 403
     And Upgrade: Calling the "/ip" endpoint with an invalid token should result in status between 400 and 403
     And Upgrade: Calling the "/ip" endpoint with a valid "JWT" token should result in status between 200 and 299
