@@ -145,7 +145,7 @@ func (s *scenario) upgradeApiGateway() error {
 	const manifestDirectory = "testsuites/upgrade/manifests"
 	const manifestFileName = "upgrade-test-generated-operator-manifest.yaml"
 
-	manifestCrds, err := manifestprocessor.ParseFromFileWithTemplate(manifestFileName, manifestDirectory, nil)
+	manifestCrds, err := manifestprocessor.ParseYamlFromFile(manifestFileName, manifestDirectory)
 	if err != nil {
 		return err
 	}

@@ -22,7 +22,7 @@ See how to [install API Gateway](./docs/contributor/01-00-installation.md).
 
 ## Useful links
 
-To learn how to use the API Gateway module, read the documentation in the [`user`](./docs/user/) directory.
+To learn how to use Kyma API Gateway, read the documentation in the [`user`](./docs/user/) directory.
 
 If you are interested in the detailed documentation of the Kyma API Gateway Operator's design and technical aspects, check the [`contributor`](./docs/contributor/) directory.
 
