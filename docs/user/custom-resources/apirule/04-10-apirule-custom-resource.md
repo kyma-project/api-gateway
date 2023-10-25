@@ -6,7 +6,7 @@ The `apirules.gateway.kyma-project.io` CustomResourceDefinition (CRD) describes 
 kubectl get crd apirules.gateway.kyma-project.io -o yaml
 ```
 
-## Specification of APIRule custom resource
+## Specification of APIRule custom resource <!-- {docsify-ignore} -->
 
 This table lists all parameters of APIRule CRD together with their descriptions:
 
@@ -54,7 +54,7 @@ The following status codes describe VirtualServices and Oathkeeper Access Rules:
 | **SKIPPED**   | Skipped creating a resource.   |
 | **ERROR**     | Resource not created.          |
 
-## Sample custom resource
+## Sample custom resource <!-- {docsify-ignore} -->
 
 This is a sample custom resource (CR) that the APIGateway Controller listens for to expose a Service. The following example has the **rules** section specified, which makes APIGateway Controller create an Oathkeeper Access Rule for the Service.
 
