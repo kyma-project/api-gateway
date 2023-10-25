@@ -19,7 +19,6 @@ jobs:
     name: Wait for image build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
       - uses: ./.github/actions/wait-for-job-succeed-or-fail
         with:
           job-name: 'post-api-gateway-manager-build'
@@ -80,7 +79,6 @@ jobs:
     if: ${{ failure() }}
     needs: [integration-tests,integration-tests-istio-module]
     steps:
-      - uses: actions/checkout@v4
       - name: Notify
         uses: ./.github/actions/slack-notification-failed-workflow
         with:
