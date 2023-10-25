@@ -40,6 +40,8 @@ jobs:
     needs: [wait-for-image-build]
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: ./.github/actions/integration-tests
         with:
           prerequisites_target: install-prerequisites
