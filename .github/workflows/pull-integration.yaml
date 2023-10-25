@@ -27,6 +27,9 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event.pull_request.draft == false
     steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: ./.github/actions/wait-for-job-succeed-or-fail
         with:
           job-name: 'pull-api-gateway-manager-build'
