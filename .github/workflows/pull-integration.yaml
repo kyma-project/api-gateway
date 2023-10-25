@@ -6,7 +6,7 @@ name: PR Integration
 on:
   # pull_request_target runs workflows from the base of PR
   # It allows the workflow to get the repository secrets
-  pull_request_target:
+  pull_request:
     types: [ synchronize, opened, reopened, ready_for_review ]
     paths-ignore:
       - "docs/**"
@@ -41,6 +41,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          #ref: ${{ github.event.pull_request.head.sha }} #uncomment when we switch to `pull_request` target
           fetch-depth: 0
       - uses: ./.github/actions/integration-tests
         with:
@@ -59,6 +60,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          #ref: ${{ github.event.pull_request.head.sha }} #uncomment when we switch to `pull_request` target
           fetch-depth: 0
       - uses: ./.github/actions/integration-tests
         with:
@@ -77,6 +79,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          #ref: ${{ github.event.pull_request.head.sha }} #uncomment when we switch to `pull_request` target
           fetch-depth: 0
       - uses: ./.github/actions/integration-tests
         with:
@@ -93,6 +96,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          #ref: ${{ github.event.pull_request.head.sha }} #uncomment when we switch to `pull_request` target
           fetch-depth: 0
       - uses: ./.github/actions/upgrade-test
         with:
