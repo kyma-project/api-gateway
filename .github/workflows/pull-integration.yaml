@@ -41,9 +41,6 @@ jobs:
     needs: [wait-for-image-build]
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          fetch-depth: 0
       - uses: ./.github/actions/integration-tests
         with:
           prerequisites_target: install-prerequisites
@@ -60,9 +57,6 @@ jobs:
     needs: [wait-for-image-build]
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          fetch-depth: 0
       - uses: ./.github/actions/integration-tests
         with:
           prerequisites_target: install-prerequisites-with-istio-from-manifest
@@ -96,9 +90,6 @@ jobs:
     needs: [wait-for-image-build]
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          fetch-depth: 0
       - uses: ./.github/actions/upgrade-test
         with:
           test_upgrade_img: "europe-docker.pkg.dev/kyma-project/dev/api-gateway-manager:PR-${{github.event.number}}"
