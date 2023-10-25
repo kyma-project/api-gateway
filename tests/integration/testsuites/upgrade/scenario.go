@@ -145,27 +145,25 @@ func (s *scenario) upgradeApiGateway() error {
 	const manifestDirectory = "testsuites/upgrade/manifests"
 	const manifestFileName = "upgrade-test-generated-operator-manifest.yaml"
 
+	var apiGatewayDeployment v1.Deployment
+	var oldImage string
+
 	manifestCrds, err := manifestprocessor.ParseYamlFromFile(manifestFileName, manifestDirectory)
 	if err != nil {
 		return err
 	}
 
+	apiGatewayUnstructured, err := s.resourceManager.GetResource(s.k8sClient, deploymentGVR, apiGatewayNS, apiGatewayName)
+	if err != nil {
+		return err
+	}
+	err = runtime.DefaultUnstructuredConverter.FromUnstructured(apiGatewayUnstructured.UnstructuredContent(), &apiGatewayDeployment)
+	if err != nil {
+		return err
+	}
+	oldImage = apiGatewayDeployment.Spec.Template.Spec.Containers[0].Image
+
 	return retry.Do(func() error {
-		var apiGatewayDeployment v1.Deployment
-
-		apiGatewayUnstructured, err := s.resourceManager.GetResource(s.k8sClient, deploymentGVR, apiGatewayNS, apiGatewayName)
-		if err != nil {
-			return err
-		}
-
-		err = runtime.DefaultUnstructuredConverter.FromUnstructured(apiGatewayUnstructured.UnstructuredContent(), &apiGatewayDeployment)
-		if err != nil {
-			return err
-		}
-		if currentImage := apiGatewayDeployment.Spec.Template.Spec.Containers[0].Image; currentImage == s.APIGatewayImageVersion {
-			return errors.New("trying to update to the same version of image")
-		}
-
 		err = s.resourceManager.MergeAndUpdateOrCreateResources(s.k8sClient, manifestCrds)
 		if err != nil {
 			return err
@@ -181,13 +179,18 @@ func (s *scenario) upgradeApiGateway() error {
 			return err
 		}
 
-		if currentImage := apiGatewayDeployment.Spec.Template.Spec.Containers[0].Image; currentImage != s.APIGatewayImageVersion {
-			return fmt.Errorf("image is not updated, expected: %s, got: %s", s.APIGatewayImageVersion, currentImage)
+		currentImage := apiGatewayDeployment.Spec.Template.Spec.Containers[0].Image
+
+		if currentImage != s.APIGatewayImageVersion || currentImage == oldImage {
+			return fmt.Errorf("after update image is the same as before %s : %s", currentImage, oldImage)
+		}
+
+		if apiGatewayDeployment.Status.UnavailableReplicas > 0 {
+			return fmt.Errorf("there are still unavailable replicas in apigateway deployment")
 		}
 
 		return nil
 	}, testcontext.GetRetryOpts()...)
-
 }
 
 func (s *scenario) reconciliationHappened(numberOfSeconds int) error {
