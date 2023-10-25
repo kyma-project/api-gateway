@@ -6,7 +6,7 @@ The `apigateways.operator.kyma-project.io` CustomResourceDefinition (CRD) descri
 kubectl get crd apigateways.operator.kyma-project.io -o yaml
 ```
 
-## Specification
+## Specification <!-- {docsify-ignore} -->
 
 This table lists the parameters of the given resource together with their descriptions:
 
