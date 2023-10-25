@@ -44,7 +44,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          #ref: ${{ github.event.pull_request.head.sha }} #uncomment when we switch to `pull_request` target
+          ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
       - uses: ./.github/actions/integration-tests
         with:
@@ -63,7 +63,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          #ref: ${{ github.event.pull_request.head.sha }} #uncomment when we switch to `pull_request` target
+          ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
       - uses: ./.github/actions/integration-tests
         with:
@@ -82,7 +82,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          #ref: ${{ github.event.pull_request.head.sha }} #uncomment when we switch to `pull_request` target
+          ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
       - uses: ./.github/actions/integration-tests
         with:
@@ -99,7 +99,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          #ref: ${{ github.event.pull_request.head.sha }} #uncomment when we switch to `pull_request` target
+          ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
       - uses: ./.github/actions/upgrade-test
         with:
