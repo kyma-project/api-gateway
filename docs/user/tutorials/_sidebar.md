@@ -13,7 +13,7 @@
     * [Get JSON Web Tokens (JWT)](/api-gateway/user/tutorials/01-50-expose-and-secure-a-workload/01-51-get-jwt.md)
     * [Secure a workload with JWT](/api-gateway/user/tutorials/01-50-expose-and-secure-a-workload/01-52-expose-and-secure-workload-jwt.md)
     * [Secure a workload with Istio](/api-gateway/user/tutorials/01-50-expose-and-secure-a-workload/01-53-expose-and-secure-workload-istio.md)
-    * [Secure a workload with a Certificate](/api-gateway/user/tutorials/01-50-expose-and-secure-a-workload/01-54-expose-and-secure-workload-with-certificate.md)
+    * [Secure a workload with a certificate](/api-gateway/user/tutorials/01-50-expose-and-secure-a-workload/01-54-expose-and-secure-workload-with-certificate.md)
   * Security
     * [Prepare self-signed root CA and client certificates](/api-gateway/user/tutorials/01-60-security/01-61-mtls-selfsign-client-certicate.md)
     * [Set up a custom identity provider](/api-gateway/user/tutorials/01-60-security/01-62-set-up-idp.md)

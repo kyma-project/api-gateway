@@ -1,4 +1,4 @@
-# Issues with certificates on Gardener certificates
+# Issues with certificates on Gardener
 
 ## Symptom & Cause
 
