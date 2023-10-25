@@ -3,7 +3,7 @@
 * [Troubleshooting guides](/api-gateway/user/troubleshooting-guides/README.md)
   * Cannot connect to a Service
     * [Basic diagnostics](/api-gateway/user/troubleshooting-guides/03-00-cannot-connect-to-service/03-00-apigateway-connect-api-rule.md)
-    * [401 Unauthorized or 403 Forbidden](/api-gateway/user/troubleshooting-guides/03-00-cannot-connect-to-service/03-01-401-unaythorized-403-forbidden.md)
+    * [401 Unauthorized or 403 Forbidden](/api-gateway/user/troubleshooting-guides/03-00-cannot-connect-to-service/03-01-401-unauthorized-403-forbidden.md)
     * [404 Not Found](/api-gateway/user/troubleshooting-guides/03-00-cannot-connect-to-service/03-02-404-not-found.md)
     * [500 Server Error](/api-gateway/user/troubleshooting-guides/03-00-cannot-connect-to-service/03-03-500-server-error.md)
   * External DNS management errors
