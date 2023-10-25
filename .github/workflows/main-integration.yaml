@@ -20,6 +20,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: ./.github/actions/wait-for-job-succeed-or-fail
         with:
           job-name: 'post-api-gateway-manager-build'
@@ -81,6 +83,8 @@ jobs:
     needs: [integration-tests,integration-tests-istio-module]
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Notify
         uses: ./.github/actions/slack-notification-failed-workflow
         with:
