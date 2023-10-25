@@ -25,7 +25,7 @@ runs:
   steps:
     - name: Checkout to PR branch # to remove after getting rid of pull_request_target
       shell: bash
-      if: github.event_name == 'pull_request'
+      if: github.event_name == 'pull_request' || github.event_name == 'pull_request_target'
       run: |
         git fetch origin pull/${{ github.event.number }}/head:PR-${{ github.event.number }}
         git checkout PR-${{ github.event.number }}
