@@ -52,3 +52,24 @@ func ParseFromFileWithTemplate(fileName string, directory string, templateData i
 
 	return manifests, nil
 }
+
+func ParseYamlFromFile(fileName string, directory string) ([]unstructured.Unstructured, error) {
+	rawData, err := os.ReadFile(path.Join(directory, fileName))
+	if err != nil {
+		return nil, err
+	}
+
+	var manifests []unstructured.Unstructured
+	decoder := yaml.NewDecoder(bytes.NewBufferString(string(rawData)))
+	for {
+		var d map[string]interface{}
+		if err := decoder.Decode(&d); err != nil {
+			if err == io.EOF {
+				break
+			}
+			return nil, fmt.Errorf("Document decode failed: %w", err)
+		}
+		manifests = append(manifests, unstructured.Unstructured{Object: d})
+	}
+	return manifests, nil
+}
