@@ -12,13 +12,46 @@ Kyma API Gateway Operator is an extension to the Kyma runtime that manages the a
 
 ![Kyma API Gateway Operator Overview](./docs/assets/operator-overview.svg)
 
-## Prerequisites
+## Installation
+
+### Prerequisites
 
 To use API Gateway, you must install Istio and Ory Oathkeeper in your cluster. Learn more about the [API Gateway's dependencies](./docs/contributor/01-20-api-gateway-dependencies.md) and [APIrules' dependencies](./docs/contributor/01-30-api-rule-dependencies.md).
 
-## Installation
+### Procedure
 
-See how to [install API Gateway](./docs/contributor/01-00-installation.md).
+1. To install API Gateway, you must install the latest version of Kyma API Gateway Operator and API Gateway CustomResourceDefinition first. Run:
+
+   ```bash
+   kubectl apply -f https://github.com/kyma-project/api-gateway/releases/latest/download/api-gateway-manager.yaml
+   ```
+
+2. Apply the default API Gateway custom resource (CR):
+
+   ```bash
+   kubectl apply -f https://github.com/kyma-project/api-gateway/releases/latest/download/apigateway-default-cr.yaml
+   ```
+
+   You should get a result similar to this example:
+
+   ```bash
+   apigateways.operator.kyma-project.io/default created
+   ```
+
+3. Check the state of API Gateway CR to verify if API Gateway was installed successfully:
+
+   ```bash
+   kubectl get apigateways/default
+   ```
+
+   After successful installation, you get the following output:
+
+   ```bash
+   NAME      STATE
+   default   Ready
+   ```
+
+For more installation options, visit the [installation guide](./docs/contributor/01-00-installation.md).
 
 ## Useful links
 
