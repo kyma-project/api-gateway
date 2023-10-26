@@ -48,16 +48,24 @@ adds the API Gateway module to the Kyma CR without overwriting existing module c
 
 ### Dev
 
-1. Apply the module template to Dev Control Plane.
-2. `kcp login` to Dev and run the migration script on all SKRs. To do that, you can use the following command:
+#### Prerequisites
+
+- Reconciliation is disabled for Dev environment (kyma/management-plane-config `PR #4485`)
+
+#### Migration procedure
+
+1. Commit the module manifest to the `kyma/module-manifests` internal repository, using the `fast` channel.
+2. Verify that the ModuleTemplate is present in `kyma/kyma-modules` internal repository.
+3. Verify that the ModuleTemplate in `fast` channel is available on `Dev` environment SKRs.
+4. `kcp login` to Dev and run the migration script on all SKRs. To do that, you can use the following command:
    ```shell
    kcp taskrun --gardener-kubeconfig {PATH TO GARDENER PROJECT KUBECONFIG} --gardener-namespace kyma-dev -t all -- ./managed-kyma-migration.sh
    ```
-3. Verify that the migration worked as expected by checking the status of APIGateway manifests on Control Plane.
+5. Verify that the migration worked as expected by checking the status of APIGateway manifests on Control Plane.
    ```shell
    kubectl get manifests -n kcp-system -o custom-columns=NAME:metadata.name,STATE:status.state | grep api-gateway
    ```
-4. Verify that `api-gateway` deployment is not present on any of the SKRs
+6. Verify that `api-gateway` deployment is not present on any of the SKRs
    ```shell
    kcp taskrun --gardener-kubeconfig {PATH TO GARDENER PROJECT KUBECONFIG} --gardener-namespace kyma-dev -t all -- kubectl get deployment -n kyma-system api-gateway 2>/dev/null
    ```
@@ -68,19 +76,17 @@ Perform the rollout to Stage together with the SRE team. Since they have already
 
 #### Prerequisites
 
-- Reconciliation is disabled for Stage environment
+- Reconciliation is disabled for Stage environment (kyma/management-plane-config `PR #4486`)
 
 #### Migration procedure
 
-1. Commit the module manifest to the `kyma/module-manifests` internal repository, using the `fast` channel.
-2. Verify that the ModuleTemplate is present in `kyma/kyma-modules` internal repository.
-3. Verify that the ModuleTemplate in `fast` channel is available on `Stage` environment SKRs.
-4. `kcp login` to Stage, select some SKRs on `Kyma-Test/Kyma-Integration`, and run `managed-kyma-migration.sh` on them using `kcp taskrun`.
-5. Verify if the migration was successful on the SKRs by checking the status of APIGateway CR and the reconciler's components.
-6. Run `managed-kyma-migration.sh` for all SKRs in Kyma-Test and Kyma-Integration global accounts.
+1. Verify that the ModuleTemplate in `fast` channel is available on `Stage` environment SKRs.
+2. `kcp login` to Stage, select some SKRs on `Kyma-Test/Kyma-Integration`, and run `managed-kyma-migration.sh` on them using `kcp taskrun`.
+3. Verify if the migration was successful on the SKRs by checking the status of APIGateway CR and the reconciler's components.
+4. Run `managed-kyma-migration.sh` for all SKRs in Kyma-Test and Kyma-Integration global accounts.
+5. Verify if the migration worked as expected.
+6. Run `managed-kyma-migration.sh` for the whole Canary landscape.
 7. Verify if the migration worked as expected.
-8. Run `managed-kyma-migration.sh` for the whole Canary landscape.
-9. Verify if the migration worked as expected.
 
 ### Prod
 
@@ -88,7 +94,7 @@ Perform the rollout to `Prod` together with the SRE team. Since they have alread
 
 #### Prerequisites
 
-- Reconciliation is disabled for Prod environment
+- Reconciliation is disabled for Prod environment (kyma/management-plane-config `PR #4487`)
 
 #### Migration procedure
 
