@@ -1,12 +1,14 @@
 name: Run vuln check
 on:
+  schedule:
+    - cron: '0 5 * * *' # Run every day at 05:00 AM
   push:
     branches: [ "main" ]
   pull_request:
 permissions:
   contents: read
 jobs:
-  test:
+  check-for-vulnerabilities:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout code
@@ -17,3 +19,16 @@ jobs:
       with:
         go-version-input: 1.21.3
         go-package: ./...
+  slack_failed_notification:
+    name: Slack Notification
+    runs-on: ubuntu-latest
+    if: ${{ failure() }} && (${{ github.event_name == 'push' }} || ${{ github.event_name == 'schedule' }})
+    needs: [check-for-vulnerabilities]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Notify
+        uses: ./.github/actions/slack-notification-failed-workflow
+        with:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
