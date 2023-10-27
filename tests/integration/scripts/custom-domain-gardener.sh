@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 #
-##Description: This scripts installs and test api-gateway custom domain test using the CLI on a real Gardener GCP cluster.
+##Description: This scripts installs and tests api-gateway custom domain test as well as gateway test using the CLI on a real Gardener GCP cluster.
 ## exit on error, and raise error when variable is not set when used
 ## IMG env variable expected (for make deploy), which points to the image in the registry
 
@@ -86,3 +86,8 @@ export TEST_DOMAIN="${CLUSTER_NAME}.${GARDENER_KYMA_PROW_PROJECT_NAME}.shoot.liv
 export TEST_CUSTOM_DOMAIN="a.build.kyma-project.io"
 
 make test-custom-domain
+
+# Run gateway tests in the same script
+export IS_GARDENER=true
+
+make test-integration-gateway
