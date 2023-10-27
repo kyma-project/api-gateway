@@ -3,6 +3,8 @@ package controllers
 import (
 	"context"
 	"fmt"
+	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
+	"github.com/kyma-project/api-gateway/internal/processing"
 
 	operatorv1alpha1 "github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
 	"k8s.io/client-go/util/retry"
@@ -22,6 +24,7 @@ const (
 type Status interface {
 	NestedError() error
 	ToAPIGatewayStatus() (operatorv1alpha1.APIGatewayStatus, error)
+	ToAPIRuleStatus() (processing.ReconciliationStatus, error)
 	IsReady() bool
 	IsWarning() bool
 	IsError() bool
@@ -108,6 +111,34 @@ func (s status) ToAPIGatewayStatus() (operatorv1alpha1.APIGatewayStatus, error) 
 		}, nil
 	default:
 		return operatorv1alpha1.APIGatewayStatus{}, fmt.Errorf("unsupported status: %v", s.state)
+	}
+}
+
+func (s status) ToAPIRuleStatus() (processing.ReconciliationStatus, error) {
+	switch s.state {
+	case Ready:
+		return processing.ReconciliationStatus{
+			ApiRuleStatus: &gatewayv1beta1.APIRuleResourceStatus{
+				Code:        gatewayv1beta1.StatusOK,
+				Description: s.description,
+			},
+		}, nil
+	case Error:
+		return processing.ReconciliationStatus{
+			ApiRuleStatus: &gatewayv1beta1.APIRuleResourceStatus{
+				Code:        gatewayv1beta1.StatusError,
+				Description: s.description,
+			},
+		}, nil
+	case Warning:
+		return processing.ReconciliationStatus{
+			ApiRuleStatus: &gatewayv1beta1.APIRuleResourceStatus{
+				Code:        gatewayv1beta1.StatusWarning,
+				Description: s.description,
+			},
+		}, nil
+	default:
+		return processing.ReconciliationStatus{}, fmt.Errorf("unsupported status: %v", s.state)
 	}
 }
 

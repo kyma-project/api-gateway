@@ -16,13 +16,22 @@ inputs:
   oidc_issuer_url:
     description: "OIDC issuer url"
     required: true
+  target_branch:
+    description: 'Target branch'
+    required: true
 
 runs:
   using: "composite"
   steps:
     - uses: actions/setup-go@v4
       with:
-        go-version: "1.20"
+        go-version: "1.21"
+    - name: Checkout to PR branch # to remove after getting rid of pull_request_target
+      shell: bash
+      if: github.event_name == 'pull_request' || github.event_name == 'pull_request_target'
+      run: |
+        git fetch origin pull/${{ github.event.number }}/head:PR-${{ github.event.number }}
+        git checkout PR-${{ github.event.number }}
     - name: Set up environment
       shell: bash
       run: |
@@ -35,19 +44,6 @@ runs:
       shell: bash
       run: |
         sudo kyma provision k3d
-    - name: Deploy prerequisite components
-      shell: bash
-      run: |
-        KUBECONFIG=$(k3d kubeconfig merge kyma) kyma deploy -s main -c hack/kyma-components.yaml
-    - name: Deploy manager #this step should be removed after first api gateway manager release. This behavior should be moved to for example some deploy-latest-release-script
-      shell: bash
-      env:
-        IMG: ${{ inputs.manager_image}}
-      run: |
-        git checkout main
-        KUBECONFIG=$(k3d kubeconfig merge kyma) make deploy
-        git restore .
-        git checkout ${{ github.event.pull_request.head.sha }}
     - name: Run test
       shell: bash
       env:
@@ -57,7 +53,7 @@ runs:
         CLIENT_SECRET: ${{ inputs.client_secret }}
         OIDC_ISSUER_URL: ${{ inputs.oidc_issuer_url }}
       run: |
-        KUBECONFIG=$(k3d kubeconfig merge kyma) EXPORT_RESULT=true \
+        KUBECONFIG=$(k3d kubeconfig merge kyma) EXPORT_RESULT=true TARGET_BRANCH=${{inputs.target_branch}} \
         make test-upgrade
     - name: Uploads artifacts
       uses: actions/upload-artifact@v3

@@ -1,5 +1,5 @@
 # Install API Gateway
-- [Install API Gateway](#Install-api-gateway)
+- [Install API Gateway](#install-api-gateway)
   - [Prerequisites](#prerequisites)
   - [Install Kyma API Gateway Operator manually](#install-kyma-api-gateway-operator-manually)
   - [Install the API Gateway module with Lifecycle Manager locally on k3d](#install-the-api-gateway-module-with-lifecycle-manager-locally-on-k3d)
@@ -90,4 +90,3 @@ make local-run
 ```bash
 make local-stop
 ```
-

@@ -29,7 +29,7 @@ updates:
 # release branch  configuration
   - package-ecosystem: "gomod"
     directory: "/"
-    target-branch: "release-1.8"
+    target-branch: "release-2.0"
     labels:
       - "go"
       - "area/dependency"
@@ -46,7 +46,7 @@ updates:
       - dependency-name: "*"
         update-types: ["version-update:semver-major", "version-update:semver-minor"]
   - package-ecosystem: "docker"
-    target-branch: "release-1.8"
+    target-branch: "release-2.0"
     directory: "/"
     labels:
       - "docker"

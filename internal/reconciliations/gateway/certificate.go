@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	kymaGatewayCertificateName = "kyma-gateway"
+	kymaGatewayCertificateName = "kyma-tls-cert"
 	// Istio IngressGateway requires the TLS secret to be present in the same namespace, that's why we have to use istio-system
 	certificateDefaultNamespace = "istio-system"
 	kymaGatewayCertSecretName   = "kyma-gateway-certs"
