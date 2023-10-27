@@ -8,7 +8,7 @@ require (
 	github.com/gardener/cert-management v0.11.2
 	github.com/gardener/external-dns-management v0.15.9
 	github.com/go-jose/go-jose/v3 v3.0.0
-	github.com/go-logr/logr v1.2.4
+	github.com/go-logr/logr v1.3.0
 	github.com/google/uuid v1.4.0
 	github.com/onsi/ginkgo/v2 v2.13.0
 	github.com/onsi/gomega v1.29.0
