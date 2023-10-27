@@ -29,39 +29,6 @@ updates:
 # release branch  configuration
   - package-ecosystem: "gomod"
     directory: "/"
-    target-branch: "release-1.8"
-    labels:
-      - "go"
-      - "area/dependency"
-    schedule:
-      interval: "daily"
-    commit-message:
-      prefix: "gomod"
-      include: "scope"
-    groups:
-      k8s-dependencies:
-        patterns:
-          - "k8s.io/*"
-    ignore:
-      - dependency-name: "*"
-        update-types: ["version-update:semver-major", "version-update:semver-minor"]
-  - package-ecosystem: "docker"
-    target-branch: "release-1.8"
-    directory: "/"
-    labels:
-      - "docker"
-      - "area/dependency"
-    schedule:
-      interval: "daily"
-    commit-message:
-      prefix: "docker"
-      include: "scope"
-    ignore:
-      - dependency-name: "*"
-        update-types: ["version-update:semver-major", "version-update:semver-minor"]
-
-  - package-ecosystem: "gomod"
-    directory: "/"
     target-branch: "release-2.0"
     labels:
       - "go"
