@@ -13,20 +13,34 @@ on:
       - ".github/**" #Ignoring since build job isn't triggered on the workflow directory changes
     branches:
       - main
+      - test-branch
+  schedule:
+    - cron: '* * * * *'
+#    - cron: '0 5 * * *' # Run every day at 05:00 AM
 
 jobs:
   wait-for-image-build:
     name: Wait for image build
     runs-on: ubuntu-latest
+    outputs:
+      sha: ${{ steps.get-sha.outputs.sha }}
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - uses: ./.github/actions/wait-for-job-succeed-or-fail
+        if: ${{ github.event_name != 'schedule' }}
         with:
           job-name: 'post-api-gateway-manager-build'
           github-auth-token: ${{ secrets.GITHUB_TOKEN }}
           commit-ref: ${{ github.sha }}
+      - id: get-sha
+        run: |
+          if [ "${{ github.event_name }}" != "schedule" ]; then
+            echo "sha=${{ github.sha }}" >> $GITHUB_OUTPUT
+          else
+            echo "sha=$(./scripts/get_latest_build_sha.sh)" >> $GITHUB_OUTPUT
+          fi
 
   integration-tests:
     name: Integration tests
@@ -39,7 +53,7 @@ jobs:
       - uses: ./.github/actions/integration-tests
         with:
           prerequisites_target: install-prerequisites
-          manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:${{ github.sha }}"
+          manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:${{ needs.wait-for-image-build.outputs.sha }}"
           client_id: ${{ secrets.CLIENT_ID }}
           client_secret: ${{ secrets.CLIENT_SECRET }}
           oidc_issuer_url: ${{ secrets.OIDC_ISSUER_URL }}
@@ -55,7 +69,7 @@ jobs:
       - uses: ./.github/actions/integration-tests
         with:
           prerequisites_target: install-prerequisites-with-istio-from-manifest
-          manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:${{ github.sha }}"
+          manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:${{ needs.wait-for-image-build.outputs.sha }}"
           client_id: ${{ secrets.CLIENT_ID }}
           client_secret: ${{ secrets.CLIENT_SECRET }}
           oidc_issuer_url: ${{ secrets.OIDC_ISSUER_URL }}
@@ -70,7 +84,7 @@ jobs:
           fetch-depth: 0
       - uses: ./.github/actions/upgrade-test
         with:
-          test_upgrade_img: "europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:${{ github.sha }}"
+          test_upgrade_img: "europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:${{ needs.wait-for-image-build.outputs.sha }}"
           client_id: ${{ secrets.CLIENT_ID }}
           client_secret: ${{ secrets.CLIENT_SECRET }}
           oidc_issuer_url: ${{ secrets.OIDC_ISSUER_URL }}
@@ -80,7 +94,7 @@ jobs:
     name: Slack Notification
     runs-on: ubuntu-latest
     if: ${{ failure() }}
-    needs: [integration-tests,integration-tests-istio-module]
+    needs: [integration-tests,integration-tests-istio-module,upgrade-tests]
     steps:
       - uses: actions/checkout@v4
         with:
