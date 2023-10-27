@@ -4,16 +4,10 @@
 name: Main Integration
 
 on:
-  push:
-    paths-ignore:
-      - "docs/**"
-      - "**/*.md"
-      - "CODEOWNERS"
-      - "sec-scanners-config.yaml"
-      - ".github/**" #Ignoring since build job isn't triggered on the workflow directory changes
+  pull_request:
+    types: [ synchronize, opened, reopened, ready_for_review ]
     branches:
       - main
-      - test-branch
   schedule:
     - cron: '* * * * *'
 #    - cron: '0 5 * * *' # Run every day at 05:00 AM
