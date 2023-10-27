@@ -24,7 +24,7 @@ jobs:
           fetch-depth: 0
       - id: get-sha
         run: |
-          if [ "${{ github.event_name }}" != "schedule" ]; then
+          if [ "${{ github.event_name }}" == "schedule" ]; then
             echo "sha=${{ github.sha }}" >> $GITHUB_OUTPUT
           else
             echo "sha=$(./scripts/get_latest_build_sha.sh)" >> $GITHUB_OUTPUT
