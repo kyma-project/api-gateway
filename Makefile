@@ -95,7 +95,7 @@ generate-upgrade-test-manifest: manifests kustomize
 	$(KUSTOMIZE) build config/default -o tests/integration/testsuites/upgrade/manifests/upgrade-test-generated-operator-manifest.yaml
 
 .PHONY: deploy-latest-release
-deploy-latest-release:
+deploy-latest-release: create-namespace
 	./tests/integration/scripts/deploy-latest-release-to-cluster.sh $(TARGET_BRANCH)
 
 # Generate code
