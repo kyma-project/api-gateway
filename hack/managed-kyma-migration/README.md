@@ -1,15 +1,15 @@
-# Managed Kyma migration
+# SAP BTP, Kyma runtime migration
 
-> **NOTE**: This documentation is relevant for managed Kyma only and does not apply to OS Kyma.
+> **NOTE**: This documentation is relevant for SAP BTP, Kyma runtime only and does not apply to open-source Kyma.
 
 ## Scenarios
 
-### Provisioning of API Gateway CR via Lifecycle-Manager in a new cluster
+### Provisioning of API Gateway CR using Lifecycle Manager in a new cluster
 
-If there is no APIGateway CR, then Lifecycle Manager provisions the default API Gateway CR defined in the API Gateway ModuleTemplate. The migration
+If there is no APIGateway custom resource (CR), then Lifecycle Manager provisions the default API Gateway CR defined in the API Gateway ModuleTemplate. The migration
 adds the API Gateway module to the Kyma CR.
 
-### Provisioning of Istio CR via Lifecycle Manager in a cluster with existing modules
+### Provisioning of Istio CR using Lifecycle Manager in a cluster with existing modules
 
 If there is no APIGateway CR, then Lifecycle Manager provisions the default APIGateway CR defined in the APIGateway ModuleTemplate. The migration
 adds the API Gateway module to the Kyma CR without overwriting existing module configuration.
@@ -18,16 +18,16 @@ adds the API Gateway module to the Kyma CR without overwriting existing module c
 
 ### Test scenarios
 
-1. Apply the ModuleTemplate for both `fast` and `regular` channel to DEV Control Plane.
+Apply the ModuleTemplate for both `fast` and `regular` channels to Dev Control Plane.
 
-#### SKR without existing modules
+#### SAP BTP, Kyma runtime clusters without existing modules
 
-1. Create Dev SKR.
+1. Create a Dev SAP BTP, Kyma runtime cluster.
 2. Execute the migration.
 3. Verify that `api-gateway-manager` is installed and the APIGateway CR's status is `Ready`.
-4. Verify that `api-gateway` deployment is not present.
+4. Verify that the `api-gateway` deployment is not present.
 
-#### SKR with an existing module
+#### SAP BTP, Kyma runtime cluster with an existing module
 
 1. Create Dev SKR.
 2. Add the Keda module to the Kyma CR.
