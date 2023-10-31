@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 set -e
 export CYPRESS_DOMAIN=http://localhost:3001
@@ -10,7 +10,6 @@ apt-get update -y
 apt-get install -y gettext-base
 
 function deploy_k3d_kyma (){
-echo "Using OS:" ${OS}
 curl -Lo kyma https://storage.googleapis.com/kyma-cli-unstable/kyma-linux
 chmod +x ./kyma
 
