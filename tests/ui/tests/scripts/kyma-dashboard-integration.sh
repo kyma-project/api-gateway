@@ -6,7 +6,8 @@ export NO_COLOR=1
 export REPO_IMG_DEV="k3d-registry.localhost:5000/kyma-dashboard"
 export TAG="test-dev"
 
-apt-get install -y gettext-base
+sudo apt-get update -y
+sudo apt-get install -y gettext-base
 
 function deploy_k3d_kyma (){
 curl -Lo kyma https://storage.googleapis.com/kyma-cli-unstable/kyma-linux
