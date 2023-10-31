@@ -10,6 +10,7 @@ sudo apt-get update -y
 sudo apt-get install -y gettext-base
 
 function deploy_k3d_kyma (){
+curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | bash
 curl -Lo kyma https://storage.googleapis.com/kyma-cli-unstable/kyma-linux
 chmod +x ./kyma
 
@@ -54,7 +55,6 @@ k3d kubeconfig get kyma > tests/fixtures/kubeconfig.yaml
 }
 
 function build_and_run_busola() {
-curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | bash
 echo "Create k3d registry..."
 k3d registry create registry.localhost --port=5000
 
