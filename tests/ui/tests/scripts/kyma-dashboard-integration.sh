@@ -10,7 +10,8 @@ sudo apt-get update -y
 sudo apt-get install -y gettext-base
 
 function deploy_k3d_kyma (){
-curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | bash
+curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh > install.sh
+sudo ./install.sh
 curl -Lo kyma https://storage.googleapis.com/kyma-cli-unstable/kyma-linux
 chmod +x ./kyma
 
