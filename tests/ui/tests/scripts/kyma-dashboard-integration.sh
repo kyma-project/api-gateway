@@ -14,7 +14,7 @@ curl -Lo kyma https://storage.googleapis.com/kyma-cli-unstable/kyma-linux
 chmod +x ./kyma
 
 echo "Provisioning k3d cluster for Kyma"
-./kyma provision k3d --ci
+sudo ./kyma provision k3d --ci
 
 ./kyma deploy
 
