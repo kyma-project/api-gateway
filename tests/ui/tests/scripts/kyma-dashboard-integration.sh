@@ -5,6 +5,7 @@ export CYPRESS_DOMAIN=http://localhost:3001
 export NO_COLOR=1
 export DASHBOARD_IMAGE="europe-docker.pkg.dev/kyma-project/prod/kyma-dashboard-local-prod:latest"
 export TAG="test-dev"
+export SCOPE=namespace
 
 sudo apt-get update -y
 sudo apt-get install -y gettext-base
