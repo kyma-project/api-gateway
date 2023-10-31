@@ -16,6 +16,7 @@ chmod +x ./kyma
 echo "Provisioning k3d cluster for Kyma"
 sudo ./kyma provision k3d --ci
 
+export KUBECONFIG=$(k3d kubeconfig merge kyma)
 ./kyma deploy
 
 ./kyma alpha deploy
