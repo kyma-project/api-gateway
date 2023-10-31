@@ -1,0 +1,38 @@
+en:
+  accessStrategies: Access Strategies
+  accessStrategies.config: Config
+  accessStrategies.handler: Handler
+  accessStrategies.handlers: Handlers
+  accessStrategies.jwks_urls: JWKS URLs
+  accessStrategies.trusted_issuers: Trusted Issuers
+  accessStrategies.required_scope: Required Scope
+  accessStrategies.introspection_url: Introspection URL
+  accessStrategies.introspection_request_headers: Introspection Request Headers
+  accessStrategies.token_from: Token From
+  gateway: Gateway
+  host: Host
+  inputInfo.gateway: Gateway structure, '{GATEWAY}.{NAMESPACE}.svc.cluster.local'
+  inputInfo.path: "Path can contain alphanumeric characters and '/', '.', '*', '?', '!', '-', '(', and ')'."
+  inputInfo.jwks_urls: "JWKS URLs must start with 'https://' or 'file://'"
+  inputInfo.trusted_issuers: "Trusted Issuers must start with 'https://' or 'file://'"
+  inputInfo.introspection_url: "URL endpoint used for validating the Bearer token. Should start with 'http://' or 'https://'"
+  inputInfo.introspection_request_headers: "Headers sent alongside the introspection request"
+  inputInfo.token_from: "Defines where Ory Oathkeeper should look for access token"
+  inputInfo.timeout: "Timeout for HTTP requests in seconds. The timeout can be configured for a maximum of 3900 seconds (65 minutes)."
+  mutators: Mutators
+  mutators.config: Config
+  mutators.handlers: Handlers
+  path: Path
+  rules: Rules
+  rules.methods: Methods
+  rules.path: Path
+  service: Service
+  service.name: Name
+  service.port: Port
+  service-name: Service Name
+  status: Status
+  general: General
+  timeout: HTTP Request Timeout
+  details.timeout: HTTP Request Timeout (seconds)
+  virtualService: Virtual Service
+  alert.spec.host: Host can not be a wildcard, replace * with subdomain name
