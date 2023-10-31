@@ -38,6 +38,7 @@ jobs:
           wget -q -O - https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | sudo bash
           ./tests/ui/tests/scripts/kyma-dashboard-integration.sh
       - uses: actions/upload-artifact@v3
+        if: ${{ always() }}
         name: Export Cypress output
         with:
           name: tests/ui/tests/cypress
