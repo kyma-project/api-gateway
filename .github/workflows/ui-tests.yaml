@@ -34,4 +34,6 @@ jobs:
           go-version-file: 'go.mod'
       - name: Run tests
         run: |
+          sudo echo "127.0.0.1 local.kyma.dev" | sudo tee -a /etc/hosts
+          wget -q -O - https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | sudo bash
           ./tests/ui/tests/scripts/kyma-dashboard-integration.sh
