@@ -95,7 +95,7 @@ generate-upgrade-test-manifest: manifests kustomize
 	$(KUSTOMIZE) build config/default -o tests/integration/testsuites/upgrade/manifests/upgrade-test-generated-operator-manifest.yaml
 
 .PHONY: deploy-latest-release
-deploy-latest-release:
+deploy-latest-release: create-namespace
 	./tests/integration/scripts/deploy-latest-release-to-cluster.sh $(TARGET_BRANCH)
 
 # Generate code
@@ -193,8 +193,12 @@ install: manifests kustomize
 uninstall: manifests kustomize ## Uninstall CRDs from the K8s cluster specified in ~/.kube/config. Call with ignore-not-found=true to ignore resource not found errors during deletion.
 	$(KUSTOMIZE) build config/crd | kubectl delete --ignore-not-found=$(ignore-not-found) -f -
 
+.PHONY: create-namespace
+create-namespace:
+	kubectl create namespace kyma-system --dry-run=client -o yaml | kubectl apply -f -
+
 .PHONY: deploy
-deploy: manifests kustomize ## Deploy controller to the K8s cluster specified in ~/.kube/config.
+deploy: manifests kustomize create-namespace ## Deploy controller to the K8s cluster specified in ~/.kube/config.
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
 	$(KUSTOMIZE) build config/default | kubectl apply -f -
 
