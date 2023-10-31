@@ -67,7 +67,7 @@ make docker-build
   </details>
 </div>
 
-6. Deploy API Gateway Operator in the `kyma-system` Namespace.
+6. Create the `kyma-system` Namespace and deploy API Gateway Operator in it.
 
 ```bash
 make deploy
