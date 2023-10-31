@@ -69,9 +69,9 @@ sleep 10
 }
 
 echo 'Waiting for deploy_k3d_kyma and build_and_run_busola'
-wait -n
+deploy_k3d_kyma
 echo "First process finished"
-wait -n
+build_and_run_busola
 echo "Second process finished"
 
 cd tests
