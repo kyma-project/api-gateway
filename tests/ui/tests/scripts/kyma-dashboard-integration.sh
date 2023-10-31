@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -e
+set -ex
 export CYPRESS_DOMAIN=http://localhost:3001
 export NO_COLOR=1
 export REPO_IMG_DEV="k3d-registry.localhost:5000/kyma-dashboard"
