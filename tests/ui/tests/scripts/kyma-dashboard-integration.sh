@@ -3,7 +3,7 @@
 set -ex
 export CYPRESS_DOMAIN=http://localhost:3001
 export NO_COLOR=1
-export REPO_IMG_DEV="k3d-registry.localhost:5000/kyma-dashboard"
+export DASHBOARD_IMAGE="europe-docker.pkg.dev/kyma-project/prod/kyma-dashboard-local-prod:latest"
 export TAG="test-dev"
 
 sudo apt-get update -y
@@ -58,11 +58,8 @@ function build_and_run_busola() {
 echo "Create k3d registry..."
 k3d registry create registry.localhost --port=5000
 
-echo "Make release-dev..."
-make release-dev
-
 echo "Running kyma-dashboard..."
-docker run -d --rm --net=host --pid=host --name kyma-dashboard "$REPO_IMG_DEV-local-dev:$TAG"
+docker run -d --rm --net=host --pid=host --name kyma-dashboard "$DASHBOARD_IMAGE"
 
 echo "waiting for server to be up..."
 while [[ "$(curl -s -o /dev/null -w ''%{http_code}'' "$CYPRESS_DOMAIN")" != "200" ]]; do sleep 5; done
