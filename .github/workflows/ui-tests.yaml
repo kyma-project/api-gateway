@@ -1,0 +1,40 @@
+# Jobs defined in this file are responsible for things that do not require container image
+# but still relevant to the codebase such as unit tests, linting etc
+
+name: Pull Request
+
+on:
+  pull_request:
+    types: [ synchronize, opened, reopened, ready_for_review ]
+    paths-ignore:
+      - 'docs/**'
+      - '**/*.md'
+      - 'tests/performance/**'
+      - 'OWNERS'
+      - 'CODEOWNERS'
+      - 'sec-scanners-config.yaml'
+      - './github/dependabot.yml'
+    branches:
+      - "main"
+      - 'release-**'
+
+permissions:
+  contents: read
+
+jobs:
+  run-ui-tests:
+    name: Run UI tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@v4
+        with:
+          go-version-file: 'go.mod'
+      - name: Run tests
+        run: |
+          PULL_PULL_SHA=${{ github.event.pull_request.head.sha}} \
+          PULL_BASE_SHA=${{ github.event.pull_request.base.sha}} \
+          PULL_NUMBER=${{ github.event.number }} \
+          ./tests/ui/tests/scripts/kyma-dashboard-integration.sh
