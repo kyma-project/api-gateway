@@ -51,7 +51,7 @@ kubectl apply -f https://raw.githubusercontent.com/gardener/cert-management/mast
 echo "Apply OAuth2 Hydra CRD"
 kubectl apply -f https://raw.githubusercontent.com/ory/hydra-maester/master/config/crd/bases/hydra.ory.sh_oauth2clients.yaml
 
-k3d kubeconfig get kyma > tests/fixtures/kubeconfig.yaml
+cp $KUBECONFIG tests/fixtures/kubeconfig.yaml
 }
 
 function build_and_run_busola() {
