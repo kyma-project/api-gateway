@@ -135,6 +135,11 @@
             token_from:
               type: map
           children:
+            - simple: true
+              widget: Alert
+              severity: warning
+              alert: '"alert.spec.jwks_url_http"'
+              visibility: '$reduce($item.config.jwks_urls,function($i, $j){$i or $substringBefore($j,"://")="http"},false)'
             - path: jwks_urls
               name: accessStrategies.jwks_urls
               inputInfo: inputInfo.jwks_urls
@@ -144,6 +149,11 @@
               children:
                 - path: '[]'
                   simple: true
+            - simple: true
+              widget: Alert
+              severity: warning
+              alert: '"alert.spec.trusted_issuers_http"'
+              visibility: '$reduce($item.config.trusted_issuers,function($i, $j){$i or $substringBefore($j,"://")="http"},false)'
             - path: trusted_issuers
               name: accessStrategies.trusted_issuers
               inputInfo: inputInfo.trusted_issuers
