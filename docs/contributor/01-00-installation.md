@@ -22,7 +22,7 @@
 git clone https://github.com/kyma-project/api-gateway.git && cd api-gateway
 ```
 
-1. Set the API Gateway Operator image name.
+2. Set the API Gateway Operator image name.
 
 ```bash
 export IMG=api-gateway-operator:0.0.1
@@ -67,7 +67,7 @@ make docker-build
   </details>
 </div>
 
-6. Deploy API Gateway Operator.
+6. Create the `kyma-system` Namespace and deploy API Gateway Operator in it.
 
 ```bash
 make deploy
