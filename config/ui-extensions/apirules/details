@@ -18,12 +18,12 @@ body:
     widget: Alert
     severity: warning
     source: '"alert.spec.jwks_url_http"'
-    visibility: '$reduce($root.spec.rules.accessStrategies.config.jwks_urls,function($i, $j){$i or $substringBefore($j,"://")="http"},false)'
+    visibility: '$count(spec.rules.accessStrategies.config.jwks_urls)>0 and $reduce(spec.rules.accessStrategies.config.jwks_urls,function($i, $j){$i or $substringBefore($j,"://")="http"},false)'
   - simple: true
     widget: Alert
     severity: warning
     source: '"alert.spec.trusted_issuers_http"'
-    visibility: '$reduce($item.config.trusted_issuers,function($i, $j){$i or $substringBefore($j,"://")="http"},false)'
+    visibility: '$count(spec.rules.accessStrategies.config.trusted_issuers)>0 and $reduce(spec.rules.accessStrategies.config.trusted_issuers,function($i, $j){$i or $substringBefore($j,"://")="http"},false)'
   - name: general
     source: spec
     widget: Panel
