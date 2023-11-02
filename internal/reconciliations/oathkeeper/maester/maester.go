@@ -9,21 +9,25 @@ import (
 )
 
 func ReconcileMaester(ctx context.Context, k8sClient client.Client, apiGatewayCR v1alpha1.APIGateway) error {
-	err := errors.Join(
+	if apiGatewayCR.IsInDeletion() {
+		return nil
+	}
+	return errors.Join(
 		reconcileOryOathkeeperPeerAuthentication(ctx, k8sClient, apiGatewayCR),
 		reconcileOryOathkeeperMaesterServiceAccount(ctx, k8sClient, apiGatewayCR),
+		reconcileOryOathkeeperMaesterClusterRole(ctx, k8sClient, apiGatewayCR),
+		reconcileOryOathkeeperMaesterClusterRoleBinding(ctx, k8sClient, apiGatewayCR),
 	)
-	var clusterRoleErr error
+}
+
+func ReconcileMaesterDeletion(ctx context.Context, k8sClient client.Client, apiGatewayCR v1alpha1.APIGateway) error {
 	if !apiGatewayCR.IsInDeletion() {
-		clusterRoleErr = errors.Join(
-			reconcileOryOathkeeperMaesterClusterRole(ctx, k8sClient, apiGatewayCR),
-			reconcileOryOathkeeperMaesterClusterRoleBinding(ctx, k8sClient, apiGatewayCR),
-		)
-	} else {
-		clusterRoleErr = errors.Join(
-			reconcileOryOathkeeperMaesterClusterRoleBinding(ctx, k8sClient, apiGatewayCR),
-			reconcileOryOathkeeperMaesterClusterRole(ctx, k8sClient, apiGatewayCR),
-		)
+		return nil
 	}
-	return errors.Join(err, clusterRoleErr)
+	return errors.Join(
+		reconcileOryOathkeeperPeerAuthentication(ctx, k8sClient, apiGatewayCR),
+		reconcileOryOathkeeperMaesterServiceAccount(ctx, k8sClient, apiGatewayCR),
+		reconcileOryOathkeeperMaesterClusterRoleBinding(ctx, k8sClient, apiGatewayCR),
+		reconcileOryOathkeeperMaesterClusterRole(ctx, k8sClient, apiGatewayCR),
+	)
 }
