@@ -13,8 +13,8 @@ en:
   host: Host
   inputInfo.gateway: Gateway structure, '{GATEWAY}.{NAMESPACE}.svc.cluster.local'
   inputInfo.path: "Path can contain alphanumeric characters and '/', '.', '*', '?', '!', '-', '(', and ')'."
-  inputInfo.jwks_urls: "JWKS URLs must start with 'https://', 'http://' or 'file://'"
-  inputInfo.trusted_issuers: "Trusted Issuers must start with 'https://', 'http://' or 'file://'"
+  inputInfo.jwks_urls: "JWKS URLs must start with 'https://', 'http://' or 'file://'. HTTP protocol is not recommended."
+  inputInfo.trusted_issuers: "Trusted Issuers must start with 'https://', 'http://' or 'file://'. HTTP protocol is not recommended."
   inputInfo.introspection_url: "URL endpoint used for validating the Bearer token. Should start with 'http://' or 'https://'"
   inputInfo.introspection_request_headers: "Headers sent alongside the introspection request"
   inputInfo.token_from: "Defines where Ory Oathkeeper should look for access token"
