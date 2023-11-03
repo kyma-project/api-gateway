@@ -24,6 +24,7 @@ import (
 	"github.com/kyma-project/api-gateway/controllers"
 	"github.com/kyma-project/api-gateway/internal/dependencies"
 	"github.com/kyma-project/api-gateway/internal/processing/default_domain"
+	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"time"
 
@@ -300,10 +301,17 @@ func (r *APIRuleReconciler) updateStatus(ctx context.Context, api *gatewayv1beta
 	api.Status.AuthorizationPolicyStatus = status.AuthorizationPolicyStatus
 
 	r.Log.Info("Updating ApiRule status", "status", api.Status)
-	err = r.Client.Status().Update(ctx, api)
+	err = retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		err = r.Client.Status().Update(ctx, api)
+		if err != nil {
+			return err
+		}
+		return nil
+	})
 	if err != nil {
 		return nil, err
 	}
+
 	return api, nil
 }
 
