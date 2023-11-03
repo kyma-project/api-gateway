@@ -286,6 +286,11 @@ func retryReconcile(err error) (ctrl.Result, error) {
 }
 
 func (r *APIRuleReconciler) updateStatus(ctx context.Context, api *gatewayv1beta1.APIRule, status processing.ReconciliationStatus) (*gatewayv1beta1.APIRule, error) {
+	api, err := r.getLatestApiRule(ctx, api)
+	if err != nil {
+		return nil, err
+	}
+
 	api.Status.ObservedGeneration = api.Generation
 	api.Status.LastProcessedTime = &v1.Time{Time: time.Now()}
 	api.Status.APIRuleStatus = status.ApiRuleStatus
@@ -295,9 +300,25 @@ func (r *APIRuleReconciler) updateStatus(ctx context.Context, api *gatewayv1beta
 	api.Status.AuthorizationPolicyStatus = status.AuthorizationPolicyStatus
 
 	r.Log.Info("Updating ApiRule status", "status", api.Status)
-	err := r.Client.Status().Update(ctx, api)
+	err = r.Client.Status().Update(ctx, api)
 	if err != nil {
 		return nil, err
 	}
 	return api, nil
+}
+
+func (r *APIRuleReconciler) getLatestApiRule(ctx context.Context, api *gatewayv1beta1.APIRule) (*gatewayv1beta1.APIRule, error) {
+	apiRule := &gatewayv1beta1.APIRule{}
+	err := r.Client.Get(ctx, types.NamespacedName{Name: api.Name, Namespace: api.Namespace}, apiRule)
+	if err != nil {
+		if apierrs.IsNotFound(err) {
+			r.Log.Error(err, "ApiRule not found")
+			return nil, err
+		}
+
+		r.Log.Error(err, "Error getting ApiRule")
+		return nil, err
+	}
+
+	return apiRule, nil
 }
