@@ -1,0 +1,9 @@
+resource:
+  kind: APIRule
+  group: gateway.kyma-project.io
+  version: v1beta1
+name: API Rules
+category: Discovery and Network
+scope: namespace
+description: '{{[APIRule](https://kyma-project.io/docs/kyma/latest/05-technical-reference/00-custom-resources/apix-01-apirule/#documentation-content)}} allows for exposing a service externally.'
+urlPath: apirules
