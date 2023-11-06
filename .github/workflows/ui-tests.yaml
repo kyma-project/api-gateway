@@ -41,5 +41,5 @@ jobs:
         if: ${{ always() }}
         name: Export Cypress output
         with:
-          name: tests/ui/tests/cypress
+          name: tests/ui/tests/cypress/
           path: cypress
