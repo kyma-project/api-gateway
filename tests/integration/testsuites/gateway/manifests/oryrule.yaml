@@ -1,7 +1,7 @@
 apiVersion: oathkeeper.ory.sh/v1alpha1
 kind: Rule
 metadata:
-  name: ory-rule
+  name: "{{.Name}}"
   namespace: "{{.Namespace}}"
 spec:
   match:
