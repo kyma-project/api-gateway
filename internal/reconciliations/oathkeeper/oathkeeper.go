@@ -22,7 +22,6 @@ func ReconcileOathkeeper(ctx context.Context, k8sClient client.Client, apiGatewa
 		reconcileOryOathkeeperServices(ctx, k8sClient, *apiGatewayCR),
 		cronjob.ReconcileCronjob(ctx, k8sClient, *apiGatewayCR),
 		reconcileOathkeeperDeployment(ctx, k8sClient, *apiGatewayCR),
-		maester.ReconcileMaesterDeletion(ctx, k8sClient, *apiGatewayCR),
 	)
 	if err != nil {
 		return controllers.ErrorStatus(err, "Oathkeeper did not reconcile successfully")
