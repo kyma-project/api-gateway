@@ -141,7 +141,8 @@ context('Test API Rules in the Function details view', () => {
     cy.contains(API_RULE_PATH).should('not.exist');
 
     cy.contains('allow').should('not.exist');
-    cy.contains('read').should('exist');
+    // Fail on purpose with not exist
+    cy.contains('read').should('not.exist');
   });
 
   it('Edit the API Rule', () => {
