@@ -1,19 +1,24 @@
 package gateway
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
 	"log"
+	"os"
 	"path"
 
 	"github.com/avast/retry-go/v4"
 	"github.com/cucumber/godog"
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/client"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/helpers"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/hooks"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/manifestprocessor"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/resource"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
+	oryv1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
+	"gopkg.in/yaml.v2"
 	appsv1 "k8s.io/api/apps/v1"
 	v2 "k8s.io/api/autoscaling/v2"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
@@ -21,6 +26,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/dynamic"
 )
 
@@ -209,49 +215,36 @@ func (c *scenario) thereIsAVirtualService(name, gateway string) error {
 }
 
 func (c *scenario) thereIsAnORYRule(name string) error {
+	// switch to typed k8s client because of flaky issue dynamic client not abled to find ORY Rule CRD
+	k8sClient := client.GetK8sClient()
 	manifestDir := path.Dir(manifestsPath)
-	oryRule, err := manifestprocessor.ParseFromFileWithTemplate("oryrule.yaml", manifestDir, struct {
-		Name      string
-		Namespace string
-	}{
-		Name:      name,
-		Namespace: c.namespace,
-	})
+	apiGatewayCRYaml, err := os.ReadFile(path.Join(manifestDir, "oryrule.yaml"))
 	if err != nil {
-		return fmt.Errorf("failed to process oryrule.yaml, details %s", err.Error())
+		return err
 	}
-	_, err = c.resourceManager.CreateResources(c.k8sClient, oryRule...)
+	resource := bytes.NewBuffer(apiGatewayCRYaml)
+	var oryRule oryv1alpha1.Rule
+	err = yaml.Unmarshal(resource.Bytes(), &oryRule)
 	if err != nil {
-		return fmt.Errorf("could not create ory rule: %s, details %s", name, err.Error())
+		return err
 	}
-
-	return nil
+	oryRule.Name = name
+	oryRule.Namespace = c.namespace
+	return retry.Do(func() error {
+		err := k8sClient.Create(context.Background(), &oryRule)
+		if err != nil {
+			return fmt.Errorf("can not create ory rule")
+		}
+		err = k8sClient.Get(context.Background(), types.NamespacedName{
+			Namespace: c.namespace,
+			Name:      name,
+		}, &oryRule)
+		if err != nil {
+			return fmt.Errorf("can not get created ory rule")
+		}
+		return nil
+	}, testcontext.GetRetryOpts()...)
 }
-
-// func (c *scenario) thereIsAnORYRule(name string) error {
-// 	// switch to typed k8s client because of flaky issue dynamic client not abled to find ORY Rule CRD
-// 	k8sClient := client.GetK8sClient()
-// 	manifestDir := path.Dir(manifestsPath)
-// 	apiGatewayCRYaml, err := os.ReadFile(path.Join(manifestDir, "oryrule.yaml"))
-// 	if err != nil {
-// 		return err
-// 	}
-// 	resource := bytes.NewBuffer(apiGatewayCRYaml)
-// 	var oryRule oryv1alpha1.Rule
-// 	err = yaml.Unmarshal(resource.Bytes(), &oryRule)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	oryRule.Name = name
-// 	oryRule.Namespace = c.namespace
-// 	return retry.Do(func() error {
-// 		err := k8sClient.Create(context.Background(), &oryRule)
-// 		if err != nil {
-// 			return fmt.Errorf("can not create ory rule")
-// 		}
-// 		return nil
-// 	}, testcontext.GetRetryOpts()...)
-// }
 
 func (c *scenario) deleteAPIRule(name string) error {
 	res := schema.GroupVersionResource{Group: "gateway.kyma-project.io", Version: "v1beta1", Resource: "apirules"}
