@@ -208,7 +208,6 @@ func createCommonTestResources(k8sClient client.Client) {
 }
 
 func createFakeClient(objects ...client.Object) client.Client {
-
 	crds := []apiextensionsv1.CustomResourceDefinition{
 		{
 			ObjectMeta: metav1.ObjectMeta{

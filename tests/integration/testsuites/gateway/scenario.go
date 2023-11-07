@@ -26,7 +26,6 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/dynamic"
 )
 
@@ -47,8 +46,8 @@ func initScenario(ctx *godog.ScenarioContext, ts *testsuite) {
 		log.Fatalf("could not initialize custom domain endpoint err=%s", err)
 	}
 
-	ctx.Before(hooks.DeleteBlockingResourcesScenarioHook)
 	ctx.Before(hooks.ApplyApiGatewayCrScenarioHook)
+	ctx.After(hooks.DeleteBlockingResourcesScenarioHook)
 	ctx.After(hooks.ApiGatewayCrTearDownScenarioHook)
 
 	ctx.Step(`^APIGateway CR "([^"]*)" "([^"]*)" present$`, scenario.thereIsAnAPIGatewayCR)
@@ -234,13 +233,6 @@ func (c *scenario) thereIsAnORYRule(name string) error {
 		err := k8sClient.Create(context.Background(), &oryRule)
 		if err != nil {
 			return fmt.Errorf("can not create ory rule")
-		}
-		err = k8sClient.Get(context.Background(), types.NamespacedName{
-			Namespace: c.namespace,
-			Name:      name,
-		}, &oryRule)
-		if err != nil {
-			return fmt.Errorf("can not get created ory rule")
 		}
 		return nil
 	}, testcontext.GetRetryOpts()...)

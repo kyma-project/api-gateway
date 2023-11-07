@@ -4,11 +4,13 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"text/template"
+
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/util/yaml"
+	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-	"text/template"
 )
 
 const (
@@ -72,7 +74,7 @@ func CreateOrUpdateResource(ctx context.Context, k8sClient client.Client, resour
 	spec, specExist := resource.Object["spec"]
 	data, dataExist := resource.Object["data"]
 
-	_, err := controllerutil.CreateOrUpdate(ctx, k8sClient, &resource, func() error {
+	res, err := controllerutil.CreateOrUpdate(ctx, k8sClient, &resource, func() error {
 		annotations := map[string]string{
 			disclaimerKey: disclaimerValue,
 		}
@@ -89,5 +91,6 @@ func CreateOrUpdateResource(ctx context.Context, k8sClient client.Client, resour
 		return nil
 	})
 
+	ctrl.Log.Info("Create/Update Resource", "name", resource.GetName(), "namespace", resource.GetNamespace(), "result", res)
 	return err
 }
