@@ -4,9 +4,7 @@
   "scripts": {
     "start": "$(npm bin)/cypress open",
     "start:local": "CYPRESS_LOCAL_DEV=true $(npm bin)/cypress open",
-    "test:cluster": "cypress run --spec \"tests/cluster/*.spec.js\" --browser chromium",
     "test:namespace": "cypress run --spec \"tests/namespace/*.spec.js\" --browser chromium",
-    "test:cluster:local": "CYPRESS_LOCAL_DEV=true cypress run --spec \"tests/cluster/*.spec.js,tests/extensibility/*.spec.js\" --browser chrome",
     "test:namespace:local": "CYPRESS_LOCAL_DEV=true cypress run --spec \"tests/namespace/*.spec.js\" --browser chrome",
     "test:e2e": "$(npm bin)/cypress run --browser chromium",
     "test:local": "CYPRESS_LOCAL_DEV=true $(npm bin)/cypress run --browser chrome",
