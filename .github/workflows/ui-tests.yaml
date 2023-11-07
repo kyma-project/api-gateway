@@ -6,14 +6,10 @@ name: Pull Request
 on:
   pull_request:
     types: [ synchronize, opened, reopened, ready_for_review ]
-    paths-ignore:
-      - 'docs/**'
-      - '**/*.md'
-      - 'tests/performance/**'
-      - 'OWNERS'
-      - 'CODEOWNERS'
-      - 'sec-scanners-config.yaml'
-      - './github/dependabot.yml'
+    paths:
+      - 'config/ui-extensions/**'
+      - 'tests/ui/**'
+      - '.github/workflows/ui-tests.yaml'
     branches:
       - "main"
       - 'release-**'
@@ -24,6 +20,7 @@ permissions:
 jobs:
   run-ui-tests:
     name: Run UI tests
+    if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
