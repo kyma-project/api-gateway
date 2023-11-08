@@ -61,7 +61,7 @@ k3d registry create registry.localhost --port=5000
 echo "Running kyma-dashboard..."
 docker run -d --rm --net=host --pid=host --name kyma-dashboard "$DASHBOARD_IMAGE"
 
-echo "waiting for server to be up..."
+echo "Waiting for the server to be up..."
 while [[ "$(curl -s -o /dev/null -w ''%{http_code}'' "$CYPRESS_DOMAIN")" != "200" ]]; do sleep 5; done
 sleep 10
 }
