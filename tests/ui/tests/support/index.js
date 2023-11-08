@@ -3,9 +3,7 @@ import './commands';
 import './login-commands';
 import './navigate-to';
 import './paste-to-monaco';
-import './inspect-list';
 import './views/api-rules-view';
 import './views/functions-view';
 import './loadFile';
-import './mockConfig';
-import './check-extension';
+

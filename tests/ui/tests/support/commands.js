@@ -31,10 +31,6 @@ Cypress.skipAfterFail = ({ skipAllSuits = false } = {}) => {
   });
 };
 
-Cypress.Commands.add('filterWithNoValue', { prevSubject: true }, $elements =>
-  $elements.filter((_, e) => !e.value),
-);
-
 Cypress.Commands.add('goToNamespaceDetails', () => {
   // Go to the details of namespace
   cy.getLeftNav()
@@ -98,33 +94,3 @@ function paste(subject, { pastePayload }) {
 Cypress.Commands.add('getLeftNav', () => {
   return cy.get('aside.sidebar');
 });
-
-Cypress.Commands.add('deleteInDetails', () => {
-  cy.contains('button', 'Delete').click();
-
-  cy.get('[data-testid="delete-confirmation"]').click();
-
-  cy.contains(/deleted/).should('be.visible');
-});
-
-Cypress.Commands.add(
-  'deleteFromGenericList',
-  (searchTerm, confirmationEnabled = true, deletedVisible = true) => {
-    cy.get('[aria-label="open-search"]').click();
-
-    cy.get('[placeholder="Search"]').type(searchTerm);
-
-    cy.contains(searchTerm).should('be.visible');
-
-    cy.get('[aria-label="Delete"]').click();
-
-    if (confirmationEnabled) {
-      cy.contains('button', 'Delete').click();
-      if (deletedVisible) {
-        cy.contains(/deleted/).should('be.visible');
-      }
-
-      cy.contains(searchTerm).should('not.exist');
-    }
-  },
-);
