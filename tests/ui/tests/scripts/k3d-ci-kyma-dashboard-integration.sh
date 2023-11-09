@@ -44,7 +44,7 @@ sleep 10
 }
 
 echo 'Waiting for deploy_k3d_kyma and build_and_run_busola'
-deploy_k3d_kyma
+deploy_k3d
 echo "First process finished"
 build_and_run_busola
 echo "Second process finished"
