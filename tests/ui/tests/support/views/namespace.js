@@ -29,3 +29,24 @@ Cypress.Commands.add('createNamespace', () => {
 
     return cy.end();
 });
+
+Cypress.Commands.add('deleteNamespace', () => {
+    cy.getLeftNav()
+        .contains('Namespaces', { includeShadowDom: true })
+        .click();
+
+    cy.get('[role="search"] [aria-label="search-input"]').type(
+        Cypress.env('NAMESPACE_NAME'),
+        {
+            force: true,
+        },
+    ); // use force to skip clicking (the table could re-render between the click and the typing)
+
+    cy.get('tbody tr [aria-label="Delete"]').click({ force: true });
+
+    cy.contains('button', 'Delete')
+        .filter(':visible', { log: false })
+        .click({ force: true });
+
+    return cy.end();
+});

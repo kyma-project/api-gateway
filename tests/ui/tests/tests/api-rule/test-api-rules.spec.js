@@ -21,6 +21,11 @@ context('Test API Rules in the Function details view', () => {
     cy.createSimpleFunction(FUNCTION_NAME);
   });
 
+  after(() => {
+    cy.loginAndSelectCluster();
+    cy.deleteNamespace();
+  });
+
   it('Create an API Rule for the Function', () => {
     cy.navigateTo('Discovery and Network', 'API Rules');
 

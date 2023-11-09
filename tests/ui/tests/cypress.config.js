@@ -27,8 +27,7 @@ module.exports = defineConfig({
       return require('./plugins')(on, config);
     },
     specPattern: [
-      'tests/api-rule/test-api-rules.spec.js',
-      'tests/api-rule/z-run-after.spec.js',
+      'tests/**/*.spec.js',
     ],
     supportFile: 'support/index.js',
   },
