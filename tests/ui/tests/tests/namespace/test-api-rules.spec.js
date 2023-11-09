@@ -16,20 +16,9 @@ context('Test API Rules in the Function details view', () => {
 
   before(() => {
     cy.loginAndSelectCluster();
-    cy.goToNamespaceDetails();
-  });
-
-  it('Go to details of the simple Function', () => {
-    cy.navigateTo('Workloads', 'Functions');
-
-    cy.contains('a', FUNCTION_NAME)
-      .filter(':visible', { log: false })
-      .first()
-      .click({ force: true });
-
-    cy.get('[role="status"]').contains('span', /running/i, {
-      timeout: 60 * 300,
-    });
+    cy.createNamespace();
+    // TODO: Replace this with only creating a service
+    cy.createSimpleFunction(FUNCTION_NAME);
   });
 
   it('Create an API Rule for the Function', () => {

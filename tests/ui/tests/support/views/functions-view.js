@@ -34,33 +34,3 @@ Cypress.Commands.add('createSimpleFunction', functionName => {
     .contains('button', 'Create')
     .click();
 });
-
-Cypress.Commands.add(
-  'createFunction',
-  (functionName, functionPath, dependenciesPath) => {
-    cy.navigateToFunctionCreate(functionName);
-
-    //paste code to the Source Tab code editor
-    cy.get('[aria-label="expand Source"]')
-      .readFile(functionPath)
-      .then(body => {
-        cy.pasteToMonaco(body);
-      });
-
-    //open Dependencies Tab and paste the dependencies to the code editor
-    cy.get('[aria-label="expand Dependencies"]')
-      .click()
-      .readFile(dependenciesPath)
-      .then(body => {
-        cy.pasteToMonaco(JSON.stringify(body), 1);
-      });
-
-    // click Create button
-    cy.get('[role=dialog]')
-      .contains('button', 'Create')
-      .click();
-
-    //check whether Function has been created
-    cy.contains('button', 'Edit');
-  },
-);

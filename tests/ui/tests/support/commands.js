@@ -31,19 +31,6 @@ Cypress.skipAfterFail = ({ skipAllSuits = false } = {}) => {
   });
 };
 
-Cypress.Commands.add('goToNamespaceDetails', () => {
-  // Go to the details of namespace
-  cy.getLeftNav()
-    .contains('Namespaces', { includeShadowDom: true })
-    .click();
-
-  cy.get('[role=row]')
-    .contains('a', Cypress.env('NAMESPACE_NAME'))
-    .click();
-
-  return cy.end();
-});
-
 Cypress.Commands.add('clearInput', { prevSubject: true }, element => {
   return cy
     .wrap(element)

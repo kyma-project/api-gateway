@@ -27,8 +27,6 @@ module.exports = defineConfig({
       return require('./plugins')(on, config);
     },
     specPattern: [
-      'tests/namespace/a-run-before.spec.js',
-      'tests/namespace/run-prepare-functions.spec.js',
       'tests/namespace/test-api-rules.spec.js',
       'tests/namespace/z-run-after.spec.js',
     ],
