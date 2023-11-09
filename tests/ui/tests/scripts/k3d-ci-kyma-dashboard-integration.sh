@@ -9,34 +9,15 @@ export SCOPE=namespace
 sudo apt-get update -y
 sudo apt-get install -y gettext-base
 
-function deploy_k3d_kyma (){
-curl -Lo kyma https://storage.googleapis.com/kyma-cli-unstable/kyma-linux
-chmod +x ./kyma
-
-echo "Provisioning k3d cluster for Kyma"
-sudo ./kyma provision k3d --ci
+function deploy_k3d (){
+echo "Provisioning k3d cluster"
+sudo k3d cluster create --name kyma --port 80:80@loadbalancer --port 443:443@loadbalancer --k3s-arg "--disable=traefik@server:0"
 
 export KUBECONFIG=$(k3d kubeconfig merge kyma)
-./kyma deploy
-
-./kyma alpha deploy
-
-echo "Apply and enable keda module"
-kubectl apply -f https://github.com/kyma-project/keda-manager/releases/latest/download/moduletemplate.yaml
-
-echo "Apply and enable serverless module"
-kubectl apply -f https://github.com/kyma-project/serverless-manager/releases/latest/download/moduletemplate.yaml
-./kyma alpha enable module serverless --channel fast
 
 echo "Apply api-gateway"
 kubectl apply -f https://github.com/kyma-project/api-gateway/releases/latest/download/api-gateway-manager.yaml
 kubectl apply -f https://github.com/kyma-project/api-gateway/releases/latest/download/apigateway-default-cr.yaml
-
-if [[ ${JOB_NAME} =~ .*smoke.* ]]; then
-    echo "Apply and enable telemetry module"
-    kubectl apply -f https://github.com/kyma-project/telemetry-manager/releases/latest/download/moduletemplate.yaml
-    ./kyma alpha enable module telemetry --channel fast
-fi
 
 echo "Apply gardener resources"
 echo "Certificates"
@@ -47,9 +28,6 @@ echo "DNS Entries"
 kubectl apply -f https://raw.githubusercontent.com/gardener/external-dns-management/master/pkg/apis/dns/crds/dns.gardener.cloud_dnsentries.yaml
 echo "Issuers"
 kubectl apply -f https://raw.githubusercontent.com/gardener/cert-management/master/pkg/apis/cert/crds/cert.gardener.cloud_issuers.yaml
-
-echo "Apply OAuth2 Hydra CRD"
-kubectl apply -f https://raw.githubusercontent.com/ory/hydra-maester/master/config/crd/bases/hydra.ory.sh_oauth2clients.yaml
 
 cp $KUBECONFIG tests/ui/tests/fixtures/kubeconfig.yaml
 }
