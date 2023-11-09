@@ -4,12 +4,9 @@
   "scripts": {
     "start": "$(npm bin)/cypress open",
     "start:local": "CYPRESS_LOCAL_DEV=true $(npm bin)/cypress open",
-    "test:namespace": "cypress run --spec \"tests/namespace/*.spec.js\" --browser chromium",
-    "test:namespace:local": "CYPRESS_LOCAL_DEV=true cypress run --spec \"tests/namespace/*.spec.js\" --browser chrome",
-    "test:e2e": "$(npm bin)/cypress run --browser chromium",
-    "test:local": "CYPRESS_LOCAL_DEV=true $(npm bin)/cypress run --browser chrome",
-    "test:smoke-extensions": "$(npm bin)/cypress run --browser chromium -C cypress-smoke.js",
-    "run-docker": "docker run --rm -it -p 3001:3001 -e DOCKER_DESKTOP_CLUSTER=true --pid=host --name kyma-dashboard europe-docker.pkg.dev/kyma-project/prod/kyma-dashboard-local-prod:latest"
+    "test": "cypress run --browser chromium",
+    "test:local": "cypress run --browser chrome",
+    "start-dashboard": "docker run --rm -it -p 3001:3001 -e DOCKER_DESKTOP_CLUSTER=true --pid=host --name kyma-dashboard europe-docker.pkg.dev/kyma-project/prod/kyma-dashboard-local-prod:latest"
   },
   "devDependencies": {
     "cypress-file-upload": "^5.0.8",

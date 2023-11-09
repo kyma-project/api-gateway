@@ -4,7 +4,6 @@ set -ex
 export CYPRESS_DOMAIN=http://localhost:3001
 export DASHBOARD_IMAGE="europe-docker.pkg.dev/kyma-project/prod/kyma-dashboard-local-prod:latest"
 export TAG="test-dev"
-export SCOPE=namespace
 
 sudo apt-get update -y
 sudo apt-get install -y gettext-base
@@ -51,4 +50,4 @@ build_and_run_busola
 echo "Second process finished"
 
 cd tests/ui/tests
-npm ci && npm run "test:$SCOPE"
+npm ci && npm run "test"
