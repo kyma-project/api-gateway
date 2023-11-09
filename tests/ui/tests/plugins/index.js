@@ -16,14 +16,21 @@ module.exports = (on, config) => {
   config.env.STORAGE_CLASS_NAME = randomName;
   config.env.APP_NAME = randomName;
 
+  on('after:spec', (spec, results) => {
+    if (results && results.video) {
+      // Do we have failures for any retry attempts?
+      const failures = results.tests.some((test) =>
+          test.attempts.some((attempt) => attempt.state === 'failed')
+      )
+      if (!failures) {
+        // delete the video if the spec passed and no tests retried
+        fs.unlinkSync(results.video)
+      }
+    }
+  });
+
   on('task', {
-    removeFile(filePath) {
-      fs.unlinkSync(filePath);
-      return null;
-    },
-    listDownloads(downloadsDirectory) {
-      return fs.readdirSync(downloadsDirectory);
-    },
+
     // invoke setter cy.task('dynamicSharedStore', { name: 'cancelTests', value: true })
     // invoke getter cy.task('dynamicSharedStore', { name: 'cancelTests' })
     dynamicSharedStore(property) {
