@@ -6,19 +6,17 @@ function openSearchWithSlashShortcut() {
 }
 
 const random = Math.floor(Math.random() * 9999) + 1000;
-const FUNCTION_NAME = 'test-function';
+const serviceName = 'test-service';
 const API_RULE_NAME = `test-api-rule-${random}`;
 const API_RULE_PATH = '/test-path';
 const API_RULE_DEFAULT_PATH = '/.*';
 
-context('Test API Rules in the Function details view', () => {
-  Cypress.skipAfterFail();
+context('Test API Rules', () => {
 
   before(() => {
     cy.loginAndSelectCluster();
     cy.createNamespace();
-    // TODO: Replace this with only creating a service
-    cy.createSimpleFunction(FUNCTION_NAME);
+    cy.createService(serviceName);
   });
 
   after(() => {
@@ -26,8 +24,11 @@ context('Test API Rules in the Function details view', () => {
     cy.deleteNamespace();
   });
 
-  it('Create an API Rule for the Function', () => {
-    cy.navigateTo('Discovery and Network', 'API Rules');
+  it('Create an API Rule for a service', () => {
+
+    cy.getLeftNav()
+        .contains('API Rules', { includeShadowDom: true })
+        .click();
 
     cy.contains('Create API Rule').click();
 
@@ -43,7 +44,7 @@ context('Test API Rules in the Function details view', () => {
     // Service
     cy.get('[aria-label="Choose Service"]:visible', { log: false })
       .first()
-      .type(FUNCTION_NAME);
+      .type(serviceName);
 
     cy.get('[aria-label="Choose Service"]:visible', { log: false })
       .first()

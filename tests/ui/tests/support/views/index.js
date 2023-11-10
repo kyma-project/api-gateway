@@ -1,3 +1,3 @@
 import './namespace';
-import './function';
+import './service';
 

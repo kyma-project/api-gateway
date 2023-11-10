@@ -7,8 +7,6 @@ Cypress.Commands.add('goToNamespaceDetails', () => {
     cy.get('[role=row]')
         .contains('a', Cypress.env('NAMESPACE_NAME'))
         .click();
-
-    return cy.end();
 });
 
 Cypress.Commands.add('createNamespace', () => {
@@ -26,8 +24,6 @@ Cypress.Commands.add('createNamespace', () => {
     cy.get('[role=dialog]')
         .contains('button', 'Create')
         .click();
-
-    return cy.end();
 });
 
 Cypress.Commands.add('deleteNamespace', () => {
@@ -47,6 +43,4 @@ Cypress.Commands.add('deleteNamespace', () => {
     cy.contains('button', 'Delete')
         .filter(':visible', { log: false })
         .click({ force: true });
-
-    return cy.end();
 });

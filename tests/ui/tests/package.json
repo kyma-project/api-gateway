@@ -2,8 +2,7 @@
   "name": "ui-tests",
   "description": "UI tests for Kyma-Dashboard",
   "scripts": {
-    "start": "$(npm bin)/cypress open",
-    "start:local": "CYPRESS_LOCAL_DEV=true $(npm bin)/cypress open",
+    "start": "npx cypress open",
     "test": "cypress run --browser chromium",
     "test:local": "cypress run --browser chrome",
     "start-dashboard": "docker run --rm -it -p 3001:3001 -e DOCKER_DESKTOP_CLUSTER=true --pid=host --name kyma-dashboard europe-docker.pkg.dev/kyma-project/prod/kyma-dashboard-local-prod:latest"

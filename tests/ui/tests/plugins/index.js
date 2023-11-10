@@ -1,20 +1,14 @@
 const fs = require('fs');
 
 module.exports = (on, config) => {
-  let namespaceName = process.env.NAMESPACE_NAME || null;
   // generate random namespace name if it wasn't provided as env
   const random = Math.floor(Math.random() * 9999) + 1000;
   const randomName = `a-busola-test-${random}`;
-  if (!namespaceName) {
-    namespaceName = randomName;
-  }
   const dynamicSharedStore = {
     cancelTests: false,
   };
 
-  config.env.NAMESPACE_NAME = namespaceName;
-  config.env.STORAGE_CLASS_NAME = randomName;
-  config.env.APP_NAME = randomName;
+  config.env.NAMESPACE_NAME = randomName;
 
   on('after:spec', (spec, results) => {
     if (results && results.video) {
