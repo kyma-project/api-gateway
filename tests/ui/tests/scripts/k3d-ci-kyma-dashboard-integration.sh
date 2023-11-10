@@ -3,16 +3,19 @@
 set -ex
 export CYPRESS_DOMAIN=http://localhost:3001
 export DASHBOARD_IMAGE="europe-docker.pkg.dev/kyma-project/prod/kyma-dashboard-local-prod:latest"
-export TAG="test-dev"
 
 sudo apt-get update -y
 sudo apt-get install -y gettext-base
 
 function deploy_k3d (){
 echo "Provisioning k3d cluster"
-sudo k3d cluster create --name kyma --port 80:80@loadbalancer --port 443:443@loadbalancer --k3s-arg "--disable=traefik@server:0"
+sudo k3d cluster create kyma --port 80:80@loadbalancer --port 443:443@loadbalancer --k3s-arg "--disable=traefik@server:0"
 
 export KUBECONFIG=$(k3d kubeconfig merge kyma)
+
+echo "Apply istio"
+kubectl apply -f https://github.com/kyma-project/istio/releases/latest/download/istio-manager.yaml
+kubectl apply -f https://github.com/kyma-project/istio/releases/latest/download/istio-default-cr.yaml
 
 echo "Apply api-gateway"
 kubectl apply -f https://github.com/kyma-project/api-gateway/releases/latest/download/api-gateway-manager.yaml

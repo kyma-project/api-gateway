@@ -127,7 +127,5 @@ Cypress.Commands.add('loginAndSelectCluster', function(params) {
 
     cy.url().should('match', expectedLocation);
     cy.contains('Cluster Details').should('be.visible');
-
-    return cy.end();
   });
 });
