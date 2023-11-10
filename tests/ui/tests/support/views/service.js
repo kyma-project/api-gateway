@@ -1,4 +1,4 @@
-Cypress.Commands.add('createService', serviceName => {
+Cypress.Commands.add('createService', (serviceName) => {
   cy.navigateTo('Discovery and Network', 'Services');
 
   cy.contains('Create Service').click();

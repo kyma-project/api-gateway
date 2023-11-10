@@ -1,15 +1,6 @@
 const fs = require('fs');
 
 module.exports = (on, config) => {
-  // generate random namespace name if it wasn't provided as env
-  const random = Math.floor(Math.random() * 9999) + 1000;
-  const randomName = `a-busola-test-${random}`;
-  const dynamicSharedStore = {
-    cancelTests: false,
-  };
-
-  config.env.NAMESPACE_NAME = randomName;
-
   on('after:spec', (spec, results) => {
     if (results && results.video) {
       // Do we have failures for any retry attempts?
@@ -23,17 +14,5 @@ module.exports = (on, config) => {
     }
   });
 
-  on('task', {
-
-    // invoke setter cy.task('dynamicSharedStore', { name: 'cancelTests', value: true })
-    // invoke getter cy.task('dynamicSharedStore', { name: 'cancelTests' })
-    dynamicSharedStore(property) {
-      if (property.value !== undefined) {
-        return (dynamicSharedStore[property.name] = property.value);
-      } else {
-        return dynamicSharedStore[property.name];
-      }
-    },
-  });
   return config;
 };

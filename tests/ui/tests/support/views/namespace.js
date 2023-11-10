@@ -1,15 +1,4 @@
-Cypress.Commands.add('goToNamespaceDetails', () => {
-    // Go to the details of namespace
-    cy.getLeftNav()
-        .contains('Namespaces', { includeShadowDom: true })
-        .click();
-
-    cy.get('[role=row]')
-        .contains('a', Cypress.env('NAMESPACE_NAME'))
-        .click();
-});
-
-Cypress.Commands.add('createNamespace', () => {
+Cypress.Commands.add('createNamespace', (namespaceName) => {
     // Go to the details of namespace
     cy.getLeftNav()
         .contains('Namespaces', { includeShadowDom: true })
@@ -19,20 +8,20 @@ Cypress.Commands.add('createNamespace', () => {
 
     cy.get('[role=dialog]')
         .find('input[ariaLabel="Namespace name"]:visible')
-        .type(Cypress.env('NAMESPACE_NAME'));
+        .type(namespaceName);
 
     cy.get('[role=dialog]')
         .contains('button', 'Create')
         .click();
 });
 
-Cypress.Commands.add('deleteNamespace', () => {
+Cypress.Commands.add('deleteNamespace', (namespaceName) => {
     cy.getLeftNav()
         .contains('Namespaces', { includeShadowDom: true })
         .click();
 
     cy.get('[role="search"] [aria-label="search-input"]').type(
-        Cypress.env('NAMESPACE_NAME'),
+        namespaceName,
         {
             force: true,
         },

@@ -14,3 +14,7 @@ Cypress.Commands.add('navigateTo', (leftNav, resource) => {
     .contains(resource, { includeShadowDom: true })
     .click();
 });
+
+Cypress.Commands.add('getLeftNav', () => {
+  return cy.get('aside.sidebar');
+});

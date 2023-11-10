@@ -1,7 +1,7 @@
 import './exceptions';
-import './commands';
-import './login-commands';
-import './navigate-to';
+import './login';
+import './navigation';
 import './loadFile';
 import './views';
+import './random';
 

@@ -1,40 +1,43 @@
 /// <reference types="cypress" />
 import 'cypress-file-upload';
+import {generateNamespaceName, generateRandomName} from "../../support/random";
+
 
 function openSearchWithSlashShortcut() {
   cy.get('body').type('/', { force: true });
 }
 
-const random = Math.floor(Math.random() * 9999) + 1000;
-const serviceName = 'test-service';
-const API_RULE_NAME = `test-api-rule-${random}`;
-const API_RULE_PATH = '/test-path';
-const API_RULE_DEFAULT_PATH = '/.*';
+const apiRulePath = "/test-path";
+const apiRuleDefaultPath = "/.*";
 
-context('Test API Rules', () => {
+context("Test API Rules", () => {
+
+  const namespaceName = generateNamespaceName();
+  const serviceName = generateRandomName("test-service");
+  const apiRuleName = generateRandomName("test-api-rule");
 
   before(() => {
     cy.loginAndSelectCluster();
-    cy.createNamespace();
+    cy.createNamespace(namespaceName);
     cy.createService(serviceName);
   });
 
   after(() => {
     cy.loginAndSelectCluster();
-    cy.deleteNamespace();
+    cy.deleteNamespace(namespaceName);
   });
 
-  it('Create an API Rule for a service', () => {
+  it("Create an API Rule for a service", () => {
 
     cy.getLeftNav()
-        .contains('API Rules', { includeShadowDom: true })
+        .contains("API Rules", { includeShadowDom: true })
         .click();
 
     cy.contains('Create API Rule').click();
 
     // Name
     cy.get('[ariaLabel="APIRule name"]:visible', { log: false }).type(
-      API_RULE_NAME,
+      apiRuleName,
     );
 
     cy.get('[data-testid="spec.timeout"]:visible', { log: false })
@@ -72,7 +75,7 @@ context('Test API Rules', () => {
 
     cy.get('[aria-label="Combobox input"]:visible', { log: false })
       .first()
-      .type(API_RULE_NAME);
+      .type(apiRuleName);
 
     cy.get('[aria-label="Combobox input"]:visible', { log: false })
       .first()
@@ -121,9 +124,9 @@ context('Test API Rules', () => {
   });
 
   it('Check the API Rule details', () => {
-    cy.contains(API_RULE_NAME).click();
+    cy.contains(apiRuleName).click();
 
-    cy.contains(API_RULE_DEFAULT_PATH).should('exist');
+    cy.contains(apiRuleDefaultPath).should('exist');
 
     cy.contains('1212').should('exist');
 
@@ -133,7 +136,7 @@ context('Test API Rules', () => {
 
     cy.contains('oauth2_introspection').should('exist');
 
-    cy.contains(API_RULE_PATH).should('not.exist');
+    cy.contains(apiRulePath).should('not.exist');
 
     cy.contains('allow').should('not.exist');
     cy.contains('read').should('exist');
@@ -142,7 +145,7 @@ context('Test API Rules', () => {
   it('Edit the API Rule', () => {
     cy.contains('Edit').click();
 
-    cy.contains(API_RULE_NAME);
+    cy.contains(apiRuleName);
 
     // Rules
 
@@ -158,7 +161,7 @@ context('Test API Rules', () => {
 
     cy.get('[data-testid="spec.rules.1.path"]:visible')
       .clear()
-      .type(API_RULE_PATH);
+      .type(apiRulePath);
 
     // > Access Strategies
     cy.get('[aria-label="expand Access Strategies"]:visible', { log: false })
@@ -206,15 +209,15 @@ context('Test API Rules', () => {
   });
 
   it('Check the edited API Rule details', () => {
-    cy.contains(API_RULE_NAME).click();
+    cy.contains(apiRuleName).click();
 
-    cy.contains(API_RULE_DEFAULT_PATH).should('exist');
+    cy.contains(apiRuleDefaultPath).should('exist');
 
     cy.contains('Rules #1', { timeout: 10000 }).click();
 
     cy.contains('Rules #2', { timeout: 10000 }).click();
 
-    cy.contains(API_RULE_PATH).should('exist');
+    cy.contains(apiRulePath).should('exist');
 
     cy.contains('jwt').should('exist');
     cy.contains('https://urls.com').should('exist');
@@ -231,19 +234,19 @@ context('Test API Rules', () => {
 
     openSearchWithSlashShortcut();
 
-    cy.get('[role="search"] [aria-label="search-input"]').type(API_RULE_NAME);
+    cy.get('[role="search"] [aria-label="search-input"]').type(apiRuleName);
 
-    cy.contains(API_RULE_NAME).should('be.visible');
+    cy.contains(apiRuleName).should('be.visible');
   });
 
   it('Create OAuth2 Introspection rule', () => {
     cy.get('[class="fd-link"]')
-      .contains(API_RULE_NAME)
+      .contains(apiRuleName)
       .click();
 
     cy.contains('Edit').click();
 
-    cy.contains(API_RULE_NAME);
+    cy.contains(apiRuleName);
 
     // Rules
     cy.get('[aria-label="expand Rules"]:visible', { log: false })
@@ -260,7 +263,7 @@ context('Test API Rules', () => {
 
     cy.get('[data-testid="spec.rules.2.path"]:visible')
       .clear()
-      .type(API_RULE_PATH);
+      .type(apiRulePath);
 
     // > Access Strategies
     cy.get('[aria-label="expand Access Strategies"]:visible', { log: false })
@@ -345,13 +348,13 @@ context('Test API Rules', () => {
   });
 
   it('Check OAuth2 Introspection strategy', () => {
-    cy.contains(API_RULE_NAME).click();
+    cy.contains(apiRuleName).click();
 
-    cy.contains(API_RULE_DEFAULT_PATH).should('exist');
+    cy.contains(apiRuleDefaultPath).should('exist');
 
     cy.contains('Rules #3', { timeout: 10000 }).click();
 
-    cy.contains(API_RULE_PATH).should('exist');
+    cy.contains(apiRulePath).should('exist');
 
     cy.contains('https://example.com').should('exist');
     cy.contains('Authorization=Basic 12345').should('exist');
