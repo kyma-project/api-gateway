@@ -44,21 +44,17 @@ npm run start
 
 #### Optional: Log in to a cluster using OIDC
 
-If a cluster requires OIDC authentication, include additional arguments `CYPRESS_OIDC_PASS` and `CYPRESS_OIDC_USER` while launching the npm scripts. For example:
-
-```bash
-CYPRESS_OIDC_PASS={YOUR_PASSWORD} CYPRESS_OIDC_USER={YOUR_USERNAME} CYPRESS_DOMAIN={REMOTE_CLUSTER_DASHBOARD_DOMAIN} npm run start
-```
+If a cluster requires OIDC authentication, include additional arguments `CYPRESS_OIDC_PASS` and `CYPRESS_OIDC_USER` while running the npm scripts.
 
 #### Run tests
 ```bash
-CYPRESS_DOMAIN={REMOTE_CLUSTER_DASHBOARD_DOMAIN} npm run test
+CYPRESS_OIDC_PASS={YOUR_PASSWORD} CYPRESS_OIDC_USER={YOUR_USERNAME} CYPRESS_DOMAIN={REMOTE_CLUSTER_DASHBOARD_DOMAIN} npm run test
 ```
 
 #### Run Cypress UI tests in the test runner mode
 
 ```bash
-CYPRESS_DOMAIN={REMOTE_CLUSTER_DASHBOARD_DOMAIN} npm run start
+CYPRESS_OIDC_PASS={YOUR_PASSWORD} CYPRESS_OIDC_USER={YOUR_USERNAME} CYPRESS_DOMAIN={REMOTE_CLUSTER_DASHBOARD_DOMAIN} npm run start
 ```
 
 ## Run tests in Continuous Integration System

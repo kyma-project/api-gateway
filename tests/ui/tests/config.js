@@ -1,8 +1,5 @@
-const env = Cypress.env();
-const domain = env.DOMAIN || 'https://local.kyma.dev';
+const defaultKymaDashboardAddress = "http://localhost:3001";
 
 export default {
-  domain: domain,
-  localDev: env.LOCAL_DEV || false,
-  clusterAddress: env.LOCAL_DEV ? `http://localhost:8080` : `${domain}`,
+  clusterAddress: Cypress.env("DOMAIN") || defaultKymaDashboardAddress
 };
