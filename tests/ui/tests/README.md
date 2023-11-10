@@ -2,78 +2,69 @@
 
 ## Overview
 
-This project contains integration and smoke UI tests for Kyma Dashboard.
+This project contains API-Gateway integration tests for Kyma Dashboard.
 
 ## Prerequisites
 
-Before testing, you must copy your cluster's kubeconfig file to `fixtures/kubeconfig.yaml`.
-
-Run Kyma Dashboard using Docker and provide a PR number:
-
-```bash
-PR_NUMBER={YOUR_PR_NUMBER} npm run run-docker
-```
+If you want to use an existing cluster, you must copy your cluster's kubeconfig file to `fixtures/kubeconfig.yaml`.
 
 ## Installation
 
-To install the dependencies, run the `npm install` command.
+To install the dependencies, run the `npm clean install` command.
 
-## Development
+## Test development using Headless mode with Chrome browser
 
-### Run Cypress UI tests in the Headless mode
+### Using a local Kyma Dashboard instance
 
-To run Cypress UI tests using a Chrome browser in the Headless mode,
-pointing to a remote Kyma Dashboard cluster with the default `local.kyma.dev` domain, use this command:
-
-```bash
-npm test
-```
-
-To run the tests, pointing to a remote Kyma Dashboard cluster with a custom domain, use this command:
+Start a k3d cluster:
 
 ```bash
-CYPRESS_DOMAIN={YOUR_DOMAIN} npm test
+npm run start-k3d
 ```
 
-To run the tests, pointing to a local Kyma Dashboard instance, use this command:
+Start the local Kyma Dashboard instance:
 
 ```bash
-npm run test:local
+npm run start-dashboard
 ```
 
-### Run Cypress UI tests in the test runner mode
+#### Run tests
 
-To open Cypress UI `tests runner`,
-pointing to a remote Kyma Dashboard cluster with the default `local.kyma.dev` domain, use this command:
+```bash
+npm run test
+```
+
+#### Run Cypress UI tests in the test runner mode
 
 ```bash
 npm run start
 ```
 
-To open the `tests runner`, pointing to a remote Kyma Dashboard cluster with a custom domain, use this command:
+### Using a remote Kyma Dashboard instance
+
+#### Optional: Log in to a cluster using OIDC
+
+If a cluster requires OIDC authentication, include additional arguments `CYPRESS_OIDC_PASS` and `CYPRESS_OIDC_USER` while launching the npm scripts. For example:
 
 ```bash
-CYPRESS_DOMAIN={YOUR_DOMAIN} npm run start
+CYPRESS_OIDC_PASS={YOUR_PASSWORD} CYPRESS_OIDC_USER={YOUR_USERNAME} CYPRESS_DOMAIN={REMOTE_CLUSTER_DASHBOARD_DOMAIN} npm run start
 ```
 
-To open the `tests runner`, pointing to a local Kyma Dashboard instance, use this command:
-
+#### Run tests
 ```bash
-npm run start:local
+CYPRESS_DOMAIN={REMOTE_CLUSTER_DASHBOARD_DOMAIN} npm run test
 ```
 
-### Smoke tests
-
-To run smoke tests, pointing to a local Kyma Dashboard instance, use this command:
+#### Run Cypress UI tests in the test runner mode
 
 ```bash
-test:smoke-extensions
+CYPRESS_DOMAIN={REMOTE_CLUSTER_DASHBOARD_DOMAIN} npm run start
 ```
 
-### Optional: Log in to a cluster using OIDC
+## Run tests in Continuous Integration System
 
-If a cluster requires OIDC authentication, include additional arguments while launching the tests. For example:
+Start a k3d cluster and run the tests:
 
 ```bash
-CYPRESS_OIDC_PASS={YOUR_PASSWORD} CYPRESS_OIDC_USER={YOUR_USERNAME} npm start
+./scripts/k3d-ci-kyma-dashboard-integration.sh
 ```
