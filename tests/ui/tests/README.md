@@ -2,7 +2,7 @@
 
 ## Overview
 
-This project contains API-Gateway integration tests for Kyma Dashboard.
+This project contains API Gateway integration tests for Kyma Dashboard.
 
 ## Prerequisites
 
@@ -44,7 +44,7 @@ npm run start
 
 #### Optional: Log in to a cluster using OIDC
 
-If a cluster requires OIDC authentication, include additional arguments `CYPRESS_OIDC_PASS` and `CYPRESS_OIDC_USER` while running the npm scripts.
+If a cluster requires OIDC authentication, include the additional arguments **CYPRESS_OIDC_PASS** and **CYPRESS_OIDC_USER** while running the npm scripts.
 
 #### Run tests
 ```bash
