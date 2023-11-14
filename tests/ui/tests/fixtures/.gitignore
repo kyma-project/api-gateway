@@ -1,0 +1,3 @@
+# As we currently have no fixtures and this folder is only used as a source for the kubeconfig, we add a dummy gitignore file
+# so that it is committed to git
+kubeconfig.yaml
