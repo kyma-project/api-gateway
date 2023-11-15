@@ -1,18 +1,13 @@
 parameters:
-  - name: 'prerequisites_target'
-    display_name: 'Which make target to use to install prerequisites'
+  - name: 'prerequisites_target' # Which make target to use to install prerequisites
     type: string
-  - name: 'manager_image'
-    display_name: 'Manager image used for test'
+  - name: 'manager_image' # Manager image used for test
     type: string
-  - name: 'client_id'
-    display_name: 'Client id for OIDC'
+  - name: 'client_id' # Client id for OIDC
     type: string
-  - name: 'client_secret'
-    display_name: 'Client secret for OIDC'
+  - name: 'client_secret' # Client secret for OIDC
     type: string
-  - name: 'oidc_issuer_url'
-    display_name: 'OIDC issuer URL'
+  - name: 'oidc_issuer_url' # OIDC issuer URL
     type: string
 
 steps:
