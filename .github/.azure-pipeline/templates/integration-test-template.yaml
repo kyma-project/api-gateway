@@ -15,16 +15,14 @@ steps:
     inputs:
       version: '1.21.4'
 
-  - displayName: Set up environment
-    bash: |
+  - bash: |
       sudo echo "127.0.0.1 local.kyma.dev" | sudo tee -a /etc/hosts
       wget -q -O - https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | sudo bash
       [ -n "${KYMA_CLI_UNSTABLE}" ] && sudo curl -Lo /usr/bin/kyma https://storage.googleapis.com/kyma-cli-unstable/kyma-linux
       [ -z "${KYMA_CLI_UNSTABLE}" ] && sudo curl -Lo kyma.tar.gz "https://github.com/kyma-project/cli/releases/latest/download/kyma_linux_x86_64.tar.gz" && sudo tar -C /usr/bin -zxvf kyma.tar.gz kyma
       sudo chmod +x /usr/bin/kyma
 
-  - displayName: Provision Kyma and run tests
-    env:
+  - env:
       KYMA_DOMAIN: "local.kyma.dev"
       CLIENT_ID: ${{ parameters.client_id }}
       CLIENT_SECRET: ${{ parameters.client_secret }}
