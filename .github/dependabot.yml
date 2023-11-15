@@ -15,6 +15,11 @@ updates:
       k8s-dependencies:
         patterns:
           - "k8s.io/*"
+    ignore:
+      # We want to ignore Istio dependencies because the update cycle is tied to the release of the Istio module and PRs can therefore be open for a long time.
+      - dependency-name: "istio.io/client-go"
+      - dependency-name: "istio.io/api"
+
   - package-ecosystem: "docker"
     directory: "/"
     labels:
@@ -26,7 +31,7 @@ updates:
       prefix: "docker"
       include: "scope"
 
-# release branch  configuration
+# release branch configuration
   - package-ecosystem: "gomod"
     directory: "/"
     target-branch: "release-2.0"
@@ -45,6 +50,10 @@ updates:
     ignore:
       - dependency-name: "*"
         update-types: ["version-update:semver-major", "version-update:semver-minor"]
+      # We want to ignore Istio dependencies because the update cycle is tied to the release of the Istio module and PRs can therefore be open for a long time.
+      - dependency-name: "istio.io/client-go"
+      - dependency-name: "istio.io/api"
+
   - package-ecosystem: "docker"
     target-branch: "release-2.0"
     directory: "/"
