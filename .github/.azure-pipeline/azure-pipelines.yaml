@@ -14,6 +14,6 @@ steps:
     parameters:
       prerequisites_target: "install-prerequisites"
       manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:v20231114-4ffb731b"
-      client_id: "$(CLIENT_ID)"
-      client_secret: "$(CLIENT_SECRET)"
-      oidc_issuer_url: "$(OIDC_ISSUER_URL)"
+      client_id: $(IAS_CLIENT_ID)
+      client_secret: $(IAS_CLIENT_SECRET)
+      oidc_issuer_url: $(OIDC_ISSUER_URL)
