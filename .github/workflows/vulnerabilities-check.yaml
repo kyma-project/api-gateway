@@ -4,7 +4,6 @@ on:
     - cron: '0 5 * * *' # Run every day at 05:00 AM
   push:
     branches: [ "main" ]
-  pull_request:
 permissions:
   contents: read
 jobs:
@@ -17,7 +16,7 @@ jobs:
     - name: vulncheck
       uses: golang/govulncheck-action@7da72f730e37eeaad891fcff0a532d27ed737cd4
       with:
-        go-version-input: 1.21.3
+        go-version-input: 1.21.4
         go-package: ./...
   slack_failed_notification:
     name: Slack Notification

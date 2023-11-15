@@ -1,0 +1,18 @@
+{
+  "name": "ui-tests",
+  "description": "UI tests for Kyma-Dashboard",
+  "scripts": {
+    "start": "npx cypress open",
+    "test": "cypress run --browser chrome",
+    "test:ci": "cypress run --browser chromium",
+    "start-dashboard": "docker run --rm -it -p 3001:3001 -e DOCKER_DESKTOP_CLUSTER=true --pid=host --name kyma-dashboard europe-docker.pkg.dev/kyma-project/prod/kyma-dashboard-local-prod:latest",
+    "start-k3d": "./scripts/k3d-local-dev.sh"
+  },
+  "devDependencies": {
+    "cypress-file-upload": "^5.0.8",
+    "js-yaml": "^4.1.0"
+  },
+  "optionalDependencies": {
+    "cypress": "^12.3.0"
+  }
+}

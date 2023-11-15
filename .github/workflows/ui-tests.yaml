@@ -1,0 +1,42 @@
+# Jobs defined in this file are responsible for things that do not require container image
+# but still relevant to the codebase such as unit tests, linting etc
+
+name: Pull Request
+
+on:
+  pull_request:
+    types: [ synchronize, opened, reopened, ready_for_review ]
+    paths:
+      - 'config/ui-extensions/**'
+      - 'tests/ui/**'
+      - '.github/workflows/ui-tests.yaml'
+    branches:
+      - "main"
+      - 'release-**'
+
+permissions:
+  contents: read
+
+jobs:
+  run-ui-tests:
+    name: Run UI tests
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@v4
+        with:
+          go-version-file: 'go.mod'
+      - name: Run tests
+        run: |
+          sudo echo "127.0.0.1 local.kyma.dev" | sudo tee -a /etc/hosts
+          wget -q -O - https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | sudo bash
+          ./tests/ui/tests/scripts/k3d-ci-kyma-dashboard-integration.sh
+      - uses: actions/upload-artifact@v3
+        if: always()
+        name: Export Cypress output
+        with:
+          name: cypress
+          path: tests/ui/tests/cypress/
