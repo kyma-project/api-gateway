@@ -14,7 +14,7 @@ steps:
       echo Hello, world!
       env
     displayName: 'Run a one-line script'
-  - template: integration-test-template.yaml
+  - template: templates/integration-test-template.yaml
     parameters:
       prerequisites_target: "install-prerequisites"
       manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:v20231114-4ffb731b"
