@@ -22,16 +22,16 @@ steps:
       [ -z "${KYMA_CLI_UNSTABLE}" ] && sudo curl -Lo kyma.tar.gz "https://github.com/kyma-project/cli/releases/latest/download/kyma_linux_x86_64.tar.gz" && sudo tar -C /usr/bin -zxvf kyma.tar.gz kyma
       sudo chmod +x /usr/bin/kyma
 
-  - env:
+  - bash: |
+      sudo kyma provision k3d
+      KUBECONFIG=$(k3d kubeconfig merge kyma) EXPORT_RESULT=true \
+      make ${{ parameters.prerequisites_target }} deploy test-integration
+    env:
       KYMA_DOMAIN: "local.kyma.dev"
       CLIENT_ID: ${{ parameters.client_id }}
       CLIENT_SECRET: ${{ parameters.client_secret }}
       OIDC_ISSUER_URL: ${{ parameters.oidc_issuer_url }}
       IMG: ${{ parameters.manager_image }}
-    bash: |
-      sudo kyma provision k3d
-      KUBECONFIG=$(k3d kubeconfig merge kyma) EXPORT_RESULT=true \
-      make ${{ parameters.prerequisites_target }} deploy test-integration
 
   - publish: $(System.DefaultWorkingDirectory)/tests/integration/reports/
     artifact: html-reports-$(Agent.JobName)
