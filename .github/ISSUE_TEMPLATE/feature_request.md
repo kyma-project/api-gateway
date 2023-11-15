@@ -26,7 +26,7 @@ assignees: ''
 - [ ] Provide integration tests.
 - [ ] Provide documentation.
 - [ ] Test on a production-like environment.
-- [ ] Solution works for open source as well.
+- [ ] Verify if the solution works for both open-source Kyma and SAP BTP, Kyma runtime.
 - [ ] Check the outcome of all related pipelines.
 - [ ] Verify resource limits.
 - [ ] As a PR reviewer, verify code coverage and evaluate if it is acceptable.
