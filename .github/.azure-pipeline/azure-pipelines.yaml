@@ -10,14 +10,10 @@ pool:
   vmImage: ubuntu-latest
 
 steps:
-  - script: |
-      echo Hello, world!
-      env
-    displayName: 'Run a one-line script'
   - template: templates/integration-test-template.yaml
     parameters:
       prerequisites_target: "install-prerequisites"
       manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:v20231114-4ffb731b"
-      #client_id: "TODO from vault"
-      #client_secret: "TODO from vault"
-      #oidc_issuer_url: "TODO from vault"
+      client_id: "$(CLIENT_ID)"
+      client_secret: "$(CLIENT_SECRET)"
+      oidc_issuer_url: "$(OIDC_ISSUER_URL)"
