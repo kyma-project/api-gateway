@@ -16,7 +16,7 @@ updates:
         patterns:
           - "k8s.io/*"
     ignore:
-      # We want to ignore Istio PRs because the update cycle is tied to the release of the Istio module and PRs can therefore be open for a long time.
+      # We want to ignore Istio dependencies because the update cycle is tied to the release of the Istio module and PRs can therefore be open for a long time.
       - dependency-name: "istio.io/client-go"
       - dependency-name: "istio.io/api"
 
@@ -50,7 +50,7 @@ updates:
     ignore:
       - dependency-name: "*"
         update-types: ["version-update:semver-major", "version-update:semver-minor"]
-      # We want to ignore Istio PRs because the update cycle is tied to the release of the Istio module and PRs can therefore be open for a long time.
+      # We want to ignore Istio dependencies because the update cycle is tied to the release of the Istio module and PRs can therefore be open for a long time.
       - dependency-name: "istio.io/client-go"
       - dependency-name: "istio.io/api"
 
