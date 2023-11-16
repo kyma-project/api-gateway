@@ -3,12 +3,21 @@
 # Add steps that build, run tests, deploy, and more:
 # https://aka.ms/yaml
 
-trigger:
-  - main
+pr:
+  branches:
+    include:
+      - main
+      - 'release-**'
+  drafts: false
 
 pool:
   vmImage: ubuntu-latest
 
 steps:
-  - script: echo Hello, world!
-    displayName: 'Run a one-line script'
+  - template: templates/integration-test-template.yaml
+    parameters:
+      prerequisites_target: "install-prerequisites"
+      manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:v20231114-4ffb731b"
+      client_id: "$(IAS_CLIENT_ID)"
+      client_secret: "$(IAS_CLIENT_SECRET)"
+      oidc_issuer_url: "$(OIDC_ISSUER_URL)"

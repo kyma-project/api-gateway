@@ -1,0 +1,37 @@
+parameters:
+  - name: 'prerequisites_target' # Which make target to use to install prerequisites
+    type: string
+  - name: 'manager_image' # Manager image used for test
+    type: string
+  - name: 'client_id' # Client id for OIDC
+    type: string
+  - name: 'client_secret' # Client secret for OIDC
+    type: string
+  - name: 'oidc_issuer_url' # OIDC issuer URL
+    type: string
+
+steps:
+  - task: GoTool@0
+    inputs:
+      version: '1.21.4'
+
+  - bash: |
+      sudo echo "127.0.0.1 local.kyma.dev" | sudo tee -a /etc/hosts
+      wget -q -O - https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | sudo bash
+      [ -n "${KYMA_CLI_UNSTABLE}" ] && sudo curl -Lo /usr/bin/kyma https://storage.googleapis.com/kyma-cli-unstable/kyma-linux
+      [ -z "${KYMA_CLI_UNSTABLE}" ] && sudo curl -Lo kyma.tar.gz "https://github.com/kyma-project/cli/releases/latest/download/kyma_linux_x86_64.tar.gz" && sudo tar -C /usr/bin -zxvf kyma.tar.gz kyma
+      sudo chmod +x /usr/bin/kyma
+
+  - bash: |
+      sudo kyma provision k3d
+      KUBECONFIG=$(k3d kubeconfig merge kyma) EXPORT_RESULT=true \
+      make ${{ parameters.prerequisites_target }} deploy test-integration
+    env:
+      KYMA_DOMAIN: "local.kyma.dev"
+      CLIENT_ID: ${{ parameters.client_id }}
+      CLIENT_SECRET: ${{ parameters.client_secret }}
+      OIDC_ISSUER_URL: ${{ parameters.oidc_issuer_url }}
+      IMG: ${{ parameters.manager_image }}
+
+  - publish: $(System.DefaultWorkingDirectory)/tests/integration/reports/
+    artifact: html-reports-$(Agent.JobName)
