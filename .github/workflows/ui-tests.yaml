@@ -8,6 +8,7 @@ on:
     types: [ synchronize, opened, reopened, ready_for_review ]
     paths:
       - 'config/ui-extensions/**'
+      - 'config/crd/**'
       - 'tests/ui/**'
       - '.github/workflows/ui-tests.yaml'
     branches:
