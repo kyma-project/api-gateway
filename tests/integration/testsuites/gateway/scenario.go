@@ -50,8 +50,10 @@ func initScenario(ctx *godog.ScenarioContext, ts *testsuite) {
 	ctx.Before(hooks.ApplyApiGatewayCrScenarioHook)
 	ctx.After(hooks.ApiGatewayCrTearDownScenarioHook)
 
+	ctx.Step(`APIGateway CR "([^"]*)" is applied`, scenario.applyAPIGatewayCR)
 	ctx.Step(`^APIGateway CR "([^"]*)" "([^"]*)" present$`, scenario.thereIsAnAPIGatewayCR)
 	ctx.Step(`^APIGateway CR is in "([^"]*)" state with description "([^"]*)"$`, scenario.checkAPIGatewayCRState)
+	ctx.Step(`^Custom APIGateway CR "([^"]*)" is in "([^"]*)" state with description "([^"]*)"$`, scenario.checkCustomAPIGatewayCRState)
 	ctx.Step(`^there is Istio Gateway "([^"]*)" in "([^"]*)" namespace$`, scenario.thereIsAGateway)
 	ctx.Step(`^there is a "([^"]*)" secret in "([^"]*)" namespace$`, scenario.thereIsACertificate)
 	ctx.Step(`^there is an "([^"]*)" APIRule with Gateway "([^"]*)"$`, scenario.thereIsAnAPIRule)
@@ -83,6 +85,24 @@ func createScenario(t *testsuite) (*scenario, error) {
 	}, nil
 }
 
+func (c *scenario) applyAPIGatewayCR(name string) error {
+	manifestDir := path.Dir(manifestsPath)
+	apiGateway, err := manifestprocessor.ParseFromFileWithTemplate("api-gateway.yaml", manifestDir, struct {
+		Name string
+	}{
+		Name: name,
+	})
+	if err != nil {
+		return err
+	}
+	_, err = c.resourceManager.CreateResources(c.k8sClient, apiGateway...)
+	if err != nil {
+		return fmt.Errorf("could not create APIGateway: %s, details %s", name, err.Error())
+	}
+
+	return nil
+}
+
 func (c *scenario) thereIsAnAPIGatewayCR(name, isPresent string) error {
 	const (
 		is    = "is"
@@ -112,6 +132,40 @@ func (c *scenario) thereIsAnAPIGatewayCR(name, isPresent string) error {
 			return err
 		}
 		return fmt.Errorf("choose between %s and %s", is, isNot)
+	}, testcontext.GetRetryOpts()...)
+}
+
+func (c *scenario) checkCustomAPIGatewayCRState(name, state, description string) error {
+	return retry.Do(func() error {
+		res := schema.GroupVersionResource{Group: "operator.kyma-project.io", Version: "v1alpha1", Resource: "apigateways"}
+		gateway, err := c.k8sClient.Resource(res).Get(context.Background(), name, metav1.GetOptions{})
+		if err != nil {
+			return err
+		}
+		gatewayState, found, err := unstructured.NestedString(gateway.Object, "status", "state")
+		if err != nil {
+			return err
+		}
+
+		if !found {
+			return errors.New("status state not found")
+		} else if gatewayState != state {
+			return fmt.Errorf("gateway state %s, is not in the expected state %s", gatewayState, state)
+		}
+
+		if len(description) > 0 {
+			gatewayDesc, found, err := unstructured.NestedString(gateway.Object, "status", "description")
+			if err != nil {
+				return err
+			}
+
+			if !found {
+				return errors.New("status description not found")
+			} else if gatewayDesc != description {
+				return fmt.Errorf("gateway description %s, is not as the expected description %s", gatewayDesc, description)
+			}
+		}
+		return nil
 	}, testcontext.GetRetryOpts()...)
 }
 

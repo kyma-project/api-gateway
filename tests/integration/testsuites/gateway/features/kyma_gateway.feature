@@ -43,3 +43,8 @@ Feature: Checking default kyma gateway
     When APIGateway CR "test-gateway" is removed
     Then APIGateway CR "test-gateway" "is not" present
     And gateway "kyma-gateway" in "kyma-system" namespace does not exist
+
+  Scenario: Second APIGateway CR is applied to the cluster
+    When APIGateway CR "second-one" is applied
+    Then Custom APIGateway CR "second-one" is in "Error" state with description "stopped APIGateway CR reconciliation: only APIGateway CR default reconciles the module"
+    And APIGateway CR is in "Ready" state with description ""

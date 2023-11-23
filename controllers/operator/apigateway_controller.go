@@ -83,6 +83,20 @@ func (r *APIGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		return ctrl.Result{}, err
 	}
 
+	existingAPIGateways := &operatorv1alpha1.APIGatewayList{}
+	if err := r.Client.List(ctx, existingAPIGateways); err != nil {
+		r.log.Info("Unable to list APIGateway CRs")
+		return r.requeueReconciliation(ctx, apiGatewayCR, controllers.ErrorStatus(err, "Unable to list APIGateway CRs"))
+	}
+
+	if len(existingAPIGateways.Items) > 1 {
+		oldestCr := r.getOldestCR(existingAPIGateways)
+		if apiGatewayCR.GetUID() != oldestCr.GetUID() {
+			err := fmt.Errorf("stopped APIGateway CR reconciliation: only APIGateway CR %s reconciles the module", oldestCr.GetName())
+			return r.terminateReconciliation(ctx, apiGatewayCR, controllers.ErrorStatus(err, err.Error()))
+		}
+	}
+
 	r.log.Info("Reconciling APIGateway CR", "name", apiGatewayCR.Name, "isInDeletion", apiGatewayCR.IsInDeletion())
 
 	if err := controllers.UpdateApiGatewayStatus(ctx, r.Client, &apiGatewayCR, controllers.ProcessingStatus()); err != nil {
@@ -170,7 +184,17 @@ func (r *APIGatewayReconciler) finishReconcile(ctx context.Context, cr v1alpha1.
 	r.log.Info("Successfully reconciled")
 	return ctrl.Result{}, nil
 }
+func (r *APIGatewayReconciler) terminateReconciliation(ctx context.Context, apiGatewayCR operatorv1alpha1.APIGateway, status controllers.Status) (ctrl.Result, error) {
+	statusUpdateErr := controllers.UpdateApiGatewayStatus(ctx, r.Client, &apiGatewayCR, status)
+	if statusUpdateErr != nil {
+		r.log.Error(statusUpdateErr, "Error during updating status to error")
+		// In case the update of the status fails we must requeue the request, because otherwise the Error state is never visible in the CR.
+		return ctrl.Result{}, statusUpdateErr
+	}
 
+	r.log.Error(status.NestedError(), "Reconcile failed, but won't requeue")
+	return ctrl.Result{}, nil
+}
 func (i *APIGatewayReconciler) reconcileFinalizer(ctx context.Context, apiGatewayCR *operatorv1alpha1.APIGateway) controllers.Status {
 	if !apiGatewayCR.IsInDeletion() && !hasFinalizer(apiGatewayCR) {
 		controllerutil.AddFinalizer(apiGatewayCR, ApiGatewayFinalizer)
@@ -247,4 +271,16 @@ func removeFinalizer(ctx context.Context, apiClient client.Client, apiGatewayCR 
 		ctrl.Log.Info("Successfully removed API-Gateway CR finalizer")
 		return nil
 	})
+}
+
+func (r *APIGatewayReconciler) getOldestCR(apigatewayCRs *operatorv1alpha1.APIGatewayList) *operatorv1alpha1.APIGateway {
+	oldest := apigatewayCRs.Items[0]
+	for _, item := range apigatewayCRs.Items {
+		timestamp := &item.CreationTimestamp
+		if !(oldest.CreationTimestamp.Before(timestamp)) {
+			oldest = item
+		}
+	}
+
+	return &oldest
 }
