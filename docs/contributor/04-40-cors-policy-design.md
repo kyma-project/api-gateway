@@ -33,12 +33,13 @@ CorsAllowMethods: "GET,POST,PUT,DELETE,PATCH"
 CorsAllowHeaders: "Authorization,Content-Type,*"
 ```
 
+**Decision**
+\
+We have decided that the go to default values should be empty, meaning secure-by-default configuration. The transition to that that default should be gradual, with staying with current CORS configration for now.
+
 ### CORS headers sanitization
 
 Another thing is that if the workload will provide CORS headers by it's own, Istio Ingress Gateway will NOT sanitize/change the CORS headers unless the request origin matches any of those that are set up in `AllowOrigins` VirtualService configuration. This is a possible security risk, because it might not be expected that the server response will contain different headers than those defined in the APIRule.
-
-
-
 
 ```yaml
 apiVersion: networking.istio.io/v1beta1
@@ -81,3 +82,7 @@ spec:
     timeout: 180s
 
 ```
+
+**Decision**
+\
+APIRule will become the singular source of truth, ignoring upstream response headers. If the configuration for CORS is empty, we should enforce the default configuration mentioned in [Default values](#default-values).
