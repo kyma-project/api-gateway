@@ -95,7 +95,7 @@ func (c *scenario) applyAPIGatewayCR(name string) error {
 	if err != nil {
 		return err
 	}
-	_, err = c.resourceManager.CreateResources(c.k8sClient, apiGateway...)
+	_, err = c.resourceManager.CreateResourcesWithoutNS(c.k8sClient, apiGateway...)
 	if err != nil {
 		return fmt.Errorf("could not create APIGateway: %s, details %s", name, err.Error())
 	}
