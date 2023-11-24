@@ -35,7 +35,7 @@ CorsAllowHeaders: "Authorization,Content-Type,*"
 
 **Decision**
 \
-We have decided that the go to default values should be empty, meaning secure-by-default configuration. The transition to that that default should be gradual, with staying with current CORS configration for now.
+We have decided that the go to default values should be empty, meaning secure-by-default configuration. The transition to that default should be gradual, with staying with current CORS configuration for now.
 
 ### CORS headers sanitization
 
