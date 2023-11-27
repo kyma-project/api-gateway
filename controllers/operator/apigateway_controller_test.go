@@ -178,9 +178,10 @@ var _ = Describe("API-Gateway Controller", func() {
 			// given
 			apiGatewayCR := &operatorv1alpha1.APIGateway{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:              apiGatewayCRName,
-					Namespace:         testNamespace,
-					UID:               "1",
+					Name:      apiGatewayCRName,
+					Namespace: testNamespace,
+					UID:       "1",
+					// 11 May 2017
 					CreationTimestamp: metav1.Unix(1494505756, 0),
 				},
 			}
