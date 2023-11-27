@@ -38,6 +38,8 @@ runs:
         cluster-name: "test-cluster-1"
         args: >-
           --agents 0
+          --port 80:80@loadbalancer
+          --port 443:443@loadbalancer
           --k3s-arg "--disable=traefik@server:0"
     - name: Run test
       shell: bash
