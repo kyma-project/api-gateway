@@ -134,7 +134,7 @@ test-integration-gateway:
 	IS_GARDENER=$(IS_GARDENER) source ./tests/integration/env_vars.sh && TEST_CONCURRENCY=1 go test -timeout 1h ./tests/integration -run "^TestGateway$$" -v -race
 
 .PHONY: install-istio
-install-istio:
+install-istio: create-namespace
 	kubectl apply -f https://github.com/kyma-project/istio/releases/latest/download/istio-manager.yaml
 	kubectl apply -f https://github.com/kyma-project/istio/releases/latest/download/istio-default-cr.yaml
 	kubectl wait -n kyma-system istios/default --for=jsonpath='{.status.state}'=Ready --timeout=300s
