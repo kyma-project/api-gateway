@@ -6,6 +6,8 @@ The `apigateways.operator.kyma-project.io` CustomResourceDefinition (CRD) descri
 kubectl get crd apigateways.operator.kyma-project.io -o yaml
 ```
 
+You can have only one APIGateway CR. In case when there are more of them on the cluster the oldest reconciles the module. All additional APIGateway CRs will end up in the Error state.
+
 ## Specification <!-- {docsify-ignore} -->
 
 This table lists the parameters of the given resource together with their descriptions:
