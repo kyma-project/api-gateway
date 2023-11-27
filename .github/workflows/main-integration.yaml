@@ -50,23 +50,7 @@ jobs:
           fetch-depth: 0
       - uses: ./.github/actions/integration-tests
         with:
-          prerequisites_target: install-prerequisites
-          manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:${{ needs.wait-for-image-build.outputs.sha }}"
-          client_id: ${{ secrets.CLIENT_ID }}
-          client_secret: ${{ secrets.CLIENT_SECRET }}
-          oidc_issuer_url: ${{ secrets.OIDC_ISSUER_URL }}
-
-  integration-tests-istio-module:
-    name: Integration tests with Istio module
-    runs-on: ubuntu-latest
-    needs: [wait-for-image-build]
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - uses: ./.github/actions/integration-tests
-        with:
-          prerequisites_target: install-prerequisites-with-istio-from-manifest
+          prerequisites_target: install-istio
           manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:${{ needs.wait-for-image-build.outputs.sha }}"
           client_id: ${{ secrets.CLIENT_ID }}
           client_secret: ${{ secrets.CLIENT_SECRET }}
