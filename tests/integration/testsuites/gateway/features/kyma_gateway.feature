@@ -48,3 +48,4 @@ Feature: Checking default kyma gateway
     When APIGateway CR "second-api-gateway-cr" is applied
     Then Custom APIGateway CR "second-api-gateway-cr" is in "Error" state with description "stopped APIGateway CR reconciliation: only APIGateway CR test-gateway reconciles the module"
     And APIGateway CR is in "Ready" state with description ""
+    And APIGateway CR "second-api-gateway-cr" is removed
