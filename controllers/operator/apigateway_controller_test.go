@@ -2,7 +2,7 @@ package operator
 
 import (
 	"context"
-	errors2 "errors"
+	goerrors "errors"
 	"fmt"
 	"time"
 
@@ -98,9 +98,10 @@ var _ = Describe("API-Gateway Controller", func() {
 			// given
 			apiGatewayCR := &operatorv1alpha1.APIGateway{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:              apiGatewayCRName,
-					Namespace:         testNamespace,
-					UID:               "1",
+					Name:      apiGatewayCRName,
+					Namespace: testNamespace,
+					UID:       "1",
+					// 11 May 2017
 					CreationTimestamp: metav1.Unix(1494505756, 0),
 				},
 			}
@@ -136,9 +137,10 @@ var _ = Describe("API-Gateway Controller", func() {
 			// given
 			apiGatewayCR := &operatorv1alpha1.APIGateway{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:              apiGatewayCRName,
-					Namespace:         testNamespace,
-					UID:               "1",
+					Name:      apiGatewayCRName,
+					Namespace: testNamespace,
+					UID:       "1",
+					// 11 May 2017
 					CreationTimestamp: metav1.Unix(1494505756, 0),
 				},
 			}
@@ -322,7 +324,7 @@ type shouldFailClient struct {
 
 func (p *shouldFailClient) List(ctx context.Context, list client.ObjectList, _ ...client.ListOption) error {
 	if p.FailOnList {
-		return errors2.New("fail on purpose")
+		return goerrors.New("fail on purpose")
 	}
 	return p.Client.List(ctx, list)
 }

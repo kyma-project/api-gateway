@@ -184,6 +184,7 @@ func (r *APIGatewayReconciler) finishReconcile(ctx context.Context, cr v1alpha1.
 	r.log.Info("Successfully reconciled")
 	return ctrl.Result{}, nil
 }
+
 func (r *APIGatewayReconciler) terminateReconciliation(ctx context.Context, apiGatewayCR operatorv1alpha1.APIGateway, status controllers.Status) (ctrl.Result, error) {
 	statusUpdateErr := controllers.UpdateApiGatewayStatus(ctx, r.Client, &apiGatewayCR, status)
 	if statusUpdateErr != nil {
@@ -195,6 +196,7 @@ func (r *APIGatewayReconciler) terminateReconciliation(ctx context.Context, apiG
 	r.log.Error(status.NestedError(), "Reconcile failed, but won't requeue")
 	return ctrl.Result{}, nil
 }
+
 func (i *APIGatewayReconciler) reconcileFinalizer(ctx context.Context, apiGatewayCR *operatorv1alpha1.APIGateway) controllers.Status {
 	if !apiGatewayCR.IsInDeletion() && !hasFinalizer(apiGatewayCR) {
 		controllerutil.AddFinalizer(apiGatewayCR, ApiGatewayFinalizer)
