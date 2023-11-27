@@ -50,7 +50,6 @@ jobs:
           fetch-depth: 0
       - uses: ./.github/actions/integration-tests
         with:
-          prerequisites_target: install-istio
           manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:${{ needs.wait-for-image-build.outputs.sha }}"
           client_id: ${{ secrets.CLIENT_ID }}
           client_secret: ${{ secrets.CLIENT_SECRET }}

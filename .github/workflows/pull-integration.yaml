@@ -48,7 +48,6 @@ jobs:
           fetch-depth: 0
       - uses: ./.github/actions/integration-tests
         with:
-          prerequisites_target: install-istio
           client_id: ${{ secrets.CLIENT_ID }}
           client_secret: ${{ secrets.CLIENT_SECRET }}
           oidc_issuer_url: ${{ secrets.OIDC_ISSUER_URL }}
@@ -67,7 +66,6 @@ jobs:
           fetch-depth: 0
       - uses: ./.github/actions/integration-tests
         with:
-          prerequisites_target: install-istio
           client_id: ${{ secrets.CLIENT_ID }}
           client_secret: ${{ secrets.CLIENT_SECRET }}
           oidc_issuer_url: ${{ secrets.OIDC_ISSUER_URL }}
