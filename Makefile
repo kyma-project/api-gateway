@@ -120,7 +120,7 @@ test-integration: generate fmt vet envtest ## Run integration tests.
 	source ./tests/integration/env_vars.sh && go test -timeout 1h ./tests/integration -v -race -run TestIstioJwt . && go test -timeout 1h ./tests/integration -v -race -run TestOryJwt . && TEST_CONCURRENCY=1 go test -timeout 1h ./tests/integration -v -race -run TestGateway .
 
 .PHONY: test-upgrade
-test-upgrade: generate fmt vet generate-upgrade-test-manifest install-prerequisites-with-istio-from-manifest deploy-latest-release ## Run API Gateway upgrade tests.
+test-upgrade: generate fmt vet generate-upgrade-test-manifest install-istio deploy-latest-release ## Run API Gateway upgrade tests.
 	source ./tests/integration/env_vars.sh && go test -timeout 1h ./tests/integration -v -race -run TestUpgrade .
 
 .PHONY: test-custom-domain
@@ -133,12 +133,8 @@ test-custom-domain: generate fmt vet
 test-integration-gateway:
 	IS_GARDENER=$(IS_GARDENER) source ./tests/integration/env_vars.sh && TEST_CONCURRENCY=1 go test -timeout 1h ./tests/integration -run "^TestGateway$$" -v -race
 
-.PHONY: install-prerequisites
-install-prerequisites:
-	kyma deploy --ci -s main -c hack/kyma-components.yaml
-
-.PHONY: install-prerequisites-with-istio-from-manifest
-install-prerequisites-with-istio-from-manifest: create-namespace
+.PHONY: install-istio
+install-istio: create-namespace
 	kubectl apply -f https://github.com/kyma-project/istio/releases/latest/download/istio-manager.yaml
 	kubectl apply -f https://github.com/kyma-project/istio/releases/latest/download/istio-default-cr.yaml
 	kubectl wait -n kyma-system istios/default --for=jsonpath='{.status.state}'=Ready --timeout=300s

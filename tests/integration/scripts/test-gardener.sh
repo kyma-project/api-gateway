@@ -63,7 +63,7 @@ max_attempts=3
 success=false
 
 while [ $success = false ] && [ $attempts_counter -le $max_attempts ]; do
-  if make install-prerequisites; then
+  if make install-istio; then
     success=true
   else
     attempts_counter=$(( attempts_counter + 1 ))
