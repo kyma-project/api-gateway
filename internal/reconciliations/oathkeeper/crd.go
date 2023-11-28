@@ -66,5 +66,5 @@ func deleteCRD(ctx context.Context, k8sClient client.Client, name string) error 
 			return errors.New("rule crd is still present")
 		}
 		return nil
-	}, retry.Attempts(60), retry.Delay(2*time.Second))
+	}, retry.Attempts(10), retry.Delay(2*time.Second), retry.DelayType(retry.FixedDelay))
 }

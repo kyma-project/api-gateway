@@ -11,9 +11,16 @@ import (
 )
 
 func ReconcileOathkeeper(ctx context.Context, k8sClient client.Client, apiGatewayCR *v1alpha1.APIGateway) controllers.Status {
-	err := errors.Join(
-		reconcileOryOathkeeperRuleCRD(ctx, k8sClient, *apiGatewayCR),
-		maester.ReconcileMaester(ctx, k8sClient, *apiGatewayCR),
+	err := reconcileOryOathkeeperRuleCRD(ctx, k8sClient, *apiGatewayCR)
+	if err != nil {
+		return controllers.ErrorStatus(err, "Oathkeeper Rule CRD did not reconcile successfully")
+	}
+	err = maester.ReconcileMaester(ctx, k8sClient, *apiGatewayCR)
+	if err != nil {
+		return controllers.ErrorStatus(err, "Oathkeeper Maester did not reconcile successfully")
+	}
+
+	err = errors.Join(
 		reconcileOryJWKSSecret(ctx, k8sClient, *apiGatewayCR),
 		reconcileOryOathkeeperConfigConfigMap(ctx, k8sClient, *apiGatewayCR),
 		reconcileOathkeeperHPA(ctx, k8sClient, *apiGatewayCR),

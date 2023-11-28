@@ -65,5 +65,5 @@ func waitForClusterRole(ctx context.Context, k8sClient client.Client) error {
 	return retry.Do(func() error {
 		var clusterRole rbacv1.ClusterRole
 		return k8sClient.Get(ctx, types.NamespacedName{Name: roleName}, &clusterRole)
-	}, retry.Attempts(60), retry.Delay(2*time.Second))
+	}, retry.Attempts(10), retry.Delay(2*time.Second), retry.DelayType(retry.FixedDelay))
 }
