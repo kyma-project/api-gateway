@@ -110,6 +110,11 @@ func waitForDeploymentToBeReady(ctx context.Context, k8sClient client.Client) er
 			return fmt.Errorf("unavailable replicas %d", dep.Status.UnavailableReplicas)
 		}
 
+		// We need to check that at least one replica is ready, to guard against the case when UnavailableReplicas is 0 but ReadyReplicas is also 0.
+		if dep.Status.ReadyReplicas <= 0 {
+			return fmt.Errorf("ready replicas %d", dep.Status.UnavailableReplicas)
+		}
+
 		return nil
 	}, retry.Attempts(60), retry.Delay(2*time.Second), retry.DelayType(retry.FixedDelay))
 }
