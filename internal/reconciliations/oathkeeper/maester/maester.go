@@ -16,11 +16,11 @@ func ReconcileMaester(ctx context.Context, k8sClient client.Client, apiGatewayCR
 	if err != nil {
 		return err
 	}
-	err = reconcileOryOathkeeperMaesterClusterRoleBinding(ctx, k8sClient, apiGatewayCR)
+	err = reconcileOryOathkeeperMaesterClusterRole(ctx, k8sClient, apiGatewayCR)
 	if err != nil {
 		return err
 	}
-	err = reconcileOryOathkeeperMaesterClusterRole(ctx, k8sClient, apiGatewayCR)
+	err = reconcileOryOathkeeperMaesterClusterRoleBinding(ctx, k8sClient, apiGatewayCR)
 	if err != nil {
 		return err
 	}
