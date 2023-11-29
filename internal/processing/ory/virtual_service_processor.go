@@ -58,12 +58,18 @@ func (r virtualServiceCreator) Create(api *gatewayv1beta1.APIRule) (*networkingv
 			}
 		}
 
+		corsPolicy := builders.CorsPolicy().
+			AllowOrigins(r.corsConfig.AllowOrigins...).
+			AllowHeaders(r.corsConfig.AllowHeaders...)
+		if len(rule.Methods) >= 1 {
+			corsPolicy.AllowMethods(rule.Methods...)
+		} else {
+			corsPolicy.AllowMethods(r.corsConfig.AllowMethods...)
+		}
+
 		httpRouteBuilder.Route(builders.RouteDestination().Host(host).Port(port))
 		httpRouteBuilder.Match(builders.MatchRequest().Uri().Regex(rule.Path))
-		httpRouteBuilder.CorsPolicy(builders.CorsPolicy().
-			AllowOrigins(r.corsConfig.AllowOrigins...).
-			AllowMethods(r.corsConfig.AllowMethods...).
-			AllowHeaders(r.corsConfig.AllowHeaders...))
+		httpRouteBuilder.CorsPolicy(corsPolicy)
 		httpRouteBuilder.Headers(builders.NewHttpRouteHeadersBuilder().
 			SetHostHeader(default_domain.GetHostWithDomain(*api.Spec.Host, r.defaultDomainName)).Get())
 		httpRouteBuilder.Timeout(processors.GetVirtualServiceHttpTimeout(api.Spec, rule))
