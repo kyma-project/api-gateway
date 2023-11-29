@@ -19,6 +19,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/kyma-project/api-gateway/internal/reconciliations/oathkeeper"
 	"os"
 	"strings"
 	"time"
@@ -165,7 +166,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err = operatorcontrollers.NewAPIGatewayReconciler(mgr).SetupWithManager(mgr, rateLimiterCfg); err != nil {
+	if err = operatorcontrollers.NewAPIGatewayReconciler(mgr, oathkeeper.NewReconciler()).SetupWithManager(mgr, rateLimiterCfg); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "APIGateway")
 		os.Exit(1)
 	}

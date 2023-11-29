@@ -19,6 +19,7 @@ package operator
 import (
 	"context"
 	"errors"
+	"github.com/kyma-project/api-gateway/internal/reconciliations/oathkeeper"
 	"path/filepath"
 	"testing"
 	"time"
@@ -156,7 +157,7 @@ var _ = BeforeSuite(func() {
 		return []byte(controlledList), nil
 	}
 
-	Expect(NewAPIGatewayReconciler(mgr).SetupWithManager(mgr, rateLimiterCfg)).Should(Succeed())
+	Expect(NewAPIGatewayReconciler(mgr, oathkeeperReconcilerWithoutVerification{}).SetupWithManager(mgr, rateLimiterCfg)).Should(Succeed())
 
 	go func() {
 		defer GinkgoRecover()
@@ -258,4 +259,12 @@ func getTestScheme() *runtime.Scheme {
 	Expect(oryv1alpha1.AddToScheme(scheme)).Should(Succeed())
 
 	return scheme
+}
+
+type oathkeeperReconcilerWithoutVerification struct {
+}
+
+func (o oathkeeperReconcilerWithoutVerification) ReconcileAndVerifyReadiness(ctx context.Context, client client.Client, apiGateway *operatorv1alpha1.APIGateway) controllers.Status {
+	// We don't want to wait for Oathkeeper to be ready in the tests, because the implemented logic doesn't work in unit and envTest-based tests.
+	return oathkeeper.Reconcile(ctx, client, apiGateway)
 }

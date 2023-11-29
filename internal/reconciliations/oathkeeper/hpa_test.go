@@ -32,7 +32,7 @@ var _ = Describe("Oathkeeper HPA reconciliation", func() {
 
 		apiGateway := createApiGateway()
 		k8sClient := createFakeClient(&node, apiGateway)
-		status := oathkeeper.ReconcileOathkeeper(context.Background(), k8sClient, apiGateway)
+		status := oathkeeper.Reconcile(context.Background(), k8sClient, apiGateway)
 		Expect(status.IsReady()).To(BeTrue(), "%#v", status)
 
 		var hpa autoscalingv2.HorizontalPodAutoscaler
@@ -60,7 +60,7 @@ var _ = Describe("Oathkeeper HPA reconciliation", func() {
 
 		apiGateway := createApiGateway()
 		k8sClient := createFakeClient(&node, apiGateway)
-		status := oathkeeper.ReconcileOathkeeper(context.Background(), k8sClient, apiGateway)
+		status := oathkeeper.Reconcile(context.Background(), k8sClient, apiGateway)
 		Expect(status.IsReady()).To(BeTrue(), "%#v", status)
 
 		var hpa autoscalingv2.HorizontalPodAutoscaler
@@ -95,7 +95,7 @@ var _ = Describe("Oathkeeper HPA reconciliation", func() {
 		apiGateway.Finalizers = []string{"test"}
 
 		k8sClient := createFakeClient(&node, apiGateway, &initialHpa)
-		status := oathkeeper.ReconcileOathkeeper(context.Background(), k8sClient, apiGateway)
+		status := oathkeeper.Reconcile(context.Background(), k8sClient, apiGateway)
 		Expect(status.IsReady()).To(BeTrue(), "%#v", status)
 
 		var hpa autoscalingv2.HorizontalPodAutoscaler

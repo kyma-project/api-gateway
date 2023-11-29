@@ -26,9 +26,10 @@ var _ = Describe("API-Gateway Controller", func() {
 			// given
 			c := createFakeClient()
 			agr := &APIGatewayReconciler{
-				Client: c,
-				Scheme: getTestScheme(),
-				log:    logr.Discard(),
+				Client:               c,
+				Scheme:               getTestScheme(),
+				log:                  logr.Discard(),
+				oathkeeperReconciler: oathkeeperReconcilerWithoutVerification{},
 			}
 
 			// when
@@ -50,9 +51,10 @@ var _ = Describe("API-Gateway Controller", func() {
 
 			c := createFakeClient(apiGatewayCR)
 			agr := &APIGatewayReconciler{
-				Client: c,
-				Scheme: getTestScheme(),
-				log:    logr.Discard(),
+				Client:               c,
+				Scheme:               getTestScheme(),
+				log:                  logr.Discard(),
+				oathkeeperReconciler: oathkeeperReconcilerWithoutVerification{},
 			}
 
 			// when
@@ -78,9 +80,10 @@ var _ = Describe("API-Gateway Controller", func() {
 
 			c := createFakeClient(apiGatewayCR)
 			agr := &APIGatewayReconciler{
-				Client: c,
-				Scheme: getTestScheme(),
-				log:    logr.Discard(),
+				Client:               c,
+				Scheme:               getTestScheme(),
+				log:                  logr.Discard(),
+				oathkeeperReconciler: oathkeeperReconcilerWithoutVerification{},
 			}
 
 			// when
@@ -117,9 +120,10 @@ var _ = Describe("API-Gateway Controller", func() {
 
 			c := createFakeClient(apiGatewayCR, secondApiGatewayCR)
 			agr := &APIGatewayReconciler{
-				Client: c,
-				Scheme: getTestScheme(),
-				log:    logr.Discard(),
+				Client:               c,
+				Scheme:               getTestScheme(),
+				log:                  logr.Discard(),
+				oathkeeperReconciler: oathkeeperReconcilerWithoutVerification{},
 			}
 
 			// when
@@ -156,9 +160,10 @@ var _ = Describe("API-Gateway Controller", func() {
 
 			c := createFakeClient(apiGatewayCR, secondApiGatewayCR)
 			agr := &APIGatewayReconciler{
-				Client: c,
-				Scheme: getTestScheme(),
-				log:    logr.Discard(),
+				Client:               c,
+				Scheme:               getTestScheme(),
+				log:                  logr.Discard(),
+				oathkeeperReconciler: oathkeeperReconcilerWithoutVerification{},
 			}
 
 			// when
@@ -189,9 +194,10 @@ var _ = Describe("API-Gateway Controller", func() {
 			c := createFakeClient(apiGatewayCR)
 			fc := &shouldFailClient{c, true}
 			agr := &APIGatewayReconciler{
-				Client: fc,
-				Scheme: getTestScheme(),
-				log:    logr.Discard(),
+				Client:               fc,
+				Scheme:               getTestScheme(),
+				log:                  logr.Discard(),
+				oathkeeperReconciler: oathkeeperReconcilerWithoutVerification{},
 			}
 
 			// when
@@ -219,9 +225,10 @@ var _ = Describe("API-Gateway Controller", func() {
 
 			c := createFakeClient(apiGatewayCR)
 			agr := &APIGatewayReconciler{
-				Client: c,
-				Scheme: getTestScheme(),
-				log:    logr.Discard(),
+				Client:               c,
+				Scheme:               getTestScheme(),
+				log:                  logr.Discard(),
+				oathkeeperReconciler: oathkeeperReconcilerWithoutVerification{},
 			}
 
 			// when
@@ -259,9 +266,10 @@ var _ = Describe("API-Gateway Controller", func() {
 
 			c := createFakeClient(apiGatewayCR, apiRule, oryRule)
 			agr := &APIGatewayReconciler{
-				Client: c,
-				Scheme: getTestScheme(),
-				log:    logr.Discard(),
+				Client:               c,
+				Scheme:               getTestScheme(),
+				log:                  logr.Discard(),
+				oathkeeperReconciler: oathkeeperReconcilerWithoutVerification{},
 			}
 
 			// when
@@ -297,9 +305,10 @@ var _ = Describe("API-Gateway Controller", func() {
 
 			c := createFakeClient(apiGatewayCR, oryRule)
 			agr := &APIGatewayReconciler{
-				Client: c,
-				Scheme: getTestScheme(),
-				log:    logr.Discard(),
+				Client:               c,
+				Scheme:               getTestScheme(),
+				log:                  logr.Discard(),
+				oathkeeperReconciler: oathkeeperReconcilerWithoutVerification{},
 			}
 
 			// when
