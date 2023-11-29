@@ -2,6 +2,8 @@ package operator
 
 import (
 	"context"
+	goerrors "errors"
+	"fmt"
 	"time"
 
 	"github.com/go-logr/logr"
@@ -90,6 +92,118 @@ var _ = Describe("API-Gateway Controller", func() {
 
 			Expect(c.Get(context.TODO(), client.ObjectKeyFromObject(apiGatewayCR), apiGatewayCR)).Should(Succeed())
 			Expect(apiGatewayCR.Status.State).Should(Equal(operatorv1alpha1.Ready))
+		})
+
+		It("Should set status Ready on the older APIGateway CR when there are two in the cluster", func() {
+			// given
+			apiGatewayCR := &operatorv1alpha1.APIGateway{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      apiGatewayCRName,
+					Namespace: testNamespace,
+					UID:       "1",
+					// 11 May 2017
+					CreationTimestamp: metav1.Unix(1494505756, 0),
+				},
+			}
+
+			secondApiGatewayCR := &operatorv1alpha1.APIGateway{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:              "default2",
+					Namespace:         testNamespace,
+					UID:               "2",
+					CreationTimestamp: metav1.Now(),
+				},
+			}
+
+			c := createFakeClient(apiGatewayCR, secondApiGatewayCR)
+			agr := &APIGatewayReconciler{
+				Client: c,
+				Scheme: getTestScheme(),
+				log:    logr.Discard(),
+			}
+
+			// when
+			result, err := agr.Reconcile(context.Background(), reconcile.Request{NamespacedName: types.NamespacedName{Namespace: testNamespace, Name: apiGatewayCRName}})
+
+			// then
+			Expect(err).ToNot(HaveOccurred())
+			Expect(result.Requeue).To(BeFalse())
+
+			Expect(c.Get(context.Background(), client.ObjectKeyFromObject(apiGatewayCR), apiGatewayCR)).Should(Succeed())
+			Expect(apiGatewayCR.Status.State).To(Equal(operatorv1alpha1.Ready))
+		})
+
+		It("Should set an error status and do not requeue an APIGateway CR when an older APIGateway CR is present", func() {
+			// given
+			apiGatewayCR := &operatorv1alpha1.APIGateway{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      apiGatewayCRName,
+					Namespace: testNamespace,
+					UID:       "1",
+					// 11 May 2017
+					CreationTimestamp: metav1.Unix(1494505756, 0),
+				},
+			}
+
+			secondApiGatewayCR := &operatorv1alpha1.APIGateway{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:              fmt.Sprintf("%s-2", apiGatewayCRName),
+					Namespace:         testNamespace,
+					UID:               "2",
+					CreationTimestamp: metav1.Now(),
+				},
+			}
+
+			c := createFakeClient(apiGatewayCR, secondApiGatewayCR)
+			agr := &APIGatewayReconciler{
+				Client: c,
+				Scheme: getTestScheme(),
+				log:    logr.Discard(),
+			}
+
+			// when
+			result, err := agr.Reconcile(context.Background(), reconcile.Request{NamespacedName: types.NamespacedName{Namespace: testNamespace, Name: fmt.Sprintf("%s-2", apiGatewayCRName)}})
+
+			// then
+			Expect(err).ToNot(HaveOccurred())
+			Expect(result.Requeue).To(BeFalse())
+
+			Expect(c.Get(context.Background(), client.ObjectKeyFromObject(secondApiGatewayCR), secondApiGatewayCR)).Should(Succeed())
+			Expect(secondApiGatewayCR.Status.State).To(Equal(operatorv1alpha1.Error))
+			Expect(secondApiGatewayCR.Status.Description).To(Equal(fmt.Sprintf("stopped APIGateway CR reconciliation: only APIGateway CR %s reconciles the module", apiGatewayCRName)))
+
+		})
+
+		It("Should set an error status and requeue an APIGateway CR when is unable to list Istio CRs", func() {
+			// given
+			apiGatewayCR := &operatorv1alpha1.APIGateway{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      apiGatewayCRName,
+					Namespace: testNamespace,
+					UID:       "1",
+					// 11 May 2017
+					CreationTimestamp: metav1.Unix(1494505756, 0),
+				},
+			}
+
+			c := createFakeClient(apiGatewayCR)
+			fc := &shouldFailClient{c, true}
+			agr := &APIGatewayReconciler{
+				Client: fc,
+				Scheme: getTestScheme(),
+				log:    logr.Discard(),
+			}
+
+			// when
+			result, err := agr.Reconcile(context.Background(), reconcile.Request{NamespacedName: types.NamespacedName{Namespace: testNamespace, Name: apiGatewayCRName}})
+
+			// then
+			Expect(err).To(HaveOccurred())
+			Expect(result.Requeue).To(BeFalse())
+
+			Expect(c.Get(context.Background(), client.ObjectKeyFromObject(apiGatewayCR), apiGatewayCR)).Should(Succeed())
+			Expect(apiGatewayCR.Status.State).To(Equal(operatorv1alpha1.Error))
+			Expect(apiGatewayCR.Status.Description).To(Equal("Unable to list APIGateway CRs"))
 		})
 
 		It("Should delete API-Gateway CR if there are no blocking resources", func() {
@@ -203,3 +317,15 @@ var _ = Describe("API-Gateway Controller", func() {
 		})
 	})
 })
+
+type shouldFailClient struct {
+	client.Client
+	FailOnList bool
+}
+
+func (p *shouldFailClient) List(ctx context.Context, list client.ObjectList, _ ...client.ListOption) error {
+	if p.FailOnList {
+		return goerrors.New("fail on purpose")
+	}
+	return p.Client.List(ctx, list)
+}
