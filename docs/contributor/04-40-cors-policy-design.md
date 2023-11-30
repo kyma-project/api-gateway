@@ -3,11 +3,11 @@
 ## API Proposal
 
 In Istio VirtualService, you can configure CORS using the following parameters:
-- **AllowHeaders** - defines a list of HTTP headers that you can use when requesting a resource. They are serialized into the **Access-Control-Allow-Headers** header.
+- **AllowHeaders** - defines a list of HTTP headers that you can use when requesting a resource. The contents of this list are serialized into the **Access-Control-Allow-Headers** header.
 - **AllowMethods** - defines a list of HTTP methods allowed to access the resource. The contents of this list are serialized into the **Access-Control-Allow-Methods** header.
-**AllowOrigins** (of the type [StringMatch](https://istio.io/latest/docs/reference/config/networking/virtual-service/#StringMatch)) - specifies string patterns that match allowed origins. An origin is allowed if any of the string matchers find a match. If a match is found, the outgoing **Access-Control-Allow-Origin** header is set to the origin provided by the client.
-- **AllowCredentials** (either `true` or `false`) - specifies whether the caller is allowed to send the actual request (not the preflight) using credentials. It translates into the **Access-Control-Allow-Credentials** header.
-- **ExposeHeaders** - a list of HTTP headers that the browsers are allowed to access. It is serialized into the **Access-Control-Expose-Headers** header.
+- **AllowOrigins** - specifies string patterns that match allowed origins. An origin is allowed if any of the string matchers find a match. If a match is found, the outgoing **Access-Control-Allow-Origin** header is set to the origin provided by the client. The value must be of the type [StringMatch](https://istio.io/latest/docs/reference/config/networking/virtual-service/#StringMatch).
+- **AllowCredentials** - specifies whether the caller is allowed to send the actual request (not the preflight) using credentials. It translates into the **Access-Control-Allow-Credentials** header. The value can be either `true` or `false`.
+- **ExposeHeaders** - defines a list of HTTP headers that browsers are allowed to access. The contents of this list are serialized into the **Access-Control-Expose-Headers** header.
 - **MaxAge** - determines the duration for which the results of a preflight request can be stored in cache. The parameter translates into the **Access-Control-Max-Age** header.
 
 The chosen configuration must allow for the exposure of all the listed parameters. The following structure is capable of storing this information:
