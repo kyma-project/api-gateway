@@ -1,16 +1,16 @@
-# Proposal for APIRule API for configuration of CORS headers in Istio VirtualService
+# Proposal for APIRule API CORS headers configuration in IstioVirtual Service
 
 ## API Proposal
 
-In Istio VirtualService, user can allow CORS configuration with the following parameters:
-- AllowHeaders - List of HTTP headers that can be used when requesting the resource. Serialized to Access-Control-Allow-Headers header.
-- AllowMethods - List of HTTP methods allowed to access the resource. The content will be serialized into the Access-Control-Allow-Methods header.
-- AllowOrigins (with type [StringMatch](https://istio.io/latest/docs/reference/config/networking/virtual-service/#StringMatch)) - String patterns that match allowed origins. An origin is allowed if any of the string matchers match. If a match is found, then the outgoing Access-Control-Allow-Origin would be set to the origin as provided by the client.
-- AllowCredentials (true or false) - Indicates whether the caller is allowed to send the actual request (not the preflight) using credentials. Translates to Access-Control-Allow-Credentials header.
-- ExposeHeaders - A list of HTTP headers that the browsers are allowed to access. Serialized into Access-Control-Expose-Headers header.
-- MaxAge - Specifies how long the results of a preflight request can be cached. Translates to the Access-Control-Max-Age header.
+In Istio VirtualService, you can configure CORS using the following parameters:
+- **AllowHeaders** - defines a list of HTTP headers that you can use when requesting a resource. They are serialized into the **Access-Control-Allow-Headers** header.
+- **AllowMethods** - defines a list of HTTP methods allowed to access the resource. The contents of this list are serialized into the **Access-Control-Allow-Methods** header.
+**AllowOrigins** (of the type [StringMatch](https://istio.io/latest/docs/reference/config/networking/virtual-service/#StringMatch)) - specifies string patterns that match allowed origins. An origin is allowed if any of the string matchers find a match. If a match is found, the outgoing **Access-Control-Allow-Origin** header is set to the origin provided by the client.
+- **AllowCredentials** (either `true` or `false`) - specifies whether the caller is allowed to send the actual request (not the preflight) using credentials. It translates into the **Access-Control-Allow-Credentials** header.
+- **ExposeHeaders** - a list of HTTP headers that the browsers are allowed to access. It is serialized into the **Access-Control-Expose-Headers** header.
+- **MaxAge** - determines the duration for which the results of a preflight request can be stored in cache. The parameter translates into the **Access-Control-Max-Age** header.
 
-We should allow exposure of all of those parameters. The structure that would hold this configuration would look like following:
+The chosen configuration must allow for the exposure of all the listed parameters. The following structure is capable of storing this information:
 ```go
 type CorsPolicy struct {
 	AllowHeaders     []string               `json:"allowHeaders,omitempty"`
@@ -26,7 +26,7 @@ type CorsPolicy struct {
 
 ### Default values
 
-It should be noted, that in the most secure scenario, CORS should be configured to not respond with any of the `Access-Control` headers. However since we need to consider backwards compatibility with current implementation, we should take notice that the current configuration, for all APIRules, is as follows:
+In the most secure scenario, CORS should be configured not to respond with any of the **Access-Control** headers. However, for backward compatibility with the current implementation, it is important to note that the current configuration for all APIRules is as follows:
 ```yaml
 CorsAllowOrigins: "regex:.*"
 CorsAllowMethods: "GET,POST,PUT,DELETE,PATCH"
@@ -34,12 +34,11 @@ CorsAllowHeaders: "Authorization,Content-Type,*"
 ```
 
 **Decision**
-\
-We have decided that the go to default values should be empty, meaning secure-by-default configuration. The transition to that default should be gradual, with staying with current CORS configuration for now.
+The default values should be empty to ensure the secure by default configuration. The transition to that default should be gradual, with the current CORS configuration staying in place for now.
 
 ### CORS headers sanitization
 
-Another thing is that if the workload will provide CORS headers by it's own, Istio Ingress Gateway will NOT sanitize/change the CORS headers unless the request origin matches any of those that are set up in `AllowOrigins` VirtualService configuration. This is a possible security risk, because it might not be expected that the server response will contain different headers than those defined in the APIRule.
+If a workload provides its own CORS headers, Istio Ingress Gateway does not sanitize or change the CORS headers unless the request origin matches one of the origins specified in the **AllowOrigins** configuration of the VirtualService. This can pose a security risk because it may be unexpected for the server response to contain different headers than those defined in the APIRule.
 
 ```yaml
 apiVersion: networking.istio.io/v1beta1
@@ -84,5 +83,4 @@ spec:
 ```
 
 **Decision**
-\
-APIRule will become the singular source of truth, ignoring upstream response headers. If the configuration for CORS is empty, we should enforce the default configuration mentioned in [Default values](#default-values).
+APIRule must be the only source of truth and disregard the upstream response headers. If the CORS configuration is empty, the default configuration specified in [Default values](#default-values) should be applied.
