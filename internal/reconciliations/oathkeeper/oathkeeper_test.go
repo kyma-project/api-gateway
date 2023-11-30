@@ -275,9 +275,34 @@ var _ = Describe("Oathkeeper reconciliation", func() {
 				Expect(k8serrors.IsNotFound(err)).To(BeTrue())
 			}
 		})
+
+		It("Should return error status when reconciliation fails", func() {
+			apiGateway := createApiGateway()
+			k8sClient := createFakeClientThatFailsOnCreate()
+			status := oathkeeper.Reconcile(context.Background(), k8sClient, apiGateway)
+			Expect(status.IsError()).To(BeTrue(), "%#v", status)
+			Expect(status.Description()).To(Equal("Oathkeeper did not reconcile successfully"))
+		})
 	})
 
 	Context("Reconciler", func() {
+
+		It("Should return error status when reconciliation fails", func() {
+			apiGateway := createApiGateway()
+			k8sClient := createFakeClientThatFailsOnCreate()
+
+			reconciler := oathkeeper.Reconciler{
+				ReadinessRetryConfig: oathkeeper.RetryConfig{
+					Attempts: 1,
+					Delay:    1 * time.Millisecond,
+				},
+			}
+
+			status := reconciler.ReconcileAndVerifyReadiness(context.Background(), k8sClient, apiGateway)
+
+			Expect(status.IsError()).To(BeTrue(), "%#v", status)
+			Expect(status.Description()).To(Equal("Oathkeeper did not reconcile successfully"))
+		})
 
 		It("Should return Ready for Oathkeeper deployment that is Available", func() {
 			apiGateway := createApiGateway()
@@ -335,6 +360,7 @@ var _ = Describe("Oathkeeper reconciliation", func() {
 			}
 			status := reconciler.ReconcileAndVerifyReadiness(context.Background(), k8sClient, apiGateway)
 			Expect(status.IsError()).To(BeTrue(), "%#v", status)
+			Expect(status.Description()).To(Equal("Oathkeeper did not start successfully"))
 		})
 
 	})
