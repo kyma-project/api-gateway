@@ -16,7 +16,6 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"strconv"
-	"time"
 )
 
 const (
@@ -90,7 +89,7 @@ func deleteDeployment(ctx context.Context, k8sClient client.Client, name string)
 	return nil
 }
 
-func waitForOathkeeperDeploymentToBeReady(ctx context.Context, k8sClient client.Client) error {
+func waitForOathkeeperDeploymentToBeReady(ctx context.Context, k8sClient client.Client, cfg RetryConfig) error {
 	return retry.Do(func() error {
 		var dep appsv1.Deployment
 		err := k8sClient.Get(ctx, client.ObjectKey{
@@ -107,7 +106,7 @@ func waitForOathkeeperDeploymentToBeReady(ctx context.Context, k8sClient client.
 		}
 
 		return fmt.Errorf("oathkeeper deployment does not have minimum replicas available. unavailable replicas  %d", dep.Status.UnavailableReplicas)
-	}, retry.Attempts(60), retry.Delay(2*time.Second), retry.DelayType(retry.FixedDelay))
+	}, retry.Attempts(cfg.Attempts), retry.Delay(cfg.Delay), retry.DelayType(retry.FixedDelay))
 }
 
 func getReplicasForDeployment(ctx context.Context, k8sClient client.Client) (string, error) {

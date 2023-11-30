@@ -9,13 +9,25 @@ import (
 	"github.com/kyma-project/api-gateway/internal/reconciliations/oathkeeper/maester"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"time"
 )
 
 func NewReconciler() Reconciler {
-	return Reconciler{}
+	return Reconciler{
+		ReadinessRetryConfig: RetryConfig{
+			Attempts: 60,
+			Delay:    2 * time.Second,
+		},
+	}
 }
 
 type Reconciler struct {
+	ReadinessRetryConfig RetryConfig
+}
+
+type RetryConfig struct {
+	Attempts uint
+	Delay    time.Duration
 }
 
 func (r Reconciler) ReconcileAndVerifyReadiness(ctx context.Context, k8sClient client.Client, apiGatewayCR *v1alpha1.APIGateway) controllers.Status {
@@ -26,7 +38,7 @@ func (r Reconciler) ReconcileAndVerifyReadiness(ctx context.Context, k8sClient c
 	}
 
 	ctrl.Log.Info("Waiting for Oathkeeper Deployment to become ready")
-	err := waitForOathkeeperDeploymentToBeReady(ctx, k8sClient)
+	err := waitForOathkeeperDeploymentToBeReady(ctx, k8sClient, r.ReadinessRetryConfig)
 	if err != nil {
 		return controllers.ErrorStatus(err, "Oathkeeper did not start successfully")
 	}
@@ -35,16 +47,9 @@ func (r Reconciler) ReconcileAndVerifyReadiness(ctx context.Context, k8sClient c
 }
 
 func Reconcile(ctx context.Context, k8sClient client.Client, apiGatewayCR *v1alpha1.APIGateway) controllers.Status {
-	err := reconcileOryOathkeeperRuleCRD(ctx, k8sClient, *apiGatewayCR)
-	if err != nil {
-		return controllers.ErrorStatus(err, "Oathkeeper Rule CRD did not reconcile successfully")
-	}
-	err = maester.ReconcileMaester(ctx, k8sClient, *apiGatewayCR)
-	if err != nil {
-		return controllers.ErrorStatus(err, "Oathkeeper Maester did not reconcile successfully")
-	}
-
-	err = errors.Join(
+	err := errors.Join(
+		reconcileOryOathkeeperRuleCRD(ctx, k8sClient, *apiGatewayCR),
+		maester.ReconcileMaester(ctx, k8sClient, *apiGatewayCR),
 		reconcileOryJWKSSecret(ctx, k8sClient, *apiGatewayCR),
 		reconcileOryOathkeeperConfigConfigMap(ctx, k8sClient, *apiGatewayCR),
 		reconcileOathkeeperHPA(ctx, k8sClient, *apiGatewayCR),
