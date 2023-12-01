@@ -10,12 +10,12 @@ import (
 	"github.com/kyma-project/api-gateway/internal/reconciliations"
 	"github.com/kyma-project/api-gateway/internal/reconciliations/oathkeeper/maester"
 	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"strconv"
-	"time"
 )
 
 const (
@@ -63,12 +63,7 @@ func reconcileDeployment(ctx context.Context, k8sClient client.Client, name stri
 	templateValues["Replicas"] = replicas
 	templateValues["ServiceAccountName"] = maester.ServiceAccountName
 
-	err = reconciliations.ApplyResource(ctx, k8sClient, *deploymentManifest, templateValues)
-	if err != nil {
-		return err
-	}
-
-	return waitForDeploymentToBeReady(ctx, k8sClient)
+	return reconciliations.ApplyResource(ctx, k8sClient, *deploymentManifest, templateValues)
 }
 
 func deleteDeployment(ctx context.Context, k8sClient client.Client, name string) error {
@@ -94,7 +89,7 @@ func deleteDeployment(ctx context.Context, k8sClient client.Client, name string)
 	return nil
 }
 
-func waitForDeploymentToBeReady(ctx context.Context, k8sClient client.Client) error {
+func waitForOathkeeperDeploymentToBeReady(ctx context.Context, k8sClient client.Client, cfg RetryConfig) error {
 	return retry.Do(func() error {
 		var dep appsv1.Deployment
 		err := k8sClient.Get(ctx, client.ObjectKey{
@@ -106,12 +101,12 @@ func waitForDeploymentToBeReady(ctx context.Context, k8sClient client.Client) er
 			return err
 		}
 
-		if dep.Status.UnavailableReplicas > 0 {
-			return fmt.Errorf("unavailable replicas %d", dep.Status.UnavailableReplicas)
+		if hasMinimumReplicasAvailable(dep) {
+			return nil
 		}
 
-		return nil
-	}, retry.Attempts(60), retry.Delay(2*time.Second), retry.DelayType(retry.FixedDelay))
+		return fmt.Errorf("oathkeeper deployment does not have minimum replicas available. unavailable replicas  %d", dep.Status.UnavailableReplicas)
+	}, retry.Attempts(cfg.Attempts), retry.Delay(cfg.Delay), retry.DelayType(retry.FixedDelay))
 }
 
 func getReplicasForDeployment(ctx context.Context, k8sClient client.Client) (string, error) {
@@ -132,4 +127,14 @@ func getReplicasForDeployment(ctx context.Context, k8sClient client.Client) (str
 	}
 
 	return strconv.Itoa(int(*dep.Spec.Replicas)), nil
+}
+
+func hasMinimumReplicasAvailable(dep appsv1.Deployment) bool {
+	for _, condition := range dep.Status.Conditions {
+		if condition.Type == appsv1.DeploymentAvailable && condition.Status == corev1.ConditionTrue {
+			return true
+		}
+	}
+
+	return false
 }

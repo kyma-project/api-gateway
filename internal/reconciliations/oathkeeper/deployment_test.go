@@ -31,7 +31,7 @@ var _ = Describe("Oathkeeper Deployment reconciliation", func() {
 
 		apiGateway := createApiGateway()
 		k8sClient := createFakeClient(&smallNode, apiGateway)
-		status := oathkeeper.ReconcileOathkeeper(context.Background(), k8sClient, apiGateway)
+		status := oathkeeper.Reconcile(context.Background(), k8sClient, apiGateway)
 		Expect(status.IsReady()).To(BeTrue(), "%#v", status)
 
 		var deployment appsv1.Deployment
@@ -75,7 +75,7 @@ var _ = Describe("Oathkeeper Deployment reconciliation", func() {
 
 		apiGateway := createApiGateway()
 		k8sClient := createFakeClient(&node, apiGateway)
-		status := oathkeeper.ReconcileOathkeeper(context.Background(), k8sClient, apiGateway)
+		status := oathkeeper.Reconcile(context.Background(), k8sClient, apiGateway)
 		Expect(status.IsReady()).To(BeTrue(), "%#v", status)
 
 		var deployment appsv1.Deployment
@@ -130,7 +130,7 @@ var _ = Describe("Oathkeeper Deployment reconciliation", func() {
 
 		apiGateway := createApiGateway()
 		k8sClient := createFakeClient(&node, apiGateway, &initialDeployment)
-		status := oathkeeper.ReconcileOathkeeper(context.Background(), k8sClient, apiGateway)
+		status := oathkeeper.Reconcile(context.Background(), k8sClient, apiGateway)
 		Expect(status.IsReady()).To(BeTrue(), "%#v", status)
 
 		var deployment appsv1.Deployment

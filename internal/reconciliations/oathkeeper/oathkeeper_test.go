@@ -7,6 +7,8 @@ import (
 	"github.com/kyma-project/api-gateway/internal/reconciliations/oathkeeper"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -143,134 +145,224 @@ var resourceList = []deployedResource{
 
 var _ = Describe("Oathkeeper reconciliation", func() {
 
-	It("Should successfully reconcile Oathkeeper", func() {
-		apiGateway := createApiGateway()
-		k8sClient := createFakeClient(apiGateway)
-		status := oathkeeper.ReconcileOathkeeper(context.Background(), k8sClient, apiGateway)
-		Expect(status.IsReady()).To(BeTrue(), "%#v", status)
+	Context("Reconcile", func() {
+		It("Should successfully reconcile Oathkeeper", func() {
+			apiGateway := createApiGateway()
+			k8sClient := createFakeClient(apiGateway)
+			status := oathkeeper.Reconcile(context.Background(), k8sClient, apiGateway)
+			Expect(status.IsReady()).To(BeTrue(), "%#v", status)
 
-		for _, resource := range resourceList {
-			var obj unstructured.Unstructured
-			obj.SetGroupVersionKind(resource.GVK)
-			var err error
-			if resource.namespaced {
-				err = k8sClient.Get(context.Background(), types.NamespacedName{
-					Namespace: reconciliations.Namespace,
-					Name:      resource.name,
-				}, &obj)
-			} else {
-				err = k8sClient.Get(context.Background(), types.NamespacedName{
-					Name: resource.name,
-				}, &obj)
+			for _, resource := range resourceList {
+				var obj unstructured.Unstructured
+				obj.SetGroupVersionKind(resource.GVK)
+				var err error
+				if resource.namespaced {
+					err = k8sClient.Get(context.Background(), types.NamespacedName{
+						Namespace: reconciliations.Namespace,
+						Name:      resource.name,
+					}, &obj)
+				} else {
+					err = k8sClient.Get(context.Background(), types.NamespacedName{
+						Name: resource.name,
+					}, &obj)
+				}
+
+				Expect(err).ShouldNot(HaveOccurred())
+			}
+		})
+
+		It("Should remove Oathkeeper resources on deletion", func() {
+			apiGateway := createApiGateway()
+			k8sClient := createFakeClient(apiGateway)
+			status := oathkeeper.Reconcile(context.Background(), k8sClient, apiGateway)
+			Expect(status.IsReady()).To(BeTrue(), "%#v", status.NestedError())
+
+			apiGateway.DeletionTimestamp = &metav1.Time{Time: time.Now()}
+
+			status = oathkeeper.Reconcile(context.Background(), k8sClient, apiGateway)
+			Expect(status.IsReady()).To(BeTrue(), "%#v", status.NestedError())
+
+			for _, resource := range resourceList {
+				var obj unstructured.Unstructured
+				obj.SetGroupVersionKind(resource.GVK)
+				var err error
+				if resource.namespaced {
+					err = k8sClient.Get(context.Background(), types.NamespacedName{
+						Namespace: reconciliations.Namespace,
+						Name:      resource.name,
+					}, &obj)
+				} else {
+					err = k8sClient.Get(context.Background(), types.NamespacedName{
+						Name: resource.name,
+					}, &obj)
+				}
+
+				Expect(k8serrors.IsNotFound(err)).To(BeTrue())
+			}
+		})
+
+		It("Should remove Cronjob resources from the cluster if those exist", func() {
+			cronjobResources := []deployedResource{
+				{
+					name:       "oathkeeper-jwks-rotator",
+					namespaced: true,
+					GVK: schema.GroupVersionKind{
+						Group:   "batch",
+						Version: "v1",
+						Kind:    "Cronjob",
+					},
+				},
+				{
+					name:       "ory-oathkeeper-keys-job-role",
+					namespaced: true,
+					GVK: schema.GroupVersionKind{
+						Group:   "rbac.authorization.k8s.io",
+						Version: "v1",
+						Kind:    "Role",
+					},
+				},
+				{
+					name:       "ory-oathkeeper-keys-job-role-binding",
+					namespaced: true,
+					GVK: schema.GroupVersionKind{
+						Group:   "rbac.authorization.k8s.io",
+						Version: "v1",
+						Kind:    "RoleBinding",
+					},
+				},
+				{
+					name:       "ory-oathkeeper-keys-service-account",
+					namespaced: true,
+					GVK: schema.GroupVersionKind{
+						Group:   "",
+						Version: "v1",
+						Kind:    "ServiceAccount",
+					},
+				},
 			}
 
-			Expect(err).ShouldNot(HaveOccurred())
-		}
+			apiGateway := createApiGateway()
+			k8sClient := createFakeClient(apiGateway)
+
+			for _, res := range cronjobResources {
+				var r unstructured.Unstructured
+				r.SetGroupVersionKind(res.GVK)
+				r.SetName(res.name)
+				if res.namespaced {
+					r.SetNamespace(reconciliations.Namespace)
+				}
+				Expect(k8sClient.Create(context.Background(), &r)).To(Succeed())
+			}
+
+			status := oathkeeper.Reconcile(context.Background(), k8sClient, apiGateway)
+			Expect(status.IsReady()).To(BeTrue(), "%#v", status.NestedError())
+
+			for _, resource := range cronjobResources {
+				var obj unstructured.Unstructured
+				obj.SetGroupVersionKind(resource.GVK)
+				var err error
+				if resource.namespaced {
+					err = k8sClient.Get(context.Background(), types.NamespacedName{
+						Namespace: reconciliations.Namespace,
+						Name:      resource.name,
+					}, &obj)
+				} else {
+					err = k8sClient.Get(context.Background(), types.NamespacedName{
+						Name: resource.name,
+					}, &obj)
+				}
+
+				Expect(k8serrors.IsNotFound(err)).To(BeTrue())
+			}
+		})
+
+		It("Should return error status when reconciliation fails", func() {
+			apiGateway := createApiGateway()
+			k8sClient := createFakeClientThatFailsOnCreate()
+			status := oathkeeper.Reconcile(context.Background(), k8sClient, apiGateway)
+			Expect(status.IsError()).To(BeTrue(), "%#v", status)
+			Expect(status.Description()).To(Equal("Oathkeeper did not reconcile successfully"))
+		})
 	})
 
-	It("Should remove Oathkeeper resources on deletion", func() {
-		apiGateway := createApiGateway()
-		k8sClient := createFakeClient(apiGateway)
-		status := oathkeeper.ReconcileOathkeeper(context.Background(), k8sClient, apiGateway)
-		Expect(status.IsReady()).To(BeTrue(), "%#v", status.NestedError())
+	Context("Reconciler", func() {
 
-		apiGateway.DeletionTimestamp = &metav1.Time{Time: time.Now()}
+		It("Should return error status when reconciliation fails", func() {
+			apiGateway := createApiGateway()
+			k8sClient := createFakeClientThatFailsOnCreate()
 
-		status = oathkeeper.ReconcileOathkeeper(context.Background(), k8sClient, apiGateway)
-		Expect(status.IsReady()).To(BeTrue(), "%#v", status.NestedError())
+			reconciler := oathkeeper.Reconciler{
+				ReadinessRetryConfig: oathkeeper.RetryConfig{
+					Attempts: 1,
+					Delay:    1 * time.Millisecond,
+				},
+			}
 
-		for _, resource := range resourceList {
-			var obj unstructured.Unstructured
-			obj.SetGroupVersionKind(resource.GVK)
-			var err error
-			if resource.namespaced {
-				err = k8sClient.Get(context.Background(), types.NamespacedName{
+			status := reconciler.ReconcileAndVerifyReadiness(context.Background(), k8sClient, apiGateway)
+
+			Expect(status.IsError()).To(BeTrue(), "%#v", status)
+			Expect(status.Description()).To(Equal("Oathkeeper did not reconcile successfully"))
+		})
+
+		It("Should return Ready for Oathkeeper deployment that is Available", func() {
+			apiGateway := createApiGateway()
+
+			oathkeeperDep := &appsv1.Deployment{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "ory-oathkeeper",
 					Namespace: reconciliations.Namespace,
-					Name:      resource.name,
-				}, &obj)
-			} else {
-				err = k8sClient.Get(context.Background(), types.NamespacedName{
-					Name: resource.name,
-				}, &obj)
+				},
+				Status: appsv1.DeploymentStatus{
+					Conditions: []appsv1.DeploymentCondition{
+						{
+							Type:   appsv1.DeploymentAvailable,
+							Status: corev1.ConditionTrue,
+						},
+					},
+				},
 			}
 
-			Expect(k8serrors.IsNotFound(err)).To(BeTrue())
-		}
-	})
-
-	It("Should remove Cronjob resources from the cluster if those exist", func() {
-		cronjobResources := []deployedResource{
-			{
-				name:       "oathkeeper-jwks-rotator",
-				namespaced: true,
-				GVK: schema.GroupVersionKind{
-					Group:   "batch",
-					Version: "v1",
-					Kind:    "Cronjob",
+			k8sClient := createFakeClient(apiGateway, oathkeeperDep)
+			reconciler := oathkeeper.Reconciler{
+				ReadinessRetryConfig: oathkeeper.RetryConfig{
+					Attempts: 1,
+					Delay:    1 * time.Millisecond,
 				},
-			},
-			{
-				name:       "ory-oathkeeper-keys-job-role",
-				namespaced: true,
-				GVK: schema.GroupVersionKind{
-					Group:   "rbac.authorization.k8s.io",
-					Version: "v1",
-					Kind:    "Role",
-				},
-			},
-			{
-				name:       "ory-oathkeeper-keys-job-role-binding",
-				namespaced: true,
-				GVK: schema.GroupVersionKind{
-					Group:   "rbac.authorization.k8s.io",
-					Version: "v1",
-					Kind:    "RoleBinding",
-				},
-			},
-			{
-				name:       "ory-oathkeeper-keys-service-account",
-				namespaced: true,
-				GVK: schema.GroupVersionKind{
-					Group:   "",
-					Version: "v1",
-					Kind:    "ServiceAccount",
-				},
-			},
-		}
-
-		apiGateway := createApiGateway()
-		k8sClient := createFakeClient(apiGateway)
-
-		for _, res := range cronjobResources {
-			var r unstructured.Unstructured
-			r.SetGroupVersionKind(res.GVK)
-			r.SetName(res.name)
-			if res.namespaced {
-				r.SetNamespace(reconciliations.Namespace)
 			}
-			Expect(k8sClient.Create(context.Background(), &r)).To(Succeed())
-		}
+			status := reconciler.ReconcileAndVerifyReadiness(context.Background(), k8sClient, apiGateway)
+			Expect(status.IsReady()).To(BeTrue(), "%#v", status)
+		})
 
-		status := oathkeeper.ReconcileOathkeeper(context.Background(), k8sClient, apiGateway)
-		Expect(status.IsReady()).To(BeTrue(), "%#v", status.NestedError())
+		It("Should return Error for Oathkeeper deployment that is not Available", func() {
+			apiGateway := createApiGateway()
 
-		for _, resource := range cronjobResources {
-			var obj unstructured.Unstructured
-			obj.SetGroupVersionKind(resource.GVK)
-			var err error
-			if resource.namespaced {
-				err = k8sClient.Get(context.Background(), types.NamespacedName{
+			oathkeeperDep := &appsv1.Deployment{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "ory-oathkeeper",
 					Namespace: reconciliations.Namespace,
-					Name:      resource.name,
-				}, &obj)
-			} else {
-				err = k8sClient.Get(context.Background(), types.NamespacedName{
-					Name: resource.name,
-				}, &obj)
+				},
+				Status: appsv1.DeploymentStatus{
+					Conditions: []appsv1.DeploymentCondition{
+						{
+							Type:   appsv1.DeploymentAvailable,
+							Status: corev1.ConditionFalse,
+						},
+					},
+				},
 			}
 
-			Expect(k8serrors.IsNotFound(err)).To(BeTrue())
-		}
+			k8sClient := createFakeClient(apiGateway, oathkeeperDep)
+			reconciler := oathkeeper.Reconciler{
+				ReadinessRetryConfig: oathkeeper.RetryConfig{
+					Attempts: 1,
+					Delay:    1 * time.Millisecond,
+				},
+			}
+			status := reconciler.ReconcileAndVerifyReadiness(context.Background(), k8sClient, apiGateway)
+			Expect(status.IsError()).To(BeTrue(), "%#v", status)
+			Expect(status.Description()).To(Equal("Oathkeeper did not start successfully"))
+		})
+
 	})
 
 })
