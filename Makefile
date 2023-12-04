@@ -137,8 +137,12 @@ test-integration-gateway:
 install-prerequisites:
 	kyma deploy --ci -s main -c hack/kyma-components.yaml
 
+.PHONY: create-namespace
+create-namespace:
+	kubectl create namespace kyma-system --dry-run=client -o yaml | kubectl apply -f -
+
 .PHONY: install-prerequisites-with-istio-from-manifest
-install-prerequisites-with-istio-from-manifest:
+install-prerequisites-with-istio-from-manifest: create-namespace
 	kubectl apply -f https://github.com/kyma-project/istio/releases/latest/download/istio-manager.yaml
 	kubectl apply -f https://github.com/kyma-project/istio/releases/latest/download/istio-default-cr.yaml
 	kubectl wait -n kyma-system istios/default --for=jsonpath='{.status.state}'=Ready --timeout=300s
