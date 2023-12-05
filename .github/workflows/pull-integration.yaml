@@ -36,7 +36,6 @@ jobs:
           github-auth-token: ${{ secrets.GITHUB_TOKEN }}
 
   integration-tests:
-    environment: ${{ github.event.pull_request.author_association != 'COLLABORATOR' && github.event.pull_request.author_association != 'OWNER' && 'restricted' || 'internal' }}
     name: Integration tests
     runs-on: ubuntu-latest
     if: github.event.pull_request.draft == false
@@ -54,7 +53,6 @@ jobs:
           manager_image: "europe-docker.pkg.dev/kyma-project/dev/api-gateway-manager:PR-${{github.event.number}}"
 
   k8s-compatibility-check:
-    environment: ${{ github.event.pull_request.author_association != 'COLLABORATOR' && github.event.pull_request.author_association != 'OWNER' && 'restricted' || 'internal' }}
     name: Kubernetes version compatibility test
     runs-on: ubuntu-latest
     if: github.event.pull_request.draft == false
