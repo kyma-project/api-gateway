@@ -290,43 +290,43 @@ const (
 // SetHeader sets the request header with name and value
 func (h HttpRouteHeadersBuilder) SetCORSPolicyHeaders(corsPolicy apirulev1beta1.CorsPolicy) HttpRouteHeadersBuilder {
 	if len(corsPolicy.ExposeHeaders) > 0 {
-		h.value.Request.Set[ExposeName] = strings.Join(corsPolicy.ExposeHeaders, ",")
+		h.value.Response.Set[ExposeName] = strings.Join(corsPolicy.ExposeHeaders, ",")
 	} else {
-		h.value.Request.Remove = append(h.value.Request.Remove, ExposeName)
+		h.value.Response.Remove = append(h.value.Request.Remove, ExposeName)
 	}
 
 	if len(corsPolicy.AllowHeaders) > 0 {
-		h.value.Request.Set[AllowHeadersName] = strings.Join(corsPolicy.AllowHeaders, ",")
+		h.value.Response.Set[AllowHeadersName] = strings.Join(corsPolicy.AllowHeaders, ",")
 	} else {
-		h.value.Request.Remove = append(h.value.Request.Remove, AllowHeadersName)
+		h.value.Response.Remove = append(h.value.Request.Remove, AllowHeadersName)
 	}
 
 	if corsPolicy.AllowCredentials != nil {
 		if *corsPolicy.AllowCredentials {
-			h.value.Request.Set[CredentialsName] = "true"
+			h.value.Response.Set[CredentialsName] = "true"
 		} else {
-			h.value.Request.Set[CredentialsName] = "false"
+			h.value.Response.Set[CredentialsName] = "false"
 		}
 	} else {
-		h.value.Request.Remove = append(h.value.Request.Remove, CredentialsName)
+		h.value.Response.Remove = append(h.value.Request.Remove, CredentialsName)
 	}
 
 	if len(corsPolicy.AllowMethods) > 0 {
-		h.value.Request.Set[AllowMethodsName] = strings.Join(corsPolicy.AllowMethods, ",")
+		h.value.Response.Set[AllowMethodsName] = strings.Join(corsPolicy.AllowMethods, ",")
 	} else {
-		h.value.Request.Remove = append(h.value.Request.Remove, AllowMethodsName)
+		h.value.Response.Remove = append(h.value.Request.Remove, AllowMethodsName)
 	}
 
 	if len(corsPolicy.AllowOrigins) > 0 {
-		h.value.Request.Set[OriginName] = strings.Join(corsPolicy.AllowOrigins, ",")
+		h.value.Response.Set[OriginName] = strings.Join(corsPolicy.AllowOrigins, ",")
 	} else {
-		h.value.Request.Remove = append(h.value.Request.Remove, OriginName)
+		h.value.Response.Remove = append(h.value.Request.Remove, OriginName)
 	}
 
 	if corsPolicy.MaxAge != nil {
-		h.value.Request.Set[MaxAgeName] = strconv.Itoa(int(corsPolicy.MaxAge.Seconds()))
+		h.value.Response.Set[MaxAgeName] = strconv.Itoa(int(corsPolicy.MaxAge.Seconds()))
 	} else {
-		h.value.Request.Remove = append(h.value.Request.Remove, MaxAgeName)
+		h.value.Response.Remove = append(h.value.Request.Remove, MaxAgeName)
 	}
 
 	return h
