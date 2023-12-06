@@ -1,9 +1,12 @@
 package builders
 
 import (
+	apirulev1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"google.golang.org/protobuf/types/known/durationpb"
 	"istio.io/api/networking/v1beta1"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
+	"strconv"
+	"strings"
 	"time"
 )
 
@@ -270,6 +273,60 @@ func (h HttpRouteHeadersBuilder) SetRequestCookies(cookies string) HttpRouteHead
 func (h HttpRouteHeadersBuilder) SetRequestHeaders(headers map[string]string) HttpRouteHeadersBuilder {
 	for name, value := range headers {
 		h.value.Request.Set[name] = value
+	}
+
+	return h
+}
+
+const (
+	ExposeName       = "Access-Control-Expose-Headers"
+	AllowHeadersName = "Access-Control-Allow-Headers"
+	CredentialsName  = "Access-Control-Allow-Credentials"
+	AllowMethodsName = "Access-Control-Allow-Methods"
+	OriginName       = "Access-Control-Allow-Origin"
+	MaxAgeName       = "Access-Control-Max-Age"
+)
+
+// SetHeader sets the request header with name and value
+func (h HttpRouteHeadersBuilder) SetCORSPolicyHeaders(corsPolicy apirulev1beta1.CorsPolicy) HttpRouteHeadersBuilder {
+	if len(corsPolicy.ExposeHeaders) > 0 {
+		h.value.Request.Set[ExposeName] = strings.Join(corsPolicy.ExposeHeaders, ",")
+	} else {
+		h.value.Request.Remove = append(h.value.Request.Remove, ExposeName)
+	}
+
+	if len(corsPolicy.AllowHeaders) > 0 {
+		h.value.Request.Set[AllowHeadersName] = strings.Join(corsPolicy.AllowHeaders, ",")
+	} else {
+		h.value.Request.Remove = append(h.value.Request.Remove, AllowHeadersName)
+	}
+
+	if corsPolicy.AllowCredentials != nil {
+		if *corsPolicy.AllowCredentials {
+			h.value.Request.Set[CredentialsName] = "true"
+		} else {
+			h.value.Request.Set[CredentialsName] = "false"
+		}
+	} else {
+		h.value.Request.Remove = append(h.value.Request.Remove, CredentialsName)
+	}
+
+	if len(corsPolicy.AllowMethods) > 0 {
+		h.value.Request.Set[AllowMethodsName] = strings.Join(corsPolicy.AllowMethods, ",")
+	} else {
+		h.value.Request.Remove = append(h.value.Request.Remove, AllowMethodsName)
+	}
+
+	if len(corsPolicy.AllowOrigins) > 0 {
+		h.value.Request.Set[OriginName] = strings.Join(corsPolicy.AllowOrigins, ",")
+	} else {
+		h.value.Request.Remove = append(h.value.Request.Remove, OriginName)
+	}
+
+	if corsPolicy.MaxAge != nil {
+		h.value.Request.Set[MaxAgeName] = strconv.Itoa(int(corsPolicy.MaxAge.Seconds()))
+	} else {
+		h.value.Request.Remove = append(h.value.Request.Remove, MaxAgeName)
 	}
 
 	return h

@@ -18,6 +18,7 @@ package v1beta1
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
+	"time"
 )
 
 // Status code describing APIRule.
@@ -47,6 +48,9 @@ type APIRuleSpec struct {
 	// Specifies the Istio Gateway to be used.
 	// +kubebuilder:validation:Pattern=`^[0-9a-z-_]+(\/[0-9a-z-_]+|(\.[0-9a-z-_]+)*)$`
 	Gateway *string `json:"gateway"`
+	// Specifies CORS headers configuration that will be sent downstream
+	// +optional
+	CorsPolicy *CorsPolicy `json:"corsPolicy,omitempty"`
 	// Represents the array of Oathkeeper access rules to be applied.
 	// +kubebuilder:validation:MinItems=1
 	Rules []Rule `json:"rules"`
@@ -193,3 +197,14 @@ type JwtHeader struct {
 // +kubebuilder:validation:Minimum=1
 // +kubebuilder:validation:Maximum=3900
 type Timeout uint16 // We use unit16 instead of a time.Duration because there is a bug with duration that requires additional validation of the format. Issue: checking https://github.com/kubernetes/apiextensions-apiserver/issues/56
+
+// CorsPolicy allows configuration of CORS headers recieved downstream. If this is not defined, the default values are applied.
+// If CorsPolicy is configured, CORS headers recieved downstream will be only those defined on the APIRule
+type CorsPolicy struct {
+	AllowHeaders     []string       `json:"allowHeaders,omitempty"`
+	AllowMethods     []string       `json:"allowMethods,omitempty"`
+	AllowOrigins     []string       `json:"allowOrigins,omitempty"`
+	AllowCredentials *bool          `json:"allowCredentials"`
+	ExposeHeaders    []string       `json:"exposeHeaders,omitempty"`
+	MaxAge           *time.Duration `json:"maxAge,omitempty"`
+}
