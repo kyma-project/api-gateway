@@ -204,7 +204,7 @@ type CorsPolicy struct {
 	AllowHeaders     []string       `json:"allowHeaders,omitempty"`
 	AllowMethods     []string       `json:"allowMethods,omitempty"`
 	AllowOrigins     []string       `json:"allowOrigins,omitempty"`
-	AllowCredentials *bool          `json:"allowCredentials"`
+	AllowCredentials *bool          `json:"allowCredentials,omitempty"`
 	ExposeHeaders    []string       `json:"exposeHeaders,omitempty"`
 	MaxAge           *time.Duration `json:"maxAge,omitempty"`
 }
