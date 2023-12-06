@@ -246,6 +246,7 @@ func NewHttpRouteHeadersBuilder() HttpRouteHeadersBuilder {
 			Request: &v1beta1.Headers_HeaderOperations{
 				Set: make(map[string]string),
 			},
+			Response: &v1beta1.Headers_HeaderOperations{},
 		},
 	}
 }
