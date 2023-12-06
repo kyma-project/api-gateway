@@ -18,7 +18,6 @@ package v1beta1
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
-	"time"
 )
 
 // Status code describing APIRule.
@@ -201,10 +200,11 @@ type Timeout uint16 // We use unit16 instead of a time.Duration because there is
 // CorsPolicy allows configuration of CORS headers recieved downstream. If this is not defined, the default values are applied.
 // If CorsPolicy is configured, CORS headers recieved downstream will be only those defined on the APIRule
 type CorsPolicy struct {
-	AllowHeaders     []string       `json:"allowHeaders,omitempty"`
-	AllowMethods     []string       `json:"allowMethods,omitempty"`
-	AllowOrigins     []string       `json:"allowOrigins,omitempty"`
-	AllowCredentials *bool          `json:"allowCredentials,omitempty"`
-	ExposeHeaders    []string       `json:"exposeHeaders,omitempty"`
-	MaxAge           *time.Duration `json:"maxAge,omitempty"`
+	AllowHeaders     []string `json:"allowHeaders,omitempty"`
+	AllowMethods     []string `json:"allowMethods,omitempty"`
+	AllowOrigins     []string `json:"allowOrigins,omitempty"`
+	AllowCredentials *bool    `json:"allowCredentials,omitempty"`
+	ExposeHeaders    []string `json:"exposeHeaders,omitempty"`
+	// +kubebuilder:validation:Format=duration
+	MaxAge *metav1.Duration `json:"maxAge,omitempty"`
 }
