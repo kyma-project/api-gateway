@@ -305,12 +305,8 @@ func (h HttpRouteHeadersBuilder) SetCORSPolicyHeaders(corsPolicy apirulev1beta1.
 		removeHeaders = append(removeHeaders, AllowHeadersName)
 	}
 
-	if corsPolicy.AllowCredentials != nil {
-		if *corsPolicy.AllowCredentials {
-			h.value.Response.Set[CredentialsName] = "true"
-		} else {
-			h.value.Response.Set[CredentialsName] = "false"
-		}
+	if corsPolicy.AllowCredentials != false {
+		h.value.Response.Set[CredentialsName] = "true"
 	} else {
 		removeHeaders = append(removeHeaders, CredentialsName)
 	}
@@ -327,7 +323,7 @@ func (h HttpRouteHeadersBuilder) SetCORSPolicyHeaders(corsPolicy apirulev1beta1.
 		removeHeaders = append(removeHeaders, OriginName)
 	}
 
-	if corsPolicy.MaxAge != nil {
+	if corsPolicy.MaxAge.Seconds() != 0 {
 		h.value.Response.Set[MaxAgeName] = strconv.Itoa(int(corsPolicy.MaxAge.Seconds()))
 	} else {
 		removeHeaders = append(removeHeaders, MaxAgeName)

@@ -7,7 +7,6 @@ import (
 	"google.golang.org/protobuf/types/known/durationpb"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/utils/ptr"
 	"time"
 )
 
@@ -122,10 +121,10 @@ var _ = Describe("Builder for", func() {
 			corsPolicy := apirulev1beta1.CorsPolicy{
 				AllowOrigins:     []string{"localhost"},
 				AllowMethods:     []string{"GET", "POST"},
-				AllowCredentials: ptr.To(true),
+				AllowCredentials: true,
 				AllowHeaders:     []string{"test"},
 				ExposeHeaders:    []string{"test"},
-				MaxAge:           ptr.To(metav1.Duration{Duration: time.Second}),
+				MaxAge:           metav1.Duration{Duration: time.Second},
 			}
 
 			result := VirtualServiceSpec().

@@ -203,8 +203,8 @@ type CorsPolicy struct {
 	AllowHeaders     []string `json:"allowHeaders,omitempty"`
 	AllowMethods     []string `json:"allowMethods,omitempty"`
 	AllowOrigins     []string `json:"allowOrigins,omitempty"`
-	AllowCredentials *bool    `json:"allowCredentials,omitempty"`
+	AllowCredentials bool     `json:"allowCredentials,omitempty"`
 	ExposeHeaders    []string `json:"exposeHeaders,omitempty"`
 	// +kubebuilder:validation:Format=duration
-	MaxAge *metav1.Duration `json:"maxAge,omitempty"`
+	MaxAge metav1.Duration `json:"maxAge,omitempty"`
 }
