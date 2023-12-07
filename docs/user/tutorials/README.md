@@ -9,7 +9,7 @@ Browse the API Gateway tutorials to learn how to set up your custom domain, crea
   - [Expose a workload](./01-40-expose-workload/01-40-expose-workload-apigateway.md)
   - [Expose multiple workloads on the same host](./01-40-expose-workload/01-41-expose-multiple-workloads.md)
   - [Expose workloads in multiple Namespaces with a single APIRule](./01-40-expose-workload/01-42-expose-workloads-multiple-namespaces.md)
-- Secure a workload
+- Expose and secure a workload
   - [Expose and secure a workload with OAuth2](./01-50-expose-and-secure-a-workload/01-50-expose-and-secure-workload-oauth2.md)
   - [Get a JSON Web Token (JWT)](./01-50-expose-and-secure-a-workload/01-51-get-jwt.md)
   - [Expose and secure a workload with JWT](./01-50-expose-and-secure-a-workload/01-52-expose-and-secure-workload-jwt.md)
