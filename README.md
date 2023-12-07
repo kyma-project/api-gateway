@@ -58,8 +58,12 @@ To use API Gateway, you must install Istio and Ory Oathkeeper in your cluster. L
 
 For more installation options, visit the [installation guide](./docs/contributor/01-00-installation.md).
 
-## Contributing
+## Useful links
 
-If you are interested in the detailed documentation of the Kyma API Gateway Operator's design and technical aspects, check the [`contributor` directory](https://github.com/kyma-project/api-gateway/tree/876a4b108ed47ae8060f5137c7df4e25459a2d20/docs/contributor).
+To learn how to use the API Gateway module, read the documentation in the [`user`](./docs/user/) directory.
+
+If you are interested in the detailed documentation of the Kyma API Gateway Operator's design and technical aspects, check the [`contributor`](https://github.com/kyma-project/api-gateway/tree/876a4b108ed47ae8060f5137c7df4e25459a2d20/docs/contributor) directory.
+
+## Contributing
 
 To contribute to this project, follow the general [contributing](https://github.com/kyma-project/community/blob/main/docs/contributing/02-contributing.md) guidelines.
