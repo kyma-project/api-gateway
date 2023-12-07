@@ -20,7 +20,7 @@
   * [Kyma Gateway not reachable](/api-gateway/user/troubleshooting-guides/03-30-gateway-not-reachable.md)
   * [Issues when creating an APIRule](/api-gateway/user/troubleshooting-guides/03-40-api-rule-troubleshooting.md)
   * [Issues with certificates on Gardener](/api-gateway/user/troubleshooting-guides/03-50-certificates-gardener.md)
-  * Cannot connect to a Service
+  * [Cannot connect to a Service](/api-gateway/user/troubleshooting-guides/03-00-cannot-connect-to-service/)
     * [Basic diagnostics](/api-gateway/user/troubleshooting-guides/03-00-cannot-connect-to-service/03-00-apigateway-connect-api-rule.md)
     * [401 Unauthorized or 403 Forbidden](/api-gateway/user/troubleshooting-guides/03-00-cannot-connect-to-service/03-01-401-unauthorized-403-forbidden.md)
     * [404 Not Found](/api-gateway/user/troubleshooting-guides/03-00-cannot-connect-to-service/03-02-404-not-found.md)
