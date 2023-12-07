@@ -10,7 +10,15 @@ en:
   accessStrategies.introspection_request_headers: Introspection Request Headers
   accessStrategies.token_from: Token From
   gateway: Gateway
+  corsPolicy: CORS Policy
+  corsAllowMethods: CORS Allow Methods
+  corsAllowOrigins: CORS Allow Origins
+  corsAllowHeaders: CORS Allow Headers
+  corsExposeHeaders: CORS Expose Headers
+  corsAllowCredentials: CORS Allow Credentials
+  corsMaxAge: CORS Max Age
   host: Host
+  inputInfo.corsPolicy: Defines what CORS headers will be sent on CORS preflight and response
   inputInfo.gateway: Gateway structure, '{GATEWAY}.{NAMESPACE}.svc.cluster.local'
   inputInfo.path: "Path can contain alphanumeric characters and '/', '.', '*', '?', '!', '-', '(', and ')'."
   inputInfo.jwks_urls: "JWKS URLs must start with 'https://', 'http://' or 'file://'. HTTP protocol is not recommended."

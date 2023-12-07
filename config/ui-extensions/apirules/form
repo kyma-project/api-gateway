@@ -55,6 +55,61 @@
   overwrite: false
   trigger: [host]
 - simple: true
+  required: false
+  path: spec.corsPolicy
+  name: corsPolicy
+  inputInfo: inputInfo.corsPolicy
+  widget: FormGroup
+  children:
+    - simple: true
+      required: false
+      path: allowMethods
+      name: corsAllowMethods
+      widget: MultiCheckbox
+      options:
+        - key: GET
+        - key: POST
+        - key: PUT
+        - key: DELETE
+        - key: PATCH
+        - key: HEAD
+    - simple: true
+      required: false
+      path: allowOrigins
+      name: corsAllowOrigins
+      widget: SimpleList
+      children:
+        - path: '[]'
+          simple: true
+    - simple: true
+      required: false
+      path: allowHeaders
+      name: corsAllowHeaders
+      widget: SimpleList
+      children:
+        - path: '[]'
+          simple: true
+    - simple: true
+      required: false
+      path: exposeHeaders
+      name: corsExposeHeaders
+      widget: SimpleList
+      children:
+        - path: '[]'
+          simple: true
+    - simple: true
+      required: false
+      path: allowCredentials
+      name: corsAllowCredentials
+      value:
+        type: boolean
+    - simple: true
+      required: false
+      path: maxAge
+      name: corsMaxAge
+      value:
+        type: string
+- simple: true
   required: true
   path: spec.host
   name: host
