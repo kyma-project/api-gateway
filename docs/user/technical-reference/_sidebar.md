@@ -1,5 +1,0 @@
-* [Home](/)
-* [API Gateway module](../README.md)
-* [Technical reference](./README.md)
-  * [Kyma API Gateway Operator parameters ](./05-00-api-gateway-operator-parameters.md)
-  * [Ory limitations](./05-50-ory-limitations.md)
