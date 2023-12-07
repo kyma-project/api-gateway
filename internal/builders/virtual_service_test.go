@@ -1,10 +1,13 @@
 package builders
 
 import (
+	apirulev1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"google.golang.org/protobuf/types/known/durationpb"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/ptr"
 	"time"
 )
 
@@ -61,7 +64,7 @@ var _ = Describe("Builder for", func() {
 				HTTP(HTTPRoute().
 					Match(MatchRequest().Uri().Regex(matchURIRegex)).
 					Match(MatchRequest().Uri().Regex(matchURIRegex2)).
-					Headers(NewHttpRouteHeadersBuilder().SetHostHeader(host).Get()).
+					Headers(NewHttpRouteHeadersBuilder().SetHostHeader(host).SetCORSPolicyHeaders(apirulev1beta1.CorsPolicy{}).Get()).
 					Route(RouteDestination().Host(destHost).Port(destPort)).
 					Timeout(timeout)).
 				HTTP(HTTPRoute().
@@ -86,6 +89,16 @@ var _ = Describe("Builder for", func() {
 			Expect(result.Http[0].Match[0].Uri.GetRegex()).To(Equal(matchURIRegex))
 			Expect(result.Http[0].Match[1].Uri.GetRegex()).To(Equal(matchURIRegex2))
 			Expect(result.Http[0].Headers.Request.Set).To(Equal(map[string]string{"x-forwarded-host": host}))
+
+			//Expect host headers set to remove
+			Expect(result.Http[0].Headers.Response.Remove).To(ContainElements([]string{
+				ExposeName,
+				AllowHeadersName,
+				CredentialsName,
+				AllowMethodsName,
+				OriginName,
+				MaxAgeName,
+			}))
 			Expect(result.Http[0].Route).To(HaveLen(1))
 			Expect(result.Http[0].Route[0].Destination.Host).To(Equal(destHost))
 			Expect(result.Http[0].Route[0].Destination.Port.Number).To(Equal(destPort))
@@ -103,6 +116,58 @@ var _ = Describe("Builder for", func() {
 			Expect(result.Http[1].Route[0].Destination.Port.Number).To(Equal(destPort2))
 			//Expect(result.Http[1].Route[0].Destination.Port.Name).To(BeEmpty())
 			Expect(result.Http[1].Route[0].Weight).To(Equal(int32(100)))
+		})
+
+		It("should build the CORS headers", func() {
+			corsPolicy := apirulev1beta1.CorsPolicy{
+				AllowOrigins:     []string{"localhost"},
+				AllowMethods:     []string{"GET", "POST"},
+				AllowCredentials: ptr.To(true),
+				AllowHeaders:     []string{"test"},
+				ExposeHeaders:    []string{"test"},
+				MaxAge:           ptr.To(metav1.Duration{Duration: time.Second}),
+			}
+
+			result := VirtualServiceSpec().
+				Host(host).
+				Gateway(gateway).
+				HTTP(HTTPRoute().
+					Match(MatchRequest().Uri().Regex(matchURIRegex)).
+					Headers(NewHttpRouteHeadersBuilder().SetHostHeader(host).SetCORSPolicyHeaders(corsPolicy).Get()).
+					Route(RouteDestination().Host(destHost).Port(destPort))).Get()
+
+			Expect(result.Hosts).To(HaveLen(1))
+			Expect(result.Hosts[0]).To(Equal(host))
+
+			Expect(result.Gateways).To(HaveLen(1))
+			Expect(result.Gateways[0]).To(Equal(gateway))
+
+			Expect(result.Http).To(HaveLen(1))
+
+			Expect(result.Http[0].Match).To(HaveLen(1))
+			Expect(result.Http[0].Match[0].Uri.GetRegex()).To(Equal(matchURIRegex))
+			Expect(result.Http[0].Headers.Request.Set).To(Equal(map[string]string{"x-forwarded-host": host}))
+
+			Expect(result.Http[0].Headers.Response.Remove).To(Not(ContainElements([]string{
+				ExposeName,
+				AllowHeadersName,
+				CredentialsName,
+				AllowMethodsName,
+				OriginName,
+				MaxAgeName,
+			})))
+
+			Expect(result.Http[0].Headers.Response.Set).To(HaveKeyWithValue(ExposeName, "test"))
+			Expect(result.Http[0].Headers.Response.Set).To(HaveKeyWithValue(AllowHeadersName, "test"))
+			Expect(result.Http[0].Headers.Response.Set).To(HaveKeyWithValue(CredentialsName, "true"))
+			Expect(result.Http[0].Headers.Response.Set).To(HaveKeyWithValue(AllowMethodsName, "GET,POST"))
+			Expect(result.Http[0].Headers.Response.Set).To(HaveKeyWithValue(OriginName, "localhost"))
+			Expect(result.Http[0].Headers.Response.Set).To(HaveKeyWithValue(MaxAgeName, "1"))
+
+			Expect(result.Http[0].Route).To(HaveLen(1))
+			Expect(result.Http[0].Route[0].Destination.Host).To(Equal(destHost))
+			Expect(result.Http[0].Route[0].Destination.Port.Number).To(Equal(destPort))
+			Expect(result.Http[0].Route[0].Weight).To(Equal(int32(100)))
 		})
 	})
 })

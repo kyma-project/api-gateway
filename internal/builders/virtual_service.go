@@ -292,16 +292,17 @@ const (
 
 // SetHeader sets the request header with name and value
 func (h HttpRouteHeadersBuilder) SetCORSPolicyHeaders(corsPolicy apirulev1beta1.CorsPolicy) HttpRouteHeadersBuilder {
+	removeHeaders := h.value.Response.Remove
 	if len(corsPolicy.ExposeHeaders) > 0 {
 		h.value.Response.Set[ExposeName] = strings.Join(corsPolicy.ExposeHeaders, ",")
 	} else {
-		h.value.Response.Remove = append(h.value.Request.Remove, ExposeName)
+		removeHeaders = append(removeHeaders, ExposeName)
 	}
 
 	if len(corsPolicy.AllowHeaders) > 0 {
 		h.value.Response.Set[AllowHeadersName] = strings.Join(corsPolicy.AllowHeaders, ",")
 	} else {
-		h.value.Response.Remove = append(h.value.Request.Remove, AllowHeadersName)
+		removeHeaders = append(removeHeaders, AllowHeadersName)
 	}
 
 	if corsPolicy.AllowCredentials != nil {
@@ -311,26 +312,28 @@ func (h HttpRouteHeadersBuilder) SetCORSPolicyHeaders(corsPolicy apirulev1beta1.
 			h.value.Response.Set[CredentialsName] = "false"
 		}
 	} else {
-		h.value.Response.Remove = append(h.value.Request.Remove, CredentialsName)
+		removeHeaders = append(removeHeaders, CredentialsName)
 	}
 
 	if len(corsPolicy.AllowMethods) > 0 {
 		h.value.Response.Set[AllowMethodsName] = strings.Join(corsPolicy.AllowMethods, ",")
 	} else {
-		h.value.Response.Remove = append(h.value.Request.Remove, AllowMethodsName)
+		removeHeaders = append(removeHeaders, AllowMethodsName)
 	}
 
 	if len(corsPolicy.AllowOrigins) > 0 {
 		h.value.Response.Set[OriginName] = strings.Join(corsPolicy.AllowOrigins, ",")
 	} else {
-		h.value.Response.Remove = append(h.value.Request.Remove, OriginName)
+		removeHeaders = append(removeHeaders, OriginName)
 	}
 
 	if corsPolicy.MaxAge != nil {
 		h.value.Response.Set[MaxAgeName] = strconv.Itoa(int(corsPolicy.MaxAge.Seconds()))
 	} else {
-		h.value.Response.Remove = append(h.value.Request.Remove, MaxAgeName)
+		removeHeaders = append(removeHeaders, MaxAgeName)
 	}
+
+	h.value.Response.Remove = append(h.value.Response.Remove, removeHeaders...)
 
 	return h
 }
