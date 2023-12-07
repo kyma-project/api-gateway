@@ -1015,7 +1015,7 @@ var _ = Describe("Virtual Service Processor", func() {
 
 			//verify VS
 			Expect(vs).NotTo(BeNil())
-			Expect(vs.Spec.Http[0].CorsPolicy).To(BeEmpty())
+			Expect(vs.Spec.Http[0].CorsPolicy).To(BeNil())
 
 			Expect(vs.Spec.Http[0].Headers.Response.Remove).To(ContainElements([]string{
 				builders.ExposeName,
@@ -1024,7 +1024,7 @@ var _ = Describe("Virtual Service Processor", func() {
 			}))
 
 			Expect(vs.Spec.Http[0].Headers.Response.Set).To(HaveKeyWithValue(builders.AllowMethodsName, "GET,POST"))
-			Expect(vs.Spec.Http[0].Headers.Response.Set).To(HaveKeyWithValue(builders.OriginName, "localhosy"))
+			Expect(vs.Spec.Http[0].Headers.Response.Set).To(HaveKeyWithValue(builders.OriginName, "localhost"))
 			Expect(vs.Spec.Http[0].Headers.Response.Set).To(HaveKeyWithValue(builders.CredentialsName, "true"))
 		})
 	})
