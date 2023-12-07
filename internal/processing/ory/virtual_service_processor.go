@@ -60,7 +60,7 @@ func (r virtualServiceCreator) Create(api *gatewayv1beta1.APIRule) (*networkingv
 
 		httpRouteBuilder.Route(builders.RouteDestination().Host(host).Port(port))
 		httpRouteBuilder.Match(builders.MatchRequest().Uri().Regex(rule.Path))
-		if api.Spec.CorsPolicy == nil {
+		if gatewayv1beta1.CorsIsNotConfigured(api.Spec.CorsPolicy) {
 			httpRouteBuilder.CorsPolicy(builders.CorsPolicy().
 				AllowOrigins(r.corsConfig.AllowOrigins...).
 				AllowMethods(r.corsConfig.AllowMethods...).
@@ -70,8 +70,8 @@ func (r virtualServiceCreator) Create(api *gatewayv1beta1.APIRule) (*networkingv
 		headersBuilder := builders.NewHttpRouteHeadersBuilder().
 			SetHostHeader(default_domain.GetHostWithDomain(*api.Spec.Host, r.defaultDomainName))
 
-		if api.Spec.CorsPolicy != nil {
-			headersBuilder.SetCORSPolicyHeaders(*api.Spec.CorsPolicy)
+		if !gatewayv1beta1.CorsIsNotConfigured(api.Spec.CorsPolicy) {
+			headersBuilder.SetCORSPolicyHeaders(api.Spec.CorsPolicy)
 		}
 
 		httpRouteBuilder.Headers(headersBuilder.Get())

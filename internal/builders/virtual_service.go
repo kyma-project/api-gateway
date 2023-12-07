@@ -323,7 +323,7 @@ func (h HttpRouteHeadersBuilder) SetCORSPolicyHeaders(corsPolicy apirulev1beta1.
 		removeHeaders = append(removeHeaders, OriginName)
 	}
 
-	if corsPolicy.MaxAge.Seconds() != 0 {
+	if corsPolicy.MaxAge != nil {
 		h.value.Response.Set[MaxAgeName] = strconv.Itoa(int(corsPolicy.MaxAge.Seconds()))
 	} else {
 		removeHeaders = append(removeHeaders, MaxAgeName)

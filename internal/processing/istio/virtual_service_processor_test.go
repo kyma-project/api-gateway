@@ -998,7 +998,7 @@ var _ = Describe("Virtual Service Processor", func() {
 
 			apiRule := GetAPIRuleFor(rules)
 			apiRule.Spec.Host = &ServiceHostWithNoDomain
-			apiRule.Spec.CorsPolicy = &corsPolicy
+			apiRule.Spec.CorsPolicy = corsPolicy
 
 			client := GetFakeClient()
 			processor := istio.NewVirtualServiceProcessor(GetTestConfig())
