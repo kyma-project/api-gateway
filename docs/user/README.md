@@ -23,4 +23,4 @@ To learn how to use the API Gateway module, read the documentation in the [`user
 - Documentation on [APIRule and APIGateway CRs](./custom-resources/)
 - Other [technical reference documentation](./technical-reference/)
 
-If you are interested in the detailed documentation of Kyma API Gateway Operator's design and technical aspects, check the [`contributor`](../contributor/) directory.
+If you are interested in the detailed documentation of Kyma API Gateway Operator's design and technical aspects, check the [`contributor`](https://github.com/kyma-project/api-gateway/tree/main/docs/contributor) directory.
