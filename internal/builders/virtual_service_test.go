@@ -122,7 +122,7 @@ var _ = Describe("Builder for", func() {
 			corsPolicy := apirulev1beta1.CorsPolicy{
 				AllowOrigins:     []string{"localhost"},
 				AllowMethods:     []string{"GET", "POST"},
-				AllowCredentials: true,
+				AllowCredentials: ptr.To(true),
 				AllowHeaders:     []string{"test"},
 				ExposeHeaders:    []string{"test"},
 				MaxAge:           ptr.To(metav1.Duration{Duration: time.Second}),

@@ -55,6 +55,17 @@
   overwrite: false
   trigger: [host]
 - simple: true
+  widget: Alert
+  severity: warning
+  alert: '"alert.corsPolicy"'
+  visibility: '$not($useCorsPolicy)'
+- var: useCorsPolicy
+  name: useCorsPolicy
+  simple: true
+  type: boolean
+  dynamicValue: '$boolean(spec.corsPolicy)'
+- simple: true
+  visibility: '$useCorsPolicy'
   required: false
   path: spec.corsPolicy
   name: corsPolicy

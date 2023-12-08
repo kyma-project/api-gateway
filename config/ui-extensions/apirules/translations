@@ -10,6 +10,7 @@ en:
   accessStrategies.introspection_request_headers: Introspection Request Headers
   accessStrategies.token_from: Token From
   gateway: Gateway
+  useCorsPolicy: Use custom CORS policy
   corsPolicy: CORS Policy
   corsAllowMethods: CORS Allow Methods
   corsAllowOrigins: CORS Allow Origins
@@ -46,3 +47,4 @@ en:
   alert.spec.host: Host can not be a wildcard, replace * with subdomain name
   alert.spec.jwks_url_http: "JWKS URL: HTTP protocol is not secure, consider using HTTPS"
   alert.spec.trusted_issuers_http: "Trusted Issuers: HTTP protocol is not secure, consider using HTTPS"
+  alert.corsPolicy: "Disabling custom CORS Policy is not recommended. Consider setting up CORS yourself"

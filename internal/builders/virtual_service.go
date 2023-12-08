@@ -305,8 +305,12 @@ func (h HttpRouteHeadersBuilder) SetCORSPolicyHeaders(corsPolicy apirulev1beta1.
 		removeHeaders = append(removeHeaders, AllowHeadersName)
 	}
 
-	if corsPolicy.AllowCredentials != false {
-		h.value.Response.Set[CredentialsName] = "true"
+	if corsPolicy.AllowCredentials != nil {
+		if *corsPolicy.AllowCredentials {
+			h.value.Response.Set[CredentialsName] = "true"
+		} else {
+			h.value.Response.Set[CredentialsName] = "false"
+		}
 	} else {
 		removeHeaders = append(removeHeaders, CredentialsName)
 	}

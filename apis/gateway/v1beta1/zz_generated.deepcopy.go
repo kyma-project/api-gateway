@@ -118,7 +118,11 @@ func (in *APIRuleSpec) DeepCopyInto(out *APIRuleSpec) {
 		*out = new(string)
 		**out = **in
 	}
-	in.CorsPolicy.DeepCopyInto(&out.CorsPolicy)
+	if in.CorsPolicy != nil {
+		in, out := &in.CorsPolicy, &out.CorsPolicy
+		*out = new(CorsPolicy)
+		(*in).DeepCopyInto(*out)
+	}
 	if in.Rules != nil {
 		in, out := &in.Rules, &out.Rules
 		*out = make([]Rule, len(*in))
@@ -246,6 +250,11 @@ func (in *CorsPolicy) DeepCopyInto(out *CorsPolicy) {
 		in, out := &in.AllowOrigins, &out.AllowOrigins
 		*out = make([]string, len(*in))
 		copy(*out, *in)
+	}
+	if in.AllowCredentials != nil {
+		in, out := &in.AllowCredentials, &out.AllowCredentials
+		*out = new(bool)
+		**out = **in
 	}
 	if in.ExposeHeaders != nil {
 		in, out := &in.ExposeHeaders, &out.ExposeHeaders

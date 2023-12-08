@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"github.com/kyma-project/api-gateway/internal/builders"
+	"k8s.io/utils/ptr"
 	"time"
 
 	"github.com/kyma-project/api-gateway/internal/processing"
@@ -990,7 +991,7 @@ var _ = Describe("Virtual Service Processor", func() {
 			corsPolicy := v1beta1.CorsPolicy{
 				AllowMethods:     []string{"GET", "POST"},
 				AllowOrigins:     []string{"localhost"},
-				AllowCredentials: true,
+				AllowCredentials: ptr.To(true),
 			}
 
 			allowRule := GetRuleFor(ApiPath, ApiMethods, nil, strategies)
@@ -998,7 +999,7 @@ var _ = Describe("Virtual Service Processor", func() {
 
 			apiRule := GetAPIRuleFor(rules)
 			apiRule.Spec.Host = &ServiceHostWithNoDomain
-			apiRule.Spec.CorsPolicy = corsPolicy
+			apiRule.Spec.CorsPolicy = ptr.To(corsPolicy)
 
 			client := GetFakeClient()
 			processor := istio.NewVirtualServiceProcessor(GetTestConfig())

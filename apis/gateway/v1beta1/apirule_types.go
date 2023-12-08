@@ -49,7 +49,7 @@ type APIRuleSpec struct {
 	Gateway *string `json:"gateway"`
 	// Specifies CORS headers configuration that will be sent downstream
 	// +optional
-	CorsPolicy CorsPolicy `json:"corsPolicy,omitempty"`
+	CorsPolicy *CorsPolicy `json:"corsPolicy,omitempty"`
 	// Represents the array of Oathkeeper access rules to be applied.
 	// +kubebuilder:validation:MinItems=1
 	Rules []Rule `json:"rules"`
@@ -203,18 +203,8 @@ type CorsPolicy struct {
 	AllowHeaders     []string `json:"allowHeaders,omitempty"`
 	AllowMethods     []string `json:"allowMethods,omitempty"`
 	AllowOrigins     []string `json:"allowOrigins,omitempty"`
-	AllowCredentials bool     `json:"allowCredentials,omitempty"`
+	AllowCredentials *bool    `json:"allowCredentials,omitempty"`
 	ExposeHeaders    []string `json:"exposeHeaders,omitempty"`
 	// +kubebuilder:validation:Format=duration
 	MaxAge *metav1.Duration `json:"maxAge,omitempty"`
-}
-
-func CorsIsNotConfigured(policy CorsPolicy) bool {
-	return len(policy.AllowMethods) == 0 &&
-		len(policy.AllowHeaders) == 0 &&
-		len(policy.AllowOrigins) == 0 &&
-		len(policy.ExposeHeaders) == 0 &&
-		!policy.AllowCredentials &&
-		policy.MaxAge == nil
-
 }
