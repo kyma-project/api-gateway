@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
+	"github.com/kyma-project/api-gateway/internal/builders"
+	"k8s.io/utils/ptr"
 	"time"
 
 	"github.com/kyma-project/api-gateway/internal/processing"
@@ -797,6 +799,94 @@ var _ = Describe("Virtual Service Processor", func() {
 			Expect(getTimeoutByPath(vs, "/rule-timeout")).To(Equal(20 * time.Second))
 		})
 	})
+
+	Context("CORS", func() {
+		It("should set default values in CORSPolicy when it is not configured in APIRule", func() {
+			// given
+			strategies := []*v1beta1.Authenticator{
+				{
+					Handler: &v1beta1.Handler{
+						Name: "allow",
+					},
+				},
+			}
+
+			allowRule := GetRuleFor(ApiPath, ApiMethods, nil, strategies)
+			rules := []v1beta1.Rule{allowRule}
+
+			apiRule := GetAPIRuleFor(rules)
+			apiRule.Spec.Host = &ServiceHostWithNoDomain
+			client := GetFakeClient()
+			processor := ory.NewVirtualServiceProcessor(GetTestConfig())
+
+			// when
+			result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
+
+			// then
+			Expect(err).To(BeNil())
+			Expect(result).To(HaveLen(1))
+
+			vs := result[0].Obj.(*networkingv1beta1.VirtualService)
+
+			//verify VS
+			Expect(vs).NotTo(BeNil())
+			Expect(vs.Spec.Http[0].CorsPolicy).NotTo(BeNil())
+			Expect(vs.Spec.Http[0].CorsPolicy.AllowMethods).To(ContainElements(TestCors.AllowMethods))
+			Expect(vs.Spec.Http[0].CorsPolicy.AllowOrigins).To(ContainElements(TestCors.AllowOrigins))
+			Expect(vs.Spec.Http[0].CorsPolicy.AllowHeaders).To(ContainElements(TestCors.AllowHeaders))
+		})
+
+		It("should not set default values in CORSPolicy when it is configured in APIRule, and set headers", func() {
+			// given
+			strategies := []*v1beta1.Authenticator{
+				{
+					Handler: &v1beta1.Handler{
+						Name: "allow",
+					},
+				},
+			}
+
+			corsPolicy := v1beta1.CorsPolicy{
+				AllowMethods:     []string{"GET", "POST"},
+				AllowOrigins:     []string{"localhost"},
+				AllowCredentials: ptr.To(true),
+			}
+
+			allowRule := GetRuleFor(ApiPath, ApiMethods, nil, strategies)
+			rules := []v1beta1.Rule{allowRule}
+
+			apiRule := GetAPIRuleFor(rules)
+			apiRule.Spec.Host = &ServiceHostWithNoDomain
+			apiRule.Spec.CorsPolicy = ptr.To(corsPolicy)
+
+			client := GetFakeClient()
+			processor := ory.NewVirtualServiceProcessor(GetTestConfig())
+
+			// when
+			result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
+
+			// then
+			Expect(err).To(BeNil())
+			Expect(result).To(HaveLen(1))
+
+			vs := result[0].Obj.(*networkingv1beta1.VirtualService)
+
+			//verify VS
+			Expect(vs).NotTo(BeNil())
+			Expect(vs.Spec.Http[0].CorsPolicy).To(BeNil())
+
+			Expect(vs.Spec.Http[0].Headers.Response.Remove).To(ContainElements([]string{
+				builders.ExposeName,
+				builders.MaxAgeName,
+				builders.AllowHeadersName,
+			}))
+
+			Expect(vs.Spec.Http[0].Headers.Response.Set).To(HaveKeyWithValue(builders.AllowMethodsName, "GET,POST"))
+			Expect(vs.Spec.Http[0].Headers.Response.Set).To(HaveKeyWithValue(builders.OriginName, "localhost"))
+			Expect(vs.Spec.Http[0].Headers.Response.Set).To(HaveKeyWithValue(builders.CredentialsName, "true"))
+		})
+	})
+
 })
 
 func getTimeoutByPath(vs *networkingv1beta1.VirtualService, path string) time.Duration {
