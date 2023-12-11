@@ -13,6 +13,8 @@ sudo k3d cluster create kyma --port 80:80@loadbalancer --port 443:443@loadbalanc
 
 export KUBECONFIG=$(k3d kubeconfig merge kyma)
 
+kubectl create ns kyma-system
+
 echo "Apply istio"
 kubectl apply -f https://github.com/kyma-project/istio/releases/latest/download/istio-manager.yaml
 kubectl apply -f https://github.com/kyma-project/istio/releases/latest/download/istio-default-cr.yaml
