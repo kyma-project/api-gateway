@@ -192,6 +192,7 @@ uninstall: manifests kustomize ## Uninstall CRDs from the K8s cluster specified 
 .PHONY: create-namespace
 create-namespace:
 	kubectl create namespace kyma-system --dry-run=client -o yaml | kubectl apply -f -
+	kubectl label namespace kyma-system istio-injection=enabled --overwrite
 
 .PHONY: deploy
 deploy: manifests kustomize create-namespace ## Deploy controller to the K8s cluster specified in ~/.kube/config.
