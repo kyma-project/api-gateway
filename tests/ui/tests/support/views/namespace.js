@@ -1,17 +1,18 @@
 Cypress.Commands.add('createNamespace', (namespaceName) => {
     // Go to the details of namespace
     cy.getLeftNav()
-        .contains('Namespaces', { includeShadowDom: true })
+        .contains('Namespaces')
         .click();
 
-    cy.contains('Create Namespace').click();
+    cy.contains('ui5-button', 'Create Namespace').click();
 
-    cy.get('[role=dialog]')
-        .find('input[ariaLabel="Namespace name"]:visible')
-        .type(namespaceName);
+    cy.get('ui5-input[aria-label="Namespace name"]')
+        .find('input')
+        .type(namespaceName, { force: true });
 
-    cy.get('[role=dialog]')
-        .contains('button', 'Create')
+    cy.get('ui5-dialog')
+        .contains('ui5-button', 'Create')
+        .should('be.visible')
         .click();
 });
 

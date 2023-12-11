@@ -1,23 +1,26 @@
 Cypress.Commands.add('createService', (serviceName) => {
   cy.navigateTo('Discovery and Network', 'Services');
 
-  cy.contains('Create Service').click();
+  cy.contains('ui5-button', 'Create Service').click();
 
-  cy.get('[ariaLabel="Service name"]:visible', { log: false }).type(
-      serviceName,
-  );
+  cy.get('ui5-input[aria-label="Service name"]')
+      .find('input')
+      .type(serviceName, { force: true });
 
-  cy.get('[role="dialog"]')
-      .contains('button', 'Add')
+  cy.get('ui5-dialog')
+      .contains('ui5-button', 'Add')
+      .should('be.visible')
       .click();
 
-  cy.get('[ariaLabel="Service name"]:visible', { log: false })
+  cy.get('ui5-input[aria-label="Service name"]')
       // Because the port name field has the same ariaLabel as the Service name field, we have
       // to use the second element to fill in the port name.
       .eq(1)
-      .type(serviceName);
+      .find('input')
+      .type(serviceName, { force: true });
 
-  cy.get('[role="dialog"]')
-    .contains('button', 'Create')
-    .click();
+  cy.get('ui5-dialog')
+      .contains('ui5-button', 'Create')
+      .should('be.visible')
+      .click();
 });
