@@ -69,6 +69,7 @@
   required: false
   path: spec.corsPolicy
   name: corsPolicy
+  defaultExpanded: true
   inputInfo: inputInfo.corsPolicy
   widget: FormGroup
   children:

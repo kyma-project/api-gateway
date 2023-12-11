@@ -24,6 +24,29 @@ body:
     severity: warning
     source: '"alert.spec.trusted_issuers_http"'
     visibility: '$count(spec.rules.accessStrategies.config.trusted_issuers)>0 and $reduce(spec.rules.accessStrategies.config.trusted_issuers,function($i, $j){$i or $substringBefore($j,"://")="http"},false)'
+  - widget: Panel
+    name: corsPolicy
+    source: spec.corsPolicy
+    visibility: $exists(spec.corsPolicy)
+    children:
+      - name: corsAllowMethods
+        source: $item.allowMethods
+        widget: JoinedArray
+      - name: corsAllowOrigins
+        source: $item.allowOrigins
+        widget: JoinedArray
+      - name: corsExposeHeaders
+        source: $item.exposeHeaders
+        widget: JoinedArray
+      - name: corsAllowHeaders
+        source: $item.allowHeaders
+        widget: JoinedArray
+      - name: corsAllowCredentials
+        source: $item.allowCredentials
+        widget: Badge
+      - name: corsMaxAge
+        source: $item.maxAge
+        widget: Badge
   - name: general
     source: spec
     widget: Panel
