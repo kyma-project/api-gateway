@@ -82,7 +82,7 @@ context("Test API Rules", () => {
             .find('li')
             .click({force: true});
 
-        cy.get('[aria-label="expand Required Scope"]:visible', {
+        cy.get('[aria-label="expand Required Scope"]', {
             log: false,
         }).click();
 
