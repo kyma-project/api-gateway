@@ -20,7 +20,7 @@ kubectl apply -f https://github.com/kyma-project/istio/releases/latest/download/
 kubectl apply -f https://github.com/kyma-project/istio/releases/latest/download/istio-default-cr.yaml
 
 echo "Apply api-gateway"
-kubectl apply -f https://github.com/kyma-project/api-gateway/releases/latest/download/api-gateway-manager.yaml
+make deploy
 kubectl apply -f https://github.com/kyma-project/api-gateway/releases/latest/download/apigateway-default-cr.yaml
 
 echo "Apply gardener resources"
