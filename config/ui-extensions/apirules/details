@@ -24,29 +24,40 @@ body:
     severity: warning
     source: '"alert.spec.trusted_issuers_http"'
     visibility: '$count(spec.rules.accessStrategies.config.trusted_issuers)>0 and $reduce(spec.rules.accessStrategies.config.trusted_issuers,function($i, $j){$i or $substringBefore($j,"://")="http"},false)'
+  - simple: true
+    widget: Alert
+    severity: warning
+    source: '"alert.corsPolicy"'
+    visibility: '$not($exists(spec.corsPolicy))'
   - widget: Panel
     name: corsPolicy
     source: spec.corsPolicy
     visibility: $exists(spec.corsPolicy)
     children:
       - name: corsAllowMethods
-        source: $item.allowMethods
+        source: allowMethods
         widget: JoinedArray
+        visibility: '$not($count(allowMethods)=0)'
       - name: corsAllowOrigins
-        source: $item.allowOrigins
+        source: allowOrigins
         widget: JoinedArray
+        visibility: '$not($count(allowOrigins)=0)'
       - name: corsExposeHeaders
-        source: $item.exposeHeaders
+        source: exposeHeaders
         widget: JoinedArray
+        visibility: '$not($count(exposeHeaders)=0)'
       - name: corsAllowHeaders
-        source: $item.allowHeaders
+        source: allowHeaders
         widget: JoinedArray
+        visibility: '$not($count(allowHeaders)=0)'
       - name: corsAllowCredentials
-        source: $item.allowCredentials
+        source: allowCredentials
         widget: Badge
+        visibility: '$exists(allowCredentials)'
       - name: corsMaxAge
-        source: $item.maxAge
-        widget: Badge
+        source: maxAge
+        widget: Text
+        visibility: '$exists(maxAge)'
   - name: general
     source: spec
     widget: Panel

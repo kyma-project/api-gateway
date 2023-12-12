@@ -96,7 +96,7 @@ context("Test API Rules", () => {
 
         // > Methods
 
-        cy.get('[data-testid="spec.rules.0.methods.POST"]').scrollIntoView();
+        cy.get('[data-testid="spec.rules.0.methods.POST"]')
 
         cy.get(`ui5-checkbox[text="POST"]:visible`).click();
 
@@ -150,8 +150,7 @@ context("Test API Rules", () => {
 
         // > Access Strategies
         cy.get('[aria-label="expand Access Strategies"]:visible', {log: false})
-            .first()
-            .scrollIntoView();
+            .first();
 
         cy.get(
             `ui5-combobox[data-testid="spec.rules.1.accessStrategies.0.handler"]:visible`,
@@ -203,7 +202,7 @@ context("Test API Rules", () => {
         }).click();
 
         // > Methods
-        cy.get('[data-testid="spec.rules.1.methods.POST"]').scrollIntoView();
+        cy.get('[data-testid="spec.rules.1.methods.POST"]');
 
         cy.get(`ui5-checkbox[text="GET"]:visible`).click();
 
@@ -229,6 +228,8 @@ context("Test API Rules", () => {
         cy.contains('jwt').should('exist');
         cy.contains('https://urls.com').should('exist');
         cy.contains('https://trusted.com').should('exist');
+
+        cy.contains('Disabling custom CORS Policy is not recommended. Consider setting up CORS yourself').should('exist');
     });
 
     it('Inspect list using slash shortcut', () => {
@@ -252,23 +253,72 @@ context("Test API Rules", () => {
         cy.contains(apiRuleName).should('be.visible');
     });
 
-    it('Create OAuth2 Introspection rule', () => {
+    it('Update the APIRule', () => {
         cy.contains('a', apiRuleName).click();
 
         cy.contains('ui5-button', 'Edit').click();
 
         cy.contains(apiRuleName);
 
+        // CorsPolicy
+        cy.get('ui5-switch[data-testid="$useCorsPolicy"]')
+            .find('[role="switch"]')
+            .click();
+
+        cy.get('[aria-label="expand CORS Policy"]')
+            .should('be.visible');
+
+            // CORS allow methods
+            cy.contains('CORS Allow Methods').should('be.visible');
+            cy.get('[data-testid="spec.corsPolicy.allowMethods.GET"]:visible').click();
+
+            // CORS allow origins
+            cy.get('[aria-label="expand CORS Allow Origins"]').should('be.visible').click();
+            cy.get('[data-testid="spec.corsPolicy.allowOrigins.0"]')
+                .find('input')
+                .clear()
+                .type("localhost")
+            cy.get('[aria-label="expand CORS Allow Origins"]').should('exist').click();
+
+            // CORS allow headers
+            cy.get('[aria-label="expand CORS Allow Headers"]').should('be.visible').click();
+            cy.get('[data-testid="spec.corsPolicy.allowHeaders.0"]')
+                .find('input')
+                .clear()
+                .type("Allowed-Header")
+            cy.get('[aria-label="expand CORS Allow Headers"]').should('exist').click();
+
+            // CORS allow headers
+            cy.get('[aria-label="expand CORS Expose Headers"]').should('be.visible').click();
+            cy.get('[data-testid="spec.corsPolicy.exposeHeaders.0"]')
+                .find('input')
+                .clear()
+                .type("Exposed-Header")
+            cy.get('[aria-label="expand CORS Expose Headers"]').should('exist').click();
+
+            // CORS allow credentials
+            cy.get('ui5-switch[data-testid="spec.corsPolicy.allowCredentials"]')
+                .find('[role="switch"]')
+                .click();
+
+            // CORS Max Age
+            cy.get('[data-testid="spec.corsPolicy.maxAge"]')
+                .find('input')
+                .clear()
+                .type('10s');
+
+        cy.get('[aria-label="expand CORS Policy"]').click();
+
         // Rules
-        cy.get('[aria-label="expand Rules"]:visible', { log: false })
+        cy.get('[aria-label="expand Rules"]:visible', {log: false})
             .contains('Add')
             .click();
 
-        cy.get('[aria-label="expand Rule"]', { log: false })
+        cy.get('[aria-label="expand Rule"]', {log: false})
             .first()
             .click();
 
-        cy.get('[aria-label="expand Rule"]', { log: false })
+        cy.get('[aria-label="expand Rule"]', {log: false})
             .eq(1)
             .click();
 
@@ -279,41 +329,42 @@ context("Test API Rules", () => {
             .type(apiRulePath);
 
         // > Access Strategies
-        cy.get('[aria-label="expand Access Strategies"]:visible', { log: false })
-            .first()
-            .scrollIntoView();
+        cy.get('[aria-label="expand Access Strategies"]:visible', {log: false})
+            .first();
 
         cy.get(
             `ui5-combobox[data-testid="spec.rules.2.accessStrategies.0.handler"]:visible`,
         )
-            .scrollIntoView()
             .find('input')
             .click()
             .clear()
-            .type('oauth2_introspection', { force: true });
+            .type('oauth2_introspection', {force: true});
 
         cy.get('ui5-li:visible')
             .contains('oauth2_introspection')
             .find('li')
-            .click({ force: true });
+            .click({force: true});
 
-        cy.get('[aria-label="expand Introspection Request Headers"]:visible', {
-            log: false,
-        }).scrollIntoView().click();
-
-        cy.get('[aria-label="expand Introspection Request Headers"]:visible', {
+        cy.get('[aria-label="expand Introspection Request Headers"]', {
             log: false,
         })
+            .last()
+            .click();
+
+        cy.get('[aria-label="expand Introspection Request Headers"]', {
+            log: false,
+        })
+            .last()
             .parent()
             .within(_$div => {
-                cy.get('[placeholder="Enter key"]:visible', { log: false })
+                cy.get('[placeholder="Enter key"]:visible', {log: false})
                     .find('input')
                     .first()
                     .click()
                     .clear()
                     .type('Authorization');
 
-                cy.get('[placeholder="Enter value"]:visible', { log: false })
+                cy.get('[placeholder="Enter value"]:visible', {log: false})
                     .find('input')
                     .first()
                     .click()
@@ -336,7 +387,6 @@ context("Test API Rules", () => {
         cy.get('[aria-label="expand Token From"]:visible', {
             log: false,
         })
-            .scrollIntoView()
             .parent()
             .within(_$div => {
                 cy.get(`ui5-icon[name="slim-arrow-down"]`)
@@ -354,7 +404,7 @@ context("Test API Rules", () => {
         })
             .parent()
             .within(_$div => {
-                cy.get('input[placeholder="Enter value"]', { log: false })
+                cy.get('input[placeholder="Enter value"]', {log: false})
                     .first()
                     .clear()
                     .type('FromHeader');
@@ -366,11 +416,11 @@ context("Test API Rules", () => {
         cy.get('[data-testid="spec.rules.2.methods.POST"]:visible').click();
 
         // Change urls to HTTP in JWT
-        cy.get('[aria-label="expand Rule"]', { log: false })
+        cy.get('[aria-label="expand Rule"]', {log: false})
             .eq(1)
             .click();
 
-        cy.get('[aria-label="expand JWKS URLs"]', { log: false }).click();
+        cy.get('[aria-label="expand JWKS URLs"]', {log: false}).click();
 
         cy.get(
             '[data-testid="spec.rules.1.accessStrategies.0.config.jwks_urls.0"]:visible',
@@ -384,7 +434,7 @@ context("Test API Rules", () => {
             'JWKS URL: HTTP protocol is not secure, consider using HTTPS',
         ).should('exist');
 
-        cy.get('[aria-label="expand Trusted Issuers"]', { log: false }).click();
+        cy.get('[aria-label="expand Trusted Issuers"]', {log: false}).click();
 
         cy.get(
             '[data-testid="spec.rules.1.accessStrategies.0.config.trusted_issuers.0"]:visible',
@@ -404,12 +454,19 @@ context("Test API Rules", () => {
             .click();
     });
 
-    it('Check OAuth2 Introspection strategy', () => {
+    it('Check edited APIRule details', () => {
         cy.contains(apiRuleName).click();
 
         cy.contains(apiRuleDefaultPath).should('exist');
 
-        cy.contains('Rules #3', { timeout: 10000 }).click();
+        cy.contains('Rules #3', {timeout: 20000}).click();
+
+        cy.contains('CORS Allow Methods').should('exist').parent().contains('GET').should('exist');
+        cy.contains('CORS Allow Origins').should('exist').parent().contains('localhost').should('exist');
+        cy.contains('CORS Expose Headers').should('exist').parent().contains('Exposed-Header').should('exist')
+        cy.contains('CORS Allow Headers').should('exist').parent().contains('Allowed-Header').should('exist')
+        cy.contains('CORS Allow Credentials').should('exist').parent().contains('true').should('exist')
+        cy.contains('CORS Max Age').should('exist').parent().contains('10s').should('exist')
 
         cy.contains(apiRulePath).should('exist');
 
