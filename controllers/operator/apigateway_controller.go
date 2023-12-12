@@ -187,6 +187,7 @@ func (r *APIGatewayReconciler) finishReconcile(ctx context.Context, cr v1alpha1.
 
 func (r *APIGatewayReconciler) terminateReconciliation(ctx context.Context, apiGatewayCR operatorv1alpha1.APIGateway, status controllers.Status) (ctrl.Result, error) {
 	statusUpdateErr := controllers.UpdateApiGatewayStatus(ctx, r.Client, &apiGatewayCR, status)
+
 	if statusUpdateErr != nil {
 		r.log.Error(statusUpdateErr, "Error during updating status to error")
 		// In case the update of the status fails we must requeue the request, because otherwise the Error state is never visible in the CR.
