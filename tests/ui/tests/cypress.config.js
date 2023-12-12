@@ -13,6 +13,7 @@ module.exports = defineConfig({
   chromeWebSecurity: false,
   viewportWidth: 1500,
   viewportHeight: 1500,
+  video: true,
   videoCompression: false,
   screenshotsFolder: process?.env?.ARTIFACTS
     ? `${process.env?.ARTIFACTS}/screenshots`

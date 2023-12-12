@@ -286,6 +286,7 @@ context("Test API Rules", () => {
         cy.get(
             `ui5-combobox[data-testid="spec.rules.2.accessStrategies.0.handler"]:visible`,
         )
+            .scrollIntoView()
             .find('input')
             .click()
             .clear()
@@ -298,7 +299,7 @@ context("Test API Rules", () => {
 
         cy.get('[aria-label="expand Introspection Request Headers"]:visible', {
             log: false,
-        }).click();
+        }).scrollIntoView().click();
 
         cy.get('[aria-label="expand Introspection Request Headers"]:visible', {
             log: false,
@@ -335,23 +336,25 @@ context("Test API Rules", () => {
         cy.get('[aria-label="expand Token From"]:visible', {
             log: false,
         })
+            .scrollIntoView()
             .parent()
             .within(_$div => {
-                cy.contains('Enter key', { log: false })
-                    .find('input')
+                cy.get(`ui5-icon[name="slim-arrow-down"]`)
                     .click()
-                    .first()
-                    .click();
             });
+
+        cy.get('ui5-li:visible')
+            .contains('header')
+            .find('li')
+            .click({force: true});
+
 
         cy.get('[aria-label="expand Token From"]:visible', {
             log: false,
         })
             .parent()
             .within(_$div => {
-                cy.get('[placeholder="Enter value"]:visible', { log: false })
-                    .find('input')
-                    .click()
+                cy.get('input[placeholder="Enter value"]', { log: false })
                     .first()
                     .clear()
                     .type('FromHeader');
