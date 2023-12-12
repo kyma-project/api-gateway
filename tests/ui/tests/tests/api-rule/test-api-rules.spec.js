@@ -455,7 +455,7 @@ context("Test API Rules", () => {
     });
 
     it('Check edited APIRule details', () => {
-        cy.contains(apiRuleName).click();
+        cy.contains(apiRuleName).should("be.visible").click();
 
         cy.contains(apiRuleDefaultPath).should('exist');
 
