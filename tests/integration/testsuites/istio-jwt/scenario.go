@@ -85,6 +85,11 @@ func (s *scenario) callingTheEndpointWithValidTokenShouldResultInBodyContaining(
 	return s.callingEndpointWithHeadersWithRetries(fmt.Sprintf("%s/%s", s.Url, strings.TrimLeft(endpoint, "/")), tokenType, asserter, nil, &tokenFrom)
 }
 
+func (s *scenario) callingTheEndpointWithMethodWithInvalidTokenShouldResultInStatusBetween(path string, method string, lower, higher int) error {
+	requestHeaders := map[string]string{testcontext.AuthorizationHeaderName: testcontext.AnyToken}
+	return s.httpClient.CallEndpointWithHeadersAndMethod(requestHeaders, fmt.Sprintf("%s%s", s.Url, path), method, &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher})
+}
+
 func (s *scenario) callingEndpointWithHeadersWithRetries(url string, tokenType string, asserter helpers.HttpResponseAsserter, requestHeaders map[string]string, tokenFrom *tokenFrom) error {
 	if requestHeaders == nil {
 		requestHeaders = make(map[string]string)
