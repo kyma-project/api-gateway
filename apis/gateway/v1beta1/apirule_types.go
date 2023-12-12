@@ -197,8 +197,8 @@ type JwtHeader struct {
 // +kubebuilder:validation:Maximum=3900
 type Timeout uint16 // We use unit16 instead of a time.Duration because there is a bug with duration that requires additional validation of the format. Issue: checking https://github.com/kubernetes/apiextensions-apiserver/issues/56
 
-// CorsPolicy allows configuration of CORS headers recieved downstream. If this is not defined, the default values are applied.
-// If CorsPolicy is configured, CORS headers recieved downstream will be only those defined on the APIRule
+// CorsPolicy allows configuration of CORS headers received downstream. If this is not defined, the default values are applied.
+// If CorsPolicy is configured, CORS headers received downstream will be only those defined on the APIRule
 type CorsPolicy struct {
 	AllowHeaders     []string `json:"allowHeaders,omitempty"`
 	AllowMethods     []string `json:"allowMethods,omitempty"`

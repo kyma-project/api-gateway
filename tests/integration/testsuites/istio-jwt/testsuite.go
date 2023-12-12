@@ -91,6 +91,8 @@ func (t *testsuite) InitScenarios(ctx *godog.ScenarioContext) {
 	initTokenFromHeaders(ctx, t)
 	initTokenFromParams(ctx, t)
 	initCustomLabelSelector(ctx, t)
+	initCustomCors(ctx, t)
+	initDefaultCors(ctx, t)
 }
 
 func (t *testsuite) FeaturePath() []string {
