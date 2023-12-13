@@ -91,8 +91,10 @@ func (t *testsuite) InitScenarios(ctx *godog.ScenarioContext) {
 	initTokenFromHeaders(ctx, t)
 	initTokenFromParams(ctx, t)
 	initCustomLabelSelector(ctx, t)
-	initAllow(ctx, t)
-	initNoop(ctx, t)
+	initExposeMethodsOnPathsAllowHandler(ctx, t)
+	initExposeMethodsOnPathsNoopHandler(ctx, t)
+	initExposeMethodsOnPathsJwtHandler(ctx, t)
+	initExposeMethodsOnPathsOAuth2Handler(ctx, t)
 }
 
 func (t *testsuite) FeaturePath() []string {
