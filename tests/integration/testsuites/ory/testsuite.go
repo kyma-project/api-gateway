@@ -74,8 +74,10 @@ func (t *testsuite) InitScenarios(ctx *godog.ScenarioContext) {
 	initUnsecured(ctx, t)
 	initSecuredToUnsecuredEndpoint(ctx, t)
 	initUnsecuredToSecured(ctx, t)
-	initAllow(ctx, t)
-	initNoop(ctx, t)
+	initExposeMethodsOnPathsAllowHandler(ctx, t)
+	initExposeMethodsOnPathsNoopHandler(ctx, t)
+	initExposeMethodsOnPathsJwtHandler(ctx, t)
+	initExposeMethodsOnPathsOAuth2Handler(ctx, t)
 }
 
 func (t *testsuite) FeaturePath() []string {

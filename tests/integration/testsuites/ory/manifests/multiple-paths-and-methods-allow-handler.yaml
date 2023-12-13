@@ -10,8 +10,13 @@ spec:
   gateway: "{{.GatewayNamespace}}/{{.GatewayName}}"
   host: "httpbin-{{.TestID}}.{{.Domain}}"
   rules:
-  - path: /.*
-    methods: ["GET"]
-    accessStrategies:
-    - handler: allow
-    mutators: []
+    - path: /anything
+      methods: ["GET", "POST"]
+      accessStrategies:
+        - handler: allow
+      mutators: []
+    - path: /anything/put
+      methods: ["PUT"]
+      accessStrategies:
+        - handler: allow
+      mutators: []

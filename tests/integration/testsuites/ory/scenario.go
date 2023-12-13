@@ -10,6 +10,7 @@ import (
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
 	"golang.org/x/oauth2/clientcredentials"
 	"k8s.io/client-go/dynamic"
+	"net/http"
 	"strings"
 )
 
@@ -31,10 +32,15 @@ type scenario struct {
 
 func (s *scenario) callingTheEndpointWithValidTokenShouldResultInStatusBetween(path string, tokenType string, lower, higher int) error {
 	asserter := &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher}
-	return s.callingTheEndpointWithValidToken(fmt.Sprintf("%s%s", s.Url, path), tokenType, asserter)
+	return s.callingTheEndpointWithMethodWithValidToken(fmt.Sprintf("%s%s", s.Url, path), http.MethodGet, tokenType, asserter)
 }
 
-func (s *scenario) callingTheEndpointWithValidToken(url string, tokenType string, asserter helpers.HttpResponseAsserter) error {
+func (s *scenario) callingTheEndpointWithMethodWithValidTokenShouldResultInStatusBetween(path string, method string, tokenType string, lower, higher int) error {
+	asserter := &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher}
+	return s.callingTheEndpointWithMethodWithValidToken(fmt.Sprintf("%s%s", s.Url, path), method, tokenType, asserter)
+}
+
+func (s *scenario) callingTheEndpointWithMethodWithValidToken(url string, method string, tokenType string, asserter helpers.HttpResponseAsserter) error {
 
 	requestHeaders := make(map[string]string)
 
@@ -55,7 +61,7 @@ func (s *scenario) callingTheEndpointWithValidToken(url string, tokenType string
 		return fmt.Errorf("unsupported token type: %s", tokenType)
 	}
 
-	return s.httpClient.CallEndpointWithHeadersWithRetries(requestHeaders, url, asserter)
+	return s.httpClient.CallEndpointWithHeadersAndMethod(requestHeaders, url, method, asserter)
 }
 
 func (s *scenario) thereIsAHttpbinServiceAndApiRuleIsApplied() error {
