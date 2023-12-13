@@ -6,6 +6,7 @@ import (
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	apinetworkingv1beta1 "istio.io/api/networking/v1beta1"
 	"math/rand"
+	"net/http"
 	"strings"
 	"time"
 
@@ -295,7 +296,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 								Host(serviceHost).
 								Gateway(testGatewayURL).
 								HTTP(builders.HTTPRoute().
-									Match(builders.MatchRequest().Uri().Regex(testPath)).
+									Match(builders.MatchRequest().Uri().Regex(testPath).MethodRegEx(defaultMethods...)).
 									Route(builders.RouteDestination().Host(testOathkeeperSvcURL).Port(testOathkeeperPort)).
 									Headers(builders.NewHttpRouteHeadersBuilder().SetHostHeader(serviceHost).Get()).
 									CorsPolicy(defaultCorsPolicy).
@@ -365,8 +366,8 @@ var _ = Describe("APIRule Controller", Serial, func() {
 							serviceName := generateTestName(testServiceNameBase, testIDLength)
 							serviceHost := fmt.Sprintf("%s.kyma.local", serviceName)
 
-							rule1 := testRule("/img", []string{"GET"}, defaultMutators, testOryJWTHandler(testIssuer, defaultScopes))
-							rule2 := testRule("/headers", []string{"GET"}, defaultMutators, testOryJWTHandler(testIssuer, defaultScopes))
+							rule1 := testRule("/img", []string{http.MethodGet}, defaultMutators, testOryJWTHandler(testIssuer, defaultScopes))
+							rule2 := testRule("/headers", []string{http.MethodGet}, defaultMutators, testOryJWTHandler(testIssuer, defaultScopes))
 							apiRule := testApiRule(apiRuleName, testNamespace, serviceName, testNamespace, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule1, rule2})
 							svc := testService(serviceName, testNamespace, testServicePort)
 
@@ -393,13 +394,13 @@ var _ = Describe("APIRule Controller", Serial, func() {
 									Host(serviceHost).
 									Gateway(testGatewayURL).
 									HTTP(builders.HTTPRoute().
-										Match(builders.MatchRequest().Uri().Regex("/img")).
+										Match(builders.MatchRequest().Uri().Regex("/img").MethodRegEx(http.MethodGet)).
 										Route(builders.RouteDestination().Host(testOathkeeperSvcURL).Port(testOathkeeperPort)).
 										Headers(builders.NewHttpRouteHeadersBuilder().SetHostHeader(serviceHost).Get()).
 										CorsPolicy(defaultCorsPolicy).
 										Timeout(defaultHttpTimeout)).
 									HTTP(builders.HTTPRoute().
-										Match(builders.MatchRequest().Uri().Regex("/headers")).
+										Match(builders.MatchRequest().Uri().Regex("/headers").MethodRegEx(http.MethodGet)).
 										Route(builders.RouteDestination().Host(testOathkeeperSvcURL).Port(testOathkeeperPort)).
 										Headers(builders.NewHttpRouteHeadersBuilder().SetHostHeader(serviceHost).Get()).
 										CorsPolicy(defaultCorsPolicy).
@@ -507,8 +508,8 @@ var _ = Describe("APIRule Controller", Serial, func() {
 							serviceName := testServiceNameBase
 							serviceHost := "httpbin-istio-jwt-happy-base.kyma.local"
 
-							rule1 := testRule("/img", []string{"GET"}, nil, testIstioJWTHandlerWithScopes(testIssuer, testJwksUri, []string{"scope-a", "scope-b"}))
-							rule2 := testRule("/headers", []string{"GET"}, nil, testIstioJWTHandlerWithScopes(testIssuer, testJwksUri, []string{"scope-c"}))
+							rule1 := testRule("/img", []string{http.MethodGet}, nil, testIstioJWTHandlerWithScopes(testIssuer, testJwksUri, []string{"scope-a", "scope-b"}))
+							rule2 := testRule("/headers", []string{http.MethodGet}, nil, testIstioJWTHandlerWithScopes(testIssuer, testJwksUri, []string{"scope-c"}))
 							apiRule := testApiRule(apiRuleName, testNamespace, serviceName, testNamespace, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule1, rule2})
 							svc := testService(serviceName, testNamespace, testServicePort)
 
@@ -535,13 +536,13 @@ var _ = Describe("APIRule Controller", Serial, func() {
 									Host(serviceHost).
 									Gateway(testGatewayURL).
 									HTTP(builders.HTTPRoute().
-										Match(builders.MatchRequest().Uri().Regex("/img")).
+										Match(builders.MatchRequest().Uri().Regex("/img").MethodRegEx(http.MethodGet)).
 										Route(builders.RouteDestination().Host(fmt.Sprintf("%s.%s.svc.cluster.local", serviceName, testNamespace)).Port(testServicePort)).
 										Headers(builders.NewHttpRouteHeadersBuilder().SetHostHeader(serviceHost).Get()).
 										CorsPolicy(defaultCorsPolicy).
 										Timeout(defaultHttpTimeout)).
 									HTTP(builders.HTTPRoute().
-										Match(builders.MatchRequest().Uri().Regex("/headers")).
+										Match(builders.MatchRequest().Uri().Regex("/headers").MethodRegEx(http.MethodGet)).
 										Route(builders.RouteDestination().Host(fmt.Sprintf("%s.%s.svc.cluster.local", serviceName, testNamespace)).Port(testServicePort)).
 										Headers(builders.NewHttpRouteHeadersBuilder().SetHostHeader(serviceHost).Get()).
 										CorsPolicy(defaultCorsPolicy).
@@ -808,10 +809,10 @@ var _ = Describe("APIRule Controller", Serial, func() {
 
 						jwtHandler := testOryJWTHandler(testIssuer, defaultScopes)
 						oauthHandler := testOauthHandler(defaultScopes)
-						rule1 := testRule("/img", []string{"GET"}, defaultMutators, jwtHandler)
-						rule2 := testRule("/headers", []string{"GET"}, defaultMutators, oauthHandler)
-						rule3 := testRule("/status", []string{"GET"}, defaultMutators, noConfigHandler("noop"))
-						rule4 := testRule("/favicon", []string{"GET"}, nil, noConfigHandler("allow"))
+						rule1 := testRule("/img", []string{http.MethodGet}, defaultMutators, jwtHandler)
+						rule2 := testRule("/headers", []string{http.MethodGet}, defaultMutators, oauthHandler)
+						rule3 := testRule("/status", []string{http.MethodGet}, defaultMutators, noConfigHandler("noop"))
+						rule4 := testRule("/favicon", []string{http.MethodGet}, nil, noConfigHandler("allow"))
 
 						apiRuleName := generateTestName(testNameBase, testIDLength)
 						serviceName := testServiceNameBase
@@ -844,25 +845,25 @@ var _ = Describe("APIRule Controller", Serial, func() {
 								Host(serviceHost).
 								Gateway(testGatewayURL).
 								HTTP(builders.HTTPRoute().
-									Match(builders.MatchRequest().Uri().Regex("/img")).
+									Match(builders.MatchRequest().Uri().Regex("/img").MethodRegEx(http.MethodGet)).
 									Route(builders.RouteDestination().Host(testOathkeeperSvcURL).Port(testOathkeeperPort)).
 									Headers(builders.NewHttpRouteHeadersBuilder().SetHostHeader(serviceHost).Get()).
 									CorsPolicy(defaultCorsPolicy).
 									Timeout(defaultHttpTimeout)).
 								HTTP(builders.HTTPRoute().
-									Match(builders.MatchRequest().Uri().Regex("/headers")).
+									Match(builders.MatchRequest().Uri().Regex("/headers").MethodRegEx(http.MethodGet)).
 									Route(builders.RouteDestination().Host(testOathkeeperSvcURL).Port(testOathkeeperPort)).
 									Headers(builders.NewHttpRouteHeadersBuilder().SetHostHeader(serviceHost).Get()).
 									CorsPolicy(defaultCorsPolicy).
 									Timeout(defaultHttpTimeout)).
 								HTTP(builders.HTTPRoute().
-									Match(builders.MatchRequest().Uri().Regex("/status")).
+									Match(builders.MatchRequest().Uri().Regex("/status").MethodRegEx(http.MethodGet)).
 									Route(builders.RouteDestination().Host(testOathkeeperSvcURL).Port(testOathkeeperPort)).
 									Headers(builders.NewHttpRouteHeadersBuilder().SetHostHeader(serviceHost).Get()).
 									CorsPolicy(defaultCorsPolicy).
 									Timeout(defaultHttpTimeout)).
 								HTTP(builders.HTTPRoute().
-									Match(builders.MatchRequest().Uri().Regex("/favicon")).
+									Match(builders.MatchRequest().Uri().Regex("/favicon").MethodRegEx(http.MethodGet)).
 									Route(builders.RouteDestination().Host("httpbin.atgo-system.svc.cluster.local").Port(443)). // "allow", no oathkeeper rule!
 									Headers(builders.NewHttpRouteHeadersBuilder().SetHostHeader(serviceHost).Get()).
 									CorsPolicy(defaultCorsPolicy).
@@ -905,7 +906,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 
 								//Spec.Match
 								g.Expect(rl.Spec.Match).NotTo(BeNil())
-								g.Expect(rl.Spec.Match.Methods).To(Equal([]string{"GET"}))
+								g.Expect(rl.Spec.Match.Methods).To(Equal([]string{http.MethodGet}))
 								g.Expect(rl.Spec.Match.URL).To(Equal(expectedRuleMatchURL))
 
 								//Spec.Authenticators

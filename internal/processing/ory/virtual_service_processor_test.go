@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
+	"net/http"
 	"time"
 
 	"github.com/kyma-project/api-gateway/internal/processing"
@@ -429,8 +430,8 @@ var _ = Describe("Virtual Service Processor", func() {
 					},
 				},
 			}
-			getMethod := []string{"GET"}
-			postMethod := []string{"POST"}
+			getMethod := []string{http.MethodGet}
+			postMethod := []string{http.MethodPost}
 			noopRule := GetRuleFor(ApiPath, getMethod, []*v1beta1.Mutator{}, noop)
 			jwtRule := GetRuleFor(ApiPath, postMethod, testMutators, jwt)
 			rules := []v1beta1.Rule{noopRule, jwtRule}
@@ -510,8 +511,8 @@ var _ = Describe("Virtual Service Processor", func() {
 					},
 				},
 			}
-			getMethod := []string{"GET"}
-			postMethod := []string{"POST"}
+			getMethod := []string{http.MethodGet}
+			postMethod := []string{http.MethodPost}
 			noopGetRule := GetRuleFor(ApiPath, getMethod, []*v1beta1.Mutator{}, noop)
 			noopPostRule := GetRuleFor(ApiPath, postMethod, []*v1beta1.Mutator{}, noop)
 			jwtRule := GetRuleFor(HeadersApiPath, ApiMethods, testMutators, jwt)
@@ -796,6 +797,49 @@ var _ = Describe("Virtual Service Processor", func() {
 			Expect(getTimeoutByPath(vs, "/default-timeout")).To(Equal(180 * time.Second))
 			Expect(getTimeoutByPath(vs, "/rule-timeout")).To(Equal(20 * time.Second))
 		})
+	})
+
+	Context("HTTP matching", func() {
+
+		DescribeTable("should restrict access for the APIRule path and methods",
+			func(accessStrategy string) {
+				// Given
+				strategies := []*v1beta1.Authenticator{
+					{
+						Handler: &v1beta1.Handler{
+							Name: accessStrategy,
+						},
+					},
+				}
+
+				allowRule := GetRuleFor("/", []string{http.MethodGet, http.MethodPost}, []*v1beta1.Mutator{}, strategies)
+				rules := []v1beta1.Rule{allowRule}
+
+				apiRule := GetAPIRuleFor(rules)
+				client := GetFakeClient()
+				processor := ory.NewVirtualServiceProcessor(GetTestConfig())
+
+				// when
+				result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
+
+				// then
+				Expect(err).To(BeNil())
+				Expect(result).To(HaveLen(1))
+
+				vs := result[0].Obj.(*networkingv1beta1.VirtualService)
+
+				Expect(vs).NotTo(BeNil())
+
+				Expect(len(vs.Spec.Http[0].Match)).To(Equal(1))
+				Expect(vs.Spec.Http[0].Match[0].Uri.GetRegex()).To(Equal("/"))
+				Expect(vs.Spec.Http[0].Match[0].Method.GetRegex()).To(ContainSubstring("^GET\\b"))
+				Expect(vs.Spec.Http[0].Match[0].Method.GetRegex()).To(ContainSubstring("^POST\\b"))
+			},
+			Entry("When access strategy is allow", "allow"),
+			Entry("When access strategy is noop", "noop"),
+			Entry("When access strategy is jwt", "jwt"),
+			Entry("When access strategy is oauth2_introspection", "oauth2_introspection"),
+		)
 	})
 })
 

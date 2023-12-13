@@ -3,6 +3,7 @@ package gateway_test
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"os"
 	"path/filepath"
 	"testing"
@@ -55,7 +56,7 @@ var (
 	ctx       context.Context
 	cancel    context.CancelFunc
 
-	defaultMethods  = []string{"GET", "PUT"}
+	defaultMethods  = []string{http.MethodGet, http.MethodPut}
 	defaultScopes   = []string{"foo", "bar"}
 	defaultMutators = []*gatewayv1beta1.Mutator{
 		{

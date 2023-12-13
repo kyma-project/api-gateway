@@ -1,9 +1,11 @@
 package builders
 
 import (
+	"fmt"
 	"google.golang.org/protobuf/types/known/durationpb"
 	"istio.io/api/networking/v1beta1"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
+	"strings"
 	"time"
 )
 
@@ -149,6 +151,23 @@ func (mr *matchRequest) Get() *v1beta1.HTTPMatchRequest {
 func (mr *matchRequest) Uri() *stringMatch {
 	mr.value.Uri = &v1beta1.StringMatch{}
 	return &stringMatch{mr.value.Uri, func() *matchRequest { return mr }}
+}
+
+// MethodRegEx sets the HTTP method regex in the HTTPMatchRequest for the given HTTP methods in the format "^PUT\b|^POST\b|^GET\b$".
+func (mr *matchRequest) MethodRegEx(httpMethods ...string) *matchRequest {
+
+	var methodExpressions []string
+	for _, m := range httpMethods {
+		methodExpressions = append(methodExpressions, fmt.Sprintf("^%s\\b$", m))
+	}
+	regex := strings.Join(methodExpressions, "|")
+
+	mr.value.Method = &v1beta1.StringMatch{
+		MatchType: &v1beta1.StringMatch_Regex{
+			Regex: regex,
+		},
+	}
+	return mr
 }
 
 type stringMatch struct {
