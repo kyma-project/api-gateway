@@ -1,7 +1,7 @@
 # Technical Design of Kyma API Gateway Operator
 
 API Gateway Operator consists of two controllers that reconcile different CRs. To understand the reasons for using a single operator with multiple controllers instead of multiple operators, refer to the [Architecture Decision Record](https://github.com/kyma-project/api-gateway/issues/495).
-The operator has a dependency on [Istio](https://istio.io/) and [Ory Oathkeeper](https://www.ory.sh/docs/oathkeeper), and it installs Ory Oathkeeper itself.
+API Gateway Operator has a dependency on [Istio](https://istio.io/) and [Ory Oathkeeper](https://www.ory.sh/docs/oathkeeper), and it installs Ory Oathkeeper itself.
 
 The following diagram illustrates the APIRule reconciliation process and the resources created in the process:
 ![Kyma API Gateway Overview](../assets/operator-contributor-skr-overview.svg)
@@ -32,7 +32,7 @@ APIRule Controller has a conditional dependency to APIGateway Controller in term
 ### Reconciliation
 APIRule Controller reconciles APIRule CR with each change. If you don't make any changes, the process occurs at the default interval of 10 hours.
 You can use the [API Gateway Operator paramteres](../user/technical-reference/05-00-api-gateway-operator-parameters.md) to adjust this interval.
-In the event of a failure during the reconciliation, the controller performs the reconciliation again after one minute.
+In the event of a failure during the reconciliation, APIRule Controller performs the reconciliation again after one minute.
 
 The following diagram illustrates the reconciliation process of APIRule and the created resources:
 
