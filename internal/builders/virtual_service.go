@@ -2,9 +2,11 @@ package builders
 
 import (
 	"fmt"
+	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"google.golang.org/protobuf/types/known/durationpb"
 	"istio.io/api/networking/v1beta1"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
+
 	"strings"
 	"time"
 )
@@ -154,7 +156,7 @@ func (mr *matchRequest) Uri() *stringMatch {
 }
 
 // MethodRegEx sets the HTTP method regex in the HTTPMatchRequest for the given HTTP methods in the format "^PUT\b|^POST\b|^GET\b$".
-func (mr *matchRequest) MethodRegEx(httpMethods ...string) *matchRequest {
+func (mr *matchRequest) MethodRegEx(httpMethods ...gatewayv1beta1.HttpMethod) *matchRequest {
 
 	var methodExpressions []string
 	for _, m := range httpMethods {

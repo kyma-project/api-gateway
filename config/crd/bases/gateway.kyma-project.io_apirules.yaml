@@ -84,6 +84,19 @@ spec:
                       description: Represents the list of allowed HTTP request methods
                         available for the **spec.rules.path**.
                       items:
+                        description: 'HttpMethod specifies the HTTP request method.
+                          The list of supported methods is defined in RFC 9910: HTTP
+                          Semantics and RFC 5789: PATCH Method for HTTP.'
+                        enum:
+                        - GET
+                        - HEAD
+                        - POST
+                        - PUT
+                        - DELETE
+                        - CONNECT
+                        - OPTIONS
+                        - TRACE
+                        - PATCH
                         type: string
                       minItems: 1
                       type: array

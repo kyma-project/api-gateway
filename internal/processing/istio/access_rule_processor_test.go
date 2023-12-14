@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
+	"net/http"
 
 	"github.com/kyma-project/api-gateway/internal/processing"
 	. "github.com/kyma-project/api-gateway/internal/processing/internal/test"
@@ -343,7 +344,7 @@ var _ = Describe("Access Rule Processor", func() {
 			expectedRuleUpstreamURL := fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", ServiceName, ApiNamespace, ServicePort)
 
 			Expect(len(rule.Spec.Match.Methods)).To(Equal(len(ApiMethods)))
-			Expect(rule.Spec.Match.Methods).To(Equal(ApiMethods))
+			Expect(rule.Spec.Match.Methods).To(Equal([]string{http.MethodGet}))
 			Expect(rule.Spec.Match.URL).To(Equal(expectedRuleMatchURL))
 
 			Expect(rule.Spec.Upstream.URL).To(Equal(expectedRuleUpstreamURL))

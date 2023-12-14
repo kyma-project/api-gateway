@@ -56,7 +56,7 @@ var (
 	ctx       context.Context
 	cancel    context.CancelFunc
 
-	defaultMethods  = []string{http.MethodGet, http.MethodPut}
+	defaultMethods  = []gatewayv1beta1.HttpMethod{http.MethodGet, http.MethodPut}
 	defaultScopes   = []string{"foo", "bar"}
 	defaultMutators = []*gatewayv1beta1.Mutator{
 		{
@@ -68,7 +68,7 @@ var (
 	}
 
 	TestAllowOrigins = []*v1beta1.StringMatch{{MatchType: &v1beta1.StringMatch_Regex{Regex: ".*"}}}
-	TestAllowMethods = []string{"GET", "POST", "PUT", "DELETE"}
+	TestAllowMethods = []string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodDelete}
 	TestAllowHeaders = []string{"header1", "header2"}
 
 	defaultCorsPolicy = builders.CorsPolicy().

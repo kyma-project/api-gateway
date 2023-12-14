@@ -432,8 +432,6 @@ var _ = Describe("Virtual Service Processor", func() {
 					},
 				},
 			}
-			getMethod := []string{http.MethodGet}
-			postMethod := []string{http.MethodPost}
 			noopRule := GetRuleFor(ApiPath, getMethod, []*v1beta1.Mutator{}, noop)
 			jwtRule := GetRuleFor(ApiPath, postMethod, testMutators, jwt)
 			rules := []v1beta1.Rule{noopRule, jwtRule}
@@ -513,8 +511,6 @@ var _ = Describe("Virtual Service Processor", func() {
 					},
 				},
 			}
-			getMethod := []string{http.MethodGet}
-			postMethod := []string{http.MethodPost}
 			noopGetRule := GetRuleFor(ApiPath, getMethod, []*v1beta1.Mutator{}, noop)
 			noopPostRule := GetRuleFor(ApiPath, postMethod, []*v1beta1.Mutator{}, noop)
 			jwtRule := GetRuleFor(HeadersApiPath, ApiMethods, testMutators, jwt)
@@ -1120,7 +1116,7 @@ var _ = Describe("Virtual Service Processor", func() {
 					},
 				}
 
-				allowRule := GetRuleFor("/", []string{http.MethodGet, http.MethodPost}, []*v1beta1.Mutator{}, strategies)
+				allowRule := GetRuleFor("/", []v1beta1.HttpMethod{http.MethodGet, http.MethodPost}, []*v1beta1.Mutator{}, strategies)
 				rules := []v1beta1.Rule{allowRule}
 
 				apiRule := GetAPIRuleFor(rules)
