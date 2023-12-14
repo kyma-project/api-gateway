@@ -13,7 +13,7 @@ The controller is responsible for handling the [APIGateway CR](../user/custom-re
 
 ### Reconciliation
 APIGateway Controller reconciles the APIGateway CR with each change. If you don't make any changes, the reconciliation process occurs at the default interval of 10 hours, as determined by the [Kubernetes controller-runtime](https://pkg.go.dev/sigs.k8s.io/controller-runtime). 
-Only the oldest APIGateway CR in the `kyma-system` namespace is reconciled. APIGateway Controller does not reconcile other CRs in the `kyma-system` namespace or any CRs in other namespaces. Instead, it sets their status to `Error`.
+APIGateway Controller reconciles only the oldest APIGateway CR on the cluster. It sets the status of other CRs to `Error`.
 If a failure occurs during the reconciliation process, the default behavior of the [Kubernetes controller-runtime](https://pkg.go.dev/sigs.k8s.io/controller-runtime) is to use exponential backoff requeue.
 
 Before deleting the APIGateway CR, APIGateway Controller first checks if there are any APIRule or [Istio Virtual Service](https://istio.io/latest/docs/reference/config/networking/virtual-service) resources that reference the default Kyma [Gateway](https://istio.io/latest/docs/reference/config/networking/gateway/) `kyma-system/kyma-gateway`. If any such resources are found, they are listed in the logs of the controller, and the APIGateway CR's status is set to `Warning` to indicate that there are resources blocking the deletion. If there are existing Ory Oathkeeper Access Rules on the cluster, APIGateway Controller also sets the status to `Warning` and does not delete the APIGateway CR.
