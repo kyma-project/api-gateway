@@ -209,6 +209,9 @@ type corsPolicy struct {
 }
 
 func (cp *corsPolicy) Get() *v1beta1.CorsPolicy {
+	if cp.value.AllowOrigins == nil {
+		return nil
+	}
 	return cp.value
 }
 
@@ -235,6 +238,16 @@ func (cp *corsPolicy) AllowOrigins(val ...*v1beta1.StringMatch) *corsPolicy {
 		cp.value.AllowOrigins = nil
 	} else {
 		cp.value.AllowOrigins = append(cp.value.AllowOrigins, val...)
+	}
+	return cp
+}
+
+func (cp *corsPolicy) AllowOriginsFromApiRule(val apirulev1beta1.StringMatch) *corsPolicy {
+	if len(val) == 0 {
+		cp.value.AllowOrigins = nil
+	} else {
+		matchers := val.ToIstioStringMatchArray()
+		cp.value.AllowOrigins = append(cp.value.AllowOrigins, matchers...)
 	}
 	return cp
 }
@@ -282,21 +295,23 @@ func (h HttpRouteHeadersBuilder) SetRequestHeaders(headers map[string]string) Ht
 }
 
 const (
-	ExposeName       = "Access-Control-Expose-Headers"
-	AllowHeadersName = "Access-Control-Allow-Headers"
-	CredentialsName  = "Access-Control-Allow-Credentials"
-	AllowMethodsName = "Access-Control-Allow-Methods"
-	OriginName       = "Access-Control-Allow-Origin"
-	MaxAgeName       = "Access-Control-Max-Age"
+	ExposeHeadersName    = "Access-Control-Expose-Headers"
+	AllowHeadersName     = "Access-Control-Allow-Headers"
+	AllowCredentialsName = "Access-Control-Allow-Credentials"
+	AllowMethodsName     = "Access-Control-Allow-Methods"
+	AllowOriginName      = "Access-Control-Allow-Origin"
+	MaxAgeName           = "Access-Control-Max-Age"
 )
 
 // SetHeader sets the request header with name and value
 func (h HttpRouteHeadersBuilder) SetCORSPolicyHeaders(corsPolicy apirulev1beta1.CorsPolicy) HttpRouteHeadersBuilder {
 	removeHeaders := h.value.Response.Remove
+	removeHeaders = append(removeHeaders, AllowOriginName)
+
 	if len(corsPolicy.ExposeHeaders) > 0 {
-		h.value.Response.Set[ExposeName] = strings.Join(corsPolicy.ExposeHeaders, ",")
+		h.value.Response.Set[ExposeHeadersName] = strings.Join(corsPolicy.ExposeHeaders, ",")
 	} else {
-		removeHeaders = append(removeHeaders, ExposeName)
+		removeHeaders = append(removeHeaders, ExposeHeadersName)
 	}
 
 	if len(corsPolicy.AllowHeaders) > 0 {
@@ -307,24 +322,18 @@ func (h HttpRouteHeadersBuilder) SetCORSPolicyHeaders(corsPolicy apirulev1beta1.
 
 	if corsPolicy.AllowCredentials != nil {
 		if *corsPolicy.AllowCredentials {
-			h.value.Response.Set[CredentialsName] = "true"
+			h.value.Response.Set[AllowCredentialsName] = "true"
 		} else {
-			h.value.Response.Set[CredentialsName] = "false"
+			h.value.Response.Set[AllowCredentialsName] = "false"
 		}
 	} else {
-		removeHeaders = append(removeHeaders, CredentialsName)
+		removeHeaders = append(removeHeaders, AllowCredentialsName)
 	}
 
 	if len(corsPolicy.AllowMethods) > 0 {
 		h.value.Response.Set[AllowMethodsName] = strings.Join(corsPolicy.AllowMethods, ",")
 	} else {
 		removeHeaders = append(removeHeaders, AllowMethodsName)
-	}
-
-	if len(corsPolicy.AllowOrigins) > 0 {
-		h.value.Response.Set[OriginName] = strings.Join(corsPolicy.AllowOrigins, ",")
-	} else {
-		removeHeaders = append(removeHeaders, OriginName)
 	}
 
 	if corsPolicy.MaxAge != nil {

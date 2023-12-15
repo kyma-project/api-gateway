@@ -92,11 +92,11 @@ var _ = Describe("Builder for", func() {
 
 			//Expect host headers set to remove
 			Expect(result.Http[0].Headers.Response.Remove).To(ContainElements([]string{
-				ExposeName,
+				ExposeHeadersName,
 				AllowHeadersName,
-				CredentialsName,
+				AllowCredentialsName,
 				AllowMethodsName,
-				OriginName,
+				AllowOriginName,
 				MaxAgeName,
 			}))
 			Expect(result.Http[0].Route).To(HaveLen(1))
@@ -120,7 +120,7 @@ var _ = Describe("Builder for", func() {
 
 		It("should build the CORS headers", func() {
 			corsPolicy := apirulev1beta1.CorsPolicy{
-				AllowOrigins:     []string{"localhost"},
+				AllowOrigins:     apirulev1beta1.StringMatch{"exact": "localhost"},
 				AllowMethods:     []string{"GET", "POST"},
 				AllowCredentials: ptr.To(true),
 				AllowHeaders:     []string{"test"},
@@ -149,19 +149,18 @@ var _ = Describe("Builder for", func() {
 			Expect(result.Http[0].Headers.Request.Set).To(Equal(map[string]string{"x-forwarded-host": host}))
 
 			Expect(result.Http[0].Headers.Response.Remove).To(Not(ContainElements([]string{
-				ExposeName,
+				ExposeHeadersName,
 				AllowHeadersName,
-				CredentialsName,
+				AllowCredentialsName,
 				AllowMethodsName,
-				OriginName,
+				AllowOriginName,
 				MaxAgeName,
 			})))
 
-			Expect(result.Http[0].Headers.Response.Set).To(HaveKeyWithValue(ExposeName, "test"))
+			Expect(result.Http[0].Headers.Response.Set).To(HaveKeyWithValue(ExposeHeadersName, "test"))
 			Expect(result.Http[0].Headers.Response.Set).To(HaveKeyWithValue(AllowHeadersName, "test"))
-			Expect(result.Http[0].Headers.Response.Set).To(HaveKeyWithValue(CredentialsName, "true"))
+			Expect(result.Http[0].Headers.Response.Set).To(HaveKeyWithValue(AllowCredentialsName, "true"))
 			Expect(result.Http[0].Headers.Response.Set).To(HaveKeyWithValue(AllowMethodsName, "GET,POST"))
-			Expect(result.Http[0].Headers.Response.Set).To(HaveKeyWithValue(OriginName, "localhost"))
 			Expect(result.Http[0].Headers.Response.Set).To(HaveKeyWithValue(MaxAgeName, "1"))
 
 			Expect(result.Http[0].Route).To(HaveLen(1))

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"github.com/kyma-project/api-gateway/internal/builders"
+	v1beta12 "istio.io/api/networking/v1beta1"
 	"k8s.io/utils/ptr"
 	"time"
 
@@ -990,9 +991,55 @@ var _ = Describe("Virtual Service Processor", func() {
 
 			corsPolicy := v1beta1.CorsPolicy{
 				AllowMethods:     []string{"GET", "POST"},
-				AllowOrigins:     []string{"localhost"},
+				AllowOrigins:     v1beta1.StringMatch{"exact": "localhost"},
 				AllowCredentials: ptr.To(true),
 			}
+
+			allowRule := GetRuleFor(ApiPath, ApiMethods, nil, strategies)
+			rules := []v1beta1.Rule{allowRule}
+
+			apiRule := GetAPIRuleFor(rules)
+			apiRule.Spec.Host = &ServiceHostWithNoDomain
+			apiRule.Spec.CorsPolicy = ptr.To(corsPolicy)
+
+			client := GetFakeClient()
+			processor := istio.NewVirtualServiceProcessor(GetTestConfig())
+
+			// when
+			result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
+
+			// then
+			Expect(err).To(BeNil())
+			Expect(result).To(HaveLen(1))
+
+			vs := result[0].Obj.(*networkingv1beta1.VirtualService)
+
+			//verify VS
+			Expect(vs).NotTo(BeNil())
+			Expect(vs.Spec.Http[0].CorsPolicy.AllowOrigins).To(ContainElements(&v1beta12.StringMatch{MatchType: &v1beta12.StringMatch_Exact{Exact: "localhost"}}))
+
+			Expect(vs.Spec.Http[0].Headers.Response.Remove).To(ContainElements([]string{
+				builders.ExposeHeadersName,
+				builders.MaxAgeName,
+				builders.AllowHeadersName,
+				builders.AllowOriginName,
+			}))
+
+			Expect(vs.Spec.Http[0].Headers.Response.Set).To(HaveKeyWithValue(builders.AllowMethodsName, "GET,POST"))
+			Expect(vs.Spec.Http[0].Headers.Response.Set).To(HaveKeyWithValue(builders.AllowCredentialsName, "true"))
+		})
+
+		It("should remove all headers when CORSPolicy is empty", func() {
+			// given
+			strategies := []*v1beta1.Authenticator{
+				{
+					Handler: &v1beta1.Handler{
+						Name: "allow",
+					},
+				},
+			}
+
+			corsPolicy := v1beta1.CorsPolicy{}
 
 			allowRule := GetRuleFor(ApiPath, ApiMethods, nil, strategies)
 			rules := []v1beta1.Rule{allowRule}
@@ -1018,14 +1065,64 @@ var _ = Describe("Virtual Service Processor", func() {
 			Expect(vs.Spec.Http[0].CorsPolicy).To(BeNil())
 
 			Expect(vs.Spec.Http[0].Headers.Response.Remove).To(ContainElements([]string{
-				builders.ExposeName,
+				builders.ExposeHeadersName,
 				builders.MaxAgeName,
 				builders.AllowHeadersName,
+				builders.AllowCredentialsName,
+				builders.AllowMethodsName,
+				builders.AllowOriginName,
 			}))
+		})
+
+		It("should apply all CORSPolicy headers correctly", func() {
+			// given
+			strategies := []*v1beta1.Authenticator{
+				{
+					Handler: &v1beta1.Handler{
+						Name: "allow",
+					},
+				},
+			}
+
+			corsPolicy := v1beta1.CorsPolicy{
+				AllowMethods:     []string{"GET", "POST"},
+				AllowOrigins:     v1beta1.StringMatch{"exact": "localhost"},
+				AllowCredentials: ptr.To(true),
+				AllowHeaders:     []string{"Allowed-Header"},
+				ExposeHeaders:    []string{"Exposed-Header"},
+				MaxAge:           &metav1.Duration{Duration: 10 * time.Second},
+			}
+
+			allowRule := GetRuleFor(ApiPath, ApiMethods, nil, strategies)
+			rules := []v1beta1.Rule{allowRule}
+
+			apiRule := GetAPIRuleFor(rules)
+			apiRule.Spec.Host = &ServiceHostWithNoDomain
+			apiRule.Spec.CorsPolicy = ptr.To(corsPolicy)
+
+			client := GetFakeClient()
+			processor := istio.NewVirtualServiceProcessor(GetTestConfig())
+
+			// when
+			result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
+
+			// then
+			Expect(err).To(BeNil())
+			Expect(result).To(HaveLen(1))
+
+			vs := result[0].Obj.(*networkingv1beta1.VirtualService)
+
+			//verify VS
+			Expect(vs).NotTo(BeNil())
+			Expect(vs.Spec.Http[0].CorsPolicy.AllowOrigins).To(ContainElements(&v1beta12.StringMatch{MatchType: &v1beta12.StringMatch_Exact{Exact: "localhost"}}))
+
+			Expect(vs.Spec.Http[0].Headers.Response.Remove).To(ConsistOf(builders.AllowOriginName))
 
 			Expect(vs.Spec.Http[0].Headers.Response.Set).To(HaveKeyWithValue(builders.AllowMethodsName, "GET,POST"))
-			Expect(vs.Spec.Http[0].Headers.Response.Set).To(HaveKeyWithValue(builders.OriginName, "localhost"))
-			Expect(vs.Spec.Http[0].Headers.Response.Set).To(HaveKeyWithValue(builders.CredentialsName, "true"))
+			Expect(vs.Spec.Http[0].Headers.Response.Set).To(HaveKeyWithValue(builders.AllowCredentialsName, "true"))
+			Expect(vs.Spec.Http[0].Headers.Response.Set).To(HaveKeyWithValue(builders.AllowHeadersName, "Allowed-Header"))
+			Expect(vs.Spec.Http[0].Headers.Response.Set).To(HaveKeyWithValue(builders.ExposeHeadersName, "Exposed-Header"))
+			Expect(vs.Spec.Http[0].Headers.Response.Set).To(HaveKeyWithValue(builders.MaxAgeName, "10"))
 		})
 	})
 
