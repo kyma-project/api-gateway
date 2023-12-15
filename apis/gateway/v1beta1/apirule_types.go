@@ -204,19 +204,21 @@ const (
 	Prefix = "prefix"
 )
 
-type StringMatch map[string]string
+type StringMatch []map[string]string
 
 func (s StringMatch) ToIstioStringMatchArray() (out []*v1beta1.StringMatch) {
-	for key, value := range s {
-		switch key {
-		case Regex:
-			out = append(out, &v1beta1.StringMatch{MatchType: &v1beta1.StringMatch_Regex{Regex: value}})
-		case Exact:
-			out = append(out, &v1beta1.StringMatch{MatchType: &v1beta1.StringMatch_Exact{Exact: value}})
-		case Prefix:
-			fallthrough
-		default:
-			out = append(out, &v1beta1.StringMatch{MatchType: &v1beta1.StringMatch_Prefix{Prefix: value}})
+	for _, match := range s {
+		for key, value := range match {
+			switch key {
+			case Regex:
+				out = append(out, &v1beta1.StringMatch{MatchType: &v1beta1.StringMatch_Regex{Regex: value}})
+			case Exact:
+				out = append(out, &v1beta1.StringMatch{MatchType: &v1beta1.StringMatch_Exact{Exact: value}})
+			case Prefix:
+				fallthrough
+			default:
+				out = append(out, &v1beta1.StringMatch{MatchType: &v1beta1.StringMatch_Prefix{Prefix: value}})
+			}
 		}
 	}
 	return out

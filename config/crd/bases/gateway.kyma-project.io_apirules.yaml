@@ -57,9 +57,11 @@ spec:
                       type: string
                     type: array
                   allowOrigins:
-                    additionalProperties:
-                      type: string
-                    type: object
+                    items:
+                      additionalProperties:
+                        type: string
+                      type: object
+                    type: array
                   exposeHeaders:
                     items:
                       type: string

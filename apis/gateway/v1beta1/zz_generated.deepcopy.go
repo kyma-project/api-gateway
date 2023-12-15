@@ -249,8 +249,14 @@ func (in *CorsPolicy) DeepCopyInto(out *CorsPolicy) {
 	if in.AllowOrigins != nil {
 		in, out := &in.AllowOrigins, &out.AllowOrigins
 		*out = make(StringMatch, len(*in))
-		for key, val := range *in {
-			(*out)[key] = val
+		for i := range *in {
+			if (*in)[i] != nil {
+				in, out := &(*in)[i], &(*out)[i]
+				*out = make(map[string]string, len(*in))
+				for key, val := range *in {
+					(*out)[key] = val
+				}
+			}
 		}
 	}
 	if in.AllowCredentials != nil {
@@ -542,8 +548,14 @@ func (in StringMatch) DeepCopyInto(out *StringMatch) {
 	{
 		in := &in
 		*out = make(StringMatch, len(*in))
-		for key, val := range *in {
-			(*out)[key] = val
+		for i := range *in {
+			if (*in)[i] != nil {
+				in, out := &(*in)[i], &(*out)[i]
+				*out = make(map[string]string, len(*in))
+				for key, val := range *in {
+					(*out)[key] = val
+				}
+			}
 		}
 	}
 }

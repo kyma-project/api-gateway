@@ -120,7 +120,7 @@ var _ = Describe("Builder for", func() {
 
 		It("should build the CORS headers", func() {
 			corsPolicy := apirulev1beta1.CorsPolicy{
-				AllowOrigins:     apirulev1beta1.StringMatch{"exact": "localhost"},
+				AllowOrigins:     apirulev1beta1.StringMatch{{"exact": "localhost"}},
 				AllowMethods:     []string{"GET", "POST"},
 				AllowCredentials: ptr.To(true),
 				AllowHeaders:     []string{"test"},

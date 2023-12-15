@@ -849,7 +849,7 @@ var _ = Describe("Virtual Service Processor", func() {
 
 			corsPolicy := v1beta1.CorsPolicy{
 				AllowMethods:     []string{"GET", "POST"},
-				AllowOrigins:     v1beta1.StringMatch{"exact": "localhost"},
+				AllowOrigins:     v1beta1.StringMatch{{"exact": "localhost"}},
 				AllowCredentials: ptr.To(true),
 			}
 
@@ -944,7 +944,7 @@ var _ = Describe("Virtual Service Processor", func() {
 
 			corsPolicy := v1beta1.CorsPolicy{
 				AllowMethods:     []string{"GET", "POST"},
-				AllowOrigins:     v1beta1.StringMatch{"exact": "localhost"},
+				AllowOrigins:     v1beta1.StringMatch{{"exact": "localhost"}},
 				AllowCredentials: ptr.To(true),
 				AllowHeaders:     []string{"Allowed-Header"},
 				ExposeHeaders:    []string{"Exposed-Header"},
