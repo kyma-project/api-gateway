@@ -155,18 +155,15 @@ func (mr *matchRequest) Uri() *stringMatch {
 	return &stringMatch{mr.value.Uri, func() *matchRequest { return mr }}
 }
 
-// MethodRegEx sets the HTTP method regex in the HTTPMatchRequest for the given HTTP methods in the format "^PUT\b|^POST\b|^GET\b$".
+// MethodRegEx sets the HTTP method regex in the HTTPMatchRequest for the given HTTP methods in the format "^(PUT|POST|GET)$".
 func (mr *matchRequest) MethodRegEx(httpMethods ...gatewayv1beta1.HttpMethod) *matchRequest {
 
-	var methodExpressions []string
-	for _, m := range httpMethods {
-		methodExpressions = append(methodExpressions, fmt.Sprintf("^%s\\b$", m))
-	}
-	regex := strings.Join(methodExpressions, "|")
+	methodStrings := gatewayv1beta1.ConvertHttpMethodsToStrings(httpMethods)
+	methodsWithSeparator := strings.Join(methodStrings, "|")
 
 	mr.value.Method = &v1beta1.StringMatch{
 		MatchType: &v1beta1.StringMatch_Regex{
-			Regex: regex,
+			Regex: fmt.Sprintf("^(%s)$", methodsWithSeparator),
 		},
 	}
 	return mr

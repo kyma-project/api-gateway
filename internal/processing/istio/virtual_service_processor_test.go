@@ -1136,8 +1136,7 @@ var _ = Describe("Virtual Service Processor", func() {
 
 				Expect(len(vs.Spec.Http[0].Match)).To(Equal(1))
 				Expect(vs.Spec.Http[0].Match[0].Uri.GetRegex()).To(Equal("/"))
-				Expect(vs.Spec.Http[0].Match[0].Method.GetRegex()).To(ContainSubstring("^GET\\b"))
-				Expect(vs.Spec.Http[0].Match[0].Method.GetRegex()).To(ContainSubstring("^POST\\b"))
+				Expect(vs.Spec.Http[0].Match[0].Method.GetRegex()).To(Equal("^(GET|POST)$"))
 			},
 			Entry("When access strategy is allow", "allow"),
 			Entry("When access strategy is noop", "noop"),
