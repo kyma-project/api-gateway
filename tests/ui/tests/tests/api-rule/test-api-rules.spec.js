@@ -291,7 +291,7 @@ context("Test API Rules", () => {
                 .find('li')
                 .click({force: true});
 
-            cy.get('[aria-label="expand Allow Origins"]:visible', {
+            cy.get('[aria-label="expand Allow Origins"]', {
                 log: false,
             })
             .parent()
