@@ -10,7 +10,7 @@ Feature: CORS
 
   Scenario: CORS is set up to custom values in APIRule
     Given CustomCORS: There is an httpbin service
-    And CustomCORS: The APIRule with following CORS setup is applied AllowOrigins:'["local.kyma.dev"]', AllowMethods:'["GET", "POST"]', AllowHeaders:'["x-custom-allow-headers"]', AllowCredentials:"false", ExposeHeaders:'["x-custom-expose-headers"]', MaxAge:"300s"
+    And CustomCORS: The APIRule with following CORS setup is applied AllowOrigins:'["exact": ".*local.kyma.dev"]', AllowMethods:'["GET", "POST"]', AllowHeaders:'["x-custom-allow-headers"]', AllowCredentials:"false", ExposeHeaders:'["x-custom-expose-headers"]', MaxAge:"300s"
     Then CustomCORS: Preflight calling the "/ip" endpoint with header Origin:"localhost" should result in status code 200 and response header "Access-Control-Allow-Origin" with value "local.kyma.dev"
     And CustomCORS: Preflight calling the "/ip" endpoint with header Origin:"localhost" should result in status code 200 and response header "Access-Control-Allow-Methods" with value "GET,POST"
     And CustomCORS: Preflight calling the "/ip" endpoint with header Origin:"localhost" should result in status code 200 and response header "Access-Control-Allow-Headers" with value "x-custom-allow-headers"
