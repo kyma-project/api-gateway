@@ -38,10 +38,18 @@ body:
         source: allowMethods
         widget: JoinedArray
         visibility: '$not($count(allowMethods)=0)'
-      - name: corsAllowOrigins
-        source: allowOrigins
-        widget: JoinedArray
-        visibility: '$not($count(allowOrigins)=0)'
+      - name: corsAllowOriginsRegex
+        source: $join(allowOrigins.regex,",")
+        widget: Text
+        visibility: '$not($count(allowOrigins.regex)=0)'
+      - name: corsAllowOriginsPrefix
+        source: $join(allowOrigins.prefix,",")
+        widget: Text
+        visibility: '$not($count(allowOrigins.prefix)=0)'
+      - name: corsAllowOriginsExact
+        source: $join(allowOrigins.exact,",")
+        widget: Text
+        visibility: '$not($count(allowOrigins.exact)=0)'
       - name: corsExposeHeaders
         source: exposeHeaders
         widget: JoinedArray

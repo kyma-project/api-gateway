@@ -260,7 +260,7 @@ context("Test API Rules", () => {
 
         cy.contains(apiRuleName);
 
-        // CorsPolicy
+        // > CorsPolicy
         cy.get('ui5-switch[data-testid="$useCorsPolicy"]')
             .find('[role="switch"]')
             .click();
@@ -273,11 +273,33 @@ context("Test API Rules", () => {
             cy.get('[data-testid="spec.corsPolicy.allowMethods.GET"]:visible').click();
 
             // CORS allow origins
-            cy.get('[aria-label="expand CORS Allow Origins"]').should('be.visible').click();
-            cy.get('[data-testid="spec.corsPolicy.allowOrigins.0"]')
-                .find('input')
+            cy.get('[aria-label="expand CORS Allow Origins"]').should('be.visible').contains("Add").click()
+            cy.get('[aria-label="expand CORS Allow Origin"]').should('be.visible')
+            cy.get('[aria-label="expand Allow Origins"]').should('exist').click();
+
+            cy.get('[aria-label="expand Allow Origins"]:visible', {
+                log: false,
+            })
+                .parent()
+                .within(_$div => {
+                    cy.get(`ui5-icon[name="slim-arrow-down"]`)
+                        .click()
+                });
+
+            cy.get('ui5-li:visible')
+                .contains('exact')
+                .find('li')
+                .click({force: true});
+
+            cy.get('[aria-label="expand Allow Origins"]:visible', {
+                log: false,
+            })
+            .parent()
+            .find('input[placeholder="Enter value"]')
+                .first()
                 .clear()
-                .type("localhost")
+                .type("localhost");
+
             cy.get('[aria-label="expand CORS Allow Origins"]').should('exist').click();
 
             // CORS allow headers
@@ -462,7 +484,7 @@ context("Test API Rules", () => {
         cy.contains('Rules #3', {timeout: 20000}).click();
 
         cy.contains('CORS Allow Methods').should('exist').parent().contains('GET').should('exist');
-        cy.contains('CORS Allow Origins').should('exist').parent().contains('localhost').should('exist');
+        cy.contains('CORS origins allowed with exact match').should('exist').parent().contains('localhost').should('exist');
         cy.contains('CORS Expose Headers').should('exist').parent().contains('Exposed-Header').should('exist')
         cy.contains('CORS Allow Headers').should('exist').parent().contains('Allowed-Header').should('exist')
         cy.contains('CORS Allow Credentials').should('exist').parent().contains('true').should('exist')

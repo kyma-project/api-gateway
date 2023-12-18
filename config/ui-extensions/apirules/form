@@ -89,9 +89,14 @@
       required: false
       path: allowOrigins
       name: corsAllowOrigins
-      widget: SimpleList
+      widget: GenericList
       children:
         - path: '[]'
+          widget: KeyValuePair
+          keyEnum:
+          - exact
+          - prefix
+          - regex
           simple: true
     - simple: true
       required: false
