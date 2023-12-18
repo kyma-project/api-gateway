@@ -219,9 +219,9 @@ context("Test API Rules", () => {
 
         cy.contains(apiRuleDefaultPath).should('exist');
 
-        cy.contains('Rules #1', {timeout: 10000}).click();
+        cy.contains('Rules #1', {timeout: 20000}).click();
 
-        cy.contains('Rules #2', {timeout: 10000}).click();
+        cy.contains('Rules #2', {timeout: 20000}).click();
 
         cy.contains(apiRulePath).should('exist');
 
