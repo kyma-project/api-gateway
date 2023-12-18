@@ -283,7 +283,7 @@ context("Test API Rules", () => {
                 .parent()
                 .within(_$div => {
                     cy.get(`ui5-icon[name="slim-arrow-down"]`)
-                        .click()
+                        .click({force: true})
                 });
 
             cy.get('ui5-li:visible')
