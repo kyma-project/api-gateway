@@ -6,7 +6,7 @@ import (
 )
 
 func initCustomCors(ctx *godog.ScenarioContext, ts *testsuite) {
-	scenario := ts.createScenario("istio-custom-cors.yaml", "istio-default-cors")
+	scenario := ts.createScenario("istio-custom-cors.yaml", "istio-custom-cors")
 
 	ctx.Step(`CustomCORS: There is an httpbin service$`, scenario.thereIsAHttpbinService)
 	ctx.Step(`CustomCORS: The APIRule with following CORS setup is applied AllowOrigins:'(\[.*\])', AllowMethods:'(\[.*\])', AllowHeaders:'(\[.*\])', AllowCredentials:"([^"]*)", ExposeHeaders:'(\[.*\])', MaxAge:"([^"]*)"$`, scenario.applyApiRuleWithCustomCORS)

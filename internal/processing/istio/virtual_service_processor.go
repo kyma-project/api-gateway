@@ -88,8 +88,8 @@ func (r virtualServiceCreator) Create(api *gatewayv1beta1.APIRule) (*networkingv
 			SetHostHeader(default_domain.GetHostWithDomain(*api.Spec.Host, r.defaultDomainName))
 
 		if api.Spec.CorsPolicy != nil {
-			httpRouteBuilder.CorsPolicy(builders.CorsPolicy().AllowOriginsFromApiRule(api.Spec.CorsPolicy.AllowOrigins))
-			headersBuilder.SetCORSPolicyHeaders(*api.Spec.CorsPolicy)
+			httpRouteBuilder.CorsPolicy(builders.CorsPolicy().FromApiRuleCorsPolicy(*api.Spec.CorsPolicy))
+			headersBuilder.RemoveUpstreamCORSPolicyHeaders()
 		}
 
 		// We need to add mutators only for JWT secured rules, since "noop" and "oauth2_introspection" access strategies

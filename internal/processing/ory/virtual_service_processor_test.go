@@ -835,6 +835,9 @@ var _ = Describe("Virtual Service Processor", func() {
 			Expect(vs.Spec.Http[0].CorsPolicy.AllowMethods).To(ConsistOf(TestCors.AllowMethods))
 			Expect(vs.Spec.Http[0].CorsPolicy.AllowOrigins).To(ConsistOf(TestCors.AllowOrigins))
 			Expect(vs.Spec.Http[0].CorsPolicy.AllowHeaders).To(ConsistOf(TestCors.AllowHeaders))
+
+			Expect(vs.Spec.Http[0].Headers.Response.Remove).To(BeEmpty())
+			Expect(vs.Spec.Http[0].Headers.Response.Set).To(BeEmpty())
 		})
 
 		It("should not set default values in CORSPolicy when it is configured in APIRule, and set headers", func() {
@@ -875,16 +878,20 @@ var _ = Describe("Virtual Service Processor", func() {
 			//verify VS
 			Expect(vs).NotTo(BeNil())
 			Expect(vs.Spec.Http[0].CorsPolicy.AllowOrigins).To(ConsistOf(&v1beta12.StringMatch{MatchType: &v1beta12.StringMatch_Exact{Exact: "localhost"}}))
+			Expect(vs.Spec.Http[0].CorsPolicy.AllowCredentials).To(Not(BeNil()))
+			Expect(vs.Spec.Http[0].CorsPolicy.AllowCredentials.Value).To(BeTrue())
+			Expect(vs.Spec.Http[0].CorsPolicy.AllowMethods).To(ConsistOf("GET", "POST"))
 
 			Expect(vs.Spec.Http[0].Headers.Response.Remove).To(ConsistOf([]string{
 				builders.ExposeHeadersName,
 				builders.MaxAgeName,
 				builders.AllowHeadersName,
 				builders.AllowOriginName,
+				builders.AllowCredentialsName,
+				builders.AllowMethodsName,
 			}))
 
-			Expect(vs.Spec.Http[0].Headers.Response.Set).To(HaveKeyWithValue(builders.AllowMethodsName, "GET,POST"))
-			Expect(vs.Spec.Http[0].Headers.Response.Set).To(HaveKeyWithValue(builders.AllowCredentialsName, "true"))
+			Expect(vs.Spec.Http[0].Headers.Response.Set).To(BeEmpty())
 		})
 
 		It("should remove all headers when CORSPolicy is empty", func() {
@@ -930,6 +937,8 @@ var _ = Describe("Virtual Service Processor", func() {
 				builders.AllowMethodsName,
 				builders.AllowOriginName,
 			}))
+
+			Expect(vs.Spec.Http[0].Headers.Response.Set).To(BeEmpty())
 		})
 
 		It("should apply all CORSPolicy headers correctly", func() {
@@ -974,16 +983,24 @@ var _ = Describe("Virtual Service Processor", func() {
 			Expect(vs).NotTo(BeNil())
 			Expect(vs.Spec.Http[0].CorsPolicy).To(Not(BeNil()))
 
-			Expect(vs.Spec.Http[0].Headers.Response.Remove).To(ConsistOf(builders.AllowOriginName))
-
 			Expect(vs.Spec.Http[0].CorsPolicy.AllowOrigins).To(HaveLen(1))
 			Expect(vs.Spec.Http[0].CorsPolicy.AllowOrigins).To(ConsistOf(&v1beta12.StringMatch{MatchType: &v1beta12.StringMatch_Exact{Exact: "localhost"}}))
+			Expect(vs.Spec.Http[0].CorsPolicy.AllowCredentials).To(Not(BeNil()))
+			Expect(vs.Spec.Http[0].CorsPolicy.AllowCredentials.Value).To(BeTrue())
+			Expect(vs.Spec.Http[0].CorsPolicy.AllowMethods).To(ConsistOf("GET", "POST"))
+			Expect(vs.Spec.Http[0].CorsPolicy.AllowHeaders).To(ConsistOf("Allowed-Header"))
+			Expect(vs.Spec.Http[0].CorsPolicy.ExposeHeaders).To(ConsistOf("Exposed-Header"))
 
-			Expect(vs.Spec.Http[0].Headers.Response.Set).To(HaveKeyWithValue(builders.AllowMethodsName, "GET,POST"))
-			Expect(vs.Spec.Http[0].Headers.Response.Set).To(HaveKeyWithValue(builders.AllowCredentialsName, "true"))
-			Expect(vs.Spec.Http[0].Headers.Response.Set).To(HaveKeyWithValue(builders.AllowHeadersName, "Allowed-Header"))
-			Expect(vs.Spec.Http[0].Headers.Response.Set).To(HaveKeyWithValue(builders.ExposeHeadersName, "Exposed-Header"))
-			Expect(vs.Spec.Http[0].Headers.Response.Set).To(HaveKeyWithValue(builders.MaxAgeName, "10"))
+			Expect(vs.Spec.Http[0].Headers.Response.Remove).To(ConsistOf([]string{
+				builders.ExposeHeadersName,
+				builders.MaxAgeName,
+				builders.AllowHeadersName,
+				builders.AllowCredentialsName,
+				builders.AllowMethodsName,
+				builders.AllowOriginName,
+			}))
+
+			Expect(vs.Spec.Http[0].Headers.Response.Set).To(BeEmpty())
 		})
 	})
 

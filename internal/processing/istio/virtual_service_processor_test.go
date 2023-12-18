@@ -1016,17 +1016,20 @@ var _ = Describe("Virtual Service Processor", func() {
 
 			//verify VS
 			Expect(vs).NotTo(BeNil())
-			Expect(vs.Spec.Http[0].CorsPolicy.AllowOrigins).To(ContainElements(&v1beta12.StringMatch{MatchType: &v1beta12.StringMatch_Exact{Exact: "localhost"}}))
+			Expect(vs.Spec.Http[0].CorsPolicy.AllowOrigins).To(ConsistOf(&v1beta12.StringMatch{MatchType: &v1beta12.StringMatch_Exact{Exact: "localhost"}}))
 
-			Expect(vs.Spec.Http[0].Headers.Response.Remove).To(ContainElements([]string{
+			Expect(vs.Spec.Http[0].Headers.Response.Remove).To(ConsistOf([]string{
 				builders.ExposeHeadersName,
 				builders.MaxAgeName,
 				builders.AllowHeadersName,
+				builders.AllowCredentialsName,
+				builders.AllowMethodsName,
 				builders.AllowOriginName,
 			}))
 
-			Expect(vs.Spec.Http[0].Headers.Response.Set).To(HaveKeyWithValue(builders.AllowMethodsName, "GET,POST"))
-			Expect(vs.Spec.Http[0].Headers.Response.Set).To(HaveKeyWithValue(builders.AllowCredentialsName, "true"))
+			Expect(vs.Spec.Http[0].CorsPolicy.AllowMethods).To(ConsistOf("GET", "POST"))
+			Expect(vs.Spec.Http[0].CorsPolicy.AllowCredentials).To(Not(BeNil()))
+			Expect(vs.Spec.Http[0].CorsPolicy.AllowCredentials.Value).To(BeTrue())
 		})
 
 		It("should remove all headers when CORSPolicy is empty", func() {
@@ -1064,7 +1067,7 @@ var _ = Describe("Virtual Service Processor", func() {
 			Expect(vs).NotTo(BeNil())
 			Expect(vs.Spec.Http[0].CorsPolicy).To(BeNil())
 
-			Expect(vs.Spec.Http[0].Headers.Response.Remove).To(ContainElements([]string{
+			Expect(vs.Spec.Http[0].Headers.Response.Remove).To(ConsistOf([]string{
 				builders.ExposeHeadersName,
 				builders.MaxAgeName,
 				builders.AllowHeadersName,
@@ -1116,13 +1119,14 @@ var _ = Describe("Virtual Service Processor", func() {
 			Expect(vs).NotTo(BeNil())
 			Expect(vs.Spec.Http[0].CorsPolicy.AllowOrigins).To(ContainElements(&v1beta12.StringMatch{MatchType: &v1beta12.StringMatch_Exact{Exact: "localhost"}}))
 
-			Expect(vs.Spec.Http[0].Headers.Response.Remove).To(ConsistOf(builders.AllowOriginName))
-
-			Expect(vs.Spec.Http[0].Headers.Response.Set).To(HaveKeyWithValue(builders.AllowMethodsName, "GET,POST"))
-			Expect(vs.Spec.Http[0].Headers.Response.Set).To(HaveKeyWithValue(builders.AllowCredentialsName, "true"))
-			Expect(vs.Spec.Http[0].Headers.Response.Set).To(HaveKeyWithValue(builders.AllowHeadersName, "Allowed-Header"))
-			Expect(vs.Spec.Http[0].Headers.Response.Set).To(HaveKeyWithValue(builders.ExposeHeadersName, "Exposed-Header"))
-			Expect(vs.Spec.Http[0].Headers.Response.Set).To(HaveKeyWithValue(builders.MaxAgeName, "10"))
+			Expect(vs.Spec.Http[0].Headers.Response.Remove).To(ContainElements([]string{
+				builders.ExposeHeadersName,
+				builders.MaxAgeName,
+				builders.AllowHeadersName,
+				builders.AllowCredentialsName,
+				builders.AllowMethodsName,
+				builders.AllowOriginName,
+			}))
 		})
 	})
 

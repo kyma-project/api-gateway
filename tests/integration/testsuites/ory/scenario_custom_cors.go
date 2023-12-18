@@ -6,7 +6,7 @@ import (
 )
 
 func initCustomCors(ctx *godog.ScenarioContext, ts *testsuite) {
-	scenario := ts.createScenario("custom-cors.yaml", "ory-default-cors")
+	scenario := ts.createScenario("custom-cors.yaml", "ory-custom-cors")
 
 	ctx.Step(`CustomCORS: There is an httpbin service$`, scenario.thereIsAHttpbinService)
 	ctx.Step(`CustomCORS: The APIRule with following CORS setup is applied AllowOrigins:'(\[.*\])', AllowMethods:'(\[.*\])', AllowHeaders:'(\[.*\])', AllowCredentials:"([^"]*)", ExposeHeaders:'(\[.*\])', MaxAge:"([^"]*)"$`, scenario.applyApiRuleWithCustomCORS)

@@ -3,10 +3,9 @@ package builders
 import (
 	apirulev1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"google.golang.org/protobuf/types/known/durationpb"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 	"istio.io/api/networking/v1beta1"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
-	"strconv"
-	"strings"
 	"time"
 )
 
@@ -242,13 +241,34 @@ func (cp *corsPolicy) AllowOrigins(val ...*v1beta1.StringMatch) *corsPolicy {
 	return cp
 }
 
-func (cp *corsPolicy) AllowOriginsFromApiRule(val apirulev1beta1.StringMatch) *corsPolicy {
-	if len(val) == 0 {
+func (cp *corsPolicy) FromApiRuleCorsPolicy(corsPolicy apirulev1beta1.CorsPolicy) *corsPolicy {
+	if len(corsPolicy.AllowOrigins) == 0 {
 		cp.value.AllowOrigins = nil
 	} else {
-		matchers := val.ToIstioStringMatchArray()
+		matchers := corsPolicy.AllowOrigins.ToIstioStringMatchArray()
 		cp.value.AllowOrigins = append(cp.value.AllowOrigins, matchers...)
 	}
+
+	if len(corsPolicy.AllowHeaders) > 0 {
+		cp.value.AllowHeaders = corsPolicy.AllowHeaders
+	}
+
+	if len(corsPolicy.AllowMethods) > 0 {
+		cp.value.AllowMethods = corsPolicy.AllowMethods
+	}
+
+	if len(corsPolicy.ExposeHeaders) > 0 {
+		cp.value.ExposeHeaders = corsPolicy.ExposeHeaders
+	}
+
+	if corsPolicy.AllowCredentials != nil {
+		cp.value.AllowCredentials = &wrapperspb.BoolValue{Value: *corsPolicy.AllowCredentials}
+	}
+
+	if corsPolicy.MaxAge != nil {
+		cp.value.MaxAge = durationpb.New(corsPolicy.MaxAge.Duration)
+	}
+
 	return cp
 }
 
@@ -303,44 +323,15 @@ const (
 	MaxAgeName           = "Access-Control-Max-Age"
 )
 
-// SetHeader sets the request header with name and value
-func (h HttpRouteHeadersBuilder) SetCORSPolicyHeaders(corsPolicy apirulev1beta1.CorsPolicy) HttpRouteHeadersBuilder {
+// RemoveUpstreamCORSPolicyHeaders sets VirtualService to remove all upstream CORS headers, leaving only those from VirtualService CORS Policy
+func (h HttpRouteHeadersBuilder) RemoveUpstreamCORSPolicyHeaders() HttpRouteHeadersBuilder {
 	removeHeaders := h.value.Response.Remove
 	removeHeaders = append(removeHeaders, AllowOriginName)
-
-	if len(corsPolicy.ExposeHeaders) > 0 {
-		h.value.Response.Set[ExposeHeadersName] = strings.Join(corsPolicy.ExposeHeaders, ",")
-	} else {
-		removeHeaders = append(removeHeaders, ExposeHeadersName)
-	}
-
-	if len(corsPolicy.AllowHeaders) > 0 {
-		h.value.Response.Set[AllowHeadersName] = strings.Join(corsPolicy.AllowHeaders, ",")
-	} else {
-		removeHeaders = append(removeHeaders, AllowHeadersName)
-	}
-
-	if corsPolicy.AllowCredentials != nil {
-		if *corsPolicy.AllowCredentials {
-			h.value.Response.Set[AllowCredentialsName] = "true"
-		} else {
-			h.value.Response.Set[AllowCredentialsName] = "false"
-		}
-	} else {
-		removeHeaders = append(removeHeaders, AllowCredentialsName)
-	}
-
-	if len(corsPolicy.AllowMethods) > 0 {
-		h.value.Response.Set[AllowMethodsName] = strings.Join(corsPolicy.AllowMethods, ",")
-	} else {
-		removeHeaders = append(removeHeaders, AllowMethodsName)
-	}
-
-	if corsPolicy.MaxAge != nil {
-		h.value.Response.Set[MaxAgeName] = strconv.Itoa(int(corsPolicy.MaxAge.Seconds()))
-	} else {
-		removeHeaders = append(removeHeaders, MaxAgeName)
-	}
+	removeHeaders = append(removeHeaders, ExposeHeadersName)
+	removeHeaders = append(removeHeaders, AllowHeadersName)
+	removeHeaders = append(removeHeaders, AllowCredentialsName)
+	removeHeaders = append(removeHeaders, AllowMethodsName)
+	removeHeaders = append(removeHeaders, MaxAgeName)
 
 	h.value.Response.Remove = append(h.value.Response.Remove, removeHeaders...)
 
