@@ -1,5 +1,5 @@
 # Pros and cons of cluster scoped and namespaced scoped module custom resource
-In the following overview, we have labelled some items with `[UX]' as they evaluate how the user sees and interacts with the resources. Some of these items are opinions rather than facts as we have no data on them and they are mainly based on our assumptions of how a user should interact with our components and APIs. Also, some of these points are based on our experience with the current implementation of the user interface.
+In the following overview, we have labelled some items with `[UX]` as they evaluate how the user sees and interacts with the resources. Some of these items are opinions rather than facts as we have no data on them and they are mainly based on our assumptions of how a user should interact with our components and APIs. Also, some of these points are based on our experience with the current implementation of the user interface.
 Furthermore, we believe that it is important not only to look at this from a technical perspective, but also to focus on the user experience.
 
 <table style="table-layout: fixed; width: 100%">
