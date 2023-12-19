@@ -1,5 +1,6 @@
 # Pros and cons of cluster scoped and namespaced scoped module custom resource
-
+In the following overview, we have labelled some items with `[UX]' as they evaluate how the user sees and interacts with the resources. Some of these items are opinions rather than facts as we have no data on them and they are mainly based on our assumptions of how a user should interact with our components and APIs. Also, some of these points are based on our experience with the current implementation of the user interface.
+Furthermore, we believe that it is important not only to look at this from a technical perspective, but also to focus on the user experience.
 
 <table style="table-layout: fixed; width: 100%">
     <tbody>
@@ -15,18 +16,18 @@
         </tr>
         <tr>
             <td>[UX] Resource is more visible to customer, and the module is clearly visible as installed.<br></br> This might also guarantee better visibility that this resource manages resources across the cluster, not only in a single namespace.</td>
-            <td>Different approach than other Kyma modules</td>
-            <td>Resource closer to manager</td>
-            <td>[UX] Module is less visible in Dashboard, as user needs to access Kyma system, before seeing the resource</td>
+            <td>[UX] Different approach than other Kyma modules</td>
+            <td>[UX] Reconciled resource in same namespace as manager</td>
+            <td>[UX] Module is less visible in Dashboard, as user needs to access kyma-system namespace, before seeing the resource</td>
         </tr>
         <tr>
             <td>Ability to use cross namespace owner references:<br></br> - Allows getting all managed resources by owner reference<br></br>- Allows easy to do force deletion of the module, even without a controller</td>
-            <td>[UX] Module ties to Kyma might not be as visible</td>
-            <td>[UX] Resource is a clear part of Kyma</td>
+            <td>[UX] Module CR ties to Kyma is not visible by namespace, but by CR API Group only.</td>
+            <td>[UX] Resource is a clear part of Kyma, since it's in the "kyma-system" namespace.</td>
             <td>Creation and modifying of resources in `kyma-system` is required, even in LM scenario</td>
         </tr>
         <tr>
-            <td>[UX] User does not need to create or edit resource in `kyma-system`, which should only be managed by Kyma team</td>
+            <td>[UX] User does not need to create or edit resource in "kyma-system", which should only be managed by Kyma team</td>
             <td>Requires additional configuration to have it displayed in Busola under `kyma-system`, if we consider that to be the desired behaviour</td>
             <td></td>
             <td>Reconciliation for resources in different Namespaces is anyway needed, as they need to be put in `Warning` state</td>
