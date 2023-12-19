@@ -1,4 +1,4 @@
-# Troubleshooting guides - DNS management
+# Troubleshooting Guides - DNS Management
 
 Browse the API Gateway troubleshooting guides related to DNS management:
 

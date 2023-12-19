@@ -1,4 +1,4 @@
-# Istio performance tests
+# Istio Performance Tests
 
 This directory contains the scripts for running kyma performance tests.
 

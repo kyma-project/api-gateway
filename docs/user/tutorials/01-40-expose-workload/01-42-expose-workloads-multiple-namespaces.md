@@ -1,4 +1,4 @@
-# Expose workloads in multiple Namespaces with a single APIRule definition
+# Expose Workloads in Multiple Namespaces With a Single APIRule Definition
 
 This tutorial shows how to expose Service endpoints in multiple Namespaces using APIGateway Controller.
 
@@ -48,7 +48,7 @@ This tutorial shows how to expose Service endpoints in multiple Namespaces using
     </details>
   </div> 
 
-## Expose and access your workloads in multiple Namespaces
+## Expose and Access Your Workloads in Multiple Namespaces
 
 1. Expose the HttpBin Services in their respective Namespaces by creating an APIRule custom resource (CR) in its own Namespace. Run:
 

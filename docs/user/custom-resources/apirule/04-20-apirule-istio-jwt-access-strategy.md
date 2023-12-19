@@ -1,4 +1,4 @@
-# JWT access strategy
+# JWT Access Strategy
 
 To enable Istio JWT, run the following command:
 
@@ -12,7 +12,7 @@ To enable Oathkeeper JWT, run the following command:
 kubectl patch configmap/api-gateway-config -n kyma-system --type merge -p '{"data":{"api-gateway-config":"jwtHandler: ory"}}'
 ```
 
-## Istio JWT configuration
+## Istio JWT Configuration
 
 >**CAUTION:** Istio JWT is not a production-ready feature, and API might change.
 
@@ -38,12 +38,7 @@ This table lists all the possible parameters of the Istio JWT access strategy to
 
 >**CAUTION:** Currently, we support only a single `fromHeader` or a single `fromParameter`. Specifying both of these fields for a JWT issuer is not supported.
 
-
-<div tabs name="api-rule" group="sample-cr">
-  <details>
-  <summary label="Example">
-  Example
-  </summary>
+### Example
 
 In the following example, the APIRule has two defined Issuers. The first Issuer, called `ISSUER`, uses a JWT token extracted from the HTTP header. The header is named `X-JWT-Assertion` and has a prefix of `Kyma`. The second Issuer, called `ISSUER2`, uses a JWT token extracted from a URL parameter named `jwt-token`.  
 **requiredScopes** defined in the **authorizations** field allow only for JWTs that have the claims `scp`, `scope`, or `scopes` with a value of `test`. Additionally, the JWTs must have an audience of either `example.com` or `example.org`. Alternatively, the JWTs can have the same claims with the `read` and `write` values.
@@ -82,9 +77,6 @@ spec:
               audiences: ["example.com", "example.org"]
             - requiredScopes: ["read", "write"]
 ```
-
-  </details>
-</div>
 
 ### Authentications
 Under the hood, an authentications array creates a corresponding [requestPrincipals](https://istio.io/latest/docs/reference/config/security/authorization-policy/#Source) array in the Istio's [Authorization Policy](https://istio.io/latest/docs/reference/config/security/authorization-policy/) resource. Every `requestPrincipals` string is formatted as `<ISSUSER>/*`.

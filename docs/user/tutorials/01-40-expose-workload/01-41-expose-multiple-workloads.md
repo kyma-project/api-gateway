@@ -1,4 +1,4 @@
-# Expose multiple workloads on the same host
+# Expose Multiple Workloads on the Same Host
 
 This tutorial shows how to expose multiple workloads on different paths by defining a Service at the root level and by defining Services on each path separately.
 
@@ -41,7 +41,7 @@ This tutorial shows how to expose multiple workloads on different paths by defin
     </details>
   </div>   
 
-## Define multiple Services on different paths
+## Define Multiple Services on Different Paths
 
 Follow the instructions to expose the instances of the HttpBin Service on different paths at the `spec.rules` level without a root Service defined.
 
@@ -88,7 +88,7 @@ Follow the instructions to expose the instances of the HttpBin Service on differ
     ```
   If successful, the calls return the code `200 OK` response.
 
-## Define a Service at the root level
+## Define a Service at the Root Level
 
 You can also define a Service at the root level. Such a definition is applied to all the paths specified at `spec.rules` that do not have their own Services defined.
  

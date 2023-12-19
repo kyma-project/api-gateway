@@ -1,4 +1,4 @@
-# Technical reference
+# Technical Reference
 
 In this section, you can find the technical reference documents that might come in handy when using the API Gateway module:
 - [Kyma API Gateway Operator parameters](./05-00-api-gateway-operator-parameters.md)

@@ -1,4 +1,4 @@
-# Connection refused or timeout
+# Connection Refused or Timeout
 
 ## Symptom
 

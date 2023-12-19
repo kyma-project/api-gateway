@@ -12,9 +12,9 @@ If you want to use an existing cluster, you must copy your cluster's kubeconfig 
 
 To install the dependencies, run the `npm clean install` command.
 
-## Test development using Headless mode with Chrome browser
+## Test Development Using Headless Mode with Chrome Browser
 
-### Using a local Kyma Dashboard instance
+### Using a Local Kyma Dashboard Instance
 
 Start a k3d cluster:
 
@@ -22,42 +22,42 @@ Start a k3d cluster:
 npm run start-k3d
 ```
 
-Start the local Kyma Dashboard instance:
+Start the local Kyma dashboard instance:
 
 ```bash
 npm run start-dashboard
 ```
 
-#### Run tests
+#### Run the Tests
 
 ```bash
 npm run test
 ```
 
-#### Run Cypress UI tests in the test runner mode
+#### Run Cypress UI Tests in the Test Runner Mode
 
 ```bash
 npm run start
 ```
 
-### Using a remote Kyma Dashboard instance
+### Using a Remote Kyma Dashboard Instance
 
-#### Optional: Log in to a cluster using OIDC
+#### Optional: Log In to a Cluster Using OIDC
 
 If a cluster requires OIDC authentication, include the additional arguments **CYPRESS_OIDC_PASS** and **CYPRESS_OIDC_USER** while running the npm scripts.
 
-#### Run tests
+#### Run Tests
 ```bash
 CYPRESS_OIDC_PASS={YOUR_PASSWORD} CYPRESS_OIDC_USER={YOUR_USERNAME} CYPRESS_DOMAIN={REMOTE_CLUSTER_DASHBOARD_DOMAIN} npm run test
 ```
 
-#### Run Cypress UI tests in the test runner mode
+#### Run Cypress UI Tests in the Test Runner Mode
 
 ```bash
 CYPRESS_OIDC_PASS={YOUR_PASSWORD} CYPRESS_OIDC_USER={YOUR_USERNAME} CYPRESS_DOMAIN={REMOTE_CLUSTER_DASHBOARD_DOMAIN} npm run start
 ```
 
-## Run tests in Continuous Integration System
+## Run Tests in Continuous Integration System
 
 Start a k3d cluster and run the tests:
 

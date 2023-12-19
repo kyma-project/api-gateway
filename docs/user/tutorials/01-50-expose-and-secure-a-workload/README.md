@@ -1,4 +1,4 @@
-# Tutorials - Expose and secure a workload
+# Tutorials - Expose and Secure a Workload
 Browse the API Gateway tutorials to learn how to expose and secure workloads:
 
 - [Expose and secure a workload with OAuth2](./01-50-expose-and-secure-workload-oauth2.md)

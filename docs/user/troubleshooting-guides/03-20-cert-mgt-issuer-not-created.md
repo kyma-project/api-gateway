@@ -1,4 +1,4 @@
-# Certificate management - Issuer not created
+# Certificate Management - Issuer Not Created
 
 ## Symptom
 

@@ -1,4 +1,4 @@
-# Expose and secure a workload with OAuth2
+# Expose and Secure a Workload with OAuth2
 
 This tutorial shows how to expose and secure Services using APIGateway Controller. The controller reacts to an instance of the APIRule custom resource (CR) and creates an Istio VirtualService and [Oathkeeper Access Rules](https://www.ory.sh/docs/oathkeeper/api-access-rules) according to the details specified in the CR.
 
@@ -41,7 +41,7 @@ This tutorial shows how to expose and secure Services using APIGateway Controlle
     export INTROSPECTION_URL={INTROSPECTION_URL}
    ```
 
-## Get the tokens
+## Get the Tokens
 
 1. Encode the client's credentials and export them as environment variables:
    ```shell
@@ -87,7 +87,7 @@ This tutorial shows how to expose and secure Services using APIGateway Controlle
    </div>
 
 
-## Expose and secure your workload
+## Expose and Secure Your Workload
 
 Follow the instructions to expose an instance of the HttpBin Service, and secure it with OAuth2 scopes.
 
@@ -136,7 +136,7 @@ Follow the instructions to expose an instance of the HttpBin Service, and secure
   
 >**CAUTION:** When you secure a workload, don't create overlapping Access Rules for paths. Doing so can cause unexpected behavior and reduce the security of your implementation.
 
-## Access the secured resources
+## Access the Secured Resources
 
 Follow the instructions to call the secured Service using the tokens issued for the client you registered.
 

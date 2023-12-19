@@ -1,4 +1,4 @@
-# Could not resolve host
+# Could Not Resolve Host
 
 ## Symptom
 

@@ -1,6 +1,6 @@
-# Custom resources
+# Custom Resources <!-- {docsify-ignore-all} -->
 
-## APIGateway custom resource <!-- {docsify-ignore} -->
+## APIGateway Custom Resource
 
 The `apigateways.operator.kyma-project.io` CRD describes the kind and the format of data that APIGateway Controller uses to configure the resources.
 
@@ -9,7 +9,7 @@ Browse the documentation related to the APIGateway CR:
 - [Kyma Gateway](./apigateway/04-10-kyma-gateway.md)
 - [Oathkeeper dependency](./apigateway/04-20-oathkeeper.md)
 
-## APIRule custom resource <!-- {docsify-ignore} -->
+## APIRule Custom Resource
 
 The `apirules.gateway.kyma-project.io` CustomResourceDefinition (CRD) describes the kind and the format of data the APIRule Controller uses to configure the resources.
 

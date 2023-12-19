@@ -1,4 +1,4 @@
-# Expose and secure a workload with JWT
+# Expose and Secure a Workload with JWT
 
 This tutorial shows how to expose and secure Services using APIGateway Controller. The Controller reacts to an instance of the APIRule custom resource (CR) and creates an Istio VirtualService and [Oathkeeper Access Rules](https://www.ory.sh/docs/oathkeeper/api-access-rules) according to the details specified in the CR. To interact with the secured workloads, the tutorial uses a JWT token.
 
@@ -34,7 +34,7 @@ This tutorial shows how to expose and secure Services using APIGateway Controlle
     </details>
   </div>  
 
-## Expose, secure, and access your workload
+## Expose, Secure, and Access Your Workload
 
 1. Expose the Service and secure it by creating an APIRule CR in your Namespace. Run:
 

@@ -1,4 +1,4 @@
-# Tutorials - Expose a workload
+# Tutorials - Expose a Workload
 Browse the API Gateway tutorials to learn how to expose workloads:
 
 - [Expose a workload](./01-40-expose-workload-apigateway.md)

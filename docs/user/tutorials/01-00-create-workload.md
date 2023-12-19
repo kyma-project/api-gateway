@@ -1,4 +1,4 @@
-# Create a workload
+# Create a Workload
 
 This tutorial explains how to create a sample HttpBin Service deployment.
 

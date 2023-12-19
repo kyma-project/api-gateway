@@ -1,4 +1,4 @@
-# Expose and secure a workload with a certificate
+# Expose and Secure a Workload with a Certificate
 
 This tutorial shows how to expose and secure a workload with mutual authentication using TLS Gateway.
 
@@ -18,7 +18,7 @@ This tutorial shows how to expose and secure a workload with mutual authenticati
   export CLIENT_CERT_KEY_FILE={CLIENT_CERT_KEY_FILE}
   ```
 
-## Authorize a client with a certificate
+## Authorize a Client with a Certificate
 
 The following instructions describe how to secure an mTLS Service. 
 >**NOTE:** Create AuthorizationPolicy to check if the client's common name in the certificate matches.

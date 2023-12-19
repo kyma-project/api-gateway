@@ -1,8 +1,8 @@
-# APIRule performance tests
+# APIRule Performance Tests
 
 Tests were performed on Gardener GCP cluster with the help of `k6s` on Kyma `production` profile. Requests were made from inside the cluster with HPA disabled for the sake of having identical environment on all runs. The tests were made using 500 Virtual Users making constant requests for 1 minute.
 
-## Performance on deployments without Istio sidecar
+## Performance of Deployments Without Istio Sidecar
 
 |Handler type|No. of successfull calls|No. of failed calls|Data recieved by server [MB]|Transfer speed (recieving) [kB/s]|Data sent by server [MB]|Transfer speed (sending) [kB/s]|Median request duration [ms]|
 |---|---|---|---|---|---|---|---|
@@ -11,7 +11,7 @@ Tests were performed on Gardener GCP cluster with the help of `k6s` on Kyma `pro
 |OAuth2|24198|4|5.5|89|6.3|104|861.75|
 |Ory JWT|66775|5|10|169|17|282|388.36|
 
-## Performance on deployments with Istio sidecar
+## Performance of Deployments with Istio Sidecar
 
 |Handler type|No. of successfull calls|No. of failed calls|Data recieved by server [MB]|Transfer speed (recieving) [kB/s]|Data sent by server [MB]|Transfer speed (sending) [kB/s]|Median request duration [ms]|
 |---|---|---|---|---|---|---|---|

@@ -12,7 +12,7 @@ This tutorial shows how to set up a TLS Gateway in both manual and simple modes.
   export GATEWAY=$NAMESPACE/httpbin-gateway
   ```
    
-## Set up a TLS Gateway in simple mode
+## Set Up a TLS Gateway in Simple Mode
 
 To create a TLS Gateway in simple mode, run:
 
@@ -40,7 +40,7 @@ To create a TLS Gateway in simple mode, run:
   EOF        
   ```
     
-## Set up a TLS Gateway in mutual mode
+## Set Up a TLS Gateway in Mutual Mode
   
   1. Create a mutual TLS Gateway. Run:
     

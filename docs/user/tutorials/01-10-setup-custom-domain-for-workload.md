@@ -1,4 +1,4 @@
-# Set up a custom domain for a workload
+# Set Up a Custom Domain for a Workload
 
 This tutorial shows how to set up a custom domain and prepare a certificate required for exposing a workload. It uses the Gardener [External DNS Management](https://github.com/gardener/external-dns-management) and [Certificate Management](https://github.com/gardener/cert-management) components.
 
@@ -111,6 +111,6 @@ This tutorial shows how to set up a custom domain and prepare a certificate requ
         kubectl get certificate httpbin-cert -n istio-system
         ```
        
-5. [Set up a TLS Gateway](./01-20-set-up-tls-gateway.md).
+5. [Set Up a TLS Gateway](./01-20-set-up-tls-gateway.md).
 
 Visit the [Gardener external DNS management documentation](https://github.com/gardener/external-dns-management/tree/master/examples) to see more examples of CRs for Services and ingresses.

@@ -1,4 +1,4 @@
-# Expose and secure a workload with Istio
+# Expose and Secure a Workload with Istio
 
 This tutorial shows how to expose and secure a workload using Istio's built-in security features. You will expose the workload by creating a [VirtualService](https://istio.io/latest/docs/reference/config/networking/virtual-service/). Then, you will secure access to your workload by adding the JWT validation verified by the Istio security configuration with [Authorization Policy](https://istio.io/latest/docs/reference/config/security/authorization-policy/) and [Request Authentication](https://istio.io/latest/docs/reference/config/security/request_authentication/).
 
@@ -34,7 +34,7 @@ This tutorial shows how to expose and secure a workload using Istio's built-in s
     </details>
   </div>  
 
-## Expose your workload using a Virtual Service
+## Expose Your Workload Using a VirtualService
 
 Follow the instructions in the tabs to expose the HttpBin workload using a VirtualService.
 
@@ -64,7 +64,7 @@ Follow the instructions in the tabs to expose the HttpBin workload using a Virtu
    EOF
    ```
 
-## Secure a workload using a JWT
+## Secure a Workload Using a JWT
 
 To secure the HttpBin workload using a JWT, create a Request Authentication with Authorization Policy. Workloads with the `matchLabels` parameter specified require a JWT for all requests. Follow the instructions:
 

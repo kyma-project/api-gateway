@@ -2,7 +2,7 @@
 
 # API Gateway
 
-## What is API Gateway?
+## What Is API Gateway?
 
 API Gateway provides functionalities that allow you to expose and secure APIs by using [Ory Oathkeeper](https://www.ory.sh/docs/oathkeeper) and the [Istio service mesh](https://istio.io/) resources.
 
@@ -59,7 +59,7 @@ To use API Gateway, you must install Istio and Ory Oathkeeper in your cluster. L
 
 For more installation options, visit the [installation guide](./docs/contributor/01-00-installation.md).
 
-## Useful links
+## Useful Links
 
 To learn how to use the API Gateway module, read the documentation in the [`user`](./docs/user/) directory.
 
