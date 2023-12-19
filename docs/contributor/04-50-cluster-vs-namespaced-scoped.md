@@ -14,7 +14,7 @@
             <td style="width: 25%;" align="center">Cons</td>
         </tr>
         <tr>
-            <td>[UX] Resource is more visible to customer, and the module is clearly visible as installed.<br></br> might also mean better visibility that this resource manages resources across the cluster, not only in a single namespace.</td>
+            <td>[UX] Resource is more visible to customer, and the module is clearly visible as installed.<br></br> This might also guarantee better visibility that this resource manages resources across the cluster, not only in a single namespace.</td>
             <td>Different approach than other Kyma modules</td>
             <td>Resource closer to manager</td>
             <td>[UX] Module is less visible in Dashboard, as user needs to access Kyma system, before seeing the resource</td>
