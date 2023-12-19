@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/avast/retry-go/v4"
 	"github.com/pkg/errors"
+	"io"
 	"net/http"
 )
 
@@ -17,6 +18,29 @@ func NewClientWithRetry(c *http.Client, opts []retry.Option) *RetryableHttpClien
 		client: c,
 		opts:   opts,
 	}
+}
+
+func (h *RetryableHttpClient) CallEndpointWithRetriesAndGetResponse(headers map[string]string, body io.Reader, method, url string) (*http.Response, error) {
+	req, err := http.NewRequest(method, url, body)
+	if err != nil {
+		return nil, err
+	}
+	for k, v := range headers {
+		req.Header.Set(k, v)
+	}
+	var resp *http.Response
+	err = retry.Do(func() error {
+		resp, err = h.client.Do(req)
+		if err != nil {
+			return err
+		}
+		return nil
+	}, h.opts...)
+	if err != nil {
+		return nil, err
+	}
+
+	return resp, nil
 }
 
 // CallEndpointWithRetries returns error if the status code is not in between bounds of status predicate after retrying deadline is reached

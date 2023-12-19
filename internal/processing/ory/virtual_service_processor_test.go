@@ -4,6 +4,9 @@ import (
 	"context"
 	"fmt"
 	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
+	"github.com/kyma-project/api-gateway/internal/builders"
+	v1beta12 "istio.io/api/networking/v1beta1"
+	"k8s.io/utils/ptr"
 	"time"
 
 	"github.com/kyma-project/api-gateway/internal/processing"
@@ -797,6 +800,210 @@ var _ = Describe("Virtual Service Processor", func() {
 			Expect(getTimeoutByPath(vs, "/rule-timeout")).To(Equal(20 * time.Second))
 		})
 	})
+
+	Context("CORS", func() {
+		It("should set default values in CORSPolicy when it is not configured in APIRule", func() {
+			// given
+			strategies := []*v1beta1.Authenticator{
+				{
+					Handler: &v1beta1.Handler{
+						Name: "allow",
+					},
+				},
+			}
+
+			allowRule := GetRuleFor(ApiPath, ApiMethods, nil, strategies)
+			rules := []v1beta1.Rule{allowRule}
+
+			apiRule := GetAPIRuleFor(rules)
+			apiRule.Spec.Host = &ServiceHostWithNoDomain
+			client := GetFakeClient()
+			processor := ory.NewVirtualServiceProcessor(GetTestConfig())
+
+			// when
+			result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
+
+			// then
+			Expect(err).To(BeNil())
+			Expect(result).To(HaveLen(1))
+
+			vs := result[0].Obj.(*networkingv1beta1.VirtualService)
+
+			//verify VS
+			Expect(vs).NotTo(BeNil())
+			Expect(vs.Spec.Http[0].CorsPolicy).NotTo(BeNil())
+			Expect(vs.Spec.Http[0].CorsPolicy.AllowMethods).To(ConsistOf(TestCors.AllowMethods))
+			Expect(vs.Spec.Http[0].CorsPolicy.AllowOrigins).To(ConsistOf(TestCors.AllowOrigins))
+			Expect(vs.Spec.Http[0].CorsPolicy.AllowHeaders).To(ConsistOf(TestCors.AllowHeaders))
+
+			Expect(vs.Spec.Http[0].Headers.Response.Remove).To(BeEmpty())
+			Expect(vs.Spec.Http[0].Headers.Response.Set).To(BeEmpty())
+		})
+
+		It("should not set default values in CORSPolicy when it is configured in APIRule, and set headers", func() {
+			// given
+			strategies := []*v1beta1.Authenticator{
+				{
+					Handler: &v1beta1.Handler{
+						Name: "allow",
+					},
+				},
+			}
+
+			corsPolicy := v1beta1.CorsPolicy{
+				AllowMethods:     []string{"GET", "POST"},
+				AllowOrigins:     v1beta1.StringMatch{{"exact": "localhost"}},
+				AllowCredentials: ptr.To(true),
+			}
+
+			allowRule := GetRuleFor(ApiPath, ApiMethods, nil, strategies)
+			rules := []v1beta1.Rule{allowRule}
+
+			apiRule := GetAPIRuleFor(rules)
+			apiRule.Spec.Host = &ServiceHostWithNoDomain
+			apiRule.Spec.CorsPolicy = ptr.To(corsPolicy)
+
+			client := GetFakeClient()
+			processor := ory.NewVirtualServiceProcessor(GetTestConfig())
+
+			// when
+			result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
+
+			// then
+			Expect(err).To(BeNil())
+			Expect(result).To(HaveLen(1))
+
+			vs := result[0].Obj.(*networkingv1beta1.VirtualService)
+
+			//verify VS
+			Expect(vs).NotTo(BeNil())
+			Expect(vs.Spec.Http[0].CorsPolicy.AllowOrigins).To(ConsistOf(&v1beta12.StringMatch{MatchType: &v1beta12.StringMatch_Exact{Exact: "localhost"}}))
+			Expect(vs.Spec.Http[0].CorsPolicy.AllowCredentials).To(Not(BeNil()))
+			Expect(vs.Spec.Http[0].CorsPolicy.AllowCredentials.Value).To(BeTrue())
+			Expect(vs.Spec.Http[0].CorsPolicy.AllowMethods).To(ConsistOf("GET", "POST"))
+
+			Expect(vs.Spec.Http[0].Headers.Response.Remove).To(ConsistOf([]string{
+				builders.ExposeHeadersName,
+				builders.MaxAgeName,
+				builders.AllowHeadersName,
+				builders.AllowOriginName,
+				builders.AllowCredentialsName,
+				builders.AllowMethodsName,
+			}))
+
+			Expect(vs.Spec.Http[0].Headers.Response.Set).To(BeEmpty())
+		})
+
+		It("should remove all headers when CORSPolicy is empty", func() {
+			// given
+			strategies := []*v1beta1.Authenticator{
+				{
+					Handler: &v1beta1.Handler{
+						Name: "allow",
+					},
+				},
+			}
+
+			corsPolicy := v1beta1.CorsPolicy{}
+
+			allowRule := GetRuleFor(ApiPath, ApiMethods, nil, strategies)
+			rules := []v1beta1.Rule{allowRule}
+
+			apiRule := GetAPIRuleFor(rules)
+			apiRule.Spec.Host = &ServiceHostWithNoDomain
+			apiRule.Spec.CorsPolicy = ptr.To(corsPolicy)
+
+			client := GetFakeClient()
+			processor := ory.NewVirtualServiceProcessor(GetTestConfig())
+
+			// when
+			result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
+
+			// then
+			Expect(err).To(BeNil())
+			Expect(result).To(HaveLen(1))
+
+			vs := result[0].Obj.(*networkingv1beta1.VirtualService)
+
+			//verify VS
+			Expect(vs).NotTo(BeNil())
+			Expect(vs.Spec.Http[0].CorsPolicy).To(BeNil())
+
+			Expect(vs.Spec.Http[0].Headers.Response.Remove).To(ConsistOf([]string{
+				builders.ExposeHeadersName,
+				builders.MaxAgeName,
+				builders.AllowHeadersName,
+				builders.AllowCredentialsName,
+				builders.AllowMethodsName,
+				builders.AllowOriginName,
+			}))
+
+			Expect(vs.Spec.Http[0].Headers.Response.Set).To(BeEmpty())
+		})
+
+		It("should apply all CORSPolicy headers correctly", func() {
+			// given
+			strategies := []*v1beta1.Authenticator{
+				{
+					Handler: &v1beta1.Handler{
+						Name: "allow",
+					},
+				},
+			}
+
+			corsPolicy := v1beta1.CorsPolicy{
+				AllowMethods:     []string{"GET", "POST"},
+				AllowOrigins:     v1beta1.StringMatch{{"exact": "localhost"}},
+				AllowCredentials: ptr.To(true),
+				AllowHeaders:     []string{"Allowed-Header"},
+				ExposeHeaders:    []string{"Exposed-Header"},
+				MaxAge:           &metav1.Duration{Duration: 10 * time.Second},
+			}
+
+			allowRule := GetRuleFor(ApiPath, ApiMethods, nil, strategies)
+			rules := []v1beta1.Rule{allowRule}
+
+			apiRule := GetAPIRuleFor(rules)
+			apiRule.Spec.Host = &ServiceHostWithNoDomain
+			apiRule.Spec.CorsPolicy = ptr.To(corsPolicy)
+
+			client := GetFakeClient()
+			processor := ory.NewVirtualServiceProcessor(GetTestConfig())
+
+			// when
+			result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
+
+			// then
+			Expect(err).To(BeNil())
+			Expect(result).To(HaveLen(1))
+
+			vs := result[0].Obj.(*networkingv1beta1.VirtualService)
+
+			//verify VS
+			Expect(vs).NotTo(BeNil())
+			Expect(vs.Spec.Http[0].CorsPolicy).To(Not(BeNil()))
+
+			Expect(vs.Spec.Http[0].CorsPolicy.AllowOrigins).To(HaveLen(1))
+			Expect(vs.Spec.Http[0].CorsPolicy.AllowOrigins).To(ConsistOf(&v1beta12.StringMatch{MatchType: &v1beta12.StringMatch_Exact{Exact: "localhost"}}))
+			Expect(vs.Spec.Http[0].CorsPolicy.AllowCredentials).To(Not(BeNil()))
+			Expect(vs.Spec.Http[0].CorsPolicy.AllowCredentials.Value).To(BeTrue())
+			Expect(vs.Spec.Http[0].CorsPolicy.AllowMethods).To(ConsistOf("GET", "POST"))
+			Expect(vs.Spec.Http[0].CorsPolicy.AllowHeaders).To(ConsistOf("Allowed-Header"))
+			Expect(vs.Spec.Http[0].CorsPolicy.ExposeHeaders).To(ConsistOf("Exposed-Header"))
+
+			Expect(vs.Spec.Http[0].Headers.Response.Remove).To(ConsistOf([]string{
+				builders.ExposeHeadersName,
+				builders.MaxAgeName,
+				builders.AllowHeadersName,
+				builders.AllowCredentialsName,
+				builders.AllowMethodsName,
+				builders.AllowOriginName,
+			}))
+
+			Expect(vs.Spec.Http[0].Headers.Response.Set).To(BeEmpty())
+		})
+	})
+
 })
 
 func getTimeoutByPath(vs *networkingv1beta1.VirtualService, path string) time.Duration {

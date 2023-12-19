@@ -1,363 +1,506 @@
 /// <reference types="cypress" />
 import 'cypress-file-upload';
 import {generateNamespaceName, generateRandomName} from "../../support/random";
-
-
-function openSearchWithSlashShortcut() {
-  cy.get('body').type('/', { force: true });
-}
+import {chooseComboboxOption} from '../../support/combobox';
 
 const apiRulePath = "/test-path";
 const apiRuleDefaultPath = "/.*";
 
 context("Test API Rules", () => {
 
-  const namespaceName = generateNamespaceName();
-  const serviceName = generateRandomName("test-service");
-  const apiRuleName = generateRandomName("test-api-rule");
-
-  before(() => {
-    cy.loginAndSelectCluster();
-    cy.createNamespace(namespaceName);
-    cy.createService(serviceName);
-  });
-
-  after(() => {
-    cy.loginAndSelectCluster();
-    cy.deleteNamespace(namespaceName);
-  });
-
-  it("Create an API Rule for a service", () => {
+    const namespaceName = generateNamespaceName();
+    const serviceName = generateRandomName("test-service");
+    const apiRuleName = generateRandomName("test-api-rule");
+
+    before(() => {
+        cy.loginAndSelectCluster();
+        cy.createNamespace(namespaceName);
+        cy.createService(serviceName);
+    });
 
-    cy.getLeftNav()
-        .contains("API Rules", { includeShadowDom: true })
-        .click();
+    after(() => {
+        cy.loginAndSelectCluster();
+        cy.deleteNamespace(namespaceName);
+    });
 
-    cy.contains('Create API Rule').click();
+    it("Create an API Rule for a service", () => {
 
-    // Name
-    cy.get('[ariaLabel="APIRule name"]:visible', { log: false }).type(
-      apiRuleName,
-    );
+        cy.getLeftNav()
+            .contains('API Rules')
+            .click();
 
-    cy.get('[data-testid="spec.timeout"]:visible', { log: false })
-      .clear()
-      .type(1212);
+        cy.contains('ui5-button', 'Create API Rule').click();
 
-    // Service
-    cy.get('[aria-label="Choose Service"]:visible', { log: false })
-      .first()
-      .type(serviceName);
+        // Name
+        cy.get('ui5-input[aria-label="APIRule name"]')
+            .find('input')
+            .type(apiRuleName, {force: true});
 
-    cy.get('[aria-label="Choose Service"]:visible', { log: false })
-      .first()
-      .next()
-      .find('[aria-label="Combobox input arrow"]:visible', { log: false })
-      .click();
+        cy.get('ui5-input[data-testid="spec.timeout"]')
+            .find('input')
+            .clear({force: true})
+            .type(1212, {force: true});
 
-    cy.get('[data-testid="spec.service.port"]:visible', { log: false })
-      .clear()
-      .type(80);
+        // Service
+        chooseComboboxOption('[data-testid="spec.service.name"]', serviceName);
 
-    // Host
-    cy.get('[aria-label="Combobox input"]:visible', { log: false })
-      .first()
-      .type('*');
+        cy.get('[data-testid="spec.service.port"]:visible', {log: false})
+            .find('input')
+            .click()
+            .clear()
+            .type(80);
 
-    cy.get('span', { log: false })
-      .contains(/^\*$/i)
-      .first()
-      .click();
+        // Host
+        chooseComboboxOption('[data-testid="spec.host"]', '*');
 
-    cy.get('[aria-label="Combobox input"]:visible', { log: false })
-      .first()
-      .type('{home}{rightArrow}{backspace}');
+        cy.get('[data-testid="spec.host"]:visible', {log: false})
+            .find('input')
+            .click()
+            .type(`{moveToStart}{rightArrow}{backspace}${apiRuleName}`);
 
-    cy.get('[aria-label="Combobox input"]:visible', { log: false })
-      .first()
-      .type(apiRuleName);
+        // Rules
 
-    cy.get('[aria-label="Combobox input"]:visible', { log: false })
-      .first()
-      .next()
-      .find('[aria-label="Combobox input arrow"]:visible', { log: false })
-      .click();
+        // > General
 
-    // Rules
+        cy.get('[data-testid="spec.rules.0.timeout"]:visible')
+            .find('input')
+            .click()
+            .clear()
+            .type(2323);
 
-    // > General
+        // > Access Strategies
+        cy.get(
+            `ui5-combobox[data-testid="spec.rules.0.accessStrategies.0.handler"]:visible`,
+        )
+            .find('input')
+            .click()
+            .clear()
+            .type('oauth2_introspection', {force: true});
 
-    cy.get('[data-testid="spec.rules.0.timeout"]:visible')
-      .clear()
-      .type(2323);
+        cy.get('ui5-li:visible')
+            .contains('oauth2_introspection')
+            .find('li')
+            .click({force: true});
 
-    // > Access Strategies
+        cy.get('[aria-label="expand Required Scope"]', {
+            log: false,
+        }).click();
 
-    cy.get('[data-testid="spec.rules.0.accessStrategies.0.handler"]:visible')
-      .clear()
-      .type('oauth2_introspection');
+        cy.get(
+            '[data-testid="spec.rules.0.accessStrategies.0.config.required_scope.0"]:visible',
+        )
+            .find('input')
+            .click()
+            .clear()
+            .type('read');
 
-    cy.get('[data-testid="spec.rules.0.accessStrategies.0.handler"]:visible', {
-      log: false,
-    })
-      .find('span')
-      .find('[aria-label="Combobox input arrow"]:visible', { log: false })
-      .click();
+        // > Methods
 
-    cy.get('[aria-label="expand Required Scope"]:visible', {
-      log: false,
-    }).click();
+        cy.get('[data-testid="spec.rules.0.methods.POST"]')
 
-    cy.get(
-      '[data-testid="spec.rules.0.accessStrategies.0.config.required_scope.0"]:visible',
-    )
-      .clear()
-      .type('read');
+        cy.get(`ui5-checkbox[text="POST"]:visible`).click();
 
-    // > Methods
+        cy.get('ui5-dialog')
+            .contains('ui5-button', 'Create')
+            .should('be.visible')
+            .click();
+    });
 
-    cy.get('[data-testid="spec.rules.0.methods.POST"]:visible').click();
+    it('Check the API Rule details', () => {
+        cy.contains(apiRuleName).click();
 
-    cy.get('[role=dialog]')
-      .contains('button', 'Create')
-      .click();
-  });
+        cy.contains(apiRuleDefaultPath).should('exist');
 
-  it('Check the API Rule details', () => {
-    cy.contains(apiRuleName).click();
+        cy.contains('1212').should('exist');
 
-    cy.contains(apiRuleDefaultPath).should('exist');
+        cy.contains('Rules #1', {timeout: 10000}).click();
 
-    cy.contains('1212').should('exist');
+        cy.contains('2323').should('exist');
 
-    cy.contains('Rules #1', { timeout: 10000 }).click();
+        cy.contains('oauth2_introspection').should('exist');
 
-    cy.contains('2323').should('exist');
+        cy.contains(apiRulePath).should('not.exist');
 
-    cy.contains('oauth2_introspection').should('exist');
+        cy.contains('allow').should('not.exist');
+        cy.contains('read').should('exist');
+    });
 
-    cy.contains(apiRulePath).should('not.exist');
+    it('Edit the API Rule', () => {
+        cy.contains('ui5-button', 'Edit').click();
 
-    cy.contains('allow').should('not.exist');
-    cy.contains('read').should('exist');
-  });
+        cy.contains(apiRuleName);
 
-  it('Edit the API Rule', () => {
-    cy.contains('Edit').click();
+        // Rules
 
-    cy.contains(apiRuleName);
+        // > General
 
-    // Rules
+        cy.get('[aria-label="expand Rules"]:visible', {log: false})
+            .contains('Add')
+            .click();
 
-    // > General
+        cy.get('[aria-label="expand Rule"]:visible', {log: false})
+            .first()
+            .click();
 
-    cy.get('[aria-label="expand Rules"]:visible', { log: false })
-      .contains('Add')
-      .click();
+        cy.get('[data-testid="spec.rules.1.path"]:visible')
+            .find('input')
+            .click()
+            .clear()
+            .type(apiRulePath);
 
-    cy.get('[aria-label="expand Rule"]:visible', { log: false })
-      .first()
-      .click();
+        // > Access Strategies
+        cy.get('[aria-label="expand Access Strategies"]:visible', {log: false})
+            .first();
 
-    cy.get('[data-testid="spec.rules.1.path"]:visible')
-      .clear()
-      .type(apiRulePath);
+        cy.get(
+            `ui5-combobox[data-testid="spec.rules.1.accessStrategies.0.handler"]:visible`,
+        )
+            .find('input')
+            .click()
+            .clear()
+            .type('jwt', {force: true});
 
-    // > Access Strategies
-    cy.get('[aria-label="expand Access Strategies"]:visible', { log: false })
-      .first()
-      .scrollIntoView();
+        cy.get('ui5-li:visible')
+            .contains('jwt')
+            .find('li')
+            .click({force: true});
 
-    cy.get('[data-testid="spec.rules.1.accessStrategies.0.handler"]:visible')
-      .find('input')
-      .clear()
-      .type('jwt');
+        cy.get('[aria-label="expand JWKS URLs"]:visible', {log: false}).click();
 
-    cy.get('[data-testid="spec.rules.1.accessStrategies.0.handler"]:visible', {
-      log: false,
-    })
-      .find('span')
-      .find('[aria-label="Combobox input arrow"]:visible', { log: false })
-      .click();
+        cy.get(
+            '[data-testid="spec.rules.1.accessStrategies.0.config.jwks_urls.0"]:visible',
+        )
+            .find('input')
+            .click()
+            .clear()
+            .type('https://urls.com');
 
-    cy.get('[aria-label="expand JWKS URLs"]:visible', { log: false }).click();
+        cy.contains(
+            'JWKS URL: HTTP protocol is not secure, consider using HTTPS',
+        ).should('not.exist');
 
-    cy.get(
-      '[data-testid="spec.rules.1.accessStrategies.0.config.jwks_urls.0"]:visible',
-    )
-      .clear()
-      .type('https://urls.com');
+        cy.get('[aria-label="expand JWKS URLs"]:visible', {log: false}).click();
 
-    cy.get('[aria-label="expand Trusted Issuers"]:visible', {
-      log: false,
-    }).click();
+        cy.get('[aria-label="expand Trusted Issuers"]:visible', {
+            log: false,
+        }).click();
 
-    cy.get(
-      '[data-testid="spec.rules.1.accessStrategies.0.config.trusted_issuers.0"]:visible',
-    )
-      .clear()
-      .type('https://trusted.com');
+        cy.get(
+            '[data-testid="spec.rules.1.accessStrategies.0.config.trusted_issuers.0"]:visible',
+        )
+            .find('input')
+            .click()
+            .clear()
+            .type('https://trusted.com');
 
-    // > Methods
-    cy.get('[data-testid="spec.rules.1.methods.GET"]:visible').click();
+        cy.contains(
+            'Trusted Issuers: HTTP protocol is not secure, consider using HTTPS',
+        ).should('not.exist');
 
-    cy.get('[data-testid="spec.rules.1.methods.POST"]:visible').click();
+        cy.get('[aria-label="expand Trusted Issuers"]:visible', {
+            log: false,
+        }).click();
 
-    cy.get('[role=dialog]')
-      .contains('button', 'Update')
-      .click();
-  });
+        // > Methods
+        cy.get('[data-testid="spec.rules.1.methods.POST"]');
 
-  it('Check the edited API Rule details', () => {
-    cy.contains(apiRuleName).click();
+        cy.get(`ui5-checkbox[text="GET"]:visible`).click();
 
-    cy.contains(apiRuleDefaultPath).should('exist');
+        cy.get(`ui5-checkbox[text="POST"]:visible`).click();
 
-    cy.contains('Rules #1', { timeout: 10000 }).click();
+        cy.get('ui5-dialog')
+            .contains('ui5-button', 'Update')
+            .should('be.visible')
+            .click();
+    });
 
-    cy.contains('Rules #2', { timeout: 10000 }).click();
+    it('Check the edited API Rule details', () => {
+        cy.contains(apiRuleName).click();
 
-    cy.contains(apiRulePath).should('exist');
+        cy.contains(apiRuleDefaultPath).should('exist');
 
-    cy.contains('jwt').should('exist');
-    cy.contains('https://urls.com').should('exist');
-    cy.contains('https://trusted.com').should('exist');
-  });
+        cy.contains('Rules #1', {timeout: 20000}).click();
 
-  it('Inspect list using slash shortcut', () => {
-    cy.getLeftNav()
-      .contains('API Rules', { includeShadowDom: true })
-      .click();
+        cy.contains('Rules #2', {timeout: 20000}).click();
 
-    cy.contains('h3', 'API Rules').should('be.visible');
-    cy.get('[aria-label="open-search"]').should('not.be.disabled');
+        cy.contains(apiRulePath).should('exist');
 
-    openSearchWithSlashShortcut();
+        cy.contains('jwt').should('exist');
+        cy.contains('https://urls.com').should('exist');
+        cy.contains('https://trusted.com').should('exist');
 
-    cy.get('[role="search"] [aria-label="search-input"]').type(apiRuleName);
+        cy.contains('Disabling custom CORS Policy is not recommended. Consider setting up CORS yourself').should('exist');
+    });
 
-    cy.contains(apiRuleName).should('be.visible');
-  });
+    it('Inspect list using slash shortcut', () => {
+        cy.getLeftNav()
+            .contains('API Rules')
+            .click();
 
-  it('Create OAuth2 Introspection rule', () => {
-    cy.get('[class="fd-link"]')
-      .contains(apiRuleName)
-      .click();
+        cy.contains('ui5-title', 'API Rules').should('be.visible');
+        cy.get('[aria-label="open-search"]').should('not.be.disabled');
 
-    cy.contains('Edit').click();
+        //TODO: Update to use slash command
+        cy.get('button[title="Search"]').click();
 
-    cy.contains(apiRuleName);
+        cy.get('ui5-combobox[placeholder="Search"]')
+            .find('input')
+            .click()
+            .type(apiRuleName, {
+                force: true,
+            });
 
-    // Rules
-    cy.get('[aria-label="expand Rules"]:visible', { log: false })
-      .contains('Add')
-      .click();
+        cy.contains(apiRuleName).should('be.visible');
+    });
 
-    cy.get('[aria-label="expand Rule"]', { log: false })
-      .first()
-      .click();
+    it('Update the APIRule', () => {
+        cy.contains('a', apiRuleName).click();
 
-    cy.get('[aria-label="expand Rule"]', { log: false })
-      .eq(1)
-      .click();
+        cy.contains('ui5-button', 'Edit').click();
 
-    cy.get('[data-testid="spec.rules.2.path"]:visible')
-      .clear()
-      .type(apiRulePath);
+        cy.contains(apiRuleName);
 
-    // > Access Strategies
-    cy.get('[aria-label="expand Access Strategies"]:visible', { log: false })
-      .first()
-      .scrollIntoView();
+        // > CorsPolicy
+        cy.get('ui5-switch[data-testid="$useCorsPolicy"]')
+            .find('[role="switch"]')
+            .click();
 
-    cy.get('[data-testid="spec.rules.2.accessStrategies.0.handler"]:visible')
-      .find('input')
-      .clear()
-      .type('oauth2_introspection');
+        cy.get('[aria-label="expand CORS Policy"]')
+            .should('be.visible');
 
-    cy.get('[data-testid="spec.rules.2.accessStrategies.0.handler"]:visible', {
-      log: false,
-    })
-      .find('span')
-      .find('[aria-label="Combobox input arrow"]:visible', { log: false })
-      .click();
-
-    cy.get('[aria-label="expand Introspection Request Headers"]:visible', {
-      log: false,
-    }).click();
-
-    cy.get('[aria-label="expand Introspection Request Headers"]:visible', {
-      log: false,
-    })
-      .parent()
-      .within(_$div => {
-        cy.get('[placeholder="Enter key"]:visible', { log: false })
-          .first()
-          .clear()
-          .type('Authorization');
-
-        cy.get('[placeholder="Enter value"]:visible', { log: false })
-          .first()
-          .clear()
-          .type('Basic 12345');
-      });
-
-    cy.get(
-      '[data-testid="spec.rules.2.accessStrategies.0.config.introspection_url"]:visible',
-    )
-      .clear()
-      .type('https://example.com');
-
-    cy.get('[aria-label="expand Token From"]:visible', {
-      log: false,
-    }).click();
-
-    cy.get('[aria-label="expand Token From"]:visible', {
-      log: false,
-    })
-      .parent()
-      .within(_$div => {
-        cy.contains('Enter key', { log: false })
-          .first()
-          .click();
-      });
-
-    cy.get('.fd-list__title')
-      .contains('header')
-      .click();
-
-    cy.get('[aria-label="expand Token From"]:visible', {
-      log: false,
-    })
-      .parent()
-      .within(_$div => {
-        cy.get('[placeholder="Enter value"]:visible', { log: false })
-          .first()
-          .clear()
-          .type('FromHeader');
-      });
-
-    // > Methods
-    cy.get('[data-testid="spec.rules.2.methods.GET"]:visible').click();
-
-    cy.get('[data-testid="spec.rules.2.methods.POST"]:visible').click();
-
-    cy.get('[role=dialog]')
-      .contains('button', 'Update')
-      .click();
-  });
-
-  it('Check OAuth2 Introspection strategy', () => {
-    cy.contains(apiRuleName).click();
-
-    cy.contains(apiRuleDefaultPath).should('exist');
-
-    cy.contains('Rules #3', { timeout: 10000 }).click();
-
-    cy.contains(apiRulePath).should('exist');
-
-    cy.contains('https://example.com').should('exist');
-    cy.contains('Authorization=Basic 12345').should('exist');
-    cy.contains('header=FromHeader').should('exist');
-  });
+            // CORS allow methods
+            cy.contains('CORS Allow Methods').should('be.visible');
+            cy.get('[data-testid="spec.corsPolicy.allowMethods.GET"]:visible').click();
+
+            // CORS allow origins
+            cy.get('[aria-label="expand CORS Allow Origins"]').should('be.visible').contains("Add").click()
+            cy.get('[aria-label="expand CORS Allow Origin"]').should('be.visible')
+            cy.get('[aria-label="expand Allow Origins"]').should('exist').click();
+
+            cy.get('[aria-label="expand Allow Origins"]:visible', {
+                log: false,
+            })
+                .parent()
+                .within(_$div => {
+                    cy.get(`ui5-icon[name="slim-arrow-down"]`)
+                        .click({force: true})
+                });
+
+            cy.get('ui5-li:visible')
+                .contains('exact')
+                .find('li')
+                .click({force: true});
+
+            cy.get('[aria-label="expand Allow Origins"]', {
+                log: false,
+            })
+            .parent()
+            .find('input[placeholder="Enter value"]')
+                .first()
+                .clear()
+                .type("localhost");
+
+            cy.get('[aria-label="expand CORS Allow Origins"]').should('exist').click();
+
+            // CORS allow headers
+            cy.get('[aria-label="expand CORS Allow Headers"]').should('be.visible').click();
+            cy.get('[data-testid="spec.corsPolicy.allowHeaders.0"]')
+                .find('input')
+                .clear()
+                .type("Allowed-Header")
+            cy.get('[aria-label="expand CORS Allow Headers"]').should('exist').click();
+
+            // CORS allow headers
+            cy.get('[aria-label="expand CORS Expose Headers"]').should('be.visible').click();
+            cy.get('[data-testid="spec.corsPolicy.exposeHeaders.0"]')
+                .find('input')
+                .clear()
+                .type("Exposed-Header")
+            cy.get('[aria-label="expand CORS Expose Headers"]').should('exist').click();
+
+            // CORS allow credentials
+            cy.get('ui5-switch[data-testid="spec.corsPolicy.allowCredentials"]')
+                .find('[role="switch"]')
+                .click();
+
+            // CORS Max Age
+            cy.get('[data-testid="spec.corsPolicy.maxAge"]')
+                .find('input')
+                .clear()
+                .type('10s');
+
+        cy.get('[aria-label="expand CORS Policy"]').click();
+
+        // Rules
+        cy.get('[aria-label="expand Rules"]:visible', {log: false})
+            .contains('Add')
+            .click();
+
+        cy.get('[aria-label="expand Rule"]', {log: false})
+            .first()
+            .click();
+
+        cy.get('[aria-label="expand Rule"]', {log: false})
+            .eq(1)
+            .click();
+
+        cy.get('[data-testid="spec.rules.2.path"]:visible')
+            .find('input')
+            .click()
+            .clear()
+            .type(apiRulePath);
+
+        // > Access Strategies
+        cy.get('[aria-label="expand Access Strategies"]:visible', {log: false})
+            .first();
+
+        cy.get(
+            `ui5-combobox[data-testid="spec.rules.2.accessStrategies.0.handler"]:visible`,
+        )
+            .find('input')
+            .click()
+            .clear()
+            .type('oauth2_introspection', {force: true});
+
+        cy.get('ui5-li:visible')
+            .contains('oauth2_introspection')
+            .find('li')
+            .click({force: true});
+
+        cy.get('[aria-label="expand Introspection Request Headers"]', {
+            log: false,
+        })
+            .last()
+            .click();
+
+        cy.get('[aria-label="expand Introspection Request Headers"]', {
+            log: false,
+        })
+            .last()
+            .parent()
+            .within(_$div => {
+                cy.get('[placeholder="Enter key"]:visible', {log: false})
+                    .find('input')
+                    .first()
+                    .click()
+                    .clear()
+                    .type('Authorization');
+
+                cy.get('[placeholder="Enter value"]:visible', {log: false})
+                    .find('input')
+                    .first()
+                    .click()
+                    .clear()
+                    .type('Basic 12345');
+            });
+
+        cy.get(
+            '[data-testid="spec.rules.2.accessStrategies.0.config.introspection_url"]:visible',
+        )
+            .find('input')
+            .click()
+            .clear()
+            .type('https://example.com');
+
+        cy.get('[aria-label="expand Token From"]:visible', {
+            log: false,
+        }).click();
+
+        cy.get('[aria-label="expand Token From"]:visible', {
+            log: false,
+        })
+            .parent()
+            .within(_$div => {
+                cy.get(`ui5-icon[name="slim-arrow-down"]`)
+                    .click()
+            });
+
+        cy.get('ui5-li:visible')
+            .contains('header')
+            .find('li')
+            .click({force: true});
+
+
+        cy.get('[aria-label="expand Token From"]:visible', {
+            log: false,
+        })
+            .parent()
+            .within(_$div => {
+                cy.get('input[placeholder="Enter value"]', {log: false})
+                    .first()
+                    .clear()
+                    .type('FromHeader');
+            });
+
+        // > Methods
+        cy.get('[data-testid="spec.rules.2.methods.GET"]:visible').click();
+
+        cy.get('[data-testid="spec.rules.2.methods.POST"]:visible').click();
+
+        // Change urls to HTTP in JWT
+        cy.get('[aria-label="expand Rule"]', {log: false})
+            .eq(1)
+            .click();
+
+        cy.get('[aria-label="expand JWKS URLs"]', {log: false}).click();
+
+        cy.get(
+            '[data-testid="spec.rules.1.accessStrategies.0.config.jwks_urls.0"]:visible',
+        )
+            .find('input')
+            .click()
+            .clear()
+            .type('http://urls.com');
+
+        cy.contains(
+            'JWKS URL: HTTP protocol is not secure, consider using HTTPS',
+        ).should('exist');
+
+        cy.get('[aria-label="expand Trusted Issuers"]', {log: false}).click();
+
+        cy.get(
+            '[data-testid="spec.rules.1.accessStrategies.0.config.trusted_issuers.0"]:visible',
+        )
+            .find('input')
+            .click()
+            .clear()
+            .type('http://trusted.com');
+
+        cy.contains(
+            'Trusted Issuers: HTTP protocol is not secure, consider using HTTPS',
+        ).should('exist');
+
+        cy.get('ui5-dialog')
+            .contains('ui5-button', 'Update')
+            .should('be.visible')
+            .click();
+    });
+
+    it('Check edited APIRule details', () => {
+        cy.contains(apiRuleName).should("be.visible").click();
+
+        cy.contains(apiRuleDefaultPath).should('exist');
+
+        cy.contains('Rules #3', {timeout: 20000}).click();
+
+        cy.contains('CORS Allow Methods').should('exist').parent().contains('GET').should('exist');
+        cy.contains('CORS origins allowed with exact match').should('exist').parent().contains('localhost').should('exist');
+        cy.contains('CORS Expose Headers').should('exist').parent().contains('Exposed-Header').should('exist')
+        cy.contains('CORS Allow Headers').should('exist').parent().contains('Allowed-Header').should('exist')
+        cy.contains('CORS Allow Credentials').should('exist').parent().contains('true').should('exist')
+        cy.contains('CORS Max Age').should('exist').parent().contains('10s').should('exist')
+
+        cy.contains(apiRulePath).should('exist');
+
+        cy.contains('https://example.com').should('exist');
+        cy.contains('Authorization=Basic 12345').should('exist');
+        cy.contains('header=FromHeader').should('exist');
+
+        cy.contains(
+            'JWKS URL: HTTP protocol is not secure, consider using HTTPS',
+        ).should('exist');
+        cy.contains(
+            'Trusted Issuers: HTTP protocol is not secure, consider using HTTPS',
+        ).should('exist');
+    });
 });

@@ -76,14 +76,21 @@ func (r virtualServiceCreator) Create(api *gatewayv1beta1.APIRule) (*networkingv
 		} else {
 			httpRouteBuilder.Match(builders.MatchRequest().Uri().Regex(rule.Path))
 		}
-		httpRouteBuilder.CorsPolicy(builders.CorsPolicy().
-			AllowOrigins(r.corsConfig.AllowOrigins...).
-			AllowMethods(r.corsConfig.AllowMethods...).
-			AllowHeaders(r.corsConfig.AllowHeaders...))
+		if api.Spec.CorsPolicy == nil {
+			httpRouteBuilder.CorsPolicy(builders.CorsPolicy().
+				AllowOrigins(r.corsConfig.AllowOrigins...).
+				AllowMethods(r.corsConfig.AllowMethods...).
+				AllowHeaders(r.corsConfig.AllowHeaders...))
+		}
 		httpRouteBuilder.Timeout(processors.GetVirtualServiceHttpTimeout(api.Spec, rule))
 
 		headersBuilder := builders.NewHttpRouteHeadersBuilder().
 			SetHostHeader(default_domain.GetHostWithDomain(*api.Spec.Host, r.defaultDomainName))
+
+		if api.Spec.CorsPolicy != nil {
+			httpRouteBuilder.CorsPolicy(builders.CorsPolicy().FromApiRuleCorsPolicy(*api.Spec.CorsPolicy))
+			headersBuilder.RemoveUpstreamCORSPolicyHeaders()
+		}
 
 		// We need to add mutators only for JWT secured rules, since "noop" and "oauth2_introspection" access strategies
 		// create access rules and therefore use ory mutators. The "allow" access strategy does not support mutators at all.

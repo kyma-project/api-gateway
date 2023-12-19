@@ -3,6 +3,7 @@ package ory
 import (
 	_ "embed"
 	"fmt"
+	"github.com/avast/retry-go/v4"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/auth"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/helpers"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/manifestprocessor"
@@ -10,6 +11,7 @@ import (
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
 	"golang.org/x/oauth2/clientcredentials"
 	"k8s.io/client-go/dynamic"
+	"net/http"
 	"strings"
 )
 
@@ -118,4 +120,45 @@ func (s *scenario) teardownHttpbinService() error {
 	s.Url = ""
 
 	return nil
+}
+
+func (s *scenario) preflightEndpointCallResponseHeaders(endpoint, origin string, statusCode int, headerKey, headerValue string) error {
+	headers := map[string]string{
+		"Origin":                        origin,
+		"Access-Control-Request-Method": "GET,POST,PUT,DELETE,PATCH",
+	}
+	return retry.Do(func() error {
+		resp, err := s.httpClient.CallEndpointWithRetriesAndGetResponse(headers, nil, http.MethodOptions, s.Url+endpoint)
+		if err != nil {
+			return err
+		}
+		if resp.StatusCode != statusCode {
+			return fmt.Errorf("expected response status code %d got %d", statusCode, resp.StatusCode)
+		}
+		rhv := resp.Header.Get(headerKey)
+		if rhv != headerValue {
+			return fmt.Errorf("expected header %s with value %s, got %s", headerKey, headerValue, rhv)
+		}
+		return nil
+	}, testcontext.GetRetryOpts()...)
+}
+
+func (s *scenario) preflightEndpointCallNoResponseHeader(endpoint, origin string, statusCode int, headerKey string) error {
+	headers := map[string]string{
+		"Origin":                        origin,
+		"Access-Control-Request-Method": "GET,POST,PUT,DELETE,PATCH",
+	}
+	return retry.Do(func() error {
+		resp, err := s.httpClient.CallEndpointWithRetriesAndGetResponse(headers, nil, http.MethodOptions, s.Url+endpoint)
+		if err != nil {
+			return err
+		}
+		if resp.StatusCode != statusCode {
+			return fmt.Errorf("expected response status code %d got %d", statusCode, resp.StatusCode)
+		}
+		if len(resp.Header.Values(headerKey)) > 0 {
+			return fmt.Errorf("expected that the response will not contain %s header, but did", headerKey)
+		}
+		return nil
+	}, testcontext.GetRetryOpts()...)
 }
