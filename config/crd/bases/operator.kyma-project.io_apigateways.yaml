@@ -13,7 +13,7 @@ spec:
     listKind: APIGatewayList
     plural: apigateways
     singular: apigateway
-  scope: Cluster
+  scope: Namespaced
   versions:
   - additionalPrinterColumns:
     - jsonPath: .status.state
