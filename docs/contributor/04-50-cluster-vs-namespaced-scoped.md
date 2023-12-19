@@ -1,17 +1,17 @@
 # Pros and cons of cluster scoped and namespaced scoped module custom resource
 
 
-<table>
+<table style="table-layout: fixed; width: 100%">
     <tbody>
         <tr>
             <td colspan="2" align="center">Cluster scoped Custom Resource</td>
             <td colspan="2" align="center">Namespaced scoped Custom Resource</td>
         </tr>
         <tr>
-            <td align="center">Pros</td>
-            <td align="center">Cons</td>
-            <td align="center">Pros</td>
-            <td align="center">Cons</td>
+            <td style="width: 25%;" align="center">Pros</td>
+            <td style="width: 25%;" align="center">Cons</td>
+            <td style="width: 25%;" align="center">Pros</td>
+            <td style="width: 25%;" align="center">Cons</td>
         </tr>
         <tr>
             <td>[UX] Resource is more visible to customer, and the module is clearly visible as installed.<br></br> might also mean better visibility that this resource manages resources across the cluster, not only in a single namespace.</td>
