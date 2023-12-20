@@ -16,30 +16,20 @@ This tutorial shows how to expose multiple workloads on different paths by defin
 * Set up [your custom domain](../01-10-setup-custom-domain-for-workload.md) or use a Kyma domain instead. 
 * Depending on whether you use your custom domain or a Kyma domain, export the necessary values as environment variables:
   
-  <div tabs name="export-values">
-
-    <details>
-    <summary>
-    Custom domain
-    </summary>
-    
+  <!-- tabs:start -->
+  #### Custom domain
+      
     ```bash
     export DOMAIN_TO_EXPOSE_WORKLOADS={DOMAIN_NAME}
     export GATEWAY=$NAMESPACE/httpbin-gateway
     ```
-    </details>
-
-    <details>
-    <summary>
-    Kyma domain
-    </summary>
+  #### Kyma Domain
 
     ```bash
     export DOMAIN_TO_EXPOSE_WORKLOADS={KYMA_DOMAIN_NAME}
     export GATEWAY=kyma-system/kyma-gateway
     ```
-    </details>
-  </div>   
+  <!-- tabs:end --> 
 
 ## Define Multiple Services on Different Paths
 

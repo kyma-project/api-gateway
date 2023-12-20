@@ -9,44 +9,34 @@ This tutorial shows how to expose Service endpoints in multiple Namespaces using
 
 1. Create three Namespaces. Deploy two instances of the HttpBin Service, each in a separate Namespace. To learn how to do it, follow the [Create a workload](../01-00-create-workload.md) tutorial. Reserve the third Namespace for creating an APIRule.
 
-  >**NOTE:** Remember to [enable the Istio sidecar proxy injection](https://kyma-project.io/#/istio/user/02-operation-guides/operations/02-20-enable-sidecar-injection) in each Namespace.
+    >**NOTE:** Remember to [enable the Istio sidecar proxy injection](https://kyma-project.io/#/istio/user/02-operation-guides/operations/02-20-enable-sidecar-injection) in each Namespace.
 
 1. Export the Namespaces' and Services' names as environment variables:
 
-  ```bash
-  export FIRST_SERVICE={SERVICE_NAME}
-  export SECOND_SERVICE={SERVICE_NAME}
-  export NAMESPACE_FIRST_SERVICE={NAMESPACE_NAME}
-  export NAMESPACE_SECOND_SERVICE={NAMESPACE_NAME}
-  export NAMESPACE_APIRULE={NAMESPACE_NAME}
-  ```
+    ```bash
+    export FIRST_SERVICE={SERVICE_NAME}
+    export SECOND_SERVICE={SERVICE_NAME}
+    export NAMESPACE_FIRST_SERVICE={NAMESPACE_NAME}
+    export NAMESPACE_SECOND_SERVICE={NAMESPACE_NAME}
+    export NAMESPACE_APIRULE={NAMESPACE_NAME}
+    ```
   
 3. Depending on whether you use your custom domain or a Kyma domain, export the necessary values as environment variables:
   
-  <div tabs name="export-values">
-
-    <details>
-    <summary>
-    Custom domain
-    </summary>
-      
+    <!-- tabs:start -->
+    #### Custom Domain
+    
     ```bash
     export DOMAIN_TO_EXPOSE_WORKLOADS={DOMAIN_NAME}
-    export GATEWAY=$NAMESPACE_APIRULE/httpbin-gateway
+    export GATEWAY=$NAMESPACE/httpbin-gateway
     ```
-    </details>
-
-    <details>
-    <summary>
-    Kyma domain
-    </summary>
+    #### Kyma Domain
 
     ```bash
     export DOMAIN_TO_EXPOSE_WORKLOADS={KYMA_DOMAIN_NAME}
     export GATEWAY=kyma-system/kyma-gateway
     ```
-    </details>
-  </div> 
+    <!-- tabs:end -->
 
 ## Expose and Access Your Workloads in Multiple Namespaces
 

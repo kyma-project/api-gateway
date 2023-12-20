@@ -26,11 +26,8 @@ This table lists all possible configuration properties of the Ory Oathkeeper JWT
 
 These are sample APIRule custom resources (CRs) of both Ory Oathkeeper and Istio JWT access strategy configuration for a Service.
 
-<div tabs name="api-rule">
-  <details>
-  <summary>
-  Ory Oathkeeper
-  </summary>
+<!-- tabs:start -->
+#### Ory Oathkeeper
 
 ```yaml
 apiVersion: gateway.kyma-project.io/v1beta1
@@ -65,12 +62,7 @@ spec:
             token_from:
               header: X-JWT-Assertion
 ```
-
-  </details>
-  <details>
-  <summary>
-  Istio
-  </summary>
+#### Istio
 
 ```yaml
 apiVersion: gateway.kyma-project.io/v1beta1
@@ -107,9 +99,7 @@ spec:
               audiences: ["example.com", "example.org"]
             - requiredScopes: ["read", "write"]
 ```
-
-  </details>
-</div>
+<!-- tabs:end -->
 
 >**CAUTION:** Both `jwks_urls` and `trusted_issuers` must be valid URLs. Although HTTP is allowed, it is recommended that you use only HTTPS endpoints. 
 

@@ -8,30 +8,20 @@ This tutorial shows how to expose and secure Services using APIGateway Controlle
 * Set up [your custom domain](../01-10-setup-custom-domain-for-workload.md) or use a Kyma domain instead. 
 * Depending on whether you use your custom domain or a Kyma domain, export the necessary values as environment variables:
   
-  <div tabs name="export-values">
-
-    <details>
-    <summary>
-    Custom domain
-    </summary>
-    
+  <!-- tabs:start -->
+  #### Custom Domain
+      
     ```bash
     export DOMAIN_TO_EXPOSE_WORKLOADS={DOMAIN_NAME}
     export GATEWAY=$NAMESPACE/httpbin-gateway
     ```
-    </details>
-
-    <details>
-    <summary>
-    Kyma domain
-    </summary>
+  #### Kyma Domain
 
     ```bash
     export DOMAIN_TO_EXPOSE_WORKLOADS={KYMA_DOMAIN_NAME}
     export GATEWAY=kyma-system/kyma-gateway
     ```
-    </details>
-  </div>  
+  <!-- tabs:end -->
 
 * Configure your client ID and client Secret using an OAuth2-compliant provider. Then, export the following values as environment variables:
   ```shell
@@ -49,42 +39,37 @@ This tutorial shows how to expose and secure Services using APIGateway Controlle
    ```
 
 2. Get tokens to interact with secured resources using the client credentials flow:
-   <div tabs>
-     <details>
-     <summary>
-     Token with `read` scope
-     </summary>
-     * Export the following value as an environment variable:
-        ```shell
-        export KYMA_DOMAIN={KYMA_DOMAIN_NAME}
-        ```  
-     * Get the opaque token:
-        ```shell
-        curl --location --request POST "$TOKEN_URL?grant_type=client_credentials" --header "Content-Type: application/x-www-form-urlencoded" --header "Authorization: Basic $ENCODED_CREDENTIALS"
-        ```
-     * Export the issued token as an environment variable:
-        ```shell
-        export ACCESS_TOKEN_READ={ISSUED_READ_TOKEN}
-        ```
-     </details>
-     <details>
-     <summary>
-     Token with `write` scope
-     </summary>
-     * Export the following value as an environment variable:
-        ```shell
-        export KYMA_DOMAIN={KYMA_DOMAIN_NAME}
-        ```  
-     * Get the opaque token:
-        ```shell
-        curl --location --request POST "$TOKEN_URL?grant_type=client_credentials" --header "Content-Type: application/x-www-form-urlencoded" --header "Authorization: Basic $ENCODED_CREDENTIALS"
-        ```
-     * Export the issued token as an environment variable:
-        ```shell
-        export ACCESS_TOKEN_WRITE={ISSUED_WRITE_TOKEN}
-        ```
-      </details>
-   </div>
+
+<!-- tabs:start -->
+#### Token with `read` scope
+  
+  * Export the following value as an environment variable:
+    ```shell
+    export KYMA_DOMAIN={KYMA_DOMAIN_NAME}
+    ```  
+  * Get the opaque token:
+    ```shell
+    curl --location --request POST "$TOKEN_URL?grant_type=client_credentials" --header "Content-Type: application/x-www-form-urlencoded" --header "Authorization: Basic $ENCODED_CREDENTIALS"
+    ```
+  * Export the issued token as an environment variable:
+    ```shell
+    export ACCESS_TOKEN_READ={ISSUED_READ_TOKEN}
+    ```
+#### Token with `write` scope
+  
+  * Export the following value as an environment variable:
+    ```shell
+    export KYMA_DOMAIN={KYMA_DOMAIN_NAME}
+    ```  
+  * Get the opaque token:
+    ```shell
+    curl --location --request POST "$TOKEN_URL?grant_type=client_credentials" --header "Content-Type: application/x-www-form-urlencoded" --header "Authorization: Basic $ENCODED_CREDENTIALS"
+    ```
+  * Export the issued token as an environment variable:
+    ```shell
+    export ACCESS_TOKEN_WRITE={ISSUED_WRITE_TOKEN}
+    ```
+<!-- tabs:end -->
 
 
 ## Expose and Secure Your Workload

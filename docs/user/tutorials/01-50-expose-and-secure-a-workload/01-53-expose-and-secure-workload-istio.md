@@ -9,30 +9,20 @@ This tutorial shows how to expose and secure a workload using Istio's built-in s
 * Set up [your custom domain](../01-10-setup-custom-domain-for-workload.md) or use a Kyma domain instead. 
 * Depending on whether you use your custom domain or a Kyma domain, export the necessary values as environment variables:
   
-  <div tabs name="export-values">
-
-    <details>
-    <summary>
-    Custom domain
-    </summary>
+<!-- tabs:start -->
+  #### Custom Domain
     
-    ```bash
-    export DOMAIN_TO_EXPOSE_WORKLOADS={DOMAIN_NAME}
-    export GATEWAY=$NAMESPACE/httpbin-gateway
-    ```
-    </details>
+  ```bash
+  export DOMAIN_TO_EXPOSE_WORKLOADS={DOMAIN_NAME}
+  export GATEWAY=$NAMESPACE/httpbin-gateway
+  ```
+  #### Kyma Domain
 
-    <details>
-    <summary>
-    Kyma domain
-    </summary>
-
-    ```bash
-    export DOMAIN_TO_EXPOSE_WORKLOADS={KYMA_DOMAIN_NAME}
-    export GATEWAY=kyma-system/kyma-gateway
-    ```
-    </details>
-  </div>  
+  ```bash
+  export DOMAIN_TO_EXPOSE_WORKLOADS={KYMA_DOMAIN_NAME}
+  export GATEWAY=kyma-system/kyma-gateway
+  ```
+<!-- tabs:end -->  
 
 ## Expose Your Workload Using a VirtualService
 
