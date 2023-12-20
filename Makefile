@@ -1,16 +1,4 @@
-# Module Name used for bundling the OCI Image and later on for referencing in the Kyma Modules
 MODULE_NAME ?= api-gateway
-
-# Module Registry used for pushing the image
-MODULE_REGISTRY_PORT ?= 8888
-MODULE_REGISTRY ?= op-kcp-registry.localhost:$(MODULE_REGISTRY_PORT)/unsigned
-# Desired Channel of the Generated Module Template
-MODULE_TEMPLATE_CHANNEL ?= stable
-MODULE_CHANNEL ?= fast
-
-ifndef MODULE_VERSION
-    MODULE_VERSION = 0.0.1
-endif
 
 #latest api-gateway release
 LATEST_RELEASE = $(shell curl -sS "https://api.github.com/repos/kyma-project/api-gateway/releases/latest" | jq -r '.tag_name')
@@ -53,17 +41,6 @@ TARGET_BRANCH ?= ""
 TEST_UPGRADE_IMG ?= ""
 
 IS_GARDENER ?= false
-
-# This will change the flags of the `kyma alpha module create` command in case we spot credentials
-# Otherwise we will assume http-based local registries without authentication (e.g. for k3d)
-ifneq (,$(PROW_JOB_ID))
-GCP_ACCESS_TOKEN=$(shell gcloud auth application-default print-access-token)
-MODULE_CREATION_FLAGS=--registry $(MODULE_REGISTRY) --module-archive-version-overwrite -c oauth2accesstoken:$(GCP_ACCESS_TOKEN)
-else ifeq (,$(MODULE_CREDENTIALS))
-MODULE_CREATION_FLAGS=--registry $(MODULE_REGISTRY) --module-archive-version-overwrite --insecure
-else
-MODULE_CREATION_FLAGS=--registry $(MODULE_REGISTRY) --module-archive-version-overwrite -c $(MODULE_CREDENTIALS)
-endif
 
 ##@ General
 
@@ -242,54 +219,18 @@ envtest: $(ENVTEST) ## Download envtest-setup locally if necessary.
 $(ENVTEST): $(LOCALBIN)
 	test -s $(LOCALBIN)/setup-envtest || GOBIN=$(LOCALBIN) go install sigs.k8s.io/controller-runtime/tools/setup-envtest@latest
 
-##@ Module
-.PHONY: all
-all: module-build
-
 .PHONY: module-image
 module-image: docker-build docker-push ## Build the Module Image and push it to a registry defined in IMG_REGISTRY
 	echo "built and pushed module image $(IMG)"
-
-.PHONY: module-build
-module-build: kyma kustomize ## Build the Module and push it to a registry defined in MODULE_REGISTRY
-	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
-	$(KYMA) alpha create module \
-		--kubebuilder-project $(SECURITY_SCAN_OPTIONS) --channel=${MODULE_CHANNEL} \
-		--name kyma-project.io/module/$(MODULE_NAME) --version $(MODULE_VERSION) \
-		--default-cr ./config/samples/operator_v1alpha1_apigateway.yaml \
-		--path . --output "template-${MODULE_CHANNEL}.yaml" $(MODULE_CREATION_FLAGS)
 
 .PHONY: generate-manifests
 generate-manifests: kustomize
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
 	$(KUSTOMIZE) build config/default > api-gateway-manager.yaml
 
-##@ Tools
-
-REPOSITORY=
-GITHUB_URL=
-
 .PHONY: get-latest-release
 get-latest-release:
 	@echo $(LATEST_RELEASE)
-
-########## Kyma CLI ###########
-KYMA_STABILITY ?= unstable
-
-# $(call os_error, os-type, os-architecture)
-define os_error
-$(error Error: unsuported platform OS_TYPE:$1, OS_ARCH:$2; to mitigate this problem set variable KYMA with absolute path to kyma-cli binary compatible with your operating system and architecture)
-endef
-
-KYMA_FILE_NAME ?= $(shell ./hack/get_kyma_file_name.sh ${OS_TYPE} ${OS_ARCH})
-KYMA ?= $(LOCALBIN)/kyma-$(KYMA_STABILITY)
-kyma: $(LOCALBIN) $(KYMA) ## Download kyma locally if necessary.
-$(KYMA):
-	## Detecting operating system to download proper kyma CLI binary
-	$(if $(KYMA_FILE_NAME),,$(call os_error, ${OS_TYPE}, ${OS_ARCH}))
-	test -f $@ || curl -s -Lo $(KYMA) https://storage.googleapis.com/kyma-cli-$(KYMA_STABILITY)/$(KYMA_FILE_NAME)
-	chmod 0100 $(KYMA)
-
 
 ########## Performance Tests ###########
 .PHONY: perf-test
