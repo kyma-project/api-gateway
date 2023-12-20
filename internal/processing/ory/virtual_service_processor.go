@@ -63,7 +63,6 @@ func (r virtualServiceCreator) Create(api *gatewayv1beta1.APIRule) (*networkingv
 			MethodRegEx(rule.Methods...))
 
 		httpRouteBuilder.Route(builders.RouteDestination().Host(host).Port(port))
-		httpRouteBuilder.Match(builders.MatchRequest().Uri().Regex(rule.Path))
 		if api.Spec.CorsPolicy == nil {
 			httpRouteBuilder.CorsPolicy(builders.CorsPolicy().
 				AllowOrigins(r.corsConfig.AllowOrigins...).
