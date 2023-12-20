@@ -13,12 +13,14 @@ sudo k3d cluster create kyma --port 80:80@loadbalancer --port 443:443@loadbalanc
 
 export KUBECONFIG=$(k3d kubeconfig merge kyma)
 
+make create-namespace
+
 echo "Apply istio"
 kubectl apply -f https://github.com/kyma-project/istio/releases/latest/download/istio-manager.yaml
 kubectl apply -f https://github.com/kyma-project/istio/releases/latest/download/istio-default-cr.yaml
 
 echo "Apply api-gateway"
-kubectl apply -f https://github.com/kyma-project/api-gateway/releases/latest/download/api-gateway-manager.yaml
+make deploy
 kubectl apply -f https://github.com/kyma-project/api-gateway/releases/latest/download/apigateway-default-cr.yaml
 
 echo "Apply gardener resources"

@@ -15,4 +15,4 @@ virtualServices:
     group: networking.istio.io
     version: v1beta1
     namespace: null
-  filter: '$contains($item.metadata.ownerReferences[0].name, $root.metadata.name) and $contains($item.metadata.ownerReferences[0].kind, $root.kind)'
+  filter: '$contains($item.metadata.labels."apirule.gateway.kyma-project.io/v1beta1", $root.metadata.name) and $contains($item.metadata.labels."apirule.gateway.kyma-project.io/v1beta1", $root.metadata.namespace)'

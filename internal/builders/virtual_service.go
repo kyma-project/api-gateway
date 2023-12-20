@@ -2,8 +2,9 @@ package builders
 
 import (
 	"fmt"
-	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
+	apirulev1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"google.golang.org/protobuf/types/known/durationpb"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 	"istio.io/api/networking/v1beta1"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 
@@ -156,9 +157,9 @@ func (mr *matchRequest) Uri() *stringMatch {
 }
 
 // MethodRegEx sets the HTTP method regex in the HTTPMatchRequest for the given HTTP methods in the format "^(PUT|POST|GET)$".
-func (mr *matchRequest) MethodRegEx(httpMethods ...gatewayv1beta1.HttpMethod) *matchRequest {
+func (mr *matchRequest) MethodRegEx(httpMethods ...apirulev1beta1.HttpMethod) *matchRequest {
 
-	methodStrings := gatewayv1beta1.ConvertHttpMethodsToStrings(httpMethods)
+	methodStrings := apirulev1beta1.ConvertHttpMethodsToStrings(httpMethods)
 	methodsWithSeparator := strings.Join(methodStrings, "|")
 
 	mr.value.Method = &v1beta1.StringMatch{
@@ -224,6 +225,9 @@ type corsPolicy struct {
 }
 
 func (cp *corsPolicy) Get() *v1beta1.CorsPolicy {
+	if cp.value.AllowOrigins == nil {
+		return nil
+	}
 	return cp.value
 }
 
@@ -254,11 +258,45 @@ func (cp *corsPolicy) AllowOrigins(val ...*v1beta1.StringMatch) *corsPolicy {
 	return cp
 }
 
+func (cp *corsPolicy) FromApiRuleCorsPolicy(corsPolicy apirulev1beta1.CorsPolicy) *corsPolicy {
+	if len(corsPolicy.AllowOrigins) == 0 {
+		cp.value.AllowOrigins = nil
+	} else {
+		matchers := corsPolicy.AllowOrigins.ToIstioStringMatchArray()
+		cp.value.AllowOrigins = append(cp.value.AllowOrigins, matchers...)
+	}
+
+	if len(corsPolicy.AllowHeaders) > 0 {
+		cp.value.AllowHeaders = corsPolicy.AllowHeaders
+	}
+
+	if len(corsPolicy.AllowMethods) > 0 {
+		cp.value.AllowMethods = corsPolicy.AllowMethods
+	}
+
+	if len(corsPolicy.ExposeHeaders) > 0 {
+		cp.value.ExposeHeaders = corsPolicy.ExposeHeaders
+	}
+
+	if corsPolicy.AllowCredentials != nil {
+		cp.value.AllowCredentials = &wrapperspb.BoolValue{Value: *corsPolicy.AllowCredentials}
+	}
+
+	if corsPolicy.MaxAge != nil {
+		cp.value.MaxAge = durationpb.New(corsPolicy.MaxAge.Duration)
+	}
+
+	return cp
+}
+
 // NewHttpRouteHeadersBuilder returns builder for istio.io/api/networking/v1beta1/Headers type
 func NewHttpRouteHeadersBuilder() HttpRouteHeadersBuilder {
 	return HttpRouteHeadersBuilder{
 		value: &v1beta1.Headers{
 			Request: &v1beta1.Headers_HeaderOperations{
+				Set: make(map[string]string),
+			},
+			Response: &v1beta1.Headers_HeaderOperations{
 				Set: make(map[string]string),
 			},
 		},
@@ -289,6 +327,30 @@ func (h HttpRouteHeadersBuilder) SetRequestHeaders(headers map[string]string) Ht
 	for name, value := range headers {
 		h.value.Request.Set[name] = value
 	}
+
+	return h
+}
+
+const (
+	ExposeHeadersName    = "Access-Control-Expose-Headers"
+	AllowHeadersName     = "Access-Control-Allow-Headers"
+	AllowCredentialsName = "Access-Control-Allow-Credentials"
+	AllowMethodsName     = "Access-Control-Allow-Methods"
+	AllowOriginName      = "Access-Control-Allow-Origin"
+	MaxAgeName           = "Access-Control-Max-Age"
+)
+
+// RemoveUpstreamCORSPolicyHeaders sets VirtualService to remove all upstream CORS headers, leaving only those from VirtualService CORS Policy
+func (h HttpRouteHeadersBuilder) RemoveUpstreamCORSPolicyHeaders() HttpRouteHeadersBuilder {
+	removeHeaders := h.value.Response.Remove
+	removeHeaders = append(removeHeaders, AllowOriginName)
+	removeHeaders = append(removeHeaders, ExposeHeadersName)
+	removeHeaders = append(removeHeaders, AllowHeadersName)
+	removeHeaders = append(removeHeaders, AllowCredentialsName)
+	removeHeaders = append(removeHeaders, AllowMethodsName)
+	removeHeaders = append(removeHeaders, MaxAgeName)
+
+	h.value.Response.Remove = append(h.value.Response.Remove, removeHeaders...)
 
 	return h
 }
