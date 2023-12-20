@@ -184,13 +184,6 @@ rules:
   - rules
   verbs:
   - '*'
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
 - apiGroups:
   - operator.kyma-project.io
   resources:
