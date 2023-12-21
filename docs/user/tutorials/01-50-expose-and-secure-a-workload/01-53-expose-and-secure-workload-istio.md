@@ -4,7 +4,7 @@ This tutorial shows how to expose and secure a workload using Istio's built-in s
 
 ## Prerequisites
 
-* Deploy a [sample HttpBin Service](../01-00-create-workload.md).
+* Deploy a [sample HTTPBin Service](../01-00-create-workload.md).
 * [JSON Web Token (JWT)](./01-51-get-jwt.md).
 * Set up [your custom domain](../01-10-setup-custom-domain-for-workload.md) or use a Kyma domain instead. 
 * Depending on whether you use your custom domain or a Kyma domain, export the necessary values as environment variables:
@@ -26,7 +26,7 @@ This tutorial shows how to expose and secure a workload using Istio's built-in s
 
 ## Expose Your Workload Using a VirtualService
 
-Follow the instructions in the tabs to expose the HttpBin workload using a VirtualService.
+Follow the instructions in the tabs to expose the HTTPBin workload using a VirtualService.
 
 1. Create a VirtualService:
 
@@ -56,7 +56,7 @@ Follow the instructions in the tabs to expose the HttpBin workload using a Virtu
 
 ## Secure a Workload Using a JWT
 
-To secure the HttpBin workload using a JWT, create a Request Authentication with Authorization Policy. Workloads with the `matchLabels` parameter specified require a JWT for all requests. Follow the instructions:
+To secure the HTTPBin workload using a JWT, create a Request Authentication with Authorization Policy. Workloads with the `matchLabels` parameter specified require a JWT for all requests. Follow the instructions:
 
 1. Create the Request Authentication and Authorization Policy resources:
 

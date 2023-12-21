@@ -65,7 +65,7 @@ Follow these steps:
 
   >**NOTE:** If you don't specify a Namespace for your Service, the default APIRule Namespace is used.
 
-2. Call the endpoint by sending a `GET` request to the HttpBin Service.
+2. Call the endpoint by sending a `GET` request to the HTTPBin Service.
 
     ```bash
     curl -ik -X GET https://httpbin.$DOMAIN_TO_EXPOSE_WORKLOADS/ip

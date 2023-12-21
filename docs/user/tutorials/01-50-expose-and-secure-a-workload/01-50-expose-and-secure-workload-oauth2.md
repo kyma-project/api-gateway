@@ -4,7 +4,7 @@ This tutorial shows how to expose and secure Services using APIGateway Controlle
 
 ## Prerequisites
 
-* Deploy [a sample HttpBin Service](../01-00-create-workload.md).
+* Deploy [a sample HTTPBin Service](../01-00-create-workload.md).
 * Set up [your custom domain](../01-10-setup-custom-domain-for-workload.md) or use a Kyma domain instead. 
 * Depending on whether you use your custom domain or a Kyma domain, export the necessary values as environment variables:
   
@@ -74,7 +74,7 @@ This tutorial shows how to expose and secure Services using APIGateway Controlle
 
 ## Expose and Secure Your Workload
 
-Follow the instructions to expose an instance of the HttpBin Service, and secure it with OAuth2 scopes.
+Follow the instructions to expose an instance of the HTTPBin Service, and secure it with OAuth2 scopes.
 
 1. Expose the Service and secure it by creating an APIRule CR in your Namespace. Run:
 
@@ -125,13 +125,13 @@ Follow the instructions to expose an instance of the HttpBin Service, and secure
 
 Follow the instructions to call the secured Service using the tokens issued for the client you registered.
 
-1. Send a `GET` request with a token that has the `read` scope to the HttpBin service:
+1. Send a `GET` request with a token that has the `read` scope to the HTTPBin service:
 
    ```shell
    curl -ik -X GET https://httpbin.$DOMAIN_TO_EXPOSE_WORKLOADS/headers -H "Authorization: Bearer $ACCESS_TOKEN_READ"
    ```
 
-2. Send a `POST` request with a token that has the `write` scope to the HttpBin's `/post` endpoint:
+2. Send a `POST` request with a token that has the `write` scope to the HTTPBin's `/post` endpoint:
 
    ```shell
    curl -ik -X POST https://httpbin.$DOMAIN_TO_EXPOSE_WORKLOADS/post -d "test data" -H "Authorization: bearer $ACCESS_TOKEN_WRITE"

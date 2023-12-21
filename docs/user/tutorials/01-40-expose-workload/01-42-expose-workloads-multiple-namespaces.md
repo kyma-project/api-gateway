@@ -7,7 +7,7 @@ This tutorial shows how to expose Service endpoints in multiple Namespaces using
 
 ##  Prerequisites
 
-1. Create three Namespaces. Deploy two instances of the HttpBin Service, each in a separate Namespace. To learn how to do it, follow the [Create a workload](../01-00-create-workload.md) tutorial. Reserve the third Namespace for creating an APIRule.
+1. Create three Namespaces. Deploy two instances of the HTTPBin Service, each in a separate Namespace. To learn how to do it, follow the [Create a workload](../01-00-create-workload.md) tutorial. Reserve the third Namespace for creating an APIRule.
 
     >**NOTE:** Remember to [enable the Istio sidecar proxy injection](https://kyma-project.io/#/istio/user/02-operation-guides/operations/02-20-enable-sidecar-injection) in each Namespace.
 
@@ -40,7 +40,7 @@ This tutorial shows how to expose Service endpoints in multiple Namespaces using
 
 ## Expose and Access Your Workloads in Multiple Namespaces
 
-1. Expose the HttpBin Services in their respective Namespaces by creating an APIRule custom resource (CR) in its own Namespace. Run:
+1. Expose the HTTPBin Services in their respective Namespaces by creating an APIRule custom resource (CR) in its own Namespace. Run:
 
    ```bash
    cat <<EOF | kubectl apply -f -
@@ -78,7 +78,7 @@ This tutorial shows how to expose Service endpoints in multiple Namespaces using
 
    >**NOTE:** If you are using k3d, add `httpbin.kyma.local` to the entry with k3d IP in your system's `/etc/hosts` file.
 
-2. Call the HttpBin endpoints by sending a `GET` request to the HttpBin Services:
+2. Call the HTTPBin endpoints by sending a `GET` request to the HTTPBin Services:
 
    ```bash
    curl -ik -X GET https://httpbin-services.$DOMAIN_TO_EXPOSE_WORKLOADS/headers

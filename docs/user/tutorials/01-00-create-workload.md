@@ -1,6 +1,6 @@
 # Create a Workload
 
-This tutorial explains how to create a sample HttpBin Service deployment.
+This tutorial explains how to create a sample HTTPBin Service deployment.
 
 ## Steps
 
@@ -18,7 +18,7 @@ This tutorial explains how to create a sample HttpBin Service deployment.
     export SERVICE_NAME={SERVICE_NAME}
     ```
 
-3. Deploy a sample instance of the HttpBin Service.
+3. Deploy a sample instance of the HTTPBin Service.
 
     ```shell
     cat <<EOF | kubectl -n $NAMESPACE apply -f -

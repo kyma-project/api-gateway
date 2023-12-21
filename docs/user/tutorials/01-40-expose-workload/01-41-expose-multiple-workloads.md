@@ -6,7 +6,7 @@ This tutorial shows how to expose multiple workloads on different paths by defin
 
 ## Prerequisites
 
-* Deploy two instances of a sample [HttpBin Service](../01-00-create-workload.md). Export their names as environment variables:
+* Deploy two instances of a sample [HTTPBin Service](../01-00-create-workload.md). Export their names as environment variables:
   
   ```bash
     export FIRST_SERVICE={SERVICE_NAME}
@@ -33,9 +33,9 @@ This tutorial shows how to expose multiple workloads on different paths by defin
 
 ## Define Multiple Services on Different Paths
 
-Follow the instructions to expose the instances of the HttpBin Service on different paths at the `spec.rules` level without a root Service defined.
+Follow the instructions to expose the instances of the HTTPBin Service on different paths at the `spec.rules` level without a root Service defined.
 
-1. To expose the instances of the HttpBin Service, create an APIRule custom resource (CR) in your Namespace. Run:
+1. To expose the instances of the HTTPBin Service, create an APIRule custom resource (CR) in your Namespace. Run:
 
    ```bash
    cat <<EOF | kubectl apply -f -
@@ -69,7 +69,7 @@ Follow the instructions to expose the instances of the HttpBin Service on differ
    EOF
    ```
 
-2. To call the endpoints, send `GET` requests to the HttpBin Services:
+2. To call the endpoints, send `GET` requests to the HTTPBin Services:
 
     ```bash
     curl -ik -X GET https://multiple-service-example.$DOMAIN_TO_EXPOSE_WORKLOADS/headers
@@ -84,7 +84,7 @@ You can also define a Service at the root level. Such a definition is applied to
  
  > **NOTE:** Services definitions at the `spec.rules` level have precedence over Service definition at the `spec.service` level.
 
-1. To expose the instances of the HttpBin Service, create an APIRule CR in your Namespace. Run:
+1. To expose the instances of the HTTPBin Service, create an APIRule CR in your Namespace. Run:
 
   ```shell
   cat <<EOF | kubectl apply -f -
@@ -116,9 +116,9 @@ You can also define a Service at the root level. Such a definition is applied to
           port: 8000
   EOF
   ```
-  In the above APIRule, the HttpBin Service on port 8000 is defined at the `spec.service` level. This Service definition is applied to the `/headers` path. The `/get` path has the Service definition overwritten.
+  In the above APIRule, the HTTPBin Service on port 8000 is defined at the `spec.service` level. This Service definition is applied to the `/headers` path. The `/get` path has the Service definition overwritten.
 
-1. To call the endpoints, send `GET` requests to the HttpBin Services:
+1. To call the endpoints, send `GET` requests to the HTTPBin Services:
 
     ```bash
     curl -ik -X GET https://multiple-service-example.$DOMAIN_TO_EXPOSE_WORKLOADS/headers
