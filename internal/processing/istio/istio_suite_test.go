@@ -2,6 +2,8 @@ package istio_test
 
 import (
 	"fmt"
+	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
+	"net/http"
 	"os"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"testing"
@@ -45,3 +47,5 @@ var _ = ReportAfterSuite("custom reporter", func(report types.Report) {
 })
 
 var testLogger = ctrl.Log.WithName("istio-test")
+var getMethod = []v1beta1.HttpMethod{http.MethodGet}
+var postMethod = []v1beta1.HttpMethod{http.MethodPost}
