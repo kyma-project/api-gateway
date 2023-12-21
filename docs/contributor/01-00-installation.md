@@ -1,7 +1,4 @@
 # Install API Gateway
-- [Install API Gateway](#install-api-gateway)
-  - [Prerequisites](#prerequisites)
-  - [Install Kyma API Gateway Operator manually](#install-kyma-api-gateway-operator-manually)
 
 ## Prerequisites
 
