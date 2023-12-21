@@ -69,7 +69,6 @@ func (v *APIRuleValidator) Validate(ctx context.Context, client client.Client, a
 		failures = append(failures, v.validateService(".spec.service", api)...)
 	}
 	failures = append(failures, v.validateHost(".spec.host", vsList, api)...)
-	failures = append(failures, v.validateGateway(".spec.gateway", api.Spec.Gateway)...)
 	failures = append(failures, v.validateRules(ctx, client, ".spec.rules", api.Spec.Service == nil, api)...)
 
 	return failures
@@ -173,10 +172,6 @@ func (v *APIRuleValidator) validateService(attributePath string, api *gatewayv1b
 	return problems
 }
 
-func (v *APIRuleValidator) validateGateway(attributePath string, gateway *string) []Failure {
-	return nil
-}
-
 // Validates whether all rules are defined correctly
 // Checks whether all rules have service defined for them if checkForService is true
 func (v *APIRuleValidator) validateRules(ctx context.Context, client client.Client, attributePath string, checkForService bool, api *gatewayv1beta1.APIRule) []Failure {
@@ -194,7 +189,6 @@ func (v *APIRuleValidator) validateRules(ctx context.Context, client client.Clie
 
 	for i, r := range rules {
 		attributePathWithRuleIndex := fmt.Sprintf("%s[%d]", attributePath, i)
-		problems = append(problems, v.validateMethods(attributePathWithRuleIndex+".methods", r.Methods)...)
 		if checkForService && r.Service == nil {
 			problems = append(problems, Failure{AttributePath: attributePathWithRuleIndex + ".service", Message: "No service defined with no main service on spec level"})
 		}
@@ -246,10 +240,6 @@ func (v *APIRuleValidator) validateRules(ctx context.Context, client client.Clie
 	}
 
 	return problems
-}
-
-func (v *APIRuleValidator) validateMethods(attributePath string, methods []string) []Failure {
-	return nil
 }
 
 func (v *APIRuleValidator) validateAccessStrategies(attributePath string, accessStrategies []*gatewayv1beta1.Authenticator, selector *apiv1beta1.WorkloadSelector, namespace string) []Failure {

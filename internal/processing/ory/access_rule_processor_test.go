@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
+	"net/http"
 	"strconv"
 
 	"github.com/kyma-project/api-gateway/internal/processing"
@@ -21,6 +22,10 @@ import (
 )
 
 var _ = Describe("Access Rule Processor", func() {
+
+	var methodsGet = []gatewayv1beta1.HttpMethod{http.MethodGet}
+	var methodsPost = []gatewayv1beta1.HttpMethod{http.MethodPost}
+
 	When("handler is allow", func() {
 		It("should not create access rules", func() {
 			// given
@@ -224,7 +229,7 @@ var _ = Describe("Access Rule Processor", func() {
 					Spec: rulev1alpha1.RuleSpec{
 						Match: &rulev1alpha1.Match{
 							URL:     fmt.Sprintf("<http|https>://%s<%s>", ServiceHost, ApiPath),
-							Methods: []string{"DELETE"},
+							Methods: []string{http.MethodDelete},
 						},
 					},
 				}
@@ -257,7 +262,7 @@ var _ = Describe("Access Rule Processor", func() {
 				Expect(result[0].Action.String()).To(Equal("update"))
 
 				accessRule := result[0].Obj.(*rulev1alpha1.Rule)
-				Expect(accessRule.Spec.Match.Methods).To(Equal([]string{"GET"}))
+				Expect(accessRule.Spec.Match.Methods).To(Equal([]string{http.MethodGet}))
 			})
 		})
 	})
@@ -323,8 +328,8 @@ var _ = Describe("Access Rule Processor", func() {
 			expectedJwtRuleMatchURL := fmt.Sprintf("<http|https>://%s<%s>", ServiceHost, HeadersApiPath)
 			expectedRuleUpstreamURL := fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", ServiceName, ApiNamespace, ServicePort)
 
-			noopMatcher := buildNoopMatcher(ApiMethods, expectedNoopRuleMatchURL, expectedRuleUpstreamURL, "allow")
-			jwtMatcher := buildJwtMatcher(ApiMethods, expectedJwtRuleMatchURL, expectedRuleUpstreamURL, jwtConfigJSON)
+			noopMatcher := buildNoopMatcher([]string{http.MethodGet}, expectedNoopRuleMatchURL, expectedRuleUpstreamURL, "allow")
+			jwtMatcher := buildJwtMatcher([]string{http.MethodGet}, expectedJwtRuleMatchURL, expectedRuleUpstreamURL, jwtConfigJSON)
 
 			Expect(result).To(ContainElements(noopMatcher, jwtMatcher))
 		})
@@ -369,10 +374,9 @@ var _ = Describe("Access Rule Processor", func() {
 					},
 				},
 			}
-			getMethod := []string{"GET"}
-			postMethod := []string{"POST"}
-			noopRule := GetRuleFor(ApiPath, getMethod, []*gatewayv1beta1.Mutator{}, noop)
-			jwtRule := GetRuleFor(ApiPath, postMethod, testMutators, jwt)
+
+			noopRule := GetRuleFor(ApiPath, methodsGet, []*gatewayv1beta1.Mutator{}, noop)
+			jwtRule := GetRuleFor(ApiPath, methodsPost, testMutators, jwt)
 			rules := []gatewayv1beta1.Rule{noopRule, jwtRule}
 
 			apiRule := GetAPIRuleFor(rules)
@@ -390,8 +394,8 @@ var _ = Describe("Access Rule Processor", func() {
 			expectedJwtRuleMatchURL := fmt.Sprintf("<http|https>://%s<%s>", ServiceHost, ApiPath)
 			expectedRuleUpstreamURL := fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", ServiceName, ApiNamespace, ServicePort)
 
-			noopMatcher := buildNoopMatcher(getMethod, expectedNoopRuleMatchURL, expectedRuleUpstreamURL, "allow")
-			jwtMatcher := buildJwtMatcher(postMethod, expectedJwtRuleMatchURL, expectedRuleUpstreamURL, jwtConfigJSON)
+			noopMatcher := buildNoopMatcher([]string{http.MethodGet}, expectedNoopRuleMatchURL, expectedRuleUpstreamURL, "allow")
+			jwtMatcher := buildJwtMatcher([]string{http.MethodPost}, expectedJwtRuleMatchURL, expectedRuleUpstreamURL, jwtConfigJSON)
 
 			Expect(result).To(ContainElements(noopMatcher, jwtMatcher))
 		})
@@ -436,10 +440,9 @@ var _ = Describe("Access Rule Processor", func() {
 					},
 				},
 			}
-			getMethod := []string{"GET"}
-			postMethod := []string{"POST"}
-			noopGetRule := GetRuleFor(ApiPath, getMethod, []*gatewayv1beta1.Mutator{}, noop)
-			noopPostRule := GetRuleFor(ApiPath, postMethod, []*gatewayv1beta1.Mutator{}, noop)
+
+			noopGetRule := GetRuleFor(ApiPath, methodsGet, []*gatewayv1beta1.Mutator{}, noop)
+			noopPostRule := GetRuleFor(ApiPath, methodsPost, []*gatewayv1beta1.Mutator{}, noop)
 			jwtRule := GetRuleFor(HeadersApiPath, ApiMethods, testMutators, jwt)
 			rules := []gatewayv1beta1.Rule{noopGetRule, noopPostRule, jwtRule}
 
@@ -458,9 +461,9 @@ var _ = Describe("Access Rule Processor", func() {
 			expectedJwtRuleMatchURL := fmt.Sprintf("<http|https>://%s<%s>", ServiceHost, HeadersApiPath)
 			expectedRuleUpstreamURL := fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", ServiceName, ApiNamespace, ServicePort)
 
-			noopGetMatcher := buildNoopMatcher(getMethod, expectedNoopRuleMatchURL, expectedRuleUpstreamURL, "allow")
-			noopPostMatcher := buildNoopMatcher(postMethod, expectedNoopRuleMatchURL, expectedRuleUpstreamURL, "allow")
-			jwtMatcher := buildJwtMatcher(ApiMethods, expectedJwtRuleMatchURL, expectedRuleUpstreamURL, jwtConfigJSON)
+			noopGetMatcher := buildNoopMatcher([]string{http.MethodGet}, expectedNoopRuleMatchURL, expectedRuleUpstreamURL, "allow")
+			noopPostMatcher := buildNoopMatcher([]string{http.MethodPost}, expectedNoopRuleMatchURL, expectedRuleUpstreamURL, "allow")
+			jwtMatcher := buildJwtMatcher([]string{http.MethodGet}, expectedJwtRuleMatchURL, expectedRuleUpstreamURL, jwtConfigJSON)
 
 			Expect(result).To(ContainElements(noopGetMatcher, noopPostMatcher, jwtMatcher))
 		})
@@ -528,7 +531,7 @@ var _ = Describe("Access Rule Processor", func() {
 			expectedRuleUpstreamURL := fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", ServiceName, ApiNamespace, ServicePort)
 
 			Expect(len(rule.Spec.Match.Methods)).To(Equal(len(ApiMethods)))
-			Expect(rule.Spec.Match.Methods).To(Equal(ApiMethods))
+			Expect(rule.Spec.Match.Methods).To(Equal([]string{http.MethodGet}))
 			Expect(rule.Spec.Match.URL).To(Equal(expectedRuleMatchURL))
 
 			Expect(rule.Spec.Upstream.URL).To(Equal(expectedRuleUpstreamURL))
