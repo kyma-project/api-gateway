@@ -85,3 +85,16 @@ jobs:
           client_secret: ${{ secrets.CLIENT_SECRET }}
           oidc_issuer_url: ${{ secrets.OIDC_ISSUER_URL }}
           target_branch: ${{ github.base_ref }}
+
+  provision-gardener:
+    name: Provision gardener
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+      - uses: ./.github/actions/gardener
+        with:
+          gardener_server: ${{ secrets.GARDENER_SERVER }}
+          gardener_token: ${{ secrets.GARDENER_TOKEN }}
