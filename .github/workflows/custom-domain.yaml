@@ -1,0 +1,52 @@
+# This workflow is responsible for custom domain integration test run after merge to main and release branch.
+# Those tests depend on a container image so in the first job we wait for the image build to succeed.
+
+name: Custom domain test
+
+on:
+  # pull_request_target runs workflows from the base of PR
+  # It allows the workflow to get the repository secrets
+  # TODO: Run after merging the PR
+  pull_request:
+    types: [ synchronize, opened, reopened, ready_for_review ]
+    paths-ignore:
+      - "docs/**"
+      - "**/*.md"
+      - "tests/performance/**"
+      - "OWNERS"
+      - "CODEOWNERS"
+      - "sec-scanners-config.yaml"
+      - ".github/**" #Ignoring since build job isn't triggered on the workflow directory changes
+    branches:
+      - main
+      - 'release-**'
+
+jobs:
+  wait-for-image-build:
+    environment: ${{ github.event.pull_request.author_association != 'COLLABORATOR' && github.event.pull_request.author_association != 'OWNER' && 'restricted' || 'internal' }}
+    name: Wait for image build
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/wait-for-job-succeed-or-fail
+        with:
+          job-name: 'pull-api-gateway-manager-build'
+          github-auth-token: ${{ secrets.GITHUB_TOKEN }}
+
+  provision-gardener:
+    name: Provision gardener
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false
+    needs: [wait-for-image-build]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+      - uses: ./.github/actions/gardener
+        with:
+          gardener_server: ${{ secrets.GARDENER_SERVER }}
+          gardener_token: ${{ secrets.GARDENER_TOKEN }}
