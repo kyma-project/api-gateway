@@ -18,11 +18,10 @@ package operator
 
 import (
 	"context"
-	"fmt"
-
-	oryv1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
-
 	"errors"
+	"fmt"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
@@ -246,7 +245,15 @@ func apiRulesExist(ctx context.Context, k8sClient client.Client) (bool, error) {
 }
 
 func oryRulesExist(ctx context.Context, k8sClient client.Client) (bool, error) {
-	oryRulesList := oryv1alpha1.RuleList{}
+         // To prevent reconciliation errors during Oathkeeper uninstallation, which arise from the absence of the Oathkeeper CRD,
+	// we exclude calls to the rules from utilizing the cache. This can be achieved by using unstructured objects, as they are excluded from caching.
+	oryRulesList := unstructured.UnstructuredList{}
+	oryRulesList.SetGroupVersionKind(schema.GroupVersionKind{
+		Group:   "oathkeeper.ory.sh",
+		Version: "v1alpha1",
+		Kind:    "rule",
+	})
+
 	err := k8sClient.List(ctx, &oryRulesList)
 	if err != nil {
 		return false, err
