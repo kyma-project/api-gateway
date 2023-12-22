@@ -8,7 +8,7 @@ require (
 	github.com/gardener/cert-management v0.11.3
 	github.com/gardener/external-dns-management v0.16.0
 	github.com/go-jose/go-jose/v3 v3.0.1
-	github.com/go-logr/logr v1.3.0
+	github.com/go-logr/logr v1.4.1
 	github.com/google/uuid v1.5.0
 	github.com/onsi/ginkgo/v2 v2.13.2
 	github.com/onsi/gomega v1.30.0
@@ -19,7 +19,7 @@ require (
 	golang.org/x/net v0.19.0
 	golang.org/x/time v0.5.0
 	google.golang.org/appengine v1.6.8
-	google.golang.org/protobuf v1.31.0
+	google.golang.org/protobuf v1.32.0
 	gopkg.in/yaml.v3 v3.0.1
 	istio.io/api v1.19.3
 	istio.io/client-go v1.19.3

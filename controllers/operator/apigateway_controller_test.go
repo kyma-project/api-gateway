@@ -4,6 +4,9 @@ import (
 	"context"
 	goerrors "errors"
 	"fmt"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"time"
 
 	"github.com/go-logr/logr"
@@ -296,14 +299,23 @@ var _ = Describe("API-Gateway Controller", func() {
 				Finalizers:        []string{ApiGatewayFinalizer},
 			},
 			}
-			oryRule := &oryv1alpha1.Rule{
+			oryRule, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&oryv1alpha1.Rule{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "ory-rule",
 					Namespace: "default",
 				},
-			}
+			})
 
-			c := createFakeClient(apiGatewayCR, oryRule)
+			r := &unstructured.Unstructured{Object: oryRule}
+			r.SetGroupVersionKind(schema.GroupVersionKind{
+				Group:   "oathkeeper.ory.sh",
+				Version: "v1alpha1",
+				Kind:    "rule",
+			})
+
+			Expect(err).ToNot(HaveOccurred())
+
+			c := createFakeClient(apiGatewayCR, r)
 			agr := &APIGatewayReconciler{
 				Client:               c,
 				Scheme:               getTestScheme(),
