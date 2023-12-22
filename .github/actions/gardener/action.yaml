@@ -23,7 +23,7 @@ runs:
       shell: bash
       env:
         GARDENER_SERVER: ${{ inputs.gardener_server }}
-        GARDENER_TOKEN: ${{ inputs.client_secret }}
+        GARDENER_TOKEN: ${{ inputs.gardener_token }}
       run: |
         ./hack/ci/gardener.sh
         curl -Lo kyma https://storage.googleapis.com/kyma-cli-unstable/kyma-linux
