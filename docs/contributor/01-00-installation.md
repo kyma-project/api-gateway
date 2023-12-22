@@ -1,9 +1,4 @@
 # Install API Gateway
-- [Install API Gateway](#install-api-gateway)
-  - [Prerequisites](#prerequisites)
-  - [Install Kyma API Gateway Operator Manually](#install-kyma-api-gateway-operator-manually)
-  - [Install the API Gateway Module with Lifecycle Manager Locally on k3d](#install-the-api-gateway-module-with-lifecycle-manager-locally-on-k3d)
-    - [Install Using the ModuleTemplate by the Local Build](#install-using-the-moduletemplate-by-the-local-build)
 
 ## Prerequisites
 
@@ -71,22 +66,4 @@
 
     ```bash
     make deploy
-    ```
-
-## Install the API Gateway Module with Lifecycle Manager Locally on k3d
-
-Use make to install the API Gateway module with Lifecycle Manager locally.
-
-### Install Using the ModuleTemplate by the Local Build
-
-1. Provision the k3d cluster, deploy Lifecycle-Manager, build the module, and deploy it.
-
-    ```bash
-    make local-run
-    ```
-
-2. Delete the k3d cluster.
-
-    ```bash
-    make local-stop
     ```
