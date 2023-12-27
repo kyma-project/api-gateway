@@ -40,15 +40,15 @@ If you suspect you are experiencing an issue caused by the Oathkeeper Maester co
 2. Fetch the Access Rules from every Oathkeeper Pod and save them to a file:
 
     ```bash
-   kubectl cp -n kyma-system -c oathkeeper "{POD_NAME}":etc/rules/access-rules.json "access-rules.{POD_NAME}.json" 
-   ```
+    kubectl cp -n kyma-system -c oathkeeper "{POD_NAME}":etc/rules/access-rules.json "access-rules.{POD_NAME}.json" 
+    ```
 
 3. If you have more than one instance of Oathkeeper, compare whether the files contain the same Access Rules. Because Oathkeeper stores Access Rules as JSON files, you can use [jd](https://github.com/josephburnett/jd) to automate the comparison:
 
-  ```bash
-  jd -set {FIRST_FILE} {SECOND_FILE} 
-  ```
+    ```bash
+    jd -set {FIRST_FILE} {SECOND_FILE} 
+    ```
 
-  The files are considered different by jd if there are any differences between the files other than the order of Access Rules.
+    The files are considered different by jd if there are any differences between the files other than the order of Access Rules.
    
 4. Compare Access Rules in the files with those present in the cluster. If the files are different, Oathkeeper Pods are out of sync.

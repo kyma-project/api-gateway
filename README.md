@@ -21,10 +21,10 @@ To use API Gateway, you must install Istio and Ory Oathkeeper in your cluster. L
 ### Procedure
 1. Create the `kyma-system` namespace and label it with `istio-injection=enabled`:
 
-    ```bash
-    kubectl create namespace kyma-system
-    kubectl label namespace kyma-system istio-injection=enabled --overwrite
-    ```
+   ```bash
+   kubectl create namespace kyma-system
+   kubectl label namespace kyma-system istio-injection=enabled --overwrite
+   ```
 
 2. To install API Gateway, you must install the latest version of Kyma API Gateway Operator and API Gateway CustomResourceDefinition first. Run:
 
