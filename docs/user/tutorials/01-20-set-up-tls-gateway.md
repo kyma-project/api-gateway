@@ -12,6 +12,7 @@ This tutorial shows how to set up a TLS Gateway in both manual and simple modes.
   export GATEWAY=$NAMESPACE/httpbin-gateway
   ```
    
+
 ## Set Up a TLS Gateway in Simple Mode
 
 To create a TLS Gateway in simple mode, run:
