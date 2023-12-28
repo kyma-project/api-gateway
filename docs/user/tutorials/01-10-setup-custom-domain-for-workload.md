@@ -6,7 +6,7 @@ This tutorial shows how to set up a custom domain and prepare a certificate requ
 
 ## Prerequisites
 
-* Deploy [a sample HttpBin Service](./01-00-create-workload.md).
+* Deploy [a sample HTTPBin Service](./01-00-create-workload.md).
 * If you use a cluster not managed by Gardener, install the [External DNS Management](https://github.com/gardener/external-dns-management#quick-start) and [Certificate Management](https://github.com/gardener/cert-management) components manually in a dedicated Namespace.
 
 ## Steps

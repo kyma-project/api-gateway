@@ -1,12 +1,12 @@
 # Expose a Workload
 
-This tutorial shows how to expose an unsecured instance of the HttpBin Service and call its endpoints.
+This tutorial shows how to expose an unsecured instance of the HTTPBin Service and call its endpoints.
 
 > **CAUTION:** Exposing a workload to the outside world is a potential security vulnerability, so tread carefully. In a production environment, always secure the workload you expose with [OAuth2](../01-50-expose-and-secure-a-workload/01-50-expose-and-secure-workload-oauth2.md) or [JWT](../01-50-expose-and-secure-a-workload/01-52-expose-and-secure-workload-jwt.md).
 
 ## Prerequisites
 
-* Deploy [a sample HttpBin Service](../01-00-create-workload.md).
+* Deploy [a sample HTTPBin Service](../01-00-create-workload.md).
 * Set up [your custom domain](../01-10-setup-custom-domain-for-workload.md) or use a Kyma domain instead. 
 * Depending on whether you use your custom domain or a Kyma domain, export the necessary values as environment variables:
   
@@ -29,7 +29,7 @@ This tutorial shows how to expose an unsecured instance of the HttpBin Service a
 
 Follow these steps:
 
-1. Expose an instance of the HttpBin Service by creating APIRule CR in your Namespace.
+1. Expose an instance of the HTTPBin Service by creating APIRule CR in your Namespace.
 
     ```bash
     cat <<EOF | kubectl apply -f -
@@ -72,7 +72,7 @@ Follow these steps:
     ```
     If successful, the call returns the code `200 OK` response.
 
-3. Call the endpoint by sending a `POST` request to the HttpBin Service.
+3. Call the endpoint by sending a `POST` request to the HTTPBin Service.
 
     ```bash
     curl -ik -X POST https://httpbin.$DOMAIN_TO_EXPOSE_WORKLOADS/post -d "test data"
