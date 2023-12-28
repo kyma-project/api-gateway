@@ -42,7 +42,7 @@ To create a TLS Gateway in simple mode, run:
     
 ## Set Up a TLS Gateway in Mutual Mode
   
-  1. Create a mutual TLS Gateway. Run:
+1. Create a mutual TLS Gateway. Run:
     
     ```bash
     cat <<EOF | kubectl apply -f -
@@ -76,13 +76,13 @@ To create a TLS Gateway in simple mode, run:
             - '*.${DOMAIN_TO_EXPOSE_WORKLOADS}'
     EOF
     ```
-  2. Export the following value as an environment variable:
+2. Export the following value as an environment variable:
 
     ```bash
     export CLIENT_ROOT_CA_CRT_ENCODED=$(cat ${CLIENT_ROOT_CA_CRT_FILE}| base64)
     ```
 
-  3. Add client root CA to the CA cert bundle Secret for mTLS Gateway. Run:
+3. Add client root CA to the CA cert bundle Secret for mTLS Gateway. Run:
 
     ```bash
     cat <<EOF | kubectl apply -f -

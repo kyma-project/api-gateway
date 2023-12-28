@@ -30,29 +30,29 @@ Follow the instructions in the tabs to expose the HTTPBin workload using a Virtu
 
 1. Create a VirtualService:
 
-   ```shell
-   cat <<EOF | kubectl apply -f -
-   apiVersion: networking.istio.io/v1alpha3
-   kind: VirtualService
-   metadata:
-     name: httpbin
-     namespace: $NAMESPACE
-   spec:
-     hosts:
-     - "httpbin.$DOMAIN_TO_EXPOSE_WORKLOADS"
-     gateways:
-     - $GATEWAY
-     http:
-     - match:
-       - uri:
-           prefix: /
-       route:
-       - destination:
-           port:
-             number: 8000
-           host: httpbin.$NAMESPACE.svc.cluster.local
-   EOF
-   ```
+    ```shell
+    cat <<EOF | kubectl apply -f -
+    apiVersion: networking.istio.io/v1alpha3
+    kind: VirtualService
+    metadata:
+      name: httpbin
+      namespace: $NAMESPACE
+    spec:
+      hosts:
+      - "httpbin.$DOMAIN_TO_EXPOSE_WORKLOADS"
+      gateways:
+      - $GATEWAY
+      http:
+      - match:
+        - uri:
+            prefix: /
+        route:
+        - destination:
+            port:
+              number: 8000
+            host: httpbin.$NAMESPACE.svc.cluster.local
+    EOF
+    ```
 
 ## Secure a Workload Using a JWT
 
@@ -60,45 +60,45 @@ To secure the HTTPBin workload using a JWT, create a Request Authentication with
 
 1. Create the Request Authentication and Authorization Policy resources:
 
-   ```shell
-   cat <<EOF | kubectl apply -f -
-   apiVersion: security.istio.io/v1beta1
-   kind: RequestAuthentication
-   metadata:
-     name: jwt-auth-httpbin
-     namespace: $NAMESPACE
-   spec:
-     selector:
-       matchLabels:
-         app: httpbin
-     jwtRules:
-     - issuer: $ISSUER
-       jwksUri: $JWKS_URI
-   ---
-   apiVersion: security.istio.io/v1beta1
-   kind: AuthorizationPolicy
-   metadata:
-     name: httpbin
-     namespace: $NAMESPACE
-   spec:
-     selector:
-       matchLabels:
-         app: httpbin
-     rules:
-     - from:
-       - source:
-           requestPrincipals: ["*"]
-   EOF
-   ```
+    ```shell
+    cat <<EOF | kubectl apply -f -
+    apiVersion: security.istio.io/v1beta1
+    kind: RequestAuthentication
+    metadata:
+      name: jwt-auth-httpbin
+      namespace: $NAMESPACE
+    spec:
+      selector:
+        matchLabels:
+          app: httpbin
+      jwtRules:
+      - issuer: $ISSUER
+        jwksUri: $JWKS_URI
+    ---
+    apiVersion: security.istio.io/v1beta1
+    kind: AuthorizationPolicy
+    metadata:
+      name: httpbin
+      namespace: $NAMESPACE
+    spec:
+      selector:
+        matchLabels:
+          app: httpbin
+      rules:
+      - from:
+        - source:
+            requestPrincipals: ["*"]
+    EOF
+    ```
 
 2. Access the workload you secured. You get the code `403 Forbidden` error.
 
-   ```shell
-   curl -ik -X GET https://httpbin.$DOMAIN_TO_EXPOSE_WORKLOADS/status/200
-   ```
+    ```shell
+    curl -ik -X GET https://httpbin.$DOMAIN_TO_EXPOSE_WORKLOADS/status/200
+    ```
 
 3. Now, access the secured workload using the correct JWT. You get the code `200 OK` response.
 
-   ```shell
-   curl -ik -X GET https://httpbin.$DOMAIN_TO_EXPOSE_WORKLOADS/status/200 --header "Authorization:Bearer $ACCESS_TOKEN"
-   ```
+    ```shell
+    curl -ik -X GET https://httpbin.$DOMAIN_TO_EXPOSE_WORKLOADS/status/200 --header "Authorization:Bearer $ACCESS_TOKEN"
+    ```

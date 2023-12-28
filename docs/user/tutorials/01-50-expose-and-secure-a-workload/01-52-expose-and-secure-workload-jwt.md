@@ -28,37 +28,37 @@ This tutorial shows how to expose and secure Services using APIGateway Controlle
 
 1. Expose the Service and secure it by creating an APIRule CR in your Namespace. Run:
 
-   ```bash
-   cat <<EOF | kubectl apply -f -
-   apiVersion: gateway.kyma-project.io/v1beta1
-   kind: APIRule
-   metadata:
-     name: httpbin
-     namespace: $NAMESPACE
-   spec:
-     host: httpbin.$DOMAIN_TO_EXPOSE_WORKLOADS   
-     service:
-       name: $SERVICE_NAME
-       port: 8000
-     gateway: $GATEWAY
-     rules:
-       - accessStrategies:
-         - handler: jwt
-           config:
-             jwks_urls:
-             - $JWKS_URI
-         methods:
-           - GET
-         path: /.*
-   EOF
-   ```
+    ```bash
+    cat <<EOF | kubectl apply -f -
+    apiVersion: gateway.kyma-project.io/v1beta1
+    kind: APIRule
+    metadata:
+      name: httpbin
+      namespace: $NAMESPACE
+    spec:
+      host: httpbin.$DOMAIN_TO_EXPOSE_WORKLOADS   
+      service:
+        name: $SERVICE_NAME
+        port: 8000
+      gateway: $GATEWAY
+      rules:
+        - accessStrategies:
+          - handler: jwt
+            config:
+              jwks_urls:
+              - $JWKS_URI
+          methods:
+            - GET
+          path: /.*
+    EOF
+    ```
 
-   >**NOTE:** If you are using k3d, add `httpbin.kyma.local` to the entry with k3d IP in your system's `/etc/hosts` file.
+    >**NOTE:** If you are using k3d, add `httpbin.kyma.local` to the entry with k3d IP in your system's `/etc/hosts` file.
 
 2. To access the secured Service, call it using the JWT access token:
 
-   ```bash
-   curl -ik https://httpbin.$DOMAIN_TO_EXPOSE_WORKLOADS/headers -H "Authorization: Bearer $ACCESS_TOKEN"
-   ```
+    ```bash
+    curl -ik https://httpbin.$DOMAIN_TO_EXPOSE_WORKLOADS/headers -H "Authorization: Bearer $ACCESS_TOKEN"
+    ```
 
   If successful, the call returns the code `200 OK` response.

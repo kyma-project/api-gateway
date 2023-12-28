@@ -83,33 +83,33 @@ This tutorial shows how to set up a custom domain and prepare a certificate requ
 
     * Export the following values as environment variables:
 
-        >**NOTE:** `TLS_SECRET` is the name of the TLS Secret, for example, `httpbin-tls-credentials`.
+      >**NOTE:** `TLS_SECRET` is the name of the TLS Secret, for example, `httpbin-tls-credentials`.
 
-        ```bash
-        export TLS_SECRET={TLS_SECRET_NAME}
-        ```
+      ```bash
+      export TLS_SECRET={TLS_SECRET_NAME}
+      ```
 
     * To create a Certificate CR, run:
 
-        ```bash
-        cat <<EOF | kubectl apply -f -
-        apiVersion: cert.gardener.cloud/v1alpha1
-        kind: Certificate
-        metadata:
-          name: httpbin-cert
-          namespace: istio-system
-        spec:  
-          secretName: $TLS_SECRET
-          commonName: $DOMAIN_TO_EXPOSE_WORKLOADS
-        EOF
-        ```
-        >**NOTE:** While using the default configuration, certificates with the Let's Encrypt Issuer are valid for 90 days and automatically renewed 30 days before their validity expires. For more information, read the documentation on [Gardener Certificate Management](https://github.com/gardener/cert-management#requesting-a-certificate) and [Gardener extensions for certificate Services](https://gardener.cloud/docs/extensions/others/gardener-extension-shoot-cert-service/).
+      ```bash
+      cat <<EOF | kubectl apply -f -
+      apiVersion: cert.gardener.cloud/v1alpha1
+      kind: Certificate
+      metadata:
+        name: httpbin-cert
+        namespace: istio-system
+      spec:  
+        secretName: $TLS_SECRET
+        commonName: $DOMAIN_TO_EXPOSE_WORKLOADS
+      EOF
+      ```
+      >**NOTE:** While using the default configuration, certificates with the Let's Encrypt Issuer are valid for 90 days and automatically renewed 30 days before their validity expires. For more information, read the documentation on [Gardener Certificate Management](https://github.com/gardener/cert-management#requesting-a-certificate) and [Gardener extensions for certificate Services](https://gardener.cloud/docs/extensions/others/gardener-extension-shoot-cert-service/).
 
     * To check the certificate status, run: 
      
-        ```bash
-        kubectl get certificate httpbin-cert -n istio-system
-        ```
+      ```bash
+      kubectl get certificate httpbin-cert -n istio-system
+      ```
        
 5. [Set Up a TLS Gateway](./01-20-set-up-tls-gateway.md).
 

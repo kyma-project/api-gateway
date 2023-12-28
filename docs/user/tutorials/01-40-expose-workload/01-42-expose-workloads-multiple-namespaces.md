@@ -2,7 +2,7 @@
 
 This tutorial shows how to expose Service endpoints in multiple Namespaces using APIGateway Controller.
 
-   > **CAUTION:** Exposing a workload to the outside world causes a potential security vulnerability, so tread carefully. In a production environment, secure the workload you expose with [OAuth2](../01-50-expose-and-secure-a-workload/01-50-expose-and-secure-workload-oauth2.md) or [JWT](../01-50-expose-and-secure-a-workload/01-52-expose-and-secure-workload-jwt.md).
+>**CAUTION:** Exposing a workload to the outside world causes a potential security vulnerability, so tread carefully. In a production environment, secure the workload you expose with [OAuth2](../01-50-expose-and-secure-a-workload/01-50-expose-and-secure-workload-oauth2.md) or [JWT](../01-50-expose-and-secure-a-workload/01-52-expose-and-secure-workload-jwt.md).
 
 
 ##  Prerequisites
@@ -42,49 +42,49 @@ This tutorial shows how to expose Service endpoints in multiple Namespaces using
 
 1. Expose the HTTPBin Services in their respective Namespaces by creating an APIRule custom resource (CR) in its own Namespace. Run:
 
-   ```bash
-   cat <<EOF | kubectl apply -f -
-   apiVersion: gateway.kyma-project.io/v1beta1
-   kind: APIRule
-   metadata:
-     name: httpbin-services
-     namespace: $NAMESPACE_APIRULE
-   spec:
-     host: httpbin-services.$DOMAIN_TO_EXPOSE_WORKLOADS
-     gateway: $GATEWAY
-     rules:
-       - path: /headers
-         methods: ["GET"]
-         service:
-           name: $FIRST_SERVICE
-           namespace: $NAMESPACE_FIRST_SERVICE
-           port: 8000
-         accessStrategies:
-           - handler: noop
-         mutators:
-           - handler: noop
-       - path: /get
-         methods: ["GET"]
-         service:
-           name: $SECOND_SERVICE
-           namespace: $NAMESPACE_SECOND_SERVICE
-           port: 8000
-         accessStrategies:
-           - handler: noop
-         mutators:
-           - handler: noop
-   EOF
-   ```
+    ```bash
+    cat <<EOF | kubectl apply -f -
+    apiVersion: gateway.kyma-project.io/v1beta1
+    kind: APIRule
+    metadata:
+      name: httpbin-services
+      namespace: $NAMESPACE_APIRULE
+    spec:
+      host: httpbin-services.$DOMAIN_TO_EXPOSE_WORKLOADS
+      gateway: $GATEWAY
+      rules:
+        - path: /headers
+          methods: ["GET"]
+          service:
+            name: $FIRST_SERVICE
+            namespace: $NAMESPACE_FIRST_SERVICE
+            port: 8000
+          accessStrategies:
+            - handler: noop
+          mutators:
+            - handler: noop
+        - path: /get
+          methods: ["GET"]
+          service:
+            name: $SECOND_SERVICE
+            namespace: $NAMESPACE_SECOND_SERVICE
+            port: 8000
+          accessStrategies:
+            - handler: noop
+          mutators:
+            - handler: noop
+    EOF
+    ```
 
-   >**NOTE:** If you are using k3d, add `httpbin.kyma.local` to the entry with k3d IP in your system's `/etc/hosts` file.
+    >**NOTE:** If you are using k3d, add `httpbin.kyma.local` to the entry with k3d IP in your system's `/etc/hosts` file.
 
 2. Call the HTTPBin endpoints by sending a `GET` request to the HTTPBin Services:
 
-   ```bash
-   curl -ik -X GET https://httpbin-services.$DOMAIN_TO_EXPOSE_WORKLOADS/headers
-   ```
-   ```bash
-   curl -ik -X GET https://httpbin-services.$DOMAIN_TO_EXPOSE_WORKLOADS/get
-   ```
+    ```bash
+    curl -ik -X GET https://httpbin-services.$DOMAIN_TO_EXPOSE_WORKLOADS/headers
+    ```
+    ```bash
+    curl -ik -X GET https://httpbin-services. $DOMAIN_TO_EXPOSE_WORKLOADS/get
+    ```
 
-  If successful, the calls return the code `200 OK` response.
+    If successful, the calls return the code `200 OK` response.

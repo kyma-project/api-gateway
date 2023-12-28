@@ -75,7 +75,7 @@ The following instructions describe how to secure an mTLS Service.
   
 3. Call the secured endpoints of the HTTPBin Service.
 
-  Send a `GET` request to the HTTPBin Service with the client certificates that you used to create mTLS Gateway:
+    Send a `GET` request to the HTTPBin Service with the client certificates that you used to create mTLS Gateway:
 
     ```shell
     curl --key ${CLIENT_CERT_KEY_FILE} \
@@ -84,4 +84,4 @@ The following instructions describe how to secure an mTLS Service.
           -ik -X GET https://httpbin-vs.$DOMAIN_TO_EXPOSE_WORKLOADS/headers
     ```
 
-  If successful, the call returns the code `200 OK` response. If you call the Service without the proper certificates or with invalid ones, you get the code `403` response.
+    If successful, the call returns the code `200 OK` response. If you call the Service without the proper certificates or with invalid ones, you get the code `403` response.
