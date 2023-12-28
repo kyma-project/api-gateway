@@ -95,7 +95,7 @@ generate-upgrade-test-manifest: manifests kustomize
 	$(KUSTOMIZE) build config/default -o tests/integration/testsuites/upgrade/manifests/upgrade-test-generated-operator-manifest.yaml
 
 .PHONY: deploy-latest-release
-deploy-latest-release:
+deploy-latest-release: create-namespace
 	./tests/integration/scripts/deploy-latest-release-to-cluster.sh $(TARGET_BRANCH)
 
 # Generate code
@@ -120,7 +120,7 @@ test-integration: generate fmt vet envtest ## Run integration tests.
 	source ./tests/integration/env_vars.sh && go test -timeout 1h ./tests/integration -v -race -run TestIstioJwt . && go test -timeout 1h ./tests/integration -v -race -run TestOryJwt . && TEST_CONCURRENCY=1 go test -timeout 1h ./tests/integration -v -race -run TestGateway .
 
 .PHONY: test-upgrade
-test-upgrade: generate fmt vet generate-upgrade-test-manifest install-prerequisites-with-istio-from-manifest deploy-latest-release ## Run API Gateway upgrade tests.
+test-upgrade: generate fmt vet generate-upgrade-test-manifest install-istio deploy-latest-release ## Run API Gateway upgrade tests.
 	source ./tests/integration/env_vars.sh && go test -timeout 1h ./tests/integration -v -race -run TestUpgrade .
 
 .PHONY: test-custom-domain
@@ -133,16 +133,8 @@ test-custom-domain: generate fmt vet
 test-integration-gateway:
 	IS_GARDENER=$(IS_GARDENER) source ./tests/integration/env_vars.sh && TEST_CONCURRENCY=1 go test -timeout 1h ./tests/integration -run "^TestGateway$$" -v -race
 
-.PHONY: install-prerequisites
-install-prerequisites:
-	kyma deploy --ci -s main -c hack/kyma-components.yaml
-
-.PHONY: create-namespace
-create-namespace:
-	kubectl create namespace kyma-system --dry-run=client -o yaml | kubectl apply -f -
-
-.PHONY: install-prerequisites-with-istio-from-manifest
-install-prerequisites-with-istio-from-manifest: create-namespace
+.PHONY: install-istio
+install-istio: create-namespace
 	kubectl apply -f https://github.com/kyma-project/istio/releases/latest/download/istio-manager.yaml
 	kubectl apply -f https://github.com/kyma-project/istio/releases/latest/download/istio-default-cr.yaml
 	kubectl wait -n kyma-system istios/default --for=jsonpath='{.status.state}'=Ready --timeout=300s
@@ -197,8 +189,12 @@ install: manifests kustomize
 uninstall: manifests kustomize ## Uninstall CRDs from the K8s cluster specified in ~/.kube/config. Call with ignore-not-found=true to ignore resource not found errors during deletion.
 	$(KUSTOMIZE) build config/crd | kubectl delete --ignore-not-found=$(ignore-not-found) -f -
 
+.PHONY: create-namespace
+create-namespace:
+	kubectl create namespace kyma-system --dry-run=client -o yaml | kubectl apply -f -
+
 .PHONY: deploy
-deploy: manifests kustomize ## Deploy controller to the K8s cluster specified in ~/.kube/config.
+deploy: manifests kustomize create-namespace ## Deploy controller to the K8s cluster specified in ~/.kube/config.
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
 	$(KUSTOMIZE) build config/default | kubectl apply -f -
 
