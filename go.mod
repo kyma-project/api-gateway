@@ -1,11 +1,13 @@
 module github.com/kyma-project/api-gateway
 
-go 1.20
+go 1.21
+
+toolchain go1.21.1
 
 require (
 	github.com/avast/retry-go/v4 v4.5.1
 	github.com/cucumber/godog v0.13.0
-	github.com/gardener/cert-management v0.11.3
+	github.com/gardener/cert-management v0.11.4
 	github.com/gardener/external-dns-management v0.16.0
 	github.com/go-jose/go-jose/v3 v3.0.1
 	github.com/go-logr/logr v1.4.1
