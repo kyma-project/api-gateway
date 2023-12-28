@@ -16,6 +16,7 @@ limitations under the License.
 package v1beta1
 
 import (
+	"istio.io/api/networking/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 )
@@ -47,6 +48,9 @@ type APIRuleSpec struct {
 	// Specifies the Istio Gateway to be used.
 	// +kubebuilder:validation:Pattern=`^[0-9a-z-_]+(\/[0-9a-z-_]+|(\.[0-9a-z-_]+)*)$`
 	Gateway *string `json:"gateway"`
+	// Specifies CORS headers configuration that will be sent downstream
+	// +optional
+	CorsPolicy *CorsPolicy `json:"corsPolicy,omitempty"`
 	// Represents the array of Oathkeeper access rules to be applied.
 	// +kubebuilder:validation:MinItems=1
 	Rules []Rule `json:"rules"`
@@ -118,7 +122,7 @@ type Rule struct {
 	Service *Service `json:"service,omitempty"`
 	// Represents the list of allowed HTTP request methods available for the **spec.rules.path**.
 	// +kubebuilder:validation:MinItems=1
-	Methods []string `json:"methods"`
+	Methods []HttpMethod `json:"methods"`
 	// Specifies the list of access strategies.
 	// All strategies listed in [Oathkeeper documentation](https://www.ory.sh/docs/oathkeeper/pipeline/authn) are supported.
 	// +kubebuilder:validation:MinItems=1
@@ -129,6 +133,10 @@ type Rule struct {
 	// +optional
 	Timeout *Timeout `json:"timeout,omitempty"`
 }
+
+// HttpMethod specifies the HTTP request method. The list of supported methods is defined in RFC 9910: HTTP Semantics and RFC 5789: PATCH Method for HTTP.
+// +kubebuilder:validation:Enum=GET;HEAD;POST;PUT;DELETE;CONNECT;OPTIONS;TRACE;PATCH
+type HttpMethod string
 
 // Describes the status of APIRule.
 type APIRuleResourceStatus struct {
@@ -193,3 +201,41 @@ type JwtHeader struct {
 // +kubebuilder:validation:Minimum=1
 // +kubebuilder:validation:Maximum=3900
 type Timeout uint16 // We use unit16 instead of a time.Duration because there is a bug with duration that requires additional validation of the format. Issue: checking https://github.com/kubernetes/apiextensions-apiserver/issues/56
+
+const (
+	Regex  = "regex"
+	Exact  = "exact"
+	Prefix = "prefix"
+)
+
+type StringMatch []map[string]string
+
+func (s StringMatch) ToIstioStringMatchArray() (out []*v1beta1.StringMatch) {
+	for _, match := range s {
+		for key, value := range match {
+			switch key {
+			case Regex:
+				out = append(out, &v1beta1.StringMatch{MatchType: &v1beta1.StringMatch_Regex{Regex: value}})
+			case Exact:
+				out = append(out, &v1beta1.StringMatch{MatchType: &v1beta1.StringMatch_Exact{Exact: value}})
+			case Prefix:
+				fallthrough
+			default:
+				out = append(out, &v1beta1.StringMatch{MatchType: &v1beta1.StringMatch_Prefix{Prefix: value}})
+			}
+		}
+	}
+	return out
+}
+
+// CorsPolicy allows configuration of CORS headers received downstream. If this is not defined, the default values are applied.
+// If CorsPolicy is configured, CORS headers received downstream will be only those defined on the APIRule
+type CorsPolicy struct {
+	AllowHeaders     []string    `json:"allowHeaders,omitempty"`
+	AllowMethods     []string    `json:"allowMethods,omitempty"`
+	AllowOrigins     StringMatch `json:"allowOrigins,omitempty"`
+	AllowCredentials *bool       `json:"allowCredentials,omitempty"`
+	ExposeHeaders    []string    `json:"exposeHeaders,omitempty"`
+	// +kubebuilder:validation:Format=duration
+	MaxAge *metav1.Duration `json:"maxAge,omitempty"`
+}

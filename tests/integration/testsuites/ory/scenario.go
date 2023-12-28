@@ -3,6 +3,7 @@ package ory
 import (
 	_ "embed"
 	"fmt"
+	"github.com/avast/retry-go/v4"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/auth"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/helpers"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/manifestprocessor"
@@ -10,6 +11,7 @@ import (
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
 	"golang.org/x/oauth2/clientcredentials"
 	"k8s.io/client-go/dynamic"
+	"net/http"
 	"strings"
 )
 
@@ -31,10 +33,15 @@ type scenario struct {
 
 func (s *scenario) callingTheEndpointWithValidTokenShouldResultInStatusBetween(path string, tokenType string, lower, higher int) error {
 	asserter := &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher}
-	return s.callingTheEndpointWithValidToken(fmt.Sprintf("%s%s", s.Url, path), tokenType, asserter)
+	return s.callingTheEndpointWithMethodWithValidToken(fmt.Sprintf("%s%s", s.Url, path), http.MethodGet, tokenType, asserter)
 }
 
-func (s *scenario) callingTheEndpointWithValidToken(url string, tokenType string, asserter helpers.HttpResponseAsserter) error {
+func (s *scenario) callingTheEndpointWithMethodWithValidTokenShouldResultInStatusBetween(path string, method string, tokenType string, lower, higher int) error {
+	asserter := &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher}
+	return s.callingTheEndpointWithMethodWithValidToken(fmt.Sprintf("%s%s", s.Url, path), method, tokenType, asserter)
+}
+
+func (s *scenario) callingTheEndpointWithMethodWithValidToken(url string, method string, tokenType string, asserter helpers.HttpResponseAsserter) error {
 
 	requestHeaders := make(map[string]string)
 
@@ -55,7 +62,7 @@ func (s *scenario) callingTheEndpointWithValidToken(url string, tokenType string
 		return fmt.Errorf("unsupported token type: %s", tokenType)
 	}
 
-	return s.httpClient.CallEndpointWithHeadersWithRetries(requestHeaders, url, asserter)
+	return s.httpClient.CallEndpointWithHeadersAndMethod(requestHeaders, url, method, asserter)
 }
 
 func (s *scenario) thereIsAHttpbinServiceAndApiRuleIsApplied() error {
@@ -77,6 +84,11 @@ func (s *scenario) theManifestIsApplied() error {
 		return err
 	}
 	return helpers.ApplyApiRule(s.resourceManager.CreateResources, s.resourceManager.UpdateResources, s.k8sClient, testcontext.GetRetryOpts(), r)
+}
+
+func (s *scenario) callingTheEndpointWithMethodWithInvalidTokenShouldResultInStatusBetween(path string, method string, lower, higher int) error {
+	requestHeaders := map[string]string{testcontext.AuthorizationHeaderName: testcontext.AnyToken}
+	return s.httpClient.CallEndpointWithHeadersAndMethod(requestHeaders, fmt.Sprintf("%s%s", s.Url, path), method, &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher})
 }
 
 func (s *scenario) callingTheEndpointWithInvalidTokenShouldResultInStatusBetween(path string, lower, higher int) error {
@@ -118,4 +130,45 @@ func (s *scenario) teardownHttpbinService() error {
 	s.Url = ""
 
 	return nil
+}
+
+func (s *scenario) preflightEndpointCallResponseHeaders(endpoint, origin string, statusCode int, headerKey, headerValue string) error {
+	headers := map[string]string{
+		"Origin":                        origin,
+		"Access-Control-Request-Method": "GET,POST,PUT,DELETE,PATCH",
+	}
+	return retry.Do(func() error {
+		resp, err := s.httpClient.CallEndpointWithRetriesAndGetResponse(headers, nil, http.MethodOptions, s.Url+endpoint)
+		if err != nil {
+			return err
+		}
+		if resp.StatusCode != statusCode {
+			return fmt.Errorf("expected response status code %d got %d", statusCode, resp.StatusCode)
+		}
+		rhv := resp.Header.Get(headerKey)
+		if rhv != headerValue {
+			return fmt.Errorf("expected header %s with value %s, got %s", headerKey, headerValue, rhv)
+		}
+		return nil
+	}, testcontext.GetRetryOpts()...)
+}
+
+func (s *scenario) preflightEndpointCallNoResponseHeader(endpoint, origin string, statusCode int, headerKey string) error {
+	headers := map[string]string{
+		"Origin":                        origin,
+		"Access-Control-Request-Method": "GET,POST,PUT,DELETE,PATCH",
+	}
+	return retry.Do(func() error {
+		resp, err := s.httpClient.CallEndpointWithRetriesAndGetResponse(headers, nil, http.MethodOptions, s.Url+endpoint)
+		if err != nil {
+			return err
+		}
+		if resp.StatusCode != statusCode {
+			return fmt.Errorf("expected response status code %d got %d", statusCode, resp.StatusCode)
+		}
+		if len(resp.Header.Values(headerKey)) > 0 {
+			return fmt.Errorf("expected that the response will not contain %s header, but did", headerKey)
+		}
+		return nil
+	}, testcontext.GetRetryOpts()...)
 }

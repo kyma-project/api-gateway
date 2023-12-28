@@ -58,14 +58,27 @@ func (r virtualServiceCreator) Create(api *gatewayv1beta1.APIRule) (*networkingv
 			}
 		}
 
+		httpRouteBuilder.Match(builders.MatchRequest().
+			Uri().Regex(rule.Path).
+			MethodRegEx(rule.Methods...))
+
 		httpRouteBuilder.Route(builders.RouteDestination().Host(host).Port(port))
-		httpRouteBuilder.Match(builders.MatchRequest().Uri().Regex(rule.Path))
-		httpRouteBuilder.CorsPolicy(builders.CorsPolicy().
-			AllowOrigins(r.corsConfig.AllowOrigins...).
-			AllowMethods(r.corsConfig.AllowMethods...).
-			AllowHeaders(r.corsConfig.AllowHeaders...))
-		httpRouteBuilder.Headers(builders.NewHttpRouteHeadersBuilder().
-			SetHostHeader(default_domain.GetHostWithDomain(*api.Spec.Host, r.defaultDomainName)).Get())
+		if api.Spec.CorsPolicy == nil {
+			httpRouteBuilder.CorsPolicy(builders.CorsPolicy().
+				AllowOrigins(r.corsConfig.AllowOrigins...).
+				AllowMethods(r.corsConfig.AllowMethods...).
+				AllowHeaders(r.corsConfig.AllowHeaders...))
+		}
+
+		headersBuilder := builders.NewHttpRouteHeadersBuilder().
+			SetHostHeader(default_domain.GetHostWithDomain(*api.Spec.Host, r.defaultDomainName))
+
+		if api.Spec.CorsPolicy != nil {
+			httpRouteBuilder.CorsPolicy(builders.CorsPolicy().FromApiRuleCorsPolicy(*api.Spec.CorsPolicy))
+			headersBuilder.RemoveUpstreamCORSPolicyHeaders()
+		}
+
+		httpRouteBuilder.Headers(headersBuilder.Get())
 		httpRouteBuilder.Timeout(processors.GetVirtualServiceHttpTimeout(api.Spec, rule))
 		vsSpecBuilder.HTTP(httpRouteBuilder)
 

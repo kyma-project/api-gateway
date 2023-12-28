@@ -1,17 +1,18 @@
 Cypress.Commands.add('createNamespace', (namespaceName) => {
     // Go to the details of namespace
     cy.getLeftNav()
-        .contains('Namespaces', { includeShadowDom: true })
+        .contains('Namespaces')
         .click();
 
-    cy.contains('Create Namespace').click();
+    cy.contains('ui5-button', 'Create Namespace').click();
 
-    cy.get('[role=dialog]')
-        .find('input[ariaLabel="Namespace name"]:visible')
-        .type(namespaceName);
+    cy.get('ui5-input[aria-label="Namespace name"]')
+        .find('input')
+        .type(namespaceName, { force: true });
 
-    cy.get('[role=dialog]')
-        .contains('button', 'Create')
+    cy.get('ui5-dialog')
+        .contains('ui5-button', 'Create')
+        .should('be.visible')
         .click();
 });
 
@@ -20,16 +21,17 @@ Cypress.Commands.add('deleteNamespace', (namespaceName) => {
         .contains('Namespaces', { includeShadowDom: true })
         .click();
 
-    cy.get('[role="search"] [aria-label="search-input"]').type(
-        namespaceName,
-        {
-            force: true,
-        },
-    ); // use force to skip clicking (the table could re-render between the click and the typing)
+    cy.get('ui5-button[aria-label="open-search"]:visible')
+        .click()
+        .get('ui5-combobox[placeholder="Search"]')
+        .find('input')
+        .click()
+        .type(namespaceName);
 
-    cy.get('tbody tr [aria-label="Delete"]').click({ force: true });
+    cy.get('ui5-table-row [aria-label="Delete"]').click({ force: true });
 
-    cy.contains('button', 'Delete')
-        .filter(':visible', { log: false })
-        .click({ force: true });
+    cy.contains(`delete Namespace ${namespaceName}`);
+    cy.get(`[header-text="Delete Namespace"]`)
+        .find('[data-testid="delete-confirmation"]')
+        .click();
 });

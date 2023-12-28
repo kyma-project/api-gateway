@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
+	"net/http"
 	"time"
 
 	"github.com/kyma-project/api-gateway/internal/helpers"
@@ -24,6 +25,8 @@ var _ = Describe("APIRule timeout", Serial, func() {
 		testJwksUri                = "https://oauth2.example.com/.well-known/jwks.json"
 	)
 
+	var methodsGet = []gatewayv1beta1.HttpMethod{http.MethodGet}
+
 	Context("when creating an APIRule", func() {
 
 		Context("without timeout", func() {
@@ -31,7 +34,7 @@ var _ = Describe("APIRule timeout", Serial, func() {
 			defaultTimeout := time.Second * 180
 
 			testFunction := func(jwtHandler *gatewayv1beta1.Handler) {
-				rule := testRule("/img", []string{"GET"}, nil, jwtHandler)
+				rule := testRule("/img", methodsGet, nil, jwtHandler)
 
 				apiRuleName := generateTestName(testNameBase, testIDLength)
 				serviceName := testServiceNameBase
@@ -88,7 +91,7 @@ var _ = Describe("APIRule timeout", Serial, func() {
 			var timeout gatewayv1beta1.Timeout = 40
 
 			testTimeoutOnRootLevel := func(jwtHandler *gatewayv1beta1.Handler) {
-				rule := testRule("/img", []string{"GET"}, nil, jwtHandler)
+				rule := testRule("/img", methodsGet, nil, jwtHandler)
 
 				apiRuleName := generateTestName(testNameBase, testIDLength)
 				serviceName := testServiceNameBase
@@ -122,7 +125,7 @@ var _ = Describe("APIRule timeout", Serial, func() {
 				}, eventuallyTimeout).Should(Succeed())
 			}
 			testTimeoutOnRuleLevel := func(jwtHandler *gatewayv1beta1.Handler) {
-				rule := testRule("/img", []string{"GET"}, nil, jwtHandler)
+				rule := testRule("/img", methodsGet, nil, jwtHandler)
 				rule.Timeout = &timeout
 				apiRuleName := generateTestName(testNameBase, testIDLength)
 				serviceName := testServiceNameBase
@@ -199,7 +202,7 @@ var _ = Describe("APIRule timeout", Serial, func() {
 			var timeout gatewayv1beta1.Timeout = 4800
 
 			testTimeoutOnRootLevel := func(jwtHandler *gatewayv1beta1.Handler) {
-				rule := testRule("/img", []string{"GET"}, nil, jwtHandler)
+				rule := testRule("/img", methodsGet, nil, jwtHandler)
 
 				apiRuleName := generateTestName(testNameBase, testIDLength)
 				serviceName := testServiceNameBase
@@ -216,7 +219,7 @@ var _ = Describe("APIRule timeout", Serial, func() {
 				Expect(err.Error()).To(ContainSubstring("spec.timeout: Invalid value: 4800: spec.timeout in body should be less than or equal to 3900"))
 			}
 			testTimeoutOnRuleLevel := func(jwtHandler *gatewayv1beta1.Handler) {
-				rule := testRule("/img", []string{"GET"}, nil, jwtHandler)
+				rule := testRule("/img", methodsGet, nil, jwtHandler)
 				rule.Timeout = &timeout
 				apiRuleName := generateTestName(testNameBase, testIDLength)
 				serviceName := testServiceNameBase
@@ -276,7 +279,7 @@ var _ = Describe("APIRule timeout", Serial, func() {
 			var timeout gatewayv1beta1.Timeout = 0
 
 			testTimeoutOnRootLevel := func(jwtHandler *gatewayv1beta1.Handler) {
-				rule := testRule("/img", []string{"GET"}, nil, jwtHandler)
+				rule := testRule("/img", methodsGet, nil, jwtHandler)
 
 				apiRuleName := generateTestName(testNameBase, testIDLength)
 				serviceName := testServiceNameBase
@@ -293,7 +296,7 @@ var _ = Describe("APIRule timeout", Serial, func() {
 				Expect(err.Error()).To(ContainSubstring("spec.timeout: Invalid value: 0: spec.timeout in body should be greater than or equal to 1"))
 			}
 			testTimeoutOnRuleLevel := func(jwtHandler *gatewayv1beta1.Handler) {
-				rule := testRule("/img", []string{"GET"}, nil, jwtHandler)
+				rule := testRule("/img", methodsGet, nil, jwtHandler)
 				rule.Timeout = &timeout
 				apiRuleName := generateTestName(testNameBase, testIDLength)
 				serviceName := testServiceNameBase
