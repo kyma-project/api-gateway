@@ -57,7 +57,7 @@ This tutorial shows how to expose and secure Services using APIGateway Controlle
       ```shell
       export ACCESS_TOKEN_READ={ISSUED_READ_TOKEN}
       ```
-    #### Token with `write` scope
+    #### **Token with `write` scope**
   
     * Export the following value as an environment variable:
       ```shell
