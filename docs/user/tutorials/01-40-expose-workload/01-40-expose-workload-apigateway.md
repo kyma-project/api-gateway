@@ -2,7 +2,7 @@
 
 This tutorial shows how to expose an unsecured instance of the HttpBin Service and call its endpoints.
 
-   > **CAUTION:** Exposing a workload to the outside world is a potential security vulnerability, so tread carefully. In a production environment, always secure the workload you expose with [OAuth2](../01-50-expose-and-secure-a-workload/01-50-expose-and-secure-workload-oauth2.md) or [JWT](../01-50-expose-and-secure-a-workload/01-52-expose-and-secure-workload-jwt.md).
+> **CAUTION:** Exposing a workload to the outside world is a potential security vulnerability, so tread carefully. In a production environment, always secure the workload you expose with [OAuth2](../01-50-expose-and-secure-a-workload/01-50-expose-and-secure-workload-oauth2.md) or [JWT](../01-50-expose-and-secure-a-workload/01-52-expose-and-secure-workload-jwt.md).
 
 ## Prerequisites
 
@@ -11,13 +11,13 @@ This tutorial shows how to expose an unsecured instance of the HttpBin Service a
 * Depending on whether you use your custom domain or a Kyma domain, export the necessary values as environment variables:
   
   <!-- tabs:start -->
-  #### Custom Domain
+  #### **Custom Domain**
     
   ```bash
   export DOMAIN_TO_EXPOSE_WORKLOADS={DOMAIN_NAME}
   export GATEWAY=$NAMESPACE/httpbin-gateway
   ```
-  #### Kyma Domain
+  #### **Kyma Domain**
 
   ```bash
   export DOMAIN_TO_EXPOSE_WORKLOADS={KYMA_DOMAIN_NAME}

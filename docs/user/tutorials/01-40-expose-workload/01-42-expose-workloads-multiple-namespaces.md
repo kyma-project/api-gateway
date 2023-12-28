@@ -24,13 +24,13 @@ This tutorial shows how to expose Service endpoints in multiple Namespaces using
 3. Depending on whether you use your custom domain or a Kyma domain, export the necessary values as environment variables:
   
     <!-- tabs:start -->
-    #### Custom Domain
+    #### **Custom Domain**
     
     ```bash
     export DOMAIN_TO_EXPOSE_WORKLOADS={DOMAIN_NAME}
     export GATEWAY=$NAMESPACE/httpbin-gateway
     ```
-    #### Kyma Domain
+    #### **Kyma Domain**
 
     ```bash
     export DOMAIN_TO_EXPOSE_WORKLOADS={KYMA_DOMAIN_NAME}

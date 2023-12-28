@@ -2,7 +2,7 @@
 
 This tutorial shows how to expose multiple workloads on different paths by defining a Service at the root level and by defining Services on each path separately.
 
-   > **CAUTION:** Exposing a workload to the outside world is always a potential security vulnerability, so tread carefully. In a production environment, remember to secure the workload you expose with [OAuth2](../01-50-expose-and-secure-a-workload/01-50-expose-and-secure-workload-oauth2.md) or [JWT](../01-50-expose-and-secure-a-workload/01-52-expose-and-secure-workload-jwt.md).
+> **CAUTION:** Exposing a workload to the outside world is always a potential security vulnerability, so tread carefully. In a production environment, remember to secure the workload you expose with [OAuth2](../01-50-expose-and-secure-a-workload/01-50-expose-and-secure-workload-oauth2.md) or [JWT](../01-50-expose-and-secure-a-workload/01-52-expose-and-secure-workload-jwt.md).
 
 ## Prerequisites
 
@@ -16,20 +16,20 @@ This tutorial shows how to expose multiple workloads on different paths by defin
 * Set up [your custom domain](../01-10-setup-custom-domain-for-workload.md) or use a Kyma domain instead. 
 * Depending on whether you use your custom domain or a Kyma domain, export the necessary values as environment variables:
   
-    <!-- tabs:start -->
-    #### Custom domain
+  <!-- tabs:start -->
+  #### **Custom domain**
       
-    ```bash
-    export DOMAIN_TO_EXPOSE_WORKLOADS={DOMAIN_NAME}
-    export GATEWAY=$NAMESPACE/httpbin-gateway
-    ```
-    #### Kyma Domain
+  ```bash
+  export DOMAIN_TO_EXPOSE_WORKLOADS={DOMAIN_NAME}
+  export GATEWAY=$NAMESPACE/httpbin-gateway
+  ```
+  #### **Kyma Domain**
 
-    ```bash
-    export DOMAIN_TO_EXPOSE_WORKLOADS={KYMA_DOMAIN_NAME}
-    export GATEWAY=kyma-system/kyma-gateway
-    ```
-    <!-- tabs:end --> 
+  ```bash
+  export DOMAIN_TO_EXPOSE_WORKLOADS={KYMA_DOMAIN_NAME}
+  export GATEWAY=kyma-system/kyma-gateway
+  ```
+  <!-- tabs:end --> 
 
 ## Define Multiple Services on Different Paths
 
@@ -118,11 +118,11 @@ You can also define a Service at the root level. Such a definition is applied to
     ```
     In the above APIRule, the HTTPBin Service on port 8000 is defined at the `spec.service` level. This Service definition is applied to the `/headers` path. The `/get` path has the Service definition overwritten.
 
-1. To call the endpoints, send `GET` requests to the HTTPBin Services:
+2. To call the endpoints, send `GET` requests to the HTTPBin Services:
 
     ```bash
     curl -ik -X GET https://multiple-service-example.$DOMAIN_TO_EXPOSE_WORKLOADS/headers
 
     curl -ik -X GET https://multiple-service-example.$DOMAIN_TO_EXPOSE_WORKLOADS/get 
     ```
-  If successful, the calls return the code `200 OK` response.
+    If successful, the calls return the code `200 OK` response.

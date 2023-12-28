@@ -35,11 +35,13 @@ This tutorial shows how to create a self-signed root certificate authority (CA) 
    export CLIENT_CERT_KEY_FILE=${CLIENT_CERT_CN}.key
    ```
 
-2. Generate a client certificate and sign it with the root CA:
-
+2. Create a new key and CSR for the client certificate.
+   
    ```bash
-   # Create a new key and CSR for the client certificate
    openssl req -out ${CLIENT_CERT_CSR_FILE} -newkey rsa:2048 -nodes -keyout ${CLIENT_CERT_KEY_FILE} -subj "/CN=${CLIENT_CERT_CN}/O=${CLIENT_CERT_ORG}"
-   # Sign the client certificate with the Client Root CA certificate
+   ```
+
+3. Sign the client certificate with the Client Root CA certificate.
+   ```bash
    openssl x509 -req -days 365 -CA ${CLIENT_ROOT_CA_CRT_FILE} -CAkey ${CLIENT_ROOT_CA_KEY_FILE} -set_serial 0 -in ${CLIENT_CERT_CSR_FILE} -out ${CLIENT_CERT_CRT_FILE}
    ```

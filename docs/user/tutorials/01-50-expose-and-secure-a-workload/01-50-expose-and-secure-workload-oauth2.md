@@ -8,22 +8,23 @@ This tutorial shows how to expose and secure Services using APIGateway Controlle
 * Set up [your custom domain](../01-10-setup-custom-domain-for-workload.md) or use a Kyma domain instead. 
 * Depending on whether you use your custom domain or a Kyma domain, export the necessary values as environment variables:
   
-    <!-- tabs:start -->
-    #### Custom Domain
+  <!-- tabs:start -->
+  #### **Custom Domain**
       
-    ```bash
-    export DOMAIN_TO_EXPOSE_WORKLOADS={DOMAIN_NAME}
-    export GATEWAY=$NAMESPACE/httpbin-gateway
-    ```
-    #### Kyma Domain
+  ```bash
+  export DOMAIN_TO_EXPOSE_WORKLOADS={DOMAIN_NAME}
+  export GATEWAY=$NAMESPACE/httpbin-gateway
+  ```
+  #### **Kyma Domain**
 
-    ```bash
-    export DOMAIN_TO_EXPOSE_WORKLOADS={KYMA_DOMAIN_NAME}
-    export GATEWAY=kyma-system/kyma-gateway
-    ```
-    <!-- tabs:end -->
+  ```bash
+  export DOMAIN_TO_EXPOSE_WORKLOADS={KYMA_DOMAIN_NAME}
+  export GATEWAY=kyma-system/kyma-gateway
+  ```
+  <!-- tabs:end -->
 
 * Configure your client ID and client Secret using an OAuth2-compliant provider. Then, export the following values as environment variables:
+  
   ```shell
     export CLIENT_ID={CLIENT_ID}
     export CLIENT_SECRET={CLIENT_SECRET}
@@ -42,31 +43,31 @@ This tutorial shows how to expose and secure Services using APIGateway Controlle
 2. Get tokens to interact with secured resources using the client credentials flow:
 
     <!-- tabs:start -->
-    #### Token with `read` scope
+    #### **Token with `read` scope**
   
-    * Export the following value as an environment variable:
+    1. Export the following value as an environment variable:
         ```shell
         export KYMA_DOMAIN={KYMA_DOMAIN_NAME}
         ```  
-    * Get the opaque token:
+    2. Get the opaque token:
         ```shell
         curl --location --request POST "$TOKEN_URL?grant_type=client_credentials" --header "Content-Type: application/x-www-form-urlencoded" --header "Authorization: Basic $ENCODED_CREDENTIALS"
         ```
-    * Export the issued token as an environment variable:
+    3. Export the issued token as an environment variable:
         ```shell
         export ACCESS_TOKEN_READ={ISSUED_READ_TOKEN}
         ```
     #### Token with `write` scope
   
-    * Export the following value as an environment variable:
+    1. Export the following value as an environment variable:
         ```shell
         export KYMA_DOMAIN={KYMA_DOMAIN_NAME}
         ```  
-    * Get the opaque token:
+    2. Get the opaque token:
         ```shell
         curl --location --request POST "$TOKEN_URL?grant_type=client_credentials" --header "Content-Type: application/x-www-form-urlencoded" --header "Authorization: Basic $ENCODED_CREDENTIALS"
         ```
-    * Export the issued token as an environment variable:
+    3. Export the issued token as an environment variable:
         ```shell
         export ACCESS_TOKEN_WRITE={ISSUED_WRITE_TOKEN}
         ```
@@ -78,7 +79,6 @@ This tutorial shows how to expose and secure Services using APIGateway Controlle
 Expose an instance of the HTTPBin Service, and secure it with OAuth2 scopes by creating an APIRule CR in your Namespace. Run:
 
 ```shell
-   
 cat <<EOF | kubectl apply -f -
 apiVersion: gateway.kyma-project.io/v1beta1
 kind: APIRule

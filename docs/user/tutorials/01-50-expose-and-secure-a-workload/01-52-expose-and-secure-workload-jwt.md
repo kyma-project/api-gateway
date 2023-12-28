@@ -10,18 +10,18 @@ This tutorial shows how to expose and secure Services using APIGateway Controlle
 * Depending on whether you use your custom domain or a Kyma domain, export the necessary values as environment variables:
   
   <!-- tabs:start -->
-  #### Custom Domain
+  #### **Custom Domain**
       
-    ```bash
-    export DOMAIN_TO_EXPOSE_WORKLOADS={DOMAIN_NAME}
-    export GATEWAY=$NAMESPACE/httpbin-gateway
-    ```
-  #### Kyma Domain
+  ```bash
+  export DOMAIN_TO_EXPOSE_WORKLOADS={DOMAIN_NAME}
+  export GATEWAY=$NAMESPACE/httpbin-gateway
+  ```
+  #### **Kyma Domain**
 
-    ```bash
-    export DOMAIN_TO_EXPOSE_WORKLOADS={KYMA_DOMAIN_NAME}
-    export GATEWAY=kyma-system/kyma-gateway
-    ```
+  ```bash
+  export DOMAIN_TO_EXPOSE_WORKLOADS={KYMA_DOMAIN_NAME}
+  export GATEWAY=kyma-system/kyma-gateway
+  ```
   <!-- tabs:end --> 
 
 ## Expose, Secure, and Access Your Workload
@@ -61,4 +61,4 @@ This tutorial shows how to expose and secure Services using APIGateway Controlle
     curl -ik https://httpbin.$DOMAIN_TO_EXPOSE_WORKLOADS/headers -H "Authorization: Bearer $ACCESS_TOKEN"
     ```
 
-  If successful, the call returns the code `200 OK` response.
+    If successful, the call returns the code `200 OK` response.
