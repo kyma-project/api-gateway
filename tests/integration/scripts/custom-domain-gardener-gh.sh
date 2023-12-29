@@ -42,6 +42,9 @@ function cleanup() {
 # Cleanup on exit, be it successful or on fail
 trap cleanup EXIT INT
 
+# Add pwd to path to be able to use binaries downloaded in scripts
+export PATH="${PATH}:${PWD}"
+
 CLUSTER_NAME=ag-$(echo $RANDOM | md5sum | head -c 7)
 export CLUSTER_NAME
 ./tests/integration/scripts/provision-gardener-gh.sh
