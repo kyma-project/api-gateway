@@ -8,7 +8,7 @@ APIGateway Controller is part of Kyma API Gateway Operator. Its role is to manag
 - Managing Certificates and DNS entries
 - Configuring Istio Gateways
 
-## APIGateway Custom Resource
+## APIGateway CR
 
 The `apigateways.operator.kyma-project.io` CustomResourceDefinition (CRD) describes the APIGateway CR that is used to manage the API Gateway resources. To learn more, read the [APIGateway CR documentation](./custom-resources/apigateway/04-00-apigateway-custom-resource.md).
 
