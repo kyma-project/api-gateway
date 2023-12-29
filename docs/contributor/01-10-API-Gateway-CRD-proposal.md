@@ -42,7 +42,7 @@ status:
 
 ## Example Use Cases
 
-### The User Wants to use API Gateway Without Additional Configuration
+### The User Wants to Use API Gateway Without Additional Configuration
 
 The user creates an APIGateway CR with no additional configuration.
 

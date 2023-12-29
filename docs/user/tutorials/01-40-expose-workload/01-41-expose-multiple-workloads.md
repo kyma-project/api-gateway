@@ -17,7 +17,7 @@ This tutorial shows how to expose multiple workloads on different paths by defin
 * Depending on whether you use your custom domain or a Kyma domain, export the necessary values as environment variables:
   
   <!-- tabs:start -->
-  #### **Custom domain**
+  #### **Custom Domain**
       
   ```bash
   export DOMAIN_TO_EXPOSE_WORKLOADS={DOMAIN_NAME}

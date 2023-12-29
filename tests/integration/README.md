@@ -10,7 +10,7 @@ Api-gateway component tests use the [cucumber/godog](https://github.com/cucumber
   - `scope` with values `read` and `write`
   - `aud` with values `https://example.com` and `https://example.com/user`
 
-### Environment Wariables
+### Environment Variables
 
 These environment variables determine how the tests are run on both Prow and your local machine:
 
@@ -34,7 +34,7 @@ To start the test suite, run:
 make test-integration
 ```
 
-## Integration Tests Ran on `presubmit` and `postsubmit` in Prow
+## Integration Tests Run on `presubmit` and `postsubmit` in Prow
 
 Job definitions are specified [in test-infra repository](https://github.com/kyma-project/test-infra/blob/main/templates/data/api-gateway-validation.yaml).
 
