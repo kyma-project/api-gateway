@@ -1,17 +1,17 @@
 # Expose Workloads in Multiple Namespaces With a Single APIRule Definition
 
-This tutorial shows how to expose Service endpoints in multiple Namespaces using APIGateway Controller.
+This tutorial shows how to expose Service endpoints in multiple namespaces using APIGateway Controller.
 
 >**CAUTION:** Exposing a workload to the outside world causes a potential security vulnerability, so tread carefully. In a production environment, secure the workload you expose with [OAuth2](../01-50-expose-and-secure-a-workload/01-50-expose-and-secure-workload-oauth2.md) or [JWT](../01-50-expose-and-secure-a-workload/01-52-expose-and-secure-workload-jwt.md).
 
 
 ##  Prerequisites
 
-1. Create three Namespaces. Deploy two instances of the HTTPBin Service, each in a separate Namespace. To learn how to do it, follow the [Create a workload](../01-00-create-workload.md) tutorial. Reserve the third Namespace for creating an APIRule.
+1. Create three namespaces. Deploy two instances of the HTTPBin Service, each in a separate namespace. To learn how to do it, follow the [Create a workload](../01-00-create-workload.md) tutorial. Reserve the third namespace for creating an APIRule.
 
-    >**NOTE:** Remember to [enable the Istio sidecar proxy injection](https://kyma-project.io/#/istio/user/02-operation-guides/operations/02-20-enable-sidecar-injection) in each Namespace.
+    >**NOTE:** Remember to [enable the Istio sidecar proxy injection](https://kyma-project.io/#/istio/user/02-operation-guides/operations/02-20-enable-sidecar-injection) in each namespace.
 
-1. Export the Namespaces' and Services' names as environment variables:
+1. Export the namespaces' and Services' names as environment variables:
 
     ```bash
     export FIRST_SERVICE={SERVICE_NAME}
@@ -40,7 +40,7 @@ This tutorial shows how to expose Service endpoints in multiple Namespaces using
 
 ## Expose and Access Your Workloads in Multiple Namespaces
 
-1. Expose the HTTPBin Services in their respective Namespaces by creating an APIRule custom resource (CR) in its own Namespace. Run:
+1. Expose the HTTPBin Services in their respective namespaces by creating an APIRule custom resource (CR) in its own namespace. Run:
 
     ```bash
     cat <<EOF | kubectl apply -f -

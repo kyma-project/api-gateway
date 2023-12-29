@@ -26,7 +26,7 @@ This tutorial shows how to expose and secure Services using APIGateway Controlle
 
 ## Expose, Secure, and Access Your Workload
 
-1. Expose the Service and secure it by creating an APIRule CR in your Namespace. Run:
+1. Expose the Service and secure it by creating an APIRule CR in your namespace. Run:
 
     ```bash
     cat <<EOF | kubectl apply -f -

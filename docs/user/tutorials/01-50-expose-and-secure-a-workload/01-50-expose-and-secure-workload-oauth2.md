@@ -76,7 +76,7 @@ This tutorial shows how to expose and secure Services using APIGateway Controlle
 
 ## Expose and Secure Your Workload
 
-Expose an instance of the HTTPBin Service, and secure it with OAuth2 scopes by creating an APIRule CR in your Namespace. Run:
+Expose an instance of the HTTPBin Service, and secure it with OAuth2 scopes by creating an APIRule CR in your namespace. Run:
 
 ```shell
 cat <<EOF | kubectl apply -f -

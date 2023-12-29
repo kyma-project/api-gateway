@@ -7,13 +7,13 @@ This tutorial shows how to set up a custom domain and prepare a certificate requ
 ## Prerequisites
 
 * Deploy [a sample HTTPBin Service](./01-00-create-workload.md).
-* If you use a cluster not managed by Gardener, install the [External DNS Management](https://github.com/gardener/external-dns-management#quick-start) and [Certificate Management](https://github.com/gardener/cert-management) components manually in a dedicated Namespace.
+* If you use a cluster not managed by Gardener, install the [External DNS Management](https://github.com/gardener/external-dns-management#quick-start) and [Certificate Management](https://github.com/gardener/cert-management) components manually in a dedicated namespace.
 
 ## Steps
 
-1. Create a Secret containing credentials for the DNS cloud service provider account in your Namespace.
+1. Create a Secret containing credentials for the DNS cloud service provider account in your namespace.
 
-    * Choose your DNS cloud service provider and create a Secret in your Namespace. To learn how to do it, follow [the guidelines](https://github.com/gardener/external-dns-management/blob/master/README.md#external-dns-management) provided in the External DNS Management documentation. 
+    * Choose your DNS cloud service provider and create a Secret in your namespace. To learn how to do it, follow [the guidelines](https://github.com/gardener/external-dns-management/blob/master/README.md#external-dns-management) provided in the External DNS Management documentation. 
     * Export the name of the created Secret as an environment variable:
 
       ```bash

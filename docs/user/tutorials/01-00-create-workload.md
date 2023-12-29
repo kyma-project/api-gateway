@@ -4,7 +4,7 @@ This tutorial explains how to create a sample HTTPBin Service deployment.
 
 ## Steps
 
-1. Create a Namespace and export its value as an environment variable. Run:
+1. Create a namespace and export its value as an environment variable. Run:
 
     ```bash
     export NAMESPACE={NAMESPACE_NAME}

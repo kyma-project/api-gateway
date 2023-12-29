@@ -6,14 +6,14 @@ When you try to create an Issuer custom resource (CR) using `cert.gardener.cloud
 
 ## Cause
 
-The Namespace in which the Issuer CR was created is incorrect. By default, `cert-management` watches the `default` Namespace for all Issuer CRs.
+The namespace in which the Issuer CR was created is incorrect. By default, `cert-management` watches the `default` namespace for all Issuer CRs.
 
 ## Remedy
 
-Make sure that you created the Issuer CR in the `default` Namespace. Run:
+Make sure that you created the Issuer CR in the `default` namespace. Run:
 
 ```bash
 kubectl get issuers -A
 ```
 
-If you want to create the Issuer CR in a different Namespace, adjust the `cert-management` settings during the installation.
+If you want to create the Issuer CR in a different namespace, adjust the `cert-management` settings during the installation.

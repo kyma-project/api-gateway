@@ -35,7 +35,7 @@ This tutorial shows how to expose multiple workloads on different paths by defin
 
 Follow the instructions to expose the instances of the HTTPBin Service on different paths at the `spec.rules` level without a root Service defined.
 
-1. To expose the instances of the HTTPBin Service, create an APIRule custom resource (CR) in your Namespace. Run:
+1. To expose the instances of the HTTPBin Service, create an APIRule custom resource (CR) in your namespace. Run:
 
     ```bash
     cat <<EOF | kubectl apply -f -
@@ -84,7 +84,7 @@ You can also define a Service at the root level. Such a definition is applied to
  
  > **NOTE:** Services definitions at the `spec.rules` level have precedence over Service definition at the `spec.service` level.
 
-1. To expose the instances of the HTTPBin Service, create an APIRule CR in your Namespace. Run:
+1. To expose the instances of the HTTPBin Service, create an APIRule CR in your namespace. Run:
 
     ```shell
     cat <<EOF | kubectl apply -f -

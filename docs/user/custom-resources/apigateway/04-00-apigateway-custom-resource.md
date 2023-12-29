@@ -18,7 +18,7 @@ This table lists the parameters of the given resource together with their descri
 
 | Parameter             | Type     | Description                                                                                                             |
 |-----------------------|----------|-------------------------------------------------------------------------------------------------------------------------|
-| **enableKymaGateway** | **NO**   | Specifies whether the default [Kyma Gateway](./04-10-kyma-gateway.md), named `kyma-gateway`, should be created in the `kyma-system` Namespace. |
+| **enableKymaGateway** | **NO**   | Specifies whether the default [Kyma Gateway](./04-10-kyma-gateway.md), named `kyma-gateway`, should be created in the `kyma-system` namespace. |
 
 **Status:**
 

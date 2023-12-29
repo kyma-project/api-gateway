@@ -1,6 +1,6 @@
 # APIGateway Kyma Gateway
 
-Kyma Gateway is an [Istio Gateway CR](https://istio.io/latest/docs/reference/config/networking/gateway/) named `kyma-gateway` that is located in the `kyma-system` Namespace. Istio Gateway describes which ports and protocols should be exposed for a particular domain.
+Kyma Gateway is an [Istio Gateway CR](https://istio.io/latest/docs/reference/config/networking/gateway/) named `kyma-gateway` that is located in the `kyma-system` namespace. Istio Gateway describes which ports and protocols should be exposed for a particular domain.
 The configuration of Kyma Gateway varies depending on whether you use a managed SAP BTP, Kyma runtime cluster, or an open-source Kyma cluster.
 
 ## SAP BTP, Kyma Runtime
