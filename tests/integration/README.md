@@ -34,9 +34,9 @@ To start the test suite, run:
 make test-integration
 ```
 
-## Integration Tests Run on `presubmit` and `postsubmit` in Prow
+## CI/CD Integration Tests
 
-Job definitions are specified [in test-infra repository](https://github.com/kyma-project/test-infra/blob/main/templates/data/api-gateway-validation.yaml).
+For more information, see [CI/CD documentation](../../docs/contributor/04-30-ci-cd.md).
 
 ## Usage for Custom Domain Test Suite
 

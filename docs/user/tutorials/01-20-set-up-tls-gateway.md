@@ -1,4 +1,4 @@
-# Set up a TLS Gateway
+# Set Up a TLS Gateway
 
 This tutorial shows how to set up a TLS Gateway in both manual and simple modes. It also explains how to configure authentication for an mTLS Gateway based on certificate details.
 

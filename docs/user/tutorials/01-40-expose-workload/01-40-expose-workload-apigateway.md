@@ -61,7 +61,7 @@ Follow these steps:
     EOF
     ```
   
-?> **NOTE:** If you are using k3d, add `httpbin.kyma.local` to the entry with k3d IP in your system's `/etc/hosts` file. 
+    > **NOTE:** If you are using k3d, add `httpbin.kyma.local` to the entry with k3d IP in your system's `/etc/hosts` file. 
 
     > **NOTE:** If you don't specify a namespace for your Service, the default APIRule namespace is used.
 
