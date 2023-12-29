@@ -37,9 +37,9 @@ This table lists all parameters of APIRule CRD together with their descriptions:
 | **rules.timeout**               |  **NO**   | Specifies the timeout, in seconds, for HTTP requests made to **spec.rules.path**. The maximum timeout is limited to 3900 seconds (65 minutes). Timeout definitions set at this level take precedence over any timeout defined at the **spec.timeout** level.                                                                                            |
 
 !> **CAUTION:** If `service` is not defined at the **spec.service** level, all defined Access Rules must have `service`
-> defined at **spec.rules.service** level. Otherwise, the validation fails.
+!> defined at the **spec.rules.service** level. Otherwise, the validation fails.
 
-!> **IMPORTANT:** Having both the Oathkeeper and Istio `jwt` access strategies defined is not supported. Access
+> **CAUTION:** Having both the Oathkeeper and Istio `jwt` access strategies defined is not supported. Access
 > strategies `noop` or `allow` cannot be used with any other access strategy on the same **spec.rules.path**.
 
 **Status:**
