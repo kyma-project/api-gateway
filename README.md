@@ -66,5 +66,16 @@ To learn how to use the API Gateway module, read the documentation in the [`user
 If you are interested in the detailed documentation of the Kyma API Gateway Operator's design and technical aspects, check the [`contributor`](./docs/contributor/) directory.
 
 ## Contributing
+<!--- mandatory section - do not change this! --->
 
-To contribute to this project, follow the general [contributing](https://github.com/kyma-project/community/blob/main/docs/contributing/02-contributing.md) guidelines.
+See the [Contributing](CONTRIBUTING.md) guidelines.
+
+## Code of Conduct
+<!--- mandatory section - do not change this! --->
+
+See the [Code of Conduct](CODE_OF_CONDUCT.md) document.
+
+## Licensing
+<!--- mandatory section - do not change this! --->
+
+See the [license](./LICENSE) file.
