@@ -43,7 +43,7 @@ runs:
     - name: Prepare DNS SA secret
       shell: bash
       run: |
-        echo ${{ inputs.dns_secret_json }} >> service-account.json
+        echo "${{ inputs.dns_secret_json }}" >> service-account.json
     - name: Run integration tests
       shell: bash
       env:
