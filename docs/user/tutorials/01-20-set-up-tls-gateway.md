@@ -1,10 +1,10 @@
-# Set up a TLS Gateway
+# Set Up a TLS Gateway
 
 This tutorial shows how to set up a TLS Gateway in both manual and simple modes. It also explains how to configure authentication for an mTLS Gateway based on certificate details.
 
 ## Prerequisites
 
-* Deploy [a sample HttpBin Service](./01-00-create-workload.md).
+* Deploy [a sample HTTPBin Service](./01-00-create-workload.md).
 * Set up [your custom domain](./01-10-setup-custom-domain-for-workload.md) and export the following values as environment variables:
 
   ```bash
@@ -12,7 +12,8 @@ This tutorial shows how to set up a TLS Gateway in both manual and simple modes.
   export GATEWAY=$NAMESPACE/httpbin-gateway
   ```
    
-## Set up a TLS Gateway in simple mode
+
+## Set Up a TLS Gateway in Simple Mode
 
 To create a TLS Gateway in simple mode, run:
 
@@ -40,9 +41,9 @@ To create a TLS Gateway in simple mode, run:
   EOF        
   ```
     
-## Set up a TLS Gateway in mutual mode
+## Set Up a TLS Gateway in Mutual Mode
   
-  1. Create a mutual TLS Gateway. Run:
+1. Create a mutual TLS Gateway. Run:
     
     ```bash
     cat <<EOF | kubectl apply -f -
@@ -76,13 +77,13 @@ To create a TLS Gateway in simple mode, run:
             - '*.${DOMAIN_TO_EXPOSE_WORKLOADS}'
     EOF
     ```
-  2. Export the following value as an environment variable:
+2. Export the following value as an environment variable:
 
     ```bash
     export CLIENT_ROOT_CA_CRT_ENCODED=$(cat ${CLIENT_ROOT_CA_CRT_FILE}| base64)
     ```
 
-  3. Add client root CA to the CA cert bundle Secret for mTLS Gateway. Run:
+3. Add client root CA to the CA cert bundle Secret for mTLS Gateway. Run:
 
     ```bash
     cat <<EOF | kubectl apply -f -

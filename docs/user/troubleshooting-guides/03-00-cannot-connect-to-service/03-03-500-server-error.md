@@ -4,36 +4,36 @@
 
 You have a deployed APIRule that looks similar to the following one: 
 
-  ```bash
-    apiVersion: gateway.kyma-project.io/v1beta1
-    kind: APIRule
-    metadata:
-      name: sample-apirule
-      namespace: $NAMESPACE
-    spec:
-      gateway: kyma-system/kyma-gateway
-      host: httpbin.$DOMAIN
-      service:
-        name: httpbin
-        port: 8000
-      rules:
-        - path: /.*
-          methods: ["GET"]
-          accessStrategies:
-            - handler: noop
-        - path: /headers
-          methods: ["GET"]
-          accessStrategies:
-            - handler: oauth2_introspection
-              config:
-                required_scope: ["read"]
-  ```
+```bash
+apiVersion: gateway.kyma-project.io/v1beta1
+kind: APIRule
+metadata:
+  name: sample-apirule
+  namespace: $NAMESPACE
+spec:
+  gateway: kyma-system/kyma-gateway
+  host: httpbin.$DOMAIN
+  service:
+    name: httpbin
+    port: 8000
+  rules:
+    - path: /.*
+      methods: ["GET"]
+      accessStrategies:
+        - handler: noop
+    - path: /headers
+      methods: ["GET"]
+      accessStrategies:
+        - handler: oauth2_introspection
+          config:
+            required_scope: ["read"]
+```
 The APIRule is configured under one host URL with the `/*` wildcard, the specific `/headers` path, and the same `GET` methods, which use different handlers.
 When you try to reach your Service, you get the `500 Internal Server Error` response:
 
-  ```bash
-  {"error":{"code":500,"status":"Internal Server Error","request":"e84400db-16b3-4818-9370-f10a6b4f3876","message":"An internal server error occurred, please contact the system administrator"}}
-  ```
+```bash
+{"error":{"code":500,"status":"Internal Server Error","request":"e84400db-16b3-4818-9370-f10a6b4f3876","message":"An internal server error occurred, please contact the system administrator"}}
+```
 
 ## Cause
 
@@ -46,7 +46,7 @@ To resolve the issue, follow these guidelines:
 
 - Set different hosts for different access strategies:
 
-  ```bash
+    ```bash
     apiVersion: gateway.kyma-project.io/v1beta1
     kind: APIRule
     metadata:
@@ -63,9 +63,9 @@ To resolve the issue, follow these guidelines:
           methods: ["GET"]
           accessStrategies:
             - handler: noop
-  ```
+    ```
 
-  ```bash
+    ```bash
     apiVersion: gateway.kyma-project.io/v1beta1
     kind: APIRule
     metadata:
@@ -84,11 +84,11 @@ To resolve the issue, follow these guidelines:
             - handler: oauth2_introspection
               config:
                 required_scope: ["read"]
-  ```
+    ```
 
 - Set different methods for the specified paths:
 
-  ```bash
+    ```bash
     apiVersion: gateway.kyma-project.io/v1beta1
     kind: APIRule
     metadata:
@@ -111,7 +111,7 @@ To resolve the issue, follow these guidelines:
             - handler: oauth2_introspection
               config:
                 required_scope: ["read"]
-  ```
+    ```
 
 
 When Oathkeeper throws the `503 Service Unavailable` or `502 Bad Gateway` responses, try to restart the Pod in order to resolve the issue. If you want to investigate what caused the error, follow these steps:
@@ -126,10 +126,10 @@ When Oathkeeper throws the `503 Service Unavailable` or `502 Bad Gateway` respon
 
     ```bash
    kubectl top pods -n kyma-system -l app.kubernetes.io/name=oathkeeper
-   ```
+    ```
 
 3. Access the logs to check for other Oathkeeper errors:
 
     ```bash
     kubectl logs -n kyma-system -l app.kubernetes.io/name=oathkeeper  -c oathkeeper
-   ```
+    ```

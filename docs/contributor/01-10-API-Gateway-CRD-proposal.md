@@ -1,8 +1,8 @@
-# API Gateway CRD proposal
+# API Gateway CRD Proposal
 
 This document describes the proposed API for installing the APIGateway component.
 
-## Proposed CR structure
+## Proposed CR Structure
 
 ```yaml
 kind: APIGateway
@@ -40,9 +40,9 @@ status:
 
 ```
 
-## Example use cases
+## Example Use Cases
 
-### The user wants to use API Gateway with no additional configuration
+### The User Wants to Use API Gateway Without Additional Configuration
 
 The user creates an APIGateway CR with no additional configuration.
 
@@ -54,7 +54,7 @@ name: default
 
 By default, APIGateway generates a Certificate and DNSEntry for the default Kyma domain. With this configuration, the user can expose their workloads under the Kyma domain.
 
-### The managed Kyma user wants to expose their workloads under a custom domain
+### The SAP BTP, Kyma Runtime User Wants to Expose Their Workloads Under a Custom Domain
 
 Prerequisite:
 - The DNS secret `dns-secret` exists in the `my-namespace` namespace.
@@ -81,7 +81,7 @@ Because it is a managed Kyma cluster (SKR), a DNSProvider with the provided Secr
 
 The user can now expose their Services under the hosts `test.example.com` and `test2.example.com`.
 
-### The user wants to expose their Mongo instance
+### The User Wants To Expose Their Mongo Instance
 
 The user configures API Gateway as follows: 
 

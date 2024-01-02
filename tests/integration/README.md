@@ -1,4 +1,4 @@
-# Api-gateway component tests
+# API Gateway Component Tests
 
 Api-gateway component tests use the [cucumber/godog](https://github.com/cucumber/godog) library.
 
@@ -10,7 +10,7 @@ Api-gateway component tests use the [cucumber/godog](https://github.com/cucumber
   - `scope` with values `read` and `write`
   - `aud` with values `https://example.com` and `https://example.com/user`
 
-### Environment variables
+### Environment Variables
 
 These environment variables determine how the tests are run on both Prow and your local machine:
 
@@ -26,7 +26,7 @@ export CLIENT_SECRET="<YOUR_CLIENT_SECRET>"
 export OIDC_ISSUER_URL="<YOUR_OIDC_ISSUER_URL>"
 ```
 
-## Usage for standard API Gateway test suite
+## Usage for Standard API Gateway Test Suite
 
 To start the test suite, run:
 
@@ -34,13 +34,13 @@ To start the test suite, run:
 make test-integration
 ```
 
-## Integration tests run on `presubmit` and `postsubmit` in Prow
+## CI/CD Integration Tests
 
-Job definitions are specified [in test-infra repository](https://github.com/kyma-project/test-infra/blob/main/templates/data/api-gateway-validation.yaml).
+For more information, see [CI/CD documentation](../../docs/contributor/04-30-ci-cd.md).
 
-## Usage for custom-domain test suite
+## Usage for Custom Domain Test Suite
 
-### Set the custom domain environment variables
+### Set the Custom Domain Environment Variables
 
 If you are using Gardener, make sure that your Kubernetes cluster has the `shoot-cert-service` and `shoot-dns-service` extensions enabled. The desired shoot specification is mentioned in the description of this [issue](https://github.com/kyma-project/control-plane/issues/875).
 Obtain a service account access key with permissions to maintain custom domain DNS entries and export it as a JSON file. To learn how to do it, follow this [guide](https://cloud.google.com/iam/docs/keys-create-delete).
@@ -50,7 +50,7 @@ Set the following environment variables:
 - `TEST_CUSTOM_DOMAIN` - your custom domain, for example, `custom.domain.build.kyma-project.io`
 - `TEST_SA_ACCESS_KEY_PATH` - the path to the service account access key exported as a JSON file, for example, `/Users/user/gcp/service-account.json`
 
-### Run the tests
+### Run the Tests
 
 To start the test suite, run:
 

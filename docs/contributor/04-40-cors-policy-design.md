@@ -1,4 +1,4 @@
-# Proposal for APIRule API CORS headers configuration in IstioVirtual Service
+# Proposal for APIRule API CORS Headers Configuration in IstioVirtual Service
 
 ## API Proposal
 
@@ -22,9 +22,9 @@ type CorsPolicy struct {
 }
 ```
 
-## Security considerations
+## Security Considerations
 
-### Default values
+### Default Values
 
 In the most secure scenario, CORS should be configured not to respond with any of the **Access-Control** headers. However, for backward compatibility with the current implementation, it is important to note that the current configuration for all APIRules is as follows:
 ```yaml
@@ -36,7 +36,7 @@ CorsAllowHeaders: "Authorization,Content-Type,*"
 **Decision**
 The default values should be empty to ensure the secure by default configuration. The transition to that default should be gradual, with the current CORS configuration staying in place for now.
 
-### CORS headers sanitization
+### CORS Headers Sanitization
 
 If a workload provides its own CORS headers, Istio Ingress Gateway does not sanitize or change the CORS headers unless the request origin matches one of the origins specified in the **AllowOrigins** configuration of the VirtualService. This can pose a security risk because it may be unexpected for the server response to contain different headers than those defined in the APIRule.
 

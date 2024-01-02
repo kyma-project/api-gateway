@@ -1,4 +1,4 @@
-# APIGateway custom resource
+# APIGateway Custom Resource
 
 The `apigateways.operator.kyma-project.io` CustomResourceDefinition (CRD) describes the kind and the format of data that APIGateway Controller uses to configure the API Gateway resources. Applying the custom resource (CR) triggers the installation of API Gateway resources, and deleting it triggers the uninstallation of those resources. The default CR has the name `default`.
 
@@ -18,7 +18,7 @@ This table lists the parameters of the given resource together with their descri
 
 | Parameter             | Type     | Description                                                                                                             |
 |-----------------------|----------|-------------------------------------------------------------------------------------------------------------------------|
-| **enableKymaGateway** | **NO**   | Specifies whether the default [Kyma Gateway](./04-10-kyma-gateway.md), named `kyma-gateway`, should be created in the `kyma-system` Namespace. |
+| **enableKymaGateway** | **NO**   | Specifies whether the default [Kyma Gateway](./04-10-kyma-gateway.md), named `kyma-gateway`, should be created in the `kyma-system` namespace. |
 
 **Status:**
 

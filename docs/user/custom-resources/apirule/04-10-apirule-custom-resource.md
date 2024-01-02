@@ -1,4 +1,4 @@
-# APIRule custom resource
+# APIRule Custom Resource <!-- {docsify-ignore-all} -->
 
 The `apirules.gateway.kyma-project.io` CustomResourceDefinition (CRD) describes the kind and the format of data the
 APIGateway Controller listens for. To get the up-to-date CRD in the `yaml` format, run the following command:
@@ -7,7 +7,7 @@ APIGateway Controller listens for. To get the up-to-date CRD in the `yaml` forma
 kubectl get crd apirules.gateway.kyma-project.io -o yaml
 ```
 
-## Specification of APIRule custom resource <!-- {docsify-ignore} -->
+## Specification of APIRule Custom Resource
 
 This table lists all parameters of APIRule CRD together with their descriptions:
 
@@ -25,7 +25,7 @@ This table lists all parameters of APIRule CRD together with their descriptions:
 | **corsPolicy.maxAge**           |  **NO**   | Specifies the maximum age of CORS policy cache. The value is provided in the **Access-Control-Max-Age** CORS header.                                                                                                                                                                                                                                                              |
 | **host**                        |  **YES**  | Specifies the Service's communication address for inbound external traffic. If only the leftmost label is provided, the default domain name will be used.                                                                                                                                                                                               |
 | **service.name**                |  **NO**   | Specifies the name of the exposed Service.                                                                                                                                                                                                                                                                                                              |
-| **service.namespace**           |  **NO**   | Specifies the Namespace of the exposed Service.                                                                                                                                                                                                                                                                                                         |
+| **service.namespace**           |  **NO**   | Specifies the namespace of the exposed Service.                                                                                                                                                                                                                                                                                                         |
 | **service.port**                |  **NO**   | Specifies the communication port of the exposed Service.                                                                                                                                                                                                                                                                                                |
 | **timeout**                     |  **NO**   | Specifies the timeout for HTTP requests in seconds for all Oathkeeper Access Rules. The value can be overridden for each Access Rule. The maximum timeout is limited to 3900 seconds (65 minutes). </br> If no timeout is specified, the default timeout of 180 seconds applies.                                                                        |
 | **rules**                       |  **YES**  | Specifies the list of Oathkeeper Access Rules.                                                                                                                                                                                                                                                                                                          |
@@ -36,8 +36,7 @@ This table lists all parameters of APIRule CRD together with their descriptions:
 | **rules.accessStrategies**      |  **YES**  | Specifies the list of access strategies. Supported are the [Oathkeeper's](https://www.ory.sh/docs/next/oathkeeper/pipeline/authn) `oauth2_introspection`, `jwt`, `noop` and `allow`. We also support `jwt` as [Istio](https://istio.io/latest/docs/tasks/security/authorization/authz-jwt/) access strategy.                                            |
 | **rules.timeout**               |  **NO**   | Specifies the timeout, in seconds, for HTTP requests made to **spec.rules.path**. The maximum timeout is limited to 3900 seconds (65 minutes). Timeout definitions set at this level take precedence over any timeout defined at the **spec.timeout** level.                                                                                            |
 
-> **CAUTION:** If `service` is not defined at the **spec.service** level, all defined Access Rules must have `service`
-> defined at **spec.rules.service** level. Otherwise, the validation fails.
+> **CAUTION:** If `service` is not defined at the **spec.service** level, all defined Access Rules must have `service` defined at the **spec.rules.service** level. Otherwise, the validation fails.
 
 > **CAUTION:** Having both the Oathkeeper and Istio `jwt` access strategies defined is not supported. Access
 > strategies `noop` or `allow` cannot be used with any other access strategy on the same **spec.rules.path**.
@@ -66,7 +65,7 @@ The following status codes describe VirtualServices and Oathkeeper Access Rules:
 | **SKIPPED** | Skipped creating a resource. |
 | **ERROR**   | Resource not created.        |
 
-## Sample custom resource <!-- {docsify-ignore} -->
+## Sample Custom Resource
 
 This is a sample custom resource (CR) that the APIGateway Controller listens for to expose a Service. The following
 example has the **rules** section specified, which makes APIGateway Controller create an Oathkeeper Access Rule for the

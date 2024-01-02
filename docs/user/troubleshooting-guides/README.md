@@ -1,4 +1,4 @@
-# Troubleshooting guides
+# Troubleshooting Guides
 
 The troubleshooting section aims to identify the most common recurring problems the users face when they expose APIs, as well as the most suitable solutions to these problems.
 

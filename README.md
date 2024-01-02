@@ -2,7 +2,7 @@
 
 # API Gateway
 
-## What is API Gateway?
+## What Is API Gateway?
 
 API Gateway provides functionalities that allow you to expose and secure APIs by using [Ory Oathkeeper](https://www.ory.sh/docs/oathkeeper) and the [Istio service mesh](https://istio.io/) resources.
 
@@ -21,10 +21,10 @@ To use API Gateway, you must install Istio and Ory Oathkeeper in your cluster. L
 ### Procedure
 1. Create the `kyma-system` namespace and label it with `istio-injection=enabled`:
 
-    ```bash
-    kubectl create namespace kyma-system
-    kubectl label namespace kyma-system istio-injection=enabled --overwrite
-    ```
+   ```bash
+   kubectl create namespace kyma-system
+   kubectl label namespace kyma-system istio-injection=enabled --overwrite
+   ```
 
 2. To install API Gateway, you must install the latest version of Kyma API Gateway Operator and API Gateway CustomResourceDefinition first. Run:
 
@@ -59,12 +59,23 @@ To use API Gateway, you must install Istio and Ory Oathkeeper in your cluster. L
 
 For more installation options, visit the [installation guide](./docs/contributor/01-00-installation.md).
 
-## Useful links
+## Useful Links
 
 To learn how to use the API Gateway module, read the documentation in the [`user`](./docs/user/) directory.
 
 If you are interested in the detailed documentation of the Kyma API Gateway Operator's design and technical aspects, check the [`contributor`](./docs/contributor/) directory.
 
 ## Contributing
+<!--- mandatory section - do not change this! --->
 
-To contribute to this project, follow the general [contributing](https://github.com/kyma-project/community/blob/main/docs/contributing/02-contributing.md) guidelines.
+See the [Contributing](CONTRIBUTING.md) guidelines.
+
+## Code of Conduct
+<!--- mandatory section - do not change this! --->
+
+See the [Code of Conduct](CODE_OF_CONDUCT.md) document.
+
+## Licensing
+<!--- mandatory section - do not change this! --->
+
+See the [license](./LICENSE) file.

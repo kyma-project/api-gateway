@@ -1,4 +1,4 @@
-# Issues when creating an APIRule - various reasons
+# Issues When Creating an APIRule - Various Reasons
 
 ## Symptom
 
@@ -18,7 +18,7 @@ To check the error message of the APIRule resource, run:
 kubectl get apirule -n <namespace> <api-rule-name> -o=jsonpath='{.status.APIRuleStatus}'
 ```
 ---
-## JWT handler's **trusted_issuers** configuration is missing
+## JWT Handler's **trusted_issuers** Configuration Is Missing
 ### Cause
 
 The following APIRule is missing the **trusted_issuers** configuration for the JWT handler:
@@ -55,7 +55,7 @@ spec:
             trusted_issuers: ["https://dev.kyma.local"]
 ```
 ---
-## Invalid **trusted_issuers** for the JWT handler
+## Invalid **trusted_issuers** for the JWT Handler
 ### Cause
 
 Here's an example of an APIRule with the **trusted_issuers** URL configured:
@@ -100,7 +100,7 @@ spec:
             trusted_issuers: ["https://dev.kyma.local"]
 ```
 ---
-## Unsupported handlers' combination
+## Unsupported Handlers' Combination
 ### Cause
 
 The following APIRule has both `allow` and `jwt` handlers defined on the same path:
@@ -129,7 +129,7 @@ The handlers' combination in the above example is not supported. If an APIRule h
 Decide on one configuration you want to use. You can either `allow` access to the specific path or restrict it using the JWT security token. Defining both configuration methods on the same path is not allowed.
 
 ---
-## Occupied host
+## Occupied Host
 ### Cause
 
 The following APIRules use the same host:
@@ -158,7 +158,7 @@ spec:
 ```
 
 ---
-## Configuration of `noop` and `allow` handlers 
+## Configuration of `noop` and `allow` Handlers 
 ### Cause
 
 In the following APIRule, the `noop` handler has the **trusted-issuers** field configured:
