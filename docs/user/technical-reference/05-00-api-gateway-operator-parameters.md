@@ -1,8 +1,8 @@
-# Kyma API Gateway Operator parameters 
+# Kyma API Gateway Operator Parameters 
 
 You can configure [APIGateway Controller](../00-10-overview-api-gateway-controller.md) and [APIRule Controller](../00-20-overview-api-rule-controller.md) using various parameters. This document contains all the options.
 
-## Reconciliation interval
+## Reconciliation Interval
 
 ### APIGateway
 Kyma API Gateway Operator reconciles the APIGateway custom resource every 10 hours or whenever it is changed.
@@ -10,7 +10,7 @@ Kyma API Gateway Operator reconciles the APIGateway custom resource every 10 hou
 ### APIRule
 By default, Kyma API Gateway Operator reconciles APIRules every 60 minutes or whenever the APIRule is changed. You can adjust this interval by modifying the operator's parameters. For example, you can set the **-reconciliation-interval** parameter to `120s`.
 
-## All configuration parameters
+## All Configuration Parameters
 
 | Name                          | Required | Description                                                                                                           | Example values                                   |
 |-------------------------------|:--------:|-----------------------------------------------------------------------------------------------------------------------|--------------------------------------------------|

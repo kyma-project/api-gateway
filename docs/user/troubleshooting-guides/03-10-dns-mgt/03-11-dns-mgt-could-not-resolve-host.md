@@ -1,4 +1,4 @@
-# Could not resolve host
+# Could Not Resolve Host
 
 ## Symptom
 
@@ -20,9 +20,9 @@ The error could result from:
 
 - Wait for the DNSEntry custom resource to be created. Check if it has the `Ready` status using the following command:
 
-```bash
-kubectl get dnsentry.dns.gardener.cloud dns-entry
-```
+    ```bash
+    kubectl get dnsentry.dns.gardener.cloud dns-entry
+    ```
 
 - Turn the VPN off.
 

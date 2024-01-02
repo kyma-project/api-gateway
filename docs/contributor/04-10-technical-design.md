@@ -4,6 +4,7 @@ API Gateway Operator consists of two controllers that reconcile different CRs. T
 API Gateway Operator has a dependency on [Istio](https://istio.io/) and [Ory Oathkeeper](https://www.ory.sh/docs/oathkeeper), and it installs Ory Oathkeeper itself.
 
 The following diagram illustrates the APIRule reconciliation process and the resources created in the process:
+
 ![Kyma API Gateway Overview](../assets/operator-contributor-skr-overview.svg)
 
 ## APIGateway Controller

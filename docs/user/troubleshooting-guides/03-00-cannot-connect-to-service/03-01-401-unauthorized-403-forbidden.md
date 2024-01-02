@@ -32,7 +32,7 @@ Make sure that you are using an access token with proper scopes, and it is activ
 
 3. Generate a [new JWT](../../tutorials/01-50-expose-and-secure-a-workload/01-51-get-jwt.md) if needed.
 
-### Opaque access token
+### Opaque Access Token
 
 1. Export the credentials of your Oauth2 client as environment variables:
 

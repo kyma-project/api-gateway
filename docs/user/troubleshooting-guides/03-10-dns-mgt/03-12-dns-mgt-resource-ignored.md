@@ -1,4 +1,4 @@
-# Resource ignored by the controller
+# Resource Ignored by the Controller
 
 ## Symptom
 

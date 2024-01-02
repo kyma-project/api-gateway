@@ -1,4 +1,4 @@
-# Set up a custom identity provider
+# Set Up a Custom Identity Provider
 
 Kyma sits on top of Kubernetes and leverages [authentication strategies](https://kubernetes.io/docs/reference/access-authn-authz/authentication/) from it. The purpose of all of those authentication strategies is to associate the identity of the caller with the request to the API server and evaluate access based on roles (RBAC).
 
@@ -13,7 +13,7 @@ One of the strategies enables you to use your own identity provider. This is ver
 
 ## Steps
 
-### Configure your identity provider
+### Configure Your Identity Provider
 
 > **NOTE:** If you don't have access to the identity provider, you can sign up for a free tier plan at [Auth0](https://auth0.com/).
 
@@ -29,7 +29,7 @@ Configure a dedicated client (often referred to as an application) at your ident
 3. Configure the name of the **username** and **group** claims.
 4. Enable the Proof Key for Code Exchange (PKCE) authentication flow.
 
-### Configure your identity provider as the OIDC server
+### Configure Your Identity Provider as the OIDC Server
 
 Add flags to the API server as described in the [Kubernetes documentation](https://kubernetes.io/docs/reference/access-authn-authz/authentication/#configuring-the-api-server). The ways of adding the flags to the API server differ depending on the Kubernetes distribution you use.
 For example, if you want to use k3d, you need to pass the additional `--k3s-server-arg` flags containing the OIDC server configuration when creating the cluster. See the [specification](https://k3d.io/v5.1.0/usage/commands/k3d_cluster_create/) of the `k3d cluster create` command:
@@ -45,7 +45,7 @@ k3d cluster create kyma \
 For managed Kubernetes, see the documentation related to your provider.
 For example, if you use Gardener as a managed Kubernetes offering, see the [OIDC Preset](https://github.com/gardener/gardener/blob/master/docs/usage/openidconnect-presets.md) documentation.
 
-### Configure role-based access to identities provided by your OIDC server
+### Configure Role-Based Access to Identities Provided by Your OIDC Server
 
 Including the JWT token in the call to the API server enables the API server to validate and extract the associated identity from the **username** and **group** claims of the JWT token.
 
@@ -53,7 +53,7 @@ Now, define which individuals or groups should have access to which Kyma resourc
 
 You can combine user-level and group-level permissions in one binding. Run `kubectl create clusterrolebinding --help` in your terminal to see more options.
 
-### Configure kubectl access
+### Configure kubectl Access
 
 With this step, you will set up the OIDC provider in the `kubeconfig` file to enforce authentication flow when accessing Kyma using `kubectl`.
 

@@ -1,10 +1,10 @@
-# Create a workload
+# Create a Workload
 
-This tutorial explains how to create a sample HttpBin Service deployment.
+This tutorial explains how to create a sample HTTPBin Service deployment.
 
 ## Steps
 
-1. Create a Namespace and export its value as an environment variable. Run:
+1. Create a namespace and export its value as an environment variable. Run:
 
     ```bash
     export NAMESPACE={NAMESPACE_NAME}
@@ -12,13 +12,13 @@ This tutorial explains how to create a sample HttpBin Service deployment.
     kubectl label namespace $NAMESPACE istio-injection=enabled --overwrite
     ```
 
-2. Choose a name for your HttpBin Service instance and export it as an environment variable.
+2. Choose a name for your HTTPBin Service instance and export it as an environment variable.
 
     ```bash
     export SERVICE_NAME={SERVICE_NAME}
     ```
 
-3. Deploy a sample instance of the HttpBin Service.
+3. Deploy a sample instance of the HTTPBin Service.
 
     ```shell
     cat <<EOF | kubectl -n $NAMESPACE apply -f -
@@ -68,7 +68,7 @@ This tutorial explains how to create a sample HttpBin Service deployment.
     EOF
     ```
 
-4. Verify if an instance of the HttpBin Service is successfully created.
+4. Verify if an instance of the HTTPBin Service is successfully created.
    
     ```shell
     kubectl get pods -l app=httpbin -n $NAMESPACE

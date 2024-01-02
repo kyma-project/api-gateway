@@ -1,33 +1,33 @@
-# SAP BTP, Kyma runtime migration
+# SAP BTP, Kyma Runtime Migration
 
 > **NOTE**: This documentation is relevant for SAP BTP, Kyma runtime only and does not apply to open-source Kyma.
 
 ## Scenarios
 
-### Provisioning of API Gateway CR using Lifecycle Manager in a new cluster
+### Provisioning of API Gateway CR Using Lifecycle Manager in a New Cluster
 
 If there is no APIGateway custom resource (CR), then Lifecycle Manager provisions the default API Gateway CR defined in the API Gateway ModuleTemplate. The migration
 adds the API Gateway module to the Kyma CR.
 
-### Provisioning of Istio CR using Lifecycle Manager in a cluster with existing modules
+### Provisioning of Istio CR Using Lifecycle Manager in a Cluster with Existing Modules
 
 If there is no APIGateway CR, then Lifecycle Manager provisions the default APIGateway CR defined in the APIGateway ModuleTemplate. The migration
 adds the API Gateway module to the Kyma CR without overwriting existing module configuration.
 
-## Migration test process
+## Migration Test Process
 
-### Test scenarios
+### Test Scenarios
 
 Apply the ModuleTemplate for both `fast` and `regular` channels to Dev Control Plane.
 
-#### SAP BTP, Kyma runtime clusters without existing modules
+#### SAP BTP, Kyma Runtime Clusters Without Existing Modules
 
 1. Create a Dev SAP BTP, Kyma runtime cluster.
 2. Execute the migration.
 3. Verify that `api-gateway-manager` is installed and the APIGateway CR's status is `Ready`.
 4. Verify that the `api-gateway` deployment is not present.
 
-#### SAP BTP, Kyma runtime cluster with an existing module
+#### SAP BTP, Kyma Runtime Cluster with an Existing Module
 
 1. Create a Dev SAP BTP, Kyma runtime cluster.
 2. Add the Keda module to the Kyma CR.
@@ -40,7 +40,7 @@ Apply the ModuleTemplate for both `fast` and `regular` channels to Dev Control P
 4. Verify that `api-gateway-manager` is installed and the APIGateway CR's status is `Ready`.
 5. Verify that the `api-gateway` deployment is not present.
 
-## Module's rollout and migration
+## Module's Rollout and Migration
 
 ### Preparations
 
@@ -52,7 +52,7 @@ Executing `kcp taskrun` requires the path to the kubeconfig file of the correspo
 
 - Reconciliation is disabled for the Dev environment. See PR #4485 in the `kyma/management-plane-config` repository.
 
-#### Migration procedure
+#### Migration Procedure
 
 1. Apply the ModuleTemplate for both `fast` and `regular` channels to Dev Control Plane.
 2. Verify that the ModuleTemplate in the `fast` and `regular` channels is available on SAP BTP, Kyma runtime clusters of the Dev environment.
@@ -77,7 +77,7 @@ Perform the rollout to Stage together with the SRE team. Since they have already
 
 - Reconciliation is disabled for the Stage environment. See PR #4486 to the `kyma/management-plane-config` repository.
 
-#### Migration procedure
+#### Migration Procedure
 
 1. Apply the ModuleTemplate for both `fast` and `regular` channels to Stage Control Plane.
 2. Verify that the ModuleTemplate in the `fast` and `regular` channels is available in SAP BTP, Kyma runtime clusters of the Stage environment.
@@ -96,7 +96,7 @@ Perform the rollout to Prod together with the SRE team. Since they have already 
 
 - Reconciliation is disabled for the Prod environment. See PR #4487 to the `kyma/management-plane-config` repository.
 
-#### Migration procedure
+#### Migration Procedure
 
 1. Commit the module manifest to the `regular` and `fast` channels in the `kyma/module-manifests` internal repository.
 2. Verify that the ModuleTemplates are present in the `kyma/kyma-modules` internal repository.

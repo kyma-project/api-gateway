@@ -1,7 +1,7 @@
-## New features
+## New Features
 
 - Some feature
 
-## Fixed bugs
+## Fixed Bugs
 
 - Some bug fix

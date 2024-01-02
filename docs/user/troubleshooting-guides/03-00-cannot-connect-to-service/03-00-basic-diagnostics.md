@@ -1,4 +1,4 @@
-# Cannot connect to a Service exposed by an APIRule - basic diagnostics
+# Cannot Connect to a Service Exposed by an APIRule - Basic Diagnostics
 
 API Gateway is a Kubernetes controller, which operates on APIRule custom resources (CRs). To diagnose problems, inspect the [`status` code](../../custom-resources/apirule/04-10-apirule-custom-resource.md) of the APIRule CR:
 
