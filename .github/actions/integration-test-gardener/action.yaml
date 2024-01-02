@@ -10,6 +10,18 @@ inputs:
   script:
     description: "Entry point script for test"
     required: true
+  client_id:
+    description: "Client id for oidc"
+    required: true
+  client_secret:
+    description: "Client secret for oidc"
+    required: true
+  oidc_issuer_url:
+    description: "OIDC issuer url"
+    required: true
+  dns_secret_json:
+    description: "Secret json for DNS provider"
+    required: true
 runs:
   using: "composite"
   steps:
@@ -28,10 +40,18 @@ runs:
         GARDENER_TOKEN: ${{ inputs.gardener_secret }}
       run: |
         ./hack/ci/gardener_kubeconfig.sh
+    - name: Prepare DNS SA secret
+      shell: bash
+      run: |
+        echo {{ inputs.dns_secret_json }} >> service-account.json
     - name: Run integration tests
       shell: bash
       env:
         IMG: ${{ inputs.manager_image }}
+        CLIENT_ID: ${{ inputs.client_id }}
+        CLIENT_SECRET: ${{ inputs.client_secret }}
+        OIDC_ISSUER_URL: ${{ inputs.oidc_issuer_url }}
+        TEST_SA_ACCESS_KEY_PATH: "service-account.json"
         GARDENER_KUBECONFIG: "gardener_kubeconfig.yaml"
       run: |
         EXPORT_RESULT=true \

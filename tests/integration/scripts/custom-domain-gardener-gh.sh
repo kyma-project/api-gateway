@@ -80,7 +80,7 @@ kubectl wait --kubeconfig "${GARDENER_KUBECONFIG}" --for=jsonpath='{.status.last
 
 # KYMA_DOMAIN is required by the tests
 export TEST_DOMAIN="${CLUSTER_NAME}.${GARDENER_PROJECT_NAME}.shoot.live.k8s-hana.ondemand.com"
-export TEST_CUSTOM_DOMAIN="a.build.kyma-project.io"
+export TEST_CUSTOM_DOMAIN="goat.build.kyma-project.io"
 
 make test-custom-domain
 

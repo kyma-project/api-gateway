@@ -100,3 +100,7 @@ jobs:
           manager_image: "europe-docker.pkg.dev/kyma-project/dev/api-gateway-manager:PR-${{github.event.number}}"
           gardener_secret: ${{ secrets.GARDENER_TOKEN }}
           script: ./tests/integration/scripts/custom-domain-gardener-gcp-gh.sh
+          client_id: ${{ secrets.CLIENT_ID }}
+          client_secret: ${{ secrets.CLIENT_SECRET }}
+          oidc_issuer_url: ${{ secrets.OIDC_ISSUER_URL }}
+          dns_secret_json: ${{ secrets.DNS_SECRET_JSON }}
