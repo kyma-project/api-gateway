@@ -42,8 +42,10 @@ runs:
         ./hack/ci/gardener_kubeconfig.sh
     - name: Prepare DNS SA secret
       shell: bash
+      env:
+        DNS_SA_BASE64: ${{ inputs.dns_secret_json }}
       run: |
-        echo "${{ inputs.dns_secret_json }}" >> service-account.json
+        echo "$DNS_SA_BASE64" | base64 --decode >> service-account.json
     - name: Run integration tests
       shell: bash
       env:
