@@ -183,7 +183,7 @@ rules:
   resources:
   - rules
   verbs:
-  - '*'
+  - deletecollection
   - create
   - delete
   - get
