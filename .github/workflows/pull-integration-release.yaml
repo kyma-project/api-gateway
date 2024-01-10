@@ -1,12 +1,12 @@
 # This workflow is responsible for all kinds of integration tests run on pull request.
 # Those tests depend on a container image so in the first job we wait for the image build to succeed.
 
-name: PR Integration
+name: PR Integration (release)
 
 on:
   # pull_request_target runs workflows from the base of PR
   # It allows the workflow to get the repository secrets
-  pull_request_target:
+  pull_request:
     types: [ synchronize, opened, reopened, ready_for_review ]
     paths-ignore:
       - "docs/**"
@@ -14,10 +14,10 @@ on:
       - "tests/performance/**"
       - "OWNERS"
       - "CODEOWNERS"
-      - "sec-scanners-config.yaml"
       - ".github/**" #Ignoring since build job isn't triggered on the workflow directory changes
     branches:
       - main
+      - 'release-**'
 
 jobs:
   wait-for-image-build:
@@ -85,3 +85,21 @@ jobs:
           oidc_issuer_url: ${{ secrets.OIDC_ISSUER_URL }}
           target_branch: ${{ github.base_ref }}
 
+  custom-domain-gcp:
+    name: Custom domain GCP
+    runs-on: ubuntu-latest
+    needs: [wait-for-image-build]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+      - uses: ./.github/actions/integration-test-gardener
+        with:
+          manager_image: "europe-docker.pkg.dev/kyma-project/dev/api-gateway-manager:PR-${{github.event.number}}"
+          gardener_secret: ${{ secrets.GARDENER_TOKEN }}
+          script: ./tests/integration/scripts/custom-domain-gardener-gcp.sh
+          client_id: ${{ secrets.CLIENT_ID }}
+          client_secret: ${{ secrets.CLIENT_SECRET }}
+          oidc_issuer_url: ${{ secrets.OIDC_ISSUER_URL }}
+          dns_secret_json: ${{ secrets.DNS_SECRET_JSON }}
