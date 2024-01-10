@@ -21,17 +21,14 @@ assignees: ''
 <!-- Explain why we should add this feature. Provide use cases to illustrate its benefits. -->
 
 **DoD:**
-- [ ] Create a follow-up issue.
-- [ ] Provide unit tests.
-- [ ] Provide integration tests.
+- [ ] Provide unit and integration tests.
 - [ ] Provide documentation.
+- [ ] Check all related pipelines.
 - [ ] Test on a production-like environment.
-- [ ] Verify if the solution works for both open-source Kyma and SAP BTP, Kyma runtime.
-- [ ] Check the outcome of all related pipelines.
+- [ ] Verify if the solution works for both open-source Kyma and SAP BTP Kyma runtime.
 - [ ] Verify resource limits.
-- [ ] As a PR reviewer, verify code coverage and evaluate if it is acceptable.
-- [ ] Create a release.
-- [ ] Add release notes and What's New notes for Kyma customers.
+- [ ] Verify code coverage is improved or explain why if it did not.
+- [ ] Add Release notes and What's New notes if needed.
 
 **Attachments**
 
