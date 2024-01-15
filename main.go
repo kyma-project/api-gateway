@@ -19,10 +19,11 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/kyma-project/api-gateway/internal/reconciliations/oathkeeper"
 	"os"
 	"strings"
 	"time"
+
+	"github.com/kyma-project/api-gateway/internal/reconciliations/oathkeeper"
 
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"github.com/kyma-project/api-gateway/controllers"
