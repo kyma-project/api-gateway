@@ -5,6 +5,8 @@ metadata:
   namespace: {{.Namespace}}
   annotations:
     dns.gardener.cloud/class: garden
+  labels:
+    kyma-project.io/module: api-gateway
 spec:
   dnsName: "*.{{.Domain}}"
   ttl: 600

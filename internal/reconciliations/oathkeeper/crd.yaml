@@ -5,6 +5,8 @@ metadata:
     controller-gen.kubebuilder.io/version: v0.5.0
   creationTimestamp: null
   name: {{ .Name }}
+  labels:
+    kyma-project.io/module: api-gateway
 spec:
   group: oathkeeper.ory.sh
   names:

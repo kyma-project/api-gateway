@@ -2,6 +2,8 @@ kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: {{ .Name }}
+  labels:
+    kyma-project.io/module: api-gateway
 subjects:
   - kind: ServiceAccount
     name: {{ .ServiceAccountName }} # Service account assigned to the controller pod.

@@ -9,8 +9,15 @@ namespace: kyma-system
 namePrefix: api-gateway-
 
 # Labels to add to all resources and selectors.
-commonLabels:
-  app.kubernetes.io/component: api-gateway-operator.kyma-project.io
+labels:
+  - includeSelectors: false
+    pairs:
+      kyma-project.io/module: api-gateway
+      app.kubernetes.io/name: api-gateway-operator
+      app.kubernetes.io/instance: api-gateway-operator-default
+      app.kubernetes.io/version: "2.1.0"
+      app.kubernetes.io/component: operator
+      app.kubernetes.io/part-of: api-gateway
 
 resources:
   - ../crd

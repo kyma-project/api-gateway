@@ -10,6 +10,5 @@ configMapGenerator:
     options:
       disableNameSuffixHash: true
       labels:
-        app.kubernetes.io/name: apigateways.operator.kyma-project.io
         busola.io/extension: resource
         busola.io/extension-version: "0.5"

@@ -8,6 +8,7 @@ metadata:
     app: oathkeeper
     app.kubernetes.io/instance: ory
     app.kubernetes.io/name: oathkeeper
+    kyma-project.io/module: api-gateway
 spec:
   replicas: {{ .Replicas }}
   selector:
