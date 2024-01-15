@@ -36,8 +36,8 @@ github.com/fsnotify/fsnotify v1.7.0 h1:8JEhPFa5W2WU7YfeZzPNqzMP6Lwt7L2715Ggo0nos
 github.com/fsnotify/fsnotify v1.7.0/go.mod h1:40Bi/Hjc2AVfZrqy+aj+yEI+/bRxZnMJyTJwOpGvigM=
 github.com/gardener/cert-management v0.11.4 h1:TLsfJOhB1rfvAMgA9dO5zCyYXvnoUFD5siPvoQ9Q7qQ=
 github.com/gardener/cert-management v0.11.4/go.mod h1:T67qArAlYnxg4hbzlJFjGnmFGlX8nnlPlXALQyeRr1I=
-github.com/gardener/external-dns-management v0.16.1 h1:oOhx/yL4VARqZxfvdZWERbsIE5QMDq9mBQblTyaPkBk=
-github.com/gardener/external-dns-management v0.16.1/go.mod h1:mTOCgst9Rda9MNmJtYiel+JFvbo7EUUBwOfCjN6zyRc=
+github.com/gardener/external-dns-management v0.17.0 h1:73PgxCY8kBe+6wFcesSUGAJ8ZB7MdiipXCf28NZUAM8=
+github.com/gardener/external-dns-management v0.17.0/go.mod h1:mTOCgst9Rda9MNmJtYiel+JFvbo7EUUBwOfCjN6zyRc=
 github.com/go-jose/go-jose/v3 v3.0.1 h1:pWmKFVtt+Jl0vBZTIpz/eAKwsm6LkIxDVVbFHKkchhA=
 github.com/go-jose/go-jose/v3 v3.0.1/go.mod h1:RNkWWRld676jZEYoV3+XK8L2ZnNSvIsxFMht0mSX+u8=
 github.com/go-logr/logr v1.2.4/go.mod h1:jdQByPbusPIv2/zmleS9BjJVeZ6kBagPoEUsqbVz/1A=
