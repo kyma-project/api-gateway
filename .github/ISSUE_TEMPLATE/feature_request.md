@@ -26,7 +26,7 @@ assignees: ''
 - [ ] Verify if the solution works for both open-source Kyma and SAP BTP Kyma runtime.
 - [ ] If resource limits are changed explain why it was needed.
 - [ ] Verify code coverage is improved or explain why if it did not.
-- [ ] Add Release notes if needed.
+- [ ] Add Release notes.
 
 **Attachments**
 
