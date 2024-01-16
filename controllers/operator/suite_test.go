@@ -19,10 +19,12 @@ package operator
 import (
 	"context"
 	"errors"
-	"github.com/kyma-project/api-gateway/internal/reconciliations/oathkeeper"
 	"path/filepath"
 	"testing"
 	"time"
+
+	"github.com/kyma-project/api-gateway/internal/helpers"
+	"github.com/kyma-project/api-gateway/internal/reconciliations/oathkeeper"
 
 	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
@@ -153,8 +155,12 @@ var _ = BeforeSuite(func() {
 		FailureMaxDelay:  10 * time.Second,
 	}
 
-	resources.ReadFileHandle = func(name string) ([]byte, error) {
+	resources.ReadResourcesFileHandle = func(name string) ([]byte, error) {
 		return []byte(controlledList), nil
+	}
+
+	helpers.ReadVersionFileHandle = func(name string) ([]byte, error) {
+		return []byte("1.0.0"), nil
 	}
 
 	Expect(NewAPIGatewayReconciler(mgr, oathkeeperReconcilerWithoutVerification{}).SetupWithManager(mgr, rateLimiterCfg)).Should(Succeed())

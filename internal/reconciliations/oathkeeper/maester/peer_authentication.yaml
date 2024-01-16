@@ -3,8 +3,6 @@ kind: PeerAuthentication
 metadata:
   name: {{ .Name }}
   namespace: {{ .Namespace }}
-  labels:
-    kyma-project.io/module: api-gateway
 spec:
   selector:
     matchLabels:

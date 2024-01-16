@@ -45,10 +45,10 @@ type resourceCondition func(context.Context, client.Client, Resource) bool
 var noMatchesForKind = regexp.MustCompile("no matches for kind")
 var couldNotFindReqResource = regexp.MustCompile("could not find the requested resource")
 
-var ReadFileHandle = os.ReadFile
+var ReadResourcesFileHandle = os.ReadFile
 
 func NewResourcesFinderFromConfigYaml(ctx context.Context, client client.Client, logger logr.Logger, path string) (*ResourcesFinder, error) {
-	configYaml, err := ReadFileHandle(path)
+	configYaml, err := ReadResourcesFileHandle(path)
 	if err != nil {
 		return nil, err
 	}

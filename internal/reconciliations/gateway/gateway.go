@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
+	"github.com/kyma-project/api-gateway/internal/helpers"
 	"github.com/kyma-project/api-gateway/internal/reconciliations"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -20,7 +21,7 @@ const (
 	KymaGatewayFullName  = "kyma-system/kyma-gateway"
 )
 
-//go:embed kyma_gateway.yaml
+//go:embed gateway.yaml
 var kymaGatewayManifest []byte
 
 func reconcileKymaGateway(ctx context.Context, k8sClient client.Client, apiGatewayCR v1alpha1.APIGateway, domain string) error {
@@ -32,6 +33,7 @@ func reconcileKymaGateway(ctx context.Context, k8sClient client.Client, apiGatew
 	templateValues["Namespace"] = KymaGatewayNamespace
 	templateValues["Domain"] = domain
 	templateValues["CertificateSecretName"] = kymaGatewayCertSecretName
+	templateValues["Version"] = helpers.GetModuleVersion()
 
 	resource, err := reconciliations.CreateUnstructuredResource(kymaGatewayManifest, templateValues)
 	if err != nil {

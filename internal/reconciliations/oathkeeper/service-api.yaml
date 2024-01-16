@@ -6,7 +6,6 @@ metadata:
     app.kubernetes.io/component: api
     app.kubernetes.io/instance: ory
     app.kubernetes.io/name: oathkeeper
-    kyma-project.io/module: api-gateway
   name: {{ .Name }}
   namespace: {{ .Namespace }}
 spec:

@@ -4,7 +4,9 @@ import (
 	"context"
 	_ "embed"
 	"fmt"
+
 	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
+	"github.com/kyma-project/api-gateway/internal/helpers"
 	"github.com/kyma-project/api-gateway/internal/reconciliations"
 	"istio.io/client-go/pkg/apis/networking/v1beta1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
@@ -39,6 +41,7 @@ func reconcileVirtualService(ctx context.Context, k8sClient client.Client, name,
 	templateValues["Namespace"] = namespace
 	templateValues["Domain"] = domain
 	templateValues["Gateway"] = KymaGatewayFullName
+	templateValues["Version"] = helpers.GetModuleVersion()
 
 	return reconciliations.ApplyResource(ctx, k8sClient, virtualServiceManifest, templateValues)
 }

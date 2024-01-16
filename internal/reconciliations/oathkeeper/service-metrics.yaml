@@ -8,7 +8,6 @@ metadata:
   labels:
     app.kubernetes.io/instance: ory
     app.kubernetes.io/name: oathkeeper-maester
-    kyma-project.io/module: api-gateway
     mode: sidecar
   name: {{ .Name }}
   namespace: {{ .Namespace }}

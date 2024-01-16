@@ -4,7 +4,9 @@ import (
 	"context"
 	_ "embed"
 	"fmt"
+
 	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
+	"github.com/kyma-project/api-gateway/internal/helpers"
 	"github.com/kyma-project/api-gateway/internal/reconciliations"
 	v1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
@@ -27,6 +29,7 @@ func reconcileNonGardenerCertificateSecret(ctx context.Context, k8sClient client
 	templateValues := make(map[string]string)
 	templateValues["Name"] = kymaGatewayCertSecretName
 	templateValues["Namespace"] = certificateDefaultNamespace
+	templateValues["Version"] = helpers.GetModuleVersion()
 
 	return reconciliations.ApplyResource(ctx, k8sClient, nonGardenerCertificateSecretManifest, templateValues)
 }

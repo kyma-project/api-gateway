@@ -6,7 +6,6 @@ metadata:
   labels:
     app: oathkeeper
     app.kubernetes.io/name: oathkeeper
-    kyma-project.io/module: api-gateway
 data:
   "config.yaml": |
     access_rules:

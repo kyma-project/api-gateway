@@ -3,6 +3,8 @@ package helpers
 import (
 	"context"
 	"fmt"
+	"os"
+
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 
 	apiv1beta1 "istio.io/api/type/v1beta1"
@@ -10,6 +12,8 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
+
+var ReadVersionFileHandle = os.ReadFile
 
 func FindServiceNamespace(api *gatewayv1beta1.APIRule, rule *gatewayv1beta1.Rule) string {
 	// Fallback direction for the upstream service namespace: Rule.Service > Spec.Service > APIRule
@@ -53,4 +57,12 @@ func GetLabelSelectorFromService(ctx context.Context, client client.Client, serv
 		workloadSelector.MatchLabels[label] = value
 	}
 	return &workloadSelector, nil
+}
+
+func GetModuleVersion() string {
+	version, err := ReadVersionFileHandle("../../VERSION")
+	if err != nil {
+		return "undefined"
+	}
+	return string(version)
 }

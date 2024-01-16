@@ -4,8 +4,10 @@ import (
 	"context"
 	_ "embed"
 	"fmt"
+
 	certv1alpha1 "github.com/gardener/cert-management/pkg/apis/cert/v1alpha1"
 	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
+	"github.com/kyma-project/api-gateway/internal/helpers"
 	"github.com/kyma-project/api-gateway/internal/reconciliations"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -43,6 +45,7 @@ func reconcileCertificate(ctx context.Context, k8sClient client.Client, name, do
 	templateValues["Namespace"] = certificateDefaultNamespace
 	templateValues["Domain"] = domain
 	templateValues["SecretName"] = certSecretName
+	templateValues["Version"] = helpers.GetModuleVersion()
 
 	return reconciliations.ApplyResource(ctx, k8sClient, certificateManifest, templateValues)
 }

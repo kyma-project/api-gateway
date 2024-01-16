@@ -7,6 +7,7 @@ import (
 
 	dnsv1alpha1 "github.com/gardener/external-dns-management/pkg/apis/dns/v1alpha1"
 	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
+	"github.com/kyma-project/api-gateway/internal/helpers"
 	"github.com/kyma-project/api-gateway/internal/reconciliations"
 	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
@@ -50,6 +51,7 @@ func reconcileDnsEntry(ctx context.Context, k8sClient client.Client, name, names
 	templateValues["Namespace"] = namespace
 	templateValues["Domain"] = domain
 	templateValues["IngressGatewayServiceIp"] = ingressGatewayIp
+	templateValues["Version"] = helpers.GetModuleVersion()
 
 	return reconciliations.ApplyResource(ctx, k8sClient, dnsEntryManifest, templateValues)
 }
