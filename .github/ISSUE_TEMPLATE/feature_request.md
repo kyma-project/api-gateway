@@ -23,12 +23,10 @@ assignees: ''
 **DoD:**
 - [ ] Provide unit and integration tests.
 - [ ] Provide documentation.
-- [ ] Check all related pipelines.
-- [ ] Test on a production-like environment.
 - [ ] Verify if the solution works for both open-source Kyma and SAP BTP Kyma runtime.
-- [ ] Verify resource limits.
+- [ ] If resource limits are changed explain why it was needed.
 - [ ] Verify code coverage is improved or explain why if it did not.
-- [ ] Add Release notes and What's New notes if needed.
+- [ ] Add Release notes if needed.
 
 **Attachments**
 
