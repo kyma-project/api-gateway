@@ -85,6 +85,9 @@
         - key: DELETE
         - key: PATCH
         - key: HEAD
+        - key: OPTIONS
+        - key: CONNECT
+        - key: TRACE
     - simple: true
       required: false
       path: allowOrigins
@@ -276,6 +279,9 @@
         - key: DELETE
         - key: PATCH
         - key: HEAD
+        - key: OPTIONS
+        - key: CONNECT
+        - key: TRACE
     - path: '[].mutators'
       name: mutators
       widget: GenericList
