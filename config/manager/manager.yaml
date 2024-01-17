@@ -4,18 +4,18 @@ metadata:
   name: controller-manager
   namespace: system
   labels:
-    control-plane: api-gateway-operator
+    control-plane: controller-manager
 spec:
   selector:
     matchLabels:
-      control-plane: api-gateway-operator
+      control-plane: controller-manager
   replicas: 1
   template:
     metadata:
       annotations:
         kubectl.kubernetes.io/default-container: manager
       labels:
-        control-plane: api-gateway-operator
+        control-plane: controller-manager
         sidecar.istio.io/inject: "false"
     spec:
       securityContext:
