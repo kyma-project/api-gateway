@@ -1,6 +1,7 @@
 package helpers
 
 import (
+	"errors"
 	"fmt"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -9,7 +10,7 @@ import (
 )
 
 var _ = Describe("GetModuleVersion", func() {
-	It("Should verify and return version if value is valid", func() {
+	It("Should return a valid version if succesfully read", func() {
 		ReadVersionFileHandle = func(name string) ([]byte, error) {
 			return []byte("1.0.0"), nil
 		}
@@ -17,11 +18,11 @@ var _ = Describe("GetModuleVersion", func() {
 		Expect(semver.IsValid(fmt.Sprintf("v%s", version))).To(BeTrue())
 	})
 
-	It("Should verify and return unknown if value is invalid", func() {
+	It("Should return unknown version if could not read it", func() {
 		ReadVersionFileHandle = func(name string) ([]byte, error) {
-			return []byte("wrong"), nil
+			return []byte{}, errors.New("could not read")
 		}
 		version := GetModuleVersion()
-		Expect(semver.IsValid(fmt.Sprintf("v%s", version))).To(BeFalse())
+		Expect(version).To(Equal("unknown"))
 	})
 })
