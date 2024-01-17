@@ -41,7 +41,7 @@ The following diagram illustrates the reconciliation process of APIRule and the 
 
 ## Labeling resources
 
-Based on the decision taken for [Consistent labeling of Kyma modules](https://github.com/kyma-project/community/issues/864). APIGateway operator resources are labeled with the common kubernetes labels, e.g.:
+Based on the decision taken for [Consistent labeling of Kyma modules](https://github.com/kyma-project/community/issues/864). APIGateway operator resources are labeled with the common kubernetes labels:
 
 ```yaml
 kyma-project.io/module: api-gateway
