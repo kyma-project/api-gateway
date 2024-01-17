@@ -24,7 +24,7 @@ assignees: ''
 - [ ] Provide unit and integration tests.
 - [ ] Provide documentation.
 - [ ] Verify if the solution works for both open-source Kyma and SAP BTP, Kyma runtime.
-- [ ] If resource limits are changed explain why it was needed.
+- [ ] If you changed the resource limits, explain why it was needed.
 - [ ] Verify that your contributions don't decrease code coverage. If they do, explain why this is the case.
 - [ ] Add release notes.
 
