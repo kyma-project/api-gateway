@@ -60,7 +60,7 @@ func GetLabelSelectorFromService(ctx context.Context, client client.Client, serv
 }
 
 func GetModuleVersion() string {
-	version, err := ReadVersionFileHandle("../../VERSION")
+	version, err := ReadVersionFileHandle("VERSION")
 	if err != nil {
 		return "undefined"
 	}
