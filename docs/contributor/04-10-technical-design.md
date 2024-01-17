@@ -13,7 +13,7 @@ APIGateway Controller is a [Kubernetes controller](https://kubernetes.io/docs/co
 The controller is responsible for handling the [APIGateway CR](../user/custom-resources/apigateway/04-00-apigateway-custom-resource.md).
 
 ### Reconciliation
-APIGateway Controller reconciles the APIGateway CR with each change. If you don't make any changes, the reconciliation process occurs at the default interval of 10 hours, as determined by the [Kubernetes controller-runtime](https://pkg.go.dev/sigs.k8s.io/controller-runtime). 
+APIGateway Controller reconciles the APIGateway CR with each change. If you don't make any changes, the reconciliation process occurs at the default interval of 10 hours, as determined by the [Kubernetes controller-runtime](https://pkg.go.dev/sigs.k8s.io/controller-runtime).
 APIGateway Controller reconciles only the oldest APIGateway CR on the cluster. It sets the status of other CRs to `Error`.
 If a failure occurs during the reconciliation process, the default behavior of the [Kubernetes controller-runtime](https://pkg.go.dev/sigs.k8s.io/controller-runtime) is to use exponential backoff requeue.
 
@@ -38,3 +38,28 @@ In the event of a failure during the reconciliation, APIRule Controller performs
 The following diagram illustrates the reconciliation process of APIRule and the created resources:
 
 ![APIRule CR Reconciliation](../assets/api-rule-reconciliation-sequence.svg)
+
+## Labeling resources
+
+Based on the decision taken for [Consistent labeling of Kyma modules](https://github.com/kyma-project/community/issues/864). APIGateway operator resources are labeled with the common kubernetes labels, e.g.:
+
+```yaml
+kyma-project.io/module: api-gateway
+app.kubernetes.io/name: api-gateway-operator
+app.kubernetes.io/instance: api-gateway-operator-default
+app.kubernetes.io/version: "x.x.x"
+app.kubernetes.io/component: operator
+app.kubernetes.io/part-of: api-gateway
+```
+
+For all other resource like the external `ory-oathkeeper` component and its respective resources we only apply the Kyma module label:
+
+```yaml
+kyma-project.io/module: api-gateway
+```
+
+Getting all resources created by the API Gateway module is possible by running:
+
+```bash
+kubectl get all|<resources-kind> -A -l kyma-project.io/module=api-gateway
+```
