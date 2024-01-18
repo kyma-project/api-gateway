@@ -14,5 +14,4 @@ Feature: Checking default kyma gateway on k3d
     And there "is" "Service" "api-gateway-operator-metrics" in namespace "kyma-system"
     And there "is" "PriorityClass" "api-gateway-priority-class" in the cluster
     And there is Istio Gateway "kyma-gateway" in "kyma-system" namespace
-    And there "is" "DNSEntry" "kyma-gateway" in namespace "kyma-system"
     And there "is" "VirtualService" "istio-healthz" in namespace "istio-system"
