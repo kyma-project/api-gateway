@@ -45,7 +45,6 @@ func reconcileKymaGatewayDnsEntry(ctx context.Context, k8sClient client.Client, 
 }
 
 func reconcileDnsEntry(ctx context.Context, k8sClient client.Client, name, namespace, domain, ingressGatewayIp string) error {
-
 	templateValues := make(map[string]string)
 	templateValues["Name"] = name
 	templateValues["Namespace"] = namespace
