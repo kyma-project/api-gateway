@@ -498,11 +498,12 @@ func (c *scenario) namespacedResourceHasStatusReady(kind, name, namespace string
 }
 
 func checkAnnotationsAndLabels(obj *unstructured.Unstructured) error {
+	gardenerResources := []string{"kyma-gateway-certs"}
 	operatorResources := []string{"apigateways.operator.kyma-project.io", "apirules.gateway.kyma-project.io", "api-gateway-controller-manager", "api-gateway-operator-metrics",
 		"api-gateway-manager-role", "api-gateway-manager-rolebinding", "api-gateway-leader-election-role", "api-gateway-leader-election-rolebinding", "kyma-gateway", "kyma-tls-cert",
 		"istio-healthz", "api-gateway-apirule-ui.operator.kyma-project.io", "api-gateway-ui.operator.kyma-project.io", "api-gateway-priority-class"}
 
-	if !slices.Contains(operatorResources, obj.GetName()) {
+	if !slices.Contains(operatorResources, obj.GetName()) && !slices.Contains(gardenerResources, obj.GetName()) {
 		annotations := obj.GetAnnotations()
 		if annotations["apigateways.operator.kyma-project.io/managed-by-disclaimer"] != "DO NOT EDIT - This resource is managed by Kyma.\nAny modifications are discarded and the resource is reverted to the original state." {
 			return fmt.Errorf("kind: %s, name: %s, does not have required annotation disclaimer", obj.GetKind(), obj.GetName())
