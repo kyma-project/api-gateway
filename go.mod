@@ -18,14 +18,14 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/thoas/go-funk v0.9.3
 	gitlab.com/rodrigoodhin/gocure v0.0.0-20230214115050-efed6aac536a
-	golang.org/x/net v0.17.0
+	golang.org/x/net v0.19.0
 	golang.org/x/time v0.3.0
 	google.golang.org/appengine v1.6.8
 	google.golang.org/protobuf v1.31.0
 	gopkg.in/yaml.v3 v3.0.1
 	istio.io/api v1.19.3
 	istio.io/client-go v1.19.3
-	k8s.io/apimachinery v0.28.5
+	k8s.io/apimachinery v0.28.6
 	k8s.io/client-go v0.28.5
 	sigs.k8s.io/controller-runtime v0.16.3
 	sigs.k8s.io/yaml v1.3.0
@@ -71,11 +71,11 @@ require (
 	github.com/tdewolff/minify/v2 v2.10.0 // indirect
 	github.com/tdewolff/parse/v2 v2.5.27 // indirect
 	go.uber.org/zap v1.25.0 // indirect
-	golang.org/x/crypto v0.14.0 // indirect
-	golang.org/x/sys v0.14.0 // indirect
-	golang.org/x/term v0.13.0 // indirect
-	golang.org/x/text v0.13.0 // indirect
-	golang.org/x/tools v0.14.0 // indirect
+	golang.org/x/crypto v0.16.0 // indirect
+	golang.org/x/sys v0.15.0 // indirect
+	golang.org/x/term v0.15.0 // indirect
+	golang.org/x/text v0.14.0 // indirect
+	golang.org/x/tools v0.16.1 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.4.0 // indirect
 	google.golang.org/genproto v0.0.0-20230526161137-0005af68ea54 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20230525234035-dd9d682886f9 // indirect
@@ -96,7 +96,7 @@ require (
 	golang.org/x/exp v0.0.0-20221217163422-3c43f8badb15
 	golang.org/x/oauth2 v0.13.0
 	gopkg.in/yaml.v2 v2.4.0
-	k8s.io/api v0.28.5
+	k8s.io/api v0.28.6
 	k8s.io/apiextensions-apiserver v0.28.5
 	k8s.io/utils v0.0.0-20230726121419-3b25d923346b
 )
