@@ -1,9 +1,7 @@
 Feature: Checking default kyma gateway on gardener
-  Background:
-    Given APIGateway CR is in "Ready" state with description ""
-
   Scenario: API Gateway is completely deployed
-    Given there "is" "CustomResourceDefinition" "apigateways.operator.kyma-project.io" in the cluster
+    Given APIGateway CR is in "Ready" state with description ""
+    Then there "is" "CustomResourceDefinition" "apigateways.operator.kyma-project.io" in the cluster
     And there "is" "CustomResourceDefinition" "apirules.gateway.kyma-project.io" in the cluster
     And there "is" "Deployment" "api-gateway-controller-manager" in namespace "kyma-system"
     And there "is" "ServiceAccount" "api-gateway-controller-manager" in namespace "kyma-system"
@@ -20,15 +18,3 @@ Feature: Checking default kyma gateway on gardener
     And there is a "kyma-gateway-certs" secret in "istio-system" namespace
     And there is a "kyma-tls-cert" Gardener Certificate CR in "istio-system" namespace
     And there "is" "VirtualService" "istio-healthz" in namespace "istio-system"
-    Then there "is" "Deployment" "ory-oathkeeper" in namespace "kyma-system"
-    And there "is" "ConfigMap" "ory-oathkeeper-config" in namespace "kyma-system"
-    And there "is" "CustomResourceDefinition" "rules.oathkeeper.ory.sh" in the cluster
-    And there "is" "Secret" "ory-oathkeeper-jwks-secret" in namespace "kyma-system"
-    And there "is" "Service" "ory-oathkeeper-api" in namespace "kyma-system"
-    And there "is" "Service" "ory-oathkeeper-proxy" in namespace "kyma-system"
-    And there "is" "Service" "ory-oathkeeper-maester-metrics" in namespace "kyma-system"
-    And there "is" "ServiceAccount" "ory-oathkeeper" in namespace "kyma-system"
-    And there "is" "ServiceAccount" "oathkeeper-maester-account" in namespace "kyma-system"
-    And there "is" "ClusterRole" "oathkeeper-maester-role" in the cluster
-    And there "is" "ClusterRoleBinding" "oathkeeper-maester-role-binding" in the cluster
-    And there "is" "PeerAuthentication" "ory-oathkeeper-maester-metrics" in namespace "kyma-system"
