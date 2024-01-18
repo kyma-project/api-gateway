@@ -5,7 +5,7 @@
 4. Update the relevant documentation.
 -->
 
-## Description
+**Description**
 
 Changes proposed in this pull request:
 
