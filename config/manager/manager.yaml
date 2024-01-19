@@ -8,6 +8,7 @@ metadata:
 spec:
   selector:
     matchLabels:
+      app.kubernetes.io/component: api-gateway-operator.kyma-project.io
       control-plane: controller-manager
   replicas: 1
   template:
@@ -15,6 +16,7 @@ spec:
       annotations:
         kubectl.kubernetes.io/default-container: manager
       labels:
+        app.kubernetes.io/component: api-gateway-operator.kyma-project.io
         control-plane: controller-manager
         sidecar.istio.io/inject: "false"
     spec:
