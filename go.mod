@@ -13,7 +13,7 @@ require (
 	github.com/go-logr/logr v1.4.1
 	github.com/google/uuid v1.5.0
 	github.com/onsi/ginkgo/v2 v2.15.0
-	github.com/onsi/gomega v1.30.0
+	github.com/onsi/gomega v1.31.0
 	github.com/ory/oathkeeper-maester v0.1.10
 	github.com/spf13/pflag v1.0.5
 	github.com/thoas/go-funk v0.9.3
