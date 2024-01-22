@@ -58,11 +58,3 @@ func GetLabelSelectorFromService(ctx context.Context, client client.Client, serv
 	}
 	return &workloadSelector, nil
 }
-
-func GetModuleVersion() string {
-	version, err := ReadVersionFileHandle("VERSION")
-	if err != nil {
-		return "unknown"
-	}
-	return string(version)
-}

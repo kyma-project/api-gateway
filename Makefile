@@ -42,6 +42,8 @@ TEST_UPGRADE_IMG ?= ""
 
 IS_GARDENER ?= false
 
+VERSION=$(shell git describe --tags --abbrev=0)
+
 ##@ General
 
 # The help target prints out all targets with their descriptions organized
@@ -128,7 +130,7 @@ run: manifests build
 
 .PHONY: docker-build
 docker-build:
-	IMG=$(IMG) docker build -t ${IMG} --build-arg TARGETOS=${TARGETOS} --build-arg TARGETARCH=${TARGETARCH} .
+	IMG=$(IMG) docker build -t ${IMG} --build-arg TARGET_OS=${TARGET_OS} --build-arg TARGET_ARCH=${TARGET_ARCH} --build-arg VERSION=${VERSION} --build-arg BUILD_TIME="$(shell date +'%Y-%m-%d %H:%M:%S')" .
 
 .PHONY: docker-push
 docker-push: ## Push docker image with the manager.
@@ -197,8 +199,6 @@ YQUERY ?= $(LOCALBIN)/yq
 KUSTOMIZE_VERSION ?= v4.5.5
 CONTROLLER_TOOLS_VERSION ?= v0.10.0
 YQ_VERSION ?= v4
-
-VERSION=$(shell cat VERSION)
 
 KUSTOMIZE_INSTALL_SCRIPT ?= "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh"
 .PHONY: kustomize
