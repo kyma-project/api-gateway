@@ -19,7 +19,7 @@ import (
 func TestResources(t *testing.T) {
 	RegisterFailHandler(Fail)
 
-	RunSpecs(t, "API-Gateway Resources Suite")
+	RunSpecs(t, "API-Gateway Helpers Suite")
 }
 
 var _ = ReportAfterSuite("custom reporter", func(report types.Report) {
