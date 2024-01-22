@@ -1,14 +1,9 @@
 package version
 
 var (
-	version   string = "dev"
-	buildTime string
+	version string = "dev"
 )
 
 func GetVersion() string {
 	return version
-}
-
-func GetBuildTime() string {
-	return buildTime
 }

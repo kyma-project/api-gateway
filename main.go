@@ -185,7 +185,6 @@ func main() {
 
 	setupLog.Info("starting manager")
 	setupLog.Info("module version", "version", version.GetVersion())
-	setupLog.Info("build timestamp", "timestamp", version.GetBuildTime())
 
 	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
 		setupLog.Error(err, "problem running manager")

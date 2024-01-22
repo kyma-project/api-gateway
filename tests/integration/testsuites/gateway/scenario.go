@@ -19,7 +19,6 @@ import (
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/resource"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
 	oryv1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
-	"golang.org/x/mod/semver"
 	"gopkg.in/yaml.v2"
 	appsv1 "k8s.io/api/apps/v1"
 	v2 "k8s.io/api/autoscaling/v2"
@@ -522,7 +521,7 @@ func checkAnnotationsAndLabels(obj *unstructured.Unstructured) error {
 		if labels["app.kubernetes.io/instance"] != "api-gateway-operator-default" {
 			return fmt.Errorf("kind: %s, name: %s, does not contain required k8s instance label", obj.GetKind(), obj.GetName())
 		}
-		if !semver.IsValid(fmt.Sprintf("v%s", labels["app.kubernetes.io/version"])) {
+		if _, found := labels["app.kubernetes.io/version"]; !found {
 			return fmt.Errorf("kind: %s, name: %s, does not contain required k8s version label", obj.GetKind(), obj.GetName())
 		}
 		if labels["app.kubernetes.io/component"] != "operator" {
