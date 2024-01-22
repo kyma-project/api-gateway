@@ -18,7 +18,7 @@ type unstructuredManifest struct {
 
 var _ = Describe("Resource", func() {
 	Context("ApplyResource", func() {
-		It("should reapply disclaimer annotation on resource when it was removed", func() {
+		It("should reapply disclaimer annotation and module labels on resource when they were removed", func() {
 			// given
 			k8sClient := createFakeClient()
 
