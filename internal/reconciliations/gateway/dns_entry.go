@@ -50,7 +50,7 @@ func reconcileDnsEntry(ctx context.Context, k8sClient client.Client, name, names
 	templateValues["Namespace"] = namespace
 	templateValues["Domain"] = domain
 	templateValues["IngressGatewayServiceIp"] = ingressGatewayIp
-	templateValues["Version"] = version.GetVersion()
+	templateValues["Version"] = version.GetModuleVersion()
 
 	return reconciliations.ApplyResource(ctx, k8sClient, dnsEntryManifest, templateValues)
 }

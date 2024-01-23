@@ -29,7 +29,7 @@ func reconcileNonGardenerCertificateSecret(ctx context.Context, k8sClient client
 	templateValues := make(map[string]string)
 	templateValues["Name"] = kymaGatewayCertSecretName
 	templateValues["Namespace"] = certificateDefaultNamespace
-	templateValues["Version"] = version.GetVersion()
+	templateValues["Version"] = version.GetModuleVersion()
 
 	return reconciliations.ApplyResource(ctx, k8sClient, nonGardenerCertificateSecretManifest, templateValues)
 }

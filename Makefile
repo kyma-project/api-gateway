@@ -31,9 +31,6 @@ IMG_REGISTRY_PORT ?= $(MODULE_REGISTRY_PORT)
 IMG_REGISTRY ?= op-skr-registry.localhost:$(IMG_REGISTRY_PORT)/unsigned/operator-images
 IMG ?= $(IMG_REGISTRY)/$(MODULE_NAME)-operator:$(MODULE_VERSION)
 
-# It is required for upgrade integration test
- TARGET_BRANCH ?= ""
-
 COMPONENT_CLI_VERSION ?= latest
 
 # It is required for upgrade integration test
@@ -42,7 +39,7 @@ TEST_UPGRADE_IMG ?= ""
 
 IS_GARDENER ?= false
 
-VERSION=$(shell git describe --tags --abbrev=0)
+VERSION = dev
 
 ##@ General
 

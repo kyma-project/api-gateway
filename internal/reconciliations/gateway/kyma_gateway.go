@@ -33,7 +33,7 @@ func reconcileKymaGateway(ctx context.Context, k8sClient client.Client, apiGatew
 	templateValues["Namespace"] = KymaGatewayNamespace
 	templateValues["Domain"] = domain
 	templateValues["CertificateSecretName"] = kymaGatewayCertSecretName
-	templateValues["Version"] = version.GetVersion()
+	templateValues["Version"] = version.GetModuleVersion()
 
 	resource, err := reconciliations.CreateUnstructuredResource(kymaGatewayManifest, templateValues)
 	if err != nil {

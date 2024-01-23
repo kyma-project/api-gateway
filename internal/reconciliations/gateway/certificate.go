@@ -43,7 +43,7 @@ func reconcileCertificate(ctx context.Context, k8sClient client.Client, name, do
 	templateValues["Namespace"] = certificateDefaultNamespace
 	templateValues["Domain"] = domain
 	templateValues["SecretName"] = certSecretName
-	templateValues["Version"] = version.GetVersion()
+	templateValues["Version"] = version.GetModuleVersion()
 
 	return reconciliations.ApplyResource(ctx, k8sClient, certificateManifest, templateValues)
 }

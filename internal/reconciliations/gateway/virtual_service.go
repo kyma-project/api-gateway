@@ -41,7 +41,7 @@ func reconcileVirtualService(ctx context.Context, k8sClient client.Client, name,
 	templateValues["Namespace"] = namespace
 	templateValues["Domain"] = domain
 	templateValues["Gateway"] = KymaGatewayFullName
-	templateValues["Version"] = version.GetVersion()
+	templateValues["Version"] = version.GetModuleVersion()
 
 	return reconciliations.ApplyResource(ctx, k8sClient, virtualServiceManifest, templateValues)
 }
