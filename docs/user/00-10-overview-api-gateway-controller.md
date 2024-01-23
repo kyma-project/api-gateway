@@ -41,7 +41,7 @@ For all other resource like the external `ory-oathkeeper` component and its resp
 kyma-project.io/module: api-gateway
 ```
 
-Getting all resources created by the API Gateway module is possible by running:
+Run this command to get all resources created by the API Gateway module:
 
 ```bash
 kubectl get all|<resources-kind> -A -l kyma-project.io/module=api-gateway
