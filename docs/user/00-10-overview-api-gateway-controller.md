@@ -22,7 +22,7 @@ The `apigateways.operator.kyma-project.io` CustomResourceDefinition (CRD) descri
 |   `Error`    | An error occurred during reconciliation. |
 |  `Warning`   | Controller is misconfigured.             |
 
-## Labeling resources
+## Labeling Resources
 
 Based on the decision taken for [Consistent labeling of Kyma modules](https://github.com/kyma-project/community/issues/864). APIGateway operator resources are labeled with the common kubernetes labels:
 
