@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	apirulev1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
-	"net/http"
 
 	"github.com/kyma-project/api-gateway/internal/processing"
 	"github.com/onsi/gomega"
@@ -44,7 +43,7 @@ const (
 )
 
 var (
-	ApiMethods                     = []apirulev1beta1.HttpMethod{http.MethodGet}
+	ApiMethods                     = []string{"GET"}
 	ApiScopes                      = []string{"write", "read"}
 	ServicePort             uint32 = 8080
 	ApiGateway                     = "some-gateway"
@@ -52,11 +51,13 @@ var (
 	ServiceHostWithNoDomain        = "myService"
 	ServiceHost                    = ServiceHostWithNoDomain + "." + DefaultDomain
 
-	TestAllowMethods = []apirulev1beta1.HttpMethod{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodDelete}
+	TestAllowOrigin  = []*v1beta1.StringMatch{{MatchType: &v1beta1.StringMatch_Regex{Regex: ".*"}}}
+	TestAllowMethods = []string{"GET", "POST", "PUT", "DELETE"}
+	TestAllowHeaders = []string{"header1", "header2"}
 	TestCors         = &processing.CorsConfig{
-		AllowOrigins: []*v1beta1.StringMatch{{MatchType: &v1beta1.StringMatch_Regex{Regex: ".*"}}},
-		AllowMethods: []string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodDelete},
-		AllowHeaders: []string{"header1", "header2"},
+		AllowOrigins: TestAllowOrigin,
+		AllowMethods: TestAllowMethods,
+		AllowHeaders: TestAllowHeaders,
 	}
 
 	TestAdditionalLabels = map[string]string{TestLabelKey: TestLabelValue}
@@ -88,7 +89,7 @@ func GetFakeClient(objs ...client.Object) client.Client {
 	return fake.NewClientBuilder().WithScheme(scheme).WithObjects(objs...).Build()
 }
 
-func GetRuleFor(path string, methods []apirulev1beta1.HttpMethod, mutators []*apirulev1beta1.Mutator, accessStrategies []*apirulev1beta1.Authenticator) apirulev1beta1.Rule {
+func GetRuleFor(path string, methods []string, mutators []*apirulev1beta1.Mutator, accessStrategies []*apirulev1beta1.Authenticator) apirulev1beta1.Rule {
 	return apirulev1beta1.Rule{
 		Path:             path,
 		Methods:          methods,
@@ -97,7 +98,7 @@ func GetRuleFor(path string, methods []apirulev1beta1.HttpMethod, mutators []*ap
 	}
 }
 
-func GetRuleWithServiceFor(path string, methods []apirulev1beta1.HttpMethod, mutators []*apirulev1beta1.Mutator, accessStrategies []*apirulev1beta1.Authenticator, service *apirulev1beta1.Service) apirulev1beta1.Rule {
+func GetRuleWithServiceFor(path string, methods []string, mutators []*apirulev1beta1.Mutator, accessStrategies []*apirulev1beta1.Authenticator, service *apirulev1beta1.Service) apirulev1beta1.Rule {
 	return apirulev1beta1.Rule{
 		Path:             path,
 		Methods:          methods,

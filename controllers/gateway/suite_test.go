@@ -3,7 +3,6 @@ package gateway_test
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"os"
 	"path/filepath"
 	"testing"
@@ -56,7 +55,7 @@ var (
 	ctx       context.Context
 	cancel    context.CancelFunc
 
-	defaultMethods  = []gatewayv1beta1.HttpMethod{http.MethodGet, http.MethodPut}
+	defaultMethods  = []string{"GET", "PUT"}
 	defaultScopes   = []string{"foo", "bar"}
 	defaultMutators = []*gatewayv1beta1.Mutator{
 		{
@@ -68,7 +67,7 @@ var (
 	}
 
 	TestAllowOrigins = []*v1beta1.StringMatch{{MatchType: &v1beta1.StringMatch_Regex{Regex: ".*"}}}
-	TestAllowMethods = []string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodDelete}
+	TestAllowMethods = []string{"GET", "POST", "PUT", "DELETE"}
 	TestAllowHeaders = []string{"header1", "header2"}
 
 	defaultCorsPolicy = builders.CorsPolicy().

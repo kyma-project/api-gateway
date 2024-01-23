@@ -7,7 +7,6 @@ import (
 	"github.com/kyma-project/api-gateway/internal/builders"
 	v1beta12 "istio.io/api/networking/v1beta1"
 	"k8s.io/utils/ptr"
-	"net/http"
 	"time"
 
 	"github.com/kyma-project/api-gateway/internal/processing"
@@ -303,10 +302,6 @@ var _ = Describe("Virtual Service Processor", func() {
 	})
 
 	When("multiple handler", func() {
-
-		getMethod := []v1beta1.HttpMethod{http.MethodGet}
-		postMethod := []v1beta1.HttpMethod{http.MethodPost}
-
 		It("should return service for given paths", func() {
 			// given
 			noop := []*v1beta1.Authenticator{
@@ -437,6 +432,8 @@ var _ = Describe("Virtual Service Processor", func() {
 					},
 				},
 			}
+			getMethod := []string{"GET"}
+			postMethod := []string{"POST"}
 			noopRule := GetRuleFor(ApiPath, getMethod, []*v1beta1.Mutator{}, noop)
 			jwtRule := GetRuleFor(ApiPath, postMethod, testMutators, jwt)
 			rules := []v1beta1.Rule{noopRule, jwtRule}
@@ -516,6 +513,8 @@ var _ = Describe("Virtual Service Processor", func() {
 					},
 				},
 			}
+			getMethod := []string{"GET"}
+			postMethod := []string{"POST"}
 			noopGetRule := GetRuleFor(ApiPath, getMethod, []*v1beta1.Mutator{}, noop)
 			noopPostRule := GetRuleFor(ApiPath, postMethod, []*v1beta1.Mutator{}, noop)
 			jwtRule := GetRuleFor(HeadersApiPath, ApiMethods, testMutators, jwt)
@@ -1003,48 +1002,6 @@ var _ = Describe("Virtual Service Processor", func() {
 
 			Expect(vs.Spec.Http[0].Headers.Response.Set).To(BeEmpty())
 		})
-	})
-
-	Context("HTTP matching", func() {
-
-		DescribeTable("should restrict access for the APIRule path and methods",
-			func(accessStrategy string) {
-				// Given
-				strategies := []*v1beta1.Authenticator{
-					{
-						Handler: &v1beta1.Handler{
-							Name: accessStrategy,
-						},
-					},
-				}
-
-				allowRule := GetRuleFor("/", []v1beta1.HttpMethod{http.MethodGet, http.MethodPost}, []*v1beta1.Mutator{}, strategies)
-				rules := []v1beta1.Rule{allowRule}
-
-				apiRule := GetAPIRuleFor(rules)
-				client := GetFakeClient()
-				processor := ory.NewVirtualServiceProcessor(GetTestConfig())
-
-				// when
-				result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
-
-				// then
-				Expect(err).To(BeNil())
-				Expect(result).To(HaveLen(1))
-
-				vs := result[0].Obj.(*networkingv1beta1.VirtualService)
-
-				Expect(vs).NotTo(BeNil())
-
-				Expect(len(vs.Spec.Http[0].Match)).To(Equal(1))
-				Expect(vs.Spec.Http[0].Match[0].Uri.GetRegex()).To(Equal("/"))
-				Expect(vs.Spec.Http[0].Match[0].Method.GetRegex()).To(Equal("^(GET|POST)$"))
-			},
-			Entry("When access strategy is allow", "allow"),
-			Entry("When access strategy is noop", "noop"),
-			Entry("When access strategy is jwt", "jwt"),
-			Entry("When access strategy is oauth2_introspection", "oauth2_introspection"),
-		)
 	})
 
 })

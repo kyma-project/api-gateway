@@ -60,12 +60,3 @@ func (r *Rule) GetHeaderMutator() (HeaderMutatorConfig, error) {
 
 	return mutatorConfig, nil
 }
-
-func ConvertHttpMethodsToStrings(methods []HttpMethod) []string {
-	strings := make([]string, len(methods))
-	for i, method := range methods {
-		strings[i] = string(method)
-	}
-
-	return strings
-}

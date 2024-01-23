@@ -466,7 +466,7 @@ func (in *Rule) DeepCopyInto(out *Rule) {
 	}
 	if in.Methods != nil {
 		in, out := &in.Methods, &out.Methods
-		*out = make([]HttpMethod, len(*in))
+		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
 	if in.AccessStrategies != nil {

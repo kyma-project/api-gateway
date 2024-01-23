@@ -11,7 +11,7 @@ spec:
     port: 8000
   rules:
     - path: /.*
-      methods: ["GET", "OPTIONS"]
+      methods: ["GET"]
       mutators: []
       accessStrategies:
         - handler: allow
