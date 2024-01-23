@@ -48,3 +48,6 @@ report*.html
 template-k3d.yaml
 template-fast.yaml
 template-regular.yaml
+
+# sed template kustomization output
+config/default/kustomization.yaml
