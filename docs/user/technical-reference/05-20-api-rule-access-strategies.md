@@ -28,3 +28,5 @@ This handler by default can be configured the same as in [Ory Oathkeeper JWT aut
 ### Other handlers
 
 Apart from `allow` handler and `jwt` with default configuration, all the other handlers are based on configuration documented in [Ory Oathkeeper authenticators](https://www.ory.sh/docs/oathkeeper/pipeline/authn), as Ory Oathkeeper is the component responsible for handling requests that use those handlers. As so, the configuration and capabilities of those handlers is the same as described in that document.
+
+When using those handlers keep in mind that Ory stack as part of API Gateway is deprecated and will not be supported in the future.
