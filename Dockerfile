@@ -3,7 +3,6 @@ FROM europe-docker.pkg.dev/kyma-project/prod/external/golang:1.21.4-alpine3.18 a
 ARG TARGET_OS
 ARG TARGET_ARCH
 ARG VERSION
-ARG BUILD_TIME
 
 WORKDIR /workspace
 # Copy the Go Modules manifests
