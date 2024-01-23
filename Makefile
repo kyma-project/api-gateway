@@ -33,13 +33,13 @@ IMG ?= $(IMG_REGISTRY)/$(MODULE_NAME)-operator:$(MODULE_VERSION)
 
 COMPONENT_CLI_VERSION ?= latest
 
-# It is required for upgrade integration test
+# Upgrade integration test variables
 TARGET_BRANCH ?= ""
 TEST_UPGRADE_IMG ?= ""
 
 IS_GARDENER ?= false
 
-VERSION = dev
+VERSION ?= dev
 
 ##@ General
 
@@ -206,6 +206,7 @@ $(KUSTOMIZE): $(LOCALBIN)
 .PHONY: module-version
 module-version:
 	sed 's/VERSION/$(VERSION)/g' config/default/kustomization.template.yaml > config/default/kustomization.yaml
+	sed 's/VERSION/$(VERSION)/g' config/manager/manager.template.yaml > config/manager/manager.yaml
 
 .PHONY: controller-gen
 controller-gen: $(CONTROLLER_GEN) ## Download controller-gen locally if necessary.

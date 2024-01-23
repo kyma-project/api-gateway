@@ -10,7 +10,7 @@ set -x
 RELEASE_TAG=$1
 RELEASE_ID=$2
 
-IMG="europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:${RELEASE_TAG}" make generate-manifests
+IMG="europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:${RELEASE_TAG}" VERSION=$(git describe --tags --abbrev=0) make generate-manifests
 
 REPOSITORY=${REPOSITORY:-kyma-project/api-gateway}
 GITHUB_URL=https://uploads.github.com/repos/${REPOSITORY}
