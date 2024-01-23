@@ -130,7 +130,7 @@ run: manifests build
 
 .PHONY: docker-build
 docker-build:
-	IMG=$(IMG) docker build -t ${IMG} --build-arg TARGET_OS=${TARGET_OS} --build-arg TARGET_ARCH=${TARGET_ARCH} --build-arg VERSION=${VERSION} --build-arg BUILD_TIME="$(shell date +'%Y-%m-%d %H:%M:%S')" .
+	IMG=$(IMG) docker build -t ${IMG} --build-arg TARGET_OS=${TARGET_OS} --build-arg TARGET_ARCH=${TARGET_ARCH} --build-arg VERSION=${VERSION} .
 
 .PHONY: docker-push
 docker-push: ## Push docker image with the manager.
