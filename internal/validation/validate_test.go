@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
-	"net/http"
 	"os"
 
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
@@ -777,14 +776,14 @@ var _ = Describe("Validate function", func() {
 						AccessStrategies: []*v1beta1.Authenticator{
 							toAuthenticator("noop", emptyConfig()),
 						},
-						Methods: []v1beta1.HttpMethod{http.MethodGet},
+						Methods: []string{"GET"},
 					},
 					{
 						Path: "/abc",
 						AccessStrategies: []*v1beta1.Authenticator{
 							toAuthenticator("anonymous", emptyConfig()),
 						},
-						Methods: []v1beta1.HttpMethod{http.MethodGet, http.MethodPost},
+						Methods: []string{"GET", "POST"},
 					},
 				},
 			},
@@ -826,7 +825,7 @@ var _ = Describe("Validate function", func() {
 							toAuthenticator("jwt", simpleJWTConfig()),
 							toAuthenticator("noop", emptyConfig()),
 						},
-						Methods: []v1beta1.HttpMethod{http.MethodPost},
+						Methods: []string{"POST"},
 					},
 					{
 						Path: "/abc",
@@ -834,7 +833,7 @@ var _ = Describe("Validate function", func() {
 							toAuthenticator("jwt", simpleJWTConfig()),
 							toAuthenticator("noop", emptyConfig()),
 						},
-						Methods: []v1beta1.HttpMethod{http.MethodGet},
+						Methods: []string{"GET"},
 					},
 					{
 						Path: "/bcd",
@@ -887,7 +886,7 @@ var _ = Describe("Validate function", func() {
 							toAuthenticator("jwt", simpleJWTConfig()),
 							toAuthenticator("noop", emptyConfig()),
 						},
-						Methods: []v1beta1.HttpMethod{http.MethodPost},
+						Methods: []string{"POST"},
 					},
 					{
 						Path: "/abc",
@@ -895,7 +894,7 @@ var _ = Describe("Validate function", func() {
 							toAuthenticator("jwt", simpleJWTConfig()),
 							toAuthenticator("noop", emptyConfig()),
 						},
-						Methods: []v1beta1.HttpMethod{http.MethodGet},
+						Methods: []string{"GET"},
 					},
 				},
 			},
@@ -925,7 +924,7 @@ var _ = Describe("Validate function", func() {
 						AccessStrategies: []*v1beta1.Authenticator{
 							toAuthenticator("noop", emptyConfig()),
 						},
-						Methods: []v1beta1.HttpMethod{http.MethodPost},
+						Methods: []string{"POST"},
 					},
 				},
 				Service: getApiRuleService(sampleServiceName, uint32(8080)),
@@ -959,7 +958,7 @@ var _ = Describe("Validate function", func() {
 						AccessStrategies: []*v1beta1.Authenticator{
 							toAuthenticator("noop", emptyConfig()),
 						},
-						Methods: []v1beta1.HttpMethod{http.MethodPost},
+						Methods: []string{"POST"},
 					},
 				},
 				Host: getHost(sampleValidHost),
@@ -991,7 +990,7 @@ var _ = Describe("Validate function", func() {
 						AccessStrategies: []*v1beta1.Authenticator{
 							toAuthenticator("noop", emptyConfig()),
 						},
-						Methods: []v1beta1.HttpMethod{http.MethodPost},
+						Methods: []string{"POST"},
 					},
 				},
 				Service: getApiRuleService(sampleServiceName, uint32(8080)),
@@ -1024,7 +1023,7 @@ var _ = Describe("Validate function", func() {
 						AccessStrategies: []*v1beta1.Authenticator{
 							toAuthenticator("noop", emptyConfig()),
 						},
-						Methods: []v1beta1.HttpMethod{http.MethodPost},
+						Methods: []string{"POST"},
 					},
 				},
 				Host: getHost(sampleValidHost),

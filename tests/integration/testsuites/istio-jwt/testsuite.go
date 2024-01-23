@@ -93,10 +93,6 @@ func (t *testsuite) InitScenarios(ctx *godog.ScenarioContext) {
 	initCustomLabelSelector(ctx, t)
 	initCustomCors(ctx, t)
 	initDefaultCors(ctx, t)
-	initExposeMethodsOnPathsAllowHandler(ctx, t)
-	initExposeMethodsOnPathsNoopHandler(ctx, t)
-	initExposeMethodsOnPathsJwtHandler(ctx, t)
-	initExposeMethodsOnPathsOAuth2Handler(ctx, t)
 }
 
 func (t *testsuite) FeaturePath() []string {
