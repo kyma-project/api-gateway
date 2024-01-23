@@ -39,8 +39,6 @@ TEST_UPGRADE_IMG ?= ""
 
 IS_GARDENER ?= false
 
-VERSION = dev
-
 ##@ General
 
 # The help target prints out all targets with their descriptions organized
@@ -66,7 +64,7 @@ manifests: controller-gen ## Generate WebhookConfiguration, ClusterRole and Cust
 	$(CONTROLLER_GEN) rbac:roleName=manager-role crd webhook paths="./..." output:crd:artifacts:config=config/crd/bases
 
 .PHONY: generate-upgrade-test-manifest
-generate-upgrade-test-manifest: manifests kustomize module-version
+generate-upgrade-test-manifest: manifests kustomize
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${TEST_UPGRADE_IMG}
 	$(KUSTOMIZE) build config/default -o tests/integration/testsuites/upgrade/manifests/upgrade-test-generated-operator-manifest.yaml
 
@@ -151,7 +149,7 @@ endif
 
 # Install CRDs into a cluster
 .PHONY: install
-install: manifests kustomize module-version
+install: manifests kustomize
 	$(KUSTOMIZE) build config/crd | kubectl apply -f -
 	@if ! kubectl get crd virtualservices.networking.istio.io > /dev/null 2>&1 ; then kubectl apply -f hack/networking.istio.io_virtualservice.yaml; fi;
 	@if ! kubectl get crd peerauthentications.security.istio.io > /dev/null 2>&1 ; then kubectl apply -f hack/security.istio.io_peerauthentication.yaml; fi;
@@ -162,7 +160,7 @@ install: manifests kustomize module-version
 	@if ! kubectl get crd certificates.cert.gardener.cloud > /dev/null 2>&1 ; then kubectl apply -f hack/cert.gardener.cloud_certificate.yaml; fi;
 
 .PHONY: uninstall
-uninstall: manifests kustomize module-version ## Uninstall CRDs from the K8s cluster specified in ~/.kube/config. Call with ignore-not-found=true to ignore resource not found errors during deletion.
+uninstall: manifests kustomize ## Uninstall CRDs from the K8s cluster specified in ~/.kube/config. Call with ignore-not-found=true to ignore resource not found errors during deletion.
 	$(KUSTOMIZE) build config/crd | kubectl delete --ignore-not-found=$(ignore-not-found) -f -
 
 .PHONY: create-namespace
@@ -171,7 +169,7 @@ create-namespace:
 	kubectl label namespace kyma-system istio-injection=enabled --overwrite
 
 .PHONY: deploy
-deploy: manifests kustomize module-version create-namespace ## Deploy controller to the K8s cluster specified in ~/.kube/config.
+deploy: manifests kustomize create-namespace ## Deploy controller to the K8s cluster specified in ~/.kube/config.
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
 	$(KUSTOMIZE) build config/default | kubectl apply -f -
 
@@ -203,10 +201,6 @@ kustomize: $(KUSTOMIZE) ## Download kustomize locally if necessary.
 $(KUSTOMIZE): $(LOCALBIN)
 	test -s $(LOCALBIN)/kustomize || { curl -s $(KUSTOMIZE_INSTALL_SCRIPT) | bash -s -- $(subst v,,$(KUSTOMIZE_VERSION)) $(LOCALBIN); }
 
-.PHONY: module-version
-module-version:
-	sed 's/VERSION/$(VERSION)/g' config/default/kustomization.template.yaml > config/default/kustomization.yaml
-
 .PHONY: controller-gen
 controller-gen: $(CONTROLLER_GEN) ## Download controller-gen locally if necessary.
 $(CONTROLLER_GEN): $(LOCALBIN)
@@ -227,7 +221,7 @@ module-image: docker-build docker-push ## Build the Module Image and push it to 
 	echo "built and pushed module image $(IMG)"
 
 .PHONY: generate-manifests
-generate-manifests: kustomize module-version
+generate-manifests: kustomize
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
 	$(KUSTOMIZE) build config/default > api-gateway-manager.yaml
 
