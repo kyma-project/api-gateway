@@ -35,7 +35,7 @@ app.kubernetes.io/component: operator
 app.kubernetes.io/part-of: api-gateway
 ```
 
-For all other resource like the external `ory-oathkeeper` component and its respective resources we only apply the Kyma module label:
+All other resources, such as the external `ory-oathkeeper` component and its respective resources, use only the Kyma module label:
 
 ```yaml
 kyma-project.io/module: api-gateway
