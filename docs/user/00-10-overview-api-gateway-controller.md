@@ -24,7 +24,8 @@ The `apigateways.operator.kyma-project.io` CustomResourceDefinition (CRD) descri
 
 ## Labeling Resources
 
-Based on the decision taken for [Consistent labeling of Kyma modules](https://github.com/kyma-project/community/issues/864). APIGateway operator resources are labeled with the common kubernetes labels:
+In accordance with the decision [Consistent Labeling of Kyma Modules](https://github.com/kyma-project/community/issues/864), the APIGateway Operator resources use the standard Kubernetes labels:
+
 
 ```yaml
 kyma-project.io/module: api-gateway
