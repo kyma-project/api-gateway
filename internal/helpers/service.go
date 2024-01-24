@@ -3,6 +3,7 @@ package helpers
 import (
 	"context"
 	"fmt"
+
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 
 	apiv1beta1 "istio.io/api/type/v1beta1"

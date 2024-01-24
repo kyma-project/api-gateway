@@ -3,6 +3,12 @@ kind: VirtualService
 metadata:
   name: {{.Name}}
   namespace: {{.Namespace}}
+  labels:
+    app.kubernetes.io/name: api-gateway-operator
+    app.kubernetes.io/instance: api-gateway-operator-default
+    app.kubernetes.io/version: "{{.Version}}"
+    app.kubernetes.io/component: operator
+    app.kubernetes.io/part-of: api-gateway
 spec:
   hosts:
     - "healthz.{{.Domain}}"

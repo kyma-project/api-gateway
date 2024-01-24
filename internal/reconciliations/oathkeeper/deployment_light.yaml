@@ -25,6 +25,7 @@ spec:
         sidecar.istio.io/inject: "true"
         app.kubernetes.io/instance: ory
         app.kubernetes.io/name: oathkeeper
+        kyma-project.io/module: api-gateway
       annotations:
         readiness.status.sidecar.istio.io/initialDelaySeconds: "10"
     spec:

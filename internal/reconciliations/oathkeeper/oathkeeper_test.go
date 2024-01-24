@@ -2,6 +2,8 @@ package oathkeeper_test
 
 import (
 	"context"
+	"time"
+
 	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
 	"github.com/kyma-project/api-gateway/internal/reconciliations"
 	"github.com/kyma-project/api-gateway/internal/reconciliations/oathkeeper"
@@ -14,7 +16,6 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
-	"time"
 )
 
 type deployedResource struct {
@@ -144,7 +145,6 @@ var resourceList = []deployedResource{
 }
 
 var _ = Describe("Oathkeeper reconciliation", func() {
-
 	Context("Reconcile", func() {
 		It("Should successfully reconcile Oathkeeper", func() {
 			apiGateway := createApiGateway()
@@ -168,6 +168,10 @@ var _ = Describe("Oathkeeper reconciliation", func() {
 				}
 
 				Expect(err).ShouldNot(HaveOccurred())
+				Expect(obj.GetAnnotations()).To(HaveKeyWithValue("apigateways.operator.kyma-project.io/managed-by-disclaimer",
+					"DO NOT EDIT - This resource is managed by Kyma.\nAny modifications are discarded and the resource is reverted to the original state."))
+
+				Expect(obj.GetLabels()).To(HaveKeyWithValue("kyma-project.io/module", "api-gateway"))
 			}
 		})
 
@@ -286,7 +290,6 @@ var _ = Describe("Oathkeeper reconciliation", func() {
 	})
 
 	Context("Reconciler", func() {
-
 		It("Should return error status when reconciliation fails", func() {
 			apiGateway := createApiGateway()
 			k8sClient := createFakeClientThatFailsOnCreate()

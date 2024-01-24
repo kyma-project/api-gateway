@@ -4,9 +4,11 @@ import (
 	"context"
 	_ "embed"
 	"fmt"
+
 	certv1alpha1 "github.com/gardener/cert-management/pkg/apis/cert/v1alpha1"
 	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
 	"github.com/kyma-project/api-gateway/internal/reconciliations"
+	"github.com/kyma-project/api-gateway/internal/version"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -24,7 +26,6 @@ const (
 var certificateManifest []byte
 
 func reconcileKymaGatewayCertificate(ctx context.Context, k8sClient client.Client, apiGatewayCR v1alpha1.APIGateway, domain string) error {
-
 	isEnabled := isKymaGatewayEnabled(apiGatewayCR)
 	ctrl.Log.Info("Reconciling Certificate", "KymaGatewayEnabled", isEnabled, "name", kymaGatewayCertificateName, "namespace", certificateDefaultNamespace)
 
@@ -36,13 +37,13 @@ func reconcileKymaGatewayCertificate(ctx context.Context, k8sClient client.Clien
 }
 
 func reconcileCertificate(ctx context.Context, k8sClient client.Client, name, domain, certSecretName string) error {
-
 	ctrl.Log.Info("Reconciling Certificate", "name", name, "namespace", certificateDefaultNamespace, "domain", domain, "secretName", certSecretName)
 	templateValues := make(map[string]string)
 	templateValues["Name"] = name
 	templateValues["Namespace"] = certificateDefaultNamespace
 	templateValues["Domain"] = domain
 	templateValues["SecretName"] = certSecretName
+	templateValues["Version"] = version.GetModuleVersion()
 
 	return reconciliations.ApplyResource(ctx, k8sClient, certificateManifest, templateValues)
 }
