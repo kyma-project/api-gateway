@@ -3,6 +3,7 @@ package reconciliations
 import (
 	"context"
 	"fmt"
+
 	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
@@ -11,7 +12,6 @@ import (
 
 // GetGardenerDomain returns the domain name from the Gardener shoot-info config.
 func GetGardenerDomain(ctx context.Context, k8sClient client.Client) (string, error) {
-
 	cm, err := getGardenerShootInfo(ctx, k8sClient)
 	if err != nil {
 		return "", err

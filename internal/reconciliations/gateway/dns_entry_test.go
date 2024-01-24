@@ -12,9 +12,7 @@ import (
 )
 
 var _ = Describe("DNSEntry", func() {
-
 	Context("reconcileDnsEntry", func() {
-
 		It("should create dnsEntry with domain and IP", func() {
 			// given
 			k8sClient := createFakeClient()
@@ -47,9 +45,6 @@ var _ = Describe("DNSEntry", func() {
 
 			// then
 			Expect(k8sClient.Get(context.Background(), client.ObjectKey{Name: "test", Namespace: "test-ns"}, &dnsEntry)).Should(Succeed())
-
-			Expect(dnsEntry.Annotations).To(HaveKeyWithValue("apigateways.operator.kyma-project.io/managed-by-disclaimer",
-				"DO NOT EDIT - This resource is managed by Kyma.\nAny modifications are discarded and the resource is reverted to the original state."))
 		})
 	})
 

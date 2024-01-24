@@ -245,7 +245,7 @@ func apiRulesExist(ctx context.Context, k8sClient client.Client) (bool, error) {
 }
 
 func oryRulesExist(ctx context.Context, k8sClient client.Client) (bool, error) {
-         // To prevent reconciliation errors during Oathkeeper uninstallation, which arise from the absence of the Oathkeeper CRD,
+	// To prevent reconciliation errors during Oathkeeper uninstallation, which arise from the absence of the Oathkeeper CRD,
 	// we exclude calls to the rules from utilizing the cache. This can be achieved by using unstructured objects, as they are excluded from caching.
 	oryRulesList := unstructured.UnstructuredList{}
 	oryRulesList.SetGroupVersionKind(schema.GroupVersionKind{
