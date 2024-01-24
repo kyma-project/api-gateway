@@ -1,4 +1,4 @@
-# Kyma API Gateway Operator Parameters 
+# Kyma API Gateway Operator Parameters
 
 You can configure [APIGateway Controller](../00-10-overview-api-gateway-controller.md) and [APIRule Controller](../00-20-overview-api-rule-controller.md) using various parameters. This document contains all the options.
 
