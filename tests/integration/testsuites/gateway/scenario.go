@@ -8,6 +8,7 @@ import (
 	"log"
 	"os"
 	"path"
+	"slices"
 
 	"github.com/avast/retry-go/v4"
 	"github.com/cucumber/godog"
@@ -206,24 +207,24 @@ func (c *scenario) checkAPIGatewayCRState(state, description string) error {
 func (c *scenario) thereIsAGateway(name string, namespace string) error {
 	return retry.Do(func() error {
 		res := schema.GroupVersionResource{Group: "networking.istio.io", Version: "v1beta1", Resource: "gateways"}
-		_, err := c.k8sClient.Resource(res).Namespace(namespace).Get(context.Background(), name, metav1.GetOptions{})
+		obj, err := c.k8sClient.Resource(res).Namespace(namespace).Get(context.Background(), name, metav1.GetOptions{})
 		if err != nil {
 			return fmt.Errorf("%s could not be found", name)
 		}
 
-		return nil
+		return checkAnnotationsAndLabels(obj)
 	}, testcontext.GetRetryOpts()...)
 }
 
 func (c *scenario) thereIsACertificate(name string, namespace string) error {
 	return retry.Do(func() error {
 		res := schema.GroupVersionResource{Group: "", Version: "v1", Resource: "secrets"}
-		_, err := c.k8sClient.Resource(res).Namespace(namespace).Get(context.Background(), name, metav1.GetOptions{})
+		obj, err := c.k8sClient.Resource(res).Namespace(namespace).Get(context.Background(), name, metav1.GetOptions{})
 		if err != nil {
 			return fmt.Errorf("%s could not be found", name)
 		}
 
-		return nil
+		return checkAnnotationsAndLabels(obj)
 	}, testcontext.GetRetryOpts()...)
 }
 
@@ -380,22 +381,22 @@ func (c *scenario) thereIsNoGateway(name, namespace string) error {
 
 func (c *scenario) thereIsACertificateCR(name, namespace string) error {
 	res := schema.GroupVersionResource{Group: "cert.gardener.cloud", Version: "v1alpha1", Resource: "certificates"}
-	_, err := c.k8sClient.Resource(res).Namespace(namespace).Get(context.Background(), name, metav1.GetOptions{})
+	obj, err := c.k8sClient.Resource(res).Namespace(namespace).Get(context.Background(), name, metav1.GetOptions{})
 	if err != nil {
 		return fmt.Errorf("%s could not be found", name)
 	}
 
-	return nil
+	return checkAnnotationsAndLabels(obj)
 }
 
 func (c *scenario) thereIsADNSEntryCR(name, namespace string) error {
 	res := schema.GroupVersionResource{Group: "dns.gardener.cloud", Version: "v1alpha1", Resource: "dnsentries"}
-	_, err := c.k8sClient.Resource(res).Namespace(namespace).Get(context.Background(), name, metav1.GetOptions{})
+	obj, err := c.k8sClient.Resource(res).Namespace(namespace).Get(context.Background(), name, metav1.GetOptions{})
 	if err != nil {
 		return fmt.Errorf("%s could not be found", name)
 	}
 
-	return nil
+	return checkAnnotationsAndLabels(obj)
 }
 
 func (c *scenario) resourceIsPresent(isPresent, kind, name string) error {
@@ -406,7 +407,7 @@ func (c *scenario) resourceIsPresent(isPresent, kind, name string) error {
 
 	return retry.Do(func() error {
 		gvr := resource.GetResourceGvr(kind, name)
-		_, err := c.k8sClient.Resource(gvr).Get(context.Background(), name, metav1.GetOptions{})
+		obj, err := c.k8sClient.Resource(gvr).Get(context.Background(), name, metav1.GetOptions{})
 		if isPresent == is {
 			if err != nil {
 				if k8serrors.IsNotFound(err) {
@@ -414,8 +415,7 @@ func (c *scenario) resourceIsPresent(isPresent, kind, name string) error {
 				}
 				return err
 			}
-
-			return nil
+			return checkAnnotationsAndLabels(obj)
 		}
 
 		if isPresent == isNo {
@@ -438,8 +438,7 @@ func (c *scenario) namespacedResourceIsPresent(isPresent, kind, name, namespace 
 	)
 	return retry.Do(func() error {
 		gvr := resource.GetResourceGvr(kind, name)
-		_, err := c.k8sClient.Resource(gvr).Namespace(namespace).Get(context.Background(), name, metav1.GetOptions{})
-
+		obj, err := c.k8sClient.Resource(gvr).Namespace(namespace).Get(context.Background(), name, metav1.GetOptions{})
 		if isPresent == is {
 			if err != nil {
 				if k8serrors.IsNotFound(err) {
@@ -447,7 +446,7 @@ func (c *scenario) namespacedResourceIsPresent(isPresent, kind, name, namespace 
 				}
 				return err
 			}
-			return nil
+			return checkAnnotationsAndLabels(obj)
 		}
 
 		if isPresent == isNo {
@@ -495,4 +494,47 @@ func (c *scenario) namespacedResourceHasStatusReady(kind, name, namespace string
 		}
 		return nil
 	}, testcontext.GetRetryOpts()...)
+}
+
+func checkAnnotationsAndLabels(obj *unstructured.Unstructured) error {
+	gardenerResources := []string{"kyma-gateway-certs"}
+	if slices.Contains(gardenerResources, obj.GetName()) {
+		return nil
+	}
+
+	operatorResources := []string{"apigateways.operator.kyma-project.io", "apirules.gateway.kyma-project.io", "api-gateway-controller-manager", "api-gateway-operator-metrics",
+		"api-gateway-manager-role", "api-gateway-manager-rolebinding", "api-gateway-leader-election-role", "api-gateway-leader-election-rolebinding", "kyma-gateway", "kyma-tls-cert",
+		"istio-healthz", "api-gateway-apirule-ui.operator.kyma-project.io", "api-gateway-ui.operator.kyma-project.io", "api-gateway-priority-class"}
+
+	if !slices.Contains(operatorResources, obj.GetName()) {
+		annotations := obj.GetAnnotations()
+		if annotations["apigateways.operator.kyma-project.io/managed-by-disclaimer"] != "DO NOT EDIT - This resource is managed by Kyma.\nAny modifications are discarded and the resource is reverted to the original state." {
+			return fmt.Errorf("kind: %s, name: %s, does not have required annotation disclaimer", obj.GetKind(), obj.GetName())
+		}
+	}
+
+	labels := obj.GetLabels()
+	if labels["kyma-project.io/module"] != "api-gateway" {
+		return fmt.Errorf("kind: %s, name: %s, does not contain required kyma module label", obj.GetKind(), obj.GetName())
+	}
+
+	if slices.Contains(operatorResources, obj.GetName()) {
+		if labels["app.kubernetes.io/name"] != "api-gateway-operator" {
+			return fmt.Errorf("kind: %s, name: %s, does not contain required k8s name label", obj.GetKind(), obj.GetName())
+		}
+		if labels["app.kubernetes.io/instance"] != "api-gateway-operator-default" {
+			return fmt.Errorf("kind: %s, name: %s, does not contain required k8s instance label", obj.GetKind(), obj.GetName())
+		}
+		if _, found := labels["app.kubernetes.io/version"]; !found {
+			return fmt.Errorf("kind: %s, name: %s, does not contain required k8s version label", obj.GetKind(), obj.GetName())
+		}
+		if labels["app.kubernetes.io/component"] != "operator" {
+			return fmt.Errorf("kind: %s, name: %s, does not contain required k8s component label", obj.GetKind(), obj.GetName())
+		}
+		if labels["app.kubernetes.io/part-of"] != "api-gateway" {
+			return fmt.Errorf("kind: %s, name: %s, does not contain required k8s part-of label", obj.GetKind(), obj.GetName())
+		}
+	}
+
+	return nil
 }

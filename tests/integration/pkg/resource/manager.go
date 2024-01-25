@@ -35,14 +35,24 @@ func (k godogResourceMapping) String() string {
 		return "CustomResourceDefinition"
 	case ServiceAccount:
 		return "ServiceAccount"
+	case Role:
+		return "Role"
+	case RoleBinding:
+		return "RoleBinding"
 	case ClusterRole:
 		return "ClusterRole"
 	case ClusterRoleBinding:
 		return "ClusterRoleBinding"
 	case PeerAuthentication:
 		return "PeerAuthentication"
+	case PriorityClass:
+		return "PriorityClass"
 	case VirtualService:
 		return "VirtualService"
+	case Certificate:
+		return "Certificate"
+	case DNSEntry:
+		return "DNSEntry"
 	}
 	panic(fmt.Errorf("%#v has unimplemented String() method", k))
 }
@@ -55,10 +65,15 @@ const (
 	Secret
 	CustomResourceDefinition
 	ServiceAccount
+	Role
+	RoleBinding
 	ClusterRole
 	ClusterRoleBinding
 	PeerAuthentication
+	PriorityClass
 	VirtualService
+	Certificate
+	DNSEntry
 )
 
 type Manager struct {
@@ -542,11 +557,23 @@ func GetResourceGvr(kind, name string) schema.GroupVersionResource {
 			Version:  "v1",
 			Resource: "serviceaccounts",
 		}
+	case Role.String():
+		gvr = schema.GroupVersionResource{
+			Group:    "rbac.authorization.k8s.io",
+			Version:  "v1",
+			Resource: "roles",
+		}
 	case ClusterRole.String():
 		gvr = schema.GroupVersionResource{
 			Group:    "rbac.authorization.k8s.io",
 			Version:  "v1",
 			Resource: "clusterroles",
+		}
+	case RoleBinding.String():
+		gvr = schema.GroupVersionResource{
+			Group:    "rbac.authorization.k8s.io",
+			Version:  "v1",
+			Resource: "rolebindings",
 		}
 	case ClusterRoleBinding.String():
 		gvr = schema.GroupVersionResource{
@@ -560,11 +587,29 @@ func GetResourceGvr(kind, name string) schema.GroupVersionResource {
 			Version:  "v1beta1",
 			Resource: "peerauthentications",
 		}
+	case PriorityClass.String():
+		gvr = schema.GroupVersionResource{
+			Group:    "scheduling.k8s.io",
+			Version:  "v1",
+			Resource: "priorityclasses",
+		}
 	case VirtualService.String():
 		gvr = schema.GroupVersionResource{
 			Group:    "networking.istio.io",
 			Version:  "v1beta1",
 			Resource: "virtualservices",
+		}
+	case Certificate.String():
+		gvr = schema.GroupVersionResource{
+			Group:    "cert.gardener.cloud",
+			Version:  "v1alpha1",
+			Resource: "certificates",
+		}
+	case DNSEntry.String():
+		gvr = schema.GroupVersionResource{
+			Group:    "dns.gardener.cloud",
+			Version:  "v1alpha1",
+			Resource: "dnsentries",
 		}
 	default:
 		panic(fmt.Errorf("cannot get gvr for kind: %s, name: %s", kind, name))

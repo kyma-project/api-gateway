@@ -9,7 +9,7 @@ This tutorial shows how to expose Service endpoints in multiple namespaces using
 
 1. Create three namespaces. Deploy two instances of the HTTPBin Service, each in a separate namespace. To learn how to do it, follow the [Create a workload](../01-00-create-workload.md) tutorial. Reserve the third namespace for creating an APIRule.
 
-    >**NOTE:** Remember to [enable the Istio sidecar proxy injection](https://kyma-project.io/#/istio/user/02-operation-guides/operations/02-20-enable-sidecar-injection) in each namespace.
+    >**NOTE:** Remember to [Enable Automatic Istio Sidecar Proxy Injection](https://kyma-project.io/#/istio/user/operation-guides/02-20-enable-sidecar-injection) in each namespace.
 
 1. Export the namespaces' and Services' names as environment variables:
 
