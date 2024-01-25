@@ -1,32 +1,32 @@
-# API Rule access strategies
+# APIRule Access Strategies
 
-APIRule allows to configure how should an exposed endpoint be secured with the concept of `access strategies`. Those can be specified in the `rules` section of the APIRule, under `rules.accessStrategies`. 
+APIRule allows you to define the security configuration for an exposed endpoint using the concept of access strategies. You can specify access strategies in the **rules.accessStrategies** section of an APIRule.
 
-Every `accessStrategy` contains `handler` field and `config`, which configure what handler should be used and configuration specific to the selected handler. The supported handlers are:
-- allow
-- noop
-- unauthorized
-- anonymous
-- cookie_session
-- bearer_token
-- oauth2_client_credentials
-- oauth2_introspection
-- jwt
+Every **accessStrategy** contains two fields: **handler** and **config**. These fields determine which handler should be used and provide configuration options specific to the selected handler. The supported handlers are:
+- `allow`
+- `noop`
+- `unauthorized`
+- `anonymous`
+- `cookie_session`
+- `bearer_token`
+- `oauth2_client_credentials`
+- `oauth2_introspection`
+- `jwt`
 
-## Handler configuration
+## Handler Configuration
 
-### `allow` handler
+### The `allow` Handler
 
-The intended functionality of this handler is a simple configuration allowing for easy workload exposure. This handler does not use any Oathkeeper configuration, depending only on Istio `VirtualService`.
+The intended functionality of this handler is to provide a simple configuration for exposing workloads. It does not use Oathkeeper configuration and instead relies only on Istio VirtualService.
 
-The `allow` handler exposes access to the workload with all HTTP methods. With this handler `config` field must not be configured.
+The `allow` handler allows access to the exposed workload with all HTTP methods. You must not configure the **config** field when using this handler.
 
-### `jwt` handler
+### The `jwt` Handler
 
-This handler by default can be configured the same as in [Ory Oathkeeper JWT authenticator configuration](https://www.ory.sh/docs/oathkeeper/pipeline/authn#jwt). However, there is a possibility to use this handler with the currently in development `Istio JWT` configuration. If you are interested in that functionallity please have a look at [this document](../custom-resources/apirule/04-20-apirule-istio-jwt-access-strategy.md).
+By default, the `jwt` handler is configured in the same way as in the [Ory Oathkeeper JWT authenticator configuration](https://www.ory.sh/docs/oathkeeper/pipeline/authn#jwt). However, you can also use this handler with the Istio JWT configuration currently being developed. To learn more about this functionality, see [JWT Access Strategy](../custom-resources/apirule/04-20-apirule-istio-jwt-access-strategy.md).
 
-### Other handlers
+### Other Handlers
 
-Apart from `allow` handler and `jwt` with default configuration, all the other handlers are based on configuration documented in [Ory Oathkeeper authenticators](https://www.ory.sh/docs/oathkeeper/pipeline/authn), as Ory Oathkeeper is the component responsible for handling requests that use those handlers. As so, the configuration and capabilities of those handlers is the same as described in that document.
+Except for the `allow` handler and `jwt` handler, which use the default configuration, all the other handlers are based on the configuration documented in [Ory Oathkeeper Authenticators](https://www.ory.sh/docs/oathkeeper/pipeline/authn). Ory Oathkeeper is responsible for handling requests that use these handlers so their configuration and capabilities align with what is described in the documentation.
 
 When using those handlers keep in mind that Ory stack as part of API Gateway is deprecated and will not be supported in the future.
