@@ -412,7 +412,7 @@ func getApiRule() gatewayv1beta1.APIRule {
 			Rules: []gatewayv1beta1.Rule{
 				{
 					Path:    "/.*",
-					Methods: []gatewayv1beta1.HttpMethod{"GET"},
+					Methods: []string{"GET"},
 					AccessStrategies: []*gatewayv1beta1.Authenticator{
 						{
 							Handler: &gatewayv1beta1.Handler{
