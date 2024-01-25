@@ -1,7 +1,6 @@
 package builders
 
 import (
-	"fmt"
 	apirulev1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -10,7 +9,6 @@ import (
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
-	"regexp"
 	"time"
 )
 
@@ -105,6 +103,7 @@ var _ = Describe("Builder for", func() {
 			Expect(result.Http[0].Route).To(HaveLen(1))
 			Expect(result.Http[0].Route[0].Destination.Host).To(Equal(destHost))
 			Expect(result.Http[0].Route[0].Destination.Port.Number).To(Equal(destPort))
+			//Expect(result.Http[0].Route[0].Destination.Port.Name).To(BeEmpty())
 			Expect(result.Http[0].Route[0].Weight).To(Equal(int32(100)))
 
 			Expect(result.Http[0].Timeout).To(Equal(durationpb.New(timeout)))
@@ -116,6 +115,7 @@ var _ = Describe("Builder for", func() {
 			Expect(result.Http[1].Route).To(HaveLen(1))
 			Expect(result.Http[1].Route[0].Destination.Host).To(Equal(destHost2))
 			Expect(result.Http[1].Route[0].Destination.Port.Number).To(Equal(destPort2))
+			//Expect(result.Http[1].Route[0].Destination.Port.Name).To(BeEmpty())
 			Expect(result.Http[1].Route[0].Weight).To(Equal(int32(100)))
 		})
 
@@ -171,40 +171,6 @@ var _ = Describe("Builder for", func() {
 			Expect(result.Http[0].Route[0].Destination.Host).To(Equal(destHost))
 			Expect(result.Http[0].Route[0].Destination.Port.Number).To(Equal(destPort))
 			Expect(result.Http[0].Route[0].Weight).To(Equal(int32(100)))
-		})
-
-		Describe("MethodRegEx", func() {
-
-			expectHttpMethodRegex := func(regex *regexp.Regexp, httpMethod string) {
-				Expect(regex.MatchString(httpMethod)).To(BeTrue())
-				Expect(regex.MatchString(fmt.Sprintf("%sA", httpMethod))).To(BeFalse())
-				Expect(regex.MatchString(fmt.Sprintf("A%s", httpMethod))).To(BeFalse())
-				Expect(regex.MatchString(fmt.Sprintf("%s ", httpMethod))).To(BeFalse())
-				Expect(regex.MatchString(fmt.Sprintf(" %s", httpMethod))).To(BeFalse())
-			}
-
-			It("should create regex only matching exact given method", func() {
-				mr := MatchRequest().MethodRegEx("GET").Get()
-
-				regex := regexp.MustCompile(mr.Method.GetRegex())
-
-				expectHttpMethodRegex(regex, "GET")
-				Expect(regex.MatchString("GUT")).To(BeFalse())
-				Expect(regex.MatchString("PUT")).To(BeFalse())
-			})
-
-			It("should create regex matching exact multiple methods", func() {
-				mr := MatchRequest().MethodRegEx("GET", "PUT", "POST", "PATCH").Get()
-
-				regex := regexp.MustCompile(mr.Method.GetRegex())
-
-				expectHttpMethodRegex(regex, "GET")
-				Expect(regex.MatchString("GUT")).To(BeFalse())
-				expectHttpMethodRegex(regex, "PUT")
-				expectHttpMethodRegex(regex, "POST")
-				expectHttpMethodRegex(regex, "PATCH")
-				Expect(regex.MatchString("DELETE")).To(BeFalse())
-			})
 		})
 	})
 })

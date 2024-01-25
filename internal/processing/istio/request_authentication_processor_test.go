@@ -597,10 +597,11 @@ var _ = Describe("Request Authentication Processor", func() {
 	When("Service has custom selector spec", func() {
 		It("should create RA with selector from service", func() {
 			// given: New resources
+			methods := []string{"GET"}
 			path := "/"
 			serviceName := "test-service"
 
-			rule := getRuleForApTest(getMethod, path, serviceName)
+			rule := getRuleForApTest(methods, path, serviceName)
 			rules := []gatewayv1beta1.Rule{rule}
 			apiRule := GetAPIRuleFor(rules)
 			svc := GetService(serviceName)
@@ -626,11 +627,12 @@ var _ = Describe("Request Authentication Processor", func() {
 
 		It("should create RA with selector from service in different namespace", func() {
 			// given: New resources
+			methods := []string{"GET"}
 			path := "/"
 			serviceName := "test-service"
 			differentNamespace := "different-namespace"
 
-			rule := getRuleForApTest(getMethod, path, serviceName)
+			rule := getRuleForApTest(methods, path, serviceName)
 			rule.Service.Namespace = &differentNamespace
 			rules := []gatewayv1beta1.Rule{rule}
 			apiRule := GetAPIRuleFor(rules)
@@ -657,10 +659,11 @@ var _ = Describe("Request Authentication Processor", func() {
 
 		It("should create RA with selector from service with multiple selector labels", func() {
 			// given: New resources
+			methods := []string{"GET"}
 			path := "/"
 			serviceName := "test-service"
 
-			rule := getRuleForApTest(getMethod, path, serviceName)
+			rule := getRuleForApTest(methods, path, serviceName)
 			rules := []gatewayv1beta1.Rule{rule}
 			apiRule := GetAPIRuleFor(rules)
 			svc := GetService(serviceName)

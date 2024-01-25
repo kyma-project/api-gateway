@@ -143,8 +143,8 @@ func (m *match) URL(val string) *match {
 	return m
 }
 
-func (m *match) Methods(val []gatewayv1beta1.HttpMethod) *match {
-	m.value.Methods = gatewayv1beta1.ConvertHttpMethodsToStrings(val)
+func (m *match) Methods(val []string) *match {
+	m.value.Methods = val
 	return m
 }
 

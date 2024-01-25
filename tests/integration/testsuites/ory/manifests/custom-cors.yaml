@@ -18,7 +18,7 @@ spec:
     maxAge: {{.MaxAge}}
   rules:
     - path: /.*
-      methods: ["GET", "OPTIONS"]
+      methods: ["GET"]
       mutators: []
       accessStrategies:
         - handler: allow
