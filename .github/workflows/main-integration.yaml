@@ -90,6 +90,25 @@ jobs:
           oidc_issuer_url: ${{ secrets.OIDC_ISSUER_URL }}
           dns_secret_json: ${{ secrets.DNS_SECRET_JSON }}
 
+  custom-domain-integration-aws:
+    name: Custom domain integration AWS
+    runs-on: ubuntu-latest
+    needs: [wait-for-image-build]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+      - uses: ./.github/actions/integration-test-gardener
+        with:
+          manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:${{ needs.wait-for-image-build.outputs.sha }}"
+          gardener_secret: ${{ secrets.GARDENER_TOKEN }}
+          script: ./tests/integration/scripts/custom-domain-gardener-aws.sh
+          client_id: ${{ secrets.CLIENT_ID }}
+          client_secret: ${{ secrets.CLIENT_SECRET }}
+          oidc_issuer_url: ${{ secrets.OIDC_ISSUER_URL }}
+          dns_secret_json: ${{ secrets.DNS_SECRET_JSON }}
+
   slack_failed_notification:
     name: Slack Notification
     runs-on: ubuntu-latest
