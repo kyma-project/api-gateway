@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/manifestprocessor"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/resource"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 	"log"
 	"net/http"
@@ -78,4 +80,49 @@ func ApplyOAuth2MockServer(resourceMgr *resource.Manager, k8sClient dynamic.Inte
 	}
 
 	return fmt.Sprintf("https://oauth2-mock.%s/default", domain), nil
+}
+
+// PatchIstiodDeploymentWithEnvironmentVariables patches the istiod deployment with the given environment variables.
+func PatchIstiodDeploymentWithEnvironmentVariables(resourceMgr *resource.Manager, k8sClient dynamic.Interface, namespace string, environmentVariables map[string]string) error {
+	log.Printf("Patching istiod deployment with environment variables: %v", environmentVariables)
+	res, err := resourceMgr.GetResource(k8sClient, schema.GroupVersionResource{Group: "apps", Version: "v1", Resource: "deployments"}, namespace, "istiod")
+	if err != nil {
+		return fmt.Errorf("could not get istiod deployment: %s", err.Error())
+	}
+
+	containers, found, err := unstructured.NestedSlice(res.Object, "spec", "template", "spec", "containers")
+	if err != nil || !found {
+		return fmt.Errorf("could not find containers in istiod deployment: %s", err.Error())
+	}
+	if len(containers) != 1 {
+		return fmt.Errorf("istiod deployment contains more than one container")
+	}
+
+	env, found, err := unstructured.NestedSlice(containers[0].(map[string]interface{}), "env")
+	if err != nil || !found {
+		return fmt.Errorf("could not find env in istiod deployment: %s", err.Error())
+	}
+
+	// Add environmentVariables to env slice
+	for key, value := range environmentVariables {
+		env = append(env, map[string]interface{}{"name": key, "value": value})
+	}
+
+	err = unstructured.SetNestedSlice(containers[0].(map[string]interface{}), env, "env")
+	if err != nil {
+		return fmt.Errorf("could not set env in istiod deployment: %s", err.Error())
+	}
+
+	err = unstructured.SetNestedSlice(res.Object, containers, "spec", "template", "spec", "containers")
+	if err != nil {
+		return fmt.Errorf("could not set containers in istiod deployment: %s", err.Error())
+	}
+
+	err = resourceMgr.UpdateResource(k8sClient, schema.GroupVersionResource{Group: "apps", Version: "v1", Resource: "deployments"}, namespace, "istiod", *res)
+	log.Printf("ENV VAR: %v", res)
+	if err != nil {
+		return fmt.Errorf("could not update istiod deployment: %s", err.Error())
+	}
+
+	return nil
 }

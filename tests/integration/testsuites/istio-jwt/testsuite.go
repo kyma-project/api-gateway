@@ -45,6 +45,7 @@ func (t *testsuite) createScenario(templateFileName string, scenarioName string)
 	template["GatewayNamespace"] = t.config.GatewayNamespace
 	template["IssuerUrl"] = t.config.IssuerUrl
 	template["EncodedCredentials"] = base64.RawStdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", t.config.ClientID, t.config.ClientSecret)))
+	template["IstioNamespace"] = t.config.IstioNamespace
 
 	return &scenario{
 		Namespace:               ns,
@@ -148,6 +149,11 @@ func (t *testsuite) Setup() error {
 		return err
 	}
 	t.config.IssuerUrl = issuerUrl
+
+	err = auth.PatchIstiodDeploymentWithEnvironmentVariables(t.resourceManager, t.k8sClient, t.config.IstioNamespace, map[string]string{"JWKS_RESOLVER_INSECURE_SKIP_VERIFY": "true"})
+	if err != nil {
+		return err
+	}
 
 	t.oauth2Cfg = &clientcredentials.Config{
 		ClientID:     t.config.ClientID,
