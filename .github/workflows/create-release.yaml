@@ -33,7 +33,12 @@ jobs:
       - name: Check security-scanner config
         shell: bash
         run: |
-          exit $([[ (cat sec-scanners-config.yaml | yq '.protecode.items[0]') == "europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:1.2.2" ]])
+          if [[ $(cat sec-scanners-config.yaml | yq '.protecode[0]') == "europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:${{ github.event.inputs.name }}" ]]; then
+            exit 0
+          else
+            echo "Error: api-gateway-manager image tag in sec-scanners-config doesn't match release ${{ github.event.inputs.name }}"
+            exit 1
+          fi
  
   create-draft:
     name: Create draft release
