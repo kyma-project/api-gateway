@@ -103,7 +103,7 @@ jobs:
         with:
           manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:${{ needs.wait-for-image-build.outputs.sha }}"
           gardener_secret: ${{ secrets.GARDENER_TOKEN }}
-          script: ./tests/integration/scripts/custom-domain-gardener-aws.sh
+          script: ./tests/integration/scripts/custom-domain-gardener-aws-gh.sh
           client_id: ${{ secrets.CLIENT_ID }}
           client_secret: ${{ secrets.CLIENT_SECRET }}
           oidc_issuer_url: ${{ secrets.OIDC_ISSUER_URL }}
