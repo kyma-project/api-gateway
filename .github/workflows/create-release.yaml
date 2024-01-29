@@ -33,7 +33,7 @@ jobs:
       - name: Check security-scanner config
         shell: bash
         run: |
-          exit [[ $(cat sec-scanners-config.yaml | yq '.protecode.items[0]') == "europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:1.2.2" ]]
+          exit $([[ (cat sec-scanners-config.yaml | yq '.protecode.items[0]') == "europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:1.2.2" ]])
  
   create-draft:
     name: Create draft release
