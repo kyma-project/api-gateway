@@ -16,6 +16,6 @@ export GARDENER_REGION="eu-west-1"
 export GARDENER_ZONES="eu-west-1b,eu-west-1c,eu-west-1a"
 export GARDENER_PROVIDER_SECRET_NAME="aws-gardener-access"
 export GARDENER_PROJECT_NAME="goatz"
-export GARDENER_CLUSTER_VERSION="1.26.11"
+export GARDENER_CLUSTER_VERSION="1.27.8"
 
 ./tests/integration/scripts/custom-domain-gardener-gh.sh
