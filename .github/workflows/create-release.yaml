@@ -23,12 +23,17 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Install yq
+        shell: bash
+        run: |
+          sudo add-apt-repository ppa:rmescandon/yq
+          sudo apt update
+          sudo apt install yq -y
+
       - name: Check security-scanner config
         shell: bash
         run: |
-          wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/bin/yq &&\
-            chmod +x /usr/bin/yq
-          exit $((cat sec-scanners-config.yaml | yq .protecode.items[0]) == "europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:${{ github.event.inputs.name }}")
+          exit [[ $(cat sec-scanners-config.yaml | yq '.protecode.items[0]') == "europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:1.2.2" ]]
  
   create-draft:
     name: Create draft release
