@@ -13,9 +13,27 @@ on:
         required: false
 
 jobs:
+  check-prerequisites:
+    name: Check release prerequisites
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check security-scanner config
+        shell: bash
+        run: |
+          wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/bin/yq &&\
+            chmod +x /usr/bin/yq
+          exit $((cat sec-scanners-config.yaml | yq .protecode.items[0]) == "europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:${{ github.event.inputs.name }}")
+ 
   create-draft:
     name: Create draft release
     runs-on: ubuntu-latest
+    needs: [check-prerequisites]
 
     steps:
       - name: Checkout code
