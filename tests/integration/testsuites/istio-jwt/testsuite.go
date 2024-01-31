@@ -179,6 +179,12 @@ func (t *testsuite) TearDown() {
 	if err != nil {
 		log.Print(err.Error())
 	}
+
+	err = auth.RemoveEnvironmentVariableFromIstiodDeployment(t.resourceManager, t.k8sClient, t.config.IstioNamespace, "JWKS_RESOLVER_INSECURE_SKIP_VERIFY")
+	if err != nil {
+		log.Print(err.Error())
+	}
+
 }
 
 func (t *testsuite) BeforeSuiteHooks() []func() error {
