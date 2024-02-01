@@ -3,7 +3,8 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   name: apigateway-editor-role
-  labels: {}
+  labels:
+    app.kubernetes.io/component: operator
 rules:
 - apiGroups:
   - operator.kyma-project.io
