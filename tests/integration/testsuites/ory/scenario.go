@@ -33,15 +33,10 @@ type scenario struct {
 
 func (s *scenario) callingTheEndpointWithValidTokenShouldResultInStatusBetween(path string, tokenType string, lower, higher int) error {
 	asserter := &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher}
-	return s.callingTheEndpointWithMethodWithValidToken(fmt.Sprintf("%s%s", s.Url, path), http.MethodGet, tokenType, asserter)
+	return s.callingTheEndpointWithValidToken(fmt.Sprintf("%s%s", s.Url, path), tokenType, asserter)
 }
 
-func (s *scenario) callingTheEndpointWithMethodWithValidTokenShouldResultInStatusBetween(path string, method string, tokenType string, lower, higher int) error {
-	asserter := &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher}
-	return s.callingTheEndpointWithMethodWithValidToken(fmt.Sprintf("%s%s", s.Url, path), method, tokenType, asserter)
-}
-
-func (s *scenario) callingTheEndpointWithMethodWithValidToken(url string, method string, tokenType string, asserter helpers.HttpResponseAsserter) error {
+func (s *scenario) callingTheEndpointWithValidToken(url string, tokenType string, asserter helpers.HttpResponseAsserter) error {
 
 	requestHeaders := make(map[string]string)
 
@@ -62,7 +57,7 @@ func (s *scenario) callingTheEndpointWithMethodWithValidToken(url string, method
 		return fmt.Errorf("unsupported token type: %s", tokenType)
 	}
 
-	return s.httpClient.CallEndpointWithHeadersAndMethod(requestHeaders, url, method, asserter)
+	return s.httpClient.CallEndpointWithHeadersWithRetries(requestHeaders, url, asserter)
 }
 
 func (s *scenario) thereIsAHttpbinServiceAndApiRuleIsApplied() error {
@@ -84,11 +79,6 @@ func (s *scenario) theManifestIsApplied() error {
 		return err
 	}
 	return helpers.ApplyApiRule(s.resourceManager.CreateResources, s.resourceManager.UpdateResources, s.k8sClient, testcontext.GetRetryOpts(), r)
-}
-
-func (s *scenario) callingTheEndpointWithMethodWithInvalidTokenShouldResultInStatusBetween(path string, method string, lower, higher int) error {
-	requestHeaders := map[string]string{testcontext.AuthorizationHeaderName: testcontext.AnyToken}
-	return s.httpClient.CallEndpointWithHeadersAndMethod(requestHeaders, fmt.Sprintf("%s%s", s.Url, path), method, &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher})
 }
 
 func (s *scenario) callingTheEndpointWithInvalidTokenShouldResultInStatusBetween(path string, lower, higher int) error {

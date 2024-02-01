@@ -45,7 +45,7 @@ func (s *scenario) callingTheEndpointWithAValidToken(endpoint, tokenType, _, _ s
 		Prefix:   testcontext.AuthorizationHeaderPrefix,
 		AsHeader: true,
 	}
-	return s.callingEndpointWithMethodAndHeaders(fmt.Sprintf("%s/%s", s.Url, strings.TrimLeft(endpoint, "/")), http.MethodGet, tokenType, asserter, nil, &tokenFrom)
+	return s.callingEndpointWithHeadersWithRetries(fmt.Sprintf("%s/%s", s.Url, strings.TrimLeft(endpoint, "/")), tokenType, asserter, nil, &tokenFrom)
 }
 
 func (s *scenario) callingTheEndpointWithValidTokenShouldResultInStatusBetween(endpoint, tokenType string, lower, higher int) error {
@@ -55,17 +55,7 @@ func (s *scenario) callingTheEndpointWithValidTokenShouldResultInStatusBetween(e
 		Prefix:   testcontext.AuthorizationHeaderPrefix,
 		AsHeader: true,
 	}
-	return s.callingEndpointWithMethodAndHeaders(fmt.Sprintf("%s/%s", s.Url, strings.TrimLeft(endpoint, "/")), http.MethodGet, tokenType, asserter, nil, &tokenFrom)
-}
-
-func (s *scenario) callingTheEndpointWithMethodWithValidTokenShouldResultInStatusBetween(endpoint, method, tokenType string, lower, higher int) error {
-	asserter := &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher}
-	tokenFrom := tokenFrom{
-		From:     testcontext.AuthorizationHeaderName,
-		Prefix:   testcontext.AuthorizationHeaderPrefix,
-		AsHeader: true,
-	}
-	return s.callingEndpointWithMethodAndHeaders(fmt.Sprintf("%s/%s", s.Url, strings.TrimLeft(endpoint, "/")), method, tokenType, asserter, nil, &tokenFrom)
+	return s.callingEndpointWithHeadersWithRetries(fmt.Sprintf("%s/%s", s.Url, strings.TrimLeft(endpoint, "/")), tokenType, asserter, nil, &tokenFrom)
 }
 
 func (s *scenario) callingTheEndpointWithValidTokenFromHeaderShouldResultInStatusBetween(endpoint, tokenType string, fromHeader string, prefix string, lower, higher int) error {
@@ -75,7 +65,7 @@ func (s *scenario) callingTheEndpointWithValidTokenFromHeaderShouldResultInStatu
 		Prefix:   prefix,
 		AsHeader: true,
 	}
-	return s.callingEndpointWithMethodAndHeaders(fmt.Sprintf("%s/%s", s.Url, strings.TrimLeft(endpoint, "/")), http.MethodGet, tokenType, asserter, nil, &tokenFrom)
+	return s.callingEndpointWithHeadersWithRetries(fmt.Sprintf("%s/%s", s.Url, strings.TrimLeft(endpoint, "/")), tokenType, asserter, nil, &tokenFrom)
 }
 
 func (s *scenario) callingTheEndpointWithValidTokenFromParameterShouldResultInStatusBetween(endpoint, tokenType string, fromParameter string, lower, higher int) error {
@@ -84,7 +74,7 @@ func (s *scenario) callingTheEndpointWithValidTokenFromParameterShouldResultInSt
 		From:     fromParameter,
 		AsHeader: false,
 	}
-	return s.callingEndpointWithMethodAndHeaders(fmt.Sprintf("%s/%s", s.Url, strings.TrimLeft(endpoint, "/")), http.MethodGet, tokenType, asserter, nil, &tokenFrom)
+	return s.callingEndpointWithHeadersWithRetries(fmt.Sprintf("%s/%s", s.Url, strings.TrimLeft(endpoint, "/")), tokenType, asserter, nil, &tokenFrom)
 }
 
 func (s *scenario) callingTheEndpointWithValidTokenShouldResultInBodyContaining(endpoint, tokenType string, bodyContent string) error {
@@ -94,15 +84,10 @@ func (s *scenario) callingTheEndpointWithValidTokenShouldResultInBodyContaining(
 		Prefix:   testcontext.AuthorizationHeaderPrefix,
 		AsHeader: true,
 	}
-	return s.callingEndpointWithMethodAndHeaders(fmt.Sprintf("%s/%s", s.Url, strings.TrimLeft(endpoint, "/")), http.MethodGet, tokenType, asserter, nil, &tokenFrom)
+	return s.callingEndpointWithHeadersWithRetries(fmt.Sprintf("%s/%s", s.Url, strings.TrimLeft(endpoint, "/")), tokenType, asserter, nil, &tokenFrom)
 }
 
-func (s *scenario) callingTheEndpointWithMethodWithInvalidTokenShouldResultInStatusBetween(path string, method string, lower, higher int) error {
-	requestHeaders := map[string]string{testcontext.AuthorizationHeaderName: testcontext.AnyToken}
-	return s.httpClient.CallEndpointWithHeadersAndMethod(requestHeaders, fmt.Sprintf("%s%s", s.Url, path), method, &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher})
-}
-
-func (s *scenario) callingEndpointWithMethodAndHeaders(url string, method string, tokenType string, asserter helpers.HttpResponseAsserter, requestHeaders map[string]string, tokenFrom *tokenFrom) error {
+func (s *scenario) callingEndpointWithHeadersWithRetries(url string, tokenType string, asserter helpers.HttpResponseAsserter, requestHeaders map[string]string, tokenFrom *tokenFrom) error {
 	if requestHeaders == nil {
 		requestHeaders = make(map[string]string)
 	}
@@ -131,7 +116,7 @@ func (s *scenario) callingEndpointWithMethodAndHeaders(url string, method string
 		return fmt.Errorf("unsupported token type: %s", tokenType)
 	}
 
-	return s.httpClient.CallEndpointWithHeadersAndMethod(requestHeaders, url, method, asserter)
+	return s.httpClient.CallEndpointWithHeadersWithRetries(requestHeaders, url, asserter)
 }
 
 func (s *scenario) callingTheEndpointWithoutTokenShouldResultInStatusBetween(endpoint string, lower, higher int) error {
