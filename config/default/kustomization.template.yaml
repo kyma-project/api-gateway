@@ -11,12 +11,13 @@ namePrefix: api-gateway-
 # Labels to add to all resources and selectors.
 labels:
   - includeSelectors: false
+    includeTemplates: true
     pairs:
+      # We cannot add the app.kubernetes.io/component, because it needs to be different for the manager
       kyma-project.io/module: api-gateway
       app.kubernetes.io/name: api-gateway-operator
       app.kubernetes.io/instance: api-gateway-operator-default
-      app.kubernetes.io/version: "VERSION"
-      app.kubernetes.io/component: operator
+      app.kubernetes.io/version: VERSION
       app.kubernetes.io/part-of: api-gateway
 
 resources:

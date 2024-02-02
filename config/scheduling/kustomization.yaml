@@ -1,2 +1,6 @@
 resources:
 - priority_class.yaml
+
+labels:
+  - pairs:
+      app.kubernetes.io/component: operator
