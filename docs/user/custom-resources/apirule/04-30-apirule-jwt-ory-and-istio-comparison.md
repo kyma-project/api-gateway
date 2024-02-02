@@ -22,7 +22,8 @@ This table lists all possible configuration properties of the Ory Oathkeeper JWT
 
 ## Examplary APIRule Custom Resources
 
->**CAUTION:** Istio JWT is **not** a production-ready feature, and API might change.
+> [!WARNING]
+>  Istio JWT is not a production-ready feature, and the API might change.
 
 These are sample APIRule custom resources (CRs) of both Ory Oathkeeper and Istio JWT access strategy configuration for a Service.
 
@@ -101,11 +102,14 @@ spec:
 ```
 <!-- tabs:end -->
 
->**CAUTION:** Both `jwks_urls` and `trusted_issuers` must be valid URLs. Although HTTP is allowed, it is recommended that you use only HTTPS endpoints. 
+> [!WARNING]
+>  Both `jwks_urls` and `trusted_issuers` must be valid URLs. Although HTTP is allowed, it is recommended that you use only HTTPS endpoints. 
 
->**CAUTION:** You can define multiple JWT issuers, but each of them must be unique.
+> [!WARNING]
+>  You can define multiple JWT issuers, but each of them must be unique.
 
->**CAUTION:** We support only a single `fromHeader` or a single `fromParameter` for a JWT issuer.
+> [!WARNING]
+> We support only a single `fromHeader` or a single `fromParameter` for a JWT issuer.
 
 ## How Istio JWT Access Strategy Differs from Ory Oathkeeper JWT Access Strategy
 

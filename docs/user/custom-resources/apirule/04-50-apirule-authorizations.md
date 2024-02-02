@@ -12,7 +12,8 @@ If you secure a Service with both OAuth2 and JWT, the Oathkeeper proxy expects t
 
 Alternatively, you can set the **token_from.location** parameter to `query_parameter:{NAME}` to extract the token from a specific query parameter.
 
->**TIP:** You can define the location of the OAuth2 token through the **token_from.location** parameter. However, by default, OAuth2 tokens are extracted from the `Authorization` header.
+> [!TIP]
+>  You can define the location of the OAuth2 token through the **token_from.location** parameter. However, by default, OAuth2 tokens are extracted from the `Authorization` header.
 
 ## Examples
 
