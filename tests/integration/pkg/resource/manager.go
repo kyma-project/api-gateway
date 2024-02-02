@@ -53,6 +53,8 @@ func (k godogResourceMapping) String() string {
 		return "Certificate"
 	case DNSEntry:
 		return "DNSEntry"
+	case PodDisruptionBudget:
+		return "PodDisruptionBudget"
 	}
 	panic(fmt.Errorf("%#v has unimplemented String() method", k))
 }
@@ -74,6 +76,7 @@ const (
 	VirtualService
 	Certificate
 	DNSEntry
+	PodDisruptionBudget
 )
 
 type Manager struct {
@@ -610,6 +613,12 @@ func GetResourceGvr(kind, name string) schema.GroupVersionResource {
 			Group:    "dns.gardener.cloud",
 			Version:  "v1alpha1",
 			Resource: "dnsentries",
+		}
+	case PodDisruptionBudget.String():
+		gvr = schema.GroupVersionResource{
+			Group:    "policy",
+			Version:  "v1",
+			Resource: "poddisruptionbudgets",
 		}
 	default:
 		panic(fmt.Errorf("cannot get gvr for kind: %s, name: %s", kind, name))
