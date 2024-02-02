@@ -3,7 +3,8 @@ kind: Service
 metadata:
   name: operator-metrics
   namespace: system
-  labels: {}
+  labels:
+    app.kubernetes.io/component: operator
 spec:
   ports:
   - name: http-metrics
