@@ -21,7 +21,6 @@ rules:
   - ""
   resources:
   - deployments
-  - poddisruptionbudgets
   - secrets
   - serviceaccounts
   - services
