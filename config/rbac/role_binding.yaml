@@ -2,8 +2,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
   name: manager-rolebinding
-  labels:
-    app.kubernetes.io/component: operator
+  labels: {}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole

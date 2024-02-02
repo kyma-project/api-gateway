@@ -5,8 +5,7 @@ metadata:
     prometheus.io/port: "8443"
     prometheus.io/scheme: https
     prometheus.io/scrape: "true"
-  labels:
-    app.kubernetes.io/component: operator
+  labels: {}
   name: controller-manager-metrics-service
   namespace: system
 spec:

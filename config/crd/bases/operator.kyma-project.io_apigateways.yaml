@@ -4,8 +4,6 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.9.2
-  labels:
-    app.kubernetes.io/component: operator
   creationTimestamp: null
   name: apigateways.operator.kyma-project.io
 spec:

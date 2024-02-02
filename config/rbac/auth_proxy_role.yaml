@@ -2,8 +2,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   name: proxy-role
-  labels:
-    app.kubernetes.io/component: operator
+  labels: {}
 rules:
 - apiGroups:
   - authentication.k8s.io
