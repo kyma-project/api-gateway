@@ -102,13 +102,13 @@ spec:
 ```
 <!-- tabs:end -->
 
-> [!NOTE]
+> [!WARNING]
 >  Both `jwks_urls` and `trusted_issuers` must be valid URLs. Although HTTP is allowed, it is recommended that you use only HTTPS endpoints. 
 
-> [!NOTE]
+> [!WARNING]
 >  You can define multiple JWT issuers, but each of them must be unique.
 
-> [!NOTE]
+> [!WARNING]
 > We support only a single `fromHeader` or a single `fromParameter` for a JWT issuer.
 
 ## How Istio JWT Access Strategy Differs from Ory Oathkeeper JWT Access Strategy

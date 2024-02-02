@@ -14,7 +14,7 @@ kubectl patch configmap/api-gateway-config -n kyma-system --type merge -p '{"dat
 
 ## Istio JWT Configuration
 
-> [!CAUTION]
+> [!WARNING]
 >  Istio JWT is not a production-ready feature, and the API might change.
 
 This table lists all the possible parameters of the Istio JWT access strategy together with their descriptions:
