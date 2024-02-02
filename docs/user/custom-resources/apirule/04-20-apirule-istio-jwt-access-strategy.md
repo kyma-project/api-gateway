@@ -14,7 +14,8 @@ kubectl patch configmap/api-gateway-config -n kyma-system --type merge -p '{"dat
 
 ## Istio JWT Configuration
 
->**CAUTION:** Istio JWT is not a production-ready feature, and API might change.
+> [!CAUTION]
+>  Istio JWT is not a production-ready feature, and the API might change.
 
 This table lists all the possible parameters of the Istio JWT access strategy together with their descriptions:
 
@@ -34,9 +35,11 @@ This table lists all the possible parameters of the Istio JWT access strategy to
 | **rules.accessStrategies.config.authorizations.requiredScopes**        | **NO**    | List of required scope values for the JWT.                                                                                                                                |
 | **rules.accessStrategies.config.authorizations.audiences**             | **NO**    | List of audiences required for the JWT.                                                                                                                                   |
 
->**CAUTION:** You can define multiple JWT issuers, but each of them must be unique.
+> [!WARNING]
+>  You can define multiple JWT issuers, but each of them must be unique.
 
->**CAUTION:** Currently, we support only a single `fromHeader` or a single `fromParameter`. Specifying both of these fields for a JWT issuer is not supported.
+> [!WARNING]
+>  Currently, we support only a single `fromHeader` or a single `fromParameter`. Specifying both of these fields for a JWT issuer is not supported.
 
 ### Authentications
 Under the hood, an authentications array creates a corresponding [requestPrincipals](https://istio.io/latest/docs/reference/config/security/authorization-policy/#Source) array in the Istio's [Authorization Policy](https://istio.io/latest/docs/reference/config/security/authorization-policy/) resource. Every `requestPrincipals` string is formatted as `<ISSUSER>/*`.

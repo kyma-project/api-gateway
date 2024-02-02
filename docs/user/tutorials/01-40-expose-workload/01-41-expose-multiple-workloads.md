@@ -2,7 +2,7 @@
 
 This tutorial shows how to expose multiple workloads on different paths by defining a Service at the root level and by defining Services on each path separately.
 
-> **CAUTION:** Exposing a workload to the outside world is always a potential security vulnerability, so tread carefully. In a production environment, remember to secure the workload you expose with [OAuth2](../01-50-expose-and-secure-a-workload/01-50-expose-and-secure-workload-oauth2.md) or [JWT](../01-50-expose-and-secure-a-workload/01-52-expose-and-secure-workload-jwt.md).
+> [!WARNING] Exposing a workload to the outside world is always a potential security vulnerability, so tread carefully. In a production environment, remember to secure the workload you expose with [OAuth2](../01-50-expose-and-secure-a-workload/01-50-expose-and-secure-workload-oauth2.md) or [JWT](../01-50-expose-and-secure-a-workload/01-52-expose-and-secure-workload-jwt.md).
 
 ## Prerequisites
 
@@ -82,7 +82,8 @@ Follow the instructions to expose the instances of the HTTPBin Service on differ
 
 You can also define a Service at the root level. Such a definition is applied to all the paths specified at `spec.rules` that do not have their own Services defined.
  
- > **NOTE:** Services definitions at the `spec.rules` level have precedence over Service definition at the `spec.service` level.
+> [!NOTE] 
+>Services definitions at the `spec.rules` level have precedence over Service definition at the `spec.service` level.
 
 1. To expose the instances of the HTTPBin Service, create an APIRule CR in your namespace. Run:
 
