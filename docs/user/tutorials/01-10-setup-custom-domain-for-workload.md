@@ -2,7 +2,8 @@
 
 This tutorial shows how to set up a custom domain and prepare a certificate required for exposing a workload. It uses the Gardener [External DNS Management](https://github.com/gardener/external-dns-management) and [Certificate Management](https://github.com/gardener/cert-management) components.
 
->**NOTE:** Skip this tutorial if you use a Kyma domain instead of your custom domain.
+> [!NOTE]
+> Skip this tutorial if you use a Kyma domain instead of your custom domain.
 
 ## Prerequisites
 
@@ -23,7 +24,8 @@ This tutorial shows how to set up a custom domain and prepare a certificate requ
 2. Create a DNSProvider custom resource (CR).
 
     * Export the following values as environment variables. 
-      >**NOTE:** As `SPEC_TYPE`, use the relevant provider type. The `DOMAIN_NAME` value specifies the name of a domain that you own, for example, `mydomain.com`. 
+      > [!NOTE]
+      > As `SPEC_TYPE`, use the relevant provider type. The `DOMAIN_NAME` value specifies the name of a domain that you own, for example, `mydomain.com`. 
 
       ```bash
       export SPEC_TYPE={PROVIDER_TYPE}
@@ -58,7 +60,8 @@ This tutorial shows how to set up a custom domain and prepare a certificate requ
       ```bash
       export IP=$(kubectl -n istio-system get service istio-ingressgateway -o jsonpath='{.status.loadBalancer.ingress[0].ip}') # Assuming only one LoadBalancer with external IP
       ```
-      >**NOTE:** For some cluster providers you need to replace the `ip` with the `hostname`, for example, in AWS, set `jsonpath='{.status.loadBalancer.ingress[0].hostname}'`.
+      > [!NOTE]
+      > For some cluster providers you need to replace the `ip` with the `hostname`, for example, in AWS, set `jsonpath='{.status.loadBalancer.ingress[0].hostname}'`.
 
     * To create a DNSEntry CR, run:
 
@@ -83,7 +86,8 @@ This tutorial shows how to set up a custom domain and prepare a certificate requ
 
     * Export the following values as environment variables:
 
-      >**NOTE:** `TLS_SECRET` is the name of the TLS Secret, for example, `httpbin-tls-credentials`.
+      > [!NOTE]
+      > `TLS_SECRET` is the name of the TLS Secret, for example, `httpbin-tls-credentials`.
 
       ```bash
       export TLS_SECRET={TLS_SECRET_NAME}
@@ -103,7 +107,8 @@ This tutorial shows how to set up a custom domain and prepare a certificate requ
         commonName: $DOMAIN_TO_EXPOSE_WORKLOADS
       EOF
       ```
-      >**NOTE:** While using the default configuration, certificates with the Let's Encrypt Issuer are valid for 90 days and automatically renewed 30 days before their validity expires. For more information, read the documentation on [Gardener Certificate Management](https://github.com/gardener/cert-management#requesting-a-certificate) and [Gardener extensions for certificate Services](https://gardener.cloud/docs/extensions/others/gardener-extension-shoot-cert-service/).
+      > [!NOTE]
+      > While using the default configuration, certificates with the Let's Encrypt Issuer are valid for 90 days and automatically renewed 30 days before their validity expires. For more information, read the documentation on [Gardener Certificate Management](https://github.com/gardener/cert-management#requesting-a-certificate) and [Gardener extensions for certificate Services](https://gardener.cloud/docs/extensions/others/gardener-extension-shoot-cert-service/).
 
     * To check the certificate status, run: 
      

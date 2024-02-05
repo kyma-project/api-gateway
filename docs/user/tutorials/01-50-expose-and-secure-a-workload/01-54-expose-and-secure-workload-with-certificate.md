@@ -21,7 +21,8 @@ This tutorial shows how to expose and secure a workload with mutual authenticati
 ## Authorize a Client with a Certificate
 
 The following instructions describe how to secure an mTLS Service. 
->**NOTE:** Create AuthorizationPolicy to check if the client's common name in the certificate matches.
+> [!NOTE]
+>  Create AuthorizationPolicy to check if the client's common name in the certificate matches.
 
 1. Create VirtualService that adds the X-CLIENT-SSL headers to incoming requests:
 

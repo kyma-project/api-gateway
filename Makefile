@@ -206,7 +206,6 @@ $(KUSTOMIZE): $(LOCALBIN)
 .PHONY: module-version
 module-version:
 	sed 's/VERSION/$(VERSION)/g' config/default/kustomization.template.yaml > config/default/kustomization.yaml
-	sed 's/VERSION/$(VERSION)/g' config/manager/manager.template.yaml > config/manager/manager.yaml
 
 .PHONY: controller-gen
 controller-gen: $(CONTROLLER_GEN) ## Download controller-gen locally if necessary.

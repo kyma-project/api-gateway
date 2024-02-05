@@ -12,5 +12,6 @@ configMapGenerator:
     options:
       disableNameSuffixHash: true
       labels:
+        app.kubernetes.io/component: operator
         busola.io/extension: resource
         busola.io/extension-version: "0.5"

@@ -4,7 +4,8 @@ Kyma sits on top of Kubernetes and leverages [authentication strategies](https:/
 
 One of the strategies enables you to use your own identity provider. This is very convenient because you can delegate the verification of who the users are to a separate user management entity and even reuse it in different systems.
 
-> **NOTE:** Kubernetes supports OpenID Connect (OIDC) JWT Access tokens, so make sure your identity provider is OIDC-compliant.
+> [!NOTE]
+>  Kubernetes supports OpenID Connect (OIDC) JWT Access tokens, so make sure your identity provider is OIDC-compliant.
 
 ## Prerequisites
 
@@ -15,7 +16,8 @@ One of the strategies enables you to use your own identity provider. This is ver
 
 ### Configure Your Identity Provider
 
-> **NOTE:** If you don't have access to the identity provider, you can sign up for a free tier plan at [Auth0](https://auth0.com/).
+> [!NOTE]
+>  If you don't have access to the identity provider, you can sign up for a free tier plan at [Auth0](https://auth0.com/).
 
 Configure a dedicated client (often referred to as an application) at your identity provider.
 
@@ -74,7 +76,8 @@ With this step, you will set up the OIDC provider in the `kubeconfig` file to en
         - --oidc-issuer-url=ISSUER_URL
         - --oidc-client-id=YOUR_CLIENT_ID
     ```
-    > **NOTE:** `--oidc-client-secret=YOUR_CLIENT_SECRET` is not required if your OICS server supports the PKCE authentication flow.
+    > [!NOTE]
+    > `--oidc-client-secret=YOUR_CLIENT_SECRET` is not required if your OICS server supports the PKCE authentication flow.
 
 4. To enforce the OIDC login, set the OIDC user as a default user in the context.
 
