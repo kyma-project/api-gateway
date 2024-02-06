@@ -149,11 +149,6 @@ func (t *testsuite) Setup() error {
 	}
 	t.config.IssuerUrl = issuerUrl
 
-	err = auth.PatchIstiodDeploymentWithEnvironmentVariables(t.resourceManager, t.k8sClient, t.config.IstioNamespace, map[string]string{"JWKS_RESOLVER_INSECURE_SKIP_VERIFY": "true"})
-	if err != nil {
-		return err
-	}
-
 	t.oauth2Cfg = &clientcredentials.Config{
 		ClientID:     t.config.ClientID,
 		ClientSecret: t.config.ClientSecret,
@@ -179,15 +174,10 @@ func (t *testsuite) TearDown() {
 		log.Print(err.Error())
 	}
 
-	err = auth.RemoveEnvironmentVariableFromIstiodDeployment(t.resourceManager, t.k8sClient, t.config.IstioNamespace, "JWKS_RESOLVER_INSECURE_SKIP_VERIFY")
-	if err != nil {
-		log.Print(err.Error())
-	}
-
 }
 
 func (t *testsuite) BeforeSuiteHooks() []func() error {
-	h := []func() error{hooks.ApplyAndVerifyApiGatewayCrSuiteHook}
+	h := []func() error{hooks.IstioSkipVerifyJwksResolverSuiteHook(t), hooks.ApplyAndVerifyApiGatewayCrSuiteHook}
 
 	if !t.config.IsGardener {
 		h = append(h, hooks.DnsPatchForK3dSuiteHook(t))
@@ -196,7 +186,7 @@ func (t *testsuite) BeforeSuiteHooks() []func() error {
 }
 
 func (t *testsuite) AfterSuiteHooks() []func() error {
-	h := []func() error{hooks.DeleteBlockingResourcesSuiteHook, hooks.ApiGatewayCrTearDownSuiteHook}
+	h := []func() error{hooks.IstioSkipVerifyJwksResolverSuiteHookTeardown(t), hooks.DeleteBlockingResourcesSuiteHook, hooks.ApiGatewayCrTearDownSuiteHook}
 
 	if !t.config.IsGardener {
 		h = append(h, hooks.DnsPatchForK3dSuiteHookTeardown(t))
