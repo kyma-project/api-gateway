@@ -434,10 +434,8 @@ var _ = Describe("Virtual Service Processor", func() {
 					},
 				},
 			}
-			getMethod := []string{"GET"}
-			postMethod := []string{"POST"}
-			noopRule := GetRuleFor(ApiPath, getMethod, []*v1beta1.Mutator{}, noop)
-			jwtRule := GetRuleFor(ApiPath, postMethod, testMutators, jwt)
+			noopRule := GetRuleFor(ApiPath, methodsGet, []*v1beta1.Mutator{}, noop)
+			jwtRule := GetRuleFor(ApiPath, methodsPost, testMutators, jwt)
 			rules := []v1beta1.Rule{noopRule, jwtRule}
 
 			apiRule := GetAPIRuleFor(rules)
@@ -515,10 +513,9 @@ var _ = Describe("Virtual Service Processor", func() {
 					},
 				},
 			}
-			getMethod := []string{"GET"}
-			postMethod := []string{"POST"}
-			noopGetRule := GetRuleFor(ApiPath, getMethod, []*v1beta1.Mutator{}, noop)
-			noopPostRule := GetRuleFor(ApiPath, postMethod, []*v1beta1.Mutator{}, noop)
+
+			noopGetRule := GetRuleFor(ApiPath, methodsGet, []*v1beta1.Mutator{}, noop)
+			noopPostRule := GetRuleFor(ApiPath, methodsPost, []*v1beta1.Mutator{}, noop)
 			jwtRule := GetRuleFor(HeadersApiPath, ApiMethods, testMutators, jwt)
 			rules := []v1beta1.Rule{noopGetRule, noopPostRule, jwtRule}
 

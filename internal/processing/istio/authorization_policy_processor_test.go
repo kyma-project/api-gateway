@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
+	"net/http"
 
 	"github.com/kyma-project/api-gateway/internal/processing/hashbasedstate"
 
@@ -233,7 +234,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 		Expect(ap1.Spec.Rules[0].From[0].Source.RequestPrincipals[0]).To(Equal(fmt.Sprintf("%s/*", JwtIssuer)))
 		Expect(len(ap1.Spec.Rules[0].To)).To(Equal(1))
 		Expect(len(ap1.Spec.Rules[0].To[0].Operation.Methods)).To(Equal(1))
-		Expect(ap1.Spec.Rules[0].To[0].Operation.Methods).To(ContainElements(ApiMethods))
+		Expect(ap1.Spec.Rules[0].To[0].Operation.Methods).To(ContainElements([]string{http.MethodGet}))
 		Expect(len(ap1.Spec.Rules[0].To[0].Operation.Paths)).To(Equal(1))
 
 		for i := 0; i < 3; i++ {
@@ -259,7 +260,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 		Expect(ap2.Spec.Rules[0].From[0].Source.RequestPrincipals[0]).To(Equal(fmt.Sprintf("%s/*", JwtIssuer)))
 		Expect(len(ap2.Spec.Rules[0].To)).To(Equal(1))
 		Expect(len(ap2.Spec.Rules[0].To[0].Operation.Methods)).To(Equal(1))
-		Expect(ap2.Spec.Rules[0].To[0].Operation.Methods).To(ContainElements(ApiMethods))
+		Expect(ap2.Spec.Rules[0].To[0].Operation.Methods).To(ContainElements([]string{http.MethodGet}))
 		Expect(len(ap2.Spec.Rules[0].To[0].Operation.Paths)).To(Equal(1))
 
 		for i := 0; i < 3; i++ {
@@ -310,7 +311,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 		Expect(ap1.Spec.Rules[0].From[0].Source.RequestPrincipals[0]).To(Equal(fmt.Sprintf("%s/*", JwtIssuer)))
 		Expect(len(ap1.Spec.Rules[0].To)).To(Equal(1))
 		Expect(len(ap1.Spec.Rules[0].To[0].Operation.Methods)).To(Equal(1))
-		Expect(ap1.Spec.Rules[0].To[0].Operation.Methods).To(ContainElements(ApiMethods))
+		Expect(ap1.Spec.Rules[0].To[0].Operation.Methods).To(ContainElements([]string{http.MethodGet}))
 		Expect(len(ap1.Spec.Rules[0].To[0].Operation.Paths)).To(Equal(1))
 
 		for i := 0; i < 3; i++ {
@@ -333,7 +334,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 		Expect(ap2.Spec.Rules[0].From[0].Source.RequestPrincipals[0]).To(Equal(fmt.Sprintf("%s/*", JwtIssuer)))
 		Expect(len(ap2.Spec.Rules[0].To)).To(Equal(1))
 		Expect(len(ap2.Spec.Rules[0].To[0].Operation.Methods)).To(Equal(1))
-		Expect(ap2.Spec.Rules[0].To[0].Operation.Methods).To(ContainElements(ApiMethods))
+		Expect(ap2.Spec.Rules[0].To[0].Operation.Methods).To(ContainElements([]string{http.MethodGet}))
 		Expect(len(ap2.Spec.Rules[0].To[0].Operation.Paths)).To(Equal(1))
 
 		for i := 0; i < 3; i++ {
@@ -476,7 +477,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 		Expect(ap.Spec.Rules[0].From[0].Source.RequestPrincipals[1]).To(Equal(fmt.Sprintf("%s/*", JwtIssuer2)))
 		Expect(len(ap.Spec.Rules[0].To)).To(Equal(1))
 		Expect(len(ap.Spec.Rules[0].To[0].Operation.Methods)).To(Equal(1))
-		Expect(ap.Spec.Rules[0].To[0].Operation.Methods).To(ContainElements(ApiMethods))
+		Expect(ap.Spec.Rules[0].To[0].Operation.Methods).To(ContainElements([]string{http.MethodGet}))
 		Expect(len(ap.Spec.Rules[0].To[0].Operation.Paths)).To(Equal(1))
 		Expect(ap.Spec.Rules[0].To[0].Operation.Paths).To(ContainElements(HeadersApiPath))
 
@@ -734,11 +735,10 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 
 	It("should create AP when no exists", func() {
 		// given: New resources
-		methods := []string{"GET"}
 		path := "/"
 		serviceName := "test-service"
 
-		rule := getRuleForApTest(methods, path, serviceName)
+		rule := getRuleForApTest(methodsGet, path, serviceName)
 		rules := []gatewayv1beta1.Rule{rule}
 		apiRule := GetAPIRuleFor(rules)
 		svc := GetService(serviceName)
@@ -761,11 +761,10 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 		processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig(), &testLogger)
 
 		// given: New resources
-		methods := []string{"GET", "POST"}
 		path := "/"
 		serviceName := "test-service"
 
-		rule := getRuleForApTest(methods, path, serviceName)
+		rule := getRuleForApTest(methodsGetPost, path, serviceName)
 		rules := []gatewayv1beta1.Rule{rule}
 
 		apiRule := GetAPIRuleFor(rules)
@@ -794,7 +793,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig(), &testLogger)
 
 			// given: New resources
-			jwtRule := getRuleForApTest([]string{"GET", "POST"}, "/", "jwt-secured-service")
+			jwtRule := getRuleForApTest(methodsGetPost, "/", "jwt-secured-service")
 
 			strategies := []*gatewayv1beta1.Authenticator{
 				{
@@ -811,7 +810,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 				Port: &port,
 			}
 
-			rule := GetRuleWithServiceFor("/", []string{"GET", "POST"}, []*gatewayv1beta1.Mutator{}, strategies, service)
+			rule := GetRuleWithServiceFor("/", []gatewayv1beta1.HttpMethod{http.MethodGet, http.MethodPost}, []*gatewayv1beta1.Mutator{}, strategies, service)
 			rules := []gatewayv1beta1.Rule{rule, jwtRule}
 
 			apiRule := GetAPIRuleFor(rules)
@@ -861,8 +860,8 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 
 			// given: New resources
 
-			existingRule := getRuleForApTest([]string{"GET", "POST"}, "/", "test-service")
-			newRule := getRuleForApTest([]string{"GET", "POST"}, "/new-path", "test-service")
+			existingRule := getRuleForApTest(methodsGetPost, "/", "test-service")
+			newRule := getRuleForApTest(methodsGetPost, "/new-path", "test-service")
 			rules := []gatewayv1beta1.Rule{existingRule, newRule}
 
 			apiRule := GetAPIRuleFor(rules)
@@ -888,8 +887,8 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 
 			// given: New resources
 
-			existingRule := getRuleForApTest([]string{"GET", "POST"}, "/", "test-service")
-			newRule := getRuleForApTest([]string{"DELETE"}, "/", "test-service")
+			existingRule := getRuleForApTest(methodsGetPost, "/", "test-service")
+			newRule := getRuleForApTest(methodsDelete, "/", "test-service")
 			rules := []gatewayv1beta1.Rule{existingRule, newRule}
 
 			apiRule := GetAPIRuleFor(rules)
@@ -910,8 +909,8 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			//given: Cluster state
 			existingAp := getAuthorizationPolicy("raName", ApiNamespace, "test-service", []string{"GET", "POST"})
 			// given: New resources
-			existingRule := getRuleForApTest([]string{"GET", "POST"}, "/", "test-service")
-			newRule := getRuleForApTest([]string{"GET", "POST"}, "/", "new-service")
+			existingRule := getRuleForApTest(methodsGetPost, "/", "test-service")
+			newRule := getRuleForApTest(methodsGetPost, "/", "new-service")
 
 			rules := []gatewayv1beta1.Rule{existingRule, newRule}
 			apiRule := GetAPIRuleFor(rules)
@@ -940,11 +939,10 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig(), &testLogger)
 
 			// given: New resources
-			methods := []string{"GET", "POST"}
 			path := "/new-path"
 			serviceName := "test-service"
 
-			rule := getRuleForApTest(methods, path, serviceName)
+			rule := getRuleForApTest(methodsGetPost, path, serviceName)
 			rules := []gatewayv1beta1.Rule{rule}
 
 			apiRule := GetAPIRuleFor(rules)
@@ -973,8 +971,8 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig(), &testLogger)
 
 			// given: New resources
-			unchangedRule := getRuleForApTest([]string{"DELETE"}, "/", "test-service")
-			updatedRule := getRuleForApTest([]string{"GET"}, "/new-path", "test-service")
+			unchangedRule := getRuleForApTest(methodsDelete, "/", "test-service")
+			updatedRule := getRuleForApTest(methodsGet, "/new-path", "test-service")
 			rules := []gatewayv1beta1.Rule{updatedRule, unchangedRule}
 
 			apiRule := GetAPIRuleFor(rules)
@@ -1004,7 +1002,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig(), &testLogger)
 
 			// given: New resources
-			movedRule := getRuleForApTest([]string{"DELETE"}, "/", "test-service")
+			movedRule := getRuleForApTest(methodsDelete, "/", "test-service")
 			rules := []gatewayv1beta1.Rule{movedRule}
 
 			apiRule := GetAPIRuleFor(rules)
@@ -1030,7 +1028,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig(), &testLogger)
 
 			// given: New resources
-			movedRule := getRuleForApTest([]string{"DELETE"}, "/", "test-service", "new-namespace")
+			movedRule := getRuleForApTest(methodsDelete, "/", "test-service", "new-namespace")
 			rules := []gatewayv1beta1.Rule{movedRule}
 
 			apiRule := GetAPIRuleFor(rules)
@@ -1059,8 +1057,8 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig(), &testLogger)
 
 			// given: New resources
-			unchangedRule := getRuleForApTest([]string{"GET"}, "/", "first-service")
-			updatedRule := getRuleForApTest([]string{"GET"}, "/new-path", "second-service")
+			unchangedRule := getRuleForApTest(methodsGet, "/", "first-service")
+			updatedRule := getRuleForApTest(methodsGet, "/new-path", "second-service")
 			rules := []gatewayv1beta1.Rule{updatedRule, unchangedRule}
 
 			apiRule := GetAPIRuleFor(rules)
@@ -1125,7 +1123,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 				Port: &ServicePort,
 			}
 
-			rule := GetRuleWithServiceFor("/", []string{"GET"}, []*gatewayv1beta1.Mutator{}, []*gatewayv1beta1.Authenticator{jwtAuth}, service)
+			rule := GetRuleWithServiceFor("/", []gatewayv1beta1.HttpMethod{http.MethodGet}, []*gatewayv1beta1.Mutator{}, []*gatewayv1beta1.Authenticator{jwtAuth}, service)
 			rules := []gatewayv1beta1.Rule{rule}
 
 			apiRule := GetAPIRuleFor(rules)
@@ -1191,7 +1189,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 				Port: &ServicePort,
 			}
 
-			rule := GetRuleWithServiceFor("/", []string{"GET"}, []*gatewayv1beta1.Mutator{}, []*gatewayv1beta1.Authenticator{jwtAuth}, service)
+			rule := GetRuleWithServiceFor("/", []gatewayv1beta1.HttpMethod{http.MethodGet}, []*gatewayv1beta1.Mutator{}, []*gatewayv1beta1.Authenticator{jwtAuth}, service)
 			rules := []gatewayv1beta1.Rule{rule}
 
 			apiRule := GetAPIRuleFor(rules)
@@ -1256,7 +1254,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 				Port: &ServicePort,
 			}
 
-			rule := GetRuleWithServiceFor("/", []string{"GET"}, []*gatewayv1beta1.Mutator{}, []*gatewayv1beta1.Authenticator{jwtAuth}, service)
+			rule := GetRuleWithServiceFor("/", []gatewayv1beta1.HttpMethod{http.MethodGet}, []*gatewayv1beta1.Mutator{}, []*gatewayv1beta1.Authenticator{jwtAuth}, service)
 			rules := []gatewayv1beta1.Rule{rule}
 
 			apiRule := GetAPIRuleFor(rules)
@@ -1333,7 +1331,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 				Port: &ServicePort,
 			}
 
-			rule := GetRuleWithServiceFor("/", []string{"GET"}, []*gatewayv1beta1.Mutator{}, []*gatewayv1beta1.Authenticator{jwtAuth}, service)
+			rule := GetRuleWithServiceFor("/", []gatewayv1beta1.HttpMethod{http.MethodGet}, []*gatewayv1beta1.Mutator{}, []*gatewayv1beta1.Authenticator{jwtAuth}, service)
 			rules := []gatewayv1beta1.Rule{rule}
 
 			apiRule := GetAPIRuleFor(rules)
@@ -1358,11 +1356,10 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 	When("Service has custom selector spec", func() {
 		It("should create AP with selector from service", func() {
 			// given: New resources
-			methods := []string{"GET"}
 			path := "/"
 			serviceName := "test-service"
 
-			rule := getRuleForApTest(methods, path, serviceName)
+			rule := getRuleForApTest(methodsGet, path, serviceName)
 			rules := []gatewayv1beta1.Rule{rule}
 			apiRule := GetAPIRuleFor(rules)
 			svc := GetService(serviceName)
@@ -1388,12 +1385,11 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 
 		It("should create AP with selector from service in different namespace", func() {
 			// given: New resources
-			methods := []string{"GET"}
 			path := "/"
 			serviceName := "test-service"
 			differentNamespace := "different-namespace"
 
-			rule := getRuleForApTest(methods, path, serviceName)
+			rule := getRuleForApTest(methodsGet, path, serviceName)
 			rule.Service.Namespace = &differentNamespace
 			rules := []gatewayv1beta1.Rule{rule}
 			apiRule := GetAPIRuleFor(rules)
@@ -1420,11 +1416,10 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 
 		It("should create AP with selector from service with multiple selector labels", func() {
 			// given: New resources
-			methods := []string{"GET"}
 			path := "/"
 			serviceName := "test-service"
 
-			rule := getRuleForApTest(methods, path, serviceName)
+			rule := getRuleForApTest(methodsGet, path, serviceName)
 			rules := []gatewayv1beta1.Rule{rule}
 			apiRule := GetAPIRuleFor(rules)
 			svc := GetService(serviceName)
@@ -1492,7 +1487,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 				Port: &ServicePort,
 			}
 
-			rule := GetRuleWithServiceFor("/", []string{"GET"}, []*gatewayv1beta1.Mutator{}, []*gatewayv1beta1.Authenticator{jwtAuth}, service)
+			rule := GetRuleWithServiceFor("/", []gatewayv1beta1.HttpMethod{http.MethodGet}, []*gatewayv1beta1.Mutator{}, []*gatewayv1beta1.Authenticator{jwtAuth}, service)
 			rules := []gatewayv1beta1.Rule{rule}
 
 			apiRule := GetAPIRuleFor(rules)
@@ -1527,7 +1522,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 	}
 })
 
-func getRuleForApTest(methods []string, path string, serviceName string, namespace ...string) gatewayv1beta1.Rule {
+func getRuleForApTest(methods []gatewayv1beta1.HttpMethod, path string, serviceName string, namespace ...string) gatewayv1beta1.Rule {
 	jwtConfigJSON := fmt.Sprintf(`{"authentications": [{"issuer": "%s", "jwksUri": "%s"}]}`, JwtIssuer, JwksUri)
 	strategies := []*gatewayv1beta1.Authenticator{
 		{
