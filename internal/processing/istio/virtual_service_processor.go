@@ -71,11 +71,19 @@ func (r virtualServiceCreator) Create(api *gatewayv1beta1.APIRule) (*networkingv
 
 		httpRouteBuilder.Route(builders.RouteDestination().Host(host).Port(port))
 
-		if rule.Path == "/*" {
-			httpRouteBuilder.Match(builders.MatchRequest().Uri().Prefix("/"))
-		} else {
-			httpRouteBuilder.Match(builders.MatchRequest().Uri().Regex(rule.Path))
+		matchBuilder := builders.MatchRequest()
+		if rule.HasRestrictedMethodAccess() {
+			matchBuilder.MethodRegEx(rule.Methods...)
 		}
+
+		if rule.Path == "/*" {
+			matchBuilder.Uri().Prefix("/")
+		} else {
+			matchBuilder.Uri().Regex(rule.Path)
+		}
+
+		httpRouteBuilder.Match(matchBuilder)
+
 		if api.Spec.CorsPolicy == nil {
 			httpRouteBuilder.CorsPolicy(builders.CorsPolicy().
 				AllowOrigins(r.corsConfig.AllowOrigins...).

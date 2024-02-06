@@ -541,13 +541,13 @@ var _ = Describe("APIRule Controller", Serial, func() {
 									Host(serviceHost).
 									Gateway(testGatewayURL).
 									HTTP(builders.HTTPRoute().
-										Match(builders.MatchRequest().Uri().Regex("/img")).
+										Match(builders.MatchRequest().Uri().Regex("/img").MethodRegEx(http.MethodGet)).
 										Route(builders.RouteDestination().Host(fmt.Sprintf("%s.%s.svc.cluster.local", serviceName, testNamespace)).Port(testServicePort)).
 										Headers(builders.NewHttpRouteHeadersBuilder().SetHostHeader(serviceHost).Get()).
 										CorsPolicy(defaultCorsPolicy).
 										Timeout(defaultHttpTimeout)).
 									HTTP(builders.HTTPRoute().
-										Match(builders.MatchRequest().Uri().Regex("/headers")).
+										Match(builders.MatchRequest().Uri().Regex("/headers").MethodRegEx(http.MethodGet)).
 										Route(builders.RouteDestination().Host(fmt.Sprintf("%s.%s.svc.cluster.local", serviceName, testNamespace)).Port(testServicePort)).
 										Headers(builders.NewHttpRouteHeadersBuilder().SetHostHeader(serviceHost).Get()).
 										CorsPolicy(defaultCorsPolicy).
@@ -818,6 +818,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 						rule2 := testRule("/headers", methodsGet, defaultMutators, oauthHandler)
 						rule3 := testRule("/status", methodsGet, defaultMutators, noConfigHandler("noop"))
 						rule4 := testRule("/favicon", methodsGet, nil, noConfigHandler("allow"))
+						// TODO Adapt for new allowMethod handler
 
 						apiRuleName := generateTestName(testNameBase, testIDLength)
 						serviceName := testServiceNameBase

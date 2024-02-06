@@ -33,7 +33,7 @@ func IsSecured(rule gatewayv1beta1.Rule) bool {
 		return true
 	}
 	for _, strat := range rule.AccessStrategies {
-		if strat.Name != "allow" {
+		if strat.Name != gatewayv1beta1.AccessStrategyAllow && strat.Name != gatewayv1beta1.AccessStrategyAllowMethods {
 			return true
 		}
 	}
@@ -57,22 +57,4 @@ func FilterDuplicatePaths(rules []gatewayv1beta1.Rule) []gatewayv1beta1.Rule {
 	}
 
 	return filteredRules
-}
-
-func FilterAccessStrategies(accessStrategies []*gatewayv1beta1.Authenticator, includeAllow bool, includeOryOnly bool, includeJwt bool) []*gatewayv1beta1.Authenticator {
-	filterFunc := func(auth *gatewayv1beta1.Authenticator) bool {
-		return ((includeAllow && auth.Handler.Name == "allow") ||
-			(includeOryOnly && (auth.Handler.Name == "noop" || auth.Handler.Name == "oauth2_introspection")) ||
-			(includeJwt && auth.Handler.Name == "jwt"))
-	}
-	return FilterGeneric(accessStrategies, filterFunc)
-}
-
-func FilterGeneric[T any](ss []T, test func(T) bool) (ret []T) {
-	for _, s := range ss {
-		if test(s) {
-			ret = append(ret, s)
-		}
-	}
-	return
 }

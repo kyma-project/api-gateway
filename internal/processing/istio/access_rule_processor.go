@@ -28,11 +28,28 @@ func (r accessRuleCreator) Create(api *gatewayv1beta1.APIRule) map[string]*rulev
 	pathDuplicates := processors.HasPathDuplicates(api.Spec.Rules)
 	accessRules := make(map[string]*rulev1alpha1.Rule)
 	for _, rule := range api.Spec.Rules {
-		filteredAS := processing.FilterAccessStrategies(rule.AccessStrategies, false, true, false)
+		filteredAS := filterAccessStrategies(rule.AccessStrategies)
 		if len(filteredAS) > 0 && processing.IsSecured(rule) {
 			ar := processors.GenerateAccessRule(api, rule, filteredAS, r.additionalLabels, r.defaultDomainName)
 			accessRules[processors.SetAccessRuleKey(pathDuplicates, *ar)] = ar
 		}
 	}
 	return accessRules
+}
+
+func filterAccessStrategies(accessStrategies []*gatewayv1beta1.Authenticator) []*gatewayv1beta1.Authenticator {
+	filterFunc := func(auth *gatewayv1beta1.Authenticator) bool {
+		return auth.Handler.Name == gatewayv1beta1.AccessStrategyNoop || auth.Handler.Name == gatewayv1beta1.AccessStrategyOauth2Introspection
+	}
+
+	return filterGeneric(accessStrategies, filterFunc)
+}
+
+func filterGeneric[T any](ss []T, test func(T) bool) (ret []T) {
+	for _, s := range ss {
+		if test(s) {
+			ret = append(ret, s)
+		}
+	}
+	return
 }

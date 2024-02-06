@@ -69,3 +69,22 @@ func ConvertHttpMethodsToStrings(methods []HttpMethod) []string {
 
 	return strings
 }
+
+const (
+	AccessStrategyAllow               string = "allow"
+	AccessStrategyAllowMethods        string = "allowMethods"
+	AccessStrategyJwt                 string = "jwt"
+	AccessStrategyNoop                string = "noop"
+	AccessStrategyOauth2Introspection string = "oauth2_introspection"
+)
+
+// HasRestrictedMethodAccess checks if the rule has only access strategies defined that restrict access to specific HTTP methods.
+func (r *Rule) HasRestrictedMethodAccess() bool {
+	for _, a := range r.AccessStrategies {
+		if a.Name == AccessStrategyAllow {
+			return false
+		}
+	}
+
+	return true
+}

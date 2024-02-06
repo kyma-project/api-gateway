@@ -534,18 +534,18 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			Expect(ap.Spec.Rules[0].From).NotTo(BeEmpty())
 		})
 
-		It("should not create AP for allow", func() {
+		DescribeTable("should not create AP for handler", func(handler string) {
 			// given
 			strategies := []*gatewayv1beta1.Authenticator{
 				{
 					Handler: &gatewayv1beta1.Handler{
-						Name: "allow",
+						Name: handler,
 					},
 				},
 			}
 
-			allowRule := GetRuleFor(ApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, strategies)
-			rules := []gatewayv1beta1.Rule{allowRule}
+			rule := GetRuleFor(ApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, strategies)
+			rules := []gatewayv1beta1.Rule{rule}
 
 			apiRule := GetAPIRuleFor(rules)
 
@@ -568,52 +568,22 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			// then
 			Expect(err).To(BeNil())
 			Expect(result).To(BeEmpty())
-		})
+		},
+			Entry(nil, gatewayv1beta1.AccessStrategyAllowMethods),
+			Entry(nil, gatewayv1beta1.AccessStrategyAllow),
+			Entry(nil, gatewayv1beta1.AccessStrategyNoop),
+		)
 
-		It("should not create AP for noop", func() {
-			// given
-			strategies := []*gatewayv1beta1.Authenticator{
-				{
-					Handler: &gatewayv1beta1.Handler{
-						Name: "noop",
-					},
-				},
-			}
-
-			allowRule := GetRuleFor(ApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, strategies)
-			rules := []gatewayv1beta1.Rule{allowRule}
-
-			apiRule := GetAPIRuleFor(rules)
-
-			overrideServiceName := "testName"
-			overrideServiceNamespace := "testName-namespace"
-			overrideServicePort := uint32(8080)
-
-			apiRule.Spec.Service = &gatewayv1beta1.Service{
-				Name:      &overrideServiceName,
-				Namespace: &overrideServiceNamespace,
-				Port:      &overrideServicePort,
-			}
-
-			client := GetFakeClient()
-			processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig(), &testLogger)
-
-			// when
-			result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
-
-			// then
-			Expect(err).To(BeNil())
-			Expect(result).To(BeEmpty())
-		})
 	})
 
 	When("additional handler to JWT", func() {
-		It("should create AP for allow with From having Source.Principals == cluster.local/ns/istio-system/sa/istio-ingressgateway-service-account", func() {
+
+		DescribeTable("should create AP with From having Source.Principals == cluster.local/ns/istio-system/sa/istio-ingressgateway-service-account for handler", func(handler string) {
 			// given
 			jwt := createIstioJwtAccessStrategy()
 			allow := &gatewayv1beta1.Authenticator{
 				Handler: &gatewayv1beta1.Handler{
-					Name: "allow",
+					Name: handler,
 				},
 			}
 
@@ -668,7 +638,10 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 					Expect(len(ap.Spec.Rules)).To(Equal(1))
 				}
 			}
-		})
+		},
+			Entry(nil, gatewayv1beta1.AccessStrategyAllowMethods),
+			Entry(nil, gatewayv1beta1.AccessStrategyAllow),
+		)
 
 		It("should create AP for noop with From spec having Source.Principals == cluster.local/ns/kyma-system/sa/oathkeeper-maester-account", func() {
 			// given

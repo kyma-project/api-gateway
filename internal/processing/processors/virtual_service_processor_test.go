@@ -46,7 +46,7 @@ var _ = Describe("Virtual Service Processor", func() {
 		strategies := []*gatewayv1beta1.Authenticator{
 			{
 				Handler: &gatewayv1beta1.Handler{
-					Name: "allow",
+					Name: gatewayv1beta1.AccessStrategyAllowMethods,
 				},
 			},
 		}

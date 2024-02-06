@@ -30,12 +30,12 @@ var _ = Describe("Reconciliation", func() {
 			},
 		}
 
-		It("with allow handler should provide Istio VS, RA and 2 APs", func() {
+		DescribeTable("should provide Istio VS, RA and 2 APs with handler", func(handler string) {
 			// given
 			allow := []*gatewayv1beta1.Authenticator{
 				{
 					Handler: &gatewayv1beta1.Handler{
-						Name: "allow",
+						Name: handler,
 					},
 				},
 			}
@@ -89,7 +89,10 @@ var _ = Describe("Reconciliation", func() {
 			}
 
 			Expect(vsCreated && raCreated && apCreated == 2).To(BeTrue())
-		})
+		},
+			Entry("only allowMethods handler", gatewayv1beta1.AccessStrategyAllowMethods),
+			Entry("only allow handler", gatewayv1beta1.AccessStrategyAllow),
+		)
 
 		It("with Ory oauth2 should provide Istio VS, AP, RA and Ory rule", func() {
 			// given
