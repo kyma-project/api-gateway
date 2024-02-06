@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"log"
 	"os"
 
 	"github.com/avast/retry-go/v4"
@@ -69,6 +70,7 @@ var ApiGatewayCrTearDownScenarioHook = func(ctx context.Context, sc *godog.Scena
 }
 
 var ApplyAndVerifyApiGatewayCrSuiteHook = func() error {
+	log.Printf("Creating APIGateway CR %s", ApiGatewayCRName)
 	k8sClient := k8sclient.GetK8sClient()
 
 	apiGateway, err := createApiGatewayCRObjectFromTemplate(ApiGatewayCRName)
@@ -108,6 +110,8 @@ var ApplyAndVerifyApiGatewayCrSuiteHook = func() error {
 	if err != nil {
 		return err
 	}
+
+	log.Printf("APIGateway CR %s in state %s", ApiGatewayCRName, apiGateway.Status.State)
 
 	return nil
 }

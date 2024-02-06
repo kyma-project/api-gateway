@@ -41,20 +41,7 @@ func ParseWithTemplate(manifest []byte, templateData interface{}) ([]unstructure
 		return nil, err
 	}
 
-	var manifests []unstructured.Unstructured
-	decoder := yaml.NewDecoder(bytes.NewBufferString(man))
-	for {
-		var d map[string]interface{}
-		if err := decoder.Decode(&d); err != nil {
-			if err == io.EOF {
-				break
-			}
-			return nil, fmt.Errorf("Document decode failed: %w", err)
-		}
-		manifests = append(manifests, unstructured.Unstructured{Object: d})
-	}
-
-	return manifests, nil
+	return parse(bytes.NewBufferString(man))
 }
 
 func ParseYamlFromFile(fileName string, directory string) ([]unstructured.Unstructured, error) {
@@ -63,15 +50,23 @@ func ParseYamlFromFile(fileName string, directory string) ([]unstructured.Unstru
 		return nil, err
 	}
 
+	return ParseYaml(rawData)
+}
+
+func ParseYaml(rawYaml []byte) ([]unstructured.Unstructured, error) {
+	return parse(bytes.NewBufferString(string(rawYaml)))
+}
+
+func parse(buffer *bytes.Buffer) ([]unstructured.Unstructured, error) {
 	var manifests []unstructured.Unstructured
-	decoder := yaml.NewDecoder(bytes.NewBufferString(string(rawData)))
+	decoder := yaml.NewDecoder(buffer)
 	for {
 		var d map[string]interface{}
 		if err := decoder.Decode(&d); err != nil {
 			if err == io.EOF {
 				break
 			}
-			return nil, fmt.Errorf("Document decode failed: %w", err)
+			return nil, fmt.Errorf("document decode failed: %w", err)
 		}
 		manifests = append(manifests, unstructured.Unstructured{Object: d})
 	}

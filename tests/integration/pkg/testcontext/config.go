@@ -27,6 +27,7 @@ type Config struct {
 	GatewayNamespace string `envconfig:"TEST_GATEWAY_NAMESPACE,default=kyma-system"`
 	TestConcurrency  int    `envconfig:"TEST_CONCURRENCY,default=4"`
 	IstioNamespace   string `envconfig:"TEST_ISTIO_NAMESPACE,default=istio-system"`
+	IsGardener       bool   `envconfig:"IS_GARDENER,default=false"`
 }
 
 var (
