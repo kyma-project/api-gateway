@@ -72,7 +72,7 @@ func (r virtualServiceCreator) Create(api *gatewayv1beta1.APIRule) (*networkingv
 		httpRouteBuilder.Route(builders.RouteDestination().Host(host).Port(port))
 
 		matchBuilder := builders.MatchRequest()
-		if rule.HasRestrictedMethodAccess() {
+		if restrictsExposedMethods(rule) {
 			matchBuilder.MethodRegEx(rule.Methods...)
 		}
 
@@ -138,4 +138,9 @@ func (r virtualServiceCreator) Create(api *gatewayv1beta1.APIRule) (*networkingv
 	vsBuilder.Spec(vsSpecBuilder)
 
 	return vsBuilder.Get(), nil
+}
+
+// restrictsExposedMethods checks if the rule has only access strategies defined that restrict access to specific HTTP methods.
+func restrictsExposedMethods(rule gatewayv1beta1.Rule) bool {
+	return !rule.ContainsAccessStrategy(gatewayv1beta1.AccessStrategyAllow)
 }

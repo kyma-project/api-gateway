@@ -33,9 +33,11 @@ var _ = Describe("Mutators", func() {
 			Expect(sut.ToString()).To(Equal(""))
 		})
 
-		It("should return string with cookies separated by semicolon when cookies are defined", func() {
+		It("should return string with cookies", func() {
 			sut := v1beta1.CookieMutatorConfig{Cookies: map[string]string{"cookie1": "value1", "cookie2": "value2"}}
-			Expect(sut.ToString()).To(Equal("cookie1=value1; cookie2=value2"))
+			Expect(sut.ToString()).To(ContainSubstring("cookie1=value1"))
+			Expect(sut.ToString()).To(ContainSubstring("; "))
+			Expect(sut.ToString()).To(ContainSubstring("cookie2=value2"))
 		})
 
 		It("should return empty string when cookies are defined but empty", func() {

@@ -816,9 +816,8 @@ var _ = Describe("APIRule Controller", Serial, func() {
 						oauthHandler := testOauthHandler(defaultScopes)
 						rule1 := testRule("/img", methodsGet, defaultMutators, jwtHandler)
 						rule2 := testRule("/headers", methodsGet, defaultMutators, oauthHandler)
-						rule3 := testRule("/status", methodsGet, defaultMutators, noConfigHandler("noop"))
-						rule4 := testRule("/favicon", methodsGet, nil, noConfigHandler("allow"))
-						// TODO Adapt for new allowMethod handler
+						rule3 := testRule("/status", methodsGet, defaultMutators, noConfigHandler(gatewayv1beta1.AccessStrategyNoop))
+						rule4 := testRule("/favicon", methodsGet, nil, noConfigHandler(gatewayv1beta1.AccessStrategyAllow))
 
 						apiRuleName := generateTestName(testNameBase, testIDLength)
 						serviceName := testServiceNameBase
@@ -894,6 +893,8 @@ var _ = Describe("APIRule Controller", Serial, func() {
 							var rlList []rulev1alpha1.Rule
 							Eventually(func(g Gomega) {
 								rlList = getRuleList(g, matchingLabels)
+
+								// Make sure no access rules for allow and allow_methods handlers are created
 								g.Expect(rlList).To(HaveLen(3))
 
 								rules := make(map[string]rulev1alpha1.Rule)
@@ -939,13 +940,71 @@ var _ = Describe("APIRule Controller", Serial, func() {
 								g.Expect(rl.Spec.Mutators[1].Handler.Name).To(Equal(defaultMutators[1].Name))
 							}, eventuallyTimeout).Should(Succeed())
 						}
+					})
 
-						//make sure no rule for "/favicon" path has been created
+					It("should create a VS, but no access rule for allow and allow_methods handler", func() {
+						updateJwtHandlerTo(helpers.JWT_HANDLER_ORY)
+
+						rule1 := testRule("/favicon", methodsGet, nil, noConfigHandler(gatewayv1beta1.AccessStrategyAllow))
+						rule2 := testRule("/anything", methodsGet, nil, noConfigHandler(gatewayv1beta1.AccessStrategyAllowMethods))
+
+						apiRuleName := generateTestName(testNameBase, testIDLength)
+						serviceName := testServiceNameBase
+						serviceHost := "httpbin4.kyma.local"
+
+						apiRule := testApiRule(apiRuleName, testNamespace, serviceName, testNamespace, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule1, rule2})
+						svc := testService(serviceName, testNamespace, testServicePort)
+
+						// when
+						Expect(c.Create(context.TODO(), svc)).Should(Succeed())
+						Expect(c.Create(context.TODO(), apiRule)).Should(Succeed())
+						defer func() {
+							apiRuleTeardown(apiRule)
+							serviceTeardown(svc)
+						}()
+
+						expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusOK)
+
+						matchingLabels := matchingLabelsFunc(apiRuleName, testNamespace)
+
+						By("Verifying created virtual service")
+						vsList := networkingv1beta1.VirtualServiceList{}
 						Eventually(func(g Gomega) {
-							name := fmt.Sprintf("%s-%s-3", apiRuleName, serviceName)
-							g.Expect(c.Get(context.TODO(), client.ObjectKey{Name: name, Namespace: testNamespace}, &rulev1alpha1.Rule{})).To(HaveOccurred())
+							g.Expect(c.List(context.TODO(), &vsList, matchingLabels)).Should(Succeed())
+							g.Expect(vsList.Items).To(HaveLen(1))
+
+							vs := vsList.Items[0]
+
+							expectedSpec := builders.VirtualServiceSpec().
+								Host(serviceHost).
+								Gateway(testGatewayURL).
+								HTTP(builders.HTTPRoute().
+									Match(builders.MatchRequest().Uri().Regex("/favicon")).
+									Route(builders.RouteDestination().Host("httpbin.atgo-system.svc.cluster.local").Port(443)). // "allow", no oathkeeper rule!
+									Headers(builders.NewHttpRouteHeadersBuilder().SetHostHeader(serviceHost).Get()).
+									CorsPolicy(defaultCorsPolicy).
+									Timeout(defaultHttpTimeout)).
+								HTTP(builders.HTTPRoute().
+									Match(builders.MatchRequest().Uri().Regex("/anything").MethodRegEx("GET")).
+									Route(builders.RouteDestination().Host("httpbin.atgo-system.svc.cluster.local").Port(443)). // "allow_methods", no oathkeeper rule!
+									Headers(builders.NewHttpRouteHeadersBuilder().SetHostHeader(serviceHost).Get()).
+									CorsPolicy(defaultCorsPolicy).
+									Timeout(defaultHttpTimeout))
+
+							gotSpec := *expectedSpec.Get()
+							g.Expect(*vs.Spec.DeepCopy()).To(Equal(*gotSpec.DeepCopy()))
 						}, eventuallyTimeout).Should(Succeed())
 
+						By("Verifying created access rules")
+
+						var rlList []rulev1alpha1.Rule
+						Eventually(func(g Gomega) {
+							rlList = getRuleList(g, matchingLabels)
+
+							// Make sure no access rules for allow and allow_methods handlers are created
+							g.Expect(rlList).To(HaveLen(0))
+
+						}, eventuallyTimeout).Should(Succeed())
 					})
 				})
 			})

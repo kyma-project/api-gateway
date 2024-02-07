@@ -82,13 +82,11 @@ const (
 	AccessStrategyOauth2Introspection     string = "oauth2_introspection"
 )
 
-// HasRestrictedMethodAccess checks if the rule has only access strategies defined that restrict access to specific HTTP methods.
-func (r *Rule) HasRestrictedMethodAccess() bool {
-	for _, a := range r.AccessStrategies {
-		if a.Name == AccessStrategyAllow {
-			return false
+func (r *Rule) ContainsAccessStrategy(strategy string) bool {
+	for _, s := range r.AccessStrategies {
+		if s.Name == strategy {
+			return true
 		}
 	}
-
-	return true
+	return false
 }

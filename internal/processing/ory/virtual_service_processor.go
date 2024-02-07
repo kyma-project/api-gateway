@@ -58,8 +58,16 @@ func (r virtualServiceCreator) Create(api *gatewayv1beta1.APIRule) (*networkingv
 			}
 		}
 
+		matchBuilder := builders.MatchRequest().Uri().Regex(rule.Path)
+
+		// Only in case of the allow_methods we want to restrict the methods, because it would be a breaking
+		// change for other handlers and in case of allow we expose all methods.
+		if rule.ContainsAccessStrategy(gatewayv1beta1.AccessStrategyAllowMethods) {
+			matchBuilder.MethodRegEx(rule.Methods...)
+		}
+
+		httpRouteBuilder.Match(matchBuilder)
 		httpRouteBuilder.Route(builders.RouteDestination().Host(host).Port(port))
-		httpRouteBuilder.Match(builders.MatchRequest().Uri().Regex(rule.Path))
 		if api.Spec.CorsPolicy == nil {
 			httpRouteBuilder.CorsPolicy(builders.CorsPolicy().
 				AllowOrigins(r.corsConfig.AllowOrigins...).

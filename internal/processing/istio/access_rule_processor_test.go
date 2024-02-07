@@ -21,18 +21,18 @@ import (
 
 var _ = Describe("Access Rule Processor", func() {
 
-	DescribeTable("should not create access rules when handler is", func(accessStrategy string) {
+	DescribeTable("should not create access rules when handler is", func(handler string) {
 		// given
 		strategies := []*gatewayv1beta1.Authenticator{
 			{
 				Handler: &gatewayv1beta1.Handler{
-					Name: accessStrategy,
+					Name: handler,
 				},
 			},
 		}
 
-		allowRule := GetRuleFor(ApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, strategies)
-		rules := []gatewayv1beta1.Rule{allowRule}
+		rule := GetRuleFor(ApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, strategies)
+		rules := []gatewayv1beta1.Rule{rule}
 
 		apiRule := GetAPIRuleFor(rules)
 

@@ -26,7 +26,7 @@ var _ = Describe("Virtual Service Processor", func() {
 	allowHandlers := []string{v1beta1.AccessStrategyAllow, v1beta1.AccessStrategyAllowMethods}
 	for _, handler := range allowHandlers {
 		When("handler is "+handler, func() {
-			It("should create for allow authenticator", func() {
+			It("should create", func() {
 				// given
 				strategies := []*v1beta1.Authenticator{
 					{
@@ -36,8 +36,8 @@ var _ = Describe("Virtual Service Processor", func() {
 					},
 				}
 
-				allowRule := GetRuleFor(ApiPath, ApiMethods, []*v1beta1.Mutator{}, strategies)
-				rules := []v1beta1.Rule{allowRule}
+				rule := GetRuleFor(ApiPath, ApiMethods, []*v1beta1.Mutator{}, strategies)
+				rules := []v1beta1.Rule{rule}
 
 				apiRule := GetAPIRuleFor(rules)
 				client := GetFakeClient()
@@ -86,8 +86,8 @@ var _ = Describe("Virtual Service Processor", func() {
 					},
 				}
 
-				allowRule := GetRuleFor(ApiPath, ApiMethods, []*v1beta1.Mutator{}, strategies)
-				rules := []v1beta1.Rule{allowRule}
+				rule := GetRuleFor(ApiPath, ApiMethods, []*v1beta1.Mutator{}, strategies)
+				rules := []v1beta1.Rule{rule}
 
 				apiRule := GetAPIRuleFor(rules)
 
@@ -136,8 +136,8 @@ var _ = Describe("Virtual Service Processor", func() {
 					Port:      &overrideServicePort,
 				}
 
-				allowRule := GetRuleWithServiceFor(ApiPath, ApiMethods, []*v1beta1.Mutator{}, strategies, service)
-				rules := []v1beta1.Rule{allowRule}
+				rule := GetRuleWithServiceFor(ApiPath, ApiMethods, []*v1beta1.Mutator{}, strategies, service)
+				rules := []v1beta1.Rule{rule}
 
 				apiRule := GetAPIRuleFor(rules)
 				client := GetFakeClient()
@@ -167,8 +167,8 @@ var _ = Describe("Virtual Service Processor", func() {
 					},
 				}
 
-				allowRule := GetRuleFor(ApiPath, ApiMethods, []*v1beta1.Mutator{}, strategies)
-				rules := []v1beta1.Rule{allowRule}
+				rule := GetRuleFor(ApiPath, ApiMethods, []*v1beta1.Mutator{}, strategies)
+				rules := []v1beta1.Rule{rule}
 
 				apiRule := GetAPIRuleFor(rules)
 				apiRule.Spec.Host = &ServiceHostWithNoDomain
@@ -1302,39 +1302,38 @@ var _ = Describe("Virtual Service Processor", func() {
 
 	Context("HTTP matching", func() {
 
-		DescribeTable("should restrict access for the given path to the configured HTTP methods",
-			func(accessStrategy string) {
-				// Given
-				strategies := []*v1beta1.Authenticator{
-					{
-						Handler: &v1beta1.Handler{
-							Name: accessStrategy,
-						},
+		DescribeTable("should restrict access for the path and methods defined in APIRule", func(handler string) {
+			// Given
+			strategies := []*v1beta1.Authenticator{
+				{
+					Handler: &v1beta1.Handler{
+						Name: handler,
 					},
-				}
+				},
+			}
 
-				rule := GetRuleFor("/", methodsGetPost, []*v1beta1.Mutator{}, strategies)
-				rules := []v1beta1.Rule{rule}
+			rule := GetRuleFor("/", methodsGetPost, []*v1beta1.Mutator{}, strategies)
+			rules := []v1beta1.Rule{rule}
 
-				apiRule := GetAPIRuleFor(rules)
-				client := GetFakeClient()
-				processor := istio.NewVirtualServiceProcessor(GetTestConfig())
+			apiRule := GetAPIRuleFor(rules)
+			client := GetFakeClient()
+			processor := istio.NewVirtualServiceProcessor(GetTestConfig())
 
-				// when
-				result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
+			// when
+			result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
 
-				// then
-				Expect(err).To(BeNil())
-				Expect(result).To(HaveLen(1))
+			// then
+			Expect(err).To(BeNil())
+			Expect(result).To(HaveLen(1))
 
-				vs := result[0].Obj.(*networkingv1beta1.VirtualService)
+			vs := result[0].Obj.(*networkingv1beta1.VirtualService)
 
-				Expect(vs).NotTo(BeNil())
+			Expect(vs).NotTo(BeNil())
 
-				Expect(len(vs.Spec.Http[0].Match)).To(Equal(1))
-				Expect(vs.Spec.Http[0].Match[0].Uri.GetRegex()).To(Equal("/"))
-				Expect(vs.Spec.Http[0].Match[0].Method.GetRegex()).To(Equal("^(GET|POST)$"))
-			},
+			Expect(len(vs.Spec.Http[0].Match)).To(Equal(1))
+			Expect(vs.Spec.Http[0].Match[0].Uri.GetRegex()).To(Equal("/"))
+			Expect(vs.Spec.Http[0].Match[0].Method.GetRegex()).To(Equal("^(GET|POST)$"))
+		},
 			Entry("When access strategy is allow_methods", v1beta1.AccessStrategyAllowMethods),
 			Entry("When access strategy is noop", v1beta1.AccessStrategyNoop),
 			Entry("When access strategy is jwt", v1beta1.AccessStrategyJwt),
@@ -1373,8 +1372,7 @@ var _ = Describe("Virtual Service Processor", func() {
 			Expect(len(vs.Spec.Http[0].Match)).To(Equal(1))
 			Expect(vs.Spec.Http[0].Match[0].Uri.GetRegex()).To(Equal("/"))
 			Expect(vs.Spec.Http[0].Match[0].Method).To(BeNil())
-		},
-		)
+		})
 	})
 })
 

@@ -23,43 +23,44 @@ import (
 
 var _ = Describe("Access Rule Processor", func() {
 
-	When("handler is allow", func() {
-		It("should not create access rules", func() {
-			// given
-			strategies := []*gatewayv1beta1.Authenticator{
-				{
-					Handler: &gatewayv1beta1.Handler{
-						Name: "allow",
-					},
+	DescribeTable("should not create access rules when handler is", func(handler string) {
+		// given
+		strategies := []*gatewayv1beta1.Authenticator{
+			{
+				Handler: &gatewayv1beta1.Handler{
+					Name: handler,
 				},
-			}
+			},
+		}
 
-			allowRule := GetRuleFor(ApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, strategies)
-			rules := []gatewayv1beta1.Rule{allowRule}
+		rule := GetRuleFor(ApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, strategies)
+		rules := []gatewayv1beta1.Rule{rule}
 
-			apiRule := GetAPIRuleFor(rules)
+		apiRule := GetAPIRuleFor(rules)
 
-			overrideServiceName := "testName"
-			overrideServiceNamespace := "testName-namespace"
-			overrideServicePort := uint32(8080)
+		overrideServiceName := "testName"
+		overrideServiceNamespace := "testName-namespace"
+		overrideServicePort := uint32(8080)
 
-			apiRule.Spec.Service = &gatewayv1beta1.Service{
-				Name:      &overrideServiceName,
-				Namespace: &overrideServiceNamespace,
-				Port:      &overrideServicePort,
-			}
+		apiRule.Spec.Service = &gatewayv1beta1.Service{
+			Name:      &overrideServiceName,
+			Namespace: &overrideServiceNamespace,
+			Port:      &overrideServicePort,
+		}
 
-			client := GetFakeClient()
-			processor := ory.NewAccessRuleProcessor(GetTestConfig())
+		client := GetFakeClient()
+		processor := ory.NewAccessRuleProcessor(GetTestConfig())
 
-			// when
-			result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
+		// when
+		result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
 
-			// then
-			Expect(err).To(BeNil())
-			Expect(result).To(BeEmpty())
-		})
-	})
+		// then
+		Expect(err).To(BeNil())
+		Expect(result).To(BeEmpty())
+	},
+		Entry(nil, gatewayv1beta1.AccessStrategyAllowMethods),
+		Entry(nil, gatewayv1beta1.AccessStrategyAllow),
+	)
 
 	When("handler is noop", func() {
 		It("should override rule with meta data", func() {
