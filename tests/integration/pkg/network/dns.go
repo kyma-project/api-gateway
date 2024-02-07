@@ -25,7 +25,7 @@ func CreateKymaLocalDnsRewrite(resourceMgr *resource.Manager, k8sClient dynamic.
 		return err
 	}
 
-	_, err = resourceMgr.CreateResources(k8sClient, resources...)
+	_, err = resourceMgr.CreateOrUpdateResources(k8sClient, resources...)
 	if err != nil {
 		return err
 	}

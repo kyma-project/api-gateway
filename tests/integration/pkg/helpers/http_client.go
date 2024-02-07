@@ -13,6 +13,11 @@ type RetryableHttpClient struct {
 	opts   []retry.Option
 }
 
+type RequestOptions struct {
+	Audiences []string
+	Scopes    []string
+}
+
 func NewClientWithRetry(c *http.Client, opts []retry.Option) *RetryableHttpClient {
 	return &RetryableHttpClient{
 		client: c,

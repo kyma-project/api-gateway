@@ -148,6 +148,7 @@ func (t *testsuite) Setup() error {
 		AuthStyle:    oauth2.AuthStyleInHeader,
 	}
 
+	t.config.IssuerUrl = fmt.Sprintf("http://mock-oauth2-server.%s.svc.cluster.local", namespace)
 	return nil
 }
 

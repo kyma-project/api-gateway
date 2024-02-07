@@ -18,7 +18,7 @@ Feature: Checking default kyma gateway
     And there "is" "ClusterRoleBinding" "oathkeeper-maester-role-binding" in the cluster
     And there "is" "PeerAuthentication" "ory-oathkeeper-maester-metrics" in namespace "kyma-system"
     And there "is" "PodDisruptionBudget" "ory-oathkeeper" in namespace "kyma-system"
-    Then APIGateway CR "test-gateway" is removed
+    Then APIGateway CR "default" is removed
     And there "is no" "Deployment" "ory-oathkeeper" in namespace "kyma-system"
     And there "is no" "ConfigMap" "ory-oathkeeper-config" in namespace "kyma-system"
     And there "is no" "CustomResourceDefinition" "rules.oathkeeper.ory.sh" in the cluster
@@ -42,12 +42,12 @@ Feature: Checking default kyma gateway
     And APIGateway CR is in "Ready" state with description ""
 
   Scenario: Kyma Gateway is removed when there is no blocking resources
-    When APIGateway CR "test-gateway" is removed
-    Then APIGateway CR "test-gateway" "is not" present
+    When APIGateway CR "default" is removed
+    Then APIGateway CR "default" "is not" present
     And gateway "kyma-gateway" in "kyma-system" namespace does not exist
 
   Scenario: Second APIGateway CR is applied to the cluster
     When APIGateway CR "second-api-gateway-cr" is applied
-    Then Custom APIGateway CR "second-api-gateway-cr" is in "Error" state with description "stopped APIGateway CR reconciliation: only APIGateway CR test-gateway reconciles the module"
+    Then Custom APIGateway CR "second-api-gateway-cr" is in "Error" state with description "stopped APIGateway CR reconciliation: only APIGateway CR default reconciles the module"
     And APIGateway CR is in "Ready" state with description ""
     And APIGateway CR "second-api-gateway-cr" is removed

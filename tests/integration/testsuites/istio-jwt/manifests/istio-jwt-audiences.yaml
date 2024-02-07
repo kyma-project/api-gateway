@@ -18,7 +18,7 @@ spec:
           config:
             authentications:
               - issuer: "{{ .IssuerUrl }}"
-                jwksUri: "{{ .IssuerUrl }}/jwks"
+                jwksUri: "{{ .IssuerUrl }}/oauth2/certs"
             authorizations:
               - requiredScopes: ["read", "write"]
                 audiences: {{ .ipAudiences }}
@@ -30,7 +30,7 @@ spec:
           config:
             authentications:
               - issuer: "{{ .IssuerUrl }}"
-                jwksUri: "{{ .IssuerUrl }}/jwks"
+                jwksUri: "{{ .IssuerUrl }}/oauth2/certs"
             authorizations:
               - requiredScopes: ["read", "write"]
                 audiences: {{ .headersAudiences }}
@@ -42,7 +42,7 @@ spec:
           config:
             authentications:
               - issuer: "{{ .IssuerUrl }}"
-                jwksUri: "{{ .IssuerUrl }}/jwks"
+                jwksUri: "{{ .IssuerUrl }}/oauth2/certs"
             authorizations:
               - requiredScopes: ["read", "write"]
                 audiences: {{ .getAudiences }}
@@ -54,7 +54,7 @@ spec:
           config:
             authentications:
               - issuer: "{{ .IssuerUrl }}"
-                jwksUri: "{{ .IssuerUrl }}/jwks"
+                jwksUri: "{{ .IssuerUrl }}/oauth2/certs"
             authorizations:
               - requiredScopes: [ "read", "write" ]
                 audiences: ["audienceNotInJWT"]

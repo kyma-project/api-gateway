@@ -4,43 +4,20 @@ metadata:
   name: mock-oauth2-server
   namespace: {{ .Namespace }}
   labels:
+    sidecar.istio.io/inject: "false"
     app: mock-oauth2-server
 spec:
   containers:
     - name: mock-oauth2-server
-      image: ghcr.io/navikt/mock-oauth2-server:2.0.0
-      imagePullPolicy: IfNotPresent
+      image: i566483/oauth2-mock:latest
+      imagePullPolicy: Always
+      env:
+        - name: iss
+          value: http://mock-oauth2-server.{{ .Namespace }}.svc.cluster.local
       ports:
         - containerPort: 8080
           name: http
           protocol: TCP
-      env:
-        - name: JSON_CONFIG
-          value: |
-            {
-                "interactiveLogin": false,
-                "httpServer": "NettyWrapper",
-                "tokenCallbacks": [
-                    {
-                        "issuerId": "default",
-                        "tokenExpiry": 600,
-                        "requestMappings": [
-                            {
-                                "requestParam": "scope",
-                                "match": "read",
-                                "claims": {
-                                    "sub": "test",
-            						"scope": "read write",
-                                    "aud": [
-                                        "https://example.com/user",
-            							"https://example.com"
-                                    ]
-                                }
-                            }
-                        ]
-                    }
-                ]
-            }
   restartPolicy: Always
 ---
 apiVersion: v1
@@ -54,8 +31,8 @@ spec:
   ports:
     - protocol: TCP
       port: 80
-      targetPort: 8080
-  type: NodePort
+      targetPort: http
+  type: ClusterIP
 ---
 apiVersion: networking.istio.io/v1beta1
 kind: VirtualService

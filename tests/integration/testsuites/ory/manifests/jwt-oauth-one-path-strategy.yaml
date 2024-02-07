@@ -17,7 +17,7 @@ spec:
         - handler: jwt
           config:
             jwks_urls:
-              - "{{ .IssuerUrl }}/jwks"
+              - "{{ .IssuerUrl }}/oauth2/certs"
         - handler: oauth2_introspection
           config:
             required_scope: [ "read" ]

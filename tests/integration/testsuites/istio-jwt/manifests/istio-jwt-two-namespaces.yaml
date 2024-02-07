@@ -18,7 +18,7 @@ spec:
           config:
             authentications:
             - issuer: "{{ .IssuerUrl }}"
-              jwksUri: "{{ .IssuerUrl }}/jwks"
+              jwksUri: "{{ .IssuerUrl }}/oauth2/certs"
     - path: {{ .otherNamespacePath }}
       service:
         namespace: "{{.Namespace}}-2"
@@ -31,4 +31,4 @@ spec:
           config:
             authentications:
             - issuer: "{{ .IssuerUrl }}"
-              jwksUri: "{{ .IssuerUrl }}/jwks"
+              jwksUri: "{{ .IssuerUrl }}/oauth2/certs"

@@ -1,6 +1,6 @@
 apiVersion: operator.kyma-project.io/v1alpha1
 kind: APIGateway
 metadata:
-  name: test-gateway
+  name: default
 spec:
   enableKymaGateway: true

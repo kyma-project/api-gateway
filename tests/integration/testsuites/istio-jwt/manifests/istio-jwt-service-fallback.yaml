@@ -21,7 +21,7 @@ spec:
           config:
             authentications:
               - issuer: "{{ .IssuerUrl }}"
-                jwksUri: "{{ .IssuerUrl }}/jwks"
+                jwksUri: "{{ .IssuerUrl }}/oauth2/certs"
     - path: {{ .jwtSecuredPath }}
       methods: ["GET"]
       mutators: []
@@ -30,4 +30,4 @@ spec:
           config:
             authentications:
               - issuer: "{{ .IssuerUrl }}"
-                jwksUri: "{{ .IssuerUrl }}/jwks"
+                jwksUri: "{{ .IssuerUrl }}/oauth2/certs"

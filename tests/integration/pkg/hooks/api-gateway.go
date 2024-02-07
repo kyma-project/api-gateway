@@ -23,7 +23,7 @@ import (
 )
 
 const templateFileName string = "pkg/hooks/manifests/apigateway_cr_template.yaml"
-const ApiGatewayCRName string = "test-gateway"
+const ApiGatewayCRName string = "default"
 
 var ApplyApiGatewayCrScenarioHook = func(ctx context.Context, sc *godog.Scenario) (context.Context, error) {
 	k8sClient, err := testcontext.GetK8sClientFromContext(ctx)

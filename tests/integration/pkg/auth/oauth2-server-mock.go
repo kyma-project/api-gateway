@@ -35,5 +35,5 @@ func ApplyOAuth2MockServer(resourceMgr *resource.Manager, k8sClient dynamic.Inte
 		return "", err
 	}
 
-	return fmt.Sprintf("https://oauth2-mock.%s/default", domain), nil
+	return fmt.Sprintf("https://oauth2-mock.%s", domain), nil
 }

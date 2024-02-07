@@ -157,6 +157,8 @@ func (t *testsuite) Setup() error {
 		Scopes:       []string{"read"},
 	}
 
+	t.config.IssuerUrl = fmt.Sprintf("http://mock-oauth2-server.%s.svc.cluster.local", namespace)
+
 	t.namespace = namespace
 	t.secondNamespace = secondNamespace
 	return nil

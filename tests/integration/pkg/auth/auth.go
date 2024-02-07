@@ -29,7 +29,9 @@ func GetAccessToken(oauth2Cfg clientcredentials.Config, tokenType ...string) (st
 	}
 
 	if len(tokenType) > 0 {
-		oauth2Cfg.EndpointParams = make(url.Values)
+		if len(oauth2Cfg.EndpointParams) == 0 {
+			oauth2Cfg.EndpointParams = make(url.Values)
+		}
 		oauth2Cfg.EndpointParams.Add("token_format", tokenType[0])
 	}
 
