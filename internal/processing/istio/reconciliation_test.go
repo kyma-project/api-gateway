@@ -90,7 +90,7 @@ var _ = Describe("Reconciliation", func() {
 
 			Expect(vsCreated && raCreated && apCreated == 2).To(BeTrue())
 		},
-			Entry("only allowMethods handler", gatewayv1beta1.AccessStrategyAllowMethods),
+			Entry("only allow_methods handler", gatewayv1beta1.AccessStrategyAllowMethods),
 			Entry("only allow handler", gatewayv1beta1.AccessStrategyAllow),
 		)
 

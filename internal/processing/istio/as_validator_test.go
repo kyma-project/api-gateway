@@ -52,7 +52,7 @@ var _ = Describe("AccessStrategies Istio Validator", func() {
 		Expect(problems[0].Message).To(Equal(expectedMessage))
 	},
 		Entry(nil, gatewayv1beta1.AccessStrategyAllow, "allow access strategy is not allowed in combination with other access strategies"),
-		Entry(nil, gatewayv1beta1.AccessStrategyAllowMethods, "allowMethods access strategy is not allowed in combination with other access strategies"),
+		Entry(nil, gatewayv1beta1.AccessStrategyAllowMethods, "allow_methods access strategy is not allowed in combination with other access strategies"),
 		Entry(nil, gatewayv1beta1.AccessStrategyJwt, "jwt access strategy is not allowed in combination with other access strategies"),
 	)
 
@@ -81,7 +81,7 @@ var _ = Describe("AccessStrategies Istio Validator", func() {
 		Expect(problems[1].Message).To(Equal("jwt access strategy is not allowed in combination with other access strategies"))
 	})
 
-	It("Should fail with allowMethods and jwt handlers on same path", func() {
+	It("Should fail with allow_methods and jwt handlers on same path", func() {
 		//given
 		strategies := []*gatewayv1beta1.Authenticator{
 			{
@@ -101,12 +101,12 @@ var _ = Describe("AccessStrategies Istio Validator", func() {
 		//then
 		Expect(problems).To(HaveLen(2))
 		Expect(problems[0].AttributePath).To(Equal("some.attribute.accessStrategies[0].handler"))
-		Expect(problems[0].Message).To(Equal("allowMethods access strategy is not allowed in combination with other access strategies"))
+		Expect(problems[0].Message).To(Equal("allow_methods access strategy is not allowed in combination with other access strategies"))
 		Expect(problems[1].AttributePath).To(Equal("some.attribute.accessStrategies[1].handler"))
 		Expect(problems[1].Message).To(Equal("jwt access strategy is not allowed in combination with other access strategies"))
 	})
 
-	It("Should fail with allowMethods and allow handlers on same path", func() {
+	It("Should fail with allow_methods and allow handlers on same path", func() {
 		//given
 		strategies := []*gatewayv1beta1.Authenticator{
 			{
@@ -128,6 +128,6 @@ var _ = Describe("AccessStrategies Istio Validator", func() {
 		Expect(problems[0].AttributePath).To(Equal("some.attribute.accessStrategies[0].handler"))
 		Expect(problems[0].Message).To(Equal("allow access strategy is not allowed in combination with other access strategies"))
 		Expect(problems[1].AttributePath).To(Equal("some.attribute.accessStrategies[1].handler"))
-		Expect(problems[1].Message).To(Equal("allowMethods access strategy is not allowed in combination with other access strategies"))
+		Expect(problems[1].Message).To(Equal("allow_methods access strategy is not allowed in combination with other access strategies"))
 	})
 })

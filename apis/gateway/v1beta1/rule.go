@@ -71,11 +71,15 @@ func ConvertHttpMethodsToStrings(methods []HttpMethod) []string {
 }
 
 const (
-	AccessStrategyAllow               string = "allow"
-	AccessStrategyAllowMethods        string = "allowMethods"
-	AccessStrategyJwt                 string = "jwt"
-	AccessStrategyNoop                string = "noop"
-	AccessStrategyOauth2Introspection string = "oauth2_introspection"
+	AccessStrategyAllow                   string = "allow"
+	AccessStrategyAllowMethods            string = "allow_methods"
+	AccessStrategyJwt                     string = "jwt"
+	AccessStrategyNoop                    string = "noop"
+	AccessStrategyUnauthorized            string = "unauthorized"
+	AccessStrategyAnonymous               string = "anonymous"
+	AccessStrategyCookieSession           string = "cookie_session"
+	AccessStrategyOauth2ClientCredentials string = "oauth2_client_credentials"
+	AccessStrategyOauth2Introspection     string = "oauth2_introspection"
 )
 
 // HasRestrictedMethodAccess checks if the rule has only access strategies defined that restrict access to specific HTTP methods.

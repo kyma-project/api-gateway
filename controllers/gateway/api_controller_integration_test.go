@@ -178,9 +178,9 @@ var _ = Describe("APIRule Controller", Serial, func() {
 		It("should create, update and delete rules depending on patch match", func() {
 			updateJwtHandlerTo(helpers.JWT_HANDLER_ORY)
 
-			rule1 := testRule("/rule1", methodsGet, defaultMutators, noConfigHandler("noop"))
-			rule2 := testRule("/rule2", methodsPut, defaultMutators, noConfigHandler("unauthorized"))
-			rule3 := testRule("/rule3", methodsDelete, defaultMutators, noConfigHandler("anonymous"))
+			rule1 := testRule("/rule1", methodsGet, defaultMutators, noConfigHandler(gatewayv1beta1.AccessStrategyNoop))
+			rule2 := testRule("/rule2", methodsPut, defaultMutators, noConfigHandler(gatewayv1beta1.AccessStrategyUnauthorized))
+			rule3 := testRule("/rule3", methodsDelete, defaultMutators, noConfigHandler(gatewayv1beta1.AccessStrategyAnonymous))
 
 			apiRuleName := generateTestName(testNameBase, testIDLength)
 			serviceName := generateTestName(testServiceNameBase, testIDLength)
