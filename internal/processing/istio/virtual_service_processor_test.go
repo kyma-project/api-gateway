@@ -1335,7 +1335,7 @@ var _ = Describe("Virtual Service Processor", func() {
 				Expect(vs.Spec.Http[0].Match[0].Uri.GetRegex()).To(Equal("/"))
 				Expect(vs.Spec.Http[0].Match[0].Method.GetRegex()).To(Equal("^(GET|POST)$"))
 			},
-			Entry("When access strategy is allowMethods", v1beta1.AccessStrategyAllowMethods),
+			Entry("When access strategy is allow_methods", v1beta1.AccessStrategyAllowMethods),
 			Entry("When access strategy is noop", v1beta1.AccessStrategyNoop),
 			Entry("When access strategy is jwt", v1beta1.AccessStrategyJwt),
 			Entry("When access strategy is oauth2_introspection", v1beta1.AccessStrategyOauth2Introspection),
