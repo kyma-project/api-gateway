@@ -28,7 +28,7 @@ spec:
         - handler: oauth2_introspection
           config:
             required_scope: {{ .getRequiredScopes }}
-            introspection_url: "{{ .IssuerUrl }}/introspect"
+            introspection_url: "{{ .IssuerUrl }}/oauth2/introspect"
             token_from: 
               header: "opaque-token"
             introspection_request_headers:

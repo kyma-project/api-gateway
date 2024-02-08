@@ -4,6 +4,7 @@ import (
 	"context"
 	_ "embed"
 	"fmt"
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/auth"
 	"log"
 	"time"
 
@@ -54,10 +55,27 @@ func (t *testsuite) Setup() error {
 	namespace := fmt.Sprintf("%s-%s", t.name, helpers.GenerateRandomString(6))
 	log.Printf("Using namespace: %s\n", namespace)
 
+	var tokenURL string
+	if t.config.OIDCConfigUrl == "empty" {
+		issuerUrl, err := auth.ApplyOAuth2MockServer(t.resourceManager, t.k8sClient, namespace, t.config.Domain)
+		if err != nil {
+			return err
+		}
+		t.config.IssuerUrl = fmt.Sprintf("http://mock-oauth2-server.%s.svc.cluster.local", namespace)
+		tokenURL = fmt.Sprintf("%s/oauth2/token", issuerUrl)
+	} else {
+		oidcConfiguration, err := helpers.GetOIDCConfiguration(t.config.OIDCConfigUrl)
+		if err != nil {
+			return err
+		}
+		t.config.IssuerUrl = oidcConfiguration.Issuer
+		tokenURL = oidcConfiguration.TokenEndpoint
+	}
+
 	oauth2Cfg := &clientcredentials.Config{
 		ClientID:     t.config.ClientID,
 		ClientSecret: t.config.ClientSecret,
-		TokenURL:     fmt.Sprintf("%s/oauth2/token", t.config.IssuerUrl),
+		TokenURL:     tokenURL,
 		AuthStyle:    oauth2.AuthStyleInHeader,
 	}
 

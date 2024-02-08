@@ -23,7 +23,7 @@ To run these tests on your cluster you have to set those environment variables:
 export KYMA_DOMAIN=<YOUR_KYMA_DOMAIN>
 export CLIENT_ID="<YOUR_CLIENT_ID>"
 export CLIENT_SECRET="<YOUR_CLIENT_SECRET>"
-export OIDC_ISSUER_URL="<YOUR_OIDC_ISSUER_URL>"
+export OIDC_CONFIG_URL="<YOUR_OIDC_WELL_KNOWN_URL>"
 ```
 
 ## Usage for Standard API Gateway Test Suite

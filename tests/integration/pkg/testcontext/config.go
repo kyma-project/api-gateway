@@ -17,9 +17,10 @@ const (
 
 type Config struct {
 	CustomDomain     string `envconfig:"TEST_CUSTOM_DOMAIN,default=test.domain.kyma"`
-	IssuerUrl        string `envconfig:"TEST_OIDC_ISSUER_URL,default=overwrite-me"`
-	ClientID         string `envconfig:"TEST_CLIENT_ID,default=mocked-client-id"`
-	ClientSecret     string `envconfig:"TEST_CLIENT_SECRET,default=mocked-client-secret"`
+	OIDCConfigUrl    string `envconfig:"TEST_OIDC_CONFIG_URL,default=empty"`
+	IssuerUrl        string `envconfig:"-"`
+	ClientID         string `envconfig:"TEST_CLIENT_ID,default=empty"`
+	ClientSecret     string `envconfig:"TEST_CLIENT_SECRET,default=empty"`
 	ReqTimeout       uint   `envconfig:"TEST_REQUEST_TIMEOUT,default=240"`
 	ReqDelay         uint   `envconfig:"TEST_REQUEST_DELAY,default=5"`
 	Domain           string `envconfig:"TEST_DOMAIN,default=local.kyma.dev"`

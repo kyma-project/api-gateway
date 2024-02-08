@@ -110,9 +110,6 @@ func (s *scenario) callingEndpointWithHeadersWithRetries(endpointUrl string, tok
 
 		if len(options[0].Audiences) > 0 {
 			oCfg.EndpointParams.Add("audience", strings.Join(options[0].Audiences, ","))
-			// Audience scenarios require both read and write scopes, so adding them here
-			// TODO: We might just want to not use them
-			oCfg.Scopes = append(oCfg.Scopes, "read", "write")
 		}
 	}
 

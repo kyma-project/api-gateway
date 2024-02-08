@@ -6,13 +6,13 @@ inputs:
     required: true
   client_id:
     description: "Client id for oidc"
-    required: true
+    required: false
   client_secret:
     description: "Client secret for oidc"
-    required: true
-  oidc_issuer_url:
-    description: "OIDC issuer url"
-    required: true
+    required: false
+  oidc_well_known_url:
+    description: "OIDC well known URL"
+    required: false
 runs:
   using: "composite"
   steps:
@@ -40,7 +40,7 @@ runs:
         KYMA_DOMAIN: "local.kyma.dev"
         CLIENT_ID: ${{ inputs.client_id }}
         CLIENT_SECRET: ${{ inputs.client_secret }}
-        OIDC_ISSUER_URL: ${{ inputs.oidc_issuer_url }}
+        OIDC_CONFIG_URL: ${{ inputs.oidc_well_known_url }}
         IMG: ${{ inputs.manager_image }}
       run: |
         EXPORT_RESULT=true \

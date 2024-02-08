@@ -6,7 +6,7 @@ name: PR Integration
 on:
   # pull_request_target runs workflows from the base of PR
   # It allows the workflow to get the repository secrets
-  pull_request_target:
+  pull_request:
     types: [ synchronize, opened, reopened, ready_for_review ]
     paths-ignore:
       - "docs/**"
@@ -46,9 +46,6 @@ jobs:
           fetch-depth: 0
       - uses: ./.github/actions/integration-tests
         with:
-          client_id: ${{ secrets.CLIENT_ID }}
-          client_secret: ${{ secrets.CLIENT_SECRET }}
-          oidc_issuer_url: ${{ secrets.OIDC_ISSUER_URL }}
           manager_image: "europe-docker.pkg.dev/kyma-project/dev/api-gateway-manager:PR-${{github.event.number}}"
 
   k8s-compatibility-check:
@@ -63,9 +60,6 @@ jobs:
           fetch-depth: 0
       - uses: ./.github/actions/integration-tests
         with:
-          client_id: ${{ secrets.CLIENT_ID }}
-          client_secret: ${{ secrets.CLIENT_SECRET }}
-          oidc_issuer_url: ${{ secrets.OIDC_ISSUER_URL }}
           manager_image: "europe-docker.pkg.dev/kyma-project/dev/api-gateway-manager:PR-${{github.event.number}}"
 
   upgrade-tests:
@@ -80,8 +74,5 @@ jobs:
       - uses: ./.github/actions/upgrade-test
         with:
           test_upgrade_img: "europe-docker.pkg.dev/kyma-project/dev/api-gateway-manager:PR-${{github.event.number}}"
-          client_id: ${{ secrets.CLIENT_ID }}
-          client_secret: ${{ secrets.CLIENT_SECRET }}
-          oidc_issuer_url: ${{ secrets.OIDC_ISSUER_URL }}
           target_branch: ${{ github.base_ref }}
 
