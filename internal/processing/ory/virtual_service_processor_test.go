@@ -1006,7 +1006,7 @@ var _ = Describe("Virtual Service Processor", func() {
 
 	Context("HTTP matching", func() {
 
-		DescribeTable("should not restrict access for the path and methods defined in APIRule", func(handler string) {
+		DescribeTable("should not restrict access for the path and methods defined in APIRule when handler is", func(handler string) {
 			// Given
 			strategies := []*v1beta1.Authenticator{
 				{
@@ -1038,10 +1038,13 @@ var _ = Describe("Virtual Service Processor", func() {
 			Expect(vs.Spec.Http[0].Match[0].Uri.GetRegex()).To(Equal("/"))
 			Expect(vs.Spec.Http[0].Match[0].Method).To(BeNil())
 		},
-			Entry("When access strategy is allow", v1beta1.AccessStrategyAllow),
-			Entry("When access strategy is noop", v1beta1.AccessStrategyNoop),
-			Entry("When access strategy is jwt", v1beta1.AccessStrategyJwt),
-			Entry("When access strategy is oauth2_introspection", v1beta1.AccessStrategyOauth2Introspection),
+			Entry(nil, v1beta1.AccessStrategyAllow),
+			Entry(nil, v1beta1.AccessStrategyNoop),
+			Entry(nil, v1beta1.AccessStrategyJwt),
+			Entry(nil, v1beta1.AccessStrategyOauth2Introspection),
+			Entry(nil, v1beta1.AccessStrategyUnauthorized),
+			Entry(nil, v1beta1.AccessStrategyAnonymous),
+			Entry(nil, v1beta1.AccessStrategyCookieSession),
 		)
 
 		It("should restrict access for the path and methods defined in APIRule when access strategy allow_methods is used", func() {
