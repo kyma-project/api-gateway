@@ -147,12 +147,11 @@ func (t *testsuite) Setup() error {
 	if err != nil {
 		return err
 	}
-	t.config.IssuerUrl = issuerUrl
 
 	t.oauth2Cfg = &clientcredentials.Config{
 		ClientID:     t.config.ClientID,
 		ClientSecret: t.config.ClientSecret,
-		TokenURL:     fmt.Sprintf("%s/token", t.config.IssuerUrl),
+		TokenURL:     fmt.Sprintf("%s/token", issuerUrl),
 		AuthStyle:    oauth2.AuthStyleInHeader,
 		Scopes:       []string{"read"},
 	}

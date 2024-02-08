@@ -13,7 +13,6 @@ import (
 var oauth2ServerMockManifest []byte
 
 // ApplyOAuth2MockServer creates OAuth2  mock server deployment, service and virtual service. Returns the issuer URL of the mock server.
-// Additional Info can be found in the documentation of the OAuth2 mock server: https://github.com/navikt/mock-oauth2-server.
 func ApplyOAuth2MockServer(resourceMgr *resource.Manager, k8sClient dynamic.Interface, namespace string, domain string) (string, error) {
 
 	log.Printf("Applying OAuth2 mock server")

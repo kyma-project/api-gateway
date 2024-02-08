@@ -5,6 +5,7 @@ import (
 	_ "embed"
 	"encoding/base64"
 	"fmt"
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/auth"
 	"log"
 	"os"
 	"path"
@@ -93,13 +94,6 @@ func (t *testsuite) Setup() error {
 	namespace := fmt.Sprintf("%s-%s", t.name, helpers.GenerateRandomString(6))
 	log.Printf("Using namespace: %s\n", namespace)
 
-	oauth2Cfg := &clientcredentials.Config{
-		ClientID:     t.config.ClientID,
-		ClientSecret: t.config.ClientSecret,
-		TokenURL:     fmt.Sprintf("%s/oauth2/token", t.config.IssuerUrl),
-		AuthStyle:    oauth2.AuthStyleInHeader,
-	}
-
 	// create common resources for all scenarios
 	globalCommonResources, err := manifestprocessor.ParseFromFileWithTemplate("global-commons.yaml", manifestsDirectory, struct {
 		Namespace string
@@ -125,6 +119,20 @@ func (t *testsuite) Setup() error {
 	if err != nil {
 		return err
 	}
+
+	issuerUrl, err := auth.ApplyOAuth2MockServer(t.resourceManager, t.k8sClient, namespace, t.config.Domain)
+	if err != nil {
+		return err
+	}
+
+	oauth2Cfg := &clientcredentials.Config{
+		ClientID:     t.config.ClientID,
+		ClientSecret: t.config.ClientSecret,
+		TokenURL:     fmt.Sprintf("%s/token", issuerUrl),
+		AuthStyle:    oauth2.AuthStyleInHeader,
+	}
+
+	t.config.IssuerUrl = fmt.Sprintf("http://mock-oauth2-server.%s.svc.cluster.local", namespace)
 
 	t.oauth2Cfg = oauth2Cfg
 	t.namespace = namespace
