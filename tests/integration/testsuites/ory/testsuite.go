@@ -149,6 +149,7 @@ func (t *testsuite) Setup() error {
 		ClientSecret: t.config.ClientSecret,
 		TokenURL:     tokenURL,
 		AuthStyle:    oauth2.AuthStyleInHeader,
+		Scopes:       []string{"read"},
 	}
 
 	t.namespace = namespace
