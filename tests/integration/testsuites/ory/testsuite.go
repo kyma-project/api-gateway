@@ -76,6 +76,11 @@ func (t *testsuite) InitScenarios(ctx *godog.ScenarioContext) {
 	initUnsecuredToSecured(ctx, t)
 	initDefaultCors(ctx, t)
 	initCustomCors(ctx, t)
+	initExposeMethodsOnPathsAllowHandler(ctx, t)
+	initExposeMethodsOnPathsAllowMethodsHandler(ctx, t)
+	initExposeMethodsOnPathsNoopHandler(ctx, t)
+	initExposeMethodsOnPathsJwtHandler(ctx, t)
+	initExposeMethodsOnPathsOAuth2Handler(ctx, t)
 }
 
 func (t *testsuite) FeaturePath() []string {
