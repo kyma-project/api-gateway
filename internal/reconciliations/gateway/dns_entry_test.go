@@ -27,6 +27,7 @@ var _ = Describe("DNSEntry", func() {
 			Expect(k8sClient.Get(context.Background(), client.ObjectKey{Name: "test", Namespace: "test-ns"}, &createdDnsEntry)).Should(Succeed())
 			Expect(createdDnsEntry.Spec.DNSName).To(Equal("*.test-domain.com"))
 			Expect(createdDnsEntry.Spec.Targets).To(ContainElement("10.0.0.1"))
+			Expect(createdDnsEntry.Annotations).To(HaveKeyWithValue("dns.gardener.cloud/class", "garden"))
 		})
 
 		It("should reapply disclaimer annotation on DNSEntry when it was removed", func() {
