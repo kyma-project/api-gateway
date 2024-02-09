@@ -21,7 +21,6 @@ on:
 
 jobs:
   wait-for-image-build:
-    environment: ${{ github.event.pull_request.author_association != 'COLLABORATOR' && github.event.pull_request.author_association != 'OWNER' && 'restricted' || 'internal' }}
     name: Wait for image build
     runs-on: ubuntu-latest
     if: github.event.pull_request.draft == false
