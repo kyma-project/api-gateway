@@ -8,6 +8,6 @@ APIRules require Istio to be installed on the cluster because APIRule Controller
 
 >**CAUTION:** Ory Oathkeeper has been deprecated. This dependency will change in the future.
 
-To use APIRules, both Ory Oathkeeper and Ory Oathkeeper Maester must be installed on the cluster. This is required because APIRule Controller creates the Rule custom resource when an APIRule has defined an access strategy other than `allow`.
+To use APIRules, both Ory Oathkeeper and Ory Oathkeeper Maester must be installed on the cluster. This is required because APIRule Controller creates the Rule custom resource when an APIRule has defined an access strategy other than `allow` and `allow_methods`.
 
 You can install Ory Oathkeeper by installing the API Gateway module.
