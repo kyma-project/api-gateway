@@ -26,7 +26,7 @@ The `allow` handler allows access to the exposed workload with all HTTP methods.
 
 The intended functionality of this handler is to provide a simple configuration for exposing workloads. It does not use Oathkeeper configuration and instead relies only on Istio VirtualService.
 
-The `allow_methods` handler only allows access to the specified HTTP methods of to the exposed workload. You must not configure the **config** field when using this handler.
+The `allow_methods` handler only allows access to the specified HTTP methods of the exposed workload. You must not configure the **config** field when using this handler.
 
 
 ### The `jwt` Handler
@@ -35,6 +35,6 @@ By default, the `jwt` handler is configured in the same way as in the [Ory Oathk
 
 ### Other Handlers
 
-Except for the `allow`, `allow_methods` and `jwt` handlers, which use the default configuration, all the other handlers are based on the configuration documented in [Ory Oathkeeper Authenticators](https://www.ory.sh/docs/oathkeeper/pipeline/authn). Ory Oathkeeper is responsible for handling requests that use these handlers so their configuration and capabilities align with what is described in the documentation.
+Except for the `allow`, `allow_methods`, and `jwt` handlers, which use the default configuration, all the other handlers are based on the configuration documented in [Ory Oathkeeper Authenticators](https://www.ory.sh/docs/oathkeeper/pipeline/authn). Ory Oathkeeper is responsible for handling requests that use these handlers so their configuration and capabilities align with what is described in the documentation.
 
 When using those handlers keep in mind that Ory stack as part of API Gateway is deprecated and will not be supported in the future.
