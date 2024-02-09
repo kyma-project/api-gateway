@@ -7,6 +7,7 @@ import (
 	"golang.org/x/exp/slices"
 )
 
+// CheckForExclusiveAccessStrategy checks if there is an access strategy that is not allowed in combination with other access strategies.
 func CheckForExclusiveAccessStrategy(accessStrategies []*gatewayv1beta1.Authenticator, exclusiveAccessStrategy string, attributePath string) []Failure {
 
 	if len(accessStrategies) <= 1 {

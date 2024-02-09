@@ -45,7 +45,7 @@ func (r virtualServiceCreator) Create(api *gatewayv1beta1.APIRule) (*networkingv
 		httpRouteBuilder := builders.HTTPRoute()
 		serviceNamespace := helpers.FindServiceNamespace(api, &rule)
 		routeDirectlyToService := false
-		if !processing.IsSecured(rule) {
+		if !processing.IsSecuredByOathkeeper(rule) {
 			routeDirectlyToService = true
 		} else if processing.IsJwtSecured(rule) {
 			routeDirectlyToService = true

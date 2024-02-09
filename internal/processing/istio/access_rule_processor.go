@@ -29,7 +29,7 @@ func (r accessRuleCreator) Create(api *gatewayv1beta1.APIRule) map[string]*rulev
 	accessRules := make(map[string]*rulev1alpha1.Rule)
 	for _, rule := range api.Spec.Rules {
 		filteredAS := filterAccessStrategies(rule.AccessStrategies)
-		if len(filteredAS) > 0 && processing.IsSecured(rule) {
+		if len(filteredAS) > 0 && processing.IsSecuredByOathkeeper(rule) {
 			ar := processors.GenerateAccessRule(api, rule, filteredAS, r.additionalLabels, r.defaultDomainName)
 			accessRules[processors.SetAccessRuleKey(pathDuplicates, *ar)] = ar
 		}

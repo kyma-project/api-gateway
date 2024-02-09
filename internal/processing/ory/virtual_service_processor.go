@@ -46,7 +46,7 @@ func (r virtualServiceCreator) Create(api *gatewayv1beta1.APIRule) (*networkingv
 		host, port := r.oathkeeperSvc, r.oathkeeperSvcPort
 		serviceNamespace := helpers.FindServiceNamespace(api, &rule)
 
-		if !processing.IsSecured(rule) {
+		if !processing.IsSecuredByOathkeeper(rule) {
 			// Use rule level service if it exists
 			if rule.Service != nil {
 				host = fmt.Sprintf("%s.%s.svc.cluster.local", *rule.Service.Name, serviceNamespace)

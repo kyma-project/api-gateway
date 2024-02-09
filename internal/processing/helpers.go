@@ -28,7 +28,8 @@ func IsJwtSecured(rule gatewayv1beta1.Rule) bool {
 	return false
 }
 
-func IsSecured(rule gatewayv1beta1.Rule) bool {
+// IsSecuredByOathkeeper checks whether the rule contains an access strategy that should lead to the creation of an Oathkeeper rule.
+func IsSecuredByOathkeeper(rule gatewayv1beta1.Rule) bool {
 	if len(rule.Mutators) > 0 {
 		return true
 	}
