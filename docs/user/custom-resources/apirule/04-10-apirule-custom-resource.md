@@ -46,8 +46,7 @@ This table lists all parameters of APIRule CRD together with their descriptions:
 **Status:**
 
 When you fetch an existing APIRule CR, the system adds the **status** section which describes the status of the
-VirtualService and the Oathkeeper Access Rule created for this CR. The following table lists the fields of the **status
-** section.
+VirtualService and the Oathkeeper Access Rule created for this CR. The following table lists the fields of the **status** section.
 
 | Field                                | Description                                        |
 |:-------------------------------------|:---------------------------------------------------|
