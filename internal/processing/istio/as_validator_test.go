@@ -8,7 +8,7 @@ import (
 
 var _ = Describe("AccessStrategies Istio Validator", func() {
 
-	DescribeTable("Should succeed with only handler", func(handler string) {
+	DescribeTable("Should succeed with only one exclusive handler", func(handler string) {
 		//given
 		strategies := []*gatewayv1beta1.Authenticator{
 			{
@@ -25,16 +25,15 @@ var _ = Describe("AccessStrategies Istio Validator", func() {
 	},
 		Entry(nil, gatewayv1beta1.AccessStrategyAllowMethods),
 		Entry(nil, gatewayv1beta1.AccessStrategyAllow),
-		Entry(nil, gatewayv1beta1.AccessStrategyNoop),
 		Entry(nil, gatewayv1beta1.AccessStrategyJwt),
 	)
 
-	DescribeTable("Should fail with handlers on same path: noop and", func(handler string, expectedMessage string) {
+	DescribeTable("Should return failures with not exclusive handler oauth2_introspection and with exclusive handler", func(handler string, expectedMessage string) {
 		//given
 		strategies := []*gatewayv1beta1.Authenticator{
 			{
 				Handler: &gatewayv1beta1.Handler{
-					Name: gatewayv1beta1.AccessStrategyNoop,
+					Name: gatewayv1beta1.AccessStrategyOauth2Introspection,
 				},
 			},
 			{
@@ -56,7 +55,7 @@ var _ = Describe("AccessStrategies Istio Validator", func() {
 		Entry(nil, gatewayv1beta1.AccessStrategyJwt, "jwt access strategy is not allowed in combination with other access strategies"),
 	)
 
-	It("Should fail with allow and jwt handlers on same path", func() {
+	It("Should return failures with multiple failures when there are multiple exclusive handlers", func() {
 		//given
 		strategies := []*gatewayv1beta1.Authenticator{
 			{
@@ -81,17 +80,17 @@ var _ = Describe("AccessStrategies Istio Validator", func() {
 		Expect(problems[1].Message).To(Equal("jwt access strategy is not allowed in combination with other access strategies"))
 	})
 
-	It("Should fail with allow_methods and jwt handlers on same path", func() {
+	It("Should succeed with multiple non-exclusive handler", func() {
 		//given
 		strategies := []*gatewayv1beta1.Authenticator{
 			{
 				Handler: &gatewayv1beta1.Handler{
-					Name: gatewayv1beta1.AccessStrategyAllowMethods,
+					Name: gatewayv1beta1.AccessStrategyOauth2ClientCredentials,
 				},
 			},
 			{
 				Handler: &gatewayv1beta1.Handler{
-					Name: gatewayv1beta1.AccessStrategyJwt,
+					Name: gatewayv1beta1.AccessStrategyOauth2Introspection,
 				},
 			},
 		}
@@ -99,35 +98,6 @@ var _ = Describe("AccessStrategies Istio Validator", func() {
 		problems := (&asValidator{}).Validate("some.attribute", strategies)
 
 		//then
-		Expect(problems).To(HaveLen(2))
-		Expect(problems[0].AttributePath).To(Equal("some.attribute.accessStrategies[0].handler"))
-		Expect(problems[0].Message).To(Equal("allow_methods access strategy is not allowed in combination with other access strategies"))
-		Expect(problems[1].AttributePath).To(Equal("some.attribute.accessStrategies[1].handler"))
-		Expect(problems[1].Message).To(Equal("jwt access strategy is not allowed in combination with other access strategies"))
-	})
-
-	It("Should fail with allow_methods and allow handlers on same path", func() {
-		//given
-		strategies := []*gatewayv1beta1.Authenticator{
-			{
-				Handler: &gatewayv1beta1.Handler{
-					Name: gatewayv1beta1.AccessStrategyAllow,
-				},
-			},
-			{
-				Handler: &gatewayv1beta1.Handler{
-					Name: gatewayv1beta1.AccessStrategyAllowMethods,
-				},
-			},
-		}
-		//when
-		problems := (&asValidator{}).Validate("some.attribute", strategies)
-
-		//then
-		Expect(problems).To(HaveLen(2))
-		Expect(problems[0].AttributePath).To(Equal("some.attribute.accessStrategies[0].handler"))
-		Expect(problems[0].Message).To(Equal("allow access strategy is not allowed in combination with other access strategies"))
-		Expect(problems[1].AttributePath).To(Equal("some.attribute.accessStrategies[1].handler"))
-		Expect(problems[1].Message).To(Equal("allow_methods access strategy is not allowed in combination with other access strategies"))
+		Expect(problems).To(HaveLen(0))
 	})
 })
