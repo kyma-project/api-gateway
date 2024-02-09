@@ -151,7 +151,7 @@
     path: '/.*'
     methods: ['GET']
     accessStrategies:
-      - handler: 'allow'
+      - handler: 'allow_methods'
   children:
     - simple: true
       required: false
@@ -172,7 +172,7 @@
       widget: GenericList
       defaultExpanded: true
       template:
-        handler: 'allow'
+        handler: 'allow_methods'
       children:
         - required: true
           simple: true
@@ -180,6 +180,7 @@
           name: accessStrategies.handler
           enum:
             - allow
+            - allow_methods
             - noop
             - jwt
             - oauth2_introspection
@@ -262,7 +263,7 @@
               simple: true
               inputInfo: inputInfo.token_from
               widget: KeyValuePair
-              visibility: '$item.handler!="allow" and $item.handler!="noop"'
+              visibility: '$item.handler!="allow" and $item.handler!="allow_methods" and $item.handler!="noop"'
               keyEnum:
               - header
               - query_parameter

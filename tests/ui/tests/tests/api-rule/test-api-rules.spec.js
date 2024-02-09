@@ -121,7 +121,7 @@ context("Test API Rules", () => {
 
         cy.contains(apiRulePath).should('not.exist');
 
-        cy.contains('allow').should('not.exist');
+        cy.contains('allow_methods').should('not.exist');
         cy.contains('read').should('exist');
     });
 

@@ -107,7 +107,7 @@ Cypress.Commands.add('loginAndSelectCluster', function(params) {
 
     cy.visit(`${config.clusterAddress}/clusters`)
         .get('ui5-button:visible')
-        .contains('Connect cluster')
+        .contains('Connect')
         .click();
 
     cy.contains('Drag your file here or click to upload').attachFile(fileName, {
@@ -127,7 +127,7 @@ Cypress.Commands.add('loginAndSelectCluster', function(params) {
     }
 
     cy.get(`[aria-label="last-step"]:visible`)
-        .contains('Connect cluster')
+        .contains('Connect')
         .click({ force: true });
 
     cy.url().should('match', expectedLocation);
