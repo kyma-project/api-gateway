@@ -24,6 +24,7 @@
     * [Kyma Gateway](/api-gateway/user/custom-resources/apigateway/04-10-kyma-gateway.md)
     * [Oathkeeper Dependency](/api-gateway/user/custom-resources/apigateway/04-20-oathkeeper.md)
   * [APIRule Custom Resource](/api-gateway/user/custom-resources/apirule/04-10-apirule-custom-resource.md)
+    * [APIRule Access Strategies](/api-gateway/user/custom-resources/apirule/04-15-api-rule-access-strategies.md)
     * [Istio JWT Access Strategy](/api-gateway/user/custom-resources/apirule/04-20-apirule-istio-jwt-access-strategy.md)
     * [Comparison of Access Strategies](/api-gateway/user/custom-resources/apirule/04-30-apirule-jwt-ory-and-istio-comparison.md)
     * [APIRule Mutators](/api-gateway/user/custom-resources/apirule/04-40-apirule-mutators.md)

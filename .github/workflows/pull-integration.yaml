@@ -18,7 +18,6 @@ on:
       - ".github/**" #Ignoring since build job isn't triggered on the workflow directory changes
     branches:
       - main
-      - 'release-**'
 
 jobs:
   wait-for-image-build:
@@ -85,3 +84,4 @@ jobs:
           client_secret: ${{ secrets.CLIENT_SECRET }}
           oidc_issuer_url: ${{ secrets.OIDC_ISSUER_URL }}
           target_branch: ${{ github.base_ref }}
+
