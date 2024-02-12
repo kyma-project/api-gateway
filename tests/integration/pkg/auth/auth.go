@@ -3,7 +3,6 @@ package auth
 import (
 	"context"
 	"crypto/tls"
-	_ "embed"
 	"fmt"
 	"net/http"
 	"net/http/cookiejar"
