@@ -53,7 +53,7 @@ jobs:
           manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:${{ needs.wait-for-image-build.outputs.sha }}"
           client_id: ${{ secrets.CLIENT_ID }}
           client_secret: ${{ secrets.CLIENT_SECRET }}
-          oidc_issuer_url: ${{ secrets.OIDC_ISSUER_URL }}
+          oidc_well_known_url: "${{ secrets.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
 
   upgrade-tests:
     name: Upgrade tests
@@ -68,7 +68,7 @@ jobs:
           test_upgrade_img: "europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:${{ needs.wait-for-image-build.outputs.sha }}"
           client_id: ${{ secrets.CLIENT_ID }}
           client_secret: ${{ secrets.CLIENT_SECRET }}
-          oidc_issuer_url: ${{ secrets.OIDC_ISSUER_URL }}
+          oidc_well_known_url: "${{ secrets.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
           target_branch: ${{github.ref_name}}
 
   custom-domain-integration-gcp:
@@ -87,7 +87,7 @@ jobs:
           script: ./tests/integration/scripts/custom-domain-gardener-gcp-gh.sh
           client_id: ${{ secrets.CLIENT_ID }}
           client_secret: ${{ secrets.CLIENT_SECRET }}
-          oidc_issuer_url: ${{ secrets.OIDC_ISSUER_URL }}
+          oidc_well_known_url: "${{ secrets.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
           dns_secret_json: ${{ secrets.DNS_SECRET_JSON }}
 
   custom-domain-integration-aws:
@@ -106,7 +106,7 @@ jobs:
           script: ./tests/integration/scripts/custom-domain-gardener-aws-gh.sh
           client_id: ${{ secrets.CLIENT_ID }}
           client_secret: ${{ secrets.CLIENT_SECRET }}
-          oidc_issuer_url: ${{ secrets.OIDC_ISSUER_URL }}
+          oidc_well_known_url: "${{ secrets.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
           dns_secret_json: ${{ secrets.DNS_SECRET_JSON }}
 
   slack_failed_notification:

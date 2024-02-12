@@ -68,7 +68,7 @@ name: default
 spec:
   gateways:
     - namespace: "my-namespace"
-      name: "test-gateway"
+      name: "default"
       servers:
         - hosts:
             - host: "test.example.com"
