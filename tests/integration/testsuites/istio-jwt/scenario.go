@@ -47,9 +47,9 @@ func (s *scenario) callingTheEndpointWithAValidToken(endpoint, tokenType, audOrC
 		AsHeader: true,
 	}
 	if audOrClaim == "audiences" {
-		return s.callingEndpointWithMethodAndHeaders(fmt.Sprintf("%s/%s", s.Url, http.MethodGet, strings.TrimLeft(endpoint, "/")), tokenType, asserter, nil, &tokenFrom, helpers.RequestOptions{Audiences: []string{par1, par2}})
+		return s.callingEndpointWithMethodAndHeaders(fmt.Sprintf("%s/%s", s.Url, strings.TrimLeft(endpoint, "/")), http.MethodGet, tokenType, asserter, nil, &tokenFrom, helpers.RequestOptions{Audiences: []string{par1, par2}})
 	} else {
-		return s.callingEndpointWithMethodAndHeaders(fmt.Sprintf("%s/%s", s.Url, http.MethodGet, strings.TrimLeft(endpoint, "/")), tokenType, asserter, nil, &tokenFrom, helpers.RequestOptions{Scopes: []string{par1, par2}})
+		return s.callingEndpointWithMethodAndHeaders(fmt.Sprintf("%s/%s", s.Url, strings.TrimLeft(endpoint, "/")), http.MethodGet, tokenType, asserter, nil, &tokenFrom, helpers.RequestOptions{Scopes: []string{par1, par2}})
 	}
 }
 
