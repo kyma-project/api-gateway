@@ -8,7 +8,7 @@ You can use mutators to enrich an incoming request with information. Different t
 | `oauth2_introspection` | [Oathkeeper](https://www.ory.sh/docs/oathkeeper/pipeline/mutator) mutator |
 | `noop`                 | [Oathkeeper](https://www.ory.sh/docs/oathkeeper/pipeline/mutator) mutator |
 | `allow`                | No mutators supported                                                     |
-| `allow_methods`        | No mutators supported                                                     |
+| `no_auth`        | No mutators supported                                                     |
 
 This document explains and provides examples of Istio mutators compatible with the JWT access strategy. Additionally, it explores the possibility of using Oathkeeper mutators with Istio and provides guidance on configuring them.
 

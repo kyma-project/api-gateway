@@ -894,7 +894,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 							Eventually(func(g Gomega) {
 								rlList = getRuleList(g, matchingLabels)
 
-								// Make sure no access rules for allow and allow_methods handlers are created
+								// Make sure no access rules for allow and no_auth handlers are created
 								g.Expect(rlList).To(HaveLen(3))
 
 								rules := make(map[string]rulev1alpha1.Rule)
@@ -945,11 +945,11 @@ var _ = Describe("APIRule Controller", Serial, func() {
 					jwtHandlers := []string{helpers.JWT_HANDLER_ORY, helpers.JWT_HANDLER_ISTIO}
 					for _, jwtHandler := range jwtHandlers {
 						Context(fmt.Sprintf("with %s as JWT handler", jwtHandler), func() {
-							It("should create a VS, but no access rule for allow and allow_methods handler", func() {
+							It("should create a VS, but no access rule for allow and no_auth handler", func() {
 								updateJwtHandlerTo(jwtHandler)
 
 								rule1 := testRule("/favicon", methodsGet, nil, noConfigHandler(gatewayv1beta1.AccessStrategyAllow))
-								rule2 := testRule("/anything", methodsGet, nil, noConfigHandler(gatewayv1beta1.AccessStrategyAllowMethods))
+								rule2 := testRule("/anything", methodsGet, nil, noConfigHandler(gatewayv1beta1.AccessStrategyNoAuth))
 
 								apiRuleName := generateTestName(testNameBase, testIDLength)
 								serviceName := testServiceNameBase

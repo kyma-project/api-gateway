@@ -60,9 +60,9 @@ func (r virtualServiceCreator) Create(api *gatewayv1beta1.APIRule) (*networkingv
 
 		matchBuilder := builders.MatchRequest().Uri().Regex(rule.Path)
 
-		// Only in case of the allow_methods we want to restrict the methods, because it would be a breaking
+		// Only in case of the no_auth we want to restrict the methods, because it would be a breaking
 		// change for other handlers and in case of allow we expose all methods.
-		if rule.ContainsAccessStrategy(gatewayv1beta1.AccessStrategyAllowMethods) {
+		if rule.ContainsAccessStrategy(gatewayv1beta1.AccessStrategyNoAuth) {
 			matchBuilder.MethodRegEx(rule.Methods...)
 		}
 

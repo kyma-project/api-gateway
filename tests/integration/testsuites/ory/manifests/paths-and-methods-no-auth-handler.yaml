@@ -13,10 +13,10 @@ spec:
     - path: /anything
       methods: ["GET", "POST"]
       accessStrategies:
-        - handler: allow_methods
+        - handler: no_auth
       mutators: []
     - path: /anything/put
       methods: ["PUT"]
       accessStrategies:
-        - handler: allow_methods
+        - handler: no_auth
       mutators: []

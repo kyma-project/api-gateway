@@ -23,7 +23,7 @@ import (
 )
 
 var _ = Describe("Virtual Service Processor", func() {
-	allowHandlers := []string{v1beta1.AccessStrategyAllow, v1beta1.AccessStrategyAllowMethods}
+	allowHandlers := []string{v1beta1.AccessStrategyAllow, v1beta1.AccessStrategyNoAuth}
 	for _, handler := range allowHandlers {
 		When("handler is "+handler, func() {
 			It("should create", func() {
@@ -1047,12 +1047,12 @@ var _ = Describe("Virtual Service Processor", func() {
 			Entry(nil, v1beta1.AccessStrategyCookieSession),
 		)
 
-		It("should restrict access for the path and methods defined in APIRule when access strategy allow_methods is used", func() {
+		It("should restrict access for the path and methods defined in APIRule when access strategy no_auth is used", func() {
 			// Given
 			strategies := []*v1beta1.Authenticator{
 				{
 					Handler: &v1beta1.Handler{
-						Name: v1beta1.AccessStrategyAllowMethods,
+						Name: v1beta1.AccessStrategyNoAuth,
 					},
 				},
 			}

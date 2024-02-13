@@ -281,7 +281,7 @@ var _ = Describe("Request Authentication Processor", func() {
 		Expect(err).To(BeNil())
 		Expect(result).To(BeEmpty())
 	},
-		Entry(nil, gatewayv1beta1.AccessStrategyAllowMethods),
+		Entry(nil, gatewayv1beta1.AccessStrategyNoAuth),
 		Entry(nil, gatewayv1beta1.AccessStrategyAllow),
 		Entry(nil, gatewayv1beta1.AccessStrategyNoop),
 	)

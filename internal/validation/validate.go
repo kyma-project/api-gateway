@@ -267,7 +267,7 @@ func (v *APIRuleValidator) validateAccessStrategy(attributePath string, accessSt
 	switch accessStrategy.Handler.Name {
 	case gatewayv1beta1.AccessStrategyAllow:
 		vld = vldNoConfig
-	case gatewayv1beta1.AccessStrategyAllowMethods:
+	case gatewayv1beta1.AccessStrategyNoAuth:
 		vld = vldNoConfig
 	case gatewayv1beta1.AccessStrategyNoop:
 		vld = vldNoConfig

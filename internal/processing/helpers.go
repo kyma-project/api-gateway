@@ -34,7 +34,7 @@ func IsSecuredByOathkeeper(rule gatewayv1beta1.Rule) bool {
 		return true
 	}
 	for _, strat := range rule.AccessStrategies {
-		if strat.Name != gatewayv1beta1.AccessStrategyAllow && strat.Name != gatewayv1beta1.AccessStrategyAllowMethods {
+		if strat.Name != gatewayv1beta1.AccessStrategyAllow && strat.Name != gatewayv1beta1.AccessStrategyNoAuth {
 			return true
 		}
 	}

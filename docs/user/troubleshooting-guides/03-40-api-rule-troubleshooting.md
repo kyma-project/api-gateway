@@ -158,7 +158,7 @@ spec:
 ```
 
 ---
-## Configuration of `noop`, `allow`, and `allow_methods` Handlers 
+## Configuration of `noop`, `allow`, and `no_auth` Handlers 
 ### Cause
 
 In the following APIRule, the `noop` handler has the **trusted-issuers** field configured:
@@ -175,7 +175,7 @@ spec:
             trusted_issuers: ["https://dex.kyma.local"]
 ```
 
-If your APIRule uses either the `noop`, `allow`, or `allow_methods` handler and has some further handler's configuration defined, you get the following `APIRuleStatus` error:
+If your APIRule uses either the `noop`, `allow`, or `no_auth` handler and has some further handler's configuration defined, you get the following `APIRuleStatus` error:
 
 ```
 {"code":"ERROR","desc":"Validation error: Attribute \".spec.rules[0].accessStrategies[0].config\": strategy: noop does not support configuration"}
@@ -183,7 +183,7 @@ If your APIRule uses either the `noop`, `allow`, or `allow_methods` handler and 
 
 ### Remedy
 
-Use the `noop`, `allow`, and `allow_methods` handlers without any further configuration, for example:
+Use the `noop`, `allow`, and `no_auth` handlers without any further configuration, for example:
 
 ```yaml
 spec:

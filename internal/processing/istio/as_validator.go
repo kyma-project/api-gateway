@@ -8,7 +8,7 @@ import (
 
 type asValidator struct{}
 
-var exclusiveAccessStrategies = []string{gatewayv1beta1.AccessStrategyAllow, gatewayv1beta1.AccessStrategyAllowMethods, gatewayv1beta1.AccessStrategyJwt}
+var exclusiveAccessStrategies = []string{gatewayv1beta1.AccessStrategyAllow, gatewayv1beta1.AccessStrategyNoAuth, gatewayv1beta1.AccessStrategyJwt}
 
 func (o *asValidator) Validate(attributePath string, accessStrategies []*gatewayv1beta1.Authenticator) []validation.Failure {
 	var problems []validation.Failure

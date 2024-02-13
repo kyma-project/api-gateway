@@ -58,7 +58,7 @@ var _ = Describe("Access Rule Processor", func() {
 		Expect(err).To(BeNil())
 		Expect(result).To(BeEmpty())
 	},
-		Entry(nil, gatewayv1beta1.AccessStrategyAllowMethods),
+		Entry(nil, gatewayv1beta1.AccessStrategyNoAuth),
 		Entry(nil, gatewayv1beta1.AccessStrategyAllow),
 	)
 

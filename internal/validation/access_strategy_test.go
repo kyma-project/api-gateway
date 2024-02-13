@@ -15,13 +15,13 @@ var _ = Describe("Access Strategies Validation", func() {
 			strategies := []*gatewayv1beta1.Authenticator{
 				{
 					Handler: &gatewayv1beta1.Handler{
-						Name: gatewayv1beta1.AccessStrategyAllowMethods,
+						Name: gatewayv1beta1.AccessStrategyNoAuth,
 					},
 				},
 			}
 
 			//when
-			problems := validation.CheckForExclusiveAccessStrategy(strategies, gatewayv1beta1.AccessStrategyAllowMethods, "some.attribute")
+			problems := validation.CheckForExclusiveAccessStrategy(strategies, gatewayv1beta1.AccessStrategyNoAuth, "some.attribute")
 
 			//then
 			Expect(problems).To(HaveLen(0))
@@ -33,7 +33,7 @@ var _ = Describe("Access Strategies Validation", func() {
 			var strategies []*gatewayv1beta1.Authenticator
 
 			//when
-			failure := validation.CheckForExclusiveAccessStrategy(strategies, gatewayv1beta1.AccessStrategyAllowMethods, "some.attribute")
+			failure := validation.CheckForExclusiveAccessStrategy(strategies, gatewayv1beta1.AccessStrategyNoAuth, "some.attribute")
 
 			//then
 			Expect(failure).To(HaveLen(0))
@@ -60,7 +60,7 @@ var _ = Describe("Access Strategies Validation", func() {
 			}
 
 			//when
-			failure := validation.CheckForExclusiveAccessStrategy(strategies, gatewayv1beta1.AccessStrategyAllowMethods, "some.attribute")
+			failure := validation.CheckForExclusiveAccessStrategy(strategies, gatewayv1beta1.AccessStrategyNoAuth, "some.attribute")
 
 			//then
 			Expect(failure).To(HaveLen(0))
@@ -81,18 +81,18 @@ var _ = Describe("Access Strategies Validation", func() {
 				},
 				{
 					Handler: &gatewayv1beta1.Handler{
-						Name: gatewayv1beta1.AccessStrategyAllowMethods,
+						Name: gatewayv1beta1.AccessStrategyNoAuth,
 					},
 				},
 			}
 
 			//when
-			failure := validation.CheckForExclusiveAccessStrategy(strategies, gatewayv1beta1.AccessStrategyAllowMethods, "some.attribute")
+			failure := validation.CheckForExclusiveAccessStrategy(strategies, gatewayv1beta1.AccessStrategyNoAuth, "some.attribute")
 
 			//then
 			Expect(failure).To(HaveLen(1))
 			Expect(failure[0].AttributePath).To(Equal("some.attribute.accessStrategies[2].handler"))
-			Expect(failure[0].Message).To(Equal("allow_methods access strategy is not allowed in combination with other access strategies"))
+			Expect(failure[0].Message).To(Equal("no_auth access strategy is not allowed in combination with other access strategies"))
 		})
 
 	})

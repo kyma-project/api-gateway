@@ -23,7 +23,7 @@ var _ = Describe("AccessStrategies Istio Validator", func() {
 		//then
 		Expect(problems).To(HaveLen(0))
 	},
-		Entry(nil, gatewayv1beta1.AccessStrategyAllowMethods),
+		Entry(nil, gatewayv1beta1.AccessStrategyNoAuth),
 		Entry(nil, gatewayv1beta1.AccessStrategyAllow),
 		Entry(nil, gatewayv1beta1.AccessStrategyJwt),
 	)
@@ -51,7 +51,7 @@ var _ = Describe("AccessStrategies Istio Validator", func() {
 		Expect(problems[0].Message).To(Equal(expectedMessage))
 	},
 		Entry(nil, gatewayv1beta1.AccessStrategyAllow, "allow access strategy is not allowed in combination with other access strategies"),
-		Entry(nil, gatewayv1beta1.AccessStrategyAllowMethods, "allow_methods access strategy is not allowed in combination with other access strategies"),
+		Entry(nil, gatewayv1beta1.AccessStrategyNoAuth, "no_auth access strategy is not allowed in combination with other access strategies"),
 		Entry(nil, gatewayv1beta1.AccessStrategyJwt, "jwt access strategy is not allowed in combination with other access strategies"),
 	)
 

@@ -16,7 +16,7 @@ var _ = Describe("Rule", func() {
 				AccessStrategies: []*v1beta1.Authenticator{
 					{
 						Handler: &v1beta1.Handler{
-							Name: v1beta1.AccessStrategyAllowMethods,
+							Name: v1beta1.AccessStrategyNoAuth,
 						},
 					},
 					{
@@ -35,7 +35,7 @@ var _ = Describe("Rule", func() {
 				AccessStrategies: []*v1beta1.Authenticator{
 					{
 						Handler: &v1beta1.Handler{
-							Name: v1beta1.AccessStrategyAllowMethods,
+							Name: v1beta1.AccessStrategyNoAuth,
 						},
 					},
 					{
@@ -46,7 +46,7 @@ var _ = Describe("Rule", func() {
 				},
 			}
 
-			Expect(rule.ContainsAccessStrategy(v1beta1.AccessStrategyAllowMethods)).To(BeTrue())
+			Expect(rule.ContainsAccessStrategy(v1beta1.AccessStrategyNoAuth)).To(BeTrue())
 		})
 
 		It("should return false when no access strategy is in the arrray", func() {

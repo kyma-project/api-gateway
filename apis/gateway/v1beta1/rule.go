@@ -72,7 +72,7 @@ func ConvertHttpMethodsToStrings(methods []HttpMethod) []string {
 
 const (
 	AccessStrategyAllow                   string = "allow"
-	AccessStrategyAllowMethods            string = "allow_methods"
+	AccessStrategyNoAuth                  string = "no_auth"
 	AccessStrategyJwt                     string = "jwt"
 	AccessStrategyNoop                    string = "noop"
 	AccessStrategyUnauthorized            string = "unauthorized"

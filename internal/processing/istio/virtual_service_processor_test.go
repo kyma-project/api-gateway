@@ -23,7 +23,7 @@ import (
 
 var _ = Describe("Virtual Service Processor", func() {
 
-	allowHandlers := []string{v1beta1.AccessStrategyAllow, v1beta1.AccessStrategyAllowMethods}
+	allowHandlers := []string{v1beta1.AccessStrategyAllow, v1beta1.AccessStrategyNoAuth}
 	for _, handler := range allowHandlers {
 		When("handler is "+handler, func() {
 			It("should create", func() {
@@ -644,7 +644,7 @@ var _ = Describe("Virtual Service Processor", func() {
 			strategies := []*v1beta1.Authenticator{
 				{
 					Handler: &v1beta1.Handler{
-						Name: v1beta1.AccessStrategyAllowMethods,
+						Name: v1beta1.AccessStrategyNoAuth,
 					},
 				},
 			}
@@ -844,7 +844,7 @@ var _ = Describe("Virtual Service Processor", func() {
 			Expect(vs.Spec.Http[0].Headers.Request.Set).ToNot(HaveKey("Cookie"))
 			Expect(vs.Spec.Http[0].Headers.Request.Set).ToNot(HaveKeyWithValue("x-test-header-1", "header-value1"))
 		},
-			Entry(nil, v1beta1.AccessStrategyAllowMethods),
+			Entry(nil, v1beta1.AccessStrategyNoAuth),
 			Entry(nil, v1beta1.AccessStrategyAllow),
 		)
 
@@ -953,7 +953,7 @@ var _ = Describe("Virtual Service Processor", func() {
 			strategies := []*v1beta1.Authenticator{
 				{
 					Handler: &v1beta1.Handler{
-						Name: v1beta1.AccessStrategyAllowMethods,
+						Name: v1beta1.AccessStrategyNoAuth,
 					},
 				},
 			}
@@ -988,7 +988,7 @@ var _ = Describe("Virtual Service Processor", func() {
 			strategies := []*v1beta1.Authenticator{
 				{
 					Handler: &v1beta1.Handler{
-						Name: v1beta1.AccessStrategyAllowMethods,
+						Name: v1beta1.AccessStrategyNoAuth,
 					},
 				},
 			}
@@ -1041,7 +1041,7 @@ var _ = Describe("Virtual Service Processor", func() {
 			strategies := []*v1beta1.Authenticator{
 				{
 					Handler: &v1beta1.Handler{
-						Name: v1beta1.AccessStrategyAllowMethods,
+						Name: v1beta1.AccessStrategyNoAuth,
 					},
 				},
 			}
@@ -1086,7 +1086,7 @@ var _ = Describe("Virtual Service Processor", func() {
 			strategies := []*v1beta1.Authenticator{
 				{
 					Handler: &v1beta1.Handler{
-						Name: v1beta1.AccessStrategyAllowMethods,
+						Name: v1beta1.AccessStrategyNoAuth,
 					},
 				},
 			}
@@ -1146,7 +1146,7 @@ var _ = Describe("Virtual Service Processor", func() {
 			strategies := []*v1beta1.Authenticator{
 				{
 					Handler: &v1beta1.Handler{
-						Name: v1beta1.AccessStrategyAllowMethods,
+						Name: v1beta1.AccessStrategyNoAuth,
 					},
 				},
 			}
@@ -1176,7 +1176,7 @@ var _ = Describe("Virtual Service Processor", func() {
 			strategies := []*v1beta1.Authenticator{
 				{
 					Handler: &v1beta1.Handler{
-						Name: v1beta1.AccessStrategyAllowMethods,
+						Name: v1beta1.AccessStrategyNoAuth,
 					},
 				},
 			}
@@ -1207,7 +1207,7 @@ var _ = Describe("Virtual Service Processor", func() {
 			strategies := []*v1beta1.Authenticator{
 				{
 					Handler: &v1beta1.Handler{
-						Name: v1beta1.AccessStrategyAllowMethods,
+						Name: v1beta1.AccessStrategyNoAuth,
 					},
 				},
 			}
@@ -1239,7 +1239,7 @@ var _ = Describe("Virtual Service Processor", func() {
 			strategies := []*v1beta1.Authenticator{
 				{
 					Handler: &v1beta1.Handler{
-						Name: v1beta1.AccessStrategyAllowMethods,
+						Name: v1beta1.AccessStrategyNoAuth,
 					},
 				},
 			}
@@ -1272,7 +1272,7 @@ var _ = Describe("Virtual Service Processor", func() {
 			strategies := []*v1beta1.Authenticator{
 				{
 					Handler: &v1beta1.Handler{
-						Name: v1beta1.AccessStrategyAllowMethods,
+						Name: v1beta1.AccessStrategyNoAuth,
 					},
 				},
 			}
@@ -1334,7 +1334,7 @@ var _ = Describe("Virtual Service Processor", func() {
 			Expect(vs.Spec.Http[0].Match[0].Uri.GetRegex()).To(Equal("/"))
 			Expect(vs.Spec.Http[0].Match[0].Method.GetRegex()).To(Equal("^(GET|POST)$"))
 		},
-			Entry("When access strategy is allow_methods", v1beta1.AccessStrategyAllowMethods),
+			Entry("When access strategy is no_auth", v1beta1.AccessStrategyNoAuth),
 			Entry("When access strategy is noop", v1beta1.AccessStrategyNoop),
 			Entry("When access strategy is jwt", v1beta1.AccessStrategyJwt),
 			Entry("When access strategy is oauth2_introspection", v1beta1.AccessStrategyOauth2Introspection),

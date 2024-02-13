@@ -78,7 +78,7 @@ func (t *testsuite) InitScenarios(ctx *godog.ScenarioContext) {
 	initDefaultCors(ctx, t)
 	initCustomCors(ctx, t)
 	initExposeMethodsOnPathsAllowHandler(ctx, t)
-	initExposeMethodsOnPathsAllowMethodsHandler(ctx, t)
+	initExposeMethodsOnPathsNoAuthHandler(ctx, t)
 	initExposeMethodsOnPathsNoopHandler(ctx, t)
 	initExposeMethodsOnPathsJwtHandler(ctx, t)
 	initExposeMethodsOnPathsOAuth2Handler(ctx, t)
