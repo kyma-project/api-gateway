@@ -2,7 +2,8 @@
 
 This tutorial shows how to create a self-signed root certificate authority (CA) and how to use it to sign a client certificate.
 
->**NOTE:** This solution is not recommended for production purposes. 
+> [!NOTE]
+>  This solution is not recommended for production purposes. 
 
 
 ## Prepare a Client Root CA

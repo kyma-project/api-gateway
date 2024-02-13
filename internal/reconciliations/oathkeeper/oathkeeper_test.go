@@ -142,6 +142,15 @@ var resourceList = []deployedResource{
 			Kind:    "PeerAuthentication",
 		},
 	},
+	{
+		name:       "ory-oathkeeper",
+		namespaced: true,
+		GVK: schema.GroupVersionKind{
+			Group:   "",
+			Version: "policy/v1",
+			Kind:    "PodDisruptionBudget",
+		},
+	},
 }
 
 var _ = Describe("Oathkeeper reconciliation", func() {

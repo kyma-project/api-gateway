@@ -17,6 +17,7 @@ Feature: Checking default kyma gateway
     And there "is" "ClusterRole" "oathkeeper-maester-role" in the cluster
     And there "is" "ClusterRoleBinding" "oathkeeper-maester-role-binding" in the cluster
     And there "is" "PeerAuthentication" "ory-oathkeeper-maester-metrics" in namespace "kyma-system"
+    And there "is" "PodDisruptionBudget" "ory-oathkeeper" in namespace "kyma-system"
     Then APIGateway CR "test-gateway" is removed
     And there "is no" "Deployment" "ory-oathkeeper" in namespace "kyma-system"
     And there "is no" "ConfigMap" "ory-oathkeeper-config" in namespace "kyma-system"
@@ -30,6 +31,7 @@ Feature: Checking default kyma gateway
     And there "is no" "ClusterRole" "oathkeeper-maester-role" in the cluster
     And there "is no" "ClusterRoleBinding" "oathkeeper-maester-role-binding" in the cluster
     And there "is no" "PeerAuthentication" "ory-oathkeeper-maester-metrics" in namespace "kyma-system"
+    And there "is no" "PodDisruptionBudget" "ory-oathkeeper" in namespace "kyma-system"
 
   Scenario: Kyma Gateway is not removed when there is a VirtualService
     Given there is an "kyma-vs" VirtualService with Gateway "kyma-system/kyma-gateway"

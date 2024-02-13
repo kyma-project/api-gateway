@@ -26,4 +26,5 @@ Run:
 ```bash
 host {YOUR_SUBDOMAIN}
 ```
->**NOTE:** `YOUR_SUBDOMAIN` specifies the name of your subdomain, for example, `httpbin.mydomain.com`.
+> [!NOTE]
+> `YOUR_SUBDOMAIN` specifies the name of your subdomain, for example, `httpbin.mydomain.com`.
