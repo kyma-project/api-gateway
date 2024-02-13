@@ -17,15 +17,18 @@ const (
 
 type Config struct {
 	CustomDomain     string `envconfig:"TEST_CUSTOM_DOMAIN,default=test.domain.kyma"`
-	IssuerUrl        string `envconfig:"TEST_OIDC_ISSUER_URL"`
-	ClientID         string `envconfig:"TEST_CLIENT_ID"`
-	ClientSecret     string `envconfig:"TEST_CLIENT_SECRET"`
+	OIDCConfigUrl    string `envconfig:"TEST_OIDC_CONFIG_URL,default=empty"`
+	IssuerUrl        string `envconfig:"-"`
+	ClientID         string `envconfig:"TEST_CLIENT_ID,default=empty"`
+	ClientSecret     string `envconfig:"TEST_CLIENT_SECRET,default=empty"`
 	ReqTimeout       uint   `envconfig:"TEST_REQUEST_TIMEOUT,default=240"`
 	ReqDelay         uint   `envconfig:"TEST_REQUEST_DELAY,default=5"`
 	Domain           string `envconfig:"TEST_DOMAIN,default=local.kyma.dev"`
 	GatewayName      string `envconfig:"TEST_GATEWAY_NAME,default=kyma-gateway"`
 	GatewayNamespace string `envconfig:"TEST_GATEWAY_NAMESPACE,default=kyma-system"`
 	TestConcurrency  int    `envconfig:"TEST_CONCURRENCY,default=4"`
+	IstioNamespace   string `envconfig:"TEST_ISTIO_NAMESPACE,default=istio-system"`
+	IsGardener       bool   `envconfig:"IS_GARDENER,default=false"`
 }
 
 var (

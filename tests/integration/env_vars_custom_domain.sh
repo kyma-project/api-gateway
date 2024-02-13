@@ -17,8 +17,8 @@ if [[ -z ${TEST_SA_ACCESS_KEY_PATH} ]]; then
   exit 2
 fi
 
-if [[ -z ${OIDC_ISSUER_URL} ]]; then
-  >&2 echo "Environment variable OIDC_ISSUER_URL is required but not set"
+if [[ -z ${OIDC_CONFIG_URL} ]]; then
+  >&2 echo "Environment variable OIDC_CONFIG_URL is required but not set"
   exit 2
 fi
 
@@ -32,7 +32,7 @@ if [[ -z ${CLIENT_SECRET} ]]; then
   exit 2
 fi
 
-export TEST_OIDC_ISSUER_URL="${OIDC_ISSUER_URL}"
+export TEST_OIDC_CONFIG_URL="${OIDC_CONFIG_URL}"
 export TEST_CLIENT_ID="${CLIENT_ID}"
 export TEST_CLIENT_SECRET="${CLIENT_SECRET}"
 export TEST_REQUEST_TIMEOUT="180"

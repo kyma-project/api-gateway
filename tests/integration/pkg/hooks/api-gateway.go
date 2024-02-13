@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"log"
 	"os"
 
 	"github.com/avast/retry-go/v4"
@@ -21,8 +22,8 @@ import (
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 )
 
-const templateFileName string = "pkg/hooks/manifests/apigateway_cr_template.yaml"
-const ApiGatewayCRName string = "test-gateway"
+const templateFileName string = "pkg/hooks/manifests/apigateway.yaml"
+const ApiGatewayCRName string = "default"
 
 var ApplyApiGatewayCrScenarioHook = func(ctx context.Context, sc *godog.Scenario) (context.Context, error) {
 	k8sClient, err := testcontext.GetK8sClientFromContext(ctx)
@@ -69,6 +70,7 @@ var ApiGatewayCrTearDownScenarioHook = func(ctx context.Context, sc *godog.Scena
 }
 
 var ApplyAndVerifyApiGatewayCrSuiteHook = func() error {
+	log.Printf("Creating APIGateway CR %s", ApiGatewayCRName)
 	k8sClient := k8sclient.GetK8sClient()
 
 	apiGateway, err := createApiGatewayCRObjectFromTemplate(ApiGatewayCRName)
@@ -108,6 +110,8 @@ var ApplyAndVerifyApiGatewayCrSuiteHook = func() error {
 	if err != nil {
 		return err
 	}
+
+	log.Printf("APIGateway CR %s in state %s", ApiGatewayCRName, apiGateway.Status.State)
 
 	return nil
 }

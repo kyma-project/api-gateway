@@ -12,6 +12,7 @@ import (
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/hooks"
 
 	"github.com/cucumber/godog"
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/auth"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/helpers"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/manifestprocessor"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/resource"
@@ -103,21 +104,6 @@ func (t *testsuite) Setup() error {
 	namespace := fmt.Sprintf("%s-%s", t.name, helpers.GenerateRandomString(6))
 	log.Printf("Using namespace: %s\n", namespace)
 
-	oauth2Cfg := &clientcredentials.Config{
-		ClientID:     t.config.ClientID,
-		ClientSecret: t.config.ClientSecret,
-		TokenURL:     fmt.Sprintf("%s/oauth2/token", t.config.IssuerUrl),
-		Scopes:       []string{"read"},
-		AuthStyle:    oauth2.AuthStyleInHeader,
-	}
-
-	jwtConfig := &clientcredentials.Config{
-		ClientID:     t.config.ClientID,
-		ClientSecret: t.config.ClientSecret,
-		TokenURL:     fmt.Sprintf("%s/oauth2/token", t.config.IssuerUrl),
-		AuthStyle:    oauth2.AuthStyleInHeader,
-	}
-
 	// create common resources for all scenarios
 	globalCommonResources, err := manifestprocessor.ParseFromFileWithTemplate("global-commons.yaml", manifestsDirectory, struct {
 		Namespace string
@@ -146,9 +132,39 @@ func (t *testsuite) Setup() error {
 
 	time.Sleep(time.Duration(t.config.ReqDelay) * time.Second)
 
-	t.oauth2Cfg = oauth2Cfg
+	var tokenURL string
+	if t.config.OIDCConfigUrl == "empty" {
+		issuerUrl, err := auth.ApplyOAuth2MockServer(t.resourceManager, t.k8sClient, namespace, t.config.Domain)
+		if err != nil {
+			return err
+		}
+		t.config.IssuerUrl = fmt.Sprintf("http://mock-oauth2-server.%s.svc.cluster.local", namespace)
+		tokenURL = fmt.Sprintf("%s/oauth2/token", issuerUrl)
+	} else {
+		oidcConfiguration, err := helpers.GetOIDCConfiguration(t.config.OIDCConfigUrl)
+		if err != nil {
+			return err
+		}
+		t.config.IssuerUrl = oidcConfiguration.Issuer
+		tokenURL = oidcConfiguration.TokenEndpoint
+	}
+
+	t.oauth2Cfg = &clientcredentials.Config{
+		ClientID:     t.config.ClientID,
+		ClientSecret: t.config.ClientSecret,
+		TokenURL:     tokenURL,
+		AuthStyle:    oauth2.AuthStyleInHeader,
+		Scopes:       []string{"read"},
+	}
+
 	t.namespace = namespace
-	t.jwtConfig = jwtConfig
+
+	t.jwtConfig = &clientcredentials.Config{
+		ClientID:     t.config.ClientID,
+		ClientSecret: t.config.ClientSecret,
+		TokenURL:     tokenURL,
+		AuthStyle:    oauth2.AuthStyleInHeader,
+	}
 
 	return nil
 }
