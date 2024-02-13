@@ -6,6 +6,7 @@ import (
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	apinetworkingv1beta1 "istio.io/api/networking/v1beta1"
 	"math/rand"
+	"net/http"
 	"strings"
 	"time"
 
@@ -44,12 +45,17 @@ var _ = Describe("APIRule Controller", Serial, func() {
 		defaultHttpTimeout         = time.Second * 180
 	)
 
+	var methodsGet = []gatewayv1beta1.HttpMethod{http.MethodGet}
+	var methodsPut = []gatewayv1beta1.HttpMethod{http.MethodPut}
+	var methodsDelete = []gatewayv1beta1.HttpMethod{http.MethodDelete}
+	var methodsPost = []gatewayv1beta1.HttpMethod{http.MethodPost}
+
 	Context("check default domain logic", func() {
 
 		It("should have an error when creating an APIRule without a domain in cluster without kyma-gateway", func() {
 			updateJwtHandlerTo(helpers.JWT_HANDLER_ISTIO)
 
-			rule1 := testRule("/rule1", []string{"GET"}, defaultMutators, noConfigHandler("allow"))
+			rule1 := testRule("/rule1", methodsGet, defaultMutators, noConfigHandler("allow"))
 
 			apiRuleName := generateTestName(testNameBase, testIDLength)
 			serviceName := generateTestName(testServiceNameBase, testIDLength)
@@ -131,7 +137,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 
 			By("Creating APIRule")
 
-			rule1 := testRule("/rule1", []string{"GET"}, defaultMutators, noConfigHandler("allow"))
+			rule1 := testRule("/rule1", methodsGet, defaultMutators, noConfigHandler("allow"))
 
 			apiRuleName := generateTestName(testNameBase, testIDLength)
 			serviceName := generateTestName(testServiceNameBase, testIDLength)
@@ -172,9 +178,9 @@ var _ = Describe("APIRule Controller", Serial, func() {
 		It("should create, update and delete rules depending on patch match", func() {
 			updateJwtHandlerTo(helpers.JWT_HANDLER_ORY)
 
-			rule1 := testRule("/rule1", []string{"GET"}, defaultMutators, noConfigHandler("noop"))
-			rule2 := testRule("/rule2", []string{"PUT"}, defaultMutators, noConfigHandler("unauthorized"))
-			rule3 := testRule("/rule3", []string{"DELETE"}, defaultMutators, noConfigHandler("anonymous"))
+			rule1 := testRule("/rule1", methodsGet, defaultMutators, noConfigHandler(gatewayv1beta1.AccessStrategyNoop))
+			rule2 := testRule("/rule2", methodsPut, defaultMutators, noConfigHandler(gatewayv1beta1.AccessStrategyUnauthorized))
+			rule3 := testRule("/rule3", methodsDelete, defaultMutators, noConfigHandler(gatewayv1beta1.AccessStrategyAnonymous))
 
 			apiRuleName := generateTestName(testNameBase, testIDLength)
 			serviceName := generateTestName(testServiceNameBase, testIDLength)
@@ -219,7 +225,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 			existingInstance := gatewayv1beta1.APIRule{}
 			Expect(c.Get(context.TODO(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &existingInstance)).Should(Succeed())
 
-			rule4 := testRule("/rule4", []string{"POST"}, defaultMutators, noConfigHandler("cookie_session"))
+			rule4 := testRule("/rule4", methodsPost, defaultMutators, noConfigHandler("cookie_session"))
 			existingInstance.Spec.Rules = []gatewayv1beta1.Rule{rule1, rule4}
 			newServiceName := serviceName + "new"
 			newServicePort := testServicePort + 3
@@ -328,7 +334,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 							//Spec.Match
 							g.Expect(rl.Spec.Match).NotTo(BeNil())
 							g.Expect(rl.Spec.Match.URL).To(Equal(fmt.Sprintf("<http|https>://%s<%s>", serviceHost, testPath)))
-							g.Expect(rl.Spec.Match.Methods).To(Equal(defaultMethods))
+							g.Expect(rl.Spec.Match.Methods).To(Equal([]string{http.MethodGet, http.MethodPut}))
 							//Spec.Authenticators
 							g.Expect(rl.Spec.Authenticators).To(HaveLen(1))
 							g.Expect(rl.Spec.Authenticators[0].Handler).NotTo(BeNil())
@@ -365,8 +371,8 @@ var _ = Describe("APIRule Controller", Serial, func() {
 							serviceName := generateTestName(testServiceNameBase, testIDLength)
 							serviceHost := fmt.Sprintf("%s.kyma.local", serviceName)
 
-							rule1 := testRule("/img", []string{"GET"}, defaultMutators, testOryJWTHandler(testIssuer, defaultScopes))
-							rule2 := testRule("/headers", []string{"GET"}, defaultMutators, testOryJWTHandler(testIssuer, defaultScopes))
+							rule1 := testRule("/img", methodsGet, defaultMutators, testOryJWTHandler(testIssuer, defaultScopes))
+							rule2 := testRule("/headers", methodsGet, defaultMutators, testOryJWTHandler(testIssuer, defaultScopes))
 							apiRule := testApiRule(apiRuleName, testNamespace, serviceName, testNamespace, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule1, rule2})
 							svc := testService(serviceName, testNamespace, testServicePort)
 
@@ -432,7 +438,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 								//Spec.Match
 								g.Expect(rl.Spec.Match).NotTo(BeNil())
 								g.Expect(rl.Spec.Match.URL).To(Equal(expectedRuleMatchURL))
-								g.Expect(rl.Spec.Match.Methods).To(Equal([]string{"GET"}))
+								g.Expect(rl.Spec.Match.Methods).To(Equal([]string{http.MethodGet}))
 								//Spec.Authenticators
 								g.Expect(rl.Spec.Authenticators).To(HaveLen(1))
 								g.Expect(rl.Spec.Authenticators[0].Handler).NotTo(BeNil())
@@ -469,7 +475,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 								//Spec.Match
 								g.Expect(rl2.Spec.Match).NotTo(BeNil())
 								g.Expect(rl2.Spec.Match.URL).To(Equal(expectedRule2MatchURL))
-								g.Expect(rl2.Spec.Match.Methods).To(Equal([]string{"GET"}))
+								g.Expect(rl2.Spec.Match.Methods).To(Equal([]string{http.MethodGet}))
 								//Spec.Authenticators
 								g.Expect(rl2.Spec.Authenticators).To(HaveLen(1))
 								g.Expect(rl2.Spec.Authenticators[0].Handler).NotTo(BeNil())
@@ -507,8 +513,8 @@ var _ = Describe("APIRule Controller", Serial, func() {
 							serviceName := testServiceNameBase
 							serviceHost := "httpbin-istio-jwt-happy-base.kyma.local"
 
-							rule1 := testRule("/img", []string{"GET"}, nil, testIstioJWTHandlerWithScopes(testIssuer, testJwksUri, []string{"scope-a", "scope-b"}))
-							rule2 := testRule("/headers", []string{"GET"}, nil, testIstioJWTHandlerWithScopes(testIssuer, testJwksUri, []string{"scope-c"}))
+							rule1 := testRule("/img", methodsGet, nil, testIstioJWTHandlerWithScopes(testIssuer, testJwksUri, []string{"scope-a", "scope-b"}))
+							rule2 := testRule("/headers", methodsGet, nil, testIstioJWTHandlerWithScopes(testIssuer, testJwksUri, []string{"scope-c"}))
 							apiRule := testApiRule(apiRuleName, testNamespace, serviceName, testNamespace, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule1, rule2})
 							svc := testService(serviceName, testNamespace, testServicePort)
 
@@ -535,13 +541,13 @@ var _ = Describe("APIRule Controller", Serial, func() {
 									Host(serviceHost).
 									Gateway(testGatewayURL).
 									HTTP(builders.HTTPRoute().
-										Match(builders.MatchRequest().Uri().Regex("/img")).
+										Match(builders.MatchRequest().Uri().Regex("/img").MethodRegEx(http.MethodGet)).
 										Route(builders.RouteDestination().Host(fmt.Sprintf("%s.%s.svc.cluster.local", serviceName, testNamespace)).Port(testServicePort)).
 										Headers(builders.NewHttpRouteHeadersBuilder().SetHostHeader(serviceHost).Get()).
 										CorsPolicy(defaultCorsPolicy).
 										Timeout(defaultHttpTimeout)).
 									HTTP(builders.HTTPRoute().
-										Match(builders.MatchRequest().Uri().Regex("/headers")).
+										Match(builders.MatchRequest().Uri().Regex("/headers").MethodRegEx(http.MethodGet)).
 										Route(builders.RouteDestination().Host(fmt.Sprintf("%s.%s.svc.cluster.local", serviceName, testNamespace)).Port(testServicePort)).
 										Headers(builders.NewHttpRouteHeadersBuilder().SetHostHeader(serviceHost).Get()).
 										CorsPolicy(defaultCorsPolicy).
@@ -587,7 +593,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 									for i := 0; i < 3; i++ {
 										g.Expect(ap.Spec.Rules[i].From[0].Source.RequestPrincipals[0]).To(Equal("https://oauth2.example.com//*"))
 										g.Expect(ap.Spec.Rules[i].To[0].Operation.Paths[0]).To(Equal(operationPath))
-										g.Expect(ap.Spec.Rules[i].To[0].Operation.Methods).To(BeEquivalentTo([]string{"GET"}))
+										g.Expect(ap.Spec.Rules[i].To[0].Operation.Methods).To(BeEquivalentTo([]string{http.MethodGet}))
 									}
 
 									ruleWhenKeys := append([]string{}, ap.Spec.Rules[0].When[0].Key, ap.Spec.Rules[1].When[0].Key, ap.Spec.Rules[2].When[0].Key)
@@ -635,7 +641,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 							}
 
 							testIstioJWTHandlerWithAuthorizations(testIssuer, testJwksUri, authorizations)
-							rule := testRule("/img", []string{"GET"}, nil, testIstioJWTHandlerWithAuthorizations(testIssuer, testJwksUri, authorizations))
+							rule := testRule("/img", methodsGet, nil, testIstioJWTHandlerWithAuthorizations(testIssuer, testJwksUri, authorizations))
 							apiRule := testApiRule(apiRuleName, testNamespace, serviceName, testNamespace, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule})
 							svc := testService(serviceName, testNamespace, testServicePort)
 
@@ -675,7 +681,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 									RequiredScopes: []string{"scope-d", "scope-b"},
 								},
 							}
-							ruleWithScopes := testRule("/img", []string{"GET"}, nil, testIstioJWTHandlerWithAuthorizations(testIssuer, testJwksUri, updatedAuthorizations))
+							ruleWithScopes := testRule("/img", methodsGet, nil, testIstioJWTHandlerWithAuthorizations(testIssuer, testJwksUri, updatedAuthorizations))
 							updatedApiRule.Spec.Rules = []gatewayv1beta1.Rule{ruleWithScopes}
 
 							By(fmt.Sprintf("Updating APIRule %s with new Authorizations for /img path", apiRuleName))
@@ -710,7 +716,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 					serviceName := testServiceNameBase
 					serviceHost := fmt.Sprintf("%s.kyma.local", serviceName)
 
-					rule1 := testRule("/img", []string{"GET"}, nil, testIstioJWTHandler(testIssuer, testJwksUri))
+					rule1 := testRule("/img", methodsGet, nil, testIstioJWTHandler(testIssuer, testJwksUri))
 					apiRule := testApiRule(apiRuleName, testNamespace, serviceName, testNamespace, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule1})
 					svc := testService(serviceName, testNamespace, testServicePort)
 					delete(svc.Spec.Selector, "app")
@@ -756,7 +762,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 					serviceName := testServiceNameBase
 					serviceHost := fmt.Sprintf("%s.kyma.local", serviceName)
 
-					rule1 := testRule("/img", []string{"GET"}, nil, testIstioJWTHandler(testIssuer, testJwksUri))
+					rule1 := testRule("/img", methodsGet, nil, testIstioJWTHandler(testIssuer, testJwksUri))
 					apiRule := testApiRule(apiRuleName, testNamespace, serviceName, testNamespace, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule1})
 					svc := testService(serviceName, testNamespace, testServicePort)
 					delete(svc.Spec.Selector, "app")
@@ -808,10 +814,10 @@ var _ = Describe("APIRule Controller", Serial, func() {
 
 						jwtHandler := testOryJWTHandler(testIssuer, defaultScopes)
 						oauthHandler := testOauthHandler(defaultScopes)
-						rule1 := testRule("/img", []string{"GET"}, defaultMutators, jwtHandler)
-						rule2 := testRule("/headers", []string{"GET"}, defaultMutators, oauthHandler)
-						rule3 := testRule("/status", []string{"GET"}, defaultMutators, noConfigHandler("noop"))
-						rule4 := testRule("/favicon", []string{"GET"}, nil, noConfigHandler("allow"))
+						rule1 := testRule("/img", methodsGet, defaultMutators, jwtHandler)
+						rule2 := testRule("/headers", methodsGet, defaultMutators, oauthHandler)
+						rule3 := testRule("/status", methodsGet, defaultMutators, noConfigHandler(gatewayv1beta1.AccessStrategyNoop))
+						rule4 := testRule("/favicon", methodsGet, nil, noConfigHandler(gatewayv1beta1.AccessStrategyAllow))
 
 						apiRuleName := generateTestName(testNameBase, testIDLength)
 						serviceName := testServiceNameBase
@@ -887,6 +893,8 @@ var _ = Describe("APIRule Controller", Serial, func() {
 							var rlList []rulev1alpha1.Rule
 							Eventually(func(g Gomega) {
 								rlList = getRuleList(g, matchingLabels)
+
+								// Make sure no access rules for allow and no_auth handlers are created
 								g.Expect(rlList).To(HaveLen(3))
 
 								rules := make(map[string]rulev1alpha1.Rule)
@@ -905,7 +913,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 
 								//Spec.Match
 								g.Expect(rl.Spec.Match).NotTo(BeNil())
-								g.Expect(rl.Spec.Match.Methods).To(Equal([]string{"GET"}))
+								g.Expect(rl.Spec.Match.Methods).To(Equal([]string{http.MethodGet}))
 								g.Expect(rl.Spec.Match.URL).To(Equal(expectedRuleMatchURL))
 
 								//Spec.Authenticators
@@ -932,14 +940,76 @@ var _ = Describe("APIRule Controller", Serial, func() {
 								g.Expect(rl.Spec.Mutators[1].Handler.Name).To(Equal(defaultMutators[1].Name))
 							}, eventuallyTimeout).Should(Succeed())
 						}
-
-						//make sure no rule for "/favicon" path has been created
-						Eventually(func(g Gomega) {
-							name := fmt.Sprintf("%s-%s-3", apiRuleName, serviceName)
-							g.Expect(c.Get(context.TODO(), client.ObjectKey{Name: name, Namespace: testNamespace}, &rulev1alpha1.Rule{})).To(HaveOccurred())
-						}, eventuallyTimeout).Should(Succeed())
-
 					})
+
+					jwtHandlers := []string{helpers.JWT_HANDLER_ORY, helpers.JWT_HANDLER_ISTIO}
+					for _, jwtHandler := range jwtHandlers {
+						Context(fmt.Sprintf("with %s as JWT handler", jwtHandler), func() {
+							It("should create a VS, but no access rule for allow and no_auth handler", func() {
+								updateJwtHandlerTo(jwtHandler)
+
+								rule1 := testRule("/favicon", methodsGet, nil, noConfigHandler(gatewayv1beta1.AccessStrategyAllow))
+								rule2 := testRule("/anything", methodsGet, nil, noConfigHandler(gatewayv1beta1.AccessStrategyNoAuth))
+
+								apiRuleName := generateTestName(testNameBase, testIDLength)
+								serviceName := testServiceNameBase
+								serviceHost := "httpbin4.kyma.local"
+
+								apiRule := testApiRule(apiRuleName, testNamespace, serviceName, testNamespace, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule1, rule2})
+								svc := testService(serviceName, testNamespace, testServicePort)
+
+								// when
+								Expect(c.Create(context.TODO(), svc)).Should(Succeed())
+								Expect(c.Create(context.TODO(), apiRule)).Should(Succeed())
+								defer func() {
+									apiRuleTeardown(apiRule)
+									serviceTeardown(svc)
+								}()
+
+								expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusOK)
+
+								matchingLabels := matchingLabelsFunc(apiRuleName, testNamespace)
+
+								By("Verifying created virtual service")
+								vsList := networkingv1beta1.VirtualServiceList{}
+								Eventually(func(g Gomega) {
+									g.Expect(c.List(context.TODO(), &vsList, matchingLabels)).Should(Succeed())
+									g.Expect(vsList.Items).To(HaveLen(1))
+
+									vs := vsList.Items[0]
+
+									expectedSpec := builders.VirtualServiceSpec().
+										Host(serviceHost).
+										Gateway(testGatewayURL).
+										HTTP(builders.HTTPRoute().
+											Match(builders.MatchRequest().Uri().Regex("/favicon")).
+											Route(builders.RouteDestination().Host("httpbin.atgo-system.svc.cluster.local").Port(443)).
+											Headers(builders.NewHttpRouteHeadersBuilder().SetHostHeader(serviceHost).Get()).
+											CorsPolicy(defaultCorsPolicy).
+											Timeout(defaultHttpTimeout)).
+										HTTP(builders.HTTPRoute().
+											Match(builders.MatchRequest().Uri().Regex("/anything").MethodRegEx("GET")).
+											Route(builders.RouteDestination().Host("httpbin.atgo-system.svc.cluster.local").Port(443)).
+											Headers(builders.NewHttpRouteHeadersBuilder().SetHostHeader(serviceHost).Get()).
+											CorsPolicy(defaultCorsPolicy).
+											Timeout(defaultHttpTimeout))
+
+									gotSpec := *expectedSpec.Get()
+									g.Expect(*vs.Spec.DeepCopy()).To(Equal(*gotSpec.DeepCopy()))
+								}, eventuallyTimeout).Should(Succeed())
+
+								By("Verifying no Oathkeeper rule is created")
+
+								var rlList []rulev1alpha1.Rule
+								Eventually(func(g Gomega) {
+									rlList = getRuleList(g, matchingLabels)
+
+									g.Expect(rlList).To(HaveLen(0))
+
+								}, eventuallyTimeout).Should(Succeed())
+							})
+						})
+					}
 				})
 			})
 		})
@@ -955,7 +1025,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 					apiRuleName := generateTestName(testNameBase, testIDLength)
 					testServiceHost := fmt.Sprintf("httpbin-%s.kyma.local", apiRuleName)
 
-					rule := testRule("/img", []string{"GET"}, nil, testOryJWTHandler(testIssuer, defaultScopes))
+					rule := testRule("/img", methodsGet, nil, testOryJWTHandler(testIssuer, defaultScopes))
 					apiRule := testApiRule(apiRuleName, testNamespace, testServiceNameBase, testNamespace, testServiceHost, testServicePort, []gatewayv1beta1.Rule{rule})
 					svc := testService(testServiceNameBase, testNamespace, testServicePort)
 
@@ -992,7 +1062,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 					apiRuleName := generateTestName(testNameBase, testIDLength)
 					testServiceHost := fmt.Sprintf("httpbin-%s.kyma.local", apiRuleName)
 
-					rule := testRule("/img", []string{"GET"}, nil, testOryJWTHandler(testIssuer, defaultScopes))
+					rule := testRule("/img", methodsGet, nil, testOryJWTHandler(testIssuer, defaultScopes))
 					apiRule := testApiRule(apiRuleName, testNamespace, testServiceNameBase, testNamespace, testServiceHost, testServicePort, []gatewayv1beta1.Rule{rule})
 					svc := testService(testServiceNameBase, testNamespace, testServicePort)
 
@@ -1012,7 +1082,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 
 					// when
 					By("Updating JWT handler configuration in ApiRule to be valid for istio")
-					istioJwtRule := testRule("/img", []string{"GET"}, nil, testIstioJWTHandler(testIssuer, testJwksUri))
+					istioJwtRule := testRule("/img", methodsGet, nil, testIstioJWTHandler(testIssuer, testJwksUri))
 					Eventually(func(g Gomega) {
 						updatedApiRule := gatewayv1beta1.APIRule{}
 						g.Expect(c.Get(context.TODO(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &updatedApiRule)).Should(Succeed())
@@ -1042,7 +1112,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 					apiRuleName := generateTestName(testNameBase, testIDLength)
 					testServiceHost := fmt.Sprintf("httpbin-%s.kyma.local", apiRuleName)
 
-					rule := testRule("/img", []string{"GET"}, nil, testIstioJWTHandler(testIssuer, testJwksUri))
+					rule := testRule("/img", methodsGet, nil, testIstioJWTHandler(testIssuer, testJwksUri))
 					apiRule := testApiRule(apiRuleName, testNamespace, testServiceNameBase, testNamespace, testServiceHost, testServicePort, []gatewayv1beta1.Rule{rule})
 					svc := testService(testServiceNameBase, testNamespace, testServicePort)
 
@@ -1081,7 +1151,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 					apiRuleName := generateTestName(testNameBase, testIDLength)
 					testServiceHost := fmt.Sprintf("httpbin-%s.kyma.local", apiRuleName)
 
-					rule := testRule("/img", []string{"GET"}, nil, testIstioJWTHandler(testIssuer, testJwksUri))
+					rule := testRule("/img", methodsGet, nil, testIstioJWTHandler(testIssuer, testJwksUri))
 					apiRule := testApiRule(apiRuleName, testNamespace, testServiceNameBase, testNamespace, testServiceHost, testServicePort, []gatewayv1beta1.Rule{rule})
 					svc := testService(testServiceNameBase, testNamespace, testServicePort)
 
@@ -1110,7 +1180,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 					// when
 					By("Updating JWT handler in ApiRule to be valid for ory")
 					Eventually(func(g Gomega) {
-						oryJwtRule := testRule("/img", []string{"GET"}, nil, testOryJWTHandler(testIssuer, defaultScopes))
+						oryJwtRule := testRule("/img", methodsGet, nil, testOryJWTHandler(testIssuer, defaultScopes))
 						updatedApiRule := gatewayv1beta1.APIRule{}
 						Expect(c.Get(context.TODO(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &updatedApiRule)).Should(Succeed())
 						updatedApiRule.Spec.Rules = []gatewayv1beta1.Rule{oryJwtRule}
@@ -1161,7 +1231,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 		apiRuleLabelMatcher := matchingLabelsFunc(apiRuleName, testNamespace)
 
 		By("Creating APIRule")
-		rule := testRule("/headers", []string{"GET"}, nil, testIstioJWTHandler(testIssuer, testJwksUri))
+		rule := testRule("/headers", methodsGet, nil, testIstioJWTHandler(testIssuer, testJwksUri))
 		apiRule := testApiRule(apiRuleName, testNamespace, serviceName, testNamespace, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule})
 		svc := testService(serviceName, testNamespace, testServicePort)
 
@@ -1198,7 +1268,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 		vsName := generateTestName("duplicated-host-vs", testIDLength)
 
 		By(fmt.Sprintf("Creating APIRule with host %s", serviceHost))
-		rule := testRule("/headers", []string{"GET"}, nil, testIstioJWTHandler(testIssuer, testJwksUri))
+		rule := testRule("/headers", methodsGet, nil, testIstioJWTHandler(testIssuer, testJwksUri))
 		apiRule := testApiRule(apiRuleName, testNamespace, serviceName, testNamespace, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule})
 		svc := testService(serviceName, testNamespace, testServicePort)
 
@@ -1250,7 +1320,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 		serviceName := testServiceNameBase
 		serviceHost := "httpbin-recreate-resources.kyma.local"
 
-		rule := testRule("/img", []string{"GET"}, nil, testIstioJWTHandlerWithScopes(testIssuer, testJwksUri, []string{"scope-a"}))
+		rule := testRule("/img", methodsGet, nil, testIstioJWTHandlerWithScopes(testIssuer, testJwksUri, []string{"scope-a"}))
 		apiRule := testApiRule(apiRuleName, testNamespace, serviceName, testNamespace, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule})
 		svc := testService(serviceName, testNamespace, testServicePort)
 
@@ -1305,7 +1375,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 		serviceName := testServiceNameBase
 		serviceHost := "httpbin-delete-resources.kyma.local"
 
-		rule := testRule("/img", []string{"GET"}, nil, testIstioJWTHandlerWithScopes(testIssuer, testJwksUri, []string{"scope-a"}))
+		rule := testRule("/img", methodsGet, nil, testIstioJWTHandlerWithScopes(testIssuer, testJwksUri, []string{"scope-a"}))
 		apiRule := testApiRule(apiRuleName, testNamespace, serviceName, testNamespace, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule})
 		svc := testService(serviceName, testNamespace, testServicePort)
 
@@ -1374,7 +1444,7 @@ func toCSVList(input []string) string {
 	return res
 }
 
-func testRule(path string, methods []string, mutators []*gatewayv1beta1.Mutator, handler *gatewayv1beta1.Handler) gatewayv1beta1.Rule {
+func testRule(path string, methods []gatewayv1beta1.HttpMethod, mutators []*gatewayv1beta1.Mutator, handler *gatewayv1beta1.Handler) gatewayv1beta1.Rule {
 	return gatewayv1beta1.Rule{
 		Path:     path,
 		Methods:  methods,
@@ -1578,7 +1648,7 @@ func verifyRuleList(g Gomega, ruleList []rulev1alpha1.Rule, pathToURLFunc func(s
 		ruleUrl := pathToURLFunc(expected[i].Path)
 		g.Expect(actual[ruleUrl]).ToNot(BeNil())
 		g.Expect(actual[ruleUrl].Spec.Match).ToNot(BeNil())
-		g.Expect(actual[ruleUrl].Spec.Match.Methods).To(Equal(expected[i].Methods))
+		g.Expect(actual[ruleUrl].Spec.Match.Methods).To(Equal(gatewayv1beta1.ConvertHttpMethodsToStrings(expected[i].Methods)))
 		verifyAccessStrategies(g, actual[ruleUrl].Spec.Authenticators, expected[i].AccessStrategies)
 		verifyMutators(g, actual[ruleUrl].Spec.Mutators, expected[i].Mutators)
 	}
