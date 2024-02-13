@@ -1,29 +1,21 @@
 package istio
 
 import (
-	"fmt"
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 
 	"github.com/kyma-project/api-gateway/internal/validation"
-	"golang.org/x/exp/slices"
 )
 
 type asValidator struct{}
 
+var exclusiveAccessStrategies = []string{gatewayv1beta1.AccessStrategyAllow, gatewayv1beta1.AccessStrategyNoAuth, gatewayv1beta1.AccessStrategyJwt}
+
 func (o *asValidator) Validate(attributePath string, accessStrategies []*gatewayv1beta1.Authenticator) []validation.Failure {
 	var problems []validation.Failure
 
-	if len(accessStrategies) > 1 {
-		allowIndex := slices.IndexFunc(accessStrategies, func(a *gatewayv1beta1.Authenticator) bool { return a.Handler.Name == "allow" })
-		jwtIndex := slices.IndexFunc(accessStrategies, func(a *gatewayv1beta1.Authenticator) bool { return a.Handler.Name == "jwt" })
-		if allowIndex > -1 {
-			attrPath := fmt.Sprintf("%s[%d]%s", attributePath+".accessStrategies", allowIndex, ".handler")
-			problems = append(problems, validation.Failure{AttributePath: attrPath, Message: "allow access strategy is not allowed in combination with other access strategies"})
-		}
-		if jwtIndex > -1 {
-			attrPath := fmt.Sprintf("%s[%d]%s", attributePath+".accessStrategies", jwtIndex, ".handler")
-			problems = append(problems, validation.Failure{AttributePath: attrPath, Message: "jwt access strategy is not allowed in combination with other access strategies"})
-		}
+	for _, strategy := range exclusiveAccessStrategies {
+		validationProblems := validation.CheckForExclusiveAccessStrategy(accessStrategies, strategy, attributePath)
+		problems = append(problems, validationProblems...)
 	}
 
 	return problems

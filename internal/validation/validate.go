@@ -69,7 +69,6 @@ func (v *APIRuleValidator) Validate(ctx context.Context, client client.Client, a
 		failures = append(failures, v.validateService(".spec.service", api)...)
 	}
 	failures = append(failures, v.validateHost(".spec.host", vsList, api)...)
-	failures = append(failures, v.validateGateway(".spec.gateway", api.Spec.Gateway)...)
 	failures = append(failures, v.validateRules(ctx, client, ".spec.rules", api.Spec.Service == nil, api)...)
 
 	return failures
@@ -173,10 +172,6 @@ func (v *APIRuleValidator) validateService(attributePath string, api *gatewayv1b
 	return problems
 }
 
-func (v *APIRuleValidator) validateGateway(attributePath string, gateway *string) []Failure {
-	return nil
-}
-
 // Validates whether all rules are defined correctly
 // Checks whether all rules have service defined for them if checkForService is true
 func (v *APIRuleValidator) validateRules(ctx context.Context, client client.Client, attributePath string, checkForService bool, api *gatewayv1beta1.APIRule) []Failure {
@@ -194,7 +189,6 @@ func (v *APIRuleValidator) validateRules(ctx context.Context, client client.Clie
 
 	for i, r := range rules {
 		attributePathWithRuleIndex := fmt.Sprintf("%s[%d]", attributePath, i)
-		problems = append(problems, v.validateMethods(attributePathWithRuleIndex+".methods", r.Methods)...)
 		if checkForService && r.Service == nil {
 			problems = append(problems, Failure{AttributePath: attributePathWithRuleIndex + ".service", Message: "No service defined with no main service on spec level"})
 		}
@@ -248,10 +242,6 @@ func (v *APIRuleValidator) validateRules(ctx context.Context, client client.Clie
 	return problems
 }
 
-func (v *APIRuleValidator) validateMethods(attributePath string, methods []string) []Failure {
-	return nil
-}
-
 func (v *APIRuleValidator) validateAccessStrategies(attributePath string, accessStrategies []*gatewayv1beta1.Authenticator, selector *apiv1beta1.WorkloadSelector, namespace string) []Failure {
 	var problems []Failure
 
@@ -275,21 +265,23 @@ func (v *APIRuleValidator) validateAccessStrategy(attributePath string, accessSt
 	var vld handlerValidator
 
 	switch accessStrategy.Handler.Name {
-	case "allow": //our internal constant, does not exist in ORY
+	case gatewayv1beta1.AccessStrategyAllow:
 		vld = vldNoConfig
-	case "noop":
+	case gatewayv1beta1.AccessStrategyNoAuth:
 		vld = vldNoConfig
-	case "unauthorized":
+	case gatewayv1beta1.AccessStrategyNoop:
 		vld = vldNoConfig
-	case "anonymous":
+	case gatewayv1beta1.AccessStrategyUnauthorized:
 		vld = vldNoConfig
-	case "cookie_session":
+	case gatewayv1beta1.AccessStrategyAnonymous:
 		vld = vldNoConfig
-	case "oauth2_client_credentials":
+	case gatewayv1beta1.AccessStrategyCookieSession:
+		vld = vldNoConfig
+	case gatewayv1beta1.AccessStrategyOauth2ClientCredentials:
 		vld = vldDummy
-	case "oauth2_introspection":
+	case gatewayv1beta1.AccessStrategyOauth2Introspection:
 		vld = vldDummy
-	case "jwt":
+	case gatewayv1beta1.AccessStrategyJwt:
 		vld = v.HandlerValidator
 		if v.InjectionValidator != nil {
 			injectionProblems, err := v.InjectionValidator.Validate(attributePath+".injection", selector, namespace)

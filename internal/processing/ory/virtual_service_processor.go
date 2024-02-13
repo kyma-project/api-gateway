@@ -46,7 +46,7 @@ func (r virtualServiceCreator) Create(api *gatewayv1beta1.APIRule) (*networkingv
 		host, port := r.oathkeeperSvc, r.oathkeeperSvcPort
 		serviceNamespace := helpers.FindServiceNamespace(api, &rule)
 
-		if !processing.IsSecured(rule) {
+		if !processing.IsSecuredByOathkeeper(rule) {
 			// Use rule level service if it exists
 			if rule.Service != nil {
 				host = fmt.Sprintf("%s.%s.svc.cluster.local", *rule.Service.Name, serviceNamespace)
@@ -58,8 +58,16 @@ func (r virtualServiceCreator) Create(api *gatewayv1beta1.APIRule) (*networkingv
 			}
 		}
 
+		matchBuilder := builders.MatchRequest().Uri().Regex(rule.Path)
+
+		// Only in case of the no_auth we want to restrict the methods, because it would be a breaking
+		// change for other handlers and in case of allow we expose all methods.
+		if rule.ContainsAccessStrategy(gatewayv1beta1.AccessStrategyNoAuth) {
+			matchBuilder.MethodRegEx(rule.Methods...)
+		}
+
+		httpRouteBuilder.Match(matchBuilder)
 		httpRouteBuilder.Route(builders.RouteDestination().Host(host).Port(port))
-		httpRouteBuilder.Match(builders.MatchRequest().Uri().Regex(rule.Path))
 		if api.Spec.CorsPolicy == nil {
 			httpRouteBuilder.CorsPolicy(builders.CorsPolicy().
 				AllowOrigins(r.corsConfig.AllowOrigins...).

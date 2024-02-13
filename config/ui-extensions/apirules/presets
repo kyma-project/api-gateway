@@ -8,4 +8,4 @@
           methods:
             - GET
           accessStrategies:
-            - handler: allow
+            - handler: no_auth

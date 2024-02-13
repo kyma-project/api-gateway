@@ -7,6 +7,7 @@ import (
 	"github.com/kyma-project/api-gateway/internal/builders"
 	v1beta12 "istio.io/api/networking/v1beta1"
 	"k8s.io/utils/ptr"
+	"net/http"
 	"time"
 
 	"github.com/kyma-project/api-gateway/internal/processing"
@@ -22,171 +23,174 @@ import (
 )
 
 var _ = Describe("Virtual Service Processor", func() {
-	When("handler is allow", func() {
-		It("should create for allow authenticator", func() {
-			// given
-			strategies := []*v1beta1.Authenticator{
-				{
-					Handler: &v1beta1.Handler{
-						Name: "allow",
+	allowHandlers := []string{v1beta1.AccessStrategyAllow, v1beta1.AccessStrategyNoAuth}
+	for _, handler := range allowHandlers {
+		When("handler is "+handler, func() {
+			It("should create", func() {
+				// given
+				strategies := []*v1beta1.Authenticator{
+					{
+						Handler: &v1beta1.Handler{
+							Name: handler,
+						},
 					},
-				},
-			}
+				}
 
-			allowRule := GetRuleFor(ApiPath, ApiMethods, []*v1beta1.Mutator{}, strategies)
-			rules := []v1beta1.Rule{allowRule}
+				rule := GetRuleFor(ApiPath, ApiMethods, []*v1beta1.Mutator{}, strategies)
+				rules := []v1beta1.Rule{rule}
 
-			apiRule := GetAPIRuleFor(rules)
-			client := GetFakeClient()
-			processor := ory.NewVirtualServiceProcessor(GetTestConfig())
+				apiRule := GetAPIRuleFor(rules)
+				client := GetFakeClient()
+				processor := ory.NewVirtualServiceProcessor(GetTestConfig())
 
-			// when
-			result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
+				// when
+				result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
 
-			// then
-			Expect(err).To(BeNil())
-			Expect(result).To(HaveLen(1))
-			Expect(result[0].Action.String()).To(Equal("create"))
+				// then
+				Expect(err).To(BeNil())
+				Expect(result).To(HaveLen(1))
+				Expect(result[0].Action.String()).To(Equal("create"))
 
-			vs := result[0].Obj.(*networkingv1beta1.VirtualService)
+				vs := result[0].Obj.(*networkingv1beta1.VirtualService)
 
-			Expect(vs).NotTo(BeNil())
-			Expect(len(vs.Spec.Gateways)).To(Equal(1))
-			Expect(len(vs.Spec.Hosts)).To(Equal(1))
-			Expect(vs.Spec.Hosts[0]).To(Equal(ServiceHost))
-			Expect(len(vs.Spec.Http)).To(Equal(1))
+				Expect(vs).NotTo(BeNil())
+				Expect(len(vs.Spec.Gateways)).To(Equal(1))
+				Expect(len(vs.Spec.Hosts)).To(Equal(1))
+				Expect(vs.Spec.Hosts[0]).To(Equal(ServiceHost))
+				Expect(len(vs.Spec.Http)).To(Equal(1))
 
-			Expect(len(vs.Spec.Http[0].Route)).To(Equal(1))
-			Expect(vs.Spec.Http[0].Route[0].Destination.Host).To(Equal(ServiceName + "." + ApiNamespace + ".svc.cluster.local"))
-			Expect(vs.Spec.Http[0].Route[0].Destination.Port.Number).To(Equal(ServicePort))
+				Expect(len(vs.Spec.Http[0].Route)).To(Equal(1))
+				Expect(vs.Spec.Http[0].Route[0].Destination.Host).To(Equal(ServiceName + "." + ApiNamespace + ".svc.cluster.local"))
+				Expect(vs.Spec.Http[0].Route[0].Destination.Port.Number).To(Equal(ServicePort))
 
-			Expect(len(vs.Spec.Http[0].Match)).To(Equal(1))
-			Expect(vs.Spec.Http[0].Match[0].Uri.GetRegex()).To(Equal(apiRule.Spec.Rules[0].Path))
+				Expect(len(vs.Spec.Http[0].Match)).To(Equal(1))
+				Expect(vs.Spec.Http[0].Match[0].Uri.GetRegex()).To(Equal(apiRule.Spec.Rules[0].Path))
 
-			Expect(vs.Spec.Http[0].CorsPolicy.AllowOrigins).To(Equal(TestCors.AllowOrigins))
-			Expect(vs.Spec.Http[0].CorsPolicy.AllowMethods).To(Equal(TestCors.AllowMethods))
-			Expect(vs.Spec.Http[0].CorsPolicy.AllowHeaders).To(Equal(TestCors.AllowHeaders))
+				Expect(vs.Spec.Http[0].CorsPolicy.AllowOrigins).To(Equal(TestCors.AllowOrigins))
+				Expect(vs.Spec.Http[0].CorsPolicy.AllowMethods).To(Equal(TestCors.AllowMethods))
+				Expect(vs.Spec.Http[0].CorsPolicy.AllowHeaders).To(Equal(TestCors.AllowHeaders))
 
-			Expect(vs.ObjectMeta.Name).To(BeEmpty())
-			Expect(vs.ObjectMeta.GenerateName).To(Equal(ApiName + "-"))
-			Expect(vs.ObjectMeta.Namespace).To(Equal(ApiNamespace))
-			Expect(vs.ObjectMeta.Labels[TestLabelKey]).To(Equal(TestLabelValue))
-		})
+				Expect(vs.ObjectMeta.Name).To(BeEmpty())
+				Expect(vs.ObjectMeta.GenerateName).To(Equal(ApiName + "-"))
+				Expect(vs.ObjectMeta.Namespace).To(Equal(ApiNamespace))
+				Expect(vs.ObjectMeta.Labels[TestLabelKey]).To(Equal(TestLabelValue))
+			})
 
-		It("should override destination host for specified spec level service namespace", func() {
-			// given
-			strategies := []*v1beta1.Authenticator{
-				{
-					Handler: &v1beta1.Handler{
-						Name: "allow",
+			It("should override destination host for specified spec level service namespace", func() {
+				// given
+				strategies := []*v1beta1.Authenticator{
+					{
+						Handler: &v1beta1.Handler{
+							Name: handler,
+						},
 					},
-				},
-			}
+				}
 
-			allowRule := GetRuleFor(ApiPath, ApiMethods, []*v1beta1.Mutator{}, strategies)
-			rules := []v1beta1.Rule{allowRule}
+				rule := GetRuleFor(ApiPath, ApiMethods, []*v1beta1.Mutator{}, strategies)
+				rules := []v1beta1.Rule{rule}
 
-			apiRule := GetAPIRuleFor(rules)
+				apiRule := GetAPIRuleFor(rules)
 
-			overrideServiceName := "testName"
-			overrideServiceNamespace := "testName-namespace"
-			overrideServicePort := uint32(8080)
+				overrideServiceName := "testName"
+				overrideServiceNamespace := "testName-namespace"
+				overrideServicePort := uint32(8080)
 
-			apiRule.Spec.Service = &v1beta1.Service{
-				Name:      &overrideServiceName,
-				Namespace: &overrideServiceNamespace,
-				Port:      &overrideServicePort,
-			}
-			client := GetFakeClient()
-			processor := ory.NewVirtualServiceProcessor(GetTestConfig())
+				apiRule.Spec.Service = &v1beta1.Service{
+					Name:      &overrideServiceName,
+					Namespace: &overrideServiceNamespace,
+					Port:      &overrideServicePort,
+				}
+				client := GetFakeClient()
+				processor := ory.NewVirtualServiceProcessor(GetTestConfig())
 
-			// when
-			result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
+				// when
+				result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
 
-			// then
-			Expect(err).To(BeNil())
-			Expect(result).To(HaveLen(1))
+				// then
+				Expect(err).To(BeNil())
+				Expect(result).To(HaveLen(1))
 
-			vs := result[0].Obj.(*networkingv1beta1.VirtualService)
+				vs := result[0].Obj.(*networkingv1beta1.VirtualService)
 
-			Expect(len(vs.Spec.Http[0].Route)).To(Equal(1))
-			Expect(vs.Spec.Http[0].Route[0].Destination.Host).To(Equal(overrideServiceName + "." + overrideServiceNamespace + ".svc.cluster.local"))
-		})
+				Expect(len(vs.Spec.Http[0].Route)).To(Equal(1))
+				Expect(vs.Spec.Http[0].Route[0].Destination.Host).To(Equal(overrideServiceName + "." + overrideServiceNamespace + ".svc.cluster.local"))
+			})
 
-		It("should override destination host with rule level service namespace", func() {
-			// given
-			strategies := []*v1beta1.Authenticator{
-				{
-					Handler: &v1beta1.Handler{
-						Name: "allow",
+			It("should override destination host with rule level service namespace", func() {
+				// given
+				strategies := []*v1beta1.Authenticator{
+					{
+						Handler: &v1beta1.Handler{
+							Name: handler,
+						},
 					},
-				},
-			}
+				}
 
-			overrideServiceName := "testName"
-			overrideServiceNamespace := "testName-namespace"
-			overrideServicePort := uint32(8080)
+				overrideServiceName := "testName"
+				overrideServiceNamespace := "testName-namespace"
+				overrideServicePort := uint32(8080)
 
-			service := &v1beta1.Service{
-				Name:      &overrideServiceName,
-				Namespace: &overrideServiceNamespace,
-				Port:      &overrideServicePort,
-			}
+				service := &v1beta1.Service{
+					Name:      &overrideServiceName,
+					Namespace: &overrideServiceNamespace,
+					Port:      &overrideServicePort,
+				}
 
-			allowRule := GetRuleWithServiceFor(ApiPath, ApiMethods, []*v1beta1.Mutator{}, strategies, service)
-			rules := []v1beta1.Rule{allowRule}
+				rule := GetRuleWithServiceFor(ApiPath, ApiMethods, []*v1beta1.Mutator{}, strategies, service)
+				rules := []v1beta1.Rule{rule}
 
-			apiRule := GetAPIRuleFor(rules)
-			client := GetFakeClient()
-			processor := ory.NewVirtualServiceProcessor(GetTestConfig())
+				apiRule := GetAPIRuleFor(rules)
+				client := GetFakeClient()
+				processor := ory.NewVirtualServiceProcessor(GetTestConfig())
 
-			// when
-			result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
+				// when
+				result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
 
-			// then
-			Expect(err).To(BeNil())
-			Expect(result).To(HaveLen(1))
+				// then
+				Expect(err).To(BeNil())
+				Expect(result).To(HaveLen(1))
 
-			vs := result[0].Obj.(*networkingv1beta1.VirtualService)
+				vs := result[0].Obj.(*networkingv1beta1.VirtualService)
 
-			//verify VS has rule level destination host
-			Expect(len(vs.Spec.Http[0].Route)).To(Equal(1))
-			Expect(vs.Spec.Http[0].Route[0].Destination.Host).To(Equal(overrideServiceName + "." + overrideServiceNamespace + ".svc.cluster.local"))
+				//verify VS has rule level destination host
+				Expect(len(vs.Spec.Http[0].Route)).To(Equal(1))
+				Expect(vs.Spec.Http[0].Route[0].Destination.Host).To(Equal(overrideServiceName + "." + overrideServiceNamespace + ".svc.cluster.local"))
 
-		})
-		It("should return VS with default domain name when the hostname does not contain domain name", func() {
-			strategies := []*v1beta1.Authenticator{
-				{
-					Handler: &v1beta1.Handler{
-						Name: "allow",
+			})
+			It("should return VS with default domain name when the hostname does not contain domain name", func() {
+				strategies := []*v1beta1.Authenticator{
+					{
+						Handler: &v1beta1.Handler{
+							Name: handler,
+						},
 					},
-				},
-			}
+				}
 
-			allowRule := GetRuleFor(ApiPath, ApiMethods, []*v1beta1.Mutator{}, strategies)
-			rules := []v1beta1.Rule{allowRule}
+				rule := GetRuleFor(ApiPath, ApiMethods, []*v1beta1.Mutator{}, strategies)
+				rules := []v1beta1.Rule{rule}
 
-			apiRule := GetAPIRuleFor(rules)
-			apiRule.Spec.Host = &ServiceHostWithNoDomain
-			client := GetFakeClient()
-			processor := ory.NewVirtualServiceProcessor(GetTestConfig())
+				apiRule := GetAPIRuleFor(rules)
+				apiRule.Spec.Host = &ServiceHostWithNoDomain
+				client := GetFakeClient()
+				processor := ory.NewVirtualServiceProcessor(GetTestConfig())
 
-			// when
-			result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
+				// when
+				result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
 
-			// then
-			Expect(err).To(BeNil())
-			Expect(result).To(HaveLen(1))
+				// then
+				Expect(err).To(BeNil())
+				Expect(result).To(HaveLen(1))
 
-			vs := result[0].Obj.(*networkingv1beta1.VirtualService)
+				vs := result[0].Obj.(*networkingv1beta1.VirtualService)
 
-			//verify VS
-			Expect(vs).NotTo(BeNil())
-			Expect(len(vs.Spec.Hosts)).To(Equal(1))
-			Expect(vs.Spec.Hosts[0]).To(Equal(ServiceHost))
+				//verify VS
+				Expect(vs).NotTo(BeNil())
+				Expect(len(vs.Spec.Hosts)).To(Equal(1))
+				Expect(vs.Spec.Hosts[0]).To(Equal(ServiceHost))
 
+			})
 		})
-	})
+	}
 
 	When("handler is noop", func() {
 		It("should not override Oathkeeper service destination host with spec level service", func() {
@@ -432,10 +436,8 @@ var _ = Describe("Virtual Service Processor", func() {
 					},
 				},
 			}
-			getMethod := []string{"GET"}
-			postMethod := []string{"POST"}
-			noopRule := GetRuleFor(ApiPath, getMethod, []*v1beta1.Mutator{}, noop)
-			jwtRule := GetRuleFor(ApiPath, postMethod, testMutators, jwt)
+			noopRule := GetRuleFor(ApiPath, methodsGet, []*v1beta1.Mutator{}, noop)
+			jwtRule := GetRuleFor(ApiPath, methodsPost, testMutators, jwt)
 			rules := []v1beta1.Rule{noopRule, jwtRule}
 
 			apiRule := GetAPIRuleFor(rules)
@@ -513,10 +515,8 @@ var _ = Describe("Virtual Service Processor", func() {
 					},
 				},
 			}
-			getMethod := []string{"GET"}
-			postMethod := []string{"POST"}
-			noopGetRule := GetRuleFor(ApiPath, getMethod, []*v1beta1.Mutator{}, noop)
-			noopPostRule := GetRuleFor(ApiPath, postMethod, []*v1beta1.Mutator{}, noop)
+			noopGetRule := GetRuleFor(ApiPath, methodsGet, []*v1beta1.Mutator{}, noop)
+			noopPostRule := GetRuleFor(ApiPath, methodsPost, []*v1beta1.Mutator{}, noop)
 			jwtRule := GetRuleFor(HeadersApiPath, ApiMethods, testMutators, jwt)
 			rules := []v1beta1.Rule{noopGetRule, noopPostRule, jwtRule}
 
@@ -647,7 +647,7 @@ var _ = Describe("Virtual Service Processor", func() {
 			strategies := []*v1beta1.Authenticator{
 				{
 					Handler: &v1beta1.Handler{
-						Name: "allow",
+						Name: v1beta1.AccessStrategyAllow,
 					},
 				},
 			}
@@ -677,7 +677,7 @@ var _ = Describe("Virtual Service Processor", func() {
 			strategies := []*v1beta1.Authenticator{
 				{
 					Handler: &v1beta1.Handler{
-						Name: "allow",
+						Name: v1beta1.AccessStrategyAllow,
 					},
 				},
 			}
@@ -708,7 +708,7 @@ var _ = Describe("Virtual Service Processor", func() {
 			strategies := []*v1beta1.Authenticator{
 				{
 					Handler: &v1beta1.Handler{
-						Name: "allow",
+						Name: v1beta1.AccessStrategyAllow,
 					},
 				},
 			}
@@ -740,7 +740,7 @@ var _ = Describe("Virtual Service Processor", func() {
 			strategies := []*v1beta1.Authenticator{
 				{
 					Handler: &v1beta1.Handler{
-						Name: "allow",
+						Name: v1beta1.AccessStrategyAllow,
 					},
 				},
 			}
@@ -773,7 +773,7 @@ var _ = Describe("Virtual Service Processor", func() {
 			strategies := []*v1beta1.Authenticator{
 				{
 					Handler: &v1beta1.Handler{
-						Name: "allow",
+						Name: v1beta1.AccessStrategyAllow,
 					},
 				},
 			}
@@ -807,7 +807,7 @@ var _ = Describe("Virtual Service Processor", func() {
 			strategies := []*v1beta1.Authenticator{
 				{
 					Handler: &v1beta1.Handler{
-						Name: "allow",
+						Name: v1beta1.AccessStrategyAllow,
 					},
 				},
 			}
@@ -845,7 +845,7 @@ var _ = Describe("Virtual Service Processor", func() {
 			strategies := []*v1beta1.Authenticator{
 				{
 					Handler: &v1beta1.Handler{
-						Name: "allow",
+						Name: v1beta1.AccessStrategyAllow,
 					},
 				},
 			}
@@ -899,7 +899,7 @@ var _ = Describe("Virtual Service Processor", func() {
 			strategies := []*v1beta1.Authenticator{
 				{
 					Handler: &v1beta1.Handler{
-						Name: "allow",
+						Name: v1beta1.AccessStrategyAllow,
 					},
 				},
 			}
@@ -946,7 +946,7 @@ var _ = Describe("Virtual Service Processor", func() {
 			strategies := []*v1beta1.Authenticator{
 				{
 					Handler: &v1beta1.Handler{
-						Name: "allow",
+						Name: v1beta1.AccessStrategyAllow,
 					},
 				},
 			}
@@ -1001,6 +1001,83 @@ var _ = Describe("Virtual Service Processor", func() {
 			}))
 
 			Expect(vs.Spec.Http[0].Headers.Response.Set).To(BeEmpty())
+		})
+	})
+
+	Context("HTTP matching", func() {
+
+		DescribeTable("should not restrict access for the path and methods defined in APIRule when handler is", func(handler string) {
+			// Given
+			strategies := []*v1beta1.Authenticator{
+				{
+					Handler: &v1beta1.Handler{
+						Name: handler,
+					},
+				},
+			}
+
+			rule := GetRuleFor("/", []v1beta1.HttpMethod{http.MethodGet, http.MethodPost}, []*v1beta1.Mutator{}, strategies)
+			rules := []v1beta1.Rule{rule}
+
+			apiRule := GetAPIRuleFor(rules)
+			client := GetFakeClient()
+			processor := ory.NewVirtualServiceProcessor(GetTestConfig())
+
+			// when
+			result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
+
+			// then
+			Expect(err).To(BeNil())
+			Expect(result).To(HaveLen(1))
+
+			vs := result[0].Obj.(*networkingv1beta1.VirtualService)
+
+			Expect(vs).NotTo(BeNil())
+
+			Expect(len(vs.Spec.Http[0].Match)).To(Equal(1))
+			Expect(vs.Spec.Http[0].Match[0].Uri.GetRegex()).To(Equal("/"))
+			Expect(vs.Spec.Http[0].Match[0].Method).To(BeNil())
+		},
+			Entry(nil, v1beta1.AccessStrategyAllow),
+			Entry(nil, v1beta1.AccessStrategyNoop),
+			Entry(nil, v1beta1.AccessStrategyJwt),
+			Entry(nil, v1beta1.AccessStrategyOauth2Introspection),
+			Entry(nil, v1beta1.AccessStrategyUnauthorized),
+			Entry(nil, v1beta1.AccessStrategyAnonymous),
+			Entry(nil, v1beta1.AccessStrategyCookieSession),
+		)
+
+		It("should restrict access for the path and methods defined in APIRule when access strategy no_auth is used", func() {
+			// Given
+			strategies := []*v1beta1.Authenticator{
+				{
+					Handler: &v1beta1.Handler{
+						Name: v1beta1.AccessStrategyNoAuth,
+					},
+				},
+			}
+
+			rule := GetRuleFor("/", []v1beta1.HttpMethod{http.MethodGet, http.MethodPost}, []*v1beta1.Mutator{}, strategies)
+			rules := []v1beta1.Rule{rule}
+
+			apiRule := GetAPIRuleFor(rules)
+			client := GetFakeClient()
+			processor := ory.NewVirtualServiceProcessor(GetTestConfig())
+
+			// when
+			result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
+
+			// then
+			Expect(err).To(BeNil())
+			Expect(result).To(HaveLen(1))
+
+			vs := result[0].Obj.(*networkingv1beta1.VirtualService)
+
+			Expect(vs).NotTo(BeNil())
+
+			Expect(len(vs.Spec.Http[0].Match)).To(Equal(1))
+			Expect(vs.Spec.Http[0].Match[0].Uri.GetRegex()).To(Equal("/"))
+			Expect(vs.Spec.Http[0].Match[0].Method.GetRegex()).To(Equal("^(GET|POST)$"))
 		})
 	})
 
