@@ -24,24 +24,13 @@ For Gardener shoot clusters follow ["set up a custom domain for workload" guide]
 
 ## Generate self-signed Root CA and client certificate
 
-This step is required for mTLS validation, so Istio could verify the authenticity of a client host
+This step is required for mTLS validation, so Istio could verify the authenticity of a client host.
 
-1. Generate Root CA and a private key
-    ```sh
-    openssl req -x509 -sha256 -nodes -days 1000 -newkey rsa:2048 -subj '/O=Kyma/CN=SelfSigned' -keyout cacert.key -out cacert.crt
-    ```
-2. Generate certificate signing request for client certificate `$HOST`. Remember to substitute `$HOST` variable with a domain name of a client
-   ```sh
-    openssl req -out client.csr -newkey rsa:2048 -nodes -keyout client.key -subj "/CN=$HOST/O=Kyma"
-   ```
-3. Sign client certificate using previously generated Root CA
-    ```shell
-    openssl x509 -req -sha256 -days 365 -CA cacert.crt -CAkey cacert.key -set_serial 1 -in client.csr -out client.crt
-    ```
+For detailed step-by-step guide on how to generate self-signed certificate, follow [Prepare Self-Signed Root Certificate Authority and Client Certificates](01-60-security/01-61-mtls-selfsign-client-certicate.md).
 
 ## Set up Istio Gateway in Mutual Mode
 
-Modify and apply the following Gateway Custom Resource on a cluster:
+Assuming that the server certificate has been successfully created and is stored under `kyma-mtls-certs` secret in default namespace, modify and apply the following Gateway Custom Resource on a cluster:
 
 ```sh
 cat <<EOF | kubectl apply -f -
@@ -66,9 +55,10 @@ spec:
         - "*.mtls.example.com"
 EOF
 ```
+
 ## Create secret containing Root CA cert
 
-In order for `MUTUAL` mode working correctly, a Root CA needs to be applied on a cluster and follow I[stio naming convention](https://istio.io/latest/docs/reference/config/networking/gateway/#ServerTLSSettings) to be used by it.
+In order for `MUTUAL` mode working correctly, a Root CA must be applied on a cluster and follow [Istio naming convention](https://istio.io/latest/docs/reference/config/networking/gateway/#ServerTLSSettings) to be used by it.
 Create an Opaque secret containing previously generated Root CA certificate:
 
 ```sh
