@@ -1,6 +1,6 @@
 # APIGateway Oathkeeper
 
-When you create the API Gateway custom resource, Ory Oathkeeper is automatically installed as a dependency. It is necessary to provide support for API Rules that use `accessStrategies` of types other than `allow`.
+When you create the API Gateway custom resource, Ory Oathkeeper is automatically installed as a dependency. It is necessary to provide support for API Rules that use `accessStrategies` of types other than `allow` and `no_auth`.
 
 ## Ory Oathkeeper Configuration
 

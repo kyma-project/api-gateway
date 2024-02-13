@@ -5,13 +5,13 @@ import (
 	_ "embed"
 	"encoding/base64"
 	"fmt"
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/hooks"
 	"log"
 	"path"
 	"time"
 
-	"github.com/kyma-project/api-gateway/tests/integration/pkg/hooks"
-
 	"github.com/cucumber/godog"
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/auth"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/helpers"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/manifestprocessor"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/resource"
@@ -44,6 +44,7 @@ func (t *testsuite) createScenario(templateFileName string, scenarioName string)
 	template["GatewayNamespace"] = t.config.GatewayNamespace
 	template["IssuerUrl"] = t.config.IssuerUrl
 	template["EncodedCredentials"] = base64.RawStdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", t.config.ClientID, t.config.ClientSecret)))
+	template["IstioNamespace"] = t.config.IstioNamespace
 
 	return &scenario{
 		Namespace:               ns,
@@ -93,6 +94,11 @@ func (t *testsuite) InitScenarios(ctx *godog.ScenarioContext) {
 	initCustomLabelSelector(ctx, t)
 	initCustomCors(ctx, t)
 	initDefaultCors(ctx, t)
+	initExposeMethodsOnPathsAllowHandler(ctx, t)
+	initExposeMethodsOnPathsNoAuthHandler(ctx, t)
+	initExposeMethodsOnPathsNoopHandler(ctx, t)
+	initExposeMethodsOnPathsJwtHandler(ctx, t)
+	initExposeMethodsOnPathsOAuth2Handler(ctx, t)
 }
 
 func (t *testsuite) FeaturePath() []string {
@@ -115,13 +121,6 @@ func (t *testsuite) Setup() error {
 	namespace := fmt.Sprintf("%s-%s", t.name, helpers.GenerateRandomString(6))
 	secondNamespace := fmt.Sprintf("%s-2", namespace)
 	log.Printf("Using namespace: %s\n", namespace)
-
-	oauth2Cfg := &clientcredentials.Config{
-		ClientID:     t.config.ClientID,
-		ClientSecret: t.config.ClientSecret,
-		TokenURL:     fmt.Sprintf("%s/oauth2/token", t.config.IssuerUrl),
-		AuthStyle:    oauth2.AuthStyleInHeader,
-	}
 
 	// create common resources for all scenarios
 	globalCommonResources, err := manifestprocessor.ParseFromFileWithTemplate("global-commons.yaml", manifestsDirectory, struct {
@@ -149,7 +148,30 @@ func (t *testsuite) Setup() error {
 		return err
 	}
 
-	t.oauth2Cfg = oauth2Cfg
+	var tokenURL string
+	if t.config.OIDCConfigUrl == "empty" {
+		issuerUrl, err := auth.ApplyOAuth2MockServer(t.resourceManager, t.k8sClient, namespace, t.config.Domain)
+		if err != nil {
+			return err
+		}
+		t.config.IssuerUrl = fmt.Sprintf("http://mock-oauth2-server.%s.svc.cluster.local", namespace)
+		tokenURL = fmt.Sprintf("%s/oauth2/token", issuerUrl)
+	} else {
+		oidcConfiguration, err := helpers.GetOIDCConfiguration(t.config.OIDCConfigUrl)
+		if err != nil {
+			return err
+		}
+		t.config.IssuerUrl = oidcConfiguration.Issuer
+		tokenURL = oidcConfiguration.TokenEndpoint
+	}
+
+	t.oauth2Cfg = &clientcredentials.Config{
+		ClientID:     t.config.ClientID,
+		ClientSecret: t.config.ClientSecret,
+		TokenURL:     tokenURL,
+		AuthStyle:    oauth2.AuthStyleInHeader,
+	}
+
 	t.namespace = namespace
 	t.secondNamespace = secondNamespace
 	return nil
@@ -166,14 +188,25 @@ func (t *testsuite) TearDown() {
 	if err != nil {
 		log.Print(err.Error())
 	}
+
 }
 
 func (t *testsuite) BeforeSuiteHooks() []func() error {
-	return []func() error{hooks.ApplyAndVerifyApiGatewayCrSuiteHook}
+	h := []func() error{hooks.IstioSkipVerifyJwksResolverSuiteHook(t), hooks.ApplyAndVerifyApiGatewayCrSuiteHook}
+
+	if !t.config.IsGardener {
+		h = append(h, hooks.DnsPatchForK3dSuiteHook(t))
+	}
+	return h
 }
 
 func (t *testsuite) AfterSuiteHooks() []func() error {
-	return []func() error{hooks.DeleteBlockingResourcesSuiteHook, hooks.ApiGatewayCrTearDownSuiteHook}
+	h := []func() error{hooks.IstioSkipVerifyJwksResolverSuiteHookTeardown(t), hooks.DeleteBlockingResourcesSuiteHook, hooks.ApiGatewayCrTearDownSuiteHook}
+
+	if !t.config.IsGardener {
+		h = append(h, hooks.DnsPatchForK3dSuiteHookTeardown(t))
+	}
+	return h
 }
 
 func NewTestsuite(httpClient *helpers.RetryableHttpClient, k8sClient dynamic.Interface, rm *resource.Manager, config testcontext.Config) testcontext.Testsuite {

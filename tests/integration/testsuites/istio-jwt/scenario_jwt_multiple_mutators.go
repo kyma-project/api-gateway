@@ -3,6 +3,7 @@ package istiojwt
 import (
 	"fmt"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
+	"net/http"
 	"strings"
 
 	"github.com/cucumber/godog"
@@ -50,5 +51,5 @@ func (s *scenario) shouldReturnResponseWithKeyValuePairs(endpoint, k1, v1, k2, v
 		AsHeader: true,
 	}
 
-	return s.callingEndpointWithHeadersWithRetries(fmt.Sprintf("%s/%s", s.Url, strings.TrimLeft(endpoint, "/")), "JWT", asserter, nil, &tokenFrom)
+	return s.callingEndpointWithMethodAndHeaders(fmt.Sprintf("%s/%s", s.Url, strings.TrimLeft(endpoint, "/")), http.MethodGet, "JWT", asserter, nil, &tokenFrom)
 }

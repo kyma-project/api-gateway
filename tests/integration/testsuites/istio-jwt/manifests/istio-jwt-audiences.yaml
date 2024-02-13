@@ -20,8 +20,7 @@ spec:
               - issuer: "{{ .IssuerUrl }}"
                 jwksUri: "{{ .IssuerUrl }}/oauth2/certs"
             authorizations:
-              - requiredScopes: ["read", "write"]
-                audiences: {{ .ipAudiences }}
+              - audiences: {{ .ipAudiences }}
     - path: /headers
       methods: ["GET"]
       mutators: []
@@ -32,8 +31,7 @@ spec:
               - issuer: "{{ .IssuerUrl }}"
                 jwksUri: "{{ .IssuerUrl }}/oauth2/certs"
             authorizations:
-              - requiredScopes: ["read", "write"]
-                audiences: {{ .headersAudiences }}
+              - audiences: {{ .headersAudiences }}
     - path: /get
       methods: ["GET"]
       mutators: []
@@ -44,8 +42,7 @@ spec:
               - issuer: "{{ .IssuerUrl }}"
                 jwksUri: "{{ .IssuerUrl }}/oauth2/certs"
             authorizations:
-              - requiredScopes: ["read", "write"]
-                audiences: {{ .getAudiences }}
+              - audiences: {{ .getAudiences }}
     - path: /cache
       methods: ["GET"]
       mutators: []
@@ -56,7 +53,5 @@ spec:
               - issuer: "{{ .IssuerUrl }}"
                 jwksUri: "{{ .IssuerUrl }}/oauth2/certs"
             authorizations:
-              - requiredScopes: [ "read", "write" ]
-                audiences: ["audienceNotInJWT"]
-              - requiredScopes: ["read", "write"]
-                audiences: ["https://example.com"]
+              - audiences: ["audienceNotInJWT"]
+              - audiences: ["https://example.com"]

@@ -122,7 +122,7 @@ type Rule struct {
 	Service *Service `json:"service,omitempty"`
 	// Represents the list of allowed HTTP request methods available for the **spec.rules.path**.
 	// +kubebuilder:validation:MinItems=1
-	Methods []string `json:"methods"`
+	Methods []HttpMethod `json:"methods"`
 	// Specifies the list of access strategies.
 	// All strategies listed in [Oathkeeper documentation](https://www.ory.sh/docs/oathkeeper/pipeline/authn) are supported.
 	// +kubebuilder:validation:MinItems=1
@@ -133,6 +133,10 @@ type Rule struct {
 	// +optional
 	Timeout *Timeout `json:"timeout,omitempty"`
 }
+
+// HttpMethod specifies the HTTP request method. The list of supported methods is defined in RFC 9910: HTTP Semantics and RFC 5789: PATCH Method for HTTP.
+// +kubebuilder:validation:Enum=GET;HEAD;POST;PUT;DELETE;CONNECT;OPTIONS;TRACE;PATCH
+type HttpMethod string
 
 // Describes the status of APIRule.
 type APIRuleResourceStatus struct {
