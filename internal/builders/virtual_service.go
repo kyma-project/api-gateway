@@ -1,11 +1,13 @@
 package builders
 
 import (
+	"fmt"
 	apirulev1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"google.golang.org/protobuf/types/known/durationpb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 	"istio.io/api/networking/v1beta1"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
+	"strings"
 	"time"
 )
 
@@ -151,6 +153,20 @@ func (mr *matchRequest) Get() *v1beta1.HTTPMatchRequest {
 func (mr *matchRequest) Uri() *stringMatch {
 	mr.value.Uri = &v1beta1.StringMatch{}
 	return &stringMatch{mr.value.Uri, func() *matchRequest { return mr }}
+}
+
+// MethodRegEx sets the HTTP method regex in the HTTPMatchRequest for the given HTTP methods in the format "^(PUT|POST|GET)$".
+func (mr *matchRequest) MethodRegEx(httpMethods ...apirulev1beta1.HttpMethod) *matchRequest {
+
+	methodStrings := apirulev1beta1.ConvertHttpMethodsToStrings(httpMethods)
+	methodsWithSeparator := strings.Join(methodStrings, "|")
+
+	mr.value.Method = &v1beta1.StringMatch{
+		MatchType: &v1beta1.StringMatch_Regex{
+			Regex: fmt.Sprintf("^(%s)$", methodsWithSeparator),
+		},
+	}
+	return mr
 }
 
 type stringMatch struct {
