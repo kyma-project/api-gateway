@@ -9,13 +9,13 @@ inputs:
     required: true
   client_id:
     description: "Client id for oidc"
-    required: true
+    required: false
   client_secret:
     description: "Client secret for oidc"
-    required: true
-  oidc_issuer_url:
-    description: "OIDC issuer url"
-    required: true
+    required: false
+  oidc_well_known_url:
+    description: "OIDC well known URL"
+    required: false
   target_branch:
     description: 'Target branch'
     required: true
@@ -48,7 +48,7 @@ runs:
         TEST_UPGRADE_IMG: ${{ inputs.test_upgrade_img }}
         CLIENT_ID: ${{ inputs.client_id }}
         CLIENT_SECRET: ${{ inputs.client_secret }}
-        OIDC_ISSUER_URL: ${{ inputs.oidc_issuer_url }}
+        OIDC_CONFIG_URL: ${{ inputs.oidc_well_known_url }}
       run: |
         EXPORT_RESULT=true TARGET_BRANCH=${{inputs.target_branch}} \
         make test-upgrade

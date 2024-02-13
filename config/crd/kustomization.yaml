@@ -6,6 +6,10 @@ resources:
 - bases/operator.kyma-project.io_apigateways.yaml
 #+kubebuilder:scaffold:crdkustomizeresource
 
+labels:
+  - pairs:
+      app.kubernetes.io/component: operator
+
 patchesStrategicMerge:
 # [WEBHOOK] To enable webhook, uncomment all the sections with [WEBHOOK] prefix.
 # patches here are for enabling the conversion webhook for each CRD

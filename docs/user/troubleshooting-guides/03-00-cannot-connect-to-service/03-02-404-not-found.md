@@ -19,7 +19,8 @@ Make sure that the following conditions are met:
   kubectl get rules.oathkeeper.ory.sh -n {NAMESPACE}
   ```
 
-  >**TIP:** The name of the Access Rule consists of the name of the APIRule and a random suffix.
+  > [!TIP]
+  > The name of the Access Rule consists of the name of the APIRule and a random suffix.
 
 - Proper VirtualService has been created:
 
@@ -27,7 +28,8 @@ Make sure that the following conditions are met:
   kubectl get virtualservices.networking.istio.io -n {NAMESPACE}
   ```
 
-  >**TIP:** The name of the VirtualService consists of the name of the APIRule and a random suffix.
+  > [!TIP]
+  > The name of the VirtualService consists of the name of the APIRule and a random suffix.
 
 If you suspect you are experiencing an issue caused by the Oathkeeper Maester controller not reconciling Access Rules, resolve the problem by restarting the Oathkeeper Pods. To confirm whether this is indeed the cause of the issue, follow these steps:
 

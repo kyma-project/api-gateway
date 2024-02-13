@@ -13,9 +13,37 @@ on:
         required: false
 
 jobs:
+  check-prerequisites:
+    name: Check release prerequisites
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install yq
+        shell: bash
+        run: |
+          sudo add-apt-repository ppa:rmescandon/yq
+          sudo apt update
+          sudo apt install yq -y
+
+      - name: Check security-scanner config
+        shell: bash
+        run: |
+          if [[ $( yq eval ".protecode[0]" sec-scanners-config.yaml ) == "europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:${{ github.event.inputs.name }}" ]]; then
+            exit 0
+          else
+            echo "Error: api-gateway-manager image tag in sec-scanners-config doesn't match release ${{ github.event.inputs.name }}"
+            exit 1
+          fi
+ 
   create-draft:
     name: Create draft release
     runs-on: ubuntu-latest
+    needs: [check-prerequisites]
 
     steps:
       - name: Checkout code
