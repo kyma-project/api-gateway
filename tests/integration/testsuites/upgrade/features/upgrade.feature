@@ -1,5 +1,8 @@
+# Important: scenarios in this feature rely on the execution order
 Feature: Upgrading API Gateway version
-  # Scenarios in this feature rely on the execution order to be valid test cases, since the first scenario deploys an upgraded controller and the following scenarios verify the behaviour of the new controller version.
+  Scenario: Fail when there is operator manifest is not applicable
+    When Upgrade: API Gateway is upgraded to current branch version with "failing" manifest and should "fail"
+
   Scenario: Upgrade from latest release to current version
     Given Upgrade: There is a httpbin service
     And Upgrade: There is an endpoint secured with JWT on path "/ip"
