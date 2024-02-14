@@ -8,7 +8,7 @@ Feature: Upgrading API Gateway version
     And Upgrade: There is an endpoint secured with JWT on path "/ip"
     And Upgrade: The APIRule is applied
     And Upgrade: Calling the "/ip" endpoint with a valid "JWT" token should result in status between 200 and 299
-    When Upgrade: API Gateway is upgraded to current branch version
+    When Upgrade: API Gateway is upgraded to current branch version with "generated" manifest and should "succeed"
     And Upgrade: A reconciliation happened in the last 60 seconds
     Then Upgrade: Calling the "/ip" endpoint without a token should result in status between 400 and 403
     And Upgrade: Calling the "/ip" endpoint with an invalid token should result in status between 400 and 403
