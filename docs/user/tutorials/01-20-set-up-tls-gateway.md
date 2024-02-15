@@ -1,6 +1,6 @@
 # Set Up a TLS Gateway
 
-This tutorial shows how to set up a TLS Gateway in simple modes.
+This tutorial shows how to set up a TLS Gateway in simple mode.
 
 ## Prerequisites
 
