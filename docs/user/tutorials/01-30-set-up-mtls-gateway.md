@@ -34,6 +34,7 @@ For detailed step-by-step guide on how to generate self-signed certificate, foll
 
 Assuming that you have successfully created the server certificate and it is stored in the `kyma-mtls-certs` Secret within the default namespace, modify and apply the following Gateway custom resource on a cluster:
 
+> Note: kyma-mtls-certs secret must contain a valid certificate for `*.mtls.example.com` common name.
 ```sh
 cat <<EOF | kubectl apply -f -
 apiVersion: networking.istio.io/v1alpha3
@@ -61,10 +62,10 @@ EOF
 4. Create a Secret containing the Root CA certificate.
 
 In order for the `MUTUAL` mode to work correctly, you must apply a Root CA on a cluster. This Root CA must follow the [Istio naming convention](https://istio.io/latest/docs/reference/config/networking/gateway/#ServerTLSSettings) so Istio can use it.
-Create an Opaque Secret containing the previously generated Root CA certificate:
+Create an Opaque Secret containing the previously generated Root CA certificate in `istio-system` namespace:
 
 ```sh
-    kubectl create secret generic -n default kyma-mtls-certs-cacert --from-file=cacert=cacert.crt
+    kubectl create secret generic -n istio-system kyma-mtls-certs-cacert --from-file=cacert=cacert.crt
 ```
 
 5. Create a custom workload and expose it using an APIRule.
