@@ -15,6 +15,7 @@ To establish a working mTLS connection, several things are required:
 The procedure of setting up a working mTLS Gateway is described in the following steps. The tutorial uses a Gardener shoot cluster and its API.
 
 The mTLS Gateway is exposed under `*.mtls.example.com` with a valid DNS `A` record.
+
 ## Steps
 
 1. Create a DNS Entry and generate a wildcard certificate.
@@ -82,7 +83,7 @@ metadata:
   name: httpbin-mtls
   namespace: default
 spec:
-  gateway: kyma-mtls-gateway.default.svc.cluster.local
+  gateway: default/kyma-mtls-gateway
   host: httpbin.mtls.example.com
   rules:
   - accessStrategies:
