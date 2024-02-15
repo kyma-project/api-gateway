@@ -171,9 +171,9 @@ rules:
   resources:
   - rules
   verbs:
-  - deletecollection
   - create
   - delete
+  - deletecollection
   - get
   - list
   - patch
