@@ -56,7 +56,7 @@ spec:
 EOF
 ```
 
-## Create secret containing Root CA cert
+4. Create a Secret containing the Root CA certificate.
 
 In order for the `MUTUAL` mode to work correctly, you must apply a Root CA on a cluster. This Root CA must follow the [Istio naming convention](https://istio.io/latest/docs/reference/config/networking/gateway/#ServerTLSSettings) so Istio can use it.
 Create an Opaque Secret containing the previously generated Root CA certificate:
