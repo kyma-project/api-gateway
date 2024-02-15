@@ -21,5 +21,4 @@ By default, Kyma API Gateway Operator reconciles APIRules every 60 minutes or wh
 | **rate-limiter-frequency**    |    NO    | Indicates the controller's bucket rate limiter frequency, signifying no. of events per second.                          | 30                                               |
 | **failure-base-delay**        |    NO    | Indicates the failure-based delay for rate limiter.                                                                    | `1s`                                             |
 | **failure-max-delay**         |    NO    | Indicates the maximum failure delay for rate limiter.                                                                     | `1000s`                                          |
-| **generated-objects-labels**  |    NO    | Comma-separated list of key-value pairs used to label generated objects.                                              | `managed-by=api-gateway`                         |
 | **reconciliation-interval**   |    NO    | Indicates the time-based reconciliation interval of APIRule.                                                          | `1h`                                             |
