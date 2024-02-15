@@ -5,12 +5,13 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"k8s.io/apimachinery/pkg/runtime"
+	"net/http"
 )
 
 var _ = Describe("Builder for", func() {
 
 	path := "/headers"
-	methods := []string{"GET", "POST"}
+	methods := []gatewayv1beta1.HttpMethod{http.MethodGet, http.MethodPost}
 
 	Describe("AuthorizationPolicy", func() {
 		It("should build an AuthorizationPolicy", func() {
@@ -51,7 +52,7 @@ var _ = Describe("Builder for", func() {
 			Expect(ap.Spec.Selector.MatchLabels).To(BeEquivalentTo(testMatchLabels))
 			Expect(ap.Spec.Rules[0].From[0].Source.RequestPrincipals[0]).To(Equal(testRequestPrincipal))
 			Expect(ap.Spec.Rules[0].To[0].Operation.Paths[0]).To(Equal(path))
-			Expect(ap.Spec.Rules[0].To[0].Operation.Methods).To(BeEquivalentTo(methods))
+			Expect(ap.Spec.Rules[0].To[0].Operation.Methods).To(BeEquivalentTo([]string{http.MethodGet, http.MethodPost}))
 			Expect(ap.Spec.Rules[0].When).To(HaveLen(1))
 			Expect(ap.Spec.Rules[0].When[0].Key).To(BeElementOf(testExpectedScopeKeys))
 			Expect(ap.Spec.Rules[0].When[0].Values).To(HaveLen(2))

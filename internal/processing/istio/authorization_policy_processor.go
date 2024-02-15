@@ -184,7 +184,7 @@ func withTo(b *builders.RuleBuilder, rule gatewayv1beta1.Rule) *builders.RuleBui
 func withFrom(b *builders.RuleBuilder, rule gatewayv1beta1.Rule) *builders.RuleBuilder {
 	if processing.IsJwtSecured(rule) {
 		return b.WithFrom(builders.NewFromBuilder().WithForcedJWTAuthorization(rule.AccessStrategies).Get())
-	} else if processing.IsSecured(rule) {
+	} else if processing.IsSecuredByOathkeeper(rule) {
 		return b.WithFrom(builders.NewFromBuilder().WithOathkeeperProxySource().Get())
 	}
 	return b.WithFrom(builders.NewFromBuilder().WithIngressGatewaySource().Get())

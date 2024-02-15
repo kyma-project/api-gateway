@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
+	"net/http"
 	"strconv"
 
 	"github.com/kyma-project/api-gateway/internal/processing"
@@ -21,43 +22,45 @@ import (
 )
 
 var _ = Describe("Access Rule Processor", func() {
-	When("handler is allow", func() {
-		It("should not create access rules", func() {
-			// given
-			strategies := []*gatewayv1beta1.Authenticator{
-				{
-					Handler: &gatewayv1beta1.Handler{
-						Name: "allow",
-					},
+
+	DescribeTable("should not create access rules when handler is", func(handler string) {
+		// given
+		strategies := []*gatewayv1beta1.Authenticator{
+			{
+				Handler: &gatewayv1beta1.Handler{
+					Name: handler,
 				},
-			}
+			},
+		}
 
-			allowRule := GetRuleFor(ApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, strategies)
-			rules := []gatewayv1beta1.Rule{allowRule}
+		rule := GetRuleFor(ApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, strategies)
+		rules := []gatewayv1beta1.Rule{rule}
 
-			apiRule := GetAPIRuleFor(rules)
+		apiRule := GetAPIRuleFor(rules)
 
-			overrideServiceName := "testName"
-			overrideServiceNamespace := "testName-namespace"
-			overrideServicePort := uint32(8080)
+		overrideServiceName := "testName"
+		overrideServiceNamespace := "testName-namespace"
+		overrideServicePort := uint32(8080)
 
-			apiRule.Spec.Service = &gatewayv1beta1.Service{
-				Name:      &overrideServiceName,
-				Namespace: &overrideServiceNamespace,
-				Port:      &overrideServicePort,
-			}
+		apiRule.Spec.Service = &gatewayv1beta1.Service{
+			Name:      &overrideServiceName,
+			Namespace: &overrideServiceNamespace,
+			Port:      &overrideServicePort,
+		}
 
-			client := GetFakeClient()
-			processor := ory.NewAccessRuleProcessor(GetTestConfig())
+		client := GetFakeClient()
+		processor := ory.NewAccessRuleProcessor(GetTestConfig())
 
-			// when
-			result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
+		// when
+		result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
 
-			// then
-			Expect(err).To(BeNil())
-			Expect(result).To(BeEmpty())
-		})
-	})
+		// then
+		Expect(err).To(BeNil())
+		Expect(result).To(BeEmpty())
+	},
+		Entry(nil, gatewayv1beta1.AccessStrategyNoAuth),
+		Entry(nil, gatewayv1beta1.AccessStrategyAllow),
+	)
 
 	When("handler is noop", func() {
 		It("should override rule with meta data", func() {
@@ -323,8 +326,8 @@ var _ = Describe("Access Rule Processor", func() {
 			expectedJwtRuleMatchURL := fmt.Sprintf("<http|https>://%s<%s>", ServiceHost, HeadersApiPath)
 			expectedRuleUpstreamURL := fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", ServiceName, ApiNamespace, ServicePort)
 
-			noopMatcher := buildNoopMatcher(ApiMethods, expectedNoopRuleMatchURL, expectedRuleUpstreamURL, "allow")
-			jwtMatcher := buildJwtMatcher(ApiMethods, expectedJwtRuleMatchURL, expectedRuleUpstreamURL, jwtConfigJSON)
+			noopMatcher := buildNoopMatcher([]string{http.MethodGet}, expectedNoopRuleMatchURL, expectedRuleUpstreamURL, "allow")
+			jwtMatcher := buildJwtMatcher([]string{http.MethodGet}, expectedJwtRuleMatchURL, expectedRuleUpstreamURL, jwtConfigJSON)
 
 			Expect(result).To(ContainElements(noopMatcher, jwtMatcher))
 		})
@@ -371,8 +374,8 @@ var _ = Describe("Access Rule Processor", func() {
 			}
 			getMethod := []string{"GET"}
 			postMethod := []string{"POST"}
-			noopRule := GetRuleFor(ApiPath, getMethod, []*gatewayv1beta1.Mutator{}, noop)
-			jwtRule := GetRuleFor(ApiPath, postMethod, testMutators, jwt)
+			noopRule := GetRuleFor(ApiPath, methodsGet, []*gatewayv1beta1.Mutator{}, noop)
+			jwtRule := GetRuleFor(ApiPath, methodsPost, testMutators, jwt)
 			rules := []gatewayv1beta1.Rule{noopRule, jwtRule}
 
 			apiRule := GetAPIRuleFor(rules)
@@ -438,8 +441,8 @@ var _ = Describe("Access Rule Processor", func() {
 			}
 			getMethod := []string{"GET"}
 			postMethod := []string{"POST"}
-			noopGetRule := GetRuleFor(ApiPath, getMethod, []*gatewayv1beta1.Mutator{}, noop)
-			noopPostRule := GetRuleFor(ApiPath, postMethod, []*gatewayv1beta1.Mutator{}, noop)
+			noopGetRule := GetRuleFor(ApiPath, methodsGet, []*gatewayv1beta1.Mutator{}, noop)
+			noopPostRule := GetRuleFor(ApiPath, methodsPost, []*gatewayv1beta1.Mutator{}, noop)
 			jwtRule := GetRuleFor(HeadersApiPath, ApiMethods, testMutators, jwt)
 			rules := []gatewayv1beta1.Rule{noopGetRule, noopPostRule, jwtRule}
 
@@ -460,7 +463,7 @@ var _ = Describe("Access Rule Processor", func() {
 
 			noopGetMatcher := buildNoopMatcher(getMethod, expectedNoopRuleMatchURL, expectedRuleUpstreamURL, "allow")
 			noopPostMatcher := buildNoopMatcher(postMethod, expectedNoopRuleMatchURL, expectedRuleUpstreamURL, "allow")
-			jwtMatcher := buildJwtMatcher(ApiMethods, expectedJwtRuleMatchURL, expectedRuleUpstreamURL, jwtConfigJSON)
+			jwtMatcher := buildJwtMatcher(getMethod, expectedJwtRuleMatchURL, expectedRuleUpstreamURL, jwtConfigJSON)
 
 			Expect(result).To(ContainElements(noopGetMatcher, noopPostMatcher, jwtMatcher))
 		})
@@ -528,7 +531,7 @@ var _ = Describe("Access Rule Processor", func() {
 			expectedRuleUpstreamURL := fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", ServiceName, ApiNamespace, ServicePort)
 
 			Expect(len(rule.Spec.Match.Methods)).To(Equal(len(ApiMethods)))
-			Expect(rule.Spec.Match.Methods).To(Equal(ApiMethods))
+			Expect(rule.Spec.Match.Methods).To(Equal([]string{http.MethodGet}))
 			Expect(rule.Spec.Match.URL).To(Equal(expectedRuleMatchURL))
 
 			Expect(rule.Spec.Upstream.URL).To(Equal(expectedRuleUpstreamURL))

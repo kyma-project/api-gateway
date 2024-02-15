@@ -3,6 +3,8 @@ package builders
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
+	"net/http"
 
 	"k8s.io/apimachinery/pkg/runtime"
 
@@ -17,7 +19,7 @@ var _ = Describe("Builder for", func() {
 	hostPath := "/.*"
 	destHost := "somehost.somenamespace.svc.cluster.local"
 	var destPort uint32 = 4321
-	methods := []string{"GET", "POST", "PUT"}
+	methods := []v1beta1.HttpMethod{http.MethodGet, http.MethodPost, http.MethodPut}
 	testScopes := []string{"read", "write"}
 
 	Describe("AccessRule", func() {
@@ -62,7 +64,7 @@ var _ = Describe("Builder for", func() {
 			Expect(ar.Namespace).To(Equal(namespace))
 			Expect(ar.Spec.Upstream.URL).To(Equal(testUpstreamURL))
 			Expect(ar.Spec.Match.URL).To(Equal(testMatchURL))
-			Expect(ar.Spec.Match.Methods).To(BeEquivalentTo(methods))
+			Expect(ar.Spec.Match.Methods).To(BeEquivalentTo([]string{http.MethodGet, http.MethodPost, http.MethodPut}))
 			Expect(ar.Spec.Authorizer.Handler.Name).To(Equal("allow"))
 			Expect(len(ar.Spec.Authenticators)).To(Equal(2))
 			Expect(ar.Spec.Authenticators[0].Name).To(Equal("oauth2_introspection"))

@@ -188,6 +188,34 @@ func (m *Manager) CreateOrUpdateResources(k8sClient dynamic.Interface, resources
 	return gotRes, nil
 }
 
+func (m *Manager) CreateOrUpdateResourcesGVR(client dynamic.Interface, resources ...unstructured.Unstructured) (*unstructured.Unstructured, error) {
+	gotRes := &unstructured.Unstructured{}
+	for _, res := range resources {
+		gvr, err := getGvrFromUnstructured(m, res)
+		if err != nil {
+			return nil, err
+		}
+		_, err = client.Resource(*gvr).Namespace(res.GetNamespace()).Get(context.TODO(), res.GetName(), metav1.GetOptions{})
+
+		if err != nil {
+			if apierrors.IsNotFound(err) {
+				_, err := client.Resource(*gvr).Namespace(res.GetNamespace()).Create(context.TODO(), &res, metav1.CreateOptions{})
+				if err != nil {
+					return nil, err
+				}
+			} else {
+				return nil, err
+			}
+		} else {
+			err = m.UpdateResource(client, *gvr, res.GetNamespace(), res.GetName(), res)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+	return gotRes, nil
+}
+
 func (m *Manager) CreateOrUpdateResourcesWithoutNS(k8sClient dynamic.Interface, resources ...unstructured.Unstructured) (*unstructured.Unstructured, error) {
 	gotRes := &unstructured.Unstructured{}
 	for _, res := range resources {
@@ -442,38 +470,6 @@ func (m *Manager) GetStatus(client dynamic.Interface, resourceSchema schema.Grou
 	return status, nil
 }
 
-func (m *Manager) MergeAndUpdateOrCreateResources(client dynamic.Interface, resources []unstructured.Unstructured) error {
-	for _, resource := range resources {
-		gvr, err := getGvrFromUnstructured(m, resource)
-		if err != nil {
-			return err
-		}
-		r, err := client.Resource(*gvr).Namespace(resource.GetNamespace()).Get(context.TODO(), resource.GetName(), metav1.GetOptions{})
-
-		if err != nil {
-			if apierrors.IsNotFound(err) {
-				_, err := client.Resource(*gvr).Namespace(resource.GetNamespace()).Create(context.TODO(), &resource, metav1.CreateOptions{})
-				if err != nil {
-					return err
-				}
-			} else {
-				return err
-			}
-		} else {
-			updatedResource := mergeUnstructured(r, &resource)
-			gvr, err := getGvrFromUnstructured(m, *updatedResource)
-			if err != nil {
-				return err
-			}
-			_, err = client.Resource(*gvr).Namespace(updatedResource.GetNamespace()).Update(context.TODO(), updatedResource, metav1.UpdateOptions{})
-			if err != nil {
-				return err
-			}
-		}
-	}
-	return nil
-}
-
 func getGvrFromUnstructured(m *Manager, resource unstructured.Unstructured) (*schema.GroupVersionResource, error) {
 	gvk := resource.GroupVersionKind()
 	mapping, err := m.mapper.RESTMapping(schema.GroupKind{
@@ -483,38 +479,14 @@ func getGvrFromUnstructured(m *Manager, resource unstructured.Unstructured) (*sc
 	if err != nil {
 		return nil, err
 	}
-	res := mapping.Resource.Resource
 	gvr := &schema.GroupVersionResource{
 		Group:    gvk.Group,
 		Version:  gvk.Version,
-		Resource: res,
+		Resource: mapping.Resource.Resource,
 	}
-
 	return gvr, nil
 }
 
-func mergeUnstructured(old, new *unstructured.Unstructured) *unstructured.Unstructured {
-	oldMap := old.Object
-	newMap := new.Object
-	mergeMaps(oldMap, newMap)
-	return &unstructured.Unstructured{Object: oldMap}
-}
-
-func mergeMaps(o, n map[string]any) {
-	for k, nv := range n {
-		if ov, ok := o[k]; ok {
-			ovm, oldIsMap := ov.(map[string]any)
-			nvm, newIsMap := nv.(map[string]any)
-			if oldIsMap && newIsMap {
-				mergeMaps(ovm, nvm)
-			} else {
-				o[k] = nv
-			}
-		} else {
-			o[k] = nv
-		}
-	}
-}
 func GetResourceGvr(kind, name string) schema.GroupVersionResource {
 	var gvr schema.GroupVersionResource
 	switch kind {
