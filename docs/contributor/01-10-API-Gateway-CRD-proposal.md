@@ -68,7 +68,7 @@ name: default
 spec:
   gateways:
     - namespace: "my-namespace"
-      name: "test-gateway"
+      name: "default"
       servers:
         - hosts:
             - host: "test.example.com"
@@ -83,7 +83,7 @@ The user can now expose their Services under the hosts `test.example.com` and `t
 
 ### The User Wants To Expose Their Mongo Instance
 
-The user configures API Gateway as follows: 
+The user configures API Gateway as follows:
 
 ```yaml
 kind: APIGateway

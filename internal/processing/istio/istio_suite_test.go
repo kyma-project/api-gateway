@@ -47,5 +47,7 @@ var _ = ReportAfterSuite("custom reporter", func(report types.Report) {
 })
 
 var testLogger = ctrl.Log.WithName("istio-test")
-var getMethod = []v1beta1.HttpMethod{http.MethodGet}
-var postMethod = []v1beta1.HttpMethod{http.MethodPost}
+var methodsGet = []v1beta1.HttpMethod{http.MethodGet}
+var methodsPost = []v1beta1.HttpMethod{http.MethodPost}
+var methodsGetPost = []v1beta1.HttpMethod{http.MethodGet, http.MethodPost}
+var methodsDelete = []v1beta1.HttpMethod{http.MethodDelete}

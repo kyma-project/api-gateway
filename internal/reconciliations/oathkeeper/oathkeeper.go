@@ -3,13 +3,13 @@ package oathkeeper
 import (
 	"context"
 	"errors"
+	"time"
+
 	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
 	"github.com/kyma-project/api-gateway/controllers"
-	"github.com/kyma-project/api-gateway/internal/reconciliations/oathkeeper/cronjob"
 	"github.com/kyma-project/api-gateway/internal/reconciliations/oathkeeper/maester"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"time"
 )
 
 func NewReconciler() Reconciler {
@@ -55,8 +55,8 @@ func Reconcile(ctx context.Context, k8sClient client.Client, apiGatewayCR *v1alp
 		reconcileOathkeeperHPA(ctx, k8sClient, *apiGatewayCR),
 		reconcileOryOathkeeperServiceAccount(ctx, k8sClient, *apiGatewayCR),
 		reconcileOryOathkeeperServices(ctx, k8sClient, *apiGatewayCR),
-		cronjob.ReconcileCronjob(ctx, k8sClient, *apiGatewayCR),
 		reconcileOathkeeperDeployment(ctx, k8sClient, *apiGatewayCR),
+		reconcileOathkeeperPdb(ctx, k8sClient, *apiGatewayCR),
 	)
 	if err != nil {
 		return controllers.ErrorStatus(err, "Oathkeeper did not reconcile successfully")

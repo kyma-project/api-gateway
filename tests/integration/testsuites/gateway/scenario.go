@@ -5,10 +5,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
-	"os"
-	"path"
-
 	"github.com/avast/retry-go/v4"
 	"github.com/cucumber/godog"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/client"
@@ -27,6 +23,9 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
+	"log"
+	"os"
+	"path"
 )
 
 const manifestsPath = "testsuites/gateway/manifests/"
@@ -206,24 +205,24 @@ func (c *scenario) checkAPIGatewayCRState(state, description string) error {
 func (c *scenario) thereIsAGateway(name string, namespace string) error {
 	return retry.Do(func() error {
 		res := schema.GroupVersionResource{Group: "networking.istio.io", Version: "v1beta1", Resource: "gateways"}
-		_, err := c.k8sClient.Resource(res).Namespace(namespace).Get(context.Background(), name, metav1.GetOptions{})
+		obj, err := c.k8sClient.Resource(res).Namespace(namespace).Get(context.Background(), name, metav1.GetOptions{})
 		if err != nil {
 			return fmt.Errorf("%s could not be found", name)
 		}
 
-		return nil
+		return checkModuleAnnotationsAndLabels(obj)
 	}, testcontext.GetRetryOpts()...)
 }
 
 func (c *scenario) thereIsACertificate(name string, namespace string) error {
 	return retry.Do(func() error {
 		res := schema.GroupVersionResource{Group: "", Version: "v1", Resource: "secrets"}
-		_, err := c.k8sClient.Resource(res).Namespace(namespace).Get(context.Background(), name, metav1.GetOptions{})
+		obj, err := c.k8sClient.Resource(res).Namespace(namespace).Get(context.Background(), name, metav1.GetOptions{})
 		if err != nil {
 			return fmt.Errorf("%s could not be found", name)
 		}
 
-		return nil
+		return checkModuleAnnotationsAndLabels(obj)
 	}, testcontext.GetRetryOpts()...)
 }
 
@@ -380,22 +379,22 @@ func (c *scenario) thereIsNoGateway(name, namespace string) error {
 
 func (c *scenario) thereIsACertificateCR(name, namespace string) error {
 	res := schema.GroupVersionResource{Group: "cert.gardener.cloud", Version: "v1alpha1", Resource: "certificates"}
-	_, err := c.k8sClient.Resource(res).Namespace(namespace).Get(context.Background(), name, metav1.GetOptions{})
+	obj, err := c.k8sClient.Resource(res).Namespace(namespace).Get(context.Background(), name, metav1.GetOptions{})
 	if err != nil {
 		return fmt.Errorf("%s could not be found", name)
 	}
 
-	return nil
+	return checkModuleAnnotationsAndLabels(obj)
 }
 
 func (c *scenario) thereIsADNSEntryCR(name, namespace string) error {
 	res := schema.GroupVersionResource{Group: "dns.gardener.cloud", Version: "v1alpha1", Resource: "dnsentries"}
-	_, err := c.k8sClient.Resource(res).Namespace(namespace).Get(context.Background(), name, metav1.GetOptions{})
+	obj, err := c.k8sClient.Resource(res).Namespace(namespace).Get(context.Background(), name, metav1.GetOptions{})
 	if err != nil {
 		return fmt.Errorf("%s could not be found", name)
 	}
 
-	return nil
+	return checkModuleAnnotationsAndLabels(obj)
 }
 
 func (c *scenario) resourceIsPresent(isPresent, kind, name string) error {
@@ -406,7 +405,7 @@ func (c *scenario) resourceIsPresent(isPresent, kind, name string) error {
 
 	return retry.Do(func() error {
 		gvr := resource.GetResourceGvr(kind, name)
-		_, err := c.k8sClient.Resource(gvr).Get(context.Background(), name, metav1.GetOptions{})
+		obj, err := c.k8sClient.Resource(gvr).Get(context.Background(), name, metav1.GetOptions{})
 		if isPresent == is {
 			if err != nil {
 				if k8serrors.IsNotFound(err) {
@@ -414,8 +413,7 @@ func (c *scenario) resourceIsPresent(isPresent, kind, name string) error {
 				}
 				return err
 			}
-
-			return nil
+			return checkModuleAnnotationsAndLabels(obj)
 		}
 
 		if isPresent == isNo {
@@ -438,8 +436,7 @@ func (c *scenario) namespacedResourceIsPresent(isPresent, kind, name, namespace 
 	)
 	return retry.Do(func() error {
 		gvr := resource.GetResourceGvr(kind, name)
-		_, err := c.k8sClient.Resource(gvr).Namespace(namespace).Get(context.Background(), name, metav1.GetOptions{})
-
+		obj, err := c.k8sClient.Resource(gvr).Namespace(namespace).Get(context.Background(), name, metav1.GetOptions{})
 		if isPresent == is {
 			if err != nil {
 				if k8serrors.IsNotFound(err) {
@@ -447,7 +444,7 @@ func (c *scenario) namespacedResourceIsPresent(isPresent, kind, name, namespace 
 				}
 				return err
 			}
-			return nil
+			return checkModuleAnnotationsAndLabels(obj)
 		}
 
 		if isPresent == isNo {

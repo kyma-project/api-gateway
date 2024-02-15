@@ -2,7 +2,10 @@ package api_gateway
 
 import (
 	"fmt"
+	"github.com/avast/retry-go/v4"
+	"log"
 	"strings"
+	"time"
 
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/resource"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
@@ -19,6 +22,7 @@ const (
 )
 
 func SwitchJwtHandler(ts testcontext.Testsuite, jwtHandler string) (string, error) {
+	log.Printf("Switching JWT handler to %s", jwtHandler)
 	mapper, err := client.GetDiscoveryMapper()
 	if err != nil {
 		return "", err
@@ -59,7 +63,15 @@ func SwitchJwtHandler(ts testcontext.Testsuite, jwtHandler string) (string, erro
 }
 
 func getConfigMapJwtHandler(resourceManager *resource.Manager, k8sClient dynamic.Interface, gvr schema.GroupVersionResource) (string, *unstructured.Unstructured, error) {
-	res, err := resourceManager.GetResource(k8sClient, gvr, configMapNs, configMapName)
+
+	// We want to fail fast in the event of a missing ConfigMap, as this will happen with every initial run of the integration tests because the ConfigMap does not yet exist.
+	retryOpts := []retry.Option{
+		retry.Delay(time.Duration(1) * time.Second),
+		retry.Attempts(3),
+		retry.DelayType(retry.FixedDelay),
+	}
+
+	res, err := resourceManager.GetResource(k8sClient, gvr, configMapNs, configMapName, retryOpts...)
 	if err != nil {
 		return "", res, fmt.Errorf("could not get ConfigMap:\n %+v", err)
 	}

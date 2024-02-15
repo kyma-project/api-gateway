@@ -45,6 +45,7 @@ junit-report*.xml
 report*.html
 
 # module generation files
-template-k3d.yaml
-template-fast.yaml
-template-regular.yaml
+api-gateway-manager.yaml
+
+# common labels template result files of make target module-version
+config/default/kustomization.yaml

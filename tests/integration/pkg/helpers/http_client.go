@@ -1,16 +1,23 @@
 package helpers
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/avast/retry-go/v4"
 	"github.com/pkg/errors"
 	"io"
 	"net/http"
+	"time"
 )
 
 type RetryableHttpClient struct {
 	client *http.Client
 	opts   []retry.Option
+}
+
+type RequestOptions struct {
+	Audiences []string
+	Scopes    []string
 }
 
 func NewClientWithRetry(c *http.Client, opts []retry.Option) *RetryableHttpClient {
@@ -108,4 +115,44 @@ func (h *RetryableHttpClient) withRetries(httpCall func() (*http.Response, error
 	}
 
 	return nil
+}
+
+type OIDCConfiguration struct {
+	Issuer                                string   `json:"issuer"`
+	AuthorizationEndpoint                 string   `json:"authorization_endpoint"`
+	TokenEndpoint                         string   `json:"token_endpoint"`
+	UserinfoEndpoint                      string   `json:"userinfo_endpoint"`
+	EndSessionEndpoint                    string   `json:"end_session_endpoint"`
+	JwksUri                               string   `json:"jwks_uri"`
+	IntrospectionEndpoint                 string   `json:"introspection_endpoint"`
+	RevocationEndpoint                    string   `json:"revocation_endpoint"`
+	ResponseTypesSupported                []string `json:"response_types_supported"`
+	GrantTypesSupported                   []string `json:"grant_types_supported"`
+	SubjectTypesSupported                 []string `json:"subject_types_supported"`
+	IdTokenSigningAlgValuesSupported      []string `json:"id_token_signing_alg_values_supported"`
+	ScopesSupported                       []string `json:"scopes_supported"`
+	TokenEndpointAuthMethodsSupported     []string `json:"token_endpoint_auth_methods_supported"`
+	ClaimsSupported                       []string `json:"claims_supported"`
+	CodeChallengeMethodsSupported         []string `json:"code_challenge_methods_supported"`
+	TlsClientCertificateBoundAccessTokens bool     `json:"tls_client_certificate_bound_access_tokens"`
+	FrontchannelLogoutSupported           bool     `json:"frontchannel_logout_supported"`
+	FrontchannelLogoutSessionSupported    bool     `json:"frontchannel_logout_session_supported"`
+}
+
+func GetOIDCConfiguration(oidcConfigurationEndpoint string) (oidcConfiguration OIDCConfiguration, err error) {
+	var resp *http.Response
+	err = retry.Do(func() error {
+		response, err := http.Get(oidcConfigurationEndpoint)
+		resp = response
+		return err
+	}, retry.Attempts(20), retry.Delay(2*time.Second), retry.DelayType(retry.FixedDelay))
+
+	if err != nil {
+		return OIDCConfiguration{}, err
+	}
+	err = json.NewDecoder(resp.Body).Decode(&oidcConfiguration)
+	if err != nil {
+		return OIDCConfiguration{}, err
+	}
+	return oidcConfiguration, err
 }

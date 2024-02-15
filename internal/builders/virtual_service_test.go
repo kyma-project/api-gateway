@@ -105,6 +105,7 @@ var _ = Describe("Builder for", func() {
 			Expect(result.Http[0].Route).To(HaveLen(1))
 			Expect(result.Http[0].Route[0].Destination.Host).To(Equal(destHost))
 			Expect(result.Http[0].Route[0].Destination.Port.Number).To(Equal(destPort))
+			//Expect(result.Http[0].Route[0].Destination.Port.Name).To(BeEmpty())
 			Expect(result.Http[0].Route[0].Weight).To(Equal(int32(100)))
 
 			Expect(result.Http[0].Timeout).To(Equal(durationpb.New(timeout)))
@@ -116,6 +117,7 @@ var _ = Describe("Builder for", func() {
 			Expect(result.Http[1].Route).To(HaveLen(1))
 			Expect(result.Http[1].Route[0].Destination.Host).To(Equal(destHost2))
 			Expect(result.Http[1].Route[0].Destination.Port.Number).To(Equal(destPort2))
+			//Expect(result.Http[1].Route[0].Destination.Port.Name).To(BeEmpty())
 			Expect(result.Http[1].Route[0].Weight).To(Equal(int32(100)))
 		})
 

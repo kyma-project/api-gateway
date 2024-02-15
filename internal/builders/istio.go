@@ -209,8 +209,8 @@ func (o *OperationBuilder) Get() *v1beta1.Operation {
 	return o.value
 }
 
-func (o *OperationBuilder) WithMethods(methods []gatewayv1beta1.HttpMethod) *OperationBuilder {
-	o.value.Methods = gatewayv1beta1.ConvertHttpMethodsToStrings(methods)
+func (o *OperationBuilder) WithMethods(val []gatewayv1beta1.HttpMethod) *OperationBuilder {
+	o.value.Methods = gatewayv1beta1.ConvertHttpMethodsToStrings(val)
 	return o
 }
 

@@ -20,6 +20,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
@@ -61,13 +62,13 @@ func NewAPIGatewayReconciler(mgr manager.Manager, oathkeeperReconciler ReadyVeri
 //+kubebuilder:rbac:groups=security.istio.io,resources=peerauthentications,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups="",resources=nodes,verbs=get;list;watch
 //+kubebuilder:rbac:groups="",resources=secrets;deployments;services;serviceaccounts,verbs=get;list;watch;update;patch;create;delete
-//+kubebuilder:rbac:groups="batch",resources=cronjobs,verbs=get;list;watch;update;patch;create;delete
 //+kubebuilder:rbac:groups="oathkeeper.ory.sh",resources=rules,verbs=*
 //+kubebuilder:rbac:groups="rbac.authorization.k8s.io",resources=roles;rolebindings;clusterroles;clusterrolebindings,verbs=get;list;watch;update;patch;create;delete
 //+kubebuilder:rbac:groups="autoscaling",resources=horizontalpodautoscalers,verbs=get;list;watch;update;patch;create;delete
 //+kubebuilder:rbac:groups="apps",resources=deployments,verbs=get;list;watch;update;patch;create;delete
 //+kubebuilder:rbac:groups="cert.gardener.cloud",resources=certificates,verbs=get;list;watch;update;patch;create;delete
 //+kubebuilder:rbac:groups="dns.gardener.cloud",resources=dnsentries,verbs=get;list;watch;update;patch;create;delete
+//+kubebuilder:rbac:groups="policy",resources=poddisruptionbudgets,verbs=get;list;watch;update;patch;create;delete
 
 func (r *APIGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	r.log.Info("Received reconciliation request", "name", req.Name)
@@ -245,7 +246,7 @@ func apiRulesExist(ctx context.Context, k8sClient client.Client) (bool, error) {
 }
 
 func oryRulesExist(ctx context.Context, k8sClient client.Client) (bool, error) {
-         // To prevent reconciliation errors during Oathkeeper uninstallation, which arise from the absence of the Oathkeeper CRD,
+	// To prevent reconciliation errors during Oathkeeper uninstallation, which arise from the absence of the Oathkeeper CRD,
 	// we exclude calls to the rules from utilizing the cache. This can be achieved by using unstructured objects, as they are excluded from caching.
 	oryRulesList := unstructured.UnstructuredList{}
 	oryRulesList.SetGroupVersionKind(schema.GroupVersionKind{

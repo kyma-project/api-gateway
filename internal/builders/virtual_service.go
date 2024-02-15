@@ -7,7 +7,6 @@ import (
 	"google.golang.org/protobuf/types/known/wrapperspb"
 	"istio.io/api/networking/v1beta1"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
-
 	"strings"
 	"time"
 )

@@ -19,10 +19,12 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/kyma-project/api-gateway/internal/reconciliations/oathkeeper"
 	"os"
 	"strings"
 	"time"
+
+	"github.com/kyma-project/api-gateway/internal/reconciliations/oathkeeper"
+	"github.com/kyma-project/api-gateway/internal/version"
 
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"github.com/kyma-project/api-gateway/controllers"
@@ -182,6 +184,8 @@ func main() {
 	}
 
 	setupLog.Info("starting manager")
+	setupLog.Info("module version", "version", version.GetModuleVersion())
+
 	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
 		setupLog.Error(err, "problem running manager")
 		os.Exit(1)

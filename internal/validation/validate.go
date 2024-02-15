@@ -265,21 +265,23 @@ func (v *APIRuleValidator) validateAccessStrategy(attributePath string, accessSt
 	var vld handlerValidator
 
 	switch accessStrategy.Handler.Name {
-	case "allow": //our internal constant, does not exist in ORY
+	case gatewayv1beta1.AccessStrategyAllow:
 		vld = vldNoConfig
-	case "noop":
+	case gatewayv1beta1.AccessStrategyNoAuth:
 		vld = vldNoConfig
-	case "unauthorized":
+	case gatewayv1beta1.AccessStrategyNoop:
 		vld = vldNoConfig
-	case "anonymous":
+	case gatewayv1beta1.AccessStrategyUnauthorized:
 		vld = vldNoConfig
-	case "cookie_session":
+	case gatewayv1beta1.AccessStrategyAnonymous:
 		vld = vldNoConfig
-	case "oauth2_client_credentials":
+	case gatewayv1beta1.AccessStrategyCookieSession:
+		vld = vldNoConfig
+	case gatewayv1beta1.AccessStrategyOauth2ClientCredentials:
 		vld = vldDummy
-	case "oauth2_introspection":
+	case gatewayv1beta1.AccessStrategyOauth2Introspection:
 		vld = vldDummy
-	case "jwt":
+	case gatewayv1beta1.AccessStrategyJwt:
 		vld = v.HandlerValidator
 		if v.InjectionValidator != nil {
 			injectionProblems, err := v.InjectionValidator.Validate(attributePath+".injection", selector, namespace)

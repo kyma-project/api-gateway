@@ -19,10 +19,11 @@ package operator
 import (
 	"context"
 	"errors"
-	"github.com/kyma-project/api-gateway/internal/reconciliations/oathkeeper"
 	"path/filepath"
 	"testing"
 	"time"
+
+	"github.com/kyma-project/api-gateway/internal/reconciliations/oathkeeper"
 
 	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
@@ -41,6 +42,7 @@ import (
 	autoscalingv2 "k8s.io/api/autoscaling/v2"
 	schedulingv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
+	policyv1 "k8s.io/api/policy/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -115,20 +117,7 @@ var _ = BeforeSuite(func() {
 	Expect(err).NotTo(HaveOccurred())
 	Expect(cfg).NotTo(BeNil())
 
-	s := runtime.NewScheme()
-	utilruntime.Must(corev1.AddToScheme(s))
-	utilruntime.Must(v1beta1.AddToScheme(s))
-	utilruntime.Must(appsv1.AddToScheme(s))
-	utilruntime.Must(rbacv1.AddToScheme(s))
-	utilruntime.Must(operatorv1alpha1.AddToScheme(s))
-	utilruntime.Must(autoscalingv2.AddToScheme(s))
-	utilruntime.Must(securityv1beta1.AddToScheme(s))
-	utilruntime.Must(schedulingv1.AddToScheme(s))
-	utilruntime.Must(apiextensionsv1.AddToScheme(s))
-	utilruntime.Must(gatewayv1beta1.AddToScheme(s))
-	utilruntime.Must(networkingv1alpha3.AddToScheme(s))
-	utilruntime.Must(networkingv1beta1.AddToScheme(s))
-	utilruntime.Must(oryv1alpha1.AddToScheme(s))
+	s := getTestScheme()
 
 	//+kubebuilder:scaffold:scheme
 
@@ -153,7 +142,7 @@ var _ = BeforeSuite(func() {
 		FailureMaxDelay:  10 * time.Second,
 	}
 
-	resources.ReadFileHandle = func(name string) ([]byte, error) {
+	resources.ReadResourcesFileHandle = func(name string) ([]byte, error) {
 		return []byte(controlledList), nil
 	}
 
@@ -243,22 +232,23 @@ func createFakeClient(objects ...client.Object) client.Client {
 }
 
 func getTestScheme() *runtime.Scheme {
-	scheme := runtime.NewScheme()
-	Expect(corev1.AddToScheme(scheme)).Should(Succeed())
-	Expect(v1beta1.AddToScheme(scheme)).Should(Succeed())
-	Expect(appsv1.AddToScheme(scheme)).Should(Succeed())
-	Expect(rbacv1.AddToScheme(scheme)).Should(Succeed())
-	Expect(operatorv1alpha1.AddToScheme(scheme)).Should(Succeed())
-	Expect(autoscalingv2.AddToScheme(scheme)).Should(Succeed())
-	Expect(securityv1beta1.AddToScheme(scheme)).Should(Succeed())
-	Expect(schedulingv1.AddToScheme(scheme)).Should(Succeed())
-	Expect(apiextensionsv1.AddToScheme(scheme)).Should(Succeed())
-	Expect(gatewayv1beta1.AddToScheme(scheme)).Should(Succeed())
-	Expect(networkingv1alpha3.AddToScheme(scheme)).Should(Succeed())
-	Expect(networkingv1beta1.AddToScheme(scheme)).Should(Succeed())
-	Expect(oryv1alpha1.AddToScheme(scheme)).Should(Succeed())
+	s := runtime.NewScheme()
+	utilruntime.Must(corev1.AddToScheme(s))
+	utilruntime.Must(v1beta1.AddToScheme(s))
+	utilruntime.Must(appsv1.AddToScheme(s))
+	utilruntime.Must(rbacv1.AddToScheme(s))
+	utilruntime.Must(policyv1.AddToScheme(s))
+	utilruntime.Must(operatorv1alpha1.AddToScheme(s))
+	utilruntime.Must(autoscalingv2.AddToScheme(s))
+	utilruntime.Must(securityv1beta1.AddToScheme(s))
+	utilruntime.Must(schedulingv1.AddToScheme(s))
+	utilruntime.Must(apiextensionsv1.AddToScheme(s))
+	utilruntime.Must(gatewayv1beta1.AddToScheme(s))
+	utilruntime.Must(networkingv1alpha3.AddToScheme(s))
+	utilruntime.Must(networkingv1beta1.AddToScheme(s))
+	utilruntime.Must(oryv1alpha1.AddToScheme(s))
 
-	return scheme
+	return s
 }
 
 type oathkeeperReconcilerWithoutVerification struct {

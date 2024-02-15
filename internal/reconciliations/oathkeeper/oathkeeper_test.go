@@ -2,6 +2,8 @@ package oathkeeper_test
 
 import (
 	"context"
+	"time"
+
 	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
 	"github.com/kyma-project/api-gateway/internal/reconciliations"
 	"github.com/kyma-project/api-gateway/internal/reconciliations/oathkeeper"
@@ -14,7 +16,6 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
-	"time"
 )
 
 type deployedResource struct {
@@ -141,10 +142,18 @@ var resourceList = []deployedResource{
 			Kind:    "PeerAuthentication",
 		},
 	},
+	{
+		name:       "ory-oathkeeper",
+		namespaced: true,
+		GVK: schema.GroupVersionKind{
+			Group:   "",
+			Version: "policy/v1",
+			Kind:    "PodDisruptionBudget",
+		},
+	},
 }
 
 var _ = Describe("Oathkeeper reconciliation", func() {
-
 	Context("Reconcile", func() {
 		It("Should successfully reconcile Oathkeeper", func() {
 			apiGateway := createApiGateway()
@@ -168,6 +177,10 @@ var _ = Describe("Oathkeeper reconciliation", func() {
 				}
 
 				Expect(err).ShouldNot(HaveOccurred())
+				Expect(obj.GetAnnotations()).To(HaveKeyWithValue("apigateways.operator.kyma-project.io/managed-by-disclaimer",
+					"DO NOT EDIT - This resource is managed by Kyma.\nAny modifications are discarded and the resource is reverted to the original state."))
+
+				Expect(obj.GetLabels()).To(HaveKeyWithValue("kyma-project.io/module", "api-gateway"))
 			}
 		})
 
@@ -201,81 +214,6 @@ var _ = Describe("Oathkeeper reconciliation", func() {
 			}
 		})
 
-		It("Should remove Cronjob resources from the cluster if those exist", func() {
-			cronjobResources := []deployedResource{
-				{
-					name:       "oathkeeper-jwks-rotator",
-					namespaced: true,
-					GVK: schema.GroupVersionKind{
-						Group:   "batch",
-						Version: "v1",
-						Kind:    "Cronjob",
-					},
-				},
-				{
-					name:       "ory-oathkeeper-keys-job-role",
-					namespaced: true,
-					GVK: schema.GroupVersionKind{
-						Group:   "rbac.authorization.k8s.io",
-						Version: "v1",
-						Kind:    "Role",
-					},
-				},
-				{
-					name:       "ory-oathkeeper-keys-job-role-binding",
-					namespaced: true,
-					GVK: schema.GroupVersionKind{
-						Group:   "rbac.authorization.k8s.io",
-						Version: "v1",
-						Kind:    "RoleBinding",
-					},
-				},
-				{
-					name:       "ory-oathkeeper-keys-service-account",
-					namespaced: true,
-					GVK: schema.GroupVersionKind{
-						Group:   "",
-						Version: "v1",
-						Kind:    "ServiceAccount",
-					},
-				},
-			}
-
-			apiGateway := createApiGateway()
-			k8sClient := createFakeClient(apiGateway)
-
-			for _, res := range cronjobResources {
-				var r unstructured.Unstructured
-				r.SetGroupVersionKind(res.GVK)
-				r.SetName(res.name)
-				if res.namespaced {
-					r.SetNamespace(reconciliations.Namespace)
-				}
-				Expect(k8sClient.Create(context.Background(), &r)).To(Succeed())
-			}
-
-			status := oathkeeper.Reconcile(context.Background(), k8sClient, apiGateway)
-			Expect(status.IsReady()).To(BeTrue(), "%#v", status.NestedError())
-
-			for _, resource := range cronjobResources {
-				var obj unstructured.Unstructured
-				obj.SetGroupVersionKind(resource.GVK)
-				var err error
-				if resource.namespaced {
-					err = k8sClient.Get(context.Background(), types.NamespacedName{
-						Namespace: reconciliations.Namespace,
-						Name:      resource.name,
-					}, &obj)
-				} else {
-					err = k8sClient.Get(context.Background(), types.NamespacedName{
-						Name: resource.name,
-					}, &obj)
-				}
-
-				Expect(k8serrors.IsNotFound(err)).To(BeTrue())
-			}
-		})
-
 		It("Should return error status when reconciliation fails", func() {
 			apiGateway := createApiGateway()
 			k8sClient := createFakeClientThatFailsOnCreate()
@@ -286,7 +224,6 @@ var _ = Describe("Oathkeeper reconciliation", func() {
 	})
 
 	Context("Reconciler", func() {
-
 		It("Should return error status when reconciliation fails", func() {
 			apiGateway := createApiGateway()
 			k8sClient := createFakeClientThatFailsOnCreate()

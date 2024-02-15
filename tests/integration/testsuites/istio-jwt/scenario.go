@@ -12,6 +12,7 @@ import (
 	"golang.org/x/oauth2/clientcredentials"
 	"k8s.io/client-go/dynamic"
 	"net/http"
+	"net/url"
 	"strings"
 )
 
@@ -38,14 +39,18 @@ func (s *scenario) theAPIRuleIsApplied() error {
 	return helpers.ApplyApiRule(s.resourceManager.CreateResources, s.resourceManager.UpdateResources, s.k8sClient, testcontext.GetRetryOpts(), r)
 }
 
-func (s *scenario) callingTheEndpointWithAValidToken(endpoint, tokenType, _, _ string, lower, higher int) error {
+func (s *scenario) callingTheEndpointWithAValidToken(endpoint, tokenType, audOrClaim, par1, par2 string, lower, higher int) error {
 	asserter := &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher}
 	tokenFrom := tokenFrom{
 		From:     testcontext.AuthorizationHeaderName,
 		Prefix:   testcontext.AuthorizationHeaderPrefix,
 		AsHeader: true,
 	}
-	return s.callingEndpointWithMethodAndHeaders(fmt.Sprintf("%s/%s", s.Url, strings.TrimLeft(endpoint, "/")), http.MethodGet, tokenType, asserter, nil, &tokenFrom)
+	if audOrClaim == "audiences" {
+		return s.callingEndpointWithMethodAndHeaders(fmt.Sprintf("%s/%s", s.Url, strings.TrimLeft(endpoint, "/")), http.MethodGet, tokenType, asserter, nil, &tokenFrom, helpers.RequestOptions{Audiences: []string{par1, par2}})
+	} else {
+		return s.callingEndpointWithMethodAndHeaders(fmt.Sprintf("%s/%s", s.Url, strings.TrimLeft(endpoint, "/")), http.MethodGet, tokenType, asserter, nil, &tokenFrom, helpers.RequestOptions{Scopes: []string{par1, par2}})
+	}
 }
 
 func (s *scenario) callingTheEndpointWithValidTokenShouldResultInStatusBetween(endpoint, tokenType string, lower, higher int) error {
@@ -102,12 +107,28 @@ func (s *scenario) callingTheEndpointWithMethodWithInvalidTokenShouldResultInSta
 	return s.httpClient.CallEndpointWithHeadersAndMethod(requestHeaders, fmt.Sprintf("%s%s", s.Url, path), method, &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher})
 }
 
-func (s *scenario) callingEndpointWithMethodAndHeaders(url string, method string, tokenType string, asserter helpers.HttpResponseAsserter, requestHeaders map[string]string, tokenFrom *tokenFrom) error {
+func (s *scenario) callingEndpointWithMethodAndHeaders(endpointUrl string, method string, tokenType string, asserter helpers.HttpResponseAsserter, requestHeaders map[string]string, tokenFrom *tokenFrom, options ...helpers.RequestOptions) error {
 	if requestHeaders == nil {
 		requestHeaders = make(map[string]string)
 	}
 
-	token, err := auth.GetAccessToken(*s.oauth2Cfg, strings.ToLower(tokenType))
+	oCfg := *s.oauth2Cfg
+
+	if len(options) > 0 {
+		if len(oCfg.EndpointParams) == 0 {
+			oCfg.EndpointParams = make(url.Values)
+		}
+
+		if len(options[0].Scopes) > 0 {
+			oCfg.Scopes = options[0].Scopes
+		}
+
+		if len(options[0].Audiences) > 0 {
+			oCfg.EndpointParams.Add("audience", strings.Join(options[0].Audiences, ","))
+		}
+	}
+
+	token, err := auth.GetAccessToken(oCfg, strings.ToLower(tokenType))
 	if err != nil {
 		return fmt.Errorf("failed to fetch an id_token: %s", err.Error())
 	}
@@ -125,13 +146,13 @@ func (s *scenario) callingEndpointWithMethodAndHeaders(url string, method string
 			}
 			requestHeaders[tokenFrom.From] = token
 		} else {
-			url = fmt.Sprintf("%s?%s=%s", url, tokenFrom.From, token)
+			endpointUrl = fmt.Sprintf("%s?%s=%s", endpointUrl, tokenFrom.From, token)
 		}
 	default:
 		return fmt.Errorf("unsupported token type: %s", tokenType)
 	}
 
-	return s.httpClient.CallEndpointWithHeadersAndMethod(requestHeaders, url, method, asserter)
+	return s.httpClient.CallEndpointWithHeadersAndMethod(requestHeaders, endpointUrl, method, asserter)
 }
 
 func (s *scenario) callingTheEndpointWithoutTokenShouldResultInStatusBetween(endpoint string, lower, higher int) error {

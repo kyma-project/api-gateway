@@ -4,21 +4,25 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"text/template"
+
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/util/yaml"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-	"text/template"
 )
 
 const (
 	disclaimerKey   = "apigateways.operator.kyma-project.io/managed-by-disclaimer"
 	disclaimerValue = "DO NOT EDIT - This resource is managed by Kyma.\nAny modifications are discarded and the resource is reverted to the original state."
-	Namespace       = "kyma-system"
+
+	labelModuleKey   = "kyma-project.io/module"
+	labelModuleValue = "api-gateway"
+
+	Namespace = "kyma-system"
 )
 
 func ApplyResource(ctx context.Context, k8sClient client.Client, resourceManifest []byte, templateValues map[string]string) error {
-
 	resource, err := CreateUnstructuredResource(resourceManifest, templateValues)
 	if err != nil {
 		return err
@@ -71,6 +75,7 @@ func unmarshalResourceBuffer(resourceBuffer []byte) (unstructured.Unstructured, 
 func CreateOrUpdateResource(ctx context.Context, k8sClient client.Client, resource unstructured.Unstructured) error {
 	spec, specExist := resource.Object["spec"]
 	data, dataExist := resource.Object["data"]
+	labels := resource.GetLabels()
 
 	_, err := controllerutil.CreateOrUpdate(ctx, k8sClient, &resource, func() error {
 		annotations := map[string]string{
@@ -78,12 +83,18 @@ func CreateOrUpdateResource(ctx context.Context, k8sClient client.Client, resour
 		}
 		resource.SetAnnotations(annotations)
 
-		if dataExist {
-			resource.Object["data"] = data
+		if len(labels) == 0 {
+			labels = map[string]string{}
 		}
+		labels[labelModuleKey] = labelModuleValue
+		resource.SetLabels(labels)
 
 		if specExist {
 			resource.Object["spec"] = spec
+		}
+
+		if dataExist {
+			resource.Object["data"] = data
 		}
 
 		return nil

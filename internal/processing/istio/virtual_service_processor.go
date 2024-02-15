@@ -45,7 +45,7 @@ func (r virtualServiceCreator) Create(api *gatewayv1beta1.APIRule) (*networkingv
 		httpRouteBuilder := builders.HTTPRoute()
 		serviceNamespace := helpers.FindServiceNamespace(api, &rule)
 		routeDirectlyToService := false
-		if !processing.IsSecured(rule) {
+		if !processing.IsSecuredByOathkeeper(rule) {
 			routeDirectlyToService = true
 		} else if processing.IsJwtSecured(rule) {
 			routeDirectlyToService = true
@@ -71,12 +71,17 @@ func (r virtualServiceCreator) Create(api *gatewayv1beta1.APIRule) (*networkingv
 
 		httpRouteBuilder.Route(builders.RouteDestination().Host(host).Port(port))
 
-		matchBuilder := builders.MatchRequest().MethodRegEx(rule.Methods...)
+		matchBuilder := builders.MatchRequest()
+		if restrictsExposedMethods(rule) {
+			matchBuilder.MethodRegEx(rule.Methods...)
+		}
+
 		if rule.Path == "/*" {
 			matchBuilder.Uri().Prefix("/")
 		} else {
 			matchBuilder.Uri().Regex(rule.Path)
 		}
+
 		httpRouteBuilder.Match(matchBuilder)
 
 		if api.Spec.CorsPolicy == nil {
@@ -133,4 +138,9 @@ func (r virtualServiceCreator) Create(api *gatewayv1beta1.APIRule) (*networkingv
 	vsBuilder.Spec(vsSpecBuilder)
 
 	return vsBuilder.Get(), nil
+}
+
+// restrictsExposedMethods checks if the rule has only access strategies defined that restrict access to specific HTTP methods.
+func restrictsExposedMethods(rule gatewayv1beta1.Rule) bool {
+	return !rule.ContainsAccessStrategy(gatewayv1beta1.AccessStrategyAllow)
 }

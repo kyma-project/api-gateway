@@ -13,7 +13,7 @@ APIGateway Controller is a [Kubernetes controller](https://kubernetes.io/docs/co
 The controller is responsible for handling the [APIGateway CR](../user/custom-resources/apigateway/04-00-apigateway-custom-resource.md).
 
 ### Reconciliation
-APIGateway Controller reconciles the APIGateway CR with each change. If you don't make any changes, the reconciliation process occurs at the default interval of 10 hours, as determined by the [Kubernetes controller-runtime](https://pkg.go.dev/sigs.k8s.io/controller-runtime). 
+APIGateway Controller reconciles the APIGateway CR with each change. If you don't make any changes, the reconciliation process occurs at the default interval of 10 hours, as determined by the [Kubernetes controller-runtime](https://pkg.go.dev/sigs.k8s.io/controller-runtime).
 APIGateway Controller reconciles only the oldest APIGateway CR on the cluster. It sets the status of other CRs to `Error`.
 If a failure occurs during the reconciliation process, the default behavior of the [Kubernetes controller-runtime](https://pkg.go.dev/sigs.k8s.io/controller-runtime) is to use exponential backoff requeue.
 

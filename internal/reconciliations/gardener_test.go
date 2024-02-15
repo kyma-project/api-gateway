@@ -2,6 +2,7 @@ package reconciliations_test
 
 import (
 	"context"
+
 	"github.com/kyma-project/api-gateway/internal/reconciliations"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -11,7 +12,6 @@ import (
 
 var _ = Describe("Gardener", func() {
 	Context("GetGardenerDomain", func() {
-
 		It("should return the domain name from the Gardener shoot-info config", func() {
 			// given
 			cm := corev1.ConfigMap{
@@ -66,7 +66,6 @@ var _ = Describe("Gardener", func() {
 	})
 
 	Context("runsOnGardenerCluster", func() {
-
 		It("should return true if the Gardener shoot-info is available", func() {
 			// given
 			cm := corev1.ConfigMap{
@@ -97,7 +96,5 @@ var _ = Describe("Gardener", func() {
 			Expect(err).ShouldNot(HaveOccurred())
 			Expect(runsOnGardener).To(BeFalse())
 		})
-
 	})
-
 })

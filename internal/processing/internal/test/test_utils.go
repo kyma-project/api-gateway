@@ -52,7 +52,9 @@ var (
 	ServiceHostWithNoDomain        = "myService"
 	ServiceHost                    = ServiceHostWithNoDomain + "." + DefaultDomain
 
+	TestAllowOrigin  = []*v1beta1.StringMatch{{MatchType: &v1beta1.StringMatch_Regex{Regex: ".*"}}}
 	TestAllowMethods = []apirulev1beta1.HttpMethod{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodDelete}
+	TestAllowHeaders = []string{"header1", "header2"}
 	TestCors         = &processing.CorsConfig{
 		AllowOrigins: []*v1beta1.StringMatch{{MatchType: &v1beta1.StringMatch_Regex{Regex: ".*"}}},
 		AllowMethods: []string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodDelete},

@@ -178,9 +178,9 @@ var _ = Describe("APIRule Controller", Serial, func() {
 		It("should create, update and delete rules depending on patch match", func() {
 			updateJwtHandlerTo(helpers.JWT_HANDLER_ORY)
 
-			rule1 := testRule("/rule1", methodsGet, defaultMutators, noConfigHandler("noop"))
-			rule2 := testRule("/rule2", methodsPut, defaultMutators, noConfigHandler("unauthorized"))
-			rule3 := testRule("/rule3", methodsDelete, defaultMutators, noConfigHandler("anonymous"))
+			rule1 := testRule("/rule1", methodsGet, defaultMutators, noConfigHandler(gatewayv1beta1.AccessStrategyNoop))
+			rule2 := testRule("/rule2", methodsPut, defaultMutators, noConfigHandler(gatewayv1beta1.AccessStrategyUnauthorized))
+			rule3 := testRule("/rule3", methodsDelete, defaultMutators, noConfigHandler(gatewayv1beta1.AccessStrategyAnonymous))
 
 			apiRuleName := generateTestName(testNameBase, testIDLength)
 			serviceName := generateTestName(testServiceNameBase, testIDLength)
@@ -301,7 +301,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 								Host(serviceHost).
 								Gateway(testGatewayURL).
 								HTTP(builders.HTTPRoute().
-									Match(builders.MatchRequest().Uri().Regex(testPath).MethodRegEx(defaultMethods...)).
+									Match(builders.MatchRequest().Uri().Regex(testPath)).
 									Route(builders.RouteDestination().Host(testOathkeeperSvcURL).Port(testOathkeeperPort)).
 									Headers(builders.NewHttpRouteHeadersBuilder().SetHostHeader(serviceHost).Get()).
 									CorsPolicy(defaultCorsPolicy).
@@ -399,13 +399,13 @@ var _ = Describe("APIRule Controller", Serial, func() {
 									Host(serviceHost).
 									Gateway(testGatewayURL).
 									HTTP(builders.HTTPRoute().
-										Match(builders.MatchRequest().Uri().Regex("/img").MethodRegEx(http.MethodGet)).
+										Match(builders.MatchRequest().Uri().Regex("/img")).
 										Route(builders.RouteDestination().Host(testOathkeeperSvcURL).Port(testOathkeeperPort)).
 										Headers(builders.NewHttpRouteHeadersBuilder().SetHostHeader(serviceHost).Get()).
 										CorsPolicy(defaultCorsPolicy).
 										Timeout(defaultHttpTimeout)).
 									HTTP(builders.HTTPRoute().
-										Match(builders.MatchRequest().Uri().Regex("/headers").MethodRegEx(http.MethodGet)).
+										Match(builders.MatchRequest().Uri().Regex("/headers")).
 										Route(builders.RouteDestination().Host(testOathkeeperSvcURL).Port(testOathkeeperPort)).
 										Headers(builders.NewHttpRouteHeadersBuilder().SetHostHeader(serviceHost).Get()).
 										CorsPolicy(defaultCorsPolicy).
@@ -816,8 +816,8 @@ var _ = Describe("APIRule Controller", Serial, func() {
 						oauthHandler := testOauthHandler(defaultScopes)
 						rule1 := testRule("/img", methodsGet, defaultMutators, jwtHandler)
 						rule2 := testRule("/headers", methodsGet, defaultMutators, oauthHandler)
-						rule3 := testRule("/status", methodsGet, defaultMutators, noConfigHandler("noop"))
-						rule4 := testRule("/favicon", methodsGet, nil, noConfigHandler("allow"))
+						rule3 := testRule("/status", methodsGet, defaultMutators, noConfigHandler(gatewayv1beta1.AccessStrategyNoop))
+						rule4 := testRule("/favicon", methodsGet, nil, noConfigHandler(gatewayv1beta1.AccessStrategyAllow))
 
 						apiRuleName := generateTestName(testNameBase, testIDLength)
 						serviceName := testServiceNameBase
@@ -850,25 +850,25 @@ var _ = Describe("APIRule Controller", Serial, func() {
 								Host(serviceHost).
 								Gateway(testGatewayURL).
 								HTTP(builders.HTTPRoute().
-									Match(builders.MatchRequest().Uri().Regex("/img").MethodRegEx(http.MethodGet)).
+									Match(builders.MatchRequest().Uri().Regex("/img")).
 									Route(builders.RouteDestination().Host(testOathkeeperSvcURL).Port(testOathkeeperPort)).
 									Headers(builders.NewHttpRouteHeadersBuilder().SetHostHeader(serviceHost).Get()).
 									CorsPolicy(defaultCorsPolicy).
 									Timeout(defaultHttpTimeout)).
 								HTTP(builders.HTTPRoute().
-									Match(builders.MatchRequest().Uri().Regex("/headers").MethodRegEx(http.MethodGet)).
+									Match(builders.MatchRequest().Uri().Regex("/headers")).
 									Route(builders.RouteDestination().Host(testOathkeeperSvcURL).Port(testOathkeeperPort)).
 									Headers(builders.NewHttpRouteHeadersBuilder().SetHostHeader(serviceHost).Get()).
 									CorsPolicy(defaultCorsPolicy).
 									Timeout(defaultHttpTimeout)).
 								HTTP(builders.HTTPRoute().
-									Match(builders.MatchRequest().Uri().Regex("/status").MethodRegEx(http.MethodGet)).
+									Match(builders.MatchRequest().Uri().Regex("/status")).
 									Route(builders.RouteDestination().Host(testOathkeeperSvcURL).Port(testOathkeeperPort)).
 									Headers(builders.NewHttpRouteHeadersBuilder().SetHostHeader(serviceHost).Get()).
 									CorsPolicy(defaultCorsPolicy).
 									Timeout(defaultHttpTimeout)).
 								HTTP(builders.HTTPRoute().
-									Match(builders.MatchRequest().Uri().Regex("/favicon").MethodRegEx(http.MethodGet)).
+									Match(builders.MatchRequest().Uri().Regex("/favicon")).
 									Route(builders.RouteDestination().Host("httpbin.atgo-system.svc.cluster.local").Port(443)). // "allow", no oathkeeper rule!
 									Headers(builders.NewHttpRouteHeadersBuilder().SetHostHeader(serviceHost).Get()).
 									CorsPolicy(defaultCorsPolicy).
@@ -893,6 +893,8 @@ var _ = Describe("APIRule Controller", Serial, func() {
 							var rlList []rulev1alpha1.Rule
 							Eventually(func(g Gomega) {
 								rlList = getRuleList(g, matchingLabels)
+
+								// Make sure no access rules for allow and no_auth handlers are created
 								g.Expect(rlList).To(HaveLen(3))
 
 								rules := make(map[string]rulev1alpha1.Rule)
@@ -938,14 +940,76 @@ var _ = Describe("APIRule Controller", Serial, func() {
 								g.Expect(rl.Spec.Mutators[1].Handler.Name).To(Equal(defaultMutators[1].Name))
 							}, eventuallyTimeout).Should(Succeed())
 						}
-
-						//make sure no rule for "/favicon" path has been created
-						Eventually(func(g Gomega) {
-							name := fmt.Sprintf("%s-%s-3", apiRuleName, serviceName)
-							g.Expect(c.Get(context.TODO(), client.ObjectKey{Name: name, Namespace: testNamespace}, &rulev1alpha1.Rule{})).To(HaveOccurred())
-						}, eventuallyTimeout).Should(Succeed())
-
 					})
+
+					jwtHandlers := []string{helpers.JWT_HANDLER_ORY, helpers.JWT_HANDLER_ISTIO}
+					for _, jwtHandler := range jwtHandlers {
+						Context(fmt.Sprintf("with %s as JWT handler", jwtHandler), func() {
+							It("should create a VS, but no access rule for allow and no_auth handler", func() {
+								updateJwtHandlerTo(jwtHandler)
+
+								rule1 := testRule("/favicon", methodsGet, nil, noConfigHandler(gatewayv1beta1.AccessStrategyAllow))
+								rule2 := testRule("/anything", methodsGet, nil, noConfigHandler(gatewayv1beta1.AccessStrategyNoAuth))
+
+								apiRuleName := generateTestName(testNameBase, testIDLength)
+								serviceName := testServiceNameBase
+								serviceHost := "httpbin4.kyma.local"
+
+								apiRule := testApiRule(apiRuleName, testNamespace, serviceName, testNamespace, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule1, rule2})
+								svc := testService(serviceName, testNamespace, testServicePort)
+
+								// when
+								Expect(c.Create(context.TODO(), svc)).Should(Succeed())
+								Expect(c.Create(context.TODO(), apiRule)).Should(Succeed())
+								defer func() {
+									apiRuleTeardown(apiRule)
+									serviceTeardown(svc)
+								}()
+
+								expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusOK)
+
+								matchingLabels := matchingLabelsFunc(apiRuleName, testNamespace)
+
+								By("Verifying created virtual service")
+								vsList := networkingv1beta1.VirtualServiceList{}
+								Eventually(func(g Gomega) {
+									g.Expect(c.List(context.TODO(), &vsList, matchingLabels)).Should(Succeed())
+									g.Expect(vsList.Items).To(HaveLen(1))
+
+									vs := vsList.Items[0]
+
+									expectedSpec := builders.VirtualServiceSpec().
+										Host(serviceHost).
+										Gateway(testGatewayURL).
+										HTTP(builders.HTTPRoute().
+											Match(builders.MatchRequest().Uri().Regex("/favicon")).
+											Route(builders.RouteDestination().Host("httpbin.atgo-system.svc.cluster.local").Port(443)).
+											Headers(builders.NewHttpRouteHeadersBuilder().SetHostHeader(serviceHost).Get()).
+											CorsPolicy(defaultCorsPolicy).
+											Timeout(defaultHttpTimeout)).
+										HTTP(builders.HTTPRoute().
+											Match(builders.MatchRequest().Uri().Regex("/anything").MethodRegEx("GET")).
+											Route(builders.RouteDestination().Host("httpbin.atgo-system.svc.cluster.local").Port(443)).
+											Headers(builders.NewHttpRouteHeadersBuilder().SetHostHeader(serviceHost).Get()).
+											CorsPolicy(defaultCorsPolicy).
+											Timeout(defaultHttpTimeout))
+
+									gotSpec := *expectedSpec.Get()
+									g.Expect(*vs.Spec.DeepCopy()).To(Equal(*gotSpec.DeepCopy()))
+								}, eventuallyTimeout).Should(Succeed())
+
+								By("Verifying no Oathkeeper rule is created")
+
+								var rlList []rulev1alpha1.Rule
+								Eventually(func(g Gomega) {
+									rlList = getRuleList(g, matchingLabels)
+
+									g.Expect(rlList).To(HaveLen(0))
+
+								}, eventuallyTimeout).Should(Succeed())
+							})
+						})
+					}
 				})
 			})
 		})

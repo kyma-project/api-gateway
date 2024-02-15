@@ -85,6 +85,9 @@
         - key: DELETE
         - key: PATCH
         - key: HEAD
+        - key: OPTIONS
+        - key: CONNECT
+        - key: TRACE
     - simple: true
       required: false
       path: allowOrigins
@@ -148,7 +151,7 @@
     path: '/.*'
     methods: ['GET']
     accessStrategies:
-      - handler: 'allow'
+      - handler: 'no_auth'
   children:
     - simple: true
       required: false
@@ -169,7 +172,7 @@
       widget: GenericList
       defaultExpanded: true
       template:
-        handler: 'allow'
+        handler: 'no_auth'
       children:
         - required: true
           simple: true
@@ -177,6 +180,7 @@
           name: accessStrategies.handler
           enum:
             - allow
+            - no_auth
             - noop
             - jwt
             - oauth2_introspection
@@ -259,7 +263,7 @@
               simple: true
               inputInfo: inputInfo.token_from
               widget: KeyValuePair
-              visibility: '$item.handler!="allow" and $item.handler!="noop"'
+              visibility: '$item.handler!="allow" and $item.handler!="no_auth" and $item.handler!="noop"'
               keyEnum:
               - header
               - query_parameter
@@ -276,6 +280,9 @@
         - key: DELETE
         - key: PATCH
         - key: HEAD
+        - key: OPTIONS
+        - key: CONNECT
+        - key: TRACE
     - path: '[].mutators'
       name: mutators
       widget: GenericList

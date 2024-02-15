@@ -5,11 +5,21 @@ Feature: Exposing specific methods on paths
     When ExposeMethodsOnPathsAllowHandler: The APIRule is applied
     Then ExposeMethodsOnPathsAllowHandler: Calling the "/anything" endpoint with "GET" method with any token should result in status between 200 and 200
     Then ExposeMethodsOnPathsAllowHandler: Calling the "/anything" endpoint with "POST" method with any token should result in status between 200 and 200
-    And ExposeMethodsOnPathsAllowHandler: Calling the "/anything" endpoint with "PUT" method with any token should result in status between 404 and 404
+    And ExposeMethodsOnPathsAllowHandler: Calling the "/anything" endpoint with "PUT" method with any token should result in status between 200 and 200
     And ExposeMethodsOnPathsAllowHandler: Calling the "/anything/put" endpoint with "PUT" method with any token should result in status between 200 and 200
-    And ExposeMethodsOnPathsAllowHandler: Calling the "/anything/put" endpoint with "POST" method with any token should result in status between 404 and 404
+    And ExposeMethodsOnPathsAllowHandler: Calling the "/anything/put" endpoint with "POST" method with any token should result in status between 200 and 200
     And ExposeMethodsOnPathsAllowHandler: Teardown httpbin service
-  
+
+  Scenario: ExposeMethodsOnPathsNoAuthHandler: Expose GET, POST method for "/anything" and only PUT for "/anything/put" with no_auth access strategy
+    Given ExposeMethodsOnPathsNoAuthHandler: There is a httpbin service
+    When ExposeMethodsOnPathsNoAuthHandler: The APIRule is applied
+    Then ExposeMethodsOnPathsNoAuthHandler: Calling the "/anything" endpoint with "GET" method with any token should result in status between 200 and 200
+    Then ExposeMethodsOnPathsNoAuthHandler: Calling the "/anything" endpoint with "POST" method with any token should result in status between 200 and 200
+    And ExposeMethodsOnPathsNoAuthHandler: Calling the "/anything" endpoint with "PUT" method with any token should result in status between 404 and 404
+    And ExposeMethodsOnPathsNoAuthHandler: Calling the "/anything/put" endpoint with "PUT" method with any token should result in status between 200 and 200
+    And ExposeMethodsOnPathsNoAuthHandler: Calling the "/anything/put" endpoint with "POST" method with any token should result in status between 404 and 404
+    And ExposeMethodsOnPathsNoAuthHandler: Teardown httpbin service
+
   Scenario: ExposeMethodsOnPathsNoopHandler: Expose GET, POST method for "/anything" and only PUT for "/anything/put" with noop access strategy
     Given ExposeMethodsOnPathsNoopHandler: There is a httpbin service
     When ExposeMethodsOnPathsNoopHandler: The APIRule is applied
@@ -19,7 +29,7 @@ Feature: Exposing specific methods on paths
     And ExposeMethodsOnPathsNoopHandler: Calling the "/anything/put" endpoint with "PUT" method with any token should result in status between 200 and 200
     And ExposeMethodsOnPathsNoopHandler: Calling the "/anything/put" endpoint with "POST" method with any token should result in status between 404 and 404
     And ExposeMethodsOnPathsNoopHandler: Teardown httpbin service
-    
+
   Scenario: ExposeMethodsOnPathsJwtHandler: Expose GET, POST method for "/anything" and only PUT for "/anything/put" with jwt access strategy
     Given ExposeMethodsOnPathsJwtHandler: There is a httpbin service
     When ExposeMethodsOnPathsJwtHandler: The APIRule is applied

@@ -5,7 +5,6 @@ import (
 	_ "embed"
 	"fmt"
 	"log"
-	"os"
 	"time"
 
 	"github.com/cucumber/godog"
@@ -32,8 +31,7 @@ func (t *testsuite) InitScenarios(ctx *godog.ScenarioContext) {
 }
 
 func (t *testsuite) FeaturePath() []string {
-	isGardener := os.Getenv("IS_GARDENER")
-	if isGardener == "true" {
+	if t.config.IsGardener {
 		return []string{"testsuites/gateway/features/deletion.feature", "testsuites/gateway/features/kyma_gateway.feature", "testsuites/gateway/features/kyma_gateway_gardener.feature"}
 	}
 

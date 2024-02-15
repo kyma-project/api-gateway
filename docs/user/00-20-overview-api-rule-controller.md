@@ -33,4 +33,4 @@ In terms of the resource configuration, the following requirements are set on AP
 | Limits   | 100m | 128Mi  |
 | Requests | 10m  | 64Mi   |
 
-The number of APIRules you can create is not limited. 
+The number of APIRules you can create is not limited.

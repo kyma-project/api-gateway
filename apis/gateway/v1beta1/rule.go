@@ -69,3 +69,24 @@ func ConvertHttpMethodsToStrings(methods []HttpMethod) []string {
 
 	return strings
 }
+
+const (
+	AccessStrategyAllow                   string = "allow"
+	AccessStrategyNoAuth                  string = "no_auth"
+	AccessStrategyJwt                     string = "jwt"
+	AccessStrategyNoop                    string = "noop"
+	AccessStrategyUnauthorized            string = "unauthorized"
+	AccessStrategyAnonymous               string = "anonymous"
+	AccessStrategyCookieSession           string = "cookie_session"
+	AccessStrategyOauth2ClientCredentials string = "oauth2_client_credentials"
+	AccessStrategyOauth2Introspection     string = "oauth2_introspection"
+)
+
+func (r *Rule) ContainsAccessStrategy(strategy string) bool {
+	for _, s := range r.AccessStrategies {
+		if s.Name == strategy {
+			return true
+		}
+	}
+	return false
+}
