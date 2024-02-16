@@ -70,22 +70,24 @@ var _ = Describe("API Gateway Controller", Serial, func() {
 
 			// when
 			Expect(k8sClient.Create(context.Background(), &apiGateway)).Should(Succeed())
-			Expect(k8sClient.Create(context.Background(), &apiGateway2)).Should(Succeed())
-
-			// then
 			Eventually(func(g Gomega) {
 				created := v1alpha1.APIGateway{}
 				g.Expect(k8sClient.Get(context.Background(), client.ObjectKey{Name: apiGateway.Name}, &created)).Should(Succeed())
 				g.Expect(created.ObjectMeta.Finalizers).To(HaveLen(1))
 				g.Expect(created.ObjectMeta.Finalizers[0]).To(Equal(ApiGatewayFinalizer))
 				g.Expect(created.Status.State).To(Equal(v1alpha1.Ready))
+			}, eventuallyTimeout).Should(Succeed())
 
-				created2 := v1alpha1.APIGateway{}
-				g.Expect(k8sClient.Get(context.Background(), client.ObjectKey{Name: apiGateway2.Name}, &created2)).Should(Succeed())
-				g.Expect(created2.ObjectMeta.Finalizers).To(HaveLen(1))
-				g.Expect(created2.ObjectMeta.Finalizers[0]).To(Equal(ApiGatewayFinalizer))
-				g.Expect(created2.Status.State).To(Equal(v1alpha1.Warning))
-				g.Expect(created2.Status.Description).To(Equal("There are APIGateway(s) that block the creation of API-Gateway CR. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning"))
+			Expect(k8sClient.Create(context.Background(), &apiGateway2)).Should(Succeed())
+
+			// then
+			Eventually(func(g Gomega) {
+				created := v1alpha1.APIGateway{}
+				g.Expect(k8sClient.Get(context.Background(), client.ObjectKey{Name: apiGateway2.Name}, &created)).Should(Succeed())
+				g.Expect(created.ObjectMeta.Finalizers).To(HaveLen(1))
+				g.Expect(created.ObjectMeta.Finalizers[0]).To(Equal(ApiGatewayFinalizer))
+				g.Expect(created.Status.State).To(Equal(v1alpha1.Warning))
+				g.Expect(created.Status.Description).To(Equal("There are APIGateway(s) that block the creation of API-Gateway CR. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning"))
 			}, eventuallyTimeout).Should(Succeed())
 
 			Expect(k8sClient.Delete(context.Background(), &apiGateway)).Should(Succeed())
