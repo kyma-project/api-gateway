@@ -36,7 +36,8 @@ The mTLS Gateway is exposed under `*.mtls.example.com` with a valid DNS `A` reco
     Assuming that you have successfully created the server certificate and it is stored in the `kyma-mtls-certs` Secret within the default namespace, modify and apply the following Gateway custom resource on a cluster:
 
     > [!NOTE]
-    >  kyma-mtls-certs secret must contain a valid certificate for `*.mtls.example.com` common name.
+    >  The `kyma-mtls-certs` Secret must contain a valid certificate for the `*.mtls.example.com` common name.
+    
     ```sh
     cat <<EOF | kubectl apply -f -
     apiVersion: networking.istio.io/v1alpha3
