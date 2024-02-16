@@ -1,6 +1,6 @@
 # Set Up an mTLS Gateway and Expose Workloads Behind It
 
-This document showcases how to set up a mTLS Gateway in Istio and expose it with APIRule.
+This document showcases how to set up an mTLS Gateway in Istio and expose it with an APIRule.
 
 According to the official [CloudFlare documentation](https://www.cloudflare.com/learning/access-management/what-is-mutual-tls/):
 >Mutual TLS, or mTLS for short, is a method for mutual authentication. mTLS ensures that the parties at each end of a network connection are who they claim to be by verifying that they both have the correct private key. The information within their respective TLS certificates provides additional verification.
@@ -29,7 +29,7 @@ The mTLS Gateway is exposed under `*.mtls.example.com` with a valid DNS `A` reco
 
     This step is required for mTLS validation, which allows Istio to verify the authenticity of a client host.
 
-    For detailed step-by-step guide on how to generate self-signed certificate, follow [Prepare Self-Signed Root Certificate Authority and Client Certificates](01-60-security/01-61-mtls-selfsign-client-certicate.md).
+    For a detailed step-by-step guide on how to generate a self-signed certificate, follow [Prepare Self-Signed Root Certificate Authority and Client Certificates](01-60-security/01-61-mtls-selfsign-client-certicate.md).
 
 3. Set up Istio Gateway in mutual mode.
 
@@ -37,7 +37,7 @@ The mTLS Gateway is exposed under `*.mtls.example.com` with a valid DNS `A` reco
 
     > [!NOTE]
     >  The `kyma-mtls-certs` Secret must contain a valid certificate for the `*.mtls.example.com` common name.
-    
+
     ```sh
     cat <<EOF | kubectl apply -f -
     apiVersion: networking.istio.io/v1alpha3
