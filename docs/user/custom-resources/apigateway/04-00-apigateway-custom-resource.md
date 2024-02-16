@@ -8,7 +8,7 @@ To get the up-to-date CRD in the `yaml` format, run the following command:
 kubectl get crd apigateways.operator.kyma-project.io -o yaml
 ```
 
-You are only allowed to have one APIGateway CR. If there are multiple APIGateway CRs in the cluster, the oldest one reconciles the module. Any additional APIGateway CR is placed in the `Error` state.
+You are only allowed to have one APIGateway CR. If there are multiple APIGateway CRs in the cluster, the oldest one reconciles the module. Any additional APIGateway CR is placed in the `Warning` state.
 
 ## Specification <!-- {docsify-ignore} -->
 
