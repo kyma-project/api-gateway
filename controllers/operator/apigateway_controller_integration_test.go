@@ -84,10 +84,9 @@ var _ = Describe("API Gateway Controller", Serial, func() {
 			Eventually(func(g Gomega) {
 				created := v1alpha1.APIGateway{}
 				g.Expect(k8sClient.Get(context.Background(), client.ObjectKey{Name: apiGateway2.Name}, &created)).Should(Succeed())
-				g.Expect(created.ObjectMeta.Finalizers).To(HaveLen(1))
-				g.Expect(created.ObjectMeta.Finalizers[0]).To(Equal(ApiGatewayFinalizer))
+				g.Expect(created.ObjectMeta.Finalizers).To(HaveLen(0))
 				g.Expect(created.Status.State).To(Equal(v1alpha1.Warning))
-				g.Expect(created.Status.Description).To(Equal("There are APIGateway(s) that block the creation of API-Gateway CR. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning"))
+				g.Expect(created.Status.Description).To(Equal(fmt.Sprintf("stopped APIGateway CR reconciliation: only APIGateway CR %s reconciles the module", apiGateway.Name)))
 			}, eventuallyTimeout).Should(Succeed())
 
 			Expect(k8sClient.Delete(context.Background(), &apiGateway)).Should(Succeed())
