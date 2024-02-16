@@ -141,9 +141,23 @@ func (s *scenario) thereIsAnJwtSecuredPath(path string) {
 	s.ManifestTemplate["jwtSecuredPath"] = path
 }
 
-func (s *scenario) upgradeApiGateway() error {
+func (s *scenario) upgradeApiGateway(manifestType, should string) error {
 	const manifestDirectory = "testsuites/upgrade/manifests"
-	const manifestFileName = "upgrade-test-generated-operator-manifest.yaml"
+
+	var manifestFileName string
+	switch manifestType {
+	case "generated":
+		manifestFileName = "upgrade-test-generated-operator-manifest.yaml"
+	case "failing":
+		manifestFileName = "upgrade-test-operator-fail.yaml"
+	default:
+		return fmt.Errorf("unsupported manifest type: %s", manifestType)
+	}
+
+	expectSuccess := false
+	if should == "succeed" {
+		expectSuccess = true
+	}
 
 	var apiGatewayDeployment v1.Deployment
 	var oldImage string
@@ -157,18 +171,24 @@ func (s *scenario) upgradeApiGateway() error {
 	if err != nil {
 		return err
 	}
+
 	err = runtime.DefaultUnstructuredConverter.FromUnstructured(apiGatewayUnstructured.UnstructuredContent(), &apiGatewayDeployment)
 	if err != nil {
 		return err
 	}
+
 	oldImage = apiGatewayDeployment.Spec.Template.Spec.Containers[0].Image
 
-	return retry.Do(func() error {
-		err = s.resourceManager.MergeAndUpdateOrCreateResources(s.k8sClient, manifestCrds)
-		if err != nil {
+	_, err = s.resourceManager.CreateOrUpdateResourcesGVR(s.k8sClient, manifestCrds...)
+	if err != nil {
+		if expectSuccess {
 			return err
+		} else {
+			return nil
 		}
+	}
 
+	return retry.Do(func() error {
 		apiGatewayUnstructured, err = s.resourceManager.GetResource(s.k8sClient, deploymentGVR, apiGatewayNS, apiGatewayName)
 		if err != nil {
 			return err
@@ -180,7 +200,6 @@ func (s *scenario) upgradeApiGateway() error {
 		}
 
 		currentImage := apiGatewayDeployment.Spec.Template.Spec.Containers[0].Image
-
 		if currentImage != s.APIGatewayImageVersion || currentImage == oldImage {
 			return fmt.Errorf("after update image is the same as before %s : %s", currentImage, oldImage)
 		}
@@ -234,7 +253,7 @@ func initCommon(ctx *godog.ScenarioContext, ts *testsuite) {
 	ctx.Step(`Upgrade: Calling the "([^"]*)" endpoint without a token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithoutTokenShouldResultInStatusBetween)
 	ctx.Step(`Upgrade: Calling the "([^"]*)" endpoint with an invalid token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithInvalidTokenShouldResultInStatusBetween)
 	ctx.Step(`Upgrade: Calling the "([^"]*)" endpoint with a valid "([^"]*)" token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithValidTokenShouldResultInStatusBetween)
-	ctx.Step(`Upgrade: API Gateway is upgraded to current branch version$`, scenario.upgradeApiGateway)
+	ctx.Step(`Upgrade: API Gateway is upgraded to current branch version with "([^"]*)" manifest and should "([^"]*)"$`, scenario.upgradeApiGateway)
 	ctx.Step(`Upgrade: Teardown httpbin service$`, scenario.teardownHttpbinService)
 	ctx.Step(`Upgrade: A reconciliation happened in the last (\d+) seconds$`, scenario.reconciliationHappened)
 }

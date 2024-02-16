@@ -63,9 +63,14 @@ func (h *RetryableHttpClient) CallEndpointWithRetries(url string, validator Http
 	return nil
 }
 
-// CallEndpointWithHeadersWithRetries returns error if the status code is not in between bounds of status predicate after retrying deadline is reached
+// CallEndpointWithHeadersWithRetries calls given url with headers and GET method. Returns error if the status code is not in between bounds of status predicate after retrying deadline is reached
 func (h *RetryableHttpClient) CallEndpointWithHeadersWithRetries(requestHeaders map[string]string, url string, validator HttpResponseAsserter) error {
-	req, err := http.NewRequest(http.MethodGet, url, nil)
+	return h.CallEndpointWithHeadersAndMethod(requestHeaders, url, http.MethodGet, validator)
+}
+
+// CallEndpointWithHeadersAndMethod calls given url with given method and headers. Returns error if the status code is not in between bounds of status predicate after retrying deadline is reached
+func (h *RetryableHttpClient) CallEndpointWithHeadersAndMethod(requestHeaders map[string]string, url string, method string, validator HttpResponseAsserter) error {
+	req, err := http.NewRequest(method, url, nil)
 	if err != nil {
 		return err
 	}
@@ -74,7 +79,11 @@ func (h *RetryableHttpClient) CallEndpointWithHeadersWithRetries(requestHeaders 
 		req.Header.Set(headerName, headerValue)
 	}
 
-	err = h.withRetries(func() (*http.Response, error) {
+	return h.CallEndpointWithRequest(req, url, validator)
+}
+
+func (h *RetryableHttpClient) CallEndpointWithRequest(req *http.Request, url string, validator HttpResponseAsserter) error {
+	err := h.withRetries(func() (*http.Response, error) {
 		return h.client.Do(req)
 	}, validator)
 

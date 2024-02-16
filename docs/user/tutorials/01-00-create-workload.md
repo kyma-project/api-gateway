@@ -37,7 +37,7 @@ This tutorial explains how to create a sample HTTPBin Service deployment.
     spec:
       ports:
       - name: http
-        port: 8000
+        port: 80
         targetPort: 80
       selector:
         app: httpbin
@@ -60,7 +60,7 @@ This tutorial explains how to create a sample HTTPBin Service deployment.
         spec:
           serviceAccountName: $SERVICE_NAME
           containers:
-          - image: docker.io/kong/httpbin
+          - image: docker.io/kennethreitz/httpbin
             imagePullPolicy: IfNotPresent
             name: httpbin
             ports:

@@ -3,6 +3,7 @@ package istiojwt
 import (
 	"fmt"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
+	"net/http"
 	"strings"
 
 	"github.com/cucumber/godog"
@@ -32,7 +33,7 @@ func (s *scenario) shouldOverwriteHeaderValue(endpoint, headerName, requestValue
 		AsHeader: true,
 	}
 
-	return s.callingEndpointWithHeadersWithRetries(fmt.Sprintf("%s/%s", s.Url, strings.TrimLeft(endpoint, "/")), "JWT", asserter, requestHeaders, &tokenFrom)
+	return s.callingEndpointWithMethodAndHeaders(fmt.Sprintf("%s/%s", s.Url, strings.TrimLeft(endpoint, "/")), http.MethodGet, "JWT", asserter, requestHeaders, &tokenFrom)
 }
 
 func (s *scenario) shouldOverwriteCookieValue(endpoint, requestValue, responseValue string) error {
@@ -46,5 +47,5 @@ func (s *scenario) shouldOverwriteCookieValue(endpoint, requestValue, responseVa
 		AsHeader: true,
 	}
 
-	return s.callingEndpointWithHeadersWithRetries(fmt.Sprintf("%s/%s", s.Url, strings.TrimLeft(endpoint, "/")), "JWT", asserter, requestHeaders, &tokenFrom)
+	return s.callingEndpointWithMethodAndHeaders(fmt.Sprintf("%s/%s", s.Url, strings.TrimLeft(endpoint, "/")), http.MethodGet, "JWT", asserter, requestHeaders, &tokenFrom)
 }

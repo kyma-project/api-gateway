@@ -246,12 +246,12 @@ var _ = Describe("Request Authentication Processor", func() {
 		Expect(ra.Spec.JwtRules[1].JwksUri).To(Equal(JwksUri2))
 	})
 
-	It("should not create RA if handler is allow", func() {
+	DescribeTable("should not create RA if access strategy is", func(accessStrategy string) {
 		// given
 		strategies := []*gatewayv1beta1.Authenticator{
 			{
 				Handler: &gatewayv1beta1.Handler{
-					Name: "allow",
+					Name: accessStrategy,
 				},
 			},
 		}
@@ -280,43 +280,11 @@ var _ = Describe("Request Authentication Processor", func() {
 		// then
 		Expect(err).To(BeNil())
 		Expect(result).To(BeEmpty())
-	})
-
-	It("should not create RA if handler is noop", func() {
-		// given
-		strategies := []*gatewayv1beta1.Authenticator{
-			{
-				Handler: &gatewayv1beta1.Handler{
-					Name: "noop",
-				},
-			},
-		}
-
-		allowRule := GetRuleFor(ApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, strategies)
-		rules := []gatewayv1beta1.Rule{allowRule}
-
-		apiRule := GetAPIRuleFor(rules)
-
-		overrideServiceName := "testName"
-		overrideServiceNamespace := "testName-namespace"
-		overrideServicePort := uint32(8080)
-
-		apiRule.Spec.Service = &gatewayv1beta1.Service{
-			Name:      &overrideServiceName,
-			Namespace: &overrideServiceNamespace,
-			Port:      &overrideServicePort,
-		}
-
-		client := GetFakeClient()
-		processor := istio.NewRequestAuthenticationProcessor(GetTestConfig())
-
-		// when
-		result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
-
-		// then
-		Expect(err).To(BeNil())
-		Expect(result).To(BeEmpty())
-	})
+	},
+		Entry(nil, gatewayv1beta1.AccessStrategyNoAuth),
+		Entry(nil, gatewayv1beta1.AccessStrategyAllow),
+		Entry(nil, gatewayv1beta1.AccessStrategyNoop),
+	)
 
 	It("should create RA when no exists", func() {
 		// given: New resources
@@ -597,11 +565,10 @@ var _ = Describe("Request Authentication Processor", func() {
 	When("Service has custom selector spec", func() {
 		It("should create RA with selector from service", func() {
 			// given: New resources
-			methods := []string{"GET"}
 			path := "/"
 			serviceName := "test-service"
 
-			rule := getRuleForApTest(methods, path, serviceName)
+			rule := getRuleForApTest(methodsGet, path, serviceName)
 			rules := []gatewayv1beta1.Rule{rule}
 			apiRule := GetAPIRuleFor(rules)
 			svc := GetService(serviceName)
@@ -627,12 +594,11 @@ var _ = Describe("Request Authentication Processor", func() {
 
 		It("should create RA with selector from service in different namespace", func() {
 			// given: New resources
-			methods := []string{"GET"}
 			path := "/"
 			serviceName := "test-service"
 			differentNamespace := "different-namespace"
 
-			rule := getRuleForApTest(methods, path, serviceName)
+			rule := getRuleForApTest(methodsGet, path, serviceName)
 			rule.Service.Namespace = &differentNamespace
 			rules := []gatewayv1beta1.Rule{rule}
 			apiRule := GetAPIRuleFor(rules)
@@ -659,11 +625,10 @@ var _ = Describe("Request Authentication Processor", func() {
 
 		It("should create RA with selector from service with multiple selector labels", func() {
 			// given: New resources
-			methods := []string{"GET"}
 			path := "/"
 			serviceName := "test-service"
 
-			rule := getRuleForApTest(methods, path, serviceName)
+			rule := getRuleForApTest(methodsGet, path, serviceName)
 			rules := []gatewayv1beta1.Rule{rule}
 			apiRule := GetAPIRuleFor(rules)
 			svc := GetService(serviceName)
