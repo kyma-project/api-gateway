@@ -13,15 +13,11 @@ import (
 // NewRequestAuthenticationProcessor returns a RequestAuthenticationProcessor with the desired state handling specific for the Istio handler.
 func NewRequestAuthenticationProcessor(config processing.ReconciliationConfig) processors.RequestAuthenticationProcessor {
 	return processors.RequestAuthenticationProcessor{
-		Creator: requestAuthenticationCreator{
-			additionalLabels: config.AdditionalLabels,
-		},
+		Creator: requestAuthenticationCreator{},
 	}
 }
 
-type requestAuthenticationCreator struct {
-	additionalLabels map[string]string
-}
+type requestAuthenticationCreator struct{}
 
 // Create returns the Virtual Service using the configuration of the APIRule.
 func (r requestAuthenticationCreator) Create(ctx context.Context, client client.Client, api *gatewayv1beta1.APIRule) (map[string]*securityv1beta1.RequestAuthentication, error) {

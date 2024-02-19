@@ -18,9 +18,7 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/kyma-project/api-gateway/internal/reconciliations/oathkeeper"
@@ -51,9 +49,6 @@ import (
 	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
-
-	"github.com/kyma-project/api-gateway/internal/validation"
-	"github.com/pkg/errors"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -70,7 +65,6 @@ type FlagVar struct {
 	rateLimiterFailureMaxDelay  time.Duration
 	rateLimiterFrequency        int
 	rateLimiterBurst            int
-	generatedObjectsLabels      string
 	reconciliationInterval      time.Duration
 }
 
@@ -104,7 +98,6 @@ func defineFlagVar() *FlagVar {
 		"Indicates the failure base delay for rate limiter.")
 	flag.DurationVar(&flagVar.rateLimiterFailureMaxDelay, "failure-max-delay", controllers.RateLimiterFailureMaxDelay,
 		"Indicates the failure max delay for rate limiter. .")
-	flag.StringVar(&flagVar.generatedObjectsLabels, "generated-objects-labels", "", "Comma-separated list of key=value pairs used to label generated objects")
 	flag.DurationVar(&flagVar.reconciliationInterval, "reconciliation-interval", 1*time.Hour, "Indicates the time based reconciliation interval of APIRule.")
 
 	return flagVar
@@ -134,19 +127,12 @@ func main() {
 		os.Exit(1)
 	}
 
-	additionalLabels, err := parseLabels(flagVar.generatedObjectsLabels)
-	if err != nil {
-		setupLog.Error(err, "parsing labels failed")
-		os.Exit(1)
-	}
-
 	config := gateway.ApiRuleReconcilerConfiguration{
 		OathkeeperSvcAddr:         "ory-oathkeeper-proxy.kyma-system.svc.cluster.local",
 		OathkeeperSvcPort:         4455,
 		CorsAllowOrigins:          "regex:.*",
 		CorsAllowMethods:          "GET,POST,PUT,DELETE,PATCH",
 		CorsAllowHeaders:          "Authorization,Content-Type,*",
-		AdditionalLabels:          additionalLabels,
 		ReconciliationPeriod:      uint(flagVar.reconciliationInterval.Seconds()),
 		ErrorReconciliationPeriod: 60,
 	}
@@ -190,44 +176,4 @@ func main() {
 		setupLog.Error(err, "problem running manager")
 		os.Exit(1)
 	}
-}
-
-func parseLabels(labelsString string) (map[string]string, error) {
-
-	output := make(map[string]string)
-
-	if labelsString == "" {
-		return output, nil
-	}
-
-	var err error
-
-	for _, labelString := range strings.Split(labelsString, ",") {
-		trim := strings.TrimSpace(labelString)
-		if trim != "" {
-			label := strings.Split(trim, "=")
-			if len(label) != 2 {
-				return nil, errors.New("invalid label format")
-			}
-
-			key, value := label[0], label[1]
-
-			if err = validation.VerifyLabelKey(key); err != nil {
-				return nil, errors.Wrap(err, "invalid label key")
-			}
-
-			if err = validation.VerifyLabelValue(value); err != nil {
-				return nil, errors.Wrap(err, "invalid label value")
-			}
-
-			_, exists := output[key]
-			if exists {
-				return nil, fmt.Errorf("duplicated label: %s", key)
-			}
-
-			output[key] = value
-		}
-	}
-
-	return output, nil
 }

@@ -91,7 +91,6 @@ var _ = Describe("Access Rule Processor", func() {
 			Expect(accessRule.ObjectMeta.Name).To(BeEmpty())
 			Expect(accessRule.ObjectMeta.GenerateName).To(Equal(ApiName + "-"))
 			Expect(accessRule.ObjectMeta.Namespace).To(Equal(ApiNamespace))
-			Expect(accessRule.ObjectMeta.Labels[TestLabelKey]).To(Equal(TestLabelValue))
 
 		})
 

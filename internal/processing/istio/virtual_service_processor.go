@@ -18,7 +18,6 @@ func NewVirtualServiceProcessor(config processing.ReconciliationConfig) processo
 			oathkeeperSvc:     config.OathkeeperSvc,
 			oathkeeperSvcPort: config.OathkeeperSvcPort,
 			corsConfig:        config.CorsConfig,
-			additionalLabels:  config.AdditionalLabels,
 			defaultDomainName: config.DefaultDomainName,
 		},
 	}
@@ -29,7 +28,6 @@ type virtualServiceCreator struct {
 	oathkeeperSvcPort uint32
 	corsConfig        *processing.CorsConfig
 	defaultDomainName string
-	additionalLabels  map[string]string
 }
 
 // Create returns the Virtual Service using the configuration of the APIRule.
@@ -130,10 +128,6 @@ func (r virtualServiceCreator) Create(api *gatewayv1beta1.APIRule) (*networkingv
 		GenerateName(virtualServiceNamePrefix).
 		Namespace(api.ObjectMeta.Namespace).
 		Label(processing.OwnerLabel, fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace))
-
-	for k, v := range r.additionalLabels {
-		vsBuilder.Label(k, v)
-	}
 
 	vsBuilder.Spec(vsSpecBuilder)
 

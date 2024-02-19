@@ -62,6 +62,5 @@ type ReconciliationConfig struct {
 	OathkeeperSvc     string
 	OathkeeperSvcPort uint32
 	CorsConfig        *CorsConfig
-	AdditionalLabels  map[string]string
 	DefaultDomainName string
 }
