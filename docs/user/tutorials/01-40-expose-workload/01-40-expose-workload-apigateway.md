@@ -44,21 +44,17 @@ Follow these steps:
       service:
         name: $SERVICE_NAME
         namespace: $NAMESPACE
-        port: 8000
+        port: 80
       gateway: $GATEWAY
       rules:
         - path: /.*
           methods: ["GET"]
           accessStrategies:
-            - handler: noop
-          mutators:
-            - handler: noop
+            - handler: no_auth
         - path: /post
           methods: ["POST"]
           accessStrategies:
-            - handler: noop
-          mutators:
-            - handler: noop
+            - handler: no_auth
     EOF
     ```
   

@@ -5,6 +5,7 @@ Browse the API Gateway tutorials to learn how to set up your custom domain, crea
 - [Create a Workload](./01-00-create-workload.md)
 - [Set Up a Custom Domain for a Workload](./01-10-setup-custom-domain-for-workload.md)
 - [Set Up a TLS Gateway](./01-20-set-up-tls-gateway.md)
+- [Set Up an mTLS Gateway](./01-30-set-up-mtls-gateway.md)
 - Expose a Workload
   - [Expose a Workload](./01-40-expose-workload/01-40-expose-workload-apigateway.md)
   - [Expose Multiple Workloads on the Same Host](./01-40-expose-workload/01-41-expose-multiple-workloads.md)
