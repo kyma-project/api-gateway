@@ -177,7 +177,7 @@ var _ = Describe("API-Gateway Controller", func() {
 			Expect(result.Requeue).To(BeFalse())
 
 			Expect(c.Get(context.Background(), client.ObjectKeyFromObject(secondApiGatewayCR), secondApiGatewayCR)).Should(Succeed())
-			Expect(secondApiGatewayCR.Status.State).To(Equal(operatorv1alpha1.Error))
+			Expect(secondApiGatewayCR.Status.State).To(Equal(operatorv1alpha1.Warning))
 			Expect(secondApiGatewayCR.Status.Description).To(Equal(fmt.Sprintf("stopped APIGateway CR reconciliation: only APIGateway CR %s reconciles the module", apiGatewayCRName)))
 
 		})

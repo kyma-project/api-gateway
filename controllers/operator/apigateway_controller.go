@@ -93,7 +93,7 @@ func (r *APIGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		oldestCr := r.getOldestCR(existingAPIGateways)
 		if apiGatewayCR.GetUID() != oldestCr.GetUID() {
 			err := fmt.Errorf("stopped APIGateway CR reconciliation: only APIGateway CR %s reconciles the module", oldestCr.GetName())
-			return r.terminateReconciliation(ctx, apiGatewayCR, controllers.ErrorStatus(err, err.Error()))
+			return r.terminateReconciliation(ctx, apiGatewayCR, controllers.WarningStatus(err, err.Error()))
 		}
 	}
 
