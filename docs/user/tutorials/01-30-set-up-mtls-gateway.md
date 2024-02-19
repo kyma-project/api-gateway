@@ -107,14 +107,16 @@ The mTLS Gateway is exposed under `*.mtls.example.com` with a valid DNS `A` reco
     Firstly, issue a curl command without providing the generated client certificate:
     ```
     curl -X GET https://httpbin.mtls.example.com/status/418
-
+    ```
+    ```
     curl: (56) LibreSSL SSL_read: LibreSSL/3.3.6: error:1404C45C:SSL routines:ST_OK:reason(1116), errno 0
     ```
 
     Then, provide the client and Root CA certificates in the command:
     ```
     curl --cert client.crt --key client.key --cacert cacert.crt -X GET https://httpbin.mtls.example.com/status/418
-
+    ```
+    ```
 
         -=[ teapot ]=-
 
