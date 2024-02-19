@@ -129,4 +129,4 @@ The mTLS Gateway is exposed under `*.mtls.example.com` with a valid DNS `A` reco
             `"""`
     ```
 
-    If the commands return the expected results, you have set up the mTLS gateway successfully.
+    If the commands return the expected results, you have set up the mTLS Gateway successfully.
