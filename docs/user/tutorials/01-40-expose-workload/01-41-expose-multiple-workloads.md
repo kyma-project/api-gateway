@@ -55,7 +55,7 @@ Follow the instructions to expose the instances of the HTTPBin Service on differ
       - path: /headers
         methods: ["GET"]
         accessStrategies:
-          - handler: noop
+          - handler: no_auth
         service:
           name: $FIRST_SERVICE
           port: 8000
