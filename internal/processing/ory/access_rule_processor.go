@@ -11,14 +11,12 @@ import (
 func NewAccessRuleProcessor(config processing.ReconciliationConfig) processors.AccessRuleProcessor {
 	return processors.AccessRuleProcessor{
 		Creator: accessRuleCreator{
-			additionalLabels:  config.AdditionalLabels,
 			defaultDomainName: config.DefaultDomainName,
 		},
 	}
 }
 
 type accessRuleCreator struct {
-	additionalLabels  map[string]string
 	defaultDomainName string
 }
 
@@ -29,7 +27,7 @@ func (r accessRuleCreator) Create(api *gatewayv1beta1.APIRule) map[string]*rulev
 	accessRules := make(map[string]*rulev1alpha1.Rule)
 	for _, rule := range api.Spec.Rules {
 		if processing.IsSecuredByOathkeeper(rule) {
-			ar := processors.GenerateAccessRule(api, rule, rule.AccessStrategies, r.additionalLabels, r.defaultDomainName)
+			ar := processors.GenerateAccessRule(api, rule, rule.AccessStrategies, r.defaultDomainName)
 			accessRules[processors.SetAccessRuleKey(pathDuplicates, *ar)] = ar
 		}
 	}

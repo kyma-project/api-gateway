@@ -60,8 +60,6 @@ var (
 		AllowMethods: []string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodDelete},
 		AllowHeaders: []string{"header1", "header2"},
 	}
-
-	TestAdditionalLabels = map[string]string{TestLabelKey: TestLabelValue}
 )
 
 func GetTestConfig() processing.ReconciliationConfig {
@@ -69,7 +67,6 @@ func GetTestConfig() processing.ReconciliationConfig {
 		OathkeeperSvc:     OathkeeperSvc,
 		OathkeeperSvcPort: OathkeeperSvcPort,
 		CorsConfig:        TestCors,
-		AdditionalLabels:  TestAdditionalLabels,
 		DefaultDomainName: DefaultDomain,
 	}
 }

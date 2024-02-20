@@ -17,22 +17,18 @@ import (
 // NewRequestAuthenticationProcessor returns a RequestAuthenticationProcessor with the desired state handling specific for the Istio handler.
 func NewRequestAuthenticationProcessor(config processing.ReconciliationConfig) processors.RequestAuthenticationProcessor {
 	return processors.RequestAuthenticationProcessor{
-		Creator: requestAuthenticationCreator{
-			additionalLabels: config.AdditionalLabels,
-		},
+		Creator: requestAuthenticationCreator{},
 	}
 }
 
-type requestAuthenticationCreator struct {
-	additionalLabels map[string]string
-}
+type requestAuthenticationCreator struct{}
 
 // Create returns the Virtual Service using the configuration of the APIRule.
 func (r requestAuthenticationCreator) Create(ctx context.Context, client client.Client, api *gatewayv1beta1.APIRule) (map[string]*securityv1beta1.RequestAuthentication, error) {
 	requestAuthentications := make(map[string]*securityv1beta1.RequestAuthentication)
 	for _, rule := range api.Spec.Rules {
 		if processing.IsJwtSecured(rule) {
-			ra, err := generateRequestAuthentication(ctx, client, api, rule, r.additionalLabels)
+			ra, err := generateRequestAuthentication(ctx, client, api, rule)
 			if err != nil {
 				return requestAuthentications, err
 			}
@@ -42,7 +38,7 @@ func (r requestAuthenticationCreator) Create(ctx context.Context, client client.
 	return requestAuthentications, nil
 }
 
-func generateRequestAuthentication(ctx context.Context, client client.Client, api *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rule, additionalLabels map[string]string) (*securityv1beta1.RequestAuthentication, error) {
+func generateRequestAuthentication(ctx context.Context, client client.Client, api *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rule) (*securityv1beta1.RequestAuthentication, error) {
 	namePrefix := fmt.Sprintf("%s-", api.ObjectMeta.Name)
 	namespace := helpers.FindServiceNamespace(api, &rule)
 
@@ -56,10 +52,6 @@ func generateRequestAuthentication(ctx context.Context, client client.Client, ap
 		WithNamespace(namespace).
 		WithSpec(builders.NewRequestAuthenticationSpecBuilder().WithFrom(spec).Get()).
 		WithLabel(processing.OwnerLabel, fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace))
-
-	for k, v := range additionalLabels {
-		raBuilder.WithLabel(k, v)
-	}
 
 	return raBuilder.Get(), nil
 }
