@@ -20,4 +20,4 @@ Furthermore, an Istio Virtual Service is created, which exposes the Istio readin
 
 ## Disable or Enable Kyma Gateway
 By default, Kyma Gateway is enabled. You can disable it by removing the `enableKymaGateway` field in the [APIGateway CR](./04-00-apigateway-custom-resource.md) or setting it to `false`.
-Kyma Gateway can be disabled only if no APIRules are configured on the cluster.
+Kyma Gateway can be disabled only if no APIRules are configured in the cluster.
