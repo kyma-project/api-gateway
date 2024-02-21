@@ -107,7 +107,6 @@ var _ = Describe("Request Authentication Processor", func() {
 		Expect(ra.ObjectMeta.Name).To(BeEmpty())
 		Expect(ra.ObjectMeta.GenerateName).To(Equal(ApiName + "-"))
 		Expect(ra.ObjectMeta.Namespace).To(Equal(ApiNamespace))
-		Expect(ra.ObjectMeta.Labels[TestLabelKey]).To(Equal(TestLabelValue))
 
 		Expect(ra.Spec.Selector.MatchLabels[TestSelectorKey]).NotTo(BeNil())
 		Expect(ra.Spec.Selector.MatchLabels[TestSelectorKey]).To(Equal(ServiceName))
@@ -235,7 +234,6 @@ var _ = Describe("Request Authentication Processor", func() {
 		Expect(ra.ObjectMeta.Name).To(BeEmpty())
 		Expect(ra.ObjectMeta.GenerateName).To(Equal(ApiName + "-"))
 		Expect(ra.ObjectMeta.Namespace).To(Equal(ApiNamespace))
-		Expect(ra.ObjectMeta.Labels[TestLabelKey]).To(Equal(TestLabelValue))
 
 		Expect(ra.Spec.Selector.MatchLabels[TestSelectorKey]).NotTo(BeNil())
 		Expect(ra.Spec.Selector.MatchLabels[TestSelectorKey]).To(Equal(ServiceName))

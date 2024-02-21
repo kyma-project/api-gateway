@@ -28,7 +28,6 @@ type ApiRuleReconcilerConfiguration struct {
 	OathkeeperSvcAddr                                    string
 	OathkeeperSvcPort                                    uint
 	CorsAllowOrigins, CorsAllowMethods, CorsAllowHeaders string
-	AdditionalLabels                                     map[string]string
 	ReconciliationPeriod                                 uint
 	ErrorReconciliationPeriod                            uint
 }
@@ -45,7 +44,6 @@ func NewApiRuleReconciler(mgr manager.Manager, config ApiRuleReconcilerConfigura
 				AllowMethods: getList(config.CorsAllowMethods),
 				AllowOrigins: getStringMatch(config.CorsAllowOrigins),
 			},
-			AdditionalLabels: config.AdditionalLabels,
 		},
 		Scheme:                 mgr.GetScheme(),
 		Config:                 &helpers.Config{},
