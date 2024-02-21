@@ -100,6 +100,9 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
       - uses: ./.github/actions/integration-test-gardener
+        env:
+          TEST_REQUEST_TIMEOUT: 480
+          TEST_REQUEST_DELAY: 10
         with:
           manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:${{ needs.wait-for-image-build.outputs.sha }}"
           gardener_secret: ${{ secrets.GARDENER_TOKEN }}

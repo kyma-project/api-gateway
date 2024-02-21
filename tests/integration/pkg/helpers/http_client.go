@@ -57,7 +57,7 @@ func (h *RetryableHttpClient) CallEndpointWithRetries(url string, validator Http
 	}, validator)
 
 	if err != nil {
-		return fmt.Errorf("error calling endpoint %s err=%s", url, err)
+		return fmt.Errorf("timestamp: %s -- error calling endpoint %s err=%s", time.Now().String(), url, err)
 	}
 
 	return nil
