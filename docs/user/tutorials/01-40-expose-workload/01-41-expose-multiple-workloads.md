@@ -55,14 +55,14 @@ Follow the instructions to expose the instances of the HTTPBin Service on differ
       - path: /headers
         methods: ["GET"]
         accessStrategies:
-          - handler: noop
+          - handler: no_auth
         service:
           name: $FIRST_SERVICE
           port: 8000
       - path: /get
         methods: ["GET"]
         accessStrategies:
-          - handler: noop
+          - handler: no_auth
         service:
           name: $SECOND_SERVICE
           port: 8000
@@ -107,11 +107,11 @@ You can also define a Service at the root level. Such a definition is applied to
         - path: /headers
           methods: ["GET"]
           accessStrategies:
-            - handler: noop
+            - handler: no_auth
         - path: /get
           methods: ["GET"]
           accessStrategies:
-            - handler: noop
+            - handler: no_auth
           service:
             name: $SECOND_SERVICE
             port: 8000
