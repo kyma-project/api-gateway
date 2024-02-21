@@ -33,7 +33,7 @@ The mTLS Gateway is exposed under `*.mtls.example.com` with a valid DNS `A` reco
 
 3. Set up Istio Gateway in mutual mode.
 
-    Assuming that you have successfully created the server certificate and it is stored in the `kyma-mtls-certs` Secret within the default namespace, modify and apply the following Gateway custom resource on a cluster:
+    Assuming that you have successfully created the server certificate and it is stored in the `kyma-mtls-certs` Secret within the default namespace, modify and apply the following Gateway custom resource in a cluster:
 
     > [!NOTE]
     >  The `kyma-mtls-certs` Secret must contain a valid certificate for the `*.mtls.example.com` common name.
@@ -64,7 +64,7 @@ The mTLS Gateway is exposed under `*.mtls.example.com` with a valid DNS `A` reco
 
 4. Create a Secret containing the Root CA certificate.
 
-    In order for the `MUTUAL` mode to work correctly, you must apply a Root CA on a cluster. This Root CA must follow the [Istio naming convention](https://istio.io/latest/docs/reference/config/networking/gateway/#ServerTLSSettings) so Istio can use it.
+    In order for the `MUTUAL` mode to work correctly, you must apply a Root CA in a cluster. This Root CA must follow the [Istio naming convention](https://istio.io/latest/docs/reference/config/networking/gateway/#ServerTLSSettings) so Istio can use it.
     Create an Opaque Secret containing the previously generated Root CA certificate in the `istio-system` namespace:
 
     ```sh
