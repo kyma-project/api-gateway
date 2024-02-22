@@ -5,4 +5,12 @@ metadata:
 rules:
   - apiGroups: ["oathkeeper.ory.sh"]
     resources: ["rules"]
-    verbs: ["*"]
+    verbs:
+      - deletecollection
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
