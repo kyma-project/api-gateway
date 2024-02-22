@@ -1,7 +1,7 @@
 # Set Up an mTLS Gateway and Expose Workloads Behind It
 
 This document showcases how to set up an mTLS Gateway in Istio and expose it with an APIRule.
-
+<!-- markdown-link-check-disable-next-line -->
 According to the official [CloudFlare documentation](https://www.cloudflare.com/learning/access-management/what-is-mutual-tls/):
 >Mutual TLS, or mTLS for short, is a method for mutual authentication. mTLS ensures that the parties at each end of a network connection are who they claim to be by verifying that they both have the correct private key. The information within their respective TLS certificates provides additional verification.
 
@@ -15,6 +15,16 @@ To establish a working mTLS connection, several things are required:
 The procedure of setting up a working mTLS Gateway is described in the following steps. The tutorial uses a Gardener shoot cluster and its API.
 
 The mTLS Gateway is exposed under `*.mtls.example.com` with a valid DNS `A` record.
+
+## Prerequisites
+
+* Deploy [a sample HTTPBin Service](./01-00-create-workload.md).
+* Set up [your custom domain](./01-10-setup-custom-domain-for-workload.md) and export the following values as environment variables:
+
+  ```bash
+  export DOMAIN_TO_EXPOSE_WORKLOADS={DOMAIN_NAME}
+  export GATEWAY=$NAMESPACE/httpbin-gateway
+  ```
 
 ## Steps
 
@@ -58,7 +68,7 @@ The mTLS Gateway is exposed under `*.mtls.example.com` with a valid DNS `A` reco
             mode: MUTUAL
             credentialName: kyma-mtls-certs
           hosts:
-            - "*.mtls.example.com"
+            - "*.$DOMAIN_TO_EXPOSE_WORKLOADS"
     EOF
     ```
 
@@ -71,11 +81,7 @@ The mTLS Gateway is exposed under `*.mtls.example.com` with a valid DNS `A` reco
         kubectl create secret generic -n istio-system kyma-mtls-certs-cacert --from-file=cacert=cacert.crt
     ```
 
-5. Create a custom workload and expose it using an APIRule.
-
-    To create a custom workload, follow [Create a Workload](01-00-create-workload.md).
-
-    Then expose the workload with the APIRule:
+5. Expose a custom workload using an APIRule.
 
     ```sh
     cat <<EOF | kubectl apply -f -
@@ -91,7 +97,7 @@ The mTLS Gateway is exposed under `*.mtls.example.com` with a valid DNS `A` reco
       host: httpbin.mtls.example.com
       rules:
       - accessStrategies:
-        - handler: allow
+        - handler: no_auth
         methods:
         - GET
         path: /.*
