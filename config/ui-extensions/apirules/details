@@ -141,7 +141,7 @@ body:
           - source: $item.config
             name: mutators.config
             widget: CodeViewer
-            description: "Configuration for {{[Ory Oathkeeper Rule mutators]https://www.ory.sh/docs/oathkeeper/pipeline/mutator#header-configuration}}"
+            description: "Configuration for {{[Ory Oathkeeper Rule mutators]https://www.ory.sh/docs/oathkeeper/pipeline/mutator}}"
             language: "'yaml'"
             visibility: '$exists($value)'
       - name: service

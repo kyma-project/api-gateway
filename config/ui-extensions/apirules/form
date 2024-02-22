@@ -289,7 +289,7 @@
       children:
         - path: '[].config'
           widget: CodeEditor
-          description: "Configuration for {{[Ory Oathkeeper Rule mutators]https://www.ory.sh/docs/oathkeeper/pipeline/mutator#header-configuration}}"
+          description: "Configuration for {{[Ory Oathkeeper Rule mutators]https://www.ory.sh/docs/oathkeeper/pipeline/mutator}}"
           language: "'yaml'"
         - required: true
           path: '[].handler'
