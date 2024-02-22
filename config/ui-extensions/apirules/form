@@ -288,11 +288,17 @@
       widget: GenericList
       children:
         - path: '[].config'
-          name: accessStrategies.config
-          widget: KeyValuePair
+          widget: CodeEditor
+          description: "Configuration for {{[Ory Oathkeeper Rule mutators]https://www.ory.sh/docs/oathkeeper/pipeline/mutator#header-configuration}}"
+          language: "'yaml'"
         - required: true
           path: '[].handler'
           name: accessStrategies.handler
+          enum:
+          - noop
+          - id_token
+          - header
+          - cookie
     - path: '[].service'
       simple: true
       name: service
