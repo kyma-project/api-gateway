@@ -83,6 +83,8 @@ The mTLS Gateway is exposed under `*.mtls.example.com` with a valid DNS `A` reco
 
 5. Expose a custom workload using an APIRule.
 
+  Create the APIRule to expose your HTTPBin Service:
+
     ```sh
     cat <<EOF | kubectl apply -f -
     apiVersion: gateway.kyma-project.io/v1beta1
