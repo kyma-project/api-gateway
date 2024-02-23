@@ -1,8 +1,8 @@
 # Set Up an mTLS Gateway and Expose Workloads Behind It
 
 This document showcases how to set up an mTLS Gateway in Istio and expose it with an APIRule.
-<!-- markdown-link-check-disable-next-line -->
-According to the official [CloudFlare documentation](https://www.cloudflare.com/learning/access-management/what-is-mutual-tls/):
+
+According to the official [CloudFlare documentation](https://cloudflare.com/learning/access-management/what-is-mutual-tls/):
 >Mutual TLS, or mTLS for short, is a method for mutual authentication. mTLS ensures that the parties at each end of a network connection are who they claim to be by verifying that they both have the correct private key. The information within their respective TLS certificates provides additional verification.
 
 To establish a working mTLS connection, several things are required:
@@ -14,8 +14,6 @@ To establish a working mTLS connection, several things are required:
 
 The procedure of setting up a working mTLS Gateway is described in the following steps. The tutorial uses a Gardener shoot cluster and its API.
 
-The mTLS Gateway is exposed under `*.mtls.example.com` with a valid DNS `A` record.
-
 ## Prerequisites
 
 * Deploy [a sample HTTPBin Service](./01-00-create-workload.md).
@@ -25,6 +23,7 @@ The mTLS Gateway is exposed under `*.mtls.example.com` with a valid DNS `A` reco
   export DOMAIN_TO_EXPOSE_WORKLOADS={DOMAIN_NAME}
   export GATEWAY=$NAMESPACE/httpbin-gateway
   ```
+  The mTLS Gateway is exposed under your domain with a valid DNS `A` record.
 
 ## Steps
 
@@ -83,8 +82,6 @@ The mTLS Gateway is exposed under `*.mtls.example.com` with a valid DNS `A` reco
 
 5. Expose a custom workload using an APIRule.
 
-  Create the APIRule to expose your HTTPBin Service:
-
     ```sh
     cat <<EOF | kubectl apply -f -
     apiVersion: gateway.kyma-project.io/v1beta1
@@ -96,7 +93,7 @@ The mTLS Gateway is exposed under `*.mtls.example.com` with a valid DNS `A` reco
       namespace: default
     spec:
       gateway: default/kyma-mtls-gateway
-      host: httpbin.mtls.example.com
+      host: httpbin.$DOMAIN_TO_EXPOSE_WORKLOADS
       rules:
       - accessStrategies:
         - handler: no_auth
@@ -105,7 +102,7 @@ The mTLS Gateway is exposed under `*.mtls.example.com` with a valid DNS `A` reco
         path: /.*
       service:
         name: httpbin
-        port: 80
+        port: 8000
     ```
 
     This configuration uses the newly created Gateway `kyma-mtls-gateway` and exposes all workloads behind mTLS.
