@@ -5,4 +5,5 @@ import './loadFile';
 import './views';
 import './random';
 import './filter';
+import './list';
 
