@@ -254,7 +254,7 @@ context("Test API Rules", () => {
     });
 
     it('Update the APIRule', () => {
-        cy.get('ui5-link').contains(apiRuleName).find('a').click();
+        cy.contains(`^${apiRuleName}$`).click();
 
         cy.contains('ui5-button', 'Edit').click();
 
