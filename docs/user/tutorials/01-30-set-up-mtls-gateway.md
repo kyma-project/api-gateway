@@ -111,7 +111,7 @@ The procedure of setting up a working mTLS Gateway is described in the following
 
     Firstly, issue a curl command without providing the generated client certificate:
     ```
-    curl -X GET https://httpbin.mtls.example.com/status/418
+    curl -X GET https://httpbin.$DOMAIN_TO_EXPOSE_WORKLOADS/status/418
     ```
     ```
     curl: (56) LibreSSL SSL_read: LibreSSL/3.3.6: error:1404C45C:SSL routines:ST_OK:reason(1116), errno 0
@@ -119,7 +119,7 @@ The procedure of setting up a working mTLS Gateway is described in the following
 
     Then, provide the client and Root CA certificates in the command:
     ```
-    curl --cert client.crt --key client.key --cacert cacert.crt -X GET https://httpbin.mtls.example.com/status/418
+    curl --cert client.crt --key client.key --cacert cacert.crt -X GET https://httpbin.$DOMAIN_TO_EXPOSE_WORKLOADS/status/418
     ```
     ```
 
