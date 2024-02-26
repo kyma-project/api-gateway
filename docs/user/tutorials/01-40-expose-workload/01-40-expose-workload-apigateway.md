@@ -44,7 +44,7 @@ Follow these steps:
       service:
         name: $SERVICE_NAME
         namespace: $NAMESPACE
-        port: 80
+        port: 8000
       gateway: $GATEWAY
       rules:
         - path: /.*
