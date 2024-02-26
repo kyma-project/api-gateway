@@ -45,7 +45,7 @@ The procedure of setting up a working mTLS Gateway is described in the following
     Assuming that you have successfully created the server certificate and it is stored in the `kyma-mtls-certs` Secret within the default namespace, modify and apply the following Gateway custom resource in a cluster:
 
     > [!NOTE]
-    >  The `kyma-mtls-certs` Secret must contain a valid certificate for the `*.mtls.example.com` common name.
+    >  The `kyma-mtls-certs` Secret must contain a valid certificate for your custom domain.
 
     ```sh
     cat <<EOF | kubectl apply -f -
