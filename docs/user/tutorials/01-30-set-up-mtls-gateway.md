@@ -2,6 +2,7 @@
 
 This document showcases how to set up an mTLS Gateway in Istio and expose it with an APIRule.
 
+<!-- markdown-link-check-disable-next-line -->
 According to the official [CloudFlare documentation](https://www.cloudflare.com/learning/access-management/what-is-mutual-tls/):
 >Mutual TLS, or mTLS for short, is a method for mutual authentication. mTLS ensures that the parties at each end of a network connection are who they claim to be by verifying that they both have the correct private key. The information within their respective TLS certificates provides additional verification.
 
