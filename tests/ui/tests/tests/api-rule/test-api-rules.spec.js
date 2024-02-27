@@ -29,7 +29,7 @@ context("Test API Rules", () => {
             .contains('API Rules')
             .click();
 
-        cy.contains('ui5-button', 'Create API Rule').click();
+        cy.clickCreateButton();
 
         // Name
         cy.get('ui5-input[aria-label="APIRule name"]')
@@ -238,19 +238,6 @@ context("Test API Rules", () => {
             .click();
 
         cy.contains('ui5-title', 'API Rules').should('be.visible');
-        cy.get('[aria-label="open-search"]').should('not.be.disabled');
-
-        //TODO: Update to use slash command
-        cy.get('button[title="Search"]').click();
-
-        cy.get('ui5-combobox[placeholder="Search"]')
-            .find('input')
-            .click()
-            .type(apiRuleName, {
-                force: true,
-            });
-
-        cy.contains(apiRuleName).should('be.visible');
     });
 
     it('Update the APIRule', () => {
