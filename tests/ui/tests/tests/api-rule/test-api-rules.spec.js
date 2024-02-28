@@ -232,15 +232,13 @@ context("Test API Rules", () => {
         cy.contains('Disabling custom CORS Policy is not recommended. Consider setting up CORS yourself').should('exist');
     });
 
-    it('Inspect list using slash shortcut', () => {
+    it('Update the APIRule', () => {
         cy.getLeftNav()
             .contains('API Rules')
             .click();
 
         cy.contains('ui5-title', 'API Rules').should('be.visible');
-    });
 
-    it('Update the APIRule', () => {
         cy.clickGenericListLink(apiRuleName);
         cy.contains('ui5-button', 'Edit').click();
 
