@@ -16,7 +16,6 @@ type KubernetesConfig = {
 };
 
 Cypress.Commands.add('loginAndSelectCluster', function () {
-    //cy.handleExceptions();
 
     sessionStorage.clear();
     cy.clearCookies();
