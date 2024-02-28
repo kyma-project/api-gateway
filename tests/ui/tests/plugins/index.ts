@@ -1,4 +1,4 @@
-const fs = require('fs');
+import fs = require('fs');
 
 module.exports = (on, config) => {
   on('after:spec', (spec, results) => {

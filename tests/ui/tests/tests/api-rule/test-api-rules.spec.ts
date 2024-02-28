@@ -1,7 +1,5 @@
-/// <reference types="cypress" />
 import 'cypress-file-upload';
 import {generateNamespaceName, generateRandomName} from "../../support/random";
-import {chooseComboboxOption} from '../../support/combobox';
 
 const apiRulePath = "/test-path";
 const apiRuleDefaultPath = "/.*";
@@ -39,19 +37,19 @@ context("Test API Rules", () => {
         cy.get('ui5-input[data-testid="spec.timeout"]')
             .find('input')
             .clear({force: true})
-            .type(1212, {force: true});
+            .type("1212", {force: true});
 
         // Service
-        chooseComboboxOption('[data-testid="spec.service.name"]', serviceName);
+        cy.chooseComboboxOption('[data-testid="spec.service.name"]', serviceName);
 
         cy.get('[data-testid="spec.service.port"]:visible', {log: false})
             .find('input')
             .click()
             .clear()
-            .type(80);
+            .type("80");
 
         // Host
-        chooseComboboxOption('[data-testid="spec.host"]', '*');
+        cy.chooseComboboxOption('[data-testid="spec.host"]', '*');
 
         cy.get('[data-testid="spec.host"]:visible', {log: false})
             .find('input')
@@ -66,7 +64,7 @@ context("Test API Rules", () => {
             .find('input')
             .click()
             .clear()
-            .type(2323);
+            .type("2323");
 
         // > Access Strategies
         cy.get(

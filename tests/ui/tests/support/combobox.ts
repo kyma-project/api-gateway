@@ -1,4 +1,4 @@
-export function chooseComboboxOption(selector, optionText) {
+Cypress.Commands.add('chooseComboboxOption', (selector: string, optionText: string) => {
     cy.get(`ui5-combobox${selector}:visible`)
         .find('input:visible')
         .filterWithNoValue()
@@ -11,4 +11,8 @@ export function chooseComboboxOption(selector, optionText) {
         .click({ force: true });
 
     return cy.end();
-}
+});
+
+Cypress.Commands.add('filterWithNoValue', { prevSubject: true }, $elements =>
+    $elements.filter((_, e) => !e.value),
+);
