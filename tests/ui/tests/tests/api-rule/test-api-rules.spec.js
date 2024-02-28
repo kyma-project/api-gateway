@@ -310,7 +310,7 @@ context("Test API Rules", () => {
         // CORS Max Age
         cy.get('[data-testid="spec.corsPolicy.maxAge"]')
             .find('input')
-            .clear()
+            .clear({force: true})
             .type('10s');
 
         cy.get('[aria-label="expand CORS Policy"]').click();
@@ -331,7 +331,7 @@ context("Test API Rules", () => {
         cy.get('[data-testid="spec.rules.2.path"]:visible')
             .find('input')
             .click()
-            .clear()
+            .clear({force: true})
             .type(apiRulePath);
 
         // > Access Strategies
@@ -343,7 +343,7 @@ context("Test API Rules", () => {
         )
             .find('input')
             .click()
-            .clear()
+            .clear({force: true})
             .type('oauth2_introspection', {force: true});
 
         cy.get('ui5-li:visible')
@@ -367,14 +367,14 @@ context("Test API Rules", () => {
                     .find('input')
                     .first()
                     .click()
-                    .clear()
+                    .clear({force: true})
                     .type('Authorization');
 
                 cy.get('[placeholder="Enter value"]:visible', {log: false})
                     .find('input')
                     .first()
                     .click()
-                    .clear()
+                    .clear({force: true})
                     .type('Basic 12345');
             });
 
@@ -383,7 +383,7 @@ context("Test API Rules", () => {
         )
             .find('input')
             .click()
-            .clear()
+            .clear({force: true})
             .type('https://example.com');
 
         cy.get('[aria-label="expand Token From"]:visible', {
@@ -412,7 +412,7 @@ context("Test API Rules", () => {
             .within(_$div => {
                 cy.get('input[placeholder="Enter value"]', {log: false})
                     .first()
-                    .clear()
+                    .clear({force: true})
                     .type('FromHeader');
             });
 
@@ -433,7 +433,7 @@ context("Test API Rules", () => {
         )
             .find('input')
             .click()
-            .clear()
+            .clear({force: true})
             .type('http://urls.com');
 
         cy.contains(
@@ -447,7 +447,7 @@ context("Test API Rules", () => {
         )
             .find('input')
             .click()
-            .clear()
+            .clear({force: true})
             .type('http://trusted.com');
 
         cy.contains(

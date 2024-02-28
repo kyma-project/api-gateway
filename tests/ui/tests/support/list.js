@@ -2,7 +2,12 @@ Cypress.Commands.add('clickGenericListLink', resourceName => {
     cy.get('ui5-table-row')
         .find('ui5-table-cell')
         .contains('span', resourceName)
-        .click({ force: true });
+        .should('be.visible')
+
+    cy.get('ui5-table-row')
+        .find('ui5-table-cell')
+        .contains('span', resourceName)
+        .click();
 });
 
 Cypress.Commands.add('deleteFromGenericList', (resourceName) => {
