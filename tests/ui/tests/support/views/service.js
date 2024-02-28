@@ -1,7 +1,7 @@
 Cypress.Commands.add('createService', (serviceName) => {
   cy.navigateTo('Discovery and Network', 'Services');
 
-  cy.contains('ui5-button', 'Create Service').click();
+  cy.clickCreateButton();
 
   cy.get('ui5-input[aria-label="Service name"]')
       .find('input')

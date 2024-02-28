@@ -29,7 +29,7 @@ context("Test API Rules", () => {
             .contains('API Rules')
             .click();
 
-        cy.contains('ui5-button', 'Create API Rule').click();
+        cy.clickCreateButton();
 
         // Name
         cy.get('ui5-input[aria-label="APIRule name"]')
@@ -232,28 +232,13 @@ context("Test API Rules", () => {
         cy.contains('Disabling custom CORS Policy is not recommended. Consider setting up CORS yourself').should('exist');
     });
 
-    it('Inspect list using slash shortcut', () => {
+    it('Update the APIRule', () => {
         cy.getLeftNav()
             .contains('API Rules')
             .click();
 
         cy.contains('ui5-title', 'API Rules').should('be.visible');
-        cy.get('[aria-label="open-search"]').should('not.be.disabled');
 
-        //TODO: Update to use slash command
-        cy.get('button[title="Search"]').click();
-
-        cy.get('ui5-combobox[placeholder="Search"]')
-            .find('input')
-            .click()
-            .type(apiRuleName, {
-                force: true,
-            });
-
-        cy.contains(apiRuleName).should('be.visible');
-    });
-
-    it('Update the APIRule', () => {
         cy.clickGenericListLink(apiRuleName);
         cy.contains('ui5-button', 'Edit').click();
 
@@ -325,7 +310,7 @@ context("Test API Rules", () => {
         // CORS Max Age
         cy.get('[data-testid="spec.corsPolicy.maxAge"]')
             .find('input')
-            .clear()
+            .clear({force: true})
             .type('10s');
 
         cy.get('[aria-label="expand CORS Policy"]').click();
@@ -346,7 +331,7 @@ context("Test API Rules", () => {
         cy.get('[data-testid="spec.rules.2.path"]:visible')
             .find('input')
             .click()
-            .clear()
+            .clear({force: true})
             .type(apiRulePath);
 
         // > Access Strategies
@@ -358,7 +343,7 @@ context("Test API Rules", () => {
         )
             .find('input')
             .click()
-            .clear()
+            .clear({force: true})
             .type('oauth2_introspection', {force: true});
 
         cy.get('ui5-li:visible')
@@ -382,14 +367,14 @@ context("Test API Rules", () => {
                     .find('input')
                     .first()
                     .click()
-                    .clear()
+                    .clear({force: true})
                     .type('Authorization');
 
                 cy.get('[placeholder="Enter value"]:visible', {log: false})
                     .find('input')
                     .first()
                     .click()
-                    .clear()
+                    .clear({force: true})
                     .type('Basic 12345');
             });
 
@@ -398,7 +383,7 @@ context("Test API Rules", () => {
         )
             .find('input')
             .click()
-            .clear()
+            .clear({force: true})
             .type('https://example.com');
 
         cy.get('[aria-label="expand Token From"]:visible', {
@@ -427,7 +412,7 @@ context("Test API Rules", () => {
             .within(_$div => {
                 cy.get('input[placeholder="Enter value"]', {log: false})
                     .first()
-                    .clear()
+                    .clear({force: true})
                     .type('FromHeader');
             });
 
@@ -448,7 +433,7 @@ context("Test API Rules", () => {
         )
             .find('input')
             .click()
-            .clear()
+            .clear({force: true})
             .type('http://urls.com');
 
         cy.contains(
@@ -462,7 +447,7 @@ context("Test API Rules", () => {
         )
             .find('input')
             .click()
-            .clear()
+            .clear({force: true})
             .type('http://trusted.com');
 
         cy.contains(

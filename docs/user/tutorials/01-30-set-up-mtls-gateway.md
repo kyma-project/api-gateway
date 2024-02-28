@@ -2,7 +2,7 @@
 
 This document showcases how to set up an mTLS Gateway in Istio and expose it with an APIRule.
 
-According to the official [CloudFlare documentation](https://www.cloudflare.com/learning/access-management/what-is-mutual-tls/):
+According to the official [CloudFlare documentation](https://cloudflare.com/learning/access-management/what-is-mutual-tls/):
 >Mutual TLS, or mTLS for short, is a method for mutual authentication. mTLS ensures that the parties at each end of a network connection are who they claim to be by verifying that they both have the correct private key. The information within their respective TLS certificates provides additional verification.
 
 To establish a working mTLS connection, several things are required:
@@ -14,7 +14,16 @@ To establish a working mTLS connection, several things are required:
 
 The procedure of setting up a working mTLS Gateway is described in the following steps. The tutorial uses a Gardener shoot cluster and its API.
 
-The mTLS Gateway is exposed under `*.mtls.example.com` with a valid DNS `A` record.
+## Prerequisites
+
+* Deploy [a sample HTTPBin Service](./01-00-create-workload.md).
+* Set up [your custom domain](./01-10-setup-custom-domain-for-workload.md) and export the following values as environment variables:
+
+  ```bash
+  export DOMAIN_TO_EXPOSE_WORKLOADS={DOMAIN_NAME}
+  export GATEWAY=$NAMESPACE/httpbin-gateway
+  ```
+  The mTLS Gateway is exposed under your domain with a valid DNS `A` record.
 
 ## Steps
 
@@ -36,7 +45,7 @@ The mTLS Gateway is exposed under `*.mtls.example.com` with a valid DNS `A` reco
     Assuming that you have successfully created the server certificate and it is stored in the `kyma-mtls-certs` Secret within the default namespace, modify and apply the following Gateway custom resource in a cluster:
 
     > [!NOTE]
-    >  The `kyma-mtls-certs` Secret must contain a valid certificate for the `*.mtls.example.com` common name.
+    >  The `kyma-mtls-certs` Secret must contain a valid certificate for your custom domain.
 
     ```sh
     cat <<EOF | kubectl apply -f -
@@ -58,7 +67,7 @@ The mTLS Gateway is exposed under `*.mtls.example.com` with a valid DNS `A` reco
             mode: MUTUAL
             credentialName: kyma-mtls-certs
           hosts:
-            - "*.mtls.example.com"
+            - "*.$DOMAIN_TO_EXPOSE_WORKLOADS"
     EOF
     ```
 
@@ -71,11 +80,7 @@ The mTLS Gateway is exposed under `*.mtls.example.com` with a valid DNS `A` reco
         kubectl create secret generic -n istio-system kyma-mtls-certs-cacert --from-file=cacert=cacert.crt
     ```
 
-5. Create a custom workload and expose it using an APIRule.
-
-    To create a custom workload, follow [Create a Workload](01-00-create-workload.md).
-
-    Then expose the workload with the APIRule:
+5. Expose a custom workload using an APIRule.
 
     ```sh
     cat <<EOF | kubectl apply -f -
@@ -88,16 +93,16 @@ The mTLS Gateway is exposed under `*.mtls.example.com` with a valid DNS `A` reco
       namespace: default
     spec:
       gateway: default/kyma-mtls-gateway
-      host: httpbin.mtls.example.com
+      host: httpbin.$DOMAIN_TO_EXPOSE_WORKLOADS
       rules:
       - accessStrategies:
-        - handler: allow
+        - handler: no_auth
         methods:
         - GET
         path: /.*
       service:
         name: httpbin
-        port: 80
+        port: 8000
     ```
 
     This configuration uses the newly created Gateway `kyma-mtls-gateway` and exposes all workloads behind mTLS.
@@ -106,7 +111,7 @@ The mTLS Gateway is exposed under `*.mtls.example.com` with a valid DNS `A` reco
 
     Firstly, issue a curl command without providing the generated client certificate:
     ```
-    curl -X GET https://httpbin.mtls.example.com/status/418
+    curl -X GET https://httpbin.$DOMAIN_TO_EXPOSE_WORKLOADS/status/418
     ```
     ```
     curl: (56) LibreSSL SSL_read: LibreSSL/3.3.6: error:1404C45C:SSL routines:ST_OK:reason(1116), errno 0
@@ -114,7 +119,7 @@ The mTLS Gateway is exposed under `*.mtls.example.com` with a valid DNS `A` reco
 
     Then, provide the client and Root CA certificates in the command:
     ```
-    curl --cert client.crt --key client.key --cacert cacert.crt -X GET https://httpbin.mtls.example.com/status/418
+    curl --cert client.crt --key client.key --cacert cacert.crt -X GET https://httpbin.$DOMAIN_TO_EXPOSE_WORKLOADS/status/418
     ```
     ```
 
