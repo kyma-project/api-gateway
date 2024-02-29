@@ -76,11 +76,19 @@ func CreateOrUpdateResource(ctx context.Context, k8sClient client.Client, resour
 	spec, specExist := resource.Object["spec"]
 	data, dataExist := resource.Object["data"]
 	labels := resource.GetLabels()
+	templateAnnotations := resource.GetAnnotations()
 
 	_, err := controllerutil.CreateOrUpdate(ctx, k8sClient, &resource, func() error {
 		annotations := map[string]string{
 			disclaimerKey: disclaimerValue,
 		}
+
+		if len(templateAnnotations) > 0 {
+			for k, v := range templateAnnotations {
+				annotations[k] = v
+			}
+		}
+
 		resource.SetAnnotations(annotations)
 
 		if len(labels) == 0 {
