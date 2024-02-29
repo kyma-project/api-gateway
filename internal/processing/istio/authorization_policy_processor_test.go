@@ -224,7 +224,6 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 		Expect(ap1).NotTo(BeNil())
 		Expect(ap1.ObjectMeta.Name).To(BeEmpty())
 		Expect(ap1.ObjectMeta.GenerateName).To(Equal(ApiName + "-"))
-		Expect(ap1.ObjectMeta.Labels[TestLabelKey]).To(Equal(TestLabelValue))
 
 		Expect(ap1.Spec.Selector.MatchLabels[TestSelectorKey]).NotTo(BeNil())
 		Expect(ap1.Spec.Selector.MatchLabels[TestSelectorKey]).To(Equal(ServiceName))
@@ -250,7 +249,6 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 		Expect(ap2.ObjectMeta.Name).To(BeEmpty())
 		Expect(ap2.ObjectMeta.GenerateName).To(Equal(ApiName + "-"))
 		Expect(ap2.ObjectMeta.Namespace).To(Equal(ApiNamespace))
-		Expect(ap2.ObjectMeta.Labels[TestLabelKey]).To(Equal(TestLabelValue))
 
 		Expect(ap2.Spec.Selector.MatchLabels[TestSelectorKey]).NotTo(BeNil())
 		Expect(ap2.Spec.Selector.MatchLabels[TestSelectorKey]).To(Equal(ServiceName))
@@ -301,7 +299,6 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 		Expect(ap1.ObjectMeta.Name).To(BeEmpty())
 		Expect(ap1.ObjectMeta.GenerateName).To(Equal(ApiName + "-"))
 		Expect(ap1.ObjectMeta.Namespace).To(Equal(ApiNamespace))
-		Expect(ap1.ObjectMeta.Labels[TestLabelKey]).To(Equal(TestLabelValue))
 
 		Expect(ap1.Spec.Selector.MatchLabels[TestSelectorKey]).NotTo(BeNil())
 		Expect(ap1.Spec.Selector.MatchLabels[TestSelectorKey]).To(Equal(ServiceName))
@@ -324,7 +321,6 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 		Expect(ap2.ObjectMeta.Name).To(BeEmpty())
 		Expect(ap2.ObjectMeta.GenerateName).To(Equal(ApiName + "-"))
 		Expect(ap2.ObjectMeta.Namespace).To(Equal(ApiNamespace))
-		Expect(ap2.ObjectMeta.Labels[TestLabelKey]).To(Equal(TestLabelValue))
 
 		Expect(ap2.Spec.Selector.MatchLabels[TestSelectorKey]).NotTo(BeNil())
 		Expect(ap2.Spec.Selector.MatchLabels[TestSelectorKey]).To(Equal(ServiceName))
@@ -466,7 +462,6 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 		Expect(ap.ObjectMeta.Name).To(BeEmpty())
 		Expect(ap.ObjectMeta.GenerateName).To(Equal(ApiName + "-"))
 		Expect(ap.ObjectMeta.Namespace).To(Equal(ApiNamespace))
-		Expect(ap.ObjectMeta.Labels[TestLabelKey]).To(Equal(TestLabelValue))
 
 		Expect(ap.Spec.Selector.MatchLabels[TestSelectorKey]).NotTo(BeNil())
 		Expect(ap.Spec.Selector.MatchLabels[TestSelectorKey]).To(Equal(ServiceName))

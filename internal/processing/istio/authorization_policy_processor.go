@@ -27,16 +27,12 @@ var (
 // NewAuthorizationPolicyProcessor returns a AuthorizationPolicyProcessor with the desired state handling specific for the Istio handler.
 func NewAuthorizationPolicyProcessor(config processing.ReconciliationConfig, log *logr.Logger) processors.AuthorizationPolicyProcessor {
 	return processors.AuthorizationPolicyProcessor{
-		Creator: authorizationPolicyCreator{
-			additionalLabels: config.AdditionalLabels,
-		},
-		Log: log,
+		Creator: authorizationPolicyCreator{},
+		Log:     log,
 	}
 }
 
-type authorizationPolicyCreator struct {
-	additionalLabels map[string]string
-}
+type authorizationPolicyCreator struct{}
 
 // Create returns the JwtAuthorization Policy using the configuration of the APIRule.
 func (r authorizationPolicyCreator) Create(ctx context.Context, client client.Client, api *gatewayv1beta1.APIRule) (hashbasedstate.Desired, error) {
@@ -44,7 +40,7 @@ func (r authorizationPolicyCreator) Create(ctx context.Context, client client.Cl
 	hasJwtRule := processing.HasJwtRule(api)
 	if hasJwtRule {
 		for _, rule := range api.Spec.Rules {
-			aps, err := generateAuthorizationPolicies(ctx, client, api, rule, r.additionalLabels)
+			aps, err := generateAuthorizationPolicies(ctx, client, api, rule)
 			if err != nil {
 				return state, err
 			}
@@ -62,12 +58,12 @@ func (r authorizationPolicyCreator) Create(ctx context.Context, client client.Cl
 	return state, nil
 }
 
-func generateAuthorizationPolicies(ctx context.Context, client client.Client, api *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rule, additionalLabels map[string]string) (*securityv1beta1.AuthorizationPolicyList, error) {
+func generateAuthorizationPolicies(ctx context.Context, client client.Client, api *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rule) (*securityv1beta1.AuthorizationPolicyList, error) {
 	authorizationPolicyList := securityv1beta1.AuthorizationPolicyList{}
 	ruleAuthorizations := rule.GetJwtIstioAuthorizations()
 
 	if len(ruleAuthorizations) == 0 {
-		ap, err := generateAuthorizationPolicy(ctx, client, api, rule, additionalLabels, &gatewayv1beta1.JwtAuthorization{})
+		ap, err := generateAuthorizationPolicy(ctx, client, api, rule, &gatewayv1beta1.JwtAuthorization{})
 		if err != nil {
 			return &authorizationPolicyList, err
 		}
@@ -82,7 +78,7 @@ func generateAuthorizationPolicies(ctx context.Context, client client.Client, ap
 		authorizationPolicyList.Items = append(authorizationPolicyList.Items, ap)
 	} else {
 		for indexInYaml, authorization := range ruleAuthorizations {
-			ap, err := generateAuthorizationPolicy(ctx, client, api, rule, additionalLabels, authorization)
+			ap, err := generateAuthorizationPolicy(ctx, client, api, rule, authorization)
 			if err != nil {
 				return &authorizationPolicyList, err
 			}
@@ -99,7 +95,7 @@ func generateAuthorizationPolicies(ctx context.Context, client client.Client, ap
 	return &authorizationPolicyList, nil
 }
 
-func generateAuthorizationPolicy(ctx context.Context, client client.Client, api *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rule, additionalLabels map[string]string, authorization *gatewayv1beta1.JwtAuthorization) (*securityv1beta1.AuthorizationPolicy, error) {
+func generateAuthorizationPolicy(ctx context.Context, client client.Client, api *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rule, authorization *gatewayv1beta1.JwtAuthorization) (*securityv1beta1.AuthorizationPolicy, error) {
 	namePrefix := fmt.Sprintf("%s-", api.ObjectMeta.Name)
 	namespace := helpers.FindServiceNamespace(api, &rule)
 
@@ -113,10 +109,6 @@ func generateAuthorizationPolicy(ctx context.Context, client client.Client, api 
 		WithNamespace(namespace).
 		WithSpec(builders.NewAuthorizationPolicySpecBuilder().FromAP(spec).Get()).
 		WithLabel(processing.OwnerLabel, fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace))
-
-	for k, v := range additionalLabels {
-		apBuilder.WithLabel(k, v)
-	}
 
 	return apBuilder.Get(), nil
 }

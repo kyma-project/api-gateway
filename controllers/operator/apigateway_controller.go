@@ -62,7 +62,7 @@ func NewAPIGatewayReconciler(mgr manager.Manager, oathkeeperReconciler ReadyVeri
 //+kubebuilder:rbac:groups=security.istio.io,resources=peerauthentications,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups="",resources=nodes,verbs=get;list;watch
 //+kubebuilder:rbac:groups="",resources=secrets;deployments;services;serviceaccounts,verbs=get;list;watch;update;patch;create;delete
-//+kubebuilder:rbac:groups="oathkeeper.ory.sh",resources=rules,verbs=*
+//+kubebuilder:rbac:groups="oathkeeper.ory.sh",resources=rules,verbs=deletecollection;create;delete;get;list;patch;update;watch
 //+kubebuilder:rbac:groups="rbac.authorization.k8s.io",resources=roles;rolebindings;clusterroles;clusterrolebindings,verbs=get;list;watch;update;patch;create;delete
 //+kubebuilder:rbac:groups="autoscaling",resources=horizontalpodautoscalers,verbs=get;list;watch;update;patch;create;delete
 //+kubebuilder:rbac:groups="apps",resources=deployments,verbs=get;list;watch;update;patch;create;delete
@@ -93,7 +93,7 @@ func (r *APIGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		oldestCr := r.getOldestCR(existingAPIGateways)
 		if apiGatewayCR.GetUID() != oldestCr.GetUID() {
 			err := fmt.Errorf("stopped APIGateway CR reconciliation: only APIGateway CR %s reconciles the module", oldestCr.GetName())
-			return r.terminateReconciliation(ctx, apiGatewayCR, controllers.ErrorStatus(err, err.Error()))
+			return r.terminateReconciliation(ctx, apiGatewayCR, controllers.WarningStatus(err, err.Error()))
 		}
 	}
 

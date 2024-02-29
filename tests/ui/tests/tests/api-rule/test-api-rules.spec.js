@@ -29,7 +29,7 @@ context("Test API Rules", () => {
             .contains('API Rules')
             .click();
 
-        cy.contains('ui5-button', 'Create API Rule').click();
+        cy.clickCreateButton();
 
         // Name
         cy.get('ui5-input[aria-label="APIRule name"]')
@@ -232,30 +232,14 @@ context("Test API Rules", () => {
         cy.contains('Disabling custom CORS Policy is not recommended. Consider setting up CORS yourself').should('exist');
     });
 
-    it('Inspect list using slash shortcut', () => {
+    it('Update the APIRule', () => {
         cy.getLeftNav()
             .contains('API Rules')
             .click();
 
         cy.contains('ui5-title', 'API Rules').should('be.visible');
-        cy.get('[aria-label="open-search"]').should('not.be.disabled');
 
-        //TODO: Update to use slash command
-        cy.get('button[title="Search"]').click();
-
-        cy.get('ui5-combobox[placeholder="Search"]')
-            .find('input')
-            .click()
-            .type(apiRuleName, {
-                force: true,
-            });
-
-        cy.contains(apiRuleName).should('be.visible');
-    });
-
-    it('Update the APIRule', () => {
-        cy.contains('a', apiRuleName).click();
-
+        cy.clickGenericListLink(apiRuleName);
         cy.contains('ui5-button', 'Edit').click();
 
         cy.contains(apiRuleName);
@@ -268,66 +252,66 @@ context("Test API Rules", () => {
         cy.get('[aria-label="expand CORS Policy"]')
             .should('be.visible');
 
-            // CORS allow methods
-            cy.contains('CORS Allow Methods').should('be.visible');
-            cy.get('[data-testid="spec.corsPolicy.allowMethods.GET"]:visible').click();
+        // CORS allow methods
+        cy.contains('CORS Allow Methods').should('be.visible');
+        cy.get('[data-testid="spec.corsPolicy.allowMethods.GET"]:visible').click();
 
-            // CORS allow origins
-            cy.get('[aria-label="expand CORS Allow Origins"]').should('be.visible').contains("Add").click()
-            cy.get('[aria-label="expand CORS Allow Origin"]').should('be.visible')
-            cy.get('[aria-label="expand Allow Origins"]').should('exist').click();
+        // CORS allow origins
+        cy.get('[aria-label="expand CORS Allow Origins"]').should('be.visible').contains("Add").click()
+        cy.get('[aria-label="expand CORS Allow Origin"]').should('be.visible')
+        cy.get('[aria-label="expand Allow Origins"]').should('exist').click();
 
-            cy.get('[aria-label="expand Allow Origins"]:visible', {
-                log: false,
-            })
-                .parent()
-                .within(_$div => {
-                    cy.get(`ui5-icon[name="slim-arrow-down"]`)
-                        .click({force: true})
-                });
+        cy.get('[aria-label="expand Allow Origins"]:visible', {
+            log: false,
+        })
+            .parent()
+            .within(_$div => {
+                cy.get(`ui5-icon[name="slim-arrow-down"]`)
+                    .click({force: true})
+            });
 
-            cy.get('ui5-li:visible')
-                .contains('exact')
-                .find('li')
-                .click({force: true});
+        cy.get('ui5-li:visible')
+            .contains('exact')
+            .find('li')
+            .click({force: true});
 
-            cy.get('[aria-label="expand Allow Origins"]', {
-                log: false,
-            })
+        cy.get('[aria-label="expand Allow Origins"]', {
+            log: false,
+        })
             .parent()
             .find('input[placeholder="Enter value"]')
-                .first()
-                .clear()
-                .type("localhost");
+            .first()
+            .clear()
+            .type("localhost");
 
-            cy.get('[aria-label="expand CORS Allow Origins"]').should('exist').click();
+        cy.get('[aria-label="expand CORS Allow Origins"]').should('exist').click();
 
-            // CORS allow headers
-            cy.get('[aria-label="expand CORS Allow Headers"]').should('be.visible').click();
-            cy.get('[data-testid="spec.corsPolicy.allowHeaders.0"]')
-                .find('input')
-                .clear()
-                .type("Allowed-Header")
-            cy.get('[aria-label="expand CORS Allow Headers"]').should('exist').click();
+        // CORS allow headers
+        cy.get('[aria-label="expand CORS Allow Headers"]').should('be.visible').click();
+        cy.get('[data-testid="spec.corsPolicy.allowHeaders.0"]')
+            .find('input')
+            .clear()
+            .type("Allowed-Header")
+        cy.get('[aria-label="expand CORS Allow Headers"]').should('exist').click();
 
-            // CORS allow headers
-            cy.get('[aria-label="expand CORS Expose Headers"]').should('be.visible').click();
-            cy.get('[data-testid="spec.corsPolicy.exposeHeaders.0"]')
-                .find('input')
-                .clear()
-                .type("Exposed-Header")
-            cy.get('[aria-label="expand CORS Expose Headers"]').should('exist').click();
+        // CORS allow headers
+        cy.get('[aria-label="expand CORS Expose Headers"]').should('be.visible').click();
+        cy.get('[data-testid="spec.corsPolicy.exposeHeaders.0"]')
+            .find('input')
+            .clear()
+            .type("Exposed-Header")
+        cy.get('[aria-label="expand CORS Expose Headers"]').should('exist').click();
 
-            // CORS allow credentials
-            cy.get('ui5-switch[data-testid="spec.corsPolicy.allowCredentials"]')
-                .find('[role="switch"]')
-                .click();
+        // CORS allow credentials
+        cy.get('ui5-switch[data-testid="spec.corsPolicy.allowCredentials"]')
+            .find('[role="switch"]')
+            .click();
 
-            // CORS Max Age
-            cy.get('[data-testid="spec.corsPolicy.maxAge"]')
-                .find('input')
-                .clear()
-                .type('10s');
+        // CORS Max Age
+        cy.get('[data-testid="spec.corsPolicy.maxAge"]')
+            .find('input')
+            .clear({force: true})
+            .type('10s');
 
         cy.get('[aria-label="expand CORS Policy"]').click();
 
@@ -347,7 +331,7 @@ context("Test API Rules", () => {
         cy.get('[data-testid="spec.rules.2.path"]:visible')
             .find('input')
             .click()
-            .clear()
+            .clear({force: true})
             .type(apiRulePath);
 
         // > Access Strategies
@@ -359,7 +343,7 @@ context("Test API Rules", () => {
         )
             .find('input')
             .click()
-            .clear()
+            .clear({force: true})
             .type('oauth2_introspection', {force: true});
 
         cy.get('ui5-li:visible')
@@ -383,14 +367,14 @@ context("Test API Rules", () => {
                     .find('input')
                     .first()
                     .click()
-                    .clear()
+                    .clear({force: true})
                     .type('Authorization');
 
                 cy.get('[placeholder="Enter value"]:visible', {log: false})
                     .find('input')
                     .first()
                     .click()
-                    .clear()
+                    .clear({force: true})
                     .type('Basic 12345');
             });
 
@@ -399,7 +383,7 @@ context("Test API Rules", () => {
         )
             .find('input')
             .click()
-            .clear()
+            .clear({force: true})
             .type('https://example.com');
 
         cy.get('[aria-label="expand Token From"]:visible', {
@@ -428,7 +412,7 @@ context("Test API Rules", () => {
             .within(_$div => {
                 cy.get('input[placeholder="Enter value"]', {log: false})
                     .first()
-                    .clear()
+                    .clear({force: true})
                     .type('FromHeader');
             });
 
@@ -449,7 +433,7 @@ context("Test API Rules", () => {
         )
             .find('input')
             .click()
-            .clear()
+            .clear({force: true})
             .type('http://urls.com');
 
         cy.contains(
@@ -463,7 +447,7 @@ context("Test API Rules", () => {
         )
             .find('input')
             .click()
-            .clear()
+            .clear({force: true})
             .type('http://trusted.com');
 
         cy.contains(

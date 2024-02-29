@@ -50,15 +50,11 @@ Follow these steps:
         - path: /.*
           methods: ["GET"]
           accessStrategies:
-            - handler: noop
-          mutators:
-            - handler: noop
+            - handler: no_auth
         - path: /post
           methods: ["POST"]
           accessStrategies:
-            - handler: noop
-          mutators:
-            - handler: noop
+            - handler: no_auth
     EOF
     ```
   

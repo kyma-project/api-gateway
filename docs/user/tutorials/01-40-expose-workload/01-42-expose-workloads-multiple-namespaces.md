@@ -62,9 +62,7 @@ This tutorial shows how to expose Service endpoints in multiple namespaces using
             namespace: $NAMESPACE_FIRST_SERVICE
             port: 8000
           accessStrategies:
-            - handler: noop
-          mutators:
-            - handler: noop
+            - handler: no_auth
         - path: /get
           methods: ["GET"]
           service:
@@ -72,9 +70,7 @@ This tutorial shows how to expose Service endpoints in multiple namespaces using
             namespace: $NAMESPACE_SECOND_SERVICE
             port: 8000
           accessStrategies:
-            - handler: noop
-          mutators:
-            - handler: noop
+            - handler: no_auth
     EOF
     ```
 
