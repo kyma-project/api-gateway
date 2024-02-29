@@ -7,7 +7,7 @@ toolchain go1.21.1
 require (
 	github.com/avast/retry-go/v4 v4.5.1
 	github.com/cucumber/godog v0.14.0
-	github.com/gardener/cert-management v0.11.4
+	github.com/gardener/cert-management v0.12.0
 	github.com/gardener/external-dns-management v0.18.3
 	github.com/go-jose/go-jose/v3 v3.0.2
 	github.com/go-logr/logr v1.4.1
@@ -75,7 +75,7 @@ require (
 	golang.org/x/sys v0.17.0 // indirect
 	golang.org/x/term v0.17.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
-	golang.org/x/tools v0.16.1 // indirect
+	golang.org/x/tools v0.17.0 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.4.0 // indirect
 	google.golang.org/genproto v0.0.0-20231002182017-d307bd883b97 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20230920204549-e6e6cdab5c13 // indirect
@@ -98,5 +98,5 @@ require (
 	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/api v0.29.2
 	k8s.io/apiextensions-apiserver v0.29.2
-	k8s.io/utils v0.0.0-20230726121419-3b25d923346b
+	k8s.io/utils v0.0.0-20240102154912-e7106e64919e
 )
