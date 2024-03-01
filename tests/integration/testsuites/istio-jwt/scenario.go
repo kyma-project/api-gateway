@@ -39,6 +39,20 @@ func (s *scenario) theAPIRuleIsApplied() error {
 	return helpers.ApplyApiRule(s.resourceManager.CreateResources, s.resourceManager.UpdateResources, s.k8sClient, testcontext.GetRetryOpts(), r)
 }
 
+func (s *scenario) createAPIRule() error {
+	r, err := manifestprocessor.ParseFromFileWithTemplate(s.ApiResourceManifestPath, s.ApiResourceDirectory, s.ManifestTemplate)
+	if err != nil {
+		return err
+	}
+
+	_, err = s.resourceManager.CreateResources(s.k8sClient, r...)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (s *scenario) callingTheEndpointWithAValidToken(endpoint, tokenType, audOrClaim, par1, par2 string, lower, higher int) error {
 	asserter := &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher}
 	tokenFrom := tokenFrom{
@@ -191,7 +205,7 @@ func (s *scenario) thereIsAHttpbinService() error {
 }
 
 // teardownHttpbinService deletes the httpbin service and reset the url in the scenario. This should be considered a temporary solution
-// to reduce resource conumption until we implement a better way to clean up the resources by a scenario. If the test fails before this step the teardown won't be executed.
+// to reduce resource consumption until we implement a better way to clean up the resources by a scenario. If the test fails before this step the teardown won't be executed.
 func (s *scenario) teardownHttpbinService() error {
 	resources, err := manifestprocessor.ParseFromFileWithTemplate("testing-app.yaml", s.ApiResourceDirectory, s.ManifestTemplate)
 	if err != nil {

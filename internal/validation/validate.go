@@ -244,6 +244,7 @@ func (v *APIRuleValidator) validateRules(ctx context.Context, client client.Clie
 
 func (v *APIRuleValidator) validateAccessStrategies(attributePath string, accessStrategies []*gatewayv1beta1.Authenticator, selector *apiv1beta1.WorkloadSelector, namespace string) []Failure {
 	var problems []Failure
+	var containsSecureAccessStrategy, containsUnsecureAccessStrategy bool
 
 	if len(accessStrategies) == 0 {
 		problems = append(problems, Failure{AttributePath: attributePath, Message: "No accessStrategies defined"})
@@ -255,6 +256,17 @@ func (v *APIRuleValidator) validateAccessStrategies(attributePath string, access
 	for i, r := range accessStrategies {
 		strategyAttrPath := attributePath + fmt.Sprintf("[%d]", i)
 		problems = append(problems, v.validateAccessStrategy(strategyAttrPath, r, selector, namespace)...)
+		switch r.Handler.Name {
+		case gatewayv1beta1.AccessStrategyOauth2ClientCredentials, gatewayv1beta1.AccessStrategyOauth2Introspection, gatewayv1beta1.AccessStrategyJwt:
+			containsSecureAccessStrategy = true
+		case gatewayv1beta1.AccessStrategyNoop, gatewayv1beta1.AccessStrategyNoAuth, gatewayv1beta1.AccessStrategyAllow,
+			gatewayv1beta1.AccessStrategyUnauthorized, gatewayv1beta1.AccessStrategyAnonymous, gatewayv1beta1.AccessStrategyCookieSession:
+			containsUnsecureAccessStrategy = true
+		}
+	}
+
+	if containsSecureAccessStrategy && containsUnsecureAccessStrategy {
+		problems = append(problems, Failure{AttributePath: attributePath, Message: "Secure access strategies cannot be used in combination with unsecure access strategies"})
 	}
 
 	return problems

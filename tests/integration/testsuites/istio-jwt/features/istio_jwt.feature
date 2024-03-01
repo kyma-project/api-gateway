@@ -44,6 +44,22 @@ Feature: Exposing endpoints with Istio JWT authorization strategy
     And JwtAndUnrestricted: Calling the "/json" endpoint without token should result in status between 200 and 299
     And JwtAndUnrestricted: Teardown httpbin service
 
+  Scenario: Exposing a httpbin endpoint with JWT and no_auth in the same rule
+    Given JwtAndNoAuth: There is a httpbin service
+    And JwtAndNoAuth: There is an endpoint secured with JWT and no_auth on path "/ip"
+    And JwtAndNoAuth: There is an endpoint with handler "no_auth" on path "/ip"
+    When JwtAndNoAuth: Create APIRule
+    Then JwtAndNoAuth: The APIRule has "ERROR" status
+    And JwtAndNoAuth: Teardown httpbin service
+
+  Scenario: Exposing a httpbin endpoint with JWT and no_auth on the same path with different methods
+    Given JwtAndNoAuthMethods: There is a httpbin service
+    And JwtAndNoAuthMethods: There is an endpoint secured with JWT and no_auth on path "/ip"
+    And JwtAndNoAuthMethods: There is an endpoint with handler "no_auth" on path "/ip"
+    When JwtAndNoAuthMethods: The APIRule is applied
+    Then JwtAndNoAuthMethods: The APIRule has "OK" status
+    And JwtAndNoAuthMethods: Teardown httpbin service
+
   Scenario: Calling a httpbin endpoint secured with JWT that requires scopes claims
     Given Scopes: There is a httpbin service
     And Scopes: There is an endpoint secured with JWT on path "/ip" requiring scopes '["read", "write"]'

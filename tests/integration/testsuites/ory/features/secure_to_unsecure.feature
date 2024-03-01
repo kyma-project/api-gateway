@@ -7,4 +7,3 @@ Feature: Exposing unsecure API and then securing it with OAuth2
     Then SecureToUnsecure: Calling the "/headers" endpoint without a token should result in status beetween 200 and 299
     And SecureToUnsecure: Calling the "/headers" endpoint with any token should result in status beetween 200 and 299
     And SecureToUnsecure: Teardown httpbin service
-
