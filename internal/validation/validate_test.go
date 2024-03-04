@@ -931,7 +931,7 @@ var _ = Describe("Validate function", func() {
 		// then
 		Expect(problems).To(HaveLen(1))
 		Expect(problems[0].AttributePath).To(Equal(".spec.rules[0].accessStrategies"))
-		Expect(problems[0].Message).To(Equal(fmt.Sprintf("Secure access strategies cannot be used in combination with unsecure access strategies")))
+		Expect(problems[0].Message).To(Equal("Secure access strategies cannot be used in combination with unsecure access strategies"))
 	})
 
 	It("Should fail for allow and jwt access strategy on the same path", func() {
@@ -966,7 +966,7 @@ var _ = Describe("Validate function", func() {
 		// then
 		Expect(problems).To(HaveLen(1))
 		Expect(problems[0].AttributePath).To(Equal(".spec.rules[0].accessStrategies"))
-		Expect(problems[0].Message).To(Equal(fmt.Sprintf("Secure access strategies cannot be used in combination with unsecure access strategies")))
+		Expect(problems[0].Message).To(Equal("Secure access strategies cannot be used in combination with unsecure access strategies"))
 	})
 
 	It("Should not fail with service without labels selector by default", func() {
