@@ -78,8 +78,6 @@ func (t *testsuite) InitScenarios(ctx *godog.ScenarioContext) {
 	initRegex(ctx, t)
 	initRequiredScopes(ctx, t)
 	initAudience(ctx, t)
-	initJwtAndNoAuth(ctx, t)
-	initJwtAndNoAuthMethods(ctx, t)
 	initJwtAndAllow(ctx, t)
 	initJwtAndOauth(ctx, t)
 	initJwtTwoNamespaces(ctx, t)

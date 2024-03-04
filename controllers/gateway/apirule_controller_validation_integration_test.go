@@ -118,6 +118,38 @@ var _ = Describe("Apirule controller validation", Serial, Ordered, func() {
 			testJwtHandlerConfig(accessStrategies, gatewayv1beta1.StatusOK, expectedValidationErrors)
 		})
 
+		It("should not allow creation of APIRule with jwt and noop handler", func() {
+			accessStrategies := []*gatewayv1beta1.Authenticator{
+				{
+					Handler: &gatewayv1beta1.Handler{
+						Name: "jwt",
+						Config: getRawConfig(
+							gatewayv1beta1.JwtConfig{
+								Authentications: []*gatewayv1beta1.JwtAuthentication{
+									{
+										Issuer:  "http://example.com/",
+										JwksUri: "http://example.com/.well-known/jwks.json",
+									},
+								},
+							}),
+					},
+				},
+				{
+					Handler: &gatewayv1beta1.Handler{
+						Name: "noop",
+					},
+				},
+			}
+
+			expectedValidationErrors := []string{
+				"Attribute \".spec.rules[0].accessStrategies.accessStrategies[0].handler\": jwt access strategy is not allowed in combination with other access strategies",
+				"Attribute \".spec.rules[0].accessStrategies.accessStrategies[1].handler\": noop access strategy is not allowed in combination with other access strategies",
+				"Attribute \".spec.rules[0].accessStrategies\": Secure access strategies cannot be used in combination with unsecure access strategies",
+			}
+
+			testJwtHandlerConfig(accessStrategies, gatewayv1beta1.StatusError, expectedValidationErrors)
+		})
+
 		It("should not allow creation of APIRule with invalid url issuer and jwks in jwt config", func() {
 			accessStrategies := []*gatewayv1beta1.Authenticator{
 				{
