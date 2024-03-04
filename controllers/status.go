@@ -4,9 +4,10 @@ import (
 	"context"
 	"fmt"
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
-	"github.com/kyma-project/api-gateway/internal/processing"
-
 	operatorv1alpha1 "github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
+	"github.com/kyma-project/api-gateway/internal/processing"
+	"k8s.io/apimachinery/pkg/api/meta"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -30,47 +31,54 @@ type Status interface {
 	IsError() bool
 	State() State
 	Description() string
+	Condition() *metav1.Condition
 }
 
 type status struct {
 	err         error
 	description string
 	state       State
+	condition   *metav1.Condition
 }
 
-func ErrorStatus(err error, description string) Status {
+func ErrorStatus(err error, description string, condition *metav1.Condition) Status {
 
 	return status{
 		err:         err,
 		description: description,
 		state:       Error,
+		condition:   condition,
 	}
 }
 
-func WarningStatus(err error, description string) Status {
+func WarningStatus(err error, description string, condition *metav1.Condition) Status {
 	return status{
 		err:         err,
 		description: description,
 		state:       Warning,
+		condition:   condition,
 	}
 }
 
-func ReadyStatus() Status {
+func ReadyStatus(condition *metav1.Condition) Status {
 	return status{
 		description: "Successfully reconciled",
 		state:       Ready,
+		condition:   condition,
 	}
 }
 
-func DeletingStatus() Status {
+func DeletingStatus(condition *metav1.Condition) Status {
 	return status{
-		state: Deleting,
+		state:     Deleting,
+		condition: condition,
 	}
 }
 
-func ProcessingStatus() Status {
+func ProcessingStatus(condition *metav1.Condition) Status {
 	return status{
-		state: Processing,
+		state:     Processing,
+		condition: condition,
 	}
 }
 
@@ -163,6 +171,9 @@ func UpdateApiGatewayStatus(ctx context.Context, k8sClient client.Client, apiGat
 	if err != nil {
 		return err
 	}
+	if status.Condition() != nil {
+		meta.SetStatusCondition(&newStatus.Conditions, *status.Condition())
+	}
 	return retry.RetryOnConflict(retry.DefaultRetry, func() error {
 		if getErr := k8sClient.Get(ctx, client.ObjectKeyFromObject(apiGatewayCR), apiGatewayCR); getErr != nil {
 			return getErr
@@ -176,4 +187,8 @@ func UpdateApiGatewayStatus(ctx context.Context, k8sClient client.Client, apiGat
 
 		return nil
 	})
+}
+
+func (s status) Condition() *metav1.Condition {
+	return s.condition
 }

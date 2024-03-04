@@ -22,6 +22,23 @@ The `apigateways.operator.kyma-project.io` CustomResourceDefinition (CRD) descri
 |   `Error`    | An error occurred during reconciliation. |
 |  `Warning`   | Controller is misconfigured.             |
 
+Conditions:
+
+| CR state   | Type  | Status  | Reason                           | Message                                                                      |
+|------------|-------|---------|----------------------------------|------------------------------------------------------------------------------|
+| Ready      | Ready | Unknown | ReconcileProcessing              | Reconciliation processing                                                    |
+| Ready      | Ready | True    | ReconcileSucceeded               | Reconciliation succeeded                                                     |
+| Error      | Ready | False   | ReconcileFailed                  | Reconciliation failed                                                        |
+| Error      | Ready | False   | OlderCRExists                    | API Gateway CR is not the oldest one and does not represent the module state |
+| Error      | Ready | False   | CustomResourceMisconfigured      | API Gateway CR has invalid configuration                                     |
+| Error      | Ready | False   | DependenciesMissing              | Module dependencies missing                                                  |
+| Processing | Ready | False   | KymaGatewayReconcileSucceeded    | Kyma Gateway reconciliation succeeded                                        |
+| Error      | Ready | False   | KymaGatewayReconcileFailed       | Kyma Gateway reconciliation failed                                           |
+| Warning    | Ready | False   | KymaGatewayDeletionBlocked       | Kyma Gateway deletion blocked because of the existing custom resources: ...  |
+| Processing | Ready | False   | OathkeeperReconcileSucceeded     | Ory Oathkeeper reconciliation succeeded                                      |
+| Error      | Ready | False   | OathkeeperReconcileFailed        | Ory Oathkeeper reconciliation failed                                         |
+| Warning    | Ready | False   | DeletionBlockedExistingResources | API Gateway deletion blocked because of the existing custom resources: ...   |
+
 ## Labeling Resources
 
 In accordance with the decision [Consistent Labeling of Kyma Modules](https://github.com/kyma-project/community/issues/864), the APIGateway Operator resources use the standard Kubernetes labels:

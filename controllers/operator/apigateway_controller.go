@@ -20,6 +20,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/kyma-project/api-gateway/internal/conditions"
+	"strings"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -86,20 +88,20 @@ func (r *APIGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	existingAPIGateways := &operatorv1alpha1.APIGatewayList{}
 	if err := r.Client.List(ctx, existingAPIGateways); err != nil {
 		r.log.Info("Unable to list APIGateway CRs")
-		return r.requeueReconciliation(ctx, apiGatewayCR, controllers.ErrorStatus(err, "Unable to list APIGateway CRs"))
+		return r.requeueReconciliation(ctx, apiGatewayCR, controllers.ErrorStatus(err, "Unable to list APIGateway CRs", nil))
 	}
 
 	if len(existingAPIGateways.Items) > 1 {
 		oldestCr := r.getOldestCR(existingAPIGateways)
 		if apiGatewayCR.GetUID() != oldestCr.GetUID() {
 			err := fmt.Errorf("stopped APIGateway CR reconciliation: only APIGateway CR %s reconciles the module", oldestCr.GetName())
-			return r.terminateReconciliation(ctx, apiGatewayCR, controllers.WarningStatus(err, err.Error()))
+			return r.terminateReconciliation(ctx, apiGatewayCR, controllers.WarningStatus(err, err.Error(), conditions.OlderCRExists.Condition()))
 		}
 	}
 
 	r.log.Info("Reconciling APIGateway CR", "name", apiGatewayCR.Name, "isInDeletion", apiGatewayCR.IsInDeletion())
 
-	if err := controllers.UpdateApiGatewayStatus(ctx, r.Client, &apiGatewayCR, controllers.ProcessingStatus()); err != nil {
+	if err := controllers.UpdateApiGatewayStatus(ctx, r.Client, &apiGatewayCR, controllers.ProcessingStatus(conditions.ReconcileProcessing.Condition())); err != nil {
 		r.log.Error(err, "Update status to processing failed")
 		// We don't update the status to error, because the status update already failed and to avoid another status update error we simply requeue the request.
 		return ctrl.Result{}, err
@@ -108,7 +110,7 @@ func (r *APIGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	if !apiGatewayCR.IsInDeletion() {
 		isGardenerCluster, err := reconciliations.RunsOnGardenerCluster(ctx, r.Client)
 		if err != nil {
-			return r.requeueReconciliation(ctx, apiGatewayCR, controllers.ErrorStatus(err, "Error during discovering if cluster is Gardener"))
+			return r.requeueReconciliation(ctx, apiGatewayCR, controllers.ErrorStatus(err, "Error during discovering if cluster is Gardener", conditions.ReconcileFailed.Condition()))
 		}
 
 		if isGardenerCluster {
@@ -146,9 +148,9 @@ func (r *APIGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 
 func handleDependenciesError(name string, err error) controllers.Status {
 	if apierrors.IsNotFound(err) {
-		return controllers.WarningStatus(err, fmt.Sprintf("CRD %s is not present. Make sure to install required dependencies for the component", name))
+		return controllers.ErrorStatus(err, fmt.Sprintf("CRD %s is not present. Make sure to install required dependencies for the component", name), conditions.DependenciesMissing.Condition())
 	} else {
-		return controllers.ErrorStatus(err, "Error happened during discovering dependencies")
+		return controllers.ErrorStatus(err, "Error happened during discovering dependencies", conditions.ReconcileFailed.Condition())
 	}
 }
 
@@ -176,7 +178,7 @@ func (r *APIGatewayReconciler) requeueReconciliation(ctx context.Context, cr ope
 }
 
 func (r *APIGatewayReconciler) finishReconcile(ctx context.Context, cr v1alpha1.APIGateway) (ctrl.Result, error) {
-	if err := controllers.UpdateApiGatewayStatus(ctx, r.Client, &cr, controllers.ReadyStatus()); err != nil {
+	if err := controllers.UpdateApiGatewayStatus(ctx, r.Client, &cr, controllers.ReadyStatus(conditions.ReconcileSucceeded.Condition())); err != nil {
 		r.log.Error(err, "Update status failed")
 		return ctrl.Result{}, err
 	}
@@ -203,49 +205,56 @@ func (r *APIGatewayReconciler) reconcileFinalizer(ctx context.Context, apiGatewa
 		controllerutil.AddFinalizer(apiGatewayCR, ApiGatewayFinalizer)
 		if err := r.Client.Update(ctx, apiGatewayCR); err != nil {
 			ctrl.Log.Error(err, "Failed to add API-Gateway CR finalizer")
-			return controllers.ErrorStatus(err, "Could not add API-Gateway CR finalizer")
+			return controllers.ErrorStatus(err, "Could not add API-Gateway CR finalizer", conditions.ReconcileFailed.Condition())
 		}
 	}
 
 	if apiGatewayCR.IsInDeletion() && hasFinalizer(apiGatewayCR) {
 		apiRulesFound, err := apiRulesExist(ctx, r.Client)
 		if err != nil {
-			return controllers.ErrorStatus(err, "Error during listing existing APIRules")
+			return controllers.ErrorStatus(err, "Error during listing existing APIRules", conditions.ReconcileFailed.Condition())
 		}
-		if apiRulesFound {
+		if len(apiRulesFound) > 0 {
 			return controllers.WarningStatus(errors.New("could not delete API-Gateway CR since there are APIRule(s) that block its deletion"),
-				"There are APIRule(s) that block the deletion of API-Gateway CR. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning")
+				"There are APIRule(s) that block the deletion of API-Gateway CR. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning",
+				conditions.DeletionBlockedExistingResources.AdditionalMessage(": "+strings.Join(apiRulesFound, ",")).Condition())
 		}
 
 		oryRulesFound, err := oryRulesExist(ctx, r.Client)
 		if err != nil {
-			return controllers.ErrorStatus(err, "Error during listing existing ORY Oathkeeper Rules")
+			return controllers.ErrorStatus(err, "Error during listing existing ORY Oathkeeper Rules", conditions.ReconcileFailed.Condition())
 		}
-		if oryRulesFound {
+		if len(oryRulesFound) > 0 {
 			return controllers.WarningStatus(errors.New("could not delete API-Gateway CR since there are ORY Oathkeeper Rule(s) that block its deletion"),
-				"There are ORY Oathkeeper Rule(s) that block the deletion of API-Gateway CR. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning")
+				"There are ORY Oathkeeper Rule(s) that block the deletion of API-Gateway CR. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning",
+				conditions.OathkeeperReconcileFailed.AdditionalMessage(": "+strings.Join(oryRulesFound, ",")).Condition())
 		}
 
 		if err := removeFinalizer(ctx, r.Client, apiGatewayCR); err != nil {
 			ctrl.Log.Error(err, "Error happened during API-Gateway CR finalizer removal")
-			return controllers.ErrorStatus(err, "Could not remove finalizer")
+			return controllers.ErrorStatus(err, "Could not remove finalizer", conditions.ReconcileFailed.Condition())
 		}
 	}
 
-	return controllers.ReadyStatus()
+	return controllers.ReadyStatus(conditions.ReconcileSucceeded.Condition())
 }
 
-func apiRulesExist(ctx context.Context, k8sClient client.Client) (bool, error) {
+func apiRulesExist(ctx context.Context, k8sClient client.Client) ([]string, error) {
 	apiRuleList := v1beta1.APIRuleList{}
 	err := k8sClient.List(ctx, &apiRuleList)
 	if err != nil {
-		return false, err
+		return nil, err
 	}
 	ctrl.Log.Info(fmt.Sprintf("There are %d APIRule(s) found on cluster", len(apiRuleList.Items)))
-	return len(apiRuleList.Items) > 0, nil
+	var blockingApiRules []string
+	for _, rule := range apiRuleList.Items {
+		ctrl.Log.Info("ORY Oathkeeper rule blocking deletion", "rule", rule.GetName())
+		blockingApiRules = append(blockingApiRules, rule.GetName())
+	}
+	return blockingApiRules, nil
 }
 
-func oryRulesExist(ctx context.Context, k8sClient client.Client) (bool, error) {
+func oryRulesExist(ctx context.Context, k8sClient client.Client) ([]string, error) {
 	// To prevent reconciliation errors during Oathkeeper uninstallation, which arise from the absence of the Oathkeeper CRD,
 	// we exclude calls to the rules from utilizing the cache. This can be achieved by using unstructured objects, as they are excluded from caching.
 	oryRulesList := unstructured.UnstructuredList{}
@@ -257,10 +266,15 @@ func oryRulesExist(ctx context.Context, k8sClient client.Client) (bool, error) {
 
 	err := k8sClient.List(ctx, &oryRulesList)
 	if err != nil {
-		return false, err
+		return nil, err
 	}
 	ctrl.Log.Info(fmt.Sprintf("There are %d ORY Oathkeeper Rule(s) found on cluster", len(oryRulesList.Items)))
-	return len(oryRulesList.Items) > 0, nil
+	var blockingOryRules []string
+	for _, rule := range oryRulesList.Items {
+		ctrl.Log.Info("ORY Oathkeeper rule blocking deletion", "rule", rule.GetName())
+		blockingOryRules = append(blockingOryRules, rule.GetName())
+	}
+	return blockingOryRules, nil
 }
 
 func hasFinalizer(apiGatewayCR *operatorv1alpha1.APIGateway) bool {
