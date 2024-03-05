@@ -40,10 +40,8 @@ This table lists all parameters of APIRule CRD together with their descriptions:
 >  If `service` is not defined at the **spec.service** level, all defined Access Rules must have `service` defined at the **spec.rules.service** level. Otherwise, the validation fails.
 
 > [!WARNING]
-On the same **spec.rules.path**, you must not:
-  - use the access strategies `jwt`, `oath2_introspection`, `noop`, `allow`, or `no_auth` with any other access strategy.
-  - define both the Oathkeeper and Istio `jwt` access strategies.
-  - combine secure and unsecure access strategies. The secure access strategies include `jwt` and `oath2_introspection`.
+> When you use the Ory handler, do not define the access strategies `noop`, `allow`, or `no_auth` with any other access strategy on the same **spec.rules.path**.
+> When you use the Istio handler, do not define the access strategies `jwt`, `noop`, `allow`, or `no_auth` with any other access strategy on the same **spec.rules.path**.
 
 **Status:**
 
