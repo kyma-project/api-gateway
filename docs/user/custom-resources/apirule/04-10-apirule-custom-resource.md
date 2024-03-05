@@ -42,6 +42,7 @@ This table lists all parameters of APIRule CRD together with their descriptions:
 > [!WARNING]
 >  Having both the Oathkeeper and Istio `jwt` access strategies defined is not supported. Access
 > strategies `noop`, `allow`, or `no_auth` cannot be used with any other access strategy on the same **spec.rules.path**.
+> Mixing secure and unsecure access strategies is not supported.
 
 **Status:**
 
