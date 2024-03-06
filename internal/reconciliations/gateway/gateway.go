@@ -80,12 +80,14 @@ func ReconcileKymaGateway(ctx context.Context, k8sClient client.Client, apiGatew
 			var blockingResources []string
 			for _, res := range clientResources {
 				ctrl.Log.Info("Custom resource is blocking Kyma Gateway deletion", "gvk", res.GVK.String(), "namespace", res.Namespace, "name", res.Name)
-				blockingResources = append(blockingResources, res.Name)
+				if len(blockingResources) < 5 {
+					blockingResources = append(blockingResources, res.Name)
+				}
 			}
 
 			return controllers.WarningStatus(fmt.Errorf("could not delete Kyma Gateway since there are %d custom resource(s) present that block its deletion", len(clientResources)),
 				"There are custom resources that block the deletion of Kyma Gateway. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning",
-				conditions.KymaGatewayDeletionBlocked.AdditionalMessage(": "+strings.Join(blockingResources, ",")).Condition())
+				conditions.KymaGatewayDeletionBlocked.AdditionalMessage(": "+strings.Join(blockingResources, ", ")).Condition())
 		}
 	}
 

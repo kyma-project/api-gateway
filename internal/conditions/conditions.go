@@ -26,7 +26,7 @@ type ReasonMessage struct {
 }
 
 // Condition returns metav1.Condition from existing ReasonMessage
-func (rm *ReasonMessage) Condition() *metav1.Condition {
+func (rm ReasonMessage) Condition() *metav1.Condition {
 	return &metav1.Condition{
 		Type:    "Ready",
 		Reason:  rm.reason,
@@ -36,8 +36,8 @@ func (rm *ReasonMessage) Condition() *metav1.Condition {
 }
 
 // AdditionalMessage adds additional string message to already defined message field in ReasonMessage
-// and returns its pointer for further struct manipulation
-func (rm *ReasonMessage) AdditionalMessage(message string) *ReasonMessage {
+// and returns a new ReasonMessage based on parent
+func (rm ReasonMessage) AdditionalMessage(message string) ReasonMessage {
 	rm.message = rm.message + message
 	return rm
 }

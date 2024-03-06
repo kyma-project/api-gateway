@@ -88,7 +88,7 @@ func (r *APIGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	existingAPIGateways := &operatorv1alpha1.APIGatewayList{}
 	if err := r.Client.List(ctx, existingAPIGateways); err != nil {
 		r.log.Info("Unable to list APIGateway CRs")
-		return r.requeueReconciliation(ctx, apiGatewayCR, controllers.ErrorStatus(err, "Unable to list APIGateway CRs", nil))
+		return r.requeueReconciliation(ctx, apiGatewayCR, controllers.ErrorStatus(err, "Unable to list APIGateway CRs", conditions.ReconcileFailed.Condition()))
 	}
 
 	if len(existingAPIGateways.Items) > 1 {
@@ -217,7 +217,7 @@ func (r *APIGatewayReconciler) reconcileFinalizer(ctx context.Context, apiGatewa
 		if len(apiRulesFound) > 0 {
 			return controllers.WarningStatus(errors.New("could not delete API-Gateway CR since there are APIRule(s) that block its deletion"),
 				"There are APIRule(s) that block the deletion of API-Gateway CR. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning",
-				conditions.DeletionBlockedExistingResources.AdditionalMessage(": "+strings.Join(apiRulesFound, ",")).Condition())
+				conditions.DeletionBlockedExistingResources.AdditionalMessage(": "+strings.Join(apiRulesFound, ", ")).Condition())
 		}
 
 		oryRulesFound, err := oryRulesExist(ctx, r.Client)
@@ -227,7 +227,7 @@ func (r *APIGatewayReconciler) reconcileFinalizer(ctx context.Context, apiGatewa
 		if len(oryRulesFound) > 0 {
 			return controllers.WarningStatus(errors.New("could not delete API-Gateway CR since there are ORY Oathkeeper Rule(s) that block its deletion"),
 				"There are ORY Oathkeeper Rule(s) that block the deletion of API-Gateway CR. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning",
-				conditions.OathkeeperReconcileFailed.AdditionalMessage(": "+strings.Join(oryRulesFound, ",")).Condition())
+				conditions.DeletionBlockedExistingResources.AdditionalMessage(": "+strings.Join(oryRulesFound, ", ")).Condition())
 		}
 
 		if err := removeFinalizer(ctx, r.Client, apiGatewayCR); err != nil {
@@ -248,8 +248,11 @@ func apiRulesExist(ctx context.Context, k8sClient client.Client) ([]string, erro
 	ctrl.Log.Info(fmt.Sprintf("There are %d APIRule(s) found on cluster", len(apiRuleList.Items)))
 	var blockingApiRules []string
 	for _, rule := range apiRuleList.Items {
-		ctrl.Log.Info("APIRule blocking deletion", "rule", rule.GetName())
-		blockingApiRules = append(blockingApiRules, rule.Kind+"/"+rule.GetName())
+		blocking := rule.Kind + "/" + rule.GetName()
+		ctrl.Log.Info("APIRule blocking deletion", "rule", blocking)
+		if len(blockingApiRules) < 5 {
+			blockingApiRules = append(blockingApiRules, blocking)
+		}
 	}
 	return blockingApiRules, nil
 }
@@ -271,8 +274,11 @@ func oryRulesExist(ctx context.Context, k8sClient client.Client) ([]string, erro
 	ctrl.Log.Info(fmt.Sprintf("There are %d ORY Oathkeeper Rule(s) found on cluster", len(oryRulesList.Items)))
 	var blockingOryRules []string
 	for _, rule := range oryRulesList.Items {
-		ctrl.Log.Info("ORY Oathkeeper rule blocking deletion", "rule", rule.GetName())
-		blockingOryRules = append(blockingOryRules, rule.GetKind()+"/"+rule.GetName())
+		blocking := rule.GetKind() + "/" + rule.GetName()
+		ctrl.Log.Info("ORY Oathkeeper rule blocking deletion", "rule", blocking)
+		if len(blockingOryRules) < 5 {
+			blockingOryRules = append(blockingOryRules, blocking)
+		}
 	}
 	return blockingOryRules, nil
 }

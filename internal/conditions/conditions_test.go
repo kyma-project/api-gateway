@@ -9,15 +9,15 @@ import (
 
 var _ = Describe("ReasonMessage", func() {
 	Context("AdditionalMessage", func() {
-		It("should extend existing condition message with string", func() {
+		It("should return a condition with custom message", func() {
 			// given
 			rm := conditions.ReconcileProcessing
 
 			// when
-			rm.AdditionalMessage(" my-custom-message")
+			result := rm.AdditionalMessage(" my-custom-message")
 
 			// then
-			Expect(rm.Condition().Message).To(Equal("Reconcile processing my-custom-message"))
+			Expect(result.Condition().Message).To(Equal("Reconcile processing my-custom-message"))
 		})
 
 	})

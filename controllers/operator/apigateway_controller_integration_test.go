@@ -198,7 +198,7 @@ var _ = Describe("API Gateway Controller", Serial, func() {
 				g.Expect(apiGateway.Status.State).To(Equal(v1alpha1.Warning))
 				for _, condition := range apiGateway.Status.Conditions {
 					if condition.Type == "Ready" {
-						g.Expect(condition.Message).To(Equal("Kyma Gateway deletion blocked because of the existing custom resources: blocking-api-rule,blocking-vs"))
+						g.Expect(condition.Message).To(Equal("Kyma Gateway deletion blocked because of the existing custom resources: blocking-api-rule, blocking-vs"))
 						firstNotReadyTransitionTime = condition.LastTransitionTime
 					}
 				}

@@ -185,7 +185,7 @@ var _ = Describe("API-Gateway Controller", func() {
 			Expect(c.Get(context.Background(), client.ObjectKeyFromObject(secondApiGatewayCR), secondApiGatewayCR)).Should(Succeed())
 			Expect(secondApiGatewayCR.Status.State).To(Equal(operatorv1alpha1.Warning))
 			Expect(secondApiGatewayCR.Status.Description).To(Equal(fmt.Sprintf("stopped APIGateway CR reconciliation: only APIGateway CR %s reconciles the module", apiGatewayCRName)))
-			Expect(apiGatewayCR.Status.Conditions).To(ContainElement(MatchFields(IgnoreExtras, Fields{
+			Expect(secondApiGatewayCR.Status.Conditions).To(ContainElement(MatchFields(IgnoreExtras, Fields{
 				"Type":   Equal(conditions.OlderCRExists.Condition().Type),
 				"Status": Equal(metav1.ConditionFalse),
 			})))
@@ -268,20 +268,21 @@ var _ = Describe("API-Gateway Controller", func() {
 				Finalizers:        []string{ApiGatewayFinalizer},
 			},
 			}
-			apiRule := &gatewayv1beta1.APIRule{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "api-rule",
-					Namespace: "default",
-				},
-			}
-			oryRule := &oryv1alpha1.Rule{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "ory-rule",
-					Namespace: "default",
-				},
+
+			var rules []client.Object
+			// we initialize more than 5 objects, so we validate if we show only 5 in a condition
+			for i := 0; i < 6; i++ {
+				apiRule := &gatewayv1beta1.APIRule{
+					TypeMeta: metav1.TypeMeta{Kind: "APIRule"},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      fmt.Sprintf("api-rule-%d", i),
+						Namespace: "default",
+					},
+				}
+				rules = append(rules, apiRule)
 			}
 
-			c := createFakeClient(apiGatewayCR, apiRule, oryRule)
+			c := createFakeClient(append(rules, apiGatewayCR)...)
 			agr := &APIGatewayReconciler{
 				Client:               c,
 				Scheme:               getTestScheme(),
@@ -304,7 +305,7 @@ var _ = Describe("API-Gateway Controller", func() {
 
 			Expect(apiGatewayCR.Status.Conditions).To(ContainElement(MatchFields(IgnoreExtras, Fields{
 				"Type":    Equal(conditions.DeletionBlockedExistingResources.Condition().Type),
-				"Message": ContainSubstring(apiRule.Name),
+				"Message": Equal("API Gateway deletion blocked because of the existing custom resources: APIRule/api-rule-0, APIRule/api-rule-1, APIRule/api-rule-2, APIRule/api-rule-3, APIRule/api-rule-4"),
 				"Status":  Equal(metav1.ConditionFalse),
 			})))
 		})
@@ -312,30 +313,34 @@ var _ = Describe("API-Gateway Controller", func() {
 		It("Should not delete API-Gateway CR if there are any ORY Oathkeeper Rules on cluster", func() {
 			// given
 			now := metav1.NewTime(time.Now())
-			apiGatewayCR := &operatorv1alpha1.APIGateway{ObjectMeta: metav1.ObjectMeta{
-				Name:              apiGatewayCRName,
-				Namespace:         testNamespace,
-				DeletionTimestamp: &now,
-				Finalizers:        []string{ApiGatewayFinalizer},
-			},
-			}
-			oryRule, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&oryv1alpha1.Rule{
+			apiGatewayCR := &operatorv1alpha1.APIGateway{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      "ory-rule",
-					Namespace: "default",
+					Name:              apiGatewayCRName,
+					Namespace:         testNamespace,
+					DeletionTimestamp: &now,
+					Finalizers:        []string{ApiGatewayFinalizer},
 				},
-			})
+			}
+			var rules []client.Object
+			for i := 0; i < 6; i++ {
+				// we initialize more than 5 objects, so we validate if we show only 5 in a condition
+				oryRule, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&oryv1alpha1.Rule{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      fmt.Sprintf("ory-rule-%d", i),
+						Namespace: "default",
+					},
+				})
+				Expect(err).ToNot(HaveOccurred())
+				r := &unstructured.Unstructured{Object: oryRule}
+				r.SetGroupVersionKind(schema.GroupVersionKind{
+					Group:   "oathkeeper.ory.sh",
+					Version: "v1alpha1",
+					Kind:    "rule",
+				})
 
-			r := &unstructured.Unstructured{Object: oryRule}
-			r.SetGroupVersionKind(schema.GroupVersionKind{
-				Group:   "oathkeeper.ory.sh",
-				Version: "v1alpha1",
-				Kind:    "rule",
-			})
-
-			Expect(err).ToNot(HaveOccurred())
-
-			c := createFakeClient(apiGatewayCR, r)
+				rules = append(rules, r)
+			}
+			c := createFakeClient(append(rules, apiGatewayCR)...)
 			agr := &APIGatewayReconciler{
 				Client:               c,
 				Scheme:               getTestScheme(),
@@ -358,7 +363,7 @@ var _ = Describe("API-Gateway Controller", func() {
 
 			Expect(apiGatewayCR.Status.Conditions).To(ContainElement(MatchFields(IgnoreExtras, Fields{
 				"Type":    Equal(conditions.DeletionBlockedExistingResources.Condition().Type),
-				"Message": ContainSubstring("ory-rule"),
+				"Message": Equal("API Gateway deletion blocked because of the existing custom resources: rule/ory-rule-0, rule/ory-rule-1, rule/ory-rule-2, rule/ory-rule-3, rule/ory-rule-4"),
 				"Status":  Equal(metav1.ConditionFalse),
 			})))
 		})
