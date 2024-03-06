@@ -66,7 +66,7 @@ var _ = Describe("Access Strategies Validation", func() {
 			Expect(failure).To(HaveLen(0))
 		})
 
-		It("Should validation failure when there is an exclusive access strategy", func() {
+		It("Should have validation failure when there is an exclusive access strategy", func() {
 			//given
 			strategies := []*gatewayv1beta1.Authenticator{
 				{
@@ -116,6 +116,11 @@ var _ = Describe("Access Strategies Validation", func() {
 						Name: gatewayv1beta1.AccessStrategyJwt,
 					},
 				},
+				{
+					Handler: &gatewayv1beta1.Handler{
+						Name: gatewayv1beta1.AccessStrategyCookieSession,
+					},
+				},
 			}
 
 			//when
@@ -153,11 +158,6 @@ var _ = Describe("Access Strategies Validation", func() {
 						Name: gatewayv1beta1.AccessStrategyAnonymous,
 					},
 				},
-				{
-					Handler: &gatewayv1beta1.Handler{
-						Name: gatewayv1beta1.AccessStrategyCookieSession,
-					},
-				},
 			}
 
 			//when
@@ -178,7 +178,7 @@ var _ = Describe("Access Strategies Validation", func() {
 			Expect(failure).To(HaveLen(0))
 		})
 
-		It("Should validation failure when there are mixed secure and unsecure access strategies", func() {
+		It("Should have validation failure when there are mixed secure and unsecure access strategies", func() {
 			//given
 			strategies := []*gatewayv1beta1.Authenticator{
 				{
