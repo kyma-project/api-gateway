@@ -25,3 +25,23 @@ func CheckForExclusiveAccessStrategy(accessStrategies []*gatewayv1beta1.Authenti
 
 	return nil
 }
+
+// CheckForSecureAndUnsecureAccessStrategies checks if there are secure and unsecure access strategies used at the same time.
+func CheckForSecureAndUnsecureAccessStrategies(accessStrategies []*gatewayv1beta1.Authenticator, attributePath string) []Failure {
+	var containsSecureAccessStrategy, containsUnsecureAccessStrategy bool
+
+	for _, r := range accessStrategies {
+		switch r.Handler.Name {
+		case gatewayv1beta1.AccessStrategyOauth2ClientCredentials, gatewayv1beta1.AccessStrategyOauth2Introspection, gatewayv1beta1.AccessStrategyJwt, gatewayv1beta1.AccessStrategyCookieSession:
+			containsSecureAccessStrategy = true
+		case gatewayv1beta1.AccessStrategyNoop, gatewayv1beta1.AccessStrategyNoAuth, gatewayv1beta1.AccessStrategyAllow, gatewayv1beta1.AccessStrategyUnauthorized, gatewayv1beta1.AccessStrategyAnonymous:
+			containsUnsecureAccessStrategy = true
+		}
+	}
+
+	if containsSecureAccessStrategy && containsUnsecureAccessStrategy {
+		return []Failure{{AttributePath: attributePath, Message: "Secure access strategies cannot be used in combination with unsecure access strategies"}}
+	}
+
+	return nil
+}
