@@ -155,7 +155,7 @@ var _ = Describe("API Gateway Controller", Serial, func() {
 			}, eventuallyTimeout).Should(Succeed())
 		})
 
-		It("should update lastTransitionTime of Ready condition when the condition status did not change", func() {
+		It("should update lastTransitionTime of Ready condition when only reason or message changed", func() {
 			// given
 			blockingApiRule := getApiRule()
 			blockingApiRule.Name = "blocking-api-rule"
@@ -198,7 +198,7 @@ var _ = Describe("API Gateway Controller", Serial, func() {
 				g.Expect(apiGateway.Status.State).To(Equal(v1alpha1.Warning))
 				for _, condition := range apiGateway.Status.Conditions {
 					if condition.Type == "Ready" {
-						g.Expect(condition.Message).To(ContainSubstring("Kyma Gateway deletion blocked because of the existing custom resources: blocking-api-rule,blocking-vs"))
+						g.Expect(condition.Message).To(Equal("Kyma Gateway deletion blocked because of the existing custom resources: blocking-api-rule,blocking-vs"))
 						firstNotReadyTransitionTime = condition.LastTransitionTime
 					}
 				}
@@ -208,13 +208,13 @@ var _ = Describe("API Gateway Controller", Serial, func() {
 			By("Deleting APIRule that referenced APIGateway")
 			Expect(k8sClient.Delete(context.Background(), &blockingApiRule)).Should(Succeed())
 
-			By("Verifying that the condition lastTransitionTime is also updated when the condition status did not change")
+			By("Verifying that the condition lastTransitionTime is also updated")
 			Eventually(func(g Gomega) {
 				g.Expect(k8sClient.Get(context.Background(), client.ObjectKey{Name: apiGateway.Name}, &apiGateway)).Should(Succeed())
 				g.Expect(apiGateway.Status.State).To(Equal(v1alpha1.Warning))
 				for _, condition := range apiGateway.Status.Conditions {
 					if condition.Type == "Ready" {
-						g.Expect(condition.Message).To(ContainSubstring("Kyma Gateway deletion blocked because of the existing custom resources: blocking-vs"))
+						g.Expect(condition.Message).To(Equal("Kyma Gateway deletion blocked because of the existing custom resources: blocking-vs"))
 						g.Expect(condition.LastTransitionTime.Compare(firstNotReadyTransitionTime.Time) >= 0).To(BeTrue())
 					}
 				}
