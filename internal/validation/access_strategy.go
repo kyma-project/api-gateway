@@ -32,10 +32,9 @@ func CheckForSecureAndUnsecureAccessStrategies(accessStrategies []*gatewayv1beta
 
 	for _, r := range accessStrategies {
 		switch r.Handler.Name {
-		case gatewayv1beta1.AccessStrategyOauth2ClientCredentials, gatewayv1beta1.AccessStrategyOauth2Introspection, gatewayv1beta1.AccessStrategyJwt:
+		case gatewayv1beta1.AccessStrategyOauth2ClientCredentials, gatewayv1beta1.AccessStrategyOauth2Introspection, gatewayv1beta1.AccessStrategyJwt, gatewayv1beta1.AccessStrategyCookieSession:
 			containsSecureAccessStrategy = true
-		case gatewayv1beta1.AccessStrategyNoop, gatewayv1beta1.AccessStrategyNoAuth, gatewayv1beta1.AccessStrategyAllow,
-			gatewayv1beta1.AccessStrategyUnauthorized, gatewayv1beta1.AccessStrategyAnonymous, gatewayv1beta1.AccessStrategyCookieSession:
+		case gatewayv1beta1.AccessStrategyNoop, gatewayv1beta1.AccessStrategyNoAuth, gatewayv1beta1.AccessStrategyAllow, gatewayv1beta1.AccessStrategyUnauthorized, gatewayv1beta1.AccessStrategyAnonymous:
 			containsUnsecureAccessStrategy = true
 		}
 	}

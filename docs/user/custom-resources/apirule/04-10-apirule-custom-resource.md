@@ -42,6 +42,7 @@ This table lists all parameters of APIRule CRD together with their descriptions:
 > [!WARNING]
 > When you use the Ory handler, do not define the access strategies `noop`, `allow`, or `no_auth` with any other access strategy on the same **spec.rules.path**.
 > When you use the Istio handler, do not define the access strategies `jwt`, `noop`, `allow`, or `no_auth` with any other access strategy on the same **spec.rules.path**.
+> Additionally, do not use secured access strategies (such as `jwt`, `oauth2_introspection`, or `oauth2_client_credentials`) with unsecured access strategies (for example, `allow`, `no_auth`, `noop`, `unauthorized`, or `anonymous`).
 
 **Status:**
 
