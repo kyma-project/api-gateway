@@ -155,7 +155,7 @@ var _ = Describe("API Gateway Controller", Serial, func() {
 			}, eventuallyTimeout).Should(Succeed())
 		})
 
-		It("should update lastTransitionTime of Ready condition when reason changed", func() {
+		It("should update lastTransitionTime of Ready condition when the condition status did not change", func() {
 			// given
 			blockingApiRule := getApiRule()
 			blockingApiRule.Name = "blocking-api-rule"
