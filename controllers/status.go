@@ -91,34 +91,30 @@ func (s status) Description() string {
 }
 
 func (s status) ToAPIGatewayStatus() (operatorv1alpha1.APIGatewayStatus, error) {
+	newStatus := operatorv1alpha1.APIGatewayStatus{
+		Description: s.description,
+	}
+	if s.condition != nil {
+		meta.SetStatusCondition(&newStatus.Conditions, *s.condition)
+	}
 	switch s.state {
 	case Ready:
-		return operatorv1alpha1.APIGatewayStatus{
-			State:       operatorv1alpha1.Ready,
-			Description: s.description,
-		}, nil
+		newStatus.State = operatorv1alpha1.Ready
+		return newStatus, nil
 	case Processing:
-		return operatorv1alpha1.APIGatewayStatus{
-			State:       operatorv1alpha1.Processing,
-			Description: s.description,
-		}, nil
+		newStatus.State = operatorv1alpha1.Processing
+		return newStatus, nil
 	case Warning:
-		return operatorv1alpha1.APIGatewayStatus{
-			State:       operatorv1alpha1.Warning,
-			Description: s.description,
-		}, nil
+		newStatus.State = operatorv1alpha1.Warning
+		return newStatus, nil
 	case Deleting:
-		return operatorv1alpha1.APIGatewayStatus{
-			State:       operatorv1alpha1.Deleting,
-			Description: s.description,
-		}, nil
+		newStatus.State = operatorv1alpha1.Deleting
+		return newStatus, nil
 	case Error:
-		return operatorv1alpha1.APIGatewayStatus{
-			State:       operatorv1alpha1.Error,
-			Description: s.description,
-		}, nil
+		newStatus.State = operatorv1alpha1.Error
+		return newStatus, nil
 	default:
-		return operatorv1alpha1.APIGatewayStatus{}, fmt.Errorf("unsupported status: %v", s.state)
+		return operatorv1alpha1.APIGatewayStatus{}, fmt.Errorf("unsupported status state: %v", s.state)
 	}
 }
 
@@ -170,9 +166,6 @@ func UpdateApiGatewayStatus(ctx context.Context, k8sClient client.Client, apiGat
 	newStatus, err := status.ToAPIGatewayStatus()
 	if err != nil {
 		return err
-	}
-	if status.Condition() != nil {
-		meta.SetStatusCondition(&newStatus.Conditions, *status.Condition())
 	}
 	return retry.RetryOnConflict(retry.DefaultRetry, func() error {
 		if getErr := k8sClient.Get(ctx, client.ObjectKeyFromObject(apiGatewayCR), apiGatewayCR); getErr != nil {
