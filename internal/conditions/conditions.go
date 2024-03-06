@@ -1,7 +1,6 @@
 package conditions
 
 import (
-	"fmt"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -20,11 +19,13 @@ var (
 	DeletionBlockedExistingResources = ReasonMessage{"DeletionBlockedExistingResources", "API Gateway deletion blocked because of the existing custom resources", metav1.ConditionFalse}
 )
 
+// ReasonMessage is a struct that defines different states of Ready condition
 type ReasonMessage struct {
 	reason, message string
 	status          metav1.ConditionStatus
 }
 
+// Condition returns metav1.Condition from existing ReasonMessage
 func (rm *ReasonMessage) Condition() *metav1.Condition {
 	return &metav1.Condition{
 		Type:    "Ready",
@@ -34,7 +35,9 @@ func (rm *ReasonMessage) Condition() *metav1.Condition {
 	}
 }
 
+// AdditionalMessage adds additional string message to already defined message field in ReasonMessage
+// and returns its pointer for further struct manipulation
 func (rm *ReasonMessage) AdditionalMessage(message string) *ReasonMessage {
-	rm.message = fmt.Sprintf(rm.message, message)
+	rm.message = rm.message + message
 	return rm
 }
