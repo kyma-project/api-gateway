@@ -117,7 +117,6 @@ var _ = Describe("Validate function", func() {
 						Path: "/abc",
 						AccessStrategies: []*v1beta1.Authenticator{
 							toAuthenticator("jwt", simpleJWTConfig()),
-							toAuthenticator("noop", emptyConfig()),
 						},
 					},
 				},
@@ -160,7 +159,6 @@ var _ = Describe("Validate function", func() {
 						Path: "/abc",
 						AccessStrategies: []*v1beta1.Authenticator{
 							toAuthenticator("jwt", simpleJWTConfig()),
-							toAuthenticator("noop", emptyConfig()),
 						},
 					},
 				},
@@ -198,7 +196,6 @@ var _ = Describe("Validate function", func() {
 						Path: "/abc",
 						AccessStrategies: []*v1beta1.Authenticator{
 							toAuthenticator("jwt", simpleJWTConfig()),
-							toAuthenticator("noop", emptyConfig()),
 						},
 					},
 				},
@@ -238,7 +235,6 @@ var _ = Describe("Validate function", func() {
 						Path: "/abc",
 						AccessStrategies: []*v1beta1.Authenticator{
 							toAuthenticator("jwt", simpleJWTConfig()),
-							toAuthenticator("noop", emptyConfig()),
 						},
 					},
 				},
@@ -282,7 +278,6 @@ var _ = Describe("Validate function", func() {
 						Path: "/abc",
 						AccessStrategies: []*v1beta1.Authenticator{
 							toAuthenticator("jwt", simpleJWTConfig()),
-							toAuthenticator("noop", emptyConfig()),
 						},
 					},
 				},
@@ -320,7 +315,6 @@ var _ = Describe("Validate function", func() {
 						Path: "/abc",
 						AccessStrategies: []*v1beta1.Authenticator{
 							toAuthenticator("jwt", simpleJWTConfig()),
-							toAuthenticator("noop", emptyConfig()),
 						},
 					},
 				},
@@ -356,7 +350,6 @@ var _ = Describe("Validate function", func() {
 						Path: "/abc",
 						AccessStrategies: []*v1beta1.Authenticator{
 							toAuthenticator("jwt", simpleJWTConfig()),
-							toAuthenticator("noop", emptyConfig()),
 						},
 					},
 				},
@@ -394,7 +387,6 @@ var _ = Describe("Validate function", func() {
 						Path: "/abc",
 						AccessStrategies: []*v1beta1.Authenticator{
 							toAuthenticator("jwt", simpleJWTConfig()),
-							toAuthenticator("noop", emptyConfig()),
 						},
 					},
 				},
@@ -432,7 +424,6 @@ var _ = Describe("Validate function", func() {
 						Path: "/abc",
 						AccessStrategies: []*v1beta1.Authenticator{
 							toAuthenticator("jwt", simpleJWTConfig()),
-							toAuthenticator("noop", emptyConfig()),
 						},
 					},
 				},
@@ -469,7 +460,6 @@ var _ = Describe("Validate function", func() {
 						Path: "/abc",
 						AccessStrategies: []*v1beta1.Authenticator{
 							toAuthenticator("jwt", simpleJWTConfig()),
-							toAuthenticator("noop", emptyConfig()),
 						},
 					},
 				},
@@ -510,7 +500,6 @@ var _ = Describe("Validate function", func() {
 						Path: "/abc",
 						AccessStrategies: []*v1beta1.Authenticator{
 							toAuthenticator("jwt", simpleJWTConfig()),
-							toAuthenticator("noop", emptyConfig()),
 						},
 					},
 				},
@@ -548,7 +537,6 @@ var _ = Describe("Validate function", func() {
 						Path: "/abc",
 						AccessStrategies: []*v1beta1.Authenticator{
 							toAuthenticator("jwt", simpleJWTConfig()),
-							toAuthenticator("noop", emptyConfig()),
 						},
 					},
 				},
@@ -824,7 +812,6 @@ var _ = Describe("Validate function", func() {
 						Path: "/abc",
 						AccessStrategies: []*v1beta1.Authenticator{
 							toAuthenticator("jwt", simpleJWTConfig()),
-							toAuthenticator("noop", emptyConfig()),
 						},
 						Methods: []v1beta1.HttpMethod{http.MethodPost},
 					},
@@ -832,7 +819,6 @@ var _ = Describe("Validate function", func() {
 						Path: "/abc",
 						AccessStrategies: []*v1beta1.Authenticator{
 							toAuthenticator("jwt", simpleJWTConfig()),
-							toAuthenticator("noop", emptyConfig()),
 						},
 						Methods: []v1beta1.HttpMethod{http.MethodGet},
 					},
@@ -885,7 +871,6 @@ var _ = Describe("Validate function", func() {
 						Path: "/abc",
 						AccessStrategies: []*v1beta1.Authenticator{
 							toAuthenticator("jwt", simpleJWTConfig()),
-							toAuthenticator("noop", emptyConfig()),
 						},
 						Methods: []v1beta1.HttpMethod{http.MethodPost},
 					},
@@ -893,7 +878,6 @@ var _ = Describe("Validate function", func() {
 						Path: "/abc",
 						AccessStrategies: []*v1beta1.Authenticator{
 							toAuthenticator("jwt", simpleJWTConfig()),
-							toAuthenticator("noop", emptyConfig()),
 						},
 						Methods: []v1beta1.HttpMethod{http.MethodGet},
 					},
@@ -913,6 +897,76 @@ var _ = Describe("Validate function", func() {
 
 		//then
 		Expect(problems).To(HaveLen(0))
+	})
+
+	It("Should fail for noop and jwt access strategy on the same path", func() {
+		//given
+		input := &v1beta1.APIRule{
+			Spec: v1beta1.APIRuleSpec{
+				Service: getApiRuleService(sampleServiceName, uint32(8080)),
+				Host:    getHost(sampleValidHost),
+				Rules: []v1beta1.Rule{
+					{
+						Path: "/abc",
+						AccessStrategies: []*v1beta1.Authenticator{
+							toAuthenticator("noop", emptyConfig()),
+							toAuthenticator("jwt", simpleJWTConfig()),
+						},
+					},
+				},
+			},
+		}
+
+		service := getService(sampleServiceName)
+		service.Spec.Selector = map[string]string{}
+		fakeClient := buildFakeClient(service)
+
+		//when
+		problems := (&APIRuleValidator{
+			HandlerValidator:          handlerValidatorMock,
+			AccessStrategiesValidator: asValidatorMock,
+			DomainAllowList:           testDomainAllowlist,
+		}).Validate(context.TODO(), fakeClient, input, networkingv1beta1.VirtualServiceList{})
+
+		// then
+		Expect(problems).To(HaveLen(1))
+		Expect(problems[0].AttributePath).To(Equal(".spec.rules[0].accessStrategies"))
+		Expect(problems[0].Message).To(Equal("Secure access strategies cannot be used in combination with unsecure access strategies"))
+	})
+
+	It("Should fail for allow and jwt access strategy on the same path", func() {
+		//given
+		input := &v1beta1.APIRule{
+			Spec: v1beta1.APIRuleSpec{
+				Service: getApiRuleService(sampleServiceName, uint32(8080)),
+				Host:    getHost(sampleValidHost),
+				Rules: []v1beta1.Rule{
+					{
+						Path: "/abc",
+						AccessStrategies: []*v1beta1.Authenticator{
+							toAuthenticator("allow", emptyConfig()),
+							toAuthenticator("jwt", simpleJWTConfig()),
+						},
+					},
+				},
+			},
+		}
+
+		service := getService(sampleServiceName)
+		service.Spec.Selector = map[string]string{}
+		fakeClient := buildFakeClient(service)
+
+		//when
+		problems := (&APIRuleValidator{
+			HandlerValidator:          handlerValidatorMock,
+			AccessStrategiesValidator: asValidatorMock,
+			DomainAllowList:           testDomainAllowlist,
+		}).Validate(context.TODO(), fakeClient, input, networkingv1beta1.VirtualServiceList{})
+
+		// then
+		Expect(problems).To(HaveLen(1))
+		Expect(problems[0].AttributePath).To(Equal(".spec.rules[0].accessStrategies"))
+		Expect(problems[0].Message).To(Equal("Secure access strategies cannot be used in combination with unsecure access strategies"))
 	})
 
 	It("Should not fail with service without labels selector by default", func() {

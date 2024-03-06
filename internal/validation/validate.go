@@ -251,6 +251,7 @@ func (v *APIRuleValidator) validateAccessStrategies(attributePath string, access
 	}
 
 	problems = append(problems, v.AccessStrategiesValidator.Validate(attributePath, accessStrategies)...)
+	problems = append(problems, CheckForSecureAndUnsecureAccessStrategies(accessStrategies, attributePath)...)
 
 	for i, r := range accessStrategies {
 		strategyAttrPath := attributePath + fmt.Sprintf("[%d]", i)
