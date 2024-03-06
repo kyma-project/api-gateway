@@ -53,6 +53,7 @@ var _ = Describe("AccessStrategies Istio Validator", func() {
 		Entry(nil, gatewayv1beta1.AccessStrategyAllow, "allow access strategy is not allowed in combination with other access strategies"),
 		Entry(nil, gatewayv1beta1.AccessStrategyNoAuth, "no_auth access strategy is not allowed in combination with other access strategies"),
 		Entry(nil, gatewayv1beta1.AccessStrategyJwt, "jwt access strategy is not allowed in combination with other access strategies"),
+		Entry(nil, gatewayv1beta1.AccessStrategyNoop, "noop access strategy is not allowed in combination with other access strategies"),
 	)
 
 	It("Should return failures with multiple failures when there are multiple exclusive handlers", func() {
@@ -68,16 +69,23 @@ var _ = Describe("AccessStrategies Istio Validator", func() {
 					Name: gatewayv1beta1.AccessStrategyJwt,
 				},
 			},
+			{
+				Handler: &gatewayv1beta1.Handler{
+					Name: gatewayv1beta1.AccessStrategyNoop,
+				},
+			},
 		}
 		//when
 		problems := (&asValidator{}).Validate("some.attribute", strategies)
 
 		//then
-		Expect(problems).To(HaveLen(2))
+		Expect(problems).To(HaveLen(3))
 		Expect(problems[0].AttributePath).To(Equal("some.attribute.accessStrategies[0].handler"))
 		Expect(problems[0].Message).To(Equal("allow access strategy is not allowed in combination with other access strategies"))
 		Expect(problems[1].AttributePath).To(Equal("some.attribute.accessStrategies[1].handler"))
 		Expect(problems[1].Message).To(Equal("jwt access strategy is not allowed in combination with other access strategies"))
+		Expect(problems[2].AttributePath).To(Equal("some.attribute.accessStrategies[2].handler"))
+		Expect(problems[2].Message).To(Equal("noop access strategy is not allowed in combination with other access strategies"))
 	})
 
 	It("Should succeed with multiple non-exclusive handler", func() {
