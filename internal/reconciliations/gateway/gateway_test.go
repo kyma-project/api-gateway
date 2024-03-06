@@ -2,6 +2,7 @@ package gateway
 
 import (
 	"context"
+	"github.com/kyma-project/api-gateway/internal/conditions"
 
 	certv1alpha1 "github.com/gardener/cert-management/pkg/apis/cert/v1alpha1"
 	dnsv1alpha1 "github.com/gardener/external-dns-management/pkg/apis/dns/v1alpha1"
@@ -41,6 +42,37 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 
 		Expect(k8sClient.Get(context.Background(), client.ObjectKeyFromObject(&apiGateway), &apiGateway)).Should(Succeed())
 		Expect(apiGateway.GetFinalizers()).To(ContainElement(KymaGatewayFinalizer))
+	})
+
+	It("Should add condition on successful reconcile ", func() {
+		// given
+		apiGateway := getApiGateway(true)
+
+		k8sClient := createFakeClient(&apiGateway)
+
+		// when
+		status := ReconcileKymaGateway(context.Background(), k8sClient, &apiGateway, resourceListPath)
+
+		// then
+		Expect(status.IsReady()).To(BeTrue())
+		Expect(status.Condition()).To(Not(BeNil()))
+		Expect(status.Condition().Type).To(Equal(conditions.KymaGatewayReconcileSucceeded.Condition().Type))
+		Expect(status.Condition().Reason).To(Equal(conditions.KymaGatewayReconcileSucceeded.Condition().Reason))
+		Expect(status.Condition().Status).To(Equal(metav1.ConditionFalse))
+	})
+
+	It("Should name of blocking resource in condition for warning", func() {
+		blockingVs := getVirtualService(KymaGatewayFullName)
+		status := testShouldDeleteKymaGatewayNonGardenerResources(func(gw v1alpha1.APIGateway) v1alpha1.APIGateway {
+			gw.Spec.EnableKymaGateway = ptr.To(false)
+			return gw
+		}, controllers.Warning, BeFalse(), ContainElement(KymaGatewayFinalizer), &blockingVs)
+
+		Expect(status.Condition()).To(Not(BeNil()))
+		Expect(status.Condition().Type).To(Equal(conditions.KymaGatewayDeletionBlocked.Condition().Type))
+		Expect(status.Condition().Reason).To(Equal(conditions.KymaGatewayDeletionBlocked.Condition().Reason))
+		Expect(status.Condition().Status).To(Equal(metav1.ConditionFalse))
+		Expect(status.Condition().Message).To(ContainSubstring(blockingVs.Name))
 	})
 
 	Context("Non-Gardener cluster", func() {

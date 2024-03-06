@@ -4,6 +4,7 @@ import (
 	"context"
 	goerrors "errors"
 	"fmt"
+	"github.com/kyma-project/api-gateway/internal/conditions"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -21,6 +22,7 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	. "github.com/onsi/gomega/gstruct"
 )
 
 var _ = Describe("API-Gateway Controller", func() {
@@ -71,7 +73,7 @@ var _ = Describe("API-Gateway Controller", func() {
 			Expect(apiGatewayCR.GetObjectMeta().GetFinalizers()).To(ContainElement(ApiGatewayFinalizer))
 		})
 
-		It("Should set status to Ready when API-Gateway reconciliation succeed", func() {
+		It("Should set status to Ready and add condition when API-Gateway reconciliation succeed", func() {
 			// given
 			apiGatewayCR := &operatorv1alpha1.APIGateway{
 				ObjectMeta: metav1.ObjectMeta{
@@ -98,6 +100,10 @@ var _ = Describe("API-Gateway Controller", func() {
 
 			Expect(c.Get(context.TODO(), client.ObjectKeyFromObject(apiGatewayCR), apiGatewayCR)).Should(Succeed())
 			Expect(apiGatewayCR.Status.State).Should(Equal(operatorv1alpha1.Ready))
+			Expect(apiGatewayCR.Status.Conditions).To(ContainElement(MatchFields(IgnoreExtras, Fields{
+				"Type":   Equal(conditions.ReconcileSucceeded.Condition().Type),
+				"Status": Equal(metav1.ConditionTrue),
+			})))
 		})
 
 		It("Should set status Ready on the older APIGateway CR when there are two in the cluster", func() {
@@ -140,7 +146,7 @@ var _ = Describe("API-Gateway Controller", func() {
 			Expect(apiGatewayCR.Status.State).To(Equal(operatorv1alpha1.Ready))
 		})
 
-		It("Should set an error status and do not requeue an APIGateway CR when an older APIGateway CR is present", func() {
+		It("Should set an error status with condition and do not requeue an APIGateway CR when an older APIGateway CR is present", func() {
 			// given
 			apiGatewayCR := &operatorv1alpha1.APIGateway{
 				ObjectMeta: metav1.ObjectMeta{
@@ -179,10 +185,14 @@ var _ = Describe("API-Gateway Controller", func() {
 			Expect(c.Get(context.Background(), client.ObjectKeyFromObject(secondApiGatewayCR), secondApiGatewayCR)).Should(Succeed())
 			Expect(secondApiGatewayCR.Status.State).To(Equal(operatorv1alpha1.Warning))
 			Expect(secondApiGatewayCR.Status.Description).To(Equal(fmt.Sprintf("stopped APIGateway CR reconciliation: only APIGateway CR %s reconciles the module", apiGatewayCRName)))
+			Expect(apiGatewayCR.Status.Conditions).To(ContainElement(MatchFields(IgnoreExtras, Fields{
+				"Type":   Equal(conditions.OlderCRExists.Condition().Type),
+				"Status": Equal(metav1.ConditionFalse),
+			})))
 
 		})
 
-		It("Should set an error status and requeue an APIGateway CR when is unable to list Istio CRs", func() {
+		It("Should set an error status with condition and requeue an APIGateway CR when is unable to list Istio CRs", func() {
 			// given
 			apiGatewayCR := &operatorv1alpha1.APIGateway{
 				ObjectMeta: metav1.ObjectMeta{
@@ -213,6 +223,10 @@ var _ = Describe("API-Gateway Controller", func() {
 			Expect(c.Get(context.Background(), client.ObjectKeyFromObject(apiGatewayCR), apiGatewayCR)).Should(Succeed())
 			Expect(apiGatewayCR.Status.State).To(Equal(operatorv1alpha1.Error))
 			Expect(apiGatewayCR.Status.Description).To(Equal("Unable to list APIGateway CRs"))
+			Expect(apiGatewayCR.Status.Conditions).To(ContainElement(MatchFields(IgnoreExtras, Fields{
+				"Type":   Equal(conditions.ReconcileFailed.Condition().Type),
+				"Status": Equal(metav1.ConditionFalse),
+			})))
 		})
 
 		It("Should delete API-Gateway CR if there are no blocking resources", func() {
@@ -287,6 +301,12 @@ var _ = Describe("API-Gateway Controller", func() {
 			Expect(apiGatewayCR.Status.State).To(Equal(operatorv1alpha1.Warning))
 			Expect(apiGatewayCR.Status.Description).To(Equal("There are APIRule(s) that block the deletion of API-Gateway CR. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning"))
 			Expect(apiGatewayCR.GetObjectMeta().GetFinalizers()).To(ContainElement(ApiGatewayFinalizer))
+
+			Expect(apiGatewayCR.Status.Conditions).To(ContainElement(MatchFields(IgnoreExtras, Fields{
+				"Type":    Equal(conditions.DeletionBlockedExistingResources.Condition().Type),
+				"Message": ContainSubstring(apiRule.Name),
+				"Status":  Equal(metav1.ConditionFalse),
+			})))
 		})
 
 		It("Should not delete API-Gateway CR if there are any ORY Oathkeeper Rules on cluster", func() {
@@ -335,6 +355,12 @@ var _ = Describe("API-Gateway Controller", func() {
 			Expect(apiGatewayCR.Status.State).To(Equal(operatorv1alpha1.Warning))
 			Expect(apiGatewayCR.Status.Description).To(Equal("There are ORY Oathkeeper Rule(s) that block the deletion of API-Gateway CR. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning"))
 			Expect(apiGatewayCR.GetObjectMeta().GetFinalizers()).To(ContainElement(ApiGatewayFinalizer))
+
+			Expect(apiGatewayCR.Status.Conditions).To(ContainElement(MatchFields(IgnoreExtras, Fields{
+				"Type":    Equal(conditions.DeletionBlockedExistingResources.Condition().Type),
+				"Message": ContainSubstring("ory-rule"),
+				"Status":  Equal(metav1.ConditionFalse),
+			})))
 		})
 	})
 })

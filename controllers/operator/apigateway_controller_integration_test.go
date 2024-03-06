@@ -154,6 +154,74 @@ var _ = Describe("API Gateway Controller", Serial, func() {
 				g.Expect(apiGateway.Status.Description).To(Equal("There are APIRule(s) that block the deletion of API-Gateway CR. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning"))
 			}, eventuallyTimeout).Should(Succeed())
 		})
+
+		It("should update lastTransitionTime of Ready condition when reason changed", func() {
+			// given
+			blockingApiRule := getApiRule()
+			blockingApiRule.Name = "blocking-api-rule"
+			blockingVs := getVirtualService()
+			blockingVs.Name = "blocking-vs"
+
+			apiGateway := v1alpha1.APIGateway{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: generateName(),
+				},
+				Spec: v1alpha1.APIGatewaySpec{
+					EnableKymaGateway: ptr.To(true),
+				},
+			}
+
+			By("Creating VirtualService that references default gateway")
+			Expect(k8sClient.Create(context.Background(), &blockingVs)).Should(Succeed())
+
+			By("Creating APIRule that references default gateway")
+			Expect(k8sClient.Create(context.Background(), &blockingApiRule)).Should(Succeed())
+
+			By("Creating APIGateway")
+			Expect(k8sClient.Create(context.Background(), &apiGateway)).Should(Succeed())
+
+			By("Validating that APIGateway CR is in ready state")
+			Eventually(func(g Gomega) {
+				g.Expect(k8sClient.Get(context.Background(), client.ObjectKey{Name: apiGateway.Name}, &apiGateway)).Should(Succeed())
+				g.Expect(apiGateway.Status.State).To(Equal(v1alpha1.Ready))
+			}, eventuallyTimeout).Should(Succeed())
+
+			By("Disabling default gateway in APIGateway")
+			apiGateway.Spec.EnableKymaGateway = ptr.To(false)
+			Expect(k8sClient.Update(context.Background(), &apiGateway)).Should(Succeed())
+
+			// then
+			By("Validating APIGateway is in warning state")
+			var firstNotReadyTransitionTime metav1.Time
+			Eventually(func(g Gomega) {
+				g.Expect(k8sClient.Get(context.Background(), client.ObjectKey{Name: apiGateway.Name}, &apiGateway)).Should(Succeed())
+				g.Expect(apiGateway.Status.State).To(Equal(v1alpha1.Warning))
+				for _, condition := range apiGateway.Status.Conditions {
+					if condition.Type == "Ready" {
+						g.Expect(condition.Message).To(ContainSubstring("Kyma Gateway deletion blocked because of the existing custom resources: blocking-api-rule,blocking-vs"))
+						firstNotReadyTransitionTime = condition.LastTransitionTime
+					}
+				}
+				g.Expect(firstNotReadyTransitionTime).ToNot(BeZero())
+			}, eventuallyTimeout).Should(Succeed())
+
+			By("Deleting APIRule that referenced APIGateway")
+			Expect(k8sClient.Delete(context.Background(), &blockingApiRule)).Should(Succeed())
+
+			By("Verifying that the condition lastTransitionTime is also updated when the condition status did not change")
+			Eventually(func(g Gomega) {
+				g.Expect(k8sClient.Get(context.Background(), client.ObjectKey{Name: apiGateway.Name}, &apiGateway)).Should(Succeed())
+				g.Expect(apiGateway.Status.State).To(Equal(v1alpha1.Warning))
+				for _, condition := range apiGateway.Status.Conditions {
+					if condition.Type == "Ready" {
+						g.Expect(condition.Message).To(ContainSubstring("Kyma Gateway deletion blocked because of the existing custom resources: blocking-vs"))
+						g.Expect(condition.LastTransitionTime.Compare(firstNotReadyTransitionTime.Time) >= 0).To(BeTrue())
+					}
+				}
+				g.Expect(firstNotReadyTransitionTime).ToNot(BeZero())
+			}, eventuallyTimeout).Should(Succeed())
+
+		})
 	})
 
 	Context("Kyma Gateway reconciliation", func() {
