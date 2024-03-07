@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 
 set -ex
-
 export CYPRESS_DOMAIN=http://localhost:3001
 export DASHBOARD_IMAGE="europe-docker.pkg.dev/kyma-project/prod/kyma-dashboard-local-prod:latest"
 
