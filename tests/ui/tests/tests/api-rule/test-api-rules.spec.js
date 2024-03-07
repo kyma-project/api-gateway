@@ -9,6 +9,7 @@ const apiRuleDefaultPath = "/.*";
 context("Test API Rules", () => {
 
     const namespaceName = generateNamespaceName();
+
     const serviceName = generateRandomName("test-service");
     const apiRuleName = generateRandomName("test-api-rule");
 
