@@ -3,7 +3,7 @@
 set -ex
 
 export CYPRESS_DOMAIN=http://localhost:3001
-export DASHBOARD_IMAGE="europe-docker.pkg.dev/kyma-project/prod/kyma-dashboard-local-prod:56632f3d"
+export DASHBOARD_IMAGE="europe-docker.pkg.dev/kyma-project/prod/kyma-dashboard-local-prod:latest"
 
 sudo apt-get update -y
 sudo apt-get install -y gettext-base
