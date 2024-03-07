@@ -1,7 +1,7 @@
 # Jobs defined in this file are responsible for things that do not require container image
 # but still relevant to the codebase such as unit tests, linting etc
 
-name: Pull Request
+name: UI Tests
 
 on:
   pull_request:

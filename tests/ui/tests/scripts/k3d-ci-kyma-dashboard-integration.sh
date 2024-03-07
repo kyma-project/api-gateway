@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 
 set -ex
+
+VERSION_STRING="121.0.6167.188"
+wget "https://dl.google.com/linux/chrome/deb/pool/main/g/google-chrome-stable/google-chrome-stable_121.0.6167.57_amd64.deb"
+sudo dpkg -i "google-chrome-stable_${VERSION_STRING}_amd64.deb"
+
 export CYPRESS_DOMAIN=http://localhost:3001
 export DASHBOARD_IMAGE="europe-docker.pkg.dev/kyma-project/prod/kyma-dashboard-local-prod:latest"
 
