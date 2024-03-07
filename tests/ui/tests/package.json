@@ -4,7 +4,7 @@
   "scripts": {
     "start": "npx cypress open",
     "test": "cypress run --browser chrome",
-    "test:ci": "cypress run --browser chromium",
+    "test:ci": "cypress run --browser /home/runner/work/api-gateway/api-gateway/chrome/linux-121.0.6167.184/chrome-linux64/chrome",
     "start-dashboard": "docker run --rm -it -p 3001:3001 -e DOCKER_DESKTOP_CLUSTER=true --pid=host --name kyma-dashboard europe-docker.pkg.dev/kyma-project/prod/kyma-dashboard-local-prod:latest",
     "start-k3d": "./scripts/k3d-local-dev.sh"
   },
