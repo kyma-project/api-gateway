@@ -2,6 +2,8 @@
 
 set -ex
 
+npx @puppeteer/browsers install chrome@121.0.6167.180
+
 export CYPRESS_DOMAIN=http://localhost:3001
 export DASHBOARD_IMAGE="europe-docker.pkg.dev/kyma-project/prod/kyma-dashboard-local-prod:latest"
 
