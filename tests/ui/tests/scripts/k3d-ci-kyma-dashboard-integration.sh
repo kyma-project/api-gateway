@@ -2,10 +2,10 @@
 
 set -ex
 
-npx @puppeteer/browsers install chrome@121
+npx @puppeteer/browsers install chromium@121
 
 export CYPRESS_DOMAIN=http://localhost:3001
-export DASHBOARD_IMAGE="europe-docker.pkg.dev/kyma-project/prod/kyma-dashboard-local-prod:latest"
+export DASHBOARD_IMAGE="europe-docker.pkg.dev/kyma-project/prod/kyma-dashboard-local-prod:3e80c24c"
 
 sudo apt-get update -y
 sudo apt-get install -y gettext-base
