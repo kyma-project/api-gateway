@@ -35,8 +35,8 @@ github.com/gardener/cert-management v0.12.0 h1:pMT15xtMFKmaKlzgBohBYOwoE29HC/S3Q
 github.com/gardener/cert-management v0.12.0/go.mod h1:jSqNDV4H1SR/9lLS412Uhqp0+ibPe6rgRupoDDDOxeg=
 github.com/gardener/external-dns-management v0.18.3 h1:CC37WDJ+niEvUesD17QShuKJpcByYPSd0HGuDrcUkA4=
 github.com/gardener/external-dns-management v0.18.3/go.mod h1:aCJx+GCzCNb3rFE9l+jhwtQAbU72hLOMyDVKxe5N3TI=
-github.com/go-jose/go-jose/v3 v3.0.2 h1:2Edjn8Nrb44UvTdp84KU0bBPs1cO7noRCybtS3eJEUQ=
-github.com/go-jose/go-jose/v3 v3.0.2/go.mod h1:5b+7YgP7ZICgJDBdfjZaIt+H/9L9T/YQrVfLAMboGkQ=
+github.com/go-jose/go-jose/v3 v3.0.3 h1:fFKWeig/irsp7XD2zBxvnmA/XaRWp5V3CBsZXJF7G7k=
+github.com/go-jose/go-jose/v3 v3.0.3/go.mod h1:5b+7YgP7ZICgJDBdfjZaIt+H/9L9T/YQrVfLAMboGkQ=
 github.com/go-logr/logr v1.3.0/go.mod h1:9T104GzyrTigFIr8wt5mBrctHMim0Nb2HLGrmQ40KvY=
 github.com/go-logr/logr v1.4.1 h1:pKouT5E8xu9zeFC39JXRDukb6JFQPXM5p5I91188VAQ=
 github.com/go-logr/logr v1.4.1/go.mod h1:9T104GzyrTigFIr8wt5mBrctHMim0Nb2HLGrmQ40KvY=
