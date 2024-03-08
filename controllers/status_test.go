@@ -8,6 +8,7 @@ import (
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"reflect"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
@@ -21,7 +22,7 @@ var _ = Describe("status", func() {
 				ObjectMeta: metav1.ObjectMeta{Name: "test"},
 			}
 
-			newStatus := ErrorStatus(fmt.Errorf("test error"), "test description")
+			newStatus := ErrorStatus(fmt.Errorf("test error"), "test description", nil)
 			k8sClient := createFakeClient(&cr)
 			// when
 			err := UpdateApiGatewayStatus(context.TODO(), k8sClient, &cr, newStatus)
@@ -39,7 +40,7 @@ var _ = Describe("status", func() {
 				ObjectMeta: metav1.ObjectMeta{Name: "test"},
 			}
 
-			newStatus := ReadyStatus()
+			newStatus := ReadyStatus(nil)
 			k8sClient := fake.NewClientBuilder().Build()
 			// when
 			err := UpdateApiGatewayStatus(context.TODO(), k8sClient, &cr, newStatus)
@@ -47,13 +48,34 @@ var _ = Describe("status", func() {
 			// then
 			Expect(err).To(HaveOccurred())
 		})
+
+		It("Should contain condition that is not nil and with expected value", func() {
+			// given
+			status := ErrorStatus(fmt.Errorf("asd"), "", &metav1.Condition{Type: "Ready", Status: "False"})
+			expected := &metav1.Condition{Type: "Ready", Status: "False"}
+
+			cr := operatorv1alpha1.APIGateway{
+				ObjectMeta: metav1.ObjectMeta{Name: "test"},
+			}
+			k8sClient := createFakeClient(&cr)
+
+			// when
+			err := UpdateApiGatewayStatus(context.TODO(), k8sClient, &cr, status)
+			result := status.Condition()
+			ok := reflect.DeepEqual(result, expected)
+
+			// then
+			Expect(err).To(BeNil())
+			Expect(result).ToNot(BeNil())
+			Expect(ok).To(BeTrue())
+		})
 	})
 
 	Context("ToAPIGatewayStatus", func() {
 
 		It("Should return Error with description set", func() {
 			// given
-			status := ErrorStatus(fmt.Errorf("test error"), "test description")
+			status := ErrorStatus(fmt.Errorf("test error"), "test description", nil)
 
 			// when
 			apiGatewayStatus, err := status.ToAPIGatewayStatus()
@@ -66,7 +88,7 @@ var _ = Describe("status", func() {
 
 		It("Should return Warning with description set", func() {
 			// given
-			status := WarningStatus(fmt.Errorf("test error"), "test description")
+			status := WarningStatus(fmt.Errorf("test error"), "test description", nil)
 
 			// when
 			apiGatewayStatus, err := status.ToAPIGatewayStatus()
@@ -79,7 +101,7 @@ var _ = Describe("status", func() {
 
 		It("Should return Ready with default description", func() {
 			// given
-			status := ReadyStatus()
+			status := ReadyStatus(nil)
 
 			// when
 			apiGatewayStatus, err := status.ToAPIGatewayStatus()
@@ -95,7 +117,7 @@ var _ = Describe("status", func() {
 	Context("IsError", func() {
 		It("Should return true if status is Error", func() {
 			// given
-			status := ErrorStatus(fmt.Errorf("test error"), "test description")
+			status := ErrorStatus(fmt.Errorf("test error"), "test description", nil)
 
 			// when
 			isError := status.IsError()
@@ -105,7 +127,7 @@ var _ = Describe("status", func() {
 		})
 		It("Should return false if status is not Error", func() {
 			// given
-			status := WarningStatus(fmt.Errorf("test error"), "test description")
+			status := WarningStatus(fmt.Errorf("test error"), "test description", nil)
 
 			// when
 			isError := status.IsError()
@@ -118,7 +140,7 @@ var _ = Describe("status", func() {
 	Context("IsWarning", func() {
 		It("Should return true if status is Warning", func() {
 			// given
-			status := WarningStatus(fmt.Errorf("test error"), "test description")
+			status := WarningStatus(fmt.Errorf("test error"), "test description", nil)
 
 			// when
 			isWarning := status.IsWarning()
@@ -128,7 +150,7 @@ var _ = Describe("status", func() {
 		})
 		It("Should return false if status is not Warning", func() {
 			// given
-			status := ErrorStatus(fmt.Errorf("test error"), "test description")
+			status := ErrorStatus(fmt.Errorf("test error"), "test description", nil)
 
 			// when
 			isWarning := status.IsWarning()
@@ -141,7 +163,7 @@ var _ = Describe("status", func() {
 	Context("IsReady", func() {
 		It("Should return true if status is Ready", func() {
 			// given
-			status := ReadyStatus()
+			status := ReadyStatus(nil)
 
 			// when
 			result := status.IsReady()
@@ -151,7 +173,7 @@ var _ = Describe("status", func() {
 		})
 		It("Should return false if status is not Ready", func() {
 			// given
-			status := ErrorStatus(fmt.Errorf("test error"), "test description")
+			status := ErrorStatus(fmt.Errorf("test error"), "test description", nil)
 
 			// when
 			result := status.IsReady()

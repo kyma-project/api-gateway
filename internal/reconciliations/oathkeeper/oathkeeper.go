@@ -3,6 +3,7 @@ package oathkeeper
 import (
 	"context"
 	"errors"
+	"github.com/kyma-project/api-gateway/internal/conditions"
 	"time"
 
 	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
@@ -40,10 +41,10 @@ func (r Reconciler) ReconcileAndVerifyReadiness(ctx context.Context, k8sClient c
 	ctrl.Log.Info("Waiting for Oathkeeper Deployment to become ready")
 	err := waitForOathkeeperDeploymentToBeReady(ctx, k8sClient, r.ReadinessRetryConfig)
 	if err != nil {
-		return controllers.ErrorStatus(err, "Oathkeeper did not start successfully")
+		return controllers.ErrorStatus(err, "Oathkeeper did not start successfully", conditions.OathkeeperReconcileFailed.Condition())
 	}
 
-	return controllers.ReadyStatus()
+	return controllers.ReadyStatus(conditions.OathkeeperReconcileSucceeded.Condition())
 }
 
 func Reconcile(ctx context.Context, k8sClient client.Client, apiGatewayCR *v1alpha1.APIGateway) controllers.Status {
@@ -59,8 +60,8 @@ func Reconcile(ctx context.Context, k8sClient client.Client, apiGatewayCR *v1alp
 		reconcileOathkeeperPdb(ctx, k8sClient, *apiGatewayCR),
 	)
 	if err != nil {
-		return controllers.ErrorStatus(err, "Oathkeeper did not reconcile successfully")
+		return controllers.ErrorStatus(err, "Oathkeeper did not reconcile successfully", conditions.OathkeeperReconcileFailed.Condition())
 	}
 
-	return controllers.ReadyStatus()
+	return controllers.ReadyStatus(conditions.OathkeeperReconcileSucceeded.Condition())
 }
