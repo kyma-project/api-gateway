@@ -88,7 +88,7 @@ If there is a use case for configuring multiple external authorizers, there is s
 
 ## API Proposal
 
-We have discussed the api in context of clearing up the API in `v1beta2/v1` API versions. We decided that `accessStrategy` will hold a single entry, either `extAuth`, `jwt` or `noAuth`. The users **MUST** define **ONE**, and **ONLY ONE** access strategy in every `rule` in `spec.rules`.
+We have discussed how the API would look like in context of support in future `v1beta2/v1` versions. We decided that `accessStrategy` will hold a single entry, either `extAuth`, `jwt` or `noAuth`. The users **MUST** define **ONE**, and **ONLY ONE** access strategy in every `rule` in `spec.rules`.
 
 A sample using the proposed API would look as follows:
 
