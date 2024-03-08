@@ -30,6 +30,10 @@ updates:
     commit-message:
       prefix: "docker"
       include: "scope"
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
 
 # release branch configuration
   - package-ecosystem: "gomod"
