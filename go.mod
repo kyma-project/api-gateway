@@ -1,8 +1,8 @@
 module github.com/kyma-project/api-gateway
 
-go 1.22
+go 1.21
 
-toolchain go1.22.1
+toolchain go1.21.1
 
 require (
 	github.com/avast/retry-go/v4 v4.5.1
