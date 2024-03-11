@@ -25,5 +25,20 @@ Cypress.Commands.add('getLeftNav', () => {
 Cypress.Commands.add('navigateToNamespace', (name: string) => {
     cy.wrap(getK8sCurrentContext()).then((context) => {
         cy.visit(`${config.clusterAddress}/cluster/${context}/namespaces/${name}`)
+        cy.wait(2000);
+    });
+});
+
+Cypress.Commands.add('navigateToApiRule', (name: string, namespace: string) => {
+    cy.wrap(getK8sCurrentContext()).then((context) => {
+        cy.visit(`${config.clusterAddress}/cluster/${context}/namespaces/${namespace}/apirules/${name}`)
+        cy.wait(2000);
+    });
+});
+
+Cypress.Commands.add('navigateToApiRuleList', (namespace: string) => {
+    cy.wrap(getK8sCurrentContext()).then((context) => {
+        cy.visit(`${config.clusterAddress}/cluster/${context}/namespaces/${namespace}/apirules`)
+        cy.wait(2000);
     });
 });

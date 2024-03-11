@@ -5,4 +5,5 @@ const dashboardUrl = (Cypress.env("DOMAIN") as string) || defaultKymaDashboardAd
 export default {
   clusterAddress: dashboardUrl,
   backendApiUrl: `${dashboardUrl}/backend/api/`,
+  backendApisUrl: `${dashboardUrl}/backend/apis/`,
 };

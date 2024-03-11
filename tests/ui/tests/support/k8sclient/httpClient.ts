@@ -1,11 +1,18 @@
 import config from "../../config";
 import {getAuthHeaders} from "./auth";
 
+export async function postApiEndpoint(url: string, data: Object): Promise<any> {
+    return post(`${config.backendApiUrl}${url}`, data);
+}
 
-export async function post(apiUrl: string, data: Object): Promise<boolean> {
+export async function postApisEndpoint(url: string, data: Object): Promise<any> {
+    return post(`${config.backendApisUrl}${url}`, data);
+}
+
+export async function post(url: string, data: Object): Promise<boolean> {
     try {
         const authHeaders = await getAuthHeaders();
-        const response = await fetch(`${config.backendApiUrl}${apiUrl}`,
+        const response = await fetch(url,
             {
                 method: 'POST',
                 headers: {
@@ -24,7 +31,7 @@ export async function post(apiUrl: string, data: Object): Promise<boolean> {
     }
 }
 
-export async function deleteResource(resourceUrl: string): Promise<boolean> {
+export async function deleteResourceApiEndpoint(resourceUrl: string): Promise<boolean> {
     try {
         const authHeaders = await getAuthHeaders();
         const response = await fetch(`${config.backendApiUrl}${resourceUrl}`,
