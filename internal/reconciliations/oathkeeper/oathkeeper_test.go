@@ -2,6 +2,7 @@ package oathkeeper_test
 
 import (
 	"context"
+	"github.com/kyma-project/api-gateway/internal/conditions"
 	"time"
 
 	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
@@ -223,8 +224,8 @@ var _ = Describe("Oathkeeper reconciliation", func() {
 		})
 	})
 
-	Context("Reconciler", func() {
-		It("Should return error status when reconciliation fails", func() {
+	Context("ReconcileAndVerifyReadiness", func() {
+		It("Should return error status with condition when reconciliation fails", func() {
 			apiGateway := createApiGateway()
 			k8sClient := createFakeClientThatFailsOnCreate()
 
@@ -239,9 +240,13 @@ var _ = Describe("Oathkeeper reconciliation", func() {
 
 			Expect(status.IsError()).To(BeTrue(), "%#v", status)
 			Expect(status.Description()).To(Equal("Oathkeeper did not reconcile successfully"))
+			Expect(status.Condition()).To(Not(BeNil()))
+			Expect(status.Condition().Type).To(Equal(conditions.OathkeeperReconcileFailed.Condition().Type))
+			Expect(status.Condition().Reason).To(Equal(conditions.OathkeeperReconcileFailed.Condition().Reason))
+			Expect(status.Condition().Status).To(Equal(metav1.ConditionFalse))
 		})
 
-		It("Should return Ready for Oathkeeper deployment that is Available", func() {
+		It("Should return Ready status with condition for Oathkeeper deployment that is Available", func() {
 			apiGateway := createApiGateway()
 
 			oathkeeperDep := &appsv1.Deployment{
@@ -268,6 +273,10 @@ var _ = Describe("Oathkeeper reconciliation", func() {
 			}
 			status := reconciler.ReconcileAndVerifyReadiness(context.Background(), k8sClient, apiGateway)
 			Expect(status.IsReady()).To(BeTrue(), "%#v", status)
+			Expect(status.Condition()).To(Not(BeNil()))
+			Expect(status.Condition().Type).To(Equal(conditions.OathkeeperReconcileSucceeded.Condition().Type))
+			Expect(status.Condition().Reason).To(Equal(conditions.OathkeeperReconcileSucceeded.Condition().Reason))
+			Expect(status.Condition().Status).To(Equal(metav1.ConditionFalse))
 		})
 
 		It("Should return Error for Oathkeeper deployment that is not Available", func() {

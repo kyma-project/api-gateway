@@ -23,7 +23,7 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - uses: actions/setup-go@v4
+    - uses: actions/setup-go@v5
       with:
         go-version: "1.21"
     - name: Checkout to PR branch # to remove after getting rid of pull_request_target
@@ -53,7 +53,7 @@ runs:
         EXPORT_RESULT=true TARGET_BRANCH=${{inputs.target_branch}} \
         make test-upgrade
     - name: Uploads artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: html-reports-${{ github.job }}
         path: tests/integration/reports/

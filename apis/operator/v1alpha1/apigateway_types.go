@@ -46,6 +46,8 @@ type APIGatewayStatus struct {
 	State State `json:"state"`
 	// Description of APIGateway status
 	Description string `json:"description,omitempty"`
+	// Conditions of APIGateway
+	Conditions []metav1.Condition `json:"conditions,omitempty"`
 }
 
 //+kubebuilder:object:root=true

@@ -30,11 +30,15 @@ updates:
     commit-message:
       prefix: "docker"
       include: "scope"
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
 
 # release branch configuration
   - package-ecosystem: "gomod"
     directory: "/"
-    target-branch: "release-2.1"
+    target-branch: "release-2.2"
     labels:
       - "go"
       - "area/dependency"
@@ -55,7 +59,7 @@ updates:
       - dependency-name: "istio.io/api"
 
   - package-ecosystem: "docker"
-    target-branch: "release-2.1"
+    target-branch: "release-2.2"
     directory: "/"
     labels:
       - "docker"
