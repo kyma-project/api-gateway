@@ -1,5 +1,5 @@
 import {loadFixture} from "./loadFile";
-import {postApisEndpoint} from "./httpClient";
+import {postApis} from "./httpClient";
 
 export type ApiRuleConfig = {
     name: string,
@@ -56,6 +56,6 @@ Cypress.Commands.add('createApiRule', (cfg: ApiRuleConfig) => {
         ]
 
         // We have to use cy.wrap, since the post command uses a cy.fixture internally
-        cy.wrap(postApisEndpoint(`${a.apiVersion}/namespaces/${cfg.namespace}/apirules`, a)).should("be.true");
+        cy.wrap(postApis(`${a.apiVersion}/namespaces/${cfg.namespace}/apirules`, a)).should("be.true");
     })
 });

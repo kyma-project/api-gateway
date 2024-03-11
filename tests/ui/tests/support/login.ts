@@ -1,5 +1,5 @@
-import config from '../config';
-import {KubernetesConfig, loadKubeconfig} from "./k8sclient/auth";
+import config from './dashboard/config';
+import {KubernetesConfig, loadKubeconfig} from "./k8sclient/kubeconfig";
 
 const NO_VALUE = 'NO_VALUE'; // must be something, OIDC server doesn't accept empty strings
 const USERNAME = Cypress.env('OIDC_USER');

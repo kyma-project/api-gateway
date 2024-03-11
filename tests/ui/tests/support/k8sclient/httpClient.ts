@@ -1,11 +1,11 @@
-import config from "../../config";
-import {getAuthHeaders} from "./auth";
+import config from "../dashboard";
+import {getAuthHeaders} from "./kubeconfig";
 
-export async function postApiEndpoint(url: string, data: Object): Promise<any> {
+export async function postApi(url: string, data: Object): Promise<any> {
     return post(`${config.backendApiUrl}${url}`, data);
 }
 
-export async function postApisEndpoint(url: string, data: Object): Promise<any> {
+export async function postApis(url: string, data: Object): Promise<any> {
     return post(`${config.backendApisUrl}${url}`, data);
 }
 
@@ -31,7 +31,7 @@ export async function post(url: string, data: Object): Promise<boolean> {
     }
 }
 
-export async function deleteResourceApiEndpoint(resourceUrl: string): Promise<boolean> {
+export async function deleteResource(resourceUrl: string): Promise<boolean> {
     try {
         const authHeaders = await getAuthHeaders();
         const response = await fetch(`${config.backendApiUrl}${resourceUrl}`,

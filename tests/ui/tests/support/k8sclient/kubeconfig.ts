@@ -27,7 +27,7 @@ export async function getAuthHeaders() {
     };
 }
 
-export async function loadKubeconfig() {
+export async function loadKubeconfig() : Promise<KubernetesConfig> {
     return  await loadFixture('kubeconfig.yaml') as KubernetesConfig;
 }
 

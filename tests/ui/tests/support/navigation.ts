@@ -1,5 +1,5 @@
-import {getK8sCurrentContext} from "./k8sclient/auth";
-import config from "../config";
+import {getK8sCurrentContext} from "./k8sclient";
+import config from "./dashboard/config";
 
 Cypress.Commands.add('navigateTo', (leftNav, resource) => {
     // To check and probably remove after cypress bump

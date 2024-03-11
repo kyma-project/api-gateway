@@ -6,4 +6,3 @@ export async function loadFixture(fileName: string, single = true) {
     cy.fixture(fileName).then(fileContent => resolve(load(fileContent)));
   });
 }
-
