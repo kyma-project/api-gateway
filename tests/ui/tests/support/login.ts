@@ -1,19 +1,11 @@
 import config from '../config';
-import {loadFile} from './loadFile';
+import {KubernetesConfig, loadKubeconfig} from "./k8sclient/auth";
 
 const NO_VALUE = 'NO_VALUE'; // must be something, OIDC server doesn't accept empty strings
 const USERNAME = Cypress.env('OIDC_USER');
 const PASSWORD = Cypress.env('OIDC_PASS');
 
-type KubernetesConfig = {
-    users: {
-        user: {
-            exec: {
-                args: string[];
-            };
-        };
-    }[];
-};
+
 
 Cypress.Commands.add('loginAndSelectCluster', function () {
 
@@ -31,7 +23,7 @@ Cypress.Commands.add('loginAndSelectCluster', function () {
         ...defaults,
     };
 
-    cy.wrap(loadFile('kubeconfig.yaml')).then((kubeconfig: KubernetesConfig) => {
+    cy.wrap(loadKubeconfig()).then((kubeconfig: KubernetesConfig) => {
         if (kubeconfig.users?.[0]?.user?.exec?.args) {
             // conditionally logs in to OIDC
             const urlElement = kubeconfig.users[0].user.exec.args.find(el =>

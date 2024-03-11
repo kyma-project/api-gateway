@@ -1,6 +1,8 @@
 const defaultKymaDashboardAddress = "http://localhost:3001";
 
+const dashboardUrl = (Cypress.env("DOMAIN") as string) || defaultKymaDashboardAddress
 
 export default {
-  clusterAddress: (Cypress.env("DOMAIN") as string) || defaultKymaDashboardAddress
+  clusterAddress: dashboardUrl,
+  backendApiUrl: `${dashboardUrl}/backend/api/`,
 };

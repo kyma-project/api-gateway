@@ -1,9 +1,9 @@
 import * as jsyaml from 'js-yaml';
 
-export function loadFile(FILE_NAME, single = true) {
+export async function loadFixture(fileName: string, single = true) {
   const load = single ? jsyaml.load : jsyaml.loadAll;
   return new Promise(resolve => {
-    cy.fixture(FILE_NAME).then(fileContent => resolve(load(fileContent)));
+    cy.fixture(fileName).then(fileContent => resolve(load(fileContent)));
   });
 }
 

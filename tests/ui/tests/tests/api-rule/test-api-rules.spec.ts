@@ -1,5 +1,7 @@
 import 'cypress-file-upload';
 import {generateNamespaceName, generateRandomName} from "../../support/random";
+import config from "../../config";
+import {getK8sCurrentContext, loadKubeconfig} from "../../support/k8sclient/auth";
 
 const apiRulePath = "/test-path";
 const apiRuleDefaultPath = "/.*";
@@ -13,11 +15,13 @@ context("Test API Rules", () => {
     before(() => {
         cy.loginAndSelectCluster();
         cy.createNamespace(namespaceName);
+        cy.wrap(getK8sCurrentContext()).then((context) => {
+            cy.visit(`${config.clusterAddress}/cluster/${context}/namespaces/${namespaceName}`)
+        })
         cy.createService(serviceName);
     });
 
     after(() => {
-        cy.loginAndSelectCluster();
         cy.deleteNamespace(namespaceName);
     });
 

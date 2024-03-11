@@ -1,3 +1,3 @@
-import './namespace';
+import '../k8sclient/namespace';
 import './service';
 
