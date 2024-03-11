@@ -215,9 +215,9 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 
 func handleDependenciesError(name string, err error) controllers.Status {
 	if apierrs.IsNotFound(err) {
-		return controllers.WarningStatus(err, fmt.Sprintf("CRD %s is not present. Make sure to install required dependencies for the component", name))
+		return controllers.WarningStatus(err, fmt.Sprintf("CRD %s is not present. Make sure to install required dependencies for the component", name), nil)
 	} else {
-		return controllers.ErrorStatus(err, "Error happened during discovering dependencies")
+		return controllers.ErrorStatus(err, "Error happened during discovering dependencies", nil)
 	}
 }
 
