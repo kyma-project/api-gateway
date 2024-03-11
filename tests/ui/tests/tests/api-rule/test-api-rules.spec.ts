@@ -15,10 +15,7 @@ context("Test API Rules", () => {
     before(() => {
         cy.loginAndSelectCluster();
         cy.createNamespace(namespaceName);
-        cy.wrap(getK8sCurrentContext()).then((context) => {
-            cy.visit(`${config.clusterAddress}/cluster/${context}/namespaces/${namespaceName}`)
-        })
-        cy.createService(serviceName);
+        cy.createService(serviceName, namespaceName);
     });
 
     after(() => {
@@ -26,10 +23,9 @@ context("Test API Rules", () => {
     });
 
     it("Create an API Rule for a service", () => {
+        cy.navigateToNamespace(namespaceName);
 
-        cy.getLeftNav()
-            .contains('API Rules')
-            .click();
+        cy.navigateTo('Discovery and Network', 'API Rules');
 
         cy.clickCreateButton();
 

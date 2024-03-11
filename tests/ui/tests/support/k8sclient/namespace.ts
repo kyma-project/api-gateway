@@ -1,7 +1,7 @@
 import * as k8s from '@kubernetes/client-node';
 
 import {deleteResource, post} from "./httpClient";
-import {loadFixture} from "../loadFile";
+import {loadFixture} from "./loadFile";
 
 Cypress.Commands.add('createNamespace', function (name: string) {
     cy.wrap(loadFixture('namespace.yaml')).then((ns: k8s.V1Namespace) => {

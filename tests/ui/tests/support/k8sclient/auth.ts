@@ -1,4 +1,4 @@
-import {loadFixture} from "../loadFile";
+import {loadFixture} from "./loadFile";
 
 export type KubernetesConfig = {
     clusters: {
