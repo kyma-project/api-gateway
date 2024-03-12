@@ -1,20 +1,17 @@
-import {Commands} from "./k8sclient";
+import {K8sClientCommands} from "./k8sclient";
 import {Status} from "./status";
+import {ApiRuleCommands} from "./apirule";
+import {ButtonCommands} from "./buttons";
+import {NavigationCommands} from "./navigation";
 
 declare global {
     namespace Cypress {
-        interface Chainable extends Commands {
+        interface Chainable extends K8sClientCommands, ApiRuleCommands, ButtonCommands, NavigationCommands {
             loginAndSelectCluster(): Chainable<JQuery>
-            getLeftNav(): Chainable<JQuery>
-            clickCreateButton(): Chainable<JQuery>
             clickGenericListLink(resourceName: string): Chainable<JQuery>
-            deleteFromGenericList(resourceName: string): Chainable<JQuery>
-            navigateTo(leftNav: string, resource: string): Chainable<JQuery>
-            navigateToNamespace(name: string): Chainable<JQuery>
-            navigateToApiRule(name: string, namespace: string): Chainable<JQuery>
-            navigateToApiRuleList(name: string): Chainable<JQuery>
             chooseComboboxOption(selector: string, optionText: string): Chainable<JQuery>
             filterWithNoValue(): Chainable<JQuery>
+            inputClearAndType(selector: string, newValue: string): Chainable<JQuery>
             hasStatusLabel(status: Status): Chainable<JQuery>
         }
     }

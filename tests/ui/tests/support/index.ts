@@ -1,6 +1,8 @@
+import './apirule';
 import './exceptions';
 import './login';
 import './navigation';
+import './input';
 import './list';
 import './combobox';
 import './buttons';

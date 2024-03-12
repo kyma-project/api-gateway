@@ -28,32 +28,13 @@ context("API Rule", () => {
 
         cy.clickCreateButton();
 
-        // Name
-        cy.get('ui5-input[aria-label="APIRule name"]')
-            .find('input')
-            .type(apiRuleName, {force: true});
+        cy.apiRuleTypeName(apiRuleName);
+        cy.apiRuleSelectService(serviceName);
+        cy.apiRuleTypeServicePort("80");
+        cy.apiRuleTypeHost(apiRuleName);
 
-        // Service
-        cy.chooseComboboxOption('[data-testid="spec.service.name"]', serviceName);
+        cy.clickDialogCreateButton();
 
-        cy.get('[data-testid="spec.service.port"]:visible', {log: false})
-            .find('input')
-            .click()
-            .clear()
-            .type("80");
-
-        // Host
-        cy.get('[data-testid="spec.host"]:visible', {log: false})
-            .find('input')
-            .click()
-            .type(apiRuleName);
-
-        cy.get('ui5-dialog')
-            .contains('ui5-button', 'Create')
-            .should('be.visible')
-            .click();
-
-        // Verify created API Rule
         cy.contains(apiRuleName).click();
         cy.hasStatusLabel("OK");
         cy.contains(apiRuleDefaultPath).should('exist');
@@ -66,64 +47,18 @@ context("API Rule", () => {
 
         cy.clickCreateButton();
 
-        // Name
-        cy.get('ui5-input[aria-label="APIRule name"]')
-            .find('input')
-            .type(apiRuleName, {force: true});
+        cy.apiRuleTypeName(apiRuleName);
+        cy.apiRuleSelectService(serviceName);
+        cy.apiRuleTypeServicePort("80");
+        cy.apiRuleTypeHost(apiRuleName);
 
-        // Service
-        cy.chooseComboboxOption('[data-testid="spec.service.name"]', serviceName);
+        cy.apiRuleSelectAccessStrategy("oauth2_introspection");
+        cy.get('[aria-label="expand Required Scope"]', {log: false,}).click();
+        cy.inputClearAndType('[data-testid="spec.rules.0.accessStrategies.0.config.required_scope.0"]:visible', "read");
 
-        cy.get('[data-testid="spec.service.port"]:visible', {log: false})
-            .find('input')
-            .click()
-            .clear()
-            .type("80");
+        cy.apiRuleSelectMethod("POST")
 
-        // Host
-        cy.get('[data-testid="spec.host"]:visible', {log: false})
-            .find('input')
-            .click()
-            .type(apiRuleName);
-
-        // Rules
-
-        // > Access Strategies
-        cy.get(
-            `ui5-combobox[data-testid="spec.rules.0.accessStrategies.0.handler"]:visible`,
-        )
-            .find('input')
-            .click()
-            .clear()
-            .type('oauth2_introspection', {force: true});
-
-        cy.get('ui5-li:visible')
-            .contains('oauth2_introspection')
-            .find('li')
-            .click({force: true});
-
-        cy.get('[aria-label="expand Required Scope"]', {
-            log: false,
-        }).click();
-
-        cy.get(
-            '[data-testid="spec.rules.0.accessStrategies.0.config.required_scope.0"]:visible',
-        )
-            .find('input')
-            .click()
-            .clear()
-            .type('read');
-
-        // > Methods
-
-        cy.get('[data-testid="spec.rules.0.methods.POST"]')
-
-        cy.get(`ui5-checkbox[text="POST"]:visible`).click();
-
-        cy.get('ui5-dialog')
-            .contains('ui5-button', 'Create')
-            .should('be.visible')
-            .click();
+        cy.clickDialogCreateButton();
 
         // Verify created API Rule
         cy.contains(apiRuleName).click();
@@ -139,82 +74,19 @@ context("API Rule", () => {
 
         cy.clickCreateButton();
 
-        // Name
-        cy.get('ui5-input[aria-label="APIRule name"]')
-            .find('input')
-            .type(apiRuleName, {force: true});
+        cy.apiRuleTypeName(apiRuleName);
+        cy.apiRuleSelectService(serviceName);
+        cy.apiRuleTypeServicePort("80");
+        cy.apiRuleTypeHost(apiRuleName);
+        cy.apiRuleSelectAccessStrategy("jwt");
 
-        // Service
-        cy.chooseComboboxOption('[data-testid="spec.service.name"]', serviceName);
+        cy.apiRuleTypeJwksUrl("https://urls.com");
+        cy.contains('JWKS URL: HTTP protocol is not secure, consider using HTTPS',).should('not.exist');
 
-        cy.get('[data-testid="spec.service.port"]:visible', {log: false})
-            .find('input')
-            .click()
-            .clear()
-            .type("80");
+        cy.apiRuleTypeTrustedIssuer("https://trusted.com")
+        cy.contains('Trusted Issuers: HTTP protocol is not secure, consider using HTTPS').should('not.exist');
 
-        // Host
-        cy.get('[data-testid="spec.host"]:visible', {log: false})
-            .find('input')
-            .click()
-            .type(apiRuleName);
-
-        // Rules
-
-        // > Access Strategies
-        cy.get(
-            `ui5-combobox[data-testid="spec.rules.0.accessStrategies.0.handler"]:visible`,
-        )
-            .find('input')
-            .click()
-            .clear()
-            .type('jwt', {force: true});
-
-        cy.get('ui5-li:visible')
-            .contains('jwt')
-            .find('li')
-            .click({force: true});
-
-        cy.get('[aria-label="expand JWKS URLs"]:visible', {log: false}).click();
-
-        cy.get(
-            '[data-testid="spec.rules.0.accessStrategies.0.config.jwks_urls.0"]:visible',
-        )
-            .find('input')
-            .click()
-            .clear()
-            .type('https://urls.com');
-
-        cy.contains(
-            'JWKS URL: HTTP protocol is not secure, consider using HTTPS',
-        ).should('not.exist');
-
-        cy.get('[aria-label="expand JWKS URLs"]:visible', {log: false}).click();
-
-        cy.get('[aria-label="expand Trusted Issuers"]:visible', {
-            log: false,
-        }).click();
-
-        cy.get(
-            '[data-testid="spec.rules.0.accessStrategies.0.config.trusted_issuers.0"]:visible',
-        )
-            .find('input')
-            .click()
-            .clear()
-            .type('https://trusted.com');
-
-        cy.contains(
-            'Trusted Issuers: HTTP protocol is not secure, consider using HTTPS',
-        ).should('not.exist');
-
-        cy.get('[aria-label="expand Trusted Issuers"]:visible', {
-            log: false,
-        }).click();
-
-        cy.get('ui5-dialog')
-            .contains('ui5-button', 'Create')
-            .should('be.visible')
-            .click();
+        cy.clickDialogCreateButton();
 
         // Verify created API Rule
         cy.contains(apiRuleName).click();
@@ -243,62 +115,18 @@ context("API Rule", () => {
         });
 
         cy.navigateToApiRule(apiRuleName, namespaceName);
-
-        cy.contains('ui5-button', 'Edit').click();
+        cy.clickEditButton()
         cy.contains(apiRuleName);
 
-        cy.get('[data-testid="spec.rules.0.path"]:visible')
-            .find('input')
-            .click()
-            .clear()
-            .type(updatedApiRulePath, {force: true});
+        cy.apiRuleTypeRulePath(updatedApiRulePath);
 
-        // > Access Strategies
-        cy.get('[aria-label="expand Access Strategies"]:visible', {log: false})
-            .first();
+        cy.get('[aria-label="expand Access Strategies"]:visible', {log: false}).first();
+        cy.apiRuleSelectAccessStrategy("jwt");
 
-        cy.get(
-            `ui5-combobox[data-testid="spec.rules.0.accessStrategies.0.handler"]:visible`,
-        )
-            .find('input')
-            .click()
-            .clear()
-            .type('jwt', {force: true});
+        cy.apiRuleTypeJwksUrl("https://urls.com");
+        cy.apiRuleTypeTrustedIssuer("https://trusted.com");
 
-        cy.get('ui5-li:visible')
-            .contains('jwt')
-            .find('li')
-            .click({force: true});
-
-        cy.get('[aria-label="expand JWKS URLs"]:visible', {log: false}).click();
-
-        cy.get(
-            '[data-testid="spec.rules.0.accessStrategies.0.config.jwks_urls.0"]:visible',
-        )
-            .find('input')
-            .click()
-            .clear()
-            .type('https://urls.com');
-
-        cy.get('[aria-label="expand JWKS URLs"]:visible', {log: false}).click();
-
-        cy.get('[aria-label="expand Trusted Issuers"]:visible', {
-            log: false,
-        }).click();
-
-        cy.get(
-            '[data-testid="spec.rules.0.accessStrategies.0.config.trusted_issuers.0"]:visible',
-        )
-            .find('input')
-            .click()
-            .clear()
-            .type('https://trusted.com');
-
-        // > Methods
-        cy.get('ui5-dialog')
-            .contains('ui5-button', 'Update')
-            .should('be.visible')
-            .click();
+        cy.clickDialogUpdateButton();
 
         // Validate edited API Rule
         cy.contains(apiRuleName).click();
@@ -331,11 +159,10 @@ context("API Rule", () => {
         cy.navigateToApiRuleList(namespaceName);
 
         cy.clickGenericListLink(apiRuleName);
-        cy.contains('ui5-button', 'Edit').click();
+        cy.clickEditButton();
 
         cy.contains(apiRuleName);
 
-        // > CorsPolicy
         cy.get('ui5-switch[data-testid="$useCorsPolicy"]')
             .find('[role="switch"]')
             .click();
@@ -352,19 +179,11 @@ context("API Rule", () => {
 
         // CORS allow headers
         cy.get('[aria-label="expand CORS Allow Headers"]').should('be.visible').click();
-        cy.get('[data-testid="spec.corsPolicy.allowHeaders.0"]')
-            .find('input')
-            .clear()
-            .type("Allowed-Header")
-        cy.get('[aria-label="expand CORS Allow Headers"]').should('exist').click();
+        cy.inputClearAndType('[data-testid="spec.corsPolicy.allowHeaders.0"]', "Allowed-Header");
 
         // CORS allow headers
         cy.get('[aria-label="expand CORS Expose Headers"]').should('be.visible').click();
-        cy.get('[data-testid="spec.corsPolicy.exposeHeaders.0"]')
-            .find('input')
-            .clear()
-            .type("Exposed-Header")
-        cy.get('[aria-label="expand CORS Expose Headers"]').should('exist').click();
+        cy.inputClearAndType('[data-testid="spec.corsPolicy.exposeHeaders.0"]', "Exposed-Header");
 
         // CORS allow credentials
         cy.get('ui5-switch[data-testid="spec.corsPolicy.allowCredentials"]')
@@ -372,15 +191,9 @@ context("API Rule", () => {
             .click();
 
         // CORS Max Age
-        cy.get('[data-testid="spec.corsPolicy.maxAge"]')
-            .find('input')
-            .clear({force: true})
-            .type('10s');
+        cy.inputClearAndType('[data-testid="spec.corsPolicy.maxAge"]', "10s");
 
-        cy.get('ui5-dialog')
-            .contains('ui5-button', 'Update')
-            .should('be.visible')
-            .click();
+        cy.clickDialogUpdateButton();
 
         // Verify CORS policy
         cy.contains(apiRuleName).should("be.visible").click();

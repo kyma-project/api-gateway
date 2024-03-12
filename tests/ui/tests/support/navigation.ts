@@ -1,5 +1,13 @@
 import {getK8sCurrentContext} from "./k8sclient";
 import config from "./dashboard/config";
+import Chainable = Cypress.Chainable;
+
+export interface NavigationCommands {
+    getLeftNav(): Chainable<JQuery>
+    navigateTo(leftNav: string, resource: string): Chainable<JQuery>
+    navigateToApiRule(name: string, namespace: string): Chainable<JQuery>
+    navigateToApiRuleList(name: string): Chainable<JQuery>
+}
 
 Cypress.Commands.add('navigateTo', (leftNav, resource) => {
     // To check and probably remove after cypress bump
@@ -20,13 +28,6 @@ Cypress.Commands.add('navigateTo', (leftNav, resource) => {
 
 Cypress.Commands.add('getLeftNav', () => {
     return cy.get('aside', { timeout: 10000 });
-});
-
-Cypress.Commands.add('navigateToNamespace', (name: string) => {
-    cy.wrap(getK8sCurrentContext()).then((context) => {
-        cy.visit(`${config.clusterAddress}/cluster/${context}/namespaces/${name}`)
-        cy.wait(2000);
-    });
 });
 
 Cypress.Commands.add('navigateToApiRule', (name: string, namespace: string) => {

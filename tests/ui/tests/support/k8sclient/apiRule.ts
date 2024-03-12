@@ -1,12 +1,14 @@
 import {loadFixture} from "./loadFile";
 import {postApis} from "./httpClient";
 
+export type ApiRuleAccessStrategy = "oauth2_introspection" | "jwt" | "noop" | "allow" | "no_auth"
+
 export type ApiRuleConfig = {
     name: string,
     namespace: string;
     service: string;
     host: string;
-    handler: "oauth2_introspection" | "jwt" | "noop" | "allow" | "no_auth";
+    handler: ApiRuleAccessStrategy;
     config?: JwtConfig | OAuth2IntroConfig | null;
 }
 
@@ -35,7 +37,7 @@ type ApiRule = {
             path: string;
             methods: string[];
             accessStrategies: {
-                handler: "oauth2_introspection" | "jwt" | "noop" | "allow" | "no_auth";
+                handler: ApiRuleAccessStrategy;
                 config?: JwtConfig | OAuth2IntroConfig | null;
             }[];
         }[];
