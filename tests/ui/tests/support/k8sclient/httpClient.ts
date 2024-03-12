@@ -1,11 +1,11 @@
 import config from "../dashboard";
 import {getAuthHeaders} from "./kubeconfig";
 
-export async function postApi(url: string, data: Object): Promise<any> {
+export async function postApi(url: string, data: Object): Promise<boolean> {
     return post(`${config.backendApiUrl}${url}`, data);
 }
 
-export async function postApis(url: string, data: Object): Promise<any> {
+export async function postApis(url: string, data: Object): Promise<boolean> {
     return post(`${config.backendApisUrl}${url}`, data);
 }
 

@@ -1,5 +1,5 @@
 import 'cypress-file-upload';
-import {generateNamespaceName, generateRandomName} from "../../support";
+import {generateNamespaceName, generateRandomName} from "../support";
 
 const apiRuleDefaultPath = "/.*";
 
@@ -55,6 +55,7 @@ context("API Rule", () => {
 
         // Verify created API Rule
         cy.contains(apiRuleName).click();
+        cy.hasStatusLabel("OK");
         cy.contains(apiRuleDefaultPath).should('exist');
         cy.contains('Rules #1', {timeout: 10000}).click();
         cy.contains('no_auth').should('exist');
@@ -126,6 +127,7 @@ context("API Rule", () => {
 
         // Verify created API Rule
         cy.contains(apiRuleName).click();
+        cy.hasStatusLabel("OK");
         cy.contains(apiRuleDefaultPath).should('exist');
         cy.contains('Rules #1', {timeout: 10000}).click();
         cy.contains('oauth2_introspection').should('exist');
@@ -216,6 +218,7 @@ context("API Rule", () => {
 
         // Verify created API Rule
         cy.contains(apiRuleName).click();
+        cy.hasStatusLabel("OK");
         cy.contains(apiRuleDefaultPath).should('exist');
         cy.contains('Rules #1', {timeout: 10000}).click();
         cy.contains('jwt').should('exist');
@@ -248,7 +251,7 @@ context("API Rule", () => {
             .find('input')
             .click()
             .clear()
-            .type(updatedApiRulePath);
+            .type(updatedApiRulePath, {force: true});
 
         // > Access Strategies
         cy.get('[aria-label="expand Access Strategies"]:visible', {log: false})
@@ -299,6 +302,7 @@ context("API Rule", () => {
 
         // Validate edited API Rule
         cy.contains(apiRuleName).click();
+        cy.hasStatusLabel("OK");
         cy.contains(apiRuleDefaultPath).should('exist');
         cy.contains('Rules #1', {timeout: 20000}).click();
         cy.contains(updatedApiRulePath).should('exist');
@@ -380,6 +384,7 @@ context("API Rule", () => {
 
         // Verify CORS policy
         cy.contains(apiRuleName).should("be.visible").click();
+        cy.hasStatusLabel("OK");
         cy.contains(apiRuleDefaultPath).should('exist');
 
         cy.contains('CORS Allow Methods').should('exist').parent().contains('GET').should('exist');

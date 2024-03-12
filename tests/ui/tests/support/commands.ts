@@ -1,4 +1,5 @@
 import {Commands} from "./k8sclient";
+import {Status} from "./status";
 
 declare global {
     namespace Cypress {
@@ -14,6 +15,7 @@ declare global {
             navigateToApiRuleList(name: string): Chainable<JQuery>
             chooseComboboxOption(selector: string, optionText: string): Chainable<JQuery>
             filterWithNoValue(): Chainable<JQuery>
+            hasStatusLabel(status: Status): Chainable<JQuery>
         }
     }
 }
