@@ -45,7 +45,8 @@ type ApiRule = {
 }
 
 Cypress.Commands.add('createApiRule', (cfg: ApiRuleConfig) => {
-    cy.wrap(loadFixture('apiRule.yaml')).then((a: ApiRule) : void => {
+    // @ts-ignore Typing of cy.then is not good enough
+    cy.wrap(loadFixture('apiRule.yaml')).then((a: ApiRule): void => {
         a.metadata.name = cfg.name;
         a.metadata.namespace = cfg.namespace;
         a.spec.service.name = cfg.service;

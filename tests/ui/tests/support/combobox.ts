@@ -1,3 +1,5 @@
+import Chainable = Cypress.Chainable;
+
 Cypress.Commands.add('chooseComboboxOption', (selector: string, optionText: string) : void => {
     cy.get(`ui5-combobox${selector}:visible`)
         .find('input:visible')
@@ -11,6 +13,6 @@ Cypress.Commands.add('chooseComboboxOption', (selector: string, optionText: stri
         .click({ force: true });
 });
 
-Cypress.Commands.add('filterWithNoValue', { prevSubject: true }, $elements =>
-    $elements.filter((_, e) => !e.value),
-);
+Cypress.Commands.add('filterWithNoValue', { prevSubject: true }, (subjects: Chainable<JQuery<HTMLInputElement>>) => {
+    return subjects.filter((_, e) => !(e as HTMLInputElement).value)
+});

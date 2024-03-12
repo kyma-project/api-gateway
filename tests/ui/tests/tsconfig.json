@@ -3,8 +3,7 @@
     "target": "es5",
     "lib": ["es5", "dom"],
     "types": ["cypress", "node"],
-    // We will start with strict false for now. After we cleaned up the code, we should set it to true.
-    "strict": false,
+    "strict": true,
   },
   "include": ["./**/*.ts", "./**/*.spec.ts"]
 }

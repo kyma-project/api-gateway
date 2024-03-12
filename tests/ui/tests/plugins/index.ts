@@ -1,3 +1,4 @@
+// @ts-nocheck
 import fs = require('fs');
 
 module.exports = (on, config) => {

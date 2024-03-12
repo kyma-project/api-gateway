@@ -21,6 +21,7 @@ Cypress.Commands.add('loginAndSelectCluster', function () {
         ...defaults,
     };
 
+    // @ts-ignore Typing of cy.then is not good enough
     cy.wrap(loadKubeconfig()).then((kubeconfig: KubernetesConfig) => {
         if (kubeconfig.users?.[0]?.user?.exec?.args) {
             // conditionally logs in to OIDC

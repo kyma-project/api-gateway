@@ -4,8 +4,9 @@ import {deleteResource, postApi} from "./httpClient";
 import {loadFixture} from "./loadFile";
 
 Cypress.Commands.add('createNamespace', (name: string) => {
-    cy.wrap(loadFixture('namespace.yaml')).then((ns: k8s.V1Namespace) => {
-        ns.metadata.name = name
+    // @ts-ignore Typing of cy.then is not good enough
+    cy.wrap(loadFixture('namespace.yaml')).then((ns: k8s.V1Namespace): void => {
+        ns.metadata!.name = name
         // We have to use cy.wrap, since the post command uses a cy.fixture internally
         cy.wrap(postApi('v1/namespaces', ns)).should("be.true");
     })
