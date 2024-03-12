@@ -67,6 +67,6 @@ func deleteRoleBinding(ctx context.Context, k8sClient client.Client, name string
 func waitForClusterRoleBinding(ctx context.Context, k8sClient client.Client) error {
 	return retry.Do(func() error {
 		roleBinding := rbacv1.ClusterRoleBinding{}
-		return k8sClient.Get(ctx, types.NamespacedName{Name: roleName}, &roleBinding)
+		return k8sClient.Get(ctx, types.NamespacedName{Name: roleBindingName}, &roleBinding)
 	}, retry.Attempts(10), retry.Delay(2*time.Second), retry.DelayType(retry.FixedDelay))
 }
