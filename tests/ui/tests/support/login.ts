@@ -5,8 +5,6 @@ const NO_VALUE = 'NO_VALUE'; // must be something, OIDC server doesn't accept em
 const USERNAME = Cypress.env('OIDC_USER');
 const PASSWORD = Cypress.env('OIDC_PASS');
 
-
-
 Cypress.Commands.add('loginAndSelectCluster', function () {
 
     sessionStorage.clear();
