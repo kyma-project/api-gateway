@@ -9,7 +9,7 @@ export interface NavigationCommands {
     navigateToApiRuleList(name: string): Chainable<JQuery>
 }
 
-Cypress.Commands.add('navigateTo', (leftNav, resource) => {
+Cypress.Commands.add('navigateTo', (leftNav: string, resource: string) : void => {
     // To check and probably remove after cypress bump
     cy.wait(500);
 
@@ -26,18 +26,18 @@ Cypress.Commands.add('navigateTo', (leftNav, resource) => {
         .click();
 });
 
-Cypress.Commands.add('getLeftNav', () => {
-    return cy.get('aside', { timeout: 10000 });
+Cypress.Commands.add('getLeftNav', () : void => {
+    cy.get('aside', { timeout: 10000 });
 });
 
-Cypress.Commands.add('navigateToApiRule', (name: string, namespace: string) => {
+Cypress.Commands.add('navigateToApiRule', (name: string, namespace: string) : void => {
     cy.wrap(getK8sCurrentContext()).then((context) => {
         cy.visit(`${config.clusterAddress}/cluster/${context}/namespaces/${namespace}/apirules/${name}`)
         cy.wait(2000);
     });
 });
 
-Cypress.Commands.add('navigateToApiRuleList', (namespace: string) => {
+Cypress.Commands.add('navigateToApiRuleList', (namespace: string) : void => {
     cy.wrap(getK8sCurrentContext()).then((context) => {
         cy.visit(`${config.clusterAddress}/cluster/${context}/namespaces/${namespace}/apirules`)
         cy.wait(2000);

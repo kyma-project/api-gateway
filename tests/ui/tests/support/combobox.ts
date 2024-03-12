@@ -1,4 +1,4 @@
-Cypress.Commands.add('chooseComboboxOption', (selector: string, optionText: string) => {
+Cypress.Commands.add('chooseComboboxOption', (selector: string, optionText: string) : void => {
     cy.get(`ui5-combobox${selector}:visible`)
         .find('input:visible')
         .filterWithNoValue()
@@ -9,8 +9,6 @@ Cypress.Commands.add('chooseComboboxOption', (selector: string, optionText: stri
         .contains(optionText)
         .find('li')
         .click({ force: true });
-
-    return cy.end();
 });
 
 Cypress.Commands.add('filterWithNoValue', { prevSubject: true }, $elements =>

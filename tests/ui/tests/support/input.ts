@@ -1,5 +1,5 @@
-Cypress.Commands.add('inputClearAndType', (selector: string, newValue: string) => {
-    return cy.get(selector,)
+Cypress.Commands.add('inputClearAndType', (selector: string, newValue: string): void => {
+    cy.get(selector,)
         .find('input')
         .click()
         .clear({force: true})

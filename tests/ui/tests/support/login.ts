@@ -27,6 +27,12 @@ Cypress.Commands.add('loginAndSelectCluster', function () {
             const urlElement = kubeconfig.users[0].user.exec.args.find(el =>
                 el.includes('oidc-issuer-url'),
             );
+
+            if (!urlElement) {
+                cy.log('OIDC url is not found in kubeconfig. Skipping OIDC login.',);
+                return;
+            }
+
             // kubeconfig should only specify a scheme and a domain without the "/ui/protected/profilemanagement" part , i.e, https://apskyxzcl.accounts400.ondemand.com
             const OICD_URL = /oidc-issuer-url=(?<url>(https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|www\.[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9]+\.[^\s]{2,}|www\.[a-zA-Z0-9]+\.[^\s]{2,}))/.exec(
                 urlElement,
@@ -40,6 +46,7 @@ Cypress.Commands.add('loginAndSelectCluster', function () {
             }
             cy.wrap(OICD_URL && USERNAME && PASSWORD).should('be.ok');
 
+            // @ts-ignore existence of OICD_URL, USERNAME and PASSWORD is checked above
             cy.request(OICD_URL).then(res => {
                 const cookies = res.headers?.['set-cookie'];
 

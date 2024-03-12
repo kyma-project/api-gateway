@@ -10,6 +10,8 @@ export type KubernetesConfig = {
     "current-context": string;
     users: {
         user: {
+            "client-certificate-data": string;
+            "client-key-data": string;
             exec: {
                 args: string[];
             };
@@ -31,7 +33,7 @@ export async function loadKubeconfig() : Promise<KubernetesConfig> {
     return  await loadFixture('kubeconfig.yaml') as KubernetesConfig;
 }
 
-export async function getK8sCurrentContext() {
+export async function getK8sCurrentContext(): Promise<string> {
     const cfg = await loadKubeconfig();
     return cfg["current-context"];
 }

@@ -25,7 +25,7 @@ export async function post(url: string, data: Object): Promise<boolean> {
 
             });
         return response.ok;
-    } catch (e) {
+    } catch (e: any) {
         cy.log(e);
         return false;
     }
@@ -45,7 +45,7 @@ export async function deleteResource(resourceUrl: string): Promise<boolean> {
                 credentials: "same-origin",
             });
         return response.ok;
-    } catch (e) {
+    } catch (e: any) {
         cy.log(e);
         return false;
     }
