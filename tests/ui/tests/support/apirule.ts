@@ -2,23 +2,15 @@ import Chainable = Cypress.Chainable;
 import {ApiRuleAccessStrategy} from "./k8sclient";
 
 export interface ApiRuleCommands {
-    apiRuleTypeName(name: string): Chainable<JQuery>
-
-    apiRuleSelectService(name: string): Chainable<JQuery>
-
-    apiRuleTypeServicePort(port: string): Chainable<JQuery>
-
-    apiRuleTypeHost(host: string): Chainable<JQuery>
-
-    apiRuleSelectAccessStrategy(strategy: ApiRuleAccessStrategy, ruleNumber?: number): Chainable<JQuery>
-
-    apiRuleTypeRulePath(path: string, ruleNumber?: number): Chainable<JQuery>
-
-    apiRuleSelectMethod(method: ApiRuleMethods, ruleNumber?: number): Chainable<JQuery>
-
-    apiRuleTypeJwksUrl(url: string, ruleNumber?: number): Chainable<JQuery>
-
-    apiRuleTypeTrustedIssuer(url: string, ruleNumber?: number): Chainable<JQuery>
+    apiRuleTypeName(name: string): void
+    apiRuleSelectService(name: string): void
+    apiRuleTypeServicePort(port: string): void
+    apiRuleTypeHost(host: string): void
+    apiRuleSelectAccessStrategy(strategy: ApiRuleAccessStrategy, ruleNumber?: number): void
+    apiRuleTypeRulePath(path: string, ruleNumber?: number): void
+    apiRuleSelectMethod(method: ApiRuleMethods, ruleNumber?: number): void
+    apiRuleTypeJwksUrl(url: string, ruleNumber?: number): void
+    apiRuleTypeTrustedIssuer(url: string, ruleNumber?: number): void
 }
 
 Cypress.Commands.add('apiRuleTypeName', (name: string): void => {

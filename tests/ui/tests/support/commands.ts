@@ -7,12 +7,12 @@ import {NavigationCommands} from "./navigation";
 declare global {
     namespace Cypress {
         interface Chainable extends K8sClientCommands, ApiRuleCommands, ButtonCommands, NavigationCommands {
-            loginAndSelectCluster(): Chainable<JQuery>
-            clickGenericListLink(resourceName: string): Chainable<JQuery>
-            chooseComboboxOption(selector: string, optionText: string): Chainable<JQuery>
+            loginAndSelectCluster(): void
+            clickGenericListLink(resourceName: string): void
+            chooseComboboxOption(selector: string, optionText: string): void
             filterWithNoValue(): Chainable<JQuery>
-            inputClearAndType(selector: string, newValue: string): Chainable<JQuery>
-            hasStatusLabel(status: Status): Chainable<JQuery>
+            inputClearAndType(selector: string, newValue: string): void
+            hasStatusLabel(status: Status): void
         }
     }
 }

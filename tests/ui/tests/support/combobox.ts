@@ -13,6 +13,6 @@ Cypress.Commands.add('chooseComboboxOption', (selector: string, optionText: stri
         .click({ force: true });
 });
 
-Cypress.Commands.add('filterWithNoValue', { prevSubject: true }, (subjects: Chainable<JQuery<HTMLInputElement>>) => {
+Cypress.Commands.add('filterWithNoValue', { prevSubject: true }, (subjects: Chainable<JQuery<HTMLInputElement>>): Chainable<JQuery> => {
     return subjects.filter((_, e) => !(e as HTMLInputElement).value)
 });

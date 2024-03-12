@@ -1,10 +1,10 @@
 import Chainable = Cypress.Chainable;
 
 export interface ButtonCommands {
-    clickCreateButton(): Chainable<JQuery>
-    clickEditButton(): Chainable<JQuery>
-    clickDialogCreateButton(): Chainable<JQuery>
-    clickDialogUpdateButton(): Chainable<JQuery>
+    clickCreateButton(): void
+    clickEditButton(): void
+    clickDialogCreateButton(): void
+    clickDialogUpdateButton(): void
 }
 
 Cypress.Commands.add('clickCreateButton', (): void => {
