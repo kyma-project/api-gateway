@@ -36,7 +36,7 @@ type ApiRule = {
             methods: string[];
             accessStrategies: {
                 handler: "oauth2_introspection" | "jwt" | "noop" | "allow" | "no_auth";
-                config: JwtConfig | OAuth2IntroConfig | null;
+                config?: JwtConfig | OAuth2IntroConfig | null;
             }[];
         }[];
     }

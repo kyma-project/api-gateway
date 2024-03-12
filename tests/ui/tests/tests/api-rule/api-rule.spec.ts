@@ -1,5 +1,5 @@
 import 'cypress-file-upload';
-import {generateNamespaceName, generateRandomName} from "../../support/random";
+import {generateNamespaceName, generateRandomName} from "../../support";
 
 const apiRuleDefaultPath = "/.*";
 

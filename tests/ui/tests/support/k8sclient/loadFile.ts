@@ -1,4 +1,5 @@
 import * as jsyaml from 'js-yaml';
+import {readFileSync} from "fs";
 
 export async function loadFixture(fileName: string, single = true) {
   const load = single ? jsyaml.load : jsyaml.loadAll;
