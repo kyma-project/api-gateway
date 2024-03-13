@@ -69,13 +69,12 @@ In result, the proposed API would look as follows:
 accessStrategy: # Validation: there needs to be one access strategy, and only one
   extAuth:
     name: oauth2-proxy
-    restrictions: # Feedback about name and structure appreciated
-      # Will most likely have the same structure as in `jwt` access strategy
-      authentications:
-        - issuer: https://example.com
-          jwksUri: https://example.com/.well-known/jwks.json            
-      authorizations:
-        - audiences: ["app1"]
+    # Will most likely configure the same fields as in `jwt` access strategy
+    authentications:
+      - issuer: https://example.com
+        jwksUri: https://example.com/.well-known/jwks.json            
+    authorizations:
+      - audiences: ["app1"]
 ```
 
 ### Should we support multiple external authorizers?
