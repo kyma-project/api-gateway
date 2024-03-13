@@ -4,13 +4,16 @@ import (
 	"context"
 	_ "embed"
 	"fmt"
+	"github.com/avast/retry-go/v4"
 	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
 	"github.com/kyma-project/api-gateway/internal/reconciliations"
 	rbacv1 "k8s.io/api/rbac/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"time"
 )
 
 //go:embed cluster_role_binding.yaml
@@ -31,7 +34,12 @@ func reconcileOryOathkeeperMaesterClusterRoleBinding(ctx context.Context, k8sCli
 	templateValues["ServiceAccountNamespace"] = reconciliations.Namespace
 	templateValues["ClusterRoleName"] = roleName
 
-	return reconciliations.ApplyResource(ctx, k8sClient, clusterRoleBinding, templateValues)
+	err := reconciliations.ApplyResource(ctx, k8sClient, clusterRoleBinding, templateValues)
+	if err != nil {
+		return err
+	}
+
+	return waitForClusterRoleBinding(ctx, k8sClient)
 }
 
 func deleteRoleBinding(ctx context.Context, k8sClient client.Client, name string) error {
@@ -54,4 +62,11 @@ func deleteRoleBinding(ctx context.Context, k8sClient client.Client, name string
 	}
 
 	return nil
+}
+
+func waitForClusterRoleBinding(ctx context.Context, k8sClient client.Client) error {
+	return retry.Do(func() error {
+		roleBinding := rbacv1.ClusterRoleBinding{}
+		return k8sClient.Get(ctx, types.NamespacedName{Name: roleBindingName}, &roleBinding)
+	}, retry.Attempts(10), retry.Delay(2*time.Second), retry.DelayType(retry.FixedDelay))
 }
