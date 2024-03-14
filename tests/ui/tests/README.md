@@ -42,19 +42,15 @@ npm run start
 
 ### Using a Remote Kyma Dashboard Instance
 
-#### Optional: Log In to a Cluster Using OIDC
-
-If a cluster requires OIDC authentication, include the additional arguments **CYPRESS_OIDC_PASS** and **CYPRESS_OIDC_USER** while running the npm scripts.
-
 #### Run Tests
 ```bash
-CYPRESS_OIDC_PASS={YOUR_PASSWORD} CYPRESS_OIDC_USER={YOUR_USERNAME} CYPRESS_DOMAIN={REMOTE_CLUSTER_DASHBOARD_DOMAIN} npm run test
+CYPRESS_DOMAIN={REMOTE_CLUSTER_DASHBOARD_DOMAIN} npm run test
 ```
 
 #### Run Cypress UI Tests in the Test Runner Mode
 
 ```bash
-CYPRESS_OIDC_PASS={YOUR_PASSWORD} CYPRESS_OIDC_USER={YOUR_USERNAME} CYPRESS_DOMAIN={REMOTE_CLUSTER_DASHBOARD_DOMAIN} npm run start
+CYPRESS_DOMAIN={REMOTE_CLUSTER_DASHBOARD_DOMAIN} npm run start
 ```
 
 ## Run Tests in Continuous Integration System
