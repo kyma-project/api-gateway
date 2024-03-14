@@ -1,4 +1,4 @@
-const { defineConfig } = require('cypress');
+import {defineConfig} from "cypress";
 
 module.exports = defineConfig({
   includeShadowDom: true,
@@ -29,8 +29,8 @@ module.exports = defineConfig({
       return require('./plugins')(on, config);
     },
     specPattern: [
-      'tests/**/*.spec.js',
+      'tests/**/*.spec.ts',
     ],
-    supportFile: 'support/index.js',
+    supportFile: 'support/index.ts',
   },
 });
