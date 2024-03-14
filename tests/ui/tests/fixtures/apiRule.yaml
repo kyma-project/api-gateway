@@ -1,0 +1,16 @@
+apiVersion: gateway.kyma-project.io/v1beta1
+kind: APIRule
+metadata:
+  name: placeholderName
+  namespace: placeholderNamespace
+spec:
+  gateway: kyma-gateway.kyma-system.svc.cluster.local
+  host: placeholderHost
+  rules:
+    - methods:
+        - GET
+        - POST
+      path: /.*
+  service:
+    name: placeholderServiceName
+    port: 80
