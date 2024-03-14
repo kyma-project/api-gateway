@@ -70,11 +70,9 @@ type FlagVar struct {
 
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
-
 	utilruntime.Must(gatewayv1beta1.AddToScheme(scheme))
 	utilruntime.Must(dnsv1alpha1.AddToScheme(scheme))
 	utilruntime.Must(certv1alpha1.AddToScheme(scheme))
-
 	utilruntime.Must(networkingv1beta1.AddToScheme(scheme))
 	utilruntime.Must(rulev1alpha1.AddToScheme(scheme))
 	utilruntime.Must(securityv1beta1.AddToScheme(scheme))
