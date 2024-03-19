@@ -1,0 +1,26 @@
+name: Workflow validation
+
+on:
+  pull_request:
+    types: [ synchronize, opened, reopened, ready_for_review ]
+    paths:
+      - '.github/workflows/**'
+    branches:
+      - main
+permissions:
+  contents: read
+
+jobs:
+  verify-actions:
+    name: Ensure SHA pinned actions
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false
+    steps:
+      - uses: actions/checkout@v4
+      - uses: zgosalvez/github-actions-ensure-sha-pinned-actions@b1b635d24259e8a047a6ce7d6501ea432aa7a830 # 3.0.2
+        with:
+          # We only want to allow official Github Actions
+          allowlist: |
+            actions/checkout
+            actions/setup-go
+            actions/upload-artifact
