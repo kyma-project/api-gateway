@@ -1,6 +1,6 @@
 version: 2
 updates:
-# main branch configuration
+  # main branch configuration
   - package-ecosystem: "gomod"
     directory: "/"
     labels:
@@ -34,8 +34,12 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
-
-# release branch configuration
+  # We only use npm for UI tests, therefore running it weekly and on main only is enough.
+  - package-ecosystem: "npm"
+    directory: "/tests/ui/tests/"
+    schedule:
+      interval: "weekly"
+  # release branch configuration
   - package-ecosystem: "gomod"
     directory: "/"
     target-branch: "release-2.3"
@@ -53,7 +57,7 @@ updates:
           - "k8s.io/*"
     ignore:
       - dependency-name: "*"
-        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+        update-types: [ "version-update:semver-major", "version-update:semver-minor" ]
       # We want to ignore Istio dependencies because the update cycle is tied to the release of the Istio module and PRs can therefore be open for a long time.
       - dependency-name: "istio.io/client-go"
       - dependency-name: "istio.io/api"
@@ -71,4 +75,4 @@ updates:
       include: "scope"
     ignore:
       - dependency-name: "*"
-        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+        update-types: [ "version-update:semver-major", "version-update:semver-minor" ]
