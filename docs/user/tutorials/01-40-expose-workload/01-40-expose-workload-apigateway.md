@@ -9,7 +9,30 @@ This tutorial shows how to expose an unsecured instance of the HTTPBin Service a
 
 * Deploy [a sample HTTPBin Service](../01-00-create-workload.md).
 * Set up [your custom domain](../01-10-setup-custom-domain-for-workload.md) or use a Kyma domain instead. 
-* Depending on whether you use your custom domain or a Kyma domain, export the necessary values as environment variables:
+
+
+## Expose and Access Your Workload
+
+Follow these steps:
+
+<!-- tabs:start -->
+#### **Kyma dashboard**
+
+In the **Discovery and Network** section, select **APIRules**, and then **Create**. Switch to the `Advanced` tab and provide the following configuration details:
+    - Name: `httpbin`
+    - Service: `httpbin`
+    - Port: `8000`
+    - In the Ports section, select **Add**. Then, use these values:
+      - Name: `http`
+      - Protocol: `TCP`
+      - Port: `8000`
+      - Target Port: `8000`
+
+
+
+#### **kubectl**
+
+1. Depending on whether you use your custom domain or a Kyma domain, export the necessary values as environment variables:
   
   <!-- tabs:start -->
   #### **Custom Domain**
@@ -26,11 +49,7 @@ This tutorial shows how to expose an unsecured instance of the HTTPBin Service a
   ```
   <!-- tabs:end -->
 
-## Expose and Access Your Workload
-
-Follow these steps:
-
-1. Expose an instance of the HTTPBin Service by creating APIRule CR in your namespace.
+2. Expose an instance of the HTTPBin Service by creating APIRule CR in your namespace.
 
     ```bash
     cat <<EOF | kubectl apply -f -
@@ -64,16 +83,18 @@ Follow these steps:
     > [!NOTE]
     > If you don't specify a namespace for your Service, the default APIRule namespace is used.
 
-2. Call the endpoint by sending a `GET` request to the HTTPBin Service.
+3. Call the endpoint by sending a `GET` request to the HTTPBin Service.
 
     ```bash
     curl -ik -X GET https://httpbin.$DOMAIN_TO_EXPOSE_WORKLOADS/ip
     ```
     If successful, the call returns the code `200 OK` response.
 
-3. Call the endpoint by sending a `POST` request to the HTTPBin Service.
+4. Call the endpoint by sending a `POST` request to the HTTPBin Service.
 
     ```bash
     curl -ik -X POST https://httpbin.$DOMAIN_TO_EXPOSE_WORKLOADS/post -d "test data"
     ```
     If successful, the call returns the code `200 OK` response.
+
+<!-- tabs:end -->
