@@ -13,20 +13,27 @@ This tutorial shows how to expose an unsecured instance of the HTTPBin Service a
 
 ## Expose and Access Your Workload
 
-Follow these steps:
-
 <!-- tabs:start -->
 #### **Kyma dashboard**
 
-In the **Discovery and Network** section, select **APIRules**, and then **Create**. Switch to the `Advanced` tab and provide the following configuration details:
-    - Name: `httpbin`
-    - Service: `httpbin`
-    - Port: `8000`
-    - In the Ports section, select **Add**. Then, use these values:
-      - Name: `http`
-      - Protocol: `TCP`
-      - Port: `8000`
-      - Target Port: `8000`
+In the **Discovery and Network** section, select **APIRules**, and then **Create**. Provide the following configuration details:
+  - **Name**: `httpbin`
+  - **Service Name**: `httpbin`
+  - **Port**: `8000`
+  - Depending on whether you're using your custom domain or a Kyma domain, follow the relevant instructions to fill in the `Gateway` section.
+    <!-- tabs:start -->
+    #### **Custom Domain**
+    Select a `kyma-system` namespace and choose the gateway's name, for example `kyma-gateway`. Use `httpbin.{KYMA_DOMAIN}` as a host, where `{KYMA_DOMAIN}` is the name of your Kyma domain.
+
+    #### **Kyma Domain**
+    Select the namespace in which you deployed an instance of the HTTPBin service and choose the gateway's name, for example `httpbin-gateway`. Enter the name of your custom domain in the **Host** field.
+
+    <!-- tabs:end -->
+  - Use the default values provided in the `Rules` section.
+  To create the APIRule, select `Create`.
+
+<!-- tabs:end -->
+
 
 
 
