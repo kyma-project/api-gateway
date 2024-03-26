@@ -77,13 +77,13 @@ The procedure of setting up a working mTLS Gateway is described in the following
     In order for the `MUTUAL` mode to work correctly, you must apply a Root CA in a cluster. This Root CA must follow the [Istio naming convention](https://istio.io/latest/docs/reference/config/networking/gateway/#ServerTLSSettings) so Istio can use it.
     Create an Opaque Secret containing the previously generated Root CA certificate in the `istio-system` namespace:
 
-    ```sh
-        kubectl create secret generic -n istio-system kyma-mtls-certs-cacert --from-file=cacert=cacert.crt
+    ```bash
+    kubectl create secret generic -n istio-system kyma-mtls-certs-cacert --from-file=cacert=cacert.crt
     ```
 
 5. Expose a custom workload using an APIRule.
 
-    ```sh
+    ```bash
     cat <<EOF | kubectl apply -f -
     apiVersion: gateway.kyma-project.io/v1beta1
     kind: APIRule

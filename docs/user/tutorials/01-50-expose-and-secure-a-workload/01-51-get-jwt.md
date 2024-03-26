@@ -6,7 +6,7 @@ This tutorial shows how to get a JSON Web Token (JWT), which can be used to acce
 
 Use an OpenID Connect-compliant (OIDC-compliant) identity provider.
 
-## Get a JWT
+## Steps
 
 1. In your OIDC-compliant identity provider, create an application to get your client credentials such as Client ID and Client Secret. 
 

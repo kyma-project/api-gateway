@@ -14,8 +14,8 @@ This tutorial shows how to set up a custom domain and prepare a certificate requ
 
 1. Create a Secret containing credentials for the DNS cloud service provider account in your namespace.
 
-    * Choose your DNS cloud service provider and create a Secret in your namespace. To learn how to do it, follow [the guidelines](https://github.com/gardener/external-dns-management/blob/master/README.md#external-dns-management) provided in the External DNS Management documentation. 
-    * Export the name of the created Secret as an environment variable:
+    1. Choose your DNS cloud service provider and create a Secret in your namespace. To learn how to do it, follow [the guidelines](https://github.com/gardener/external-dns-management/blob/master/README.md#external-dns-management) provided in the External DNS Management documentation. 
+    2. Export the name of the created Secret as an environment variable:
 
       ```bash
       export SECRET={SECRET_NAME}
@@ -23,7 +23,7 @@ This tutorial shows how to set up a custom domain and prepare a certificate requ
 
 2. Create a DNSProvider custom resource (CR).
 
-    * Export the following values as environment variables. 
+    1. Export the following values as environment variables. 
       > [!NOTE]
       > As `SPEC_TYPE`, use the relevant provider type. The `DOMAIN_NAME` value specifies the name of a domain that you own, for example, `mydomain.com`. 
 
@@ -32,7 +32,7 @@ This tutorial shows how to set up a custom domain and prepare a certificate requ
       export DOMAIN_TO_EXPOSE_WORKLOADS={DOMAIN_NAME} 
       ````
   
-    * To create a DNSProvider CR, run: 
+    2. To create a DNSProvider CR, run: 
 
       ```bash
       cat <<EOF | kubectl apply -f -
@@ -55,7 +55,7 @@ This tutorial shows how to set up a custom domain and prepare a certificate requ
   
 3. Create a DNSEntry CR.
    
-    * Export the following values as environment variables:
+    1. Export the following values as environment variables:
 
       ```bash
       export IP=$(kubectl -n istio-system get service istio-ingressgateway -o jsonpath='{.status.loadBalancer.ingress[0].ip}') # Assuming only one LoadBalancer with external IP
@@ -63,7 +63,7 @@ This tutorial shows how to set up a custom domain and prepare a certificate requ
       > [!NOTE]
       > For some cluster providers you need to replace the `ip` with the `hostname`, for example, in AWS, set `jsonpath='{.status.loadBalancer.ingress[0].hostname}'`.
 
-    * To create a DNSEntry CR, run:
+    2. To create a DNSEntry CR, run:
 
       ```bash
       cat <<EOF | kubectl apply -f -
@@ -84,7 +84,7 @@ This tutorial shows how to set up a custom domain and prepare a certificate requ
 
 4. Create a Certificate CR.
 
-    * Export the following values as environment variables:
+    1. Export the following values as environment variables:
 
       > [!NOTE]
       > `TLS_SECRET` is the name of the TLS Secret, for example, `httpbin-tls-credentials`.
@@ -93,7 +93,7 @@ This tutorial shows how to set up a custom domain and prepare a certificate requ
       export TLS_SECRET={TLS_SECRET_NAME}
       ```
 
-    * To create a Certificate CR, run:
+    2. To create a Certificate CR, run:
 
       ```bash
       cat <<EOF | kubectl apply -f -
@@ -110,7 +110,7 @@ This tutorial shows how to set up a custom domain and prepare a certificate requ
       > [!NOTE]
       > While using the default configuration, certificates with the Let's Encrypt Issuer are valid for 90 days and automatically renewed 30 days before their validity expires. For more information, read the documentation on [Gardener Certificate Management](https://github.com/gardener/cert-management#requesting-a-certificate) and [Gardener extensions for certificate Services](https://gardener.cloud/docs/extensions/others/gardener-extension-shoot-cert-service/).
 
-    * To check the certificate status, run: 
+    3. To check the certificate status, run: 
      
         ```bash
         kubectl get certificate httpbin-cert -n istio-system

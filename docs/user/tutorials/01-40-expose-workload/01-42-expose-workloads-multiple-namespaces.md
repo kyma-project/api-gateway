@@ -40,7 +40,7 @@ This tutorial shows how to expose Service endpoints in multiple namespaces using
     ```
     <!-- tabs:end -->
 
-## Expose and Access Your Workloads in Multiple Namespaces
+## Steps
 
 1. Expose the HTTPBin Services in their respective namespaces by creating an APIRule custom resource (CR) in its own namespace. Run:
 
