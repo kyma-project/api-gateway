@@ -27,8 +27,6 @@ This tutorial explains how to create a sample HTTPBin Service Deployment.
 
 #### **kubectl**
 
-<!-- tabs:end -->
-
 1. Create a namespace and export its value as an environment variable. Run:
 
     ```bash
@@ -105,3 +103,4 @@ This tutorial explains how to create a sample HTTPBin Service Deployment.
     NAME                        READY    STATUS     RESTARTS    AGE
     {SERVICE_NAME}-{SUFFIX}     2/2      Running    0           96s
     ```
+<!-- tabs:end -->
