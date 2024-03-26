@@ -22,7 +22,7 @@ This tutorial explains how to create a sample HTTPBin Service Deployment.
       - **Port**: `8000`
       - **Target Port**: `80`
 
-    To confirm, select **Create**.
+  To confirm, select **Create**.
 5. Go to **Workloads > Deployments** and select **Create Deployment**. Click on the bar to toggle it and select the HTTPBin preset. To confirm, select **Create**.
 
 #### **kubectl**
