@@ -55,8 +55,8 @@ spec:
   rules:
     - path: /headers
       methods: ["GET"]
-      accessStrategies:
-        - handler: extAuth
+      accessStrategy:
+        extAuth:
           name: oauth2-proxy
           restrictions:
             authentications:
@@ -82,8 +82,8 @@ spec:
   rules:
     - path: /headers
       methods: ["GET"]
-      accessStrategies:
-        - handler: jwt
+      accessStrategy:
+        jwt:
           authentications:
             - issuer: https://example.com
               jwksUri: https://example.com/.well-known/jwks.json            
@@ -107,6 +107,7 @@ spec:
   rules:
     - path: /headers
       methods: ["GET"]
-      accessStrategies: 
-        - handler: noAuth
+      accessStrategy: 
+        noAuth:
+          name: "noauth"
 ```
