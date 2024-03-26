@@ -34,26 +34,25 @@ This tutorial shows how to expose an unsecured instance of the HTTPBin Service a
   
 3. To create the APIRule, select `Create`.  
 4. Replace the placeholder in the link and access the exposed HTTPBin Service at `https://httpbin.{YOUR_DOMAIN}`.
-<!-- tabs:end -->
 
 #### **kubectl**
 
 1. Depending on whether you use your custom domain or a Kyma domain, export the necessary values as environment variables:
   
-  <!-- tabs:start -->
-  #### **Custom Domain**
-    
-  ```bash
-  export DOMAIN_TO_EXPOSE_WORKLOADS={DOMAIN_NAME}
-  export GATEWAY=$NAMESPACE/httpbin-gateway
-  ```
-  #### **Kyma Domain**
+    <!-- tabs:start -->
+    #### **Custom Domain**
+      
+    ```bash
+    export DOMAIN_TO_EXPOSE_WORKLOADS={DOMAIN_NAME}
+    export GATEWAY=$NAMESPACE/httpbin-gateway
+    ```
+    #### **Kyma Domain**
 
-  ```bash
-  export DOMAIN_TO_EXPOSE_WORKLOADS={KYMA_DOMAIN_NAME}
-  export GATEWAY=kyma-system/kyma-gateway
-  ```
-  <!-- tabs:end -->
+    ```bash
+    export DOMAIN_TO_EXPOSE_WORKLOADS={KYMA_DOMAIN_NAME}
+    export GATEWAY=kyma-system/kyma-gateway
+    ```
+    <!-- tabs:end -->
 
 2. Expose an instance of the HTTPBin Service by creating APIRule CR in your namespace.
 
