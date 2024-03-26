@@ -23,7 +23,7 @@ Due to deprecation of Ory and new features in api-gateway, next version of APIRu
 | **corsPolicy.allowCredentials** |  **NO**   | Specifies whether credentials are allowed in the **Access-Control-Allow-Credentials** CORS header.                                                                                                                                                                                                                                           |
 | **corsPolicy.exposeHeaders**    |  **NO**   | Specifies headers exposed with the **Access-Control-Expose-Headers** CORS header.                                                                                                                                                                                                                                                            |
 | **corsPolicy.maxAge**           |  **NO**   | Specifies the maximum age of CORS policy cache. The value is provided in the **Access-Control-Max-Age** CORS header.                                                                                                                                                                                                                         |
-| **host**                        |  **YES**  | Specifies the Service's communication address for inbound external traffic. If only the leftmost label is provided, the default domain name will be used.                                                                                                                                                                                    |
+| **hosts**                       |  **YES**  | Specifies the Service's communication address for inbound external traffic. If only the leftmost label is provided, the default domain name will be used. User `"/.*"` instead of `*` to cover all paths                                                                                                                                     |
 | **service.name**                |  **NO**   | Specifies the name of the exposed Service.                                                                                                                                                                                                                                                                                                   |
 | **service.namespace**           |  **NO**   | Specifies the namespace of the exposed Service.                                                                                                                                                                                                                                                                                              |
 | **service.port**                |  **NO**   | Specifies the communication port of the exposed Service.                                                                                                                                                                                                                                                                                     |
@@ -55,10 +55,8 @@ spec:
   rules:
     - path: /headers
       methods: ["GET"]
-      mutators:
-        - ***
-      accessStrategy:
-        extAuth:
+      accessStrategies:
+        - handler: extAuth
           name: oauth2-proxy
           restrictions:
             authentications:
@@ -84,10 +82,8 @@ spec:
   rules:
     - path: /headers
       methods: ["GET"]
-      mutators:
-        - ***
-      accessStrategy:
-        jwt:
+      accessStrategies:
+        - handler: jwt
           authentications:
             - issuer: https://example.com
               jwksUri: https://example.com/.well-known/jwks.json            
@@ -111,8 +107,6 @@ spec:
   rules:
     - path: /headers
       methods: ["GET"]
-      mutators:
-        - ***
-      accessStrategy:
-        noAuth: true
+      accessStrategies: 
+        - handler: noAuth
 ```
