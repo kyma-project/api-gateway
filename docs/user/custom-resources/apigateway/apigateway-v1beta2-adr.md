@@ -23,7 +23,7 @@ Due to deprecation of Ory and new features in api-gateway, next version of APIRu
 | **corsPolicy.allowCredentials** |  **NO**   | Specifies whether credentials are allowed in the **Access-Control-Allow-Credentials** CORS header.                                                                                                                                                                                                                                           |
 | **corsPolicy.exposeHeaders**    |  **NO**   | Specifies headers exposed with the **Access-Control-Expose-Headers** CORS header.                                                                                                                                                                                                                                                            |
 | **corsPolicy.maxAge**           |  **NO**   | Specifies the maximum age of CORS policy cache. The value is provided in the **Access-Control-Max-Age** CORS header.                                                                                                                                                                                                                         |
-| **hosts**                       |  **YES**  | Specifies the Service's communication address for inbound external traffic. If only the leftmost label is provided, the default domain name will be used. User `"/.*"` instead of `*` to cover all paths                                                                                                                                     |
+| **hosts**                       |  **YES**  | Specifies the Service's communication address for inbound external traffic. If only the leftmost label is provided, the default domain name will be used.                                                                                                                                                                                    |
 | **service.name**                |  **NO**   | Specifies the name of the exposed Service.                                                                                                                                                                                                                                                                                                   |
 | **service.namespace**           |  **NO**   | Specifies the namespace of the exposed Service.                                                                                                                                                                                                                                                                                              |
 | **service.port**                |  **NO**   | Specifies the communication port of the exposed Service.                                                                                                                                                                                                                                                                                     |
@@ -32,9 +32,15 @@ Due to deprecation of Ory and new features in api-gateway, next version of APIRu
 | **rules.service**               |  **NO**   | Services definitions at this level have higher precedence than the Service definition at the **spec.service** level.                                                                                                                                                                                                                         |
 | **rules.path**                  |  **YES**  | Specifies the path of the exposed Service.                                                                                                                                                                                                                                                                                                   |
 | **rules.methods**               |  **NO**   | Specifies the list of HTTP request methods available for **spec.rules.path**. The list of supported methods is defined in [RFC 9910: HTTP Semantics](https://www.rfc-editor.org/rfc/rfc9110.html) and [RFC 5789: PATCH Method for HTTP](https://www.rfc-editor.org/rfc/rfc5789.html).                                                        |
-| **rules.mutators**              |  **NO**   | Specifies the list of the Istio mutators.                                                                                                                                                                                                                                                                                                    |
+| **rules.mutators**              |  **NO**   | Specifies the list of the Istio mutators. Currently, the `Headers` and `Cookie` mutators are supported.                                                                                                                                                                                                                                      |
 | **rules.accessStrategies**      |  **YES**  | Specifies the list of access strategies. Supported are `no_auth`, `extAuth` and `jwt` as [Istio](https://istio.io/latest/docs/tasks/security/authorization/authz-jwt/) access strategy.                                                                                                                                                      |
 | **rules.timeout**               |  **NO**   | Specifies the timeout, in seconds, for HTTP requests made to **spec.rules.path**. The maximum timeout is limited to 3900 seconds (65 minutes). Timeout definitions set at this level take precedence over any timeout defined at the **spec.timeout** level.                                                                                 |
+
+### Validation
+
+Hosts:
+- The **hosts** field elements must contain either full domain names or the leftmost label.
+- The **hosts** field elements cannot contain the wildcard character `*`.
 
 ### Examples
 
@@ -107,7 +113,40 @@ spec:
   rules:
     - path: /headers
       methods: ["GET"]
-      accessStrategy: 
-        noAuth:
-          name: "noauth"
+      noAuth: true
+```
+
+- Istio mutators:
+```yaml
+apiVersion: gateway.kyma-project.io/v1beta2
+kind: APIRule
+metadata:
+  name: service-config
+spec:
+  gateway: kyma-system/kyma-gateway
+  hosts:
+    - app1.example.com
+  service:
+    name: httpbin
+    port: 8000
+  rules:
+    - path: /headers
+      methods: ["GET"]
+      mutators:
+        - handler: header
+          config:
+            headers:
+              X-Custom-Auth: "%REQ(Authorization)%"
+              X-Some-Data: "some-data"
+        - handler: cookie
+          config:
+            cookies:
+              user: "test"
+      accessStrategy:
+        jwt:
+          authentications:
+            - issuer: https://example.com
+              jwksUri: https://example.com/.well-known/jwks.json            
+          authorizations:
+            - audiences: ["app1"]
 ```
