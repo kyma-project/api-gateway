@@ -21,10 +21,10 @@ import (
 	"errors"
 	"fmt"
 	"github.com/kyma-project/api-gateway/internal/conditions"
-	"strings"
-
+	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"strings"
 
 	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
@@ -268,7 +268,12 @@ func oryRulesExist(ctx context.Context, k8sClient client.Client) ([]string, erro
 	})
 
 	err := k8sClient.List(ctx, &oryRulesList)
+	if err != nil && meta.IsNoMatchError(err) {
+		// Oathkeeper CRD does not exist, there are no blocking rules
+		return nil, nil
+	}
 	if err != nil {
+		// any other error
 		return nil, err
 	}
 	ctrl.Log.Info(fmt.Sprintf("There are %d ORY Oathkeeper Rule(s) found on cluster", len(oryRulesList.Items)))
