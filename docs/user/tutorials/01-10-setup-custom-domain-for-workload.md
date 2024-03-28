@@ -30,7 +30,7 @@ This tutorial shows how to set up a custom domain and prepare a certificate requ
     ```
     <!-- tabs:end -->
 
-1. Create a DNSProvider custom resource (CR).
+2. Create a DNSProvider custom resource (CR).
     
     <!-- tabs:start -->
     #### **Kyma Dashboard**
@@ -49,33 +49,32 @@ This tutorial shows how to set up a custom domain and prepare a certificate requ
 
     #### **kubectl**
 
-      1. Export the following values as environment variables. Replace `PROVIDER_TYPE` with the type of your DNS cloud service provider. `DOMAIN_NAME` value specifies the name of your custom domain, for example, `mydomain.com`.
+    1. Export the following values as environment variables. Replace `PROVIDER_TYPE` with the type of your DNS cloud service provider. `DOMAIN_NAME` value specifies the name of your custom domain, for example, `mydomain.com`.
 
-          ```bash
-          export PROVIDER_TYPE={YOUR_PROVIDER_TYPE}
-          export DOMAIN_TO_EXPOSE_WORKLOADS={YOUR_DOMAIN_NAME} 
-          ````
-      
-      2. To create a DNSProvider CR, run: 
+        ```bash
+        export PROVIDER_TYPE={YOUR_PROVIDER_TYPE}
+        export DOMAIN_TO_EXPOSE_WORKLOADS={YOUR_DOMAIN_NAME} 
+        ````
+    2. To create a DNSProvider CR, run: 
 
-          ```bash
-          cat <<EOF | kubectl apply -f -
-          apiVersion: dns.gardener.cloud/v1alpha1
-          kind: DNSProvider
-          metadata:
-            name: dns-provider
-            namespace: $NAMESPACE
-            annotations:
-              dns.gardener.cloud/class: garden
-          spec:
-            type: $SPEC_TYPE
-            secretRef:
-              name: $SECRET
-            domains:
-              include:
-                - $DOMAIN_TO_EXPOSE_WORKLOADS
-          EOF
-          ```
+        ```bash
+        cat <<EOF | kubectl apply -f -
+        apiVersion: dns.gardener.cloud/v1alpha1
+        kind: DNSProvider
+        metadata:
+          name: dns-provider
+          namespace: $NAMESPACE
+          annotations:
+            dns.gardener.cloud/class: garden
+        spec:
+          type: $SPEC_TYPE
+          secretRef:
+            name: $SECRET
+          domains:
+            include:
+              - $DOMAIN_TO_EXPOSE_WORKLOADS
+        EOF
+        ```
     <!-- tabs:end -->
 
 3. Create a DNSEntry CR.
@@ -83,19 +82,19 @@ This tutorial shows how to set up a custom domain and prepare a certificate requ
     <!-- tabs:start -->
     #### **Kyma Dashboard**
     1. Check the external IP address of Istio Ingress Gateway.
-      1. Go to the istio-system namespace.
-      2. Go to **Discovery and Network > Services**.
-      3. Select the `istio-ingressgateway` Service.
-      4. Copy its external IP address.
-      5. Come back to the namespace you're using for setting up the custom domain.
+        1. Go to the istio-system namespace.
+        2. Go to **Discovery and Network > Services**.
+        3. Select the `istio-ingressgateway` Service.
+        4. Copy its external IP address.
+        5. Come back to the namespace you're using for setting up the custom domain.
     2. Go to **Configuration > DNS Entries**.
     3. Select **Create DNS Provider**, switch to the `Advanced` tab, and provide the details      
-      - **Name**:`dns-entry`
-      - Add the annotation:
-        - **dns.gardener.cloud/class**: `garden`
-      - For **DNSName**, use `*.{DOMAIN_TO_EXPOSE_WORKLOADS}`. Replace `{DOMAIN_TO_EXPOSE_WORKLOADS}` with the name of your custom domain.
-      - **TTL**:`600`
-      - Paste the external IP address of the `istio-ingressgateway` Service in the **Target** field.
+        - **Name**:`dns-entry`
+        - Add the annotation:
+          - **dns.gardener.cloud/class**: `garden`
+        - For **DNSName**, use `*.{DOMAIN_TO_EXPOSE_WORKLOADS}`. Replace `{DOMAIN_TO_EXPOSE_WORKLOADS}` with the name of your custom domain.
+        - **TTL**:`600`
+        - Paste the external IP address of the `istio-ingressgateway` Service in the **Target** field.
     4. Select **Create**.
 
 
@@ -130,6 +129,9 @@ This tutorial shows how to set up a custom domain and prepare a certificate requ
     <!-- tabs:end -->
 
 4. Create a Certificate CR.
+    
+    > [!NOTE]
+    > While using the default configuration, certificates with the Let's Encrypt Issuer are valid for 90 days and automatically renewed 30 days before their validity expires. For more information, read the documentation on [Gardener Certificate Management](https://github.com/gardener/cert-management#requesting-a-certificate) and [Gardener extensions for certificate Services](https://gardener.cloud/docs/extensions/others/gardener-extension-shoot-cert-service/).
 
     <!-- tabs:start -->
     #### **Kyma Dashboard**
@@ -137,9 +139,9 @@ This tutorial shows how to set up a custom domain and prepare a certificate requ
     1. Go to the `istio-system` namespace.
     1. Go to **Configuration > Certificates**.
     2. Select **Create Certificate** and provide the details:
-      - **Name**:`httpbin-cert`
-      - **Secret Name** is the name of your TLS Secret.
-      - **Custom Name** is the name of your custom domain.
+        - **Name**:`httpbin-cert`
+        - **Secret Name** is the name of your TLS Secret.
+        - **Custom Name** is the name of your custom domain.
     3. Select **Create**.
 
     #### **kubectl**
@@ -171,9 +173,6 @@ This tutorial shows how to set up a custom domain and prepare a certificate requ
         kubectl get certificate httpbin-cert -n istio-system
         ```
     <!-- tabs:end -->
-
-    > [!NOTE]
-    > While using the default configuration, certificates with the Let's Encrypt Issuer are valid for 90 days and automatically renewed 30 days before their validity expires. For more information, read the documentation on [Gardener Certificate Management](https://github.com/gardener/cert-management#requesting-a-certificate) and [Gardener extensions for certificate Services](https://gardener.cloud/docs/extensions/others/gardener-extension-shoot-cert-service/).
 
 5. [Set Up a TLS Gateway](./01-20-set-up-tls-gateway.md) or [Set up an mTLS Gateway](./01-30-set-up-mtls-gateway.md).
 
