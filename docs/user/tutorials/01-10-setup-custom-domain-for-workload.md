@@ -30,7 +30,7 @@ This tutorial shows how to set up a custom domain and prepare a certificate requ
     ```
     <!-- tabs:end -->
 
-2. Create a DNSProvider custom resource (CR).
+1. Create a DNSProvider custom resource (CR).
     
     <!-- tabs:start -->
     #### **Kyma Dashboard**
