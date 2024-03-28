@@ -17,10 +17,17 @@ This tutorial shows how to set up a custom domain and prepare a certificate requ
     <!-- tabs:start -->
     #### **Kyma Dashboard**
     
-    x
+    1. Select the namespace you want to use.
+    2. Go to **Configuration > Secretes**.
+    3. Select **Create Secret** and provide your configuration details.
+    4. Select **Create**.
 
     #### **kubectl**
-    x
+    Use `kubectl apply` to create a Secret containing the credentials and export its name as an environment variable:
+
+    ```bash
+    export SECRET={SECRET_NAME}
+    ```
     <!-- tabs:end -->
 
 2. Create a DNSProvider custom resource (CR).
