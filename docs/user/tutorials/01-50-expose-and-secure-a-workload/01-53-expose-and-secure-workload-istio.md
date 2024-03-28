@@ -19,7 +19,7 @@ This tutorial shows how to expose and secure a workload using Istio's built-in s
     2. Switch to the `Advanced` tab and provide the following configuration details:
         - **Name**: `httpbin`
         - Go to **HTTP > Matches > Match** and provide URI of the type **prefix** and value `/`.
-        - Go to **HTTP > Routes > Route > Destination**. Replace the placeholder and add the following fields:
+        - Go to **HTTP > Routes > Route > Destination**. Replace `{NAMESPACE}` with the name of the HTTPBin Service's namespace and add the following fields:
           - **Host**: `httpbin.{NAMESPACE}.svc.cluster.local`
           - **Port Number**: `8000`
     3. To create the VirtualService, select **Create**.
@@ -75,11 +75,10 @@ This tutorial shows how to expose and secure a workload using Istio's built-in s
     To secure the HTTPBin workload using a JWT, create a Request Authentication with Authorization Policy. Workloads with the `matchLabels` parameter specified require a JWT for all requests. Follow the instructions:
 
     <!-- tabs:start -->
-    #### **Kyma dashboard**
-    1. Go to **Custom Resources > RequestAuthentications** and select **Create RequestAuthentication**.
-    2. To create a RequestAuthentication, paste the following configuration, and replace the placeholders.
-        ```bash
-        cat <<EOF | kubectl apply -f -
+    #### **Kyma Dashboard**
+    1. Go to **Custom Resources > RequestAuthentications**.
+    2. Select **Create RequestAuthentication** and paste the following configuration into the editor:
+        ```yaml
         apiVersion: security.istio.io/v1beta1
         kind: RequestAuthentication
         metadata:
@@ -93,9 +92,13 @@ This tutorial shows how to expose and secure a workload using Istio's built-in s
           - issuer: {ISSUER}
             jwksUri: {JWKS_URI}
         ```
-    3. To confirm, select **Create**.
-    4. Go to **Istio > Authorization Policies** and select **Create Authorization Policy**. 
-    5. Switch to the `YAML` tab, paste the following configuration, and replace the placeholders.
+    3. Replace the placeholders:
+      - `{NAMESPACE}` is the name of the namespace in which you deployed the HTTPBin Service.
+      - `{ISSUER}` is
+      - `{JWKS_URI}` is 
+    3. Select **Create**.
+    4. Go to **Istio > Authorization Policies**.
+    5. Select **Create Authorization Policy**, switch to the `YAML` tab and paste the following configuration into the editor:
         ```bash
         apiVersion: security.istio.io/v1beta1
           kind: AuthorizationPolicy
@@ -112,7 +115,9 @@ This tutorial shows how to expose and secure a workload using Istio's built-in s
                   requestPrincipals: ["*"]
           EOF
           ```
-    6. To confirm, select **Create**.
+    6. Replace `{NAMESPACE}` with the name of the namespace in which you deployed the HTTPBin Service.
+    7. Select **Create**.
+    8. verify
 
     #### **kubectl**
 
@@ -161,3 +166,4 @@ This tutorial shows how to expose and secure a workload using Istio's built-in s
     ```shell
     curl -ik -X GET https://httpbin.$DOMAIN_TO_EXPOSE_WORKLOADS/status/200 --header "Authorization:Bearer $ACCESS_TOKEN"
     ```
+<!-- tabs:start -->

@@ -7,29 +7,53 @@ This tutorial shows how to set up a custom domain and prepare a certificate requ
 
 ## Prerequisites
 
-* Deploy [a sample HTTPBin Service](./01-00-create-workload.md).
-* If you use a cluster not managed by Gardener, install the [External DNS Management](https://github.com/gardener/external-dns-management#quick-start) and [Certificate Management](https://github.com/gardener/cert-management) components manually in a dedicated namespace.
+* [Deploy a sample HTTPBin Service](./01-00-create-workload.md).
+* If you use a cluster not managed by Gardener, install the [External DNS Management](https://github.com/gardener/external-dns-management#quick-start) and [Certificate Management](https://github.com/gardener/cert-management) components manually in a dedicated namespace. SAP BTP, Kyma runtime clusters are managed by Gardener so you are not required to install any additional components.
 
 ## Steps
 
-1. Create a Secret containing credentials for the DNS cloud service provider account in your namespace.
+1. Create a Secret containing credentials for the DNS cloud service provider account in your namespace. To learn how to do it, follow the [External DNS Management guidelines](https://github.com/gardener/external-dns-management/blob/master/README.md#external-dns-management).
+    <!-- tabs:start -->
+    #### **Kyma Dashboard**
+    1. Select the namespace you want to use.
+    2. Go to **Configuration > Secretes**.
+    3. Select **Create Secret** and provide your configuration details.
+    4. Select **Create**.
 
-    1. Choose your DNS cloud service provider and create a Secret in your namespace. To learn how to do it, follow [the guidelines](https://github.com/gardener/external-dns-management/blob/master/README.md#external-dns-management) provided in the External DNS Management documentation. 
-    2. Export the name of the created Secret as an environment variable:
 
-      ```bash
-      export SECRET={SECRET_NAME}
-      ```
+    #### **kubectl**
+    1. Use `kubectl apply` to create a Secret.
+    2. Export the name of the created Secret and its namespace as an environment variables:
+    ```bash
+    export SECRET={SECRET_NAME}
+    export NAMESPACE={SECRET_NAMESPACE}
+    ```
+    <!-- tabs:end -->
 
 2. Create a DNSProvider custom resource (CR).
+    <!-- tabs:start -->
+    #### **Kyma Dashboard**
+    1. Go to **Configuration > DNS Providers**.
+    2. Select **Create DNS Provider**, switch to the `Advanced` tab, and provide the details:
+      - **Name**:`dns-provider`
+      - **Type** is the type of your DNS cloud service provider.
+      - Add the annotation:
+        - **dns.gardener.cloud/class**: `garden`
+      - In the `Secret Reference` section, add these fields:
+        - **Namespace** is the name of the namespace in which you created the Secret containing the credentials. 
+        - **Name** is the name of the Secret.
+      - In the `Include Domains` section, add the field:
+        - **Include Domains** is the name of your custom domain.
+    3. Select **Create**.
 
-    1. Export the following values as environment variables. 
-      > [!NOTE]
-      > As `SPEC_TYPE`, use the relevant provider type. The `DOMAIN_NAME` value specifies the name of a domain that you own, for example, `mydomain.com`. 
+
+    #### **kubectl**
+
+    1. Export the following values as environment variables. Replace `PROVIDER_TYPE` with the type of your DNS cloud service provider. `DOMAIN_NAME` value specifies the name of your custom domain, for example, `mydomain.com`.
 
       ```bash
-      export SPEC_TYPE={PROVIDER_TYPE}
-      export DOMAIN_TO_EXPOSE_WORKLOADS={DOMAIN_NAME} 
+      export PROVIDER_TYPE={YOUR_PROVIDER_TYPE}
+      export DOMAIN_TO_EXPOSE_WORKLOADS={YOUR_DOMAIN_NAME} 
       ````
   
     2. To create a DNSProvider CR, run: 
@@ -52,8 +76,30 @@ This tutorial shows how to set up a custom domain and prepare a certificate requ
             - $DOMAIN_TO_EXPOSE_WORKLOADS
       EOF
       ```
+    <!-- tabs:end -->
   
 3. Create a DNSEntry CR.
+
+    <!-- tabs:start -->
+    #### **Kyma Dashboard**
+    1. Check the external IP address of Istio Ingress Gateway.
+      1. Go to the istio-system namespace.
+      2. Go to **Discovery and Network > Services**.
+      3. Select the `istio-ingressgateway` Service.
+      4. Copy its external IP address.
+      5. Come back to the namespace you're using for setting up the custom domain.
+    2. Go to **Configuration > DNS Entries**.
+    3. Select **Create DNS Provider**, switch to the `Advanced` tab, and provide the details      
+      - **Name**:`dns-entry`
+      - Add the annotation:
+        - **dns.gardener.cloud/class**: `garden`
+      - For **DNSName**, use `*.{DOMAIN_TO_EXPOSE_WORKLOADS}`. Replace `{DOMAIN_TO_EXPOSE_WORKLOADS}` with the name of your custom domain.
+      - **TTL**:`600`
+      - Paste the external IP address of the `istio-ingressgateway` Service in the **Target** field.
+    4. Select **Create**.
+
+
+    #### **kubectl**
    
     1. Export the following values as environment variables:
 
@@ -81,13 +127,24 @@ This tutorial shows how to set up a custom domain and prepare a certificate requ
           - $IP
       EOF
       ```
+    <!-- tabs:end -->
 
 4. Create a Certificate CR.
 
-    1. Export the following values as environment variables:
+    <!-- tabs:start -->
+    #### **Kyma Dashboard**
 
-      > [!NOTE]
-      > `TLS_SECRET` is the name of the TLS Secret, for example, `httpbin-tls-credentials`.
+    1. Go to the `istio-system` namespace.
+    1. Go to **Configuration > Certificates**.
+    2. Select **Create Certificate** and provide the details:
+      - **Name**:`httpbin-cert`
+      - **Secret Name** is the name of your TLS Secret.
+      - **Custom Name** is the name of your custom domain.
+    3. Select **Create**.
+
+    #### **kubectl**
+
+    1. Export the name of your TLS Secret as an environment variable:
 
       ```bash
       export TLS_SECRET={TLS_SECRET_NAME}
@@ -107,15 +164,17 @@ This tutorial shows how to set up a custom domain and prepare a certificate requ
         commonName: $DOMAIN_TO_EXPOSE_WORKLOADS
       EOF
       ```
-      > [!NOTE]
-      > While using the default configuration, certificates with the Let's Encrypt Issuer are valid for 90 days and automatically renewed 30 days before their validity expires. For more information, read the documentation on [Gardener Certificate Management](https://github.com/gardener/cert-management#requesting-a-certificate) and [Gardener extensions for certificate Services](https://gardener.cloud/docs/extensions/others/gardener-extension-shoot-cert-service/).
 
     3. To check the certificate status, run: 
      
         ```bash
         kubectl get certificate httpbin-cert -n istio-system
         ```
-       
-5. [Set Up a TLS Gateway](./01-20-set-up-tls-gateway.md).
+    <!-- tabs:end -->
 
-Visit the [Gardener external DNS management documentation](https://github.com/gardener/external-dns-management/tree/master/examples) to see more examples of CRs for Services and ingresses.
+    > [!NOTE]
+    > While using the default configuration, certificates with the Let's Encrypt Issuer are valid for 90 days and automatically renewed 30 days before their validity expires. For more information, read the documentation on [Gardener Certificate Management](https://github.com/gardener/cert-management#requesting-a-certificate) and [Gardener extensions for certificate Services](https://gardener.cloud/docs/extensions/others/gardener-extension-shoot-cert-service/).
+
+5. [Set Up a TLS Gateway](./01-20-set-up-tls-gateway.md) or [Set up an mTLS Gateway](./01-30-set-up-mtls-gateway.md).
+
+Visit the [Gardener external DNS management documentation](https://github.com/gardener/external-dns-management/tree/master/examples) to see more examples of CRs for Services and Ingresses.

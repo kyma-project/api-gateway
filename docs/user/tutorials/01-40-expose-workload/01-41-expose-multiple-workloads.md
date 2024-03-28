@@ -6,51 +6,55 @@ This tutorial shows how to expose multiple workloads on different paths by defin
 
 ## Prerequisites
 
-* Deploy two instances of a sample [HTTPBin Service](../01-00-create-workload.md). Export their names as environment variables:
-  
-  ```bash
-  export FIRST_SERVICE={SERVICE_NAME}
-  export SECOND_SERVICE={SERVICE_NAME}
-  ```
-
-* Set up [your custom domain](../01-10-setup-custom-domain-for-workload.md) or use a Kyma domain instead. 
+* [Deploy two instances of a sample HTTPBin Service](../01-00-create-workload.md) in one namespace. 
+* [Set up your custom domain](../01-10-setup-custom-domain-for-workload.md) or use a Kyma domain instead. 
 
 ## Define Multiple Services on Different Paths
 
 Follow the instructions to expose the instances of the HTTPBin Service on different paths at the `spec.rules` level without a root Service defined.
 
 <!-- tabs:start -->
-#### **Kyma dashboard**
+#### **Kyma Dashboard**
 
-1. In the **Discovery and Network** section, select **APIRules**, and then **Create**. 
+1. Go to **Discovery and Network > APIRules** and select **Create API Rule**. 
 2. Provide the following configuration details:
-    - **Name**: `multiple-service`
+    - **Name**: `multiple-services`
     - Depending on whether you're using your custom domain or a Kyma domain, follow the relevant instructions to fill in the `Gateway` section.
       <!-- tabs:start -->
       #### **Custom Domain**
-      Select a `kyma-system` namespace and choose the gateway's name, for example `httpbin-gateway`. Use `httpbin.{KYMA_DOMAIN}` as a host, where `{KYMA_DOMAIN}` is the name of your Kyma domain.
+      - Select the namespace in which you deployed an instance of the HTTPBin Service. 
+      - Choose the Gateway's name, for example `httpbin-gateway`. 
+      - In the **Host** field, enter `httpbin.{YOUR_DOMAIN}`. Replace the placeholder with the name of your custom domain.
 
       #### **Kyma Domain**
-      Select the namespace in which you deployed an instance of the HTTPBin service and choose the gateway's name, for example `httpbin-gateway`. Use `httpbin.{CUSTOM_DOMAIN}` as a host, where `{CUSTOM_DOMAIN}` is the name of your custom domain.
+      - Use the `kyma-system` namespace.
+      - Choose the Gateway's name, for example `kyma-gateway`.
+      - In the **Host** field, enter `httpbin.{YOUR_DOMAIN}`. Replace the placeholder with the name of your Kyma domain.
       <!-- tabs:end -->
-    
     - To expose the first service, add a Rule with the following configuration:
       - **Path**: `/headers`
-      - Use the predefined access strategy with the no_auth handler and the `GET` method.
-      - In the `Service` section, add specify the name and port of the first service you deployed.
+      - **Handler**: `no_auth`
+      - **Methods**: `GET`
+      - In the `Service` section, select the name of the first service you deployed and use the port `8000`.
     - To expose the second service, add a Rule with the following configuration:
       - **Path**: `/get`
-      - Use the predefined access strategy with the `no_auth` handler and the `GET` method.
-      - In the `Service` section, add specify the name and port of the second service you deployed.
-
+      - **Handler**: `no_auth`
+      - **Methods**: `GET`
+      - In the `Service` section, select the name of the second service you deployed and use the port `8000`.
       <!-- tabs:end -->
 
-3. To create the APIRule, select `Create`.  
-4. Replace the placeholder in the link and access the exposed HTTPBin Service at `https://httpbin.{YOUR_DOMAIN}`.
+3. To create the APIRule, select **Create**.  
+4. Replace the placeholder in the links and access the exposed HTTPBin Services at `https://multiple-services.{YOUR_DOMAIN}/get` and `https://multiple-services.{YOUR_DOMAIN}/headers`.
 
 #### **kubectl**
+1. Export the names of two deployed HTTPBin Services as environment variables:
+  
+  ```bash
+  export FIRST_SERVICE={SERVICE_NAME}
+  export SECOND_SERVICE={SERVICE_NAME}
+  ```
 
-1. Depending on whether you use your custom domain or a Kyma domain, export the necessary values as environment variables:
+2. Depending on whether you use your custom domain or a Kyma domain, export the necessary values as environment variables:
   
   <!-- tabs:start -->
   #### **Custom Domain**
@@ -67,20 +71,20 @@ Follow the instructions to expose the instances of the HTTPBin Service on differ
   ```
   <!-- tabs:end --> 
 
-2. To expose the instances of the HTTPBin Service, create the following APIRule:
+3. To expose the instances of the HTTPBin Service, create the following APIRule:
 
     ```bash
     cat <<EOF | kubectl apply -f -
     apiVersion: gateway.kyma-project.io/v1beta1
     kind: APIRule
     metadata:
-      name: multiple-service
+      name: multiple-services
       namespace: $NAMESPACE
       labels:
-        app: multiple-service
-        example: multiple-service
+        app: multiple-services
+        example: multiple-services
     spec:
-      host: multiple-service.$DOMAIN_TO_EXPOSE_WORKLOADS
+      host: multiple-services.$DOMAIN_TO_EXPOSE_WORKLOADS
       gateway: $GATEWAY
       rules:
       rules:
@@ -101,12 +105,12 @@ Follow the instructions to expose the instances of the HTTPBin Service on differ
     EOF
     ```
 
-3. To call the endpoints, send `GET` requests to the HTTPBin Services:
+4. To call the endpoints, send `GET` requests to the HTTPBin Services:
 
     ```bash
-    curl -ik -X GET https://multiple-service.$DOMAIN_TO_EXPOSE_WORKLOADS/headers
+    curl -ik -X GET https://multiple-services.$DOMAIN_TO_EXPOSE_WORKLOADS/headers
 
-    curl -ik -X GET https://multiple-service.$DOMAIN_TO_EXPOSE_WORKLOADS/get 
+    curl -ik -X GET https://multiple-services.$DOMAIN_TO_EXPOSE_WORKLOADS/get 
     ```
     If successful, the calls return the code `200 OK` response.
 
@@ -122,35 +126,47 @@ You can also define a Service at the root level. Such a definition is applied to
 <!-- tabs:start -->
 #### **Kyma Dashboard**
 
-1. In the **Discovery and Network** section, select **APIRules**, and then **Create**. Provide the following configuration details:
-    - **Name**: `multiple-service`
+1. Go to **Discovery and Network > APIRules** and select **Create**. 
+2. Provide the following configuration details:
+    - **Name**: `httpbin-services`
     - In the `Service` section, select the name of the first service you deployed and the port `8000`. 
     - Depending on whether you're using your custom domain or a Kyma domain, follow the relevant instructions to fill in the `Gateway` section.
       <!-- tabs:start -->
       #### **Custom Domain**
-      Select a `kyma-system` namespace and choose the gateway's name, for example `httpbin-gateway`. Use `httpbin.{KYMA_DOMAIN}` as a host, where `{KYMA_DOMAIN}` is the name of your Kyma domain.
+      - Select the namespace in which you deployed an instance of the HTTPBin Service. 
+      - Choose the Gateway's name, for example `httpbin-gateway`. 
+      - In the **Host** field, enter `httpbin.{YOUR_DOMAIN}`. Replace the placeholder with the name of your custom domain.
 
       #### **Kyma Domain**
-      Select the namespace in which you deployed an instance of the HTTPBin service and choose the gateway's name, for example `httpbin-gateway`. Use `httpbin.{CUSTOM_DOMAIN}` as a host, where `{CUSTOM_DOMAIN}` is the name of your Kyma domain.
-      <!-- tabs:end -->
-    
-    - Add the first Rule with the following configuration:
+      - Use the `kyma-system` namespace.
+      - Choose the Gateway's name, for example `kyma-gateway`.
+      - In the **Host** field, enter `httpbin.{YOUR_DOMAIN}`. Replace the placeholder with the name of your Kyma domain.
+      <!-- tabs:end --> 
+    - Add a Rule with the following configuration:
       - **Path**: `/headers`
-      - Use the predefined access strategy with the `no_auth` handler and the `GET` method.
-      - Keep the `Service` section empty.
+      - **Handler**: `no_auth`
+      - **Methods**: `GET`
+      - Leave the `Service` section empty.
     - Add another Rule with the following configuration:
       - **Path**: `/get`
-      - Use the predefined access strategy with the `no_auth` handler and the `GET` method.
-      - In the `Service` section, add specify the name and port of the second service you deployed and use the port `8000`.
-
-      <!-- tabs:end -->
+      - **Handler**: `no_auth`
+      - **Methods**: `GET`
+      - In the `Service` section, select the name of the second service you deployed and use the port `8000`.
   
-    To create the APIRule, select `Create`.
+3. To create the APIRule, select **Create**.
+4. Replace the placeholder in the links and access the exposed HTTPBin Services at `https://httpbin-services.{YOUR_DOMAIN}/get` and `https://httpbin-services.{YOUR_DOMAIN}/headers`.
 
 
 #### **kubectl**
 
-1. Depending on whether you use your custom domain or a Kyma domain, export the necessary values as environment variables:
+1. Export the names of the two deployed HTTPBin Services as environment variables:
+  
+  ```bash
+  export FIRST_SERVICE={SERVICE_NAME}
+  export SECOND_SERVICE={SERVICE_NAME}
+  ```
+
+2. Depending on whether you use your custom domain or a Kyma domain, export the necessary values as environment variables:
   
   <!-- tabs:start -->
   #### **Custom Domain**
@@ -168,20 +184,20 @@ You can also define a Service at the root level. Such a definition is applied to
   <!-- tabs:end --> 
 
 
-2. To expose the instances of the HTTPBin Service, create the following APIRule:
+3. To expose the instances of the HTTPBin Service, create the following APIRule:
 
     ```shell
     cat <<EOF | kubectl apply -f -
     apiVersion: gateway.kyma-project.io/v1beta1
     kind: APIRule
     metadata:
-      name: multiple-service
+      name: multiple-services
       namespace: $NAMESPACE
       labels:
-        app: multiple-service
-        example: multiple-service
+        app: multiple-services
+        example: multiple-services
     spec:
-      host: multiple-service-example.$DOMAIN_TO_EXPOSE_WORKLOADS
+      host: multiple-services.$DOMAIN_TO_EXPOSE_WORKLOADS
       gateway: $GATEWAY
       service:
         name: $FIRST_SERVICE
@@ -201,12 +217,12 @@ You can also define a Service at the root level. Such a definition is applied to
     EOF
     ```
 
-3. To call the endpoints, send `GET` requests to the HTTPBin Services:
+4. To call the endpoints, send `GET` requests to the HTTPBin Services:
 
     ```bash
-    curl -ik -X GET https://multiple-service-example.$DOMAIN_TO_EXPOSE_WORKLOADS/headers
+    curl -ik -X GET https://multiple-services.$DOMAIN_TO_EXPOSE_WORKLOADS/headers
 
-    curl -ik -X GET https://multiple-service-example.$DOMAIN_TO_EXPOSE_WORKLOADS/get 
+    curl -ik -X GET https://multiple-services.$DOMAIN_TO_EXPOSE_WORKLOADS/get 
     ```
     If successful, the calls return the code `200 OK` response.
 

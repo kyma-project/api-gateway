@@ -17,8 +17,8 @@ The procedure of setting up a working mTLS Gateway is described in the following
 
 ## Prerequisites
 
-* Deploy [a sample HTTPBin Service](./01-00-create-workload.md).
-* Set up [your custom domain](./01-10-setup-custom-domain-for-workload.md) and export the following values as environment variables:
+* [Deploy a sample HTTPBin Service](./01-00-create-workload.md).
+* [Set up your custom domain](./01-10-setup-custom-domain-for-workload.md) and export the following values as environment variables:
 
   ```bash
   export DOMAIN_TO_EXPOSE_WORKLOADS={DOMAIN_NAME}

@@ -13,7 +13,7 @@ This tutorial shows how to expose and secure Services using APIGateway Controlle
 <!-- tabs:start -->
 #### **Kyma dashboard**
 
-1. In the **Discovery and Network** section, select **APIRules**, and then **Create**. 
+1. Go to **Discovery and Network > API Rules** and select **Create API Rule**. 
 2. Provide the following configuration details:
     - **Name**: `httpbin`
     - **Service Name**: `httpbin`
@@ -21,18 +21,22 @@ This tutorial shows how to expose and secure Services using APIGateway Controlle
     - Depending on whether you're using your custom domain or a Kyma domain, follow the relevant instructions to fill in the `Gateway` section.
       <!-- tabs:start -->
       #### **Custom Domain**
-      Select a `kyma-system` namespace and choose the gateway's name, for example `kyma-gateway`. Use `httpbin.{KYMA_DOMAIN}` as a host, where `{KYMA_DOMAIN}` is the name of your Kyma domain.
+      - Select the namespace in which you deployed an instance of the HTTPBin Service. 
+      - Choose the Gateway's name, for example `httpbin-gateway`. 
+      - In the **Host** field, enter `httpbin.{YOUR_DOMAIN}`. Replace the placeholder with the name of your custom domain.
 
       #### **Kyma Domain**
-      Select the namespace in which you deployed an instance of the HTTPBin service and choose the gateway's name, for example `httpbin-gateway`. Enter the name of your custom domain in the **Host** field.
-      <!-- tabs:end -->
+      - Use the `kyma-system` namespace.
+      - Choose the Gateway's name, for example `httpbin-gateway`.
+      - In the **Host** field, enter `httpbin.{YOUR_DOMAIN}`. Replace the placeholder with the name of your Kyma domain.
+        <!-- tabs:end -->
     - Add an access strategy with the following configuration:
       - **Handler**: `jwt`
       - In the `jwks_uri` section, add your JSON Web Key Set URIs.
       - **Method**: `GET`
       - **Path**: `/.*`
 
-3. To create the APIRule, select `Create`.  
+3. To create the APIRule, select **Create**.  
 4. Replace the placeholder in the link and access the secured HTTPBin Service at `https://httpbin.{YOUR_DOMAIN}`.
 
 #### **kubectl**

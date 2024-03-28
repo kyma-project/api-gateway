@@ -7,8 +7,8 @@ This tutorial shows how to expose an unsecured instance of the HTTPBin Service a
 
 ## Prerequisites
 
-* Deploy [a sample HTTPBin Service](../01-00-create-workload.md).
-* Set up [your custom domain](../01-10-setup-custom-domain-for-workload.md) or use a Kyma domain instead. 
+* [Deploy a sample HTTPBin Service](../01-00-create-workload.md).
+* [Set up your custom domain](../01-10-setup-custom-domain-for-workload.md) or use a Kyma domain instead. 
 
 
 ## Expose and Access Your Workload
@@ -27,7 +27,7 @@ This tutorial shows how to expose an unsecured instance of the HTTPBin Service a
     #### **Custom Domain**
     - Select the namespace in which you deployed an instance of the HTTPBin Service. 
     - Choose the Gateway's name, for example `httpbin-gateway`. 
-    - In the **Host** field, enter `httpbin.{YOUR_DOMAIN}`. Replace the placeholder with the name of your Custom domain.
+    - In the **Host** field, enter `httpbin.{YOUR_DOMAIN}`. Replace the placeholder with the name of your custom domain.
 
     #### **Kyma Domain**
     - Use the `kyma-system` namespace.
