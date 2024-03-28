@@ -44,7 +44,7 @@ Hosts:
 
 ### Examples
 
-- Multiple hosts with external authorizer:
+- Multiple hosts with external authorizers:
 ```yaml
 apiVersion: gateway.kyma-project.io/v1beta2
 kind: APIRule
@@ -63,13 +63,14 @@ spec:
       methods: ["GET"]
       accessStrategy:
         extAuth:
-          name: oauth2-proxy
-          restrictions:
-            authentications:
-              - issuer: https://example.com
-                jwksUri: https://example.com/.well-known/jwks.json            
-            authorizations:
-              - audiences: ["app1"]
+          - name: oauth2-proxy
+            restrictions:
+              authentications:
+                - issuer: https://example.com
+                  jwksUri: https://example.com/.well-known/jwks.json            
+              authorizations:
+                - audiences: ["app1"]
+          - name: geo-blocker
 ```
 
 - One host with jwt:
