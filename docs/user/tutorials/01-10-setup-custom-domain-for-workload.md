@@ -13,21 +13,21 @@ This tutorial shows how to set up a custom domain and prepare a certificate requ
 ## Steps
 
 1. Create a Secret containing credentials for the DNS cloud service provider account in your namespace. To learn how to do it, follow the [External DNS Management guidelines](https://github.com/gardener/external-dns-management/blob/master/README.md#external-dns-management).
-    <!-- tabs:start -->
-    #### **Kyma Dashboard**
-    1. Select the namespace you want to use.
-    2. Go to **Configuration > Secretes**.
-    3. Select **Create Secret** and provide your configuration details.
-    4. Select **Create**.
+  <!-- tabs:start -->
+  #### **Kyma Dashboard**
+  1. Select the namespace you want to use.
+  2. Go to **Configuration > Secretes**.
+  3. Select **Create Secret** and provide your configuration details.
+  4. Select **Create**.
 
-    #### **kubectl**
-    1. Use `kubectl apply` to create a Secret.
-    2. Export the name of the created Secret and its namespace as an environment variables:
-    ```bash
-    export SECRET={SECRET_NAME}
-    export NAMESPACE={SECRET_NAMESPACE}
-    ```
-    <!-- tabs:end -->
+  #### **kubectl**
+  1. Use `kubectl apply` to create a Secret.
+  2. Export the name of the created Secret and its namespace as an environment variables:
+  ```bash
+  export SECRET={SECRET_NAME}
+  export NAMESPACE={SECRET_NAMESPACE}
+  ```
+  <!-- tabs:end -->
 
 2. Create a DNSProvider custom resource (CR).
     <!-- tabs:start -->
