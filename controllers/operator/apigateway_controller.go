@@ -268,7 +268,7 @@ func oryRulesExist(ctx context.Context, k8sClient client.Client) ([]string, erro
 	})
 
 	err := k8sClient.List(ctx, &oryRulesList)
-	if err != nil && meta.IsNoMatchError(err) {
+	if meta.IsNoMatchError(err) || apierrors.IsNotFound(err) {
 		// Oathkeeper CRD does not exist, there are no blocking rules
 		return nil, nil
 	}
