@@ -15,34 +15,35 @@ This tutorial shows how to set up a custom domain and prepare a certificate requ
 1. Create a Secret containing credentials for the DNS cloud service provider account in your namespace. To learn how to do it, follow the [External DNS Management guidelines](https://github.com/gardener/external-dns-management/blob/master/README.md#external-dns-management).
     <!-- tabs:start -->
     #### **Kyma Dashboard**
-      1. Select the namespace you want to use.
-      2. Go to **Configuration > Secretes**.
-      3. Select **Create Secret** and provide your configuration details.
-      4. Select **Create**.
+    1. Select the namespace you want to use.
+    2. Go to **Configuration > Secretes**.
+    3. Select **Create Secret** and provide your configuration details.
+    4. Select **Create**.
 
     #### **kubectl**
-      1. Use `kubectl apply` to create a Secret.
-      2. Export the name of the created Secret and its namespace as an environment variables:
-          ```bash
-          export SECRET={SECRET_NAME}
-          export NAMESPACE={SECRET_NAMESPACE}
-          ```
+    1. Use `kubectl apply` to create a Secret.
+    2. Export the name of the created Secret and its namespace as an environment variables:
+        ```bash
+        export SECRET={SECRET_NAME}
+        export NAMESPACE={SECRET_NAMESPACE}
+        ```
     <!-- tabs:end -->
 
 2. Create a DNSProvider custom resource (CR).
+    
     <!-- tabs:start -->
     #### **Kyma Dashboard**
     1. Go to **Configuration > DNS Providers**.
     2. Select **Create DNS Provider**, switch to the `Advanced` tab, and provide the details:
-      - **Name**:`dns-provider`
-      - **Type** is the type of your DNS cloud service provider.
-      - Add the annotation:
-        - **dns.gardener.cloud/class**: `garden`
-      - In the `Secret Reference` section, add these fields:
-        - **Namespace** is the name of the namespace in which you created the Secret containing the credentials. 
+        - **Name**:`dns-provider`
+        - **Type** is the type of your DNS cloud service provider.
+        - Add the annotation:
+          - **dns.gardener.cloud/class**: `garden`
+        - In the `Secret Reference` section, add these fields:
+          - **Namespace** is the name of the namespace in which you created the Secret containing the credentials. 
           - **Name** is the name of the Secret.
-      - In the `Include Domains` section, add the field:
-        - **Include Domains** is the name of your custom domain.
+        - In the `Include Domains` section, add the field:
+         - **Include Domains** is the name of your custom domain.
     3. Select **Create**.
 
     #### **kubectl**
@@ -101,30 +102,30 @@ This tutorial shows how to set up a custom domain and prepare a certificate requ
    
     1. Export the following values as environment variables:
 
-      ```bash
-      export IP=$(kubectl -n istio-system get service istio-ingressgateway -o jsonpath='{.status.loadBalancer.ingress[0].ip}') # Assuming only one LoadBalancer with external IP
-      ```
-      > [!NOTE]
-      > For some cluster providers you need to replace the `ip` with the `hostname`, for example, in AWS, set `jsonpath='{.status.loadBalancer.ingress[0].hostname}'`.
+        ```bash
+        export IP=$(kubectl -n istio-system get service istio-ingressgateway -o jsonpath='{.status.loadBalancer.ingress[0].ip}') # Assuming only one LoadBalancer with external IP
+        ```
+        > [!NOTE]
+        > For some cluster providers you need to replace the `ip` with the `hostname`, for example, in AWS, set `jsonpath='{.status.loadBalancer.ingress[0].hostname}'`.
 
     2. To create a DNSEntry CR, run:
 
-      ```bash
-      cat <<EOF | kubectl apply -f -
-      apiVersion: dns.gardener.cloud/v1alpha1
-      kind: DNSEntry
-      metadata:
-        name: dns-entry
-        namespace: $NAMESPACE
-        annotations:
-          dns.gardener.cloud/class: garden
-      spec:
-        dnsName: "*.$DOMAIN_TO_EXPOSE_WORKLOADS"
-        ttl: 600
-        targets:
-          - $IP
-      EOF
-      ```
+        ```bash
+        cat <<EOF | kubectl apply -f -
+        apiVersion: dns.gardener.cloud/v1alpha1
+        kind: DNSEntry
+        metadata:
+          name: dns-entry
+          namespace: $NAMESPACE
+          annotations:
+            dns.gardener.cloud/class: garden
+        spec:
+          dnsName: "*.$DOMAIN_TO_EXPOSE_WORKLOADS"
+          ttl: 600
+          targets:
+            - $IP
+        EOF
+        ```
     <!-- tabs:end -->
 
 4. Create a Certificate CR.
@@ -144,24 +145,24 @@ This tutorial shows how to set up a custom domain and prepare a certificate requ
 
     1. Export the name of your TLS Secret as an environment variable:
 
-      ```bash
-      export TLS_SECRET={TLS_SECRET_NAME}
-      ```
+        ```bash
+        export TLS_SECRET={TLS_SECRET_NAME}
+        ```
 
     2. To create a Certificate CR, run:
 
-      ```bash
-      cat <<EOF | kubectl apply -f -
-      apiVersion: cert.gardener.cloud/v1alpha1
-      kind: Certificate
-      metadata:
-        name: httpbin-cert
-        namespace: istio-system
-      spec:  
-        secretName: $TLS_SECRET
-        commonName: $DOMAIN_TO_EXPOSE_WORKLOADS
-      EOF
-      ```
+        ```bash
+        cat <<EOF | kubectl apply -f -
+        apiVersion: cert.gardener.cloud/v1alpha1
+        kind: Certificate
+        metadata:
+          name: httpbin-cert
+          namespace: istio-system
+        spec:  
+          secretName: $TLS_SECRET
+          commonName: $DOMAIN_TO_EXPOSE_WORKLOADS
+        EOF
+        ```
 
     3. To check the certificate status, run: 
      
