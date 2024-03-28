@@ -23,8 +23,8 @@ This tutorial shows how to set up a custom domain and prepare a certificate requ
     4. Select **Create**.
 
     #### **kubectl**
-    
-    Export the name of the created Secret as an environment variable:
+    1. Use kubectl apply to create a Secret containing the credentials.
+    2. Export the name of the Secret as an environment variable:
 
     ```bash
     export SECRET={SECRET_NAME}
