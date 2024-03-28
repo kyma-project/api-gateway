@@ -21,12 +21,7 @@ This tutorial shows how to set up a custom domain and prepare a certificate requ
     4. Select **Create**.
 
     #### **kubectl**
-    1. Use `kubectl apply` to create a Secret.
-    2. Export the name of the created Secret and its namespace as an environment variables:
-        ```bash
-        export SECRET={SECRET_NAME}
-        export NAMESPACE={SECRET_NAMESPACE}
-        ```
+    c
     <!-- tabs:end -->
 
 2. Create a DNSProvider custom resource (CR).
