@@ -45,29 +45,29 @@ This tutorial shows how to expose and secure Services using APIGateway Controlle
     <!-- tabs:start -->
     #### **Token with `read` scope**
   
-    * Export the following value as an environment variable:
+    1. Export the following value as an environment variable:
       ```shell
       export KYMA_DOMAIN={KYMA_DOMAIN_NAME}
       ```  
-    * Get the opaque token:
+    2. Get the opaque token:
       ```shell
       curl --location --request POST "$TOKEN_URL?grant_type=client_credentials" --header "Content-Type: application/x-www-form-urlencoded" --header "Authorization: Basic $ENCODED_CREDENTIALS"
       ```
-    * Export the issued token as an environment variable:
+    3. Export the issued token as an environment variable:
       ```shell
       export ACCESS_TOKEN_READ={ISSUED_READ_TOKEN}
       ```
     #### **Token with `write` scope**
   
-    * Export the following value as an environment variable:
+    1. Export the following value as an environment variable:
       ```shell
       export KYMA_DOMAIN={KYMA_DOMAIN_NAME}
       ```  
-    * Get the opaque token:
+    2. Get the opaque token:
       ```shell
       curl --location --request POST "$TOKEN_URL?grant_type=client_credentials" --header "Content-Type: application/x-www-form-urlencoded" --header "Authorization: Basic $ENCODED_CREDENTIALS"
       ```
-    * Export the issued token as an environment variable:
+    3. Export the issued token as an environment variable:
       ```shell
       export ACCESS_TOKEN_WRITE={ISSUED_WRITE_TOKEN}
       ```

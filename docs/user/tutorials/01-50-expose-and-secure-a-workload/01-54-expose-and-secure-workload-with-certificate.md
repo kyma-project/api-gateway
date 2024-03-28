@@ -4,9 +4,9 @@ This tutorial shows how to expose and secure a workload with mutual authenticati
 
 ## Prerequisites
 
-* Deploy [a sample HTTPBin Service](../01-00-create-workload.md).
-* Set up [your custom domain](../01-10-setup-custom-domain-for-workload.md).
-* Set up [a mutual TLS Gateway](../01-20-set-up-tls-gateway.md) and export the bundle certificates.
+* [Deploy a sample HTTPBin Service](../01-00-create-workload.md).
+* [Set up your custom domain](../01-10-setup-custom-domain-for-workload.md).
+* [Set up a mutual TLS Gateway](../01-30-set-up-mtls-gateway.md) and export the bundle certificates.
 * To learn how to create your own self-signed Client Root CA and certificate, see [this tutorial](../01-60-security/01-61-mtls-selfsign-client-certicate.md). This step is optional.
 * Export the following values as environment variables:
 
@@ -24,7 +24,7 @@ The following instructions describe how to secure an mTLS Service.
 > [!NOTE]
 >  Create AuthorizationPolicy to check if the client's common name in the certificate matches.
 
-1. Create VirtualService that adds the X-CLIENT-SSL headers to incoming requests:
+1. Create VirtualService that adds the **X-CLIENT-SSL** headers to incoming requests:
 
     ```bash
     cat <<EOF | kubectl apply -f - 
