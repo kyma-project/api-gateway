@@ -165,10 +165,10 @@ To access your HTTPBin Service, use [Postman](https://www.postman.com) or [curl]
 You get the code `403 Forbidden` error.
 
 2. Now, access the secured workload using the correct JWT.
-  1. Enter the URL `https://httpbin.{DOMAIN_TO_EXPOSE_WORKLOADS}/status/200` and replace `{DOMAIN_TO_EXPOSE_WORKLOADS}` with the name of your domain. 
-  2. Go to the `Headers` tab. 
-  3. Add a new header with the key `Authorization` and the value `Bearer {ACCESS_TOKEN}`. Replace `{ACCESS_TOKEN}` with your JWT.
-  4. To call the endpoint, send a `GET` request to the HTTPBin Service. 
+    1. Enter the URL `https://httpbin.{DOMAIN_TO_EXPOSE_WORKLOADS}/status/200` and replace `{DOMAIN_TO_EXPOSE_WORKLOADS}` with the name of your domain. 
+    2. Go to the `Headers` tab. 
+    3. Add a new header with the key `Authorization` and the value `Bearer {ACCESS_TOKEN}`. Replace `{ACCESS_TOKEN}` with your JWT.
+    4. To call the endpoint, send a `GET` request to the HTTPBin Service. 
 If successful, you get the code `200 OK` response.
 
 
