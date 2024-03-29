@@ -115,45 +115,46 @@ To secure the HTTPBin workload using a JWT, create a Request Authentication with
                 requestPrincipals: ["*"]
       EOF
       ```
-    7. Replace `{NAMESPACE}` with the name of the namespace in which you deployed the HTTPBin Service.
-    8. Select **Create**.
+  7. Replace `{NAMESPACE}` with the name of the namespace in which you deployed the HTTPBin Service.
+  8. Select **Create**.
 
-    #### **kubectl**
+  #### **kubectl**
 
-    Create the Request Authentication and Authorization Policy resources:
+  Create the Request Authentication and Authorization Policy resources:
 
-    ```bash
-    cat <<EOF | kubectl apply -f -
-    apiVersion: security.istio.io/v1beta1
-    kind: RequestAuthentication
-    metadata:
-      name: jwt-auth-httpbin
-      namespace: $NAMESPACE
-    spec:
-      selector:
-        matchLabels:
-          app: httpbin
-      jwtRules:
-      - issuer: $ISSUER
-        jwksUri: $JWKS_URI
-    ---
-    apiVersion: security.istio.io/v1beta1
-    kind: AuthorizationPolicy
-    metadata:
-      name: httpbin
-      namespace: $NAMESPACE
-    spec:
-      selector:
-        matchLabels:
-          app: httpbin
-      rules:
-      - from:
-        - source:
-            requestPrincipals: ["*"]
-    EOF
-    ```
+  ```bash
+  cat <<EOF | kubectl apply -f -
+  apiVersion: security.istio.io/v1beta1
+  kind: RequestAuthentication
+  metadata:
+    name: jwt-auth-httpbin
+    namespace: $NAMESPACE
+  spec:
+    selector:
+      matchLabels:
+        app: httpbin
+    jwtRules:
+    - issuer: $ISSUER
+      jwksUri: $JWKS_URI
+  ---
+  apiVersion: security.istio.io/v1beta1
+  kind: AuthorizationPolicy
+  metadata:
+    name: httpbin
+    namespace: $NAMESPACE
+  spec:
+    selector:
+      matchLabels:
+        app: httpbin
+    rules:
+    - from:
+      - source:
+          requestPrincipals: ["*"]
+  EOF
+  ```
 <!-- tabs:end -->
 4. Access the secured workload.
+
 To access your HTTPBin Service, use [Postman](https://www.postman.com) or [curl](https://curl.se).
 
 <!-- tabs:start -->

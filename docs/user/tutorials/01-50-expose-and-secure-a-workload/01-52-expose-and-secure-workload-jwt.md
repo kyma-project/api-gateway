@@ -21,15 +21,15 @@ This tutorial shows how to expose and secure Services using APIGateway Controlle
     - Depending on whether you're using your custom domain or a Kyma domain, follow the relevant instructions to fill in the `Gateway` section.
       <!-- tabs:start -->
       #### **Custom Domain**
-      - Select the namespace in which you deployed an instance of the HTTPBin Service. 
-      - Choose the Gateway's name, for example `httpbin-gateway`. 
+      - **Namespace** is the name of the namespace in which you deployed an instance of the HTTPBin Service. 
+      - **Name** is Gateway's name, for example `httpbin-gateway`. 
       - In the **Host** field, enter `httpbin.{YOUR_DOMAIN}`. Replace the placeholder with the name of your custom domain.
 
       #### **Kyma Domain**
-      - Use the `kyma-system` namespace.
-      - Choose the Gateway's name, for example `httpbin-gateway`.
+      - **Namespace**: `kyma-system`
+      - **Name** is the Gateway's name, for example `kyma-gateway`. 
       - In the **Host** field, enter `httpbin.{YOUR_DOMAIN}`. Replace the placeholder with the name of your Kyma domain.
-        <!-- tabs:end -->
+      <!-- tabs:end -->
     - Add an access strategy with the following configuration:
       - **Handler**: `jwt`
       - In the `jwks_uri` section, add your JSON Web Key Set URIs.
@@ -37,7 +37,6 @@ This tutorial shows how to expose and secure Services using APIGateway Controlle
       - **Path**: `/.*`
 
 3. To create the APIRule, select **Create**.  
-4. Replace the placeholder in the link and access the secured HTTPBin Service at `https://httpbin.{YOUR_DOMAIN}`.
 
 #### **kubectl**
 
@@ -58,7 +57,7 @@ This tutorial shows how to expose and secure Services using APIGateway Controlle
     ```
     <!-- tabs:end --> 
 
-2. To expose and secure the Service, create the follwing APIRule:
+2. To expose and secure the Service, create the following APIRule:
     
     ```bash
     cat <<EOF | kubectl apply -f -
@@ -84,13 +83,41 @@ This tutorial shows how to expose and secure Services using APIGateway Controlle
           path: /.*
     EOF
     ```
+<!-- tabs:end -->
 
-3. To access the secured Service, call it using the JWT access token:
+To access your HTTPBin Service, use [Postman](https://www.postman.com) or [curl](https://curl.se).
+
+<!-- tabs:start -->
+#### **Postman**
+
+1. Try to access the secured workload without credentials.
+    1. Enter the URL `https://httpbin.{DOMAIN_TO_EXPOSE_WORKLOADS}/headers` and replace `{DOMAIN_TO_EXPOSE_WORKLOADS}` with the name of your domain. 
+    2. To call the endpoint, send a `GET` request to the HTTPBin Service. 
+
+You get the code `403 Forbidden` error.
+
+2. Now, access the secured workload using the correct JWT.
+    1. Enter the URL `https://httpbin.{DOMAIN_TO_EXPOSE_WORKLOADS}/headers` and replace `{DOMAIN_TO_EXPOSE_WORKLOADS}` with the name of your domain. 
+    2. Go to the `Headers` tab. 
+    3. Add a new header with the key `Authorization` and the value `Bearer {ACCESS_TOKEN}`. Replace `{ACCESS_TOKEN}` with your JWT.
+    4. To call the endpoint, send a `GET` request to the HTTPBin Service. 
+
+If successful, you get the code `200 OK` response.
+
+
+#### **curl**
+
+1. To call the endpoint, send a `GET` request to the HTTPBin Service.
 
     ```bash
-    curl -ik https://httpbin.$DOMAIN_TO_EXPOSE_WORKLOADS/headers -H "Authorization: Bearer $ACCESS_TOKEN"
+    curl -ik -X GET https://httpbin.$DOMAIN_TO_EXPOSE_WORKLOADS/headers
     ```
+    You get the code `403 Forbidden` error.
 
-    If successful, the call returns the code `200 OK` response.
+2. Now, access the secured workload using the correct JWT.
 
+    ```bash
+    curl -ik -X GET https://httpbin.$DOMAIN_TO_EXPOSE_WORKLOADS/headers --header "Authorization:Bearer $ACCESS_TOKEN"
+    ```
+    You get the code `200 OK` response.
 <!-- tabs:end -->
