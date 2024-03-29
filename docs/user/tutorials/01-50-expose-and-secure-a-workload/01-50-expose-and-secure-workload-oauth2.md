@@ -4,8 +4,8 @@ This tutorial shows how to expose and secure Services using APIGateway Controlle
 
 ## Prerequisites
 
-* Deploy [a sample HTTPBin Service](../01-00-create-workload.md).
-* Set up [your custom domain](../01-10-setup-custom-domain-for-workload.md) or use a Kyma domain instead. 
+* [Deploy a sample HTTPBin Service](../01-00-create-workload.md).
+* [Set up your custom domain](../01-10-setup-custom-domain-for-workload.md) or use a Kyma domain instead. 
 * Depending on whether you use your custom domain or a Kyma domain, export the necessary values as environment variables:
   
   <!-- tabs:start -->
@@ -76,7 +76,7 @@ This tutorial shows how to expose and secure Services using APIGateway Controlle
 
 ## Expose and Secure Your Workload
 
-Expose an instance of the HTTPBin Service, and secure it with OAuth2 scopes by creating an APIRule CR in your namespace. Run:
+To expose an instance of the HTTPBin Service and secure it with OAuth2 scopes, create the followng APIRule in your namespace:
 
 ```shell
 cat <<EOF | kubectl apply -f -

@@ -20,17 +20,16 @@ Follow the instructions to expose the instances of the HTTPBin Service on differ
 2. Provide the following configuration details:
     - **Name**: `multiple-services`
     - Depending on whether you're using your custom domain or a Kyma domain, follow the relevant instructions to fill in the `Gateway` section.
-      <!-- tabs:start -->
-      #### **Custom Domain**
-      - Select the namespace in which you deployed an instance of the HTTPBin Service. 
-      - Choose the Gateway's name, for example `httpbin-gateway`. 
-      - In the **Host** field, enter `httpbin.{YOUR_DOMAIN}`. Replace the placeholder with the name of your custom domain.
+    #### **Custom Domain**
+    - **Namespace** is the name of the namespace in which you deployed an instance of the HTTPBin Service. 
+    - **Name** is Gateway's name, for example `httpbin-gateway`. 
+    - In the **Host** field, enter `httpbin.{YOUR_DOMAIN}`. Replace the placeholder with the name of your custom domain.
 
-      #### **Kyma Domain**
-      - Use the `kyma-system` namespace.
-      - Choose the Gateway's name, for example `kyma-gateway`.
-      - In the **Host** field, enter `httpbin.{YOUR_DOMAIN}`. Replace the placeholder with the name of your Kyma domain.
-      <!-- tabs:end -->
+    #### **Kyma Domain**
+    - **Namespace**: `kyma-system`
+    - **Name** is the Gateway's name, for example `kyma-gateway`. 
+    - In the **Host** field, enter `httpbin.{YOUR_DOMAIN}`. Replace the placeholder with the name of your Kyma domain.
+    <!-- tabs:end -->
     - To expose the first service, add a Rule with the following configuration:
       - **Path**: `/headers`
       - **Handler**: `no_auth`
@@ -44,7 +43,7 @@ Follow the instructions to expose the instances of the HTTPBin Service on differ
       <!-- tabs:end -->
 
 3. To create the APIRule, select **Create**.  
-4. Replace the placeholder in the links and access the exposed HTTPBin Services at `https://multiple-services.{YOUR_DOMAIN}/get` and `https://multiple-services.{YOUR_DOMAIN}/headers`.
+
 
 #### **kubectl**
 1. Export the names of two deployed HTTPBin Services as environment variables:
@@ -105,15 +104,6 @@ Follow the instructions to expose the instances of the HTTPBin Service on differ
     EOF
     ```
 
-4. To call the endpoints, send `GET` requests to the HTTPBin Services:
-
-    ```bash
-    curl -ik -X GET https://multiple-services.$DOMAIN_TO_EXPOSE_WORKLOADS/headers
-
-    curl -ik -X GET https://multiple-services.$DOMAIN_TO_EXPOSE_WORKLOADS/get 
-    ```
-    If successful, the calls return the code `200 OK` response.
-
 <!-- tabs:end -->
 
 ## Define a Service at the Root Level
@@ -131,17 +121,16 @@ You can also define a Service at the root level. Such a definition is applied to
     - **Name**: `httpbin-services`
     - In the `Service` section, select the name of the first service you deployed and the port `8000`. 
     - Depending on whether you're using your custom domain or a Kyma domain, follow the relevant instructions to fill in the `Gateway` section.
-      <!-- tabs:start -->
-      #### **Custom Domain**
-      - Select the namespace in which you deployed an instance of the HTTPBin Service. 
-      - Choose the Gateway's name, for example `httpbin-gateway`. 
-      - In the **Host** field, enter `httpbin.{YOUR_DOMAIN}`. Replace the placeholder with the name of your custom domain.
+    #### **Custom Domain**
+    - **Namespace** is the name of the namespace in which you deployed an instance of the HTTPBin Service. 
+    - **Name** is Gateway's name, for example `httpbin-gateway`. 
+    - In the **Host** field, enter `httpbin.{YOUR_DOMAIN}`. Replace the placeholder with the name of your custom domain.
 
-      #### **Kyma Domain**
-      - Use the `kyma-system` namespace.
-      - Choose the Gateway's name, for example `kyma-gateway`.
-      - In the **Host** field, enter `httpbin.{YOUR_DOMAIN}`. Replace the placeholder with the name of your Kyma domain.
-      <!-- tabs:end --> 
+    #### **Kyma Domain**
+    - **Namespace**: `kyma-system`
+    - **Name** is the Gateway's name, for example `kyma-gateway`. 
+    - In the **Host** field, enter `httpbin.{YOUR_DOMAIN}`. Replace the placeholder with the name of your Kyma domain.
+    <!-- tabs:end -->
     - Add a Rule with the following configuration:
       - **Path**: `/headers`
       - **Handler**: `no_auth`
@@ -154,8 +143,6 @@ You can also define a Service at the root level. Such a definition is applied to
       - In the `Service` section, select the name of the second service you deployed and use the port `8000`.
   
 3. To create the APIRule, select **Create**.
-4. Replace the placeholder in the links and access the exposed HTTPBin Services at `https://httpbin-services.{YOUR_DOMAIN}/get` and `https://httpbin-services.{YOUR_DOMAIN}/headers`.
-
 
 #### **kubectl**
 
@@ -216,14 +203,27 @@ You can also define a Service at the root level. Such a definition is applied to
             port: 8000
     EOF
     ```
+<!-- tabs:end -->
 
-4. To call the endpoints, send `GET` requests to the HTTPBin Services:
+## Access Your Workloads
+To access your HTTPBin Services, use [Postman](https://www.postman.com) or [curl](https://curl.se).
+
+<!-- tabs:start -->
+#### **Postman**
+
+1. Enter the URL `https://httpbin.{DOMAIN_TO_EXPOSE_WORKLOADS}/headers` and replace `{DOMAIN_TO_EXPOSE_WORKLOADS}` with your domain name. To call the endpoint, send a `GET` request to the HTTPBin Service. If successful, the call returns the code `200 OK` response.
+
+2. Enter the URL `https://httpbin.{DOMAIN_TO_EXPOSE_WORKLOADS}/get` and replace `{DOMAIN_TO_EXPOSE_WORKLOADS}` with your domain name. To call the endpoint, send a `GET` request to the HTTPBin Service. If successful, the call returns the code `200 OK` response.
+
+#### **curl**
+
+To call the endpoints, send `GET` requests to the HTTPBin Services:
 
     ```bash
     curl -ik -X GET https://multiple-services.$DOMAIN_TO_EXPOSE_WORKLOADS/headers
 
     curl -ik -X GET https://multiple-services.$DOMAIN_TO_EXPOSE_WORKLOADS/get 
     ```
-    If successful, the calls return the code `200 OK` response.
+If successful, the calls return the code `200 OK` response.
 
 <!-- tabs:end -->

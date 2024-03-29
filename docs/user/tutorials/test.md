@@ -82,7 +82,7 @@ This tutorial shows how to set up a custom domain and prepare a certificate requ
     <!-- tabs:start -->
     #### **Kyma Dashboard**
     1. Check the external IP address of Istio Ingress Gateway.
-        1. Go to the istio-system namespace.
+        1. Go to the `istio-system` namespace.
         2. Go to **Discovery and Network > Services**.
         3. Select the `istio-ingressgateway` Service.
         4. Copy its external IP address.

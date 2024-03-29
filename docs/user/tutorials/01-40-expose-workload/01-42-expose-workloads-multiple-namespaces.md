@@ -14,7 +14,7 @@ Create three namespaces. Deploy two instances of the HTTPBin Service, each in a 
   > Remember to [Enable Automatic Istio Sidecar Proxy Injection](https://kyma-project.io/#/istio/user/operation-guides/02-20-enable-sidecar-injection) in each namespace.
 
 
-## Steps
+## Expose Your Workloads
 
 <!-- tabs:start -->
 #### **Kyma Dashboard**
@@ -55,7 +55,6 @@ Create three namespaces. Deploy two instances of the HTTPBin Service, each in a 
   - `{FIRST_SERVICE}` and `{NAMESPACE_FIRST_SERVICE}` are the name and namespace of the first Service you deployed.
   - `{SECOND_SERVICE}` and `{NAMESPACE_SECOND_SERVICE}` are the name and namespace of the second Service you deployed.
 3. To create the APIRule, select **Create**.
-4. Replace the placeholders in the URLs and access the exposed HTTPBin Services at `https://httpbin-services.{DOMAIN_TO_EXPOSE_WORKLOADS}/get` and `https://httpbin-services.{DOMAIN_TO_EXPOSE_WORKLOADS}/headers`.
 
 
 #### **kubectl**
@@ -122,15 +121,27 @@ Create three namespaces. Deploy two instances of the HTTPBin Service, each in a 
     > [!NOTE]
     > If you are using k3d, add `httpbin.kyma.local` to the entry with k3d IP in your system's `/etc/hosts` file.
 
-4. Call the HTTPBin endpoints by sending a `GET` request to the HTTPBin Services:
+<!-- tabs:end -->
+
+## Access Your Workloads
+To access your HTTPBin Services, use [Postman](https://www.postman.com) or [curl](https://curl.se).
+
+<!-- tabs:start -->
+#### **Postman**
+
+1. Enter the URL `https://httpbin.{DOMAIN_TO_EXPOSE_WORKLOADS}/headers` and replace `{DOMAIN_TO_EXPOSE_WORKLOADS}` with your domain name. To call the endpoint, send a `GET` request to the HTTPBin Service. If successful, the call returns the code `200 OK` response.
+
+2. Enter the URL `https://httpbin.{DOMAIN_TO_EXPOSE_WORKLOADS}/get` and replace `{DOMAIN_TO_EXPOSE_WORKLOADS}` with your domain name. To call the endpoint, send a `GET` request to the HTTPBin Service. If successful, the call returns the code `200 OK` response.
+
+#### **curl**
+
+To call the endpoints, send `GET` requests to the HTTPBin Services:
 
     ```bash
-    curl -ik -X GET https://httpbin-services.$DOMAIN_TO_EXPOSE_WORKLOADS/headers
-    ```
-    ```bash
-    curl -ik -X GET https://httpbin-services. $DOMAIN_TO_EXPOSE_WORKLOADS/get
-    ```
+    curl -ik -X GET https://multiple-services.$DOMAIN_TO_EXPOSE_WORKLOADS/headers
 
-    If successful, the calls return the code `200 OK` response.
+    curl -ik -X GET https://multiple-services.$DOMAIN_TO_EXPOSE_WORKLOADS/get 
+    ```
+If successful, the calls return the code `200 OK` response.
 
 <!-- tabs:end -->

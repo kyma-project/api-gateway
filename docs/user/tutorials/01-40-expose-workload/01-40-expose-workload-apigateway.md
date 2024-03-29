@@ -10,8 +10,7 @@ This tutorial shows how to expose an unsecured instance of the HTTPBin Service a
 * [Deploy a sample HTTPBin Service](../01-00-create-workload.md).
 * [Set up your custom domain](../01-10-setup-custom-domain-for-workload.md) or use a Kyma domain instead. 
 
-
-## Expose and Access Your Workload
+## Expose Your Workload
 
 <!-- tabs:start -->
 #### **Kyma Dashboard**
@@ -25,13 +24,13 @@ This tutorial shows how to expose an unsecured instance of the HTTPBin Service a
   - Depending on whether you're using your custom domain or a Kyma domain, follow the respective instructions to fill in the `Gateway` section.
     <!-- tabs:start -->
     #### **Custom Domain**
-    - Select the namespace in which you deployed an instance of the HTTPBin Service. 
-    - Choose the Gateway's name, for example `httpbin-gateway`. 
+    - **Namespace** is the name of the namespace in which you deployed an instance of the HTTPBin Service. 
+    - **Name** is Gateway's name, for example `httpbin-gateway`. 
     - In the **Host** field, enter `httpbin.{YOUR_DOMAIN}`. Replace the placeholder with the name of your custom domain.
 
     #### **Kyma Domain**
-    - Use the `kyma-system` namespace.
-    - Choose the Gateway's name, for example `httpbin-gateway`.
+    - **Namespace**: `kyma-system`
+    - **Name** is the Gateway's name, for example `kyma-gateway`. 
     - In the **Host** field, enter `httpbin.{YOUR_DOMAIN}`. Replace the placeholder with the name of your Kyma domain.
     <!-- tabs:end -->
   - In the `Rules` section, select:
@@ -39,8 +38,7 @@ This tutorial shows how to expose an unsecured instance of the HTTPBin Service a
     - **Handler**: `no_auth`
     - **Methods**: `GET` and `POST`
   
-3. To create the APIRule, select **Create**.  
-4. Replace the placeholder in the link and access the exposed HTTPBin Service at `https://httpbin.{YOUR_DOMAIN}`.
+3. To create the APIRule, select **Create**.
 
 #### **kubectl**
 
@@ -95,14 +93,28 @@ This tutorial shows how to expose an unsecured instance of the HTTPBin Service a
     > [!NOTE]
     > If you don't specify a namespace for your Service, the default namespace is used.
 
-3. Call the endpoint by sending a `GET` request to the HTTPBin Service.
+<!-- tabs:end -->
+
+## Access your workload
+To access your HTTPBin Service, use [Postman](https://www.postman.com) or [curl](https://curl.se).
+
+<!-- tabs:start -->
+#### **Postman**
+
+1. Enter the URL `https://httpbin.{DOMAIN_TO_EXPOSE_WORKLOADS}/ip` and replace `{DOMAIN_TO_EXPOSE_WORKLOADS}` with the name of your domain. Call the endpoint by sending a `GET` request to the HTTPBin Service. If successful, the call returns the code `200 OK` response.
+
+2. Enter the URL `https://httpbin.{DOMAIN_TO_EXPOSE_WORKLOADS}/post` and replace `{DOMAIN_TO_EXPOSE_WORKLOADS}` with the name of your domain. Call the endpoint by sending a `POST` request to the HTTPBin Service. If successful, the call returns the code `200 OK` response.
+
+#### **curl**
+
+1. To call the endpoint, send a `GET` request to the HTTPBin Service.
 
     ```bash
     curl -ik -X GET https://httpbin.$DOMAIN_TO_EXPOSE_WORKLOADS/ip
     ```
     If successful, the call returns the code `200 OK` response.
 
-4. Call the endpoint by sending a `POST` request to the HTTPBin Service.
+2. To call the endpoint, send a `POST` request to the HTTPBin Service.
 
     ```bash
     curl -ik -X POST https://httpbin.$DOMAIN_TO_EXPOSE_WORKLOADS/post -d "test data"
