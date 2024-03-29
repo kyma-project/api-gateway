@@ -121,6 +121,7 @@ You can also define a Service at the root level. Such a definition is applied to
     - **Name**: `httpbin-services`
     - In the `Service` section, select the name of the first service you deployed and the port `8000`. 
     - Depending on whether you're using your custom domain or a Kyma domain, follow the relevant instructions to fill in the `Gateway` section.
+    <!-- tabs:start -->
     #### **Custom Domain**
     - **Namespace** is the name of the namespace in which you deployed an instance of the HTTPBin Service. 
     - **Name** is Gateway's name, for example `httpbin-gateway`. 
