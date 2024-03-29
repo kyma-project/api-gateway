@@ -10,7 +10,7 @@ This tutorial shows how to set up a TLS Gateway in simple mode.
 ## Steps
 
 <!-- tabs:start -->
-#### **Kyma dashboard**
+#### **Kyma Dashboard**
 
 1. Go to **Istio > Gateways** and select **Create Gateway**. 
 2. Switch to the `Advanced` tab and provide the following configuration details:
