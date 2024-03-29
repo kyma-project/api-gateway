@@ -74,7 +74,7 @@ This tutorial shows how to expose and secure a workload using Istio's built-in s
 
     To secure the HTTPBin workload using a JWT, create a Request Authentication with Authorization Policy. Workloads with the `matchLabels` parameter specified require a JWT for all requests. Follow the instructions:
 
-  <!-- tabs:start -->
+<!-- tabs:start -->
     #### **Kyma Dashboard**
     1. Go to **Custom Resources > RequestAuthentications**.
     2. Select **Create RequestAuthentication** and paste the following configuration into the editor:
@@ -153,7 +153,7 @@ This tutorial shows how to expose and secure a workload using Istio's built-in s
             requestPrincipals: ["*"]
     EOF
     ```
-  <!-- tabs:end -->
+<!-- tabs:end -->
 
 3. Access the workload you secured. You get the code `403 Forbidden` error.
 
