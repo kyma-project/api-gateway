@@ -14,7 +14,7 @@ Create three namespaces. Deploy two instances of the HTTPBin Service, each in a 
   > Remember to [Enable Automatic Istio Sidecar Proxy Injection](https://kyma-project.io/#/istio/user/operation-guides/02-20-enable-sidecar-injection) in each namespace.
 
 
-## Expose Your Workloads
+## Steps
 
 <!-- tabs:start -->
 #### **Kyma Dashboard**
@@ -123,7 +123,7 @@ Create three namespaces. Deploy two instances of the HTTPBin Service, each in a 
 
 <!-- tabs:end -->
 
-## Access Your Workloads
+
 To access your HTTPBin Services, use [Postman](https://www.postman.com) or [curl](https://curl.se).
 
 <!-- tabs:start -->

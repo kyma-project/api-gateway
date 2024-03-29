@@ -12,8 +12,6 @@ This tutorial shows how to expose an unsecured instance of the HTTPBin Service a
 
 ## Steps
 
-### Expose Your Instance of the HTTPBin Service
-
 <!-- tabs:start -->
 #### **Kyma Dashboard**
 
@@ -97,7 +95,7 @@ This tutorial shows how to expose an unsecured instance of the HTTPBin Service a
 
 <!-- tabs:end -->
 
-### Access Your Instance of the HTTPBin Service
+
 To access your HTTPBin Service, use [Postman](https://www.postman.com) or [curl](https://curl.se).
 
 <!-- tabs:start -->
