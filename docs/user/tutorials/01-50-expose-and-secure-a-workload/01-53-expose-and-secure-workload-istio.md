@@ -72,52 +72,51 @@ This tutorial shows how to expose and secure a workload using Istio's built-in s
 
 3. Secure a Workload Using a JWT
 
-    To secure the HTTPBin workload using a JWT, create a Request Authentication with Authorization Policy. Workloads with the `matchLabels` parameter specified require a JWT for all requests. Follow the instructions:
+To secure the HTTPBin workload using a JWT, create a Request Authentication with Authorization Policy. Workloads with the `matchLabels` parameter specified require a JWT for all requests. Follow the instructions:
 
 <!-- tabs:start -->
-    #### **Kyma Dashboard**
-    1. Go to **Custom Resources > RequestAuthentications**.
-    2. Select **Create RequestAuthentication** and paste the following configuration into the editor:
-        ```yaml
-        apiVersion: security.istio.io/v1beta1
-        kind: RequestAuthentication
+  #### **Kyma Dashboard**
+  1. Go to **Custom Resources > RequestAuthentications**.
+  2. Select **Create RequestAuthentication** and paste the following configuration into the editor:
+      ```yaml
+      apiVersion: security.istio.io/v1beta1
+      kind: RequestAuthentication
+      metadata:
+        name: jwt-auth-httpbin
+        namespace: {NAMESPACE}
+      spec:
+        selector:
+          matchLabels:
+            app: httpbin
+        jwtRules:
+        - issuer: {ISSUER}
+          jwksUri: {JWKS_URI}
+      ```
+  3. Replace the placeholders:
+    - `{NAMESPACE}` is the name of the namespace in which you deployed the HTTPBin Service.
+    - `{ISSUER}` is
+    - `{JWKS_URI}` is 
+  4. Select **Create**.
+  5. Go to **Istio > Authorization Policies**.
+  6. Select **Create Authorization Policy**, switch to the `YAML` tab and paste the following configuration into the editor:
+      ```yaml
+      apiVersion: security.istio.io/v1beta1
+        kind: AuthorizationPolicy
         metadata:
-          name: jwt-auth-httpbin
+          name: httpbin
           namespace: {NAMESPACE}
         spec:
           selector:
             matchLabels:
               app: httpbin
-          jwtRules:
-          - issuer: {ISSUER}
-            jwksUri: {JWKS_URI}
-        ```
-    3. Replace the placeholders:
-      - `{NAMESPACE}` is the name of the namespace in which you deployed the HTTPBin Service.
-      - `{ISSUER}` is
-      - `{JWKS_URI}` is 
-    3. Select **Create**.
-    4. Go to **Istio > Authorization Policies**.
-    5. Select **Create Authorization Policy**, switch to the `YAML` tab and paste the following configuration into the editor:
-        ```bash
-        apiVersion: security.istio.io/v1beta1
-          kind: AuthorizationPolicy
-          metadata:
-            name: httpbin
-            namespace: {NAMESPACE}
-          spec:
-            selector:
-              matchLabels:
-                app: httpbin
-            rules:
-            - from:
-              - source:
-                  requestPrincipals: ["*"]
-          EOF
-          ```
-    6. Replace `{NAMESPACE}` with the name of the namespace in which you deployed the HTTPBin Service.
-    7. Select **Create**.
-    8. verify
+          rules:
+          - from:
+            - source:
+                requestPrincipals: ["*"]
+      EOF
+      ```
+    7. Replace `{NAMESPACE}` with the name of the namespace in which you deployed the HTTPBin Service.
+    8. Select **Create**.
 
     #### **kubectl**
 
@@ -155,13 +154,13 @@ This tutorial shows how to expose and secure a workload using Istio's built-in s
     ```
 <!-- tabs:end -->
 
-3. Access the workload you secured. You get the code `403 Forbidden` error.
+4. Access the workload you secured. You get the code `403 Forbidden` error.
 
     ```shell
     curl -ik -X GET https://httpbin.$DOMAIN_TO_EXPOSE_WORKLOADS/status/200
     ```
 
-4. Now, access the secured workload using the correct JWT. You get the code `200 OK` response.
+5. Now, access the secured workload using the correct JWT. You get the code `200 OK` response.
 
     ```shell
     curl -ik -X GET https://httpbin.$DOMAIN_TO_EXPOSE_WORKLOADS/status/200 --header "Authorization:Bearer $ACCESS_TOKEN"
