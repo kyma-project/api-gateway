@@ -10,7 +10,9 @@ This tutorial shows how to expose an unsecured instance of the HTTPBin Service a
 * [Deploy a sample HTTPBin Service](../01-00-create-workload.md).
 * [Set up your custom domain](../01-10-setup-custom-domain-for-workload.md) or use a Kyma domain instead. 
 
-## Expose Your Workload
+## Steps
+
+### Expose Your Instance of the HTTPBin Service
 
 <!-- tabs:start -->
 #### **Kyma Dashboard**
@@ -95,7 +97,7 @@ This tutorial shows how to expose an unsecured instance of the HTTPBin Service a
 
 <!-- tabs:end -->
 
-## Access your workload
+### Access Your Instance of the HTTPBin Service
 To access your HTTPBin Service, use [Postman](https://www.postman.com) or [curl](https://curl.se).
 
 <!-- tabs:start -->

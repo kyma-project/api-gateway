@@ -10,7 +10,7 @@ This tutorial shows how to expose and secure a workload using Istio's built-in s
 
 ## Steps
 
-1. Expose the HTTPBin Service instance.
+### Expose Your Workload
 
 <!-- tabs:start -->
   #### **Kyma dashboard**
@@ -70,7 +70,7 @@ This tutorial shows how to expose and secure a workload using Istio's built-in s
       ```
 <!-- tabs:end --> 
 
-3. Secure a Workload Using a JWT
+### Secure Your Workload
 
 To secure the HTTPBin workload using a JWT, create a Request Authentication with Authorization Policy. Workloads with the `matchLabels` parameter specified require a JWT for all requests. Follow the instructions:
 
@@ -153,7 +153,7 @@ To secure the HTTPBin workload using a JWT, create a Request Authentication with
   EOF
   ```
 <!-- tabs:end -->
-4. Access the secured workload.
+### Access the Secured Resources
 
 To access your HTTPBin Service, use [Postman](https://www.postman.com) or [curl](https://curl.se).
 
