@@ -56,9 +56,9 @@ To expose your workloads, use [Kyma dashboard](#use-kyma-dashboard) or [command 
   - `{SECOND_SERVICE}` and `{NAMESPACE_SECOND_SERVICE}` are the name and namespace of the second Service you deployed.
 3. To create the APIRule, select **Create**.
 4. To access your secured resources, use [Postman](https://www.postman.com).
-    1. Enter the URL `https://httpbin.{DOMAIN_TO_EXPOSE_WORKLOADS}/headers` and replace `{DOMAIN_TO_EXPOSE_WORKLOADS}` with your domain name. To call the endpoint, send a `GET` request to the HTTPBin Service. If successful, the call returns the code `200 OK` response.
+    - Enter the URL `https://httpbin.{DOMAIN_TO_EXPOSE_WORKLOADS}/headers` and replace `{DOMAIN_TO_EXPOSE_WORKLOADS}` with your domain name. To call the endpoint, send a `GET` request to the HTTPBin Service. If successful, the call returns the code `200 OK` response.
 
-    2. Enter the URL `https://httpbin.{DOMAIN_TO_EXPOSE_WORKLOADS}/get` and replace `{DOMAIN_TO_EXPOSE_WORKLOADS}` with your domain name. To call the endpoint, send a `GET` request to the HTTPBin Service. If successful, the call returns the code `200 OK` response.
+    - Enter the URL `https://httpbin.{DOMAIN_TO_EXPOSE_WORKLOADS}/get` and replace `{DOMAIN_TO_EXPOSE_WORKLOADS}` with your domain name. To call the endpoint, send a `GET` request to the HTTPBin Service. If successful, the call returns the code `200 OK` response.
 
 ### Use Command Line Interface
 
