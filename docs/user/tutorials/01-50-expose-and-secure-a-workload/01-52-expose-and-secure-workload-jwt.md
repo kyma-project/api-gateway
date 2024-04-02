@@ -98,7 +98,7 @@ To access your HTTPBin Service, use [Postman](https://www.postman.com) or [curl]
     1. Enter the URL `https://httpbin.{DOMAIN_TO_EXPOSE_WORKLOADS}/headers` and replace `{DOMAIN_TO_EXPOSE_WORKLOADS}` with the name of your domain. 
     2. To call the endpoint, send a `GET` request to the HTTPBin Service. 
 
-    You get the code `403 Forbidden` error.
+    You get the error `401 Unauthorized`.
 
 2. Now, access the secured workload using the correct JWT.
     1. Enter the URL `https://httpbin.{DOMAIN_TO_EXPOSE_WORKLOADS}/headers` and replace `{DOMAIN_TO_EXPOSE_WORKLOADS}` with the name of your domain. 
@@ -116,7 +116,7 @@ To access your HTTPBin Service, use [Postman](https://www.postman.com) or [curl]
     ```bash
     curl -ik -X GET https://httpbin.$DOMAIN_TO_EXPOSE_WORKLOADS/headers
     ```
-    You get the code `403 Forbidden` error.
+    You get the error `401 Unauthorized`.
 
 2. Now, access the secured workload using the correct JWT.
 

@@ -4,17 +4,44 @@ This tutorial shows how to get a JSON Web Token (JWT), which can be used to acce
 
 ## Prerequisites
 
-Use an OpenID Connect-compliant (OIDC-compliant) identity provider.
+You use an OpenID Connect-compliant (OIDC-compliant) identity provider.
 
 ## Steps
 
-1. In your OIDC-compliant identity provider, create an application to get your client credentials such as Client ID and Client Secret. 
+1. Create an application in your OIDC-compliant identity provider. Save the client credentials: Client ID and Client Secret. 
 
-2. Export your client credentials as environment variables. Run:
+2. In the URL `https://{YOUR_IDENTITY_PROVIDER_INSTANCE}/.well-known/openid-configuration` replace `{YOUR_IDENTITY_PROVIDER_INSTANCE}` with the name of your OICD-compliant identity provider instance. Then, open the link in your browser. Save the values of the **token_endpoint**, **jwks_uri** and **issuer** parameters.
 
+3. To encode your client credentials and get a JWT, follow the instructions in the tabs.
+
+<!-- tabs:start -->
+#### **Postman**
+
+1. Enter your token endpoint URL.
+2. Go to the `Body` tab and select the `x-www-form-urlencoded` option. Add two key-value pairs to the body:
+   - Key: **grant_type**, Value: `client_credentials`
+   - Key: **client_id**, Value: `{CLIENT_ID}` R
+   Replace `{CLIENT_ID}` with your client ID.
+2. Go to the `Headers` tab and add two headers:
+   - Key: **Content-Type**, Value: `application/x-www-form-urlencoded`
+3. Go to the `Authorization` tab and select:
+   - **Type**: Basic
+   - **Username**: {CLIENT_ID}
+   - **Password**: {CLIENT_SECRET}
+   Replace `{CLIENT_ID}` and `{CLIENT_SECRET}` with your Client ID and Client Secret.
+4. Send a `POST` request. 
+
+
+#### **curl**
+
+1. Export the saved values as environment variables:
+   
    ```bash
    export CLIENT_ID={YOUR_CLIENT_ID}
    export CLIENT_SECRET={YOUR_CLIENT_SECRET}
+   export TOKEN_ENDPOINT={YOUR_TOKEN_ENDPOINT}
+   export JWKS_URI={YOUR_JWKS_URI}
+   export ISSUER={YOUR_ISSUER}
    ```
 
 2. Encode your client credentials and export them as an environment variable:
@@ -23,22 +50,14 @@ Use an OpenID Connect-compliant (OIDC-compliant) identity provider.
    export ENCODED_CREDENTIALS=$(echo -n "$CLIENT_ID:$CLIENT_SECRET" | base64)
    ```
 
-3. In your browser, go to `https://YOUR_OIDC_COMPLIANT_IDENTITY_PROVIDER_INSTANCE/.well-known/openid-configuration`, save the values of the `token_endpoint`, `jwks_uri` and `issuer` parameters, and export them as environment variables:
-
-   ```bash
-   export TOKEN_ENDPOINT={YOUR_TOKEN_ENDPOINT}
-   export JWKS_URI={YOUR_JWKS_URI}
-   export ISSUER={YOUR_ISSUER}
-   ```
-
-4. Get the JWT:
+3. To obtain a JWT, run the following command:
 
    ```bash
    curl -X POST "$TOKEN_ENDPOINT" -d "grant_type=client_credentials" -d "client_id=$CLIENT_ID" -H "Content-Type: application/x-www-form-urlencoded" -H "Authorization: Basic $ENCODED_CREDENTIALS"
    ```
+<!-- tabs:end -->
 
-5. Save the JWT and export it as an environment variable:
+4. Save your JWT. 
 
-   ```bash
-   export ACCESS_TOKEN={YOUR_ACCESSS_TOKEN}
-   ```
+To learn how to secure a workload using a JWT, follow [Expose and Secure a Workload with JWT](./01-52-expose-and-secure-workload-jwt.md) and 
+[Expose and Secure a Workload with Istio](./01-53-expose-and-secure-workload-istio.md).

@@ -33,48 +33,48 @@ export SECRET={SECRET_NAME}
 2. Create a DNSProvider custom resource (CR).
     
 <!-- tabs:start -->
-#### **Kyma Dashboard**
+  #### **Kyma Dashboard**
 
-1. Go to **Configuration > DNS Providers**.
-2. Select **Create DNS Provider**, switch to the `Advanced` tab, and provide the details:
-  - **Name**: `dns-provider`
-  - **Type**: is the type of your DNS cloud service provider.
-  - Add the annotation **dns.gardener.cloud/class**: `garden`
-  - In the `Secret Reference` section, add these fields:
-      - **Namespace**: is the name of the namespace in which you created the Secret containing the credentials. 
-      - **Name**: is the name of the Secret.
-  - In the `Include Domains` section, add the field:
-    - **Include Domains**: is the name of your custom domain.
-3. Select **Create**.
+  1. Go to **Configuration > DNS Providers**.
+  2. Select **Create DNS Provider**, switch to the `Advanced` tab, and provide the details:
+    - **Name**: `dns-provider`
+    - **Type**: is the type of your DNS cloud service provider.
+    - Add the annotation **dns.gardener.cloud/class**: `garden`
+    - In the `Secret Reference` section, add these fields:
+        - **Namespace**: is the name of the namespace in which you created the Secret containing the credentials. 
+        - **Name**: is the name of the Secret.
+    - In the `Include Domains` section, add the field:
+      - **Include Domains**: is the name of your custom domain.
+  3. Select **Create**.
 
-#### **kubectl**
+  #### **kubectl**
 
-1. Export the following values as environment variables. Replace `PROVIDER_TYPE` with the type of your DNS cloud service provider. `DOMAIN_NAME` value specifies the name of your custom domain, for example, `mydomain.com`.
+  1. Export the following values as environment variables. Replace `PROVIDER_TYPE` with the type of your DNS cloud service provider. `DOMAIN_NAME` value specifies the name of your custom domain, for example, `mydomain.com`.
 
-    ```bash
-    export PROVIDER_TYPE={YOUR_PROVIDER_TYPE}
-    export DOMAIN_TO_EXPOSE_WORKLOADS={YOUR_DOMAIN_NAME} 
-    ````
-2. To create a DNSProvider CR, run: 
+      ```bash
+      export PROVIDER_TYPE={YOUR_PROVIDER_TYPE}
+      export DOMAIN_TO_EXPOSE_WORKLOADS={YOUR_DOMAIN_NAME} 
+      ````
+  2. To create a DNSProvider CR, run: 
 
-    ```bash
-    cat <<EOF | kubectl apply -f -
-    apiVersion: dns.gardener.cloud/v1alpha1
-    kind: DNSProvider
-    metadata:
-      name: dns-provider
-      namespace: $NAMESPACE
-      annotations:
-        dns.gardener.cloud/class: garden
-    spec:
-      type: $SPEC_TYPE
-      secretRef:
-        name: $SECRET
-      domains:
-        include:
-          - $DOMAIN_TO_EXPOSE_WORKLOADS
-    EOF
-    ```
+      ```bash
+      cat <<EOF | kubectl apply -f -
+      apiVersion: dns.gardener.cloud/v1alpha1
+      kind: DNSProvider
+      metadata:
+        name: dns-provider
+        namespace: $NAMESPACE
+        annotations:
+          dns.gardener.cloud/class: garden
+      spec:
+        type: $SPEC_TYPE
+        secretRef:
+          name: $SECRET
+        domains:
+          include:
+            - $DOMAIN_TO_EXPOSE_WORKLOADS
+      EOF
+      ```
 <!-- tabs:end -->
 
 3. Create a DNSEntry CR.
@@ -169,6 +169,7 @@ export SECRET={SECRET_NAME}
       kubectl get certificate httpbin-cert -n istio-system
       ```
 <!-- tabs:end -->
+
 > [!NOTE]
 > While using the default configuration, certificates with the Let's Encrypt Issuer are valid for 90 days and automatically renewed 30 days before their validity expires. For more information, read the documentation on [Gardener Certificate Management](https://github.com/gardener/cert-management#requesting-a-certificate) and [Gardener extensions for certificate Services](https://gardener.cloud/docs/extensions/others/gardener-extension-shoot-cert-service/).
 

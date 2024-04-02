@@ -34,7 +34,7 @@ This tutorial shows how to expose and secure Services using APIGateway Controlle
 
 ## Get the Tokens
 
-1. Encode the client's credentials and export them as environment variables:
+1. Encode the client's credentials and export them as an environment variable:
    
     ```shell
     export ENCODED_CREDENTIALS=$(echo -n "$CLIENT_ID:$CLIENT_SECRET" | base64)
@@ -76,7 +76,7 @@ This tutorial shows how to expose and secure Services using APIGateway Controlle
 
 ## Expose and Secure Your Workload
 
-To expose an instance of the HTTPBin Service and secure it with OAuth2 scopes, create the followng APIRule in your namespace:
+To expose an instance of the HTTPBin Service and secure it with OAuth2 scopes, create the following APIRule in your namespace:
 
 ```shell
 cat <<EOF | kubectl apply -f -
