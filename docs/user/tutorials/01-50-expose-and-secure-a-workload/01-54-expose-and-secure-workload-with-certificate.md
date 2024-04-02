@@ -7,7 +7,7 @@ This tutorial shows how to expose and secure a workload with mutual authenticati
 * [Deploy a sample HTTPBin Service](../01-00-create-workload.md).
 * [Set up your custom domain](../01-10-setup-custom-domain-for-workload.md).
 * [Set up a mutual TLS Gateway](../01-30-set-up-mtls-gateway.md) and export the bundle certificates.
-* To learn how to create your own self-signed Client Root CA and certificate, see [this tutorial](../01-60-security/01-61-mtls-selfsign-client-certicate.md). This step is optional.
+* Optionally, you can [create your own self-signed Client Root CA and certificate](../01-60-security/01-61-mtls-selfsign-client-certicate.md).
 * Export the following values as environment variables:
 
   ```bash
@@ -20,7 +20,7 @@ This tutorial shows how to expose and secure a workload with mutual authenticati
 
 ## Authorize a Client with a Certificate
 
-The following instructions describe how to secure an mTLS Service. 
+The following instructions describe how to secure an mTLS Gateway. 
 > [!NOTE]
 >  Create AuthorizationPolicy to check if the client's common name in the certificate matches.
 

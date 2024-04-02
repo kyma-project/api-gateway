@@ -12,7 +12,7 @@ You use an OpenID Connect-compliant (OIDC-compliant) identity provider.
 
 2. In the URL `https://{YOUR_IDENTITY_PROVIDER_INSTANCE}/.well-known/openid-configuration` replace `{YOUR_IDENTITY_PROVIDER_INSTANCE}` with the name of your OICD-compliant identity provider instance. Then, open the link in your browser. Save the values of the **token_endpoint**, **jwks_uri** and **issuer** parameters.
 
-3. To encode your client credentials and get a JWT, follow the instructions in the tabs.
+3. To encode your client credentials and get a JWT, use [Postman](https://www.postman.com) or [curl](https://curl.se).
 
 <!-- tabs:start -->
 #### **Postman**
@@ -21,16 +21,17 @@ You use an OpenID Connect-compliant (OIDC-compliant) identity provider.
 2. Go to the `Body` tab and select the `x-www-form-urlencoded` option. Add two key-value pairs to the body:
    - Key: **grant_type**, Value: `client_credentials`
    - Key: **client_id**, Value: `{CLIENT_ID}` R
+   
    Replace `{CLIENT_ID}` with your client ID.
 2. Go to the `Headers` tab and add two headers:
    - Key: **Content-Type**, Value: `application/x-www-form-urlencoded`
 3. Go to the `Authorization` tab and select:
    - **Type**: Basic
-   - **Username**: {CLIENT_ID}
-   - **Password**: {CLIENT_SECRET}
+   - **Username**: `{CLIENT_ID}`
+   - **Password**: `{CLIENT_SECRET}`
+   
    Replace `{CLIENT_ID}` and `{CLIENT_SECRET}` with your Client ID and Client Secret.
 4. Send a `POST` request. 
-
 
 #### **curl**
 
@@ -40,8 +41,6 @@ You use an OpenID Connect-compliant (OIDC-compliant) identity provider.
    export CLIENT_ID={YOUR_CLIENT_ID}
    export CLIENT_SECRET={YOUR_CLIENT_SECRET}
    export TOKEN_ENDPOINT={YOUR_TOKEN_ENDPOINT}
-   export JWKS_URI={YOUR_JWKS_URI}
-   export ISSUER={YOUR_ISSUER}
    ```
 
 2. Encode your client credentials and export them as an environment variable:
