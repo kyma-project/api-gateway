@@ -13,20 +13,14 @@ To establish a working mTLS connection, several things are required:
 3. Generated client and server certificates with a private key
 4. Istio and API-Gateway installed on a Kubernetes cluster
 
-The procedure of setting up a working mTLS Gateway is described in the following steps. The tutorial uses a Gardener shoot cluster and its API.
+The procedure of setting up a working mTLS Gateway is described in the following steps. The tutorial uses a Gardener shoot cluster and its API. The mTLS Gateway is exposed under your domain with a valid DNS `A` record.
 
 ## Prerequisites
 
 * [Deploy a sample HTTPBin Service](./01-00-create-workload.md).
-* [Set up your custom domain](./01-10-setup-custom-domain-for-workload.md) and export the following values as environment variables:
-
-  ```bash
-  export DOMAIN_TO_EXPOSE_WORKLOADS={DOMAIN_NAME}
-  export GATEWAY=$NAMESPACE/httpbin-gateway
-  ```
-  The mTLS Gateway is exposed under your domain with a valid DNS `A` record.
-
-## Steps
+* [Set up your custom domain](./01-10-setup-custom-domain-for-workload.md).
+  
+## Set Up an mTLS Gateway
 
 1. Create a DNS Entry and generate a wildcard certificate.
 
@@ -43,96 +37,180 @@ The procedure of setting up a working mTLS Gateway is described in the following
 
 3. Set up Istio Gateway in mutual mode.
 
-    Assuming that you have successfully created the server certificate and it is stored in the `kyma-mtls-certs` Secret within the default namespace, modify and apply the following Gateway custom resource in a cluster:
+    <!-- tabs:start -->
+    #### **Kyma Dashboard**
+    1. Go to **Istio > Gateways** and select **Create**. 
+    2. Provide the following configuration details.
+        - **Name**: `kyma-mtls-gateway`
+        - Add the selectors:
+            - **app**: `istio-ingressgateway`
+            - **istio**: `ingressgateway`
+        - Add a server with these values:
+            - **Port Number**: `443`
+            - **Name**: `mtls`
+            - **Protocol**: `HTTPS`
+            - **TLS Mode**: `MUTUAL`
+            - **Credential Name**: `kyma-mtls-certs`
+            - Add a host `*.{DOMAIN_TO_EXPOSE_WORKLOADS}`. Replace `{DOMAIN_TO_EXPOSE_WORKLOADS}` with the name of your custom domain.
+        > [!NOTE]
+        >  The `kyma-mtls-certs` Secret must contain a valid certificate for your custom domain.
+    3. Select **Create**.
 
-    > [!NOTE]
-    >  The `kyma-mtls-certs` Secret must contain a valid certificate for your custom domain.
+    #### **kubectl**
 
-    ```sh
-    cat <<EOF | kubectl apply -f -
-    apiVersion: networking.istio.io/v1alpha3
-    kind: Gateway
-    metadata:
-      name: kyma-mtls-gateway
-      namespace: default
-    spec:
-      selector:
-        app: istio-ingressgateway
-        istio: ingressgateway # use istio default ingress gateway
-      servers:
-        - port:
-            number: 443
-            name: mtls
-            protocol: HTTPS
-          tls:
-            mode: MUTUAL
-            credentialName: kyma-mtls-certs
-          hosts:
-            - "*.$DOMAIN_TO_EXPOSE_WORKLOADS"
-    EOF
-    ```
+    1. Export the name of your custom domain and the Gateway as environment variables:
+
+        ```bash
+        export DOMAIN_TO_EXPOSE_WORKLOADS={DOMAIN_NAME}
+        export GATEWAY=$NAMESPACE/httpbin-gateway
+        ```
+
+    2. Assuming that you have successfully created the server certificate and it is stored in the `kyma-mtls-certs` Secret within the default namespace, modify and apply the following Gateway custom resource in a cluster:
+
+        > [!NOTE]
+        >  The `kyma-mtls-certs` Secret must contain a valid certificate for your custom domain.
+
+        ```sh
+        cat <<EOF | kubectl apply -f -
+        apiVersion: networking.istio.io/v1alpha3
+        kind: Gateway
+        metadata:
+          name: kyma-mtls-gateway
+          namespace: default
+        spec:
+          selector:
+            app: istio-ingressgateway
+            istio: ingressgateway
+          servers:
+            - port:
+                number: 443
+                name: mtls
+                protocol: HTTPS
+              tls:
+                mode: MUTUAL
+                credentialName: kyma-mtls-certs
+              hosts:
+                - "*.$DOMAIN_TO_EXPOSE_WORKLOADS"
+        EOF
+        ```
+    <!-- tabs:end -->
 
 4. Create a Secret containing the Root CA certificate.
 
     In order for the `MUTUAL` mode to work correctly, you must apply a Root CA in a cluster. This Root CA must follow the [Istio naming convention](https://istio.io/latest/docs/reference/config/networking/gateway/#ServerTLSSettings) so Istio can use it.
-    Create an Opaque Secret containing the previously generated Root CA certificate in the `istio-system` namespace:
+    Create an Opaque Secret containing the previously generated Root CA certificate in the `istio-system` namespace.
 
+    <!-- tabs:start -->
+    #### **Kyma Dashboard**
+    1. Go to **Configuration > Secrets** and select **Create**. 
+    2. Provide the following configuration details.
+        - **Name**: `kyma-mtls-certs-cacert`
+        - **Type**: `Opaque`
+        - In the `Data` section, choose **Read value from file**. Select the file that contains your Root CA certificate.
+
+
+    #### **kubectl**
+    Run the following command:
     ```bash
     kubectl create secret generic -n istio-system kyma-mtls-certs-cacert --from-file=cacert=cacert.crt
     ```
+    <!-- tabs:end -->
+## Expose Workloads Behind Your mTLS Gateway
 
-5. Expose a custom workload using an APIRule.
+To expose a custom workload, create an APIRule.
 
+<!-- tabs:start -->
+#### **Kyma Dashboard**
+1. Go to the `default` namespace.
+2. Go to **Discovery and Network > API Rules** and select **Create**. 
+3. Provide the following configuration details.
+    - **Name**: `httpbin-mtls`
+    - In the Gateway section, select:
+        - **Namespace**: `httpbin-mtls`
+        - **Gateway**: `defualt`
+    - Add the host `httpbin.{DOMAIN_TO_EXPOSE_WORKLOADS}`. `{DOMAIN_TO_EXPOSE_WORKLOADS}` is the name of your custom domain.
+    - In the `Rules` section, select:
+      - **Path**: `/.*`
+      - **Handler**: `no_auth`
+      - **Methods**: `GET` and `POST`        
+      - Add the `httpbin` Service on port `8000`.
+
+
+#### **kubectl**
+
+```bash
+cat <<EOF | kubectl apply -f -
+apiVersion: gateway.kyma-project.io/v1beta1
+kind: APIRule
+metadata:
+  labels:
+    app.kubernetes.io/name: httpbin-mtls
+  name: httpbin-mtls
+  namespace: default
+spec:
+  gateway: default/kyma-mtls-gateway
+  host: httpbin.$DOMAIN_TO_EXPOSE_WORKLOADS
+  rules:
+  - accessStrategies:
+    - handler: no_auth
+    methods:
+    - GET
+    path: /.*
+  service:
+    name: httpbin
+    port: 8000
+EOF
+```
+<!-- tabs:end -->
+
+This configuration uses the newly created Gateway `kyma-mtls-gateway` and exposes all workloads behind mTLS.
+
+## Verify the Connection
+
+<!-- tabs:start -->
+#### **Postman**
+1. Try to access the secured workload without credentials. 
+    1. Enter the URL `https://httpbin.{DOMAIN_TO_EXPOSE_WORKLOADS}/status/418`. `{DOMAIN_TO_EXPOSE_WORKLOADS}` is the name of your domain. 
+    2. Send a `GET` request to the HTTPBin Service.
+
+    You get an SSL-related error.
+
+2. Now, access the secured workload using the correct JWT.
+    1. Go to **Settings > Certificates** and select **Add Certificate**. Use your `cacert.crt` and `client.key` files.
+    1. Create a new request and enter the URL `https://httpbin.{DOMAIN_TO_EXPOSE_WORKLOADS}/status/418`. `{DOMAIN_TO_EXPOSE_WORKLOADS}` is the name of your domain. 
+    2. Go to the `Headers` tab and add the header:
+      - Key: **Content-Type**, Value: `application/x-www-form-urlencoded`
+    4. To call the endpoint, send a `GET` request to the HTTPBin Service. 
+
+    If successful, you get the code `418` response.
+
+
+#### **curl**
+
+1. Issue the curl command without providing the generated client certificate:
     ```bash
-    cat <<EOF | kubectl apply -f -
-    apiVersion: gateway.kyma-project.io/v1beta1
-    kind: APIRule
-    metadata:
-      labels:
-        app.kubernetes.io/name: httpbin-mtls
-      name: httpbin-mtls
-      namespace: default
-    spec:
-      gateway: default/kyma-mtls-gateway
-      host: httpbin.$DOMAIN_TO_EXPOSE_WORKLOADS
-      rules:
-      - accessStrategies:
-        - handler: no_auth
-        methods:
-        - GET
-        path: /.*
-      service:
-        name: httpbin
-        port: 8000
-    ```
-
-    This configuration uses the newly created Gateway `kyma-mtls-gateway` and exposes all workloads behind mTLS.
-
-6. Verify the connection.
-
-    Firstly, issue a curl command without providing the generated client certificate:
-    ```
     curl -X GET https://httpbin.$DOMAIN_TO_EXPOSE_WORKLOADS/status/418
     ```
-    ```
+    You get:
+    ```bash
     curl: (56) LibreSSL SSL_read: LibreSSL/3.3.6: error:1404C45C:SSL routines:ST_OK:reason(1116), errno 0
     ```
 
-    Then, provide the client and Root CA certificates in the command:
-    ```
+2. Provide the client and Root CA certificates in the command:
+    ```bash
     curl --cert client.crt --key client.key --cacert cacert.crt -X GET https://httpbin.$DOMAIN_TO_EXPOSE_WORKLOADS/status/418
     ```
-    ```
-
-        -=[ teapot ]=-
-
-          _...._
-        .'  _ _ `.
-        | ."` ^ `". _,
-        \_;`"---"`|//
-          |       ;/
-          \_     _/
-            `"""`
-    ```
+    You get:
+    ```bash
+    -=[ teapot ]=-
+        _...._
+      .'  _ _ `.
+      | ."` ^ `". _,
+      \_;`"---"`|//
+        |       ;/
+        \_     _/
+          `"""` 
+    ```   
 
     If the commands return the expected results, you have set up the mTLS Gateway successfully.
+    <!-- tabs:end -->

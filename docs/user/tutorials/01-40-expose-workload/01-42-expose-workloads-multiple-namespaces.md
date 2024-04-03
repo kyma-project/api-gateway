@@ -14,10 +14,10 @@ Create three namespaces. Deploy two instances of the HTTPBin Service, each in a 
   > Remember to [Enable Automatic Istio Sidecar Proxy Injection](https://kyma-project.io/#/istio/user/operation-guides/02-20-enable-sidecar-injection) in each namespace.
 
 
-## Steps
-To expose your workloads, use [Kyma dashboard](#use-kyma-dashboard) or [command line interface](#use-command-line-interface).
+## Expose Your Workloads
 
-### Use Kyma Dashboard
+<!-- tabs:start -->
+#### **Kyma Dashboard**
 
 1. Go to **Discovery and Network > APIRules** and select **Create API Rule**. 
 2. Switch to the `YAML` tab and paste the following configuration into the editor:
@@ -55,12 +55,8 @@ To expose your workloads, use [Kyma dashboard](#use-kyma-dashboard) or [command 
   - `{FIRST_SERVICE}` and `{NAMESPACE_FIRST_SERVICE}` are the name and namespace of the first Service you deployed.
   - `{SECOND_SERVICE}` and `{NAMESPACE_SECOND_SERVICE}` are the name and namespace of the second Service you deployed.
 3. To create the APIRule, select **Create**.
-4. To access your secured resources, use [Postman](https://www.postman.com).
-    - Enter the URL `https://httpbin.{DOMAIN_TO_EXPOSE_WORKLOADS}/headers` and replace `{DOMAIN_TO_EXPOSE_WORKLOADS}` with your domain name. To call the endpoint, send a `GET` request to the HTTPBin Service. If successful, the call returns the code `200 OK` response.
 
-    - Enter the URL `https://httpbin.{DOMAIN_TO_EXPOSE_WORKLOADS}/get` and replace `{DOMAIN_TO_EXPOSE_WORKLOADS}` with your domain name. To call the endpoint, send a `GET` request to the HTTPBin Service. If successful, the call returns the code `200 OK` response.
-
-### Use Command Line Interface
+#### **kubectl**
 
 1. Export the namespaces' and Services' names as environment variables:
 
@@ -124,7 +120,21 @@ To expose your workloads, use [Kyma dashboard](#use-kyma-dashboard) or [command 
     > [!NOTE]
     > If you are using k3d, add `httpbin.kyma.local` to the entry with k3d IP in your system's `/etc/hosts` file.
 
-4. To access the secured resources, use [curl](https://curl.se). Send the `GET` requests to the HTTPBin Services:
+<!-- tabs:end -->
+
+## Access Your Workloads
+To access your HTTPBin Services, use [Postman](https://www.postman.com) or [curl](https://curl.se).
+
+<!-- tabs:start -->
+#### **Postman**
+
+- Enter the URL `https://httpbin.{DOMAIN_TO_EXPOSE_WORKLOADS}/headers` and replace `{DOMAIN_TO_EXPOSE_WORKLOADS}` with your domain name. To call the endpoint, send a `GET` request to the HTTPBin Service. If successful, the call returns the code `200 OK` response.
+
+- Enter the URL `https://httpbin.{DOMAIN_TO_EXPOSE_WORKLOADS}/get` and replace `{DOMAIN_TO_EXPOSE_WORKLOADS}` with your domain name. To call the endpoint, send a `GET` request to the HTTPBin Service. If successful, the call returns the code `200 OK` response.
+
+#### **curl**
+
+To call the endpoints, send `GET` requests to the HTTPBin Services:
 
     ```bash
     curl -ik -X GET https://multiple-services.$DOMAIN_TO_EXPOSE_WORKLOADS/headers

@@ -23,7 +23,7 @@ You use an OpenID Connect-compliant (OIDC-compliant) identity provider.
    - Key: **client_id**, Value: `{CLIENT_ID}` R
    
    Replace `{CLIENT_ID}` with your client ID.
-2. Go to the `Headers` tab and add two headers:
+2. Go to the `Headers` tab and add the header:
    - Key: **Content-Type**, Value: `application/x-www-form-urlencoded`
 3. Go to the `Authorization` tab and select:
    - **Type**: Basic

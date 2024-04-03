@@ -98,7 +98,7 @@ spec:
         - handler: oauth2_introspection
           config:
             required_scope: ["read"]
-            introspection_url: "$INTROSPECTION_URL"
+            introspection_url: "$INTROSPECTION_ENDPOINT"
             introspection_request_headers:
               Authorization: "Basic $ENCODED_CREDENTIALS"
     - path: /post
@@ -107,7 +107,7 @@ spec:
         - handler: oauth2_introspection
           config:
             required_scope: ["write"]
-            introspection_url: "$INTROSPECTION_URL"
+            introspection_url: "$INTROSPECTION_ENDPOINT"
             introspection_request_headers:
               Authorization: "Basic $ENCODED_CREDENTIALS"
 EOF

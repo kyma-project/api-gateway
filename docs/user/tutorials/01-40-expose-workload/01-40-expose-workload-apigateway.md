@@ -19,8 +19,8 @@ This tutorial shows how to expose an unsecured instance of the HTTPBin Service a
 2. Provide the following configuration details.
   - **Name**: `httpbin`
   - In the `Service` section, select:
-    - **Service Name**: `httpbin`
-    - **Port**: `8000`
+      - **Service Name**: `httpbin`
+      - **Port**: `8000`
   - Depending on whether you're using your custom domain or a Kyma domain, follow the respective instructions to fill in the `Gateway` section.
     <!-- tabs:start -->
     #### **Custom Domain**
@@ -101,9 +101,9 @@ To access your HTTPBin Service, use [Postman](https://www.postman.com) or [curl]
 <!-- tabs:start -->
 #### **Postman**
 
-1. Enter the URL `https://httpbin.{DOMAIN_TO_EXPOSE_WORKLOADS}/ip` and replace `{DOMAIN_TO_EXPOSE_WORKLOADS}` with the name of your domain. Call the endpoint by sending a `GET` request to the HTTPBin Service. If successful, the call returns the code `200 OK` response.
+- Enter the URL `https://httpbin.{DOMAIN_TO_EXPOSE_WORKLOADS}/ip` and replace `{DOMAIN_TO_EXPOSE_WORKLOADS}` with the name of your domain. Call the endpoint by sending a `GET` request to the HTTPBin Service. If successful, the call returns the code `200 OK` response.
 
-2. Enter the URL `https://httpbin.{DOMAIN_TO_EXPOSE_WORKLOADS}/post` and replace `{DOMAIN_TO_EXPOSE_WORKLOADS}` with the name of your domain. Call the endpoint by sending a `POST` request to the HTTPBin Service. If successful, the call returns the code `200 OK` response.
+- Enter the URL `https://httpbin.{DOMAIN_TO_EXPOSE_WORKLOADS}/post` and replace `{DOMAIN_TO_EXPOSE_WORKLOADS}` with the name of your domain. Call the endpoint by sending a `POST` request to the HTTPBin Service. If successful, the call returns the code `200 OK` response.
 
 #### **curl**
 

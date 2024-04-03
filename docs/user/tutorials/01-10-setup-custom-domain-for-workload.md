@@ -82,19 +82,19 @@ export SECRET={SECRET_NAME}
 <!-- tabs:start -->
   #### **Kyma Dashboard**
   1. Check the external IP address of Istio Ingress Gateway.
-    1. Go to the `istio-system` namespace.
-    2. Go to **Discovery and Network > Services**.
-    3. Select the `istio-ingressgateway` Service.
-    4. Copy its external IP address.
-    5. Come back to the namespace you're using for setting up the custom domain.
+      1. Go to the `istio-system` namespace.
+      2. Go to **Discovery and Network > Services**.
+      3. Select the `istio-ingressgateway` Service.
+      4. Copy its external IP address.
+      5. Come back to the namespace you're using for setting up the custom domain.
   2. Go to **Configuration > DNS Entries**.
   3. Select **Create DNS Provider**, switch to the `Advanced` tab, and provide the details      
-    - **Name**:`dns-entry`
-    - Add the annotation:
-      - **dns.gardener.cloud/class**: `garden`
-    - For **DNSName**, use `*.{DOMAIN_TO_EXPOSE_WORKLOADS}`. Replace `{DOMAIN_TO_EXPOSE_WORKLOADS}` with the name of your custom domain.
-    - **TTL**:`600`
-    - Paste the external IP address of the `istio-ingressgateway` Service in the **Target** field.
+      - **Name**:`dns-entry`
+      - Add the annotation:
+          - **dns.gardener.cloud/class**: `garden`
+      - For **DNSName**, use `*.{DOMAIN_TO_EXPOSE_WORKLOADS}`. Replace `{DOMAIN_TO_EXPOSE_WORKLOADS}` with the name of your custom domain.
+      - **TTL**:`600`
+      - Paste the external IP address of the `istio-ingressgateway` Service in the **Target** field.
   4. Select **Create**.
 
   #### **kubectl**

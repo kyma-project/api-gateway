@@ -25,7 +25,7 @@ This tutorial shows how to set up a TLS Gateway in simple mode.
       - **Credential Name** is the name of the Secret that contains the credentials.
     - Use `httpbin.{CUSTOM_DOMAIN}` as **Host**. Replace `{CUSTOM_DOMAIN}` with the name of your custom domain. 
 
-3. To confirm the Gateway creation, select **Create**.
+3. Select **Create**.
 
 
 #### **kubectl**
