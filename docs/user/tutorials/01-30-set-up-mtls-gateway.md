@@ -39,22 +39,23 @@ The procedure of setting up a working mTLS Gateway is described in the following
 
     <!-- tabs:start -->
     #### **Kyma Dashboard**
-    1. Go to **Istio > Gateways** and select **Create**. 
-    2. Provide the following configuration details.
-        - **Name**: `kyma-mtls-gateway`
-        - Add the selectors:
-            - **app**: `istio-ingressgateway`
-            - **istio**: `ingressgateway`
-        - Add a server with these values:
-            - **Port Number**: `443`
-            - **Name**: `mtls`
-            - **Protocol**: `HTTPS`
-            - **TLS Mode**: `MUTUAL`
-            - **Credential Name**: `kyma-mtls-certs`
-            - Add a host `*.{DOMAIN_TO_EXPOSE_WORKLOADS}`. Replace `{DOMAIN_TO_EXPOSE_WORKLOADS}` with the name of your custom domain.
-        > [!NOTE]
-        >  The `kyma-mtls-certs` Secret must contain a valid certificate for your custom domain.
-    3. Select **Create**.
+    Go to **Istio > Gateways** and select **Create**. 
+    Provide the following configuration details:
+    - **Name**: `kyma-mtls-gateway`
+    - Add the selectors:
+        - **app**: `istio-ingressgateway`
+        - **istio**: `ingressgateway`
+    - Add a server with these values:
+        - **Port Number**: `443`
+        - **Name**: `mtls`
+        - **Protocol**: `HTTPS`
+        - **TLS Mode**: `MUTUAL`
+        - **Credential Name**: `kyma-mtls-certs`
+        - Add a host `*.{DOMAIN_TO_EXPOSE_WORKLOADS}`. Replace `{DOMAIN_TO_EXPOSE_WORKLOADS}` with the name of your custom domain.
+    > [!NOTE]
+    >  The `kyma-mtls-certs` Secret must contain a valid certificate for your custom domain.
+    
+    To confirm, select **Create**.
 
     #### **kubectl**
 
