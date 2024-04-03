@@ -41,59 +41,62 @@ The procedure of setting up a working mTLS Gateway is described in the following
     #### **Kyma Dashboard**
     Go to **Istio > Gateways** and select **Create**. 
     Provide the following configuration details:
-    - **Name**: `kyma-mtls-gateway`
-    - Add the selectors:
-        - **app**: `istio-ingressgateway`
-        - **istio**: `ingressgateway`
-    - Add a server with these values:
-        - **Port Number**: `443`
-        - **Name**: `mtls`
-        - **Protocol**: `HTTPS`
-        - **TLS Mode**: `MUTUAL`
-        - **Credential Name**: `kyma-mtls-certs`
-        - Add a host `*.{DOMAIN_TO_EXPOSE_WORKLOADS}`. Replace `{DOMAIN_TO_EXPOSE_WORKLOADS}` with the name of your custom domain.
+      - **Name**: `kyma-mtls-gateway`
+      - Add the selectors:
+          - **app**: `istio-ingressgateway`
+          - **istio**: `ingressgateway`
+      - Add a server with these values:
+          - **Port Number**: `443`
+          - **Name**: `mtls`
+          - **Protocol**: `HTTPS`
+          - **TLS Mode**: `MUTUAL`
+          - **Credential Name**: `kyma-mtls-certs`
+          - Add a host `*.{DOMAIN_TO_EXPOSE_WORKLOADS}`. Replace `{DOMAIN_TO_EXPOSE_WORKLOADS}` with the name of your custom domain.
     > [!NOTE]
     >  The `kyma-mtls-certs` Secret must contain a valid certificate for your custom domain.
     
     To confirm, select **Create**.
 
     #### **kubectl**
+    <ol>
+    <li>Export the name of your custom domain and the Gateway as environment variables:
 
-    1. Export the name of your custom domain and the Gateway as environment variables:
+    ```bash
+    export DOMAIN_TO_EXPOSE_WORKLOADS={DOMAIN_NAME}
+    export GATEWAY=$NAMESPACE/httpbin-gateway
+    ```
+    </li>
 
-        ```bash
-        export DOMAIN_TO_EXPOSE_WORKLOADS={DOMAIN_NAME}
-        export GATEWAY=$NAMESPACE/httpbin-gateway
-        ```
+    <li> Assuming that you have successfully created the server certificate and it is stored in the `kyma-mtls-certs` Secret within the default namespace, modify and apply the following Gateway custom resource in a cluster:
 
-    2. Assuming that you have successfully created the server certificate and it is stored in the `kyma-mtls-certs` Secret within the default namespace, modify and apply the following Gateway custom resource in a cluster:
+    > [!NOTE]
+    >  The `kyma-mtls-certs` Secret must contain a valid certificate for your custom domain.
 
-        > [!NOTE]
-        >  The `kyma-mtls-certs` Secret must contain a valid certificate for your custom domain.
-
-        ```sh
-        cat <<EOF | kubectl apply -f -
-        apiVersion: networking.istio.io/v1alpha3
-        kind: Gateway
-        metadata:
-          name: kyma-mtls-gateway
-          namespace: default
-        spec:
-          selector:
-            app: istio-ingressgateway
-            istio: ingressgateway
-          servers:
-            - port:
-                number: 443
-                name: mtls
-                protocol: HTTPS
-              tls:
-                mode: MUTUAL
-                credentialName: kyma-mtls-certs
-              hosts:
-                - "*.$DOMAIN_TO_EXPOSE_WORKLOADS"
-        EOF
-        ```
+    ```bash
+    cat <<EOF | kubectl apply -f -
+    apiVersion: networking.istio.io/v1alpha3
+    kind: Gateway
+    metadata:
+      name: kyma-mtls-gateway
+      namespace: default
+    spec:
+      selector:
+        app: istio-ingressgateway
+        istio: ingressgateway
+      servers:
+        - port:
+            number: 443
+            name: mtls
+            protocol: HTTPS
+          tls:
+            mode: MUTUAL
+            credentialName: kyma-mtls-certs
+          hosts:
+            - "*.$DOMAIN_TO_EXPOSE_WORKLOADS"
+    EOF
+    ```
+    </li>
+    </ol>
     <!-- tabs:end -->
 
 4. Create a Secret containing the Root CA certificate.
