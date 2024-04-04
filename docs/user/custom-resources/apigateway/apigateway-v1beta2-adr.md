@@ -148,3 +148,25 @@ spec:
           authorizations:
             - audiences: ["app1"]
 ```
+
+- External authorizer with `noAuth` set to `false`:
+```yaml
+apiVersion: gateway.kyma-project.io/v1beta2
+kind: APIRule
+metadata:
+  name: service-config
+spec:
+  gateway: kyma-system/kyma-gateway
+  hosts:
+    - api1.example.com
+  service:
+    name: httpbin
+    port: 8000
+  rules:
+    - path: /headers
+      methods: ["GET"]
+      noAuth: false
+      accessStrategy:
+        extAuth:
+          - name: geo-blocker
+```
