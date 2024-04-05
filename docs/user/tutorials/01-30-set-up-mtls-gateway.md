@@ -55,7 +55,7 @@ The procedure of setting up a working mTLS Gateway is described in the following
     
     > [!NOTE]
     >  The `kyma-mtls-certs` Secret must contain a valid certificate for your custom domain.
-    3. To confirm, select **Create**.</li>
+    3. To confirm, select **Create**.
 
     #### **kubectl**
     <ol>
