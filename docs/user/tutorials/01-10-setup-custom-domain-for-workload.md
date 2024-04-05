@@ -79,7 +79,7 @@ This tutorial shows how to set up a custom domain and prepare a certificate requ
 
       </li>
     </ol>
-  <!-- tabs:end -->
+    <!-- tabs:end -->
 
 3. Create a DNSEntry CR.
 
@@ -148,7 +148,7 @@ This tutorial shows how to set up a custom domain and prepare a certificate requ
           - $IP
       EOF
       ```
-      
+
       </li>
     </ol>
     <!-- tabs:end -->
