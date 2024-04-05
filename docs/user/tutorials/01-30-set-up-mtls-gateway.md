@@ -39,10 +39,8 @@ The procedure of setting up a working mTLS Gateway is described in the following
 
     <!-- tabs:start -->
     #### **Kyma Dashboard**
-    <ol>
-    <li>Go to **Istio > Gateways** and select **Create**.
-    </li>
-    <li>Provide the following configuration details:
+    1. Go to **Istio > Gateways** and select **Create**.
+    2. Provide the following configuration details:
       - **Name**: `kyma-mtls-gateway`
       - Add the selectors:
           - **app**: `istio-ingressgateway`
@@ -57,8 +55,7 @@ The procedure of setting up a working mTLS Gateway is described in the following
     
     > [!NOTE]
     >  The `kyma-mtls-certs` Secret must contain a valid certificate for your custom domain.
-    </li>
-    <li> To confirm, select **Create**.</li>
+    3. To confirm, select **Create**.</li>
 
     #### **kubectl**
     <ol>
@@ -179,20 +176,21 @@ This configuration uses the newly created Gateway `kyma-mtls-gateway` and expose
 
 <!-- tabs:start -->
 #### **Postman**
-1. Try to access the secured workload without credentials. 
-    1. Enter the URL `https://httpbin.{DOMAIN_TO_EXPOSE_WORKLOADS}/status/418`. Replace `{DOMAIN_TO_EXPOSE_WORKLOADS}` with the name of your domain. 
-    2. Send a `GET` request to the HTTPBin Service.
+Try to access the secured workload without credentials:
 
-    You get an SSL-related error.
+1. Enter the URL `https://httpbin.{DOMAIN_TO_EXPOSE_WORKLOADS}/status/418`. Replace `{DOMAIN_TO_EXPOSE_WORKLOADS}` with the name of your domain. 
+2. Send a `GET` request to the HTTPBin Service.
 
-2. Now, access the secured workload using the correct JWT.
-    1. Go to **Settings > Certificates** and select **Add Certificate**. Use your `cacert.crt` and `client.key` files.
-    1. Create a new request and enter the URL `https://httpbin.{DOMAIN_TO_EXPOSE_WORKLOADS}/status/418`. Replace `{DOMAIN_TO_EXPOSE_WORKLOADS}` with the name of your domain. 
-    2. Go to the `Headers` tab and add the header:
-        - **Content-Type**: `application/x-www-form-urlencoded`
-    4. To call the endpoint, send a `GET` request to the HTTPBin Service. 
+You get an SSL-related error.
 
-    If successful, you get the code `418` response.
+Now, access the secured workload using the correct JWT:
+1. Go to **Settings > Certificates** and select **Add Certificate**. Use your `cacert.crt` and `client.key` files.
+2. Create a new request and enter the URL `https://httpbin.{DOMAIN_TO_EXPOSE_WORKLOADS}/status/418`. Replace `{DOMAIN_TO_EXPOSE_WORKLOADS}` with the name of your domain. 
+3. Go to the `Headers` tab and add the header:
+    - **Content-Type**: `application/x-www-form-urlencoded`
+4. To call the endpoint, send a `GET` request to the HTTPBin Service. 
+
+If successful, you get the code `418` response.
 
 
 #### **curl**

@@ -9,6 +9,7 @@ This tutorial shows how to set up a TLS Gateway in simple mode.
    
 ## Steps
 
+
 <!-- tabs:start -->
 #### **Kyma Dashboard**
 

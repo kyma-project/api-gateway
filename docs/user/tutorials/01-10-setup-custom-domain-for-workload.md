@@ -82,52 +82,46 @@ export SECRET={SECRET_NAME}
 ### Create a DNSEntry CR
 
 <!-- tabs:start -->
-  #### **Kyma Dashboard**
-  1. Check the external IP address of Istio Ingress Gateway.
-      1. Go to the `istio-system` namespace.
-      2. Go to **Discovery and Network > Services**.
-      3. Select the `istio-ingressgateway` Service.
-      4. Copy its external IP address.
-      5. Come back to the namespace you're using for setting up the custom domain.
-  2. Go to **Configuration > DNS Entries**.
-  3. Select **Create DNS Provider**, switch to the `Advanced` tab, and provide the details      
-      - **Name**:`dns-entry`
-      - Add the annotation:
-        - **dns.gardener.cloud/class**: `garden`
+#### **Kyma Dashboard**
+1. Go to **Discovery and Network > Services** in the `istio-system` namespace. Select the `istio-ingressgateway` Service and copy its external IP address.
+2. In the namespace of your HTTPBin Deployment, go to **Configuration > DNS Entries**.
+3. Select **Create DNS Provider**, switch to the `Advanced` tab, and provide the details      
+    - **Name**:`dns-entry`
+    - Add the annotation:
+      - **dns.gardener.cloud/class**: `garden`
       - For **DNSName**, use `*.{DOMAIN_TO_EXPOSE_WORKLOADS}`. Replace `{DOMAIN_TO_EXPOSE_WORKLOADS}` with the name of your custom domain.
       - **TTL**:`600`
       - Paste the external IP address of the `istio-ingressgateway` Service in the **Target** field.
-  4. Select **Create**.
+4. Select **Create**.
 
-
-  #### **kubectl**
+#### **kubectl**
    
-  1. Export the following values as environment variables:
+1. Export the following values as environment variables:
 
-      ```bash
-      export IP=$(kubectl -n istio-system get service istio-ingressgateway -o jsonpath='{.status.loadBalancer.ingress[0].ip}') # Assuming only one LoadBalancer with external IP
-      ```
-      > [!NOTE]
-      > For some cluster providers you need to replace the `ip` with the `hostname`, for example, in AWS, set `jsonpath='{.status.loadBalancer.ingress[0].hostname}'`.
+    ```bash
+    export IP=$(kubectl -n istio-system get service istio-ingressgateway -o jsonpath='{.status.loadBalancer.ingress[0].ip}') # Assuming only one LoadBalancer with external IP
+    ```
+    > [!NOTE]
+    > For some cluster providers you need to replace the `ip` with the `hostname`, for example, in AWS, set `jsonpath='{.status.loadBalancer.ingress[0].hostname}'`.
 
-  2. To create a DNSEntry CR, run:
+2. To create a DNSEntry CR, run:
 
-      ```bash
-      cat <<EOF | kubectl apply -f -
-      apiVersion: dns.gardener.cloud/v1alpha1
-      kind: DNSEntry
-      metadata:
-        name: dns-entry
-        namespace: $NAMESPACE
-        annotations:
-          dns.gardener.cloud/class: garden
-      spec:
-        dnsName: "*.$DOMAIN_TO_EXPOSE_WORKLOADS"
-        ttl: 600
-        targets:
-          - $IP
-      EOF
-      ```
+    ```bash
+    cat <<EOF | kubectl apply -f -
+    apiVersion: dns.gardener.cloud/v1alpha1
+    kind: DNSEntry
+    metadata:
+      name: dns-entry
+      namespace: $NAMESPACE
+      annotations:
+        dns.gardener.cloud/class: garden
+    spec:
+      dnsName: "*.$DOMAIN_TO_EXPOSE_WORKLOADS"
+      ttl: 600
+      targets:
+        - $IP
+    EOF
+    ```
 <!-- tabs:end -->
 
 ### Create a Certificate CR
@@ -136,44 +130,44 @@ export SECRET={SECRET_NAME}
 > While using the default configuration, certificates with the Let's Encrypt Issuer are valid for 90 days and automatically renewed 30 days before their validity expires. For more information, read the documentation on [Gardener Certificate Management](https://github.com/gardener/cert-management#requesting-a-certificate) and [Gardener extensions for certificate Services](https://gardener.cloud/docs/extensions/others/gardener-extension-shoot-cert-service/).
 
 <!-- tabs:start -->
-  #### **Kyma Dashboard**
+#### **Kyma Dashboard**
 
-  1. Go to the `istio-system` namespace.
-  2. Go to **Configuration > Certificates**.
-  3. Select **Create Certificate** and provide the details:
-        - **Name**:`httpbin-cert`
-        - **Secret Name** is the name of your TLS Secret.
-        - **Custom Name** is the name of your custom domain.
-  4. Select **Create**.
+1. Go to the `istio-system` namespace.
+2. Go to **Configuration > Certificates**.
+3. Select **Create Certificate** and provide the details:
+    - **Name**:`httpbin-cert`
+    - **Secret Name** is the name of your TLS Secret.
+    - **Custom Name** is the name of your custom domain.
+4. Select **Create**.
 
-  #### **kubectl**
+#### **kubectl**
 
-  1. Export the name of your TLS Secret as an environment variable:
+1. Export the name of your TLS Secret as an environment variable:
 
-      ```bash
-      export TLS_SECRET={TLS_SECRET_NAME}
-      ```
+    ```bash
+    export TLS_SECRET={TLS_SECRET_NAME}
+    ```
 
-  2. To create a Certificate CR, run:
+2. To create a Certificate CR, run:
 
-      ```bash
-      cat <<EOF | kubectl apply -f -
-      apiVersion: cert.gardener.cloud/v1alpha1
-      kind: Certificate
-      metadata:
-        name: httpbin-cert
-        namespace: istio-system
-      spec:  
-        secretName: $TLS_SECRET
-        commonName: $DOMAIN_TO_EXPOSE_WORKLOADS
-      EOF
-      ```
+    ```bash
+    cat <<EOF | kubectl apply -f -
+    apiVersion: cert.gardener.cloud/v1alpha1
+    kind: Certificate
+    metadata:
+      name: httpbin-cert
+      namespace: istio-system
+    spec:  
+      secretName: $TLS_SECRET
+      commonName: $DOMAIN_TO_EXPOSE_WORKLOADS
+    EOF
+    ```
 
-  3. To check the certificate status, run: 
+3. To check the certificate status, run: 
      
-      ```bash
-      kubectl get certificate httpbin-cert -n istio-system
-      ```
+    ```bash
+    kubectl get certificate httpbin-cert -n istio-system
+    ```
 <!-- tabs:end -->
 
 ### Next Steps
