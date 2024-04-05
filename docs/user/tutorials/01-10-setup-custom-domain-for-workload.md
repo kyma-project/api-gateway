@@ -84,7 +84,7 @@ This tutorial shows how to set up a custom domain and prepare a certificate requ
 
     <!-- tabs:start -->
     #### **Kyma Dashboard**
-    <div>
+    <ol>
     
     1. Go to **Discovery and Network > Services** in the `istio-system` namespace. Select the `istio-ingressgateway` Service and copy its external IP address.
     2. In the namespace of your HTTPBin Deployment, go to **Configuration > DNS Entries**.
@@ -97,37 +97,37 @@ This tutorial shows how to set up a custom domain and prepare a certificate requ
         - Paste the external IP address of the `istio-ingressgateway` Service in the **Target** field.
     4. Select **Create**.
     
-    </div>
+    </ol>
 
     #### **kubectl**
     <ol>
-    <li> Export the following values as environment variables:
+      <li> Export the following values as environment variables:
 
-    ```bash
-    export IP=$(kubectl -n istio-system get service istio-ingressgateway -o jsonpath='{.status.loadBalancer.ingress[0].ip}') # Assuming only one LoadBalancer with external IP
-    ```
-    > [!NOTE]
-    > For some cluster providers you need to replace the `ip` with the `hostname`, for example, in AWS, set `jsonpath='{.status.loadBalancer.ingress[0].hostname}'`.
-    </li>
-    <li> To create a DNSEntry CR, run:
+      ```bash
+      export IP=$(kubectl -n istio-system get service istio-ingressgateway -o jsonpath='{.status.loadBalancer.ingress[0].ip}') # Assuming only one LoadBalancer with external IP
+      ```
+      > [!NOTE]
+      > For some cluster providers you need to replace the `ip` with the `hostname`, for example, in AWS, set `jsonpath='{.status.loadBalancer.ingress[0].hostname}'`.
+      </li>
+      <li> To create a DNSEntry CR, run:
 
-    ```bash
-    cat <<EOF | kubectl apply -f -
-    apiVersion: dns.gardener.cloud/v1alpha1
-    kind: DNSEntry
-    metadata:
-      name: dns-entry
-      namespace: $NAMESPACE
-      annotations:
-        dns.gardener.cloud/class: garden
-    spec:
-      dnsName: "*.$DOMAIN_TO_EXPOSE_WORKLOADS"
-      ttl: 600
-      targets:
-        - $IP
-    EOF
-    ```
-    </li>
+      ```bash
+      cat <<EOF | kubectl apply -f -
+      apiVersion: dns.gardener.cloud/v1alpha1
+      kind: DNSEntry
+      metadata:
+        name: dns-entry
+        namespace: $NAMESPACE
+        annotations:
+          dns.gardener.cloud/class: garden
+      spec:
+        dnsName: "*.$DOMAIN_TO_EXPOSE_WORKLOADS"
+        ttl: 600
+        targets:
+          - $IP
+      EOF
+      ```
+      </li>
     </ol>
     <!-- tabs:end -->
 
