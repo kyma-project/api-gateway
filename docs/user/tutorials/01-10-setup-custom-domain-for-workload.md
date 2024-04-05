@@ -86,17 +86,37 @@ This tutorial shows how to set up a custom domain and prepare a certificate requ
     #### **Kyma Dashboard**
     <ol>
     
-    1. Go to **Discovery and Network > Services** in the `istio-system` namespace. Select the `istio-ingressgateway` Service and copy its external IP address.
-    2. In the namespace of your HTTPBin Deployment, go to **Configuration > DNS Entries**.
-    3. Select **Create DNS Provider**, switch to the `Advanced` tab, and provide the details      
-        - **Name**:`dns-entry`
-        - Add the annotation:
-            - **dns.gardener.cloud/class**: `garden`
-        - For **DNSName**, use `*.{DOMAIN_TO_EXPOSE_WORKLOADS}`. Replace `{DOMAIN_TO_EXPOSE_WORKLOADS}` with the name of your custom domain.
-        - **TTL**:`600`
-        - Paste the external IP address of the `istio-ingressgateway` Service in the **Target** field.
-    4. Select **Create**.
-    
+    <li> 
+    Go to <b>Discovery and Network > Services</b> in the <code>istio-system</code> namespace. Select the <code>istio-ingressgateway</code> Service and copy its external IP address.
+    </li>
+    <li>
+    In the namespace of your HTTPBin Deployment, go to <b>Configuration > DNS Entries</b>.
+    </li>
+    <li>
+    Select <b>Create DNS Provider</b>, switch to the <code>Advanced</code> tab, and provide the details:
+      <ul>    
+        <li>
+        <b>Name</b>:<code>dns-entry</code>
+        </li>
+        <li>
+        Add the annotation:
+          <ul><li>
+          <b>dns.gardener.cloud/class</b>: <code>garden</code>
+          </ul></li>
+        </li> 
+        <li>
+        For <b>DNSName</b>, use <code>*.{DOMAIN_TO_EXPOSE_WORKLOADS}</code>. Replace <code>{DOMAIN_TO_EXPOSE_WORKLOADS}</code> with the name of your custom domain.
+        </li>
+        <li>
+        - <b>TTL</b>:<code>600</code>
+        </li>
+        <li>
+        Paste the external IP address of the <codeistio-ingressgateway</code> Service in the <b>Target</b> field.
+        </li>
+      </ul>
+    <li> 
+    Select <b>Create</b>.
+    </li>
     </ol>
 
     #### **kubectl**
