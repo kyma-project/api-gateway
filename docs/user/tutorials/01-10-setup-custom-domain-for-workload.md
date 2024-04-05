@@ -84,7 +84,7 @@ This tutorial shows how to set up a custom domain and prepare a certificate requ
 
     <!-- tabs:start -->
     #### **Kyma Dashboard**
-    <ol>
+    <div>
     
     1. Go to **Discovery and Network > Services** in the `istio-system` namespace. Select the `istio-ingressgateway` Service and copy its external IP address.
     2. In the namespace of your HTTPBin Deployment, go to **Configuration > DNS Entries**.
@@ -97,7 +97,7 @@ This tutorial shows how to set up a custom domain and prepare a certificate requ
         - Paste the external IP address of the `istio-ingressgateway` Service in the **Target** field.
     4. Select **Create**.
     
-    </ol>
+    </div>
 
     #### **kubectl**
     <ol>
