@@ -17,9 +17,9 @@ This tutorial shows how to set up a custom domain and prepare a certificate requ
     <!-- tabs:start -->
     #### **Kyma Dashboard**
     <ol>
-      <li> Go to **Configuration > Secrets**. </li>
-      <li> Select **Create Secret** and provide your configuration details. </li>
-      <li> Select **Create**. </li>
+      <li> Go to <b>Configuration > Secrets</b>. </li>
+      <li> Select <b>Create Secret</b> and provide your configuration details. </li>
+      <li> Select <b>Create</b>. </li>
     </ol>
 
     #### **kubectl**
@@ -37,19 +37,19 @@ This tutorial shows how to set up a custom domain and prepare a certificate requ
     
     1. Go to **Configuration > DNS Providers**.
     2. Select **Create DNS Provider**, switch to the `Advanced` tab, and provide the details:
-      - **Name**: `dns-provider`
-      - **Type**: is the type of your DNS cloud service provider.
-      - Add the annotation **dns.gardener.cloud/class**: `garden`
-      - In the `Secret Reference` section, add these fields:
+        - **Name**: `dns-provider`
+        - **Type**: is the type of your DNS cloud service provider.
+        - Add the annotation **dns.gardener.cloud/class**: `garden`
+        - In the `Secret Reference` section, add these fields:
           - **Namespace**: is the name of the namespace in which you created the Secret containing the credentials. 
           - **Name**: is the name of the Secret.
-      - In the `Include Domains` section, add the field:
-        - **Include Domains**: is the name of your custom domain.
+        - In the `Include Domains` section, add the field:
+          - **Include Domains**: is the name of your custom domain.
     3. Select **Create**.
 
     #### **kubectl**
     <ol>
-      <li> Export the following values as environment variables. Replace `PROVIDER_TYPE` with the type of your DNS cloud service provider. `DOMAIN_NAME` value specifies the name of your custom domain, for example, `mydomain.com`.
+      <li> Export the following values as environment variables. Replace <code>PROVIDER_TYPE</code> with the type of your DNS cloud service provider. <code>DOMAIN_NAME</code> value specifies the name of your custom domain, for example, <code>mydomain.com</code>.
 
       ```bash
       export PROVIDER_TYPE={YOUR_PROVIDER_TYPE}
