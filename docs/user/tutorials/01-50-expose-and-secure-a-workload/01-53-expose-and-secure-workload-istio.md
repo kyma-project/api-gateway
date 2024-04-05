@@ -182,7 +182,7 @@ If successful, you get the code `200 OK` response.
     ```bash
     curl -ik -X GET https://httpbin.$DOMAIN_TO_EXPOSE_WORKLOADS/status/200
     ```
-    You get the code `403 Forbidden` error.
+    You get the code `401 Unauthorized` error.
 
 2. Now, access the secured workload using the correct JWT.
 

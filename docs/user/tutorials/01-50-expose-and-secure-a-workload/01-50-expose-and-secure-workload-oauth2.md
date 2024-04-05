@@ -5,8 +5,72 @@ This tutorial shows how to expose and secure Services using APIGateway Controlle
 ## Prerequisites
 
 * [Deploy a sample HTTPBin Service](../01-00-create-workload.md).
-* [Set up your custom domain](../01-10-setup-custom-domain-for-workload.md) or use a Kyma domain instead. 
-* Depending on whether you use your custom domain or a Kyma domain, export the necessary values as environment variables:
+* [Set up your custom domain](../01-10-setup-custom-domain-for-workload.md) or use a Kyma domain instead.
+* Configure your client ID and client Secret using an OAuth2-compliant provider.
+
+## Get the Tokens
+<!-- tabs:start -->
+#### **Postman**
+
+1. Get a token with the `read` scope.
+    1. Enter your token endpoint URL.
+    2. Go to the `Body` tab and select the `x-www-form-urlencoded` option. Add two key-value pairs to the body:
+      - **grant_type**: `client_credentials&scope=read`
+      - **client_id**: `{CLIENT_ID}`
+      
+      Replace `{CLIENT_ID}` with your client ID.
+    2. Go to the `Headers` tab and add the header:
+      - **Content-Type**: `application/x-www-form-urlencoded`
+    3. Go to the `Authorization` tab and select:
+      - **Type**: Basic
+      - **Username**: `{CLIENT_ID}`
+      - **Password**: `{CLIENT_SECRET}`
+      
+      Replace `{CLIENT_ID}` and `{CLIENT_SECRET}` with your Client ID and Client Secret.
+    4. Send a `POST` request and save your token.
+2. To get a token with `read` scope, go to the `Body` tab and replace the **grant_type** value with `client_credentials&scope=write`. Send a `POST` request and save your token.
+
+
+#### **curl**
+
+1. Encode the client's credentials and export them as an environment variable:
+   
+    ```bash
+    export ENCODED_CREDENTIALS=$(echo -n "$CLIENT_ID:$CLIENT_SECRET" | base64)
+    ```
+
+2. Get a token with the `read` scope.
+  
+    2. Get the opaque token:
+      ```shell
+      curl --location --request POST "$TOKEN_ENDPOINT?grant_type=client_credentials" -F "scope=read" --header "Content-Type: application/x-www-form-urlencoded" --header "Authorization: Basic $ENCODED_CREDENTIALS"
+      ```
+    3. Export the issued token as an environment variable:
+      ```bash
+      export ACCESS_TOKEN_READ={ISSUED_READ_TOKEN}
+      ```
+3. Get a token with the `write` scope.  
+
+    2. Get the opaque token:
+      ```shell
+      curl --location --request POST "$TOKEN_ENDPOINT?grant_type=client_credentials" -F "scope=write" --header "Content-Type: application/x-www-form-urlencoded" --header "Authorization: Basic $ENCODED_CREDENTIALS"
+      ```
+    3. Export the issued token as an environment variable:
+      ```shell
+      export ACCESS_TOKEN_WRITE={ISSUED_WRITE_TOKEN}
+      ```
+    <!-- tabs:end -->
+
+
+## Expose and Secure Your Workload
+<!-- tabs:start -->
+#### **Kyma Dashboard**
+
+
+
+#### **kubectl**
+
+1. Depending on whether you use your custom domain or a Kyma domain, export the necessary values as environment variables:
   
   <!-- tabs:start -->
   #### **Custom Domain**
@@ -23,95 +87,52 @@ This tutorial shows how to expose and secure Services using APIGateway Controlle
   ```
   <!-- tabs:end -->
 
-* Configure your client ID and client Secret using an OAuth2-compliant provider. Then, export the following values as environment variables:
+2. Export the following values as environment variables:
   
   ```shell
     export CLIENT_ID={CLIENT_ID}
     export CLIENT_SECRET={CLIENT_SECRET}
-    export TOKEN_URL={TOKEN_URL}
-    export INTROSPECTION_URL={INTROSPECTION_URL}
+    export TOKEN_ENDPOINT={TOKEN_URL}
+    export INTROSPECTION_ENDPOINT={INTROSPECTION_URL}
    ```
 
-## Get the Tokens
+3. To expose an instance of the HTTPBin Service and secure it with OAuth2 scopes, create the following APIRule in your namespace:
 
-1. Encode the client's credentials and export them as an environment variable:
-   
     ```shell
-    export ENCODED_CREDENTIALS=$(echo -n "$CLIENT_ID:$CLIENT_SECRET" | base64)
+    cat <<EOF | kubectl apply -f -
+    apiVersion: gateway.kyma-project.io/v1beta1
+    kind: APIRule
+    metadata:
+      name: httpbin
+      namespace: $NAMESPACE
+    spec:
+      gateway: $GATEWAY
+      host: httpbin.$DOMAIN_TO_EXPOSE_WORKLOADS
+      service:
+        name: $SERVICE_NAME
+        port: 8000
+      rules:
+        - path: /.*
+          methods: ["GET"]
+          accessStrategies:
+            - handler: oauth2_introspection
+              config:
+                required_scope: ["read"]
+                introspection_url: "$INTROSPECTION_ENDPOINT"
+                introspection_request_headers:
+                  Authorization: "Basic $ENCODED_CREDENTIALS"
+        - path: /post
+          methods: ["POST"]
+          accessStrategies:
+            - handler: oauth2_introspection
+              config:
+                required_scope: ["write"]
+                introspection_url: "$INTROSPECTION_ENDPOINT"
+                introspection_request_headers:
+                  Authorization: "Basic $ENCODED_CREDENTIALS"
+    EOF
     ```
-
-2. Get tokens to interact with secured resources using the client credentials flow:
-
-    <!-- tabs:start -->
-    #### **Token with `read` scope**
-  
-    1. Export the following value as an environment variable:
-      ```shell
-      export KYMA_DOMAIN={KYMA_DOMAIN_NAME}
-      ```  
-    2. Get the opaque token:
-      ```shell
-      curl --location --request POST "$TOKEN_URL?grant_type=client_credentials" --header "Content-Type: application/x-www-form-urlencoded" --header "Authorization: Basic $ENCODED_CREDENTIALS"
-      ```
-    3. Export the issued token as an environment variable:
-      ```shell
-      export ACCESS_TOKEN_READ={ISSUED_READ_TOKEN}
-      ```
-    #### **Token with `write` scope**
-  
-    1. Export the following value as an environment variable:
-      ```shell
-      export KYMA_DOMAIN={KYMA_DOMAIN_NAME}
-      ```  
-    2. Get the opaque token:
-      ```shell
-      curl --location --request POST "$TOKEN_URL?grant_type=client_credentials" --header "Content-Type: application/x-www-form-urlencoded" --header "Authorization: Basic $ENCODED_CREDENTIALS"
-      ```
-    3. Export the issued token as an environment variable:
-      ```shell
-      export ACCESS_TOKEN_WRITE={ISSUED_WRITE_TOKEN}
-      ```
-    <!-- tabs:end -->
-
-
-## Expose and Secure Your Workload
-
-To expose an instance of the HTTPBin Service and secure it with OAuth2 scopes, create the following APIRule in your namespace:
-
-```shell
-cat <<EOF | kubectl apply -f -
-apiVersion: gateway.kyma-project.io/v1beta1
-kind: APIRule
-metadata:
-  name: httpbin
-  namespace: $NAMESPACE
-spec:
-  gateway: $GATEWAY
-  host: httpbin.$DOMAIN_TO_EXPOSE_WORKLOADS
-  service:
-    name: $SERVICE_NAME
-    port: 8000
-  rules:
-    - path: /.*
-      methods: ["GET"]
-      accessStrategies:
-        - handler: oauth2_introspection
-          config:
-            required_scope: ["read"]
-            introspection_url: "$INTROSPECTION_ENDPOINT"
-            introspection_request_headers:
-              Authorization: "Basic $ENCODED_CREDENTIALS"
-    - path: /post
-      methods: ["POST"]
-      accessStrategies:
-        - handler: oauth2_introspection
-          config:
-            required_scope: ["write"]
-            introspection_url: "$INTROSPECTION_ENDPOINT"
-            introspection_request_headers:
-              Authorization: "Basic $ENCODED_CREDENTIALS"
-EOF
-```
+<!-- tabs:end -->
 
 > [!NOTE]
 >  If you are using k3d, add `httpbin.kyma.local` to the entry with k3d IP in your system's `/etc/hosts` file.
@@ -126,18 +147,34 @@ The exposed Service requires tokens with `read` scope for `GET` requests in the 
 
 Follow the instructions to call the secured Service using the tokens issued for the client you registered.
 
-1. Send a `GET` request with a token that has the `read` scope to the HTTPBin service:
+<!-- tabs:start -->
+#### **Kyma Dashboard**
+1. Use the token with the `read` scope to access the HTTPBin Service.
+    1. Create a new request and enter the URL `https://httpbin.{DOMAIN_TO_EXPOSE_WORKLOADS}/status/headers`. Replace `{DOMAIN_TO_EXPOSE_WORKLOADS}` with the name of your domain. 
+    2. Go to the `Headers` tab. Add a new header with the key **Authorization** and the value `Bearer {ACCESS_TOKEN_READ}`. Replace `{ACCESS_TOKEN_READ}` with the Opaque token that has the `read` scope.
+    4. To call the endpoint, send a `GET` request to the HTTPBin Service. 
 
-    ```shell
+
+2. Use the token with the `write` scope to access the HTTPBin Service.
+    1. Create a new request and enter the URL `https://httpbin.{DOMAIN_TO_EXPOSE_WORKLOADS}/status/post`. Replace `{DOMAIN_TO_EXPOSE_WORKLOADS}` with the name of your domain. 
+    2. Go to the `Headers` tab. Add a new header with the key **Authorization** and the value `Bearer {ACCESS_TOKEN_WRITE}`. Replace `{ACCESS_TOKEN_WRITE}` with the Opaque token that has the `write` scope.
+    4. To call the endpoint, send a `POST` request to the HTTPBin Service. 
+
+#### **kubectl**
+
+1. Send a `GET` request with a token that has the `read` scope to the HTTPBin Service:
+
+    ```bash
     curl -ik -X GET https://httpbin.$DOMAIN_TO_EXPOSE_WORKLOADS/headers -H "Authorization: Bearer $ACCESS_TOKEN_READ"
     ```
 
 2. Send a `POST` request with a token that has the `write` scope to the HTTPBin's `/post` endpoint:
 
-    ```shell
-    curl -ik -X POST https://httpbin.$DOMAIN_TO_EXPOSE_WORKLOADS/post -d "test data" -H "Authorization: bearer $ACCESS_TOKEN_WRITE"
+    ```bash
+    curl -ik -X POST https://httpbin.$DOMAIN_TO_EXPOSE_WORKLOADS/post -d "test data" -H "Authorization: Bearer $ACCESS_TOKEN_WRITE"
     ```
+<!-- tabs:end -->
 
-If successful, the call returns the code `200 OK` response. If you call the Service without a token, you get the code `401` response. If you call the Service or its secured endpoint with a token with the wrong scope, you get the code `403` response.
+If successful, the calls return the code `200 OK` responses. If you call the Service without a token, you get the code `401 Unauthorized` response. If you call the Service or its secured endpoint with a token with the wrong scope, you get the code `403 Forbidden` response.
 
 To learn more about the security options, read the document describing [authorization configuration](../../custom-resources/apirule/04-50-apirule-authorizations.md).

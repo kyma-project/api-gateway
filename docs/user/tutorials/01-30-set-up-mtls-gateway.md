@@ -39,8 +39,10 @@ The procedure of setting up a working mTLS Gateway is described in the following
 
     <!-- tabs:start -->
     #### **Kyma Dashboard**
-    Go to **Istio > Gateways** and select **Create**. 
-    Provide the following configuration details:
+    <ol>
+    <li>Go to **Istio > Gateways** and select **Create**.
+    </li>
+    <li>Provide the following configuration details:
       - **Name**: `kyma-mtls-gateway`
       - Add the selectors:
           - **app**: `istio-ingressgateway`
@@ -52,10 +54,11 @@ The procedure of setting up a working mTLS Gateway is described in the following
           - **TLS Mode**: `MUTUAL`
           - **Credential Name**: `kyma-mtls-certs`
           - Add a host `*.{DOMAIN_TO_EXPOSE_WORKLOADS}`. Replace `{DOMAIN_TO_EXPOSE_WORKLOADS}` with the name of your custom domain.
+    
     > [!NOTE]
     >  The `kyma-mtls-certs` Secret must contain a valid certificate for your custom domain.
-    
-    To confirm, select **Create**.
+    </li>
+    <li> To confirm, select **Create**.</li>
 
     #### **kubectl**
     <ol>
@@ -119,6 +122,8 @@ The procedure of setting up a working mTLS Gateway is described in the following
     kubectl create secret generic -n istio-system kyma-mtls-certs-cacert --from-file=cacert=cacert.crt
     ```
     <!-- tabs:end -->
+
+
 ## Expose Workloads Behind Your mTLS Gateway
 
 To expose a custom workload, create an APIRule.
@@ -132,7 +137,7 @@ To expose a custom workload, create an APIRule.
     - In the Gateway section, select:
         - **Namespace**: `httpbin-mtls`
         - **Gateway**: `defualt`
-    - Add the host `httpbin.{DOMAIN_TO_EXPOSE_WORKLOADS}`. `{DOMAIN_TO_EXPOSE_WORKLOADS}` is the name of your custom domain.
+    - Add the host `httpbin.{DOMAIN_TO_EXPOSE_WORKLOADS}`. Replace `{DOMAIN_TO_EXPOSE_WORKLOADS}` with the name of your custom domain.
     - In the `Rules` section, select:
       - **Path**: `/.*`
       - **Handler**: `no_auth`
@@ -141,6 +146,7 @@ To expose a custom workload, create an APIRule.
 
 
 #### **kubectl**
+Run the following command:
 
 ```bash
 cat <<EOF | kubectl apply -f -
@@ -174,16 +180,16 @@ This configuration uses the newly created Gateway `kyma-mtls-gateway` and expose
 <!-- tabs:start -->
 #### **Postman**
 1. Try to access the secured workload without credentials. 
-    1. Enter the URL `https://httpbin.{DOMAIN_TO_EXPOSE_WORKLOADS}/status/418`. `{DOMAIN_TO_EXPOSE_WORKLOADS}` is the name of your domain. 
+    1. Enter the URL `https://httpbin.{DOMAIN_TO_EXPOSE_WORKLOADS}/status/418`. Replace `{DOMAIN_TO_EXPOSE_WORKLOADS}` with the name of your domain. 
     2. Send a `GET` request to the HTTPBin Service.
 
     You get an SSL-related error.
 
 2. Now, access the secured workload using the correct JWT.
     1. Go to **Settings > Certificates** and select **Add Certificate**. Use your `cacert.crt` and `client.key` files.
-    1. Create a new request and enter the URL `https://httpbin.{DOMAIN_TO_EXPOSE_WORKLOADS}/status/418`. `{DOMAIN_TO_EXPOSE_WORKLOADS}` is the name of your domain. 
+    1. Create a new request and enter the URL `https://httpbin.{DOMAIN_TO_EXPOSE_WORKLOADS}/status/418`. Replace `{DOMAIN_TO_EXPOSE_WORKLOADS}` with the name of your domain. 
     2. Go to the `Headers` tab and add the header:
-      - Key: **Content-Type**, Value: `application/x-www-form-urlencoded`
+        - **Content-Type**: `application/x-www-form-urlencoded`
     4. To call the endpoint, send a `GET` request to the HTTPBin Service. 
 
     If successful, you get the code `418` response.

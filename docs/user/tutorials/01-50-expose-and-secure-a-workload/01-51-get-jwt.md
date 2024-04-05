@@ -19,12 +19,12 @@ You use an OpenID Connect-compliant (OIDC-compliant) identity provider.
 
 1. Enter your token endpoint URL.
 2. Go to the `Body` tab and select the `x-www-form-urlencoded` option. Add two key-value pairs to the body:
-   - Key: **grant_type**, Value: `client_credentials`
-   - Key: **client_id**, Value: `{CLIENT_ID}` R
+   - **grant_type**: `client_credentials`
+   - **client_id**: `{CLIENT_ID}`
    
    Replace `{CLIENT_ID}` with your client ID.
 2. Go to the `Headers` tab and add the header:
-   - Key: **Content-Type**, Value: `application/x-www-form-urlencoded`
+   - **Content-Type**: `application/x-www-form-urlencoded`
 3. Go to the `Authorization` tab and select:
    - **Type**: Basic
    - **Username**: `{CLIENT_ID}`
