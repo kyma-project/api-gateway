@@ -85,19 +85,19 @@ This tutorial shows how to set up a custom domain and prepare a certificate requ
     <!-- tabs:start -->
     #### **Kyma Dashboard**
     <ol>
-    <li> Go to <b>Discovery and Network > Services</b> in the <code>istio-system</code> namespace. Select the <code>istio-ingressgateway</code> Service and copy its external IP address.</li>
-    <li> In the namespace of your HTTPBin Deployment, go to <b>Configuration > DNS Entries</b>.</li>
-    <li> Select <b>Create DNS Provider</b>, switch to the <code>Advanced</code> tab, and provide the details:
-
+    
+    1. Go to **Discovery and Network > Services** in the `istio-system` namespace. Select the `istio-ingressgateway` Service and copy its external IP address.
+    2. In the namespace of your HTTPBin Deployment, go to **Configuration > DNS Entries**.
+    3. Select **Create DNS Provider**, switch to the `Advanced` tab, and provide the details      
         - **Name**:`dns-entry`
         - Add the annotation:
             - **dns.gardener.cloud/class**: `garden`
         - For **DNSName**, use `*.{DOMAIN_TO_EXPOSE_WORKLOADS}`. Replace `{DOMAIN_TO_EXPOSE_WORKLOADS}` with the name of your custom domain.
         - **TTL**:`600`
         - Paste the external IP address of the `istio-ingressgateway` Service in the **Target** field.
-        
-    </li>
-    <li> Select <b>Create</b>. </li>
+    4. Select **Create**.
+    
+    </ol>
 
     #### **kubectl**
     <ol>
