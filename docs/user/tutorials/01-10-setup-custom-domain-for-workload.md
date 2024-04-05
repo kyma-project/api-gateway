@@ -76,6 +76,7 @@ This tutorial shows how to set up a custom domain and prepare a certificate requ
             - $DOMAIN_TO_EXPOSE_WORKLOADS
       EOF
       ```
+      
       </li>
     </ol>
   <!-- tabs:end -->
