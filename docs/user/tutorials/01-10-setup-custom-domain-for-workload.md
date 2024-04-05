@@ -39,12 +39,12 @@ This tutorial shows how to set up a custom domain and prepare a certificate requ
     2. Select **Create DNS Provider**, switch to the `Advanced` tab, and provide the details:
         - **Name**: `dns-provider`
         - **Type**: is the type of your DNS cloud service provider.
-        - Add the annotation **dns.gardener.cloud/class**: `garden`
+        - Add the following annotation:
+          - **dns.gardener.cloud/class**: `garden`
         - In the `Secret Reference` section, add these fields:
           - **Namespace**: is the name of the namespace in which you created the Secret containing the credentials. 
           - **Name**: is the name of the Secret.
-        - In the `Include Domains` section, add the field:
-          - **Include Domains**: is the name of your custom domain.
+        - In the `Include Domains` section, add the name of your custom domain.
     3. Select **Create**.
 
     #### **kubectl**
@@ -131,14 +131,17 @@ This tutorial shows how to set up a custom domain and prepare a certificate requ
     
     <!-- tabs:start -->
     #### **Kyma Dashboard**
-
-    1. Go to the `istio-system` namespace.
-    2. Go to **Configuration > Certificates**.
-    3. Select **Create Certificate** and provide the details:
-        - **Name**:`httpbin-cert`
-        - **Secret Name** is the name of your TLS Secret.
-        - **Custom Name** is the name of your custom domain.
-    4. Select **Create**.
+    <ol>
+    <li> Go to the <code>istio-system</code> namespace.</li>
+    <li> Go to <b>Configuration > Certificates</b>. </li>
+    <li> Select **Create Certificate** and provide the details:
+    <ul>
+      <li> <b>Name</b><code>httpbin-cert</code></li>
+      <li> <b>Secret Name</b> is the name of your TLS Secret. </li>
+      <li> <b>Custom Name</b> is the name of your custom domain </li>
+    </ul>
+    </li>
+    <li> Select <b>Create</b>.</li>
 
     #### **kubectl**
     <ol>
@@ -164,10 +167,10 @@ This tutorial shows how to set up a custom domain and prepare a certificate requ
     ```
     </li>
     <li> To check the certificate status, run: 
-        
-    ```bash
-    kubectl get certificate httpbin-cert -n istio-system
-    ```
+     
+      ```bash
+      kubectl get certificate httpbin-cert -n istio-system
+      ```
     </li>
     </ol>
     <!-- tabs:end -->
