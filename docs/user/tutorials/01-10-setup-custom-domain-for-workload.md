@@ -76,7 +76,7 @@ This tutorial shows how to set up a custom domain and prepare a certificate requ
             - $DOMAIN_TO_EXPOSE_WORKLOADS
       EOF
       ```
-      
+
       </li>
     </ol>
   <!-- tabs:end -->
@@ -131,6 +131,7 @@ This tutorial shows how to set up a custom domain and prepare a certificate requ
       > For some cluster providers you need to replace the `ip` with the `hostname`, for example, in AWS, set `jsonpath='{.status.loadBalancer.ingress[0].hostname}'`.
       </li>
       <li> To create a DNSEntry CR, run:
+
       ```bash
       cat <<EOF | kubectl apply -f -
       apiVersion: dns.gardener.cloud/v1alpha1
@@ -147,6 +148,7 @@ This tutorial shows how to set up a custom domain and prepare a certificate requ
           - $IP
       EOF
       ```
+      
       </li>
     </ol>
     <!-- tabs:end -->
