@@ -11,9 +11,29 @@ This tutorial shows how to expose and secure a workload with mutual authenticati
 
 ## Authorize a Client with a Certificate
 
-The following instructions describe how to secure an mTLS Gateway. 
 > [!NOTE]
->  Create AuthorizationPolicy to check if the client's common name in the certificate matches.
+>  Create an AuthorizationPolicy to verify that the name specified in it matches the client's common name in the certificate.
+
+<!-- tabs:start -->
+#### **Kyma Dashboard**
+
+1. Go to **Istio > Virtual Services** and select **Create**. Provide the following configuration details:
+    - **Name**: `httpbin-vs`
+    - In the `HTTP` section, select **Add**. Add a route with the destination port 8000 and the host httpbin. Then, go to **HTTP > Headers > Request > Set** and add these headers:
+      - **X-CLIENT-SSL-CN**: `%DOWNSTREAM_PEER_SUBJECT%`
+      - **X-CLIENT-SSL-SAN**: `%DOWNSTREAM_PEER_URI_SAN%`
+      - **X-CLIENT-SSL-ISSUER**: `%DOWNSTREAM_PEER_ISSUER%`
+    - In the `Host` section, add `httpbin.{YOUR_DOMAIN}`. Replace `{YOUR_DOMAIN}` with the name of your domain.
+    - In the `Gateways` section, add the name of your mTLS Gateway.
+3. Go to **Istio > Authorization Policies** and select **Create**. Provide the following configuration details:
+    - **Name**: `test-authz-policy`
+    - **Action**: `ALLOW`
+    - Add a Rule. Go to **Rule > To > Operation > Hosts** and add the host `httpbin-vs.{DOMAIN_TO_EXPOSE_WORKLOADS}`. Replace `{DOMAIN_TO_EXPOSE_WORKLOADS}` with the name of your domain. Then, go to **Rule > When** and add:
+      - **key**: `request.headers[X-Client-Ssl-Cn]`
+      - **values**: `["O={CLIENT_CERT_ORG},CN={CLIENT_CERT_CN}"]`
+    Replace `{CLIENT_CERT_ORG}` with the name of your organization and `{CLIENT_CERT_CN}` with the common name.
+
+#### **kubectl**
 
 1. Export the following values as environment variables:
 
@@ -74,15 +94,9 @@ The following instructions describe how to secure an mTLS Gateway.
           values: ["O=${CLIENT_CERT_ORG},CN=${CLIENT_CERT_CN}"]
     EOF
     ```
+<!-- tabs:end -->
 
 ## Access the Secured Resources
-
-<!-- tabs:start -->
-#### **Kyma Dashboard**
-
-
-
-#### **kubectl**
 
 Call the secured endpoints of the HTTPBin Service.
 

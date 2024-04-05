@@ -220,5 +220,5 @@ If successful, you get the code `418` response.
           `"""` 
     ```   
 
-    If the commands return the expected results, you have set up the mTLS Gateway successfully.
-    <!-- tabs:end -->
+If the commands return the expected results, you have set up the mTLS Gateway successfully.
+<!-- tabs:end -->

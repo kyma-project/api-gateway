@@ -12,23 +12,25 @@ This tutorial shows how to expose and secure Services using APIGateway Controlle
 <!-- tabs:start -->
 #### **Postman**
 
-1. Get a token with the `read` scope.
-    1. Enter your token endpoint URL.
-    2. Go to the `Body` tab and select the `x-www-form-urlencoded` option. Add two key-value pairs to the body:
-      - **grant_type**: `client_credentials&scope=read`
-      - **client_id**: `{CLIENT_ID}`
+Follow the steps to get a token with the `read` scope:
+
+1. Enter your token endpoint URL.
+2. Go to the `Body` tab and select the `x-www-form-urlencoded` option. Add two key-value pairs to the body:
+    - **grant_type**: `client_credentials&scope=read`
+    - **client_id**: `{CLIENT_ID}`
       
-      Replace `{CLIENT_ID}` with your client ID.
-    2. Go to the `Headers` tab and add the header:
-      - **Content-Type**: `application/x-www-form-urlencoded`
-    3. Go to the `Authorization` tab and select:
-      - **Type**: Basic
-      - **Username**: `{CLIENT_ID}`
-      - **Password**: `{CLIENT_SECRET}`
+    Replace `{CLIENT_ID}` with your client ID.
+2. Go to the `Headers` tab and add the header:
+    - **Content-Type**: `application/x-www-form-urlencoded`
+3. Go to the `Authorization` tab and select:
+    - **Type**: Basic
+    - **Username**: `{CLIENT_ID}`
+    - **Password**: `{CLIENT_SECRET}`
       
-      Replace `{CLIENT_ID}` and `{CLIENT_SECRET}` with your Client ID and Client Secret.
-    4. Send a `POST` request and save your token.
-2. To get a token with `read` scope, go to the `Body` tab and replace the **grant_type** value with `client_credentials&scope=write`. Send a `POST` request and save your token.
+    Replace `{CLIENT_ID}` and `{CLIENT_SECRET}` with your Client ID and Client Secret.
+4. Send a `POST` request and save your token.
+
+To get a token with `read` scope, go to the `Body` tab and replace the **grant_type** value with `client_credentials&scope=write`. Send a `POST` request and save your token.
 
 
 #### **curl**
@@ -41,24 +43,24 @@ This tutorial shows how to expose and secure Services using APIGateway Controlle
 
 2. Get a token with the `read` scope.
   
-    2. Get the opaque token:
-      ```shell
-      curl --location --request POST "$TOKEN_ENDPOINT?grant_type=client_credentials" -F "scope=read" --header "Content-Type: application/x-www-form-urlencoded" --header "Authorization: Basic $ENCODED_CREDENTIALS"
-      ```
-    3. Export the issued token as an environment variable:
-      ```bash
-      export ACCESS_TOKEN_READ={ISSUED_READ_TOKEN}
-      ```
+    1. Get the opaque token:
+        ```shell
+        curl --location --request POST "$TOKEN_ENDPOINT?grant_type=client_credentials" -F "scope=read" --header "Content-Type: application/x-www-form-urlencoded" --header "Authorization: Basic $ENCODED_CREDENTIALS"
+        ```
+    2. Export the issued token as an environment variable:
+        ```bash
+        export ACCESS_TOKEN_READ={ISSUED_READ_TOKEN}
+        ```
 3. Get a token with the `write` scope.  
 
-    2. Get the opaque token:
-      ```shell
-      curl --location --request POST "$TOKEN_ENDPOINT?grant_type=client_credentials" -F "scope=write" --header "Content-Type: application/x-www-form-urlencoded" --header "Authorization: Basic $ENCODED_CREDENTIALS"
-      ```
-    3. Export the issued token as an environment variable:
-      ```shell
-      export ACCESS_TOKEN_WRITE={ISSUED_WRITE_TOKEN}
-      ```
+    1. Get the opaque token:
+        ```shell
+        curl --location --request POST "$TOKEN_ENDPOINT?grant_type=client_credentials" -F "scope=write" --header "Content-Type: application/x-www-form-urlencoded" --header "Authorization: Basic $ENCODED_CREDENTIALS"
+        ```
+    2. Export the issued token as an environment variable:
+        ```shell
+        export ACCESS_TOKEN_WRITE={ISSUED_WRITE_TOKEN}
+        ```
     <!-- tabs:end -->
 
 
@@ -66,6 +68,31 @@ This tutorial shows how to expose and secure Services using APIGateway Controlle
 <!-- tabs:start -->
 #### **Kyma Dashboard**
 
+1. Go to **Discovery and Network > API Rules** and select **Create**. 
+2. Provide the following configuration details:
+    - **Name**: `httpbin`
+    - **Service Name**: `httpbin`
+    - **Port**: `8000`
+    - To fill in the `Gateway` section, use these values:
+      - **Namespace** is the name of the namespace in which you deployed an instance of the HTTPBin Service. With a Kyma domain, use the `kyma-system` namespace.
+      - **Name** is the Gateway's name, for example `httpbin-gateway`. 
+      - In the **Host** field, enter `httpbin.{YOUR_DOMAIN}`. Replace the placeholder with the name of your domain.
+    - Add an access strategy with the following configuration:
+      - **Handler**: `oauth2_introspection`
+      - **Introspection URL** is your introspection endpoint.
+      - Add introspection request header with the key **Authorization** and value `Basic {ENCODED_CREDENTIALS}`. Replace with base 64 encoded `{CLIENT_ID}:{CLIENT_SECRET}`.
+      - **Required Scope**: `read`
+      - **Method**: `GET`
+      - **Path**: `/.*`
+    - Add another access strategy with the following configuration:
+      - **Handler**: `oauth2_introspection`
+      - **Introspection URL** is your introspection endpoint.
+      - Add introspection request header with the key **Authorization** and value `Basic {ENCODED_CREDENTIALS}`. Replace with base 64 encoded `{CLIENT_ID}:{CLIENT_SECRET}`.
+      - **Required Scope**: `read`
+      - **Method**: `GET`
+      - **Path**: `/post`
+
+3. To create the APIRule, select **Create**.
 
 
 #### **kubectl**
@@ -87,18 +114,15 @@ This tutorial shows how to expose and secure Services using APIGateway Controlle
   ```
   <!-- tabs:end -->
 
-2. Export the following values as environment variables:
+2. Export your introspection endpoint as an environment variable:
   
-  ```shell
-    export CLIENT_ID={CLIENT_ID}
-    export CLIENT_SECRET={CLIENT_SECRET}
-    export TOKEN_ENDPOINT={TOKEN_URL}
-    export INTROSPECTION_ENDPOINT={INTROSPECTION_URL}
-   ```
+    ```bash
+      export INTROSPECTION_ENDPOINT={INTROSPECTION_URL}
+    ```
 
 3. To expose an instance of the HTTPBin Service and secure it with OAuth2 scopes, create the following APIRule in your namespace:
 
-    ```shell
+    ```bash
     cat <<EOF | kubectl apply -f -
     apiVersion: gateway.kyma-project.io/v1beta1
     kind: APIRule
@@ -149,16 +173,18 @@ Follow the instructions to call the secured Service using the tokens issued for 
 
 <!-- tabs:start -->
 #### **Kyma Dashboard**
-1. Use the token with the `read` scope to access the HTTPBin Service.
-    1. Create a new request and enter the URL `https://httpbin.{DOMAIN_TO_EXPOSE_WORKLOADS}/status/headers`. Replace `{DOMAIN_TO_EXPOSE_WORKLOADS}` with the name of your domain. 
-    2. Go to the `Headers` tab. Add a new header with the key **Authorization** and the value `Bearer {ACCESS_TOKEN_READ}`. Replace `{ACCESS_TOKEN_READ}` with the Opaque token that has the `read` scope.
-    4. To call the endpoint, send a `GET` request to the HTTPBin Service. 
+Use the token with the `read` scope to access the HTTPBin Service:
+
+1. Create a new request and enter the URL `https://httpbin.{DOMAIN_TO_EXPOSE_WORKLOADS}/status/headers`. Replace `{DOMAIN_TO_EXPOSE_WORKLOADS}` with the name of your domain. 
+2. Go to the `Headers` tab. Add a new header with the key **Authorization** and the value `Bearer {ACCESS_TOKEN_READ}`. Replace `{ACCESS_TOKEN_READ}` with the Opaque token that has the `read` scope.
+4. To call the endpoint, send a `GET` request to the HTTPBin Service. 
 
 
-2. Use the token with the `write` scope to access the HTTPBin Service.
-    1. Create a new request and enter the URL `https://httpbin.{DOMAIN_TO_EXPOSE_WORKLOADS}/status/post`. Replace `{DOMAIN_TO_EXPOSE_WORKLOADS}` with the name of your domain. 
-    2. Go to the `Headers` tab. Add a new header with the key **Authorization** and the value `Bearer {ACCESS_TOKEN_WRITE}`. Replace `{ACCESS_TOKEN_WRITE}` with the Opaque token that has the `write` scope.
-    4. To call the endpoint, send a `POST` request to the HTTPBin Service. 
+Use the token with the `write` scope to access the HTTPBin Service:
+    
+1. Create a new request and enter the URL `https://httpbin.{DOMAIN_TO_EXPOSE_WORKLOADS}/status/post`. Replace `{DOMAIN_TO_EXPOSE_WORKLOADS}` with the name of your domain. 
+2. Go to the `Headers` tab. Add a new header with the key **Authorization** and the value `Bearer {ACCESS_TOKEN_WRITE}`. Replace `{ACCESS_TOKEN_WRITE}` with the Opaque token that has the `write` scope.
+4. To call the endpoint, send a `POST` request to the HTTPBin Service. 
 
 #### **kubectl**
 
