@@ -19,7 +19,7 @@ This tutorial shows how to expose and secure a workload with mutual authenticati
 
 1. Go to **Istio > Virtual Services** and select **Create**. Provide the following configuration details:
     - **Name**: `httpbin-vs`
-    - In the `HTTP` section, select **Add**. Add a route with the destination port 8000 and the host httpbin. Then, go to **HTTP > Headers > Request > Set** and add these headers:
+    - In the `HTTP` section, select **Add**. Add a route with the destination port `8000` and the host httpbin. Then, go to **HTTP > Headers > Request > Set** and add these headers:
       - **X-CLIENT-SSL-CN**: `%DOWNSTREAM_PEER_SUBJECT%`
       - **X-CLIENT-SSL-SAN**: `%DOWNSTREAM_PEER_URI_SAN%`
       - **X-CLIENT-SSL-ISSUER**: `%DOWNSTREAM_PEER_ISSUER%`

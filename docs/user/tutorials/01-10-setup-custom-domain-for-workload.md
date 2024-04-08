@@ -43,10 +43,9 @@ export SECRET={SECRET_NAME}
     - **Type**: is the type of your DNS cloud service provider.
     - Add the annotation **dns.gardener.cloud/class**: `garden`
     - In the `Secret Reference` section, add these fields:
-        - **Namespace**: is the name of the namespace in which you created the Secret containing the credentials. 
-        - **Name**: is the name of the Secret.
-    - In the `Include Domains` section, add the field:
-        - **Include Domains**: is the name of your custom domain.
+        - **Namespace** is the name of the namespace in which you created the Secret containing the credentials. 
+        - **Name** is the name of the Secret.
+    - In the `Include Domains` section, add your custom domain.
 3. Select **Create**.
 
 #### **kubectl**

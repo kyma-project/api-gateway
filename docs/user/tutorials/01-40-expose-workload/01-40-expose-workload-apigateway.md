@@ -15,24 +15,16 @@ This tutorial shows how to expose an unsecured instance of the HTTPBin Service a
 <!-- tabs:start -->
 #### **Kyma Dashboard**
 
-1. Go to **Discovery and Network > API Rules** and select **Create API Rule**. 
+1. Go to **Discovery and Network > API Rules** and select **Create**. 
 2. Provide the following configuration details.
   - **Name**: `httpbin`
   - In the `Service` section, select:
       - **Service Name**: `httpbin`
       - **Port**: `8000`
-  - Depending on whether you're using your custom domain or a Kyma domain, follow the respective instructions to fill in the `Gateway` section.
-    <!-- tabs:start -->
-    #### **Custom Domain**
-    - **Namespace** is the name of the namespace in which you deployed an instance of the HTTPBin Service. 
-    - **Name** is Gateway's name, for example `httpbin-gateway`. 
-    - In the **Host** field, enter `httpbin.{YOUR_DOMAIN}`. Replace the placeholder with the name of your custom domain.
-
-    #### **Kyma Domain**
-    - **Namespace**: `kyma-system`
-    - **Name** is the Gateway's name, for example `kyma-gateway`. 
-    - In the **Host** field, enter `httpbin.{YOUR_DOMAIN}`. Replace the placeholder with the name of your Kyma domain.
-    <!-- tabs:end -->
+  - To fill in the `Gateway` section, use these values:
+    - **Namespace** is the name of the namespace in which you deployed an instance of the HTTPBin Service. If you use a Kyma domain, select the `kyma-system` namespace.
+    - **Name** is the Gateway's name. If you use a Kyma domain, select `kyma-gateway`. 
+    - In the **Host** field, enter `httpbin.{DOMAIN_TO_EXPORT_WORKLOADS}`. Replace the placeholder with the name of your domain.
   - In the `Rules` section, select:
     - **Path**: `/.*`
     - **Handler**: `no_auth`
@@ -86,39 +78,37 @@ This tutorial shows how to expose an unsecured instance of the HTTPBin Service a
             - handler: no_auth
     EOF
     ```
-  
-    > [!NOTE]
-    > If you are using k3d, add `httpbin.kyma.local` to the entry with k3d IP in your system's `/etc/hosts` file. 
-
-    > [!NOTE]
-    > If you don't specify a namespace for your Service, the default namespace is used.
 
 <!-- tabs:end -->
+> [!NOTE]
+> If you are using k3d, add `httpbin.kyma.local` to the entry with k3d IP in your system's `/etc/hosts` file. 
 
+> [!NOTE]
+> If you don't specify a namespace for your Service, the default namespace is used.
 
 To access your HTTPBin Service, use [Postman](https://www.postman.com) or [curl](https://curl.se).
 
 <!-- tabs:start -->
 #### **Postman**
 
-- Enter the URL `https://httpbin.{DOMAIN_TO_EXPOSE_WORKLOADS}/ip` and replace `{DOMAIN_TO_EXPOSE_WORKLOADS}` with the name of your domain. Call the endpoint by sending a `GET` request to the HTTPBin Service. If successful, the call returns the code `200 OK` response.
+- Enter the URL `https://httpbin.{DOMAIN_TO_EXPOSE_WORKLOADS}/ip` and replace the placeholder with the name of your domain. Call the endpoint by sending a `GET` request to the HTTPBin Service. If successful, the call returns the code `200 OK` response.
 
-- Enter the URL `https://httpbin.{DOMAIN_TO_EXPOSE_WORKLOADS}/post` and replace `{DOMAIN_TO_EXPOSE_WORKLOADS}` with the name of your domain. Call the endpoint by sending a `POST` request to the HTTPBin Service. If successful, the call returns the code `200 OK` response.
+- Enter the URL `https://httpbin.{DOMAIN_TO_EXPOSE_WORKLOADS}/post` and replace the placeholder with the name of your domain. Call the endpoint by sending a `POST` request to the HTTPBin Service. If successful, the call returns the code `200 OK` response.
 
 #### **curl**
 
-1. To call the endpoint, send a `GET` request to the HTTPBin Service.
+- Send a `GET` request to the HTTPBin Service.
 
-    ```bash
-    curl -ik -X GET https://httpbin.$DOMAIN_TO_EXPOSE_WORKLOADS/ip
-    ```
-    If successful, the call returns the code `200 OK` response.
+  ```bash
+  curl -ik -X GET https://httpbin.$DOMAIN_TO_EXPOSE_WORKLOADS/ip
+  ```
+  If successful, the call returns the code `200 OK` response.
 
-2. To call the endpoint, send a `POST` request to the HTTPBin Service.
+- Send a `POST` request to the HTTPBin Service.
 
-    ```bash
-    curl -ik -X POST https://httpbin.$DOMAIN_TO_EXPOSE_WORKLOADS/post -d "test data"
-    ```
-    If successful, the call returns the code `200 OK` response.
+  ```bash
+  curl -ik -X POST https://httpbin.$DOMAIN_TO_EXPOSE_WORKLOADS/post -d "test data"
+  ```
+  If successful, the call returns the code `200 OK` response.
 
 <!-- tabs:end -->

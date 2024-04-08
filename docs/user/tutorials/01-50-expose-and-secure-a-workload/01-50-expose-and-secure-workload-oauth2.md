@@ -76,7 +76,7 @@ To get a token with `read` scope, go to the `Body` tab and replace the **grant_t
     - To fill in the `Gateway` section, use these values:
       - **Namespace** is the name of the namespace in which you deployed an instance of the HTTPBin Service. With a Kyma domain, use the `kyma-system` namespace.
       - **Name** is the Gateway's name, for example `httpbin-gateway`. 
-      - In the **Host** field, enter `httpbin.{YOUR_DOMAIN}`. Replace the placeholder with the name of your domain.
+      - In the **Host** field, enter `httpbin.{DOMAIN_TO_EXPORT_WORKLOADS}`. Replace the placeholder with the name of your domain.
     - Add an access strategy with the following configuration:
       - **Handler**: `oauth2_introspection`
       - **Introspection URL** is your introspection endpoint.

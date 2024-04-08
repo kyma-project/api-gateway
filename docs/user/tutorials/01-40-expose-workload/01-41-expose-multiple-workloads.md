@@ -16,30 +16,23 @@ Follow the instructions to expose the instances of the HTTPBin Service on differ
 <!-- tabs:start -->
 #### **Kyma Dashboard**
 
-1. Go to **Discovery and Network > APIRules** and select **Create API Rule**. 
+1. Go to **Discovery and Network > APIRules** and select **Create**. 
 2. Provide the following configuration details:
     - **Name**: `multiple-services`
-    - Depending on whether you're using your custom domain or a Kyma domain, follow the relevant instructions to fill in the `Gateway` section.
-    #### **Custom Domain**
-    - **Namespace** is the name of the namespace in which you deployed an instance of the HTTPBin Service. 
-    - **Name** is Gateway's name, for example `httpbin-gateway`. 
-    - In the **Host** field, enter `httpbin.{YOUR_DOMAIN}`. Replace the placeholder with the name of your custom domain.
-
-    #### **Kyma Domain**
-    - **Namespace**: `kyma-system`
-    - **Name** is the Gateway's name, for example `kyma-gateway`. 
-    - In the **Host** field, enter `httpbin.{YOUR_DOMAIN}`. Replace the placeholder with the name of your Kyma domain.
-    <!-- tabs:end -->
+    - To fill in the `Gateway` section, use these values:
+      - **Namespace** is the name of the namespace in which you deployed an instance of the HTTPBin Service. If you use a Kyma domain, select the `kyma-system` namespace.
+      - **Name** is the Gateway's name. If you use a Kyma domain, select `kyma-gateway`. 
+      - In the **Host** field, enter `httpbin.{DOMAIN_TO_EXPORT_WORKLOADS}`. Replace the placeholder with the name of your domain.
     - To expose the first service, add a Rule with the following configuration:
       - **Path**: `/headers`
       - **Handler**: `no_auth`
       - **Methods**: `GET`
-      - In the `Service` section, select the name of the first service you deployed and use the port `8000`.
+      - In the `Service` section, select the name of the first Service you deployed and use the port `8000`.
     - To expose the second service, add a Rule with the following configuration:
       - **Path**: `/get`
       - **Handler**: `no_auth`
       - **Methods**: `GET`
-      - In the `Service` section, select the name of the second service you deployed and use the port `8000`.
+      - In the `Service` section, select the name of the second Service you deployed and use the port `8000`.
       <!-- tabs:end -->
 
 3. To create the APIRule, select **Create**.  
@@ -120,18 +113,10 @@ You can also define a Service at the root level. Such a definition is applied to
 2. Provide the following configuration details:
     - **Name**: `httpbin-services`
     - In the `Service` section, select the name of the first service you deployed and the port `8000`. 
-    - Depending on whether you're using your custom domain or a Kyma domain, follow the relevant instructions to fill in the `Gateway` section.
-    <!-- tabs:start -->
-    #### **Custom Domain**
-    - **Namespace** is the name of the namespace in which you deployed an instance of the HTTPBin Service. 
-    - **Name** is Gateway's name, for example `httpbin-gateway`. 
-    - In the **Host** field, enter `httpbin.{YOUR_DOMAIN}`. Replace the placeholder with the name of your custom domain.
-
-    #### **Kyma Domain**
-    - **Namespace**: `kyma-system`
-    - **Name** is the Gateway's name, for example `kyma-gateway`. 
-    - In the **Host** field, enter `httpbin.{YOUR_DOMAIN}`. Replace the placeholder with the name of your Kyma domain.
-    <!-- tabs:end -->
+    - To fill in the `Gateway` section, use these values:
+      - **Namespace** is the name of the namespace in which you deployed an instance of the HTTPBin Service. If you use a Kyma domain, select the `kyma-system` namespace.
+      - **Name** is the Gateway's name. If you use a Kyma domain, select `kyma-gateway`. 
+      - In the **Host** field, enter `httpbin.{DOMAIN_TO_EXPORT_WORKLOADS}`. Replace the placeholder with the name of your domain.
     - Add a Rule with the following configuration:
       - **Path**: `/headers`
       - **Handler**: `no_auth`
@@ -212,9 +197,9 @@ To access your HTTPBin Services, use [Postman](https://www.postman.com) or [curl
 <!-- tabs:start -->
 #### **Postman**
 
-1. Enter the URL `https://httpbin.{DOMAIN_TO_EXPOSE_WORKLOADS}/headers` and replace `{DOMAIN_TO_EXPOSE_WORKLOADS}` with your domain name. To call the endpoint, send a `GET` request to the HTTPBin Service. If successful, the call returns the code `200 OK` response.
+- Enter the URL `https://httpbin.{DOMAIN_TO_EXPOSE_WORKLOADS}/headers` and replace `{DOMAIN_TO_EXPOSE_WORKLOADS}` with your domain name. To call the endpoint, send a `GET` request to the HTTPBin Service. If successful, the call returns the code `200 OK` response.
 
-2. Enter the URL `https://httpbin.{DOMAIN_TO_EXPOSE_WORKLOADS}/get` and replace `{DOMAIN_TO_EXPOSE_WORKLOADS}` with your domain name. To call the endpoint, send a `GET` request to the HTTPBin Service. If successful, the call returns the code `200 OK` response.
+- Enter the URL `https://httpbin.{DOMAIN_TO_EXPOSE_WORKLOADS}/get` and replace `{DOMAIN_TO_EXPOSE_WORKLOADS}` with your domain name. To call the endpoint, send a `GET` request to the HTTPBin Service. If successful, the call returns the code `200 OK` response.
 
 #### **curl**
 
