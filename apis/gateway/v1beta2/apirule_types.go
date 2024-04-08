@@ -13,7 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package v1beta1
+package v1beta2
 
 import (
 	"istio.io/api/networking/v1beta1"
@@ -73,8 +73,6 @@ type APIRuleStatus struct {
 }
 
 // APIRule is the Schema for ApiRule APIs.
-// +kubebuilder:storageversion
-// +kubebuilder:deprecatedversion:warning=v1beta1 is deprecated
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Status",type="string",JSONPath=".status.APIRuleStatus.code"
@@ -125,10 +123,10 @@ type Rule struct {
 	// Represents the list of allowed HTTP request methods available for the **spec.rules.path**.
 	// +kubebuilder:validation:MinItems=1
 	Methods []HttpMethod `json:"methods"`
-	// Specifies the list of access strategies.
-	// All strategies listed in [Oathkeeper documentation](https://www.ory.sh/docs/oathkeeper/pipeline/authn) are supported.
-	// +kubebuilder:validation:MinItems=1
-	AccessStrategies []*Authenticator `json:"accessStrategies"`
+	// +optional
+	NoAuth *bool `json:"noAuth,omitempty"`
+	// +optional
+	AccessStrategy *AccessStrategy `json:"accessStrategy"`
 	// Specifies the list of [Ory Oathkeeper](https://www.ory.sh/docs/oathkeeper/pipeline/mutator) mutators.
 	// +optional
 	Mutators []*Mutator `json:"mutators,omitempty"`
@@ -151,8 +149,9 @@ func init() {
 }
 
 // Represents a handler that authenticates provided credentials. See the corresponding type in the oathkeeper-maester project.
-type Authenticator struct {
-	*Handler `json:",inline"`
+type AccessStrategy struct {
+	Jwt     *JwtConfig `json:"jwt,omitempty"`
+	ExtAuth *string    `json:"extAuth,omitempty"`
 }
 
 // Mutator represents a handler that transforms the HTTP request before forwarding it. See the corresponding in the oathkeeper-maester project.
