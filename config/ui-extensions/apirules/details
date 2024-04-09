@@ -12,7 +12,8 @@ header:
     description: status.APIRuleStatus.desc
   - name: host
     widget: ExternalLink
-    source: '$virtualServices().items[0].spec.hosts[0]'
+    source: 'spec.host'
+    link: 'status.APIRuleStatus.code = "OK" ? "https://" & $virtualServices().items[0].spec.hosts[0] : ""'
 body:
   - simple: true
     widget: Alert
