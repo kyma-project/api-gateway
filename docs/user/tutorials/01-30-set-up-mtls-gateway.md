@@ -97,7 +97,7 @@ The procedure of setting up a working mTLS Gateway is described in the following
     </li>
     </ol>
   <!-- tabs:end -->
-</br>
+<!-- -->
 
 4. Create a Secret containing the Root CA certificate.
 
