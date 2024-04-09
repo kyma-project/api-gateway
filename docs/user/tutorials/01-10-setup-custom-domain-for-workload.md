@@ -89,7 +89,6 @@ export SECRET={SECRET_NAME}
     - Add the annotation:
       - **dns.gardener.cloud/class**: `garden`
       - For **DNSName**, use `*.{DOMAIN_TO_EXPOSE_WORKLOADS}`. Replace `{DOMAIN_TO_EXPOSE_WORKLOADS}` with the name of your custom domain.
-      - **TTL**:`600`
       - Paste the external IP address of the `istio-ingressgateway` Service in the **Target** field.
 4. Select **Create**.
 

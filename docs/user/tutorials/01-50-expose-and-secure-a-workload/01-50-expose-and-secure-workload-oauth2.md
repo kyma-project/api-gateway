@@ -7,8 +7,11 @@ This tutorial shows how to expose and secure Services using APIGateway Controlle
 * [Deploy a sample HTTPBin Service](../01-00-create-workload.md).
 * [Set up your custom domain](../01-10-setup-custom-domain-for-workload.md) or use a Kyma domain instead.
 * Configure your client ID and client Secret using an OAuth2-compliant provider.
+* 
 
-## Get the Tokens
+## Steps
+
+### Get the Tokens
 <!-- tabs:start -->
 #### **Postman**
 
@@ -41,8 +44,13 @@ To get a token with `read` scope, go to the `Body` tab and replace the **grant_t
     export ENCODED_CREDENTIALS=$(echo -n "$CLIENT_ID:$CLIENT_SECRET" | base64)
     export TOKEN_ENDPOINT={YOUR_TOKEN_ENDPOINT}
     ```
+2. Export your token endpoint as environment variable:
+    
+    ```bash
+    export TOKEN_ENDPOINT={YOUR_TOKEN_ENDPOINT}
+    ```
 
-2. Get a token with the `read` scope.
+3. Get a token with the `read` scope.
   
     1. Get the opaque token:
         ```shell
@@ -52,7 +60,7 @@ To get a token with `read` scope, go to the `Body` tab and replace the **grant_t
         ```bash
         export ACCESS_TOKEN_READ={ISSUED_READ_TOKEN}
         ```
-3. Get a token with the `write` scope.  
+4. Get a token with the `write` scope.  
 
     1. Get the opaque token:
         ```shell
@@ -65,7 +73,7 @@ To get a token with `read` scope, go to the `Body` tab and replace the **grant_t
     <!-- tabs:end -->
 
 
-## Expose and Secure Your Workload
+### Expose and Secure Your Workload
 <!-- tabs:start -->
 #### **Kyma Dashboard**
 
@@ -168,7 +176,7 @@ The exposed Service requires tokens with `read` scope for `GET` requests in the 
 > [!WARNING]
 >  When you secure a workload, don't create overlapping Access Rules for paths. Doing so can cause unexpected behavior and reduce the security of your implementation.
 
-## Access the Secured Resources
+### Access the Secured Resources
 
 Follow the instructions to call the secured Service using the tokens issued for the client you registered.
 

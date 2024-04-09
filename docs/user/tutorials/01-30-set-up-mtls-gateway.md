@@ -20,7 +20,9 @@ The procedure of setting up a working mTLS Gateway is described in the following
 * [Deploy a sample HTTPBin Service](./01-00-create-workload.md).
 * [Set up your custom domain](./01-10-setup-custom-domain-for-workload.md).
   
-## Set Up an mTLS Gateway
+## Steps
+
+### Set Up an mTLS Gateway
 
 1. Create a DNS Entry and generate a wildcard certificate.
 
@@ -42,9 +44,6 @@ The procedure of setting up a working mTLS Gateway is described in the following
     1. Go to **Istio > Gateways** and select **Create**.
     2. Provide the following configuration details:
       - **Name**: `kyma-mtls-gateway`
-      - Add the selectors:
-          - **app**: `istio-ingressgateway`
-          - **istio**: `ingressgateway`
       - Add a server with these values:
           - **Port Number**: `443`
           - **Name**: `mtls`
@@ -121,7 +120,7 @@ The procedure of setting up a working mTLS Gateway is described in the following
     <!-- tabs:end -->
 
 
-## Expose Workloads Behind Your mTLS Gateway
+### Expose Workloads Behind Your mTLS Gateway
 
 To expose a custom workload, create an APIRule.
 
@@ -138,7 +137,7 @@ To expose a custom workload, create an APIRule.
     - In the `Rules` section, select:
       - **Path**: `/.*`
       - **Handler**: `no_auth`
-      - **Methods**: `GET` and `POST`        
+      - **Methods**: `GET`       
       - Add the `httpbin` Service on port `8000`.
 
 
@@ -172,7 +171,7 @@ EOF
 
 This configuration uses the newly created Gateway `kyma-mtls-gateway` and exposes all workloads behind mTLS.
 
-## Verify the Connection
+### Verify the Connection
 
 <!-- tabs:start -->
 #### **Postman**

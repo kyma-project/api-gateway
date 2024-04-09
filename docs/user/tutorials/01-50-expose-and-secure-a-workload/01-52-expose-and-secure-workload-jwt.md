@@ -10,7 +10,7 @@ This tutorial shows how to expose and secure Services using APIGateway Controlle
 
 ## Steps
 
-## Expose and Secure Your Workload
+### Expose and Secure Your Workload
 
 <!-- tabs:start -->
 #### **Kyma Dashboard**
@@ -80,7 +80,7 @@ This tutorial shows how to expose and secure Services using APIGateway Controlle
     ```
 <!-- tabs:end -->
 
-## Access the Secured Resources
+### Access the Secured Resources
 
 To access your HTTPBin Service, use [Postman](https://www.postman.com) or [curl](https://curl.se).
 

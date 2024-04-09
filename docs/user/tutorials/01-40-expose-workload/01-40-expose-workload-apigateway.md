@@ -25,10 +25,14 @@ This tutorial shows how to expose an unsecured instance of the HTTPBin Service a
     - **Namespace** is the name of the namespace in which you deployed an instance of the HTTPBin Service. If you use a Kyma domain, select the `kyma-system` namespace.
     - **Name** is the Gateway's name. If you use a Kyma domain, select `kyma-gateway`. 
     - In the **Host** field, enter `httpbin.{DOMAIN_TO_EXPORT_WORKLOADS}`. Replace the placeholder with the name of your domain.
-  - In the `Rules` section, select:
+  - In the `Rules` section, add two Rules. Use the following configuration for the first one:
     - **Path**: `/.*`
     - **Handler**: `no_auth`
-    - **Methods**: `GET` and `POST`
+    - **Methods**: `GET`
+  - Use the following configuration for the second Rule:
+    - **Path**: `/post`
+    - **Handler**: `no_auth`
+    - **Methods**: `POST`
   
 3. To create the APIRule, select **Create**.
 
