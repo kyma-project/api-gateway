@@ -57,16 +57,14 @@ The procedure of setting up a working mTLS Gateway is described in the following
     3. To confirm, select **Create**.
 
     #### **kubectl**
-    <ol>
-    <li>Export the name of your custom domain and the Gateway as environment variables:
+    1. Export the name of your custom domain and the Gateway as environment variables:
 
     ```bash
     export DOMAIN_TO_EXPOSE_WORKLOADS={DOMAIN_NAME}
     export GATEWAY=$NAMESPACE/httpbin-gateway
     ```
-    </li>
-
-    <li> Assuming that you have successfully created the server certificate and it is stored in the `kyma-mtls-certs` Secret within the default namespace, modify and apply the following Gateway custom resource in a cluster:
+    
+    2. Assuming that you have successfully created the server certificate and it is stored in the `kyma-mtls-certs` Secret within the default namespace, modify and apply the following Gateway custom resource in a cluster:
 
     > [!NOTE]
     >  The `kyma-mtls-certs` Secret must contain a valid certificate for your custom domain.
@@ -94,10 +92,7 @@ The procedure of setting up a working mTLS Gateway is described in the following
             - "*.$DOMAIN_TO_EXPOSE_WORKLOADS"
     EOF
     ```
-    </li>
-    </ol>
   <!-- tabs:end -->
-<!-- -->
 
 4. Create a Secret containing the Root CA certificate.
 
