@@ -92,8 +92,8 @@ The procedure of setting up a working mTLS Gateway is described in the following
             - "*.$DOMAIN_TO_EXPOSE_WORKLOADS"
     EOF
     ```
-  x
-  <!-- tabs:end -->
+  
+    <!-- tabs:end -->
 
 4. Create a Secret containing the Root CA certificate.
 
