@@ -23,7 +23,7 @@ context("API Rule", () => {
         cy.deleteNamespace(namespaceName);
     });
 
-    xit("should create no_auth APIRule as default", () => {
+    it("should create no_auth APIRule as default", () => {
         cy.navigateToApiRuleList(namespaceName);
 
         cy.clickCreateButton();
@@ -42,7 +42,7 @@ context("API Rule", () => {
         cy.contains('no_auth').should('exist');
     });
 
-    xit("should create oauth2_introspection APIRule", () => {
+    it("should create oauth2_introspection APIRule", () => {
         cy.navigateToApiRuleList(namespaceName);
 
         cy.clickCreateButton();
@@ -69,7 +69,7 @@ context("API Rule", () => {
         cy.contains('read').should('exist');
     });
 
-    xit("should create jwt APIRule", () => {
+    it("should create jwt APIRule", () => {
         cy.navigateToApiRuleList(namespaceName);
 
         cy.clickCreateButton();
@@ -99,7 +99,7 @@ context("API Rule", () => {
         cy.contains('Disabling custom CORS Policy is not recommended. Consider setting up CORS yourself').should('exist');
     });
 
-    xit('should update oauth2_introspection API Rule to jwt', () => {
+    it('should update oauth2_introspection API Rule to jwt', () => {
         const updatedApiRulePath = "/test-path";
 
         cy.createApiRule({
@@ -140,7 +140,7 @@ context("API Rule", () => {
         cy.contains('https://trusted.com').should('exist');
     });
 
-    xit('should update CORS policy', () => {
+    it('should update CORS policy', () => {
 
         cy.createApiRule({
             name: apiRuleName,
