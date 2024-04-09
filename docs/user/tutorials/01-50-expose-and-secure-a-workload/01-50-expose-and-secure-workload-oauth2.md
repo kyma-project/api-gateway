@@ -39,6 +39,7 @@ To get a token with `read` scope, go to the `Body` tab and replace the **grant_t
    
     ```bash
     export ENCODED_CREDENTIALS=$(echo -n "$CLIENT_ID:$CLIENT_SECRET" | base64)
+    export TOKEN_ENDPOINT={YOUR_TOKEN_ENDPOINT}
     ```
 
 2. Get a token with the `read` scope.
