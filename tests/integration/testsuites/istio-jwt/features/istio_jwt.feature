@@ -110,7 +110,7 @@ Feature: Exposing endpoints with Istio JWT authorization strategy
     Given JwtIssuerJwksNotMatch: There is a httpbin service
     And JwtIssuerJwksNotMatch: There is an endpoint secured with JWT on path "/ip" with invalid issuer and jwks
     When JwtIssuerJwksNotMatch: The APIRule is applied
-    And JwtIssuerJwksNotMatch: Calling the "/ip" endpoint with a valid "JWT" token should result in body containing "Jwks doesn't have key to match kid or alg from Jwt"
+    And JwtIssuerJwksNotMatch: Calling the "/ip" endpoint with a valid "JWT" token should result in body containing "Jwt verification fails"
     And JwtIssuerJwksNotMatch: Teardown httpbin service
 
   Scenario: Calling a httpbin endpoint secured with different JWT token from headers
