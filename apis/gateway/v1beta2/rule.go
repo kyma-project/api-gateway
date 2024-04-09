@@ -5,8 +5,8 @@ import "encoding/json"
 func (r *Rule) GetJwtIstioAuthorizations() []*JwtAuthorization {
 	// For Istio JWT we can safely assume that there is only one access strategy
 	authorizations := []*JwtAuthorization{}
-	if r.AccessStrategy != nil && r.AccessStrategy.Jwt != nil {
-		authorizations = r.AccessStrategy.Jwt.Authorizations
+	if r.Jwt != nil {
+		authorizations = r.Jwt.Authorizations
 	}
 	return authorizations
 }

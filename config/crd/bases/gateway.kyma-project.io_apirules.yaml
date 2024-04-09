@@ -371,67 +371,60 @@ spec:
                 items:
                   description: Rule .
                   properties:
-                    accessStrategy:
-                      description: Represents a handler that authenticates provided
-                        credentials. See the corresponding type in the oathkeeper-maester
-                        project.
+                    extAuth:
+                      type: string
+                    jwt:
+                      description: JwtConfig is an array of JwtAuthorization type
+                        used by raw field Config of Istio jwt Handler
                       properties:
-                        extAuth:
-                          type: string
-                        jwt:
-                          description: JwtConfig is an array of JwtAuthorization type
-                            used by raw field Config of Istio jwt Handler
-                          properties:
-                            authentications:
-                              items:
-                                description: JwtAuthentication Config for Jwt Istio
-                                  authentication
-                                properties:
-                                  fromHeaders:
-                                    items:
-                                      description: JwtHeader for specifying from header
-                                        for the Jwt token
-                                      properties:
-                                        name:
-                                          type: string
-                                        prefix:
-                                          type: string
-                                      required:
-                                      - name
-                                      type: object
-                                    type: array
-                                  fromParams:
-                                    items:
+                        authentications:
+                          items:
+                            description: JwtAuthentication Config for Jwt Istio authentication
+                            properties:
+                              fromHeaders:
+                                items:
+                                  description: JwtHeader for specifying from header
+                                    for the Jwt token
+                                  properties:
+                                    name:
                                       type: string
-                                    type: array
-                                  issuer:
-                                    type: string
-                                  jwksUri:
-                                    type: string
-                                required:
-                                - issuer
-                                - jwksUri
-                                type: object
-                              type: array
-                            authorizations:
-                              items:
-                                description: JwtAuthorization contains an array of
-                                  required scopes
-                                properties:
-                                  audiences:
-                                    items:
+                                    prefix:
                                       type: string
-                                    type: array
-                                  requiredScopes:
-                                    items:
-                                      type: string
-                                    type: array
-                                required:
-                                - audiences
-                                - requiredScopes
-                                type: object
-                              type: array
-                          type: object
+                                  required:
+                                  - name
+                                  type: object
+                                type: array
+                              fromParams:
+                                items:
+                                  type: string
+                                type: array
+                              issuer:
+                                type: string
+                              jwksUri:
+                                type: string
+                            required:
+                            - issuer
+                            - jwksUri
+                            type: object
+                          type: array
+                        authorizations:
+                          items:
+                            description: JwtAuthorization contains an array of required
+                              scopes
+                            properties:
+                              audiences:
+                                items:
+                                  type: string
+                                type: array
+                              requiredScopes:
+                                items:
+                                  type: string
+                                type: array
+                            required:
+                            - audiences
+                            - requiredScopes
+                            type: object
+                          type: array
                       type: object
                     methods:
                       description: Represents the list of allowed HTTP request methods

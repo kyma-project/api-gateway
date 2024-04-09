@@ -126,7 +126,9 @@ type Rule struct {
 	// +optional
 	NoAuth *bool `json:"noAuth,omitempty"`
 	// +optional
-	AccessStrategy *AccessStrategy `json:"accessStrategy"`
+	Jwt *JwtConfig `json:"jwt,omitempty"`
+	// +optional
+	ExtAuth *string `json:"extAuth,omitempty"`
 	// Specifies the list of [Ory Oathkeeper](https://www.ory.sh/docs/oathkeeper/pipeline/mutator) mutators.
 	// +optional
 	Mutators []*Mutator `json:"mutators,omitempty"`
@@ -146,12 +148,6 @@ type APIRuleResourceStatus struct {
 
 func init() {
 	SchemeBuilder.Register(&APIRule{}, &APIRuleList{})
-}
-
-// Represents a handler that authenticates provided credentials. See the corresponding type in the oathkeeper-maester project.
-type AccessStrategy struct {
-	Jwt     *JwtConfig `json:"jwt,omitempty"`
-	ExtAuth *string    `json:"extAuth,omitempty"`
 }
 
 // Mutator represents a handler that transforms the HTTP request before forwarding it. See the corresponding in the oathkeeper-maester project.
