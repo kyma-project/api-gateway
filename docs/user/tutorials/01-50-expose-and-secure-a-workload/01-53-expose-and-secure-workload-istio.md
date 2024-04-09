@@ -15,8 +15,8 @@ This tutorial shows how to expose and secure a workload using Istio's built-in s
 <!-- tabs:start -->
   #### **Kyma dashboard**
 
-  1. Go to **Istio > Virtual Services** and select **Create Virtual Service**. 
-  2. Switch to the `Advanced` tab and provide the following configuration details:
+  1. Go to **Istio > Virtual Services** and select **Create**. 
+  2. Provide the following configuration details:
       - **Name**: `httpbin`
       - Go to **HTTP > Matches > Match** and provide URI of the type **prefix** and value `/`.
       - Go to **HTTP > Routes > Route > Destination**. Replace `{NAMESPACE}` with the name of the HTTPBin Service's namespace and add the following fields:
@@ -76,8 +76,8 @@ To secure the HTTPBin workload using a JWT, create a Request Authentication with
 
 <!-- tabs:start -->
   #### **Kyma Dashboard**
-  1. Go to **Custom Resources > RequestAuthentications**.
-  2. Select **Create RequestAuthentication** and paste the following configuration into the editor:
+  1. Go to **Configuration > Custom Resources > RequestAuthentications**.
+  2. Select **Create** and paste the following configuration into the editor:
       ```yaml
       apiVersion: security.istio.io/v1beta1
       kind: RequestAuthentication
@@ -98,7 +98,7 @@ To secure the HTTPBin workload using a JWT, create a Request Authentication with
     - `{JWKS_URI}` is 
   4. Select **Create**.
   5. Go to **Istio > Authorization Policies**.
-  6. Select **Create Authorization Policy**, switch to the `YAML` tab and paste the following configuration into the editor:
+  6. Select **Create**, switch to the `YAML` tab and paste the following configuration into the editor:
       ```yaml
       apiVersion: security.istio.io/v1beta1
         kind: AuthorizationPolicy

@@ -21,7 +21,7 @@ Create a Secret containing credentials for the DNS cloud service provider accoun
 
 1. Select the namespace you want to use.
 2. Go to **Configuration > Secrets**.
-3. Select **Create Secret** and provide your configuration details.
+3. Select **Create** and provide your configuration details.
 4. Select **Create**.
 
 #### **kubectl**
@@ -38,7 +38,7 @@ export SECRET={SECRET_NAME}
   #### **Kyma Dashboard**
 
 1. Go to **Configuration > DNS Providers**.
-2. Select **Create DNS Provider**, switch to the `Advanced` tab, and provide the details:
+2. Select **Create** and provide the details:
     - **Name**: `dns-provider`
     - **Type**: is the type of your DNS cloud service provider.
     - Add the annotation **dns.gardener.cloud/class**: `garden`
@@ -68,7 +68,7 @@ export SECRET={SECRET_NAME}
       annotations:
         dns.gardener.cloud/class: garden
     spec:
-      type: $SPEC_TYPE
+      type: $PROVIDER_TYPE
       secretRef:
         name: $SECRET
       domains:
@@ -84,7 +84,7 @@ export SECRET={SECRET_NAME}
 #### **Kyma Dashboard**
 1. Go to **Discovery and Network > Services** in the `istio-system` namespace. Select the `istio-ingressgateway` Service and copy its external IP address.
 2. In the namespace of your HTTPBin Deployment, go to **Configuration > DNS Entries**.
-3. Select **Create DNS Provider**, switch to the `Advanced` tab, and provide the details      
+3. Select **Create** and provide the details:      
     - **Name**:`dns-entry`
     - Add the annotation:
       - **dns.gardener.cloud/class**: `garden`
@@ -124,7 +124,6 @@ export SECRET={SECRET_NAME}
 <!-- tabs:end -->
 
 ### Create a Certificate CR
-    
 
 > [!NOTE]
 > While using the default configuration, certificates with the Let's Encrypt Issuer are valid for 90 days and automatically renewed 30 days before their validity expires. For more information, read the documentation on [Gardener Certificate Management](https://github.com/gardener/cert-management#requesting-a-certificate) and [Gardener extensions for certificate Services](https://gardener.cloud/docs/extensions/others/gardener-extension-shoot-cert-service/).
@@ -134,10 +133,10 @@ export SECRET={SECRET_NAME}
 
 1. Go to the `istio-system` namespace.
 2. Go to **Configuration > Certificates**.
-3. Select **Create Certificate** and provide the details:
+3. Select **Create** and provide the details:
     - **Name**:`httpbin-cert`
     - **Secret Name** is the name of your TLS Secret.
-    - **Custom Name** is the name of your custom domain.
+    - **Common Name** is the name of your custom domain.
 4. Select **Create**.
 
 #### **kubectl**

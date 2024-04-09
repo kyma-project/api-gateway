@@ -13,11 +13,11 @@ This tutorial shows how to set up a TLS Gateway in simple mode.
 <!-- tabs:start -->
 #### **Kyma Dashboard**
 
-1. Go to **Istio > Gateways** and select **Create Gateway**. 
-2. Switch to the `Advanced` tab and provide the following configuration details:
+1. Go to **Istio > Gateways** and select **Create**. 
+2. Provide the following configuration details:
     - **Name**: `httpbin-gateway`
     - In the `Selectors` section, add the following selector: 
-      - **istio**: `ingress-gateway`
+      - **istio**: `ingressgateway`
     - In the `Servers` section, select **Add**. Then, use these values:
       - **Port Number**: `443`
       - **Name**: `https`

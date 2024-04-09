@@ -88,8 +88,8 @@ To get a token with `read` scope, go to the `Body` tab and replace the **grant_t
       - **Handler**: `oauth2_introspection`
       - **Introspection URL** is your introspection endpoint.
       - Add introspection request header with the key **Authorization** and value `Basic {ENCODED_CREDENTIALS}`. Replace with base 64 encoded `{CLIENT_ID}:{CLIENT_SECRET}`.
-      - **Required Scope**: `read`
-      - **Method**: `GET`
+      - **Required Scope**: `write`
+      - **Method**: `POST`
       - **Path**: `/post`
 
 3. To create the APIRule, select **Create**.
@@ -172,7 +172,7 @@ The exposed Service requires tokens with `read` scope for `GET` requests in the 
 Follow the instructions to call the secured Service using the tokens issued for the client you registered.
 
 <!-- tabs:start -->
-#### **Kyma Dashboard**
+#### **Postman**
 Use the token with the `read` scope to access the HTTPBin Service:
 
 1. Create a new request and enter the URL `https://httpbin.{DOMAIN_TO_EXPOSE_WORKLOADS}/status/headers`. Replace `{DOMAIN_TO_EXPOSE_WORKLOADS}` with the name of your domain. 
@@ -186,7 +186,7 @@ Use the token with the `write` scope to access the HTTPBin Service:
 2. Go to the `Headers` tab. Add a new header with the key **Authorization** and the value `Bearer {ACCESS_TOKEN_WRITE}`. Replace `{ACCESS_TOKEN_WRITE}` with the Opaque token that has the `write` scope.
 4. To call the endpoint, send a `POST` request to the HTTPBin Service. 
 
-#### **kubectl**
+#### **curl**
 
 1. Send a `GET` request with a token that has the `read` scope to the HTTPBin Service:
 
