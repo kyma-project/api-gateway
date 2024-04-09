@@ -35,7 +35,6 @@ context("API Rule", () => {
 
         cy.clickCreateButton();
 
-        cy.contains(apiRuleName).click();
         cy.hasStatusLabel("OK");
         cy.contains(apiRuleDefaultPath).should('exist');
         cy.contains('Rules #1', {timeout: 10000}).click();
@@ -61,7 +60,6 @@ context("API Rule", () => {
         cy.clickCreateButton();
 
         // Verify created API Rule
-        cy.contains(apiRuleName).click();
         cy.hasStatusLabel("OK");
         cy.contains(apiRuleDefaultPath).should('exist');
         cy.contains('Rules #1', {timeout: 10000}).click();
@@ -89,7 +87,6 @@ context("API Rule", () => {
         cy.clickCreateButton();
 
         // Verify created API Rule
-        cy.contains(apiRuleName).click();
         cy.hasStatusLabel("OK");
         cy.contains(apiRuleDefaultPath).should('exist');
         cy.contains('Rules #1', {timeout: 10000}).click();
