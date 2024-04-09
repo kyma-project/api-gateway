@@ -44,7 +44,7 @@ The procedure of setting up a working mTLS Gateway is described in the following
     1. Go to **Istio > Gateways** and select **Create**.
     2. Provide the following configuration details:
       - **Name**: `kyma-mtls-gateway`
-      - Add a server with these values:
+      - Add a server with the following configuration:
           - **Port Number**: `443`
           - **Name**: `mtls`
           - **Protocol**: `HTTPS`
@@ -96,7 +96,8 @@ The procedure of setting up a working mTLS Gateway is described in the following
     ```
     </li>
     </ol>
-    <!-- tabs:end -->
+  <!-- tabs:end -->
+</br>
 
 4. Create a Secret containing the Root CA certificate.
 
