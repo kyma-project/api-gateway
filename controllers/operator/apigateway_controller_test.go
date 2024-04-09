@@ -5,9 +5,6 @@ import (
 	goerrors "errors"
 	"fmt"
 	"github.com/kyma-project/api-gateway/internal/conditions"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"time"
 
 	"github.com/go-logr/logr"
@@ -305,7 +302,7 @@ var _ = Describe("API-Gateway Controller", func() {
 
 			Expect(apiGatewayCR.Status.Conditions).To(ContainElement(MatchFields(IgnoreExtras, Fields{
 				"Type":    Equal(conditions.DeletionBlockedExistingResources.Condition().Type),
-				"Message": Equal("API Gateway deletion blocked because of the existing custom resources: APIRule/api-rule-0, APIRule/api-rule-1, APIRule/api-rule-2, APIRule/api-rule-3, APIRule/api-rule-4"),
+				"Message": Equal("API Gateway deletion blocked because of the existing custom resources: default/api-rule-0, default/api-rule-1, default/api-rule-2, default/api-rule-3, default/api-rule-4"),
 				"Status":  Equal(metav1.ConditionFalse),
 			})))
 		})
@@ -324,19 +321,12 @@ var _ = Describe("API-Gateway Controller", func() {
 			var rules []client.Object
 			for i := 0; i < 6; i++ {
 				// we initialize more than 5 objects, so we validate if we show only 5 in a condition
-				oryRule, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&oryv1alpha1.Rule{
+				r := &oryv1alpha1.Rule{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      fmt.Sprintf("ory-rule-%d", i),
 						Namespace: "default",
 					},
-				})
-				Expect(err).ToNot(HaveOccurred())
-				r := &unstructured.Unstructured{Object: oryRule}
-				r.SetGroupVersionKind(schema.GroupVersionKind{
-					Group:   "oathkeeper.ory.sh",
-					Version: "v1alpha1",
-					Kind:    "rule",
-				})
+				}
 
 				rules = append(rules, r)
 			}
@@ -363,7 +353,7 @@ var _ = Describe("API-Gateway Controller", func() {
 
 			Expect(apiGatewayCR.Status.Conditions).To(ContainElement(MatchFields(IgnoreExtras, Fields{
 				"Type":    Equal(conditions.DeletionBlockedExistingResources.Condition().Type),
-				"Message": Equal("API Gateway deletion blocked because of the existing custom resources: rule/ory-rule-0, rule/ory-rule-1, rule/ory-rule-2, rule/ory-rule-3, rule/ory-rule-4"),
+				"Message": Equal("API Gateway deletion blocked because of the existing custom resources: default/ory-rule-0, default/ory-rule-1, default/ory-rule-2, default/ory-rule-3, default/ory-rule-4"),
 				"Status":  Equal(metav1.ConditionFalse),
 			})))
 		})
