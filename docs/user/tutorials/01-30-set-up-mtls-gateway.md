@@ -37,37 +37,42 @@ The procedure of setting up a working mTLS Gateway is described in the following
 
     For a detailed step-by-step guide on how to generate a self-signed certificate, follow [Prepare Self-Signed Root Certificate Authority and Client Certificates](01-60-security/01-61-mtls-selfsign-client-certicate.md).
 
-3. Set up Istio Gateway in mutual mode.
+<!-- tabs:start -->
+#### **Kyma Dashboard**
 
-    <!-- tabs:start -->
-    #### **Kyma Dashboard**
-    1. Go to **Istio > Gateways** and select **Create**.
-    2. Provide the following configuration details:
-      - **Name**: `kyma-mtls-gateway`
-      - Add a server with the following configuration:
-          - **Port Number**: `443`
-          - **Name**: `mtls`
-          - **Protocol**: `HTTPS`
-          - **TLS Mode**: `MUTUAL`
-          - **Credential Name**: `kyma-mtls-certs`
-          - Add a host `*.{DOMAIN_TO_EXPOSE_WORKLOADS}`. Replace `{DOMAIN_TO_EXPOSE_WORKLOADS}` with the name of your custom domain.
+3. Set up Istio Gateway in mutual mode. To do this, go to **Istio > Gateways** and select **Create**. Then, provide the following configuration details:
+    - **Name**: `kyma-mtls-gateway`
+    - Add a server with the following configuration:
+      - **Port Number**: `443`
+      - **Name**: `mtls`
+      - **Protocol**: `HTTPS`
+      - **TLS Mode**: `MUTUAL`
+      - **Credential Name**: `kyma-mtls-certs`
+      - Add a host `*.{DOMAIN_TO_EXPOSE_WORKLOADS}`. Replace `{DOMAIN_TO_EXPOSE_WORKLOADS}` with the name of your custom domain.
+    - Select **Create**.
     
     > [!NOTE]
     >  The `kyma-mtls-certs` Secret must contain a valid certificate for your custom domain.
-    3. To confirm, select **Create**.
+4. Create a Secret containing the Root CA certificate.
 
-    #### **kubectl**
-    1. Export the name of your custom domain and the Gateway as environment variables:
+    In order for the `MUTUAL` mode to work correctly, you must apply a Root CA in a cluster. This Root CA must follow the [Istio naming convention](https://istio.io/latest/docs/reference/config/networking/gateway/#ServerTLSSettings) so Istio can use it.
+    Create an Opaque Secret containing the previously generated Root CA certificate in the `istio-system` namespace.
 
+    Go to **Configuration > Secrets** and select **Create**. Provide the following configuration details.
+    - **Name**: `kyma-mtls-certs-cacert`
+      - **Type**: `Opaque`
+      - In the `Data` section, choose **Read value from file**. Select the file that contains your Root CA certificate.
+
+#### **kubectl**
+3. Export the name of your custom domain and the Gateway as environment variables. To set up Istio Gateway in mutual mode, apply the Gateway custom resource in a cluster.
+    
     ```bash
     export DOMAIN_TO_EXPOSE_WORKLOADS={DOMAIN_NAME}
     export GATEWAY=$NAMESPACE/httpbin-gateway
     ```
-    
-    2. Assuming that you have successfully created the server certificate and it is stored in the `kyma-mtls-certs` Secret within the default namespace, modify and apply the following Gateway custom resource in a cluster:
 
     > [!NOTE]
-    >  The `kyma-mtls-certs` Secret must contain a valid certificate for your custom domain.
+    >  The `kyma-mtls-certs` Secret must contain a valid certificate you created for for your custom domain within the default namespace.
 
     ```bash
     cat <<EOF | kubectl apply -f -
@@ -92,30 +97,18 @@ The procedure of setting up a working mTLS Gateway is described in the following
             - "*.$DOMAIN_TO_EXPOSE_WORKLOADS"
     EOF
     ```
-  
-    <!-- tabs:end -->
 
 4. Create a Secret containing the Root CA certificate.
 
     In order for the `MUTUAL` mode to work correctly, you must apply a Root CA in a cluster. This Root CA must follow the [Istio naming convention](https://istio.io/latest/docs/reference/config/networking/gateway/#ServerTLSSettings) so Istio can use it.
-    Create an Opaque Secret containing the previously generated Root CA certificate in the `istio-system` namespace.
+    Create an Opaque Secret containing the previously generated Root CA certificate in the `istio-system` namespace. 
 
-    <!-- tabs:start -->
-    #### **Kyma Dashboard**
-    1. Go to **Configuration > Secrets** and select **Create**. 
-    2. Provide the following configuration details.
-        - **Name**: `kyma-mtls-certs-cacert`
-        - **Type**: `Opaque`
-        - In the `Data` section, choose **Read value from file**. Select the file that contains your Root CA certificate.
-
-
-    #### **kubectl**
     Run the following command:
+    
     ```bash
     kubectl create secret generic -n istio-system kyma-mtls-certs-cacert --from-file=cacert=cacert.crt
     ```
-    <!-- tabs:end -->
-
+<!-- tabs:end -->
 
 ### Expose Workloads Behind Your mTLS Gateway
 
@@ -136,7 +129,6 @@ To expose a custom workload, create an APIRule.
       - **Handler**: `no_auth`
       - **Methods**: `GET`       
       - Add the `httpbin` Service on port `8000`.
-
 
 #### **kubectl**
 Run the following command:

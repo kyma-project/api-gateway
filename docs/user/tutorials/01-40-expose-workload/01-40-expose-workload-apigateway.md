@@ -12,6 +12,8 @@ This tutorial shows how to expose an unsecured instance of the HTTPBin Service a
 
 ## Steps
 
+### Expose Your Workload
+
 <!-- tabs:start -->
 #### **Kyma Dashboard**
 
@@ -89,6 +91,8 @@ This tutorial shows how to expose an unsecured instance of the HTTPBin Service a
 
 > [!NOTE]
 > If you don't specify a namespace for your Service, the default namespace is used.
+
+### Access Your Workload
 
 To access your HTTPBin Service, use [Postman](https://www.postman.com) or [curl](https://curl.se).
 

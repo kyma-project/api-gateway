@@ -178,7 +178,7 @@ The exposed Service requires tokens with `read` scope for `GET` requests in the 
 
 ### Access the Secured Resources
 
-Follow the instructions to call the secured Service using the tokens issued for the client you registered.
+Follow the instructions to call the secured Service using the tokens issued for the client you registered. You can use [Postman](https://www.postman.com) or [curl](https://curl.se).
 
 <!-- tabs:start -->
 #### **Postman**
