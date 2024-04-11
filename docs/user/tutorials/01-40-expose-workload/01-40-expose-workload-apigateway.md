@@ -21,8 +21,8 @@ This tutorial shows how to expose an unsecured instance of the HTTPBin Service a
 2. Provide the following configuration details.
   - **Name**: `httpbin`
   - In the `Service` section, select:
-      - **Service Name**: `httpbin`
-      - **Port**: `8000`
+    - **Service Name**: `httpbin`
+    - **Port**: `8000`
   - To fill in the `Gateway` section, use these values:
     - **Namespace** is the name of the namespace in which you deployed an instance of the HTTPBin Service. If you use a Kyma domain, select the `kyma-system` namespace.
     - **Name** is the Gateway's name. If you use a Kyma domain, select `kyma-gateway`. 

@@ -121,8 +121,8 @@ To expose a custom workload, create an APIRule.
 3. Provide the following configuration details.
     - **Name**: `httpbin-mtls`
     - In the Gateway section, select:
-        - **Namespace**: `default`
-        - **Gateway**: `kyma-mtls-gateway`
+      - **Namespace**: `default`
+      - **Gateway**: `kyma-mtls-gateway`
     - Add the host `httpbin.{DOMAIN_TO_EXPOSE_WORKLOADS}`. Replace `{DOMAIN_TO_EXPOSE_WORKLOADS}` with the name of your custom domain.
     - In the `Rules` section, select:
       - **Path**: `/.*`

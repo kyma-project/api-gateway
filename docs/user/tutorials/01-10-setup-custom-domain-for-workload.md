@@ -83,14 +83,14 @@ export SECRET={SECRET_NAME}
 
 <!-- tabs:start -->
 #### **Kyma Dashboard**
-1. Go to **Discovery and Network > Services** in the `istio-system` namespace. Select the `istio-ingressgateway` Service and copy its external IP address.
+1. In the `istio-system` namespace, go to **Discovery and Network > Services**. Select the `istio-ingressgateway` Service and copy its external IP address.
 2. In the namespace of your HTTPBin Deployment, go to **Configuration > DNS Entries**.
 3. Select **Create** and provide the details:      
     - **Name**:`dns-entry`
     - Add the annotation:
       - **dns.gardener.cloud/class**: `garden`
-      - For **DNSName**, use `*.{DOMAIN_TO_EXPOSE_WORKLOADS}`. Replace `{DOMAIN_TO_EXPOSE_WORKLOADS}` with the name of your custom domain.
-      - Paste the external IP address of the `istio-ingressgateway` Service in the **Target** field.
+    - For **DNSName**, use `*.{DOMAIN_TO_EXPOSE_WORKLOADS}`. Replace `{DOMAIN_TO_EXPOSE_WORKLOADS}` with the name of your custom domain.
+    - Paste the external IP address of the `istio-ingressgateway` Service in the **Target** field.
 4. Select **Create**.
 
 #### **kubectl**
