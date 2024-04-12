@@ -20,7 +20,6 @@ This tutorial shows how to expose and secure Services using APIGateway Controlle
     - **Name**: `httpbin`
     - **Service Name**: `httpbin`
     - **Port**: `8000`
-    - Depending on whether you're using your custom domain or a Kyma domain, follow the relevant instructions to fill in the `Gateway` section.
     - To fill in the `Gateway` section, use these values:
       - **Namespace** is the name of the namespace in which you deployed an instance of the HTTPBin Service. If you use a Kyma domain, select the `kyma-system` namespace.
       - **Name** is the Gateway's name. If you use a Kyma domain, select `kyma-gateway`. 

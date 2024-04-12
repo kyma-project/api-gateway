@@ -8,7 +8,7 @@ This tutorial shows how to set up a custom domain and prepare a certificate requ
 ## Prerequisites
 
 * [Deploy a sample HTTPBin Service](./01-00-create-workload.md).
-* If you use a cluster not managed by Gardener, install the [External DNS Management](https://github.com/gardener/external-dns-management#quick-start) and [Certificate Management](https://github.com/gardener/cert-management) components manually in a dedicated namespace. SAP BTP, Kyma runtime clusters are managed by Gardener so you are not required to install any additional components.
+* If you use a cluster not managed by Gardener, install the [External DNS Management](https://github.com/gardener/external-dns-management#quick-start) and [Certificate Management](https://github.com/gardener/cert-management) components manually in a dedicated namespace. SAP BTP, Kyma runtime clusters are managed by Gardener, so you are not required to install any additional components.
 
 ## Steps
 
@@ -51,7 +51,7 @@ export SECRET={SECRET_NAME}
 
 #### **kubectl**
 
-1. Export the following values as environment variables. Replace `PROVIDER_TYPE` with the type of your DNS cloud service provider. `DOMAIN_NAME` value specifies the name of your custom domain, for example, `mydomain.com`.
+1. Export the following values as environment variables. Replace **PROVIDER_TYPE** with the type of your DNS cloud service provider. **DOMAIN_NAME** value specifies the name of your custom domain, for example, `mydomain.com`.
 
     ```bash
     export PROVIDER_TYPE={YOUR_PROVIDER_TYPE}

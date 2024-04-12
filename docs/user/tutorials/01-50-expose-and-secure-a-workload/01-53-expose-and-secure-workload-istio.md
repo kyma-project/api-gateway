@@ -72,7 +72,7 @@ This tutorial shows how to expose and secure a workload using Istio's built-in s
 
 ### Secure Your Workload
 
-To secure the HTTPBin workload using a JWT, create a Request Authentication with Authorization Policy. Workloads with the `matchLabels` parameter specified require a JWT for all requests. Follow the instructions:
+To secure the HTTPBin workload using a JWT, create a Request Authentication with Authorization Policy. Workloads with the **matchLabels** parameter specified require a JWT for all requests. Follow the instructions:
 
 <!-- tabs:start -->
   #### **Kyma Dashboard**
@@ -95,7 +95,7 @@ To secure the HTTPBin workload using a JWT, create a Request Authentication with
   3. Replace the placeholders:
     - `{NAMESPACE}` is the name of the namespace in which you deployed the HTTPBin Service.
     - `{ISSUER}` is the issuer of your JWT.
-    - `{JWKS_URI}` is your the JSON Web Key Set URI.
+    - `{JWKS_URI}` is your JSON Web Key Set URI.
   4. Select **Create**.
   5. Go to **Istio > Authorization Policies**.
   6. Select **Create**, switch to the `YAML` tab and paste the following configuration into the editor:

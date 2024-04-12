@@ -72,7 +72,7 @@ The procedure of setting up a working mTLS Gateway is described in the following
     ```
 
     > [!NOTE]
-    >  The `kyma-mtls-certs` Secret must contain a valid certificate you created for for your custom domain within the default namespace.
+    >  The `kyma-mtls-certs` Secret must contain a valid certificate you created for your custom domain within the default namespace.
 
     ```bash
     cat <<EOF | kubectl apply -f -

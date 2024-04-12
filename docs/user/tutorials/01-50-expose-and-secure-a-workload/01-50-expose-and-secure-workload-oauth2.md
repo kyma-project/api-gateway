@@ -33,7 +33,7 @@ Follow the steps to get a token with the `read` scope:
     Replace `{CLIENT_ID}` and `{CLIENT_SECRET}` with your Client ID and Client Secret.
 4. Send a `POST` request and save your token.
 
-To get a token with `read` scope, go to the `Body` tab and replace the **grant_type** value with `client_credentials&scope=write`. Send a `POST` request and save your token.
+To get a token with the `read` scope, go to the `Body` tab and replace the **grant_type** value with `client_credentials&scope=write`. Send a `POST` request and save your token.
 
 
 #### **curl**
@@ -44,7 +44,7 @@ To get a token with `read` scope, go to the `Body` tab and replace the **grant_t
     export ENCODED_CREDENTIALS=$(echo -n "$CLIENT_ID:$CLIENT_SECRET" | base64)
     export TOKEN_ENDPOINT={YOUR_TOKEN_ENDPOINT}
     ```
-2. Export your token endpoint as environment variable:
+2. Export your token endpoint as an environment variable:
     
     ```bash
     export TOKEN_ENDPOINT={YOUR_TOKEN_ENDPOINT}
