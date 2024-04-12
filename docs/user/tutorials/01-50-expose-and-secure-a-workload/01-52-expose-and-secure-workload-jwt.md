@@ -4,30 +4,55 @@ This tutorial shows how to expose and secure Services using APIGateway Controlle
 
 ## Prerequisites
 
-* Deploy a [sample HTTPBin Service](../01-00-create-workload.md).
-* [JSON Web Token (JWT)](./01-51-get-jwt.md)
-* Set up [your custom domain](../01-10-setup-custom-domain-for-workload.md) or use a Kyma domain instead. 
-* Depending on whether you use your custom domain or a Kyma domain, export the necessary values as environment variables:
+* [Deploy a sample HTTPBin Service](../01-00-create-workload.md).
+* [Obtain a JSON Web Token (JWT)](./01-51-get-jwt.md).
+* [Set up your custom domain](../01-10-setup-custom-domain-for-workload.md) or use a Kyma domain instead.
+
+## Steps
+
+### Expose and Secure Your Workload
+
+<!-- tabs:start -->
+#### **Kyma Dashboard**
+
+1. Go to **Discovery and Network > API Rules** and select **Create**. 
+2. Provide the following configuration details:
+    - **Name**: `httpbin`
+    - **Service Name**: `httpbin`
+    - **Port**: `8000`
+    - To fill in the `Gateway` section, use these values:
+      - **Namespace** is the name of the namespace in which you deployed an instance of the HTTPBin Service. If you use a Kyma domain, select the `kyma-system` namespace.
+      - **Name** is the Gateway's name. If you use a Kyma domain, select `kyma-gateway`. 
+      - In the **Host** field, enter `httpbin.{DOMAIN_TO_EXPORT_WORKLOADS}`. Replace the placeholder with the name of your domain.
+    - Add an access strategy with the following configuration:
+      - **Handler**: `jwt`
+      - In the `jwks_uri` section, add your JSON Web Key Set URIs.
+      - **Method**: `GET`
+      - **Path**: `/.*`
+
+3. To create the APIRule, select **Create**.  
+
+#### **kubectl**
+
+1. Depending on whether you use your custom domain or a Kyma domain, export the necessary values as environment variables:
   
-  <!-- tabs:start -->
-  #### **Custom Domain**
-      
-  ```bash
-  export DOMAIN_TO_EXPOSE_WORKLOADS={DOMAIN_NAME}
-  export GATEWAY=$NAMESPACE/httpbin-gateway
-  ```
-  #### **Kyma Domain**
+    <!-- tabs:start -->
+    #### **Custom Domain**
+        
+    ```bash
+    export DOMAIN_TO_EXPOSE_WORKLOADS={DOMAIN_NAME}
+    export GATEWAY=$NAMESPACE/httpbin-gateway
+    ```
+    #### **Kyma Domain**
 
-  ```bash
-  export DOMAIN_TO_EXPOSE_WORKLOADS={KYMA_DOMAIN_NAME}
-  export GATEWAY=kyma-system/kyma-gateway
-  ```
-  <!-- tabs:end --> 
+    ```bash
+    export DOMAIN_TO_EXPOSE_WORKLOADS={KYMA_DOMAIN_NAME}
+    export GATEWAY=kyma-system/kyma-gateway
+    ```
+    <!-- tabs:end --> 
 
-## Expose, Secure, and Access Your Workload
-
-1. Expose the Service and secure it by creating an APIRule CR in your namespace. Run:
-
+2. To expose and secure the Service, create the following APIRule:
+    
     ```bash
     cat <<EOF | kubectl apply -f -
     apiVersion: gateway.kyma-project.io/v1beta1
@@ -38,7 +63,7 @@ This tutorial shows how to expose and secure Services using APIGateway Controlle
     spec:
       host: httpbin.$DOMAIN_TO_EXPOSE_WORKLOADS   
       service:
-        name: $SERVICE_NAME
+        name: httpbin
         port: 8000
       gateway: $GATEWAY
       rules:
@@ -52,14 +77,43 @@ This tutorial shows how to expose and secure Services using APIGateway Controlle
           path: /.*
     EOF
     ```
+<!-- tabs:end -->
 
-    > [!NOTE]
-    > If you are using k3d, add `httpbin.kyma.local` to the entry with k3d IP in your system's `/etc/hosts` file.
+### Access the Secured Resources
 
-2. To access the secured Service, call it using the JWT access token:
+To access your HTTPBin Service, use [Postman](https://www.postman.com) or [curl](https://curl.se).
+
+<!-- tabs:start -->
+#### **Postman**
+
+1. Try to access the secured workload without credentials.
+    1. Enter the URL `https://httpbin.{DOMAIN_TO_EXPOSE_WORKLOADS}/headers` and replace `{DOMAIN_TO_EXPOSE_WORKLOADS}` with the name of your domain. 
+    2. To call the endpoint, send a `GET` request to the HTTPBin Service. 
+
+    You get the error `401 Unauthorized`.
+
+2. Now, access the secured workload using the correct JWT.
+    1. Enter the URL `https://httpbin.{DOMAIN_TO_EXPOSE_WORKLOADS}/headers` and replace `{DOMAIN_TO_EXPOSE_WORKLOADS}` with the name of your domain. 
+    2. Go to the **Headers** tab. 
+    3. Add a new header with the key **Authorization** and the value `Bearer {ACCESS_TOKEN}`. Replace `{ACCESS_TOKEN}` with your JWT.
+    4. To call the endpoint, send a `GET` request to the HTTPBin Service. 
+
+    If successful, you get the `200 OK` response code.
+
+
+#### **curl**
+
+1. To call the endpoint, send a `GET` request to the HTTPBin Service.
 
     ```bash
-    curl -ik https://httpbin.$DOMAIN_TO_EXPOSE_WORKLOADS/headers -H "Authorization: Bearer $ACCESS_TOKEN"
+    curl -ik -X GET https://httpbin.$DOMAIN_TO_EXPOSE_WORKLOADS/headers
     ```
+    You get the error `401 Unauthorized`.
 
-    If successful, the call returns the code `200 OK` response.
+2. Now, access the secured workload using the correct JWT.
+
+    ```bash
+    curl -ik -X GET https://httpbin.$DOMAIN_TO_EXPOSE_WORKLOADS/headers --header "Authorization:Bearer $ACCESS_TOKEN"
+    ```
+    You get the `200 OK` response code.
+<!-- tabs:end -->
