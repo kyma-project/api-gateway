@@ -33,9 +33,8 @@ context("API Rule", () => {
         cy.apiRuleTypeServicePort("80");
         cy.apiRuleTypeHost(apiRuleName);
 
-        cy.clickDialogCreateButton();
+        cy.clickCreateButton();
 
-        cy.contains(apiRuleName).click();
         cy.hasStatusLabel("OK");
         cy.contains(apiRuleDefaultPath).should('exist');
         cy.contains('Rules #1', {timeout: 10000}).click();
@@ -58,10 +57,9 @@ context("API Rule", () => {
 
         cy.apiRuleSelectMethod("POST")
 
-        cy.clickDialogCreateButton();
+        cy.clickCreateButton();
 
         // Verify created API Rule
-        cy.contains(apiRuleName).click();
         cy.hasStatusLabel("OK");
         cy.contains(apiRuleDefaultPath).should('exist');
         cy.contains('Rules #1', {timeout: 10000}).click();
@@ -86,10 +84,9 @@ context("API Rule", () => {
         cy.apiRuleTypeTrustedIssuer("https://trusted.com")
         cy.contains('Trusted Issuers: HTTP protocol is not secure, consider using HTTPS').should('not.exist');
 
-        cy.clickDialogCreateButton();
+        cy.clickCreateButton();
 
         // Verify created API Rule
-        cy.contains(apiRuleName).click();
         cy.hasStatusLabel("OK");
         cy.contains(apiRuleDefaultPath).should('exist');
         cy.contains('Rules #1', {timeout: 10000}).click();
@@ -98,7 +95,6 @@ context("API Rule", () => {
         cy.contains('https://trusted.com').should('exist');
         cy.contains('Disabling custom CORS Policy is not recommended. Consider setting up CORS yourself').should('exist');
     });
-
 
     it('should update oauth2_introspection API Rule to jwt', () => {
         const updatedApiRulePath = "/test-path";
@@ -115,7 +111,7 @@ context("API Rule", () => {
         });
 
         cy.navigateToApiRule(apiRuleName, namespaceName);
-        cy.clickEditButton()
+        cy.clickEditTab()
         cy.contains(apiRuleName);
 
         cy.apiRuleTypeRulePath(updatedApiRulePath);
@@ -126,10 +122,10 @@ context("API Rule", () => {
         cy.apiRuleTypeJwksUrl("https://urls.com");
         cy.apiRuleTypeTrustedIssuer("https://trusted.com");
 
-        cy.clickDialogUpdateButton();
+        cy.clickSaveButton();
+        cy.clickViewTab();
 
         // Validate edited API Rule
-        cy.contains(apiRuleName).click();
         cy.hasStatusLabel("OK");
         cy.contains(apiRuleDefaultPath).should('exist');
         cy.contains('Rules #1', {timeout: 20000}).click();
@@ -140,7 +136,6 @@ context("API Rule", () => {
         cy.contains('https://urls.com').should('exist');
         cy.contains('https://trusted.com').should('exist');
     });
-
 
     it('should update CORS policy', () => {
 
@@ -159,9 +154,7 @@ context("API Rule", () => {
         cy.navigateToApiRuleList(namespaceName);
 
         cy.clickGenericListLink(apiRuleName);
-        cy.clickEditButton();
-
-        cy.contains(apiRuleName);
+        cy.clickEditTab();
 
         cy.get('ui5-switch[data-testid="$useCorsPolicy"]')
             .find('[role="switch"]')
@@ -193,10 +186,10 @@ context("API Rule", () => {
         // CORS Max Age
         cy.inputClearAndType('[data-testid="spec.corsPolicy.maxAge"]', "10s");
 
-        cy.clickDialogUpdateButton();
+        cy.clickSaveButton();
+        cy.clickViewTab();
 
         // Verify CORS policy
-        cy.contains(apiRuleName).should("be.visible").click();
         cy.hasStatusLabel("OK");
         cy.contains(apiRuleDefaultPath).should('exist');
 
@@ -205,6 +198,70 @@ context("API Rule", () => {
         cy.contains('CORS Allow Headers').should('exist').parent().contains('Allowed-Header').should('exist')
         cy.contains('CORS Allow Credentials').should('exist').parent().contains('true').should('exist')
         cy.contains('CORS Max Age').should('exist').parent().contains('10s').should('exist')
+    });
+
+    context("Host", () => {
+        context("when APIRule is in OK state", () => {
+            it('should build correct link in list view', () => {
+                cy.createApiRule({
+                    name: apiRuleName,
+                    namespace: namespaceName,
+                    service: serviceName,
+                    host: apiRuleName,
+                    handler: "no_auth",
+                });
+
+                cy.navigateToApiRuleList(namespaceName);
+
+                cy.hasTableRowWithLink(`https://${apiRuleName}.local.kyma.dev`);
+
+            });
+
+            it('should build correct link in details view', () => {
+                cy.createApiRule({
+                    name: apiRuleName,
+                    namespace: namespaceName,
+                    service: serviceName,
+                    host: apiRuleName,
+                    handler: "no_auth",
+                });
+
+                cy.navigateToApiRule(apiRuleName, namespaceName);
+
+                cy.apiRuleMetadataContainsHostUrl(`https://${apiRuleName}.local.kyma.dev`);
+            });
+        })
+
+        context("when APIRule is not in OK state", () => {
+            it('should have dummy link in list view', () => {
+                cy.createApiRule({
+                    name: apiRuleName,
+                    namespace: namespaceName,
+                    service: "not_existent",
+                    host: apiRuleName,
+                    handler: "no_auth",
+                });
+
+                cy.navigateToApiRuleList(namespaceName);
+
+                cy.hasTableRowWithLink(`https://${apiRuleName}`);
+
+            });
+
+            it('should have dummy link in details view', () => {
+                cy.createApiRule({
+                    name: apiRuleName,
+                    namespace: namespaceName,
+                    service: "not_existent",
+                    host: apiRuleName,
+                    handler: "no_auth",
+                });
+
+                cy.navigateToApiRule(apiRuleName, namespaceName);
+
+                cy.apiRuleMetadataContainsHostUrl(`https://${apiRuleName}`);
+            });
+        })
     });
 
 });

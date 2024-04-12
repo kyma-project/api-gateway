@@ -9,3 +9,9 @@ Cypress.Commands.add('clickGenericListLink', (resourceName: string) : void => {
         .contains('span', resourceName)
         .click();
 });
+
+Cypress.Commands.add('hasTableRowWithLink', (hrefValue: string) : void => {
+    cy.get('ui5-table-row')
+        .find('ui5-link')
+        .should('have.attr', 'href', hrefValue)
+});
