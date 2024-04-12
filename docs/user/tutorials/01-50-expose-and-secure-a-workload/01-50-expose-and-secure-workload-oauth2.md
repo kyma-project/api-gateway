@@ -23,7 +23,7 @@ Follow the steps to get a token with the `read` scope:
     - **client_id**: `{CLIENT_ID}`
       
     Replace `{CLIENT_ID}` with your client ID.
-2. Go to the `Headers` tab and add the header:
+2. Go to the **Headers** tab and add the header:
     - **Content-Type**: `application/x-www-form-urlencoded`
 3. Go to the `Authorization` tab and add the following values:
     - **Type**: Basic
@@ -185,14 +185,14 @@ Follow the instructions to call the secured Service using the tokens issued for 
 Use the token with the `read` scope to access the HTTPBin Service:
 
 1. Create a new request and enter the URL `https://httpbin.{DOMAIN_TO_EXPOSE_WORKLOADS}/status/headers`. Replace `{DOMAIN_TO_EXPOSE_WORKLOADS}` with the name of your domain. 
-2. Go to the `Headers` tab. Add a new header with the key **Authorization** and the value `Bearer {ACCESS_TOKEN_READ}`. Replace `{ACCESS_TOKEN_READ}` with the Opaque token that has the `read` scope.
+2. Go to the **Headers** tab. Add a new header with the key **Authorization** and the value `Bearer {ACCESS_TOKEN_READ}`. Replace `{ACCESS_TOKEN_READ}` with the Opaque token that has the `read` scope.
 4. To call the endpoint, send a `GET` request to the HTTPBin Service. 
 
 
 Use the token with the `write` scope to access the HTTPBin Service:
     
 1. Create a new request and enter the URL `https://httpbin.{DOMAIN_TO_EXPOSE_WORKLOADS}/status/post`. Replace `{DOMAIN_TO_EXPOSE_WORKLOADS}` with the name of your domain. 
-2. Go to the `Headers` tab. Add a new header with the key **Authorization** and the value `Bearer {ACCESS_TOKEN_WRITE}`. Replace `{ACCESS_TOKEN_WRITE}` with the Opaque token that has the `write` scope.
+2. Go to the **Headers** tab. Add a new header with the key **Authorization** and the value `Bearer {ACCESS_TOKEN_WRITE}`. Replace `{ACCESS_TOKEN_WRITE}` with the Opaque token that has the `write` scope.
 4. To call the endpoint, send a `POST` request to the HTTPBin Service. 
 
 #### **curl**

@@ -174,7 +174,7 @@ You get an SSL-related error.
 Now, access the secured workload using the correct JWT:
 1. Go to **Settings > Certificates** and select **Add Certificate**. Use your `cacert.crt` and `client.key` files.
 2. Create a new request and enter the URL `https://httpbin.{DOMAIN_TO_EXPOSE_WORKLOADS}/status/418`. Replace `{DOMAIN_TO_EXPOSE_WORKLOADS}` with the name of your domain. 
-3. Go to the `Headers` tab and add the header:
+3. Go to the **Headers** tab and add the header:
     - **Content-Type**: `application/x-www-form-urlencoded`
 4. To call the endpoint, send a `GET` request to the HTTPBin Service. 
 
