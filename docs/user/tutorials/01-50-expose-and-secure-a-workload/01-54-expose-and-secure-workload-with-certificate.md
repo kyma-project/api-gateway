@@ -4,11 +4,38 @@ This tutorial shows how to expose and secure a workload with mutual authenticati
 
 ## Prerequisites
 
-* Deploy [a sample HTTPBin Service](../01-00-create-workload.md).
-* Set up [your custom domain](../01-10-setup-custom-domain-for-workload.md).
-* Set up [a mutual TLS Gateway](../01-20-set-up-tls-gateway.md) and export the bundle certificates.
-* To learn how to create your own self-signed Client Root CA and certificate, see [this tutorial](../01-60-security/01-61-mtls-selfsign-client-certicate.md). This step is optional.
-* Export the following values as environment variables:
+* [Deploy a sample HTTPBin Service](../01-00-create-workload.md).
+* [Set up your custom domain](../01-10-setup-custom-domain-for-workload.md).
+* [Set up a mutual TLS Gateway](../01-30-set-up-mtls-gateway.md) and export the bundle certificates.
+* Optionally, you can [create your own self-signed Client Root CA and certificate](../01-60-security/01-61-mtls-selfsign-client-certicate.md).
+
+## Authorize a Client with a Certificate
+
+> [!NOTE]
+>  Create an AuthorizationPolicy to verify that the name specified in it matches the client's common name in the certificate.
+
+<!-- tabs:start -->
+#### **Kyma Dashboard**
+
+1. Go to **Istio > Virtual Services** and select **Create**. Provide the following configuration details:
+    - **Name**: `httpbin-vs`
+    - In the `HTTP` section, select **Add**. Add a route with the destination port `8000` and the host HTTPBin. Then, go to **HTTP > Headers > Request > Set** and add these headers:
+      - **X-CLIENT-SSL-CN**: `%DOWNSTREAM_PEER_SUBJECT%`
+      - **X-CLIENT-SSL-SAN**: `%DOWNSTREAM_PEER_URI_SAN%`
+      - **X-CLIENT-SSL-ISSUER**: `%DOWNSTREAM_PEER_ISSUER%`
+    - In the `Host` section, add `httpbin.{YOUR_DOMAIN}`. Replace `{YOUR_DOMAIN}` with the name of your domain.
+    - In the `Gateways` section, add the name of your mTLS Gateway.
+3. Go to **Istio > Authorization Policies** and select **Create**. Provide the following configuration details:
+    - **Name**: `test-authz-policy`
+    - **Action**: `ALLOW`
+    - Add a Rule. Go to **Rule > To > Operation > Hosts** and add the host `httpbin-vs.{DOMAIN_TO_EXPOSE_WORKLOADS}`. Replace `{DOMAIN_TO_EXPOSE_WORKLOADS}` with the name of your domain. Then, go to **Rule > When** and add:
+      - **key**: `request.headers[X-Client-Ssl-Cn]`
+      - **values**: `["O={CLIENT_CERT_ORG},CN={CLIENT_CERT_CN}"]`
+    Replace `{CLIENT_CERT_ORG}` with the name of your organization and `{CLIENT_CERT_CN}` with the common name.
+
+#### **kubectl**
+
+1. Export the following values as environment variables:
 
   ```bash
   export CLIENT_ROOT_CA_CRT_FILE={CLIENT_ROOT_CA_CRT_FILE}
@@ -18,13 +45,7 @@ This tutorial shows how to expose and secure a workload with mutual authenticati
   export CLIENT_CERT_KEY_FILE={CLIENT_CERT_KEY_FILE}
   ```
 
-## Authorize a Client with a Certificate
-
-The following instructions describe how to secure an mTLS Service. 
-> [!NOTE]
->  Create AuthorizationPolicy to check if the client's common name in the certificate matches.
-
-1. Create VirtualService that adds the X-CLIENT-SSL headers to incoming requests:
+2. Create VirtualService that adds the **X-CLIENT-SSL** headers to incoming requests:
 
     ```bash
     cat <<EOF | kubectl apply -f - 
@@ -53,7 +74,7 @@ The following instructions describe how to secure an mTLS Service.
     EOF
     ```
 
-2. Create AuthorizationPolicy that verifies if the request contains a client certificate:
+3. Create AuthorizationPolicy that verifies if the request contains a client certificate:
     
     ```bash
     cat <<EOF | kubectl apply -f -
@@ -73,16 +94,19 @@ The following instructions describe how to secure an mTLS Service.
           values: ["O=${CLIENT_CERT_ORG},CN=${CLIENT_CERT_CN}"]
     EOF
     ```
-  
-3. Call the secured endpoints of the HTTPBin Service.
+<!-- tabs:end -->
 
-    Send a `GET` request to the HTTPBin Service with the client certificates that you used to create mTLS Gateway:
+## Access the Secured Resources
 
-    ```shell
-    curl --key ${CLIENT_CERT_KEY_FILE} \
-          --cert ${CLIENT_CERT_CRT_FILE} \
-          --cacert ${CLIENT_ROOT_CA_CRT_FILE} \
-          -ik -X GET https://httpbin-vs.$DOMAIN_TO_EXPOSE_WORKLOADS/headers
-    ```
+Call the secured endpoints of the HTTPBin Service.
 
-    If successful, the call returns the code `200 OK` response. If you call the Service without the proper certificates or with invalid ones, you get the code `403` response.
+Send a `GET` request to the HTTPBin Service with the client certificates that you used to create mTLS Gateway:
+
+```bash
+curl --key ${CLIENT_CERT_KEY_FILE} \
+      --cert ${CLIENT_CERT_CRT_FILE} \
+      --cacert ${CLIENT_ROOT_CA_CRT_FILE} \
+      -ik -X GET https://httpbin-vs.$DOMAIN_TO_EXPOSE_WORKLOADS/headers
+```
+
+If successful, the call returns the `200 OK` response code. If you call the Service without the proper certificates or with invalid ones, you get the error `403 Forbidden`.

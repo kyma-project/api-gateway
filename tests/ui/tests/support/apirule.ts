@@ -11,6 +11,7 @@ export interface ApiRuleCommands {
     apiRuleSelectMethod(method: ApiRuleMethods, ruleNumber?: number): void
     apiRuleTypeJwksUrl(url: string, ruleNumber?: number): void
     apiRuleTypeTrustedIssuer(url: string, ruleNumber?: number): void
+    apiRuleMetadataContainsHostUrl(url: string): void
 }
 
 Cypress.Commands.add('apiRuleTypeName', (name: string): void => {
@@ -56,4 +57,10 @@ Cypress.Commands.add('apiRuleTypeJwksUrl', (url: string, ruleNumber: number = 0)
 Cypress.Commands.add('apiRuleTypeTrustedIssuer', (url: string, ruleNumber: number = 0): void => {
     cy.get('[aria-label="expand Trusted Issuers"]:visible', {log: false}).click();
     cy.inputClearAndType(`[data-testid="spec.rules.${ruleNumber}.accessStrategies.0.config.trusted_issuers.0"]:visible`, url);
+});
+
+Cypress.Commands.add('apiRuleMetadataContainsHostUrl', (url: string): void => {
+    cy.get('ui5-card')
+        .find('ui5-link')
+        .should('have.attr', 'href', url)
 });

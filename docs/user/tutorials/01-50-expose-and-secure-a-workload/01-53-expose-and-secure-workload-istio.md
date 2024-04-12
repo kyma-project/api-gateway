@@ -4,101 +4,190 @@ This tutorial shows how to expose and secure a workload using Istio's built-in s
 
 ## Prerequisites
 
-* Deploy a [sample HTTPBin Service](../01-00-create-workload.md).
-* [JSON Web Token (JWT)](./01-51-get-jwt.md).
-* Set up [your custom domain](../01-10-setup-custom-domain-for-workload.md) or use a Kyma domain instead. 
-* Depending on whether you use your custom domain or a Kyma domain, export the necessary values as environment variables:
-  
-  <!-- tabs:start -->
-  #### **Custom Domain**
-    
-  ```bash
-  export DOMAIN_TO_EXPOSE_WORKLOADS={DOMAIN_NAME}
-  export GATEWAY=$NAMESPACE/httpbin-gateway
-  ```
-  #### **Kyma Domain**
+* [Deploy a sample HTTPBin Service](../01-00-create-workload.md).
+* [Obtain a JSON Web Token (JWT)](./01-51-get-jwt.md).
+* [Set up your custom domain](../01-10-setup-custom-domain-for-workload.md) or use a Kyma domain instead.
+
+## Steps
+
+### Expose Your Workload
+
+<!-- tabs:start -->
+  #### **Kyma dashboard**
+
+  1. Go to **Istio > Virtual Services** and select **Create**. 
+  2. Provide the following configuration details:
+      - **Name**: `httpbin`
+      - Go to **HTTP > Matches > Match** and provide URI of the type **prefix** and value `/`.
+      - Go to **HTTP > Routes > Route > Destination**. Replace `{NAMESPACE}` with the name of the HTTPBin Service's namespace and add the following fields:
+        - **Host**: `httpbin.{NAMESPACE}.svc.cluster.local`
+        - **Port Number**: `8000`
+  3. To create the VirtualService, select **Create**.
+
+  #### **kubectl**
+
+  1. Depending on whether you use your custom domain or a Kyma domain, export the necessary values as environment variables:
+      
+      <!-- tabs:start -->
+      #### **Custom Domain**
+        
+      ```bash
+      export DOMAIN_TO_EXPOSE_WORKLOADS={DOMAIN_NAME}
+      export GATEWAY=$NAMESPACE/httpbin-gateway
+      ```
+      #### **Kyma Domain**
+
+      ```bash
+      export DOMAIN_TO_EXPOSE_WORKLOADS={KYMA_DOMAIN_NAME}
+      export GATEWAY=kyma-system/kyma-gateway
+      ```
+      <!-- tabs:end -->  
+
+  2. To expose your workload, create a VirtualService:
+
+      ```bash
+      cat <<EOF | kubectl apply -f -
+      apiVersion: networking.istio.io/v1alpha3
+      kind: VirtualService
+      metadata:
+        name: httpbin
+        namespace: $NAMESPACE
+      spec:
+        hosts:
+        - "httpbin.$DOMAIN_TO_EXPOSE_WORKLOADS"
+        gateways:
+        - $GATEWAY
+        http:
+        - match:
+          - uri:
+              prefix: /
+          route:
+          - destination:
+              port:
+                number: 8000
+              host: httpbin.$NAMESPACE.svc.cluster.local
+      EOF
+      ```
+<!-- tabs:end --> 
+
+### Secure Your Workload
+
+To secure the HTTPBin workload using a JWT, create a Request Authentication with Authorization Policy. Workloads with the **matchLabels** parameter specified require a JWT for all requests. Follow the instructions:
+
+<!-- tabs:start -->
+  #### **Kyma Dashboard**
+  1. Go to **Configuration > Custom Resources > RequestAuthentications**.
+  2. Select **Create** and paste the following configuration into the editor:
+      ```yaml
+      apiVersion: security.istio.io/v1beta1
+      kind: RequestAuthentication
+      metadata:
+        name: jwt-auth-httpbin
+        namespace: {NAMESPACE}
+      spec:
+        selector:
+          matchLabels:
+            app: httpbin
+        jwtRules:
+        - issuer: {ISSUER}
+          jwksUri: {JWKS_URI}
+      ```
+  3. Replace the placeholders:
+    - `{NAMESPACE}` is the name of the namespace in which you deployed the HTTPBin Service.
+    - `{ISSUER}` is the issuer of your JWT.
+    - `{JWKS_URI}` is your JSON Web Key Set URI.
+  4. Select **Create**.
+  5. Go to **Istio > Authorization Policies**.
+  6. Select **Create**, switch to the `YAML` tab and paste the following configuration into the editor:
+      ```yaml
+      apiVersion: security.istio.io/v1beta1
+        kind: AuthorizationPolicy
+        metadata:
+          name: httpbin
+          namespace: {NAMESPACE}
+        spec:
+          selector:
+            matchLabels:
+              app: httpbin
+          rules:
+          - from:
+            - source:
+                requestPrincipals: ["*"]
+      EOF
+      ```
+  7. Replace `{NAMESPACE}` with the name of the namespace in which you deployed the HTTPBin Service.
+  8. Select **Create**.
+
+  #### **kubectl**
+
+  Create the Request Authentication and Authorization Policy resources:
 
   ```bash
-  export DOMAIN_TO_EXPOSE_WORKLOADS={KYMA_DOMAIN_NAME}
-  export GATEWAY=kyma-system/kyma-gateway
+  cat <<EOF | kubectl apply -f -
+  apiVersion: security.istio.io/v1beta1
+  kind: RequestAuthentication
+  metadata:
+    name: jwt-auth-httpbin
+    namespace: $NAMESPACE
+  spec:
+    selector:
+      matchLabels:
+        app: httpbin
+    jwtRules:
+    - issuer: $ISSUER
+      jwksUri: $JWKS_URI
+  ---
+  apiVersion: security.istio.io/v1beta1
+  kind: AuthorizationPolicy
+  metadata:
+    name: httpbin
+    namespace: $NAMESPACE
+  spec:
+    selector:
+      matchLabels:
+        app: httpbin
+    rules:
+    - from:
+      - source:
+          requestPrincipals: ["*"]
+  EOF
   ```
-  <!-- tabs:end -->  
+<!-- tabs:end -->
+### Access the Secured Resources
 
-## Expose Your Workload Using a VirtualService
+To access your HTTPBin Service, use [Postman](https://www.postman.com) or [curl](https://curl.se).
 
-Follow the instructions in the tabs to expose the HTTPBin workload using a VirtualService.
+<!-- tabs:start -->
+#### **Postman**
 
-1. Create a VirtualService:
+1. Try to access the secured workload without credentials.
+    1. Enter the URL `https://httpbin.{DOMAIN_TO_EXPOSE_WORKLOADS}/status/200` and replace `{DOMAIN_TO_EXPOSE_WORKLOADS}` with the name of your domain. 
+    2. To call the endpoint, send a `GET` request to the HTTPBin Service. 
 
-    ```shell
-    cat <<EOF | kubectl apply -f -
-    apiVersion: networking.istio.io/v1alpha3
-    kind: VirtualService
-    metadata:
-      name: httpbin
-      namespace: $NAMESPACE
-    spec:
-      hosts:
-      - "httpbin.$DOMAIN_TO_EXPOSE_WORKLOADS"
-      gateways:
-      - $GATEWAY
-      http:
-      - match:
-        - uri:
-            prefix: /
-        route:
-        - destination:
-            port:
-              number: 8000
-            host: httpbin.$NAMESPACE.svc.cluster.local
-    EOF
-    ```
+    You get the error `403 Forbidden`.
 
-## Secure a Workload Using a JWT
+2. Now, access the secured workload using the correct JWT.
+    1. Enter the URL `https://httpbin.{DOMAIN_TO_EXPOSE_WORKLOADS}/status/200` and replace `{DOMAIN_TO_EXPOSE_WORKLOADS}` with the name of your domain. 
+    2. Go to the **Headers** tab. 
+    3. Add a new header with the key `Authorization` and the value `Bearer {ACCESS_TOKEN}`. Replace `{ACCESS_TOKEN}` with your JWT.
+    4. To call the endpoint, send a `GET` request to the HTTPBin Service. 
 
-To secure the HTTPBin workload using a JWT, create a Request Authentication with Authorization Policy. Workloads with the `matchLabels` parameter specified require a JWT for all requests. Follow the instructions:
+    If successful, you get the `200 OK` response code.
 
-1. Create the Request Authentication and Authorization Policy resources:
 
-    ```shell
-    cat <<EOF | kubectl apply -f -
-    apiVersion: security.istio.io/v1beta1
-    kind: RequestAuthentication
-    metadata:
-      name: jwt-auth-httpbin
-      namespace: $NAMESPACE
-    spec:
-      selector:
-        matchLabels:
-          app: httpbin
-      jwtRules:
-      - issuer: $ISSUER
-        jwksUri: $JWKS_URI
-    ---
-    apiVersion: security.istio.io/v1beta1
-    kind: AuthorizationPolicy
-    metadata:
-      name: httpbin
-      namespace: $NAMESPACE
-    spec:
-      selector:
-        matchLabels:
-          app: httpbin
-      rules:
-      - from:
-        - source:
-            requestPrincipals: ["*"]
-    EOF
-    ```
+#### **curl**
 
-2. Access the workload you secured. You get the code `403 Forbidden` error.
+1. To call the endpoint, send a `GET` request to the HTTPBin Service.
 
-    ```shell
+    ```bash
     curl -ik -X GET https://httpbin.$DOMAIN_TO_EXPOSE_WORKLOADS/status/200
     ```
+    You get the code `401 Unauthorized` error.
 
-3. Now, access the secured workload using the correct JWT. You get the code `200 OK` response.
+2. Now, access the secured workload using the correct JWT.
 
-    ```shell
+    ```bash
     curl -ik -X GET https://httpbin.$DOMAIN_TO_EXPOSE_WORKLOADS/status/200 --header "Authorization:Bearer $ACCESS_TOKEN"
     ```
+    You get the `200 OK` response code.
+<!-- tabs:end -->
