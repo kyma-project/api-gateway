@@ -13,29 +13,29 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package v1beta1
+package v1beta2
 
 import (
 	"istio.io/api/networking/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	runtime "k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
-// Status code describing APIRule.
+// StatusCode describing APIRule.
 type StatusCode string
 
 const (
-	//StatusOK is set when the reconciliation finished succefully
+	//StatusOK is set when the reconciliation finished successfully
 	StatusOK StatusCode = "OK"
-	//StatusSkipped is set when reconcilation of the APIRule component was skipped
+	//StatusSkipped is set when reconciliation of the APIRule component was skipped
 	StatusSkipped StatusCode = "SKIPPED"
 	//StatusError is set when an error happened during reconciliation of the APIRule
 	StatusError StatusCode = "ERROR"
-	//StatusWarning is set if an user action is required
+	//StatusWarning is set if a user action is required
 	StatusWarning StatusCode = "WARNING"
 )
 
-// Defines the desired state of ApiRule.
+// APIRuleSpec defines the desired state of ApiRule.
 type APIRuleSpec struct {
 	// Specifies the URL of the exposed service.
 	// +kubebuilder:validation:MinLength=3
@@ -58,7 +58,7 @@ type APIRuleSpec struct {
 	Timeout *Timeout `json:"timeout,omitempty"`
 }
 
-// Describes the observed state of ApiRule.
+// APIRuleStatus describes the observed state of ApiRule.
 type APIRuleStatus struct {
 	LastProcessedTime    *metav1.Time           `json:"lastProcessedTime,omitempty"`
 	ObservedGeneration   int64                  `json:"observedGeneration,omitempty"`
@@ -74,7 +74,6 @@ type APIRuleStatus struct {
 
 // APIRule is the Schema for ApiRule APIs.
 // +kubebuilder:storageversion
-// +kubebuilder:deprecatedversion:warning=v1beta1 is deprecated
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Status",type="string",JSONPath=".status.APIRuleStatus.code"
@@ -125,10 +124,15 @@ type Rule struct {
 	// Represents the list of allowed HTTP request methods available for the **spec.rules.path**.
 	// +kubebuilder:validation:MinItems=1
 	Methods []HttpMethod `json:"methods"`
-	// Specifies the list of access strategies.
-	// All strategies listed in [Oathkeeper documentation](https://www.ory.sh/docs/oathkeeper/pipeline/authn) are supported.
-	// +kubebuilder:validation:MinItems=1
-	AccessStrategies []*Authenticator `json:"accessStrategies"`
+	// Disables authorization when set to true.
+	// +optional
+	NoAuth *bool `json:"noAuth"`
+	// Specifies the list of external authorizers.
+	// +optional
+	ExtAuths []*ExtAuth `json:"extAuths,omitempty"`
+	// Specifies the Istio JWT access strategy.
+	// +optional
+	Jwt *JwtConfig `json:"jwt,omitempty"`
 	// Specifies the list of [Ory Oathkeeper](https://www.ory.sh/docs/oathkeeper/pipeline/mutator) mutators.
 	// +optional
 	Mutators []*Mutator `json:"mutators,omitempty"`
@@ -140,7 +144,12 @@ type Rule struct {
 // +kubebuilder:validation:Enum=GET;HEAD;POST;PUT;DELETE;CONNECT;OPTIONS;TRACE;PATCH
 type HttpMethod string
 
-// Describes the status of APIRule.
+type ExtAuth struct {
+	// Specifies the name of the external authorizer.
+	Name string `json:"name"`
+}
+
+// APIRuleResourceStatus describes the status of APIRule.
 type APIRuleResourceStatus struct {
 	Code        StatusCode `json:"code,omitempty"`
 	Description string     `json:"desc,omitempty"`
@@ -150,27 +159,17 @@ func init() {
 	SchemeBuilder.Register(&APIRule{}, &APIRuleList{})
 }
 
-// Represents a handler that authenticates provided credentials. See the corresponding type in the oathkeeper-maester project.
-type Authenticator struct {
-	*Handler `json:",inline"`
-}
-
-// Mutator represents a handler that transforms the HTTP request before forwarding it. See the corresponding in the oathkeeper-maester project.
+// Mutator is a configuration for Istio mutators. It is used to enrich an incoming request with information.
 type Mutator struct {
-	*Handler `json:",inline"`
-}
-
-// Handler provides configuration for different Oathkeeper objects. It is used to either validate a request (Authenticator, Authorizer) or modify it (Mutator). See the corresponding type in the oathkeeper-maester project.
-type Handler struct {
-	// Specifies the name of the handler.
-	Name string `json:"handler"`
-	// Configures the handler. Configuration keys vary per handler.
+	// Specifies the name of the mutator.
+	Handler string `json:"handler"`
+	// Configures the mutator. Configuration keys vary per mutator.
 	// +kubebuilder:validation:Type=object
 	// +kubebuilder:pruning:PreserveUnknownFields
 	Config *runtime.RawExtension `json:"config,omitempty"`
 }
 
-// JwtConfig is an array of JwtAuthorization type used by raw field Config of Istio jwt Handler
+// JwtConfig is the configuration for the Istio JWT authentication
 type JwtConfig struct {
 	Authentications []*JwtAuthentication `json:"authentications,omitempty"`
 	Authorizations  []*JwtAuthorization  `json:"authorizations,omitempty"`
