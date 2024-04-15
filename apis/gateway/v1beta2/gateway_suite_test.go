@@ -12,12 +12,12 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 )
 
-func TestGatewayV1beta1(t *testing.T) {
+func TestGatewayV1beta2(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Gateway v1beta1 Suite")
+	RunSpecs(t, "Gateway v1beta2 Suite")
 }
 
-const reportFilename = "junit-gateway-v1beta1.xml"
+const reportFilename = "junit-gateway-v1beta2.xml"
 
 var _ = ReportAfterSuite("custom reporter", func(report types.Report) {
 	logger := zap.New(zap.UseDevMode(true), zap.WriteTo(GinkgoWriter))

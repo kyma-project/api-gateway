@@ -57,22 +57,13 @@ func ConvertHttpMethodsToStrings(methods []HttpMethod) []string {
 }
 
 func (r *Rule) ContainsAccessStrategyJwt() bool {
-	if r.Jwt != nil {
-		return true
-	}
-	return false
+	return r.Jwt != nil
 }
 
 func (r *Rule) ContainsAccessStrategyExtAuths() bool {
-	if r.ExtAuths != nil {
-		return true
-	}
-	return false
+	return r.ExtAuths != nil
 }
 
 func (r *Rule) ContainsNoAuth() bool {
-	if r.NoAuth != nil {
-		return true
-	}
-	return false
+	return r.NoAuth != nil
 }
