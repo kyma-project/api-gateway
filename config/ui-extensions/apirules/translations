@@ -23,7 +23,7 @@ en:
   corsMaxAge: CORS Max Age
   host: Host
   inputInfo.corsPolicy: Defines what CORS headers will be sent on CORS preflight and response
-  inputInfo.gateway: Gateway structure, '{GATEWAY}.{NAMESPACE}.svc.cluster.local'
+  inputInfo.gateway: Gateway structure, '{NAMESPACE}/{NAME}'
   inputInfo.path: "Path can contain alphanumeric characters and '/', '.', '*', '?', '!', '-', '(', and ')'."
   inputInfo.jwks_urls: "JWKS URLs must start with 'https://', 'http://' or 'file://'. HTTP protocol is not recommended."
   inputInfo.trusted_issuers: "Trusted Issuers must start with 'https://', 'http://' or 'file://'. HTTP protocol is not recommended."

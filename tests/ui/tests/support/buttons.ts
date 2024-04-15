@@ -1,10 +1,10 @@
-import Chainable = Cypress.Chainable;
+
 
 export interface ButtonCommands {
     clickCreateButton(): void
-    clickEditButton(): void
-    clickDialogCreateButton(): void
-    clickDialogUpdateButton(): void
+    clickEditTab(): void
+    clickViewTab(): void
+    clickSaveButton(): void
 }
 
 Cypress.Commands.add('clickCreateButton', (): void => {
@@ -13,22 +13,22 @@ Cypress.Commands.add('clickCreateButton', (): void => {
         .click();
 });
 
-Cypress.Commands.add('clickDialogCreateButton', (): void => {
-    cy.get('ui5-dialog')
-        .contains('ui5-button', 'Create')
+Cypress.Commands.add('clickEditTab', (): void => {
+    cy.get('ui5-tabcontainer')
+        .contains('span', 'Edit')
         .should('be.visible')
         .click();
 });
 
-Cypress.Commands.add('clickEditButton', (): void => {
-    cy.contains('ui5-button', 'Edit')
+Cypress.Commands.add('clickViewTab', (): void => {
+    cy.get('ui5-tabcontainer')
+        .contains('span', 'View')
         .should('be.visible')
         .click();
 });
 
-Cypress.Commands.add('clickDialogUpdateButton', (): void => {
-    cy.get('ui5-dialog')
-        .contains('ui5-button', 'Update')
-        .should('be.visible')
+Cypress.Commands.add('clickSaveButton', (): void => {
+    cy.get('.edit-form')
+        .contains('ui5-button:visible', 'Save')
         .click();
 });

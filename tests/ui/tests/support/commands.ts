@@ -13,6 +13,7 @@ declare global {
             filterWithNoValue(): Chainable<JQuery>
             inputClearAndType(selector: string, newValue: string): void
             hasStatusLabel(status: Status): void
+            hasTableRowWithLink(hrefValue: string): void
         }
     }
 }
