@@ -73,7 +73,6 @@ type APIRuleStatus struct {
 }
 
 // APIRule is the Schema for ApiRule APIs.
-// +kubebuilder:storageversion
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Status",type="string",JSONPath=".status.APIRuleStatus.code"

@@ -154,9 +154,7 @@ var _ = BeforeSuite(func(specCtx SpecContext) {
 		ErrorReconciliationPeriod: 2,
 	}
 
-	apiReconciler, err := gateway.NewApiRuleReconciler(mgr, reconcilerConfig)
-	Expect(err).NotTo(HaveOccurred())
-
+	apiReconciler := gateway.NewApiRuleReconciler(mgr, reconcilerConfig)
 	rateLimiterCfg := controllers.RateLimiterConfig{
 		Burst:            200,
 		Frequency:        30,

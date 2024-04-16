@@ -24,11 +24,13 @@ import (
 	"github.com/kyma-project/api-gateway/internal/reconciliations/oathkeeper"
 	"github.com/kyma-project/api-gateway/internal/version"
 
-	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"github.com/kyma-project/api-gateway/controllers"
+	"github.com/kyma-project/api-gateway/controllers/certificate"
 	"github.com/kyma-project/api-gateway/controllers/gateway"
-	operatorcontrollers "github.com/kyma-project/api-gateway/controllers/operator"
-	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	"github.com/kyma-project/api-gateway/controllers/operator"
+
+	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
+	gatewayv1beta2 "github.com/kyma-project/api-gateway/apis/gateway/v1beta2"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
@@ -42,6 +44,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
+	"sigs.k8s.io/controller-runtime/pkg/webhook"
+
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 
 	certv1alpha1 "github.com/gardener/cert-management/pkg/apis/cert/v1alpha1"
 	dnsv1alpha1 "github.com/gardener/external-dns-management/pkg/apis/dns/v1alpha1"
@@ -58,20 +63,22 @@ var (
 )
 
 type FlagVar struct {
-	metricsAddr                 string
-	enableLeaderElection        bool
-	probeAddr                   string
-	rateLimiterFailureBaseDelay time.Duration
-	rateLimiterFailureMaxDelay  time.Duration
-	rateLimiterFrequency        int
-	rateLimiterBurst            int
-	reconciliationInterval      time.Duration
+	metricsAddr                       string
+	enableLeaderElection              bool
+	probeAddr                         string
+	rateLimiterFailureBaseDelay       time.Duration
+	rateLimiterFailureMaxDelay        time.Duration
+	rateLimiterFrequency              int
+	rateLimiterBurst                  int
+	reconciliationInterval            time.Duration
+	certificateReconciliationInterval time.Duration
 }
 
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 
 	utilruntime.Must(gatewayv1beta1.AddToScheme(scheme))
+	utilruntime.Must(gatewayv1beta2.AddToScheme(scheme))
 	utilruntime.Must(dnsv1alpha1.AddToScheme(scheme))
 	utilruntime.Must(certv1alpha1.AddToScheme(scheme))
 
@@ -85,11 +92,12 @@ func init() {
 
 func defineFlagVar() *FlagVar {
 	flagVar := new(FlagVar)
-	flag.StringVar(&flagVar.metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
-	flag.StringVar(&flagVar.probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
+	flag.StringVar(&flagVar.metricsAddr, "metrics-bind-address", ":8080",
+		"The address the metric endpoint binds to.")
+	flag.StringVar(&flagVar.probeAddr, "health-probe-bind-address", ":8081",
+		"The address the probe endpoint binds to.")
 	flag.BoolVar(&flagVar.enableLeaderElection, "leader-elect", false,
-		"Enable leader election for controller manager. "+
-			"Enabling this will ensure there is only one active controller manager.")
+		"Enable leader election for controller manager. Enabling this will ensure there is only one active controller manager.")
 	flag.IntVar(&flagVar.rateLimiterBurst, "rate-limiter-burst", controllers.RateLimiterBurst,
 		"Indicates the burst value for the bucket rate limiter.")
 	flag.IntVar(&flagVar.rateLimiterFrequency, "rate-limiter-frequency", controllers.RateLimiterFrequency,
@@ -98,7 +106,10 @@ func defineFlagVar() *FlagVar {
 		"Indicates the failure base delay for rate limiter.")
 	flag.DurationVar(&flagVar.rateLimiterFailureMaxDelay, "failure-max-delay", controllers.RateLimiterFailureMaxDelay,
 		"Indicates the failure max delay for rate limiter. .")
-	flag.DurationVar(&flagVar.reconciliationInterval, "reconciliation-interval", 1*time.Hour, "Indicates the time based reconciliation interval of APIRule.")
+	flag.DurationVar(&flagVar.reconciliationInterval, "reconciliation-interval", 1*time.Hour,
+		"Indicates the time based reconciliation interval of APIRule.")
+	flag.DurationVar(&flagVar.certificateReconciliationInterval, "certificate-reconciliation-interval", 14*24*time.Hour,
+		"Indicates the time based reconciliation interval of certificate needed for conversion webhook.")
 
 	return flagVar
 }
@@ -121,6 +132,10 @@ func main() {
 		HealthProbeBindAddress: flagVar.probeAddr,
 		LeaderElection:         flagVar.enableLeaderElection,
 		LeaderElectionID:       "69358922.kyma-project.io",
+		WebhookServer: webhook.NewServer(webhook.Options{
+			Port:    9443,
+			CertDir: "/tmp/webhook-certificate",
+		}),
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")
@@ -144,18 +159,23 @@ func main() {
 		FailureMaxDelay:  flagVar.rateLimiterFailureMaxDelay,
 	}
 
-	apiRuleReconciler, err := gateway.NewApiRuleReconciler(mgr, config)
-	if err != nil {
-		setupLog.Error(err, "unable to create APIRule reconciler", "controller", "APIRule")
-		os.Exit(1)
-	}
-	if err = apiRuleReconciler.SetupWithManager(mgr, rateLimiterCfg); err != nil {
+	if err := gateway.NewApiRuleReconciler(mgr, config).SetupWithManager(mgr, rateLimiterCfg); err != nil {
 		setupLog.Error(err, "unable to setup controller", "controller", "APIRule")
 		os.Exit(1)
 	}
 
-	if err = operatorcontrollers.NewAPIGatewayReconciler(mgr, oathkeeper.NewReconciler()).SetupWithManager(mgr, rateLimiterCfg); err != nil {
+	if err = operator.NewAPIGatewayReconciler(mgr, oathkeeper.NewReconciler()).SetupWithManager(mgr, rateLimiterCfg); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "APIGateway")
+		os.Exit(1)
+	}
+
+	if err = certificate.NewCertificateReconciler(mgr, flagVar.certificateReconciliationInterval).SetupWithManager(mgr, rateLimiterCfg); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "Certificate")
+		os.Exit(1)
+	}
+
+	if err = (&gatewayv1beta1.APIRule{}).SetupWebhookWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create webhook", "webhook", "APIRule")
 		os.Exit(1)
 	}
 	//+kubebuilder:scaffold:builder

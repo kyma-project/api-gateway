@@ -1,16 +1,16 @@
 package gateway
 
 import (
+	"strings"
+	"time"
+
 	"github.com/go-logr/logr"
 	"github.com/kyma-project/api-gateway/internal/helpers"
 	"github.com/kyma-project/api-gateway/internal/processing"
 	"istio.io/api/networking/v1beta1"
 	"k8s.io/apimachinery/pkg/runtime"
-	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
-	"strings"
-	"time"
 )
 
 // APIRuleReconciler reconciles a APIRule object
@@ -32,10 +32,10 @@ type ApiRuleReconcilerConfiguration struct {
 	ErrorReconciliationPeriod                            uint
 }
 
-func NewApiRuleReconciler(mgr manager.Manager, config ApiRuleReconcilerConfiguration) (*APIRuleReconciler, error) {
+func NewApiRuleReconciler(mgr manager.Manager, config ApiRuleReconcilerConfiguration) *APIRuleReconciler {
 	return &APIRuleReconciler{
 		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("apirule-controller"),
+		Log:    mgr.GetLogger().WithName("apirule-controller"),
 		ReconciliationConfig: processing.ReconciliationConfig{
 			OathkeeperSvc:     config.OathkeeperSvcAddr,
 			OathkeeperSvcPort: uint32(config.OathkeeperSvcPort),
@@ -49,7 +49,7 @@ func NewApiRuleReconciler(mgr manager.Manager, config ApiRuleReconcilerConfigura
 		Config:                 &helpers.Config{},
 		ReconcilePeriod:        time.Duration(config.ReconciliationPeriod) * time.Second,
 		OnErrorReconcilePeriod: time.Duration(config.ErrorReconciliationPeriod) * time.Second,
-	}, nil
+	}
 }
 
 func getList(raw string) []string {
