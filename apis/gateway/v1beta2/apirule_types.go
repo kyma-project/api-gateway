@@ -41,7 +41,7 @@ type APIRuleSpec struct {
 	// +kubebuilder:validation:MinLength=3
 	// +kubebuilder:validation:MaxLength=256
 	// +kubebuilder:validation:Pattern=^([a-zA-Z0-9][a-zA-Z0-9-_]*\.)*[a-zA-Z0-9]*[a-zA-Z0-9-_]*[[a-zA-Z0-9]+$
-	Host *string `json:"host"`
+	Hosts []*string `json:"hosts"`
 	// Describes the service to expose.
 	// +optional
 	Service *Service `json:"service,omitempty"`
