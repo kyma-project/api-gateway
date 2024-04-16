@@ -12,6 +12,9 @@ func (src *APIRule) ConvertTo(dstRaw conversion.Hub) error {
 	dst := dstRaw.(*v1beta1.APIRule)
 
 	annotations := dst.GetAnnotations()
+	if annotations == nil {
+		annotations = make(map[string]string)
+	}
 	annotations["gateway.kyma-project.io/converted"] = "true"
 	dst.SetAnnotations(annotations)
 
