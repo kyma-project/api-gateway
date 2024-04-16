@@ -11,6 +11,10 @@ import (
 func (src *APIRule) ConvertTo(dstRaw conversion.Hub) error {
 	dst := dstRaw.(*v1beta1.APIRule)
 
+	annotations := dst.GetAnnotations()
+	annotations["gateway.kyma-project.io/converted"] = "true"
+	dst.SetAnnotations(annotations)
+
 	specData, err := json.Marshal(src.Spec)
 	if err != nil {
 		return err
