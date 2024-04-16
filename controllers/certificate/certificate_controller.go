@@ -11,15 +11,14 @@ import (
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 
 	"github.com/kyma-project/api-gateway/controllers"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
-	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/util/cert"
@@ -28,32 +27,15 @@ import (
 )
 
 const (
-	certName       = "tls.crt"
-	keyName        = "tls.key"
-	serviceName    = "api-gateway-webhook-service"
+	certName = "tls.crt"
+	keyName  = "tls.key"
+
+	secretNamespace = "kyma-system"
+	secretName      = "api-gateway-webhook-certificate"
+	serviceName     = "api-gateway-webhook-service"
+
 	APIRuleCRDName = "apirules.gateway.kyma-project.io"
 )
-
-func namespaceFunction(namespace string) bool {
-	return namespace == "kyma-system"
-}
-
-func namespacePredicate() predicate.Predicate {
-	return predicate.Funcs{
-		CreateFunc: func(e event.CreateEvent) bool {
-			return namespaceFunction(e.Object.GetNamespace())
-		},
-		DeleteFunc: func(e event.DeleteEvent) bool {
-			return namespaceFunction(e.Object.GetNamespace())
-		},
-		UpdateFunc: func(e event.UpdateEvent) bool {
-			return namespaceFunction(e.ObjectNew.GetNamespace())
-		},
-		GenericFunc: func(e event.GenericEvent) bool {
-			return namespaceFunction(e.Object.GetNamespace())
-		},
-	}
-}
 
 func NewCertificateReconciler(mgr manager.Manager, reconciliationInterval time.Duration) *CertificateReconciler {
 	return &CertificateReconciler{
@@ -73,9 +55,8 @@ func (r *CertificateReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		return ctrl.Result{}, nil
 	}
 
-	r.log.Info("Reconciling Secret", "name", certificateSecret.Name)
-
-	err = setupCertificate(ctx, r.Client, certificateSecret)
+	r.log.Info("Reconciling Webhook Secret", "name", certificateSecret.Name)
+	err = reconcileSecret(ctx, r.Client, certificateSecret)
 	if err != nil {
 		return ctrl.Result{RequeueAfter: 1 * time.Minute}, err
 	}
@@ -85,34 +66,17 @@ func (r *CertificateReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 
 // +kubebuilder:rbac:groups="",resources=secrets,verbs=get;list;watch;create;update;patch;delete
 func (r *CertificateReconciler) SetupWithManager(mgr ctrl.Manager, c controllers.RateLimiterConfig) error {
-	labelSelectorPredicate, err := predicate.LabelSelectorPredicate(metav1.LabelSelector{
-		MatchLabels: map[string]string{"operator.kyma-project.io/certificate": "api-gateway"},
-	})
-
-	if err != nil {
-		return err
-	}
-
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&corev1.Secret{}).
-		WithEventFilter(labelSelectorPredicate).
-		WithEventFilter(namespacePredicate()).
+		WithEventFilter(predicate.NewPredicateFuncs(func(o client.Object) bool { return o.GetName() == secretName && o.GetNamespace() == secretNamespace })).
 		WithOptions(controller.Options{
 			RateLimiter: controllers.NewRateLimiter(c),
 		}).
 		Complete(r)
 }
 
-func setupCertificate(ctx context.Context, client ctrlclient.Client, secret *corev1.Secret) error {
-	if err := ensureWebhookCertificate(ctx, client, secret, serviceName); err != nil {
-		return fmt.Errorf("failed to ensure webhook secret: %s", err.Error())
-	}
-
-	return nil
-}
-
-func createCABundle(webhookNamespace string, serviceName string) ([]byte, []byte, error) {
-	cert, key, err := createCert(webhookNamespace, serviceName)
+func createCABundle(webhookNamespace string) ([]byte, []byte, error) {
+	cert, key, err := createCert(webhookNamespace)
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "failed to crete cert")
 	}
@@ -138,13 +102,6 @@ func addCertToConversionWebhook(ctx context.Context, client ctrlclient.Client, c
 	return nil
 }
 
-func ensureWebhookCertificate(ctx context.Context, client ctrlclient.Client, secret *corev1.Secret, serviceName string) error {
-	if err := updateSecret(ctx, client, secret, serviceName); err != nil {
-		return errors.Wrap(err, "failed to update secret")
-	}
-	return nil
-}
-
 func containsConversionWebhookClientConfig(crd *apiextensionsv1.CustomResourceDefinition) (bool, string) {
 	if crd.Spec.Conversion == nil {
 		return false, "conversion not found in APIRule CRD"
@@ -160,8 +117,8 @@ func containsConversionWebhookClientConfig(crd *apiextensionsv1.CustomResourceDe
 	return true, ""
 }
 
-func createCert(webhookNamespace string, serviceName string) ([]byte, []byte, error) {
-	cert, key, err := buildCert(webhookNamespace, serviceName)
+func createCert(webhookNamespace string) ([]byte, []byte, error) {
+	cert, key, err := buildCert(webhookNamespace)
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "failed to build certificate")
 	}
@@ -225,7 +182,7 @@ func hasRequiredKeys(data map[string][]byte) bool {
 	return true
 }
 
-func buildCert(namespace, serviceName string) (cert []byte, key []byte, err error) {
+func buildCert(namespace string) (cert []byte, key []byte, err error) {
 	cert, key, err = generateWebhookCertificates(serviceName, namespace)
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "failed to generate webhook certificates")
@@ -234,20 +191,20 @@ func buildCert(namespace, serviceName string) (cert []byte, key []byte, err erro
 	return cert, key, nil
 }
 
-func updateSecret(ctx context.Context, client ctrlclient.Client, secret *corev1.Secret, serviceName string) error {
+func reconcileSecret(ctx context.Context, client ctrlclient.Client, secret *corev1.Secret) error {
 	valid, _ := isValidSecret(secret)
 	if valid {
 		return nil
 	}
 
-	cert, key, err := createCABundle(secret.Namespace, serviceName)
+	cert, key, err := createCABundle(secret.Namespace)
 	if err != nil {
 		return errors.Wrap(err, "failed to ensure webhook secret")
 	}
 
 	newSecret := buildSecret(secret.Name, secret.Namespace, cert, key)
-
 	secret.Data = newSecret.Data
+
 	if err := client.Update(ctx, secret); err != nil {
 		return errors.Wrap(err, "failed to update secret")
 	}
@@ -255,6 +212,7 @@ func updateSecret(ctx context.Context, client ctrlclient.Client, secret *corev1.
 	if err := addCertToConversionWebhook(ctx, client, cert); err != nil {
 		return errors.Wrap(err, "while adding CaBundle to Conversion Webhook for function CRD")
 	}
+
 	return nil
 }
 
