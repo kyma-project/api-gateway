@@ -11,13 +11,6 @@ import (
 func (src *APIRule) ConvertTo(dstRaw conversion.Hub) error {
 	dst := dstRaw.(*v1beta1.APIRule)
 
-	annotations := dst.GetAnnotations()
-	if annotations == nil {
-		annotations = make(map[string]string)
-	}
-	annotations["gateway.kyma-project.io/converted"] = "true"
-	dst.SetAnnotations(annotations)
-
 	specData, err := json.Marshal(src.Spec)
 	if err != nil {
 		return err
@@ -39,6 +32,12 @@ func (src *APIRule) ConvertTo(dstRaw conversion.Hub) error {
 	}
 
 	dst.ObjectMeta = src.ObjectMeta
+	annotations := dst.GetAnnotations()
+	if annotations == nil {
+		annotations = make(map[string]string)
+	}
+	annotations["gateway.kyma-project.io/converted"] = "true"
+	dst.SetAnnotations(annotations)
 
 	// Only one host is supported in v1beta1, so we use the first one from the list
 	hosts := src.Spec.Hosts
