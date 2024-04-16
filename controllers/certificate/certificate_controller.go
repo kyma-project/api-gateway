@@ -18,7 +18,6 @@ import (
 
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
-	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/util/cert"
@@ -51,8 +50,8 @@ func (r *CertificateReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 
 	certificateSecret := &corev1.Secret{}
 	err := r.Client.Get(ctx, req.NamespacedName, certificateSecret)
-	if err != nil && !apiErrors.IsNotFound(err) {
-		return ctrl.Result{}, nil
+	if err != nil {
+		return ctrl.Result{}, err
 	}
 
 	r.log.Info("Reconciling Webhook Secret", "name", certificateSecret.Name)
