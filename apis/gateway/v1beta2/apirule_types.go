@@ -38,9 +38,6 @@ const (
 // APIRuleSpec defines the desired state of ApiRule.
 type APIRuleSpec struct {
 	// Specifies the URL of the exposed service.
-	// +kubebuilder:validation:MinLength=3
-	// +kubebuilder:validation:MaxLength=256
-	// +kubebuilder:validation:Pattern=^([a-zA-Z0-9][a-zA-Z0-9-_]*\.)*[a-zA-Z0-9]*[a-zA-Z0-9-_]*[[a-zA-Z0-9]+$
 	Hosts []*string `json:"hosts"`
 	// Describes the service to expose.
 	// +optional

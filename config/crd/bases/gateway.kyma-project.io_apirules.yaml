@@ -359,12 +359,11 @@ spec:
                 description: Specifies the Istio Gateway to be used.
                 pattern: ^[0-9a-z-_]+(\/[0-9a-z-_]+|(\.[0-9a-z-_]+)*)$
                 type: string
-              host:
+              hosts:
                 description: Specifies the URL of the exposed service.
-                maxLength: 256
-                minLength: 3
-                pattern: ^([a-zA-Z0-9][a-zA-Z0-9-_]*\.)*[a-zA-Z0-9]*[a-zA-Z0-9-_]*[[a-zA-Z0-9]+$
-                type: string
+                items:
+                  type: string
+                type: array
               rules:
                 description: Represents the array of Oathkeeper access rules to be
                   applied.
@@ -553,7 +552,7 @@ spec:
                 type: integer
             required:
             - gateway
-            - host
+            - hosts
             - rules
             type: object
           status:
