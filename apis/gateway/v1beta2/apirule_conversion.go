@@ -35,7 +35,6 @@ func (src *APIRule) ConvertTo(dstRaw conversion.Hub) error {
 	return nil
 }
 
-// ConvertFrom converts this ApiRule from the Hub version (v1beta1).
 func (dst *APIRule) ConvertFrom(srcRaw conversion.Hub) error {
 	src := srcRaw.(*v1beta1.APIRule)
 	specData, err := json.Marshal(src.Spec)

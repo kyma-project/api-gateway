@@ -59,7 +59,7 @@ func NewCertificateReconciler(mgr manager.Manager, reconciliationInterval time.D
 	return &CertificateReconciler{
 		Client:                 mgr.GetClient(),
 		Scheme:                 mgr.GetScheme(),
-		log:                    mgr.GetLogger().WithName("secret-controller"),
+		log:                    mgr.GetLogger().WithName("certificate-controller"),
 		reconciliationInterval: reconciliationInterval,
 	}
 }
