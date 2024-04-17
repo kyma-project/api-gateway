@@ -18,13 +18,14 @@ package operator
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"github.com/kyma-project/api-gateway/internal/conditions"
+	"k8s.io/apimachinery/pkg/api/meta"
 	"strings"
 
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime/schema"
+	oryv1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
+
+	"errors"
 
 	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
@@ -242,13 +243,17 @@ func (r *APIGatewayReconciler) reconcileFinalizer(ctx context.Context, apiGatewa
 func apiRulesExist(ctx context.Context, k8sClient client.Client) ([]string, error) {
 	apiRuleList := v1beta1.APIRuleList{}
 	err := k8sClient.List(ctx, &apiRuleList)
+	if meta.IsNoMatchError(err) || apierrors.IsNotFound(err) {
+		// ApiRule CRD does not exist, there are no blocking rules
+		return nil, nil
+	}
 	if err != nil {
 		return nil, err
 	}
 	ctrl.Log.Info(fmt.Sprintf("There are %d APIRule(s) found on cluster", len(apiRuleList.Items)))
 	var blockingApiRules []string
 	for _, rule := range apiRuleList.Items {
-		blocking := rule.Kind + "/" + rule.GetName()
+		blocking := rule.GetNamespace() + "/" + rule.GetName()
 		ctrl.Log.Info("APIRule blocking deletion", "rule", blocking)
 		if len(blockingApiRules) < 5 {
 			blockingApiRules = append(blockingApiRules, blocking)
@@ -258,23 +263,20 @@ func apiRulesExist(ctx context.Context, k8sClient client.Client) ([]string, erro
 }
 
 func oryRulesExist(ctx context.Context, k8sClient client.Client) ([]string, error) {
-	// To prevent reconciliation errors during Oathkeeper uninstallation, which arise from the absence of the Oathkeeper CRD,
-	// we exclude calls to the rules from utilizing the cache. This can be achieved by using unstructured objects, as they are excluded from caching.
-	oryRulesList := unstructured.UnstructuredList{}
-	oryRulesList.SetGroupVersionKind(schema.GroupVersionKind{
-		Group:   "oathkeeper.ory.sh",
-		Version: "v1alpha1",
-		Kind:    "rule",
-	})
-
+	oryRulesList := oryv1alpha1.RuleList{}
 	err := k8sClient.List(ctx, &oryRulesList)
+	if meta.IsNoMatchError(err) || apierrors.IsNotFound(err) {
+		// Oathkeeper CRD does not exist, there are no blocking rules
+		return nil, nil
+	}
 	if err != nil {
+		// any other error
 		return nil, err
 	}
 	ctrl.Log.Info(fmt.Sprintf("There are %d ORY Oathkeeper Rule(s) found on cluster", len(oryRulesList.Items)))
 	var blockingOryRules []string
 	for _, rule := range oryRulesList.Items {
-		blocking := rule.GetKind() + "/" + rule.GetName()
+		blocking := rule.GetNamespace() + "/" + rule.GetName()
 		ctrl.Log.Info("ORY Oathkeeper rule blocking deletion", "rule", blocking)
 		if len(blockingOryRules) < 5 {
 			blockingOryRules = append(blockingOryRules, blocking)

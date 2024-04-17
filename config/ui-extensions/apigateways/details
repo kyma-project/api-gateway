@@ -11,22 +11,12 @@ header:
     critical:
     - 'Warning'
 body:
-- widget: Tabs
+- widget: Panel
+  name: Configuration
   children:
-  - name: General
-    children:
-    - widget: Panel
-      name: Configuration
-      children:
-      - source: spec.enableKymaGateway
-        name: enableKymaGateway
-        visibility: '$exists($value)'
-  - name: Reconciliation
-    children:
-    - widget: EventList
-      filter: '$matchEvents($$, $root.kind, $root.metadata.name)'
-      name: Events
-      defaultType: information
+  - source: spec.enableKymaGateway
+    name: enableKymaGateway
+    visibility: '$exists($value)'
 
 - source: status.conditions
   widget: Table

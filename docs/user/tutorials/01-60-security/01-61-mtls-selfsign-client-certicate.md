@@ -20,7 +20,6 @@ This tutorial shows how to create a self-signed root certificate authority (CA) 
 2. Generate a client root CA and a client certificate:
 
    ```bash
-   # Create a root CA key and a certificate that's valid for one year - you can use it for validation
    openssl req -x509 -sha256 -nodes -days 365 -newkey rsa:2048 -subj '/O=${CLIENT_ROOT_CA_ORG}/CN=${CLIENT_ROOT_CA_CN}' -keyout ${CLIENT_ROOT_CA_KEY_FILE} -out ${CLIENT_ROOT_CA_CRT_FILE}
    ```
    

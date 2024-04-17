@@ -1,4 +1,5 @@
-const fs = require('fs');
+// @ts-nocheck
+import fs = require('fs');
 
 module.exports = (on, config) => {
   on('after:spec', (spec, results) => {
