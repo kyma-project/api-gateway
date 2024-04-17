@@ -2,7 +2,6 @@ package v1beta2
 
 import (
 	"encoding/json"
-
 	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
 )
@@ -43,18 +42,16 @@ func (src *APIRule) ConvertTo(dstRaw conversion.Hub) error {
 	hosts := src.Spec.Hosts
 	dst.Spec.Host = hosts[0]
 
-	for _, rule := range src.Spec.Rules {
-		convertedRule := v1beta1.Rule{}
+	for _, rule := range dst.Spec.Rules {
+		srcRule := findBeta2Rule(src.Spec.Rules, &rule)
 		// No Auth
-		if rule.NoAuth != nil && *rule.NoAuth {
-			convertedRule.AccessStrategies = append(convertedRule.AccessStrategies, &v1beta1.Authenticator{
+		if srcRule.NoAuth != nil && *srcRule.NoAuth {
+			rule.AccessStrategies = append(rule.AccessStrategies, &v1beta1.Authenticator{
 				Handler: &v1beta1.Handler{
 					Name: "no_auth",
 				},
 			})
 		}
-
-		dst.Spec.Rules = append(dst.Spec.Rules, convertedRule)
 	}
 
 	return nil
@@ -89,18 +86,56 @@ func (dst *APIRule) ConvertFrom(srcRaw conversion.Hub) error {
 	host := src.Spec.Host
 	dst.Spec.Hosts = append(dst.Spec.Hosts, host)
 
-	for _, rule := range src.Spec.Rules {
-		convertedRule := Rule{}
-		for _, accessStrategy := range rule.AccessStrategies {
+	for _, dstRule := range dst.Spec.Rules {
+		srcRule := findBeta1Rule(src.Spec.Rules, &dstRule)
+		for _, accessStrategy := range srcRule.AccessStrategies {
 			// No Auth
 			if accessStrategy.Handler.Name == "no_auth" {
-				convertedRule.NoAuth = new(bool)
-				*convertedRule.NoAuth = true
+				dstRule.NoAuth = new(bool)
 			}
 		}
-
-		dst.Spec.Rules = append(dst.Spec.Rules, convertedRule)
 	}
 
 	return nil
+}
+
+func findBeta1Rule(srcRules []v1beta1.Rule, dstRule *Rule) *v1beta1.Rule {
+	for _, srcRule := range srcRules {
+		if srcRule.Path == dstRule.Path && containsAllMethods(srcRule.Methods, dstRule.Methods) {
+			return &srcRule
+		}
+	}
+
+	return nil
+}
+
+func findBeta2Rule(srcRules []Rule, dstRule *v1beta1.Rule) *Rule {
+	for _, srcRule := range srcRules {
+		if srcRule.Path == dstRule.Path && containsAllMethods(dstRule.Methods, srcRule.Methods) {
+			return &srcRule
+		}
+	}
+
+	return nil
+}
+
+func containsAllMethods(srcMethods []v1beta1.HttpMethod, dstMethods []HttpMethod) bool {
+	countMap1 := make(map[v1beta1.HttpMethod]int)
+	countMap2 := make(map[HttpMethod]int)
+
+	for _, str := range srcMethods {
+		countMap1[str]++
+	}
+	for _, str := range dstMethods {
+		countMap2[str]++
+	}
+
+	for method, count := range countMap1 {
+		httpMethod := HttpMethod(method)
+		if count != countMap2[httpMethod] {
+			return false
+		}
+	}
+
+	return len(srcMethods) == len(dstMethods)
 }
