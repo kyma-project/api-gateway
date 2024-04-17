@@ -108,7 +108,7 @@ func defineFlagVar() *FlagVar {
 		"Indicates the failure max delay for rate limiter. .")
 	flag.DurationVar(&flagVar.reconciliationInterval, "reconciliation-interval", 1*time.Hour,
 		"Indicates the time based reconciliation interval of APIRule.")
-	flag.DurationVar(&flagVar.certificateReconciliationInterval, "certificate-reconciliation-interval", 14*24*time.Hour,
+	flag.DurationVar(&flagVar.certificateReconciliationInterval, "certificate-reconciliation-interval", 1*time.Hour,
 		"Indicates the time based reconciliation interval of certificate needed for conversion webhook.")
 
 	return flagVar
