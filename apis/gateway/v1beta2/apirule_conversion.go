@@ -3,6 +3,7 @@ package v1beta2
 import (
 	"encoding/json"
 	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
 )
 
@@ -42,13 +43,26 @@ func (src *APIRule) ConvertTo(dstRaw conversion.Hub) error {
 	hosts := src.Spec.Hosts
 	dst.Spec.Host = hosts[0]
 
-	for _, rule := range dst.Spec.Rules {
-		srcRule := findBeta2Rule(src.Spec.Rules, &rule)
+	for _, dstRule := range dst.Spec.Rules {
+		srcRule := findBeta2Rule(src.Spec.Rules, &dstRule)
 		// No Auth
 		if srcRule.NoAuth != nil && *srcRule.NoAuth {
-			rule.AccessStrategies = append(rule.AccessStrategies, &v1beta1.Authenticator{
+			dstRule.AccessStrategies = append(dstRule.AccessStrategies, &v1beta1.Authenticator{
 				Handler: &v1beta1.Handler{
 					Name: "no_auth",
+				},
+			})
+		}
+		// JWT
+		if srcRule.Jwt != nil {
+			jwtBytes, err := json.Marshal(srcRule.Jwt)
+			if err != nil {
+				return err
+			}
+			dstRule.AccessStrategies = append(dstRule.AccessStrategies, &v1beta1.Authenticator{
+				Handler: &v1beta1.Handler{
+					Name:   "jwt",
+					Config: &runtime.RawExtension{Raw: jwtBytes},
 				},
 			})
 		}
@@ -92,6 +106,24 @@ func (dst *APIRule) ConvertFrom(srcRaw conversion.Hub) error {
 			// No Auth
 			if accessStrategy.Handler.Name == "no_auth" {
 				dstRule.NoAuth = new(bool)
+			}
+			// JWT
+			if accessStrategy.Handler.Name == "jwt" {
+				rawJWT := accessStrategy.Config.Raw
+				var jsonJWT JwtConfig
+				err = json.Unmarshal(rawJWT, &jsonJWT)
+				if err != nil {
+					return err
+				}
+				if dstRule.Jwt == nil {
+					dstRule.Jwt = &JwtConfig{
+						Authentications: jsonJWT.Authentications,
+						Authorizations:  jsonJWT.Authorizations,
+					}
+				} else {
+					dstRule.Jwt.Authentications = append(dstRule.Jwt.Authentications, jsonJWT.Authentications...)
+					dstRule.Jwt.Authorizations = append(dstRule.Jwt.Authorizations, jsonJWT.Authorizations...)
+				}
 			}
 		}
 	}
