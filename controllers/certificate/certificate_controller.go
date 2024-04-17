@@ -25,7 +25,8 @@ import (
 )
 
 const (
-	daysUntilCertificateRenewal = 14
+	maxAge       = time.Hour * 24 * 90 // issue certificate with 90 days validity
+	untilRenewal = time.Hour * 24 * 14 // renew certificate 14 days before expiration
 
 	certificateName = "tls.crt"
 	keyName         = "tls.key"
@@ -73,6 +74,7 @@ func (r *CertificateReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 }
 
 // +kubebuilder:rbac:groups="",resources=secrets,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups="apiextensions.k8s.io",resources=customresourcedefinitions,verbs=get;list;watch;create;update;patch;delete
 func (r *CertificateReconciler) SetupWithManager(mgr ctrl.Manager, c controllers.RateLimiterConfig) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&corev1.Secret{}).
@@ -118,7 +120,7 @@ func generateCertificate(serviceName, namespace string) ([]byte, []byte, error) 
 		namespacedServiceName,
 		serviceHostname,
 	}
-	return generateSelfSignedCertKey(altNames[0], nil, altNames)
+	return generateSelfSignedCertificate(altNames[0], nil, altNames, maxAge)
 }
 
 func buildSecret(name, namespace string, certificate []byte, key []byte) *corev1.Secret {

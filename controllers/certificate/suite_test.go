@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package operator
+package certificate
 
 import (
 	"context"
@@ -22,8 +22,6 @@ import (
 	"path/filepath"
 	"testing"
 	"time"
-
-	"github.com/kyma-project/api-gateway/internal/reconciliations/oathkeeper"
 
 	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
@@ -63,8 +61,7 @@ import (
 )
 
 const (
-	testNamespace    = "kyma-system"
-	apiGatewayCRName = "default"
+	testNamespace = "kyma-system"
 
 	eventuallyTimeout = time.Second * 20
 
@@ -98,7 +95,7 @@ var (
 func TestAPIs(t *testing.T) {
 	RegisterFailHandler(Fail)
 
-	RunSpecs(t, "API Gateway Operator Suite")
+	RunSpecs(t, "API Gateway Certificate Suite")
 }
 
 var _ = BeforeSuite(func() {
@@ -146,7 +143,7 @@ var _ = BeforeSuite(func() {
 		return []byte(controlledList), nil
 	}
 
-	Expect(NewAPIGatewayReconciler(mgr, oathkeeperReconcilerWithoutVerification{}).SetupWithManager(mgr, rateLimiterCfg)).Should(Succeed())
+	Expect(NewCertificateReconciler(mgr, time.Second*10).SetupWithManager(mgr, rateLimiterCfg)).Should(Succeed())
 
 	go func() {
 		defer GinkgoRecover()
@@ -180,7 +177,7 @@ var _ = AfterSuite(func() {
 })
 
 var _ = ReportAfterSuite("custom reporter", func(report types.Report) {
-	tests.GenerateGinkgoJunitReport("api-gateway-operator-suite", report)
+	tests.GenerateGinkgoJunitReport("api-gateway-certificate-suite", report)
 })
 
 func createCommonTestResources(k8sClient client.Client) {
@@ -198,7 +195,6 @@ func createCommonTestResources(k8sClient client.Client) {
 }
 
 func createFakeClient(objects ...client.Object) client.Client {
-
 	crds := []apiextensionsv1.CustomResourceDefinition{
 		{
 			ObjectMeta: metav1.ObjectMeta{
@@ -249,12 +245,4 @@ func getTestScheme() *runtime.Scheme {
 	utilruntime.Must(oryv1alpha1.AddToScheme(s))
 
 	return s
-}
-
-type oathkeeperReconcilerWithoutVerification struct {
-}
-
-func (o oathkeeperReconcilerWithoutVerification) ReconcileAndVerifyReadiness(ctx context.Context, client client.Client, apiGateway *operatorv1alpha1.APIGateway) controllers.Status {
-	// We don't want to wait for Oathkeeper to be ready in the tests, because the implemented logic doesn't work in unit and envTest-based tests.
-	return oathkeeper.Reconcile(ctx, client, apiGateway)
 }

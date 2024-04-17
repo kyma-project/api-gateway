@@ -20,13 +20,8 @@ import (
 	netutils "k8s.io/utils/net"
 )
 
-const (
-	maxAge = time.Hour * 24 * 90 // 90 days self-signed certs
-)
-
-func generateSelfSignedCertKey(host string, alternateIPs []net.IP, alternateDNS []string) ([]byte, []byte, error) {
+func generateSelfSignedCertificate(host string, alternateIPs []net.IP, alternateDNS []string, maxAge time.Duration) ([]byte, []byte, error) {
 	validFrom := time.Now().Add(-time.Hour) // valid an hour earlier to avoid flakes due to clock skew
-
 	caKey, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
 		return nil, nil, err
@@ -95,6 +90,7 @@ func generateSelfSignedCertKey(host string, alternateIPs []net.IP, alternateDNS 
 
 	template.IPAddresses = append(template.IPAddresses, alternateIPs...)
 	template.DNSNames = append(template.DNSNames, alternateDNS...)
+
 	derBytes, err := x509.CreateCertificate(rand.Reader, &template, caCertificate, &priv.PublicKey, caKey)
 	if err != nil {
 		return nil, nil, err
@@ -123,12 +119,15 @@ func verifySecret(s *corev1.Secret) error {
 	if !hasRequiredKeys(s.Data, []string{certificateName, keyName}) {
 		return fmt.Errorf("secret do not have required keys: %s, %s", certificateName, keyName)
 	}
+
 	if err := verifyCertificate(s.Data[certificateName]); err != nil {
 		return err
 	}
+
 	if err := verifyKey(s.Data[keyName]); err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -137,19 +136,23 @@ func verifyCertificate(c []byte) error {
 	if err != nil {
 		return errors.Wrap(err, "failed to parse certificate data")
 	}
+
 	// certificate is self signed, we use it as a root cert
 	root, err := cert.NewPoolFromBytes(c)
 	if err != nil {
 		return errors.Wrap(err, "failed to parse root certificate data")
 	}
-	// make sure the certificate is valid for the next predefined days
+
+	// make sure the certificate is valid for predefined duration
 	_, err = certificate[0].Verify(x509.VerifyOptions{
-		CurrentTime: time.Now().Add(daysUntilCertificateRenewal * 24 * time.Hour),
+		CurrentTime: time.Now().Add(untilRenewal),
 		Roots:       root,
 	})
+
 	if err != nil {
 		return errors.Wrap(err, "certificate verification failed")
 	}
+
 	return nil
 }
 
@@ -159,9 +162,11 @@ func verifyKey(k []byte) error {
 	if err != nil {
 		return errors.Wrap(err, "failed to parse key data")
 	}
+
 	if err = key.Validate(); err != nil {
 		return errors.Wrap(err, "key verification failed")
 	}
+
 	return nil
 }
 
@@ -169,10 +174,12 @@ func hasRequiredKeys(data map[string][]byte, keys []string) bool {
 	if data == nil {
 		return false
 	}
+
 	for _, key := range keys {
 		if _, ok := data[key]; !ok {
 			return false
 		}
 	}
+
 	return true
 }
