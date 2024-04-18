@@ -43,23 +43,25 @@ func (src *APIRule) ConvertTo(dstRaw conversion.Hub) error {
 	hosts := src.Spec.Hosts
 	dst.Spec.Host = hosts[0]
 
-	for _, dstRule := range dst.Spec.Rules {
+	for i, dstRule := range dst.Spec.Rules {
 		srcRule := findBeta2Rule(src.Spec.Rules, &dstRule)
+
 		// No Auth
 		if srcRule.NoAuth != nil && *srcRule.NoAuth {
-			dstRule.AccessStrategies = append(dstRule.AccessStrategies, &v1beta1.Authenticator{
+			dst.Spec.Rules[i].AccessStrategies = append(dst.Spec.Rules[i].AccessStrategies, &v1beta1.Authenticator{
 				Handler: &v1beta1.Handler{
 					Name: "no_auth",
 				},
 			})
 		}
+
 		// JWT
 		if srcRule.Jwt != nil {
 			jwtBytes, err := json.Marshal(srcRule.Jwt)
 			if err != nil {
 				return err
 			}
-			dstRule.AccessStrategies = append(dstRule.AccessStrategies, &v1beta1.Authenticator{
+			dst.Spec.Rules[i].AccessStrategies = append(dst.Spec.Rules[i].AccessStrategies, &v1beta1.Authenticator{
 				Handler: &v1beta1.Handler{
 					Name:   "jwt",
 					Config: &runtime.RawExtension{Raw: jwtBytes},
