@@ -6,14 +6,14 @@ import (
 	"github.com/kyma-project/api-gateway/apis/gateway/v1beta2"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
 var _ = Describe("APIRule Conversion", func() {
+	host1 := "host1"
+	host2 := "host2"
 
-	Describe("v1beta2 conversion to v1beta1", func() {
-		host1 := "host1"
-		host2 := "host2"
-
+	Describe("v1beta2 to v1beta1", func() {
 		It("should keep the first host", func() {
 			src := v1beta2.APIRule{
 				Spec: v1beta2.APIRuleSpec{
@@ -90,6 +90,7 @@ var _ = Describe("APIRule Conversion", func() {
 			Expect(err).To(BeNil())
 			Expect(dst.Spec.Rules).To(HaveLen(1))
 			Expect(dst.Spec.Rules[0].AccessStrategies).To(HaveLen(1))
+			Expect(dst.Spec.Rules[0].AccessStrategies[0].Handler.Name).To(Equal("jwt"))
 
 			rawJWT := dst.Spec.Rules[0].AccessStrategies[0].Config.Raw
 			var jsonJWT v1beta1.JwtConfig
@@ -105,6 +106,113 @@ var _ = Describe("APIRule Conversion", func() {
 			Expect(jsonJWT.Authorizations).To(HaveLen(1))
 			Expect(jsonJWT.Authorizations[0].RequiredScopes).To(ContainElements("scope1", "scope2"))
 			Expect(jsonJWT.Authorizations[0].Audiences).To(ContainElements("audience1", "audience2"))
+		})
+	})
+
+	Describe("v1beta1 to v1beta2", func() {
+		It("should keep the host", func() {
+			src := v1beta1.APIRule{
+				Spec: v1beta1.APIRuleSpec{
+					Host: &host1,
+				},
+			}
+			dst := v1beta2.APIRule{}
+
+			err := dst.ConvertFrom(&src)
+
+			Expect(err).To(BeNil())
+			Expect(dst.Spec.Hosts).To(HaveLen(1))
+			Expect(*dst.Spec.Hosts[0]).To(Equal(host1))
+		})
+
+		It("should convert NoAuth to v1beta2", func() {
+			accessStrategiesNoAuth := []*v1beta1.Authenticator{
+				{
+					Handler: &v1beta1.Handler{
+						Name: "no_auth",
+					},
+				},
+			}
+
+			src := v1beta1.APIRule{
+				Spec: v1beta1.APIRuleSpec{
+					Host: &host1,
+					Rules: []v1beta1.Rule{
+						{
+							AccessStrategies: accessStrategiesNoAuth,
+						},
+					},
+				},
+			}
+			dst := v1beta2.APIRule{}
+
+			err := dst.ConvertFrom(&src)
+
+			Expect(err).To(BeNil())
+			Expect(dst.Spec.Rules).To(HaveLen(1))
+			Expect(*dst.Spec.Rules[0].NoAuth).To(BeTrue())
+		})
+
+		It("should convert JWT to v1beta2", func() {
+			jwtHeaders := []*v1beta1.JwtHeader{
+				{Name: "header1", Prefix: "prefix1"},
+			}
+
+			srcJwt := v1beta1.JwtConfig{
+				Authentications: []*v1beta1.JwtAuthentication{
+					{
+						Issuer:      "issuer",
+						JwksUri:     "jwksUri",
+						FromHeaders: jwtHeaders,
+						FromParams:  []string{"param1", "param2"},
+					},
+				},
+				Authorizations: []*v1beta1.JwtAuthorization{
+					{
+						RequiredScopes: []string{"scope1", "scope2"},
+						Audiences:      []string{"audience1", "audience2"},
+					},
+				},
+			}
+			jwtBytes, err := json.Marshal(srcJwt)
+			Expect(err).To(BeNil())
+
+			accessStrategiesJwt := []*v1beta1.Authenticator{
+				{
+					Handler: &v1beta1.Handler{
+						Name:   "jwt",
+						Config: &runtime.RawExtension{Raw: jwtBytes},
+					},
+				},
+			}
+
+			src := v1beta1.APIRule{
+				Spec: v1beta1.APIRuleSpec{
+					Host: &host1,
+					Rules: []v1beta1.Rule{
+						{
+							AccessStrategies: accessStrategiesJwt,
+						},
+					},
+				},
+			}
+			dst := v1beta2.APIRule{}
+
+			err = dst.ConvertFrom(&src)
+
+			Expect(err).To(BeNil())
+			Expect(dst.Spec.Rules).To(HaveLen(1))
+			Expect(dst.Spec.Rules[0].Jwt).To(Not(BeNil()))
+			Expect(dst.Spec.Rules[0].Jwt.Authentications).To(HaveLen(1))
+			Expect(dst.Spec.Rules[0].Jwt.Authentications[0].Issuer).To(Equal("issuer"))
+			Expect(dst.Spec.Rules[0].Jwt.Authentications[0].JwksUri).To(Equal("jwksUri"))
+			Expect(dst.Spec.Rules[0].Jwt.Authentications[0].FromHeaders).To(HaveLen(1))
+			Expect(dst.Spec.Rules[0].Jwt.Authentications[0].FromHeaders[0].Name).To(Equal(jwtHeaders[0].Name))
+			Expect(dst.Spec.Rules[0].Jwt.Authentications[0].FromHeaders[0].Prefix).To(Equal(jwtHeaders[0].Prefix))
+			Expect(dst.Spec.Rules[0].Jwt.Authentications[0].FromParams).To(ContainElements("param1", "param2"))
+			Expect(dst.Spec.Rules[0].Jwt.Authorizations).To(HaveLen(1))
+			Expect(dst.Spec.Rules[0].Jwt.Authorizations[0].RequiredScopes).To(ContainElements("scope1", "scope2"))
+			Expect(dst.Spec.Rules[0].Jwt.Authorizations[0].Audiences).To(ContainElements("audience1", "audience2"))
 		})
 	})
 })

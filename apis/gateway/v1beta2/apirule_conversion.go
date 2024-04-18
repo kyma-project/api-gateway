@@ -102,13 +102,16 @@ func (dst *APIRule) ConvertFrom(srcRaw conversion.Hub) error {
 	host := src.Spec.Host
 	dst.Spec.Hosts = append(dst.Spec.Hosts, host)
 
-	for _, dstRule := range dst.Spec.Rules {
+	for i, dstRule := range dst.Spec.Rules {
 		srcRule := findBeta1Rule(src.Spec.Rules, &dstRule)
 		for _, accessStrategy := range srcRule.AccessStrategies {
+
 			// No Auth
 			if accessStrategy.Handler.Name == "no_auth" {
-				dstRule.NoAuth = new(bool)
+				noAuthTrue := true
+				dst.Spec.Rules[i].NoAuth = &noAuthTrue
 			}
+
 			// JWT
 			if accessStrategy.Handler.Name == "jwt" {
 				rawJWT := accessStrategy.Config.Raw
@@ -118,13 +121,13 @@ func (dst *APIRule) ConvertFrom(srcRaw conversion.Hub) error {
 					return err
 				}
 				if dstRule.Jwt == nil {
-					dstRule.Jwt = &JwtConfig{
+					dst.Spec.Rules[i].Jwt = &JwtConfig{
 						Authentications: jsonJWT.Authentications,
 						Authorizations:  jsonJWT.Authorizations,
 					}
 				} else {
-					dstRule.Jwt.Authentications = append(dstRule.Jwt.Authentications, jsonJWT.Authentications...)
-					dstRule.Jwt.Authorizations = append(dstRule.Jwt.Authorizations, jsonJWT.Authorizations...)
+					dst.Spec.Rules[i].Jwt.Authentications = append(dst.Spec.Rules[i].Jwt.Authentications, jsonJWT.Authentications...)
+					dst.Spec.Rules[i].Jwt.Authorizations = append(dst.Spec.Rules[i].Jwt.Authorizations, jsonJWT.Authorizations...)
 				}
 			}
 		}

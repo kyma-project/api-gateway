@@ -13,29 +13,9 @@ var _ = Describe("Rule", func() {
 
 		It("should return false when noAuth does not exist in the object", func() {
 			rule := v1beta2.Rule{
-				Jwt:      &v1beta2.JwtConfig{},
-				ExtAuths: []*v1beta2.ExtAuth{},
-			}
-
-			Expect(rule.ContainsNoAuth()).To(BeFalse())
-		})
-
-		It("should return false when JWT access strategy does not exist in the object", func() {
-			rule := v1beta2.Rule{
-				ExtAuths: []*v1beta2.ExtAuth{},
-			}
-
-			Expect(rule.ContainsAccessStrategyJwt()).To(BeFalse())
-			Expect(rule.ContainsNoAuth()).To(BeFalse())
-
-		})
-
-		It("should return false when extAuth access strategy does not exist in the object", func() {
-			rule := v1beta2.Rule{
 				Jwt: &v1beta2.JwtConfig{},
 			}
 
-			Expect(rule.ContainsAccessStrategyExtAuths()).To(BeFalse())
 			Expect(rule.ContainsNoAuth()).To(BeFalse())
 		})
 
@@ -57,18 +37,9 @@ var _ = Describe("Rule", func() {
 			Expect(rule.ContainsAccessStrategyJwt()).To(BeTrue())
 		})
 
-		It("should return true when extAuth exists in the object", func() {
-			rule := v1beta2.Rule{
-				ExtAuths: []*v1beta2.ExtAuth{},
-			}
-
-			Expect(rule.ContainsAccessStrategyExtAuths()).To(BeTrue())
-		})
-
 		It("should return false when no access strategy is in the object", func() {
 			rule := v1beta2.Rule{}
 
-			Expect(rule.ContainsAccessStrategyExtAuths()).To(BeFalse())
 			Expect(rule.ContainsAccessStrategyJwt()).To(BeFalse())
 			Expect(rule.ContainsNoAuth()).To(BeFalse())
 		})

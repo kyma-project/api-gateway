@@ -123,9 +123,6 @@ type Rule struct {
 	// Disables authorization when set to true.
 	// +optional
 	NoAuth *bool `json:"noAuth"`
-	// Specifies the list of external authorizers.
-	// +optional
-	ExtAuths []*ExtAuth `json:"extAuths,omitempty"`
 	// Specifies the Istio JWT access strategy.
 	// +optional
 	Jwt *JwtConfig `json:"jwt,omitempty"`
@@ -139,11 +136,6 @@ type Rule struct {
 // HttpMethod specifies the HTTP request method. The list of supported methods is defined in RFC 9910: HTTP Semantics and RFC 5789: PATCH Method for HTTP.
 // +kubebuilder:validation:Enum=GET;HEAD;POST;PUT;DELETE;CONNECT;OPTIONS;TRACE;PATCH
 type HttpMethod string
-
-type ExtAuth struct {
-	// Specifies the name of the external authorizer.
-	Name string `json:"name"`
-}
 
 // APIRuleResourceStatus describes the status of APIRule.
 type APIRuleResourceStatus struct {
