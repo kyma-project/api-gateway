@@ -5,7 +5,7 @@ go 1.22
 toolchain go1.22.0
 
 require (
-	github.com/avast/retry-go/v4 v4.5.1
+	github.com/avast/retry-go/v4 v4.6.0
 	github.com/cucumber/godog v0.14.0
 	github.com/gardener/cert-management v0.13.0
 	github.com/gardener/external-dns-management v0.18.4
