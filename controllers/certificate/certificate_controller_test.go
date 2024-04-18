@@ -10,6 +10,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -20,15 +21,10 @@ import (
 
 var _ = Describe("API-Gateway Controller", func() {
 	Context("Reconcile", func() {
-		It("Should return an error when Secret CR was not found", func() {
+		It("Should return an error when Secret was not found", func() {
 			// given
 			c := createFakeClient()
-			agr := &CertificateReconciler{
-				Client:                 c,
-				Scheme:                 getTestScheme(),
-				log:                    logr.Discard(),
-				reconciliationInterval: 1 * time.Second,
-			}
+			agr := getReconciler(c, getTestScheme(), logr.Discard())
 
 			// when
 			result, err := agr.Reconcile(context.Background(), reconcile.Request{NamespacedName: types.NamespacedName{Namespace: testNamespace, Name: secretName}})
@@ -38,23 +34,18 @@ var _ = Describe("API-Gateway Controller", func() {
 			Expect(result).Should(Equal(reconcile.Result{}))
 		})
 
-		It("Should return an error when unable to get Secret CR", func() {
+		It("Should return an error when unable to get Secret", func() {
 			// given
-			secretCR := &corev1.Secret{
+			secret := &corev1.Secret{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      secretName,
 					Namespace: testNamespace,
 				},
 			}
 
-			c := createFakeClient(secretCR)
+			c := createFakeClient(secret)
 			fc := &shouldFailClient{c, true}
-			agr := &CertificateReconciler{
-				Client:                 fc,
-				Scheme:                 getTestScheme(),
-				log:                    logr.Discard(),
-				reconciliationInterval: 1 * time.Second,
-			}
+			agr := getReconciler(fc, getTestScheme(), logr.Discard())
 
 			// when
 			result, err := agr.Reconcile(context.Background(), reconcile.Request{NamespacedName: types.NamespacedName{Namespace: testNamespace, Name: secretName}})
@@ -64,36 +55,22 @@ var _ = Describe("API-Gateway Controller", func() {
 			Expect(result.Requeue).To(BeFalse())
 		})
 
-		It("Should succeed when Secret CR is present and valid", func() {
+		It("Should succeed when Secret is present and valid", func() {
 			// given
 			certificate, key, err := generateCertificate(serviceName, testNamespace)
 			Expect(err).ShouldNot(HaveOccurred())
 
-			secretCR := &corev1.Secret{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      secretName,
-					Namespace: testNamespace,
-				},
-				Data: map[string][]byte{
-					certificateName: certificate,
-					keyName:         key,
-				},
-			}
+			secret := getSecret(certificate, key)
 
-			c := createFakeClient(secretCR)
-			agr := &CertificateReconciler{
-				Client:                 c,
-				Scheme:                 getTestScheme(),
-				log:                    logr.Discard(),
-				reconciliationInterval: 1 * time.Second,
-			}
+			c := createFakeClient(secret)
+			agr := getReconciler(c, getTestScheme(), logr.Discard())
 
 			// when
 			result, err := agr.Reconcile(context.Background(), reconcile.Request{NamespacedName: types.NamespacedName{Namespace: testNamespace, Name: secretName}})
 
 			// then
 			Expect(err).ShouldNot(HaveOccurred())
-			Expect(result.RequeueAfter).Should(Equal(1 * time.Second))
+			Expect(result.RequeueAfter).Should(Equal(reconciliationInterval))
 		})
 
 		It("Should return error when APIRule CRD do not contain webhook spec but have to create new certificate and reschedule reconcile in a minute", func() {
@@ -101,39 +78,15 @@ var _ = Describe("API-Gateway Controller", func() {
 			certificate, key, err := generateSelfSignedCertificate(serviceName, nil, []string{}, time.Nanosecond*1)
 			Expect(err).ShouldNot(HaveOccurred())
 
-			secretCR := &corev1.Secret{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      secretName,
-					Namespace: testNamespace,
-				},
-				Data: map[string][]byte{
-					certificateName: certificate,
-					keyName:         key,
-				},
-			}
+			secret := getSecret(certificate, key)
 
-			crd := apiextensionsv1.CustomResourceDefinition{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: APIRuleCRDName,
-				},
-				Spec: apiextensionsv1.CustomResourceDefinitionSpec{
-					Conversion: &apiextensionsv1.CustomResourceConversion{
-						Webhook: &apiextensionsv1.WebhookConversion{
-							ClientConfig: nil,
-						},
-					},
-				},
-			}
+			crd := getCRD(certificate)
+			crd.Spec.Conversion.Webhook.ClientConfig = nil
 
-			c := createFakeClient(secretCR)
-			Expect(c.Create(context.Background(), &crd)).To(Succeed())
+			c := createFakeClient(secret)
+			Expect(c.Create(context.Background(), crd)).To(Succeed())
 
-			agr := &CertificateReconciler{
-				Client:                 c,
-				Scheme:                 getTestScheme(),
-				log:                    logr.Discard(),
-				reconciliationInterval: 1 * time.Second,
-			}
+			agr := getReconciler(c, getTestScheme(), logr.Discard())
 
 			// when
 			result, err := agr.Reconcile(context.Background(), reconcile.Request{NamespacedName: types.NamespacedName{Namespace: testNamespace, Name: secretName}})
@@ -143,59 +96,87 @@ var _ = Describe("API-Gateway Controller", func() {
 			Expect(result.RequeueAfter).Should(Equal(1 * time.Minute))
 		})
 
-		It("Should succeed when Secret CR is present and generate new certificate when current is expired", func() {
+		It("Should succeed when Secret is present and generate new certificate when current is expired", func() {
 			// given
 			certificate, key, err := generateSelfSignedCertificate(serviceName, nil, []string{}, time.Nanosecond*1)
 			Expect(err).ShouldNot(HaveOccurred())
 
-			secretCR := &corev1.Secret{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      secretName,
-					Namespace: testNamespace,
-				},
-				Data: map[string][]byte{
-					certificateName: certificate,
-					keyName:         key,
-				},
-			}
+			secret := getSecret(certificate, key)
+			crd := getCRD(certificate)
 
-			crd := apiextensionsv1.CustomResourceDefinition{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: APIRuleCRDName,
-				},
-				Spec: apiextensionsv1.CustomResourceDefinitionSpec{
-					Conversion: &apiextensionsv1.CustomResourceConversion{
-						Webhook: &apiextensionsv1.WebhookConversion{
-							ClientConfig: &apiextensionsv1.WebhookClientConfig{
-								CABundle: certificate,
-							},
-						},
-					},
-				},
-			}
+			c := createFakeClient(secret)
+			Expect(c.Create(context.Background(), crd)).To(Succeed())
 
-			c := createFakeClient(secretCR)
-			Expect(c.Create(context.Background(), &crd)).To(Succeed())
-
-			agr := &CertificateReconciler{
-				Client:                 c,
-				Scheme:                 getTestScheme(),
-				log:                    logr.Discard(),
-				reconciliationInterval: 1 * time.Second,
-			}
+			agr := getReconciler(c, getTestScheme(), logr.Discard())
 
 			// when
 			result, err := agr.Reconcile(context.Background(), reconcile.Request{NamespacedName: types.NamespacedName{Namespace: testNamespace, Name: secretName}})
 
 			// then
 			Expect(err).ShouldNot(HaveOccurred())
-			Expect(result.RequeueAfter).Should(Equal(1 * time.Second))
+			Expect(result.RequeueAfter).Should(Equal(reconciliationInterval))
 
-			Expect(c.Get(context.TODO(), client.ObjectKeyFromObject(secretCR), secretCR)).Should(Succeed())
-			Expect(secretCR.Data[certificateName]).ShouldNot(Equal(certificate))
+			Expect(c.Get(context.TODO(), client.ObjectKeyFromObject(secret), secret)).Should(Succeed())
+			Expect(secret.Data[certificateName]).ShouldNot(Equal(certificate))
 
-			Expect(c.Get(context.TODO(), types.NamespacedName{Name: APIRuleCRDName}, &crd)).Should(Succeed())
+			Expect(c.Get(context.TODO(), types.NamespacedName{Name: APIRuleCRDName}, crd)).Should(Succeed())
 			Expect(crd.Spec.Conversion.Webhook.ClientConfig.CABundle).ShouldNot(Equal(certificate))
+
+			Expect(secret.Data[certificateName]).To(Equal(crd.Spec.Conversion.Webhook.ClientConfig.CABundle))
+		})
+
+		It("Should succeed when Secret is present and generate new certificate when current has missing required keys", func() {
+			// given
+			secret := getSecret([]byte{}, []byte{})
+			secret.Data = make(map[string][]byte)
+
+			crd := getCRD([]byte{})
+
+			c := createFakeClient(secret)
+			Expect(c.Create(context.Background(), crd)).To(Succeed())
+
+			agr := getReconciler(c, getTestScheme(), logr.Discard())
+
+			// when
+			result, err := agr.Reconcile(context.Background(), reconcile.Request{NamespacedName: types.NamespacedName{Namespace: testNamespace, Name: secretName}})
+
+			// then
+			Expect(err).ShouldNot(HaveOccurred())
+			Expect(result.RequeueAfter).Should(Equal(reconciliationInterval))
+
+			Expect(c.Get(context.TODO(), client.ObjectKeyFromObject(secret), secret)).Should(Succeed())
+			Expect(secret.Data[certificateName]).ShouldNot(Equal([]byte{}))
+
+			Expect(c.Get(context.TODO(), types.NamespacedName{Name: APIRuleCRDName}, crd)).Should(Succeed())
+			Expect(crd.Spec.Conversion.Webhook.ClientConfig.CABundle).ShouldNot(Equal([]byte{}))
+
+			Expect(secret.Data[certificateName]).To(Equal(crd.Spec.Conversion.Webhook.ClientConfig.CABundle))
+		})
+
+		It("Should succeed when Secret is present and generate new certificate when current has incorrect certificate", func() {
+			// given
+			secret := getSecret([]byte{1, 2, 3}, []byte{3, 2, 1})
+			crd := getCRD([]byte{})
+
+			c := createFakeClient(secret)
+			Expect(c.Create(context.Background(), crd)).To(Succeed())
+
+			agr := getReconciler(c, getTestScheme(), logr.Discard())
+
+			// when
+			result, err := agr.Reconcile(context.Background(), reconcile.Request{NamespacedName: types.NamespacedName{Namespace: testNamespace, Name: secretName}})
+
+			// then
+			Expect(err).ShouldNot(HaveOccurred())
+			Expect(result.RequeueAfter).Should(Equal(reconciliationInterval))
+
+			Expect(c.Get(context.TODO(), client.ObjectKeyFromObject(secret), secret)).Should(Succeed())
+			Expect(secret.Data[certificateName]).ShouldNot(Equal([]byte{}))
+
+			Expect(c.Get(context.TODO(), types.NamespacedName{Name: APIRuleCRDName}, crd)).Should(Succeed())
+			Expect(crd.Spec.Conversion.Webhook.ClientConfig.CABundle).ShouldNot(Equal([]byte{}))
+
+			Expect(secret.Data[certificateName]).To(Equal(crd.Spec.Conversion.Webhook.ClientConfig.CABundle))
 		})
 	})
 })
@@ -210,4 +191,43 @@ func (p *shouldFailClient) Get(ctx context.Context, key client.ObjectKey, obj cl
 		return goerrors.New("fail on purpose")
 	}
 	return p.Client.Get(ctx, key, obj, opts...)
+}
+
+func getReconciler(c client.Client, scheme *runtime.Scheme, log logr.Logger) *CertificateReconciler {
+	return &CertificateReconciler{
+		Client:                 c,
+		Scheme:                 scheme,
+		log:                    log,
+		reconciliationInterval: reconciliationInterval,
+	}
+}
+
+func getSecret(certificate, key []byte) *corev1.Secret {
+	return &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      secretName,
+			Namespace: testNamespace,
+		},
+		Data: map[string][]byte{
+			certificateName: certificate,
+			keyName:         key,
+		},
+	}
+}
+
+func getCRD(certificate []byte) *apiextensionsv1.CustomResourceDefinition {
+	return &apiextensionsv1.CustomResourceDefinition{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: APIRuleCRDName,
+		},
+		Spec: apiextensionsv1.CustomResourceDefinitionSpec{
+			Conversion: &apiextensionsv1.CustomResourceConversion{
+				Webhook: &apiextensionsv1.WebhookConversion{
+					ClientConfig: &apiextensionsv1.WebhookClientConfig{
+						CABundle: certificate,
+					},
+				},
+			},
+		},
+	}
 }

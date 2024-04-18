@@ -23,8 +23,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
+	gatewayv1beta2 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	operatorv1alpha1 "github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
 	"github.com/kyma-project/api-gateway/controllers"
 	"github.com/kyma-project/api-gateway/internal/resources"
@@ -63,7 +63,8 @@ import (
 const (
 	testNamespace = "kyma-system"
 
-	eventuallyTimeout = time.Second * 20
+	eventuallyTimeout      = time.Second * 20
+	reconciliationInterval = time.Second * 1
 
 	kymaNamespace   = "kyma-system"
 	kymaGatewayName = "kyma-gateway"
@@ -230,7 +231,6 @@ func createFakeClient(objects ...client.Object) client.Client {
 func getTestScheme() *runtime.Scheme {
 	s := runtime.NewScheme()
 	utilruntime.Must(corev1.AddToScheme(s))
-	utilruntime.Must(v1beta1.AddToScheme(s))
 	utilruntime.Must(appsv1.AddToScheme(s))
 	utilruntime.Must(rbacv1.AddToScheme(s))
 	utilruntime.Must(policyv1.AddToScheme(s))
@@ -240,6 +240,7 @@ func getTestScheme() *runtime.Scheme {
 	utilruntime.Must(schedulingv1.AddToScheme(s))
 	utilruntime.Must(apiextensionsv1.AddToScheme(s))
 	utilruntime.Must(gatewayv1beta1.AddToScheme(s))
+	utilruntime.Must(gatewayv1beta2.AddToScheme(s))
 	utilruntime.Must(networkingv1alpha3.AddToScheme(s))
 	utilruntime.Must(networkingv1beta1.AddToScheme(s))
 	utilruntime.Must(oryv1alpha1.AddToScheme(s))
