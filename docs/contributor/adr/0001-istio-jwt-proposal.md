@@ -3,8 +3,6 @@
 ## Status
 
 - Accepted
-- Updated: added **audiences** spec
-- Updated: added **fromHeaders** spec
 
 ## Context
 
