@@ -8,7 +8,7 @@ Accepted
 
 Due to the deprecation of Ory and the introduction of new features in API Gateway, the next version of APIRule resource needs to be defined.
 
-### Changes:
+## Decision
 
 - **accessStrategies** field is replaced with **extAuths**, **jwt**, and **noAuth**
 - multiple hosts are allowed
