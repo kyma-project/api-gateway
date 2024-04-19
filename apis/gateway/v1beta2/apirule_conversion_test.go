@@ -2,10 +2,12 @@ package v1beta2_test
 
 import (
 	"encoding/json"
+
 	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"github.com/kyma-project/api-gateway/apis/gateway/v1beta2"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
@@ -14,6 +16,23 @@ var _ = Describe("APIRule Conversion", func() {
 	host2 := "host2"
 
 	Describe("v1beta2 to v1beta1", func() {
+		It("should have origin version annotation", func() {
+			src := v1beta2.APIRule{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test",
+				},
+				Spec: v1beta2.APIRuleSpec{
+					Hosts: []*string{&host1},
+				},
+			}
+			dst := v1beta1.APIRule{}
+
+			err := src.ConvertTo(&dst)
+
+			Expect(err).To(BeNil())
+			Expect(dst.Annotations).To(HaveKeyWithValue("gateway.kyma-project.io/origin-version", "v1beta2"))
+		})
+
 		It("should keep the first host", func() {
 			src := v1beta2.APIRule{
 				Spec: v1beta2.APIRuleSpec{
@@ -49,6 +68,7 @@ var _ = Describe("APIRule Conversion", func() {
 			Expect(dst.Spec.Rules).To(HaveLen(1))
 			Expect(dst.Spec.Rules[0].AccessStrategies).To(HaveLen(1))
 			Expect(dst.Spec.Rules[0].AccessStrategies[0].Handler.Name).To(Equal("no_auth"))
+			Expect(dst.Spec.Rules[0].AccessStrategies[0].Handler.Config).To(BeNil())
 		})
 
 		It("should convert JWT to v1beta1", func() {
@@ -91,26 +111,27 @@ var _ = Describe("APIRule Conversion", func() {
 			Expect(dst.Spec.Rules).To(HaveLen(1))
 			Expect(dst.Spec.Rules[0].AccessStrategies).To(HaveLen(1))
 			Expect(dst.Spec.Rules[0].AccessStrategies[0].Handler.Name).To(Equal("jwt"))
+			Expect(dst.Spec.Rules[0].AccessStrategies[0].Config).ToNot(BeNil())
 
-			rawJWT := dst.Spec.Rules[0].AccessStrategies[0].Config.Raw
-			var jsonJWT v1beta1.JwtConfig
-			err = json.Unmarshal(rawJWT, &jsonJWT)
+			var v1beta1JWT v1beta1.JwtConfig
+			err = json.Unmarshal(dst.Spec.Rules[0].AccessStrategies[0].Config.Raw, &v1beta1JWT)
 			Expect(err).To(BeNil())
 
-			Expect(jsonJWT.Authentications[0].Issuer).To(Equal("issuer"))
-			Expect(jsonJWT.Authentications[0].JwksUri).To(Equal("jwksUri"))
-			Expect(jsonJWT.Authentications[0].FromHeaders).To(HaveLen(1))
-			Expect(jsonJWT.Authentications[0].FromHeaders[0].Name).To(Equal(jwtHeaders[0].Name))
-			Expect(jsonJWT.Authentications[0].FromHeaders[0].Prefix).To(Equal(jwtHeaders[0].Prefix))
-			Expect(jsonJWT.Authentications[0].FromParams).To(ContainElements("param1", "param2"))
-			Expect(jsonJWT.Authorizations).To(HaveLen(1))
-			Expect(jsonJWT.Authorizations[0].RequiredScopes).To(ContainElements("scope1", "scope2"))
-			Expect(jsonJWT.Authorizations[0].Audiences).To(ContainElements("audience1", "audience2"))
+			Expect(v1beta1JWT.Authentications).To(HaveLen(1))
+			Expect(v1beta1JWT.Authentications[0].Issuer).To(Equal("issuer"))
+			Expect(v1beta1JWT.Authentications[0].JwksUri).To(Equal("jwksUri"))
+			Expect(v1beta1JWT.Authentications[0].FromHeaders).To(HaveLen(1))
+			Expect(v1beta1JWT.Authentications[0].FromHeaders[0].Name).To(Equal(jwtHeaders[0].Name))
+			Expect(v1beta1JWT.Authentications[0].FromHeaders[0].Prefix).To(Equal(jwtHeaders[0].Prefix))
+			Expect(v1beta1JWT.Authentications[0].FromParams).To(HaveExactElements("param1", "param2"))
+			Expect(v1beta1JWT.Authorizations).To(HaveLen(1))
+			Expect(v1beta1JWT.Authorizations[0].RequiredScopes).To(HaveExactElements("scope1", "scope2"))
+			Expect(v1beta1JWT.Authorizations[0].Audiences).To(HaveExactElements("audience1", "audience2"))
 		})
 	})
 
 	Describe("v1beta1 to v1beta2", func() {
-		It("should keep the host", func() {
+		It("should have the host in array", func() {
 			src := v1beta1.APIRule{
 				Spec: v1beta1.APIRuleSpec{
 					Host: &host1,
@@ -121,8 +142,7 @@ var _ = Describe("APIRule Conversion", func() {
 			err := dst.ConvertFrom(&src)
 
 			Expect(err).To(BeNil())
-			Expect(dst.Spec.Hosts).To(HaveLen(1))
-			Expect(*dst.Spec.Hosts[0]).To(Equal(host1))
+			Expect(dst.Spec.Hosts).To(HaveExactElements(&host1))
 		})
 
 		It("should convert NoAuth to v1beta2", func() {
@@ -202,17 +222,17 @@ var _ = Describe("APIRule Conversion", func() {
 
 			Expect(err).To(BeNil())
 			Expect(dst.Spec.Rules).To(HaveLen(1))
-			Expect(dst.Spec.Rules[0].Jwt).To(Not(BeNil()))
+			Expect(dst.Spec.Rules[0].Jwt).ToNot(BeNil())
 			Expect(dst.Spec.Rules[0].Jwt.Authentications).To(HaveLen(1))
 			Expect(dst.Spec.Rules[0].Jwt.Authentications[0].Issuer).To(Equal("issuer"))
 			Expect(dst.Spec.Rules[0].Jwt.Authentications[0].JwksUri).To(Equal("jwksUri"))
 			Expect(dst.Spec.Rules[0].Jwt.Authentications[0].FromHeaders).To(HaveLen(1))
 			Expect(dst.Spec.Rules[0].Jwt.Authentications[0].FromHeaders[0].Name).To(Equal(jwtHeaders[0].Name))
 			Expect(dst.Spec.Rules[0].Jwt.Authentications[0].FromHeaders[0].Prefix).To(Equal(jwtHeaders[0].Prefix))
-			Expect(dst.Spec.Rules[0].Jwt.Authentications[0].FromParams).To(ContainElements("param1", "param2"))
+			Expect(dst.Spec.Rules[0].Jwt.Authentications[0].FromParams).To(HaveExactElements("param1", "param2"))
 			Expect(dst.Spec.Rules[0].Jwt.Authorizations).To(HaveLen(1))
-			Expect(dst.Spec.Rules[0].Jwt.Authorizations[0].RequiredScopes).To(ContainElements("scope1", "scope2"))
-			Expect(dst.Spec.Rules[0].Jwt.Authorizations[0].Audiences).To(ContainElements("audience1", "audience2"))
+			Expect(dst.Spec.Rules[0].Jwt.Authorizations[0].RequiredScopes).To(HaveExactElements("scope1", "scope2"))
+			Expect(dst.Spec.Rules[0].Jwt.Authorizations[0].Audiences).To(HaveExactElements("audience1", "audience2"))
 		})
 	})
 })

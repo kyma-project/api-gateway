@@ -2,6 +2,7 @@ package v1beta2
 
 import (
 	"encoding/json"
+
 	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
@@ -31,13 +32,11 @@ func (src *APIRule) ConvertTo(dstRaw conversion.Hub) error {
 		return err
 	}
 
-	dst.ObjectMeta = src.ObjectMeta
-	annotations := dst.GetAnnotations()
-	if annotations == nil {
-		annotations = make(map[string]string)
+	dst.Annotations = src.Annotations
+	if dst.Annotations == nil {
+		dst.Annotations = make(map[string]string)
 	}
-	annotations["gateway.kyma-project.io/converted"] = "true"
-	dst.SetAnnotations(annotations)
+	dst.Annotations["gateway.kyma-project.io/origin-version"] = "v1beta2"
 
 	// Only one host is supported in v1beta1, so we use the first one from the list
 	hosts := src.Spec.Hosts

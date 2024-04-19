@@ -22,7 +22,8 @@ spec:
       name: Host
       type: string
     deprecated: true
-    deprecationWarning: v1beta1 is deprecated
+    deprecationWarning: APIRule version v1beta1 is deprecated in favor of v1beta2.
+      You need to migrate to v1beta2. We plan to remove v1beta1 in xx.2023.
     name: v1beta1
     schema:
       openAPIV3Schema:
@@ -370,17 +371,6 @@ spec:
                 items:
                   description: Rule .
                   properties:
-                    extAuths:
-                      description: Specifies the list of external authorizers.
-                      items:
-                        properties:
-                          name:
-                            description: Specifies the name of the external authorizer.
-                            type: string
-                        required:
-                        - name
-                        type: object
-                      type: array
                     jwt:
                       description: Specifies the Istio JWT access strategy.
                       properties:
