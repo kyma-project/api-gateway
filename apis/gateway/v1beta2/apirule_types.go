@@ -19,6 +19,7 @@ import (
 	"istio.io/api/networking/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 // StatusCode describing APIRule.
@@ -158,9 +159,14 @@ type Mutator struct {
 }
 
 // JwtConfig is the configuration for the Istio JWT authentication
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type JwtConfig struct {
 	Authentications []*JwtAuthentication `json:"authentications,omitempty"`
 	Authorizations  []*JwtAuthorization  `json:"authorizations,omitempty"`
+}
+
+func (j *JwtConfig) GetObjectKind() schema.ObjectKind {
+	return schema.EmptyObjectKind
 }
 
 // JwtAuthorization contains an array of required scopes

@@ -56,14 +56,10 @@ func (src *APIRule) ConvertTo(dstRaw conversion.Hub) error {
 
 		// JWT
 		if srcRule.Jwt != nil {
-			jwtBytes, err := json.Marshal(srcRule.Jwt)
-			if err != nil {
-				return err
-			}
 			dst.Spec.Rules[i].AccessStrategies = append(dst.Spec.Rules[i].AccessStrategies, &v1beta1.Authenticator{
 				Handler: &v1beta1.Handler{
 					Name:   "jwt",
-					Config: &runtime.RawExtension{Raw: jwtBytes},
+					Config: &runtime.RawExtension{Object: srcRule.Jwt},
 				},
 			})
 		}
@@ -113,20 +109,14 @@ func (dst *APIRule) ConvertFrom(srcRaw conversion.Hub) error {
 
 			// JWT
 			if accessStrategy.Handler.Name == "jwt" {
-				rawJWT := accessStrategy.Config.Raw
-				var jsonJWT JwtConfig
-				err = json.Unmarshal(rawJWT, &jsonJWT)
+				jwtConfig := accessStrategy.Config.Object.(*v1beta1.JwtConfig)
+				jsonConfig, err := json.Marshal(jwtConfig)
 				if err != nil {
 					return err
 				}
-				if dstRule.Jwt == nil {
-					dst.Spec.Rules[i].Jwt = &JwtConfig{
-						Authentications: jsonJWT.Authentications,
-						Authorizations:  jsonJWT.Authorizations,
-					}
-				} else {
-					dst.Spec.Rules[i].Jwt.Authentications = append(dst.Spec.Rules[i].Jwt.Authentications, jsonJWT.Authentications...)
-					dst.Spec.Rules[i].Jwt.Authorizations = append(dst.Spec.Rules[i].Jwt.Authorizations, jsonJWT.Authorizations...)
+				err = json.Unmarshal(jsonConfig, &dst.Spec.Rules[i].Jwt)
+				if err != nil {
+					return err
 				}
 			}
 		}
