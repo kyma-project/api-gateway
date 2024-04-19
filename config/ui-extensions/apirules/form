@@ -127,6 +127,7 @@
       required: false
       path: maxAge
       name: corsMaxAge
+      placeholder: 300s
       value:
         type: string
 - simple: true
