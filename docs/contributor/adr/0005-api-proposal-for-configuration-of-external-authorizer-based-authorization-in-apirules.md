@@ -3,13 +3,13 @@
 ## Status
 Accepted
 
-## Details
+## Context
 
 We are going to introduce a new handler for APIRules that allows configuring External Authorizer for services exposed by the user.
 
 The new access strategy will be called `extAuth`, which follows the camel case naming convention used for previous strategies. The `no_auth` access strategy will also change its name to `noAuth` in the future.
 
-## Considerations
+## Decision
 
 ### Should We Support Combining the `extAuth` and `jwt` Access Strategies?
 
