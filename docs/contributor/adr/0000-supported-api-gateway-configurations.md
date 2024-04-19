@@ -8,7 +8,7 @@ Accepted
 
 ## Context
 
-While having different configuration options for APIRule we specify which combinations of `path` + `accessStrategies.handler` are allowed for the API Gateway component. Additionally we will provide validation based on this.
+While having different configuration options for APIRules, we specify which combinations of **path** + **accessStrategies.handler** are allowed for the API Gateway component. Additionally, we will provide validation based on this.
 
 ## Decision
 
@@ -43,4 +43,4 @@ After having a meeting today and discussed the issue within the team, we decided
 
 ## Consequences
 
-Having specified supported configurations we can improve our unit test coverage in API Gateway and add the needed validation for APIRules.
+Having specified supported configurations, we can improve our unit test coverage in API Gateway and add the needed validation for APIRules.
