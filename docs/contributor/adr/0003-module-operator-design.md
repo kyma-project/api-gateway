@@ -18,14 +18,14 @@ The decision was made to use one operator with two controllers. As we are aiming
 
 ![Diagram of API Gateway Operator with two controllers](https://github.com/kyma-project/api-gateway/assets/11753933/9873b3b7-1d8f-4ddd-89d8-aa56c8161b1e)
 
-The default domain will be configured by the APIGateway CR and the API Rule controller will update the APIRules on change of the APIRule or during the next default reconciliation. We assume that changing the default domain is a task that is performed very rarely, which is why we accept the risk of a comparatively long tuning time.
+The default domain will be configured by the APIGateway CR and the APIRule controller will update the APIRules on change of the APIRule or during the next default reconciliation. We assume that changing the default domain is a task that is performed very rarely, which is why we accept the risk of a comparatively long tuning time.
 
 ## Consequences
 We can use the existing api-gateway repository for the implementation of the new controller. We need to adapt this repository to be compliant with the modularisation concept and add the new controller. Since we already have everything set up and configured it's only adjusting existing configuration.
 
-There are some tradeoffs that we have to accept. Although we want to separate the controllers, the controllers will be loosely coupled through the API gateway CR. The API Rule Controller must know the API Gateway CR to determine the default domain. However, the API Rule Controller should not validate this, but treat it as optional and reconcile the API Rule.
-Furthermore, the first version of the operator will perform the installation of Ory Oathkeeper in the API Gateway Controller. Since certain API Rules (e.g. with a configured oauth handler) require Ory Oathkeeper resources, a configuration of the API Gateway CR is necessary in this case, otherwise the ORY resources for the API Rule cannot be created.
+There are some tradeoffs that we have to accept. Although we want to separate the controllers, the controllers will be loosely coupled through the API gateway CR. The API Rule Controller must know the API Gateway CR to determine the default domain. However, the APIRule Controller should not validate this, but treat it as optional and reconcile the API Rule.
+Furthermore, the first version of the operator will perform the installation of Ory Oathkeeper in the API Gateway Controller. Since certain APIRules (e.g. with a configured oauth handler) require Ory Oathkeeper resources, a configuration of the API Gateway CR is necessary in this case, otherwise the ORY resources for the API Rule cannot be created.
 
 Having both controllers in the same repository means that we have to be very careful that the controllers remain separate and do not refer directly to each other.
 
-Another consequence is that we need to implement the modular operator in a long-lived branch, since we still want to be able to release the API-Gateway controller in its current state. Nevertheless, we want to merge this branch with the main branch as soon as possible, since we know about the disadvantages of long-lived branches.
+Another consequence is that we need to implement the modular operator in a long-lived branch, since we still want to be able to release the APIGateway controller in its current state. Nevertheless, we want to merge this branch with the main branch as soon as possible, since we know about the disadvantages of long-lived branches.

@@ -10,4 +10,4 @@
 <!--- Explain the proposed change or action and the reason behind it. -->
 
 ## Consequences
-<!--- Discuss the impact of this change, including the tasks that are now simplified or complicated as a result. -->
+<!--- Discuss the impact of this change, including what becomes easier or more complicated as a result. -->
