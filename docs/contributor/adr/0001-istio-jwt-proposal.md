@@ -1,12 +1,10 @@
 # Istio JWT Proposal
 
-Date: 2022-02-03
-
 ## Status
 
-- Accepted (2022-12-29)
-- Updated (2022-02-03): added **audiences** spec
-- Updated (2022-03-31): added **fromHeaders** spec
+- Accepted
+- Updated: added **audiences** spec
+- Updated: added **fromHeaders** spec
 
 ## Context
 

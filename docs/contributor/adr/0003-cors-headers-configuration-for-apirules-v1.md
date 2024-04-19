@@ -1,16 +1,11 @@
 # CORS Headers Configuration for APIRules in Version `v1`
 
 ## Status
-| Name | Description |
-|-----------------------|------------------------------------------------------------------------------------|
-| Title | CORS headers configuration for APIRules in version `v1` |
-| Status | Proposed on 2023.11.23, Approved on 2023.11.24 |
-| Decision type | Binary |
-| Affected decisions |  - |
+Accepted
 
 ## Context
 
-In preparation for exposing CORS configuration in APIRules, we must determine the default configuration that is used when no explicit configuration is provided. As of the creation day of ADR, all APIRules in version v1beta1 use the following CORS configuration:
+In preparation for exposing CORS configuration in APIRules, we must determine the default configuration that is used when no explicit configuration is provided. As of the creation day of ADR, all APIRules in version `v1beta1` use the following CORS configuration:
 
 ```yaml
 Access-Control-Allow-Origins: "*"

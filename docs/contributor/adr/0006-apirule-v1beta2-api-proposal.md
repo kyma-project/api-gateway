@@ -1,11 +1,8 @@
 # APIRule `v1beta2` API Proposal
 
-Date: 2024-03-22
-
 ## Status
 
-- Accepted: 10.04.2024
-- Proposed: 22.03.2024
+Accepted
 
 ## Context
 
@@ -13,7 +10,7 @@ Due to the deprecation of Ory and the introduction of new features in API Gatewa
 
 ### Changes:
 
-- `accessStrategies` field is replaced with `extAuths`, `jwt` and `noAuth`
+- **accessStrategies** field is replaced with **extAuths**, **jwt**, and **noAuth**
 - multiple hosts are allowed
 
 **Spec:**
@@ -56,7 +53,7 @@ Due to the deprecation of Ory and the introduction of new features in API Gatewa
 
 ### Examples
 
-- Multiple hosts with external authorizers and jwt:
+- Multiple hosts with external authorizers and JWT:
 ```yaml
 apiVersion: gateway.kyma-project.io/v1beta2
 kind: APIRule

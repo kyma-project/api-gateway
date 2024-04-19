@@ -1,7 +1,5 @@
 # Supported API Gateway Configurations
 
-Date: 2022-12-08
-
 ## Status
 
 Accepted

@@ -1,8 +1,7 @@
 # API Proposal for Configuration of External Authorizer-Based Authorization in APIRules
 
 ## Status
-Proposed: 13.03.2024
-Accepted: 27.03.2024
+Accepted
 
 ## Details
 
@@ -92,7 +91,7 @@ We must consider whether a configuration that uses multiple external authorizers
 **Decision**
 We decided to support multiple External Authorizers. Since there are some useful configurations that our users might want to have.
 
-## API Proposal
+### API Proposal
 
 We have discussed how the API would be structured to support future versions, specifically `v1beta2/v1`. We decided that **accessStrategy** will hold a single entry, either `extAuth`, `jwt`, or `noAuth`. The user must define only one access strategy in every **rule** of the **spec.rules** field.
 
