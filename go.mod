@@ -5,7 +5,7 @@ go 1.22
 toolchain go1.22.0
 
 require (
-	github.com/avast/retry-go/v4 v4.5.1
+	github.com/avast/retry-go/v4 v4.6.0
 	github.com/cucumber/godog v0.14.0
 	github.com/gardener/cert-management v0.13.0
 	github.com/gardener/external-dns-management v0.18.4
@@ -13,7 +13,7 @@ require (
 	github.com/go-logr/logr v1.4.1
 	github.com/google/uuid v1.6.0
 	github.com/onsi/ginkgo/v2 v2.17.1
-	github.com/onsi/gomega v1.32.0
+	github.com/onsi/gomega v1.33.0
 	github.com/ory/oathkeeper-maester v0.1.10
 	github.com/spf13/pflag v1.0.5
 	github.com/thoas/go-funk v0.9.3
