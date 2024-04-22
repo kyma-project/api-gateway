@@ -17,12 +17,11 @@ limitations under the License.
 package certificate
 
 import (
-	"context"
 	"testing"
 	"time"
 
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
-	gatewayv1beta2 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
+	gatewayv1beta2 "github.com/kyma-project/api-gateway/apis/gateway/v1beta2"
 	"github.com/kyma-project/api-gateway/tests"
 	. "github.com/onsi/ginkgo/v2"
 	"github.com/onsi/ginkgo/v2/types"
@@ -33,9 +32,7 @@ import (
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
-	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/envtest"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -44,14 +41,6 @@ const (
 
 	eventuallyTimeout      = time.Second * 20
 	reconciliationInterval = time.Second * 1
-)
-
-var (
-	cfg       *rest.Config
-	k8sClient client.Client
-	testEnv   *envtest.Environment
-	ctx       context.Context
-	cancel    context.CancelFunc
 )
 
 func TestAPIs(t *testing.T) {

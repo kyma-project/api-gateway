@@ -19,8 +19,14 @@ func (apiRuleBeta2 *APIRule) ConvertTo(hub conversion.Hub) error {
 	}
 	apiRuleBeta1.Annotations["gateway.kyma-project.io/original-version"] = "v1beta2"
 
-	convertOverJson(apiRuleBeta2.Spec, &apiRuleBeta1.Spec)
-	convertOverJson(apiRuleBeta2.Status, &apiRuleBeta1.Status)
+	err := convertOverJson(apiRuleBeta2.Spec, &apiRuleBeta1.Spec)
+	if err != nil {
+		return err
+	}
+	err = convertOverJson(apiRuleBeta2.Status, &apiRuleBeta1.Status)
+	if err != nil {
+		return err
+	}
 
 	// Only one host is supported in v1beta1, so we use the first one from the list
 	apiRuleBeta1.Spec.Host = apiRuleBeta2.Spec.Hosts[0]
@@ -28,7 +34,10 @@ func (apiRuleBeta2 *APIRule) ConvertTo(hub conversion.Hub) error {
 	apiRuleBeta1.Spec.Rules = []v1beta1.Rule{}
 	for _, ruleBeta2 := range apiRuleBeta2.Spec.Rules {
 		ruleBeta1 := v1beta1.Rule{}
-		convertOverJson(ruleBeta2, &ruleBeta1)
+		err = convertOverJson(ruleBeta2, &ruleBeta1)
+		if err != nil {
+			return err
+		}
 		// No Auth
 		if ruleBeta2.NoAuth != nil && *ruleBeta2.NoAuth {
 			ruleBeta1.AccessStrategies = append(ruleBeta1.AccessStrategies, &v1beta1.Authenticator{
@@ -58,8 +67,14 @@ func (apiRuleBeta2 *APIRule) ConvertFrom(hub conversion.Hub) error {
 
 	apiRuleBeta2.ObjectMeta = apiRuleBeta1.ObjectMeta
 
-	convertOverJson(apiRuleBeta1.Spec, &apiRuleBeta2.Spec)
-	convertOverJson(apiRuleBeta1.Status, &apiRuleBeta2.Status)
+	err := convertOverJson(apiRuleBeta1.Spec, &apiRuleBeta2.Spec)
+	if err != nil {
+		return err
+	}
+	err = convertOverJson(apiRuleBeta1.Status, &apiRuleBeta2.Status)
+	if err != nil {
+		return err
+	}
 
 	apiRuleBeta2.Spec.Hosts = []*string{new(string)}
 	*apiRuleBeta2.Spec.Hosts[0] = *apiRuleBeta1.Spec.Host
@@ -67,7 +82,10 @@ func (apiRuleBeta2 *APIRule) ConvertFrom(hub conversion.Hub) error {
 	apiRuleBeta2.Spec.Rules = []Rule{}
 	for _, ruleBeta1 := range apiRuleBeta1.Spec.Rules {
 		ruleBeta2 := Rule{}
-		convertOverJson(ruleBeta1, &ruleBeta2)
+		err = convertOverJson(ruleBeta1, &ruleBeta2)
+		if err != nil {
+			return err
+		}
 		for _, accessStrategy := range ruleBeta1.AccessStrategies {
 			// No Auth
 			if accessStrategy.Handler.Name == "no_auth" {
@@ -76,7 +94,10 @@ func (apiRuleBeta2 *APIRule) ConvertFrom(hub conversion.Hub) error {
 			// JWT
 			if accessStrategy.Handler.Name == "jwt" {
 				jwtConfig := accessStrategy.Config.Object.(*v1beta1.JwtConfig)
-				convertOverJson(jwtConfig, &ruleBeta2.Jwt)
+				err = convertOverJson(jwtConfig, &ruleBeta2.Jwt)
+				if err != nil {
+					return err
+				}
 			}
 		}
 		apiRuleBeta2.Spec.Rules = append(apiRuleBeta2.Spec.Rules, ruleBeta2)
