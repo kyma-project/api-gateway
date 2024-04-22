@@ -8,7 +8,7 @@ The API Gateway CR status doesn't contain enough information to easily debug wit
 
 ## Decision
 
-For the sake of simplicity, we implement the condition of type `Ready` as the main condition that supports multiple reasons. This way, we can reduce the number of condition types. If we use the [SetStatusCondition function](https://pkg.go.dev/k8s.io/apimachinery/pkg/api/meta#SetStatusCondition) of [k8s.io/apimachinery](http://k8s.io/apimachinery), the **lastTransitionTime** is only updated when the status of the condition changes.
+For the sake of simplicity, we implement the condition of type `Ready` as the main condition that supports multiple reasons. This way, we can reduce the number of condition types. If we use the [SetStatusCondition function](https://pkg.go.dev/k8s.io/apimachinery/pkg/api/meta#SetStatusCondition) of [k8s.io/apimachinery](https://github.com/kubernetes/apimachinery), the **lastTransitionTime** is only updated when the status of the condition changes.
 
 To support multiple reasons for the status `False`, we decided to set the status of the `Ready` condition to `Unknown` at the beginning of the reconciliation. This allows us to force the **lastTransitionTime** of the `Ready` condition to be always updated.
 
