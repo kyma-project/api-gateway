@@ -364,6 +364,7 @@ spec:
                 description: Specifies the URL of the exposed service.
                 items:
                   type: string
+                minItems: 1
                 type: array
               rules:
                 description: Represents the array of Oathkeeper access rules to be
@@ -506,7 +507,6 @@ spec:
                   - methods
                   - path
                   type: object
-                  x-kubernetes-preserve-unknown-fields: true
                 minItems: 1
                 type: array
               service:
