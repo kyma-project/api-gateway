@@ -247,13 +247,13 @@ func (s *scenario) reconciliationHappened(numberOfSeconds int) error {
 func initCommon(ctx *godog.ScenarioContext, ts *testsuite) {
 	scenario := ts.createScenario("istio-jwt-common.yaml", "api-gateway-upgrade")
 
-	ctx.Step(`Upgrade: There is a httpbin service$`, scenario.thereIsAHttpbinService)
-	ctx.Step(`Upgrade: There is an endpoint secured with JWT on path "([^"]*)"`, scenario.thereIsAnJwtSecuredPath)
-	ctx.Step(`Upgrade: The APIRule is applied$`, scenario.theAPIRuleIsApplied)
-	ctx.Step(`Upgrade: Calling the "([^"]*)" endpoint without a token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithoutTokenShouldResultInStatusBetween)
-	ctx.Step(`Upgrade: Calling the "([^"]*)" endpoint with an invalid token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithInvalidTokenShouldResultInStatusBetween)
-	ctx.Step(`Upgrade: Calling the "([^"]*)" endpoint with a valid "([^"]*)" token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithValidTokenShouldResultInStatusBetween)
-	ctx.Step(`Upgrade: API Gateway is upgraded to current branch version with "([^"]*)" manifest and should "([^"]*)"$`, scenario.upgradeApiGateway)
-	ctx.Step(`Upgrade: Teardown httpbin service$`, scenario.teardownHttpbinService)
-	ctx.Step(`Upgrade: A reconciliation happened in the last (\d+) seconds$`, scenario.reconciliationHappened)
+	ctx.Step(`Common: There is a httpbin service$`, scenario.thereIsAHttpbinService)
+	ctx.Step(`Common: There is an endpoint secured with JWT on path "([^"]*)"`, scenario.thereIsAnJwtSecuredPath)
+	ctx.Step(`Common: The APIRule is applied$`, scenario.theAPIRuleIsApplied)
+	ctx.Step(`Common: Calling the "([^"]*)" endpoint without a token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithoutTokenShouldResultInStatusBetween)
+	ctx.Step(`Common: Calling the "([^"]*)" endpoint with an invalid token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithInvalidTokenShouldResultInStatusBetween)
+	ctx.Step(`Common: Calling the "([^"]*)" endpoint with a valid "([^"]*)" token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithValidTokenShouldResultInStatusBetween)
+	ctx.Step(`Common: API Gateway is upgraded to current branch version with "([^"]*)" manifest and should "([^"]*)"$`, scenario.upgradeApiGateway)
+	ctx.Step(`Common: Teardown httpbin service$`, scenario.teardownHttpbinService)
+	ctx.Step(`Common: A reconciliation happened in the last (\d+) seconds$`, scenario.reconciliationHappened)
 }
