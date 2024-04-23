@@ -191,7 +191,6 @@ func (t *testsuite) TearDown() {
 	if err != nil {
 		log.Print(err.Error())
 	}
-
 }
 
 func (t *testsuite) BeforeSuiteHooks() []func() error {

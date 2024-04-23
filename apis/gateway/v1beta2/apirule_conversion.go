@@ -9,7 +9,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
 )
 
-// Converts this ApiRule to the Hub version (v1beta1).
+// Converts this ApiRule (v1beta2) to the Hub version (v1beta1)
 func (apiRuleBeta2 *APIRule) ConvertTo(hub conversion.Hub) error {
 	apiRuleBeta1 := hub.(*v1beta1.APIRule)
 
@@ -61,7 +61,7 @@ func (apiRuleBeta2 *APIRule) ConvertTo(hub conversion.Hub) error {
 	return nil
 }
 
-// Converts from the Hub version (v1beta1) into this ApiRule.
+// Converts from the Hub version (v1beta1) into this ApiRule (v1beta2)
 func (apiRuleBeta2 *APIRule) ConvertFrom(hub conversion.Hub) error {
 	apiRuleBeta1 := hub.(*v1beta1.APIRule)
 
@@ -92,8 +92,17 @@ func (apiRuleBeta2 *APIRule) ConvertFrom(hub conversion.Hub) error {
 				ruleBeta2.NoAuth = ptr.To(true)
 			}
 			// JWT
-			if accessStrategy.Handler.Name == "jwt" {
-				jwtConfig := accessStrategy.Config.Object.(*v1beta1.JwtConfig)
+			if accessStrategy.Handler.Name == "jwt" && accessStrategy.Config != nil {
+				var jwtConfig *v1beta1.JwtConfig
+				if accessStrategy.Config.Object != nil {
+					jwtConfig = accessStrategy.Config.Object.(*v1beta1.JwtConfig)
+				} else if accessStrategy.Config.Raw != nil {
+					jwtConfig = &v1beta1.JwtConfig{}
+					err = json.Unmarshal(accessStrategy.Config.Raw, jwtConfig)
+					if err != nil {
+						return err
+					}
+				}
 				err = convertOverJson(jwtConfig, &ruleBeta2.Jwt)
 				if err != nil {
 					return err

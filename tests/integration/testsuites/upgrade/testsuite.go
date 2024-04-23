@@ -5,11 +5,12 @@ import (
 	_ "embed"
 	"encoding/base64"
 	"fmt"
-	"github.com/kyma-project/api-gateway/tests/integration/pkg/auth"
 	"log"
 	"os"
 	"path"
 	"time"
+
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/auth"
 
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/hooks"
 
@@ -166,7 +167,7 @@ func (t *testsuite) Name() string {
 }
 
 func (t *testsuite) InitScenarios(ctx *godog.ScenarioContext) {
-	initCommon(ctx, t)
+	initUpgrade(ctx, t)
 }
 
 func (t *testsuite) BeforeSuiteHooks() []func() error {

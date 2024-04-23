@@ -1,6 +1,8 @@
 package v1beta2_test
 
 import (
+	"encoding/json"
+
 	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"github.com/kyma-project/api-gateway/apis/gateway/v1beta2"
 	. "github.com/onsi/ginkgo/v2"
@@ -16,6 +18,7 @@ var _ = Describe("APIRule Conversion", func() {
 
 	Describe("v1beta2 to v1beta1", func() {
 		It("should have origin version annotation", func() {
+			// given
 			apiRuleBeta2 := v1beta2.APIRule{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "test",
@@ -26,13 +29,16 @@ var _ = Describe("APIRule Conversion", func() {
 			}
 			apiRuleBeta1 := v1beta1.APIRule{}
 
+			// when
 			err := apiRuleBeta2.ConvertTo(&apiRuleBeta1)
 
+			// then
 			Expect(err).To(BeNil())
 			Expect(apiRuleBeta1.Annotations).To(HaveKeyWithValue("gateway.kyma-project.io/original-version", "v1beta2"))
 		})
 
 		It("should keep the first host", func() {
+			// given
 			apiRuleBeta2 := v1beta2.APIRule{
 				Spec: v1beta2.APIRuleSpec{
 					Hosts: []*string{&host1, &host2},
@@ -40,13 +46,16 @@ var _ = Describe("APIRule Conversion", func() {
 			}
 			apiRuleBeta1 := v1beta1.APIRule{}
 
+			// when
 			err := apiRuleBeta2.ConvertTo(&apiRuleBeta1)
 
+			// then
 			Expect(err).To(BeNil())
 			Expect(*apiRuleBeta1.Spec.Host).To(Equal(host1))
 		})
 
 		It("should convert NoAuth to v1beta1", func() {
+			// given
 			apiRuleBeta2 := v1beta2.APIRule{
 				Spec: v1beta2.APIRuleSpec{
 					Hosts: []*string{&host1},
@@ -59,8 +68,10 @@ var _ = Describe("APIRule Conversion", func() {
 			}
 			apiRuleBeta1 := v1beta1.APIRule{}
 
+			// when
 			err := apiRuleBeta2.ConvertTo(&apiRuleBeta1)
 
+			// then
 			Expect(err).To(BeNil())
 			Expect(apiRuleBeta1.Spec.Rules).To(HaveLen(1))
 			Expect(apiRuleBeta1.Spec.Rules[0].AccessStrategies).To(HaveLen(1))
@@ -69,6 +80,7 @@ var _ = Describe("APIRule Conversion", func() {
 		})
 
 		It("should convert rule with nested data to v1beta1", func() {
+			// given
 			apiRuleBeta2 := v1beta2.APIRule{
 				Spec: v1beta2.APIRuleSpec{
 					Gateway: ptr.To("gateway"),
@@ -85,8 +97,10 @@ var _ = Describe("APIRule Conversion", func() {
 			}
 			apiRuleBeta1 := v1beta1.APIRule{}
 
+			// when
 			err := apiRuleBeta2.ConvertTo(&apiRuleBeta1)
 
+			// then
 			Expect(err).To(BeNil())
 			Expect(*apiRuleBeta1.Spec.Gateway).To(Equal("gateway"))
 			Expect(*apiRuleBeta1.Spec.Service.Name).To(Equal("service"))
@@ -99,6 +113,7 @@ var _ = Describe("APIRule Conversion", func() {
 		})
 
 		It("should convert JWT to v1beta1", func() {
+			// given
 			jwtHeadersBeta2 := []*v1beta2.JwtHeader{
 				{Name: "header1", Prefix: "prefix1"},
 			}
@@ -130,8 +145,10 @@ var _ = Describe("APIRule Conversion", func() {
 			}
 			apiRuleBeta1 := v1beta1.APIRule{}
 
+			// when
 			err := apiRuleBeta2.ConvertTo(&apiRuleBeta1)
 
+			// then
 			Expect(err).To(BeNil())
 			Expect(apiRuleBeta1.Spec.Rules).To(HaveLen(1))
 			Expect(apiRuleBeta1.Spec.Rules[0].AccessStrategies).To(HaveLen(1))
@@ -153,6 +170,7 @@ var _ = Describe("APIRule Conversion", func() {
 		})
 
 		It("should convert single rule with JWT and ignore NoAuth when set to false to v1beta1", func() {
+			// given
 			apiRuleBeta2 := v1beta2.APIRule{
 				Spec: v1beta2.APIRuleSpec{
 					Hosts: []*string{&host1},
@@ -169,8 +187,10 @@ var _ = Describe("APIRule Conversion", func() {
 			}
 			apiRuleBeta1 := v1beta1.APIRule{}
 
+			// when
 			err := apiRuleBeta2.ConvertTo(&apiRuleBeta1)
 
+			// then
 			Expect(err).To(BeNil())
 			Expect(apiRuleBeta1.Spec.Rules).To(HaveLen(1))
 			Expect(apiRuleBeta1.Spec.Rules[0].AccessStrategies).To(HaveLen(1))
@@ -179,6 +199,7 @@ var _ = Describe("APIRule Conversion", func() {
 		})
 
 		It("should convert two rules with NoAuth and JWT to v1beta1", func() {
+			// given
 			apiRuleBeta2 := v1beta2.APIRule{
 				Spec: v1beta2.APIRuleSpec{
 					Hosts: []*string{&host1},
@@ -197,8 +218,10 @@ var _ = Describe("APIRule Conversion", func() {
 			}
 			apiRuleBeta1 := v1beta1.APIRule{}
 
+			// when
 			err := apiRuleBeta2.ConvertTo(&apiRuleBeta1)
 
+			// then
 			Expect(err).To(BeNil())
 			Expect(apiRuleBeta1.Spec.Rules).To(HaveLen(2))
 			Expect(apiRuleBeta1.Spec.Rules[0].AccessStrategies).To(HaveLen(1))
@@ -212,6 +235,7 @@ var _ = Describe("APIRule Conversion", func() {
 
 	Describe("v1beta1 to v1beta2", func() {
 		It("should have the host in array", func() {
+			// given
 			apiRuleBeta1 := v1beta1.APIRule{
 				Spec: v1beta1.APIRuleSpec{
 					Host: &host1,
@@ -219,6 +243,7 @@ var _ = Describe("APIRule Conversion", func() {
 			}
 			apiRuleBeta2 := v1beta2.APIRule{}
 
+			// when
 			err := apiRuleBeta2.ConvertFrom(&apiRuleBeta1)
 
 			Expect(err).To(BeNil())
@@ -226,6 +251,7 @@ var _ = Describe("APIRule Conversion", func() {
 		})
 
 		It("should convert NoAuth to v1beta2", func() {
+			// given
 			apiRuleBeta1 := v1beta1.APIRule{
 				Spec: v1beta1.APIRuleSpec{
 					Host: &host1,
@@ -244,14 +270,17 @@ var _ = Describe("APIRule Conversion", func() {
 			}
 			apiRuleBeta2 := v1beta2.APIRule{}
 
+			// when
 			err := apiRuleBeta2.ConvertFrom(&apiRuleBeta1)
 
+			// then
 			Expect(err).To(BeNil())
 			Expect(apiRuleBeta2.Spec.Rules).To(HaveLen(1))
 			Expect(*apiRuleBeta2.Spec.Rules[0].NoAuth).To(BeTrue())
 		})
 
 		It("should convert rule with nested data to v1beta2", func() {
+			// given
 			apiRuleBeta1 := v1beta1.APIRule{
 				Spec: v1beta1.APIRuleSpec{
 					Gateway: ptr.To("gateway"),
@@ -274,8 +303,10 @@ var _ = Describe("APIRule Conversion", func() {
 			}
 			apiRuleBeta2 := v1beta2.APIRule{}
 
+			// when
 			err := apiRuleBeta2.ConvertFrom(&apiRuleBeta1)
 
+			// then
 			Expect(err).To(BeNil())
 			Expect(*apiRuleBeta2.Spec.Gateway).To(Equal("gateway"))
 			Expect(*apiRuleBeta2.Spec.Service.Name).To(Equal("service"))
@@ -286,6 +317,7 @@ var _ = Describe("APIRule Conversion", func() {
 		})
 
 		It("should convert JWT to v1beta2", func() {
+			// given
 			jwtHeadersBeta1 := []*v1beta1.JwtHeader{
 				{Name: "header1", Prefix: "prefix1"},
 			}
@@ -326,8 +358,10 @@ var _ = Describe("APIRule Conversion", func() {
 			}
 			apiRuleBeta2 := v1beta2.APIRule{}
 
+			// when
 			err := apiRuleBeta2.ConvertFrom(&apiRuleBeta1)
 
+			// then
 			Expect(err).To(BeNil())
 			Expect(apiRuleBeta2.Spec.Rules).To(HaveLen(1))
 			Expect(apiRuleBeta2.Spec.Rules[0].Jwt).ToNot(BeNil())
@@ -343,7 +377,63 @@ var _ = Describe("APIRule Conversion", func() {
 			Expect(apiRuleBeta2.Spec.Rules[0].Jwt.Authorizations[0].Audiences).To(HaveExactElements("audience1", "audience2"))
 		})
 
+		It("should convert JWT to v1beta2 when config stored as raw", func() {
+			// given
+			jwtHeadersBeta1 := []*v1beta1.JwtHeader{
+				{Name: "header1", Prefix: "prefix1"},
+			}
+
+			jwtConfigBeta1 := v1beta1.JwtConfig{
+				Authentications: []*v1beta1.JwtAuthentication{
+					{
+						Issuer:      "issuer",
+						JwksUri:     "jwksUri",
+						FromHeaders: jwtHeadersBeta1,
+						FromParams:  []string{"param1", "param2"},
+					},
+				},
+				Authorizations: []*v1beta1.JwtAuthorization{
+					{
+						RequiredScopes: []string{"scope1", "scope2"},
+						Audiences:      []string{"audience1", "audience2"},
+					},
+				},
+			}
+			jsonConfig, err := json.Marshal(jwtConfigBeta1)
+			Expect(err).To(BeNil())
+
+			apiRuleBeta1 := v1beta1.APIRule{
+				Spec: v1beta1.APIRuleSpec{
+					Host: &host1,
+					Rules: []v1beta1.Rule{
+						{
+							AccessStrategies: []*v1beta1.Authenticator{
+								{
+									Handler: &v1beta1.Handler{
+										Name:   "jwt",
+										Config: &runtime.RawExtension{Raw: jsonConfig},
+									},
+								},
+							},
+						},
+					},
+				},
+			}
+			apiRuleBeta2 := v1beta2.APIRule{}
+
+			// when
+			err = apiRuleBeta2.ConvertFrom(&apiRuleBeta1)
+
+			// then
+			Expect(err).To(BeNil())
+			Expect(apiRuleBeta2.Spec.Rules).To(HaveLen(1))
+			Expect(apiRuleBeta2.Spec.Rules[0].Jwt).ToNot(BeNil())
+			Expect(apiRuleBeta2.Spec.Rules[0].Jwt.Authentications).To(HaveLen(1))
+			Expect(apiRuleBeta2.Spec.Rules[0].Jwt.Authorizations).To(HaveLen(1))
+		})
+
 		It("should convert JWT and allow to v1beta2", func() {
+			// given
 			apiRuleBeta1 := v1beta1.APIRule{
 				Spec: v1beta1.APIRuleSpec{
 					Host: &host1,
@@ -370,14 +460,17 @@ var _ = Describe("APIRule Conversion", func() {
 			}
 			apiRuleBeta2 := v1beta2.APIRule{}
 
+			// when
 			err := apiRuleBeta2.ConvertFrom(&apiRuleBeta1)
 
+			// then
 			Expect(err).To(BeNil())
 			Expect(apiRuleBeta2.Spec.Rules).To(HaveLen(1))
 			Expect(apiRuleBeta2.Spec.Rules[0].Jwt).ToNot(BeNil())
 		})
 
 		It("should convert two rules with NoAuth and JWT to v1beta2", func() {
+			// given
 			apiRuleBeta1 := v1beta1.APIRule{
 				Spec: v1beta1.APIRuleSpec{
 					Host: &host1,
@@ -408,8 +501,10 @@ var _ = Describe("APIRule Conversion", func() {
 			}
 			apiRuleBeta2 := v1beta2.APIRule{}
 
+			// when
 			err := apiRuleBeta2.ConvertFrom(&apiRuleBeta1)
 
+			// then
 			Expect(err).To(BeNil())
 			Expect(apiRuleBeta2.Spec.Rules).To(HaveLen(2))
 			Expect(*apiRuleBeta2.Spec.Rules[0].NoAuth).To(BeTrue())
