@@ -117,7 +117,7 @@ func generateSelfSignedCertificate(host string, alternateIPs []net.IP, alternate
 
 func verifySecret(s *corev1.Secret) error {
 	if !hasRequiredKeys(s.Data, []string{certificateName, keyName}) {
-		return fmt.Errorf("secret do not have required keys: %s, %s", certificateName, keyName)
+		return fmt.Errorf("secret does not have required keys: %s, %s", certificateName, keyName)
 	}
 
 	if err := verifyCertificate(s.Data[certificateName]); err != nil {
