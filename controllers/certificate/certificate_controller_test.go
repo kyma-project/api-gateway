@@ -19,7 +19,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var _ = Describe("API-Gateway Controller", func() {
+var _ = Describe("Certificate Controller", func() {
 	Context("Reconcile", func() {
 		It("Should return an error when Secret was not found", func() {
 			// given
