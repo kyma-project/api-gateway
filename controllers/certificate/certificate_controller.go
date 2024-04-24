@@ -121,7 +121,7 @@ func generateCertificate(serviceName, namespace string) ([]byte, []byte, error) 
 		namespacedServiceName,
 		serviceHostname,
 	}
-	return generateSelfSignedCertificate(altNames[0], nil, altNames, maxAge)
+	return generateSelfSignedCertificate(commonName, nil, altNames, maxAge)
 }
 
 func buildSecret(name, namespace string, certificate []byte, key []byte) *corev1.Secret {
