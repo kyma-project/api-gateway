@@ -1,4 +1,4 @@
-package certificate
+package certificate_test
 
 import (
 	"context"
@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
+	"github.com/kyma-project/api-gateway/controllers/certificate"
 
 	corev1 "k8s.io/api/core/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
@@ -27,7 +28,7 @@ var _ = Describe("Certificate Controller", func() {
 			agr := getReconciler(c, getTestScheme(), logr.Discard())
 
 			// when
-			result, err := agr.Reconcile(context.Background(), reconcile.Request{NamespacedName: types.NamespacedName{Namespace: testNamespace, Name: secretName}})
+			result, err := agr.Reconcile(context.Background(), reconcile.Request{NamespacedName: types.NamespacedName{Namespace: testNamespace, Name: "api-gateway-webhook-certificate"}})
 
 			// then
 			Expect(err).Should(HaveOccurred())
@@ -38,7 +39,7 @@ var _ = Describe("Certificate Controller", func() {
 			// given
 			secret := &corev1.Secret{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      secretName,
+					Name:      "api-gateway-webhook-certificate",
 					Namespace: testNamespace,
 				},
 			}
@@ -48,7 +49,7 @@ var _ = Describe("Certificate Controller", func() {
 			agr := getReconciler(fc, getTestScheme(), logr.Discard())
 
 			// when
-			result, err := agr.Reconcile(context.Background(), reconcile.Request{NamespacedName: types.NamespacedName{Namespace: testNamespace, Name: secretName}})
+			result, err := agr.Reconcile(context.Background(), reconcile.Request{NamespacedName: types.NamespacedName{Namespace: testNamespace, Name: "api-gateway-webhook-certificate"}})
 
 			// then
 			Expect(err).To(HaveOccurred())
@@ -57,7 +58,7 @@ var _ = Describe("Certificate Controller", func() {
 
 		It("Should succeed when Secret is present and valid", func() {
 			// given
-			certificate, key, err := generateCertificate(serviceName, testNamespace)
+			certificate, key, err := certificate.GenerateSelfSignedCertificate("api-gateway-webhook-service", nil, []string{}, time.Hour*24*365)
 			Expect(err).ShouldNot(HaveOccurred())
 
 			secret := getSecret(certificate, key)
@@ -66,16 +67,16 @@ var _ = Describe("Certificate Controller", func() {
 			agr := getReconciler(c, getTestScheme(), logr.Discard())
 
 			// when
-			result, err := agr.Reconcile(context.Background(), reconcile.Request{NamespacedName: types.NamespacedName{Namespace: testNamespace, Name: secretName}})
+			result, err := agr.Reconcile(context.Background(), reconcile.Request{NamespacedName: types.NamespacedName{Namespace: testNamespace, Name: "api-gateway-webhook-certificate"}})
 
 			// then
 			Expect(err).ShouldNot(HaveOccurred())
-			Expect(result.RequeueAfter).To(Equal(reconciliationInterval))
+			Expect(result.RequeueAfter).To(Equal(time.Hour * 1))
 		})
 
 		It("Should return error when APIRule CRD do not contain webhook spec but have to create new certificate and reschedule reconcile in a minute", func() {
 			// given
-			certificate, key, err := generateSelfSignedCertificate(serviceName, nil, []string{}, time.Nanosecond*1)
+			certificate, key, err := certificate.GenerateSelfSignedCertificate("api-gateway-webhook-service", nil, []string{}, time.Nanosecond*1)
 			Expect(err).ShouldNot(HaveOccurred())
 
 			secret := getSecret(certificate, key)
@@ -89,7 +90,7 @@ var _ = Describe("Certificate Controller", func() {
 			agr := getReconciler(c, getTestScheme(), logr.Discard())
 
 			// when
-			result, err := agr.Reconcile(context.Background(), reconcile.Request{NamespacedName: types.NamespacedName{Namespace: testNamespace, Name: secretName}})
+			result, err := agr.Reconcile(context.Background(), reconcile.Request{NamespacedName: types.NamespacedName{Namespace: testNamespace, Name: "api-gateway-webhook-certificate"}})
 
 			// then
 			Expect(err).Should(HaveOccurred())
@@ -99,7 +100,7 @@ var _ = Describe("Certificate Controller", func() {
 
 		It("Should succeed when Secret is present and generate new certificate when current is expired", func() {
 			// given
-			certificate, key, err := generateSelfSignedCertificate(serviceName, nil, []string{}, time.Nanosecond*1)
+			certificate, key, err := certificate.GenerateSelfSignedCertificate("api-gateway-webhook-service", nil, []string{}, time.Nanosecond*1)
 			Expect(err).ShouldNot(HaveOccurred())
 
 			secret := getSecret(certificate, key)
@@ -111,19 +112,19 @@ var _ = Describe("Certificate Controller", func() {
 			agr := getReconciler(c, getTestScheme(), logr.Discard())
 
 			// when
-			result, err := agr.Reconcile(context.Background(), reconcile.Request{NamespacedName: types.NamespacedName{Namespace: testNamespace, Name: secretName}})
+			result, err := agr.Reconcile(context.Background(), reconcile.Request{NamespacedName: types.NamespacedName{Namespace: testNamespace, Name: "api-gateway-webhook-certificate"}})
 
 			// then
 			Expect(err).ShouldNot(HaveOccurred())
-			Expect(result.RequeueAfter).Should(Equal(reconciliationInterval))
+			Expect(result.RequeueAfter).Should(Equal(time.Hour * 1))
 
-			Expect(c.Get(context.TODO(), client.ObjectKeyFromObject(secret), secret)).Should(Succeed())
-			Expect(secret.Data[certificateName]).ShouldNot(Equal(certificate))
+			Expect(c.Get(context.Background(), client.ObjectKeyFromObject(secret), secret)).Should(Succeed())
+			Expect(secret.Data["tls.crt"]).ShouldNot(Equal(certificate))
 
-			Expect(c.Get(context.TODO(), types.NamespacedName{Name: APIRuleCRDName}, crd)).Should(Succeed())
+			Expect(c.Get(context.Background(), types.NamespacedName{Name: "apirules.gateway.kyma-project.io"}, crd)).Should(Succeed())
 			Expect(crd.Spec.Conversion.Webhook.ClientConfig.CABundle).ShouldNot(Equal(certificate))
 
-			Expect(secret.Data[certificateName]).To(Equal(crd.Spec.Conversion.Webhook.ClientConfig.CABundle))
+			Expect(secret.Data["tls.crt"]).To(Equal(crd.Spec.Conversion.Webhook.ClientConfig.CABundle))
 		})
 
 		It("Should succeed when Secret is present and generate new certificate when current has missing required keys", func() {
@@ -139,19 +140,19 @@ var _ = Describe("Certificate Controller", func() {
 			agr := getReconciler(c, getTestScheme(), logr.Discard())
 
 			// when
-			result, err := agr.Reconcile(context.Background(), reconcile.Request{NamespacedName: types.NamespacedName{Namespace: testNamespace, Name: secretName}})
+			result, err := agr.Reconcile(context.Background(), reconcile.Request{NamespacedName: types.NamespacedName{Namespace: testNamespace, Name: "api-gateway-webhook-certificate"}})
 
 			// then
 			Expect(err).ShouldNot(HaveOccurred())
-			Expect(result.RequeueAfter).Should(Equal(reconciliationInterval))
+			Expect(result.RequeueAfter).Should(Equal(time.Hour * 1))
 
-			Expect(c.Get(context.TODO(), client.ObjectKeyFromObject(secret), secret)).Should(Succeed())
-			Expect(secret.Data[certificateName]).ShouldNot(Equal([]byte{}))
+			Expect(c.Get(context.Background(), client.ObjectKeyFromObject(secret), secret)).Should(Succeed())
+			Expect(secret.Data["tls.crt"]).ShouldNot(Equal([]byte{}))
 
-			Expect(c.Get(context.TODO(), types.NamespacedName{Name: APIRuleCRDName}, crd)).Should(Succeed())
+			Expect(c.Get(context.Background(), types.NamespacedName{Name: "apirules.gateway.kyma-project.io"}, crd)).Should(Succeed())
 			Expect(crd.Spec.Conversion.Webhook.ClientConfig.CABundle).ShouldNot(Equal([]byte{}))
 
-			Expect(secret.Data[certificateName]).To(Equal(crd.Spec.Conversion.Webhook.ClientConfig.CABundle))
+			Expect(secret.Data["tls.crt"]).To(Equal(crd.Spec.Conversion.Webhook.ClientConfig.CABundle))
 		})
 
 		It("Should succeed when Secret is present and generate new certificate when current has incorrect certificate", func() {
@@ -165,19 +166,19 @@ var _ = Describe("Certificate Controller", func() {
 			agr := getReconciler(c, getTestScheme(), logr.Discard())
 
 			// when
-			result, err := agr.Reconcile(context.Background(), reconcile.Request{NamespacedName: types.NamespacedName{Namespace: testNamespace, Name: secretName}})
+			result, err := agr.Reconcile(context.Background(), reconcile.Request{NamespacedName: types.NamespacedName{Namespace: testNamespace, Name: "api-gateway-webhook-certificate"}})
 
 			// then
 			Expect(err).ShouldNot(HaveOccurred())
-			Expect(result.RequeueAfter).Should(Equal(reconciliationInterval))
+			Expect(result.RequeueAfter).Should(Equal(time.Hour * 1))
 
-			Expect(c.Get(context.TODO(), client.ObjectKeyFromObject(secret), secret)).Should(Succeed())
-			Expect(secret.Data[certificateName]).ShouldNot(Equal([]byte{}))
+			Expect(c.Get(context.Background(), client.ObjectKeyFromObject(secret), secret)).Should(Succeed())
+			Expect(secret.Data["tls.crt"]).ShouldNot(Equal([]byte{}))
 
-			Expect(c.Get(context.TODO(), types.NamespacedName{Name: APIRuleCRDName}, crd)).Should(Succeed())
+			Expect(c.Get(context.Background(), types.NamespacedName{Name: "apirules.gateway.kyma-project.io"}, crd)).Should(Succeed())
 			Expect(crd.Spec.Conversion.Webhook.ClientConfig.CABundle).ShouldNot(Equal([]byte{}))
 
-			Expect(secret.Data[certificateName]).To(Equal(crd.Spec.Conversion.Webhook.ClientConfig.CABundle))
+			Expect(secret.Data["tls.crt"]).To(Equal(crd.Spec.Conversion.Webhook.ClientConfig.CABundle))
 		})
 	})
 })
@@ -194,23 +195,23 @@ func (p *shouldFailClient) Get(ctx context.Context, key client.ObjectKey, obj cl
 	return p.Client.Get(ctx, key, obj, opts...)
 }
 
-func getReconciler(c client.Client, scheme *runtime.Scheme, log logr.Logger) *Reconciler {
-	return &Reconciler{
+func getReconciler(c client.Client, scheme *runtime.Scheme, log logr.Logger) *certificate.Reconciler {
+	return &certificate.Reconciler{
 		Client: c,
 		Scheme: scheme,
-		log:    log,
+		Log:    log,
 	}
 }
 
 func getSecret(certificate, key []byte) *corev1.Secret {
 	return &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      secretName,
+			Name:      "api-gateway-webhook-certificate",
 			Namespace: testNamespace,
 		},
 		Data: map[string][]byte{
-			certificateName: certificate,
-			keyName:         key,
+			"tls.crt": certificate,
+			"tls.key": key,
 		},
 	}
 }
@@ -218,7 +219,7 @@ func getSecret(certificate, key []byte) *corev1.Secret {
 func getCRD(certificate []byte) *apiextensionsv1.CustomResourceDefinition {
 	return &apiextensionsv1.CustomResourceDefinition{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: APIRuleCRDName,
+			Name: "apirules.gateway.kyma-project.io",
 		},
 		Spec: apiextensionsv1.CustomResourceDefinitionSpec{
 			Conversion: &apiextensionsv1.CustomResourceConversion{

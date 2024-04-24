@@ -23,7 +23,7 @@ spec:
       type: string
     deprecated: true
     deprecationWarning: APIRule version v1beta1 is deprecated in favor of v1beta2.
-      You need to migrate to v1beta2. We plan to remove v1beta1 in xx.2023.
+      You need to migrate to v1beta2. We plan to remove v1beta1 in xx.2024.
     name: v1beta1
     schema:
       openAPIV3Schema:

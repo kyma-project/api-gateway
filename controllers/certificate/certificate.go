@@ -24,7 +24,7 @@ const (
 	keySize = 4096
 )
 
-func generateSelfSignedCertificate(host string, alternateIPs []net.IP, alternateDNS []string, maxAge time.Duration) ([]byte, []byte, error) {
+func GenerateSelfSignedCertificate(host string, alternateIPs []net.IP, alternateDNS []string, maxAge time.Duration) ([]byte, []byte, error) {
 	validFrom := time.Now().Add(-time.Hour) // valid an hour earlier to avoid flakes due to clock skew
 	caKey, err := rsa.GenerateKey(rand.Reader, keySize)
 	if err != nil {

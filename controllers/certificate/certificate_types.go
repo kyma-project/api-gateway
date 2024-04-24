@@ -9,5 +9,5 @@ import (
 type Reconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
-	log    logr.Logger
+	Log    logr.Logger
 }

@@ -42,7 +42,7 @@ func NewCertificateReconciler(mgr manager.Manager) *Reconciler {
 	return &Reconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
-		log:    mgr.GetLogger().WithName("certificate-controller"),
+		Log:    mgr.GetLogger().WithName("certificate-controller"),
 	}
 }
 
@@ -50,7 +50,7 @@ func NewCertificateReconciler(mgr manager.Manager) *Reconciler {
 // +kubebuilder:rbac:groups="apiextensions.k8s.io",resources=customresourcedefinitions,verbs=get;list;watch;create;update;patch;delete
 
 func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	r.log.Info("Received reconciliation request", "name", req.Name)
+	r.Log.Info("Received reconciliation request", "name", req.Name)
 
 	certificateSecret := &corev1.Secret{}
 	err := r.Client.Get(ctx, req.NamespacedName, certificateSecret)
@@ -58,18 +58,18 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 		return ctrl.Result{}, err
 	}
 
-	r.log.Info("Reconciling Webhook Secret", "name", certificateSecret.Name)
+	r.Log.Info("Reconciling Webhook Secret", "name", certificateSecret.Name)
 
 	err = verifySecret(certificateSecret)
 	if err == nil {
-		r.log.Info("Secret certificate is still valid and does not need to be updated")
+		r.Log.Info("Secret certificate is still valid and does not need to be updated")
 	} else {
-		r.log.Info("Secret certificate is invalid", "verificationError", err.Error())
+		r.Log.Info("Secret certificate is invalid", "verificationError", err.Error())
 		certificate, err := createNewSecret(ctx, r.Client, certificateSecret)
 		if err != nil {
 			return ctrl.Result{Requeue: true}, err
 		}
-		r.log.Info("New certificate created", "validFrom", certificate.NotBefore, "validUntil", certificate.NotAfter)
+		r.Log.Info("New certificate created", "validFrom", certificate.NotBefore, "validUntil", certificate.NotAfter)
 	}
 
 	return ctrl.Result{RequeueAfter: reconciliationInterval}, nil
@@ -113,7 +113,7 @@ func createNewSecret(ctx context.Context, client ctrlclient.Client, secret *core
 func generateCertificate(serviceName, namespace string) ([]byte, []byte, error) {
 	namespacedServiceName := strings.Join([]string{serviceName, namespace}, ".")
 	commonName := strings.Join([]string{namespacedServiceName, "svc"}, ".")
-	return generateSelfSignedCertificate(commonName, nil, []string{}, maxAge)
+	return GenerateSelfSignedCertificate(commonName, nil, []string{}, maxAge)
 }
 
 func buildSecret(name, namespace string, certificate []byte, key []byte) *corev1.Secret {
