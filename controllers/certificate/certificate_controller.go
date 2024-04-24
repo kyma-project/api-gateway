@@ -3,7 +3,6 @@ package certificate
 import (
 	"context"
 	"crypto/x509"
-	"fmt"
 	"strings"
 	"time"
 
@@ -25,8 +24,9 @@ import (
 )
 
 const (
-	maxAge       = time.Hour * 24 * 365 // issue certificate with 365 days validity
-	untilRenewal = time.Hour * 24 * 14  // renew certificate 14 days before expiration
+	reconciliationInterval = time.Hour * 1        // reconciliation interval of 1 hour
+	maxAge                 = time.Hour * 24 * 365 // issue certificate with 365 days validity
+	untilRenewal           = time.Hour * 24 * 14  // renew certificate 14 days before expiration
 
 	certificateName = "tls.crt"
 	keyName         = "tls.key"
@@ -38,12 +38,11 @@ const (
 	APIRuleCRDName = "apirules.gateway.kyma-project.io"
 )
 
-func NewCertificateReconciler(mgr manager.Manager, reconciliationInterval time.Duration) *Reconciler {
+func NewCertificateReconciler(mgr manager.Manager) *Reconciler {
 	return &Reconciler{
-		Client:                 mgr.GetClient(),
-		Scheme:                 mgr.GetScheme(),
-		log:                    mgr.GetLogger().WithName("certificate-controller"),
-		reconciliationInterval: reconciliationInterval,
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+		log:    mgr.GetLogger().WithName("certificate-controller"),
 	}
 }
 
@@ -68,12 +67,12 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 		r.log.Info("Secret certificate is invalid", "verificationError", err.Error())
 		certificate, err := createNewSecret(ctx, r.Client, certificateSecret)
 		if err != nil {
-			return ctrl.Result{RequeueAfter: 1 * time.Minute}, err
+			return ctrl.Result{Requeue: true}, err
 		}
 		r.log.Info("New certificate created", "validFrom", certificate.NotBefore, "validUntil", certificate.NotAfter)
 	}
 
-	return ctrl.Result{RequeueAfter: r.reconciliationInterval}, nil
+	return ctrl.Result{RequeueAfter: reconciliationInterval}, nil
 }
 
 func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, c controllers.RateLimiterConfig) error {
@@ -114,14 +113,7 @@ func createNewSecret(ctx context.Context, client ctrlclient.Client, secret *core
 func generateCertificate(serviceName, namespace string) ([]byte, []byte, error) {
 	namespacedServiceName := strings.Join([]string{serviceName, namespace}, ".")
 	commonName := strings.Join([]string{namespacedServiceName, "svc"}, ".")
-	serviceHostname := fmt.Sprintf("%s.%s.svc.cluster.local", serviceName, namespace)
-	altNames := []string{
-		commonName,
-		serviceName,
-		namespacedServiceName,
-		serviceHostname,
-	}
-	return generateSelfSignedCertificate(commonName, nil, altNames, maxAge)
+	return generateSelfSignedCertificate(commonName, nil, []string{}, maxAge)
 }
 
 func buildSecret(name, namespace string, certificate []byte, key []byte) *corev1.Secret {

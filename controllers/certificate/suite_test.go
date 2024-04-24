@@ -18,7 +18,6 @@ package certificate
 
 import (
 	"testing"
-	"time"
 
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	gatewayv1beta2 "github.com/kyma-project/api-gateway/apis/gateway/v1beta2"
@@ -38,9 +37,6 @@ import (
 
 const (
 	testNamespace = "kyma-system"
-
-	eventuallyTimeout      = time.Second * 20
-	reconciliationInterval = time.Second * 1
 )
 
 func TestAPIs(t *testing.T) {

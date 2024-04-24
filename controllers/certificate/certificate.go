@@ -20,19 +20,21 @@ import (
 	netutils "k8s.io/utils/net"
 )
 
+const (
+	keySize = 4096
+)
+
 func generateSelfSignedCertificate(host string, alternateIPs []net.IP, alternateDNS []string, maxAge time.Duration) ([]byte, []byte, error) {
 	validFrom := time.Now().Add(-time.Hour) // valid an hour earlier to avoid flakes due to clock skew
-	caKey, err := rsa.GenerateKey(rand.Reader, 2048)
+	caKey, err := rsa.GenerateKey(rand.Reader, keySize)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	// returns a uniform random value in [0, max-1), then add 1 to serial to make it a uniform random value in [1, max).
-	serial, err := rand.Int(rand.Reader, new(big.Int).SetInt64(math.MaxInt64-1))
+	serial, err := generateRandomSerialNumber()
 	if err != nil {
 		return nil, nil, err
 	}
-	serial = new(big.Int).Add(serial, big.NewInt(1))
 
 	caTemplate := x509.Certificate{
 		SerialNumber: serial,
@@ -57,17 +59,15 @@ func generateSelfSignedCertificate(host string, alternateIPs []net.IP, alternate
 		return nil, nil, err
 	}
 
-	priv, err := rsa.GenerateKey(rand.Reader, 2048)
+	priv, err := rsa.GenerateKey(rand.Reader, keySize)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	// returns a uniform random value in [0, max-1), then add 1 to serial to make it a uniform random value in [1, max).
-	serial, err = rand.Int(rand.Reader, new(big.Int).SetInt64(math.MaxInt64-1))
+	serial, err = generateRandomSerialNumber()
 	if err != nil {
 		return nil, nil, err
 	}
-	serial = new(big.Int).Add(serial, big.NewInt(1))
 
 	template := x509.Certificate{
 		SerialNumber: serial,
@@ -182,4 +182,13 @@ func hasRequiredKeys(data map[string][]byte, keys []string) bool {
 	}
 
 	return true
+}
+
+// returns a uniform random value in [0, max-1), then add 1 to serial to make it a uniform random value in [1, max).
+func generateRandomSerialNumber() (*big.Int, error) {
+	serial, err := rand.Int(rand.Reader, new(big.Int).SetInt64(math.MaxInt64-1))
+	if err != nil {
+		return nil, err
+	}
+	return new(big.Int).Add(serial, big.NewInt(1)), nil
 }

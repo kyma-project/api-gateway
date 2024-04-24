@@ -70,7 +70,7 @@ var _ = Describe("Certificate Controller", func() {
 
 			// then
 			Expect(err).ShouldNot(HaveOccurred())
-			Expect(result.RequeueAfter).Should(Equal(reconciliationInterval))
+			Expect(result.RequeueAfter).To(Equal(reconciliationInterval))
 		})
 
 		It("Should return error when APIRule CRD do not contain webhook spec but have to create new certificate and reschedule reconcile in a minute", func() {
@@ -93,7 +93,8 @@ var _ = Describe("Certificate Controller", func() {
 
 			// then
 			Expect(err).Should(HaveOccurred())
-			Expect(result.RequeueAfter).Should(Equal(1 * time.Minute))
+			Expect(err.Error()).To(Equal("failed to update certificate into CRD: can not add certificate into CRD: client config for conversion webhook not found in APIRule CRD"))
+			Expect(result.Requeue).To(BeTrue())
 		})
 
 		It("Should succeed when Secret is present and generate new certificate when current is expired", func() {
@@ -195,10 +196,9 @@ func (p *shouldFailClient) Get(ctx context.Context, key client.ObjectKey, obj cl
 
 func getReconciler(c client.Client, scheme *runtime.Scheme, log logr.Logger) *Reconciler {
 	return &Reconciler{
-		Client:                 c,
-		Scheme:                 scheme,
-		log:                    log,
-		reconciliationInterval: reconciliationInterval,
+		Client: c,
+		Scheme: scheme,
+		log:    log,
 	}
 }
 
