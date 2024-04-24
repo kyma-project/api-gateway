@@ -8,7 +8,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-type CertificateReconciler struct {
+type Reconciler struct {
 	client.Client
 	Scheme                 *runtime.Scheme
 	log                    logr.Logger
