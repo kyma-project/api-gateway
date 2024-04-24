@@ -118,6 +118,33 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		DefaultDomainName: defaultDomainName,
 	}
 
+	r.Log.Info("Starting ApiRule reconciliation", "jwtHandler", r.Config.JWTHandler)
+	cmd := r.getReconciliation(defaultDomainName)
+
+	apiRule := &gatewayv1beta1.APIRule{}
+	err = r.Client.Get(ctx, req.NamespacedName, apiRule)
+	if err != nil {
+		if apierrs.IsNotFound(err) {
+			//There is no APIRule. Nothing to process, dependent objects will be garbage-collected.
+			r.Log.Info(fmt.Sprintf("Finishing reconciliation as ApiRule '%s' does not exist.", req.NamespacedName))
+			return doneReconcileNoRequeue()
+		}
+
+		r.Log.Error(err, "Error getting ApiRule")
+
+		statusBase := cmd.GetStatusBase(gatewayv1beta1.StatusSkipped)
+		errorMap := map[processing.ResourceSelector][]error{processing.OnApiRule: {err}}
+		status := processing.GetStatusForErrorMap(errorMap, statusBase)
+		return r.updateStatusOrRetry(ctx, apiRule, status)
+	}
+
+	if apiRule.Annotations != nil {
+		if originalVersion, ok := apiRule.Annotations["gateway.kyma-project.io/original-version"]; ok && originalVersion == "v1beta2" {
+			r.Log.Info("ApiRule is converted from v1beta2")
+			r.Config.JWTHandler = helpers.JWT_HANDLER_ISTIO
+		}
+	}
+
 	isCMReconcile := req.NamespacedName.String() == types.NamespacedName{Namespace: helpers.CM_NS, Name: helpers.CM_NAME}.String()
 	if isCMReconcile || r.Config.JWTHandler == "" {
 		r.Log.Info("Starting ConfigMap reconciliation")
@@ -141,26 +168,6 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 			r.Log.Info("ConfigMap reconciliation finished")
 			return doneReconcileNoRequeue()
 		}
-	}
-	r.Log.Info("Starting ApiRule reconciliation", "jwtHandler", r.Config.JWTHandler)
-
-	cmd := r.getReconciliation(defaultDomainName)
-
-	apiRule := &gatewayv1beta1.APIRule{}
-	err = r.Client.Get(ctx, req.NamespacedName, apiRule)
-	if err != nil {
-		if apierrs.IsNotFound(err) {
-			//There is no APIRule. Nothing to process, dependent objects will be garbage-collected.
-			r.Log.Info(fmt.Sprintf("Finishing reconciliation as ApiRule '%s' does not exist.", req.NamespacedName))
-			return doneReconcileNoRequeue()
-		}
-
-		r.Log.Error(err, "Error getting ApiRule")
-
-		statusBase := cmd.GetStatusBase(gatewayv1beta1.StatusSkipped)
-		errorMap := map[processing.ResourceSelector][]error{processing.OnApiRule: {err}}
-		status := processing.GetStatusForErrorMap(errorMap, statusBase)
-		return r.updateStatusOrRetry(ctx, apiRule, status)
 	}
 
 	r.Log.Info("Reconciling ApiRule", "name", apiRule.Name, "namespace", apiRule.Namespace, "resource version", apiRule.ResourceVersion)
