@@ -38,8 +38,8 @@ const (
 	APIRuleCRDName = "apirules.gateway.kyma-project.io"
 )
 
-func NewCertificateReconciler(mgr manager.Manager, reconciliationInterval time.Duration) *CertificateReconciler {
-	return &CertificateReconciler{
+func NewCertificateReconciler(mgr manager.Manager, reconciliationInterval time.Duration) *Reconciler {
+	return &Reconciler{
 		Client:                 mgr.GetClient(),
 		Scheme:                 mgr.GetScheme(),
 		log:                    mgr.GetLogger().WithName("certificate-controller"),
@@ -50,7 +50,7 @@ func NewCertificateReconciler(mgr manager.Manager, reconciliationInterval time.D
 // +kubebuilder:rbac:groups="",resources=secrets,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups="apiextensions.k8s.io",resources=customresourcedefinitions,verbs=get;list;watch;create;update;patch;delete
 
-func (r *CertificateReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	r.log.Info("Received reconciliation request", "name", req.Name)
 
 	certificateSecret := &corev1.Secret{}
@@ -76,7 +76,7 @@ func (r *CertificateReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	return ctrl.Result{RequeueAfter: r.reconciliationInterval}, nil
 }
 
-func (r *CertificateReconciler) SetupWithManager(mgr ctrl.Manager, c controllers.RateLimiterConfig) error {
+func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, c controllers.RateLimiterConfig) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&corev1.Secret{}).
 		WithEventFilter(predicate.NewPredicateFuncs(func(o client.Object) bool { return o.GetName() == secretName && o.GetNamespace() == secretNamespace })).

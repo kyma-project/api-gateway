@@ -445,8 +445,7 @@ spec:
                       minItems: 1
                       type: array
                     mutators:
-                      description: Specifies the list of [Ory Oathkeeper](https://www.ory.sh/docs/oathkeeper/pipeline/mutator)
-                        mutators.
+                      description: Specifies the list of request mutators.
                       items:
                         description: Mutator is a configuration for Istio mutators.
                           It is used to enrich an incoming request with information.

@@ -193,8 +193,8 @@ func (p *shouldFailClient) Get(ctx context.Context, key client.ObjectKey, obj cl
 	return p.Client.Get(ctx, key, obj, opts...)
 }
 
-func getReconciler(c client.Client, scheme *runtime.Scheme, log logr.Logger) *CertificateReconciler {
-	return &CertificateReconciler{
+func getReconciler(c client.Client, scheme *runtime.Scheme, log logr.Logger) *Reconciler {
+	return &Reconciler{
 		Client:                 c,
 		Scheme:                 scheme,
 		log:                    log,
