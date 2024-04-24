@@ -127,7 +127,7 @@ type Rule struct {
 	// Specifies the Istio JWT access strategy.
 	// +optional
 	Jwt *JwtConfig `json:"jwt,omitempty"`
-	// Specifies the list of [Ory Oathkeeper](https://www.ory.sh/docs/oathkeeper/pipeline/mutator) mutators.
+	// Specifies the list of request mutators.
 	// +optional
 	Mutators []*Mutator `json:"mutators,omitempty"`
 	// +optional
