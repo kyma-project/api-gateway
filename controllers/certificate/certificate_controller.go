@@ -24,9 +24,9 @@ import (
 )
 
 const (
-	reconciliationInterval = time.Hour * 1        // reconciliation interval of 1 hour
-	maxAge                 = time.Hour * 24 * 365 // issue certificate with 365 days validity
-	untilRenewal           = time.Hour * 24 * 14  // renew certificate 14 days before expiration
+	reconciliationInterval = time.Hour * 1       // reconciliation interval of 1 hour
+	maxAge                 = time.Hour * 24 * 90 // issue certificate with 90 days validity
+	untilRenewal           = time.Hour * 24 * 14 // renew certificate 14 days before expiration
 
 	certificateName = "tls.crt"
 	keyName         = "tls.key"
