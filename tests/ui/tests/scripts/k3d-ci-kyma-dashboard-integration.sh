@@ -1,18 +1,11 @@
 #!/usr/bin/env bash
 
-# Repository where Busola version per environment is stored
-BUSOLA_CONFIG_SOURCE_URL=https://github.com/kyma-project/kyma-dashboard.git
-
 # Script argument describing which Busola version should be tested. Possible values: "stage" or "prod"
 BUSOLA_ENV=$1
 
-git clone "$BUSOLA_CONFIG_SOURCE_URL"
-
 if [ "$BUSOLA_ENV" == "stage" ]; then
-  source kyma-dashboard/environments/stage/env.sh
   echo "Running tests on stage Busola"
 elif [ "$BUSOLA_ENV" == "prod" ]; then
-  source kyma-dashboard/environments/prod/env.sh
   echo "Running tests on prod Busola"
 else
   echo "Please provide the correct BUSOLA_ENV"
@@ -21,7 +14,7 @@ fi
 
 set -ex
 export CYPRESS_DOMAIN=http://localhost:3001
-export DASHBOARD_IMAGE="europe-docker.pkg.dev/kyma-project/prod/kyma-dashboard-local-prod:$WEB_IMAGE"
+export DASHBOARD_IMAGE="europe-docker.pkg.dev/kyma-project/prod/kyma-dashboard-local-$BUSOLA_ENV:latest"
 
 sudo apt-get update -y
 sudo apt-get install -y gettext-base
