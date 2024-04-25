@@ -118,6 +118,16 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		DefaultDomainName: defaultDomainName,
 	}
 
+	convertedApiRule := &gatewayv1beta1.APIRule{}
+	err = r.Client.Get(ctx, req.NamespacedName, convertedApiRule)
+	// If the ApiRule is not found, we don't need to do anything. If it's found and converted, CM reconciliation is not needed.
+	if err == nil && convertedApiRule.Annotations != nil {
+		if originalVersion, ok := convertedApiRule.Annotations["gateway.kyma-project.io/original-version"]; ok && originalVersion == "v1beta2" {
+			r.Log.Info("ApiRule is converted from v1beta2")
+			r.Config.JWTHandler = helpers.JWT_HANDLER_ISTIO
+		}
+	}
+
 	isCMReconcile := req.NamespacedName.String() == types.NamespacedName{Namespace: helpers.CM_NS, Name: helpers.CM_NAME}.String()
 	if isCMReconcile || r.Config.JWTHandler == "" {
 		r.Log.Info("Starting ConfigMap reconciliation")
