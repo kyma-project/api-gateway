@@ -49,3 +49,6 @@ api-gateway-manager.yaml
 
 # common labels template result files of make target module-version
 config/default/kustomization.yaml
+
+# used in the cicd, to determine which busola version to use for UI tests
+kyma-dashboard/
