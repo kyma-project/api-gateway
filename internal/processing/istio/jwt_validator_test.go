@@ -148,24 +148,74 @@ var _ = Describe("JWT Handler validation", func() {
 		Expect(problems[0].Message).To(Equal("supplied config cannot be empty"))
 	})
 
-	It("Should fail for config with invalid trustedIssuers and JWKSUrls", func() {
-		//given
-		handler := &gatewayv1beta1.Handler{Name: "jwt", Config: simpleJWTIstioConfig("a t g o")}
+	Context("JWT authentication configuration", func() {
+		It("Should fail validation when jwksUri is not a URI", func() {
+			//given
+			handler := &gatewayv1beta1.Handler{Name: "jwt", Config: jwtIstioConfig("no_url", "the_issuer")}
 
-		//when
-		problems := (&handlerValidator{}).Validate("some.attribute", handler)
+			//when
+			problems := (&handlerValidator{}).Validate("some.attribute", handler)
 
-		//then
-		Expect(problems).To(HaveLen(2))
-		Expect(problems[0].AttributePath).To(Equal("some.attribute.config.authentications[0].issuer"))
-		Expect(problems[0].Message).To(ContainSubstring("value is empty or not a valid url"))
-		Expect(problems[1].AttributePath).To(Equal("some.attribute.config.authentications[0].jwksUri"))
-		Expect(problems[1].Message).To(ContainSubstring("value is empty or not a valid url"))
+			//then
+			Expect(problems).To(HaveLen(1))
+			Expect(problems[0].AttributePath).To(Equal("some.attribute.config.authentications[0].jwksUri"))
+			Expect(problems[0].Message).To(ContainSubstring("value is empty or not a valid url"))
+		})
+
+		It("Should fail validation when issuer and jwksUri are empty", func() {
+			//given
+			handler := &gatewayv1beta1.Handler{Name: "jwt", Config: jwtIstioConfig("", "")}
+
+			//when
+			problems := (&handlerValidator{}).Validate("some.attribute", handler)
+
+			//then
+			Expect(problems).To(HaveLen(2))
+			Expect(problems[0].AttributePath).To(Equal("some.attribute.config.authentications[0].issuer"))
+			Expect(problems[0].Message).To(ContainSubstring("value is empty or not a valid url"))
+			Expect(problems[1].AttributePath).To(Equal("some.attribute.config.authentications[0].jwksUri"))
+			Expect(problems[1].Message).To(ContainSubstring("value is empty or not a valid url"))
+		})
+
+		It("Should fail validation when issuer contains ':' but is not a URI", func() {
+			//given
+			handler := &gatewayv1beta1.Handler{Name: "jwt", Config: jwtIstioConfig("http://issuer.test/.well-known/jwks.json", "://example")}
+
+			//when
+			problems := (&handlerValidator{}).Validate("some.attribute", handler)
+
+			//then
+			Expect(problems).To(HaveLen(1))
+			Expect(problems[0].AttributePath).To(Equal("some.attribute.config.authentications[0].issuer"))
+			Expect(problems[0].Message).To(ContainSubstring("value is empty or not a valid url"))
+		})
+
+		It("Should pass validation when issuer contains ':' and is a URI", func() {
+			//given
+			handler := &gatewayv1beta1.Handler{Name: "jwt", Config: jwtIstioConfig("http://issuer.test/.well-known/jwks.json", "https://issuer.example.com")}
+
+			//when
+			problems := (&handlerValidator{}).Validate("some.attribute", handler)
+
+			//then
+			Expect(problems).To(HaveLen(0))
+		})
+
+		It("Should pass validation when issuer is not empty has contains no ':'", func() {
+			//given
+			handler := &gatewayv1beta1.Handler{Name: "jwt", Config: jwtIstioConfig("http://issuer.test/.well-known/jwks.json", "testing@secure.istio.io")}
+
+			//when
+			problems := (&handlerValidator{}).Validate("some.attribute", handler)
+
+			//then
+			Expect(problems).To(HaveLen(0))
+		})
 	})
 
 	It("Should succeed for config with plain HTTP JWKSUrls and trustedIssuers", func() {
 		//given
-		handler := &gatewayv1beta1.Handler{Name: "jwt", Config: testURLJWTIstioConfig("http://issuer.test/.well-known/jwks.json", "http://issuer.test/")}
+		handler := &gatewayv1beta1.Handler{Name: "jwt", Config: jwtIstioConfig("http://issuer.test/.well-known/jwks.json", "http://issuer.test/")}
 
 		//when
 		problems := (&handlerValidator{}).Validate("some.attribute", handler)
@@ -176,7 +226,7 @@ var _ = Describe("JWT Handler validation", func() {
 
 	It("Should succeed for config with file JWKSUrls and HTTPS trustedIssuers", func() {
 		//given
-		handler := &gatewayv1beta1.Handler{Name: "jwt", Config: testURLJWTIstioConfig("file://.well-known/jwks.json", "https://issuer.test/")}
+		handler := &gatewayv1beta1.Handler{Name: "jwt", Config: jwtIstioConfig("file://.well-known/jwks.json", "https://issuer.test/")}
 
 		//when
 		problems := (&handlerValidator{}).Validate("some.attribute", handler)
@@ -187,7 +237,7 @@ var _ = Describe("JWT Handler validation", func() {
 
 	It("Should succeed for config with HTTPS JWKSUrls and trustedIssuers", func() {
 		//given
-		handler := &gatewayv1beta1.Handler{Name: "jwt", Config: testURLJWTIstioConfig("https://issuer.test/.well-known/jwks.json", "https://issuer.test/")}
+		handler := &gatewayv1beta1.Handler{Name: "jwt", Config: jwtIstioConfig("https://issuer.test/.well-known/jwks.json", "https://issuer.test/")}
 
 		//when
 		problems := (&handlerValidator{}).Validate("some.attribute", handler)
@@ -769,25 +819,13 @@ func emptyJWTIstioConfig() *runtime.RawExtension {
 		&gatewayv1beta1.JwtConfig{})
 }
 
-func simpleJWTIstioConfig(trustedIssuers ...string) *runtime.RawExtension {
-	var issuers []*gatewayv1beta1.JwtAuthentication
-	for _, issuer := range trustedIssuers {
-		issuers = append(issuers, &gatewayv1beta1.JwtAuthentication{
-			Issuer:  issuer,
-			JwksUri: issuer,
-		})
-	}
-	jwtConfig := gatewayv1beta1.JwtConfig{Authentications: issuers}
-	return processingtest.GetRawConfig(jwtConfig)
-}
-
-func testURLJWTIstioConfig(JWKSUrl string, trustedIssuer string) *runtime.RawExtension {
+func jwtIstioConfig(jwksUri string, issuer string) *runtime.RawExtension {
 	return processingtest.GetRawConfig(
 		gatewayv1beta1.JwtConfig{
 			Authentications: []*gatewayv1beta1.JwtAuthentication{
 				{
-					Issuer:  trustedIssuer,
-					JwksUri: JWKSUrl,
+					Issuer:  issuer,
+					JwksUri: jwksUri,
 				},
 			},
 		})
