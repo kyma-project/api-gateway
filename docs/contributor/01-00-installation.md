@@ -68,7 +68,7 @@
     make deploy
     ```
 
-7. If installating on k3d make sure to update Core DNS to correctly resolve `local.kyma.dev` domain.
+7. If you're using k3d, update Core DNS to correctly resolve the `local.kyma.dev` domain.
 
 ```bash
 cat <<EOF | kubectl apply -f -
