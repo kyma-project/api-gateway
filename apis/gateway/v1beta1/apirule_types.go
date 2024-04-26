@@ -75,7 +75,7 @@ type APIRuleStatus struct {
 
 // APIRule is the Schema for ApiRule APIs.
 // +kubebuilder:storageversion
-// +kubebuilder:deprecatedversion:warning=APIRule version v1beta1 is deprecated in favor of v1beta2. You need to migrate to v1beta2. We plan to remove v1beta1 in xx.2024.
+// +kubebuilder:deprecatedversion:warning=APIRule version v1beta1 is deprecated in favor of v1beta2. You must migrate to v1beta2 until the end of 2024.
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Status",type="string",JSONPath=".status.APIRuleStatus.code"
