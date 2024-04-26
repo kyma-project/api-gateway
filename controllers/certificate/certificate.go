@@ -1,6 +1,7 @@
 package certificate
 
 import (
+	"bytes"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
@@ -15,86 +16,103 @@ import (
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/util/cert"
+	"k8s.io/client-go/util/keyutil"
+	netutils "k8s.io/utils/net"
 )
 
 const (
 	keySize = 4096
 )
 
-// original code reference: https://github.com/kubernetes/client-go/blob/master/util/cert/cert.go
 func GenerateSelfSignedCertificate(host string, alternateIPs []net.IP, alternateDNS []string, maxAge time.Duration) ([]byte, []byte, error) {
-	// Generate CA key pair
+	validFrom := time.Now().Add(-time.Hour) // valid an hour earlier to avoid flakes due to clock skew
 	caKey, err := rsa.GenerateKey(rand.Reader, keySize)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	// Generate CA certificate
-	caCertificate, err := generateCertificate(host+"-ca", time.Now(), maxAge, caKey, true, nil, nil)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	// Generate server key pair
-	serverKey, err := rsa.GenerateKey(rand.Reader, keySize)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	// Generate server certificate
-	serverCertificate, err := generateCertificate(host, time.Now(), maxAge, serverKey, false, alternateIPs, alternateDNS)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	// Encode certificates to PEM format
-	certPEM := encodeToPEM(serverCertificate, caCertificate)
-	keyPEM := encodeToPEM(x509.MarshalPKCS1PrivateKey(serverKey), nil)
-
-	return certPEM, keyPEM, nil
-}
-
-func generateCertificate(commonName string, validFrom time.Time, maxAge time.Duration, key *rsa.PrivateKey, isCA bool, alternateIPs []net.IP, alternateDNS []string) ([]byte, error) {
 	serial, err := generateRandomSerialNumber()
 	if err != nil {
-		return nil, err
+		return nil, nil, err
+	}
+
+	caTemplate := x509.Certificate{
+		SerialNumber: serial,
+		Subject: pkix.Name{
+			CommonName: fmt.Sprintf("%s-ca@%d", host, time.Now().Unix()),
+		},
+		NotBefore: validFrom,
+		NotAfter:  validFrom.Add(maxAge),
+
+		KeyUsage:              x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
+		BasicConstraintsValid: true,
+		IsCA:                  true,
+	}
+
+	caDERBytes, err := x509.CreateCertificate(rand.Reader, &caTemplate, &caTemplate, &caKey.PublicKey, caKey)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	caCertificate, err := x509.ParseCertificate(caDERBytes)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	priv, err := rsa.GenerateKey(rand.Reader, keySize)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	serial, err = generateRandomSerialNumber()
+	if err != nil {
+		return nil, nil, err
 	}
 
 	template := x509.Certificate{
 		SerialNumber: serial,
 		Subject: pkix.Name{
-			CommonName: commonName,
+			CommonName: fmt.Sprintf("%s@%d", host, time.Now().Unix()),
 		},
-		NotBefore:             validFrom,
-		NotAfter:              validFrom.Add(maxAge),
+		NotBefore: validFrom,
+		NotAfter:  validFrom.Add(maxAge),
+
 		KeyUsage:              x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
+		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
 		BasicConstraintsValid: true,
 	}
 
-	if isCA {
-		template.KeyUsage |= x509.KeyUsageCertSign
-		template.IsCA = true
-	}
-
-	if len(alternateIPs) > 0 {
-		template.IPAddresses = append(template.IPAddresses, alternateIPs...)
+	if ip := netutils.ParseIPSloppy(host); ip != nil {
+		template.IPAddresses = append(template.IPAddresses, ip)
 	} else {
-		template.DNSNames = append(template.DNSNames, alternateDNS...)
+		template.DNSNames = append(template.DNSNames, host)
 	}
 
-	return x509.CreateCertificate(rand.Reader, &template, &template, &key.PublicKey, key)
-}
+	template.IPAddresses = append(template.IPAddresses, alternateIPs...)
+	template.DNSNames = append(template.DNSNames, alternateDNS...)
 
-func encodeToPEM(certs ...[]byte) []byte {
-	var pemData []byte
-	for _, cert := range certs {
-		block := &pem.Block{
-			Type:  "CERTIFICATE",
-			Bytes: cert,
-		}
-		pemData = append(pemData, pem.EncodeToMemory(block)...)
+	derBytes, err := x509.CreateCertificate(rand.Reader, &template, caCertificate, &priv.PublicKey, caKey)
+	if err != nil {
+		return nil, nil, err
 	}
-	return pemData
+
+	// Generate cert, followed by ca
+	certBuffer := bytes.Buffer{}
+	if err := pem.Encode(&certBuffer, &pem.Block{Type: "CERTIFICATE", Bytes: derBytes}); err != nil {
+		return nil, nil, err
+	}
+
+	if err := pem.Encode(&certBuffer, &pem.Block{Type: "CERTIFICATE", Bytes: caDERBytes}); err != nil {
+		return nil, nil, err
+	}
+
+	// Generate key
+	keyBuffer := bytes.Buffer{}
+	if err := pem.Encode(&keyBuffer, &pem.Block{Type: keyutil.RSAPrivateKeyBlockType, Bytes: x509.MarshalPKCS1PrivateKey(priv)}); err != nil {
+		return nil, nil, err
+	}
+
+	return certBuffer.Bytes(), keyBuffer.Bytes(), nil
 }
 
 func verifySecret(s *corev1.Secret) error {
