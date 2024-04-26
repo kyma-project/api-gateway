@@ -86,7 +86,7 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, c controllers.RateLimite
 }
 
 func createNewSecret(ctx context.Context, client ctrlclient.Client, secret *corev1.Secret) (*x509.Certificate, error) {
-	certificate, key, err := generateCertificate(serviceName, secret.Namespace)
+	certificate, key, err := generateNewCertificate(serviceName, secret.Namespace)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to generate certificate")
 	}
@@ -110,7 +110,7 @@ func createNewSecret(ctx context.Context, client ctrlclient.Client, secret *core
 	return parsedCertificates[0], nil
 }
 
-func generateCertificate(serviceName, namespace string) ([]byte, []byte, error) {
+func generateNewCertificate(serviceName, namespace string) ([]byte, []byte, error) {
 	namespacedServiceName := strings.Join([]string{serviceName, namespace}, ".")
 	commonName := strings.Join([]string{namespacedServiceName, "svc"}, ".")
 	return GenerateSelfSignedCertificate(commonName, nil, []string{}, maxAge)
