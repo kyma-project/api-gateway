@@ -16,7 +16,6 @@ import (
 
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/util/cert"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -85,17 +84,23 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, c controllers.RateLimite
 		Complete(r)
 }
 
-func createNewSecret(ctx context.Context, client ctrlclient.Client, secret *corev1.Secret) (*x509.Certificate, error) {
-	certificate, key, err := generateCertificate(serviceName, secret.Namespace)
+func createNewSecret(ctx context.Context, client client.Client, secret *corev1.Secret) (*x509.Certificate, error) {
+	certificate, key, err := generateNewCertificate(serviceName, secret.Namespace)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to generate certificate")
 	}
 
-	newSecret := buildSecret(secret.Name, secret.Namespace, certificate, key)
-	secret.Data = newSecret.Data
+	mergeFrom := ctrlclient.StrategicMergeFrom(secret.DeepCopy())
 
-	if err := client.Update(ctx, secret); err != nil {
-		return nil, errors.Wrap(err, "failed to update secret")
+	if secret.Data == nil {
+		secret.Data = make(map[string][]byte)
+	}
+
+	secret.Data[certificateName] = certificate
+	secret.Data[keyName] = key
+
+	if err := client.Patch(ctx, secret, mergeFrom); err != nil {
+		return nil, errors.Wrap(err, "failed to patch secret")
 	}
 
 	if err := updateCertificateInCRD(ctx, client, certificate); err != nil {
@@ -110,26 +115,13 @@ func createNewSecret(ctx context.Context, client ctrlclient.Client, secret *core
 	return parsedCertificates[0], nil
 }
 
-func generateCertificate(serviceName, namespace string) ([]byte, []byte, error) {
+func generateNewCertificate(serviceName, namespace string) ([]byte, []byte, error) {
 	namespacedServiceName := strings.Join([]string{serviceName, namespace}, ".")
 	commonName := strings.Join([]string{namespacedServiceName, "svc"}, ".")
 	return GenerateSelfSignedCertificate(commonName, nil, []string{}, maxAge)
 }
 
-func buildSecret(name, namespace string, certificate []byte, key []byte) *corev1.Secret {
-	return &corev1.Secret{
-		ObjectMeta: v1.ObjectMeta{
-			Name:      name,
-			Namespace: namespace,
-		},
-		Data: map[string][]byte{
-			certificateName: certificate,
-			keyName:         key,
-		},
-	}
-}
-
-func updateCertificateInCRD(ctx context.Context, client ctrlclient.Client, certificate []byte) error {
+func updateCertificateInCRD(ctx context.Context, client client.Client, certificate []byte) error {
 	crd := &apiextensionsv1.CustomResourceDefinition{}
 	err := client.Get(ctx, types.NamespacedName{Name: APIRuleCRDName}, crd)
 	if err != nil {
@@ -140,11 +132,13 @@ func updateCertificateInCRD(ctx context.Context, client ctrlclient.Client, certi
 		return errors.Errorf("can not add certificate into CRD: %s", reason)
 	}
 
+	mergeFrom := ctrlclient.StrategicMergeFrom(crd.DeepCopy())
 	crd.Spec.Conversion.Webhook.ClientConfig.CABundle = certificate
-	err = client.Update(ctx, crd)
-	if err != nil {
+
+	if err := client.Patch(ctx, crd, mergeFrom); err != nil {
 		return errors.Wrap(err, "failed to update CRD with new certificate")
 	}
+
 	return nil
 }
 

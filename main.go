@@ -120,8 +120,8 @@ func main() {
 	flag.Parse()
 
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
-
-	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
+	config := ctrl.GetConfigOrDie()
+	options := ctrl.Options{
 		Scheme: scheme,
 		Metrics: metricsserver.Options{
 			BindAddress: flagVar.metricsAddr,
@@ -133,13 +133,15 @@ func main() {
 			Port:    9443,
 			CertDir: "/tmp/webhook-certificate",
 		}),
-	})
+	}
+
+	mgr, err := ctrl.NewManager(config, options)
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")
 		os.Exit(1)
 	}
 
-	config := gateway.ApiRuleReconcilerConfiguration{
+	reconcileConfig := gateway.ApiRuleReconcilerConfiguration{
 		OathkeeperSvcAddr:         "ory-oathkeeper-proxy.kyma-system.svc.cluster.local",
 		OathkeeperSvcPort:         4455,
 		CorsAllowOrigins:          "regex:.*",
@@ -156,8 +158,8 @@ func main() {
 		FailureMaxDelay:  flagVar.rateLimiterFailureMaxDelay,
 	}
 
-	if err := gateway.NewApiRuleReconciler(mgr, config).SetupWithManager(mgr, rateLimiterCfg); err != nil {
-		setupLog.Error(err, "unable to setup controller", "controller", "APIRule")
+	if err := gateway.NewApiRuleReconciler(mgr, reconcileConfig).SetupWithManager(mgr, rateLimiterCfg); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "APIRule")
 		os.Exit(1)
 	}
 
