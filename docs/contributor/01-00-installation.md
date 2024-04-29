@@ -67,3 +67,21 @@
     ```bash
     make deploy
     ```
+
+7. If you're using k3d, update Core DNS to correctly resolve the `local.kyma.dev` domain.
+
+```bash
+cat <<EOF | kubectl apply -f -
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: coredns-custom
+  namespace: kube-system
+data:
+  kyma.override: |
+    rewrite name regex (.*)\.local\.kyma\.dev istio-ingressgateway.istio-system.svc.cluster.local
+EOF
+
+kubectl rollout restart deployment -n kube-system coredns
+```
+

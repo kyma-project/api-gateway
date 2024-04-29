@@ -1,8 +1,20 @@
 #!/usr/bin/env bash
 
+# Script argument describing which Busola version should be tested. Possible values: "stage" or "prod"
+BUSOLA_ENV=$1
+
+if [ "$BUSOLA_ENV" == "stage" ]; then
+  echo "Running tests on stage Busola"
+elif [ "$BUSOLA_ENV" == "prod" ]; then
+  echo "Running tests on prod Busola"
+else
+  echo "Please provide the correct BUSOLA_ENV"
+  exit 1
+fi
+
 set -ex
 export CYPRESS_DOMAIN=http://localhost:3001
-export DASHBOARD_IMAGE="europe-docker.pkg.dev/kyma-project/prod/kyma-dashboard-local-prod:latest"
+export DASHBOARD_IMAGE="europe-docker.pkg.dev/kyma-project/prod/kyma-dashboard-local-$BUSOLA_ENV:latest"
 
 sudo apt-get update -y
 sudo apt-get install -y gettext-base
