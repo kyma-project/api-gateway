@@ -21,6 +21,7 @@ spec:
         control-plane: controller-manager
         sidecar.istio.io/inject: "false"
     spec:
+      priorityClassName: api-gateway-priority-class
       securityContext:
         runAsNonRoot: true
       containers:
