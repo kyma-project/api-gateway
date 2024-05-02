@@ -28,8 +28,8 @@ github.com/evanphx/json-patch/v5 v5.8.0/go.mod h1:VNkHZ/282BpEyt/tObQO8s5CMPmYYq
 github.com/fsnotify/fsnotify v1.5.1/go.mod h1:T3375wBYaZdLLcVNkcVbzGHY7f1l/uK5T5Ai1i3InKU=
 github.com/fsnotify/fsnotify v1.7.0 h1:8JEhPFa5W2WU7YfeZzPNqzMP6Lwt7L2715Ggo0nosvA=
 github.com/fsnotify/fsnotify v1.7.0/go.mod h1:40Bi/Hjc2AVfZrqy+aj+yEI+/bRxZnMJyTJwOpGvigM=
-github.com/gardener/cert-management v0.13.0 h1:KIT9wWFmbo2+YwnN3EhUqGX2tOkvB8aTFIQYFWdEo6E=
-github.com/gardener/cert-management v0.13.0/go.mod h1:0nTNVZoKA+v7uumOQ0xZPNjqSOfYxF93PFCEN26A+mw=
+github.com/gardener/cert-management v0.14.1 h1:tpLipU1uHVmwqBy5Nc0KJskOetcczvcf4dvV0qrz4d8=
+github.com/gardener/cert-management v0.14.1/go.mod h1:dfhuPXJn+yy9OoSSxY/HAMiwzD2IOqoM+UMx16QTkvI=
 github.com/gardener/external-dns-management v0.18.5 h1:lqKVuuPTPzw5zhYtHtdETSVyxIiLRsmj1LzMqxAwPYo=
 github.com/gardener/external-dns-management v0.18.5/go.mod h1:6WO+q0vfcxlGjAIeXG9hNr6ve6NHNw1E9Ey8mnGax8Q=
 github.com/go-jose/go-jose/v3 v3.0.3 h1:fFKWeig/irsp7XD2zBxvnmA/XaRWp5V3CBsZXJF7G7k=
