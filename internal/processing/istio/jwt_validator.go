@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
+	"strings"
 
 	oryjwt "github.com/kyma-project/api-gateway/internal/types/ory"
 	"github.com/kyma-project/api-gateway/internal/validation"
@@ -106,11 +107,12 @@ func hasInvalidAuthentications(attributePath string, authentications []*gatewayv
 		}
 	}
 	for i, authentication := range authentications {
-		invalidIssuer, err := validation.IsInvalidURL(authentication.Issuer)
-		if invalidIssuer {
+		issuerErr := validateJwtIssuer(authentication.Issuer)
+		if issuerErr != nil {
 			attrPath := fmt.Sprintf("%s%s[%d]%s", attributePath, ".config.authentications", i, ".issuer")
-			failures = append(failures, validation.Failure{AttributePath: attrPath, Message: fmt.Sprintf("value is empty or not a valid url err=%s", err)})
+			failures = append(failures, validation.Failure{AttributePath: attrPath, Message: fmt.Sprintf("value is empty or not a valid url err=%s", issuerErr)})
 		}
+
 		invalidJwksUri, err := validation.IsInvalidURL(authentication.JwksUri)
 		if invalidJwksUri {
 			attrPath := fmt.Sprintf("%s%s[%d]%s", attributePath, ".config.authentications", i, ".jwksUri")
@@ -266,4 +268,19 @@ func isJwtAuthenticationsEqual(auth1 *gatewayv1beta1.JwtAuthentication, auth2 *g
 		}
 	}
 	return true
+}
+
+func validateJwtIssuer(issuer string) error {
+	if issuer == "" {
+		return errors.New("value is empty")
+	}
+
+	// If issuer contains ':' it must be a valid URI, see https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.1
+	if strings.Contains(issuer, ":") {
+		if isInvalid, err := validation.IsInvalidURL(issuer); isInvalid {
+			return err
+		}
+	}
+
+	return nil
 }

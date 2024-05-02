@@ -150,7 +150,7 @@ var _ = Describe("Apirule controller validation", Serial, Ordered, func() {
 			testJwtHandlerConfig(accessStrategies, gatewayv1beta1.StatusError, expectedValidationErrors)
 		})
 
-		It("should not allow creation of APIRule with invalid url issuer and jwks in jwt config", func() {
+		It("should not allow creation of APIRule with invalid uri for issuer and jwks in jwt config", func() {
 			accessStrategies := []*gatewayv1beta1.Authenticator{
 				{
 					Handler: &gatewayv1beta1.Handler{
@@ -159,7 +159,7 @@ var _ = Describe("Apirule controller validation", Serial, Ordered, func() {
 							gatewayv1beta1.JwtConfig{
 								Authentications: []*gatewayv1beta1.JwtAuthentication{
 									{
-										Issuer:  "example.com/",
+										Issuer:  "invalid_:example",
 										JwksUri: "example.com/.well-known/jwks.json",
 									},
 								},
@@ -169,7 +169,7 @@ var _ = Describe("Apirule controller validation", Serial, Ordered, func() {
 			}
 
 			expectedValidationErrors := []string{
-				"Attribute \".spec.rules[0].accessStrategies[0].config.authentications[0].issuer\": value is empty or not a valid url err=parse \"example.com/\": invalid URI for request",
+				"Attribute \".spec.rules[0].accessStrategies[0].config.authentications[0].issuer\": value is empty or not a valid url err=parse \"invalid_:example\": invalid URI for request",
 				"Attribute \".spec.rules[0].accessStrategies[0].config.authentications[0].jwksUri\": value is empty or not a valid url err=parse \"example.com/.well-known/jwks.json\": invalid URI for request",
 			}
 
