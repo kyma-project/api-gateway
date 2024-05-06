@@ -115,7 +115,6 @@ type Service struct {
 }
 
 // Rule .
-// +kubebuilder:pruning:PreserveUnknownFields
 type Rule struct {
 	// Specifies the path of the exposed service.
 	// +kubebuilder:validation:Pattern=^([0-9a-zA-Z./*()?!\\_-]+)

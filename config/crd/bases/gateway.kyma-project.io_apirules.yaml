@@ -197,7 +197,6 @@ spec:
                   - methods
                   - path
                   type: object
-                  x-kubernetes-preserve-unknown-fields: true
                 minItems: 1
                 type: array
               service:
