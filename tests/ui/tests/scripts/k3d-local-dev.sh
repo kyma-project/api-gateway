@@ -3,7 +3,8 @@
 set -ex
 
 echo "Provisioning k3d cluster"
-kyma provision k3d
+k3d cluster create
+kubectl create ns kyma-system
 
 export KUBECONFIG=$(k3d kubeconfig merge kyma)
 
