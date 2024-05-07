@@ -17,6 +17,7 @@ limitations under the License.
 package main
 
 import (
+	"context"
 	"flag"
 	"os"
 	"time"
@@ -41,6 +42,7 @@ import (
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
@@ -63,6 +65,7 @@ var (
 )
 
 type FlagVar struct {
+	initOnly                    bool
 	metricsAddr                 string
 	enableLeaderElection        bool
 	probeAddr                   string
@@ -91,6 +94,8 @@ func init() {
 
 func defineFlagVar() *FlagVar {
 	flagVar := new(FlagVar)
+	flag.BoolVar(&flagVar.initOnly, "init-only", false,
+		"Should only initialise operator prerequisites.")
 	flag.StringVar(&flagVar.metricsAddr, "metrics-bind-address", ":8080",
 		"The address the metric endpoint binds to.")
 	flag.StringVar(&flagVar.probeAddr, "health-probe-bind-address", ":8081",
@@ -121,6 +126,23 @@ func main() {
 
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 	config := ctrl.GetConfigOrDie()
+
+	if flagVar.initOnly {
+		setupLog.Info("Initialisation only mode")
+		utilruntime.Must(apiextensionsv1.AddToScheme(scheme))
+		k8sClient, err := client.New(config, client.Options{Scheme: scheme})
+		if err != nil {
+			setupLog.Error(err, "Unable to create client")
+			os.Exit(1)
+		}
+		_, err = certificate.VerifyCertificate(context.Background(), k8sClient, setupLog)
+		if err != nil {
+			setupLog.Error(err, "Unable to initialise certificate")
+			os.Exit(1)
+		}
+		os.Exit(0)
+	}
+
 	options := ctrl.Options{
 		Scheme: scheme,
 		Metrics: metricsserver.Options{
@@ -137,7 +159,7 @@ func main() {
 
 	mgr, err := ctrl.NewManager(config, options)
 	if err != nil {
-		setupLog.Error(err, "unable to start manager")
+		setupLog.Error(err, "Unable to start manager")
 		os.Exit(1)
 	}
 
@@ -159,40 +181,40 @@ func main() {
 	}
 
 	if err := gateway.NewApiRuleReconciler(mgr, reconcileConfig).SetupWithManager(mgr, rateLimiterCfg); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "APIRule")
+		setupLog.Error(err, "Unable to create controller", "controller", "APIRule")
 		os.Exit(1)
 	}
 
 	if err = operator.NewAPIGatewayReconciler(mgr, oathkeeper.NewReconciler()).SetupWithManager(mgr, rateLimiterCfg); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "APIGateway")
+		setupLog.Error(err, "Unable to create controller", "controller", "APIGateway")
 		os.Exit(1)
 	}
 
 	if err = certificate.NewCertificateReconciler(mgr).SetupWithManager(mgr, rateLimiterCfg); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "Certificate")
+		setupLog.Error(err, "Unable to create controller", "controller", "Certificate")
 		os.Exit(1)
 	}
 
 	if err = (&gatewayv1beta1.APIRule{}).SetupWebhookWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create webhook", "webhook", "APIRule")
+		setupLog.Error(err, "Unable to create webhook", "webhook", "APIRule")
 		os.Exit(1)
 	}
 	//+kubebuilder:scaffold:builder
 
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
-		setupLog.Error(err, "unable to set up health check")
+		setupLog.Error(err, "Unable to set up health check")
 		os.Exit(1)
 	}
 	if err := mgr.AddReadyzCheck("readyz", healthz.Ping); err != nil {
-		setupLog.Error(err, "unable to set up ready check")
+		setupLog.Error(err, "Unable to set up ready check")
 		os.Exit(1)
 	}
 
-	setupLog.Info("starting manager")
-	setupLog.Info("module version", "version", version.GetModuleVersion())
+	setupLog.Info("Starting manager")
+	setupLog.Info("Module version", "version", version.GetModuleVersion())
 
 	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
-		setupLog.Error(err, "problem running manager")
+		setupLog.Error(err, "Problem running manager")
 		os.Exit(1)
 	}
 }

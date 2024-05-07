@@ -8,6 +8,7 @@ import (
 
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 
+	"github.com/go-logr/logr"
 	"github.com/kyma-project/api-gateway/controllers"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
@@ -49,26 +50,15 @@ func NewCertificateReconciler(mgr manager.Manager) *Reconciler {
 // +kubebuilder:rbac:groups="apiextensions.k8s.io",resources=customresourcedefinitions,verbs=get;list;watch;create;update;patch;delete
 
 func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	r.Log.Info("Received reconciliation request", "name", req.Name)
+	r.Log.Info("Received reconciliation request", "namespace", req.Namespace, "name", req.Name)
 
-	certificateSecret := &corev1.Secret{}
-	err := r.Client.Get(ctx, req.NamespacedName, certificateSecret)
-	if err != nil {
-		return ctrl.Result{}, err
+	if req.Namespace != secretNamespace || req.Name != secretName {
+		return ctrl.Result{}, nil
 	}
 
-	r.Log.Info("Reconciling Webhook Secret", "name", certificateSecret.Name)
-
-	err = verifySecret(certificateSecret)
-	if err == nil {
-		r.Log.Info("Secret certificate is still valid and does not need to be updated")
-	} else {
-		r.Log.Info("Secret certificate is invalid", "verificationError", err.Error())
-		certificate, err := createNewSecret(ctx, r.Client, certificateSecret)
-		if err != nil {
-			return ctrl.Result{Requeue: true}, err
-		}
-		r.Log.Info("New certificate created", "validFrom", certificate.NotBefore, "validUntil", certificate.NotAfter)
+	requeue, err := VerifyCertificate(ctx, r.Client, r.Log)
+	if err != nil {
+		return ctrl.Result{Requeue: requeue}, err
 	}
 
 	return ctrl.Result{RequeueAfter: reconciliationInterval}, nil
@@ -82,6 +72,30 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, c controllers.RateLimite
 			RateLimiter: controllers.NewRateLimiter(c),
 		}).
 		Complete(r)
+}
+
+func VerifyCertificate(ctx context.Context, client client.Client, log logr.Logger) (bool, error) {
+	log.Info("Verifying certficate", "namespace", secretNamespace, "name", secretName)
+
+	certificateSecret := &corev1.Secret{}
+	err := client.Get(ctx, types.NamespacedName{Namespace: secretNamespace, Name: secretName}, certificateSecret)
+	if err != nil {
+		return false, err
+	}
+
+	err = verifySecret(certificateSecret)
+	if err == nil {
+		log.Info("Certificate is still valid and does not need to be updated")
+	} else {
+		log.Info("Certificate is invalid", "verificationError", err.Error())
+		certificate, err := createNewSecret(ctx, client, certificateSecret)
+		if err != nil {
+			return true, err
+		}
+		log.Info("New certificate created", "validFrom", certificate.NotBefore, "validUntil", certificate.NotAfter)
+	}
+
+	return false, nil
 }
 
 func createNewSecret(ctx context.Context, client client.Client, secret *corev1.Secret) (*x509.Certificate, error) {
