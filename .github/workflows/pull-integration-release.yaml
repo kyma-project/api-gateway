@@ -60,7 +60,7 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
-      - uses: ./.github/actions/integration-tests
+      - uses: ./.github/actions/k8s-compatibility-test
         with:
           client_id: ${{ secrets.CLIENT_ID }}
           client_secret: ${{ secrets.CLIENT_SECRET }}
