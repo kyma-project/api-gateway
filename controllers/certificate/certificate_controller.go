@@ -82,7 +82,7 @@ func InitialiseCertificateSecret(ctx context.Context, client client.Client, log 
 		log.Info("Certificate secret found", "namespace", secretNamespace, "name", secretName)
 	}
 
-	if err = printCertificateValidity(secret, log); err != nil {
+	if err = parseCertificateSecret(secret, log); err != nil {
 		return errors.Wrap(err, "failed to print certificate secret validity")
 	}
 
@@ -98,7 +98,7 @@ func ReadCertificateSecret(ctx context.Context, client client.Client, log logr.L
 		return errors.Wrap(err, "failed to get certificate secret")
 	}
 
-	printCertificateValidity(secret, log)
+	parseCertificateSecret(secret, log)
 
 	tlsCert, err := tls.X509KeyPair(secret.Data[certificateName], secret.Data[keyName])
 	if err != nil {
@@ -165,7 +165,7 @@ func verifyCertificateSecret(ctx context.Context, client client.Client, secret *
 		if err != nil {
 			return true, err
 		}
-		printCertificateValidity(secret, log)
+		parseCertificateSecret(secret, log)
 	}
 
 	return false, nil
@@ -237,7 +237,7 @@ func containsConversionWebhookClientConfig(crd *apiextensionsv1.CustomResourceDe
 	return true, ""
 }
 
-func printCertificateValidity(secret *corev1.Secret, log logr.Logger) error {
+func parseCertificateSecret(secret *corev1.Secret, log logr.Logger) error {
 	if !hasRequiredKeys(secret.Data, []string{certificateName, keyName}) {
 		return fmt.Errorf("secret does not have required keys: %s, %s", certificateName, keyName)
 	}
