@@ -70,8 +70,6 @@ type APIRuleStatus struct {
 	APIRuleStatus        *APIRuleResourceStatus `json:"APIRuleStatus,omitempty"`
 	VirtualServiceStatus *APIRuleResourceStatus `json:"virtualServiceStatus,omitempty"`
 	// +optional
-	AccessRuleStatus *APIRuleResourceStatus `json:"accessRuleStatus,omitempty"`
-	// +optional
 	RequestAuthenticationStatus *APIRuleResourceStatus `json:"requestAuthenticationStatus,omitempty"`
 	// +optional
 	AuthorizationPolicyStatus *APIRuleResourceStatus `json:"authorizationPolicyStatus,omitempty"`

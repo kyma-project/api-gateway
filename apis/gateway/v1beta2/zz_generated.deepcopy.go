@@ -169,11 +169,6 @@ func (in *APIRuleStatus) DeepCopyInto(out *APIRuleStatus) {
 		*out = new(APIRuleResourceStatus)
 		**out = **in
 	}
-	if in.AccessRuleStatus != nil {
-		in, out := &in.AccessRuleStatus, &out.AccessRuleStatus
-		*out = new(APIRuleResourceStatus)
-		**out = **in
-	}
 	if in.RequestAuthenticationStatus != nil {
 		in, out := &in.RequestAuthenticationStatus, &out.RequestAuthenticationStatus
 		*out = new(APIRuleResourceStatus)
