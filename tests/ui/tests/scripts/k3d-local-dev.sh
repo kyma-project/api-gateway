@@ -3,7 +3,8 @@
 set -ex
 
 echo "Provisioning k3d cluster"
-kyma provision k3d
+k3d cluster create kyma --port 80:80@loadbalancer --port 443:443@loadbalancer --k3s-arg "--disable=traefik@server:0"
+kubectl create ns kyma-system
 
 export KUBECONFIG=$(k3d kubeconfig merge kyma)
 
