@@ -72,12 +72,19 @@ func InitialiseCertificateSecret(ctx context.Context, client client.Client, log 
 			if err := client.Create(ctx, secret); err != nil {
 				return errors.Wrap(err, "failed to create secret")
 			}
+			if err := updateCertificateInCRD(ctx, client, certificate); err != nil {
+				return errors.Wrap(err, "failed to update certificate into CRD")
+			}
 		} else {
 			return errors.Wrap(err, "failed to get certificate secret")
 		}
+	} else {
+		log.Info("Certificate secret found", "namespace", secretNamespace, "name", secretName)
 	}
 
-	log.Info("Certificate secret found", "namespace", secretNamespace, "name", secretName)
+	if err = printCertificateValidity(secret, log); err != nil {
+		return errors.Wrap(err, "failed to print certificate secret validity")
+	}
 
 	return nil
 }
@@ -91,15 +98,13 @@ func ReadCertificateSecret(ctx context.Context, client client.Client, log logr.L
 		return errors.Wrap(err, "failed to get certificate secret")
 	}
 
-	if !hasRequiredKeys(secret.Data, []string{certificateName, keyName}) {
-		return fmt.Errorf("secret does not have required keys: %s, %s", certificateName, keyName)
-	}
+	printCertificateValidity(secret, log)
 
-	cert, err := tls.X509KeyPair(secret.Data[certificateName], secret.Data[keyName])
+	tlsCert, err := tls.X509KeyPair(secret.Data[certificateName], secret.Data[keyName])
 	if err != nil {
 		return errors.Wrap(err, "failed to load certificate key pair")
 	}
-	currentCertifate = &cert
+	currentCertifate = &tlsCert
 
 	return nil
 }
@@ -129,11 +134,11 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 		return ctrl.Result{Requeue: requeue}, err
 	}
 
-	cert, err := tls.X509KeyPair(secret.Data[certificateName], secret.Data[keyName])
+	tlsCert, err := tls.X509KeyPair(secret.Data[certificateName], secret.Data[keyName])
 	if err != nil {
 		return ctrl.Result{Requeue: false}, err
 	}
-	currentCertifate = &cert
+	currentCertifate = &tlsCert
 
 	return ctrl.Result{RequeueAfter: reconciliationInterval}, nil
 }
@@ -160,11 +165,7 @@ func verifyCertificateSecret(ctx context.Context, client client.Client, secret *
 		if err != nil {
 			return true, err
 		}
-		certs, err := cert.ParseCertsPEM(secret.Data[certificateName])
-		if err != nil || len(certs) == 0 {
-			return true, errors.Wrap(err, "failed to parse certificate")
-		}
-		log.Info("New certificate created", "validFrom", certs[0].NotBefore, "validUntil", certs[0].NotAfter)
+		printCertificateValidity(secret, log)
 	}
 
 	return false, nil
@@ -234,4 +235,18 @@ func containsConversionWebhookClientConfig(crd *apiextensionsv1.CustomResourceDe
 		return false, "client config for conversion webhook not found in APIRule CRD"
 	}
 	return true, ""
+}
+
+func printCertificateValidity(secret *corev1.Secret, log logr.Logger) error {
+	if !hasRequiredKeys(secret.Data, []string{certificateName, keyName}) {
+		return fmt.Errorf("secret does not have required keys: %s, %s", certificateName, keyName)
+	}
+
+	certs, err := cert.ParseCertsPEM(secret.Data[certificateName])
+	if err != nil || len(certs) == 0 {
+		return errors.Wrap(err, "failed to parse certificate")
+	}
+
+	log.Info("Certificate validity", "validFrom", certs[0].NotBefore, "validUntil", certs[0].NotAfter)
+	return nil
 }
