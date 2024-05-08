@@ -26,8 +26,8 @@
 
 3. Provision the k3d cluster.
 
-    ```bash
-    k3d cluster create
+    k3d registry create kyma-registry --port 5001
+    k3d cluster create kyma --kubeconfig-switch-context -p 80:80@loadbalancer -p 443:443@loadbalancer --registry-use kyma-registry
     kubectl create ns kyma-system
     ```
     >**TIP:** To verify the correctness of the project, build it using the `make build` command.
