@@ -29,7 +29,8 @@ func (apiRuleBeta2 *APIRule) ConvertTo(hub conversion.Hub) error {
 	}
 
 	// Only one host is supported in v1beta1, so we use the first one from the list
-	apiRuleBeta1.Spec.Host = apiRuleBeta2.Spec.Hosts[0]
+	strHost := string(*apiRuleBeta2.Spec.Hosts[0])
+	apiRuleBeta1.Spec.Host = &strHost
 
 	apiRuleBeta1.Spec.Rules = []v1beta1.Rule{}
 	for _, ruleBeta2 := range apiRuleBeta2.Spec.Rules {
@@ -76,8 +77,8 @@ func (apiRuleBeta2 *APIRule) ConvertFrom(hub conversion.Hub) error {
 		return err
 	}
 
-	apiRuleBeta2.Spec.Hosts = []*string{new(string)}
-	*apiRuleBeta2.Spec.Hosts[0] = *apiRuleBeta1.Spec.Host
+	apiRuleBeta2.Spec.Hosts = []*Host{new(Host)}
+	*apiRuleBeta2.Spec.Hosts[0] = Host(*apiRuleBeta1.Spec.Host)
 
 	apiRuleBeta2.Spec.Rules = []Rule{}
 	for _, ruleBeta1 := range apiRuleBeta1.Spec.Rules {

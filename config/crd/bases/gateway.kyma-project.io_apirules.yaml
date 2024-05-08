@@ -360,8 +360,12 @@ spec:
                 pattern: ^[0-9a-z-_]+(\/[0-9a-z-_]+|(\.[0-9a-z-_]+)*)$
                 type: string
               hosts:
-                description: Specifies the URL of the exposed service.
+                description: Specifies the URLs of the exposed service.
                 items:
+                  description: Host is the URL of the exposed service.
+                  maxLength: 256
+                  minLength: 3
+                  pattern: ^([a-zA-Z0-9][a-zA-Z0-9-_]*\.)*[a-zA-Z0-9]*[a-zA-Z0-9-_]*[[a-zA-Z0-9]+$
                   type: string
                 minItems: 1
                 type: array

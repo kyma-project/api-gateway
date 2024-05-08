@@ -38,9 +38,9 @@ const (
 
 // APIRuleSpec defines the desired state of ApiRule.
 type APIRuleSpec struct {
-	// Specifies the URL of the exposed service.
+	// Specifies the URLs of the exposed service.
 	// +kubebuilder:validation:MinItems=1
-	Hosts []*string `json:"hosts"`
+	Hosts []*Host `json:"hosts"`
 	// Describes the service to expose.
 	// +optional
 	Service *Service `json:"service,omitempty"`
@@ -56,6 +56,12 @@ type APIRuleSpec struct {
 	// +optional
 	Timeout *Timeout `json:"timeout,omitempty"`
 }
+
+// Host is the URL of the exposed service.
+// +kubebuilder:validation:MinLength=3
+// +kubebuilder:validation:MaxLength=256
+// +kubebuilder:validation:Pattern=^([a-zA-Z0-9][a-zA-Z0-9-_]*\.)*[a-zA-Z0-9]*[a-zA-Z0-9-_]*[[a-zA-Z0-9]+$
+type Host string
 
 // APIRuleStatus describes the observed state of ApiRule.
 type APIRuleStatus struct {

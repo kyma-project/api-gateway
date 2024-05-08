@@ -104,11 +104,11 @@ func (in *APIRuleSpec) DeepCopyInto(out *APIRuleSpec) {
 	*out = *in
 	if in.Hosts != nil {
 		in, out := &in.Hosts, &out.Hosts
-		*out = make([]*string, len(*in))
+		*out = make([]*Host, len(*in))
 		for i := range *in {
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
-				*out = new(string)
+				*out = new(Host)
 				**out = **in
 			}
 		}

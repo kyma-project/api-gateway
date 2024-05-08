@@ -13,8 +13,10 @@ import (
 )
 
 var _ = Describe("APIRule Conversion", func() {
-	host1 := "host1"
-	host2 := "host2"
+	host1string := "host1"
+	host2string := "host2"
+	host1 := v1beta2.Host(host1string)
+	host2 := v1beta2.Host(host2string)
 
 	Describe("v1beta2 to v1beta1", func() {
 		It("should have origin version annotation", func() {
@@ -24,7 +26,7 @@ var _ = Describe("APIRule Conversion", func() {
 					Name: "test",
 				},
 				Spec: v1beta2.APIRuleSpec{
-					Hosts: []*string{&host1},
+					Hosts: []*v1beta2.Host{&host1},
 				},
 			}
 			apiRuleBeta1 := v1beta1.APIRule{}
@@ -41,7 +43,7 @@ var _ = Describe("APIRule Conversion", func() {
 			// given
 			apiRuleBeta2 := v1beta2.APIRule{
 				Spec: v1beta2.APIRuleSpec{
-					Hosts: []*string{&host1, &host2},
+					Hosts: []*v1beta2.Host{&host1, &host2},
 				},
 			}
 			apiRuleBeta1 := v1beta1.APIRule{}
@@ -51,14 +53,14 @@ var _ = Describe("APIRule Conversion", func() {
 
 			// then
 			Expect(err).To(BeNil())
-			Expect(*apiRuleBeta1.Spec.Host).To(Equal(host1))
+			Expect(*apiRuleBeta1.Spec.Host).To(Equal(string(host1)))
 		})
 
 		It("should convert NoAuth to v1beta1", func() {
 			// given
 			apiRuleBeta2 := v1beta2.APIRule{
 				Spec: v1beta2.APIRuleSpec{
-					Hosts: []*string{&host1},
+					Hosts: []*v1beta2.Host{&host1},
 					Rules: []v1beta2.Rule{
 						{
 							NoAuth: ptr.To(true),
@@ -85,7 +87,7 @@ var _ = Describe("APIRule Conversion", func() {
 				Spec: v1beta2.APIRuleSpec{
 					Gateway: ptr.To("gateway"),
 					Service: &v1beta2.Service{Name: ptr.To("service")},
-					Hosts:   []*string{&host1},
+					Hosts:   []*v1beta2.Host{&host1},
 					Rules: []v1beta2.Rule{
 						{
 							Path:    "/path1",
@@ -120,7 +122,7 @@ var _ = Describe("APIRule Conversion", func() {
 
 			apiRuleBeta2 := v1beta2.APIRule{
 				Spec: v1beta2.APIRuleSpec{
-					Hosts: []*string{&host1},
+					Hosts: []*v1beta2.Host{&host1},
 					Rules: []v1beta2.Rule{
 						{
 							Jwt: &v1beta2.JwtConfig{
@@ -173,7 +175,7 @@ var _ = Describe("APIRule Conversion", func() {
 			// given
 			apiRuleBeta2 := v1beta2.APIRule{
 				Spec: v1beta2.APIRuleSpec{
-					Hosts: []*string{&host1},
+					Hosts: []*v1beta2.Host{&host1},
 					Rules: []v1beta2.Rule{
 						{
 							NoAuth: ptr.To(false),
@@ -202,7 +204,7 @@ var _ = Describe("APIRule Conversion", func() {
 			// given
 			apiRuleBeta2 := v1beta2.APIRule{
 				Spec: v1beta2.APIRuleSpec{
-					Hosts: []*string{&host1},
+					Hosts: []*v1beta2.Host{&host1},
 					Rules: []v1beta2.Rule{
 						{
 							NoAuth: ptr.To(true),
@@ -238,7 +240,7 @@ var _ = Describe("APIRule Conversion", func() {
 			// given
 			apiRuleBeta1 := v1beta1.APIRule{
 				Spec: v1beta1.APIRuleSpec{
-					Host: &host1,
+					Host: &host1string,
 				},
 			}
 			apiRuleBeta2 := v1beta2.APIRule{}
@@ -254,7 +256,7 @@ var _ = Describe("APIRule Conversion", func() {
 			// given
 			apiRuleBeta1 := v1beta1.APIRule{
 				Spec: v1beta1.APIRuleSpec{
-					Host: &host1,
+					Host: &host1string,
 					Rules: []v1beta1.Rule{
 						{
 							AccessStrategies: []*v1beta1.Authenticator{
@@ -285,7 +287,7 @@ var _ = Describe("APIRule Conversion", func() {
 				Spec: v1beta1.APIRuleSpec{
 					Gateway: ptr.To("gateway"),
 					Service: &v1beta1.Service{Name: ptr.To("service")},
-					Host:    &host1,
+					Host:    &host1string,
 					Rules: []v1beta1.Rule{
 						{
 							Path:    "/path1",
@@ -341,7 +343,7 @@ var _ = Describe("APIRule Conversion", func() {
 
 			apiRuleBeta1 := v1beta1.APIRule{
 				Spec: v1beta1.APIRuleSpec{
-					Host: &host1,
+					Host: &host1string,
 					Rules: []v1beta1.Rule{
 						{
 							AccessStrategies: []*v1beta1.Authenticator{
@@ -404,7 +406,7 @@ var _ = Describe("APIRule Conversion", func() {
 
 			apiRuleBeta1 := v1beta1.APIRule{
 				Spec: v1beta1.APIRuleSpec{
-					Host: &host1,
+					Host: &host1string,
 					Rules: []v1beta1.Rule{
 						{
 							AccessStrategies: []*v1beta1.Authenticator{
@@ -436,7 +438,7 @@ var _ = Describe("APIRule Conversion", func() {
 			// given
 			apiRuleBeta1 := v1beta1.APIRule{
 				Spec: v1beta1.APIRuleSpec{
-					Host: &host1,
+					Host: &host1string,
 					Rules: []v1beta1.Rule{
 						{
 							AccessStrategies: []*v1beta1.Authenticator{
@@ -473,7 +475,7 @@ var _ = Describe("APIRule Conversion", func() {
 			// given
 			apiRuleBeta1 := v1beta1.APIRule{
 				Spec: v1beta1.APIRuleSpec{
-					Host: &host1,
+					Host: &host1string,
 					Rules: []v1beta1.Rule{
 						{
 							AccessStrategies: []*v1beta1.Authenticator{

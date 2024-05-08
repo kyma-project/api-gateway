@@ -124,10 +124,6 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	if err == nil && convertedApiRule.Annotations != nil {
 		if originalVersion, ok := convertedApiRule.Annotations["gateway.kyma-project.io/original-version"]; ok && originalVersion == "v1beta2" {
 			r.Log.Info("ApiRule is converted from v1beta2")
-			if r.Config.JWTHandler == helpers.JWT_HANDLER_ORY {
-				r.Log.Info("APIRule in version v1beta2 is not supported with Ory handler.")
-				return doneReconcileNoRequeue()
-			}
 			r.Config.JWTHandler = helpers.JWT_HANDLER_ISTIO
 		}
 	}
