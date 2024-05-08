@@ -18,6 +18,7 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
 	"flag"
 	"os"
 	"time"
@@ -126,18 +127,18 @@ func main() {
 
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 	config := ctrl.GetConfigOrDie()
+	k8sClient, err := client.New(config, client.Options{Scheme: scheme})
+	if err != nil {
+		setupLog.Error(err, "Unable to create client")
+		os.Exit(1)
+	}
 
 	if flagVar.initOnly {
 		setupLog.Info("Initialisation only mode")
 		utilruntime.Must(apiextensionsv1.AddToScheme(scheme))
-		k8sClient, err := client.New(config, client.Options{Scheme: scheme})
+		err = certificate.InitialiseCertificateSecret(context.Background(), k8sClient, setupLog)
 		if err != nil {
-			setupLog.Error(err, "Unable to create client")
-			os.Exit(1)
-		}
-		_, err = certificate.VerifyCertificate(context.Background(), k8sClient, setupLog)
-		if err != nil {
-			setupLog.Error(err, "Unable to initialise certificate")
+			setupLog.Error(err, "Unable to initialise certificate secret")
 			os.Exit(1)
 		}
 		os.Exit(0)
@@ -152,8 +153,11 @@ func main() {
 		LeaderElection:         flagVar.enableLeaderElection,
 		LeaderElectionID:       "69358922.kyma-project.io",
 		WebhookServer: webhook.NewServer(webhook.Options{
-			Port:    9443,
-			CertDir: "/tmp/webhook-certificate",
+			TLSOpts: []func(*tls.Config){
+				func(cfg *tls.Config) {
+					cfg.GetCertificate = certificate.GetCertificate
+				},
+			},
 		}),
 	}
 
@@ -191,7 +195,12 @@ func main() {
 	}
 
 	if err = certificate.NewCertificateReconciler(mgr).SetupWithManager(mgr, rateLimiterCfg); err != nil {
-		setupLog.Error(err, "Unable to create controller", "controller", "Certificate")
+		setupLog.Error(err, "Unable to create controller", "controller", "certificate")
+		os.Exit(1)
+	}
+
+	if err = certificate.ReadCertificateSecret(context.Background(), k8sClient, setupLog); err != nil {
+		setupLog.Error(err, "Unable to read certificate secret", "webhook", "certificate")
 		os.Exit(1)
 	}
 

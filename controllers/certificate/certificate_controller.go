@@ -2,7 +2,8 @@ package certificate
 
 import (
 	"context"
-	"crypto/x509"
+	"crypto/tls"
+	"fmt"
 	"strings"
 	"time"
 
@@ -17,6 +18,8 @@ import (
 
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
+	apierrs "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/util/cert"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -38,6 +41,69 @@ const (
 	APIRuleCRDName = "apirules.gateway.kyma-project.io"
 )
 
+var currentCertifate *tls.Certificate
+var GetCertificate = func(*tls.ClientHelloInfo) (*tls.Certificate, error) {
+	if currentCertifate == nil {
+		return nil, errors.New("certificate not available")
+	}
+	return currentCertifate, nil
+}
+
+func InitialiseCertificateSecret(ctx context.Context, client client.Client, log logr.Logger) error {
+	log.Info("Initialising certficate secret", "namespace", secretNamespace, "name", secretName)
+
+	secret := &corev1.Secret{}
+	err := client.Get(ctx, types.NamespacedName{Namespace: secretNamespace, Name: secretName}, secret)
+	if err != nil {
+		if apierrs.IsNotFound(err) {
+			log.Info("Certificate secret not found, creating a new one")
+			certificate, key, err := generateNewCertificate(serviceName, secretNamespace)
+			if err != nil {
+				return errors.Wrap(err, "failed to generate certificate")
+			}
+			secret = &corev1.Secret{
+				ObjectMeta: metav1.ObjectMeta{Namespace: secretNamespace, Name: secretName},
+				Data: map[string][]byte{
+					certificateName: certificate,
+					keyName:         key,
+				},
+				Type: corev1.SecretTypeOpaque,
+			}
+			if err := client.Create(ctx, secret); err != nil {
+				return errors.Wrap(err, "failed to create secret")
+			}
+		} else {
+			return errors.Wrap(err, "failed to get certificate secret")
+		}
+	}
+
+	log.Info("Certificate secret found", "namespace", secretNamespace, "name", secretName)
+
+	return nil
+}
+
+func ReadCertificateSecret(ctx context.Context, client client.Client, log logr.Logger) error {
+	log.Info("Reading certficate secret", "namespace", secretNamespace, "name", secretName)
+
+	secret := &corev1.Secret{}
+	err := client.Get(ctx, types.NamespacedName{Namespace: secretNamespace, Name: secretName}, secret)
+	if err != nil {
+		return errors.Wrap(err, "failed to get certificate secret")
+	}
+
+	if !hasRequiredKeys(secret.Data, []string{certificateName, keyName}) {
+		return fmt.Errorf("secret does not have required keys: %s, %s", certificateName, keyName)
+	}
+
+	cert, err := tls.X509KeyPair(secret.Data[certificateName], secret.Data[keyName])
+	if err != nil {
+		return errors.Wrap(err, "failed to load certificate key pair")
+	}
+	currentCertifate = &cert
+
+	return nil
+}
+
 func NewCertificateReconciler(mgr manager.Manager) *Reconciler {
 	return &Reconciler{
 		Client: mgr.GetClient(),
@@ -52,14 +118,22 @@ func NewCertificateReconciler(mgr manager.Manager) *Reconciler {
 func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	r.Log.Info("Received reconciliation request", "namespace", req.Namespace, "name", req.Name)
 
-	if req.Namespace != secretNamespace || req.Name != secretName {
-		return ctrl.Result{}, nil
+	secret := &corev1.Secret{}
+	err := r.Client.Get(ctx, types.NamespacedName{Namespace: secretNamespace, Name: secretName}, secret)
+	if err != nil {
+		return ctrl.Result{Requeue: false}, err
 	}
 
-	requeue, err := VerifyCertificate(ctx, r.Client, r.Log)
+	requeue, err := verifyCertificateSecret(ctx, r.Client, secret, r.Log)
 	if err != nil {
 		return ctrl.Result{Requeue: requeue}, err
 	}
+
+	cert, err := tls.X509KeyPair(secret.Data[certificateName], secret.Data[keyName])
+	if err != nil {
+		return ctrl.Result{Requeue: false}, err
+	}
+	currentCertifate = &cert
 
 	return ctrl.Result{RequeueAfter: reconciliationInterval}, nil
 }
@@ -74,34 +148,32 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, c controllers.RateLimite
 		Complete(r)
 }
 
-func VerifyCertificate(ctx context.Context, client client.Client, log logr.Logger) (bool, error) {
-	log.Info("Verifying certficate", "namespace", secretNamespace, "name", secretName)
+func verifyCertificateSecret(ctx context.Context, client client.Client, secret *corev1.Secret, log logr.Logger) (bool, error) {
+	log.Info("Verifying certficate secret", "namespace", secretNamespace, "name", secretName)
 
-	certificateSecret := &corev1.Secret{}
-	err := client.Get(ctx, types.NamespacedName{Namespace: secretNamespace, Name: secretName}, certificateSecret)
-	if err != nil {
-		return false, err
-	}
-
-	err = verifySecret(certificateSecret)
+	err := verifySecret(secret)
 	if err == nil {
 		log.Info("Certificate is still valid and does not need to be updated")
 	} else {
-		log.Info("Certificate is invalid", "verificationError", err.Error())
-		certificate, err := createNewSecret(ctx, client, certificateSecret)
+		log.Info("Certificate verification did not succeed", "error", err.Error())
+		err := generateNewCertificateSecret(ctx, client, secret)
 		if err != nil {
 			return true, err
 		}
-		log.Info("New certificate created", "validFrom", certificate.NotBefore, "validUntil", certificate.NotAfter)
+		certs, err := cert.ParseCertsPEM(secret.Data[certificateName])
+		if err != nil || len(certs) == 0 {
+			return true, errors.Wrap(err, "failed to parse certificate")
+		}
+		log.Info("New certificate created", "validFrom", certs[0].NotBefore, "validUntil", certs[0].NotAfter)
 	}
 
 	return false, nil
 }
 
-func createNewSecret(ctx context.Context, client client.Client, secret *corev1.Secret) (*x509.Certificate, error) {
+func generateNewCertificateSecret(ctx context.Context, client client.Client, secret *corev1.Secret) error {
 	certificate, key, err := generateNewCertificate(serviceName, secret.Namespace)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to generate certificate")
+		return errors.Wrap(err, "failed to generate certificate")
 	}
 
 	mergeFrom := ctrlclient.StrategicMergeFrom(secret.DeepCopy())
@@ -114,19 +186,14 @@ func createNewSecret(ctx context.Context, client client.Client, secret *corev1.S
 	secret.Data[keyName] = key
 
 	if err := client.Patch(ctx, secret, mergeFrom); err != nil {
-		return nil, errors.Wrap(err, "failed to patch secret")
+		return errors.Wrap(err, "failed to patch secret")
 	}
 
 	if err := updateCertificateInCRD(ctx, client, certificate); err != nil {
-		return nil, errors.Wrap(err, "failed to update certificate into CRD")
+		return errors.Wrap(err, "failed to update certificate into CRD")
 	}
 
-	parsedCertificates, err := cert.ParseCertsPEM(certificate)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to parse certificate")
-	}
-
-	return parsedCertificates[0], nil
+	return nil
 }
 
 func generateNewCertificate(serviceName, namespace string) ([]byte, []byte, error) {
