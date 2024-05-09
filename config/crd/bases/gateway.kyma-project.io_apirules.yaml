@@ -559,15 +559,6 @@ spec:
                   desc:
                     type: string
                 type: object
-              accessRuleStatus:
-                description: APIRuleResourceStatus describes the status of APIRule.
-                properties:
-                  code:
-                    description: StatusCode describing APIRule.
-                    type: string
-                  desc:
-                    type: string
-                type: object
               authorizationPolicyStatus:
                 description: APIRuleResourceStatus describes the status of APIRule.
                 properties:
