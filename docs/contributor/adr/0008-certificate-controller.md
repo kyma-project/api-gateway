@@ -13,9 +13,9 @@ We introduce a conversion webhook for converting `v1beta1` from and to `v1beta2`
 1. We like to handle this creation, verifying and renewal of the required certificate integrated into our Module operator with a new Kubernetes controller.
 2. We do not create additional image that would handle certificate mangement with `CronJob` which showed quite a few limitations (`Job` updating for instance) and inconviniences in regards of observability.
 3. New controller will reconcile predefined `Secret` named `api-gateway-webhook-certificate` in `kyma-system` namespace that is holding the data for the Certificate.
-4. Secret is mounted via Kubernetes as read-only resource into Module operator file system and automatically updated on changes.
-5. Webhoook server implementation handles changes in the Certificate files by implementing a watcher which will fully automate Certificate renewal process.
-6. We rotate the Certificate 14 days before expiration and we create Certificate with 90 days validity. SAP recommendation for SSL server certificates is one year validity.
+4. We introduce an Kubernetes `init container` to the operator deployment which will handle initial creation of the predefined Secret holding the Certificate.
+6. We delegate function to the Webhoook server for obtaining current Certificate which will fully automate Certificate renewal process.
+7. We rotate the Certificate 14 days before expiration and we create Certificate with 90 days validity. SAP recommendation for SSL server certificates is one year validity.
 
 ## Consequences
 
