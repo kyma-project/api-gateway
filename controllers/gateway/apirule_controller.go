@@ -120,7 +120,7 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 
 	apiRule := &gatewayv1beta1.APIRule{}
 	apiRuleErr := r.Client.Get(ctx, req.NamespacedName, apiRule)
-	if r.isApiRuleConvertedFromV1beta2(*apiRule) {
+	if apiRuleErr == nil && r.isApiRuleConvertedFromV1beta2(*apiRule) {
 		r.Config.JWTHandler = helpers.JWT_HANDLER_ISTIO
 	}
 
