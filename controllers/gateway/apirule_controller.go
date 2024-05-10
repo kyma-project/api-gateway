@@ -118,7 +118,9 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		DefaultDomainName: defaultDomainName,
 	}
 
-	if r.isApiRuleConvertedFromV1beta2(ctx, req) {
+	apiRule := &gatewayv1beta1.APIRule{}
+	apiRuleErr := r.Client.Get(ctx, req.NamespacedName, apiRule)
+	if r.isApiRuleConvertedFromV1beta2(*apiRule) {
 		r.Config.JWTHandler = helpers.JWT_HANDLER_ISTIO
 	}
 
@@ -150,19 +152,17 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 
 	cmd := r.getReconciliation(defaultDomainName)
 
-	apiRule := &gatewayv1beta1.APIRule{}
-	err = r.Client.Get(ctx, req.NamespacedName, apiRule)
-	if err != nil {
-		if apierrs.IsNotFound(err) {
+	if apiRuleErr != nil {
+		if apierrs.IsNotFound(apiRuleErr) {
 			//There is no APIRule. Nothing to process, dependent objects will be garbage-collected.
 			r.Log.Info(fmt.Sprintf("Finishing reconciliation as ApiRule '%s' does not exist.", req.NamespacedName))
 			return doneReconcileNoRequeue()
 		}
 
-		r.Log.Error(err, "Error getting ApiRule")
+		r.Log.Error(apiRuleErr, "Error getting ApiRule")
 
 		statusBase := cmd.GetStatusBase(gatewayv1beta1.StatusSkipped)
-		errorMap := map[processing.ResourceSelector][]error{processing.OnApiRule: {err}}
+		errorMap := map[processing.ResourceSelector][]error{processing.OnApiRule: {apiRuleErr}}
 		status := processing.GetStatusForErrorMap(errorMap, statusBase)
 		return r.updateStatusOrRetry(ctx, apiRule, status)
 	}
@@ -335,12 +335,10 @@ func (r *APIRuleReconciler) getLatestApiRule(ctx context.Context, api *gatewayv1
 	return apiRule, nil
 }
 
-func (r *APIRuleReconciler) isApiRuleConvertedFromV1beta2(ctx context.Context, req ctrl.Request) bool {
-	convertedApiRule := &gatewayv1beta1.APIRule{}
-	err := r.Client.Get(ctx, req.NamespacedName, convertedApiRule)
+func (r *APIRuleReconciler) isApiRuleConvertedFromV1beta2(apiRule gatewayv1beta1.APIRule) bool {
 	// If the ApiRule is not found, we don't need to do anything. If it's found and converted, CM reconciliation is not needed.
-	if err == nil && convertedApiRule.Annotations != nil {
-		if originalVersion, ok := convertedApiRule.Annotations["gateway.kyma-project.io/original-version"]; ok && originalVersion == "v1beta2" {
+	if apiRule.Annotations != nil {
+		if originalVersion, ok := apiRule.Annotations["gateway.kyma-project.io/original-version"]; ok && originalVersion == "v1beta2" {
 			r.Log.Info("ApiRule is converted from v1beta2")
 			return true
 		}
