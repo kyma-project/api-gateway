@@ -144,13 +144,14 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	}
 	r.Log.Info("Starting ApiRule reconciliation", "jwtHandler", r.Config.JWTHandler)
 
+	isApiRuleInV1beta2Version := false
 	apiRule := &gatewayv1beta1.APIRule{}
 	apiRuleErr := r.Client.Get(ctx, req.NamespacedName, apiRule)
 	if apiRuleErr == nil && r.isApiRuleConvertedFromV1beta2(*apiRule) {
-		r.Config.JWTHandler = helpers.JWT_HANDLER_ISTIO
+		isApiRuleInV1beta2Version = true
 	}
 
-	cmd := r.getReconciliation(defaultDomainName)
+	cmd := r.getReconciliation(defaultDomainName, isApiRuleInV1beta2Version)
 
 	if apiRuleErr != nil {
 		if apierrs.IsNotFound(apiRuleErr) {
@@ -225,10 +226,10 @@ func handleDependenciesError(name string, err error) controllers.Status {
 	}
 }
 
-func (r *APIRuleReconciler) getReconciliation(defaultDomain string) processing.ReconciliationCommand {
+func (r *APIRuleReconciler) getReconciliation(defaultDomain string, apiRuleV1beta2 bool) processing.ReconciliationCommand {
 	config := r.ReconciliationConfig
 	config.DefaultDomainName = defaultDomain
-	if r.Config.JWTHandler == helpers.JWT_HANDLER_ISTIO {
+	if r.Config.JWTHandler == helpers.JWT_HANDLER_ISTIO || apiRuleV1beta2 {
 		return istio.NewIstioReconciliation(config, &r.Log)
 	}
 	return ory.NewOryReconciliation(config, &r.Log)

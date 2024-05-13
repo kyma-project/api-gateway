@@ -173,6 +173,33 @@ var _ = Describe("APIRule Controller", Serial, func() {
 		})
 	})
 
+	Context("when creating APIRule in version v1beta2", func() {
+		It("should create the istio APIRule", func() {
+			updateJwtHandlerTo(helpers.JWT_HANDLER_ORY)
+
+			apiRuleName := generateTestName(testNameBase, testIDLength)
+			serviceName := testServiceNameBase
+			serviceHost := "httpbin-istio-jwt-happy-base.kyma.local"
+
+			rule := testRule("/img", methodsGet, nil, testIstioJWTHandlerWithScopes(testIssuer, testJwksUri, []string{"scope-a", "scope-b"}))
+			apiRule := testApiRule(apiRuleName, testNamespace, serviceName, testNamespace, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule})
+			apiRule.Annotations = map[string]string{
+				"gateway.kyma-project.io/original-version": "v1beta2",
+			}
+			svc := testService(serviceName, testNamespace, testServicePort)
+
+			// when
+			Expect(c.Create(context.TODO(), svc)).Should(Succeed())
+			Expect(c.Create(context.TODO(), apiRule)).Should(Succeed())
+			defer func() {
+				apiRuleTeardown(apiRule)
+				serviceTeardown(svc)
+			}()
+
+			expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusOK)
+		})
+	})
+
 	Context("when updating the APIRule with multiple paths", func() {
 
 		It("should create, update and delete rules depending on patch match", func() {
