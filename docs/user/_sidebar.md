@@ -30,6 +30,7 @@
     * [Comparison of Access Strategies](/api-gateway/user/custom-resources/apirule/04-30-apirule-jwt-ory-and-istio-comparison.md)
     * [APIRule Mutators](/api-gateway/user/custom-resources/apirule/04-40-apirule-mutators.md)
     * [APIRule Authorizations](/api-gateway/user/custom-resources/apirule/04-50-apirule-authorizations.md)
+    * [APIRule v1beta2 Custom Resource](/api-gateway/user/custom-resources/apirule/04-60-apirule-v1beta2.md)
 * [Technical Reference](/api-gateway/user/technical-reference/README.md)
   * [Kyma API Gateway Operator Parameters ](/api-gateway/user/technical-reference/05-00-api-gateway-operator-parameters.md)
   * [Ory Limitations](/api-gateway/user/technical-reference/05-50-ory-limitations.md)
