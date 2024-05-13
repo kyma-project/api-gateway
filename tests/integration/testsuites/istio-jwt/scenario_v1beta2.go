@@ -2,6 +2,7 @@ package istiojwt
 
 import (
 	"github.com/cucumber/godog"
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/manifestprocessor"
 )
 
 func initV1Beta2IstioJWT(ctx *godog.ScenarioContext, ts *testsuite) {
@@ -23,4 +24,28 @@ func initV1Beta2NoAuthHandler(ctx *godog.ScenarioContext, ts *testsuite) {
 	ctx.Step(`^v1beta2NoAuthHandler: The APIRule is applied$`, scenario.theAPIRuleIsApplied)
 	ctx.Step(`^v1beta2NoAuthHandler: Calling the "([^"]*)" endpoint with "([^"]*)" method with any token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithMethodWithInvalidTokenShouldResultInStatusBetween)
 	ctx.Step(`^v1beta2NoAuthHandler: Teardown httpbin service$`, scenario.teardownHttpbinService)
+}
+
+func initV1Beta2NoAuthHandlerRecover(ctx *godog.ScenarioContext, ts *testsuite) {
+	scenario := ts.createScenario("v1beta2-no-auth-handler.yaml", "v1beta2-no-auth-handler-recover")
+
+	ctx.Step(`^v1beta2NoAuthHandlerRecover: There is a httpbin service$`, scenario.thereIsAHttpbinService)
+	ctx.Step(`^v1beta2NoAuthHandlerRecover: The APIRule is applied$`, scenario.theAPIRuleIsApplied)
+	ctx.Step(`^v1beta2NoAuthHandlerRecover: Certificate secret is reset$`, scenario.certificateSecretReset)
+	ctx.Step(`^v1beta2NoAuthHandlerRecover: Calling the "([^"]*)" endpoint with "([^"]*)" method with any token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithMethodWithInvalidTokenShouldResultInStatusBetween)
+	ctx.Step(`^v1beta2NoAuthHandlerRecover: Teardown httpbin service$`, scenario.teardownHttpbinService)
+}
+
+func (s *scenario) certificateSecretReset() error {
+	r, err := manifestprocessor.ParseFromFileWithTemplate("certificate-secret.yaml", s.ApiResourceDirectory, s.ManifestTemplate)
+	if err != nil {
+		return err
+	}
+
+	_, err = s.resourceManager.CreateOrUpdateResources(s.k8sClient, r...)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

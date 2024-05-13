@@ -102,6 +102,7 @@ func (t *testsuite) InitScenarios(ctx *godog.ScenarioContext) {
 	initExposeMethodsOnPathsOAuth2Handler(ctx, t)
 	initV1Beta2IstioJWT(ctx, t)
 	initV1Beta2NoAuthHandler(ctx, t)
+	initV1Beta2NoAuthHandlerRecover(ctx, t)
 }
 
 func (t *testsuite) FeaturePath() []string {

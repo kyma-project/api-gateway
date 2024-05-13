@@ -42,7 +42,8 @@ const (
 )
 
 var currentCertifate *tls.Certificate
-var GetCertificate = func(*tls.ClientHelloInfo) (*tls.Certificate, error) {
+
+func GetCertificate(*tls.ClientHelloInfo) (*tls.Certificate, error) {
 	if currentCertifate == nil {
 		return nil, errors.New("certificate not available")
 	}
