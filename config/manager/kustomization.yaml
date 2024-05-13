@@ -6,4 +6,4 @@ kind: Kustomization
 images:
 - name: controller
   newName: api-gateway-controller
-  newTag: latest
+  newTag: 0.0.1

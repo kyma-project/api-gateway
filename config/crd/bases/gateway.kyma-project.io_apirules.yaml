@@ -509,6 +509,9 @@ spec:
                   - methods
                   - path
                   type: object
+                  x-kubernetes-validations:
+                  - message: Jwt cannot be set when noAuth is true
+                    rule: '!(self.noAuth == true && has(self.jwt))'
                 minItems: 1
                 type: array
               service:
