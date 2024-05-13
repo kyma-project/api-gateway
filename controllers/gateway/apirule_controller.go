@@ -118,12 +118,6 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		DefaultDomainName: defaultDomainName,
 	}
 
-	apiRule := &gatewayv1beta1.APIRule{}
-	apiRuleErr := r.Client.Get(ctx, req.NamespacedName, apiRule)
-	if apiRuleErr == nil && r.isApiRuleConvertedFromV1beta2(*apiRule) {
-		r.Config.JWTHandler = helpers.JWT_HANDLER_ISTIO
-	}
-
 	isCMReconcile := req.NamespacedName.String() == types.NamespacedName{Namespace: helpers.CM_NS, Name: helpers.CM_NAME}.String()
 	if isCMReconcile || r.Config.JWTHandler == "" {
 		r.Log.Info("Starting ConfigMap reconciliation")
@@ -149,6 +143,12 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		}
 	}
 	r.Log.Info("Starting ApiRule reconciliation", "jwtHandler", r.Config.JWTHandler)
+
+	apiRule := &gatewayv1beta1.APIRule{}
+	apiRuleErr := r.Client.Get(ctx, req.NamespacedName, apiRule)
+	if apiRuleErr == nil && r.isApiRuleConvertedFromV1beta2(*apiRule) {
+		r.Config.JWTHandler = helpers.JWT_HANDLER_ISTIO
+	}
 
 	cmd := r.getReconciliation(defaultDomainName)
 
