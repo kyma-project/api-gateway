@@ -83,7 +83,7 @@ func InitialiseCertificateSecret(ctx context.Context, client client.Client, log 
 	}
 
 	if err = parseCertificateSecret(secret, log); err != nil {
-		return errors.Wrap(err, "failed to print certificate secret validity")
+		return errors.Wrap(err, "failed to get parse certificate secret")
 	}
 
 	return nil
@@ -98,7 +98,9 @@ func ReadCertificateSecret(ctx context.Context, client client.Client, log logr.L
 		return errors.Wrap(err, "failed to get certificate secret")
 	}
 
-	parseCertificateSecret(secret, log)
+	if err = parseCertificateSecret(secret, log); err != nil {
+		return errors.Wrap(err, "failed to get parse certificate secret")
+	}
 
 	tlsCert, err := tls.X509KeyPair(secret.Data[certificateName], secret.Data[keyName])
 	if err != nil {
@@ -165,7 +167,9 @@ func verifyCertificateSecret(ctx context.Context, client client.Client, secret *
 		if err != nil {
 			return true, err
 		}
-		parseCertificateSecret(secret, log)
+		if err = parseCertificateSecret(secret, log); err != nil {
+			return true, err
+		}
 	}
 
 	return false, nil
