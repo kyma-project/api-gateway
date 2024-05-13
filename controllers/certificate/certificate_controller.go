@@ -38,7 +38,7 @@ const (
 	secretName      = "api-gateway-webhook-certificate"
 	serviceName     = "api-gateway-webhook-service"
 
-	APIRuleCRDName = "apirules.gateway.kyma-project.io"
+	apiRuleCRDName = "apirules.gateway.kyma-project.io"
 )
 
 var currentCertifate *tls.Certificate
@@ -205,7 +205,7 @@ func generateNewCertificate(serviceName, namespace string) ([]byte, []byte, erro
 
 func updateCertificateInCRD(ctx context.Context, client client.Client, certificate []byte) error {
 	crd := &apiextensionsv1.CustomResourceDefinition{}
-	err := client.Get(ctx, types.NamespacedName{Name: APIRuleCRDName}, crd)
+	err := client.Get(ctx, types.NamespacedName{Name: apiRuleCRDName}, crd)
 	if err != nil {
 		return errors.Wrap(err, "failed to get APIRule CRD")
 	}
