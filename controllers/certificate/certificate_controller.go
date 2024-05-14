@@ -51,7 +51,7 @@ func GetCertificate(*tls.ClientHelloInfo) (*tls.Certificate, error) {
 }
 
 func InitialiseCertificateSecret(ctx context.Context, client client.Client, log logr.Logger) error {
-	log.Info("Initialising certficate secret", "namespace", secretNamespace, "name", secretName)
+	log.Info("Initialising certificate secret", "namespace", secretNamespace, "name", secretName)
 
 	secret := &corev1.Secret{}
 	err := client.Get(ctx, types.NamespacedName{Namespace: secretNamespace, Name: secretName}, secret)
