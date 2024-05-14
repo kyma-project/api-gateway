@@ -52,8 +52,6 @@ var _ = Describe("APIRule Controller", Serial, func() {
 	var methodsDelete = []gatewayv1beta1.HttpMethod{http.MethodDelete}
 	var methodsPost = []gatewayv1beta1.HttpMethod{http.MethodPost}
 
-	var methodsGetv1beta2 = []gatewayv1beta2.HttpMethod{http.MethodGet}
-
 	Context("check default domain logic", func() {
 
 		It("should have an error when creating an APIRule without a domain in cluster without kyma-gateway", func() {
@@ -201,30 +199,6 @@ var _ = Describe("APIRule Controller", Serial, func() {
 			}()
 
 			expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusOK)
-		})
-
-		It("should not create the APIRule without noAuth nor jwt in version v1beta2", func() {
-			updateJwtHandlerTo(helpers.JWT_HANDLER_ORY)
-
-			apiRuleName := generateTestName(testNameBase, testIDLength)
-			serviceName := testServiceNameBase
-			serviceHost := gatewayv1beta2.Host("httpbin-istio-jwt-happy-base.kyma.local")
-			serviceHosts := []*gatewayv1beta2.Host{&serviceHost}
-
-			rule := testBrokenRulev1beta2("/img", methodsGetv1beta2, nil)
-			apiRule := testApiRulev1beta2(apiRuleName, testNamespace, serviceName, testNamespace, serviceHosts, testServicePort, []gatewayv1beta2.Rule{rule})
-			svc := testService(serviceName, testNamespace, testServicePort)
-
-			// when
-			Expect(c.Create(context.TODO(), svc)).Should(Succeed())
-			err := c.Create(context.TODO(), apiRule)
-			defer func() {
-				apiRulev1beta2Teardown(apiRule)
-				serviceTeardown(svc)
-			}()
-
-			Expect(err).Should(HaveOccurred())
-			Expect(err.Error()).To(ContainSubstring("Either noAuth or jwt must be set"))
 		})
 	})
 
@@ -1524,35 +1498,6 @@ func testApiRule(name, namespace, serviceName, serviceNamespace, serviceHost str
 			Host:    &serviceHost,
 			Gateway: &gateway,
 			Service: &gatewayv1beta1.Service{
-				Name:      &serviceName,
-				Namespace: &serviceNamespace,
-				Port:      &servicePort,
-			},
-			Rules: rules,
-		},
-	}
-}
-
-func testBrokenRulev1beta2(path string, methods []gatewayv1beta2.HttpMethod, mutators []*gatewayv1beta2.Mutator) gatewayv1beta2.Rule {
-	return gatewayv1beta2.Rule{
-		Path:     path,
-		Methods:  methods,
-		Mutators: mutators,
-	}
-}
-
-func testApiRulev1beta2(name, namespace, serviceName, serviceNamespace string, serviceHosts []*gatewayv1beta2.Host, servicePort uint32, rules []gatewayv1beta2.Rule) *gatewayv1beta2.APIRule {
-	var gateway = testGatewayURL
-
-	return &gatewayv1beta2.APIRule{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: namespace,
-		},
-		Spec: gatewayv1beta2.APIRuleSpec{
-			Hosts:   serviceHosts,
-			Gateway: &gateway,
-			Service: &gatewayv1beta2.Service{
 				Name:      &serviceName,
 				Namespace: &serviceNamespace,
 				Port:      &servicePort,

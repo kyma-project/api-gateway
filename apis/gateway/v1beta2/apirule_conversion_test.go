@@ -253,7 +253,7 @@ var _ = Describe("APIRule Conversion", func() {
 
 			// then
 			Expect(err).To(HaveOccurred())
-			Expect(err.Error()).To(Equal("either jwt must be configured or no_auth must be set to true in a rule"))
+			Expect(err.Error()).To(Equal("either jwt is configured or noAuth must be set to true in a rule"))
 		})
 	})
 

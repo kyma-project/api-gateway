@@ -512,7 +512,11 @@ spec:
                   x-kubernetes-validations:
                   - message: either jwt is configured or noAuth must be set to true
                       in a rule
-                    rule: 'has(self.jwt) ? self.noAuth != true : self.noAuth == true'
+                    rule: 'has(self.jwt) ? !has(self.noAuth) || self.noAuth == false
+                      : has(self.noAuth) && self.noAuth == true'
+                  - message: mutators must be configured only in combination with
+                      jwt
+                    rule: '!has(self.mutators) || has(self.jwt)'
                 minItems: 1
                 type: array
               service:
