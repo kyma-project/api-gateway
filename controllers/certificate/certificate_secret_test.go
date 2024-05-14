@@ -9,6 +9,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/pem"
+	"time"
 
 	. "github.com/onsi/gomega"
 	"github.com/pkg/errors"
@@ -25,49 +26,72 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-var _ = Describe("Certificate initialisation functions on manager start", Ordered, func() {
+var _ = Describe("InitialiseCertificateSecret", func() {
 	It("Should create new secret with certificate if was previously not found", func() {
 		// given
+		crd := getCRD([]byte{})
+
+		c := createFakeClient()
+		Expect(c.Create(context.Background(), crd)).To(Succeed())
+
 		secret := corev1.Secret{}
-		err := k8sClient.Get(context.Background(), client.ObjectKey{Namespace: "kyma-system", Name: "api-gateway-webhook-certificate"}, &secret)
+		err := c.Get(context.Background(), client.ObjectKey{Namespace: "kyma-system", Name: "api-gateway-webhook-certificate"}, &secret)
 		Expect(err).Should(HaveOccurred())
 		Expect(apierrs.IsNotFound(err)).Should(BeTrue())
 
 		// when
-		Expect(certificate.InitialiseCertificateSecret(context.Background(), k8sClient, logr.Discard())).Should(Succeed())
+		Expect(certificate.InitialiseCertificateSecret(context.Background(), c, logr.Discard())).Should(Succeed())
 
 		// then
 		secret = corev1.Secret{}
-		Expect(k8sClient.Get(context.Background(), client.ObjectKey{Namespace: "kyma-system", Name: "api-gateway-webhook-certificate"}, &secret)).Should(Succeed())
+		Expect(c.Get(context.Background(), client.ObjectKey{Namespace: "kyma-system", Name: "api-gateway-webhook-certificate"}, &secret)).Should(Succeed())
 		_, err = cert.ParseCertsPEM(secret.Data["tls.crt"])
 		Expect(err).ShouldNot(HaveOccurred())
 
-		crd := apiextensionsv1.CustomResourceDefinition{}
-		Expect(k8sClient.Get(ctx, types.NamespacedName{Name: "apirules.gateway.kyma-project.io"}, &crd)).Should(Succeed())
+		crd = &apiextensionsv1.CustomResourceDefinition{}
+		Expect(c.Get(ctx, types.NamespacedName{Name: "apirules.gateway.kyma-project.io"}, crd)).Should(Succeed())
 		Expect(crd.Spec.Conversion.Webhook.ClientConfig.CABundle).To(Equal(secret.Data["tls.crt"]))
 	})
 
-	It("Should not create new secret if already created", func() {
+	It("Should not create new secret if already existing", func() {
 		// given
-		originalSecret := corev1.Secret{}
-		Expect(k8sClient.Get(context.Background(), client.ObjectKey{Namespace: "kyma-system", Name: "api-gateway-webhook-certificate"}, &originalSecret)).ShouldNot(HaveOccurred())
+		cert, key, err := certificate.GenerateSelfSignedCertificate("api-gateway-webhook-service", nil, []string{}, time.Minute*1)
+		Expect(err).ShouldNot(HaveOccurred())
+
+		secret := getSecret(cert, key)
+		crd := getCRD(cert)
+
+		c := createFakeClient(secret)
+		Expect(c.Create(context.Background(), crd)).To(Succeed())
 
 		// when
-		Expect(certificate.InitialiseCertificateSecret(context.Background(), k8sClient, logr.Discard())).Should(Succeed())
+		Expect(certificate.InitialiseCertificateSecret(context.Background(), c, logr.Discard())).Should(Succeed())
 
 		// then
 		currentSecret := corev1.Secret{}
-		Expect(k8sClient.Get(context.Background(), client.ObjectKey{Namespace: "kyma-system", Name: "api-gateway-webhook-certificate"}, &currentSecret)).ShouldNot(HaveOccurred())
-		Expect(currentSecret.Data["tls.crt"]).Should(Equal(originalSecret.Data["tls.crt"]))
-	})
+		Expect(c.Get(context.Background(), client.ObjectKey{Namespace: "kyma-system", Name: "api-gateway-webhook-certificate"}, &currentSecret)).ShouldNot(HaveOccurred())
+		Expect(currentSecret.Data["tls.crt"]).Should(Equal(secret.Data["tls.crt"]))
 
+		crd = &apiextensionsv1.CustomResourceDefinition{}
+		Expect(c.Get(ctx, types.NamespacedName{Name: "apirules.gateway.kyma-project.io"}, crd)).Should(Succeed())
+		Expect(crd.Spec.Conversion.Webhook.ClientConfig.CABundle).To(Equal(secret.Data["tls.crt"]))
+	})
+})
+
+var _ = Describe("ReadCertificateSecret", func() {
 	It("Should be able to read already created certificate and is available for webhook server", func() {
 		// given
-		secret := corev1.Secret{}
-		Expect(k8sClient.Get(context.Background(), client.ObjectKey{Namespace: "kyma-system", Name: "api-gateway-webhook-certificate"}, &secret)).ShouldNot(HaveOccurred())
+		cert, key, err := certificate.GenerateSelfSignedCertificate("api-gateway-webhook-service", nil, []string{}, time.Minute*1)
+		Expect(err).ShouldNot(HaveOccurred())
+
+		secret := getSecret(cert, key)
+		crd := getCRD(cert)
+
+		c := createFakeClient(secret)
+		Expect(c.Create(context.Background(), crd)).To(Succeed())
 
 		// when
-		Expect(certificate.ReadCertificateSecret(context.Background(), k8sClient, logr.Discard())).Should(Succeed())
+		Expect(certificate.ReadCertificateSecret(context.Background(), c, logr.Discard())).Should(Succeed())
 
 		// then
 		tlsCert, err := certificate.GetCertificate(ptr.To(tls.ClientHelloInfo{}))
