@@ -299,8 +299,8 @@ spec:
     - jsonPath: .status.APIRuleStatus.code
       name: Status
       type: string
-    - jsonPath: .spec.host
-      name: Host
+    - jsonPath: .spec.hosts
+      name: Hosts
       type: string
     name: v1beta2
     schema:
