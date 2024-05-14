@@ -41,8 +41,7 @@ const (
 )
 
 var (
-	k8sClient client.Client
-	ctx       context.Context
+	ctx context.Context
 )
 
 func TestAPIs(t *testing.T) {
