@@ -25,6 +25,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	gikgotypes "github.com/onsi/ginkgo/v2/types"
 	. "github.com/onsi/gomega"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -63,6 +64,7 @@ func createFakeClient(objects ...client.Object) client.Client {
 func getTestScheme() *runtime.Scheme {
 	s := runtime.NewScheme()
 	utilruntime.Must(corev1.AddToScheme(s))
+	utilruntime.Must(appsv1.AddToScheme(s))
 	utilruntime.Must(apiextensionsv1.AddToScheme(s))
 	return s
 }

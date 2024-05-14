@@ -13,9 +13,11 @@ import (
 
 	. "github.com/onsi/gomega"
 	"github.com/pkg/errors"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apierrs "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/util/cert"
 	"k8s.io/utils/ptr"
@@ -29,9 +31,16 @@ import (
 var _ = Describe("InitialiseCertificateSecret", func() {
 	It("Should create new secret with certificate if was previously not found", func() {
 		// given
-		crd := getCRD([]byte{})
+		deployment := &appsv1.Deployment{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "api-gateway-controller-manager",
+				Namespace: "kyma-system",
+			},
+		}
 
-		c := createFakeClient()
+		c := createFakeClient(deployment)
+
+		crd := getCRD([]byte{})
 		Expect(c.Create(context.Background(), crd)).To(Succeed())
 
 		secret := corev1.Secret{}

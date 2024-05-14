@@ -8,6 +8,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/pkg/errors"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	apierrs "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -33,6 +34,11 @@ func InitialiseCertificateSecret(ctx context.Context, client client.Client, log 
 	if err != nil {
 		if apierrs.IsNotFound(err) {
 			log.Info("Certificate secret not found, creating a new one")
+			deployment := &appsv1.Deployment{}
+			err = client.Get(ctx, types.NamespacedName{Namespace: "kyma-system", Name: "api-gateway-controller-manager"}, deployment)
+			if err != nil {
+				return errors.Wrap(err, "failed to get api-gateway-controller-manager deployment")
+			}
 			certificate, key, err := generateNewCertificate(serviceName, secretNamespace)
 			if err != nil {
 				return errors.Wrap(err, "failed to generate certificate")
@@ -42,6 +48,14 @@ func InitialiseCertificateSecret(ctx context.Context, client client.Client, log 
 					Namespace:  secretNamespace,
 					Name:       secretName,
 					Finalizers: []string{SecretFinalizer},
+					OwnerReferences: []metav1.OwnerReference{
+						{
+							APIVersion: deployment.APIVersion,
+							Kind:       deployment.Kind,
+							Name:       deployment.Name,
+							UID:        deployment.UID,
+						},
+					},
 				},
 				Data: map[string][]byte{
 					certificateName: certificate,
