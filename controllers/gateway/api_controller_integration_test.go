@@ -3,13 +3,14 @@ package gateway_test
 import (
 	"context"
 	"fmt"
-	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
-	gatewayv1beta2 "github.com/kyma-project/api-gateway/apis/gateway/v1beta2"
-	apinetworkingv1beta1 "istio.io/api/networking/v1beta1"
 	"math/rand"
 	"net/http"
 	"strings"
 	"time"
+
+	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
+	gatewayv1beta2 "github.com/kyma-project/api-gateway/apis/gateway/v1beta2"
+	apinetworkingv1beta1 "istio.io/api/networking/v1beta1"
 
 	gomegatypes "github.com/onsi/gomega/types"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -222,7 +223,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 				serviceTeardown(svc)
 			}()
 
-			Expect(err).Should(Not(BeNil()))
+			Expect(err).Should(HaveOccurred())
 			Expect(err.Error()).To(ContainSubstring("Either noAuth or jwt must be set"))
 		})
 	})
