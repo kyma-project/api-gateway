@@ -510,12 +510,9 @@ spec:
                   - path
                   type: object
                   x-kubernetes-validations:
-                  - message: Either noAuth or jwt must be set
-                    rule: has(self.noAuth) || has(self.jwt)
-                  - message: Jwt cannot be set when noAuth is true
-                    rule: '!(has(self.noAuth) && self.noAuth == true && has(self.jwt))'
-                  - message: Mutators must be set when jwt is set
-                    rule: '!(!has(self.jwt) && has(self.mutators))'
+                  - message: either jwt is configured or noAuth must be set to true
+                      in a rule
+                    rule: 'has(self.jwt) ? self.noAuth != true : self.noAuth == true'
                 minItems: 1
                 type: array
               service:

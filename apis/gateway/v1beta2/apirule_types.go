@@ -115,9 +115,7 @@ type Service struct {
 }
 
 // Rule .
-// +kubebuilder:validation:XValidation:rule="has(self.noAuth) || has(self.jwt)",message="Either noAuth or jwt must be set"
-// +kubebuilder:validation:XValidation:rule="!(has(self.noAuth) && self.noAuth == true && has(self.jwt))",message="Jwt cannot be set when noAuth is true"
-// +kubebuilder:validation:XValidation:rule="!(!has(self.jwt) && has(self.mutators))",message="Mutators must be set when jwt is set"
+// +kubebuilder:validation:XValidation:rule="has(self.jwt) ? self.noAuth != true : self.noAuth == true",message="either jwt is configured or noAuth must be set to true in a rule"
 type Rule struct {
 	// Specifies the path of the exposed service.
 	// +kubebuilder:validation:Pattern=^([0-9a-zA-Z./*()?!\\_-]+)

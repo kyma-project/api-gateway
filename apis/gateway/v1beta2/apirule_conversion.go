@@ -58,7 +58,7 @@ func (apiRuleBeta2 *APIRule) ConvertTo(hub conversion.Hub) error {
 			})
 		}
 		if len(ruleBeta1.AccessStrategies) == 0 {
-			return errors.New("either jwt must be configured or no_auth must be set to true in a rule")
+			return errors.New("either jwt is configured or noAuth must be set to true in a rule")
 		}
 		apiRuleBeta1.Spec.Rules = append(apiRuleBeta1.Spec.Rules, ruleBeta1)
 	}
