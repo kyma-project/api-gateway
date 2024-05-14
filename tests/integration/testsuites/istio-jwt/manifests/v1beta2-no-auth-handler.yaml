@@ -14,8 +14,6 @@ spec:
     - path: /anything
       methods: ["GET", "POST"]
       noAuth: true
-      mutators: []
     - path: /anything/put
       methods: ["PUT"]
       noAuth: true
-      mutators: []
