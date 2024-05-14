@@ -233,6 +233,28 @@ var _ = Describe("APIRule Conversion", func() {
 			Expect(apiRuleBeta1.Spec.Rules[1].AccessStrategies[0].Handler.Name).To(Equal("jwt"))
 			Expect(apiRuleBeta1.Spec.Rules[1].AccessStrategies[0].Config).ToNot(BeNil())
 		})
+
+		It("should fail when jwt is not configured and no_auth is set to false", func() {
+			// given
+			apiRuleBeta2 := v1beta2.APIRule{
+				Spec: v1beta2.APIRuleSpec{
+					Hosts: []*v1beta2.Host{&host1},
+					Rules: []v1beta2.Rule{
+						{
+							NoAuth: ptr.To(false),
+						},
+					},
+				},
+			}
+			apiRuleBeta1 := v1beta1.APIRule{}
+
+			// when
+			err := apiRuleBeta2.ConvertTo(&apiRuleBeta1)
+
+			// then
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(Equal("either jwt must be configured or no_auth must be set to true in a rule"))
+		})
 	})
 
 	Describe("v1beta1 to v1beta2", func() {

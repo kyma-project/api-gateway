@@ -2,6 +2,7 @@ package v1beta2
 
 import (
 	"encoding/json"
+	"errors"
 
 	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -55,6 +56,9 @@ func (apiRuleBeta2 *APIRule) ConvertTo(hub conversion.Hub) error {
 					Config: &runtime.RawExtension{Object: ruleBeta2.Jwt},
 				},
 			})
+		}
+		if len(ruleBeta1.AccessStrategies) == 0 {
+			return errors.New("either jwt must be configured or no_auth must be set to true in a rule")
 		}
 		apiRuleBeta1.Spec.Rules = append(apiRuleBeta1.Spec.Rules, ruleBeta1)
 	}
