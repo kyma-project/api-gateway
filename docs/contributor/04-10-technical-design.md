@@ -42,7 +42,7 @@ The following diagram illustrates the reconciliation process of APIRule and the 
 ## Certificate Controller
 
 Certificate Controller is a [Kubernetes controller](https://kubernetes.io/docs/concepts/architecture/controller/), which is implemented using the [Kubebuilder](https://book.kubebuilder.io/) framework.
-The controller is responsible for handling the a Secret CR name `api-gateway-webhook-certificate` in `kyma-system` that is holding Certificate data needed for the APIRule conversion webhook.
+The controller is responsible for handling the a Secret CR name `api-gateway-webhook-certificate` in `kyma-system` that is holding Certificate data needed for the APIRule conversion webhook. The secret is created with `gateways.operator.kyma-project.io/certificate` finalizer to prevent accidental deletion.
 
 ### Reconciliation
 Certificate Controller reconciles a Secret CR with each change. If you don't make any changes, the process occurs at the default interval of 1 hour. It checks if the Certificate is still valid and not expiring in 14 days, otherwise it will be renewed. In the event of a failure during the reconciliation, Certificate Controller performs the reconciliation again with the predefined rate limiter.

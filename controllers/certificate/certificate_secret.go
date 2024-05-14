@@ -14,6 +14,8 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
+const SecretFinalizer string = "gateways.operator.kyma-project.io/certificate"
+
 var currentCertificate *tls.Certificate
 
 func GetCertificate(*tls.ClientHelloInfo) (*tls.Certificate, error) {
@@ -36,7 +38,11 @@ func InitialiseCertificateSecret(ctx context.Context, client client.Client, log 
 				return errors.Wrap(err, "failed to generate certificate")
 			}
 			secret = &corev1.Secret{
-				ObjectMeta: metav1.ObjectMeta{Namespace: secretNamespace, Name: secretName},
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace:  secretNamespace,
+					Name:       secretName,
+					Finalizers: []string{SecretFinalizer},
+				},
 				Data: map[string][]byte{
 					certificateName: certificate,
 					keyName:         key,
