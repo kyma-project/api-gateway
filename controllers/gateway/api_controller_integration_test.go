@@ -9,7 +9,6 @@ import (
 	"time"
 
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
-	gatewayv1beta2 "github.com/kyma-project/api-gateway/apis/gateway/v1beta2"
 	apinetworkingv1beta1 "istio.io/api/networking/v1beta1"
 
 	gomegatypes "github.com/onsi/gomega/types"
@@ -1782,21 +1781,6 @@ func apiRuleTeardown(apiRule *gatewayv1beta1.APIRule) {
 
 	Eventually(func(g Gomega) {
 		a := gatewayv1beta1.APIRule{}
-		err := c.Get(context.TODO(), client.ObjectKey{Name: apiRule.Name, Namespace: testNamespace}, &a)
-		g.Expect(errors.IsNotFound(err)).To(BeTrue())
-	}, eventuallyTimeout).Should(Succeed())
-}
-
-func apiRulev1beta2Teardown(apiRule *gatewayv1beta2.APIRule) {
-	By(fmt.Sprintf("Deleting ApiRule %s as part of teardown", apiRule.Name))
-	err := c.Delete(context.TODO(), apiRule)
-
-	if err != nil {
-		Expect(errors.IsNotFound(err)).To(BeTrue())
-	}
-
-	Eventually(func(g Gomega) {
-		a := gatewayv1beta2.APIRule{}
 		err := c.Get(context.TODO(), client.ObjectKey{Name: apiRule.Name, Namespace: testNamespace}, &a)
 		g.Expect(errors.IsNotFound(err)).To(BeTrue())
 	}, eventuallyTimeout).Should(Succeed())
