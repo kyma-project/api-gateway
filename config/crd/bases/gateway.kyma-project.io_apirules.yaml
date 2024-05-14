@@ -514,6 +514,8 @@ spec:
                     rule: has(self.noAuth) || has(self.jwt)
                   - message: Jwt cannot be set when noAuth is true
                     rule: '!(has(self.noAuth) && self.noAuth == true && has(self.jwt))'
+                  - message: Mutators must be set when jwt is set
+                    rule: '!(!has(self.jwt) && has(self.mutators))'
                 minItems: 1
                 type: array
               service:
