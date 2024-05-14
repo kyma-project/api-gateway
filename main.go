@@ -21,6 +21,7 @@ import (
 	"crypto/tls"
 	"flag"
 	"os"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"time"
 
 	"github.com/kyma-project/api-gateway/internal/reconciliations/oathkeeper"
@@ -159,6 +160,13 @@ func main() {
 				},
 			},
 		}),
+		Client: client.Options{
+			Cache: &client.CacheOptions{
+				DisableFor: []client.Object{
+					&rulev1alpha1.Rule{},
+				},
+			},
+		},
 	}
 
 	mgr, err := ctrl.NewManager(config, options)
