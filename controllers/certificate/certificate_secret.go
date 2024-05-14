@@ -15,8 +15,6 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
-const SecretFinalizer string = "gateways.operator.kyma-project.io/certificate"
-
 var currentCertificate *tls.Certificate
 
 func GetCertificate(*tls.ClientHelloInfo) (*tls.Certificate, error) {
@@ -45,14 +43,13 @@ func InitialiseCertificateSecret(ctx context.Context, client client.Client, log 
 			}
 			secret = &corev1.Secret{
 				ObjectMeta: metav1.ObjectMeta{
-					Namespace:  secretNamespace,
-					Name:       secretName,
-					Finalizers: []string{SecretFinalizer},
+					Namespace: secretNamespace,
+					Name:      secretName,
 					OwnerReferences: []metav1.OwnerReference{
 						{
-							APIVersion: deployment.APIVersion,
-							Kind:       deployment.Kind,
-							Name:       deployment.Name,
+							APIVersion: "apps/v1",
+							Kind:       "Deployment",
+							Name:       "api-gateway-controller-manager",
 							UID:        deployment.UID,
 						},
 					},

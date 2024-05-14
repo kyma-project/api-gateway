@@ -54,7 +54,6 @@ var _ = Describe("InitialiseCertificateSecret", func() {
 		// then
 		secret = corev1.Secret{}
 		Expect(c.Get(context.Background(), client.ObjectKey{Namespace: "kyma-system", Name: "api-gateway-webhook-certificate"}, &secret)).Should(Succeed())
-		Expect(secret.ObjectMeta.Finalizers).Should(ContainElement(certificate.SecretFinalizer))
 
 		_, err = cert.ParseCertsPEM(secret.Data["tls.crt"])
 		Expect(err).ShouldNot(HaveOccurred())
