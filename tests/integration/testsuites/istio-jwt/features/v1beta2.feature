@@ -19,7 +19,7 @@ Feature: Exposing endpoints with Istio JWT and NoAuth with v1beta2 APIRule
     And v1beta2NoAuthHandler: Calling the "/anything/put" endpoint with "POST" method with any token should result in status between 404 and 404
     And v1beta2NoAuthHandler: Teardown httpbin service
 
-  Scenario: Expose GET method for "/anything" with no_auth access strategy and recover if conversion webhook certificate secret is rotated
+  Scenario: Expose GET method for "/anything" with noAuth and recover if conversion webhook certificate secret is rotated
     Given v1beta2NoAuthHandlerRecover: There is a httpbin service
     And v1beta2NoAuthHandlerRecover: The APIRule is applied
     And v1beta2NoAuthHandlerRecover: Calling the "/anything" endpoint with "GET" method with any token should result in status between 200 and 200
