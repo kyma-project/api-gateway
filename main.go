@@ -21,7 +21,6 @@ import (
 	"crypto/tls"
 	"flag"
 	"os"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	"time"
 
 	"github.com/kyma-project/api-gateway/internal/reconciliations/oathkeeper"
