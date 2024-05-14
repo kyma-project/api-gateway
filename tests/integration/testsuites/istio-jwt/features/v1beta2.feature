@@ -22,7 +22,8 @@ Feature: Exposing endpoints with Istio JWT and NoAuth with v1beta2 APIRule
   Scenario: Expose GET method for "/anything" with no_auth access strategy and recover if conversion webhook certificate secret is rotated
     Given v1beta2NoAuthHandlerRecover: There is a httpbin service
     And v1beta2NoAuthHandlerRecover: The APIRule is applied
-    Then v1beta2NoAuthHandlerRecover: Calling the "/anything" endpoint with "GET" method with any token should result in status between 200 and 200
+    And v1beta2NoAuthHandlerRecover: Calling the "/anything" endpoint with "GET" method with any token should result in status between 200 and 200
     When v1beta2NoAuthHandlerRecover: Certificate secret is reset
-    Then v1beta2NoAuthHandlerRecover: Calling the "/anything" endpoint with "GET" method with any token should result in status between 200 and 200
+    Then v1beta2NoAuthHandlerRecover: Certificate secret is rotated
+    And v1beta2NoAuthHandlerRecover: Calling the "/anything" endpoint with "GET" method with any token should result in status between 200 and 200
     And v1beta2NoAuthHandlerRecover: Teardown httpbin service
