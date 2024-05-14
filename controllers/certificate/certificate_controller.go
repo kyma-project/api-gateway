@@ -41,7 +41,7 @@ const (
 	apiRuleCRDName = "apirules.gateway.kyma-project.io"
 )
 
-var currentCertifate *tls.Certificate
+var currentCertificate *tls.Certificate
 
 func GetCertificate(*tls.ClientHelloInfo) (*tls.Certificate, error) {
 	if currentCertifate == nil {
