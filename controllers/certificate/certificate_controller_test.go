@@ -90,12 +90,11 @@ var _ = Describe("Certificate Controller", func() {
 			agr := getReconciler(c, getTestScheme(), logr.Discard())
 
 			// when
-			result, err := agr.Reconcile(context.Background(), reconcile.Request{NamespacedName: types.NamespacedName{Namespace: testNamespace, Name: "api-gateway-webhook-certificate"}})
+			_, err = agr.Reconcile(context.Background(), reconcile.Request{NamespacedName: types.NamespacedName{Namespace: testNamespace, Name: "api-gateway-webhook-certificate"}})
 
 			// then
 			Expect(err).Should(HaveOccurred())
 			Expect(err.Error()).To(Equal("failed to update certificate into CRD: can not add certificate into CRD: client config for conversion webhook not found in APIRule CRD"))
-			Expect(result.Requeue).To(BeTrue())
 		})
 
 		It("Should succeed when Secret is present and generate new certificate when current is expired", func() {

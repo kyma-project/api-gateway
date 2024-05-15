@@ -56,17 +56,17 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 	secret := &corev1.Secret{}
 	err := r.Client.Get(ctx, types.NamespacedName{Namespace: secretNamespace, Name: secretName}, secret)
 	if err != nil {
-		return ctrl.Result{Requeue: false}, err
+		return ctrl.Result{}, err
 	}
 
-	requeue, err := verifyCertificateSecret(ctx, r.Client, secret, r.Log)
+	err = verifyCertificateSecret(ctx, r.Client, secret, r.Log)
 	if err != nil {
-		return ctrl.Result{Requeue: requeue}, err
+		return ctrl.Result{}, err
 	}
 
 	tlsCert, err := tls.X509KeyPair(secret.Data[certificateName], secret.Data[keyName])
 	if err != nil {
-		return ctrl.Result{Requeue: false}, err
+		return ctrl.Result{}, err
 	}
 	currentCertificate = &tlsCert
 
@@ -83,7 +83,7 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, c controllers.RateLimite
 		Complete(r)
 }
 
-func verifyCertificateSecret(ctx context.Context, client client.Client, secret *corev1.Secret, log logr.Logger) (bool, error) {
+func verifyCertificateSecret(ctx context.Context, client client.Client, secret *corev1.Secret, log logr.Logger) error {
 	log.Info("Verifying certficate secret", "namespace", secretNamespace, "name", secretName)
 
 	err := verifySecret(secret)
@@ -93,14 +93,14 @@ func verifyCertificateSecret(ctx context.Context, client client.Client, secret *
 		log.Info("Certificate verification did not succeed", "error", err.Error())
 		err := generateNewCertificateSecret(ctx, client, secret)
 		if err != nil {
-			return true, err
+			return err
 		}
 		if err = parseCertificateSecret(secret, log); err != nil {
-			return true, err
+			return err
 		}
 	}
 
-	return false, nil
+	return nil
 }
 
 func generateNewCertificateSecret(ctx context.Context, client client.Client, secret *corev1.Secret) error {
