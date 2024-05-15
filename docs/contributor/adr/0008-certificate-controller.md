@@ -21,3 +21,5 @@ We introduce a conversion webhook for converting `v1beta1` from and to `v1beta2`
 ## Consequences
 
 APIRule conversion works out of the box with integrated conversion webhook started with the controller manager and certificate is managed by us in our Module operator falling Kubernetes controller reconciling pattern.
+
+The `api-gateway-webhook-certificate` secret is not automatically recreated if deleted manually. To restore the secret, a restart of the manager is necessary.
