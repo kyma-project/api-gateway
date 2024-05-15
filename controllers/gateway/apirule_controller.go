@@ -144,21 +144,26 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	}
 	r.Log.Info("Starting ApiRule reconciliation", "jwtHandler", r.Config.JWTHandler)
 
-	cmd := r.getReconciliation(defaultDomainName)
-
+	isApiRuleInV1beta2Version := false
 	apiRule := &gatewayv1beta1.APIRule{}
-	err = r.Client.Get(ctx, req.NamespacedName, apiRule)
-	if err != nil {
-		if apierrs.IsNotFound(err) {
+	apiRuleErr := r.Client.Get(ctx, req.NamespacedName, apiRule)
+	if apiRuleErr == nil && r.isApiRuleConvertedFromV1beta2(*apiRule) {
+		isApiRuleInV1beta2Version = true
+	}
+
+	cmd := r.getReconciliation(defaultDomainName, isApiRuleInV1beta2Version)
+
+	if apiRuleErr != nil {
+		if apierrs.IsNotFound(apiRuleErr) {
 			//There is no APIRule. Nothing to process, dependent objects will be garbage-collected.
 			r.Log.Info(fmt.Sprintf("Finishing reconciliation as ApiRule '%s' does not exist.", req.NamespacedName))
 			return doneReconcileNoRequeue()
 		}
 
-		r.Log.Error(err, "Error getting ApiRule")
+		r.Log.Error(apiRuleErr, "Error getting ApiRule")
 
 		statusBase := cmd.GetStatusBase(gatewayv1beta1.StatusSkipped)
-		errorMap := map[processing.ResourceSelector][]error{processing.OnApiRule: {err}}
+		errorMap := map[processing.ResourceSelector][]error{processing.OnApiRule: {apiRuleErr}}
 		status := processing.GetStatusForErrorMap(errorMap, statusBase)
 		return r.updateStatusOrRetry(ctx, apiRule, status)
 	}
@@ -221,10 +226,10 @@ func handleDependenciesError(name string, err error) controllers.Status {
 	}
 }
 
-func (r *APIRuleReconciler) getReconciliation(defaultDomain string) processing.ReconciliationCommand {
+func (r *APIRuleReconciler) getReconciliation(defaultDomain string, apiRuleV1beta2 bool) processing.ReconciliationCommand {
 	config := r.ReconciliationConfig
 	config.DefaultDomainName = defaultDomain
-	if r.Config.JWTHandler == helpers.JWT_HANDLER_ISTIO {
+	if r.Config.JWTHandler == helpers.JWT_HANDLER_ISTIO || apiRuleV1beta2 {
 		return istio.NewIstioReconciliation(config, &r.Log)
 	}
 	return ory.NewOryReconciliation(config, &r.Log)
@@ -329,4 +334,16 @@ func (r *APIRuleReconciler) getLatestApiRule(ctx context.Context, api *gatewayv1
 	}
 
 	return apiRule, nil
+}
+
+func (r *APIRuleReconciler) isApiRuleConvertedFromV1beta2(apiRule gatewayv1beta1.APIRule) bool {
+	// If the ApiRule is not found, we don't need to do anything. If it's found and converted, CM reconciliation is not needed.
+	if apiRule.Annotations != nil {
+		if originalVersion, ok := apiRule.Annotations["gateway.kyma-project.io/original-version"]; ok && originalVersion == "v1beta2" {
+			r.Log.Info("ApiRule is converted from v1beta2")
+			return true
+		}
+	}
+
+	return false
 }

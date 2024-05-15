@@ -18,7 +18,7 @@ APIGateway Controller reconciles only the oldest APIGateway CR in the cluster. I
 If a failure occurs during the reconciliation process, the default behavior of the [Kubernetes controller-runtime](https://pkg.go.dev/sigs.k8s.io/controller-runtime) is to use exponential backoff requeue.
 
 Before deleting the APIGateway CR, APIGateway Controller first checks if there are any APIRule or [Istio Virtual Service](https://istio.io/latest/docs/reference/config/networking/virtual-service) resources that reference the default Kyma [Gateway](https://istio.io/latest/docs/reference/config/networking/gateway/) `kyma-system/kyma-gateway`. If any such resources are found, they are listed in the logs of the controller, and the APIGateway CR's status is set to `Warning` to indicate that there are resources blocking the deletion. If there are existing Ory Oathkeeper Access Rules in the cluster, APIGateway Controller also sets the status to `Warning` and does not delete the APIGateway CR.
-The `gateways.operator.kyma-project.io/api-gateway-reconciliation` finalizer protects the deletion of the APIGateway CR. Once no more APIRule and VirtualService resources are blocking the deletion of the APIGateway CR, the APIGateway CR can be deleted. Deleting the APIGateway CR also deletes the default Kyma Gateway. 
+The `gateways.operator.kyma-project.io/api-gateway-reconciliation` finalizer protects the deletion of the APIGateway CR. Once no more APIRule and VirtualService resources are blocking the deletion of the APIGateway CR, the APIGateway CR can be deleted. Deleting the APIGateway CR also deletes the default Kyma Gateway.
 
 ## APIRule Controller
 
@@ -38,3 +38,11 @@ In the event of a failure during the reconciliation, APIRule Controller performs
 The following diagram illustrates the reconciliation process of APIRule and the created resources:
 
 ![APIRule CR Reconciliation](../assets/api-rule-reconciliation-sequence.svg)
+
+## Certificate Controller
+
+Certificate Controller is a [Kubernetes controller](https://kubernetes.io/docs/concepts/architecture/controller/), which is implemented using the [Kubebuilder](https://book.kubebuilder.io/) framework.
+The controller is responsible for handling the Secret `api-gateway-webhook-certificate` in the `kyma-system` namespace. This Secret contains the Certificate data required for the APIRule conversion webhook.
+
+### Reconciliation
+Certificate Controller reconciles a Secret CR with each change. If you don't make any changes, the process occurs at the default interval of 1 hour. This code verifies whether the Certificate is currently valid and will not expire within the next 14 days. If the Certificate does not meet these criteria, it is renewed. In the event of a failure during the reconciliation, Certificate Controller performs the reconciliation again with the predefined rate limiter.
