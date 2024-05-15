@@ -14,7 +14,7 @@ We introduce a conversion webhook for converting `v1beta1` from and to `v1beta2`
 2. We do not create additional image that would handle certificate mangement with `CronJob` which showed quite a few limitations (`Job` updating for instance) and inconviniences in regards of observability.
 3. New controller will reconcile predefined `Secret` named `api-gateway-webhook-certificate` in `kyma-system` namespace that is holding the data for the Certificate.
 4. We introduce an Kubernetes `init container` to the operator deployment which will handle initial creation of the predefined Secret holding the Certificate.
-5. Newly created `Secret` will have `gateways.operator.kyma-project.io/certificate` finalizer to prevent accidental deletion.
+5. The created secret `api-gateway-webhook-certificate` will have an OwnerReference set to the `api-gateway-manager` deployment for cascading deletion.
 6. We delegate function to the Webhoook server for obtaining current Certificate which will fully automate Certificate renewal process.
 7. We rotate the Certificate 14 days before expiration and we create Certificate with 90 days validity. SAP recommendation for SSL server certificates is one year validity.
 
