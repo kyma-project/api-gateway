@@ -1,4 +1,4 @@
-# Certificate management for APIRule conversion webhook with a new controller
+# Certificate Management for APIRule Conversion Webhook with a New Controller
 
 ## Status
 
@@ -6,20 +6,20 @@ Proposed
 
 ## Context
 
-We introduce a conversion webhook for converting `v1beta1` from and to `v1beta2` APIRule versions. For it we need a valid x509 certificate needed for the webhook server. We must provide implementation of certificate handling such as creating, verifying and renewal. Previously for conversion webhook we did use `CronJob` which scheduled `Job` periodically for handling certificate verification and renewal. This required new image to be maintained, build and released.
+We introduce a conversion webhook that converts APIRule versions from `v1beta1` to `v1beta2` and vice versa. It requires a valid x509 certificate for the webhook server. We must provide implementation of certificate handling, which includes tasks such as creating, verifying, and renewing the certificate. Previously, for the conversion webhook, we used a CronJob to schedule a Job that would periodically handle certificate verification and renewal for the conversion webhook. However, this approach required us to maintain, build, and release an image for the webhook.
 
 ## Decision
 
-1. We like to handle this creation, verifying and renewal of the required certificate integrated into our Module operator with a new Kubernetes controller.
-2. We do not create additional image that would handle certificate mangement with `CronJob` which showed quite a few limitations (`Job` updating for instance) and inconviniences in regards of observability.
-3. New controller will reconcile predefined `Secret` named `api-gateway-webhook-certificate` in `kyma-system` namespace that is holding the data for the Certificate.
-4. We introduce an Kubernetes `init container` to the operator deployment which will handle initial creation of the predefined Secret holding the Certificate.
-5. The created secret `api-gateway-webhook-certificate` will have an OwnerReference set to the `api-gateway-manager` deployment for cascading deletion.
-6. We delegate function to the Webhoook server for obtaining current Certificate which will fully automate Certificate renewal process.
-7. We rotate the Certificate 14 days before expiration and we create Certificate with 90 days validity. SAP recommendation for SSL server certificates is one year validity.
+1. We integrate a new Kubernetes controller into the module's operator to handle the creation, verification, and renewal of the required certificate.
+2. We do not create an additional image specifically for handling certificate management using a CronJob. This approach has proven to have a few limitations, such as issues with updating the Job and inconveniences in regards to observability.
+3. The new controller will reconcile predefined Secret named `api-gateway-webhook-certificate` in the `kyma-system` namespace. This Secret contains the data for the Certificate.
+4. We add a Kubernetes `init container` to the operator Deployment. The container will handle the initial creation of the predefined Secret that holds the Certificate.
+5. The created Secret `api-gateway-webhook-certificate` will have an **OwnerReference** set to the `api-gateway-manager` Deployment for cascading deletion.
+6. We delegate function to the webhook server for obtaining the current Certificate. This will fully automate the Certificate renewal process.
+7. We rotate the Certificate 14 days before expiration, and we create a Certificate with 90 days validity. SAP's recommendation for SSL server certificates is one year of validity.
 
 ## Consequences
 
-APIRule conversion works out of the box with integrated conversion webhook started with the controller manager and certificate is managed by us in our Module operator falling Kubernetes controller reconciling pattern.
+The APIRule conversion works out of the box with an integrated conversion webhook started with the controller manager. We manage the certificate in our module's operator falling Kubernetes controller reconciling pattern.
 
-The `api-gateway-webhook-certificate` secret is not automatically recreated if deleted manually. To restore the secret, a restart of the manager is necessary.
+The `api-gateway-webhook-certificate` Secret is not automatically recreated if deleted manually. To restore the secret, a restart of the manager is necessary.
