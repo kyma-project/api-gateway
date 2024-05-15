@@ -185,7 +185,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 			serviceHost := gatewayv1beta2.Host("httpbin-istio-jwt-happy-base.kyma.local")
 			serviceHosts := []*gatewayv1beta2.Host{&serviceHost}
 
-			rule := testRuleV1Beta2("/img", []gatewayv1beta2.HttpMethod{http.MethodGet}, nil)
+			rule := testRuleV1Beta2("/img", []gatewayv1beta2.HttpMethod{http.MethodGet})
 			rule.NoAuth = ptr.To(true)
 			apiRule := testApiRuleV1Beta2(apiRuleName, testNamespace, serviceName, testNamespace, serviceHosts, testServicePort, []gatewayv1beta2.Rule{rule})
 			svc := testService(serviceName, testNamespace, testServicePort)
@@ -207,7 +207,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 			serviceHost := gatewayv1beta2.Host("httpbin-istio-jwt-happy-base.kyma.local")
 			serviceHosts := []*gatewayv1beta2.Host{&serviceHost}
 
-			rule := testRuleV1Beta2("/img", []gatewayv1beta2.HttpMethod{http.MethodGet}, nil)
+			rule := testRuleV1Beta2("/img", []gatewayv1beta2.HttpMethod{http.MethodGet})
 			rule.Jwt = &gatewayv1beta2.JwtConfig{
 				Authentications: []*gatewayv1beta2.JwtAuthentication{},
 				Authorizations:  []*gatewayv1beta2.JwtAuthorization{},
@@ -232,7 +232,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 			serviceHost := gatewayv1beta2.Host("httpbin-istio-jwt-happy-base.kyma.local")
 			serviceHosts := []*gatewayv1beta2.Host{&serviceHost}
 
-			rule := testRuleV1Beta2("/img", []gatewayv1beta2.HttpMethod{http.MethodGet}, nil)
+			rule := testRuleV1Beta2("/img", []gatewayv1beta2.HttpMethod{http.MethodGet})
 			rule.NoAuth = ptr.To(false)
 			rule.Jwt = &gatewayv1beta2.JwtConfig{
 				Authentications: []*gatewayv1beta2.JwtAuthentication{},
@@ -258,10 +258,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 			serviceHost := gatewayv1beta2.Host("httpbin-istio-jwt-happy-base.kyma.local")
 			serviceHosts := []*gatewayv1beta2.Host{&serviceHost}
 
-			rule := testRuleV1Beta2("/img", []gatewayv1beta2.HttpMethod{http.MethodGet}, nil)
-			rule.Mutators = []*gatewayv1beta2.Mutator{
-				{Handler: "noop"},
-			}
+			rule := testRuleV1Beta2("/img", []gatewayv1beta2.HttpMethod{http.MethodGet})
 			rule.Jwt = &gatewayv1beta2.JwtConfig{
 				Authentications: []*gatewayv1beta2.JwtAuthentication{},
 				Authorizations:  []*gatewayv1beta2.JwtAuthorization{},
@@ -286,7 +283,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 			serviceHost := gatewayv1beta2.Host("httpbin-istio-jwt-happy-base.kyma.local")
 			serviceHosts := []*gatewayv1beta2.Host{&serviceHost}
 
-			rule := testRuleV1Beta2("/img", []gatewayv1beta2.HttpMethod{http.MethodGet}, nil)
+			rule := testRuleV1Beta2("/img", []gatewayv1beta2.HttpMethod{http.MethodGet})
 			apiRule := testApiRuleV1Beta2(apiRuleName, testNamespace, serviceName, testNamespace, serviceHosts, testServicePort, []gatewayv1beta2.Rule{rule})
 			svc := testService(serviceName, testNamespace, testServicePort)
 
@@ -310,7 +307,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 			serviceHost := gatewayv1beta2.Host("httpbin-istio-jwt-happy-base.kyma.local")
 			serviceHosts := []*gatewayv1beta2.Host{&serviceHost}
 
-			rule := testRuleV1Beta2("/img", []gatewayv1beta2.HttpMethod{http.MethodGet}, nil)
+			rule := testRuleV1Beta2("/img", []gatewayv1beta2.HttpMethod{http.MethodGet})
 			rule.NoAuth = ptr.To(false)
 			apiRule := testApiRuleV1Beta2(apiRuleName, testNamespace, serviceName, testNamespace, serviceHosts, testServicePort, []gatewayv1beta2.Rule{rule})
 			svc := testService(serviceName, testNamespace, testServicePort)
@@ -335,7 +332,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 			serviceHost := gatewayv1beta2.Host("httpbin-istio-jwt-happy-base.kyma.local")
 			serviceHosts := []*gatewayv1beta2.Host{&serviceHost}
 
-			rule := testRuleV1Beta2("/img", []gatewayv1beta2.HttpMethod{http.MethodGet}, nil)
+			rule := testRuleV1Beta2("/img", []gatewayv1beta2.HttpMethod{http.MethodGet})
 			rule.NoAuth = ptr.To(true)
 			rule.Jwt = &gatewayv1beta2.JwtConfig{
 				Authentications: []*gatewayv1beta2.JwtAuthentication{},
@@ -354,34 +351,6 @@ var _ = Describe("APIRule Controller", Serial, func() {
 
 			Expect(err).Should(HaveOccurred())
 			Expect(err.Error()).To(ContainSubstring("either jwt is configured or noAuth must be set to true in a rule"))
-		})
-
-		It("should fail to create an APIRule with mutators but no jwt", func() {
-			updateJwtHandlerTo(helpers.JWT_HANDLER_ORY)
-
-			apiRuleName := generateTestName(testNameBase, testIDLength)
-			serviceName := testServiceNameBase
-			serviceHost := gatewayv1beta2.Host("httpbin-istio-jwt-happy-base.kyma.local")
-			serviceHosts := []*gatewayv1beta2.Host{&serviceHost}
-
-			rule := testRuleV1Beta2("/img", []gatewayv1beta2.HttpMethod{http.MethodGet}, nil)
-			rule.NoAuth = ptr.To(true)
-			rule.Mutators = []*gatewayv1beta2.Mutator{
-				{Handler: "noop"},
-			}
-			apiRule := testApiRuleV1Beta2(apiRuleName, testNamespace, serviceName, testNamespace, serviceHosts, testServicePort, []gatewayv1beta2.Rule{rule})
-			svc := testService(serviceName, testNamespace, testServicePort)
-
-			// when
-			Expect(c.Create(context.TODO(), svc)).Should(Succeed())
-			err := c.Create(context.TODO(), apiRule)
-			defer func() {
-				apiRuleV1Beta2Teardown(apiRule)
-				serviceTeardown(svc)
-			}()
-
-			Expect(err).Should(HaveOccurred())
-			Expect(err.Error()).To(ContainSubstring("mutators must be configured only in combination with jwt"))
 		})
 	})
 
@@ -1669,11 +1638,10 @@ func testRule(path string, methods []gatewayv1beta1.HttpMethod, mutators []*gate
 	}
 }
 
-func testRuleV1Beta2(path string, methods []gatewayv1beta2.HttpMethod, mutators []*gatewayv1beta2.Mutator) gatewayv1beta2.Rule {
+func testRuleV1Beta2(path string, methods []gatewayv1beta2.HttpMethod) gatewayv1beta2.Rule {
 	return gatewayv1beta2.Rule{
-		Path:     path,
-		Methods:  methods,
-		Mutators: mutators,
+		Path:    path,
+		Methods: methods,
 	}
 }
 

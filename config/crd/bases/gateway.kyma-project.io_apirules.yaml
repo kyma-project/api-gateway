@@ -447,24 +447,6 @@ spec:
                         type: string
                       minItems: 1
                       type: array
-                    mutators:
-                      description: Specifies the list of request mutators.
-                      items:
-                        description: Mutator is a configuration for Istio mutators.
-                          It is used to enrich an incoming request with information.
-                        properties:
-                          config:
-                            description: Configures the mutator. Configuration keys
-                              vary per mutator.
-                            type: object
-                            x-kubernetes-preserve-unknown-fields: true
-                          handler:
-                            description: Specifies the name of the mutator.
-                            type: string
-                        required:
-                        - handler
-                        type: object
-                      type: array
                     noAuth:
                       description: Disables authorization when set to true.
                       type: boolean
@@ -514,9 +496,6 @@ spec:
                       in a rule
                     rule: 'has(self.jwt) ? !has(self.noAuth) || self.noAuth == false
                       : has(self.noAuth) && self.noAuth == true'
-                  - message: mutators must be configured only in combination with
-                      jwt
-                    rule: '!has(self.mutators) || has(self.jwt)'
                 minItems: 1
                 type: array
               service:

@@ -13,7 +13,6 @@ spec:
   rules:
     - path: "{{ .jwtSecuredPath }}"
       methods: ["GET"]
-      mutators: []
       jwt:
         authentications:
         - issuer: "{{ .IssuerUrl }}"

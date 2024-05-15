@@ -18,7 +18,6 @@ package v1beta2
 import (
 	"istio.io/api/networking/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
@@ -116,7 +115,6 @@ type Service struct {
 
 // Rule .
 // +kubebuilder:validation:XValidation:rule="has(self.jwt) ? !has(self.noAuth) || self.noAuth == false : has(self.noAuth) && self.noAuth == true",message="either jwt is configured or noAuth must be set to true in a rule"
-// +kubebuilder:validation:XValidation:rule="!has(self.mutators) || has(self.jwt)",message="mutators must be configured only in combination with jwt"
 type Rule struct {
 	// Specifies the path of the exposed service.
 	// +kubebuilder:validation:Pattern=^([0-9a-zA-Z./*()?!\\_-]+)
@@ -133,9 +131,6 @@ type Rule struct {
 	// Specifies the Istio JWT access strategy.
 	// +optional
 	Jwt *JwtConfig `json:"jwt,omitempty"`
-	// Specifies the list of request mutators.
-	// +optional
-	Mutators []*Mutator `json:"mutators,omitempty"`
 	// +optional
 	Timeout *Timeout `json:"timeout,omitempty"`
 }
@@ -152,16 +147,6 @@ type APIRuleResourceStatus struct {
 
 func init() {
 	SchemeBuilder.Register(&APIRule{}, &APIRuleList{})
-}
-
-// Mutator is a configuration for Istio mutators. It is used to enrich an incoming request with information.
-type Mutator struct {
-	// Specifies the name of the mutator.
-	Handler string `json:"handler"`
-	// Configures the mutator. Configuration keys vary per mutator.
-	// +kubebuilder:validation:Type=object
-	// +kubebuilder:pruning:PreserveUnknownFields
-	Config *runtime.RawExtension `json:"config,omitempty"`
 }
 
 // JwtConfig is the configuration for the Istio JWT authentication
