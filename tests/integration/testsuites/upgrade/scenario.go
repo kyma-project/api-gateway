@@ -244,8 +244,8 @@ func (s *scenario) reconciliationHappened(numberOfSeconds int) error {
 	}, retry.Attempts(uint(numberOfSeconds)), retry.Delay(time.Second))
 }
 
-func initCommon(ctx *godog.ScenarioContext, ts *testsuite) {
-	scenario := ts.createScenario("istio-jwt-common.yaml", "api-gateway-upgrade")
+func initUpgrade(ctx *godog.ScenarioContext, ts *testsuite) {
+	scenario := ts.createScenario("istio-jwt-upgrade.yaml", "api-gateway-upgrade")
 
 	ctx.Step(`Upgrade: There is a httpbin service$`, scenario.thereIsAHttpbinService)
 	ctx.Step(`Upgrade: There is an endpoint secured with JWT on path "([^"]*)"`, scenario.thereIsAnJwtSecuredPath)

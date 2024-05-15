@@ -10,6 +10,7 @@ import (
 	"time"
 
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
+	gatewayv1beta2 "github.com/kyma-project/api-gateway/apis/gateway/v1beta2"
 	"github.com/kyma-project/api-gateway/controllers"
 	"github.com/kyma-project/api-gateway/controllers/gateway"
 	"github.com/kyma-project/api-gateway/internal/builders"
@@ -31,7 +32,6 @@ import (
 	"github.com/onsi/ginkgo/v2/types"
 	. "github.com/onsi/gomega"
 
-	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
@@ -49,12 +49,11 @@ const (
 )
 
 var (
-	cfg       *rest.Config
-	k8sClient client.Client
-	testEnv   *envtest.Environment
-	c         client.Client
-	ctx       context.Context
-	cancel    context.CancelFunc
+	cfg     *rest.Config
+	testEnv *envtest.Environment
+	c       client.Client
+	ctx     context.Context
+	cancel  context.CancelFunc
 
 	defaultMethods  = []gatewayv1beta1.HttpMethod{http.MethodGet, http.MethodPut}
 	defaultScopes   = []string{"foo", "bar"}
@@ -97,13 +96,10 @@ var _ = BeforeSuite(func(specCtx SpecContext) {
 	Expect(err).ToNot(HaveOccurred())
 	Expect(cfg).ToNot(BeNil())
 
-	k8sClient, err = client.New(cfg, client.Options{Scheme: scheme.Scheme})
-	Expect(err).ToNot(HaveOccurred())
-	Expect(k8sClient).ToNot(BeNil())
-
 	s := runtime.NewScheme()
 
 	Expect(gatewayv1beta1.AddToScheme(s)).Should(Succeed())
+	Expect(gatewayv1beta2.AddToScheme(s)).Should(Succeed())
 	Expect(rulev1alpha1.AddToScheme(s)).Should(Succeed())
 	Expect(networkingv1beta1.AddToScheme(s)).Should(Succeed())
 	Expect(securityv1beta1.AddToScheme(s)).Should(Succeed())
@@ -154,9 +150,7 @@ var _ = BeforeSuite(func(specCtx SpecContext) {
 		ErrorReconciliationPeriod: 2,
 	}
 
-	apiReconciler, err := gateway.NewApiRuleReconciler(mgr, reconcilerConfig)
-	Expect(err).NotTo(HaveOccurred())
-
+	apiReconciler := gateway.NewApiRuleReconciler(mgr, reconcilerConfig)
 	rateLimiterCfg := controllers.RateLimiterConfig{
 		Burst:            200,
 		Frequency:        30,

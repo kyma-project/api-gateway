@@ -17,19 +17,22 @@ limitations under the License.
 package main
 
 import (
+	"context"
+	"crypto/tls"
 	"flag"
 	"os"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	"time"
 
 	"github.com/kyma-project/api-gateway/internal/reconciliations/oathkeeper"
 	"github.com/kyma-project/api-gateway/internal/version"
 
-	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"github.com/kyma-project/api-gateway/controllers"
+	"github.com/kyma-project/api-gateway/controllers/certificate"
 	"github.com/kyma-project/api-gateway/controllers/gateway"
-	operatorcontrollers "github.com/kyma-project/api-gateway/controllers/operator"
-	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	"github.com/kyma-project/api-gateway/controllers/operator"
+
+	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
+	gatewayv1beta2 "github.com/kyma-project/api-gateway/apis/gateway/v1beta2"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
@@ -40,9 +43,13 @@ import (
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
+	"sigs.k8s.io/controller-runtime/pkg/webhook"
+
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 
 	certv1alpha1 "github.com/gardener/cert-management/pkg/apis/cert/v1alpha1"
 	dnsv1alpha1 "github.com/gardener/external-dns-management/pkg/apis/dns/v1alpha1"
@@ -59,6 +66,7 @@ var (
 )
 
 type FlagVar struct {
+	initOnly                    bool
 	metricsAddr                 string
 	enableLeaderElection        bool
 	probeAddr                   string
@@ -73,6 +81,7 @@ func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 
 	utilruntime.Must(gatewayv1beta1.AddToScheme(scheme))
+	utilruntime.Must(gatewayv1beta2.AddToScheme(scheme))
 	utilruntime.Must(dnsv1alpha1.AddToScheme(scheme))
 	utilruntime.Must(certv1alpha1.AddToScheme(scheme))
 
@@ -86,11 +95,14 @@ func init() {
 
 func defineFlagVar() *FlagVar {
 	flagVar := new(FlagVar)
-	flag.StringVar(&flagVar.metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
-	flag.StringVar(&flagVar.probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
+	flag.BoolVar(&flagVar.initOnly, "init-only", false,
+		"Should only initialise operator prerequisites.")
+	flag.StringVar(&flagVar.metricsAddr, "metrics-bind-address", ":8080",
+		"The address the metric endpoint binds to.")
+	flag.StringVar(&flagVar.probeAddr, "health-probe-bind-address", ":8081",
+		"The address the probe endpoint binds to.")
 	flag.BoolVar(&flagVar.enableLeaderElection, "leader-elect", false,
-		"Enable leader election for controller manager. "+
-			"Enabling this will ensure there is only one active controller manager.")
+		"Enable leader election for controller manager. Enabling this will ensure there is only one active controller manager.")
 	flag.IntVar(&flagVar.rateLimiterBurst, "rate-limiter-burst", controllers.RateLimiterBurst,
 		"Indicates the burst value for the bucket rate limiter.")
 	flag.IntVar(&flagVar.rateLimiterFrequency, "rate-limiter-frequency", controllers.RateLimiterFrequency,
@@ -99,7 +111,8 @@ func defineFlagVar() *FlagVar {
 		"Indicates the failure base delay for rate limiter.")
 	flag.DurationVar(&flagVar.rateLimiterFailureMaxDelay, "failure-max-delay", controllers.RateLimiterFailureMaxDelay,
 		"Indicates the failure max delay for rate limiter. .")
-	flag.DurationVar(&flagVar.reconciliationInterval, "reconciliation-interval", 1*time.Hour, "Indicates the time based reconciliation interval of APIRule.")
+	flag.DurationVar(&flagVar.reconciliationInterval, "reconciliation-interval", 1*time.Hour,
+		"Indicates the time based reconciliation interval of APIRule.")
 
 	return flagVar
 }
@@ -113,8 +126,25 @@ func main() {
 	flag.Parse()
 
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
+	config := ctrl.GetConfigOrDie()
+	k8sClient, err := client.New(config, client.Options{Scheme: scheme})
+	if err != nil {
+		setupLog.Error(err, "Unable to create client")
+		os.Exit(1)
+	}
 
-	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
+	if flagVar.initOnly {
+		setupLog.Info("Initialisation only mode")
+		utilruntime.Must(apiextensionsv1.AddToScheme(scheme))
+		err = certificate.InitialiseCertificateSecret(context.Background(), k8sClient, setupLog)
+		if err != nil {
+			setupLog.Error(err, "Unable to initialise certificate secret")
+			os.Exit(1)
+		}
+		os.Exit(0)
+	}
+
+	options := ctrl.Options{
 		Scheme: scheme,
 		Metrics: metricsserver.Options{
 			BindAddress: flagVar.metricsAddr,
@@ -122,6 +152,13 @@ func main() {
 		HealthProbeBindAddress: flagVar.probeAddr,
 		LeaderElection:         flagVar.enableLeaderElection,
 		LeaderElectionID:       "69358922.kyma-project.io",
+		WebhookServer: webhook.NewServer(webhook.Options{
+			TLSOpts: []func(*tls.Config){
+				func(cfg *tls.Config) {
+					cfg.GetCertificate = certificate.GetCertificate
+				},
+			},
+		}),
 		Client: client.Options{
 			Cache: &client.CacheOptions{
 				DisableFor: []client.Object{
@@ -129,13 +166,15 @@ func main() {
 				},
 			},
 		},
-	})
+	}
+
+	mgr, err := ctrl.NewManager(config, options)
 	if err != nil {
-		setupLog.Error(err, "unable to start manager")
+		setupLog.Error(err, "Unable to start manager")
 		os.Exit(1)
 	}
 
-	config := gateway.ApiRuleReconcilerConfiguration{
+	reconcileConfig := gateway.ApiRuleReconcilerConfiguration{
 		OathkeeperSvcAddr:         "ory-oathkeeper-proxy.kyma-system.svc.cluster.local",
 		OathkeeperSvcPort:         4455,
 		CorsAllowOrigins:          "regex:.*",
@@ -152,36 +191,46 @@ func main() {
 		FailureMaxDelay:  flagVar.rateLimiterFailureMaxDelay,
 	}
 
-	apiRuleReconciler, err := gateway.NewApiRuleReconciler(mgr, config)
-	if err != nil {
-		setupLog.Error(err, "unable to create APIRule reconciler", "controller", "APIRule")
-		os.Exit(1)
-	}
-	if err = apiRuleReconciler.SetupWithManager(mgr, rateLimiterCfg); err != nil {
-		setupLog.Error(err, "unable to setup controller", "controller", "APIRule")
+	if err := gateway.NewApiRuleReconciler(mgr, reconcileConfig).SetupWithManager(mgr, rateLimiterCfg); err != nil {
+		setupLog.Error(err, "Unable to create controller", "controller", "APIRule")
 		os.Exit(1)
 	}
 
-	if err = operatorcontrollers.NewAPIGatewayReconciler(mgr, oathkeeper.NewReconciler()).SetupWithManager(mgr, rateLimiterCfg); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "APIGateway")
+	if err = operator.NewAPIGatewayReconciler(mgr, oathkeeper.NewReconciler()).SetupWithManager(mgr, rateLimiterCfg); err != nil {
+		setupLog.Error(err, "Unable to create controller", "controller", "APIGateway")
+		os.Exit(1)
+	}
+
+	if err = certificate.NewCertificateReconciler(mgr).SetupWithManager(mgr, rateLimiterCfg); err != nil {
+		setupLog.Error(err, "Unable to create controller", "controller", "certificate")
+		os.Exit(1)
+	}
+
+	if err = certificate.ReadCertificateSecret(context.Background(), k8sClient, setupLog); err != nil {
+		setupLog.Error(err, "Unable to read certificate secret", "webhook", "certificate")
+		os.Exit(1)
+	}
+
+	if err = (&gatewayv1beta1.APIRule{}).SetupWebhookWithManager(mgr); err != nil {
+		setupLog.Error(err, "Unable to create webhook", "webhook", "APIRule")
 		os.Exit(1)
 	}
 	//+kubebuilder:scaffold:builder
 
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
-		setupLog.Error(err, "unable to set up health check")
+		setupLog.Error(err, "Unable to set up health check")
 		os.Exit(1)
 	}
 	if err := mgr.AddReadyzCheck("readyz", healthz.Ping); err != nil {
-		setupLog.Error(err, "unable to set up ready check")
+		setupLog.Error(err, "Unable to set up ready check")
 		os.Exit(1)
 	}
 
-	setupLog.Info("starting manager")
-	setupLog.Info("module version", "version", version.GetModuleVersion())
+	setupLog.Info("Starting manager")
+	setupLog.Info("Module version", "version", version.GetModuleVersion())
 
 	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
-		setupLog.Error(err, "problem running manager")
+		setupLog.Error(err, "Problem running manager")
 		os.Exit(1)
 	}
 }
