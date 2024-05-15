@@ -32,3 +32,6 @@ The default configuration in terms of autoscaling of Ory components is as follow
 | Oathkeeper Maester | Same as Oathkeeper | Same as Oathkeeper |
 
 Oathkeeper Maester is set up as a separate container in the same Pod as Oathkeeper. Because of that, their autoscaling configuration is similar.
+
+The autoscaling is CPU utilization based, with HorizontalPodAutoscaler set up for 80% CPU request average utilization.
+
