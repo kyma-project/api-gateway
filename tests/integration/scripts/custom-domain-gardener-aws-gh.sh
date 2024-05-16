@@ -13,7 +13,6 @@ export SCALER_MAX=3
 export SCALER_MIN=1
 export GARDENER_PROVIDER="aws"
 export GARDENER_REGION="eu-west-1"
-export GARDENER_ZONES="eu-west-1b,eu-west-1c,eu-west-1a"
 export GARDENER_PROVIDER_SECRET_NAME="aws-gardener-access"
 export GARDENER_PROJECT_NAME="goatz"
 export GARDENER_CLUSTER_VERSION="1.27.8"

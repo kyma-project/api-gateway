@@ -17,7 +17,7 @@ spec:
     controlPlaneConfig:
       apiVersion: gcp.provider.extensions.gardener.cloud/v1alpha1
       kind: ControlPlaneConfig
-      zone: ${GARDENER_ZONES}
+      zone: ${GARDENER_REGION}-a
     workers:
       - name: cpu-worker
         minimum: ${SCALER_MIN}
@@ -28,7 +28,9 @@ spec:
           type: ${DISK_TYPE}
           size: ${DISK_SIZE}Gi
         zones:
-          - ${GARDENER_ZONES}
+          - ${GARDENER_REGION}-a
+          - ${GARDENER_REGION}-b
+          - ${GARDENER_REGION}-c
   networking:
     type: calico
     pods: 100.96.0.0/11

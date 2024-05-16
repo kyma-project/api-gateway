@@ -16,10 +16,18 @@ spec:
         vpc:
           cidr: 10.250.0.0/16
         zones:
-          - name: ${GARDENER_ZONES}
-            internal: 10.250.112.0/22
-            public: 10.250.96.0/22
+          - name: ${GARDENER_REGION}a
+            internal: 10.250.48.0/20
+            public: 10.250.32.0/20
             workers: 10.250.0.0/19
+          - name: ${GARDENER_REGION}b
+            internal: 10.250.112.0/20
+            public: 10.250.96.0/20
+            workers: 10.250.64.0/19
+          - name: ${GARDENER_REGION}c
+            internal: 10.250.176.0/20
+            public: 10.250.160.0/20
+            workers: 10.250.128.0/19
     workers:
       - name: cpu-worker
         minimum: ${SCALER_MIN}
@@ -30,7 +38,9 @@ spec:
           type: ${DISK_TYPE}
           size: ${DISK_SIZE}Gi
         zones:
-          - ${GARDENER_ZONES}
+          - ${GARDENER_REGION}a
+          - ${GARDENER_REGION}b
+          - ${GARDENER_REGION}c
   networking:
     type: calico
     pods: 100.96.0.0/11
