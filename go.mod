@@ -25,8 +25,8 @@ require (
 	gopkg.in/yaml.v3 v3.0.1
 	istio.io/api v1.20.2
 	istio.io/client-go v1.20.2
-	k8s.io/apimachinery v0.29.4
-	k8s.io/client-go v0.29.4
+	k8s.io/apimachinery v0.29.5
+	k8s.io/client-go v0.29.5
 	sigs.k8s.io/controller-runtime v0.17.5
 	sigs.k8s.io/yaml v1.4.0
 )
@@ -80,7 +80,7 @@ require (
 	google.golang.org/genproto v0.0.0-20231002182017-d307bd883b97 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20230920204549-e6e6cdab5c13 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
-	k8s.io/component-base v0.29.4 // indirect
+	k8s.io/component-base v0.29.5 // indirect
 	k8s.io/klog/v2 v2.110.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20231010175941-2dd684a91f00 // indirect
 	sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd // indirect
@@ -96,7 +96,7 @@ require (
 	golang.org/x/exp v0.0.0-20221217163422-3c43f8badb15
 	golang.org/x/oauth2 v0.18.0
 	gopkg.in/yaml.v2 v2.4.0
-	k8s.io/api v0.29.4
-	k8s.io/apiextensions-apiserver v0.29.4
+	k8s.io/api v0.29.5
+	k8s.io/apiextensions-apiserver v0.29.5
 	k8s.io/utils v0.0.0-20240102154912-e7106e64919e
 )
