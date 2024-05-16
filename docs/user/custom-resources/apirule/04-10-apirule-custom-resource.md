@@ -1,4 +1,4 @@
-# APIRule Custom Resource <!-- {docsify-ignore-all} -->
+# APIRule v1beta1 Custom Resource <!-- {docsify-ignore-all} -->
 
 > [!WARNING]
 > The APIRule in version `v1beta1` will be deprecated in 2024. Use the APIRule in version `v1beta2` instead.
