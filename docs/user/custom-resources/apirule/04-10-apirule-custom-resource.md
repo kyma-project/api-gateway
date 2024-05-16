@@ -10,7 +10,7 @@ APIGateway Controller listens for. To get the up-to-date CRD in the `yaml` forma
 kubectl get crd apirules.gateway.kyma-project.io -o yaml
 ```
 
-## Specification of APIRule Custom Resource
+## Specification of APIRule v1beta1 Custom Resource
 
 This table lists all parameters of APIRule CRD together with their descriptions:
 
