@@ -340,6 +340,53 @@ var _ = Describe("APIRule Conversion", func() {
 			Expect(*apiRuleBeta2.Spec.Rules[0].NoAuth).To(BeTrue())
 		})
 
+		It("should convert rule with ory jwt to v1beta2", func() {
+			// given
+			apiRuleBeta1 := v1beta1.APIRule{
+				Spec: v1beta1.APIRuleSpec{
+					Gateway: ptr.To("gateway"),
+					Service: &v1beta1.Service{Name: ptr.To("service")},
+					Host:    &host1string,
+					Rules: []v1beta1.Rule{
+						{
+							Path:    "/path1",
+							Service: &v1beta1.Service{Name: ptr.To("rule-service")},
+							AccessStrategies: []*v1beta1.Authenticator{
+								{
+									Handler: &v1beta1.Handler{
+										Name: "jwt",
+										Config: &runtime.RawExtension{
+											Raw: []byte(`{
+												"trusted_issuers": ["issuer"],
+												"jwks_urls": ["jwksUri"],
+												"required_scope": ["scope1", "scope2"],
+												"target_audience": ["audience1", "audience2"]
+											}`),
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			}
+			apiRuleBeta2 := v1beta2.APIRule{}
+
+			// when
+			err := apiRuleBeta2.ConvertFrom(&apiRuleBeta1)
+
+			// then
+			Expect(err).To(BeNil())
+			Expect(apiRuleBeta2.Spec.Rules).To(HaveLen(1))
+			Expect(apiRuleBeta2.Spec.Rules[0].Jwt).ToNot(BeNil())
+			Expect(apiRuleBeta2.Spec.Rules[0].Jwt.Authentications).To(HaveLen(1))
+			Expect(apiRuleBeta2.Spec.Rules[0].Jwt.Authentications[0].Issuer).To(Equal("issuer"))
+			Expect(apiRuleBeta2.Spec.Rules[0].Jwt.Authentications[0].JwksUri).To(Equal("jwksUri"))
+			Expect(apiRuleBeta2.Spec.Rules[0].Jwt.Authorizations).To(HaveLen(1))
+			Expect(apiRuleBeta2.Spec.Rules[0].Jwt.Authorizations[0].RequiredScopes).To(HaveExactElements("scope1", "scope2"))
+			Expect(apiRuleBeta2.Spec.Rules[0].Jwt.Authorizations[0].Audiences).To(HaveExactElements("audience1", "audience2"))
+		})
+
 		It("should convert JWT to v1beta2", func() {
 			// given
 			jwtHeadersBeta1 := []*v1beta1.JwtHeader{
