@@ -53,4 +53,4 @@ kubectl create  --kubeconfig "${GARDENER_KUBECONFIG}" \
 
 # replace the default kubeconfig
 mkdir -p ~/.kube
-mv ${SHOOT}_kubeconfig.yaml ~/.kube/config
+mv ${CLUSTER_NAME}_kubeconfig.yaml ~/.kube/config
