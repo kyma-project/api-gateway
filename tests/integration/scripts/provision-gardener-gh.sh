@@ -37,15 +37,15 @@ requiredVars=(
 check_required_vars "${requiredVars[@]}"
 
 # render and applyshoot template
-shoot_template=$(envsubst < ${PROJECT_ROOT}/hack/shoot_${GARDENER_PROVIDER}.yaml)
+shoot_template=$(envsubst < ./tests/integration/scripts/shoot_${GARDENER_PROVIDER}.yaml)
 
 echo "$shoot_template" | kubectl --kubeconfig "${GARDENER_KUBECONFIG}" apply -f -
 
 echo "waiting fo cluster to be ready..."
-kubectl wait --for=condition=EveryNodeReady shoot/${CLUSTER_NAME} --timeout=17m
+kubectl wait  --kubeconfig "${GARDENER_KUBECONFIG}" --for=condition=EveryNodeReady shoot/${CLUSTER_NAME} --timeout=17m
 
 # create kubeconfig request, that creates a kubeconfig which is valid for one day
-kubectl create \
+kubectl create  --kubeconfig "${GARDENER_KUBECONFIG}" \
     -f <(printf '{"spec":{"expirationSeconds":86400}}') \
     --raw /apis/core.gardener.cloud/v1beta1/namespaces/garden-${GARDENER_PROJECT_NAME}/shoots/${CLUSTER_NAME}/adminkubeconfig | \
     jq -r ".status.kubeconfig" | \
