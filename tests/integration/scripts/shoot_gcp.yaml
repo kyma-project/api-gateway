@@ -37,7 +37,7 @@ spec:
     nodes: 10.250.0.0/16
     services: 100.64.0.0/13
   kubernetes:
-    version: ${GARDENER_CLUSTER_VERSION}
+    version: "${GARDENER_CLUSTER_VERSION}"
   hibernation:
     enabled: true
     schedules:
