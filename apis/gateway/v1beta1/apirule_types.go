@@ -19,6 +19,7 @@ import (
 	"istio.io/api/networking/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 // Status code describing APIRule.
@@ -74,6 +75,7 @@ type APIRuleStatus struct {
 
 // APIRule is the Schema for ApiRule APIs.
 // +kubebuilder:storageversion
+// +kubebuilder:deprecatedversion:warning=APIRule version v1beta1 is deprecated in favor of v1beta2. Please migrate APIRule to v1beta2 as soon as possible.
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Status",type="string",JSONPath=".status.APIRuleStatus.code"
@@ -169,9 +171,14 @@ type Handler struct {
 }
 
 // JwtConfig is an array of JwtAuthorization type used by raw field Config of Istio jwt Handler
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type JwtConfig struct {
 	Authentications []*JwtAuthentication `json:"authentications,omitempty"`
 	Authorizations  []*JwtAuthorization  `json:"authorizations,omitempty"`
+}
+
+func (j *JwtConfig) GetObjectKind() schema.ObjectKind {
+	return schema.EmptyObjectKind
 }
 
 // JwtAuthorization contains an array of required scopes

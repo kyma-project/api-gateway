@@ -3,11 +3,12 @@ package manifestprocessor
 import (
 	"bytes"
 	"fmt"
-	"gopkg.in/yaml.v3"
 	"io"
 	"os"
 	"path"
 	"text/template"
+
+	"gopkg.in/yaml.v3"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )

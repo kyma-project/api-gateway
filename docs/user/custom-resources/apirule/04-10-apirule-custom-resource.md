@@ -1,4 +1,7 @@
-# APIRule Custom Resource <!-- {docsify-ignore-all} -->
+# APIRule v1beta1 Custom Resource <!-- {docsify-ignore-all} -->
+
+> [!WARNING]
+> The APIRule in version `v1beta1` will be deprecated in 2024. Use the APIRule in version `v1beta2` instead.
 
 The `apirules.gateway.kyma-project.io` CustomResourceDefinition (CRD) describes the kind and the format of data the
 APIGateway Controller listens for. To get the up-to-date CRD in the `yaml` format, run the following command:
@@ -7,7 +10,7 @@ APIGateway Controller listens for. To get the up-to-date CRD in the `yaml` forma
 kubectl get crd apirules.gateway.kyma-project.io -o yaml
 ```
 
-## Specification of APIRule Custom Resource
+## Specification of APIRule v1beta1 Custom Resource
 
 This table lists all parameters of APIRule CRD together with their descriptions:
 

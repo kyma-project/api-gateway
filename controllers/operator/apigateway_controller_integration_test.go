@@ -485,7 +485,7 @@ func virtualServiceTeardown(vs *networkingv1beta1.VirtualService) {
 }
 
 func apiRuleTeardown(apiRule *v1beta1.APIRule) {
-	By(fmt.Sprintf("Deleting ApiRule %s as part of teardown", apiRule.Name))
+	By(fmt.Sprintf("Deleting APIRule %s as part of teardown", apiRule.Name))
 	err := k8sClient.Delete(context.TODO(), apiRule)
 
 	if err != nil {

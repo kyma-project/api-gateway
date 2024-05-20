@@ -34,15 +34,17 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+
   # We only use npm for UI tests, therefore running it weekly and on main only is enough.
   - package-ecosystem: "npm"
     directory: "/tests/ui/tests/"
     schedule:
       interval: "weekly"
+
   # release branch configuration
   - package-ecosystem: "gomod"
     directory: "/"
-    target-branch: "release-2.3"
+    target-branch: "release-2.4"
     labels:
       - "go"
       - "area/dependency"
@@ -63,7 +65,7 @@ updates:
       - dependency-name: "istio.io/api"
 
   - package-ecosystem: "docker"
-    target-branch: "release-2.3"
+    target-branch: "release-2.4"
     directory: "/"
     labels:
       - "docker"

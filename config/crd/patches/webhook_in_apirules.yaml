@@ -9,9 +9,10 @@ spec:
     webhook:
       clientConfig:
         service:
-          namespace: system
-          name: webhook-service
+          namespace: kyma-system
+          name: api-gateway-webhook-service
+          port: 9443
           path: /convert
       conversionReviewVersions:
         - v1beta1
-        - v1alpha1
+        - v1beta2

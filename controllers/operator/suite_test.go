@@ -98,7 +98,7 @@ var (
 func TestAPIs(t *testing.T) {
 	RegisterFailHandler(Fail)
 
-	RunSpecs(t, "API Gateway Controller Suite")
+	RunSpecs(t, "API Gateway Operator Suite")
 }
 
 var _ = BeforeSuite(func() {
@@ -180,7 +180,7 @@ var _ = AfterSuite(func() {
 })
 
 var _ = ReportAfterSuite("custom reporter", func(report types.Report) {
-	tests.GenerateGinkgoJunitReport("api-gateway-controller-suite", report)
+	tests.GenerateGinkgoJunitReport("api-gateway-operator-suite", report)
 })
 
 func createCommonTestResources(k8sClient client.Client) {
