@@ -178,8 +178,6 @@ var _ = Describe("APIRule Controller", Serial, func() {
 
 	Context("when creating APIRule in version v1beta2 respect x-validation rules only", func() {
 		It("should be able to create an APIRule with noAuth=true", func() {
-			updateJwtHandlerTo(helpers.JWT_HANDLER_ORY)
-
 			apiRuleName := generateTestName(testNameBase, testIDLength)
 			serviceName := testServiceNameBase
 			serviceHost := gatewayv1beta2.Host("httpbin-istio-jwt-happy-base.kyma.local")
@@ -200,8 +198,6 @@ var _ = Describe("APIRule Controller", Serial, func() {
 		})
 
 		It("should be able to create an APIRule with jwt", func() {
-			updateJwtHandlerTo(helpers.JWT_HANDLER_ORY)
-
 			apiRuleName := generateTestName(testNameBase, testIDLength)
 			serviceName := testServiceNameBase
 			serviceHost := gatewayv1beta2.Host("httpbin-istio-jwt-happy-base.kyma.local")
@@ -225,8 +221,6 @@ var _ = Describe("APIRule Controller", Serial, func() {
 		})
 
 		It("should be able to create an APIRule with jwt and noAuth=false", func() {
-			updateJwtHandlerTo(helpers.JWT_HANDLER_ORY)
-
 			apiRuleName := generateTestName(testNameBase, testIDLength)
 			serviceName := testServiceNameBase
 			serviceHost := gatewayv1beta2.Host("httpbin-istio-jwt-happy-base.kyma.local")
@@ -251,8 +245,6 @@ var _ = Describe("APIRule Controller", Serial, func() {
 		})
 
 		It("should be able to create an APIRule with jwt and mutators", func() {
-			updateJwtHandlerTo(helpers.JWT_HANDLER_ORY)
-
 			apiRuleName := generateTestName(testNameBase, testIDLength)
 			serviceName := testServiceNameBase
 			serviceHost := gatewayv1beta2.Host("httpbin-istio-jwt-happy-base.kyma.local")
@@ -276,8 +268,6 @@ var _ = Describe("APIRule Controller", Serial, func() {
 		})
 
 		It("should fail to create an APIRule without noAuth and jwt", func() {
-			updateJwtHandlerTo(helpers.JWT_HANDLER_ORY)
-
 			apiRuleName := generateTestName(testNameBase, testIDLength)
 			serviceName := testServiceNameBase
 			serviceHost := gatewayv1beta2.Host("httpbin-istio-jwt-happy-base.kyma.local")
@@ -300,8 +290,6 @@ var _ = Describe("APIRule Controller", Serial, func() {
 		})
 
 		It("should fail to create an APIRule with noAuth=false", func() {
-			updateJwtHandlerTo(helpers.JWT_HANDLER_ORY)
-
 			apiRuleName := generateTestName(testNameBase, testIDLength)
 			serviceName := testServiceNameBase
 			serviceHost := gatewayv1beta2.Host("httpbin-istio-jwt-happy-base.kyma.local")
@@ -325,8 +313,6 @@ var _ = Describe("APIRule Controller", Serial, func() {
 		})
 
 		It("should fail to create an APIRule with jwt and noAuth=true", func() {
-			updateJwtHandlerTo(helpers.JWT_HANDLER_ORY)
-
 			apiRuleName := generateTestName(testNameBase, testIDLength)
 			serviceName := testServiceNameBase
 			serviceHost := gatewayv1beta2.Host("httpbin-istio-jwt-happy-base.kyma.local")
@@ -351,6 +337,29 @@ var _ = Describe("APIRule Controller", Serial, func() {
 
 			Expect(err).Should(HaveOccurred())
 			Expect(err.Error()).To(ContainSubstring("either jwt is configured or noAuth must be set to true in a rule"))
+		})
+
+		It("should fail to create an APIRule with more than one host", func() {
+			apiRuleName := generateTestName(testNameBase, testIDLength)
+			serviceName := testServiceNameBase
+			serviceHost := gatewayv1beta2.Host("httpbin-istio-jwt-happy-base.kyma.local")
+			secondServiceHost := gatewayv1beta2.Host("other-istio-jwt-happy-base.kyma.local")
+			serviceHosts := []*gatewayv1beta2.Host{&serviceHost, &secondServiceHost}
+
+			rule := testRuleV1Beta2("/img", []gatewayv1beta2.HttpMethod{http.MethodGet})
+			rule.NoAuth = ptr.To(true)
+			apiRule := testApiRuleV1Beta2(apiRuleName, testNamespace, serviceName, testNamespace, serviceHosts, testServicePort, []gatewayv1beta2.Rule{rule})
+			svc := testService(serviceName, testNamespace, testServicePort)
+
+			// when
+			Expect(c.Create(context.TODO(), svc)).Should(Succeed())
+			err := c.Create(context.TODO(), apiRule)
+			defer func() {
+				apiRuleV1Beta2Teardown(apiRule)
+				serviceTeardown(svc)
+			}()
+			Expect(err).Should(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring("spec.hosts: Too many: 2: must have at most 1 items"))
 		})
 	})
 
