@@ -176,7 +176,12 @@ var _ = Describe("APIRule Controller", Serial, func() {
 		})
 	})
 
-	Context("when creating APIRule in version v1beta2 respect x-validation rules only", func() {
+	Context("when creating APIRule in version v1beta2 respect x-validation rules only", Ordered, func() {
+
+		BeforeAll(func() {
+			updateJwtHandlerTo(helpers.JWT_HANDLER_ORY)
+		})
+
 		It("should be able to create an APIRule with noAuth=true", func() {
 			apiRuleName := generateTestName(testNameBase, testIDLength)
 			serviceName := testServiceNameBase
