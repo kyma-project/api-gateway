@@ -14,6 +14,7 @@ declare global {
             inputClearAndType(selector: string, newValue: string): void
             hasStatusLabel(status: Status): void
             hasTableRowWithLink(hrefValue: string): void
+            hasTableRowNumberWithLink(row: number, hrefValue: string): void
         }
     }
 }

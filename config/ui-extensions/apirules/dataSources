@@ -16,3 +16,9 @@ virtualServices:
     version: v1beta1
     namespace: null
   filter: '$item.metadata.labels."apirule.gateway.kyma-project.io/v1beta1" = $root.metadata.name & "." & $root.metadata.namespace'
+allVirtualServices:
+  resource:
+    kind: VirtualService
+    group: networking.istio.io
+    version: v1beta1
+    namespace: null

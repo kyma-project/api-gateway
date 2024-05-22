@@ -15,3 +15,9 @@ Cypress.Commands.add('hasTableRowWithLink', (hrefValue: string) : void => {
         .find('ui5-link')
         .should('have.attr', 'href', hrefValue)
 });
+
+Cypress.Commands.add('hasTableRowNumberWithLink', (row: number, hrefValue: string) : void => {
+    cy.get(`ui5-table-row[slot="default-${row}"]`)
+        .find('ui5-link')
+        .should('have.attr', 'href', hrefValue)
+});
