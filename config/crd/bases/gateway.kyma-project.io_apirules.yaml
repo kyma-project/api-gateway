@@ -352,8 +352,8 @@ spec:
                       type: string
                     type: array
                   maxAge:
-                    format: duration
-                    type: string
+                    format: int64
+                    type: integer
                 type: object
               gateway:
                 description: Specifies the Istio Gateway to be used.
