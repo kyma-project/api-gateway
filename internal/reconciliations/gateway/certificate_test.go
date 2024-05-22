@@ -52,7 +52,7 @@ var _ = Describe("Certificate", func() {
 			Expect(secret.Data).To(HaveKey("tls.crt"))
 		})
 
-		It("should not contain certificate that will expire in one week", func() {
+		It("should not contain certificate that will expire in one month", func() {
 			// given
 			apiGateway := getApiGateway(true)
 			k8sClient := createFakeClient()
@@ -66,14 +66,14 @@ var _ = Describe("Certificate", func() {
 			secret := v1.Secret{}
 			Expect(k8sClient.Get(context.Background(), client.ObjectKey{Name: kymaGatewayCertSecretName, Namespace: certificateDefaultNamespace}, &secret)).Should(Succeed())
 			Expect(secret.Data).To(HaveKey("tls.crt"))
-			willExpireInOneWeek, err := willCertificateExpireInOneWeek(string(secret.Data["tls.crt"]))
+			willExpireInOneMonth, err := certificateExpireInOneMonth(string(secret.Data["tls.crt"]))
 			Expect(err).ShouldNot(HaveOccurred())
-			Expect(willExpireInOneWeek).To(BeFalse())
+			Expect(willExpireInOneMonth).To(BeFalse())
 		})
 	})
 })
 
-func willCertificateExpireInOneWeek(certPEM string) (bool, error) {
+func certificateExpireInOneMonth(certPEM string) (bool, error) {
 	block, _ := pem.Decode([]byte(certPEM))
 	if block == nil {
 		return false, errors.New("failed to parse certificate PEM")
@@ -84,6 +84,6 @@ func willCertificateExpireInOneWeek(certPEM string) (bool, error) {
 		return false, err
 	}
 
-	plusOneWeek := time.Now().AddDate(0, 0, 7)
-	return plusOneWeek.After(cert.NotAfter), nil
+	plusOneMonth := time.Now().AddDate(0, 1, 0)
+	return plusOneMonth.After(cert.NotAfter), nil
 }

@@ -367,6 +367,7 @@ spec:
                   minLength: 3
                   pattern: ^([a-zA-Z0-9][a-zA-Z0-9-_]*\.)*[a-zA-Z0-9]*[a-zA-Z0-9-_]*[[a-zA-Z0-9]+$
                   type: string
+                maxItems: 1
                 minItems: 1
                 type: array
               rules:
