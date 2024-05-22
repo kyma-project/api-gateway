@@ -196,9 +196,9 @@ To access your HTTPBin Services, use [Postman](https://www.postman.com) or [curl
 <!-- tabs:start -->
 #### **Postman**
 
-- Enter the URL `https://httpbin.{DOMAIN_TO_EXPOSE_WORKLOADS}/headers` and replace `{DOMAIN_TO_EXPOSE_WORKLOADS}` with your domain name. To call the endpoint, send a `GET` request to the HTTPBin Service. If successful, the call returns the `200 OK` response code.
+- Enter the URL `https://multiple-services.{DOMAIN_TO_EXPOSE_WORKLOADS}/headers` and replace `{DOMAIN_TO_EXPOSE_WORKLOADS}` with your domain name. To call the endpoint, send a `GET` request to the HTTPBin Service. If successful, the call returns the `200 OK` response code.
 
-- Enter the URL `https://httpbin.{DOMAIN_TO_EXPOSE_WORKLOADS}/get` and replace `{DOMAIN_TO_EXPOSE_WORKLOADS}` with your domain name. To call the endpoint, send a `GET` request to the HTTPBin Service. If successful, the call returns the `200 OK` response code.
+- Enter the URL `https://multiple-services.{DOMAIN_TO_EXPOSE_WORKLOADS}/get` and replace `{DOMAIN_TO_EXPOSE_WORKLOADS}` with your domain name. To call the endpoint, send a `GET` request to the HTTPBin Service. If successful, the call returns the `200 OK` response code.
 
 #### **curl**
 
