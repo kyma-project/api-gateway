@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
+	"github.com/kyma-project/api-gateway/internal/types/ory"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
@@ -106,6 +107,26 @@ func (apiRuleBeta2 *APIRule) ConvertFrom(hub conversion.Hub) error {
 					err = json.Unmarshal(accessStrategy.Config.Raw, jwtConfig)
 					if err != nil {
 						return err
+					}
+				}
+				if jwtConfig.Authentications == nil && jwtConfig.Authorizations == nil {
+					// check for v1beta1 ory jwt config
+					var oryJwtConfig ory.JWTAccStrConfig
+					err := json.Unmarshal(accessStrategy.Config.Raw, &oryJwtConfig)
+					// best effort to convert to v1beta2
+					if err == nil && len(oryJwtConfig.JWKSUrls) == len(oryJwtConfig.TrustedIssuers) && len(oryJwtConfig.JWKSUrls) > 0 {
+						for index, jwksUrl := range oryJwtConfig.JWKSUrls {
+							jwtAuthentication := v1beta1.JwtAuthentication{}
+							jwtAuthentication.JwksUri = jwksUrl
+							jwtAuthentication.Issuer = oryJwtConfig.TrustedIssuers[index]
+							jwtConfig.Authentications = append(jwtConfig.Authentications, &jwtAuthentication)
+						}
+						if len(oryJwtConfig.RequiredScopes) > 0 || len(oryJwtConfig.TargetAudience) > 0 {
+							jwtAuthorization := v1beta1.JwtAuthorization{}
+							jwtAuthorization.RequiredScopes = append(jwtAuthorization.RequiredScopes, oryJwtConfig.RequiredScopes...)
+							jwtAuthorization.Audiences = append(jwtAuthorization.Audiences, oryJwtConfig.TargetAudience...)
+							jwtConfig.Authorizations = append(jwtConfig.Authorizations, &jwtAuthorization)
+						}
 					}
 				}
 				err = convertOverJson(jwtConfig, &ruleBeta2.Jwt)
