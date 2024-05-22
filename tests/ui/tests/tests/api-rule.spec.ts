@@ -67,7 +67,7 @@ context("API Rule", () => {
         cy.contains('read').should('exist');
     });
 
-    it.only("should create jwt APIRule", () => {
+    it("should create jwt APIRule", () => {
         cy.navigateToApiRuleList(namespaceName);
 
         cy.clickCreateButton();
@@ -230,31 +230,31 @@ context("API Rule", () => {
 
                 cy.apiRuleMetadataContainsHostUrl(`https://${apiRuleName}.local.kyma.dev`);
             });
+
+            it("should build correct link when multiple rules are in the list", () => {
+
+                cy.createApiRule({
+                    name: apiRuleName,
+                    namespace: namespaceName,
+                    service: serviceName,
+                    host: apiRuleName,
+                    handler: "no_auth",
+                });
+
+                const secondApiRuleName = `${apiRuleName}-second`
+                cy.createApiRule({
+                    name: secondApiRuleName,
+                    namespace: namespaceName,
+                    service: serviceName,
+                    host: secondApiRuleName,
+                    handler: "no_auth",
+                });
+
+                cy.navigateToApiRuleList(namespaceName);
+                cy.hasTableRowNumberWithLink(1,`https://${apiRuleName}.local.kyma.dev`);
+                cy.hasTableRowNumberWithLink(2, `https://${apiRuleName}-second.local.kyma.dev`);
+            });
         })
-
-        it("should build correct link for each rule in list", () => {
-
-            cy.createApiRule({
-                name: apiRuleName,
-                namespace: namespaceName,
-                service: serviceName,
-                host: apiRuleName,
-                handler: "no_auth",
-            });
-
-            const secondApiRuleName = `${apiRuleName}-second`
-            cy.createApiRule({
-                name: secondApiRuleName,
-                namespace: namespaceName,
-                service: serviceName,
-                host: secondApiRuleName,
-                handler: "no_auth",
-            });
-
-            cy.navigateToApiRuleList(namespaceName);
-            cy.hasTableRowNumberWithLink(1,`https://${apiRuleName}.local.kyma.dev`);
-            cy.hasTableRowNumberWithLink(2, `https://${apiRuleName}-second.local.kyma.dev`);
-        });
 
         context("when APIRule is not in OK state", () => {
             it('should have dummy link in list view', () => {
