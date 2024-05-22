@@ -3,6 +3,7 @@ package v1beta2
 import (
 	"encoding/json"
 	"errors"
+	"strings"
 
 	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"github.com/kyma-project/api-gateway/internal/types/ory"
@@ -110,11 +111,10 @@ func (apiRuleBeta2 *APIRule) ConvertFrom(hub conversion.Hub) error {
 					}
 				}
 				if jwtConfig.Authentications == nil && jwtConfig.Authorizations == nil {
-					// check for v1beta1 ory jwt config
+					// best effort to convert ory jwt v1beta1 to v1beta2
 					var oryJwtConfig ory.JWTAccStrConfig
-					err := json.Unmarshal(accessStrategy.Config.Raw, &oryJwtConfig)
-					// best effort to convert to v1beta2
-					if err == nil && len(oryJwtConfig.JWKSUrls) == len(oryJwtConfig.TrustedIssuers) && len(oryJwtConfig.JWKSUrls) > 0 {
+					_ = json.Unmarshal(accessStrategy.Config.Raw, &oryJwtConfig)
+					if len(oryJwtConfig.JWKSUrls) > 0 && len(oryJwtConfig.JWKSUrls) == len(oryJwtConfig.TrustedIssuers) {
 						for index, jwksUrl := range oryJwtConfig.JWKSUrls {
 							jwtAuthentication := v1beta1.JwtAuthentication{}
 							jwtAuthentication.JwksUri = jwksUrl
@@ -133,6 +133,10 @@ func (apiRuleBeta2 *APIRule) ConvertFrom(hub conversion.Hub) error {
 				if err != nil {
 					return err
 				}
+			}
+			// OAuth2
+			if strings.Contains(accessStrategy.Handler.Name, "oauth2") {
+				return errors.New("oauth2 access strategy is not supported in v1beta2, please migrate to v1beta2 or request it in v1beta1 version")
 			}
 		}
 		apiRuleBeta2.Spec.Rules = append(apiRuleBeta2.Spec.Rules, ruleBeta2)

@@ -35,7 +35,7 @@ var _ = Describe("APIRule Conversion", func() {
 			err := apiRuleBeta2.ConvertTo(&apiRuleBeta1)
 
 			// then
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 			Expect(apiRuleBeta1.Annotations).To(HaveKeyWithValue("gateway.kyma-project.io/original-version", "v1beta2"))
 		})
 
@@ -52,7 +52,7 @@ var _ = Describe("APIRule Conversion", func() {
 			err := apiRuleBeta2.ConvertTo(&apiRuleBeta1)
 
 			// then
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 			Expect(*apiRuleBeta1.Spec.Host).To(Equal(string(host1)))
 		})
 
@@ -74,7 +74,7 @@ var _ = Describe("APIRule Conversion", func() {
 			err := apiRuleBeta2.ConvertTo(&apiRuleBeta1)
 
 			// then
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 			Expect(apiRuleBeta1.Spec.Rules).To(HaveLen(1))
 			Expect(apiRuleBeta1.Spec.Rules[0].AccessStrategies).To(HaveLen(1))
 			Expect(apiRuleBeta1.Spec.Rules[0].AccessStrategies[0].Handler.Name).To(Equal("no_auth"))
@@ -103,7 +103,7 @@ var _ = Describe("APIRule Conversion", func() {
 			err := apiRuleBeta2.ConvertTo(&apiRuleBeta1)
 
 			// then
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 			Expect(*apiRuleBeta1.Spec.Gateway).To(Equal("gateway"))
 			Expect(*apiRuleBeta1.Spec.Service.Name).To(Equal("service"))
 			Expect(apiRuleBeta1.Spec.Rules).To(HaveLen(1))
@@ -151,7 +151,7 @@ var _ = Describe("APIRule Conversion", func() {
 			err := apiRuleBeta2.ConvertTo(&apiRuleBeta1)
 
 			// then
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 			Expect(apiRuleBeta1.Spec.Rules).To(HaveLen(1))
 			Expect(apiRuleBeta1.Spec.Rules[0].AccessStrategies).To(HaveLen(1))
 			Expect(apiRuleBeta1.Spec.Rules[0].AccessStrategies[0].Handler.Name).To(Equal("jwt"))
@@ -193,7 +193,7 @@ var _ = Describe("APIRule Conversion", func() {
 			err := apiRuleBeta2.ConvertTo(&apiRuleBeta1)
 
 			// then
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 			Expect(apiRuleBeta1.Spec.Rules).To(HaveLen(1))
 			Expect(apiRuleBeta1.Spec.Rules[0].AccessStrategies).To(HaveLen(1))
 			Expect(apiRuleBeta1.Spec.Rules[0].AccessStrategies[0].Handler.Name).To(Equal("jwt"))
@@ -224,7 +224,7 @@ var _ = Describe("APIRule Conversion", func() {
 			err := apiRuleBeta2.ConvertTo(&apiRuleBeta1)
 
 			// then
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 			Expect(apiRuleBeta1.Spec.Rules).To(HaveLen(2))
 			Expect(apiRuleBeta1.Spec.Rules[0].AccessStrategies).To(HaveLen(1))
 			Expect(apiRuleBeta1.Spec.Rules[0].AccessStrategies[0].Handler.Name).To(Equal("no_auth"))
@@ -270,7 +270,7 @@ var _ = Describe("APIRule Conversion", func() {
 			// when
 			err := apiRuleBeta2.ConvertFrom(&apiRuleBeta1)
 
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 			Expect(apiRuleBeta2.Spec.Hosts).To(HaveExactElements(&host1))
 		})
 
@@ -298,7 +298,7 @@ var _ = Describe("APIRule Conversion", func() {
 			err := apiRuleBeta2.ConvertFrom(&apiRuleBeta1)
 
 			// then
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 			Expect(apiRuleBeta2.Spec.Rules).To(HaveLen(1))
 			Expect(*apiRuleBeta2.Spec.Rules[0].NoAuth).To(BeTrue())
 		})
@@ -331,7 +331,7 @@ var _ = Describe("APIRule Conversion", func() {
 			err := apiRuleBeta2.ConvertFrom(&apiRuleBeta1)
 
 			// then
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 			Expect(*apiRuleBeta2.Spec.Gateway).To(Equal("gateway"))
 			Expect(*apiRuleBeta2.Spec.Service.Name).To(Equal("service"))
 			Expect(apiRuleBeta2.Spec.Rules).To(HaveLen(1))
@@ -376,7 +376,7 @@ var _ = Describe("APIRule Conversion", func() {
 			err := apiRuleBeta2.ConvertFrom(&apiRuleBeta1)
 
 			// then
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 			Expect(apiRuleBeta2.Spec.Rules).To(HaveLen(1))
 			Expect(apiRuleBeta2.Spec.Rules[0].Jwt).ToNot(BeNil())
 			Expect(apiRuleBeta2.Spec.Rules[0].Jwt.Authentications).To(HaveLen(1))
@@ -433,7 +433,7 @@ var _ = Describe("APIRule Conversion", func() {
 			err := apiRuleBeta2.ConvertFrom(&apiRuleBeta1)
 
 			// then
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 			Expect(apiRuleBeta2.Spec.Rules).To(HaveLen(1))
 			Expect(apiRuleBeta2.Spec.Rules[0].Jwt).ToNot(BeNil())
 			Expect(apiRuleBeta2.Spec.Rules[0].Jwt.Authentications).To(HaveLen(1))
@@ -471,7 +471,7 @@ var _ = Describe("APIRule Conversion", func() {
 				},
 			}
 			jsonConfig, err := json.Marshal(jwtConfigBeta1)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 
 			apiRuleBeta1 := v1beta1.APIRule{
 				Spec: v1beta1.APIRuleSpec{
@@ -496,7 +496,7 @@ var _ = Describe("APIRule Conversion", func() {
 			err = apiRuleBeta2.ConvertFrom(&apiRuleBeta1)
 
 			// then
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 			Expect(apiRuleBeta2.Spec.Rules).To(HaveLen(1))
 			Expect(apiRuleBeta2.Spec.Rules[0].Jwt).ToNot(BeNil())
 			Expect(apiRuleBeta2.Spec.Rules[0].Jwt.Authentications).To(HaveLen(1))
@@ -535,7 +535,7 @@ var _ = Describe("APIRule Conversion", func() {
 			err := apiRuleBeta2.ConvertFrom(&apiRuleBeta1)
 
 			// then
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 			Expect(apiRuleBeta2.Spec.Rules).To(HaveLen(1))
 			Expect(apiRuleBeta2.Spec.Rules[0].Jwt).ToNot(BeNil())
 		})
@@ -576,12 +576,45 @@ var _ = Describe("APIRule Conversion", func() {
 			err := apiRuleBeta2.ConvertFrom(&apiRuleBeta1)
 
 			// then
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 			Expect(apiRuleBeta2.Spec.Rules).To(HaveLen(2))
 			Expect(*apiRuleBeta2.Spec.Rules[0].NoAuth).To(BeTrue())
 			Expect(apiRuleBeta2.Spec.Rules[0].Jwt).To(BeNil())
 			Expect(apiRuleBeta2.Spec.Rules[1].NoAuth).To(BeNil())
 			Expect(apiRuleBeta2.Spec.Rules[1].Jwt).ToNot(BeNil())
+		})
+
+		It("should fail to convert rule with oauth2 to v1beta2", func() {
+			// given
+			apiRuleBeta1 := v1beta1.APIRule{
+				Spec: v1beta1.APIRuleSpec{
+					Gateway: ptr.To("gateway"),
+					Service: &v1beta1.Service{Name: ptr.To("service")},
+					Host:    &host1string,
+					Rules: []v1beta1.Rule{
+						{
+							Path:    "/path1",
+							Service: &v1beta1.Service{Name: ptr.To("rule-service")},
+							AccessStrategies: []*v1beta1.Authenticator{
+								{
+									Handler: &v1beta1.Handler{
+										Name:   "oauth2_introspection",
+										Config: &runtime.RawExtension{},
+									},
+								},
+							},
+						},
+					},
+				},
+			}
+			apiRuleBeta2 := v1beta2.APIRule{}
+
+			// when
+			err := apiRuleBeta2.ConvertFrom(&apiRuleBeta1)
+
+			// then
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(Equal("oauth2 access strategy is not supported in v1beta2, please migrate to v1beta2 or request it in v1beta1 version"))
 		})
 	})
 })
