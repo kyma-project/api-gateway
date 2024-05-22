@@ -61,7 +61,7 @@ func (apiRuleBeta2 *APIRule) ConvertTo(hub conversion.Hub) error {
 	apiRuleBeta1.Spec.Rules = []v1beta1.Rule{}
 	for _, ruleBeta2 := range apiRuleBeta2.Spec.Rules {
 		ruleBeta1 := v1beta1.Rule{}
-		err = convertOverJson(ruleBeta2, &ruleBeta1)
+		err := convertOverJson(ruleBeta2, &ruleBeta1)
 		if err != nil {
 			return err
 		}
@@ -101,7 +101,7 @@ func (apiRuleBeta2 *APIRule) ConvertFrom(hub conversion.Hub) error {
 	if err != nil {
 		return err
 	}
-	err = convertOverJson(apiRuleBeta1.Spec.Gateway, &apiRuleBeta2.Spec.Gateway)
+	err = convertOverJson(apiRuleBeta1.Spec.Gateway, &apiRuleBeta2.Spec.Gateway))
 	if err != nil {
 		return err
 	}
