@@ -64,14 +64,9 @@ type Host string
 
 // APIRuleStatus describes the observed state of ApiRule.
 type APIRuleStatus struct {
-	LastProcessedTime    *metav1.Time           `json:"lastProcessedTime,omitempty"`
-	ObservedGeneration   int64                  `json:"observedGeneration,omitempty"`
-	APIRuleStatus        *APIRuleResourceStatus `json:"APIRuleStatus,omitempty"`
-	VirtualServiceStatus *APIRuleResourceStatus `json:"virtualServiceStatus,omitempty"`
-	// +optional
-	RequestAuthenticationStatus *APIRuleResourceStatus `json:"requestAuthenticationStatus,omitempty"`
-	// +optional
-	AuthorizationPolicyStatus *APIRuleResourceStatus `json:"authorizationPolicyStatus,omitempty"`
+	LastProcessedTime  *metav1.Time           `json:"lastProcessedTime,omitempty"`
+	ObservedGeneration int64                  `json:"observedGeneration,omitempty"`
+	APIRuleStatus      *APIRuleResourceStatus `json:"APIRuleStatus,omitempty"`
 }
 
 // APIRule is the Schema for ApiRule APIs.

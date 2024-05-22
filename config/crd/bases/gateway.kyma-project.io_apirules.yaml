@@ -546,39 +546,12 @@ spec:
                   desc:
                     type: string
                 type: object
-              authorizationPolicyStatus:
-                description: APIRuleResourceStatus describes the status of APIRule.
-                properties:
-                  code:
-                    description: StatusCode describing APIRule.
-                    type: string
-                  desc:
-                    type: string
-                type: object
               lastProcessedTime:
                 format: date-time
                 type: string
               observedGeneration:
                 format: int64
                 type: integer
-              requestAuthenticationStatus:
-                description: APIRuleResourceStatus describes the status of APIRule.
-                properties:
-                  code:
-                    description: StatusCode describing APIRule.
-                    type: string
-                  desc:
-                    type: string
-                type: object
-              virtualServiceStatus:
-                description: APIRuleResourceStatus describes the status of APIRule.
-                properties:
-                  code:
-                    description: StatusCode describing APIRule.
-                    type: string
-                  desc:
-                    type: string
-                type: object
             type: object
         type: object
     served: true
