@@ -39,6 +39,7 @@ const (
 type APIRuleSpec struct {
 	// Specifies the URLs of the exposed service.
 	// +kubebuilder:validation:MinItems=1
+	// +kubebuilder:validation:MaxItems=1
 	Hosts []*Host `json:"hosts"`
 	// Describes the service to expose.
 	// +optional
