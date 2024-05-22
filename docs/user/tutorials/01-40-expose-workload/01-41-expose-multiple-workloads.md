@@ -79,7 +79,6 @@ Follow the instructions to expose the instances of the HTTPBin Service on differ
       host: multiple-services.$DOMAIN_TO_EXPOSE_WORKLOADS
       gateway: $GATEWAY
       rules:
-      rules:
       - path: /headers
         methods: ["GET"]
         accessStrategies:
@@ -159,7 +158,7 @@ You can also define a Service at the root level. Such a definition is applied to
 
 3. To expose the instances of the HTTPBin Service, create the following APIRule:
 
-    ```shell
+    ```bash
     cat <<EOF | kubectl apply -f -
     apiVersion: gateway.kyma-project.io/v1beta1
     kind: APIRule
@@ -205,11 +204,11 @@ To access your HTTPBin Services, use [Postman](https://www.postman.com) or [curl
 
 To call the endpoints, send `GET` requests to the HTTPBin Services:
 
-    ```bash
-    curl -ik -X GET https://multiple-services.$DOMAIN_TO_EXPOSE_WORKLOADS/headers
+  ```bash
+  curl -ik -X GET https://multiple-services.$DOMAIN_TO_EXPOSE_WORKLOADS/headers
 
-    curl -ik -X GET https://multiple-services.$DOMAIN_TO_EXPOSE_WORKLOADS/get 
-    ```
+  curl -ik -X GET https://multiple-services.$DOMAIN_TO_EXPOSE_WORKLOADS/get 
+  ```
 If successful, the calls return the `200 OK` response code.
 
 <!-- tabs:end -->

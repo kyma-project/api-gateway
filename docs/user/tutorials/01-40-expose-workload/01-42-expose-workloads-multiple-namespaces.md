@@ -137,11 +137,11 @@ To access your HTTPBin Services, use [Postman](https://www.postman.com) or [curl
 
 To call the endpoints, send `GET` requests to the HTTPBin Services:
 
-    ```bash
-    curl -ik -X GET https://multiple-services.$DOMAIN_TO_EXPOSE_WORKLOADS/headers
+  ```bash
+  curl -ik -X GET https://multiple-services.$DOMAIN_TO_EXPOSE_WORKLOADS/headers
 
-    curl -ik -X GET https://multiple-services.$DOMAIN_TO_EXPOSE_WORKLOADS/get 
-    ```
+  curl -ik -X GET https://multiple-services.$DOMAIN_TO_EXPOSE_WORKLOADS/get 
+  ```
 If successful, the calls return the `200 OK` response code.
 
 <!-- tabs:end -->
