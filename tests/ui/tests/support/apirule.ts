@@ -15,7 +15,11 @@ export interface ApiRuleCommands {
 }
 
 Cypress.Commands.add('apiRuleTypeName', (name: string): void => {
-    cy.inputClearAndType('ui5-input[aria-label="APIRule name"]', name);
+    cy.get('ui5-input[aria-label="APIRule name"]')
+        .find('input')
+        .click({scrollBehavior: false})
+        .clear({force: true})
+        .type(name, {force: true});
 });
 
 Cypress.Commands.add('apiRuleSelectService', (name: string): void => {
