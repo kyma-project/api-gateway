@@ -10,6 +10,27 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
 )
 
+var beta1to2statusConversionMap = map[v1beta1.StatusCode]State{
+	v1beta1.StatusOK:      Ready,
+	v1beta1.StatusError:   Error,
+	v1beta1.StatusWarning: Warning,
+
+	// StatusSkipped is not supported in v1beta2, and it happens only when another component has Error or Warning status
+	// In this case, we map it to Warning
+	v1beta1.StatusSkipped: Warning,
+}
+
+func convertMap(m map[v1beta1.StatusCode]State) map[State]v1beta1.StatusCode {
+	inv := make(map[State]v1beta1.StatusCode)
+	for k, v := range m {
+		inv[v] = k
+	}
+	return inv
+}
+
+// The 2 => 1 map is generated automatically based on 1 => 2 map
+var beta2to1statusConversionMap = convertMap(beta1to2statusConversionMap)
+
 // Converts this ApiRule (v1beta2) to the Hub version (v1beta1)
 func (apiRuleBeta2 *APIRule) ConvertTo(hub conversion.Hub) error {
 	apiRuleBeta1 := hub.(*v1beta1.APIRule)
@@ -24,9 +45,14 @@ func (apiRuleBeta2 *APIRule) ConvertTo(hub conversion.Hub) error {
 	if err != nil {
 		return err
 	}
-	err = convertOverJson(apiRuleBeta2.Status, &apiRuleBeta1.Status)
-	if err != nil {
-		return err
+
+	// Status
+	apiRuleBeta1.Status = v1beta1.APIRuleStatus{
+		APIRuleStatus: &v1beta1.APIRuleResourceStatus{
+			Code:        beta2to1statusConversionMap[apiRuleBeta2.Status.State],
+			Description: apiRuleBeta2.Status.Description,
+		},
+		LastProcessedTime: apiRuleBeta2.Status.LastProcessedTime,
 	}
 
 	// Only one host is supported in v1beta1, so we use the first one from the list
@@ -76,9 +102,13 @@ func (apiRuleBeta2 *APIRule) ConvertFrom(hub conversion.Hub) error {
 	if err != nil {
 		return err
 	}
-	err = convertOverJson(apiRuleBeta1.Status, &apiRuleBeta2.Status)
-	if err != nil {
-		return err
+
+	if apiRuleBeta1.Status.APIRuleStatus != nil {
+		apiRuleBeta2.Status = APIRuleStatus{
+			State:             beta1to2statusConversionMap[apiRuleBeta1.Status.APIRuleStatus.Code],
+			Description:       apiRuleBeta1.Status.APIRuleStatus.Description,
+			LastProcessedTime: apiRuleBeta1.Status.LastProcessedTime,
+		}
 	}
 
 	apiRuleBeta2.Spec.Hosts = []*Host{new(Host)}
