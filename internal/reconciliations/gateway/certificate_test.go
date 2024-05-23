@@ -2,6 +2,10 @@ package gateway
 
 import (
 	"context"
+	"crypto/x509"
+	"encoding/pem"
+	"errors"
+	"time"
 
 	"github.com/gardener/cert-management/pkg/apis/cert/v1alpha1"
 	. "github.com/onsi/ginkgo/v2"
@@ -47,5 +51,39 @@ var _ = Describe("Certificate", func() {
 			Expect(secret.Data).To(HaveKey("tls.key"))
 			Expect(secret.Data).To(HaveKey("tls.crt"))
 		})
+
+		It("should not contain certificate that will expire in one month", func() {
+			// given
+			apiGateway := getApiGateway(true)
+			k8sClient := createFakeClient()
+
+			// when
+			err := reconcileNonGardenerCertificateSecret(context.Background(), k8sClient, apiGateway)
+
+			// then
+			Expect(err).ShouldNot(HaveOccurred())
+
+			secret := v1.Secret{}
+			Expect(k8sClient.Get(context.Background(), client.ObjectKey{Name: kymaGatewayCertSecretName, Namespace: certificateDefaultNamespace}, &secret)).Should(Succeed())
+			Expect(secret.Data).To(HaveKey("tls.crt"))
+			willExpireInOneMonth, err := certificateExpireInOneMonth(string(secret.Data["tls.crt"]))
+			Expect(err).ShouldNot(HaveOccurred())
+			Expect(willExpireInOneMonth).To(BeFalse())
+		})
 	})
 })
+
+func certificateExpireInOneMonth(certPEM string) (bool, error) {
+	block, _ := pem.Decode([]byte(certPEM))
+	if block == nil {
+		return false, errors.New("failed to parse certificate PEM")
+	}
+
+	cert, err := x509.ParseCertificate(block.Bytes)
+	if err != nil {
+		return false, err
+	}
+
+	plusOneMonth := time.Now().AddDate(0, 1, 0)
+	return plusOneMonth.After(cert.NotAfter), nil
+}
