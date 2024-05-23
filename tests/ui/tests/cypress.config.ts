@@ -21,7 +21,6 @@ module.exports = defineConfig({
     ? `${process.env?.ARTIFACTS}/videos`
     : 'cypress/videos',
   experimentalInteractiveRunEvents: true,
-  experimentalMemoryManagement: true,
   numTestsKeptInMemory: 0,
   e2e: {
     testIsolation: false,
