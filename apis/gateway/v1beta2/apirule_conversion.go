@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	v1beta1DeprecatedTemplate = "APIRule is using deprecated v1beta1 configuration, please migrate to v1beta2 or request it in v1beta1 version with 'kubectl get -n %s apirules.v1beta1.gateway.kyma-project.io %s' command"
+	v1beta1DeprecatedTemplate = "APIRule in version v1beta1 has been deprecated. To request APIRule v1beta1, use the command 'kubectl get -n %s apirules.v1beta1.gateway.kyma-project.io %s'. See APIRule v1beta2 documentation and consider migrating to the newer version."
 )
 
 // Converts this ApiRule (v1beta2) to the Hub version (v1beta1)

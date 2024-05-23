@@ -541,7 +541,7 @@ var _ = Describe("APIRule Conversion", func() {
 
 			// then
 			Expect(err).To(HaveOccurred())
-			Expect(err.Error()).To(Equal("APIRule is using deprecated v1beta1 configuration, please migrate to v1beta2 or request it in v1beta1 version with 'kubectl get -n test-ns apirules.v1beta1.gateway.kyma-project.io test-name' command"))
+			Expect(err.Error()).To(Equal("APIRule in version v1beta1 has been deprecated. To request APIRule v1beta1, use the command 'kubectl get -n test-ns apirules.v1beta1.gateway.kyma-project.io test-name'. See APIRule v1beta2 documentation and consider migrating to the newer version."))
 		})
 
 		It("should fail to convert rule with handler different to no_auth or jwt to v1beta2", func() {
@@ -578,7 +578,7 @@ var _ = Describe("APIRule Conversion", func() {
 
 			// then
 			Expect(err).To(HaveOccurred())
-			Expect(err.Error()).To(Equal("APIRule is using deprecated v1beta1 configuration, please migrate to v1beta2 or request it in v1beta1 version with 'kubectl get -n test-ns apirules.v1beta1.gateway.kyma-project.io test-name' command"))
+			Expect(err.Error()).To(Equal("APIRule in version v1beta1 has been deprecated. To request APIRule v1beta1, use the command 'kubectl get -n test-ns apirules.v1beta1.gateway.kyma-project.io test-name'. See APIRule v1beta2 documentation and consider migrating to the newer version."))
 		})
 
 		It("should fail to convert two rules with JWT and allow to v1beta2", func() {
@@ -618,7 +618,7 @@ var _ = Describe("APIRule Conversion", func() {
 
 			// then
 			Expect(err).To(HaveOccurred())
-			Expect(err.Error()).To(Equal("APIRule is using deprecated v1beta1 configuration, please migrate to v1beta2 or request it in v1beta1 version with 'kubectl get -n test-ns apirules.v1beta1.gateway.kyma-project.io test-name' command"))
+			Expect(err.Error()).To(Equal("APIRule in version v1beta1 has been deprecated. To request APIRule v1beta1, use the command 'kubectl get -n test-ns apirules.v1beta1.gateway.kyma-project.io test-name'. See APIRule v1beta2 documentation and consider migrating to the newer version."))
 		})
 	})
 })
