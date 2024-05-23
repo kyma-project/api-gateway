@@ -255,7 +255,7 @@ var _ = Describe("APIRule Conversion", func() {
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(Equal("either jwt is configured or noAuth must be set to true in a rule"))
 		})
-		It("should convert OK status from APIRuleStatus to v1beta2 Ready state", func() {
+		It("should convert v1beta2 Ready state to OK status from APIRuleStatus", func() {
 			// given
 			apiRuleBeta2 := v1beta2.APIRule{
 				Spec: v1beta2.APIRuleSpec{
