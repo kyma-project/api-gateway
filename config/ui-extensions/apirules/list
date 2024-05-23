@@ -1,7 +1,5 @@
 - name: host
-  widget: ExternalLink
   source: spec.host
-  link: 'status.APIRuleStatus.code = "OK" ? "https://" & $filter($allVirtualServices().items, function($vs){$vs.metadata.labels."apirule.gateway.kyma-project.io/v1beta1" = $root.metadata.name & "." & $root.metadata.namespace})[0].spec.hosts[0] : ""'
 - name: service-name
   source: '$string(spec.service.name) ? ($string(spec.service.name) & " (port: " & $string(spec.service.port) & ")") : ""'
   widget: ResourceLink

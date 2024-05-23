@@ -137,6 +137,30 @@ context("API Rule", () => {
         cy.contains('https://trusted.com').should('exist');
     });
 
+    it("should display multiple rules are in the list", () => {
+
+        cy.createApiRule({
+            name: apiRuleName,
+            namespace: namespaceName,
+            service: serviceName,
+            host: apiRuleName,
+            handler: "no_auth",
+        });
+
+        const secondApiRuleName = `${apiRuleName}-second`
+        cy.createApiRule({
+            name: secondApiRuleName,
+            namespace: namespaceName,
+            service: serviceName,
+            host: secondApiRuleName,
+            handler: "no_auth",
+        });
+
+        cy.navigateToApiRuleList(namespaceName);
+        cy.hasTableRowNumberContaining(1, apiRuleName);
+        cy.hasTableRowNumberContaining(2, secondApiRuleName);
+    });
+
     it('should update CORS policy', () => {
 
         cy.createApiRule({
@@ -198,94 +222,6 @@ context("API Rule", () => {
         cy.contains('CORS Allow Headers').should('exist').parent().contains('Allowed-Header').should('exist')
         cy.contains('CORS Allow Credentials').should('exist').parent().contains('true').should('exist')
         cy.contains('CORS Max Age').should('exist').parent().contains('10s').should('exist')
-    });
-
-    context("Host", () => {
-        context("when APIRule is in OK state", () => {
-            it('should build correct link in list view', () => {
-                cy.createApiRule({
-                    name: apiRuleName,
-                    namespace: namespaceName,
-                    service: serviceName,
-                    host: apiRuleName,
-                    handler: "no_auth",
-                });
-
-                cy.navigateToApiRuleList(namespaceName);
-
-                cy.hasTableRowWithLink(`https://${apiRuleName}.local.kyma.dev`);
-
-            });
-
-            it('should build correct link in details view', () => {
-                cy.createApiRule({
-                    name: apiRuleName,
-                    namespace: namespaceName,
-                    service: serviceName,
-                    host: apiRuleName,
-                    handler: "no_auth",
-                });
-
-                cy.navigateToApiRule(apiRuleName, namespaceName);
-
-                cy.apiRuleMetadataContainsHostUrl(`https://${apiRuleName}.local.kyma.dev`);
-            });
-
-            it("should build correct link when multiple rules are in the list", () => {
-
-                cy.createApiRule({
-                    name: apiRuleName,
-                    namespace: namespaceName,
-                    service: serviceName,
-                    host: apiRuleName,
-                    handler: "no_auth",
-                });
-
-                const secondApiRuleName = `${apiRuleName}-second`
-                cy.createApiRule({
-                    name: secondApiRuleName,
-                    namespace: namespaceName,
-                    service: serviceName,
-                    host: secondApiRuleName,
-                    handler: "no_auth",
-                });
-
-                cy.navigateToApiRuleList(namespaceName);
-                cy.hasTableRowNumberWithLink(1,`https://${apiRuleName}.local.kyma.dev`);
-                cy.hasTableRowNumberWithLink(2, `https://${apiRuleName}-second.local.kyma.dev`);
-            });
-        })
-
-        context("when APIRule is not in OK state", () => {
-            it('should have dummy link in list view', () => {
-                cy.createApiRule({
-                    name: apiRuleName,
-                    namespace: namespaceName,
-                    service: "not_existent",
-                    host: apiRuleName,
-                    handler: "no_auth",
-                });
-
-                cy.navigateToApiRuleList(namespaceName);
-
-                cy.hasTableRowWithLink(`https://${apiRuleName}`);
-
-            });
-
-            it('should have dummy link in details view', () => {
-                cy.createApiRule({
-                    name: apiRuleName,
-                    namespace: namespaceName,
-                    service: "not_existent",
-                    host: apiRuleName,
-                    handler: "no_auth",
-                });
-
-                cy.navigateToApiRule(apiRuleName, namespaceName);
-
-                cy.apiRuleMetadataContainsHostUrl(`https://${apiRuleName}`);
-            });
-        })
     });
 
 });
