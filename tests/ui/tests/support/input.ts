@@ -1,7 +1,8 @@
 Cypress.Commands.add('inputClearAndType', (selector: string, newValue: string): void => {
-    cy.get(selector,)
+    cy.get(selector)
         .find('input')
-        .click()
+        .scrollIntoView()
+        .click({force: true})
         .clear({force: true})
         .type(newValue, {force: true});
 });
