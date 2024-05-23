@@ -224,4 +224,40 @@ context("API Rule", () => {
         cy.contains('CORS Max Age').should('exist').parent().contains('10s').should('exist')
     });
 
+    context("Host", () => {
+        context("when APIRule is in OK state", () => {
+
+            it('should build correct link in details view', () => {
+                cy.createApiRule({
+                    name: apiRuleName,
+                    namespace: namespaceName,
+                    service: serviceName,
+                    host: apiRuleName,
+                    handler: "no_auth",
+                });
+
+                cy.navigateToApiRule(apiRuleName, namespaceName);
+
+                cy.apiRuleMetadataContainsHostUrl(`https://${apiRuleName}.local.kyma.dev`);
+            });
+        })
+
+        context("when APIRule is not in OK state", () => {
+
+            it('should have dummy link in details view', () => {
+                cy.createApiRule({
+                    name: apiRuleName,
+                    namespace: namespaceName,
+                    service: "not_existent",
+                    host: apiRuleName,
+                    handler: "no_auth",
+                });
+
+                cy.navigateToApiRule(apiRuleName, namespaceName);
+
+                cy.apiRuleMetadataContainsHostUrl(`https://${apiRuleName}`);
+            });
+        })
+    });
+
 });
