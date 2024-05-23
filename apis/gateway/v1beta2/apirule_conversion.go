@@ -3,13 +3,17 @@ package v1beta2
 import (
 	"encoding/json"
 	"errors"
-	"strings"
+	"fmt"
 
 	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"github.com/kyma-project/api-gateway/internal/types/ory"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
+)
+
+const (
+	v1beta1DeprecatedTemplate = "APIRule is using deprecated v1beta1 configuration, please migrate to v1beta2 or request it in v1beta1 version with 'kubectl get -n %s apirules.v1beta1.gateway.kyma-project.io %s' command"
 )
 
 // Converts this ApiRule (v1beta2) to the Hub version (v1beta1)
@@ -94,12 +98,9 @@ func (apiRuleBeta2 *APIRule) ConvertFrom(hub conversion.Hub) error {
 			return err
 		}
 		for _, accessStrategy := range ruleBeta1.AccessStrategies {
-			// No Auth
-			if accessStrategy.Handler.Name == "no_auth" {
+			if accessStrategy.Handler.Name == "no_auth" { // No Auth
 				ruleBeta2.NoAuth = ptr.To(true)
-			}
-			// JWT
-			if accessStrategy.Handler.Name == "jwt" && accessStrategy.Config != nil {
+			} else if accessStrategy.Handler.Name == "jwt" && accessStrategy.Config != nil { // JWT
 				var jwtConfig *v1beta1.JwtConfig
 				if accessStrategy.Config.Object != nil {
 					jwtConfig = accessStrategy.Config.Object.(*v1beta1.JwtConfig)
@@ -110,33 +111,19 @@ func (apiRuleBeta2 *APIRule) ConvertFrom(hub conversion.Hub) error {
 						return err
 					}
 				}
-				if jwtConfig.Authentications == nil && jwtConfig.Authorizations == nil {
-					// best effort to convert ory jwt v1beta1 to v1beta2
+				if jwtConfig.Authentications == nil && jwtConfig.Authorizations == nil { // v1beta1 ory jwt config
 					var oryJwtConfig ory.JWTAccStrConfig
 					_ = json.Unmarshal(accessStrategy.Config.Raw, &oryJwtConfig)
-					if len(oryJwtConfig.JWKSUrls) > 0 && len(oryJwtConfig.JWKSUrls) == len(oryJwtConfig.TrustedIssuers) {
-						for index, jwksUrl := range oryJwtConfig.JWKSUrls {
-							jwtAuthentication := v1beta1.JwtAuthentication{}
-							jwtAuthentication.JwksUri = jwksUrl
-							jwtAuthentication.Issuer = oryJwtConfig.TrustedIssuers[index]
-							jwtConfig.Authentications = append(jwtConfig.Authentications, &jwtAuthentication)
-						}
-						if len(oryJwtConfig.RequiredScopes) > 0 || len(oryJwtConfig.TargetAudience) > 0 {
-							jwtAuthorization := v1beta1.JwtAuthorization{}
-							jwtAuthorization.RequiredScopes = append(jwtAuthorization.RequiredScopes, oryJwtConfig.RequiredScopes...)
-							jwtAuthorization.Audiences = append(jwtAuthorization.Audiences, oryJwtConfig.TargetAudience...)
-							jwtConfig.Authorizations = append(jwtConfig.Authorizations, &jwtAuthorization)
-						}
+					if len(oryJwtConfig.JWKSUrls) > 0 {
+						return fmt.Errorf(v1beta1DeprecatedTemplate, apiRuleBeta1.Namespace, apiRuleBeta1.Name)
 					}
 				}
 				err = convertOverJson(jwtConfig, &ruleBeta2.Jwt)
 				if err != nil {
 					return err
 				}
-			}
-			// OAuth2
-			if strings.Contains(accessStrategy.Handler.Name, "oauth2") {
-				return errors.New("oauth2 access strategy is not supported in v1beta2, please migrate to v1beta2 or request it in v1beta1 version")
+			} else {
+				return fmt.Errorf(v1beta1DeprecatedTemplate, apiRuleBeta1.Namespace, apiRuleBeta1.Name)
 			}
 		}
 		apiRuleBeta2.Spec.Rules = append(apiRuleBeta2.Spec.Rules, ruleBeta2)
