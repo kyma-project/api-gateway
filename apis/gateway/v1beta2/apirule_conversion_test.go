@@ -255,6 +255,49 @@ var _ = Describe("APIRule Conversion", func() {
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(Equal("either jwt is configured or noAuth must be set to true in a rule"))
 		})
+		It("should convert v1beta2 Ready state to OK status from APIRuleStatus", func() {
+			// given
+			apiRuleBeta2 := v1beta2.APIRule{
+				Spec: v1beta2.APIRuleSpec{
+					Hosts: []*v1beta2.Host{&host1},
+				},
+				Status: v1beta2.APIRuleStatus{
+					State:       v1beta2.Ready,
+					Description: "description",
+				},
+			}
+			apiRuleBeta1 := v1beta1.APIRule{}
+
+			// when
+			err := apiRuleBeta2.ConvertTo(&apiRuleBeta1)
+
+			// then
+			Expect(err).To(BeNil())
+			Expect(apiRuleBeta1.Status.APIRuleStatus.Code).To(Equal(v1beta1.StatusOK))
+			Expect(apiRuleBeta1.Status.APIRuleStatus.Description).To(Equal("description"))
+		})
+
+		It("should convert v1beta2 Error state to Error status from APIRuleStatusError status from APIRuleStatus", func() {
+			// given
+			apiRuleBeta2 := v1beta2.APIRule{
+				Spec: v1beta2.APIRuleSpec{
+					Hosts: []*v1beta2.Host{&host1},
+				},
+				Status: v1beta2.APIRuleStatus{
+					State:       v1beta2.Error,
+					Description: "description",
+				},
+			}
+			apiRuleBeta1 := v1beta1.APIRule{}
+
+			// when
+			err := apiRuleBeta2.ConvertTo(&apiRuleBeta1)
+
+			// then
+			Expect(err).To(BeNil())
+			Expect(apiRuleBeta1.Status.APIRuleStatus.Code).To(Equal(v1beta1.StatusError))
+			Expect(apiRuleBeta1.Status.APIRuleStatus.Description).To(Equal("description"))
+		})
 	})
 
 	Describe("v1beta1 to v1beta2", func() {
@@ -619,6 +662,54 @@ var _ = Describe("APIRule Conversion", func() {
 			// then
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(Equal("APIRule in version v1beta1 has been deprecated. To request APIRule v1beta1, use the command 'kubectl get -n test-ns apirules.v1beta1.gateway.kyma-project.io test-name'. See APIRule v1beta2 documentation and consider migrating to the newer version."))
+		})
+
+		It("should convert OK status from APIRuleStatus to v1beta2 Ready state", func() {
+			// given
+			apiRuleBeta1 := v1beta1.APIRule{
+				Spec: v1beta1.APIRuleSpec{
+					Host: &host1string,
+				},
+				Status: v1beta1.APIRuleStatus{
+					APIRuleStatus: &v1beta1.APIRuleResourceStatus{
+						Code:        v1beta1.StatusOK,
+						Description: "description",
+					},
+				},
+			}
+			apiRuleBeta2 := v1beta2.APIRule{}
+
+			// when
+			err := apiRuleBeta2.ConvertFrom(&apiRuleBeta1)
+
+			// then
+			Expect(err).To(BeNil())
+			Expect(apiRuleBeta2.Status.State).To(Equal(v1beta2.Ready))
+			Expect(apiRuleBeta2.Status.Description).To(Equal("description"))
+		})
+
+		It("should convert Error status from APIRuleStatus to v1beta2 Error state", func() {
+			// given
+			apiRuleBeta1 := v1beta1.APIRule{
+				Spec: v1beta1.APIRuleSpec{
+					Host: &host1string,
+				},
+				Status: v1beta1.APIRuleStatus{
+					APIRuleStatus: &v1beta1.APIRuleResourceStatus{
+						Code:        v1beta1.StatusError,
+						Description: "description",
+					},
+				},
+			}
+			apiRuleBeta2 := v1beta2.APIRule{}
+
+			// when
+			err := apiRuleBeta2.ConvertFrom(&apiRuleBeta1)
+
+			// then
+			Expect(err).To(BeNil())
+			Expect(apiRuleBeta2.Status.State).To(Equal(v1beta2.Error))
+			Expect(apiRuleBeta2.Status.Description).To(Equal("description"))
 		})
 	})
 })
