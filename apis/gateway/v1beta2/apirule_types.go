@@ -21,18 +21,14 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
-// StatusCode describing APIRule.
-type StatusCode string
+type State string
 
 const (
-	//StatusOK is set when the reconciliation finished successfully
-	StatusOK StatusCode = "OK"
-	//StatusSkipped is set when reconciliation of the APIRule component was skipped
-	StatusSkipped StatusCode = "SKIPPED"
-	//StatusError is set when an error happened during reconciliation of the APIRule
-	StatusError StatusCode = "ERROR"
-	//StatusWarning is set if a user action is required
-	StatusWarning StatusCode = "WARNING"
+	Ready      State = "Ready"
+	Processing State = "Processing"
+	Error      State = "Error"
+	Deleting   State = "Deleting"
+	Warning    State = "Warning"
 )
 
 // APIRuleSpec defines the desired state of ApiRule.
@@ -65,20 +61,20 @@ type Host string
 
 // APIRuleStatus describes the observed state of ApiRule.
 type APIRuleStatus struct {
-	LastProcessedTime    *metav1.Time           `json:"lastProcessedTime,omitempty"`
-	ObservedGeneration   int64                  `json:"observedGeneration,omitempty"`
-	APIRuleStatus        *APIRuleResourceStatus `json:"APIRuleStatus,omitempty"`
-	VirtualServiceStatus *APIRuleResourceStatus `json:"virtualServiceStatus,omitempty"`
-	// +optional
-	RequestAuthenticationStatus *APIRuleResourceStatus `json:"requestAuthenticationStatus,omitempty"`
-	// +optional
-	AuthorizationPolicyStatus *APIRuleResourceStatus `json:"authorizationPolicyStatus,omitempty"`
+	LastProcessedTime *metav1.Time `json:"lastProcessedTime,omitempty"`
+	// State signifies current state of APIRule.
+	// Value can be one of ("Ready", "Processing", "Error", "Deleting", "Warning").
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:Enum=Processing;Deleting;Ready;Error;Warning
+	State State `json:"state"`
+	// Description of APIRule status
+	Description string `json:"description,omitempty"`
 }
 
 // APIRule is the Schema for ApiRule APIs.
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
-// +kubebuilder:printcolumn:name="Status",type="string",JSONPath=".status.APIRuleStatus.code"
+// +kubebuilder:printcolumn:name="Status",type="string",JSONPath=".status.state"
 // +kubebuilder:printcolumn:name="Hosts",type="string",JSONPath=".spec.hosts"
 type APIRule struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -139,12 +135,6 @@ type Rule struct {
 // HttpMethod specifies the HTTP request method. The list of supported methods is defined in RFC 9910: HTTP Semantics and RFC 5789: PATCH Method for HTTP.
 // +kubebuilder:validation:Enum=GET;HEAD;POST;PUT;DELETE;CONNECT;OPTIONS;TRACE;PATCH
 type HttpMethod string
-
-// APIRuleResourceStatus describes the status of APIRule.
-type APIRuleResourceStatus struct {
-	Code        StatusCode `json:"code,omitempty"`
-	Description string     `json:"desc,omitempty"`
-}
 
 func init() {
 	SchemeBuilder.Register(&APIRule{}, &APIRuleList{})
