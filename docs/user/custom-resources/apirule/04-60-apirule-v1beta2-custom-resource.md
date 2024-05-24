@@ -57,23 +57,12 @@ This table lists all parameters of APIRule `v1beta2` CRD together with their des
 
 **Status:**
 
-When you fetch an existing APIRule CR, the system adds the **status** section which describes the status of the
-VirtualService created for this CR. The following table lists the fields of the **status** section.
+The following table lists the fields of the **status** section.
 
 | Field                  | Description                                                                                                                       |
 |:-----------------------|:----------------------------------------------------------------------------------------------------------------------------------|
 | **status.state**       | Defines the reconciliation state of the APIRule. The possible states are `Ready`, `Warning`, `Error`, `Processing` or `Deleting`. |
 | **status.description** | Detailed description of **status.state**.                                                                                         |
-
-**Status codes:**
-
-The following status codes describe VirtualServices and Oathkeeper Access Rules:
-
-| Code        | Description                  |
-|-------------|------------------------------|
-| **OK**      | Resource created.            |
-| **SKIPPED** | Skipped creating a resource. |
-| **ERROR**   | Resource not created.        |
 
 ## Sample Custom Resource
 
