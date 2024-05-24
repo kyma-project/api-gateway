@@ -49,7 +49,4 @@ spec:
   kubernetes:
     version: ${GARDENER_CLUSTER_VERSION}
   hibernation:
-    enabled: true
-    schedules:
-      - start: "00 14 * * ?"
-        location: "Europe/Berlin"
+    enabled: false
