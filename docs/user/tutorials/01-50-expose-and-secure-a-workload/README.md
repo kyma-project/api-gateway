@@ -1,7 +1,7 @@
 # Tutorials - Expose and Secure a Workload
 Browse the API Gateway tutorials to learn how to expose and secure workloads. The tutorials are available in two versions: one uses the APIRule resource in version `v1beta2` and the other uses the APIRule resource in version `v1beta1`. 
 
-> [!NOTE]
+> [!WARNING]
 > APIRule in version `v1beta1` will become deprecated in 2024. Migrate to version `v1beta2`.
 
 Expose and Secure a workload with APIRule in version `v1beta2`:
