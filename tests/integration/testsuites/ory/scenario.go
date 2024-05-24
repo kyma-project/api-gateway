@@ -10,6 +10,8 @@ import (
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/resource"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
 	"golang.org/x/oauth2/clientcredentials"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 	"net/http"
 	"strings"
@@ -86,6 +88,44 @@ func (s *scenario) theAPIRuleIsApplied() error {
 		return err
 	}
 	return helpers.ApplyApiRule(s.resourceManager.CreateResources, s.resourceManager.UpdateResources, s.k8sClient, testcontext.GetRetryOpts(), r)
+}
+
+func (s *scenario) theV1beta2APIRuleIsDeleted() error {
+	r, err := manifestprocessor.ParseFromFileWithTemplate(s.ApiResourceManifestPath, s.ApiResourceDirectory, s.ManifestTemplate)
+	if err != nil {
+		return err
+	}
+
+	resourceSchema := schema.GroupVersionResource{Group: "gateway.kyma-project.io", Version: "v1beta2", Resource: "apirules"}
+
+	return retry.Do(func() error {
+		return s.resourceManager.DeleteResource(s.k8sClient, resourceSchema, r[0].GetNamespace(), r[0].GetName())
+	}, testcontext.GetRetryOpts()...)
+}
+
+func (s *scenario) theAPIRuleIsNotFound() error {
+	apiRule, err := manifestprocessor.ParseFromFileWithTemplate(s.ApiResourceManifestPath, s.ApiResourceDirectory, s.ManifestTemplate)
+	if err != nil {
+		return err
+	}
+
+	gvr, err := resource.GetGvrFromUnstructured(s.resourceManager, apiRule[0])
+	if err != nil {
+		return err
+	}
+
+	return retry.Do(func() error {
+		_, err = s.resourceManager.GetResource(s.k8sClient, *gvr, apiRule[0].GetNamespace(), apiRule[0].GetName(), testcontext.GetRetryOpts()...)
+
+		if apierrors.IsNotFound(err) {
+			return nil
+		}
+		if err != nil {
+			return err
+		}
+
+		return fmt.Errorf("expected that APIRule %s not to exist, but it exists", apiRule[0].GetName())
+	}, testcontext.GetRetryOpts()...)
 }
 
 func (s *scenario) callingTheEndpointWithMethodWithInvalidTokenShouldResultInStatusBetween(path string, method string, lower, higher int) error {
