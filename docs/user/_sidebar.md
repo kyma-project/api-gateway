@@ -17,9 +17,9 @@
       * [Expose Multiple Workloads](/api-gateway/user/tutorials/01-40-expose-workload/01-41-expose-multiple-workloads.md)
       * [Expose Workloads in Multiple Namespaces](/api-gateway/user/tutorials/01-40-expose-workload/01-42-expose-workloads-multiple-namespaces.md)
   * [Expose and Secure a Workload](/api-gateway/user/tutorials/01-50-expose-and-secure-a-workload/README.md)
-    * Use APIRule v1beta2
+    * [Use APIRule v1beta2](/api-gateway/user/tutorials/01-50-expose-and-secure-a-workload/README.md)
       * [Secure a Workload with JWT](/api-gateway/user/01-50-expose-and-secure-a-workload/v1beta2/01-52-expose-and-secure-workload-jwt.md)
-    * Use APIRule v1beta1
+    * [Use APIRule v1beta1](/api-gateway/user/tutorials/01-50-expose-and-secure-a-workload/README.md)
       * [Secure a Workload with OAuth2](/api-gateway/user/tutorials/01-50-expose-and-secure-a-workload/01-42-expose-workloads-multiple-namespaces.md)
       * [Get JSON Web Tokens (JWT)](/api-gateway/user/tutorials/01-50-expose-and-secure-a-workload/01-51-get-jwt.md)
       * [Secure a Workload with JWT](/api-gateway/user/tutorials/01-50-expose-and-secure-a-workload/01-52-expose-and-secure-workload-jwt.md)
