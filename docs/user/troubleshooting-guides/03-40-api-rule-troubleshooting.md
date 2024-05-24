@@ -1,5 +1,8 @@
 # Issues When Creating an APIRule - Various Reasons
 
+> [!WARNING]
+> APIRule in version `v1beta1` will become deprecated in 2024. Migrate to version `v1beta2`.
+
 ## Symptom
 
 When you create an APIRule, an instant validation error appears, or the APIRule custom resource (CR) has the `ERROR` status, for example:
@@ -103,7 +106,7 @@ spec:
 ## Unsupported Handlers' Combination
 ### Cause
 
-The following APIRule has both `allow` and `jwt` handlers defined on the same path:
+The following APIRule has both `no_auth` and `jwt` handlers defined on the same path:
 
 ```yaml
 spec:
@@ -112,7 +115,7 @@ spec:
     - path: /.*
       methods: ["GET"]
       accessStrategies:
-        - handler: allow
+        - handler: no_auth
         - handler: jwt
           config:
             trusted_issuers: ["https://dev.kyma.local"]
@@ -126,7 +129,7 @@ The handlers' combination in the above example is not supported. If an APIRule h
 
 ### Remedy
 
-Decide on one configuration you want to use. You can either `allow` access to the specific path or restrict it using the JWT security token. Defining both configuration methods on the same path is not allowed.
+Decide on one configuration you want to use. You can either `no_auth` access to the specific path or restrict it using the JWT security token. Defining both configuration methods on the same path is not allowed.
 
 ---
 ## Occupied Host
@@ -180,6 +183,10 @@ If your APIRule uses either the `noop`, `allow`, or `no_auth` handler and has so
 ```
 {"code":"ERROR","desc":"Validation error: Attribute \".spec.rules[0].accessStrategies[0].config\": strategy: noop does not support configuration"}
 ```
+
+> [!NOTE]
+> The handlers `noop` and `allow` are not supported in version `v1beta2` of APIRule.
+
 
 ### Remedy
 
