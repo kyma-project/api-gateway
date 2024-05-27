@@ -29,7 +29,7 @@
     * [Prepare Self-Signed Root CA and Client Certificates](/api-gateway/user/tutorials/01-60-security/01-61-mtls-selfsign-client-certicate.md)
     * [Set Up a Custom Identity Provider](/api-gateway/user/tutorials/01-60-security/01-62-set-up-idp.md)
 * [Custom Resources](/api-gateway/user/custom-resources/README.md)
-  * [APIGateway Custom Resource](/api-gateway/user/custom-resources/apigatewayREADME.md)
+  * [APIGateway Custom Resource](/api-gateway/user/custom-resources/apigateway/README.md)
     * [Specification](/api-gateway/user/custom-resources/apigateway/04-00-apigateway-custom-resource.md)
     * [Kyma Gateway](/api-gateway/user/custom-resources/apigateway/04-10-kyma-gateway.md)
     * [Oathkeeper Dependency](/api-gateway/user/custom-resources/apigateway/04-20-oathkeeper.md)
