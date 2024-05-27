@@ -80,7 +80,7 @@ This table lists all parameters of APIRule `v1beta2` CRD together with their des
 | **rules.timeout**                                |  **NO**   | Specifies the timeout, in seconds, for HTTP requests made to **spec.rules.path**. Timeout definitions set at this level take precedence over any timeout defined at the **spec.timeout** level. The maximum timeout is limited to 3900 seconds (65 minutes).                                          |
 
 > [!WARNING]
-> The Ory handler is not supported in version `v1beta2 of the APIRule.
+> The Ory handler is not supported in version `v1beta2` of the APIRule.
 
 > [!WARNING]
 >  If `service` is not defined at the **spec.service** level, all defined Access Rules must have `service` defined at the **spec.rules.service** level. Otherwise, the validation fails.
@@ -99,7 +99,7 @@ The following table lists the fields of the **status** section.
 
 ## Sample Custom Resource
 
-This is a sample custom resource (CR) that the APIGateway Controller listens for to expose a Service.
+See an exmplary APIRule custom resource:
 
 ```yaml
 apiVersion: gateway.kyma-project.io/v1beta2
