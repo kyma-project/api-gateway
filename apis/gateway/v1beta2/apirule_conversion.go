@@ -3,12 +3,39 @@ package v1beta2
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 
 	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
+	"github.com/kyma-project/api-gateway/internal/types/ory"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
 )
+
+const (
+	v1beta1DeprecatedTemplate = "APIRule in version v1beta1 has been deprecated. To request APIRule v1beta1, use the command 'kubectl get -n %s apirules.v1beta1.gateway.kyma-project.io %s'. See APIRule v1beta2 documentation and consider migrating to the newer version."
+)
+
+var beta1to2statusConversionMap = map[v1beta1.StatusCode]State{
+	v1beta1.StatusOK:      Ready,
+	v1beta1.StatusError:   Error,
+	v1beta1.StatusWarning: Warning,
+
+	// StatusSkipped is not supported in v1beta2, and it happens only when another component has Error or Warning status
+	// In this case, we map it to Warning
+	v1beta1.StatusSkipped: Warning,
+}
+
+func convertMap(m map[v1beta1.StatusCode]State) map[State]v1beta1.StatusCode {
+	inv := make(map[State]v1beta1.StatusCode)
+	for k, v := range m {
+		inv[v] = k
+	}
+	return inv
+}
+
+// The 2 => 1 map is generated automatically based on 1 => 2 map
+var beta2to1statusConversionMap = convertMap(beta1to2statusConversionMap)
 
 // Converts this ApiRule (v1beta2) to the Hub version (v1beta1)
 func (apiRuleBeta2 *APIRule) ConvertTo(hub conversion.Hub) error {
@@ -24,9 +51,14 @@ func (apiRuleBeta2 *APIRule) ConvertTo(hub conversion.Hub) error {
 	if err != nil {
 		return err
 	}
-	err = convertOverJson(apiRuleBeta2.Status, &apiRuleBeta1.Status)
-	if err != nil {
-		return err
+
+	// Status
+	apiRuleBeta1.Status = v1beta1.APIRuleStatus{
+		APIRuleStatus: &v1beta1.APIRuleResourceStatus{
+			Code:        beta2to1statusConversionMap[apiRuleBeta2.Status.State],
+			Description: apiRuleBeta2.Status.Description,
+		},
+		LastProcessedTime: apiRuleBeta2.Status.LastProcessedTime,
 	}
 
 	// Only one host is supported in v1beta1, so we use the first one from the list
@@ -76,9 +108,13 @@ func (apiRuleBeta2 *APIRule) ConvertFrom(hub conversion.Hub) error {
 	if err != nil {
 		return err
 	}
-	err = convertOverJson(apiRuleBeta1.Status, &apiRuleBeta2.Status)
-	if err != nil {
-		return err
+
+	if apiRuleBeta1.Status.APIRuleStatus != nil {
+		apiRuleBeta2.Status = APIRuleStatus{
+			State:             beta1to2statusConversionMap[apiRuleBeta1.Status.APIRuleStatus.Code],
+			Description:       apiRuleBeta1.Status.APIRuleStatus.Description,
+			LastProcessedTime: apiRuleBeta1.Status.LastProcessedTime,
+		}
 	}
 
 	apiRuleBeta2.Spec.Hosts = []*Host{new(Host)}
@@ -92,12 +128,9 @@ func (apiRuleBeta2 *APIRule) ConvertFrom(hub conversion.Hub) error {
 			return err
 		}
 		for _, accessStrategy := range ruleBeta1.AccessStrategies {
-			// No Auth
-			if accessStrategy.Handler.Name == "no_auth" {
+			if accessStrategy.Handler.Name == "no_auth" { // No Auth
 				ruleBeta2.NoAuth = ptr.To(true)
-			}
-			// JWT
-			if accessStrategy.Handler.Name == "jwt" && accessStrategy.Config != nil {
+			} else if accessStrategy.Handler.Name == "jwt" && accessStrategy.Config != nil { // JWT
 				var jwtConfig *v1beta1.JwtConfig
 				if accessStrategy.Config.Object != nil {
 					jwtConfig = accessStrategy.Config.Object.(*v1beta1.JwtConfig)
@@ -108,10 +141,19 @@ func (apiRuleBeta2 *APIRule) ConvertFrom(hub conversion.Hub) error {
 						return err
 					}
 				}
+				if jwtConfig.Authentications == nil && jwtConfig.Authorizations == nil { // v1beta1 ory jwt config
+					var oryJwtConfig ory.JWTAccStrConfig
+					_ = json.Unmarshal(accessStrategy.Config.Raw, &oryJwtConfig)
+					if len(oryJwtConfig.JWKSUrls) > 0 {
+						return fmt.Errorf(v1beta1DeprecatedTemplate, apiRuleBeta1.Namespace, apiRuleBeta1.Name)
+					}
+				}
 				err = convertOverJson(jwtConfig, &ruleBeta2.Jwt)
 				if err != nil {
 					return err
 				}
+			} else {
+				return fmt.Errorf(v1beta1DeprecatedTemplate, apiRuleBeta1.Namespace, apiRuleBeta1.Name)
 			}
 		}
 		apiRuleBeta2.Spec.Rules = append(apiRuleBeta2.Spec.Rules, ruleBeta2)
