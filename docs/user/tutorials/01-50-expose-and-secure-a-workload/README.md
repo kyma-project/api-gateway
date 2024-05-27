@@ -5,6 +5,7 @@ Browse the API Gateway tutorials to learn how to expose and secure workloads. Th
 > APIRule in version `v1beta1` will become deprecated in 2024. Migrate to version `v1beta2`.
 
 Expose and Secure a workload with APIRule in version `v1beta2`:
+- [Get a JSON Web Token (JWT)](./01-51-get-jwt.md)
 - [Expose and Secure a Workload with JWT](./v1beta2/01-52-expose-and-secure-workload-jwt.md)
 
 Expose and Secure a workload with APIRule in version `v1beta1`:

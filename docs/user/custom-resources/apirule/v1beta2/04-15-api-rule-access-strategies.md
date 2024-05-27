@@ -13,6 +13,7 @@ The intended functionality of this handler is to provide a simple configuration 
 The `no_auth` handler only allows access to the specified HTTP methods of the exposed workload. You must not configure the **config** field when using this handler.
 
 ```yaml
+...
 rules:
   - path: /headers
     methods: ["GET"]
@@ -24,6 +25,7 @@ rules:
 By default, the `jwt` handler is configured in the same way as in the [Ory Oathkeeper JWT authenticator configuration](https://www.ory.sh/docs/oathkeeper/pipeline/authn#jwt). However, you can also use this handler with the Istio JWT configuration currently being developed. To learn more about this functionality, see [JWT Access Strategy](04-20-apirule-istio-jwt-access-strategy.md).
 
 ```yaml
+...
 rules:
   - path: /headers
     methods: ["GET"]

@@ -1,8 +1,5 @@
 # Issues When Creating an APIRule - Various Reasons
 
-> [!WARNING]
-> APIRule in version `v1beta1` will become deprecated in 2024. Migrate to version `v1beta2`.
-
 ## Symptom
 
 When you create an APIRule, an instant validation error appears, or the APIRule custom resource (CR) has the `ERROR` status, for example:
@@ -162,6 +159,10 @@ spec:
 
 ---
 ## Configuration of `noop`, `allow`, and `no_auth` Handlers 
+
+> [!WARNING]
+> The `noop` and `allow` handlers are supported only in version `v1beta1` of APIRule, which will become deprecated in 2024. Migrate to version `v1beta2`.
+
 ### Cause
 
 In the following APIRule, the `no_auth` handler has the **trusted-issuers** field configured:
