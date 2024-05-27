@@ -1,0 +1,45 @@
+apiVersion: core.gardener.cloud/v1beta1
+kind: Shoot
+metadata:
+  name: ${CLUSTER_NAME}
+spec:
+  secretBindingName: ${GARDENER_PROVIDER_SECRET_NAME}
+  cloudProfileName: gcp
+  region: ${GARDENER_REGION}
+  purpose: evaluation
+  provider:
+    type: gcp
+    infrastructureConfig:
+      apiVersion: gcp.provider.extensions.gardener.cloud/v1alpha1
+      kind: InfrastructureConfig
+      networks:
+        workers: 10.250.0.0/16
+    controlPlaneConfig:
+      apiVersion: gcp.provider.extensions.gardener.cloud/v1alpha1
+      kind: ControlPlaneConfig
+      zone: ${GARDENER_REGION}-a
+    workers:
+      - name: cpu-worker
+        minimum: ${SCALER_MIN}
+        maximum: ${SCALER_MAX}
+        machine:
+          type: ${MACHINE_TYPE}
+        volume:
+          type: ${DISK_TYPE}
+          size: ${DISK_SIZE}Gi
+        zones:
+          - ${GARDENER_REGION}-a
+          - ${GARDENER_REGION}-b
+          - ${GARDENER_REGION}-c
+  networking:
+    type: calico
+    pods: 100.96.0.0/11
+    nodes: 10.250.0.0/16
+    services: 100.64.0.0/13
+  kubernetes:
+    version: "${GARDENER_CLUSTER_VERSION}"
+  hibernation:
+    enabled: false
+  addons:
+    nginxIngress:
+      enabled: false
