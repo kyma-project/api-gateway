@@ -37,6 +37,7 @@
     * [v1beta2](/api-gateway/user/custom-resources/apirule/README.md)
       * [Specificaion](/api-gateway/user/custom-resources/apirule/v1beta2/04-10-apirule-custom-resource.md)
       * [APIRule Access Strategies](/api-gateway/user/custom-resources/apirule/v1beta2/04-15-api-rule-access-strategies.md)
+      * [APIRule Mutators](/api-gateway/user/custom-resources/apirule/v1beta2/04-40-apirule-mutators.md)
     * [v1beta1](/api-gateway/user/custom-resources/apirule/README.md)
       * [Specification](/api-gateway/user/custom-resources/apirule/04-10-apirule-custom-resource.md)
       * [APIRule Access Strategies](/api-gateway/user/custom-resources/apirule/04-15-api-rule-access-strategies.md)
