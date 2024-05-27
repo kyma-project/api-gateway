@@ -1,6 +1,7 @@
 package ory
 
 import (
+	"context"
 	_ "embed"
 	"fmt"
 	"github.com/avast/retry-go/v4"
@@ -11,7 +12,7 @@ import (
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
 	"golang.org/x/oauth2/clientcredentials"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/runtime/schema"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/dynamic"
 	"net/http"
 	"strings"
@@ -90,32 +91,66 @@ func (s *scenario) theAPIRuleIsApplied() error {
 	return helpers.ApplyApiRule(s.resourceManager.CreateResources, s.resourceManager.UpdateResources, s.k8sClient, testcontext.GetRetryOpts(), r)
 }
 
-func (s *scenario) theV1beta2APIRuleIsDeleted() error {
-	r, err := manifestprocessor.ParseFromFileWithTemplate(s.ApiResourceManifestPath, s.ApiResourceDirectory, s.ManifestTemplate)
+func (s *scenario) theAPIRuleIsUpdated(manifest string) error {
+	resourceManifest, err := manifestprocessor.ParseFromFileWithTemplate(manifest, s.ApiResourceDirectory, s.ManifestTemplate)
+	if err != nil {
+		return err
+	}
+	return helpers.UpdateApiRule(s.resourceManager, s.k8sClient, testcontext.GetRetryOpts(), resourceManifest)
+}
+
+func (s *scenario) theAPIRuleIsDeletedUsingV1beta2Version() error {
+	resourceManifest, err := manifestprocessor.ParseFromFileWithTemplate(s.ApiResourceManifestPath, s.ApiResourceDirectory, s.ManifestTemplate)
 	if err != nil {
 		return err
 	}
 
-	resourceSchema := schema.GroupVersionResource{Group: "gateway.kyma-project.io", Version: "v1beta2", Resource: "apirules"}
+	groupVersionResource, err := resource.GetGvrFromUnstructured(s.resourceManager, resourceManifest[0])
+	groupVersionResource.Version = "v1beta2"
+
+	return s.resourceManager.DeleteResource(s.k8sClient, *groupVersionResource, resourceManifest[0].GetNamespace(), resourceManifest[0].GetName())
+}
+
+func (s *scenario) theAPIRuleHasStatus(expectedStatus string) error {
+	resourceManifest, err := manifestprocessor.ParseFromFileWithTemplate(s.ApiResourceManifestPath, s.ApiResourceDirectory, s.ManifestTemplate)
+	if err != nil {
+		return err
+	}
+
+	groupVersionResource, err := resource.GetGvrFromUnstructured(s.resourceManager, resourceManifest[0])
 
 	return retry.Do(func() error {
-		return s.resourceManager.DeleteResource(s.k8sClient, resourceSchema, r[0].GetNamespace(), r[0].GetName())
+		apiRule, err := s.resourceManager.GetResource(s.k8sClient, *groupVersionResource, resourceManifest[0].GetNamespace(), resourceManifest[0].GetName())
+		if err != nil {
+			return err
+		}
+
+		hasExpectedStatus, err := helpers.HasAPIRuleStatus(apiRule, expectedStatus)
+		if err != nil {
+			return err
+		}
+
+		if !hasExpectedStatus {
+			return fmt.Errorf("APIRule %s not in expected status %s", apiRule.GetName(), expectedStatus)
+		}
+
+		return nil
 	}, testcontext.GetRetryOpts()...)
 }
 
 func (s *scenario) theAPIRuleIsNotFound() error {
-	apiRule, err := manifestprocessor.ParseFromFileWithTemplate(s.ApiResourceManifestPath, s.ApiResourceDirectory, s.ManifestTemplate)
+	resourceManifest, err := manifestprocessor.ParseFromFileWithTemplate(s.ApiResourceManifestPath, s.ApiResourceDirectory, s.ManifestTemplate)
 	if err != nil {
 		return err
 	}
 
-	gvr, err := resource.GetGvrFromUnstructured(s.resourceManager, apiRule[0])
+	gvr, err := resource.GetGvrFromUnstructured(s.resourceManager, resourceManifest[0])
 	if err != nil {
 		return err
 	}
 
 	return retry.Do(func() error {
-		_, err = s.resourceManager.GetResource(s.k8sClient, *gvr, apiRule[0].GetNamespace(), apiRule[0].GetName(), testcontext.GetRetryOpts()...)
+		_, err = s.k8sClient.Resource(*gvr).Namespace(resourceManifest[0].GetNamespace()).Get(context.Background(), resourceManifest[0].GetName(), metav1.GetOptions{})
 
 		if apierrors.IsNotFound(err) {
 			return nil
@@ -124,7 +159,7 @@ func (s *scenario) theAPIRuleIsNotFound() error {
 			return err
 		}
 
-		return fmt.Errorf("expected that APIRule %s not to exist, but it exists", apiRule[0].GetName())
+		return fmt.Errorf("expected that APIRule %s not to exist, but it exists", resourceManifest[0].GetName())
 	}, testcontext.GetRetryOpts()...)
 }
 

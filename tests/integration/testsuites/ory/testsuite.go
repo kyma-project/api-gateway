@@ -82,8 +82,12 @@ func (t *testsuite) InitScenarios(ctx *godog.ScenarioContext) {
 	initExposeMethodsOnPathsNoopHandler(ctx, t)
 	initExposeMethodsOnPathsJwtHandler(ctx, t)
 	initExposeMethodsOnPathsOAuth2Handler(ctx, t)
-	initV1Beta1AllowDelete(ctx, t)
-	initV1Beta1NoAuthDelete(ctx, t)
+	initDeleteNoAuthV1beta1(ctx, t)
+	initDeleteAllowV1beta1(ctx, t)
+	initMigrationAllowV1beta1(ctx, t)
+	initMigrationNoAuthV1beta1(ctx, t)
+	initMigrationNoopV1beta1(ctx, t)
+	initMigrationJwtV1beta1(ctx, t)
 }
 
 func (t *testsuite) FeaturePath() []string {
