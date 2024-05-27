@@ -209,9 +209,6 @@ If your APIRule uses either the `noop`, `allow`, or `no_auth` handler and has so
 {"code":"ERROR","desc":"Validation error: Attribute \".spec.rules[0].accessStrategies[0].config\": strategy: noop does not support configuration"}
 ```
 
-> [!NOTE]
-> The handlers `noop` and `allow` are not supported in version `v1beta2` of APIRule.
-
 
 ### Remedy
 
