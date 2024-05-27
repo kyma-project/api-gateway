@@ -1,6 +1,6 @@
 # APIRule Mutators
 
-You can use mutators to enrich an incoming request with information. For the `no_auth` access strategy mutators are not supported. APIRule in version v1beta2 supports Istio `cookie` and `header` mutators for the Istio `jwt` access strategy. For the `no_auth` access strategy mutators are not supported. You are allowed to configure both mutators for one APIRule, but only one mutator of each type is allowed.
+You can use mutators to enrich an incoming request with information. For the `no_auth` access strategy mutators are not supported. APIRule in version v1beta2 supports Istio `cookie` and `header` mutators for the Istio `jwt` access strategy. You are allowed to configure both mutators for one APIRule, but only one mutator of each type is allowed.
 
 ## Header Mutator
 The headers are defined in the **headers** field of the `header` mutator. The keys represent the names of the headers, and each value is a string. You can use [Envoy command operators](https://www.envoyproxy.io/docs/envoy/latest/configuration/observability/access_log/usage#command-operators) in the header value to perform operations such as copying an incoming header to a new one. The configured headers are applied to the request. They overwrite any existing headers with the same name.
