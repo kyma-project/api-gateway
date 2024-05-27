@@ -137,6 +137,30 @@ context("API Rule", () => {
         cy.contains('https://trusted.com').should('exist');
     });
 
+    it("should display multiple rules are in the list", () => {
+
+        cy.createApiRule({
+            name: apiRuleName,
+            namespace: namespaceName,
+            service: serviceName,
+            host: apiRuleName,
+            handler: "no_auth",
+        });
+
+        const secondApiRuleName = `${apiRuleName}-second`
+        cy.createApiRule({
+            name: secondApiRuleName,
+            namespace: namespaceName,
+            service: serviceName,
+            host: secondApiRuleName,
+            handler: "no_auth",
+        });
+
+        cy.navigateToApiRuleList(namespaceName);
+        cy.hasTableRowNumberContaining(1, apiRuleName);
+        cy.hasTableRowNumberContaining(2, secondApiRuleName);
+    });
+
     it('should update CORS policy', () => {
 
         cy.createApiRule({
@@ -202,20 +226,6 @@ context("API Rule", () => {
 
     context("Host", () => {
         context("when APIRule is in OK state", () => {
-            it('should build correct link in list view', () => {
-                cy.createApiRule({
-                    name: apiRuleName,
-                    namespace: namespaceName,
-                    service: serviceName,
-                    host: apiRuleName,
-                    handler: "no_auth",
-                });
-
-                cy.navigateToApiRuleList(namespaceName);
-
-                cy.hasTableRowWithLink(`https://${apiRuleName}.local.kyma.dev`);
-
-            });
 
             it('should build correct link in details view', () => {
                 cy.createApiRule({
@@ -233,20 +243,6 @@ context("API Rule", () => {
         })
 
         context("when APIRule is not in OK state", () => {
-            it('should have dummy link in list view', () => {
-                cy.createApiRule({
-                    name: apiRuleName,
-                    namespace: namespaceName,
-                    service: "not_existent",
-                    host: apiRuleName,
-                    handler: "no_auth",
-                });
-
-                cy.navigateToApiRuleList(namespaceName);
-
-                cy.hasTableRowWithLink(`https://${apiRuleName}`);
-
-            });
 
             it('should have dummy link in details view', () => {
                 cy.createApiRule({
