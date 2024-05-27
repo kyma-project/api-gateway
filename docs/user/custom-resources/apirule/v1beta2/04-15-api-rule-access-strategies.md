@@ -1,12 +1,8 @@
 # APIRule v1beta2 Access Strategies
 
-APIRule allows you to define the security configuration for an exposed endpoint using the concept of access strategies. You can specify access strategies in the **rules.accessStrategies** section of an APIRule.
+APIRule allows you to define the security configuration for an exposed endpoint using the concept of access strategies. The supported handlers for APIRule `v1beta2` are `no_auth` and `jwt`.
 
-Every **accessStrategy** contains two fields: **handler** and **config**. These fields determine which handler should be used and provide configuration options specific to the selected handler. The supported handlers for APIRule `v1beta2` are `no_auth` and `jwt`.
-
-## Handler Configuration
-
-### The `no_auth` Handler
+## Configuration of the `no_auth` Handler
 
 The intended functionality of this handler is to provide a simple configuration for exposing workloads. It does not use Oathkeeper configuration and instead relies only on Istio VirtualService.
 
@@ -20,9 +16,9 @@ rules:
     noAuth: true
 ```
 
-### The `jwt` Handler
+## Configuration of the `jwt` Handler
 
-By default, the `jwt` handler is configured in the same way as in the [Ory Oathkeeper JWT authenticator configuration](https://www.ory.sh/docs/oathkeeper/pipeline/authn#jwt). However, you can also use this handler with the Istio JWT configuration currently being developed. To learn more about this functionality, see [JWT Access Strategy](04-20-apirule-istio-jwt-access-strategy.md).
+In version v1beta2 of the APIRule CR, you can use this handler only with the Istio JWT configuration.
 
 ```yaml
 ...
@@ -35,4 +31,49 @@ rules:
           jwksUri: https://example.com/.well-known/jwks.json
       authorizations:
         - audiences: ["app1"]
+```
+
+### Authentications
+Under the hood, an authentications array creates a corresponding **requestPrincipals** array in the Istio’s Authorization Policy resource. Every **requestPrincipals** string is formatted as `<ISSUSER>/*`.
+
+### Authorizations
+The authorizations field is optional. When not defined, the authorization is satisfied if the JWT is valid. You can define multiple authorizations for an access strategy. The request is allowed if at least one of them is satisfied.
+
+The **requiredScopes** and **audiences** fields are optional. If the **requiredScopes** field is defined, the JWT must contain all the scopes in the scp, scope, or scopes claims to be authorized. If the **audiences** field is defined, the JWT has to contain all the audiences in the aud claim to be authorized.
+
+#### Example
+
+In the following example, the APIRule has two defined Issuers. The first Issuer, called `ISSUER`, uses a JWT token extracted from the HTTP header. The header is named `X-JWT-Assertion` and has a prefix of `Kyma`. The second Issuer, called `ISSUER2`, uses a JWT token extracted from a URL parameter named `jwt-token`.  
+**requiredScopes** defined in the **authorizations** field allow only for JWTs that have the claims **scp**, **scope**, or **scopes** with a value of `test` and an audience of either `example.com` or `example.org`. Alternatively, the JWTs can have the same claims with the `read` and `write` values.
+
+```yaml
+apiVersion: gateway.kyma-project.io/v1beta2
+kind: APIRule
+metadata:
+  name: service-config
+spec:
+  gateway: kyma-system/kyma-gateway
+  hosts:
+    - app1.example.com
+  service:
+    name: httpbin
+    port: 8000
+  rules:
+    - path: /headers
+      methods: ["GET"]
+      jwt:
+        authentications:
+          - issuer: $ISSUER
+            jwksUri: $JWKS_URI
+            fromHeaders:
+            - name: X-JWT-Assertion
+              prefix: "Kyma "
+            - issuer: $ISSUER2
+              jwksUri: $JWKS_URI2
+              fromParameters:
+            - "jwt_token"
+        authorizations:
+          - requiredScopes: ["test"]
+            audiences: ["example.com", "example.org"]
+          - requiredScopes: ["read", "write"]
 ```

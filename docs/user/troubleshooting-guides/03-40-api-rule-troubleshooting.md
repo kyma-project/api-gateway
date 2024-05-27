@@ -5,7 +5,7 @@
 When you create an APIRule, an instant validation error appears, or the APIRule custom resource (CR) has the `ERROR` status, for example:
 
 <!-- tabs:start -->
-#### v1beta1
+#### **v1beta1**
 
 ```bash
 kubectl get apirules.v1beta1.gateway.kyma-project.io httpbin
@@ -14,7 +14,7 @@ NAME      STATUS   HOST
 httpbin   ERROR    httpbin.xxx.shoot.canary.k8s-hana.ondemand.com
 ```
 
-#### v1beta2
+#### **v1beta2**
 
 ```bash
 kubectl get apirule httpbin
@@ -28,13 +28,13 @@ The error may result in an inconsistent state of the APIRule resource in which O
 To check the error message of the APIRule resource, run:
 
 <!-- tabs:start -->
-#### v1beta1
+#### **v1beta1**
 
 ```bash
 kubectl get apirules.v1beta1.gateway.kyma-project.io -n <namespace> <api-rule-name> -o=jsonpath='{.status.APIRuleStatus}'
 ```
 
-#### v1beta2
+#### **v1beta2**
 
 ```bash
 kubectl get apirule -n <namespace> <api-rule-name> -o=jsonpath='{.status.APIRuleStatus}'
