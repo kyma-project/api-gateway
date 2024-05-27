@@ -164,7 +164,7 @@ spec:
 ## Configuration of `noop`, `allow`, and `no_auth` Handlers 
 ### Cause
 
-In the following APIRule, the `noop` handler has the **trusted-issuers** field configured:
+In the following APIRule, the `no_auth` handler has the **trusted-issuers** field configured:
 
 ```yaml
 spec:
@@ -173,7 +173,7 @@ spec:
     - path: /.*
       methods: ["GET"]
       accessStrategies:
-        - handler: noop
+        - handler: no_auth
           config:
             trusted_issuers: ["https://dex.kyma.local"]
 ```
@@ -199,5 +199,5 @@ spec:
     - path: /.*
       methods: ["GET"]
       accessStrategies:
-        - handler: noop
+        - handler: no_auth
 ```
