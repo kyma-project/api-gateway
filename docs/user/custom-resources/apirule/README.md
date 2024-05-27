@@ -6,7 +6,9 @@ The `apirules.gateway.kyma-project.io` CRD describes the kind and the format of 
 > APIRule in version `v1beta1` will become deprecated in 2024. Migrate to version `v1beta2`.
 
 Browse the documentation related to the APIRule CR in version `v1beta2`:
-- [Specification of APIRule CR](./04-60-apirule-v1beta2-custom-resource.md)
+- [Specification of APIRule CR](./v1beta2/04-10-apirule-custom-resource.md)
+- [APIRule Access Strategies](./v1beta2/04-15-api-rule-access-strategies.md)
+- [APIRule Mutators](./v1beta2/04-40-apirule-mutators.md)
 
 Browse the documentation related to the APIRule CR in version `v1beta1`:
 - [Specification of APIRule CR](./04-10-apirule-custom-resource.md)
