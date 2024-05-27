@@ -1,7 +1,5 @@
 - name: host
-  widget: ExternalLink
   source: spec.host
-  link: 'status.APIRuleStatus.code = "OK" ? "https://" & $virtualServices().items[0].spec.hosts[0] : ""'
 - name: service-name
   source: '$string(spec.service.name) ? ($string(spec.service.name) & " (port: " & $string(spec.service.port) & ")") : ""'
   widget: ResourceLink

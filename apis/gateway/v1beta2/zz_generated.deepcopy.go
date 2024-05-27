@@ -21,7 +21,6 @@ limitations under the License.
 package v1beta2
 
 import (
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
@@ -213,11 +212,6 @@ func (in *CorsPolicy) DeepCopyInto(out *CorsPolicy) {
 		in, out := &in.ExposeHeaders, &out.ExposeHeaders
 		*out = make([]string, len(*in))
 		copy(*out, *in)
-	}
-	if in.MaxAge != nil {
-		in, out := &in.MaxAge, &out.MaxAge
-		*out = new(v1.Duration)
-		**out = **in
 	}
 }
 

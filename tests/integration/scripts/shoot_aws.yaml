@@ -1,0 +1,52 @@
+apiVersion: core.gardener.cloud/v1beta1
+kind: Shoot
+metadata:
+  name: ${CLUSTER_NAME}
+spec:
+  secretBindingName: ${GARDENER_PROVIDER_SECRET_NAME}
+  cloudProfileName: aws
+  region: ${GARDENER_REGION}
+  purpose: evaluation
+  provider:
+    type: aws
+    infrastructureConfig:
+      apiVersion: aws.provider.extensions.gardener.cloud/v1alpha1
+      kind: InfrastructureConfig
+      networks:
+        vpc:
+          cidr: 10.250.0.0/16
+        zones:
+          - name: ${GARDENER_REGION}a
+            internal: 10.250.48.0/20
+            public: 10.250.32.0/20
+            workers: 10.250.0.0/19
+          - name: ${GARDENER_REGION}b
+            internal: 10.250.112.0/20
+            public: 10.250.96.0/20
+            workers: 10.250.64.0/19
+          - name: ${GARDENER_REGION}c
+            internal: 10.250.176.0/20
+            public: 10.250.160.0/20
+            workers: 10.250.128.0/19
+    workers:
+      - name: cpu-worker
+        minimum: ${SCALER_MIN}
+        maximum: ${SCALER_MAX}
+        machine:
+          type: ${MACHINE_TYPE}
+        volume:
+          type: ${DISK_TYPE}
+          size: ${DISK_SIZE}Gi
+        zones:
+          - ${GARDENER_REGION}a
+          - ${GARDENER_REGION}b
+          - ${GARDENER_REGION}c
+  networking:
+    type: calico
+    pods: 100.96.0.0/11
+    nodes: 10.250.0.0/16
+    services: 100.64.0.0/13
+  kubernetes:
+    version: ${GARDENER_CLUSTER_VERSION}
+  hibernation:
+    enabled: false

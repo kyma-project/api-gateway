@@ -22,7 +22,7 @@ This table lists all parameters of APIRule `v1beta2` CRD together with their des
 | **corsPolicy.allowOrigins**                      |  **NO**   | Specifies origins allowed with the **Access-Control-Allow-Origins** CORS header.                                                                                                                                                                                                                                                             |                                                                                                       |
 | **corsPolicy.allowCredentials**                  |  **NO**   | Specifies whether credentials are allowed in the **Access-Control-Allow-Credentials** CORS header.                                                                                                                                                                                                                                           |                                                                                                       |
 | **corsPolicy.exposeHeaders**                     |  **NO**   | Specifies headers exposed with the **Access-Control-Expose-Headers** CORS header.                                                                                                                                                                                                                                                            |                                                                                                       |
-| **corsPolicy.maxAge**                            |  **NO**   | Specifies the maximum age of CORS policy cache. The value is provided in the **Access-Control-Max-Age** CORS header.                                                                                                                                                                                                                         |                                                                                                       |
+| **corsPolicy.maxAge**                            |  **NO**   | Specifies the maximum age of the CORS policy cache provided in the **Access-Control-Max-Age** CORS header. The value must be an integer expressed in seconds.                                                                                                                                                      |                                                                                                       |
 | **hosts**                                        |  **YES**  | Specifies the Service's communication address for inbound external traffic. If only the leftmost label is provided, the default domain name is used.                                                                                                                                                                                         | The full domain name or the leftmost label cannot contain the wildcard character `*`.                 |
 | **service.name**                                 |  **NO**   | Specifies the name of the exposed Service.                                                                                                                                                                                                                                                                                                   |                                                                                                       |
 | **service.namespace**                            |  **NO**   | Specifies the namespace of the exposed Service.                                                                                                                                                                                                                                                                                              |                                                                                                       |
@@ -57,24 +57,12 @@ This table lists all parameters of APIRule `v1beta2` CRD together with their des
 
 **Status:**
 
-When you fetch an existing APIRule CR, the system adds the **status** section which describes the status of the
-VirtualService created for this CR. The following table lists the fields of the **status** section.
+The following table lists the fields of the **status** section.
 
-| Field                                | Description                                        |
-|:-------------------------------------|:---------------------------------------------------|
-| **status.apiRuleStatus**             | Status code describing the APIRule CR.             |
-| **status.virtualServiceStatus.code** | Status code describing the VirtualService.         |
-| **status.virtualService.desc**       | Current state of the VirtualService.               |
-
-**Status codes:**
-
-The following status codes describe VirtualServices and Oathkeeper Access Rules:
-
-| Code        | Description                  |
-|-------------|------------------------------|
-| **OK**      | Resource created.            |
-| **SKIPPED** | Skipped creating a resource. |
-| **ERROR**   | Resource not created.        |
+| Field                  | Description                                                                                                                       |
+|:-----------------------|:----------------------------------------------------------------------------------------------------------------------------------|
+| **status.state**       | Defines the reconciliation state of the APIRule. The possible states are `Ready`, `Warning`, `Error`, `Processing` or `Deleting`. |
+| **status.description** | Detailed description of **status.state**.                                                                                         |
 
 ## Sample Custom Resource
 

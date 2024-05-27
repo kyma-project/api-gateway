@@ -2,6 +2,7 @@ package v1beta2_test
 
 import (
 	"encoding/json"
+	"time"
 
 	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"github.com/kyma-project/api-gateway/apis/gateway/v1beta2"
@@ -255,6 +256,27 @@ var _ = Describe("APIRule Conversion", func() {
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(Equal("either jwt is configured or noAuth must be set to true in a rule"))
 		})
+
+ 		It("should convert CORS maxAge from seconds as uint64 to duration", func() {
+ 			// given
+ 			apiRuleBeta2 := v1beta2.APIRule{
+ 				Spec: v1beta2.APIRuleSpec{
+ 					Hosts: []*v1beta2.Host{&host1},
+ 					CorsPolicy: &v1beta2.CorsPolicy{
+ 						MaxAge: 60,
+ 					},
+ 				},
+ 			}
+ 			apiRuleBeta1 := v1beta1.APIRule{}
+
+ 			// when
+ 			err := apiRuleBeta2.ConvertTo(&apiRuleBeta1)
+
+ 			// then
+ 			Expect(err).To(BeNil())
+ 			Expect(apiRuleBeta1.Spec.CorsPolicy.MaxAge).To(Equal(&metav1.Duration{Duration: time.Minute}))
+ 		})
+
 		It("should convert v1beta2 Ready state to OK status from APIRuleStatus", func() {
 			// given
 			apiRuleBeta2 := v1beta2.APIRule{
@@ -710,6 +732,26 @@ var _ = Describe("APIRule Conversion", func() {
 			Expect(err).To(BeNil())
 			Expect(apiRuleBeta2.Status.State).To(Equal(v1beta2.Error))
 			Expect(apiRuleBeta2.Status.Description).To(Equal("description"))
+		})
+
+		It("should convert CORS maxAge from duration to seconds as uint64, ignoring values less than 1 second", func() {
+			// given
+			apiRuleBeta1 := v1beta1.APIRule{
+				Spec: v1beta1.APIRuleSpec{
+					Host: &host1string,
+					CorsPolicy: &v1beta1.CorsPolicy{
+						MaxAge: &metav1.Duration{Duration: time.Minute + time.Millisecond},
+					},
+				},
+			}
+			apiRuleBeta2 := v1beta2.APIRule{}
+
+			// when
+			err := apiRuleBeta2.ConvertFrom(&apiRuleBeta1)
+
+			// then
+			Expect(err).To(BeNil())
+			Expect(apiRuleBeta2.Spec.CorsPolicy.MaxAge).To(Equal(uint64(60)))
 		})
 	})
 })
