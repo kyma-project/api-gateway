@@ -17,12 +17,8 @@ The `apirules.gateway.kyma-project.io` CRD describes the kind and the format of 
 > APIRule in version `v1beta1` will become deprecated in 2024. Migrate to version `v1beta2`.
 
 Browse the documentation related to the APIRule CR in version `v1beta2`:
-- [Specification of APIRule CR](./apirule/04-10-apirule-custom-resource.md) describing all primary parameters of APIRule CR
-- [APIRule Access Strategies](./apirule/04-15-api-rule-access-strategies.md)
-- [Istio JWT Access Strategy](./apirule/04-20-apirule-istio-jwt-access-strategy.md) that explains how to configure **rules.accessStrategies** for Istio JWT
-- [Comparison of Ory Oathkeeper and Istio JWT Access Strategies](./apirule/04-30-apirule-jwt-ory-and-istio-comparison.md)
-- [APIRule Mutators](./apirule/04-40-apirule-mutators.md)
-- [OAuth2 and JWT Authorization](./apirule/04-50-apirule-authorizations.md)
+- [Specification of APIRule CR](./apirule/v1beta2/04-10-apirule-custom-resource.md) describing all primary parameters of APIRule CR
+- [APIRule Access Strategies](./apirule/v1beta2/04-15-api-rule-access-strategies)
 
 Browse the documentation related to the APIRule CR in version `v1beta1`:
 - [Specification of APIRule CR](./apirule/04-10-apirule-custom-resource.md) describing all primary parameters of APIRule CR
