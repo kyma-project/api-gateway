@@ -16,5 +16,5 @@ users:
   - name: github
     user:
       token: >-
-        $GARDENER_TOKEN
+        $GARDENER_LIVE_TOKEN
 EOF
