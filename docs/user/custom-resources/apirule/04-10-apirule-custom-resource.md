@@ -70,9 +70,6 @@ The following status codes describe VirtualServices and Oathkeeper Access Rules:
 | **SKIPPED** | Skipped creating a resource. |
 | **ERROR**   | Resource not created.        |
 
-## Access Strategies
-
-
 ## Sample Custom Resource
 
 This is a sample custom resource (CR) that the APIGateway Controller listens for to expose a Service. The following

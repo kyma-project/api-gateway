@@ -67,9 +67,9 @@ spec:
             fromHeaders:
             - name: X-JWT-Assertion
               prefix: "Kyma "
-            - issuer: $ISSUER2
-              jwksUri: $JWKS_URI2
-              fromParameters:
+          - issuer: $ISSUER2
+            jwksUri: $JWKS_URI2
+            fromParameters:
             - "jwt_token"
         authorizations:
           - requiredScopes: ["test"]
