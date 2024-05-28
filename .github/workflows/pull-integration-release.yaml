@@ -96,7 +96,7 @@ jobs:
       - uses: ./.github/actions/integration-test-gardener
         with:
           manager_image: "europe-docker.pkg.dev/kyma-project/dev/api-gateway-manager:PR-${{github.event.number}}"
-          gardener_secret: ${{ secrets.GARDENER_TOKEN }}
+          gardener_secret: ${{ secrets.GARDENER_LIVE_TOKEN }}
           script: ./tests/integration/scripts/custom-domain-gardener-gcp-gh.sh
           client_id: ${{ secrets.CLIENT_ID }}
           client_secret: ${{ secrets.CLIENT_SECRET }}
@@ -115,7 +115,7 @@ jobs:
       - uses: ./.github/actions/integration-test-gardener
         with:
           manager_image: "europe-docker.pkg.dev/kyma-project/dev/api-gateway-manager:PR-${{github.event.number}}"
-          gardener_secret: ${{ secrets.GARDENER_TOKEN }}
+          gardener_secret: ${{ secrets.GARDENER_LIVE_TOKEN }}
           script: ./tests/integration/scripts/custom-domain-gardener-aws-gh.sh
           client_id: ${{ secrets.CLIENT_ID }}
           client_secret: ${{ secrets.CLIENT_SECRET }}

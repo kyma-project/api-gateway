@@ -37,7 +37,7 @@ runs:
     - name: Prepare gardener kubeconfig
       shell: bash
       env:
-        GARDENER_TOKEN: ${{ inputs.gardener_secret }}
+        GARDENER_LIVE_TOKEN: ${{ inputs.gardener_secret }}
       run: |
         ./hack/ci/gardener_kubeconfig.sh
     - name: Prepare DNS SA secret
