@@ -11,7 +11,7 @@ contexts:
 clusters:
   - name: garden
     cluster:
-      server: https://api.live.gardener.cloud.sap/
+      server: https://api.live.gardener.cloud.sap
 users:
   - name: github
     user:
