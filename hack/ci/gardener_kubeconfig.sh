@@ -1,19 +1,19 @@
 cat <<EOF > gardener_kubeconfig.yaml
 apiVersion: v1
 kind: Config
-current-context: garden-goatz-cli-test
+current-context: garden-goats-github
 contexts:
-  - name: garden-goatz-cli-test
+  - name: garden-goats-github
     context:
       cluster: garden
-      user: cli-test
-      namespace: garden-goatz
+      user: github
+      namespace: garden-goats
 clusters:
   - name: garden
     cluster:
-      server: https://api.canary.gardener.cloud.sap/
+      server: https://api.live.gardener.cloud.sap
 users:
-  - name: cli-test
+  - name: github
     user:
       token: >-
         $GARDENER_TOKEN
