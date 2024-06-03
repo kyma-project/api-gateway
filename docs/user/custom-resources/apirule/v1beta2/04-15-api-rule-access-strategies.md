@@ -1,12 +1,11 @@
 # APIRule v1beta2 Access Strategies
 
-APIRule allows you to define the security configuration for an exposed endpoint using the concept of access strategies. The supported handlers for APIRule `v1beta2` are `noAuth` and `jwt`.
+APIRule allows you to define the security configuration for an exposed endpoint using the concept of access strategies. The supported access strategies for APIRule `v1beta2` are **noAuth** and **jwt**.
 
-## Configuration of the `noAuth` Handler
+## Configuration of the **noAuth** Access Strategy
 
-The intended functionality of this handler is to provide a simple configuration for exposing workloads.
-
-The `noAuth` handler only allows access to the specified HTTP methods of the exposed workload. You must not configure the **config** field when using this handler.
+The intended functionality of this access strategy is to provide a simple configuration for exposing workloads.
+It only allows access to the specified HTTP methods of the exposed workload.
 
 ```yaml
 ...
@@ -16,9 +15,9 @@ rules:
     noAuth: true
 ```
 
-## Configuration of the `jwt` Handler
+## Configuration of the **jwt** Access Strategy
 
-In version v1beta2 of the APIRule CR, you can use this handler only with the Istio JWT configuration.
+In version `v1beta2` of the APIRule CR, you can use this access strategy only with the Istio JWT configuration.
 
 ```yaml
 ...
