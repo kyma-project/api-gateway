@@ -112,7 +112,9 @@ The procedure of setting up a working mTLS Gateway is described in the following
 
 ### Expose Workloads Behind Your mTLS Gateway
 
-To expose a custom workload, create an APIRule.
+To expose a custom workload, create an APIRule. You can either use version `v1beta1` or `v1beta2`.
+
+### Use APIRule `v1beta1`
 
 <!-- tabs:start -->
 #### **Kyma Dashboard**
@@ -156,6 +158,32 @@ spec:
     port: 8000
 EOF
 ```
+
+### Use APIRule `v1beta2`
+
+```bash
+cat <<EOF | kubectl apply -f -
+apiVersion: gateway.kyma-project.io/v1beta2
+kind: APIRule
+metadata:
+  labels:
+    app.kubernetes.io/name: httpbin-mtls
+  name: httpbin-mtls
+  namespace: default
+spec:
+  hosts: 
+    - httpbin.$DOMAIN_TO_EXPOSE_WORKLOADS
+  gateway: default/kyma-mtls-gateway
+  rules:
+    - path: /.*
+      methods: ["GET"]
+      noAuth: true
+  service:
+  name: httpbin
+  port: 8000
+EOF
+```
+
 <!-- tabs:end -->
 
 This configuration uses the newly created Gateway `kyma-mtls-gateway` and exposes all workloads behind mTLS.

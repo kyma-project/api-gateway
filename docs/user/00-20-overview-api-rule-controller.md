@@ -6,11 +6,11 @@ APIRule Controller is part of Kyma API Gateway Operator. It uses [Ory Oathkeeper
 
 ## APIRule Custom Resource
 
-The `apirules.gateway.kyma-project.io` CustomResourceDefinition (CRD) describes the APIRule custom resource (CR) that is used to expose and secure APIs. To learn more, read the [APIRule CR documentation](./custom-resources/apirule/04-10-apirule-custom-resource.md).
+The `apirules.gateway.kyma-project.io` CustomResourceDefinition (CRD) describes the APIRule custom resource (CR) that is used to expose and secure APIs. See the specification of the APIRule CR in version [`v1beta1`](./custom-resources/apirule/04-10-apirule-custom-resource.md) and [`v1beta2`](./custom-resources/apirule/v1beta2/04-10-apirule-custom-resource.md).
 
 ## api-gateway-config ConfigMap
 
-The `api-gateway-config` ConfigMap contains the configuration of the JWT Handler. To learn more about how to [enable Istio the JWT handling](./custom-resources/apirule/04-20-apirule-istio-jwt-access-strategy.md).
+The `api-gateway-config` ConfigMap contains the configuration of the **jwt** access strategy.
 
 ## Status Codes
 
