@@ -18,7 +18,7 @@ The `apirules.gateway.kyma-project.io` CRD describes the kind and the format of 
 
 Browse the documentation related to the APIRule CR in version `v1beta2`:
 - [Specification of APIRule CR](./apirule/v1beta2/04-10-apirule-custom-resource.md) describing all primary parameters of APIRule CR
-- [APIRule Access Strategies](./apirule/v1beta2/04-15-api-rule-access-strategies)
+- [APIRule Access Strategies](./apirule/v1beta2/04-15-api-rule-access-strategies.md)
 
 Browse the documentation related to the APIRule CR in version `v1beta1`:
 - [Specification of APIRule CR](./apirule/04-10-apirule-custom-resource.md) describing all primary parameters of APIRule CR
