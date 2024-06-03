@@ -158,6 +158,7 @@ spec:
     port: 8000
 EOF
 ```
+<!-- tabs:end -->
 
 ### Use APIRule `v1beta2`
 
@@ -183,8 +184,6 @@ spec:
   port: 8000
 EOF
 ```
-
-<!-- tabs:end -->
 
 This configuration uses the newly created Gateway `kyma-mtls-gateway` and exposes all workloads behind mTLS.
 
