@@ -1,11 +1,11 @@
-# Issues When Creating an APIRule in version v1beta1
+# Issues When Creating an APIRule - Various Reasons
 
 ## Symptom
 
 When you create an APIRule, an instant validation error appears, or the APIRule custom resource (CR) has the `ERROR` status, for example:
 
 ```bash
-kubectl get apirules.v1beta1.gateway.kyma-project.io httpbin
+kubectl get apirule httpbin
 
 NAME      STATUS   HOST
 httpbin   ERROR    httpbin.xxx.shoot.canary.k8s-hana.ondemand.com
@@ -14,11 +14,9 @@ httpbin   ERROR    httpbin.xxx.shoot.canary.k8s-hana.ondemand.com
 The error may result in an inconsistent state of the APIRule resource in which Ory CR, Istio CR, or both are missing. Your Service then cannot be properly exposed.
 To check the error message of the APIRule resource, run:
 
-
 ```bash
-kubectl get apirules.v1beta1.gateway.kyma-project.io -n <namespace> <api-rule-name> -o=jsonpath='{.status.APIRuleStatus}'
+kubectl get apirule -n <namespace> <api-rule-name> -o=jsonpath='{.status.APIRuleStatus}'
 ```
-
 ---
 ## JWT Handler's **trusted_issuers** Configuration Is Missing
 ### Cause
@@ -105,7 +103,7 @@ spec:
 ## Unsupported Handlers' Combination
 ### Cause
 
-The following APIRule has both `no_auth` and `jwt` handlers defined on the same path:
+The following APIRule has both `allow` and `jwt` handlers defined on the same path:
 
 ```yaml
 spec:
@@ -114,7 +112,7 @@ spec:
     - path: /.*
       methods: ["GET"]
       accessStrategies:
-        - handler: no_auth
+        - handler: allow
         - handler: jwt
           config:
             trusted_issuers: ["https://dev.kyma.local"]
@@ -128,7 +126,7 @@ The handlers' combination in the above example is not supported. If an APIRule h
 
 ### Remedy
 
-Decide on one configuration you want to use. You can either `no_auth` access to the specific path or restrict it using the JWT security token. Defining both configuration methods on the same path is not allowed.
+Decide on one configuration you want to use. You can either `allow` access to the specific path or restrict it using the JWT security token. Defining both configuration methods on the same path is not allowed.
 
 ---
 ## Occupied Host
@@ -161,13 +159,9 @@ spec:
 
 ---
 ## Configuration of `noop`, `allow`, and `no_auth` Handlers 
-
-> [!WARNING]
-> The `noop` and `allow` handlers are supported only in version `v1beta1` of APIRule, which will become deprecated in 2024. Migrate to version `v1beta2`.
-
 ### Cause
 
-In the following APIRule, the `no_auth` handler has the **trusted-issuers** field configured:
+In the following APIRule, the `noop` handler has the **trusted-issuers** field configured:
 
 ```yaml
 spec:
@@ -176,7 +170,7 @@ spec:
     - path: /.*
       methods: ["GET"]
       accessStrategies:
-        - handler: no_auth
+        - handler: noop
           config:
             trusted_issuers: ["https://dex.kyma.local"]
 ```
@@ -186,7 +180,6 @@ If your APIRule uses either the `noop`, `allow`, or `no_auth` handler and has so
 ```
 {"code":"ERROR","desc":"Validation error: Attribute \".spec.rules[0].accessStrategies[0].config\": strategy: noop does not support configuration"}
 ```
-
 
 ### Remedy
 
@@ -199,5 +192,5 @@ spec:
     - path: /.*
       methods: ["GET"]
       accessStrategies:
-        - handler: no_auth
+        - handler: noop
 ```
