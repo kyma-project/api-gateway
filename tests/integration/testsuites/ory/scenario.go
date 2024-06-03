@@ -106,6 +106,9 @@ func (s *scenario) theAPIRuleIsDeletedUsingV1beta2Version() error {
 	}
 
 	groupVersionResource, err := resource.GetGvrFromUnstructured(s.resourceManager, resourceManifest[0])
+	if err != nil {
+		return err
+	}
 	groupVersionResource.Version = "v1beta2"
 
 	return s.resourceManager.DeleteResource(s.k8sClient, *groupVersionResource, resourceManifest[0].GetNamespace(), resourceManifest[0].GetName())
@@ -118,6 +121,9 @@ func (s *scenario) theAPIRuleHasStatus(expectedStatus string) error {
 	}
 
 	groupVersionResource, err := resource.GetGvrFromUnstructured(s.resourceManager, resourceManifest[0])
+	if err != nil {
+		return err
+	}
 
 	return retry.Do(func() error {
 		apiRule, err := s.resourceManager.GetResource(s.k8sClient, *groupVersionResource, resourceManifest[0].GetNamespace(), resourceManifest[0].GetName())
