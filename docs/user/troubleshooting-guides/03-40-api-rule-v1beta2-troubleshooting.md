@@ -43,7 +43,7 @@ spec:
 If the **issuer** URL is an unsecured HTTP URL, or the **issuer** URL is not valid, you get the following error, and the APIRule resource is not created:
 
 ```
-TBD
+The APIRule "httpbin" is invalid: spec.Rules[0].Jwt.Authentications[0].Issuer: Invalid value: "some-url": spec.Rules[0].Jwt.Authentications[0].Issuer in body should match '^(https://|file://).*$'
 ```
 
 ### Remedy
@@ -86,7 +86,7 @@ spec:
 If you set **noAuth** access strategy to `true` and define the **jwt** configuration on the same path, you get the following `APIRuleStatus` error appears:
 
 ```
-TBD
+{"code":"ERROR","desc":"Validation error: Attribute \"spec.Rules[0].noAuth": either jwt is configured or noAuth must be set to true in a rule"}
 ```
 
 ### Remedy
@@ -120,41 +120,4 @@ Use a different host for the second APIRule CR, for example:
 spec:
   ...
   host: httpbin-new.xxx.shoot.canary.k8s-hana.ondemand.com
-```
-
----
-## Additional configuration for **noAuth** Access Strategy
-
-### Cause
-
-In the following APIRule CR, the **noAuth** access strategy has the **issuer** field configured:
-
-```yaml
-spec:
-  ...
-  rules:
-    - path: /.*
-      noAuth: true
-        authentications:
-          - issuer: https://dev.kyma.local
-            jwksUri: https://dev.kyma.local/.well-known/jwks.json
-```
-
-If your APIRule CR uses the **noAuth** access strategy and has some further configuration defined, you get the following `APIRuleStatus` error:
-
-```
-TBD
-```
-
-
-### Remedy
-
-Use the **noAuth** access strategy without any further configuration:
-
-```yaml
-spec:
-  ...
-  rules:
-    - path: /.*
-      noAuth: true
 ```
