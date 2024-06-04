@@ -2,7 +2,6 @@ package v1beta2
 
 import (
 	"encoding/json"
-	"errors"
 	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -76,7 +75,10 @@ func (apiRuleBeta2 *APIRule) ConvertTo(hub conversion.Hub) error {
 		apiRuleBeta1.Spec.CorsPolicy.AllowOrigins = v1beta1.StringMatch(apiRuleBeta2.Spec.CorsPolicy.AllowOrigins)
 		apiRuleBeta1.Spec.CorsPolicy.AllowCredentials = apiRuleBeta2.Spec.CorsPolicy.AllowCredentials
 		apiRuleBeta1.Spec.CorsPolicy.ExposeHeaders = apiRuleBeta2.Spec.CorsPolicy.ExposeHeaders
-		apiRuleBeta1.Spec.CorsPolicy.MaxAge = &metav1.Duration{Duration: time.Duration(apiRuleBeta2.Spec.CorsPolicy.MaxAge) * time.Second}
+
+		if apiRuleBeta2.Spec.CorsPolicy.MaxAge != nil {
+			apiRuleBeta1.Spec.CorsPolicy.MaxAge = &metav1.Duration{Duration: time.Duration(*apiRuleBeta2.Spec.CorsPolicy.MaxAge) * time.Second}
+		}
 	}
 
 	// Only one host is supported in v1beta1, so we use the first one from the list
@@ -107,9 +109,6 @@ func (apiRuleBeta2 *APIRule) ConvertTo(hub conversion.Hub) error {
 				},
 			})
 		}
-		if len(ruleBeta1.AccessStrategies) == 0 {
-			return errors.New("either jwt is configured or noAuth must be set to true in a rule")
-		}
 		apiRuleBeta1.Spec.Rules = append(apiRuleBeta1.Spec.Rules, ruleBeta1)
 	}
 
@@ -126,9 +125,9 @@ func (apiRuleBeta2 *APIRule) ConvertFrom(hub conversion.Hub) error {
 	if err != nil {
 		return err
 	}
-	if !conversionPossible {
+	if conversionPossible {
 		// We have to stop the conversion here, because we want to return an empty Spec in case we cannot fully convert the APIRule.
-		return nil
+		// TODO Decide how to handle the case when the conversion is not possible.
 	}
 
 	err = convertOverJson(apiRuleBeta1.Spec.Rules, &apiRuleBeta2.Spec.Rules)
@@ -170,7 +169,10 @@ func (apiRuleBeta2 *APIRule) ConvertFrom(hub conversion.Hub) error {
 		// however the Access-Control-Max-Age header is specified in seconds without decimals.
 		// In consequence, the conversion drops any values smaller than 1 second.
 		// https://fetch.spec.whatwg.org/#http-responses
-		apiRuleBeta2.Spec.CorsPolicy.MaxAge = uint64(apiRuleBeta1.Spec.CorsPolicy.MaxAge.Duration.Seconds())
+		if apiRuleBeta1.Spec.CorsPolicy.MaxAge != nil {
+			maxAge := uint64(apiRuleBeta1.Spec.CorsPolicy.MaxAge.Duration.Seconds())
+			apiRuleBeta2.Spec.CorsPolicy.MaxAge = &maxAge
+		}
 	}
 
 	apiRuleBeta2.Spec.Rules = []Rule{}

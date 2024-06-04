@@ -213,6 +213,6 @@ type CorsPolicy struct {
 	AllowOrigins     StringMatch `json:"allowOrigins,omitempty"`
 	AllowCredentials *bool       `json:"allowCredentials,omitempty"`
 	ExposeHeaders    []string    `json:"exposeHeaders,omitempty"`
-	// +kubebuilder:validation:Minimum=0
-	MaxAge uint64 `json:"maxAge,omitempty"`
+	// +kubebuilder:validation:Minimum=1
+	MaxAge *uint64 `json:"maxAge,omitempty"`
 }
