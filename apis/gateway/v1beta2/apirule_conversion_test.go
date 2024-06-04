@@ -257,25 +257,25 @@ var _ = Describe("APIRule Conversion", func() {
 			Expect(err.Error()).To(Equal("either jwt is configured or noAuth must be set to true in a rule"))
 		})
 
- 		It("should convert CORS maxAge from seconds as uint64 to duration", func() {
- 			// given
- 			apiRuleBeta2 := v1beta2.APIRule{
- 				Spec: v1beta2.APIRuleSpec{
- 					Hosts: []*v1beta2.Host{&host1},
- 					CorsPolicy: &v1beta2.CorsPolicy{
- 						MaxAge: 60,
- 					},
- 				},
- 			}
- 			apiRuleBeta1 := v1beta1.APIRule{}
+		It("should convert CORS maxAge from seconds as uint64 to duration", func() {
+			// given
+			apiRuleBeta2 := v1beta2.APIRule{
+				Spec: v1beta2.APIRuleSpec{
+					Hosts: []*v1beta2.Host{&host1},
+					CorsPolicy: &v1beta2.CorsPolicy{
+						MaxAge: 60,
+					},
+				},
+			}
+			apiRuleBeta1 := v1beta1.APIRule{}
 
- 			// when
- 			err := apiRuleBeta2.ConvertTo(&apiRuleBeta1)
+			// when
+			err := apiRuleBeta2.ConvertTo(&apiRuleBeta1)
 
- 			// then
- 			Expect(err).To(BeNil())
- 			Expect(apiRuleBeta1.Spec.CorsPolicy.MaxAge).To(Equal(&metav1.Duration{Duration: time.Minute}))
- 		})
+			// then
+			Expect(err).To(BeNil())
+			Expect(apiRuleBeta1.Spec.CorsPolicy.MaxAge).To(Equal(&metav1.Duration{Duration: time.Minute}))
+		})
 
 		It("should convert v1beta2 Ready state to OK status from APIRuleStatus", func() {
 			// given
@@ -405,122 +405,6 @@ var _ = Describe("APIRule Conversion", func() {
 			Expect(*apiRuleBeta2.Spec.Rules[0].NoAuth).To(BeTrue())
 		})
 
-		It("should convert JWT to v1beta2", func() {
-			// given
-			jwtHeadersBeta1 := []*v1beta1.JwtHeader{
-				{Name: "header1", Prefix: "prefix1"},
-			}
-
-			jwtConfigBeta1 := v1beta1.JwtConfig{
-				Authentications: []*v1beta1.JwtAuthentication{
-					{
-						Issuer:      "issuer",
-						JwksUri:     "jwksUri",
-						FromHeaders: jwtHeadersBeta1,
-						FromParams:  []string{"param1", "param2"},
-					},
-				},
-				Authorizations: []*v1beta1.JwtAuthorization{
-					{
-						RequiredScopes: []string{"scope1", "scope2"},
-						Audiences:      []string{"audience1", "audience2"},
-					},
-				},
-			}
-
-			apiRuleBeta1 := v1beta1.APIRule{
-				Spec: v1beta1.APIRuleSpec{
-					Host: &host1string,
-					Rules: []v1beta1.Rule{
-						{
-							AccessStrategies: []*v1beta1.Authenticator{
-								{
-									Handler: &v1beta1.Handler{
-										Name:   "jwt",
-										Config: &runtime.RawExtension{Object: &jwtConfigBeta1},
-									},
-								},
-							},
-						},
-					},
-				},
-			}
-			apiRuleBeta2 := v1beta2.APIRule{}
-
-			// when
-			err := apiRuleBeta2.ConvertFrom(&apiRuleBeta1)
-
-			// then
-			Expect(err).ToNot(HaveOccurred())
-			Expect(apiRuleBeta2.Spec.Rules).To(HaveLen(1))
-			Expect(apiRuleBeta2.Spec.Rules[0].Jwt).ToNot(BeNil())
-			Expect(apiRuleBeta2.Spec.Rules[0].Jwt.Authentications).To(HaveLen(1))
-			Expect(apiRuleBeta2.Spec.Rules[0].Jwt.Authentications[0].Issuer).To(Equal("issuer"))
-			Expect(apiRuleBeta2.Spec.Rules[0].Jwt.Authentications[0].JwksUri).To(Equal("jwksUri"))
-			Expect(apiRuleBeta2.Spec.Rules[0].Jwt.Authentications[0].FromHeaders).To(HaveLen(1))
-			Expect(apiRuleBeta2.Spec.Rules[0].Jwt.Authentications[0].FromHeaders[0].Name).To(Equal(jwtHeadersBeta1[0].Name))
-			Expect(apiRuleBeta2.Spec.Rules[0].Jwt.Authentications[0].FromHeaders[0].Prefix).To(Equal(jwtHeadersBeta1[0].Prefix))
-			Expect(apiRuleBeta2.Spec.Rules[0].Jwt.Authentications[0].FromParams).To(HaveExactElements("param1", "param2"))
-			Expect(apiRuleBeta2.Spec.Rules[0].Jwt.Authorizations).To(HaveLen(1))
-			Expect(apiRuleBeta2.Spec.Rules[0].Jwt.Authorizations[0].RequiredScopes).To(HaveExactElements("scope1", "scope2"))
-			Expect(apiRuleBeta2.Spec.Rules[0].Jwt.Authorizations[0].Audiences).To(HaveExactElements("audience1", "audience2"))
-		})
-
-		It("should convert JWT to v1beta2 when config stored as raw", func() {
-			// given
-			jwtHeadersBeta1 := []*v1beta1.JwtHeader{
-				{Name: "header1", Prefix: "prefix1"},
-			}
-
-			jwtConfigBeta1 := v1beta1.JwtConfig{
-				Authentications: []*v1beta1.JwtAuthentication{
-					{
-						Issuer:      "issuer",
-						JwksUri:     "jwksUri",
-						FromHeaders: jwtHeadersBeta1,
-						FromParams:  []string{"param1", "param2"},
-					},
-				},
-				Authorizations: []*v1beta1.JwtAuthorization{
-					{
-						RequiredScopes: []string{"scope1", "scope2"},
-						Audiences:      []string{"audience1", "audience2"},
-					},
-				},
-			}
-			jsonConfig, err := json.Marshal(jwtConfigBeta1)
-			Expect(err).ToNot(HaveOccurred())
-
-			apiRuleBeta1 := v1beta1.APIRule{
-				Spec: v1beta1.APIRuleSpec{
-					Host: &host1string,
-					Rules: []v1beta1.Rule{
-						{
-							AccessStrategies: []*v1beta1.Authenticator{
-								{
-									Handler: &v1beta1.Handler{
-										Name:   "jwt",
-										Config: &runtime.RawExtension{Raw: jsonConfig},
-									},
-								},
-							},
-						},
-					},
-				},
-			}
-			apiRuleBeta2 := v1beta2.APIRule{}
-
-			// when
-			err = apiRuleBeta2.ConvertFrom(&apiRuleBeta1)
-
-			// then
-			Expect(err).ToNot(HaveOccurred())
-			Expect(apiRuleBeta2.Spec.Rules).To(HaveLen(1))
-			Expect(apiRuleBeta2.Spec.Rules[0].Jwt).ToNot(BeNil())
-			Expect(apiRuleBeta2.Spec.Rules[0].Jwt.Authentications).To(HaveLen(1))
-			Expect(apiRuleBeta2.Spec.Rules[0].Jwt.Authorizations).To(HaveLen(1))
-		})
-
 		It("should convert two rules with NoAuth and JWT to v1beta2", func() {
 			// given
 			apiRuleBeta1 := v1beta1.APIRule{
@@ -542,7 +426,14 @@ var _ = Describe("APIRule Conversion", func() {
 									Handler: &v1beta1.Handler{
 										Name: "jwt",
 										Config: &runtime.RawExtension{
-											Object: &v1beta1.JwtConfig{},
+											Object: &v1beta1.JwtConfig{
+												Authentications: []*v1beta1.JwtAuthentication{
+													{
+														Issuer:  "issuer",
+														JwksUri: "jwksUri",
+													},
+												},
+											},
 										},
 									},
 								},
@@ -565,125 +456,542 @@ var _ = Describe("APIRule Conversion", func() {
 			Expect(apiRuleBeta2.Spec.Rules[1].Jwt).ToNot(BeNil())
 		})
 
-		It("should fail to convert rule with ory jwt to v1beta2", func() {
-			// given
-			apiRuleBeta1 := v1beta1.APIRule{
-				ObjectMeta: metav1.ObjectMeta{
-					Namespace: "test-ns",
-					Name:      "test-name",
-				},
-				Spec: v1beta1.APIRuleSpec{
-					Gateway: ptr.To("gateway"),
-					Service: &v1beta1.Service{Name: ptr.To("service")},
-					Host:    &host1string,
-					Rules: []v1beta1.Rule{
+		Context("with JWT", func() {
+			It("should convert JWT", func() {
+				// given
+				jwtHeadersBeta1 := []*v1beta1.JwtHeader{
+					{Name: "header1", Prefix: "prefix1"},
+				}
+
+				jwtConfigBeta1 := v1beta1.JwtConfig{
+					Authentications: []*v1beta1.JwtAuthentication{
 						{
-							Path:    "/path1",
-							Service: &v1beta1.Service{Name: ptr.To("rule-service")},
-							AccessStrategies: []*v1beta1.Authenticator{
-								{
-									Handler: &v1beta1.Handler{
-										Name: "jwt",
-										Config: &runtime.RawExtension{
-											Raw: []byte(`{
+							Issuer:      "issuer",
+							JwksUri:     "jwksUri",
+							FromHeaders: jwtHeadersBeta1,
+							FromParams:  []string{"param1", "param2"},
+						},
+					},
+					Authorizations: []*v1beta1.JwtAuthorization{
+						{
+							RequiredScopes: []string{"scope1", "scope2"},
+							Audiences:      []string{"audience1", "audience2"},
+						},
+					},
+				}
+
+				apiRuleBeta1 := v1beta1.APIRule{
+					Spec: v1beta1.APIRuleSpec{
+						Host: &host1string,
+						Rules: []v1beta1.Rule{
+							{
+								AccessStrategies: []*v1beta1.Authenticator{
+									{
+										Handler: &v1beta1.Handler{
+											Name:   "jwt",
+											Config: &runtime.RawExtension{Object: &jwtConfigBeta1},
+										},
+									},
+								},
+							},
+						},
+					},
+				}
+				apiRuleBeta2 := v1beta2.APIRule{}
+
+				// when
+				err := apiRuleBeta2.ConvertFrom(&apiRuleBeta1)
+
+				// then
+				Expect(err).ToNot(HaveOccurred())
+				Expect(apiRuleBeta2.Spec.Rules).To(HaveLen(1))
+				Expect(apiRuleBeta2.Spec.Rules[0].Jwt).ToNot(BeNil())
+				Expect(apiRuleBeta2.Spec.Rules[0].Jwt.Authentications).To(HaveLen(1))
+				Expect(apiRuleBeta2.Spec.Rules[0].Jwt.Authentications[0].Issuer).To(Equal("issuer"))
+				Expect(apiRuleBeta2.Spec.Rules[0].Jwt.Authentications[0].JwksUri).To(Equal("jwksUri"))
+				Expect(apiRuleBeta2.Spec.Rules[0].Jwt.Authentications[0].FromHeaders).To(HaveLen(1))
+				Expect(apiRuleBeta2.Spec.Rules[0].Jwt.Authentications[0].FromHeaders[0].Name).To(Equal(jwtHeadersBeta1[0].Name))
+				Expect(apiRuleBeta2.Spec.Rules[0].Jwt.Authentications[0].FromHeaders[0].Prefix).To(Equal(jwtHeadersBeta1[0].Prefix))
+				Expect(apiRuleBeta2.Spec.Rules[0].Jwt.Authentications[0].FromParams).To(HaveExactElements("param1", "param2"))
+				Expect(apiRuleBeta2.Spec.Rules[0].Jwt.Authorizations).To(HaveLen(1))
+				Expect(apiRuleBeta2.Spec.Rules[0].Jwt.Authorizations[0].RequiredScopes).To(HaveExactElements("scope1", "scope2"))
+				Expect(apiRuleBeta2.Spec.Rules[0].Jwt.Authorizations[0].Audiences).To(HaveExactElements("audience1", "audience2"))
+			})
+
+			It("should convert JWT without Authorizations", func() {
+				// given
+				jwtConfigBeta1 := v1beta1.JwtConfig{
+					Authentications: []*v1beta1.JwtAuthentication{
+						{
+							Issuer:  "issuer",
+							JwksUri: "jwksUri",
+						},
+					},
+				}
+
+				apiRuleBeta1 := v1beta1.APIRule{
+					Spec: v1beta1.APIRuleSpec{
+						Host: &host1string,
+						Rules: []v1beta1.Rule{
+							{
+								AccessStrategies: []*v1beta1.Authenticator{
+									{
+										Handler: &v1beta1.Handler{
+											Name:   "jwt",
+											Config: &runtime.RawExtension{Object: &jwtConfigBeta1},
+										},
+									},
+								},
+							},
+						},
+					},
+				}
+				apiRuleBeta2 := v1beta2.APIRule{}
+
+				// when
+				err := apiRuleBeta2.ConvertFrom(&apiRuleBeta1)
+
+				// then
+				Expect(err).ToNot(HaveOccurred())
+				Expect(apiRuleBeta2.Spec.Rules).To(HaveLen(1))
+				Expect(apiRuleBeta2.Spec.Rules[0].Jwt).ToNot(BeNil())
+				Expect(apiRuleBeta2.Spec.Rules[0].Jwt.Authentications).To(HaveLen(1))
+				Expect(apiRuleBeta2.Spec.Rules[0].Jwt.Authentications[0].Issuer).To(Equal("issuer"))
+				Expect(apiRuleBeta2.Spec.Rules[0].Jwt.Authentications[0].JwksUri).To(Equal("jwksUri"))
+			})
+
+			It("should convert JWT to v1beta2 when config stored as raw", func() {
+				// given
+				jwtHeadersBeta1 := []*v1beta1.JwtHeader{
+					{Name: "header1", Prefix: "prefix1"},
+				}
+
+				jwtConfigBeta1 := v1beta1.JwtConfig{
+					Authentications: []*v1beta1.JwtAuthentication{
+						{
+							Issuer:      "issuer",
+							JwksUri:     "jwksUri",
+							FromHeaders: jwtHeadersBeta1,
+							FromParams:  []string{"param1", "param2"},
+						},
+					},
+					Authorizations: []*v1beta1.JwtAuthorization{
+						{
+							RequiredScopes: []string{"scope1", "scope2"},
+							Audiences:      []string{"audience1", "audience2"},
+						},
+					},
+				}
+				jsonConfig, err := json.Marshal(jwtConfigBeta1)
+				Expect(err).ToNot(HaveOccurred())
+
+				apiRuleBeta1 := v1beta1.APIRule{
+					Spec: v1beta1.APIRuleSpec{
+						Host: &host1string,
+						Rules: []v1beta1.Rule{
+							{
+								AccessStrategies: []*v1beta1.Authenticator{
+									{
+										Handler: &v1beta1.Handler{
+											Name:   "jwt",
+											Config: &runtime.RawExtension{Raw: jsonConfig},
+										},
+									},
+								},
+							},
+						},
+					},
+				}
+				apiRuleBeta2 := v1beta2.APIRule{}
+
+				// when
+				err = apiRuleBeta2.ConvertFrom(&apiRuleBeta1)
+
+				// then
+				Expect(err).ToNot(HaveOccurred())
+				Expect(apiRuleBeta2.Spec.Rules).To(HaveLen(1))
+				Expect(apiRuleBeta2.Spec.Rules[0].Jwt).ToNot(BeNil())
+				Expect(apiRuleBeta2.Spec.Rules[0].Jwt.Authentications).To(HaveLen(1))
+				Expect(apiRuleBeta2.Spec.Rules[0].Jwt.Authorizations).To(HaveLen(1))
+			})
+
+			It("should convert rule with ory jwt to v1beta2", func() {
+				// given
+				apiRuleBeta1 := v1beta1.APIRule{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "test-ns",
+						Name:      "test-name",
+					},
+					Spec: v1beta1.APIRuleSpec{
+						Gateway: ptr.To("gateway"),
+						Service: &v1beta1.Service{Name: ptr.To("service")},
+						Host:    &host1string,
+						Rules: []v1beta1.Rule{
+							{
+								Path:    "/path1",
+								Service: &v1beta1.Service{Name: ptr.To("rule-service")},
+								AccessStrategies: []*v1beta1.Authenticator{
+									{
+										Handler: &v1beta1.Handler{
+											Name: "jwt",
+											Config: &runtime.RawExtension{
+												Raw: []byte(`{
 												"trusted_issuers": ["issuer"],
 												"jwks_urls": ["jwksUri"],
 												"required_scope": ["scope1", "scope2"],
 												"target_audience": ["audience1", "audience2"]
 											}`),
+											},
 										},
 									},
 								},
 							},
 						},
 					},
-				},
-			}
-			apiRuleBeta2 := v1beta2.APIRule{}
+				}
+				apiRuleBeta2 := v1beta2.APIRule{}
 
-			// when
-			err := apiRuleBeta2.ConvertFrom(&apiRuleBeta1)
+				// when
+				err := apiRuleBeta2.ConvertFrom(&apiRuleBeta1)
 
-			// then
-			Expect(err).To(HaveOccurred())
-			Expect(err.Error()).To(Equal("APIRule in version v1beta1 has been deprecated. To request APIRule v1beta1, use the command 'kubectl get -n test-ns apirules.v1beta1.gateway.kyma-project.io test-name'. See APIRule v1beta2 documentation and consider migrating to the newer version."))
-		})
+				// then
+				Expect(err).ToNot(HaveOccurred())
+				Expect(apiRuleBeta2.Spec.Rules).To(HaveLen(1))
+				Expect(apiRuleBeta2.Spec.Rules[0].Jwt).ToNot(BeNil())
+				Expect(apiRuleBeta2.Spec.Rules[0].Jwt.Authentications).To(HaveLen(1))
+				Expect(apiRuleBeta2.Spec.Rules[0].Jwt.Authentications[0].Issuer).To(Equal("issuer"))
+				Expect(apiRuleBeta2.Spec.Rules[0].Jwt.Authentications[0].JwksUri).To(Equal("jwksUri"))
+				Expect(apiRuleBeta2.Spec.Rules[0].Jwt.Authorizations).To(HaveLen(1))
+				Expect(apiRuleBeta2.Spec.Rules[0].Jwt.Authorizations[0].RequiredScopes).To(HaveExactElements("scope1", "scope2"))
+				Expect(apiRuleBeta2.Spec.Rules[0].Jwt.Authorizations[0].Audiences).To(HaveExactElements("audience1", "audience2"))
+			})
 
-		It("should fail to convert rule with handler different to no_auth or jwt to v1beta2", func() {
-			// given
-			apiRuleBeta1 := v1beta1.APIRule{
-				ObjectMeta: metav1.ObjectMeta{
-					Namespace: "test-ns",
-					Name:      "test-name",
-				},
-				Spec: v1beta1.APIRuleSpec{
-					Gateway: ptr.To("gateway"),
-					Service: &v1beta1.Service{Name: ptr.To("service")},
-					Host:    &host1string,
-					Rules: []v1beta1.Rule{
-						{
-							Path:    "/path1",
-							Service: &v1beta1.Service{Name: ptr.To("rule-service")},
-							AccessStrategies: []*v1beta1.Authenticator{
-								{
-									Handler: &v1beta1.Handler{
-										Name:   "any_handler",
-										Config: &runtime.RawExtension{},
-									},
-								},
-							},
-						},
+			It("should convert rule with ory jwt with trusted_issuers and jwks_urls only", func() {
+				// given
+				apiRuleBeta1 := v1beta1.APIRule{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "test-ns",
+						Name:      "test-name",
 					},
-				},
-			}
-			apiRuleBeta2 := v1beta2.APIRule{}
-
-			// when
-			err := apiRuleBeta2.ConvertFrom(&apiRuleBeta1)
-
-			// then
-			Expect(err).To(HaveOccurred())
-			Expect(err.Error()).To(Equal("APIRule in version v1beta1 has been deprecated. To request APIRule v1beta1, use the command 'kubectl get -n test-ns apirules.v1beta1.gateway.kyma-project.io test-name'. See APIRule v1beta2 documentation and consider migrating to the newer version."))
-		})
-
-		It("should fail to convert two rules with JWT and allow to v1beta2", func() {
-			// given
-			apiRuleBeta1 := v1beta1.APIRule{
-				ObjectMeta: metav1.ObjectMeta{
-					Namespace: "test-ns",
-					Name:      "test-name",
-				},
-				Spec: v1beta1.APIRuleSpec{
-					Host: &host1string,
-					Rules: []v1beta1.Rule{
-						{
-							AccessStrategies: []*v1beta1.Authenticator{
-								{
-									Handler: &v1beta1.Handler{
-										Name: "jwt",
-										Config: &runtime.RawExtension{
-											Object: &v1beta1.JwtConfig{},
+					Spec: v1beta1.APIRuleSpec{
+						Gateway: ptr.To("gateway"),
+						Service: &v1beta1.Service{Name: ptr.To("service")},
+						Host:    &host1string,
+						Rules: []v1beta1.Rule{
+							{
+								Path:    "/path1",
+								Service: &v1beta1.Service{Name: ptr.To("rule-service")},
+								AccessStrategies: []*v1beta1.Authenticator{
+									{
+										Handler: &v1beta1.Handler{
+											Name: "jwt",
+											Config: &runtime.RawExtension{
+												Raw: []byte(`{
+												"trusted_issuers": ["issuer"],
+												"jwks_urls": ["jwksUri"]
+											}`),
+											},
 										},
 									},
 								},
-								{
-									Handler: &v1beta1.Handler{
-										Name: "allow",
+							},
+						},
+					},
+				}
+				apiRuleBeta2 := v1beta2.APIRule{}
+
+				// when
+				err := apiRuleBeta2.ConvertFrom(&apiRuleBeta1)
+
+				// then
+				Expect(err).ToNot(HaveOccurred())
+				Expect(apiRuleBeta2.Spec.Rules).To(HaveLen(1))
+				Expect(apiRuleBeta2.Spec.Rules[0].Jwt).ToNot(BeNil())
+				Expect(apiRuleBeta2.Spec.Rules[0].Jwt.Authentications).To(HaveLen(1))
+				Expect(apiRuleBeta2.Spec.Rules[0].Jwt.Authentications[0].Issuer).To(Equal("issuer"))
+				Expect(apiRuleBeta2.Spec.Rules[0].Jwt.Authentications[0].JwksUri).To(Equal("jwksUri"))
+				Expect(apiRuleBeta2.Spec.Rules[0].Jwt.Authorizations).To(HaveLen(1))
+			})
+
+			It("should convert rule with ory jwt handler with multiple trusted_issuers to v1beta2 with empty spec", func() {
+				// given
+				apiRuleBeta1 := v1beta1.APIRule{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "test-ns",
+						Name:      "test-name",
+					},
+					Spec: v1beta1.APIRuleSpec{
+						Gateway: ptr.To("gateway"),
+						Service: &v1beta1.Service{Name: ptr.To("service")},
+						Host:    &host1string,
+						Rules: []v1beta1.Rule{
+							{
+								Path:    "/path1",
+								Service: &v1beta1.Service{Name: ptr.To("rule-service")},
+								AccessStrategies: []*v1beta1.Authenticator{
+									{
+										Handler: &v1beta1.Handler{
+											Name: "jwt",
+											Config: &runtime.RawExtension{
+												Raw: []byte(`{
+												"trusted_issuers": ["issuer", "issuer2"],
+												"jwks_urls": ["jwksUri"]
+											}`),
+											},
+										},
 									},
 								},
 							},
 						},
 					},
-				},
-			}
-			apiRuleBeta2 := v1beta2.APIRule{}
+				}
+				apiRuleBeta2 := v1beta2.APIRule{}
 
-			// when
-			err := apiRuleBeta2.ConvertFrom(&apiRuleBeta1)
+				// when
+				err := apiRuleBeta2.ConvertFrom(&apiRuleBeta1)
 
-			// then
-			Expect(err).To(HaveOccurred())
-			Expect(err.Error()).To(Equal("APIRule in version v1beta1 has been deprecated. To request APIRule v1beta1, use the command 'kubectl get -n test-ns apirules.v1beta1.gateway.kyma-project.io test-name'. See APIRule v1beta2 documentation and consider migrating to the newer version."))
+				// then
+				Expect(err).ToNot(HaveOccurred())
+				Expect(apiRuleBeta2.Spec).To(Equal(v1beta2.APIRuleSpec{}))
+			})
+
+			It("should convert rule with ory jwt handler with multiple jwks_urls to v1beta2 with empty spec", func() {
+				// given
+				apiRuleBeta1 := v1beta1.APIRule{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "test-ns",
+						Name:      "test-name",
+					},
+					Spec: v1beta1.APIRuleSpec{
+						Gateway: ptr.To("gateway"),
+						Service: &v1beta1.Service{Name: ptr.To("service")},
+						Host:    &host1string,
+						Rules: []v1beta1.Rule{
+							{
+								Path:    "/path1",
+								Service: &v1beta1.Service{Name: ptr.To("rule-service")},
+								AccessStrategies: []*v1beta1.Authenticator{
+									{
+										Handler: &v1beta1.Handler{
+											Name: "jwt",
+											Config: &runtime.RawExtension{
+												Raw: []byte(`{
+												"trusted_issuers": ["issuer"],
+												"jwks_urls": ["https://jwksUri.com", "https://jwksUriTwo.com"]
+											}`),
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				}
+				apiRuleBeta2 := v1beta2.APIRule{}
+
+				// when
+				err := apiRuleBeta2.ConvertFrom(&apiRuleBeta1)
+
+				// then
+				Expect(err).ToNot(HaveOccurred())
+				Expect(apiRuleBeta2.Spec).To(Equal(v1beta2.APIRuleSpec{}))
+			})
+		})
+
+		Context("with unsupported handler", func() {
+
+			It("should set object meta data when converting handler that does not support full conversion to v1beta2", func() {
+				// given
+				apiRuleBeta1 := v1beta1.APIRule{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "test-ns",
+						Name:      "test-name",
+					},
+					Spec: v1beta1.APIRuleSpec{
+						Gateway: ptr.To("gateway"),
+						Service: &v1beta1.Service{Name: ptr.To("service")},
+						Host:    &host1string,
+						Rules: []v1beta1.Rule{
+							{
+								Path:    "/path1",
+								Service: &v1beta1.Service{Name: ptr.To("rule-service")},
+								AccessStrategies: []*v1beta1.Authenticator{
+									{
+										Handler: &v1beta1.Handler{
+											Name: "allow",
+										},
+									},
+								},
+							},
+						},
+					},
+				}
+				apiRuleBeta2 := v1beta2.APIRule{}
+
+				// when
+				err := apiRuleBeta2.ConvertFrom(&apiRuleBeta1)
+
+				// then
+				Expect(err).ToNot(HaveOccurred())
+				Expect(apiRuleBeta2.Name).To(Equal("test-name"))
+				Expect(apiRuleBeta2.Namespace).To(Equal("test-ns"))
+			})
+
+			It("should convert rule with allow handler to v1beta2 with empty spec", func() {
+				// given
+				apiRuleBeta1 := v1beta1.APIRule{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "test-ns",
+						Name:      "test-name",
+					},
+					Spec: v1beta1.APIRuleSpec{
+						Gateway: ptr.To("gateway"),
+						Service: &v1beta1.Service{Name: ptr.To("service")},
+						Host:    &host1string,
+						Rules: []v1beta1.Rule{
+							{
+								Path:    "/path1",
+								Service: &v1beta1.Service{Name: ptr.To("rule-service")},
+								AccessStrategies: []*v1beta1.Authenticator{
+									{
+										Handler: &v1beta1.Handler{
+											Name: "allow",
+										},
+									},
+								},
+							},
+						},
+					},
+				}
+				apiRuleBeta2 := v1beta2.APIRule{}
+
+				// when
+				err := apiRuleBeta2.ConvertFrom(&apiRuleBeta1)
+
+				// then
+				Expect(err).ToNot(HaveOccurred())
+				Expect(apiRuleBeta2.Spec).To(Equal(v1beta2.APIRuleSpec{}))
+			})
+
+			It("should convert rule with oauth2_introspection handler to v1beta2 with empty spec", func() {
+				// given
+				apiRuleBeta1 := v1beta1.APIRule{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "test-ns",
+						Name:      "test-name",
+					},
+					Spec: v1beta1.APIRuleSpec{
+						Gateway: ptr.To("gateway"),
+						Service: &v1beta1.Service{Name: ptr.To("service")},
+						Host:    &host1string,
+						Rules: []v1beta1.Rule{
+							{
+								Path:    "/path1",
+								Service: &v1beta1.Service{Name: ptr.To("rule-service")},
+								AccessStrategies: []*v1beta1.Authenticator{
+									{
+										Handler: &v1beta1.Handler{
+											Name: "oauth2_introspection",
+										},
+									},
+								},
+							},
+						},
+					},
+				}
+				apiRuleBeta2 := v1beta2.APIRule{}
+
+				// when
+				err := apiRuleBeta2.ConvertFrom(&apiRuleBeta1)
+
+				// then
+				Expect(err).ToNot(HaveOccurred())
+				Expect(apiRuleBeta2.Spec).To(Equal(v1beta2.APIRuleSpec{}))
+			})
+
+			It("should convert rule with noop handler to v1beta2 with empty spec", func() {
+				// given
+				apiRuleBeta1 := v1beta1.APIRule{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "test-ns",
+						Name:      "test-name",
+					},
+					Spec: v1beta1.APIRuleSpec{
+						Gateway: ptr.To("gateway"),
+						Service: &v1beta1.Service{Name: ptr.To("service")},
+						Host:    &host1string,
+						Rules: []v1beta1.Rule{
+							{
+								Path:    "/path1",
+								Service: &v1beta1.Service{Name: ptr.To("rule-service")},
+								AccessStrategies: []*v1beta1.Authenticator{
+									{
+										Handler: &v1beta1.Handler{
+											Name:   "noop",
+											Config: &runtime.RawExtension{},
+										},
+									},
+								},
+							},
+						},
+					},
+				}
+				apiRuleBeta2 := v1beta2.APIRule{}
+
+				// when
+				err := apiRuleBeta2.ConvertFrom(&apiRuleBeta1)
+
+				// then
+				Expect(err).ToNot(HaveOccurred())
+				Expect(apiRuleBeta2.Spec).To(Equal(v1beta2.APIRuleSpec{}))
+			})
+
+			It("should convert two rules with JWT and allow to v1beta2 with empty spec", func() {
+				// given
+				apiRuleBeta1 := v1beta1.APIRule{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "test-ns",
+						Name:      "test-name",
+					},
+					Spec: v1beta1.APIRuleSpec{
+						Host: &host1string,
+						Rules: []v1beta1.Rule{
+							{
+								AccessStrategies: []*v1beta1.Authenticator{
+									{
+										Handler: &v1beta1.Handler{
+											Name: "jwt",
+											Config: &runtime.RawExtension{
+												Object: &v1beta1.JwtConfig{
+													Authentications: []*v1beta1.JwtAuthentication{
+														{
+															Issuer:  "issuer",
+															JwksUri: "jwksUri",
+														},
+													},
+												},
+											},
+										},
+									},
+									{
+										Handler: &v1beta1.Handler{
+											Name: "allow",
+										},
+									},
+								},
+							},
+						},
+					},
+				}
+				apiRuleBeta2 := v1beta2.APIRule{}
+
+				// when
+				err := apiRuleBeta2.ConvertFrom(&apiRuleBeta1)
+
+				// then
+				Expect(err).ToNot(HaveOccurred())
+				Expect(apiRuleBeta2.Spec).To(Equal(v1beta2.APIRuleSpec{}))
+			})
 		})
 
 		It("should convert OK status from APIRuleStatus to v1beta2 Ready state", func() {
