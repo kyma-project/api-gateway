@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
-	"github.com/kyma-project/api-gateway/internal/types/ory"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/utils/ptr"
@@ -95,7 +94,7 @@ func (apiRuleBeta2 *APIRule) ConvertTo(hub conversion.Hub) error {
 		if ruleBeta2.NoAuth != nil && *ruleBeta2.NoAuth {
 			ruleBeta1.AccessStrategies = append(ruleBeta1.AccessStrategies, &v1beta1.Authenticator{
 				Handler: &v1beta1.Handler{
-					Name: "no_auth",
+					Name: v1beta1.AccessStrategyNoAuth,
 				},
 			})
 		}
@@ -103,7 +102,7 @@ func (apiRuleBeta2 *APIRule) ConvertTo(hub conversion.Hub) error {
 		if ruleBeta2.Jwt != nil {
 			ruleBeta1.AccessStrategies = append(ruleBeta1.AccessStrategies, &v1beta1.Authenticator{
 				Handler: &v1beta1.Handler{
-					Name:   "jwt",
+					Name:   v1beta1.AccessStrategyJwt,
 					Config: &runtime.RawExtension{Object: ruleBeta2.Jwt},
 				},
 			})
@@ -182,24 +181,12 @@ func (apiRuleBeta2 *APIRule) ConvertFrom(hub conversion.Hub) error {
 			return err
 		}
 		for _, accessStrategy := range ruleBeta1.AccessStrategies {
-			if accessStrategy.Handler.Name == "no_auth" {
+			if accessStrategy.Handler.Name == v1beta1.AccessStrategyNoAuth {
 				ruleBeta2.NoAuth = ptr.To(true)
 			}
 
-			if accessStrategy.Handler.Name == "jwt" && accessStrategy.Config != nil {
-				jwtConfig, err := convertIstioJwtAccessStrategy(accessStrategy)
-				if err != nil {
-					return err
-				}
-
-				if jwtConfig.Authentications == nil && jwtConfig.Authorizations == nil {
-					// If the conversion to Istio JwtConfig failed, we try to convert to Ory JwtConfig
-					jwtConfig, err = convertOryJwtAccessStrategy(accessStrategy)
-					if err != nil {
-						return err
-					}
-				}
-
+			if accessStrategy.Handler.Name == v1beta1.AccessStrategyJwt {
+				jwtConfig, err := convertToJwtConfig(accessStrategy)
 				err = convertOverJson(jwtConfig, &ruleBeta2.Jwt)
 				if err != nil {
 					return err
@@ -210,49 +197,6 @@ func (apiRuleBeta2 *APIRule) ConvertFrom(hub conversion.Hub) error {
 	}
 
 	return nil
-}
-
-func convertOryJwtAccessStrategy(accessStrategy *v1beta1.Authenticator) (*v1beta1.JwtConfig, error) {
-	var oryJwtConfig ory.JWTAccStrConfig
-	err := json.Unmarshal(accessStrategy.Config.Raw, &oryJwtConfig)
-	if err != nil {
-		return nil, err
-	}
-
-	// We can only reliably convert a single trusted issuer and JWKS URL to an Istio JwtConfig, as Istio JwtConfig does not support multiple issuers or JWKS URLs in a JwtAuthentication.
-	// If an Ory JwtConfig has multiple trusted issuers or JWKS URLs the assumption of this function is, that this already has been checked earlier in the conversion.
-	authentication := v1beta1.JwtAuthentication{
-		Issuer:  oryJwtConfig.TrustedIssuers[0],
-		JwksUri: oryJwtConfig.JWKSUrls[0],
-	}
-
-	authorization := v1beta1.JwtAuthorization{
-		RequiredScopes: oryJwtConfig.RequiredScopes,
-		Audiences:      oryJwtConfig.TargetAudience,
-	}
-
-	jwtConfig := &v1beta1.JwtConfig{
-		Authentications: []*v1beta1.JwtAuthentication{&authentication},
-		Authorizations:  []*v1beta1.JwtAuthorization{&authorization},
-	}
-
-	return jwtConfig, nil
-}
-
-func convertIstioJwtAccessStrategy(accessStrategy *v1beta1.Authenticator) (*v1beta1.JwtConfig, error) {
-	var jwtConfig *v1beta1.JwtConfig
-
-	if accessStrategy.Config.Object != nil {
-		jwtConfig = accessStrategy.Config.Object.(*v1beta1.JwtConfig)
-	} else if accessStrategy.Config.Raw != nil {
-		jwtConfig = &v1beta1.JwtConfig{}
-		err := json.Unmarshal(accessStrategy.Config.Raw, jwtConfig)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return jwtConfig, nil
 }
 
 func convertOverJson(src any, dst any) error {
@@ -274,11 +218,11 @@ func isFullConversionPossible(apiRule *v1beta1.APIRule) (bool, error) {
 	for _, rule := range apiRule.Spec.Rules {
 		for _, accessStrategy := range rule.AccessStrategies {
 
-			if accessStrategy.Handler.Name == "no_auth" {
+			if accessStrategy.Handler.Name == v1beta1.AccessStrategyNoAuth {
 				continue
 			}
 
-			if accessStrategy.Handler.Name == "jwt" {
+			if accessStrategy.Handler.Name == v1beta1.AccessStrategyJwt {
 				isConvertible, err := isConvertibleJwtConfig(accessStrategy)
 				if err != nil {
 					return false, err
@@ -294,27 +238,4 @@ func isFullConversionPossible(apiRule *v1beta1.APIRule) (bool, error) {
 	}
 
 	return true, nil
-}
-
-func isConvertibleJwtConfig(accessStrategy *v1beta1.Authenticator) (bool, error) {
-	istioJwtConfig, err := convertIstioJwtAccessStrategy(accessStrategy)
-	if err != nil {
-		return false, err
-	}
-
-	if istioJwtConfig.Authentications != nil || istioJwtConfig.Authorizations != nil {
-		return true, nil
-	}
-
-	var oryJwtConfig ory.JWTAccStrConfig
-	err = json.Unmarshal(accessStrategy.Config.Raw, &oryJwtConfig)
-	if err != nil {
-		return false, err
-	}
-	if len(oryJwtConfig.TrustedIssuers) == 1 && len(oryJwtConfig.JWKSUrls) == 1 {
-		// We can only reliably convert a single trusted issuer and JWKS URL to an Istio JwtConfig, as Istio JwtConfig does not support multiple issuers or JWKS URLs in a JwtAuthentication.
-		return true, nil
-	}
-
-	return false, nil
 }
