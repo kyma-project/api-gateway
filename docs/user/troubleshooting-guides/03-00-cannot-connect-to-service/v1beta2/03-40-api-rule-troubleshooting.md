@@ -62,7 +62,7 @@ spec:
 ## Invalid **issuer** for the **jwt** Access Strategy
 ### Cause
 
-Here's an example of an APIRule with an invalid **issuer** URL configured:
+Here's an example of the APIRule CR with an invalid **issuer** URL configured:
 
 ```yaml
 apiVersion: gateway.kyma-project.io/v1beta1
@@ -79,7 +79,7 @@ spec:
             jwksUri: https://example.com/.well-known/jwks.json
 ```
 
-If the **issuer** contains `:`, it must be a valid URI. Otherwise, you get the following error, and the APIRule resource is not created:
+If the **issuer** contains `:`, it must be a valid URI. Otherwise, you get the following error, and the APIRule CR is not created:
 
 ```
 The APIRule "httpbin" is invalid: .spec.rules[0].jwt.authentications[0].issuer: value is empty or not a valid url
@@ -108,7 +108,7 @@ spec:
 ## Both **noAuth** and **jwt** Access Strategies Defined on the Same Path
 ### Cause
 
-The following APIRule has both **noAuth** and **jwt** access strategies defined on the same path:
+The following APIRule CR has both **noAuth** and **jwt** access strategies defined on the same path:
 
 ```yaml
 spec:
