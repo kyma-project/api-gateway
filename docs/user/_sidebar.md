@@ -51,7 +51,7 @@
   * [Certificate Issuer Not Created](/api-gateway/user/troubleshooting-guides/03-20-cert-mgt-issuer-not-created.md)
   * [Kyma Gateway Not Reachable](/api-gateway/user/troubleshooting-guides/03-30-gateway-not-reachable.md)
   * [Issues with Gardener Certificates](/api-gateway/user/troubleshooting-guides/03-50-certificates-gardener.md)
-  * [APIRule and Service Connestion Issues](/api-gateway/user/troubleshooting-guides/03-00-cannot-connect-to-service/03-00-basic-diagnostics.md)
+  * [APIRule and Service Connection Issues](/api-gateway/user/troubleshooting-guides/03-00-cannot-connect-to-service/README)
     * [APIRule v1beta2](/api-gateway/user/troubleshooting-guides/03-00-cannot-connect-to-service/v1beta2/03-00-basic-diagnostics.md)
       * [Issues When Creating APIRule](/api-gateway/user/troubleshooting-guides/03-00-cannot-connect-to-service/v1beta2/03-40-api-rule-troubleshooting.md)
       * [401 Unauthorized or 403 Forbidden](/api-gateway/user/troubleshooting-guides/03-00-cannot-connect-to-service/v1beta2/03-01-401-unauthorized-403-forbidden.md)

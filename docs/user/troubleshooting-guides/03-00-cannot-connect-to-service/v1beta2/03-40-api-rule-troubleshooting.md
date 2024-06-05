@@ -2,7 +2,7 @@
 
 ## Symptom
 
-When you create an APIRule custom resource (CR), a validation error appears, or the APIRule CR has the `ERROR` status, for example:
+When you create an APIRule custom resource (CR), an instant validation error appears, or the APIRule CR has the `ERROR` status, for example:
 
 ```bash
 kubectl get apirules httpbin
@@ -82,7 +82,7 @@ spec:
 If the **issuer** URL is an unsecured HTTP URL, or the **issuer** URL is not valid, you get the following error, and the APIRule resource is not created:
 
 ```
-The APIRule "httpbin" is invalid: .spec.rules[0].jwt.issuer[0]: Invalid value: "some-url": .spec.rules[0].jwt.issuer[0] in body should match '^(https://|file://).*$'
+The APIRule "httpbin" is invalid: .spec.rules[0].jwt.authentications[0].issuer: Invalid value: "some-url": .spec.rules[0].jwt.issuer[0] in body should match '^(https://|file://).*$'
 ```
 
 ### Remedy
