@@ -121,13 +121,21 @@ func (apiRuleBeta2 *APIRule) ConvertFrom(hub conversion.Hub) error {
 
 	apiRuleBeta2.ObjectMeta = apiRuleBeta1.ObjectMeta
 
+	if apiRuleBeta1.Status.APIRuleStatus != nil {
+		apiRuleBeta2.Status = APIRuleStatus{
+			State:             beta1to2statusConversionMap[apiRuleBeta1.Status.APIRuleStatus.Code],
+			Description:       apiRuleBeta1.Status.APIRuleStatus.Description,
+			LastProcessedTime: apiRuleBeta1.Status.LastProcessedTime,
+		}
+	}
+
 	conversionPossible, err := isFullConversionPossible(apiRuleBeta1)
 	if err != nil {
 		return err
 	}
-	if conversionPossible {
+	if !conversionPossible {
 		// We have to stop the conversion here, because we want to return an empty Spec in case we cannot fully convert the APIRule.
-		// TODO Decide how to handle the case when the conversion is not possible.
+		return nil
 	}
 
 	err = convertOverJson(apiRuleBeta1.Spec.Rules, &apiRuleBeta2.Spec.Rules)
@@ -145,14 +153,6 @@ func (apiRuleBeta2 *APIRule) ConvertFrom(hub conversion.Hub) error {
 	err = convertOverJson(apiRuleBeta1.Spec.Timeout, &apiRuleBeta2.Spec.Timeout)
 	if err != nil {
 		return err
-	}
-
-	if apiRuleBeta1.Status.APIRuleStatus != nil {
-		apiRuleBeta2.Status = APIRuleStatus{
-			State:             beta1to2statusConversionMap[apiRuleBeta1.Status.APIRuleStatus.Code],
-			Description:       apiRuleBeta1.Status.APIRuleStatus.Description,
-			LastProcessedTime: apiRuleBeta1.Status.LastProcessedTime,
-		}
 	}
 
 	apiRuleBeta2.Spec.Hosts = []*Host{new(Host)}
