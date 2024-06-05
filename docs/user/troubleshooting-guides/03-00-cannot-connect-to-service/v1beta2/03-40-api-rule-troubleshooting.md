@@ -65,7 +65,7 @@ spec:
 Here's an example of the APIRule CR with an invalid **issuer** URL configured:
 
 ```yaml
-apiVersion: gateway.kyma-project.io/v1beta1
+apiVersion: gateway.kyma-project.io/v1beta2
 kind: APIRule
 metadata:
   ...
