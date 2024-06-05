@@ -2,7 +2,7 @@
 
 API Gateway is a Kubernetes controller, which operates on APIRule custom resources (CRs). See [Issues When Creating an APIRule in version v1beta1](./03-00-basic-diagnostics.md).
 
-To diagnose problems, inspect the [`status` code](../../custom-resources/apirule/04-10-apirule-custom-resource.md) of the APIRule CR:
+To diagnose problems, inspect the status code of the APIRule CR:
 
    ```bash
    kubectl describe apirules.gateway.kyma-project.io -n {NAMESPACE} {APIRULE_NAME}
