@@ -23,10 +23,10 @@ kubectl get apirules -n <namespace> <api-rule-name> -o=jsonpath='{.status.descri
 ## The **issuer** Configuration of **jwt** Access Strategy Is Missing
 ### Cause
 
-The following APIRule is missing the **trusted_issuers** configuration for the JWT handler:
+The following APIRule is missing the **issuer** configuration for the **jwt** access strategy:
 
 ```yaml
-apiVersion: gateway.kyma-project.io/v1beta1
+apiVersion: gateway.kyma-project.io/v1beta2
 kind: APIRule
 metadata:
   ...
@@ -37,7 +37,7 @@ spec:
       jwt:
 ```
 
-If your APIRule is missing the **issuer** configuration for the JWT handler, the following `APIRuleStatus` error appears:
+If your APIRule is missing the **issuer** configuration for the **jwt** access strategy, the following error appears:
 
 ```
 {"code":"ERROR","description":"Validation error: Attribute \".spec.rules[0].jwt\": supplied config cannot be empty"}
@@ -53,10 +53,10 @@ spec:
   rules:
     - path: /.*
       methods: ["GET"]
-      accessStrategies:
-        - handler: jwt
-          config:
-            trusted_issuers: ["https://dev.kyma.local"]
+      jwt:
+        authentications:
+          - issuer: "https://dev.kyma.local"
+            jwksUri: "https://example.com/.well-known/jwks.json"
 ```
 
 ## Invalid **issuer** for the **jwt** Access Strategy
@@ -75,22 +75,22 @@ spec:
     - path: /.*
       jwt:
         authentications:
-          - issuer: http://unsecured.or.not.valid.url
+          - issuer: ://unsecured.or.not.valid.url
             jwksUri: https://example.com/.well-known/jwks.json
 ```
 
-If the **issuer** URL is an unsecured HTTP URL, or the **issuer** URL is not valid, you get the following error, and the APIRule resource is not created:
+If the **issuer** contains `:`, it must be a valid URI. Otherwise, you get the following error, and the APIRule resource is not created:
 
 ```
-The APIRule "httpbin" is invalid: .spec.rules[0].jwt.authentications[0].issuer: Invalid value: "some-url": .spec.rules[0].jwt.issuer[0] in body should match '^(https://|file://).*$'
+The APIRule "httpbin" is invalid: .spec.rules[0].jwt.authentications[0].issuer: value is empty or not a valid url
 ```
 
 ### Remedy
 
-The JWT **issuer** must be a valid HTTPS URL, for example:
+The JWT **issuer** must not be empty and must be a valid URI, for example:
 
 ```yaml
-apiVersion: gateway.kyma-project.io/v1beta1
+apiVersion: gateway.kyma-project.io/v1beta2
 kind: APIRule
 metadata:
   ...
@@ -159,41 +159,4 @@ Use a different host for the second APIRule CR, for example:
 spec:
   ...
   host: httpbin-new.xxx.shoot.canary.k8s-hana.ondemand.com
-```
-
----
-## Additional configuration for **noAuth** Access Strategy
-
-### Cause
-
-In the following APIRule CR, the **noAuth** access strategy has the **issuer** field configured:
-
-```yaml
-spec:
-  ...
-  rules:
-    - path: /.*
-      noAuth: true
-        authentications:
-          - issuer: https://dev.kyma.local
-            jwksUri: https://dev.kyma.local/.well-known/jwks.json
-```
-
-If your APIRule CR uses the **noAuth** access strategy and has some further configuration defined, you get the following error:
-
-```
-{"code":"ERROR","description":"Validation error: Attribute \".spec.rules[0].noAuth\": noAuth does not support configuration"}
-```
-
-
-### Remedy
-
-Use the **noAuth** access strategy without any further configuration:
-
-```yaml
-spec:
-  ...
-  rules:
-    - path: /.*
-      noAuth: true
 ```
