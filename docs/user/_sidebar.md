@@ -56,6 +56,7 @@
       * [Issues When Creating APIRule](/api-gateway/user/troubleshooting-guides/03-00-cannot-connect-to-service/v1beta2/03-40-api-rule-troubleshooting.md)
       * [401 Unauthorized or 403 Forbidden](/api-gateway/user/troubleshooting-guides/03-00-cannot-connect-to-service/v1beta2/03-01-401-unauthorized-403-forbidden.md)
     * [APIRule v1beta1](/api-gateway/user/troubleshooting-guides/03-00-cannot-connect-to-service/03-00-basic-diagnostics.md)
+      * [Issues When Creating APIRule](/api-gateway/user/troubleshooting-guides/03-00-cannot-connect-to-service/03-40-api-rule-troubleshooting.md)
       * [401 Unauthorized or 403 Forbidden](/api-gateway/user/troubleshooting-guides/03-00-cannot-connect-to-service/03-01-401-unauthorized-403-forbidden.md)
       * [404 Not Found](/api-gateway/user/troubleshooting-guides/03-00-cannot-connect-to-service/03-02-404-not-found.md)
       * [500 Server Error](/api-gateway/user/troubleshooting-guides/03-00-cannot-connect-to-service/03-03-500-server-error.md)
