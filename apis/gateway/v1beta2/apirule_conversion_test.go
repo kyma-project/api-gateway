@@ -752,7 +752,7 @@ var _ = Describe("APIRule Conversion", func() {
 
 				// then
 				Expect(err).ToNot(HaveOccurred())
-				//TODO Expect(apiRuleBeta2.Spec).To(Equal(v1beta2.APIRuleSpec{}))
+				Expect(apiRuleBeta2.Spec).To(Equal(v1beta2.APIRuleSpec{}))
 			})
 
 			It("should convert rule with ory jwt handler with multiple jwks_urls to v1beta2 with empty spec", func() {
@@ -794,13 +794,13 @@ var _ = Describe("APIRule Conversion", func() {
 
 				// then
 				Expect(err).ToNot(HaveOccurred())
-				// TODO // TODO Expect(apiRuleBeta2.Spec).To(Equal(v1beta2.APIRuleSpec{}))
+				Expect(apiRuleBeta2.Spec).To(Equal(v1beta2.APIRuleSpec{}))
 			})
 		})
 
 		Context("with unsupported handler", func() {
 
-			It("should set object meta data when converting handler that does not support full conversion to v1beta2", func() {
+			It("should set object meta data and status when converting handler that does not support full conversion to v1beta2", func() {
 				// given
 				apiRuleBeta1 := v1beta1.APIRule{
 					ObjectMeta: metav1.ObjectMeta{
@@ -825,6 +825,12 @@ var _ = Describe("APIRule Conversion", func() {
 							},
 						},
 					},
+					Status: v1beta1.APIRuleStatus{
+						APIRuleStatus: &v1beta1.APIRuleResourceStatus{
+							Code:        v1beta1.StatusOK,
+							Description: "description",
+						},
+					},
 				}
 				apiRuleBeta2 := v1beta2.APIRule{}
 
@@ -835,6 +841,10 @@ var _ = Describe("APIRule Conversion", func() {
 				Expect(err).ToNot(HaveOccurred())
 				Expect(apiRuleBeta2.Name).To(Equal("test-name"))
 				Expect(apiRuleBeta2.Namespace).To(Equal("test-ns"))
+				Expect(apiRuleBeta2.Status).ToNot(BeNil())
+				Expect(apiRuleBeta2.Status.State).To(Equal(v1beta2.Ready))
+				Expect(apiRuleBeta2.Status.Description).To(Equal("description"))
+
 			})
 
 			It("should convert rule with allow handler to v1beta2 with empty spec", func() {
@@ -870,7 +880,7 @@ var _ = Describe("APIRule Conversion", func() {
 
 				// then
 				Expect(err).ToNot(HaveOccurred())
-				// TODO Expect(apiRuleBeta2.Spec).To(Equal(v1beta2.APIRuleSpec{}))
+				Expect(apiRuleBeta2.Spec).To(Equal(v1beta2.APIRuleSpec{}))
 			})
 
 			It("should convert rule with oauth2_introspection handler to v1beta2 with empty spec", func() {
@@ -906,7 +916,7 @@ var _ = Describe("APIRule Conversion", func() {
 
 				// then
 				Expect(err).ToNot(HaveOccurred())
-				// TODO Expect(apiRuleBeta2.Spec).To(Equal(v1beta2.APIRuleSpec{}))
+				Expect(apiRuleBeta2.Spec).To(Equal(v1beta2.APIRuleSpec{}))
 			})
 
 			It("should convert rule with noop handler to v1beta2 with empty spec", func() {
@@ -943,7 +953,7 @@ var _ = Describe("APIRule Conversion", func() {
 
 				// then
 				Expect(err).ToNot(HaveOccurred())
-				// TODO Expect(apiRuleBeta2.Spec).To(Equal(v1beta2.APIRuleSpec{}))
+				Expect(apiRuleBeta2.Spec).To(Equal(v1beta2.APIRuleSpec{}))
 			})
 
 			It("should convert two rules with JWT and allow to v1beta2 with empty spec", func() {
@@ -990,7 +1000,7 @@ var _ = Describe("APIRule Conversion", func() {
 
 				// then
 				Expect(err).ToNot(HaveOccurred())
-				// TODO Expect(apiRuleBeta2.Spec).To(Equal(v1beta2.APIRuleSpec{}))
+				Expect(apiRuleBeta2.Spec).To(Equal(v1beta2.APIRuleSpec{}))
 			})
 		})
 
