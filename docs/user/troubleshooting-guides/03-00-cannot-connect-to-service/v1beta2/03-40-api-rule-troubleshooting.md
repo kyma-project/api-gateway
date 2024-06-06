@@ -122,7 +122,7 @@ spec:
             jwksUri: https://dev.kyma.local/.well-known/jwks.json
 ```
 
-If you set **noAuth** access strategy to `true` and define the **jwt** configuration on the same path, you get the following error appears:
+If you set the **noAuth** access strategy to `true` and define the **jwt** configuration on the same path, you get the following error:
 
 ```
 {"code":"ERROR","description":"Validation error: Attribute \".spec.rules[0].noAuth\": noAuth access strategy is not allowed in combination with other access strategies"}
@@ -130,7 +130,7 @@ If you set **noAuth** access strategy to `true` and define the **jwt** configura
 
 ### Remedy
 
-Decide on one configuration you want to use. You can either **noAuth** access to the specific path or restrict it using a JWT security token.
+Decide on one configuration you want to use. You can either use **noAuth** access to the specific path or restrict it using a JWT security token.
 
 ---
 ## Occupied Host

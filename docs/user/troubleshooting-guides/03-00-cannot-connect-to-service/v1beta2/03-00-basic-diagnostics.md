@@ -1,6 +1,6 @@
 # Issues with APIRules and Service Connection - Basic Diagnostics
 
-API Gateway is a Kubernetes controller, which operates on APIRule custom resources (CRs). See [Issues When Creating an APIRule in version v1beta2](./03-40-api-rule-troubleshooting.md).
+API Gateway is a Kubernetes controller, which operates on APIRule custom resources (CRs). See [Issues When Creating an APIRule in Version v1beta2](./03-40-api-rule-troubleshooting.md).
 
 To diagnose problems, inspect the status code of the APIRule CR:
 

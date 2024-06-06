@@ -1,6 +1,6 @@
 # Issues with APIRules and Service Connection
 
-If you have issues creating an APIRule custom resource (CR) or you've exposed a service but you cannont connect to it, see the troubleshooting guides related to:
+If you have issues creating an APIRule custom resource (CR) or you've exposed a service but you cannot connect to it, see the troubleshooting guides related to:
 
 - [APIRule CR in version v1beta2](./v1beta2/03-00-basic-diagnostics.md)
 - [APIRule CR in version v1beta1](./03-00-basic-diagnostics.md)

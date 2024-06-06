@@ -10,7 +10,7 @@ The error `401 Unauthorized` occurs when you try to access a Service that requir
 
 ## Remedy
 
-Make sure that you are using a JSON Web Token (JWT) with proper scopes, and it is active.
+Make sure that you are using an active JSON Web Token (JWT) with proper scopes.
 
 ### Remedy
 

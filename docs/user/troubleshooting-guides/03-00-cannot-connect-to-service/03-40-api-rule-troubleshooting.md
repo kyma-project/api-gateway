@@ -1,4 +1,4 @@
-# Issues When Creating an APIRule in version v1beta1
+# Issues When Creating an APIRule in Version v1beta1
 
 ## Symptom
 
