@@ -353,6 +353,7 @@ spec:
                     type: array
                   maxAge:
                     format: int64
+                    minimum: 1
                     type: integer
                 type: object
               gateway:

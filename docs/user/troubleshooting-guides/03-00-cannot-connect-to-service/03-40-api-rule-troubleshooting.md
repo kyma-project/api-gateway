@@ -1,11 +1,11 @@
-# Issues When Creating an APIRule - Various Reasons
+# Issues When Creating an APIRule in Version v1beta1
 
 ## Symptom
 
 When you create an APIRule, an instant validation error appears, or the APIRule custom resource (CR) has the `ERROR` status, for example:
 
 ```bash
-kubectl get apirule httpbin
+kubectl get apirules.v1beta1.gateway.kyma-project.io httpbin
 
 NAME      STATUS   HOST
 httpbin   ERROR    httpbin.xxx.shoot.canary.k8s-hana.ondemand.com
@@ -15,7 +15,7 @@ The error may result in an inconsistent state of the APIRule resource in which O
 To check the error message of the APIRule resource, run:
 
 ```bash
-kubectl get apirule -n <namespace> <api-rule-name> -o=jsonpath='{.status.APIRuleStatus}'
+kubectl get apirules.v1beta1.gateway.kyma-project.io -n <namespace> <api-rule-name> -o=jsonpath='{.status.APIRuleStatus}'
 ```
 ---
 ## JWT Handler's **trusted_issuers** Configuration Is Missing
