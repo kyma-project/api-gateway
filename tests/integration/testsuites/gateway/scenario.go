@@ -48,6 +48,7 @@ func initScenario(ctx *godog.ScenarioContext, ts *testsuite) {
 	ctx.Before(hooks.DeleteBlockingResourcesScenarioHook)
 	ctx.Before(hooks.ApplyApiGatewayCrScenarioHook)
 	ctx.After(hooks.ApiGatewayCrTearDownScenarioHook)
+	ctx.After(hooks.VerifyIfControllerHasBeenRestarted)
 
 	ctx.Step(`APIGateway CR "([^"]*)" is applied`, scenario.applyAPIGatewayCR)
 	ctx.Step(`^APIGateway CR "([^"]*)" "([^"]*)" present$`, scenario.thereIsAnAPIGatewayCR)

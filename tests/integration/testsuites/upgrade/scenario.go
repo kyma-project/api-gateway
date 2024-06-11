@@ -3,6 +3,7 @@ package upgrade
 import (
 	"errors"
 	"fmt"
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/hooks"
 	"strings"
 	"time"
 
@@ -245,6 +246,8 @@ func (s *scenario) reconciliationHappened(numberOfSeconds int) error {
 }
 
 func initUpgrade(ctx *godog.ScenarioContext, ts *testsuite) {
+	ctx.After(hooks.VerifyIfControllerHasBeenRestarted)
+
 	scenario := ts.createScenario("istio-jwt-upgrade.yaml", "api-gateway-upgrade")
 
 	ctx.Step(`Upgrade: There is a httpbin service$`, scenario.thereIsAHttpbinService)
