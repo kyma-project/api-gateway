@@ -9,7 +9,7 @@ metadata:
 spec:
   containers:
     - name: mock-oauth2-server
-      image: europe-central2-docker.pkg.dev/sap-se-cx-kyma-goat/networking-dev-tools/oauth2-mock:ff32edf2bd79d7dd0cd5805d4c326dab89bdc326
+      image: europe-central2-docker.pkg.dev/sap-se-cx-kyma-goat/networking-dev-tools/oauth2-mock:latest
       imagePullPolicy: Always
       env:
         - name: iss
