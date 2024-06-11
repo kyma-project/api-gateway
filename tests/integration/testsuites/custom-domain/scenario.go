@@ -7,6 +7,7 @@ import (
 	"github.com/cucumber/godog"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/auth"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/helpers"
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/hooks"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/manifestprocessor"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/resource"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
@@ -41,6 +42,8 @@ type scenario struct {
 }
 
 func initScenario(ctx *godog.ScenarioContext, ts *testsuite) {
+	ctx.After(hooks.VerifyIfControllerHasBeenRestarted)
+
 	scenario, err := createScenario(ts, "custom-domain")
 
 	if err != nil {

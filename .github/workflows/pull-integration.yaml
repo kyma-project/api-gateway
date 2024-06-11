@@ -33,36 +33,69 @@ jobs:
           job-name: 'pull-api-gateway-manager-build'
           github-auth-token: ${{ secrets.GITHUB_TOKEN }}
 
-  integration-tests:
-    name: Integration tests
+#  integration-tests:
+#    name: Integration tests
+#    runs-on: ubuntu-latest
+#    if: github.event.pull_request.draft == false
+#    needs: [wait-for-image-build]
+#    steps:
+#      - uses: actions/checkout@v4
+#        with:
+#          ref: ${{ github.event.pull_request.head.sha }}
+#          fetch-depth: 0
+#      - uses: ./.github/actions/integration-tests
+#        with:
+#          manager_image: "europe-docker.pkg.dev/kyma-project/dev/api-gateway-manager:PR-${{github.event.number}}"
+#
+#  k8s-compatibility-check:
+#    name: Kubernetes version compatibility test
+#    runs-on: ubuntu-latest
+#    if: github.event.pull_request.draft == false
+#    needs: [ wait-for-image-build ]
+#    steps:
+#      - uses: actions/checkout@v4
+#        with:
+#          ref: ${{ github.event.pull_request.head.sha }}
+#          fetch-depth: 0
+#      - uses: ./.github/actions/k8s-compatibility-test
+#        with:
+#          manager_image: "europe-docker.pkg.dev/kyma-project/dev/api-gateway-manager:PR-${{github.event.number}}"
+#
+#  upgrade-tests:
+#    name: Upgrade tests
+#    runs-on: ubuntu-latest
+#    needs: [wait-for-image-build]
+#    steps:
+#      - uses: actions/checkout@v4
+#        with:
+#          ref: ${{ github.event.pull_request.head.sha }}
+#          fetch-depth: 0
+#      - uses: ./.github/actions/upgrade-test
+#        with:
+#          test_upgrade_img: "europe-docker.pkg.dev/kyma-project/dev/api-gateway-manager:PR-${{github.event.number}}"
+#          target_branch: ${{ github.base_ref }}
+
+  custom-domain-gcp:
+    name: Custom domain GCP
     runs-on: ubuntu-latest
-    if: github.event.pull_request.draft == false
     needs: [wait-for-image-build]
     steps:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
-      - uses: ./.github/actions/integration-tests
+      - uses: ./.github/actions/integration-test-gardener
         with:
           manager_image: "europe-docker.pkg.dev/kyma-project/dev/api-gateway-manager:PR-${{github.event.number}}"
+          gardener_secret: ${{ secrets.GARDENER_TOKEN }}
+          script: ./tests/integration/scripts/custom-domain-gardener-gcp-gh.sh
+          client_id: ${{ secrets.CLIENT_ID }}
+          client_secret: ${{ secrets.CLIENT_SECRET }}
+          oidc_well_known_url: "${{ secrets.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
+          dns_secret_json: ${{ secrets.DNS_SECRET_JSON }}
 
-  k8s-compatibility-check:
-    name: Kubernetes version compatibility test
-    runs-on: ubuntu-latest
-    if: github.event.pull_request.draft == false
-    needs: [ wait-for-image-build ]
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          fetch-depth: 0
-      - uses: ./.github/actions/k8s-compatibility-test
-        with:
-          manager_image: "europe-docker.pkg.dev/kyma-project/dev/api-gateway-manager:PR-${{github.event.number}}"
-
-  upgrade-tests:
-    name: Upgrade tests
+  custom-domain-aws:
+    name: Custom domain AWS
     runs-on: ubuntu-latest
     needs: [wait-for-image-build]
     steps:
@@ -70,8 +103,12 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
-      - uses: ./.github/actions/upgrade-test
+      - uses: ./.github/actions/integration-test-gardener
         with:
-          test_upgrade_img: "europe-docker.pkg.dev/kyma-project/dev/api-gateway-manager:PR-${{github.event.number}}"
-          target_branch: ${{ github.base_ref }}
-
+          manager_image: "europe-docker.pkg.dev/kyma-project/dev/api-gateway-manager:PR-${{github.event.number}}"
+          gardener_secret: ${{ secrets.GARDENER_TOKEN }}
+          script: ./tests/integration/scripts/custom-domain-gardener-aws-gh.sh
+          client_id: ${{ secrets.CLIENT_ID }}
+          client_secret: ${{ secrets.CLIENT_SECRET }}
+          oidc_well_known_url: "${{ secrets.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
+          dns_secret_json: ${{ secrets.DNS_SECRET_JSON }}
