@@ -3,7 +3,7 @@
 This tutorial shows how to expose multiple workloads on different paths by defining a Service at the root level and by defining Services on each path separately.
 
 > [!WARNING] 
->  Exposing a workload to the outside world is always a potential security vulnerability, so tread carefully. In a production environment, remember to secure the workload you expose with [JWT](../../01-50-expose-and-secure-a-workload/v1beta2/01-52-expose-and-secure-workload-jwt.md).
+>  Exposing a workload to the outside world is always a potential security vulnerability, so tread carefully. In a production environment, remember to secure the workload you expose with [JWT](../../01-50-expose-and-secure-a-workload/v2alpha1/01-52-expose-and-secure-workload-jwt.md).
 
 ## Prerequisites
 
@@ -43,7 +43,7 @@ Follow the instructions to expose the instances of the HTTPBin Service on differ
 
     ```bash
     cat <<EOF | kubectl apply -f -
-    apiVersion: gateway.kyma-project.io/v1beta2
+    apiVersion: gateway.kyma-project.io/v2alpha1
     kind: APIRule
     metadata:
       name: multiple-services
@@ -109,7 +109,7 @@ You can also define a Service at the root level. Such a definition is applied to
 
     ```bash
     cat <<EOF | kubectl apply -f -
-    apiVersion: gateway.kyma-project.io/v1beta2
+    apiVersion: gateway.kyma-project.io/v2alpha1
     kind: APIRule
     metadata:
       name: multiple-services

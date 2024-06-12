@@ -3,7 +3,7 @@
 This tutorial shows how to expose Service endpoints in multiple namespaces using APIGateway Controller.
 
 > [!WARNING]
->  Exposing a workload to the outside world causes a potential security vulnerability, so tread carefully. In a production environment, secure the workload you expose with [JWT](../../01-50-expose-and-secure-a-workload/v1beta2/01-52-expose-and-secure-workload-jwt.md).
+>  Exposing a workload to the outside world causes a potential security vulnerability, so tread carefully. In a production environment, secure the workload you expose with [JWT](../../01-50-expose-and-secure-a-workload/v2alpha1/01-52-expose-and-secure-workload-jwt.md).
 
 
 ##  Prerequisites
@@ -50,7 +50,7 @@ Create three namespaces. Deploy two instances of the HTTPBin Service, each in a 
 
     ```bash
     cat <<EOF | kubectl apply -f -
-    apiVersion: gateway.kyma-project.io/v1beta2
+    apiVersion: gateway.kyma-project.io/v2alpha1
     kind: APIRule
     metadata:
       name: httpbin-services

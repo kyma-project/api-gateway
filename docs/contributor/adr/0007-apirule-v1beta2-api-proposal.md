@@ -1,4 +1,4 @@
-# APIRule `v1beta2` API Proposal
+# APIRule `v2alpha1` API Proposal
 
 ## Status
 
@@ -55,7 +55,7 @@ Due to the deprecation of Ory and the introduction of new features in API Gatewa
 
 - Multiple hosts with external authorizers and JWT:
 ```yaml
-apiVersion: gateway.kyma-project.io/v1beta2
+apiVersion: gateway.kyma-project.io/v2alpha1
 kind: APIRule
 metadata:
   name: service-config
@@ -83,7 +83,7 @@ spec:
 
 - One host with JWT:
 ```yaml
-apiVersion: gateway.kyma-project.io/v1beta2
+apiVersion: gateway.kyma-project.io/v2alpha1
 kind: APIRule
 metadata:
   name: service-config
@@ -107,7 +107,7 @@ spec:
 
 - One host with `noAuth`:
 ```yaml
-apiVersion: gateway.kyma-project.io/v1beta2
+apiVersion: gateway.kyma-project.io/v2alpha1
 kind: APIRule
 metadata:
   name: service-config
@@ -126,7 +126,7 @@ spec:
 
 - Istio mutators:
 ```yaml
-apiVersion: gateway.kyma-project.io/v1beta2
+apiVersion: gateway.kyma-project.io/v2alpha1
 kind: APIRule
 metadata:
   name: service-config
@@ -160,7 +160,7 @@ spec:
 
 - Multiple paths with different configurations:
 ```yaml
-apiVersion: gateway.kyma-project.io/v1beta2
+apiVersion: gateway.kyma-project.io/v2alpha1
 kind: APIRule
 metadata:
   name: service-config

@@ -1,4 +1,4 @@
-package v1beta2
+package v2alpha1
 
 import (
 	"encoding/json"
@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	v1beta1DeprecatedTemplate = "APIRule in version v1beta1 has been deprecated. To request APIRule v1beta1, use the command 'kubectl get -n %s apirules.v1beta1.gateway.kyma-project.io %s'. See APIRule v1beta2 documentation and consider migrating to the newer version."
+	v1beta1DeprecatedTemplate = "APIRule in version v1beta1 has been deprecated. To request APIRule v1beta1, use the command 'kubectl get -n %s apirules.v1beta1.gateway.kyma-project.io %s'. See APIRule v2alpha1 documentation and consider migrating to the newer version."
 )
 
 var beta1to2statusConversionMap = map[v1beta1.StatusCode]State{
@@ -23,7 +23,7 @@ var beta1to2statusConversionMap = map[v1beta1.StatusCode]State{
 	v1beta1.StatusError:   Error,
 	v1beta1.StatusWarning: Warning,
 
-	// StatusSkipped is not supported in v1beta2, and it happens only when another component has Error or Warning status
+	// StatusSkipped is not supported in v2alpha1, and it happens only when another component has Error or Warning status
 	// In this case, we map it to Warning
 	v1beta1.StatusSkipped: Warning,
 }
@@ -39,7 +39,7 @@ func convertMap(m map[v1beta1.StatusCode]State) map[State]v1beta1.StatusCode {
 // The 2 => 1 map is generated automatically based on 1 => 2 map
 var beta2to1statusConversionMap = convertMap(beta1to2statusConversionMap)
 
-// Converts this ApiRule (v1beta2) to the Hub version (v1beta1)
+// Converts this ApiRule (v2alpha1) to the Hub version (v1beta1)
 func (apiRuleBeta2 *APIRule) ConvertTo(hub conversion.Hub) error {
 	apiRuleBeta1 := hub.(*v1beta1.APIRule)
 
@@ -47,7 +47,7 @@ func (apiRuleBeta2 *APIRule) ConvertTo(hub conversion.Hub) error {
 	if apiRuleBeta1.Annotations == nil {
 		apiRuleBeta1.Annotations = make(map[string]string)
 	}
-	apiRuleBeta1.Annotations["gateway.kyma-project.io/original-version"] = "v1beta2"
+	apiRuleBeta1.Annotations["gateway.kyma-project.io/original-version"] = "v2alpha1"
 
 	err := convertOverJson(apiRuleBeta2.Spec.Rules, &apiRuleBeta1.Spec.Rules)
 	if err != nil {
@@ -126,7 +126,7 @@ func (apiRuleBeta2 *APIRule) ConvertTo(hub conversion.Hub) error {
 	return nil
 }
 
-// Converts from the Hub version (v1beta1) into this ApiRule (v1beta2)
+// Converts from the Hub version (v1beta1) into this ApiRule (v2alpha1)
 func (apiRuleBeta2 *APIRule) ConvertFrom(hub conversion.Hub) error {
 	apiRuleBeta1 := hub.(*v1beta1.APIRule)
 

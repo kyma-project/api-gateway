@@ -1,4 +1,4 @@
-# Issues When Creating an APIRule Custom Resource in Version v1beta2
+# Issues When Creating an APIRule Custom Resource in Version v2alpha1
 
 ## Symptom
 
@@ -26,7 +26,7 @@ kubectl get apirules -n <namespace> <api-rule-name> -o=jsonpath='{.status.descri
 The following APIRule is missing the **issuer** configuration for the **jwt** access strategy:
 
 ```yaml
-apiVersion: gateway.kyma-project.io/v1beta2
+apiVersion: gateway.kyma-project.io/v2alpha1
 kind: APIRule
 metadata:
   ...
@@ -65,7 +65,7 @@ spec:
 Here's an example of the APIRule CR with an invalid **issuer** URL configured:
 
 ```yaml
-apiVersion: gateway.kyma-project.io/v1beta2
+apiVersion: gateway.kyma-project.io/v2alpha1
 kind: APIRule
 metadata:
   ...
@@ -90,7 +90,7 @@ The APIRule "httpbin" is invalid: .spec.rules[0].jwt.authentications[0].issuer: 
 The JWT **issuer** must not be empty and must be a valid URI, for example:
 
 ```yaml
-apiVersion: gateway.kyma-project.io/v1beta2
+apiVersion: gateway.kyma-project.io/v2alpha1
 kind: APIRule
 metadata:
   ...

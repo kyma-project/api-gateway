@@ -15,4 +15,4 @@ spec:
           path: /convert
       conversionReviewVersions:
         - v1beta1
-        - v1beta2
+        - v2alpha1
