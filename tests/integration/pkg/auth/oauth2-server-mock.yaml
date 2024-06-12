@@ -9,13 +9,15 @@ metadata:
 spec:
   containers:
     - name: mock-oauth2-server
-      image: i566483/oauth2-mock:latest
+      image: europe-central2-docker.pkg.dev/sap-se-cx-kyma-goat/networking-dev-tools/oauth2-mock:latest
       imagePullPolicy: Always
       env:
         - name: iss
           value: http://mock-oauth2-server.{{ .Namespace }}.svc.cluster.local
+        - name: PORT
+          value: "80"
       ports:
-        - containerPort: 8080
+        - containerPort: 80
           name: http
           protocol: TCP
   restartPolicy: Always
