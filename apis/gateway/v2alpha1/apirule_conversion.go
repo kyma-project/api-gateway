@@ -37,32 +37,32 @@ func convertMap(m map[v1beta1.StatusCode]State) map[State]v1beta1.StatusCode {
 }
 
 // The 2 => 1 map is generated automatically based on 1 => 2 map
-var beta2to1statusConversionMap = convertMap(beta1to2statusConversionMap)
+var 2alpha1to1statusConversionMap = convertMap(beta1to2statusConversionMap)
 
 // Converts this ApiRule (v2alpha1) to the Hub version (v1beta1)
-func (apiRuleBeta2 *APIRule) ConvertTo(hub conversion.Hub) error {
+func (apiRule2Alpha1 *APIRule) ConvertTo(hub conversion.Hub) error {
 	apiRuleBeta1 := hub.(*v1beta1.APIRule)
 
-	apiRuleBeta1.ObjectMeta = apiRuleBeta2.ObjectMeta
+	apiRuleBeta1.ObjectMeta = apiRule2Alpha1.ObjectMeta
 	if apiRuleBeta1.Annotations == nil {
 		apiRuleBeta1.Annotations = make(map[string]string)
 	}
 	apiRuleBeta1.Annotations["gateway.kyma-project.io/original-version"] = "v2alpha1"
 
-	err := convertOverJson(apiRuleBeta2.Spec.Rules, &apiRuleBeta1.Spec.Rules)
+	err := convertOverJson(apiRule2Alpha1.Spec.Rules, &apiRuleBeta1.Spec.Rules)
 	if err != nil {
 		return err
 	}
 
-	err = convertOverJson(apiRuleBeta2.Spec.Gateway, &apiRuleBeta1.Spec.Gateway)
+	err = convertOverJson(apiRule2Alpha1.Spec.Gateway, &apiRuleBeta1.Spec.Gateway)
 	if err != nil {
 		return err
 	}
-	err = convertOverJson(apiRuleBeta2.Spec.Service, &apiRuleBeta1.Spec.Service)
+	err = convertOverJson(apiRule2Alpha1.Spec.Service, &apiRuleBeta1.Spec.Service)
 	if err != nil {
 		return err
 	}
-	err = convertOverJson(apiRuleBeta2.Spec.Timeout, &apiRuleBeta1.Spec.Timeout)
+	err = convertOverJson(apiRule2Alpha1.Spec.Timeout, &apiRuleBeta1.Spec.Timeout)
 	if err != nil {
 		return err
 	}
@@ -70,38 +70,38 @@ func (apiRuleBeta2 *APIRule) ConvertTo(hub conversion.Hub) error {
 	// Status
 	apiRuleBeta1.Status = v1beta1.APIRuleStatus{
 		APIRuleStatus: &v1beta1.APIRuleResourceStatus{
-			Code:        beta2to1statusConversionMap[apiRuleBeta2.Status.State],
-			Description: apiRuleBeta2.Status.Description,
+			Code:        2alpha1to1statusConversionMap[apiRule2Alpha1.Status.State],
+			Description: apiRule2Alpha1.Status.Description,
 		},
-		LastProcessedTime: apiRuleBeta2.Status.LastProcessedTime,
+		LastProcessedTime: apiRule2Alpha1.Status.LastProcessedTime,
 	}
 
-	if apiRuleBeta2.Spec.CorsPolicy != nil {
+	if apiRule2Alpha1.Spec.CorsPolicy != nil {
 		apiRuleBeta1.Spec.CorsPolicy = &v1beta1.CorsPolicy{}
-		apiRuleBeta1.Spec.CorsPolicy.AllowHeaders = apiRuleBeta2.Spec.CorsPolicy.AllowHeaders
-		apiRuleBeta1.Spec.CorsPolicy.AllowMethods = apiRuleBeta2.Spec.CorsPolicy.AllowMethods
-		apiRuleBeta1.Spec.CorsPolicy.AllowOrigins = v1beta1.StringMatch(apiRuleBeta2.Spec.CorsPolicy.AllowOrigins)
-		apiRuleBeta1.Spec.CorsPolicy.AllowCredentials = apiRuleBeta2.Spec.CorsPolicy.AllowCredentials
-		apiRuleBeta1.Spec.CorsPolicy.ExposeHeaders = apiRuleBeta2.Spec.CorsPolicy.ExposeHeaders
+		apiRuleBeta1.Spec.CorsPolicy.AllowHeaders = apiRule2Alpha1.Spec.CorsPolicy.AllowHeaders
+		apiRuleBeta1.Spec.CorsPolicy.AllowMethods = apiRule2Alpha1.Spec.CorsPolicy.AllowMethods
+		apiRuleBeta1.Spec.CorsPolicy.AllowOrigins = v1beta1.StringMatch(apiRule2Alpha1.Spec.CorsPolicy.AllowOrigins)
+		apiRuleBeta1.Spec.CorsPolicy.AllowCredentials = apiRule2Alpha1.Spec.CorsPolicy.AllowCredentials
+		apiRuleBeta1.Spec.CorsPolicy.ExposeHeaders = apiRule2Alpha1.Spec.CorsPolicy.ExposeHeaders
 
-		if apiRuleBeta2.Spec.CorsPolicy.MaxAge != nil {
-			apiRuleBeta1.Spec.CorsPolicy.MaxAge = &metav1.Duration{Duration: time.Duration(*apiRuleBeta2.Spec.CorsPolicy.MaxAge) * time.Second}
+		if apiRule2Alpha1.Spec.CorsPolicy.MaxAge != nil {
+			apiRuleBeta1.Spec.CorsPolicy.MaxAge = &metav1.Duration{Duration: time.Duration(*apiRule2Alpha1.Spec.CorsPolicy.MaxAge) * time.Second}
 		}
 	}
 
 	// Only one host is supported in v1beta1, so we use the first one from the list
-	strHost := string(*apiRuleBeta2.Spec.Hosts[0])
+	strHost := string(*apiRule2Alpha1.Spec.Hosts[0])
 	apiRuleBeta1.Spec.Host = &strHost
 
 	apiRuleBeta1.Spec.Rules = []v1beta1.Rule{}
-	for _, ruleBeta2 := range apiRuleBeta2.Spec.Rules {
+	for _, rule2alpha1 := range apiRule2Alpha1.Spec.Rules {
 		ruleBeta1 := v1beta1.Rule{}
-		err = convertOverJson(ruleBeta2, &ruleBeta1)
+		err = convertOverJson(rule2alpha1, &ruleBeta1)
 		if err != nil {
 			return err
 		}
 		// No Auth
-		if ruleBeta2.NoAuth != nil && *ruleBeta2.NoAuth {
+		if rule2alpha1.NoAuth != nil && *rule2alpha1.NoAuth {
 			ruleBeta1.AccessStrategies = append(ruleBeta1.AccessStrategies, &v1beta1.Authenticator{
 				Handler: &v1beta1.Handler{
 					Name: "no_auth",
@@ -109,11 +109,11 @@ func (apiRuleBeta2 *APIRule) ConvertTo(hub conversion.Hub) error {
 			})
 		}
 		// JWT
-		if ruleBeta2.Jwt != nil {
+		if rule2alpha1.Jwt != nil {
 			ruleBeta1.AccessStrategies = append(ruleBeta1.AccessStrategies, &v1beta1.Authenticator{
 				Handler: &v1beta1.Handler{
 					Name:   "jwt",
-					Config: &runtime.RawExtension{Object: ruleBeta2.Jwt},
+					Config: &runtime.RawExtension{Object: rule2alpha1.Jwt},
 				},
 			})
 		}
@@ -127,45 +127,45 @@ func (apiRuleBeta2 *APIRule) ConvertTo(hub conversion.Hub) error {
 }
 
 // Converts from the Hub version (v1beta1) into this ApiRule (v2alpha1)
-func (apiRuleBeta2 *APIRule) ConvertFrom(hub conversion.Hub) error {
+func (apiRule2Alpha1 *APIRule) ConvertFrom(hub conversion.Hub) error {
 	apiRuleBeta1 := hub.(*v1beta1.APIRule)
 
-	apiRuleBeta2.ObjectMeta = apiRuleBeta1.ObjectMeta
+	apiRule2Alpha1.ObjectMeta = apiRuleBeta1.ObjectMeta
 
-	err := convertOverJson(apiRuleBeta1.Spec.Rules, &apiRuleBeta2.Spec.Rules)
+	err := convertOverJson(apiRuleBeta1.Spec.Rules, &apiRule2Alpha1.Spec.Rules)
 	if err != nil {
 		return err
 	}
-	err = convertOverJson(apiRuleBeta1.Spec.Gateway, &apiRuleBeta2.Spec.Gateway)
+	err = convertOverJson(apiRuleBeta1.Spec.Gateway, &apiRule2Alpha1.Spec.Gateway)
 	if err != nil {
 		return err
 	}
-	err = convertOverJson(apiRuleBeta1.Spec.Service, &apiRuleBeta2.Spec.Service)
+	err = convertOverJson(apiRuleBeta1.Spec.Service, &apiRule2Alpha1.Spec.Service)
 	if err != nil {
 		return err
 	}
-	err = convertOverJson(apiRuleBeta1.Spec.Timeout, &apiRuleBeta2.Spec.Timeout)
+	err = convertOverJson(apiRuleBeta1.Spec.Timeout, &apiRule2Alpha1.Spec.Timeout)
 	if err != nil {
 		return err
 	}
 
 	if apiRuleBeta1.Status.APIRuleStatus != nil {
-		apiRuleBeta2.Status = APIRuleStatus{
+		apiRule2Alpha1.Status = APIRuleStatus{
 			State:             beta1to2statusConversionMap[apiRuleBeta1.Status.APIRuleStatus.Code],
 			Description:       apiRuleBeta1.Status.APIRuleStatus.Description,
 			LastProcessedTime: apiRuleBeta1.Status.LastProcessedTime,
 		}
 	}
 
-	apiRuleBeta2.Spec.Hosts = []*Host{new(Host)}
-	*apiRuleBeta2.Spec.Hosts[0] = Host(*apiRuleBeta1.Spec.Host)
+	apiRule2Alpha1.Spec.Hosts = []*Host{new(Host)}
+	*apiRule2Alpha1.Spec.Hosts[0] = Host(*apiRuleBeta1.Spec.Host)
 	if apiRuleBeta1.Spec.CorsPolicy != nil {
-		apiRuleBeta2.Spec.CorsPolicy = &CorsPolicy{}
-		apiRuleBeta2.Spec.CorsPolicy.AllowHeaders = apiRuleBeta1.Spec.CorsPolicy.AllowHeaders
-		apiRuleBeta2.Spec.CorsPolicy.AllowMethods = apiRuleBeta1.Spec.CorsPolicy.AllowMethods
-		apiRuleBeta2.Spec.CorsPolicy.AllowOrigins = StringMatch(apiRuleBeta1.Spec.CorsPolicy.AllowOrigins)
-		apiRuleBeta2.Spec.CorsPolicy.AllowCredentials = apiRuleBeta1.Spec.CorsPolicy.AllowCredentials
-		apiRuleBeta2.Spec.CorsPolicy.ExposeHeaders = apiRuleBeta1.Spec.CorsPolicy.ExposeHeaders
+		apiRule2Alpha1.Spec.CorsPolicy = &CorsPolicy{}
+		apiRule2Alpha1.Spec.CorsPolicy.AllowHeaders = apiRuleBeta1.Spec.CorsPolicy.AllowHeaders
+		apiRule2Alpha1.Spec.CorsPolicy.AllowMethods = apiRuleBeta1.Spec.CorsPolicy.AllowMethods
+		apiRule2Alpha1.Spec.CorsPolicy.AllowOrigins = StringMatch(apiRuleBeta1.Spec.CorsPolicy.AllowOrigins)
+		apiRule2Alpha1.Spec.CorsPolicy.AllowCredentials = apiRuleBeta1.Spec.CorsPolicy.AllowCredentials
+		apiRule2Alpha1.Spec.CorsPolicy.ExposeHeaders = apiRuleBeta1.Spec.CorsPolicy.ExposeHeaders
 
 		// metav1.Duration type for seconds is float64,
 		// however the Access-Control-Max-Age header is specified in seconds without decimals.
@@ -173,20 +173,20 @@ func (apiRuleBeta2 *APIRule) ConvertFrom(hub conversion.Hub) error {
 		// https://fetch.spec.whatwg.org/#http-responses
 		if apiRuleBeta1.Spec.CorsPolicy.MaxAge != nil {
 			maxAge := uint64(apiRuleBeta1.Spec.CorsPolicy.MaxAge.Duration.Seconds())
-			apiRuleBeta2.Spec.CorsPolicy.MaxAge = &maxAge
+			apiRule2Alpha1.Spec.CorsPolicy.MaxAge = &maxAge
 		}
 	}
 
-	apiRuleBeta2.Spec.Rules = []Rule{}
+	apiRule2Alpha1.Spec.Rules = []Rule{}
 	for _, ruleBeta1 := range apiRuleBeta1.Spec.Rules {
-		ruleBeta2 := Rule{}
-		err = convertOverJson(ruleBeta1, &ruleBeta2)
+		rule2alpha1 := Rule{}
+		err = convertOverJson(ruleBeta1, &rule2alpha1)
 		if err != nil {
 			return err
 		}
 		for _, accessStrategy := range ruleBeta1.AccessStrategies {
 			if accessStrategy.Handler.Name == "no_auth" { // No Auth
-				ruleBeta2.NoAuth = ptr.To(true)
+				rule2alpha1.NoAuth = ptr.To(true)
 			} else if accessStrategy.Handler.Name == "jwt" && accessStrategy.Config != nil { // JWT
 				var jwtConfig *v1beta1.JwtConfig
 				if accessStrategy.Config.Object != nil {
@@ -205,7 +205,7 @@ func (apiRuleBeta2 *APIRule) ConvertFrom(hub conversion.Hub) error {
 						return fmt.Errorf(v1beta1DeprecatedTemplate, apiRuleBeta1.Namespace, apiRuleBeta1.Name)
 					}
 				}
-				err = convertOverJson(jwtConfig, &ruleBeta2.Jwt)
+				err = convertOverJson(jwtConfig, &rule2alpha1.Jwt)
 				if err != nil {
 					return err
 				}
@@ -213,7 +213,7 @@ func (apiRuleBeta2 *APIRule) ConvertFrom(hub conversion.Hub) error {
 				return fmt.Errorf(v1beta1DeprecatedTemplate, apiRuleBeta1.Namespace, apiRuleBeta1.Name)
 			}
 		}
-		apiRuleBeta2.Spec.Rules = append(apiRuleBeta2.Spec.Rules, ruleBeta2)
+		apiRule2Alpha1.Spec.Rules = append(apiRule2Alpha1.Spec.Rules, rule2alpha1)
 	}
 
 	return nil
