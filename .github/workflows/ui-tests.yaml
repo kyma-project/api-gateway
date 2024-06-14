@@ -1,35 +1,12 @@
 name: UI Tests
 
 on:
-  pull_request:
-    types: [ synchronize, opened, reopened, ready_for_review ]
-    paths:
-      - 'config/ui-extensions/**'
-      - 'config/crd/**'
-      - 'tests/ui/**'
-      - '.github/workflows/ui-tests.yaml'
-    branches:
-      - "main"
-      - 'release-**'
+  workflow_call:
 
 jobs:
-  wait-for-image-build:
-    name: Wait for image build
-    runs-on: ubuntu-latest
-    if: github.event.pull_request.draft == false
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - uses: ./.github/actions/wait-for-job-succeed-or-fail
-        with:
-          job-name: 'pull-api-gateway-manager-build'
-          github-auth-token: ${{ secrets.GITHUB_TOKEN }}
-
   run-ui-tests:
     name: Run UI tests
     if: github.event.pull_request.draft == false
-    needs: [wait-for-image-build]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

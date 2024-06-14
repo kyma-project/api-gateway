@@ -6,14 +6,6 @@ name: Pull Request
 on:
   pull_request:
     types: [ synchronize, opened, reopened, ready_for_review ]
-    paths-ignore:
-      - 'docs/**'
-      - '**/*.md'
-      - 'tests/performance/**'
-      - 'OWNERS'
-      - 'CODEOWNERS'
-      - 'sec-scanners-config.yaml'
-      - './github/dependabot.yml'
     branches:
       - "main"
       - 'release-**'
@@ -22,38 +14,113 @@ permissions:
   contents: read
 
 jobs:
-  lint:
-    name: Golang lint check
+  check-wait-for-image-build:
+    outputs:
+      check: ${{ steps.changed-files.outputs.any_modified }}
+    name: Check whether to wait for image build
     runs-on: ubuntu-latest
-    if: github.event.pull_request.draft == false
+    if: ${{ github.event.pull_request.draft == false }}
     steps:
       - uses: actions/checkout@v4
+      - uses: tj-actions/changed-files@90a06d6ba9543371ab4df8eeca0be07ca6054959
+        id: changed-files
         with:
-          fetch-depth: 0
-      - uses: actions/setup-go@v5
-        with:
-          go-version-file: 'go.mod'
-          cache: false # We need to disable caching here, since this is handled by the golangci-lint action
-      - name: golangci-lint
-        uses: golangci/golangci-lint-action@3cfe3a4abbb849e10058ce4af15d205b6da42804 #v4.0.0
-        with:
-          version: 'latest'
-          args: --timeout=10m --verbose
+          files_ignore: |
+            docs/**
+            **/*.md
+            **/*.yaml
+            tests/performance/**
+            OWNERS
+            CODEOWNERS
+            .github/**
+            .reuse/**
+      - name: List all changed files
+        run: echo '${{ steps.changed-files.outputs.all_changed_files }}' >> $GITHUB_STEP_SUMMARY
 
-  run-unit-tests:
-    name: Run unit tests
+  wait-for-image-build:
+    name: Wait for image build
     runs-on: ubuntu-latest
-    if: github.event.pull_request.draft == false
+    needs: [check-wait-for-image-build]
+    if: ${{ needs.check-wait-for-image-build.outputs.check == 'true' }}
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: actions/setup-go@v5
+      - uses: ./.github/actions/wait-for-job-succeed-or-fail
         with:
-          go-version-file: 'go.mod'
-      - name: Run tests
-        run: |
-          PULL_PULL_SHA=${{ github.event.pull_request.head.sha}} \
-          PULL_BASE_SHA=${{ github.event.pull_request.base.sha}} \
-          PULL_NUMBER=${{ github.event.number }} \
-          ./tests/integration/scripts/code-coverage-guard.sh
+          job-name: 'pull-api-gateway-manager-build'
+          github-auth-token: ${{ secrets.GITHUB_TOKEN }}
+
+  check-integration:
+    outputs:
+      check: ${{ steps.changed-files.outputs.any_modified }}
+    name: Check whether integration tests should run based on the changed files
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: tj-actions/changed-files@90a06d6ba9543371ab4df8eeca0be07ca6054959
+        id: changed-files
+        with:
+          files_ignore: |
+            - "docs/**"
+            - "**/*.md"
+            - "tests/performance/**"
+            - "OWNERS"
+            - "CODEOWNERS"
+            - "sec-scanners-config.yaml"
+            - ".github/**"
+      - name: List all changed files
+        run: echo '${{ steps.changed-files.outputs.all_changed_files }}' >> $GITHUB_STEP_SUMMARY
+  dispatch-integration:
+    name: Dispatch integration tests
+    needs: [check-integration,wait-for-image-build]
+    uses: ./.github/workflows/pull-integration.yaml
+    if: ${{ needs.check-integration.outputs.check == 'true' }}
+    secrets: inherit
+
+  check-ui:
+    outputs:
+      check: ${{ steps.changed-files.outputs.any_modified }}
+    name: Check whether UI tests should run based on the changed files
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: tj-actions/changed-files@90a06d6ba9543371ab4df8eeca0be07ca6054959
+        id: changed-files
+        with:
+          files: |
+            - 'config/ui-extensions/**'
+            - 'config/crd/**'
+            - 'tests/ui/**'
+            - '.github/workflows/ui-tests.yaml'
+      - name: List all changed files
+        run: echo '${{ steps.changed-files.outputs.all_changed_files }}' >> $GITHUB_STEP_SUMMARY
+  dispatch-ui:
+    name: Dispatch UI tests
+    needs: [check-ui,wait-for-image-build]
+    uses: ./.github/workflows/ui-tests.yaml
+    if: ${{ needs.check-ui.outputs.check == 'true' }}
+    secrets: inherit
+
+  check-verify-pins:
+    outputs:
+      check: ${{ steps.changed-files.outputs.any_modified }}
+    name: Check whether to run verify-commit-pins
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: tj-actions/changed-files@90a06d6ba9543371ab4df8eeca0be07ca6054959
+        id: changed-files
+        with:
+          files: |
+            .github/workflows/**
+      - name: List all changed files
+        run: echo '${{ steps.changed-files.outputs.all_changed_files }}' >> $GITHUB_STEP_SUMMARY
+  dispatch-verify-pins:
+    name: Dispatch verify-commit-pins
+    needs: [check-verify-pins]
+    uses: ./.github/workflows/verify-commit-pins.yaml
+    if: ${{ needs.check-verify-pins.outputs.check == 'true' }}
+    secrets: inherit
