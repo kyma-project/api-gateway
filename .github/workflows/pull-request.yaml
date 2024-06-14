@@ -51,6 +51,35 @@ jobs:
           job-name: 'pull-api-gateway-manager-build'
           github-auth-token: ${{ secrets.GITHUB_TOKEN }}
 
+  check-unit-test:
+    outputs:
+      check: ${{ steps.changed-files.outputs.any_modified }}
+    name: Check whether unit test & lint should run based on the changed files
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: tj-actions/changed-files@90a06d6ba9543371ab4df8eeca0be07ca6054959
+        id: changed-files
+        with:
+          files_ignore: |
+            docs/**
+            **/*.md
+            tests/performance/**
+            OWNERS
+            CODEOWNERS
+            sec-scanners-config.yaml
+            .github/**
+            .reuse/**
+      - name: List all changed files
+        run: echo '${{ steps.changed-files.outputs.all_changed_files }}' >> $GITHUB_STEP_SUMMARY
+  dispatch-unit-test:
+    name: Dispatch unit test
+    needs: [check-unit-test]
+    uses: ./.github/workflows/pull-unit-lint.yaml
+    if: ${{ needs.check-unit-test.outputs.check == 'true' }}
+    secrets: inherit
+
   check-integration:
     outputs:
       check: ${{ steps.changed-files.outputs.any_modified }}
