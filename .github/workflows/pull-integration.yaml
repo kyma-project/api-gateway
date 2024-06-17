@@ -4,40 +4,13 @@
 name: PR Integration
 
 on:
-  # pull_request_target runs workflows from the base of PR
-  # It allows the workflow to get the repository secrets
-  pull_request:
-    types: [ synchronize, opened, reopened, ready_for_review ]
-    paths-ignore:
-      - "docs/**"
-      - "**/*.md"
-      - "tests/performance/**"
-      - "OWNERS"
-      - "CODEOWNERS"
-      - "sec-scanners-config.yaml"
-      - ".github/**" #Ignoring since build job isn't triggered on the workflow directory changes
-    branches:
-      - main
+  workflow_call:
 
 jobs:
-  wait-for-image-build:
-    name: Wait for image build
-    runs-on: ubuntu-latest
-    if: github.event.pull_request.draft == false
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - uses: ./.github/actions/wait-for-job-succeed-or-fail
-        with:
-          job-name: 'pull-api-gateway-manager-build'
-          github-auth-token: ${{ secrets.GITHUB_TOKEN }}
-
   integration-tests:
     name: Integration tests
     runs-on: ubuntu-latest
     if: github.event.pull_request.draft == false
-    needs: [wait-for-image-build]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -51,7 +24,6 @@ jobs:
     name: Kubernetes version compatibility test
     runs-on: ubuntu-latest
     if: github.event.pull_request.draft == false
-    needs: [ wait-for-image-build ]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -64,7 +36,6 @@ jobs:
   upgrade-tests:
     name: Upgrade tests
     runs-on: ubuntu-latest
-    needs: [wait-for-image-build]
     steps:
       - uses: actions/checkout@v4
         with:

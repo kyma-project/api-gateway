@@ -1,6 +1,6 @@
 module-name: api-gateway
 protecode:
-  - europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:v20240612-4ccda31d
+  - europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:v20240614-9c2e2d73
   - europe-docker.pkg.dev/kyma-project/prod/external/oryd/oathkeeper:v0.38.25-beta.1
   - europe-docker.pkg.dev/kyma-project/prod/external/oryd/oathkeeper-maester:v0.1.5
 whitesource:
