@@ -13,7 +13,7 @@ jobs:
     if: github.event.pull_request.draft == false
     steps:
       - uses: actions/checkout@v4
-      - uses: zgosalvez/github-actions-ensure-sha-pinned-actions@b1b635d24259e8a047a6ce7d6501ea432aa7a830 # 3.0.2
+      - uses: zgosalvez/github-actions-ensure-sha-pinned-actions@74606c30450304eee8660aae751818321754feb1 # 3.0.9
         with:
           # We only want to allow official GitHub Actions
           allowlist: |
