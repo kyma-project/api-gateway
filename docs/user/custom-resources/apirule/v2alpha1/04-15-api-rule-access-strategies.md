@@ -1,6 +1,6 @@
-# APIRule v1beta2 Access Strategies
+# APIRule v2alpha1 Access Strategies
 
-APIRule allows you to define the security configuration for an exposed endpoint using the concept of access strategies. The supported access strategies for APIRule `v1beta2` are **noAuth** and **jwt**.
+APIRule allows you to define the security configuration for an exposed endpoint using the concept of access strategies. The supported access strategies for APIRule `v2alpha1` are **noAuth** and **jwt**.
 
 ## Configuration of the **noAuth** Access Strategy
 
@@ -17,7 +17,7 @@ rules:
 
 ## Configuration of the **jwt** Access Strategy
 
-In version `v1beta2` of the APIRule CR, you can use this access strategy only with the Istio JWT configuration.
+In version `v2alpha1` of the APIRule CR, you can use this access strategy only with the Istio JWT configuration.
 
 ```yaml
 ...
@@ -45,7 +45,7 @@ In the following example, the APIRule has two defined Issuers. The first Issuer,
 **requiredScopes** defined in the **authorizations** field allow only for JWTs that have the claims **scp**, **scope**, or **scopes** with a value of `test` and an audience of either `example.com` or `example.org`. Alternatively, the JWTs can have the same claims with the `read` and `write` values.
 
 ```yaml
-apiVersion: gateway.kyma-project.io/v1beta2
+apiVersion: gateway.kyma-project.io/v2alpha1
 kind: APIRule
 metadata:
   name: service-config

@@ -1,7 +1,7 @@
-package v1beta2_test
+package v2alpha1_test
 
 import (
-	"github.com/kyma-project/api-gateway/apis/gateway/v1beta2"
+	"github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -12,8 +12,8 @@ var _ = Describe("Rule", func() {
 	Describe("ContainsAccessStrategy", func() {
 
 		It("should return false when noAuth does not exist in the object", func() {
-			rule := v1beta2.Rule{
-				Jwt: &v1beta2.JwtConfig{},
+			rule := v2alpha1.Rule{
+				Jwt: &v2alpha1.JwtConfig{},
 			}
 
 			Expect(rule.ContainsNoAuth()).To(BeFalse())
@@ -22,7 +22,7 @@ var _ = Describe("Rule", func() {
 		It("should return true when noAuth exists in the object", func() {
 			value := true
 
-			rule := v1beta2.Rule{
+			rule := v2alpha1.Rule{
 				NoAuth: &value,
 			}
 
@@ -30,15 +30,15 @@ var _ = Describe("Rule", func() {
 		})
 
 		It("should return true when JWT exists in the object", func() {
-			rule := v1beta2.Rule{
-				Jwt: &v1beta2.JwtConfig{},
+			rule := v2alpha1.Rule{
+				Jwt: &v2alpha1.JwtConfig{},
 			}
 
 			Expect(rule.ContainsAccessStrategyJwt()).To(BeTrue())
 		})
 
 		It("should return false when no access strategy is in the object", func() {
-			rule := v1beta2.Rule{}
+			rule := v2alpha1.Rule{}
 
 			Expect(rule.ContainsAccessStrategyJwt()).To(BeFalse())
 			Expect(rule.ContainsNoAuth()).To(BeFalse())

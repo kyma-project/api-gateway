@@ -1,4 +1,4 @@
-# APIRule v1beta2 Custom Resource <!-- {docsify-ignore-all} -->
+# APIRule v2alpha1 Custom Resource <!-- {docsify-ignore-all} -->
 
 The `apirules.gateway.kyma-project.io` CustomResourceDefinition (CRD) describes the kind and the format of data the
 APIGateway Controller listens for. To get the up-to-date CRD in the `yaml` format, run the following command:
@@ -7,9 +7,9 @@ APIGateway Controller listens for. To get the up-to-date CRD in the `yaml` forma
 kubectl get crd apirules.gateway.kyma-project.io -o yaml
 ```
 
-## Specification of APIRule v1beta2 Custom Resource
+## Specification of APIRule v2alpha1 Custom Resource
 
-This table lists all parameters of APIRule `v1beta2` CRD together with their descriptions:
+This table lists all parameters of APIRule `v2alpha1` CRD together with their descriptions:
 
 **Spec:**
 
@@ -48,7 +48,7 @@ This table lists all parameters of APIRule `v1beta2` CRD together with their des
 
 
 > [!WARNING]
-> The Ory handler is not supported in version `v1beta2` of the APIRule.
+> The Ory handler is not supported in version `v2alpha1` of the APIRule.
 
 > [!WARNING]
 >  If `service` is not defined at the **spec.service** level, all defined Access Rules must have `service` defined at the **spec.rules.service** level. Otherwise, the validation fails.
@@ -70,7 +70,7 @@ The following table lists the fields of the **status** section.
 See an exmplary APIRule custom resource:
 
 ```yaml
-apiVersion: gateway.kyma-project.io/v1beta2
+apiVersion: gateway.kyma-project.io/v2alpha1
 kind: APIRule
 metadata:
   name: service-exposed

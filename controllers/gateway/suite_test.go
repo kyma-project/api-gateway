@@ -10,7 +10,7 @@ import (
 	"time"
 
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
-	gatewayv1beta2 "github.com/kyma-project/api-gateway/apis/gateway/v1beta2"
+	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	"github.com/kyma-project/api-gateway/controllers"
 	"github.com/kyma-project/api-gateway/controllers/gateway"
 	"github.com/kyma-project/api-gateway/internal/builders"
@@ -99,7 +99,7 @@ var _ = BeforeSuite(func(specCtx SpecContext) {
 	s := runtime.NewScheme()
 
 	Expect(gatewayv1beta1.AddToScheme(s)).Should(Succeed())
-	Expect(gatewayv1beta2.AddToScheme(s)).Should(Succeed())
+	Expect(gatewayv2alpha1.AddToScheme(s)).Should(Succeed())
 	Expect(rulev1alpha1.AddToScheme(s)).Should(Succeed())
 	Expect(networkingv1beta1.AddToScheme(s)).Should(Succeed())
 	Expect(securityv1beta1.AddToScheme(s)).Should(Succeed())
