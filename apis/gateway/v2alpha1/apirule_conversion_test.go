@@ -1126,5 +1126,20 @@ var _ = Describe("APIRule Conversion", func() {
 			Expect(err).To(BeNil())
 			Expect(*apiRuleV2Alpha1.Spec.CorsPolicy.AllowCredentials).To(BeTrue())
 		})
+
+		It("should convert rule with empty spec", func() {
+			// given
+			apiRuleBeta1 := v1beta1.APIRule{
+				Spec: v1beta1.APIRuleSpec{},
+			}
+			apiRuleV2Alpha1 := v2alpha1.APIRule{}
+
+			// when
+			err := apiRuleV2Alpha1.ConvertFrom(&apiRuleBeta1)
+
+			// then
+			Expect(err).ToNot(HaveOccurred())
+			Expect(apiRuleV2Alpha1.Spec).To(Equal(v2alpha1.APIRuleSpec{}))
+		})
 	})
 })

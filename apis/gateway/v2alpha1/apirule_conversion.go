@@ -160,8 +160,6 @@ func (apiRuleV2Alpha1 *APIRule) ConvertFrom(hub conversion.Hub) error {
 		return err
 	}
 
-	apiRuleV2Alpha1.Spec.Hosts = []*Host{new(Host)}
-	*apiRuleV2Alpha1.Spec.Hosts[0] = Host(*apiRuleBeta1.Spec.Host)
 	if apiRuleBeta1.Spec.CorsPolicy != nil {
 		apiRuleV2Alpha1.Spec.CorsPolicy = &CorsPolicy{}
 		apiRuleV2Alpha1.Spec.CorsPolicy.AllowHeaders = apiRuleBeta1.Spec.CorsPolicy.AllowHeaders
@@ -180,30 +178,37 @@ func (apiRuleV2Alpha1 *APIRule) ConvertFrom(hub conversion.Hub) error {
 		}
 	}
 
-	apiRuleV2Alpha1.Spec.Rules = []Rule{}
-	for _, ruleBeta1 := range apiRuleBeta1.Spec.Rules {
-		ruleV1Alpha2 := Rule{}
-		err = convertOverJson(ruleBeta1, &ruleV1Alpha2)
-		if err != nil {
-			return err
-		}
-		for _, accessStrategy := range ruleBeta1.AccessStrategies {
-			if accessStrategy.Handler.Name == v1beta1.AccessStrategyNoAuth {
-				ruleV1Alpha2.NoAuth = ptr.To(true)
-			}
+	if apiRuleBeta1.Spec.Host != nil {
+		apiRuleV2Alpha1.Spec.Hosts = []*Host{new(Host)}
+		*apiRuleV2Alpha1.Spec.Hosts[0] = Host(*apiRuleBeta1.Spec.Host)
+	}
 
-			if accessStrategy.Handler.Name == v1beta1.AccessStrategyJwt {
-				jwtConfig, err := convertToJwtConfig(accessStrategy)
-				if err != nil {
-					return err
+	if len(apiRuleBeta1.Spec.Rules) > 0 {
+		apiRuleV2Alpha1.Spec.Rules = []Rule{}
+		for _, ruleBeta1 := range apiRuleBeta1.Spec.Rules {
+			ruleV1Alpha2 := Rule{}
+			err = convertOverJson(ruleBeta1, &ruleV1Alpha2)
+			if err != nil {
+				return err
+			}
+			for _, accessStrategy := range ruleBeta1.AccessStrategies {
+				if accessStrategy.Handler.Name == v1beta1.AccessStrategyNoAuth {
+					ruleV1Alpha2.NoAuth = ptr.To(true)
 				}
-				err = convertOverJson(jwtConfig, &ruleV1Alpha2.Jwt)
-				if err != nil {
-					return err
+
+				if accessStrategy.Handler.Name == v1beta1.AccessStrategyJwt {
+					jwtConfig, err := convertToJwtConfig(accessStrategy)
+					if err != nil {
+						return err
+					}
+					err = convertOverJson(jwtConfig, &ruleV1Alpha2.Jwt)
+					if err != nil {
+						return err
+					}
 				}
 			}
+			apiRuleV2Alpha1.Spec.Rules = append(apiRuleV2Alpha1.Spec.Rules, ruleV1Alpha2)
 		}
-		apiRuleV2Alpha1.Spec.Rules = append(apiRuleV2Alpha1.Spec.Rules, ruleV1Alpha2)
 	}
 
 	return nil
