@@ -35,7 +35,7 @@ This tutorial shows how to expose and secure Services using APIGateway Controlle
     
     ```bash
     cat <<EOF | kubectl apply -f -
-    apiVersion: gateway.kyma-project.io/v1beta2
+    apiVersion: gateway.kyma-project.io/v2alpha1
     kind: APIRule
     metadata:
       name: httpbin

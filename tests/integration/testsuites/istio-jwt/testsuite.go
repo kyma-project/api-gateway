@@ -100,9 +100,9 @@ func (t *testsuite) InitScenarios(ctx *godog.ScenarioContext) {
 	initExposeMethodsOnPathsNoopHandler(ctx, t)
 	initExposeMethodsOnPathsJwtHandler(ctx, t)
 	initExposeMethodsOnPathsOAuth2Handler(ctx, t)
-	initV1Beta2IstioJWT(ctx, t)
-	initV1Beta2NoAuthHandler(ctx, t)
-	initV1Beta2NoAuthHandlerRecover(ctx, t)
+	initv2alpha1IstioJWT(ctx, t)
+	initv2alpha1NoAuthHandler(ctx, t)
+	initv2alpha1NoAuthHandlerRecover(ctx, t)
 }
 
 func (t *testsuite) FeaturePath() []string {

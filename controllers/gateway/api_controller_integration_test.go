@@ -9,7 +9,7 @@ import (
 	"time"
 
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
-	gatewayv1beta2 "github.com/kyma-project/api-gateway/apis/gateway/v1beta2"
+	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	apinetworkingv1beta1 "istio.io/api/networking/v1beta1"
 
 	gomegatypes "github.com/onsi/gomega/types"
@@ -176,7 +176,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 		})
 	})
 
-	Context("when creating APIRule in version v1beta2 respect x-validation rules only", Ordered, func() {
+	Context("when creating APIRule in version v2alpha1 respect x-validation rules only", Ordered, func() {
 
 		BeforeAll(func() {
 			updateJwtHandlerTo(helpers.JWT_HANDLER_ORY)
@@ -185,19 +185,19 @@ var _ = Describe("APIRule Controller", Serial, func() {
 		It("should be able to create an APIRule with noAuth=true", func() {
 			apiRuleName := generateTestName(testNameBase, testIDLength)
 			serviceName := testServiceNameBase
-			serviceHost := gatewayv1beta2.Host("httpbin-istio-jwt-happy-base.kyma.local")
-			serviceHosts := []*gatewayv1beta2.Host{&serviceHost}
+			serviceHost := gatewayv2alpha1.Host("httpbin-istio-jwt-happy-base.kyma.local")
+			serviceHosts := []*gatewayv2alpha1.Host{&serviceHost}
 
-			rule := testRuleV1Beta2("/img", []gatewayv1beta2.HttpMethod{http.MethodGet})
+			rule := testRulev2alpha1("/img", []gatewayv2alpha1.HttpMethod{http.MethodGet})
 			rule.NoAuth = ptr.To(true)
-			apiRule := testApiRuleV1Beta2(apiRuleName, testNamespace, serviceName, testNamespace, serviceHosts, testServicePort, []gatewayv1beta2.Rule{rule})
+			apiRule := testApiRulev2alpha1(apiRuleName, testNamespace, serviceName, testNamespace, serviceHosts, testServicePort, []gatewayv2alpha1.Rule{rule})
 			svc := testService(serviceName, testNamespace, testServicePort)
 
 			// when
 			Expect(c.Create(context.TODO(), svc)).Should(Succeed())
 			Expect(c.Create(context.TODO(), apiRule)).Should(Succeed())
 			defer func() {
-				apiRuleV1Beta2Teardown(apiRule)
+				apiRulev2alpha1Teardown(apiRule)
 				serviceTeardown(svc)
 			}()
 		})
@@ -205,22 +205,22 @@ var _ = Describe("APIRule Controller", Serial, func() {
 		It("should be able to create an APIRule with jwt", func() {
 			apiRuleName := generateTestName(testNameBase, testIDLength)
 			serviceName := testServiceNameBase
-			serviceHost := gatewayv1beta2.Host("httpbin-istio-jwt-happy-base.kyma.local")
-			serviceHosts := []*gatewayv1beta2.Host{&serviceHost}
+			serviceHost := gatewayv2alpha1.Host("httpbin-istio-jwt-happy-base.kyma.local")
+			serviceHosts := []*gatewayv2alpha1.Host{&serviceHost}
 
-			rule := testRuleV1Beta2("/img", []gatewayv1beta2.HttpMethod{http.MethodGet})
-			rule.Jwt = &gatewayv1beta2.JwtConfig{
-				Authentications: []*gatewayv1beta2.JwtAuthentication{},
-				Authorizations:  []*gatewayv1beta2.JwtAuthorization{},
+			rule := testRulev2alpha1("/img", []gatewayv2alpha1.HttpMethod{http.MethodGet})
+			rule.Jwt = &gatewayv2alpha1.JwtConfig{
+				Authentications: []*gatewayv2alpha1.JwtAuthentication{},
+				Authorizations:  []*gatewayv2alpha1.JwtAuthorization{},
 			}
-			apiRule := testApiRuleV1Beta2(apiRuleName, testNamespace, serviceName, testNamespace, serviceHosts, testServicePort, []gatewayv1beta2.Rule{rule})
+			apiRule := testApiRulev2alpha1(apiRuleName, testNamespace, serviceName, testNamespace, serviceHosts, testServicePort, []gatewayv2alpha1.Rule{rule})
 			svc := testService(serviceName, testNamespace, testServicePort)
 
 			// when
 			Expect(c.Create(context.TODO(), svc)).Should(Succeed())
 			Expect(c.Create(context.TODO(), apiRule)).Should(Succeed())
 			defer func() {
-				apiRuleV1Beta2Teardown(apiRule)
+				apiRulev2alpha1Teardown(apiRule)
 				serviceTeardown(svc)
 			}()
 		})
@@ -228,23 +228,23 @@ var _ = Describe("APIRule Controller", Serial, func() {
 		It("should be able to create an APIRule with jwt and noAuth=false", func() {
 			apiRuleName := generateTestName(testNameBase, testIDLength)
 			serviceName := testServiceNameBase
-			serviceHost := gatewayv1beta2.Host("httpbin-istio-jwt-happy-base.kyma.local")
-			serviceHosts := []*gatewayv1beta2.Host{&serviceHost}
+			serviceHost := gatewayv2alpha1.Host("httpbin-istio-jwt-happy-base.kyma.local")
+			serviceHosts := []*gatewayv2alpha1.Host{&serviceHost}
 
-			rule := testRuleV1Beta2("/img", []gatewayv1beta2.HttpMethod{http.MethodGet})
+			rule := testRulev2alpha1("/img", []gatewayv2alpha1.HttpMethod{http.MethodGet})
 			rule.NoAuth = ptr.To(false)
-			rule.Jwt = &gatewayv1beta2.JwtConfig{
-				Authentications: []*gatewayv1beta2.JwtAuthentication{},
-				Authorizations:  []*gatewayv1beta2.JwtAuthorization{},
+			rule.Jwt = &gatewayv2alpha1.JwtConfig{
+				Authentications: []*gatewayv2alpha1.JwtAuthentication{},
+				Authorizations:  []*gatewayv2alpha1.JwtAuthorization{},
 			}
-			apiRule := testApiRuleV1Beta2(apiRuleName, testNamespace, serviceName, testNamespace, serviceHosts, testServicePort, []gatewayv1beta2.Rule{rule})
+			apiRule := testApiRulev2alpha1(apiRuleName, testNamespace, serviceName, testNamespace, serviceHosts, testServicePort, []gatewayv2alpha1.Rule{rule})
 			svc := testService(serviceName, testNamespace, testServicePort)
 
 			// when
 			Expect(c.Create(context.TODO(), svc)).Should(Succeed())
 			Expect(c.Create(context.TODO(), apiRule)).Should(Succeed())
 			defer func() {
-				apiRuleV1Beta2Teardown(apiRule)
+				apiRulev2alpha1Teardown(apiRule)
 				serviceTeardown(svc)
 			}()
 		})
@@ -252,22 +252,22 @@ var _ = Describe("APIRule Controller", Serial, func() {
 		It("should be able to create an APIRule with jwt and mutators", func() {
 			apiRuleName := generateTestName(testNameBase, testIDLength)
 			serviceName := testServiceNameBase
-			serviceHost := gatewayv1beta2.Host("httpbin-istio-jwt-happy-base.kyma.local")
-			serviceHosts := []*gatewayv1beta2.Host{&serviceHost}
+			serviceHost := gatewayv2alpha1.Host("httpbin-istio-jwt-happy-base.kyma.local")
+			serviceHosts := []*gatewayv2alpha1.Host{&serviceHost}
 
-			rule := testRuleV1Beta2("/img", []gatewayv1beta2.HttpMethod{http.MethodGet})
-			rule.Jwt = &gatewayv1beta2.JwtConfig{
-				Authentications: []*gatewayv1beta2.JwtAuthentication{},
-				Authorizations:  []*gatewayv1beta2.JwtAuthorization{},
+			rule := testRulev2alpha1("/img", []gatewayv2alpha1.HttpMethod{http.MethodGet})
+			rule.Jwt = &gatewayv2alpha1.JwtConfig{
+				Authentications: []*gatewayv2alpha1.JwtAuthentication{},
+				Authorizations:  []*gatewayv2alpha1.JwtAuthorization{},
 			}
-			apiRule := testApiRuleV1Beta2(apiRuleName, testNamespace, serviceName, testNamespace, serviceHosts, testServicePort, []gatewayv1beta2.Rule{rule})
+			apiRule := testApiRulev2alpha1(apiRuleName, testNamespace, serviceName, testNamespace, serviceHosts, testServicePort, []gatewayv2alpha1.Rule{rule})
 			svc := testService(serviceName, testNamespace, testServicePort)
 
 			// when
 			Expect(c.Create(context.TODO(), svc)).Should(Succeed())
 			Expect(c.Create(context.TODO(), apiRule)).Should(Succeed())
 			defer func() {
-				apiRuleV1Beta2Teardown(apiRule)
+				apiRulev2alpha1Teardown(apiRule)
 				serviceTeardown(svc)
 			}()
 		})
@@ -275,18 +275,18 @@ var _ = Describe("APIRule Controller", Serial, func() {
 		It("should fail to create an APIRule without noAuth and jwt", func() {
 			apiRuleName := generateTestName(testNameBase, testIDLength)
 			serviceName := testServiceNameBase
-			serviceHost := gatewayv1beta2.Host("httpbin-istio-jwt-happy-base.kyma.local")
-			serviceHosts := []*gatewayv1beta2.Host{&serviceHost}
+			serviceHost := gatewayv2alpha1.Host("httpbin-istio-jwt-happy-base.kyma.local")
+			serviceHosts := []*gatewayv2alpha1.Host{&serviceHost}
 
-			rule := testRuleV1Beta2("/img", []gatewayv1beta2.HttpMethod{http.MethodGet})
-			apiRule := testApiRuleV1Beta2(apiRuleName, testNamespace, serviceName, testNamespace, serviceHosts, testServicePort, []gatewayv1beta2.Rule{rule})
+			rule := testRulev2alpha1("/img", []gatewayv2alpha1.HttpMethod{http.MethodGet})
+			apiRule := testApiRulev2alpha1(apiRuleName, testNamespace, serviceName, testNamespace, serviceHosts, testServicePort, []gatewayv2alpha1.Rule{rule})
 			svc := testService(serviceName, testNamespace, testServicePort)
 
 			// when
 			Expect(c.Create(context.TODO(), svc)).Should(Succeed())
 			err := c.Create(context.TODO(), apiRule)
 			defer func() {
-				apiRuleV1Beta2Teardown(apiRule)
+				apiRulev2alpha1Teardown(apiRule)
 				serviceTeardown(svc)
 			}()
 
@@ -297,19 +297,19 @@ var _ = Describe("APIRule Controller", Serial, func() {
 		It("should fail to create an APIRule with noAuth=false", func() {
 			apiRuleName := generateTestName(testNameBase, testIDLength)
 			serviceName := testServiceNameBase
-			serviceHost := gatewayv1beta2.Host("httpbin-istio-jwt-happy-base.kyma.local")
-			serviceHosts := []*gatewayv1beta2.Host{&serviceHost}
+			serviceHost := gatewayv2alpha1.Host("httpbin-istio-jwt-happy-base.kyma.local")
+			serviceHosts := []*gatewayv2alpha1.Host{&serviceHost}
 
-			rule := testRuleV1Beta2("/img", []gatewayv1beta2.HttpMethod{http.MethodGet})
+			rule := testRulev2alpha1("/img", []gatewayv2alpha1.HttpMethod{http.MethodGet})
 			rule.NoAuth = ptr.To(false)
-			apiRule := testApiRuleV1Beta2(apiRuleName, testNamespace, serviceName, testNamespace, serviceHosts, testServicePort, []gatewayv1beta2.Rule{rule})
+			apiRule := testApiRulev2alpha1(apiRuleName, testNamespace, serviceName, testNamespace, serviceHosts, testServicePort, []gatewayv2alpha1.Rule{rule})
 			svc := testService(serviceName, testNamespace, testServicePort)
 
 			// when
 			Expect(c.Create(context.TODO(), svc)).Should(Succeed())
 			err := c.Create(context.TODO(), apiRule)
 			defer func() {
-				apiRuleV1Beta2Teardown(apiRule)
+				apiRulev2alpha1Teardown(apiRule)
 				serviceTeardown(svc)
 			}()
 
@@ -320,23 +320,23 @@ var _ = Describe("APIRule Controller", Serial, func() {
 		It("should fail to create an APIRule with jwt and noAuth=true", func() {
 			apiRuleName := generateTestName(testNameBase, testIDLength)
 			serviceName := testServiceNameBase
-			serviceHost := gatewayv1beta2.Host("httpbin-istio-jwt-happy-base.kyma.local")
-			serviceHosts := []*gatewayv1beta2.Host{&serviceHost}
+			serviceHost := gatewayv2alpha1.Host("httpbin-istio-jwt-happy-base.kyma.local")
+			serviceHosts := []*gatewayv2alpha1.Host{&serviceHost}
 
-			rule := testRuleV1Beta2("/img", []gatewayv1beta2.HttpMethod{http.MethodGet})
+			rule := testRulev2alpha1("/img", []gatewayv2alpha1.HttpMethod{http.MethodGet})
 			rule.NoAuth = ptr.To(true)
-			rule.Jwt = &gatewayv1beta2.JwtConfig{
-				Authentications: []*gatewayv1beta2.JwtAuthentication{},
-				Authorizations:  []*gatewayv1beta2.JwtAuthorization{},
+			rule.Jwt = &gatewayv2alpha1.JwtConfig{
+				Authentications: []*gatewayv2alpha1.JwtAuthentication{},
+				Authorizations:  []*gatewayv2alpha1.JwtAuthorization{},
 			}
-			apiRule := testApiRuleV1Beta2(apiRuleName, testNamespace, serviceName, testNamespace, serviceHosts, testServicePort, []gatewayv1beta2.Rule{rule})
+			apiRule := testApiRulev2alpha1(apiRuleName, testNamespace, serviceName, testNamespace, serviceHosts, testServicePort, []gatewayv2alpha1.Rule{rule})
 			svc := testService(serviceName, testNamespace, testServicePort)
 
 			// when
 			Expect(c.Create(context.TODO(), svc)).Should(Succeed())
 			err := c.Create(context.TODO(), apiRule)
 			defer func() {
-				apiRuleV1Beta2Teardown(apiRule)
+				apiRulev2alpha1Teardown(apiRule)
 				serviceTeardown(svc)
 			}()
 
@@ -347,20 +347,20 @@ var _ = Describe("APIRule Controller", Serial, func() {
 		It("should fail to create an APIRule with more than one host", func() {
 			apiRuleName := generateTestName(testNameBase, testIDLength)
 			serviceName := testServiceNameBase
-			serviceHost := gatewayv1beta2.Host("httpbin-istio-jwt-happy-base.kyma.local")
-			secondServiceHost := gatewayv1beta2.Host("other-istio-jwt-happy-base.kyma.local")
-			serviceHosts := []*gatewayv1beta2.Host{&serviceHost, &secondServiceHost}
+			serviceHost := gatewayv2alpha1.Host("httpbin-istio-jwt-happy-base.kyma.local")
+			secondServiceHost := gatewayv2alpha1.Host("other-istio-jwt-happy-base.kyma.local")
+			serviceHosts := []*gatewayv2alpha1.Host{&serviceHost, &secondServiceHost}
 
-			rule := testRuleV1Beta2("/img", []gatewayv1beta2.HttpMethod{http.MethodGet})
+			rule := testRulev2alpha1("/img", []gatewayv2alpha1.HttpMethod{http.MethodGet})
 			rule.NoAuth = ptr.To(true)
-			apiRule := testApiRuleV1Beta2(apiRuleName, testNamespace, serviceName, testNamespace, serviceHosts, testServicePort, []gatewayv1beta2.Rule{rule})
+			apiRule := testApiRulev2alpha1(apiRuleName, testNamespace, serviceName, testNamespace, serviceHosts, testServicePort, []gatewayv2alpha1.Rule{rule})
 			svc := testService(serviceName, testNamespace, testServicePort)
 
 			// when
 			Expect(c.Create(context.TODO(), svc)).Should(Succeed())
 			err := c.Create(context.TODO(), apiRule)
 			defer func() {
-				apiRuleV1Beta2Teardown(apiRule)
+				apiRulev2alpha1Teardown(apiRule)
 				serviceTeardown(svc)
 			}()
 			Expect(err).Should(HaveOccurred())
@@ -1652,8 +1652,8 @@ func testRule(path string, methods []gatewayv1beta1.HttpMethod, mutators []*gate
 	}
 }
 
-func testRuleV1Beta2(path string, methods []gatewayv1beta2.HttpMethod) gatewayv1beta2.Rule {
-	return gatewayv1beta2.Rule{
+func testRulev2alpha1(path string, methods []gatewayv2alpha1.HttpMethod) gatewayv2alpha1.Rule {
+	return gatewayv2alpha1.Rule{
 		Path:    path,
 		Methods: methods,
 	}
@@ -1680,18 +1680,18 @@ func testApiRule(name, namespace, serviceName, serviceNamespace, serviceHost str
 	}
 }
 
-func testApiRuleV1Beta2(name, namespace, serviceName, serviceNamespace string, serviceHosts []*gatewayv1beta2.Host, servicePort uint32, rules []gatewayv1beta2.Rule) *gatewayv1beta2.APIRule {
+func testApiRulev2alpha1(name, namespace, serviceName, serviceNamespace string, serviceHosts []*gatewayv2alpha1.Host, servicePort uint32, rules []gatewayv2alpha1.Rule) *gatewayv2alpha1.APIRule {
 	var gateway = testGatewayURL
 
-	return &gatewayv1beta2.APIRule{
+	return &gatewayv2alpha1.APIRule{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: namespace,
 		},
-		Spec: gatewayv1beta2.APIRuleSpec{
+		Spec: gatewayv2alpha1.APIRuleSpec{
 			Hosts:   serviceHosts,
 			Gateway: &gateway,
-			Service: &gatewayv1beta2.Service{
+			Service: &gatewayv2alpha1.Service{
 				Name:      &serviceName,
 				Namespace: &serviceNamespace,
 				Port:      &servicePort,
@@ -1981,7 +1981,7 @@ func apiRuleTeardown(apiRule *gatewayv1beta1.APIRule) {
 	}, eventuallyTimeout).Should(Succeed())
 }
 
-func apiRuleV1Beta2Teardown(apiRule *gatewayv1beta2.APIRule) {
+func apiRulev2alpha1Teardown(apiRule *gatewayv2alpha1.APIRule) {
 	By(fmt.Sprintf("Deleting ApiRule %s as part of teardown", apiRule.Name))
 	err := c.Delete(context.TODO(), apiRule)
 
@@ -1990,7 +1990,7 @@ func apiRuleV1Beta2Teardown(apiRule *gatewayv1beta2.APIRule) {
 	}
 
 	Eventually(func(g Gomega) {
-		a := gatewayv1beta2.APIRule{}
+		a := gatewayv2alpha1.APIRule{}
 		err := c.Get(context.TODO(), client.ObjectKey{Name: apiRule.Name, Namespace: testNamespace}, &a)
 		g.Expect(errors.IsNotFound(err)).To(BeTrue())
 	}, eventuallyTimeout).Should(Succeed())
