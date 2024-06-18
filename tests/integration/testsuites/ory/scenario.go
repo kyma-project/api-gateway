@@ -99,7 +99,7 @@ func (s *scenario) theAPIRuleIsUpdated(manifest string) error {
 	return helpers.UpdateApiRule(s.resourceManager, s.k8sClient, testcontext.GetRetryOpts(), resourceManifest)
 }
 
-func (s *scenario) theAPIRuleIsDeletedUsingV1beta2Version() error {
+func (s *scenario) theAPIRuleIsDeletedUsingv2alpha1Version() error {
 	resourceManifest, err := manifestprocessor.ParseFromFileWithTemplate(s.ApiResourceManifestPath, s.ApiResourceDirectory, s.ManifestTemplate)
 	if err != nil {
 		return err
@@ -109,7 +109,7 @@ func (s *scenario) theAPIRuleIsDeletedUsingV1beta2Version() error {
 	if err != nil {
 		return err
 	}
-	groupVersionResource.Version = "v1beta2"
+	groupVersionResource.Version = "v2alpha1"
 
 	return s.resourceManager.DeleteResource(s.k8sClient, *groupVersionResource, resourceManifest[0].GetNamespace(), resourceManifest[0].GetName())
 }

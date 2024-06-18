@@ -1,4 +1,4 @@
-apiVersion: gateway.kyma-project.io/v1beta2
+apiVersion: gateway.kyma-project.io/v2alpha1
 kind: APIRule
 metadata:
   name: "{{.NamePrefix}}-{{.TestID}}"

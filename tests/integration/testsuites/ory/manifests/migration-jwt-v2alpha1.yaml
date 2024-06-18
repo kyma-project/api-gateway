@@ -1,4 +1,4 @@
-apiVersion: gateway.kyma-project.io/v1beta2
+apiVersion: gateway.kyma-project.io/v2alpha1
 kind: APIRule
 metadata:
   name: "{{.NamePrefix}}-{{.TestID}}"
@@ -13,4 +13,7 @@ spec:
   rules:
     - path: /anything
       methods: ["GET"]
-      noAuth: true
+      jwt:
+        authentications:
+          - issuer: https://dummy-test-url.com
+            jwksUri: https://dummy-test-url.com/oauth2/certs
