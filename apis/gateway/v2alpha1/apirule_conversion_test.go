@@ -918,7 +918,7 @@ var _ = Describe("APIRule Conversion", func() {
 				Expect(apiRuleV2Alpha1.Spec).To(Equal(v2alpha1.APIRuleSpec{}))
 			})
 
-			It("should convert rule with oauth2_introspection handler to v1beta2 with empty spec", func() {
+			It("should convert rule with oauth2_introspection handler to v2alpha1 with empty spec", func() {
 				// given
 				apiRuleBeta1 := v1beta1.APIRule{
 					ObjectMeta: metav1.ObjectMeta{
@@ -954,7 +954,7 @@ var _ = Describe("APIRule Conversion", func() {
 				Expect(apiRuleV2Alpha1.Spec).To(Equal(v2alpha1.APIRuleSpec{}))
 			})
 
-			It("should convert rule with noop handler to v1beta2 with empty spec", func() {
+			It("should convert rule with noop handler to v2alpha1 with empty spec", func() {
 				// given
 				apiRuleBeta1 := v1beta1.APIRule{
 					ObjectMeta: metav1.ObjectMeta{

@@ -194,6 +194,9 @@ func (apiRuleV2Alpha1 *APIRule) ConvertFrom(hub conversion.Hub) error {
 
 			if accessStrategy.Handler.Name == v1beta1.AccessStrategyJwt {
 				jwtConfig, err := convertToJwtConfig(accessStrategy)
+				if err != nil {
+					return err
+				}
 				err = convertOverJson(jwtConfig, &ruleV1Alpha2.Jwt)
 				if err != nil {
 					return err
