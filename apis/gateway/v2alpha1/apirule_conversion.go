@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"time"
 
@@ -14,9 +15,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
 )
 
-const (
-	v1beta1DeprecatedTemplate = "APIRule in version v1beta1 has been deprecated. To request APIRule v1beta1, use the command 'kubectl get -n %s apirules.v1beta1.gateway.kyma-project.io %s'. See APIRule v2alpha1 documentation and consider migrating to the newer version."
-)
 
 var beta1toV2alpha1StatusConversionMap = map[v1beta1.StatusCode]State{
 	v1beta1.StatusOK:      Ready,
@@ -104,7 +102,7 @@ func (apiRuleV2Alpha1 *APIRule) ConvertTo(hub conversion.Hub) error {
 		if ruleV1Alpha2.NoAuth != nil && *ruleV1Alpha2.NoAuth {
 			ruleBeta1.AccessStrategies = append(ruleBeta1.AccessStrategies, &v1beta1.Authenticator{
 				Handler: &v1beta1.Handler{
-					Name: "no_auth",
+					Name: v1beta1.AccessStrategyNoAuth,
 				},
 			})
 		}
@@ -112,13 +110,10 @@ func (apiRuleV2Alpha1 *APIRule) ConvertTo(hub conversion.Hub) error {
 		if ruleV1Alpha2.Jwt != nil {
 			ruleBeta1.AccessStrategies = append(ruleBeta1.AccessStrategies, &v1beta1.Authenticator{
 				Handler: &v1beta1.Handler{
-					Name:   "jwt",
+					Name:   v1beta1.AccessStrategyJwt,
 					Config: &runtime.RawExtension{Object: ruleV1Alpha2.Jwt},
 				},
 			})
-		}
-		if len(ruleBeta1.AccessStrategies) == 0 {
-			return errors.New("either jwt is configured or noAuth must be set to true in a rule")
 		}
 		apiRuleBeta1.Spec.Rules = append(apiRuleBeta1.Spec.Rules, ruleBeta1)
 	}
@@ -131,6 +126,24 @@ func (apiRuleV2Alpha1 *APIRule) ConvertFrom(hub conversion.Hub) error {
 	apiRuleBeta1 := hub.(*v1beta1.APIRule)
 
 	apiRuleV2Alpha1.ObjectMeta = apiRuleBeta1.ObjectMeta
+
+	if apiRuleBeta1.Status.APIRuleStatus != nil {
+		apiRuleV2Alpha1.Status = APIRuleStatus{
+			State:             beta1toV2alpha1StatusConversionMap[apiRuleBeta1.Status.APIRuleStatus.Code],
+			Description:       apiRuleBeta1.Status.APIRuleStatus.Description,
+			LastProcessedTime: apiRuleBeta1.Status.LastProcessedTime,
+		}
+	}
+
+	conversionPossible, err := isFullConversionPossible(apiRuleBeta1)
+	if err != nil {
+		return err
+	}
+	if !conversionPossible {
+		// We have to stop the conversion here, because we want to return an empty Spec in case we cannot fully convert the APIRule.
+		return nil
+	}
+
 
 	err := convertOverJson(apiRuleBeta1.Spec.Rules, &apiRuleV2Alpha1.Spec.Rules)
 	if err != nil {
@@ -147,14 +160,6 @@ func (apiRuleV2Alpha1 *APIRule) ConvertFrom(hub conversion.Hub) error {
 	err = convertOverJson(apiRuleBeta1.Spec.Timeout, &apiRuleV2Alpha1.Spec.Timeout)
 	if err != nil {
 		return err
-	}
-
-	if apiRuleBeta1.Status.APIRuleStatus != nil {
-		apiRuleV2Alpha1.Status = APIRuleStatus{
-			State:             beta1toV2alpha1StatusConversionMap[apiRuleBeta1.Status.APIRuleStatus.Code],
-			Description:       apiRuleBeta1.Status.APIRuleStatus.Description,
-			LastProcessedTime: apiRuleBeta1.Status.LastProcessedTime,
-		}
 	}
 
 	apiRuleV2Alpha1.Spec.Hosts = []*Host{new(Host)}
@@ -185,32 +190,16 @@ func (apiRuleV2Alpha1 *APIRule) ConvertFrom(hub conversion.Hub) error {
 			return err
 		}
 		for _, accessStrategy := range ruleBeta1.AccessStrategies {
-			if accessStrategy.Handler.Name == "no_auth" { // No Auth
+			if accessStrategy.Handler.Name == v1beta1.AccessStrategyNoAuth {
 				ruleV1Alpha2.NoAuth = ptr.To(true)
-			} else if accessStrategy.Handler.Name == "jwt" && accessStrategy.Config != nil { // JWT
-				var jwtConfig *v1beta1.JwtConfig
-				if accessStrategy.Config.Object != nil {
-					jwtConfig = accessStrategy.Config.Object.(*v1beta1.JwtConfig)
-				} else if accessStrategy.Config.Raw != nil {
-					jwtConfig = &v1beta1.JwtConfig{}
-					err = json.Unmarshal(accessStrategy.Config.Raw, jwtConfig)
-					if err != nil {
-						return err
-					}
-				}
-				if jwtConfig.Authentications == nil && jwtConfig.Authorizations == nil { // v1beta1 ory jwt config
-					var oryJwtConfig ory.JWTAccStrConfig
-					_ = json.Unmarshal(accessStrategy.Config.Raw, &oryJwtConfig)
-					if len(oryJwtConfig.JWKSUrls) > 0 {
-						return fmt.Errorf(v1beta1DeprecatedTemplate, apiRuleBeta1.Namespace, apiRuleBeta1.Name)
-					}
-				}
+			}
+
+			if accessStrategy.Handler.Name == v1beta1.AccessStrategyJwt {
+				jwtConfig, err := convertToJwtConfig(accessStrategy)
 				err = convertOverJson(jwtConfig, &ruleV1Alpha2.Jwt)
 				if err != nil {
 					return err
 				}
-			} else {
-				return fmt.Errorf(v1beta1DeprecatedTemplate, apiRuleBeta1.Namespace, apiRuleBeta1.Name)
 			}
 		}
 		apiRuleV2Alpha1.Spec.Rules = append(apiRuleV2Alpha1.Spec.Rules, ruleV1Alpha2)
@@ -231,4 +220,31 @@ func convertOverJson(src any, dst any) error {
 	}
 
 	return nil
+}
+
+// isFullConversionPossible checks if the APIRule can be fully converted to v2alpha1 by evaluating the access strategies.
+func isFullConversionPossible(apiRule *v1beta1.APIRule) (bool, error) {
+	for _, rule := range apiRule.Spec.Rules {
+		for _, accessStrategy := range rule.AccessStrategies {
+
+			if accessStrategy.Handler.Name == v1beta1.AccessStrategyNoAuth {
+				continue
+			}
+
+			if accessStrategy.Handler.Name == v1beta1.AccessStrategyJwt {
+				isConvertible, err := isConvertibleJwtConfig(accessStrategy)
+				if err != nil {
+					return false, err
+				}
+				if isConvertible {
+					continue
+				}
+			}
+
+			return false, nil
+		}
+
+	}
+
+	return true, nil
 }
