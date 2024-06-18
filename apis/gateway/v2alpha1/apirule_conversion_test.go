@@ -341,6 +341,21 @@ var _ = Describe("APIRule Conversion", func() {
 			Expect(apiRuleBeta1.Status.APIRuleStatus.Code).To(Equal(v1beta1.StatusError))
 			Expect(apiRuleBeta1.Status.APIRuleStatus.Description).To(Equal("description"))
 		})
+
+		It("should convert rule with empty spec", func() {
+			// given
+			apiRuleV2Alpha1 := v2alpha1.APIRule{
+				Spec: v2alpha1.APIRuleSpec{},
+			}
+			apiRuleBeta1 := v1beta1.APIRule{}
+
+			// when
+			err := apiRuleV2Alpha1.ConvertTo(&apiRuleBeta1)
+
+			// then
+			Expect(err).ToNot(HaveOccurred())
+			Expect(apiRuleBeta1.Spec).To(Equal(v1beta1.APIRuleSpec{}))
+		})
 	})
 
 	Describe("v1beta1 to v2alpha1", func() {
@@ -820,7 +835,6 @@ var _ = Describe("APIRule Conversion", func() {
 		})
 
 		Context("with unsupported handler", func() {
-
 			It("should set object meta data and status when converting handler that does not support full conversion to v2alpha1", func() {
 				// given
 				apiRuleBeta1 := v1beta1.APIRule{

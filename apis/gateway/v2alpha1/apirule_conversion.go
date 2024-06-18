@@ -2,12 +2,13 @@ package v2alpha1
 
 import (
 	"encoding/json"
+	"time"
+
 	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
-	"time"
 )
 
 var beta1toV2alpha1StatusConversionMap = map[v1beta1.StatusCode]State{
@@ -81,35 +82,39 @@ func (apiRuleV2Alpha1 *APIRule) ConvertTo(hub conversion.Hub) error {
 		}
 	}
 
-	// Only one host is supported in v1beta1, so we use the first one from the list
-	strHost := string(*apiRuleV2Alpha1.Spec.Hosts[0])
-	apiRuleBeta1.Spec.Host = &strHost
+	if len(apiRuleV2Alpha1.Spec.Hosts) > 0 {
+		// Only one host is supported in v1beta1, so we use the first one from the list
+		strHost := string(*apiRuleV2Alpha1.Spec.Hosts[0])
+		apiRuleBeta1.Spec.Host = &strHost
+	}
 
-	apiRuleBeta1.Spec.Rules = []v1beta1.Rule{}
-	for _, ruleV1Alpha2 := range apiRuleV2Alpha1.Spec.Rules {
-		ruleBeta1 := v1beta1.Rule{}
-		err = convertOverJson(ruleV1Alpha2, &ruleBeta1)
-		if err != nil {
-			return err
+	if len(apiRuleV2Alpha1.Spec.Rules) > 0 {
+		apiRuleBeta1.Spec.Rules = []v1beta1.Rule{}
+		for _, ruleV1Alpha2 := range apiRuleV2Alpha1.Spec.Rules {
+			ruleBeta1 := v1beta1.Rule{}
+			err = convertOverJson(ruleV1Alpha2, &ruleBeta1)
+			if err != nil {
+				return err
+			}
+			// No Auth
+			if ruleV1Alpha2.NoAuth != nil && *ruleV1Alpha2.NoAuth {
+				ruleBeta1.AccessStrategies = append(ruleBeta1.AccessStrategies, &v1beta1.Authenticator{
+					Handler: &v1beta1.Handler{
+						Name: v1beta1.AccessStrategyNoAuth,
+					},
+				})
+			}
+			// JWT
+			if ruleV1Alpha2.Jwt != nil {
+				ruleBeta1.AccessStrategies = append(ruleBeta1.AccessStrategies, &v1beta1.Authenticator{
+					Handler: &v1beta1.Handler{
+						Name:   v1beta1.AccessStrategyJwt,
+						Config: &runtime.RawExtension{Object: ruleV1Alpha2.Jwt},
+					},
+				})
+			}
+			apiRuleBeta1.Spec.Rules = append(apiRuleBeta1.Spec.Rules, ruleBeta1)
 		}
-		// No Auth
-		if ruleV1Alpha2.NoAuth != nil && *ruleV1Alpha2.NoAuth {
-			ruleBeta1.AccessStrategies = append(ruleBeta1.AccessStrategies, &v1beta1.Authenticator{
-				Handler: &v1beta1.Handler{
-					Name: v1beta1.AccessStrategyNoAuth,
-				},
-			})
-		}
-		// JWT
-		if ruleV1Alpha2.Jwt != nil {
-			ruleBeta1.AccessStrategies = append(ruleBeta1.AccessStrategies, &v1beta1.Authenticator{
-				Handler: &v1beta1.Handler{
-					Name:   v1beta1.AccessStrategyJwt,
-					Config: &runtime.RawExtension{Object: ruleV1Alpha2.Jwt},
-				},
-			})
-		}
-		apiRuleBeta1.Spec.Rules = append(apiRuleBeta1.Spec.Rules, ruleBeta1)
 	}
 
 	return nil
