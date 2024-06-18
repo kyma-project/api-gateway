@@ -2,19 +2,13 @@ package v2alpha1
 
 import (
 	"encoding/json"
-	"errors"
-	"fmt"
 	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"time"
-
-	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
-	"github.com/kyma-project/api-gateway/internal/types/ory"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
+	"time"
 )
-
 
 var beta1toV2alpha1StatusConversionMap = map[v1beta1.StatusCode]State{
 	v1beta1.StatusOK:      Ready,
@@ -144,8 +138,7 @@ func (apiRuleV2Alpha1 *APIRule) ConvertFrom(hub conversion.Hub) error {
 		return nil
 	}
 
-
-	err := convertOverJson(apiRuleBeta1.Spec.Rules, &apiRuleV2Alpha1.Spec.Rules)
+	err = convertOverJson(apiRuleBeta1.Spec.Rules, &apiRuleV2Alpha1.Spec.Rules)
 	if err != nil {
 		return err
 	}

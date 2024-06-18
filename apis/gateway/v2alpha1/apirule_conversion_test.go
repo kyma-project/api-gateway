@@ -520,24 +520,24 @@ var _ = Describe("APIRule Conversion", func() {
 				}
 				apiRuleV2Alpha1 := v2alpha1.APIRule{}
 
-			// when
-			err := apiRuleV2Alpha1.ConvertFrom(&apiRuleBeta1)
+				// when
+				err := apiRuleV2Alpha1.ConvertFrom(&apiRuleBeta1)
 
-			// then
-			Expect(err).ToNot(HaveOccurred())
-			Expect(apiRuleV2Alpha1.Spec.Rules).To(HaveLen(1))
-			Expect(apiRuleV2Alpha1.Spec.Rules[0].Jwt).ToNot(BeNil())
-			Expect(apiRuleV2Alpha1.Spec.Rules[0].Jwt.Authentications).To(HaveLen(1))
-			Expect(apiRuleV2Alpha1.Spec.Rules[0].Jwt.Authentications[0].Issuer).To(Equal("issuer"))
-			Expect(apiRuleV2Alpha1.Spec.Rules[0].Jwt.Authentications[0].JwksUri).To(Equal("jwksUri"))
-			Expect(apiRuleV2Alpha1.Spec.Rules[0].Jwt.Authentications[0].FromHeaders).To(HaveLen(1))
-			Expect(apiRuleV2Alpha1.Spec.Rules[0].Jwt.Authentications[0].FromHeaders[0].Name).To(Equal(jwtHeadersBeta1[0].Name))
-			Expect(apiRuleV2Alpha1.Spec.Rules[0].Jwt.Authentications[0].FromHeaders[0].Prefix).To(Equal(jwtHeadersBeta1[0].Prefix))
-			Expect(apiRuleV2Alpha1.Spec.Rules[0].Jwt.Authentications[0].FromParams).To(HaveExactElements("param1", "param2"))
-			Expect(apiRuleV2Alpha1.Spec.Rules[0].Jwt.Authorizations).To(HaveLen(1))
-			Expect(apiRuleV2Alpha1.Spec.Rules[0].Jwt.Authorizations[0].RequiredScopes).To(HaveExactElements("scope1", "scope2"))
-			Expect(apiRuleV2Alpha1.Spec.Rules[0].Jwt.Authorizations[0].Audiences).To(HaveExactElements("audience1", "audience2"))
-		})
+				// then
+				Expect(err).ToNot(HaveOccurred())
+				Expect(apiRuleV2Alpha1.Spec.Rules).To(HaveLen(1))
+				Expect(apiRuleV2Alpha1.Spec.Rules[0].Jwt).ToNot(BeNil())
+				Expect(apiRuleV2Alpha1.Spec.Rules[0].Jwt.Authentications).To(HaveLen(1))
+				Expect(apiRuleV2Alpha1.Spec.Rules[0].Jwt.Authentications[0].Issuer).To(Equal("issuer"))
+				Expect(apiRuleV2Alpha1.Spec.Rules[0].Jwt.Authentications[0].JwksUri).To(Equal("jwksUri"))
+				Expect(apiRuleV2Alpha1.Spec.Rules[0].Jwt.Authentications[0].FromHeaders).To(HaveLen(1))
+				Expect(apiRuleV2Alpha1.Spec.Rules[0].Jwt.Authentications[0].FromHeaders[0].Name).To(Equal(jwtHeadersBeta1[0].Name))
+				Expect(apiRuleV2Alpha1.Spec.Rules[0].Jwt.Authentications[0].FromHeaders[0].Prefix).To(Equal(jwtHeadersBeta1[0].Prefix))
+				Expect(apiRuleV2Alpha1.Spec.Rules[0].Jwt.Authentications[0].FromParams).To(HaveExactElements("param1", "param2"))
+				Expect(apiRuleV2Alpha1.Spec.Rules[0].Jwt.Authorizations).To(HaveLen(1))
+				Expect(apiRuleV2Alpha1.Spec.Rules[0].Jwt.Authorizations[0].RequiredScopes).To(HaveExactElements("scope1", "scope2"))
+				Expect(apiRuleV2Alpha1.Spec.Rules[0].Jwt.Authorizations[0].Audiences).To(HaveExactElements("audience1", "audience2"))
+			})
 
 			It("should convert JWT without Authorizations", func() {
 				// given
@@ -606,35 +606,35 @@ var _ = Describe("APIRule Conversion", func() {
 				jsonConfig, err := json.Marshal(jwtConfigBeta1)
 				Expect(err).ToNot(HaveOccurred())
 
-			apiRuleBeta1 := v1beta1.APIRule{
-				Spec: v1beta1.APIRuleSpec{
-					Host: &host1string,
-					Rules: []v1beta1.Rule{
-						{
-							AccessStrategies: []*v1beta1.Authenticator{
-								{
-									Handler: &v1beta1.Handler{
-										Name:   "jwt",
-										Config: &runtime.RawExtension{Raw: jsonConfig},
+				apiRuleBeta1 := v1beta1.APIRule{
+					Spec: v1beta1.APIRuleSpec{
+						Host: &host1string,
+						Rules: []v1beta1.Rule{
+							{
+								AccessStrategies: []*v1beta1.Authenticator{
+									{
+										Handler: &v1beta1.Handler{
+											Name:   "jwt",
+											Config: &runtime.RawExtension{Raw: jsonConfig},
+										},
 									},
 								},
 							},
 						},
 					},
-				},
-			}
-			apiRuleV2Alpha1 := v2alpha1.APIRule{}
+				}
+				apiRuleV2Alpha1 := v2alpha1.APIRule{}
 
-			// when
-			err = apiRuleV2Alpha1.ConvertFrom(&apiRuleBeta1)
+				// when
+				err = apiRuleV2Alpha1.ConvertFrom(&apiRuleBeta1)
 
-			// then
-			Expect(err).ToNot(HaveOccurred())
-			Expect(apiRuleV2Alpha1.Spec.Rules).To(HaveLen(1))
-			Expect(apiRuleV2Alpha1.Spec.Rules[0].Jwt).ToNot(BeNil())
-			Expect(apiRuleV2Alpha1.Spec.Rules[0].Jwt.Authentications).To(HaveLen(1))
-			Expect(apiRuleV2Alpha1.Spec.Rules[0].Jwt.Authorizations).To(HaveLen(1))
-		})
+				// then
+				Expect(err).ToNot(HaveOccurred())
+				Expect(apiRuleV2Alpha1.Spec.Rules).To(HaveLen(1))
+				Expect(apiRuleV2Alpha1.Spec.Rules[0].Jwt).ToNot(BeNil())
+				Expect(apiRuleV2Alpha1.Spec.Rules[0].Jwt.Authentications).To(HaveLen(1))
+				Expect(apiRuleV2Alpha1.Spec.Rules[0].Jwt.Authorizations).To(HaveLen(1))
+			})
 
 			It("should convert rule with ory jwt to v2alpha1", func() {
 				// given
@@ -863,7 +863,7 @@ var _ = Describe("APIRule Conversion", func() {
 				Expect(apiRuleV2Alpha1.Name).To(Equal("test-name"))
 				Expect(apiRuleV2Alpha1.Namespace).To(Equal("test-ns"))
 				Expect(apiRuleV2Alpha1.Status).ToNot(BeNil())
-				Expect(apiRuleV2Alpha1.Status.State).To(Equal(v1beta2.Ready))
+				Expect(apiRuleV2Alpha1.Status.State).To(Equal(v2alpha1.Ready))
 				Expect(apiRuleV2Alpha1.Status.Description).To(Equal("description"))
 
 			})
@@ -894,14 +894,14 @@ var _ = Describe("APIRule Conversion", func() {
 						},
 					},
 				}
-				apiRuleBeta2 := v1beta2.APIRule{}
+				apiRuleV2Alpha1 := v2alpha1.APIRule{}
 
 				// when
-				err := apiRuleBeta2.ConvertFrom(&apiRuleBeta1)
+				err := apiRuleV2Alpha1.ConvertFrom(&apiRuleBeta1)
 
 				// then
 				Expect(err).ToNot(HaveOccurred())
-				Expect(apiRuleBeta2.Spec).To(Equal(v1beta2.APIRuleSpec{}))
+				Expect(apiRuleV2Alpha1.Spec).To(Equal(v2alpha1.APIRuleSpec{}))
 			})
 
 			It("should convert rule with oauth2_introspection handler to v1beta2 with empty spec", func() {
@@ -930,14 +930,14 @@ var _ = Describe("APIRule Conversion", func() {
 						},
 					},
 				}
-				apiRuleBeta2 := v1beta2.APIRule{}
+				apiRuleV2Alpha1 := v2alpha1.APIRule{}
 
 				// when
-				err := apiRuleBeta2.ConvertFrom(&apiRuleBeta1)
+				err := apiRuleV2Alpha1.ConvertFrom(&apiRuleBeta1)
 
 				// then
 				Expect(err).ToNot(HaveOccurred())
-				Expect(apiRuleBeta2.Spec).To(Equal(v1beta2.APIRuleSpec{}))
+				Expect(apiRuleV2Alpha1.Spec).To(Equal(v2alpha1.APIRuleSpec{}))
 			})
 
 			It("should convert rule with noop handler to v1beta2 with empty spec", func() {
