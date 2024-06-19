@@ -76,7 +76,7 @@ metadata:
   name: service-exposed
 spec:
   gateway: kyma-system/kyma-gateway
-  hosts: 
+  hosts:
     - foo.bar
   service:
     name: foo-service
@@ -88,3 +88,7 @@ spec:
       methods: [ "GET" ]
       noAuth: true
 ```
+
+## Empty spec
+
+We return empty spec for APIRules in `v2alpha1` version when unsupported `v1beta1` spec is in place. See [supported access strategies](04-15-api-rule-access-strategies.md). Additionally for `jwt` we support only configuration with a single issuer.
