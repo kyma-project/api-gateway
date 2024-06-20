@@ -239,3 +239,4 @@ get-latest-release:
 .PHONY: perf-test
 perf-test:
 	cd performance_tests && ./test.sh
+

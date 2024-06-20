@@ -20,13 +20,15 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
+
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"github.com/kyma-project/api-gateway/controllers"
 	"github.com/kyma-project/api-gateway/internal/dependencies"
 	"github.com/kyma-project/api-gateway/internal/processing/default_domain"
 	"k8s.io/client-go/util/retry"
+	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
-	"time"
 
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 
@@ -197,6 +199,26 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 
 			// remove finalizer so the reconcilation can proceed
 			controllerutil.RemoveFinalizer(apiRule, API_GATEWAY_FINALIZER)
+			// workaround for when APIRule was deleted using v2alpha1 version and it got trimmed spec
+			if apiRule.Spec.Gateway == nil {
+				apiRule.Spec.Gateway = ptr.To("n/a")
+			}
+			if apiRule.Spec.Host == nil {
+				apiRule.Spec.Host = ptr.To("host")
+			}
+			if apiRule.Spec.Rules == nil {
+				apiRule.Spec.Rules = []gatewayv1beta1.Rule{{
+					Methods: []gatewayv1beta1.HttpMethod{"GET"},
+					Path:    "/*",
+					AccessStrategies: []*gatewayv1beta1.Authenticator{
+						{
+							Handler: &gatewayv1beta1.Handler{
+								Name: "noop",
+							},
+						},
+					},
+				}}
+			}
 			if err := r.Update(ctx, apiRule); err != nil {
 				r.Log.Error(err, "Error happened during finalizer removal")
 				return doneReconcileErrorRequeue(r.OnErrorReconcilePeriod)

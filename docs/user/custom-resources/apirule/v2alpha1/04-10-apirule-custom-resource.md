@@ -46,15 +46,14 @@ This table lists all parameters of APIRule `v2alpha1` CRD together with their de
 | **rules.jwt.authorizations.audiences**           |  **NO**   | Specifies the list of audiences required for the JWT.                                                                                                                                                                                                                                                                                        | None                                                                                                  |
 | **rules.timeout**                                |  **NO**   | Specifies the timeout, in seconds, for HTTP requests made to **spec.rules.path**. Timeout definitions set at this level take precedence over any timeout defined at the **spec.timeout** level.                                                                                                                                              | The maximum timeout is limited to 3900 seconds (65 minutes).                                          |
 
+> [!WARNING]
+> When you use an unsupported `v1beta1` configuration in version `v2alpha1` of the APIRule CR, you get an empty **spec**. See [supported access strategies](04-15-api-rule-access-strategies.md).
 
 > [!WARNING]
-> The Ory handler is not supported in version `v2alpha1` of the APIRule.
+> The Ory handler is not supported in version `v2alpha1` of the APIRule. When **noAuth** is set to true, **jwt** cannot be defined on the same path.
 
 > [!WARNING]
->  If `service` is not defined at the **spec.service** level, all defined Access Rules must have `service` defined at the **spec.rules.service** level. Otherwise, the validation fails.
-
-> [!WARNING]
-> When `noAuth` is set to true, `jwt` cannot be defined on the same path.
+>  If a service is not defined at the **spec.service** level, all defined Access Rules must have it defined at the **spec.rules.service** level. Otherwise, the validation fails.
 
 **Status:**
 
@@ -76,7 +75,7 @@ metadata:
   name: service-exposed
 spec:
   gateway: kyma-system/kyma-gateway
-  hosts: 
+  hosts:
     - foo.bar
   service:
     name: foo-service

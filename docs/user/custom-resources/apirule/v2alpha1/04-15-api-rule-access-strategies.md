@@ -17,7 +17,7 @@ rules:
 
 ## Configuration of the **jwt** Access Strategy
 
-In version `v2alpha1` of the APIRule CR, you can use this access strategy only with the Istio JWT configuration.
+In version `v2alpha1` of the APIRule CR, you can use this access strategy only with the Istio JWT configuration. Additionally, defining only one issuer is supported.
 
 ```yaml
 ...
@@ -40,8 +40,7 @@ The authorizations field is optional. When not defined, the authorization is sat
 
 The **requiredScopes** and **audiences** fields are optional. If the **requiredScopes** field is defined, the JWT must contain all the scopes in the scp, scope, or scopes claims to be authorized. If the **audiences** field is defined, the JWT has to contain all the audiences in the aud claim to be authorized.
 
-
-In the following example, the APIRule has two defined Issuers. The first Issuer, called `ISSUER`, uses a JWT token extracted from the HTTP header. The header is named `X-JWT-Assertion` and has a prefix of `Kyma`. The second Issuer, called `ISSUER2`, uses a JWT token extracted from a URL parameter named `jwt-token`.  
+In the following example, the APIRule has two defined Issuers. The first Issuer, called `ISSUER`, uses a JWT token extracted from the HTTP header. The header is named `X-JWT-Assertion` and has a prefix of `Kyma`. The second Issuer, called `ISSUER2`, uses a JWT token extracted from a URL parameter named `jwt-token`.
 **requiredScopes** defined in the **authorizations** field allow only for JWTs that have the claims **scp**, **scope**, or **scopes** with a value of `test` and an audience of either `example.com` or `example.org`. Alternatively, the JWTs can have the same claims with the `read` and `write` values.
 
 ```yaml
