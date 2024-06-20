@@ -17,7 +17,7 @@ rules:
 
 ## Configuration of the **jwt** Access Strategy
 
-In version `v2alpha1` of the APIRule CR, you can use this access strategy only with the Istio JWT configuration.
+In version `v2alpha1` of the APIRule CR, you can use this access strategy only with the Istio JWT configuration. Additionally, defining only one issuer is supported.
 
 ```yaml
 ...
