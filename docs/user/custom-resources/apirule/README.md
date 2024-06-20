@@ -1,13 +1,13 @@
 # APIRule Custom Resource <!-- {docsify-ignore-all} -->
 
-The `apirules.gateway.kyma-project.io` CRD describes the kind and the format of data the APIRule Controller uses to configure resources. The APIRule CR is available in two versions: `v1beta2` and `v1beta1`.
+The `apirules.gateway.kyma-project.io` CRD describes the kind and the format of data the APIRule Controller uses to configure resources. The APIRule CR is available in two versions: `v2alpha1` and `v1beta1`.
 
 > [!WARNING]
-> APIRule in version `v1beta1` will become deprecated in 2024. Migrate to version `v1beta2`.
+> APIRule in version `v1beta1` will become deprecated in 2024. Migrate to version `v2alpha1`.
 
-Browse the documentation related to the APIRule CR in version `v1beta2`:
-- [Specification of APIRule CR](./v1beta2/04-10-apirule-custom-resource.md)
-- [APIRule Access Strategies](./v1beta2/04-15-api-rule-access-strategies.md)
+Browse the documentation related to the APIRule CR in version `v2alpha1`:
+- [Specification of APIRule CR](./v2alpha1/04-10-apirule-custom-resource.md)
+- [APIRule Access Strategies](./v2alpha1/04-15-api-rule-access-strategies.md)
 
 Browse the documentation related to the APIRule CR in version `v1beta1`:
 - [Specification of APIRule CR](./04-10-apirule-custom-resource.md)

@@ -60,7 +60,7 @@ This tutorial explains how to create a sample HTTPBin Service Deployment.
       ports:
       - name: http
         port: 8000
-        targetPort: 8080
+        targetPort: 80
       selector:
         app: httpbin
     ---
