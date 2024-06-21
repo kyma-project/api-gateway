@@ -2,8 +2,6 @@ module github.com/kyma-project/api-gateway
 
 go 1.22.0
 
-toolchain go1.22.3
-
 require (
 	github.com/avast/retry-go/v4 v4.6.0
 	github.com/cucumber/godog v0.14.1
@@ -96,5 +94,5 @@ require (
 	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/api v0.30.1
 	k8s.io/apiextensions-apiserver v0.30.1
-	k8s.io/utils v0.0.0-20240102154912-e7106e64919e
+	k8s.io/utils v0.0.0-20240423183400-0849a56e8f22
 )
