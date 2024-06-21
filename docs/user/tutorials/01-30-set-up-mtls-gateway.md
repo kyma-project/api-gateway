@@ -112,7 +112,7 @@ The procedure of setting up a working mTLS Gateway is described in the following
 
 ### Expose Workloads Behind Your mTLS Gateway
 
-To expose a custom workload, create an APIRule. You can either use version `v1beta1` or `v1beta2`.
+To expose a custom workload, create an APIRule. You can either use version `v1beta1` or `v2alpha1`.
 
 ### Use APIRule `v1beta1`
 
@@ -160,11 +160,11 @@ EOF
 ```
 <!-- tabs:end -->
 
-### Use APIRule `v1beta2`
+### Use APIRule `v2alpha1`
 
 ```bash
 cat <<EOF | kubectl apply -f -
-apiVersion: gateway.kyma-project.io/v1beta2
+apiVersion: gateway.kyma-project.io/v2alpha1
 kind: APIRule
 metadata:
   labels:

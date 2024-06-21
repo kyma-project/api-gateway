@@ -6,7 +6,7 @@ Proposed
 
 ## Context
 
-We introduce a conversion webhook that converts APIRule versions from `v1beta1` to `v1beta2` and vice versa. It requires a valid x509 certificate for the webhook server. We must provide implementation of certificate handling, which includes tasks such as creating, verifying, and renewing the certificate. Previously, for the conversion webhook, we used a CronJob to schedule a Job that would periodically handle certificate verification and renewal for the conversion webhook. However, this approach required us to maintain, build, and release an image for the webhook.
+We introduce a conversion webhook that converts APIRule versions from `v1beta1` to `v2alpha1` and vice versa. It requires a valid x509 certificate for the webhook server. We must provide implementation of certificate handling, which includes tasks such as creating, verifying, and renewing the certificate. Previously, for the conversion webhook, we used a CronJob to schedule a Job that would periodically handle certificate verification and renewal for the conversion webhook. However, this approach required us to maintain, build, and release an image for the webhook.
 
 ## Decision
 

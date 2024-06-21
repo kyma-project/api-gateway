@@ -191,7 +191,7 @@ func (m *Manager) CreateOrUpdateResources(k8sClient dynamic.Interface, resources
 func (m *Manager) CreateOrUpdateResourcesGVR(client dynamic.Interface, resources ...unstructured.Unstructured) (*unstructured.Unstructured, error) {
 	gotRes := &unstructured.Unstructured{}
 	for _, res := range resources {
-		gvr, err := getGvrFromUnstructured(m, res)
+		gvr, err := GetGvrFromUnstructured(m, res)
 		if err != nil {
 			return nil, err
 		}
@@ -470,7 +470,7 @@ func (m *Manager) GetStatus(client dynamic.Interface, resourceSchema schema.Grou
 	return status, nil
 }
 
-func getGvrFromUnstructured(m *Manager, resource unstructured.Unstructured) (*schema.GroupVersionResource, error) {
+func GetGvrFromUnstructured(m *Manager, resource unstructured.Unstructured) (*schema.GroupVersionResource, error) {
 	gvk := resource.GroupVersionKind()
 	mapping, err := m.mapper.RESTMapping(schema.GroupKind{
 		Group: gvk.Group,
