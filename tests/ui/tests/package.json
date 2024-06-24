@@ -12,7 +12,7 @@
     "cypress": "13.11.0",
     "cypress-file-upload": "5.0.8",
     "js-yaml": "4.1.0",
-    "typescript": "5.4.5",
+    "typescript": "5.5.2",
     "@kubernetes/client-node": "0.21.0"
   }
 }
