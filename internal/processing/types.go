@@ -59,8 +59,9 @@ type CorsConfig struct {
 }
 
 type ReconciliationConfig struct {
-	OathkeeperSvc     string
-	OathkeeperSvcPort uint32
-	CorsConfig        *CorsConfig
-	DefaultDomainName string
+	OathkeeperSvc      string
+	OathkeeperSvcPort  uint32
+	CorsConfig         *CorsConfig
+	DefaultDomainName  string
+	HasMigrationMarker bool
 }

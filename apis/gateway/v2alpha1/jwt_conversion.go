@@ -33,7 +33,7 @@ func convertOryJwtAccessStrategy(accessStrategy *v1beta1.Authenticator) (*v1beta
 	return jwtConfig, nil
 }
 
-func convertIstioJwtAccessStrategy(accessStrategy *v1beta1.Authenticator) (*v1beta1.JwtConfig, error) {
+func ConvertIstioJwtAccessStrategy(accessStrategy *v1beta1.Authenticator) (*v1beta1.JwtConfig, error) {
 	var jwtConfig *v1beta1.JwtConfig
 
 	if accessStrategy.Config.Object != nil {
@@ -55,7 +55,7 @@ func isConvertibleJwtConfig(accessStrategy *v1beta1.Authenticator) (bool, error)
 		return false, nil
 	}
 
-	istioJwtConfig, err := convertIstioJwtAccessStrategy(accessStrategy)
+	istioJwtConfig, err := ConvertIstioJwtAccessStrategy(accessStrategy)
 	if err != nil {
 		return false, err
 	}
@@ -80,7 +80,7 @@ func isConvertibleJwtConfig(accessStrategy *v1beta1.Authenticator) (bool, error)
 }
 
 func convertToJwtConfig(accessStrategy *v1beta1.Authenticator) (*v1beta1.JwtConfig, error) {
-	jwtConfig, err := convertIstioJwtAccessStrategy(accessStrategy)
+	jwtConfig, err := ConvertIstioJwtAccessStrategy(accessStrategy)
 	if err != nil {
 		return nil, err
 	}
