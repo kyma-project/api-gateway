@@ -45,3 +45,7 @@ func (r Reconciliation) Validate(ctx context.Context, client client.Client, apiR
 func (r Reconciliation) GetProcessors() []processing.ReconciliationProcessor {
 	return r.processors
 }
+
+func (r Reconciliation) ApplyMigrationMarker(_ *gatewayv1beta1.APIRule) bool {
+	return false
+}

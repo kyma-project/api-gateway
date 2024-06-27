@@ -21,6 +21,9 @@ type ReconciliationCommand interface {
 
 	// GetProcessors returns the processor relevant for the reconciliation of this command.
 	GetProcessors() []ReconciliationProcessor
+
+	// ApplyMigrationMarker adds the migration marker to the APIRule if required. Returns true if the marker was added and false if marker already exists.
+	ApplyMigrationMarker(apiRule *gatewayv1beta1.APIRule) bool
 }
 
 // ReconciliationProcessor provides the evaluation of changes during the reconciliation of API Rule.

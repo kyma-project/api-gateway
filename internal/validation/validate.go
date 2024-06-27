@@ -21,11 +21,11 @@ import (
 var vldNoConfig = &noConfigAccStrValidator{}
 var vldDummy = &dummyHandlerValidator{}
 
-type handlerValidator interface {
+type HandlerValidator interface {
 	Validate(attrPath string, Handler *gatewayv1beta1.Handler) []Failure
 }
 
-type accessStrategyValidator interface {
+type AccessStrategyValidator interface {
 	Validate(attrPath string, accessStrategies []*gatewayv1beta1.Authenticator) []Failure
 }
 
@@ -43,8 +43,8 @@ type rulesValidator interface {
 
 // APIRuleValidator is used to validate github.com/kyma-project/api-gateway/api/v1beta1/APIRule instances
 type APIRuleValidator struct {
-	HandlerValidator          handlerValidator
-	AccessStrategiesValidator accessStrategyValidator
+	HandlerValidator          HandlerValidator
+	AccessStrategiesValidator AccessStrategyValidator
 	MutatorsValidator         mutatorValidator
 	InjectionValidator        injectionValidator
 	RulesValidator            rulesValidator
@@ -263,7 +263,7 @@ func (v *APIRuleValidator) validateAccessStrategies(attributePath string, access
 
 func (v *APIRuleValidator) validateAccessStrategy(attributePath string, accessStrategy *gatewayv1beta1.Authenticator, selector *apiv1beta1.WorkloadSelector, namespace string) []Failure {
 	var problems []Failure
-	var vld handlerValidator
+	var vld HandlerValidator
 
 	switch accessStrategy.Handler.Name {
 	case gatewayv1beta1.AccessStrategyAllow:

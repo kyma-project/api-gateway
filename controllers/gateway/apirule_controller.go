@@ -20,6 +20,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/kyma-project/api-gateway/internal/processing/migration"
 	"time"
 
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
@@ -153,7 +154,9 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		isApiRuleInv2alpha1Version = true
 	}
 
-	cmd := r.getReconciliation(defaultDomainName, isApiRuleInv2alpha1Version)
+	shouldMigrateToIstio := migration.HasMigrationMarker(*apiRule)
+
+	cmd := r.getReconciliation(defaultDomainName, isApiRuleInv2alpha1Version, shouldMigrateToIstio)
 
 	if apiRuleErr != nil {
 		if apierrs.IsNotFound(apiRuleErr) {
@@ -237,6 +240,16 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	}
 
 	status := processing.Reconcile(ctx, r.Client, &r.Log, cmd, apiRule)
+
+	if cmd.ApplyMigrationMarker(apiRule) && !status.HasError() {
+		r.Log.Info("Applying migration marker", "apiRule", apiRule.Name, "namespace", apiRule.Namespace)
+		if err := r.Update(ctx, apiRule); err != nil {
+			return doneReconcileErrorRequeue(r.OnErrorReconcilePeriod)
+		}
+
+		return r.updateStatusMigration(ctx, apiRule, status)
+	}
+
 	return r.updateStatusOrRetry(ctx, apiRule, status)
 }
 
@@ -248,12 +261,19 @@ func handleDependenciesError(name string, err error) controllers.Status {
 	}
 }
 
-func (r *APIRuleReconciler) getReconciliation(defaultDomain string, apiRulev2alpha1 bool) processing.ReconciliationCommand {
+func (r *APIRuleReconciler) getReconciliation(defaultDomain string, apiRulev2alpha1 bool, shouldMigrateToIstio bool) processing.ReconciliationCommand {
 	config := r.ReconciliationConfig
 	config.DefaultDomainName = defaultDomain
-	if r.Config.JWTHandler == helpers.JWT_HANDLER_ISTIO || apiRulev2alpha1 {
+	if r.Config.JWTHandler == helpers.JWT_HANDLER_ISTIO {
 		return istio.NewIstioReconciliation(config, &r.Log)
 	}
+
+	if apiRulev2alpha1 {
+		r.Log.Info("APIRule is in v2alpha1 version. Migration reconciliation is used.")
+		config.HasMigrationMarker = shouldMigrateToIstio
+		return migration.NewMigrationReconciliation(config, &r.Log)
+	}
+
 	return ory.NewOryReconciliation(config, &r.Log)
 
 }
@@ -285,6 +305,21 @@ func (r *APIRuleReconciler) updateStatusOrRetry(ctx context.Context, api *gatewa
 	}
 
 	return doneReconcileDefaultRequeue(r.ReconcilePeriod, &r.Log)
+}
+
+func (r *APIRuleReconciler) updateStatusMigration(ctx context.Context, api *gatewayv1beta1.APIRule, status processing.ReconciliationStatus) (ctrl.Result, error) {
+	_, updateStatusErr := r.updateStatus(ctx, api, status)
+	if updateStatusErr != nil {
+		r.Log.Error(updateStatusErr, "Error updating ApiRule status, retrying")
+		return retryReconcile(updateStatusErr) //controller retries to set the correct status eventually.
+	}
+
+	if status.HasError() {
+		r.Log.Info("Requeue for reconciliation because the status has an error")
+		return doneReconcileErrorRequeue(r.OnErrorReconcilePeriod)
+	}
+
+	return doneReconcileDefaultRequeue(60*time.Second, &r.Log)
 }
 
 func doneReconcileNoRequeue() (ctrl.Result, error) {
