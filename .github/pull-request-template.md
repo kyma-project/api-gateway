@@ -11,7 +11,7 @@ Changes proposed in this pull request:
 
 - ...
 
-Pre-Merge Checklist:
+**Pre-Merge Checklist**
 
 - [ ] As a PR reviewer, verify code coverage and evaluate if it is acceptable.
 
