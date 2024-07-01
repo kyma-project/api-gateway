@@ -19,7 +19,7 @@ One of the strategies enables you to use your own identity provider. This is ver
 > [!NOTE]
 >  If you don't have access to the identity provider, you can sign up for a free tier plan at [Auth0](https://auth0.com/).
 
-Configure a dedicated client (often referred to as an application) at your identity provider.
+Configure a dedicated client (often referred to as an application) in your identity provider.
 
 1. Save these details of your application at your identity provider:
 
