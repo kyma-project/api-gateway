@@ -7,7 +7,7 @@ import (
 
 	"github.com/kyma-project/api-gateway/internal/builders"
 	"github.com/kyma-project/api-gateway/internal/processing"
-	. "github.com/kyma-project/api-gateway/internal/processing/internal/test"
+	. "github.com/kyma-project/api-gateway/internal/processing/processing_test"
 	"github.com/kyma-project/api-gateway/internal/processing/processors"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"

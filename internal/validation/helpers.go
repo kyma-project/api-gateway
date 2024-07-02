@@ -3,38 +3,11 @@ package validation
 import (
 	"bytes"
 	"errors"
-	"fmt"
-	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"net/url"
 	"regexp"
 
 	"k8s.io/apimachinery/pkg/runtime"
 )
-
-func hasPathAndMethodDuplicates(rules []gatewayv1beta1.Rule) bool {
-	duplicates := map[string]bool{}
-
-	if len(rules) > 1 {
-		for _, rule := range rules {
-			if len(rule.Methods) > 0 {
-				for _, method := range rule.Methods {
-					tmp := fmt.Sprintf("%s:%s", rule.Path, method)
-					if duplicates[tmp] {
-						return true
-					}
-					duplicates[tmp] = true
-				}
-			} else {
-				if duplicates[rule.Path] {
-					return true
-				}
-				duplicates[rule.Path] = true
-			}
-		}
-	}
-
-	return false
-}
 
 func IsInvalidURL(toTest string) (bool, error) {
 	if len(toTest) == 0 {

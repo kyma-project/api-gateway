@@ -5,7 +5,7 @@ import (
 	"fmt"
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	operatorv1alpha1 "github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
-	"github.com/kyma-project/api-gateway/internal/processing"
+	v1beta1Status "github.com/kyma-project/api-gateway/internal/processing/status/v1beta1"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/util/retry"
@@ -25,7 +25,7 @@ const (
 type Status interface {
 	NestedError() error
 	ToAPIGatewayStatus() (operatorv1alpha1.APIGatewayStatus, error)
-	ToAPIRuleStatus() (processing.ReconciliationStatus, error)
+	ToAPIRuleStatus() (v1beta1Status.ReconciliationV1beta1Status, error)
 	IsReady() bool
 	IsWarning() bool
 	IsError() bool
@@ -118,31 +118,31 @@ func (s status) ToAPIGatewayStatus() (operatorv1alpha1.APIGatewayStatus, error) 
 	}
 }
 
-func (s status) ToAPIRuleStatus() (processing.ReconciliationStatus, error) {
+func (s status) ToAPIRuleStatus() (v1beta1Status.ReconciliationV1beta1Status, error) {
 	switch s.state {
 	case Ready:
-		return processing.ReconciliationStatus{
+		return v1beta1Status.ReconciliationV1beta1Status{
 			ApiRuleStatus: &gatewayv1beta1.APIRuleResourceStatus{
 				Code:        gatewayv1beta1.StatusOK,
 				Description: s.description,
 			},
 		}, nil
 	case Error:
-		return processing.ReconciliationStatus{
+		return v1beta1Status.ReconciliationV1beta1Status{
 			ApiRuleStatus: &gatewayv1beta1.APIRuleResourceStatus{
 				Code:        gatewayv1beta1.StatusError,
 				Description: s.description,
 			},
 		}, nil
 	case Warning:
-		return processing.ReconciliationStatus{
+		return v1beta1Status.ReconciliationV1beta1Status{
 			ApiRuleStatus: &gatewayv1beta1.APIRuleResourceStatus{
 				Code:        gatewayv1beta1.StatusWarning,
 				Description: s.description,
 			},
 		}, nil
 	default:
-		return processing.ReconciliationStatus{}, fmt.Errorf("unsupported status: %v", s.state)
+		return v1beta1Status.ReconciliationV1beta1Status{}, fmt.Errorf("unsupported status: %v", s.state)
 	}
 }
 
