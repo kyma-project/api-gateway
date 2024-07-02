@@ -16,6 +16,7 @@ limitations under the License.
 package v2alpha1
 
 import (
+	"github.com/kyma-project/api-gateway/apis/gateway/versions"
 	"istio.io/api/networking/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -65,10 +66,15 @@ type APIRuleStatus struct {
 	// State signifies current state of APIRule.
 	// Value can be one of ("Ready", "Processing", "Error", "Deleting", "Warning").
 	// +kubebuilder:validation:Required
+
 	// +kubebuilder:validation:Enum=Processing;Deleting;Ready;Error;Warning
 	State State `json:"state"`
 	// Description of APIRule status
 	Description string `json:"description,omitempty"`
+}
+
+func (s *APIRuleStatus) ApiRuleStatusVersion() versions.Version {
+	return versions.V2alpha1
 }
 
 // APIRule is the Schema for ApiRule APIs.

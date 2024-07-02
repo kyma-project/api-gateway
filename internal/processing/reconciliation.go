@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
+	"github.com/kyma-project/api-gateway/internal/processing/status"
 
 	"github.com/go-logr/logr"
 	"github.com/kyma-project/api-gateway/internal/validation"
@@ -16,8 +17,8 @@ type ReconciliationCommand interface {
 	// Validate performs provided APIRule validation in context of the provided client cluster
 	Validate(context.Context, client.Client, *gatewayv1beta1.APIRule) ([]validation.Failure, error)
 
-	// GetStatusBase returns ReconciliationStatus that sets unused subresources status to nil and to gatewayv1beta1.StatusCode paramter for all the others
-	GetStatusBase(gatewayv1beta1.StatusCode) ReconciliationStatus
+	// GetStatusBase returns ReconciliationV1beta1Status that sets unused subresources status to nil and to gatewayv1beta1.StatusCode paramter for all the others
+	GetStatusBase(string) status.ReconciliationStatusVisitor
 
 	// GetProcessors returns the processor relevant for the reconciliation of this command.
 	GetProcessors() []ReconciliationProcessor
@@ -30,22 +31,21 @@ type ReconciliationProcessor interface {
 }
 
 // Reconcile executes the reconciliation of the APIRule using the given reconciliation command.
-func Reconcile(ctx context.Context, client client.Client, log *logr.Logger, cmd ReconciliationCommand, apiRule *gatewayv1beta1.APIRule) ReconciliationStatus {
-
+func Reconcile(ctx context.Context, client client.Client, log *logr.Logger, cmd ReconciliationCommand, apiRule *gatewayv1beta1.APIRule) status.ReconciliationStatusVisitor {
 	validationFailures, err := cmd.Validate(ctx, client, apiRule)
 	if err != nil {
 		// We set the status to skipped because it was not the validation that failed, but an error occurred during validation.
 		log.Error(err, "Error during validation")
-		statusBase := cmd.GetStatusBase(gatewayv1beta1.StatusSkipped)
-		errorMap := map[ResourceSelector][]error{OnApiRule: {err}}
-		return GetStatusForErrorMap(errorMap, statusBase)
+		statusBase := cmd.GetStatusBase(string(gatewayv1beta1.StatusSkipped))
+		errorMap := map[status.ResourceSelector][]error{status.OnApiRule: {err}}
+		return statusBase.GetStatusForErrorMap(errorMap)
 	}
 
 	if len(validationFailures) > 0 {
 		failuresJson, _ := json.Marshal(validationFailures)
 		log.Info(fmt.Sprintf(`Validation failure {"controller": "Api", "request": "%s/%s", "failures": %s}`, apiRule.Namespace, apiRule.Name, string(failuresJson)))
-		statusBase := cmd.GetStatusBase(gatewayv1beta1.StatusSkipped)
-		return GenerateStatusFromFailures(validationFailures, statusBase)
+		statusBase := cmd.GetStatusBase(string(gatewayv1beta1.StatusSkipped))
+		return statusBase.GenerateStatusFromFailures(validationFailures)
 	}
 
 	for _, processor := range cmd.GetProcessors() {
@@ -53,28 +53,28 @@ func Reconcile(ctx context.Context, client client.Client, log *logr.Logger, cmd 
 		objectChanges, err := processor.EvaluateReconciliation(ctx, client, apiRule)
 		if err != nil {
 			log.Error(err, "Error during reconciliation")
-			statusBase := cmd.GetStatusBase(gatewayv1beta1.StatusSkipped)
-			errorMap := map[ResourceSelector][]error{OnApiRule: {err}}
-			return GetStatusForErrorMap(errorMap, statusBase)
+			statusBase := cmd.GetStatusBase(string(gatewayv1beta1.StatusSkipped))
+			errorMap := map[status.ResourceSelector][]error{status.OnApiRule: {err}}
+			return statusBase.GetStatusForErrorMap(errorMap)
 		}
 
 		errorMap := applyChanges(ctx, client, objectChanges...)
 		if len(errorMap) > 0 {
 			log.Error(err, "Error during applying reconciliation")
-			statusBase := cmd.GetStatusBase(gatewayv1beta1.StatusOK)
-			return GetStatusForErrorMap(errorMap, statusBase)
+			statusBase := cmd.GetStatusBase(string(gatewayv1beta1.StatusOK))
+			return statusBase.GetStatusForErrorMap(errorMap)
 		}
 	}
 
-	statusBase := cmd.GetStatusBase(gatewayv1beta1.StatusOK)
-	return GenerateStatusFromFailures([]validation.Failure{}, statusBase)
+	statusBase := cmd.GetStatusBase(string(gatewayv1beta1.StatusOK))
+	return statusBase.GenerateStatusFromFailures([]validation.Failure{})
 }
 
 // applyChanges applies the given commands on the cluster
 // returns map of errors that happened for all subresources
 // the map is empty if no error happened
-func applyChanges(ctx context.Context, client client.Client, changes ...*ObjectChange) map[ResourceSelector][]error {
-	errorMap := make(map[ResourceSelector][]error)
+func applyChanges(ctx context.Context, client client.Client, changes ...*ObjectChange) map[status.ResourceSelector][]error {
+	errorMap := make(map[status.ResourceSelector][]error)
 	for _, change := range changes {
 		res, err := applyChange(ctx, client, change)
 		if err != nil {
@@ -85,7 +85,7 @@ func applyChanges(ctx context.Context, client client.Client, changes ...*ObjectC
 	return errorMap
 }
 
-func applyChange(ctx context.Context, client client.Client, change *ObjectChange) (ResourceSelector, error) {
+func applyChange(ctx context.Context, client client.Client, change *ObjectChange) (status.ResourceSelector, error) {
 	var err error
 
 	switch change.Action {
@@ -106,18 +106,18 @@ func applyChange(ctx context.Context, client client.Client, change *ObjectChange
 	return objectToSelector(change.Obj), nil
 }
 
-func objectToSelector(obj client.Object) ResourceSelector {
+func objectToSelector(obj client.Object) status.ResourceSelector {
 	kind := obj.GetObjectKind().GroupVersionKind().Kind
 	switch kind {
-	case OnVirtualService.String():
-		return OnVirtualService
-	case OnAccessRule.String():
-		return OnAccessRule
-	case OnRequestAuthentication.String():
-		return OnRequestAuthentication
-	case OnAuthorizationPolicy.String():
-		return OnAuthorizationPolicy
+	case status.OnVirtualService.String():
+		return status.OnVirtualService
+	case status.OnAccessRule.String():
+		return status.OnAccessRule
+	case status.OnRequestAuthentication.String():
+		return status.OnRequestAuthentication
+	case status.OnAuthorizationPolicy.String():
+		return status.OnAuthorizationPolicy
 	default:
-		return OnApiRule
+		return status.OnApiRule
 	}
 }
