@@ -29,8 +29,6 @@ import (
 	"github.com/kyma-project/api-gateway/controllers"
 	"github.com/kyma-project/api-gateway/internal/dependencies"
 	"github.com/kyma-project/api-gateway/internal/processing/default_domain"
-	"k8s.io/client-go/util/retry"
-	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 
 	"sigs.k8s.io/controller-runtime/pkg/builder"
@@ -43,78 +41,18 @@ import (
 	"github.com/kyma-project/api-gateway/internal/processing"
 	corev1 "k8s.io/api/core/v1"
 	apierrs "k8s.io/apimachinery/pkg/api/errors"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
 const (
-	CONFIGMAP_NAME                = "api-gateway-config"
-	CONFIGMAP_NS                  = "kyma-system"
-	DEFAULT_RECONCILIATION_PERIOD = 30 * time.Minute
-	ERROR_RECONCILIATION_PERIOD   = time.Minute
-	API_GATEWAY_FINALIZER         = "gateway.kyma-project.io/subresources"
+	defaultReconciliationPeriod = 30 * time.Minute
+	errorReconciliationPeriod   = time.Minute
+	apiGatewayFinalizer         = "gateway.kyma-project.io/subresources"
 )
-
-type isApiGatewayConfigMapPredicate struct {
-	Log logr.Logger
-	predicate.Funcs
-}
-
-func (p isApiGatewayConfigMapPredicate) Create(e event.CreateEvent) bool {
-	return p.Generic(event.GenericEvent(e))
-}
-
-func (p isApiGatewayConfigMapPredicate) Delete(e event.DeleteEvent) bool {
-	return p.Generic(event.GenericEvent{
-		Object: e.Object,
-	})
-}
-
-func (p isApiGatewayConfigMapPredicate) Update(e event.UpdateEvent) bool {
-	return p.Generic(event.GenericEvent{
-		Object: e.ObjectNew,
-	})
-}
-
-func (p isApiGatewayConfigMapPredicate) Generic(e event.GenericEvent) bool {
-	if e.Object == nil {
-		p.Log.Error(nil, "Generic event has no object", "event", e)
-		return false
-	}
-	configMap, okCM := e.Object.(*corev1.ConfigMap)
-	return okCM && configMap.GetNamespace() == CONFIGMAP_NS && configMap.GetName() == CONFIGMAP_NAME
-}
-
-func (r *APIRuleReconciler) reconcileConfigMap(ctx context.Context, isCMReconcile bool) (finishReconciliation bool) {
-	r.Log.Info("Starting ConfigMap reconciliation")
-	err := r.Config.ReadFromConfigMap(ctx, r.Client)
-	if err != nil {
-		if apierrs.IsNotFound(err) {
-			r.Log.Info(fmt.Sprintf(`ConfigMap %s in namespace %s was not found {"controller": "Api"}, will use default config`, helpers.CM_NAME, helpers.CM_NS))
-			r.Config.ResetToDefault()
-		} else {
-			r.Log.Error(err, fmt.Sprintf(`could not read ConfigMap %s in namespace %s {"controller": "Api"}`, helpers.CM_NAME, helpers.CM_NS))
-			r.Config.Reset()
-		}
-	}
-	if isCMReconcile {
-		configValidationFailures := validation.ValidateConfig(r.Config)
-		r.Log.Info("ConfigMap changed", "config", r.Config)
-		if len(configValidationFailures) > 0 {
-			failuresJson, _ := json.Marshal(configValidationFailures)
-			r.Log.Error(err, fmt.Sprintf(`Config validation failure {"controller": "Api", "failures": %s}`, string(failuresJson)))
-		}
-		r.Log.Info("ConfigMap reconciliation finished")
-		return true
-	}
-	return false
-}
 
 func (r *APIRuleReconciler) handleAPIRuleGetError(ctx context.Context, name types.NamespacedName, apiRule *gatewayv1beta1.APIRule, err error, cmd processing.ReconciliationCommand) (ctrl.Result, error) {
 	if apierrs.IsNotFound(err) {
@@ -128,46 +66,6 @@ func (r *APIRuleReconciler) handleAPIRuleGetError(ctx context.Context, name type
 	statusBase := cmd.GetStatusBase(string(gatewayv1beta1.StatusSkipped))
 	errorMap := map[status.ResourceSelector][]error{status.OnApiRule: {err}}
 	return r.updateStatusOrRetry(ctx, apiRule, statusBase.GetStatusForErrorMap(errorMap))
-}
-
-func (r *APIRuleReconciler) reconcileAPIRuleDeletion(ctx context.Context, apiRule *gatewayv1beta1.APIRule) (ctrl.Result, error) {
-	if controllerutil.ContainsFinalizer(apiRule, API_GATEWAY_FINALIZER) {
-		// finalizer is present on APIRule, so all subresources need to be deleted
-		if err := processing.DeleteAPIRuleSubresources(r.Client, ctx, *apiRule); err != nil {
-			r.Log.Error(err, "Error happened during deletion of APIRule subresources")
-			// if removing subresources ends in error, return with retry
-			// so that it can be retried
-			return doneReconcileErrorRequeue(r.OnErrorReconcilePeriod)
-		}
-
-		// remove finalizer so the reconcilation can proceed
-		controllerutil.RemoveFinalizer(apiRule, API_GATEWAY_FINALIZER)
-		// workaround for when APIRule was deleted using v2alpha1 version and it got trimmed spec
-		if apiRule.Spec.Gateway == nil {
-			apiRule.Spec.Gateway = ptr.To("n/a")
-		}
-		if apiRule.Spec.Host == nil {
-			apiRule.Spec.Host = ptr.To("host")
-		}
-		if apiRule.Spec.Rules == nil {
-			apiRule.Spec.Rules = []gatewayv1beta1.Rule{{
-				Methods: []gatewayv1beta1.HttpMethod{"GET"},
-				Path:    "/*",
-				AccessStrategies: []*gatewayv1beta1.Authenticator{
-					{
-						Handler: &gatewayv1beta1.Handler{
-							Name: "noop",
-						},
-					},
-				},
-			}}
-		}
-		if err := r.Update(ctx, apiRule); err != nil {
-			r.Log.Error(err, "Error happened during finalizer removal")
-			return doneReconcileErrorRequeue(r.OnErrorReconcilePeriod)
-		}
-	}
-	return doneReconcileNoRequeue()
 }
 
 //+kubebuilder:rbac:groups=gateway.kyma-project.io,resources=apirules,verbs=get;list;watch;create;update;patch;delete
@@ -189,7 +87,7 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 
 	defaultDomainName, err := default_domain.GetDefaultDomainFromKymaGateway(ctx, r.Client)
 	if err != nil && default_domain.HandleDefaultDomainError(r.Log, err) {
-		return doneReconcileErrorRequeue(ERROR_RECONCILIATION_PERIOD)
+		return doneReconcileErrorRequeue(errorReconciliationPeriod)
 	}
 
 	isCMReconcile := req.NamespacedName.String() == types.NamespacedName{Namespace: helpers.CM_NS, Name: helpers.CM_NAME}.String()
@@ -226,8 +124,8 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 			return r.updateStatusOrRetry(ctx, apiRule, status)
 		}
 
-		if !controllerutil.ContainsFinalizer(apiRule, API_GATEWAY_FINALIZER) {
-			controllerutil.AddFinalizer(apiRule, API_GATEWAY_FINALIZER)
+		if !controllerutil.ContainsFinalizer(apiRule, apiGatewayFinalizer) {
+			controllerutil.AddFinalizer(apiRule, apiGatewayFinalizer)
 			if err := r.Update(ctx, apiRule); err != nil {
 				return doneReconcileErrorRequeue(r.OnErrorReconcilePeriod)
 			}
@@ -280,94 +178,6 @@ func (r *APIRuleReconciler) SetupWithManager(mgr ctrl.Manager, c controllers.Rat
 			RateLimiter: controllers.NewRateLimiter(c),
 		}).
 		Complete(r)
-}
-
-// Updates api status. If there was an error during update, returns the error so that entire reconcile loop is retried. If there is no error, returns a "reconcile success" value.
-func (r *APIRuleReconciler) updateStatusOrRetry(ctx context.Context, api *gatewayv1beta1.APIRule, status status.ReconciliationStatusVisitor) (ctrl.Result, error) {
-	_, updateStatusErr := r.updateStatus(ctx, api, status)
-	if updateStatusErr != nil {
-		r.Log.Error(updateStatusErr, "Error updating ApiRule status, retrying")
-		return retryReconcile(updateStatusErr) //controller retries to set the correct status eventually.
-	}
-
-	// If error happened during reconciliation (e.g. VirtualService conflict) requeue for reconciliation earlier
-	if status.HasError() {
-		r.Log.Info("Requeue for reconciliation because the status has an error")
-		return doneReconcileErrorRequeue(r.OnErrorReconcilePeriod)
-	}
-
-	return doneReconcileDefaultRequeue(r.ReconcilePeriod, &r.Log)
-}
-
-func doneReconcileNoRequeue() (ctrl.Result, error) {
-	return ctrl.Result{}, nil
-}
-
-func doneReconcileDefaultRequeue(reconcilerPeriod time.Duration, logger *logr.Logger) (ctrl.Result, error) {
-	after := DEFAULT_RECONCILIATION_PERIOD
-	if reconcilerPeriod != 0 {
-		after = reconcilerPeriod
-	}
-
-	logger.Info("Finished reconciliation and requeue", "requeue period", after)
-	return ctrl.Result{RequeueAfter: after}, nil
-}
-
-func doneReconcileErrorRequeue(errorReconcilerPeriod time.Duration) (ctrl.Result, error) {
-	after := ERROR_RECONCILIATION_PERIOD
-	if errorReconcilerPeriod != 0 {
-		after = errorReconcilerPeriod
-	}
-	return ctrl.Result{RequeueAfter: after}, nil
-}
-
-func retryReconcile(err error) (ctrl.Result, error) {
-	return reconcile.Result{Requeue: true}, err
-}
-
-func (r *APIRuleReconciler) updateStatus(ctx context.Context, api *gatewayv1beta1.APIRule, status status.ReconciliationStatusVisitor) (*gatewayv1beta1.APIRule, error) {
-	api, err := r.getLatestApiRule(ctx, api)
-	if err != nil {
-		return nil, err
-	}
-
-	api.Status.ObservedGeneration = api.Generation
-	api.Status.LastProcessedTime = &v1.Time{Time: time.Now()}
-
-	err = status.VisitStatus(&api.Status)
-	if err != nil {
-		return nil, err
-	}
-
-	r.Log.Info("Updating ApiRule status", "status", api.Status)
-	err = retry.RetryOnConflict(retry.DefaultRetry, func() error {
-		err = r.Client.Status().Update(ctx, api)
-		if err != nil {
-			return err
-		}
-		return nil
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	return api, nil
-}
-
-func (r *APIRuleReconciler) getLatestApiRule(ctx context.Context, api *gatewayv1beta1.APIRule) (*gatewayv1beta1.APIRule, error) {
-	apiRule := &gatewayv1beta1.APIRule{}
-	err := r.Client.Get(ctx, types.NamespacedName{Name: api.Name, Namespace: api.Namespace}, apiRule)
-	if err != nil {
-		if apierrs.IsNotFound(err) {
-			r.Log.Error(err, "ApiRule not found")
-			return nil, err
-		}
-
-		r.Log.Error(err, "Error getting ApiRule")
-		return nil, err
-	}
-
-	return apiRule, nil
 }
 
 func (r *APIRuleReconciler) isApiRuleConvertedFromv2alpha1(apiRule gatewayv1beta1.APIRule) bool {
