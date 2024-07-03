@@ -37,13 +37,8 @@ func (s ReconciliationV2alpha1Status) GenerateStatusFromFailures(failures []vali
 		return s
 	}
 
-	errString := strings.Builder{}
-	for _, failure := range failures {
-		errString.WriteString(fmt.Sprintf("\"%s\": %s\n", failure.AttributePath, failure.Message))
-	}
-
 	s.State = gatewayv2alpha1.Error
-	s.Description = errString.String()
+	s.Description = generateValidationDescription(failures)
 
 	return s
 }
