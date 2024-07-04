@@ -47,7 +47,7 @@ var _ = Describe("Access Rule Processor", func() {
 		}
 
 		client := GetFakeClient()
-		processor := istio.NewAccessRuleProcessor(GetTestConfig())
+		processor := istio.Newv1beta1AccessRuleProcessor(GetTestConfig())
 
 		// when
 		result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
@@ -77,7 +77,7 @@ var _ = Describe("Access Rule Processor", func() {
 
 			apiRule := GetAPIRuleFor(rules)
 			client := GetFakeClient()
-			processor := istio.NewAccessRuleProcessor(GetTestConfig())
+			processor := istio.Newv1beta1AccessRuleProcessor(GetTestConfig())
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
@@ -117,7 +117,7 @@ var _ = Describe("Access Rule Processor", func() {
 
 			apiRule := GetAPIRuleFor(rules)
 			client := GetFakeClient()
-			processor := istio.NewAccessRuleProcessor(GetTestConfig())
+			processor := istio.Newv1beta1AccessRuleProcessor(GetTestConfig())
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
@@ -156,7 +156,7 @@ var _ = Describe("Access Rule Processor", func() {
 
 			apiRule := GetAPIRuleFor(rules)
 			client := GetFakeClient()
-			processor := istio.NewAccessRuleProcessor(GetTestConfig())
+			processor := istio.Newv1beta1AccessRuleProcessor(GetTestConfig())
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
@@ -185,7 +185,7 @@ var _ = Describe("Access Rule Processor", func() {
 			apiRule := GetAPIRuleFor(rules)
 			apiRule.Spec.Host = &ServiceHostWithNoDomain
 			client := GetFakeClient()
-			processor := istio.NewAccessRuleProcessor(GetTestConfig())
+			processor := istio.Newv1beta1AccessRuleProcessor(GetTestConfig())
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
@@ -248,7 +248,7 @@ var _ = Describe("Access Rule Processor", func() {
 				Expect(err).NotTo(HaveOccurred())
 
 				client := fake.NewClientBuilder().WithScheme(scheme).WithObjects(&rule, &vs).Build()
-				processor := istio.NewAccessRuleProcessor(GetTestConfig())
+				processor := istio.Newv1beta1AccessRuleProcessor(GetTestConfig())
 
 				// when
 				result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)

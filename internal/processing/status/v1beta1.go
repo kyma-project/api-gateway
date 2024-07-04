@@ -1,14 +1,15 @@
-package v1beta1
+package status
 
 import (
 	"fmt"
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"github.com/kyma-project/api-gateway/apis/gateway/versions"
-	"github.com/kyma-project/api-gateway/internal/processing/status"
 	"github.com/kyma-project/api-gateway/internal/validation"
 )
 
 type ReconciliationV1beta1Status struct {
+	status *gatewayv1beta1.APIRuleStatus
+
 	ApiRuleStatus               *gatewayv1beta1.APIRuleResourceStatus
 	VirtualServiceStatus        *gatewayv1beta1.APIRuleResourceStatus
 	AccessRuleStatus            *gatewayv1beta1.APIRuleResourceStatus
@@ -35,22 +36,22 @@ func (s ReconciliationV1beta1Status) HasError() bool {
 	return false
 }
 
-func (s ReconciliationV1beta1Status) GetStatusForErrorMap(errorMap map[status.ResourceSelector][]error) status.ReconciliationStatusVisitor {
+func (s ReconciliationV1beta1Status) GetStatusForErrorMap(errorMap map[ResourceSelector][]error) ReconciliationStatus {
 	for key, val := range errorMap {
 		switch key {
-		case status.OnApiRule:
+		case OnApiRule:
 			s.ApiRuleStatus = generateStatusFromErrors(val)
-		case status.OnVirtualService:
+		case OnVirtualService:
 			s.VirtualServiceStatus = generateStatusFromErrors(val)
-		case status.OnAccessRule:
+		case OnAccessRule:
 			s.AccessRuleStatus = generateStatusFromErrors(val)
-		case status.OnAuthorizationPolicy:
+		case OnAuthorizationPolicy:
 			s.AuthorizationPolicyStatus = generateStatusFromErrors(val)
-		case status.OnRequestAuthentication:
+		case OnRequestAuthentication:
 			s.RequestAuthenticationStatus = generateStatusFromErrors(val)
 		}
 
-		if key != status.OnApiRule {
+		if key != OnApiRule {
 			if s.ApiRuleStatus == nil || s.ApiRuleStatus.Code == gatewayv1beta1.StatusOK {
 				s.ApiRuleStatus = &gatewayv1beta1.APIRuleResourceStatus{
 					Code:        gatewayv1beta1.StatusError,
@@ -66,7 +67,7 @@ func (s ReconciliationV1beta1Status) GetStatusForErrorMap(errorMap map[status.Re
 	return s
 }
 
-func (s ReconciliationV1beta1Status) GenerateStatusFromFailures(failures []validation.Failure) status.ReconciliationStatusVisitor {
+func (s ReconciliationV1beta1Status) GenerateStatusFromFailures(failures []validation.Failure) ReconciliationStatus {
 	if len(failures) == 0 {
 		return s
 	}
@@ -89,43 +90,22 @@ func generateStatusFromErrors(errors []error) *gatewayv1beta1.APIRuleResourceSta
 	return status
 }
 
-func (s ReconciliationV1beta1Status) VisitStatus(status status.Status) error {
-	if status.ApiRuleStatusVersion() != versions.V1beta1 {
-		return fmt.Errorf("v1beta1 status visitor cannot handle status of version %s", status.ApiRuleStatusVersion())
+func (s ReconciliationV1beta1Status) UpdateStatus() error {
+	if s.status.ApiRuleStatusVersion() != versions.V1beta1 {
+		return fmt.Errorf("v1beta1 status visitor cannot handle status of version %s", s.status.ApiRuleStatusVersion())
 	}
 
-	v1beta1Status := status.(*gatewayv1beta1.APIRuleStatus)
-	v1beta1Status.APIRuleStatus = s.ApiRuleStatus
-	v1beta1Status.VirtualServiceStatus = s.VirtualServiceStatus
-	v1beta1Status.AccessRuleStatus = s.AccessRuleStatus
-	v1beta1Status.RequestAuthenticationStatus = s.RequestAuthenticationStatus
-	v1beta1Status.AuthorizationPolicyStatus = s.AuthorizationPolicyStatus
+	s.status.APIRuleStatus = s.ApiRuleStatus
+	s.status.VirtualServiceStatus = s.VirtualServiceStatus
+	s.status.AccessRuleStatus = s.AccessRuleStatus
+	s.status.RequestAuthenticationStatus = s.RequestAuthenticationStatus
+	s.status.AuthorizationPolicyStatus = s.AuthorizationPolicyStatus
 
 	return nil
 }
 
 func generateValidationStatus(failures []validation.Failure) *gatewayv1beta1.APIRuleResourceStatus {
 	return toStatus(gatewayv1beta1.StatusError, generateValidationDescription(failures))
-}
-
-func generateValidationDescription(failures []validation.Failure) string {
-	var description string
-
-	if len(failures) == 1 {
-		description = "Validation error: "
-		description += fmt.Sprintf("Attribute \"%s\": %s", failures[0].AttributePath, failures[0].Message)
-	} else {
-		const maxEntries = 3
-		description = "Multiple validation errors: "
-		for i := 0; i < len(failures) && i < maxEntries; i++ {
-			description += fmt.Sprintf("\nAttribute \"%s\": %s", failures[i].AttributePath, failures[i].Message)
-		}
-		if len(failures) > maxEntries {
-			description += fmt.Sprintf("\n%d more error(s)...", len(failures)-maxEntries)
-		}
-	}
-
-	return description
 }
 
 func toStatus(c gatewayv1beta1.StatusCode, desc string) *gatewayv1beta1.APIRuleResourceStatus {

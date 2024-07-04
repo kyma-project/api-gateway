@@ -1,15 +1,16 @@
 package status
 
 import (
+	"fmt"
 	"github.com/kyma-project/api-gateway/apis/gateway/versions"
 	"github.com/kyma-project/api-gateway/internal/validation"
 )
 
-type ReconciliationStatusVisitor interface {
-	VisitStatus(status Status) error
+type ReconciliationStatus interface {
+	UpdateStatus() error
 
-	GetStatusForErrorMap(errorMap map[ResourceSelector][]error) ReconciliationStatusVisitor
-	GenerateStatusFromFailures([]validation.Failure) ReconciliationStatusVisitor
+	GetStatusForErrorMap(errorMap map[ResourceSelector][]error) ReconciliationStatus
+	GenerateStatusFromFailures([]validation.Failure) ReconciliationStatus
 
 	HasError() bool
 }
@@ -42,4 +43,24 @@ func (r ResourceSelector) String() string {
 		// If no Kind is resolved from the resource (e.g. subresource CRD is missing)
 		return "APIRule"
 	}
+}
+
+func generateValidationDescription(failures []validation.Failure) string {
+	var description string
+
+	if len(failures) == 1 {
+		description = "Validation error: "
+		description += fmt.Sprintf("Attribute \"%s\": %s", failures[0].AttributePath, failures[0].Message)
+	} else {
+		const maxEntries = 3
+		description = "Multiple validation errors: "
+		for i := 0; i < len(failures) && i < maxEntries; i++ {
+			description += fmt.Sprintf("\nAttribute \"%s\": %s", failures[i].AttributePath, failures[i].Message)
+		}
+		if len(failures) > maxEntries {
+			description += fmt.Sprintf("\n%d more error(s)...", len(failures)-maxEntries)
+		}
+	}
+
+	return description
 }

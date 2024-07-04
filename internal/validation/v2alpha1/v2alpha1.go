@@ -9,7 +9,7 @@ import (
 )
 
 type APIRuleValidator struct {
-	api *gatewayv2alpha1.APIRule
+	Api *gatewayv2alpha1.APIRule
 
 	// TODO: I don't know if those validators are enough, for now I added some boilerplate code
 	InjectionValidator *validation.InjectionValidator
@@ -43,7 +43,7 @@ func (r rulesValidatorImpl) Validate(attributePath string, rules []*gatewayv2alp
 
 func NewAPIRuleValidator(ctx context.Context, client client.Client, api *gatewayv2alpha1.APIRule, defaultDomainName string) *APIRuleValidator {
 	return &APIRuleValidator{
-		api:                api,
+		Api:                api,
 		InjectionValidator: validation.NewInjectionValidator(ctx, client),
 		RulesValidator:     rulesValidatorImpl{},
 		JwtValidator:       &jwtValidatorImpl{},

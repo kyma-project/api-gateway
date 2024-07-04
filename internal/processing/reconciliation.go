@@ -15,10 +15,10 @@ import (
 // ReconciliationCommand provides the processors and validation required to reconcile the API rule.
 type ReconciliationCommand interface {
 	// Validate performs provided APIRule validation in context of the provided client cluster
-	Validate(context.Context, client.Client, *gatewayv1beta1.APIRule) ([]validation.Failure, error)
+	Validate(context.Context, client.Client) ([]validation.Failure, error)
 
 	// GetStatusBase returns ReconciliationV1beta1Status that sets unused subresources status to nil and to gatewayv1beta1.StatusCode paramter for all the others
-	GetStatusBase(string) status.ReconciliationStatusVisitor
+	GetStatusBase(string) status.ReconciliationStatus
 
 	// GetProcessors returns the processor relevant for the reconciliation of this command.
 	GetProcessors() []ReconciliationProcessor
@@ -27,12 +27,12 @@ type ReconciliationCommand interface {
 // ReconciliationProcessor provides the evaluation of changes during the reconciliation of API Rule.
 type ReconciliationProcessor interface {
 	// EvaluateReconciliation returns the changes that needs to be applied to the cluster by comparing the desired with the actual state.
-	EvaluateReconciliation(context.Context, client.Client, *gatewayv1beta1.APIRule) ([]*ObjectChange, error)
+	EvaluateReconciliation(context.Context, client.Client) ([]*ObjectChange, error)
 }
 
 // Reconcile executes the reconciliation of the APIRule using the given reconciliation command.
-func Reconcile(ctx context.Context, client client.Client, log *logr.Logger, cmd ReconciliationCommand, apiRule *gatewayv1beta1.APIRule) status.ReconciliationStatusVisitor {
-	validationFailures, err := cmd.Validate(ctx, client, apiRule)
+func Reconcile(ctx context.Context, client client.Client, log *logr.Logger, cmd ReconciliationCommand, name, namespace string) status.ReconciliationStatus {
+	validationFailures, err := cmd.Validate(ctx, client)
 	if err != nil {
 		// We set the status to skipped because it was not the validation that failed, but an error occurred during validation.
 		log.Error(err, "Error during validation")
@@ -43,14 +43,14 @@ func Reconcile(ctx context.Context, client client.Client, log *logr.Logger, cmd 
 
 	if len(validationFailures) > 0 {
 		failuresJson, _ := json.Marshal(validationFailures)
-		log.Info(fmt.Sprintf(`Validation failure {"controller": "Api", "request": "%s/%s", "failures": %s}`, apiRule.Namespace, apiRule.Name, string(failuresJson)))
+		log.Info(fmt.Sprintf(`Validation failure {"controller": "Api", "request": "%s/%s", "failures": %s}`, namespace, name, string(failuresJson)))
 		statusBase := cmd.GetStatusBase(string(gatewayv1beta1.StatusSkipped))
 		return statusBase.GenerateStatusFromFailures(validationFailures)
 	}
 
 	for _, processor := range cmd.GetProcessors() {
 
-		objectChanges, err := processor.EvaluateReconciliation(ctx, client, apiRule)
+		objectChanges, err := processor.EvaluateReconciliation(ctx, client)
 		if err != nil {
 			log.Error(err, "Error during reconciliation")
 			statusBase := cmd.GetStatusBase(string(gatewayv1beta1.StatusSkipped))

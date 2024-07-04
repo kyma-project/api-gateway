@@ -14,6 +14,7 @@ const RequestAuthenticationAppSelectorLabel = "app"
 
 // RequestAuthenticationProcessor is the generic processor that handles the Istio Request Authentications in the reconciliation of API Rule.
 type RequestAuthenticationProcessor struct {
+	Api     *gatewayv1beta1.APIRule
 	Creator RequestAuthenticationCreator
 }
 
@@ -23,12 +24,12 @@ type RequestAuthenticationCreator interface {
 	Create(ctx context.Context, client ctrlclient.Client, api *gatewayv1beta1.APIRule) (map[string]*securityv1beta1.RequestAuthentication, error)
 }
 
-func (r RequestAuthenticationProcessor) EvaluateReconciliation(ctx context.Context, client ctrlclient.Client, apiRule *gatewayv1beta1.APIRule) ([]*processing.ObjectChange, error) {
-	desired, err := r.getDesiredState(ctx, client, apiRule)
+func (r RequestAuthenticationProcessor) EvaluateReconciliation(ctx context.Context, client ctrlclient.Client) ([]*processing.ObjectChange, error) {
+	desired, err := r.getDesiredState(ctx, client, r.Api)
 	if err != nil {
 		return make([]*processing.ObjectChange, 0), err
 	}
-	actual, err := r.getActualState(ctx, client, apiRule)
+	actual, err := r.getActualState(ctx, client, r.Api)
 	if err != nil {
 		return make([]*processing.ObjectChange, 0), err
 	}

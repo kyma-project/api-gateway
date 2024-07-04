@@ -94,7 +94,7 @@ var _ = Describe("Request Authentication Processor", func() {
 		apiRule := GetAPIRuleFor([]gatewayv1beta1.Rule{ruleJwt, ruleJwt2})
 		svc := GetService(ServiceName)
 		client := GetFakeClient(svc)
-		processor := istio.NewRequestAuthenticationProcessor(GetTestConfig())
+		processor := istio.Newv1beta1RequestAuthenticationProcessor(GetTestConfig())
 
 		// when
 		result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
@@ -122,7 +122,7 @@ var _ = Describe("Request Authentication Processor", func() {
 		client := GetFakeClient(svc)
 		ruleJwt := GetRuleFor(HeadersApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, []*gatewayv1beta1.Authenticator{jwt})
 		apiRule := GetAPIRuleFor([]gatewayv1beta1.Rule{ruleJwt})
-		processor := istio.NewRequestAuthenticationProcessor(GetTestConfig())
+		processor := istio.Newv1beta1RequestAuthenticationProcessor(GetTestConfig())
 
 		// when
 		result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
@@ -151,7 +151,7 @@ var _ = Describe("Request Authentication Processor", func() {
 		client := GetFakeClient(svc)
 		ruleJwt := GetRuleWithServiceFor(HeadersApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, []*gatewayv1beta1.Authenticator{jwt}, service)
 		apiRule := GetAPIRuleFor([]gatewayv1beta1.Rule{ruleJwt}, specServiceNamespace)
-		processor := istio.NewRequestAuthenticationProcessor(GetTestConfig())
+		processor := istio.Newv1beta1RequestAuthenticationProcessor(GetTestConfig())
 
 		// when
 		result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
@@ -181,7 +181,7 @@ var _ = Describe("Request Authentication Processor", func() {
 		client := GetFakeClient(svc)
 		ruleJwt := GetRuleWithServiceFor(HeadersApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, []*gatewayv1beta1.Authenticator{jwt}, service)
 		apiRule := GetAPIRuleFor([]gatewayv1beta1.Rule{ruleJwt})
-		processor := istio.NewRequestAuthenticationProcessor(GetTestConfig())
+		processor := istio.Newv1beta1RequestAuthenticationProcessor(GetTestConfig())
 
 		// when
 		result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
@@ -220,7 +220,7 @@ var _ = Describe("Request Authentication Processor", func() {
 		}
 		ruleJwt := GetRuleWithServiceFor(HeadersApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, []*gatewayv1beta1.Authenticator{jwt}, service)
 		apiRule := GetAPIRuleFor([]gatewayv1beta1.Rule{ruleJwt})
-		processor := istio.NewRequestAuthenticationProcessor(GetTestConfig())
+		processor := istio.Newv1beta1RequestAuthenticationProcessor(GetTestConfig())
 
 		// when
 		result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
@@ -270,7 +270,7 @@ var _ = Describe("Request Authentication Processor", func() {
 		}
 
 		client := GetFakeClient()
-		processor := istio.NewRequestAuthenticationProcessor(GetTestConfig())
+		processor := istio.Newv1beta1RequestAuthenticationProcessor(GetTestConfig())
 
 		// when
 		result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
@@ -291,7 +291,7 @@ var _ = Describe("Request Authentication Processor", func() {
 		svc := GetService("test-service")
 		client := GetFakeClient(svc)
 		apiRule := GetAPIRuleFor(rules)
-		processor := istio.NewRequestAuthenticationProcessor(GetTestConfig())
+		processor := istio.Newv1beta1RequestAuthenticationProcessor(GetTestConfig())
 
 		// when
 		result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
@@ -307,7 +307,7 @@ var _ = Describe("Request Authentication Processor", func() {
 		existingRa := getRequestAuthentication("raName", "test-service", JwksUri, JwtIssuer)
 
 		ctrlClient := GetFakeClient(&existingRa)
-		processor := istio.NewRequestAuthenticationProcessor(GetTestConfig())
+		processor := istio.Newv1beta1RequestAuthenticationProcessor(GetTestConfig())
 
 		// given: New resources
 		apiRule := GetAPIRuleFor([]gatewayv1beta1.Rule{})
@@ -328,7 +328,7 @@ var _ = Describe("Request Authentication Processor", func() {
 			existingRa := getRequestAuthentication("raName", "test-service", JwksUri, JwtIssuer)
 			svc := GetService("test-service")
 			ctrlClient := GetFakeClient(&existingRa, svc)
-			processor := istio.NewRequestAuthenticationProcessor(GetTestConfig())
+			processor := istio.Newv1beta1RequestAuthenticationProcessor(GetTestConfig())
 
 			// given: New resources
 			jwtRule := GetJwtRuleWithService(JwtIssuer, JwksUri, "test-service")
@@ -350,7 +350,7 @@ var _ = Describe("Request Authentication Processor", func() {
 			svcOld := GetService("old-service")
 			svcUpdated := GetService("updated-service")
 			ctrlClient := GetFakeClient(&existingRa, svcOld, svcUpdated)
-			processor := istio.NewRequestAuthenticationProcessor(GetTestConfig())
+			processor := istio.Newv1beta1RequestAuthenticationProcessor(GetTestConfig())
 
 			// given: New resources
 			jwtRule := GetJwtRuleWithService(JwtIssuer, JwksUri, "updated-service")
@@ -375,7 +375,7 @@ var _ = Describe("Request Authentication Processor", func() {
 			svcExisting := GetService("existing-service")
 			svcNew := GetService("new-service")
 			ctrlClient := GetFakeClient(&existingRa, svcExisting, svcNew)
-			processor := istio.NewRequestAuthenticationProcessor(GetTestConfig())
+			processor := istio.Newv1beta1RequestAuthenticationProcessor(GetTestConfig())
 
 			// given: New resources
 			existingJwtRule := GetJwtRuleWithService(JwtIssuer, JwksUri, "existing-service")
@@ -400,7 +400,7 @@ var _ = Describe("Request Authentication Processor", func() {
 			existingRa := getRequestAuthentication("raName", "test-service", JwksUri, JwtIssuer)
 			svc := GetService("test-service")
 			ctrlClient := GetFakeClient(&existingRa, svc)
-			processor := istio.NewRequestAuthenticationProcessor(GetTestConfig())
+			processor := istio.Newv1beta1RequestAuthenticationProcessor(GetTestConfig())
 
 			// given: New resources
 			jwtRule := GetJwtRuleWithService(JwtIssuer, JwksUri2, "test-service")
@@ -430,7 +430,7 @@ var _ = Describe("Request Authentication Processor", func() {
 			svcFirst := GetService("first-service")
 			svcSecond := GetService("second-service")
 			ctrlClient := GetFakeClient(&firstServiceRa, &secondServiceRa, svcFirst, svcSecond)
-			processor := istio.NewRequestAuthenticationProcessor(GetTestConfig())
+			processor := istio.Newv1beta1RequestAuthenticationProcessor(GetTestConfig())
 
 			// given: New resources
 			firstJwtRule := GetJwtRuleWithService("https://new.issuer.com/", JwksUri, "first-service")
@@ -458,7 +458,7 @@ var _ = Describe("Request Authentication Processor", func() {
 			svcFirst := GetService("first-service")
 			svcSecond := GetService("second-service")
 			ctrlClient := GetFakeClient(&firstServiceRa, &secondServiceRa, svcFirst, svcSecond)
-			processor := istio.NewRequestAuthenticationProcessor(GetTestConfig())
+			processor := istio.Newv1beta1RequestAuthenticationProcessor(GetTestConfig())
 
 			// given: New resources
 			secondJwtRule := GetJwtRuleWithService(JwtIssuer, JwksUri, "second-service")
@@ -485,7 +485,7 @@ var _ = Describe("Request Authentication Processor", func() {
 			svcSecond := GetService("second-service")
 			svcNew := GetService("new-service")
 			ctrlClient := GetFakeClient(&firstServiceRa, &secondServiceRa, svcFirst, svcSecond, svcNew)
-			processor := istio.NewRequestAuthenticationProcessor(GetTestConfig())
+			processor := istio.Newv1beta1RequestAuthenticationProcessor(GetTestConfig())
 
 			// given: New resources
 			firstJwtRule := GetJwtRuleWithService(JwtIssuer, JwksUri, "first-service")
@@ -513,7 +513,7 @@ var _ = Describe("Request Authentication Processor", func() {
 			svcOld := GetService("old-service")
 			svcNewNS := GetService("old-service", "new-namespace")
 			ctrlClient := GetFakeClient(&oldRa, svcOld, svcNewNS)
-			processor := istio.NewRequestAuthenticationProcessor(GetTestConfig())
+			processor := istio.Newv1beta1RequestAuthenticationProcessor(GetTestConfig())
 
 			// given: New resources
 			jwtRule := GetJwtRuleWithService(JwtIssuer, JwksUri, "old-service", "new-namespace")
@@ -540,7 +540,7 @@ var _ = Describe("Request Authentication Processor", func() {
 			svcOld := GetService("old-service")
 			svcNewNS := GetService("old-service", "new-namespace")
 			ctrlClient := GetFakeClient(&oldRa, svcOld, svcNewNS)
-			processor := istio.NewRequestAuthenticationProcessor(GetTestConfig())
+			processor := istio.Newv1beta1RequestAuthenticationProcessor(GetTestConfig())
 
 			// given: New resources
 			jwtRule := GetJwtRuleWithService(JwtIssuer, JwksUri, "old-service", "new-namespace")
@@ -574,7 +574,7 @@ var _ = Describe("Request Authentication Processor", func() {
 			svc.Spec.Selector["custom"] = serviceName
 			client := GetFakeClient(svc)
 
-			processor := istio.NewRequestAuthenticationProcessor(GetTestConfig())
+			processor := istio.Newv1beta1RequestAuthenticationProcessor(GetTestConfig())
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
@@ -605,7 +605,7 @@ var _ = Describe("Request Authentication Processor", func() {
 			svc.Spec.Selector["custom"] = serviceName
 			client := GetFakeClient(svc)
 
-			processor := istio.NewRequestAuthenticationProcessor(GetTestConfig())
+			processor := istio.Newv1beta1RequestAuthenticationProcessor(GetTestConfig())
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
@@ -635,7 +635,7 @@ var _ = Describe("Request Authentication Processor", func() {
 			svc.Spec.Selector["second-custom"] = "blah"
 			client := GetFakeClient(svc)
 
-			processor := istio.NewRequestAuthenticationProcessor(GetTestConfig())
+			processor := istio.Newv1beta1RequestAuthenticationProcessor(GetTestConfig())
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)

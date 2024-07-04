@@ -31,11 +31,6 @@ type APIRuleValidator struct {
 	DefaultDomainName         string
 }
 
-const (
-	Istio = iota
-	Ory
-)
-
 type accessStrategyValidator interface {
 	Validate(attrPath string, accessStrategies []*gatewayv1beta1.Authenticator) []validation.Failure
 }

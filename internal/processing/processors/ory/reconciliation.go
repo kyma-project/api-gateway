@@ -13,29 +13,31 @@ import (
 )
 
 type Reconciliation struct {
+	apiRule    *gatewayv1beta1.APIRule
 	processors []processing.ReconciliationProcessor
 	config     processing.ReconciliationConfig
 }
 
-func NewOryReconciliation(config processing.ReconciliationConfig, log *logr.Logger) Reconciliation {
-	acProcessor := NewAccessRuleProcessor(config)
+func NewOryReconciliation(apiRule *gatewayv1beta1.APIRule, config processing.ReconciliationConfig, log *logr.Logger) Reconciliation {
+	acProcessor := NewAccessRuleProcessor(config, apiRule)
 	vsProcessor := NewVirtualServiceProcessor(config)
 	apProcessor := NewAuthorizationPolicyProcessor(config, log)
 	raProcessor := NewRequestAuthenticationProcessor(config)
 
 	return Reconciliation{
+		apiRule:    apiRule,
 		processors: []processing.ReconciliationProcessor{vsProcessor, raProcessor, apProcessor, acProcessor},
 		config:     config,
 	}
 }
 
-func (r Reconciliation) Validate(ctx context.Context, client client.Client, apiRule *gatewayv1beta1.APIRule) ([]validation.Failure, error) {
+func (r Reconciliation) Validate(ctx context.Context, client client.Client) ([]validation.Failure, error) {
 	var vsList networkingv1beta1.VirtualServiceList
 	if err := client.List(ctx, &vsList); err != nil {
 		return make([]validation.Failure, 0), err
 	}
 
-	validator := oryValidation.NewAPIRuleValidator(apiRule, r.config.DefaultDomainName)
+	validator := oryValidation.NewAPIRuleValidator(r.apiRule, r.config.DefaultDomainName)
 
 	return validator.Validate(ctx, client, vsList), nil
 }

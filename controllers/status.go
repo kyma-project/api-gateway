@@ -5,7 +5,7 @@ import (
 	"fmt"
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	operatorv1alpha1 "github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
-	v1beta1Status "github.com/kyma-project/api-gateway/internal/processing/status/v1beta1"
+	v1beta1Status "github.com/kyma-project/api-gateway/internal/processing/status"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/util/retry"

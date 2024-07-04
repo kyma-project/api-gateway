@@ -2,7 +2,7 @@ package v2alpha1
 
 import (
 	"github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
-	v1alpha2Status "github.com/kyma-project/api-gateway/internal/processing/status/v2alpha1"
+	v1alpha2Status "github.com/kyma-project/api-gateway/internal/processing/status"
 )
 
 func Base(state string) v1alpha2Status.ReconciliationV2alpha1Status {

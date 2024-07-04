@@ -20,6 +20,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	"github.com/kyma-project/api-gateway/internal/processing/processors/istio"
 	v2alpha1Processing "github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1"
 	"github.com/kyma-project/api-gateway/internal/processing/status"
@@ -99,14 +100,18 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 
 	r.Log.Info("Starting ApiRule reconciliation", "jwtHandler", r.Config.JWTHandler)
 
-	isApiRuleInv2alpha1Version := false
 	apiRule := &gatewayv1beta1.APIRule{}
 	apiRuleErr := r.Client.Get(ctx, req.NamespacedName, apiRule)
+	var cmd processing.ReconciliationCommand
 	if apiRuleErr == nil && r.isApiRuleConvertedFromv2alpha1(*apiRule) {
-		isApiRuleInv2alpha1Version = true
+		apiRulev2alpha1 := &gatewayv2alpha1.APIRule{}
+		if err := r.Client.Get(ctx, req.NamespacedName, apiRulev2alpha1); err != nil {
+			return doneReconcileErrorRequeue(r.OnErrorReconcilePeriod)
+		}
+		cmd = r.getv2alpha1Reconciliation(apiRule, apiRulev2alpha1, defaultDomainName)
+	} else {
+		cmd = r.getv1beta1Reconciliation(apiRule, defaultDomainName)
 	}
-
-	cmd := r.getReconciliation(defaultDomainName, isApiRuleInv2alpha1Version)
 
 	if apiRuleErr != nil {
 		return r.handleAPIRuleGetError(ctx, req.NamespacedName, apiRule, apiRuleErr, cmd)
@@ -143,7 +148,7 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		return r.updateStatusOrRetry(ctx, apiRule, statusBase.GenerateStatusFromFailures(configValidationFailures))
 	}
 
-	s := processing.Reconcile(ctx, r.Client, &r.Log, cmd, apiRule)
+	s := processing.Reconcile(ctx, r.Client, &r.Log, cmd, apiRule.Name, apiRule.Namespace)
 	return r.updateStatusOrRetry(ctx, apiRule, s)
 }
 
@@ -155,17 +160,21 @@ func handleDependenciesError(name string, err error) controllers.Status {
 	}
 }
 
-func (r *APIRuleReconciler) getReconciliation(defaultDomain string, apiRulev2alpha1 bool) processing.ReconciliationCommand {
+func (r *APIRuleReconciler) getv1beta1Reconciliation(apiRule *gatewayv1beta1.APIRule, defaultDomain string) processing.ReconciliationCommand {
 	config := r.ReconciliationConfig
 	config.DefaultDomainName = defaultDomain
 	switch {
-	case apiRulev2alpha1:
-		return v2alpha1Processing.NewReconciliation(config, &r.Log)
 	case r.Config.JWTHandler == helpers.JWT_HANDLER_ISTIO:
-		return istio.NewIstioReconciliation(config, &r.Log)
+		return istio.NewIstioReconciliation(apiRule, config, &r.Log)
 	default:
-		return ory.NewOryReconciliation(config, &r.Log)
+		return ory.NewOryReconciliation(apiRule, config, &r.Log)
 	}
+}
+
+func (r *APIRuleReconciler) getv2alpha1Reconciliation(apiRulev1beta1 *gatewayv1beta1.APIRule, apiRulev2alpha1 *gatewayv2alpha1.APIRule, defaultDomain string) processing.ReconciliationCommand {
+	config := r.ReconciliationConfig
+	config.DefaultDomainName = defaultDomain
+	return v2alpha1Processing.NewReconciliation(apiRulev2alpha1, apiRulev1beta1, config, &r.Log)
 }
 
 // SetupWithManager sets up the controller with the Manager.

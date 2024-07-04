@@ -8,8 +8,9 @@ import (
 )
 
 // NewAccessRuleProcessor returns a AccessRuleProcessor with the desired state handling specific for the Ory handler.
-func NewAccessRuleProcessor(config processing.ReconciliationConfig) processors.AccessRuleProcessor {
+func NewAccessRuleProcessor(config processing.ReconciliationConfig, apiRule *gatewayv1beta1.APIRule) processors.AccessRuleProcessor {
 	return processors.AccessRuleProcessor{
+		ApiRule: apiRule,
 		Creator: accessRuleCreator{
 			defaultDomainName: config.DefaultDomainName,
 		},

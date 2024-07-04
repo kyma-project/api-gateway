@@ -41,7 +41,7 @@ var _ = Describe("Virtual Service Processor", func() {
 
 				apiRule := GetAPIRuleFor(rules)
 				client := GetFakeClient()
-				processor := istio.NewVirtualServiceProcessor(GetTestConfig())
+				processor := istio.Newv1beta1VirtualServiceProcessor(GetTestConfig())
 
 				// when
 				result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
@@ -100,7 +100,7 @@ var _ = Describe("Virtual Service Processor", func() {
 					Port:      &overrideServicePort,
 				}
 				client := GetFakeClient()
-				processor := istio.NewVirtualServiceProcessor(GetTestConfig())
+				processor := istio.Newv1beta1VirtualServiceProcessor(GetTestConfig())
 
 				// when
 				result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
@@ -140,7 +140,7 @@ var _ = Describe("Virtual Service Processor", func() {
 
 				apiRule := GetAPIRuleFor(rules)
 				client := GetFakeClient()
-				processor := istio.NewVirtualServiceProcessor(GetTestConfig())
+				processor := istio.Newv1beta1VirtualServiceProcessor(GetTestConfig())
 
 				// when
 				result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
@@ -172,7 +172,7 @@ var _ = Describe("Virtual Service Processor", func() {
 				apiRule := GetAPIRuleFor(rules)
 				apiRule.Spec.Host = &ServiceHostWithNoDomain
 				client := GetFakeClient()
-				processor := istio.NewVirtualServiceProcessor(GetTestConfig())
+				processor := istio.Newv1beta1VirtualServiceProcessor(GetTestConfig())
 
 				// when
 				result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
@@ -217,7 +217,7 @@ var _ = Describe("Virtual Service Processor", func() {
 
 			apiRule := GetAPIRuleFor(rules)
 			client := GetFakeClient()
-			processor := istio.NewVirtualServiceProcessor(GetTestConfig())
+			processor := istio.Newv1beta1VirtualServiceProcessor(GetTestConfig())
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
@@ -274,7 +274,7 @@ var _ = Describe("Virtual Service Processor", func() {
 				Expect(err).NotTo(HaveOccurred())
 
 				client := fake.NewClientBuilder().WithScheme(scheme).WithObjects(&rule, &vs).Build()
-				processor := istio.NewVirtualServiceProcessor(GetTestConfig())
+				processor := istio.Newv1beta1VirtualServiceProcessor(GetTestConfig())
 
 				// when
 				result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
@@ -355,7 +355,7 @@ var _ = Describe("Virtual Service Processor", func() {
 
 			apiRule := GetAPIRuleFor(rules)
 			client := GetFakeClient()
-			processor := istio.NewVirtualServiceProcessor(GetTestConfig())
+			processor := istio.Newv1beta1VirtualServiceProcessor(GetTestConfig())
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
@@ -443,7 +443,7 @@ var _ = Describe("Virtual Service Processor", func() {
 
 			apiRule := GetAPIRuleFor(rules)
 			client := GetFakeClient()
-			processor := istio.NewVirtualServiceProcessor(GetTestConfig())
+			processor := istio.Newv1beta1VirtualServiceProcessor(GetTestConfig())
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
@@ -523,7 +523,7 @@ var _ = Describe("Virtual Service Processor", func() {
 
 			apiRule := GetAPIRuleFor(rules)
 			client := GetFakeClient()
-			processor := istio.NewVirtualServiceProcessor(GetTestConfig())
+			processor := istio.Newv1beta1VirtualServiceProcessor(GetTestConfig())
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
@@ -600,7 +600,7 @@ var _ = Describe("Virtual Service Processor", func() {
 
 			apiRule := GetAPIRuleFor(rules)
 			client := GetFakeClient()
-			processor := istio.NewVirtualServiceProcessor(GetTestConfig())
+			processor := istio.Newv1beta1VirtualServiceProcessor(GetTestConfig())
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
@@ -649,7 +649,7 @@ var _ = Describe("Virtual Service Processor", func() {
 
 			apiRule := GetAPIRuleFor(rules)
 			client := GetFakeClient()
-			processor := istio.NewVirtualServiceProcessor(GetTestConfig())
+			processor := istio.Newv1beta1VirtualServiceProcessor(GetTestConfig())
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
@@ -716,7 +716,7 @@ var _ = Describe("Virtual Service Processor", func() {
 				apiRule := GetAPIRuleFor(rules)
 				apiRule.Spec.Host = &ServiceHostWithNoDomain
 				client := GetFakeClient()
-				processor := istio.NewVirtualServiceProcessor(GetTestConfig())
+				processor := istio.Newv1beta1VirtualServiceProcessor(GetTestConfig())
 
 				// when
 				result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
@@ -772,7 +772,7 @@ var _ = Describe("Virtual Service Processor", func() {
 				apiRule := GetAPIRuleFor(rules)
 				apiRule.Spec.Host = &ServiceHostWithNoDomain
 				client := GetFakeClient()
-				processor := istio.NewVirtualServiceProcessor(GetTestConfig())
+				processor := istio.Newv1beta1VirtualServiceProcessor(GetTestConfig())
 
 				// when
 				result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
@@ -822,7 +822,7 @@ var _ = Describe("Virtual Service Processor", func() {
 			apiRule := GetAPIRuleFor(rules)
 			apiRule.Spec.Host = &ServiceHostWithNoDomain
 			client := GetFakeClient()
-			processor := istio.NewVirtualServiceProcessor(GetTestConfig())
+			processor := istio.Newv1beta1VirtualServiceProcessor(GetTestConfig())
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
@@ -874,7 +874,7 @@ var _ = Describe("Virtual Service Processor", func() {
 			apiRule := GetAPIRuleFor(rules)
 			apiRule.Spec.Host = &ServiceHostWithNoDomain
 			client := GetFakeClient()
-			processor := istio.NewVirtualServiceProcessor(GetTestConfig())
+			processor := istio.Newv1beta1VirtualServiceProcessor(GetTestConfig())
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
@@ -923,7 +923,7 @@ var _ = Describe("Virtual Service Processor", func() {
 			apiRule := GetAPIRuleFor(rules)
 			apiRule.Spec.Host = &ServiceHostWithNoDomain
 			client := GetFakeClient()
-			processor := istio.NewVirtualServiceProcessor(GetTestConfig())
+			processor := istio.Newv1beta1VirtualServiceProcessor(GetTestConfig())
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
@@ -959,7 +959,7 @@ var _ = Describe("Virtual Service Processor", func() {
 			apiRule := GetAPIRuleFor(rules)
 			apiRule.Spec.Host = &ServiceHostWithNoDomain
 			client := GetFakeClient()
-			processor := istio.NewVirtualServiceProcessor(GetTestConfig())
+			processor := istio.Newv1beta1VirtualServiceProcessor(GetTestConfig())
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
@@ -1002,7 +1002,7 @@ var _ = Describe("Virtual Service Processor", func() {
 			apiRule.Spec.CorsPolicy = ptr.To(corsPolicy)
 
 			client := GetFakeClient()
-			processor := istio.NewVirtualServiceProcessor(GetTestConfig())
+			processor := istio.Newv1beta1VirtualServiceProcessor(GetTestConfig())
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
@@ -1051,7 +1051,7 @@ var _ = Describe("Virtual Service Processor", func() {
 			apiRule.Spec.CorsPolicy = ptr.To(corsPolicy)
 
 			client := GetFakeClient()
-			processor := istio.NewVirtualServiceProcessor(GetTestConfig())
+			processor := istio.Newv1beta1VirtualServiceProcessor(GetTestConfig())
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
@@ -1103,7 +1103,7 @@ var _ = Describe("Virtual Service Processor", func() {
 			apiRule.Spec.CorsPolicy = ptr.To(corsPolicy)
 
 			client := GetFakeClient()
-			processor := istio.NewVirtualServiceProcessor(GetTestConfig())
+			processor := istio.Newv1beta1VirtualServiceProcessor(GetTestConfig())
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
@@ -1151,7 +1151,7 @@ var _ = Describe("Virtual Service Processor", func() {
 
 			apiRule := GetAPIRuleFor(rules)
 			client := GetFakeClient()
-			processor := istio.NewVirtualServiceProcessor(GetTestConfig())
+			processor := istio.Newv1beta1VirtualServiceProcessor(GetTestConfig())
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
@@ -1182,7 +1182,7 @@ var _ = Describe("Virtual Service Processor", func() {
 			apiRule := GetAPIRuleFor(rules)
 			apiRule.Spec.Timeout = &timeout10s
 			client := GetFakeClient()
-			processor := istio.NewVirtualServiceProcessor(GetTestConfig())
+			processor := istio.Newv1beta1VirtualServiceProcessor(GetTestConfig())
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
@@ -1214,7 +1214,7 @@ var _ = Describe("Virtual Service Processor", func() {
 			apiRule := GetAPIRuleFor(rules)
 			apiRule.Spec.Timeout = &timeout10s
 			client := GetFakeClient()
-			processor := istio.NewVirtualServiceProcessor(GetTestConfig())
+			processor := istio.Newv1beta1VirtualServiceProcessor(GetTestConfig())
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
@@ -1246,7 +1246,7 @@ var _ = Describe("Virtual Service Processor", func() {
 			apiRule := GetAPIRuleFor(rules)
 			apiRule.Spec.Timeout = &timeout10s
 			client := GetFakeClient()
-			processor := istio.NewVirtualServiceProcessor(GetTestConfig())
+			processor := istio.Newv1beta1VirtualServiceProcessor(GetTestConfig())
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
@@ -1278,7 +1278,7 @@ var _ = Describe("Virtual Service Processor", func() {
 
 			apiRule := GetAPIRuleFor(rules)
 			client := GetFakeClient()
-			processor := istio.NewVirtualServiceProcessor(GetTestConfig())
+			processor := istio.Newv1beta1VirtualServiceProcessor(GetTestConfig())
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
@@ -1312,7 +1312,7 @@ var _ = Describe("Virtual Service Processor", func() {
 
 			apiRule := GetAPIRuleFor(rules)
 			client := GetFakeClient()
-			processor := istio.NewVirtualServiceProcessor(GetTestConfig())
+			processor := istio.Newv1beta1VirtualServiceProcessor(GetTestConfig())
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
@@ -1351,7 +1351,7 @@ var _ = Describe("Virtual Service Processor", func() {
 
 			apiRule := GetAPIRuleFor(rules)
 			client := GetFakeClient()
-			processor := istio.NewVirtualServiceProcessor(GetTestConfig())
+			processor := istio.Newv1beta1VirtualServiceProcessor(GetTestConfig())
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)

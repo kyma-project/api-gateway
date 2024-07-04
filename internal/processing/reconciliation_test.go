@@ -27,7 +27,7 @@ var _ = Describe("Reconcile", func() {
 		// given
 		cmd := MockReconciliationCommand{
 			validateMock: func() ([]validation.Failure, error) { return nil, fmt.Errorf("error during validation") },
-			getStatusBaseMock: func() status.ReconciliationStatusVisitor {
+			getStatusBaseMock: func() status.ReconciliationStatus {
 				return mockStatusBase(gatewayv1beta1.StatusSkipped)
 			},
 		}
@@ -53,7 +53,7 @@ var _ = Describe("Reconcile", func() {
 		}}
 		cmd := MockReconciliationCommand{
 			validateMock: func() ([]validation.Failure, error) { return failures, nil },
-			getStatusBaseMock: func() status.ReconciliationStatusVisitor {
+			getStatusBaseMock: func() status.ReconciliationStatus {
 				return mockStatusBase(gatewayv1beta1.StatusSkipped)
 			},
 		}
@@ -83,7 +83,7 @@ var _ = Describe("Reconcile", func() {
 		cmd := MockReconciliationCommand{
 			validateMock:   func() ([]validation.Failure, error) { return []validation.Failure{}, nil },
 			processorMocks: func() []processing.ReconciliationProcessor { return []processing.ReconciliationProcessor{p} },
-			getStatusBaseMock: func() status.ReconciliationStatusVisitor {
+			getStatusBaseMock: func() status.ReconciliationStatus {
 				return mockStatusBase(gatewayv1beta1.StatusSkipped)
 			},
 		}
@@ -115,7 +115,7 @@ var _ = Describe("Reconcile", func() {
 			cmd := MockReconciliationCommand{
 				validateMock:   func() ([]validation.Failure, error) { return []validation.Failure{}, nil },
 				processorMocks: func() []processing.ReconciliationProcessor { return []processing.ReconciliationProcessor{p} },
-				getStatusBaseMock: func() status.ReconciliationStatusVisitor {
+				getStatusBaseMock: func() status.ReconciliationStatus {
 					return mockStatusBase(gatewayv1beta1.StatusOK)
 				},
 			}
@@ -154,7 +154,7 @@ var _ = Describe("Reconcile", func() {
 		cmd := MockReconciliationCommand{
 			validateMock:   func() ([]validation.Failure, error) { return []validation.Failure{}, nil },
 			processorMocks: func() []processing.ReconciliationProcessor { return []processing.ReconciliationProcessor{p} },
-			getStatusBaseMock: func() status.ReconciliationStatusVisitor {
+			getStatusBaseMock: func() status.ReconciliationStatus {
 				return mockStatusBase(gatewayv1beta1.StatusOK)
 			},
 		}
@@ -192,7 +192,7 @@ var _ = Describe("Reconcile", func() {
 		cmd := MockReconciliationCommand{
 			validateMock:   func() ([]validation.Failure, error) { return []validation.Failure{}, nil },
 			processorMocks: func() []processing.ReconciliationProcessor { return []processing.ReconciliationProcessor{p} },
-			getStatusBaseMock: func() status.ReconciliationStatusVisitor {
+			getStatusBaseMock: func() status.ReconciliationStatus {
 				return mockStatusBase(gatewayv1beta1.StatusOK)
 			},
 		}
@@ -218,11 +218,11 @@ var _ = Describe("Reconcile", func() {
 
 type MockReconciliationCommand struct {
 	validateMock      func() ([]validation.Failure, error)
-	getStatusBaseMock func() status.ReconciliationStatusVisitor
+	getStatusBaseMock func() status.ReconciliationStatus
 	processorMocks    func() []processing.ReconciliationProcessor
 }
 
-func (r MockReconciliationCommand) Validate(_ context.Context, _ client.Client, _ *gatewayv1beta1.APIRule) ([]validation.Failure, error) {
+func (r MockReconciliationCommand) Validate(_ context.Context, _ client.Client) ([]validation.Failure, error) {
 	return r.validateMock()
 }
 
@@ -234,11 +234,11 @@ type MockReconciliationProcessor struct {
 	evaluate func() ([]*processing.ObjectChange, error)
 }
 
-func (r MockReconciliationProcessor) EvaluateReconciliation(_ context.Context, _ client.Client, _ *gatewayv1beta1.APIRule) ([]*processing.ObjectChange, error) {
+func (r MockReconciliationProcessor) EvaluateReconciliation(_ context.Context, _ client.Client) ([]*processing.ObjectChange, error) {
 	return r.evaluate()
 }
 
-func (r MockReconciliationCommand) GetStatusBase(string) status.ReconciliationStatusVisitor {
+func (r MockReconciliationCommand) GetStatusBase(string) status.ReconciliationStatus {
 	return r.getStatusBaseMock()
 }
 
@@ -247,6 +247,6 @@ func testLogger() *logr.Logger {
 	return &logger
 }
 
-func mockStatusBase(statusCode gatewayv1beta1.StatusCode) status.ReconciliationStatusVisitor {
+func mockStatusBase(statusCode gatewayv1beta1.StatusCode) status.ReconciliationStatus {
 	return oryHandler.StatusBase(string(statusCode))
 }

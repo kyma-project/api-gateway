@@ -24,9 +24,10 @@ var (
 	defaultScopeKeys = []string{"request.auth.claims[scp]", "request.auth.claims[scope]", "request.auth.claims[scopes]"}
 )
 
-// NewAuthorizationPolicyProcessor returns a AuthorizationPolicyProcessor with the desired state handling specific for the Istio handler.
-func NewAuthorizationPolicyProcessor(config processing.ReconciliationConfig, log *logr.Logger) processors.AuthorizationPolicyProcessor {
+// Newv1beta1AuthorizationPolicyProcessor returns a AuthorizationPolicyProcessor with the desired state handling specific for the Istio handler.
+func Newv1beta1AuthorizationPolicyProcessor(config processing.ReconciliationConfig, log *logr.Logger, rule *gatewayv1beta1.APIRule) processors.AuthorizationPolicyProcessor {
 	return processors.AuthorizationPolicyProcessor{
+		ApiRule: rule,
 		Creator: authorizationPolicyCreator{},
 		Log:     log,
 	}

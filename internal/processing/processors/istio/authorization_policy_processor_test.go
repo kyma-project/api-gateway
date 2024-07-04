@@ -182,7 +182,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 		apiRule := GetAPIRuleFor([]gatewayv1beta1.Rule{ruleJwt})
 		svc := GetService(*apiRule.Spec.Service.Name)
 		client := GetFakeClient(svc)
-		processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig(), &testLogger)
+		processor := istio.Newv1beta1AuthorizationPolicyProcessor(GetTestConfig(), &testLogger)
 
 		// when
 		result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
@@ -209,7 +209,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 		apiRule := GetAPIRuleFor([]gatewayv1beta1.Rule{ruleJwt, ruleJwt2})
 		svc := GetService(*apiRule.Spec.Service.Name)
 		client := GetFakeClient(svc)
-		processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig(), &testLogger)
+		processor := istio.Newv1beta1AuthorizationPolicyProcessor(GetTestConfig(), &testLogger)
 
 		// when
 		result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
@@ -283,7 +283,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 		apiRule := GetAPIRuleFor([]gatewayv1beta1.Rule{ruleJwt})
 		svc := GetService(*apiRule.Spec.Service.Name)
 		client := GetFakeClient(svc)
-		processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig(), &testLogger)
+		processor := istio.Newv1beta1AuthorizationPolicyProcessor(GetTestConfig(), &testLogger)
 
 		// when
 		result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
@@ -347,7 +347,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 		apiRule := GetAPIRuleFor([]gatewayv1beta1.Rule{ruleJwt})
 		svc := GetService(*apiRule.Spec.Service.Name)
 		client := GetFakeClient(svc)
-		processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig(), &testLogger)
+		processor := istio.Newv1beta1AuthorizationPolicyProcessor(GetTestConfig(), &testLogger)
 
 		// when
 		result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
@@ -376,7 +376,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 		apiRule := GetAPIRuleFor([]gatewayv1beta1.Rule{ruleJwt}, specServiceNamespace)
 		svc := GetService(ruleServiceName, specServiceNamespace)
 		client := GetFakeClient(svc)
-		processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig(), &testLogger)
+		processor := istio.Newv1beta1AuthorizationPolicyProcessor(GetTestConfig(), &testLogger)
 
 		// when
 		result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
@@ -406,7 +406,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 		apiRule := GetAPIRuleFor([]gatewayv1beta1.Rule{ruleJwt})
 		svc := GetService(ruleServiceName, ruleServiceNamespace)
 		client := GetFakeClient(svc)
-		processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig(), &testLogger)
+		processor := istio.Newv1beta1AuthorizationPolicyProcessor(GetTestConfig(), &testLogger)
 
 		// when
 		result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
@@ -447,7 +447,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 		apiRule := GetAPIRuleFor([]gatewayv1beta1.Rule{ruleJwt})
 		svc := GetService(*apiRule.Spec.Service.Name)
 		client := GetFakeClient(svc)
-		processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig(), &testLogger)
+		processor := istio.Newv1beta1AuthorizationPolicyProcessor(GetTestConfig(), &testLogger)
 
 		// when
 		result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
@@ -516,7 +516,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 
 			svc := GetService(overrideServiceName, overrideServiceNamespace)
 			client := GetFakeClient(svc)
-			processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig(), &testLogger)
+			processor := istio.Newv1beta1AuthorizationPolicyProcessor(GetTestConfig(), &testLogger)
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
@@ -555,7 +555,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			}
 
 			client := GetFakeClient()
-			processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig(), &testLogger)
+			processor := istio.Newv1beta1AuthorizationPolicyProcessor(GetTestConfig(), &testLogger)
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
@@ -592,7 +592,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			apiRule := GetAPIRuleFor([]gatewayv1beta1.Rule{ruleAllow, ruleJwt})
 			svc := GetService(*apiRule.Spec.Service.Name)
 			client := GetFakeClient(svc)
-			processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig(), &testLogger)
+			processor := istio.Newv1beta1AuthorizationPolicyProcessor(GetTestConfig(), &testLogger)
 
 			// when
 			results, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
@@ -657,7 +657,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			apiRule := GetAPIRuleFor([]gatewayv1beta1.Rule{ruleNoop, ruleJwt})
 			svc := GetService(*apiRule.Spec.Service.Name)
 			client := GetFakeClient(svc)
-			processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig(), &testLogger)
+			processor := istio.Newv1beta1AuthorizationPolicyProcessor(GetTestConfig(), &testLogger)
 
 			// when
 			results, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
@@ -712,7 +712,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 		svc := GetService(serviceName)
 		client := GetFakeClient(svc)
 
-		processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig(), &testLogger)
+		processor := istio.Newv1beta1AuthorizationPolicyProcessor(GetTestConfig(), &testLogger)
 
 		// when
 		result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
@@ -726,7 +726,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 	It("should update AP when path, methods and service name didn't change", func() {
 		// given: Cluster state
 		existingAp := getAuthorizationPolicy("raName", ApiNamespace, "test-service", []string{"GET", "POST"})
-		processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig(), &testLogger)
+		processor := istio.Newv1beta1AuthorizationPolicyProcessor(GetTestConfig(), &testLogger)
 
 		// given: New resources
 		path := "/"
@@ -758,7 +758,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			svc1 := GetService("test-service")
 			svc2 := GetService("jwt-secured-service")
 			ctrlClient := GetFakeClient(beingUpdatedAp, jwtSecuredAp, svc1, svc2)
-			processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig(), &testLogger)
+			processor := istio.Newv1beta1AuthorizationPolicyProcessor(GetTestConfig(), &testLogger)
 
 			// given: New resources
 			jwtRule := getRuleForApTest(methodsGetPost, "/", "jwt-secured-service")
@@ -802,7 +802,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 		existingAp := getAuthorizationPolicy("raName", ApiNamespace, "test-service", []string{"GET", "POST"})
 		svc := GetService("test-service")
 		ctrlClient := GetFakeClient(existingAp, svc)
-		processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig(), &testLogger)
+		processor := istio.Newv1beta1AuthorizationPolicyProcessor(GetTestConfig(), &testLogger)
 
 		// given: New resources
 		apiRule := GetAPIRuleFor([]gatewayv1beta1.Rule{})
@@ -824,7 +824,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			existingAp := getAuthorizationPolicy("raName", ApiNamespace, "test-service", []string{"GET", "POST"})
 			svc := GetService("test-service")
 			ctrlClient := GetFakeClient(existingAp, svc)
-			processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig(), &testLogger)
+			processor := istio.Newv1beta1AuthorizationPolicyProcessor(GetTestConfig(), &testLogger)
 
 			// given: New resources
 
@@ -851,7 +851,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			existingAp := getAuthorizationPolicy("raName", ApiNamespace, "test-service", []string{"GET", "POST"})
 			svc := GetService("test-service")
 			ctrlClient := GetFakeClient(existingAp, svc)
-			processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig(), &testLogger)
+			processor := istio.Newv1beta1AuthorizationPolicyProcessor(GetTestConfig(), &testLogger)
 
 			// given: New resources
 
@@ -885,7 +885,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			svc1 := GetService("test-service")
 			svc2 := GetService("new-service")
 			ctrlClient := GetFakeClient(existingAp, svc1, svc2)
-			processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig(), &testLogger)
+			processor := istio.Newv1beta1AuthorizationPolicyProcessor(GetTestConfig(), &testLogger)
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.TODO(), ctrlClient, apiRule)
@@ -904,7 +904,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			existingAp := getAuthorizationPolicy("raName", ApiNamespace, "test-service", []string{"GET", "POST"})
 			svc := GetService("test-service")
 			ctrlClient := GetFakeClient(existingAp, svc)
-			processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig(), &testLogger)
+			processor := istio.Newv1beta1AuthorizationPolicyProcessor(GetTestConfig(), &testLogger)
 
 			// given: New resources
 			path := "/new-path"
@@ -936,7 +936,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			toBeUpdateAp := getAuthorizationPolicy("to-be-updated-ap", ApiNamespace, "test-service", []string{"GET"})
 			svc := GetService("test-service")
 			ctrlClient := GetFakeClient(toBeUpdateAp, unchangedAp, svc)
-			processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig(), &testLogger)
+			processor := istio.Newv1beta1AuthorizationPolicyProcessor(GetTestConfig(), &testLogger)
 
 			// given: New resources
 			unchangedRule := getRuleForApTest(methodsDelete, "/", "test-service")
@@ -967,7 +967,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			svc := GetService("test-service")
 			svcNewNS := GetService("test-service", specNewServiceNamespace)
 			ctrlClient := GetFakeClient(oldAP, svc, svcNewNS)
-			processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig(), &testLogger)
+			processor := istio.Newv1beta1AuthorizationPolicyProcessor(GetTestConfig(), &testLogger)
 
 			// given: New resources
 			movedRule := getRuleForApTest(methodsDelete, "/", "test-service")
@@ -993,7 +993,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			oldAP := getAuthorizationPolicy("unchanged-ap", ApiNamespace, "test-service", []string{"DELETE"})
 			svc := GetService("test-service", "new-namespace")
 			ctrlClient := GetFakeClient(oldAP, svc)
-			processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig(), &testLogger)
+			processor := istio.Newv1beta1AuthorizationPolicyProcessor(GetTestConfig(), &testLogger)
 
 			// given: New resources
 			movedRule := getRuleForApTest(methodsDelete, "/", "test-service", "new-namespace")
@@ -1022,7 +1022,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			svc1 := GetService("first-service")
 			svc2 := GetService("second-service")
 			ctrlClient := GetFakeClient(toBeUpdateAp, unchangedAp, svc1, svc2)
-			processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig(), &testLogger)
+			processor := istio.Newv1beta1AuthorizationPolicyProcessor(GetTestConfig(), &testLogger)
 
 			// given: New resources
 			unchangedRule := getRuleForApTest(methodsGet, "/", "first-service")
@@ -1070,7 +1070,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 
 			svc := GetService(serviceName)
 			ctrlClient := GetFakeClient(ap1, ap2, svc)
-			processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig(), &testLogger)
+			processor := istio.Newv1beta1AuthorizationPolicyProcessor(GetTestConfig(), &testLogger)
 
 			// given: ApiRule with updated audiences in jwt authorizations
 			authorization1 := `{"audiences": ["audience1", "audience3"]}`
@@ -1135,7 +1135,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 
 			svc := GetService(serviceName)
 			ctrlClient := GetFakeClient(ap1, ap2, svc)
-			processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig(), &testLogger)
+			processor := istio.Newv1beta1AuthorizationPolicyProcessor(GetTestConfig(), &testLogger)
 
 			// given: ApiRule with updated audiences in jwt authorizations
 			authorization1 := `{"audiences": ["audience1", "audience2"]}`
@@ -1202,7 +1202,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 
 			svc := GetService(serviceName)
 			ctrlClient := GetFakeClient(ap1, ap2, svc)
-			processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig(), &testLogger)
+			processor := istio.Newv1beta1AuthorizationPolicyProcessor(GetTestConfig(), &testLogger)
 
 			// given: ApiRule with updated audiences in jwt authorizations
 			authorization1 := `{"audiences": ["audience1", "audience2"]}`
@@ -1278,7 +1278,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 
 			svc := GetService(serviceName)
 			ctrlClient := GetFakeClient(ap1, ap2, ap3, svc)
-			processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig(), &testLogger)
+			processor := istio.Newv1beta1AuthorizationPolicyProcessor(GetTestConfig(), &testLogger)
 
 			// given: ApiRule with updated audiences in jwt authorizations
 			authorization2 := `{"audiences": ["audience3"]}`
@@ -1335,7 +1335,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			svc.Spec.Selector["custom"] = serviceName
 			client := GetFakeClient(svc)
 
-			processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig(), &testLogger)
+			processor := istio.Newv1beta1AuthorizationPolicyProcessor(GetTestConfig(), &testLogger)
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
@@ -1366,7 +1366,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			svc.Spec.Selector["custom"] = serviceName
 			client := GetFakeClient(svc)
 
-			processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig(), &testLogger)
+			processor := istio.Newv1beta1AuthorizationPolicyProcessor(GetTestConfig(), &testLogger)
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
@@ -1396,7 +1396,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			svc.Spec.Selector["second-custom"] = "blah"
 			client := GetFakeClient(svc)
 
-			processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig(), &testLogger)
+			processor := istio.Newv1beta1AuthorizationPolicyProcessor(GetTestConfig(), &testLogger)
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
@@ -1435,7 +1435,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 
 			svc := GetService(serviceName)
 			ctrlClient := GetFakeClient(ap, svc)
-			processor := istio.NewAuthorizationPolicyProcessor(GetTestConfig(), &testLogger)
+			processor := istio.Newv1beta1AuthorizationPolicyProcessor(GetTestConfig(), &testLogger)
 
 			// given: ApiRule with updated audiences in jwt authorizations
 			authorization := `{"audiences": ["audience1"]}`

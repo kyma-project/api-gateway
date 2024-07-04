@@ -15,7 +15,7 @@ import (
 )
 
 // Updates api status. If there was an error during update, returns the error so that entire reconcile loop is retried. If there is no error, returns a "reconcile success" value.
-func (r *APIRuleReconciler) updateStatusOrRetry(ctx context.Context, api *gatewayv1beta1.APIRule, status status.ReconciliationStatusVisitor) (ctrl.Result, error) {
+func (r *APIRuleReconciler) updateStatusOrRetry(ctx context.Context, api *gatewayv1beta1.APIRule, status status.ReconciliationStatus) (ctrl.Result, error) {
 	_, updateStatusErr := r.updateStatus(ctx, api, status)
 	if updateStatusErr != nil {
 		r.Log.Error(updateStatusErr, "Error updating ApiRule status, retrying")
@@ -31,7 +31,7 @@ func (r *APIRuleReconciler) updateStatusOrRetry(ctx context.Context, api *gatewa
 	return doneReconcileDefaultRequeue(r.ReconcilePeriod, &r.Log)
 }
 
-func (r *APIRuleReconciler) updateStatus(ctx context.Context, api *gatewayv1beta1.APIRule, status status.ReconciliationStatusVisitor) (*gatewayv1beta1.APIRule, error) {
+func (r *APIRuleReconciler) updateStatus(ctx context.Context, api *gatewayv1beta1.APIRule, status status.ReconciliationStatus) (*gatewayv1beta1.APIRule, error) {
 	api, err := r.getLatestApiRule(ctx, api)
 	if err != nil {
 		return nil, err
@@ -40,7 +40,7 @@ func (r *APIRuleReconciler) updateStatus(ctx context.Context, api *gatewayv1beta
 	api.Status.ObservedGeneration = api.Generation
 	api.Status.LastProcessedTime = &v1.Time{Time: time.Now()}
 
-	err = status.VisitStatus(&api.Status)
+	err = status.UpdateStatus(&api.Status)
 	if err != nil {
 		return nil, err
 	}

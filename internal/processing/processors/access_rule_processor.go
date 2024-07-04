@@ -15,6 +15,7 @@ import (
 
 // AccessRuleProcessor is the generic processor that handles the Ory Rules in the reconciliation of API Rule.
 type AccessRuleProcessor struct {
+	ApiRule *gatewayv1beta1.APIRule
 	Creator AccessRuleCreator
 }
 
@@ -24,9 +25,9 @@ type AccessRuleCreator interface {
 	Create(api *gatewayv1beta1.APIRule) map[string]*rulev1alpha1.Rule
 }
 
-func (r AccessRuleProcessor) EvaluateReconciliation(ctx context.Context, client ctrlclient.Client, apiRule *gatewayv1beta1.APIRule) ([]*processing.ObjectChange, error) {
-	desired := r.getDesiredState(apiRule)
-	actual, err := r.getActualState(ctx, client, apiRule)
+func (r AccessRuleProcessor) EvaluateReconciliation(ctx context.Context, client ctrlclient.Client) ([]*processing.ObjectChange, error) {
+	desired := r.getDesiredState(r.ApiRule)
+	actual, err := r.getActualState(ctx, client, r.ApiRule)
 	if err != nil {
 		return make([]*processing.ObjectChange, 0), err
 	}
