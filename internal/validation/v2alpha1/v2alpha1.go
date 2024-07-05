@@ -23,6 +23,7 @@ type APIRuleValidator struct {
 	ServiceBlockList   map[string][]string
 	HostBlockList      []string
 	DefaultDomainName  string
+	DomainAllowList    []string
 }
 
 type jwtValidator interface {
