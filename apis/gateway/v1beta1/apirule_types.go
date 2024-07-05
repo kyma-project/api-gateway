@@ -56,7 +56,20 @@ type APIRuleSpec struct {
 	// +kubebuilder:validation:MinItems=1
 	Rules []Rule `json:"rules"`
 	// +optional
-	Timeout *Timeout `json:"timeout,omitempty"`
+	Headers *HeadersConfig `json:"headers,omitempty"`
+	Timeout *Timeout       `json:"timeout,omitempty"`
+}
+
+type HeadersConfig struct {
+	// Request defines header manipulation options for all requests passing through an APIRule
+	Request *HeaderOptions `json:"request,omitempty"`
+	// Response defines header manipulation options for all responses passing through an APIRule
+	Response *HeaderOptions `json:"response,omitempty"`
+}
+
+type HeaderOptions struct {
+	// Set contains key/value pair map containing headers that are set in APIRule
+	Set map[string]string `json:"set,omitempty"`
 }
 
 // Describes the observed state of ApiRule.
