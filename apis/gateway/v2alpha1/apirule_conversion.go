@@ -59,7 +59,10 @@ func (apiRuleV2Alpha1 *APIRule) ConvertTo(hub conversion.Hub) error {
 	if err != nil {
 		return err
 	}
-
+	err = convertOverJson(apiRuleV2Alpha1.Spec.Headers, &apiRuleBeta1.Spec.Headers)
+	if err != nil {
+		return err
+	}
 	// Status
 	apiRuleBeta1.Status = v1beta1.APIRuleStatus{
 		APIRuleStatus: &v1beta1.APIRuleResourceStatus{
