@@ -12,8 +12,9 @@ import (
 )
 
 // NewAuthorizationPolicyProcessor returns a AuthorizationPolicyProcessor with the desired state handling specific for the Istio handler.
-func NewAuthorizationPolicyProcessor(config processing.ReconciliationConfig, log *logr.Logger) processors.AuthorizationPolicyProcessor {
+func NewAuthorizationPolicyProcessor(_ processing.ReconciliationConfig, log *logr.Logger, apiRule *gatewayv1beta1.APIRule) processors.AuthorizationPolicyProcessor {
 	return processors.AuthorizationPolicyProcessor{
+		ApiRule: apiRule,
 		Creator: authorizationPolicyCreator{},
 		Log:     log,
 	}
@@ -22,6 +23,6 @@ func NewAuthorizationPolicyProcessor(config processing.ReconciliationConfig, log
 type authorizationPolicyCreator struct{}
 
 // Create returns empty JwtAuthorization Policy
-func (r authorizationPolicyCreator) Create(ctx context.Context, client client.Client, _ *gatewayv1beta1.APIRule) (hashbasedstate.Desired, error) {
+func (r authorizationPolicyCreator) Create(_ context.Context, _ client.Client, _ *gatewayv1beta1.APIRule) (hashbasedstate.Desired, error) {
 	return hashbasedstate.NewDesired(), nil
 }
