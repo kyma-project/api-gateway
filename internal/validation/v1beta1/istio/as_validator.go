@@ -7,11 +7,11 @@ import (
 	"github.com/kyma-project/api-gateway/internal/validation"
 )
 
-type AccessStrategyValidator struct{}
+type accessStrategyValidator struct{}
 
 var exclusiveAccessStrategies = []string{gatewayv1beta1.AccessStrategyAllow, gatewayv1beta1.AccessStrategyNoAuth, gatewayv1beta1.AccessStrategyJwt, gatewayv1beta1.AccessStrategyNoop}
 
-func (o *AccessStrategyValidator) Validate(attributePath string, accessStrategies []*gatewayv1beta1.Authenticator) []validation.Failure {
+func (o *accessStrategyValidator) Validate(attributePath string, accessStrategies []*gatewayv1beta1.Authenticator) []validation.Failure {
 	var problems []validation.Failure
 
 	for _, strategy := range exclusiveAccessStrategies {

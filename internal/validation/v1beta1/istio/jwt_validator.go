@@ -11,9 +11,9 @@ import (
 	"github.com/kyma-project/api-gateway/internal/validation"
 )
 
-type HandlerValidator struct{}
+type handlerValidator struct{}
 
-func (o *HandlerValidator) Validate(attributePath string, handler *gatewayv1beta1.Handler) []validation.Failure {
+func (o *handlerValidator) Validate(attributePath string, handler *gatewayv1beta1.Handler) []validation.Failure {
 	var failures []validation.Failure
 	var template gatewayv1beta1.JwtConfig
 

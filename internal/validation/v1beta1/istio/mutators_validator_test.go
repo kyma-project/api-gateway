@@ -35,7 +35,7 @@ var _ = Describe("Mutators validator", func() {
 		rule := createJwtHandlerRule(&mutator)
 
 		//when
-		problems := MutatorsValidator{}.Validate("some.attribute", rule)
+		problems := mutatorsValidator{}.Validate("some.attribute", rule)
 
 		//then
 		Expect(problems).To(HaveLen(1))
@@ -52,7 +52,7 @@ var _ = Describe("Mutators validator", func() {
 		rule := createJwtHandlerRule(&mutator)
 
 		//when
-		problems := MutatorsValidator{}.Validate("some.attribute", rule)
+		problems := mutatorsValidator{}.Validate("some.attribute", rule)
 
 		//then
 		Expect(problems).To(HaveLen(1))
@@ -71,7 +71,7 @@ var _ = Describe("Mutators validator", func() {
 		rule := createJwtHandlerRule(&mutator)
 
 		//when
-		problems := MutatorsValidator{}.Validate("some.attribute", rule)
+		problems := mutatorsValidator{}.Validate("some.attribute", rule)
 
 		//then
 		Expect(problems).To(HaveLen(1))
@@ -92,7 +92,7 @@ var _ = Describe("Mutators validator", func() {
 		rule := createJwtHandlerRule(&mutator)
 
 		//when
-		problems := MutatorsValidator{}.Validate("some.attribute", rule)
+		problems := mutatorsValidator{}.Validate("some.attribute", rule)
 
 		//then
 		Expect(problems).To(HaveLen(1))
@@ -115,7 +115,7 @@ var _ = Describe("Mutators validator", func() {
 		rule := createJwtHandlerRule(&mutator)
 
 		//when
-		problems := MutatorsValidator{}.Validate("some.attribute", rule)
+		problems := mutatorsValidator{}.Validate("some.attribute", rule)
 
 		//then
 		Expect(problems).To(HaveLen(1))
@@ -140,7 +140,7 @@ var _ = Describe("Mutators validator", func() {
 		rule := createJwtHandlerRule(&mutator)
 
 		//when
-		problems := MutatorsValidator{}.Validate("some.attribute", rule)
+		problems := mutatorsValidator{}.Validate("some.attribute", rule)
 
 		//then
 		Expect(problems).To(HaveLen(1))
@@ -165,7 +165,7 @@ var _ = Describe("Mutators validator", func() {
 		rule := createJwtHandlerRule(&mutator)
 
 		//when
-		problems := MutatorsValidator{}.Validate("some.attribute", rule)
+		problems := mutatorsValidator{}.Validate("some.attribute", rule)
 
 		//then
 		Expect(problems).To(HaveLen(0))
@@ -182,7 +182,7 @@ var _ = Describe("Mutators validator", func() {
 		rule := createJwtHandlerRule(&mutator)
 
 		//when
-		problems := MutatorsValidator{}.Validate("some.attribute", rule)
+		problems := mutatorsValidator{}.Validate("some.attribute", rule)
 
 		//then
 		Expect(problems).To(HaveLen(1))
@@ -203,7 +203,7 @@ var _ = Describe("Mutators validator", func() {
 		rule := createJwtHandlerRule(&mutator)
 
 		//when
-		problems := MutatorsValidator{}.Validate("some.attribute", rule)
+		problems := mutatorsValidator{}.Validate("some.attribute", rule)
 
 		//then
 		Expect(problems).To(HaveLen(1))
@@ -226,7 +226,7 @@ var _ = Describe("Mutators validator", func() {
 		rule := createJwtHandlerRule(&mutator)
 
 		//when
-		problems := MutatorsValidator{}.Validate("some.attribute", rule)
+		problems := mutatorsValidator{}.Validate("some.attribute", rule)
 
 		//then
 		Expect(problems).To(HaveLen(1))
@@ -251,7 +251,7 @@ var _ = Describe("Mutators validator", func() {
 		rule := createJwtHandlerRule(&mutator)
 
 		//when
-		problems := MutatorsValidator{}.Validate("some.attribute", rule)
+		problems := mutatorsValidator{}.Validate("some.attribute", rule)
 
 		//then
 		Expect(problems).To(HaveLen(1))
@@ -276,7 +276,7 @@ var _ = Describe("Mutators validator", func() {
 		rule := createJwtHandlerRule(&mutator)
 
 		//when
-		problems := MutatorsValidator{}.Validate("some.attribute", rule)
+		problems := mutatorsValidator{}.Validate("some.attribute", rule)
 
 		//then
 		Expect(problems).To(HaveLen(0))
@@ -305,7 +305,7 @@ var _ = Describe("Mutators validator", func() {
 		rule := createJwtHandlerRule(&unsupportedMutator, &noNameMutator, &noConfigMutator)
 
 		//when
-		problems := MutatorsValidator{}.Validate("some.attribute", rule)
+		problems := mutatorsValidator{}.Validate("some.attribute", rule)
 
 		//then
 		Expect(problems).To(HaveLen(3))
@@ -340,7 +340,7 @@ var _ = Describe("Mutators validator", func() {
 		rule := createJwtHandlerRule(&cookieMutator, &anotherCookieMutator)
 
 		//when
-		problems := MutatorsValidator{}.Validate("some.attribute", rule)
+		problems := mutatorsValidator{}.Validate("some.attribute", rule)
 
 		//then
 		Expect(problems).To(HaveLen(1))

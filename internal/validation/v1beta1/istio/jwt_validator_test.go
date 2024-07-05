@@ -141,7 +141,7 @@ var _ = Describe("JWT Handler validation", func() {
 		handler := &gatewayv1beta1.Handler{Name: "jwt", Config: emptyJWTIstioConfig()}
 
 		//when
-		problems := (&HandlerValidator{}).Validate("some.attribute", handler)
+		problems := (&handlerValidator{}).Validate("some.attribute", handler)
 
 		//then
 		Expect(problems).To(HaveLen(1))
@@ -155,7 +155,7 @@ var _ = Describe("JWT Handler validation", func() {
 			handler := &gatewayv1beta1.Handler{Name: "jwt", Config: jwtIstioConfig("no_url", "the_issuer")}
 
 			//when
-			problems := (&HandlerValidator{}).Validate("some.attribute", handler)
+			problems := (&handlerValidator{}).Validate("some.attribute", handler)
 
 			//then
 			Expect(problems).To(HaveLen(1))
@@ -168,7 +168,7 @@ var _ = Describe("JWT Handler validation", func() {
 			handler := &gatewayv1beta1.Handler{Name: "jwt", Config: jwtIstioConfig("", "")}
 
 			//when
-			problems := (&HandlerValidator{}).Validate("some.attribute", handler)
+			problems := (&handlerValidator{}).Validate("some.attribute", handler)
 
 			//then
 			Expect(problems).To(HaveLen(2))
@@ -183,7 +183,7 @@ var _ = Describe("JWT Handler validation", func() {
 			handler := &gatewayv1beta1.Handler{Name: "jwt", Config: jwtIstioConfig("http://issuer.test/.well-known/jwks.json", "://example")}
 
 			//when
-			problems := (&HandlerValidator{}).Validate("some.attribute", handler)
+			problems := (&handlerValidator{}).Validate("some.attribute", handler)
 
 			//then
 			Expect(problems).To(HaveLen(1))
@@ -196,7 +196,7 @@ var _ = Describe("JWT Handler validation", func() {
 			handler := &gatewayv1beta1.Handler{Name: "jwt", Config: jwtIstioConfig("http://issuer.test/.well-known/jwks.json", "https://issuer.example.com")}
 
 			//when
-			problems := (&HandlerValidator{}).Validate("some.attribute", handler)
+			problems := (&handlerValidator{}).Validate("some.attribute", handler)
 
 			//then
 			Expect(problems).To(HaveLen(0))
@@ -207,7 +207,7 @@ var _ = Describe("JWT Handler validation", func() {
 			handler := &gatewayv1beta1.Handler{Name: "jwt", Config: jwtIstioConfig("http://issuer.test/.well-known/jwks.json", "testing@secure.istio.io")}
 
 			//when
-			problems := (&HandlerValidator{}).Validate("some.attribute", handler)
+			problems := (&handlerValidator{}).Validate("some.attribute", handler)
 
 			//then
 			Expect(problems).To(HaveLen(0))
@@ -219,7 +219,7 @@ var _ = Describe("JWT Handler validation", func() {
 		handler := &gatewayv1beta1.Handler{Name: "jwt", Config: jwtIstioConfig("http://issuer.test/.well-known/jwks.json", "http://issuer.test/")}
 
 		//when
-		problems := (&HandlerValidator{}).Validate("some.attribute", handler)
+		problems := (&handlerValidator{}).Validate("some.attribute", handler)
 
 		//then
 		Expect(problems).To(HaveLen(0))
@@ -230,7 +230,7 @@ var _ = Describe("JWT Handler validation", func() {
 		handler := &gatewayv1beta1.Handler{Name: "jwt", Config: jwtIstioConfig("file://.well-known/jwks.json", "https://issuer.test/")}
 
 		//when
-		problems := (&HandlerValidator{}).Validate("some.attribute", handler)
+		problems := (&handlerValidator{}).Validate("some.attribute", handler)
 
 		//then
 		Expect(problems).To(HaveLen(0))
@@ -241,7 +241,7 @@ var _ = Describe("JWT Handler validation", func() {
 		handler := &gatewayv1beta1.Handler{Name: "jwt", Config: jwtIstioConfig("https://issuer.test/.well-known/jwks.json", "https://issuer.test/")}
 
 		//when
-		problems := (&HandlerValidator{}).Validate("some.attribute", handler)
+		problems := (&handlerValidator{}).Validate("some.attribute", handler)
 
 		//then
 		Expect(problems).To(HaveLen(0))
@@ -252,7 +252,7 @@ var _ = Describe("JWT Handler validation", func() {
 		handler := &gatewayv1beta1.Handler{Name: "jwt", Config: &runtime.RawExtension{Raw: []byte("/abc]")}}
 
 		//when
-		problems := (&HandlerValidator{}).Validate("some.attribute", handler)
+		problems := (&handlerValidator{}).Validate("some.attribute", handler)
 
 		//then
 		Expect(problems).To(HaveLen(1))
@@ -264,7 +264,7 @@ var _ = Describe("JWT Handler validation", func() {
 		handler := &gatewayv1beta1.Handler{Name: "jwt", Config: testURLJWTOryConfig("https://issuer.test/.well-known/jwks.json", "https://issuer.test/")}
 
 		//when
-		problems := (&HandlerValidator{}).Validate("some.attribute", handler)
+		problems := (&handlerValidator{}).Validate("some.attribute", handler)
 
 		//then
 		Expect(problems).To(Not(BeEmpty()))
@@ -289,7 +289,7 @@ var _ = Describe("JWT Handler validation", func() {
 			}
 
 			//when
-			problems := (&HandlerValidator{}).Validate("", handler)
+			problems := (&handlerValidator{}).Validate("", handler)
 
 			//then
 			Expect(problems).To(HaveLen(1))
@@ -315,7 +315,7 @@ var _ = Describe("JWT Handler validation", func() {
 			}
 
 			//when
-			problems := (&HandlerValidator{}).Validate("", handler)
+			problems := (&handlerValidator{}).Validate("", handler)
 
 			//then
 			Expect(problems).To(HaveLen(1))
@@ -342,7 +342,7 @@ var _ = Describe("JWT Handler validation", func() {
 			}
 
 			//when
-			problems := (&HandlerValidator{}).Validate("", handler)
+			problems := (&handlerValidator{}).Validate("", handler)
 
 			//then
 			Expect(problems).To(HaveLen(1))
@@ -374,7 +374,7 @@ var _ = Describe("JWT Handler validation", func() {
 			}
 
 			//when
-			problems := (&HandlerValidator{}).Validate("", handler)
+			problems := (&handlerValidator{}).Validate("", handler)
 
 			//then
 			Expect(problems).To(HaveLen(1))
@@ -406,7 +406,7 @@ var _ = Describe("JWT Handler validation", func() {
 			}
 
 			//when
-			problems := (&HandlerValidator{}).Validate("", handler)
+			problems := (&handlerValidator{}).Validate("", handler)
 
 			//then
 			Expect(problems).To(HaveLen(1))
@@ -432,7 +432,7 @@ var _ = Describe("JWT Handler validation", func() {
 			}
 
 			//when
-			problems := (&HandlerValidator{}).Validate("", handler)
+			problems := (&handlerValidator{}).Validate("", handler)
 
 			//then
 			Expect(problems).To(HaveLen(0))
@@ -452,7 +452,7 @@ var _ = Describe("JWT Handler validation", func() {
 				}
 
 				//when
-				problems := (&HandlerValidator{}).Validate("some.attribute", handler)
+				problems := (&handlerValidator{}).Validate("some.attribute", handler)
 
 				//then
 				Expect(problems).To(HaveLen(1))
@@ -473,7 +473,7 @@ var _ = Describe("JWT Handler validation", func() {
 				}
 
 				//when
-				problems := (&HandlerValidator{}).Validate("some.attribute", handler)
+				problems := (&handlerValidator{}).Validate("some.attribute", handler)
 
 				//then
 				Expect(problems).To(HaveLen(1))
@@ -494,7 +494,7 @@ var _ = Describe("JWT Handler validation", func() {
 				}
 
 				//when
-				problems := (&HandlerValidator{}).Validate("some.attribute", handler)
+				problems := (&handlerValidator{}).Validate("some.attribute", handler)
 
 				//then
 				Expect(problems).To(HaveLen(0))
@@ -513,7 +513,7 @@ var _ = Describe("JWT Handler validation", func() {
 				}
 
 				//when
-				problems := (&HandlerValidator{}).Validate("", handler)
+				problems := (&handlerValidator{}).Validate("", handler)
 
 				//then
 				Expect(problems).To(HaveLen(0))
@@ -535,7 +535,7 @@ var _ = Describe("JWT Handler validation", func() {
 				}
 
 				//when
-				problems := (&HandlerValidator{}).Validate("", handler)
+				problems := (&handlerValidator{}).Validate("", handler)
 
 				//then
 				Expect(problems).To(HaveLen(1))
@@ -556,7 +556,7 @@ var _ = Describe("JWT Handler validation", func() {
 				}
 
 				//when
-				problems := (&HandlerValidator{}).Validate("", handler)
+				problems := (&handlerValidator{}).Validate("", handler)
 
 				//then
 				Expect(problems).To(HaveLen(1))
@@ -577,7 +577,7 @@ var _ = Describe("JWT Handler validation", func() {
 				}
 
 				//when
-				problems := (&HandlerValidator{}).Validate("", handler)
+				problems := (&handlerValidator{}).Validate("", handler)
 
 				//then
 				Expect(problems).To(HaveLen(0))
@@ -596,7 +596,7 @@ var _ = Describe("JWT Handler validation", func() {
 				}
 
 				//when
-				problems := (&HandlerValidator{}).Validate("", handler)
+				problems := (&handlerValidator{}).Validate("", handler)
 
 				//then
 				Expect(problems).To(HaveLen(0))

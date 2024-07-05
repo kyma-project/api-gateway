@@ -18,7 +18,7 @@ var _ = Describe("AccessStrategies Istio Validator", func() {
 			},
 		}
 		//when
-		problems := (&AccessStrategyValidator{}).Validate("some.attribute", strategies)
+		problems := (&accessStrategyValidator{}).Validate("some.attribute", strategies)
 
 		//then
 		Expect(problems).To(HaveLen(0))
@@ -43,7 +43,7 @@ var _ = Describe("AccessStrategies Istio Validator", func() {
 			},
 		}
 		//when
-		problems := (&AccessStrategyValidator{}).Validate("some.attribute", strategies)
+		problems := (&accessStrategyValidator{}).Validate("some.attribute", strategies)
 
 		//then
 		Expect(problems).To(HaveLen(1))
@@ -76,7 +76,7 @@ var _ = Describe("AccessStrategies Istio Validator", func() {
 			},
 		}
 		//when
-		problems := (&AccessStrategyValidator{}).Validate("some.attribute", strategies)
+		problems := (&accessStrategyValidator{}).Validate("some.attribute", strategies)
 
 		//then
 		Expect(problems).To(HaveLen(3))
@@ -103,7 +103,7 @@ var _ = Describe("AccessStrategies Istio Validator", func() {
 			},
 		}
 		//when
-		problems := (&AccessStrategyValidator{}).Validate("some.attribute", strategies)
+		problems := (&accessStrategyValidator{}).Validate("some.attribute", strategies)
 
 		//then
 		Expect(problems).To(HaveLen(0))

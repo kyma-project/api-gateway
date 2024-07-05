@@ -12,9 +12,9 @@ func NewAPIRuleValidator(ctx context.Context, client client.Client, api *gateway
 	return &v1beta1.APIRuleValidator{
 		ApiRule: api,
 
-		HandlerValidator:          &HandlerValidator{},
-		AccessStrategiesValidator: &AccessStrategyValidator{},
-		MutatorsValidator:         &MutatorsValidator{},
+		HandlerValidator:          &handlerValidator{},
+		AccessStrategiesValidator: &accessStrategyValidator{},
+		MutatorsValidator:         &mutatorsValidator{},
 		InjectionValidator:        validation.NewInjectionValidator(ctx, client),
 		RulesValidator:            &RulesValidator{},
 		DefaultDomainName:         defaultDomainName,

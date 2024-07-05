@@ -10,8 +10,8 @@ func NewAPIRuleValidator(api *gatewayv1beta1.APIRule, defaultDomainName string) 
 	return &v1beta1.APIRuleValidator{
 		ApiRule: api,
 
-		HandlerValidator:          &HandlerValidator{},
-		AccessStrategiesValidator: &AccessStrategyValidator{},
+		HandlerValidator:          &handlerValidator{},
+		AccessStrategiesValidator: &accessStrategyValidator{},
 		DefaultDomainName:         defaultDomainName,
 	}
 }
