@@ -330,6 +330,14 @@ func (h HttpRouteHeadersBuilder) SetRequestHeaders(headers map[string]string) Ht
 	return h
 }
 
+// SetResponseHeaders sets the response headers and expects a map of the form "header-name1": "header-value1", "header-name2": "header-value2", ...
+func (h HttpRouteHeadersBuilder) SetResponseHeaders(headers map[string]string) HttpRouteHeadersBuilder {
+	for name, value := range headers {
+		h.value.Response.Set[name] = value
+	}
+	return h
+}
+
 const (
 	ExposeHeadersName    = "Access-Control-Expose-Headers"
 	AllowHeadersName     = "Access-Control-Allow-Headers"
