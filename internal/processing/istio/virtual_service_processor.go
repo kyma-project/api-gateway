@@ -93,6 +93,13 @@ func (r virtualServiceCreator) Create(api *gatewayv1beta1.APIRule) (*networkingv
 		headersBuilder := builders.NewHttpRouteHeadersBuilder().
 			SetHostHeader(default_domain.GetHostWithDomain(*api.Spec.Host, r.defaultDomainName))
 
+		if api.Spec.Headers != nil && api.Spec.Headers.Request != nil {
+			headersBuilder.SetRequestHeaders(api.Spec.Headers.Request.Set)
+		}
+		if api.Spec.Headers != nil && api.Spec.Headers.Response != nil {
+			headersBuilder.SetResponseHeaders(api.Spec.Headers.Response.Set)
+		}
+
 		if api.Spec.CorsPolicy != nil {
 			httpRouteBuilder.CorsPolicy(builders.CorsPolicy().FromApiRuleCorsPolicy(*api.Spec.CorsPolicy))
 			headersBuilder.RemoveUpstreamCORSPolicyHeaders()
