@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
+	"github.com/kyma-project/api-gateway/internal/validation"
 
 	processingtest "github.com/kyma-project/api-gateway/internal/processing/processing_test"
 	"istio.io/api/type/v1beta1"
@@ -32,7 +33,7 @@ var _ = Describe("JWT Handler validation", func() {
 
 		It("Should not fail when the Pod for which the service is specified is in different ns", func() {
 			//given
-			err := k8sfakeClient.Create(context.TODO(), &corev1.Pod{
+			err := k8sfakeClient.Create(context.Background(), &corev1.Pod{
 				ObjectMeta: v1.ObjectMeta{
 					Name:      "test-pod",
 					Namespace: "test",
@@ -44,7 +45,7 @@ var _ = Describe("JWT Handler validation", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			//when
-			problems, err := (&InjectionValidator{ctx: context.TODO(), client: k8sfakeClient}).Validate("some.attribute", &v1beta1.WorkloadSelector{MatchLabels: map[string]string{"app": "test"}}, "default")
+			problems, err := (&validation.InjectionValidator{Ctx: context.Background(), Client: k8sfakeClient}).Validate("some.attribute", &v1beta1.WorkloadSelector{MatchLabels: map[string]string{"app": "test"}}, "default")
 			Expect(err).NotTo(HaveOccurred())
 
 			//then
@@ -53,7 +54,7 @@ var _ = Describe("JWT Handler validation", func() {
 
 		It("Should fail when the workload selector is nil", func() {
 			//when
-			problems, err := (&InjectionValidator{ctx: context.TODO(), client: k8sfakeClient}).Validate("some.attribute", nil, "default")
+			problems, err := (&validation.InjectionValidator{Ctx: context.Background(), Client: k8sfakeClient}).Validate("some.attribute", nil, "default")
 			Expect(err).NotTo(HaveOccurred())
 
 			//then
@@ -64,7 +65,7 @@ var _ = Describe("JWT Handler validation", func() {
 
 		It("Should fail when the Pod for which the service is specified is not istio injected and in the same not default namespace", func() {
 			//given
-			err := k8sfakeClient.Create(context.TODO(), &corev1.Pod{
+			err := k8sfakeClient.Create(context.Background(), &corev1.Pod{
 				ObjectMeta: v1.ObjectMeta{
 					Name:      "test-pod",
 					Namespace: "test",
@@ -76,7 +77,7 @@ var _ = Describe("JWT Handler validation", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			//when
-			problems, err := (&InjectionValidator{ctx: context.TODO(), client: k8sfakeClient}).Validate("some.attribute", &v1beta1.WorkloadSelector{MatchLabels: map[string]string{"app": "test"}}, "test")
+			problems, err := (&validation.InjectionValidator{Ctx: context.Background(), Client: k8sfakeClient}).Validate("some.attribute", &v1beta1.WorkloadSelector{MatchLabels: map[string]string{"app": "test"}}, "test")
 			Expect(err).NotTo(HaveOccurred())
 
 			//then
@@ -87,7 +88,7 @@ var _ = Describe("JWT Handler validation", func() {
 
 		It("Should fail when the Pod for which the service is specified is not istio injected", func() {
 			//given
-			err := k8sfakeClient.Create(context.TODO(), &corev1.Pod{
+			err := k8sfakeClient.Create(context.Background(), &corev1.Pod{
 				ObjectMeta: v1.ObjectMeta{
 					Name:      "test-pod",
 					Namespace: "default",
@@ -99,7 +100,7 @@ var _ = Describe("JWT Handler validation", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			//when
-			problems, err := (&InjectionValidator{ctx: context.TODO(), client: k8sfakeClient}).Validate("some.attribute", &v1beta1.WorkloadSelector{MatchLabels: map[string]string{"app": "test"}}, "default")
+			problems, err := (&validation.InjectionValidator{Ctx: context.Background(), Client: k8sfakeClient}).Validate("some.attribute", &v1beta1.WorkloadSelector{MatchLabels: map[string]string{"app": "test"}}, "default")
 			Expect(err).NotTo(HaveOccurred())
 
 			//then
@@ -110,7 +111,7 @@ var _ = Describe("JWT Handler validation", func() {
 
 		It("Should not fail when the Pod for which the service is specified is istio injected", func() {
 			//given
-			err := k8sfakeClient.Create(context.TODO(), &corev1.Pod{
+			err := k8sfakeClient.Create(context.Background(), &corev1.Pod{
 				ObjectMeta: v1.ObjectMeta{
 					Name:      "test-pod-injected",
 					Namespace: "default",
@@ -127,7 +128,7 @@ var _ = Describe("JWT Handler validation", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			//when
-			problems, err := (&InjectionValidator{ctx: context.TODO(), client: k8sfakeClient}).Validate("some.attribute", &v1beta1.WorkloadSelector{MatchLabels: map[string]string{"app": "test-injected"}}, "default")
+			problems, err := (&validation.InjectionValidator{Ctx: context.Background(), Client: k8sfakeClient}).Validate("some.attribute", &v1beta1.WorkloadSelector{MatchLabels: map[string]string{"app": "test-injected"}}, "default")
 			Expect(err).NotTo(HaveOccurred())
 
 			//then

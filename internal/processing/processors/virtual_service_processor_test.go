@@ -26,14 +26,13 @@ var (
 var _ = Describe("Virtual Service Processor", func() {
 	It("should create virtual service when no virtual service exists", func() {
 		// given
-		apiRule := &gatewayv1beta1.APIRule{}
-
 		processor := processors.VirtualServiceProcessor{
+			ApiRule: &gatewayv1beta1.APIRule{},
 			Creator: mockVirtualServiceCreator{},
 		}
 
 		// when
-		result, err := processor.EvaluateReconciliation(context.TODO(), GetFakeClient(), apiRule)
+		result, err := processor.EvaluateReconciliation(context.Background(), GetFakeClient())
 
 		// then
 		Expect(err).To(BeNil())
@@ -71,11 +70,12 @@ var _ = Describe("Virtual Service Processor", func() {
 		client := fake.NewClientBuilder().WithScheme(scheme).WithObjects(&vs).Build()
 
 		processor := processors.VirtualServiceProcessor{
+			ApiRule: apiRule,
 			Creator: mockVirtualServiceCreator{},
 		}
 
 		// when
-		result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
+		result, err := processor.EvaluateReconciliation(context.Background(), client)
 
 		// then
 		Expect(err).To(BeNil())

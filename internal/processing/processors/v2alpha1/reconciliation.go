@@ -7,7 +7,6 @@ import (
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	"github.com/kyma-project/api-gateway/internal/processing"
 	"github.com/kyma-project/api-gateway/internal/processing/processors/istio"
-	"github.com/kyma-project/api-gateway/internal/processing/status"
 	"github.com/kyma-project/api-gateway/internal/validation"
 	istioValidation "github.com/kyma-project/api-gateway/internal/validation/v1beta1/istio"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
@@ -33,10 +32,6 @@ func (r Reconciliation) Validate(ctx context.Context, client client.Client) ([]v
 	return validator.Validate(ctx, client, vsList), nil
 }
 
-func (r Reconciliation) GetStatusBase(statusCode string) status.ReconciliationStatus {
-	return Base(statusCode)
-}
-
 func (r Reconciliation) GetProcessors() []processing.ReconciliationProcessor {
 	return r.processors
 }
@@ -59,11 +54,4 @@ func NewReconciliation(apiv2alpha1 *gatewayv2alpha1.APIRule, apiv1beta1 *gateway
 		processors:      []processing.ReconciliationProcessor{vsProcessor, raProcessor, apProcessor},
 		config:          config,
 	}
-}
-
-type handlerValidator struct{}
-
-type injectionValidator struct {
-	ctx    context.Context
-	client client.Client
 }

@@ -47,10 +47,10 @@ var _ = Describe("Access Rule Processor", func() {
 		}
 
 		client := GetFakeClient()
-		processor := istio.Newv1beta1AccessRuleProcessor(GetTestConfig())
+		processor := istio.Newv1beta1AccessRuleProcessor(GetTestConfig(), apiRule)
 
 		// when
-		result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
+		result, err := processor.EvaluateReconciliation(context.Background(), client)
 
 		// then
 		Expect(err).To(BeNil())
@@ -77,10 +77,10 @@ var _ = Describe("Access Rule Processor", func() {
 
 			apiRule := GetAPIRuleFor(rules)
 			client := GetFakeClient()
-			processor := istio.Newv1beta1AccessRuleProcessor(GetTestConfig())
+			processor := istio.Newv1beta1AccessRuleProcessor(GetTestConfig(), apiRule)
 
 			// when
-			result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
+			result, err := processor.EvaluateReconciliation(context.Background(), client)
 
 			// then
 			Expect(err).To(BeNil())
@@ -117,10 +117,10 @@ var _ = Describe("Access Rule Processor", func() {
 
 			apiRule := GetAPIRuleFor(rules)
 			client := GetFakeClient()
-			processor := istio.Newv1beta1AccessRuleProcessor(GetTestConfig())
+			processor := istio.Newv1beta1AccessRuleProcessor(GetTestConfig(), apiRule)
 
 			// when
-			result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
+			result, err := processor.EvaluateReconciliation(context.Background(), client)
 
 			// then
 			Expect(err).To(BeNil())
@@ -156,10 +156,10 @@ var _ = Describe("Access Rule Processor", func() {
 
 			apiRule := GetAPIRuleFor(rules)
 			client := GetFakeClient()
-			processor := istio.Newv1beta1AccessRuleProcessor(GetTestConfig())
+			processor := istio.Newv1beta1AccessRuleProcessor(GetTestConfig(), apiRule)
 
 			// when
-			result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
+			result, err := processor.EvaluateReconciliation(context.Background(), client)
 
 			// then
 			Expect(err).To(BeNil())
@@ -185,10 +185,10 @@ var _ = Describe("Access Rule Processor", func() {
 			apiRule := GetAPIRuleFor(rules)
 			apiRule.Spec.Host = &ServiceHostWithNoDomain
 			client := GetFakeClient()
-			processor := istio.Newv1beta1AccessRuleProcessor(GetTestConfig())
+			processor := istio.Newv1beta1AccessRuleProcessor(GetTestConfig(), apiRule)
 
 			// when
-			result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
+			result, err := processor.EvaluateReconciliation(context.Background(), client)
 
 			// then
 			Expect(err).To(BeNil())
@@ -248,10 +248,10 @@ var _ = Describe("Access Rule Processor", func() {
 				Expect(err).NotTo(HaveOccurred())
 
 				client := fake.NewClientBuilder().WithScheme(scheme).WithObjects(&rule, &vs).Build()
-				processor := istio.Newv1beta1AccessRuleProcessor(GetTestConfig())
+				processor := istio.Newv1beta1AccessRuleProcessor(GetTestConfig(), apiRule)
 
 				// when
-				result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
+				result, err := processor.EvaluateReconciliation(context.Background(), client)
 
 				// then
 				Expect(err).To(BeNil())
@@ -284,10 +284,10 @@ var _ = Describe("Access Rule Processor", func() {
 
 			apiRule := GetAPIRuleFor(rules)
 			client := GetFakeClient()
-			processor := ory.NewAccessRuleProcessor(GetTestConfig())
+			processor := ory.NewAccessRuleProcessor(GetTestConfig(), apiRule)
 
 			// when
-			result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
+			result, err := processor.EvaluateReconciliation(context.Background(), client)
 
 			// then
 			Expect(err).To(BeNil())

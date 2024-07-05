@@ -12,8 +12,9 @@ import (
 )
 
 // NewVirtualServiceProcessor returns a VirtualServiceProcessor with the desired state handling specific for the Ory handler.
-func NewVirtualServiceProcessor(config processing.ReconciliationConfig) processors.VirtualServiceProcessor {
+func NewVirtualServiceProcessor(config processing.ReconciliationConfig, apiRule *gatewayv1beta1.APIRule) processors.VirtualServiceProcessor {
 	return processors.VirtualServiceProcessor{
+		ApiRule: apiRule,
 		Creator: virtualServiceCreator{
 			oathkeeperSvc:     config.OathkeeperSvc,
 			oathkeeperSvcPort: config.OathkeeperSvcPort,

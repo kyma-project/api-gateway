@@ -2,12 +2,13 @@ package status
 
 import (
 	"fmt"
+	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"github.com/kyma-project/api-gateway/apis/gateway/versions"
 	"github.com/kyma-project/api-gateway/internal/validation"
 )
 
 type ReconciliationStatus interface {
-	UpdateStatus() error
+	UpdateStatus(status *v1beta1.APIRuleStatus) error
 
 	GetStatusForErrorMap(errorMap map[ResourceSelector][]error) ReconciliationStatus
 	GenerateStatusFromFailures([]validation.Failure) ReconciliationStatus

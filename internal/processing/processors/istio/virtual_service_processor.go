@@ -14,7 +14,7 @@ import (
 // Newv1beta1VirtualServiceProcessor returns a VirtualServiceProcessor with the desired state handling specific for the Istio handler.
 func Newv1beta1VirtualServiceProcessor(config processing.ReconciliationConfig, api *gatewayv1beta1.APIRule) processors.VirtualServiceProcessor {
 	return processors.VirtualServiceProcessor{
-		Api: api,
+		ApiRule: api,
 		Creator: virtualServiceCreator{
 			oathkeeperSvc:     config.OathkeeperSvc,
 			oathkeeperSvcPort: config.OathkeeperSvcPort,

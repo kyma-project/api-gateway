@@ -50,9 +50,9 @@ var _ = Describe("Reconciliation", func() {
 
 			// when
 			var createdObjects []client.Object
-			reconciliation := istio.NewIstioReconciliation(GetTestConfig(), &testLogger)
+			reconciliation := istio.NewIstioReconciliation(apiRule, GetTestConfig(), &testLogger)
 			for _, processor := range reconciliation.GetProcessors() {
-				results, err := processor.EvaluateReconciliation(context.TODO(), fakeClient, apiRule)
+				results, err := processor.EvaluateReconciliation(context.Background(), fakeClient)
 				Expect(err).To(BeNil())
 				for _, result := range results {
 					createdObjects = append(createdObjects, result.Obj)
@@ -118,9 +118,9 @@ var _ = Describe("Reconciliation", func() {
 
 			// when
 			var createdObjects []client.Object
-			reconciliation := istio.NewIstioReconciliation(GetTestConfig(), &testLogger)
+			reconciliation := istio.NewIstioReconciliation(apiRule, GetTestConfig(), &testLogger)
 			for _, processor := range reconciliation.GetProcessors() {
-				results, err := processor.EvaluateReconciliation(context.TODO(), fakeClient, apiRule)
+				results, err := processor.EvaluateReconciliation(context.Background(), fakeClient)
 				Expect(err).To(BeNil())
 				for _, result := range results {
 					createdObjects = append(createdObjects, result.Obj)
@@ -185,9 +185,9 @@ var _ = Describe("Reconciliation", func() {
 
 			// when
 			var createdObjects []client.Object
-			reconciliation := istio.NewIstioReconciliation(GetTestConfig(), &testLogger)
+			reconciliation := istio.NewIstioReconciliation(apiRule, GetTestConfig(), &testLogger)
 			for _, processor := range reconciliation.GetProcessors() {
-				results, err := processor.EvaluateReconciliation(context.TODO(), fakeClient, apiRule)
+				results, err := processor.EvaluateReconciliation(context.Background(), fakeClient)
 				Expect(err).To(BeNil())
 				for _, result := range results {
 					createdObjects = append(createdObjects, result.Obj)

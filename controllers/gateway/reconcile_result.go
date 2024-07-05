@@ -40,7 +40,6 @@ func (r *APIRuleReconciler) updateStatus(ctx context.Context, api *gatewayv1beta
 	api.Status.ObservedGeneration = api.Generation
 	api.Status.LastProcessedTime = &v1.Time{Time: time.Now()}
 
-	// TODO: api status as dependency injection
 	err = status.UpdateStatus(&api.Status)
 	if err != nil {
 		return nil, err

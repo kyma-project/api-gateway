@@ -6,6 +6,7 @@ import (
 	"fmt"
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"github.com/kyma-project/api-gateway/internal/processing/status"
+	ctrl "sigs.k8s.io/controller-runtime"
 
 	"github.com/go-logr/logr"
 	"github.com/kyma-project/api-gateway/internal/validation"
@@ -31,7 +32,7 @@ type ReconciliationProcessor interface {
 }
 
 // Reconcile executes the reconciliation of the APIRule using the given reconciliation command.
-func Reconcile(ctx context.Context, client client.Client, log *logr.Logger, cmd ReconciliationCommand, name, namespace string) status.ReconciliationStatus {
+func Reconcile(ctx context.Context, client client.Client, log *logr.Logger, cmd ReconciliationCommand, req ctrl.Request) status.ReconciliationStatus {
 	validationFailures, err := cmd.Validate(ctx, client)
 	if err != nil {
 		// We set the status to skipped because it was not the validation that failed, but an error occurred during validation.
@@ -43,7 +44,7 @@ func Reconcile(ctx context.Context, client client.Client, log *logr.Logger, cmd 
 
 	if len(validationFailures) > 0 {
 		failuresJson, _ := json.Marshal(validationFailures)
-		log.Info(fmt.Sprintf(`Validation failure {"controller": "Api", "request": "%s/%s", "failures": %s}`, namespace, name, string(failuresJson)))
+		log.Info(fmt.Sprintf(`Validation failure {"controller": "ApiRule", "request": "%s", "failures": %s}`, req.NamespacedName, string(failuresJson)))
 		statusBase := cmd.GetStatusBase(string(gatewayv1beta1.StatusSkipped))
 		return statusBase.GenerateStatusFromFailures(validationFailures)
 	}

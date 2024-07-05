@@ -20,7 +20,7 @@ type Reconciliation struct {
 
 func NewOryReconciliation(apiRule *gatewayv1beta1.APIRule, config processing.ReconciliationConfig, log *logr.Logger) Reconciliation {
 	acProcessor := NewAccessRuleProcessor(config, apiRule)
-	vsProcessor := NewVirtualServiceProcessor(config)
+	vsProcessor := NewVirtualServiceProcessor(config, apiRule)
 	apProcessor := NewAuthorizationPolicyProcessor(config, log)
 	raProcessor := NewRequestAuthenticationProcessor(config)
 

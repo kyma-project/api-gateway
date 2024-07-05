@@ -18,7 +18,7 @@ import (
 
 // APIRuleValidator is used to validate github.com/kyma-project/api-gateway/api/v1beta1/APIRule instances
 type APIRuleValidator struct {
-	Api *gatewayv1beta1.APIRule
+	ApiRule *gatewayv1beta1.APIRule
 
 	HandlerValidator          handlerValidator
 	AccessStrategiesValidator accessStrategyValidator
@@ -48,11 +48,11 @@ func (v *APIRuleValidator) Validate(ctx context.Context, client client.Client, v
 	var failures []validation.Failure
 
 	//Validate service on path level if it is created
-	if v.Api.Spec.Service != nil {
-		failures = append(failures, v.validateService(".spec.service", v.Api)...)
+	if v.ApiRule.Spec.Service != nil {
+		failures = append(failures, v.validateService(".spec.service", v.ApiRule)...)
 	}
-	failures = append(failures, v.validateHost(".spec.host", vsList, v.Api)...)
-	failures = append(failures, v.validateRules(ctx, client, ".spec.rules", v.Api.Spec.Service == nil, v.Api)...)
+	failures = append(failures, v.validateHost(".spec.host", vsList, v.ApiRule)...)
+	failures = append(failures, v.validateRules(ctx, client, ".spec.rules", v.ApiRule.Spec.Service == nil, v.ApiRule)...)
 
 	return failures
 }

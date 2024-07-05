@@ -17,7 +17,7 @@ import (
 // Newv1beta1RequestAuthenticationProcessor returns a RequestAuthenticationProcessor with the desired state handling specific for the Istio handler.
 func Newv1beta1RequestAuthenticationProcessor(config processing.ReconciliationConfig, apiRule *gatewayv1beta1.APIRule) processors.RequestAuthenticationProcessor {
 	return processors.RequestAuthenticationProcessor{
-		Api:     apiRule,
+		ApiRule: apiRule,
 		Creator: requestAuthenticationCreator{},
 	}
 }

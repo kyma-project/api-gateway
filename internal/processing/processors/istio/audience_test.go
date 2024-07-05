@@ -60,10 +60,10 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 		apiRule := GetAPIRuleFor([]gatewayv1beta1.Rule{ruleJwt})
 		svc := GetService(*apiRule.Spec.Service.Name)
 		client := GetFakeClient(svc)
-		processor := istio.Newv1beta1AuthorizationPolicyProcessor(GetTestConfig(), &testLogger)
+		processor := istio.Newv1beta1AuthorizationPolicyProcessor(GetTestConfig(), &testLogger, apiRule)
 
 		// when
-		result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
+		result, err := processor.EvaluateReconciliation(context.Background(), client)
 
 		// then
 		Expect(err).To(BeNil())
@@ -90,10 +90,10 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 		apiRule := GetAPIRuleFor([]gatewayv1beta1.Rule{ruleJwt})
 		svc := GetService(*apiRule.Spec.Service.Name)
 		client := GetFakeClient(svc)
-		processor := istio.Newv1beta1AuthorizationPolicyProcessor(GetTestConfig(), &testLogger)
+		processor := istio.Newv1beta1AuthorizationPolicyProcessor(GetTestConfig(), &testLogger, apiRule)
 
 		// when
-		result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
+		result, err := processor.EvaluateReconciliation(context.Background(), client)
 
 		// then
 		Expect(err).To(BeNil())

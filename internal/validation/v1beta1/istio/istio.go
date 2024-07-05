@@ -10,7 +10,7 @@ import (
 
 func NewAPIRuleValidator(ctx context.Context, client client.Client, api *gatewayv1beta1.APIRule, defaultDomainName string) validation.ApiRuleValidator {
 	return &v1beta1.APIRuleValidator{
-		Api: api,
+		ApiRule: api,
 
 		HandlerValidator:          &HandlerValidator{},
 		AccessStrategiesValidator: &AccessStrategyValidator{},

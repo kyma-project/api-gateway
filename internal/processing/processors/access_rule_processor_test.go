@@ -22,9 +22,8 @@ import (
 var _ = Describe("Access Rule Processor", func() {
 	It("should create access rule when no exists", func() {
 		// given
-		apiRule := &gatewayv1beta1.APIRule{}
-
 		processor := processors.AccessRuleProcessor{
+			ApiRule: &gatewayv1beta1.APIRule{},
 			Creator: mockCreator{
 				createMock: func() map[string]*rulev1alpha1.Rule {
 					return map[string]*rulev1alpha1.Rule{
@@ -37,7 +36,7 @@ var _ = Describe("Access Rule Processor", func() {
 		}
 
 		// when
-		result, err := processor.EvaluateReconciliation(context.TODO(), GetFakeClient(), apiRule)
+		result, err := processor.EvaluateReconciliation(context.Background(), GetFakeClient())
 
 		// then
 		Expect(err).To(BeNil())
@@ -91,6 +90,7 @@ var _ = Describe("Access Rule Processor", func() {
 
 		client := fake.NewClientBuilder().WithScheme(scheme).WithObjects(&rule, &vs).Build()
 		processor := processors.AccessRuleProcessor{
+			ApiRule: apiRule,
 			Creator: mockCreator{
 				createMock: func() map[string]*rulev1alpha1.Rule {
 					return map[string]*rulev1alpha1.Rule{
@@ -103,7 +103,7 @@ var _ = Describe("Access Rule Processor", func() {
 		}
 
 		// when
-		result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
+		result, err := processor.EvaluateReconciliation(context.Background(), client)
 
 		// then
 		Expect(err).To(BeNil())
@@ -157,6 +157,7 @@ var _ = Describe("Access Rule Processor", func() {
 
 		client := fake.NewClientBuilder().WithScheme(scheme).WithObjects(&rule, &vs).Build()
 		processor := processors.AccessRuleProcessor{
+			ApiRule: apiRule,
 			Creator: mockCreator{
 				createMock: func() map[string]*rulev1alpha1.Rule {
 					return map[string]*rulev1alpha1.Rule{}
@@ -165,7 +166,7 @@ var _ = Describe("Access Rule Processor", func() {
 		}
 
 		// when
-		result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
+		result, err := processor.EvaluateReconciliation(context.Background(), client)
 
 		// then
 		Expect(err).To(BeNil())
@@ -220,6 +221,7 @@ var _ = Describe("Access Rule Processor", func() {
 
 			client := fake.NewClientBuilder().WithScheme(scheme).WithObjects(&rule, &vs).Build()
 			processor := processors.AccessRuleProcessor{
+				ApiRule: apiRule,
 				Creator: mockCreator{
 					createMock: func() map[string]*rulev1alpha1.Rule {
 						return map[string]*rulev1alpha1.Rule{
@@ -232,7 +234,7 @@ var _ = Describe("Access Rule Processor", func() {
 			}
 
 			// when
-			result, err := processor.EvaluateReconciliation(context.TODO(), client, apiRule)
+			result, err := processor.EvaluateReconciliation(context.Background(), client)
 
 			// then
 			Expect(err).To(BeNil())

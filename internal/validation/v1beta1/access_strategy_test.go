@@ -2,7 +2,7 @@ package v1beta1_test
 
 import (
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
-	"github.com/kyma-project/api-gateway/internal/validation"
+	validation "github.com/kyma-project/api-gateway/internal/validation/v1beta1"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )

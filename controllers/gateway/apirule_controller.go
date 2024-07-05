@@ -104,11 +104,11 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	apiRuleErr := r.Client.Get(ctx, req.NamespacedName, apiRule)
 	var cmd processing.ReconciliationCommand
 	if apiRuleErr == nil && r.isApiRuleConvertedFromv2alpha1(*apiRule) {
-		apiRulev2alpha1 := &gatewayv2alpha1.APIRule{}
-		if err := r.Client.Get(ctx, req.NamespacedName, apiRulev2alpha1); err != nil {
+		apiRuleV2alpha1 := &gatewayv2alpha1.APIRule{}
+		if err := r.Client.Get(ctx, req.NamespacedName, apiRuleV2alpha1); err != nil {
 			return doneReconcileErrorRequeue(r.OnErrorReconcilePeriod)
 		}
-		cmd = r.getv2alpha1Reconciliation(apiRule, apiRulev2alpha1, defaultDomainName)
+		cmd = r.getv2alpha1Reconciliation(apiRule, apiRuleV2alpha1, defaultDomainName)
 	} else {
 		cmd = r.getv1beta1Reconciliation(apiRule, defaultDomainName)
 	}
@@ -143,12 +143,12 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	configValidationFailures := validation.ValidateConfig(r.Config)
 	if len(configValidationFailures) > 0 {
 		failuresJson, _ := json.Marshal(configValidationFailures)
-		r.Log.Error(err, fmt.Sprintf(`Config validation failure {"controller": "Api", "request": "%s/%s", "failures": %s}`, apiRule.Namespace, apiRule.Name, string(failuresJson)))
+		r.Log.Error(err, fmt.Sprintf(`Config validation failure {"controller": "ApiRule", "request": "%s/%s", "failures": %s}`, apiRule.Namespace, apiRule.Name, string(failuresJson)))
 		statusBase := cmd.GetStatusBase(string(gatewayv1beta1.StatusSkipped))
 		return r.updateStatusOrRetry(ctx, apiRule, statusBase.GenerateStatusFromFailures(configValidationFailures))
 	}
 
-	s := processing.Reconcile(ctx, r.Client, &r.Log, cmd, apiRule.Name, apiRule.Namespace)
+	s := processing.Reconcile(ctx, r.Client, &r.Log, cmd, req)
 	return r.updateStatusOrRetry(ctx, apiRule, s)
 }
 

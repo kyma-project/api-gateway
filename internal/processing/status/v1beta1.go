@@ -8,8 +8,6 @@ import (
 )
 
 type ReconciliationV1beta1Status struct {
-	status *gatewayv1beta1.APIRuleStatus
-
 	ApiRuleStatus               *gatewayv1beta1.APIRuleResourceStatus
 	VirtualServiceStatus        *gatewayv1beta1.APIRuleResourceStatus
 	AccessRuleStatus            *gatewayv1beta1.APIRuleResourceStatus
@@ -90,16 +88,16 @@ func generateStatusFromErrors(errors []error) *gatewayv1beta1.APIRuleResourceSta
 	return status
 }
 
-func (s ReconciliationV1beta1Status) UpdateStatus() error {
-	if s.status.ApiRuleStatusVersion() != versions.V1beta1 {
-		return fmt.Errorf("v1beta1 status visitor cannot handle status of version %s", s.status.ApiRuleStatusVersion())
+func (s ReconciliationV1beta1Status) UpdateStatus(status *gatewayv1beta1.APIRuleStatus) error {
+	if status.ApiRuleStatusVersion() != versions.V1beta1 {
+		return fmt.Errorf("v1beta1 status handler cannot handle status of version %s", status.ApiRuleStatusVersion())
 	}
 
-	s.status.APIRuleStatus = s.ApiRuleStatus
-	s.status.VirtualServiceStatus = s.VirtualServiceStatus
-	s.status.AccessRuleStatus = s.AccessRuleStatus
-	s.status.RequestAuthenticationStatus = s.RequestAuthenticationStatus
-	s.status.AuthorizationPolicyStatus = s.AuthorizationPolicyStatus
+	status.APIRuleStatus = s.ApiRuleStatus
+	status.VirtualServiceStatus = s.VirtualServiceStatus
+	status.AccessRuleStatus = s.AccessRuleStatus
+	status.RequestAuthenticationStatus = s.RequestAuthenticationStatus
+	status.AuthorizationPolicyStatus = s.AuthorizationPolicyStatus
 
 	return nil
 }

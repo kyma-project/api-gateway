@@ -11,12 +11,12 @@ import (
 const istioSidecarContainerName = "istio-proxy"
 
 type InjectionValidator struct {
-	ctx    context.Context
-	client client.Client
+	Ctx    context.Context
+	Client client.Client
 }
 
 func NewInjectionValidator(ctx context.Context, client client.Client) *InjectionValidator {
-	return &InjectionValidator{ctx: ctx, client: client}
+	return &InjectionValidator{Ctx: ctx, Client: client}
 }
 
 func (v *InjectionValidator) Validate(attributePath string, selector *apiv1beta1.WorkloadSelector, namespace string) (problems []Failure, err error) {
@@ -30,7 +30,7 @@ func (v *InjectionValidator) Validate(attributePath string, selector *apiv1beta1
 	}
 
 	var podList corev1.PodList
-	err = v.client.List(v.ctx, &podList, client.InNamespace(namespace), client.MatchingLabels(selector.MatchLabels))
+	err = v.Client.List(v.Ctx, &podList, client.InNamespace(namespace), client.MatchingLabels(selector.MatchLabels))
 	if err != nil {
 		return nil, err
 	}

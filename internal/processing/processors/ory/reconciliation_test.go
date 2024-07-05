@@ -55,9 +55,9 @@ var _ = Describe("Reconciliation", func() {
 
 			// when
 			var createdObjects []client.Object
-			reconciliation := ory.NewOryReconciliation(GetTestConfig(), &testLogger)
+			reconciliation := ory.NewOryReconciliation(apiRule, GetTestConfig(), &testLogger)
 			for _, processor := range reconciliation.GetProcessors() {
-				results, err := processor.EvaluateReconciliation(context.TODO(), faceClient, apiRule)
+				results, err := processor.EvaluateReconciliation(context.TODO(), faceClient)
 				Expect(err).To(BeNil())
 
 				for _, result := range results {
@@ -117,9 +117,9 @@ var _ = Describe("Reconciliation", func() {
 
 			// when
 			var createdObjects []client.Object
-			reconciliation := ory.NewOryReconciliation(GetTestConfig(), &testLogger)
+			reconciliation := ory.NewOryReconciliation(apiRule, GetTestConfig(), &testLogger)
 			for _, processor := range reconciliation.GetProcessors() {
-				results, err := processor.EvaluateReconciliation(context.TODO(), faceClient, apiRule)
+				results, err := processor.EvaluateReconciliation(context.TODO(), faceClient)
 				Expect(err).To(BeNil())
 
 				for _, result := range results {
