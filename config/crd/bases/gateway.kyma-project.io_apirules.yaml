@@ -81,6 +81,31 @@ spec:
                 description: Specifies the Istio Gateway to be used.
                 pattern: ^[0-9a-z-_]+(\/[0-9a-z-_]+|(\.[0-9a-z-_]+)*)$
                 type: string
+              headers:
+                properties:
+                  request:
+                    description: Request defines header manipulation options for all
+                      requests passing through an APIRule
+                    properties:
+                      set:
+                        additionalProperties:
+                          type: string
+                        description: Set contains key/value pair map containing headers
+                          that are set in APIRule
+                        type: object
+                    type: object
+                  response:
+                    description: Response defines header manipulation options for
+                      all responses passing through an APIRule
+                    properties:
+                      set:
+                        additionalProperties:
+                          type: string
+                        description: Set contains key/value pair map containing headers
+                          that are set in APIRule
+                        type: object
+                    type: object
+                type: object
               host:
                 description: Specifies the URL of the exposed service.
                 maxLength: 256
@@ -360,6 +385,31 @@ spec:
                 description: Specifies the Istio Gateway to be used.
                 pattern: ^[0-9a-z-_]+(\/[0-9a-z-_]+|(\.[0-9a-z-_]+)*)$
                 type: string
+              headers:
+                properties:
+                  request:
+                    description: Request defines header manipulation options for all
+                      requests passing through an APIRule
+                    properties:
+                      set:
+                        additionalProperties:
+                          type: string
+                        description: Set contains key/value pair map containing headers
+                          that are set in APIRule
+                        type: object
+                    type: object
+                  response:
+                    description: Response defines header manipulation options for
+                      fll responses passing through an APIRule
+                    properties:
+                      set:
+                        additionalProperties:
+                          type: string
+                        description: Set contains key/value pair map containing headers
+                          that are set in APIRule
+                        type: object
+                    type: object
+                type: object
               hosts:
                 description: Specifies the URLs of the exposed service.
                 items:
