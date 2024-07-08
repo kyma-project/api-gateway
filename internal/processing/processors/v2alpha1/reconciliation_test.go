@@ -26,54 +26,13 @@ const (
 )
 
 var _ = Describe("Reconciliation", func() {
-	jwtConfigJSON := fmt.Sprintf(`{"authentications": [{"issuer": "%s", "jwksUri": "%s"}]}`, jwtIssuer, jwksUri)
-	jwtV1beta1 := []*gatewayv1beta1.Authenticator{
-		{
-			Handler: &gatewayv1beta1.Handler{
-				Name: gatewayv1beta1.AccessStrategyJwt,
-				Config: &runtime.RawExtension{
-					Raw: []byte(jwtConfigJSON),
-				},
-			},
-		},
-	}
-	jwtV1beta1Rule := GetRuleFor(path, []gatewayv1beta1.HttpMethod{http.MethodGet}, []*gatewayv1beta1.Mutator{}, jwtV1beta1)
-
-	jwtV2alpha1 := gatewayv2alpha1.Rule{
-		Path:    path,
-		Methods: []gatewayv2alpha1.HttpMethod{http.MethodGet},
-		Jwt: &gatewayv2alpha1.JwtConfig{
-			Authentications: []*gatewayv2alpha1.JwtAuthentication{
-				{
-					Issuer:  jwtIssuer,
-					JwksUri: jwksUri,
-				},
-			},
-		},
-	}
-
-	noAuthV1beta1 := []*gatewayv1beta1.Authenticator{
-		{
-			Handler: &gatewayv1beta1.Handler{
-				Name: gatewayv1beta1.AccessStrategyNoAuth,
-			},
-		},
-	}
-	noAuthV1beta1Rule := GetRuleFor(path, []gatewayv1beta1.HttpMethod{http.MethodGet}, []*gatewayv1beta1.Mutator{}, noAuthV1beta1)
-
-	noAuthV2alpha1Rule := gatewayv2alpha1.Rule{
-		Path:    path,
-		Methods: []gatewayv2alpha1.HttpMethod{http.MethodGet},
-		NoAuth:  ptr.To(true),
-	}
 
 	It("with v1beta1 no_auth and v2alpha1 noAuth should provide only Istio VS", func() {
 		// given
-
-		rulesV1beta1 := []gatewayv1beta1.Rule{noAuthV1beta1Rule}
+		rulesV1beta1 := []gatewayv1beta1.Rule{getNoAuthV1beta1Rule()}
 		v1beta1ApiRule := GetAPIRuleFor(rulesV1beta1)
 
-		rulesV2alpha1 := []gatewayv2alpha1.Rule{noAuthV2alpha1Rule}
+		rulesV2alpha1 := []gatewayv2alpha1.Rule{getNoAuthV2alpha1Rule()}
 		v2alpha1ApiRule := getV2alpha1APIRuleFor("test-apirule", "some-namespace", rulesV2alpha1)
 
 		service := GetService(ServiceName)
@@ -99,10 +58,10 @@ var _ = Describe("Reconciliation", func() {
 	It("with v1beta1 jwt and v2alpha1 jwt should provide VirtualService, AuthorizationPolicy and RequestAuthentication", func() {
 		// given
 
-		rulesV1beta1 := []gatewayv1beta1.Rule{jwtV1beta1Rule}
+		rulesV1beta1 := []gatewayv1beta1.Rule{getJwtV1beta1Rule()}
 		v1beta1ApiRule := GetAPIRuleFor(rulesV1beta1)
 
-		rulesV2alpha1 := []gatewayv2alpha1.Rule{jwtV2alpha1}
+		rulesV2alpha1 := []gatewayv2alpha1.Rule{getJwtV2alpha1Rule()}
 		v2alpha1ApiRule := getV2alpha1APIRuleFor("test-apirule", "some-namespace", rulesV2alpha1)
 
 		service := GetService(ServiceName)
@@ -173,4 +132,54 @@ func getV2alpha1APIRuleFor(name, namespace string, rules []gatewayv2alpha1.Rule)
 		},
 	}
 
+}
+
+func getJwtV1beta1Rule() gatewayv1beta1.Rule {
+	jwtConfigJSON := fmt.Sprintf(`{"authentications": [{"issuer": "%s", "jwksUri": "%s"}]}`, jwtIssuer, jwksUri)
+	jwtV1beta1 := []*gatewayv1beta1.Authenticator{
+		{
+			Handler: &gatewayv1beta1.Handler{
+				Name: gatewayv1beta1.AccessStrategyJwt,
+				Config: &runtime.RawExtension{
+					Raw: []byte(jwtConfigJSON),
+				},
+			},
+		},
+	}
+	return GetRuleFor(path, []gatewayv1beta1.HttpMethod{http.MethodGet}, []*gatewayv1beta1.Mutator{}, jwtV1beta1)
+}
+
+func getNoAuthV1beta1Rule() gatewayv1beta1.Rule {
+
+	noAuthV1beta1 := []*gatewayv1beta1.Authenticator{
+		{
+			Handler: &gatewayv1beta1.Handler{
+				Name: gatewayv1beta1.AccessStrategyNoAuth,
+			},
+		},
+	}
+	return GetRuleFor(path, []gatewayv1beta1.HttpMethod{http.MethodGet}, []*gatewayv1beta1.Mutator{}, noAuthV1beta1)
+}
+
+func getJwtV2alpha1Rule() gatewayv2alpha1.Rule {
+	return gatewayv2alpha1.Rule{
+		Path:    path,
+		Methods: []gatewayv2alpha1.HttpMethod{http.MethodGet},
+		Jwt: &gatewayv2alpha1.JwtConfig{
+			Authentications: []*gatewayv2alpha1.JwtAuthentication{
+				{
+					Issuer:  jwtIssuer,
+					JwksUri: jwksUri,
+				},
+			},
+		},
+	}
+}
+
+func getNoAuthV2alpha1Rule() gatewayv2alpha1.Rule {
+	return gatewayv2alpha1.Rule{
+		Path:    path,
+		Methods: []gatewayv2alpha1.HttpMethod{http.MethodGet},
+		NoAuth:  ptr.To(true),
+	}
 }
