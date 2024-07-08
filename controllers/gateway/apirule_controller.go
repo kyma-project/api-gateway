@@ -98,27 +98,25 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		return doneReconcileNoRequeue()
 	}
 
-	r.Log.Info("Starting ApiRule reconciliation", "jwtHandler", r.Config.JWTHandler)
-
 	apiRule := &gatewayv1beta1.APIRule{}
 	apiRuleErr := r.Client.Get(ctx, req.NamespacedName, apiRule)
 	var cmd processing.ReconciliationCommand
 
 	if apiRuleErr == nil && r.isApiRuleConvertedFromV2alpha1(*apiRule) {
+		r.Log.Info("Reconciling APIRule with v2alpha1 reconciliation", "name", apiRule.Name, "namespace", apiRule.Namespace)
 		apiRuleV2alpha1 := &gatewayv2alpha1.APIRule{}
 		if err := r.Client.Get(ctx, req.NamespacedName, apiRuleV2alpha1); err != nil {
 			return doneReconcileErrorRequeue(r.OnErrorReconcilePeriod)
 		}
 		cmd = r.getv2alpha1Reconciliation(apiRule, apiRuleV2alpha1, defaultDomainName)
 	} else {
+		r.Log.Info("Reconciling APIRule", "name", apiRule.Name, "namespace", apiRule.Namespace, "jwtHandler", r.Config.JWTHandler)
 		cmd = r.getV1beta1Reconciliation(apiRule, defaultDomainName)
 	}
 
 	if apiRuleErr != nil {
 		return r.handleAPIRuleGetError(ctx, req.NamespacedName, apiRule, apiRuleErr, cmd)
 	}
-
-	r.Log.Info("Reconciling ApiRule", "name", apiRule.Name, "namespace", apiRule.Namespace, "resource version", apiRule.ResourceVersion)
 
 	shouldDeleteAPIRule := !apiRule.DeletionTimestamp.IsZero()
 	if !shouldDeleteAPIRule {
@@ -137,10 +135,11 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 			}
 		}
 	} else {
+		r.Log.Info("APIRule is marked for deletion", "name", apiRule.Name, "namespace", apiRule.Namespace)
 		return r.reconcileAPIRuleDeletion(ctx, apiRule)
 	}
 
-	r.Log.Info("Validating ApiRule config")
+	r.Log.Info("Validating APIRule config", "name", apiRule.Name, "namespace", apiRule.Namespace)
 	configValidationFailures := validation.ValidateConfig(r.Config)
 	if len(configValidationFailures) > 0 {
 		failuresJson, _ := json.Marshal(configValidationFailures)
