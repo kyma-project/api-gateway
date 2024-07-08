@@ -66,7 +66,6 @@ type APIRuleStatus struct {
 	// State signifies current state of APIRule.
 	// Value can be one of ("Ready", "Processing", "Error", "Deleting", "Warning").
 	// +kubebuilder:validation:Required
-
 	// +kubebuilder:validation:Enum=Processing;Deleting;Ready;Error;Warning
 	State State `json:"state"`
 	// Description of APIRule status
