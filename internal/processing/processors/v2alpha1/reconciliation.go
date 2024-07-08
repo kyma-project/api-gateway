@@ -29,7 +29,6 @@ func (r Reconciliation) Validate(ctx context.Context, client client.Client) ([]v
 		return make([]validation.Failure, 0), err
 	}
 
-	// TODO: Use v2alpha1 validation
 	validator := istioValidation.NewAPIRuleValidator(ctx, client, r.apiRuleV1beta1, r.config.DefaultDomainName)
 	return validator.Validate(ctx, client, vsList), nil
 }
@@ -39,11 +38,9 @@ func (r Reconciliation) GetProcessors() []processing.ReconciliationProcessor {
 }
 
 func NewReconciliation(apiRuleV2alpha1 *gatewayv2alpha1.APIRule, apiRuleV1beta1 *gatewayv1beta1.APIRule, config processing.ReconciliationConfig, log *logr.Logger) Reconciliation {
-	//TODO: Switch implementation to v2alpha1
 	vsProcessor := istio.Newv1beta1VirtualServiceProcessor(config, apiRuleV1beta1)
 	apProcessor := istio.Newv1beta1AuthorizationPolicyProcessor(config, log, apiRuleV1beta1)
 	raProcessor := istio.Newv1beta1RequestAuthenticationProcessor(config, apiRuleV1beta1)
-	// End todo
 
 	/*
 		When implementing extauth handler, it should use the APIrule in version v2alpha1
