@@ -103,14 +103,15 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	apiRule := &gatewayv1beta1.APIRule{}
 	apiRuleErr := r.Client.Get(ctx, req.NamespacedName, apiRule)
 	var cmd processing.ReconciliationCommand
-	if apiRuleErr == nil && r.isApiRuleConvertedFromv2alpha1(*apiRule) {
+
+	if apiRuleErr == nil && r.isApiRuleConvertedFromV2alpha1(*apiRule) {
 		apiRuleV2alpha1 := &gatewayv2alpha1.APIRule{}
 		if err := r.Client.Get(ctx, req.NamespacedName, apiRuleV2alpha1); err != nil {
 			return doneReconcileErrorRequeue(r.OnErrorReconcilePeriod)
 		}
 		cmd = r.getv2alpha1Reconciliation(apiRule, apiRuleV2alpha1, defaultDomainName)
 	} else {
-		cmd = r.getv1beta1Reconciliation(apiRule, defaultDomainName)
+		cmd = r.getV1beta1Reconciliation(apiRule, defaultDomainName)
 	}
 
 	if apiRuleErr != nil {
@@ -122,11 +123,11 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	shouldDeleteAPIRule := !apiRule.DeletionTimestamp.IsZero()
 	if !shouldDeleteAPIRule {
 		if name, err := dependencies.APIRule().AreAvailable(ctx, r.Client); err != nil {
-			status, err := handleDependenciesError(name, err).ToAPIRuleStatus()
+			apiRuleStatus, err := handleDependenciesError(name, err).ToAPIRuleStatus()
 			if err != nil {
 				return doneReconcileErrorRequeue(r.OnErrorReconcilePeriod)
 			}
-			return r.updateStatusOrRetry(ctx, apiRule, status)
+			return r.updateStatusOrRetry(ctx, apiRule, apiRuleStatus)
 		}
 
 		if !controllerutil.ContainsFinalizer(apiRule, apiGatewayFinalizer) {
@@ -160,7 +161,7 @@ func handleDependenciesError(name string, err error) controllers.Status {
 	}
 }
 
-func (r *APIRuleReconciler) getv1beta1Reconciliation(apiRule *gatewayv1beta1.APIRule, defaultDomain string) processing.ReconciliationCommand {
+func (r *APIRuleReconciler) getV1beta1Reconciliation(apiRule *gatewayv1beta1.APIRule, defaultDomain string) processing.ReconciliationCommand {
 	config := r.ReconciliationConfig
 	config.DefaultDomainName = defaultDomain
 	switch {
@@ -189,7 +190,7 @@ func (r *APIRuleReconciler) SetupWithManager(mgr ctrl.Manager, c controllers.Rat
 		Complete(r)
 }
 
-func (r *APIRuleReconciler) isApiRuleConvertedFromv2alpha1(apiRule gatewayv1beta1.APIRule) bool {
+func (r *APIRuleReconciler) isApiRuleConvertedFromV2alpha1(apiRule gatewayv1beta1.APIRule) bool {
 	// If the ApiRule is not found, we don't need to do anything. If it's found and converted, CM reconciliation is not needed.
 	if apiRule.Annotations != nil {
 		if originalVersion, ok := apiRule.Annotations["gateway.kyma-project.io/original-version"]; ok && originalVersion == "v2alpha1" {

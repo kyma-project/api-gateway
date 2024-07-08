@@ -13,6 +13,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
+// Reconciliation holds the components needed to reconcile an APIRule. The v2alpha1 reconciliation requires the APIRule in v2alpha1 and v1beta1 since
+// not all underlying implementations have been migrated to v2alpha1 and the v1beta1 APIRule is used for those cases.
 type Reconciliation struct {
 	apiRuleV1beta1  *gatewayv1beta1.APIRule
 	apiRuleV2alpha1 *gatewayv2alpha1.APIRule
@@ -36,11 +38,11 @@ func (r Reconciliation) GetProcessors() []processing.ReconciliationProcessor {
 	return r.processors
 }
 
-func NewReconciliation(apiv2alpha1 *gatewayv2alpha1.APIRule, apiv1beta1 *gatewayv1beta1.APIRule, config processing.ReconciliationConfig, log *logr.Logger) Reconciliation {
+func NewReconciliation(apiRuleV2alpha1 *gatewayv2alpha1.APIRule, apiRuleV1beta1 *gatewayv1beta1.APIRule, config processing.ReconciliationConfig, log *logr.Logger) Reconciliation {
 	//TODO: Switch implementation to v2alpha1
-	vsProcessor := istio.Newv1beta1VirtualServiceProcessor(config, apiv1beta1)
-	apProcessor := istio.Newv1beta1AuthorizationPolicyProcessor(config, log, apiv1beta1)
-	raProcessor := istio.Newv1beta1RequestAuthenticationProcessor(config, apiv1beta1)
+	vsProcessor := istio.Newv1beta1VirtualServiceProcessor(config, apiRuleV1beta1)
+	apProcessor := istio.Newv1beta1AuthorizationPolicyProcessor(config, log, apiRuleV1beta1)
+	raProcessor := istio.Newv1beta1RequestAuthenticationProcessor(config, apiRuleV1beta1)
 	// End todo
 
 	/*
@@ -49,8 +51,8 @@ func NewReconciliation(apiv2alpha1 *gatewayv2alpha1.APIRule, apiv1beta1 *gateway
 	*/
 
 	return Reconciliation{
-		apiRuleV1beta1:  apiv1beta1,
-		apiRuleV2alpha1: apiv2alpha1,
+		apiRuleV1beta1:  apiRuleV1beta1,
+		apiRuleV2alpha1: apiRuleV2alpha1,
 		processors:      []processing.ReconciliationProcessor{vsProcessor, raProcessor, apProcessor},
 		config:          config,
 	}
