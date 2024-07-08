@@ -14,8 +14,8 @@ import (
 )
 
 type Reconciliation struct {
-	apiRulev1beta1  *gatewayv1beta1.APIRule
-	apiRulev2alpha1 *gatewayv2alpha1.APIRule
+	apiRuleV1beta1  *gatewayv1beta1.APIRule
+	apiRuleV2alpha1 *gatewayv2alpha1.APIRule
 	processors      []processing.ReconciliationProcessor
 	config          processing.ReconciliationConfig
 }
@@ -28,7 +28,7 @@ func (r Reconciliation) Validate(ctx context.Context, client client.Client) ([]v
 	}
 
 	// TODO: Use v2alpha1 validation
-	validator := istioValidation.NewAPIRuleValidator(ctx, client, r.apiRulev1beta1, r.config.DefaultDomainName)
+	validator := istioValidation.NewAPIRuleValidator(ctx, client, r.apiRuleV1beta1, r.config.DefaultDomainName)
 	return validator.Validate(ctx, client, vsList), nil
 }
 
@@ -49,8 +49,8 @@ func NewReconciliation(apiv2alpha1 *gatewayv2alpha1.APIRule, apiv1beta1 *gateway
 	*/
 
 	return Reconciliation{
-		apiRulev1beta1:  apiv1beta1,
-		apiRulev2alpha1: apiv2alpha1,
+		apiRuleV1beta1:  apiv1beta1,
+		apiRuleV2alpha1: apiv2alpha1,
 		processors:      []processing.ReconciliationProcessor{vsProcessor, raProcessor, apProcessor},
 		config:          config,
 	}
