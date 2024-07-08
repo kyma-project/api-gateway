@@ -1,7 +1,9 @@
-package istio
+package istio_test
 
 import (
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
+	"github.com/kyma-project/api-gateway/internal/processing"
+	"github.com/kyma-project/api-gateway/internal/processing/processors/istio"
 	status "github.com/kyma-project/api-gateway/internal/processing/status"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -9,8 +11,8 @@ import (
 
 var _ = Describe("IstioStatusBase", func() {
 	It("should create status base with AccessRule set to nil", func() {
-		// when
-		status := StatusBase(string(gatewayv1beta1.StatusSkipped)).(status.ReconciliationV1beta1Status)
+		r := istio.NewIstioReconciliation(nil, processing.ReconciliationConfig{}, nil)
+		status := r.GetStatusBase(string(gatewayv1beta1.StatusSkipped)).(status.ReconciliationV1beta1Status)
 
 		Expect(status.ApiRuleStatus.Code).To(Equal(gatewayv1beta1.StatusSkipped))
 		Expect(status.VirtualServiceStatus.Code).To(Equal(gatewayv1beta1.StatusSkipped))

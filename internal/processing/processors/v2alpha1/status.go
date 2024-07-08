@@ -7,10 +7,6 @@ import (
 )
 
 func (r Reconciliation) GetStatusBase(statusCode string) status.ReconciliationStatus {
-	return StatusBase(statusCode)
-}
-
-func StatusBase(statusCode string) status.ReconciliationStatus {
 	return v1beta1Status.ReconciliationV1beta1Status{
 		ApiRuleStatus: &gatewayv1beta1.APIRuleResourceStatus{
 			Code: gatewayv1beta1.StatusCode(statusCode),
