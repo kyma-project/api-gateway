@@ -16,6 +16,7 @@ limitations under the License.
 package v1beta1
 
 import (
+	"github.com/kyma-project/api-gateway/apis/gateway/versions"
 	"istio.io/api/networking/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
@@ -84,6 +85,10 @@ type APIRuleStatus struct {
 	RequestAuthenticationStatus *APIRuleResourceStatus `json:"requestAuthenticationStatus,omitempty"`
 	// +optional
 	AuthorizationPolicyStatus *APIRuleResourceStatus `json:"authorizationPolicyStatus,omitempty"`
+}
+
+func (s *APIRuleStatus) ApiRuleStatusVersion() versions.Version {
+	return versions.V1beta1
 }
 
 // APIRule is the Schema for ApiRule APIs.
