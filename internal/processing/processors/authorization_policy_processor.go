@@ -13,6 +13,7 @@ import (
 
 // AuthorizationPolicyProcessor is the generic processor that handles the Istio JwtAuthorization Policies in the reconciliation of API Rule.
 type AuthorizationPolicyProcessor struct {
+	ApiRule *gatewayv1beta1.APIRule
 	Creator AuthorizationPolicyCreator
 	Log     *logr.Logger
 }
@@ -23,12 +24,12 @@ type AuthorizationPolicyCreator interface {
 	Create(ctx context.Context, client ctrlclient.Client, api *gatewayv1beta1.APIRule) (hashbasedstate.Desired, error)
 }
 
-func (r AuthorizationPolicyProcessor) EvaluateReconciliation(ctx context.Context, client ctrlclient.Client, apiRule *gatewayv1beta1.APIRule) ([]*processing.ObjectChange, error) {
-	desired, err := r.getDesiredState(ctx, client, apiRule)
+func (r AuthorizationPolicyProcessor) EvaluateReconciliation(ctx context.Context, client ctrlclient.Client) ([]*processing.ObjectChange, error) {
+	desired, err := r.getDesiredState(ctx, client, r.ApiRule)
 	if err != nil {
 		return nil, err
 	}
-	actual, err := r.getActualState(ctx, client, apiRule)
+	actual, err := r.getActualState(ctx, client, r.ApiRule)
 	if err != nil {
 		return make([]*processing.ObjectChange, 0), err
 	}

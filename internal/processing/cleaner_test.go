@@ -15,7 +15,7 @@ import (
 	. "github.com/onsi/gomega"
 
 	"github.com/kyma-project/api-gateway/internal/processing"
-	testUtils "github.com/kyma-project/api-gateway/internal/processing/internal/test"
+	testUtils "github.com/kyma-project/api-gateway/internal/processing/processing_test"
 )
 
 var _ = Describe("APIRule subresources deletion", func() {
