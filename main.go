@@ -163,6 +163,12 @@ func main() {
 			Cache: &client.CacheOptions{
 				DisableFor: []client.Object{
 					&rulev1alpha1.Rule{},
+					/*
+						Reading v1beta1 and v2alpha1 APIRules during reconciliation led to an issue that the APIRule could not be read in v2alpha1 after it was deleted.
+						This would self-heal in the next reconciliation loop.To avoid this confusion with this issue, we disable the cache for v2alpha1 APIRules.
+						This can probably be enabled again when reconciliation only uses v2alpha1.
+					*/
+					&gatewayv2alpha1.APIRule{},
 				},
 			},
 		},
