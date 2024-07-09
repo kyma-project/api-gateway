@@ -40,7 +40,7 @@ The following diagram illustrates the reconciliation process of APIRule and the 
 ![APIRule CR Reconciliation](../assets/api-rule-reconciliation-sequence.svg)
 
 #### Reconciliation Processors
-The APIRule reconciliation supports different processors that are responsible for validation, status handling and creating, updating and deleting the resources in the cluster. 
+The APIRule reconciliation supports different processors that are responsible for validation and status handling as well as creating, updating, and deleting the resources in the cluster. 
 The processor used is evaluated for each reconciliation of an APIRule and is determined by the configuration of the JWT handler in the `api-gateway-config` ConfigMap or the existence of the
 annotation `gateway.kyma-project.io/original-version: v2alpha1` on the APIRule.
 
