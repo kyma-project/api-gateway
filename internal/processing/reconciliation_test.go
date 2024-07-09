@@ -4,11 +4,13 @@ import (
 	"context"
 	"fmt"
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
+	"github.com/kyma-project/api-gateway/internal/processing/status"
+	k8stypes "k8s.io/apimachinery/pkg/types"
 
 	"github.com/go-logr/logr"
 	"github.com/kyma-project/api-gateway/internal/builders"
 	"github.com/kyma-project/api-gateway/internal/processing"
-	oryHandler "github.com/kyma-project/api-gateway/internal/processing/ory"
+	v1beta1Status "github.com/kyma-project/api-gateway/internal/processing/status"
 	"github.com/kyma-project/api-gateway/internal/validation"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -20,18 +22,24 @@ import (
 )
 
 var _ = Describe("Reconcile", func() {
+
+	req := ctrl.Request{NamespacedName: k8stypes.NamespacedName{
+		Namespace: "test-ns",
+		Name:      "test-name",
+	}}
+
 	It("should return api status error and vs/ar status skipped when an error happens during validation", func() {
 		// given
 		cmd := MockReconciliationCommand{
 			validateMock: func() ([]validation.Failure, error) { return nil, fmt.Errorf("error during validation") },
-			getStatusBaseMock: func() processing.ReconciliationStatus {
+			getStatusBaseMock: func() status.ReconciliationStatus {
 				return mockStatusBase(gatewayv1beta1.StatusSkipped)
 			},
 		}
 		client := fake.NewClientBuilder().Build()
 
 		// when
-		status := processing.Reconcile(context.TODO(), client, testLogger(), cmd, &gatewayv1beta1.APIRule{})
+		status := processing.Reconcile(context.Background(), client, testLogger(), cmd, req).(status.ReconciliationV1beta1Status)
 
 		// then
 		Expect(status.ApiRuleStatus.Code).To(Equal(gatewayv1beta1.StatusError))
@@ -50,14 +58,14 @@ var _ = Describe("Reconcile", func() {
 		}}
 		cmd := MockReconciliationCommand{
 			validateMock: func() ([]validation.Failure, error) { return failures, nil },
-			getStatusBaseMock: func() processing.ReconciliationStatus {
+			getStatusBaseMock: func() status.ReconciliationStatus {
 				return mockStatusBase(gatewayv1beta1.StatusSkipped)
 			},
 		}
 		client := fake.NewClientBuilder().Build()
 
 		// when
-		status := processing.Reconcile(context.TODO(), client, testLogger(), cmd, &gatewayv1beta1.APIRule{})
+		status := processing.Reconcile(context.Background(), client, testLogger(), cmd, req).(status.ReconciliationV1beta1Status)
 
 		// then
 		Expect(status.ApiRuleStatus.Code).To(Equal(gatewayv1beta1.StatusError))
@@ -80,7 +88,7 @@ var _ = Describe("Reconcile", func() {
 		cmd := MockReconciliationCommand{
 			validateMock:   func() ([]validation.Failure, error) { return []validation.Failure{}, nil },
 			processorMocks: func() []processing.ReconciliationProcessor { return []processing.ReconciliationProcessor{p} },
-			getStatusBaseMock: func() processing.ReconciliationStatus {
+			getStatusBaseMock: func() status.ReconciliationStatus {
 				return mockStatusBase(gatewayv1beta1.StatusSkipped)
 			},
 		}
@@ -88,7 +96,7 @@ var _ = Describe("Reconcile", func() {
 		client := fake.NewClientBuilder().Build()
 
 		// when
-		status := processing.Reconcile(context.TODO(), client, testLogger(), cmd, &gatewayv1beta1.APIRule{})
+		status := processing.Reconcile(context.Background(), client, testLogger(), cmd, req).(status.ReconciliationV1beta1Status)
 
 		// then
 		Expect(status.ApiRuleStatus.Code).To(Equal(gatewayv1beta1.StatusError))
@@ -112,7 +120,7 @@ var _ = Describe("Reconcile", func() {
 			cmd := MockReconciliationCommand{
 				validateMock:   func() ([]validation.Failure, error) { return []validation.Failure{}, nil },
 				processorMocks: func() []processing.ReconciliationProcessor { return []processing.ReconciliationProcessor{p} },
-				getStatusBaseMock: func() processing.ReconciliationStatus {
+				getStatusBaseMock: func() status.ReconciliationStatus {
 					return mockStatusBase(gatewayv1beta1.StatusOK)
 				},
 			}
@@ -120,7 +128,7 @@ var _ = Describe("Reconcile", func() {
 			client := fake.NewClientBuilder().Build()
 
 			// when
-			status := processing.Reconcile(context.TODO(), client, testLogger(), cmd, &gatewayv1beta1.APIRule{})
+			status := processing.Reconcile(context.Background(), client, testLogger(), cmd, req).(status.ReconciliationV1beta1Status)
 
 			// then
 			Expect(status.ApiRuleStatus.Code).To(Equal(gatewayv1beta1.StatusError))
@@ -151,7 +159,7 @@ var _ = Describe("Reconcile", func() {
 		cmd := MockReconciliationCommand{
 			validateMock:   func() ([]validation.Failure, error) { return []validation.Failure{}, nil },
 			processorMocks: func() []processing.ReconciliationProcessor { return []processing.ReconciliationProcessor{p} },
-			getStatusBaseMock: func() processing.ReconciliationStatus {
+			getStatusBaseMock: func() status.ReconciliationStatus {
 				return mockStatusBase(gatewayv1beta1.StatusOK)
 			},
 		}
@@ -162,7 +170,7 @@ var _ = Describe("Reconcile", func() {
 		client := fake.NewClientBuilder().WithScheme(scheme).WithObjects(toBeUpdatedVs, toBeDeletedVs).Build()
 
 		// when
-		status := processing.Reconcile(context.TODO(), client, testLogger(), cmd, &gatewayv1beta1.APIRule{})
+		status := processing.Reconcile(context.Background(), client, testLogger(), cmd, req).(status.ReconciliationV1beta1Status)
 
 		// then
 		Expect(status.ApiRuleStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
@@ -189,7 +197,7 @@ var _ = Describe("Reconcile", func() {
 		cmd := MockReconciliationCommand{
 			validateMock:   func() ([]validation.Failure, error) { return []validation.Failure{}, nil },
 			processorMocks: func() []processing.ReconciliationProcessor { return []processing.ReconciliationProcessor{p} },
-			getStatusBaseMock: func() processing.ReconciliationStatus {
+			getStatusBaseMock: func() status.ReconciliationStatus {
 				return mockStatusBase(gatewayv1beta1.StatusOK)
 			},
 		}
@@ -200,7 +208,7 @@ var _ = Describe("Reconcile", func() {
 		client := fake.NewClientBuilder().WithScheme(scheme).Build()
 
 		// when
-		status := processing.Reconcile(context.TODO(), client, testLogger(), cmd, &gatewayv1beta1.APIRule{})
+		status := processing.Reconcile(context.Background(), client, testLogger(), cmd, req).(status.ReconciliationV1beta1Status)
 
 		// then
 		Expect(status.ApiRuleStatus.Code).To(Equal(gatewayv1beta1.StatusError))
@@ -215,11 +223,11 @@ var _ = Describe("Reconcile", func() {
 
 type MockReconciliationCommand struct {
 	validateMock      func() ([]validation.Failure, error)
-	getStatusBaseMock func() processing.ReconciliationStatus
+	getStatusBaseMock func() status.ReconciliationStatus
 	processorMocks    func() []processing.ReconciliationProcessor
 }
 
-func (r MockReconciliationCommand) Validate(_ context.Context, _ client.Client, _ *gatewayv1beta1.APIRule) ([]validation.Failure, error) {
+func (r MockReconciliationCommand) Validate(_ context.Context, _ client.Client) ([]validation.Failure, error) {
 	return r.validateMock()
 }
 
@@ -231,12 +239,12 @@ type MockReconciliationProcessor struct {
 	evaluate func() ([]*processing.ObjectChange, error)
 }
 
-func (r MockReconciliationProcessor) EvaluateReconciliation(_ context.Context, _ client.Client, _ *gatewayv1beta1.APIRule) ([]*processing.ObjectChange, error) {
+func (r MockReconciliationProcessor) EvaluateReconciliation(_ context.Context, _ client.Client) ([]*processing.ObjectChange, error) {
 	return r.evaluate()
 }
 
-func (c MockReconciliationCommand) GetStatusBase(_ gatewayv1beta1.StatusCode) processing.ReconciliationStatus {
-	return c.getStatusBaseMock()
+func (r MockReconciliationCommand) GetStatusBase(string) status.ReconciliationStatus {
+	return r.getStatusBaseMock()
 }
 
 func testLogger() *logr.Logger {
@@ -244,6 +252,16 @@ func testLogger() *logr.Logger {
 	return &logger
 }
 
-func mockStatusBase(statusCode gatewayv1beta1.StatusCode) processing.ReconciliationStatus {
-	return oryHandler.StatusBase(statusCode)
+func mockStatusBase(statusCode gatewayv1beta1.StatusCode) status.ReconciliationStatus {
+	return v1beta1Status.ReconciliationV1beta1Status{
+		ApiRuleStatus: &gatewayv1beta1.APIRuleResourceStatus{
+			Code: statusCode,
+		},
+		VirtualServiceStatus: &gatewayv1beta1.APIRuleResourceStatus{
+			Code: statusCode,
+		},
+		AccessRuleStatus: &gatewayv1beta1.APIRuleResourceStatus{
+			Code: statusCode,
+		},
+	}
 }
