@@ -14,6 +14,7 @@ const defaultHttpTimeout = time.Second * 180
 
 // VirtualServiceProcessor is the generic processor that handles the Virtual Service in the reconciliation of API Rule.
 type VirtualServiceProcessor struct {
+	ApiRule *gatewayv1beta1.APIRule
 	Creator VirtualServiceCreator
 }
 
@@ -22,13 +23,13 @@ type VirtualServiceCreator interface {
 	Create(api *gatewayv1beta1.APIRule) (*networkingv1beta1.VirtualService, error)
 }
 
-func (r VirtualServiceProcessor) EvaluateReconciliation(ctx context.Context, client ctrlclient.Client, apiRule *gatewayv1beta1.APIRule) ([]*processing.ObjectChange, error) {
-	desired, err := r.getDesiredState(apiRule)
+func (r VirtualServiceProcessor) EvaluateReconciliation(ctx context.Context, client ctrlclient.Client) ([]*processing.ObjectChange, error) {
+	desired, err := r.getDesiredState(r.ApiRule)
 	if err != nil {
 		return make([]*processing.ObjectChange, 0), err
 	}
 
-	actual, err := r.getActualState(ctx, client, apiRule)
+	actual, err := r.getActualState(ctx, client, r.ApiRule)
 	if err != nil {
 		return make([]*processing.ObjectChange, 0), err
 	}

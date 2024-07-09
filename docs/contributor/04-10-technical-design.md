@@ -32,12 +32,22 @@ APIRule Controller has a conditional dependency to APIGateway Controller in term
 
 ### Reconciliation
 APIRule Controller reconciles APIRule CR with each change. If you don't make any changes, the process occurs at the default interval of 10 hours.
-You can use the [API Gateway Operator paramteres](../user/technical-reference/05-00-api-gateway-operator-parameters.md) to adjust this interval.
+You can use the [API Gateway Operator parameters](../user/technical-reference/05-00-api-gateway-operator-parameters.md) to adjust this interval.
 In the event of a failure during the reconciliation, APIRule Controller performs the reconciliation again after one minute.
 
 The following diagram illustrates the reconciliation process of APIRule and the created resources:
 
 ![APIRule CR Reconciliation](../assets/api-rule-reconciliation-sequence.svg)
+
+#### Reconciliation Processors
+The APIRule reconciliation supports different processors that are responsible for validation and status handling as well as creating, updating, and deleting the resources in the cluster. 
+The processor used is evaluated for each reconciliation of an APIRule and is determined by the configuration of the JWT handler in the `api-gateway-config` ConfigMap or the existence of the
+annotation `gateway.kyma-project.io/original-version: v2alpha1` on the APIRule.
+
+The processor is selected based on the following rules:
+- If the handler in the `api-gateway-config` ConfigMap is set to `istio`, the APIRule reconciliation uses the `NewIstioReconciliation` in the [istio](../../internal/processing/processors/istio) package. 
+- If the handler in the `api-gateway-config` ConfigMap is set to `ory`, the APIRule reconciliation uses the `NewOryReconciliation` in the [ory](../../internal/processing/processors/ory) package.
+- If the annotation `gateway.kyma-project.io/original-version: v2alpha1` is present on the APIRule, the APIRule reconciliation uses the `NewReconciliation` in the [v2alpha1](../../internal/processing/processors/v2alpha1) package.
 
 ## Certificate Controller
 
