@@ -62,7 +62,7 @@ func hasInvalidAuthentications(parentAttributePath string, authentications []*ga
 		return []validation.Failure{
 			{
 				AttributePath: authenticationsAttrPath,
-				Message:       "Authentications are required",
+				Message:       "A JWT config must have at least one authentication",
 			},
 		}
 	}
@@ -111,7 +111,7 @@ func hasInvalidAuthorizations(parentAttributePath string, authorizations []*gate
 		return nil
 	}
 	if len(authorizations) == 0 {
-		failures = append(failures, validation.Failure{AttributePath: authorizationsAttrPath, Message: "value is empty"})
+		failures = append(failures, validation.Failure{AttributePath: authorizationsAttrPath, Message: "authorizations defined, but no configuration exists"})
 		return
 	}
 
