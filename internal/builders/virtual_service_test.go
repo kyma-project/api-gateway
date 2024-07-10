@@ -6,8 +6,8 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"google.golang.org/protobuf/types/known/durationpb"
-	networkingv1 "istio.io/api/networking/v1"
-	networkingapiv1 "istio.io/client-go/pkg/apis/networking/v1"
+	v1beta12 "istio.io/api/networking/v1beta1"
+	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
 	"regexp"
@@ -28,7 +28,7 @@ var _ = Describe("Builder for", func() {
 			name := "testName"
 			namespace := "testNs"
 
-			initialVs := networkingapiv1.VirtualService{}
+			initialVs := networkingv1beta1.VirtualService{}
 			initialVs.Name = "shoudBeOverwritten"
 			initialVs.Spec.Hosts = []string{"a,", "b", "c"}
 
@@ -162,7 +162,7 @@ var _ = Describe("Builder for", func() {
 			}))
 
 			Expect(result.Http[0].CorsPolicy.AllowOrigins).To(HaveLen(1))
-			Expect(result.Http[0].CorsPolicy.AllowOrigins).To(ConsistOf(&networkingv1.StringMatch{MatchType: &networkingv1.StringMatch_Exact{Exact: "localhost"}}))
+			Expect(result.Http[0].CorsPolicy.AllowOrigins).To(ConsistOf(&v1beta12.StringMatch{MatchType: &v1beta12.StringMatch_Exact{Exact: "localhost"}}))
 			Expect(result.Http[0].CorsPolicy.AllowCredentials).To(Not(BeNil()))
 			Expect(result.Http[0].CorsPolicy.AllowCredentials.Value).To(BeTrue())
 			Expect(result.Http[0].CorsPolicy.AllowMethods).To(ConsistOf("GET", "POST"))

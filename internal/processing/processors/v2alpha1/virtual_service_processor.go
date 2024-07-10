@@ -7,7 +7,7 @@ import (
 	"github.com/kyma-project/api-gateway/internal/builders"
 	"github.com/kyma-project/api-gateway/internal/processing"
 	"github.com/kyma-project/api-gateway/internal/processing/default_domain"
-	networkingv1 "istio.io/client-go/pkg/apis/networking/v1"
+	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 	"time"
 )
@@ -20,7 +20,7 @@ type VirtualServiceProcessor struct {
 
 // VirtualServiceCreator provides the creation of a Virtual Service using the configuration in the given APIRule.
 type VirtualServiceCreator interface {
-	Create(api *gatewayv2alpha1.APIRule) (*networkingv1.VirtualService, error)
+	Create(api *gatewayv2alpha1.APIRule) (*networkingv1beta1.VirtualService, error)
 }
 
 // EvaluateReconciliation evaluates the reconciliation of the Virtual Service for the given API Rule.
@@ -40,14 +40,14 @@ func (r VirtualServiceProcessor) EvaluateReconciliation(ctx context.Context, cli
 	return []*processing.ObjectChange{changes}, nil
 }
 
-func (r VirtualServiceProcessor) getDesiredState(api *gatewayv2alpha1.APIRule) (*networkingv1.VirtualService, error) {
+func (r VirtualServiceProcessor) getDesiredState(api *gatewayv2alpha1.APIRule) (*networkingv1beta1.VirtualService, error) {
 	return r.Creator.Create(api)
 }
 
-func (r VirtualServiceProcessor) getActualState(ctx context.Context, client ctrlclient.Client, api *gatewayv2alpha1.APIRule) (*networkingv1.VirtualService, error) {
+func (r VirtualServiceProcessor) getActualState(ctx context.Context, client ctrlclient.Client, api *gatewayv2alpha1.APIRule) (*networkingv1beta1.VirtualService, error) {
 	labels := getOwnerLabels(api)
 
-	var vsList networkingv1.VirtualServiceList
+	var vsList networkingv1beta1.VirtualServiceList
 	if err := client.List(ctx, &vsList, ctrlclient.MatchingLabels(labels)); err != nil {
 		return nil, err
 	}
@@ -59,7 +59,7 @@ func (r VirtualServiceProcessor) getActualState(ctx context.Context, client ctrl
 	}
 }
 
-func (r VirtualServiceProcessor) getObjectChanges(desired *networkingv1.VirtualService, actual *networkingv1.VirtualService) *processing.ObjectChange {
+func (r VirtualServiceProcessor) getObjectChanges(desired *networkingv1beta1.VirtualService, actual *networkingv1beta1.VirtualService) *processing.ObjectChange {
 	if actual != nil {
 		actual.Spec = *desired.Spec.DeepCopy()
 		return processing.NewObjectUpdateAction(actual)
@@ -83,7 +83,7 @@ type virtualServiceCreator struct {
 }
 
 // Create returns the Virtual Service using the configuration of the APIRule.
-func (r virtualServiceCreator) Create(api *gatewayv2alpha1.APIRule) (*networkingv1.VirtualService, error) {
+func (r virtualServiceCreator) Create(api *gatewayv2alpha1.APIRule) (*networkingv1beta1.VirtualService, error) {
 	virtualServiceNamePrefix := fmt.Sprintf("%s-", api.ObjectMeta.Name)
 
 	vsSpecBuilder := builders.VirtualServiceSpec()

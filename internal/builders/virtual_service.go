@@ -6,28 +6,28 @@ import (
 	apirulev2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	"google.golang.org/protobuf/types/known/durationpb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
-	"istio.io/api/networking/v1"
-	networkingv1 "istio.io/client-go/pkg/apis/networking/v1"
+	"istio.io/api/networking/v1beta1"
+	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	"strings"
 	"time"
 )
 
-// VirtualService returns builder for istio.io/client-go/pkg/apis/networking/v1/VirtualService type
+// VirtualService returns builder for istio.io/client-go/pkg/apis/networking/v1beta1/VirtualService type
 func VirtualService() *virtualService {
 	return &virtualService{
-		value: &networkingv1.VirtualService{},
+		value: &networkingv1beta1.VirtualService{},
 	}
 }
 
 type virtualService struct {
-	value *networkingv1.VirtualService
+	value *networkingv1beta1.VirtualService
 }
 
-func (vs *virtualService) Get() *networkingv1.VirtualService {
+func (vs *virtualService) Get() *networkingv1beta1.VirtualService {
 	return vs.value
 }
 
-func (vs *virtualService) From(val *networkingv1.VirtualService) *virtualService {
+func (vs *virtualService) From(val *networkingv1beta1.VirtualService) *virtualService {
 	vs.value = val
 	return vs
 }
@@ -61,22 +61,22 @@ func (vs *virtualService) Spec(val *virtualServiceSpec) *virtualService {
 	return vs
 }
 
-// VirtualServiceSpec returns builder for istio.io/api/networking/v1/VirtualServiceSpec type
+// VirtualServiceSpec returns builder for istio.io/api/networking/v1beta1/VirtualServiceSpec type
 func VirtualServiceSpec() *virtualServiceSpec {
 	return &virtualServiceSpec{
-		value: &v1.VirtualService{},
+		value: &v1beta1.VirtualService{},
 	}
 }
 
 type virtualServiceSpec struct {
-	value *v1.VirtualService
+	value *v1beta1.VirtualService
 }
 
-func (vss *virtualServiceSpec) Get() *v1.VirtualService {
+func (vss *virtualServiceSpec) Get() *v1beta1.VirtualService {
 	return vss.value
 }
 
-func (vss *virtualServiceSpec) From(val *v1.VirtualService) *virtualServiceSpec {
+func (vss *virtualServiceSpec) From(val *v1beta1.VirtualService) *virtualServiceSpec {
 	vss.value = val
 	return vss
 }
@@ -96,18 +96,18 @@ func (vss *virtualServiceSpec) HTTP(hr *httpRoute) *virtualServiceSpec {
 	return vss
 }
 
-// HTTPRoute returns builder for istio.io/api/networking/v1/HTTPRoute type
+// HTTPRoute returns builder for istio.io/api/networking/v1beta1/HTTPRoute type
 func HTTPRoute() *httpRoute {
 	return &httpRoute{
-		value: &v1.HTTPRoute{},
+		value: &v1beta1.HTTPRoute{},
 	}
 }
 
 type httpRoute struct {
-	value *v1.HTTPRoute
+	value *v1beta1.HTTPRoute
 }
 
-func (hr *httpRoute) Get() *v1.HTTPRoute {
+func (hr *httpRoute) Get() *v1beta1.HTTPRoute {
 	return hr.value
 }
 
@@ -126,7 +126,7 @@ func (hr *httpRoute) CorsPolicy(cc *corsPolicy) *httpRoute {
 	return hr
 }
 
-func (hr *httpRoute) Headers(h *v1.Headers) *httpRoute {
+func (hr *httpRoute) Headers(h *v1beta1.Headers) *httpRoute {
 	hr.value.Headers = h
 	return hr
 }
@@ -136,23 +136,23 @@ func (hr *httpRoute) Timeout(value time.Duration) *httpRoute {
 	return hr
 }
 
-// MatchRequest returns builder for istio.io/api/networking/v1/HTTPMatchRequest type
+// MatchRequest returns builder for istio.io/api/networking/v1beta1/HTTPMatchRequest type
 func MatchRequest() *matchRequest {
 	return &matchRequest{
-		value: &v1.HTTPMatchRequest{},
+		value: &v1beta1.HTTPMatchRequest{},
 	}
 }
 
 type matchRequest struct {
-	value *v1.HTTPMatchRequest
+	value *v1beta1.HTTPMatchRequest
 }
 
-func (mr *matchRequest) Get() *v1.HTTPMatchRequest {
+func (mr *matchRequest) Get() *v1beta1.HTTPMatchRequest {
 	return mr.value
 }
 
 func (mr *matchRequest) Uri() *stringMatch {
-	mr.value.Uri = &v1.StringMatch{}
+	mr.value.Uri = &v1beta1.StringMatch{}
 	return &stringMatch{mr.value.Uri, func() *matchRequest { return mr }}
 }
 
@@ -162,8 +162,8 @@ func (mr *matchRequest) MethodRegEx(httpMethods ...apirulev1beta1.HttpMethod) *m
 	methodStrings := apirulev1beta1.ConvertHttpMethodsToStrings(httpMethods)
 	methodsWithSeparator := strings.Join(methodStrings, "|")
 
-	mr.value.Method = &v1.StringMatch{
-		MatchType: &v1.StringMatch_Regex{
+	mr.value.Method = &v1beta1.StringMatch{
+		MatchType: &v1beta1.StringMatch_Regex{
 			Regex: fmt.Sprintf("^(%s)$", methodsWithSeparator),
 		},
 	}
@@ -171,35 +171,35 @@ func (mr *matchRequest) MethodRegEx(httpMethods ...apirulev1beta1.HttpMethod) *m
 }
 
 type stringMatch struct {
-	value  *v1.StringMatch
+	value  *v1beta1.StringMatch
 	parent func() *matchRequest
 }
 
 func (st *stringMatch) Regex(val string) *matchRequest {
-	st.value.MatchType = &v1.StringMatch_Regex{Regex: val}
+	st.value.MatchType = &v1beta1.StringMatch_Regex{Regex: val}
 	return st.parent()
 }
 
 func (st *stringMatch) Prefix(val string) *matchRequest {
-	st.value.MatchType = &v1.StringMatch_Prefix{Prefix: val}
+	st.value.MatchType = &v1beta1.StringMatch_Prefix{Prefix: val}
 	return st.parent()
 }
 
-// RouteDestination returns builder for istio.io/api/networking/v1/HTTPRouteDestination type
+// RouteDestination returns builder for istio.io/api/networking/v1beta1/HTTPRouteDestination type
 func RouteDestination() *routeDestination {
-	return &routeDestination{&v1.HTTPRouteDestination{
-		Destination: &v1.Destination{
-			Port: &v1.PortSelector{},
+	return &routeDestination{&v1beta1.HTTPRouteDestination{
+		Destination: &v1beta1.Destination{
+			Port: &v1beta1.PortSelector{},
 		},
 		Weight: 100,
 	}}
 }
 
 type routeDestination struct {
-	value *v1.HTTPRouteDestination
+	value *v1beta1.HTTPRouteDestination
 }
 
-func (rd *routeDestination) Get() *v1.HTTPRouteDestination {
+func (rd *routeDestination) Get() *v1beta1.HTTPRouteDestination {
 	return rd.value
 }
 
@@ -213,18 +213,18 @@ func (rd *routeDestination) Port(val uint32) *routeDestination {
 	return rd
 }
 
-// CorsPolicy returns builder for istio.io/api/networking/v1/CorsPolicy type
+// CorsPolicy returns builder for istio.io/api/networking/v1beta1/CorsPolicy type
 func CorsPolicy() *corsPolicy {
 	return &corsPolicy{
-		value: &v1.CorsPolicy{},
+		value: &v1beta1.CorsPolicy{},
 	}
 }
 
 type corsPolicy struct {
-	value *v1.CorsPolicy
+	value *v1beta1.CorsPolicy
 }
 
-func (cp *corsPolicy) Get() *v1.CorsPolicy {
+func (cp *corsPolicy) Get() *v1beta1.CorsPolicy {
 	if cp.value.AllowOrigins == nil {
 		return nil
 	}
@@ -249,7 +249,7 @@ func (cp *corsPolicy) AllowMethods(val ...string) *corsPolicy {
 	return cp
 }
 
-func (cp *corsPolicy) AllowOrigins(val ...*v1.StringMatch) *corsPolicy {
+func (cp *corsPolicy) AllowOrigins(val ...*v1beta1.StringMatch) *corsPolicy {
 	if len(val) == 0 {
 		cp.value.AllowOrigins = nil
 	} else {
@@ -320,14 +320,14 @@ func (cp *corsPolicy) FromApiRuleCorsPolicy(corsPolicy apirulev1beta1.CorsPolicy
 	return cp
 }
 
-// NewHttpRouteHeadersBuilder returns builder for istio.io/api/networking/v1/Headers type
+// NewHttpRouteHeadersBuilder returns builder for istio.io/api/networking/v1beta1/Headers type
 func NewHttpRouteHeadersBuilder() HttpRouteHeadersBuilder {
 	return HttpRouteHeadersBuilder{
-		value: &v1.Headers{
-			Request: &v1.Headers_HeaderOperations{
+		value: &v1beta1.Headers{
+			Request: &v1beta1.Headers_HeaderOperations{
 				Set: make(map[string]string),
 			},
-			Response: &v1.Headers_HeaderOperations{
+			Response: &v1beta1.Headers_HeaderOperations{
 				Set: make(map[string]string),
 			},
 		},
@@ -335,10 +335,10 @@ func NewHttpRouteHeadersBuilder() HttpRouteHeadersBuilder {
 }
 
 type HttpRouteHeadersBuilder struct {
-	value *v1.Headers
+	value *v1beta1.Headers
 }
 
-func (h HttpRouteHeadersBuilder) Get() *v1.Headers {
+func (h HttpRouteHeadersBuilder) Get() *v1beta1.Headers {
 	return h.value
 }
 

@@ -5,7 +5,7 @@ import (
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	"github.com/kyma-project/api-gateway/internal/builders"
 	processors "github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1"
-	networkingv1 "istio.io/client-go/pkg/apis/networking/v1"
+	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 
 	. "github.com/kyma-project/api-gateway/internal/processing/processing_test"
 
@@ -33,6 +33,6 @@ var _ = Describe("VirtualServiceProcessor", func() {
 
 type mockVirtualServiceCreator struct{}
 
-func (r mockVirtualServiceCreator) Create(_ *gatewayv2alpha1.APIRule) (*networkingv1.VirtualService, error) {
+func (r mockVirtualServiceCreator) Create(_ *gatewayv2alpha1.APIRule) (*networkingv1beta1.VirtualService, error) {
 	return builders.VirtualService().Get(), nil
 }
