@@ -25,7 +25,7 @@ func validateRules(ctx context.Context, client client.Client, parentAttributePat
 		ruleAttributePath := fmt.Sprintf("%s[%d]", parentAttributePath, i)
 
 		if apiRule.Spec.Service == nil && rule.Service == nil {
-			problems = append(problems, validation.Failure{AttributePath: ruleAttributePath + ".service", Message: "The rule must contain a service, because no service set on spec level"})
+			problems = append(problems, validation.Failure{AttributePath: ruleAttributePath + ".service", Message: "The rule must define a service, because no service is defined on spec level"})
 		}
 
 		if rule.Jwt != nil {

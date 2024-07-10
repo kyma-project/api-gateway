@@ -2,7 +2,16 @@ package v2alpha1
 
 import (
 	"fmt"
+	"github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
+	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
+	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
+	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"os"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"testing"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -42,3 +51,50 @@ var _ = ReportAfterSuite("custom reporter", func(report types.Report) {
 		}
 	}
 })
+
+func createFakeClient(objs ...client.Object) client.Client {
+	scheme := runtime.NewScheme()
+	err := networkingv1beta1.AddToScheme(scheme)
+	Expect(err).NotTo(HaveOccurred())
+	err = rulev1alpha1.AddToScheme(scheme)
+	Expect(err).NotTo(HaveOccurred())
+	err = securityv1beta1.AddToScheme(scheme)
+	Expect(err).NotTo(HaveOccurred())
+	err = v2alpha1.AddToScheme(scheme)
+	Expect(err).NotTo(HaveOccurred())
+	err = corev1.AddToScheme(scheme)
+	Expect(err).NotTo(HaveOccurred())
+
+	return fake.NewClientBuilder().WithScheme(scheme).WithObjects(objs...).Build()
+}
+
+func getService(name string, namespace ...string) *corev1.Service {
+	svc := corev1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: name,
+		},
+		Spec: corev1.ServiceSpec{
+			Selector: map[string]string{
+				"app": name,
+			},
+		},
+	}
+	if len(namespace) > 0 {
+		svc.ObjectMeta.Namespace = namespace[0]
+	}
+	if svc.ObjectMeta.Namespace == "" {
+		svc.ObjectMeta.Namespace = "default"
+	}
+	return &svc
+}
+
+func getApiRuleService(serviceName string, servicePort uint32, namespace ...*string) *v2alpha1.Service {
+	svc := v2alpha1.Service{
+		Name: &serviceName,
+		Port: &servicePort,
+	}
+	if len(namespace) > 0 {
+		svc.Namespace = namespace[0]
+	}
+	return &svc
+}

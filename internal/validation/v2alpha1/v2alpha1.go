@@ -23,6 +23,5 @@ func (a *APIRuleValidator) Validate(ctx context.Context, client client.Client, v
 
 	failures = append(failures, validateRules(ctx, client, ".spec.rules", a.ApiRule)...)
 
-	validation.NewInjectionValidator(ctx, client)
 	return failures
 }
