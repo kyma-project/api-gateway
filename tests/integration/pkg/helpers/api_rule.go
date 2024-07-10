@@ -7,12 +7,14 @@ import (
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/resource"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/dynamic"
+	"log"
 )
 
 type apiRuleStatus struct {
 	Status struct {
 		APIRuleStatus struct {
-			Code string `json:"code"`
+			Code        string `json:"code"`
+			Description string `json:"desc"`
 		} `json:"APIRuleStatus"`
 	} `json:"status"`
 }
@@ -39,7 +41,6 @@ func ApplyApiRule(toExecute RetryableApiRule, onRetry RetryableApiRule, k8sClien
 			if err != nil {
 				return err
 			}
-
 			js, err := json.Marshal(res)
 			if err != nil {
 				return err
@@ -49,7 +50,8 @@ func ApplyApiRule(toExecute RetryableApiRule, onRetry RetryableApiRule, k8sClien
 				return err
 			}
 			if apiStatus.Status.APIRuleStatus.Code == "ERROR" {
-				return errors.New("APIRule status not ok")
+				log.Println("APIRule status not ok: " + apiStatus.Status.APIRuleStatus.Description)
+				return errors.New("APIRule status not ok: " + apiStatus.Status.APIRuleStatus.Description)
 			}
 			return nil
 		}, retryOpts...)
@@ -75,7 +77,8 @@ func UpdateApiRule(resourceManager *resource.Manager, k8sClient dynamic.Interfac
 		return err
 	}
 	if status.Status.APIRuleStatus.Code == "ERROR" || status.Status.APIRuleStatus.Code == "Error" {
-		return errors.New("APIRule status not ok")
+		log.Println("APIRule status not ok: " + status.Status.APIRuleStatus.Description)
+		return errors.New("APIRule status not ok: " + status.Status.APIRuleStatus.Description)
 	}
 	return nil
 }
