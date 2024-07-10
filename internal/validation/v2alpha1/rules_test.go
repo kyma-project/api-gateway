@@ -5,7 +5,6 @@ import (
 	"github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
 	"net/http"
@@ -309,7 +308,7 @@ var _ = Describe("Validate rules", func() {
 		fakeClient := createFakeClient(service)
 
 		//when
-		problems := (&APIRuleValidator{ApiRule: apiRule}).Validate(context.Background(), fakeClient, networkingv1beta1.VirtualServiceList{})
+		problems := validateRules(context.Background(), fakeClient, ".spec.rules", apiRule)
 
 		// then
 		Expect(problems).To(HaveLen(1))
