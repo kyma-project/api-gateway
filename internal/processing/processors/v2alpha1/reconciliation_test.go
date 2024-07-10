@@ -6,9 +6,9 @@ import (
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	"github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1"
-	"istio.io/api/networking/v1beta1"
+	apinetworkingv1 "istio.io/api/networking/v1"
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/utils/ptr"
 	"net/http"
@@ -16,7 +16,7 @@ import (
 	. "github.com/kyma-project/api-gateway/internal/processing/processing_test"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
+	networkingv1 "istio.io/client-go/pkg/apis/networking/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -55,7 +55,7 @@ var _ = Describe("Reconciliation", func() {
 			// then
 			Expect(createdObjects).To(HaveLen(1))
 
-			Expect(createdObjects[0]).To(BeAssignableToTypeOf(&networkingv1beta1.VirtualService{}))
+			Expect(createdObjects[0]).To(BeAssignableToTypeOf(&networkingv1.VirtualService{}))
 		})
 
 		It("with v1beta1 JWT and v2alpha1 JWT should provide VirtualService, AuthorizationPolicy and RequestAuthentication", func() {
@@ -87,7 +87,7 @@ var _ = Describe("Reconciliation", func() {
 			vsCreated, apCreated, raCreated := false, false, false
 
 			for _, createdObj := range createdObjects {
-				vs, vsOk := createdObj.(*networkingv1beta1.VirtualService)
+				vs, vsOk := createdObj.(*networkingv1.VirtualService)
 				ra, raOk := createdObj.(*securityv1beta1.RequestAuthentication)
 				ap, apOk := createdObj.(*securityv1beta1.AuthorizationPolicy)
 
@@ -179,7 +179,7 @@ var _ = Describe("Reconciliation", func() {
 			vsCreated, raCreated, apCreated := false, false, false
 
 			for _, createdObj := range createdObjects {
-				vs, vsOk := createdObj.(*networkingv1beta1.VirtualService)
+				vs, vsOk := createdObj.(*networkingv1.VirtualService)
 				ra, raOk := createdObj.(*securityv1beta1.RequestAuthentication)
 				ap, apOk := createdObj.(*securityv1beta1.AuthorizationPolicy)
 
@@ -248,7 +248,7 @@ var _ = Describe("Reconciliation", func() {
 			numberOfCreatedRequestAuthentications := 0
 
 			for _, createdObj := range createdObjects {
-				vs, vsOk := createdObj.(*networkingv1beta1.VirtualService)
+				vs, vsOk := createdObj.(*networkingv1.VirtualService)
 				ra, raOk := createdObj.(*securityv1beta1.RequestAuthentication)
 				ap, apOk := createdObj.(*securityv1beta1.AuthorizationPolicy)
 
@@ -259,7 +259,7 @@ var _ = Describe("Reconciliation", func() {
 						Expect(len(http.Route)).To(Equal(1))
 						Expect(http.Route[0].Destination.Host).To(Equal("example-service.some-namespace.svc.cluster.local"))
 
-						switch http.Match[0].Uri.MatchType.(*v1beta1.StringMatch_Regex).Regex {
+						switch http.Match[0].Uri.MatchType.(*apinetworkingv1.StringMatch_Regex).Regex {
 						case "/test":
 							break
 						case "/different-path":
@@ -323,7 +323,7 @@ var _ = Describe("Reconciliation", func() {
 			vsCreated, raCreated, apCreated := false, false, false
 
 			for _, createdObj := range createdObjects {
-				vs, vsOk := createdObj.(*networkingv1beta1.VirtualService)
+				vs, vsOk := createdObj.(*networkingv1.VirtualService)
 				ra, raOk := createdObj.(*securityv1beta1.RequestAuthentication)
 				ap, apOk := createdObj.(*securityv1beta1.AuthorizationPolicy)
 
@@ -335,7 +335,7 @@ var _ = Describe("Reconciliation", func() {
 						Expect(len(http.Route)).To(Equal(1))
 						Expect(http.Route[0].Destination.Host).To(Equal("example-service.some-namespace.svc.cluster.local"))
 
-						switch http.Match[0].Uri.MatchType.(*v1beta1.StringMatch_Regex).Regex {
+						switch http.Match[0].Uri.MatchType.(*apinetworkingv1.StringMatch_Regex).Regex {
 						case "/test":
 							break
 						case "/different-path":
@@ -368,7 +368,7 @@ func getV2alpha1APIRuleFor(name, namespace string, rules []gatewayv2alpha1.Rule)
 	serviceHost := gatewayv2alpha1.Host("myService.test.com")
 
 	return &gatewayv2alpha1.APIRule{
-		ObjectMeta: v1.ObjectMeta{
+		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: namespace,
 		},
