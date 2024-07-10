@@ -59,7 +59,7 @@ This tutorial shows how to set up a TLS Gateway in simple mode.
             credentialName: $TLS_SECRET
           hosts:
             - "*.$DOMAIN_TO_EXPOSE_WORKLOADS"
-    EOF        
+    EOF
     ```
 
 <!-- tabs:end -->
