@@ -54,7 +54,8 @@ func hasInvalidAudiences(authorization gatewayv2alpha1.JwtAuthorization) error {
 	return nil
 }
 
-func hasInvalidAuthentications(parentAttributePath string, authentications []*gatewayv2alpha1.JwtAuthentication) (failures []validation.Failure) {
+func hasInvalidAuthentications(parentAttributePath string, authentications []*gatewayv2alpha1.JwtAuthentication) []validation.Failure {
+	var failures []validation.Failure
 	authenticationsAttrPath := fmt.Sprintf("%s%s", parentAttributePath, ".authentications")
 
 	hasFromHeaders, hasFromParams := false, false
@@ -104,15 +105,15 @@ func hasInvalidAuthentications(parentAttributePath string, authentications []*ga
 	return failures
 }
 
-func hasInvalidAuthorizations(parentAttributePath string, authorizations []*gatewayv2alpha1.JwtAuthorization) (failures []validation.Failure) {
+func hasInvalidAuthorizations(parentAttributePath string, authorizations []*gatewayv2alpha1.JwtAuthorization) []validation.Failure {
+	var failures []validation.Failure
 	authorizationsAttrPath := fmt.Sprintf("%s%s", parentAttributePath, ".authorizations")
 
 	if authorizations == nil {
 		return nil
 	}
 	if len(authorizations) == 0 {
-		failures = append(failures, validation.Failure{AttributePath: authorizationsAttrPath, Message: "authorizations defined, but no configuration exists"})
-		return
+		return append(failures, validation.Failure{AttributePath: authorizationsAttrPath, Message: "authorizations defined, but no configuration exists"})
 	}
 
 	for i, authorization := range authorizations {
@@ -135,7 +136,7 @@ func hasInvalidAuthorizations(parentAttributePath string, authorizations []*gate
 		}
 	}
 
-	return
+	return failures
 }
 
 // validateJwtAuthenticationEquality validates that all JWT authorizations with the same issuer and JWKS URI have the same configuration
