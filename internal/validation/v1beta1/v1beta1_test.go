@@ -54,7 +54,7 @@ var _ = Describe("Validate function", func() {
 			HandlerValidator:          handlerValidatorMock,
 			AccessStrategiesValidator: asValidatorMock,
 			DomainAllowList:           testAllowList,
-		}).Validate(context.TODO(), fakeClient, networkingv1beta1.VirtualServiceList{})
+		}).Validate(context.Background(), fakeClient, networkingv1beta1.VirtualServiceList{})
 
 		//then
 		Expect(problems).To(HaveLen(1))
@@ -96,7 +96,7 @@ var _ = Describe("Validate function", func() {
 			AccessStrategiesValidator: asValidatorMock,
 			ServiceBlockList:          testBlockList,
 			DomainAllowList:           testDomainAllowlist,
-		}).Validate(context.TODO(), fakeClient, networkingv1beta1.VirtualServiceList{})
+		}).Validate(context.Background(), fakeClient, networkingv1beta1.VirtualServiceList{})
 
 		//then
 		Expect(problems).To(HaveLen(1))
@@ -139,7 +139,7 @@ var _ = Describe("Validate function", func() {
 			AccessStrategiesValidator: asValidatorMock,
 			ServiceBlockList:          testBlockList,
 			DomainAllowList:           testDomainAllowlist,
-		}).Validate(context.TODO(), fakeClient, networkingv1beta1.VirtualServiceList{})
+		}).Validate(context.Background(), fakeClient, networkingv1beta1.VirtualServiceList{})
 
 		//then
 		Expect(problems).To(HaveLen(1))
@@ -177,7 +177,7 @@ var _ = Describe("Validate function", func() {
 			AccessStrategiesValidator: asValidatorMock,
 			ServiceBlockList:          testBlockList,
 			DomainAllowList:           testDomainAllowlist,
-		}).Validate(context.TODO(), fakeClient, networkingv1beta1.VirtualServiceList{})
+		}).Validate(context.Background(), fakeClient, networkingv1beta1.VirtualServiceList{})
 
 		//then
 		Expect(problems).To(HaveLen(1))
@@ -219,7 +219,7 @@ var _ = Describe("Validate function", func() {
 			DomainAllowList:           testDomainAllowlist,
 			HostBlockList:             testHostBlockList,
 			DefaultDomainName:         testDefaultDomain,
-		}).Validate(context.TODO(), fakeClient, networkingv1beta1.VirtualServiceList{})
+		}).Validate(context.Background(), fakeClient, networkingv1beta1.VirtualServiceList{})
 
 		//then
 		Expect(problems).To(HaveLen(1))
@@ -263,7 +263,7 @@ var _ = Describe("Validate function", func() {
 			DomainAllowList:           testDomainAllowlist,
 			HostBlockList:             testHostBlockList,
 			DefaultDomainName:         testDefaultDomain,
-		}).Validate(context.TODO(), fakeClient, networkingv1beta1.VirtualServiceList{})
+		}).Validate(context.Background(), fakeClient, networkingv1beta1.VirtualServiceList{})
 
 		//then
 		Expect(problems).To(HaveLen(0))
@@ -299,7 +299,7 @@ var _ = Describe("Validate function", func() {
 			AccessStrategiesValidator: asValidatorMock,
 			ServiceBlockList:          testBlockList,
 			DomainAllowList:           []string{},
-		}).Validate(context.TODO(), fakeClient, networkingv1beta1.VirtualServiceList{})
+		}).Validate(context.Background(), fakeClient, networkingv1beta1.VirtualServiceList{})
 
 		//then
 		Expect(problems).To(HaveLen(0))
@@ -335,7 +335,7 @@ var _ = Describe("Validate function", func() {
 			AccessStrategiesValidator: asValidatorMock,
 			ServiceBlockList:          testBlockList,
 			DomainAllowList:           testDomainAllowlist,
-		}).Validate(context.TODO(), fakeClient, networkingv1beta1.VirtualServiceList{})
+		}).Validate(context.Background(), fakeClient, networkingv1beta1.VirtualServiceList{})
 
 		//then
 		Expect(problems).To(HaveLen(1))
@@ -373,7 +373,7 @@ var _ = Describe("Validate function", func() {
 			AccessStrategiesValidator: asValidatorMock,
 			ServiceBlockList:          testBlockList,
 			DomainAllowList:           testDomainAllowlist,
-		}).Validate(context.TODO(), fakeClient, networkingv1beta1.VirtualServiceList{})
+		}).Validate(context.Background(), fakeClient, networkingv1beta1.VirtualServiceList{})
 
 		//then
 		Expect(problems).To(HaveLen(1))
@@ -412,7 +412,7 @@ var _ = Describe("Validate function", func() {
 			ServiceBlockList:          testBlockList,
 			DomainAllowList:           testDomainAllowlist,
 			DefaultDomainName:         testDefaultDomain,
-		}).Validate(context.TODO(), fakeClient, networkingv1beta1.VirtualServiceList{})
+		}).Validate(context.Background(), fakeClient, networkingv1beta1.VirtualServiceList{})
 
 		//then
 		Expect(problems).To(HaveLen(0))
@@ -448,7 +448,7 @@ var _ = Describe("Validate function", func() {
 			AccessStrategiesValidator: asValidatorMock,
 			ServiceBlockList:          testBlockList,
 			DomainAllowList:           testDomainAllowlist,
-		}).Validate(context.TODO(), fakeClient, networkingv1beta1.VirtualServiceList{})
+		}).Validate(context.Background(), fakeClient, networkingv1beta1.VirtualServiceList{})
 
 		//then
 		Expect(problems).To(HaveLen(1))
@@ -489,7 +489,7 @@ var _ = Describe("Validate function", func() {
 			HandlerValidator:          handlerValidatorMock,
 			AccessStrategiesValidator: asValidatorMock,
 			DomainAllowList:           testDomainAllowlist,
-		}).Validate(context.TODO(), fakeClient, networkingv1beta1.VirtualServiceList{Items: []*networkingv1beta1.VirtualService{&existingVS}})
+		}).Validate(context.Background(), fakeClient, networkingv1beta1.VirtualServiceList{Items: []*networkingv1beta1.VirtualService{&existingVS}})
 
 		Expect(problems).To(HaveLen(1))
 		Expect(problems[0].AttributePath).To(Equal(".spec.host"))
@@ -531,7 +531,7 @@ var _ = Describe("Validate function", func() {
 			HandlerValidator:          handlerValidatorMock,
 			AccessStrategiesValidator: asValidatorMock,
 			DomainAllowList:           testDomainAllowlist,
-		}).Validate(context.TODO(), fakeClient, networkingv1beta1.VirtualServiceList{Items: []*networkingv1beta1.VirtualService{&existingVS}})
+		}).Validate(context.Background(), fakeClient, networkingv1beta1.VirtualServiceList{Items: []*networkingv1beta1.VirtualService{&existingVS}})
 
 		Expect(problems).To(HaveLen(0))
 	})
@@ -560,7 +560,7 @@ var _ = Describe("Validate function", func() {
 			ApiRule:                   apiRule,
 			AccessStrategiesValidator: asValidatorMock,
 			DomainAllowList:           testDomainAllowlist,
-		}).Validate(context.TODO(), fakeClient, networkingv1beta1.VirtualServiceList{})
+		}).Validate(context.Background(), fakeClient, networkingv1beta1.VirtualServiceList{})
 
 		//then
 		Expect(problems).To(HaveLen(1))
@@ -611,7 +611,7 @@ var _ = Describe("Validate function", func() {
 			AccessStrategiesValidator: asValidatorMock,
 			ServiceBlockList:          testBlockList,
 			DomainAllowList:           testDomainAllowlist,
-		}).Validate(context.TODO(), fakeClient, networkingv1beta1.VirtualServiceList{})
+		}).Validate(context.Background(), fakeClient, networkingv1beta1.VirtualServiceList{})
 
 		//then
 		Expect(problems).To(HaveLen(1))
@@ -663,7 +663,7 @@ var _ = Describe("Validate function", func() {
 			AccessStrategiesValidator: asValidatorMock,
 			ServiceBlockList:          testBlockList,
 			DomainAllowList:           testDomainAllowlist,
-		}).Validate(context.TODO(), fakeClient, networkingv1beta1.VirtualServiceList{})
+		}).Validate(context.Background(), fakeClient, networkingv1beta1.VirtualServiceList{})
 
 		//then
 		Expect(problems).To(HaveLen(1))
@@ -712,7 +712,7 @@ var _ = Describe("Validate function", func() {
 			ApiRule:                   apiRule,
 			AccessStrategiesValidator: asValidatorMock,
 			DomainAllowList:           testDomainAllowlist,
-		}).Validate(context.TODO(), fakeClient, networkingv1beta1.VirtualServiceList{})
+		}).Validate(context.Background(), fakeClient, networkingv1beta1.VirtualServiceList{})
 
 		//then
 		Expect(problems).To(HaveLen(5))
@@ -766,7 +766,7 @@ var _ = Describe("Validate function", func() {
 			ApiRule:                   apiRule,
 			AccessStrategiesValidator: asValidatorMock,
 			DomainAllowList:           testDomainAllowlist,
-		}).Validate(context.TODO(), fakeClient, networkingv1beta1.VirtualServiceList{})
+		}).Validate(context.Background(), fakeClient, networkingv1beta1.VirtualServiceList{})
 
 		//then
 		Expect(problems).To(HaveLen(1))
@@ -828,7 +828,7 @@ var _ = Describe("Validate function", func() {
 			HandlerValidator:          handlerValidatorMock,
 			AccessStrategiesValidator: asValidatorMock,
 			DomainAllowList:           testDomainAllowlist,
-		}).Validate(context.TODO(), fakeClient, networkingv1beta1.VirtualServiceList{Items: []*networkingv1beta1.VirtualService{&existingVS}})
+		}).Validate(context.Background(), fakeClient, networkingv1beta1.VirtualServiceList{Items: []*networkingv1beta1.VirtualService{&existingVS}})
 
 		//then
 		Expect(problems).To(HaveLen(0))
@@ -876,7 +876,7 @@ var _ = Describe("Validate function", func() {
 			HandlerValidator:          handlerValidatorMock,
 			AccessStrategiesValidator: asValidatorMock,
 			DomainAllowList:           testDomainAllowlist,
-		}).Validate(context.TODO(), fakeClient, networkingv1beta1.VirtualServiceList{Items: []*networkingv1beta1.VirtualService{&existingVS}})
+		}).Validate(context.Background(), fakeClient, networkingv1beta1.VirtualServiceList{Items: []*networkingv1beta1.VirtualService{&existingVS}})
 
 		//then
 		Expect(problems).To(HaveLen(0))
@@ -910,7 +910,7 @@ var _ = Describe("Validate function", func() {
 			HandlerValidator:          handlerValidatorMock,
 			AccessStrategiesValidator: asValidatorMock,
 			DomainAllowList:           testDomainAllowlist,
-		}).Validate(context.TODO(), fakeClient, networkingv1beta1.VirtualServiceList{})
+		}).Validate(context.Background(), fakeClient, networkingv1beta1.VirtualServiceList{})
 
 		// then
 		Expect(problems).To(HaveLen(1))
@@ -946,7 +946,7 @@ var _ = Describe("Validate function", func() {
 			HandlerValidator:          handlerValidatorMock,
 			AccessStrategiesValidator: asValidatorMock,
 			DomainAllowList:           testDomainAllowlist,
-		}).Validate(context.TODO(), fakeClient, networkingv1beta1.VirtualServiceList{})
+		}).Validate(context.Background(), fakeClient, networkingv1beta1.VirtualServiceList{})
 
 		// then
 		Expect(problems).To(HaveLen(1))
@@ -982,7 +982,7 @@ var _ = Describe("Validate function", func() {
 			HandlerValidator:          handlerValidatorMock,
 			AccessStrategiesValidator: asValidatorMock,
 			DomainAllowList:           testDomainAllowlist,
-		}).Validate(context.TODO(), fakeClient, networkingv1beta1.VirtualServiceList{})
+		}).Validate(context.Background(), fakeClient, networkingv1beta1.VirtualServiceList{})
 
 		//then
 		Expect(problems).To(HaveLen(0))
@@ -1016,7 +1016,7 @@ var _ = Describe("Validate function", func() {
 			HandlerValidator:          handlerValidatorMock,
 			AccessStrategiesValidator: asValidatorMock,
 			DomainAllowList:           testDomainAllowlist,
-		}).Validate(context.TODO(), fakeClient, networkingv1beta1.VirtualServiceList{})
+		}).Validate(context.Background(), fakeClient, networkingv1beta1.VirtualServiceList{})
 
 		//then
 		Expect(problems).To(HaveLen(0))
@@ -1049,7 +1049,7 @@ var _ = Describe("Validate function", func() {
 			HandlerValidator:          handlerValidatorMock,
 			AccessStrategiesValidator: asValidatorMock,
 			DomainAllowList:           testDomainAllowlist,
-		}).Validate(context.TODO(), fakeClient, networkingv1beta1.VirtualServiceList{})
+		}).Validate(context.Background(), fakeClient, networkingv1beta1.VirtualServiceList{})
 
 		//then
 		Expect(problems).To(HaveLen(0))
@@ -1082,7 +1082,7 @@ var _ = Describe("Validate function", func() {
 			HandlerValidator:          handlerValidatorMock,
 			AccessStrategiesValidator: asValidatorMock,
 			DomainAllowList:           testDomainAllowlist,
-		}).Validate(context.TODO(), fakeClient, networkingv1beta1.VirtualServiceList{})
+		}).Validate(context.Background(), fakeClient, networkingv1beta1.VirtualServiceList{})
 
 		//then
 		Expect(problems).To(HaveLen(0))

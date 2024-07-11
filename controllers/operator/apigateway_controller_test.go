@@ -66,7 +66,7 @@ var _ = Describe("API-Gateway Controller", func() {
 			Expect(err).ShouldNot(HaveOccurred())
 			Expect(result).Should(Equal(reconcile.Result{}))
 
-			Expect(c.Get(context.TODO(), client.ObjectKeyFromObject(apiGatewayCR), apiGatewayCR)).Should(Succeed())
+			Expect(c.Get(context.Background(), client.ObjectKeyFromObject(apiGatewayCR), apiGatewayCR)).Should(Succeed())
 			Expect(apiGatewayCR.GetObjectMeta().GetFinalizers()).To(ContainElement(ApiGatewayFinalizer))
 		})
 
@@ -95,7 +95,7 @@ var _ = Describe("API-Gateway Controller", func() {
 			Expect(err).ShouldNot(HaveOccurred())
 			Expect(result).Should(Equal(reconcile.Result{}))
 
-			Expect(c.Get(context.TODO(), client.ObjectKeyFromObject(apiGatewayCR), apiGatewayCR)).Should(Succeed())
+			Expect(c.Get(context.Background(), client.ObjectKeyFromObject(apiGatewayCR), apiGatewayCR)).Should(Succeed())
 			Expect(apiGatewayCR.Status.State).Should(Equal(operatorv1alpha1.Ready))
 			Expect(apiGatewayCR.Status.Conditions).To(ContainElement(MatchFields(IgnoreExtras, Fields{
 				"Type":   Equal(conditions.ReconcileSucceeded.Condition().Type),
@@ -252,7 +252,7 @@ var _ = Describe("API-Gateway Controller", func() {
 			Expect(err).ShouldNot(HaveOccurred())
 			Expect(result).Should(Equal(reconcile.Result{}))
 
-			Expect(errors.IsNotFound(c.Get(context.TODO(), client.ObjectKeyFromObject(apiGatewayCR), apiGatewayCR))).To(BeTrue())
+			Expect(errors.IsNotFound(c.Get(context.Background(), client.ObjectKeyFromObject(apiGatewayCR), apiGatewayCR))).To(BeTrue())
 		})
 
 		It("Should not delete API-Gateway CR if there are any APIRules on cluster", func() {
@@ -295,7 +295,7 @@ var _ = Describe("API-Gateway Controller", func() {
 			Expect(err.Error()).To(Equal("could not delete API-Gateway CR since there are APIRule(s) that block its deletion"))
 			Expect(result).Should(Equal(reconcile.Result{}))
 
-			Expect(c.Get(context.TODO(), client.ObjectKeyFromObject(apiGatewayCR), apiGatewayCR)).Should(Succeed())
+			Expect(c.Get(context.Background(), client.ObjectKeyFromObject(apiGatewayCR), apiGatewayCR)).Should(Succeed())
 			Expect(apiGatewayCR.Status.State).To(Equal(operatorv1alpha1.Warning))
 			Expect(apiGatewayCR.Status.Description).To(Equal("There are APIRule(s) that block the deletion of API-Gateway CR. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning"))
 			Expect(apiGatewayCR.GetObjectMeta().GetFinalizers()).To(ContainElement(ApiGatewayFinalizer))
@@ -346,7 +346,7 @@ var _ = Describe("API-Gateway Controller", func() {
 			Expect(err.Error()).To(Equal("could not delete API-Gateway CR since there are ORY Oathkeeper Rule(s) that block its deletion"))
 			Expect(result).Should(Equal(reconcile.Result{}))
 
-			Expect(c.Get(context.TODO(), client.ObjectKeyFromObject(apiGatewayCR), apiGatewayCR)).Should(Succeed())
+			Expect(c.Get(context.Background(), client.ObjectKeyFromObject(apiGatewayCR), apiGatewayCR)).Should(Succeed())
 			Expect(apiGatewayCR.Status.State).To(Equal(operatorv1alpha1.Warning))
 			Expect(apiGatewayCR.Status.Description).To(Equal("There are ORY Oathkeeper Rule(s) that block the deletion of API-Gateway CR. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning"))
 			Expect(apiGatewayCR.GetObjectMeta().GetFinalizers()).To(ContainElement(ApiGatewayFinalizer))
