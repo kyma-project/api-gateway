@@ -147,8 +147,6 @@ func (r virtualServiceCreator) Create(api *gatewayv2alpha1.APIRule) (*networking
 		}
 		headersBuilder.RemoveUpstreamCORSPolicyHeaders()
 
-		// Mutators go here
-
 		httpRouteBuilder.Headers(headersBuilder.Get())
 
 		vsSpecBuilder.HTTP(httpRouteBuilder)

@@ -49,6 +49,37 @@ func checkVirtualServices(c client.Client, processor processors.VirtualServicePr
 
 type verifier func(*networkingv1beta1.VirtualService)
 
+var _ = Describe("Hosts", func() {
+	var client client.Client
+	var processor processors.VirtualServiceProcessor
+	BeforeEach(func() {
+		client = GetFakeClient()
+	})
+
+	DescribeTable("Hosts",
+		func(apiRule *gatewayv2alpha1.APIRule, verifiers []verifier, expectedActions ...string) {
+			processor = processors.NewVirtualServiceProcessor(GetTestConfig(), apiRule)
+			checkVirtualServices(client, processor, verifiers, expectedActions...)
+		},
+
+		Entry("should set the host correctly",
+			newAPIRuleBuilder().WithGateway("example/example").WithHost("example.com").Build(),
+			[]verifier{
+				func(vs *networkingv1beta1.VirtualService) {
+					Expect(vs.Spec.Hosts).To(ConsistOf("example.com"))
+				},
+			}, "create"),
+
+		Entry("should set multiple hosts correctly",
+			newAPIRuleBuilder().WithGateway("example/example").WithHosts("example.com", "goat.com").Build(),
+			[]verifier{
+				func(vs *networkingv1beta1.VirtualService) {
+					Expect(vs.Spec.Hosts).To(ConsistOf("example.com", "goat.com"))
+				},
+			}, "create"),
+	)
+})
+
 var _ = Describe("CORS", func() {
 	var client client.Client
 	var processor processors.VirtualServiceProcessor
