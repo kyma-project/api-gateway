@@ -368,6 +368,7 @@ spec:
                   minLength: 3
                   pattern: ^([a-zA-Z0-9][a-zA-Z0-9-_]*\.)*[a-zA-Z0-9]*[a-zA-Z0-9-_]*[[a-zA-Z0-9]+$
                   type: string
+                maxItems: 1
                 minItems: 1
                 type: array
               rules:
@@ -500,7 +501,7 @@ spec:
                 minItems: 1
                 type: array
               service:
-                description: Describes the service to expose..
+                description: Describes the service to expose.
                 properties:
                   external:
                     description: Specifies if the service is internal (in cluster)
