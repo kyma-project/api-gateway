@@ -12,6 +12,17 @@ import (
 	"time"
 )
 
+const defaultHttpTimeout uint32 = 180
+
+func NewVirtualServiceProcessor(config processing.ReconciliationConfig, apiRule *gatewayv2alpha1.APIRule) VirtualServiceProcessor {
+	return VirtualServiceProcessor{
+		ApiRule: apiRule,
+		Creator: virtualServiceCreator{
+			defaultDomainName: config.DefaultDomainName,
+		},
+	}
+}
+
 // VirtualServiceProcessor is the generic processor that handles the Virtual Service in the reconciliation of API Rule.
 type VirtualServiceProcessor struct {
 	ApiRule *gatewayv2alpha1.APIRule
@@ -106,7 +117,7 @@ func (r virtualServiceCreator) Create(api *gatewayv2alpha1.APIRule) (*networking
 			host = default_domain.GetHostLocalDomain(*rule.Service.Name, serviceNamespace)
 			port = *rule.Service.Port
 		} else {
-			// Otherwise use service defined on APIRule spec level
+			// Otherwise, use service defined on APIRule spec level
 			host = default_domain.GetHostLocalDomain(*api.Spec.Service.Name, serviceNamespace)
 			port = *api.Spec.Service.Port
 		}
@@ -123,7 +134,7 @@ func (r virtualServiceCreator) Create(api *gatewayv2alpha1.APIRule) (*networking
 
 		httpRouteBuilder.Match(matchBuilder)
 
-		httpRouteBuilder.Timeout(time.Duration(getVirtualServiceHttpTimeout(api.Spec, rule)) * time.Second)
+		httpRouteBuilder.Timeout(time.Duration(GetVirtualServiceHttpTimeout(api.Spec, rule)) * time.Second)
 
 		headersBuilder := builders.NewHttpRouteHeadersBuilder().
 			// For now, the X-Forwarded-Host header is set to the first host in the APIRule hosts list.
@@ -153,10 +164,13 @@ func (r virtualServiceCreator) Create(api *gatewayv2alpha1.APIRule) (*networking
 	return vsBuilder.Get(), nil
 }
 
-func getVirtualServiceHttpTimeout(apiRuleSpec gatewayv2alpha1.APIRuleSpec, rule gatewayv2alpha1.Rule) uint32 {
+func GetVirtualServiceHttpTimeout(apiRuleSpec gatewayv2alpha1.APIRuleSpec, rule gatewayv2alpha1.Rule) uint32 {
 	if rule.Timeout != nil {
 		return uint32(*rule.Timeout)
 	}
 
-	return uint32(*apiRuleSpec.Timeout)
+	if apiRuleSpec.Timeout != nil {
+		return uint32(*apiRuleSpec.Timeout)
+	}
+	return defaultHttpTimeout
 }
