@@ -86,7 +86,7 @@ var _ = Describe("GetLabelSelectorFromService", func() {
 		}
 		apiRule := gatewayv1beta1.APIRule{}
 		rule := gatewayv1beta1.Rule{}
-		workloadSelector, err := GetLabelSelectorFromService(context.TODO(), k8sClient, &service, &apiRule, &rule)
+		workloadSelector, err := GetLabelSelectorFromService(context.Background(), k8sClient, &service, &apiRule, &rule)
 		Expect(err).ToNot(HaveOccurred())
 		Expect(workloadSelector.MatchLabels).To(HaveKeyWithValue("selectorKey", "selectorValue"))
 	})
@@ -99,7 +99,7 @@ var _ = Describe("GetLabelSelectorFromService", func() {
 		}
 		apiRule := gatewayv1beta1.APIRule{}
 		rule := gatewayv1beta1.Rule{}
-		workloadSelector, err := GetLabelSelectorFromService(context.TODO(), k8sClient, &service, &apiRule, &rule)
+		workloadSelector, err := GetLabelSelectorFromService(context.Background(), k8sClient, &service, &apiRule, &rule)
 		Expect(err).To(HaveOccurred())
 		Expect(err.Error()).To(ContainSubstring("service name is required but missing"))
 		Expect(workloadSelector.MatchLabels).To(BeNil())
@@ -127,7 +127,7 @@ var _ = Describe("GetLabelSelectorFromService", func() {
 			},
 		}
 		rule := gatewayv1beta1.Rule{}
-		workloadSelector, err := GetLabelSelectorFromService(context.TODO(), k8sClient, &service, &apiRule, &rule)
+		workloadSelector, err := GetLabelSelectorFromService(context.Background(), k8sClient, &service, &apiRule, &rule)
 		Expect(err).ToNot(HaveOccurred())
 		Expect(workloadSelector.MatchLabels).To(HaveKeyWithValue("selectorKey", "selectorValue"))
 	})
@@ -148,7 +148,7 @@ var _ = Describe("GetLabelSelectorFromService", func() {
 		}
 		apiRule := gatewayv1beta1.APIRule{}
 		rule := gatewayv1beta1.Rule{}
-		workloadSelector, err := GetLabelSelectorFromService(context.TODO(), k8sClient, &service, &apiRule, &rule)
+		workloadSelector, err := GetLabelSelectorFromService(context.Background(), k8sClient, &service, &apiRule, &rule)
 		Expect(err).ToNot(HaveOccurred())
 		Expect(workloadSelector.MatchLabels).To(HaveKeyWithValue("selectorKey", "selectorValue"))
 	})
@@ -167,7 +167,7 @@ var _ = Describe("GetLabelSelectorFromService", func() {
 		}
 		apiRule := gatewayv1beta1.APIRule{}
 		rule := gatewayv1beta1.Rule{}
-		workloadSelector, err := GetLabelSelectorFromService(context.TODO(), k8sClient, &service, &apiRule, &rule)
+		workloadSelector, err := GetLabelSelectorFromService(context.Background(), k8sClient, &service, &apiRule, &rule)
 		Expect(err).ToNot(HaveOccurred())
 		Expect(workloadSelector).To(BeNil())
 	})

@@ -35,7 +35,7 @@ var _ = Describe("EvaluateClusterSize", func() {
 		client := createFakeClient(&k3dNode)
 
 		//when
-		size, err := clusterconfig.EvaluateClusterSize(context.TODO(), client)
+		size, err := clusterconfig.EvaluateClusterSize(context.Background(), client)
 
 		//then
 		Expect(err).To(Not(HaveOccurred()))
@@ -59,7 +59,7 @@ var _ = Describe("EvaluateClusterSize", func() {
 		client := createFakeClient(&k3dNode)
 
 		//when
-		size, err := clusterconfig.EvaluateClusterSize(context.TODO(), client)
+		size, err := clusterconfig.EvaluateClusterSize(context.Background(), client)
 
 		//then
 		Expect(err).To(Not(HaveOccurred()))
@@ -95,7 +95,7 @@ var _ = Describe("EvaluateClusterSize", func() {
 		client := createFakeClient(&k3dNode, &k3dNode2)
 
 		//when
-		size, err := clusterconfig.EvaluateClusterSize(context.TODO(), client)
+		size, err := clusterconfig.EvaluateClusterSize(context.Background(), client)
 
 		//then
 		Expect(err).To(Not(HaveOccurred()))

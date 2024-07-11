@@ -87,33 +87,33 @@ var _ = Describe("APIRule subresources deletion", func() {
 		client := testUtils.GetFakeClient(&apiRuleVS, &otherVS, &apiRuleRule, &otherRule, &apiRuleAP, &otherAP, &apiRuleRA, &otherRA)
 
 		// when
-		err := processing.DeleteAPIRuleSubresources(client, context.TODO(), *apiRule)
+		err := processing.DeleteAPIRuleSubresources(client, context.Background(), *apiRule)
 		Expect(err).ShouldNot(HaveOccurred())
 
 		// then
 		vsList := networkingv1beta1.VirtualServiceList{}
-		err = client.List(context.TODO(), &vsList)
+		err = client.List(context.Background(), &vsList)
 
 		Expect(err).ShouldNot(HaveOccurred())
 		Expect(vsList.Items).To(HaveLen(1))
 		Expect(vsList.Items[0].Name).To(Equal("test-other-apirule"))
 
 		ruleList := rulev1alpha1.RuleList{}
-		err = client.List(context.TODO(), &ruleList)
+		err = client.List(context.Background(), &ruleList)
 
 		Expect(err).ShouldNot(HaveOccurred())
 		Expect(ruleList.Items).To(HaveLen(1))
 		Expect(ruleList.Items[0].Name).To(Equal("test-other-apirule"))
 
 		apList := securityv1beta1.AuthorizationPolicyList{}
-		err = client.List(context.TODO(), &apList)
+		err = client.List(context.Background(), &apList)
 
 		Expect(err).ShouldNot(HaveOccurred())
 		Expect(apList.Items).To(HaveLen(1))
 		Expect(apList.Items[0].Name).To(Equal("test-other-apirule"))
 
 		raList := securityv1beta1.RequestAuthenticationList{}
-		err = client.List(context.TODO(), &raList)
+		err = client.List(context.Background(), &raList)
 
 		Expect(err).ShouldNot(HaveOccurred())
 		Expect(raList.Items).To(HaveLen(1))

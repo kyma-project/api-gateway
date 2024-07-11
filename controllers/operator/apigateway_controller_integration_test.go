@@ -423,7 +423,7 @@ func deleteApiGateways() {
 	Eventually(func(g Gomega) {
 		By("Checking if APIGateway exists as part of teardown")
 		list := v1alpha1.APIGatewayList{}
-		Expect(k8sClient.List(context.TODO(), &list)).Should(Succeed())
+		Expect(k8sClient.List(context.Background(), &list)).Should(Succeed())
 
 		for _, item := range list.Items {
 			apiGatewayTeardown(&item)
@@ -434,14 +434,14 @@ func deleteApiGateways() {
 func apiGatewayTeardown(apiGateway *v1alpha1.APIGateway) {
 	By(fmt.Sprintf("Deleting APIGateway %s as part of teardown", apiGateway.Name))
 	Eventually(func(g Gomega) {
-		err := k8sClient.Delete(context.TODO(), apiGateway)
+		err := k8sClient.Delete(context.Background(), apiGateway)
 
 		if err != nil {
 			Expect(errors.IsNotFound(err)).To(BeTrue())
 		}
 
 		a := v1alpha1.APIGateway{}
-		err = k8sClient.Get(context.TODO(), client.ObjectKey{Name: apiGateway.Name}, &a)
+		err = k8sClient.Get(context.Background(), client.ObjectKey{Name: apiGateway.Name}, &a)
 		g.Expect(errors.IsNotFound(err)).To(BeTrue())
 	}, eventuallyTimeout).Should(Succeed())
 }
@@ -450,7 +450,7 @@ func deleteApiRules() {
 	Eventually(func(g Gomega) {
 		By("Checking if APIRules exists as part of teardown")
 		list := v1beta1.APIRuleList{}
-		Expect(k8sClient.List(context.TODO(), &list)).Should(Succeed())
+		Expect(k8sClient.List(context.Background(), &list)).Should(Succeed())
 
 		for _, item := range list.Items {
 			apiRuleTeardown(&item)
@@ -462,7 +462,7 @@ func fetchLatestApiGateway(apiGateway v1alpha1.APIGateway) v1alpha1.APIGateway {
 	a := v1alpha1.APIGateway{}
 	Eventually(func(g Gomega) {
 
-		err := k8sClient.Get(context.TODO(), client.ObjectKey{Name: apiGateway.Name}, &a)
+		err := k8sClient.Get(context.Background(), client.ObjectKey{Name: apiGateway.Name}, &a)
 		g.Expect(err).To(Not(HaveOccurred()))
 	}, eventuallyTimeout).Should(Succeed())
 
@@ -472,21 +472,21 @@ func fetchLatestApiGateway(apiGateway v1alpha1.APIGateway) v1alpha1.APIGateway {
 func virtualServiceTeardown(vs *networkingv1beta1.VirtualService) {
 	By(fmt.Sprintf("Deleting Virtual Service %s as part of teardown", vs.Name))
 	Eventually(func(g Gomega) {
-		err := k8sClient.Delete(context.TODO(), vs)
+		err := k8sClient.Delete(context.Background(), vs)
 
 		if err != nil {
 			Expect(errors.IsNotFound(err)).To(BeTrue())
 		}
 
 		v := networkingv1beta1.VirtualService{}
-		err = k8sClient.Get(context.TODO(), client.ObjectKey{Name: vs.Name, Namespace: vs.Namespace}, &v)
+		err = k8sClient.Get(context.Background(), client.ObjectKey{Name: vs.Name, Namespace: vs.Namespace}, &v)
 		g.Expect(errors.IsNotFound(err)).To(BeTrue())
 	}, eventuallyTimeout).Should(Succeed())
 }
 
 func apiRuleTeardown(apiRule *v1beta1.APIRule) {
 	By(fmt.Sprintf("Deleting APIRule %s as part of teardown", apiRule.Name))
-	err := k8sClient.Delete(context.TODO(), apiRule)
+	err := k8sClient.Delete(context.Background(), apiRule)
 
 	if err != nil {
 		Expect(errors.IsNotFound(err)).To(BeTrue())
@@ -494,7 +494,7 @@ func apiRuleTeardown(apiRule *v1beta1.APIRule) {
 
 	Eventually(func(g Gomega) {
 		a := v1beta1.APIRule{}
-		err := k8sClient.Get(context.TODO(), client.ObjectKey{Name: apiRule.Name, Namespace: apiRule.Namespace}, &a)
+		err := k8sClient.Get(context.Background(), client.ObjectKey{Name: apiRule.Name, Namespace: apiRule.Namespace}, &a)
 		g.Expect(errors.IsNotFound(err)).To(BeTrue())
 	}, eventuallyTimeout).Should(Succeed())
 }
@@ -554,7 +554,7 @@ func deleteVirtualServices() {
 	Eventually(func(g Gomega) {
 		By("Checking if VirtualServices exists as part of teardown")
 		list := networkingv1beta1.VirtualServiceList{}
-		Expect(k8sClient.List(context.TODO(), &list)).Should(Succeed())
+		Expect(k8sClient.List(context.Background(), &list)).Should(Succeed())
 
 		for _, item := range list.Items {
 			virtualServiceTeardown(item)

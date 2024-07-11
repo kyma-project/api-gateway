@@ -25,11 +25,11 @@ var _ = Describe("status", func() {
 			newStatus := ErrorStatus(fmt.Errorf("test error"), "test description", nil)
 			k8sClient := createFakeClient(&cr)
 			// when
-			err := UpdateApiGatewayStatus(context.TODO(), k8sClient, &cr, newStatus)
+			err := UpdateApiGatewayStatus(context.Background(), k8sClient, &cr, newStatus)
 
 			// then
 			Expect(err).ToNot(HaveOccurred())
-			Expect(k8sClient.Get(context.TODO(), types.NamespacedName{Name: "test"}, &cr)).To(Succeed())
+			Expect(k8sClient.Get(context.Background(), types.NamespacedName{Name: "test"}, &cr)).To(Succeed())
 			Expect(cr.Status.State).To(Equal(operatorv1alpha1.Error))
 			Expect(cr.Status.Description).To(Equal("test description"))
 		})
@@ -43,7 +43,7 @@ var _ = Describe("status", func() {
 			newStatus := ReadyStatus(nil)
 			k8sClient := fake.NewClientBuilder().Build()
 			// when
-			err := UpdateApiGatewayStatus(context.TODO(), k8sClient, &cr, newStatus)
+			err := UpdateApiGatewayStatus(context.Background(), k8sClient, &cr, newStatus)
 
 			// then
 			Expect(err).To(HaveOccurred())
@@ -60,7 +60,7 @@ var _ = Describe("status", func() {
 			k8sClient := createFakeClient(&cr)
 
 			// when
-			err := UpdateApiGatewayStatus(context.TODO(), k8sClient, &cr, status)
+			err := UpdateApiGatewayStatus(context.Background(), k8sClient, &cr, status)
 			result := status.Condition()
 			ok := reflect.DeepEqual(result, expected)
 
