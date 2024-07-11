@@ -38,8 +38,8 @@ var _ = Describe("Resource status", Serial, func() {
 			svc := testService(serviceName, testNamespace, testServicePort)
 
 			// when
-			Expect(c.Create(context.TODO(), svc)).Should(Succeed())
-			Expect(c.Create(context.TODO(), instance)).Should(Succeed())
+			Expect(c.Create(context.Background(), svc)).Should(Succeed())
+			Expect(c.Create(context.Background(), instance)).Should(Succeed())
 			defer func() {
 				apiRuleTeardown(instance)
 				serviceTeardown(svc)
@@ -48,7 +48,7 @@ var _ = Describe("Resource status", Serial, func() {
 			// then
 			Eventually(func(g Gomega) {
 				created := gatewayv1beta1.APIRule{}
-				g.Expect(c.Get(context.TODO(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &created)).Should(Succeed())
+				g.Expect(c.Get(context.Background(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &created)).Should(Succeed())
 				g.Expect(created.Status.APIRuleStatus).NotTo(BeNil())
 				g.Expect(created.Status.APIRuleStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
 				g.Expect(created.Status.VirtualServiceStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
@@ -77,8 +77,8 @@ var _ = Describe("Resource status", Serial, func() {
 			svc := testService(serviceName, testNamespace, testServicePort)
 
 			// when
-			Expect(c.Create(context.TODO(), svc)).Should(Succeed())
-			Expect(c.Create(context.TODO(), instance)).Should(Succeed())
+			Expect(c.Create(context.Background(), svc)).Should(Succeed())
+			Expect(c.Create(context.Background(), instance)).Should(Succeed())
 			defer func() {
 				apiRuleTeardown(instance)
 				serviceTeardown(svc)
@@ -87,7 +87,7 @@ var _ = Describe("Resource status", Serial, func() {
 			// then
 			Eventually(func(g Gomega) {
 				created := gatewayv1beta1.APIRule{}
-				Expect(c.Get(context.TODO(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &created)).Should(Succeed())
+				Expect(c.Get(context.Background(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &created)).Should(Succeed())
 
 				g.Expect(created.Status.APIRuleStatus).NotTo(BeNil())
 				g.Expect(created.Status.APIRuleStatus.Code).To(Equal(gatewayv1beta1.StatusError))
@@ -123,8 +123,8 @@ var _ = Describe("Resource status", Serial, func() {
 			svc := testService(serviceName, testNamespace, testServicePort)
 
 			// when
-			Expect(c.Create(context.TODO(), svc)).Should(Succeed())
-			Expect(c.Create(context.TODO(), instance)).Should(Succeed())
+			Expect(c.Create(context.Background(), svc)).Should(Succeed())
+			Expect(c.Create(context.Background(), instance)).Should(Succeed())
 			defer func() {
 				apiRuleTeardown(instance)
 				serviceTeardown(svc)
@@ -133,7 +133,7 @@ var _ = Describe("Resource status", Serial, func() {
 			// then
 			Eventually(func(g Gomega) {
 				created := gatewayv1beta1.APIRule{}
-				Expect(c.Get(context.TODO(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &created)).Should(Succeed())
+				Expect(c.Get(context.Background(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &created)).Should(Succeed())
 				g.Expect(created.Status.APIRuleStatus).NotTo(BeNil())
 				g.Expect(created.Status.APIRuleStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
 				g.Expect(created.Status.VirtualServiceStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
@@ -161,8 +161,8 @@ var _ = Describe("Resource status", Serial, func() {
 			svc := testService(serviceName, testNamespace, testServicePort)
 
 			// when
-			Expect(c.Create(context.TODO(), svc)).Should(Succeed())
-			Expect(c.Create(context.TODO(), instance)).Should(Succeed())
+			Expect(c.Create(context.Background(), svc)).Should(Succeed())
+			Expect(c.Create(context.Background(), instance)).Should(Succeed())
 			defer func() {
 				apiRuleTeardown(instance)
 				serviceTeardown(svc)
@@ -171,7 +171,7 @@ var _ = Describe("Resource status", Serial, func() {
 			// then
 			Eventually(func(g Gomega) {
 				created := gatewayv1beta1.APIRule{}
-				Expect(c.Get(context.TODO(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &created)).Should(Succeed())
+				Expect(c.Get(context.Background(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &created)).Should(Succeed())
 				g.Expect(created.Status.APIRuleStatus).NotTo(BeNil())
 				g.Expect(created.Status.APIRuleStatus.Code).To(Equal(gatewayv1beta1.StatusError))
 				g.Expect(created.Status.APIRuleStatus.Description).To(ContainSubstring("Multiple validation errors:"))

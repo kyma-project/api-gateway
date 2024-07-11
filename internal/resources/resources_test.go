@@ -36,7 +36,7 @@ var _ = Describe("Resources", func() {
 		Expect(err != nil).To(Equal(wantErr))
 		Expect(got).To(BeEquivalentTo(want))
 	},
-		Entry("Should get nothing if there are only managed API-Gateway resources present", context.TODO(),
+		Entry("Should get nothing if there are only managed API-Gateway resources present", context.Background(),
 			logr.Discard(),
 			fake.NewClientBuilder().WithScheme(sc).WithObjects(&v1beta1.APIRule{
 				ObjectMeta: metav1.ObjectMeta{
@@ -63,7 +63,7 @@ var _ = Describe("Resources", func() {
 			true,
 			nil,
 			false,
-		), Entry("Should get resource if there is a customer resource present", context.TODO(),
+		), Entry("Should get resource if there is a customer resource present", context.Background(),
 			logr.Discard(),
 			fake.NewClientBuilder().WithScheme(sc).WithObjects(&v1beta1.APIRule{
 				ObjectMeta: metav1.ObjectMeta{
@@ -106,7 +106,7 @@ var _ = Describe("Resources", func() {
 				},
 			},
 			false,
-		), Entry("Should get resource if there is a customer resource present in a specific version only", context.TODO(),
+		), Entry("Should get resource if there is a customer resource present in a specific version only", context.Background(),
 			logr.Discard(),
 			fake.NewClientBuilder().WithScheme(sc).WithObjects(&networkingv1beta1.VirtualService{
 				ObjectMeta: metav1.ObjectMeta{
@@ -145,7 +145,7 @@ var _ = Describe("Resources", func() {
 				},
 			},
 			false,
-		), Entry("Should not get resource if there is a customer resource present but condition check returns false", context.TODO(),
+		), Entry("Should not get resource if there is a customer resource present but condition check returns false", context.Background(),
 			logr.Discard(),
 			fake.NewClientBuilder().WithScheme(sc).WithObjects(&v1beta1.APIRule{
 				ObjectMeta: metav1.ObjectMeta{
@@ -171,10 +171,10 @@ var _ = Describe("Resources", func() {
 
 var _ = Describe("NewResourcesFinderFromConfigYaml", func() {
 	It("Should read configuration from yaml", func() {
-		config, err := NewResourcesFinderFromConfigYaml(context.TODO(), nil, logr.Logger{}, "test_assets/test_resources_list.yaml")
+		config, err := NewResourcesFinderFromConfigYaml(context.Background(), nil, logr.Logger{}, "test_assets/test_resources_list.yaml")
 		Expect(err).ToNot(HaveOccurred())
 		Expect(config).To(BeEquivalentTo(&ResourcesFinder{
-			ctx:    context.TODO(),
+			ctx:    context.Background(),
 			logger: logr.Logger{},
 			client: nil,
 			configuration: resourceFinderConfiguration{
@@ -199,7 +199,7 @@ var _ = Describe("NewResourcesFinderFromConfigYaml", func() {
 	})
 
 	It("Should fail if the configuration contains invalid regex", func() {
-		_, err := NewResourcesFinderFromConfigYaml(context.TODO(), nil, logr.Logger{}, "test_assets/test_wrong_resources_list.yaml")
+		_, err := NewResourcesFinderFromConfigYaml(context.Background(), nil, logr.Logger{}, "test_assets/test_wrong_resources_list.yaml")
 		Expect(err).To(HaveOccurred())
 	})
 })

@@ -45,8 +45,8 @@ var _ = Describe("APIRule timeout", Serial, func() {
 				svc := testService(serviceName, testNamespace, testServicePort)
 
 				// when
-				Expect(c.Create(context.TODO(), svc)).Should(Succeed())
-				Expect(c.Create(context.TODO(), apiRule)).Should(Succeed())
+				Expect(c.Create(context.Background(), svc)).Should(Succeed())
+				Expect(c.Create(context.Background(), apiRule)).Should(Succeed())
 				defer func() {
 					apiRuleTeardown(apiRule)
 					serviceTeardown(svc)
@@ -59,7 +59,7 @@ var _ = Describe("APIRule timeout", Serial, func() {
 				By("Verifying created virtual service")
 				vsList := networkingv1beta1.VirtualServiceList{}
 				Eventually(func(g Gomega) {
-					g.Expect(c.List(context.TODO(), &vsList, matchingLabels)).Should(Succeed())
+					g.Expect(c.List(context.Background(), &vsList, matchingLabels)).Should(Succeed())
 					g.Expect(vsList.Items).To(HaveLen(1))
 
 					vs := vsList.Items[0]
@@ -103,8 +103,8 @@ var _ = Describe("APIRule timeout", Serial, func() {
 				svc := testService(serviceName, testNamespace, testServicePort)
 
 				// when
-				Expect(c.Create(context.TODO(), svc)).Should(Succeed())
-				Expect(c.Create(context.TODO(), apiRule)).Should(Succeed())
+				Expect(c.Create(context.Background(), svc)).Should(Succeed())
+				Expect(c.Create(context.Background(), apiRule)).Should(Succeed())
 				defer func() {
 					apiRuleTeardown(apiRule)
 					serviceTeardown(svc)
@@ -117,7 +117,7 @@ var _ = Describe("APIRule timeout", Serial, func() {
 				By("Verifying created virtual service")
 				vsList := networkingv1beta1.VirtualServiceList{}
 				Eventually(func(g Gomega) {
-					g.Expect(c.List(context.TODO(), &vsList, matchingLabels)).Should(Succeed())
+					g.Expect(c.List(context.Background(), &vsList, matchingLabels)).Should(Succeed())
 					g.Expect(vsList.Items).To(HaveLen(1))
 
 					vs := vsList.Items[0]
@@ -136,8 +136,8 @@ var _ = Describe("APIRule timeout", Serial, func() {
 				svc := testService(serviceName, testNamespace, testServicePort)
 
 				// when
-				Expect(c.Create(context.TODO(), svc)).Should(Succeed())
-				Expect(c.Create(context.TODO(), apiRule)).Should(Succeed())
+				Expect(c.Create(context.Background(), svc)).Should(Succeed())
+				Expect(c.Create(context.Background(), apiRule)).Should(Succeed())
 				defer func() {
 					apiRuleTeardown(apiRule)
 					serviceTeardown(svc)
@@ -150,7 +150,7 @@ var _ = Describe("APIRule timeout", Serial, func() {
 				By("Verifying created virtual service")
 				vsList := networkingv1beta1.VirtualServiceList{}
 				Eventually(func(g Gomega) {
-					g.Expect(c.List(context.TODO(), &vsList, matchingLabels)).Should(Succeed())
+					g.Expect(c.List(context.Background(), &vsList, matchingLabels)).Should(Succeed())
 					g.Expect(vsList.Items).To(HaveLen(1))
 
 					vs := vsList.Items[0]
@@ -212,7 +212,7 @@ var _ = Describe("APIRule timeout", Serial, func() {
 				apiRule.Spec.Timeout = &timeout
 
 				// when
-				err := c.Create(context.TODO(), apiRule)
+				err := c.Create(context.Background(), apiRule)
 
 				// then
 				Expect(err).Should(HaveOccurred())
@@ -228,7 +228,7 @@ var _ = Describe("APIRule timeout", Serial, func() {
 				apiRule := testApiRule(apiRuleName, testNamespace, serviceName, testNamespace, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule})
 
 				// when
-				err := c.Create(context.TODO(), apiRule)
+				err := c.Create(context.Background(), apiRule)
 
 				// then
 				Expect(err).Should(HaveOccurred())
@@ -289,7 +289,7 @@ var _ = Describe("APIRule timeout", Serial, func() {
 				apiRule.Spec.Timeout = &timeout
 
 				// when
-				err := c.Create(context.TODO(), apiRule)
+				err := c.Create(context.Background(), apiRule)
 
 				// then
 				Expect(err).Should(HaveOccurred())
@@ -305,7 +305,7 @@ var _ = Describe("APIRule timeout", Serial, func() {
 				apiRule := testApiRule(apiRuleName, testNamespace, serviceName, testNamespace, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule})
 
 				// when
-				err := c.Create(context.TODO(), apiRule)
+				err := c.Create(context.Background(), apiRule)
 
 				// then
 				Expect(err).Should(HaveOccurred())

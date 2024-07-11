@@ -195,11 +195,11 @@ func (m *Manager) CreateOrUpdateResourcesGVR(client dynamic.Interface, resources
 		if err != nil {
 			return nil, err
 		}
-		_, err = client.Resource(*gvr).Namespace(res.GetNamespace()).Get(context.TODO(), res.GetName(), metav1.GetOptions{})
+		_, err = client.Resource(*gvr).Namespace(res.GetNamespace()).Get(context.Background(), res.GetName(), metav1.GetOptions{})
 
 		if err != nil {
 			if apierrors.IsNotFound(err) {
-				_, err := client.Resource(*gvr).Namespace(res.GetNamespace()).Create(context.TODO(), &res, metav1.CreateOptions{})
+				_, err := client.Resource(*gvr).Namespace(res.GetNamespace()).Create(context.Background(), &res, metav1.CreateOptions{})
 				if err != nil {
 					return nil, err
 				}
