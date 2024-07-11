@@ -10,19 +10,20 @@ import (
 
 func validateRules(ctx context.Context, client client.Client, parentAttributePath string, apiRule *gatewayv2alpha1.APIRule) []validation.Failure {
 	var problems []validation.Failure
+	rulesAttributePath := parentAttributePath + ".rules"
 
 	rules := apiRule.Spec.Rules
 	if len(rules) == 0 {
-		problems = append(problems, validation.Failure{AttributePath: parentAttributePath, Message: "No rules defined"})
+		problems = append(problems, validation.Failure{AttributePath: rulesAttributePath, Message: "No rules defined"})
 		return problems
 	}
 
 	if hasPathAndMethodDuplicates(rules) {
-		problems = append(problems, validation.Failure{AttributePath: parentAttributePath, Message: "multiple rules defined for the same path and method"})
+		problems = append(problems, validation.Failure{AttributePath: rulesAttributePath, Message: "multiple rules defined for the same path and method"})
 	}
 
 	for i, rule := range rules {
-		ruleAttributePath := fmt.Sprintf("%s[%d]", parentAttributePath, i)
+		ruleAttributePath := fmt.Sprintf("%s[%d]", rulesAttributePath, i)
 
 		if apiRule.Spec.Service == nil && rule.Service == nil {
 			problems = append(problems, validation.Failure{AttributePath: ruleAttributePath + ".service", Message: "The rule must define a service, because no service is defined on spec level"})
@@ -42,7 +43,7 @@ func validateRules(ctx context.Context, client client.Client, parentAttributePat
 
 	}
 
-	jwtAuthFailures := validateJwtAuthenticationEquality(".spec.rules", rules)
+	jwtAuthFailures := validateJwtAuthenticationEquality(rulesAttributePath, rules)
 	problems = append(problems, jwtAuthFailures...)
 
 	return problems

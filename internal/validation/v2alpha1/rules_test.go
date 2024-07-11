@@ -28,7 +28,7 @@ var _ = Describe("Validate rules", func() {
 		fakeClient := createFakeClient(service)
 
 		//when
-		problems := validateRules(context.Background(), fakeClient, ".spec.rules", apiRule)
+		problems := validateRules(context.Background(), fakeClient, ".spec", apiRule)
 
 		//then
 		Expect(problems).To(HaveLen(1))
@@ -54,7 +54,7 @@ var _ = Describe("Validate rules", func() {
 		fakeClient := createFakeClient(service)
 
 		//when
-		problems := validateRules(context.Background(), fakeClient, ".spec.rules", apiRule)
+		problems := validateRules(context.Background(), fakeClient, ".spec", apiRule)
 
 		//then
 		Expect(problems).To(HaveLen(1))
@@ -96,7 +96,7 @@ var _ = Describe("Validate rules", func() {
 		fakeClient := createFakeClient(service)
 
 		//when
-		problems := validateRules(context.Background(), fakeClient, ".spec.rules", apiRule)
+		problems := validateRules(context.Background(), fakeClient, ".spec", apiRule)
 
 		//then
 		Expect(problems).To(HaveLen(2))
@@ -132,7 +132,7 @@ var _ = Describe("Validate rules", func() {
 		fakeClient := createFakeClient(service)
 
 		//when
-		problems := validateRules(context.Background(), fakeClient, ".spec.rules", apiRule)
+		problems := validateRules(context.Background(), fakeClient, ".spec", apiRule)
 
 		//then
 		Expect(problems).To(HaveLen(1))
@@ -168,7 +168,7 @@ var _ = Describe("Validate rules", func() {
 		fakeClient := createFakeClient(service)
 
 		//when
-		problems := validateRules(context.Background(), fakeClient, ".spec.rules", apiRule)
+		problems := validateRules(context.Background(), fakeClient, ".spec", apiRule)
 
 		//then
 		Expect(problems).To(HaveLen(0))
@@ -195,7 +195,7 @@ var _ = Describe("Validate rules", func() {
 		fakeClient := createFakeClient(service)
 
 		//when
-		problems := validateRules(context.Background(), fakeClient, ".spec.rules", apiRule)
+		problems := validateRules(context.Background(), fakeClient, ".spec", apiRule)
 
 		//then
 		Expect(problems).To(HaveLen(0))
@@ -222,7 +222,7 @@ var _ = Describe("Validate rules", func() {
 		fakeClient := createFakeClient(service)
 
 		//when
-		problems := validateRules(context.Background(), fakeClient, ".spec.rules", apiRule)
+		problems := validateRules(context.Background(), fakeClient, ".spec", apiRule)
 
 		//then
 		Expect(problems).To(HaveLen(0))
@@ -248,7 +248,7 @@ var _ = Describe("Validate rules", func() {
 		fakeClient := createFakeClient(service)
 
 		//when
-		problems := validateRules(context.Background(), fakeClient, ".spec.rules", apiRule)
+		problems := validateRules(context.Background(), fakeClient, ".spec", apiRule)
 
 		//then
 		Expect(problems).To(HaveLen(0))
@@ -274,7 +274,7 @@ var _ = Describe("Validate rules", func() {
 		fakeClient := createFakeClient(service)
 
 		//when
-		problems := validateRules(context.Background(), fakeClient, ".spec.rules", apiRule)
+		problems := validateRules(context.Background(), fakeClient, ".spec", apiRule)
 
 		//then
 		Expect(problems).To(HaveLen(0))
@@ -308,7 +308,7 @@ var _ = Describe("Validate rules", func() {
 		fakeClient := createFakeClient(service)
 
 		//when
-		problems := validateRules(context.Background(), fakeClient, ".spec.rules", apiRule)
+		problems := validateRules(context.Background(), fakeClient, ".spec", apiRule)
 
 		// then
 		Expect(problems).To(HaveLen(1))

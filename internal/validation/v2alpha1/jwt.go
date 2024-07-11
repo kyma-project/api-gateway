@@ -16,10 +16,10 @@ func validateJwt(parentAttributePath string, rule *gatewayv2alpha1.Rule) []valid
 		return nil
 	}
 
-	parentAttributePath = fmt.Sprintf("%s%s", parentAttributePath, ".jwt")
+	jwtAttributePath := parentAttributePath + ".jwt"
 
-	failures = append(failures, hasInvalidAuthorizations(parentAttributePath, rule.Jwt.Authorizations)...)
-	failures = append(failures, hasInvalidAuthentications(parentAttributePath, rule.Jwt.Authentications)...)
+	failures = append(failures, hasInvalidAuthorizations(jwtAttributePath, rule.Jwt.Authorizations)...)
+	failures = append(failures, hasInvalidAuthentications(jwtAttributePath, rule.Jwt.Authentications)...)
 
 	return failures
 }
@@ -56,7 +56,7 @@ func hasInvalidAudiences(authorization gatewayv2alpha1.JwtAuthorization) error {
 
 func hasInvalidAuthentications(parentAttributePath string, authentications []*gatewayv2alpha1.JwtAuthentication) []validation.Failure {
 	var failures []validation.Failure
-	authenticationsAttrPath := fmt.Sprintf("%s%s", parentAttributePath, ".authentications")
+	authenticationsAttrPath := parentAttributePath + ".authentications"
 
 	hasFromHeaders, hasFromParams := false, false
 	if len(authentications) == 0 {
@@ -107,7 +107,7 @@ func hasInvalidAuthentications(parentAttributePath string, authentications []*ga
 
 func hasInvalidAuthorizations(parentAttributePath string, authorizations []*gatewayv2alpha1.JwtAuthorization) []validation.Failure {
 	var failures []validation.Failure
-	authorizationsAttrPath := fmt.Sprintf("%s%s", parentAttributePath, ".authorizations")
+	authorizationsAttrPath := parentAttributePath + ".authorizations"
 
 	if authorizations == nil {
 		return nil
