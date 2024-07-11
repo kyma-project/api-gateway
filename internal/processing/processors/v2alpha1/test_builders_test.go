@@ -138,12 +138,23 @@ func newAPIRuleBuilder() *apiRuleBuilder {
 	}
 }
 
+// newAPIRuleBuilderWithDummyData returns an APIRuleBuilder pre-filled with placeholder data:
+//
+// Host: example-host.example.com
+//
+// Gateway: example-namespace/example-gateway
+//
+// Service: example-namespace/example-service:8080
+//
+// Rule: GET /
+//
+// Strategy: NoAuth
 func newAPIRuleBuilderWithDummyData() *apiRuleBuilder {
 	return newAPIRuleBuilder().
-		WithHost("dummy-host.dummy.com").
-		WithGateway("dummy-namespace/dummy-gateway").
-		WithService("dummy-service", "dummy-namespace", 8080).
-		WithRule(*newRuleBuilder().WithMethods(http.MethodGet).NoAuth().Build())
+		WithHost("example-host.example.com").
+		WithGateway("example-namespace/example-gateway").
+		WithService("example-service", "example-namespace", 8080).
+		WithRule(*newRuleBuilder().WithMethods(http.MethodGet).WithPath("/").NoAuth().Build())
 }
 
 type corsPolicyBuilder struct {

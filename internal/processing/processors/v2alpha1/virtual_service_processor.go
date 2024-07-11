@@ -138,7 +138,8 @@ func (r virtualServiceCreator) Create(api *gatewayv2alpha1.APIRule) (*networking
 
 		headersBuilder := builders.NewHttpRouteHeadersBuilder().
 			// For now, the X-Forwarded-Host header is set to the first host in the APIRule hosts list.
-			// This should be clarified how to resolve in the future.
+			// The status of this header is still under discussion in the following GitHub issue:
+			// https://github.com/kyma-project/api-gateway/issues/1159
 			SetHostHeader(default_domain.GetHostWithDomain(string(*api.Spec.Hosts[0]), r.defaultDomainName))
 
 		if api.Spec.CorsPolicy != nil {

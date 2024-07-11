@@ -79,28 +79,36 @@ var _ = Describe("CORS", func() {
 				},
 			}, "create"),
 
-		Entry("should set CORS configuration in VirtualService CORSPolicy when CORS configuration is set in APIRule",
+		Entry("should apply all CORSPolicy headers correctly",
 			newAPIRuleBuilderWithDummyData().WithCORSPolicy(
 				newCorsPolicyBuilder().
-					WithAllowOrigins([]map[string]string{{"exact": "dummy.com"}}).
+					WithAllowOrigins([]map[string]string{{"exact": "example.com"}}).
+					WithAllowMethods([]string{"GET", "POST"}).
+					WithAllowHeaders([]string{"header1", "header2"}).
+					WithExposeHeaders([]string{"header3", "header4"}).
+					WithAllowCredentials(true).
+					WithMaxAge(600).
 					Build()).
 				Build(),
-			[]verifier{
-				func(vs *networkingv1beta1.VirtualService) {
-					Expect(vs.Spec.Http[0].CorsPolicy).NotTo(BeNil())
-					Expect(vs.Spec.Http[0].CorsPolicy.AllowOrigins).To(HaveLen(1))
-					Expect(vs.Spec.Http[0].CorsPolicy.AllowOrigins[0]).To(Equal(&istioapiv1beta1.StringMatch{MatchType: &istioapiv1beta1.StringMatch_Exact{Exact: "dummy.com"}}))
+			[]verifier{func(vs *networkingv1beta1.VirtualService) {
+				Expect(vs.Spec.Http[0].CorsPolicy).NotTo(BeNil())
+				Expect(vs.Spec.Http[0].CorsPolicy.AllowOrigins).To(HaveLen(1))
+				Expect(vs.Spec.Http[0].CorsPolicy.AllowOrigins[0]).To(Equal(&istioapiv1beta1.StringMatch{MatchType: &istioapiv1beta1.StringMatch_Exact{Exact: "example.com"}}))
+				Expect(vs.Spec.Http[0].CorsPolicy.AllowMethods).To(ConsistOf("GET", "POST"))
+				Expect(vs.Spec.Http[0].CorsPolicy.AllowHeaders).To(ConsistOf("header1", "header2"))
+				Expect(vs.Spec.Http[0].CorsPolicy.ExposeHeaders).To(ConsistOf("header3", "header4"))
+				Expect(vs.Spec.Http[0].CorsPolicy.AllowCredentials.GetValue()).To(BeTrue())
+				Expect(vs.Spec.Http[0].CorsPolicy.MaxAge.Seconds).To(Equal(int64(600)))
 
-					Expect(vs.Spec.Http[0].Headers.Response.Remove).To(ConsistOf([]string{
-						builders.ExposeHeadersName,
-						builders.MaxAgeName,
-						builders.AllowHeadersName,
-						builders.AllowCredentialsName,
-						builders.AllowMethodsName,
-						builders.AllowOriginName,
-					}))
-				},
-			}, "create"),
+				Expect(vs.Spec.Http[0].Headers.Response.Remove).To(ConsistOf([]string{
+					builders.ExposeHeadersName,
+					builders.MaxAgeName,
+					builders.AllowHeadersName,
+					builders.AllowCredentialsName,
+					builders.AllowMethodsName,
+					builders.AllowOriginName,
+				}))
+			}}, "create"),
 	)
 })
 
