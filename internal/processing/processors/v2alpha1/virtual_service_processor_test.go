@@ -197,7 +197,7 @@ var _ = Describe("GetVirtualServiceHttpTimeout", func() {
 		timeout := processors.GetVirtualServiceHttpTimeout(apiRuleSpec, rule)
 
 		// then
-		Expect(timeout).To(Equal(uint32(10)))
+		Expect(timeout).To(Equal(uint32(20)))
 	})
 })
 
