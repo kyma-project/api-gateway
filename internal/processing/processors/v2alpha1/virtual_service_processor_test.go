@@ -6,15 +6,125 @@ import (
 	"github.com/kyma-project/api-gateway/internal/builders"
 	. "github.com/kyma-project/api-gateway/internal/processing/processing_test"
 	processors "github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1"
-	istioapiv1beta1 "istio.io/api/networking/v1beta1"
-	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
-	"k8s.io/utils/ptr"
-
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-
+	istioapiv1beta1 "istio.io/api/networking/v1beta1"
+	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
+
+var _ = Describe("ObjectChange", func() {
+	It("should return create action when there is no VirtualService on cluster", func() {
+		// given
+		processor := processors.VirtualServiceProcessor{
+			ApiRule: &gatewayv2alpha1.APIRule{},
+			Creator: mockVirtualServiceCreator{},
+		}
+
+		// when
+		result, err := processor.EvaluateReconciliation(context.Background(), GetFakeClient())
+
+		// then
+		Expect(err).To(BeNil())
+		Expect(result).To(HaveLen(1))
+		Expect(result[0].Action.String()).To(Equal("create"))
+	})
+
+	It("should return update action when there is a matching VirtualService on cluster", func() {
+		// given
+		apiRuleBuilder := newAPIRuleBuilderWithDummyData()
+		processor := processors.NewVirtualServiceProcessor(GetTestConfig(), apiRuleBuilder.Build())
+		result, err := processor.EvaluateReconciliation(context.Background(), GetFakeClient())
+
+		Expect(err).To(BeNil())
+		Expect(result).To(HaveLen(1))
+		Expect(result[0].Action.String()).To(Equal("create"))
+
+		// when
+		processor = processors.NewVirtualServiceProcessor(GetTestConfig(), apiRuleBuilder.WithHosts("newHost.com").Build())
+		result, err = processor.EvaluateReconciliation(context.Background(), GetFakeClient(result[0].Obj.(*networkingv1beta1.VirtualService)))
+
+		// then
+		Expect(err).To(BeNil())
+		Expect(result).To(HaveLen(1))
+		Expect(result[0].Action.String()).To(Equal("update"))
+	})
+})
+
+var _ = Describe("Fully configured APIRule happy path", func() {
+	It("should create a VirtualService with all the configured values", func() {
+		apiRule := newAPIRuleBuilder().
+			WithGateway("example/example").
+			WithHosts("example.com", "goat.com").
+			WithService("example-service", "example-namespace", 8080).
+			WithTimeout(180).
+			WithCORSPolicy(newCorsPolicyBuilder().
+				WithAllowOrigins([]map[string]string{{"exact": "example.com"}}).
+				WithAllowMethods([]string{"GET", "POST"}).
+				WithAllowHeaders([]string{"header1", "header2"}).
+				WithExposeHeaders([]string{"header3", "header4"}).
+				WithAllowCredentials(true).
+				WithMaxAge(600).
+				Build()).
+			WithRules(
+				newRuleBuilder().
+					WithService("another-service", "another-namespace", 9999).
+					WithMethods("GET", "POST").
+					WithPath("/").
+					WithJWTAuthn("example.com", "https://jwks.example.com", nil, nil).
+					WithTimeout(10).Build(),
+
+				newRuleBuilder().
+					WithMethods("PUT").
+					WithPath("/*").
+					NoAuth().Build(),
+			).
+			Build()
+
+		client := GetFakeClient()
+		processor := processors.NewVirtualServiceProcessor(GetTestConfig(), apiRule)
+		checkVirtualServices(client, processor, []verifier{
+			func(vs *networkingv1beta1.VirtualService) {
+				Expect(vs.Spec.Hosts).To(ConsistOf("example.com", "goat.com"))
+				Expect(vs.Spec.Gateways).To(ConsistOf("example/example"))
+				Expect(vs.Spec.Http).To(HaveLen(2))
+
+				Expect(vs.Spec.Http[0].Match[0].Method.GetRegex()).To(Equal("^(GET|POST)$"))
+				Expect(vs.Spec.Http[0].Match[0].Uri.GetRegex()).To(Equal("/"))
+				Expect(vs.Spec.Http[0].Route[0].Destination.Host).To(Equal("another-service.another-namespace.svc.cluster.local"))
+				Expect(vs.Spec.Http[0].Route[0].Destination.Port.Number).To(Equal(uint32(9999)))
+
+				Expect(vs.Spec.Http[0].CorsPolicy).NotTo(BeNil())
+				Expect(vs.Spec.Http[0].CorsPolicy.AllowOrigins).To(HaveLen(1))
+				Expect(vs.Spec.Http[0].CorsPolicy.AllowOrigins[0]).To(Equal(&istioapiv1beta1.StringMatch{MatchType: &istioapiv1beta1.StringMatch_Exact{Exact: "example.com"}}))
+				Expect(vs.Spec.Http[0].CorsPolicy.AllowMethods).To(ConsistOf("GET", "POST"))
+				Expect(vs.Spec.Http[0].CorsPolicy.AllowHeaders).To(ConsistOf("header1", "header2"))
+				Expect(vs.Spec.Http[0].CorsPolicy.ExposeHeaders).To(ConsistOf("header3", "header4"))
+				Expect(vs.Spec.Http[0].CorsPolicy.AllowCredentials.GetValue()).To(BeTrue())
+				Expect(vs.Spec.Http[0].CorsPolicy.MaxAge.Seconds).To(Equal(int64(600)))
+
+				Expect(vs.Spec.Http[0].Timeout.Seconds).To(Equal(int64(10)))
+
+				Expect(vs.Spec.Http[1].Match[0].Method.GetRegex()).To(Equal("^(PUT)$"))
+				Expect(vs.Spec.Http[1].Match[0].Uri.GetPrefix()).To(Equal("/"))
+				Expect(vs.Spec.Http[1].Route[0].Destination.Host).To(Equal("example-service.example-namespace.svc.cluster.local"))
+				Expect(vs.Spec.Http[1].Route[0].Destination.Port.Number).To(Equal(uint32(8080)))
+
+				Expect(vs.Spec.Http[1].CorsPolicy).NotTo(BeNil())
+				Expect(vs.Spec.Http[1].CorsPolicy.AllowOrigins).To(HaveLen(1))
+				Expect(vs.Spec.Http[1].CorsPolicy.AllowOrigins[0]).To(Equal(&istioapiv1beta1.StringMatch{MatchType: &istioapiv1beta1.StringMatch_Exact{Exact: "example.com"}}))
+				Expect(vs.Spec.Http[1].CorsPolicy.AllowMethods).To(ConsistOf("GET", "POST"))
+				Expect(vs.Spec.Http[1].CorsPolicy.AllowHeaders).To(ConsistOf("header1", "header2"))
+				Expect(vs.Spec.Http[1].CorsPolicy.ExposeHeaders).To(ConsistOf("header3", "header4"))
+				Expect(vs.Spec.Http[1].CorsPolicy.AllowCredentials.GetValue()).To(BeTrue())
+				Expect(vs.Spec.Http[1].CorsPolicy.MaxAge.Seconds).To(Equal(int64(600)))
+
+				Expect(vs.Spec.Http[1].Timeout.Seconds).To(Equal(int64(180)))
+			},
+		}, "create")
+
+	})
+})
 
 var _ = Describe("VirtualServiceProcessor", func() {
 	It("should create virtual service when no virtual service exists", func() {
@@ -48,158 +158,6 @@ func checkVirtualServices(c client.Client, processor processors.VirtualServicePr
 }
 
 type verifier func(*networkingv1beta1.VirtualService)
-
-var _ = Describe("Hosts", func() {
-	var client client.Client
-	var processor processors.VirtualServiceProcessor
-	BeforeEach(func() {
-		client = GetFakeClient()
-	})
-
-	DescribeTable("Hosts",
-		func(apiRule *gatewayv2alpha1.APIRule, verifiers []verifier, expectedActions ...string) {
-			processor = processors.NewVirtualServiceProcessor(GetTestConfig(), apiRule)
-			checkVirtualServices(client, processor, verifiers, expectedActions...)
-		},
-
-		Entry("should set the host correctly",
-			newAPIRuleBuilder().WithGateway("example/example").WithHost("example.com").Build(),
-			[]verifier{
-				func(vs *networkingv1beta1.VirtualService) {
-					Expect(vs.Spec.Hosts).To(ConsistOf("example.com"))
-				},
-			}, "create"),
-
-		Entry("should set multiple hosts correctly",
-			newAPIRuleBuilder().WithGateway("example/example").WithHosts("example.com", "goat.com").Build(),
-			[]verifier{
-				func(vs *networkingv1beta1.VirtualService) {
-					Expect(vs.Spec.Hosts).To(ConsistOf("example.com", "goat.com"))
-				},
-			}, "create"),
-	)
-})
-
-var _ = Describe("CORS", func() {
-	var client client.Client
-	var processor processors.VirtualServiceProcessor
-	BeforeEach(func() {
-		client = GetFakeClient()
-	})
-
-	DescribeTable("CORS",
-		func(apiRule *gatewayv2alpha1.APIRule, verifiers []verifier, expectedActions ...string) {
-			processor = processors.NewVirtualServiceProcessor(GetTestConfig(), apiRule)
-			checkVirtualServices(client, processor, verifiers, expectedActions...)
-		},
-
-		Entry("should set default empty values in VirtualService CORSPolicy when no CORS configuration is set in APIRule",
-			newAPIRuleBuilderWithDummyData().Build(),
-			[]verifier{
-				func(vs *networkingv1beta1.VirtualService) {
-					Expect(vs.Spec.Http[0].CorsPolicy).To(BeNil())
-
-					Expect(vs.Spec.Http[0].Headers.Response.Remove).To(ConsistOf([]string{
-						builders.ExposeHeadersName,
-						builders.MaxAgeName,
-						builders.AllowHeadersName,
-						builders.AllowCredentialsName,
-						builders.AllowMethodsName,
-						builders.AllowOriginName,
-					}))
-				},
-			}, "create"),
-
-		Entry("should apply all CORSPolicy headers correctly",
-			newAPIRuleBuilderWithDummyData().WithCORSPolicy(
-				newCorsPolicyBuilder().
-					WithAllowOrigins([]map[string]string{{"exact": "example.com"}}).
-					WithAllowMethods([]string{"GET", "POST"}).
-					WithAllowHeaders([]string{"header1", "header2"}).
-					WithExposeHeaders([]string{"header3", "header4"}).
-					WithAllowCredentials(true).
-					WithMaxAge(600).
-					Build()).
-				Build(),
-			[]verifier{func(vs *networkingv1beta1.VirtualService) {
-				Expect(vs.Spec.Http[0].CorsPolicy).NotTo(BeNil())
-				Expect(vs.Spec.Http[0].CorsPolicy.AllowOrigins).To(HaveLen(1))
-				Expect(vs.Spec.Http[0].CorsPolicy.AllowOrigins[0]).To(Equal(&istioapiv1beta1.StringMatch{MatchType: &istioapiv1beta1.StringMatch_Exact{Exact: "example.com"}}))
-				Expect(vs.Spec.Http[0].CorsPolicy.AllowMethods).To(ConsistOf("GET", "POST"))
-				Expect(vs.Spec.Http[0].CorsPolicy.AllowHeaders).To(ConsistOf("header1", "header2"))
-				Expect(vs.Spec.Http[0].CorsPolicy.ExposeHeaders).To(ConsistOf("header3", "header4"))
-				Expect(vs.Spec.Http[0].CorsPolicy.AllowCredentials.GetValue()).To(BeTrue())
-				Expect(vs.Spec.Http[0].CorsPolicy.MaxAge.Seconds).To(Equal(int64(600)))
-
-				Expect(vs.Spec.Http[0].Headers.Response.Remove).To(ConsistOf([]string{
-					builders.ExposeHeadersName,
-					builders.MaxAgeName,
-					builders.AllowHeadersName,
-					builders.AllowCredentialsName,
-					builders.AllowMethodsName,
-					builders.AllowOriginName,
-				}))
-			}}, "create"),
-	)
-})
-
-var _ = Describe("GetVirtualServiceHttpTimeout", func() {
-	It("should return default of 180s when no timeout is set", func() {
-		// given
-		apiRuleSpec := gatewayv2alpha1.APIRuleSpec{}
-		rule := gatewayv2alpha1.Rule{}
-
-		// when
-		timeout := processors.GetVirtualServiceHttpTimeout(apiRuleSpec, rule)
-
-		// then
-		Expect(timeout).To(Equal(uint32(180)))
-	})
-
-	It("should return the timeout set in the rule when it is set and APIRule has different value", func() {
-		// given
-		apiRuleSpec := gatewayv2alpha1.APIRuleSpec{
-			Timeout: ptr.To(gatewayv2alpha1.Timeout(20)),
-		}
-		rule := gatewayv2alpha1.Rule{
-			Timeout: ptr.To(gatewayv2alpha1.Timeout(10)),
-		}
-
-		// when
-		timeout := processors.GetVirtualServiceHttpTimeout(apiRuleSpec, rule)
-
-		// then
-		Expect(timeout).To(Equal(uint32(10)))
-	})
-
-	It("should return the timeout set in the rule when it is set and APIRule timeout is not", func() {
-		// given
-		apiRuleSpec := gatewayv2alpha1.APIRuleSpec{}
-		rule := gatewayv2alpha1.Rule{
-			Timeout: ptr.To(gatewayv2alpha1.Timeout(10)),
-		}
-
-		// when
-		timeout := processors.GetVirtualServiceHttpTimeout(apiRuleSpec, rule)
-
-		// then
-		Expect(timeout).To(Equal(uint32(10)))
-	})
-
-	It("should return the timeout set in the APIRule it is set and rule timeout is not", func() {
-		// given
-		apiRuleSpec := gatewayv2alpha1.APIRuleSpec{
-			Timeout: ptr.To(gatewayv2alpha1.Timeout(20)),
-		}
-		rule := gatewayv2alpha1.Rule{}
-
-		// when
-		timeout := processors.GetVirtualServiceHttpTimeout(apiRuleSpec, rule)
-
-		// then
-		Expect(timeout).To(Equal(uint32(20)))
-	})
-})
 
 type mockVirtualServiceCreator struct{}
 

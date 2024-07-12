@@ -103,9 +103,8 @@ func (r virtualServiceCreator) Create(api *gatewayv2alpha1.APIRule) (*networking
 	}
 
 	vsSpecBuilder.Gateway(*api.Spec.Gateway)
-	filteredRules := filterDuplicatePaths(api.Spec.Rules)
 
-	for _, rule := range filteredRules {
+	for _, rule := range api.Spec.Rules {
 		httpRouteBuilder := builders.HTTPRoute()
 		serviceNamespace := findServiceNamespace(api, &rule)
 

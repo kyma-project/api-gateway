@@ -55,19 +55,6 @@ func NewReconciliation(apiRuleV2alpha1 *gatewayv2alpha1.APIRule, apiRuleV1beta1 
 	}
 }
 
-func filterDuplicatePaths(rules []gatewayv2alpha1.Rule) []gatewayv2alpha1.Rule {
-	duplicates := make(map[string]bool)
-	var filteredRules []gatewayv2alpha1.Rule
-	for _, rule := range rules {
-		if _, exists := duplicates[rule.Path]; !exists {
-			duplicates[rule.Path] = true
-			filteredRules = append(filteredRules, rule)
-		}
-	}
-
-	return filteredRules
-}
-
 func findServiceNamespace(api *gatewayv2alpha1.APIRule, rule *gatewayv2alpha1.Rule) string {
 	// Fallback direction for the upstream service namespace: Rule.Service > Spec.Service > APIRule
 	if rule != nil && rule.Service != nil && rule.Service.Namespace != nil {
