@@ -19,8 +19,6 @@ func validateSidecarInjection(ctx context.Context, k8sClient client.Client, pare
 	if rule.Service != nil {
 		// We only need to consider the rule's service if it's set, since rule service takes precedence over spec service
 		ruleForLabelSelector = &rule
-	} else if apiRule.Spec.Service != nil {
-		ruleForLabelSelector = nil
 	}
 
 	serviceWorkloadSelector, err := getLabelSelectorFromService(ctx, k8sClient, apiRule.Spec.Service, apiRule, ruleForLabelSelector)

@@ -1,33 +1,52 @@
-package v2alpha1
+package v2alpha1_test
 
 import (
 	"context"
-	"github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
+	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
+	"github.com/kyma-project/api-gateway/internal/validation/v2alpha1"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/utils/ptr"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
 var _ = Describe("Validate", func() {
 
-	sampleServiceName := "some-service"
-	host := v2alpha1.Host(sampleServiceName + ".test.dev")
+	serviceName := "some-service"
+	host := gatewayv2alpha1.Host(serviceName + ".test.dev")
 
 	It("should invoke rules validation", func() {
 		//given
-		apiRule := &v2alpha1.APIRule{
-			Spec: v2alpha1.APIRuleSpec{
-				Rules:   nil,
-				Service: getApiRuleService(sampleServiceName, uint32(8080)),
-				Hosts:   []*v2alpha1.Host{&host},
+		apiRule := &gatewayv2alpha1.APIRule{
+			Spec: gatewayv2alpha1.APIRuleSpec{
+				Rules: nil,
+				Service: &gatewayv2alpha1.Service{
+					Name: ptr.To(serviceName),
+					Port: ptr.To(uint32(8080)),
+				},
+				Hosts: []*gatewayv2alpha1.Host{&host},
 			},
 		}
 
-		service := getService(sampleServiceName)
-		fakeClient := createFakeClient(service)
+		service := corev1.Service{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: serviceName,
+			},
+			Spec: corev1.ServiceSpec{
+				Selector: map[string]string{
+					"app": serviceName,
+				},
+			},
+		}
+		fakeClient := createFakeClient(&service)
 
 		//when
-		problems := (&APIRuleValidator{ApiRule: apiRule}).Validate(context.Background(), fakeClient, networkingv1beta1.VirtualServiceList{})
+		problems := (&v2alpha1.APIRuleValidator{ApiRule: apiRule}).Validate(context.Background(), fakeClient, networkingv1beta1.VirtualServiceList{})
 
 		//then
 		Expect(problems).To(HaveLen(1))
@@ -36,3 +55,13 @@ var _ = Describe("Validate", func() {
 	})
 
 })
+
+func createFakeClient(objs ...client.Object) client.Client {
+	scheme := runtime.NewScheme()
+	err := gatewayv2alpha1.AddToScheme(scheme)
+	Expect(err).NotTo(HaveOccurred())
+	err = corev1.AddToScheme(scheme)
+	Expect(err).NotTo(HaveOccurred())
+
+	return fake.NewClientBuilder().WithScheme(scheme).WithObjects(objs...).Build()
+}
