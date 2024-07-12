@@ -81,7 +81,7 @@ func (vss *virtualServiceSpec) From(val *v1beta1.VirtualService) *virtualService
 	return vss
 }
 
-func (vss *virtualServiceSpec) Host(val string) *virtualServiceSpec {
+func (vss *virtualServiceSpec) AddHost(val string) *virtualServiceSpec {
 	vss.value.Hosts = append(vss.value.Hosts, val)
 	return vss
 }
@@ -154,6 +154,20 @@ func (mr *matchRequest) Get() *v1beta1.HTTPMatchRequest {
 func (mr *matchRequest) Uri() *stringMatch {
 	mr.value.Uri = &v1beta1.StringMatch{}
 	return &stringMatch{mr.value.Uri, func() *matchRequest { return mr }}
+}
+
+// MethodRegExV2Alpha1 sets the HTTP method regex in the HTTPMatchRequest for the given HTTP methods in the format "^(PUT|POST|GET)$".
+func (mr *matchRequest) MethodRegExV2Alpha1(httpMethods ...apirulev2alpha1.HttpMethod) *matchRequest {
+	methodStrings := apirulev2alpha1.ConvertHttpMethodsToStrings(httpMethods)
+	methodsWithSeparator := strings.Join(methodStrings, "|")
+
+	mr.value.Method = &v1beta1.StringMatch{
+		MatchType: &v1beta1.StringMatch_Regex{
+			Regex: fmt.Sprintf("^(%s)$", methodsWithSeparator),
+		},
+	}
+
+	return mr
 }
 
 // MethodRegEx sets the HTTP method regex in the HTTPMatchRequest for the given HTTP methods in the format "^(PUT|POST|GET)$".

@@ -99,7 +99,7 @@ func (r virtualServiceCreator) Create(api *gatewayv2alpha1.APIRule) (*networking
 
 	vsSpecBuilder := builders.VirtualServiceSpec()
 	for _, host := range api.Spec.Hosts {
-		vsSpecBuilder.Host(default_domain.GetHostWithDomain(string(*host), r.defaultDomainName))
+		vsSpecBuilder.AddHost(default_domain.GetHostWithDomain(string(*host), r.defaultDomainName))
 	}
 
 	vsSpecBuilder.Gateway(*api.Spec.Gateway)
@@ -124,7 +124,7 @@ func (r virtualServiceCreator) Create(api *gatewayv2alpha1.APIRule) (*networking
 
 		httpRouteBuilder.Route(builders.RouteDestination().Host(host).Port(port))
 
-		matchBuilder := builders.MatchRequest()
+		matchBuilder := builders.MatchRequest().MethodRegExV2Alpha1(rule.Methods...)
 
 		if rule.Path == "/*" {
 			matchBuilder.Uri().Prefix("/")

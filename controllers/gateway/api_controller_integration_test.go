@@ -493,7 +493,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 							g.Expect(len(vs.Name) > len(apiRuleName)).To(BeTrue())
 
 							expectedSpec := builders.VirtualServiceSpec().
-								Host(serviceHost).
+								AddHost(serviceHost).
 								Gateway(testGatewayURL).
 								HTTP(builders.HTTPRoute().
 									Match(builders.MatchRequest().Uri().Regex(testPath)).
@@ -591,7 +591,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 								vs := vsList.Items[0]
 
 								expectedSpec := builders.VirtualServiceSpec().
-									Host(serviceHost).
+									AddHost(serviceHost).
 									Gateway(testGatewayURL).
 									HTTP(builders.HTTPRoute().
 										Match(builders.MatchRequest().Uri().Regex("/img")).
@@ -733,7 +733,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 								vs := vsList.Items[0]
 
 								expectedSpec := builders.VirtualServiceSpec().
-									Host(serviceHost).
+									AddHost(serviceHost).
 									Gateway(testGatewayURL).
 									HTTP(builders.HTTPRoute().
 										Match(builders.MatchRequest().Uri().Regex("/img").MethodRegEx(http.MethodGet)).
@@ -1042,7 +1042,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 							vs := vsList.Items[0]
 
 							expectedSpec := builders.VirtualServiceSpec().
-								Host(serviceHost).
+								AddHost(serviceHost).
 								Gateway(testGatewayURL).
 								HTTP(builders.HTTPRoute().
 									Match(builders.MatchRequest().Uri().Regex("/img")).
@@ -1174,7 +1174,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 									vs := vsList.Items[0]
 
 									expectedSpec := builders.VirtualServiceSpec().
-										Host(serviceHost).
+										AddHost(serviceHost).
 										Gateway(testGatewayURL).
 										HTTP(builders.HTTPRoute().
 											Match(builders.MatchRequest().Uri().Regex("/favicon")).
