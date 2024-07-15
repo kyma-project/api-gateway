@@ -9,6 +9,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/utils/ptr"
 	"os"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
@@ -97,4 +98,22 @@ func getApiRuleService(serviceName string, servicePort uint32, namespace ...*str
 		svc.Namespace = namespace[0]
 	}
 	return &svc
+}
+
+func getNamespace(name string) *corev1.Namespace {
+	return &corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: name,
+		},
+	}
+}
+
+func getHosts(hosts ...string) []*v2alpha1.Host {
+	var h []*v2alpha1.Host
+	for _, host := range hosts {
+		h = append(h, ptr.To(v2alpha1.Host(host)))
+
+	}
+
+	return h
 }

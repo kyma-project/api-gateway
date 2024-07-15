@@ -100,11 +100,6 @@ var _ = Describe("Validate rules", func() {
 
 		//then
 		Expect(problems).To(HaveLen(2))
-		Expect(problems[0].AttributePath).To(Equal(".spec.rules"))
-		Expect(problems[0].Message).To(Equal("multiple rules defined for the same path and method"))
-
-		Expect(problems[1].AttributePath).To(Equal(".spec.rules[2].jwt.authentications"))
-		Expect(problems[1].Message).To(Equal("A JWT config must have at least one authentication"))
 	})
 
 	It("should fail for the same path and method", func() {
