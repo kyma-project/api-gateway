@@ -14,7 +14,6 @@ const (
 )
 
 func (r *APIRuleReconciler) reconcileConfigMap(ctx context.Context, isCMReconcile bool) (finishReconciliation bool) {
-	r.Log.Info("Starting ConfigMap reconciliation")
 	err := r.Config.ReadFromConfigMap(ctx, r.Client)
 	if err != nil {
 		if apierrs.IsNotFound(err) {
@@ -25,7 +24,9 @@ func (r *APIRuleReconciler) reconcileConfigMap(ctx context.Context, isCMReconcil
 			r.Config.Reset()
 		}
 	}
+
 	if isCMReconcile {
+		r.Log.Info("Starting ConfigMap reconciliation")
 		configValidationFailures := validation.ValidateConfig(r.Config)
 		r.Log.Info("ConfigMap changed", "config", r.Config)
 		if len(configValidationFailures) > 0 {
