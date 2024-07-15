@@ -93,7 +93,11 @@ test: manifests generate fmt vet envtest ## Generate manifests and run tests.
 
 .PHONY: test-integration
 test-integration: generate fmt vet envtest ## Run integration tests.
-	source ./tests/integration/env_vars.sh && go test -timeout 1h ./tests/integration -v -race -run TestIstioJwt . && go test -timeout 1h ./tests/integration -v -race -run TestOryJwt . && TEST_CONCURRENCY=1 go test -timeout 1h ./tests/integration -v -race -run TestGateway .
+	source ./tests/integration/env_vars.sh && go test -timeout 1h ./tests/integration -v -race -run TestIstioJwt . && go test -timeout 1h ./tests/integration -v -race -run TestOryJwt . && go test -timeout 1h ./tests/integration -v -race -run TestV2alpha1 . && TEST_CONCURRENCY=1 go test -timeout 1h ./tests/integration -v -race -run TestGateway .
+
+.PHONY: test-integration-v2alpha1
+test-integration-v2alpha1: generate fmt vet envtest ## Run integration tests.
+	source ./tests/integration/env_vars.sh && go test -timeout 1h ./tests/integration -v -race -run TestV2alpha1
 
 .PHONY: test-upgrade
 test-upgrade: generate fmt vet generate-upgrade-test-manifest install-istio deploy-latest-release ## Run API Gateway upgrade tests.
