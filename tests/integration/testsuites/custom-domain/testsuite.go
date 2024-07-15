@@ -114,7 +114,7 @@ func (t *testsuite) Setup() error {
 func (t *testsuite) TearDown() {
 	//Remove certificate
 	res := schema.GroupVersionResource{Group: "cert.gardener.cloud", Version: "v1alpha1", Resource: "certificates"}
-	err := t.k8sClient.Resource(res).Namespace("istio-system").DeleteCollection(context.TODO(), v1.DeleteOptions{}, v1.ListOptions{LabelSelector: "owner=custom-domain-test"})
+	err := t.k8sClient.Resource(res).Namespace("istio-system").DeleteCollection(context.Background(), v1.DeleteOptions{}, v1.ListOptions{LabelSelector: "owner=custom-domain-test"})
 	if err != nil {
 		log.Print(err.Error())
 	}

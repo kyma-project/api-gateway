@@ -185,7 +185,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 		processor := istio.Newv1beta1AuthorizationPolicyProcessor(GetTestConfig(), &testLogger, apiRule)
 
 		// when
-		result, err := processor.EvaluateReconciliation(context.TODO(), client)
+		result, err := processor.EvaluateReconciliation(context.Background(), client)
 
 		Expect(err).To(BeNil())
 		Expect(result).To(HaveLen(1))
@@ -212,7 +212,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 		processor := istio.Newv1beta1AuthorizationPolicyProcessor(GetTestConfig(), &testLogger, apiRule)
 
 		// when
-		result, err := processor.EvaluateReconciliation(context.TODO(), client)
+		result, err := processor.EvaluateReconciliation(context.Background(), client)
 
 		// then
 		Expect(err).To(BeNil())
@@ -286,7 +286,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 		processor := istio.Newv1beta1AuthorizationPolicyProcessor(GetTestConfig(), &testLogger, apiRule)
 
 		// when
-		result, err := processor.EvaluateReconciliation(context.TODO(), client)
+		result, err := processor.EvaluateReconciliation(context.Background(), client)
 
 		// then
 		Expect(err).To(BeNil())
@@ -350,7 +350,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 		processor := istio.Newv1beta1AuthorizationPolicyProcessor(GetTestConfig(), &testLogger, apiRule)
 
 		// when
-		result, err := processor.EvaluateReconciliation(context.TODO(), client)
+		result, err := processor.EvaluateReconciliation(context.Background(), client)
 
 		// then
 		Expect(err).To(BeNil())
@@ -379,7 +379,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 		processor := istio.Newv1beta1AuthorizationPolicyProcessor(GetTestConfig(), &testLogger, apiRule)
 
 		// when
-		result, err := processor.EvaluateReconciliation(context.TODO(), client)
+		result, err := processor.EvaluateReconciliation(context.Background(), client)
 
 		// then
 		Expect(err).To(BeNil())
@@ -409,7 +409,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 		processor := istio.Newv1beta1AuthorizationPolicyProcessor(GetTestConfig(), &testLogger, apiRule)
 
 		// when
-		result, err := processor.EvaluateReconciliation(context.TODO(), client)
+		result, err := processor.EvaluateReconciliation(context.Background(), client)
 
 		// then
 		Expect(err).To(BeNil())
@@ -450,7 +450,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 		processor := istio.Newv1beta1AuthorizationPolicyProcessor(GetTestConfig(), &testLogger, apiRule)
 
 		// when
-		result, err := processor.EvaluateReconciliation(context.TODO(), client)
+		result, err := processor.EvaluateReconciliation(context.Background(), client)
 
 		// then
 		Expect(err).To(BeNil())
@@ -519,7 +519,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			processor := istio.Newv1beta1AuthorizationPolicyProcessor(GetTestConfig(), &testLogger, apiRule)
 
 			// when
-			result, err := processor.EvaluateReconciliation(context.TODO(), client)
+			result, err := processor.EvaluateReconciliation(context.Background(), client)
 
 			// then
 			Expect(err).To(BeNil())
@@ -558,7 +558,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			processor := istio.Newv1beta1AuthorizationPolicyProcessor(GetTestConfig(), &testLogger, apiRule)
 
 			// when
-			result, err := processor.EvaluateReconciliation(context.TODO(), client)
+			result, err := processor.EvaluateReconciliation(context.Background(), client)
 
 			// then
 			Expect(err).To(BeNil())
@@ -595,7 +595,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			processor := istio.Newv1beta1AuthorizationPolicyProcessor(GetTestConfig(), &testLogger, apiRule)
 
 			// when
-			results, err := processor.EvaluateReconciliation(context.TODO(), client)
+			results, err := processor.EvaluateReconciliation(context.Background(), client)
 
 			// then
 			Expect(err).To(BeNil())
@@ -660,7 +660,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			processor := istio.Newv1beta1AuthorizationPolicyProcessor(GetTestConfig(), &testLogger, apiRule)
 
 			// when
-			results, err := processor.EvaluateReconciliation(context.TODO(), client)
+			results, err := processor.EvaluateReconciliation(context.Background(), client)
 
 			// then
 			Expect(err).To(BeNil())
@@ -715,7 +715,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 		processor := istio.Newv1beta1AuthorizationPolicyProcessor(GetTestConfig(), &testLogger, apiRule)
 
 		// when
-		result, err := processor.EvaluateReconciliation(context.TODO(), client)
+		result, err := processor.EvaluateReconciliation(context.Background(), client)
 
 		// then
 		Expect(err).To(BeNil())
@@ -741,7 +741,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 		processor := istio.Newv1beta1AuthorizationPolicyProcessor(GetTestConfig(), &testLogger, apiRule)
 
 		// when
-		result, err := processor.EvaluateReconciliation(context.TODO(), client)
+		result, err := processor.EvaluateReconciliation(context.Background(), client)
 
 		// then
 		Expect(err).To(BeNil())
@@ -785,7 +785,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			processor := istio.Newv1beta1AuthorizationPolicyProcessor(GetTestConfig(), &testLogger, apiRule)
 
 			// when
-			result, err := processor.EvaluateReconciliation(context.TODO(), ctrlClient)
+			result, err := processor.EvaluateReconciliation(context.Background(), ctrlClient)
 
 			// then
 			Expect(err).To(BeNil())
@@ -809,7 +809,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 		processor := istio.Newv1beta1AuthorizationPolicyProcessor(GetTestConfig(), &testLogger, apiRule)
 
 		// when
-		result, err := processor.EvaluateReconciliation(context.TODO(), ctrlClient)
+		result, err := processor.EvaluateReconciliation(context.Background(), ctrlClient)
 
 		// then
 		Expect(err).To(BeNil())
@@ -836,7 +836,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			processor := istio.Newv1beta1AuthorizationPolicyProcessor(GetTestConfig(), &testLogger, apiRule)
 
 			// when
-			result, err := processor.EvaluateReconciliation(context.TODO(), ctrlClient)
+			result, err := processor.EvaluateReconciliation(context.Background(), ctrlClient)
 
 			// then
 			Expect(err).To(BeNil())
@@ -863,7 +863,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			processor := istio.Newv1beta1AuthorizationPolicyProcessor(GetTestConfig(), &testLogger, apiRule)
 
 			// when
-			result, err := processor.EvaluateReconciliation(context.TODO(), ctrlClient)
+			result, err := processor.EvaluateReconciliation(context.Background(), ctrlClient)
 
 			// then
 			Expect(err).To(BeNil())
@@ -889,7 +889,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			processor := istio.Newv1beta1AuthorizationPolicyProcessor(GetTestConfig(), &testLogger, apiRule)
 
 			// when
-			result, err := processor.EvaluateReconciliation(context.TODO(), ctrlClient)
+			result, err := processor.EvaluateReconciliation(context.Background(), ctrlClient)
 
 			// then
 			Expect(err).To(BeNil())
@@ -917,7 +917,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			processor := istio.Newv1beta1AuthorizationPolicyProcessor(GetTestConfig(), &testLogger, apiRule)
 
 			// when
-			result, err := processor.EvaluateReconciliation(context.TODO(), ctrlClient)
+			result, err := processor.EvaluateReconciliation(context.Background(), ctrlClient)
 
 			// then
 			Expect(err).To(BeNil())
@@ -947,7 +947,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			processor := istio.Newv1beta1AuthorizationPolicyProcessor(GetTestConfig(), &testLogger, apiRule)
 
 			// when
-			result, err := processor.EvaluateReconciliation(context.TODO(), ctrlClient)
+			result, err := processor.EvaluateReconciliation(context.Background(), ctrlClient)
 
 			// then
 			Expect(err).To(BeNil())
@@ -978,7 +978,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			processor := istio.Newv1beta1AuthorizationPolicyProcessor(GetTestConfig(), &testLogger, apiRule)
 
 			// when
-			result, err := processor.EvaluateReconciliation(context.TODO(), ctrlClient)
+			result, err := processor.EvaluateReconciliation(context.Background(), ctrlClient)
 
 			// then
 			Expect(err).To(BeNil())
@@ -1003,7 +1003,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			processor := istio.Newv1beta1AuthorizationPolicyProcessor(GetTestConfig(), &testLogger, apiRule)
 
 			// when
-			result, err := processor.EvaluateReconciliation(context.TODO(), ctrlClient)
+			result, err := processor.EvaluateReconciliation(context.Background(), ctrlClient)
 
 			// then
 			Expect(err).To(BeNil())
@@ -1033,7 +1033,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			processor := istio.Newv1beta1AuthorizationPolicyProcessor(GetTestConfig(), &testLogger, apiRule)
 
 			// when
-			result, err := processor.EvaluateReconciliation(context.TODO(), ctrlClient)
+			result, err := processor.EvaluateReconciliation(context.Background(), ctrlClient)
 
 			// then
 			Expect(err).To(BeNil())
@@ -1098,7 +1098,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			processor := istio.Newv1beta1AuthorizationPolicyProcessor(GetTestConfig(), &testLogger, apiRule)
 
 			// when
-			result, err := processor.EvaluateReconciliation(context.TODO(), ctrlClient)
+			result, err := processor.EvaluateReconciliation(context.Background(), ctrlClient)
 
 			// then
 			Expect(err).To(BeNil())
@@ -1164,7 +1164,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			processor := istio.Newv1beta1AuthorizationPolicyProcessor(GetTestConfig(), &testLogger, apiRule)
 
 			// when
-			result, err := processor.EvaluateReconciliation(context.TODO(), ctrlClient)
+			result, err := processor.EvaluateReconciliation(context.Background(), ctrlClient)
 
 			// then
 			Expect(err).To(BeNil())
@@ -1229,7 +1229,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			processor := istio.Newv1beta1AuthorizationPolicyProcessor(GetTestConfig(), &testLogger, apiRule)
 
 			// when
-			result, err := processor.EvaluateReconciliation(context.TODO(), ctrlClient)
+			result, err := processor.EvaluateReconciliation(context.Background(), ctrlClient)
 
 			// then
 			Expect(err).To(BeNil())
@@ -1306,7 +1306,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			processor := istio.Newv1beta1AuthorizationPolicyProcessor(GetTestConfig(), &testLogger, apiRule)
 
 			// when
-			result, err := processor.EvaluateReconciliation(context.TODO(), ctrlClient)
+			result, err := processor.EvaluateReconciliation(context.Background(), ctrlClient)
 
 			// then
 			Expect(err).To(BeNil())
@@ -1339,7 +1339,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			processor := istio.Newv1beta1AuthorizationPolicyProcessor(GetTestConfig(), &testLogger, apiRule)
 
 			// when
-			result, err := processor.EvaluateReconciliation(context.TODO(), client)
+			result, err := processor.EvaluateReconciliation(context.Background(), client)
 
 			// then
 			Expect(err).To(BeNil())
@@ -1370,7 +1370,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			processor := istio.Newv1beta1AuthorizationPolicyProcessor(GetTestConfig(), &testLogger, apiRule)
 
 			// when
-			result, err := processor.EvaluateReconciliation(context.TODO(), client)
+			result, err := processor.EvaluateReconciliation(context.Background(), client)
 
 			// then
 			Expect(err).To(BeNil())
@@ -1400,7 +1400,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			processor := istio.Newv1beta1AuthorizationPolicyProcessor(GetTestConfig(), &testLogger, apiRule)
 
 			// when
-			result, err := processor.EvaluateReconciliation(context.TODO(), client)
+			result, err := processor.EvaluateReconciliation(context.Background(), client)
 
 			// then
 			Expect(err).To(BeNil())
@@ -1462,7 +1462,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			processor := istio.Newv1beta1AuthorizationPolicyProcessor(GetTestConfig(), &testLogger, apiRule)
 
 			// when
-			result, err := processor.EvaluateReconciliation(context.TODO(), ctrlClient)
+			result, err := processor.EvaluateReconciliation(context.Background(), ctrlClient)
 
 			// then
 			Expect(err).To(BeNil())

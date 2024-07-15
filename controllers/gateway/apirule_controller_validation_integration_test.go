@@ -352,8 +352,8 @@ func testConfigWithServiceAndHost(serviceName string, host string, accessStrateg
 	svc := testService(serviceName, testNamespace, testServicePort)
 
 	// when
-	Expect(c.Create(context.TODO(), svc)).Should(Succeed())
-	Expect(c.Create(context.TODO(), instance)).Should(Succeed())
+	Expect(c.Create(context.Background(), svc)).Should(Succeed())
+	Expect(c.Create(context.Background(), instance)).Should(Succeed())
 	defer func() {
 		apiRuleTeardown(instance)
 		serviceTeardown(svc)
@@ -362,7 +362,7 @@ func testConfigWithServiceAndHost(serviceName string, host string, accessStrateg
 	// then
 	Eventually(func(g Gomega) {
 		created := gatewayv1beta1.APIRule{}
-		g.Expect(c.Get(context.TODO(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &created)).Should(Succeed())
+		g.Expect(c.Get(context.Background(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &created)).Should(Succeed())
 		g.Expect(created.Status.APIRuleStatus).NotTo(BeNil())
 		g.Expect(created.Status.APIRuleStatus.Code).To(Equal(expectedStatusCode))
 		for _, expected := range expectedValidationErrors {

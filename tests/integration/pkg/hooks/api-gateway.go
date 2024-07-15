@@ -195,7 +195,7 @@ func removeObjectFromCluster(ctx context.Context, object client.Object) error {
 		return err
 	}
 
-	err = k8sClient.Delete(context.TODO(), object, &client.DeleteOptions{})
+	err = k8sClient.Delete(context.Background(), object, &client.DeleteOptions{})
 	if err != nil && !k8serrors.IsNotFound(err) {
 		return err
 	}
