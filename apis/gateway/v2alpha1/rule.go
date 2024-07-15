@@ -7,3 +7,12 @@ func (r *Rule) ContainsAccessStrategyJwt() bool {
 func (r *Rule) ContainsNoAuth() bool {
 	return r.NoAuth != nil
 }
+
+func ConvertHttpMethodsToStrings(methods []HttpMethod) []string {
+	strings := make([]string, len(methods))
+	for i, method := range methods {
+		strings[i] = string(method)
+	}
+
+	return strings
+}

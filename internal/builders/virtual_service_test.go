@@ -35,7 +35,7 @@ var _ = Describe("Builder for", func() {
 			vs := VirtualService().From(&initialVs).GenerateName(name).Namespace(namespace).
 				Spec(
 					VirtualServiceSpec().
-						Host(host).
+						AddHost(host).
 						Gateway(gateway)).
 				Get()
 			Expect(vs.Name).To(BeEmpty())
@@ -60,8 +60,8 @@ var _ = Describe("Builder for", func() {
 			timeout := time.Second * 60
 
 			result := VirtualServiceSpec().
-				Host(host).
-				Host(host2).
+				AddHost(host).
+				AddHost(host2).
 				Gateway(gateway).
 				Gateway(gateway2).
 				HTTP(HTTPRoute().
@@ -132,7 +132,7 @@ var _ = Describe("Builder for", func() {
 			}
 
 			result := VirtualServiceSpec().
-				Host(host).
+				AddHost(host).
 				Gateway(gateway).
 				HTTP(HTTPRoute().
 					CorsPolicy(CorsPolicy().FromApiRuleCorsPolicy(corsPolicy)).
