@@ -70,6 +70,14 @@ type testsuite struct {
 func (t *testsuite) InitScenarios(ctx *godog.ScenarioContext) {
 	initExposeMethodsOnPathsNoAuthHandler(ctx, t)
 	initExposeMethodsOnPathsJwtHandler(ctx, t)
+	initDefaultCors(ctx, t)
+	initCustomCors(ctx, t)
+	initJwtCommon(ctx, t)
+	initJwtRegex(ctx, t)
+	initJwtPrefix(ctx, t)
+	initJwtAndAllow(ctx, t)
+	initJwtScopes(ctx, t)
+	initJwtAudience(ctx, t)
 }
 
 func (t *testsuite) FeaturePath() []string {

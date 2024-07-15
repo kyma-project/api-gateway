@@ -2,6 +2,7 @@ package v2alpha1
 
 import (
 	_ "embed"
+	"errors"
 	"fmt"
 	"github.com/avast/retry-go/v4"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/auth"
@@ -12,6 +13,7 @@ import (
 	"golang.org/x/oauth2/clientcredentials"
 	"k8s.io/client-go/dynamic"
 	"net/http"
+	"net/url"
 	"strings"
 )
 
@@ -29,6 +31,26 @@ type scenario struct {
 	httpClient              *helpers.RetryableHttpClient
 	resourceManager         *resource.Manager
 	config                  testcontext.Config
+}
+
+type tokenFrom struct {
+	From     string
+	Prefix   string
+	AsHeader bool
+}
+
+func (s *scenario) callingTheEndpointWithAValidToken(endpoint, tokenType, audOrClaim, par1, par2 string, lower, higher int) error {
+	asserter := &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher}
+	tokenFrom := tokenFrom{
+		From:     testcontext.AuthorizationHeaderName,
+		Prefix:   testcontext.AuthorizationHeaderPrefix,
+		AsHeader: true,
+	}
+	if audOrClaim == "audiences" {
+		return s.callingEndpointWithMethodAndHeaders(fmt.Sprintf("%s/%s", s.Url, strings.TrimLeft(endpoint, "/")), http.MethodGet, tokenType, asserter, nil, &tokenFrom, helpers.RequestOptions{Audiences: []string{par1, par2}})
+	} else {
+		return s.callingEndpointWithMethodAndHeaders(fmt.Sprintf("%s/%s", s.Url, strings.TrimLeft(endpoint, "/")), http.MethodGet, tokenType, asserter, nil, &tokenFrom, helpers.RequestOptions{Scopes: []string{par1, par2}})
+	}
 }
 
 func (s *scenario) callingTheEndpointWithValidTokenShouldResultInStatusBetween(path string, tokenType string, lower, higher int) error {
@@ -103,6 +125,13 @@ func (s *scenario) callingTheEndpointWithoutTokenShouldResultInStatusBetween(pat
 	return s.httpClient.CallEndpointWithRetries(fmt.Sprintf("%s/%s", s.Url, strings.TrimLeft(path, "/")), &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher})
 }
 
+func (s *scenario) thereIsAnJwtSecuredPath(path string) {
+	s.ManifestTemplate["jwtSecuredPath"] = path
+}
+
+func (s *scenario) emptyStep() {
+}
+
 func (s *scenario) thereIsAHttpbinService() error {
 	resources, err := manifestprocessor.ParseFromFileWithTemplate("testing-app.yaml", s.ApiResourceDirectory, s.ManifestTemplate)
 	if err != nil {
@@ -174,4 +203,52 @@ func (s *scenario) preflightEndpointCallNoResponseHeader(endpoint, origin string
 		}
 		return nil
 	}, testcontext.GetRetryOpts()...)
+}
+
+func (s *scenario) callingEndpointWithMethodAndHeaders(endpointUrl string, method string, tokenType string, asserter helpers.HttpResponseAsserter, requestHeaders map[string]string, tokenFrom *tokenFrom, options ...helpers.RequestOptions) error {
+	if requestHeaders == nil {
+		requestHeaders = make(map[string]string)
+	}
+
+	oCfg := *s.oauth2Cfg
+
+	if len(options) > 0 {
+		if len(oCfg.EndpointParams) == 0 {
+			oCfg.EndpointParams = make(url.Values)
+		}
+
+		if len(options[0].Scopes) > 0 {
+			oCfg.Scopes = options[0].Scopes
+		}
+
+		if len(options[0].Audiences) > 0 {
+			oCfg.EndpointParams.Add("audience", strings.Join(options[0].Audiences, ","))
+		}
+	}
+
+	token, err := auth.GetAccessToken(oCfg, strings.ToLower(tokenType))
+	if err != nil {
+		return fmt.Errorf("failed to fetch an id_token: %s", err.Error())
+	}
+
+	switch tokenType {
+	case "Opaque":
+		requestHeaders[testcontext.OpaqueHeaderName] = token
+	case "JWT":
+		if tokenFrom.From == "" {
+			return errors.New("jwt from header or parameter name not specified")
+		}
+		if tokenFrom.AsHeader {
+			if tokenFrom.Prefix != "" {
+				token = fmt.Sprintf("%s %s", tokenFrom.Prefix, token)
+			}
+			requestHeaders[tokenFrom.From] = token
+		} else {
+			endpointUrl = fmt.Sprintf("%s?%s=%s", endpointUrl, tokenFrom.From, token)
+		}
+	default:
+		return fmt.Errorf("unsupported token type: %s", tokenType)
+	}
+
+	return s.httpClient.CallEndpointWithHeadersAndMethod(requestHeaders, endpointUrl, method, asserter)
 }
