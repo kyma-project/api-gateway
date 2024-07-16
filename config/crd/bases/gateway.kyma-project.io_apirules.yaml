@@ -412,8 +412,8 @@ spec:
                           type: array
                         authorizations:
                           items:
-                            description: JwtAuthorization contains an array of required
-                              scopes
+                            description: JwtAuthorization contains scopes and audiences
+                              required for the JWT token.
                             properties:
                               audiences:
                                 items:
@@ -423,9 +423,6 @@ spec:
                                 items:
                                   type: string
                                 type: array
-                            required:
-                            - audiences
-                            - requiredScopes
                             type: object
                           type: array
                       type: object

@@ -78,6 +78,10 @@ func (t *testsuite) InitScenarios(ctx *godog.ScenarioContext) {
 	initJwtAndAllow(ctx, t)
 	initJwtScopes(ctx, t)
 	initJwtAudience(ctx, t)
+	initJwtUnavailableIssuer(ctx, t)
+	initJwtIssuerJwksNotMatch(ctx, t)
+	initJwtFromHeader(ctx, t)
+	initJwtFromParam(ctx, t)
 }
 
 func (t *testsuite) FeaturePath() []string {

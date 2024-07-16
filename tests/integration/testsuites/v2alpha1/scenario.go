@@ -252,3 +252,13 @@ func (s *scenario) callingEndpointWithMethodAndHeaders(endpointUrl string, metho
 
 	return s.httpClient.CallEndpointWithHeadersAndMethod(requestHeaders, endpointUrl, method, asserter)
 }
+
+func (s *scenario) callingTheEndpointWithValidTokenShouldResultInBodyContaining(endpoint, tokenType string, bodyContent string) error {
+	asserter := &helpers.BodyContainsPredicate{Expected: []string{bodyContent}}
+	tokenFrom := tokenFrom{
+		From:     testcontext.AuthorizationHeaderName,
+		Prefix:   testcontext.AuthorizationHeaderPrefix,
+		AsHeader: true,
+	}
+	return s.callingEndpointWithMethodAndHeaders(fmt.Sprintf("%s/%s", s.Url, strings.TrimLeft(endpoint, "/")), http.MethodGet, tokenType, asserter, nil, &tokenFrom)
+}

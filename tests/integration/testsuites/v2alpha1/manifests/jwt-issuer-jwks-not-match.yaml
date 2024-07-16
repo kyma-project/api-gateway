@@ -11,12 +11,9 @@ spec:
     name: httpbin-{{.TestID}}
     port: 8000
   rules:
-    - path: {{ .jwtSecuredPath }}
+    - path: /ip
       methods: ["GET"]
       jwt:
         authentications:
           - issuer: "{{ .IssuerUrl }}"
-            jwksUri: "{{ .IssuerUrl }}/oauth2/certs"
-    - path: /headers
-      methods: ["GET"]
-      noAuth: true
+            jwksUri: "https://oauth2.{{.Domain}}/.well-known/jwks.json"
