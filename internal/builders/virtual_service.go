@@ -3,6 +3,7 @@ package builders
 import (
 	"fmt"
 	apirulev1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
+	apirulev2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	"google.golang.org/protobuf/types/known/durationpb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 	"istio.io/api/networking/v1beta1"
@@ -80,7 +81,7 @@ func (vss *virtualServiceSpec) From(val *v1beta1.VirtualService) *virtualService
 	return vss
 }
 
-func (vss *virtualServiceSpec) Host(val string) *virtualServiceSpec {
+func (vss *virtualServiceSpec) AddHost(val string) *virtualServiceSpec {
 	vss.value.Hosts = append(vss.value.Hosts, val)
 	return vss
 }
@@ -153,6 +154,20 @@ func (mr *matchRequest) Get() *v1beta1.HTTPMatchRequest {
 func (mr *matchRequest) Uri() *stringMatch {
 	mr.value.Uri = &v1beta1.StringMatch{}
 	return &stringMatch{mr.value.Uri, func() *matchRequest { return mr }}
+}
+
+// MethodRegExV2Alpha1 sets the HTTP method regex in the HTTPMatchRequest for the given HTTP methods in the format "^(PUT|POST|GET)$".
+func (mr *matchRequest) MethodRegExV2Alpha1(httpMethods ...apirulev2alpha1.HttpMethod) *matchRequest {
+	methodStrings := apirulev2alpha1.ConvertHttpMethodsToStrings(httpMethods)
+	methodsWithSeparator := strings.Join(methodStrings, "|")
+
+	mr.value.Method = &v1beta1.StringMatch{
+		MatchType: &v1beta1.StringMatch_Regex{
+			Regex: fmt.Sprintf("^(%s)$", methodsWithSeparator),
+		},
+	}
+
+	return mr
 }
 
 // MethodRegEx sets the HTTP method regex in the HTTPMatchRequest for the given HTTP methods in the format "^(PUT|POST|GET)$".
@@ -254,6 +269,37 @@ func (cp *corsPolicy) AllowOrigins(val ...*v1beta1.StringMatch) *corsPolicy {
 	} else {
 		cp.value.AllowOrigins = append(cp.value.AllowOrigins, val...)
 	}
+	return cp
+}
+
+func (cp *corsPolicy) FromV2Alpha1ApiRuleCorsPolicy(corsPolicy apirulev2alpha1.CorsPolicy) *corsPolicy {
+	if len(corsPolicy.AllowOrigins) == 0 {
+		cp.value.AllowOrigins = nil
+	} else {
+		matchers := corsPolicy.AllowOrigins.ToIstioStringMatchArray()
+		cp.value.AllowOrigins = append(cp.value.AllowOrigins, matchers...)
+	}
+
+	if len(corsPolicy.AllowHeaders) > 0 {
+		cp.value.AllowHeaders = corsPolicy.AllowHeaders
+	}
+
+	if len(corsPolicy.AllowMethods) > 0 {
+		cp.value.AllowMethods = corsPolicy.AllowMethods
+	}
+
+	if len(corsPolicy.ExposeHeaders) > 0 {
+		cp.value.ExposeHeaders = corsPolicy.ExposeHeaders
+	}
+
+	if corsPolicy.AllowCredentials != nil {
+		cp.value.AllowCredentials = &wrapperspb.BoolValue{Value: *corsPolicy.AllowCredentials}
+	}
+
+	if corsPolicy.MaxAge != nil {
+		cp.value.MaxAge = durationpb.New(time.Duration(*corsPolicy.MaxAge) * time.Second)
+	}
+
 	return cp
 }
 
