@@ -23,6 +23,7 @@ func (a *APIRuleValidator) Validate(ctx context.Context, client client.Client, v
 	var failures []validation.Failure
 
 	failures = append(failures, validateRules(ctx, client, ".spec", a.ApiRule)...)
+	failures = append(failures, validateHosts(".spec", vsList, a.ApiRule)...)
 
 	return failures
 }
