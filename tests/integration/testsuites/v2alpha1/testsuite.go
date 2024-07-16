@@ -86,6 +86,7 @@ func (t *testsuite) InitScenarios(ctx *godog.ScenarioContext) {
 	initServiceTwoNamespaces(ctx, t)
 	initServiceDifferentSameMethods(ctx, t)
 	initServiceCustomLabelSelector(ctx, t)
+	initWebhookCertificateRecovery(ctx, t)
 }
 
 func (t *testsuite) FeaturePath() []string {
