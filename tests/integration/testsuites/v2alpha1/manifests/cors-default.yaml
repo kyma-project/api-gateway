@@ -12,5 +12,5 @@ spec:
     port: 8000
   rules:
     - path: /.*
-      methods: ["GET"]
+      methods: ["OPTIONS"]
       noAuth: true

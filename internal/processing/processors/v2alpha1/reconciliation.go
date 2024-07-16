@@ -38,7 +38,7 @@ func (r Reconciliation) GetProcessors() []processing.ReconciliationProcessor {
 }
 
 func NewReconciliation(apiRuleV2alpha1 *gatewayv2alpha1.APIRule, apiRuleV1beta1 *gatewayv1beta1.APIRule, config processing.ReconciliationConfig, log *logr.Logger) Reconciliation {
-	vsProcessor := istio.Newv1beta1VirtualServiceProcessor(config, apiRuleV1beta1)
+	vsProcessor := NewVirtualServiceProcessor(config, apiRuleV2alpha1)
 	apProcessor := istio.Newv1beta1AuthorizationPolicyProcessor(config, log, apiRuleV1beta1)
 	raProcessor := istio.Newv1beta1RequestAuthenticationProcessor(config, apiRuleV1beta1)
 

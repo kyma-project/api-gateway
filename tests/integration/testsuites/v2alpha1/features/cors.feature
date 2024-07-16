@@ -4,12 +4,12 @@ Feature: CORS
     Given DefaultCORS: There is an httpbin service
     And DefaultCORS: The APIRule without CORS set up is applied
     Then DefaultCORS: Preflight calling the "/ip" endpoint with header Origin:"localhost" should result in status code 200 and no response header "Access-Control-Allow-Origin"
-    Then DefaultCORS: Preflight calling the "/ip" endpoint with header Origin:"localhost" should result in status code 200 and no response header "Access-Control-Allow-Methods"
-    Then DefaultCORS: Preflight calling the "/ip" endpoint with header Origin:"localhost" should result in status code 200 and no response header "Access-Control-Allow-Headers"
-    Then DefaultCORS: Preflight calling the "/ip" endpoint with header Origin:"localhost" should result in status code 200 and no response header "Access-Control-Expose-Headers"
-    Then DefaultCORS: Preflight calling the "/ip" endpoint with header Origin:"localhost" should result in status code 200 and no response header "Access-Control-Allow-Credentials"
-    Then DefaultCORS: Preflight calling the "/ip" endpoint with header Origin:"localhost" should result in status code 200 and no response header "Access-Control-Max-Age"
-    Then DefaultCORS: Teardown httpbin service
+    And DefaultCORS: Preflight calling the "/ip" endpoint with header Origin:"localhost" should result in status code 200 and no response header "Access-Control-Allow-Methods"
+    And DefaultCORS: Preflight calling the "/ip" endpoint with header Origin:"localhost" should result in status code 200 and no response header "Access-Control-Allow-Headers"
+    And DefaultCORS: Preflight calling the "/ip" endpoint with header Origin:"localhost" should result in status code 200 and no response header "Access-Control-Expose-Headers"
+    And DefaultCORS: Preflight calling the "/ip" endpoint with header Origin:"localhost" should result in status code 200 and no response header "Access-Control-Allow-Credentials"
+    And DefaultCORS: Preflight calling the "/ip" endpoint with header Origin:"localhost" should result in status code 200 and no response header "Access-Control-Max-Age"
+    And DefaultCORS: Teardown httpbin service
 
   Scenario: CORS is set up to custom values in APIRule
     Given CustomCORS: There is an httpbin service

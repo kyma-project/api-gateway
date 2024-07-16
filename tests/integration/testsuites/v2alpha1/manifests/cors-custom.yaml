@@ -19,5 +19,5 @@ spec:
     maxAge: {{.MaxAge}}
   rules:
     - path: /.*
-      methods: ["GET"]
+      methods: ["OPTIONS"]
       noAuth: true
