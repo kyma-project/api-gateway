@@ -11,12 +11,18 @@ spec:
     name: httpbin-{{.TestID}}
     port: 8000
   rules:
-    - path: /headers
+    - path: {{ .jwtSecuredPathWithService }}
+      service:
+        name: httpbin-{{.TestID}}
+        port: 8000
       methods: ["GET"]
       jwt:
         authentications:
           - issuer: "{{ .IssuerUrl }}"
             jwksUri: "{{ .IssuerUrl }}/oauth2/certs"
-            fromHeaders:
-              - name: {{ .JWTHeaderName }}
-                prefix: "JwtToken "
+    - path: {{ .jwtSecuredPath }}
+      methods: ["GET"]
+      jwt:
+        authentications:
+          - issuer: "{{ .IssuerUrl }}"
+            jwksUri: "{{ .IssuerUrl }}/oauth2/certs"

@@ -6,17 +6,14 @@ metadata:
 spec:
   gateway: "{{.GatewayNamespace}}/{{.GatewayName}}"
   hosts:
-    - "httpbin-{{.TestID}}.{{.Domain}}"
+    - "helloworld-{{.TestID}}.{{.Domain}}"
   service:
-    name: httpbin-{{.TestID}}
-    port: 8000
+    name: helloworld-{{.TestID}}
+    port: 5000
   rules:
-    - path: /headers
+    - path: "{{ .jwtSecuredPath }}"
       methods: ["GET"]
       jwt:
         authentications:
           - issuer: "{{ .IssuerUrl }}"
             jwksUri: "{{ .IssuerUrl }}/oauth2/certs"
-            fromHeaders:
-              - name: {{ .JWTHeaderName }}
-                prefix: "JwtToken "
