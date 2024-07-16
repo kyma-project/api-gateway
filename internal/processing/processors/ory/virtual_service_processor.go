@@ -36,7 +36,7 @@ func (r virtualServiceCreator) Create(api *gatewayv1beta1.APIRule) (*networkingv
 	virtualServiceNamePrefix := fmt.Sprintf("%s-", api.ObjectMeta.Name)
 
 	vsSpecBuilder := builders.VirtualServiceSpec()
-	vsSpecBuilder.Host(default_domain.GetHostWithDomain(*api.Spec.Host, r.defaultDomainName))
+	vsSpecBuilder.AddHost(default_domain.GetHostWithDomain(*api.Spec.Host, r.defaultDomainName))
 	vsSpecBuilder.Gateway(*api.Spec.Gateway)
 	filteredRules := processing.FilterDuplicatePaths(api.Spec.Rules)
 

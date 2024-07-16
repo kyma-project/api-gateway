@@ -188,13 +188,13 @@ func createCommonTestResources(k8sClient client.Client) {
 		ObjectMeta: metav1.ObjectMeta{Name: testNamespace},
 		Spec:       corev1.NamespaceSpec{},
 	}
-	Expect(k8sClient.Create(context.TODO(), kymaSystemNs)).Should(Succeed())
+	Expect(k8sClient.Create(context.Background(), kymaSystemNs)).Should(Succeed())
 
 	istioSystemNs := &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{Name: "istio-system"},
 		Spec:       corev1.NamespaceSpec{},
 	}
-	Expect(k8sClient.Create(context.TODO(), istioSystemNs)).Should(Succeed())
+	Expect(k8sClient.Create(context.Background(), istioSystemNs)).Should(Succeed())
 }
 
 func createFakeClient(objects ...client.Object) client.Client {
