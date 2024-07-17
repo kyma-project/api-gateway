@@ -85,8 +85,6 @@ func (s *APIRuleStatus) ApiRuleStatusVersion() versions.Version {
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Status",type="string",JSONPath=".status.APIRuleStatus.code"
 // +kubebuilder:printcolumn:name="Host",type="string",JSONPath=".spec.host"
-// +kubebuilder:printcolumn:name="Migration",type="string",JSONPath=`.metadata.annotations.gateway\.kyma-project\.io/migration-step`
-// +kubebuilder:printcolumn:name="OriginalVersion",type="string",JSONPath=`.metadata.annotations.gateway\.kyma-project\.io/original-version`
 type APIRule struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
