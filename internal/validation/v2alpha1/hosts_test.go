@@ -239,6 +239,10 @@ var _ = Describe("Validate hosts", func() {
 	It("Should fail if any host that is occupied by any Virtual Service exposed by another resource", func() {
 		//given
 		apiRule := &v2alpha1.APIRule{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "some-name",
+				Namespace: "some-ns",
+			},
 			Spec: v2alpha1.APIRuleSpec{
 				Hosts: []*v2alpha1.Host{
 					getHostPtr("host.example.com"),
@@ -280,6 +284,10 @@ var _ = Describe("Validate hosts", func() {
 	It("Should not fail if a host is occupied by the Virtual Service related to the same API Rule", func() {
 		//given
 		apiRule := &v2alpha1.APIRule{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "some-name",
+				Namespace: "some-ns",
+			},
 			Spec: v2alpha1.APIRuleSpec{
 				Hosts: []*v2alpha1.Host{
 					getHostPtr("host.example.com"),
