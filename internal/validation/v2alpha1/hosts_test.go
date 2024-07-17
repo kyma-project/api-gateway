@@ -84,6 +84,25 @@ var _ = Describe("Validate hosts", func() {
 		Expect(problems[0].Message).To(Equal("Host is not fully qualified domain name"))
 	})
 
+	It("Should fail if host name has uppercase letters", func() {
+		//given
+		apiRule := &v2alpha1.APIRule{
+			Spec: v2alpha1.APIRuleSpec{
+				Hosts: []*v2alpha1.Host{
+					getHostPtr("host.exaMple.com"),
+				},
+			},
+		}
+
+		//when
+		problems := validateHosts(".spec", networkingv1beta1.VirtualServiceList{}, apiRule)
+
+		//then
+		Expect(problems).To(HaveLen(1))
+		Expect(problems[0].AttributePath).To(Equal(".spec.hosts[0]"))
+		Expect(problems[0].Message).To(Equal("Host is not fully qualified domain name"))
+	})
+
 	It("Should allow lenghty host name with numbers and dashes", func() {
 		//given
 		apiRule := &v2alpha1.APIRule{

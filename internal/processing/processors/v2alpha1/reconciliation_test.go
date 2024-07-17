@@ -361,11 +361,35 @@ var _ = Describe("Reconciliation", func() {
 			Expect(raCreated).To(BeTrue())
 		})
 	})
+
+	It("v2alpha1 reconciliation calls v2alpha1 api rule validation", func() {
+		// given
+		rulesV1beta1 := []gatewayv1beta1.Rule{getNoAuthV1beta1Rule(path)}
+		v1beta1ApiRule := GetAPIRuleFor(rulesV1beta1)
+
+		rulesV2alpha1 := []gatewayv2alpha1.Rule{getNoAuthV2alpha1Rule(path)}
+		v2alpha1ApiRule := getV2alpha1APIRuleFor("test-apirule", "some-namespace", rulesV2alpha1)
+
+		brokenHost := gatewayv2alpha1.Host("host-without-domain")
+		v2alpha1ApiRule.Spec.Hosts[0] = &brokenHost
+
+		service := GetService(ServiceName)
+		fakeClient := GetFakeClient(service)
+
+		// when
+		reconciliation := v2alpha1.NewReconciliation(v2alpha1ApiRule, v1beta1ApiRule, GetTestConfig(), &testLogger)
+		problems, _ := reconciliation.Validate(context.Background(), fakeClient)
+
+		// then
+		Expect(problems).To(HaveLen(1))
+		Expect(problems[0].AttributePath).To(Equal(".spec.hosts[0]"))
+		Expect(problems[0].Message).To(Equal("Host is not fully qualified domain name"))
+	})
 })
 
 func getV2alpha1APIRuleFor(name, namespace string, rules []gatewayv2alpha1.Rule) *gatewayv2alpha1.APIRule {
 
-	serviceHost := gatewayv2alpha1.Host("myService.test.com")
+	serviceHost := gatewayv2alpha1.Host("myservice.test.com")
 
 	return &gatewayv2alpha1.APIRule{
 		ObjectMeta: v1.ObjectMeta{
