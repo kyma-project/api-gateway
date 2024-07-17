@@ -17,6 +17,20 @@ var _ = Describe("NewMigrationProcessors", func() {
 		log         = logr.Discard()
 		apiruleBeta = &gatewayv1beta1.APIRule{}
 	)
+	It("should return applyIstioAuthorizationMigrationStep when annotation is not set", func() {
+		apirule := &gatewayv2alpha1.APIRule{
+			ObjectMeta: metav1.ObjectMeta{
+				Annotations: map[string]string{},
+			},
+		}
+
+		processors := NewMigrationProcessors(apirule, apiruleBeta, config, &log)
+		Expect(processors).To(HaveLen(3))
+		Expect(processors[0]).To(BeAssignableToTypeOf(processors2.AuthorizationPolicyProcessor{}))
+		Expect(processors[1]).To(BeAssignableToTypeOf(processors2.RequestAuthenticationProcessor{}))
+		Expect(processors[2]).To(BeAssignableToTypeOf(annotationProcessor{}))
+	})
+
 	DescribeTable("should return processors according to migration step", func(annotation string, expectedProcessors []processing.ReconciliationProcessor) {
 		// when
 		apirule := &gatewayv2alpha1.APIRule{
@@ -62,5 +76,4 @@ var _ = Describe("NewMigrationProcessors", func() {
 			},
 		),
 	)
-
 })
