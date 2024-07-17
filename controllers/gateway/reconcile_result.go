@@ -15,7 +15,7 @@ import (
 )
 
 // Updates api status. If there was an error during update, returns the error so that entire reconcile loop is retried. If there is no error, returns a "reconcile success" value.
-func (r *APIRuleReconciler) updateStatusOrRetry(ctx context.Context, api *gatewayv1beta1.APIRule, status status.ReconciliationStatus, needsMigration bool) (ctrl.Result, error) {
+func (r *APIRuleReconciler) updateStatusOrRetry(ctx context.Context, api *gatewayv1beta1.APIRule, status status.ReconciliationStatus, needsMigration ...bool) (ctrl.Result, error) {
 	_, updateStatusErr := r.updateStatus(ctx, api, status)
 	if updateStatusErr != nil {
 		r.Log.Error(updateStatusErr, "Error updating ApiRule status, retrying")
@@ -28,7 +28,7 @@ func (r *APIRuleReconciler) updateStatusOrRetry(ctx context.Context, api *gatewa
 		return doneReconcileErrorRequeue(r.OnErrorReconcilePeriod)
 	}
 
-	if needsMigration {
+	if len(needsMigration) > 0 && needsMigration[0] {
 		return doneReconcileMigrationRequeue(r.MigrationReconcilePeriod)
 	}
 	return doneReconcileDefaultRequeue(r.ReconcilePeriod, &r.Log)
