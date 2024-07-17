@@ -21,6 +21,12 @@ spec:
     - jsonPath: .spec.host
       name: Host
       type: string
+    - jsonPath: .metadata.annotations.gateway\.kyma-project\.io/migration-step
+      name: Migration
+      type: string
+    - jsonPath: .metadata.annotations.gateway\.kyma-project\.io/original-version
+      name: OriginalVersion
+      type: string
     deprecated: true
     deprecationWarning: APIRule version v1beta1 is deprecated in favor of v2alpha1.
       Please migrate APIRule to v2alpha1 as soon as possible.

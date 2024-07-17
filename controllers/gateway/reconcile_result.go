@@ -15,7 +15,7 @@ import (
 )
 
 // Updates api status. If there was an error during update, returns the error so that entire reconcile loop is retried. If there is no error, returns a "reconcile success" value.
-func (r *APIRuleReconciler) updateStatusOrRetry(ctx context.Context, api *gatewayv1beta1.APIRule, status status.ReconciliationStatus) (ctrl.Result, error) {
+func (r *APIRuleReconciler) updateStatusOrRetry(ctx context.Context, api *gatewayv1beta1.APIRule, status status.ReconciliationStatus, needsMigration bool) (ctrl.Result, error) {
 	_, updateStatusErr := r.updateStatus(ctx, api, status)
 	if updateStatusErr != nil {
 		r.Log.Error(updateStatusErr, "Error updating ApiRule status, retrying")
@@ -28,6 +28,9 @@ func (r *APIRuleReconciler) updateStatusOrRetry(ctx context.Context, api *gatewa
 		return doneReconcileErrorRequeue(r.OnErrorReconcilePeriod)
 	}
 
+	if needsMigration {
+		return doneReconcileMigrationRequeue(r.MigrationReconcilePeriod)
+	}
 	return doneReconcileDefaultRequeue(r.ReconcilePeriod, &r.Log)
 }
 
@@ -90,10 +93,18 @@ func doneReconcileDefaultRequeue(reconcilerPeriod time.Duration, logger *logr.Lo
 	return ctrl.Result{RequeueAfter: after}, nil
 }
 
-func doneReconcileErrorRequeue(errorReconcilerPeriod time.Duration) (ctrl.Result, error) {
+func doneReconcileErrorRequeue(reconcilerPeriod time.Duration) (ctrl.Result, error) {
 	after := errorReconciliationPeriod
-	if errorReconcilerPeriod != 0 {
-		after = errorReconcilerPeriod
+	if reconcilerPeriod != 0 {
+		after = reconcilerPeriod
+	}
+	return ctrl.Result{RequeueAfter: after}, nil
+}
+
+func doneReconcileMigrationRequeue(reconcilerPeriod time.Duration) (ctrl.Result, error) {
+	after := migrationReconciliationPeriod
+	if reconcilerPeriod != 0 {
+		after = reconcilerPeriod
 	}
 	return ctrl.Result{RequeueAfter: after}, nil
 }

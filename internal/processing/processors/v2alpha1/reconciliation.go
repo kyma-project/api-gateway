@@ -7,6 +7,7 @@ import (
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	"github.com/kyma-project/api-gateway/internal/processing"
 	"github.com/kyma-project/api-gateway/internal/processing/processors/istio"
+	"github.com/kyma-project/api-gateway/internal/processing/processors/migration"
 	"github.com/kyma-project/api-gateway/internal/validation"
 	istioValidation "github.com/kyma-project/api-gateway/internal/validation/v1beta1/istio"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
@@ -37,10 +38,16 @@ func (r Reconciliation) GetProcessors() []processing.ReconciliationProcessor {
 	return r.processors
 }
 
-func NewReconciliation(apiRuleV2alpha1 *gatewayv2alpha1.APIRule, apiRuleV1beta1 *gatewayv1beta1.APIRule, config processing.ReconciliationConfig, log *logr.Logger) Reconciliation {
-	vsProcessor := istio.Newv1beta1VirtualServiceProcessor(config, apiRuleV1beta1)
-	apProcessor := istio.Newv1beta1AuthorizationPolicyProcessor(config, log, apiRuleV1beta1)
-	raProcessor := istio.Newv1beta1RequestAuthenticationProcessor(config, apiRuleV1beta1)
+func NewReconciliation(apiRuleV2alpha1 *gatewayv2alpha1.APIRule, apiRuleV1beta1 *gatewayv1beta1.APIRule, config processing.ReconciliationConfig, log *logr.Logger, needsMigration bool) Reconciliation {
+	var processors []processing.ReconciliationProcessor
+	if needsMigration {
+		log.Info("APIRule needs migration", "name", apiRuleV2alpha1.Name, "namespace", apiRuleV2alpha1.Namespace)
+		processors = append(processors, migration.NewMigrationProcessors(apiRuleV2alpha1, apiRuleV1beta1, config, log)...)
+	} else {
+		processors = append(processors, istio.Newv1beta1VirtualServiceProcessor(config, apiRuleV1beta1))
+		processors = append(processors, istio.Newv1beta1AuthorizationPolicyProcessor(config, log, apiRuleV1beta1))
+		processors = append(processors, istio.Newv1beta1RequestAuthenticationProcessor(config, apiRuleV1beta1))
+	}
 
 	/*
 		When implementing extauth handler, it should use the APIrule in version v2alpha1
@@ -50,7 +57,7 @@ func NewReconciliation(apiRuleV2alpha1 *gatewayv2alpha1.APIRule, apiRuleV1beta1 
 	return Reconciliation{
 		apiRuleV1beta1:  apiRuleV1beta1,
 		apiRuleV2alpha1: apiRuleV2alpha1,
-		processors:      []processing.ReconciliationProcessor{vsProcessor, raProcessor, apProcessor},
+		processors:      processors,
 		config:          config,
 	}
 }
