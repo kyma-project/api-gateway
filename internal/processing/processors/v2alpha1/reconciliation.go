@@ -9,8 +9,7 @@ import (
 	"github.com/kyma-project/api-gateway/internal/processing"
 	"github.com/kyma-project/api-gateway/internal/processing/processors/istio"
 	"github.com/kyma-project/api-gateway/internal/validation"
-	istioValidation "github.com/kyma-project/api-gateway/internal/validation/v1beta1/istio"
-	v2validation "github.com/kyma-project/api-gateway/internal/validation/v2alpha1"
+	v2alpha1validation "github.com/kyma-project/api-gateway/internal/validation/v2alpha1"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -31,14 +30,8 @@ func (r Reconciliation) Validate(ctx context.Context, client client.Client) ([]v
 		return make([]validation.Failure, 0), err
 	}
 
-	var failures []validation.Failure
-	apiRuleValidator := v2validation.NewAPIRuleValidator(r.apiRuleV2alpha1)
-	failures = append(failures, apiRuleValidator.Validate(ctx, client, vsList)...)
-
-	istioValidator := istioValidation.NewAPIRuleValidator(ctx, client, r.apiRuleV1beta1, r.config.DefaultDomainName)
-	failures = append(failures, istioValidator.Validate(ctx, client, vsList)...)
-
-	return failures, nil
+	apiRuleValidator := v2alpha1validation.NewAPIRuleValidator(r.apiRuleV2alpha1)
+	return apiRuleValidator.Validate(ctx, client, vsList), nil
 }
 
 func (r Reconciliation) GetProcessors() []processing.ReconciliationProcessor {
