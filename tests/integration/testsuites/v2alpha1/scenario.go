@@ -82,33 +82,12 @@ func (s *scenario) callingTheEndpointWithMethodWithValidToken(url string, method
 	return s.httpClient.CallEndpointWithHeadersAndMethod(requestHeaders, url, method, asserter)
 }
 
-func (s *scenario) thereIsAHttpbinServiceAndApiRuleIsApplied() error {
-	err := s.thereIsAHttpbinService()
-	if err != nil {
-		return err
-	}
-
-	r, err := manifestprocessor.ParseFromFileWithTemplate(s.ApiResourceManifestPath, s.ApiResourceDirectory, s.ManifestTemplate)
-	if err != nil {
-		return err
-	}
-	return helpers.ApplyApiRule(s.resourceManager.CreateResources, s.resourceManager.UpdateResources, s.k8sClient, testcontext.GetRetryOpts(), r)
-}
-
 func (s *scenario) theAPIRuleIsApplied() error {
 	r, err := manifestprocessor.ParseFromFileWithTemplate(s.ApiResourceManifestPath, s.ApiResourceDirectory, s.ManifestTemplate)
 	if err != nil {
 		return err
 	}
 	return helpers.ApplyApiRule(s.resourceManager.CreateResources, s.resourceManager.UpdateResources, s.k8sClient, testcontext.GetRetryOpts(), r)
-}
-
-func (s *scenario) theAPIRuleIsUpdated(manifest string) error {
-	resourceManifest, err := manifestprocessor.ParseFromFileWithTemplate(manifest, s.ApiResourceDirectory, s.ManifestTemplate)
-	if err != nil {
-		return err
-	}
-	return helpers.UpdateApiRule(s.resourceManager, s.k8sClient, testcontext.GetRetryOpts(), resourceManifest)
 }
 
 func (s *scenario) callingTheEndpointWithMethodWithInvalidTokenShouldResultInStatusBetween(path string, method string, lower, higher int) error {

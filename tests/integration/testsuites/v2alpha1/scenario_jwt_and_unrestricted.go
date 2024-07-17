@@ -1,9 +1,7 @@
 package v2alpha1
 
 import (
-	"fmt"
 	"github.com/cucumber/godog"
-	"strings"
 )
 
 func initJwtAndAllow(ctx *godog.ScenarioContext, ts *testsuite) {
@@ -15,8 +13,4 @@ func initJwtAndAllow(ctx *godog.ScenarioContext, ts *testsuite) {
 	ctx.Step(`JwtAndUnrestricted: Calling the "([^"]*)" endpoint with a valid "([^"]*)" token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithValidTokenShouldResultInStatusBetween)
 	ctx.Step(`JwtAndUnrestricted: Calling the "([^"]*)" endpoint without token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithoutTokenShouldResultInStatusBetween)
 	ctx.Step(`JwtAndUnrestricted: Teardown httpbin service$`, scenario.teardownHttpbinService)
-}
-
-func (s *scenario) thereIsAnEndpointWithHandler(handler, handlerPath string) {
-	s.ManifestTemplate[fmt.Sprintf("%sEndpoint%s", strings.TrimPrefix(handlerPath, "/"), "Handler")] = handler
 }
