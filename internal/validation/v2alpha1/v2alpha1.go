@@ -13,7 +13,7 @@ type APIRuleValidator struct {
 	ApiRule *gatewayv2alpha1.APIRule
 }
 
-var NewAPIRuleValidator = func(apiRule *gatewayv2alpha1.APIRule) validation.ApiRuleValidator {
+func NewAPIRuleValidator(apiRule *gatewayv2alpha1.APIRule) validation.ApiRuleValidator {
 	return &APIRuleValidator{
 		ApiRule: apiRule,
 	}
