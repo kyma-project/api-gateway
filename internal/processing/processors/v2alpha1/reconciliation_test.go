@@ -3,15 +3,17 @@ package v2alpha1_test
 import (
 	"context"
 	"fmt"
+	"net/http"
+
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	"github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1"
+	"github.com/kyma-project/api-gateway/internal/validation"
 	"istio.io/api/networking/v1beta1"
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/utils/ptr"
-	"net/http"
 
 	. "github.com/kyma-project/api-gateway/internal/processing/processing_test"
 	. "github.com/onsi/ginkgo/v2"
@@ -43,7 +45,7 @@ var _ = Describe("Reconciliation", func() {
 
 			// when
 			var createdObjects []client.Object
-			reconciliation := v2alpha1.NewReconciliation(v2alpha1ApiRule, v1beta1ApiRule, GetTestConfig(), &testLogger)
+			reconciliation := v2alpha1.NewReconciliation(v2alpha1ApiRule, v1beta1ApiRule, nil, GetTestConfig(), &testLogger)
 			for _, processor := range reconciliation.GetProcessors() {
 				results, err := processor.EvaluateReconciliation(context.Background(), fakeClient)
 				Expect(err).To(BeNil())
@@ -72,7 +74,7 @@ var _ = Describe("Reconciliation", func() {
 
 			// when
 			var createdObjects []client.Object
-			reconciliation := v2alpha1.NewReconciliation(v2alpha1ApiRule, v1beta1ApiRule, GetTestConfig(), &testLogger)
+			reconciliation := v2alpha1.NewReconciliation(v2alpha1ApiRule, v1beta1ApiRule, nil, GetTestConfig(), &testLogger)
 			for _, processor := range reconciliation.GetProcessors() {
 				results, err := processor.EvaluateReconciliation(context.Background(), fakeClient)
 				Expect(err).To(BeNil())
@@ -164,7 +166,7 @@ var _ = Describe("Reconciliation", func() {
 
 			// when
 			var createdObjects []client.Object
-			reconciliation := v2alpha1.NewReconciliation(v2alpha1ApiRule, v1beta1ApiRule, GetTestConfig(), &testLogger)
+			reconciliation := v2alpha1.NewReconciliation(v2alpha1ApiRule, v1beta1ApiRule, nil, GetTestConfig(), &testLogger)
 			for _, processor := range reconciliation.GetProcessors() {
 				results, err := processor.EvaluateReconciliation(context.Background(), fakeClient)
 				Expect(err).To(BeNil())
@@ -232,7 +234,7 @@ var _ = Describe("Reconciliation", func() {
 
 			// when
 			var createdObjects []client.Object
-			reconciliation := v2alpha1.NewReconciliation(v2alpha1ApiRule, v1beta1ApiRule, GetTestConfig(), &testLogger)
+			reconciliation := v2alpha1.NewReconciliation(v2alpha1ApiRule, v1beta1ApiRule, nil, GetTestConfig(), &testLogger)
 			for _, processor := range reconciliation.GetProcessors() {
 				results, err := processor.EvaluateReconciliation(context.Background(), fakeClient)
 				Expect(err).To(BeNil())
@@ -308,7 +310,7 @@ var _ = Describe("Reconciliation", func() {
 
 			// when
 			var createdObjects []client.Object
-			reconciliation := v2alpha1.NewReconciliation(v2alpha1ApiRule, v1beta1ApiRule, GetTestConfig(), &testLogger)
+			reconciliation := v2alpha1.NewReconciliation(v2alpha1ApiRule, v1beta1ApiRule, nil, GetTestConfig(), &testLogger)
 			for _, processor := range reconciliation.GetProcessors() {
 				results, err := processor.EvaluateReconciliation(context.Background(), fakeClient)
 				Expect(err).To(BeNil())
@@ -362,30 +364,61 @@ var _ = Describe("Reconciliation", func() {
 		})
 	})
 
-	It("v2alpha1 reconciliation calls v2alpha1 api rule validation", func() {
-		// given
-		rulesV1beta1 := []gatewayv1beta1.Rule{getNoAuthV1beta1Rule(path)}
-		v1beta1ApiRule := GetAPIRuleFor(rulesV1beta1)
+	Context("validation", func() {
+		It("validates v2alpha1 API rule with the validator", func() {
+			// given
+			rulesV1beta1 := []gatewayv1beta1.Rule{getJwtV1beta1Rule(path, jwtIssuer, jwksUri), getNoAuthV1beta1Rule("/different-path")}
+			v1beta1ApiRule := GetAPIRuleFor(rulesV1beta1)
 
-		rulesV2alpha1 := []gatewayv2alpha1.Rule{getNoAuthV2alpha1Rule(path)}
-		v2alpha1ApiRule := getV2alpha1APIRuleFor("test-apirule", "some-namespace", rulesV2alpha1)
+			rulesV2alpha1 := []gatewayv2alpha1.Rule{getJwtV2alpha1Rule(path, jwtIssuer, jwksUri), getJwtV2alpha1Rule("/different-path", "https://different.com/", "https://different.com/.well-known/jwks.json")}
+			v2alpha1ApiRule := getV2alpha1APIRuleFor("test-apirule", "some-namespace", rulesV2alpha1)
 
-		brokenHost := gatewayv2alpha1.Host("host-without-domain")
-		v2alpha1ApiRule.Spec.Hosts[0] = &brokenHost
+			service := GetService(ServiceName)
+			fakeClient := GetFakeClient(service)
 
-		service := GetService(ServiceName)
-		fakeClient := GetFakeClient(service)
+			// when
+			apiRuleValidatorMock := APIRuleValidatorMock{}
+			reconciliation := v2alpha1.NewReconciliation(v2alpha1ApiRule, v1beta1ApiRule, &apiRuleValidatorMock, GetTestConfig(), &testLogger)
 
-		// when
-		reconciliation := v2alpha1.NewReconciliation(v2alpha1ApiRule, v1beta1ApiRule, GetTestConfig(), &testLogger)
-		problems, _ := reconciliation.Validate(context.Background(), fakeClient)
+			failures, err := reconciliation.Validate(context.Background(), fakeClient)
 
-		// then
-		Expect(problems).To(HaveLen(1))
-		Expect(problems[0].AttributePath).To(Equal(".spec.hosts[0]"))
-		Expect(problems[0].Message).To(Equal("Host is not fully qualified domain name"))
+			// then
+			Expect(err).ToNot(HaveOccurred())
+			Expect(failures).To(HaveLen(0))
+			Expect(apiRuleValidatorMock.validateHostsCalled).To(BeTrue())
+		})
+
+		It("fails v2alpha1 validation if validator not provided", func() {
+			// given
+			rulesV1beta1 := []gatewayv1beta1.Rule{getJwtV1beta1Rule(path, jwtIssuer, jwksUri), getNoAuthV1beta1Rule("/different-path")}
+			v1beta1ApiRule := GetAPIRuleFor(rulesV1beta1)
+
+			rulesV2alpha1 := []gatewayv2alpha1.Rule{getJwtV2alpha1Rule(path, jwtIssuer, jwksUri), getJwtV2alpha1Rule("/different-path", "https://different.com/", "https://different.com/.well-known/jwks.json")}
+			v2alpha1ApiRule := getV2alpha1APIRuleFor("test-apirule", "some-namespace", rulesV2alpha1)
+
+			service := GetService(ServiceName)
+			fakeClient := GetFakeClient(service)
+
+			// when
+			reconciliation := v2alpha1.NewReconciliation(v2alpha1ApiRule, v1beta1ApiRule, nil, GetTestConfig(), &testLogger)
+			failures, err := reconciliation.Validate(context.Background(), fakeClient)
+
+			// then
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(Equal("validator is not set"))
+			Expect(failures).To(HaveLen(0))
+		})
 	})
 })
+
+type APIRuleValidatorMock struct {
+	validateHostsCalled bool
+}
+
+func (a *APIRuleValidatorMock) Validate(_ context.Context, _ client.Client, _ networkingv1beta1.VirtualServiceList) []validation.Failure {
+	a.validateHostsCalled = true
+	return []validation.Failure{}
+}
 
 func getV2alpha1APIRuleFor(name, namespace string, rules []gatewayv2alpha1.Rule) *gatewayv2alpha1.APIRule {
 
