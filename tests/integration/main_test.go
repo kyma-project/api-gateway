@@ -2,6 +2,7 @@ package api_gateway
 
 import (
 	"context"
+	"github.com/kyma-project/api-gateway/tests/integration/testsuites/v2alpha1"
 	"log"
 	"os"
 	"testing"
@@ -84,6 +85,21 @@ func TestGateway(t *testing.T) {
 		t.Fatalf("Failed to create Gateway testsuite %s", err.Error())
 	}
 	defer ts.TearDown()
+	runTestsuite(t, ts, config)
+}
+
+func TestV2alpha1(t *testing.T) {
+	config := testcontext.GetConfig()
+	ts, err := testcontext.New(config, v2alpha1.NewTestsuite)
+	if err != nil {
+		t.Fatalf("Failed to create v2alpha1 testsuite %s", err.Error())
+	}
+	originalJwtHandler, err := SwitchJwtHandler(ts, "ory")
+	if err != nil {
+		log.Print(err.Error())
+		t.Fatalf("unable to switch to Ory jwtHandler")
+	}
+	defer cleanUp(ts, originalJwtHandler)
 	runTestsuite(t, ts, config)
 }
 

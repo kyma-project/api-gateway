@@ -2,13 +2,14 @@ package v2alpha1
 
 import (
 	"context"
+	"errors"
+
 	"github.com/go-logr/logr"
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	"github.com/kyma-project/api-gateway/internal/processing"
 	"github.com/kyma-project/api-gateway/internal/processing/processors/istio"
 	"github.com/kyma-project/api-gateway/internal/validation"
-	istioValidation "github.com/kyma-project/api-gateway/internal/validation/v1beta1/istio"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -19,26 +20,28 @@ type Reconciliation struct {
 	apiRuleV1beta1  *gatewayv1beta1.APIRule
 	apiRuleV2alpha1 *gatewayv2alpha1.APIRule
 	processors      []processing.ReconciliationProcessor
+	validator       validation.ApiRuleValidator
 	config          processing.ReconciliationConfig
 }
 
 func (r Reconciliation) Validate(ctx context.Context, client client.Client) ([]validation.Failure, error) {
-
 	var vsList networkingv1beta1.VirtualServiceList
 	if err := client.List(ctx, &vsList); err != nil {
 		return make([]validation.Failure, 0), err
 	}
-
-	validator := istioValidation.NewAPIRuleValidator(ctx, client, r.apiRuleV1beta1, r.config.DefaultDomainName)
-	return validator.Validate(ctx, client, vsList), nil
+	if r.validator == nil {
+		return make([]validation.Failure, 0), errors.New("validator is not set")
+	}
+	failures := r.validator.Validate(ctx, client, vsList)
+	return failures, nil
 }
 
 func (r Reconciliation) GetProcessors() []processing.ReconciliationProcessor {
 	return r.processors
 }
 
-func NewReconciliation(apiRuleV2alpha1 *gatewayv2alpha1.APIRule, apiRuleV1beta1 *gatewayv1beta1.APIRule, config processing.ReconciliationConfig, log *logr.Logger) Reconciliation {
-	vsProcessor := istio.Newv1beta1VirtualServiceProcessor(config, apiRuleV1beta1)
+func NewReconciliation(apiRuleV2alpha1 *gatewayv2alpha1.APIRule, apiRuleV1beta1 *gatewayv1beta1.APIRule, validator validation.ApiRuleValidator, config processing.ReconciliationConfig, log *logr.Logger) Reconciliation {
+	vsProcessor := NewVirtualServiceProcessor(config, apiRuleV2alpha1)
 	apProcessor := istio.Newv1beta1AuthorizationPolicyProcessor(config, log, apiRuleV1beta1)
 	raProcessor := istio.Newv1beta1RequestAuthenticationProcessor(config, apiRuleV1beta1)
 
@@ -51,6 +54,7 @@ func NewReconciliation(apiRuleV2alpha1 *gatewayv2alpha1.APIRule, apiRuleV1beta1 
 		apiRuleV1beta1:  apiRuleV1beta1,
 		apiRuleV2alpha1: apiRuleV2alpha1,
 		processors:      []processing.ReconciliationProcessor{vsProcessor, raProcessor, apProcessor},
+		validator:       validator,
 		config:          config,
 	}
 }
