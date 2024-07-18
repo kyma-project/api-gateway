@@ -145,7 +145,7 @@ func init() {
 	SchemeBuilder.Register(&APIRule{}, &APIRuleList{})
 }
 
-// JwtConfig is the configuration for the Istio JWT authentication
+// JwtConfig is the configuration for the Istio JWT authentication and authorization.
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type JwtConfig struct {
 	Authentications []*JwtAuthentication `json:"authentications,omitempty"`
@@ -156,10 +156,12 @@ func (j *JwtConfig) GetObjectKind() schema.ObjectKind {
 	return schema.EmptyObjectKind
 }
 
-// JwtAuthorization contains an array of required scopes
+// JwtAuthorization contains scopes and audiences required for the JWT token.
 type JwtAuthorization struct {
-	RequiredScopes []string `json:"requiredScopes"`
-	Audiences      []string `json:"audiences"`
+	// +optional
+	RequiredScopes []string `json:"requiredScopes,omitempty"`
+	// +optional
+	Audiences []string `json:"audiences,omitempty"`
 }
 
 // JwtAuthentication Config for Jwt Istio authentication
