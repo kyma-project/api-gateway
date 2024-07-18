@@ -160,7 +160,7 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	}
 
 	if needsMigration {
-		err := migration.ApplyMigrationAnnotation(ctx, r.Client, apiRule)
+		err := migration.ApplyMigrationAnnotation(ctx, r.Client, &r.Log, apiRule)
 		if err != nil {
 			return doneReconcileErrorRequeue(r.OnErrorReconcilePeriod)
 		}

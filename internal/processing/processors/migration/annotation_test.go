@@ -2,6 +2,7 @@ package migration_test
 
 import (
 	"context"
+	"github.com/go-logr/logr"
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	"github.com/kyma-project/api-gateway/internal/processing/processors/migration"
@@ -30,9 +31,9 @@ var _ = Describe("AnnotationProcessor", func() {
 		Expect(err).To(BeNil())
 
 		k8sClient := fake.NewClientBuilder().WithScheme(scheme).WithObjects(&apirule).Build()
-
+		log := logr.Discard()
 		// when
-		err = migration.ApplyMigrationAnnotation(context.Background(), k8sClient, &apirule)
+		err = migration.ApplyMigrationAnnotation(context.Background(), k8sClient, &log, &apirule)
 		Expect(err).To(BeNil())
 
 		// then
@@ -60,9 +61,10 @@ var _ = Describe("AnnotationProcessor", func() {
 		Expect(err).To(BeNil())
 
 		k8sClient := fake.NewClientBuilder().WithScheme(scheme).WithObjects(&apirule).Build()
+		log := logr.Discard()
 
 		// when
-		err = migration.ApplyMigrationAnnotation(context.Background(), k8sClient, &apirule)
+		err = migration.ApplyMigrationAnnotation(context.Background(), k8sClient, &log, &apirule)
 		Expect(err).To(BeNil())
 
 		// then
