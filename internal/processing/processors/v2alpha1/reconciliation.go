@@ -2,6 +2,8 @@ package v2alpha1
 
 import (
 	"context"
+	"errors"
+
 	"github.com/go-logr/logr"
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
@@ -10,7 +12,6 @@ import (
 	"github.com/kyma-project/api-gateway/internal/processing/processors/migration"
 	v2alpha1VirtualService "github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1/virtualservice"
 	"github.com/kyma-project/api-gateway/internal/validation"
-	istioValidation "github.com/kyma-project/api-gateway/internal/validation/v1beta1/istio"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -21,25 +22,27 @@ type Reconciliation struct {
 	apiRuleV1beta1  *gatewayv1beta1.APIRule
 	apiRuleV2alpha1 *gatewayv2alpha1.APIRule
 	processors      []processing.ReconciliationProcessor
+	validator       validation.ApiRuleValidator
 	config          processing.ReconciliationConfig
 }
 
 func (r Reconciliation) Validate(ctx context.Context, client client.Client) ([]validation.Failure, error) {
-
 	var vsList networkingv1beta1.VirtualServiceList
 	if err := client.List(ctx, &vsList); err != nil {
 		return make([]validation.Failure, 0), err
 	}
-
-	validator := istioValidation.NewAPIRuleValidator(ctx, client, r.apiRuleV1beta1, r.config.DefaultDomainName)
-	return validator.Validate(ctx, client, vsList), nil
+	if r.validator == nil {
+		return make([]validation.Failure, 0), errors.New("validator is not set")
+	}
+	failures := r.validator.Validate(ctx, client, vsList)
+	return failures, nil
 }
 
 func (r Reconciliation) GetProcessors() []processing.ReconciliationProcessor {
 	return r.processors
 }
 
-func NewReconciliation(apiRuleV2alpha1 *gatewayv2alpha1.APIRule, apiRuleV1beta1 *gatewayv1beta1.APIRule, config processing.ReconciliationConfig, log *logr.Logger, needsMigration bool) Reconciliation {
+func NewReconciliation(apiRuleV2alpha1 *gatewayv2alpha1.APIRule, apiRuleV1beta1 *gatewayv1beta1.APIRule, validator validation.ApiRuleValidator, config processing.ReconciliationConfig, log *logr.Logger, needsMigration bool) Reconciliation {
 	var processors []processing.ReconciliationProcessor
 	if needsMigration {
 		log.Info("APIRule needs migration", "name", apiRuleV2alpha1.Name, "namespace", apiRuleV2alpha1.Namespace)
@@ -59,6 +62,7 @@ func NewReconciliation(apiRuleV2alpha1 *gatewayv2alpha1.APIRule, apiRuleV1beta1 
 		apiRuleV1beta1:  apiRuleV1beta1,
 		apiRuleV2alpha1: apiRuleV2alpha1,
 		processors:      processors,
+		validator:       validator,
 		config:          config,
 	}
 }

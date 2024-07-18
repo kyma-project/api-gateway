@@ -20,19 +20,20 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
+
+	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
+	"github.com/kyma-project/api-gateway/controllers"
+	"github.com/kyma-project/api-gateway/internal/dependencies"
+	"github.com/kyma-project/api-gateway/internal/processing/default_domain"
 	"github.com/kyma-project/api-gateway/internal/processing/processors/istio"
 	"github.com/kyma-project/api-gateway/internal/processing/processors/migration"
 	v2alpha1Processing "github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1"
 	"github.com/kyma-project/api-gateway/internal/processing/status"
+	"github.com/kyma-project/api-gateway/internal/validation/v2alpha1"
 	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"time"
-
-	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
-	"github.com/kyma-project/api-gateway/controllers"
-	"github.com/kyma-project/api-gateway/internal/dependencies"
-	"github.com/kyma-project/api-gateway/internal/processing/default_domain"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 
 	"sigs.k8s.io/controller-runtime/pkg/builder"
@@ -203,7 +204,8 @@ func (r *APIRuleReconciler) getV1beta1Reconciliation(apiRule *gatewayv1beta1.API
 func (r *APIRuleReconciler) getv2alpha1Reconciliation(apiRulev1beta1 *gatewayv1beta1.APIRule, apiRulev2alpha1 *gatewayv2alpha1.APIRule, defaultDomain string, needsMigration bool) processing.ReconciliationCommand {
 	config := r.ReconciliationConfig
 	config.DefaultDomainName = defaultDomain
-	return v2alpha1Processing.NewReconciliation(apiRulev2alpha1, apiRulev1beta1, config, &r.Log, needsMigration)
+	v2alpha1Validator := v2alpha1.NewAPIRuleValidator(apiRulev2alpha1)
+	return v2alpha1Processing.NewReconciliation(apiRulev2alpha1, apiRulev1beta1, v2alpha1Validator, config, &r.Log, needsMigration)
 }
 
 // SetupWithManager sets up the controller with the Manager.
