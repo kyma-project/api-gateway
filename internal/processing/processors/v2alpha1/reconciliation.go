@@ -61,19 +61,3 @@ func NewReconciliation(apiRuleV2alpha1 *gatewayv2alpha1.APIRule, apiRuleV1beta1 
 		config:          config,
 	}
 }
-
-func findServiceNamespace(api *gatewayv2alpha1.APIRule, rule *gatewayv2alpha1.Rule) string {
-	// Fallback direction for the upstream service namespace: Rule.Service > Spec.Service > APIRule
-	if rule != nil && rule.Service != nil && rule.Service.Namespace != nil {
-		return *rule.Service.Namespace
-	}
-	if api != nil && api.Spec.Service != nil && api.Spec.Service.Namespace != nil {
-		return *api.Spec.Service.Namespace
-	}
-
-	if api != nil {
-		return api.Namespace
-	} else {
-		return ""
-	}
-}

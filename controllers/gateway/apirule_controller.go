@@ -22,6 +22,7 @@ import (
 	"fmt"
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	"github.com/kyma-project/api-gateway/internal/processing/processors/istio"
+	"github.com/kyma-project/api-gateway/internal/processing/processors/migration"
 	v2alpha1Processing "github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1"
 	"github.com/kyma-project/api-gateway/internal/processing/status"
 	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
@@ -157,6 +158,12 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		return r.updateStatusOrRetry(ctx, apiRule, statusBase.GenerateStatusFromFailures(configValidationFailures))
 	}
 
+	if needsMigration {
+		err := migration.ApplyMigrationAnnotation(ctx, r.Client, apiRule)
+		if err != nil {
+			return doneReconcileErrorRequeue(r.OnErrorReconcilePeriod)
+		}
+	}
 	s := processing.Reconcile(ctx, r.Client, &r.Log, cmd, req)
 	return r.updateStatusOrRetry(ctx, apiRule, s, needsMigration)
 }
