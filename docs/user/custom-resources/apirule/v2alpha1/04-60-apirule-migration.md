@@ -2,7 +2,7 @@
 
 ## Overview
 
-With the introduction of `v2alpha1` APIRule the authorization and authentication mechanism will switch from using `Ory Oathkeeper` to `Istio Authorization Policy` and `Istio Authentication Policy`.
+With the introduction of `v2alpha1` APIRule the authorization and authentication mechanism will switch from using `Ory Oathkeeper` to `Istio AuthorizationPolicy` and `Istio RequestAuthentication`.
 As a result of this, temporal downtime could happen as there is a propagation delay for the Istio configuration to apply to the Envoy sidecar proxies.
 To make sure that the migration is done without any downtime, a migration procedure has been implemented as part of APIRule reconciliation.
 
