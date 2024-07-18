@@ -20,11 +20,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
+
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	"github.com/kyma-project/api-gateway/internal/processing/processors/istio"
 	v2alpha1Processing "github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1"
 	"github.com/kyma-project/api-gateway/internal/processing/status"
-	"time"
+	"github.com/kyma-project/api-gateway/internal/validation/v2alpha1"
 
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"github.com/kyma-project/api-gateway/controllers"
@@ -174,7 +176,8 @@ func (r *APIRuleReconciler) getV1beta1Reconciliation(apiRule *gatewayv1beta1.API
 func (r *APIRuleReconciler) getv2alpha1Reconciliation(apiRulev1beta1 *gatewayv1beta1.APIRule, apiRulev2alpha1 *gatewayv2alpha1.APIRule, defaultDomain string) processing.ReconciliationCommand {
 	config := r.ReconciliationConfig
 	config.DefaultDomainName = defaultDomain
-	return v2alpha1Processing.NewReconciliation(apiRulev2alpha1, apiRulev1beta1, config, &r.Log)
+	v2alpha1Validator := v2alpha1.NewAPIRuleValidator(apiRulev2alpha1)
+	return v2alpha1Processing.NewReconciliation(apiRulev2alpha1, apiRulev1beta1, v2alpha1Validator, config, &r.Log)
 }
 
 // SetupWithManager sets up the controller with the Manager.
