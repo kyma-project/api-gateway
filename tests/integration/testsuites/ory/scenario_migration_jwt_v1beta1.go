@@ -41,6 +41,10 @@ func (s *scenario) thereIsApiRuleVirtualServiceWithHttpbinServiceDestination() e
 
 		vs := networkingv1alpha3.VirtualService{}
 		err = runtime.DefaultUnstructuredConverter.FromUnstructured(vsList.Items[0].Object, &vs)
+		if err != nil {
+			return err
+		}
+
 		if len(vs.Spec.Http) != 1 {
 			return fmt.Errorf("expected 1 HTTP route, got %d", len(vs.Spec.Http))
 		}
