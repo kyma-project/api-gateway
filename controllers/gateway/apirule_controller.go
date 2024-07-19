@@ -166,7 +166,11 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		}
 	}
 	s := processing.Reconcile(ctx, r.Client, &r.Log, cmd, req)
-	return r.updateStatusOrRetry(ctx, apiRule, s, needsMigration)
+	if needsMigration {
+		return r.updateStatusOrRetryDuringMigration(ctx, apiRule, s)
+	} else {
+		return r.updateStatusOrRetry(ctx, apiRule, s)
+	}
 }
 
 func apiRuleNeedsMigration(ctx context.Context, k8sClient client.Client, apiRule *gatewayv1beta1.APIRule) (bool, error) {
