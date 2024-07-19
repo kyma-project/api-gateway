@@ -22,16 +22,18 @@ import (
 	"fmt"
 	"time"
 
-	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
-	"github.com/kyma-project/api-gateway/internal/processing/processors/istio"
-	v2alpha1Processing "github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1"
-	"github.com/kyma-project/api-gateway/internal/processing/status"
-	"github.com/kyma-project/api-gateway/internal/validation/v2alpha1"
-
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
+	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	"github.com/kyma-project/api-gateway/controllers"
 	"github.com/kyma-project/api-gateway/internal/dependencies"
 	"github.com/kyma-project/api-gateway/internal/processing/default_domain"
+	"github.com/kyma-project/api-gateway/internal/processing/processors/istio"
+	"github.com/kyma-project/api-gateway/internal/processing/processors/migration"
+	v2alpha1Processing "github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1"
+	"github.com/kyma-project/api-gateway/internal/processing/status"
+	"github.com/kyma-project/api-gateway/internal/validation/v2alpha1"
+	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 
 	"sigs.k8s.io/controller-runtime/pkg/builder"
@@ -52,9 +54,10 @@ import (
 )
 
 const (
-	defaultReconciliationPeriod = 30 * time.Minute
-	errorReconciliationPeriod   = time.Minute
-	apiGatewayFinalizer         = "gateway.kyma-project.io/subresources"
+	defaultReconciliationPeriod   = 30 * time.Minute
+	errorReconciliationPeriod     = 1 * time.Minute
+	migrationReconciliationPeriod = 1 * time.Minute
+	apiGatewayFinalizer           = "gateway.kyma-project.io/subresources"
 )
 
 func (r *APIRuleReconciler) handleAPIRuleGetError(ctx context.Context, name types.NamespacedName, apiRule *gatewayv1beta1.APIRule, err error, cmd processing.ReconciliationCommand) (ctrl.Result, error) {
@@ -85,11 +88,12 @@ func (r *APIRuleReconciler) handleAPIRuleGetError(ctx context.Context, name type
 //+kubebuilder:rbac:groups="",resources=services,verbs=get;list;watch
 
 func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	r.Log.Info("Starting reconciliation", "namespacedName", req.NamespacedName.String())
+	namespacedLogger := r.Log.WithValues("namespace", req.Namespace, "name", req.Name)
+	namespacedLogger.Info("Starting reconciliation", "namespacedName", req.NamespacedName.String())
 	ctx = logr.NewContext(ctx, r.Log)
 
 	defaultDomainName, err := default_domain.GetDefaultDomainFromKymaGateway(ctx, r.Client)
-	if err != nil && default_domain.HandleDefaultDomainError(r.Log, err) {
+	if err != nil && default_domain.HandleDefaultDomainError(namespacedLogger, err) {
 		return doneReconcileErrorRequeue(errorReconciliationPeriod)
 	}
 
@@ -103,17 +107,23 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	apiRule := &gatewayv1beta1.APIRule{}
 	apiRuleErr := r.Client.Get(ctx, req.NamespacedName, apiRule)
 	var cmd processing.ReconciliationCommand
+	needsMigration := false
 
 	if apiRuleErr == nil && r.isApiRuleConvertedFromV2alpha1(*apiRule) {
-		r.Log.Info("Reconciling APIRule with v2alpha1 reconciliation", "name", apiRule.Name, "namespace", apiRule.Namespace)
+		namespacedLogger.Info("Reconciling APIRule with v2alpha1 reconciliation", "name", apiRule.Name, "namespace", apiRule.Namespace)
 		apiRuleV2alpha1 := &gatewayv2alpha1.APIRule{}
 		if err := r.Client.Get(ctx, req.NamespacedName, apiRuleV2alpha1); err != nil {
 			return doneReconcileErrorRequeue(r.OnErrorReconcilePeriod)
 		}
-		cmd = r.getv2alpha1Reconciliation(apiRule, apiRuleV2alpha1, defaultDomainName)
+		nM, err := apiRuleNeedsMigration(ctx, r.Client, apiRule)
+		needsMigration = nM
+		if err != nil {
+			return doneReconcileErrorRequeue(r.OnErrorReconcilePeriod)
+		}
+		cmd = r.getv2alpha1Reconciliation(apiRule, apiRuleV2alpha1, defaultDomainName, needsMigration, &namespacedLogger)
 	} else {
-		r.Log.Info("Reconciling APIRule", "name", apiRule.Name, "namespace", apiRule.Namespace, "jwtHandler", r.Config.JWTHandler)
-		cmd = r.getV1beta1Reconciliation(apiRule, defaultDomainName)
+		namespacedLogger.Info("Reconciling APIRule", "name", apiRule.Name, "namespace", apiRule.Namespace, "jwtHandler", r.Config.JWTHandler)
+		cmd = r.getV1beta1Reconciliation(apiRule, defaultDomainName, &namespacedLogger)
 	}
 
 	if apiRuleErr != nil {
@@ -137,21 +147,44 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 			}
 		}
 	} else {
-		r.Log.Info("APIRule is marked for deletion", "name", apiRule.Name, "namespace", apiRule.Namespace)
+		namespacedLogger.Info("APIRule is marked for deletion", "name", apiRule.Name, "namespace", apiRule.Namespace)
 		return r.reconcileAPIRuleDeletion(ctx, apiRule)
 	}
 
-	r.Log.Info("Validating APIRule config", "name", apiRule.Name, "namespace", apiRule.Namespace)
+	namespacedLogger.Info("Validating APIRule config", "name", apiRule.Name, "namespace", apiRule.Namespace)
 	configValidationFailures := validation.ValidateConfig(r.Config)
 	if len(configValidationFailures) > 0 {
 		failuresJson, _ := json.Marshal(configValidationFailures)
-		r.Log.Error(err, fmt.Sprintf(`Config validation failure {"controller": "ApiRule", "request": "%s/%s", "failures": %s}`, apiRule.Namespace, apiRule.Name, string(failuresJson)))
+		namespacedLogger.Error(err, fmt.Sprintf(`Config validation failure {"controller": "ApiRule", "request": "%s/%s", "failures": %s}`, apiRule.Namespace, apiRule.Name, string(failuresJson)))
 		statusBase := cmd.GetStatusBase(string(gatewayv1beta1.StatusSkipped))
 		return r.updateStatusOrRetry(ctx, apiRule, statusBase.GenerateStatusFromFailures(configValidationFailures))
 	}
 
-	s := processing.Reconcile(ctx, r.Client, &r.Log, cmd, req)
-	return r.updateStatusOrRetry(ctx, apiRule, s)
+	if needsMigration {
+		err := migration.ApplyMigrationAnnotation(ctx, r.Client, &namespacedLogger, apiRule)
+		if err != nil {
+			return doneReconcileErrorRequeue(r.OnErrorReconcilePeriod)
+		}
+	}
+	s := processing.Reconcile(ctx, r.Client, &namespacedLogger, cmd, req)
+	if needsMigration {
+		return r.updateStatusOrRetryDuringMigration(ctx, apiRule, s)
+	} else {
+		return r.updateStatusOrRetry(ctx, apiRule, s)
+	}
+}
+
+func apiRuleNeedsMigration(ctx context.Context, k8sClient client.Client, apiRule *gatewayv1beta1.APIRule) (bool, error) {
+	var ownedRules rulev1alpha1.RuleList
+	labels := processing.GetOwnerLabels(apiRule)
+	if err := k8sClient.List(ctx, &ownedRules, client.MatchingLabels(labels)); err != nil {
+		return false, err
+	}
+	if len(ownedRules.Items) > 0 {
+		return true, nil
+	} else {
+		return false, nil
+	}
 }
 
 func handleDependenciesError(name string, err error) controllers.Status {
@@ -162,22 +195,22 @@ func handleDependenciesError(name string, err error) controllers.Status {
 	}
 }
 
-func (r *APIRuleReconciler) getV1beta1Reconciliation(apiRule *gatewayv1beta1.APIRule, defaultDomain string) processing.ReconciliationCommand {
+func (r *APIRuleReconciler) getV1beta1Reconciliation(apiRule *gatewayv1beta1.APIRule, defaultDomain string, namespacedLogger *logr.Logger) processing.ReconciliationCommand {
 	config := r.ReconciliationConfig
 	config.DefaultDomainName = defaultDomain
 	switch {
 	case r.Config.JWTHandler == helpers.JWT_HANDLER_ISTIO:
-		return istio.NewIstioReconciliation(apiRule, config, &r.Log)
+		return istio.NewIstioReconciliation(apiRule, config, namespacedLogger)
 	default:
-		return ory.NewOryReconciliation(apiRule, config, &r.Log)
+		return ory.NewOryReconciliation(apiRule, config, namespacedLogger)
 	}
 }
 
-func (r *APIRuleReconciler) getv2alpha1Reconciliation(apiRulev1beta1 *gatewayv1beta1.APIRule, apiRulev2alpha1 *gatewayv2alpha1.APIRule, defaultDomain string) processing.ReconciliationCommand {
+func (r *APIRuleReconciler) getv2alpha1Reconciliation(apiRulev1beta1 *gatewayv1beta1.APIRule, apiRulev2alpha1 *gatewayv2alpha1.APIRule, defaultDomain string, needsMigration bool, namespacedLogger *logr.Logger) processing.ReconciliationCommand {
 	config := r.ReconciliationConfig
 	config.DefaultDomainName = defaultDomain
 	v2alpha1Validator := v2alpha1.NewAPIRuleValidator(apiRulev2alpha1)
-	return v2alpha1Processing.NewReconciliation(apiRulev2alpha1, apiRulev1beta1, v2alpha1Validator, config, &r.Log)
+	return v2alpha1Processing.NewReconciliation(apiRulev2alpha1, apiRulev1beta1, v2alpha1Validator, config, namespacedLogger, needsMigration)
 }
 
 // SetupWithManager sets up the controller with the Manager.
@@ -196,7 +229,7 @@ func (r *APIRuleReconciler) isApiRuleConvertedFromV2alpha1(apiRule gatewayv1beta
 	// If the ApiRule is not found, we don't need to do anything. If it's found and converted, CM reconciliation is not needed.
 	if apiRule.Annotations != nil {
 		if originalVersion, ok := apiRule.Annotations["gateway.kyma-project.io/original-version"]; ok && originalVersion == "v2alpha1" {
-			r.Log.Info("ApiRule is converted from v2alpha1")
+			r.Log.Info("ApiRule is converted from v2alpha1", "name", apiRule.Name, "namespace", apiRule.Namespace)
 			return true
 		}
 	}

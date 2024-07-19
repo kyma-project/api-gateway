@@ -17,11 +17,12 @@ import (
 type APIRuleReconciler struct {
 	processing.ReconciliationConfig
 	client.Client
-	Log                    logr.Logger
-	Scheme                 *runtime.Scheme
-	Config                 *helpers.Config
-	ReconcilePeriod        time.Duration
-	OnErrorReconcilePeriod time.Duration
+	Log                      logr.Logger
+	Scheme                   *runtime.Scheme
+	Config                   *helpers.Config
+	ReconcilePeriod          time.Duration
+	OnErrorReconcilePeriod   time.Duration
+	MigrationReconcilePeriod time.Duration
 }
 
 type ApiRuleReconcilerConfiguration struct {
@@ -30,6 +31,7 @@ type ApiRuleReconcilerConfiguration struct {
 	CorsAllowOrigins, CorsAllowMethods, CorsAllowHeaders string
 	ReconciliationPeriod                                 uint
 	ErrorReconciliationPeriod                            uint
+	MigrationReconciliationPeriod                        uint
 }
 
 func NewApiRuleReconciler(mgr manager.Manager, config ApiRuleReconcilerConfiguration) *APIRuleReconciler {
@@ -45,10 +47,11 @@ func NewApiRuleReconciler(mgr manager.Manager, config ApiRuleReconcilerConfigura
 				AllowOrigins: getStringMatch(config.CorsAllowOrigins),
 			},
 		},
-		Scheme:                 mgr.GetScheme(),
-		Config:                 &helpers.Config{},
-		ReconcilePeriod:        time.Duration(config.ReconciliationPeriod) * time.Second,
-		OnErrorReconcilePeriod: time.Duration(config.ErrorReconciliationPeriod) * time.Second,
+		Scheme:                   mgr.GetScheme(),
+		Config:                   &helpers.Config{},
+		ReconcilePeriod:          time.Duration(config.ReconciliationPeriod) * time.Second,
+		OnErrorReconcilePeriod:   time.Duration(config.ErrorReconciliationPeriod) * time.Second,
+		MigrationReconcilePeriod: time.Duration(config.MigrationReconciliationPeriod) * time.Second,
 	}
 }
 

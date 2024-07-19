@@ -65,6 +65,8 @@ func TestUpgrade(t *testing.T) {
 
 func TestOryJwt(t *testing.T) {
 	config := testcontext.GetConfig()
+	// We use a higher concurrency to counter the slower execution of the v2alpha1 JWT migration test
+	config.TestConcurrency = 8
 	ts, err := testcontext.New(config, ory.NewTestsuite)
 	if err != nil {
 		t.Fatalf("Failed to create Ory testsuite %s", err.Error())

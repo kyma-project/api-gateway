@@ -1,11 +1,11 @@
-package v2alpha1_test
+package virtualservice_test
 
 import (
 	"context"
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	"github.com/kyma-project/api-gateway/internal/builders"
 	. "github.com/kyma-project/api-gateway/internal/processing/processing_test"
-	processors "github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1"
+	processors "github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1/virtualservice"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	istioapiv1beta1 "istio.io/api/networking/v1beta1"
