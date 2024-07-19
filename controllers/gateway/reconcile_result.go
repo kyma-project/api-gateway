@@ -62,7 +62,7 @@ func (r *APIRuleReconciler) updateStatus(ctx context.Context, api *gatewayv1beta
 		return nil, err
 	}
 
-	r.Log.Info("Updating ApiRule status", "status", api.Status)
+	r.Log.Info("Updating ApiRule status", "status", api.Status, "name", api.Name, "namespace", api.Namespace)
 	err = retry.RetryOnConflict(retry.DefaultRetry, func() error {
 		err = r.Client.Status().Update(ctx, api)
 		if err != nil {

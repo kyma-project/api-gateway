@@ -43,6 +43,8 @@ func nextMigrationStep(rule *gatewayv1beta1.APIRule) MigrationStep {
 	case string(switchVsToService):
 		return removeOryRule
 	default:
+		// applyIstioAuthorizationMigrationStep is used as a fallback in case the annotation is not recognized
+		// this ensures that the migration process can continue and the annotation will be corrected if it is invalid
 		return applyIstioAuthorizationMigrationStep
 	}
 }
