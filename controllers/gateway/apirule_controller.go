@@ -120,10 +120,10 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		if err != nil {
 			return doneReconcileErrorRequeue(r.OnErrorReconcilePeriod)
 		}
-		cmd = r.getv2alpha1Reconciliation(apiRule, apiRuleV2alpha1, defaultDomainName, needsMigration)
+		cmd = r.getv2alpha1Reconciliation(apiRule, apiRuleV2alpha1, defaultDomainName, needsMigration, &namespacedLogger)
 	} else {
 		namespacedLogger.Info("Reconciling APIRule", "name", apiRule.Name, "namespace", apiRule.Namespace, "jwtHandler", r.Config.JWTHandler)
-		cmd = r.getV1beta1Reconciliation(apiRule, defaultDomainName)
+		cmd = r.getV1beta1Reconciliation(apiRule, defaultDomainName, &namespacedLogger)
 	}
 
 	if apiRuleErr != nil {
@@ -195,22 +195,22 @@ func handleDependenciesError(name string, err error) controllers.Status {
 	}
 }
 
-func (r *APIRuleReconciler) getV1beta1Reconciliation(apiRule *gatewayv1beta1.APIRule, defaultDomain string) processing.ReconciliationCommand {
+func (r *APIRuleReconciler) getV1beta1Reconciliation(apiRule *gatewayv1beta1.APIRule, defaultDomain string, namespacedLogger *logr.Logger) processing.ReconciliationCommand {
 	config := r.ReconciliationConfig
 	config.DefaultDomainName = defaultDomain
 	switch {
 	case r.Config.JWTHandler == helpers.JWT_HANDLER_ISTIO:
-		return istio.NewIstioReconciliation(apiRule, config, &namespacedLogger)
+		return istio.NewIstioReconciliation(apiRule, config, namespacedLogger)
 	default:
-		return ory.NewOryReconciliation(apiRule, config, &namespacedLogger)
+		return ory.NewOryReconciliation(apiRule, config, namespacedLogger)
 	}
 }
 
-func (r *APIRuleReconciler) getv2alpha1Reconciliation(apiRulev1beta1 *gatewayv1beta1.APIRule, apiRulev2alpha1 *gatewayv2alpha1.APIRule, defaultDomain string, needsMigration bool) processing.ReconciliationCommand {
+func (r *APIRuleReconciler) getv2alpha1Reconciliation(apiRulev1beta1 *gatewayv1beta1.APIRule, apiRulev2alpha1 *gatewayv2alpha1.APIRule, defaultDomain string, needsMigration bool, namespacedLogger *logr.Logger) processing.ReconciliationCommand {
 	config := r.ReconciliationConfig
 	config.DefaultDomainName = defaultDomain
 	v2alpha1Validator := v2alpha1.NewAPIRuleValidator(apiRulev2alpha1)
-	return v2alpha1Processing.NewReconciliation(apiRulev2alpha1, apiRulev1beta1, v2alpha1Validator, config, &namespacedLogger, needsMigration)
+	return v2alpha1Processing.NewReconciliation(apiRulev2alpha1, apiRulev1beta1, v2alpha1Validator, config, namespacedLogger, needsMigration)
 }
 
 // SetupWithManager sets up the controller with the Manager.
@@ -218,7 +218,7 @@ func (r *APIRuleReconciler) SetupWithManager(mgr ctrl.Manager, c controllers.Rat
 	return ctrl.NewControllerManagedBy(mgr).
 		// We need to filter for generation changes, because we had an issue that on Azure clusters the APIRules were constantly reconciled.
 		For(&gatewayv1beta1.APIRule{}, builder.WithPredicates(predicate.GenerationChangedPredicate{})).
-		Watches(&corev1.ConfigMap{}, &handler.EnqueueRequestForObject{}, builder.WithPredicates(&isApiGatewayConfigMapPredicate{Log: namespacedLogger})).
+		Watches(&corev1.ConfigMap{}, &handler.EnqueueRequestForObject{}, builder.WithPredicates(&isApiGatewayConfigMapPredicate{Log: r.Log})).
 		WithOptions(controller.Options{
 			RateLimiter: controllers.NewRateLimiter(c),
 		}).
