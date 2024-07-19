@@ -14,7 +14,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
-var _ = Describe("AnnotationProcessor", func() {
+var _ = Describe("ApplyMigrationAnnotation", func() {
 	It("should add migration step annotation", func() {
 		apirule := gatewayv1beta1.APIRule{
 			ObjectMeta: metav1.ObjectMeta{
