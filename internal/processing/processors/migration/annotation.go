@@ -17,7 +17,6 @@ const (
 
 func ApplyMigrationAnnotation(ctx context.Context, k8sClient client.Client, logger *logr.Logger, apiRule *gatewayv1beta1.APIRule) error {
 	annotation := nextMigrationStep(apiRule)
-	logger.WithValues()
 	if annotation == removeOryRule {
 		logger.Info("Removing migration annotation")
 		delete(apiRule.Annotations, annotationName)
