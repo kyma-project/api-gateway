@@ -41,6 +41,7 @@ func (t *testsuite) createScenario(templateFileName string, scenarioName string)
 	template["EncodedCredentials"] = base64.RawStdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", t.config.ClientID, t.config.ClientSecret)))
 
 	return &scenario{
+		name:                    scenarioName,
 		Namespace:               ns,
 		TestID:                  testId,
 		Domain:                  t.config.Domain,
