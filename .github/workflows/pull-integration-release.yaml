@@ -19,25 +19,46 @@ on:
       - 'release-**'
 
 jobs:
-  wait-for-image-build:
-    environment: ${{ github.event.pull_request.author_association != 'COLLABORATOR' && github.event.pull_request.author_association != 'OWNER' && 'restricted' || 'internal' }}
-    name: Wait for image build
+  filter-changes:
+    name: List relevant VCS changes
+    outputs:
+      check: ${{ steps.changed-files.outputs.any_modified }}
     runs-on: ubuntu-latest
-    if: github.event.pull_request.draft == false
     steps:
       - uses: actions/checkout@v4
+      - uses: tj-actions/changed-files@d6babd6899969df1a11d14c368283ea4436bca78
+        id: changed-files
         with:
-          fetch-depth: 0
-      - uses: ./.github/actions/wait-for-job-succeed-or-fail
+          files_ignore: |
+            docs/**
+            **/*.md
+            OWNERS
+            CODEOWNERS
+            sec-scanners-config.yaml
+            .github/**
+            .**
+      - name: List all changed files
+        run: echo '${{ steps.changed-files.outputs.all_changed_files }}'
+
+  build-image:
+    name: Build and push manager image
+    needs: [filter-changes]
+    environment: ${{ github.event.pull_request.author_association != 'COLLABORATOR' && github.event.pull_request.author_association != 'OWNER' && 'restricted' || 'internal' }}
+    runs-on: ubuntu-latest
+    if: ${{ github.event.pull_request.draft == false && needs.filter-changes.outputs.check == 'true' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/build-manager-image
         with:
-          job-name: 'pull-api-gateway-manager-build'
-          github-auth-token: ${{ secrets.GITHUB_TOKEN }}
+          operator-image-name: "europe-central2-docker.pkg.dev/sap-se-cx-kyma-goat/api-gateway/api-gateway-manager:PR-${{github.event.number}}"
+          push-image: 'true'
+          push-sa-key: ${{ secrets.GCP_SA_KEY }}
 
   integration-tests:
     name: Integration tests
     runs-on: ubuntu-latest
     if: github.event.pull_request.draft == false
-    needs: [wait-for-image-build]
+    needs: [build-mage]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -48,13 +69,13 @@ jobs:
           client_id: ${{ secrets.CLIENT_ID }}
           client_secret: ${{ secrets.CLIENT_SECRET }}
           oidc_well_known_url: "${{ secrets.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
-          manager_image: "europe-docker.pkg.dev/kyma-project/dev/api-gateway-manager:PR-${{github.event.number}}"
+          manager_image: "europe-central2-docker.pkg.dev/sap-se-cx-kyma-goat/api-gateway-manager:PR-${{github.event.number}}"
 
   k8s-compatibility-check:
     name: Kubernetes version compatibility test
     runs-on: ubuntu-latest
     if: github.event.pull_request.draft == false
-    needs: [ wait-for-image-build ]
+    needs: [ build-mage ]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -65,12 +86,12 @@ jobs:
           client_id: ${{ secrets.CLIENT_ID }}
           client_secret: ${{ secrets.CLIENT_SECRET }}
           oidc_well_known_url: "${{ secrets.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
-          manager_image: "europe-docker.pkg.dev/kyma-project/dev/api-gateway-manager:PR-${{github.event.number}}"
+          manager_image: "europe-central2-docker.pkg.dev/sap-se-cx-kyma-goat/api-gateway-manager:PR-${{github.event.number}}"
 
   upgrade-tests:
     name: Upgrade tests
     runs-on: ubuntu-latest
-    needs: [wait-for-image-build]
+    needs: [build-mage]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -78,7 +99,7 @@ jobs:
           fetch-depth: 0
       - uses: ./.github/actions/upgrade-test
         with:
-          test_upgrade_img: "europe-docker.pkg.dev/kyma-project/dev/api-gateway-manager:PR-${{github.event.number}}"
+          test_upgrade_img: "europe-central2-docker.pkg.dev/sap-se-cx-kyma-goat/api-gateway-manager:PR-${{github.event.number}}"
           client_id: ${{ secrets.CLIENT_ID }}
           client_secret: ${{ secrets.CLIENT_SECRET }}
           oidc_well_known_url: "${{ secrets.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
@@ -87,7 +108,7 @@ jobs:
   custom-domain-gcp:
     name: Custom domain GCP
     runs-on: ubuntu-latest
-    needs: [wait-for-image-build]
+    needs: [build-mage]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -95,7 +116,7 @@ jobs:
           fetch-depth: 0
       - uses: ./.github/actions/integration-test-gardener
         with:
-          manager_image: "europe-docker.pkg.dev/kyma-project/dev/api-gateway-manager:PR-${{github.event.number}}"
+          manager_image: "europe-central2-docker.pkg.dev/sap-se-cx-kyma-goat/api-gateway-manager:PR-${{github.event.number}}"
           gardener_secret: ${{ secrets.GARDENER_TOKEN }}
           script: ./tests/integration/scripts/custom-domain-gardener-gcp-gh.sh
           client_id: ${{ secrets.CLIENT_ID }}
@@ -106,7 +127,7 @@ jobs:
   custom-domain-aws:
     name: Custom domain AWS
     runs-on: ubuntu-latest
-    needs: [wait-for-image-build]
+    needs: [build-mage]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -114,7 +135,7 @@ jobs:
           fetch-depth: 0
       - uses: ./.github/actions/integration-test-gardener
         with:
-          manager_image: "europe-docker.pkg.dev/kyma-project/dev/api-gateway-manager:PR-${{github.event.number}}"
+          manager_image: "europe-central2-docker.pkg.dev/sap-se-cx-kyma-goat/api-gateway-manager:PR-${{github.event.number}}"
           gardener_secret: ${{ secrets.GARDENER_TOKEN }}
           script: ./tests/integration/scripts/custom-domain-gardener-aws-gh.sh
           client_id: ${{ secrets.CLIENT_ID }}
