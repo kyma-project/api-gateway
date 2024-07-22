@@ -19,9 +19,14 @@ Feature: APIRules v2alpha1 conversion
     Then migrationNoopV1beta1: APIRule has status "OK"
 
   Scenario: Migrate v1beta1 APIRule with jwt handler that is supported in v2alpha1
-    Given migrationJwtV1beta1: The APIRule is applied
+    Given migrationJwtV1beta1: There is a httpbin service with Istio injection enabled
+    And migrationJwtV1beta1: The APIRule is applied
     And migrationJwtV1beta1: APIRule has status "OK"
     When migrationJwtV1beta1: The APIRule is updated using manifest "migration-jwt-v2alpha1.yaml"
+    And migrationJwtV1beta1: Resource of Kind "RequestAuthentication" owned by APIRule exists
+    And migrationJwtV1beta1: Resource of Kind "AuthorizationPolicy" owned by APIRule exists
+    And migrationJwtV1beta1: VirtualService owned by APIRule has httpbin service as destination
+    And migrationJwtV1beta1: Resource of Kind "Rule" owned by APIRule does not exist
     Then migrationJwtV1beta1: APIRule has status "OK"
 
   Scenario: Delete v1beta1 APIRule with handler that is unsupported in v2alpha1

@@ -19,6 +19,7 @@ import (
 )
 
 type scenario struct {
+	name                    string
 	Namespace               string
 	TestID                  string
 	Domain                  string

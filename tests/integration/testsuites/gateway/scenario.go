@@ -404,7 +404,7 @@ func (c *scenario) resourceIsPresent(isPresent, kind, name string) error {
 	)
 
 	return retry.Do(func() error {
-		gvr := resource.GetResourceGvr(kind, name)
+		gvr := resource.GetResourceGvr(kind)
 		obj, err := c.k8sClient.Resource(gvr).Get(context.Background(), name, metav1.GetOptions{})
 		if isPresent == is {
 			if err != nil {
@@ -435,7 +435,7 @@ func (c *scenario) namespacedResourceIsPresent(isPresent, kind, name, namespace 
 		isNo = "is no"
 	)
 	return retry.Do(func() error {
-		gvr := resource.GetResourceGvr(kind, name)
+		gvr := resource.GetResourceGvr(kind)
 		obj, err := c.k8sClient.Resource(gvr).Namespace(namespace).Get(context.Background(), name, metav1.GetOptions{})
 		if isPresent == is {
 			if err != nil {
@@ -463,7 +463,7 @@ func (c *scenario) namespacedResourceIsPresent(isPresent, kind, name, namespace 
 
 func (c *scenario) namespacedResourceHasStatusReady(kind, name, namespace string) error {
 	return retry.Do(func() error {
-		gvr := resource.GetResourceGvr(kind, name)
+		gvr := resource.GetResourceGvr(kind)
 		unstr, err := c.k8sClient.Resource(gvr).Namespace(namespace).Get(context.Background(), name, metav1.GetOptions{})
 		if err != nil {
 			return fmt.Errorf("could not get resource: %s, named: %s, in namespace %s", kind, name, namespace)
