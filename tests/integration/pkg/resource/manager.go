@@ -55,6 +55,12 @@ func (k godogResourceMapping) String() string {
 		return "DNSEntry"
 	case PodDisruptionBudget:
 		return "PodDisruptionBudget"
+	case OryRule:
+		return "Rule"
+	case RequestAuthentication:
+		return "RequestAuthentication"
+	case AuthorizationPolicy:
+		return "AuthorizationPolicy"
 	}
 	panic(fmt.Errorf("%#v has unimplemented String() method", k))
 }
@@ -77,6 +83,9 @@ const (
 	Certificate
 	DNSEntry
 	PodDisruptionBudget
+	OryRule
+	RequestAuthentication
+	AuthorizationPolicy
 )
 
 type Manager struct {
@@ -487,7 +496,7 @@ func GetGvrFromUnstructured(m *Manager, resource unstructured.Unstructured) (*sc
 	return gvr, nil
 }
 
-func GetResourceGvr(kind, name string) schema.GroupVersionResource {
+func GetResourceGvr(kind string) schema.GroupVersionResource {
 	var gvr schema.GroupVersionResource
 	switch kind {
 	case Deployment.String():
@@ -592,8 +601,26 @@ func GetResourceGvr(kind, name string) schema.GroupVersionResource {
 			Version:  "v1",
 			Resource: "poddisruptionbudgets",
 		}
+	case OryRule.String():
+		gvr = schema.GroupVersionResource{
+			Group:    "oathkeeper.ory.sh",
+			Version:  "v1alpha1",
+			Resource: "rules",
+		}
+	case RequestAuthentication.String():
+		gvr = schema.GroupVersionResource{
+			Group:    "security.istio.io",
+			Version:  "v1",
+			Resource: "requestauthentications",
+		}
+	case AuthorizationPolicy.String():
+		gvr = schema.GroupVersionResource{
+			Group:    "security.istio.io",
+			Version:  "v1",
+			Resource: "authorizationpolicies",
+		}
 	default:
-		panic(fmt.Errorf("cannot get gvr for kind: %s, name: %s", kind, name))
+		panic(fmt.Errorf("cannot get gvr for kind: %s", kind))
 	}
 	return gvr
 }

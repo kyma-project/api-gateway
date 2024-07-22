@@ -1,8 +1,8 @@
-package v2alpha1_test
+package virtualservice_test
 
 import (
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
-	processors "github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1"
+	processors "github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1/virtualservice"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	"net/http"
 	"sigs.k8s.io/controller-runtime/pkg/client"

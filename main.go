@@ -75,6 +75,7 @@ type FlagVar struct {
 	rateLimiterFrequency        int
 	rateLimiterBurst            int
 	reconciliationInterval      time.Duration
+	migrationInterval           time.Duration
 }
 
 func init() {
@@ -113,6 +114,8 @@ func defineFlagVar() *FlagVar {
 		"Indicates the failure max delay for rate limiter. .")
 	flag.DurationVar(&flagVar.reconciliationInterval, "reconciliation-interval", 1*time.Hour,
 		"Indicates the time based reconciliation interval of APIRule.")
+	flag.DurationVar(&flagVar.migrationInterval, "migration-interval", 1*time.Minute,
+		"Indicates the time taken between steps of APIRule version migration.")
 
 	return flagVar
 }
@@ -181,13 +184,14 @@ func main() {
 	}
 
 	reconcileConfig := gateway.ApiRuleReconcilerConfiguration{
-		OathkeeperSvcAddr:         "ory-oathkeeper-proxy.kyma-system.svc.cluster.local",
-		OathkeeperSvcPort:         4455,
-		CorsAllowOrigins:          "regex:.*",
-		CorsAllowMethods:          "GET,POST,PUT,DELETE,PATCH",
-		CorsAllowHeaders:          "Authorization,Content-Type,*",
-		ReconciliationPeriod:      uint(flagVar.reconciliationInterval.Seconds()),
-		ErrorReconciliationPeriod: 60,
+		OathkeeperSvcAddr:             "ory-oathkeeper-proxy.kyma-system.svc.cluster.local",
+		OathkeeperSvcPort:             4455,
+		CorsAllowOrigins:              "regex:.*",
+		CorsAllowMethods:              "GET,POST,PUT,DELETE,PATCH",
+		CorsAllowHeaders:              "Authorization,Content-Type,*",
+		ReconciliationPeriod:          uint(flagVar.reconciliationInterval.Seconds()),
+		ErrorReconciliationPeriod:     60,
+		MigrationReconciliationPeriod: uint(flagVar.migrationInterval.Seconds()),
 	}
 
 	rateLimiterCfg := controllers.RateLimiterConfig{
