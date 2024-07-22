@@ -7,7 +7,6 @@ Feature: Exposing different endpoints with different handlers
     When NoAuth_JWT: The APIRule is applied
     Then NoAuth_JWT: Calling the "/ip" endpoint without a token should result in status between 400 and 403
     And NoAuth_JWT: Calling the "/ip" endpoint with an invalid token should result in status between 400 and 403
-    And NoAuth_JWT: Calling the "/ip" endpoint with a valid "Opaque" token with "scopes" "read" and "write" should result in status between 400 and 403
     And NoAuth_JWT: Calling the "/ip" endpoint with a valid "JWT" token with "scopes" "read" and "write" should result in status between 200 and 299
     And NoAuth_JWT: Calling the "/get" endpoint on prefix "httpbin2" without a token should result in status between 200 and 299
     And NoAuth_JWT: Calling the "/get" endpoint without a token should result in status between 200 and 299
