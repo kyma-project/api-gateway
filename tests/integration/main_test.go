@@ -2,7 +2,6 @@ package api_gateway
 
 import (
 	"context"
-	"github.com/kyma-project/api-gateway/tests/integration/testsuites/v2alpha1"
 	"log"
 	"os"
 	"testing"
@@ -11,12 +10,7 @@ import (
 	"github.com/cucumber/godog/colors"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/client"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
-	customdomain "github.com/kyma-project/api-gateway/tests/integration/testsuites/custom-domain"
-	"github.com/kyma-project/api-gateway/tests/integration/testsuites/gateway"
 	istiojwt "github.com/kyma-project/api-gateway/tests/integration/testsuites/istio-jwt"
-	"github.com/kyma-project/api-gateway/tests/integration/testsuites/ory"
-	"github.com/kyma-project/api-gateway/tests/integration/testsuites/upgrade"
-
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 )
 
@@ -30,74 +24,6 @@ func TestIstioJwt(t *testing.T) {
 	if err != nil {
 		log.Print(err.Error())
 		t.Fatalf("unable to switch to Istio jwtHandler")
-	}
-	defer cleanUp(ts, originalJwtHandler)
-	runTestsuite(t, ts, config)
-}
-
-func TestCustomDomain(t *testing.T) {
-	config := testcontext.GetConfig()
-	ts, err := testcontext.New(config, customdomain.NewTestsuite)
-	if err != nil {
-		t.Fatalf("Failed to create Custom domain testsuite %s", err.Error())
-	}
-	defer ts.TearDown()
-	runTestsuite(t, ts, config)
-}
-
-func TestUpgrade(t *testing.T) {
-	config := testcontext.GetConfig()
-	config.TestConcurrency = 1
-	ts, err := testcontext.New(config, upgrade.NewTestsuite)
-
-	if err != nil {
-		t.Fatalf("Failed to create Upgrade testsuite %s", err.Error())
-	}
-	originalJwtHandler, err := SwitchJwtHandler(ts, "istio")
-	if err != nil {
-		log.Print(err.Error())
-		t.Fatalf("unable to switch to Istio jwtHandler")
-	}
-	defer cleanUp(ts, originalJwtHandler)
-	defer ts.TearDown()
-	runTestsuite(t, ts, config)
-}
-
-func TestOryJwt(t *testing.T) {
-	config := testcontext.GetConfig()
-	ts, err := testcontext.New(config, ory.NewTestsuite)
-	if err != nil {
-		t.Fatalf("Failed to create Ory testsuite %s", err.Error())
-	}
-	originalJwtHandler, err := SwitchJwtHandler(ts, "ory")
-	if err != nil {
-		log.Print(err.Error())
-		t.Fatalf("unable to switch to Ory jwtHandler")
-	}
-	defer cleanUp(ts, originalJwtHandler)
-	runTestsuite(t, ts, config)
-}
-
-func TestGateway(t *testing.T) {
-	config := testcontext.GetConfig()
-	ts, err := testcontext.New(config, gateway.NewTestsuite)
-	if err != nil {
-		t.Fatalf("Failed to create Gateway testsuite %s", err.Error())
-	}
-	defer ts.TearDown()
-	runTestsuite(t, ts, config)
-}
-
-func TestV2alpha1(t *testing.T) {
-	config := testcontext.GetConfig()
-	ts, err := testcontext.New(config, v2alpha1.NewTestsuite)
-	if err != nil {
-		t.Fatalf("Failed to create v2alpha1 testsuite %s", err.Error())
-	}
-	originalJwtHandler, err := SwitchJwtHandler(ts, "ory")
-	if err != nil {
-		log.Print(err.Error())
-		t.Fatalf("unable to switch to Ory jwtHandler")
 	}
 	defer cleanUp(ts, originalJwtHandler)
 	runTestsuite(t, ts, config)
