@@ -38,8 +38,8 @@ type authorizationPolicyCreator struct{}
 // Create returns the JwtAuthorization Policy using the configuration of the APIRule.
 func (r authorizationPolicyCreator) Create(ctx context.Context, client client.Client, api *gatewayv1beta1.APIRule) (hashbasedstate.Desired, error) {
 	state := hashbasedstate.NewDesired()
-	hasJwtRule := processing.HasJwtRule(api)
-	if hasJwtRule {
+	requiresAuthorizationPolicies := processing.RequiresAuthorizationPolicies(api)
+	if requiresAuthorizationPolicies {
 		for _, rule := range api.Spec.Rules {
 			aps, err := generateAuthorizationPolicies(ctx, client, api, rule)
 			if err != nil {
@@ -64,6 +64,7 @@ func generateAuthorizationPolicies(ctx context.Context, client client.Client, ap
 	ruleAuthorizations := rule.GetJwtIstioAuthorizations()
 
 	if len(ruleAuthorizations) == 0 {
+		// In case of no_auth, it will create an ALLOW AuthorizationPolicy bypassing any other AuthorizationPolicies.
 		ap, err := generateAuthorizationPolicy(ctx, client, api, rule, &gatewayv1beta1.JwtAuthorization{})
 		if err != nil {
 			return &authorizationPolicyList, err

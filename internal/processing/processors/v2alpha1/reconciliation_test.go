@@ -32,7 +32,7 @@ var _ = Describe("Reconciliation", func() {
 
 	Context("with one rule", func() {
 
-		It("with v1beta1 no_auth and v2alpha1 noAuth should provide only Istio VS", func() {
+		It("noAuth should generate an ALLOW AuthorizationPolicy", func() {
 			// given
 			rulesV1beta1 := []gatewayv1beta1.Rule{getNoAuthV1beta1Rule(path)}
 			v1beta1ApiRule := GetAPIRuleFor(rulesV1beta1)
@@ -55,9 +55,10 @@ var _ = Describe("Reconciliation", func() {
 			}
 
 			// then
-			Expect(createdObjects).To(HaveLen(1))
+			Expect(createdObjects).To(HaveLen(2))
 
 			Expect(createdObjects[0]).To(BeAssignableToTypeOf(&networkingv1beta1.VirtualService{}))
+			Expect(createdObjects[1]).To(BeAssignableToTypeOf(&securityv1beta1.AuthorizationPolicy{}))
 		})
 
 		It("with v1beta1 JWT and v2alpha1 JWT should provide VirtualService, AuthorizationPolicy and RequestAuthentication", func() {

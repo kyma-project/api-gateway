@@ -564,7 +564,6 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			Expect(err).To(BeNil())
 			Expect(result).To(BeEmpty())
 		},
-			Entry(nil, gatewayv1beta1.AccessStrategyNoAuth),
 			Entry(nil, gatewayv1beta1.AccessStrategyAllow),
 			Entry(nil, gatewayv1beta1.AccessStrategyNoop),
 		)
@@ -637,6 +636,68 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			Entry(nil, gatewayv1beta1.AccessStrategyNoAuth),
 			Entry(nil, gatewayv1beta1.AccessStrategyAllow),
 		)
+
+		It("should create AP for noAuth with From spec having Source.Principals == cluster.local/ns/istio-system/sa/istio-ingressgateway-service-account", func() {
+			// given
+			jwt := createIstioJwtAccessStrategy()
+			noAuth := &gatewayv1beta1.Authenticator{
+				Handler: &gatewayv1beta1.Handler{
+					Name: "no_auth",
+				},
+			}
+
+			service := &gatewayv1beta1.Service{
+				Name: &ServiceName,
+				Port: &ServicePort,
+			}
+
+			ruleNoAuth := GetRuleWithServiceFor(HeadersApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, []*gatewayv1beta1.Authenticator{noAuth}, service)
+			ruleJwt := GetRuleWithServiceFor(ImgApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, []*gatewayv1beta1.Authenticator{jwt}, service)
+			apiRule := GetAPIRuleFor([]gatewayv1beta1.Rule{ruleNoAuth, ruleJwt})
+			svc := GetService(*apiRule.Spec.Service.Name)
+			client := GetFakeClient(svc)
+			processor := istio.Newv1beta1AuthorizationPolicyProcessor(GetTestConfig(), &testLogger, apiRule)
+
+			// when
+			results, err := processor.EvaluateReconciliation(context.Background(), client)
+
+			// then
+			Expect(err).To(BeNil())
+			Expect(results).To(HaveLen(2))
+
+			for _, result := range results {
+				ap := result.Obj.(*securityv1beta1.AuthorizationPolicy)
+
+				Expect(ap).NotTo(BeNil())
+				Expect(len(ap.Spec.Rules[0].To)).To(Equal(1))
+				Expect(len(ap.Spec.Rules[0].To[0].Operation.Paths)).To(Equal(1))
+
+				expectedHandlers := []string{HeadersApiPath, ImgApiPath}
+				Expect(slices.Contains(expectedHandlers, ap.Spec.Rules[0].To[0].Operation.Paths[0])).To(BeTrue())
+
+				switch ap.Spec.Rules[0].To[0].Operation.Paths[0] {
+				case HeadersApiPath:
+					Expect(len(ap.Spec.Rules[0].From)).To(Equal(1))
+					Expect(ap.Spec.Rules[0].From[0].Source.Principals[0]).To(Equal("cluster.local/ns/istio-system/sa/istio-ingressgateway-service-account"))
+				case ImgApiPath:
+					Expect(len(ap.Spec.Rules[0].From)).To(Equal(1))
+				}
+
+				Expect(len(ap.Spec.Rules)).To(BeElementOf([]int{1, 3}))
+				if len(ap.Spec.Rules) == 3 {
+					for i := 0; i < 3; i++ {
+						Expect(ap.Spec.Rules[i].When[0].Key).To(BeElementOf(testExpectedScopeKeys))
+						Expect(ap.Spec.Rules[i].When).To(HaveLen(2))
+						Expect(ap.Spec.Rules[i].When[0].Key).To(BeElementOf(testExpectedScopeKeys))
+						Expect(ap.Spec.Rules[i].When[0].Values[0]).To(BeElementOf(RequiredScopeA, RequiredScopeB))
+						Expect(ap.Spec.Rules[i].When[1].Key).To(BeElementOf(testExpectedScopeKeys))
+						Expect(ap.Spec.Rules[i].When[1].Values[0]).To(BeElementOf(RequiredScopeA, RequiredScopeB))
+					}
+				} else {
+					Expect(len(ap.Spec.Rules)).To(Equal(1))
+				}
+			}
+		})
 
 		It("should create AP for noop with From spec having Source.Principals == cluster.local/ns/kyma-system/sa/oathkeeper-maester-account", func() {
 			// given

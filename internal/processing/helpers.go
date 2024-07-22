@@ -10,9 +10,9 @@ var (
 	OwnerLabel = fmt.Sprintf("%s.%s", "apirule", gatewayv1beta1.GroupVersion.String())
 )
 
-func HasJwtRule(api *gatewayv1beta1.APIRule) bool {
+func RequiresAuthorizationPolicies(api *gatewayv1beta1.APIRule) bool {
 	for _, rule := range api.Spec.Rules {
-		if IsJwtSecured(rule) {
+		if IsJwtSecured(rule) || rule.ContainsAccessStrategy(gatewayv1beta1.AccessStrategyNoAuth) {
 			return true
 		}
 	}
