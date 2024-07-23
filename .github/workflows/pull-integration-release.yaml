@@ -58,7 +58,7 @@ jobs:
     name: Integration tests
     runs-on: ubuntu-latest
     if: github.event.pull_request.draft == false
-    needs: [build-mage]
+    needs: [build-image]
     steps:
       - uses: actions/checkout@v4
         with:
