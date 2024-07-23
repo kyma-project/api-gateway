@@ -1,10 +1,7 @@
 name: 'Integration test - upgrade (k3d)'
 description: 'Runs integration tests - upgrade on k3d'
 inputs:
-  test_upgrade_img:
-    description: 'Image that api-gateway will be upgraded to'
-    required: true
-  manager_image: # This is required here to replace latest release deploy script, it's temporary and later can be removed
+  manager_image:
     description: 'Manager image used for test'
     required: true
   client_id:
@@ -45,7 +42,7 @@ runs:
       shell: bash
       env:
         KYMA_DOMAIN: "local.kyma.dev"
-        TEST_UPGRADE_IMG: ${{ inputs.test_upgrade_img }}
+        TEST_UPGRADE_IMG: ${{ inputs.manager_image }}
         CLIENT_ID: ${{ inputs.client_id }}
         CLIENT_SECRET: ${{ inputs.client_secret }}
         OIDC_CONFIG_URL: ${{ inputs.oidc_well_known_url }}

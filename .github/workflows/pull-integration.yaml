@@ -46,6 +46,6 @@ jobs:
       - uses: ./.github/actions/load-manager-image
       - uses: ./.github/actions/upgrade-test
         with:
-          test_upgrade_img: "api-gateway-manager:PR-${{github.event.number}}"
+          manager_image: "api-gateway-manager:PR-${{github.event.number}}"
           target_branch: ${{ github.base_ref }}
 
