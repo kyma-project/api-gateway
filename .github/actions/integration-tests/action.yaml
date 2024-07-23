@@ -43,7 +43,7 @@ runs:
         OIDC_CONFIG_URL: ${{ inputs.oidc_well_known_url }}
         IMG: ${{ inputs.manager_image }}
       run: |
-        k3d image import ${{ inputs.manager_image }} -c test-cluster-1
+        k3d image import ${{ inputs.manager_image }} -c k3d-cluster
         EXPORT_RESULT=true make install-istio deploy test-integration
     - shell: bash
       name: gather deployment logs
