@@ -17,7 +17,7 @@
 
 ## Cause
 
-The conversion from the `APIRule` version `v1beta1` to `v2alpha1` is not possible. It's only possible to convert `jwt` handler from `v1beta1` to `v2alpha1`, for more information see the [documentation](https://github.com/kyma-project/api-gateway/blob/main/docs/user/custom-resources/apirule/v2alpha1/04-60-apirule-migration.md).
+The conversion from the `APIRule` version `v1beta1` to `v2alpha1` is not possible. It's only possible to convert `noAuth` and `jwt` handler from `v1beta1` to `v2alpha1`. Beware that `jwt` handler with more than one `trusted_issuers` or `jwks_urls` can also not be converted.
 
 ## Remedy
 
