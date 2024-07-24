@@ -159,6 +159,10 @@ func (s *scenario) callingTheEndpointWithoutTokenShouldResultInStatusBetween(end
 	return s.httpClient.CallEndpointWithRetries(fmt.Sprintf("%s/%s", s.Url, strings.TrimLeft(endpoint, "/")), &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher})
 }
 
+func (s *scenario) callingPrefixWithoutTokenShouldResultInStatusBetween(endpoint, host string, lower, higher int) error {
+	return s.httpClient.CallEndpointWithRetries(fmt.Sprintf("%s/%s", fmt.Sprintf("https://%s-%s.%s", host, s.TestID, s.Domain), strings.TrimLeft(endpoint, "/")), &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher})
+}
+
 func (s *scenario) thereAreTwoNamespaces() error {
 	resources, err := manifestprocessor.ParseFromFileWithTemplate("second-namespace.yaml", s.ApiResourceDirectory, s.ManifestTemplate)
 	if err != nil {
