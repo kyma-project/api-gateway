@@ -44,6 +44,9 @@ jobs:
     if: ${{ needs.check-build-image.outputs.check == 'true' }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
       - uses: ./.github/actions/build-manager-image
         with:
           operator-image-name: "api-gateway-manager:PR-${{github.event.number}}"
