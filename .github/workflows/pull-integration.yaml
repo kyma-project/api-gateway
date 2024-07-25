@@ -16,9 +16,10 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
+      - uses: ./.github/actions/load-manager-image
       - uses: ./.github/actions/integration-tests
         with:
-          manager_image: "europe-docker.pkg.dev/kyma-project/dev/api-gateway-manager:PR-${{github.event.number}}"
+          manager_image: "api-gateway-manager:PR-${{github.event.number}}"
 
   k8s-compatibility-check:
     name: Kubernetes version compatibility test
@@ -29,9 +30,10 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
+      - uses: ./.github/actions/load-manager-image
       - uses: ./.github/actions/k8s-compatibility-test
         with:
-          manager_image: "europe-docker.pkg.dev/kyma-project/dev/api-gateway-manager:PR-${{github.event.number}}"
+          manager_image: "api-gateway-manager:PR-${{github.event.number}}"
 
   upgrade-tests:
     name: Upgrade tests
@@ -41,8 +43,9 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
+      - uses: ./.github/actions/load-manager-image
       - uses: ./.github/actions/upgrade-test
         with:
-          test_upgrade_img: "europe-docker.pkg.dev/kyma-project/dev/api-gateway-manager:PR-${{github.event.number}}"
+          manager_image: "api-gateway-manager:PR-${{github.event.number}}"
           target_branch: ${{ github.base_ref }}
 

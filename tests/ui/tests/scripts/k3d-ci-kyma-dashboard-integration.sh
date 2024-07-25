@@ -22,6 +22,7 @@ sudo apt-get install -y gettext-base
 function deploy_k3d (){
 echo "Provisioning k3d cluster"
 sudo k3d cluster create kyma --port 80:80@loadbalancer --port 443:443@loadbalancer --k3s-arg "--disable=traefik@server:0"
+k3d image import "$IMG" -c kyma
 
 export KUBECONFIG=$(k3d kubeconfig merge kyma)
 
