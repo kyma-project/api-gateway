@@ -1,10 +1,7 @@
 name: 'Integration test - upgrade (k3d)'
 description: 'Runs integration tests - upgrade on k3d'
 inputs:
-  test_upgrade_img:
-    description: 'Image that api-gateway will be upgraded to'
-    required: true
-  manager_image: # This is required here to replace latest release deploy script, it's temporary and later can be removed
+  manager_image:
     description: 'Manager image used for test'
     required: true
   client_id:
@@ -35,7 +32,7 @@ runs:
     - name: Create Single Cluster
       uses: AbsaOSS/k3d-action@4e8b3239042be1dc0aed6c5eb80c13b18200fc79 #v2.4.0
       with:
-        cluster-name: "k3d-cluster"
+        cluster-name: "test-cluster-1"
         args: >-
           --agents 0
           --port 80:80@loadbalancer
@@ -45,13 +42,16 @@ runs:
       shell: bash
       env:
         KYMA_DOMAIN: "local.kyma.dev"
-        TEST_UPGRADE_IMG: ${{ inputs.test_upgrade_img }}
+        TEST_UPGRADE_IMG: ${{ inputs.manager_image }}
         CLIENT_ID: ${{ inputs.client_id }}
         CLIENT_SECRET: ${{ inputs.client_secret }}
         OIDC_CONFIG_URL: ${{ inputs.oidc_well_known_url }}
       run: |
-        EXPORT_RESULT=true TARGET_BRANCH=${{inputs.target_branch}} \
-        make test-upgrade
+        if [ "${{ github.event_name }}" == "pull_request" ]; then
+          k3d image import ${{ inputs.manager_image }} -c test-cluster-1
+        fi
+        kubectl config use-context k3d-test-cluster-1
+        EXPORT_RESULT=true TARGET_BRANCH=${{inputs.target_branch}} make test-upgrade
     - name: Uploads artifacts
       uses: actions/upload-artifact@v4
       with:

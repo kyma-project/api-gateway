@@ -1,0 +1,54 @@
+name: 'Build API Gateway Manager Image'
+description: 'Builds API Gateway manager image'
+inputs:
+  operator-image-name:
+    description: 'Operator image name used for creation of API Gateway manager image'
+    required: true
+  push-image:
+    description: 'Push the image to GCP'
+    required: false
+    default: 'false'
+  push-sa-key:
+    description: 'Service account key to push the image to GCP'
+    required: false
+    default: ''
+runs:
+  using: "composite"
+  steps:
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    - name: Login to Docker Hub
+      if: ${{ inputs.push-image == 'true' }}
+      uses: docker/login-action@v3
+      with:
+        registry: europe-central2-docker.pkg.dev
+        username: _json_key_base64
+        password: ${{ inputs.push-sa-key }}
+    - name: Build and Push
+      if: ${{ inputs.push-image == 'true' }}
+      uses: docker/build-push-action@v6
+      with:
+        context: .
+        platforms: 'linux/amd64'
+        push: true
+        tags: ${{ inputs.operator-image-name }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+    - name: Build and Load
+      if: ${{ inputs.push-image == 'false' }}
+      uses: docker/build-push-action@v6
+      with:
+        context: .
+        platforms: 'linux/amd64'
+        push: false
+        load: true
+        tags: ${{ inputs.operator-image-name }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        outputs: type=docker,dest=/tmp/manager-image.tar
+    - name: Upload artifact
+      if: ${{ inputs.push-image == 'false' }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: manager-image
+        path: /tmp/manager-image.tar

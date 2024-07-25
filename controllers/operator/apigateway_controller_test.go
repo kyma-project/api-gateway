@@ -4,8 +4,9 @@ import (
 	"context"
 	goerrors "errors"
 	"fmt"
-	"github.com/kyma-project/api-gateway/internal/conditions"
 	"time"
+
+	"github.com/kyma-project/api-gateway/internal/conditions"
 
 	"github.com/go-logr/logr"
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
