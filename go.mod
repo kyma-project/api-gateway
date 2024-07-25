@@ -1,6 +1,6 @@
 module github.com/kyma-project/api-gateway
 
-go 1.22.0
+go 1.22.5
 
 require (
 	github.com/avast/retry-go/v4 v4.6.0
@@ -21,8 +21,8 @@ require (
 	google.golang.org/appengine v1.6.8
 	google.golang.org/protobuf v1.34.2
 	gopkg.in/yaml.v3 v3.0.1
-	istio.io/api v1.22.1
-	istio.io/client-go v1.22.1
+	istio.io/api v1.22.2
+	istio.io/client-go v1.22.2
 	k8s.io/apimachinery v0.30.3
 	k8s.io/client-go v0.30.3
 	sigs.k8s.io/controller-runtime v0.18.4
