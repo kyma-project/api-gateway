@@ -7,6 +7,7 @@ spec:
   - port: 9443
     protocol: TCP
     targetPort: 9443
+    name: https-convert
   selector:
     app.kubernetes.io/component: api-gateway-operator.kyma-project.io
     control-plane: controller-manager
