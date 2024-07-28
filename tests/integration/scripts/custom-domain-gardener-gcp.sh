@@ -13,6 +13,8 @@ export SCALER_MAX=3
 export SCALER_MIN=1
 export GARDENER_PROVIDER="gcp"
 export GARDENER_REGION="europe-west3"
-export GARDENER_ZONES="europe-west3-c,europe-west3-b,europe-west3-a"
+export GARDENER_PROVIDER_SECRET_NAME="goat"
+export GARDENER_PROJECT_NAME="goats"
+export GARDENER_CLUSTER_VERSION="1.27.8"
 
-./tests/integration/scripts/custom-domain-gardener.sh
+./tests/integration/scripts/custom-domain-gardener-gh.sh
