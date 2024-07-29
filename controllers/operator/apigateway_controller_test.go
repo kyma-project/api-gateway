@@ -25,6 +25,35 @@ import (
 
 var _ = Describe("API-Gateway Controller", func() {
 	Context("Reconcile", func() {
+		It("Should requeue if the reconciliation was successful", func() {
+			// given
+			apiGatewayCR := &operatorv1alpha1.APIGateway{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:       apiGatewayCRName,
+					Namespace:  testNamespace,
+					Finalizers: []string{ApiGatewayFinalizer},
+				},
+			}
+
+			c := createFakeClient(apiGatewayCR)
+			agr := &APIGatewayReconciler{
+				Client:               c,
+				Scheme:               getTestScheme(),
+				log:                  logr.Discard(),
+				oathkeeperReconciler: oathkeeperReconcilerWithoutVerification{},
+			}
+
+			// when
+			result, err := agr.Reconcile(context.Background(), reconcile.Request{NamespacedName: types.NamespacedName{Namespace: testNamespace, Name: apiGatewayCRName}})
+
+			// then
+			Expect(err).ShouldNot(HaveOccurred())
+			Expect(result).Should(Equal(reconcile.Result{
+				Requeue:      true,
+				RequeueAfter: defaultApiGatewayReconciliationInterval,
+			}))
+		})
+
 		It("Should not return an error when CR was not found", func() {
 			// given
 			c := createFakeClient()
@@ -65,7 +94,10 @@ var _ = Describe("API-Gateway Controller", func() {
 
 			// then
 			Expect(err).ShouldNot(HaveOccurred())
-			Expect(result).Should(Equal(reconcile.Result{}))
+			Expect(result).Should(Equal(reconcile.Result{
+				Requeue:      true,
+				RequeueAfter: defaultApiGatewayReconciliationInterval,
+			}))
 
 			Expect(c.Get(context.Background(), client.ObjectKeyFromObject(apiGatewayCR), apiGatewayCR)).Should(Succeed())
 			Expect(apiGatewayCR.GetObjectMeta().GetFinalizers()).To(ContainElement(ApiGatewayFinalizer))
@@ -94,7 +126,10 @@ var _ = Describe("API-Gateway Controller", func() {
 
 			// then
 			Expect(err).ShouldNot(HaveOccurred())
-			Expect(result).Should(Equal(reconcile.Result{}))
+			Expect(result).Should(Equal(reconcile.Result{
+				Requeue:      true,
+				RequeueAfter: defaultApiGatewayReconciliationInterval,
+			}))
 
 			Expect(c.Get(context.Background(), client.ObjectKeyFromObject(apiGatewayCR), apiGatewayCR)).Should(Succeed())
 			Expect(apiGatewayCR.Status.State).Should(Equal(operatorv1alpha1.Ready))
@@ -138,7 +173,7 @@ var _ = Describe("API-Gateway Controller", func() {
 
 			// then
 			Expect(err).ToNot(HaveOccurred())
-			Expect(result.Requeue).To(BeFalse())
+			Expect(result.Requeue).To(BeTrue())
 
 			Expect(c.Get(context.Background(), client.ObjectKeyFromObject(apiGatewayCR), apiGatewayCR)).Should(Succeed())
 			Expect(apiGatewayCR.Status.State).To(Equal(operatorv1alpha1.Ready))
