@@ -42,14 +42,26 @@ echo "$shoot_template" | kubectl --kubeconfig "${GARDENER_KUBECONFIG}" apply -f 
 
 echo "waiting fo cluster to be ready..."
 kubectl wait  --kubeconfig "${GARDENER_KUBECONFIG}" --for=condition=EveryNodeReady shoot/${CLUSTER_NAME} --timeout=17m
-
 # create kubeconfig request, that creates a kubeconfig which is valid for one day
 kubectl create  --kubeconfig "${GARDENER_KUBECONFIG}" \
     -f <(printf '{"spec":{"expirationSeconds":86400}}') \
-    --raw /apis/core.gardener.cloud/v1beta1/namespaces/garden-${GARDENER_PROJECT_NAME}/shoots/${CLUSTER_NAME}/adminkubeconfig | \
+    --raw "/apis/core.gardener.cloud/v1beta1/namespaces/garden-${GARDENER_PROJECT_NAME}/shoots/${CLUSTER_NAME}/adminkubeconfig" | \
     jq -r ".status.kubeconfig" | \
-    base64 -d > ${CLUSTER_NAME}_kubeconfig.yaml
+    base64 -d > "${CLUSTER_NAME}_kubeconfig.yaml"
+
+# wait until apiserver /readyz endpoint returns "ok"
+until [[ $isOK == "ok" ]]; do
+  isOK=$(kubectl --kubeconfig "${CLUSTER_NAME}_kubeconfig.yaml" get --raw "/readyz")
+  # 5 minutes
+  if [[ $timeout -gt 300 ]]; then
+    echo "Timed out waiting for API Server to be ready"
+    exit 1
+  fi
+  timeout+=1
+  sleep 1
+done
 
 # replace the default kubeconfig
 mkdir -p ~/.kube
-mv ${CLUSTER_NAME}_kubeconfig.yaml ~/.kube/config
+mv "${CLUSTER_NAME}_kubeconfig.yaml" ~/.kube/config
+
