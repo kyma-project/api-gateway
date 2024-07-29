@@ -39,6 +39,7 @@ import (
 
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
@@ -172,6 +173,7 @@ func main() {
 						This can probably be enabled again when reconciliation only uses v2alpha1.
 					*/
 					&gatewayv2alpha1.APIRule{},
+					&corev1.Secret{},
 				},
 			},
 		},
