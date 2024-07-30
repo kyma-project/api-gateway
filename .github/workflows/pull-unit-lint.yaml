@@ -40,5 +40,5 @@ jobs:
           PULL_PULL_SHA=${{ github.event.pull_request.head.sha}} \
           PULL_BASE_SHA=${{ github.event.pull_request.base.sha}} \
           PULL_NUMBER=${{ github.event.number }} \
-          ./tests/integration/scripts/code-coverage-guard.sh
+          ./hack/ci/code-coverage-guard.sh
 
