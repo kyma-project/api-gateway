@@ -232,8 +232,8 @@ func (s *scenario) callingEndpointWithMethodAndHeaders(endpointUrl string, metho
 	return s.httpClient.CallEndpointWithHeadersAndMethod(requestHeaders, endpointUrl, method, asserter)
 }
 
-func (s *scenario) callinTheEndpointShouldResultInBodyContaining(endpoint string, bodyContent string) error {
-	asserter := &helpers.BodyContainsPredicate{Expected: []string{bodyContent}}
+func (s *scenario) callingTheEndpointShouldResultInBodyContaining(endpoint string, header string, bodyContent string) error {
+	asserter := &helpers.BodyContainsPredicate{Expected: []string{header, bodyContent}}
 	return s.httpClient.CallEndpointWithRetries(fmt.Sprintf("%s/%s", s.Url, strings.TrimLeft(endpoint, "/")), asserter)
 }
 
