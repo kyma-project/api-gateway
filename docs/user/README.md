@@ -13,7 +13,7 @@ Kyma API Gateway Operator is an extension to the Kyma runtime that manages the a
 
 ## Prerequisites
 
-You must enable the Istio module to be able to use the API Gateway module.
+You must add the Istio module to be able to use the API Gateway module.
 
 ## Useful Links
 
