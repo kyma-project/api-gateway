@@ -6,11 +6,11 @@ require (
 	github.com/avast/retry-go/v4 v4.6.0
 	github.com/cucumber/godog v0.14.1
 	github.com/gardener/cert-management v0.15.0
-	github.com/gardener/external-dns-management v0.19.0
+	github.com/gardener/external-dns-management v0.20.0
 	github.com/go-jose/go-jose/v3 v3.0.3
 	github.com/go-logr/logr v1.4.2
 	github.com/google/uuid v1.6.0
-	github.com/onsi/ginkgo/v2 v2.19.0
+	github.com/onsi/ginkgo/v2 v2.19.1
 	github.com/onsi/gomega v1.34.0
 	github.com/ory/oathkeeper-maester v0.1.10
 	github.com/spf13/pflag v1.0.5
