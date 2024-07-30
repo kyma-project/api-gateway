@@ -141,6 +141,16 @@ func (r virtualServiceCreator) Create(api *gatewayv2alpha1.APIRule) (*networking
 			// https://github.com/kyma-project/api-gateway/issues/1159
 			SetHostHeader(default_domain.GetHostWithDomain(string(*api.Spec.Hosts[0]), r.defaultDomainName))
 
+		if rule.Request != nil {
+			if rule.Request.Headers != nil {
+				headersBuilder.SetRequestHeaders(rule.Request.Headers)
+			}
+
+			if rule.Request.Cookies != nil {
+				headersBuilder.SetRequestCookies(rule.Request.Cookies)
+			}
+		}
+
 		if api.Spec.CorsPolicy != nil {
 			httpRouteBuilder.CorsPolicy(builders.CorsPolicy().FromV2Alpha1ApiRuleCorsPolicy(*api.Spec.CorsPolicy))
 		}

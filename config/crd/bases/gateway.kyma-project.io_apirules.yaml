@@ -450,6 +450,23 @@ spec:
                       description: Specifies the path of the exposed service.
                       pattern: ^([0-9a-zA-Z./*()?!\\_-]+)
                       type: string
+                    request:
+                      description: Request allows modifying the request before it
+                        is forwarded to the service.
+                      properties:
+                        cookies:
+                          additionalProperties:
+                            type: string
+                          description: Cookies allow modifying the request cookies
+                            before it is forwarded to the service.
+                          type: object
+                        headers:
+                          additionalProperties:
+                            type: string
+                          description: Headers allow modifying the request headers
+                            before it is forwarded to the service.
+                          type: object
+                      type: object
                     service:
                       description: Describes the service to expose. Overwrites the
                         **spec** level service if defined.
