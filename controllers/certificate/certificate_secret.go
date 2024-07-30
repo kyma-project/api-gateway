@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 
 	"github.com/go-logr/logr"
+	"github.com/kyma-project/api-gateway/internal/version"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/pkg/errors"
@@ -45,6 +46,15 @@ func InitialiseCertificateSecret(ctx context.Context, client client.Client, log 
 				ObjectMeta: metav1.ObjectMeta{
 					Namespace: secretNamespace,
 					Name:      secretName,
+					Labels: map[string]string{
+						"app.kubernetes.io/component": "api-gateway-operator.kyma-project.io",
+						"app.kubernetes.io/instance":  "api-gateway-operator-default",
+						"app.kubernetes.io/name":      "api-gateway-operator",
+						"app.kubernetes.io/part-of":   "api-gateway",
+						"app.kubernetes.io/version":   version.GetModuleVersion(),
+						"control-plane":               "controller-manager",
+						"kyma-project.io/module":      "api-gateway",
+					},
 					OwnerReferences: []metav1.OwnerReference{
 						{
 							APIVersion: "apps/v1",
