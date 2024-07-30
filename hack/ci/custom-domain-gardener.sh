@@ -47,7 +47,7 @@ export PATH="${PATH}:${PWD}"
 
 CLUSTER_NAME=ag-$(echo $RANDOM | md5sum | head -c 7)
 export CLUSTER_NAME
-./tests/integration/scripts/provision-gardener-gh.sh
+./hack/ci/provision-gardener-gh.sh
 
 echo "waiting for Gardener to finish shoot reconcile..."
 kubectl wait --kubeconfig "${GARDENER_KUBECONFIG}" --for=jsonpath='{.status.lastOperation.state}'=Succeeded --timeout=600s "shoots/${CLUSTER_NAME}"
