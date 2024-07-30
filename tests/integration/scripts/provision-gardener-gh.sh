@@ -50,6 +50,8 @@ kubectl create  --kubeconfig "${GARDENER_KUBECONFIG}" \
     base64 -d > "${CLUSTER_NAME}_kubeconfig.yaml"
 
 # wait until apiserver /readyz endpoint returns "ok"
+isOK=""
+timeout=0
 until [[ $isOK == "ok" ]]; do
   isOK=$(kubectl --kubeconfig "${CLUSTER_NAME}_kubeconfig.yaml" get --raw "/readyz")
   # 5 minutes
