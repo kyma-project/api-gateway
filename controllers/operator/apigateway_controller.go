@@ -22,6 +22,7 @@ import (
 	"github.com/kyma-project/api-gateway/internal/conditions"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"strings"
+	"time"
 
 	oryv1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
 
@@ -45,8 +46,9 @@ import (
 )
 
 const (
-	APIGatewayResourceListDefaultPath = "manifests/controlled_resources_list.yaml"
-	ApiGatewayFinalizer               = "gateways.operator.kyma-project.io/api-gateway"
+	APIGatewayResourceListDefaultPath       = "manifests/controlled_resources_list.yaml"
+	ApiGatewayFinalizer                     = "gateways.operator.kyma-project.io/api-gateway"
+	defaultApiGatewayReconciliationInterval = time.Hour * 10
 )
 
 func NewAPIGatewayReconciler(mgr manager.Manager, oathkeeperReconciler ReadyVerifyingReconciler) *APIGatewayReconciler {
@@ -185,7 +187,10 @@ func (r *APIGatewayReconciler) finishReconcile(ctx context.Context, cr v1alpha1.
 	}
 
 	r.log.Info("Successfully reconciled")
-	return ctrl.Result{}, nil
+	return ctrl.Result{
+		Requeue:      true,
+		RequeueAfter: defaultApiGatewayReconciliationInterval,
+	}, nil
 }
 
 func (r *APIGatewayReconciler) terminateReconciliation(ctx context.Context, apiGatewayCR operatorv1alpha1.APIGateway, status controllers.Status) (ctrl.Result, error) {
