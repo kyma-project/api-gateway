@@ -4,7 +4,7 @@ metadata:
   name: controller-manager
   namespace: system
   labels:
-    app.kubernetes.io/component: istio-operator.kyma-project.io
+    app.kubernetes.io/component: api-gateway-operator.kyma-project.io
     control-plane: controller-manager
 spec:
   selector:
