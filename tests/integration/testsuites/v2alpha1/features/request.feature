@@ -2,9 +2,9 @@ Feature: Support for request headers and cookies
 
   Scenario: Exposing an endpoint with request header configured
     Given RequestHeader: There is a httpbin service
-    And RequestHeader: There is an endpoint on path "/headers" with a header mutator setting "x-request-test" header to "a-header-value"
+    And RequestHeader: There is an endpoint on path "/headers" with a header mutator setting "X-Request-Test" header to "a-header-value"
     When RequestHeader: The APIRule is applied
-    Then RequestHeader: Calling the "/headers" endpoint should return response with header "x-request-test" with value "a-header-value"
+    Then RequestHeader: Calling the "/headers" endpoint should return response with header "X-Request-Test" with value "a-header-value"
     Then RequestHeader: Teardown httpbin service
 
   Scenario: Exposing an endpoint with request cookie configured
