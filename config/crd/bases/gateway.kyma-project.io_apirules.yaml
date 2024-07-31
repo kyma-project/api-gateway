@@ -363,8 +363,10 @@ spec:
                   description: Host is the URL of the exposed service.
                   maxLength: 256
                   minLength: 3
-                  pattern: ^([a-zA-Z0-9][a-zA-Z0-9-_]*\.)*[a-zA-Z0-9]*[a-zA-Z0-9-_]*[[a-zA-Z0-9]+$
                   type: string
+                  x-kubernetes-validations:
+                  - message: Host is not Fully Qualified Domain Name
+                    rule: self.matches('^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\\.)+[a-z0-9][a-z0-9-]{0,61}[a-z0-9]$')
                 maxItems: 1
                 minItems: 1
                 type: array
