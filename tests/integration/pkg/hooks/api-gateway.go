@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	controllerruntime "sigs.k8s.io/controller-runtime"
 
 	"github.com/avast/retry-go/v4"
 	"github.com/cucumber/godog"
@@ -71,7 +70,7 @@ var ApiGatewayCrTearDownScenarioHook = func(ctx context.Context, sc *godog.Scena
 }
 
 var ApplyAndVerifyApiGatewayCrSuiteHook = func() error {
-	log.Printf("Create or update APIGateway CR %s", ApiGatewayCRName)
+	log.Printf("Creating APIGateway CR %s", ApiGatewayCRName)
 	k8sClient := k8sclient.GetK8sClient()
 
 	apiGateway, err := createApiGatewayCRObjectFromTemplate(ApiGatewayCRName)
@@ -80,9 +79,7 @@ var ApplyAndVerifyApiGatewayCrSuiteHook = func() error {
 	}
 
 	err = retry.Do(func() error {
-		_, err := controllerruntime.CreateOrUpdate(context.Background(), k8sClient, &apiGateway, func() error {
-			return nil
-		})
+		err := k8sClient.Create(context.Background(), &apiGateway)
 		if err != nil {
 			return err
 		}
@@ -121,6 +118,44 @@ var ApplyAndVerifyApiGatewayCrSuiteHook = func() error {
 
 var DeleteBlockingResourcesSuiteHook = func() error {
 	return deleteBlockingResources(context.Background())
+}
+
+var ApiGatewayCrTearDownSuiteHook = func() error {
+	k8sClient := k8sclient.GetK8sClient()
+
+	apiGateway, err := createApiGatewayCRObjectFromTemplate(ApiGatewayCRName)
+	if err != nil {
+		return err
+	}
+
+	err = retry.Do(func() error {
+		err := k8sClient.Delete(context.Background(), &apiGateway)
+		if err != nil {
+			return err
+		}
+		return nil
+	}, testcontext.GetRetryOpts()...)
+	if err != nil {
+		return err
+	}
+
+	err = retry.Do(func() error {
+		err := k8sClient.Get(context.Background(), client.ObjectKey{
+			Namespace: apiGateway.GetNamespace(),
+			Name:      apiGateway.GetName(),
+		}, &apiGateway)
+
+		if err == nil {
+			return fmt.Errorf("ApiGatewayCrTearDownSuiteHook did not delete APIGateway CR, state: %s description: %s", apiGateway.Status.State, apiGateway.Status.Description)
+		}
+
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func forceApiGatewayCrRemoval(ctx context.Context, apiGateway *v1alpha1.APIGateway) error {
