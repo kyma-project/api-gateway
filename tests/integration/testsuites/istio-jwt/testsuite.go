@@ -205,7 +205,7 @@ func (t *testsuite) BeforeSuiteHooks() []func() error {
 }
 
 func (t *testsuite) AfterSuiteHooks() []func() error {
-	h := []func() error{hooks.IstioSkipVerifyJwksResolverSuiteHookTeardown(t), hooks.DeleteBlockingResourcesSuiteHook, hooks.ApiGatewayCrTearDownSuiteHook}
+	h := []func() error{hooks.IstioSkipVerifyJwksResolverSuiteHookTeardown(t), hooks.DeleteBlockingResourcesSuiteHook}
 
 	if !t.config.IsGardener {
 		h = append(h, hooks.DnsPatchForK3dSuiteHookTeardown(t))
