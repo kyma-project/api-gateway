@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
+	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 
 	"istio.io/api/security/v1beta1"
 	apiv1beta1 "istio.io/api/type/v1beta1"
@@ -162,6 +163,19 @@ func (rf *FromBuilder) WithForcedJWTAuthorization(accessStrategies []*gatewayv1b
 	return rf
 }
 
+// WithForcedJWTAuthorizationV2alpha1 adds RequestPrincipals = "ISSUER/*" for every issuer, forcing requests to use JWT authorization
+func (rf *FromBuilder) WithForcedJWTAuthorizationV2alpha1(authentications []*gatewayv2alpha1.JwtAuthentication) *FromBuilder {
+	// Only support one source at the moment
+	var requestPrincipals []string
+	for _, authentication := range authentications {
+		requestPrincipals = append(requestPrincipals, fmt.Sprintf("%s/*", authentication.Issuer))
+	}
+
+	source := v1beta1.Source{RequestPrincipals: requestPrincipals}
+	rf.value.Source = &source
+	return rf
+}
+
 func (rf *FromBuilder) WithIngressGatewaySource() *FromBuilder {
 	source := v1beta1.Source{Principals: []string{istioIngressGatewayPrincipal}}
 	rf.value.Source = &source
@@ -211,6 +225,11 @@ func (o *OperationBuilder) Get() *v1beta1.Operation {
 
 func (o *OperationBuilder) WithMethods(val []gatewayv1beta1.HttpMethod) *OperationBuilder {
 	o.value.Methods = gatewayv1beta1.ConvertHttpMethodsToStrings(val)
+	return o
+}
+
+func (o *OperationBuilder) WithMethodsV2alpha1(val []gatewayv2alpha1.HttpMethod) *OperationBuilder {
+	o.value.Methods = gatewayv2alpha1.ConvertHttpMethodsToStrings(val)
 	return o
 }
 

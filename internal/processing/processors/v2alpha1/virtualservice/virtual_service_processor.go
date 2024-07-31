@@ -106,7 +106,10 @@ func (r virtualServiceCreator) Create(api *gatewayv2alpha1.APIRule) (*networking
 
 	for _, rule := range api.Spec.Rules {
 		httpRouteBuilder := builders.HTTPRoute()
-		serviceNamespace := findServiceNamespace(api, &rule)
+		serviceNamespace, err := gatewayv2alpha1.FindServiceNamespace(api, rule)
+		if err != nil {
+			return nil, fmt.Errorf("finding service namespace: %w", err)
+		}
 
 		var host string
 		var port uint32
@@ -171,20 +174,4 @@ func GetVirtualServiceHttpTimeout(apiRuleSpec gatewayv2alpha1.APIRuleSpec, rule 
 		return uint32(*apiRuleSpec.Timeout)
 	}
 	return defaultHttpTimeout
-}
-
-func findServiceNamespace(api *gatewayv2alpha1.APIRule, rule *gatewayv2alpha1.Rule) string {
-	// Fallback direction for the upstream service namespace: Rule.Service > Spec.Service > APIRule
-	if rule != nil && rule.Service != nil && rule.Service.Namespace != nil {
-		return *rule.Service.Namespace
-	}
-	if api != nil && api.Spec.Service != nil && api.Spec.Service.Namespace != nil {
-		return *api.Spec.Service.Namespace
-	}
-
-	if api != nil {
-		return api.Namespace
-	} else {
-		return ""
-	}
 }
