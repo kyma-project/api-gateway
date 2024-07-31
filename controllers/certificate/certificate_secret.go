@@ -45,6 +45,9 @@ func InitialiseCertificateSecret(ctx context.Context, client client.Client, log 
 				ObjectMeta: metav1.ObjectMeta{
 					Namespace: secretNamespace,
 					Name:      secretName,
+					Labels: map[string]string{
+						"kyma-project.io/module": "api-gateway",
+					},
 					OwnerReferences: []metav1.OwnerReference{
 						{
 							APIVersion: "apps/v1",
