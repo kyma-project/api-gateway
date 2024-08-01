@@ -1,15 +1,17 @@
-import {loadFixture} from "./loadFile";
-import {postApis} from "./httpClient";
+import { postApis } from "./httpClient";
+import { loadFixture } from "./loadFile";
 
 export type ApiRuleAccessStrategy = "oauth2_introspection" | "jwt" | "noop" | "allow" | "no_auth"
 
 export type ApiRuleConfig = {
     name: string,
     namespace: string;
+    annotations: Record<string, string>;
     service: string;
     host: string;
     handler: ApiRuleAccessStrategy;
     config?: JwtConfig | OAuth2IntroConfig | null;
+    gateway: string;
 }
 
 type JwtConfig = {
@@ -26,6 +28,7 @@ type ApiRule = {
     metadata: {
         name: string;
         namespace: string;
+        annotations: Record<string, string>;
     }
     spec: {
         service: {
@@ -49,8 +52,14 @@ Cypress.Commands.add('createApiRule', (cfg: ApiRuleConfig) => {
     cy.wrap(loadFixture('apiRule.yaml')).then((a: ApiRule): void => {
         a.metadata.name = cfg.name;
         a.metadata.namespace = cfg.namespace;
+        if (Object.keys(cfg.annotations).length > 0) {
+            a.metadata.annotations = cfg.annotations;
+        }
         a.spec.service.name = cfg.service;
         a.spec.host = cfg.host;
+        if (cfg.gateway != "") {
+            a.spec.gateway = cfg.gateway;
+        }
         a.spec.rules[0].accessStrategies = [
             {
                 handler: cfg.handler,

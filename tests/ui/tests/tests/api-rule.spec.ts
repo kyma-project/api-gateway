@@ -1,5 +1,5 @@
 import 'cypress-file-upload';
-import {generateNamespaceName, generateRandomName} from "../support";
+import { generateNamespaceName, generateRandomName } from "../support";
 
 const apiRuleDefaultPath = "/.*";
 
@@ -37,7 +37,7 @@ context("API Rule", () => {
 
         cy.hasStatusLabel("OK");
         cy.contains(apiRuleDefaultPath).should('exist');
-        cy.contains('Rules #1', {timeout: 10000}).click();
+        cy.contains('Rules #1', { timeout: 10000 }).click();
         cy.contains('no_auth').should('exist');
     });
 
@@ -52,7 +52,7 @@ context("API Rule", () => {
         cy.apiRuleTypeHost(apiRuleName);
 
         cy.apiRuleSelectAccessStrategy("oauth2_introspection");
-        cy.get('[aria-label="expand Required Scope"]', {log: false,}).click();
+        cy.get('[aria-label="expand Required Scope"]', { log: false, }).click();
         cy.inputClearAndType('[data-testid="spec.rules.0.accessStrategies.0.config.required_scope.0"]:visible', "read");
 
         cy.apiRuleSelectMethod("POST")
@@ -62,7 +62,7 @@ context("API Rule", () => {
         // Verify created API Rule
         cy.hasStatusLabel("OK");
         cy.contains(apiRuleDefaultPath).should('exist');
-        cy.contains('Rules #1', {timeout: 10000}).click();
+        cy.contains('Rules #1', { timeout: 10000 }).click();
         cy.contains('oauth2_introspection').should('exist');
         cy.contains('read').should('exist');
     });
@@ -89,7 +89,7 @@ context("API Rule", () => {
         // Verify created API Rule
         cy.hasStatusLabel("OK");
         cy.contains(apiRuleDefaultPath).should('exist');
-        cy.contains('Rules #1', {timeout: 10000}).click();
+        cy.contains('Rules #1', { timeout: 10000 }).click();
         cy.contains('jwt').should('exist');
         cy.contains('https://urls.com').should('exist');
         cy.contains('https://trusted.com').should('exist');
@@ -116,7 +116,7 @@ context("API Rule", () => {
 
         cy.apiRuleTypeRulePath(updatedApiRulePath);
 
-        cy.get('[aria-label="expand Access Strategies"]:visible', {log: false}).first();
+        cy.get('[aria-label="expand Access Strategies"]:visible', { log: false }).first();
         cy.apiRuleSelectAccessStrategy("jwt");
 
         cy.apiRuleTypeJwksUrl("https://urls.com");
@@ -128,7 +128,7 @@ context("API Rule", () => {
         // Validate edited API Rule
         cy.hasStatusLabel("OK");
         cy.contains(apiRuleDefaultPath).should('exist');
-        cy.contains('Rules #1', {timeout: 20000}).click();
+        cy.contains('Rules #1', { timeout: 20000 }).click();
         cy.contains(updatedApiRulePath).should('exist');
 
         cy.contains('oauth2_introspection').should('not.exist');
@@ -224,6 +224,26 @@ context("API Rule", () => {
         cy.contains('CORS Max Age').should('exist').parent().contains('10s').should('exist')
     });
 
+    it('should show alert warning if gateway is in wrong format for v2alpha1 API Rule', () => {
+        cy.createApiRule({
+            name: apiRuleName,
+            namespace: namespaceName,
+            annotations: { 'gateway.kyma-project.io/original-version': 'v2alpha1' },
+            service: serviceName,
+            host: apiRuleName,
+            handler: "jwt",
+            config: {
+                jwks_urls: ["https://urls.com"],
+                trusted_issuers: ["https://trusted.com"]
+            },
+            gateway: "kyma-gateway"
+        });
+
+        cy.navigateToApiRuleList(namespaceName);
+        cy.clickGenericListLink(apiRuleName);
+        cy.contains('Gateway must be in the format {NAMESPACE}/{NAME}').should('exist')
+    });
+
     context("Host", () => {
         context("when APIRule is in OK state", () => {
 
@@ -259,5 +279,4 @@ context("API Rule", () => {
             });
         })
     });
-
 });
