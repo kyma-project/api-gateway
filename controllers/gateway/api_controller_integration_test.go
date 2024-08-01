@@ -1395,6 +1395,72 @@ var _ = Describe("APIRule Controller", Serial, func() {
 		})
 	})
 
+	Context("when creating APIRule in version v2alpha1 gateway name should be valid", Ordered, func() {
+		It("should create an APIRule with a valid gateway", func() {
+			// given
+			apiRuleName := generateTestName(testNameBase, testIDLength)
+			serviceName := testServiceNameBase
+
+			rule := testRulev2alpha1("/img", []gatewayv2alpha1.HttpMethod{http.MethodGet})
+			rule.NoAuth = ptr.To(true)
+			apiRule := testApiRulev2alpha1Gateway(apiRuleName, testNamespace, serviceName, testNamespace, testGatewayURL, testServicePort, []gatewayv2alpha1.Rule{rule})
+			svc := testService(serviceName, testNamespace, testServicePort)
+
+			// when
+			Expect(c.Create(context.Background(), svc)).Should(Succeed())
+			Expect(c.Create(context.Background(), apiRule)).Should(Succeed())
+			defer func() {
+				apiRulev2alpha1Teardown(apiRule)
+				serviceTeardown(svc)
+			}()
+		})
+
+		invalidHelper := func(gatewayName string) {
+			// given
+			apiRuleName := generateTestName(testNameBase, testIDLength)
+			serviceName := testServiceNameBase
+
+			rule := testRulev2alpha1("/img", []gatewayv2alpha1.HttpMethod{http.MethodGet})
+			rule.NoAuth = ptr.To(true)
+			apiRule := testApiRulev2alpha1Gateway(apiRuleName, testNamespace, serviceName, testNamespace, gatewayName, testServicePort, []gatewayv2alpha1.Rule{rule})
+			svc := testService(serviceName, testNamespace, testServicePort)
+
+			// when
+			Expect(c.Create(context.Background(), svc)).Should(Succeed())
+			err := c.Create(context.Background(), apiRule)
+			defer func() {
+				apiRulev2alpha1Teardown(apiRule)
+				serviceTeardown(svc)
+			}()
+			Expect(err).Should(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring("spec.gateway: Invalid value: \"string\": Gateway is not valid"))
+		}
+
+		It("should not create an APIRule with an empty gateway", func() {
+			invalidHelper("")
+		})
+
+		It("should not create an APIRule with too long gateway namespace name", func() {
+			invalidHelper("insane-very-long-namespace-name-exceeding-sixty-three-characters/validname")
+		})
+
+		It("should not create an APIRule with too long gateway name", func() {
+			invalidHelper("validnamespace/insane-very-long-namespace-name-exceeding-sixty-three-characters")
+		})
+
+		It("should not create an APIRule with just the namespace", func() {
+			invalidHelper("validnamespace/")
+		})
+
+		It("should not create an APIRule with just the gateway name", func() {
+			invalidHelper("/validgateway")
+		})
+
+		It("should not create an APIRule with double slashed gateway name", func() {
+			invalidHelper("namespace//gateway")
+		})
+	})
+
 	Context("when creating APIRule in version v2alpha1 hosts should be FQDN", Ordered, func() {
 		It("should not create an APIRule with an empty host", func() {
 			// given
@@ -1940,6 +2006,28 @@ func testApiRule(name, namespace, serviceName, serviceNamespace, serviceHost str
 
 func testApiRulev2alpha1(name, namespace, serviceName, serviceNamespace string, serviceHosts []*gatewayv2alpha1.Host, servicePort uint32, rules []gatewayv2alpha1.Rule) *gatewayv2alpha1.APIRule {
 	var gateway = testGatewayURL
+
+	return &gatewayv2alpha1.APIRule{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: namespace,
+		},
+		Spec: gatewayv2alpha1.APIRuleSpec{
+			Hosts:   serviceHosts,
+			Gateway: &gateway,
+			Service: &gatewayv2alpha1.Service{
+				Name:      &serviceName,
+				Namespace: &serviceNamespace,
+				Port:      &servicePort,
+			},
+			Rules: rules,
+		},
+	}
+}
+
+func testApiRulev2alpha1Gateway(name, namespace, serviceName, serviceNamespace, gateway string, servicePort uint32, rules []gatewayv2alpha1.Rule) *gatewayv2alpha1.APIRule {
+	serviceHost := gatewayv2alpha1.Host("example.com")
+	serviceHosts := []*gatewayv2alpha1.Host{&serviceHost}
 
 	return &gatewayv2alpha1.APIRule{
 		ObjectMeta: metav1.ObjectMeta{

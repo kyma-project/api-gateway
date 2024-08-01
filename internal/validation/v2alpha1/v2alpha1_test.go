@@ -47,7 +47,7 @@ var _ = Describe("Validate", func() {
 		fakeClient := createFakeClient(&service)
 
 		//when
-		problems := (&v2alpha1.APIRuleValidator{ApiRule: apiRule}).Validate(context.Background(), fakeClient, networkingv1beta1.VirtualServiceList{})
+		problems := (&v2alpha1.APIRuleValidator{ApiRule: apiRule}).Validate(context.Background(), fakeClient, networkingv1beta1.VirtualServiceList{}, networkingv1beta1.GatewayList{})
 
 		//then
 		Expect(problems).To(HaveLen(1))

@@ -31,10 +31,16 @@ func (r Reconciliation) Validate(ctx context.Context, client client.Client) ([]v
 	if err := client.List(ctx, &vsList); err != nil {
 		return make([]validation.Failure, 0), err
 	}
+
+	var gwList networkingv1beta1.GatewayList
+	if err := client.List(ctx, &gwList); err != nil {
+		return make([]validation.Failure, 0), err
+	}
+
 	if r.validator == nil {
 		return make([]validation.Failure, 0), errors.New("validator is not set")
 	}
-	failures := r.validator.Validate(ctx, client, vsList)
+	failures := r.validator.Validate(ctx, client, vsList, gwList)
 	return failures, nil
 }
 
