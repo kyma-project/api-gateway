@@ -1396,6 +1396,29 @@ var _ = Describe("APIRule Controller", Serial, func() {
 	})
 
 	Context("when creating APIRule in version v2alpha1 hosts should be FQDN", Ordered, func() {
+		It("should not create an APIRule with an empty host", func() {
+			// given
+			apiRuleName := generateTestName(testNameBase, testIDLength)
+			serviceName := testServiceNameBase
+			serviceHost := gatewayv2alpha1.Host("")
+			serviceHosts := []*gatewayv2alpha1.Host{&serviceHost}
+
+			rule := testRulev2alpha1("/img", []gatewayv2alpha1.HttpMethod{http.MethodGet})
+			rule.NoAuth = ptr.To(true)
+			apiRule := testApiRulev2alpha1(apiRuleName, testNamespace, serviceName, testNamespace, serviceHosts, testServicePort, []gatewayv2alpha1.Rule{rule})
+			svc := testService(serviceName, testNamespace, testServicePort)
+
+			// when
+			Expect(c.Create(context.Background(), svc)).Should(Succeed())
+			err := c.Create(context.Background(), apiRule)
+			defer func() {
+				apiRulev2alpha1Teardown(apiRule)
+				serviceTeardown(svc)
+			}()
+			Expect(err).Should(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring("spec.hosts[0]: Invalid value: \"string\": Host is not Fully Qualified Domain Name"))
+		})
+
 		It("should create an APIRule with a FQDN host", func() {
 			// given
 			apiRuleName := generateTestName(testNameBase, testIDLength)
@@ -1415,6 +1438,52 @@ var _ = Describe("APIRule Controller", Serial, func() {
 				apiRulev2alpha1Teardown(apiRule)
 				serviceTeardown(svc)
 			}()
+		})
+
+		It("should not create an APIRule with host name without domain", func() {
+			// given
+			apiRuleName := generateTestName(testNameBase, testIDLength)
+			serviceName := testServiceNameBase
+			serviceHost := gatewayv2alpha1.Host("example-com")
+			serviceHosts := []*gatewayv2alpha1.Host{&serviceHost}
+
+			rule := testRulev2alpha1("/img", []gatewayv2alpha1.HttpMethod{http.MethodGet})
+			rule.NoAuth = ptr.To(true)
+			apiRule := testApiRulev2alpha1(apiRuleName, testNamespace, serviceName, testNamespace, serviceHosts, testServicePort, []gatewayv2alpha1.Rule{rule})
+			svc := testService(serviceName, testNamespace, testServicePort)
+
+			// when
+			Expect(c.Create(context.Background(), svc)).Should(Succeed())
+			err := c.Create(context.Background(), apiRule)
+			defer func() {
+				apiRulev2alpha1Teardown(apiRule)
+				serviceTeardown(svc)
+			}()
+			Expect(err).Should(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring("spec.hosts[0]: Invalid value: \"string\": Host is not Fully Qualified Domain Name"))
+		})
+
+		It("should not create an APIRule when host name has uppercase letters", func() {
+			// given
+			apiRuleName := generateTestName(testNameBase, testIDLength)
+			serviceName := testServiceNameBase
+			serviceHost := gatewayv2alpha1.Host("Example.Com")
+			serviceHosts := []*gatewayv2alpha1.Host{&serviceHost}
+
+			rule := testRulev2alpha1("/img", []gatewayv2alpha1.HttpMethod{http.MethodGet})
+			rule.NoAuth = ptr.To(true)
+			apiRule := testApiRulev2alpha1(apiRuleName, testNamespace, serviceName, testNamespace, serviceHosts, testServicePort, []gatewayv2alpha1.Rule{rule})
+			svc := testService(serviceName, testNamespace, testServicePort)
+
+			// when
+			Expect(c.Create(context.Background(), svc)).Should(Succeed())
+			err := c.Create(context.Background(), apiRule)
+			defer func() {
+				apiRulev2alpha1Teardown(apiRule)
+				serviceTeardown(svc)
+			}()
+			Expect(err).Should(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring("spec.hosts[0]: Invalid value: \"string\": Host is not Fully Qualified Domain Name"))
 		})
 
 		It("should not create an APIRule with host name segment longer than 63 characters", func() {
@@ -1487,8 +1556,100 @@ var _ = Describe("APIRule Controller", Serial, func() {
 				serviceTeardown(svc)
 			}()
 			Expect(err).Should(HaveOccurred())
-			Expect(err.Error()).To(ContainSubstring("spec.hosts[0]: Too long: may not be longer than 256"))
+			Expect(err.Error()).To(ContainSubstring("spec.hosts[0]: Too long: may not be longer than 255"))
 			Expect(host256).To(HaveLen(256))
+		})
+
+		It("should not create an APIRule when any domain label is empty", func() {
+			// given
+			apiRuleName := generateTestName(testNameBase, testIDLength)
+			serviceName := testServiceNameBase
+			serviceHost := gatewayv2alpha1.Host("host..com")
+			serviceHosts := []*gatewayv2alpha1.Host{&serviceHost}
+
+			rule := testRulev2alpha1("/img", []gatewayv2alpha1.HttpMethod{http.MethodGet})
+			rule.NoAuth = ptr.To(true)
+			apiRule := testApiRulev2alpha1(apiRuleName, testNamespace, serviceName, testNamespace, serviceHosts, testServicePort, []gatewayv2alpha1.Rule{rule})
+			svc := testService(serviceName, testNamespace, testServicePort)
+
+			// when
+			Expect(c.Create(context.Background(), svc)).Should(Succeed())
+			err := c.Create(context.Background(), apiRule)
+			defer func() {
+				apiRulev2alpha1Teardown(apiRule)
+				serviceTeardown(svc)
+			}()
+			Expect(err).Should(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring("spec.hosts[0]: Invalid value: \"string\": Host is not Fully Qualified Domain Name"))
+		})
+
+		It("should not create an APIRule when top level domain is too short", func() {
+			// given
+			apiRuleName := generateTestName(testNameBase, testIDLength)
+			serviceName := testServiceNameBase
+			serviceHost := gatewayv2alpha1.Host("host.with.tld.too.short.x")
+			serviceHosts := []*gatewayv2alpha1.Host{&serviceHost}
+
+			rule := testRulev2alpha1("/img", []gatewayv2alpha1.HttpMethod{http.MethodGet})
+			rule.NoAuth = ptr.To(true)
+			apiRule := testApiRulev2alpha1(apiRuleName, testNamespace, serviceName, testNamespace, serviceHosts, testServicePort, []gatewayv2alpha1.Rule{rule})
+			svc := testService(serviceName, testNamespace, testServicePort)
+
+			// when
+			Expect(c.Create(context.Background(), svc)).Should(Succeed())
+			err := c.Create(context.Background(), apiRule)
+			defer func() {
+				apiRulev2alpha1Teardown(apiRule)
+				serviceTeardown(svc)
+			}()
+			Expect(err).Should(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring("spec.hosts[0]: Invalid value: \"string\": Host is not Fully Qualified Domain Name"))
+		})
+
+		It("should not create an APIRule when host contains wrong characters", func() {
+			// given
+			apiRuleName := generateTestName(testNameBase, testIDLength)
+			serviceName := testServiceNameBase
+			serviceHost := gatewayv2alpha1.Host("*example.com")
+			serviceHosts := []*gatewayv2alpha1.Host{&serviceHost}
+
+			rule := testRulev2alpha1("/img", []gatewayv2alpha1.HttpMethod{http.MethodGet})
+			rule.NoAuth = ptr.To(true)
+			apiRule := testApiRulev2alpha1(apiRuleName, testNamespace, serviceName, testNamespace, serviceHosts, testServicePort, []gatewayv2alpha1.Rule{rule})
+			svc := testService(serviceName, testNamespace, testServicePort)
+
+			// when
+			Expect(c.Create(context.Background(), svc)).Should(Succeed())
+			err := c.Create(context.Background(), apiRule)
+			defer func() {
+				apiRulev2alpha1Teardown(apiRule)
+				serviceTeardown(svc)
+			}()
+			Expect(err).Should(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring("spec.hosts[0]: Invalid value: \"string\": Host is not Fully Qualified Domain Name"))
+		})
+
+		It("should not create an APIRule when host starts with a dash", func() {
+			// given
+			apiRuleName := generateTestName(testNameBase, testIDLength)
+			serviceName := testServiceNameBase
+			serviceHost := gatewayv2alpha1.Host("-example.com")
+			serviceHosts := []*gatewayv2alpha1.Host{&serviceHost}
+
+			rule := testRulev2alpha1("/img", []gatewayv2alpha1.HttpMethod{http.MethodGet})
+			rule.NoAuth = ptr.To(true)
+			apiRule := testApiRulev2alpha1(apiRuleName, testNamespace, serviceName, testNamespace, serviceHosts, testServicePort, []gatewayv2alpha1.Rule{rule})
+			svc := testService(serviceName, testNamespace, testServicePort)
+
+			// when
+			Expect(c.Create(context.Background(), svc)).Should(Succeed())
+			err := c.Create(context.Background(), apiRule)
+			defer func() {
+				apiRulev2alpha1Teardown(apiRule)
+				serviceTeardown(svc)
+			}()
+			Expect(err).Should(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring("spec.hosts[0]: Invalid value: \"string\": Host is not Fully Qualified Domain Name"))
 		})
 	})
 

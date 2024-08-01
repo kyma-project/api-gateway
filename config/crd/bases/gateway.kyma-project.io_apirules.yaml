@@ -361,7 +361,7 @@ spec:
                 description: Specifies the URLs of the exposed service.
                 items:
                   description: Host is the URL of the exposed service.
-                  maxLength: 256
+                  maxLength: 255
                   minLength: 3
                   type: string
                   x-kubernetes-validations:
