@@ -1462,29 +1462,6 @@ var _ = Describe("APIRule Controller", Serial, func() {
 	})
 
 	Context("when creating APIRule in version v2alpha1 hosts should be FQDN", Ordered, func() {
-		It("should not create an APIRule with an empty host", func() {
-			// given
-			apiRuleName := generateTestName(testNameBase, testIDLength)
-			serviceName := testServiceNameBase
-			serviceHost := gatewayv2alpha1.Host("")
-			serviceHosts := []*gatewayv2alpha1.Host{&serviceHost}
-
-			rule := testRulev2alpha1("/img", []gatewayv2alpha1.HttpMethod{http.MethodGet})
-			rule.NoAuth = ptr.To(true)
-			apiRule := testApiRulev2alpha1(apiRuleName, testNamespace, serviceName, testNamespace, serviceHosts, testServicePort, []gatewayv2alpha1.Rule{rule})
-			svc := testService(serviceName, testNamespace, testServicePort)
-
-			// when
-			Expect(c.Create(context.Background(), svc)).Should(Succeed())
-			err := c.Create(context.Background(), apiRule)
-			defer func() {
-				apiRulev2alpha1Teardown(apiRule)
-				serviceTeardown(svc)
-			}()
-			Expect(err).Should(HaveOccurred())
-			Expect(err.Error()).To(ContainSubstring("spec.hosts[0]: Invalid value: \"string\": Host is not Fully Qualified Domain Name"))
-		})
-
 		It("should create an APIRule with a FQDN host", func() {
 			// given
 			apiRuleName := generateTestName(testNameBase, testIDLength)
@@ -1506,81 +1483,12 @@ var _ = Describe("APIRule Controller", Serial, func() {
 			}()
 		})
 
-		It("should not create an APIRule with host name without domain", func() {
-			// given
-			apiRuleName := generateTestName(testNameBase, testIDLength)
-			serviceName := testServiceNameBase
-			serviceHost := gatewayv2alpha1.Host("example-com")
-			serviceHosts := []*gatewayv2alpha1.Host{&serviceHost}
-
-			rule := testRulev2alpha1("/img", []gatewayv2alpha1.HttpMethod{http.MethodGet})
-			rule.NoAuth = ptr.To(true)
-			apiRule := testApiRulev2alpha1(apiRuleName, testNamespace, serviceName, testNamespace, serviceHosts, testServicePort, []gatewayv2alpha1.Rule{rule})
-			svc := testService(serviceName, testNamespace, testServicePort)
-
-			// when
-			Expect(c.Create(context.Background(), svc)).Should(Succeed())
-			err := c.Create(context.Background(), apiRule)
-			defer func() {
-				apiRulev2alpha1Teardown(apiRule)
-				serviceTeardown(svc)
-			}()
-			Expect(err).Should(HaveOccurred())
-			Expect(err.Error()).To(ContainSubstring("spec.hosts[0]: Invalid value: \"string\": Host is not Fully Qualified Domain Name"))
-		})
-
-		It("should not create an APIRule when host name has uppercase letters", func() {
-			// given
-			apiRuleName := generateTestName(testNameBase, testIDLength)
-			serviceName := testServiceNameBase
-			serviceHost := gatewayv2alpha1.Host("Example.Com")
-			serviceHosts := []*gatewayv2alpha1.Host{&serviceHost}
-
-			rule := testRulev2alpha1("/img", []gatewayv2alpha1.HttpMethod{http.MethodGet})
-			rule.NoAuth = ptr.To(true)
-			apiRule := testApiRulev2alpha1(apiRuleName, testNamespace, serviceName, testNamespace, serviceHosts, testServicePort, []gatewayv2alpha1.Rule{rule})
-			svc := testService(serviceName, testNamespace, testServicePort)
-
-			// when
-			Expect(c.Create(context.Background(), svc)).Should(Succeed())
-			err := c.Create(context.Background(), apiRule)
-			defer func() {
-				apiRulev2alpha1Teardown(apiRule)
-				serviceTeardown(svc)
-			}()
-			Expect(err).Should(HaveOccurred())
-			Expect(err.Error()).To(ContainSubstring("spec.hosts[0]: Invalid value: \"string\": Host is not Fully Qualified Domain Name"))
-		})
-
-		It("should not create an APIRule with host name segment longer than 63 characters", func() {
-			// given
-			apiRuleName := generateTestName(testNameBase, testIDLength)
-			serviceName := testServiceNameBase
-			serviceHost := gatewayv2alpha1.Host(strings.Repeat("a", 64) + ".com")
-			serviceHosts := []*gatewayv2alpha1.Host{&serviceHost}
-
-			rule := testRulev2alpha1("/img", []gatewayv2alpha1.HttpMethod{http.MethodGet})
-			rule.NoAuth = ptr.To(true)
-			apiRule := testApiRulev2alpha1(apiRuleName, testNamespace, serviceName, testNamespace, serviceHosts, testServicePort, []gatewayv2alpha1.Rule{rule})
-			svc := testService(serviceName, testNamespace, testServicePort)
-
-			// when
-			Expect(c.Create(context.Background(), svc)).Should(Succeed())
-			err := c.Create(context.Background(), apiRule)
-			defer func() {
-				apiRulev2alpha1Teardown(apiRule)
-				serviceTeardown(svc)
-			}()
-			Expect(err).Should(HaveOccurred())
-			Expect(err.Error()).To(ContainSubstring("spec.hosts[0]: Invalid value: \"string\": Host is not Fully Qualified Domain Name"))
-		})
-
 		It("should create an APIRule with host name that has length of 255 characters", func() {
 			// given
 			apiRuleName := generateTestName(testNameBase, testIDLength)
 			serviceName := testServiceNameBase
-			sixtyThreeA := strings.Repeat("a", 63) + "."
-			host255 := sixtyThreeA + sixtyThreeA + sixtyThreeA + strings.Repeat("b", 59) + ".com"
+			sixtyThreeA := strings.Repeat("a", 63)
+			host255 := fmt.Sprintf("%s.%s.%s.%s.com", sixtyThreeA, sixtyThreeA, sixtyThreeA, strings.Repeat("b", 59))
 			serviceHost := gatewayv2alpha1.Host(host255)
 			serviceHosts := []*gatewayv2alpha1.Host{&serviceHost}
 
@@ -1590,22 +1498,21 @@ var _ = Describe("APIRule Controller", Serial, func() {
 			svc := testService(serviceName, testNamespace, testServicePort)
 
 			// when
+			Expect(host255).To(HaveLen(255))
 			Expect(c.Create(context.Background(), svc)).Should(Succeed())
-			err := c.Create(context.Background(), apiRule)
+			Expect(c.Create(context.Background(), apiRule)).Should(Succeed())
 			defer func() {
 				apiRulev2alpha1Teardown(apiRule)
 				serviceTeardown(svc)
 			}()
-			Expect(err).ShouldNot(HaveOccurred())
-			Expect(host255).To(HaveLen(255))
 		})
 
 		It("should not create an APIRule with host name longer than 255 characters", func() {
 			// given
 			apiRuleName := generateTestName(testNameBase, testIDLength)
 			serviceName := testServiceNameBase
-			sixtyThreeA := strings.Repeat("a", 63) + "."
-			host256 := sixtyThreeA + sixtyThreeA + sixtyThreeA + strings.Repeat("b", 60) + ".com"
+			sixtyThreeA := strings.Repeat("a", 63)
+			host256 := fmt.Sprintf("%s.%s.%s.%s.com", sixtyThreeA, sixtyThreeA, sixtyThreeA, strings.Repeat("b", 60))
 			serviceHost := gatewayv2alpha1.Host(host256)
 			serviceHosts := []*gatewayv2alpha1.Host{&serviceHost}
 
@@ -1615,6 +1522,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 			svc := testService(serviceName, testNamespace, testServicePort)
 
 			// when
+			Expect(host256).To(HaveLen(256))
 			Expect(c.Create(context.Background(), svc)).Should(Succeed())
 			err := c.Create(context.Background(), apiRule)
 			defer func() {
@@ -1623,99 +1531,61 @@ var _ = Describe("APIRule Controller", Serial, func() {
 			}()
 			Expect(err).Should(HaveOccurred())
 			Expect(err.Error()).To(ContainSubstring("spec.hosts[0]: Too long: may not be longer than 255"))
-			Expect(host256).To(HaveLen(256))
+		})
+
+		invalidHelper := func(host gatewayv2alpha1.Host) {
+			// given
+			apiRuleName := generateTestName(testNameBase, testIDLength)
+			serviceName := testServiceNameBase
+			serviceHosts := []*gatewayv2alpha1.Host{&host}
+
+			rule := testRulev2alpha1("/img", []gatewayv2alpha1.HttpMethod{http.MethodGet})
+			rule.NoAuth = ptr.To(true)
+			apiRule := testApiRulev2alpha1(apiRuleName, testNamespace, serviceName, testNamespace, serviceHosts, testServicePort, []gatewayv2alpha1.Rule{rule})
+			svc := testService(serviceName, testNamespace, testServicePort)
+
+			// when
+			Expect(c.Create(context.Background(), svc)).Should(Succeed())
+			err := c.Create(context.Background(), apiRule)
+			defer func() {
+				apiRulev2alpha1Teardown(apiRule)
+				serviceTeardown(svc)
+			}()
+			Expect(err).Should(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring("spec.hosts[0]: Invalid value: \"string\": Host is not Fully Qualified Domain Name"))
+		}
+
+		It("should not create an APIRule with an empty host", func() {
+			invalidHelper("")
+		})
+
+		It("should not create an APIRule with host name without domain", func() {
+			invalidHelper("example-com")
+		})
+
+		It("should not create an APIRule when host name has uppercase letters", func() {
+			invalidHelper("Example.Com")
+		})
+
+		It("should not create an APIRule with host name segment longer than 63 characters", func() {
+			serviceHost := gatewayv2alpha1.Host(strings.Repeat("a", 64) + ".com")
+			invalidHelper(serviceHost)
 		})
 
 		It("should not create an APIRule when any domain label is empty", func() {
-			// given
-			apiRuleName := generateTestName(testNameBase, testIDLength)
-			serviceName := testServiceNameBase
-			serviceHost := gatewayv2alpha1.Host("host..com")
-			serviceHosts := []*gatewayv2alpha1.Host{&serviceHost}
-
-			rule := testRulev2alpha1("/img", []gatewayv2alpha1.HttpMethod{http.MethodGet})
-			rule.NoAuth = ptr.To(true)
-			apiRule := testApiRulev2alpha1(apiRuleName, testNamespace, serviceName, testNamespace, serviceHosts, testServicePort, []gatewayv2alpha1.Rule{rule})
-			svc := testService(serviceName, testNamespace, testServicePort)
-
-			// when
-			Expect(c.Create(context.Background(), svc)).Should(Succeed())
-			err := c.Create(context.Background(), apiRule)
-			defer func() {
-				apiRulev2alpha1Teardown(apiRule)
-				serviceTeardown(svc)
-			}()
-			Expect(err).Should(HaveOccurred())
-			Expect(err.Error()).To(ContainSubstring("spec.hosts[0]: Invalid value: \"string\": Host is not Fully Qualified Domain Name"))
+			invalidHelper("host..com")
 		})
 
 		It("should not create an APIRule when top level domain is too short", func() {
-			// given
-			apiRuleName := generateTestName(testNameBase, testIDLength)
-			serviceName := testServiceNameBase
-			serviceHost := gatewayv2alpha1.Host("host.with.tld.too.short.x")
-			serviceHosts := []*gatewayv2alpha1.Host{&serviceHost}
-
-			rule := testRulev2alpha1("/img", []gatewayv2alpha1.HttpMethod{http.MethodGet})
-			rule.NoAuth = ptr.To(true)
-			apiRule := testApiRulev2alpha1(apiRuleName, testNamespace, serviceName, testNamespace, serviceHosts, testServicePort, []gatewayv2alpha1.Rule{rule})
-			svc := testService(serviceName, testNamespace, testServicePort)
-
-			// when
-			Expect(c.Create(context.Background(), svc)).Should(Succeed())
-			err := c.Create(context.Background(), apiRule)
-			defer func() {
-				apiRulev2alpha1Teardown(apiRule)
-				serviceTeardown(svc)
-			}()
-			Expect(err).Should(HaveOccurred())
-			Expect(err.Error()).To(ContainSubstring("spec.hosts[0]: Invalid value: \"string\": Host is not Fully Qualified Domain Name"))
+			invalidHelper("host.with.tld.too.short.x")
 		})
 
 		It("should not create an APIRule when host contains wrong characters", func() {
-			// given
-			apiRuleName := generateTestName(testNameBase, testIDLength)
-			serviceName := testServiceNameBase
-			serviceHost := gatewayv2alpha1.Host("*example.com")
-			serviceHosts := []*gatewayv2alpha1.Host{&serviceHost}
-
-			rule := testRulev2alpha1("/img", []gatewayv2alpha1.HttpMethod{http.MethodGet})
-			rule.NoAuth = ptr.To(true)
-			apiRule := testApiRulev2alpha1(apiRuleName, testNamespace, serviceName, testNamespace, serviceHosts, testServicePort, []gatewayv2alpha1.Rule{rule})
-			svc := testService(serviceName, testNamespace, testServicePort)
-
-			// when
-			Expect(c.Create(context.Background(), svc)).Should(Succeed())
-			err := c.Create(context.Background(), apiRule)
-			defer func() {
-				apiRulev2alpha1Teardown(apiRule)
-				serviceTeardown(svc)
-			}()
-			Expect(err).Should(HaveOccurred())
-			Expect(err.Error()).To(ContainSubstring("spec.hosts[0]: Invalid value: \"string\": Host is not Fully Qualified Domain Name"))
+			invalidHelper("*example.com")
 		})
 
 		It("should not create an APIRule when host starts with a dash", func() {
-			// given
-			apiRuleName := generateTestName(testNameBase, testIDLength)
-			serviceName := testServiceNameBase
-			serviceHost := gatewayv2alpha1.Host("-example.com")
-			serviceHosts := []*gatewayv2alpha1.Host{&serviceHost}
-
-			rule := testRulev2alpha1("/img", []gatewayv2alpha1.HttpMethod{http.MethodGet})
-			rule.NoAuth = ptr.To(true)
-			apiRule := testApiRulev2alpha1(apiRuleName, testNamespace, serviceName, testNamespace, serviceHosts, testServicePort, []gatewayv2alpha1.Rule{rule})
-			svc := testService(serviceName, testNamespace, testServicePort)
-
-			// when
-			Expect(c.Create(context.Background(), svc)).Should(Succeed())
-			err := c.Create(context.Background(), apiRule)
-			defer func() {
-				apiRulev2alpha1Teardown(apiRule)
-				serviceTeardown(svc)
-			}()
-			Expect(err).Should(HaveOccurred())
-			Expect(err.Error()).To(ContainSubstring("spec.hosts[0]: Invalid value: \"string\": Host is not Fully Qualified Domain Name"))
+			invalidHelper("-example.com")
 		})
 	})
 
