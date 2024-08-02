@@ -52,7 +52,7 @@ Cypress.Commands.add('createApiRule', (cfg: ApiRuleConfig) => {
     cy.wrap(loadFixture('apiRule.yaml')).then((a: ApiRule): void => {
         a.metadata.name = cfg.name;
         a.metadata.namespace = cfg.namespace;
-        if (Object.keys(cfg.annotations).length > 0) {
+        if (cfg.annotations != null) {
             a.metadata.annotations = cfg.annotations;
         }
         a.spec.service.name = cfg.service;

@@ -31,8 +31,8 @@
 - simple: true
   widget: Alert
   severity: warning
-  alert: '"alert.gatewayName"'
-  visibility: '$exists(metadata.annotations."gateway.kyma-project.io/original-version") and $not($exists($match(spec.gateway,/^[a-z0-9_]+(-[a-z0-9_]+)*\/[a-z0-9_]+(-[a-z0-9_]+)*$/))[0])'
+  alert: '"alert.gateway.form"'
+  visibility: 'metadata.annotations."gateway.kyma-project.io/original-version"="v2alpha1" and $not($exists($match(spec.gateway,/^[a-z0-9_]+(-[a-z0-9_]+)*\/[a-z0-9_]+(-[a-z0-9_]+)*$/))[0])'
 - simple: true
   required: true
   path: spec.gateway
