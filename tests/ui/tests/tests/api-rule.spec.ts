@@ -259,12 +259,13 @@ context("API Rule", () => {
 
         cy.inputPairClearAndType('[aria-label="expand Gateway"]', "kyma-system", "kyma-gateway");
 
-        cy.contains('Gateway must exist, specify both Namespace and Name').should('not.exist')
-
         cy.clickSaveButton();
         cy.clickViewTab();
 
         cy.contains('Gateway must be in the format \'{NAMESPACE}/{NAME}\'').should('not.exist')
+
+        cy.clickEditTab();
+        cy.contains('Gateway must exist, specify both Namespace and Name').should('not.exist')
     });
 
     context("Host", () => {
