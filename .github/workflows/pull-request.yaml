@@ -73,12 +73,12 @@ jobs:
             .reuse/**
       - name: List all changed files
         run: echo '${{ steps.changed-files.outputs.all_changed_files }}' >> $GITHUB_STEP_SUMMARY
-  # dispatch-unit-test:
-  #   name: Dispatch unit test
-  #   needs: [check-unit-test]
-  #   uses: ./.github/workflows/pull-unit-lint.yaml
-  #   if: ${{ needs.check-unit-test.outputs.check == 'true' }}
-  #   secrets: inherit
+  dispatch-unit-test:
+    name: Dispatch unit test
+    needs: [check-unit-test]
+    uses: ./.github/workflows/pull-unit-lint.yaml
+    if: ${{ needs.check-unit-test.outputs.check == 'true' }}
+    secrets: inherit
 
   check-integration:
     outputs:
@@ -101,12 +101,12 @@ jobs:
             .github/**
       - name: List all changed files
         run: echo '${{ steps.changed-files.outputs.all_changed_files }}' >> $GITHUB_STEP_SUMMARY
-  # dispatch-integration:
-  #   name: Dispatch integration tests
-  #   needs: [check-integration,build-image]
-  #   uses: ./.github/workflows/pull-integration.yaml
-  #   if: ${{ needs.check-integration.outputs.check == 'true' }}
-  #   secrets: inherit
+  dispatch-integration:
+    name: Dispatch integration tests
+    needs: [check-integration,build-image]
+    uses: ./.github/workflows/pull-integration.yaml
+    if: ${{ needs.check-integration.outputs.check == 'true' }}
+    secrets: inherit
 
   check-ui:
     outputs:
@@ -147,9 +147,9 @@ jobs:
             .github/workflows/**
       - name: List all changed files
         run: echo '${{ steps.changed-files.outputs.all_changed_files }}' >> $GITHUB_STEP_SUMMARY
-  # dispatch-verify-pins:
-  #   name: Dispatch verify-commit-pins
-  #   needs: [check-verify-pins]
-  #   uses: ./.github/workflows/verify-commit-pins.yaml
-  #   if: ${{ needs.check-verify-pins.outputs.check == 'true' }}
-  #   secrets: inherit
+  dispatch-verify-pins:
+    name: Dispatch verify-commit-pins
+    needs: [check-verify-pins]
+    uses: ./.github/workflows/verify-commit-pins.yaml
+    if: ${{ needs.check-verify-pins.outputs.check == 'true' }}
+    secrets: inherit
