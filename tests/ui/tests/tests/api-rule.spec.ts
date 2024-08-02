@@ -102,12 +102,14 @@ context("API Rule", () => {
         cy.createApiRule({
             name: apiRuleName,
             namespace: namespaceName,
+            annotations: {},
             service: serviceName,
             host: apiRuleName,
             handler: "oauth2_introspection",
             config: {
                 required_scope: ["read"]
-            }
+            },
+            gateway: ""
         });
 
         cy.navigateToApiRule(apiRuleName, namespaceName);
@@ -142,18 +144,22 @@ context("API Rule", () => {
         cy.createApiRule({
             name: apiRuleName,
             namespace: namespaceName,
+            annotations: {},
             service: serviceName,
             host: apiRuleName,
             handler: "no_auth",
+            gateway: ""
         });
 
         const secondApiRuleName = `${apiRuleName}-second`
         cy.createApiRule({
             name: secondApiRuleName,
             namespace: namespaceName,
+            annotations: {},
             service: serviceName,
             host: secondApiRuleName,
             handler: "no_auth",
+            gateway: ""
         });
 
         cy.navigateToApiRuleList(namespaceName);
@@ -166,13 +172,15 @@ context("API Rule", () => {
         cy.createApiRule({
             name: apiRuleName,
             namespace: namespaceName,
+            annotations: {},
             service: serviceName,
             host: apiRuleName,
             handler: "jwt",
             config: {
                 jwks_urls: ["https://urls.com"],
                 trusted_issuers: ["https://trusted.com"]
-            }
+            },
+            gateway: ""
         });
 
         cy.navigateToApiRuleList(namespaceName);
@@ -251,13 +259,14 @@ context("API Rule", () => {
                 cy.createApiRule({
                     name: apiRuleName,
                     namespace: namespaceName,
+                    annotations: {},
                     service: serviceName,
                     host: apiRuleName,
                     handler: "no_auth",
+                    gateway: ""
                 });
 
                 cy.navigateToApiRule(apiRuleName, namespaceName);
-
                 cy.apiRuleMetadataContainsHostUrl(`https://${apiRuleName}.local.kyma.dev`);
             });
         })
@@ -268,13 +277,14 @@ context("API Rule", () => {
                 cy.createApiRule({
                     name: apiRuleName,
                     namespace: namespaceName,
+                    annotations: {},
                     service: "not_existent",
                     host: apiRuleName,
                     handler: "no_auth",
+                    gateway: ""
                 });
 
                 cy.navigateToApiRule(apiRuleName, namespaceName);
-
                 cy.apiRuleMetadataContainsHostUrl(`https://${apiRuleName}`);
             });
         })
