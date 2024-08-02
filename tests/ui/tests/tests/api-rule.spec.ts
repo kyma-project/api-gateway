@@ -250,6 +250,19 @@ context("API Rule", () => {
         cy.navigateToApiRuleList(namespaceName);
         cy.clickGenericListLink(apiRuleName);
         cy.contains('Gateway must be in the format \'{NAMESPACE}/{NAME}\'').should('exist')
+
+        cy.clickEditTab();
+        cy.contains('Gateway must exist, specify both Namespace and Name').should('exist')
+
+        cy.get('[data-testid="gateway"]').should('be.visible');
+        cy.inputPairClearAndType('[data-testid="gateway"]', "kyma-system", "kyma-gateway");
+
+        cy.contains('Gateway must exist, specify both Namespace and Name').should('not.exist')
+
+        cy.clickSaveButton();
+        cy.clickViewTab();
+
+        cy.contains('Gateway must be in the format \'{NAMESPACE}/{NAME}\'').should('not.exist')
     });
 
     context("Host", () => {
