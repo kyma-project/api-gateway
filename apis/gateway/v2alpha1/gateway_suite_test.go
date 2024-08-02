@@ -22,8 +22,6 @@ func TestGatewayv2alpha1(t *testing.T) {
 	RunSpecs(t, "Gateway v2alpha1 Suite")
 }
 
-const reportFilename = "junit-gateway-v2alpha1.xml"
-
 var _ = ReportAfterSuite("custom reporter", func(report types.Report) {
 	tests.GenerateGinkgoJunitReport("gateway-v2alpha1", report)
 })

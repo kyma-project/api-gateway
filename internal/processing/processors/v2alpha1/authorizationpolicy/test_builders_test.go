@@ -34,11 +34,6 @@ func (b *ruleBuilder) addMethods(methods ...gatewayv2alpha1.HttpMethod) *ruleBui
 	return b
 }
 
-func (b *ruleBuilder) withService(service *gatewayv2alpha1.Service) *ruleBuilder {
-	b.rule.Service = service
-	return b
-}
-
 func (b *ruleBuilder) withServiceName(name string) *ruleBuilder {
 	if b.rule.Service == nil {
 		b.rule.Service = &gatewayv2alpha1.Service{}
@@ -141,15 +136,12 @@ Service: example-namespace/example-service:8080
 JWT Authentication: https://oauth2.example.com/, https://oauth2.example.com/.well-known/jwks.json
 */
 func newJwtRuleBuilderWithDummyData() *ruleBuilder {
-	service := &gatewayv2alpha1.Service{
-		Name:      ptr.To("example-service"),
-		Namespace: ptr.To("example-namespace"),
-		Port:      ptr.To(uint32(8080)),
-	}
 	return newRuleBuilder().
 		withPath("/").
 		addMethods(http.MethodGet).
-		withService(service).
+		withServiceName("example-service").
+		withServiceNamespace("example-namespace").
+		withServicePort(8080).
 		addJwtAuthentication("https://oauth2.example.com/", "https://oauth2.example.com/.well-known/jwks.json")
 }
 
@@ -165,15 +157,12 @@ Service: example-namespace/example-service:8080
 NoAuth: true
 */
 func newNoAuthRuleBuilderWithDummyData() *ruleBuilder {
-	service := &gatewayv2alpha1.Service{
-		Name:      ptr.To("example-service"),
-		Namespace: ptr.To("example-namespace"),
-		Port:      ptr.To(uint32(8080)),
-	}
 	return newRuleBuilder().
 		withPath("/").
 		addMethods(http.MethodGet).
-		withService(service).
+		withServiceName("example-service").
+		withServiceNamespace("example-namespace").
+		withServicePort(8080).
 		withNoAuth()
 }
 
@@ -183,15 +172,6 @@ type apiRuleBuilder struct {
 
 func (a *apiRuleBuilder) withHost(host string) *apiRuleBuilder {
 	a.apiRule.Spec.Hosts = append(a.apiRule.Spec.Hosts, ptr.To(gatewayv2alpha1.Host(host)))
-	return a
-}
-
-func (a *apiRuleBuilder) withService(name, namespace string, port uint32) *apiRuleBuilder {
-	a.apiRule.Spec.Service = &gatewayv2alpha1.Service{
-		Name:      &name,
-		Namespace: &namespace,
-		Port:      &port,
-	}
 	return a
 }
 
@@ -278,7 +258,9 @@ func newAPIRuleBuilderWithDummyData() *apiRuleBuilder {
 		withNamespace(apiRuleNamespace).
 		withHost("example-host.example.com").
 		withGateway("example-namespace/example-gateway").
-		withService("example-service", "example-namespace", 8080)
+		withServiceName("example-service").
+		withServiceNamespace("example-namespace").
+		withServicePort(8080)
 }
 
 type serviceBuilder struct {
