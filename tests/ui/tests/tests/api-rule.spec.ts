@@ -254,8 +254,8 @@ context("API Rule", () => {
         cy.clickEditTab();
         cy.contains('Gateway must exist, specify both Namespace and Name').should('exist')
 
-        cy.get('[data-testid="gateway"]').should('be.visible');
-        cy.inputPairClearAndType('[data-testid="gateway"]', "kyma-system", "kyma-gateway");
+        cy.get('ui5-panel[data-testid="gateway"]').should('be.visible');
+        cy.inputPairClearAndType('ui5-panel[data-testid="gateway"]', "kyma-system", "kyma-gateway");
 
         cy.contains('Gateway must exist, specify both Namespace and Name').should('not.exist')
 
