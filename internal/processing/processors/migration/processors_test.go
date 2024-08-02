@@ -6,6 +6,7 @@ import (
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	"github.com/kyma-project/api-gateway/internal/processing"
 	processors2 "github.com/kyma-project/api-gateway/internal/processing/processors"
+	"github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1/authorizationpolicy"
 	v2alpha1VirtualService "github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1/virtualservice"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -32,7 +33,7 @@ var _ = Describe("NewMigrationProcessors", func() {
 
 		processors := NewMigrationProcessors(apirule, apiruleBeta, config, &log)
 		Expect(processors).To(HaveLen(2))
-		Expect(processors[0]).To(BeAssignableToTypeOf(processors2.AuthorizationPolicyProcessor{}))
+		Expect(processors[0]).To(BeAssignableToTypeOf(authorizationpolicy.Processor{}))
 		Expect(processors[1]).To(BeAssignableToTypeOf(processors2.RequestAuthenticationProcessor{}))
 	})
 
@@ -63,7 +64,7 @@ var _ = Describe("NewMigrationProcessors", func() {
 		Entry("should return AP and RA processors when annotation is not set",
 			"",
 			[]processing.ReconciliationProcessor{
-				processors2.AuthorizationPolicyProcessor{},
+				authorizationpolicy.Processor{},
 				processors2.RequestAuthenticationProcessor{},
 			},
 		),
@@ -71,7 +72,7 @@ var _ = Describe("NewMigrationProcessors", func() {
 			string(applyIstioAuthorizationMigrationStep),
 			[]processing.ReconciliationProcessor{
 				v2alpha1VirtualService.VirtualServiceProcessor{},
-				processors2.AuthorizationPolicyProcessor{},
+				authorizationpolicy.Processor{},
 				processors2.RequestAuthenticationProcessor{},
 			},
 		),
@@ -80,7 +81,7 @@ var _ = Describe("NewMigrationProcessors", func() {
 			[]processing.ReconciliationProcessor{
 				accessRuleDeletionProcessor{},
 				v2alpha1VirtualService.VirtualServiceProcessor{},
-				processors2.AuthorizationPolicyProcessor{},
+				authorizationpolicy.Processor{},
 				processors2.RequestAuthenticationProcessor{},
 			},
 		),

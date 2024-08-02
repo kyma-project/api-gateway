@@ -3,6 +3,7 @@ package v2alpha1
 import (
 	"context"
 	"errors"
+	"github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1/authorizationpolicy"
 
 	"github.com/go-logr/logr"
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
@@ -49,7 +50,7 @@ func NewReconciliation(apiRuleV2alpha1 *gatewayv2alpha1.APIRule, apiRuleV1beta1 
 		processors = append(processors, migration.NewMigrationProcessors(apiRuleV2alpha1, apiRuleV1beta1, config, log)...)
 	} else {
 		processors = append(processors, v2alpha1VirtualService.NewVirtualServiceProcessor(config, apiRuleV2alpha1))
-		processors = append(processors, istio.Newv1beta1AuthorizationPolicyProcessor(config, log, apiRuleV1beta1))
+		processors = append(processors, authorizationpolicy.NewProcessor(log, apiRuleV2alpha1))
 		processors = append(processors, istio.Newv1beta1RequestAuthenticationProcessor(config, apiRuleV1beta1))
 	}
 
