@@ -249,7 +249,7 @@ context("API Rule", () => {
 
         cy.navigateToApiRuleList(namespaceName);
         cy.clickGenericListLink(apiRuleName);
-        cy.contains('Gateway must be in the format {NAMESPACE}/{NAME}').should('exist')
+        cy.contains('Gateway must be in the format \'{NAMESPACE}/{NAME}\'').should('exist')
     });
 
     context("Host", () => {
