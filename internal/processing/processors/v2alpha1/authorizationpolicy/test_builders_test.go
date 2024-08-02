@@ -111,6 +111,20 @@ func (b *ruleBuilder) addJwtAuthorizationAudiences(audiences ...string) *ruleBui
 	return b
 }
 
+func (b *ruleBuilder) addJwtAuthorization(requiredScopes []string, audiences []string) *ruleBuilder {
+	auth := &gatewayv2alpha1.JwtAuthorization{
+		RequiredScopes: requiredScopes,
+		Audiences:      audiences,
+	}
+
+	if b.rule.Jwt == nil {
+		b.rule.Jwt = &gatewayv2alpha1.JwtConfig{}
+	}
+
+	b.rule.Jwt.Authorizations = append(b.rule.Jwt.Authorizations, auth)
+	return b
+}
+
 func (b *ruleBuilder) build() *gatewayv2alpha1.Rule {
 	return b.rule
 }
