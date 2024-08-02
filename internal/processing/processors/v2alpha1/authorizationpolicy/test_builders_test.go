@@ -85,7 +85,7 @@ func (b *ruleBuilder) addJwtAuthentication(issuer, jwksUri string) *ruleBuilder 
 	return b
 }
 
-func (b *ruleBuilder) addJwtAuthorizationRequiredScopes(requiredScopes []string) *ruleBuilder {
+func (b *ruleBuilder) addJwtAuthorizationRequiredScopes(requiredScopes ...string) *ruleBuilder {
 	auth := &gatewayv2alpha1.JwtAuthorization{
 		RequiredScopes: requiredScopes,
 	}
@@ -98,7 +98,7 @@ func (b *ruleBuilder) addJwtAuthorizationRequiredScopes(requiredScopes []string)
 	return b
 }
 
-func (b *ruleBuilder) addJwtAuthorizationAudiences(audiences []string) *ruleBuilder {
+func (b *ruleBuilder) addJwtAuthorizationAudiences(audiences ...string) *ruleBuilder {
 	auth := &gatewayv2alpha1.JwtAuthorization{
 		Audiences: audiences,
 	}
@@ -137,6 +137,30 @@ func newJwtRuleBuilderWithDummyData() *ruleBuilder {
 		addMethods(http.MethodGet).
 		withService(service).
 		addJwtAuthentication("https://oauth2.example.com/", "https://oauth2.example.com/.well-known/jwks.json")
+}
+
+/*
+newNoAuthRuleBuilderWithDummyData returns a ruleBuilder pre-filled with placeholder data:
+
+Path: /
+
+Methods: GET
+
+Service: example-namespace/example-service:8080
+
+NoAuth: true
+*/
+func newNoAuthRuleBuilderWithDummyData() *ruleBuilder {
+	service := &gatewayv2alpha1.Service{
+		Name:      ptr.To("example-service"),
+		Namespace: ptr.To("example-namespace"),
+		Port:      ptr.To(uint32(8080)),
+	}
+	return newRuleBuilder().
+		withPath("/").
+		addMethods(http.MethodGet).
+		withService(service).
+		withNoAuth()
 }
 
 type apiRuleBuilder struct {
@@ -224,6 +248,10 @@ func newAPIRuleBuilder() *apiRuleBuilder {
 /*
 newAPIRuleBuilderWithDummyDataWithNoAuthRule returns an APIRuleBuilder pre-filled with placeholder data:
 
+Name: test-apirule
+
+Namespace: example-namespace
+
 Host: example-host.example.com
 
 Gateway: example-namespace/example-gateway
@@ -232,8 +260,8 @@ Service: example-namespace/example-service:8080
 */
 func newAPIRuleBuilderWithDummyData() *apiRuleBuilder {
 	return newAPIRuleBuilder().
-		withName("test-apirule").
-		withNamespace("example-namespace").
+		withName(apiRuleName).
+		withNamespace(apiRuleNamespace).
 		withHost("example-host.example.com").
 		withGateway("example-namespace/example-gateway").
 		withService("example-service", "example-namespace", 8080)
