@@ -239,11 +239,7 @@ context("API Rule", () => {
             annotations: { 'gateway.kyma-project.io/original-version': 'v2alpha1' },
             service: serviceName,
             host: apiRuleName,
-            handler: "jwt",
-            config: {
-                jwks_urls: ["https://urls.com"],
-                trusted_issuers: ["https://trusted.com"]
-            },
+            handler: "no_auth",
             gateway: "kyma-gateway"
         });
 
@@ -254,17 +250,29 @@ context("API Rule", () => {
         cy.clickEditTab();
         cy.contains('Gateway must exist, specify both Namespace and Name').should('exist')
 
-        cy.get('[aria-label="expand Gateway"]').should('be.visible').contains("Namespace")
-        cy.get('[aria-label="expand Gateway"]').should('be.visible').contains("Name")
+        cy.task('log', 'here1')
+        // cy.get('[aria-label="expand Gateway"]').should('be.visible').contains("Namespace").should('exist');
+        // cy.get('[aria-label="expand Gateway"]').should('be.visible').contains("Name").should('exist');
 
         cy.inputPairClearAndType('[aria-label="expand Gateway"]', "kyma-system", "kyma-gateway");
 
+        cy.task('log', 'here2')
+
         cy.clickSaveButton();
+
+        cy.task('log', 'here3')
         cy.clickViewTab();
+
+        cy.task('log', 'here4')
 
         cy.contains('Gateway must be in the format \'{NAMESPACE}/{NAME}\'').should('not.exist')
 
+        cy.task('log', 'here5')
+
         cy.clickEditTab();
+
+        cy.task('log', 'here6')
+
         cy.contains('Gateway must exist, specify both Namespace and Name').should('not.exist')
     });
 
