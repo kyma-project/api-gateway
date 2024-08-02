@@ -56,7 +56,7 @@ func (r VirtualServiceProcessor) getDesiredState(api *gatewayv2alpha1.APIRule) (
 }
 
 func (r VirtualServiceProcessor) getActualState(ctx context.Context, client ctrlclient.Client, api *gatewayv2alpha1.APIRule) (*networkingv1beta1.VirtualService, error) {
-	labels := getOwnerLabels(api)
+	labels := processing.GetOwnerLabelsV2alpha1(api)
 
 	var vsList networkingv1beta1.VirtualServiceList
 	if err := client.List(ctx, &vsList, ctrlclient.MatchingLabels(labels)); err != nil {
@@ -76,16 +76,6 @@ func (r VirtualServiceProcessor) getObjectChanges(desired *networkingv1beta1.Vir
 		return processing.NewObjectUpdateAction(actual)
 	} else {
 		return processing.NewObjectCreateAction(desired)
-	}
-}
-
-// The owner labels are still set to the old APIRule version.
-// Do not switch the owner labels to the new APIRule version unless absolutely necessary!
-// This has been done before, and it caused a lot of confusion and bugs.
-// If the change for some reason has to be done, please remove the version from the processing.OwnerLabel constant.
-func getOwnerLabels(api *gatewayv2alpha1.APIRule) map[string]string {
-	return map[string]string{
-		processing.OwnerLabel: fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace),
 	}
 }
 

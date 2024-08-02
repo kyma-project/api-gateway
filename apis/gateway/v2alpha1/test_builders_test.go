@@ -5,29 +5,29 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-type ServiceBuilder struct {
+type serviceBuilder struct {
 	service *corev1.Service
 }
 
-func NewServiceBuilder() *ServiceBuilder {
-	return &ServiceBuilder{
+func newServiceBuilder() *serviceBuilder {
+	return &serviceBuilder{
 		service: &corev1.Service{
 			ObjectMeta: metav1.ObjectMeta{},
 		},
 	}
 }
 
-func (b *ServiceBuilder) SetName(name string) *ServiceBuilder {
+func (b *serviceBuilder) withName(name string) *serviceBuilder {
 	b.service.ObjectMeta.Name = name
 	return b
 }
 
-func (b *ServiceBuilder) SetNamespace(namespace string) *ServiceBuilder {
+func (b *serviceBuilder) withNamespace(namespace string) *serviceBuilder {
 	b.service.ObjectMeta.Namespace = namespace
 	return b
 }
 
-func (b *ServiceBuilder) AddSelector(key, value string) *ServiceBuilder {
+func (b *serviceBuilder) addSelector(key, value string) *serviceBuilder {
 	if b.service.Spec.Selector == nil {
 		b.service.Spec.Selector = map[string]string{}
 	}
@@ -36,6 +36,6 @@ func (b *ServiceBuilder) AddSelector(key, value string) *ServiceBuilder {
 	return b
 }
 
-func (b *ServiceBuilder) Build() *corev1.Service {
+func (b *serviceBuilder) build() *corev1.Service {
 	return b.service
 }

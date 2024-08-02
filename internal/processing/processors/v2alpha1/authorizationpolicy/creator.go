@@ -5,7 +5,6 @@ import (
 	"fmt"
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 
-	"github.com/go-logr/logr"
 	"github.com/kyma-project/api-gateway/internal/builders"
 	"github.com/kyma-project/api-gateway/internal/processing"
 	"github.com/kyma-project/api-gateway/internal/processing/hashbasedstate"
@@ -22,32 +21,16 @@ var (
 	defaultScopeKeys = []string{"request.auth.claims[scp]", "request.auth.claims[scope]", "request.auth.claims[scopes]"}
 )
 
-// NewAuthorizationPolicyProcessor returns a AuthorizationPolicyProcessor with the desired state handling specific for the Istio handler.
-func NewAuthorizationPolicyProcessor(log *logr.Logger, rule *gatewayv2alpha1.APIRule) Processor {
-	return Processor{
-		apiRule: rule,
-		creator: authorizationPolicyCreator{},
-		Log:     log,
-	}
-}
-
-// AuthorizationPolicyProcessor is the generic processor that handles the Istio JwtAuthorization Policies in the reconciliation of API Rule.
-type Processor struct {
-	apiRule *gatewayv2alpha1.APIRule
-	creator Creator
-	Log     *logr.Logger
-}
-
-// Creator provides the creation of AuthorizationPolicies using the configuration in the given APIRule.
+// Creator provides the creation of AuthorizationPolicy using the configuration in the given APIRule.
 // The key of the map is expected to be unique and comparable with the
 type Creator interface {
 	Create(ctx context.Context, client client.Client, api *gatewayv2alpha1.APIRule) (hashbasedstate.Desired, error)
 }
 
-type authorizationPolicyCreator struct{}
+type creator struct{}
 
-// Create returns the JwtAuthorization Policy using the configuration of the APIRule.
-func (r authorizationPolicyCreator) Create(ctx context.Context, client client.Client, apiRule *gatewayv2alpha1.APIRule) (hashbasedstate.Desired, error) {
+// Create returns the AuthorizationPolicy using the configuration of the APIRule.
+func (r creator) Create(ctx context.Context, client client.Client, apiRule *gatewayv2alpha1.APIRule) (hashbasedstate.Desired, error) {
 	state := hashbasedstate.NewDesired()
 	for _, rule := range apiRule.Spec.Rules {
 		aps, err := generateAuthorizationPolicies(ctx, client, apiRule, rule)
@@ -191,7 +174,7 @@ func withFrom(b *builders.RuleBuilder, rule gatewayv2alpha1.Rule) *builders.Rule
 	return b.WithFrom(builders.NewFromBuilder().WithIngressGatewaySource().Get())
 }
 
-// baseRuleBuilder returns RuleBuilder with To and From
+// baseRuleBuilder returns ruleBuilder with To and From
 func baseRuleBuilder(rule gatewayv2alpha1.Rule) *builders.RuleBuilder {
 	builder := builders.NewRuleBuilder()
 	builder = withTo(builder, rule)

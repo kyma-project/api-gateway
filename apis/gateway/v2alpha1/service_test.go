@@ -90,10 +90,10 @@ var _ = Describe("Service", func() {
 		})
 
 		It("should return empty selector when service has no selector", func() {
-			s := NewServiceBuilder().
-				SetName("test-service").
-				SetNamespace("test-namespace").
-				Build()
+			s := newServiceBuilder().
+				withName("test-service").
+				withNamespace("test-namespace").
+				build()
 
 			fakeClient := createFakeClient(s)
 			selector, err := v2alpha1.GetSelectorFromService(context.Background(), fakeClient, &v2alpha1.APIRule{}, v2alpha1.Rule{
@@ -107,11 +107,11 @@ var _ = Describe("Service", func() {
 		})
 
 		It("should return selector from service", func() {
-			s := NewServiceBuilder().
-				SetName("test-service").
-				SetNamespace("test-namespace").
-				AddSelector("app", "test-service").
-				Build()
+			s := newServiceBuilder().
+				withName("test-service").
+				withNamespace("test-namespace").
+				addSelector("app", "test-service").
+				build()
 
 			fakeClient := createFakeClient(s)
 			selector, err := v2alpha1.GetSelectorFromService(context.Background(), fakeClient, &v2alpha1.APIRule{}, v2alpha1.Rule{
@@ -126,15 +126,18 @@ var _ = Describe("Service", func() {
 		})
 
 		It("should use service from Rule when APIRule Spec has Service set", func() {
-			s := NewServiceBuilder().
-				SetName("test-rule-service").
-				SetNamespace("test-rule-namespace").
-				AddSelector("app", "test-service").
-				Build()
+			s := newServiceBuilder().
+				withName("test-rule-service").
+				withNamespace("test-rule-namespace").
+				addSelector("app", "test-service").
+				build()
 
 			fakeClient := createFakeClient(s)
 			selector, err := v2alpha1.GetSelectorFromService(context.Background(), fakeClient,
 				&v2alpha1.APIRule{
+					ObjectMeta: v1.ObjectMeta{
+						Namespace: "apirule-namespace",
+					},
 					Spec: v2alpha1.APIRuleSpec{
 						Service: &v2alpha1.Service{
 							Name:      ptr.To("test-spec-service"),
@@ -153,57 +156,68 @@ var _ = Describe("Service", func() {
 		})
 
 		It("should use service from APIRule Spec when rule has no service set", func() {
-			s := NewServiceBuilder().
-				SetName("test-service").
-				SetNamespace("test-namespace").
-				AddSelector("app", "test-service").
-				Build()
+			s := newServiceBuilder().
+				withName("test-service").
+				withNamespace("test-namespace").
+				addSelector("app", "test-service").
+				build()
 
 			fakeClient := createFakeClient(s)
-			selector, err := v2alpha1.GetSelectorFromService(context.Background(), fakeClient, &v2alpha1.APIRule{
-				Spec: v2alpha1.APIRuleSpec{
-					Service: &v2alpha1.Service{
-						Name:      ptr.To("test-service"),
-						Namespace: ptr.To("test-namespace"),
+			selector, err := v2alpha1.GetSelectorFromService(context.Background(), fakeClient,
+				&v2alpha1.APIRule{
+					ObjectMeta: v1.ObjectMeta{
+						Namespace: "apirule-namespace",
 					},
-				},
-			}, v2alpha1.Rule{})
+					Spec: v2alpha1.APIRuleSpec{
+						Service: &v2alpha1.Service{
+							Name:      ptr.To("test-service"),
+							Namespace: ptr.To("test-namespace"),
+						},
+					},
+				}, v2alpha1.Rule{})
 			Expect(err).NotTo(HaveOccurred())
 			Expect(selector.Selector.MatchLabels).To(Equal(map[string]string{"app": "test-service"}))
 			Expect(selector.Namespace).To(Equal("test-namespace"))
 		})
 
 		It("should use default as service namespace when namespace is empty", func() {
-			s := NewServiceBuilder().
-				SetName("test-service").
-				SetNamespace("default").
-				AddSelector("app", "test-service").
-				Build()
+			s := newServiceBuilder().
+				withName("test-service").
+				withNamespace("default").
+				addSelector("app", "test-service").
+				build()
 
 			fakeClient := createFakeClient(s)
-			selector, err := v2alpha1.GetSelectorFromService(context.Background(), fakeClient, &v2alpha1.APIRule{
-				Spec: v2alpha1.APIRuleSpec{
-					Service: &v2alpha1.Service{
-						Name:      ptr.To("test-service"),
-						Namespace: ptr.To(""),
+			selector, err := v2alpha1.GetSelectorFromService(context.Background(), fakeClient,
+				&v2alpha1.APIRule{
+					ObjectMeta: v1.ObjectMeta{
+						Namespace: "apirule-namespace",
 					},
-				},
-			}, v2alpha1.Rule{})
+					Spec: v2alpha1.APIRuleSpec{
+						Service: &v2alpha1.Service{
+							Name:      ptr.To("test-service"),
+							Namespace: ptr.To(""),
+						},
+					},
+				}, v2alpha1.Rule{})
 			Expect(err).NotTo(HaveOccurred())
 			Expect(selector.Selector.MatchLabels).To(Equal(map[string]string{"app": "test-service"}))
 			Expect(selector.Namespace).To(Equal("default"))
 		})
 
 		It("should use service namespace from APIRule Spec when Rule Service has name, but no namespace set", func() {
-			s := NewServiceBuilder().
-				SetName("test-rule-service").
-				SetNamespace("test-spec-namespace").
-				AddSelector("app", "test-service").
-				Build()
+			s := newServiceBuilder().
+				withName("test-rule-service").
+				withNamespace("test-spec-namespace").
+				addSelector("app", "test-service").
+				build()
 
 			fakeClient := createFakeClient(s)
 			selector, err := v2alpha1.GetSelectorFromService(context.Background(), fakeClient,
 				&v2alpha1.APIRule{
+					ObjectMeta: v1.ObjectMeta{
+						Namespace: "apirule-namespace",
+					},
 					Spec: v2alpha1.APIRuleSpec{
 						Service: &v2alpha1.Service{
 							Name:      ptr.To("test-spec-service"),
@@ -218,6 +232,34 @@ var _ = Describe("Service", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(selector.Selector.MatchLabels).To(Equal(map[string]string{"app": "test-service"}))
 			Expect(selector.Namespace).To(Equal("test-spec-namespace"))
+		})
+
+		It("should use service namespace from APIRule when Rule Service and Spec Service have no namespace set", func() {
+			s := newServiceBuilder().
+				withName("test-rule-service").
+				withNamespace("apirule-namespace").
+				addSelector("app", "test-service").
+				build()
+
+			fakeClient := createFakeClient(s)
+			selector, err := v2alpha1.GetSelectorFromService(context.Background(), fakeClient,
+				&v2alpha1.APIRule{
+					ObjectMeta: v1.ObjectMeta{
+						Namespace: "apirule-namespace",
+					},
+					Spec: v2alpha1.APIRuleSpec{
+						Service: &v2alpha1.Service{
+							Name: ptr.To("test-spec-service"),
+						},
+					},
+				}, v2alpha1.Rule{
+					Service: &v2alpha1.Service{
+						Name: ptr.To("test-rule-service"),
+					},
+				})
+			Expect(err).NotTo(HaveOccurred())
+			Expect(selector.Selector.MatchLabels).To(Equal(map[string]string{"app": "test-service"}))
+			Expect(selector.Namespace).To(Equal("apirule-namespace"))
 		})
 	})
 })
