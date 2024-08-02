@@ -2,7 +2,6 @@ package v2alpha1
 
 import (
 	"encoding/json"
-	"fmt"
 	"time"
 
 	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
@@ -246,7 +245,6 @@ func (apiRuleV2Alpha1 *APIRule) ConvertFrom(hub conversion.Hub) error {
 			}
 
 			for _, mutator := range ruleBeta1.Mutators {
-				fmt.Printf("Mutator: %v\n", string(mutator.Config.Raw))
 				switch mutator.Handler.Name {
 				case v1beta1.HeaderMutator:
 					var configStruct map[string]string

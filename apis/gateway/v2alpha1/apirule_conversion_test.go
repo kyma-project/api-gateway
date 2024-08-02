@@ -1202,6 +1202,7 @@ var _ = Describe("APIRule Conversion", func() {
 					Host: &host1string,
 					Rules: []v1beta1.Rule{
 						{
+							Path: "/path1",
 							AccessStrategies: []*v1beta1.Authenticator{
 								{
 									Handler: &v1beta1.Handler{
@@ -1232,6 +1233,28 @@ var _ = Describe("APIRule Conversion", func() {
 								},
 							},
 						},
+						{
+							Path: "/path2",
+							AccessStrategies: []*v1beta1.Authenticator{
+								{
+									Handler: &v1beta1.Handler{
+										Name: "no_auth",
+									},
+								},
+							},
+							Mutators: []*v1beta1.Mutator{
+								{
+									Handler: &v1beta1.Handler{
+										Name: "cookie",
+										Config: getRawConfig(
+											map[string]string{
+												"cookie2": "value2",
+											},
+										),
+									},
+								},
+							},
+						},
 					},
 				},
 			}
@@ -1249,6 +1272,10 @@ var _ = Describe("APIRule Conversion", func() {
 			Expect(apiRuleV2Alpha1.Spec.Rules[0].Request.Headers).ToNot(BeNil())
 			Expect(apiRuleV2Alpha1.Spec.Rules[0].Request.Headers).To(HaveLen(1))
 			Expect(apiRuleV2Alpha1.Spec.Rules[0].Request.Headers["header1"]).To(Equal("value1"))
+
+			Expect(apiRuleV2Alpha1.Spec.Rules[1].Request.Cookies).ToNot(BeNil())
+			Expect(apiRuleV2Alpha1.Spec.Rules[1].Request.Cookies).To(HaveLen(1))
+			Expect(apiRuleV2Alpha1.Spec.Rules[1].Request.Cookies["cookie2"]).To(Equal("value2"))
 		})
 	})
 })
