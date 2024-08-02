@@ -254,7 +254,7 @@ context("API Rule", () => {
         // cy.get('[aria-label="expand Gateway"]').should('be.visible').contains("Namespace").should('exist');
         // cy.get('[aria-label="expand Gateway"]').should('be.visible').contains("Name").should('exist');
 
-        cy.inputPairClearAndType('[aria-label="expand Gateway"]', "kyma-system", "kyma-gateway");
+        cy.inputPairClearAndType('ui5-panel[data-testid="gateway"]', "kyma-system", "kyma-gateway");
 
         cy.task('log', 'here2')
 
