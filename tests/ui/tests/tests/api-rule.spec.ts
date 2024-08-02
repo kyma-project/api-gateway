@@ -240,7 +240,7 @@ context("API Rule", () => {
             service: serviceName,
             host: apiRuleName,
             handler: "no_auth",
-            gateway: "kyma-gateway"
+            gateway: "kyma-system"
         });
 
         cy.navigateToApiRuleList(namespaceName);
