@@ -19,11 +19,12 @@ func NewAPIRuleValidator(apiRule *gatewayv2alpha1.APIRule) validation.ApiRuleVal
 	}
 }
 
-func (a *APIRuleValidator) Validate(ctx context.Context, client client.Client, vsList networkingv1beta1.VirtualServiceList) []validation.Failure {
+func (a *APIRuleValidator) Validate(ctx context.Context, client client.Client, vsList networkingv1beta1.VirtualServiceList, gwList networkingv1beta1.GatewayList) []validation.Failure {
 	var failures []validation.Failure
 
 	failures = append(failures, validateRules(ctx, client, ".spec", a.ApiRule)...)
 	failures = append(failures, validateHosts(".spec", vsList, a.ApiRule)...)
+	failures = append(failures, validateGateway(".spec", gwList, a.ApiRule)...)
 
 	return failures
 }

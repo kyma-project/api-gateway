@@ -42,7 +42,8 @@ type APIRuleSpec struct {
 	// +optional
 	Service *Service `json:"service,omitempty"`
 	// Specifies the Istio Gateway to be used.
-	// +kubebuilder:validation:Pattern=`^[0-9a-z-_]+(\/[0-9a-z-_]+|(\.[0-9a-z-_]+)*)$`
+	// +kubebuilder:validation:MaxLength=127
+	// +kubebuilder:validation:XValidation:rule=`self.matches('^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?/([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)$')`,message="Gateway is not valid"
 	Gateway *string `json:"gateway"`
 	// Specifies CORS headers configuration that will be sent downstream
 	// +optional
@@ -56,8 +57,8 @@ type APIRuleSpec struct {
 
 // Host is the URL of the exposed service.
 // +kubebuilder:validation:MinLength=3
-// +kubebuilder:validation:MaxLength=256
-// +kubebuilder:validation:Pattern=^([a-zA-Z0-9][a-zA-Z0-9-_]*\.)*[a-zA-Z0-9]*[a-zA-Z0-9-_]*[[a-zA-Z0-9]+$
+// +kubebuilder:validation:MaxLength=255
+// +kubebuilder:validation:XValidation:rule=`self.matches('^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\\.)+[a-z0-9][a-z0-9-]{0,61}[a-z0-9]$')`,message="Host is not Fully Qualified Domain Name"
 type Host string
 
 // APIRuleStatus describes the observed state of ApiRule.
