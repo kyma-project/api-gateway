@@ -76,7 +76,6 @@ var _ = Describe("Processing", func() {
 	It("should produce one RA for a rule with one issuer and two paths", func() {
 		// given
 		ruleJwt := newJwtRuleBuilderWithDummyData().
-			withPath("/headers").
 			build()
 		ruleJwt2 := newJwtRuleBuilderWithDummyData().
 			withPath("/img").
@@ -111,7 +110,6 @@ var _ = Describe("Processing", func() {
 	It("should produce RA for a Rule without service, but service definition on ApiRule level", func() {
 		// given
 		ruleJwt := newJwtRuleBuilderWithDummyData().
-			withPath("/headers").
 			build()
 		apiRule := newAPIRuleBuilderWithDummyData().
 			withRules(ruleJwt).
@@ -140,7 +138,7 @@ var _ = Describe("Processing", func() {
 		specServiceNamespace := "spec-service-namespace"
 
 		ruleJwt := newRuleBuilder().
-			withPath("/headers").
+			withPath("/").
 			addMethods(http.MethodGet).
 			withServiceName(ruleServiceName).
 			withServicePort(8080).
@@ -180,7 +178,6 @@ var _ = Describe("Processing", func() {
 		ruleServiceNamespace := "rule-service-namespace"
 
 		jwtRule := newJwtRuleBuilderWithDummyData().
-			withPath("/headers").
 			withServiceName(ruleServiceName).
 			withServiceNamespace(ruleServiceNamespace).
 			build()
@@ -217,7 +214,6 @@ var _ = Describe("Processing", func() {
 
 	It("should produce RA from a rule with two issuers and one path", func() {
 		jwtRule := newJwtRuleBuilderWithDummyData().
-			withPath("/headers").
 			addJwtAuthentication(anotherJwtIssuer, anotherJwksUri).
 			build()
 		apiRule := newAPIRuleBuilderWithDummyData().
