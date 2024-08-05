@@ -11,7 +11,7 @@ import (
 )
 
 type ApiRuleValidator interface {
-	Validate(ctx context.Context, client client.Client, vsList networkingv1beta1.VirtualServiceList) []Failure
+	Validate(ctx context.Context, client client.Client, vsList networkingv1beta1.VirtualServiceList, gwList networkingv1beta1.GatewayList) []Failure
 }
 
 // Failure carries validation failures for a single attribute of an object.
