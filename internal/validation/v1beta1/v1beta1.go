@@ -44,7 +44,7 @@ type rulesValidator interface {
 }
 
 // Validate performs APIRule validation
-func (v *APIRuleValidator) Validate(ctx context.Context, client client.Client, vsList networkingv1beta1.VirtualServiceList) []validation.Failure {
+func (v *APIRuleValidator) Validate(ctx context.Context, client client.Client, vsList networkingv1beta1.VirtualServiceList, _ networkingv1beta1.GatewayList) []validation.Failure {
 	var failures []validation.Failure
 
 	//Validate service on path level if it is created

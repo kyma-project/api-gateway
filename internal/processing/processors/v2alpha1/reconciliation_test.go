@@ -416,7 +416,7 @@ type APIRuleValidatorMock struct {
 	validateHostsCalled bool
 }
 
-func (a *APIRuleValidatorMock) Validate(_ context.Context, _ client.Client, _ networkingv1beta1.VirtualServiceList) []validation.Failure {
+func (a *APIRuleValidatorMock) Validate(_ context.Context, _ client.Client, _ networkingv1beta1.VirtualServiceList, _ networkingv1beta1.GatewayList) []validation.Failure {
 	a.validateHostsCalled = true
 	return []validation.Failure{}
 }

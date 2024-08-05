@@ -19,10 +19,21 @@ import (
 var _ = Describe("Validate", func() {
 
 	serviceName := "some-service"
+	gatewayName := "namespace/gateway"
 	host := gatewayv2alpha1.Host(serviceName + ".test.dev")
 
 	It("should invoke rules validation", func() {
 		//given
+		gatewayList := networkingv1beta1.GatewayList{
+			Items: []*networkingv1beta1.Gateway{
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "gateway",
+						Namespace: "namespace",
+					},
+				},
+			},
+		}
 		apiRule := &gatewayv2alpha1.APIRule{
 			Spec: gatewayv2alpha1.APIRuleSpec{
 				Rules: nil,
@@ -30,7 +41,8 @@ var _ = Describe("Validate", func() {
 					Name: ptr.To(serviceName),
 					Port: ptr.To(uint32(8080)),
 				},
-				Hosts: []*gatewayv2alpha1.Host{&host},
+				Hosts:   []*gatewayv2alpha1.Host{&host},
+				Gateway: ptr.To(gatewayName),
 			},
 		}
 
@@ -47,7 +59,7 @@ var _ = Describe("Validate", func() {
 		fakeClient := createFakeClient(&service)
 
 		//when
-		problems := (&v2alpha1.APIRuleValidator{ApiRule: apiRule}).Validate(context.Background(), fakeClient, networkingv1beta1.VirtualServiceList{})
+		problems := (&v2alpha1.APIRuleValidator{ApiRule: apiRule}).Validate(context.Background(), fakeClient, networkingv1beta1.VirtualServiceList{}, gatewayList)
 
 		//then
 		Expect(problems).To(HaveLen(1))
@@ -62,6 +74,8 @@ func createFakeClient(objs ...client.Object) client.Client {
 	err := gatewayv2alpha1.AddToScheme(scheme)
 	Expect(err).NotTo(HaveOccurred())
 	err = corev1.AddToScheme(scheme)
+	Expect(err).NotTo(HaveOccurred())
+	err = networkingv1beta1.AddToScheme(scheme)
 	Expect(err).NotTo(HaveOccurred())
 
 	return fake.NewClientBuilder().WithScheme(scheme).WithObjects(objs...).Build()
