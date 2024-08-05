@@ -240,7 +240,7 @@ func newAPIRuleBuilder() *apiRuleBuilder {
 }
 
 /*
-newAPIRuleBuilderWithDummyDataWithNoAuthRule returns an APIRuleBuilder pre-filled with placeholder data:
+newAPIRuleBuilderWithDummyData returns an APIRuleBuilder pre-filled with placeholder data:
 
 Name: test-apirule
 
