@@ -357,6 +357,35 @@ func (jr *JwtRuleBuilder) Get() *[]*v1beta1.JWTRule {
 	return jr.value
 }
 
+func (jr *JwtRuleBuilder) FromV2Alpha1(jwt *gatewayv2alpha1.JwtConfig) *JwtRuleBuilder {
+
+	if jwt == nil {
+		return jr
+	}
+
+	for _, authentication := range jwt.Authentications {
+		jwtRule := v1beta1.JWTRule{
+			Issuer:  authentication.Issuer,
+			JwksUri: authentication.JwksUri,
+			// We decided to change the default behavior of Istio to provide the same behavior as ORY
+			// so there's no breaking change
+			ForwardOriginalToken: true,
+		}
+		for _, fromHeader := range authentication.FromHeaders {
+			jwtRule.FromHeaders = append(jwtRule.FromHeaders, &v1beta1.JWTHeader{
+				Name:   fromHeader.Name,
+				Prefix: fromHeader.Prefix,
+			})
+		}
+		if authentication.FromParams != nil {
+			jwtRule.FromParams = authentication.FromParams
+		}
+		*jr.value = append(*jr.value, &jwtRule)
+
+	}
+	return jr
+}
+
 func (jr *JwtRuleBuilder) From(val []*gatewayv1beta1.Authenticator) *JwtRuleBuilder {
 	for _, accessStrategy := range val {
 		authentications := &Authentications{
