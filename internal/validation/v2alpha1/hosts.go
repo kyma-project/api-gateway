@@ -2,20 +2,10 @@ package v2alpha1
 
 import (
 	"fmt"
-	"regexp"
-
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	"github.com/kyma-project/api-gateway/internal/validation"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
-)
-
-const (
-	fqdnMaxLength = 253
-)
-
-var (
-	fqdnRegexp = regexp.MustCompile(`^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-9][a-z0-9-]{0,61}[a-z0-9]$`)
 )
 
 func validateHosts(parentAttributePath string, vsList networkingv1beta1.VirtualServiceList, apiRule *gatewayv2alpha1.APIRule) []validation.Failure {
@@ -32,14 +22,6 @@ func validateHosts(parentAttributePath string, vsList networkingv1beta1.VirtualS
 	}
 
 	for hostIndex, host := range hosts {
-		if !isFQDN(string(*host)) {
-			hostAttributePath := fmt.Sprintf("%s[%d]", hostsAttributePath, hostIndex)
-			failures = append(failures, validation.Failure{
-				AttributePath: hostAttributePath,
-				Message:       "Host is not fully qualified domain name",
-			})
-		}
-
 		for _, vs := range vsList.Items {
 			if occupiesHost(vs, string(*host)) && !ownedBy(vs, apiRule) {
 				hostAttributePath := fmt.Sprintf("%s[%d]", hostsAttributePath, hostIndex)
@@ -52,13 +34,6 @@ func validateHosts(parentAttributePath string, vsList networkingv1beta1.VirtualS
 	}
 
 	return failures
-}
-
-func isFQDN(host string) bool {
-	if len(host) > fqdnMaxLength {
-		return false
-	}
-	return fqdnRegexp.MatchString(host)
 }
 
 func occupiesHost(vs *networkingv1beta1.VirtualService, host string) bool {
