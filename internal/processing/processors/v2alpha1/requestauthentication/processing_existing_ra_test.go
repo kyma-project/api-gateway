@@ -18,13 +18,7 @@ import (
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 )
 
-var _ = Describe("Processing", func() {
-
-	appSelector := "app"
-	jwtIssuer := "https://oauth2.example.com/"
-	jwksUri := "https://oauth2.example.com/.well-known/jwks.json"
-	anotherJwtIssuer := "https://oauth2.another.example.com/"
-	anotherJwksUri := "https://oauth2.another.example.com/.well-known/jwks.json"
+var _ = Describe("Processing with existing RequestAuthentication", func() {
 
 	getRequestAuthentication := func(name string, serviceName string, jwksUri string, issuer string) securityv1beta1.RequestAuthentication {
 		return securityv1beta1.RequestAuthentication{
@@ -50,7 +44,6 @@ var _ = Describe("Processing", func() {
 			},
 		}
 	}
-
 	getActionMatcher := func(action string, namespace string, serviceName string, jwksUri string, issuer string) gomegatypes.GomegaMatcher {
 		return PointTo(MatchFields(IgnoreExtras, Fields{
 			"Action": WithTransform(ActionToString, Equal(action)),
@@ -73,218 +66,9 @@ var _ = Describe("Processing", func() {
 		}))
 	}
 
-	It("should produce one RA for a rule with one issuer and two paths", func() {
-		// given
-		ruleJwt := newJwtRuleBuilderWithDummyData().
-			build()
-		ruleJwt2 := newJwtRuleBuilderWithDummyData().
-			withPath("/img").
-			build()
-
-		apiRule := newAPIRuleBuilderWithDummyData().
-			withRules(ruleJwt, ruleJwt2).
-			build()
-		svc := newServiceBuilderWithDummyData().build()
-		client := getFakeClient(svc)
-		processor := requestauthentication.NewProcessor(apiRule)
-
-		// when
-		result, err := processor.EvaluateReconciliation(context.Background(), client)
-
-		// then
-		Expect(err).To(BeNil())
-		Expect(result).To(HaveLen(1))
-		ra := result[0].Obj.(*securityv1beta1.RequestAuthentication)
-		Expect(ra).NotTo(BeNil())
-		Expect(ra.ObjectMeta.Name).To(BeEmpty())
-		Expect(ra.ObjectMeta.GenerateName).To(Equal(apiRuleName + "-"))
-		Expect(ra.ObjectMeta.Namespace).To(Equal(apiRuleNamespace))
-
-		Expect(ra.Spec.Selector.MatchLabels[appSelector]).NotTo(BeNil())
-		Expect(ra.Spec.Selector.MatchLabels[appSelector]).To(Equal(serviceName))
-		Expect(len(ra.Spec.JwtRules)).To(Equal(1))
-		Expect(ra.Spec.JwtRules[0].Issuer).To(Equal(jwtIssuer))
-		Expect(ra.Spec.JwtRules[0].JwksUri).To(Equal(jwksUri))
-	})
-
-	It("should produce RA for a Rule without service, but service definition on ApiRule level", func() {
-		// given
-		ruleJwt := newJwtRuleBuilderWithDummyData().
-			build()
-		apiRule := newAPIRuleBuilderWithDummyData().
-			withRules(ruleJwt).
-			build()
-		svc := newServiceBuilderWithDummyData().build()
-		client := getFakeClient(svc)
-		processor := requestauthentication.NewProcessor(apiRule)
-
-		// when
-		result, err := processor.EvaluateReconciliation(context.Background(), client)
-
-		// then
-		Expect(err).To(BeNil())
-		Expect(result).To(HaveLen(1))
-
-		ra := result[0].Obj.(*securityv1beta1.RequestAuthentication)
-		Expect(ra).NotTo(BeNil())
-		// The RA should be in .Spec.Service.Namespace
-		Expect(ra.Namespace).To(Equal(apiRuleNamespace))
-		Expect(ra.Spec.Selector.MatchLabels[appSelector]).To(Equal(serviceName))
-	})
-
-	It("should produce RA with service from Rule, when service is configured on Rule and ApiRule level", func() {
-		// given
-		ruleServiceName := "rule-scope-example-service"
-		specServiceNamespace := "spec-service-namespace"
-
-		ruleJwt := newRuleBuilder().
-			withPath("/").
-			addMethods(http.MethodGet).
-			withServiceName(ruleServiceName).
-			withServicePort(8080).
-			addJwtAuthentication(jwtIssuer, jwksUri).
-			build()
-		apiRule := newAPIRuleBuilderWithDummyData().
-			withServiceNamespace(specServiceNamespace).
-			withRules(ruleJwt).
-			build()
-
-		svc := newServiceBuilder().
-			withName(ruleServiceName).
-			withNamespace(specServiceNamespace).
-			addSelector(appSelector, ruleServiceName).
-			build()
-
-		client := getFakeClient(svc)
-		processor := requestauthentication.NewProcessor(apiRule)
-
-		// when
-		result, err := processor.EvaluateReconciliation(context.Background(), client)
-
-		// then
-		Expect(err).To(BeNil())
-		Expect(result).To(HaveLen(1))
-
-		ra := result[0].Obj.(*securityv1beta1.RequestAuthentication)
-		Expect(ra).NotTo(BeNil())
-		// The RA should be in .Spec.Service.Namespace
-		Expect(ra.Namespace).To(Equal(specServiceNamespace))
-		Expect(ra.Spec.Selector.MatchLabels[appSelector]).To(Equal(ruleServiceName))
-	})
-
-	It("should produce RA for a Rule with service with configured namespace, in the configured namespace", func() {
-		// given
-		ruleServiceName := "rule-scope-example-service"
-		ruleServiceNamespace := "rule-service-namespace"
-
-		jwtRule := newJwtRuleBuilderWithDummyData().
-			withServiceName(ruleServiceName).
-			withServiceNamespace(ruleServiceNamespace).
-			build()
-
-		apiRule := newAPIRuleBuilderWithDummyData().
-			withRules(jwtRule).
-			build()
-
-		svc := newServiceBuilder().
-			withName(ruleServiceName).
-			withNamespace(ruleServiceNamespace).
-			addSelector(appSelector, ruleServiceName).
-			build()
-
-		client := getFakeClient(svc)
-		processor := requestauthentication.NewProcessor(apiRule)
-
-		// when
-		result, err := processor.EvaluateReconciliation(context.Background(), client)
-
-		// then
-		Expect(err).To(BeNil())
-		Expect(result).To(HaveLen(1))
-
-		ra := result[0].Obj.(*securityv1beta1.RequestAuthentication)
-		Expect(ra).NotTo(BeNil())
-		Expect(ra.Spec.Selector.MatchLabels[appSelector]).To(Equal(ruleServiceName))
-		// The RA should be in .Service.Namespace
-		Expect(ra.Namespace).To(Equal(ruleServiceNamespace))
-		// And the OwnerLabel should point to APIRule namespace
-		Expect(ra.Labels[processing.OwnerLabel]).ToNot(BeEmpty())
-		Expect(ra.Labels[processing.OwnerLabel]).To(Equal(fmt.Sprintf("%s.%s", apiRule.Name, apiRule.Namespace)))
-	})
-
-	It("should produce RA from a rule with two issuers and one path", func() {
-		jwtRule := newJwtRuleBuilderWithDummyData().
-			addJwtAuthentication(anotherJwtIssuer, anotherJwksUri).
-			build()
-		apiRule := newAPIRuleBuilderWithDummyData().
-			withRules(jwtRule).
-			build()
-		svc := newServiceBuilderWithDummyData().build()
-		client := getFakeClient(svc)
-		processor := requestauthentication.NewProcessor(apiRule)
-
-		// when
-		result, err := processor.EvaluateReconciliation(context.Background(), client)
-
-		// then
-		Expect(err).To(BeNil())
-		Expect(result).To(HaveLen(1))
-		ra := result[0].Obj.(*securityv1beta1.RequestAuthentication)
-
-		Expect(ra).NotTo(BeNil())
-		Expect(ra.ObjectMeta.Name).To(BeEmpty())
-		Expect(ra.ObjectMeta.GenerateName).To(Equal(apiRuleName + "-"))
-		Expect(ra.ObjectMeta.Namespace).To(Equal(apiRuleNamespace))
-
-		Expect(ra.Spec.Selector.MatchLabels[appSelector]).NotTo(BeNil())
-		Expect(ra.Spec.Selector.MatchLabels[appSelector]).To(Equal(serviceName))
-		Expect(len(ra.Spec.JwtRules)).To(Equal(2))
-		Expect(ra.Spec.JwtRules[0].Issuer).To(Equal(jwtIssuer))
-		Expect(ra.Spec.JwtRules[0].JwksUri).To(Equal(jwksUri))
-		Expect(ra.Spec.JwtRules[1].Issuer).To(Equal(anotherJwtIssuer))
-		Expect(ra.Spec.JwtRules[1].JwksUri).To(Equal(anotherJwksUri))
-	})
-
-	It("should not create RA when NoAuth is true", func() {
-		// given
-		rule := newNoAuthRuleBuilderWithDummyData().build()
-		apiRule := newAPIRuleBuilderWithDummyData().
-			withRules(rule).
-			build()
-
-		client := getFakeClient()
-		processor := requestauthentication.NewProcessor(apiRule)
-
-		// when
-		result, err := processor.EvaluateReconciliation(context.Background(), client)
-
-		// then
-		Expect(err).To(BeNil())
-		Expect(result).To(BeEmpty())
-	})
-
-	It("should create RA when no exists", func() {
-		// given: New resources
-		jwtRule := newJwtRuleBuilderWithDummyData().build()
-		apiRule := newAPIRuleBuilderWithDummyData().
-			withRules(jwtRule).
-			build()
-		svc := newServiceBuilderWithDummyData().build()
-		client := getFakeClient(svc)
-		processor := requestauthentication.NewProcessor(apiRule)
-
-		// when
-		result, err := processor.EvaluateReconciliation(context.Background(), client)
-
-		// then
-		Expect(err).To(BeNil())
-		Expect(result).To(HaveLen(1))
-		Expect(result[0].Action.String()).To(Equal("create"))
-	})
-
 	It("should delete RA when there is no rule configured in ApiRule", func() {
 		// given: Cluster state
-		existingRa := getRequestAuthentication("raName", "example-service", jwksUri, jwtIssuer)
+		existingRa := getRequestAuthentication("raName", serviceName, jwksUri, jwtIssuer)
 
 		ctrlClient := getFakeClient(&existingRa)
 
@@ -301,7 +85,7 @@ var _ = Describe("Processing", func() {
 		Expect(result[0].Action.String()).To(Equal("delete"))
 	})
 
-	When("RA with JWT config exists", func() {
+	When("one resource with JWT config exists", func() {
 
 		It("should update RA when nothing changed", func() {
 			// given: Cluster state
@@ -440,7 +224,7 @@ var _ = Describe("Processing", func() {
 		})
 	})
 
-	When("Two RA with same JWT config for different services exist", func() {
+	When("Two resources with same JWT config for different services exist", func() {
 
 		It("should update RAs and create new RA for first-service and delete old RA when JWT issuer in JWT Rule for first-service has changed", func() {
 			// given: Cluster state
@@ -668,102 +452,4 @@ var _ = Describe("Processing", func() {
 		})
 	})
 
-	When("Service has custom selector spec", func() {
-		It("should create RA with selector from service", func() {
-			// given: New resources
-			jwtRule := newJwtRuleBuilderWithDummyData().build()
-			apiRule := newAPIRuleBuilderWithDummyData().
-				withRules(jwtRule).
-				build()
-			svc := newServiceBuilder().
-				withName("example-service").
-				withNamespace("example-namespace").
-				addSelector("custom", "example-service").
-				build()
-			client := getFakeClient(svc)
-
-			processor := requestauthentication.NewProcessor(apiRule)
-
-			// when
-			result, err := processor.EvaluateReconciliation(context.Background(), client)
-
-			// then
-			Expect(err).To(BeNil())
-			Expect(result).To(HaveLen(1))
-
-			ra := result[0].Obj.(*securityv1beta1.RequestAuthentication)
-
-			Expect(ra).NotTo(BeNil())
-			Expect(ra.Spec.Selector.MatchLabels).To(HaveLen(1))
-			Expect(ra.Spec.Selector.MatchLabels["custom"]).To(Equal(serviceName))
-		})
-
-		It("should create RA with selector from service in different namespace", func() {
-			// given: New resources
-			differentNamespace := "different-namespace"
-
-			jwtRule := newJwtRuleBuilderWithDummyData().
-				withServiceNamespace(differentNamespace).
-				build()
-			apiRule := newAPIRuleBuilderWithDummyData().
-				withRules(jwtRule).
-				build()
-			svc := newServiceBuilder().
-				withName("example-service").
-				withNamespace(differentNamespace).
-				addSelector("custom", "example-service").
-				build()
-
-			client := getFakeClient(svc)
-
-			processor := requestauthentication.NewProcessor(apiRule)
-
-			// when
-			result, err := processor.EvaluateReconciliation(context.Background(), client)
-
-			// then
-			Expect(err).To(BeNil())
-			Expect(result).To(HaveLen(1))
-
-			ra := result[0].Obj.(*securityv1beta1.RequestAuthentication)
-
-			Expect(ra).NotTo(BeNil())
-			Expect(ra.Spec.Selector.MatchLabels).To(HaveLen(1))
-			Expect(ra.Spec.Selector.MatchLabels["custom"]).To(Equal(serviceName))
-		})
-
-		It("should create RA with selector from service with multiple selector labels", func() {
-			// given: New resources
-
-			jwtRule := newJwtRuleBuilderWithDummyData().
-				build()
-			apiRule := newAPIRuleBuilderWithDummyData().
-				withRules(jwtRule).
-				build()
-			svc := newServiceBuilder().
-				withName("example-service").
-				withNamespace("example-namespace").
-				addSelector("custom", "example-service").
-				addSelector("second-custom", "foo").
-				build()
-
-			client := getFakeClient(svc)
-
-			processor := requestauthentication.NewProcessor(apiRule)
-
-			// when
-			result, err := processor.EvaluateReconciliation(context.Background(), client)
-
-			// then
-			Expect(err).To(BeNil())
-			Expect(result).To(HaveLen(1))
-
-			ra := result[0].Obj.(*securityv1beta1.RequestAuthentication)
-
-			Expect(ra).NotTo(BeNil())
-			Expect(ra.Spec.Selector.MatchLabels).To(HaveLen(2))
-			Expect(ra.Spec.Selector.MatchLabels).To(HaveKeyWithValue("custom", serviceName))
-			Expect(ra.Spec.Selector.MatchLabels).To(HaveKeyWithValue("second-custom", "foo"))
-		})
-	})
 })

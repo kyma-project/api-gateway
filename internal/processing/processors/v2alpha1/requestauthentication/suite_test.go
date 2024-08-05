@@ -30,6 +30,10 @@ var _ = ReportAfterSuite("custom reporter", func(report ginkgotypes.Report) {
 var apiRuleName = "test-apirule"
 var apiRuleNamespace = "example-namespace"
 var serviceName = "example-service"
+var jwtIssuer = "https://oauth2.example.com/"
+var jwksUri = "https://oauth2.example.com/.well-known/jwks.json"
+var anotherJwtIssuer = "https://oauth2.another.example.com/"
+var anotherJwksUri = "https://oauth2.another.example.com/.well-known/jwks.json"
 
 var ActionToString = func(a processing.Action) string { return a.String() }
 
