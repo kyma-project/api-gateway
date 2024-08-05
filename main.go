@@ -115,7 +115,7 @@ func defineFlagVar() *FlagVar {
 		"Indicates the failure base delay for rate limiter.")
 	flag.DurationVar(&flagVar.rateLimiterFailureMaxDelay, "failure-max-delay", controllers.RateLimiterFailureMaxDelay,
 		"Indicates the failure max delay for rate limiter. .")
-	flag.DurationVar(&flagVar.reconciliationInterval, "reconciliation-interval", 1*time.Hour,
+	flag.DurationVar(&flagVar.reconciliationInterval, "reconciliation-interval", 30*time.Minute,
 		"Indicates the time based reconciliation interval of APIRule.")
 	flag.DurationVar(&flagVar.migrationInterval, "migration-interval", 1*time.Minute,
 		"Indicates the time taken between steps of APIRule version migration.")
