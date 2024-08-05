@@ -22,7 +22,6 @@ var (
 )
 
 // Creator provides the creation of AuthorizationPolicy using the configuration in the given APIRule.
-// The key of the map is expected to be unique and comparable with the
 type Creator interface {
 	Create(ctx context.Context, client client.Client, api *gatewayv2alpha1.APIRule) (hashbasedstate.Desired, error)
 }

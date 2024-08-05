@@ -2,7 +2,6 @@ package authorizationpolicy_test
 
 import (
 	"fmt"
-	apirulev1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"github.com/kyma-project/api-gateway/internal/processing"
 	"github.com/kyma-project/api-gateway/internal/processing/hashbasedstate"
 	"github.com/kyma-project/api-gateway/tests"
@@ -28,11 +27,11 @@ import (
 
 func Test(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "authorizationpolicy v1alpha2 Suite")
+	RunSpecs(t, "authorizationpolicy v2alpha1 Suite")
 }
 
 var _ = ReportAfterSuite("custom reporter", func(report ginkgotypes.Report) {
-	tests.GenerateGinkgoJunitReport("authorizationpolicy-v1alpha2-suite", report)
+	tests.GenerateGinkgoJunitReport("authorizationpolicy-v2alpha1-suite", report)
 })
 
 var apiRuleName = "test-apirule"
@@ -159,8 +158,6 @@ func getFakeClient(objs ...client.Object) client.Client {
 	err = rulev1alpha1.AddToScheme(scheme)
 	Expect(err).NotTo(HaveOccurred())
 	err = securityv1beta1.AddToScheme(scheme)
-	Expect(err).NotTo(HaveOccurred())
-	err = apirulev1beta1.AddToScheme(scheme)
 	Expect(err).NotTo(HaveOccurred())
 	err = corev1.AddToScheme(scheme)
 	Expect(err).NotTo(HaveOccurred())

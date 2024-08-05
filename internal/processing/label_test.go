@@ -10,6 +10,8 @@ import (
 )
 
 var _ = Describe("GetOwnerLabels", func() {
+	expectedOwnerLabelKey := "apirule.gateway.kyma-project.io/v1beta1"
+
 	Context("v1beta1", func() {
 		It("should return v1beta1 owner label", func() {
 			apiRule := gatewayv1beta1.APIRule{
@@ -20,7 +22,7 @@ var _ = Describe("GetOwnerLabels", func() {
 			}
 
 			labels := processing.GetOwnerLabels(&apiRule)
-			Expect(labels).To(HaveKeyWithValue("apirule.gateway.kyma-project.io/v1beta1", "test-apirule-psdh34.test-namespace"))
+			Expect(labels).To(HaveKeyWithValue(expectedOwnerLabelKey, "test-apirule-psdh34.test-namespace"))
 		})
 	})
 
@@ -34,7 +36,7 @@ var _ = Describe("GetOwnerLabels", func() {
 			}
 
 			labels := processing.GetOwnerLabelsV2alpha1(&apiRule)
-			Expect(labels).To(HaveKeyWithValue("apirule.gateway.kyma-project.io/v1beta1", "test-apirule-psdh34.test-namespace"))
+			Expect(labels).To(HaveKeyWithValue(expectedOwnerLabelKey, "test-apirule-psdh34.test-namespace"))
 		})
 	})
 })
