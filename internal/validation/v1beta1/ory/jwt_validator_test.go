@@ -34,9 +34,9 @@ var _ = Describe("JWT Validator", func() {
 		//then
 		Expect(problems).To(HaveLen(2))
 		Expect(problems[0].AttributePath).To(Equal("some.attribute.config.trusted_issuers[0]"))
-		Expect(problems[0].Message).To(ContainSubstring("value is empty or not a valid url"))
+		Expect(problems[0].Message).To(ContainSubstring("value is empty or not a valid uri"))
 		Expect(problems[1].AttributePath).To(Equal("some.attribute.config.jwks_urls[0]"))
-		Expect(problems[1].Message).To(ContainSubstring("value is empty or not a valid url"))
+		Expect(problems[1].Message).To(ContainSubstring("value is empty or not a valid uri"))
 	})
 
 	It("Should succeed for config with plain HTTP JWKSUrls and trustedIssuers", func() {
