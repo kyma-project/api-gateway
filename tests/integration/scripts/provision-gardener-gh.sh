@@ -60,16 +60,14 @@ kubectl create  --kubeconfig "${GARDENER_KUBECONFIG}" \
     base64 -d > "${CLUSTER_NAME}_kubeconfig.yaml"
 
 # wait until apiserver /readyz endpoint returns "ok"
-isOK=""
 timeout=0
-until [[ $isOK == "ok" ]]; do
-  isOK=$(kubectl --kubeconfig "${CLUSTER_NAME}_kubeconfig.yaml" get --raw "/readyz")
+until (kubectl --kubeconfig "${CLUSTER_NAME}_kubeconfig.yaml" get --raw "/readyz"); do
+  timeout+=1
   # 5 minutes
   if [[ $timeout -gt 300 ]]; then
     echo "Timed out waiting for API Server to be ready"
     exit 1
   fi
-  timeout+=1
   sleep 1
 done
 
