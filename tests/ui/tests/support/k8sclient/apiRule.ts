@@ -6,7 +6,6 @@ export type ApiRuleAccessStrategy = "oauth2_introspection" | "jwt" | "noop" | "a
 export type ApiRuleConfig = {
     name: string,
     namespace: string;
-    annotations: Record<string, string>;
     service: string;
     host: string;
     handler: ApiRuleAccessStrategy;
@@ -28,7 +27,6 @@ type ApiRule = {
     metadata: {
         name: string;
         namespace: string;
-        annotations: Record<string, string>;
     }
     spec: {
         service: {
@@ -52,7 +50,6 @@ Cypress.Commands.add('createApiRule', (cfg: ApiRuleConfig) => {
     cy.wrap(loadFixture('apiRule.yaml')).then((a: ApiRule): void => {
         a.metadata.name = cfg.name;
         a.metadata.namespace = cfg.namespace;
-        a.metadata.annotations = cfg.annotations;
         a.spec.service.name = cfg.service;
         a.spec.host = cfg.host;
         if (cfg.gateway != "") {

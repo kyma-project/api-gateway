@@ -101,7 +101,6 @@ context("API Rule", () => {
         cy.createApiRule({
             name: apiRuleName,
             namespace: namespaceName,
-            annotations: {},
             service: serviceName,
             host: apiRuleName,
             handler: "oauth2_introspection",
@@ -143,7 +142,6 @@ context("API Rule", () => {
         cy.createApiRule({
             name: apiRuleName,
             namespace: namespaceName,
-            annotations: {},
             service: serviceName,
             host: apiRuleName,
             handler: "no_auth",
@@ -154,7 +152,6 @@ context("API Rule", () => {
         cy.createApiRule({
             name: secondApiRuleName,
             namespace: namespaceName,
-            annotations: {},
             service: serviceName,
             host: secondApiRuleName,
             handler: "no_auth",
@@ -171,7 +168,6 @@ context("API Rule", () => {
         cy.createApiRule({
             name: apiRuleName,
             namespace: namespaceName,
-            annotations: {},
             service: serviceName,
             host: apiRuleName,
             handler: "jwt",
@@ -235,7 +231,6 @@ context("API Rule", () => {
         cy.createApiRule({
             name: apiRuleName,
             namespace: namespaceName,
-            annotations: { 'gateway.kyma-project.io/original-version': 'v2alpha1' },
             service: serviceName,
             host: apiRuleName,
             handler: "no_auth",
@@ -268,7 +263,6 @@ context("API Rule", () => {
                 cy.createApiRule({
                     name: apiRuleName,
                     namespace: namespaceName,
-                    annotations: {},
                     service: serviceName,
                     host: apiRuleName,
                     handler: "no_auth",
@@ -286,7 +280,6 @@ context("API Rule", () => {
                 cy.createApiRule({
                     name: apiRuleName,
                     namespace: namespaceName,
-                    annotations: {},
                     service: "not_existent",
                     host: apiRuleName,
                     handler: "no_auth",
