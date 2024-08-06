@@ -24,9 +24,6 @@ func IsJwtSecured(rule gatewayv1beta1.Rule) bool {
 
 // IsSecuredByOathkeeper checks whether the rule contains an access strategy that should lead to the creation of an Oathkeeper rule.
 func IsSecuredByOathkeeper(rule gatewayv1beta1.Rule) bool {
-	if len(rule.Mutators) > 0 {
-		return true
-	}
 	for _, strat := range rule.AccessStrategies {
 		if strat.Name != gatewayv1beta1.AccessStrategyAllow && strat.Name != gatewayv1beta1.AccessStrategyNoAuth {
 			return true
