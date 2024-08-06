@@ -227,7 +227,7 @@ context("API Rule", () => {
         cy.contains('CORS Max Age').should('exist').parent().contains('10s').should('exist')
     });
 
-    it('should show alert warning if Gateway is in wrong format for v2alpha1 API Rule', () => {
+    it('should show alert warning if Gateway is in wrong format', () => {
         cy.createApiRule({
             name: apiRuleName,
             namespace: namespaceName,
