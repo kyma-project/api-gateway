@@ -10,7 +10,7 @@ export type ApiRuleConfig = {
     host: string;
     handler: ApiRuleAccessStrategy;
     config?: JwtConfig | OAuth2IntroConfig | null;
-    gateway: string;
+    gateway?: string | null;
 }
 
 type JwtConfig = {
@@ -52,7 +52,7 @@ Cypress.Commands.add('createApiRule', (cfg: ApiRuleConfig) => {
         a.metadata.namespace = cfg.namespace;
         a.spec.service.name = cfg.service;
         a.spec.host = cfg.host;
-        if (cfg.gateway != "") {
+        if (cfg.gateway != null) {
             a.spec.gateway = cfg.gateway;
         }
         a.spec.rules[0].accessStrategies = [

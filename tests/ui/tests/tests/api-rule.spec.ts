@@ -106,8 +106,7 @@ context("API Rule", () => {
             handler: "oauth2_introspection",
             config: {
                 required_scope: ["read"]
-            },
-            gateway: ""
+            }
         });
 
         cy.navigateToApiRule(apiRuleName, namespaceName);
@@ -138,14 +137,12 @@ context("API Rule", () => {
     });
 
     it("should display multiple rules are in the list", () => {
-
         cy.createApiRule({
             name: apiRuleName,
             namespace: namespaceName,
             service: serviceName,
             host: apiRuleName,
-            handler: "no_auth",
-            gateway: ""
+            handler: "no_auth"
         });
 
         const secondApiRuleName = `${apiRuleName}-second`
@@ -154,8 +151,7 @@ context("API Rule", () => {
             namespace: namespaceName,
             service: serviceName,
             host: secondApiRuleName,
-            handler: "no_auth",
-            gateway: ""
+            handler: "no_auth"
         });
 
         cy.navigateToApiRuleList(namespaceName);
@@ -174,8 +170,7 @@ context("API Rule", () => {
             config: {
                 jwks_urls: ["https://urls.com"],
                 trusted_issuers: ["https://trusted.com"]
-            },
-            gateway: ""
+            }
         });
 
         cy.navigateToApiRuleList(namespaceName);
@@ -258,15 +253,13 @@ context("API Rule", () => {
 
     context("Host", () => {
         context("when APIRule is in OK state", () => {
-
             it('should build correct link in details view', () => {
                 cy.createApiRule({
                     name: apiRuleName,
                     namespace: namespaceName,
                     service: serviceName,
                     host: apiRuleName,
-                    handler: "no_auth",
-                    gateway: ""
+                    handler: "no_auth"
                 });
 
                 cy.navigateToApiRule(apiRuleName, namespaceName);
@@ -275,15 +268,13 @@ context("API Rule", () => {
         })
 
         context("when APIRule is not in OK state", () => {
-
             it('should have dummy link in details view', () => {
                 cy.createApiRule({
                     name: apiRuleName,
                     namespace: namespaceName,
                     service: "not_existent",
                     host: apiRuleName,
-                    handler: "no_auth",
-                    gateway: ""
+                    handler: "no_auth"
                 });
 
                 cy.navigateToApiRule(apiRuleName, namespaceName);
