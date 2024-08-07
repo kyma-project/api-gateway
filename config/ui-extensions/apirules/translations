@@ -51,3 +51,5 @@ en:
   alert.spec.jwks_url_http: "JWKS URL: HTTP protocol is not secure, consider using HTTPS"
   alert.spec.trusted_issuers_http: "Trusted Issuers: HTTP protocol is not secure, consider using HTTPS"
   alert.corsPolicy: "Disabling custom CORS Policy is not recommended. Consider setting up CORS yourself"
+  alert.gateway.details: "Gateway must be in the format '{NAMESPACE}/{NAME}'"
+  alert.gateway.form: "Gateway must exist, specify both Namespace and Name"

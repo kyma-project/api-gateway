@@ -92,13 +92,13 @@ jobs:
         id: changed-files
         with:
           files_ignore: |
-            - "docs/**"
-            - "**/*.md"
-            - "tests/performance/**"
-            - "OWNERS"
-            - "CODEOWNERS"
-            - "sec-scanners-config.yaml"
-            - ".github/**"
+            docs/**
+            **/*.md
+            tests/performance/**
+            OWNERS
+            CODEOWNERS
+            sec-scanners-config.yaml
+            .github/**
       - name: List all changed files
         run: echo '${{ steps.changed-files.outputs.all_changed_files }}' >> $GITHUB_STEP_SUMMARY
   dispatch-integration:
@@ -120,10 +120,10 @@ jobs:
         id: changed-files
         with:
           files: |
-            - 'config/ui-extensions/**'
-            - 'config/crd/**'
-            - 'tests/ui/**'
-            - '.github/workflows/ui-tests.yaml'
+            config/ui-extensions/**
+            config/crd/**
+            tests/ui/**
+            .github/workflows/ui-tests.yaml
       - name: List all changed files
         run: echo '${{ steps.changed-files.outputs.all_changed_files }}' >> $GITHUB_STEP_SUMMARY
   dispatch-ui:

@@ -30,6 +30,11 @@ body:
     severity: warning
     source: '"alert.corsPolicy"'
     visibility: '$not($exists(spec.corsPolicy))'
+  - simple: true
+    widget: Alert
+    severity: warning
+    source: '"alert.gateway.details"'
+    visibility: '$not($exists($match(spec.gateway,/^[a-z0-9_]+(-[a-z0-9_]+)*\/[a-z0-9_]+(-[a-z0-9_]+)*$/))[0])'
   - widget: Panel
     name: corsPolicy
     source: spec.corsPolicy
