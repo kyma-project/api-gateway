@@ -91,12 +91,19 @@ vet: ## Run go vet against code.
 test: manifests generate fmt vet envtest ## Generate manifests and run tests.
 	KUBEBUILDER_CONTROLPLANE_START_TIMEOUT=2m KUBEBUILDER_CONTROLPLANE_STOP_TIMEOUT=2m KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" go test $(shell go list ./... | grep -v /tests/integration) -coverprofile cover.out
 
-.PHONY: test-integration
-test-integration: generate fmt vet envtest test-integration-v2alpha1 ## Run integration tests.
-	source ./tests/integration/env_vars.sh && go test -timeout 1h ./tests/integration -v -race -run TestIstioJwt . && go test -timeout 1h ./tests/integration -v -race -run TestOryJwt . && TEST_CONCURRENCY=1 go test -timeout 1h ./tests/integration -v -race -run TestGateway .
+.PHONY: test-integration-all
+test-integration: test-integration-v2alpha1 test-integration-ory-jwt test-integration-istio-jwt test-integration-gateway
+
+.PHONY: test-integration-ory-jwt
+test-integration-v2alpha1: generate fmt vet envtest
+	source ./tests/integration/env_vars.sh && go test -timeout 1h ./tests/integration -v -race -run TestOryJwt
+
+.PHONY: test-integration-istio-jwt
+test-integration-v2alpha1: generate fmt vet envtest
+	source ./tests/integration/env_vars.sh && go test -timeout 1h ./tests/integration -v -race -run TestIstioJwt
 
 .PHONY: test-integration-v2alpha1
-test-integration-v2alpha1: generate fmt vet envtest ## Run integration tests.
+test-integration-v2alpha1: generate fmt vet envtest
 	source ./tests/integration/env_vars.sh && go test -timeout 1h ./tests/integration -v -race -run TestV2alpha1
 
 .PHONY: test-upgrade

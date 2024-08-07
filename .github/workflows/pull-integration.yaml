@@ -11,6 +11,24 @@ jobs:
     name: Integration tests
     runs-on: ubuntu-latest
     if: github.event.pull_request.draft == false
+    strategy:
+      matrix:
+        test_make_target: [ "test-integration-ory-jwt", "test-integration-istio-jwt", "test-integration-v2alpha1", "test-integration-gateway" ]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+      - uses: ./.github/actions/load-manager-image
+      - uses: ./.github/actions/integration-tests
+        with:
+          manager_image: "api-gateway-manager:PR-${{github.event.number}}"
+          test_make_target: ${{ matrix.test_make_target }}
+
+  integration-tests-all:
+    name: Integration tests all
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false
     steps:
       - uses: actions/checkout@v4
         with:

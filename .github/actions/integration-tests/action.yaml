@@ -1,6 +1,9 @@
 name: 'Integration tests (k3d)'
 description: 'Runs integration tests on k3d'
 inputs:
+  test_make_target:
+    description: 'Make target for integration tests to run'
+    default: 'test-integration-all'
   manager_image:
     description: 'Manager image used for test'
     required: true
@@ -47,7 +50,7 @@ runs:
           k3d image import ${{ inputs.manager_image }} -c test-cluster-1
         fi
         kubectl config use-context k3d-test-cluster-1
-        EXPORT_RESULT=true make install-istio deploy test-integration
+        EXPORT_RESULT=true make install-istio deploy ${{ inputs.test_make_target }}
     - shell: bash
       name: gather deployment logs
       if: failure()
