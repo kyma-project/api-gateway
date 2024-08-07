@@ -23,12 +23,6 @@ func (b *ruleBuilder) withPath(path string) *ruleBuilder {
 	return b
 }
 
-func (b *ruleBuilder) withMethods(methods ...gatewayv2alpha1.HttpMethod) *ruleBuilder {
-	b.rule.Methods = nil
-	b.rule.Methods = append(b.rule.Methods, methods...)
-	return b
-}
-
 func (b *ruleBuilder) addMethods(methods ...gatewayv2alpha1.HttpMethod) *ruleBuilder {
 	b.rule.Methods = append(b.rule.Methods, methods...)
 	return b
@@ -77,46 +71,6 @@ func (b *ruleBuilder) addJwtAuthentication(issuer, jwksUri string) *ruleBuilder 
 	}
 
 	b.rule.Jwt.Authentications = append(b.rule.Jwt.Authentications, auth)
-	return b
-}
-
-func (b *ruleBuilder) addJwtAuthorizationRequiredScopes(requiredScopes ...string) *ruleBuilder {
-	auth := &gatewayv2alpha1.JwtAuthorization{
-		RequiredScopes: requiredScopes,
-	}
-
-	if b.rule.Jwt == nil {
-		b.rule.Jwt = &gatewayv2alpha1.JwtConfig{}
-	}
-
-	b.rule.Jwt.Authorizations = append(b.rule.Jwt.Authorizations, auth)
-	return b
-}
-
-func (b *ruleBuilder) addJwtAuthorizationAudiences(audiences ...string) *ruleBuilder {
-	auth := &gatewayv2alpha1.JwtAuthorization{
-		Audiences: audiences,
-	}
-
-	if b.rule.Jwt == nil {
-		b.rule.Jwt = &gatewayv2alpha1.JwtConfig{}
-	}
-
-	b.rule.Jwt.Authorizations = append(b.rule.Jwt.Authorizations, auth)
-	return b
-}
-
-func (b *ruleBuilder) addJwtAuthorization(requiredScopes []string, audiences []string) *ruleBuilder {
-	auth := &gatewayv2alpha1.JwtAuthorization{
-		RequiredScopes: requiredScopes,
-		Audiences:      audiences,
-	}
-
-	if b.rule.Jwt == nil {
-		b.rule.Jwt = &gatewayv2alpha1.JwtConfig{}
-	}
-
-	b.rule.Jwt.Authorizations = append(b.rule.Jwt.Authorizations, auth)
 	return b
 }
 
