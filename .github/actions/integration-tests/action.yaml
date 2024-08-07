@@ -3,7 +3,7 @@ description: 'Runs integration tests on k3d'
 inputs:
   test_make_target:
     description: 'Make target for integration tests to run'
-    default: 'test-integration-all'
+    default: 'test-integration'
   manager_image:
     description: 'Manager image used for test'
     required: true
@@ -67,11 +67,11 @@ runs:
     - name: Uploads artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: html-reports-${{ github.job }}
+        name: html-reports-${{ github.job }}-$${{ inputs.test_make_target }}
         path: tests/integration/reports/
     - name: Uploads logs
       uses: actions/upload-artifact@v4
       if: failure()
       with:
-        name: logs-${{ github.job }}
+        name: logs-${{ github.job }}-$${{ inputs.test_make_target }}
         path: logs/
