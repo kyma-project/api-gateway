@@ -5,8 +5,8 @@ import (
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	"github.com/kyma-project/api-gateway/internal/processing"
-	processors2 "github.com/kyma-project/api-gateway/internal/processing/processors"
 	"github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1/authorizationpolicy"
+	"github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1/requestauthentication"
 	v2alpha1VirtualService "github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1/virtualservice"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -34,7 +34,7 @@ var _ = Describe("NewMigrationProcessors", func() {
 		processors := NewMigrationProcessors(apirule, apiruleBeta, config, &log)
 		Expect(processors).To(HaveLen(2))
 		Expect(processors[0]).To(BeAssignableToTypeOf(authorizationpolicy.Processor{}))
-		Expect(processors[1]).To(BeAssignableToTypeOf(processors2.RequestAuthenticationProcessor{}))
+		Expect(processors[1]).To(BeAssignableToTypeOf(requestauthentication.Processor{}))
 	})
 
 	DescribeTable("should return processors according to migration step", func(annotation string, expectedProcessors []processing.ReconciliationProcessor) {
@@ -65,7 +65,7 @@ var _ = Describe("NewMigrationProcessors", func() {
 			"",
 			[]processing.ReconciliationProcessor{
 				authorizationpolicy.Processor{},
-				processors2.RequestAuthenticationProcessor{},
+				requestauthentication.Processor{},
 			},
 		),
 		Entry("should return VS, AP and RA processors when current step is switchVsToService",
@@ -73,7 +73,7 @@ var _ = Describe("NewMigrationProcessors", func() {
 			[]processing.ReconciliationProcessor{
 				v2alpha1VirtualService.VirtualServiceProcessor{},
 				authorizationpolicy.Processor{},
-				processors2.RequestAuthenticationProcessor{},
+				requestauthentication.Processor{},
 			},
 		),
 		Entry("should return AccessRule deletion, VS, AP and RA processors when current step is removeOryRule",
@@ -82,7 +82,7 @@ var _ = Describe("NewMigrationProcessors", func() {
 				accessRuleDeletionProcessor{},
 				v2alpha1VirtualService.VirtualServiceProcessor{},
 				authorizationpolicy.Processor{},
-				processors2.RequestAuthenticationProcessor{},
+				requestauthentication.Processor{},
 			},
 		),
 	)
