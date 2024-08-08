@@ -113,6 +113,38 @@ func (apiRuleV2Alpha1 *APIRule) ConvertTo(hub conversion.Hub) error {
 					},
 				})
 			}
+
+			// Mutators
+			if ruleV1Alpha2.Request != nil {
+				if ruleV1Alpha2.Request.Cookies != nil {
+					var config runtime.RawExtension
+					err := convertOverJson(ruleV1Alpha2.Request.Cookies, &config)
+					if err != nil {
+						return err
+					}
+					ruleBeta1.Mutators = append(ruleBeta1.Mutators, &v1beta1.Mutator{
+						Handler: &v1beta1.Handler{
+							Name:   v1beta1.CookieMutator,
+							Config: &config,
+						},
+					})
+				}
+
+				if ruleV1Alpha2.Request.Headers != nil {
+					var config runtime.RawExtension
+					err := convertOverJson(ruleV1Alpha2.Request.Headers, &config)
+					if err != nil {
+						return err
+					}
+					ruleBeta1.Mutators = append(ruleBeta1.Mutators, &v1beta1.Mutator{
+						Handler: &v1beta1.Handler{
+							Name:   v1beta1.HeaderMutator,
+							Config: &config,
+						},
+					})
+				}
+			}
+
 			apiRuleBeta1.Spec.Rules = append(apiRuleBeta1.Spec.Rules, ruleBeta1)
 		}
 	}
@@ -205,6 +237,33 @@ func (apiRuleV2Alpha1 *APIRule) ConvertFrom(hub conversion.Hub) error {
 					if err != nil {
 						return err
 					}
+				}
+			}
+
+			if ruleBeta1.Mutators != nil {
+				ruleV1Alpha2.Request = &Request{}
+			}
+
+			for _, mutator := range ruleBeta1.Mutators {
+				switch mutator.Handler.Name {
+				case v1beta1.HeaderMutator:
+					var configStruct map[string]string
+
+					err := json.Unmarshal(mutator.Handler.Config.Raw, &configStruct)
+					if err != nil {
+						return err
+					}
+
+					ruleV1Alpha2.Request.Headers = configStruct
+				case v1beta1.CookieMutator:
+					var configStruct map[string]string
+
+					err := json.Unmarshal(mutator.Handler.Config.Raw, &configStruct)
+					if err != nil {
+						return err
+					}
+
+					ruleV1Alpha2.Request.Cookies = configStruct
 				}
 			}
 			apiRuleV2Alpha1.Spec.Rules = append(apiRuleV2Alpha1.Spec.Rules, ruleV1Alpha2)

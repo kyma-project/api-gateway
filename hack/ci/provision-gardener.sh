@@ -36,9 +36,19 @@ requiredVars=(
 check_required_vars "${requiredVars[@]}"
 
 # render and applyshoot template
-shoot_template=$(envsubst < ./hack/ci/shoot_${GARDENER_PROVIDER}.yaml)
+shoot_template=$(envsubst < "./tests/integration/scripts/shoot_${GARDENER_PROVIDER}.yaml")
 
-echo "$shoot_template" | kubectl --kubeconfig "${GARDENER_KUBECONFIG}" apply -f -
+echo "trying to apply shoot template into seed cluster"
+retries=0
+until (echo "$shoot_template" | kubectl --kubeconfig "${GARDENER_KUBECONFIG}" apply -f -); do
+  retries+=1
+  if [[ retries -gt 2 ]]; then
+    echo "could not apply shoot spec after 3 tries, exiting"
+    exit 1
+  fi
+  echo "failed, retrying in 15s"
+  sleep 15
+done
 
 echo "waiting fo cluster to be ready..."
 kubectl wait  --kubeconfig "${GARDENER_KUBECONFIG}" --for=condition=EveryNodeReady shoot/${CLUSTER_NAME} --timeout=17m
@@ -50,16 +60,14 @@ kubectl create  --kubeconfig "${GARDENER_KUBECONFIG}" \
     base64 -d > "${CLUSTER_NAME}_kubeconfig.yaml"
 
 # wait until apiserver /readyz endpoint returns "ok"
-isOK=""
 timeout=0
-until [[ $isOK == "ok" ]]; do
-  isOK=$(kubectl --kubeconfig "${CLUSTER_NAME}_kubeconfig.yaml" get --raw "/readyz")
+until (kubectl --kubeconfig "${CLUSTER_NAME}_kubeconfig.yaml" get --raw "/readyz"); do
+  timeout+=1
   # 5 minutes
   if [[ $timeout -gt 300 ]]; then
     echo "Timed out waiting for API Server to be ready"
     exit 1
   fi
-  timeout+=1
   sleep 1
 done
 

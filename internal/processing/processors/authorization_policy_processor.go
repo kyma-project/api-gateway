@@ -19,7 +19,6 @@ type AuthorizationPolicyProcessor struct {
 }
 
 // AuthorizationPolicyCreator provides the creation of AuthorizationPolicies using the configuration in the given APIRule.
-// The key of the map is expected to be unique and comparable with the
 type AuthorizationPolicyCreator interface {
 	Create(ctx context.Context, client ctrlclient.Client, api *gatewayv1beta1.APIRule) (hashbasedstate.Desired, error)
 }

@@ -37,9 +37,14 @@ func (r Reconciliation) Validate(ctx context.Context, client client.Client) ([]v
 		return make([]validation.Failure, 0), err
 	}
 
+	var gwList networkingv1beta1.GatewayList
+	if err := client.List(ctx, &gwList); err != nil {
+		return make([]validation.Failure, 0), err
+	}
+
 	validator := istioValidation.NewAPIRuleValidator(ctx, client, r.apiRule, r.config.DefaultDomainName)
 
-	return validator.Validate(ctx, client, vsList), nil
+	return validator.Validate(ctx, client, vsList, gwList), nil
 }
 
 func (r Reconciliation) GetProcessors() []processing.ReconciliationProcessor {

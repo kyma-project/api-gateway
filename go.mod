@@ -6,7 +6,7 @@ require (
 	github.com/avast/retry-go/v4 v4.6.0
 	github.com/cucumber/godog v0.14.1
 	github.com/gardener/cert-management v0.15.0
-	github.com/gardener/external-dns-management v0.20.0
+	github.com/gardener/external-dns-management v0.20.1
 	github.com/go-jose/go-jose/v3 v3.0.3
 	github.com/go-logr/logr v1.4.2
 	github.com/google/uuid v1.6.0
@@ -16,8 +16,8 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/thoas/go-funk v0.9.3
 	gitlab.com/rodrigoodhin/gocure v0.0.0-20230214115050-efed6aac536a
-	golang.org/x/net v0.27.0
-	golang.org/x/time v0.5.0
+	golang.org/x/net v0.28.0
+	golang.org/x/time v0.6.0
 	google.golang.org/appengine v1.6.8
 	google.golang.org/protobuf v1.34.2
 	gopkg.in/yaml.v3 v3.0.1
@@ -69,10 +69,10 @@ require (
 	github.com/tdewolff/minify/v2 v2.10.0 // indirect
 	github.com/tdewolff/parse/v2 v2.5.27 // indirect
 	go.uber.org/zap v1.26.0 // indirect
-	golang.org/x/crypto v0.25.0 // indirect
-	golang.org/x/sys v0.22.0 // indirect
-	golang.org/x/term v0.22.0 // indirect
-	golang.org/x/text v0.16.0 // indirect
+	golang.org/x/crypto v0.26.0 // indirect
+	golang.org/x/sys v0.23.0 // indirect
+	golang.org/x/term v0.23.0 // indirect
+	golang.org/x/text v0.17.0 // indirect
 	golang.org/x/tools v0.23.0 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.4.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20240318140521-94a12d6c2237 // indirect
@@ -90,7 +90,7 @@ require (
 	github.com/vrischmann/envconfig v1.3.0
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/exp v0.0.0-20240719175910-8a7402abbf56
-	golang.org/x/oauth2 v0.21.0
+	golang.org/x/oauth2 v0.22.0
 	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/api v0.30.3
 	k8s.io/apiextensions-apiserver v0.30.3

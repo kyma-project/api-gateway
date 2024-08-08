@@ -1,13 +1,7 @@
 package processing
 
 import (
-	"fmt"
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
-)
-
-var (
-	//OwnerLabel .
-	OwnerLabel = fmt.Sprintf("%s.%s", "apirule", gatewayv1beta1.GroupVersion.String())
 )
 
 func RequiresAuthorizationPolicies(api *gatewayv1beta1.APIRule) bool {
@@ -30,21 +24,12 @@ func IsJwtSecured(rule gatewayv1beta1.Rule) bool {
 
 // IsSecuredByOathkeeper checks whether the rule contains an access strategy that should lead to the creation of an Oathkeeper rule.
 func IsSecuredByOathkeeper(rule gatewayv1beta1.Rule) bool {
-	if len(rule.Mutators) > 0 {
-		return true
-	}
 	for _, strat := range rule.AccessStrategies {
 		if strat.Name != gatewayv1beta1.AccessStrategyAllow && strat.Name != gatewayv1beta1.AccessStrategyNoAuth {
 			return true
 		}
 	}
 	return false
-}
-
-func GetOwnerLabels(api *gatewayv1beta1.APIRule) map[string]string {
-	labels := make(map[string]string)
-	labels[OwnerLabel] = fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace)
-	return labels
 }
 
 func FilterDuplicatePaths(rules []gatewayv1beta1.Rule) []gatewayv1beta1.Rule {
