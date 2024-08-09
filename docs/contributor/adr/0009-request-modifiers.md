@@ -6,7 +6,7 @@ Accepted
 
 ## Context
 
-Request modifiers are introduced to the APIRule, they can add cookies or headers to the request.
+Request modifiers are introduced to the APIRule, they can add cookies or headers to the request. This behaviour is similar to [Istio JWT mutators](../../user/custom-resources/apirule/04-40-apirule-mutators.md) in the previous APIRule version.
 
 ## Decision
 
