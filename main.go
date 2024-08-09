@@ -88,6 +88,7 @@ func init() {
 	utilruntime.Must(gatewayv2alpha1.AddToScheme(scheme))
 	utilruntime.Must(dnsv1alpha1.AddToScheme(scheme))
 	utilruntime.Must(certv1alpha1.AddToScheme(scheme))
+
 	utilruntime.Must(networkingv1beta1.AddToScheme(scheme))
 	utilruntime.Must(rulev1alpha1.AddToScheme(scheme))
 	utilruntime.Must(securityv1beta1.AddToScheme(scheme))
