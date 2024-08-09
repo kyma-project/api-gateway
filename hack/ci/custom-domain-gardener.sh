@@ -21,8 +21,8 @@ function check_required_vars() {
 }
 
 requiredVars=(
-    GARDENER_KYMA_PROW_KUBECONFIG
-    GARDENER_KYMA_PROW_PROJECT_NAME
+    GARDENER_KUBECONFIG
+    GARDENER_PROJECT_NAME
 )
 
 check_required_vars "${requiredVars[@]}"
@@ -30,13 +30,13 @@ check_required_vars "${requiredVars[@]}"
 function cleanup() {
   kubectl annotate shoot "${CLUSTER_NAME}" confirmation.gardener.cloud/deletion=true \
       --overwrite \
-      -n "garden-${GARDENER_KYMA_PROW_PROJECT_NAME}" \
-      --kubeconfig "${GARDENER_KYMA_PROW_KUBECONFIG}"
+      -n "garden-${GARDENER_PROJECT_NAME}" \
+      --kubeconfig "${GARDENER_KUBECONFIG}"
 
   kubectl delete shoot "${CLUSTER_NAME}" \
     --wait="false" \
-    --kubeconfig "${GARDENER_KYMA_PROW_KUBECONFIG}" \
-    -n "garden-${GARDENER_KYMA_PROW_PROJECT_NAME}"
+    --kubeconfig "${GARDENER_KUBECONFIG}" \
+    -n "garden-${GARDENER_PROJECT_NAME}"
 }
 
 # Cleanup on exit, be it successful or on fail
@@ -45,15 +45,12 @@ trap cleanup EXIT INT
 # Add pwd to path to be able to use binaries downloaded in scripts
 export PATH="${PATH}:${PWD}"
 
-# wait for build job
-./tests/integration/scripts/jobguard.sh
-
 CLUSTER_NAME=ag-$(echo $RANDOM | md5sum | head -c 7)
 export CLUSTER_NAME
-./tests/integration/scripts/provision-gardener.sh
+./hack/ci/provision-gardener-gh.sh
 
 echo "waiting for Gardener to finish shoot reconcile..."
-kubectl wait --kubeconfig "${GARDENER_KYMA_PROW_KUBECONFIG}" --for=jsonpath='{.status.lastOperation.state}'=Succeeded --timeout=600s "shoots/${CLUSTER_NAME}"
+kubectl wait --kubeconfig "${GARDENER_KUBECONFIG}" --for=jsonpath='{.status.lastOperation.state}'=Succeeded --timeout=600s "shoots/${CLUSTER_NAME}"
 
 cat <<EOF > patch.yaml
 spec:
@@ -73,17 +70,17 @@ spec:
           enabled: true
 EOF
 
-kubectl patch shoot "${CLUSTER_NAME}" --patch-file patch.yaml --kubeconfig "${GARDENER_KYMA_PROW_KUBECONFIG}"
+kubectl patch shoot "${CLUSTER_NAME}" --patch-file patch.yaml --kubeconfig "${GARDENER_KUBECONFIG}"
 
 make install-istio
 make deploy
 
 echo "waiting for Gardener to finish shoot reconcile..."
-kubectl wait --kubeconfig "${GARDENER_KYMA_PROW_KUBECONFIG}" --for=jsonpath='{.status.lastOperation.state}'=Succeeded --timeout=600s "shoots/${CLUSTER_NAME}"
+kubectl wait --kubeconfig "${GARDENER_KUBECONFIG}" --for=jsonpath='{.status.lastOperation.state}'=Succeeded --timeout=600s "shoots/${CLUSTER_NAME}"
 
 # KYMA_DOMAIN is required by the tests
-export TEST_DOMAIN="${CLUSTER_NAME}.${GARDENER_KYMA_PROW_PROJECT_NAME}.shoot.live.k8s-hana.ondemand.com"
-export TEST_CUSTOM_DOMAIN="a.build.kyma-project.io"
+export TEST_DOMAIN="${CLUSTER_NAME}.${GARDENER_PROJECT_NAME}.shoot.live.k8s-hana.ondemand.com"
+export TEST_CUSTOM_DOMAIN="goat.build.kyma-project.io"
 
 make test-custom-domain
 
