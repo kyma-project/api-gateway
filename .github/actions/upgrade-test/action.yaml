@@ -29,15 +29,15 @@ runs:
       run: |
         git fetch origin pull/${{ github.event.number }}/head:PR-${{ github.event.number }}
         git checkout PR-${{ github.event.number }}
-    - name: Create Single Cluster
-      uses: AbsaOSS/k3d-action@4e8b3239042be1dc0aed6c5eb80c13b18200fc79 #v2.4.0
-      with:
-        cluster-name: "test-cluster-1"
-        args: >-
-          --agents 0
-          --port 80:80@loadbalancer
-          --port 443:443@loadbalancer
-          --k3s-arg "--disable=traefik@server:0"
+    - name: Create Cluster
+      shell: bash
+      run: |
+        curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | bash
+        k3d cluster create --agents 0 \
+                           --image docker.io/rancher/k3s:v1.29.7-k3s1 \
+                           --port 80:80@loadbalancer \
+                           --port 443:443@loadbalancer \
+                           --k3s-arg "--disable=traefik@server:0"
     - name: Run test
       shell: bash
       env:
