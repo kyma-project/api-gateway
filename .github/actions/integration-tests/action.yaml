@@ -49,7 +49,7 @@ runs:
         if [ "${{ github.event_name }}" == "pull_request" ]; then
           k3d image import ${{ inputs.manager_image }} -c k3s-default
         fi
-        kubectl config use-context k3s-default
+        kubectl config use-context k3d-k3s-default
         EXPORT_RESULT=true make install-istio deploy ${{ inputs.test_make_target }}
     - shell: bash
       name: gather deployment logs
