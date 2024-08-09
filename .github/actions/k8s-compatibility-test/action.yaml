@@ -48,15 +48,15 @@ runs:
         IMG: ${{ inputs.manager_image }}
       run: |
         if [ "${{ github.event_name }}" == "pull_request" ]; then
-          k3d image import ${{ inputs.manager_image }} -c test-cluster-1
+          k3d image import ${{ inputs.manager_image }} -c default
         fi
-        kubectl config use-context k3d-test-cluster-1
+        kubectl config use-context k3s-default
         EXPORT_RESULT=true make install-istio deploy ${{ inputs.test_make_target }}
     - name: Check deprecations
       run: |
         set -eou pipefail
         GO111MODULE=on go install github.com/prometheus/prom2json/cmd/prom2json@v1.3.3
-        kubectl get --context k3d-test-cluster-1 --raw /metrics | prom2json | jq '.[] | select(.name=="apiserver_requested_deprecated_apis").metrics[].labels' > deprecations.txt
+        kubectl get --context k3s-default --raw /metrics | prom2json | jq '.[] | select(.name=="apiserver_requested_deprecated_apis").metrics[].labels' > deprecations.txt
       shell: bash
     - uses: actions/upload-artifact@v4
       with:
