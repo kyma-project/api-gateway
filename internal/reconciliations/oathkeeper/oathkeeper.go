@@ -38,10 +38,12 @@ func (r Reconciler) ReconcileAndVerifyReadiness(ctx context.Context, k8sClient c
 		return status
 	}
 
-	ctrl.Log.Info("Waiting for Oathkeeper Deployment to become ready")
-	err := waitForOathkeeperDeploymentToBeReady(ctx, k8sClient, r.ReadinessRetryConfig)
-	if err != nil {
-		return controllers.ErrorStatus(err, "Oathkeeper did not start successfully", conditions.OathkeeperReconcileFailed.Condition())
+	if !apiGatewayCR.IsInDeletion() {
+		ctrl.Log.Info("Waiting for Oathkeeper Deployment to become ready")
+		err := waitForOathkeeperDeploymentToBeReady(ctx, k8sClient, r.ReadinessRetryConfig)
+		if err != nil {
+			return controllers.ErrorStatus(err, "Oathkeeper did not start successfully", conditions.OathkeeperReconcileFailed.Condition())
+		}
 	}
 
 	return controllers.ReadyStatus(conditions.OathkeeperReconcileSucceeded.Condition())
