@@ -36,7 +36,7 @@ requiredVars=(
 check_required_vars "${requiredVars[@]}"
 
 # render and applyshoot template
-shoot_template=$(envsubst < "./tests/integration/scripts/shoot_${GARDENER_PROVIDER}.yaml")
+shoot_template=$(envsubst < "./hack/ci/shoot_${GARDENER_PROVIDER}.yaml")
 
 echo "trying to apply shoot template into seed cluster"
 retries=0
