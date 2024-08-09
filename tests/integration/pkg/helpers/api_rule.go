@@ -30,7 +30,7 @@ func ApplyApiRule(toExecute RetryableApiRule, onRetry RetryableApiRule, k8sClien
 		return err
 	}
 
-	apiStatus, err := getAPIRuleStatus(res)
+	apiStatus, err := GetAPIRuleStatus(res)
 	if err != nil {
 		return err
 	}
@@ -83,7 +83,7 @@ func UpdateApiRule(resourceManager *resource.Manager, k8sClient dynamic.Interfac
 	return nil
 }
 
-func getAPIRuleStatus(apiRuleUnstructured *unstructured.Unstructured) (apiRuleStatus, error) {
+func GetAPIRuleStatus(apiRuleUnstructured *unstructured.Unstructured) (apiRuleStatus, error) {
 	js, err := json.Marshal(apiRuleUnstructured)
 	if err != nil {
 		return apiRuleStatus{}, err
@@ -100,7 +100,7 @@ func getAPIRuleStatus(apiRuleUnstructured *unstructured.Unstructured) (apiRuleSt
 }
 
 func HasAPIRuleStatus(apiRuleUnstructured *unstructured.Unstructured, status string) (bool, error) {
-	apiRuleStatus, err := getAPIRuleStatus(apiRuleUnstructured)
+	apiRuleStatus, err := GetAPIRuleStatus(apiRuleUnstructured)
 	if err != nil {
 		return false, err
 	}
