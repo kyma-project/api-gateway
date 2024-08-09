@@ -34,7 +34,7 @@ runs:
         cluster-name: "test-cluster-1"
         args: >-
           --agents 2
-          --image docker.io/rancher/k3s:v1.29.4-k3s1
+          --image docker.io/rancher/k3s:v1.30.3-k3s1
           --servers-memory=16g
           --port 80:80@loadbalancer
           --port 443:443@loadbalancer
