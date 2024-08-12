@@ -28,17 +28,11 @@ runs:
       run: |
         git fetch origin pull/${{ github.event.number }}/head:PR-${{ github.event.number }}
         git checkout PR-${{ github.event.number }}
-    - name: Create Single Cluster
-      shell: bash
-      run: |
-        curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | bash
-        k3d cluster create --agents 2 \
-                           --image docker.io/rancher/k3s:v1.30.3-k3s1 \
-                           --port 80:80@loadbalancer \
-                           --servers-memory=16g \
-                           --port 443:443@loadbalancer \
-                           --k3s-arg "--disable=traefik@server:0"
-    - name: Provision Kyma and run tests
+    - name: Create Cluster
+      uses: ./.github/actions/provision-k3d-cluster
+      with:
+        version: "1.30.3"
+    - name: Deploy APIGateway manager and run tests
       shell: bash
       env:
         KYMA_DOMAIN: "local.kyma.dev"

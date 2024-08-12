@@ -29,14 +29,9 @@ runs:
         git fetch origin pull/${{ github.event.number }}/head:PR-${{ github.event.number }}
         git checkout PR-${{ github.event.number }}
     - name: Create Cluster
-      shell: bash
-      run: |
-        curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | bash
-        k3d cluster create --agents 0 \
-                           --image docker.io/rancher/k3s:v1.29.7-k3s1 \
-                           --port 80:80@loadbalancer \
-                           --port 443:443@loadbalancer \
-                           --k3s-arg "--disable=traefik@server:0"
+      uses: ./.github/actions/provision-k3d-cluster
+      with:
+          version: "1.29.7"
     - name: Run integration tests
       shell: bash
       env:

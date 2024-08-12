@@ -32,12 +32,10 @@ runs:
     - name: Create Cluster
       shell: bash
       run: |
-        curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | bash
-        k3d cluster create --agents 0 \
-                           --image docker.io/rancher/k3s:v1.29.7-k3s1 \
-                           --port 80:80@loadbalancer \
-                           --port 443:443@loadbalancer \
-                           --k3s-arg "--disable=traefik@server:0"
+    - name: Create Cluster
+      uses: ./.github/actions/provision-k3d-cluster
+      with:
+        version: "1.29.7"
     - name: Run test
       shell: bash
       env:
