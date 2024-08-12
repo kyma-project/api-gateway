@@ -358,7 +358,7 @@ spec:
                 maxLength: 127
                 type: string
                 x-kubernetes-validations:
-                - message: Gateway should be in namespace/name format
+                - message: Gateway must be in namespace/name format
                   rule: self.matches('^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?/([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)$')
               hosts:
                 description: Specifies the URLs of the exposed service.
