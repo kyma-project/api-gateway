@@ -48,7 +48,7 @@ func (r *APIRuleReconciler) updateStatusOrRetry(ctx context.Context, api *gatewa
 	return doneReconcileDefaultRequeue(r.ReconcilePeriod, &r.Log)
 }
 
-func (r *APIRuleReconciler) updateStatus(ctx context.Context, api *gatewayv1beta1.APIRule, status status.ReconciliationStatus) (*gatewayv1beta1.APIRule, error) {
+func (r *APIRuleReconciler) updateStatus(ctx context.Context, api *gatewayv1beta1.APIRule, s status.ReconciliationStatus) (*gatewayv1beta1.APIRule, error) {
 	api, err := r.getLatestApiRule(ctx, api)
 	if err != nil {
 		return nil, err
@@ -57,7 +57,7 @@ func (r *APIRuleReconciler) updateStatus(ctx context.Context, api *gatewayv1beta
 	api.Status.ObservedGeneration = api.Generation
 	api.Status.LastProcessedTime = &v1.Time{Time: time.Now()}
 
-	err = status.UpdateStatus(&api.Status)
+	err = s.UpdateStatus(status.Status{V1beta1Status: &api.Status})
 	if err != nil {
 		return nil, err
 	}

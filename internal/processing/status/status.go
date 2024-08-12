@@ -3,12 +3,12 @@ package status
 import (
 	"fmt"
 	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
-	"github.com/kyma-project/api-gateway/apis/gateway/versions"
+	"github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	"github.com/kyma-project/api-gateway/internal/validation"
 )
 
 type ReconciliationStatus interface {
-	UpdateStatus(status *v1beta1.APIRuleStatus) error
+	UpdateStatus(status Status) error
 
 	GetStatusForErrorMap(errorMap map[ResourceSelector][]error) ReconciliationStatus
 	GenerateStatusFromFailures([]validation.Failure) ReconciliationStatus
@@ -16,8 +16,11 @@ type ReconciliationStatus interface {
 	HasError() bool
 }
 
-type Status interface {
-	ApiRuleStatusVersion() versions.Version
+// Status stores 2 status implementations for different APIRule types
+// Serves as a compat layer
+type Status struct {
+	V1beta1Status  *v1beta1.APIRuleStatus
+	V2alpha1Status *v2alpha1.APIRuleStatus
 }
 
 type ResourceSelector int

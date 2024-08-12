@@ -3,7 +3,6 @@ package status
 import (
 	"fmt"
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
-	"github.com/kyma-project/api-gateway/apis/gateway/versions"
 	"github.com/kyma-project/api-gateway/internal/validation"
 )
 
@@ -88,16 +87,16 @@ func generateStatusFromErrors(errors []error) *gatewayv1beta1.APIRuleResourceSta
 	return status
 }
 
-func (s ReconciliationV1beta1Status) UpdateStatus(status *gatewayv1beta1.APIRuleStatus) error {
-	if status.ApiRuleStatusVersion() != versions.V1beta1 {
-		return fmt.Errorf("v1beta1 status handler cannot handle status of version %s", status.ApiRuleStatusVersion())
+func (s ReconciliationV1beta1Status) UpdateStatus(status Status) error {
+	if status.V1beta1Status == nil {
+		return fmt.Errorf("v1beta1Status is nil")
 	}
-
-	status.APIRuleStatus = s.ApiRuleStatus
-	status.VirtualServiceStatus = s.VirtualServiceStatus
-	status.AccessRuleStatus = s.AccessRuleStatus
-	status.RequestAuthenticationStatus = s.RequestAuthenticationStatus
-	status.AuthorizationPolicyStatus = s.AuthorizationPolicyStatus
+	st := status.V1beta1Status
+	st.APIRuleStatus = s.ApiRuleStatus
+	st.VirtualServiceStatus = s.VirtualServiceStatus
+	st.AccessRuleStatus = s.AccessRuleStatus
+	st.RequestAuthenticationStatus = s.RequestAuthenticationStatus
+	st.AuthorizationPolicyStatus = s.AuthorizationPolicyStatus
 
 	return nil
 }
