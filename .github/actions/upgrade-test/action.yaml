@@ -30,9 +30,6 @@ runs:
         git fetch origin pull/${{ github.event.number }}/head:PR-${{ github.event.number }}
         git checkout PR-${{ github.event.number }}
     - name: Create Cluster
-      shell: bash
-      run: |
-    - name: Create Cluster
       uses: ./.github/actions/provision-k3d-cluster
       with:
         version: "1.29.7"
