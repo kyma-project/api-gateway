@@ -53,7 +53,7 @@ We decided that the authentications and the authorizations will be array fields.
 #### Authentications
 For each authentication a separate RequestAuthentication will be created.
 
-Selecting a request header to be used as a JWT token is possible with the **fromHeaders** field. The **prefix** field, which specifies a leading string before the actual token value, is optional. Alternatively, you can specify a request URL parameter in the **fromParams** field. Both **fromHeaders** and **fromParams** fields are optional. They are translated respectively to the [JWTRule](https://istio.io/latest/docs/reference/config/security/jwt/#JWTRule)'s **fromHeaders** and **fromParams** in the created RequestAuthentication.
+Selecting a request header to be used as a JWT token is possible with the **fromHeaders** field. The **prefix** field, which specifies a leading string before the actual token value, is optional. Alternatively, you can specify a request URL parameter in the **fromParams** field. Both **fromHeaders** and **fromParams** fields are optional. They are translated respectively to the [JWTRule](https://istio.io/latest/docs/reference/config/security/request_authentication/#JWTRule)'s **fromHeaders** and **fromParams** in the created RequestAuthentication.
 
 >**NOTE:** For now, requests with multiple tokens (at different locations) are not supported.
 
