@@ -2,7 +2,6 @@ package clusterconfig
 
 import (
 	"context"
-
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -56,6 +55,5 @@ func EvaluateClusterSize(ctx context.Context, k8sClient client.Client) (ClusterS
 		memoryCapacity.Cmp(*resource.NewScaledQuantity(ProductionClusterMemoryThresholdGi, resource.Giga)) == -1 {
 		return Evaluation, nil
 	}
-
 	return Production, nil
 }
