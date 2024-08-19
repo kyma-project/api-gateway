@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	. "github.com/kyma-project/api-gateway/internal/builders/builders_test/v2alpha1_test"
 	. "github.com/kyma-project/api-gateway/internal/processing/processing_test"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -24,9 +25,9 @@ var _ = Describe("HTTP matching", func() {
 			checkVirtualServices(client, processor, verifiers, expectedActions...)
 		},
 		Entry("from two rules with different methods on the same path should create two HTTP routes with different methods",
-			newAPIRuleBuilderWithDummyData().
-				WithRules(newRuleBuilder().WithMethods(http.MethodGet).WithPath("/").NoAuth().Build(),
-					newRuleBuilder().WithMethods(http.MethodPut).WithPath("/").WithJWTAuthn("example.com", "https://jwks.example.com", nil, nil).Build()).Build(),
+			NewAPIRuleBuilderWithDummyData().
+				WithRules(NewRuleBuilder().WithMethods(http.MethodGet).WithPath("/").NoAuth().Build(),
+					NewRuleBuilder().WithMethods(http.MethodPut).WithPath("/").WithJWTAuthn("example.com", "https://jwks.example.com", nil, nil).Build()).Build(),
 			[]verifier{
 				func(vs *networkingv1beta1.VirtualService) {
 					Expect(vs.Spec.Http).To(HaveLen(2))
@@ -37,8 +38,8 @@ var _ = Describe("HTTP matching", func() {
 			}, "create"),
 
 		Entry("from one rule with two methods on the same path should create one HTTP route with regex matching both methods",
-			newAPIRuleBuilderWithDummyData().
-				WithRules(newRuleBuilder().WithMethods(http.MethodGet, http.MethodPut).WithPath("/").NoAuth().Build()).
+			NewAPIRuleBuilderWithDummyData().
+				WithRules(NewRuleBuilder().WithMethods(http.MethodGet, http.MethodPut).WithPath("/").NoAuth().Build()).
 				Build(),
 			[]verifier{
 				func(vs *networkingv1beta1.VirtualService) {

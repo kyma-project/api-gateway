@@ -1,4 +1,4 @@
-package virtualservice_test
+package v2alpha1_test
 
 import (
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
@@ -6,21 +6,21 @@ import (
 	"net/http"
 )
 
-type ruleBuilder struct {
+type RuleBuilder struct {
 	rule *gatewayv2alpha1.Rule
 }
 
-func (r *ruleBuilder) WithPath(path string) *ruleBuilder {
+func (r *RuleBuilder) WithPath(path string) *RuleBuilder {
 	r.rule.Path = path
 	return r
 }
 
-func (r *ruleBuilder) WithTimeout(timeout uint32) *ruleBuilder {
+func (r *RuleBuilder) WithTimeout(timeout uint32) *RuleBuilder {
 	r.rule.Timeout = ptr.To(gatewayv2alpha1.Timeout(timeout))
 	return r
 }
 
-func (r *ruleBuilder) WithService(name, namespace string, port uint32) *ruleBuilder {
+func (r *RuleBuilder) WithService(name, namespace string, port uint32) *RuleBuilder {
 	r.rule.Service = &gatewayv2alpha1.Service{
 		Name:      &name,
 		Namespace: &namespace,
@@ -29,17 +29,17 @@ func (r *ruleBuilder) WithService(name, namespace string, port uint32) *ruleBuil
 	return r
 }
 
-func (r *ruleBuilder) WithMethods(methods ...gatewayv2alpha1.HttpMethod) *ruleBuilder {
+func (r *RuleBuilder) WithMethods(methods ...gatewayv2alpha1.HttpMethod) *RuleBuilder {
 	r.rule.Methods = methods
 	return r
 }
 
-func (r *ruleBuilder) NoAuth() *ruleBuilder {
+func (r *RuleBuilder) NoAuth() *RuleBuilder {
 	r.rule.NoAuth = ptr.To(true)
 	return r
 }
 
-func (r *ruleBuilder) WithJWTAuthn(issuer, jwksUri string, fromHeaders []*gatewayv2alpha1.JwtHeader, fromParams []string) *ruleBuilder {
+func (r *RuleBuilder) WithJWTAuthn(issuer, jwksUri string, fromHeaders []*gatewayv2alpha1.JwtHeader, fromParams []string) *RuleBuilder {
 	if r.rule.Jwt == nil {
 		r.rule.Jwt = &gatewayv2alpha1.JwtConfig{}
 	}
@@ -53,7 +53,7 @@ func (r *ruleBuilder) WithJWTAuthn(issuer, jwksUri string, fromHeaders []*gatewa
 	return r
 }
 
-func (r *ruleBuilder) WithJWTAuthz(requiredScopes []string, audiences []string) *ruleBuilder {
+func (r *RuleBuilder) WithJWTAuthz(requiredScopes []string, audiences []string) *RuleBuilder {
 	if r.rule.Jwt == nil {
 		r.rule.Jwt = &gatewayv2alpha1.JwtConfig{}
 	}
@@ -66,64 +66,69 @@ func (r *ruleBuilder) WithJWTAuthz(requiredScopes []string, audiences []string) 
 	return r
 }
 
-func (r *ruleBuilder) WithRequest(rm *gatewayv2alpha1.Request) *ruleBuilder {
+func (r *RuleBuilder) WithRequest(rm *gatewayv2alpha1.Request) *RuleBuilder {
 	r.rule.Request = rm
 	return r
 }
 
-func newRuleBuilder() *ruleBuilder {
-	return &ruleBuilder{
+func (r *RuleBuilder) WithExtAuth(auth *gatewayv2alpha1.ExtAuth) *RuleBuilder {
+	r.rule.ExtAuth = auth
+	return r
+}
+
+func NewRuleBuilder() *RuleBuilder {
+	return &RuleBuilder{
 		rule: &gatewayv2alpha1.Rule{},
 	}
 }
 
-func (r *ruleBuilder) Build() *gatewayv2alpha1.Rule {
+func (r *RuleBuilder) Build() *gatewayv2alpha1.Rule {
 	return r.rule
 }
 
-type requestBuilder struct {
+type RequestBuilder struct {
 	request *gatewayv2alpha1.Request
 }
 
-func (m *requestBuilder) WithHeaders(headers map[string]string) *requestBuilder {
+func (m *RequestBuilder) WithHeaders(headers map[string]string) *RequestBuilder {
 	m.request.Headers = headers
 
 	return m
 }
 
-func (m *requestBuilder) WithCookies(cookies map[string]string) *requestBuilder {
+func (m *RequestBuilder) WithCookies(cookies map[string]string) *RequestBuilder {
 	m.request.Cookies = cookies
 
 	return m
 }
 
-func newRequestModifier() *requestBuilder {
-	return &requestBuilder{
+func NewRequestModifier() *RequestBuilder {
+	return &RequestBuilder{
 		request: &gatewayv2alpha1.Request{},
 	}
 }
 
-func (m *requestBuilder) Build() *gatewayv2alpha1.Request {
+func (m *RequestBuilder) Build() *gatewayv2alpha1.Request {
 	return m.request
 }
 
-type apiRuleBuilder struct {
+type ApiRuleBuilder struct {
 	apiRule *gatewayv2alpha1.APIRule
 }
 
-func (a *apiRuleBuilder) WithHost(host string) *apiRuleBuilder {
+func (a *ApiRuleBuilder) WithHost(host string) *ApiRuleBuilder {
 	a.apiRule.Spec.Hosts = append(a.apiRule.Spec.Hosts, ptr.To(gatewayv2alpha1.Host(host)))
 	return a
 }
 
-func (a *apiRuleBuilder) WithHosts(hosts ...string) *apiRuleBuilder {
+func (a *ApiRuleBuilder) WithHosts(hosts ...string) *ApiRuleBuilder {
 	for _, host := range hosts {
 		a.WithHost(host)
 	}
 	return a
 }
 
-func (a *apiRuleBuilder) WithService(name, namespace string, port uint32) *apiRuleBuilder {
+func (a *ApiRuleBuilder) WithService(name, namespace string, port uint32) *ApiRuleBuilder {
 	a.apiRule.Spec.Service = &gatewayv2alpha1.Service{
 		Name:      &name,
 		Namespace: &namespace,
@@ -132,44 +137,44 @@ func (a *apiRuleBuilder) WithService(name, namespace string, port uint32) *apiRu
 	return a
 }
 
-func (a *apiRuleBuilder) WithGateway(gateway string) *apiRuleBuilder {
+func (a *ApiRuleBuilder) WithGateway(gateway string) *ApiRuleBuilder {
 	a.apiRule.Spec.Gateway = ptr.To(gateway)
 	return a
 }
 
-func (a *apiRuleBuilder) WithCORSPolicy(policy gatewayv2alpha1.CorsPolicy) *apiRuleBuilder {
+func (a *ApiRuleBuilder) WithCORSPolicy(policy gatewayv2alpha1.CorsPolicy) *ApiRuleBuilder {
 	a.apiRule.Spec.CorsPolicy = &policy
 	return a
 }
 
-func (a *apiRuleBuilder) WithTimeout(timeout uint32) *apiRuleBuilder {
+func (a *ApiRuleBuilder) WithTimeout(timeout uint32) *ApiRuleBuilder {
 	a.apiRule.Spec.Timeout = ptr.To(gatewayv2alpha1.Timeout(timeout))
 	return a
 }
 
-func (a *apiRuleBuilder) WithRule(rule gatewayv2alpha1.Rule) *apiRuleBuilder {
+func (a *ApiRuleBuilder) WithRule(rule gatewayv2alpha1.Rule) *ApiRuleBuilder {
 	a.apiRule.Spec.Rules = append(a.apiRule.Spec.Rules, rule)
 	return a
 }
 
-func (a *apiRuleBuilder) WithRules(rules ...*gatewayv2alpha1.Rule) *apiRuleBuilder {
+func (a *ApiRuleBuilder) WithRules(rules ...*gatewayv2alpha1.Rule) *ApiRuleBuilder {
 	for _, rule := range rules {
 		a.WithRule(*rule)
 	}
 	return a
 }
 
-func (a *apiRuleBuilder) Build() *gatewayv2alpha1.APIRule {
+func (a *ApiRuleBuilder) Build() *gatewayv2alpha1.APIRule {
 	return a.apiRule
 }
 
-func newAPIRuleBuilder() *apiRuleBuilder {
-	return &apiRuleBuilder{
+func NewAPIRuleBuilder() *ApiRuleBuilder {
+	return &ApiRuleBuilder{
 		apiRule: &gatewayv2alpha1.APIRule{},
 	}
 }
 
-// newAPIRuleBuilderWithDummyDataWithNoAuthRule returns an APIRuleBuilder pre-filled with placeholder data:
+// NewAPIRuleBuilderWithDummyDataWithNoAuthRule returns an APIRuleBuilder pre-filled with placeholder data:
 //
 // Host: example-host.example.com
 //
@@ -180,16 +185,16 @@ func newAPIRuleBuilder() *apiRuleBuilder {
 // Rule: GET /
 //
 // Strategy: NoAuth
-func newAPIRuleBuilderWithDummyDataWithNoAuthRule() *apiRuleBuilder {
-	return newAPIRuleBuilder().
+func NewAPIRuleBuilderWithDummyDataWithNoAuthRule() *ApiRuleBuilder {
+	return NewAPIRuleBuilder().
 		WithHost("example-host.example.com").
 		WithGateway("example-namespace/example-gateway").
 		WithService("example-service", "example-namespace", 8080).
-		WithRule(*newRuleBuilder().WithMethods(http.MethodGet).WithPath("/").NoAuth().Build())
+		WithRule(*NewRuleBuilder().WithMethods(http.MethodGet).WithPath("/").NoAuth().Build())
 }
 
-func newAPIRuleBuilderWithDummyData() *apiRuleBuilder {
-	return newAPIRuleBuilder().
+func NewAPIRuleBuilderWithDummyData() *ApiRuleBuilder {
+	return NewAPIRuleBuilder().
 		WithHost("example-host.example.com").
 		WithGateway("example-namespace/example-gateway").
 		WithService("example-service", "example-namespace", 8080)
@@ -229,7 +234,7 @@ func (c *corsPolicyBuilder) WithAllowCredentials(allow bool) *corsPolicyBuilder 
 	return c
 }
 
-func newCorsPolicyBuilder() *corsPolicyBuilder {
+func NewCorsPolicyBuilder() *corsPolicyBuilder {
 	return &corsPolicyBuilder{
 		policy: gatewayv2alpha1.CorsPolicy{},
 	}
@@ -237,4 +242,28 @@ func newCorsPolicyBuilder() *corsPolicyBuilder {
 
 func (c *corsPolicyBuilder) Build() gatewayv2alpha1.CorsPolicy {
 	return c.policy
+}
+
+type ExtAuthBuilder struct {
+	extAuth *gatewayv2alpha1.ExtAuth
+}
+
+func NewExtAuthBuilder() *ExtAuthBuilder {
+	return &ExtAuthBuilder{
+		extAuth: &gatewayv2alpha1.ExtAuth{},
+	}
+}
+
+func (e *ExtAuthBuilder) Build() *gatewayv2alpha1.ExtAuth {
+	return e.extAuth
+}
+
+func (e *ExtAuthBuilder) WithAuthorizers(auths ...string) *ExtAuthBuilder {
+	e.extAuth.ExternalAuthorizers = append(e.extAuth.ExternalAuthorizers, auths...)
+	return e
+}
+
+func (e *ExtAuthBuilder) WithRestriction(config *gatewayv2alpha1.JwtConfig) *ExtAuthBuilder {
+	e.extAuth.Restrictions = config
+	return e
 }

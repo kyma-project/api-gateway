@@ -32,6 +32,14 @@ func convertMap(m map[v1beta1.StatusCode]State) map[State]v1beta1.StatusCode {
 // The 2 => 1 map is generated automatically based on 1 => 2 map
 var alpha1to1beta1statusConversionMap = convertMap(beta1toV2alpha1StatusConversionMap)
 
+const extAuthAnnotationKey = "gateway.kyma-project.io/ext-auth"
+
+// indexedExtAuth is a helper struct to store the index of the rule in the array
+type indexedExtAuth struct {
+	Index int  `json:"index"`
+	Rule  Rule `json:"rule"`
+}
+
 // Converts this ApiRule (v2alpha1) to the Hub version (v1beta1)
 func (apiRuleV2Alpha1 *APIRule) ConvertTo(hub conversion.Hub) error {
 	apiRuleBeta1 := hub.(*v1beta1.APIRule)
@@ -90,7 +98,21 @@ func (apiRuleV2Alpha1 *APIRule) ConvertTo(hub conversion.Hub) error {
 
 	if len(apiRuleV2Alpha1.Spec.Rules) > 0 {
 		apiRuleBeta1.Spec.Rules = []v1beta1.Rule{}
-		for _, ruleV1Alpha2 := range apiRuleV2Alpha1.Spec.Rules {
+		var extAuthAnnotations []indexedExtAuth
+		for i, ruleV1Alpha2 := range apiRuleV2Alpha1.Spec.Rules {
+			// ExtAuth
+			if ruleV1Alpha2.ExtAuth != nil {
+				// The index needs to be preserved, so we store the extAuth rules in an array with index
+				// A sequentially built array is used here instead of a map un purpose.
+				// This simplifies conversion back to v2alpha1,
+				// as only the last not already added rule needs to be processed at once.
+				extAuthAnnotations = append(extAuthAnnotations, indexedExtAuth{
+					Index: i,
+					Rule:  ruleV1Alpha2,
+				})
+				continue
+			}
+
 			ruleBeta1 := v1beta1.Rule{}
 			err = convertOverJson(ruleV1Alpha2, &ruleBeta1)
 			if err != nil {
@@ -146,6 +168,14 @@ func (apiRuleV2Alpha1 *APIRule) ConvertTo(hub conversion.Hub) error {
 			}
 
 			apiRuleBeta1.Spec.Rules = append(apiRuleBeta1.Spec.Rules, ruleBeta1)
+		}
+
+		if len(extAuthAnnotations) > 0 {
+			js, err := json.Marshal(extAuthAnnotations)
+			if err != nil {
+				return err
+			}
+			apiRuleBeta1.Annotations[extAuthAnnotationKey] = string(js)
 		}
 	}
 
@@ -215,9 +245,27 @@ func (apiRuleV2Alpha1 *APIRule) ConvertFrom(hub conversion.Hub) error {
 		*apiRuleV2Alpha1.Spec.Hosts[0] = Host(*apiRuleBeta1.Spec.Host)
 	}
 
+	var indexedExtAuths []indexedExtAuth
+	extAuthIndex := 0
+	if annotation, ok := apiRuleBeta1.Annotations[extAuthAnnotationKey]; ok {
+		err := json.Unmarshal([]byte(annotation), &indexedExtAuths)
+		if err != nil {
+			return err
+		}
+	}
+
 	if len(apiRuleBeta1.Spec.Rules) > 0 {
 		apiRuleV2Alpha1.Spec.Rules = []Rule{}
-		for _, ruleBeta1 := range apiRuleBeta1.Spec.Rules {
+		for i, ruleBeta1 := range apiRuleBeta1.Spec.Rules {
+			// This here is done to preserve the order of the rules in the APIRule.
+			// As kubernetes preserves the order of array fields as they were applied,
+			// they need to be properly converted back to the original order
+			// otherwise conflicts will occur during the update of the APIRule (especially doing server-side apply).
+			for extAuthIndex < len(indexedExtAuths) && indexedExtAuths[extAuthIndex].Index == i+extAuthIndex {
+				apiRuleV2Alpha1.Spec.Rules = append(apiRuleV2Alpha1.Spec.Rules, indexedExtAuths[extAuthIndex].Rule)
+				extAuthIndex++
+			}
+
 			ruleV1Alpha2 := Rule{}
 			err = convertOverJson(ruleBeta1, &ruleV1Alpha2)
 			if err != nil {
@@ -267,6 +315,13 @@ func (apiRuleV2Alpha1 *APIRule) ConvertFrom(hub conversion.Hub) error {
 				}
 			}
 			apiRuleV2Alpha1.Spec.Rules = append(apiRuleV2Alpha1.Spec.Rules, ruleV1Alpha2)
+		}
+
+	}
+
+	if extAuthIndex < len(indexedExtAuths) {
+		for _, extAuth := range indexedExtAuths[extAuthIndex:] {
+			apiRuleV2Alpha1.Spec.Rules = append(apiRuleV2Alpha1.Spec.Rules, extAuth.Rule)
 		}
 	}
 

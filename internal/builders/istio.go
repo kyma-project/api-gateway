@@ -80,6 +80,22 @@ func (aps *AuthorizationPolicySpecBuilder) Get() *v1beta1.AuthorizationPolicy {
 	return aps.value
 }
 
+func (aps *AuthorizationPolicySpecBuilder) WithAction(val v1beta1.AuthorizationPolicy_Action) *AuthorizationPolicySpecBuilder {
+	aps.value.Action = val
+	return aps
+}
+
+func (aps *AuthorizationPolicySpecBuilder) WithProvider(val string) *AuthorizationPolicySpecBuilder {
+	provider := &v1beta1.AuthorizationPolicy_Provider{
+		Provider: &v1beta1.AuthorizationPolicy_ExtensionProvider{
+			Name: val,
+		},
+	}
+
+	aps.value.ActionDetail = provider
+	return aps
+}
+
 func (aps *AuthorizationPolicySpecBuilder) FromAP(val *v1beta1.AuthorizationPolicy) *AuthorizationPolicySpecBuilder {
 	aps.value = val
 	return aps

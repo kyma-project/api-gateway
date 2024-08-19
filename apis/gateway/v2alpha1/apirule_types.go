@@ -116,8 +116,11 @@ type Service struct {
 	IsExternal *bool `json:"external,omitempty"`
 }
 
+// Validation of whether there is only one of the following fields set:
+// noAuth, jwt, extAuth is done by XOR operation, using the "!=" operator.
+
 // Rule .
-// +kubebuilder:validation:XValidation:rule="has(self.jwt) ? !has(self.noAuth) || self.noAuth == false : has(self.noAuth) && self.noAuth == true",message="either jwt is configured or noAuth must be set to true in a rule"
+// +kubebuilder:validation:XValidation:rule="has(self.extAuth)!=has(self.jwt)!=(has(self.noAuth)&&self.noAuth==true)",message="One, and only one of the following fields must be set: noAuth, jwt, extAuth"
 type Rule struct {
 	// Specifies the path of the exposed service.
 	// +kubebuilder:validation:Pattern=^([0-9a-zA-Z./*()?!\\_-]+)
@@ -134,6 +137,9 @@ type Rule struct {
 	// Specifies the Istio JWT access strategy.
 	// +optional
 	Jwt *JwtConfig `json:"jwt,omitempty"`
+	// Specifies external authorization configuration.
+	// +optional
+	ExtAuth *ExtAuth `json:"extAuth,omitempty"`
 	// +optional
 	Timeout *Timeout `json:"timeout,omitempty"`
 	// Request allows modifying the request before it is forwarded to the service.
@@ -192,6 +198,16 @@ type JwtHeader struct {
 	Name string `json:"name"`
 	// +optional
 	Prefix string `json:"prefix,omitempty"`
+}
+
+// ExtAuth contains configuration for paths that use external authorization.
+type ExtAuth struct {
+	// Specifies the name of the external authorization handler.
+	// +optional
+	ExternalAuthorizers []string `json:"authorizers"`
+	// Specifies JWT configuration for the external authorization handler.
+	// +optional
+	Restrictions *JwtConfig `json:"restrictions,omitempty"`
 }
 
 // Timeout for HTTP requests in seconds. The timeout can be configured up to 3900 seconds (65 minutes).
