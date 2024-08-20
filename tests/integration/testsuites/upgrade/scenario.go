@@ -31,19 +31,20 @@ var deploymentGVR = schema.GroupVersionResource{
 const apiGatewayNS, apiGatewayName = "kyma-system", "api-gateway-controller-manager"
 
 type scenario struct {
-	Namespace               string
-	TestID                  string
-	Domain                  string
-	ApiResourceManifestPath string
-	ApiResourceDirectory    string
-	ManifestTemplate        map[string]string
-	Url                     string
-	k8sClient               dynamic.Interface
-	oauth2Cfg               *clientcredentials.Config
-	httpClient              *helpers.RetryableHttpClient
-	resourceManager         *resource.Manager
-	config                  testcontext.Config
-	APIGatewayImageVersion  string
+	Namespace                string
+	TestID                   string
+	Domain                   string
+	ApiResourceManifestPath  string
+	ApiResourceDirectory     string
+	ManifestTemplate         map[string]string
+	Url                      string
+	k8sClient                dynamic.Interface
+	oauth2Cfg                *clientcredentials.Config
+	httpClient               *helpers.RetryableHttpClient
+	resourceManager          *resource.Manager
+	config                   testcontext.Config
+	APIGatewayImageVersion   string
+	apiRuleLastProcessedTime time.Time
 }
 
 func (s *scenario) theAPIRuleIsApplied() error {
@@ -212,7 +213,7 @@ func (s *scenario) upgradeApiGateway(manifestType, should string) error {
 	}, testcontext.GetRetryOpts()...)
 }
 
-func (s *scenario) reconciliationHappened(numberOfSeconds int) error {
+func (s *scenario) fetchAPIRuleLastProcessedTime() error {
 	apiRules, err := manifestprocessor.ParseFromFileWithTemplate(s.ApiResourceManifestPath, s.ApiResourceDirectory, s.ManifestTemplate)
 	if err != nil {
 		return err
@@ -236,12 +237,42 @@ func (s *scenario) reconciliationHappened(numberOfSeconds int) error {
 				return err
 			}
 
-			if time.Since(apiRuleStructured.Status.LastProcessedTime.Time) > time.Second*time.Duration(numberOfSeconds) {
-				return fmt.Errorf("reconcilation didn't happened in last %d seconds", numberOfSeconds)
+			s.apiRuleLastProcessedTime = apiRuleStructured.Status.LastProcessedTime.Time
+		}
+		return nil
+	}, testcontext.GetRetryOpts()...)
+}
+
+func (s *scenario) apiRuleWasReconciledAgain() error {
+	apiRules, err := manifestprocessor.ParseFromFileWithTemplate(s.ApiResourceManifestPath, s.ApiResourceDirectory, s.ManifestTemplate)
+	if err != nil {
+		return err
+	}
+
+	return retry.Do(func() error {
+		for _, apiRule := range apiRules {
+			var apiRuleStructured apirulev1beta1.APIRule
+			res, err := s.resourceManager.GetResource(s.k8sClient, schema.GroupVersionResource{
+				Group:    apirulev1beta1.GroupVersion.Group,
+				Version:  apirulev1beta1.GroupVersion.Version,
+				Resource: "apirules",
+			}, apiRule.GetNamespace(), apiRule.GetName(), retry.Attempts(1))
+
+			if err != nil {
+				return err
+			}
+
+			err = runtime.DefaultUnstructuredConverter.FromUnstructured(res.UnstructuredContent(), &apiRuleStructured)
+			if err != nil {
+				return err
+			}
+
+			if apiRuleStructured.Status.LastProcessedTime.Time.After(s.apiRuleLastProcessedTime) {
+				return fmt.Errorf("APIRule is still not reconciled again")
 			}
 		}
 		return nil
-	}, retry.Attempts(uint(numberOfSeconds)), retry.Delay(time.Second))
+	}, testcontext.GetRetryOpts()...)
 }
 
 func initUpgrade(ctx *godog.ScenarioContext, ts *testsuite) {
@@ -255,5 +286,6 @@ func initUpgrade(ctx *godog.ScenarioContext, ts *testsuite) {
 	ctx.Step(`Upgrade: Calling the "([^"]*)" endpoint with a valid "([^"]*)" token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithValidTokenShouldResultInStatusBetween)
 	ctx.Step(`Upgrade: API Gateway is upgraded to current branch version with "([^"]*)" manifest and should "([^"]*)"$`, scenario.upgradeApiGateway)
 	ctx.Step(`Upgrade: Teardown httpbin service$`, scenario.teardownHttpbinService)
-	ctx.Step(`Upgrade: A reconciliation happened in the last (\d+) seconds$`, scenario.reconciliationHappened)
+	ctx.Step(`Upgrade: Fetch APIRule last processed time$`, scenario.fetchAPIRuleLastProcessedTime)
+	ctx.Step(`Upgrade: APIRule was reconciled again$`, scenario.apiRuleWasReconciledAgain)
 }
