@@ -3,6 +3,7 @@ package builders
 import (
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
+
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
