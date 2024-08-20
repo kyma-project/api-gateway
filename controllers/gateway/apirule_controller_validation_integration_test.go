@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/kyma-project/api-gateway/apis/gateway/shared"
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"k8s.io/apimachinery/pkg/runtime"
 
@@ -77,8 +78,8 @@ var _ = Describe("Apirule controller validation", Serial, Ordered, func() {
 					Handler: &gatewayv1beta1.Handler{
 						Name: "jwt",
 						Config: getRawConfig(
-							gatewayv1beta1.JwtConfig{
-								Authentications: []*gatewayv1beta1.JwtAuthentication{
+							shared.JwtConfig{
+								Authentications: []*shared.JwtAuthentication{
 									{
 										Issuer: "https://example.com/",
 									},
@@ -101,8 +102,8 @@ var _ = Describe("Apirule controller validation", Serial, Ordered, func() {
 					Handler: &gatewayv1beta1.Handler{
 						Name: "jwt",
 						Config: getRawConfig(
-							gatewayv1beta1.JwtConfig{
-								Authentications: []*gatewayv1beta1.JwtAuthentication{
+							shared.JwtConfig{
+								Authentications: []*shared.JwtAuthentication{
 									{
 										Issuer:  "http://example.com/",
 										JwksUri: "http://example.com/.well-known/jwks.json",
@@ -124,8 +125,8 @@ var _ = Describe("Apirule controller validation", Serial, Ordered, func() {
 					Handler: &gatewayv1beta1.Handler{
 						Name: "jwt",
 						Config: getRawConfig(
-							gatewayv1beta1.JwtConfig{
-								Authentications: []*gatewayv1beta1.JwtAuthentication{
+							shared.JwtConfig{
+								Authentications: []*shared.JwtAuthentication{
 									{
 										Issuer:  "http://example.com/",
 										JwksUri: "http://example.com/.well-known/jwks.json",
@@ -156,8 +157,8 @@ var _ = Describe("Apirule controller validation", Serial, Ordered, func() {
 					Handler: &gatewayv1beta1.Handler{
 						Name: "jwt",
 						Config: getRawConfig(
-							gatewayv1beta1.JwtConfig{
-								Authentications: []*gatewayv1beta1.JwtAuthentication{
+							shared.JwtConfig{
+								Authentications: []*shared.JwtAuthentication{
 									{
 										Issuer:  "invalid_:example",
 										JwksUri: "example.com/.well-known/jwks.json",
@@ -184,14 +185,14 @@ var _ = Describe("Apirule controller validation", Serial, Ordered, func() {
 						Handler: &gatewayv1beta1.Handler{
 							Name: "jwt",
 							Config: getRawConfig(
-								gatewayv1beta1.JwtConfig{
-									Authentications: []*gatewayv1beta1.JwtAuthentication{
+								shared.JwtConfig{
+									Authentications: []*shared.JwtAuthentication{
 										{
 											Issuer:  "https://example.com/",
 											JwksUri: "https://example.com/.well-known/jwks.json",
 										},
 									},
-									Authorizations: []*gatewayv1beta1.JwtAuthorization{
+									Authorizations: []*shared.JwtAuthorization{
 										{
 											Audiences: []string{},
 										},
@@ -214,14 +215,14 @@ var _ = Describe("Apirule controller validation", Serial, Ordered, func() {
 						Handler: &gatewayv1beta1.Handler{
 							Name: "jwt",
 							Config: getRawConfig(
-								gatewayv1beta1.JwtConfig{
-									Authentications: []*gatewayv1beta1.JwtAuthentication{
+								shared.JwtConfig{
+									Authentications: []*shared.JwtAuthentication{
 										{
 											Issuer:  "https://example.com/",
 											JwksUri: "https://example.com/.well-known/jwks.json",
 										},
 									},
-									Authorizations: []*gatewayv1beta1.JwtAuthorization{
+									Authorizations: []*shared.JwtAuthorization{
 										{
 											RequiredScopes: []string{},
 										},

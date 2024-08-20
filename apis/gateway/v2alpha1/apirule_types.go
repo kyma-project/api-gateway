@@ -16,10 +16,10 @@ limitations under the License.
 package v2alpha1
 
 import (
+	"github.com/kyma-project/api-gateway/apis/gateway/shared"
 	"github.com/kyma-project/api-gateway/apis/gateway/versions"
 	"istio.io/api/networking/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 type State string
@@ -136,7 +136,7 @@ type Rule struct {
 	NoAuth *bool `json:"noAuth"`
 	// Specifies the Istio JWT access strategy.
 	// +optional
-	Jwt *JwtConfig `json:"jwt,omitempty"`
+	Jwt *shared.JwtConfig `json:"jwt,omitempty"`
 	// Specifies external authorization configuration.
 	// +optional
 	ExtAuth *ExtAuth `json:"extAuth,omitempty"`
@@ -164,42 +164,6 @@ func init() {
 	SchemeBuilder.Register(&APIRule{}, &APIRuleList{})
 }
 
-// JwtConfig is the configuration for the Istio JWT authentication and authorization.
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-type JwtConfig struct {
-	Authentications []*JwtAuthentication `json:"authentications,omitempty"`
-	Authorizations  []*JwtAuthorization  `json:"authorizations,omitempty"`
-}
-
-func (j *JwtConfig) GetObjectKind() schema.ObjectKind {
-	return schema.EmptyObjectKind
-}
-
-// JwtAuthorization contains scopes and audiences required for the JWT token.
-type JwtAuthorization struct {
-	// +optional
-	RequiredScopes []string `json:"requiredScopes,omitempty"`
-	// +optional
-	Audiences []string `json:"audiences,omitempty"`
-}
-
-// JwtAuthentication Config for Jwt Istio authentication
-type JwtAuthentication struct {
-	Issuer  string `json:"issuer"`
-	JwksUri string `json:"jwksUri"`
-	// +optional
-	FromHeaders []*JwtHeader `json:"fromHeaders,omitempty"`
-	// +optional
-	FromParams []string `json:"fromParams,omitempty"`
-}
-
-// JwtHeader for specifying from header for the Jwt token
-type JwtHeader struct {
-	Name string `json:"name"`
-	// +optional
-	Prefix string `json:"prefix,omitempty"`
-}
-
 // ExtAuth contains configuration for paths that use external authorization.
 type ExtAuth struct {
 	// Specifies the name of the external authorization handler.
@@ -207,7 +171,7 @@ type ExtAuth struct {
 	ExternalAuthorizers []string `json:"authorizers"`
 	// Specifies JWT configuration for the external authorization handler.
 	// +optional
-	Restrictions *JwtConfig `json:"restrictions,omitempty"`
+	Restrictions *shared.JwtConfig `json:"restrictions,omitempty"`
 }
 
 // Timeout for HTTP requests in seconds. The timeout can be configured up to 3900 seconds (65 minutes).

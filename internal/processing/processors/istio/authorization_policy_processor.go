@@ -3,6 +3,7 @@ package istio
 import (
 	"context"
 	"fmt"
+	"github.com/kyma-project/api-gateway/apis/gateway/shared"
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 
 	"github.com/go-logr/logr"
@@ -64,7 +65,7 @@ func generateAuthorizationPolicies(ctx context.Context, client client.Client, ap
 
 	if len(ruleAuthorizations) == 0 {
 		// In case of no_auth, it will create an ALLOW AuthorizationPolicy bypassing any other AuthorizationPolicies.
-		ap, err := generateAuthorizationPolicy(ctx, client, api, rule, &gatewayv1beta1.JwtAuthorization{})
+		ap, err := generateAuthorizationPolicy(ctx, client, api, rule, &shared.JwtAuthorization{})
 		if err != nil {
 			return &authorizationPolicyList, err
 		}
@@ -96,7 +97,7 @@ func generateAuthorizationPolicies(ctx context.Context, client client.Client, ap
 	return &authorizationPolicyList, nil
 }
 
-func generateAuthorizationPolicy(ctx context.Context, client client.Client, api *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rule, authorization *gatewayv1beta1.JwtAuthorization) (*securityv1beta1.AuthorizationPolicy, error) {
+func generateAuthorizationPolicy(ctx context.Context, client client.Client, api *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rule, authorization *shared.JwtAuthorization) (*securityv1beta1.AuthorizationPolicy, error) {
 	namePrefix := fmt.Sprintf("%s-", api.ObjectMeta.Name)
 	namespace := helpers.FindServiceNamespace(api, &rule)
 
@@ -114,7 +115,7 @@ func generateAuthorizationPolicy(ctx context.Context, client client.Client, api 
 	return apBuilder.Get(), nil
 }
 
-func generateAuthorizationPolicySpec(ctx context.Context, client client.Client, api *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rule, authorization *gatewayv1beta1.JwtAuthorization) (*v1beta1.AuthorizationPolicy, error) {
+func generateAuthorizationPolicySpec(ctx context.Context, client client.Client, api *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rule, authorization *shared.JwtAuthorization) (*v1beta1.AuthorizationPolicy, error) {
 	var service *gatewayv1beta1.Service
 	if rule.Service != nil {
 		service = rule.Service

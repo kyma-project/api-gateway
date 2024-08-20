@@ -1,6 +1,7 @@
 package v2alpha1
 
 import (
+	"github.com/kyma-project/api-gateway/apis/gateway/shared"
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -11,8 +12,8 @@ var _ = Describe("JWT authentications validation", func() {
 	It("should fail validation when jwksUri is not a URI", func() {
 		//given
 		rule := gatewayv2alpha1.Rule{
-			Jwt: &gatewayv2alpha1.JwtConfig{
-				Authentications: []*gatewayv2alpha1.JwtAuthentication{
+			Jwt: &shared.JwtConfig{
+				Authentications: []*shared.JwtAuthentication{
 					{
 						Issuer:  "the_issuer/",
 						JwksUri: "no_url",
@@ -33,8 +34,8 @@ var _ = Describe("JWT authentications validation", func() {
 	It("should fail validation when issuer and jwksUri are empty", func() {
 		//given
 		rule := gatewayv2alpha1.Rule{
-			Jwt: &gatewayv2alpha1.JwtConfig{
-				Authentications: []*gatewayv2alpha1.JwtAuthentication{
+			Jwt: &shared.JwtConfig{
+				Authentications: []*shared.JwtAuthentication{
 					{
 						Issuer:  "",
 						JwksUri: "",
@@ -57,8 +58,8 @@ var _ = Describe("JWT authentications validation", func() {
 	It("should fail validation when issuer contains ':' but is not a URI", func() {
 		//given
 		rule := gatewayv2alpha1.Rule{
-			Jwt: &gatewayv2alpha1.JwtConfig{
-				Authentications: []*gatewayv2alpha1.JwtAuthentication{
+			Jwt: &shared.JwtConfig{
+				Authentications: []*shared.JwtAuthentication{
 					{
 						Issuer:  "://example",
 						JwksUri: "http://issuer.test/.well-known/jwks.json",
@@ -79,8 +80,8 @@ var _ = Describe("JWT authentications validation", func() {
 	It("should pass validation when issuer contains ':' and is a URI", func() {
 		//given
 		rule := gatewayv2alpha1.Rule{
-			Jwt: &gatewayv2alpha1.JwtConfig{
-				Authentications: []*gatewayv2alpha1.JwtAuthentication{
+			Jwt: &shared.JwtConfig{
+				Authentications: []*shared.JwtAuthentication{
 					{
 						Issuer:  "https://issuer.example.com",
 						JwksUri: "http://issuer.test/.well-known/jwks.json",
@@ -99,8 +100,8 @@ var _ = Describe("JWT authentications validation", func() {
 	It("should pass validation when issuer is not empty has contains no ':'", func() {
 		//given
 		rule := gatewayv2alpha1.Rule{
-			Jwt: &gatewayv2alpha1.JwtConfig{
-				Authentications: []*gatewayv2alpha1.JwtAuthentication{
+			Jwt: &shared.JwtConfig{
+				Authentications: []*shared.JwtAuthentication{
 					{
 						Issuer:  "testing@secure.istio.io",
 						JwksUri: "http://issuer.test/.well-known/jwks.json",
@@ -119,8 +120,8 @@ var _ = Describe("JWT authentications validation", func() {
 	It("should succeed for config with plain HTTP JWKSUrls and trustedIssuers", func() {
 		//given
 		rule := gatewayv2alpha1.Rule{
-			Jwt: &gatewayv2alpha1.JwtConfig{
-				Authentications: []*gatewayv2alpha1.JwtAuthentication{
+			Jwt: &shared.JwtConfig{
+				Authentications: []*shared.JwtAuthentication{
 					{
 						Issuer:  "http://issuer.test",
 						JwksUri: "http://issuer.test/.well-known/jwks.json",
@@ -139,8 +140,8 @@ var _ = Describe("JWT authentications validation", func() {
 	It("should succeed for config with file JWKSUrls and HTTPS trustedIssuers", func() {
 		//given
 		rule := gatewayv2alpha1.Rule{
-			Jwt: &gatewayv2alpha1.JwtConfig{
-				Authentications: []*gatewayv2alpha1.JwtAuthentication{
+			Jwt: &shared.JwtConfig{
+				Authentications: []*shared.JwtAuthentication{
 					{
 						Issuer:  "https://issuer.test/",
 						JwksUri: "file://.well-known/jwks.json",
@@ -159,8 +160,8 @@ var _ = Describe("JWT authentications validation", func() {
 	It("should succeed for config with HTTPS JWKSUrls and trustedIssuers", func() {
 		//given
 		rule := gatewayv2alpha1.Rule{
-			Jwt: &gatewayv2alpha1.JwtConfig{
-				Authentications: []*gatewayv2alpha1.JwtAuthentication{
+			Jwt: &shared.JwtConfig{
+				Authentications: []*shared.JwtAuthentication{
 					{
 						Issuer:  "https://issuer.test//",
 						JwksUri: "https://issuer.test/.well-known/jwks.json",
@@ -179,12 +180,12 @@ var _ = Describe("JWT authentications validation", func() {
 	It("Should fail validation when authentication has more than one fromHeaders", func() {
 		//given
 		rule := gatewayv2alpha1.Rule{
-			Jwt: &gatewayv2alpha1.JwtConfig{
-				Authentications: []*gatewayv2alpha1.JwtAuthentication{
+			Jwt: &shared.JwtConfig{
+				Authentications: []*shared.JwtAuthentication{
 					{
 						Issuer:      "https://issuer.test//",
 						JwksUri:     "https://issuer.test/.well-known/jwks.json",
-						FromHeaders: []*gatewayv2alpha1.JwtHeader{{Name: "header1"}, {Name: "header2"}},
+						FromHeaders: []*shared.JwtHeader{{Name: "header1"}, {Name: "header2"}},
 					},
 				},
 			},
@@ -202,8 +203,8 @@ var _ = Describe("JWT authentications validation", func() {
 	It("should fail validation when authentication has more than one fromParams", func() {
 		//given
 		rule := gatewayv2alpha1.Rule{
-			Jwt: &gatewayv2alpha1.JwtConfig{
-				Authentications: []*gatewayv2alpha1.JwtAuthentication{
+			Jwt: &shared.JwtConfig{
+				Authentications: []*shared.JwtAuthentication{
 					{
 						Issuer:     "https://issuer.test//",
 						JwksUri:    "https://issuer.test/.well-known/jwks.json",
@@ -225,8 +226,8 @@ var _ = Describe("JWT authentications validation", func() {
 	It("should fail validation when multiple authentications have mixture of fromHeaders and fromParams", func() {
 		//given
 		rule := gatewayv2alpha1.Rule{
-			Jwt: &gatewayv2alpha1.JwtConfig{
-				Authentications: []*gatewayv2alpha1.JwtAuthentication{
+			Jwt: &shared.JwtConfig{
+				Authentications: []*shared.JwtAuthentication{
 					{
 						Issuer:     "https://issuer.test//",
 						JwksUri:    "file://.well-known/jwks.json",
@@ -235,7 +236,7 @@ var _ = Describe("JWT authentications validation", func() {
 					{
 						Issuer:      "https://issuer.test/",
 						JwksUri:     "file://.well-known/jwks.json",
-						FromHeaders: []*gatewayv2alpha1.JwtHeader{{Name: "header1"}},
+						FromHeaders: []*shared.JwtHeader{{Name: "header1"}},
 					},
 				},
 			},

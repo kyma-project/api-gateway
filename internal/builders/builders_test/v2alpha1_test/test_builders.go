@@ -1,6 +1,7 @@
 package v2alpha1_test
 
 import (
+	"github.com/kyma-project/api-gateway/apis/gateway/shared"
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	"k8s.io/utils/ptr"
 	"net/http"
@@ -39,11 +40,11 @@ func (r *RuleBuilder) NoAuth() *RuleBuilder {
 	return r
 }
 
-func (r *RuleBuilder) WithJWTAuthn(issuer, jwksUri string, fromHeaders []*gatewayv2alpha1.JwtHeader, fromParams []string) *RuleBuilder {
+func (r *RuleBuilder) WithJWTAuthn(issuer, jwksUri string, fromHeaders []*shared.JwtHeader, fromParams []string) *RuleBuilder {
 	if r.rule.Jwt == nil {
-		r.rule.Jwt = &gatewayv2alpha1.JwtConfig{}
+		r.rule.Jwt = &shared.JwtConfig{}
 	}
-	r.rule.Jwt.Authentications = append(r.rule.Jwt.Authentications, &gatewayv2alpha1.JwtAuthentication{
+	r.rule.Jwt.Authentications = append(r.rule.Jwt.Authentications, &shared.JwtAuthentication{
 		Issuer:      issuer,
 		JwksUri:     jwksUri,
 		FromHeaders: fromHeaders,
@@ -55,10 +56,10 @@ func (r *RuleBuilder) WithJWTAuthn(issuer, jwksUri string, fromHeaders []*gatewa
 
 func (r *RuleBuilder) WithJWTAuthz(requiredScopes []string, audiences []string) *RuleBuilder {
 	if r.rule.Jwt == nil {
-		r.rule.Jwt = &gatewayv2alpha1.JwtConfig{}
+		r.rule.Jwt = &shared.JwtConfig{}
 	}
 
-	r.rule.Jwt.Authorizations = append(r.rule.Jwt.Authorizations, &gatewayv2alpha1.JwtAuthorization{
+	r.rule.Jwt.Authorizations = append(r.rule.Jwt.Authorizations, &shared.JwtAuthorization{
 		RequiredScopes: requiredScopes,
 		Audiences:      audiences,
 	})
@@ -263,7 +264,7 @@ func (e *ExtAuthBuilder) WithAuthorizers(auths ...string) *ExtAuthBuilder {
 	return e
 }
 
-func (e *ExtAuthBuilder) WithRestriction(config *gatewayv2alpha1.JwtConfig) *ExtAuthBuilder {
+func (e *ExtAuthBuilder) WithRestriction(config *shared.JwtConfig) *ExtAuthBuilder {
 	e.extAuth.Restrictions = config
 	return e
 }

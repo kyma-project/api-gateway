@@ -3,6 +3,7 @@ package v2alpha1
 import (
 	"errors"
 	"fmt"
+	"github.com/kyma-project/api-gateway/apis/gateway/shared"
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	"strings"
 
@@ -24,7 +25,7 @@ func validateJwt(parentAttributePath string, rule *gatewayv2alpha1.Rule) []valid
 	return failures
 }
 
-func hasInvalidRequiredScopes(authorization gatewayv2alpha1.JwtAuthorization) error {
+func hasInvalidRequiredScopes(authorization shared.JwtAuthorization) error {
 	if authorization.RequiredScopes == nil {
 		return nil
 	}
@@ -39,7 +40,7 @@ func hasInvalidRequiredScopes(authorization gatewayv2alpha1.JwtAuthorization) er
 	return nil
 }
 
-func hasInvalidAudiences(authorization gatewayv2alpha1.JwtAuthorization) error {
+func hasInvalidAudiences(authorization shared.JwtAuthorization) error {
 	if authorization.Audiences == nil {
 		return nil
 	}
@@ -54,7 +55,7 @@ func hasInvalidAudiences(authorization gatewayv2alpha1.JwtAuthorization) error {
 	return nil
 }
 
-func hasInvalidAuthentications(parentAttributePath string, authentications []*gatewayv2alpha1.JwtAuthentication) []validation.Failure {
+func hasInvalidAuthentications(parentAttributePath string, authentications []*shared.JwtAuthentication) []validation.Failure {
 	var failures []validation.Failure
 	authenticationsAttrPath := parentAttributePath + ".authentications"
 
@@ -105,7 +106,7 @@ func hasInvalidAuthentications(parentAttributePath string, authentications []*ga
 	return failures
 }
 
-func hasInvalidAuthorizations(parentAttributePath string, authorizations []*gatewayv2alpha1.JwtAuthorization) []validation.Failure {
+func hasInvalidAuthorizations(parentAttributePath string, authorizations []*shared.JwtAuthorization) []validation.Failure {
 	var failures []validation.Failure
 	authorizationsAttrPath := parentAttributePath + ".authorizations"
 
@@ -142,7 +143,7 @@ func hasInvalidAuthorizations(parentAttributePath string, authorizations []*gate
 // validateJwtAuthenticationEquality validates that all JWT authorizations with the same issuer and JWKS URI have the same configuration
 func validateJwtAuthenticationEquality(parentAttributePath string, rules []gatewayv2alpha1.Rule) []validation.Failure {
 	var failures []validation.Failure
-	jwtAuths := map[string]*gatewayv2alpha1.JwtAuthentication{}
+	jwtAuths := map[string]*shared.JwtAuthentication{}
 
 	for ruleIndex, rule := range rules {
 
@@ -164,7 +165,7 @@ func validateJwtAuthenticationEquality(parentAttributePath string, rules []gatew
 	return failures
 }
 
-func jwtAuthenticationsEqual(auth1 *gatewayv2alpha1.JwtAuthentication, auth2 *gatewayv2alpha1.JwtAuthentication) bool {
+func jwtAuthenticationsEqual(auth1 *shared.JwtAuthentication, auth2 *shared.JwtAuthentication) bool {
 	if auth1.Issuer != auth2.Issuer || auth1.JwksUri != auth2.JwksUri {
 		return false
 	}

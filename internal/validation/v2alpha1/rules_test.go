@@ -2,6 +2,7 @@ package v2alpha1
 
 import (
 	"context"
+	"github.com/kyma-project/api-gateway/apis/gateway/shared"
 	"github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -71,8 +72,8 @@ var _ = Describe("Validate rules", func() {
 				Rules: []v2alpha1.Rule{
 					{
 						Path: "/abc",
-						Jwt: &v2alpha1.JwtConfig{
-							Authentications: []*v2alpha1.JwtAuthentication{
+						Jwt: &shared.JwtConfig{
+							Authentications: []*shared.JwtAuthentication{
 								{
 									Issuer:  "https://issuer.example.com",
 									JwksUri: "https://issuer.test/.well-known/jwks.json",
@@ -86,7 +87,7 @@ var _ = Describe("Validate rules", func() {
 					},
 					{
 						Path: "/test",
-						Jwt:  &v2alpha1.JwtConfig{},
+						Jwt:  &shared.JwtConfig{},
 					},
 				},
 			},
@@ -285,8 +286,8 @@ var _ = Describe("Validate rules", func() {
 					{
 						Path:   "/abc",
 						NoAuth: ptr.To(true),
-						Jwt: &v2alpha1.JwtConfig{
-							Authentications: []*v2alpha1.JwtAuthentication{
+						Jwt: &shared.JwtConfig{
+							Authentications: []*shared.JwtAuthentication{
 								{
 									Issuer:  "https://issuer.example.com",
 									JwksUri: "https://issuer.test/.well-known/jwks.json",

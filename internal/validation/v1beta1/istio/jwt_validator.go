@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/kyma-project/api-gateway/apis/gateway/shared"
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"strings"
 
@@ -15,7 +16,7 @@ type handlerValidator struct{}
 
 func (o *handlerValidator) Validate(attributePath string, handler *gatewayv1beta1.Handler) []validation.Failure {
 	var failures []validation.Failure
-	var template gatewayv1beta1.JwtConfig
+	var template shared.JwtConfig
 
 	if !validation.ConfigNotEmpty(handler.Config) {
 		failures = append(failures, validation.Failure{AttributePath: attributePath + ".config", Message: "supplied config cannot be empty"})
@@ -58,7 +59,7 @@ func checkForOryConfig(attributePath string, handler *gatewayv1beta1.Handler) (p
 	return problems
 }
 
-func hasInvalidRequiredScopes(authorization gatewayv1beta1.JwtAuthorization) error {
+func hasInvalidRequiredScopes(authorization shared.JwtAuthorization) error {
 	if authorization.RequiredScopes == nil {
 		return nil
 	}
@@ -73,7 +74,7 @@ func hasInvalidRequiredScopes(authorization gatewayv1beta1.JwtAuthorization) err
 	return nil
 }
 
-func hasInvalidAudiences(authorization gatewayv1beta1.JwtAuthorization) error {
+func hasInvalidAudiences(authorization shared.JwtAuthorization) error {
 	if authorization.Audiences == nil {
 		return nil
 	}
@@ -88,7 +89,7 @@ func hasInvalidAudiences(authorization gatewayv1beta1.JwtAuthorization) error {
 	return nil
 }
 
-func hasInvalidAuthentications(attributePath string, authentications []*gatewayv1beta1.JwtAuthentication) (failures []validation.Failure) {
+func hasInvalidAuthentications(attributePath string, authentications []*shared.JwtAuthentication) (failures []validation.Failure) {
 	hasFromHeaders, hasFromParams := false, false
 	if len(authentications) == 0 {
 		return []validation.Failure{
@@ -136,7 +137,7 @@ func hasInvalidAuthentications(attributePath string, authentications []*gatewayv
 	return failures
 }
 
-func hasInvalidAuthorizations(attributePath string, authorizations []*gatewayv1beta1.JwtAuthorization) (failures []validation.Failure) {
+func hasInvalidAuthorizations(attributePath string, authorizations []*shared.JwtAuthorization) (failures []validation.Failure) {
 	if authorizations == nil {
 		return nil
 	}
@@ -174,12 +175,12 @@ type RulesValidator struct {
 
 func (v *RulesValidator) Validate(attrPath string, rules []gatewayv1beta1.Rule) []validation.Failure {
 	var failures []validation.Failure
-	jwtAuths := map[string]*gatewayv1beta1.JwtAuthentication{}
+	jwtAuths := map[string]*shared.JwtAuthentication{}
 	for i, rule := range rules {
 		for j, accessStrategy := range rule.AccessStrategies {
 			attributePath := fmt.Sprintf("%s[%d].accessStrategy[%d]", attrPath, i, j)
 			if accessStrategy.Config != nil {
-				var template gatewayv1beta1.JwtConfig
+				var template shared.JwtConfig
 				err := json.Unmarshal(accessStrategy.Config.Raw, &template)
 				if err != nil {
 					failures = append(failures, validation.Failure{AttributePath: attributePath, Message: "Can't read json: " + err.Error()})
@@ -201,7 +202,7 @@ func (v *RulesValidator) Validate(attrPath string, rules []gatewayv1beta1.Rule) 
 	return failures
 }
 
-func isJwtAuthenticationsEqual(auth1 *gatewayv1beta1.JwtAuthentication, auth2 *gatewayv1beta1.JwtAuthentication) bool {
+func isJwtAuthenticationsEqual(auth1 *shared.JwtAuthentication, auth2 *shared.JwtAuthentication) bool {
 	if auth1.Issuer != auth2.Issuer || auth1.JwksUri != auth2.JwksUri {
 		return false
 	}

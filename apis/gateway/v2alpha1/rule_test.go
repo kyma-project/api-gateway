@@ -1,6 +1,7 @@
 package v2alpha1_test
 
 import (
+	"github.com/kyma-project/api-gateway/apis/gateway/shared"
 	"github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -13,7 +14,7 @@ var _ = Describe("Rule", func() {
 
 		It("should return false when noAuth does not exist in the object", func() {
 			rule := v2alpha1.Rule{
-				Jwt: &v2alpha1.JwtConfig{},
+				Jwt: &shared.JwtConfig{},
 			}
 
 			Expect(rule.ContainsNoAuth()).To(BeFalse())
@@ -31,7 +32,7 @@ var _ = Describe("Rule", func() {
 
 		It("should return true when JWT exists in the object", func() {
 			rule := v2alpha1.Rule{
-				Jwt: &v2alpha1.JwtConfig{},
+				Jwt: &shared.JwtConfig{},
 			}
 
 			Expect(rule.ContainsAccessStrategyJwt()).To(BeTrue())

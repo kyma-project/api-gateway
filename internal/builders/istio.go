@@ -3,6 +3,7 @@ package builders
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/kyma-project/api-gateway/apis/gateway/shared"
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 
@@ -180,7 +181,7 @@ func (rf *FromBuilder) WithForcedJWTAuthorization(accessStrategies []*gatewayv1b
 }
 
 // WithForcedJWTAuthorizationV2alpha1 adds RequestPrincipals = "ISSUER/*" for every issuer, forcing requests to use JWT authorization
-func (rf *FromBuilder) WithForcedJWTAuthorizationV2alpha1(authentications []*gatewayv2alpha1.JwtAuthentication) *FromBuilder {
+func (rf *FromBuilder) WithForcedJWTAuthorizationV2alpha1(authentications []*shared.JwtAuthentication) *FromBuilder {
 	// Only support one source at the moment
 	var requestPrincipals []string
 	for _, authentication := range authentications {
@@ -373,7 +374,7 @@ func (jr *JwtRuleBuilder) Get() *[]*v1beta1.JWTRule {
 	return jr.value
 }
 
-func (jr *JwtRuleBuilder) FromV2Alpha1(jwt *gatewayv2alpha1.JwtConfig) *JwtRuleBuilder {
+func (jr *JwtRuleBuilder) FromV2Alpha1(jwt *shared.JwtConfig) *JwtRuleBuilder {
 
 	if jwt == nil {
 		return jr

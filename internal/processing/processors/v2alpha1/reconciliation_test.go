@@ -3,6 +3,7 @@ package v2alpha1_test
 import (
 	"context"
 	"fmt"
+	"github.com/kyma-project/api-gateway/apis/gateway/shared"
 	"net/http"
 
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
@@ -147,8 +148,8 @@ var _ = Describe("Reconciliation", func() {
 			rulesV2alpha1 := gatewayv2alpha1.Rule{
 				Path:    path,
 				Methods: []gatewayv2alpha1.HttpMethod{http.MethodGet},
-				Jwt: &gatewayv2alpha1.JwtConfig{
-					Authentications: []*gatewayv2alpha1.JwtAuthentication{
+				Jwt: &shared.JwtConfig{
+					Authentications: []*shared.JwtAuthentication{
 						{
 							Issuer:  jwtIssuer,
 							JwksUri: jwksUri,
@@ -474,8 +475,8 @@ func getJwtV2alpha1Rule(path, issuer, jwksUri string) gatewayv2alpha1.Rule {
 	return gatewayv2alpha1.Rule{
 		Path:    path,
 		Methods: []gatewayv2alpha1.HttpMethod{http.MethodGet},
-		Jwt: &gatewayv2alpha1.JwtConfig{
-			Authentications: []*gatewayv2alpha1.JwtAuthentication{
+		Jwt: &shared.JwtConfig{
+			Authentications: []*shared.JwtAuthentication{
 				{
 					Issuer:  issuer,
 					JwksUri: jwksUri,

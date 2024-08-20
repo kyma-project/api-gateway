@@ -3,6 +3,7 @@ package ory
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/kyma-project/api-gateway/apis/gateway/shared"
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 
 	"github.com/kyma-project/api-gateway/internal/types/ory"
@@ -55,7 +56,7 @@ func (o *handlerValidator) Validate(attributePath string, handler *gatewayv1beta
 }
 
 func checkForIstioConfig(attributePath string, handler *gatewayv1beta1.Handler) (problems []validation.Failure) {
-	var template gatewayv1beta1.JwtConfig
+	var template shared.JwtConfig
 	err := json.Unmarshal(handler.Config.Raw, &template)
 	if err != nil {
 		return []validation.Failure{{AttributePath: attributePath + ".config", Message: "Can't read json: " + err.Error()}}

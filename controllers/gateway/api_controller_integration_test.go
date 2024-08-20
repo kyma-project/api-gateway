@@ -3,6 +3,7 @@ package gateway_test
 import (
 	"context"
 	"fmt"
+	"github.com/kyma-project/api-gateway/apis/gateway/shared"
 	"math/rand"
 	"net/http"
 	"strings"
@@ -209,9 +210,9 @@ var _ = Describe("APIRule Controller", Serial, func() {
 			serviceHosts := []*gatewayv2alpha1.Host{&serviceHost}
 
 			rule := testRulev2alpha1("/img", []gatewayv2alpha1.HttpMethod{http.MethodGet})
-			rule.Jwt = &gatewayv2alpha1.JwtConfig{
-				Authentications: []*gatewayv2alpha1.JwtAuthentication{},
-				Authorizations:  []*gatewayv2alpha1.JwtAuthorization{},
+			rule.Jwt = &shared.JwtConfig{
+				Authentications: []*shared.JwtAuthentication{},
+				Authorizations:  []*shared.JwtAuthorization{},
 			}
 			apiRule := testApiRulev2alpha1(apiRuleName, testNamespace, serviceName, testNamespace, serviceHosts, testServicePort, []gatewayv2alpha1.Rule{rule})
 			svc := testService(serviceName, testNamespace, testServicePort)
@@ -233,9 +234,9 @@ var _ = Describe("APIRule Controller", Serial, func() {
 
 			rule := testRulev2alpha1("/img", []gatewayv2alpha1.HttpMethod{http.MethodGet})
 			rule.NoAuth = ptr.To(false)
-			rule.Jwt = &gatewayv2alpha1.JwtConfig{
-				Authentications: []*gatewayv2alpha1.JwtAuthentication{},
-				Authorizations:  []*gatewayv2alpha1.JwtAuthorization{},
+			rule.Jwt = &shared.JwtConfig{
+				Authentications: []*shared.JwtAuthentication{},
+				Authorizations:  []*shared.JwtAuthorization{},
 			}
 			apiRule := testApiRulev2alpha1(apiRuleName, testNamespace, serviceName, testNamespace, serviceHosts, testServicePort, []gatewayv2alpha1.Rule{rule})
 			svc := testService(serviceName, testNamespace, testServicePort)
@@ -256,9 +257,9 @@ var _ = Describe("APIRule Controller", Serial, func() {
 			serviceHosts := []*gatewayv2alpha1.Host{&serviceHost}
 
 			rule := testRulev2alpha1("/img", []gatewayv2alpha1.HttpMethod{http.MethodGet})
-			rule.Jwt = &gatewayv2alpha1.JwtConfig{
-				Authentications: []*gatewayv2alpha1.JwtAuthentication{},
-				Authorizations:  []*gatewayv2alpha1.JwtAuthorization{},
+			rule.Jwt = &shared.JwtConfig{
+				Authentications: []*shared.JwtAuthentication{},
+				Authorizations:  []*shared.JwtAuthorization{},
 			}
 			apiRule := testApiRulev2alpha1(apiRuleName, testNamespace, serviceName, testNamespace, serviceHosts, testServicePort, []gatewayv2alpha1.Rule{rule})
 			svc := testService(serviceName, testNamespace, testServicePort)
@@ -325,9 +326,9 @@ var _ = Describe("APIRule Controller", Serial, func() {
 
 			rule := testRulev2alpha1("/img", []gatewayv2alpha1.HttpMethod{http.MethodGet})
 			rule.NoAuth = ptr.To(true)
-			rule.Jwt = &gatewayv2alpha1.JwtConfig{
-				Authentications: []*gatewayv2alpha1.JwtAuthentication{},
-				Authorizations:  []*gatewayv2alpha1.JwtAuthorization{},
+			rule.Jwt = &shared.JwtConfig{
+				Authentications: []*shared.JwtAuthentication{},
+				Authorizations:  []*shared.JwtAuthorization{},
 			}
 			apiRule := testApiRulev2alpha1(apiRuleName, testNamespace, serviceName, testNamespace, serviceHosts, testServicePort, []gatewayv2alpha1.Rule{rule})
 			svc := testService(serviceName, testNamespace, testServicePort)
@@ -829,7 +830,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 							serviceName := generateTestName(testServiceNameBase, testIDLength)
 							serviceHost := fmt.Sprintf("%s.kyma.local", serviceName)
 
-							authorizations := []*gatewayv1beta1.JwtAuthorization{
+							authorizations := []*shared.JwtAuthorization{
 								{
 									RequiredScopes: []string{"scope-a", "scope-b"},
 								},
@@ -865,7 +866,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 							updatedApiRule := gatewayv1beta1.APIRule{}
 							Expect(c.Get(context.Background(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &updatedApiRule)).Should(Succeed())
 
-							updatedAuthorizations := []*gatewayv1beta1.JwtAuthorization{
+							updatedAuthorizations := []*shared.JwtAuthorization{
 								{
 									RequiredScopes: []string{"scope-a", "scope-c"},
 								},
@@ -1955,8 +1956,8 @@ func testOryJWTHandler(issuer string, scopes []string) *gatewayv1beta1.Handler {
 
 func testIstioJWTHandler(issuer string, jwksUri string) *gatewayv1beta1.Handler {
 
-	bytes, err := json.Marshal(gatewayv1beta1.JwtConfig{
-		Authentications: []*gatewayv1beta1.JwtAuthentication{
+	bytes, err := json.Marshal(shared.JwtConfig{
+		Authentications: []*shared.JwtAuthentication{
 			{
 				Issuer:  issuer,
 				JwksUri: jwksUri,
@@ -1974,14 +1975,14 @@ func testIstioJWTHandler(issuer string, jwksUri string) *gatewayv1beta1.Handler 
 
 func testIstioJWTHandlerWithScopes(issuer string, jwksUri string, authorizationScopes []string) *gatewayv1beta1.Handler {
 
-	bytes, err := json.Marshal(gatewayv1beta1.JwtConfig{
-		Authentications: []*gatewayv1beta1.JwtAuthentication{
+	bytes, err := json.Marshal(shared.JwtConfig{
+		Authentications: []*shared.JwtAuthentication{
 			{
 				Issuer:  issuer,
 				JwksUri: jwksUri,
 			},
 		},
-		Authorizations: []*gatewayv1beta1.JwtAuthorization{
+		Authorizations: []*shared.JwtAuthorization{
 			{
 				RequiredScopes: authorizationScopes,
 			},
@@ -1996,10 +1997,10 @@ func testIstioJWTHandlerWithScopes(issuer string, jwksUri string, authorizationS
 	}
 }
 
-func testIstioJWTHandlerWithAuthorizations(issuer string, jwksUri string, authorizations []*gatewayv1beta1.JwtAuthorization) *gatewayv1beta1.Handler {
+func testIstioJWTHandlerWithAuthorizations(issuer string, jwksUri string, authorizations []*shared.JwtAuthorization) *gatewayv1beta1.Handler {
 
-	bytes, err := json.Marshal(gatewayv1beta1.JwtConfig{
-		Authentications: []*gatewayv1beta1.JwtAuthentication{
+	bytes, err := json.Marshal(shared.JwtConfig{
+		Authentications: []*shared.JwtAuthentication{
 			{
 				Issuer:  issuer,
 				JwksUri: jwksUri,

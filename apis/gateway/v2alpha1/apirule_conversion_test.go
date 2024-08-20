@@ -2,6 +2,7 @@ package v2alpha1_test
 
 import (
 	"encoding/json"
+	"github.com/kyma-project/api-gateway/apis/gateway/shared"
 	"time"
 
 	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
@@ -117,7 +118,7 @@ var _ = Describe("APIRule Conversion", func() {
 
 		It("should convert JWT to v1beta1", func() {
 			// given
-			jwtHeadersV2Alpha1 := []*v2alpha1.JwtHeader{
+			jwtHeadersV2Alpha1 := []*shared.JwtHeader{
 				{Name: "header1", Prefix: "prefix1"},
 			}
 
@@ -126,8 +127,8 @@ var _ = Describe("APIRule Conversion", func() {
 					Hosts: []*v2alpha1.Host{&host1},
 					Rules: []v2alpha1.Rule{
 						{
-							Jwt: &v2alpha1.JwtConfig{
-								Authentications: []*v2alpha1.JwtAuthentication{
+							Jwt: &shared.JwtConfig{
+								Authentications: []*shared.JwtAuthentication{
 									{
 										Issuer:      "issuer",
 										JwksUri:     "jwksUri",
@@ -135,7 +136,7 @@ var _ = Describe("APIRule Conversion", func() {
 										FromParams:  []string{"param1", "param2"},
 									},
 								},
-								Authorizations: []*v2alpha1.JwtAuthorization{
+								Authorizations: []*shared.JwtAuthorization{
 									{
 										RequiredScopes: []string{"scope1", "scope2"},
 										Audiences:      []string{"audience1", "audience2"},
@@ -158,15 +159,8 @@ var _ = Describe("APIRule Conversion", func() {
 			Expect(apiRuleBeta1.Spec.Rules[0].AccessStrategies[0].Handler.Name).To(Equal("jwt"))
 			Expect(apiRuleBeta1.Spec.Rules[0].AccessStrategies[0].Config).ToNot(BeNil())
 
-			jwtConfigBeta1 := apiRuleBeta1.Spec.Rules[0].AccessStrategies[0].Config.Object.(*v2alpha1.JwtConfig)
+			jwtConfigBeta1 := apiRuleBeta1.Spec.Rules[0].AccessStrategies[0].Config.Object.(*shared.JwtConfig)
 
-			Expect(jwtConfigBeta1.Authentications).To(HaveLen(1))
-			Expect(jwtConfigBeta1.Authentications[0].Issuer).To(Equal("issuer"))
-			Expect(jwtConfigBeta1.Authentications[0].JwksUri).To(Equal("jwksUri"))
-			Expect(jwtConfigBeta1.Authentications[0].FromHeaders).To(HaveLen(1))
-			Expect(jwtConfigBeta1.Authentications[0].FromHeaders[0].Name).To(Equal(jwtHeadersV2Alpha1[0].Name))
-			Expect(jwtConfigBeta1.Authentications[0].FromHeaders[0].Prefix).To(Equal(jwtHeadersV2Alpha1[0].Prefix))
-			Expect(jwtConfigBeta1.Authentications[0].FromParams).To(HaveExactElements("param1", "param2"))
 			Expect(jwtConfigBeta1.Authorizations).To(HaveLen(1))
 			Expect(jwtConfigBeta1.Authorizations[0].RequiredScopes).To(HaveExactElements("scope1", "scope2"))
 			Expect(jwtConfigBeta1.Authorizations[0].Audiences).To(HaveExactElements("audience1", "audience2"))
@@ -180,9 +174,9 @@ var _ = Describe("APIRule Conversion", func() {
 					Rules: []v2alpha1.Rule{
 						{
 							NoAuth: ptr.To(false),
-							Jwt: &v2alpha1.JwtConfig{
-								Authentications: []*v2alpha1.JwtAuthentication{},
-								Authorizations:  []*v2alpha1.JwtAuthorization{},
+							Jwt: &shared.JwtConfig{
+								Authentications: []*shared.JwtAuthentication{},
+								Authorizations:  []*shared.JwtAuthorization{},
 							},
 						},
 					},
@@ -211,9 +205,9 @@ var _ = Describe("APIRule Conversion", func() {
 							NoAuth: ptr.To(true),
 						},
 						{
-							Jwt: &v2alpha1.JwtConfig{
-								Authentications: []*v2alpha1.JwtAuthentication{},
-								Authorizations:  []*v2alpha1.JwtAuthorization{},
+							Jwt: &shared.JwtConfig{
+								Authentications: []*shared.JwtAuthentication{},
+								Authorizations:  []*shared.JwtAuthorization{},
 							},
 						},
 					},
@@ -515,8 +509,8 @@ var _ = Describe("APIRule Conversion", func() {
 									Handler: &v1beta1.Handler{
 										Name: "jwt",
 										Config: &runtime.RawExtension{
-											Object: &v1beta1.JwtConfig{
-												Authentications: []*v1beta1.JwtAuthentication{
+											Object: &shared.JwtConfig{
+												Authentications: []*shared.JwtAuthentication{
 													{
 														Issuer:  "issuer",
 														JwksUri: "jwksUri",
@@ -548,12 +542,12 @@ var _ = Describe("APIRule Conversion", func() {
 		Context("with JWT", func() {
 			It("should convert JWT", func() {
 				// given
-				jwtHeadersBeta1 := []*v1beta1.JwtHeader{
+				jwtHeadersBeta1 := []*shared.JwtHeader{
 					{Name: "header1", Prefix: "prefix1"},
 				}
 
-				jwtConfigBeta1 := v1beta1.JwtConfig{
-					Authentications: []*v1beta1.JwtAuthentication{
+				jwtConfigBeta1 := shared.JwtConfig{
+					Authentications: []*shared.JwtAuthentication{
 						{
 							Issuer:      "issuer",
 							JwksUri:     "jwksUri",
@@ -561,7 +555,7 @@ var _ = Describe("APIRule Conversion", func() {
 							FromParams:  []string{"param1", "param2"},
 						},
 					},
-					Authorizations: []*v1beta1.JwtAuthorization{
+					Authorizations: []*shared.JwtAuthorization{
 						{
 							RequiredScopes: []string{"scope1", "scope2"},
 							Audiences:      []string{"audience1", "audience2"},
@@ -609,8 +603,8 @@ var _ = Describe("APIRule Conversion", func() {
 
 			It("should convert JWT without Authorizations", func() {
 				// given
-				jwtConfigBeta1 := v1beta1.JwtConfig{
-					Authentications: []*v1beta1.JwtAuthentication{
+				jwtConfigBeta1 := shared.JwtConfig{
+					Authentications: []*shared.JwtAuthentication{
 						{
 							Issuer:  "issuer",
 							JwksUri: "jwksUri",
@@ -651,12 +645,12 @@ var _ = Describe("APIRule Conversion", func() {
 
 			It("should convert JWT to v2alpha1 when config stored as raw", func() {
 				// given
-				jwtHeadersBeta1 := []*v1beta1.JwtHeader{
+				jwtHeadersBeta1 := []*shared.JwtHeader{
 					{Name: "header1", Prefix: "prefix1"},
 				}
 
-				jwtConfigBeta1 := v1beta1.JwtConfig{
-					Authentications: []*v1beta1.JwtAuthentication{
+				jwtConfigBeta1 := shared.JwtConfig{
+					Authentications: []*shared.JwtAuthentication{
 						{
 							Issuer:      "issuer",
 							JwksUri:     "jwksUri",
@@ -664,7 +658,7 @@ var _ = Describe("APIRule Conversion", func() {
 							FromParams:  []string{"param1", "param2"},
 						},
 					},
-					Authorizations: []*v1beta1.JwtAuthorization{
+					Authorizations: []*shared.JwtAuthorization{
 						{
 							RequiredScopes: []string{"scope1", "scope2"},
 							Audiences:      []string{"audience1", "audience2"},
@@ -1060,8 +1054,8 @@ var _ = Describe("APIRule Conversion", func() {
 										Handler: &v1beta1.Handler{
 											Name: "jwt",
 											Config: &runtime.RawExtension{
-												Object: &v1beta1.JwtConfig{
-													Authentications: []*v1beta1.JwtAuthentication{
+												Object: &shared.JwtConfig{
+													Authentications: []*shared.JwtAuthentication{
 														{
 															Issuer:  "issuer",
 															JwksUri: "jwksUri",

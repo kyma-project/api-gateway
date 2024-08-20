@@ -1,6 +1,7 @@
 package requestauthentication_test
 
 import (
+	"github.com/kyma-project/api-gateway/apis/gateway/shared"
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -61,13 +62,13 @@ func (b *ruleBuilder) withNoAuth() *ruleBuilder {
 }
 
 func (b *ruleBuilder) addJwtAuthentication(issuer, jwksUri string) *ruleBuilder {
-	auth := &gatewayv2alpha1.JwtAuthentication{
+	auth := &shared.JwtAuthentication{
 		Issuer:  issuer,
 		JwksUri: jwksUri,
 	}
 
 	if b.rule.Jwt == nil {
-		b.rule.Jwt = &gatewayv2alpha1.JwtConfig{}
+		b.rule.Jwt = &shared.JwtConfig{}
 	}
 
 	b.rule.Jwt.Authentications = append(b.rule.Jwt.Authentications, auth)
