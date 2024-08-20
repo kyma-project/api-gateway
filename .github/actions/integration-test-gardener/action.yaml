@@ -76,10 +76,10 @@ runs:
       uses: actions/upload-artifact@v4
       if: failure()
       with:
-        name: logs-${{ github.job }}
+        name: logs-${{ github.job }}-${{ inputs.test_make_target }}
         path: logs/
     - name: Uploads artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: html-reports-${{ github.job }}
+        name: html-reports-${{ github.job }}-${{ inputs.test_make_target }}
         path: tests/integration/reports/
