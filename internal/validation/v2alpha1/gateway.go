@@ -11,7 +11,12 @@ import (
 func validateGateway(parentAttributePath string, gwList networkingv1beta1.GatewayList, apiRule *gatewayv2alpha1.APIRule) []validation.Failure {
 	var failures []validation.Failure
 
-	if apiRule.Spec.Gateway != nil {
+	if apiRule.Spec.Gateway == nil {
+		failures = append(failures, validation.Failure{
+			AttributePath: parentAttributePath,
+			Message:       "Gateway not specified",
+		})
+	} else {
 		gatewayName := *apiRule.Spec.Gateway
 
 		if !gatewayExists(gwList, gatewayName) {

@@ -25,7 +25,9 @@ var _ = Describe("Validate gateway", func() {
 		problems := validateGateway(".spec", gatewayList, apiRule)
 
 		//then
-		Expect(problems).To(BeEmpty())
+		Expect(problems).To(HaveLen(1))
+		Expect(problems[0].AttributePath).To(Equal(".spec"))
+		Expect(problems[0].Message).To(Equal("Gateway not specified"))
 	})
 
 	It("Should fail if gateway does not exist", func() {
