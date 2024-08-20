@@ -26,7 +26,7 @@ func (a *APIRuleValidator) Validate(ctx context.Context, client client.Client, v
 	if reflect.DeepEqual(a.ApiRule.Spec, gatewayv2alpha1.APIRuleSpec{}) {
 		failures = append(failures, validation.Failure{
 			AttributePath: ".spec",
-			Message:       "APIRule in v2alpha1 version has an empty spec, check the troubleshooting guide",
+			Message:       "APIRule in version v2alpha1 contains an empty spec. To troubleshoot, see https://kyma-project.io/#/api-gateway/user/troubleshooting-guides/03-70-empty-apirule-spec.",
 		})
 	} else {
 		failures = append(failures, validateRules(ctx, client, ".spec", a.ApiRule)...)
