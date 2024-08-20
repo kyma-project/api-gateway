@@ -58,7 +58,6 @@ func convertIstioJwtAccessStrategy(accessStrategy *v1beta1.Authenticator) (*v1be
 }
 
 func isConvertibleJwtConfig(accessStrategy *v1beta1.Authenticator) (bool, error) {
-
 	if accessStrategy.Config == nil {
 		return false, nil
 	}
@@ -68,7 +67,7 @@ func isConvertibleJwtConfig(accessStrategy *v1beta1.Authenticator) (bool, error)
 		return false, err
 	}
 
-	if len(istioJwtConfig.Authentications) > 0 {
+	if len(istioJwtConfig.Authentications) > 0 || len(istioJwtConfig.Authorizations) > 0 {
 		return true, nil
 	}
 

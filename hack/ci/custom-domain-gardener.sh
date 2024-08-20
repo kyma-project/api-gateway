@@ -7,6 +7,11 @@
 
 set -euo pipefail
 
+if [ $# -lt 1 ]; then
+    >&2 echo "Make target is required as parameter"
+    exit 2
+fi
+
 function check_required_vars() {
   local requiredVarMissing=false
   for var in "$@"; do
@@ -81,10 +86,9 @@ kubectl wait --kubeconfig "${GARDENER_KUBECONFIG}" --for=jsonpath='{.status.last
 # KYMA_DOMAIN is required by the tests
 export TEST_DOMAIN="${CLUSTER_NAME}.${GARDENER_PROJECT_NAME}.shoot.live.k8s-hana.ondemand.com"
 export TEST_CUSTOM_DOMAIN="goat.build.kyma-project.io"
-
-make test-custom-domain
-
-# Run gateway tests in the same script
 export IS_GARDENER=true
 
-make test-integration-gateway
+for make_target in "$@"
+do
+    make $make_target
+done
