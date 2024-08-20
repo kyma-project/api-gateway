@@ -1,7 +1,6 @@
 package v2alpha1
 
 import (
-	"github.com/kyma-project/api-gateway/apis/gateway/shared"
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -12,14 +11,14 @@ var _ = Describe("JWT authorizations validation", func() {
 	It("should fail validation when authorizations is defined, but empty", func() {
 		//given
 		rule := gatewayv2alpha1.Rule{
-			Jwt: &shared.JwtConfig{
-				Authentications: []*shared.JwtAuthentication{
+			Jwt: &gatewayv2alpha1.JwtConfig{
+				Authentications: []*gatewayv2alpha1.JwtAuthentication{
 					{
 						Issuer:  "https://issuer.test/",
 						JwksUri: "file://.well-known/jwks.json",
 					},
 				},
-				Authorizations: []*shared.JwtAuthorization{},
+				Authorizations: []*gatewayv2alpha1.JwtAuthorization{},
 			},
 		}
 
@@ -34,16 +33,16 @@ var _ = Describe("JWT authorizations validation", func() {
 
 	It("should fail validation when authorization is empty", func() {
 		//given
-		var auth *shared.JwtAuthorization
+		var auth *gatewayv2alpha1.JwtAuthorization
 		rule := gatewayv2alpha1.Rule{
-			Jwt: &shared.JwtConfig{
-				Authentications: []*shared.JwtAuthentication{
+			Jwt: &gatewayv2alpha1.JwtConfig{
+				Authentications: []*gatewayv2alpha1.JwtAuthentication{
 					{
 						Issuer:  "https://issuer.test/",
 						JwksUri: "file://.well-known/jwks.json",
 					},
 				},
-				Authorizations: []*shared.JwtAuthorization{
+				Authorizations: []*gatewayv2alpha1.JwtAuthorization{
 					auth,
 				},
 			},
@@ -62,14 +61,14 @@ var _ = Describe("JWT authorizations validation", func() {
 		It("should fail for config with empty required scopes", func() {
 			//given
 			rule := gatewayv2alpha1.Rule{
-				Jwt: &shared.JwtConfig{
-					Authentications: []*shared.JwtAuthentication{
+				Jwt: &gatewayv2alpha1.JwtConfig{
+					Authentications: []*gatewayv2alpha1.JwtAuthentication{
 						{
 							Issuer:  "https://issuer.test/",
 							JwksUri: "file://.well-known/jwks.json",
 						},
 					},
-					Authorizations: []*shared.JwtAuthorization{
+					Authorizations: []*gatewayv2alpha1.JwtAuthorization{
 						{
 							RequiredScopes: []string{},
 						},
@@ -89,14 +88,14 @@ var _ = Describe("JWT authorizations validation", func() {
 		It("should fail for config with empty string in required scopes", func() {
 			//given
 			rule := gatewayv2alpha1.Rule{
-				Jwt: &shared.JwtConfig{
-					Authentications: []*shared.JwtAuthentication{
+				Jwt: &gatewayv2alpha1.JwtConfig{
+					Authentications: []*gatewayv2alpha1.JwtAuthentication{
 						{
 							Issuer:  "https://issuer.test/",
 							JwksUri: "file://.well-known/jwks.json",
 						},
 					},
-					Authorizations: []*shared.JwtAuthorization{
+					Authorizations: []*gatewayv2alpha1.JwtAuthorization{
 						{
 							RequiredScopes: []string{"scope-a", ""},
 						},
@@ -116,14 +115,14 @@ var _ = Describe("JWT authorizations validation", func() {
 		It("should succeed for config with two required scopes", func() {
 			//given
 			rule := gatewayv2alpha1.Rule{
-				Jwt: &shared.JwtConfig{
-					Authentications: []*shared.JwtAuthentication{
+				Jwt: &gatewayv2alpha1.JwtConfig{
+					Authentications: []*gatewayv2alpha1.JwtAuthentication{
 						{
 							Issuer:  "https://issuer.test/",
 							JwksUri: "file://.well-known/jwks.json",
 						},
 					},
-					Authorizations: []*shared.JwtAuthorization{
+					Authorizations: []*gatewayv2alpha1.JwtAuthorization{
 						{
 							RequiredScopes: []string{"scope-a", "scope-b"},
 						},
@@ -141,14 +140,14 @@ var _ = Describe("JWT authorizations validation", func() {
 		It("should successful validate config without a required scope", func() {
 			//given
 			rule := gatewayv2alpha1.Rule{
-				Jwt: &shared.JwtConfig{
-					Authentications: []*shared.JwtAuthentication{
+				Jwt: &gatewayv2alpha1.JwtConfig{
+					Authentications: []*gatewayv2alpha1.JwtAuthentication{
 						{
 							Issuer:  "https://issuer.test/",
 							JwksUri: "file://.well-known/jwks.json",
 						},
 					},
-					Authorizations: []*shared.JwtAuthorization{
+					Authorizations: []*gatewayv2alpha1.JwtAuthorization{
 						{
 							Audiences: []string{"www.example.com"},
 						},
@@ -169,14 +168,14 @@ var _ = Describe("JWT authorizations validation", func() {
 		It("should fail validation for config with empty audiences", func() {
 			//given
 			rule := gatewayv2alpha1.Rule{
-				Jwt: &shared.JwtConfig{
-					Authentications: []*shared.JwtAuthentication{
+				Jwt: &gatewayv2alpha1.JwtConfig{
+					Authentications: []*gatewayv2alpha1.JwtAuthentication{
 						{
 							Issuer:  "https://issuer.test/",
 							JwksUri: "file://.well-known/jwks.json",
 						},
 					},
-					Authorizations: []*shared.JwtAuthorization{
+					Authorizations: []*gatewayv2alpha1.JwtAuthorization{
 						{
 							Audiences: []string{},
 						},
@@ -196,14 +195,14 @@ var _ = Describe("JWT authorizations validation", func() {
 		It("should fail validation for config with empty string in audiences", func() {
 			//given
 			rule := gatewayv2alpha1.Rule{
-				Jwt: &shared.JwtConfig{
-					Authentications: []*shared.JwtAuthentication{
+				Jwt: &gatewayv2alpha1.JwtConfig{
+					Authentications: []*gatewayv2alpha1.JwtAuthentication{
 						{
 							Issuer:  "https://issuer.test/",
 							JwksUri: "file://.well-known/jwks.json",
 						},
 					},
-					Authorizations: []*shared.JwtAuthorization{
+					Authorizations: []*gatewayv2alpha1.JwtAuthorization{
 						{
 							Audiences: []string{"www.example.com", ""},
 						},
@@ -223,14 +222,14 @@ var _ = Describe("JWT authorizations validation", func() {
 		It("should successful validate config with an audience", func() {
 			//given
 			rule := gatewayv2alpha1.Rule{
-				Jwt: &shared.JwtConfig{
-					Authentications: []*shared.JwtAuthentication{
+				Jwt: &gatewayv2alpha1.JwtConfig{
+					Authentications: []*gatewayv2alpha1.JwtAuthentication{
 						{
 							Issuer:  "https://issuer.test/",
 							JwksUri: "file://.well-known/jwks.json",
 						},
 					},
-					Authorizations: []*shared.JwtAuthorization{
+					Authorizations: []*gatewayv2alpha1.JwtAuthorization{
 						{
 							Audiences: []string{"www.example.com"},
 						},
@@ -248,14 +247,14 @@ var _ = Describe("JWT authorizations validation", func() {
 		It("should successful validate config without audiences", func() {
 			//given
 			rule := gatewayv2alpha1.Rule{
-				Jwt: &shared.JwtConfig{
-					Authentications: []*shared.JwtAuthentication{
+				Jwt: &gatewayv2alpha1.JwtConfig{
+					Authentications: []*gatewayv2alpha1.JwtAuthentication{
 						{
 							Issuer:  "https://issuer.test/",
 							JwksUri: "file://.well-known/jwks.json",
 						},
 					},
-					Authorizations: []*shared.JwtAuthorization{
+					Authorizations: []*gatewayv2alpha1.JwtAuthorization{
 						{
 							RequiredScopes: []string{"www.example.com"},
 						},

@@ -1,7 +1,6 @@
 package authorizationpolicy_test
 
 import (
-	"github.com/kyma-project/api-gateway/apis/gateway/shared"
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -68,13 +67,13 @@ func (b *ruleBuilder) withNoAuth() *ruleBuilder {
 }
 
 func (b *ruleBuilder) addJwtAuthentication(issuer, jwksUri string) *ruleBuilder {
-	auth := &shared.JwtAuthentication{
+	auth := &gatewayv2alpha1.JwtAuthentication{
 		Issuer:  issuer,
 		JwksUri: jwksUri,
 	}
 
 	if b.rule.Jwt == nil {
-		b.rule.Jwt = &shared.JwtConfig{}
+		b.rule.Jwt = &gatewayv2alpha1.JwtConfig{}
 	}
 
 	b.rule.Jwt.Authentications = append(b.rule.Jwt.Authentications, auth)
@@ -82,12 +81,12 @@ func (b *ruleBuilder) addJwtAuthentication(issuer, jwksUri string) *ruleBuilder 
 }
 
 func (b *ruleBuilder) addJwtAuthorizationRequiredScopes(requiredScopes ...string) *ruleBuilder {
-	auth := &shared.JwtAuthorization{
+	auth := &gatewayv2alpha1.JwtAuthorization{
 		RequiredScopes: requiredScopes,
 	}
 
 	if b.rule.Jwt == nil {
-		b.rule.Jwt = &shared.JwtConfig{}
+		b.rule.Jwt = &gatewayv2alpha1.JwtConfig{}
 	}
 
 	b.rule.Jwt.Authorizations = append(b.rule.Jwt.Authorizations, auth)
@@ -95,12 +94,12 @@ func (b *ruleBuilder) addJwtAuthorizationRequiredScopes(requiredScopes ...string
 }
 
 func (b *ruleBuilder) addJwtAuthorizationAudiences(audiences ...string) *ruleBuilder {
-	auth := &shared.JwtAuthorization{
+	auth := &gatewayv2alpha1.JwtAuthorization{
 		Audiences: audiences,
 	}
 
 	if b.rule.Jwt == nil {
-		b.rule.Jwt = &shared.JwtConfig{}
+		b.rule.Jwt = &gatewayv2alpha1.JwtConfig{}
 	}
 
 	b.rule.Jwt.Authorizations = append(b.rule.Jwt.Authorizations, auth)
@@ -108,13 +107,13 @@ func (b *ruleBuilder) addJwtAuthorizationAudiences(audiences ...string) *ruleBui
 }
 
 func (b *ruleBuilder) addJwtAuthorization(requiredScopes []string, audiences []string) *ruleBuilder {
-	auth := &shared.JwtAuthorization{
+	auth := &gatewayv2alpha1.JwtAuthorization{
 		RequiredScopes: requiredScopes,
 		Audiences:      audiences,
 	}
 
 	if b.rule.Jwt == nil {
-		b.rule.Jwt = &shared.JwtConfig{}
+		b.rule.Jwt = &gatewayv2alpha1.JwtConfig{}
 	}
 
 	b.rule.Jwt.Authorizations = append(b.rule.Jwt.Authorizations, auth)

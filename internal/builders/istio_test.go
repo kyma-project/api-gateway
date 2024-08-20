@@ -1,7 +1,6 @@
 package builders
 
 import (
-	"github.com/kyma-project/api-gateway/apis/gateway/shared"
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -24,7 +23,7 @@ var _ = Describe("Builder for", func() {
 			testMatchLabels := map[string]string{testMatchLabelsKey: testMatchLabelsValue}
 			testScopeA := "scope-a"
 			testScopeB := "scope-b"
-			testAuthorization := shared.JwtAuthorization{RequiredScopes: []string{testScopeA, testScopeB}}
+			testAuthorization := gatewayv1beta1.JwtAuthorization{RequiredScopes: []string{testScopeA, testScopeB}}
 			testExpectedScopeKeys := []string{"request.auth.claims[scp]"}
 			testRaw := runtime.RawExtension{Raw: []byte(`{"authentications": [{"issuer": "testIssuer", "jwksUri": "testJwksUri"}], "authorizations": [{"requiredScopes": ["test"]}]}`)}
 			testHandler := gatewayv1beta1.Handler{Name: "jwt", Config: &testRaw}

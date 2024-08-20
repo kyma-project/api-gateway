@@ -1,7 +1,6 @@
 package v2alpha1_test
 
 import (
-	"github.com/kyma-project/api-gateway/apis/gateway/shared"
 	apirulev1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	apirulev2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	v2alpha1 "github.com/kyma-project/api-gateway/internal/builders/builders_test/v2alpha1_test"
@@ -13,12 +12,12 @@ var _ = Describe("ExtAuthConversion", func() {
 	dummyExtAuthRule := v2alpha1.NewRuleBuilder().
 		WithExtAuth(v2alpha1.NewExtAuthBuilder().
 			WithAuthorizers("test-authorizer").
-			WithRestriction(&shared.JwtConfig{
-				Authentications: []*shared.JwtAuthentication{
+			WithRestriction(&apirulev2alpha1.JwtConfig{
+				Authentications: []*apirulev2alpha1.JwtAuthentication{
 					{
 						Issuer:  "test-issuer",
 						JwksUri: "test-jwks-uri",
-						FromHeaders: []*shared.JwtHeader{
+						FromHeaders: []*apirulev2alpha1.JwtHeader{
 							{
 								Name:   "test-header",
 								Prefix: "test-prefix",
@@ -72,8 +71,7 @@ var _ = Describe("ExtAuthConversion", func() {
 		Entry("Should preserve order of rules when ExtAuth is in the middle", []*apirulev2alpha1.Rule{
 			v2alpha1.NewRuleBuilder().
 				WithPath("/first").
-				WithJWTAuthn("test-issuer.com", "https://test-jwks-uri.com/jwks", nil, nil).
-				WithJWTAuthz(nil, []string{"abc"}).
+				NoAuth().
 				Build(),
 			dummyExtAuthRule,
 			v2alpha1.NewRuleBuilder().

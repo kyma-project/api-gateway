@@ -1,16 +1,13 @@
 package v1beta1
 
-import (
-	"encoding/json"
-	"github.com/kyma-project/api-gateway/apis/gateway/shared"
-)
+import "encoding/json"
 
-func (r *Rule) GetJwtIstioAuthorizations() []*shared.JwtAuthorization {
+func (r *Rule) GetJwtIstioAuthorizations() []*JwtAuthorization {
 	// For Istio JWT we can safely assume that there is only one access strategy
 	accessStrategy := r.AccessStrategies[0]
 
-	authorizations := &shared.JwtConfig{
-		Authorizations: []*shared.JwtAuthorization{},
+	authorizations := &JwtConfig{
+		Authorizations: []*JwtAuthorization{},
 	}
 	if accessStrategy.Config != nil {
 		_ = json.Unmarshal(accessStrategy.Config.Raw, authorizations)

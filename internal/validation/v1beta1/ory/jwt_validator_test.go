@@ -2,7 +2,6 @@ package ory
 
 import (
 	"encoding/json"
-	"github.com/kyma-project/api-gateway/apis/gateway/shared"
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 
 	"github.com/kyma-project/api-gateway/internal/types/ory"
@@ -133,8 +132,8 @@ func testURLJWTConfig(JWKSUrls string, trustedIssuers string) *runtime.RawExtens
 
 func testURLJWTIstioConfig(JWKSUrl string, trustedIssuer string) *runtime.RawExtension {
 	return getRawConfig(
-		shared.JwtConfig{
-			Authentications: []*shared.JwtAuthentication{
+		gatewayv1beta1.JwtConfig{
+			Authentications: []*gatewayv1beta1.JwtAuthentication{
 				{
 					Issuer:  trustedIssuer,
 					JwksUri: JWKSUrl,

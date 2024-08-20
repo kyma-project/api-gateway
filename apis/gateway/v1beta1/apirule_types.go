@@ -20,6 +20,7 @@ import (
 	"istio.io/api/networking/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 // Status code describing APIRule.
@@ -171,6 +172,40 @@ type Handler struct {
 	// +kubebuilder:validation:Type=object
 	// +kubebuilder:pruning:PreserveUnknownFields
 	Config *runtime.RawExtension `json:"config,omitempty"`
+}
+
+// JwtConfig is an array of JwtAuthorization type used by raw field Config of Istio jwt Handler
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type JwtConfig struct {
+	Authentications []*JwtAuthentication `json:"authentications,omitempty"`
+	Authorizations  []*JwtAuthorization  `json:"authorizations,omitempty"`
+}
+
+func (j *JwtConfig) GetObjectKind() schema.ObjectKind {
+	return schema.EmptyObjectKind
+}
+
+// JwtAuthorization contains an array of required scopes
+type JwtAuthorization struct {
+	RequiredScopes []string `json:"requiredScopes"`
+	Audiences      []string `json:"audiences"`
+}
+
+// JwtAuthentication Config for Jwt Istio authentication
+type JwtAuthentication struct {
+	Issuer  string `json:"issuer"`
+	JwksUri string `json:"jwksUri"`
+	// +optional
+	FromHeaders []*JwtHeader `json:"fromHeaders,omitempty"`
+	// +optional
+	FromParams []string `json:"fromParams,omitempty"`
+}
+
+// JwtHeader for specifying from header for the Jwt token
+type JwtHeader struct {
+	Name string `json:"name"`
+	// +optional
+	Prefix string `json:"prefix,omitempty"`
 }
 
 // Timeout for HTTP requests in seconds. The timeout can be configured up to 3900 seconds (65 minutes).

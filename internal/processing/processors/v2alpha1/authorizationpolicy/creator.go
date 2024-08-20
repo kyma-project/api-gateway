@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/kyma-project/api-gateway/apis/gateway/shared"
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 
 	"github.com/kyma-project/api-gateway/internal/builders"
@@ -54,7 +53,7 @@ func (r creator) Create(ctx context.Context, client client.Client, apiRule *gate
 func generateAuthorizationPolicies(ctx context.Context, client client.Client, api *gatewayv2alpha1.APIRule, rule gatewayv2alpha1.Rule) (*securityv1beta1.AuthorizationPolicyList, error) {
 	authorizationPolicyList := securityv1beta1.AuthorizationPolicyList{}
 
-	var jwtAuthorizations []*shared.JwtAuthorization
+	var jwtAuthorizations []*gatewayv2alpha1.JwtAuthorization
 
 	baseHashIndex := 0
 	switch {
@@ -122,7 +121,7 @@ func generateExtAuthAuthorizationPolicies(ctx context.Context, client client.Cli
 
 func generateAuthorizationPolicyForEmptyAuthorizations(ctx context.Context, client client.Client, api *gatewayv2alpha1.APIRule, rule gatewayv2alpha1.Rule) (*securityv1beta1.AuthorizationPolicy, error) {
 	// In case of NoAuth, it will create an ALLOW AuthorizationPolicy bypassing any other AuthorizationPolicies.
-	ap, err := generateAuthorizationPolicy(ctx, client, api, rule, &shared.JwtAuthorization{})
+	ap, err := generateAuthorizationPolicy(ctx, client, api, rule, &gatewayv2alpha1.JwtAuthorization{})
 	if err != nil {
 		return nil, err
 	}
@@ -168,7 +167,7 @@ func generateExtAuthAuthorizationPolicy(ctx context.Context, client client.Clien
 	return apBuilder.Get(), nil
 }
 
-func generateAuthorizationPolicy(ctx context.Context, client client.Client, apiRule *gatewayv2alpha1.APIRule, rule gatewayv2alpha1.Rule, authorization *shared.JwtAuthorization) (*securityv1beta1.AuthorizationPolicy, error) {
+func generateAuthorizationPolicy(ctx context.Context, client client.Client, apiRule *gatewayv2alpha1.APIRule, rule gatewayv2alpha1.Rule, authorization *gatewayv2alpha1.JwtAuthorization) (*securityv1beta1.AuthorizationPolicy, error) {
 	spec, err := generateAuthorizationPolicySpec(ctx, client, apiRule, rule, authorization)
 	if err != nil {
 		return nil, err
@@ -201,7 +200,7 @@ func generateExtAuthAuthorizationPolicySpec(ctx context.Context, client client.C
 		Get(), nil
 }
 
-func generateAuthorizationPolicySpec(ctx context.Context, client client.Client, api *gatewayv2alpha1.APIRule, rule gatewayv2alpha1.Rule, authorization *shared.JwtAuthorization) (*v1beta1.AuthorizationPolicy, error) {
+func generateAuthorizationPolicySpec(ctx context.Context, client client.Client, api *gatewayv2alpha1.APIRule, rule gatewayv2alpha1.Rule, authorization *gatewayv2alpha1.JwtAuthorization) (*v1beta1.AuthorizationPolicy, error) {
 	podSelector, err := gatewayv2alpha1.GetSelectorFromService(ctx, client, api, rule)
 	if err != nil {
 		return nil, err

@@ -2,7 +2,6 @@ package istio
 
 import (
 	"encoding/json"
-	"github.com/kyma-project/api-gateway/apis/gateway/shared"
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	processingtest "github.com/kyma-project/api-gateway/internal/processing/processing_test"
 	"github.com/kyma-project/api-gateway/internal/types/ory"
@@ -152,8 +151,8 @@ var _ = Describe("JWT Handler validation", func() {
 		It("Should fail validation when authentications are empty", func() {
 			//given
 			config := processingtest.GetRawConfig(
-				shared.JwtConfig{
-					Authorizations: []*shared.JwtAuthorization{
+				gatewayv1beta1.JwtConfig{
+					Authorizations: []*gatewayv1beta1.JwtAuthorization{
 						{
 							RequiredScopes: []string{"scope-a", "scope-b"},
 						},
@@ -176,12 +175,12 @@ var _ = Describe("JWT Handler validation", func() {
 		It("Should fail validation when authentication has more than one fromHeaders", func() {
 			//given
 			config := processingtest.GetRawConfig(
-				shared.JwtConfig{
-					Authentications: []*shared.JwtAuthentication{
+				gatewayv1beta1.JwtConfig{
+					Authentications: []*gatewayv1beta1.JwtAuthentication{
 						{
 							Issuer:      "https://issuer.test/",
 							JwksUri:     "file://.well-known/jwks.json",
-							FromHeaders: []*shared.JwtHeader{{Name: "header1"}, {Name: "header2"}},
+							FromHeaders: []*gatewayv1beta1.JwtHeader{{Name: "header1"}, {Name: "header2"}},
 						},
 					},
 				})
@@ -203,8 +202,8 @@ var _ = Describe("JWT Handler validation", func() {
 		It("Should fail validation when authentication has more than one fromParams", func() {
 			//given
 			config := processingtest.GetRawConfig(
-				shared.JwtConfig{
-					Authentications: []*shared.JwtAuthentication{
+				gatewayv1beta1.JwtConfig{
+					Authentications: []*gatewayv1beta1.JwtAuthentication{
 						{
 							Issuer:     "https://issuer.test/",
 							JwksUri:    "file://.well-known/jwks.json",
@@ -230,8 +229,8 @@ var _ = Describe("JWT Handler validation", func() {
 		It("Should fail validation when multiple authentications have mixture of fromHeaders and fromParams", func() {
 			//given
 			config := processingtest.GetRawConfig(
-				shared.JwtConfig{
-					Authentications: []*shared.JwtAuthentication{
+				gatewayv1beta1.JwtConfig{
+					Authentications: []*gatewayv1beta1.JwtAuthentication{
 						{
 							Issuer:     "https://issuer.test/",
 							JwksUri:    "file://.well-known/jwks.json",
@@ -240,7 +239,7 @@ var _ = Describe("JWT Handler validation", func() {
 						{
 							Issuer:      "https://issuer.test/",
 							JwksUri:     "file://.well-known/jwks.json",
-							FromHeaders: []*shared.JwtHeader{{Name: "header1"}},
+							FromHeaders: []*gatewayv1beta1.JwtHeader{{Name: "header1"}},
 						},
 					},
 				})
@@ -265,14 +264,14 @@ var _ = Describe("JWT Handler validation", func() {
 		It("Should fail validation when authorization has no value", func() {
 			//given
 			config := processingtest.GetRawConfig(
-				shared.JwtConfig{
-					Authentications: []*shared.JwtAuthentication{
+				gatewayv1beta1.JwtConfig{
+					Authentications: []*gatewayv1beta1.JwtAuthentication{
 						{
 							Issuer:  "https://issuer.test/",
 							JwksUri: "file://.well-known/jwks.json",
 						},
 					},
-					Authorizations: []*shared.JwtAuthorization{
+					Authorizations: []*gatewayv1beta1.JwtAuthorization{
 						nil,
 					},
 				})
@@ -294,8 +293,8 @@ var _ = Describe("JWT Handler validation", func() {
 		It("Should successful validate config without authorizations", func() {
 			//given
 			config := processingtest.GetRawConfig(
-				shared.JwtConfig{
-					Authentications: []*shared.JwtAuthentication{
+				gatewayv1beta1.JwtConfig{
+					Authentications: []*gatewayv1beta1.JwtAuthentication{
 						{
 							Issuer:  "https://issuer.test/",
 							JwksUri: "file://.well-known/jwks.json",
@@ -318,7 +317,7 @@ var _ = Describe("JWT Handler validation", func() {
 		Context("required scopes", func() {
 			It("Should fail for config with empty required scopes", func() {
 				//given
-				authorizations := []*shared.JwtAuthorization{
+				authorizations := []*gatewayv1beta1.JwtAuthorization{
 					{
 						RequiredScopes: []string{},
 					},
@@ -339,7 +338,7 @@ var _ = Describe("JWT Handler validation", func() {
 
 			It("Should fail for config with empty string in required scopes", func() {
 				//given
-				authorizations := []*shared.JwtAuthorization{
+				authorizations := []*gatewayv1beta1.JwtAuthorization{
 					{
 						RequiredScopes: []string{"scope-a", ""},
 					},
@@ -360,7 +359,7 @@ var _ = Describe("JWT Handler validation", func() {
 
 			It("Should succeed for config with two required scopes", func() {
 				//given
-				authorizations := []*shared.JwtAuthorization{
+				authorizations := []*gatewayv1beta1.JwtAuthorization{
 					{
 						RequiredScopes: []string{"scope-a", "scope-b"},
 					},
@@ -379,7 +378,7 @@ var _ = Describe("JWT Handler validation", func() {
 
 			It("Should successful validate config without a required scope", func() {
 				//given
-				authorizations := []*shared.JwtAuthorization{
+				authorizations := []*gatewayv1beta1.JwtAuthorization{
 					{
 						Audiences: []string{"www.example.com"},
 					},
@@ -401,7 +400,7 @@ var _ = Describe("JWT Handler validation", func() {
 
 			It("Should fail validation for config with empty audiences", func() {
 				//given
-				authorizations := []*shared.JwtAuthorization{
+				authorizations := []*gatewayv1beta1.JwtAuthorization{
 					{
 						Audiences: []string{},
 					},
@@ -422,7 +421,7 @@ var _ = Describe("JWT Handler validation", func() {
 
 			It("Should fail validation for config with empty string in audiences", func() {
 				//given
-				authorizations := []*shared.JwtAuthorization{
+				authorizations := []*gatewayv1beta1.JwtAuthorization{
 					{
 						Audiences: []string{"www.example.com", ""},
 					},
@@ -443,7 +442,7 @@ var _ = Describe("JWT Handler validation", func() {
 
 			It("Should successful validate config with an audience", func() {
 				//given
-				authorizations := []*shared.JwtAuthorization{
+				authorizations := []*gatewayv1beta1.JwtAuthorization{
 					{
 						Audiences: []string{"www.example.com"},
 					},
@@ -462,7 +461,7 @@ var _ = Describe("JWT Handler validation", func() {
 
 			It("Should successful validate config without audiences", func() {
 				//given
-				authorizations := []*shared.JwtAuthorization{
+				authorizations := []*gatewayv1beta1.JwtAuthorization{
 					{
 						RequiredScopes: []string{"www.example.com"},
 					},
@@ -490,17 +489,17 @@ var _ = Describe("JWT Handler validation", func() {
 					Handler: &gatewayv1beta1.Handler{
 						Name: "jwt",
 						Config: getRawConfig(
-							shared.JwtConfig{
-								Authentications: []*shared.JwtAuthentication{
+							gatewayv1beta1.JwtConfig{
+								Authentications: []*gatewayv1beta1.JwtAuthentication{
 									{
 										Issuer:      "https://issuer.test/",
 										JwksUri:     "file://.well-known/jwks.json",
-										FromHeaders: []*shared.JwtHeader{{Name: "header1"}},
+										FromHeaders: []*gatewayv1beta1.JwtHeader{{Name: "header1"}},
 									},
 									{
 										Issuer:      "https://issuer.test/",
 										JwksUri:     "file://.well-known/jwks.json",
-										FromHeaders: []*shared.JwtHeader{{Name: "header2"}},
+										FromHeaders: []*gatewayv1beta1.JwtHeader{{Name: "header2"}},
 									},
 								},
 							}),
@@ -524,8 +523,8 @@ var _ = Describe("JWT Handler validation", func() {
 					Handler: &gatewayv1beta1.Handler{
 						Name: "jwt",
 						Config: getRawConfig(
-							shared.JwtConfig{
-								Authentications: []*shared.JwtAuthentication{
+							gatewayv1beta1.JwtConfig{
+								Authentications: []*gatewayv1beta1.JwtAuthentication{
 									{
 										Issuer:     "https://issuer.test/",
 										JwksUri:    "file://.well-known/jwks.json",
@@ -558,12 +557,12 @@ var _ = Describe("JWT Handler validation", func() {
 					Handler: &gatewayv1beta1.Handler{
 						Name: "jwt",
 						Config: getRawConfig(
-							shared.JwtConfig{
-								Authentications: []*shared.JwtAuthentication{
+							gatewayv1beta1.JwtConfig{
+								Authentications: []*gatewayv1beta1.JwtAuthentication{
 									{
 										Issuer:      "https://issuer.test/",
 										JwksUri:     "file://.well-known/jwks.json",
-										FromHeaders: []*shared.JwtHeader{{Name: "header1"}},
+										FromHeaders: []*gatewayv1beta1.JwtHeader{{Name: "header1"}},
 									},
 								},
 							}),
@@ -576,8 +575,8 @@ var _ = Describe("JWT Handler validation", func() {
 					Handler: &gatewayv1beta1.Handler{
 						Name: "jwt",
 						Config: getRawConfig(
-							shared.JwtConfig{
-								Authentications: []*shared.JwtAuthentication{
+							gatewayv1beta1.JwtConfig{
+								Authentications: []*gatewayv1beta1.JwtAuthentication{
 									{
 										Issuer:     "https://issuer.test/",
 										JwksUri:    "file://.well-known/jwks.json",
@@ -605,12 +604,12 @@ var _ = Describe("JWT Handler validation", func() {
 					Handler: &gatewayv1beta1.Handler{
 						Name: "jwt",
 						Config: getRawConfig(
-							shared.JwtConfig{
-								Authentications: []*shared.JwtAuthentication{
+							gatewayv1beta1.JwtConfig{
+								Authentications: []*gatewayv1beta1.JwtAuthentication{
 									{
 										Issuer:      "https://issuer.test/",
 										JwksUri:     "file://.well-known/jwks.json",
-										FromHeaders: []*shared.JwtHeader{{Name: "header1"}},
+										FromHeaders: []*gatewayv1beta1.JwtHeader{{Name: "header1"}},
 									},
 								},
 							}),
@@ -623,12 +622,12 @@ var _ = Describe("JWT Handler validation", func() {
 					Handler: &gatewayv1beta1.Handler{
 						Name: "jwt",
 						Config: getRawConfig(
-							shared.JwtConfig{
-								Authentications: []*shared.JwtAuthentication{
+							gatewayv1beta1.JwtConfig{
+								Authentications: []*gatewayv1beta1.JwtAuthentication{
 									{
 										Issuer:      "https://issuer.test/",
 										JwksUri:     "file://.well-known/jwks.json",
-										FromHeaders: []*shared.JwtHeader{{Name: "header2"}},
+										FromHeaders: []*gatewayv1beta1.JwtHeader{{Name: "header2"}},
 									},
 								},
 							}),
@@ -652,12 +651,12 @@ var _ = Describe("JWT Handler validation", func() {
 					Handler: &gatewayv1beta1.Handler{
 						Name: "jwt",
 						Config: getRawConfig(
-							shared.JwtConfig{
-								Authentications: []*shared.JwtAuthentication{
+							gatewayv1beta1.JwtConfig{
+								Authentications: []*gatewayv1beta1.JwtAuthentication{
 									{
 										Issuer:      "https://issuer.test/",
 										JwksUri:     "file://.well-known/jwks.json",
-										FromHeaders: []*shared.JwtHeader{{Name: "header1"}},
+										FromHeaders: []*gatewayv1beta1.JwtHeader{{Name: "header1"}},
 									},
 								},
 							}),
@@ -670,12 +669,12 @@ var _ = Describe("JWT Handler validation", func() {
 					Handler: &gatewayv1beta1.Handler{
 						Name: "jwt",
 						Config: getRawConfig(
-							shared.JwtConfig{
-								Authentications: []*shared.JwtAuthentication{
+							gatewayv1beta1.JwtConfig{
+								Authentications: []*gatewayv1beta1.JwtAuthentication{
 									{
 										Issuer:      "https://issuer.test/",
 										JwksUri:     "file://.well-known/jwks.json",
-										FromHeaders: []*shared.JwtHeader{{Name: "header1"}},
+										FromHeaders: []*gatewayv1beta1.JwtHeader{{Name: "header1"}},
 									},
 								},
 							}),
@@ -694,13 +693,13 @@ var _ = Describe("JWT Handler validation", func() {
 
 func emptyJWTIstioConfig() *runtime.RawExtension {
 	return processingtest.GetRawConfig(
-		&shared.JwtConfig{})
+		&gatewayv1beta1.JwtConfig{})
 }
 
 func jwtIstioConfig(jwksUri string, issuer string) *runtime.RawExtension {
 	return processingtest.GetRawConfig(
-		shared.JwtConfig{
-			Authentications: []*shared.JwtAuthentication{
+		gatewayv1beta1.JwtConfig{
+			Authentications: []*gatewayv1beta1.JwtAuthentication{
 				{
 					Issuer:  issuer,
 					JwksUri: jwksUri,
@@ -709,10 +708,10 @@ func jwtIstioConfig(jwksUri string, issuer string) *runtime.RawExtension {
 		})
 }
 
-func testURLJWTIstioConfigWithAuthorizations(authorizations []*shared.JwtAuthorization) *runtime.RawExtension {
+func testURLJWTIstioConfigWithAuthorizations(authorizations []*gatewayv1beta1.JwtAuthorization) *runtime.RawExtension {
 	return processingtest.GetRawConfig(
-		shared.JwtConfig{
-			Authentications: []*shared.JwtAuthentication{
+		gatewayv1beta1.JwtConfig{
+			Authentications: []*gatewayv1beta1.JwtAuthentication{
 				{
 					Issuer:  "https://issuer.test/",
 					JwksUri: "file://.well-known/jwks.json",
