@@ -4,6 +4,10 @@ import (
 	_ "embed"
 	"errors"
 	"fmt"
+	"net/http"
+	"net/url"
+	"strings"
+
 	"github.com/avast/retry-go/v4"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/auth"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/helpers"
@@ -12,9 +16,6 @@ import (
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
 	"golang.org/x/oauth2/clientcredentials"
 	"k8s.io/client-go/dynamic"
-	"net/http"
-	"net/url"
-	"strings"
 )
 
 type scenario struct {
@@ -88,6 +89,37 @@ func (s *scenario) theAPIRuleIsApplied() error {
 		return err
 	}
 	return helpers.ApplyApiRule(s.resourceManager.CreateResources, s.resourceManager.UpdateResources, s.k8sClient, testcontext.GetRetryOpts(), r)
+}
+
+func (s *scenario) theAPIRuleHasStatusWithDesc(expectedState, expectedDescription string) error {
+	resourceManifest, err := manifestprocessor.ParseFromFileWithTemplate(s.ApiResourceManifestPath, s.ApiResourceDirectory, s.ManifestTemplate)
+	if err != nil {
+		return err
+	}
+
+	groupVersionResource, err := resource.GetGvrFromUnstructured(s.resourceManager, resourceManifest[0])
+	if err != nil {
+		return err
+	}
+
+	return retry.Do(func() error {
+		apiRule, err := s.resourceManager.GetResource(s.k8sClient, *groupVersionResource, resourceManifest[0].GetNamespace(), resourceManifest[0].GetName())
+		if err != nil {
+			return err
+		}
+
+		apiRuleStatus, err := helpers.GetAPIRuleStatusV2Alpha1(apiRule)
+		if err != nil {
+			return err
+		}
+
+		hasExpected := apiRuleStatus.Status.State == expectedState && strings.Contains(apiRuleStatus.Status.Description, expectedDescription)
+		if !hasExpected {
+			return fmt.Errorf("APIRule %s not in expected status %s or not containing description %s. Status: %s, Description:\n%s", apiRule.GetName(), expectedState, expectedDescription, apiRuleStatus.Status.State, apiRuleStatus.Status.Description)
+		}
+
+		return nil
+	}, testcontext.GetRetryOpts()...)
 }
 
 func (s *scenario) callingTheEndpointWithMethodWithInvalidTokenShouldResultInStatusBetween(path string, method string, lower, higher int) error {

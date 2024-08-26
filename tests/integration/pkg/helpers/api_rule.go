@@ -19,6 +19,13 @@ type apiRuleStatus struct {
 	} `json:"status"`
 }
 
+type apiRuleStatusV2Alpha1 struct {
+	Status struct {
+		State       string `json:"state"`
+		Description string `json:"description"`
+	} `json:"status"`
+}
+
 // RetryableApiRule wraps any function that modifies or creates an APIRule
 type RetryableApiRule func(k8sClient dynamic.Interface, resources ...unstructured.Unstructured) (*unstructured.Unstructured, error)
 
@@ -94,6 +101,22 @@ func GetAPIRuleStatus(apiRuleUnstructured *unstructured.Unstructured) (apiRuleSt
 	err = json.Unmarshal(js, &status)
 	if err != nil {
 		return apiRuleStatus{}, err
+	}
+
+	return status, nil
+}
+
+func GetAPIRuleStatusV2Alpha1(apiRuleUnstructured *unstructured.Unstructured) (apiRuleStatusV2Alpha1, error) {
+	js, err := json.Marshal(apiRuleUnstructured)
+	if err != nil {
+		return apiRuleStatusV2Alpha1{}, err
+	}
+
+	status := apiRuleStatusV2Alpha1{}
+
+	err = json.Unmarshal(js, &status)
+	if err != nil {
+		return apiRuleStatusV2Alpha1{}, err
 	}
 
 	return status, nil
