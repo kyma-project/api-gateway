@@ -5,12 +5,17 @@
 ## exit on error, and raise error when variable is not set when used
 ## IMG env variable expected (for make deploy), which points to the image in the registry
 
-set -euo pipefail
+set -eo pipefail
+
+if [ $# -lt 1 ]; then
+    >&2 echo "Make target is required as parameter"
+    exit 2
+fi
 
 function check_required_vars() {
   local requiredVarMissing=false
   for var in "$@"; do
-    if [ -z "${var}" ]; then
+    if [ -z "${!var}" ]; then
       >&2 echo "Environment variable ${var} is required but not set"
       requiredVarMissing=true
     fi
@@ -20,12 +25,36 @@ function check_required_vars() {
   fi
 }
 
+function check_required_files() {
+  local requiredFileMissing=false
+  for file in "$@"; do
+    path=$(eval echo "\$$file")
+    if [ ! -f "${path}" ]; then
+        >&2 echo "File '${path}' required but not found"
+        requiredFileMissing=true
+    fi
+  done
+  if [ "${requiredFileMissing}" = true ] ; then
+    exit 2
+  fi
+}
+
 requiredVars=(
     GARDENER_KUBECONFIG
     GARDENER_PROJECT_NAME
+    CLIENT_ID
+    CLIENT_SECRET
+    OIDC_CONFIG_URL
+    TEST_SA_ACCESS_KEY_PATH
+)
+
+requiredFiles=(
+    GARDENER_KUBECONFIG
+    TEST_SA_ACCESS_KEY_PATH
 )
 
 check_required_vars "${requiredVars[@]}"
+check_required_files "${requiredFiles[@]}"
 
 function cleanup() {
   kubectl annotate shoot "${CLUSTER_NAME}" confirmation.gardener.cloud/deletion=true \
@@ -81,10 +110,9 @@ kubectl wait --kubeconfig "${GARDENER_KUBECONFIG}" --for=jsonpath='{.status.last
 # KYMA_DOMAIN is required by the tests
 export TEST_DOMAIN="${CLUSTER_NAME}.${GARDENER_PROJECT_NAME}.shoot.live.k8s-hana.ondemand.com"
 export TEST_CUSTOM_DOMAIN="goat.build.kyma-project.io"
-
-make test-custom-domain
-
-# Run gateway tests in the same script
 export IS_GARDENER=true
 
-make test-integration-gateway
+for make_target in "$@"
+do
+    make $make_target
+done
