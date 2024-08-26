@@ -6,11 +6,11 @@ require (
 	github.com/avast/retry-go/v4 v4.6.0
 	github.com/cucumber/godog v0.14.1
 	github.com/gardener/cert-management v0.15.0
-	github.com/gardener/external-dns-management v0.20.1
+	github.com/gardener/external-dns-management v0.21.0
 	github.com/go-jose/go-jose/v3 v3.0.3
 	github.com/go-logr/logr v1.4.2
 	github.com/google/uuid v1.6.0
-	github.com/onsi/ginkgo/v2 v2.20.0
+	github.com/onsi/ginkgo/v2 v2.20.1
 	github.com/onsi/gomega v1.34.1
 	github.com/ory/oathkeeper-maester v0.1.10
 	github.com/spf13/pflag v1.0.5
@@ -21,7 +21,7 @@ require (
 	google.golang.org/appengine v1.6.8
 	google.golang.org/protobuf v1.34.2
 	gopkg.in/yaml.v3 v3.0.1
-	istio.io/api v1.22.2
+	istio.io/api v1.22.3
 	istio.io/client-go v1.22.2
 	k8s.io/apimachinery v0.30.3
 	k8s.io/client-go v0.30.3
@@ -94,5 +94,5 @@ require (
 	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/api v0.30.3
 	k8s.io/apiextensions-apiserver v0.30.3
-	k8s.io/utils v0.0.0-20240423183400-0849a56e8f22
+	k8s.io/utils v0.0.0-20240711033017-18e509b52bc8
 )
