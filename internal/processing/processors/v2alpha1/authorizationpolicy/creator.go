@@ -256,7 +256,7 @@ func withTo(b *builders.RuleBuilder, rule gatewayv2alpha1.Rule) *builders.RuleBu
 }
 
 func withFrom(b *builders.RuleBuilder, rule gatewayv2alpha1.Rule) *builders.RuleBuilder {
-	if rule.Jwt != nil {
+	if rule.Jwt != nil || (rule.ExtAuth != nil && rule.ExtAuth.Restrictions != nil) {
 		return b.WithFrom(builders.NewFromBuilder().WithForcedJWTAuthorizationV2alpha1(rule.Jwt.Authentications).Get())
 	}
 

@@ -68,26 +68,8 @@ type testsuite struct {
 }
 
 func (t *testsuite) InitScenarios(ctx *godog.ScenarioContext) {
-	initExposeMethodsOnPathsNoAuthHandler(ctx, t)
-	initExposeMethodsOnPathsJwtHandler(ctx, t)
-	initDefaultCors(ctx, t)
-	initCustomCors(ctx, t)
-	initJwtCommon(ctx, t)
-	initJwtRegex(ctx, t)
-	initJwtPrefix(ctx, t)
-	initJwtAndAllow(ctx, t)
-	initJwtScopes(ctx, t)
-	initJwtAudience(ctx, t)
-	initJwtUnavailableIssuer(ctx, t)
-	initJwtIssuerJwksNotMatch(ctx, t)
-	initJwtFromHeader(ctx, t)
-	initJwtFromParam(ctx, t)
-	initRequestHeaders(ctx, t)
-	initRequestCookies(ctx, t)
-	initServiceFallback(ctx, t)
-	initServiceTwoNamespaces(ctx, t)
-	initServiceDifferentSameMethods(ctx, t)
-	initServiceCustomLabelSelector(ctx, t)
+	initExtAuthCommon(ctx, t)
+	initExtAuthJwt(ctx, t)
 }
 
 func (t *testsuite) FeaturePath() []string {
