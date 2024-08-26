@@ -5,7 +5,7 @@
 ## exit on error, and raise error when variable is not set when used
 ## IMG env variable expected (for make deploy), which points to the image in the registry
 
-set -euo pipefail
+set -eo pipefail
 
 if [ $# -lt 1 ]; then
     >&2 echo "Make target is required as parameter"
@@ -15,7 +15,7 @@ fi
 function check_required_vars() {
   local requiredVarMissing=false
   for var in "$@"; do
-    if [ -z "${var}" ]; then
+    if [ -z "${!var}" ]; then
       >&2 echo "Environment variable ${var} is required but not set"
       requiredVarMissing=true
     fi
@@ -25,12 +25,36 @@ function check_required_vars() {
   fi
 }
 
+function check_required_files() {
+  local requiredFileMissing=false
+  for file in "$@"; do
+    path=$(eval echo "\$$file")
+    if [ ! -f "${path}" ]; then
+        >&2 echo "File '${path}' required but not found"
+        requiredFileMissing=true
+    fi
+  done
+  if [ "${requiredFileMissing}" = true ] ; then
+    exit 2
+  fi
+}
+
 requiredVars=(
     GARDENER_KUBECONFIG
     GARDENER_PROJECT_NAME
+    CLIENT_ID
+    CLIENT_SECRET
+    OIDC_CONFIG_URL
+    TEST_SA_ACCESS_KEY_PATH
+)
+
+requiredFiles=(
+    GARDENER_KUBECONFIG
+    TEST_SA_ACCESS_KEY_PATH
 )
 
 check_required_vars "${requiredVars[@]}"
+check_required_files "${requiredFiles[@]}"
 
 function cleanup() {
   kubectl annotate shoot "${CLUSTER_NAME}" confirmation.gardener.cloud/deletion=true \
