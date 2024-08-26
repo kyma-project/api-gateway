@@ -2,7 +2,6 @@ package authorizationpolicy
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 
@@ -72,8 +71,13 @@ func generateAuthorizationPolicies(ctx context.Context, client client.Client, ap
 		authorizationPolicyList.Items = append(authorizationPolicyList.Items, policies...)
 	}
 
-	if len(jwtAuthorizations) == 0 && rule.ExtAuth == nil {
+	if len(jwtAuthorizations) == 0 {
 		ap, err := generateAuthorizationPolicyForEmptyAuthorizations(ctx, client, api, rule)
+		if err != nil {
+			return &authorizationPolicyList, err
+		}
+
+		err = hashbasedstate.AddLabelsToAuthorizationPolicy(ap, baseHashIndex)
 		if err != nil {
 			return &authorizationPolicyList, err
 		}
@@ -104,9 +108,6 @@ func generateExtAuthAuthorizationPolicies(ctx context.Context, client client.Cli
 		if err != nil {
 			return authorizationPolicyList, err
 		}
-
-		js, _ := json.Marshal(policy)
-		fmt.Println(string(js))
 
 		err = hashbasedstate.AddLabelsToAuthorizationPolicy(policy, i)
 		if err != nil {

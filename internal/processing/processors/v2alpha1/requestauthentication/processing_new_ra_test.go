@@ -3,6 +3,8 @@ package requestauthentication_test
 import (
 	"context"
 	"fmt"
+	"github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
+	"github.com/kyma-project/api-gateway/internal/builders/builders_test/v2alpha1_test"
 	"github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1/requestauthentication"
 	"net/http"
 
@@ -225,4 +227,56 @@ var _ = Describe("Processing", func() {
 		Expect(result[0].Action.String()).To(Equal("create"))
 	})
 
+	Context("extAuth", func() {
+		It("should not create RA when ExtAuth has no restrictions configured", func() {
+			// given
+			rule := v2alpha1_test.NewRuleBuilder().WithExtAuth(v2alpha1_test.NewExtAuthBuilder().WithAuthorizers("abc").Build()).Build()
+			apiRule := newAPIRuleBuilderWithDummyData().
+				withRules(rule).
+				build()
+			client := getFakeClient()
+			processor := requestauthentication.NewProcessor(apiRule)
+
+			// when
+			result, err := processor.EvaluateReconciliation(context.Background(), client)
+
+			// then
+			Expect(err).To(BeNil())
+			Expect(result).To(BeEmpty())
+		})
+
+		It("should create RA when ExtAuth has restrictions with authenticators configured", func() {
+			// given
+			rule := v2alpha1_test.
+				NewRuleBuilder().
+				WithExtAuth(
+					v2alpha1_test.NewExtAuthBuilder().
+						WithRestriction(&v2alpha1.JwtConfig{
+							Authentications: []*v2alpha1.JwtAuthentication{
+								{
+									Issuer:  jwtIssuer,
+									JwksUri: jwksUri,
+								},
+							},
+						}).
+						Build()).
+				Build()
+
+			apiRule := newAPIRuleBuilderWithDummyData().
+				withRules(rule).
+				build()
+
+			svc := newServiceBuilderWithDummyData().build()
+			client := getFakeClient(svc)
+			processor := requestauthentication.NewProcessor(apiRule)
+
+			// when
+			result, err := processor.EvaluateReconciliation(context.Background(), client)
+
+			// then
+			Expect(err).To(BeNil())
+			Expect(result).To(HaveLen(1))
+			Expect(result[0].Action.String()).To(Equal("create"))
+		})
+	})
 })

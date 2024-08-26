@@ -267,3 +267,20 @@ func (e *ExtAuthBuilder) WithRestriction(config *gatewayv2alpha1.JwtConfig) *Ext
 	e.extAuth.Restrictions = config
 	return e
 }
+
+func (e *ExtAuthBuilder) WithRestrictionAuthorization(config *gatewayv2alpha1.JwtAuthorization) *ExtAuthBuilder {
+	if e.extAuth.Restrictions == nil {
+		e.extAuth.Restrictions = &gatewayv2alpha1.JwtConfig{}
+	}
+
+	e.extAuth.Restrictions.Authorizations = append(e.extAuth.Restrictions.Authorizations, config)
+	return e
+}
+
+func (e *ExtAuthBuilder) WithRestrictionAuthentication(config *gatewayv2alpha1.JwtAuthentication) *ExtAuthBuilder {
+	if e.extAuth.Restrictions == nil {
+		e.extAuth.Restrictions = &gatewayv2alpha1.JwtConfig{}
+	}
+	e.extAuth.Restrictions.Authentications = append(e.extAuth.Restrictions.Authentications, config)
+	return e
+}

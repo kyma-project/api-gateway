@@ -59,8 +59,13 @@ func generateRequestAuthenticationSpec(ctx context.Context, client client.Client
 	}
 
 	requestAuthenticationSpec := builders.NewRequestAuthenticationSpecBuilder().
-		WithSelector(s.Selector).
-		WithJwtRules(*builders.NewJwtRuleBuilder().FromV2Alpha1(rule.Jwt).Get())
+		WithSelector(s.Selector)
+
+	if rule.ExtAuth != nil && rule.ExtAuth.Restrictions != nil {
+		requestAuthenticationSpec.WithJwtRules(*builders.NewJwtRuleBuilder().FromV2Alpha1(rule.ExtAuth.Restrictions).Get())
+	} else {
+		requestAuthenticationSpec.WithJwtRules(*builders.NewJwtRuleBuilder().FromV2Alpha1(rule.Jwt).Get())
+	}
 
 	return requestAuthenticationSpec.Get(), nil
 }
