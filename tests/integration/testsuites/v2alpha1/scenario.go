@@ -116,7 +116,7 @@ func (s *scenario) callingTheEndpointWithHeaderAndNoToken(path, headerName, valu
 	return s.httpClient.CallEndpointWithHeadersWithRetries(requestHeaders, fmt.Sprintf("%s/%s", s.Url, strings.TrimLeft(path, "/")), &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher})
 }
 
-func (s *scenario) callingTheEndpointWithHeaderAndInvalidJwt(path, headerName, value string, lower, higher int) error {
+func (s *scenario) callingTheEndpointWithHeaderAndInvalidJwt(path, headerName, _, value string, lower, higher int) error {
 	requestHeaders := map[string]string{headerName: value, testcontext.AuthorizationHeaderName: testcontext.AnyToken}
 	return s.httpClient.CallEndpointWithHeadersWithRetries(requestHeaders, fmt.Sprintf("%s/%s", s.Url, strings.TrimLeft(path, "/")), &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher})
 }

@@ -19,6 +19,6 @@ func initExtAuthJwt(ctx *godog.ScenarioContext, ts *testsuite) {
 	ctx.Step(`ExtAuthJwt: The endpoint has JWT restrictions$`, scenario.theEndpointHasJwtRestrictionsWithScope)
 	ctx.Step(`ExtAuthJwt: The APIRule is applied$`, scenario.theAPIRuleIsApplied)
 	ctx.Step(`ExtAuthJwt: Calling the "([^"]*)" endpoint with header "([^"]*)" with value "([^"]*)" and no token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithHeaderAndNoToken)
-	ctx.Step(`ExtAuthJwt: Calling the "([^"]*)" endpoint with header "([^"])*" with value "([^"]*)" and an invalid "JWT" token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithHeaderAndInvalidJwt)
-	ctx.Step(`ExtAuthJwt: Calling the "([^"]*)" endpoint with header "([^"])*" with value "([^"]*)" and a valid "JWT" token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithHeaderAndValidJwt)
+	ctx.Step(`ExtAuthJwt: Calling the "([^"]*)" endpoint with header "([^"])*" with value "([^"]*)" and an invalid "([^"]*)" token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithHeaderAndInvalidJwt)
+	ctx.Step(`ExtAuthJwt: Calling the "([^"]*)" endpoint with header "([^"])*" with value "([^"]*)" and a valid "([^"]*)" token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithHeaderAndValidJwt)
 }
