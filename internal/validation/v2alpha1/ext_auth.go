@@ -53,7 +53,7 @@ func validateExtAuthProviders(ctx context.Context, k8sClient client.Client, pare
 						if provider.EnvoyExtAuthzHttp == nil {
 							problems = append(problems, validation.Failure{
 								AttributePath: parentAttributePath + ".extAuth.externalAuthorizers." + authorizer,
-								Message:       "EnvoyExtAuthzHttp not found in mesh data for authorizer",
+								Message:       "EnvoyExtAuthzHttp not found in Istio ConfigMap mesh data for authorizer",
 							})
 						}
 						found = true
@@ -63,7 +63,7 @@ func validateExtAuthProviders(ctx context.Context, k8sClient client.Client, pare
 				if !found {
 					problems = append(problems, validation.Failure{
 						AttributePath: parentAttributePath + ".extAuth.externalAuthorizers." + authorizer,
-						Message:       "Authorizer not found in mesh data",
+						Message:       "Authorizer not found in Istio ConfigMap mesh data",
 					})
 				}
 			}
