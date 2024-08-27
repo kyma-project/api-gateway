@@ -54,7 +54,6 @@ type APIRuleSpec struct {
 	// +optional
 	CorsPolicy *CorsPolicy `json:"corsPolicy,omitempty"`
 	// Represents the array of Oathkeeper access rules to be applied.
-	// +kubebuilder:validation:MinItems=1
 	Rules []Rule `json:"rules"`
 	// +optional
 	Timeout *Timeout `json:"timeout,omitempty"`
