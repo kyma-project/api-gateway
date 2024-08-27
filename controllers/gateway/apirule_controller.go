@@ -143,6 +143,7 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		if !controllerutil.ContainsFinalizer(apiRule, apiGatewayFinalizer) {
 			controllerutil.AddFinalizer(apiRule, apiGatewayFinalizer)
 			if err := r.Update(ctx, apiRule); err != nil {
+				namespacedLogger.Error(err, "Failed to add finalizer to APIRule", "name", apiRule.Name, "namespace", apiRule.Namespace)
 				return doneReconcileErrorRequeue(r.OnErrorReconcilePeriod)
 			}
 		}
