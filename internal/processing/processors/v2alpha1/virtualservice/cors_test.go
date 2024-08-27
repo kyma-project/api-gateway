@@ -8,7 +8,6 @@ import (
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	. "github.com/kyma-project/api-gateway/internal/builders/builders_test/v2alpha1_test"
 	. "github.com/kyma-project/api-gateway/internal/processing/processing_test"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -28,7 +27,7 @@ var _ = Describe("CORS", func() {
 		},
 
 		Entry("should set default empty values in VirtualService CORSPolicy when no CORS configuration is set in APIRule",
-			NewAPIRuleBuilderWithDummyDataWithNoAuthRule().Build(),
+			newAPIRuleBuilderWithDummyDataWithNoAuthRule().Build(),
 			[]verifier{
 				func(vs *networkingv1beta1.VirtualService) {
 					Expect(vs.Spec.Http[0].CorsPolicy).To(BeNil())
@@ -45,8 +44,8 @@ var _ = Describe("CORS", func() {
 			}, "create"),
 
 		Entry("should apply all CORSPolicy headers correctly",
-			NewAPIRuleBuilderWithDummyDataWithNoAuthRule().WithCORSPolicy(
-				NewCorsPolicyBuilder().
+			newAPIRuleBuilderWithDummyDataWithNoAuthRule().WithCORSPolicy(
+				newCorsPolicyBuilder().
 					WithAllowOrigins([]map[string]string{{"exact": "example.com"}}).
 					WithAllowMethods([]string{"GET", "POST"}).
 					WithAllowHeaders([]string{"header1", "header2"}).

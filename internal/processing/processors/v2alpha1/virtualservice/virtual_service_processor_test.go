@@ -4,7 +4,6 @@ import (
 	"context"
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	"github.com/kyma-project/api-gateway/internal/builders"
-	. "github.com/kyma-project/api-gateway/internal/builders/builders_test/v2alpha1_test"
 	. "github.com/kyma-project/api-gateway/internal/processing/processing_test"
 	processors "github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1/virtualservice"
 	. "github.com/onsi/ginkgo/v2"
@@ -33,7 +32,7 @@ var _ = Describe("ObjectChange", func() {
 
 	It("should return update action when there is a matching VirtualService on cluster", func() {
 		// given
-		apiRuleBuilder := NewAPIRuleBuilderWithDummyData()
+		apiRuleBuilder := newAPIRuleBuilderWithDummyData()
 		processor := processors.NewVirtualServiceProcessor(GetTestConfig(), apiRuleBuilder.Build())
 		result, err := processor.EvaluateReconciliation(context.Background(), GetFakeClient())
 
@@ -54,12 +53,12 @@ var _ = Describe("ObjectChange", func() {
 
 var _ = Describe("Fully configured APIRule happy path", func() {
 	It("should create a VirtualService with all the configured values", func() {
-		apiRule := NewAPIRuleBuilder().
+		apiRule := newAPIRuleBuilder().
 			WithGateway("example/example").
 			WithHosts("example.com", "goat.com").
 			WithService("example-service", "example-namespace", 8080).
 			WithTimeout(180).
-			WithCORSPolicy(NewCorsPolicyBuilder().
+			WithCORSPolicy(newCorsPolicyBuilder().
 				WithAllowOrigins([]map[string]string{{"exact": "example.com"}}).
 				WithAllowMethods([]string{"GET", "POST"}).
 				WithAllowHeaders([]string{"header1", "header2"}).
@@ -68,17 +67,17 @@ var _ = Describe("Fully configured APIRule happy path", func() {
 				WithMaxAge(600).
 				Build()).
 			WithRules(
-				NewRuleBuilder().
+				newRuleBuilder().
 					WithService("another-service", "another-namespace", 9999).
 					WithMethods("GET", "POST").
 					WithPath("/").
 					WithJWTAuthn("example.com", "https://jwks.example.com", nil, nil).
 					WithTimeout(10).Build(),
 
-				NewRuleBuilder().
+				newRuleBuilder().
 					WithMethods("PUT").
 					WithPath("/*").
-					WithRequest(NewRequestModifier().
+					WithRequest(newRequestModifier().
 						WithHeaders(map[string]string{"header1": "value1"}).
 						WithCookies(map[string]string{"cookie1": "value1"}).
 						Build()).

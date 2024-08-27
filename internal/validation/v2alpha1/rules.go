@@ -29,23 +29,16 @@ func validateRules(ctx context.Context, client client.Client, parentAttributePat
 			problems = append(problems, validation.Failure{AttributePath: ruleAttributePath + ".service", Message: "The rule must define a service, because no service is defined on spec level"})
 		}
 
-		problems = append(problems, validateJwt(ruleAttributePath, &rule)...)
-		if rule.NoAuth == nil || !*rule.NoAuth {
+		if rule.Jwt != nil {
 			injectionFailures, err := validateSidecarInjection(ctx, client, ruleAttributePath, apiRule, rule)
 			if err != nil {
 				problems = append(problems, validation.Failure{AttributePath: ruleAttributePath, Message: fmt.Sprintf("Failed to execute sidecar injection validation, err: %s", err)})
 			}
 
 			problems = append(problems, injectionFailures...)
-		}
 
-		if rule.ExtAuth != nil {
-			extAuthFailures, err := validateExtAuthProviders(ctx, client, ruleAttributePath, rule)
-			if err != nil {
-				problems = append(problems, validation.Failure{AttributePath: ruleAttributePath, Message: fmt.Sprintf("Failed to execute external auth provider validation, err: %s", err)})
-			}
-
-			problems = append(problems, extAuthFailures...)
+			jwtFailures := validateJwt(ruleAttributePath, &rule)
+			problems = append(problems, jwtFailures...)
 		}
 
 	}

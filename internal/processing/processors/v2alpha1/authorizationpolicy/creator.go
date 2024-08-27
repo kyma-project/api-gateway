@@ -53,31 +53,20 @@ func generateAuthorizationPolicies(ctx context.Context, client client.Client, ap
 	authorizationPolicyList := securityv1beta1.AuthorizationPolicyList{}
 
 	var jwtAuthorizations []*gatewayv2alpha1.JwtAuthorization
-
-	baseHashIndex := 0
-	switch {
-	case rule.Jwt != nil:
-		jwtAuthorizations = append(jwtAuthorizations, rule.Jwt.Authorizations...)
-	case rule.ExtAuth != nil:
-		baseHashIndex = len(rule.ExtAuth.ExternalAuthorizers)
-		if rule.ExtAuth.Restrictions != nil {
-			jwtAuthorizations = append(jwtAuthorizations, rule.ExtAuth.Restrictions.Authorizations...)
-		}
-		policies, err := generateExtAuthAuthorizationPolicies(ctx, client, api, rule)
-		if err != nil {
-			return &authorizationPolicyList, err
-		}
-
-		authorizationPolicyList.Items = append(authorizationPolicyList.Items, policies...)
+	if rule.Jwt != nil {
+		jwtAuthorizations = rule.Jwt.Authorizations
 	}
 
 	if len(jwtAuthorizations) == 0 {
-		ap, err := generateAuthorizationPolicyForEmptyAuthorizations(ctx, client, api, rule)
+		// In case of NoAuth, it will create an ALLOW AuthorizationPolicy bypassing any other AuthorizationPolicies.
+		ap, err := generateAuthorizationPolicy(ctx, client, api, rule, &gatewayv2alpha1.JwtAuthorization{})
 		if err != nil {
 			return &authorizationPolicyList, err
 		}
 
-		err = hashbasedstate.AddLabelsToAuthorizationPolicy(ap, baseHashIndex)
+		// If there is no other authorization we can safely assume that the index of this authorization in the array
+		// in the yaml is 0.
+		err = hashbasedstate.AddLabelsToAuthorizationPolicy(ap, 0)
 		if err != nil {
 			return &authorizationPolicyList, err
 		}
@@ -90,7 +79,7 @@ func generateAuthorizationPolicies(ctx context.Context, client client.Client, ap
 				return &authorizationPolicyList, err
 			}
 
-			err = hashbasedstate.AddLabelsToAuthorizationPolicy(ap, indexInYaml+baseHashIndex)
+			err = hashbasedstate.AddLabelsToAuthorizationPolicy(ap, indexInYaml)
 			if err != nil {
 				return &authorizationPolicyList, err
 			}
@@ -102,103 +91,25 @@ func generateAuthorizationPolicies(ctx context.Context, client client.Client, ap
 	return &authorizationPolicyList, nil
 }
 
-func generateExtAuthAuthorizationPolicies(ctx context.Context, client client.Client, api *gatewayv2alpha1.APIRule, rule gatewayv2alpha1.Rule) (authorizationPolicyList []*securityv1beta1.AuthorizationPolicy, _ error) {
-	for i, authorizer := range rule.ExtAuth.ExternalAuthorizers {
-		policy, err := generateExtAuthAuthorizationPolicy(ctx, client, api, rule, authorizer)
-		if err != nil {
-			return authorizationPolicyList, err
-		}
-
-		err = hashbasedstate.AddLabelsToAuthorizationPolicy(policy, i)
-		if err != nil {
-			return authorizationPolicyList, err
-		}
-
-		authorizationPolicyList = append(authorizationPolicyList, policy)
-	}
-
-	return authorizationPolicyList, nil
-}
-
-func generateAuthorizationPolicyForEmptyAuthorizations(ctx context.Context, client client.Client, api *gatewayv2alpha1.APIRule, rule gatewayv2alpha1.Rule) (*securityv1beta1.AuthorizationPolicy, error) {
-	// In case of NoAuth, it will create an ALLOW AuthorizationPolicy bypassing any other AuthorizationPolicies.
-	ap, err := generateAuthorizationPolicy(ctx, client, api, rule, &gatewayv2alpha1.JwtAuthorization{})
-	if err != nil {
-		return nil, err
-	}
-
-	// If there is no other authorization, we can safely assume that the index of this authorization in the array
-	// in the YAML is 0.
-	err = hashbasedstate.AddLabelsToAuthorizationPolicy(ap, 0)
-	if err != nil {
-		return nil, err
-	}
-
-	return ap, nil
-}
-
-func baseAuthorizationPolicyBuilder(apiRule *gatewayv2alpha1.APIRule, rule gatewayv2alpha1.Rule) (*builders.AuthorizationPolicyBuilder, error) {
+func generateAuthorizationPolicy(ctx context.Context, client client.Client, apiRule *gatewayv2alpha1.APIRule, rule gatewayv2alpha1.Rule, authorization *gatewayv2alpha1.JwtAuthorization) (*securityv1beta1.AuthorizationPolicy, error) {
 	namePrefix := fmt.Sprintf("%s-", apiRule.ObjectMeta.Name)
 	namespace, err := gatewayv2alpha1.FindServiceNamespace(apiRule, rule)
 	if err != nil {
 		return nil, fmt.Errorf("finding service namespace: %w", err)
 	}
 
-	return builders.NewAuthorizationPolicyBuilder().
-			WithGenerateName(namePrefix).
-			WithNamespace(namespace).
-			WithLabel(processing.OwnerLabel, fmt.Sprintf("%s.%s", apiRule.ObjectMeta.Name, apiRule.ObjectMeta.Namespace)),
-		nil
-}
-
-func generateExtAuthAuthorizationPolicy(ctx context.Context, client client.Client, api *gatewayv2alpha1.APIRule, rule gatewayv2alpha1.Rule, authorizerName string) (*securityv1beta1.AuthorizationPolicy, error) {
-	spec, err := generateExtAuthAuthorizationPolicySpec(ctx, client, api, rule, authorizerName)
-	if err != nil {
-		return nil, err
-	}
-
-	apBuilder, err := baseAuthorizationPolicyBuilder(api, rule)
-	if err != nil {
-		return nil, fmt.Errorf("error creating base AuthorizationPolicy builder: %w", err)
-	}
-
-	apBuilder.
-		WithSpec(builders.NewAuthorizationPolicySpecBuilder().FromAP(spec).Get())
-
-	return apBuilder.Get(), nil
-}
-
-func generateAuthorizationPolicy(ctx context.Context, client client.Client, apiRule *gatewayv2alpha1.APIRule, rule gatewayv2alpha1.Rule, authorization *gatewayv2alpha1.JwtAuthorization) (*securityv1beta1.AuthorizationPolicy, error) {
 	spec, err := generateAuthorizationPolicySpec(ctx, client, apiRule, rule, authorization)
 	if err != nil {
 		return nil, err
 	}
 
-	apBuilder, err := baseAuthorizationPolicyBuilder(apiRule, rule)
-	if err != nil {
-		return nil, fmt.Errorf("error creating base AuthorizationPolicy builder: %w", err)
-	}
-
-	apBuilder.WithSpec(
-		builders.NewAuthorizationPolicySpecBuilder().
-			FromAP(spec).
-			Get())
+	apBuilder := builders.NewAuthorizationPolicyBuilder().
+		WithGenerateName(namePrefix).
+		WithNamespace(namespace).
+		WithSpec(builders.NewAuthorizationPolicySpecBuilder().FromAP(spec).Get()).
+		WithLabel(processing.OwnerLabel, fmt.Sprintf("%s.%s", apiRule.ObjectMeta.Name, apiRule.ObjectMeta.Namespace))
 
 	return apBuilder.Get(), nil
-}
-
-func generateExtAuthAuthorizationPolicySpec(ctx context.Context, client client.Client, api *gatewayv2alpha1.APIRule, rule gatewayv2alpha1.Rule, providerName string) (*v1beta1.AuthorizationPolicy, error) {
-	podSelector, err := gatewayv2alpha1.GetSelectorFromService(ctx, client, api, rule)
-	if err != nil {
-		return nil, err
-	}
-
-	authorizationPolicySpecBuilder := builders.NewAuthorizationPolicySpecBuilder().WithSelector(podSelector.Selector)
-	return authorizationPolicySpecBuilder.
-		WithAction(v1beta1.AuthorizationPolicy_CUSTOM).
-		WithProvider(providerName).
-		WithRule(baseExtAuthRuleBuilder(rule).Get()).
-		Get(), nil
 }
 
 func generateAuthorizationPolicySpec(ctx context.Context, client client.Client, api *gatewayv2alpha1.APIRule, rule gatewayv2alpha1.Rule, authorization *gatewayv2alpha1.JwtAuthorization) (*v1beta1.AuthorizationPolicy, error) {
@@ -207,8 +118,7 @@ func generateAuthorizationPolicySpec(ctx context.Context, client client.Client, 
 		return nil, err
 	}
 
-	authorizationPolicySpecBuilder := builders.NewAuthorizationPolicySpecBuilder().
-		WithSelector(podSelector.Selector)
+	authorizationPolicySpecBuilder := builders.NewAuthorizationPolicySpecBuilder().WithSelector(podSelector.Selector)
 
 	// If RequiredScopes are configured, we need to generate a separate Rule for each scopeKey in defaultScopeKeys
 	if len(authorization.RequiredScopes) > 0 {
@@ -258,19 +168,9 @@ func withTo(b *builders.RuleBuilder, rule gatewayv2alpha1.Rule) *builders.RuleBu
 func withFrom(b *builders.RuleBuilder, rule gatewayv2alpha1.Rule) *builders.RuleBuilder {
 	if rule.Jwt != nil {
 		return b.WithFrom(builders.NewFromBuilder().WithForcedJWTAuthorizationV2alpha1(rule.Jwt.Authentications).Get())
-	} else if rule.ExtAuth != nil && rule.ExtAuth.Restrictions != nil {
-		return b.WithFrom(builders.NewFromBuilder().WithForcedJWTAuthorizationV2alpha1(rule.ExtAuth.Restrictions.Authentications).Get())
 	}
 
 	return b.WithFrom(builders.NewFromBuilder().WithIngressGatewaySource().Get())
-}
-
-// baseExtAuthRuleBuilder returns ruleBuilder with To
-func baseExtAuthRuleBuilder(rule gatewayv2alpha1.Rule) *builders.RuleBuilder {
-	builder := builders.NewRuleBuilder()
-	builder = withTo(builder, rule)
-
-	return builder
 }
 
 // baseRuleBuilder returns ruleBuilder with To and From

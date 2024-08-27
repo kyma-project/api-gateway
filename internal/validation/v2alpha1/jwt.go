@@ -12,17 +12,14 @@ import (
 func validateJwt(parentAttributePath string, rule *gatewayv2alpha1.Rule) []validation.Failure {
 	var failures []validation.Failure
 
-	if rule.Jwt != nil {
-		jwtAttributePath := parentAttributePath + ".jwt"
-
-		failures = append(failures, hasInvalidAuthorizations(jwtAttributePath, rule.Jwt.Authorizations)...)
-		failures = append(failures, hasInvalidAuthentications(jwtAttributePath, rule.Jwt.Authentications)...)
-	} else if rule.ExtAuth != nil && rule.ExtAuth.Restrictions != nil {
-		extAuthAttributePath := parentAttributePath + ".extAuth"
-
-		failures = append(failures, hasInvalidAuthorizations(extAuthAttributePath, rule.ExtAuth.Restrictions.Authorizations)...)
-		failures = append(failures, hasInvalidAuthentications(extAuthAttributePath, rule.ExtAuth.Restrictions.Authentications)...)
+	if rule.Jwt == nil {
+		return nil
 	}
+
+	jwtAttributePath := parentAttributePath + ".jwt"
+
+	failures = append(failures, hasInvalidAuthorizations(jwtAttributePath, rule.Jwt.Authorizations)...)
+	failures = append(failures, hasInvalidAuthentications(jwtAttributePath, rule.Jwt.Authentications)...)
 
 	return failures
 }
