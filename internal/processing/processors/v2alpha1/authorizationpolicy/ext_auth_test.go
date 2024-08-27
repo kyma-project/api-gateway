@@ -16,7 +16,7 @@ var _ = Describe("Processing ExtAuth rules", func() {
 	audience := "audience"
 	extAuthAuthorizer := "test-authorizer"
 
-	It("should create Custom AP for ExtAuth authorizers", func() {
+	It("should create Custom AP and Allow from ingress-gateway for ExtAuth authorizers", func() {
 		// given
 		headersPath := "/headers"
 		ruleExtAuth := v2alpha1_test.NewRuleBuilder().
@@ -40,17 +40,29 @@ var _ = Describe("Processing ExtAuth rules", func() {
 
 		// then
 		Expect(err).To(BeNil())
-		Expect(results).To(HaveLen(1))
+		Expect(results).To(HaveLen(2))
 
-		Expect(results[0].Obj).To(BeAssignableToTypeOf(&securityv1beta1.AuthorizationPolicy{}))
-		ap := results[0].Obj.(*securityv1beta1.AuthorizationPolicy)
-		Expect(ap.Spec.Action).To(Equal(v1beta1.AuthorizationPolicy_CUSTOM))
-		Expect(ap.Spec.Rules).To(HaveLen(1))
-		Expect(ap.Spec.Rules[0].To).To(HaveLen(1))
-		Expect(ap.Spec.Rules[0].To[0].Operation.Paths).To(HaveLen(1))
-		Expect(ap.Spec.Rules[0].To[0].Operation.Paths[0]).To(Equal(headersPath))
+		for _, result := range results {
+			Expect(result.Obj).To(BeAssignableToTypeOf(&securityv1beta1.AuthorizationPolicy{}))
+			ap := result.Obj.(*securityv1beta1.AuthorizationPolicy)
+			switch ap.Spec.GetAction() {
+			case v1beta1.AuthorizationPolicy_CUSTOM:
+				Expect(ap.Spec.Rules).To(HaveLen(1))
+				Expect(ap.Spec.Rules[0].To).To(HaveLen(1))
+				Expect(ap.Spec.Rules[0].To[0].Operation.Paths).To(HaveLen(1))
+				Expect(ap.Spec.Rules[0].To[0].Operation.Paths[0]).To(Equal(headersPath))
 
-		Expect(ap.Spec.GetProvider().Name).To(Equal(extAuthAuthorizer))
+				Expect(ap.Spec.GetProvider().Name).To(Equal(extAuthAuthorizer))
+			case v1beta1.AuthorizationPolicy_ALLOW:
+				Expect(ap.Spec.Rules).To(HaveLen(1))
+				Expect(ap.Spec.Rules[0].To).To(HaveLen(1))
+				Expect(ap.Spec.Rules[0].To[0].Operation.Paths).To(HaveLen(1))
+				Expect(ap.Spec.Rules[0].To[0].Operation.Paths[0]).To(Equal(headersPath))
+			default:
+				Fail("Expected Custom or Allow AuthorizationPolicy")
+			}
+		}
+
 	})
 
 	It("should create AP for ExtAuth restrictions", func() {
