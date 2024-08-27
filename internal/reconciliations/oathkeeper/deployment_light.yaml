@@ -9,7 +9,7 @@ metadata:
     app.kubernetes.io/instance: ory
     app.kubernetes.io/name: oathkeeper
 spec:
-  replicas: {{ .Replicas }}
+  replicas: {{ if .Replicas }} {{ .Replicas }} {{ else }} 1 {{ end }}
   selector:
     matchLabels:
       app.kubernetes.io/instance: ory
