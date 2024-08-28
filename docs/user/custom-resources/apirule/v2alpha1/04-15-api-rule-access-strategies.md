@@ -99,6 +99,8 @@ spec:
 
 The provider can then be referenced in the APIRule configuration.
 
+### Securing endpoint with extAuth
+
 ```yaml
 apiVersion: gateway.kyma-project.io/v2alpha1
 kind: APIRule
@@ -121,3 +123,34 @@ spec:
 ```
 
 This configuration allows access to the `/get` path of the `user-service` service. Based on this APIRule, a `CUSTOM` Istio AuthorizationPolicy is created with the `ext-auth-provider` provider, securing access.
+
+### Securing endpoint with extAuth and JWT restrictions
+
+```yaml
+apiVersion: gateway.kyma-project.io/v2alpha1
+kind: APIRule
+metadata:
+  name: ext-authz
+  namespace: user-system
+spec:
+  hosts:
+    - na.example.com
+  service:
+    name: user-service
+    port: 8000
+  gateway: kyma-system/kyma-gateway
+  rules:
+    - path: "/get"
+      methods: ["GET"]
+      extAuth:
+        authorizers:
+          - x-ext-authz
+        restrictions:
+          authentications:
+            - issuer: https://example.com
+              jwksUri: https://example.com/.well-known/jwks.json
+          authorizations:
+            - audiences: ["app1"]
+```
+
+This configuration allows access to the `/get` path of the `user-service` service, as in the example in the previous section. The access is further restricted by the JWT configuration, specified in the `restrictions` field.
