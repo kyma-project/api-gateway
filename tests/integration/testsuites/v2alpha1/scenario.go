@@ -111,11 +111,6 @@ func (s *scenario) callingTheEndpointWithHeader(path, headerName, value string, 
 	return s.httpClient.CallEndpointWithHeadersWithRetries(requestHeaders, fmt.Sprintf("%s/%s", s.Url, strings.TrimLeft(path, "/")), &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher})
 }
 
-func (s *scenario) callingTheEndpointWithHeaderAndNoToken(path, headerName, value string, lower, higher int) error {
-	requestHeaders := map[string]string{headerName: value}
-	return s.httpClient.CallEndpointWithHeadersWithRetries(requestHeaders, fmt.Sprintf("%s/%s", s.Url, strings.TrimLeft(path, "/")), &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher})
-}
-
 func (s *scenario) callingTheEndpointWithHeaderAndInvalidJwt(path, headerName, _, value string, lower, higher int) error {
 	requestHeaders := map[string]string{headerName: value, testcontext.AuthorizationHeaderName: testcontext.AnyToken}
 	return s.httpClient.CallEndpointWithHeadersWithRetries(requestHeaders, fmt.Sprintf("%s/%s", s.Url, strings.TrimLeft(path, "/")), &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher})
@@ -130,8 +125,7 @@ func (s *scenario) thereIsAnJwtSecuredPath(path string) {
 	s.ManifestTemplate["jwtSecuredPath"] = path
 }
 
-func (s *scenario) emptyStep() {
-}
+func (s *scenario) emptyStep() {}
 
 func (s *scenario) thereIsAHttpbinService() error {
 	resources, err := manifestprocessor.ParseFromFileWithTemplate("testing-app.yaml", s.ApiResourceDirectory, s.ManifestTemplate)
@@ -151,6 +145,7 @@ func (s *scenario) thereIsAHttpbinService() error {
 func (s *scenario) thereIsAnEndpointWithExtAuth(provider, path string) error {
 	s.ManifestTemplate["extAuthPath"] = path
 	s.ManifestTemplate["extAuthProvider"] = provider
+
 	return nil
 }
 

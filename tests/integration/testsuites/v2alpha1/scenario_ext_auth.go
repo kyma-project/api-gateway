@@ -3,22 +3,22 @@ package v2alpha1
 import "github.com/cucumber/godog"
 
 func initExtAuthCommon(ctx *godog.ScenarioContext, ts *testsuite) {
-	scenario := ts.createScenario("ext-auth-common.yaml", "ext-auth-common")
+	s := ts.createScenario("ext-auth-common.yaml", "ext-auth-common")
 
-	ctx.Step(`ExtAuthCommon: There is a httpbin service$`, scenario.thereIsAHttpbinService)
-	ctx.Step(`ExtAuthCommon: There is an endpoint secured with ExtAuth "([^"]*)" on path "([^"]*)"$`, scenario.thereIsAnEndpointWithExtAuth)
-	ctx.Step(`ExtAuthCommon: The APIRule is applied$`, scenario.theAPIRuleIsApplied)
-	ctx.Step(`ExtAuthCommon: Calling the "([^"]*)" endpoint with header "([^"]*)" with value "([^"]*)" should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithHeader)
+	ctx.Step(`^ExtAuthCommon: There is a httpbin service$`, s.thereIsAHttpbinService)
+	ctx.Step(`^ExtAuthCommon: There is an endpoint secured with ExtAuth "([^"]*)" on path "([^"]*)"$`, s.thereIsAnEndpointWithExtAuth)
+	ctx.Step(`^ExtAuthCommon: The APIRule is applied$`, s.theAPIRuleIsApplied)
+	ctx.Step(`^ExtAuthCommon: Calling the "([^"]*)" endpoint with header "([^"]*)" with value "([^"]*)" should result in status between (\d+) and (\d+)$`, s.callingTheEndpointWithHeader)
 }
 
 func initExtAuthJwt(ctx *godog.ScenarioContext, ts *testsuite) {
-	scenario := ts.createScenario("ext-auth-jwt.yaml", "ext-auth-jwt")
+	s := ts.createScenario("ext-auth-jwt.yaml", "ext-auth-jwt")
 
-	ctx.Step(`ExtAuthJwt: There is a httpbin service$`, scenario.thereIsAHttpbinService)
-	ctx.Step(`ExtAuthJwt: There is an endpoint secured with ExtAuth "([^"]*)" on path "([^"]*)"$`, scenario.thereIsAnEndpointWithExtAuth)
-	ctx.Step(`ExtAuthJwt: The endpoint has JWT restrictions$`, scenario.theEndpointHasJwtRestrictionsWithScope)
-	ctx.Step(`ExtAuthJwt: The APIRule is applied$`, scenario.theAPIRuleIsApplied)
-	ctx.Step(`ExtAuthJwt: Calling the "([^"]*)" endpoint with header "([^"]*)" with value "([^"]*)" and no token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithHeaderAndNoToken)
-	ctx.Step(`ExtAuthJwt: Calling the "([^"]*)" endpoint with header "([^"]*)" with value "([^"]*)" and an invalid "([^"]*)" token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithHeaderAndInvalidJwt)
-	ctx.Step(`ExtAuthJwt: Calling the "([^"]*)" endpoint with header "([^"]*)" with value "([^"]*)" and a valid "([^"]*)" token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithHeaderAndValidJwt)
+	ctx.Step(`^ExtAuthJwt: There is a httpbin service$`, s.thereIsAHttpbinService)
+	ctx.Step(`^ExtAuthJwt: There is an endpoint secured with ExtAuth "([^"]*)" on path "([^"]*)"$`, s.thereIsAnEndpointWithExtAuth)
+	ctx.Step(`^ExtAuthJwt: The endpoint has JWT restrictions$`, s.theEndpointHasJwtRestrictionsWithScope)
+	ctx.Step(`^ExtAuthJwt: The APIRule is applied$`, s.theAPIRuleIsApplied)
+	ctx.Step(`^ExtAuthJwt: Calling the "([^"]*)" endpoint with header "([^"]*)" with value "([^"]*)" and no token should result in status between (\d+) and (\d+)$`, s.callingTheEndpointWithHeader)
+	ctx.Step(`^ExtAuthJwt: Calling the "([^"]*)" endpoint with header "([^"]*)" with value "([^"]*)" and an invalid "([^"]*)" token should result in status between (\d+) and (\d+)$`, s.callingTheEndpointWithHeaderAndInvalidJwt)
+	ctx.Step(`^ExtAuthJwt: Calling the "([^"]*)" endpoint with header "([^"]*)" with value "([^"]*)" and a valid "([^"]*)" token should result in status between (\d+) and (\d+)$`, s.callingTheEndpointWithHeaderAndValidJwt)
 }

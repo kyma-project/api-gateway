@@ -3,13 +3,11 @@ package resource
 import (
 	"context"
 	"fmt"
-	"log"
-	"time"
-
 	"github.com/avast/retry-go/v4"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/client"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"log"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -314,7 +312,6 @@ func (m *Manager) CreateResourceWithoutNS(client dynamic.Interface, resourceSche
 // UpdateResource updates a given k8s resource
 func (m *Manager) UpdateResource(client dynamic.Interface, resourceSchema schema.GroupVersionResource, namespace string, name string, updateTo unstructured.Unstructured) error {
 	return retry.Do(func() error {
-		time.Sleep(5 * time.Second) //TODO: delete after waiting for resource creation is implemented
 		toUpdate, err := client.Resource(resourceSchema).Namespace(namespace).Get(context.Background(), name, metav1.GetOptions{})
 		if err != nil {
 			return err
@@ -332,7 +329,6 @@ func (m *Manager) UpdateResource(client dynamic.Interface, resourceSchema schema
 // UpdateResourceWithoutNS updates a given k8s resource without namespace
 func (m *Manager) UpdateResourceWithoutNS(client dynamic.Interface, resourceSchema schema.GroupVersionResource, name string, updateTo unstructured.Unstructured) error {
 	return retry.Do(func() error {
-		time.Sleep(5 * time.Second) //TODO: delete after waiting for resource creation is implemented
 		toUpdate, err := client.Resource(resourceSchema).Get(context.Background(), name, metav1.GetOptions{})
 		if err != nil {
 			return err

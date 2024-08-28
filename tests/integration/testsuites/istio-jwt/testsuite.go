@@ -5,11 +5,9 @@ import (
 	_ "embed"
 	"encoding/base64"
 	"fmt"
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/hooks"
 	"log"
 	"path"
-	"time"
-
-	"github.com/kyma-project/api-gateway/tests/integration/pkg/hooks"
 
 	"github.com/cucumber/godog"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/auth"
@@ -144,8 +142,6 @@ func (t *testsuite) Setup() error {
 	if err != nil {
 		return err
 	}
-
-	time.Sleep(time.Duration(t.config.ReqDelay) * time.Second)
 
 	log.Printf("Creating common tests resources")
 	_, err = t.resourceManager.CreateResources(t.k8sClient, globalCommonResources...)

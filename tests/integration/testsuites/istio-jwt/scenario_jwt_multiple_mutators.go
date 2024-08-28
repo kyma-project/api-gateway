@@ -13,13 +13,13 @@ import (
 func initMultipleMutators(ctx *godog.ScenarioContext, ts *testsuite) {
 	scenario := ts.createScenario("istio-jwt-multiple-mutators.yaml", "istio-jwt-multiple-mutators")
 
-	ctx.Step(`JwtMultipleMutators: There is a httpbin service$`, scenario.thereIsAHttpbinService)
-	ctx.Step(`JwtMultipleMutators: There is an endpoint on path "([^"]*)" with a header mutator setting "([^"]*)" header to "([^"]*)" and "([^"]*)" header to "([^"]*)"$`, scenario.thereIsAnEndpointWithHeaderMutatorWithTwoHeaders)
-	ctx.Step(`JwtMultipleMutators: There is an endpoint on path "([^"]*)" with a cookie mutator setting "([^"]*)" cookie to "([^"]*)" and "([^"]*)" cookie to "([^"]*)"$`, scenario.thereIsAnEndpointWithCookieMutatorWithTwoCookies)
-	ctx.Step(`JwtMultipleMutators: The APIRule is applied$`, scenario.theAPIRuleIsApplied)
-	ctx.Step(`JwtMultipleMutators: Calling the "([^"]*)" endpoint should return response with cookies "([^"]*)" with value "([^"]*)" and "([^"]*)" with value "([^"]*)"$`, scenario.shouldReturnResponseWithKeyValuePairs)
-	ctx.Step(`JwtMultipleMutators: Calling the "([^"]*)" endpoint should return response with headers "([^"]*)" with value "([^"]*)" and "([^"]*)" with value "([^"]*)"$`, scenario.shouldReturnResponseWithKeyValuePairs)
-	ctx.Step(`JwtMultipleMutators: Teardown httpbin service$`, scenario.teardownHttpbinService)
+	ctx.Step(`^JwtMultipleMutators: There is a httpbin service$`, scenario.thereIsAHttpbinService)
+	ctx.Step(`^JwtMultipleMutators: There is an endpoint on path "([^"]*)" with a header mutator setting "([^"]*)" header to "([^"]*)" and "([^"]*)" header to "([^"]*)"$`, scenario.thereIsAnEndpointWithHeaderMutatorWithTwoHeaders)
+	ctx.Step(`^JwtMultipleMutators: There is an endpoint on path "([^"]*)" with a cookie mutator setting "([^"]*)" cookie to "([^"]*)" and "([^"]*)" cookie to "([^"]*)"$`, scenario.thereIsAnEndpointWithCookieMutatorWithTwoCookies)
+	ctx.Step(`^JwtMultipleMutators: The APIRule is applied$`, scenario.theAPIRuleIsApplied)
+	ctx.Step(`^JwtMultipleMutators: Calling the "([^"]*)" endpoint should return response with cookies "([^"]*)" with value "([^"]*)" and "([^"]*)" with value "([^"]*)"$`, scenario.shouldReturnResponseWithKeyValuePairs)
+	ctx.Step(`^JwtMultipleMutators: Calling the "([^"]*)" endpoint should return response with headers "([^"]*)" with value "([^"]*)" and "([^"]*)" with value "([^"]*)"$`, scenario.shouldReturnResponseWithKeyValuePairs)
+	ctx.Step(`^JwtMultipleMutators: Teardown httpbin service$`, scenario.teardownHttpbinService)
 }
 
 func (s *scenario) thereIsAnEndpointWithHeaderMutatorWithTwoHeaders(_, header1, header1Value, header2, header2Value string) error {
