@@ -3,11 +3,9 @@ package gateway
 import (
 	"context"
 	"github.com/go-logr/logr"
-	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"github.com/kyma-project/api-gateway/internal/processing/processors/migration"
-	"github.com/kyma-project/api-gateway/internal/processing/status"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"time"
 )
 
@@ -40,22 +38,14 @@ func doneReconcileMigrationRequeue(reconcilerPeriod time.Duration) (ctrl.Result,
 	return ctrl.Result{RequeueAfter: after}, nil
 }
 
-func (r *APIRuleReconciler) updateStatus(ctx context.Context, l logr.Logger, apiRule *gatewayv1beta1.APIRule, s status.ReconciliationStatus) (ctrl.Result, error) {
-	// TODO handle v2alpha1
-	err := s.UpdateStatus(status.Status{V1beta1Status: &apiRule.Status})
-	if err != nil {
-		l.Error(err, "Error updating APIRule status")
-		// try again
-		return doneReconcileErrorRequeue(r.OnErrorReconcilePeriod)
-	}
-
-	// finally update object status
+func (r *APIRuleReconciler) updateStatus(ctx context.Context, l logr.Logger,
+	apiRule client.Object) (ctrl.Result, error) {
 	l.Info("Updating APIRule status")
 	if err := r.Status().Update(ctx, apiRule); err != nil {
 		l.Error(err, "Error updating APIRule status")
 		return doneReconcileErrorRequeue(r.OnErrorReconcilePeriod)
 	}
-	if metav1.HasAnnotation(apiRule.ObjectMeta, migration.AnnotationName) {
+	if _, ok := apiRule.GetAnnotations()[migration.AnnotationName]; ok {
 		l.Info("Finished reconciliation", "next", r.MigrationReconcilePeriod)
 		return doneReconcileMigrationRequeue(r.MigrationReconcilePeriod)
 	}

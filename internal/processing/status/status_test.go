@@ -161,6 +161,7 @@ var _ = Describe("Status", func() {
 				}
 				s.GenerateStatusFromFailures(nil)
 				Expect(s.ApiRuleStatus.State).To(Equal(gatewayv2alpha1.Ready))
+				Expect(s.ApiRuleStatus.Description).To(Equal("No errors"))
 			})
 		})
 		Context("UpdateStatus", func() {
@@ -168,7 +169,7 @@ var _ = Describe("Status", func() {
 				s := v2alpha1status.ReconciliationV2alpha1Status{
 					ApiRuleStatus: &gatewayv2alpha1.APIRuleStatus{},
 				}
-				Expect(s.UpdateStatus(v2alpha1status.Status{})).To(HaveOccurred())
+				Expect(s.UpdateStatus(nil)).To(HaveOccurred())
 			})
 			It("should update status from correct Status", func() {
 				s := v2alpha1status.ReconciliationV2alpha1Status{
@@ -176,10 +177,10 @@ var _ = Describe("Status", func() {
 						State:       gatewayv2alpha1.Error,
 						Description: "some description",
 					}}
-				expect := v2alpha1status.Status{V2alpha1Status: &gatewayv2alpha1.APIRuleStatus{}}
+				expect := &gatewayv2alpha1.APIRuleStatus{}
 				Expect(s.UpdateStatus(expect)).ToNot(HaveOccurred())
-				Expect(expect.V2alpha1Status.State).To(Equal(gatewayv2alpha1.Error))
-				Expect(expect.V2alpha1Status.Description).To(Equal("some description"))
+				Expect(expect.State).To(Equal(gatewayv2alpha1.Error))
+				Expect(expect.Description).To(Equal("some description"))
 
 			})
 		})

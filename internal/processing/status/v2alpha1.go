@@ -69,12 +69,12 @@ func (s ReconciliationV2alpha1Status) GenerateStatusFromFailures(failures []vali
 	return s
 }
 
-func (s ReconciliationV2alpha1Status) UpdateStatus(status Status) error {
-	if status.V2alpha1Status == nil {
-		return fmt.Errorf("v2alpha1Status is nil")
+func (s ReconciliationV2alpha1Status) UpdateStatus(status any) error {
+	st, ok := status.(*gatewayv2alpha1.APIRuleStatus)
+	if !ok {
+		return fmt.Errorf("status has unexpected type %T", status)
 	}
 
-	st := status.V2alpha1Status
 	st.Description = s.ApiRuleStatus.Description
 	st.State = s.ApiRuleStatus.State
 

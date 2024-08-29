@@ -87,11 +87,12 @@ func generateStatusFromErrors(errors []error) *gatewayv1beta1.APIRuleResourceSta
 	return status
 }
 
-func (s ReconciliationV1beta1Status) UpdateStatus(status Status) error {
-	if status.V1beta1Status == nil {
-		return fmt.Errorf("v1beta1Status is nil")
+func (s ReconciliationV1beta1Status) UpdateStatus(status any) error {
+	st, ok := status.(*gatewayv1beta1.APIRuleStatus)
+	if !ok {
+		return fmt.Errorf("status has unexpected type %T", status)
 	}
-	st := status.V1beta1Status
+
 	st.APIRuleStatus = s.ApiRuleStatus
 	st.VirtualServiceStatus = s.VirtualServiceStatus
 	st.AccessRuleStatus = s.AccessRuleStatus
