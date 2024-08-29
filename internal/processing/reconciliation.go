@@ -91,7 +91,7 @@ func applyChanges(ctx context.Context, client client.Client, changes ...*ObjectC
 
 func applyChange(ctx context.Context, client client.Client, change *ObjectChange) (status.ResourceSelector, error) {
 	var err error
-
+	// TODO
 	switch change.Action {
 	case create:
 		err = client.Create(ctx, change.Obj)

@@ -1,17 +1,12 @@
 package migration_test
 
 import (
-	"context"
 	"github.com/go-logr/logr"
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
-	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	"github.com/kyma-project/api-gateway/internal/processing/processors/migration"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
-	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
 var _ = Describe("ApplyMigrationAnnotation", func() {
@@ -24,21 +19,11 @@ var _ = Describe("ApplyMigrationAnnotation", func() {
 			},
 		}
 
-		scheme := runtime.NewScheme()
-		err := gatewayv2alpha1.AddToScheme(scheme)
-		Expect(err).To(BeNil())
-		err = gatewayv1beta1.AddToScheme(scheme)
-		Expect(err).To(BeNil())
-
-		k8sClient := fake.NewClientBuilder().WithScheme(scheme).WithObjects(&apirule).Build()
 		log := logr.Discard()
 		// when
-		err = migration.ApplyMigrationAnnotation(context.Background(), k8sClient, &log, &apirule)
-		Expect(err).To(BeNil())
+		migration.ApplyMigrationAnnotation(log, &apirule)
 
 		// then
-		err = k8sClient.Get(context.Background(), types.NamespacedName{Name: "test-name", Namespace: "test-namespace"}, &apirule)
-		Expect(err).To(BeNil())
 		Expect(apirule.GetAnnotations()).To(HaveKey("gateway.kyma-project.io/migration-step"))
 		Expect(apirule.GetAnnotations()["gateway.kyma-project.io/migration-step"]).To(Equal("apply-istio-authorization"))
 	})
@@ -54,22 +39,12 @@ var _ = Describe("ApplyMigrationAnnotation", func() {
 			},
 		}
 
-		scheme := runtime.NewScheme()
-		err := gatewayv2alpha1.AddToScheme(scheme)
-		Expect(err).To(BeNil())
-		err = gatewayv1beta1.AddToScheme(scheme)
-		Expect(err).To(BeNil())
-
-		k8sClient := fake.NewClientBuilder().WithScheme(scheme).WithObjects(&apirule).Build()
 		log := logr.Discard()
 
 		// when
-		err = migration.ApplyMigrationAnnotation(context.Background(), k8sClient, &log, &apirule)
-		Expect(err).To(BeNil())
+		migration.ApplyMigrationAnnotation(log, &apirule)
 
 		// then
-		err = k8sClient.Get(context.Background(), types.NamespacedName{Name: "test-name", Namespace: "test-namespace"}, &apirule)
-		Expect(err).To(BeNil())
 		Expect(apirule.GetAnnotations()).ToNot(HaveKey("gateway.kyma-project.io/migration-step"))
 	})
 })

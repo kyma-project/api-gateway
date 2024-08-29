@@ -274,9 +274,9 @@ func (c *scenario) thereIsAnORYRule(name string) error {
 	if err != nil {
 		return err
 	}
-	resource := bytes.NewBuffer(apiGatewayCRYaml)
+	r := bytes.NewBuffer(apiGatewayCRYaml)
 	var oryRule oryv1alpha1.Rule
-	err = yaml.Unmarshal(resource.Bytes(), &oryRule)
+	err = yaml.Unmarshal(r.Bytes(), &oryRule)
 	if err != nil {
 		return err
 	}
@@ -357,6 +357,7 @@ func (c *scenario) disableKymaGateway() error {
 	if err != nil {
 		return err
 	}
+
 	apiGatewayCR.Object["spec"].(map[string]interface{})["enableKymaGateway"] = false
 	_, err = c.k8sClient.Resource(res).Update(context.Background(), apiGatewayCR, metav1.UpdateOptions{})
 	if err != nil {

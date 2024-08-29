@@ -94,7 +94,7 @@ var _ = Describe("nextMigrationStep", func() {
 		step := nextMigrationStep(&gatewayv1beta1.APIRule{
 			ObjectMeta: metav1.ObjectMeta{
 				Annotations: map[string]string{
-					annotationName: annotation,
+					AnnotationName: annotation,
 				},
 			},
 		})

@@ -173,7 +173,7 @@ func UpdateApiGatewayStatus(ctx context.Context, k8sClient client.Client, apiGat
 		}
 
 		apiGatewayCR.Status = newStatus
-
+		// TODO: remove intermediate update call
 		if updateErr := k8sClient.Status().Update(ctx, apiGatewayCR); updateErr != nil {
 			return updateErr
 		}
