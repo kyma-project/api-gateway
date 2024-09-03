@@ -36,7 +36,7 @@ var _ = Describe("Validate", func() {
 		//then
 		Expect(problems).To(HaveLen(1))
 		Expect(problems[0].AttributePath).To(Equal(".spec"))
-		Expect(problems[0].Message).To(Equal("APIRule in v2alpha1 version has an empty spec, check the troubleshooting guide"))
+		Expect(problems[0].Message).To(Equal("APIRule in version v2alpha1 contains an empty spec. To troubleshoot, see https://kyma-project.io/#/api-gateway/user/troubleshooting-guides/03-70-empty-apirule-spec."))
 	})
 
 	It("should invoke rules validation", func() {
