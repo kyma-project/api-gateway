@@ -9,9 +9,9 @@ Feature: Exposing endpoints with JWT
     And Common: Calling the "/ip" endpoint with a valid "JWT" token should result in status between 200 and 299
     And Common: Teardown httpbin service
 
-  Scenario: Calling a httpbin endpoint secured on wildcard `/.*` path
+  Scenario: Calling a httpbin endpoint secured on wildcard `*` path
     Given Regex: There is a httpbin service
-    And Regex: There is an endpoint secured with JWT on path "/.*"
+    And Regex: There is an endpoint secured with JWT on path "*"
     When Regex: The APIRule is applied
     Then Regex: Calling the "/ip" endpoint without a token should result in status between 400 and 403
     And Regex: Calling the "/ip" endpoint with an invalid token should result in status between 400 and 403
@@ -21,9 +21,9 @@ Feature: Exposing endpoints with JWT
     And Regex: Calling the "/headers" endpoint with a valid "JWT" token should result in status between 200 and 299
     And Regex: Teardown httpbin service
 
-  Scenario: Calling a httpbin endpoint secured on wildcard `/*` path
+  Scenario: Calling a httpbin endpoint secured on wildcard `*` path
     Given Prefix: There is a httpbin service
-    And Prefix: There is an endpoint secured with JWT on path "/*"
+    And Prefix: There is an endpoint secured with JWT on path "*"
     When Prefix: The APIRule is applied
     Then Prefix: Calling the "/ip" endpoint without a token should result in status between 400 and 403
     And Prefix: Calling the "/ip" endpoint with an invalid token should result in status between 400 and 403
