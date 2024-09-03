@@ -15,6 +15,6 @@ export GARDENER_PROVIDER="aws"
 export GARDENER_REGION="eu-west-1"
 export GARDENER_PROVIDER_SECRET_NAME="aws-gardener-access"
 export GARDENER_PROJECT_NAME="goats"
-export GARDENER_CLUSTER_VERSION="1.27.8"
+export GARDENER_CLUSTER_VERSION="1.29.7"
 
 ./tests/integration/scripts/custom-domain-gardener-gh.sh
