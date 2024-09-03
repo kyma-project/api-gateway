@@ -11,6 +11,6 @@ spec:
     name: httpbin-{{.TestID}}
     port: 8000
   rules:
-    - path: *
+    - path: "*"
       methods: ["OPTIONS"]
       noAuth: true
