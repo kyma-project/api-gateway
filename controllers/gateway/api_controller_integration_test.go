@@ -1589,6 +1589,80 @@ var _ = Describe("APIRule Controller", Serial, func() {
 		})
 	})
 
+	Context("APIRule version v2alpha1 rule path validation", func() {
+
+		It("should fail when path consists of a path and *", func() {
+			// given
+			apiRuleName := generateTestName(testNameBase, testIDLength)
+			serviceName := generateTestName(testServiceNameBase, testIDLength)
+			serviceHost := gatewayv2alpha1.Host("example.com")
+			serviceHosts := []*gatewayv2alpha1.Host{&serviceHost}
+
+			rule := testRulev2alpha1("/img*", []gatewayv2alpha1.HttpMethod{http.MethodGet})
+			rule.NoAuth = ptr.To(true)
+			apiRule := testApiRulev2alpha1(apiRuleName, testNamespace, serviceName, testNamespace, serviceHosts, testServicePort, []gatewayv2alpha1.Rule{rule})
+			svc := testService(serviceName, testNamespace, testServicePort)
+
+			Expect(c.Create(context.Background(), svc)).Should(Succeed())
+
+			// when
+			err := c.Create(context.Background(), apiRule)
+
+			// then
+			Expect(err).Should(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring("spec.rules[0].path: Invalid value: \"/img*\": spec.rules[0].path"))
+			defer func() {
+				apiRulev2alpha1Teardown(apiRule)
+				serviceTeardown(svc)
+			}()
+		})
+
+		It("should apply APIRule when path contains only *", func() {
+			// given
+			apiRuleName := generateTestName(testNameBase, testIDLength)
+			serviceName := generateTestName(testServiceNameBase, testIDLength)
+			serviceHost := gatewayv2alpha1.Host("example.com")
+			serviceHosts := []*gatewayv2alpha1.Host{&serviceHost}
+
+			rule := testRulev2alpha1("*", []gatewayv2alpha1.HttpMethod{http.MethodGet})
+			rule.NoAuth = ptr.To(true)
+			apiRule := testApiRulev2alpha1(apiRuleName, testNamespace, serviceName, testNamespace, serviceHosts, testServicePort, []gatewayv2alpha1.Rule{rule})
+			svc := testService(serviceName, testNamespace, testServicePort)
+
+			Expect(c.Create(context.Background(), svc)).Should(Succeed())
+
+			// when then
+			Expect(c.Create(context.Background(), apiRule)).Should(Succeed())
+			defer func() {
+				apiRulev2alpha1Teardown(apiRule)
+				serviceTeardown(svc)
+			}()
+		})
+
+		It("should apply APIRule when path contains no *", func() {
+			// given
+			apiRuleName := generateTestName(testNameBase, testIDLength)
+			serviceName := generateTestName(testServiceNameBase, testIDLength)
+			serviceHost := gatewayv2alpha1.Host("example.com")
+			serviceHosts := []*gatewayv2alpha1.Host{&serviceHost}
+
+			rule := testRulev2alpha1("/img/1", []gatewayv2alpha1.HttpMethod{http.MethodGet})
+			rule.NoAuth = ptr.To(true)
+			apiRule := testApiRulev2alpha1(apiRuleName, testNamespace, serviceName, testNamespace, serviceHosts, testServicePort, []gatewayv2alpha1.Rule{rule})
+			svc := testService(serviceName, testNamespace, testServicePort)
+
+			Expect(c.Create(context.Background(), svc)).Should(Succeed())
+
+			// when then
+			Expect(c.Create(context.Background(), apiRule)).Should(Succeed())
+			defer func() {
+				apiRulev2alpha1Teardown(apiRule)
+				serviceTeardown(svc)
+			}()
+		})
+
+	})
+
 	It("APIRule in status Error should reconcile to status OK when root cause of error is fixed", func() {
 		// given
 		updateJwtHandlerTo(helpers.JWT_HANDLER_ISTIO)
