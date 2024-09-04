@@ -74,7 +74,7 @@ func hasInvalidAuthentications(parentAttributePath string, authentications []*ga
 			failures = append(failures, validation.Failure{AttributePath: attrPath, Message: fmt.Sprintf("value is empty or not a valid uri err=%s", issuerErr)})
 		}
 
-		invalidJwksUri, err := validation.IsInvalidURL(authentication.JwksUri)
+		invalidJwksUri, err := validation.IsInvalidURI(authentication.JwksUri)
 		if invalidJwksUri {
 			attrPath := fmt.Sprintf("%s[%d]%s", authenticationsAttrPath, i, ".jwksUri")
 			failures = append(failures, validation.Failure{AttributePath: attrPath, Message: fmt.Sprintf("value is empty or not a valid uri err=%s", err)})
@@ -194,7 +194,7 @@ func validateJwtIssuer(issuer string) error {
 
 	// If issuer contains ':' it must be a valid URI, see https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.1
 	if strings.Contains(issuer, ":") {
-		if isInvalid, err := validation.IsInvalidURL(issuer); isInvalid {
+		if isInvalid, err := validation.IsInvalidURI(issuer); isInvalid {
 			return err
 		}
 	}

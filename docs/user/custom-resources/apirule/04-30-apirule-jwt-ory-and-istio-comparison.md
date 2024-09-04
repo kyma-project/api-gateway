@@ -103,7 +103,7 @@ spec:
 <!-- tabs:end -->
 
 > [!WARNING]
->  Both `jwks_urls` and `trusted_issuers` must be valid URLs. Although HTTP is allowed, it is recommended that you use only HTTPS endpoints. 
+>  Both `jwks_urls` and `trusted_issuers` must be valid URIs. Although HTTP is allowed, it is recommended that you use only HTTPS endpoints. 
 
 > [!WARNING]
 >  You can define multiple JWT issuers, but each of them must be unique.

@@ -361,9 +361,16 @@ func (h HttpRouteHeadersBuilder) SetHostHeader(hostname string) HttpRouteHeaders
 	return h
 }
 
-// SetRequestCookies sets the Cookie header and expects a string of the form "cookie-name1=cookie-value1; cookie-name2=cookie-value2; ..."
-func (h HttpRouteHeadersBuilder) SetRequestCookies(cookies string) HttpRouteHeadersBuilder {
-	h.value.Request.Set["Cookie"] = cookies
+// SetRequestCookies sets the Cookie header based on a map[string]string
+// The Cookie header is built as "key1=value1; key2=value2; ..."
+func (h HttpRouteHeadersBuilder) SetRequestCookies(cookies map[string]string) HttpRouteHeadersBuilder {
+	var cookiesSlice []string
+	for name, value := range cookies {
+		cookiesSlice = append(cookiesSlice, fmt.Sprintf("%s=%s", name, value))
+	}
+
+	toSet := strings.Join(cookiesSlice, "; ")
+	h.value.Request.Set["Cookie"] = toSet
 	return h
 }
 

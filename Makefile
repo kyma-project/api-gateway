@@ -92,12 +92,23 @@ test: manifests generate fmt vet envtest ## Generate manifests and run tests.
 	KUBEBUILDER_CONTROLPLANE_START_TIMEOUT=2m KUBEBUILDER_CONTROLPLANE_STOP_TIMEOUT=2m KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" go test $(shell go list ./... | grep -v /tests/integration) -coverprofile cover.out
 
 .PHONY: test-integration
-test-integration: generate fmt vet envtest test-integration-v2alpha1 ## Run integration tests.
-	source ./tests/integration/env_vars.sh && go test -timeout 1h ./tests/integration -v -race -run TestIstioJwt . && go test -timeout 1h ./tests/integration -v -race -run TestOryJwt . && TEST_CONCURRENCY=1 go test -timeout 1h ./tests/integration -v -race -run TestGateway .
+test-integration: test-integration-v2alpha1 test-integration-ory test-integration-istio test-integration-gateway
 
 .PHONY: test-integration-v2alpha1
-test-integration-v2alpha1: generate fmt vet envtest ## Run integration tests.
+test-integration-v2alpha1: generate fmt vet
 	source ./tests/integration/env_vars.sh && go test -timeout 1h ./tests/integration -v -race -run TestV2alpha1
+
+.PHONY: test-integration-ory
+test-integration-ory: generate fmt vet
+	source ./tests/integration/env_vars.sh && go test -timeout 1h ./tests/integration -v -race -run TestOryJwt
+
+.PHONY: test-integration-istio
+test-integration-istio: generate fmt vet
+	source ./tests/integration/env_vars.sh && go test -timeout 1h ./tests/integration -v -race -run TestIstioJwt
+
+.PHONY: test-integration-gateway
+test-integration-gateway: generate fmt vet
+	IS_GARDENER=$(IS_GARDENER) source ./tests/integration/env_vars.sh && TEST_CONCURRENCY=1 go test -timeout 1h ./tests/integration -run "^TestGateway$$" -v -race
 
 .PHONY: test-upgrade
 test-upgrade: generate fmt vet generate-upgrade-test-manifest install-istio deploy-latest-release ## Run API Gateway upgrade tests.
@@ -108,10 +119,6 @@ test-custom-domain: generate fmt vet
 	source ./tests/integration/env_vars_custom_domain.sh && bash -c "trap 'kubectl delete secret google-credentials -n default' EXIT; \
              kubectl create secret generic google-credentials -n default --from-file=serviceaccount.json=${TEST_SA_ACCESS_KEY_PATH}; \
              GODEBUG=netdns=cgo CGO_ENABLED=1 go test -timeout 1h ./tests/integration -run "^TestCustomDomain$$" -v -race"
-
-.PHONY: test-integration-gateway
-test-integration-gateway:
-	IS_GARDENER=$(IS_GARDENER) source ./tests/integration/env_vars.sh && TEST_CONCURRENCY=1 go test -timeout 1h ./tests/integration -run "^TestGateway$$" -v -race
 
 .PHONY: install-istio
 install-istio: create-namespace

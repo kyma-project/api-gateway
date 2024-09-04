@@ -82,7 +82,7 @@ spec:
 If the **issuer** contains `:`, it must be a valid URI. Otherwise, you get the following error, and the APIRule CR is not created:
 
 ```
-The APIRule "httpbin" is invalid: .spec.rules[0].jwt.authentications[0].issuer: value is empty or not a valid url
+The APIRule "httpbin" is invalid: .spec.rules[0].jwt.authentications[0].issuer: value is empty or not a valid URI
 ```
 
 ### Remedy

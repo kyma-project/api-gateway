@@ -3,14 +3,15 @@ package v2alpha1
 import (
 	"context"
 	"errors"
+	"github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1/authorizationpolicy"
+	"github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1/requestauthentication"
+	v2alpha1VirtualService "github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1/virtualservice"
 
 	"github.com/go-logr/logr"
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	"github.com/kyma-project/api-gateway/internal/processing"
-	"github.com/kyma-project/api-gateway/internal/processing/processors/istio"
 	"github.com/kyma-project/api-gateway/internal/processing/processors/migration"
-	v2alpha1VirtualService "github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1/virtualservice"
 	"github.com/kyma-project/api-gateway/internal/validation"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -55,8 +56,8 @@ func NewReconciliation(apiRuleV2alpha1 *gatewayv2alpha1.APIRule, apiRuleV1beta1 
 		processors = append(processors, migration.NewMigrationProcessors(apiRuleV2alpha1, apiRuleV1beta1, config, log)...)
 	} else {
 		processors = append(processors, v2alpha1VirtualService.NewVirtualServiceProcessor(config, apiRuleV2alpha1))
-		processors = append(processors, istio.Newv1beta1AuthorizationPolicyProcessor(config, log, apiRuleV1beta1))
-		processors = append(processors, istio.Newv1beta1RequestAuthenticationProcessor(config, apiRuleV1beta1))
+		processors = append(processors, authorizationpolicy.NewProcessor(log, apiRuleV2alpha1))
+		processors = append(processors, requestauthentication.NewProcessor(apiRuleV2alpha1))
 	}
 
 	/*

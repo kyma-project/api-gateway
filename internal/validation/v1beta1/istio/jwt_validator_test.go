@@ -36,7 +36,7 @@ var _ = Describe("JWT Handler validation", func() {
 			//then
 			Expect(problems).To(HaveLen(1))
 			Expect(problems[0].AttributePath).To(Equal("some.attribute.config.authentications[0].jwksUri"))
-			Expect(problems[0].Message).To(ContainSubstring("value is empty or not a valid url"))
+			Expect(problems[0].Message).To(ContainSubstring("value is empty or not a valid uri"))
 		})
 
 		It("Should fail validation when issuer and jwksUri are empty", func() {
@@ -49,9 +49,9 @@ var _ = Describe("JWT Handler validation", func() {
 			//then
 			Expect(problems).To(HaveLen(2))
 			Expect(problems[0].AttributePath).To(Equal("some.attribute.config.authentications[0].issuer"))
-			Expect(problems[0].Message).To(ContainSubstring("value is empty or not a valid url"))
+			Expect(problems[0].Message).To(ContainSubstring("value is empty or not a valid uri"))
 			Expect(problems[1].AttributePath).To(Equal("some.attribute.config.authentications[0].jwksUri"))
-			Expect(problems[1].Message).To(ContainSubstring("value is empty or not a valid url"))
+			Expect(problems[1].Message).To(ContainSubstring("value is empty or not a valid uri"))
 		})
 
 		It("Should fail validation when issuer contains ':' but is not a URI", func() {
@@ -64,7 +64,7 @@ var _ = Describe("JWT Handler validation", func() {
 			//then
 			Expect(problems).To(HaveLen(1))
 			Expect(problems[0].AttributePath).To(Equal("some.attribute.config.authentications[0].issuer"))
-			Expect(problems[0].Message).To(ContainSubstring("value is empty or not a valid url"))
+			Expect(problems[0].Message).To(ContainSubstring("value is empty or not a valid uri"))
 		})
 
 		It("Should pass validation when issuer contains ':' and is a URI", func() {

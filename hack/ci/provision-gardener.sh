@@ -3,17 +3,31 @@
 #
 ##Description: This script provisions a Gardener cluster with config specified in environmental variables
 
-set -euo pipefail
+set -eo pipefail
 
 function check_required_vars() {
   local requiredVarMissing=false
   for var in "$@"; do
-    if [ -z "${var}" ]; then
+    if [ -z "${!var}" ]; then
       >&2 echo "Environment variable ${var} is required but not set"
       requiredVarMissing=true
     fi
   done
   if [ "${requiredVarMissing}" = true ] ; then
+    exit 2
+  fi
+}
+
+function check_required_files() {
+  local requiredFileMissing=false
+  for file in "$@"; do
+    path=$(eval echo "\$$file")
+    if [ ! -f "${path}" ]; then
+        >&2 echo "File '${path}' required but not found"
+        requiredFileMissing=true
+    fi
+  done
+  if [ "${requiredFileMissing}" = true ] ; then
     exit 2
   fi
 }
@@ -33,12 +47,32 @@ requiredVars=(
     SCALER_MIN
 )
 
+requiredFiles=(
+    GARDENER_KUBECONFIG
+)
+
 check_required_vars "${requiredVars[@]}"
+check_required_files "${requiredFiles[@]}"
+
+if [ ! -f "./hack/ci/shoot_${GARDENER_PROVIDER}.yaml" ]; then
+    >&2 echo "File './hack/ci/shoot_${GARDENER_PROVIDER}.yaml' required but not found"
+    exit 2
+fi
 
 # render and applyshoot template
-shoot_template=$(envsubst < ./tests/integration/scripts/shoot_${GARDENER_PROVIDER}.yaml)
+shoot_template=$(envsubst < "./hack/ci/shoot_${GARDENER_PROVIDER}.yaml")
 
-echo "$shoot_template" | kubectl --kubeconfig "${GARDENER_KUBECONFIG}" apply -f -
+echo "trying to apply shoot template into seed cluster"
+retries=0
+until (echo "$shoot_template" | kubectl --kubeconfig "${GARDENER_KUBECONFIG}" apply -f -); do
+  retries+=1
+  if [[ retries -gt 2 ]]; then
+    echo "could not apply shoot spec after 3 tries, exiting"
+    exit 1
+  fi
+  echo "failed, retrying in 15s"
+  sleep 15
+done
 
 echo "waiting fo cluster to be ready..."
 kubectl wait  --kubeconfig "${GARDENER_KUBECONFIG}" --for=condition=EveryNodeReady shoot/${CLUSTER_NAME} --timeout=17m
@@ -50,16 +84,14 @@ kubectl create  --kubeconfig "${GARDENER_KUBECONFIG}" \
     base64 -d > "${CLUSTER_NAME}_kubeconfig.yaml"
 
 # wait until apiserver /readyz endpoint returns "ok"
-isOK=""
 timeout=0
-until [[ $isOK == "ok" ]]; do
-  isOK=$(kubectl --kubeconfig "${CLUSTER_NAME}_kubeconfig.yaml" get --raw "/readyz")
+until (kubectl --kubeconfig "${CLUSTER_NAME}_kubeconfig.yaml" get --raw "/readyz"); do
+  timeout+=1
   # 5 minutes
   if [[ $timeout -gt 300 ]]; then
     echo "Timed out waiting for API Server to be ready"
     exit 1
   fi
-  timeout+=1
   sleep 1
 done
 

@@ -4,6 +4,9 @@ inputs:
   manager_image:
     description: 'Manager image used for test'
     required: true
+  test_make_target:
+    description: 'Make target for integration tests to run'
+    default: 'test-integration'
   client_id:
     description: "Client id for oidc"
     required: false
@@ -25,18 +28,11 @@ runs:
       run: |
         git fetch origin pull/${{ github.event.number }}/head:PR-${{ github.event.number }}
         git checkout PR-${{ github.event.number }}
-    - name: Create Single Cluster
-      uses: AbsaOSS/k3d-action@4e8b3239042be1dc0aed6c5eb80c13b18200fc79 #v2.4.0
+    - name: Create Cluster
+      uses: ./.github/actions/provision-k3d-cluster
       with:
-        cluster-name: "test-cluster-1"
-        args: >-
-          --agents 2
-          --image docker.io/rancher/k3s:v1.29.4-k3s1
-          --servers-memory=16g
-          --port 80:80@loadbalancer
-          --port 443:443@loadbalancer
-          --k3s-arg "--disable=traefik@server:0"
-    - name: Provision Kyma and run tests
+        version: "1.30.3"
+    - name: Deploy APIGateway manager and run tests
       shell: bash
       env:
         KYMA_DOMAIN: "local.kyma.dev"
@@ -46,24 +42,24 @@ runs:
         IMG: ${{ inputs.manager_image }}
       run: |
         if [ "${{ github.event_name }}" == "pull_request" ]; then
-          k3d image import ${{ inputs.manager_image }} -c test-cluster-1
+          k3d image import ${{ inputs.manager_image }} -c k3s-default
         fi
-        kubectl config use-context k3d-test-cluster-1
-        EXPORT_RESULT=true make install-istio deploy test-integration
+        kubectl config use-context k3d-k3s-default
+        EXPORT_RESULT=true make install-istio deploy ${{ inputs.test_make_target }}
     - name: Check deprecations
       run: |
         set -eou pipefail
         GO111MODULE=on go install github.com/prometheus/prom2json/cmd/prom2json@v1.3.3
-        kubectl get --context k3d-test-cluster-1 --raw /metrics | prom2json | jq '.[] | select(.name=="apiserver_requested_deprecated_apis").metrics[].labels' > deprecations.txt
+        kubectl get --context k3d-k3s-default --raw /metrics | prom2json | jq '.[] | select(.name=="apiserver_requested_deprecated_apis").metrics[].labels' > deprecations.txt
       shell: bash
     - uses: actions/upload-artifact@v4
       with:
-        name: html-reports
+        name: html-reports-${{ github.job }}-${{ inputs.test_make_target }}
         path: tests/integration/reports/
-    - uses: actions/upload-artifact@v4
-      with:
-        name: deprecation-report
-        path: deprecations.txt
     - name: Check that deprecations are empty
       run: if [[ $(cat deprecations.txt | jq 'select(.resource != "apirules")') ]]; then exit 1; fi
       shell: bash
+    - uses: actions/upload-artifact@v4
+      with:
+        name: deprecation-report-${{ github.job }}-${{ inputs.test_make_target }}
+        path: deprecations.txt

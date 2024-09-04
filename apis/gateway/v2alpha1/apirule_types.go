@@ -43,7 +43,7 @@ type APIRuleSpec struct {
 	Service *Service `json:"service,omitempty"`
 	// Specifies the Istio Gateway to be used.
 	// +kubebuilder:validation:MaxLength=127
-	// +kubebuilder:validation:XValidation:rule=`self.matches('^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?/([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)$')`,message="Gateway is not valid"
+	// +kubebuilder:validation:XValidation:rule=`self.matches('^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?/([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)$')`,message="Gateway must be in the namespace/name format"
 	Gateway *string `json:"gateway"`
 	// Specifies CORS headers configuration that will be sent downstream
 	// +optional
@@ -136,6 +136,18 @@ type Rule struct {
 	Jwt *JwtConfig `json:"jwt,omitempty"`
 	// +optional
 	Timeout *Timeout `json:"timeout,omitempty"`
+	// Request allows modifying the request before it is forwarded to the service.
+	// +optional
+	Request *Request `json:"request,omitempty"`
+}
+
+type Request struct {
+	// Cookies allow modifying the request cookies before it is forwarded to the service.
+	// +optional
+	Cookies map[string]string `json:"cookies,omitempty"`
+	// Headers allow modifying the request headers before it is forwarded to the service.
+	// +optional
+	Headers map[string]string `json:"headers,omitempty"`
 }
 
 // HttpMethod specifies the HTTP request method. The list of supported methods is defined in RFC 9910: HTTP Semantics and RFC 5789: PATCH Method for HTTP.

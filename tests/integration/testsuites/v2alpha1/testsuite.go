@@ -82,6 +82,8 @@ func (t *testsuite) InitScenarios(ctx *godog.ScenarioContext) {
 	initJwtIssuerJwksNotMatch(ctx, t)
 	initJwtFromHeader(ctx, t)
 	initJwtFromParam(ctx, t)
+	initRequestHeaders(ctx, t)
+	initRequestCookies(ctx, t)
 	initServiceFallback(ctx, t)
 	initServiceTwoNamespaces(ctx, t)
 	initServiceDifferentSameMethods(ctx, t)

@@ -12,7 +12,9 @@ export DISK_TYPE="gp2"
 export SCALER_MAX=3
 export SCALER_MIN=1
 export GARDENER_PROVIDER="aws"
-export GARDENER_REGION="eu-north-1"
-export GARDENER_ZONES="eu-north-1b,eu-north-1c,eu-north-1a"
+export GARDENER_REGION="eu-west-1"
+export GARDENER_PROVIDER_SECRET_NAME="aws-gardener-access"
+export GARDENER_PROJECT_NAME="goats"
+export GARDENER_CLUSTER_VERSION="1.29.7"
 
-./tests/integration/scripts/custom-domain-gardener.sh
+./hack/ci/custom-domain-gardener.sh $@

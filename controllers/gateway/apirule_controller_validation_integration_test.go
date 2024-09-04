@@ -89,7 +89,7 @@ var _ = Describe("Apirule controller validation", Serial, Ordered, func() {
 			}
 
 			expectedValidationErrors := []string{
-				"Attribute \".spec.rules[0].accessStrategies[0].config.authentications[0].jwksUri\": value is empty or not a valid url err=value is empty",
+				"Attribute \".spec.rules[0].accessStrategies[0].config.authentications[0].jwksUri\": value is empty or not a valid uri err=value is empty",
 			}
 
 			testJwtHandlerConfig(accessStrategies, gatewayv1beta1.StatusError, expectedValidationErrors)
@@ -169,8 +169,8 @@ var _ = Describe("Apirule controller validation", Serial, Ordered, func() {
 			}
 
 			expectedValidationErrors := []string{
-				"Attribute \".spec.rules[0].accessStrategies[0].config.authentications[0].issuer\": value is empty or not a valid url err=parse \"invalid_:example\": invalid URI for request",
-				"Attribute \".spec.rules[0].accessStrategies[0].config.authentications[0].jwksUri\": value is empty or not a valid url err=parse \"example.com/.well-known/jwks.json\": invalid URI for request",
+				"Attribute \".spec.rules[0].accessStrategies[0].config.authentications[0].issuer\": value is empty or not a valid uri err=parse \"invalid_:example\": invalid URI for request",
+				"Attribute \".spec.rules[0].accessStrategies[0].config.authentications[0].jwksUri\": value is empty or not a valid uri err=parse \"example.com/.well-known/jwks.json\": invalid URI for request",
 			}
 
 			testJwtHandlerConfig(accessStrategies, gatewayv1beta1.StatusError, expectedValidationErrors)

@@ -66,6 +66,11 @@ func (r *ruleBuilder) WithJWTAuthz(requiredScopes []string, audiences []string) 
 	return r
 }
 
+func (r *ruleBuilder) WithRequest(rm *gatewayv2alpha1.Request) *ruleBuilder {
+	r.rule.Request = rm
+	return r
+}
+
 func newRuleBuilder() *ruleBuilder {
 	return &ruleBuilder{
 		rule: &gatewayv2alpha1.Rule{},
@@ -74,6 +79,32 @@ func newRuleBuilder() *ruleBuilder {
 
 func (r *ruleBuilder) Build() *gatewayv2alpha1.Rule {
 	return r.rule
+}
+
+type requestBuilder struct {
+	request *gatewayv2alpha1.Request
+}
+
+func (m *requestBuilder) WithHeaders(headers map[string]string) *requestBuilder {
+	m.request.Headers = headers
+
+	return m
+}
+
+func (m *requestBuilder) WithCookies(cookies map[string]string) *requestBuilder {
+	m.request.Cookies = cookies
+
+	return m
+}
+
+func newRequestModifier() *requestBuilder {
+	return &requestBuilder{
+		request: &gatewayv2alpha1.Request{},
+	}
+}
+
+func (m *requestBuilder) Build() *gatewayv2alpha1.Request {
+	return m.request
 }
 
 type apiRuleBuilder struct {

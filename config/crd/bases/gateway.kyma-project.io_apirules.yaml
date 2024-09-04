@@ -358,7 +358,7 @@ spec:
                 maxLength: 127
                 type: string
                 x-kubernetes-validations:
-                - message: Gateway is not valid
+                - message: Gateway must be in the namespace/name format
                   rule: self.matches('^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?/([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)$')
               hosts:
                 description: Specifies the URLs of the exposed service.
@@ -455,6 +455,23 @@ spec:
                       description: Specifies the path of the exposed service.
                       pattern: ^([0-9a-zA-Z./*()?!\\_-]+)
                       type: string
+                    request:
+                      description: Request allows modifying the request before it
+                        is forwarded to the service.
+                      properties:
+                        cookies:
+                          additionalProperties:
+                            type: string
+                          description: Cookies allow modifying the request cookies
+                            before it is forwarded to the service.
+                          type: object
+                        headers:
+                          additionalProperties:
+                            type: string
+                          description: Headers allow modifying the request headers
+                            before it is forwarded to the service.
+                          type: object
+                      type: object
                     service:
                       description: Describes the service to expose. Overwrites the
                         **spec** level service if defined.

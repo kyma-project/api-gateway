@@ -9,7 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
-func IsInvalidURL(toTest string) (bool, error) {
+func IsInvalidURI(toTest string) (bool, error) {
 	if len(toTest) == 0 {
 		return true, errors.New("value is empty")
 	}

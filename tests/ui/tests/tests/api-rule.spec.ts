@@ -1,5 +1,5 @@
 import 'cypress-file-upload';
-import {generateNamespaceName, generateRandomName} from "../support";
+import { generateNamespaceName, generateRandomName } from "../support";
 
 const apiRuleDefaultPath = "/.*";
 
@@ -8,7 +8,6 @@ context("API Rule", () => {
     let apiRuleName = "";
     let namespaceName = "";
     let serviceName = "";
-
 
     beforeEach(() => {
         apiRuleName = generateRandomName("test-api-rule");
@@ -37,7 +36,7 @@ context("API Rule", () => {
 
         cy.hasStatusLabel("OK");
         cy.contains(apiRuleDefaultPath).should('exist');
-        cy.contains('Rules #1', {timeout: 10000}).click();
+        cy.contains('Rules #1', { timeout: 10000 }).click();
         cy.contains('no_auth').should('exist');
     });
 
@@ -52,7 +51,7 @@ context("API Rule", () => {
         cy.apiRuleTypeHost(apiRuleName);
 
         cy.apiRuleSelectAccessStrategy("oauth2_introspection");
-        cy.get('[aria-label="expand Required Scope"]', {log: false,}).click();
+        cy.get('[aria-label="expand Required Scope"]', { log: false, }).click();
         cy.inputClearAndType('[data-testid="spec.rules.0.accessStrategies.0.config.required_scope.0"]:visible', "read");
 
         cy.apiRuleSelectMethod("POST")
@@ -62,7 +61,7 @@ context("API Rule", () => {
         // Verify created API Rule
         cy.hasStatusLabel("OK");
         cy.contains(apiRuleDefaultPath).should('exist');
-        cy.contains('Rules #1', {timeout: 10000}).click();
+        cy.contains('Rules #1', { timeout: 10000 }).click();
         cy.contains('oauth2_introspection').should('exist');
         cy.contains('read').should('exist');
     });
@@ -89,7 +88,7 @@ context("API Rule", () => {
         // Verify created API Rule
         cy.hasStatusLabel("OK");
         cy.contains(apiRuleDefaultPath).should('exist');
-        cy.contains('Rules #1', {timeout: 10000}).click();
+        cy.contains('Rules #1', { timeout: 10000 }).click();
         cy.contains('jwt').should('exist');
         cy.contains('https://urls.com').should('exist');
         cy.contains('https://trusted.com').should('exist');
@@ -116,7 +115,7 @@ context("API Rule", () => {
 
         cy.apiRuleTypeRulePath(updatedApiRulePath);
 
-        cy.get('[aria-label="expand Access Strategies"]:visible', {log: false}).first();
+        cy.get('[aria-label="expand Access Strategies"]:visible', { log: false }).first();
         cy.apiRuleSelectAccessStrategy("jwt");
 
         cy.apiRuleTypeJwksUrl("https://urls.com");
@@ -128,7 +127,7 @@ context("API Rule", () => {
         // Validate edited API Rule
         cy.hasStatusLabel("OK");
         cy.contains(apiRuleDefaultPath).should('exist');
-        cy.contains('Rules #1', {timeout: 20000}).click();
+        cy.contains('Rules #1', { timeout: 20000 }).click();
         cy.contains(updatedApiRulePath).should('exist');
 
         cy.contains('oauth2_introspection').should('not.exist');
@@ -138,13 +137,12 @@ context("API Rule", () => {
     });
 
     it("should display multiple rules are in the list", () => {
-
         cy.createApiRule({
             name: apiRuleName,
             namespace: namespaceName,
             service: serviceName,
             host: apiRuleName,
-            handler: "no_auth",
+            handler: "no_auth"
         });
 
         const secondApiRuleName = `${apiRuleName}-second`
@@ -153,7 +151,7 @@ context("API Rule", () => {
             namespace: namespaceName,
             service: serviceName,
             host: secondApiRuleName,
-            handler: "no_auth",
+            handler: "no_auth"
         });
 
         cy.navigateToApiRuleList(namespaceName);
@@ -224,40 +222,64 @@ context("API Rule", () => {
         cy.contains('CORS Max Age').should('exist').parent().contains('10s').should('exist')
     });
 
+    it('should show alert warning if Gateway is in wrong format', () => {
+        cy.createApiRule({
+            name: apiRuleName,
+            namespace: namespaceName,
+            service: serviceName,
+            host: apiRuleName,
+            handler: "no_auth",
+            gateway: "kyma-system"
+        });
+
+        cy.navigateToApiRuleList(namespaceName);
+        cy.clickGenericListLink(apiRuleName);
+        cy.contains('Gateway must be in the format \'{NAMESPACE}/{NAME}\'').should('exist')
+
+        cy.clickEditTab();
+        cy.contains('Gateway must exist, specify both Namespace and Name').should('exist')
+
+        cy.inputClearAndType('ui5-combobox[placeholder="Select name"]', "kyma-gateway");
+
+        cy.clickSaveButton();
+        cy.clickViewTab();
+
+        cy.contains('Gateway must be in the format \'{NAMESPACE}/{NAME}\'').should('not.exist')
+
+        cy.clickEditTab();
+
+        cy.contains('Gateway must exist, specify both Namespace and Name').should('not.exist')
+    });
+
     context("Host", () => {
         context("when APIRule is in OK state", () => {
-
             it('should build correct link in details view', () => {
                 cy.createApiRule({
                     name: apiRuleName,
                     namespace: namespaceName,
                     service: serviceName,
                     host: apiRuleName,
-                    handler: "no_auth",
+                    handler: "no_auth"
                 });
 
                 cy.navigateToApiRule(apiRuleName, namespaceName);
-
                 cy.apiRuleMetadataContainsHostUrl(`https://${apiRuleName}.local.kyma.dev`);
             });
         })
 
         context("when APIRule is not in OK state", () => {
-
             it('should have dummy link in details view', () => {
                 cy.createApiRule({
                     name: apiRuleName,
                     namespace: namespaceName,
                     service: "not_existent",
                     host: apiRuleName,
-                    handler: "no_auth",
+                    handler: "no_auth"
                 });
 
                 cy.navigateToApiRule(apiRuleName, namespaceName);
-
                 cy.apiRuleMetadataContainsHostUrl(`https://${apiRuleName}`);
             });
         })
     });
-
 });

@@ -356,6 +356,59 @@ var _ = Describe("APIRule Conversion", func() {
 			Expect(err).ToNot(HaveOccurred())
 			Expect(apiRuleBeta1.Spec).To(Equal(v1beta1.APIRuleSpec{}))
 		})
+
+		It("should convert request to mutator", func() {
+			// given
+			apiRuleV2Alpha1 := v2alpha1.APIRule{
+				Spec: v2alpha1.APIRuleSpec{
+					Hosts: []*v2alpha1.Host{&host1},
+					Rules: []v2alpha1.Rule{
+						{
+							Request: &v2alpha1.Request{
+								Headers: map[string]string{
+									"header1": "value1",
+								},
+
+								Cookies: map[string]string{
+									"cookie1": "value1",
+								},
+							},
+						},
+					},
+				},
+			}
+			apiRuleBeta1 := v1beta1.APIRule{}
+
+			// when
+			err := apiRuleV2Alpha1.ConvertTo(&apiRuleBeta1)
+
+			// then
+			Expect(err).ToNot(HaveOccurred())
+
+			Expect(apiRuleBeta1.Spec.Rules).To(HaveLen(1))
+			Expect(apiRuleBeta1.Spec.Rules[0].Mutators).To(HaveLen(2))
+
+			var configMap map[string]string
+			correctMutators := 0
+
+			for _, mutator := range apiRuleBeta1.Spec.Rules[0].Mutators {
+				if mutator.Handler.Name == v1beta1.HeaderMutator {
+					correctMutators++
+					Expect(mutator.Handler.Config.Raw).ToNot(BeNil())
+					err := json.Unmarshal(mutator.Handler.Config.Raw, &configMap)
+					Expect(err).ToNot(HaveOccurred())
+					Expect(configMap).To(HaveKeyWithValue("header1", "value1"))
+				}
+				if mutator.Handler.Name == v1beta1.CookieMutator {
+					correctMutators++
+					Expect(mutator.Handler.Config.Raw).ToNot(BeNil())
+					err := json.Unmarshal(mutator.Handler.Config.Raw, &configMap)
+					Expect(err).ToNot(HaveOccurred())
+					Expect(configMap).To(HaveKeyWithValue("cookie1", "value1"))
+				}
+			}
+			Expect(correctMutators).To(Equal(2))
+		})
 	})
 
 	Describe("v1beta1 to v2alpha1", func() {
@@ -591,9 +644,53 @@ var _ = Describe("APIRule Conversion", func() {
 				Expect(err).ToNot(HaveOccurred())
 				Expect(apiRuleV2Alpha1.Spec.Rules).To(HaveLen(1))
 				Expect(apiRuleV2Alpha1.Spec.Rules[0].Jwt).ToNot(BeNil())
+				Expect(apiRuleV2Alpha1.Spec.Rules[0].Jwt.Authorizations).To(BeEmpty())
 				Expect(apiRuleV2Alpha1.Spec.Rules[0].Jwt.Authentications).To(HaveLen(1))
 				Expect(apiRuleV2Alpha1.Spec.Rules[0].Jwt.Authentications[0].Issuer).To(Equal("issuer"))
 				Expect(apiRuleV2Alpha1.Spec.Rules[0].Jwt.Authentications[0].JwksUri).To(Equal("jwksUri"))
+			})
+
+			It("should convert JWT without Authentications", func() {
+				// given
+				jwtConfigBeta1 := v1beta1.JwtConfig{
+					Authorizations: []*v1beta1.JwtAuthorization{
+						{
+							RequiredScopes: []string{"scope1", "scope2"},
+							Audiences:      []string{"aud1", "aud2"},
+						},
+					},
+				}
+
+				apiRuleBeta1 := v1beta1.APIRule{
+					Spec: v1beta1.APIRuleSpec{
+						Host: &host1string,
+						Rules: []v1beta1.Rule{
+							{
+								AccessStrategies: []*v1beta1.Authenticator{
+									{
+										Handler: &v1beta1.Handler{
+											Name:   "jwt",
+											Config: &runtime.RawExtension{Object: &jwtConfigBeta1},
+										},
+									},
+								},
+							},
+						},
+					},
+				}
+				apiRuleV2Alpha1 := v2alpha1.APIRule{}
+
+				// when
+				err := apiRuleV2Alpha1.ConvertFrom(&apiRuleBeta1)
+
+				// then
+				Expect(err).ToNot(HaveOccurred())
+				Expect(apiRuleV2Alpha1.Spec.Rules).To(HaveLen(1))
+				Expect(apiRuleV2Alpha1.Spec.Rules[0].Jwt).ToNot(BeNil())
+				Expect(apiRuleV2Alpha1.Spec.Rules[0].Jwt.Authentications).To(BeEmpty())
+				Expect(apiRuleV2Alpha1.Spec.Rules[0].Jwt.Authorizations).To(HaveLen(1))
+				Expect(apiRuleV2Alpha1.Spec.Rules[0].Jwt.Authorizations[0].RequiredScopes).To(ContainElements("scope1", "scope2"))
+				Expect(apiRuleV2Alpha1.Spec.Rules[0].Jwt.Authorizations[0].Audiences).To(ContainElements("aud1", "aud2"))
 			})
 
 			It("should convert JWT to v2alpha1 when config stored as raw", func() {
@@ -1141,5 +1238,96 @@ var _ = Describe("APIRule Conversion", func() {
 			Expect(err).ToNot(HaveOccurred())
 			Expect(apiRuleV2Alpha1.Spec).To(Equal(v2alpha1.APIRuleSpec{}))
 		})
+
+		It("should convert mutators", func() {
+			// given
+			apiRuleBeta1 := v1beta1.APIRule{
+				Spec: v1beta1.APIRuleSpec{
+					Host: &host1string,
+					Rules: []v1beta1.Rule{
+						{
+							Path: "/path1",
+							AccessStrategies: []*v1beta1.Authenticator{
+								{
+									Handler: &v1beta1.Handler{
+										Name: "no_auth",
+									},
+								},
+							},
+							Mutators: []*v1beta1.Mutator{
+								{
+									Handler: &v1beta1.Handler{
+										Name: "cookie",
+										Config: getRawConfig(
+											map[string]string{
+												"cookie1": "value1",
+											},
+										),
+									},
+								},
+								{
+									Handler: &v1beta1.Handler{
+										Name: "header",
+										Config: getRawConfig(
+											map[string]string{
+												"header1": "value1",
+											},
+										),
+									},
+								},
+							},
+						},
+						{
+							Path: "/path2",
+							AccessStrategies: []*v1beta1.Authenticator{
+								{
+									Handler: &v1beta1.Handler{
+										Name: "no_auth",
+									},
+								},
+							},
+							Mutators: []*v1beta1.Mutator{
+								{
+									Handler: &v1beta1.Handler{
+										Name: "cookie",
+										Config: getRawConfig(
+											map[string]string{
+												"cookie2": "value2",
+											},
+										),
+									},
+								},
+							},
+						},
+					},
+				},
+			}
+
+			var apiRuleV2Alpha1 v2alpha1.APIRule
+			// when
+			err := apiRuleV2Alpha1.ConvertFrom(&apiRuleBeta1)
+
+			// then
+			Expect(err).To(BeNil())
+			Expect(apiRuleV2Alpha1.Spec.Rules[0].Request.Cookies).ToNot(BeNil())
+			Expect(apiRuleV2Alpha1.Spec.Rules[0].Request.Cookies).To(HaveLen(1))
+			Expect(apiRuleV2Alpha1.Spec.Rules[0].Request.Cookies["cookie1"]).To(Equal("value1"))
+
+			Expect(apiRuleV2Alpha1.Spec.Rules[0].Request.Headers).ToNot(BeNil())
+			Expect(apiRuleV2Alpha1.Spec.Rules[0].Request.Headers).To(HaveLen(1))
+			Expect(apiRuleV2Alpha1.Spec.Rules[0].Request.Headers["header1"]).To(Equal("value1"))
+
+			Expect(apiRuleV2Alpha1.Spec.Rules[1].Request.Cookies).ToNot(BeNil())
+			Expect(apiRuleV2Alpha1.Spec.Rules[1].Request.Cookies).To(HaveLen(1))
+			Expect(apiRuleV2Alpha1.Spec.Rules[1].Request.Cookies["cookie2"]).To(Equal("value2"))
+		})
 	})
 })
+
+func getRawConfig(config any) *runtime.RawExtension {
+	b, err := json.Marshal(config)
+	Expect(err).To(BeNil())
+	return &runtime.RawExtension{
+		Raw: b,
+	}
+}

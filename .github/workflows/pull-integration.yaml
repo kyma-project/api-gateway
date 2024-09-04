@@ -11,6 +11,10 @@ jobs:
     name: Integration tests
     runs-on: ubuntu-latest
     if: github.event.pull_request.draft == false
+    strategy:
+      fail-fast: false
+      matrix:
+        test_make_target: [ "test-integration-ory", "test-integration-istio", "test-integration-v2alpha1", "test-integration-gateway" ]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -20,11 +24,16 @@ jobs:
       - uses: ./.github/actions/integration-tests
         with:
           manager_image: "api-gateway-manager:PR-${{github.event.number}}"
+          test_make_target: ${{ matrix.test_make_target }}
 
   k8s-compatibility-check:
     name: Kubernetes version compatibility test
     runs-on: ubuntu-latest
     if: github.event.pull_request.draft == false
+    strategy:
+      fail-fast: false
+      matrix:
+        test_make_target: [ "test-integration-ory", "test-integration-istio", "test-integration-v2alpha1", "test-integration-gateway" ]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -34,6 +43,7 @@ jobs:
       - uses: ./.github/actions/k8s-compatibility-test
         with:
           manager_image: "api-gateway-manager:PR-${{github.event.number}}"
+          test_make_target: ${{ matrix.test_make_target }}
 
   upgrade-tests:
     name: Upgrade tests

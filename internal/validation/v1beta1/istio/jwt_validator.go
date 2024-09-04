@@ -102,13 +102,13 @@ func hasInvalidAuthentications(attributePath string, authentications []*gatewayv
 		issuerErr := validateJwtIssuer(authentication.Issuer)
 		if issuerErr != nil {
 			attrPath := fmt.Sprintf("%s%s[%d]%s", attributePath, ".config.authentications", i, ".issuer")
-			failures = append(failures, validation.Failure{AttributePath: attrPath, Message: fmt.Sprintf("value is empty or not a valid url err=%s", issuerErr)})
+			failures = append(failures, validation.Failure{AttributePath: attrPath, Message: fmt.Sprintf("value is empty or not a valid uri err=%s", issuerErr)})
 		}
 
-		invalidJwksUri, err := validation.IsInvalidURL(authentication.JwksUri)
+		invalidJwksUri, err := validation.IsInvalidURI(authentication.JwksUri)
 		if invalidJwksUri {
 			attrPath := fmt.Sprintf("%s%s[%d]%s", attributePath, ".config.authentications", i, ".jwksUri")
-			failures = append(failures, validation.Failure{AttributePath: attrPath, Message: fmt.Sprintf("value is empty or not a valid url err=%s", err)})
+			failures = append(failures, validation.Failure{AttributePath: attrPath, Message: fmt.Sprintf("value is empty or not a valid uri err=%s", err)})
 		}
 		if len(authentication.FromHeaders) > 0 {
 			if hasFromParams {
@@ -231,7 +231,7 @@ func validateJwtIssuer(issuer string) error {
 
 	// If issuer contains ':' it must be a valid URI, see https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.1
 	if strings.Contains(issuer, ":") {
-		if isInvalid, err := validation.IsInvalidURL(issuer); isInvalid {
+		if isInvalid, err := validation.IsInvalidURI(issuer); isInvalid {
 			return err
 		}
 	}

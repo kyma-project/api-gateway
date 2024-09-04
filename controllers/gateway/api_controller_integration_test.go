@@ -1433,7 +1433,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 				serviceTeardown(svc)
 			}()
 			Expect(err).Should(HaveOccurred())
-			Expect(err.Error()).To(ContainSubstring("spec.gateway: Invalid value: \"string\": Gateway is not valid"))
+			Expect(err.Error()).To(ContainSubstring("spec.gateway: Invalid value: \"string\": Gateway must be in the namespace/name format"))
 		}
 
 		It("should not create an APIRule with an empty gateway", func() {

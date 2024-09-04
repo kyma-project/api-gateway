@@ -29,6 +29,11 @@
       subscribe:
         port: "$filter($relatedServices().items, function ($v) { $v.metadata.name = $root.spec.service.name and $v.metadata.namespace = $root.metadata.namespace }).spec.ports[0].port"
 - simple: true
+  widget: Alert
+  severity: warning
+  alert: '"alert.gateway.form"'
+  visibility: '$not($exists($match(spec.gateway,/^[a-z0-9_]+(-[a-z0-9_]+)*\/[a-z0-9_]+(-[a-z0-9_]+)*$/))[0])'
+- simple: true
   required: true
   path: spec.gateway
   name: gateway

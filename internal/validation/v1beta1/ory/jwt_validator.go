@@ -33,20 +33,20 @@ func (o *handlerValidator) Validate(attributePath string, handler *gatewayv1beta
 	// If we want to allow some weaker configurations, we should have a dedicated configuration which allows that.
 	if len(template.TrustedIssuers) > 0 {
 		for i := 0; i < len(template.TrustedIssuers); i++ {
-			invalid, err := validation.IsInvalidURL(template.TrustedIssuers[i])
+			invalid, err := validation.IsInvalidURI(template.TrustedIssuers[i])
 			if invalid {
 				attrPath := fmt.Sprintf("%s[%d]", attributePath+".config.trusted_issuers", i)
-				problems = append(problems, validation.Failure{AttributePath: attrPath, Message: fmt.Sprintf("value is empty or not a valid url err=%s", err)})
+				problems = append(problems, validation.Failure{AttributePath: attrPath, Message: fmt.Sprintf("value is empty or not a valid uri err=%s", err)})
 			}
 		}
 	}
 
 	if len(template.JWKSUrls) > 0 {
 		for i := 0; i < len(template.JWKSUrls); i++ {
-			invalid, err := validation.IsInvalidURL(template.JWKSUrls[i])
+			invalid, err := validation.IsInvalidURI(template.JWKSUrls[i])
 			if invalid {
 				attrPath := fmt.Sprintf("%s[%d]", attributePath+".config.jwks_urls", i)
-				problems = append(problems, validation.Failure{AttributePath: attrPath, Message: fmt.Sprintf("value is empty or not a valid url err=%s", err)})
+				problems = append(problems, validation.Failure{AttributePath: attrPath, Message: fmt.Sprintf("value is empty or not a valid uri err=%s", err)})
 			}
 		}
 	}

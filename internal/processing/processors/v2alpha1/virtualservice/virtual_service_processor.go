@@ -56,7 +56,7 @@ func (r VirtualServiceProcessor) getDesiredState(api *gatewayv2alpha1.APIRule) (
 }
 
 func (r VirtualServiceProcessor) getActualState(ctx context.Context, client ctrlclient.Client, api *gatewayv2alpha1.APIRule) (*networkingv1beta1.VirtualService, error) {
-	labels := getOwnerLabels(api)
+	labels := processing.GetOwnerLabelsV2alpha1(api)
 
 	var vsList networkingv1beta1.VirtualServiceList
 	if err := client.List(ctx, &vsList, ctrlclient.MatchingLabels(labels)); err != nil {
@@ -79,16 +79,6 @@ func (r VirtualServiceProcessor) getObjectChanges(desired *networkingv1beta1.Vir
 	}
 }
 
-// The owner labels are still set to the old APIRule version.
-// Do not switch the owner labels to the new APIRule version unless absolutely necessary!
-// This has been done before, and it caused a lot of confusion and bugs.
-// If the change for some reason has to be done, please remove the version from the processing.OwnerLabel constant.
-func getOwnerLabels(api *gatewayv2alpha1.APIRule) map[string]string {
-	return map[string]string{
-		processing.OwnerLabel: fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace),
-	}
-}
-
 type virtualServiceCreator struct {
 	defaultDomainName string
 }
@@ -106,7 +96,10 @@ func (r virtualServiceCreator) Create(api *gatewayv2alpha1.APIRule) (*networking
 
 	for _, rule := range api.Spec.Rules {
 		httpRouteBuilder := builders.HTTPRoute()
-		serviceNamespace := findServiceNamespace(api, &rule)
+		serviceNamespace, err := gatewayv2alpha1.FindServiceNamespace(api, rule)
+		if err != nil {
+			return nil, fmt.Errorf("finding service namespace: %w", err)
+		}
 
 		var host string
 		var port uint32
@@ -141,6 +134,16 @@ func (r virtualServiceCreator) Create(api *gatewayv2alpha1.APIRule) (*networking
 			// https://github.com/kyma-project/api-gateway/issues/1159
 			SetHostHeader(default_domain.GetHostWithDomain(string(*api.Spec.Hosts[0]), r.defaultDomainName))
 
+		if rule.Request != nil {
+			if rule.Request.Headers != nil {
+				headersBuilder.SetRequestHeaders(rule.Request.Headers)
+			}
+
+			if rule.Request.Cookies != nil {
+				headersBuilder.SetRequestCookies(rule.Request.Cookies)
+			}
+		}
+
 		if api.Spec.CorsPolicy != nil {
 			httpRouteBuilder.CorsPolicy(builders.CorsPolicy().FromV2Alpha1ApiRuleCorsPolicy(*api.Spec.CorsPolicy))
 		}
@@ -171,20 +174,4 @@ func GetVirtualServiceHttpTimeout(apiRuleSpec gatewayv2alpha1.APIRuleSpec, rule 
 		return uint32(*apiRuleSpec.Timeout)
 	}
 	return defaultHttpTimeout
-}
-
-func findServiceNamespace(api *gatewayv2alpha1.APIRule, rule *gatewayv2alpha1.Rule) string {
-	// Fallback direction for the upstream service namespace: Rule.Service > Spec.Service > APIRule
-	if rule != nil && rule.Service != nil && rule.Service.Namespace != nil {
-		return *rule.Service.Namespace
-	}
-	if api != nil && api.Spec.Service != nil && api.Spec.Service.Namespace != nil {
-		return *api.Spec.Service.Namespace
-	}
-
-	if api != nil {
-		return api.Namespace
-	} else {
-		return ""
-	}
 }

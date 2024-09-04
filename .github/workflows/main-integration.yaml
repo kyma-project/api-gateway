@@ -84,7 +84,7 @@ jobs:
         with:
           manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:${{ needs.wait-for-image-build.outputs.sha }}"
           gardener_secret: ${{ secrets.GARDENER_TOKEN }}
-          script: ./tests/integration/scripts/custom-domain-gardener-gcp-gh.sh
+          script: ./hack/ci/custom-domain-gardener-gcp.sh
           client_id: ${{ secrets.CLIENT_ID }}
           client_secret: ${{ secrets.CLIENT_SECRET }}
           oidc_well_known_url: "${{ secrets.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
@@ -103,7 +103,7 @@ jobs:
         with:
           manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:${{ needs.wait-for-image-build.outputs.sha }}"
           gardener_secret: ${{ secrets.GARDENER_TOKEN }}
-          script: ./tests/integration/scripts/custom-domain-gardener-aws-gh.sh
+          script: ./hack/ci/custom-domain-gardener-aws.sh
           client_id: ${{ secrets.CLIENT_ID }}
           client_secret: ${{ secrets.CLIENT_SECRET }}
           oidc_well_known_url: "${{ secrets.OIDC_ISSUER_URL }}/.well-known/openid-configuration"

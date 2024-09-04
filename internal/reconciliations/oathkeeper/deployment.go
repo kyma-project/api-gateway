@@ -117,13 +117,13 @@ func getReplicasForDeployment(ctx context.Context, k8sClient client.Client) (str
 	}, &dep)
 
 	if k8serrors.IsNotFound(err) {
-		return "1", nil
+		return "", nil
 	} else if err != nil {
-		return "1", err
+		return "", err
 	}
 
 	if dep.Spec.Replicas == nil {
-		return "1", nil
+		return "", nil
 	}
 
 	return strconv.Itoa(int(*dep.Spec.Replicas)), nil

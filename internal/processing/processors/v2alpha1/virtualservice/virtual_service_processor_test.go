@@ -77,6 +77,10 @@ var _ = Describe("Fully configured APIRule happy path", func() {
 				newRuleBuilder().
 					WithMethods("PUT").
 					WithPath("/*").
+					WithRequest(newRequestModifier().
+						WithHeaders(map[string]string{"header1": "value1"}).
+						WithCookies(map[string]string{"cookie1": "value1"}).
+						Build()).
 					NoAuth().Build(),
 			).
 			Build()
@@ -118,6 +122,12 @@ var _ = Describe("Fully configured APIRule happy path", func() {
 				Expect(vs.Spec.Http[1].CorsPolicy.ExposeHeaders).To(ConsistOf("header3", "header4"))
 				Expect(vs.Spec.Http[1].CorsPolicy.AllowCredentials.GetValue()).To(BeTrue())
 				Expect(vs.Spec.Http[1].CorsPolicy.MaxAge.Seconds).To(Equal(int64(600)))
+
+				Expect(vs.Spec.Http[1].Headers).NotTo(BeNil())
+				Expect(vs.Spec.Http[1].Headers.Request).NotTo(BeNil())
+				Expect(vs.Spec.Http[1].Headers.Request.Set).To(HaveKeyWithValue("x-forwarded-host", "example.com"))
+				Expect(vs.Spec.Http[1].Headers.Request.Set).To(HaveKeyWithValue("header1", "value1"))
+				Expect(vs.Spec.Http[1].Headers.Request.Set).To(HaveKeyWithValue("Cookie", "cookie1=value1"))
 
 				Expect(vs.Spec.Http[1].Timeout.Seconds).To(Equal(int64(180)))
 			},
