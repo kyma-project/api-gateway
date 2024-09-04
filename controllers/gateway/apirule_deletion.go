@@ -11,6 +11,7 @@ import (
 )
 
 func (r *APIRuleReconciler) reconcileAPIRuleDeletion(ctx context.Context, log logr.Logger, apiRule *gatewayv1beta1.APIRule) (ctrl.Result, error) {
+	newApiRule := apiRule.DeepCopy()
 	if controllerutil.ContainsFinalizer(apiRule, apiGatewayFinalizer) {
 		// finalizer is present on APIRule, so all subresources need to be deleted
 		if err := processing.DeleteAPIRuleSubresources(r.Client, ctx, *apiRule); err != nil {
@@ -20,12 +21,10 @@ func (r *APIRuleReconciler) reconcileAPIRuleDeletion(ctx context.Context, log lo
 			return doneReconcileErrorRequeue(r.OnErrorReconcilePeriod)
 		}
 
-		newApiRule := apiRule.DeepCopy()
 		// remove finalizer so the reconciliation can proceed
 		controllerutil.RemoveFinalizer(newApiRule, apiGatewayFinalizer)
 		// workaround for when APIRule was deleted using v2alpha1 version
 		// and if it got trimmed spec
-		// (Ressetkk): Conversion should handle that...
 		if newApiRule.Spec.Gateway == nil {
 			newApiRule.Spec.Gateway = ptr.To("n/a")
 		}

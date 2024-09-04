@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"github.com/kyma-project/api-gateway/internal/dependencies"
 	"github.com/kyma-project/api-gateway/internal/processing/processors/migration"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"time"
 
@@ -93,13 +94,15 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 
 	if err := r.Client.Get(ctx, req.NamespacedName, &apiRule); err != nil {
 		if apierrs.IsNotFound(err) {
-			// (Ressetkk): should be log.Debug...
-			//l.Info("ApiRule not found")
 			return doneReconcileNoRequeue()
 		}
 		l.Error(err, "Error while getting APIRule")
 		return doneReconcileErrorRequeue(errorReconciliationPeriod)
 	}
+	// assign LastProcessedTime and ObservedGeneration early to indicate that
+	// resource got reconciled
+	apiRule.Status.LastProcessedTime = metav1.Now()
+	apiRule.Status.ObservedGeneration = apiRule.Generation
 
 	if !apiRule.DeletionTimestamp.IsZero() {
 		l.Info("APIRule is marked for deletion, deleting")
@@ -108,78 +111,19 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 
 	if !controllerutil.ContainsFinalizer(&apiRule, apiGatewayFinalizer) {
 		l.Info("APIRule is missing a finalizer, adding")
-		n := apiRule.DeepCopy() // copy to avoid conflicts
+		n := apiRule.DeepCopy()
 		controllerutil.AddFinalizer(n, apiGatewayFinalizer)
-		// (Ressetkk): should be part of update logic to reduce number of
-		// updates on a resource
 		return r.updateResourceRequeue(ctx, l, n)
 	}
 
-	var cmd processing.ReconciliationCommand
 	if r.isApiRuleConvertedFromV2alpha1(apiRule) {
-		l.Info("Reconciling v2alpha1 APIRule")
-		migrate, err := apiRuleNeedsMigration(ctx, r.Client, &apiRule)
-		if err != nil {
-			return doneReconcileErrorRequeue(r.OnErrorReconcilePeriod)
-		}
-		if migrate {
-			n := apiRule.DeepCopy() // copy to avoid conflicts
-			migration.ApplyMigrationAnnotation(l, n)
-			// should not conflict with future updates as long as there are
-			// no Update() calls to the resource after that
-			if err := r.Client.Update(ctx, n); err != nil {
-				l.Error(err, "Failed to update migration annotation")
-				return doneReconcileErrorRequeue(r.OnErrorReconcilePeriod)
-			}
-		}
-		// grab latest v2alpha1
-		apiRuleV2alpha1 := gatewayv2alpha1.APIRule{}
-		if err := r.Client.Get(ctx, req.NamespacedName, &apiRuleV2alpha1); err != nil {
-			return doneReconcileErrorRequeue(r.OnErrorReconcilePeriod)
-		}
-		cmd = r.getv2alpha1Reconciliation(&apiRule, &apiRuleV2alpha1,
-			defaultDomainName, migrate, &l)
-
-		if name, err := dependencies.APIRule().AreAvailable(ctx, r.Client); err != nil {
-			s, err := handleDependenciesError(name, err).ToAPIRuleStatus()
-			if err != nil {
-				return doneReconcileErrorRequeue(r.OnErrorReconcilePeriod)
-			}
-			if err := s.UpdateStatus(&apiRuleV2alpha1.Status); err != nil {
-				l.Error(err, "Error updating APIRule status")
-				return doneReconcileErrorRequeue(r.OnErrorReconcilePeriod)
-			}
-			return r.updateStatus(ctx, l, &apiRuleV2alpha1)
-		}
-
-		l.Info("Validating APIRule config")
-		failures := validation.ValidateConfig(r.Config)
-		if len(failures) > 0 {
-			l.Error(fmt.Errorf("validation has failures"),
-				"Configuration validation failed", "failures", failures)
-			s := cmd.GetStatusBase(string(gatewayv2alpha1.Error)).
-				GenerateStatusFromFailures(failures)
-			if err := s.UpdateStatus(&apiRuleV2alpha1.Status); err != nil {
-				l.Error(err, "Error updating APIRule status")
-				return doneReconcileErrorRequeue(r.OnErrorReconcilePeriod)
-			}
-			return r.updateStatus(ctx, l, &apiRuleV2alpha1)
-		}
-
-		l.Info("Updating APIRule")
-		s := processing.Reconcile(ctx, r.Client, &l, cmd, req)
-
-		if err := s.UpdateStatus(&apiRuleV2alpha1.Status); err != nil {
-			l.Error(err, "Error updating APIRule status")
-			return doneReconcileErrorRequeue(r.OnErrorReconcilePeriod)
-		}
-		return r.updateStatus(ctx, l, &apiRuleV2alpha1)
+		return r.reconcileV2alpha1APIRule(ctx, req, l, apiRule, defaultDomainName)
 	}
 
 	l.Info("Reconciling v1beta1 APIRule", "jwtHandler", r.Config.JWTHandler)
-	cmd = r.getV1beta1Reconciliation(&apiRule, defaultDomainName, &l)
+	cmd := r.getV1beta1Reconciliation(&apiRule, defaultDomainName, &l)
 	if name, err := dependencies.APIRule().AreAvailable(ctx, r.Client); err != nil {
-		s, err := handleDependenciesError(name, err).ToAPIRuleStatus()
+		s, err := handleDependenciesError(name, err).V1beta1Status()
 		if err != nil {
 			return doneReconcileErrorRequeue(r.OnErrorReconcilePeriod)
 		}
@@ -204,7 +148,7 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		return r.updateStatus(ctx, l, &apiRule)
 	}
 
-	l.Info("Updating APIRule")
+	l.Info("Reconciling APIRule sub-resources")
 	s := processing.Reconcile(ctx, r.Client, &l, cmd, req)
 	if err := s.UpdateStatus(&apiRule.Status); err != nil {
 		l.Error(err, "Error updating APIRule status")
@@ -213,13 +157,74 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	return r.updateStatus(ctx, l, &apiRule)
 }
 
+func (r *APIRuleReconciler) reconcileV2alpha1APIRule(ctx context.Context, req ctrl.Request, l logr.Logger, apiRule gatewayv1beta1.APIRule, domain string) (ctrl.Result, error) {
+	l.Info("Reconciling v2alpha1 APIRule")
+	migrate, err := apiRuleNeedsMigration(ctx, r.Client, &apiRule)
+	if err != nil {
+		return doneReconcileErrorRequeue(r.OnErrorReconcilePeriod)
+	}
+	if migrate {
+		n := apiRule.DeepCopy()
+		migration.ApplyMigrationAnnotation(l, n)
+		// should not conflict with future status updates as long as there are
+		// no Update() calls to the resource after that
+		if err := r.Client.Update(ctx, n); err != nil {
+			l.Error(err, "Failed to update migration annotation")
+			return doneReconcileErrorRequeue(r.OnErrorReconcilePeriod)
+		}
+	}
+	apiRuleV2alpha1 := gatewayv2alpha1.APIRule{}
+	if err := r.Client.Get(ctx, req.NamespacedName, &apiRuleV2alpha1); err != nil {
+		return doneReconcileErrorRequeue(r.OnErrorReconcilePeriod)
+	}
+	// assign LastProcessedTime early to indicate that resource got reconciled
+	apiRuleV2alpha1.Status.LastProcessedTime = metav1.Now()
+
+	cmd := r.getv2alpha1Reconciliation(&apiRule, &apiRuleV2alpha1,
+		domain, migrate, &l)
+
+	if name, err := dependencies.APIRule().AreAvailable(ctx, r.Client); err != nil {
+		s, err := handleDependenciesError(name, err).V2alpha1Status()
+		if err != nil {
+			return doneReconcileErrorRequeue(r.OnErrorReconcilePeriod)
+		}
+		if err := s.UpdateStatus(&apiRuleV2alpha1.Status); err != nil {
+			l.Error(err, "Error updating APIRule status")
+			return doneReconcileErrorRequeue(r.OnErrorReconcilePeriod)
+		}
+		return r.updateStatus(ctx, l, &apiRuleV2alpha1)
+	}
+
+	l.Info("Validating APIRule config")
+	failures := validation.ValidateConfig(r.Config)
+	if len(failures) > 0 {
+		l.Error(fmt.Errorf("validation has failures"),
+			"Configuration validation failed", "failures", failures)
+		s := cmd.GetStatusBase(string(gatewayv2alpha1.Error)).
+			GenerateStatusFromFailures(failures)
+		if err := s.UpdateStatus(&apiRuleV2alpha1.Status); err != nil {
+			l.Error(err, "Error updating APIRule status")
+			return doneReconcileErrorRequeue(r.OnErrorReconcilePeriod)
+		}
+		return r.updateStatus(ctx, l, &apiRuleV2alpha1)
+	}
+
+	l.Info("Reconciling APIRule sub-resources")
+	s := processing.Reconcile(ctx, r.Client, &l, cmd, req)
+
+	if err := s.UpdateStatus(&apiRuleV2alpha1.Status); err != nil {
+		l.Error(err, "Error updating APIRule status")
+		return doneReconcileErrorRequeue(r.OnErrorReconcilePeriod)
+	}
+	return r.updateStatus(ctx, l, &apiRuleV2alpha1)
+}
+
 func (r *APIRuleReconciler) updateResourceRequeue(ctx context.Context,
 	log logr.Logger, rule client.Object) (ctrl.Result, error) {
 	log.Info("Updating APIRule Resource", "requeue", "true")
 	if err := r.Update(ctx, rule); err != nil {
 		return doneReconcileErrorRequeue(r.OnErrorReconcilePeriod)
 	}
-	// do immediate requeue
 	return ctrl.Result{Requeue: true}, nil
 }
 

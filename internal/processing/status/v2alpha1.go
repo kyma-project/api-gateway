@@ -18,6 +18,7 @@ func (s ReconciliationV2alpha1Status) HasError() bool {
 func (s ReconciliationV2alpha1Status) GetStatusForErrorMap(errorMap map[ResourceSelector][]error) ReconciliationStatus {
 	if len(errorMap) == 0 {
 		s.ApiRuleStatus.State = gatewayv2alpha1.Ready
+		s.ApiRuleStatus.Description = "Reconciled successfully"
 		return s
 	}
 	var resourceErrors []string
@@ -52,7 +53,7 @@ func (s ReconciliationV2alpha1Status) GetStatusForErrorMap(errorMap map[Resource
 func (s ReconciliationV2alpha1Status) GenerateStatusFromFailures(failures []validation.Failure) ReconciliationStatus {
 	if len(failures) == 0 {
 		s.ApiRuleStatus.State = gatewayv2alpha1.Ready
-		s.ApiRuleStatus.Description = "No errors"
+		s.ApiRuleStatus.Description = "Reconciled successfully"
 		return s
 	}
 

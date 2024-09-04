@@ -15,7 +15,6 @@ func hasKymaGatewayFinalizer(apiGatewayCR v1alpha1.APIGateway) bool {
 	return controllerutil.ContainsFinalizer(&apiGatewayCR, KymaGatewayFinalizer)
 }
 
-// TODO: remove intermediate update call
 func addKymaGatewayFinalizer(ctx context.Context, k8sClient client.Client, apiGatewayCR *v1alpha1.APIGateway) error {
 	ctrl.Log.Info("Adding finalizer", "finalizer", KymaGatewayFinalizer)
 	controllerutil.AddFinalizer(apiGatewayCR, KymaGatewayFinalizer)

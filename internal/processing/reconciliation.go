@@ -71,7 +71,7 @@ func Reconcile(ctx context.Context, client client.Client, log *logr.Logger, cmd 
 	}
 
 	statusBase := cmd.GetStatusBase(string(gatewayv1beta1.StatusOK))
-	return statusBase.GenerateStatusFromFailures([]validation.Failure{})
+	return statusBase.GenerateStatusFromFailures(nil)
 }
 
 // applyChanges applies the given commands on the cluster
@@ -91,7 +91,6 @@ func applyChanges(ctx context.Context, client client.Client, changes ...*ObjectC
 
 func applyChange(ctx context.Context, client client.Client, change *ObjectChange) (status.ResourceSelector, error) {
 	var err error
-	// TODO
 	switch change.Action {
 	case create:
 		err = client.Create(ctx, change.Obj)

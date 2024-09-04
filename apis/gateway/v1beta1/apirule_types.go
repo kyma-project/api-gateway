@@ -62,7 +62,7 @@ type APIRuleSpec struct {
 
 // Describes the observed state of ApiRule.
 type APIRuleStatus struct {
-	LastProcessedTime    *metav1.Time           `json:"lastProcessedTime,omitempty"`
+	LastProcessedTime    metav1.Time            `json:"lastProcessedTime,omitempty"`
 	ObservedGeneration   int64                  `json:"observedGeneration,omitempty"`
 	APIRuleStatus        *APIRuleResourceStatus `json:"APIRuleStatus,omitempty"`
 	VirtualServiceStatus *APIRuleResourceStatus `json:"virtualServiceStatus,omitempty"`

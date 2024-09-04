@@ -177,7 +177,6 @@ func forceApiGatewayCrRemoval(ctx context.Context, apiGateway *v1alpha1.APIGatew
 
 		if apiGateway.Status.State == v1alpha1.Error {
 			apiGateway.Finalizers = nil
-			// TODO: remove intermediate update call
 			err = c.Update(ctx, apiGateway)
 			if err != nil {
 				return err
@@ -238,7 +237,6 @@ func deleteBlockingResources(ctx context.Context) error {
 		err = retry.Do(func() error {
 			if apiRule.Finalizers != nil {
 				apiRule.Finalizers = nil
-				// TODO: remove intermediate update call
 				err = k8sClient.Update(ctx, &apiRule)
 				if err != nil {
 					return err

@@ -209,7 +209,6 @@ func (r *APIGatewayReconciler) terminateReconciliation(ctx context.Context, apiG
 func (r *APIGatewayReconciler) reconcileFinalizer(ctx context.Context, apiGatewayCR *operatorv1alpha1.APIGateway) controllers.Status {
 	if !apiGatewayCR.IsInDeletion() && !hasFinalizer(apiGatewayCR) {
 		controllerutil.AddFinalizer(apiGatewayCR, ApiGatewayFinalizer)
-		// TODO: remove intermediate update
 		if err := r.Client.Update(ctx, apiGatewayCR); err != nil {
 			ctrl.Log.Error(err, "Failed to add API-Gateway CR finalizer")
 			return controllers.ErrorStatus(err, "Could not add API-Gateway CR finalizer", conditions.ReconcileFailed.Condition())
@@ -303,7 +302,6 @@ func removeFinalizer(ctx context.Context, apiClient client.Client, apiGatewayCR 
 		}
 
 		controllerutil.RemoveFinalizer(apiGatewayCR, ApiGatewayFinalizer)
-		// TODO: remove intermediate update call
 		if updateErr := apiClient.Update(ctx, apiGatewayCR); updateErr != nil {
 			return updateErr
 		}
