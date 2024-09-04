@@ -86,7 +86,7 @@ spec:
     port: 8080
   timeout: 360
   rules:
-    - path: /.*
+    - path: "*"
       methods: [ "GET" ]
       noAuth: true
 ```

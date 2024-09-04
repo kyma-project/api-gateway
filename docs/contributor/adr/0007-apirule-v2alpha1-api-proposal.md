@@ -95,7 +95,7 @@ spec:
     name: httpbin
     port: 8000
   rules:
-    - path: * # Should be warning user that it is not recommended, as it applies to all paths
+    - path: "*" # Should be warning user that it is not recommended, as it applies to all paths
       methods: ["GET"]
       jwt:
         authentications:
