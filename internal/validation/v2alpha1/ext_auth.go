@@ -23,7 +23,8 @@ type meshData struct {
 	} `yaml:"extensionProviders"`
 }
 
-func validateExtAuthProviders(ctx context.Context, k8sClient client.Client, parentAttributePath string, rule gatewayv2alpha1.Rule) (problems []validation.Failure, err error) {
+func validateExtAuthProviders(ctx context.Context, k8sClient client.Client, parentAttributePath string,
+	rule gatewayv2alpha1.Rule) (problems []validation.Failure, err error) {
 	istioConfigMap, err := getIstioConfigMap(ctx, k8sClient)
 	if err != nil {
 		return []validation.Failure{
@@ -33,42 +34,60 @@ func validateExtAuthProviders(ctx context.Context, k8sClient client.Client, pare
 			},
 		}, nil
 	}
-	if data, ok := istioConfigMap.Data["mesh"]; !ok {
+
+	data, ok := istioConfigMap.Data["mesh"]
+	if !ok {
 		problems = append(problems, validation.Failure{
 			AttributePath: parentAttributePath + ".extAuth.externalAuthorizers",
 			Message:       "Istio ConfigMap does not contain mesh key",
 		})
-	} else {
-		var mesh meshData
-		if err := yaml.Unmarshal([]byte(data), &mesh); err != nil {
-			problems = append(problems, validation.Failure{
-				AttributePath: parentAttributePath + ".extAuth.externalAuthorizers",
-				Message:       "Failed to unmarshal mesh data",
-			})
-		} else {
-			for _, authorizer := range rule.ExtAuth.ExternalAuthorizers {
-				found := false
-				for _, provider := range mesh.ExtensionProviders {
-					if provider.Name == authorizer {
-						if provider.EnvoyExtAuthzHttp == nil {
-							problems = append(problems, validation.Failure{
-								AttributePath: parentAttributePath + ".extAuth.externalAuthorizers." + authorizer,
-								Message:       "EnvoyExtAuthzHttp not found in Istio ConfigMap mesh data for authorizer",
-							})
-						}
-						found = true
-						break
-					}
-				}
-				if !found {
-					problems = append(problems, validation.Failure{
-						AttributePath: parentAttributePath + ".extAuth.externalAuthorizers." + authorizer,
-						Message:       "Authorizer not found in Istio ConfigMap mesh data",
-					})
-				}
-			}
-		}
+
+		// Since all following validation would require the mesh key, we can return early
+		return problems, nil
+	}
+
+	var mesh meshData
+	if err := yaml.Unmarshal([]byte(data), &mesh); err != nil {
+		problems = append(problems, validation.Failure{
+			AttributePath: parentAttributePath + ".extAuth.externalAuthorizers",
+			Message:       "Failed to unmarshal mesh data",
+		})
+		// Since all following validation would require the mesh data, we can return early
+		return problems, nil
+	}
+
+	for _, authorizer := range rule.ExtAuth.ExternalAuthorizers {
+		p := validateAuthorizer(authorizer, mesh, parentAttributePath)
+		problems = append(problems, p...)
 	}
 
 	return problems, nil
+}
+
+func validateAuthorizer(authorizer string, mesh meshData, parentAttributePath string) []validation.Failure {
+	found := false
+	for _, provider := range mesh.ExtensionProviders {
+		if provider.Name == authorizer {
+			if provider.EnvoyExtAuthzHttp == nil {
+				return []validation.Failure{
+					{
+						AttributePath: parentAttributePath + ".extAuth.externalAuthorizers." + authorizer,
+						Message:       "EnvoyExtAuthzHttp not found in Istio ConfigMap mesh data for authorizer",
+					},
+				}
+			}
+			found = true
+			break
+		}
+	}
+	if !found {
+		return []validation.Failure{
+			{
+				AttributePath: parentAttributePath + ".extAuth.externalAuthorizers." + authorizer,
+				Message:       "Authorizer not found in Istio ConfigMap mesh data",
+			},
+		}
+	}
+
+	return []validation.Failure{}
 }
