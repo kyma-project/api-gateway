@@ -65,7 +65,7 @@ func (s *scenario) callingTheEndpointWithMethodWithValidTokenShouldResultInStatu
 
 func (s *scenario) callingTheEndpointWithMethodWithValidToken(url string, method string, tokenType string, asserter helpers.HttpResponseAsserter, additionalRequestHeaders ...map[string]string) error {
 	requestHeaders := make(map[string]string)
-	if len(additionalRequestHeaders) != 0 {
+	if len(additionalRequestHeaders) > 0 {
 		requestHeaders = additionalRequestHeaders[0]
 	}
 

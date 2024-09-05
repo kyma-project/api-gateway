@@ -129,8 +129,7 @@ func generateAuthorizationPolicyForEmptyAuthorizations(ctx context.Context, clie
 
 	// If there is no other authorization, we can safely assume that the index of this authorization in the array
 	// in the YAML is 0.
-	err = hashbasedstate.AddLabelsToAuthorizationPolicy(ap, 0)
-	if err != nil {
+	if err := hashbasedstate.AddLabelsToAuthorizationPolicy(ap, 0); err != nil {
 		return nil, err
 	}
 

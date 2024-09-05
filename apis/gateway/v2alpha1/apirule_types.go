@@ -117,7 +117,7 @@ type Service struct {
 }
 
 // Rule .
-// +kubebuilder:validation:XValidation:rule="((has(self.extAuth)?1:0)+(has(self.jwt)?1:0)+((has(self.noAuth)&&self.noAuth==true)?1:0))==1",message="One, and only one of the following fields must be set: noAuth, jwt, extAuth"
+// +kubebuilder:validation:XValidation:rule="((has(self.extAuth)?1:0)+(has(self.jwt)?1:0)+((has(self.noAuth)&&self.noAuth==true)?1:0))==1",message="One of the following fields must be set: noAuth, jwt, extAuth"
 type Rule struct {
 	// Specifies the path of the exposed service.
 	// +kubebuilder:validation:Pattern=^([0-9a-zA-Z./*()?!\\_-]+)

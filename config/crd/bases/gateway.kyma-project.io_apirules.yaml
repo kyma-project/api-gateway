@@ -570,8 +570,8 @@ spec:
                   - path
                   type: object
                   x-kubernetes-validations:
-                  - message: 'One, and only one of the following fields must be set:
-                      noAuth, jwt, extAuth'
+                  - message: 'One of the following fields must be set: noAuth, jwt,
+                      extAuth'
                     rule: ((has(self.extAuth)?1:0)+(has(self.jwt)?1:0)+((has(self.noAuth)&&self.noAuth==true)?1:0))==1
                 minItems: 1
                 type: array
