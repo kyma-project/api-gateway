@@ -200,47 +200,47 @@ func NewAPIRuleBuilderWithDummyData() *ApiRuleBuilder {
 		WithService("example-service", "example-namespace", 8080)
 }
 
-type corsPolicyBuilder struct {
+type CorsPolicyBuilder struct {
 	policy gatewayv2alpha1.CorsPolicy
 }
 
-func (c *corsPolicyBuilder) WithAllowOrigins(origins []map[string]string) *corsPolicyBuilder {
+func (c *CorsPolicyBuilder) WithAllowOrigins(origins []map[string]string) *CorsPolicyBuilder {
 	c.policy.AllowOrigins = origins
 	return c
 }
 
-func (c *corsPolicyBuilder) WithAllowMethods(methods []string) *corsPolicyBuilder {
+func (c *CorsPolicyBuilder) WithAllowMethods(methods []string) *CorsPolicyBuilder {
 	c.policy.AllowMethods = methods
 	return c
 }
 
-func (c *corsPolicyBuilder) WithAllowHeaders(headers []string) *corsPolicyBuilder {
+func (c *CorsPolicyBuilder) WithAllowHeaders(headers []string) *CorsPolicyBuilder {
 	c.policy.AllowHeaders = headers
 	return c
 }
 
-func (c *corsPolicyBuilder) WithExposeHeaders(headers []string) *corsPolicyBuilder {
+func (c *CorsPolicyBuilder) WithExposeHeaders(headers []string) *CorsPolicyBuilder {
 	c.policy.ExposeHeaders = headers
 	return c
 }
 
-func (c *corsPolicyBuilder) WithMaxAge(maxAge uint64) *corsPolicyBuilder {
+func (c *CorsPolicyBuilder) WithMaxAge(maxAge uint64) *CorsPolicyBuilder {
 	c.policy.MaxAge = &maxAge
 	return c
 }
 
-func (c *corsPolicyBuilder) WithAllowCredentials(allow bool) *corsPolicyBuilder {
+func (c *CorsPolicyBuilder) WithAllowCredentials(allow bool) *CorsPolicyBuilder {
 	c.policy.AllowCredentials = &allow
 	return c
 }
 
-func NewCorsPolicyBuilder() *corsPolicyBuilder {
-	return &corsPolicyBuilder{
+func NewCorsPolicyBuilder() *CorsPolicyBuilder {
+	return &CorsPolicyBuilder{
 		policy: gatewayv2alpha1.CorsPolicy{},
 	}
 }
 
-func (c *corsPolicyBuilder) Build() gatewayv2alpha1.CorsPolicy {
+func (c *CorsPolicyBuilder) Build() gatewayv2alpha1.CorsPolicy {
 	return c.policy
 }
 
