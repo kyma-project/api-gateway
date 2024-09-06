@@ -22,12 +22,12 @@ func doneReconcileDefaultRequeue(reconcilerPeriod time.Duration) (ctrl.Result, e
 	return ctrl.Result{RequeueAfter: after}, nil
 }
 
-func doneReconcileErrorRequeue(reconcilerPeriod time.Duration) (ctrl.Result, error) {
+func doneReconcileErrorRequeue(err error, reconcilerPeriod time.Duration) (ctrl.Result, error) {
 	after := errorReconciliationPeriod
 	if reconcilerPeriod != 0 {
 		after = reconcilerPeriod
 	}
-	return ctrl.Result{RequeueAfter: after}, nil
+	return ctrl.Result{RequeueAfter: after}, err
 }
 
 func doneReconcileMigrationRequeue(reconcilerPeriod time.Duration) (ctrl.Result, error) {
@@ -43,7 +43,7 @@ func (r *APIRuleReconciler) updateStatus(ctx context.Context, l logr.Logger,
 	l.Info("Updating APIRule status")
 	if err := r.Status().Update(ctx, apiRule); err != nil {
 		l.Error(err, "Error updating APIRule status")
-		return doneReconcileErrorRequeue(r.OnErrorReconcilePeriod)
+		return doneReconcileErrorRequeue(err, r.OnErrorReconcilePeriod)
 	}
 	if _, ok := apiRule.GetAnnotations()[migration.AnnotationName]; ok {
 		l.Info("Finished reconciliation", "next", r.MigrationReconcilePeriod)
