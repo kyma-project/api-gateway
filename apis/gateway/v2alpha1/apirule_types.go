@@ -120,7 +120,7 @@ type Service struct {
 // +kubebuilder:validation:XValidation:rule="has(self.jwt) ? !has(self.noAuth) || self.noAuth == false : has(self.noAuth) && self.noAuth == true",message="either jwt is configured or noAuth must be set to true in a rule"
 type Rule struct {
 	// Specifies the path of the exposed service.
-	// +kubebuilder:validation:Pattern=^(\*|[0-9a-zA-Z./()?!\\_-]+)$
+	// +kubebuilder:validation:Pattern=^(\*|[0-9a-zA-Z/()?!\\_-]+)$
 	Path string `json:"path"`
 	// Describes the service to expose. Overwrites the **spec** level service if defined.
 	// +optional
