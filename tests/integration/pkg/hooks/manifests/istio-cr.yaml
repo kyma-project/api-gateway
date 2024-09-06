@@ -7,7 +7,7 @@ spec:
   config:
     authorizers:
       - name: sample-ext-authz-http
-        port: 8080
+        port: 8000
         service: ext-authz.ext-auth.svc.cluster.local
         headers:
           inCheck:
