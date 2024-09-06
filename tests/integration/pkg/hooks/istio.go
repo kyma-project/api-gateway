@@ -39,7 +39,7 @@ var ApplyExtAuthorizerIstioCR = func() error {
 		return err
 	}
 	client := k8sclient.GetK8sClient()
-	spec, _ := istioCr.Object["spec"]
+	spec := istioCr.Object["spec"]
 	return retry.Do(func() error {
 		_, err := controllerutil.CreateOrPatch(context.Background(), client, &istioCr, func() error {
 			istioCr.Object["spec"] = spec
