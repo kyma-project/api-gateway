@@ -4,8 +4,9 @@ import (
 	"context"
 	"fmt"
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
+	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	operatorv1alpha1 "github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
-	v1beta1Status "github.com/kyma-project/api-gateway/internal/processing/status"
+	processingStatus "github.com/kyma-project/api-gateway/internal/processing/status"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/util/retry"
@@ -25,7 +26,8 @@ const (
 type Status interface {
 	NestedError() error
 	ToAPIGatewayStatus() (operatorv1alpha1.APIGatewayStatus, error)
-	ToAPIRuleStatus() (v1beta1Status.ReconciliationV1beta1Status, error)
+	V1beta1Status() (processingStatus.ReconciliationV1beta1Status, error)
+	V2alpha1Status() (processingStatus.ReconciliationV2alpha1Status, error)
 	IsReady() bool
 	IsWarning() bool
 	IsError() bool
@@ -117,32 +119,58 @@ func (s status) ToAPIGatewayStatus() (operatorv1alpha1.APIGatewayStatus, error) 
 		return operatorv1alpha1.APIGatewayStatus{}, fmt.Errorf("unsupported status state: %v", s.state)
 	}
 }
-
-func (s status) ToAPIRuleStatus() (v1beta1Status.ReconciliationV1beta1Status, error) {
+func (s status) V2alpha1Status() (processingStatus.ReconciliationV2alpha1Status, error) {
 	switch s.state {
 	case Ready:
-		return v1beta1Status.ReconciliationV1beta1Status{
+		return processingStatus.ReconciliationV2alpha1Status{
+			ApiRuleStatus: &gatewayv2alpha1.APIRuleStatus{
+				State:       gatewayv2alpha1.Ready,
+				Description: s.description,
+			},
+		}, nil
+	case Error:
+		return processingStatus.ReconciliationV2alpha1Status{
+			ApiRuleStatus: &gatewayv2alpha1.APIRuleStatus{
+				State:       gatewayv2alpha1.Error,
+				Description: s.description,
+			},
+		}, nil
+	case Warning:
+		return processingStatus.ReconciliationV2alpha1Status{
+			ApiRuleStatus: &gatewayv2alpha1.APIRuleStatus{
+				State:       gatewayv2alpha1.Warning,
+				Description: s.description,
+			},
+		}, nil
+	default:
+		return processingStatus.ReconciliationV2alpha1Status{}, fmt.Errorf("unsupported status: %v", s.state)
+	}
+}
+func (s status) V1beta1Status() (processingStatus.ReconciliationV1beta1Status, error) {
+	switch s.state {
+	case Ready:
+		return processingStatus.ReconciliationV1beta1Status{
 			ApiRuleStatus: &gatewayv1beta1.APIRuleResourceStatus{
 				Code:        gatewayv1beta1.StatusOK,
 				Description: s.description,
 			},
 		}, nil
 	case Error:
-		return v1beta1Status.ReconciliationV1beta1Status{
+		return processingStatus.ReconciliationV1beta1Status{
 			ApiRuleStatus: &gatewayv1beta1.APIRuleResourceStatus{
 				Code:        gatewayv1beta1.StatusError,
 				Description: s.description,
 			},
 		}, nil
 	case Warning:
-		return v1beta1Status.ReconciliationV1beta1Status{
+		return processingStatus.ReconciliationV1beta1Status{
 			ApiRuleStatus: &gatewayv1beta1.APIRuleResourceStatus{
 				Code:        gatewayv1beta1.StatusWarning,
 				Description: s.description,
 			},
 		}, nil
 	default:
-		return v1beta1Status.ReconciliationV1beta1Status{}, fmt.Errorf("unsupported status: %v", s.state)
+		return processingStatus.ReconciliationV1beta1Status{}, fmt.Errorf("unsupported status: %v", s.state)
 	}
 }
 
@@ -173,7 +201,6 @@ func UpdateApiGatewayStatus(ctx context.Context, k8sClient client.Client, apiGat
 		}
 
 		apiGatewayCR.Status = newStatus
-
 		if updateErr := k8sClient.Status().Update(ctx, apiGatewayCR); updateErr != nil {
 			return updateErr
 		}
