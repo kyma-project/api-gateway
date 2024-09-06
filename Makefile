@@ -95,15 +95,11 @@ test: manifests generate fmt vet envtest ## Generate manifests and run tests.
 test-integration: test-integration-v2alpha1 test-integration-ory test-integration-istio test-integration-gateway
 
 .PHONY: test-integration-v2alpha1
-test-integration-v2alpha1: generate fmt vet add-authorizer-to-istio ## Run API Gateway integration tests with v2alpha1 API.
+test-integration-v2alpha1: generate fmt vet ## Run API Gateway integration tests with v2alpha1 API.
 	kubectl create ns ext-auth --dry-run=client -o yaml | kubectl apply -f -
 	kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.23/samples/extauthz/ext-authz.yaml -n ext-auth
 	source ./tests/integration/env_vars.sh && go test -timeout 1h ./tests/integration -v -race -run TestV2alpha1
 	kubectl delete ns ext-auth
-
-.PHONY: add-authorizer-to-istio
-add-authorizer-to-istio:
-	kubectl patch istio -n kyma-system default --type merge --patch '{"spec":{"config":{"authorizers":[{"name":"sample-ext-authz-http","port":8000,"service":"ext-authz.ext-auth.svc.cluster.local","headers":{"inCheck":{"include":["x-ext-authz"]}}}]}}}'
 
 .PHONY: test-integration-ory
 test-integration-ory: generate fmt vet
