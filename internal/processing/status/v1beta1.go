@@ -3,7 +3,6 @@ package status
 import (
 	"fmt"
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
-	"github.com/kyma-project/api-gateway/apis/gateway/versions"
 	"github.com/kyma-project/api-gateway/internal/validation"
 )
 
@@ -88,16 +87,17 @@ func generateStatusFromErrors(errors []error) *gatewayv1beta1.APIRuleResourceSta
 	return status
 }
 
-func (s ReconciliationV1beta1Status) UpdateStatus(status *gatewayv1beta1.APIRuleStatus) error {
-	if status.ApiRuleStatusVersion() != versions.V1beta1 {
-		return fmt.Errorf("v1beta1 status handler cannot handle status of version %s", status.ApiRuleStatusVersion())
+func (s ReconciliationV1beta1Status) UpdateStatus(status any) error {
+	st, ok := status.(*gatewayv1beta1.APIRuleStatus)
+	if !ok {
+		return fmt.Errorf("status has unexpected type %T", status)
 	}
 
-	status.APIRuleStatus = s.ApiRuleStatus
-	status.VirtualServiceStatus = s.VirtualServiceStatus
-	status.AccessRuleStatus = s.AccessRuleStatus
-	status.RequestAuthenticationStatus = s.RequestAuthenticationStatus
-	status.AuthorizationPolicyStatus = s.AuthorizationPolicyStatus
+	st.APIRuleStatus = s.ApiRuleStatus
+	st.VirtualServiceStatus = s.VirtualServiceStatus
+	st.AccessRuleStatus = s.AccessRuleStatus
+	st.RequestAuthenticationStatus = s.RequestAuthenticationStatus
+	st.AuthorizationPolicyStatus = s.AuthorizationPolicyStatus
 
 	return nil
 }
@@ -111,4 +111,24 @@ func toStatus(c gatewayv1beta1.StatusCode, desc string) *gatewayv1beta1.APIRuleR
 		Code:        c,
 		Description: desc,
 	}
+}
+
+func generateValidationDescription(failures []validation.Failure) string {
+	var description string
+
+	if len(failures) == 1 {
+		description = "Validation error: "
+		description += fmt.Sprintf("Attribute \"%s\": %s", failures[0].AttributePath, failures[0].Message)
+	} else {
+		const maxEntries = 3
+		description = "Multiple validation errors: "
+		for i := 0; i < len(failures) && i < maxEntries; i++ {
+			description += fmt.Sprintf("\nAttribute \"%s\": %s", failures[i].AttributePath, failures[i].Message)
+		}
+		if len(failures) > maxEntries {
+			description += fmt.Sprintf("\n%d more error(s)...", len(failures)-maxEntries)
+		}
+	}
+
+	return description
 }

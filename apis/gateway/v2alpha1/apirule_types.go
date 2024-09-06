@@ -63,7 +63,7 @@ type Host string
 
 // APIRuleStatus describes the observed state of ApiRule.
 type APIRuleStatus struct {
-	LastProcessedTime *metav1.Time `json:"lastProcessedTime,omitempty"`
+	LastProcessedTime metav1.Time `json:"lastProcessedTime,omitempty"`
 	// State signifies current state of APIRule.
 	// Value can be one of ("Ready", "Processing", "Error", "Deleting", "Warning").
 	// +kubebuilder:validation:Required
