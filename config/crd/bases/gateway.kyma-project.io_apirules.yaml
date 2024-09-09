@@ -194,6 +194,7 @@ spec:
                   - methods
                   - path
                   type: object
+                minItems: 1
                 type: array
               service:
                 description: Describes the service to expose.

@@ -110,6 +110,21 @@ func (apiRuleV2Alpha1 *APIRule) ConvertTo(hub conversion.Hub) error {
 					Index: i,
 					Rule:  ruleV1Alpha2,
 				})
+
+				var v1beta1Methods []v1beta1.HttpMethod
+				err = convertOverJson(ruleV1Alpha2.Methods, &v1beta1Methods)
+
+				apiRuleBeta1.Spec.Rules = append(apiRuleBeta1.Spec.Rules, v1beta1.Rule{
+					AccessStrategies: []*v1beta1.Authenticator{
+						{
+							Handler: &v1beta1.Handler{
+								Name: "ext-auth",
+							},
+						},
+					},
+					Methods: v1beta1Methods,
+					Path:    ruleV1Alpha2.Path,
+				})
 				continue
 			}
 
@@ -256,12 +271,13 @@ func (apiRuleV2Alpha1 *APIRule) ConvertFrom(hub conversion.Hub) error {
 
 	if len(apiRuleBeta1.Spec.Rules) > 0 {
 		apiRuleV2Alpha1.Spec.Rules = []Rule{}
+	OUTER:
 		for i, ruleBeta1 := range apiRuleBeta1.Spec.Rules {
 			// This here is done to preserve the order of the rules in the APIRule.
 			// As kubernetes preserves the order of array fields as they were applied,
 			// they need to be properly converted back to the original order
 			// otherwise conflicts will occur during the update of the APIRule (especially doing server-side apply).
-			for extAuthIndex < len(indexedExtAuths) && indexedExtAuths[extAuthIndex].Index == i+extAuthIndex {
+			for extAuthIndex < len(indexedExtAuths) && indexedExtAuths[extAuthIndex].Index == i {
 				apiRuleV2Alpha1.Spec.Rules = append(apiRuleV2Alpha1.Spec.Rules, indexedExtAuths[extAuthIndex].Rule)
 				extAuthIndex++
 			}
@@ -272,6 +288,10 @@ func (apiRuleV2Alpha1 *APIRule) ConvertFrom(hub conversion.Hub) error {
 				return err
 			}
 			for _, accessStrategy := range ruleBeta1.AccessStrategies {
+				if accessStrategy.Handler.Name == "ext-auth" {
+					continue OUTER
+				}
+
 				if accessStrategy.Handler.Name == v1beta1.AccessStrategyNoAuth {
 					ruleV1Alpha2.NoAuth = ptr.To(true)
 				}
@@ -347,7 +367,7 @@ func isFullConversionPossible(apiRule *v1beta1.APIRule) (bool, error) {
 	for _, rule := range apiRule.Spec.Rules {
 		for _, accessStrategy := range rule.AccessStrategies {
 
-			if accessStrategy.Handler.Name == v1beta1.AccessStrategyNoAuth {
+			if accessStrategy.Handler.Name == v1beta1.AccessStrategyNoAuth || accessStrategy.Handler.Name == "ext-auth" {
 				continue
 			}
 
