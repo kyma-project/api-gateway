@@ -2,11 +2,11 @@ package v2alpha1
 
 import (
 	"encoding/json"
+	"k8s.io/apimachinery/pkg/runtime"
 	"time"
 
 	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
 )
@@ -32,7 +32,7 @@ func convertMap(m map[v1beta1.StatusCode]State) map[State]v1beta1.StatusCode {
 // The 2 => 1 map is generated automatically based on 1 => 2 map
 var alpha1to1beta1statusConversionMap = convertMap(beta1toV2alpha1StatusConversionMap)
 
-const extAuthAnnotationKey = "gateway.kyma-project.io/ext-auth"
+const v2alpha1RulesAnnotationKey = "gateway.kyma-project.io/v2alpha1-rules"
 
 // indexedExtAuth is a helper struct to store the index of the rule in the array
 type indexedExtAuth struct {
@@ -97,47 +97,34 @@ func (apiRuleV2Alpha1 *APIRule) ConvertTo(hub conversion.Hub) error {
 	}
 
 	if len(apiRuleV2Alpha1.Spec.Rules) > 0 {
+		marshaledApiRules, err := json.Marshal(apiRuleV2Alpha1.Spec.Rules)
+		if err != nil {
+			return err
+		}
+		if len(apiRuleBeta1.Annotations) == 0 {
+			apiRuleBeta1.Annotations = make(map[string]string)
+		}
+		apiRuleBeta1.Annotations[v2alpha1RulesAnnotationKey] = string(marshaledApiRules)
+
 		apiRuleBeta1.Spec.Rules = []v1beta1.Rule{}
-		var extAuthAnnotations []indexedExtAuth
-		for i, ruleV1Alpha2 := range apiRuleV2Alpha1.Spec.Rules {
-			// ExtAuth
-			if ruleV1Alpha2.ExtAuth != nil {
-				// The index needs to be preserved, so we store the extAuth rules in an array with index
-				// A sequentially built array is used here instead of a map un purpose.
-				// This simplifies conversion back to v2alpha1,
-				// as only the last not already added rule needs to be processed at once.
-				extAuthAnnotations = append(extAuthAnnotations, indexedExtAuth{
-					Index: i,
-					Rule:  ruleV1Alpha2,
-				})
-
-				var v1beta1Methods []v1beta1.HttpMethod
-				err = convertOverJson(ruleV1Alpha2.Methods, &v1beta1Methods)
-				if err != nil {
-					return err
-				}
-
-				apiRuleBeta1.Spec.Rules = append(apiRuleBeta1.Spec.Rules, v1beta1.Rule{
-					AccessStrategies: []*v1beta1.Authenticator{
-						{
-							Handler: &v1beta1.Handler{
-								Name: "ext-auth",
-							},
-						},
-					},
-					Methods: v1beta1Methods,
-					Path:    ruleV1Alpha2.Path,
-				})
-				continue
-			}
-
+		for _, ruleV2Alpha1 := range apiRuleV2Alpha1.Spec.Rules {
 			ruleBeta1 := v1beta1.Rule{}
-			err = convertOverJson(ruleV1Alpha2, &ruleBeta1)
+			err = convertOverJson(ruleV2Alpha1, &ruleBeta1)
 			if err != nil {
 				return err
 			}
-			// No Auth
-			if ruleV1Alpha2.NoAuth != nil && *ruleV1Alpha2.NoAuth {
+
+			// ExtAuth
+			if ruleV2Alpha1.ExtAuth != nil {
+				ruleBeta1.AccessStrategies = append(ruleBeta1.AccessStrategies, &v1beta1.Authenticator{
+					Handler: &v1beta1.Handler{
+						Name: "ext-auth",
+					},
+				})
+			}
+
+			// NoAuth
+			if ruleV2Alpha1.NoAuth != nil && *ruleV2Alpha1.NoAuth {
 				ruleBeta1.AccessStrategies = append(ruleBeta1.AccessStrategies, &v1beta1.Authenticator{
 					Handler: &v1beta1.Handler{
 						Name: v1beta1.AccessStrategyNoAuth,
@@ -145,20 +132,20 @@ func (apiRuleV2Alpha1 *APIRule) ConvertTo(hub conversion.Hub) error {
 				})
 			}
 			// JWT
-			if ruleV1Alpha2.Jwt != nil {
+			if ruleV2Alpha1.Jwt != nil {
 				ruleBeta1.AccessStrategies = append(ruleBeta1.AccessStrategies, &v1beta1.Authenticator{
 					Handler: &v1beta1.Handler{
 						Name:   v1beta1.AccessStrategyJwt,
-						Config: &runtime.RawExtension{Object: ruleV1Alpha2.Jwt},
+						Config: &runtime.RawExtension{Object: ruleV2Alpha1.Jwt},
 					},
 				})
 			}
 
 			// Mutators
-			if ruleV1Alpha2.Request != nil {
-				if ruleV1Alpha2.Request.Cookies != nil {
+			if ruleV2Alpha1.Request != nil {
+				if ruleV2Alpha1.Request.Cookies != nil {
 					var config runtime.RawExtension
-					err := convertOverJson(ruleV1Alpha2.Request.Cookies, &config)
+					err := convertOverJson(ruleV2Alpha1.Request.Cookies, &config)
 					if err != nil {
 						return err
 					}
@@ -170,9 +157,9 @@ func (apiRuleV2Alpha1 *APIRule) ConvertTo(hub conversion.Hub) error {
 					})
 				}
 
-				if ruleV1Alpha2.Request.Headers != nil {
+				if ruleV2Alpha1.Request.Headers != nil {
 					var config runtime.RawExtension
-					err := convertOverJson(ruleV1Alpha2.Request.Headers, &config)
+					err := convertOverJson(ruleV2Alpha1.Request.Headers, &config)
 					if err != nil {
 						return err
 					}
@@ -187,16 +174,7 @@ func (apiRuleV2Alpha1 *APIRule) ConvertTo(hub conversion.Hub) error {
 
 			apiRuleBeta1.Spec.Rules = append(apiRuleBeta1.Spec.Rules, ruleBeta1)
 		}
-
-		if len(extAuthAnnotations) > 0 {
-			js, err := json.Marshal(extAuthAnnotations)
-			if err != nil {
-				return err
-			}
-			apiRuleBeta1.Annotations[extAuthAnnotationKey] = string(js)
-		}
 	}
-
 	return nil
 }
 
@@ -263,38 +241,23 @@ func (apiRuleV2Alpha1 *APIRule) ConvertFrom(hub conversion.Hub) error {
 		*apiRuleV2Alpha1.Spec.Hosts[0] = Host(*apiRuleBeta1.Spec.Host)
 	}
 
-	var indexedExtAuths []indexedExtAuth
-	extAuthIndex := 0
-	if annotation, ok := apiRuleBeta1.Annotations[extAuthAnnotationKey]; ok {
-		err := json.Unmarshal([]byte(annotation), &indexedExtAuths)
+	if annotation, ok := apiRuleBeta1.Annotations[v2alpha1RulesAnnotationKey]; ok {
+		var v2alpha1Rules []Rule
+		err := json.Unmarshal([]byte(annotation), &v2alpha1Rules)
 		if err != nil {
 			return err
 		}
-	}
 
-	if len(apiRuleBeta1.Spec.Rules) > 0 {
+		apiRuleV2Alpha1.Spec.Rules = v2alpha1Rules
+	} else if len(apiRuleBeta1.Spec.Rules) > 0 {
 		apiRuleV2Alpha1.Spec.Rules = []Rule{}
-	OUTER:
-		for i, ruleBeta1 := range apiRuleBeta1.Spec.Rules {
-			// This here is done to preserve the order of the rules in the APIRule.
-			// As kubernetes preserves the order of array fields as they were applied,
-			// they need to be properly converted back to the original order
-			// otherwise conflicts will occur during the update of the APIRule (especially doing server-side apply).
-			for extAuthIndex < len(indexedExtAuths) && indexedExtAuths[extAuthIndex].Index == i {
-				apiRuleV2Alpha1.Spec.Rules = append(apiRuleV2Alpha1.Spec.Rules, indexedExtAuths[extAuthIndex].Rule)
-				extAuthIndex++
-			}
-
+		for _, ruleBeta1 := range apiRuleBeta1.Spec.Rules {
 			ruleV1Alpha2 := Rule{}
 			err = convertOverJson(ruleBeta1, &ruleV1Alpha2)
 			if err != nil {
 				return err
 			}
 			for _, accessStrategy := range ruleBeta1.AccessStrategies {
-				if accessStrategy.Handler.Name == "ext-auth" {
-					continue OUTER
-				}
-
 				if accessStrategy.Handler.Name == v1beta1.AccessStrategyNoAuth {
 					ruleV1Alpha2.NoAuth = ptr.To(true)
 				}
@@ -340,12 +303,6 @@ func (apiRuleV2Alpha1 *APIRule) ConvertFrom(hub conversion.Hub) error {
 			apiRuleV2Alpha1.Spec.Rules = append(apiRuleV2Alpha1.Spec.Rules, ruleV1Alpha2)
 		}
 
-	}
-
-	if extAuthIndex < len(indexedExtAuths) {
-		for _, extAuth := range indexedExtAuths[extAuthIndex:] {
-			apiRuleV2Alpha1.Spec.Rules = append(apiRuleV2Alpha1.Spec.Rules, extAuth.Rule)
-		}
 	}
 
 	return nil

@@ -35,26 +35,24 @@ func convertOryJwtAccessStrategy(accessStrategy *v1beta1.Authenticator) (*v1beta
 }
 
 func convertIstioJwtAccessStrategy(accessStrategy *v1beta1.Authenticator) (*v1beta1.JwtConfig, error) {
-	var jwtConfig *v1beta1.JwtConfig
 
-	convertedFromObject := false
 	if accessStrategy.Config.Object != nil {
-		jwtConfig, convertedFromObject = accessStrategy.Config.Object.(*v1beta1.JwtConfig)
-	}
-
-	if accessStrategy.Config.Raw != nil && !convertedFromObject {
-		jwtConfig = &v1beta1.JwtConfig{}
-		err := json.Unmarshal(accessStrategy.Config.Raw, jwtConfig)
-		if err != nil {
-			return nil, err
+		jwtConfig, ok := accessStrategy.Config.Object.(*v1beta1.JwtConfig)
+		if ok {
+			return jwtConfig, nil
 		}
 	}
 
-	if jwtConfig == nil {
-		return nil, errors.New("could not convert handler to v2alpha1.JwtConfig")
+	if accessStrategy.Config.Raw != nil {
+		var jwtConfig v1beta1.JwtConfig
+		err := json.Unmarshal(accessStrategy.Config.Raw, &jwtConfig)
+		if err != nil {
+			return nil, err
+		}
+		return &jwtConfig, nil
 	}
 
-	return jwtConfig, nil
+	return nil, errors.New("no raw config to convert")
 }
 
 func isConvertibleJwtConfig(accessStrategy *v1beta1.Authenticator) (bool, error) {

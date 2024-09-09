@@ -8,28 +8,55 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var _ = Describe("ExtAuthConversion", func() {
-	dummyExtAuthRule := v2alpha1.NewRuleBuilder().
-		WithExtAuth(v2alpha1.NewExtAuthBuilder().
-			WithAuthorizers("test-authorizer").
-			WithRestriction(&apirulev2alpha1.JwtConfig{
-				Authentications: []*apirulev2alpha1.JwtAuthentication{
-					{
-						Issuer:  "test-issuer",
-						JwksUri: "test-jwks-uri",
-						FromHeaders: []*apirulev2alpha1.JwtHeader{
-							{
-								Name:   "test-header",
-								Prefix: "test-prefix",
-							},
+const annotationKey = "gateway.kyma-project.io/v2alpha1-rules"
+
+var dummyExtAuthRule = v2alpha1.NewRuleBuilder().
+	WithPath("/test").
+	WithMethods("GET").
+	WithExtAuth(v2alpha1.NewExtAuthBuilder().
+		WithAuthorizers("test-authorizer").
+		WithRestriction(&apirulev2alpha1.JwtConfig{
+			Authentications: []*apirulev2alpha1.JwtAuthentication{
+				{
+					Issuer:  "test-issuer",
+					JwksUri: "test-jwks-uri",
+					FromHeaders: []*apirulev2alpha1.JwtHeader{
+						{
+							Name:   "test-header",
+							Prefix: "test-prefix",
 						},
-						FromParams: []string{"test-param"},
 					},
+					FromParams: []string{"test-param"},
 				},
-				Authorizations: nil,
-			}).
-			Build()).
-		Build()
+			},
+			Authorizations: nil,
+		}).
+		Build()).
+	Build()
+
+var _ = Describe("ExtAuthStorage", func() {
+	It("Should store extAuth in v1beta1 through annotation and a rule with only handler name set", func() {
+		// given
+		v2alpha1APIRule := v2alpha1.NewAPIRuleBuilderWithDummyData().WithRules(dummyExtAuthRule).Build()
+
+		// when
+		var betaConverted apirulev1beta1.APIRule
+		err := v2alpha1APIRule.ConvertTo(&betaConverted)
+		Expect(err).ToNot(HaveOccurred())
+
+		//then
+		annotations := betaConverted.GetAnnotations()
+		Expect(annotations).To(HaveKey(annotationKey))
+		Expect(betaConverted.Spec.Rules).To(HaveLen(1))
+		Expect(betaConverted.Spec.Rules[0].Path).To(Equal("/test"))
+		Expect(betaConverted.Spec.Rules[0].Methods).To(BeEquivalentTo([]apirulev1beta1.HttpMethod{"GET"}))
+		Expect(betaConverted.Spec.Rules[0].AccessStrategies).To(HaveLen(1))
+		Expect(betaConverted.Spec.Rules[0].AccessStrategies[0].Handler.Name).To(BeEquivalentTo("ext-auth"))
+		Expect(betaConverted.Spec.Rules[0].AccessStrategies[0].Config).To(BeNil())
+	})
+})
+
+var _ = Describe("ExtAuthConversion", func() {
 
 	DescribeTable("Should convert back and forth correctly with ExtAuth set", func(expectedRules []*apirulev2alpha1.Rule) {
 		// given
