@@ -113,6 +113,9 @@ func (apiRuleV2Alpha1 *APIRule) ConvertTo(hub conversion.Hub) error {
 
 				var v1beta1Methods []v1beta1.HttpMethod
 				err = convertOverJson(ruleV1Alpha2.Methods, &v1beta1Methods)
+				if err != nil {
+					return err
+				}
 
 				apiRuleBeta1.Spec.Rules = append(apiRuleBeta1.Spec.Rules, v1beta1.Rule{
 					AccessStrategies: []*v1beta1.Authenticator{
