@@ -19,7 +19,7 @@ type requestAuthenticationCreator struct{}
 func (r requestAuthenticationCreator) Create(ctx context.Context, client client.Client, api *gatewayv2alpha1.APIRule) (map[string]*securityv1beta1.RequestAuthentication, error) {
 	requestAuthentications := make(map[string]*securityv1beta1.RequestAuthentication)
 	for _, rule := range api.Spec.Rules {
-		if rule.Jwt != nil || (rule.ExtAuth != nil && rule.ExtAuth.Restrictions != nil) {
+		if rule.Jwt != nil || rule.ExtAuth != nil && rule.ExtAuth.Restrictions != nil {
 			ra, err := generateRequestAuthentication(ctx, client, api, rule)
 			if err != nil {
 				return requestAuthentications, err
