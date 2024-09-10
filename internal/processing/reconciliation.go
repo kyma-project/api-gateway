@@ -5,11 +5,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/go-logr/logr"
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"github.com/kyma-project/api-gateway/internal/processing/status"
-	ctrl "sigs.k8s.io/controller-runtime"
-
-	"github.com/go-logr/logr"
 	"github.com/kyma-project/api-gateway/internal/validation"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -33,8 +31,8 @@ type ReconciliationProcessor interface {
 }
 
 // Reconcile executes the reconciliation of the APIRule using the given reconciliation command.
-func Reconcile(ctx context.Context, client client.Client, log *logr.Logger, cmd ReconciliationCommand, req ctrl.Request) status.ReconciliationStatus {
-	l := log.WithValues("controller", "APIRule", "version", gatewayv1beta1.GroupVersion.String(), "request", req.NamespacedName)
+func Reconcile(ctx context.Context, client client.Client, log *logr.Logger, cmd ReconciliationCommand) status.ReconciliationStatus {
+	l := log.WithValues("controller", "APIRule", "version", gatewayv1beta1.GroupVersion.String())
 
 	validationFailures, err := cmd.Validate(ctx, client)
 	if err != nil {
