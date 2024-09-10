@@ -5,11 +5,9 @@ import (
 	_ "embed"
 	"encoding/base64"
 	"fmt"
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/hooks"
 	"log"
 	"path"
-	"time"
-
-	"github.com/kyma-project/api-gateway/tests/integration/pkg/hooks"
 
 	"github.com/cucumber/godog"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/auth"
@@ -88,6 +86,8 @@ func (t *testsuite) InitScenarios(ctx *godog.ScenarioContext) {
 	initServiceTwoNamespaces(ctx, t)
 	initServiceDifferentSameMethods(ctx, t)
 	initServiceCustomLabelSelector(ctx, t)
+	initExtAuthCommon(ctx, t)
+	initExtAuthJwt(ctx, t)
 	initValidationError(ctx, t)
 }
 
@@ -129,15 +129,11 @@ func (t *testsuite) Setup() error {
 		return err
 	}
 
-	time.Sleep(time.Duration(t.config.ReqDelay) * time.Second)
-
 	log.Printf("Creating common tests resources")
 	_, err = t.resourceManager.CreateResources(t.k8sClient, globalCommonResources...)
 	if err != nil {
 		return err
 	}
-
-	time.Sleep(time.Duration(t.config.ReqDelay) * time.Second)
 
 	var tokenURL string
 	if t.config.OIDCConfigUrl == "empty" {
@@ -185,7 +181,7 @@ func (t *testsuite) TearDown() {
 }
 
 func (t *testsuite) BeforeSuiteHooks() []func() error {
-	return []func() error{hooks.ApplyAndVerifyApiGatewayCrSuiteHook}
+	return []func() error{hooks.ApplyAndVerifyApiGatewayCrSuiteHook, hooks.ApplyExtAuthorizerIstioCR}
 }
 
 func (t *testsuite) AfterSuiteHooks() []func() error {
