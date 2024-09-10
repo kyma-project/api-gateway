@@ -104,17 +104,21 @@ func NewManager(retryOpts []retry.Option) *Manager {
 	}
 }
 
+const errorCreatingResource = "error creating resource: %w"
+const errorGettingResource = "error getting resource: %w"
+const errorUpdatingResource = "error updating resource: %w"
+
 func (m *Manager) CreateResources(k8sClient dynamic.Interface, resources ...unstructured.Unstructured) (*unstructured.Unstructured, error) {
 	gotRes := &unstructured.Unstructured{}
 	for _, res := range resources {
 		resourceSchema, ns, _ := m.GetResourceSchemaAndNamespace(res)
 		err := m.CreateResource(k8sClient, resourceSchema, ns, res)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf(errorCreatingResource, err)
 		}
 		gotRes, err = m.GetResource(k8sClient, resourceSchema, ns, res.GetName())
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf(errorGettingResource, err)
 		}
 	}
 	return gotRes, nil
@@ -127,11 +131,11 @@ func (m *Manager) CreateResourcesWithoutNS(k8sClient dynamic.Interface, resource
 		resourceSchema, _, _ := m.GetResourceSchemaAndNamespace(res)
 		err := m.CreateResourceWithoutNS(k8sClient, resourceSchema, res)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf(errorCreatingResource, err)
 		}
 		gotRes, err = m.GetResourceWithoutNS(k8sClient, resourceSchema, res.GetName())
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf(errorGettingResource, err)
 		}
 	}
 
@@ -144,11 +148,11 @@ func (m *Manager) UpdateResources(k8sClient dynamic.Interface, resources ...unst
 		resourceSchema, ns, _ := m.GetResourceSchemaAndNamespace(res)
 		err := m.UpdateResource(k8sClient, resourceSchema, ns, res.GetName(), res)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf(errorUpdatingResource, err)
 		}
 		gotRes, err = m.GetResource(k8sClient, resourceSchema, ns, res.GetName())
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf(errorGettingResource, err)
 		}
 	}
 	return gotRes, nil
@@ -160,11 +164,11 @@ func (m *Manager) UpdateResourcesWithoutNS(k8sClient dynamic.Interface, resource
 		resourceSchema, _, _ := m.GetResourceSchemaAndNamespace(res)
 		err := m.UpdateResourceWithoutNS(k8sClient, resourceSchema, res.GetName(), res)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf(errorUpdatingResource, err)
 		}
 		gotRes, err = m.GetResourceWithoutNS(k8sClient, resourceSchema, res.GetName())
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf(errorGettingResource, err)
 		}
 	}
 	return gotRes, nil
@@ -180,15 +184,15 @@ func (m *Manager) CreateOrUpdateResources(k8sClient dynamic.Interface, resources
 			if apierrors.IsNotFound(retry.Error{err}.Unwrap()) {
 				err := m.CreateResource(k8sClient, resourceSchema, ns, res)
 				if err != nil {
-					return nil, err
+					return nil, fmt.Errorf(errorCreatingResource, err)
 				}
 			} else {
-				return nil, err
+				return nil, fmt.Errorf(errorGettingResource, err)
 			}
 		} else {
 			err = m.UpdateResource(k8sClient, resourceSchema, ns, res.GetName(), res)
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf(errorUpdatingResource, err)
 			}
 		}
 	}
@@ -208,15 +212,15 @@ func (m *Manager) CreateOrUpdateResourcesGVR(client dynamic.Interface, resources
 			if apierrors.IsNotFound(err) {
 				_, err := client.Resource(*gvr).Namespace(res.GetNamespace()).Create(context.Background(), &res, metav1.CreateOptions{})
 				if err != nil {
-					return nil, err
+					return nil, fmt.Errorf(errorCreatingResource, err)
 				}
 			} else {
-				return nil, err
+				return nil, fmt.Errorf(errorGettingResource, err)
 			}
 		} else {
 			err = m.UpdateResource(client, *gvr, res.GetNamespace(), res.GetName(), res)
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf(errorUpdatingResource, err)
 			}
 		}
 	}
@@ -233,27 +237,29 @@ func (m *Manager) CreateOrUpdateResourcesWithoutNS(k8sClient dynamic.Interface, 
 			if apierrors.IsNotFound(retry.Error{err}.Unwrap()) {
 				err := m.CreateResourceWithoutNS(k8sClient, resourceSchema, res)
 				if err != nil {
-					return nil, err
+					return nil, fmt.Errorf(errorCreatingResource, err)
 				}
 			} else {
-				return nil, err
+				return nil, fmt.Errorf(errorGettingResource, err)
 			}
 		} else {
 			err = m.UpdateResourceWithoutNS(k8sClient, resourceSchema, res.GetName(), res)
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf(errorUpdatingResource, err)
 			}
 		}
 	}
 	return gotRes, nil
 }
 
+const errorDeletingResource = "error deleting resource: %w"
+
 func (m *Manager) DeleteResources(k8sClient dynamic.Interface, resources ...unstructured.Unstructured) error {
 	for _, res := range resources {
 		resourceSchema, ns, name := m.GetResourceSchemaAndNamespace(res)
 		err := m.DeleteResource(k8sClient, resourceSchema, ns, name)
 		if err != nil {
-			return err
+			return fmt.Errorf(errorDeletingResource, err)
 		}
 	}
 	return nil
@@ -264,7 +270,7 @@ func (m *Manager) DeleteResourcesWithoutNS(k8sClient dynamic.Interface, resource
 		resourceSchema, _, name := m.GetResourceSchemaAndNamespace(res)
 		err := m.DeleteResourceWithoutNS(k8sClient, resourceSchema, name)
 		if err != nil {
-			return err
+			return fmt.Errorf(errorDeletingResource, err)
 		}
 	}
 	return nil
