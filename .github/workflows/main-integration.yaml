@@ -42,7 +42,7 @@ jobs:
           fetch-depth: 0
       - uses: ./.github/actions/integration-tests
         with:
-          manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:${{ needs.wait-for-image-build.outputs.sha }}"
+          manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:${{ github.sha }}"
           client_id: ${{ secrets.CLIENT_ID }}
           client_secret: ${{ secrets.CLIENT_SECRET }}
           oidc_well_known_url: "${{ secrets.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
@@ -57,7 +57,7 @@ jobs:
           fetch-depth: 0
       - uses: ./.github/actions/upgrade-test
         with:
-          manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:${{ needs.wait-for-image-build.outputs.sha }}"
+          manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:${{ github.sha }}"
           client_id: ${{ secrets.CLIENT_ID }}
           client_secret: ${{ secrets.CLIENT_SECRET }}
           oidc_well_known_url: "${{ secrets.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
@@ -74,7 +74,7 @@ jobs:
           fetch-depth: 0
       - uses: ./.github/actions/integration-test-gardener
         with:
-          manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:${{ needs.wait-for-image-build.outputs.sha }}"
+          manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:${{ github.sha }}"
           gardener_secret: ${{ secrets.GARDENER_TOKEN }}
           script: ./hack/ci/custom-domain-gardener-gcp.sh
           client_id: ${{ secrets.CLIENT_ID }}
@@ -93,7 +93,7 @@ jobs:
           fetch-depth: 0
       - uses: ./.github/actions/integration-test-gardener
         with:
-          manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:${{ needs.wait-for-image-build.outputs.sha }}"
+          manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:${{ github.sha }}"
           gardener_secret: ${{ secrets.GARDENER_TOKEN }}
           script: ./hack/ci/custom-domain-gardener-aws.sh
           client_id: ${{ secrets.CLIENT_ID }}
