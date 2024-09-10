@@ -64,9 +64,11 @@ func (s *scenario) callingTheEndpointWithMethodWithValidTokenShouldResultInStatu
 	return s.callingTheEndpointWithMethodWithValidToken(fmt.Sprintf("%s%s", s.Url, path), method, tokenType, asserter)
 }
 
-func (s *scenario) callingTheEndpointWithMethodWithValidToken(url string, method string, tokenType string, asserter helpers.HttpResponseAsserter) error {
-
+func (s *scenario) callingTheEndpointWithMethodWithValidToken(url string, method string, tokenType string, asserter helpers.HttpResponseAsserter, additionalRequestHeaders ...map[string]string) error {
 	requestHeaders := make(map[string]string)
+	if len(additionalRequestHeaders) > 0 {
+		requestHeaders = additionalRequestHeaders[0]
+	}
 
 	switch tokenType {
 	case "JWT":
@@ -136,12 +138,26 @@ func (s *scenario) callingTheEndpointWithoutTokenShouldResultInStatusBetween(pat
 	return s.httpClient.CallEndpointWithRetries(fmt.Sprintf("%s/%s", s.Url, strings.TrimLeft(path, "/")), &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher})
 }
 
+func (s *scenario) callingTheEndpointWithHeader(path, headerName, value string, lower, higher int) error {
+	requestHeaders := map[string]string{headerName: value}
+	return s.httpClient.CallEndpointWithHeadersWithRetries(requestHeaders, fmt.Sprintf("%s/%s", s.Url, strings.TrimLeft(path, "/")), &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher})
+}
+
+func (s *scenario) callingTheEndpointWithHeaderAndInvalidJwt(path, headerName, _, value string, lower, higher int) error {
+	requestHeaders := map[string]string{headerName: value, testcontext.AuthorizationHeaderName: testcontext.AnyToken}
+	return s.httpClient.CallEndpointWithHeadersWithRetries(requestHeaders, fmt.Sprintf("%s/%s", s.Url, strings.TrimLeft(path, "/")), &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher})
+}
+
+func (s *scenario) callingTheEndpointWithHeaderAndValidJwt(path, headerName, value, tokenType string, lower, higher int) error {
+	requestHeaders := map[string]string{headerName: value}
+	return s.callingTheEndpointWithMethodWithValidToken(fmt.Sprintf("%s/%s", s.Url, strings.TrimLeft(path, "/")), http.MethodGet, tokenType, &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher}, requestHeaders)
+}
+
 func (s *scenario) thereIsAnJwtSecuredPath(path string) {
 	s.ManifestTemplate["jwtSecuredPath"] = path
 }
 
-func (s *scenario) emptyStep() {
-}
+func (s *scenario) emptyStep() {}
 
 func (s *scenario) thereIsAHttpbinService() error {
 	resources, err := manifestprocessor.ParseFromFileWithTemplate("testing-app.yaml", s.ApiResourceDirectory, s.ManifestTemplate)
@@ -155,6 +171,17 @@ func (s *scenario) thereIsAHttpbinService() error {
 
 	s.Url = fmt.Sprintf("https://httpbin-%s.%s", s.TestID, s.Domain)
 
+	return nil
+}
+
+func (s *scenario) thereIsAnEndpointWithExtAuth(provider, path string) error {
+	s.ManifestTemplate["extAuthPath"] = path
+	s.ManifestTemplate["extAuthProvider"] = provider
+
+	return nil
+}
+
+func (s *scenario) theEndpointHasJwtRestrictionsWithScope() error {
 	return nil
 }
 

@@ -2,7 +2,7 @@ package v2alpha1
 
 import (
 	"encoding/json"
-
+	"errors"
 	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"github.com/kyma-project/api-gateway/internal/types/ory"
 )
@@ -35,19 +35,24 @@ func convertOryJwtAccessStrategy(accessStrategy *v1beta1.Authenticator) (*v1beta
 }
 
 func convertIstioJwtAccessStrategy(accessStrategy *v1beta1.Authenticator) (*v1beta1.JwtConfig, error) {
-	var jwtConfig *v1beta1.JwtConfig
 
 	if accessStrategy.Config.Object != nil {
-		jwtConfig = accessStrategy.Config.Object.(*v1beta1.JwtConfig)
-	} else if accessStrategy.Config.Raw != nil {
-		jwtConfig = &v1beta1.JwtConfig{}
-		err := json.Unmarshal(accessStrategy.Config.Raw, jwtConfig)
-		if err != nil {
-			return nil, err
+		jwtConfig, ok := accessStrategy.Config.Object.(*v1beta1.JwtConfig)
+		if ok {
+			return jwtConfig, nil
 		}
 	}
 
-	return jwtConfig, nil
+	if accessStrategy.Config.Raw != nil {
+		var jwtConfig v1beta1.JwtConfig
+		err := json.Unmarshal(accessStrategy.Config.Raw, &jwtConfig)
+		if err != nil {
+			return nil, err
+		}
+		return &jwtConfig, nil
+	}
+
+	return nil, errors.New("no raw config to convert")
 }
 
 func isConvertibleJwtConfig(accessStrategy *v1beta1.Authenticator) (bool, error) {

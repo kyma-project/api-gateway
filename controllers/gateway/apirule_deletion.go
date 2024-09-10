@@ -18,7 +18,7 @@ func (r *APIRuleReconciler) reconcileAPIRuleDeletion(ctx context.Context, log lo
 			log.Error(err, "Error happened during deletion of APIRule subresources")
 			// if removing subresources ends in error, return with retry
 			// so that it can be retried
-			return doneReconcileErrorRequeue(r.OnErrorReconcilePeriod)
+			return doneReconcileErrorRequeue(err, r.OnErrorReconcilePeriod)
 		}
 
 		// remove finalizer so the reconciliation can proceed

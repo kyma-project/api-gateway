@@ -60,11 +60,6 @@ func NewReconciliation(apiRuleV2alpha1 *gatewayv2alpha1.APIRule, apiRuleV1beta1 
 		processors = append(processors, requestauthentication.NewProcessor(apiRuleV2alpha1))
 	}
 
-	/*
-		When implementing extauth handler, it should use the APIrule in version v2alpha1
-		extAuth := NewExtAuthProcessor(config, log, apiv2alpha1)
-	*/
-
 	return Reconciliation{
 		apiRuleV1beta1:  apiRuleV1beta1,
 		apiRuleV2alpha1: apiRuleV2alpha1,
