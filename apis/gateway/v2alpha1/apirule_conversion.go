@@ -34,12 +34,6 @@ var alpha1to1beta1statusConversionMap = convertMap(beta1toV2alpha1StatusConversi
 
 const v2alpha1RulesAnnotationKey = "gateway.kyma-project.io/v2alpha1-rules"
 
-// indexedExtAuth is a helper struct to store the index of the rule in the array
-type indexedExtAuth struct {
-	Index int  `json:"index"`
-	Rule  Rule `json:"rule"`
-}
-
 // Converts this ApiRule (v2alpha1) to the Hub version (v1beta1)
 func (apiRuleV2Alpha1 *APIRule) ConvertTo(hub conversion.Hub) error {
 	apiRuleBeta1 := hub.(*v1beta1.APIRule)
