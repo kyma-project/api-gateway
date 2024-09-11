@@ -1,0 +1,70 @@
+<mxfile host="Electron" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/24.7.8 Chrome/128.0.6613.36 Electron/32.0.1 Safari/537.36" version="24.7.8">
+  <diagram name="Strona-1" id="5n1gzQs8BZRNpNOb5FFD">
+    <mxGraphModel dx="1941" dy="804" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="kJNU5zewfWgcpStd2Wkp-11" value="SAP" style="rounded=0;whiteSpace=wrap;html=1;dashed=1;verticalAlign=bottom;" vertex="1" parent="1">
+          <mxGeometry x="630" y="150" width="170" height="370" as="geometry" />
+        </mxCell>
+        <mxCell id="MuowoX1qL9KpNT2H9gFL-21" value="Kubernetes" style="rounded=0;whiteSpace=wrap;html=1;dashed=1;verticalAlign=bottom;" parent="1" vertex="1">
+          <mxGeometry x="90" y="150" width="400" height="370" as="geometry" />
+        </mxCell>
+        <mxCell id="kJNU5zewfWgcpStd2Wkp-1" value="kyma-system" style="rounded=0;whiteSpace=wrap;html=1;dashed=1;verticalAlign=bottom;" vertex="1" parent="1">
+          <mxGeometry x="100" y="160" width="380" height="330" as="geometry" />
+        </mxCell>
+        <mxCell id="MuowoX1qL9KpNT2H9gFL-11" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.25;entryDx=0;entryDy=0;exitX=1;exitY=0.25;exitDx=0;exitDy=0;" parent="1" source="MuowoX1qL9KpNT2H9gFL-1" target="MuowoX1qL9KpNT2H9gFL-3" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="530" y="360" as="sourcePoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="MuowoX1qL9KpNT2H9gFL-13" value="get policies" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" parent="MuowoX1qL9KpNT2H9gFL-11" vertex="1" connectable="0">
+          <mxGeometry x="0.4834" y="-1" relative="1" as="geometry">
+            <mxPoint x="-47" y="-13" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="MuowoX1qL9KpNT2H9gFL-12" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.75;exitDx=0;exitDy=0;entryX=0;entryY=0.75;entryDx=0;entryDy=0;" parent="1" source="MuowoX1qL9KpNT2H9gFL-1" target="MuowoX1qL9KpNT2H9gFL-3" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="MuowoX1qL9KpNT2H9gFL-14" value="access event&lt;br&gt;list consumption event" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" parent="MuowoX1qL9KpNT2H9gFL-12" vertex="1" connectable="0">
+          <mxGeometry x="0.6372" y="1" relative="1" as="geometry">
+            <mxPoint x="-63" y="21" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="MuowoX1qL9KpNT2H9gFL-1" value="ip-auth&lt;br&gt;(pod)" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="334" y="230" width="120" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="MuowoX1qL9KpNT2H9gFL-3" value="SAP Geoblocking service" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="660" y="230" width="120" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="kJNU5zewfWgcpStd2Wkp-4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0;exitDx=126;exitDy=40;exitPerimeter=0;entryX=0;entryY=0.25;entryDx=0;entryDy=0;" edge="1" parent="1" source="MuowoX1qL9KpNT2H9gFL-4" target="MuowoX1qL9KpNT2H9gFL-1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="MuowoX1qL9KpNT2H9gFL-4" value="&lt;div&gt;SAP geoblocking service&lt;/div&gt;&lt;div&gt;settings&lt;br&gt;(config map)&lt;br&gt;&lt;/div&gt;" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;darkOpacity=0.05;size=10;" parent="1" vertex="1">
+          <mxGeometry x="130" y="200" width="140" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="MuowoX1qL9KpNT2H9gFL-5" value="&lt;div&gt;IP block list&amp;nbsp;&lt;span style=&quot;background-color: initial;&quot;&gt;cache&lt;/span&gt;&lt;/div&gt;&lt;div&gt;(config map)&lt;br&gt;&lt;/div&gt;" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;darkOpacity=0.05;size=18;" parent="1" vertex="1">
+          <mxGeometry x="339" y="380" width="110" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="MuowoX1qL9KpNT2H9gFL-6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;entryPerimeter=0;startArrow=classic;startFill=1;" parent="1" source="MuowoX1qL9KpNT2H9gFL-1" target="MuowoX1qL9KpNT2H9gFL-5" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="kJNU5zewfWgcpStd2Wkp-5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0;exitDx=126;exitDy=40;exitPerimeter=0;entryX=0;entryY=0.75;entryDx=0;entryDy=0;" edge="1" parent="1" source="kJNU5zewfWgcpStd2Wkp-3" target="MuowoX1qL9KpNT2H9gFL-1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="kJNU5zewfWgcpStd2Wkp-3" value="&lt;div&gt;SAP geoblocking service&lt;/div&gt;&lt;div&gt;credentials&lt;br&gt;(secret)&lt;br&gt;&lt;/div&gt;" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;darkOpacity=0.05;size=10;" vertex="1" parent="1">
+          <mxGeometry x="130" y="290" width="140" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="kJNU5zewfWgcpStd2Wkp-10" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.3333333333333333;exitDx=0;exitDy=0;exitPerimeter=0;" edge="1" parent="1" source="kJNU5zewfWgcpStd2Wkp-6" target="kJNU5zewfWgcpStd2Wkp-3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="kJNU5zewfWgcpStd2Wkp-6" value="Power user" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;" vertex="1" parent="1">
+          <mxGeometry x="-10" y="260" width="30" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="kJNU5zewfWgcpStd2Wkp-9" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.3333333333333333;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="1" source="kJNU5zewfWgcpStd2Wkp-6" target="MuowoX1qL9KpNT2H9gFL-4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

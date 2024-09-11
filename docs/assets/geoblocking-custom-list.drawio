@@ -1,0 +1,35 @@
+<mxfile host="Electron" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/24.7.8 Chrome/128.0.6613.36 Electron/32.0.1 Safari/537.36" version="24.7.8">
+  <diagram name="Strona-1" id="5n1gzQs8BZRNpNOb5FFD">
+    <mxGraphModel dx="1941" dy="804" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="MuowoX1qL9KpNT2H9gFL-21" value="Kubernetes" style="rounded=0;whiteSpace=wrap;html=1;dashed=1;verticalAlign=bottom;" parent="1" vertex="1">
+          <mxGeometry x="90" y="190" width="400" height="210" as="geometry" />
+        </mxCell>
+        <mxCell id="kJNU5zewfWgcpStd2Wkp-1" value="kyma-system" style="rounded=0;whiteSpace=wrap;html=1;dashed=1;verticalAlign=bottom;" vertex="1" parent="1">
+          <mxGeometry x="100" y="200" width="380" height="170" as="geometry" />
+        </mxCell>
+        <mxCell id="MuowoX1qL9KpNT2H9gFL-1" value="ip-auth&lt;br&gt;(pod)" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="334" y="230" width="120" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="kJNU5zewfWgcpStd2Wkp-4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.991;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="MuowoX1qL9KpNT2H9gFL-5" target="MuowoX1qL9KpNT2H9gFL-1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="256" y="240" as="sourcePoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="MuowoX1qL9KpNT2H9gFL-5" value="&lt;div&gt;IP block list&lt;/div&gt;&lt;div&gt;(config map)&lt;br&gt;&lt;/div&gt;" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;darkOpacity=0.05;size=18;" parent="1" vertex="1">
+          <mxGeometry x="150" y="245" width="110" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="kJNU5zewfWgcpStd2Wkp-10" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.3333333333333333;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="1" source="kJNU5zewfWgcpStd2Wkp-6" target="MuowoX1qL9KpNT2H9gFL-5">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="130" y="325" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="kJNU5zewfWgcpStd2Wkp-6" value="Power user" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;" vertex="1" parent="1">
+          <mxGeometry x="-10" y="260" width="30" height="60" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
