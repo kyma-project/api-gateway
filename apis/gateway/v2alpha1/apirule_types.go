@@ -200,7 +200,7 @@ type JwtHeader struct {
 // ExtAuth contains configuration for paths that use external authorization.
 type ExtAuth struct {
 	// Specifies the name of the external authorization handler.
-	// +optional
+	// +kubebuilder:validation:MinItems=1
 	ExternalAuthorizers []string `json:"authorizers"`
 	// Specifies JWT configuration for the external authorization handler.
 	// +optional

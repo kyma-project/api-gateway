@@ -387,6 +387,7 @@ spec:
                             handler.
                           items:
                             type: string
+                          minItems: 1
                           type: array
                         restrictions:
                           description: Specifies JWT configuration for the external
@@ -439,6 +440,8 @@ spec:
                                 type: object
                               type: array
                           type: object
+                      required:
+                      - authorizers
                       type: object
                     jwt:
                       description: Specifies the Istio JWT access strategy.
