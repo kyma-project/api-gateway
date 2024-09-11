@@ -358,7 +358,7 @@ spec:
                 maxLength: 127
                 type: string
                 x-kubernetes-validations:
-                - message: Gateway is not valid
+                - message: Gateway must be in the namespace/name format
                   rule: self.matches('^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?/([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)$')
               hosts:
                 description: Specifies the URLs of the exposed service.
@@ -379,6 +379,67 @@ spec:
                 items:
                   description: Rule .
                   properties:
+                    extAuth:
+                      description: Specifies external authorization configuration.
+                      properties:
+                        authorizers:
+                          description: Specifies the name of the external authorization
+                            handler.
+                          items:
+                            type: string
+                          type: array
+                        restrictions:
+                          description: Specifies JWT configuration for the external
+                            authorization handler.
+                          properties:
+                            authentications:
+                              items:
+                                description: JwtAuthentication Config for Jwt Istio
+                                  authentication
+                                properties:
+                                  fromHeaders:
+                                    items:
+                                      description: JwtHeader for specifying from header
+                                        for the Jwt token
+                                      properties:
+                                        name:
+                                          type: string
+                                        prefix:
+                                          type: string
+                                      required:
+                                      - name
+                                      type: object
+                                    type: array
+                                  fromParams:
+                                    items:
+                                      type: string
+                                    type: array
+                                  issuer:
+                                    type: string
+                                  jwksUri:
+                                    type: string
+                                required:
+                                - issuer
+                                - jwksUri
+                                type: object
+                              type: array
+                            authorizations:
+                              items:
+                                description: JwtAuthorization contains scopes and
+                                  audiences required for the JWT token.
+                                properties:
+                                  audiences:
+                                    items:
+                                      type: string
+                                    type: array
+                                  requiredScopes:
+                                    items:
+                                      type: string
+                                    type: array
+                                type: object
+                              type: array
+                          type: object
+                      type: object
                     jwt:
                       description: Specifies the Istio JWT access strategy.
                       properties:
@@ -510,10 +571,9 @@ spec:
                   - path
                   type: object
                   x-kubernetes-validations:
-                  - message: either jwt is configured or noAuth must be set to true
-                      in a rule
-                    rule: 'has(self.jwt) ? !has(self.noAuth) || self.noAuth == false
-                      : has(self.noAuth) && self.noAuth == true'
+                  - message: 'One of the following fields must be set: noAuth, jwt,
+                      extAuth'
+                    rule: ((has(self.extAuth)?1:0)+(has(self.jwt)?1:0)+((has(self.noAuth)&&self.noAuth==true)?1:0))==1
                 minItems: 1
                 type: array
               service:

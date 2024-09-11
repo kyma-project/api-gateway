@@ -22,6 +22,23 @@ var _ = Describe("Validate", func() {
 	gatewayName := "namespace/gateway"
 	host := gatewayv2alpha1.Host(serviceName + ".test.dev")
 
+	It("should validate if spec is not empty", func() {
+		//given
+		apiRule := &gatewayv2alpha1.APIRule{
+			Spec: gatewayv2alpha1.APIRuleSpec{},
+		}
+
+		fakeClient := createFakeClient()
+
+		//when
+		problems := (&v2alpha1.APIRuleValidator{ApiRule: apiRule}).Validate(context.Background(), fakeClient, networkingv1beta1.VirtualServiceList{}, networkingv1beta1.GatewayList{})
+
+		//then
+		Expect(problems).To(HaveLen(1))
+		Expect(problems[0].AttributePath).To(Equal(".spec"))
+		Expect(problems[0].Message).To(Equal("APIRule in version v2alpha1 contains an empty spec. To troubleshoot, see https://kyma-project.io/#/api-gateway/user/troubleshooting-guides/03-70-empty-apirule-spec."))
+	})
+
 	It("should invoke rules validation", func() {
 		//given
 		gatewayList := networkingv1beta1.GatewayList{

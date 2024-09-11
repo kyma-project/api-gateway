@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	. "github.com/kyma-project/api-gateway/internal/builders/builders_test/v2alpha1_test"
 	. "github.com/kyma-project/api-gateway/internal/processing/processing_test"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -26,7 +27,7 @@ var _ = Describe("Mutators", func() {
 		},
 
 		Entry("should set only x-forwarded-host header when rule does not use any mutators",
-			newAPIRuleBuilderWithDummyDataWithNoAuthRule().Build(),
+			NewAPIRuleBuilderWithDummyDataWithNoAuthRule().Build(),
 			[]verifier{
 				func(vs *networkingv1beta1.VirtualService) {
 					Expect(vs.Spec.Http[0].Headers).NotTo(BeNil())
@@ -37,9 +38,9 @@ var _ = Describe("Mutators", func() {
 			}, "create"),
 
 		Entry("should set Headers on request when rule uses HeadersMutator",
-			newAPIRuleBuilderWithDummyData().
-				WithRules(newRuleBuilder().WithMethods(http.MethodGet).WithPath("/").WithRequest(
-					newRequestModifier().WithHeaders(map[string]string{"header1": "value1"}).Build(),
+			NewAPIRuleBuilderWithDummyData().
+				WithRules(NewRuleBuilder().WithMethods(http.MethodGet).WithPath("/").WithRequest(
+					NewRequestModifier().WithHeaders(map[string]string{"header1": "value1"}).Build(),
 				).NoAuth().Build()).Build(),
 			[]verifier{
 				func(vs *networkingv1beta1.VirtualService) {
@@ -52,9 +53,9 @@ var _ = Describe("Mutators", func() {
 			}, "create"),
 
 		Entry("should set Cookie header on request when rule uses CookieMutator",
-			newAPIRuleBuilderWithDummyData().
-				WithRules(newRuleBuilder().WithMethods(http.MethodGet).WithPath("/").WithRequest(
-					newRequestModifier().WithCookies(map[string]string{"header1": "value1"}).Build(),
+			NewAPIRuleBuilderWithDummyData().
+				WithRules(NewRuleBuilder().WithMethods(http.MethodGet).WithPath("/").WithRequest(
+					NewRequestModifier().WithCookies(map[string]string{"header1": "value1"}).Build(),
 				).NoAuth().Build()).Build(),
 			[]verifier{
 				func(vs *networkingv1beta1.VirtualService) {
@@ -67,9 +68,9 @@ var _ = Describe("Mutators", func() {
 			}, "create"),
 
 		Entry("should set Cookie header and custom header on request when rule uses CookieMutator and HeadersMutator",
-			newAPIRuleBuilderWithDummyData().
-				WithRules(newRuleBuilder().WithMethods(http.MethodGet).WithPath("/").WithRequest(
-					newRequestModifier().
+			NewAPIRuleBuilderWithDummyData().
+				WithRules(NewRuleBuilder().WithMethods(http.MethodGet).WithPath("/").WithRequest(
+					NewRequestModifier().
 						WithCookies(map[string]string{"header1": "value1"}).
 						WithHeaders(map[string]string{"header2": "value2"}).
 						Build(),

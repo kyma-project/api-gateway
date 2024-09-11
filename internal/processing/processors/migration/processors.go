@@ -8,6 +8,7 @@ import (
 	"github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1/authorizationpolicy"
 	"github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1/requestauthentication"
 	"github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1/virtualservice"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // NewMigrationProcessors returns a list of processors that should be executed during the migration process.
@@ -30,10 +31,11 @@ func NewMigrationProcessors(apiRuleV2alpha1 *gatewayv2alpha1.APIRule, apiRuleV1b
 	return processors
 }
 
-type MigrationStep string
+type Step string
 
-func nextMigrationStep(rule *gatewayv1beta1.APIRule) MigrationStep {
-	annotation, found := rule.Annotations[annotationName]
+func nextMigrationStep(rule client.Object) Step {
+	annotations := rule.GetAnnotations()
+	annotation, found := annotations[AnnotationName]
 	if !found {
 		return applyIstioAuthorizationMigrationStep
 	}

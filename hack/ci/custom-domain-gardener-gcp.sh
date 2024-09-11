@@ -17,4 +17,4 @@ export GARDENER_PROVIDER_SECRET_NAME="goat"
 export GARDENER_PROJECT_NAME="goats"
 export GARDENER_CLUSTER_VERSION="1.29.7"
 
-./hack/ci/custom-domain-gardener.sh
+./hack/ci/custom-domain-gardener.sh $@

@@ -644,9 +644,53 @@ var _ = Describe("APIRule Conversion", func() {
 				Expect(err).ToNot(HaveOccurred())
 				Expect(apiRuleV2Alpha1.Spec.Rules).To(HaveLen(1))
 				Expect(apiRuleV2Alpha1.Spec.Rules[0].Jwt).ToNot(BeNil())
+				Expect(apiRuleV2Alpha1.Spec.Rules[0].Jwt.Authorizations).To(BeEmpty())
 				Expect(apiRuleV2Alpha1.Spec.Rules[0].Jwt.Authentications).To(HaveLen(1))
 				Expect(apiRuleV2Alpha1.Spec.Rules[0].Jwt.Authentications[0].Issuer).To(Equal("issuer"))
 				Expect(apiRuleV2Alpha1.Spec.Rules[0].Jwt.Authentications[0].JwksUri).To(Equal("jwksUri"))
+			})
+
+			It("should convert JWT without Authentications", func() {
+				// given
+				jwtConfigBeta1 := v1beta1.JwtConfig{
+					Authorizations: []*v1beta1.JwtAuthorization{
+						{
+							RequiredScopes: []string{"scope1", "scope2"},
+							Audiences:      []string{"aud1", "aud2"},
+						},
+					},
+				}
+
+				apiRuleBeta1 := v1beta1.APIRule{
+					Spec: v1beta1.APIRuleSpec{
+						Host: &host1string,
+						Rules: []v1beta1.Rule{
+							{
+								AccessStrategies: []*v1beta1.Authenticator{
+									{
+										Handler: &v1beta1.Handler{
+											Name:   "jwt",
+											Config: &runtime.RawExtension{Object: &jwtConfigBeta1},
+										},
+									},
+								},
+							},
+						},
+					},
+				}
+				apiRuleV2Alpha1 := v2alpha1.APIRule{}
+
+				// when
+				err := apiRuleV2Alpha1.ConvertFrom(&apiRuleBeta1)
+
+				// then
+				Expect(err).ToNot(HaveOccurred())
+				Expect(apiRuleV2Alpha1.Spec.Rules).To(HaveLen(1))
+				Expect(apiRuleV2Alpha1.Spec.Rules[0].Jwt).ToNot(BeNil())
+				Expect(apiRuleV2Alpha1.Spec.Rules[0].Jwt.Authentications).To(BeEmpty())
+				Expect(apiRuleV2Alpha1.Spec.Rules[0].Jwt.Authorizations).To(HaveLen(1))
+				Expect(apiRuleV2Alpha1.Spec.Rules[0].Jwt.Authorizations[0].RequiredScopes).To(ContainElements("scope1", "scope2"))
+				Expect(apiRuleV2Alpha1.Spec.Rules[0].Jwt.Authorizations[0].Audiences).To(ContainElements("aud1", "aud2"))
 			})
 
 			It("should convert JWT to v2alpha1 when config stored as raw", func() {

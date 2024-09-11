@@ -10,6 +10,9 @@ inputs:
   script:
     description: "Entry point script for test"
     required: true
+  test_make_target:
+    description: 'Make target for integration tests to run'
+    default: 'test-custom-domain test-integration-gateway'
   client_id:
     description: "Client id for oidc"
     required: false
@@ -57,7 +60,7 @@ runs:
         GARDENER_KUBECONFIG: "gardener_kubeconfig.yaml"
       run: |
         EXPORT_RESULT=true \
-        ${{ inputs.script }}
+        ${{ inputs.script }} ${{ inputs.test_make_target }}
     - shell: bash
       name: gather deployment logs
       if: failure()
@@ -73,10 +76,10 @@ runs:
       uses: actions/upload-artifact@v4
       if: failure()
       with:
-        name: logs-${{ github.job }}
+        name: logs-${{ github.job }}-${{ inputs.test_make_target }}
         path: logs/
     - name: Uploads artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: html-reports-${{ github.job }}
+        name: html-reports-${{ github.job }}-${{ inputs.test_make_target }}
         path: tests/integration/reports/

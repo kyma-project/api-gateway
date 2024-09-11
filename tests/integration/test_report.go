@@ -36,7 +36,7 @@ func generateReport(ts testcontext.Testsuite) {
 	}
 	err := h.Generate()
 	if err != nil {
-		log.Fatalf(err.Error())
+		log.Fatal(err.Error())
 	}
 
 	err = filepath.Walk("reports", func(path string, info fs.FileInfo, err error) error {
@@ -64,7 +64,7 @@ func generateReport(ts testcontext.Testsuite) {
 	})
 
 	if err != nil {
-		log.Fatalf(err.Error())
+		log.Fatal(err.Error())
 	}
 
 	if artifactsDir, ok := os.LookupEnv("ARTIFACTS"); ok {
@@ -81,12 +81,12 @@ func generateReport(ts testcontext.Testsuite) {
 		})
 
 		if err != nil {
-			log.Fatalf(err.Error())
+			log.Fatal(err.Error())
 		}
 
 		_, err = copyReport("./junit-report.xml", fmt.Sprintf("%s/junit-report-%s.xml", artifactsDir, ts.Name()))
 		if err != nil {
-			log.Fatalf(err.Error())
+			log.Fatal(err.Error())
 		}
 	}
 }

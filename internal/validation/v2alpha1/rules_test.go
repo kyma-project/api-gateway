@@ -283,8 +283,7 @@ var _ = Describe("Validate rules", func() {
 				Hosts:   []*v2alpha1.Host{&host},
 				Rules: []v2alpha1.Rule{
 					{
-						Path:   "/abc",
-						NoAuth: ptr.To(true),
+						Path: "/abc",
 						Jwt: &v2alpha1.JwtConfig{
 							Authentications: []*v2alpha1.JwtAuthentication{
 								{

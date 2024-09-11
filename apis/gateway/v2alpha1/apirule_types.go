@@ -43,7 +43,7 @@ type APIRuleSpec struct {
 	Service *Service `json:"service,omitempty"`
 	// Specifies the Istio Gateway to be used.
 	// +kubebuilder:validation:MaxLength=127
-	// +kubebuilder:validation:XValidation:rule=`self.matches('^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?/([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)$')`,message="Gateway is not valid"
+	// +kubebuilder:validation:XValidation:rule=`self.matches('^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?/([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)$')`,message="Gateway must be in the namespace/name format"
 	Gateway *string `json:"gateway"`
 	// Specifies CORS headers configuration that will be sent downstream
 	// +optional
@@ -63,7 +63,7 @@ type Host string
 
 // APIRuleStatus describes the observed state of ApiRule.
 type APIRuleStatus struct {
-	LastProcessedTime *metav1.Time `json:"lastProcessedTime,omitempty"`
+	LastProcessedTime metav1.Time `json:"lastProcessedTime,omitempty"`
 	// State signifies current state of APIRule.
 	// Value can be one of ("Ready", "Processing", "Error", "Deleting", "Warning").
 	// +kubebuilder:validation:Required
@@ -117,7 +117,7 @@ type Service struct {
 }
 
 // Rule .
-// +kubebuilder:validation:XValidation:rule="has(self.jwt) ? !has(self.noAuth) || self.noAuth == false : has(self.noAuth) && self.noAuth == true",message="either jwt is configured or noAuth must be set to true in a rule"
+// +kubebuilder:validation:XValidation:rule="((has(self.extAuth)?1:0)+(has(self.jwt)?1:0)+((has(self.noAuth)&&self.noAuth==true)?1:0))==1",message="One of the following fields must be set: noAuth, jwt, extAuth"
 type Rule struct {
 	// Specifies the path of the exposed service.
 	// +kubebuilder:validation:Pattern=^([0-9a-zA-Z./*()?!\\_-]+)
@@ -134,6 +134,9 @@ type Rule struct {
 	// Specifies the Istio JWT access strategy.
 	// +optional
 	Jwt *JwtConfig `json:"jwt,omitempty"`
+	// Specifies external authorization configuration.
+	// +optional
+	ExtAuth *ExtAuth `json:"extAuth,omitempty"`
 	// +optional
 	Timeout *Timeout `json:"timeout,omitempty"`
 	// Request allows modifying the request before it is forwarded to the service.
@@ -192,6 +195,16 @@ type JwtHeader struct {
 	Name string `json:"name"`
 	// +optional
 	Prefix string `json:"prefix,omitempty"`
+}
+
+// ExtAuth contains configuration for paths that use external authorization.
+type ExtAuth struct {
+	// Specifies the name of the external authorization handler.
+	// +optional
+	ExternalAuthorizers []string `json:"authorizers"`
+	// Specifies JWT configuration for the external authorization handler.
+	// +optional
+	Restrictions *JwtConfig `json:"restrictions,omitempty"`
 }
 
 // Timeout for HTTP requests in seconds. The timeout can be configured up to 3900 seconds (65 minutes).
