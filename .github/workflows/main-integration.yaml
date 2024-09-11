@@ -3,6 +3,10 @@
 
 name: Main Integration
 
+permissions:
+  id-token: write # This is required for requesting the JWT token
+  contents: read # This is required for actions/checkout
+
 on:
   push:
     paths-ignore:
@@ -17,40 +21,28 @@ on:
     - cron: '0 5 * * *' # Run every day at 05:00 AM
 
 jobs:
-  wait-for-image-build:
-    name: Wait for image build
-    runs-on: ubuntu-latest
-    outputs:
-      sha: ${{ steps.get-sha.outputs.sha }}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - uses: ./.github/actions/wait-for-job-succeed-or-fail
-        if: ${{ github.event_name != 'schedule' }}
-        with:
-          job-name: 'post-api-gateway-manager-build'
-          github-auth-token: ${{ secrets.GITHUB_TOKEN }}
-          commit-ref: ${{ github.sha }}
-      - id: get-sha
-        run: |
-          if [ "${{ github.event_name }}" != "schedule" ]; then
-            echo "sha=${{ github.sha }}" >> $GITHUB_OUTPUT
-          else
-            echo "sha=$(./scripts/get_latest_build_sha.sh)" >> $GITHUB_OUTPUT
-          fi
+  build:
+    name: build api-gateway image
+    uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
+    with:
+      name: api-gateway
+      dockerfile: Dockerfile
+      context: .
+      build-args: |
+        VERSION=${{ github.sha }}
+      tags: "${{ github.sha }}"
 
   integration-tests:
     name: Integration tests
     runs-on: ubuntu-latest
-    needs: [wait-for-image-build]
+    needs: [build]
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - uses: ./.github/actions/integration-tests
         with:
-          manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:${{ needs.wait-for-image-build.outputs.sha }}"
+          manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:${{ github.sha }}"
           client_id: ${{ secrets.CLIENT_ID }}
           client_secret: ${{ secrets.CLIENT_SECRET }}
           oidc_well_known_url: "${{ secrets.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
@@ -58,14 +50,14 @@ jobs:
   upgrade-tests:
     name: Upgrade tests
     runs-on: ubuntu-latest
-    needs: [wait-for-image-build]
+    needs: [build]
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - uses: ./.github/actions/upgrade-test
         with:
-          manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:${{ needs.wait-for-image-build.outputs.sha }}"
+          manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:${{ github.sha }}"
           client_id: ${{ secrets.CLIENT_ID }}
           client_secret: ${{ secrets.CLIENT_SECRET }}
           oidc_well_known_url: "${{ secrets.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
@@ -74,7 +66,7 @@ jobs:
   custom-domain-integration-gcp:
     name: Custom domain integration GCP
     runs-on: ubuntu-latest
-    needs: [wait-for-image-build]
+    needs: [build]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -82,7 +74,7 @@ jobs:
           fetch-depth: 0
       - uses: ./.github/actions/integration-test-gardener
         with:
-          manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:${{ needs.wait-for-image-build.outputs.sha }}"
+          manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:${{ github.sha }}"
           gardener_secret: ${{ secrets.GARDENER_TOKEN }}
           script: ./hack/ci/custom-domain-gardener-gcp.sh
           client_id: ${{ secrets.CLIENT_ID }}
@@ -93,7 +85,7 @@ jobs:
   custom-domain-integration-aws:
     name: Custom domain integration AWS
     runs-on: ubuntu-latest
-    needs: [wait-for-image-build]
+    needs: [build]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -101,7 +93,7 @@ jobs:
           fetch-depth: 0
       - uses: ./.github/actions/integration-test-gardener
         with:
-          manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:${{ needs.wait-for-image-build.outputs.sha }}"
+          manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:${{ github.sha }}"
           gardener_secret: ${{ secrets.GARDENER_TOKEN }}
           script: ./hack/ci/custom-domain-gardener-aws.sh
           client_id: ${{ secrets.CLIENT_ID }}
