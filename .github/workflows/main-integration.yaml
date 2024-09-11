@@ -25,7 +25,7 @@ jobs:
     name: build api-gateway image
     uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
     with:
-      name: api-gateway
+      name: api-gateway-manager
       dockerfile: Dockerfile
       context: .
       build-args: |
