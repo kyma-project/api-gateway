@@ -52,18 +52,13 @@ func (r Reconciliation) GetProcessors() []processing.ReconciliationProcessor {
 func NewReconciliation(apiRuleV2alpha1 *gatewayv2alpha1.APIRule, apiRuleV1beta1 *gatewayv1beta1.APIRule, validator validation.ApiRuleValidator, config processing.ReconciliationConfig, log *logr.Logger, needsMigration bool) Reconciliation {
 	var processors []processing.ReconciliationProcessor
 	if needsMigration {
-		log.Info("APIRule needs migration", "name", apiRuleV2alpha1.Name, "namespace", apiRuleV2alpha1.Namespace)
+		log.Info("APIRule needs migration")
 		processors = append(processors, migration.NewMigrationProcessors(apiRuleV2alpha1, apiRuleV1beta1, config, log)...)
 	} else {
 		processors = append(processors, v2alpha1VirtualService.NewVirtualServiceProcessor(config, apiRuleV2alpha1))
 		processors = append(processors, authorizationpolicy.NewProcessor(log, apiRuleV2alpha1))
 		processors = append(processors, requestauthentication.NewProcessor(apiRuleV2alpha1))
 	}
-
-	/*
-		When implementing extauth handler, it should use the APIrule in version v2alpha1
-		extAuth := NewExtAuthProcessor(config, log, apiv2alpha1)
-	*/
 
 	return Reconciliation{
 		apiRuleV1beta1:  apiRuleV1beta1,

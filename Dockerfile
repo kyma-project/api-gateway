@@ -4,7 +4,7 @@ ARG TARGET_OS
 ARG TARGET_ARCH
 ARG VERSION
 
-WORKDIR /workspace
+WORKDIR /api-gateway-build
 # Copy the Go Modules manifests
 COPY go.mod go.mod
 COPY go.sum go.sum
@@ -31,8 +31,8 @@ RUN CGO_ENABLED=0 GOOS=${TARGET_OS:-linux} GOARCH=${TARGET_ARCH:-amd64} go build
 # Refer to https://github.com/GoogleContainerTools/distroless for more details
 FROM gcr.io/distroless/static:nonroot
 WORKDIR /
-COPY --from=builder /workspace/manager .
-COPY --from=builder /workspace/manifests/ manifests
+COPY --from=builder /api-gateway-build/manager .
+COPY --from=builder /api-gateway-build/manifests/ manifests
 
 USER 65532:65532
 

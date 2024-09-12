@@ -4,11 +4,8 @@ import (
 	"context"
 	_ "embed"
 	"fmt"
-	"github.com/kyma-project/api-gateway/tests/integration/pkg/auth"
-	"log"
-	"time"
-
 	"github.com/cucumber/godog"
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/auth"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/helpers"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/hooks"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/manifestprocessor"
@@ -19,6 +16,7 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
+	"log"
 )
 
 type testsuite struct {
@@ -96,8 +94,6 @@ func (t *testsuite) Setup() error {
 	if err != nil {
 		return err
 	}
-
-	time.Sleep(time.Duration(t.config.ReqDelay) * time.Second)
 
 	log.Printf("Creating common tests resources")
 	_, err = t.resourceManager.CreateResources(t.k8sClient, globalCommonResources...)

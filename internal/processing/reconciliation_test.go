@@ -3,13 +3,11 @@ package processing_test
 import (
 	"context"
 	"fmt"
-	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
-	"github.com/kyma-project/api-gateway/internal/processing/status"
-	k8stypes "k8s.io/apimachinery/pkg/types"
-
 	"github.com/go-logr/logr"
+	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"github.com/kyma-project/api-gateway/internal/builders"
 	"github.com/kyma-project/api-gateway/internal/processing"
+	"github.com/kyma-project/api-gateway/internal/processing/status"
 	v1beta1Status "github.com/kyma-project/api-gateway/internal/processing/status"
 	"github.com/kyma-project/api-gateway/internal/validation"
 	. "github.com/onsi/ginkgo/v2"
@@ -22,12 +20,6 @@ import (
 )
 
 var _ = Describe("Reconcile", func() {
-
-	req := ctrl.Request{NamespacedName: k8stypes.NamespacedName{
-		Namespace: "test-ns",
-		Name:      "test-name",
-	}}
-
 	It("should return api status error and vs/ar status skipped when an error happens during validation", func() {
 		// given
 		cmd := MockReconciliationCommand{
@@ -39,7 +31,7 @@ var _ = Describe("Reconcile", func() {
 		client := fake.NewClientBuilder().Build()
 
 		// when
-		status := processing.Reconcile(context.Background(), client, testLogger(), cmd, req).(status.ReconciliationV1beta1Status)
+		status := processing.Reconcile(context.Background(), client, testLogger(), cmd).(status.ReconciliationV1beta1Status)
 
 		// then
 		Expect(status.ApiRuleStatus.Code).To(Equal(gatewayv1beta1.StatusError))
@@ -65,7 +57,7 @@ var _ = Describe("Reconcile", func() {
 		client := fake.NewClientBuilder().Build()
 
 		// when
-		status := processing.Reconcile(context.Background(), client, testLogger(), cmd, req).(status.ReconciliationV1beta1Status)
+		status := processing.Reconcile(context.Background(), client, testLogger(), cmd).(status.ReconciliationV1beta1Status)
 
 		// then
 		Expect(status.ApiRuleStatus.Code).To(Equal(gatewayv1beta1.StatusError))
@@ -96,7 +88,7 @@ var _ = Describe("Reconcile", func() {
 		client := fake.NewClientBuilder().Build()
 
 		// when
-		status := processing.Reconcile(context.Background(), client, testLogger(), cmd, req).(status.ReconciliationV1beta1Status)
+		status := processing.Reconcile(context.Background(), client, testLogger(), cmd).(status.ReconciliationV1beta1Status)
 
 		// then
 		Expect(status.ApiRuleStatus.Code).To(Equal(gatewayv1beta1.StatusError))
@@ -128,7 +120,7 @@ var _ = Describe("Reconcile", func() {
 			client := fake.NewClientBuilder().Build()
 
 			// when
-			status := processing.Reconcile(context.Background(), client, testLogger(), cmd, req).(status.ReconciliationV1beta1Status)
+			status := processing.Reconcile(context.Background(), client, testLogger(), cmd).(status.ReconciliationV1beta1Status)
 
 			// then
 			Expect(status.ApiRuleStatus.Code).To(Equal(gatewayv1beta1.StatusError))
@@ -170,7 +162,7 @@ var _ = Describe("Reconcile", func() {
 		client := fake.NewClientBuilder().WithScheme(scheme).WithObjects(toBeUpdatedVs, toBeDeletedVs).Build()
 
 		// when
-		status := processing.Reconcile(context.Background(), client, testLogger(), cmd, req).(status.ReconciliationV1beta1Status)
+		status := processing.Reconcile(context.Background(), client, testLogger(), cmd).(status.ReconciliationV1beta1Status)
 
 		// then
 		Expect(status.ApiRuleStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
@@ -208,7 +200,7 @@ var _ = Describe("Reconcile", func() {
 		client := fake.NewClientBuilder().WithScheme(scheme).Build()
 
 		// when
-		status := processing.Reconcile(context.Background(), client, testLogger(), cmd, req).(status.ReconciliationV1beta1Status)
+		status := processing.Reconcile(context.Background(), client, testLogger(), cmd).(status.ReconciliationV1beta1Status)
 
 		// then
 		Expect(status.ApiRuleStatus.Code).To(Equal(gatewayv1beta1.StatusError))

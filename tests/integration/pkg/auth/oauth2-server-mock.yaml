@@ -15,9 +15,9 @@ spec:
         - name: iss
           value: http://mock-oauth2-server.{{ .Namespace }}.svc.cluster.local
         - name: PORT
-          value: "80"
+          value: "8000"
       ports:
-        - containerPort: 80
+        - containerPort: 8000
           name: http
           protocol: TCP
   restartPolicy: Always

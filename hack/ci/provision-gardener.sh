@@ -87,8 +87,8 @@ kubectl create  --kubeconfig "${GARDENER_KUBECONFIG}" \
 timeout=0
 until (kubectl --kubeconfig "${CLUSTER_NAME}_kubeconfig.yaml" get --raw "/readyz"); do
   timeout+=1
-  # 5 minutes
-  if [[ $timeout -gt 300 ]]; then
+  # 10 minutes
+  if [[ $timeout -gt 600 ]]; then
     echo "Timed out waiting for API Server to be ready"
     exit 1
   fi

@@ -4,6 +4,10 @@ import (
 	_ "embed"
 	"errors"
 	"fmt"
+	"net/http"
+	"net/url"
+	"strings"
+
 	"github.com/avast/retry-go/v4"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/auth"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/helpers"
@@ -12,9 +16,6 @@ import (
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
 	"golang.org/x/oauth2/clientcredentials"
 	"k8s.io/client-go/dynamic"
-	"net/http"
-	"net/url"
-	"strings"
 )
 
 type scenario struct {
@@ -63,9 +64,11 @@ func (s *scenario) callingTheEndpointWithMethodWithValidTokenShouldResultInStatu
 	return s.callingTheEndpointWithMethodWithValidToken(fmt.Sprintf("%s%s", s.Url, path), method, tokenType, asserter)
 }
 
-func (s *scenario) callingTheEndpointWithMethodWithValidToken(url string, method string, tokenType string, asserter helpers.HttpResponseAsserter) error {
-
+func (s *scenario) callingTheEndpointWithMethodWithValidToken(url string, method string, tokenType string, asserter helpers.HttpResponseAsserter, additionalRequestHeaders ...map[string]string) error {
 	requestHeaders := make(map[string]string)
+	if len(additionalRequestHeaders) > 0 {
+		requestHeaders = additionalRequestHeaders[0]
+	}
 
 	switch tokenType {
 	case "JWT":
@@ -90,6 +93,37 @@ func (s *scenario) theAPIRuleIsApplied() error {
 	return helpers.ApplyApiRule(s.resourceManager.CreateResources, s.resourceManager.UpdateResources, s.k8sClient, testcontext.GetRetryOpts(), r)
 }
 
+func (s *scenario) theAPIRuleHasStatusWithDesc(expectedState, expectedDescription string) error {
+	resourceManifest, err := manifestprocessor.ParseFromFileWithTemplate(s.ApiResourceManifestPath, s.ApiResourceDirectory, s.ManifestTemplate)
+	if err != nil {
+		return err
+	}
+
+	groupVersionResource, err := resource.GetGvrFromUnstructured(s.resourceManager, resourceManifest[0])
+	if err != nil {
+		return err
+	}
+
+	return retry.Do(func() error {
+		apiRule, err := s.resourceManager.GetResource(s.k8sClient, *groupVersionResource, resourceManifest[0].GetNamespace(), resourceManifest[0].GetName())
+		if err != nil {
+			return err
+		}
+
+		apiRuleStatus, err := helpers.GetAPIRuleStatusV2Alpha1(apiRule)
+		if err != nil {
+			return err
+		}
+
+		hasExpected := apiRuleStatus.Status.State == expectedState && strings.Contains(apiRuleStatus.Status.Description, expectedDescription)
+		if !hasExpected {
+			return fmt.Errorf("APIRule %s not in expected status %s or not containing description %s. Status: %s, Description:\n%s", apiRule.GetName(), expectedState, expectedDescription, apiRuleStatus.Status.State, apiRuleStatus.Status.Description)
+		}
+
+		return nil
+	}, testcontext.GetRetryOpts()...)
+}
+
 func (s *scenario) callingTheEndpointWithMethodWithInvalidTokenShouldResultInStatusBetween(path string, method string, lower, higher int) error {
 	requestHeaders := map[string]string{testcontext.AuthorizationHeaderName: testcontext.AnyToken}
 	return s.httpClient.CallEndpointWithHeadersAndMethod(requestHeaders, fmt.Sprintf("%s%s", s.Url, path), method, &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher})
@@ -104,12 +138,26 @@ func (s *scenario) callingTheEndpointWithoutTokenShouldResultInStatusBetween(pat
 	return s.httpClient.CallEndpointWithRetries(fmt.Sprintf("%s/%s", s.Url, strings.TrimLeft(path, "/")), &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher})
 }
 
+func (s *scenario) callingTheEndpointWithHeader(path, headerName, value string, lower, higher int) error {
+	requestHeaders := map[string]string{headerName: value}
+	return s.httpClient.CallEndpointWithHeadersWithRetries(requestHeaders, fmt.Sprintf("%s/%s", s.Url, strings.TrimLeft(path, "/")), &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher})
+}
+
+func (s *scenario) callingTheEndpointWithHeaderAndInvalidJwt(path, headerName, _, value string, lower, higher int) error {
+	requestHeaders := map[string]string{headerName: value, testcontext.AuthorizationHeaderName: testcontext.AnyToken}
+	return s.httpClient.CallEndpointWithHeadersWithRetries(requestHeaders, fmt.Sprintf("%s/%s", s.Url, strings.TrimLeft(path, "/")), &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher})
+}
+
+func (s *scenario) callingTheEndpointWithHeaderAndValidJwt(path, headerName, value, tokenType string, lower, higher int) error {
+	requestHeaders := map[string]string{headerName: value}
+	return s.callingTheEndpointWithMethodWithValidToken(fmt.Sprintf("%s/%s", s.Url, strings.TrimLeft(path, "/")), http.MethodGet, tokenType, &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher}, requestHeaders)
+}
+
 func (s *scenario) thereIsAnJwtSecuredPath(path string) {
 	s.ManifestTemplate["jwtSecuredPath"] = path
 }
 
-func (s *scenario) emptyStep() {
-}
+func (s *scenario) emptyStep() {}
 
 func (s *scenario) thereIsAHttpbinService() error {
 	resources, err := manifestprocessor.ParseFromFileWithTemplate("testing-app.yaml", s.ApiResourceDirectory, s.ManifestTemplate)
@@ -123,6 +171,17 @@ func (s *scenario) thereIsAHttpbinService() error {
 
 	s.Url = fmt.Sprintf("https://httpbin-%s.%s", s.TestID, s.Domain)
 
+	return nil
+}
+
+func (s *scenario) thereIsAnEndpointWithExtAuth(provider, path string) error {
+	s.ManifestTemplate["extAuthPath"] = path
+	s.ManifestTemplate["extAuthProvider"] = provider
+
+	return nil
+}
+
+func (s *scenario) theEndpointHasJwtRestrictionsWithScope() error {
 	return nil
 }
 

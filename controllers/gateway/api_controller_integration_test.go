@@ -291,7 +291,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 			}()
 
 			Expect(err).Should(HaveOccurred())
-			Expect(err.Error()).To(ContainSubstring("either jwt is configured or noAuth must be set to true in a rule"))
+			Expect(err.Error()).To(ContainSubstring("One of the following fields must be set: noAuth, jwt, extAuth"))
 		})
 
 		It("should fail to create an APIRule with noAuth=false", func() {
@@ -314,7 +314,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 			}()
 
 			Expect(err).Should(HaveOccurred())
-			Expect(err.Error()).To(ContainSubstring("either jwt is configured or noAuth must be set to true in a rule"))
+			Expect(err.Error()).To(ContainSubstring("One of the following fields must be set: noAuth, jwt, extAuth"))
 		})
 
 		It("should fail to create an APIRule with jwt and noAuth=true", func() {
@@ -341,7 +341,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 			}()
 
 			Expect(err).Should(HaveOccurred())
-			Expect(err.Error()).To(ContainSubstring("either jwt is configured or noAuth must be set to true in a rule"))
+			Expect(err.Error()).To(ContainSubstring("One of the following fields must be set: noAuth, jwt, extAuth"))
 		})
 
 		It("should fail to create an APIRule with more than one host", func() {

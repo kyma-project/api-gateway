@@ -1,0 +1,14 @@
+apiVersion: operator.kyma-project.io/v1alpha2
+kind: Istio
+metadata:
+  name: default
+  namespace: kyma-system
+spec:
+  config:
+    authorizers:
+      - name: sample-ext-authz-http
+        port: 8000
+        service: ext-authz.ext-auth.svc.cluster.local
+        headers:
+          inCheck:
+            include: [ "x-ext-authz" ]
