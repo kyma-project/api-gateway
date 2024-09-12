@@ -1,24 +1,14 @@
 package v2alpha1
 
 import (
-	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
+	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	"github.com/kyma-project/api-gateway/internal/processing/status"
-	v1beta1Status "github.com/kyma-project/api-gateway/internal/processing/status"
 )
 
-func (r Reconciliation) GetStatusBase(statusCode string) status.ReconciliationStatus {
-	return v1beta1Status.ReconciliationV1beta1Status{
-		ApiRuleStatus: &gatewayv1beta1.APIRuleResourceStatus{
-			Code: gatewayv1beta1.StatusCode(statusCode),
-		},
-		VirtualServiceStatus: &gatewayv1beta1.APIRuleResourceStatus{
-			Code: gatewayv1beta1.StatusCode(statusCode),
-		},
-		AuthorizationPolicyStatus: &gatewayv1beta1.APIRuleResourceStatus{
-			Code: gatewayv1beta1.StatusCode(statusCode),
-		},
-		RequestAuthenticationStatus: &gatewayv1beta1.APIRuleResourceStatus{
-			Code: gatewayv1beta1.StatusCode(statusCode),
+func (r Reconciliation) GetStatusBase(state string) status.ReconciliationStatus {
+	return status.ReconciliationV2alpha1Status{
+		ApiRuleStatus: &gatewayv2alpha1.APIRuleStatus{
+			State: gatewayv2alpha1.State(state),
 		},
 	}
 }

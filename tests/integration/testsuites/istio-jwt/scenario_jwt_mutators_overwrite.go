@@ -13,13 +13,13 @@ import (
 func initMutatorsOverwrite(ctx *godog.ScenarioContext, ts *testsuite) {
 	scenario := ts.createScenario("istio-jwt-mutators-overwrite.yaml", "istio-jwt-mutators-overwrite")
 
-	ctx.Step(`JwtMutatorsOverwrite: There is a httpbin service$`, scenario.thereIsAHttpbinService)
-	ctx.Step(`JwtMutatorsOverwrite: There is an endpoint on path "([^"]*)" with a header mutator setting "([^"]*)" header to "([^"]*)"$`, scenario.thereIsAnEndpointWithHeaderMutator)
-	ctx.Step(`JwtMutatorsOverwrite: There is an endpoint on path "([^"]*)" with a cookie mutator setting "([^"]*)" cookie to "([^"]*)"$`, scenario.thereIsAnEndpointWithCookieMutator)
-	ctx.Step(`JwtMutatorsOverwrite: The APIRule is applied$`, scenario.theAPIRuleIsApplied)
-	ctx.Step(`JwtMutatorsOverwrite: Calling the "([^"]*)" endpoint with a request having cookie header with value "([^"]*)" should return cookie header with value "([^"]*)"$`, scenario.shouldOverwriteCookieValue)
-	ctx.Step(`JwtMutatorsOverwrite: Calling the "([^"]*)" endpoint with a request having header "([^"]*)" with value "([^"]*)" should return same header with value "([^"]*)"$`, scenario.shouldOverwriteHeaderValue)
-	ctx.Step(`JwtMutatorsOverwrite: Teardown httpbin service$`, scenario.teardownHttpbinService)
+	ctx.Step(`^JwtMutatorsOverwrite: There is a httpbin service$`, scenario.thereIsAHttpbinService)
+	ctx.Step(`^JwtMutatorsOverwrite: There is an endpoint on path "([^"]*)" with a header mutator setting "([^"]*)" header to "([^"]*)"$`, scenario.thereIsAnEndpointWithHeaderMutator)
+	ctx.Step(`^JwtMutatorsOverwrite: There is an endpoint on path "([^"]*)" with a cookie mutator setting "([^"]*)" cookie to "([^"]*)"$`, scenario.thereIsAnEndpointWithCookieMutator)
+	ctx.Step(`^JwtMutatorsOverwrite: The APIRule is applied$`, scenario.theAPIRuleIsApplied)
+	ctx.Step(`^JwtMutatorsOverwrite: Calling the "([^"]*)" endpoint with a request having cookie header with value "([^"]*)" should return cookie header with value "([^"]*)"$`, scenario.shouldOverwriteCookieValue)
+	ctx.Step(`^JwtMutatorsOverwrite: Calling the "([^"]*)" endpoint with a request having header "([^"]*)" with value "([^"]*)" should return same header with value "([^"]*)"$`, scenario.shouldOverwriteHeaderValue)
+	ctx.Step(`^JwtMutatorsOverwrite: Teardown httpbin service$`, scenario.teardownHttpbinService)
 }
 
 func (s *scenario) shouldOverwriteHeaderValue(endpoint, headerName, requestValue, responseValue string) error {

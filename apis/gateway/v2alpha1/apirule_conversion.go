@@ -2,11 +2,11 @@ package v2alpha1
 
 import (
 	"encoding/json"
+	"k8s.io/apimachinery/pkg/runtime"
 	"time"
 
 	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
 )
@@ -32,7 +32,9 @@ func convertMap(m map[v1beta1.StatusCode]State) map[State]v1beta1.StatusCode {
 // The 2 => 1 map is generated automatically based on 1 => 2 map
 var alpha1to1beta1statusConversionMap = convertMap(beta1toV2alpha1StatusConversionMap)
 
-// Converts this ApiRule (v2alpha1) to the Hub version (v1beta1)
+const v2alpha1RulesAnnotationKey = "gateway.kyma-project.io/v2alpha1-rules"
+
+// ConvertTo Converts this ApiRule (v2alpha1) to the Hub version (v1beta1)
 func (apiRuleV2Alpha1 *APIRule) ConvertTo(hub conversion.Hub) error {
 	apiRuleBeta1 := hub.(*v1beta1.APIRule)
 
@@ -89,15 +91,34 @@ func (apiRuleV2Alpha1 *APIRule) ConvertTo(hub conversion.Hub) error {
 	}
 
 	if len(apiRuleV2Alpha1.Spec.Rules) > 0 {
+		marshaledApiRules, err := json.Marshal(apiRuleV2Alpha1.Spec.Rules)
+		if err != nil {
+			return err
+		}
+		if len(apiRuleBeta1.Annotations) == 0 {
+			apiRuleBeta1.Annotations = make(map[string]string)
+		}
+		apiRuleBeta1.Annotations[v2alpha1RulesAnnotationKey] = string(marshaledApiRules)
+
 		apiRuleBeta1.Spec.Rules = []v1beta1.Rule{}
-		for _, ruleV1Alpha2 := range apiRuleV2Alpha1.Spec.Rules {
+		for _, ruleV2Alpha1 := range apiRuleV2Alpha1.Spec.Rules {
 			ruleBeta1 := v1beta1.Rule{}
-			err = convertOverJson(ruleV1Alpha2, &ruleBeta1)
+			err = convertOverJson(ruleV2Alpha1, &ruleBeta1)
 			if err != nil {
 				return err
 			}
-			// No Auth
-			if ruleV1Alpha2.NoAuth != nil && *ruleV1Alpha2.NoAuth {
+
+			// ExtAuth
+			if ruleV2Alpha1.ExtAuth != nil {
+				ruleBeta1.AccessStrategies = append(ruleBeta1.AccessStrategies, &v1beta1.Authenticator{
+					Handler: &v1beta1.Handler{
+						Name: "ext-auth",
+					},
+				})
+			}
+
+			// NoAuth
+			if ruleV2Alpha1.NoAuth != nil && *ruleV2Alpha1.NoAuth {
 				ruleBeta1.AccessStrategies = append(ruleBeta1.AccessStrategies, &v1beta1.Authenticator{
 					Handler: &v1beta1.Handler{
 						Name: v1beta1.AccessStrategyNoAuth,
@@ -105,20 +126,20 @@ func (apiRuleV2Alpha1 *APIRule) ConvertTo(hub conversion.Hub) error {
 				})
 			}
 			// JWT
-			if ruleV1Alpha2.Jwt != nil {
+			if ruleV2Alpha1.Jwt != nil {
 				ruleBeta1.AccessStrategies = append(ruleBeta1.AccessStrategies, &v1beta1.Authenticator{
 					Handler: &v1beta1.Handler{
 						Name:   v1beta1.AccessStrategyJwt,
-						Config: &runtime.RawExtension{Object: ruleV1Alpha2.Jwt},
+						Config: &runtime.RawExtension{Object: ruleV2Alpha1.Jwt},
 					},
 				})
 			}
 
 			// Mutators
-			if ruleV1Alpha2.Request != nil {
-				if ruleV1Alpha2.Request.Cookies != nil {
+			if ruleV2Alpha1.Request != nil {
+				if ruleV2Alpha1.Request.Cookies != nil {
 					var config runtime.RawExtension
-					err := convertOverJson(ruleV1Alpha2.Request.Cookies, &config)
+					err := convertOverJson(ruleV2Alpha1.Request.Cookies, &config)
 					if err != nil {
 						return err
 					}
@@ -130,9 +151,9 @@ func (apiRuleV2Alpha1 *APIRule) ConvertTo(hub conversion.Hub) error {
 					})
 				}
 
-				if ruleV1Alpha2.Request.Headers != nil {
+				if ruleV2Alpha1.Request.Headers != nil {
 					var config runtime.RawExtension
-					err := convertOverJson(ruleV1Alpha2.Request.Headers, &config)
+					err := convertOverJson(ruleV2Alpha1.Request.Headers, &config)
 					if err != nil {
 						return err
 					}
@@ -148,7 +169,6 @@ func (apiRuleV2Alpha1 *APIRule) ConvertTo(hub conversion.Hub) error {
 			apiRuleBeta1.Spec.Rules = append(apiRuleBeta1.Spec.Rules, ruleBeta1)
 		}
 	}
-
 	return nil
 }
 
@@ -215,7 +235,15 @@ func (apiRuleV2Alpha1 *APIRule) ConvertFrom(hub conversion.Hub) error {
 		*apiRuleV2Alpha1.Spec.Hosts[0] = Host(*apiRuleBeta1.Spec.Host)
 	}
 
-	if len(apiRuleBeta1.Spec.Rules) > 0 {
+	if annotation, ok := apiRuleBeta1.Annotations[v2alpha1RulesAnnotationKey]; ok {
+		var v2alpha1Rules []Rule
+		err := json.Unmarshal([]byte(annotation), &v2alpha1Rules)
+		if err != nil {
+			return err
+		}
+
+		apiRuleV2Alpha1.Spec.Rules = v2alpha1Rules
+	} else if len(apiRuleBeta1.Spec.Rules) > 0 {
 		apiRuleV2Alpha1.Spec.Rules = []Rule{}
 		for _, ruleBeta1 := range apiRuleBeta1.Spec.Rules {
 			ruleV1Alpha2 := Rule{}
@@ -268,6 +296,7 @@ func (apiRuleV2Alpha1 *APIRule) ConvertFrom(hub conversion.Hub) error {
 			}
 			apiRuleV2Alpha1.Spec.Rules = append(apiRuleV2Alpha1.Spec.Rules, ruleV1Alpha2)
 		}
+
 	}
 
 	return nil
@@ -292,7 +321,7 @@ func isFullConversionPossible(apiRule *v1beta1.APIRule) (bool, error) {
 	for _, rule := range apiRule.Spec.Rules {
 		for _, accessStrategy := range rule.AccessStrategies {
 
-			if accessStrategy.Handler.Name == v1beta1.AccessStrategyNoAuth {
+			if accessStrategy.Handler.Name == v1beta1.AccessStrategyNoAuth || accessStrategy.Handler.Name == "ext-auth" {
 				continue
 			}
 

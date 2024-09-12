@@ -49,7 +49,7 @@ func initScenario(ctx *godog.ScenarioContext, ts *testsuite) {
 	ctx.Before(hooks.ApplyApiGatewayCrScenarioHook)
 	ctx.After(hooks.ApiGatewayCrTearDownScenarioHook)
 
-	ctx.Step(`APIGateway CR "([^"]*)" is applied`, scenario.applyAPIGatewayCR)
+	ctx.Step(`^APIGateway CR "([^"]*)" is applied`, scenario.applyAPIGatewayCR)
 	ctx.Step(`^APIGateway CR "([^"]*)" "([^"]*)" present$`, scenario.thereIsAnAPIGatewayCR)
 	ctx.Step(`^APIGateway CR is in "([^"]*)" state with description "([^"]*)"$`, scenario.checkAPIGatewayCRState)
 	ctx.Step(`^Custom APIGateway CR "([^"]*)" is in "([^"]*)" state with description "([^"]*)"$`, scenario.checkCustomAPIGatewayCRState)
@@ -66,8 +66,8 @@ func initScenario(ctx *godog.ScenarioContext, ts *testsuite) {
 	ctx.Step(`^gateway "([^"]*)" in "([^"]*)" namespace does not exist$`, scenario.thereIsNoGateway)
 	ctx.Step(`^there is a "([^"]*)" Gardener Certificate CR in "([^"]*)" namespace$`, scenario.thereIsACertificateCR)
 	ctx.Step(`^there is a "([^"]*)" Gardener DNSEntry CR in "([^"]*)" namespace$`, scenario.thereIsADNSEntryCR)
-	ctx.Step(`there "([^"]*)" "([^"]*)" "([^"]*)" in the cluster`, scenario.resourceIsPresent)
-	ctx.Step(`there "([^"]*)" "([^"]*)" "([^"]*)" in namespace "([^"]*)"`, scenario.namespacedResourceIsPresent)
+	ctx.Step(`^there "([^"]*)" "([^"]*)" "([^"]*)" in the cluster`, scenario.resourceIsPresent)
+	ctx.Step(`^there "([^"]*)" "([^"]*)" "([^"]*)" in namespace "([^"]*)"`, scenario.namespacedResourceIsPresent)
 	ctx.Step(`"([^"]*)" "([^"]*)" in namespace "([^"]*)" has status "([^"]*)"`, scenario.namespacedResourceHasStatusReady)
 }
 
@@ -274,9 +274,9 @@ func (c *scenario) thereIsAnORYRule(name string) error {
 	if err != nil {
 		return err
 	}
-	resource := bytes.NewBuffer(apiGatewayCRYaml)
+	r := bytes.NewBuffer(apiGatewayCRYaml)
 	var oryRule oryv1alpha1.Rule
-	err = yaml.Unmarshal(resource.Bytes(), &oryRule)
+	err = yaml.Unmarshal(r.Bytes(), &oryRule)
 	if err != nil {
 		return err
 	}
@@ -357,6 +357,7 @@ func (c *scenario) disableKymaGateway() error {
 	if err != nil {
 		return err
 	}
+
 	apiGatewayCR.Object["spec"].(map[string]interface{})["enableKymaGateway"] = false
 	_, err = c.k8sClient.Resource(res).Update(context.Background(), apiGatewayCR, metav1.UpdateOptions{})
 	if err != nil {

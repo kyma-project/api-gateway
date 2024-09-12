@@ -1,8 +1,11 @@
 package status_test
 
 import (
+	"errors"
 	"fmt"
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
+	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
+	"github.com/kyma-project/api-gateway/internal/processing/status"
 	"strings"
 
 	"github.com/kyma-project/api-gateway/internal/validation"
@@ -58,6 +61,141 @@ var _ = Describe("Status", func() {
 			Expect(failureLines[2]).To(Equal("Attribute \"gateway\": is bad"))
 			Expect(failureLines[3]).To(Equal("Attribute \"service.name\": is too short"))
 			Expect(failureLines[4]).To(Equal("2 more error(s)..."))
+		})
+	})
+	Context("v2alpha1", func() {
+		Context("GenerateStatusFromFailures", func() {
+			It("should generate status for single failure", func() {
+				s := status.ReconciliationV2alpha1Status{
+					ApiRuleStatus: &gatewayv2alpha1.APIRuleStatus{},
+				}
+				failures := []validation.Failure{
+					{
+						AttributePath: "name",
+						Message:       "is wrong",
+					},
+				}
+				s.GenerateStatusFromFailures(failures)
+				Expect(s.ApiRuleStatus.State).To(Equal(gatewayv2alpha1.Error))
+				Expect(s.ApiRuleStatus.Description).To(Equal("Validation errors: Attribute 'name': is wrong"))
+			})
+			It("should generate status for 2 failures", func() {
+				s := status.ReconciliationV2alpha1Status{
+					ApiRuleStatus: &gatewayv2alpha1.APIRuleStatus{},
+				}
+				failures := []validation.Failure{
+					{
+						AttributePath: "name",
+						Message:       "is wrong",
+					},
+					{
+						AttributePath: "service.name",
+						Message:       "is too short",
+					},
+				}
+				s.GenerateStatusFromFailures(failures)
+				Expect(s.ApiRuleStatus.State).To(Equal(gatewayv2alpha1.Error))
+				Expect(s.ApiRuleStatus.Description).To(Equal("Validation errors: Attribute 'name': is wrong\nAttribute 'service.name': is too short"))
+			})
+			It("should generate status for 5 failures", func() {
+				s := status.ReconciliationV2alpha1Status{
+					ApiRuleStatus: &gatewayv2alpha1.APIRuleStatus{},
+				}
+				failures := []validation.Failure{
+					{
+						AttributePath: "name",
+						Message:       "is wrong",
+					},
+					{
+						AttributePath: "service.name",
+						Message:       "is too short",
+					},
+					{
+						AttributePath: "service.port",
+						Message:       "is too big",
+					},
+					{
+						AttributePath: "service.host",
+						Message:       "is invalid",
+					},
+					{
+						AttributePath: "service.host",
+						Message:       "is too short",
+					},
+				}
+				s.GenerateStatusFromFailures(failures)
+				Expect(s.ApiRuleStatus.State).To(Equal(gatewayv2alpha1.Error))
+				Expect(s.ApiRuleStatus.Description).To(Equal("Validation errors: " +
+					"Attribute 'name': is wrong\n" +
+					"Attribute 'service.name': is too short\n" +
+					"Attribute 'service.port': is too big\n" +
+					"2 more error(s)..."))
+			})
+			It("should generate Ready for no failures", func() {
+				s := status.ReconciliationV2alpha1Status{
+					ApiRuleStatus: &gatewayv2alpha1.APIRuleStatus{},
+				}
+				s.GenerateStatusFromFailures(nil)
+				Expect(s.ApiRuleStatus.State).To(Equal(gatewayv2alpha1.Ready))
+				Expect(s.ApiRuleStatus.Description).To(Equal("Reconciled successfully"))
+			})
+		})
+		Context("GetStatusForErrorMap", func() {
+			It("should set Error state for errorMap", func() {
+				s := status.ReconciliationV2alpha1Status{
+					ApiRuleStatus: &gatewayv2alpha1.APIRuleStatus{},
+				}
+				errMap := map[status.ResourceSelector][]error{
+					0: {errors.New("one error"), errors.New("another error")},
+					1: {errors.New("one error"), errors.New("another error")},
+				}
+				s.GetStatusForErrorMap(errMap)
+				Expect(s.ApiRuleStatus.State).To(Equal(gatewayv2alpha1.Error))
+				Expect(s.ApiRuleStatus.Description).To(ContainSubstring("ApiRuleErrors: one error, another error"))
+				Expect(s.ApiRuleStatus.Description).To(ContainSubstring("VirtualServiceErrors: one error, another error"))
+			})
+			It("should set Ready state for no errorMap", func() {
+				s := status.ReconciliationV2alpha1Status{
+					ApiRuleStatus: &gatewayv2alpha1.APIRuleStatus{},
+				}
+				s.GetStatusForErrorMap(nil)
+				Expect(s.ApiRuleStatus.State).To(Equal(gatewayv2alpha1.Ready))
+				Expect(s.ApiRuleStatus.Description).To(Equal("Reconciled successfully"))
+			})
+		})
+		Context("UpdateStatus", func() {
+			It("should return error if v2alpha1 status is empty", func() {
+				s := status.ReconciliationV2alpha1Status{
+					ApiRuleStatus: &gatewayv2alpha1.APIRuleStatus{},
+				}
+				Expect(s.UpdateStatus(nil)).To(HaveOccurred())
+			})
+			It("should update status from correct Status", func() {
+				s := status.ReconciliationV2alpha1Status{
+					ApiRuleStatus: &gatewayv2alpha1.APIRuleStatus{
+						State:       gatewayv2alpha1.Error,
+						Description: "some description",
+					}}
+				expect := &gatewayv2alpha1.APIRuleStatus{}
+				Expect(s.UpdateStatus(expect)).ToNot(HaveOccurred())
+				Expect(expect.State).To(Equal(gatewayv2alpha1.Error))
+				Expect(expect.Description).To(Equal("some description"))
+
+			})
+		})
+		Context("HasError", func() {
+			It("should return true if state equals error", func() {
+				s := status.ReconciliationV2alpha1Status{
+					ApiRuleStatus: &gatewayv2alpha1.APIRuleStatus{
+						State: gatewayv2alpha1.Error,
+					},
+				}
+				Expect(s.HasError()).To(Equal(true))
+			})
+			It("should return false if APIRuleStatus is nil", func() {
+				s := status.ReconciliationV2alpha1Status{}
+				Expect(s.HasError()).To(Equal(false))
+			})
 		})
 	})
 })

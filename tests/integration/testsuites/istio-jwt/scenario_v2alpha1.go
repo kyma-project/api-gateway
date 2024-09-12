@@ -18,13 +18,13 @@ import (
 func initv2alpha1IstioJWT(ctx *godog.ScenarioContext, ts *testsuite) {
 	scenario := ts.createScenario("v2alpha1-istio-jwt.yaml", "v2alpha1-istio-jwt")
 
-	ctx.Step(`v2alpha1IstioJWT: There is a httpbin service$`, scenario.thereIsAHttpbinService)
-	ctx.Step(`v2alpha1IstioJWT: There is an endpoint secured with JWT on path "([^"]*)"`, scenario.thereIsAnJwtSecuredPath)
-	ctx.Step(`v2alpha1IstioJWT: The APIRule is applied$`, scenario.theAPIRuleIsApplied)
-	ctx.Step(`v2alpha1IstioJWT: Calling the "([^"]*)" endpoint without a token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithoutTokenShouldResultInStatusBetween)
-	ctx.Step(`v2alpha1IstioJWT: Calling the "([^"]*)" endpoint with an invalid token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithInvalidTokenShouldResultInStatusBetween)
-	ctx.Step(`v2alpha1IstioJWT: Calling the "([^"]*)" endpoint with a valid "([^"]*)" token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithValidTokenShouldResultInStatusBetween)
-	ctx.Step(`v2alpha1IstioJWT: Teardown httpbin service$`, scenario.teardownHttpbinService)
+	ctx.Step(`^v2alpha1IstioJWT: There is a httpbin service$`, scenario.thereIsAHttpbinService)
+	ctx.Step(`^v2alpha1IstioJWT: There is an endpoint secured with JWT on path "([^"]*)"`, scenario.thereIsAnJwtSecuredPath)
+	ctx.Step(`^v2alpha1IstioJWT: The APIRule is applied$`, scenario.theAPIRuleIsApplied)
+	ctx.Step(`^v2alpha1IstioJWT: Calling the "([^"]*)" endpoint without a token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithoutTokenShouldResultInStatusBetween)
+	ctx.Step(`^v2alpha1IstioJWT: Calling the "([^"]*)" endpoint with an invalid token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithInvalidTokenShouldResultInStatusBetween)
+	ctx.Step(`^v2alpha1IstioJWT: Calling the "([^"]*)" endpoint with a valid "([^"]*)" token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithValidTokenShouldResultInStatusBetween)
+	ctx.Step(`^v2alpha1IstioJWT: Teardown httpbin service$`, scenario.teardownHttpbinService)
 }
 
 func initv2alpha1NoAuthHandler(ctx *godog.ScenarioContext, ts *testsuite) {
