@@ -19,5 +19,5 @@ func ConvertHttpMethodsToStrings(methods []HttpMethod) []string {
 
 // AppliesToAllPaths returns true if the rule applies to all paths of the service.
 func (r *Rule) AppliesToAllPaths() bool {
-	return r.Path == "*"
+	return r.Path == "/*"
 }

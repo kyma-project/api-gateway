@@ -9,9 +9,9 @@ Feature: Exposing endpoints with JWT
     And Common: Calling the "/ip" endpoint with a valid "JWT" token should result in status between 200 and 299
     And Common: Teardown httpbin service
 
-  Scenario: Calling a httpbin endpoint secured on wildcard `*` path
+  Scenario: Calling a httpbin endpoint secured on all paths
     Given Wildcard: There is a httpbin service
-    And Wildcard: There is an endpoint secured with JWT on path "*"
+    And Wildcard: There is an endpoint secured with JWT on path "/*"
     When Wildcard: The APIRule is applied
     Then Wildcard: Calling the "/ip" endpoint without a token should result in status between 400 and 403
     And Wildcard: Calling the "/ip" endpoint with an invalid token should result in status between 400 and 403

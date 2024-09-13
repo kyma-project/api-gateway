@@ -71,15 +71,15 @@ var _ = Describe("Rule", func() {
 
 	Describe("AppliesToAllPaths", func() {
 
-		It("should return true when the path is '*'", func() {
+		It("should return true when the path applies to all paths", func() {
 			rule := v2alpha1.Rule{
-				Path: "*",
+				Path: "/*",
 			}
 
 			Expect(rule.AppliesToAllPaths()).To(BeTrue())
 		})
 
-		It("should return false when the path is not '*'", func() {
+		It("should return false when the path does not apply to all paths", func() {
 			rule := v2alpha1.Rule{
 				Path: "/",
 			}

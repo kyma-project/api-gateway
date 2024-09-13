@@ -1617,14 +1617,14 @@ var _ = Describe("APIRule Controller", Serial, func() {
 			}()
 		})
 
-		It("should apply APIRule when path contains only *", func() {
+		It("should apply APIRule when path contains only /*", func() {
 			// given
 			apiRuleName := generateTestName(testNameBase, testIDLength)
 			serviceName := generateTestName(testServiceNameBase, testIDLength)
 			serviceHost := gatewayv2alpha1.Host("example.com")
 			serviceHosts := []*gatewayv2alpha1.Host{&serviceHost}
 
-			rule := testRulev2alpha1("*", []gatewayv2alpha1.HttpMethod{http.MethodGet})
+			rule := testRulev2alpha1("/*", []gatewayv2alpha1.HttpMethod{http.MethodGet})
 			rule.NoAuth = ptr.To(true)
 			apiRule := testApiRulev2alpha1(apiRuleName, testNamespace, serviceName, testNamespace, serviceHosts, testServicePort, []gatewayv2alpha1.Rule{rule})
 			svc := testService(serviceName, testNamespace, testServicePort)
@@ -1646,7 +1646,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 			serviceHost := gatewayv2alpha1.Host("example.com")
 			serviceHosts := []*gatewayv2alpha1.Host{&serviceHost}
 
-			rule := testRulev2alpha1("/img/1", []gatewayv2alpha1.HttpMethod{http.MethodGet})
+			rule := testRulev2alpha1("/img-new/1", []gatewayv2alpha1.HttpMethod{http.MethodGet})
 			rule.NoAuth = ptr.To(true)
 			apiRule := testApiRulev2alpha1(apiRuleName, testNamespace, serviceName, testNamespace, serviceHosts, testServicePort, []gatewayv2alpha1.Rule{rule})
 			svc := testService(serviceName, testNamespace, testServicePort)
