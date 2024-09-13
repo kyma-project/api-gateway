@@ -44,7 +44,7 @@ updates:
   # release branch configuration
   - package-ecosystem: "gomod"
     directory: "/"
-    target-branch: "release-2.5"
+    target-branch: "release-2.6"
     labels:
       - "go"
       - "area/dependency"
@@ -65,7 +65,7 @@ updates:
       - dependency-name: "istio.io/api"
 
   - package-ecosystem: "docker"
-    target-branch: "release-2.5"
+    target-branch: "release-2.6"
     directory: "/"
     labels:
       - "docker"
