@@ -9,6 +9,6 @@ func initNoAuthWildcard(ctx *godog.ScenarioContext, ts *testsuite) {
 
 	ctx.Step(`^NoAuthWildcard: There is a httpbin service$`, scenario.thereIsAHttpbinService)
 	ctx.Step(`^NoAuthWildcard: The APIRule is applied$`, scenario.theAPIRuleIsApplied)
-	ctx.Step(`^NoAuthWildcard: Calling the "([^"]*)" endpoint without token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithoutTokenShouldResultInStatusBetween)
+	ctx.Step(`^NoAuthWildcard: Calling the "([^"]*)" endpoint without a token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithoutTokenShouldResultInStatusBetween)
 	ctx.Step(`^NoAuthWildcard: Teardown httpbin service$`, scenario.teardownHttpbinService)
 }
