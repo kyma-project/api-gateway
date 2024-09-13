@@ -17,10 +17,10 @@ import (
 var _ = Describe("Processing", func() {
 	serviceName := "example-service"
 
-	It("should set path to `/*` when the Rule path is `/.*`", func() {
+	It("should set authorization policy path to `*` when the Rule applies to all paths", func() {
 		// given
 		ruleJwt := newNoAuthRuleBuilderWithDummyData().
-			withPath("/.*").
+			withPath("*").
 			build()
 
 		apiRule := newAPIRuleBuilderWithDummyData().
@@ -39,7 +39,7 @@ var _ = Describe("Processing", func() {
 		ap := result[0].Obj.(*securityv1beta1.AuthorizationPolicy)
 
 		Expect(len(ap.Spec.Rules[0].To[0].Operation.Paths)).To(Equal(1))
-		Expect(ap.Spec.Rules[0].To[0].Operation.Paths).To(ContainElement("/*"))
+		Expect(ap.Spec.Rules[0].To[0].Operation.Paths).To(ContainElement("*"))
 	})
 
 	It("should produce one AP for a Rule without service, but service definition on ApiRule level", func() {

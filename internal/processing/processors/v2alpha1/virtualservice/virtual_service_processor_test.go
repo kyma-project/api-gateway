@@ -77,7 +77,7 @@ var _ = Describe("Fully configured APIRule happy path", func() {
 
 				NewRuleBuilder().
 					WithMethods("PUT").
-					WithPath("/*").
+					WithPath("*").
 					WithRequest(NewRequestModifier().
 						WithHeaders(map[string]string{"header1": "value1"}).
 						WithCookies(map[string]string{"cookie1": "value1"}).
