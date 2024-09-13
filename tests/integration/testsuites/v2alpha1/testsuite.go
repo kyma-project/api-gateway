@@ -88,6 +88,7 @@ func (t *testsuite) InitScenarios(ctx *godog.ScenarioContext) {
 	initExtAuthCommon(ctx, t)
 	initExtAuthJwt(ctx, t)
 	initValidationError(ctx, t)
+	initNoAuthWildcard(ctx, t)
 }
 
 func (t *testsuite) FeaturePath() []string {

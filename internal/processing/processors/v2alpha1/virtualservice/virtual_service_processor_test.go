@@ -153,6 +153,36 @@ var _ = Describe("VirtualServiceProcessor", func() {
 		Expect(result).To(HaveLen(1))
 		Expect(result[0].Action.String()).To(Equal("create"))
 	})
+
+	It("should create a VirtualService with '/' prefix, when rule in APIRule applies to all paths", func() {
+		apiRule := NewAPIRuleBuilder().
+			WithGateway("example/example").
+			WithHosts("example.com").
+			WithService("example-service", "example-namespace", 8080).
+			WithTimeout(180).
+			WithRules(
+				NewRuleBuilder().
+					WithMethods("GET").
+					WithPath("/*").
+					NoAuth().Build(),
+			).
+			Build()
+
+		client := GetFakeClient()
+		processor := processors.NewVirtualServiceProcessor(GetTestConfig(), apiRule)
+
+		checkVirtualServices(client, processor, []verifier{
+			func(vs *networkingv1beta1.VirtualService) {
+				Expect(vs.Spec.Hosts).To(ConsistOf("example.com"))
+				Expect(vs.Spec.Gateways).To(ConsistOf("example/example"))
+				Expect(vs.Spec.Http).To(HaveLen(1))
+
+				Expect(vs.Spec.Http[0].Match[0].Method.GetRegex()).To(Equal("^(GET)$"))
+				Expect(vs.Spec.Http[0].Match[0].Uri.GetPrefix()).To(Equal("/"))
+			},
+		}, "create")
+	})
+
 })
 
 func checkVirtualServices(c client.Client, processor processors.VirtualServiceProcessor, verifiers []verifier, expectedActions ...string) {
