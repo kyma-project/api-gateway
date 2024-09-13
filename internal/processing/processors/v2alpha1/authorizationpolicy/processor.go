@@ -12,11 +12,13 @@ import (
 )
 
 // NewProcessor returns a Processor with the desired state handling for AuthorizationPolicy.
-func NewProcessor(log *logr.Logger, rule *gatewayv2alpha1.APIRule) Processor {
+func NewProcessor(log *logr.Logger, rule *gatewayv2alpha1.APIRule, oryPassthrough bool) Processor {
 	return Processor{
 		apiRule: rule,
-		creator: creator{},
-		Log:     log,
+		creator: creator{
+			oryPassthrough: oryPassthrough,
+		},
+		Log: log,
 	}
 }
 

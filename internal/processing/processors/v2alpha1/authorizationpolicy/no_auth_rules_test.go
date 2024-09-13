@@ -31,7 +31,7 @@ var _ = Describe("Processing NoAuth rules", func() {
 			build()
 		svc := newServiceBuilderWithDummyData().build()
 		client := getFakeClient(svc)
-		processor := authorizationpolicy.NewProcessor(&testLogger, apiRule)
+		processor := authorizationpolicy.NewProcessor(&testLogger, apiRule, false)
 
 		// when
 		results, err := processor.EvaluateReconciliation(context.Background(), client)

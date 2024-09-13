@@ -28,7 +28,7 @@ var _ = Describe("Processing", func() {
 			build()
 		svc := newServiceBuilderWithDummyData().build()
 		client := getFakeClient(svc)
-		processor := authorizationpolicy.NewProcessor(&testLogger, apiRule)
+		processor := authorizationpolicy.NewProcessor(&testLogger, apiRule, false)
 
 		// when
 		result, err := processor.EvaluateReconciliation(context.Background(), client)
@@ -53,7 +53,7 @@ var _ = Describe("Processing", func() {
 			build()
 		svc := newServiceBuilderWithDummyData().build()
 		client := getFakeClient(svc)
-		processor := authorizationpolicy.NewProcessor(&testLogger, apiRule)
+		processor := authorizationpolicy.NewProcessor(&testLogger, apiRule, false)
 
 		// when
 		result, err := processor.EvaluateReconciliation(context.Background(), client)
@@ -92,7 +92,7 @@ var _ = Describe("Processing", func() {
 			addSelector("app", ruleServiceName).
 			build()
 		client := getFakeClient(svc)
-		processor := authorizationpolicy.NewProcessor(&testLogger, apiRule)
+		processor := authorizationpolicy.NewProcessor(&testLogger, apiRule, false)
 
 		// when
 		result, err := processor.EvaluateReconciliation(context.Background(), client)
@@ -128,7 +128,7 @@ var _ = Describe("Processing", func() {
 			addSelector("app", ruleServiceName).
 			build()
 		client := getFakeClient(svc)
-		processor := authorizationpolicy.NewProcessor(&testLogger, apiRule)
+		processor := authorizationpolicy.NewProcessor(&testLogger, apiRule, false)
 
 		// when
 		result, err := processor.EvaluateReconciliation(context.Background(), client)
@@ -156,7 +156,7 @@ var _ = Describe("Processing", func() {
 		svc := newServiceBuilderWithDummyData().build()
 		client := getFakeClient(svc)
 
-		processor := authorizationpolicy.NewProcessor(&testLogger, apiRule)
+		processor := authorizationpolicy.NewProcessor(&testLogger, apiRule, false)
 
 		// when
 		result, err := processor.EvaluateReconciliation(context.Background(), client)
@@ -181,7 +181,7 @@ var _ = Describe("Processing", func() {
 		svc := newServiceBuilderWithDummyData().build()
 		client := getFakeClient(existingAp, svc)
 
-		processor := authorizationpolicy.NewProcessor(&testLogger, apiRule)
+		processor := authorizationpolicy.NewProcessor(&testLogger, apiRule, false)
 
 		// when
 		result, err := processor.EvaluateReconciliation(context.Background(), client)
@@ -202,7 +202,7 @@ var _ = Describe("Processing", func() {
 		apiRule := newAPIRuleBuilderWithDummyData().build()
 		svc := newServiceBuilderWithDummyData().build()
 		ctrlClient := getFakeClient(existingAp, svc)
-		processor := authorizationpolicy.NewProcessor(&testLogger, apiRule)
+		processor := authorizationpolicy.NewProcessor(&testLogger, apiRule, false)
 
 		// when
 		result, err := processor.EvaluateReconciliation(context.Background(), ctrlClient)
@@ -233,7 +233,7 @@ var _ = Describe("Processing", func() {
 			apiRule := newAPIRuleBuilderWithDummyData().
 				withRules(existingRule, newRule).
 				build()
-			processor := authorizationpolicy.NewProcessor(&testLogger, apiRule)
+			processor := authorizationpolicy.NewProcessor(&testLogger, apiRule, false)
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.Background(), ctrlClient)
@@ -263,7 +263,7 @@ var _ = Describe("Processing", func() {
 			apiRule := newAPIRuleBuilderWithDummyData().
 				withRules(existingRule, newRule).
 				build()
-			processor := authorizationpolicy.NewProcessor(&testLogger, apiRule)
+			processor := authorizationpolicy.NewProcessor(&testLogger, apiRule, false)
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.Background(), ctrlClient)
@@ -298,7 +298,7 @@ var _ = Describe("Processing", func() {
 				addSelector("app", "new-service").
 				build()
 			ctrlClient := getFakeClient(existingAp, svc1, svc2)
-			processor := authorizationpolicy.NewProcessor(&testLogger, apiRule)
+			processor := authorizationpolicy.NewProcessor(&testLogger, apiRule, false)
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.Background(), ctrlClient)
@@ -326,7 +326,7 @@ var _ = Describe("Processing", func() {
 			apiRule := newAPIRuleBuilderWithDummyData().
 				withRules(rule).
 				build()
-			processor := authorizationpolicy.NewProcessor(&testLogger, apiRule)
+			processor := authorizationpolicy.NewProcessor(&testLogger, apiRule, false)
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.Background(), ctrlClient)
@@ -361,7 +361,7 @@ var _ = Describe("Processing", func() {
 			apiRule := newAPIRuleBuilderWithDummyData().
 				withRules(unchangedRule, updatedRule).
 				build()
-			processor := authorizationpolicy.NewProcessor(&testLogger, apiRule)
+			processor := authorizationpolicy.NewProcessor(&testLogger, apiRule, false)
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.Background(), ctrlClient)
@@ -400,7 +400,7 @@ var _ = Describe("Processing", func() {
 				withRules(movedRule).
 				withServiceNamespace(specNewServiceNamespace).
 				build()
-			processor := authorizationpolicy.NewProcessor(&testLogger, apiRule)
+			processor := authorizationpolicy.NewProcessor(&testLogger, apiRule, false)
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.Background(), ctrlClient)
@@ -432,7 +432,7 @@ var _ = Describe("Processing", func() {
 			apiRule := newAPIRuleBuilderWithDummyData().
 				withRules(movedRule).
 				build()
-			processor := authorizationpolicy.NewProcessor(&testLogger, apiRule)
+			processor := authorizationpolicy.NewProcessor(&testLogger, apiRule, false)
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.Background(), ctrlClient)
@@ -476,7 +476,7 @@ var _ = Describe("Processing", func() {
 			apiRule := newAPIRuleBuilderWithDummyData().
 				withRules(unchangedRule, updatedRule).
 				build()
-			processor := authorizationpolicy.NewProcessor(&testLogger, apiRule)
+			processor := authorizationpolicy.NewProcessor(&testLogger, apiRule, false)
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.Background(), ctrlClient)
@@ -506,7 +506,7 @@ var _ = Describe("Processing", func() {
 				build()
 			client := getFakeClient(svc)
 
-			processor := authorizationpolicy.NewProcessor(&testLogger, apiRule)
+			processor := authorizationpolicy.NewProcessor(&testLogger, apiRule, false)
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.Background(), client)
@@ -539,7 +539,7 @@ var _ = Describe("Processing", func() {
 				build()
 			client := getFakeClient(svc)
 
-			processor := authorizationpolicy.NewProcessor(&testLogger, apiRule)
+			processor := authorizationpolicy.NewProcessor(&testLogger, apiRule, false)
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.Background(), client)
@@ -569,7 +569,7 @@ var _ = Describe("Processing", func() {
 				build()
 			client := getFakeClient(svc)
 
-			processor := authorizationpolicy.NewProcessor(&testLogger, apiRule)
+			processor := authorizationpolicy.NewProcessor(&testLogger, apiRule, false)
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.Background(), client)
@@ -615,7 +615,7 @@ var _ = Describe("Processing", func() {
 			apiRule := newAPIRuleBuilderWithDummyData().
 				withRules(rule).
 				build()
-			processor := authorizationpolicy.NewProcessor(&testLogger, apiRule)
+			processor := authorizationpolicy.NewProcessor(&testLogger, apiRule, false)
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.Background(), ctrlClient)

@@ -3,6 +3,8 @@ package v2alpha1_test
 import (
 	"context"
 	"fmt"
+	oryv1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
+	v1beta12 "istio.io/api/security/v1beta1"
 	"net/http"
 
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
@@ -363,6 +365,90 @@ var _ = Describe("Reconciliation", func() {
 			Expect(apCreated).To(BeTrue())
 			Expect(raCreated).To(BeTrue())
 		})
+	})
+
+	Context("migration", func() {
+		DescribeTable("migration steps", func(migrationAnnotation string, numAPActions, numRAActions, numVSActions, numRuleActions int, expectedOathkeeperPassthrough bool) {
+			// given
+			rulesV1beta1 := []gatewayv1beta1.Rule{getNoAuthV1beta1Rule("/different-path")}
+			v1beta1ApiRule := GetAPIRuleFor(rulesV1beta1)
+
+			rulesV2alpha1 := []gatewayv2alpha1.Rule{getNoAuthV2alpha1Rule("/different-path")}
+			v2alpha1ApiRule := getV2alpha1APIRuleFor("test-apirule", "some-namespace", rulesV2alpha1)
+			v2alpha1ApiRule.Annotations = map[string]string{
+				"gateway.kyma-project.io/migration-step": migrationAnnotation,
+			}
+			v1beta1ApiRule.Annotations = map[string]string{
+				"gateway.kyma-project.io/migration-step": migrationAnnotation,
+			}
+
+			rule := &oryv1alpha1.Rule{
+				ObjectMeta: v1.ObjectMeta{
+					Name:      "test-apirule",
+					Namespace: "some-namespace",
+					Labels: map[string]string{
+						"apirule.gateway.kyma-project.io/v1beta1": "test-apirule.some-namespace",
+					},
+				},
+			}
+
+			service := GetService(ServiceName)
+			fakeClient := GetFakeClient(service, rule)
+
+			// when
+			var createdObjects []client.Object
+			reconciliation := v2alpha1.NewReconciliation(v2alpha1ApiRule, v1beta1ApiRule, nil, GetTestConfig(), &testLogger, true)
+			for _, processor := range reconciliation.GetProcessors() {
+				results, err := processor.EvaluateReconciliation(context.Background(), fakeClient)
+				Expect(err).To(BeNil())
+				for _, result := range results {
+					createdObjects = append(createdObjects, result.Obj)
+				}
+			}
+
+			// then
+			Expect(createdObjects).To(HaveLen(numAPActions + numRAActions + numVSActions + numRuleActions))
+
+			vsNumber, raNumber, apNumber, ruleNumber := 0, 0, 0, 0
+
+			for _, createdObj := range createdObjects {
+				switch obj := createdObj.(type) {
+				case *networkingv1beta1.VirtualService:
+					vsNumber++
+				case *securityv1beta1.RequestAuthentication:
+					raNumber++
+				case *securityv1beta1.AuthorizationPolicy:
+					switch obj.Spec.Action {
+					case v1beta12.AuthorizationPolicy_ALLOW:
+						Expect(obj.Spec.Rules).To(HaveLen(1))
+
+						if expectedOathkeeperPassthrough {
+							Expect(obj.Spec.Rules[0].From).To(HaveLen(2))
+							Expect(obj.Spec.Rules[0].From[0].Source.Principals).To(HaveLen(1))
+							Expect(obj.Spec.Rules[0].From[0].Source.Principals[0]).To(Equal("cluster.local/ns/kyma-system/sa/oathkeeper-maester-account"))
+
+							Expect(obj.Spec.Rules[0].From[1].Source.Principals).To(HaveLen(1))
+							Expect(obj.Spec.Rules[0].From[1].Source.Principals[0]).To(Equal("cluster.local/ns/istio-system/sa/istio-ingressgateway-service-account"))
+						} else {
+							Expect(obj.Spec.Rules[0].From).To(HaveLen(1))
+							Expect(obj.Spec.Rules[0].From[0].Source.Principals).To(HaveLen(1))
+							Expect(obj.Spec.Rules[0].From[0].Source.Principals[0]).To(Equal("cluster.local/ns/istio-system/sa/istio-ingressgateway-service-account"))
+						}
+					}
+					apNumber++
+				case *oryv1alpha1.Rule:
+					ruleNumber++
+				}
+			}
+
+			Expect(vsNumber).To(Equal(numVSActions))
+			Expect(raNumber).To(Equal(numRAActions))
+			Expect(apNumber).To(Equal(numAPActions))
+			Expect(ruleNumber).To(Equal(numRuleActions))
+		},
+			Entry("Step 1: Create AuthorizationPolicies and RequestAuthentications", "", 1, 0, 0, 0, true),
+			Entry("Step 2: Switch VirtualServices", "apply-istio-authorization", 1, 0, 1, 0, true),
+			Entry("Step 3: Remove OryRule", "vs-switch-to-service", 1, 0, 1, 1, false))
 	})
 
 	Context("validation", func() {
