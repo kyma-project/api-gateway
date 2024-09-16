@@ -71,8 +71,7 @@ func (t *testsuite) InitScenarios(ctx *godog.ScenarioContext) {
 	initDefaultCors(ctx, t)
 	initCustomCors(ctx, t)
 	initJwtCommon(ctx, t)
-	initJwtRegex(ctx, t)
-	initJwtPrefix(ctx, t)
+	initJwtWildcard(ctx, t)
 	initJwtAndAllow(ctx, t)
 	initJwtScopes(ctx, t)
 	initJwtAudience(ctx, t)
@@ -89,6 +88,7 @@ func (t *testsuite) InitScenarios(ctx *godog.ScenarioContext) {
 	initExtAuthCommon(ctx, t)
 	initExtAuthJwt(ctx, t)
 	initValidationError(ctx, t)
+	initNoAuthWildcard(ctx, t)
 }
 
 func (t *testsuite) FeaturePath() []string {

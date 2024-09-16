@@ -17,10 +17,10 @@ import (
 var _ = Describe("Processing", func() {
 	serviceName := "example-service"
 
-	It("should set path to `/*` when the Rule path is `/.*`", func() {
+	It("should set authorization policy path to `/*` when the Rule applies to all paths", func() {
 		// given
 		ruleJwt := newNoAuthRuleBuilderWithDummyData().
-			withPath("/.*").
+			withPath("/*").
 			build()
 
 		apiRule := newAPIRuleBuilderWithDummyData().

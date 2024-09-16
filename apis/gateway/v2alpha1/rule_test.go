@@ -2,6 +2,7 @@ package v2alpha1_test
 
 import (
 	"github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
+	"net/http"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -44,5 +45,46 @@ var _ = Describe("Rule", func() {
 			Expect(rule.ContainsNoAuth()).To(BeFalse())
 		})
 
+	})
+
+	Describe("ConvertHttpMethodsToStrings", func() {
+
+		It("should convert the HttpMethod slice to a string slice", func() {
+			methods := []v2alpha1.HttpMethod{
+				http.MethodGet,
+				http.MethodPost,
+			}
+
+			expected := []string{
+				"GET",
+				"POST",
+			}
+
+			Expect(v2alpha1.ConvertHttpMethodsToStrings(methods)).To(ConsistOf(expected))
+		})
+
+		It("should return an empty slice when the input slice is nil", func() {
+			Expect(v2alpha1.ConvertHttpMethodsToStrings(nil)).To(BeEmpty())
+		})
+
+	})
+
+	Describe("AppliesToAllPaths", func() {
+
+		It("should return true when the path applies to all paths", func() {
+			rule := v2alpha1.Rule{
+				Path: "/*",
+			}
+
+			Expect(rule.AppliesToAllPaths()).To(BeTrue())
+		})
+
+		It("should return false when the path does not apply to all paths", func() {
+			rule := v2alpha1.Rule{
+				Path: "/",
+			}
+
+			Expect(rule.AppliesToAllPaths()).To(BeFalse())
+		})
 	})
 })
