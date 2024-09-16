@@ -36,6 +36,9 @@ type APIGatewaySpec struct {
 	// Specifies whether the default Kyma Gateway kyma-gateway in kyma-system Namespace is created.
 	// +optional
 	EnableKymaGateway *bool `json:"enableKymaGateway,omitempty"`
+	// Gardener defines if reconcile gateway CR as if it was running on gardener
+	// cluster.
+	Gardener bool `json:"gardener,omitempty"`
 }
 
 // APIGatewayStatus defines the observed state of APIGateway

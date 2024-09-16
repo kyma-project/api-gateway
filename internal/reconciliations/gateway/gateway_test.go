@@ -30,7 +30,7 @@ const (
 var _ = Describe("Kyma Gateway reconciliation", func() {
 	It("Should add finalizer when EnableKymaGateway is true", func() {
 		// given
-		apiGateway := getApiGateway(true)
+		apiGateway := getApiGateway(true, false)
 
 		k8sClient := createFakeClient(&apiGateway)
 
@@ -46,7 +46,7 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 
 	It("Should add condition on successful reconcile ", func() {
 		// given
-		apiGateway := getApiGateway(true)
+		apiGateway := getApiGateway(true, false)
 
 		k8sClient := createFakeClient(&apiGateway)
 
@@ -99,7 +99,7 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 
 		It("Should not create gateway when EnableKymaGateway is false", func() {
 			// given
-			apiGateway := getApiGateway(false)
+			apiGateway := getApiGateway(false, false)
 
 			k8sClient := createFakeClient(&apiGateway)
 
@@ -116,7 +116,7 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 
 		It("Should create gateway with *.local.kyma.dev hosts when EnableKymaGateway is true and no Gardener shoot-info exists", func() {
 			// given
-			apiGateway := getApiGateway(true)
+			apiGateway := getApiGateway(true, false)
 
 			k8sClient := createFakeClient(&apiGateway)
 
@@ -136,7 +136,7 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 
 		It("Should create secret with default certificate when EnableKymaGateway is true and no Gardener shoot-info exists", func() {
 			// given
-			apiGateway := getApiGateway(true)
+			apiGateway := getApiGateway(true, false)
 
 			k8sClient := createFakeClient(&apiGateway)
 
@@ -154,7 +154,7 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 
 		It("Should create secret with istio-healthz virtual service when EnableKymaGateway is true and no Gardener shoot-info exists", func() {
 			// given
-			apiGateway := getApiGateway(true)
+			apiGateway := getApiGateway(true, false)
 
 			k8sClient := createFakeClient(&apiGateway)
 
@@ -170,7 +170,7 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 
 		It("Should not create Certificate and DNSEntry when EnableKymaGateway is true and no Gardener shoot-info exists", func() {
 			// given
-			apiGateway := getApiGateway(true)
+			apiGateway := getApiGateway(true, false)
 
 			k8sClient := createFakeClient(&apiGateway)
 
@@ -235,7 +235,7 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 	Context("Gardener cluster", func() {
 		It("Should create gateway, Virtual Service, DNSEntry and Certificate with shoot-info domain when EnableKymaGateway is true and Gardener shoot-info exists", func() {
 			// given
-			apiGateway := getApiGateway(true)
+			apiGateway := getApiGateway(true, true)
 			cm := getTestShootInfo()
 			igwService := getTestIstioIngressGatewayIpBasedService()
 
@@ -296,7 +296,7 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 
 		It("Should not create gateway when EnableKymaGateway is false", func() {
 			// given
-			apiGateway := getApiGateway(false)
+			apiGateway := getApiGateway(false, false)
 			cm := getTestShootInfo()
 
 			k8sClient := createFakeClient(&apiGateway, &cm)
@@ -358,7 +358,7 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 
 func testShouldDeleteKymaGatewayNonGardenerResources(updateApiGateway func(gw v1alpha1.APIGateway) v1alpha1.APIGateway, state controllers.State, nfMatcher types.GomegaMatcher, fMatcher types.GomegaMatcher, objs ...client.Object) controllers.Status {
 	// given
-	apiGateway := getApiGateway(true, KymaGatewayFinalizer)
+	apiGateway := getApiGateway(true, false, KymaGatewayFinalizer)
 	objs = append(objs, &apiGateway)
 
 	k8sClient := createFakeClient(objs...)
@@ -398,7 +398,7 @@ func testShouldDeleteKymaGatewayNonGardenerResources(updateApiGateway func(gw v1
 
 func testShouldDeleteKymaGatewayResources(updateApiGateway func(gw v1alpha1.APIGateway) v1alpha1.APIGateway, state controllers.State, nfMatcher types.GomegaMatcher, fMatcher types.GomegaMatcher, objs ...client.Object) controllers.Status {
 	// given
-	apiGateway := getApiGateway(true, KymaGatewayFinalizer)
+	apiGateway := getApiGateway(true, true, KymaGatewayFinalizer)
 	objs = append(objs, &apiGateway)
 
 	cm := getTestShootInfo()
@@ -445,7 +445,7 @@ func testShouldDeleteKymaGatewayResources(updateApiGateway func(gw v1alpha1.APIG
 	return status
 }
 
-func getApiGateway(enableKymaGateway bool, finalizers ...string) v1alpha1.APIGateway {
+func getApiGateway(enableKymaGateway, gardener bool, finalizers ...string) v1alpha1.APIGateway {
 	return v1alpha1.APIGateway{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:       "test",
@@ -453,6 +453,7 @@ func getApiGateway(enableKymaGateway bool, finalizers ...string) v1alpha1.APIGat
 		},
 		Spec: v1alpha1.APIGatewaySpec{
 			EnableKymaGateway: ptr.To(enableKymaGateway),
+			Gardener:          gardener,
 		},
 	}
 }

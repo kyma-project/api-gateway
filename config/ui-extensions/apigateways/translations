@@ -1,2 +1,3 @@
 en:
   enableKymaGateway: Enable Kyma Gateway
+  gardener: Enable Gardener-based features

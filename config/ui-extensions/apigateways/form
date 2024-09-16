@@ -9,3 +9,8 @@
     name: enableKymaGateway
     value:
       type: boolean
+  - path: gardener
+    simple: true
+    name: gardener
+    value:
+      type: boolean

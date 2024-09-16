@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	corev1 "k8s.io/api/core/v1"
-	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -22,21 +21,6 @@ func GetGardenerDomain(ctx context.Context, k8sClient client.Client) (string, er
 	}
 
 	return cm.Data["domain"], nil
-}
-
-// RunsOnGardenerCluster returns true if the cluster is a Gardener cluster validated by the presence of the shoot-info configmap.
-func RunsOnGardenerCluster(ctx context.Context, k8sClient client.Client) (bool, error) {
-	_, err := getGardenerShootInfo(ctx, k8sClient)
-
-	if err != nil && k8serrors.IsNotFound(err) {
-		return false, nil
-	}
-
-	if err != nil {
-		return false, err
-	}
-
-	return true, nil
 }
 
 func getGardenerShootInfo(ctx context.Context, k8sClient client.Client) (corev1.ConfigMap, error) {

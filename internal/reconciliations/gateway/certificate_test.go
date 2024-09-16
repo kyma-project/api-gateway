@@ -37,7 +37,7 @@ var _ = Describe("Certificate", func() {
 	Context("reconcileNonGardenerCertificateSecret", func() {
 		It("should create Certificate with default name and namespace", func() {
 			// given
-			apiGateway := getApiGateway(true)
+			apiGateway := getApiGateway(true, false)
 			k8sClient := createFakeClient()
 
 			// when
@@ -54,7 +54,7 @@ var _ = Describe("Certificate", func() {
 
 		It("should not contain certificate that will expire in one month", func() {
 			// given
-			apiGateway := getApiGateway(true)
+			apiGateway := getApiGateway(true, false)
 			k8sClient := createFakeClient()
 
 			// when

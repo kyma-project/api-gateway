@@ -64,37 +64,4 @@ var _ = Describe("Gardener", func() {
 			Expect(err.Error()).To(ContainSubstring("domain not found in Gardener shoot-info"))
 		})
 	})
-
-	Context("runsOnGardenerCluster", func() {
-		It("should return true if the Gardener shoot-info is available", func() {
-			// given
-			cm := corev1.ConfigMap{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "shoot-info",
-					Namespace: "kube-system",
-				},
-			}
-
-			k8sClient := createFakeClient(&cm)
-
-			// when
-			runsOnGardener, err := reconciliations.RunsOnGardenerCluster(context.Background(), k8sClient)
-
-			// then
-			Expect(err).ShouldNot(HaveOccurred())
-			Expect(runsOnGardener).To(BeTrue())
-		})
-
-		It("should return false and no error if the Gardener shoot-info is not available", func() {
-			// given
-			k8sClient := createFakeClient()
-
-			// when
-			runsOnGardener, err := reconciliations.RunsOnGardenerCluster(context.Background(), k8sClient)
-
-			// then
-			Expect(err).ShouldNot(HaveOccurred())
-			Expect(runsOnGardener).To(BeFalse())
-		})
-	})
 })

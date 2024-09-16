@@ -4,3 +4,4 @@ metadata:
   name: default
 spec:
   enableKymaGateway: true
+  gardener: true

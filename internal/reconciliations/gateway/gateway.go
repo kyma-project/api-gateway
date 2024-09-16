@@ -91,10 +91,7 @@ func ReconcileKymaGateway(ctx context.Context, k8sClient client.Client, apiGatew
 		}
 	}
 
-	isGardenerCluster, err := reconciliations.RunsOnGardenerCluster(ctx, k8sClient)
-	if err != nil {
-		return controllers.ErrorStatus(err, "Error during Kyma Gateway reconciliation", conditions.KymaGatewayReconcileFailed.Condition())
-	}
+	isGardenerCluster := apiGatewayCR.Spec.Gardener
 
 	var reconcileErr error
 	if isGardenerCluster {

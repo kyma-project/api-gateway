@@ -17,6 +17,9 @@ body:
   - source: spec.enableKymaGateway
     name: enableKymaGateway
     visibility: '$exists($value)'
+  - source: spec.gardener
+    name: gardener
+    visibility: '$exists($value)'
 
 - source: status.conditions
   widget: Table

@@ -47,6 +47,11 @@ spec:
                 description: Specifies whether the default Kyma Gateway kyma-gateway
                   in kyma-system Namespace is created.
                 type: boolean
+              gardener:
+                description: |-
+                  Gardener defines if reconcile gateway CR as if it was running on gardener
+                  cluster.
+                type: boolean
             type: object
           status:
             description: APIGatewayStatus defines the observed state of APIGateway
