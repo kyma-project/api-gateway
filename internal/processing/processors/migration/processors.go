@@ -25,7 +25,7 @@ func NewMigrationProcessors(apiRuleV2alpha1 *gatewayv2alpha1.APIRule, apiRuleV1b
 		processors = append(processors, virtualservice.NewVirtualServiceProcessor(config, apiRuleV2alpha1))
 		fallthrough // We want to also use the processors from the previous steps
 	case applyIstioAuthorizationMigrationStep: // Step 1
-		processors = append(processors, authorizationpolicy.NewProcessor(log, apiRuleV2alpha1, step != removeOryRule))
+		processors = append(processors, authorizationpolicy.NewMigrationProcessor(log, apiRuleV2alpha1, step != removeOryRule))
 		processors = append(processors, requestauthentication.NewProcessor(apiRuleV2alpha1))
 	}
 	return processors
