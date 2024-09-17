@@ -118,7 +118,7 @@ func (r virtualServiceCreator) Create(api *gatewayv2alpha1.APIRule) (*networking
 
 		matchBuilder := builders.MatchRequest().MethodRegExV2Alpha1(rule.Methods...)
 
-		if rule.Path == "/*" {
+		if rule.AppliesToAllPaths() {
 			matchBuilder.Uri().Prefix("/")
 		} else {
 			matchBuilder.Uri().Regex(rule.Path)

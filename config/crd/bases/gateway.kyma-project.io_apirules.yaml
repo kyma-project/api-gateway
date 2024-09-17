@@ -516,8 +516,10 @@ spec:
                       description: Disables authorization when set to true.
                       type: boolean
                     path:
-                      description: Specifies the path of the exposed service.
-                      pattern: ^([0-9a-zA-Z./*()?!\\_-]+)
+                      description: Specifies the path of the exposed service, allowing
+                        '/*' to match all paths and '/a-path' to match a specific
+                        path.
+                      pattern: ^(\/\*|\/[0-9a-zA-Z/()?!\\_-]+)$
                       type: string
                     request:
                       description: Request allows modifying the request before it
