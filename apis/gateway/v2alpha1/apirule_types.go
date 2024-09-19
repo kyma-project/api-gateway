@@ -55,10 +55,9 @@ type APIRuleSpec struct {
 	Timeout *Timeout `json:"timeout,omitempty"`
 }
 
-// Host is the URL of the exposed service.
-// +kubebuilder:validation:MinLength=3
+// Host is the URL of the exposed service. We support short names.
+// +kubebuilder:validation:MinLength=1
 // +kubebuilder:validation:MaxLength=255
-// +kubebuilder:validation:XValidation:rule=`self.matches('^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\\.)+[a-z0-9][a-z0-9-]{0,61}[a-z0-9]$')`,message="Host is not Fully Qualified Domain Name"
 type Host string
 
 // APIRuleStatus describes the observed state of ApiRule.

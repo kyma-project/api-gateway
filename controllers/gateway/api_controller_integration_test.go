@@ -1533,11 +1533,11 @@ var _ = Describe("APIRule Controller", Serial, func() {
 			Expect(err.Error()).To(ContainSubstring("spec.hosts[0]: Too long: may not be longer than 255"))
 		})
 
-		invalidHelper := func(host gatewayv2alpha1.Host) {
+		It("should not create an APIRule with host name shorter than 1 character", func() {
 			// given
 			apiRuleName := generateTestName(testNameBase, testIDLength)
 			serviceName := testServiceNameBase
-			serviceHosts := []*gatewayv2alpha1.Host{&host}
+			serviceHosts := []*gatewayv2alpha1.Host{ptr.To(gatewayv2alpha1.Host(""))}
 
 			rule := testRulev2alpha1("/img", []gatewayv2alpha1.HttpMethod{http.MethodGet})
 			rule.NoAuth = ptr.To(true)
@@ -1552,40 +1552,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 				serviceTeardown(svc)
 			}()
 			Expect(err).Should(HaveOccurred())
-			Expect(err.Error()).To(ContainSubstring("spec.hosts[0]: Invalid value: \"string\": Host is not Fully Qualified Domain Name"))
-		}
-
-		It("should not create an APIRule with an empty host", func() {
-			invalidHelper("")
-		})
-
-		It("should not create an APIRule with host name without domain", func() {
-			invalidHelper("example-com")
-		})
-
-		It("should not create an APIRule when host name has uppercase letters", func() {
-			invalidHelper("Example.Com")
-		})
-
-		It("should not create an APIRule with host name segment longer than 63 characters", func() {
-			serviceHost := gatewayv2alpha1.Host(strings.Repeat("a", 64) + ".com")
-			invalidHelper(serviceHost)
-		})
-
-		It("should not create an APIRule when any domain label is empty", func() {
-			invalidHelper("host..com")
-		})
-
-		It("should not create an APIRule when top level domain is too short", func() {
-			invalidHelper("host.with.tld.too.short.x")
-		})
-
-		It("should not create an APIRule when host contains wrong characters", func() {
-			invalidHelper("*example.com")
-		})
-
-		It("should not create an APIRule when host starts with a dash", func() {
-			invalidHelper("-example.com")
+			Expect(err.Error()).To(ContainSubstring("spec.hosts[0] in body should be at least 1 chars long"))
 		})
 	})
 

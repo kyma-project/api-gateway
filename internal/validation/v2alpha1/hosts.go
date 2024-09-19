@@ -2,13 +2,25 @@ package v2alpha1
 
 import (
 	"fmt"
+	"regexp"
+	"strings"
+
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	"github.com/kyma-project/api-gateway/internal/validation"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 )
 
-func validateHosts(parentAttributePath string, vsList networkingv1beta1.VirtualServiceList, apiRule *gatewayv2alpha1.APIRule) []validation.Failure {
+const (
+	fqdnMaxLength = 253
+)
+
+var (
+	regexFqdn      = regexp.MustCompile(`^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-9][a-z0-9-]{0,61}[a-z0-9]$`)
+	regexFqdnLabel = regexp.MustCompile("^[a-z0-9][a-z0-9-]{0,61}[a-z0-9]$")
+)
+
+func validateHosts(parentAttributePath string, vsList networkingv1beta1.VirtualServiceList, gwList networkingv1beta1.GatewayList, apiRule *gatewayv2alpha1.APIRule) []validation.Failure {
 	var failures []validation.Failure
 	hostsAttributePath := parentAttributePath + ".hosts"
 
@@ -22,6 +34,31 @@ func validateHosts(parentAttributePath string, vsList networkingv1beta1.VirtualS
 	}
 
 	for hostIndex, host := range hosts {
+		if !isFqdn(string(*host)) {
+			if isFqdnLabel(string(*host)) { // short name
+				gateway := findGateway(*apiRule.Spec.Gateway, gwList)
+				if gateway == nil {
+					hostAttributePath := fmt.Sprintf("%s[%d]", hostsAttributePath, hostIndex)
+					failures = append(failures, validation.Failure{
+						AttributePath: hostAttributePath,
+						Message:       fmt.Sprintf("Unable to find Gateway %s", *apiRule.Spec.Gateway),
+					})
+				}
+				if hasMultipleHostDefinitions(gateway) {
+					hostAttributePath := fmt.Sprintf("%s[%d]", hostsAttributePath, hostIndex)
+					failures = append(failures, validation.Failure{
+						AttributePath: hostAttributePath,
+						Message:       "Short host only supported when Gateway has single host definition matching *.<fqdn> format",
+					})
+				}
+			} else {
+				hostAttributePath := fmt.Sprintf("%s[%d]", hostsAttributePath, hostIndex)
+				failures = append(failures, validation.Failure{
+					AttributePath: hostAttributePath,
+					Message:       "Host must be a valid FQDN or short name",
+				})
+			}
+		}
 		for _, vs := range vsList.Items {
 			if occupiesHost(vs, string(*host)) && !ownedBy(vs, apiRule) {
 				hostAttributePath := fmt.Sprintf("%s[%d]", hostsAttributePath, hostIndex)
@@ -34,6 +71,41 @@ func validateHosts(parentAttributePath string, vsList networkingv1beta1.VirtualS
 	}
 
 	return failures
+}
+
+func hasMultipleHostDefinitions(gateway *networkingv1beta1.Gateway) bool {
+	host := ""
+	for _, server := range gateway.Spec.Servers {
+		if len(server.Hosts) > 1 {
+			return true
+		}
+		if !strings.HasPrefix(server.Hosts[0], "*.") {
+			return true
+		}
+		if host == "" {
+			host = server.Hosts[0]
+		} else if host != server.Hosts[0] {
+			return true
+		}
+	}
+	return false
+}
+
+func findGateway(name string, gwList networkingv1beta1.GatewayList) *networkingv1beta1.Gateway {
+	for _, gateway := range gwList.Items {
+		if gateway.Name == name {
+			return gateway
+		}
+	}
+	return nil
+}
+
+func isFqdn(host string) bool {
+	return len(host) <= fqdnMaxLength && regexFqdn.MatchString(host)
+}
+
+func isFqdnLabel(host string) bool {
+	return regexFqdnLabel.MatchString(host)
 }
 
 func occupiesHost(vs *networkingv1beta1.VirtualService, host string) bool {
