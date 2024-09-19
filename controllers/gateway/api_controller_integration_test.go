@@ -1461,12 +1461,33 @@ var _ = Describe("APIRule Controller", Serial, func() {
 		})
 	})
 
-	Context("when creating APIRule in version v2alpha1 hosts should be FQDN", Ordered, func() {
-		It("should create an APIRule with a FQDN host", func() {
+	Context("when creating APIRule in version v2alpha1 hosts should be a valid FQDN or a short name", Ordered, func() {
+		It("should create an APIRule with a valid FQDN host", func() {
 			// given
 			apiRuleName := generateTestName(testNameBase, testIDLength)
 			serviceName := testServiceNameBase
 			serviceHost := gatewayv2alpha1.Host("example.com")
+			serviceHosts := []*gatewayv2alpha1.Host{&serviceHost}
+
+			rule := testRulev2alpha1("/img", []gatewayv2alpha1.HttpMethod{http.MethodGet})
+			rule.NoAuth = ptr.To(true)
+			apiRule := testApiRulev2alpha1(apiRuleName, testNamespace, serviceName, testNamespace, serviceHosts, testServicePort, []gatewayv2alpha1.Rule{rule})
+			svc := testService(serviceName, testNamespace, testServicePort)
+
+			// when
+			Expect(c.Create(context.Background(), svc)).Should(Succeed())
+			Expect(c.Create(context.Background(), apiRule)).Should(Succeed())
+			defer func() {
+				apiRulev2alpha1Teardown(apiRule)
+				serviceTeardown(svc)
+			}()
+		})
+
+		It("should create an APIRule with a short host name", func() {
+			// given
+			apiRuleName := generateTestName(testNameBase, testIDLength)
+			serviceName := testServiceNameBase
+			serviceHost := gatewayv2alpha1.Host("example")
 			serviceHosts := []*gatewayv2alpha1.Host{&serviceHost}
 
 			rule := testRulev2alpha1("/img", []gatewayv2alpha1.HttpMethod{http.MethodGet})

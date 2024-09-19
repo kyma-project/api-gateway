@@ -43,8 +43,7 @@ func validateHosts(parentAttributePath string, vsList networkingv1beta1.VirtualS
 						AttributePath: hostAttributePath,
 						Message:       fmt.Sprintf("Unable to find Gateway %s", *apiRule.Spec.Gateway),
 					})
-				}
-				if hasMultipleHostDefinitions(gateway) {
+				} else if hasMultipleHostDefinitions(gateway) {
 					hostAttributePath := fmt.Sprintf("%s[%d]", hostsAttributePath, hostIndex)
 					failures = append(failures, validation.Failure{
 						AttributePath: hostAttributePath,

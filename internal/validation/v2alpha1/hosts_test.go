@@ -48,7 +48,7 @@ var _ = Describe("Validate hosts", func() {
 		Expect(problems[0].Message).To(Equal("Host must be a valid FQDN or short name"))
 	})
 
-	It("Should succeed if host is FQDN", func() {
+	It("Should succeed if host is a valid FQDN", func() {
 		//given
 		apiRule := &v2alpha1.APIRule{
 			Spec: v2alpha1.APIRuleSpec{
@@ -65,7 +65,7 @@ var _ = Describe("Validate hosts", func() {
 		Expect(problems).To(HaveLen(0))
 	})
 
-	It("Should succeed if host is FQDN label only (short-name)", func() {
+	It("Should succeed if host is a short name", func() {
 		//given
 		apiRule := &v2alpha1.APIRule{
 			Spec: v2alpha1.APIRuleSpec{
@@ -100,6 +100,66 @@ var _ = Describe("Validate hosts", func() {
 		Expect(problems).To(HaveLen(0))
 	})
 
+	It("Should fail if host is a short name and referenced Gateway is missing", func() {
+		//given
+		apiRule := &v2alpha1.APIRule{
+			Spec: v2alpha1.APIRuleSpec{
+				Gateway: ptr.To("gateway-name"),
+				Hosts: []*v2alpha1.Host{
+					ptr.To(v2alpha1.Host("short-name-host")),
+				},
+			},
+		}
+
+		//when
+		problems := validateHosts(".spec", networkingv1beta1.VirtualServiceList{}, networkingv1beta1.GatewayList{}, apiRule)
+
+		//then
+		Expect(problems).To(HaveLen(1))
+		Expect(problems[0].AttributePath).To(Equal(".spec.hosts[0]"))
+		Expect(problems[0].Message).To(Equal("Unable to find Gateway gateway-name"))
+	})
+
+	It("Should fail if host is a short name and referenced Gateway has various hosts definitions", func() {
+		//given
+		apiRule := &v2alpha1.APIRule{
+			Spec: v2alpha1.APIRuleSpec{
+				Gateway: ptr.To("gateway-name"),
+				Hosts: []*v2alpha1.Host{
+					ptr.To(v2alpha1.Host("short-name-host")),
+				},
+			},
+		}
+
+		gwList := networkingv1beta1.GatewayList{
+			Items: []*networkingv1beta1.Gateway{
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "gateway-name",
+					},
+					Spec: v1beta1.Gateway{
+						Servers: []*v1beta1.Server{
+							{
+								Hosts: []string{"*.example.com"},
+							},
+							{
+								Hosts: []string{"*.example2.com"},
+							},
+						},
+					},
+				},
+			},
+		}
+
+		//when
+		problems := validateHosts(".spec", networkingv1beta1.VirtualServiceList{}, gwList, apiRule)
+
+		//then
+		Expect(problems).To(HaveLen(1))
+		Expect(problems[0].AttributePath).To(Equal(".spec.hosts[0]"))
+		Expect(problems[0].Message).To(Equal("Short host only supported when Gateway has single host definition matching *.<fqdn> format"))
+	})
+
 	It("Should fail if host name has uppercase letters", func() {
 		//given
 		apiRule := &v2alpha1.APIRule{
@@ -119,12 +179,12 @@ var _ = Describe("Validate hosts", func() {
 		Expect(problems[0].Message).To(Equal("Host must be a valid FQDN or short name"))
 	})
 
-	It("Should allow lenghty host name with numbers and dashes", func() {
+	It("Should allow lenghty host name with numbers and hyphens", func() {
 		//given
 		apiRule := &v2alpha1.APIRule{
 			Spec: v2alpha1.APIRuleSpec{
 				Hosts: []*v2alpha1.Host{
-					ptr.To(v2alpha1.Host("host-with-numbers-1234567890-and-dashes----------up-to-63-chars.domain-with-numbers-1234567890-and-dashes--------up-to-63-chars.com")),
+					ptr.To(v2alpha1.Host("host-with-numbers-1234567890-and-hyphens---------up-to-63-chars.domain-with-numbers-1234567890-and-hyphens-------up-to-63-chars.com")),
 				},
 			},
 		}
@@ -136,7 +196,7 @@ var _ = Describe("Validate hosts", func() {
 		Expect(problems).To(HaveLen(0))
 	})
 
-	It("Should fail if the host FQDN is longer than 253 characters", func() {
+	It("Should fail if the host is longer than 253 characters", func() {
 		//given
 		apiRule := &v2alpha1.APIRule{
 			Spec: v2alpha1.APIRuleSpec{
@@ -155,7 +215,7 @@ var _ = Describe("Validate hosts", func() {
 		Expect(problems[0].Message).To(Equal("Host must be a valid FQDN or short name"))
 	})
 
-	It("Should fail if any domain label is too long", func() {
+	It("Should fail if any domain label is longer than 63 chars", func() {
 		//given
 		apiRule := &v2alpha1.APIRule{
 			Spec: v2alpha1.APIRuleSpec{
@@ -248,7 +308,7 @@ var _ = Describe("Validate hosts", func() {
 		}
 	})
 
-	It("Should fail if any segment in host name starts or ends with dash", func() {
+	It("Should fail if any segment in host name starts or ends with hyphen", func() {
 		//given
 		apiRule := &v2alpha1.APIRule{
 			Spec: v2alpha1.APIRuleSpec{
