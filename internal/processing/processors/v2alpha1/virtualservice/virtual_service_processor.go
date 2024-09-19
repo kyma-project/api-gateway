@@ -3,13 +3,14 @@ package virtualservice
 import (
 	"context"
 	"fmt"
+	"time"
+
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	"github.com/kyma-project/api-gateway/internal/builders"
 	"github.com/kyma-project/api-gateway/internal/processing"
 	"github.com/kyma-project/api-gateway/internal/processing/default_domain"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
-	"time"
 )
 
 const defaultHttpTimeout uint32 = 180
@@ -89,6 +90,7 @@ func (r virtualServiceCreator) Create(api *gatewayv2alpha1.APIRule) (*networking
 
 	vsSpecBuilder := builders.VirtualServiceSpec()
 	for _, host := range api.Spec.Hosts {
+		// TODO: continue here
 		vsSpecBuilder.AddHost(default_domain.GetHostWithDomain(string(*host), r.defaultDomainName))
 	}
 
