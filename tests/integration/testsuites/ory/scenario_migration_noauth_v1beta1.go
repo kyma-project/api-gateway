@@ -11,4 +11,5 @@ func initMigrationNoAuthV1beta1(ctx *godog.ScenarioContext, ts *testsuite) {
 	ctx.Step(`^migrationNoAuthV1beta1: The APIRule is applied$`, scenario.theAPIRuleIsApplied)
 	ctx.Step(`^migrationNoAuthV1beta1: The APIRule is updated using manifest "([^"]*)"$`, scenario.theAPIRuleIsUpdated)
 	ctx.Step(`^migrationNoAuthV1beta1: APIRule has status "([^"]*)"$`, scenario.theAPIRuleHasStatus)
+	ctx.Step(`^migrationNoAuthV1beta1: Wait for "([^"]*)" seconds$`, scenario.waitForSeconds)
 }

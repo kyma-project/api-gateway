@@ -105,6 +105,10 @@ test-integration-v2alpha1: generate fmt vet ## Run API Gateway integration tests
 test-integration-ory: generate fmt vet
 	source ./tests/integration/env_vars.sh && go test -timeout 1h ./tests/integration -v -race -run TestOryJwt
 
+.PHONY: test-migration-zero-downtime
+test-migration-zero-downtime: generate fmt vet
+	source ./tests/integration/env_vars.sh && go test -timeout 1h ./tests/integration -v -race -run TestOryJwt/$(TEST)
+
 .PHONY: test-integration-istio
 test-integration-istio: generate fmt vet
 	source ./tests/integration/env_vars.sh && go test -timeout 1h ./tests/integration -v -race -run TestIstioJwt

@@ -23,6 +23,7 @@ func initMigrationJwtV1beta1(ctx *godog.ScenarioContext, ts *testsuite) {
 	ctx.Step(`^migrationJwtV1beta1: VirtualService owned by APIRule has httpbin service as destination$`, scenario.thereIsApiRuleVirtualServiceWithHttpbinServiceDestination)
 	ctx.Step(`^migrationJwtV1beta1: Resource of Kind "([^"]*)" owned by APIRule does not exist$`, scenario.resourceOwnedByApiRuleDoesNotExist)
 	ctx.Step(`^migrationJwtV1beta1: Resource of Kind "([^"]*)" owned by APIRule exists$`, scenario.resourceOwnedByApiRuleExists)
+	ctx.Step(`^migrationJwtV1beta1: Wait for "([^"]*)" seconds$`, scenario.waitForSeconds)
 }
 
 func (s *scenario) thereIsApiRuleVirtualServiceWithHttpbinServiceDestination() error {
