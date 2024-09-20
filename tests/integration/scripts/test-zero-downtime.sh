@@ -1,7 +1,6 @@
 #!/bin/bash
 
 set -o nounset
-set -o pipefail
 
 PARALLEL_REQUESTS=5
 
@@ -15,6 +14,8 @@ PARALLEL_REQUESTS=5
 # 3. Check if the zero downtime requests were successful.
 
 run_zero_downtime_requests() {
+  local handler="$1"
+  local bearerToken=""
 
   # Wait until the APIRule created in the test is in status OK
   wait_for_api_rule_to_exist
@@ -23,6 +24,13 @@ run_zero_downtime_requests() {
   exposed_host=$(kubectl get apirules -A -l test=v1beta1-migration -o jsonpath='{.items[0].spec.host}')
   url_under_test="https://$exposed_host/anything"
 
+  if [ "$handler" == "jwt" ]; then
+    echo "zero-downtime: Getting access token"
+    # Get the access token from the OAuth2 mock server
+    tokenUrl="https://oauth2-mock.$KYMA_DOMAIN/oauth2/token"
+    # TODO get cluster domain and token from the OAuth2 mock server
+  fi
+
   echo "zero-downtime: Waiting for the new host to be propagated"
   # Propagation of the new host can take some time, therefore there is a wait for 30 secs,
   # even though APIRule is in OK state.
@@ -30,8 +38,8 @@ run_zero_downtime_requests() {
   echo "zero-downtime: Sending requests to $url_under_test"
 
   # Run the send_requests function in parallel child processes
-  for (( i = 0; i < $PARALLEL_REQUESTS; i++ )); do
-    send_requests $url_under_test &
+  for (( i = 0; i < PARALLEL_REQUESTS; i++ )); do
+    send_requests "$url_under_test" "$bearerToken" &
     request_pids[$i]=$!
   done
 
@@ -64,11 +72,18 @@ wait_for_api_rule_to_exist() {
 # Function to send requests to a given endpoint
 send_requests() {
   local endpoint="$1"
+  local bearerToken="$2"
 
   # Stop sending requests when the APIRule is deleted to avoid false negatives by sending requests
   # to an endpoint that is no longer exposed.
   while kubectl get apirules -A -l test=v1beta1-migration --ignore-not-found | grep -q .; do
-    response=$(curl -fsSk -o /dev/null -w "%{http_code}" "$endpoint")
+
+    if [ -n "$bearerToken" ]; then
+      response=$(curl -fsSk -o /dev/null -w "%{http_code}" -H "Authorization: Bearer $bearerToken" "$endpoint")
+    else
+      response=$(curl -fsSk -o /dev/null -w "%{http_code}" "$endpoint")
+    fi
+
     if [ "$response" -ne 200 ]; then
       echo "zero-downtime: Error, received HTTP status code $response"
       exit 1
@@ -78,26 +93,58 @@ send_requests() {
   exit 0
 }
 
-# Function to run tests
-run_test() {
-  echo "zero-downtime: Starting integration test scenario"
-  #make TEST=Migrate_v1beta1_APIRule_with_no_auth_handler test-migration-zero-downtime
-  #make TEST=Migrate_v1beta1_APIRule_with_noop_handler test-migration-zero-downtime
-  make TEST=Migrate_v1beta1_APIRule_with_allow_handler test-migration-zero-downtime
+start() {
+  local handler="$1"
+
+  # Start the requests in the background as soon as the APIRule is ready
+  run_zero_downtime_requests "$handler" &
+  zero_downtime_requests_pid=$!
+
+  echo "zero-downtime: Starting integration test scenario for handler $handler"
+  case $handler in
+    "no_auth")
+      make TEST=Migrate_v1beta1_APIRule_with_no_auth_handler test-migration-zero-downtime
+      ;;
+    "noop")
+      make TEST=Migrate_v1beta1_APIRule_with_noop_handler test-migration-zero-downtime
+      ;;
+    "allow")
+      make TEST=Migrate_v1beta1_APIRule_with_allow_handler test-migration-zero-downtime
+      ;;
+    "jwt")
+      make TEST=Migrate_v1beta1_APIRule_with_jwt_handler test-migration-zero-downtime
+      ;;
+    *)
+      echo "Invalid handler specified"
+      exit 1
+      ;;
+  esac
+
+  wait $zero_downtime_requests_pid
+  if [ $? -ne 0 ]; then
+    echo "zero-downtime: Requests returned a non-zero exit status, that means requests failed or returned a status not equal 200"
+    return 1
+  fi
+
+  echo "zero-downtime: Test completed successfully"
+  return 0
 }
 
-# Start the requests in the background as soon as the APIRule is ready
-run_zero_downtime_requests &
-zero_downtime_requests_pid=$!
+start "allow"
+allow_exit_code=$?
+start "noop"
+noop_exit_code=$?
 
-run_test
+start "no_auth"
+no_auth_exit_code=$?
 
-wait $zero_downtime_requests_pid
-if [ $? -ne 0 ]; then
-  echo "zero-downtime: Requests returned a non-zero exit status, that means requests failed or returned a status not equal 200"
-  exit 1
-fi
+#start "jwt
+#jwt_exit_code=$?
 
-echo "zero-downtime: Test completed successfully"
 
-exit 0
+echo "zero-downtime: allow exit code: $allow_exit_code"
+echo "zero-downtime: noop exit code: $noop_exit_code"
+echo "zero-downtime: no_auth exit code: $no_auth_exit_code"
+#echo "zero-downtime: jwt_exit_code: $jwt_exit_code"
+
+# TODO exit code handling
