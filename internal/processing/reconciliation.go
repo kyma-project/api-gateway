@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+
 	"github.com/go-logr/logr"
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"github.com/kyma-project/api-gateway/internal/processing/status"
@@ -51,7 +52,6 @@ func Reconcile(ctx context.Context, client client.Client, log *logr.Logger, cmd 
 	}
 
 	for _, processor := range cmd.GetProcessors() {
-
 		objectChanges, err := processor.EvaluateReconciliation(ctx, client)
 		if err != nil {
 			l.Error(err, "Error during reconciliation")

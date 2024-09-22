@@ -56,8 +56,8 @@ type APIRuleSpec struct {
 }
 
 // Host is the URL of the exposed service. We support short names.
-// +kubebuilder:validation:MinLength=1
 // +kubebuilder:validation:MaxLength=255
+// +kubebuilder:validation:XValidation:rule=`self.matches('^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)(?:\\.[a-z0-9][a-z0-9-]{0,61}[a-z0-9])*$')`,message="Host must be a short name or a fully qualified domain name"
 type Host string
 
 // APIRuleStatus describes the observed state of ApiRule.

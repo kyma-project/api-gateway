@@ -54,7 +54,6 @@ var _ = Describe("APIRule Controller", Serial, func() {
 	var methodsPost = []gatewayv1beta1.HttpMethod{http.MethodPost}
 
 	Context("check default domain logic", func() {
-
 		It("should have an error when creating an APIRule without a domain in cluster without kyma-gateway", func() {
 			updateJwtHandlerTo(helpers.JWT_HANDLER_ISTIO)
 
@@ -177,7 +176,6 @@ var _ = Describe("APIRule Controller", Serial, func() {
 	})
 
 	Context("when creating APIRule in version v2alpha1 respect x-validation rules only", Ordered, func() {
-
 		BeforeAll(func() {
 			updateJwtHandlerTo(helpers.JWT_HANDLER_ORY)
 		})
@@ -369,7 +367,6 @@ var _ = Describe("APIRule Controller", Serial, func() {
 	})
 
 	Context("when updating the APIRule with multiple paths", func() {
-
 		It("should create, update and delete rules depending on patch match", func() {
 			updateJwtHandlerTo(helpers.JWT_HANDLER_ORY)
 
@@ -453,7 +450,6 @@ var _ = Describe("APIRule Controller", Serial, func() {
 	})
 
 	Context("when creating an APIRule for exposing service", func() {
-
 		Context("on all the paths,", func() {
 			Context("secured with Oauth2 introspection,", func() {
 				Context("in a happy-path scenario", func() {
@@ -1466,7 +1462,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 			// given
 			apiRuleName := generateTestName(testNameBase, testIDLength)
 			serviceName := testServiceNameBase
-			serviceHost := gatewayv2alpha1.Host("example.com")
+			serviceHost := gatewayv2alpha1.Host("test.some-example.com")
 			serviceHosts := []*gatewayv2alpha1.Host{&serviceHost}
 
 			rule := testRulev2alpha1("/img", []gatewayv2alpha1.HttpMethod{http.MethodGet})
@@ -1483,11 +1479,32 @@ var _ = Describe("APIRule Controller", Serial, func() {
 			}()
 		})
 
-		It("should create an APIRule with a short host name", func() {
+		It("should create an APIRule with a short name", func() {
 			// given
 			apiRuleName := generateTestName(testNameBase, testIDLength)
 			serviceName := testServiceNameBase
-			serviceHost := gatewayv2alpha1.Host("example")
+			serviceHost := gatewayv2alpha1.Host("test--example")
+			serviceHosts := []*gatewayv2alpha1.Host{&serviceHost}
+
+			rule := testRulev2alpha1("/img", []gatewayv2alpha1.HttpMethod{http.MethodGet})
+			rule.NoAuth = ptr.To(true)
+			apiRule := testApiRulev2alpha1(apiRuleName, testNamespace, serviceName, testNamespace, serviceHosts, testServicePort, []gatewayv2alpha1.Rule{rule})
+			svc := testService(serviceName, testNamespace, testServicePort)
+
+			// when
+			Expect(c.Create(context.Background(), svc)).Should(Succeed())
+			Expect(c.Create(context.Background(), apiRule)).Should(Succeed())
+			defer func() {
+				apiRulev2alpha1Teardown(apiRule)
+				serviceTeardown(svc)
+			}()
+		})
+
+		It("should create an APIRule with short name that has length of 1 character", func() {
+			// given
+			apiRuleName := generateTestName(testNameBase, testIDLength)
+			serviceName := testServiceNameBase
+			serviceHost := gatewayv2alpha1.Host("a")
 			serviceHosts := []*gatewayv2alpha1.Host{&serviceHost}
 
 			rule := testRulev2alpha1("/img", []gatewayv2alpha1.HttpMethod{http.MethodGet})
@@ -1554,17 +1571,16 @@ var _ = Describe("APIRule Controller", Serial, func() {
 			Expect(err.Error()).To(ContainSubstring("spec.hosts[0]: Too long: may not be longer than 255"))
 		})
 
-		It("should not create an APIRule with host name shorter than 1 character", func() {
+		invalidHelper := func(host gatewayv2alpha1.Host) {
 			// given
 			apiRuleName := generateTestName(testNameBase, testIDLength)
 			serviceName := testServiceNameBase
-			serviceHosts := []*gatewayv2alpha1.Host{ptr.To(gatewayv2alpha1.Host(""))}
+			serviceHosts := []*gatewayv2alpha1.Host{ptr.To(gatewayv2alpha1.Host(host))}
 
 			rule := testRulev2alpha1("/img", []gatewayv2alpha1.HttpMethod{http.MethodGet})
 			rule.NoAuth = ptr.To(true)
 			apiRule := testApiRulev2alpha1(apiRuleName, testNamespace, serviceName, testNamespace, serviceHosts, testServicePort, []gatewayv2alpha1.Rule{rule})
 			svc := testService(serviceName, testNamespace, testServicePort)
-
 			// when
 			Expect(c.Create(context.Background(), svc)).Should(Succeed())
 			err := c.Create(context.Background(), apiRule)
@@ -1573,12 +1589,51 @@ var _ = Describe("APIRule Controller", Serial, func() {
 				serviceTeardown(svc)
 			}()
 			Expect(err).Should(HaveOccurred())
-			Expect(err.Error()).To(ContainSubstring("spec.hosts[0] in body should be at least 1 chars long"))
+			Expect(err.Error()).To(ContainSubstring("spec.hosts[0]: Invalid value: \"string\": Host must be a short name or a fully qualified domain name"))
+		}
+
+		It("should not create an APIRule with an empty host", func() {
+			invalidHelper("")
+		})
+
+		It("should not create an APIRule when host name has uppercase letters", func() {
+			invalidHelper("eXample.com")
+			invalidHelper("example.cOm")
+		})
+
+		It("should not create an APIRule with host label longer than 63 characters", func() {
+			invalidHelper(gatewayv2alpha1.Host(strings.Repeat("a", 64) + ".com"))
+			invalidHelper(gatewayv2alpha1.Host("example." + strings.Repeat("a", 64)))
+		})
+
+		It("should not create an APIRule when any domain label is empty", func() {
+			invalidHelper(".com")
+			invalidHelper("example..com")
+			invalidHelper("example.")
+		})
+
+		It("should not create an APIRule when top level domain is too short", func() {
+			invalidHelper("example.c")
+		})
+
+		It("should not create an APIRule when host contains wrong characters", func() {
+			invalidHelper("*example.com")
+			invalidHelper("exam*ple.com")
+			invalidHelper("example*.com")
+			invalidHelper("example.*com")
+			invalidHelper("example.co*m")
+			invalidHelper("example.com*")
+		})
+
+		It("should not create an APIRule when host starts or ends with a hyphen", func() {
+			invalidHelper("-example.com")
+			invalidHelper("example-.com")
+			invalidHelper("example.-com")
+			invalidHelper("example.com-")
 		})
 	})
 
 	Context("APIRule version v2alpha1 rule path validation", func() {
-
 		It("should fail when path consists of a path and *", func() {
 			// given
 			apiRuleName := generateTestName(testNameBase, testIDLength)

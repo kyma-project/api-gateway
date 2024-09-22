@@ -70,7 +70,7 @@ func GetDomainFromKymaGateway(ctx context.Context, k8sClient client.Client) (str
 	}
 
 	if !strings.HasPrefix(httpsServers[0].Hosts[0], "*.") {
-		return "", fmt.Errorf(`gateway https server host %s does not start with a prefix "*."`, httpsServers[0].Hosts[0])
+		return "", fmt.Errorf(`gateway https server host %s does not start with the prefix "*."`, httpsServers[0].Hosts[0])
 	}
 
 	return strings.TrimPrefix(httpsServers[0].Hosts[0], "*."), nil
@@ -88,7 +88,7 @@ func GetDomainFromGateway(ctx context.Context, k8sClient client.Client, gatewayN
 	}
 
 	if !strings.HasPrefix(gateway.Spec.Servers[0].Hosts[0], "*.") {
-		return "", fmt.Errorf(`gateway https server host %s does not start with a prefix "*."`, gateway.Spec.Servers[0].Hosts[0])
+		return "", fmt.Errorf(`gateway server host %s does not start with the prefix "*."`, gateway.Spec.Servers[0].Hosts[0])
 	}
 
 	return strings.TrimPrefix(gateway.Spec.Servers[0].Hosts[0], "*."), nil

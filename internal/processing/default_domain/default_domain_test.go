@@ -143,7 +143,7 @@ var _ = Describe("GetDomainFromKymaGateway", func() {
 		Expect(host).To(Equal(""))
 	})
 
-	It("should return error if gateway has a HTTPS server but host do not start with *. prefix", func() {
+	It(`should return error if gateway has a HTTPS server but host do not start with "*." prefix`, func() {
 		// given
 		gateway := networkingv1beta1.Gateway{
 			ObjectMeta: metav1.ObjectMeta{Name: kymaGatewayName, Namespace: kymaGatewayNamespace},
@@ -165,7 +165,7 @@ var _ = Describe("GetDomainFromKymaGateway", func() {
 
 		// then
 		Expect(err).Should(HaveOccurred())
-		Expect(err.Error()).To(Equal(`gateway https server host local.kyma.dev does not start with a prefix "*."`))
+		Expect(err.Error()).To(Equal(`gateway https server host local.kyma.dev does not start with the prefix "*."`))
 		Expect(host).To(Equal(""))
 	})
 
@@ -191,7 +191,7 @@ var _ = Describe("GetDomainFromGateway", func() {
 			Spec: apinetworkingv1beta1.Gateway{
 				Servers: []*apinetworkingv1beta1.Server{
 					{
-						Port: &apinetworkingv1beta1.Port{Protocol: "HTTPS"},
+						Port: &apinetworkingv1beta1.Port{Protocol: "HTTP"},
 						Hosts: []string{
 							"*.local.kyma.dev",
 						},
@@ -275,7 +275,7 @@ var _ = Describe("GetDomainFromGateway", func() {
 		Expect(host).To(Equal(""))
 	})
 
-	It("should return error if gateway has a HTTPS server but host do not start with *. prefix", func() {
+	It(`should return error if gateway has a HTTPS server but host do not start with "*." prefix`, func() {
 		// given
 		gateway := networkingv1beta1.Gateway{
 			ObjectMeta: metav1.ObjectMeta{Name: "gateway-name", Namespace: "gateway-namespace"},
@@ -297,7 +297,7 @@ var _ = Describe("GetDomainFromGateway", func() {
 
 		// then
 		Expect(err).Should(HaveOccurred())
-		Expect(err.Error()).To(Equal(`gateway https server host local.kyma.dev does not start with a prefix "*."`))
+		Expect(err.Error()).To(Equal(`gateway server host local.kyma.dev does not start with the prefix "*."`))
 		Expect(host).To(Equal(""))
 	})
 

@@ -2,22 +2,13 @@ package v2alpha1
 
 import (
 	"fmt"
-	"regexp"
 	"strings"
 
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
+	"github.com/kyma-project/api-gateway/internal/helpers"
 	"github.com/kyma-project/api-gateway/internal/validation"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
-)
-
-const (
-	fqdnMaxLength = 253
-)
-
-var (
-	regexFqdn      = regexp.MustCompile(`^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-9][a-z0-9-]{0,61}[a-z0-9]$`)
-	regexFqdnLabel = regexp.MustCompile("^[a-z0-9][a-z0-9-]{0,61}[a-z0-9]$")
 )
 
 func validateHosts(parentAttributePath string, vsList networkingv1beta1.VirtualServiceList, gwList networkingv1beta1.GatewayList, apiRule *gatewayv2alpha1.APIRule) []validation.Failure {
@@ -34,8 +25,8 @@ func validateHosts(parentAttributePath string, vsList networkingv1beta1.VirtualS
 	}
 
 	for hostIndex, host := range hosts {
-		if !isFqdn(string(*host)) {
-			if isFqdnLabel(string(*host)) { // short name
+		if !helpers.IsHostFqdn(string(*host)) {
+			if helpers.IsHostShortName(string(*host)) { // short name
 				gateway := findGateway(*apiRule.Spec.Gateway, gwList)
 				if gateway == nil {
 					hostAttributePath := fmt.Sprintf("%s[%d]", hostsAttributePath, hostIndex)
@@ -97,14 +88,6 @@ func findGateway(name string, gwList networkingv1beta1.GatewayList) *networkingv
 		}
 	}
 	return nil
-}
-
-func isFqdn(host string) bool {
-	return len(host) <= fqdnMaxLength && regexFqdn.MatchString(host)
-}
-
-func isFqdnLabel(host string) bool {
-	return regexFqdnLabel.MatchString(host)
 }
 
 func occupiesHost(vs *networkingv1beta1.VirtualService, host string) bool {

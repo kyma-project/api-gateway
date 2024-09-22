@@ -7,6 +7,7 @@ import (
 
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	"github.com/kyma-project/api-gateway/internal/builders"
+	"github.com/kyma-project/api-gateway/internal/helpers"
 	"github.com/kyma-project/api-gateway/internal/processing"
 	"github.com/kyma-project/api-gateway/internal/processing/default_domain"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
@@ -90,8 +91,11 @@ func (r virtualServiceCreator) Create(api *gatewayv2alpha1.APIRule) (*networking
 
 	vsSpecBuilder := builders.VirtualServiceSpec()
 	for _, host := range api.Spec.Hosts {
-		// TODO: continue here
-		vsSpecBuilder.AddHost(default_domain.GetHostWithDomain(string(*host), r.defaultDomainName))
+		if helpers.IsHostShortName(string(*host)) {
+
+		} else {
+			vsSpecBuilder.AddHost(default_domain.GetHostWithDomain(string(*host), r.defaultDomainName))
+		}
 	}
 
 	vsSpecBuilder.Gateway(*api.Spec.Gateway)
