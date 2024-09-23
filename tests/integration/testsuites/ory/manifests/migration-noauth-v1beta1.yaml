@@ -12,7 +12,7 @@ spec:
   gateway: "{{.GatewayNamespace}}/{{.GatewayName}}"
   host: "httpbin-{{.TestID}}.{{.Domain}}"
   rules:
-    - path: /anything
+    - path: /headers
       methods: ["GET"]
       accessStrategies:
         - handler: no_auth

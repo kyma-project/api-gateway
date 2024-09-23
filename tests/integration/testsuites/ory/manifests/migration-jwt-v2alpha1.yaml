@@ -13,7 +13,7 @@ spec:
   hosts:
     - "httpbin-{{.TestID}}.{{.Domain}}"
   rules:
-    - path: /anything
+    - path: /headers
       methods: ["GET"]
       jwt:
         authentications:

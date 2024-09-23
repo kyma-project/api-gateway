@@ -13,6 +13,6 @@ spec:
   hosts:
     - "httpbin-{{.TestID}}.{{.Domain}}"
   rules:
-    - path: /anything
+    - path: /headers
       methods: ["GET"]
       noAuth: true

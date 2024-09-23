@@ -22,7 +22,7 @@ run_zero_downtime_requests() {
   echo "zero-downtime: APIRule found"
   kubectl wait --for='jsonpath={.status.APIRuleStatus.code}=OK' --timeout=5m apirules -A -l test=v1beta1-migration
   exposed_host=$(kubectl get apirules -A -l test=v1beta1-migration -o jsonpath='{.items[0].spec.host}')
-  url_under_test="https://$exposed_host/anything"
+  url_under_test="https://$exposed_host/headers"
 
   if [ "$handler" == "jwt" ]; then
     # Get the access token from the OAuth2 mock server
@@ -32,9 +32,9 @@ run_zero_downtime_requests() {
   fi
 
   echo "zero-downtime: Waiting for the new host to be propagated"
-  # Propagation of the new host can take some time for an unknown reason, therefore there is a wait for 30 secs,
+  # Propagation of the new host can take some time for an unknown reason, therefore there is a wait for 40 secs,
   # even though APIRule is in OK state.
-  sleep 30
+  sleep 40
   echo "zero-downtime: Sending requests to $url_under_test"
 
   # Run the send_requests function in parallel child processes
