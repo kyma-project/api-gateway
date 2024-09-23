@@ -6,4 +6,4 @@ If you have issues creating an APIRule custom resource (CR) or you've exposed a 
 - [APIRule CR in version v1beta1](./03-00-basic-diagnostics.md)
 
 > [!WARNING]
-> APIRule in version `v1beta1` will become deprecated in 2024. Migrate to version `v2alpha1`.
+> APIRule in version `v1beta1` will become deprecated in 2024.
