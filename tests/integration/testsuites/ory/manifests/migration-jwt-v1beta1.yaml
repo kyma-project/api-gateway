@@ -17,7 +17,5 @@ spec:
       accessStrategies:
         - handler: jwt
           config:
-            trusted_issuers:
-              - https://dummy-test-url.com
             jwks_urls:
-              - https://dummy-test-url.com/oauth2/certs
+              - "{{ .IssuerUrl }}/oauth2/certs"

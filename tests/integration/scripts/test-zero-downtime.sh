@@ -15,7 +15,7 @@ PARALLEL_REQUESTS=5
 
 run_zero_downtime_requests() {
   local handler="$1"
-  local bearerToken=""
+  local bearer_token=""
 
   # Wait until the APIRule created in the test is in status OK
   wait_for_api_rule_to_exist
@@ -25,10 +25,11 @@ run_zero_downtime_requests() {
   url_under_test="https://$exposed_host/anything"
 
   if [ "$handler" == "jwt" ]; then
-    echo "zero-downtime: Getting access token"
     # Get the access token from the OAuth2 mock server
-    tokenUrl="https://oauth2-mock.$KYMA_DOMAIN/oauth2/token"
-    # TODO get cluster domain and token from the OAuth2 mock server
+    cluster_domain=$(kubectl config view -o json | jq '.clusters[0].cluster.server' | sed -e "s/https:\/\/api.//" -e 's/"//g')
+    tokenUrl="https://oauth2-mock.$cluster_domain/oauth2/token"
+    echo "zero-downtime: Getting access token from URL '$tokenUrl'"
+    bearer_token=$(curl -X POST "$tokenUrl" -d "grant_type=client_credentials" -d "token_format=jwt" -H "Content-Type: application/x-www-form-urlencoded" | jq ".access_token" | tr -d '"')
   fi
 
   echo "zero-downtime: Waiting for the new host to be propagated"
@@ -39,7 +40,7 @@ run_zero_downtime_requests() {
 
   # Run the send_requests function in parallel child processes
   for (( i = 0; i < PARALLEL_REQUESTS; i++ )); do
-    send_requests "$url_under_test" "$bearerToken" &
+    send_requests "$url_under_test" "$bearer_token" &
     request_pids[$i]=$!
   done
 
@@ -67,19 +68,17 @@ wait_for_api_rule_to_exist() {
   echo "zero-downtime: APIRule not found"
 }
 
-
-# TODO: Add handling of requests that must send a bearer token
-# Function to send requests to a given endpoint
+# Function to send requests to a given endpoint and optionally with a bearer token
 send_requests() {
   local endpoint="$1"
-  local bearerToken="$2"
+  local bearer_token="$2"
 
   # Stop sending requests when the APIRule is deleted to avoid false negatives by sending requests
   # to an endpoint that is no longer exposed.
   while kubectl get apirules -A -l test=v1beta1-migration --ignore-not-found | grep -q .; do
 
-    if [ -n "$bearerToken" ]; then
-      response=$(curl -fsSk -o /dev/null -w "%{http_code}" -H "Authorization: Bearer $bearerToken" "$endpoint")
+    if [ -n "$bearer_token" ]; then
+      response=$(curl -fsSk -o /dev/null -w "%{http_code}" -H "Authorization: Bearer $bearer_token" "$endpoint")
     else
       response=$(curl -fsSk -o /dev/null -w "%{http_code}" "$endpoint")
     fi
@@ -100,19 +99,25 @@ start() {
   run_zero_downtime_requests "$handler" &
   zero_downtime_requests_pid=$!
 
-  echo "zero-downtime: Starting integration test scenario for handler $handler"
+  echo "zero-downtime: Starting integration test scenario for handler '$handler'"
+
+  test_exit_code=0
   case $handler in
     "no_auth")
       make TEST=Migrate_v1beta1_APIRule_with_no_auth_handler test-migration-zero-downtime
+      test_exit_code=$?
       ;;
     "noop")
       make TEST=Migrate_v1beta1_APIRule_with_noop_handler test-migration-zero-downtime
+      test_exit_code=$?
       ;;
     "allow")
       make TEST=Migrate_v1beta1_APIRule_with_allow_handler test-migration-zero-downtime
+      test_exit_code=$?
       ;;
     "jwt")
       make TEST=Migrate_v1beta1_APIRule_with_jwt_handler test-migration-zero-downtime
+      test_exit_code=$?
       ;;
     *)
       echo "Invalid handler specified"
@@ -120,10 +125,17 @@ start() {
       ;;
   esac
 
-  wait $zero_downtime_requests_pid
-  if [ $? -ne 0 ]; then
-    echo "zero-downtime: Requests returned a non-zero exit status, that means requests failed or returned a status not equal 200"
+  if [ $test_exit_code -ne 0 ]; then
+    echo "zero-downtime: Test execution failed"
     return 1
+  fi
+
+  wait $zero_downtime_requests_pid
+  zero_downtime_exit_code=$?
+
+  if [ $zero_downtime_exit_code -ne 0 ]; then
+    echo "zero-downtime: Requests returned a non-zero exit status, that means requests failed or returned a status not equal 200"
+    return 2
   fi
 
   echo "zero-downtime: Test completed successfully"
@@ -134,17 +146,18 @@ start "allow"
 allow_exit_code=$?
 start "noop"
 noop_exit_code=$?
-
 start "no_auth"
 no_auth_exit_code=$?
+start "jwt"
+jwt_exit_code=$?
 
-#start "jwt
-#jwt_exit_code=$?
-
-
+# exit code 1 if the godog tests failed and exit code 2 if the zero-downtime requests failed
 echo "zero-downtime: allow exit code: $allow_exit_code"
 echo "zero-downtime: noop exit code: $noop_exit_code"
 echo "zero-downtime: no_auth exit code: $no_auth_exit_code"
-#echo "zero-downtime: jwt_exit_code: $jwt_exit_code"
+echo "zero-downtime: jwt_exit_code: $jwt_exit_code"
 
-# TODO exit code handling
+
+if [ $allow_exit_code -ne 0 ] || [ $noop_exit_code -ne 0 ] || [ $no_auth_exit_code -ne 0 ] || [ $jwt_exit_code -ne 0 ]; then
+  exit 1
+fi

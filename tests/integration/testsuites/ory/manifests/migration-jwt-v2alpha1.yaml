@@ -17,5 +17,5 @@ spec:
       methods: ["GET"]
       jwt:
         authentications:
-          - issuer: https://dummy-test-url.com
-            jwksUri: https://dummy-test-url.com/oauth2/certs
+          - issuer: "{{ .IssuerUrl }}"
+            jwksUri: "{{ .IssuerUrl }}/oauth2/certs"
