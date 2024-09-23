@@ -71,7 +71,7 @@ func (s *scenario) resourceOwnedByApiRuleDoesNotExist(resourceKind string) error
 			return err
 		}
 
-		if len(list.Items) < 1 {
+		if len(list.Items) > 0 {
 			return fmt.Errorf("expected at least one %s owned by APIRule, got %d", resourceKind, len(list.Items))
 		}
 

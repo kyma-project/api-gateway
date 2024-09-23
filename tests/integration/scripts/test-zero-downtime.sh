@@ -4,7 +4,7 @@ set -o nounset
 
 PARALLEL_REQUESTS=5
 
-# Script to run zero downtime tests by executing one godog integration test and sending requests to the endpoint
+# Script to run zero downtime tests by executing one godog integration test and sending requests to the url_under_test
 # exposed by an APIRule.
 #
 # The following process is executed:
@@ -33,7 +33,7 @@ run_zero_downtime_requests() {
   fi
 
   echo "zero-downtime: Waiting for the new host to be propagated"
-  # Propagation of the new host can take some time, therefore there is a wait for 30 secs,
+  # Propagation of the new host can take some time for an unknown reason, therefore there is a wait for 30 secs,
   # even though APIRule is in OK state.
   sleep 30
   echo "zero-downtime: Sending requests to $url_under_test"
@@ -66,21 +66,22 @@ wait_for_api_rule_to_exist() {
     ((attempts = attempts + 1))
   done
   echo "zero-downtime: APIRule not found"
+  exit 1
 }
 
-# Function to send requests to a given endpoint and optionally with a bearer token
+# Function to send requests to a given url_under_test and optionally with a bearer token
 send_requests() {
-  local endpoint="$1"
+  local url_under_test="$1"
   local bearer_token="$2"
 
   # Stop sending requests when the APIRule is deleted to avoid false negatives by sending requests
-  # to an endpoint that is no longer exposed.
+  # to an url_under_test that is no longer exposed.
   while kubectl get apirules -A -l test=v1beta1-migration --ignore-not-found | grep -q .; do
 
     if [ -n "$bearer_token" ]; then
-      response=$(curl -fsSk -o /dev/null -w "%{http_code}" -H "Authorization: Bearer $bearer_token" "$endpoint")
+      response=$(curl -fsSk -o /dev/null -w "%{http_code}" -H "Authorization: Bearer $bearer_token" "$url_under_test")
     else
-      response=$(curl -fsSk -o /dev/null -w "%{http_code}" "$endpoint")
+      response=$(curl -fsSk -o /dev/null -w "%{http_code}" "$url_under_test")
     fi
 
     if [ "$response" -ne 200 ]; then
@@ -101,30 +102,8 @@ start() {
 
   echo "zero-downtime: Starting integration test scenario for handler '$handler'"
 
-  test_exit_code=0
-  case $handler in
-    "no_auth")
-      make TEST=Migrate_v1beta1_APIRule_with_no_auth_handler test-migration-zero-downtime
-      test_exit_code=$?
-      ;;
-    "noop")
-      make TEST=Migrate_v1beta1_APIRule_with_noop_handler test-migration-zero-downtime
-      test_exit_code=$?
-      ;;
-    "allow")
-      make TEST=Migrate_v1beta1_APIRule_with_allow_handler test-migration-zero-downtime
-      test_exit_code=$?
-      ;;
-    "jwt")
-      make TEST=Migrate_v1beta1_APIRule_with_jwt_handler test-migration-zero-downtime
-      test_exit_code=$?
-      ;;
-    *)
-      echo "Invalid handler specified"
-      exit 1
-      ;;
-  esac
-
+  go test -timeout 15m ./tests/integration -v -race -run "TestOryJwt/Migrate_v1beta1_APIRule_with_${handler}_handler"
+  test_exit_code=$?
   if [ $test_exit_code -ne 0 ]; then
     echo "zero-downtime: Test execution failed"
     return 1
@@ -142,22 +121,21 @@ start() {
   return 0
 }
 
-start "allow"
-allow_exit_code=$?
-start "noop"
-noop_exit_code=$?
-start "no_auth"
-no_auth_exit_code=$?
-start "jwt"
-jwt_exit_code=$?
+handler="$1"
+
+if [ -z "$handler" ]; then
+  echo "zero-downtime: Handler not provided"
+  exit 2
+fi
+
+start "$handler"
+start_exit_code=$?
 
 # exit code 1 if the godog tests failed and exit code 2 if the zero-downtime requests failed
-echo "zero-downtime: allow exit code: $allow_exit_code"
-echo "zero-downtime: noop exit code: $noop_exit_code"
-echo "zero-downtime: no_auth exit code: $no_auth_exit_code"
-echo "zero-downtime: jwt_exit_code: $jwt_exit_code"
-
-
-if [ $allow_exit_code -ne 0 ] || [ $noop_exit_code -ne 0 ] || [ $no_auth_exit_code -ne 0 ] || [ $jwt_exit_code -ne 0 ]; then
+echo "zero-downtime: start exit code: $start_exit_code"
+if [ $start_exit_code -ne 0 ]; then
+  echo "zero-downtime: Tests failed"
   exit 1
 fi
+
+echo "zero-downtime: Tests successful"

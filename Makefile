@@ -107,7 +107,7 @@ test-integration-ory: generate fmt vet
 
 .PHONY: test-migration-zero-downtime
 test-migration-zero-downtime: generate fmt vet
-	source ./tests/integration/env_vars.sh && go test -timeout 1h ./tests/integration -v -race -run TestOryJwt/$(TEST)
+	source ./tests/integration/env_vars.sh && ./tests/integration/scripts/test-zero-downtime.sh $(HANDLER)
 
 .PHONY: test-integration-istio
 test-integration-istio: generate fmt vet

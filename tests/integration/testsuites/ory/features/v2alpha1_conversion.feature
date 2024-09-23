@@ -6,6 +6,7 @@ Feature: APIRules v2alpha1 conversion
     And migrationAllowV1beta1: APIRule has status "OK"
     And migrationAllowV1beta1: Wait for "50" seconds
     When migrationAllowV1beta1: The APIRule is updated using manifest "migration-allow-v2alpha1.yaml"
+    And migrationNoopV1beta1: Wait for "10" seconds
     Then migrationAllowV1beta1: APIRule has status "OK"
 
   Scenario: Migrate v1beta1 APIRule with no_auth handler that is supported in v2alpha1
@@ -14,6 +15,7 @@ Feature: APIRules v2alpha1 conversion
     And migrationNoAuthV1beta1: APIRule has status "OK"
     And migrationNoAuthV1beta1: Wait for "50" seconds
     When migrationNoAuthV1beta1: The APIRule is updated using manifest "migration-noauth-v2alpha1.yaml"
+    And migrationNoopV1beta1: Wait for "10" seconds
     Then migrationNoAuthV1beta1: APIRule has status "OK"
 
   Scenario: Migrate v1beta1 APIRule with noop handler that is unsupported in v2alpha1
@@ -22,6 +24,7 @@ Feature: APIRules v2alpha1 conversion
     And migrationNoopV1beta1: APIRule has status "OK"
     And migrationNoopV1beta1: Wait for "50" seconds
     When migrationNoopV1beta1: The APIRule is updated using manifest "migration-noop-v2alpha1.yaml"
+    And migrationNoopV1beta1: Resource of Kind "Rule" owned by APIRule does not exist
     Then migrationNoopV1beta1: APIRule has status "OK"
 
   Scenario: Migrate v1beta1 APIRule with jwt handler that is supported in v2alpha1
