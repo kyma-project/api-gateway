@@ -28,7 +28,7 @@ run_zero_downtime_requests() {
     # Get the access token from the OAuth2 mock server
     tokenUrl="https://oauth2-mock.$TEST_DOMAIN/oauth2/token"
     echo "zero-downtime: Getting access token from URL '$tokenUrl'"
-    bearer_token=$(curl -X POST "$tokenUrl" -d "grant_type=client_credentials" -d "token_format=jwt" -H "Content-Type: application/x-www-form-urlencoded" | jq ".access_token" | tr -d '"')
+    bearer_token=$(curl -kX POST "$tokenUrl" -d "grant_type=client_credentials" -d "token_format=jwt" -H "Content-Type: application/x-www-form-urlencoded" | jq ".access_token" | tr -d '"')
   fi
 
   echo "zero-downtime: Waiting for the new host to be propagated"
