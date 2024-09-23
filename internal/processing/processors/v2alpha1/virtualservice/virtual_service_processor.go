@@ -2,7 +2,9 @@ package virtualservice
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
@@ -16,11 +18,12 @@ import (
 
 const defaultHttpTimeout uint32 = 180
 
-func NewVirtualServiceProcessor(config processing.ReconciliationConfig, apiRule *gatewayv2alpha1.APIRule) VirtualServiceProcessor {
+func NewVirtualServiceProcessor(config processing.ReconciliationConfig, apiRule *gatewayv2alpha1.APIRule, gateway *networkingv1beta1.Gateway) VirtualServiceProcessor {
 	return VirtualServiceProcessor{
 		ApiRule: apiRule,
 		Creator: virtualServiceCreator{
 			defaultDomainName: config.DefaultDomainName,
+			gateway:           gateway,
 		},
 	}
 }
@@ -83,6 +86,7 @@ func (r VirtualServiceProcessor) getObjectChanges(desired *networkingv1beta1.Vir
 
 type virtualServiceCreator struct {
 	defaultDomainName string
+	gateway           *networkingv1beta1.Gateway
 }
 
 // Create returns the Virtual Service using the configuration of the APIRule.
@@ -92,7 +96,11 @@ func (r virtualServiceCreator) Create(api *gatewayv2alpha1.APIRule) (*networking
 	vsSpecBuilder := builders.VirtualServiceSpec()
 	for _, host := range api.Spec.Hosts {
 		if helpers.IsHostShortName(string(*host)) {
-
+			if r.gateway == nil || len(r.gateway.Spec.Servers) < 1 || len(r.gateway.Spec.Servers[0].Hosts) < 1 {
+				return nil, errors.New("gateway or host definition is missing")
+			}
+			gatewayDomain := strings.TrimPrefix(r.gateway.Spec.Servers[0].Hosts[0], "*.")
+			vsSpecBuilder.AddHost(default_domain.GetHostWithDomain(string(*host), gatewayDomain))
 		} else {
 			vsSpecBuilder.AddHost(default_domain.GetHostWithDomain(string(*host), r.defaultDomainName))
 		}

@@ -11,7 +11,7 @@ import (
 
 var _ = Describe("StatusBase", func() {
 	It("should create status from given status code", func() {
-		r := v2alpha1.NewReconciliation(nil, nil, nil, processing.ReconciliationConfig{}, nil, false)
+		r := v2alpha1.NewReconciliation(nil, nil, nil, nil, processing.ReconciliationConfig{}, nil, false)
 
 		// when
 		s, ok := r.GetStatusBase(string(gatewayv2alpha1.Error)).(status.ReconciliationV2alpha1Status)

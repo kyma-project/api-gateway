@@ -22,9 +22,9 @@ var _ = Describe("CORS", func() {
 	})
 
 	DescribeTable("CORS",
-		func(apiRule *gatewayv2alpha1.APIRule, verifiers []verifier, expectedActions ...string) {
-			processor = processors.NewVirtualServiceProcessor(GetTestConfig(), apiRule)
-			checkVirtualServices(client, processor, verifiers, expectedActions...)
+		func(apiRule *gatewayv2alpha1.APIRule, verifiers []verifier, expectedError error, expectedActions ...string) {
+			processor = processors.NewVirtualServiceProcessor(GetTestConfig(), apiRule, nil)
+			checkVirtualServices(client, processor, verifiers, expectedError, expectedActions...)
 		},
 
 		Entry("should set default empty values in VirtualService CORSPolicy when no CORS configuration is set in APIRule",
@@ -42,7 +42,7 @@ var _ = Describe("CORS", func() {
 						builders.AllowOriginName,
 					}))
 				},
-			}, "create"),
+			}, nil, "create"),
 
 		Entry("should apply all CORSPolicy headers correctly",
 			NewAPIRuleBuilderWithDummyDataWithNoAuthRule().WithCORSPolicy(
@@ -73,6 +73,6 @@ var _ = Describe("CORS", func() {
 					builders.AllowMethodsName,
 					builders.AllowOriginName,
 				}))
-			}}, "create"),
+			}}, nil, "create"),
 	)
 })

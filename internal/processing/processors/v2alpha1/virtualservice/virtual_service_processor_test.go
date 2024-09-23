@@ -2,6 +2,7 @@ package virtualservice_test
 
 import (
 	"context"
+
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	"github.com/kyma-project/api-gateway/internal/builders"
 	. "github.com/kyma-project/api-gateway/internal/builders/builders_test/v2alpha1_test"
@@ -34,7 +35,7 @@ var _ = Describe("ObjectChange", func() {
 	It("should return update action when there is a matching VirtualService on cluster", func() {
 		// given
 		apiRuleBuilder := NewAPIRuleBuilderWithDummyData()
-		processor := processors.NewVirtualServiceProcessor(GetTestConfig(), apiRuleBuilder.Build())
+		processor := processors.NewVirtualServiceProcessor(GetTestConfig(), apiRuleBuilder.Build(), nil)
 		result, err := processor.EvaluateReconciliation(context.Background(), GetFakeClient())
 
 		Expect(err).To(BeNil())
@@ -42,7 +43,7 @@ var _ = Describe("ObjectChange", func() {
 		Expect(result[0].Action.String()).To(Equal("create"))
 
 		// when
-		processor = processors.NewVirtualServiceProcessor(GetTestConfig(), apiRuleBuilder.WithHosts("newHost.com").Build())
+		processor = processors.NewVirtualServiceProcessor(GetTestConfig(), apiRuleBuilder.WithHosts("newHost.com").Build(), nil)
 		result, err = processor.EvaluateReconciliation(context.Background(), GetFakeClient(result[0].Obj.(*networkingv1beta1.VirtualService)))
 
 		// then
@@ -87,7 +88,7 @@ var _ = Describe("Fully configured APIRule happy path", func() {
 			Build()
 
 		client := GetFakeClient()
-		processor := processors.NewVirtualServiceProcessor(GetTestConfig(), apiRule)
+		processor := processors.NewVirtualServiceProcessor(GetTestConfig(), apiRule, nil)
 		checkVirtualServices(client, processor, []verifier{
 			func(vs *networkingv1beta1.VirtualService) {
 				Expect(vs.Spec.Hosts).To(ConsistOf("example.com", "goat.com"))
@@ -132,7 +133,7 @@ var _ = Describe("Fully configured APIRule happy path", func() {
 
 				Expect(vs.Spec.Http[1].Timeout.Seconds).To(Equal(int64(180)))
 			},
-		}, "create")
+		}, nil, "create")
 
 	})
 })
@@ -169,7 +170,7 @@ var _ = Describe("VirtualServiceProcessor", func() {
 			Build()
 
 		client := GetFakeClient()
-		processor := processors.NewVirtualServiceProcessor(GetTestConfig(), apiRule)
+		processor := processors.NewVirtualServiceProcessor(GetTestConfig(), apiRule, nil)
 
 		checkVirtualServices(client, processor, []verifier{
 			func(vs *networkingv1beta1.VirtualService) {
@@ -180,14 +181,21 @@ var _ = Describe("VirtualServiceProcessor", func() {
 				Expect(vs.Spec.Http[0].Match[0].Method.GetRegex()).To(Equal("^(GET)$"))
 				Expect(vs.Spec.Http[0].Match[0].Uri.GetPrefix()).To(Equal("/"))
 			},
-		}, "create")
+		}, nil, "create")
 	})
 
 })
 
-func checkVirtualServices(c client.Client, processor processors.VirtualServiceProcessor, verifiers []verifier, expectedActions ...string) {
+func checkVirtualServices(c client.Client, processor processors.VirtualServiceProcessor, verifiers []verifier, expectedError error, expectedActions ...string) {
 	result, err := processor.EvaluateReconciliation(context.Background(), c)
-	Expect(err).To(BeNil())
+	if expectedError != nil {
+		Expect(result).To(HaveLen(len(expectedActions)))
+		Expect(err).To(HaveOccurred())
+		Expect(err.Error()).To(Equal(expectedError.Error()))
+		return
+	}
+
+	Expect(err).ToNot(HaveOccurred())
 	Expect(result).To(HaveLen(len(expectedActions)))
 	for i, action := range expectedActions {
 		Expect(result[i].Action.String()).To(Equal(action))

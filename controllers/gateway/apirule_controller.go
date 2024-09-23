@@ -19,6 +19,7 @@ package gateway
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/kyma-project/api-gateway/internal/dependencies"
@@ -45,6 +46,7 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/kyma-project/api-gateway/internal/processing"
+	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	apierrs "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
@@ -180,7 +182,19 @@ func (r *APIRuleReconciler) reconcileV2Alpha1APIRule(ctx context.Context, l logr
 	if err := rule.ConvertFrom(toUpdate); err != nil {
 		return doneReconcileErrorRequeue(err, r.OnErrorReconcilePeriod)
 	}
-	cmd := r.getV2Alpha1Reconciliation(&apiRule, &rule, defaultDomainName, migrate, &l)
+
+	gatewayName := strings.Split(*rule.Spec.Gateway, "/")
+	gatewayNN := types.NamespacedName{
+		Namespace: gatewayName[0],
+		Name:      gatewayName[1],
+	}
+	var gateway networkingv1beta1.Gateway
+	if err := r.Client.Get(ctx, gatewayNN, &gateway); err != nil {
+		l.Error(err, "Error while getting Gateway for APIRule", "not found", apierrs.IsNotFound(err))
+		return doneReconcileErrorRequeue(err, r.OnErrorReconcilePeriod)
+	}
+
+	cmd := r.getV2Alpha1Reconciliation(&apiRule, &rule, &gateway, defaultDomainName, migrate, &l)
 
 	if name, err := dependencies.APIRule().AreAvailable(ctx, r.Client); err != nil {
 		s, err := handleDependenciesError(name, err).V2alpha1Status()
@@ -267,11 +281,11 @@ func (r *APIRuleReconciler) getV1Beta1Reconciliation(apiRule *gatewayv1beta1.API
 	}
 }
 
-func (r *APIRuleReconciler) getV2Alpha1Reconciliation(apiRulev1beta1 *gatewayv1beta1.APIRule, apiRulev2alpha1 *gatewayv2alpha1.APIRule, defaultDomainName string, needsMigration bool, namespacedLogger *logr.Logger) processing.ReconciliationCommand {
+func (r *APIRuleReconciler) getV2Alpha1Reconciliation(apiRulev1beta1 *gatewayv1beta1.APIRule, apiRulev2alpha1 *gatewayv2alpha1.APIRule, gateway *networkingv1beta1.Gateway, defaultDomainName string, needsMigration bool, namespacedLogger *logr.Logger) processing.ReconciliationCommand {
 	config := r.ReconciliationConfig
 	config.DefaultDomainName = defaultDomainName
 	v2alpha1Validator := v2alpha1.NewAPIRuleValidator(apiRulev2alpha1)
-	return v2alpha1Processing.NewReconciliation(apiRulev2alpha1, apiRulev1beta1, v2alpha1Validator, config, namespacedLogger, needsMigration)
+	return v2alpha1Processing.NewReconciliation(apiRulev2alpha1, apiRulev1beta1, gateway, v2alpha1Validator, config, namespacedLogger, needsMigration)
 }
 
 // SetupWithManager sets up the controller with the Manager.
