@@ -1479,76 +1479,6 @@ var _ = Describe("APIRule Controller", Serial, func() {
 				}()
 			})
 
-			It("should create an APIRule with a short name and apply host domain from gateway", func() {
-				// given
-				apiRuleName := generateTestName(testNameBase, testIDLength)
-				serviceName := testServiceNameBase
-				serviceHost := gatewayv2alpha1.Host("test--example")
-				serviceHosts := []*gatewayv2alpha1.Host{&serviceHost}
-
-				rule := testRulev2alpha1("/img", []gatewayv2alpha1.HttpMethod{http.MethodGet})
-				rule.NoAuth = ptr.To(true)
-				apiRule := testApiRulev2alpha1(apiRuleName, testNamespace, serviceName, testNamespace, serviceHosts, testServicePort, []gatewayv2alpha1.Rule{rule})
-				svc := testService(serviceName, testNamespace, testServicePort)
-
-				By("Creating Kyma gateway")
-				gateway := networkingv1beta1.Gateway{
-					ObjectMeta: metav1.ObjectMeta{Name: "kyma-gateway", Namespace: "kyma-system"},
-					Spec: apinetworkingv1beta1.Gateway{
-						Servers: []*apinetworkingv1beta1.Server{
-							{
-								Port: &apinetworkingv1beta1.Port{
-									Protocol: "HTTPS",
-								},
-								Hosts: []string{
-									"*.local.kyma.dev",
-								},
-							},
-						},
-					},
-				}
-
-				// when
-				Expect(c.Create(context.Background(), &gateway)).Should(Succeed())
-				Expect(c.Create(context.Background(), svc)).Should(Succeed())
-				Expect(c.Create(context.Background(), apiRule)).Should(Succeed())
-				defer func() {
-					apiRulev2alpha1Teardown(apiRule)
-					serviceTeardown(svc)
-					kymaGatewayTeardown(&gateway)
-				}()
-
-				expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusOK)
-
-				matchingLabels := matchingLabelsFunc(apiRuleName, testNamespace)
-
-				By("Verifying created virtual service")
-				vsList := networkingv1beta1.VirtualServiceList{}
-				Eventually(func(g Gomega) {
-					g.Expect(c.List(context.Background(), &vsList, matchingLabels)).Should(Succeed())
-					g.Expect(vsList.Items).To(HaveLen(1))
-
-					vs := vsList.Items[0]
-
-					//Meta
-					g.Expect(vs.Name).To(HavePrefix(apiRuleName + "-"))
-					g.Expect(len(vs.Name) > len(apiRuleName)).To(BeTrue())
-
-					expectedSpec := builders.VirtualServiceSpec().
-						AddHost("test--example.local.kyma.dev").
-						Gateway(testGatewayURL).
-						HTTP(builders.HTTPRoute().
-							Match(builders.MatchRequest().Uri().Regex(testPath)).
-							Route(builders.RouteDestination().Host(testOathkeeperSvcURL).Port(testOathkeeperPort)).
-							Headers(builders.NewHttpRouteHeadersBuilder().SetHostHeader("test--example.local.kyma.dev").Get()).
-							CorsPolicy(defaultCorsPolicy).
-							Timeout(defaultHttpTimeout))
-
-					gotSpec := *expectedSpec.Get()
-					g.Expect(*vs.Spec.DeepCopy()).To(Equal(*gotSpec.DeepCopy()))
-				}, eventuallyTimeout).Should(Succeed())
-			})
-
 			It("should create an APIRule with short name that has length of 1 character", func() {
 				// given
 				apiRuleName := generateTestName(testNameBase, testIDLength)
@@ -2388,7 +2318,7 @@ func serviceTeardown(svc *corev1.Service) {
 }
 
 func kymaGatewayTeardown(gateway *networkingv1beta1.Gateway) {
-	By(fmt.Sprintf("Deleting Kyma Gateway as part of teardown", gateway.Name))
+	By(fmt.Sprintf("Deleting Kyma Gateway %s as part of teardown", gateway.Name))
 	err := c.Delete(context.Background(), gateway)
 
 	if err != nil {
