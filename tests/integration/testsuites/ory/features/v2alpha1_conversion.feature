@@ -35,7 +35,7 @@ Feature: APIRules v2alpha1 conversion
     Given migrationJwtV1beta1: There is a httpbin service with Istio injection enabled
     And migrationJwtV1beta1: The APIRule is applied
     And migrationJwtV1beta1: APIRule has status "OK"
-    And migrationJwtV1beta1: Wait for "50" seconds
+    And migrationJwtV1beta1: Calling the "/headers" endpoint with a valid "JWT" token should result in status between 200 and 200
     When migrationJwtV1beta1: The APIRule is updated using manifest "migration-jwt-v2alpha1.yaml"
     And migrationJwtV1beta1: Resource of Kind "RequestAuthentication" owned by APIRule exists
     And migrationJwtV1beta1: Resource of Kind "AuthorizationPolicy" owned by APIRule exists
