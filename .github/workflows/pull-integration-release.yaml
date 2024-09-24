@@ -55,6 +55,25 @@ jobs:
           manager_image: "europe-docker.pkg.dev/kyma-project/dev/api-gateway-manager:PR-${{github.event.number}}"
           test_make_target: ${{ matrix.test_make_target }}
 
+  migration-downtime-tests:
+    name: Zero Downtime Migration Tests
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false
+    needs: [wait-for-image-build]
+    strategy:
+      fail-fast: false
+      matrix:
+        test_make_target: [ "test-migration-zero-downtime HANDLER=no_auth", "test-migration-zero-downtime HANDLER=allow", "test-migration-zero-downtime HANDLER=noop", "test-migration-zero-downtime HANDLER=jwt" ]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+      - uses: ./.github/actions/integration-tests
+        with:
+          manager_image: "europe-docker.pkg.dev/kyma-project/dev/api-gateway-manager:PR-${{github.event.number}}"
+          test_make_target: ${{ matrix.test_make_target }}
+
   k8s-compatibility-check:
     name: Kubernetes version compatibility test
     runs-on: ubuntu-latest
