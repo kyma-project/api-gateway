@@ -1568,7 +1568,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 					serviceTeardown(svc)
 				}()
 				Expect(err).Should(HaveOccurred())
-				Expect(err.Error()).To(ContainSubstring("spec.hosts[0]: Invalid value: \"string\": Host must be a short host name or a fully qualified domain name"))
+				Expect(err.Error()).To(ContainSubstring("spec.hosts[0]: Invalid value: \"string\": Host must be a lowercase RFC 1123 label (must consist of lowercase alphanumeric characters or '-', and must start and end with an lowercase alphanumeric character) or a fully qualified domain name"))
 			}
 
 			It("should not create an APIRule with an empty host", func() {
