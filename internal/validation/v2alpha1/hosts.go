@@ -32,7 +32,7 @@ func validateHosts(parentAttributePath string, vsList networkingv1beta1.VirtualS
 					hostAttributePath := fmt.Sprintf("%s[%d]", hostsAttributePath, hostIndex)
 					failures = append(failures, validation.Failure{
 						AttributePath: hostAttributePath,
-						Message:       fmt.Sprintf("Unable to find Gateway %s", *apiRule.Spec.Gateway),
+						Message:       fmt.Sprintf(`Unable to find Gateway "%s"`, *apiRule.Spec.Gateway),
 					})
 				} else if !hasSingleHostDefinitionWithCorrectPrefix(gateway) {
 					hostAttributePath := fmt.Sprintf("%s[%d]", hostsAttributePath, hostIndex)
@@ -81,9 +81,9 @@ func hasSingleHostDefinitionWithCorrectPrefix(gateway *networkingv1beta1.Gateway
 	return true
 }
 
-func findGateway(name string, gwList networkingv1beta1.GatewayList) *networkingv1beta1.Gateway {
+func findGateway(gatewayName string, gwList networkingv1beta1.GatewayList) *networkingv1beta1.Gateway {
 	for _, gateway := range gwList.Items {
-		if gateway.Name == name {
+		if gatewayName == strings.Join([]string{gateway.Namespace, gateway.Name}, "/") {
 			return gateway
 		}
 	}

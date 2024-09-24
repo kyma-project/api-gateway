@@ -66,7 +66,7 @@ var _ = Describe("Validate hosts", func() {
 		//given
 		apiRule := &v2alpha1.APIRule{
 			Spec: v2alpha1.APIRuleSpec{
-				Gateway: ptr.To("gateway-name"),
+				Gateway: ptr.To("gateway-ns/gateway-name"),
 				Hosts: []*v2alpha1.Host{
 					ptr.To(v2alpha1.Host("short-name-host")),
 				},
@@ -77,7 +77,8 @@ var _ = Describe("Validate hosts", func() {
 			Items: []*networkingv1beta1.Gateway{
 				{
 					ObjectMeta: metav1.ObjectMeta{
-						Name: "gateway-name",
+						Name:      "gateway-name",
+						Namespace: "gateway-ns",
 					},
 					Spec: v1beta1.Gateway{
 						Servers: []*v1beta1.Server{
@@ -97,11 +98,11 @@ var _ = Describe("Validate hosts", func() {
 		Expect(problems).To(HaveLen(0))
 	})
 
-	It("Should fail if host is a short host name and referenced Gateway is missing", func() {
+	It("Should fail if host is a short host name and no Gateways available", func() {
 		//given
 		apiRule := &v2alpha1.APIRule{
 			Spec: v2alpha1.APIRuleSpec{
-				Gateway: ptr.To("gateway-name"),
+				Gateway: ptr.To("gateway-ns/gateway-name"),
 				Hosts: []*v2alpha1.Host{
 					ptr.To(v2alpha1.Host("short-name-host")),
 				},
@@ -114,14 +115,14 @@ var _ = Describe("Validate hosts", func() {
 		//then
 		Expect(problems).To(HaveLen(1))
 		Expect(problems[0].AttributePath).To(Equal(".spec.hosts[0]"))
-		Expect(problems[0].Message).To(Equal("Unable to find Gateway gateway-name"))
+		Expect(problems[0].Message).To(Equal(`Unable to find Gateway "gateway-ns/gateway-name"`))
 	})
 
-	It("Should fail if host is a short host name and referenced Gateway has various hosts definitions", func() {
+	It("Should fail if host is a short host name and referenced Gateway was not found", func() {
 		//given
 		apiRule := &v2alpha1.APIRule{
 			Spec: v2alpha1.APIRuleSpec{
-				Gateway: ptr.To("gateway-name"),
+				Gateway: ptr.To("gateway-ns/gateway-name"),
 				Hosts: []*v2alpha1.Host{
 					ptr.To(v2alpha1.Host("short-name-host")),
 				},
@@ -132,7 +133,49 @@ var _ = Describe("Validate hosts", func() {
 			Items: []*networkingv1beta1.Gateway{
 				{
 					ObjectMeta: metav1.ObjectMeta{
-						Name: "gateway-name",
+						Name:      "gateway-name",
+						Namespace: "gateway-other-ns",
+					},
+					Spec: v1beta1.Gateway{
+						Servers: []*v1beta1.Server{
+							{
+								Hosts: []string{"*.example.com"},
+							},
+							{
+								Hosts: []string{"*.example2.com"},
+							},
+						},
+					},
+				},
+			},
+		}
+
+		//when
+		problems := validateHosts(".spec", networkingv1beta1.VirtualServiceList{}, gwList, apiRule)
+
+		//then
+		Expect(problems).To(HaveLen(1))
+		Expect(problems[0].AttributePath).To(Equal(".spec.hosts[0]"))
+		Expect(problems[0].Message).To(Equal(`Unable to find Gateway "gateway-ns/gateway-name"`))
+	})
+
+	It("Should fail if host is a short host name and referenced Gateway has various hosts definitions", func() {
+		//given
+		apiRule := &v2alpha1.APIRule{
+			Spec: v2alpha1.APIRuleSpec{
+				Gateway: ptr.To("gateway-ns/gateway-name"),
+				Hosts: []*v2alpha1.Host{
+					ptr.To(v2alpha1.Host("short-name-host")),
+				},
+			},
+		}
+
+		gwList := networkingv1beta1.GatewayList{
+			Items: []*networkingv1beta1.Gateway{
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "gateway-name",
+						Namespace: "gateway-ns",
 					},
 					Spec: v1beta1.Gateway{
 						Servers: []*v1beta1.Server{
