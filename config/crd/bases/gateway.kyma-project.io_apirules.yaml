@@ -364,11 +364,11 @@ spec:
                 description: Specifies the URLs of the exposed service.
                 items:
                   description: Host is the URL of the exposed service. We support
-                    short names.
+                    short host names.
                   maxLength: 255
                   type: string
                   x-kubernetes-validations:
-                  - message: Host must be a short name or a fully qualified domain
+                  - message: Host must be a short host name or a fully qualified domain
                       name
                     rule: self.matches('^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)(?:\\.[a-z0-9][a-z0-9-]{0,61}[a-z0-9])*$')
                 maxItems: 1

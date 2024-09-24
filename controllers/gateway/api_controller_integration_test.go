@@ -1457,7 +1457,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 			})
 		})
 
-		Context("hosts should be a valid FQDN or a short name", Ordered, func() {
+		Context("hosts should be a valid FQDN or a short host name", Ordered, func() {
 			It("should create an APIRule with a valid FQDN host", func() {
 				// given
 				apiRuleName := generateTestName(testNameBase, testIDLength)
@@ -1479,7 +1479,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 				}()
 			})
 
-			It("should create an APIRule with short name that has length of 1 character", func() {
+			It("should create an APIRule with short host name that has length of 1 character", func() {
 				// given
 				apiRuleName := generateTestName(testNameBase, testIDLength)
 				serviceName := testServiceNameBase
@@ -1568,7 +1568,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 					serviceTeardown(svc)
 				}()
 				Expect(err).Should(HaveOccurred())
-				Expect(err.Error()).To(ContainSubstring("spec.hosts[0]: Invalid value: \"string\": Host must be a short name or a fully qualified domain name"))
+				Expect(err.Error()).To(ContainSubstring("spec.hosts[0]: Invalid value: \"string\": Host must be a short host name or a fully qualified domain name"))
 			}
 
 			It("should not create an APIRule with an empty host", func() {

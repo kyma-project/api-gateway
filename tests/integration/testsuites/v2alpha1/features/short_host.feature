@@ -1,4 +1,4 @@
-Feature: Exposing endpoints with NoAuth when specifying short host only in APIRule
+Feature: Exposing endpoints with NoAuth when specifying short host name in APIRule
 
   Scenario: Calling a httpbin endpoint unsecured
     Given ShortHost: There is a httpbin service

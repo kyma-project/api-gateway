@@ -25,8 +25,8 @@ func validateHosts(parentAttributePath string, vsList networkingv1beta1.VirtualS
 	}
 
 	for hostIndex, host := range hosts {
-		if !helpers.IsHostFqdn(string(*host)) {
-			if helpers.IsHostShortName(string(*host)) { // short name
+		if !helpers.IsFqdnHostName(string(*host)) {
+			if helpers.IsShortHostName(string(*host)) {
 				gateway := findGateway(*apiRule.Spec.Gateway, gwList)
 				if gateway == nil {
 					hostAttributePath := fmt.Sprintf("%s[%d]", hostsAttributePath, hostIndex)
@@ -45,7 +45,7 @@ func validateHosts(parentAttributePath string, vsList networkingv1beta1.VirtualS
 				hostAttributePath := fmt.Sprintf("%s[%d]", hostsAttributePath, hostIndex)
 				failures = append(failures, validation.Failure{
 					AttributePath: hostAttributePath,
-					Message:       "Host must be a valid FQDN or short name",
+					Message:       "Host must be a valid FQDN or short host name",
 				})
 			}
 		}

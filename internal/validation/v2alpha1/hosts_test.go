@@ -42,7 +42,7 @@ var _ = Describe("Validate hosts", func() {
 		//then
 		Expect(problems).To(HaveLen(1))
 		Expect(problems[0].AttributePath).To(Equal(".spec.hosts[0]"))
-		Expect(problems[0].Message).To(Equal("Host must be a valid FQDN or short name"))
+		Expect(problems[0].Message).To(Equal("Host must be a valid FQDN or short host name"))
 	})
 
 	It("Should succeed if host is a valid FQDN", func() {
@@ -62,7 +62,7 @@ var _ = Describe("Validate hosts", func() {
 		Expect(problems).To(HaveLen(0))
 	})
 
-	It("Should succeed if host is a short name", func() {
+	It("Should succeed if host is a short host name", func() {
 		//given
 		apiRule := &v2alpha1.APIRule{
 			Spec: v2alpha1.APIRuleSpec{
@@ -97,7 +97,7 @@ var _ = Describe("Validate hosts", func() {
 		Expect(problems).To(HaveLen(0))
 	})
 
-	It("Should fail if host is a short name and referenced Gateway is missing", func() {
+	It("Should fail if host is a short host name and referenced Gateway is missing", func() {
 		//given
 		apiRule := &v2alpha1.APIRule{
 			Spec: v2alpha1.APIRuleSpec{
@@ -117,7 +117,7 @@ var _ = Describe("Validate hosts", func() {
 		Expect(problems[0].Message).To(Equal("Unable to find Gateway gateway-name"))
 	})
 
-	It("Should fail if host is a short name and referenced Gateway has various hosts definitions", func() {
+	It("Should fail if host is a short host name and referenced Gateway has various hosts definitions", func() {
 		//given
 		apiRule := &v2alpha1.APIRule{
 			Spec: v2alpha1.APIRuleSpec{

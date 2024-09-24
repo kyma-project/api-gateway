@@ -95,7 +95,7 @@ func (r virtualServiceCreator) Create(api *gatewayv2alpha1.APIRule) (*networking
 
 	vsSpecBuilder := builders.VirtualServiceSpec()
 	for _, host := range api.Spec.Hosts {
-		if helpers.IsHostShortName(string(*host)) {
+		if helpers.IsShortHostName(string(*host)) {
 			if r.gateway == nil || len(r.gateway.Spec.Servers) < 1 || len(r.gateway.Spec.Servers[0].Hosts) < 1 {
 				return nil, errors.New("gateway or host definition is missing")
 			}

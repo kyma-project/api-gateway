@@ -13,10 +13,10 @@ var (
 	regexShortName = regexp.MustCompile("^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$")
 )
 
-func IsHostFqdn(host string) bool {
+func IsFqdnHostName(host string) bool {
 	return len(host) <= fqdnMaxLength && regexFqdn.MatchString(host)
 }
 
-func IsHostShortName(host string) bool {
+func IsShortHostName(host string) bool {
 	return regexShortName.MatchString(host)
 }

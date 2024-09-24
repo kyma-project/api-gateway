@@ -2,13 +2,13 @@
 
 This tutorial shows how to expose multiple workloads on different paths by defining a Service at the root level and by defining Services on each path separately.
 
-> [!WARNING] 
+> [!WARNING]
 >  Exposing a workload to the outside world is always a potential security vulnerability, so tread carefully. In a production environment, remember to secure the workload you expose with [JWT](../../01-50-expose-and-secure-a-workload/v2alpha1/01-52-expose-and-secure-workload-jwt.md).
 
 ## Prerequisites
 
-* [Deploy two instances of a sample HTTPBin Service](../../01-00-create-workload.md) in one namespace. 
-* [Set up your custom domain](../../01-10-setup-custom-domain-for-workload.md) or use a Kyma domain instead. 
+* [Deploy two instances of a sample HTTPBin Service](../../01-00-create-workload.md) in one namespace.
+* [Set up your custom domain](../../01-10-setup-custom-domain-for-workload.md) or use a Kyma domain instead.
 
 ## Define Multiple Services on Different Paths
 
@@ -16,17 +16,17 @@ Follow the instructions to expose the instances of the HTTPBin Service on differ
 
 #### **kubectl**
 1. Export the names of two deployed HTTPBin Services as environment variables:
-  
+
   ```bash
   export FIRST_SERVICE={SERVICE_NAME}
   export SECOND_SERVICE={SERVICE_NAME}
   ```
 
 2. Depending on whether you use your custom domain or a Kyma domain, export the necessary values as environment variables:
-  
+
   <!-- tabs:start -->
   #### **Custom Domain**
-      
+
   ```bash
   export DOMAIN_TO_EXPOSE_WORKLOADS={DOMAIN_NAME}
   export GATEWAY=$NAMESPACE/httpbin-gateway
@@ -37,7 +37,7 @@ Follow the instructions to expose the instances of the HTTPBin Service on differ
   export DOMAIN_TO_EXPOSE_WORKLOADS={KYMA_DOMAIN_NAME}
   export GATEWAY=kyma-system/kyma-gateway
   ```
-  <!-- tabs:end --> 
+  <!-- tabs:end -->
 
 3. To expose the instances of the HTTPBin Service, create the following APIRule:
 
@@ -52,7 +52,7 @@ Follow the instructions to expose the instances of the HTTPBin Service on differ
         app: multiple-services
         example: multiple-services
     spec:
-      hosts: 
+      hosts:
         - multiple-services.$DOMAIN_TO_EXPOSE_WORKLOADS
       gateway: $GATEWAY
       rules:
@@ -74,24 +74,24 @@ Follow the instructions to expose the instances of the HTTPBin Service on differ
 ## Define a Service at the Root Level
 
 You can also define a Service at the root level. Such a definition is applied to all the paths specified at `spec.rules` that do not have their own Services defined.
- 
-> [!NOTE] 
+
+> [!NOTE]
 >Services defined at the `spec.rules` level have precedence over Service definition at the `spec.service` level.
 
 #### **kubectl**
 
 1. Export the names of the two deployed HTTPBin Services as environment variables:
-  
+
   ```bash
   export FIRST_SERVICE={SERVICE_NAME}
   export SECOND_SERVICE={SERVICE_NAME}
   ```
 
 2. Depending on whether you use your custom domain or a Kyma domain, export the necessary values as environment variables:
-  
+
   <!-- tabs:start -->
   #### **Custom Domain**
-      
+
   ```bash
   export DOMAIN_TO_EXPOSE_WORKLOADS={DOMAIN_NAME}
   export GATEWAY=$NAMESPACE/httpbin-gateway
@@ -102,7 +102,7 @@ You can also define a Service at the root level. Such a definition is applied to
   export DOMAIN_TO_EXPOSE_WORKLOADS={KYMA_DOMAIN_NAME}
   export GATEWAY=kyma-system/kyma-gateway
   ```
-  <!-- tabs:end --> 
+  <!-- tabs:end -->
 
 
 3. To expose the instances of the HTTPBin Service, create the following APIRule:
@@ -118,7 +118,7 @@ You can also define a Service at the root level. Such a definition is applied to
         app: multiple-services
         example: multiple-services
     spec:
-      hosts: 
+      hosts:
         - multiple-services.$DOMAIN_TO_EXPOSE_WORKLOADS
       gateway: $GATEWAY
       service:
@@ -151,10 +151,10 @@ To access your HTTPBin Services, use [Postman](https://www.postman.com) or [curl
 
 To call the endpoints, send `GET` requests to the HTTPBin Services:
 
-  ```bash 
+  ```bash
   curl -ik -X GET https://multiple-services.$DOMAIN_TO_EXPOSE_WORKLOADS/headers
 
-  curl -ik -X GET https://multiple-services.$DOMAIN_TO_EXPOSE_WORKLOADS/get 
+  curl -ik -X GET https://multiple-services.$DOMAIN_TO_EXPOSE_WORKLOADS/get
   ```
 If successful, the calls return the `200 OK` response code.
 
