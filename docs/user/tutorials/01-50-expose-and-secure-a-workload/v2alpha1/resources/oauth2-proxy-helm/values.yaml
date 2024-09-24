@@ -1,0 +1,129 @@
+namespaceOverride: ""
+
+config:
+  clientID: "<your application aud claim>"
+  # Create a new secret with the following command
+  # openssl rand -base64 32 | head -c 32 | base64
+  clientSecret: "random-secret"
+  cookieSecret: ""
+  cookieName: ""
+  configFile: |-
+    email_domains = [ "*" ]
+    upstreams = [ "file:///dev/null" ]
+
+image:
+  repository: "quay.io/oauth2-proxy/oauth2-proxy"
+  # appVersion is used by default
+  tag: ""
+  pullPolicy: "IfNotPresent"
+
+extraArgs: 
+  provider: oidc
+  set-xauthrequest: true
+  whitelist-domain: "*.<your domain>:*"
+  reverse-proxy: true
+  force-json-errors: true
+  set-authorization-header: true
+  pass-access-token: true 
+  pass-authorization-header: true
+  pass-user-headers: true
+  pass-host-header: true 
+  pass-access-token: true
+  upstream: static://200
+  oidc-issuer-url: "<your jwt token issuer>"
+  standard-logging: true
+  auth-logging: true
+  request-logging: true
+  skip-jwt-bearer-tokens: true
+  skip-provider-button: true
+  skip-oidc-discovery: false
+  login-url: static://401
+  scope: machine
+
+service:
+  type: ClusterIP
+  portNumber: 80
+  appProtocol: http
+
+## Create or use ServiceAccount
+serviceAccount:
+  enabled: true
+  automountServiceAccountToken: true
+
+# Whether to use secrets instead of environment values for setting up OAUTH2_PROXY variables
+proxyVarsAsSecrets: true
+
+# Configure Kubernetes liveness and readiness probes.
+# Ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/
+# Disable both when deploying with Istio 1.0 mTLS. https://istio.io/help/faq/security/#k8s-health-checks
+livenessProbe:
+  enabled: true
+  initialDelaySeconds: 0
+  timeoutSeconds: 1
+
+readinessProbe:
+  enabled: true
+  initialDelaySeconds: 0
+  timeoutSeconds: 5
+  periodSeconds: 10
+  successThreshold: 1
+
+# Configure Kubernetes security context for container
+# Ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+securityContext:
+  enabled: true
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+    - ALL
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  runAsUser: 2000
+  runAsGroup: 2000
+  seccompProfile:
+    type: RuntimeDefault
+
+replicaCount: 1
+revisionHistoryLimit: 10
+
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+
+# whether to use http or https
+httpScheme: http
+
+# Enables apiVersion deprecation checks
+checkDeprecation: true
+
+metrics:
+  enabled: true
+  port: 44180
+  service:
+    appProtocol: http
+  serviceMonitor:
+    prometheusInstance: default
+    interval: 60s
+    scrapeTimeout: 30s
+
+htpasswdFile:
+  enabled: false
+
+authenticatedEmailsFile:
+  enabled: false
+
+alphaConfig:
+  enabled: false
+
+ingress:
+  enabled: false
+
+hostAlias:
+  enabled: false
+
+sessionStorage:
+  enabled: false
+
+extraVolumeMounts: []
+
+extraVolumes: []
