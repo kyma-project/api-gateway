@@ -165,7 +165,33 @@ var _ = Describe("GetDomainFromKymaGateway", func() {
 
 		// then
 		Expect(err).Should(HaveOccurred())
-		Expect(err.Error()).To(Equal(`gateway https server host local.kyma.dev does not start with the prefix "*."`))
+		Expect(err.Error()).To(Equal(`gateway https server host "local.kyma.dev" does not start with the prefix "*."`))
+		Expect(host).To(Equal(""))
+	})
+
+	It(`should return error if gateway has a HTTPS server but host do not define domain after "*." prefix`, func() {
+		// given
+		gateway := networkingv1beta1.Gateway{
+			ObjectMeta: metav1.ObjectMeta{Name: kymaGatewayName, Namespace: kymaGatewayNamespace},
+			Spec: apinetworkingv1beta1.Gateway{
+				Servers: []*apinetworkingv1beta1.Server{
+					{
+						Port: &apinetworkingv1beta1.Port{Protocol: "HTTPS"},
+						Hosts: []string{
+							"*.",
+						},
+					},
+				},
+			},
+		}
+		client := getFakeClient(&gateway)
+
+		// when
+		host, err := GetDomainFromKymaGateway(context.Background(), client)
+
+		// then
+		Expect(err).Should(HaveOccurred())
+		Expect(err.Error()).To(Equal(`gateway https server host "*." does not define domain after the prefix "*."`))
 		Expect(host).To(Equal(""))
 	})
 
@@ -297,7 +323,33 @@ var _ = Describe("GetDomainFromGateway", func() {
 
 		// then
 		Expect(err).Should(HaveOccurred())
-		Expect(err.Error()).To(Equal(`gateway server host local.kyma.dev does not start with the prefix "*."`))
+		Expect(err.Error()).To(Equal(`gateway server host "local.kyma.dev" does not start with the prefix "*."`))
+		Expect(host).To(Equal(""))
+	})
+
+	It(`should return error if gateway has a HTTPS server but host do not define domain after "*." prefix`, func() {
+		// given
+		gateway := networkingv1beta1.Gateway{
+			ObjectMeta: metav1.ObjectMeta{Name: "gateway-name", Namespace: "gateway-namespace"},
+			Spec: apinetworkingv1beta1.Gateway{
+				Servers: []*apinetworkingv1beta1.Server{
+					{
+						Port: &apinetworkingv1beta1.Port{Protocol: "HTTPS"},
+						Hosts: []string{
+							"*.",
+						},
+					},
+				},
+			},
+		}
+		client := getFakeClient(&gateway)
+
+		// when
+		host, err := GetDomainFromGateway(context.Background(), client, "gateway-name", "gateway-namespace")
+
+		// then
+		Expect(err).Should(HaveOccurred())
+		Expect(err.Error()).To(Equal(`gateway server host "*." does not define domain after the prefix "*."`))
 		Expect(host).To(Equal(""))
 	})
 

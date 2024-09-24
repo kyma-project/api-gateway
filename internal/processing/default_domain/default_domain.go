@@ -70,10 +70,15 @@ func GetDomainFromKymaGateway(ctx context.Context, k8sClient client.Client) (str
 	}
 
 	if !strings.HasPrefix(httpsServers[0].Hosts[0], "*.") {
-		return "", fmt.Errorf(`gateway https server host %s does not start with the prefix "*."`, httpsServers[0].Hosts[0])
+		return "", fmt.Errorf(`gateway https server host "%s" does not start with the prefix "*."`, httpsServers[0].Hosts[0])
 	}
 
-	return strings.TrimPrefix(httpsServers[0].Hosts[0], "*."), nil
+	domain := strings.TrimPrefix(httpsServers[0].Hosts[0], "*.")
+	if domain == "" {
+		return "", fmt.Errorf(`gateway https server host "%s" does not define domain after the prefix "*."`, httpsServers[0].Hosts[0])
+	}
+
+	return domain, nil
 }
 
 func GetDomainFromGateway(ctx context.Context, k8sClient client.Client, gatewayName, gatewayNamespace string) (string, error) {
@@ -88,10 +93,15 @@ func GetDomainFromGateway(ctx context.Context, k8sClient client.Client, gatewayN
 	}
 
 	if !strings.HasPrefix(gateway.Spec.Servers[0].Hosts[0], "*.") {
-		return "", fmt.Errorf(`gateway server host %s does not start with the prefix "*."`, gateway.Spec.Servers[0].Hosts[0])
+		return "", fmt.Errorf(`gateway server host "%s" does not start with the prefix "*."`, gateway.Spec.Servers[0].Hosts[0])
 	}
 
-	return strings.TrimPrefix(gateway.Spec.Servers[0].Hosts[0], "*."), nil
+	domain := strings.TrimPrefix(gateway.Spec.Servers[0].Hosts[0], "*.")
+	if domain == "" {
+		return "", fmt.Errorf(`gateway server host "%s" does not define domain after the prefix "*."`, gateway.Spec.Servers[0].Hosts[0])
+	}
+
+	return domain, nil
 }
 
 func gatewayServersWithSameSingleHost(gateway *networkingv1beta1.Gateway) bool {

@@ -154,7 +154,7 @@ var _ = Describe("Validate hosts", func() {
 		//then
 		Expect(problems).To(HaveLen(1))
 		Expect(problems[0].AttributePath).To(Equal(".spec.hosts[0]"))
-		Expect(problems[0].Message).To(Equal("Short host only supported when Gateway has single host definition matching *.<fqdn> format"))
+		Expect(problems[0].Message).To(Equal("Lowercase RFC 1123 label is only supported as the APIRule host when selected Gateway has a single host definition matching *.<fqdn> format"))
 	})
 
 	It("Should fail if any host that is occupied by any Virtual Service exposed by another resource", func() {
