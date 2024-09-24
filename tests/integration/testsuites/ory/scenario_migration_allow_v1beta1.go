@@ -12,4 +12,5 @@ func initMigrationAllowV1beta1(ctx *godog.ScenarioContext, ts *testsuite) {
 	ctx.Step(`^migrationAllowV1beta1: The APIRule is updated using manifest "([^"]*)"$`, scenario.theAPIRuleIsUpdated)
 	ctx.Step(`^migrationAllowV1beta1: APIRule has status "([^"]*)"$`, scenario.theAPIRuleHasStatus)
 	ctx.Step(`^migrationAllowV1beta1: Wait for "([^"]*)" seconds$`, scenario.waitForSeconds)
+	ctx.Step(`^migrationAllowV1beta1: Calling the "([^"]*)" endpoint without a token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithoutTokenShouldResultInStatusBetween)
 }
