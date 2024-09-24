@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -o nounset
+set -ou pipefail
 
 PARALLEL_REQUESTS=5
 
@@ -22,21 +22,23 @@ run_zero_downtime_requests() {
   echo "zero-downtime: APIRule found"
   kubectl wait --for='jsonpath={.status.APIRuleStatus.code}=OK' --timeout=5m apirules -A -l test=v1beta1-migration
   exposed_host=$(kubectl get apirules -A -l test=v1beta1-migration -o jsonpath='{.items[0].spec.host}')
-  url_under_test="https://$exposed_host/headers"
+  local url_under_test="https://$exposed_host/headers"
+
 
   if [ "$handler" == "jwt" ]; then
     # Get the access token from the OAuth2 mock server
-    tokenUrl="https://oauth2-mock.$TEST_DOMAIN/oauth2/token"
-    echo "zero-downtime: Getting access token from URL '$tokenUrl'"
-    bearer_token=$(curl -kX POST "$tokenUrl" -d "grant_type=client_credentials" -d "token_format=jwt" -H "Content-Type: application/x-www-form-urlencoded" | jq ".access_token" | tr -d '"')
+    wait_for_url "https://oauth2-mock.$TEST_DOMAIN/.well-known/openid-configuration" ""
+    token_url="https://oauth2-mock.$TEST_DOMAIN/oauth2/token"
+    echo "zero-downtime: Getting access token from URL '$token_url'"
+    bearer_token=$(curl -kX POST "$token_url" -d "grant_type=client_credentials" -d "token_format=jwt" \
+      -H "Content-Type: application/x-www-form-urlencoded" | jq ".access_token" | tr -d '"')
   fi
 
-  echo "zero-downtime: Waiting for the new host to be propagated"
   # Propagation of the new host can take some time for an unknown reason, therefore there is a wait for 40 secs,
   # even though APIRule is in OK state.
-  sleep 40
-  echo "zero-downtime: Sending requests to $url_under_test"
+  wait_for_url "$url_under_test" "$bearer_token"
 
+  echo "zero-downtime: Sending requests to $url_under_test"
   # Run the send_requests function in parallel child processes
   for (( i = 0; i < PARALLEL_REQUESTS; i++ )); do
     send_requests "$url_under_test" "$bearer_token" &
@@ -68,28 +70,53 @@ wait_for_api_rule_to_exist() {
   exit 1
 }
 
-# Function to send requests to a given url_under_test and optionally with a bearer token
-send_requests() {
-  local url_under_test="$1"
+wait_for_url() {
+  local url="$1"
   local bearer_token="$2"
+  local attempts=1
 
-  # Stop sending requests when the APIRule is deleted to avoid false negatives by sending requests
-  # to an url_under_test that is no longer exposed.
-  while kubectl get apirules -A -l test=v1beta1-migration --ignore-not-found | grep -q .; do
+  echo "zero-downtime: Waiting for the new host to be propagated"
 
-    if [ -n "$bearer_token" ]; then
-      response=$(curl -fsSk -o /dev/null -w "%{http_code}" -H "Authorization: Bearer $bearer_token" "$url_under_test")
-    else
-      response=$(curl -fsSk -o /dev/null -w "%{http_code}" "$url_under_test")
+  while [[ $attempts -le 60 ]] ; do
+    response=$(curl -sk -o /dev/null -L -w "%{http_code}" "$url" -H "Authorization: Bearer $bearer_token" )
+  	if [ "$response" == "200" ]; then
+      echo "zero-downtime: $url is available for requests"
+  	  return 0
     fi
-
-    if [ "$response" -ne 200 ]; then
-      echo "zero-downtime: Error, received HTTP status code $response"
-      exit 1
-    fi
+  	sleep 1
+    ((attempts = attempts + 1))
   done
 
-  exit 0
+  echo "zero-downtime: $url exposed in APIRule is not available for requests"
+  exit 1
+}
+
+# Function to send requests to a given url and optionally with a bearer token
+send_requests() {
+  local url="$1"
+  local bearer_token="$2"
+
+  while true; do
+
+    if [ -n "$bearer_token" ]; then
+      response=$(curl -sk -o /dev/null -w "%{http_code}" -H "Authorization: Bearer $bearer_token" "$url")
+    else
+      response=$(curl -sk -o /dev/null -w "%{http_code}" "$url")
+    fi
+
+    if [ "$response" != "200" ]; then
+      # If we get an error and the APIRule still exists, the test is failed, but if we receive an error only when the
+      # APIRule is deleted, the test is successful, because without an APIRule the request must fail as no host
+      # is exposed.
+      if kubectl get apirules -A -l test=v1beta1-migration --ignore-not-found | grep -q .; then
+        echo "zero-downtime: Test failed. Canceling requests because of HTTP status code $response"
+        exit 1
+      else
+        echo "zero-downtime: Test successful. Stopping requests because APIRule is deleted."
+        exit 0
+      fi
+    fi
+  done
 }
 
 start() {
