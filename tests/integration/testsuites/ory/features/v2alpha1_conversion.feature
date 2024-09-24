@@ -26,7 +26,7 @@ Feature: APIRules v2alpha1 conversion
     Given migrationNoopV1beta1: There is a httpbin service with Istio injection enabled
     And migrationNoopV1beta1: The APIRule is applied
     And migrationNoopV1beta1: APIRule has status "OK"
-    And migrationNoopV1beta1: Wait for "50" seconds
+    And migrationNoopV1beta1: Calling the "/headers" endpoint without a token should result in status between 200 and 200
     When migrationNoopV1beta1: The APIRule is updated using manifest "migration-noop-v2alpha1.yaml"
     And migrationNoopV1beta1: Resource of Kind "Rule" owned by APIRule does not exist
     Then migrationNoopV1beta1: APIRule has status "OK"
