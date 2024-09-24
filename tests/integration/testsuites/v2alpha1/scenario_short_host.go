@@ -9,6 +9,6 @@ func initShortHost(ctx *godog.ScenarioContext, ts *testsuite) {
 
 	ctx.Step(`^ShortHost: There is a httpbin service$`, scenario.thereIsAHttpbinService)
 	ctx.Step(`^ShortHost: The APIRule is applied$`, scenario.theAPIRuleIsApplied)
-	ctx.Step(`^ShortHost: Calling the "([^"]*)" endpoint without a token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithoutTokenShouldResultInStatusBetween)
+	ctx.Step(`^ShortHost: Calling short host "([^"]*)" with path "([^"]*)" without a token should result in status between (\d+) and (\d+)$`, scenario.callingShortHostWithoutTokenShouldResultInStatusBetween)
 	ctx.Step(`^ShortHost: Teardown httpbin service$`, scenario.teardownHttpbinService)
 }

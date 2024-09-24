@@ -3,5 +3,5 @@ Feature: Exposing endpoints with NoAuth when specifying short host name in APIRu
   Scenario: Calling a httpbin endpoint unsecured
     Given ShortHost: There is a httpbin service
     When ShortHost: The APIRule is applied
-    Then ShortHost: Calling the "/ip" endpoint without a token should result in status between 200 and 200
+    Then ShortHost: Calling short host "httpbin" with path "/ip" without a token should result in status between 200 and 200
     And ShortHost: Teardown httpbin service
