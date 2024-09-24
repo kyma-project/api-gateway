@@ -24,6 +24,7 @@ import (
 
 	"github.com/kyma-project/api-gateway/internal/dependencies"
 	"github.com/kyma-project/api-gateway/internal/processing/processors/migration"
+	"github.com/kyma-project/api-gateway/internal/processing/status"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
@@ -190,8 +191,22 @@ func (r *APIRuleReconciler) reconcileV2Alpha1APIRule(ctx context.Context, l logr
 	}
 	var gateway networkingv1beta1.Gateway
 	if err := r.Client.Get(ctx, gatewayNN, &gateway); err != nil {
-		l.Error(err, "Error while getting Gateway for APIRule", "not found", apierrs.IsNotFound(err))
-		return doneReconcileErrorRequeue(err, r.OnErrorReconcilePeriod)
+		v2Alpha1Status := status.ReconciliationV2alpha1Status{
+			ApiRuleStatus: &gatewayv2alpha1.APIRuleStatus{
+				State: gatewayv2alpha1.State(gatewayv2alpha1.Error),
+			},
+		}
+		s := v2Alpha1Status.GenerateStatusFromFailures([]validation.Failure{
+			{
+				AttributePath: "spec.gateway",
+				Message:       "Could not get specified Gateway",
+			},
+		})
+		if err := s.UpdateStatus(&rule.Status); err != nil {
+			l.Error(err, "Error updating APIRule status")
+			return doneReconcileErrorRequeue(err, r.OnErrorReconcilePeriod)
+		}
+		return r.convertAndUpdateStatus(ctx, l, rule)
 	}
 
 	cmd := r.getV2Alpha1Reconciliation(&apiRule, &rule, &gateway, defaultDomainName, migrate, &l)
