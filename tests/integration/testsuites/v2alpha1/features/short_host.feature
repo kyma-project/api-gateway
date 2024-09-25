@@ -9,5 +9,5 @@ Feature: Exposing endpoints with NoAuth when specifying short host name in APIRu
   Scenario: Calling a httpbin endpoint unsecured (error scenario)
     Given ShortHostError: There is a httpbin service
     When ShortHostError: Specifies custom Gateway "kyma-system"/"another-gateway"
-    And ShortHostError: The APIRule is applied and contains error status with "Unable to get specified Gateway" message
+    And ShortHostError: The APIRule is applied and contains error status with "Could not get specified Gateway" message
     And ShortHostError: Teardown httpbin service
