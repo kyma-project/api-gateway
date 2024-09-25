@@ -53,8 +53,9 @@ run_zero_downtime_requests() {
       -H "Content-Type: application/x-www-form-urlencoded" | jq ".access_token" | tr -d '"')
   fi
 
-  # Wait until the host in the APIRule is available. In the integration tests it takes up to 30 secs until
-  # the host is propagated.
+  # Wait until the host in the APIRule is available. This may take a very long time because the httpbin application
+  # used in the integration tests takes a very long time to start successfully processing requests, even though it is
+  # already ready.
   wait_for_url "$url_under_test" "$bearer_token"
 
   echo "zero-downtime: Sending requests to $url_under_test"
