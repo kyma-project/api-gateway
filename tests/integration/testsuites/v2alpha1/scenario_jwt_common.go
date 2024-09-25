@@ -9,7 +9,7 @@ func initJwtCommon(ctx *godog.ScenarioContext, ts *testsuite) {
 
 	ctx.Step(`^Common: There is a httpbin service$`, scenario.thereIsAHttpbinService)
 	ctx.Step(`^Common: There is an endpoint secured with JWT on path "([^"]*)"`, scenario.thereIsAnJwtSecuredPath)
-	ctx.Step(`^Common: The APIRule is applied$`, scenario.theAPIRuleIsApplied)
+	ctx.Step(`^Common: The APIRule is applied$`, scenario.theAPIRuleV2Alpha1IsApplied)
 	ctx.Step(`^Common: Calling the "([^"]*)" endpoint without a token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithoutTokenShouldResultInStatusBetween)
 	ctx.Step(`^Common: Calling the "([^"]*)" endpoint with an invalid token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithInvalidTokenShouldResultInStatusBetween)
 	ctx.Step(`^Common: Calling the "([^"]*)" endpoint with a valid "([^"]*)" token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithValidTokenShouldResultInStatusBetween)
@@ -21,7 +21,7 @@ func initJwtWildcard(ctx *godog.ScenarioContext, ts *testsuite) {
 
 	ctx.Step(`^JwtWildcard: There is a httpbin service$`, scenario.thereIsAHttpbinService)
 	ctx.Step(`^JwtWildcard: There is an endpoint secured with JWT on path "([^"]*)"`, scenario.thereIsAnJwtSecuredPath)
-	ctx.Step(`^JwtWildcard: The APIRule is applied$`, scenario.theAPIRuleIsApplied)
+	ctx.Step(`^JwtWildcard: The APIRule is applied$`, scenario.theAPIRuleV2Alpha1IsApplied)
 	ctx.Step(`^JwtWildcard: Calling the "([^"]*)" endpoint without a token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithoutTokenShouldResultInStatusBetween)
 	ctx.Step(`^JwtWildcard: Calling the "([^"]*)" endpoint with an invalid token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithInvalidTokenShouldResultInStatusBetween)
 	ctx.Step(`^JwtWildcard: Calling the "([^"]*)" endpoint with a valid "([^"]*)" token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithValidTokenShouldResultInStatusBetween)

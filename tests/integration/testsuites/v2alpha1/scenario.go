@@ -85,12 +85,25 @@ func (s *scenario) callingTheEndpointWithMethodWithValidToken(url string, method
 	return s.httpClient.CallEndpointWithHeadersAndMethod(requestHeaders, url, method, asserter)
 }
 
-func (s *scenario) theAPIRuleIsApplied() error {
+func (s *scenario) theAPIRuleV2Alpha1IsApplied() error {
 	r, err := manifestprocessor.ParseFromFileWithTemplate(s.ApiResourceManifestPath, s.ApiResourceDirectory, s.ManifestTemplate)
 	if err != nil {
 		return err
 	}
-	return helpers.ApplyApiRule(s.resourceManager.CreateResources, s.resourceManager.UpdateResources, s.k8sClient, testcontext.GetRetryOpts(), r)
+	return helpers.ApplyApiRuleV2Alpha1(s.resourceManager.CreateResources, s.resourceManager.UpdateResources, s.k8sClient, testcontext.GetRetryOpts(), r)
+}
+
+func (s *scenario) theAPIRuleV2Alpha1IsAppliedExpectError(errorMessage string) error {
+	r, err := manifestprocessor.ParseFromFileWithTemplate(s.ApiResourceManifestPath, s.ApiResourceDirectory, s.ManifestTemplate)
+	if err != nil {
+		return err
+	}
+	return helpers.ApplyApiRuleV2Alpha1ExpectError(s.resourceManager.CreateResources, s.resourceManager.UpdateResources, s.k8sClient, testcontext.GetRetryOpts(), r, errorMessage)
+}
+
+func (s *scenario) specifiesCustomGateway(gatewayNamespace, gatewayName string) {
+	s.ManifestTemplate["GatewayNamespace"] = gatewayNamespace
+	s.ManifestTemplate["GatewayName"] = gatewayName
 }
 
 func (s *scenario) theAPIRuleHasStatusWithDesc(expectedState, expectedDescription string) error {
