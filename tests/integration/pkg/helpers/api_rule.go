@@ -58,6 +58,7 @@ func ApplyApiRule(toExecute RetryableApiRule, onRetry RetryableApiRule, k8sClien
 				return err
 			}
 			if apiStatus.Status.APIRuleStatus.Code != "OK" {
+				log.Println("APIRule status not OK: " + apiStatus.Status.APIRuleStatus.Description)
 				return errors.New("APIRule status not OK: " + apiStatus.Status.APIRuleStatus.Description)
 			}
 			return nil
