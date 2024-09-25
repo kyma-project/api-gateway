@@ -27,7 +27,7 @@ type Creator interface {
 }
 
 type creator struct {
-	// Controls that requests to Ory Oathkeeper are also permitted when 
+	// Controls that requests to Ory Oathkeeper are also permitted when
 	// migrating from APIRule v1beta1 to v2alpha1.
 	oryPassthrough bool
 }

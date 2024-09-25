@@ -47,6 +47,23 @@ jobs:
           client_secret: ${{ secrets.CLIENT_SECRET }}
           oidc_well_known_url: "${{ secrets.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
 
+  migration-downtime-tests:
+    name: Zero Downtime Migration Tests
+    runs-on: ubuntu-latest
+    needs: [build]
+    strategy:
+      fail-fast: false
+      matrix:
+        test_make_target: [ "test-migration-zero-downtime HANDLER=no_auth", "test-migration-zero-downtime HANDLER=allow", "test-migration-zero-downtime HANDLER=noop", "test-migration-zero-downtime HANDLER=jwt" ]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/integration-tests
+        with:
+          manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:${{ github.sha }}"
+          test_make_target: ${{ matrix.test_make_target }}
+
   upgrade-tests:
     name: Upgrade tests
     runs-on: ubuntu-latest
