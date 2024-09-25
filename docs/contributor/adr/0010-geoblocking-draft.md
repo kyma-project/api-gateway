@@ -13,14 +13,14 @@ Therefore, creating this kind of feature is a convenience for the user, as it ex
 
 ## Decision
 
-Istio allows to delegate the access control to an external authorization service, which may be just a regular Kubernetes service. This seems to be a simplest way to plug the geoblocking check of incomming connections.
+Istio allows to delegate the access control to an external authorization service, which may be just a regular Kubernetes service. This seems to be the simplest way to plug the geoblocking check of incoming connections.
 
 ### ip-auth service
 
 For that purpose a new service 'ip-auth' is introduced. Its main responsibility is to fulfil the [external authorizer](https://istio.io/latest/docs/tasks/security/authorization/authz-custom/) contract:
 - listening to the connections from Envoy proxy
-- deciding whether to allow/disallow an incomming connection (based on headers and current list of IP ranges)
-- responding with HTTP 200 to allow an incomming connection or with HTTP 403 to disallow it
+- deciding whether to allow/disallow an incoming connection (based on headers and current list of IP ranges)
+- responding with HTTP 200 to allow an incoming connection or with HTTP 403 to disallow it
 
 High level overview:
 
@@ -103,11 +103,11 @@ data:
 
 In order to ensure reliability and configurability a new Geoblocking Custom Resource and a new Geoblocking Controller is introduced. The controller is responsible for:
 - managing the ip-auth service deployment
-- managing authorization policy that plugs ip-auth authorizer to all incomming requests
+- managing authorization policy that plugs ip-auth authorizer to all incoming requests
 - performing configuration checks (like external traffic policy)
 - reporting geoblocking state
 
-There should be only one Geoblocking resource. The controller should raise an issue if there are more of them similarly to [APIGateway CR](https://github.com/kyma-project/api-gateway/blob/05ed57f3299f42c2565ed1b28b84dee808a5213b/controllers/operator/apigateway_controller.go#L100).
+There should be only one Geoblocking resource. The controller should set the additional Geoblocking CR in `Error` state, similarly to [APIGateway CR](https://github.com/kyma-project/api-gateway/blob/05ed57f3299f42c2565ed1b28b84dee808a5213b/controllers/operator/apigateway_controller.go#L100).
 
 ![Geoblocking controller](../../assets/geoblocking-cr-controller.svg)
 
@@ -157,7 +157,7 @@ The local copy (stored in a Config Map) should be used to optimize the amount of
 - if the local copy contains a newer version (lastUpdateTime) -> load it
 - if the update check has been recently performed (now - lastUpdateCheckTime < refreshInterval) -> don't check it again
 - if the update check hasn't been recently performed (now - lastUpdateCheckTime >= refreshInterval) -> check for an update
-- if there is a newer version -> download, apply it, update a local copy and set lastUpdateCheckTime and lastUpdateTime to the current time
+- if there is a newer version available in the central SAP Geoblocking service -> download, apply it, update a local copy and set lastUpdateCheckTime and lastUpdateTime to the current time
 - if there is no newer version -> update lastUpdateCheckTime time (so other pods may skip the check)
 - if there is a problem with checking for an update -> log a warning
 - if there is a problem with updating the local copy -> log a warning and use a new version anyway
@@ -281,7 +281,7 @@ Decision: it doesn't make sense to expose so many detailed parameters, because t
 
 The list of IP ranges is processed by each ip-auth container and stored in its memory and regularly refreshed using geoblocking service. If geoblocking service doesn't work then the ip-auth containers may work as before, the list is not refreshed.
 
-However, the problem is when the ip-auth container needs to be restarted when geoblocking service is not available, so it can't download the list of IP ranges. This may happen when during the upgrade or in case of issues (like out of memory).
+However, the problem is when the ip-auth container needs to be restarted when geoblocking service is not available, so it can't download the list of IP ranges. This may be the case during an upgrade of ip-auth or in the event of runtime problems (for example ouf of memory).
 
 It is not acceptable to allow the traffic as a fallback in such case.
 
@@ -313,7 +313,7 @@ The following options have been considered:
 
 Decision: Let's use a Config Map as a fallback and cache for IP range allow/block list. However, let's split it technically from the Config Map that contains IP ranges provided by the end-user, so:
 - the Config Map containing custom IP range allow/block list is configured by the user, it becomes a contract
-- the Config Map containing IP range allow/block list downloaded from the SAP internal service is a Kyma internal thing and the implementation may change at any time, so no other module should use it
+- the Config Map containing IP range allow/block list downloaded from the SAP internal service is a Kyma internal resource and the implementation may change at any time, so no other module should use it
 
 Consequence: Config map capacity may be exceeded in future, which may require immediate attention.
 
