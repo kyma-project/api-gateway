@@ -121,7 +121,7 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	}
 
 	if r.isApiRuleConvertedFromV2alpha1(apiRule) {
-		return r.reconcileV2Alpha1APIRule(ctx, l, apiRule, defaultDomainName)
+		return r.reconcileV2Alpha1APIRule(ctx, l, apiRule)
 	}
 
 	l.Info("Reconciling v1beta1 APIRule", "jwtHandler", r.Config.JWTHandler)
@@ -161,7 +161,7 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	return r.updateStatus(ctx, l, &apiRule)
 }
 
-func (r *APIRuleReconciler) reconcileV2Alpha1APIRule(ctx context.Context, l logr.Logger, apiRule gatewayv1beta1.APIRule, defaultDomainName string) (ctrl.Result, error) {
+func (r *APIRuleReconciler) reconcileV2Alpha1APIRule(ctx context.Context, l logr.Logger, apiRule gatewayv1beta1.APIRule) (ctrl.Result, error) {
 	l.Info("Reconciling v2alpha1 APIRule")
 	toUpdate := apiRule.DeepCopy()
 	migrate, err := apiRuleNeedsMigration(ctx, r.Client, toUpdate)
@@ -209,7 +209,7 @@ func (r *APIRuleReconciler) reconcileV2Alpha1APIRule(ctx context.Context, l logr
 		return r.convertAndUpdateStatus(ctx, l, rule)
 	}
 
-	cmd := r.getV2Alpha1Reconciliation(&apiRule, &rule, &gateway, defaultDomainName, migrate, &l)
+	cmd := r.getV2Alpha1Reconciliation(&apiRule, &rule, &gateway, migrate, &l)
 
 	if name, err := dependencies.APIRule().AreAvailable(ctx, r.Client); err != nil {
 		s, err := handleDependenciesError(name, err).V2alpha1Status()
@@ -296,9 +296,8 @@ func (r *APIRuleReconciler) getV1Beta1Reconciliation(apiRule *gatewayv1beta1.API
 	}
 }
 
-func (r *APIRuleReconciler) getV2Alpha1Reconciliation(apiRulev1beta1 *gatewayv1beta1.APIRule, apiRulev2alpha1 *gatewayv2alpha1.APIRule, gateway *networkingv1beta1.Gateway, defaultDomainName string, needsMigration bool, namespacedLogger *logr.Logger) processing.ReconciliationCommand {
+func (r *APIRuleReconciler) getV2Alpha1Reconciliation(apiRulev1beta1 *gatewayv1beta1.APIRule, apiRulev2alpha1 *gatewayv2alpha1.APIRule, gateway *networkingv1beta1.Gateway, needsMigration bool, namespacedLogger *logr.Logger) processing.ReconciliationCommand {
 	config := r.ReconciliationConfig
-	config.DefaultDomainName = defaultDomainName
 	v2alpha1Validator := v2alpha1.NewAPIRuleValidator(apiRulev2alpha1)
 	return v2alpha1Processing.NewReconciliation(apiRulev2alpha1, apiRulev1beta1, gateway, v2alpha1Validator, config, namespacedLogger, needsMigration)
 }

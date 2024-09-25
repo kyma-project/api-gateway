@@ -55,6 +55,22 @@ var _ = ReportAfterSuite("custom reporter", func(report types.Report) {
 	}
 })
 
+var _ = Describe("GetHostWithDomain", func() {
+	It("should get host with domain", func() {
+		Expect(GetHostWithDomain("example", "com")).To(Equal("example.com"))
+	})
+
+	It("should get host if domain not specified", func() {
+		Expect(GetHostWithDomain("example.com", "")).To(Equal("example.com"))
+	})
+})
+
+var _ = Describe("GetHostLocalDomain", func() {
+	It("should get host with local domain", func() {
+		Expect(GetHostLocalDomain("example", "namespace")).To(Equal("example.namespace.svc.cluster.local"))
+	})
+})
+
 var _ = Describe("GetDomainFromKymaGateway", func() {
 	It("should get domain from default kyma gateway if it exists", func() {
 		// given
@@ -242,6 +258,34 @@ var _ = Describe("GetDomainFromGateway", func() {
 		Expect(host).To(Equal("local.kyma.dev"))
 	})
 
+	It(`should get domain from gateway that definies multiple servers when not all define hosts`, func() {
+		// given
+		gateway := networkingv1beta1.Gateway{
+			ObjectMeta: metav1.ObjectMeta{Name: "gateway-name", Namespace: "gateway-namespace"},
+			Spec: apinetworkingv1beta1.Gateway{
+				Servers: []*apinetworkingv1beta1.Server{
+					{
+						Port: &apinetworkingv1beta1.Port{Protocol: "HTTP"},
+					},
+					{
+						Port: &apinetworkingv1beta1.Port{Protocol: "HTTP"},
+						Hosts: []string{
+							"*.local.kyma.dev",
+						},
+					},
+				},
+			},
+		}
+		client := getFakeClient(&gateway)
+
+		// when
+		host, err := GetDomainFromGateway(context.Background(), client, "gateway-name", "gateway-namespace")
+
+		// then
+		Expect(err).ShouldNot(HaveOccurred())
+		Expect(host).To(Equal("local.kyma.dev"))
+	})
+
 	It("should return error if gateway defines more than a single host", func() {
 		// given
 		gateway := networkingv1beta1.Gateway{
@@ -265,7 +309,7 @@ var _ = Describe("GetDomainFromGateway", func() {
 
 		// then
 		Expect(err).Should(HaveOccurred())
-		Expect(err.Error()).To(Equal("gateway must specify server(s) with the same single host"))
+		Expect(err.Error()).To(Equal("gateway must have server definition(s) with a single host"))
 		Expect(host).To(Equal(""))
 	})
 
@@ -297,7 +341,7 @@ var _ = Describe("GetDomainFromGateway", func() {
 
 		// then
 		Expect(err).Should(HaveOccurred())
-		Expect(err.Error()).To(Equal("gateway must specify server(s) with the same single host"))
+		Expect(err.Error()).To(Equal("gateway must have server definition(s) with the same host"))
 		Expect(host).To(Equal(""))
 	})
 

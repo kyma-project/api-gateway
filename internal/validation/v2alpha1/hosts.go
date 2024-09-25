@@ -25,29 +25,27 @@ func validateHosts(parentAttributePath string, vsList networkingv1beta1.VirtualS
 	}
 
 	for hostIndex, host := range hosts {
-		if !helpers.IsFqdnHostName(string(*host)) {
-			if helpers.IsShortHostName(string(*host)) {
-				gateway := findGateway(*apiRule.Spec.Gateway, gwList)
-				if gateway == nil {
-					hostAttributePath := fmt.Sprintf("%s[%d]", hostsAttributePath, hostIndex)
-					failures = append(failures, validation.Failure{
-						AttributePath: hostAttributePath,
-						Message:       fmt.Sprintf(`Unable to find Gateway "%s"`, *apiRule.Spec.Gateway),
-					})
-				} else if !hasSingleHostDefinitionWithCorrectPrefix(gateway) {
-					hostAttributePath := fmt.Sprintf("%s[%d]", hostsAttributePath, hostIndex)
-					failures = append(failures, validation.Failure{
-						AttributePath: hostAttributePath,
-						Message:       "Lowercase RFC 1123 label is only supported as the APIRule host when selected Gateway has a single host definition matching *.<fqdn> format",
-					})
-				}
-			} else {
+		if helpers.IsShortHostName(string(*host)) {
+			gateway := findGateway(*apiRule.Spec.Gateway, gwList)
+			if gateway == nil {
 				hostAttributePath := fmt.Sprintf("%s[%d]", hostsAttributePath, hostIndex)
 				failures = append(failures, validation.Failure{
 					AttributePath: hostAttributePath,
-					Message:       "Host must be a valid FQDN or short host name",
+					Message:       fmt.Sprintf(`Unable to find Gateway "%s"`, *apiRule.Spec.Gateway),
+				})
+			} else if !hasSingleHostDefinitionWithCorrectPrefix(gateway) {
+				hostAttributePath := fmt.Sprintf("%s[%d]", hostsAttributePath, hostIndex)
+				failures = append(failures, validation.Failure{
+					AttributePath: hostAttributePath,
+					Message:       "Lowercase RFC 1123 label is only supported as the APIRule host when selected Gateway has a single host definition matching *.<fqdn> format",
 				})
 			}
+		} else if !helpers.IsFqdnHostName(string(*host)) {
+			hostAttributePath := fmt.Sprintf("%s[%d]", hostsAttributePath, hostIndex)
+			failures = append(failures, validation.Failure{
+				AttributePath: hostAttributePath,
+				Message:       "Host must be a valid FQDN or short host name",
+			})
 		}
 		for _, vs := range vsList.Items {
 			if occupiesHost(vs, string(*host)) && !ownedBy(vs, apiRule) {

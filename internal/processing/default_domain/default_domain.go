@@ -21,9 +21,9 @@ const (
 	kymaGatewayProtocol  = "HTTPS"
 )
 
-func GetHostWithDomain(host, defaultDomainName string) string {
-	if !HostIncludesDomain(host) {
-		return GetHostWithDefaultDomain(host, defaultDomainName)
+func GetHostWithDomain(host, domainName string) string {
+	if !HostIncludesDomain(host) && domainName != "" {
+		return BuildHostWithDomain(host, domainName)
 	}
 	return host
 }
@@ -32,8 +32,8 @@ func HostIncludesDomain(host string) bool {
 	return strings.Contains(host, ".")
 }
 
-func GetHostWithDefaultDomain(host, defaultDomainName string) string {
-	return fmt.Sprintf("%s.%s", host, defaultDomainName)
+func BuildHostWithDomain(host, domainName string) string {
+	return fmt.Sprintf("%s.%s", host, domainName)
 }
 
 func GetHostLocalDomain(host string, namespace string) string {
@@ -88,33 +88,29 @@ func GetDomainFromGateway(ctx context.Context, k8sClient client.Client, gatewayN
 		return "", err
 	}
 
-	if !gatewayServersWithSameSingleHost(&gateway) {
-		return "", errors.New("gateway must specify server(s) with the same single host")
+	serverHost := ""
+	for _, server := range gateway.Spec.Servers {
+		switch len(server.Hosts) {
+		case 0: // ignored
+		case 1:
+			if serverHost == "" {
+				serverHost = server.Hosts[0]
+			} else if serverHost != server.Hosts[0] {
+				return "", errors.New("gateway must have server definition(s) with the same host")
+			}
+		default:
+			return "", errors.New("gateway must have server definition(s) with a single host")
+		}
 	}
 
-	if !strings.HasPrefix(gateway.Spec.Servers[0].Hosts[0], "*.") {
-		return "", fmt.Errorf(`gateway server host "%s" does not start with the prefix "*."`, gateway.Spec.Servers[0].Hosts[0])
+	if !strings.HasPrefix(serverHost, "*.") {
+		return "", fmt.Errorf(`gateway server host "%s" does not start with the prefix "*."`, serverHost)
 	}
 
-	domain := strings.TrimPrefix(gateway.Spec.Servers[0].Hosts[0], "*.")
+	domain := strings.TrimPrefix(serverHost, "*.")
 	if domain == "" {
-		return "", fmt.Errorf(`gateway server host "%s" does not define domain after the prefix "*."`, gateway.Spec.Servers[0].Hosts[0])
+		return "", fmt.Errorf(`gateway server host "%s" does not define domain after the prefix "*."`, serverHost)
 	}
 
 	return domain, nil
-}
-
-func gatewayServersWithSameSingleHost(gateway *networkingv1beta1.Gateway) bool {
-	host := ""
-	for _, server := range gateway.Spec.Servers {
-		if len(server.Hosts) > 1 {
-			return false
-		}
-		if host == "" {
-			host = server.Hosts[0]
-		} else if host != server.Hosts[0] {
-			return false
-		}
-	}
-	return host != ""
 }

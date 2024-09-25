@@ -47,8 +47,17 @@ var _ = Describe("Hosts", func() {
 				},
 			}, nil, "create"),
 
-		Entry("should set the host correctly when short host is used",
-			NewAPIRuleBuilder().WithGateway("gateway-ns/gateway-name").WithHost("example").Build(),
+		Entry("should set the host and XFH request header with referenced gateway domain name when short host is used",
+			NewAPIRuleBuilder().WithGateway("gateway-ns/gateway-name").
+				WithHost("example").
+				WithService("example-service", "example-namespace", 8080).
+				WithRules(
+					NewRuleBuilder().
+						WithMethods("GET").
+						WithPath("/*").
+						NoAuth().Build(),
+				).
+				Build(),
 			&networkingv1beta1.Gateway{
 				ObjectMeta: metav1.ObjectMeta{Name: "gateway-name", Namespace: "gateway-ns"},
 				Spec: apinetworkingv1beta1.Gateway{
@@ -64,13 +73,17 @@ var _ = Describe("Hosts", func() {
 			[]verifier{
 				func(vs *networkingv1beta1.VirtualService) {
 					Expect(vs.Spec.Hosts).To(ConsistOf("example.domain.name"))
+					Expect(vs.Spec.Http).To(HaveLen(1))
+					Expect(vs.Spec.Http[0].Headers).NotTo(BeNil())
+					Expect(vs.Spec.Http[0].Headers.Request).NotTo(BeNil())
+					Expect(vs.Spec.Http[0].Headers.Request.Set).To(HaveKeyWithValue("x-forwarded-host", "example.domain.name"))
 				},
 			}, nil, "create"),
 
 		Entry("should return error when short host is used but no gateway available",
 			NewAPIRuleBuilder().WithGateway("gateway-ns/gateway-name").WithHost("example").Build(),
 			nil,
-			[]verifier{}, errors.New("gateway or host definition is missing")),
+			[]verifier{}, errors.New("gateway must be provided when using short host name")),
 
 		Entry("should return error when short host is used but gateway do not have servers defined",
 			NewAPIRuleBuilder().WithGateway("gateway-ns/gateway-name").WithHost("example").Build(),
@@ -80,7 +93,7 @@ var _ = Describe("Hosts", func() {
 					Servers: []*apinetworkingv1beta1.Server{},
 				},
 			},
-			[]verifier{}, errors.New("gateway or host definition is missing")),
+			[]verifier{}, errors.New("gateway with host definition must be provided when using short host name")),
 
 		Entry("should return error when short host is used but gateway do not have hosts defined",
 			NewAPIRuleBuilder().WithGateway("gateway-ns/gateway-name").WithHost("example").Build(),
@@ -94,6 +107,6 @@ var _ = Describe("Hosts", func() {
 					},
 				},
 			},
-			[]verifier{}, errors.New("gateway or host definition is missing")),
+			[]verifier{}, errors.New("gateway with host definition must be provided when using short host name")),
 	)
 })
