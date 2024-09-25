@@ -8,7 +8,7 @@ Feature: APIRules v2alpha1 conversion
     When migrationAllowV1beta1: The APIRule is updated using manifest "migration-allow-v2alpha1.yaml"
     # We wait for 10 seconds, because there is no resource change we can check for but we still want to make
     # sure the migration worked during zero downtime migration test.
-    And migrationNoopV1beta1: Wait for "10" seconds
+    And migrationAllowV1beta1: Wait for "10" seconds
     Then migrationAllowV1beta1: APIRule has status "OK"
 
   Scenario: Migrate v1beta1 APIRule with no_auth handler that is supported in v2alpha1
@@ -19,7 +19,7 @@ Feature: APIRules v2alpha1 conversion
     When migrationNoAuthV1beta1: The APIRule is updated using manifest "migration-noauth-v2alpha1.yaml"
     # We wait for 10 seconds, because there is no resource change we can check for but we still want to make
     # sure the migration worked during zero downtime migration test.
-    And migrationNoopV1beta1: Wait for "10" seconds
+    And migrationNoAuthV1beta1: Wait for "10" seconds
     Then migrationNoAuthV1beta1: APIRule has status "OK"
 
   Scenario: Migrate v1beta1 APIRule with noop handler that is unsupported in v2alpha1
