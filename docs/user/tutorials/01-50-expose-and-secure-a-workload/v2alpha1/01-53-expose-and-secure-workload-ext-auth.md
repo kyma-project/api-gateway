@@ -39,6 +39,10 @@ export GATEWAY=kyma-system/kyma-gateway
 
 2. Deploy `oauth2-proxy` with configuration for your authorization server. This tutorial uses [oauth2-proxy helm chart](https://github.com/oauth2-proxy/manifests) 
 for this purpose. Sample configuration is provided in [this directory](../v2alpha1/resources/oauth2-proxy-helm).
+Deployement can be done from that directory by invoking the following command:
+```
+helm upgrade --install oauth2-proxy . --namespace oauth2-proxy --create-namespace
+```
 
 To make sure that `oauth2-proxy` works with your provider, you need to at least adapt the following configuration:
 
