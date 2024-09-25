@@ -117,6 +117,7 @@ wait_for_url() {
 send_requests() {
   local url="$1"
   local bearer_token="$2"
+  local request_count=0
 
   while true; do
 
@@ -125,6 +126,7 @@ send_requests() {
     else
       response=$(curl -sk -o /dev/null -w "%{http_code}" "$url")
     fi
+    ((request_count = request_count + 1))
 
     if [ "$response" != "200" ]; then
       # If there is an error and the APIRule still exists, the test is failed, but if an error is received only when the
@@ -132,10 +134,10 @@ send_requests() {
       # is exposed. This was the most reliable way to detect when to stop the requests, since only sending requests
       # when the APIRule exists led to flaky results.
       if kubectl get apirules -A -l test=v1beta1-migration --ignore-not-found | grep -q .; then
-        echo "zero-downtime: Test failed. Canceling requests because of HTTP status code $response"
+        echo "zero-downtime: Test failed after $request_count requests. Canceling requests because of HTTP status code $response"
         exit 1
       else
-        echo "zero-downtime: Test successful. Stopping requests because APIRule is deleted."
+        echo "zero-downtime: Test successful after $request_count requests. Stopping requests because APIRule is deleted."
         exit 0
       fi
     fi
