@@ -11,7 +11,7 @@ func initServiceCustomLabelSelector(ctx *godog.ScenarioContext, ts *testsuite) {
 
 	ctx.Step(`^ServiceCustomLabelSelector: There is a helloworld service with custom label selector name "([^"]*)"$`, scenario.thereIsHelloworldCustomLabelService)
 	ctx.Step(`^ServiceCustomLabelSelector: There is an endpoint secured with JWT on path "([^"]*)"`, scenario.thereIsAnJwtSecuredPath)
-	ctx.Step(`^ServiceCustomLabelSelector: The APIRule is applied$`, scenario.theAPIRuleV2Alpha1IsApplied)
+	ctx.Step(`^ServiceCustomLabelSelector: The APIRule is applied$`, scenario.theAPIRuleIsApplied)
 	ctx.Step(`^ServiceCustomLabelSelector: Calling the "([^"]*)" endpoint without a token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithoutTokenShouldResultInStatusBetween)
 	ctx.Step(`^ServiceCustomLabelSelector: Calling the "([^"]*)" endpoint with a valid "([^"]*)" token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithValidTokenShouldResultInStatusBetween)
 	ctx.Step(`^ServiceCustomLabelSelector: Teardown helloworld service$`, scenario.teardownHelloworldCustomLabelService)

@@ -9,7 +9,7 @@ func initRequestHeaders(ctx *godog.ScenarioContext, ts *testsuite) {
 
 	ctx.Step(`^RequestHeader: There is a httpbin service$`, scenario.thereIsAHttpbinService)
 	ctx.Step(`^RequestHeader: There is an endpoint on path "([^"]*)" with a header mutator setting "([^"]*)" header to "([^"]*)"$`, scenario.thereIsAnEndpointWithHeader)
-	ctx.Step(`^RequestHeader: The APIRule is applied$`, scenario.theAPIRuleV2Alpha1IsApplied)
+	ctx.Step(`^RequestHeader: The APIRule is applied$`, scenario.theAPIRuleIsApplied)
 	ctx.Step(`^RequestHeader: Calling the "([^"]*)" endpoint should return response with header "([^"]*)" with value "([^"]*)"$`, scenario.callingTheEndpointShouldResultInBodyContaining)
 	ctx.Step(`^RequestHeader: Teardown httpbin service$`, scenario.teardownHttpbinService)
 }
@@ -19,7 +19,7 @@ func initRequestCookies(ctx *godog.ScenarioContext, ts *testsuite) {
 
 	ctx.Step(`^RequestCookie: There is a httpbin service$`, scenario.thereIsAHttpbinService)
 	ctx.Step(`^RequestCookie: There is an endpoint on path "([^"]*)" with a cookie mutator setting "([^"]*)" cookie to "([^"]*)"$`, scenario.thereIsAnEndpointWithCookie)
-	ctx.Step(`^RequestCookie: The APIRule is applied$`, scenario.theAPIRuleV2Alpha1IsApplied)
+	ctx.Step(`^RequestCookie: The APIRule is applied$`, scenario.theAPIRuleIsApplied)
 	ctx.Step(`^RequestCookie: Calling the "([^"]*)" endpoint should return response with header "([^"]*)" with value "([^"]*)"$`, scenario.callingTheEndpointShouldResultInBodyContaining)
 	ctx.Step(`^RequestCookie: Teardown httpbin service$`, scenario.teardownHttpbinService)
 }

@@ -13,7 +13,7 @@ func initJwtFromParam(ctx *godog.ScenarioContext, ts *testsuite) {
 	scenario.ManifestTemplate["FromParamName"] = "jwt_token"
 
 	ctx.Step(`^JwtTokenFromParam: There is a httpbin service$`, scenario.thereIsAHttpbinService)
-	ctx.Step(`^JwtTokenFromParam: The APIRule is applied$`, scenario.theAPIRuleV2Alpha1IsApplied)
+	ctx.Step(`^JwtTokenFromParam: The APIRule is applied$`, scenario.theAPIRuleIsApplied)
 	ctx.Step(`^JwtTokenFromParam: Calling the "([^"]*)" endpoint without a token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithoutTokenShouldResultInStatusBetween)
 	ctx.Step(`^JwtTokenFromParam: Calling the "([^"]*)" endpoint with a valid "([^"]*)" token from default header should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithValidTokenShouldResultInStatusBetween)
 	ctx.Step(`^JwtTokenFromParam: Calling the "([^"]*)" endpoint with a valid "([^"]*)" token from parameter "([^"]*)" should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithValidTokenFromParameterShouldResultInStatusBetween)
