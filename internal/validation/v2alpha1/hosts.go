@@ -79,9 +79,9 @@ func hasSingleHostDefinitionWithCorrectPrefix(gateway *networkingv1beta1.Gateway
 	return true
 }
 
-func findGateway(gatewayName string, gwList networkingv1beta1.GatewayList) *networkingv1beta1.Gateway {
+func findGateway(gatewayNamespacedName string, gwList networkingv1beta1.GatewayList) *networkingv1beta1.Gateway {
 	for _, gateway := range gwList.Items {
-		if gatewayName == strings.Join([]string{gateway.Namespace, gateway.Name}, "/") {
+		if gatewayNamespacedName == strings.Join([]string{gateway.Namespace, gateway.Name}, "/") {
 			return gateway
 		}
 	}
