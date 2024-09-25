@@ -85,14 +85,14 @@ wait_for_api_rule_to_exist() {
   local attempts=1
   echo "zero-downtime: Waiting for the APIRule to exist"
   # Wait for 5min
-  while [[ $attempts -le 3000 ]] ; do
+  while [[ $attempts -le 300 ]] ; do
     apirule=$(kubectl get apirules -A -l test=v1beta1-migration --ignore-not-found) && kubectl_exit_code=$? || kubectl_exit_code=$?
     if [ $kubectl_exit_code -ne 0 ]; then
         echo "zero-downtime: kubectl failed when listing apirules, exit code: $kubectl_exit_code"
         exit 2
     fi
   	[[ -n "$apirule" ]] && return 0
-  	sleep 0.1
+  	sleep 1
     ((attempts = attempts + 1))
   done
   echo "zero-downtime: APIRule not found"
