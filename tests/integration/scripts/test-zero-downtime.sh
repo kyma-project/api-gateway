@@ -1,50 +1,71 @@
 #!/bin/bash
+# Script to run zero downtime tests by executing a godog integration test for a given handler and sending requests to
+# the url exposed by an APIRule.
+#
+# The following process is executed:
+# 1. Start the zero downtime requests in the background. The requests will be sent once the APIRule is ready and the
+# exposed host is reachable. The requests will be sent in a loop until the APIRule is deleted.
+#  - Wait for 5 min until APIRule exists
+#  - Wait for 5 min until APIRule status is OK
+#  - If handler is jwt, wait for 1 min until the OAuth2 mock server is available and get the bearer token
+#  - Wait for 1 min until the host in the APIRule is available
+#  - Send requests in parallel to the exposed host until the requests fail and in this case check if the APIRule
+#    still exists to determine if the test failed or succeeded.
+# 2. Run the godog test that will migrate the APIRule from v1beta1 to v2alpha1 parallel to the requests.
+# 3. Check if the zero downtime requests were successful.
 
 set -ou pipefail
 
 PARALLEL_REQUESTS=5
 
-# Script to run zero downtime tests by executing one godog integration test and sending requests to the url_under_test
-# exposed by an APIRule.
-#
-# The following process is executed:
-# 1. Start the zero downtime requests in the background. The will be sent once the APIRule is ready and until the
-#    APIRule is deleted.
-# 2. Run the godog test that will migrate the APIRule from v1beta1 to v2alpha1.
-# 3. Check if the zero downtime requests were successful.
+HANDLER="$1"
 
+if [[ -z "$HANDLER" || ! "$HANDLER" =~ ^(jwt|noop|no_auth|allow)$ ]]; then
+  echo "zero-downtime: Handler not provided or invalid. Must be one of: jwt, noop, no_auth, allow"
+  exit 1
+fi
+
+# Function to run zero downtime requests to the exposed host of the APIRule
 run_zero_downtime_requests() {
   local handler="$1"
   local bearer_token=""
 
-  # Wait until the APIRule created in the test is in status OK
+  # Wait until the APIRule from the test is created and in status OK
+  # At the time of writing this script kubectl wait does not support waiting for a resource that doesn't exist yet.
+  # This is supported in an upcoming kubectl version.
   wait_for_api_rule_to_exist
   echo "zero-downtime: APIRule found"
   kubectl wait --for='jsonpath={.status.APIRuleStatus.code}=OK' --timeout=5m apirules -A -l test=v1beta1-migration
+
+  # Get the host set in the APIRule
   exposed_host=$(kubectl get apirules -A -l test=v1beta1-migration -o jsonpath='{.items[0].spec.host}')
   local url_under_test="https://$exposed_host/headers"
 
 
   if [ "$handler" == "jwt" ]; then
-    # Get the access token from the OAuth2 mock server
-    wait_for_url "https://oauth2-mock.$TEST_DOMAIN/.well-known/openid-configuration" ""
+    # Wait until the OAuth2 mock server host is available
+    wait_for_url "https://oauth2-mock.$TEST_DOMAIN/.well-known/openid-configuration"
     token_url="https://oauth2-mock.$TEST_DOMAIN/oauth2/token"
+
+    # Get the access token from the OAuth2 mock server
     echo "zero-downtime: Getting access token from URL '$token_url'"
     bearer_token=$(curl -kX POST "$token_url" -d "grant_type=client_credentials" -d "token_format=jwt" \
       -H "Content-Type: application/x-www-form-urlencoded" | jq ".access_token" | tr -d '"')
   fi
 
-  # Propagation of the new host can take some time for an unknown reason, therefore there is a wait for 40 secs,
-  # even though APIRule is in OK state.
+  # Wait until the host in the APIRule is available. In the integration tests it takes up to 30 secs until
+  # the host is propagated.
   wait_for_url "$url_under_test" "$bearer_token"
 
   echo "zero-downtime: Sending requests to $url_under_test"
-  # Run the send_requests function in parallel child processes
+
+  # Run the send_requests function in parallel processes
   for (( i = 0; i < PARALLEL_REQUESTS; i++ )); do
     send_requests "$url_under_test" "$bearer_token" &
     request_pids[$i]=$!
   done
 
+  # Wait for all send_requests processes to finish or fail fast if one of them fails
   for pid in ${request_pids[*]}; do
     wait $pid
     if [ $? -ne 0 ]; then
@@ -72,11 +93,12 @@ wait_for_api_rule_to_exist() {
 
 wait_for_url() {
   local url="$1"
-  local bearer_token="$2"
+  local bearer_token="${2:-''}"
   local attempts=1
 
-  echo "zero-downtime: Waiting for the new host to be propagated"
+  echo "zero-downtime: Waiting for URL '$url' to be available"
 
+  # Wait for 1min
   while [[ $attempts -le 60 ]] ; do
     response=$(curl -sk -o /dev/null -L -w "%{http_code}" "$url" -H "Authorization: Bearer $bearer_token" )
   	if [ "$response" == "200" ]; then
@@ -87,11 +109,11 @@ wait_for_url() {
     ((attempts = attempts + 1))
   done
 
-  echo "zero-downtime: $url exposed in APIRule is not available for requests"
+  echo "zero-downtime: $url is not available for requests"
   exit 1
 }
 
-# Function to send requests to a given url and optionally with a bearer token
+# Function to send requests to a given url with optional bearer token
 send_requests() {
   local url="$1"
   local bearer_token="$2"
@@ -105,9 +127,10 @@ send_requests() {
     fi
 
     if [ "$response" != "200" ]; then
-      # If we get an error and the APIRule still exists, the test is failed, but if we receive an error only when the
+      # If there is an error and the APIRule still exists, the test is failed, but if an error is received only when the
       # APIRule is deleted, the test is successful, because without an APIRule the request must fail as no host
-      # is exposed.
+      # is exposed. This was the most reliable way to detect when to stop the requests, since only sending requests
+      # when the APIRule exists led to flaky results.
       if kubectl get apirules -A -l test=v1beta1-migration --ignore-not-found | grep -q .; then
         echo "zero-downtime: Test failed. Canceling requests because of HTTP status code $response"
         exit 1
@@ -147,21 +170,16 @@ start() {
   return 0
 }
 
-handler="$1"
+start "$HANDLER"
+start_exit_code="$?"
 
-if [ -z "$handler" ]; then
-  echo "zero-downtime: Handler not provided"
+if [ "$start_exit_code" == "1" ]; then
+  echo "zero-downtime: godog integration tests failed"
+  exit 1
+elif [ "$start_exit_code" == "2" ]; then
+  echo "zero-downtime: Zero-downtime requests failed"
   exit 2
 fi
 
-start "$handler"
-start_exit_code=$?
-
-# exit code 1 if the godog tests failed and exit code 2 if the zero-downtime requests failed
-echo "zero-downtime: start exit code: $start_exit_code"
-if [ $start_exit_code -ne 0 ]; then
-  echo "zero-downtime: Tests failed"
-  exit 1
-fi
-
 echo "zero-downtime: Tests successful"
+exit 0

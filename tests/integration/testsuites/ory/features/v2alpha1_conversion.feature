@@ -6,8 +6,8 @@ Feature: APIRules v2alpha1 conversion
     And migrationAllowV1beta1: APIRule has status "OK"
     And migrationAllowV1beta1: Calling the "/headers" endpoint without a token should result in status between 200 and 200
     When migrationAllowV1beta1: The APIRule is updated using manifest "migration-allow-v2alpha1.yaml"
-    # We wait for 10 seconds, because there is no resource change we can check for but we still want to make
-    # sure the migration worked during zero downtime migration test.
+    # Waiting for 10 seconds, because there is no resource change that can be checked and during zero downtime migration
+    # test we need some time to send requests verify that the migration worked.
     And migrationAllowV1beta1: Wait for "10" seconds
     Then migrationAllowV1beta1: APIRule has status "OK"
 
@@ -17,8 +17,8 @@ Feature: APIRules v2alpha1 conversion
     And migrationNoAuthV1beta1: APIRule has status "OK"
     And migrationNoAuthV1beta1: Calling the "/headers" endpoint without a token should result in status between 200 and 200
     When migrationNoAuthV1beta1: The APIRule is updated using manifest "migration-noauth-v2alpha1.yaml"
-    # We wait for 10 seconds, because there is no resource change we can check for but we still want to make
-    # sure the migration worked during zero downtime migration test.
+    # Waiting for 10 seconds, because there is no resource change that can be checked and during zero downtime migration
+    # test we need some time to send requests verify that the migration worked.
     And migrationNoAuthV1beta1: Wait for "10" seconds
     Then migrationNoAuthV1beta1: APIRule has status "OK"
 
