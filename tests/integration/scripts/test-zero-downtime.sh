@@ -14,7 +14,10 @@
 # 2. Run the godog test that will migrate the APIRule from v1beta1 to v2alpha1 parallel to the requests.
 # 3. Check if the zero downtime requests were successful.
 
-set -ou pipefail
+set -eou pipefail
+
+# The following trap is useful when breaking the script (ctrl+c), so it stops also background jobs
+trap 'kill $(jobs -p)' INT
 
 PARALLEL_REQUESTS=5
 
@@ -68,8 +71,8 @@ run_zero_downtime_requests() {
 
   # Wait for all send_requests processes to finish or fail fast if one of them fails
   for pid in ${request_pids[*]}; do
-    wait $pid
-    if [ $? -ne 0 ]; then
+    wait $pid && request_runner_exit_code=$? || request_runner_exit_code=$?
+    if [ $request_runner_exit_code -ne 0 ]; then
         echo "zero-downtime: A sending requests subprocess failed with a non-zero exit status."
         exit 1
     fi
@@ -83,7 +86,11 @@ wait_for_api_rule_to_exist() {
   echo "zero-downtime: Waiting for the APIRule to exist"
   # Wait for 5min
   while [[ $attempts -le 3000 ]] ; do
-  	apirule=$(kubectl get apirules -A -l test=v1beta1-migration --ignore-not-found)
+    apirule=$(kubectl get apirules -A -l test=v1beta1-migration --ignore-not-found) && kubectl_exit_code=$? || kubectl_exit_code=$?
+    if [ $kubectl_exit_code -ne 0 ]; then
+        echo "zero-downtime: kubectl failed when listing apirules, exit code: $kubectl_exit_code"
+        exit 2
+    fi
   	[[ -n "$apirule" ]] && return 0
   	sleep 0.1
     ((attempts = attempts + 1))
@@ -154,16 +161,13 @@ start() {
 
   echo "zero-downtime: Starting integration test scenario for handler '$handler'"
 
-  go test -timeout 15m ./tests/integration -v -race -run "TestOryJwt/Migrate_v1beta1_APIRule_with_${handler}_handler"
-  test_exit_code=$?
+  go test -timeout 15m ./tests/integration -v -race -run "TestOryJwt/Migrate_v1beta1_APIRule_with_${handler}_handler" && test_exit_code=$? || test_exit_code=$?
   if [ $test_exit_code -ne 0 ]; then
     echo "zero-downtime: Test execution failed"
     return 1
   fi
 
-  wait $zero_downtime_requests_pid
-  zero_downtime_exit_code=$?
-
+  wait $zero_downtime_requests_pid && zero_downtime_exit_code=$? || zero_downtime_exit_code=$?
   if [ $zero_downtime_exit_code -ne 0 ]; then
     echo "zero-downtime: Requests returned a non-zero exit status, that means requests failed or returned a status not equal 200"
     return 2
@@ -173,9 +177,7 @@ start() {
   return 0
 }
 
-start "$HANDLER"
-start_exit_code="$?"
-
+start "$HANDLER" && start_exit_code="$?" || start_exit_code="$?"
 if [ "$start_exit_code" == "1" ]; then
   echo "zero-downtime: godog integration tests failed"
   exit 1
