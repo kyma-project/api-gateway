@@ -167,9 +167,9 @@ Pods should slightly randomize an update check time to benefit from the above op
 
 #### Quick IP check
 
-The list of blocked IP ranges may be big (thousands of entries), so analyzing whether an IP address matches any IP range in the list is too time consuming.
+The list of blocked IP ranges may be big (thousands of entries), so analyzing whether an IP address matches any IP range in the list may be time consuming. The 'linear search' through all IP ranges would probably be too slow.
 
-The list of IP ranges changes rarely, so it is better to build a data structure that supports quick comparision of IP addresses. The good candidate is a [radix tree](https://en.wikipedia.org/wiki/Radix_tree).
+Because the list of IP ranges changes rarely (compared to the frequency of incoming connections) it is recommended to build some efficient data structure that supports quick comparision of IP addresses. The good candidate is a [radix tree](https://en.wikipedia.org/wiki/Radix_tree) or something like [TSS](https://citeseerx.ist.psu.edu/document?repid=rep1&type=pdf&doi=3aa1dd14e3d1c20d1f09b0ce0d4b4dd7b1190885). This can be decided during implementation phase and would probably require some tests (benchmark, etc.).
 
 #### Events retention
 
