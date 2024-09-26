@@ -38,27 +38,71 @@ export GATEWAY=kyma-system/kyma-gateway
 <!-- tabs:end -->
 
 2. Deploy `oauth2-proxy` with configuration for your authorization server. This tutorial uses [oauth2-proxy helm chart](https://github.com/oauth2-proxy/manifests) 
-for this purpose. Sample configuration is provided in [this directory](../v2alpha1/resources/oauth2-proxy-helm).
+for this purpose.
 
-To make sure that `oauth2-proxy` works with your provider, you need to at least adapt the following configuration:
-
-```yaml
-config:
-  clientID: "<your application aud claim>"
-  # Create a new secret with the following command
-  # openssl rand -base64 32 | head -c 32 | base64
-  clientSecret: "random-secret"
-
-extraArgs: 
-  provider: oidc
-  whitelist-domain: "*.<your domain>:*"
-  oidc-issuer-url: "<your jwt token issuer>"
-```
+Export the following environment variables before deploying oauth2-proxy. 
+You can generate the CLIENT and COOKIE secret with `openssl rand -base64 32 | head -c 32 | base64`.
 
 You may want to adapt this configuration to better suit your needs.
 Additional configuration parameters are listed [here](https://oauth2-proxy.github.io/oauth2-proxy/configuration/overview/#config-options).
 
-3. To expose and secure the Service, create the following APIRule:
+```
+export CLIENT_ID={CLIENT_ID/APPLICATION_AUDIENCE}
+export CLIENT_SECRET={CLIENT_SECRET} # Generate with "openssl rand -base64 32 | head -c 32 | base64"
+export COOKIE_SECRET={COOKIE_SECRET} # Generate with "openssl rand -base64 32 | head -c 32 | base64"
+export OIDC_ISSUER_URL={OIDC_ISSUER_URL} # e.g "https://issuer.com"
+export TOKEN_SCOPES={TOKEN_SCOPES} # e.g. "read write"
+```
+
+```
+cat <<EOF > values.yaml
+config:
+  clientID: $CLIENT_ID
+  clientSecret: $CLIENT_SECRET
+  cookieName: ""
+  cookieSecret: $COOKIE_SECRET
+
+extraArgs: 
+  auth-logging: true
+  cookie-domain: "$DOMAIN_TO_EXPOSE_WORKLOADS"
+  cookie-samesite: lax
+  cookie-secure: false
+  force-json-errors: true
+  login-url: static://401
+  oidc-issuer-url: $OIDC_ISSUER_URL
+  pass-access-token: true
+  pass-authorization-header: true
+  pass-host-header: true 
+  pass-user-headers: true
+  provider: oidc
+  request-logging: true
+  reverse-proxy: true
+  scope: "$TOKEN_SCOPES"
+  set-authorization-header: true
+  set-xauthrequest: true
+  skip-jwt-bearer-tokens: true
+  skip-oidc-discovery: false
+  skip-provider-button: true
+  standard-logging: true
+  upstream: static://200
+  whitelist-domain: "*.$DOMAIN_TO_EXPOSE_WORKLOADS:*"
+EOF
+```
+
+Install oauth2-proxy with your configuration using Helm:
+
+```
+helm repo add oauth2-proxy https://oauth2-proxy.github.io/manifests
+helm upgrade --install oauth2-proxy oauth2-proxy/oauth2-proxy -f values.yaml -n oauth2-proxy
+```
+
+3. Register `oauth2-proxy` as authorization provider in Istio module:
+
+```
+kubectl patch istio -n kyma-system default --type merge --patch '{"spec":{"config":{"authorizers":[{"name":"oauth2-proxy","port":80,"service":"oauth2-proxy.oauth2-proxy.svc.cluster.local","headers":{"inCheck":{"include":["x-forwarded-for", "cookie", "authorization"]}}}]}}}'
+```
+
+4. To expose and secure the Service, create the following APIRule:
 
 ```bash
 cat <<EOF | kubectl apply -f -
