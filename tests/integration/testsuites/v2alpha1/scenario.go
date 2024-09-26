@@ -93,6 +93,27 @@ func (s *scenario) theAPIRuleIsApplied() error {
 	return helpers.ApplyApiRule(s.resourceManager.CreateResources, s.resourceManager.UpdateResources, s.k8sClient, testcontext.GetRetryOpts(), r)
 }
 
+func (s *scenario) theAPIRuleV2Alpha1IsApplied() error {
+	r, err := manifestprocessor.ParseFromFileWithTemplate(s.ApiResourceManifestPath, s.ApiResourceDirectory, s.ManifestTemplate)
+	if err != nil {
+		return err
+	}
+	return helpers.ApplyApiRuleV2Alpha1(s.resourceManager.CreateResources, s.resourceManager.UpdateResources, s.k8sClient, testcontext.GetRetryOpts(), r)
+}
+
+func (s *scenario) theAPIRuleV2Alpha1IsAppliedExpectError(errorMessage string) error {
+	r, err := manifestprocessor.ParseFromFileWithTemplate(s.ApiResourceManifestPath, s.ApiResourceDirectory, s.ManifestTemplate)
+	if err != nil {
+		return err
+	}
+	return helpers.ApplyApiRuleV2Alpha1ExpectError(s.resourceManager.CreateResources, s.resourceManager.UpdateResources, s.k8sClient, testcontext.GetRetryOpts(), r, errorMessage)
+}
+
+func (s *scenario) specifiesCustomGateway(gatewayNamespace, gatewayName string) {
+	s.ManifestTemplate["GatewayNamespace"] = gatewayNamespace
+	s.ManifestTemplate["GatewayName"] = gatewayName
+}
+
 func (s *scenario) theAPIRuleHasStatusWithDesc(expectedState, expectedDescription string) error {
 	resourceManifest, err := manifestprocessor.ParseFromFileWithTemplate(s.ApiResourceManifestPath, s.ApiResourceDirectory, s.ManifestTemplate)
 	if err != nil {
@@ -124,6 +145,23 @@ func (s *scenario) theAPIRuleHasStatusWithDesc(expectedState, expectedDescriptio
 	}, testcontext.GetRetryOpts()...)
 }
 
+func (s *scenario) getGatewayHost(name, namespace string) (string, error) {
+	var host string
+	err := retry.Do(func() error {
+		apiRule, err := s.resourceManager.GetResource(s.k8sClient, resource.GetResourceGvr("Gateway"), namespace, name)
+		if err != nil {
+			return err
+		}
+		host = strings.TrimPrefix(apiRule.Object["spec"].(map[string]interface{})["servers"].([]interface{})[0].(map[string]interface{})["hosts"].([]interface{})[0].(string), "*.")
+		return nil
+	}, testcontext.GetRetryOpts()...)
+
+	if err != nil {
+		return "", err
+	}
+	return host, nil
+}
+
 func (s *scenario) callingTheEndpointWithMethodWithInvalidTokenShouldResultInStatusBetween(path string, method string, lower, higher int) error {
 	requestHeaders := map[string]string{testcontext.AuthorizationHeaderName: testcontext.AnyToken}
 	return s.httpClient.CallEndpointWithHeadersAndMethod(requestHeaders, fmt.Sprintf("%s%s", s.Url, path), method, &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher})
@@ -136,6 +174,14 @@ func (s *scenario) callingTheEndpointWithInvalidTokenShouldResultInStatusBetween
 
 func (s *scenario) callingTheEndpointWithoutTokenShouldResultInStatusBetween(path string, lower, higher int) error {
 	return s.httpClient.CallEndpointWithRetries(fmt.Sprintf("%s/%s", s.Url, strings.TrimLeft(path, "/")), &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher})
+}
+
+func (s *scenario) callingShortHostWithoutTokenShouldResultInStatusBetween(host, path string, lower, higher int) error {
+	gatewayHost, err := s.getGatewayHost(s.config.GatewayName, s.config.GatewayNamespace)
+	if err != nil {
+		return err
+	}
+	return s.httpClient.CallEndpointWithRetries(fmt.Sprintf("https://%s.%s/%s", host, gatewayHost, strings.TrimLeft(path, "/")), &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher})
 }
 
 func (s *scenario) callingTheEndpointWithHeader(path, headerName, value string, lower, higher int) error {

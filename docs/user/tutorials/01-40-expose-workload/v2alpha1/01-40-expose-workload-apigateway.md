@@ -8,7 +8,7 @@ This tutorial shows how to expose an unsecured instance of the HTTPBin Service a
 ## Prerequisites
 
 * [Deploy a sample HTTPBin Service](../../01-00-create-workload.md).
-* [Set up your custom domain](../../01-10-setup-custom-domain-for-workload.md) or use a Kyma domain instead. 
+* [Set up your custom domain](../../01-10-setup-custom-domain-for-workload.md) or use a Kyma domain instead.
 
 ## Steps
 
@@ -17,10 +17,10 @@ This tutorial shows how to expose an unsecured instance of the HTTPBin Service a
 #### **kubectl**
 
 1. Depending on whether you use your custom domain or a Kyma domain, export the necessary values as environment variables:
-  
+
   <!-- tabs:start -->
   #### **Custom Domain**
-      
+
   ```bash
   export DOMAIN_TO_EXPOSE_WORKLOADS={DOMAIN_NAME}
   export GATEWAY=$NAMESPACE/httpbin-gateway
@@ -43,7 +43,7 @@ This tutorial shows how to expose an unsecured instance of the HTTPBin Service a
       name: httpbin
       namespace: $NAMESPACE
     spec:
-      hosts: 
+      hosts:
         - httpbin.$DOMAIN_TO_EXPOSE_WORKLOADS
       service:
         name: $SERVICE_NAME
@@ -61,7 +61,7 @@ This tutorial shows how to expose an unsecured instance of the HTTPBin Service a
     ```
 
 > [!NOTE]
-> If you are using k3d, add `httpbin.kyma.local` to the entry with k3d IP in your system's `/etc/hosts` file. 
+> If you are using k3d, add `httpbin.kyma.local` to the entry with k3d IP in your system's `/etc/hosts` file.
 
 > [!NOTE]
 > If you don't specify a namespace for your Service, the default namespace is used.

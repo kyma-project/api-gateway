@@ -2,23 +2,27 @@ package virtualservice
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"strings"
+	"time"
+
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	"github.com/kyma-project/api-gateway/internal/builders"
+	"github.com/kyma-project/api-gateway/internal/helpers"
 	"github.com/kyma-project/api-gateway/internal/processing"
 	"github.com/kyma-project/api-gateway/internal/processing/default_domain"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
-	"time"
 )
 
 const defaultHttpTimeout uint32 = 180
 
-func NewVirtualServiceProcessor(config processing.ReconciliationConfig, apiRule *gatewayv2alpha1.APIRule) VirtualServiceProcessor {
+func NewVirtualServiceProcessor(_ processing.ReconciliationConfig, apiRule *gatewayv2alpha1.APIRule, gateway *networkingv1beta1.Gateway) VirtualServiceProcessor {
 	return VirtualServiceProcessor{
 		ApiRule: apiRule,
 		Creator: virtualServiceCreator{
-			defaultDomainName: config.DefaultDomainName,
+			gateway: gateway,
 		},
 	}
 }
@@ -80,7 +84,7 @@ func (r VirtualServiceProcessor) getObjectChanges(desired *networkingv1beta1.Vir
 }
 
 type virtualServiceCreator struct {
-	defaultDomainName string
+	gateway *networkingv1beta1.Gateway
 }
 
 // Create returns the Virtual Service using the configuration of the APIRule.
@@ -88,8 +92,28 @@ func (r virtualServiceCreator) Create(api *gatewayv2alpha1.APIRule) (*networking
 	virtualServiceNamePrefix := fmt.Sprintf("%s-", api.ObjectMeta.Name)
 
 	vsSpecBuilder := builders.VirtualServiceSpec()
+	gatewayDomain := ""
+
 	for _, host := range api.Spec.Hosts {
-		vsSpecBuilder.AddHost(default_domain.GetHostWithDomain(string(*host), r.defaultDomainName))
+		if helpers.IsShortHostName(string(*host)) {
+			if gatewayDomain == "" {
+				if r.gateway == nil {
+					return nil, errors.New("gateway must be provided when using short host name")
+				}
+				for _, server := range r.gateway.Spec.Servers {
+					if len(server.Hosts) > 0 {
+						gatewayDomain = strings.TrimPrefix(server.Hosts[0], "*.")
+						break
+					}
+				}
+			}
+			if gatewayDomain == "" {
+				return nil, errors.New("gateway with host definition must be provided when using short host name")
+			}
+			vsSpecBuilder.AddHost(default_domain.GetHostWithDomain(string(*host), gatewayDomain))
+		} else {
+			vsSpecBuilder.AddHost(string(*host))
+		}
 	}
 
 	vsSpecBuilder.Gateway(*api.Spec.Gateway)
@@ -132,7 +156,7 @@ func (r virtualServiceCreator) Create(api *gatewayv2alpha1.APIRule) (*networking
 			// For now, the X-Forwarded-Host header is set to the first host in the APIRule hosts list.
 			// The status of this header is still under discussion in the following GitHub issue:
 			// https://github.com/kyma-project/api-gateway/issues/1159
-			SetHostHeader(default_domain.GetHostWithDomain(string(*api.Spec.Hosts[0]), r.defaultDomainName))
+			SetHostHeader(default_domain.GetHostWithDomain(string(*api.Spec.Hosts[0]), gatewayDomain))
 
 		if rule.Request != nil {
 			if rule.Request.Headers != nil {

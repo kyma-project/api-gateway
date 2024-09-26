@@ -3,11 +3,13 @@ package helpers
 import (
 	"encoding/json"
 	"errors"
+	"log"
+	"strings"
+
 	"github.com/avast/retry-go/v4"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/resource"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/dynamic"
-	"log"
 )
 
 type apiRuleStatus struct {
@@ -31,7 +33,6 @@ type RetryableApiRule func(k8sClient dynamic.Interface, resources ...unstructure
 
 // APIRuleWithRetries tries toExecute function and retries with onRetry if APIRule status is "ERROR"
 func ApplyApiRule(toExecute RetryableApiRule, onRetry RetryableApiRule, k8sClient dynamic.Interface, retryOpts []retry.Option, resources []unstructured.Unstructured) error {
-
 	res, err := toExecute(k8sClient, resources...)
 	if err != nil {
 		return err
@@ -66,8 +67,77 @@ func ApplyApiRule(toExecute RetryableApiRule, onRetry RetryableApiRule, k8sClien
 	return nil
 }
 
-func UpdateApiRule(resourceManager *resource.Manager, k8sClient dynamic.Interface, retryOpts []retry.Option, resources []unstructured.Unstructured) error {
+func ApplyApiRuleV2Alpha1(toExecute RetryableApiRule, onRetry RetryableApiRule, k8sClient dynamic.Interface, retryOpts []retry.Option, resources []unstructured.Unstructured) error {
+	res, err := toExecute(k8sClient, resources...)
+	if err != nil {
+		return err
+	}
+	apiStatus, err := GetAPIRuleStatusV2Alpha1(res)
+	if err != nil {
+		return err
+	}
+	if apiStatus.Status.State != "Ready" {
+		return retry.Do(func() error {
+			res, err := onRetry(k8sClient, resources...)
+			if err != nil {
+				return err
+			}
+			js, err := json.Marshal(res)
+			if err != nil {
+				return err
+			}
+			err = json.Unmarshal(js, &apiStatus)
+			if err != nil {
+				return err
+			}
+			if apiStatus.Status.State != "Ready" {
+				log.Println("APIRule status not Ready: " + apiStatus.Status.Description)
+				return errors.New("APIRule status not Ready: " + apiStatus.Status.Description)
+			}
+			return nil
+		}, retryOpts...)
+	}
+	return nil
+}
 
+func ApplyApiRuleV2Alpha1ExpectError(toExecute RetryableApiRule, onRetry RetryableApiRule, k8sClient dynamic.Interface, retryOpts []retry.Option, resources []unstructured.Unstructured, errorMessage string) error {
+	res, err := toExecute(k8sClient, resources...)
+	if err != nil {
+		return err
+	}
+	apiStatus, err := GetAPIRuleStatusV2Alpha1(res)
+	if err != nil {
+		return err
+	}
+	if apiStatus.Status.State != "Error" {
+		return retry.Do(func() error {
+			res, err := onRetry(k8sClient, resources...)
+			if err != nil {
+				return err
+			}
+			js, err := json.Marshal(res)
+			if err != nil {
+				return err
+			}
+			err = json.Unmarshal(js, &apiStatus)
+			if err != nil {
+				return err
+			}
+			if apiStatus.Status.State != "Error" {
+				log.Println("APIRule status not Error: " + apiStatus.Status.Description)
+				return errors.New("APIRule status not Error: " + apiStatus.Status.Description)
+			}
+			if !strings.Contains(apiStatus.Status.Description, errorMessage) {
+				log.Println("APIRule Error status description does not contain expected string: " + apiStatus.Status.Description)
+				return errors.New("APIRule Error status description does not contain expected string: " + apiStatus.Status.Description)
+			}
+			return nil
+		}, retryOpts...)
+	}
+	return nil
+}
+
+func UpdateApiRule(resourceManager *resource.Manager, k8sClient dynamic.Interface, retryOpts []retry.Option, resources []unstructured.Unstructured) error {
 	status := apiRuleStatus{}
 
 	res, err := resourceManager.UpdateResources(k8sClient, resources...)

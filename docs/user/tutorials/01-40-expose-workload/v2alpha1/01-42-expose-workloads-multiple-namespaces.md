@@ -28,12 +28,12 @@ Create three namespaces. Deploy two instances of the HTTPBin Service, each in a 
     export NAMESPACE_SECOND_SERVICE={NAMESPACE_NAME}
     export NAMESPACE_APIRULE={NAMESPACE_NAME}
     ```
-  
+
 2. Depending on whether you use your custom domain or a Kyma domain, export the necessary values as environment variables:
-  
+
     <!-- tabs:start -->
     #### **Custom Domain**
-    
+
     ```bash
     export DOMAIN_TO_EXPOSE_WORKLOADS={DOMAIN_NAME}
     export GATEWAY=$NAMESPACE/httpbin-gateway
@@ -56,7 +56,7 @@ Create three namespaces. Deploy two instances of the HTTPBin Service, each in a 
       name: httpbin-services
       namespace: $NAMESPACE_APIRULE
     spec:
-      hosts: 
+      hosts:
         - httpbin-services.$DOMAIN_TO_EXPOSE_WORKLOADS
       gateway: $GATEWAY
       rules:
@@ -97,7 +97,7 @@ To call the endpoints, send `GET` requests to the HTTPBin Services:
   ```bash
   curl -ik -X GET https://httpbin-services.$DOMAIN_TO_EXPOSE_WORKLOADS/headers
 
-  curl -ik -X GET https://httpbin-services.$DOMAIN_TO_EXPOSE_WORKLOADS/get 
+  curl -ik -X GET https://httpbin-services.$DOMAIN_TO_EXPOSE_WORKLOADS/get
   ```
 If successful, the calls return the `200 OK` response code.
 

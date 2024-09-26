@@ -87,4 +87,4 @@ With this step, you will set up the OIDC provider in the `kubeconfig` file to en
         user: oidc
     ```
 
-5. Now, you can share the modified kubeconfig file with the members of your team or organization. When they use it, your identity provider will handle the authentication. The Kubernetes API server will make sure they have access to resources according to the roles bound to them as individuals or group members.     
+5. Now, you can share the modified kubeconfig file with the members of your team or organization. When they use it, your identity provider will handle the authentication. The Kubernetes API server will make sure they have access to resources according to the roles bound to them as individuals or group members.

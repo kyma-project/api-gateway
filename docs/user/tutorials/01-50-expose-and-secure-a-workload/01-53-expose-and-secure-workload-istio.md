@@ -15,7 +15,7 @@ This tutorial shows how to expose and secure a workload using Istio's built-in s
 <!-- tabs:start -->
   #### **Kyma dashboard**
 
-  1. Go to **Istio > Virtual Services** and select **Create**. 
+  1. Go to **Istio > Virtual Services** and select **Create**.
   2. Provide the following configuration details:
       - **Name**: `httpbin`
       - Go to **HTTP > Matches > Match** and provide URI of the type **prefix** and value `/`.
@@ -27,10 +27,10 @@ This tutorial shows how to expose and secure a workload using Istio's built-in s
   #### **kubectl**
 
   1. Depending on whether you use your custom domain or a Kyma domain, export the necessary values as environment variables:
-      
+
       <!-- tabs:start -->
       #### **Custom Domain**
-        
+
       ```bash
       export DOMAIN_TO_EXPOSE_WORKLOADS={DOMAIN_NAME}
       export GATEWAY=$NAMESPACE/httpbin-gateway
@@ -41,7 +41,7 @@ This tutorial shows how to expose and secure a workload using Istio's built-in s
       export DOMAIN_TO_EXPOSE_WORKLOADS={KYMA_DOMAIN_NAME}
       export GATEWAY=kyma-system/kyma-gateway
       ```
-      <!-- tabs:end -->  
+      <!-- tabs:end -->
 
   2. To expose your workload, create a VirtualService:
 
@@ -68,7 +68,7 @@ This tutorial shows how to expose and secure a workload using Istio's built-in s
               host: httpbin.$NAMESPACE.svc.cluster.local
       EOF
       ```
-<!-- tabs:end --> 
+<!-- tabs:end -->
 
 ### Secure Your Workload
 
@@ -162,15 +162,15 @@ To access your HTTPBin Service, use [Postman](https://www.postman.com) or [curl]
 
 1. Try to access the secured workload without credentials.
     1. Enter the URL `https://httpbin.{DOMAIN_TO_EXPOSE_WORKLOADS}/status/200` and replace `{DOMAIN_TO_EXPOSE_WORKLOADS}` with the name of your domain. 
-    2. To call the endpoint, send a `GET` request to the HTTPBin Service. 
+    2. To call the endpoint, send a `GET` request to the HTTPBin Service.
 
     You get the error `403 Forbidden`.
 
 2. Now, access the secured workload using the correct JWT.
     1. Enter the URL `https://httpbin.{DOMAIN_TO_EXPOSE_WORKLOADS}/status/200` and replace `{DOMAIN_TO_EXPOSE_WORKLOADS}` with the name of your domain. 
-    2. Go to the **Headers** tab. 
+    2. Go to the **Headers** tab.
     3. Add a new header with the key `Authorization` and the value `Bearer {ACCESS_TOKEN}`. Replace `{ACCESS_TOKEN}` with your JWT.
-    4. To call the endpoint, send a `GET` request to the HTTPBin Service. 
+    4. To call the endpoint, send a `GET` request to the HTTPBin Service.
 
     If successful, you get the `200 OK` response code.
 
