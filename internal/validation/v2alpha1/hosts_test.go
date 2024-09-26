@@ -2,6 +2,7 @@ package v2alpha1
 
 import (
 	"github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
+	"github.com/kyma-project/api-gateway/internal/validation"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"istio.io/api/networking/v1beta1"
@@ -200,7 +201,7 @@ var _ = Describe("Validate hosts", func() {
 		Expect(problems[0].Message).To(Equal("Lowercase RFC 1123 label is only supported as the APIRule host when selected Gateway has a single host definition matching *.<fqdn> format"))
 	})
 
-	It("Should fail if any host that is occupied by any Virtual Service exposed by another resource", func() {
+	validateHostsHelper := func(hosts []*v2alpha1.Host, useVsOwnerLabel bool) []validation.Failure {
 		//given
 		apiRule := &v2alpha1.APIRule{
 			ObjectMeta: metav1.ObjectMeta{
@@ -208,36 +209,83 @@ var _ = Describe("Validate hosts", func() {
 				Namespace: "some-ns",
 			},
 			Spec: v2alpha1.APIRuleSpec{
-				Hosts: []*v2alpha1.Host{
-					ptr.To(v2alpha1.Host("host.example.com")),
-					ptr.To(v2alpha1.Host("occupied.example.com")),
-				},
+				Gateway: ptr.To("gateway-ns/gateway-name"),
+				Hosts:   hosts,
 			},
 		}
 		virtualService1 := &networkingv1beta1.VirtualService{
 			Spec: v1beta1.VirtualService{
 				Hosts: []string{
 					"not-occupied1.example.com",
-					"not-occupied2.example.com"},
+					"not-occupied2.example.com",
+				},
 			},
 		}
 		virtualService2 := &networkingv1beta1.VirtualService{
 			Spec: v1beta1.VirtualService{
 				Hosts: []string{
 					"not-occupied3.example.com",
-					"occupied.example.com"},
+					"occupied.example.com",
+				},
 			},
 		}
-
+		if useVsOwnerLabel {
+			virtualService2.ObjectMeta.Labels = getMapWithOwnerLabel(apiRule)
+		}
 		virtualServiceList := networkingv1beta1.VirtualServiceList{
 			Items: []*networkingv1beta1.VirtualService{
 				virtualService1,
 				virtualService2,
 			},
 		}
+		gwList := networkingv1beta1.GatewayList{
+			Items: []*networkingv1beta1.Gateway{
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "gateway-name",
+						Namespace: "gateway-ns",
+					},
+					Spec: v1beta1.Gateway{
+						Servers: []*v1beta1.Server{
+							{
+								Hosts: []string{"*.example.com"},
+							},
+						},
+					},
+				},
+			},
+		}
 
+		return validateHosts(".spec", virtualServiceList, gwList, apiRule)
+	}
+
+	It("Should succeed if a host is occupied by a Virtual Service related to the same API Rule", func() {
 		//when
-		problems := validateHosts(".spec", virtualServiceList, networkingv1beta1.GatewayList{}, apiRule)
+		problems := validateHostsHelper([]*v2alpha1.Host{
+			ptr.To(v2alpha1.Host("host.example.com")),
+			ptr.To(v2alpha1.Host("occupied.example.com")),
+		}, true)
+
+		//then
+		Expect(problems).To(HaveLen(0))
+	})
+
+	It("Should succeed if a shot host name is occupied by a Virtual Service related to the same API Rule", func() {
+		//when
+		problems := validateHostsHelper([]*v2alpha1.Host{
+			ptr.To(v2alpha1.Host("occupied")),
+		}, true)
+
+		//then
+		Expect(problems).To(HaveLen(0))
+	})
+
+	It("Should fail if any host that is occupied by any Virtual Service exposed by another resource", func() {
+		//when
+		problems := validateHostsHelper([]*v2alpha1.Host{
+			ptr.To(v2alpha1.Host("host.example.com")),
+			ptr.To(v2alpha1.Host("occupied.example.com")),
+		}, false)
 
 		//then
 		Expect(problems).To(HaveLen(1))
@@ -245,49 +293,16 @@ var _ = Describe("Validate hosts", func() {
 		Expect(problems[0].Message).To(Equal("Host is occupied by another Virtual Service"))
 	})
 
-	It("Should not fail if a host is occupied by the Virtual Service related to the same API Rule", func() {
-		//given
-		apiRule := &v2alpha1.APIRule{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "some-name",
-				Namespace: "some-ns",
-			},
-			Spec: v2alpha1.APIRuleSpec{
-				Hosts: []*v2alpha1.Host{
-					ptr.To(v2alpha1.Host("host.example.com")),
-					ptr.To(v2alpha1.Host("occupied.example.com")),
-				},
-			},
-		}
-		virtualService1 := &networkingv1beta1.VirtualService{
-			Spec: v1beta1.VirtualService{
-				Hosts: []string{
-					"not-occupied1.example.com",
-					"not-occupied2.example.com"},
-			},
-		}
-		virtualService2 := &networkingv1beta1.VirtualService{
-			Spec: v1beta1.VirtualService{
-				Hosts: []string{
-					"not-occupied3.example.com",
-					"occupied.example.com"},
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				Labels: getMapWithOwnerLabel(apiRule),
-			},
-		}
-		virtualServiceList := networkingv1beta1.VirtualServiceList{
-			Items: []*networkingv1beta1.VirtualService{
-				virtualService1,
-				virtualService2,
-			},
-		}
-
+	It("Should fail if any short host name that is occupied by any Virtual Service exposed by another resource", func() {
 		//when
-		problems := validateHosts(".spec", virtualServiceList, networkingv1beta1.GatewayList{}, apiRule)
+		problems := validateHostsHelper([]*v2alpha1.Host{
+			ptr.To(v2alpha1.Host("occupied")),
+		}, false)
 
 		//then
-		Expect(problems).To(HaveLen(0))
+		Expect(problems).To(HaveLen(1))
+		Expect(problems[0].AttributePath).To(Equal(".spec.hosts[0]"))
+		Expect(problems[0].Message).To(Equal("Host is occupied by another Virtual Service"))
 	})
 })
 

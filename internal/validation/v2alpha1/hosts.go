@@ -7,6 +7,7 @@ import (
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	"github.com/kyma-project/api-gateway/internal/helpers"
+	"github.com/kyma-project/api-gateway/internal/processing/default_domain"
 	"github.com/kyma-project/api-gateway/internal/validation"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 )
@@ -25,6 +26,7 @@ func validateHosts(parentAttributePath string, vsList networkingv1beta1.VirtualS
 	}
 
 	for hostIndex, host := range hosts {
+		gatewayDomain := ""
 		if helpers.IsShortHostName(string(*host)) {
 			gateway := findGateway(*apiRule.Spec.Gateway, gwList)
 			if gateway == nil {
@@ -40,6 +42,7 @@ func validateHosts(parentAttributePath string, vsList networkingv1beta1.VirtualS
 					Message:       "Lowercase RFC 1123 label is only supported as the APIRule host when selected Gateway has a single host definition matching *.<fqdn> format",
 				})
 			}
+			gatewayDomain = getGatewayDomain(gateway)
 		} else if !helpers.IsFqdnHostName(string(*host)) {
 			hostAttributePath := fmt.Sprintf("%s[%d]", hostsAttributePath, hostIndex)
 			failures = append(failures, validation.Failure{
@@ -48,7 +51,8 @@ func validateHosts(parentAttributePath string, vsList networkingv1beta1.VirtualS
 			})
 		}
 		for _, vs := range vsList.Items {
-			if occupiesHost(vs, string(*host)) && !ownedBy(vs, apiRule) {
+			if occupiesHost(vs, default_domain.GetHostWithDomain(string(*host), gatewayDomain)) && !ownedBy(vs, apiRule) {
+				fmt.Printf("its occupied\n")
 				hostAttributePath := fmt.Sprintf("%s[%d]", hostsAttributePath, hostIndex)
 				failures = append(failures, validation.Failure{
 					AttributePath: hostAttributePath,
@@ -59,6 +63,17 @@ func validateHosts(parentAttributePath string, vsList networkingv1beta1.VirtualS
 	}
 
 	return failures
+}
+
+func getGatewayDomain(gateway *networkingv1beta1.Gateway) string {
+	if gateway != nil {
+		for _, server := range gateway.Spec.Servers {
+			if len(server.Hosts) > 0 {
+				return strings.TrimPrefix(server.Hosts[0], "*.")
+			}
+		}
+	}
+	return ""
 }
 
 func hasSingleHostDefinitionWithCorrectPrefix(gateway *networkingv1beta1.Gateway) bool {
