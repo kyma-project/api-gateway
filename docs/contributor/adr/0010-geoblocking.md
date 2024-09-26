@@ -2,7 +2,7 @@
 
 ## Status
 
-Draft
+Accepted
 
 ## Context
 
@@ -24,7 +24,7 @@ For that purpose a new service 'ip-auth' is introduced. Its main responsibility 
 
 High level overview:
 
-![IP Auth](../../assets/geoblocking.svg)
+![IP Auth](../../assets/geoblocking.drawio.svg)
 
 ### Modes of operation
 
@@ -56,7 +56,7 @@ data:
 
 The allow list should take precedence over the block list, which may be useful in allowing the narrower range within blocked broader range. Lists may contain both IPv4 and IPv6 ranges.
 
-![Static list](../../assets/geoblocking-custom-list.svg)
+![Static list](../../assets/geoblocking-custom-list.drawio.svg)
 
 #### Usage of SAP internal service
 
@@ -97,7 +97,7 @@ data:
     - 2001:0002::/48
 ```
 
-![SAP internal service](../../assets/geoblocking-SAP-service.svg)
+![SAP internal service](../../assets/geoblocking-SAP-service.drawio.svg)
 
 ### Geoblocking CR and controller
 
@@ -109,7 +109,7 @@ In order to ensure reliability and configurability a new Geoblocking Custom Reso
 
 There should be only one Geoblocking resource. The controller should set the additional Geoblocking CR in `Error` state, similarly to [APIGateway CR](https://github.com/kyma-project/api-gateway/blob/05ed57f3299f42c2565ed1b28b84dee808a5213b/controllers/operator/apigateway_controller.go#L100).
 
-![Geoblocking controller](../../assets/geoblocking-cr-controller.svg)
+![Geoblocking controller](../../assets/geoblocking-cr-controller.drawio.svg)
 
 #### CR examples
 
@@ -169,7 +169,7 @@ Pods should slightly randomize an update check time to benefit from the above op
 
 The list of blocked IP ranges may be big (thousands of entries), so analyzing whether an IP address matches any IP range in the list may be time consuming. The 'linear search' through all IP ranges would probably be too slow.
 
-Because the list of IP ranges changes rarely (compared to the frequency of incoming connections) it is recommended to build some efficient data structure that supports quick comparision of IP addresses. The good candidate is a [radix tree](https://en.wikipedia.org/wiki/Radix_tree) or something like [TSS](https://citeseerx.ist.psu.edu/document?repid=rep1&type=pdf&doi=3aa1dd14e3d1c20d1f09b0ce0d4b4dd7b1190885). This can be decided during implementation phase and would probably require some tests (benchmark, etc.).
+Because the list of IP ranges changes rarely (compared to the frequency of incoming connections) it is recommended to build some efficient data structure that supports quick comparision of IP addresses. The good candidate is a [radix tree](https://en.wikipedia.org/wiki/Radix_tree) or something like [TSS](https://citeseerx.ist.psu.edu/document?repid=rep1&type=pdf&doi=3aa1dd14e3d1c20d1f09b0ce0d4b4dd7b1190885). This can be decided during the implementation phase and would probably require some tests (benchmark, etc.).
 
 #### Events retention
 
@@ -240,7 +240,7 @@ Geoblocking resources would be placed in the following namespaces:
 | IP ranges Config Map with cache             | ip-auth or External customer   | kyma-system                        |
 | Authorization Policy                        | Geoblocking Operator           | istio-system                       |
 
-![Geoblocking namespaces](../../assets/geoblocking-namespaces.svg)
+![Geoblocking namespaces](../../assets/geoblocking-namespaces.drawio.svg)
 
 ## Considered alternative architectural approaches
 
@@ -290,9 +290,9 @@ Decision: it doesn't make sense to expose so many detailed parameters, because t
 
 The list of IP ranges is processed by each ip-auth container and stored in its memory and regularly refreshed using geoblocking service. If geoblocking service doesn't work then the ip-auth containers may work as before, the list is not refreshed.
 
-However, the problem is when the ip-auth container needs to be restarted when geoblocking service is not available, so it can't download the list of IP ranges. This may be the case during an upgrade of ip-auth or in the event of runtime problems (for example ouf of memory).
+However, the problem is when the ip-auth container needs to be restarted when geoblocking service is not available, so it can't download the list of IP ranges. This may be the case during an upgrade of ip-auth or in the event of runtime problems (for example ouf of memory). It is not acceptable to allow the traffic in such case. This means that the list of IP ranges should be stored somehow to be able to survive the pod restarts. This requirement is refered to as 'fallback'.
 
-It is not acceptable to allow the traffic as a fallback in such case.
+Another aspect is the reduction of the number of connections done to the SAP internal service. Multiple ip-auth pods independently asking SAP internal service for policy updates would generate unnecessary load and it should be avoided if possible. This requirement is refered to as 'cache'.
 
 The following options have been considered:
 
@@ -320,7 +320,7 @@ The following options have been considered:
 |                    | Less load on geoblocking service                        |                                                         |
 |                    | Works well with restart / upgrade / scaling             |                                                         |
 
-Decision: Let's use a Config Map as a fallback and cache for IP range allow/block list. However, let's split it technically from the Config Map that contains IP ranges provided by the end-user, so:
+Decision: Let's use a Config Map as a fallback and a cache for IP range allow/block list. However, let's split it technically from the Config Map that contains IP ranges provided by the end-user, so:
 - the Config Map containing custom IP range allow/block list is configured by the user, it becomes a contract
 - the Config Map containing IP range allow/block list downloaded from the SAP internal service is a Kyma internal resource and the implementation may change at any time, so no other module should use it
 
