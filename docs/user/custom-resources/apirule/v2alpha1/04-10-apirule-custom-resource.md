@@ -97,7 +97,7 @@ spec:
       noAuth: true
 ```
 
-Usage of short host name. It will use the domain from the referenced Gateway `kyma-system/kyma-gateway`:
+This sample APIRule illustrates the usage of a short host name. It uses the domain from the referenced Gateway `kyma-system/kyma-gateway`:
 
 ```yaml
 apiVersion: gateway.kyma-project.io/v2alpha1
