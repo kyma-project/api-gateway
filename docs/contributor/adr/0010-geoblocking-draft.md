@@ -153,14 +153,15 @@ spec:
 
 In order to reduce unnecessary updates of the list of blocked IP ranges the ip-auth service should use ETag mechanism, which is supported by the SAP internal service.
 
-The local copy (stored in a Config Map) should be used to optimize the amount of connections to the SAP internal service:
-- if the local copy contains a newer version (lastUpdateTime) -> load it
+The local copy (stored in a Config Map) should be used to reduce the amount of connections to the SAP internal service. The idea is that only one pod should contact the SAP internal service (if the time interval defined in refreshInterval has passed). So the algorithm may use the following rules:
+
+- if the local copy contains a newer version of the policy list (lastUpdateTime attribute) -> it means that another pod has already downloaded it from the SAP internal service, so load the policy list from the local copy
 - if the update check has been recently performed (now - lastUpdateCheckTime < refreshInterval) -> don't check it again
-- if the update check hasn't been recently performed (now - lastUpdateCheckTime >= refreshInterval) -> check for an update
-- if there is a newer version available in the central SAP Geoblocking service -> download, apply it, update a local copy and set lastUpdateCheckTime and lastUpdateTime to the current time
-- if there is no newer version -> update lastUpdateCheckTime time (so other pods may skip the check)
+- if the update check hasn't been recently performed (now - lastUpdateCheckTime >= refreshInterval) -> check whether a newer version of the policy list is available in the SAP internal service
 - if there is a problem with checking for an update -> log a warning
-- if there is a problem with updating the local copy -> log a warning and use a new version anyway
+- if there is a newer version available in the SAP internal service -> download, apply it, store it in the local copy, set both lastUpdateCheckTime and lastUpdateTime attributes to the current time
+- if there is a problem with storing the newer version of the policy list it the local copy -> log a warning (but apply a new policy version anyway)
+- if there is no newer version available in the SAP internal service -> set lastUpdateCheckTime attribute to the current time, so other pods may skip this check (until the time defined in refreshInterval passes again)
 
 Pods should slightly randomize an update check time to benefit from the above optimization (minimize a risk of performing the check by multiple pods at the same time).
 
@@ -179,6 +180,14 @@ In order to not cause unnecessary delays the access events should be sent asynch
 This approach may cause issues if SAP internal service responds slowly or does not respond at all, because events would be consuming memory. System availability is a key factor here, so it is acceptable to drop events in order to ensure stability (prevent out of memory issues).
 
 Events should have some retry number, so the application can drop them if maximum number of retries is exceeded. Events should be also dropped if the queue is full. All such cases should be properly logged.
+
+There won't be any persistent storage for events, so unsent events would be lost in case of ip-auth crash (and SAP internal service instability).
+
+#### Graceful shutdown / probes
+
+It would be good to ensure some graceful shutdown mechanism, so the ip-auth pods may send events that are in the queue in case of controlled shutdown. The good example of such situation is autoscaling or rolling update.
+
+IP-auth should also have a readiness probe that cooperates with graceful shutdown mode, so the ip-auth won't be receiving new requests if the pod is being shut down.
 
 #### Headers used in check
 
@@ -220,16 +229,16 @@ For now we assume that the feature works with default Istio Ingress Gateway inst
 
 Geoblocking resources would be placed in the following namespaces:
 
-| Resource                           | Who creates it                | Namespace                          |
-| ---------------------------------- | ----------------------------- | ---------------------------------- |
-| Geoblocking Operator               | Power user                    | kyma-system                        |
-| Geoblocking CR                     | Power user                    | kyma-system                        |
-| ip-auth Deployment                 | Geoblocking Operator          | kyma-system                        |
-| ip-auth Service                    | Geoblocking Operator          | kyma-system                        |
-| ip-auth Secret                     | Power user                    | kyma-system                        |
-| IP ranges Config Map with input    | ip-auth or External customer  | kyma-system                        |
-| IP ranges Config Map with cache    | ip-auth or External customer  | kyma-system                        |
-| Authorization Policy               | Geoblocking Operator          | istio-system                       |
+| Resource                                    | Who creates it                 | Namespace                          |
+| ------------------------------------------- | ------------------------------ | ---------------------------------- |
+| Geoblocking Operator (API Gateway Operator) | Power user / Lifecycle Manager | kyma-system                        |
+| Geoblocking CR                              | Power user                     | kyma-system                        |
+| ip-auth Deployment                          | Geoblocking Operator           | kyma-system                        |
+| ip-auth Service                             | Geoblocking Operator           | kyma-system                        |
+| ip-auth Secret                              | Power user                     | kyma-system                        |
+| IP ranges Config Map with input             | ip-auth or External customer   | kyma-system                        |
+| IP ranges Config Map with cache             | ip-auth or External customer   | kyma-system                        |
+| Authorization Policy                        | Geoblocking Operator           | istio-system                       |
 
 ![Geoblocking namespaces](../../assets/geoblocking-namespaces.svg)
 
@@ -315,7 +324,7 @@ Decision: Let's use a Config Map as a fallback and cache for IP range allow/bloc
 - the Config Map containing custom IP range allow/block list is configured by the user, it becomes a contract
 - the Config Map containing IP range allow/block list downloaded from the SAP internal service is a Kyma internal resource and the implementation may change at any time, so no other module should use it
 
-Consequence: Config map capacity may be exceeded in future, which may require immediate attention.
+Consequence: Config map capacity may be exceeded in future, which may require immediate attention. It would be good to observe the number of entries in the policy list to be able to react to potential capacity issue early.
 
 ### ip-auth deployment configurability
 
@@ -358,7 +367,7 @@ There are multiple factors that need to be taken into consideration:
 - Ingress Gateway is created by default in the istio-system namespace
 - Users may influence Istio (via Gateway API) to create Ingress Gateway in different namespace
 - Authorization Policy references Ingress Gateway via selector, so they should be in the same namespace
-- Gateway CR is supposed to be a singleton (for now)
+- Geoblocking CR is supposed to be a singleton (for now)
 
 There are multiple approaches possible:
 - Geoblocking CR being close to the gateway (by default istio-system)
