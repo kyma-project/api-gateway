@@ -53,7 +53,6 @@ func validateHosts(parentAttributePath string, vsList networkingv1beta1.VirtualS
 		for _, vs := range vsList.Items {
 			hostWithDomain := default_domain.GetHostWithDomain(string(*host), gatewayDomain)
 			if occupiesHost(vs, hostWithDomain) && !ownedBy(vs, apiRule) {
-				fmt.Printf("its occupied\n")
 				hostAttributePath := fmt.Sprintf("%s[%d]", hostsAttributePath, hostIndex)
 				failures = append(failures, validation.Failure{
 					AttributePath: hostAttributePath,
