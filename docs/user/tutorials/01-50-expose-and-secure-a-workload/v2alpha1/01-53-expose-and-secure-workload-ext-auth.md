@@ -37,8 +37,8 @@ export GATEWAY=kyma-system/kyma-gateway
 ```
 <!-- tabs:end -->
 
-2. Deploy `oauth2-proxy` with configuration for your authorization server. This tutorial uses [oauth2-proxy helm chart](https://github.com/oauth2-proxy/manifests) 
-for this purpose.
+2. Deploy `oauth2-proxy` with configuration for your authorization server.
+This tutorial uses [oauth2-proxy helm chart](https://github.com/oauth2-proxy/manifests) for this purpose.
 
 Export the following environment variables before deploying oauth2-proxy. 
 You can generate the CLIENT and COOKIE secret with `openssl rand -base64 32 | head -c 32 | base64`.
