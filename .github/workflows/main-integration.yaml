@@ -45,10 +45,10 @@ jobs:
             const { data } = await github.rest.actions.listWorkflowRuns({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              workflow_id: 'test-main-integration.yaml',
+              workflow_id: 'main-integration.yaml',
               branch: 'main',
               status: 'success',
-              per_page: 20 
+              per_page: 40 
             });
             const pushRuns = data.workflow_runs.filter(run => run.event === 'push');
 
@@ -57,9 +57,8 @@ jobs:
             }
 
             const latestRun = pushRuns[0];
-            const sha = latestRun.head_sha;
 
-            core.setOutput('sha', sha);
+            core.setOutput('sha', latestRun.head_sha);
       - name: Set output SHA
         id: get-sha
         run: |
