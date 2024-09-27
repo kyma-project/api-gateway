@@ -42,16 +42,15 @@ jobs:
         if: ${{ github.event_name == 'schedule' }}
         with:
           script: |
-            const { data: runs } = await github.actions.listWorkflowRuns({
+            const { data } = await github.rest.actions.listWorkflowRuns({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              workflow_id: 'main-integration.yaml',
+              workflow_id: 'test-main-integration.yaml',
               branch: 'main',
               status: 'success',
               per_page: 20 
             });
-
-            const pushRuns = runs.filter(run => run.event === 'push');
+            const pushRuns = data.workflow_runs.filter(run => run.event === 'push');
 
             if (pushRuns.length === 0) {
               throw new Error('No successful push runs found');
