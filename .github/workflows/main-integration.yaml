@@ -34,6 +34,7 @@ jobs:
       tags: "${{ github.sha }}"
 
   get-sha:
+    name: Get SHA
     runs-on: ubuntu-latest
     outputs:
       sha: ${{ steps.get-sha.outputs.sha }}
