@@ -22,15 +22,53 @@ on:
 
 jobs:
   build:
-    name: build api-gateway image
-    uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
-    with:
-      name: api-gateway-manager
-      dockerfile: Dockerfile
-      context: .
-      build-args: |
-        VERSION=${{ github.sha }}
-      tags: "${{ github.sha }}"
+    runs-on: ubuntu-latest
+    outputs:
+      sha: ${{ steps.get-sha.outputs.sha }}
+    steps:
+      - name: build api-gateway image
+        uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
+        if: ${{ github.event_name != 'schedule' }}
+        with:
+          name: api-gateway-manager
+          dockerfile: Dockerfile
+          context: .
+          build-args: |
+            VERSION=${{ github.sha }}
+            tags: "${{ github.sha }}"
+      - name: Get SHA from latest run of main integration triggered by push
+        id: get-latest-push-sha
+        uses: actions/github-script@v6
+        if: ${{ github.event_name == 'schedule' }}
+        with:
+          script: |
+            const { data: runs } = await github.actions.listWorkflowRuns({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'main-integration.yaml',
+              branch: 'main',
+              status: 'success',
+              per_page: 20 
+            });
+
+            const pushRuns = runs.filter(run => run.event === 'push');
+
+            if (pushRuns.length === 0) {
+              throw new Error('No successful push runs found');
+            }
+
+            const latestRun = pushRuns[0];
+            const sha = latestRun.head_sha;
+
+            core.setOutput('sha', sha);
+      - name: Set output SHA
+        id: get-sha
+        run: |
+          if [ "${{ github.event_name }}" != "schedule" ]; then
+            echo "sha=${{ github.sha }}" >> $GITHUB_OUTPUT
+          else
+            echo "sha=${{ steps.get-latest-push-sha.outputs.sha }}" >> $GITHUB_OUTPUT
+          fi
 
   integration-tests:
     name: Integration tests
@@ -42,7 +80,7 @@ jobs:
           fetch-depth: 0
       - uses: ./.github/actions/integration-tests
         with:
-          manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:${{ github.sha }}"
+          manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:${{ needs.build.outputs.sha }}"
           client_id: ${{ secrets.CLIENT_ID }}
           client_secret: ${{ secrets.CLIENT_SECRET }}
           oidc_well_known_url: "${{ secrets.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
@@ -61,7 +99,7 @@ jobs:
           fetch-depth: 0
       - uses: ./.github/actions/integration-tests
         with:
-          manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:${{ github.sha }}"
+          manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:${{ needs.build.outputs.sha }}"
           test_make_target: ${{ matrix.test_make_target }}
 
   upgrade-tests:
@@ -74,7 +112,7 @@ jobs:
           fetch-depth: 0
       - uses: ./.github/actions/upgrade-test
         with:
-          manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:${{ github.sha }}"
+          manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:${{ needs.build.outputs.sha }}"
           client_id: ${{ secrets.CLIENT_ID }}
           client_secret: ${{ secrets.CLIENT_SECRET }}
           oidc_well_known_url: "${{ secrets.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
@@ -91,7 +129,7 @@ jobs:
           fetch-depth: 0
       - uses: ./.github/actions/integration-test-gardener
         with:
-          manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:${{ github.sha }}"
+          manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:${{ needs.build.outputs.sha }}"
           gardener_secret: ${{ secrets.GARDENER_TOKEN }}
           script: ./hack/ci/custom-domain-gardener-gcp.sh
           client_id: ${{ secrets.CLIENT_ID }}
@@ -110,7 +148,7 @@ jobs:
           fetch-depth: 0
       - uses: ./.github/actions/integration-test-gardener
         with:
-          manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:${{ github.sha }}"
+          manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:${{ needs.build.outputs.sha }}"
           gardener_secret: ${{ secrets.GARDENER_TOKEN }}
           script: ./hack/ci/custom-domain-gardener-aws.sh
           client_id: ${{ secrets.CLIENT_ID }}
