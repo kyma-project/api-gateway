@@ -22,20 +22,22 @@ on:
 
 jobs:
   build:
+    name: build api-gateway image
+    uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
+    if: ${{ github.event_name != 'schedule' }}
+    with:
+      name: api-gateway-manager
+      dockerfile: Dockerfile
+      context: .
+      build-args: |
+        VERSION=${{ github.sha }}
+      tags: "${{ github.sha }}"
+
+  get-sha:
     runs-on: ubuntu-latest
     outputs:
       sha: ${{ steps.get-sha.outputs.sha }}
     steps:
-      - name: build api-gateway image
-        uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
-        if: ${{ github.event_name != 'schedule' }}
-        with:
-          name: api-gateway-manager
-          dockerfile: Dockerfile
-          context: .
-          build-args: |
-            VERSION=${{ github.sha }}
-            tags: "${{ github.sha }}"
       - name: Get SHA from latest run of main integration triggered by push
         id: get-latest-push-sha
         uses: actions/github-script@v6
@@ -62,23 +64,23 @@ jobs:
       - name: Set output SHA
         id: get-sha
         run: |
-          if [ "${{ github.event_name }}" != "schedule" ]; then
-            echo "sha=${{ github.sha }}" >> $GITHUB_OUTPUT
-          else
+          if [ "${{ github.event_name }}" == "schedule" ]; then
             echo "sha=${{ steps.get-latest-push-sha.outputs.sha }}" >> $GITHUB_OUTPUT
+          else
+            echo "sha=${{ github.sha }}" >> $GITHUB_OUTPUT
           fi
 
   integration-tests:
     name: Integration tests
     runs-on: ubuntu-latest
-    needs: [build]
+    needs: [build, get-sha]
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - uses: ./.github/actions/integration-tests
         with:
-          manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:${{ needs.build.outputs.sha }}"
+          manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:${{ needs.get-sha.outputs.sha }}"
           client_id: ${{ secrets.CLIENT_ID }}
           client_secret: ${{ secrets.CLIENT_SECRET }}
           oidc_well_known_url: "${{ secrets.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
@@ -86,7 +88,7 @@ jobs:
   migration-downtime-tests:
     name: Zero Downtime Migration Tests
     runs-on: ubuntu-latest
-    needs: [build]
+    needs: [build, get-sha]
     strategy:
       fail-fast: false
       matrix:
@@ -97,20 +99,20 @@ jobs:
           fetch-depth: 0
       - uses: ./.github/actions/integration-tests
         with:
-          manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:${{ needs.build.outputs.sha }}"
+          manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:${{ needs.get-sha.outputs.sha }}"
           test_make_target: ${{ matrix.test_make_target }}
 
   upgrade-tests:
     name: Upgrade tests
     runs-on: ubuntu-latest
-    needs: [build]
+    needs: [build, get-sha]
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - uses: ./.github/actions/upgrade-test
         with:
-          manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:${{ needs.build.outputs.sha }}"
+          manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:${{ needs.get-sha.outputs.sha }}"
           client_id: ${{ secrets.CLIENT_ID }}
           client_secret: ${{ secrets.CLIENT_SECRET }}
           oidc_well_known_url: "${{ secrets.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
@@ -119,7 +121,7 @@ jobs:
   custom-domain-integration-gcp:
     name: Custom domain integration GCP
     runs-on: ubuntu-latest
-    needs: [build]
+    needs: [build, get-sha]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -127,7 +129,7 @@ jobs:
           fetch-depth: 0
       - uses: ./.github/actions/integration-test-gardener
         with:
-          manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:${{ needs.build.outputs.sha }}"
+          manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:${{ needs.get-sha.outputs.sha }}"
           gardener_secret: ${{ secrets.GARDENER_TOKEN }}
           script: ./hack/ci/custom-domain-gardener-gcp.sh
           client_id: ${{ secrets.CLIENT_ID }}
@@ -138,7 +140,7 @@ jobs:
   custom-domain-integration-aws:
     name: Custom domain integration AWS
     runs-on: ubuntu-latest
-    needs: [build]
+    needs: [build, get-sha]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -146,7 +148,7 @@ jobs:
           fetch-depth: 0
       - uses: ./.github/actions/integration-test-gardener
         with:
-          manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:${{ needs.build.outputs.sha }}"
+          manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:${{ needs.get-sha.outputs.sha }}"
           gardener_secret: ${{ secrets.GARDENER_TOKEN }}
           script: ./hack/ci/custom-domain-gardener-aws.sh
           client_id: ${{ secrets.CLIENT_ID }}
