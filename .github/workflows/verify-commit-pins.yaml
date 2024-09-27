@@ -19,5 +19,6 @@ jobs:
           allowlist: |
             actions/checkout
             actions/setup-go
+            actions/github-script
             actions/upload-artifact
             kyma-project/test-infra
