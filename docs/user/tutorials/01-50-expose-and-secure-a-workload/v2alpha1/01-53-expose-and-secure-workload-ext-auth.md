@@ -92,6 +92,7 @@ EOF
 Install oauth2-proxy with your configuration using Helm:
 
 ```
+kubectl create namespace oauth2-proxy
 helm repo add oauth2-proxy https://oauth2-proxy.github.io/manifests
 helm upgrade --install oauth2-proxy oauth2-proxy/oauth2-proxy -f values.yaml -n oauth2-proxy
 ```
@@ -124,7 +125,7 @@ spec:
           - oauth2-proxy
       methods:
         - GET
-      path: /.*
+      path: /*
 EOF
 ```
 
