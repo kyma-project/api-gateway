@@ -1,6 +1,3 @@
-# This workflow is responsible for all kinds of integration tests run on pull request.
-# Those tests depend on a container image so in the first job we wait for the image build to succeed.
-
 name: Main Integration
 
 permissions:
