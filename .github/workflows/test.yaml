@@ -1,0 +1,66 @@
+# This workflow is responsible for all kinds of integration tests run on pull request.
+# Those tests depend on a container image so in the first job we wait for the image build to succeed.
+
+name: Test
+
+on:
+  pull_request:
+    branches:
+      - "main"
+
+
+jobs:
+  build:
+    name: build image
+    if: ${{ github.event_name == 'schedule' }}
+    steps:
+      - name: build
+        id: build
+        run: echo "build"
+
+  get-sha:
+    name: Get SHA
+    runs-on: ubuntu-latest
+    needs: [build]
+    # This job must run also when the build job is skipped
+    if: ${{ always() && needs.build.result == 'skipped' }}
+    outputs:
+      sha: ${{ steps.get-sha.outputs.sha }}
+    steps:
+      - name: Get SHA from latest run of main integration triggered by push
+        id: get-sha
+        uses: actions/github-script@v6
+        if: ${{ github.event_name != 'schedule' }}
+        with:
+          script: |
+            if (context.eventName !== 'schedule') {
+              core.setOutput('sha', context.sha);
+              return;
+            }
+            
+            const { data } = await github.rest.actions.listWorkflowRuns({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'main-integration.yaml',
+              branch: 'main',
+              status: 'success',
+              per_page: 40 
+            });
+            const pushRuns = data.workflow_runs.filter(run => run.event === 'push');
+
+            if (pushRuns.length === 0) {
+              throw new Error('No successful push runs found');
+            }
+
+            const latestRun = pushRuns[0];
+
+            core.setOutput('sha', latestRun.head_sha);
+
+  integration-tests:
+    name: Integration tests
+    runs-on: ubuntu-latest
+    needs: [get-sha]
+    steps:
+      - name: build
+        id: build
+        run: echo "test"
