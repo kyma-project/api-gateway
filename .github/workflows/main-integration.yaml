@@ -44,7 +44,7 @@ jobs:
     steps:
       - name: Get SHA from latest run of main integration triggered by push
         id: get-sha
-        uses: actions/github-script@v6
+        uses: actions/github-script@v7
         with:
           script: |
             if (context.eventName !== 'schedule') {
