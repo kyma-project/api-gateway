@@ -43,7 +43,7 @@ jobs:
     uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
     needs: [check-prerequisites]
     with:
-      name: istio-manager
+      name: api-gateway-manager
       dockerfile: Dockerfile
       context: .
       build-args: |
