@@ -1,13 +1,10 @@
-name: Pull Request
+name: Release Pull Request
 
 on:
   pull_request_target:
     types: [ synchronize, opened, reopened, ready_for_review ]
     branches:
       - 'release-**'
-
-permissions:
-  contents: read
 
 jobs:
   check-build-image:
@@ -34,7 +31,8 @@ jobs:
       - name: List all changed files
         run: echo '${{ steps.changed-files.outputs.all_changed_files }}' >> $GITHUB_STEP_SUMMARY
   build-image:
-    name: build api-gateway image
+    name: Build manager image
+    needs: [check-build-image]
     if: ${{ needs.check-build-image.outputs.check == 'true' }}
     uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
     with:
@@ -42,7 +40,7 @@ jobs:
       dockerfile: Dockerfile
       context: .
       build-args: |
-        VERSION=${{ github.sha }}
+        VERSION=PR-${{ github.event.number }}
 
   check-unit-test:
     outputs:
