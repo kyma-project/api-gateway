@@ -23,7 +23,7 @@ This table lists all parameters of APIRule `v2alpha1` CRD together with their de
 | **corsPolicy.allowCredentials**                  |  **NO**  | Specifies whether credentials are allowed in the **Access-Control-Allow-Credentials** CORS header.                                                                                                                                                                                    | None                                                                                                                  |
 | **corsPolicy.exposeHeaders**                     |  **NO**  | Specifies headers exposed with the **Access-Control-Expose-Headers** CORS header.                                                                                                                                                                                                     | None                                                                                                                  |
 | **corsPolicy.maxAge**                            |  **NO**  | Specifies the maximum age of CORS policy cache. The value is provided in the **Access-Control-Max-Age** CORS header.                                                                                                                                                                  | None                                                                                                                  |
-| **hosts**                                        | **YES**  | Specifies the Service's communication address for inbound external traffic. It must be a fully qualified domain name in proper FQDN format: at least two domain labels with characters, numbers, or dashes.                                                                           | FQDN format.                                                                                                          |
+| **hosts**                                        | **YES**  | Specifies the Service's communication address for inbound external traffic. It must be a RFC 1123 label or a valid, fully qualified domain name (FQDN) in the following format: at least two domain labels with characters, numbers, or hyphens.                                                          | Lowercase RFC 1123 label or FQDN format.                                                                                                |
 | **service.name**                                 |  **NO**  | Specifies the name of the exposed Service.                                                                                                                                                                                                                                            | None                                                                                                                  |
 | **service.namespace**                            |  **NO**  | Specifies the namespace of the exposed Service.                                                                                                                                                                                                                                       | None                                                                                                                  |
 | **service.port**                                 |  **NO**  | Specifies the communication port of the exposed Service.                                                                                                                                                                                                                              | None                                                                                                                  |
@@ -61,6 +61,9 @@ This table lists all parameters of APIRule `v2alpha1` CRD together with their de
 > [!WARNING]
 >  If a service is not defined at the **spec.service** level, all defined Access Rules must have it defined at the **spec.rules.service** level. Otherwise, the validation fails.
 
+> [!WARNING]
+>  If a short host name is defined at the **spec.hosts** level, the referenced Gateway must provide the same single host for all [Server](https://istio.io/latest/docs/reference/config/networking/gateway/#Server) definitions and it must be prefixed with `*.`. Otherwise, the validation fails.
+
 **Status:**
 
 The following table lists the fields of the **status** section.
@@ -83,6 +86,28 @@ spec:
   gateway: kyma-system/kyma-gateway
   hosts:
     - foo.bar
+  service:
+    name: foo-service
+    namespace: foo-namespace
+    port: 8080
+  timeout: 360
+  rules:
+    - path: /*
+      methods: [ "GET" ]
+      noAuth: true
+```
+
+This sample APIRule illustrates the usage of a short host name. It uses the domain from the referenced Gateway `kyma-system/kyma-gateway`:
+
+```yaml
+apiVersion: gateway.kyma-project.io/v2alpha1
+kind: APIRule
+metadata:
+  name: service-exposed
+spec:
+  gateway: kyma-system/kyma-gateway
+  hosts:
+    - foo
   service:
     name: foo-service
     namespace: foo-namespace

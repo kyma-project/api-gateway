@@ -35,7 +35,7 @@ func (a *APIRuleValidator) Validate(ctx context.Context, client client.Client, v
 		})
 	} else {
 		failures = append(failures, validateRules(ctx, client, ".spec", a.ApiRule)...)
-		failures = append(failures, validateHosts(".spec", vsList, a.ApiRule)...)
+		failures = append(failures, validateHosts(".spec", vsList, gwList, a.ApiRule)...)
 		failures = append(failures, validateGateway(".spec", gwList, a.ApiRule)...)
 	}
 

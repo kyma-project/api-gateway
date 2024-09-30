@@ -48,7 +48,7 @@ This tutorial shows how to expose and secure a workload with mutual authenticati
 2. Create VirtualService that adds the **X-CLIENT-SSL** headers to incoming requests:
 
     ```bash
-    cat <<EOF | kubectl apply -f - 
+    cat <<EOF | kubectl apply -f -
     apiVersion: networking.istio.io/v1alpha3
     kind: VirtualService
     metadata:
@@ -75,7 +75,7 @@ This tutorial shows how to expose and secure a workload with mutual authenticati
     ```
 
 3. Create AuthorizationPolicy that verifies if the request contains a client certificate:
-    
+
     ```bash
     cat <<EOF | kubectl apply -f -
     apiVersion: security.istio.io/v1beta1

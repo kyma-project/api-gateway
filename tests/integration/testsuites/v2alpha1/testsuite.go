@@ -5,9 +5,10 @@ import (
 	_ "embed"
 	"encoding/base64"
 	"fmt"
-	"github.com/kyma-project/api-gateway/tests/integration/pkg/hooks"
 	"log"
 	"path"
+
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/hooks"
 
 	"github.com/cucumber/godog"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/auth"
@@ -89,6 +90,7 @@ func (t *testsuite) InitScenarios(ctx *godog.ScenarioContext) {
 	initExtAuthJwt(ctx, t)
 	initValidationError(ctx, t)
 	initNoAuthWildcard(ctx, t)
+	initShortHost(ctx, t)
 }
 
 func (t *testsuite) FeaturePath() []string {

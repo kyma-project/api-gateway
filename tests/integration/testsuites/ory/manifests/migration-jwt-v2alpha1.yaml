@@ -3,6 +3,8 @@ kind: APIRule
 metadata:
   name: "{{.NamePrefix}}-{{.TestID}}"
   namespace: "{{.Namespace}}"
+  labels:
+    test: v1beta1-migration
 spec:
   service:
     name: httpbin-{{.TestID}}
@@ -11,9 +13,9 @@ spec:
   hosts:
     - "httpbin-{{.TestID}}.{{.Domain}}"
   rules:
-    - path: /anything
+    - path: /headers
       methods: ["GET"]
       jwt:
         authentications:
-          - issuer: https://dummy-test-url.com
-            jwksUri: https://dummy-test-url.com/oauth2/certs
+          - issuer: "{{ .IssuerUrl }}"
+            jwksUri: "{{ .IssuerUrl }}/oauth2/certs"

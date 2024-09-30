@@ -1,10 +1,11 @@
 package virtualservice_test
 
 import (
+	"net/http"
+
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	processors "github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1/virtualservice"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
-	"net/http"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	. "github.com/kyma-project/api-gateway/internal/builders/builders_test/v2alpha1_test"
@@ -20,9 +21,9 @@ var _ = Describe("HTTP matching", func() {
 		client = GetFakeClient()
 	})
 	var _ = DescribeTable("Different methods on same path",
-		func(apiRule *gatewayv2alpha1.APIRule, verifiers []verifier, expectedActions ...string) {
-			processor = processors.NewVirtualServiceProcessor(GetTestConfig(), apiRule)
-			checkVirtualServices(client, processor, verifiers, expectedActions...)
+		func(apiRule *gatewayv2alpha1.APIRule, verifiers []verifier, expectedError error, expectedActions ...string) {
+			processor = processors.NewVirtualServiceProcessor(GetTestConfig(), apiRule, nil)
+			checkVirtualServices(client, processor, verifiers, expectedError, expectedActions...)
 		},
 		Entry("from two rules with different methods on the same path should create two HTTP routes with different methods",
 			NewAPIRuleBuilderWithDummyData().
@@ -35,7 +36,7 @@ var _ = Describe("HTTP matching", func() {
 					Expect(vs.Spec.Http[0].Match[0].Method.GetRegex()).To(Equal("^(GET)$"))
 					Expect(vs.Spec.Http[1].Match[0].Method.GetRegex()).To(Equal("^(PUT)$"))
 				},
-			}, "create"),
+			}, nil, "create"),
 
 		Entry("from one rule with two methods on the same path should create one HTTP route with regex matching both methods",
 			NewAPIRuleBuilderWithDummyData().
@@ -47,6 +48,6 @@ var _ = Describe("HTTP matching", func() {
 
 					Expect(vs.Spec.Http[0].Match[0].Method.GetRegex()).To(Equal("^(GET|PUT)$"))
 				},
-			}, "create"),
+			}, nil, "create"),
 	)
 })

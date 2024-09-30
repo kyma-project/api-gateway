@@ -3,16 +3,14 @@ kind: APIRule
 metadata:
   name: "{{.NamePrefix}}-{{.TestID}}"
   namespace: "{{.Namespace}}"
-  labels:
-    test: v1beta1-migration
 spec:
+  gateway: "{{.GatewayNamespace}}/{{.GatewayName}}"
+  hosts:
+    - "httpbin"
   service:
     name: httpbin-{{.TestID}}
     port: 8000
-  gateway: "{{.GatewayNamespace}}/{{.GatewayName}}"
-  hosts:
-    - "httpbin-{{.TestID}}.{{.Domain}}"
   rules:
-    - path: /headers
+    - path: /*
       methods: ["GET"]
       noAuth: true

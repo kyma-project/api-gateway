@@ -36,7 +36,6 @@ import (
 
 // Tests needs to be executed serially because of the shared state of the JWT Handler in the API Controller.
 var _ = Describe("APIRule Controller", Serial, func() {
-
 	const (
 		testNameBase               = "test"
 		testIDLength               = 5
@@ -54,7 +53,6 @@ var _ = Describe("APIRule Controller", Serial, func() {
 	var methodsPost = []gatewayv1beta1.HttpMethod{http.MethodPost}
 
 	Context("check default domain logic", func() {
-
 		It("should have an error when creating an APIRule without a domain in cluster without kyma-gateway", func() {
 			updateJwtHandlerTo(helpers.JWT_HANDLER_ISTIO)
 
@@ -155,6 +153,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 			defer func() {
 				apiRuleTeardown(apiRule)
 				serviceTeardown(svc)
+				kymaGatewayTeardown(&gateway)
 			}()
 
 			expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusOK)
@@ -176,200 +175,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 		})
 	})
 
-	Context("when creating APIRule in version v2alpha1 respect x-validation rules only", Ordered, func() {
-
-		BeforeAll(func() {
-			updateJwtHandlerTo(helpers.JWT_HANDLER_ORY)
-		})
-
-		It("should be able to create an APIRule with noAuth=true", func() {
-			apiRuleName := generateTestName(testNameBase, testIDLength)
-			serviceName := testServiceNameBase
-			serviceHost := gatewayv2alpha1.Host("httpbin-istio-jwt-happy-base.kyma.local")
-			serviceHosts := []*gatewayv2alpha1.Host{&serviceHost}
-
-			rule := testRulev2alpha1("/img", []gatewayv2alpha1.HttpMethod{http.MethodGet})
-			rule.NoAuth = ptr.To(true)
-			apiRule := testApiRulev2alpha1(apiRuleName, testNamespace, serviceName, testNamespace, serviceHosts, testServicePort, []gatewayv2alpha1.Rule{rule})
-			svc := testService(serviceName, testNamespace, testServicePort)
-
-			// when
-			Expect(c.Create(context.Background(), svc)).Should(Succeed())
-			Expect(c.Create(context.Background(), apiRule)).Should(Succeed())
-			defer func() {
-				apiRulev2alpha1Teardown(apiRule)
-				serviceTeardown(svc)
-			}()
-		})
-
-		It("should be able to create an APIRule with jwt", func() {
-			apiRuleName := generateTestName(testNameBase, testIDLength)
-			serviceName := testServiceNameBase
-			serviceHost := gatewayv2alpha1.Host("httpbin-istio-jwt-happy-base.kyma.local")
-			serviceHosts := []*gatewayv2alpha1.Host{&serviceHost}
-
-			rule := testRulev2alpha1("/img", []gatewayv2alpha1.HttpMethod{http.MethodGet})
-			rule.Jwt = &gatewayv2alpha1.JwtConfig{
-				Authentications: []*gatewayv2alpha1.JwtAuthentication{},
-				Authorizations:  []*gatewayv2alpha1.JwtAuthorization{},
-			}
-			apiRule := testApiRulev2alpha1(apiRuleName, testNamespace, serviceName, testNamespace, serviceHosts, testServicePort, []gatewayv2alpha1.Rule{rule})
-			svc := testService(serviceName, testNamespace, testServicePort)
-
-			// when
-			Expect(c.Create(context.Background(), svc)).Should(Succeed())
-			Expect(c.Create(context.Background(), apiRule)).Should(Succeed())
-			defer func() {
-				apiRulev2alpha1Teardown(apiRule)
-				serviceTeardown(svc)
-			}()
-		})
-
-		It("should be able to create an APIRule with jwt and noAuth=false", func() {
-			apiRuleName := generateTestName(testNameBase, testIDLength)
-			serviceName := testServiceNameBase
-			serviceHost := gatewayv2alpha1.Host("httpbin-istio-jwt-happy-base.kyma.local")
-			serviceHosts := []*gatewayv2alpha1.Host{&serviceHost}
-
-			rule := testRulev2alpha1("/img", []gatewayv2alpha1.HttpMethod{http.MethodGet})
-			rule.NoAuth = ptr.To(false)
-			rule.Jwt = &gatewayv2alpha1.JwtConfig{
-				Authentications: []*gatewayv2alpha1.JwtAuthentication{},
-				Authorizations:  []*gatewayv2alpha1.JwtAuthorization{},
-			}
-			apiRule := testApiRulev2alpha1(apiRuleName, testNamespace, serviceName, testNamespace, serviceHosts, testServicePort, []gatewayv2alpha1.Rule{rule})
-			svc := testService(serviceName, testNamespace, testServicePort)
-
-			// when
-			Expect(c.Create(context.Background(), svc)).Should(Succeed())
-			Expect(c.Create(context.Background(), apiRule)).Should(Succeed())
-			defer func() {
-				apiRulev2alpha1Teardown(apiRule)
-				serviceTeardown(svc)
-			}()
-		})
-
-		It("should be able to create an APIRule with jwt and mutators", func() {
-			apiRuleName := generateTestName(testNameBase, testIDLength)
-			serviceName := testServiceNameBase
-			serviceHost := gatewayv2alpha1.Host("httpbin-istio-jwt-happy-base.kyma.local")
-			serviceHosts := []*gatewayv2alpha1.Host{&serviceHost}
-
-			rule := testRulev2alpha1("/img", []gatewayv2alpha1.HttpMethod{http.MethodGet})
-			rule.Jwt = &gatewayv2alpha1.JwtConfig{
-				Authentications: []*gatewayv2alpha1.JwtAuthentication{},
-				Authorizations:  []*gatewayv2alpha1.JwtAuthorization{},
-			}
-			apiRule := testApiRulev2alpha1(apiRuleName, testNamespace, serviceName, testNamespace, serviceHosts, testServicePort, []gatewayv2alpha1.Rule{rule})
-			svc := testService(serviceName, testNamespace, testServicePort)
-
-			// when
-			Expect(c.Create(context.Background(), svc)).Should(Succeed())
-			Expect(c.Create(context.Background(), apiRule)).Should(Succeed())
-			defer func() {
-				apiRulev2alpha1Teardown(apiRule)
-				serviceTeardown(svc)
-			}()
-		})
-
-		It("should fail to create an APIRule without noAuth and jwt", func() {
-			apiRuleName := generateTestName(testNameBase, testIDLength)
-			serviceName := testServiceNameBase
-			serviceHost := gatewayv2alpha1.Host("httpbin-istio-jwt-happy-base.kyma.local")
-			serviceHosts := []*gatewayv2alpha1.Host{&serviceHost}
-
-			rule := testRulev2alpha1("/img", []gatewayv2alpha1.HttpMethod{http.MethodGet})
-			apiRule := testApiRulev2alpha1(apiRuleName, testNamespace, serviceName, testNamespace, serviceHosts, testServicePort, []gatewayv2alpha1.Rule{rule})
-			svc := testService(serviceName, testNamespace, testServicePort)
-
-			// when
-			Expect(c.Create(context.Background(), svc)).Should(Succeed())
-			err := c.Create(context.Background(), apiRule)
-			defer func() {
-				apiRulev2alpha1Teardown(apiRule)
-				serviceTeardown(svc)
-			}()
-
-			Expect(err).Should(HaveOccurred())
-			Expect(err.Error()).To(ContainSubstring("One of the following fields must be set: noAuth, jwt, extAuth"))
-		})
-
-		It("should fail to create an APIRule with noAuth=false", func() {
-			apiRuleName := generateTestName(testNameBase, testIDLength)
-			serviceName := testServiceNameBase
-			serviceHost := gatewayv2alpha1.Host("httpbin-istio-jwt-happy-base.kyma.local")
-			serviceHosts := []*gatewayv2alpha1.Host{&serviceHost}
-
-			rule := testRulev2alpha1("/img", []gatewayv2alpha1.HttpMethod{http.MethodGet})
-			rule.NoAuth = ptr.To(false)
-			apiRule := testApiRulev2alpha1(apiRuleName, testNamespace, serviceName, testNamespace, serviceHosts, testServicePort, []gatewayv2alpha1.Rule{rule})
-			svc := testService(serviceName, testNamespace, testServicePort)
-
-			// when
-			Expect(c.Create(context.Background(), svc)).Should(Succeed())
-			err := c.Create(context.Background(), apiRule)
-			defer func() {
-				apiRulev2alpha1Teardown(apiRule)
-				serviceTeardown(svc)
-			}()
-
-			Expect(err).Should(HaveOccurred())
-			Expect(err.Error()).To(ContainSubstring("One of the following fields must be set: noAuth, jwt, extAuth"))
-		})
-
-		It("should fail to create an APIRule with jwt and noAuth=true", func() {
-			apiRuleName := generateTestName(testNameBase, testIDLength)
-			serviceName := testServiceNameBase
-			serviceHost := gatewayv2alpha1.Host("httpbin-istio-jwt-happy-base.kyma.local")
-			serviceHosts := []*gatewayv2alpha1.Host{&serviceHost}
-
-			rule := testRulev2alpha1("/img", []gatewayv2alpha1.HttpMethod{http.MethodGet})
-			rule.NoAuth = ptr.To(true)
-			rule.Jwt = &gatewayv2alpha1.JwtConfig{
-				Authentications: []*gatewayv2alpha1.JwtAuthentication{},
-				Authorizations:  []*gatewayv2alpha1.JwtAuthorization{},
-			}
-			apiRule := testApiRulev2alpha1(apiRuleName, testNamespace, serviceName, testNamespace, serviceHosts, testServicePort, []gatewayv2alpha1.Rule{rule})
-			svc := testService(serviceName, testNamespace, testServicePort)
-
-			// when
-			Expect(c.Create(context.Background(), svc)).Should(Succeed())
-			err := c.Create(context.Background(), apiRule)
-			defer func() {
-				apiRulev2alpha1Teardown(apiRule)
-				serviceTeardown(svc)
-			}()
-
-			Expect(err).Should(HaveOccurred())
-			Expect(err.Error()).To(ContainSubstring("One of the following fields must be set: noAuth, jwt, extAuth"))
-		})
-
-		It("should fail to create an APIRule with more than one host", func() {
-			apiRuleName := generateTestName(testNameBase, testIDLength)
-			serviceName := testServiceNameBase
-			serviceHost := gatewayv2alpha1.Host("httpbin-istio-jwt-happy-base.kyma.local")
-			secondServiceHost := gatewayv2alpha1.Host("other-istio-jwt-happy-base.kyma.local")
-			serviceHosts := []*gatewayv2alpha1.Host{&serviceHost, &secondServiceHost}
-
-			rule := testRulev2alpha1("/img", []gatewayv2alpha1.HttpMethod{http.MethodGet})
-			rule.NoAuth = ptr.To(true)
-			apiRule := testApiRulev2alpha1(apiRuleName, testNamespace, serviceName, testNamespace, serviceHosts, testServicePort, []gatewayv2alpha1.Rule{rule})
-			svc := testService(serviceName, testNamespace, testServicePort)
-
-			// when
-			Expect(c.Create(context.Background(), svc)).Should(Succeed())
-			err := c.Create(context.Background(), apiRule)
-			defer func() {
-				apiRulev2alpha1Teardown(apiRule)
-				serviceTeardown(svc)
-			}()
-			Expect(err).Should(HaveOccurred())
-			Expect(err.Error()).To(ContainSubstring("spec.hosts: Too many: 2: must have at most 1 items"))
-		})
-	})
-
 	Context("when updating the APIRule with multiple paths", func() {
-
 		It("should create, update and delete rules depending on patch match", func() {
 			updateJwtHandlerTo(helpers.JWT_HANDLER_ORY)
 
@@ -453,7 +259,6 @@ var _ = Describe("APIRule Controller", Serial, func() {
 	})
 
 	Context("when creating an APIRule for exposing service", func() {
-
 		Context("on all the paths,", func() {
 			Context("secured with Oauth2 introspection,", func() {
 				Context("in a happy-path scenario", func() {
@@ -1298,7 +1103,6 @@ var _ = Describe("APIRule Controller", Serial, func() {
 		})
 
 		Context("Handler is istio and ApiRule with JWT handler specific resources exists", func() {
-
 			Context("changing jwt handler to ory", func() {
 				It("Should have validation errors for APiRule JWT handler configuration and resources are not deleted", func() {
 					// given
@@ -1395,272 +1199,490 @@ var _ = Describe("APIRule Controller", Serial, func() {
 		})
 	})
 
-	Context("when creating APIRule in version v2alpha1 gateway name should be valid", Ordered, func() {
-		It("should create an APIRule with a valid gateway", func() {
-			// given
-			apiRuleName := generateTestName(testNameBase, testIDLength)
-			serviceName := testServiceNameBase
+	Context("when creating APIRule in version v2alpha1", Ordered, func() {
+		Context("respect x-validation rules only", Ordered, func() {
+			BeforeAll(func() {
+				updateJwtHandlerTo(helpers.JWT_HANDLER_ORY)
+			})
 
-			rule := testRulev2alpha1("/img", []gatewayv2alpha1.HttpMethod{http.MethodGet})
-			rule.NoAuth = ptr.To(true)
-			apiRule := testApiRulev2alpha1Gateway(apiRuleName, testNamespace, serviceName, testNamespace, testGatewayURL, testServicePort, []gatewayv2alpha1.Rule{rule})
-			svc := testService(serviceName, testNamespace, testServicePort)
+			It("should be able to create an APIRule with noAuth=true", func() {
+				apiRuleName := generateTestName(testNameBase, testIDLength)
+				serviceName := testServiceNameBase
+				serviceHost := gatewayv2alpha1.Host("httpbin-istio-jwt-happy-base.kyma.local")
+				serviceHosts := []*gatewayv2alpha1.Host{&serviceHost}
 
-			// when
-			Expect(c.Create(context.Background(), svc)).Should(Succeed())
-			Expect(c.Create(context.Background(), apiRule)).Should(Succeed())
-			defer func() {
-				apiRulev2alpha1Teardown(apiRule)
-				serviceTeardown(svc)
-			}()
+				rule := testRulev2alpha1("/img", []gatewayv2alpha1.HttpMethod{http.MethodGet})
+				rule.NoAuth = ptr.To(true)
+				apiRule := testApiRulev2alpha1(apiRuleName, testNamespace, serviceName, testNamespace, serviceHosts, testServicePort, []gatewayv2alpha1.Rule{rule})
+				svc := testService(serviceName, testNamespace, testServicePort)
+
+				// when
+				Expect(c.Create(context.Background(), svc)).Should(Succeed())
+				Expect(c.Create(context.Background(), apiRule)).Should(Succeed())
+				defer func() {
+					apiRulev2alpha1Teardown(apiRule)
+					serviceTeardown(svc)
+				}()
+			})
+
+			It("should be able to create an APIRule with jwt", func() {
+				apiRuleName := generateTestName(testNameBase, testIDLength)
+				serviceName := testServiceNameBase
+				serviceHost := gatewayv2alpha1.Host("httpbin-istio-jwt-happy-base.kyma.local")
+				serviceHosts := []*gatewayv2alpha1.Host{&serviceHost}
+
+				rule := testRulev2alpha1("/img", []gatewayv2alpha1.HttpMethod{http.MethodGet})
+				rule.Jwt = &gatewayv2alpha1.JwtConfig{
+					Authentications: []*gatewayv2alpha1.JwtAuthentication{},
+					Authorizations:  []*gatewayv2alpha1.JwtAuthorization{},
+				}
+				apiRule := testApiRulev2alpha1(apiRuleName, testNamespace, serviceName, testNamespace, serviceHosts, testServicePort, []gatewayv2alpha1.Rule{rule})
+				svc := testService(serviceName, testNamespace, testServicePort)
+
+				// when
+				Expect(c.Create(context.Background(), svc)).Should(Succeed())
+				Expect(c.Create(context.Background(), apiRule)).Should(Succeed())
+				defer func() {
+					apiRulev2alpha1Teardown(apiRule)
+					serviceTeardown(svc)
+				}()
+			})
+
+			It("should be able to create an APIRule with jwt and noAuth=false", func() {
+				apiRuleName := generateTestName(testNameBase, testIDLength)
+				serviceName := testServiceNameBase
+				serviceHost := gatewayv2alpha1.Host("httpbin-istio-jwt-happy-base.kyma.local")
+				serviceHosts := []*gatewayv2alpha1.Host{&serviceHost}
+
+				rule := testRulev2alpha1("/img", []gatewayv2alpha1.HttpMethod{http.MethodGet})
+				rule.NoAuth = ptr.To(false)
+				rule.Jwt = &gatewayv2alpha1.JwtConfig{
+					Authentications: []*gatewayv2alpha1.JwtAuthentication{},
+					Authorizations:  []*gatewayv2alpha1.JwtAuthorization{},
+				}
+				apiRule := testApiRulev2alpha1(apiRuleName, testNamespace, serviceName, testNamespace, serviceHosts, testServicePort, []gatewayv2alpha1.Rule{rule})
+				svc := testService(serviceName, testNamespace, testServicePort)
+
+				// when
+				Expect(c.Create(context.Background(), svc)).Should(Succeed())
+				Expect(c.Create(context.Background(), apiRule)).Should(Succeed())
+				defer func() {
+					apiRulev2alpha1Teardown(apiRule)
+					serviceTeardown(svc)
+				}()
+			})
+
+			It("should be able to create an APIRule with jwt and mutators", func() {
+				apiRuleName := generateTestName(testNameBase, testIDLength)
+				serviceName := testServiceNameBase
+				serviceHost := gatewayv2alpha1.Host("httpbin-istio-jwt-happy-base.kyma.local")
+				serviceHosts := []*gatewayv2alpha1.Host{&serviceHost}
+
+				rule := testRulev2alpha1("/img", []gatewayv2alpha1.HttpMethod{http.MethodGet})
+				rule.Jwt = &gatewayv2alpha1.JwtConfig{
+					Authentications: []*gatewayv2alpha1.JwtAuthentication{},
+					Authorizations:  []*gatewayv2alpha1.JwtAuthorization{},
+				}
+				apiRule := testApiRulev2alpha1(apiRuleName, testNamespace, serviceName, testNamespace, serviceHosts, testServicePort, []gatewayv2alpha1.Rule{rule})
+				svc := testService(serviceName, testNamespace, testServicePort)
+
+				// when
+				Expect(c.Create(context.Background(), svc)).Should(Succeed())
+				Expect(c.Create(context.Background(), apiRule)).Should(Succeed())
+				defer func() {
+					apiRulev2alpha1Teardown(apiRule)
+					serviceTeardown(svc)
+				}()
+			})
+
+			It("should fail to create an APIRule without noAuth and jwt", func() {
+				apiRuleName := generateTestName(testNameBase, testIDLength)
+				serviceName := testServiceNameBase
+				serviceHost := gatewayv2alpha1.Host("httpbin-istio-jwt-happy-base.kyma.local")
+				serviceHosts := []*gatewayv2alpha1.Host{&serviceHost}
+
+				rule := testRulev2alpha1("/img", []gatewayv2alpha1.HttpMethod{http.MethodGet})
+				apiRule := testApiRulev2alpha1(apiRuleName, testNamespace, serviceName, testNamespace, serviceHosts, testServicePort, []gatewayv2alpha1.Rule{rule})
+				svc := testService(serviceName, testNamespace, testServicePort)
+
+				// when
+				Expect(c.Create(context.Background(), svc)).Should(Succeed())
+				err := c.Create(context.Background(), apiRule)
+				defer func() {
+					apiRulev2alpha1Teardown(apiRule)
+					serviceTeardown(svc)
+				}()
+
+				Expect(err).Should(HaveOccurred())
+				Expect(err.Error()).To(ContainSubstring("One of the following fields must be set: noAuth, jwt, extAuth"))
+			})
+
+			It("should fail to create an APIRule with noAuth=false", func() {
+				apiRuleName := generateTestName(testNameBase, testIDLength)
+				serviceName := testServiceNameBase
+				serviceHost := gatewayv2alpha1.Host("httpbin-istio-jwt-happy-base.kyma.local")
+				serviceHosts := []*gatewayv2alpha1.Host{&serviceHost}
+
+				rule := testRulev2alpha1("/img", []gatewayv2alpha1.HttpMethod{http.MethodGet})
+				rule.NoAuth = ptr.To(false)
+				apiRule := testApiRulev2alpha1(apiRuleName, testNamespace, serviceName, testNamespace, serviceHosts, testServicePort, []gatewayv2alpha1.Rule{rule})
+				svc := testService(serviceName, testNamespace, testServicePort)
+
+				// when
+				Expect(c.Create(context.Background(), svc)).Should(Succeed())
+				err := c.Create(context.Background(), apiRule)
+				defer func() {
+					apiRulev2alpha1Teardown(apiRule)
+					serviceTeardown(svc)
+				}()
+
+				Expect(err).Should(HaveOccurred())
+				Expect(err.Error()).To(ContainSubstring("One of the following fields must be set: noAuth, jwt, extAuth"))
+			})
+
+			It("should fail to create an APIRule with jwt and noAuth=true", func() {
+				apiRuleName := generateTestName(testNameBase, testIDLength)
+				serviceName := testServiceNameBase
+				serviceHost := gatewayv2alpha1.Host("httpbin-istio-jwt-happy-base.kyma.local")
+				serviceHosts := []*gatewayv2alpha1.Host{&serviceHost}
+
+				rule := testRulev2alpha1("/img", []gatewayv2alpha1.HttpMethod{http.MethodGet})
+				rule.NoAuth = ptr.To(true)
+				rule.Jwt = &gatewayv2alpha1.JwtConfig{
+					Authentications: []*gatewayv2alpha1.JwtAuthentication{},
+					Authorizations:  []*gatewayv2alpha1.JwtAuthorization{},
+				}
+				apiRule := testApiRulev2alpha1(apiRuleName, testNamespace, serviceName, testNamespace, serviceHosts, testServicePort, []gatewayv2alpha1.Rule{rule})
+				svc := testService(serviceName, testNamespace, testServicePort)
+
+				// when
+				Expect(c.Create(context.Background(), svc)).Should(Succeed())
+				err := c.Create(context.Background(), apiRule)
+				defer func() {
+					apiRulev2alpha1Teardown(apiRule)
+					serviceTeardown(svc)
+				}()
+
+				Expect(err).Should(HaveOccurred())
+				Expect(err.Error()).To(ContainSubstring("One of the following fields must be set: noAuth, jwt, extAuth"))
+			})
+
+			It("should fail to create an APIRule with more than one host", func() {
+				apiRuleName := generateTestName(testNameBase, testIDLength)
+				serviceName := testServiceNameBase
+				serviceHost := gatewayv2alpha1.Host("httpbin-istio-jwt-happy-base.kyma.local")
+				secondServiceHost := gatewayv2alpha1.Host("other-istio-jwt-happy-base.kyma.local")
+				serviceHosts := []*gatewayv2alpha1.Host{&serviceHost, &secondServiceHost}
+
+				rule := testRulev2alpha1("/img", []gatewayv2alpha1.HttpMethod{http.MethodGet})
+				rule.NoAuth = ptr.To(true)
+				apiRule := testApiRulev2alpha1(apiRuleName, testNamespace, serviceName, testNamespace, serviceHosts, testServicePort, []gatewayv2alpha1.Rule{rule})
+				svc := testService(serviceName, testNamespace, testServicePort)
+
+				// when
+				Expect(c.Create(context.Background(), svc)).Should(Succeed())
+				err := c.Create(context.Background(), apiRule)
+				defer func() {
+					apiRulev2alpha1Teardown(apiRule)
+					serviceTeardown(svc)
+				}()
+				Expect(err).Should(HaveOccurred())
+				Expect(err.Error()).To(ContainSubstring("spec.hosts: Too many: 2: must have at most 1 items"))
+			})
 		})
 
-		invalidHelper := func(gatewayName string) {
-			// given
-			apiRuleName := generateTestName(testNameBase, testIDLength)
-			serviceName := testServiceNameBase
+		Context("gateway name should be valid", Ordered, func() {
+			It("should create an APIRule with a valid gateway", func() {
+				// given
+				apiRuleName := generateTestName(testNameBase, testIDLength)
+				serviceName := testServiceNameBase
 
-			rule := testRulev2alpha1("/img", []gatewayv2alpha1.HttpMethod{http.MethodGet})
-			rule.NoAuth = ptr.To(true)
-			apiRule := testApiRulev2alpha1Gateway(apiRuleName, testNamespace, serviceName, testNamespace, gatewayName, testServicePort, []gatewayv2alpha1.Rule{rule})
-			svc := testService(serviceName, testNamespace, testServicePort)
+				rule := testRulev2alpha1("/img", []gatewayv2alpha1.HttpMethod{http.MethodGet})
+				rule.NoAuth = ptr.To(true)
+				apiRule := testApiRulev2alpha1Gateway(apiRuleName, testNamespace, serviceName, testNamespace, testGatewayURL, testServicePort, []gatewayv2alpha1.Rule{rule})
+				svc := testService(serviceName, testNamespace, testServicePort)
 
-			// when
-			Expect(c.Create(context.Background(), svc)).Should(Succeed())
-			err := c.Create(context.Background(), apiRule)
-			defer func() {
-				apiRulev2alpha1Teardown(apiRule)
-				serviceTeardown(svc)
-			}()
-			Expect(err).Should(HaveOccurred())
-			Expect(err.Error()).To(ContainSubstring("spec.gateway: Invalid value: \"string\": Gateway must be in the namespace/name format"))
-		}
+				// when
+				Expect(c.Create(context.Background(), svc)).Should(Succeed())
+				Expect(c.Create(context.Background(), apiRule)).Should(Succeed())
+				defer func() {
+					apiRulev2alpha1Teardown(apiRule)
+					serviceTeardown(svc)
+				}()
+			})
 
-		It("should not create an APIRule with an empty gateway", func() {
-			invalidHelper("")
+			invalidHelper := func(gatewayName string) {
+				// given
+				apiRuleName := generateTestName(testNameBase, testIDLength)
+				serviceName := testServiceNameBase
+
+				rule := testRulev2alpha1("/img", []gatewayv2alpha1.HttpMethod{http.MethodGet})
+				rule.NoAuth = ptr.To(true)
+				apiRule := testApiRulev2alpha1Gateway(apiRuleName, testNamespace, serviceName, testNamespace, gatewayName, testServicePort, []gatewayv2alpha1.Rule{rule})
+				svc := testService(serviceName, testNamespace, testServicePort)
+
+				// when
+				Expect(c.Create(context.Background(), svc)).Should(Succeed())
+				err := c.Create(context.Background(), apiRule)
+				defer func() {
+					apiRulev2alpha1Teardown(apiRule)
+					serviceTeardown(svc)
+				}()
+				Expect(err).Should(HaveOccurred())
+				Expect(err.Error()).To(ContainSubstring("spec.gateway: Invalid value: \"string\": Gateway must be in the namespace/name format"))
+			}
+
+			It("should not create an APIRule with an empty gateway", func() {
+				invalidHelper("")
+			})
+
+			It("should not create an APIRule with too long gateway namespace name", func() {
+				invalidHelper("insane-very-long-namespace-name-exceeding-sixty-three-characters/validname")
+			})
+
+			It("should not create an APIRule with too long gateway name", func() {
+				invalidHelper("validnamespace/insane-very-long-namespace-name-exceeding-sixty-three-characters")
+			})
+
+			It("should not create an APIRule with just the namespace", func() {
+				invalidHelper("validnamespace/")
+			})
+
+			It("should not create an APIRule with just the gateway name", func() {
+				invalidHelper("/validgateway")
+			})
+
+			It("should not create an APIRule with double slashed gateway name", func() {
+				invalidHelper("namespace//gateway")
+			})
 		})
 
-		It("should not create an APIRule with too long gateway namespace name", func() {
-			invalidHelper("insane-very-long-namespace-name-exceeding-sixty-three-characters/validname")
+		Context("hosts should be a valid FQDN or a short host name", Ordered, func() {
+			It("should create an APIRule with a valid FQDN host", func() {
+				// given
+				apiRuleName := generateTestName(testNameBase, testIDLength)
+				serviceName := testServiceNameBase
+				serviceHost := gatewayv2alpha1.Host("test.some-example.com")
+				serviceHosts := []*gatewayv2alpha1.Host{&serviceHost}
+
+				rule := testRulev2alpha1("/img", []gatewayv2alpha1.HttpMethod{http.MethodGet})
+				rule.NoAuth = ptr.To(true)
+				apiRule := testApiRulev2alpha1(apiRuleName, testNamespace, serviceName, testNamespace, serviceHosts, testServicePort, []gatewayv2alpha1.Rule{rule})
+				svc := testService(serviceName, testNamespace, testServicePort)
+
+				// when
+				Expect(c.Create(context.Background(), svc)).Should(Succeed())
+				Expect(c.Create(context.Background(), apiRule)).Should(Succeed())
+				defer func() {
+					apiRulev2alpha1Teardown(apiRule)
+					serviceTeardown(svc)
+				}()
+			})
+
+			It("should create an APIRule with short host name that has length of 1 character", func() {
+				// given
+				apiRuleName := generateTestName(testNameBase, testIDLength)
+				serviceName := testServiceNameBase
+				serviceHost := gatewayv2alpha1.Host("a")
+				serviceHosts := []*gatewayv2alpha1.Host{&serviceHost}
+
+				rule := testRulev2alpha1("/img", []gatewayv2alpha1.HttpMethod{http.MethodGet})
+				rule.NoAuth = ptr.To(true)
+				apiRule := testApiRulev2alpha1(apiRuleName, testNamespace, serviceName, testNamespace, serviceHosts, testServicePort, []gatewayv2alpha1.Rule{rule})
+				svc := testService(serviceName, testNamespace, testServicePort)
+
+				// when
+				Expect(c.Create(context.Background(), svc)).Should(Succeed())
+				Expect(c.Create(context.Background(), apiRule)).Should(Succeed())
+				defer func() {
+					apiRulev2alpha1Teardown(apiRule)
+					serviceTeardown(svc)
+				}()
+			})
+
+			It("should create an APIRule with host name that has length of 255 characters", func() {
+				// given
+				apiRuleName := generateTestName(testNameBase, testIDLength)
+				serviceName := testServiceNameBase
+				sixtyThreeA := strings.Repeat("a", 63)
+				host255 := fmt.Sprintf("%s.%s.%s.%s.com", sixtyThreeA, sixtyThreeA, sixtyThreeA, strings.Repeat("b", 59))
+				serviceHost := gatewayv2alpha1.Host(host255)
+				serviceHosts := []*gatewayv2alpha1.Host{&serviceHost}
+
+				rule := testRulev2alpha1("/img", []gatewayv2alpha1.HttpMethod{http.MethodGet})
+				rule.NoAuth = ptr.To(true)
+				apiRule := testApiRulev2alpha1(apiRuleName, testNamespace, serviceName, testNamespace, serviceHosts, testServicePort, []gatewayv2alpha1.Rule{rule})
+				svc := testService(serviceName, testNamespace, testServicePort)
+
+				// when
+				Expect(host255).To(HaveLen(255))
+				Expect(c.Create(context.Background(), svc)).Should(Succeed())
+				Expect(c.Create(context.Background(), apiRule)).Should(Succeed())
+				defer func() {
+					apiRulev2alpha1Teardown(apiRule)
+					serviceTeardown(svc)
+				}()
+			})
+
+			It("should not create an APIRule with host name longer than 255 characters", func() {
+				// given
+				apiRuleName := generateTestName(testNameBase, testIDLength)
+				serviceName := testServiceNameBase
+				sixtyThreeA := strings.Repeat("a", 63)
+				host256 := fmt.Sprintf("%s.%s.%s.%s.com", sixtyThreeA, sixtyThreeA, sixtyThreeA, strings.Repeat("b", 60))
+				serviceHost := gatewayv2alpha1.Host(host256)
+				serviceHosts := []*gatewayv2alpha1.Host{&serviceHost}
+
+				rule := testRulev2alpha1("/img", []gatewayv2alpha1.HttpMethod{http.MethodGet})
+				rule.NoAuth = ptr.To(true)
+				apiRule := testApiRulev2alpha1(apiRuleName, testNamespace, serviceName, testNamespace, serviceHosts, testServicePort, []gatewayv2alpha1.Rule{rule})
+				svc := testService(serviceName, testNamespace, testServicePort)
+
+				// when
+				Expect(host256).To(HaveLen(256))
+				Expect(c.Create(context.Background(), svc)).Should(Succeed())
+				err := c.Create(context.Background(), apiRule)
+				defer func() {
+					apiRulev2alpha1Teardown(apiRule)
+					serviceTeardown(svc)
+				}()
+				Expect(err).Should(HaveOccurred())
+				Expect(err.Error()).To(ContainSubstring("spec.hosts[0]: Too long: may not be longer than 255"))
+			})
+
+			invalidHelper := func(host gatewayv2alpha1.Host) {
+				// given
+				apiRuleName := generateTestName(testNameBase, testIDLength)
+				serviceName := testServiceNameBase
+				serviceHosts := []*gatewayv2alpha1.Host{ptr.To(gatewayv2alpha1.Host(host))}
+
+				rule := testRulev2alpha1("/img", []gatewayv2alpha1.HttpMethod{http.MethodGet})
+				rule.NoAuth = ptr.To(true)
+				apiRule := testApiRulev2alpha1(apiRuleName, testNamespace, serviceName, testNamespace, serviceHosts, testServicePort, []gatewayv2alpha1.Rule{rule})
+				svc := testService(serviceName, testNamespace, testServicePort)
+				// when
+				Expect(c.Create(context.Background(), svc)).Should(Succeed())
+				err := c.Create(context.Background(), apiRule)
+				defer func() {
+					apiRulev2alpha1Teardown(apiRule)
+					serviceTeardown(svc)
+				}()
+				Expect(err).Should(HaveOccurred())
+				Expect(err.Error()).To(ContainSubstring("spec.hosts[0]: Invalid value: \"string\": Host must be a lowercase RFC 1123 label (must consist of lowercase alphanumeric characters or '-', and must start and end with an lowercase alphanumeric character) or a fully qualified domain name"))
+			}
+
+			It("should not create an APIRule with an empty host", func() {
+				invalidHelper("")
+			})
+
+			It("should not create an APIRule when host name has uppercase letters", func() {
+				invalidHelper("eXample.com")
+				invalidHelper("example.cOm")
+			})
+
+			It("should not create an APIRule with host label longer than 63 characters", func() {
+				invalidHelper(gatewayv2alpha1.Host(strings.Repeat("a", 64) + ".com"))
+				invalidHelper(gatewayv2alpha1.Host("example." + strings.Repeat("a", 64)))
+			})
+
+			It("should not create an APIRule when any domain label is empty", func() {
+				invalidHelper(".com")
+				invalidHelper("example..com")
+				invalidHelper("example.")
+			})
+
+			It("should not create an APIRule when top level domain is too short", func() {
+				invalidHelper("example.c")
+			})
+
+			It("should not create an APIRule when host contains wrong characters", func() {
+				invalidHelper("*example.com")
+				invalidHelper("exam*ple.com")
+				invalidHelper("example*.com")
+				invalidHelper("example.*com")
+				invalidHelper("example.co*m")
+				invalidHelper("example.com*")
+			})
+
+			It("should not create an APIRule when host starts or ends with a hyphen", func() {
+				invalidHelper("-example.com")
+				invalidHelper("example-.com")
+				invalidHelper("example.-com")
+				invalidHelper("example.com-")
+			})
 		})
 
-		It("should not create an APIRule with too long gateway name", func() {
-			invalidHelper("validnamespace/insane-very-long-namespace-name-exceeding-sixty-three-characters")
+		Context("rule path validation respected", func() {
+			It("should fail when path consists of a path and *", func() {
+				// given
+				apiRuleName := generateTestName(testNameBase, testIDLength)
+				serviceName := generateTestName(testServiceNameBase, testIDLength)
+				serviceHost := gatewayv2alpha1.Host("example.com")
+				serviceHosts := []*gatewayv2alpha1.Host{&serviceHost}
+
+				rule := testRulev2alpha1("/img*", []gatewayv2alpha1.HttpMethod{http.MethodGet})
+				rule.NoAuth = ptr.To(true)
+				apiRule := testApiRulev2alpha1(apiRuleName, testNamespace, serviceName, testNamespace, serviceHosts, testServicePort, []gatewayv2alpha1.Rule{rule})
+				svc := testService(serviceName, testNamespace, testServicePort)
+
+				Expect(c.Create(context.Background(), svc)).Should(Succeed())
+
+				// when
+				err := c.Create(context.Background(), apiRule)
+
+				// then
+				Expect(err).Should(HaveOccurred())
+				Expect(err.Error()).To(ContainSubstring("spec.rules[0].path: Invalid value: \"/img*\": spec.rules[0].path"))
+				defer func() {
+					apiRulev2alpha1Teardown(apiRule)
+					serviceTeardown(svc)
+				}()
+			})
+
+			It("should apply APIRule when path contains only /*", func() {
+				// given
+				apiRuleName := generateTestName(testNameBase, testIDLength)
+				serviceName := generateTestName(testServiceNameBase, testIDLength)
+				serviceHost := gatewayv2alpha1.Host("example.com")
+				serviceHosts := []*gatewayv2alpha1.Host{&serviceHost}
+
+				rule := testRulev2alpha1("/*", []gatewayv2alpha1.HttpMethod{http.MethodGet})
+				rule.NoAuth = ptr.To(true)
+				apiRule := testApiRulev2alpha1(apiRuleName, testNamespace, serviceName, testNamespace, serviceHosts, testServicePort, []gatewayv2alpha1.Rule{rule})
+				svc := testService(serviceName, testNamespace, testServicePort)
+
+				Expect(c.Create(context.Background(), svc)).Should(Succeed())
+
+				// when then
+				Expect(c.Create(context.Background(), apiRule)).Should(Succeed())
+				defer func() {
+					apiRulev2alpha1Teardown(apiRule)
+					serviceTeardown(svc)
+				}()
+			})
+
+			It("should apply APIRule when path contains no *", func() {
+				// given
+				apiRuleName := generateTestName(testNameBase, testIDLength)
+				serviceName := generateTestName(testServiceNameBase, testIDLength)
+				serviceHost := gatewayv2alpha1.Host("example.com")
+				serviceHosts := []*gatewayv2alpha1.Host{&serviceHost}
+
+				rule := testRulev2alpha1("/img-new/1", []gatewayv2alpha1.HttpMethod{http.MethodGet})
+				rule.NoAuth = ptr.To(true)
+				apiRule := testApiRulev2alpha1(apiRuleName, testNamespace, serviceName, testNamespace, serviceHosts, testServicePort, []gatewayv2alpha1.Rule{rule})
+				svc := testService(serviceName, testNamespace, testServicePort)
+
+				Expect(c.Create(context.Background(), svc)).Should(Succeed())
+
+				// when then
+				Expect(c.Create(context.Background(), apiRule)).Should(Succeed())
+				defer func() {
+					apiRulev2alpha1Teardown(apiRule)
+					serviceTeardown(svc)
+				}()
+			})
 		})
-
-		It("should not create an APIRule with just the namespace", func() {
-			invalidHelper("validnamespace/")
-		})
-
-		It("should not create an APIRule with just the gateway name", func() {
-			invalidHelper("/validgateway")
-		})
-
-		It("should not create an APIRule with double slashed gateway name", func() {
-			invalidHelper("namespace//gateway")
-		})
-	})
-
-	Context("when creating APIRule in version v2alpha1 hosts should be FQDN", Ordered, func() {
-		It("should create an APIRule with a FQDN host", func() {
-			// given
-			apiRuleName := generateTestName(testNameBase, testIDLength)
-			serviceName := testServiceNameBase
-			serviceHost := gatewayv2alpha1.Host("example.com")
-			serviceHosts := []*gatewayv2alpha1.Host{&serviceHost}
-
-			rule := testRulev2alpha1("/img", []gatewayv2alpha1.HttpMethod{http.MethodGet})
-			rule.NoAuth = ptr.To(true)
-			apiRule := testApiRulev2alpha1(apiRuleName, testNamespace, serviceName, testNamespace, serviceHosts, testServicePort, []gatewayv2alpha1.Rule{rule})
-			svc := testService(serviceName, testNamespace, testServicePort)
-
-			// when
-			Expect(c.Create(context.Background(), svc)).Should(Succeed())
-			Expect(c.Create(context.Background(), apiRule)).Should(Succeed())
-			defer func() {
-				apiRulev2alpha1Teardown(apiRule)
-				serviceTeardown(svc)
-			}()
-		})
-
-		It("should create an APIRule with host name that has length of 255 characters", func() {
-			// given
-			apiRuleName := generateTestName(testNameBase, testIDLength)
-			serviceName := testServiceNameBase
-			sixtyThreeA := strings.Repeat("a", 63)
-			host255 := fmt.Sprintf("%s.%s.%s.%s.com", sixtyThreeA, sixtyThreeA, sixtyThreeA, strings.Repeat("b", 59))
-			serviceHost := gatewayv2alpha1.Host(host255)
-			serviceHosts := []*gatewayv2alpha1.Host{&serviceHost}
-
-			rule := testRulev2alpha1("/img", []gatewayv2alpha1.HttpMethod{http.MethodGet})
-			rule.NoAuth = ptr.To(true)
-			apiRule := testApiRulev2alpha1(apiRuleName, testNamespace, serviceName, testNamespace, serviceHosts, testServicePort, []gatewayv2alpha1.Rule{rule})
-			svc := testService(serviceName, testNamespace, testServicePort)
-
-			// when
-			Expect(host255).To(HaveLen(255))
-			Expect(c.Create(context.Background(), svc)).Should(Succeed())
-			Expect(c.Create(context.Background(), apiRule)).Should(Succeed())
-			defer func() {
-				apiRulev2alpha1Teardown(apiRule)
-				serviceTeardown(svc)
-			}()
-		})
-
-		It("should not create an APIRule with host name longer than 255 characters", func() {
-			// given
-			apiRuleName := generateTestName(testNameBase, testIDLength)
-			serviceName := testServiceNameBase
-			sixtyThreeA := strings.Repeat("a", 63)
-			host256 := fmt.Sprintf("%s.%s.%s.%s.com", sixtyThreeA, sixtyThreeA, sixtyThreeA, strings.Repeat("b", 60))
-			serviceHost := gatewayv2alpha1.Host(host256)
-			serviceHosts := []*gatewayv2alpha1.Host{&serviceHost}
-
-			rule := testRulev2alpha1("/img", []gatewayv2alpha1.HttpMethod{http.MethodGet})
-			rule.NoAuth = ptr.To(true)
-			apiRule := testApiRulev2alpha1(apiRuleName, testNamespace, serviceName, testNamespace, serviceHosts, testServicePort, []gatewayv2alpha1.Rule{rule})
-			svc := testService(serviceName, testNamespace, testServicePort)
-
-			// when
-			Expect(host256).To(HaveLen(256))
-			Expect(c.Create(context.Background(), svc)).Should(Succeed())
-			err := c.Create(context.Background(), apiRule)
-			defer func() {
-				apiRulev2alpha1Teardown(apiRule)
-				serviceTeardown(svc)
-			}()
-			Expect(err).Should(HaveOccurred())
-			Expect(err.Error()).To(ContainSubstring("spec.hosts[0]: Too long: may not be longer than 255"))
-		})
-
-		invalidHelper := func(host gatewayv2alpha1.Host) {
-			// given
-			apiRuleName := generateTestName(testNameBase, testIDLength)
-			serviceName := testServiceNameBase
-			serviceHosts := []*gatewayv2alpha1.Host{&host}
-
-			rule := testRulev2alpha1("/img", []gatewayv2alpha1.HttpMethod{http.MethodGet})
-			rule.NoAuth = ptr.To(true)
-			apiRule := testApiRulev2alpha1(apiRuleName, testNamespace, serviceName, testNamespace, serviceHosts, testServicePort, []gatewayv2alpha1.Rule{rule})
-			svc := testService(serviceName, testNamespace, testServicePort)
-
-			// when
-			Expect(c.Create(context.Background(), svc)).Should(Succeed())
-			err := c.Create(context.Background(), apiRule)
-			defer func() {
-				apiRulev2alpha1Teardown(apiRule)
-				serviceTeardown(svc)
-			}()
-			Expect(err).Should(HaveOccurred())
-			Expect(err.Error()).To(ContainSubstring("spec.hosts[0]: Invalid value: \"string\": Host is not Fully Qualified Domain Name"))
-		}
-
-		It("should not create an APIRule with an empty host", func() {
-			invalidHelper("")
-		})
-
-		It("should not create an APIRule with host name without domain", func() {
-			invalidHelper("example-com")
-		})
-
-		It("should not create an APIRule when host name has uppercase letters", func() {
-			invalidHelper("Example.Com")
-		})
-
-		It("should not create an APIRule with host name segment longer than 63 characters", func() {
-			serviceHost := gatewayv2alpha1.Host(strings.Repeat("a", 64) + ".com")
-			invalidHelper(serviceHost)
-		})
-
-		It("should not create an APIRule when any domain label is empty", func() {
-			invalidHelper("host..com")
-		})
-
-		It("should not create an APIRule when top level domain is too short", func() {
-			invalidHelper("host.with.tld.too.short.x")
-		})
-
-		It("should not create an APIRule when host contains wrong characters", func() {
-			invalidHelper("*example.com")
-		})
-
-		It("should not create an APIRule when host starts with a dash", func() {
-			invalidHelper("-example.com")
-		})
-	})
-
-	Context("APIRule version v2alpha1 rule path validation", func() {
-
-		It("should fail when path consists of a path and *", func() {
-			// given
-			apiRuleName := generateTestName(testNameBase, testIDLength)
-			serviceName := generateTestName(testServiceNameBase, testIDLength)
-			serviceHost := gatewayv2alpha1.Host("example.com")
-			serviceHosts := []*gatewayv2alpha1.Host{&serviceHost}
-
-			rule := testRulev2alpha1("/img*", []gatewayv2alpha1.HttpMethod{http.MethodGet})
-			rule.NoAuth = ptr.To(true)
-			apiRule := testApiRulev2alpha1(apiRuleName, testNamespace, serviceName, testNamespace, serviceHosts, testServicePort, []gatewayv2alpha1.Rule{rule})
-			svc := testService(serviceName, testNamespace, testServicePort)
-
-			Expect(c.Create(context.Background(), svc)).Should(Succeed())
-
-			// when
-			err := c.Create(context.Background(), apiRule)
-
-			// then
-			Expect(err).Should(HaveOccurred())
-			Expect(err.Error()).To(ContainSubstring("spec.rules[0].path: Invalid value: \"/img*\": spec.rules[0].path"))
-			defer func() {
-				apiRulev2alpha1Teardown(apiRule)
-				serviceTeardown(svc)
-			}()
-		})
-
-		It("should apply APIRule when path contains only /*", func() {
-			// given
-			apiRuleName := generateTestName(testNameBase, testIDLength)
-			serviceName := generateTestName(testServiceNameBase, testIDLength)
-			serviceHost := gatewayv2alpha1.Host("example.com")
-			serviceHosts := []*gatewayv2alpha1.Host{&serviceHost}
-
-			rule := testRulev2alpha1("/*", []gatewayv2alpha1.HttpMethod{http.MethodGet})
-			rule.NoAuth = ptr.To(true)
-			apiRule := testApiRulev2alpha1(apiRuleName, testNamespace, serviceName, testNamespace, serviceHosts, testServicePort, []gatewayv2alpha1.Rule{rule})
-			svc := testService(serviceName, testNamespace, testServicePort)
-
-			Expect(c.Create(context.Background(), svc)).Should(Succeed())
-
-			// when then
-			Expect(c.Create(context.Background(), apiRule)).Should(Succeed())
-			defer func() {
-				apiRulev2alpha1Teardown(apiRule)
-				serviceTeardown(svc)
-			}()
-		})
-
-		It("should apply APIRule when path contains no *", func() {
-			// given
-			apiRuleName := generateTestName(testNameBase, testIDLength)
-			serviceName := generateTestName(testServiceNameBase, testIDLength)
-			serviceHost := gatewayv2alpha1.Host("example.com")
-			serviceHosts := []*gatewayv2alpha1.Host{&serviceHost}
-
-			rule := testRulev2alpha1("/img-new/1", []gatewayv2alpha1.HttpMethod{http.MethodGet})
-			rule.NoAuth = ptr.To(true)
-			apiRule := testApiRulev2alpha1(apiRuleName, testNamespace, serviceName, testNamespace, serviceHosts, testServicePort, []gatewayv2alpha1.Rule{rule})
-			svc := testService(serviceName, testNamespace, testServicePort)
-
-			Expect(c.Create(context.Background(), svc)).Should(Succeed())
-
-			// when then
-			Expect(c.Create(context.Background(), apiRule)).Should(Succeed())
-			defer func() {
-				apiRulev2alpha1Teardown(apiRule)
-				serviceTeardown(svc)
-			}()
-		})
-
 	})
 
 	It("APIRule in status Error should reconcile to status OK when root cause of error is fixed", func() {
@@ -2012,7 +2034,6 @@ func testService(name, namespace string, servicePort uint32) *corev1.Service {
 }
 
 func testOryJWTHandler(issuer string, scopes []string) *gatewayv1beta1.Handler {
-
 	configJSON := fmt.Sprintf(`{
 			"trusted_issuers": ["%s"],
 			"jwks": [],
@@ -2028,7 +2049,6 @@ func testOryJWTHandler(issuer string, scopes []string) *gatewayv1beta1.Handler {
 }
 
 func testIstioJWTHandler(issuer string, jwksUri string) *gatewayv1beta1.Handler {
-
 	bytes, err := json.Marshal(gatewayv1beta1.JwtConfig{
 		Authentications: []*gatewayv1beta1.JwtAuthentication{
 			{
@@ -2047,7 +2067,6 @@ func testIstioJWTHandler(issuer string, jwksUri string) *gatewayv1beta1.Handler 
 }
 
 func testIstioJWTHandlerWithScopes(issuer string, jwksUri string, authorizationScopes []string) *gatewayv1beta1.Handler {
-
 	bytes, err := json.Marshal(gatewayv1beta1.JwtConfig{
 		Authentications: []*gatewayv1beta1.JwtAuthentication{
 			{
@@ -2071,7 +2090,6 @@ func testIstioJWTHandlerWithScopes(issuer string, jwksUri string, authorizationS
 }
 
 func testIstioJWTHandlerWithAuthorizations(issuer string, jwksUri string, authorizations []*gatewayv1beta1.JwtAuthorization) *gatewayv1beta1.Handler {
-
 	bytes, err := json.Marshal(gatewayv1beta1.JwtConfig{
 		Authentications: []*gatewayv1beta1.JwtAuthentication{
 			{
@@ -2091,7 +2109,6 @@ func testIstioJWTHandlerWithAuthorizations(issuer string, jwksUri string, author
 }
 
 func testOauthHandler(scopes []string) *gatewayv1beta1.Handler {
-
 	configJSON := fmt.Sprintf(`{
 		"required_scope": [%s]
 	}`, toCSVList(scopes))
@@ -2112,7 +2129,6 @@ func noConfigHandler(name string) *gatewayv1beta1.Handler {
 
 // Converts a []interface{} to a string slice. Panics if given object is of other type.
 func asStringSlice(in interface{}) []string {
-
 	inSlice := in.([]interface{})
 
 	if inSlice == nil {
@@ -2129,7 +2145,6 @@ func asStringSlice(in interface{}) []string {
 }
 
 func generateTestName(name string, length int) string {
-
 	rand.NewSource(time.Now().UnixNano())
 
 	letterRunes := []rune("abcdefghijklmnopqrstuvwxyz")
@@ -2148,7 +2163,6 @@ func getRuleList(g Gomega, matchingLabels client.ListOption) []rulev1alpha1.Rule
 }
 
 func verifyRuleList(g Gomega, ruleList []rulev1alpha1.Rule, pathToURLFunc func(string) string, expected ...gatewayv1beta1.Rule) {
-
 	g.Expect(ruleList).To(HaveLen(len(expected)))
 
 	actual := make(map[string]rulev1alpha1.Rule)
@@ -2166,6 +2180,7 @@ func verifyRuleList(g Gomega, ruleList []rulev1alpha1.Rule, pathToURLFunc func(s
 		verifyMutators(g, actual[ruleUrl].Spec.Mutators, expected[i].Mutators)
 	}
 }
+
 func verifyMutators(g Gomega, actual []*rulev1alpha1.Mutator, expected []*gatewayv1beta1.Mutator) {
 	if expected == nil {
 		g.Expect(actual).To(BeNil())
@@ -2175,6 +2190,7 @@ func verifyMutators(g Gomega, actual []*rulev1alpha1.Mutator, expected []*gatewa
 		}
 	}
 }
+
 func verifyAccessStrategies(g Gomega, actual []*rulev1alpha1.Authenticator, expected []*gatewayv1beta1.Authenticator) {
 	if expected == nil {
 		g.Expect(actual).To(BeNil())
@@ -2297,6 +2313,21 @@ func serviceTeardown(svc *corev1.Service) {
 	Eventually(func(g Gomega) {
 		a := corev1.Service{}
 		err := c.Get(context.Background(), client.ObjectKey{Name: svc.Name, Namespace: testNamespace}, &a)
+		g.Expect(errors.IsNotFound(err)).To(BeTrue())
+	}, eventuallyTimeout).Should(Succeed())
+}
+
+func kymaGatewayTeardown(gateway *networkingv1beta1.Gateway) {
+	By(fmt.Sprintf("Deleting Kyma Gateway %s as part of teardown", gateway.Name))
+	err := c.Delete(context.Background(), gateway)
+
+	if err != nil {
+		Expect(errors.IsNotFound(err)).To(BeTrue())
+	}
+
+	Eventually(func(g Gomega) {
+		a := gatewayv1beta1.APIRule{}
+		err := c.Get(context.Background(), client.ObjectKey{Name: gateway.Name, Namespace: gateway.Namespace}, &a)
 		g.Expect(errors.IsNotFound(err)).To(BeTrue())
 	}, eventuallyTimeout).Should(Succeed())
 }

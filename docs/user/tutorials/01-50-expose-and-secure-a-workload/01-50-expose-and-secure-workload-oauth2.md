@@ -7,7 +7,6 @@ This tutorial shows how to expose and secure Services using APIGateway Controlle
 * [Deploy a sample HTTPBin Service](../01-00-create-workload.md).
 * [Set up your custom domain](../01-10-setup-custom-domain-for-workload.md) or use a Kyma domain instead.
 * Configure your client ID and client Secret using an OAuth2-compliant provider.
-* 
 
 ## Steps
 
@@ -21,7 +20,7 @@ Follow the steps to get a token with the `read` scope:
 2. Go to the `Body` tab and select the `x-www-form-urlencoded` option. Add two key-value pairs to the body:
     - **grant_type**: `client_credentials&scope=read`
     - **client_id**: `{CLIENT_ID}`
-      
+
     Replace `{CLIENT_ID}` with your client ID.
 2. Go to the **Headers** tab and add the header:
     - **Content-Type**: `application/x-www-form-urlencoded`
@@ -29,7 +28,7 @@ Follow the steps to get a token with the `read` scope:
     - **Type**: Basic
     - **Username**: `{CLIENT_ID}`
     - **Password**: `{CLIENT_SECRET}`
-      
+
     Replace `{CLIENT_ID}` and `{CLIENT_SECRET}` with your Client ID and Client Secret.
 4. Send a `POST` request and save your token.
 
@@ -39,19 +38,19 @@ To get a token with the `read` scope, go to the `Body` tab and replace the **gra
 #### **curl**
 
 1. Encode the client's credentials and export them as an environment variable:
-   
+
     ```bash
     export ENCODED_CREDENTIALS=$(echo -n "$CLIENT_ID:$CLIENT_SECRET" | base64)
     export TOKEN_ENDPOINT={YOUR_TOKEN_ENDPOINT}
     ```
 2. Export your token endpoint as an environment variable:
-    
+
     ```bash
     export TOKEN_ENDPOINT={YOUR_TOKEN_ENDPOINT}
     ```
 
 3. Get a token with the `read` scope.
-  
+
     1. Get the opaque token:
         ```shell
         curl --location --request POST "$TOKEN_ENDPOINT?grant_type=client_credentials" -F "scope=read" --header "Content-Type: application/x-www-form-urlencoded" --header "Authorization: Basic $ENCODED_CREDENTIALS"
@@ -60,7 +59,7 @@ To get a token with the `read` scope, go to the `Body` tab and replace the **gra
         ```bash
         export ACCESS_TOKEN_READ={ISSUED_READ_TOKEN}
         ```
-4. Get a token with the `write` scope.  
+4. Get a token with the `write` scope.
 
     1. Get the opaque token:
         ```shell
@@ -77,14 +76,14 @@ To get a token with the `read` scope, go to the `Body` tab and replace the **gra
 <!-- tabs:start -->
 #### **Kyma Dashboard**
 
-1. Go to **Discovery and Network > API Rules** and select **Create**. 
+1. Go to **Discovery and Network > API Rules** and select **Create**.
 2. Provide the following configuration details:
     - **Name**: `httpbin`
     - **Service Name**: `httpbin`
     - **Port**: `8000`
     - To fill in the `Gateway` section, use these values:
       - **Namespace** is the name of the namespace in which you deployed an instance of the HTTPBin Service. With a Kyma domain, use the `kyma-system` namespace.
-      - **Name** is the Gateway's name, for example `httpbin-gateway`. 
+      - **Name** is the Gateway's name, for example `httpbin-gateway`.
       - In the **Host** field, enter `httpbin.{DOMAIN_TO_EXPORT_WORKLOADS}`. Replace the placeholder with the name of your domain.
     - Add an access strategy with the following configuration:
       - **Handler**: `oauth2_introspection`
@@ -107,10 +106,10 @@ To get a token with the `read` scope, go to the `Body` tab and replace the **gra
 #### **kubectl**
 
 1. Depending on whether you use your custom domain or a Kyma domain, export the necessary values as environment variables:
-  
+
   <!-- tabs:start -->
   #### **Custom Domain**
-      
+
   ```bash
   export DOMAIN_TO_EXPOSE_WORKLOADS={DOMAIN_NAME}
   export GATEWAY=$NAMESPACE/httpbin-gateway
@@ -124,7 +123,7 @@ To get a token with the `read` scope, go to the `Body` tab and replace the **gra
   <!-- tabs:end -->
 
 2. Export your introspection endpoint as an environment variable:
-  
+
     ```bash
       export INTROSPECTION_ENDPOINT={INTROSPECTION_URL}
     ```
@@ -172,7 +171,6 @@ To get a token with the `read` scope, go to the `Body` tab and replace the **gra
 
 The exposed Service requires tokens with `read` scope for `GET` requests in the entire Service, and tokens with `write` scope for `POST` requests to the `/post` endpoint of the Service.
 
-  
 > [!WARNING]
 >  When you secure a workload, don't create overlapping Access Rules for paths. Doing so can cause unexpected behavior and reduce the security of your implementation.
 
@@ -186,14 +184,14 @@ Use the token with the `read` scope to access the HTTPBin Service:
 
 1. Create a new request and enter the URL `https://httpbin.{DOMAIN_TO_EXPOSE_WORKLOADS}/status/headers`. Replace `{DOMAIN_TO_EXPOSE_WORKLOADS}` with the name of your domain. 
 2. Go to the **Headers** tab. Add a new header with the key **Authorization** and the value `Bearer {ACCESS_TOKEN_READ}`. Replace `{ACCESS_TOKEN_READ}` with the Opaque token that has the `read` scope.
-4. To call the endpoint, send a `GET` request to the HTTPBin Service. 
+4. To call the endpoint, send a `GET` request to the HTTPBin Service.
 
 
 Use the token with the `write` scope to access the HTTPBin Service:
-    
+
 1. Create a new request and enter the URL `https://httpbin.{DOMAIN_TO_EXPOSE_WORKLOADS}/status/post`. Replace `{DOMAIN_TO_EXPOSE_WORKLOADS}` with the name of your domain. 
 2. Go to the **Headers** tab. Add a new header with the key **Authorization** and the value `Bearer {ACCESS_TOKEN_WRITE}`. Replace `{ACCESS_TOKEN_WRITE}` with the Opaque token that has the `write` scope.
-4. To call the endpoint, send a `POST` request to the HTTPBin Service. 
+4. To call the endpoint, send a `POST` request to the HTTPBin Service.
 
 #### **curl**
 

@@ -1,10 +1,11 @@
 package virtualservice_test
 
 import (
+	"net/http"
+
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	processors "github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1/virtualservice"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
-	"net/http"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	. "github.com/kyma-project/api-gateway/internal/builders/builders_test/v2alpha1_test"
@@ -21,9 +22,9 @@ var _ = Describe("Mutators", func() {
 	})
 
 	DescribeTable("Mutators",
-		func(apiRule *gatewayv2alpha1.APIRule, verifiers []verifier, expectedActions ...string) {
-			processor = processors.NewVirtualServiceProcessor(GetTestConfig(), apiRule)
-			checkVirtualServices(client, processor, verifiers, expectedActions...)
+		func(apiRule *gatewayv2alpha1.APIRule, verifiers []verifier, expectedError error, expectedActions ...string) {
+			processor = processors.NewVirtualServiceProcessor(GetTestConfig(), apiRule, nil)
+			checkVirtualServices(client, processor, verifiers, expectedError, expectedActions...)
 		},
 
 		Entry("should set only x-forwarded-host header when rule does not use any mutators",
@@ -35,7 +36,7 @@ var _ = Describe("Mutators", func() {
 					Expect(vs.Spec.Http[0].Headers.Request.Set).To(HaveLen(1))
 					Expect(vs.Spec.Http[0].Headers.Request.Set["x-forwarded-host"]).To(Equal("example-host.example.com"))
 				},
-			}, "create"),
+			}, nil, "create"),
 
 		Entry("should set Headers on request when rule uses HeadersMutator",
 			NewAPIRuleBuilderWithDummyData().
@@ -50,7 +51,7 @@ var _ = Describe("Mutators", func() {
 					Expect(vs.Spec.Http[0].Headers.Request.Set["header1"]).To(Equal("value1"))
 					Expect(vs.Spec.Http[0].Headers.Request.Set["x-forwarded-host"]).To(Equal("example-host.example.com"))
 				},
-			}, "create"),
+			}, nil, "create"),
 
 		Entry("should set Cookie header on request when rule uses CookieMutator",
 			NewAPIRuleBuilderWithDummyData().
@@ -65,7 +66,7 @@ var _ = Describe("Mutators", func() {
 					Expect(vs.Spec.Http[0].Headers.Request.Set["Cookie"]).To(Equal("header1=value1"))
 					Expect(vs.Spec.Http[0].Headers.Request.Set["x-forwarded-host"]).To(Equal("example-host.example.com"))
 				},
-			}, "create"),
+			}, nil, "create"),
 
 		Entry("should set Cookie header and custom header on request when rule uses CookieMutator and HeadersMutator",
 			NewAPIRuleBuilderWithDummyData().
@@ -84,6 +85,6 @@ var _ = Describe("Mutators", func() {
 					Expect(vs.Spec.Http[0].Headers.Request.Set["header2"]).To(Equal("value2"))
 					Expect(vs.Spec.Http[0].Headers.Request.Set["x-forwarded-host"]).To(Equal("example-host.example.com"))
 				},
-			}, "create"),
+			}, nil, "create"),
 	)
 })

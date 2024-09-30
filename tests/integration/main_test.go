@@ -155,7 +155,7 @@ func createGoDogOpts(t *testing.T, featuresPath []string, concurrency int) godog
 	}
 
 	if shouldExportResults() {
-		goDogOpts.Format = "pretty,junit:junit-report.xml,cucumber:cucumber-report.json"
+		goDogOpts.Format = "pretty,cucumber:cucumber-report.json"
 	}
 
 	return goDogOpts

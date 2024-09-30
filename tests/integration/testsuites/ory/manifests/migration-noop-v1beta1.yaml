@@ -3,6 +3,8 @@ kind: APIRule
 metadata:
   name: "{{.NamePrefix}}-{{.TestID}}"
   namespace: "{{.Namespace}}"
+  labels:
+    test: v1beta1-migration
 spec:
   service:
     name: httpbin-{{.TestID}}
@@ -10,7 +12,7 @@ spec:
   gateway: "{{.GatewayNamespace}}/{{.GatewayName}}"
   host: "httpbin-{{.TestID}}.{{.Domain}}"
   rules:
-    - path: /anything
+    - path: /headers
       methods: ["GET"]
       accessStrategies:
         - handler: noop

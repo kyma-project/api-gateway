@@ -1,43 +1,13 @@
-# This workflow is responsible for all kinds of integration tests run on pull request.
-# Those tests depend on a container image so in the first job we wait for the image build to succeed.
-
 name: PR Integration Release
 
 on:
-  # pull_request_target runs workflows from the base of PR
-  # It allows the workflow to get the repository secrets
-  pull_request_target:
-    types: [ synchronize, opened, reopened, ready_for_review ]
-    paths-ignore:
-      - "docs/**"
-      - "**/*.md"
-      - "tests/performance/**"
-      - "OWNERS"
-      - "CODEOWNERS"
-      - ".github/**" #Ignoring since build job isn't triggered on the workflow directory changes
-    branches:
-      - 'release-**'
+  workflow_call:
 
 jobs:
-  wait-for-image-build:
-    environment: ${{ github.event.pull_request.author_association != 'COLLABORATOR' && github.event.pull_request.author_association != 'OWNER' && 'restricted' || 'internal' }}
-    name: Wait for image build
-    runs-on: ubuntu-latest
-    if: github.event.pull_request.draft == false
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - uses: ./.github/actions/wait-for-job-succeed-or-fail
-        with:
-          job-name: 'pull-api-gateway-manager-build'
-          github-auth-token: ${{ secrets.GITHUB_TOKEN }}
-
   integration-tests:
     name: Integration tests
     runs-on: ubuntu-latest
     if: github.event.pull_request.draft == false
-    needs: [wait-for-image-build]
     strategy:
       fail-fast: false
       matrix:
@@ -55,11 +25,28 @@ jobs:
           manager_image: "europe-docker.pkg.dev/kyma-project/dev/api-gateway-manager:PR-${{github.event.number}}"
           test_make_target: ${{ matrix.test_make_target }}
 
+  migration-downtime-tests:
+    name: Zero Downtime Migration Tests
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false
+    strategy:
+      fail-fast: false
+      matrix:
+        test_make_target: [ "test-migration-zero-downtime HANDLER=no_auth", "test-migration-zero-downtime HANDLER=allow", "test-migration-zero-downtime HANDLER=noop", "test-migration-zero-downtime HANDLER=jwt" ]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+      - uses: ./.github/actions/integration-tests
+        with:
+          manager_image: "europe-docker.pkg.dev/kyma-project/dev/api-gateway-manager:PR-${{github.event.number}}"
+          test_make_target: ${{ matrix.test_make_target }}
+
   k8s-compatibility-check:
     name: Kubernetes version compatibility test
     runs-on: ubuntu-latest
     if: github.event.pull_request.draft == false
-    needs: [ wait-for-image-build ]
     strategy:
       fail-fast: false
       matrix:
@@ -80,7 +67,6 @@ jobs:
   upgrade-tests:
     name: Upgrade tests
     runs-on: ubuntu-latest
-    needs: [wait-for-image-build]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -97,7 +83,6 @@ jobs:
   custom-domain-gcp:
     name: Custom domain GCP
     runs-on: ubuntu-latest
-    needs: [wait-for-image-build]
     strategy:
       fail-fast: false
       matrix:
@@ -121,7 +106,6 @@ jobs:
   custom-domain-aws:
     name: Custom domain AWS
     runs-on: ubuntu-latest
-    needs: [wait-for-image-build]
     strategy:
       fail-fast: false
       matrix:

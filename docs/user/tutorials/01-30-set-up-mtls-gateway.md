@@ -104,7 +104,7 @@ The procedure of setting up a working mTLS Gateway is described in the following
     Create an Opaque Secret containing the previously generated Root CA certificate in the `istio-system` namespace. 
 
     Run the following command:
-    
+
     ```bash
     kubectl create secret generic -n istio-system kyma-mtls-certs-cacert --from-file=cacert=cacert.crt
     ```
@@ -119,7 +119,7 @@ To expose a custom workload, create an APIRule. You can either use version `v1be
 <!-- tabs:start -->
 #### **Kyma Dashboard**
 1. Go to the `default` namespace.
-2. Go to **Discovery and Network > API Rules** and select **Create**. 
+2. Go to **Discovery and Network > API Rules** and select **Create**.
 3. Provide the following configuration details.
     - **Name**: `httpbin-mtls`
     - In the Gateway section, select:
@@ -129,7 +129,7 @@ To expose a custom workload, create an APIRule. You can either use version `v1be
     - In the `Rules` section, select:
       - **Path**: `/.*`
       - **Handler**: `no_auth`
-      - **Methods**: `GET`       
+      - **Methods**: `GET`
       - Add the `httpbin` Service on port `8000`.
 
 #### **kubectl**
@@ -172,7 +172,7 @@ metadata:
   name: httpbin-mtls
   namespace: default
 spec:
-  hosts: 
+  hosts:
     - httpbin.$DOMAIN_TO_EXPOSE_WORKLOADS
   gateway: default/kyma-mtls-gateway
   rules:
@@ -203,7 +203,7 @@ Now, access the secured workload using the correct JWT:
 2. Create a new request and enter the URL `https://httpbin.{DOMAIN_TO_EXPOSE_WORKLOADS}/status/418`. Replace `{DOMAIN_TO_EXPOSE_WORKLOADS}` with the name of your domain. 
 3. Go to the **Headers** tab and add the header:
     - **Content-Type**: `application/x-www-form-urlencoded`
-4. To call the endpoint, send a `GET` request to the HTTPBin Service. 
+4. To call the endpoint, send a `GET` request to the HTTPBin Service.
 
 If successful, you get the code `418` response.
 

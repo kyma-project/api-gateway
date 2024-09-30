@@ -3,11 +3,12 @@ package resource
 import (
 	"context"
 	"fmt"
+	"log"
+
 	"github.com/avast/retry-go/v4"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/client"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"log"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -59,6 +60,8 @@ func (k godogResourceMapping) String() string {
 		return "RequestAuthentication"
 	case AuthorizationPolicy:
 		return "AuthorizationPolicy"
+	case Gateway:
+		return "Gateway"
 	}
 	panic(fmt.Errorf("%#v has unimplemented String() method", k))
 }
@@ -84,6 +87,7 @@ const (
 	OryRule
 	RequestAuthentication
 	AuthorizationPolicy
+	Gateway
 )
 
 type Manager struct {
@@ -620,6 +624,12 @@ func GetResourceGvr(kind string) schema.GroupVersionResource {
 			Group:    "security.istio.io",
 			Version:  "v1",
 			Resource: "authorizationpolicies",
+		}
+	case Gateway.String():
+		gvr = schema.GroupVersionResource{
+			Group:    "networking.istio.io",
+			Version:  "v1",
+			Resource: "gateways",
 		}
 	default:
 		panic(fmt.Errorf("cannot get gvr for kind: %s", kind))

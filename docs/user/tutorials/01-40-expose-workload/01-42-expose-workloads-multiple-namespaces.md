@@ -20,7 +20,7 @@ Create three namespaces. Deploy two instances of the HTTPBin Service, each in a 
 <!-- tabs:start -->
 #### **Kyma Dashboard**
 
-1. Go to **Discovery and Network > APIRules** and select **Create**. 
+1. Go to **Discovery and Network > APIRules** and select **Create**.
 2. Switch to the `YAML` tab and paste the following configuration into the editor:
     ```yaml
     apiVersion: gateway.kyma-project.io/v1beta1
@@ -140,7 +140,7 @@ To call the endpoints, send `GET` requests to the HTTPBin Services:
   ```bash
   curl -ik -X GET https://httpbin-services.$DOMAIN_TO_EXPOSE_WORKLOADS/headers
 
-  curl -ik -X GET https://httpbin-services.$DOMAIN_TO_EXPOSE_WORKLOADS/get 
+  curl -ik -X GET https://httpbin-services.$DOMAIN_TO_EXPOSE_WORKLOADS/get
   ```
 If successful, the calls return the `200 OK` response code.
 

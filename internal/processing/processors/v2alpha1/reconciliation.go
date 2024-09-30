@@ -3,6 +3,7 @@ package v2alpha1
 import (
 	"context"
 	"errors"
+
 	"github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1/authorizationpolicy"
 	"github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1/requestauthentication"
 	v2alpha1VirtualService "github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1/virtualservice"
@@ -49,13 +50,13 @@ func (r Reconciliation) GetProcessors() []processing.ReconciliationProcessor {
 	return r.processors
 }
 
-func NewReconciliation(apiRuleV2alpha1 *gatewayv2alpha1.APIRule, apiRuleV1beta1 *gatewayv1beta1.APIRule, validator validation.ApiRuleValidator, config processing.ReconciliationConfig, log *logr.Logger, needsMigration bool) Reconciliation {
+func NewReconciliation(apiRuleV2alpha1 *gatewayv2alpha1.APIRule, apiRuleV1beta1 *gatewayv1beta1.APIRule, gateway *networkingv1beta1.Gateway, validator validation.ApiRuleValidator, config processing.ReconciliationConfig, log *logr.Logger, needsMigration bool) Reconciliation {
 	var processors []processing.ReconciliationProcessor
 	if needsMigration {
 		log.Info("APIRule needs migration")
 		processors = append(processors, migration.NewMigrationProcessors(apiRuleV2alpha1, apiRuleV1beta1, config, log)...)
 	} else {
-		processors = append(processors, v2alpha1VirtualService.NewVirtualServiceProcessor(config, apiRuleV2alpha1))
+		processors = append(processors, v2alpha1VirtualService.NewVirtualServiceProcessor(config, apiRuleV2alpha1, gateway))
 		processors = append(processors, authorizationpolicy.NewProcessor(log, apiRuleV2alpha1))
 		processors = append(processors, requestauthentication.NewProcessor(apiRuleV2alpha1))
 	}
