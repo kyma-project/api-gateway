@@ -12,6 +12,7 @@ module.exports = defineConfig({
   chromeWebSecurity: false,
   viewportWidth: 1500,
   viewportHeight: 1500,
+  experimentalMemoryManagement: true,
   video: true,
   videoCompression: false,
   screenshotsFolder: process?.env?.ARTIFACTS
