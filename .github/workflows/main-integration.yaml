@@ -43,11 +43,15 @@ jobs:
       sha: ${{ steps.get-sha.outputs.sha }}
     steps:
       - name: Get SHA from latest run of main integration triggered by push
-        id: get-latest-push-sha
+        id: get-sha
         uses: actions/github-script@v6
-        if: ${{ github.event_name == 'schedule' }}
         with:
           script: |
+            if (context.eventName !== 'schedule') {
+              core.setOutput('sha', context.sha);
+              return;
+            }
+            
             const { data } = await github.rest.actions.listWorkflowRuns({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -57,22 +61,11 @@ jobs:
               per_page: 40 
             });
             const pushRuns = data.workflow_runs.filter(run => run.event === 'push');
-
             if (pushRuns.length === 0) {
               throw new Error('No successful push runs found');
             }
-
             const latestRun = pushRuns[0];
-
             core.setOutput('sha', latestRun.head_sha);
-      - name: Set output SHA
-        id: get-sha
-        run: |
-          if [ "${{ github.event_name }}" == "schedule" ]; then
-            echo "sha=${{ steps.get-latest-push-sha.outputs.sha }}" >> $GITHUB_OUTPUT
-          else
-            echo "sha=${{ github.sha }}" >> $GITHUB_OUTPUT
-          fi
 
   integration-tests:
     name: Integration tests
