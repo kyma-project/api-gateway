@@ -1,13 +1,10 @@
-# Jobs defined in this file are responsible for things that do not require container image
-# but still relevant to the codebase such as unit tests, linting etc
-
 name: Pull Request
 
 on:
-  pull_request:
+  pull_request_target:
     types: [ synchronize, opened, reopened, ready_for_review ]
     branches:
-      - "main"
+      - 'release-**'
 
 permissions:
   contents: read
@@ -15,6 +12,7 @@ permissions:
 jobs:
   check-build-image:
     name: Check whether build image should run
+    environment: ${{ github.event.pull_request.author_association != 'COLLABORATOR' && github.event.pull_request.author_association != 'OWNER' && 'restricted' || 'internal' }}
     outputs:
       check: ${{ steps.changed-files.outputs.any_modified }}
     runs-on: ubuntu-latest
@@ -35,25 +33,22 @@ jobs:
             .reuse/**
       - name: List all changed files
         run: echo '${{ steps.changed-files.outputs.all_changed_files }}' >> $GITHUB_STEP_SUMMARY
-
   build-image:
-    name: Build manager image
-    runs-on: ubuntu-latest
-    needs: [check-build-image]
+    name: build api-gateway image
     if: ${{ needs.check-build-image.outputs.check == 'true' }}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          fetch-depth: 0
-      - uses: ./.github/actions/build-manager-image
-        with:
-          operator-image-name: "api-gateway-manager:PR-${{github.event.number}}"
+    uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
+    with:
+      name: api-gateway-manager
+      dockerfile: Dockerfile
+      context: .
+      build-args: |
+        VERSION=${{ github.sha }}
 
   check-unit-test:
     outputs:
       check: ${{ steps.changed-files.outputs.any_modified }}
     name: Check whether unit test & lint should run based on the changed files
+    environment: ${{ github.event.pull_request.author_association != 'COLLABORATOR' && github.event.pull_request.author_association != 'OWNER' && 'restricted' || 'internal' }}
     if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     steps:
@@ -83,6 +78,7 @@ jobs:
     outputs:
       check: ${{ steps.changed-files.outputs.any_modified }}
     name: Check whether integration tests should run based on the changed files
+    environment: ${{ github.event.pull_request.author_association != 'COLLABORATOR' && github.event.pull_request.author_association != 'OWNER' && 'restricted' || 'internal' }}
     if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     steps:
@@ -102,8 +98,8 @@ jobs:
         run: echo '${{ steps.changed-files.outputs.all_changed_files }}' >> $GITHUB_STEP_SUMMARY
   dispatch-integration:
     name: Dispatch integration tests
-    needs: [check-integration,build-image]
-    uses: ./.github/workflows/pull-integration.yaml
+    needs: [ check-integration,build-image ]
+    uses: ./.github/workflows/pull-integration-release.yaml
     if: ${{ needs.check-integration.outputs.check == 'true' }}
     secrets: inherit
 
@@ -111,6 +107,7 @@ jobs:
     outputs:
       check: ${{ steps.changed-files.outputs.any_modified }}
     name: Check whether UI tests should run based on the changed files
+    environment: ${{ github.event.pull_request.author_association != 'COLLABORATOR' && github.event.pull_request.author_association != 'OWNER' && 'restricted' || 'internal' }}
     if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     steps:
@@ -136,6 +133,7 @@ jobs:
     outputs:
       check: ${{ steps.changed-files.outputs.any_modified }}
     name: Check whether to run verify-commit-pins
+    environment: ${{ github.event.pull_request.author_association != 'COLLABORATOR' && github.event.pull_request.author_association != 'OWNER' && 'restricted' || 'internal' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
