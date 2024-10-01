@@ -338,7 +338,7 @@ Decision: Let's use a ConfigMap as a fallback and a cache for the IP range allow
 - The ConfigMap containing the custom IP range allow/block list is configured by the user. It becomes a contract.
 - The ConfigMap containing the IP range allow/block list downloaded from the SAP internal service is a Kyma internal resource, and the implementation may change at any time, so no other module should use it.
 
-Consequence: Config map capacity may be exceeded in future, which may require immediate attention. It would be good to observe the number of entries in the policy list to be able to react to potential capacity issue early. Another consequence is that power users with `kyma-system` namespace access would be able to modify the IP ranges cache, which is not intended, but it is not possible to additionally protect it.
+Consequence: The ConfigMap's capacity may be exceeded in the future, which may require immediate attention. It would be good to observe the number of entries in the policy list to be able to react to any potential capacity issues early on. Another consequence is that power users with `kyma-system` namespace access would be able to modify the IP ranges cache, which is not intended, but it is not possible to additionally protect it.
 
 ### ip-auth Deployment's Configurability
 
