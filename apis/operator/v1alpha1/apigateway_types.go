@@ -53,7 +53,7 @@ type APIGatewayStatus struct {
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 //+kubebuilder:printcolumn:JSONPath=".status.state",name="State",type="string"
-//+kubebuilder:resource:scope=Cluster
+//+kubebuilder:resource:scope=Cluster,categories={kyma,kyma-modules,kyma-api-gateway}
 
 // APIGateway is the Schema for the apigateways API
 type APIGateway struct {

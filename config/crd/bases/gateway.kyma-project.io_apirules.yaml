@@ -8,6 +8,9 @@ metadata:
 spec:
   group: gateway.kyma-project.io
   names:
+    categories:
+    - kyma
+    - kyma-api-gateway
     kind: APIRule
     listKind: APIRuleList
     plural: apirules
