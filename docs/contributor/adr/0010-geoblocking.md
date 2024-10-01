@@ -213,9 +213,19 @@ This includes at least the following details:
   - service account
   - configmap mount (ip allow / block list)
   - secret mount (secrets for Geoblocking service)
+  - priority class
 - service:
   - selectors
   - ports
+
+#### Deployment stability
+
+The ip-auth deployment stability is quite critical from system availability point of view. Thus, it requires at least the following:
+- horizontal autoscaling
+- rolling updates (so there are always some pods available during upgrade)
+- readiness probe (container won't receive new requests if the IP range list is not available yet)
+- liveness probe (non-working container is restarted)
+- priority class (pod is scheduled before other less important pods)
 
 #### Authorization Policy settings
 
@@ -236,11 +246,15 @@ Geoblocking resources would be placed in the following namespaces:
 | ip-auth Deployment                          | Geoblocking Operator           | kyma-system                        |
 | ip-auth Service                             | Geoblocking Operator           | kyma-system                        |
 | ip-auth Secret                              | Power user                     | kyma-system                        |
-| IP ranges Config Map with input             | ip-auth or External customer   | kyma-system                        |
-| IP ranges Config Map with cache             | ip-auth or External customer   | kyma-system                        |
+| IP ranges Config Map with input             | External customer              | kyma-system                        |
+| IP ranges Config Map with cache             | ip-auth                        | kyma-system                        |
 | Authorization Policy                        | Geoblocking Operator           | istio-system                       |
 
 ![Geoblocking namespaces](../../assets/geoblocking-namespaces.drawio.svg)
+
+Consequently, two separate Service Accounts are required:
+- Geoblocking Operator is able to read CR, create/write ip-auth deployment, service, check existence of ip-auth secret, check existence of CM with ip-ranges, create/write Authorization Policy in istio-system namespace, read Istio configuration
+- IP-auth is able to read IP-auth secret (or have it mounted), read CM with IP ranges, create/write CM with IP ranges cache
 
 ## Considered alternative architectural approaches
 
@@ -324,7 +338,7 @@ Decision: Let's use a Config Map as a fallback and a cache for IP range allow/bl
 - the Config Map containing custom IP range allow/block list is configured by the user, it becomes a contract
 - the Config Map containing IP range allow/block list downloaded from the SAP internal service is a Kyma internal resource and the implementation may change at any time, so no other module should use it
 
-Consequence: Config map capacity may be exceeded in future, which may require immediate attention. It would be good to observe the number of entries in the policy list to be able to react to potential capacity issue early.
+Consequence: Config map capacity may be exceeded in future, which may require immediate attention. It would be good to observe the number of entries in the policy list to be able to react to potential capacity issue early. Another consequence is that power users with kyma-system namespace access would be able to modify the IP ranges cache, which is not intended, but it is not possible to additionally protect it.
 
 ### ip-auth deployment configurability
 
