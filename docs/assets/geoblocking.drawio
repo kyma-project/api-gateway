@@ -1,0 +1,47 @@
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:129.0) Gecko/20100101 Firefox/129.0" version="24.7.7">
+  <diagram name="Strona-1" id="v8SNsYcJiMRTOL4lsl0-">
+    <mxGraphModel dx="1114" dy="546" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="TS3W0wv6DTMDt22f-NC_-5" value="" style="rounded=1;whiteSpace=wrap;html=1;dashed=1;dashPattern=8 8;" vertex="1" parent="1">
+          <mxGeometry x="304" y="230" width="216" height="210" as="geometry" />
+        </mxCell>
+        <mxCell id="TS3W0wv6DTMDt22f-NC_-1" value="workload" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="350" y="350" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="TS3W0wv6DTMDt22f-NC_-2" value="&lt;div&gt;ip-auth&lt;/div&gt;&lt;div&gt;authorizer&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="350" y="40" width="120" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="TS3W0wv6DTMDt22f-NC_-8" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="TS3W0wv6DTMDt22f-NC_-4" target="TS3W0wv6DTMDt22f-NC_-1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="TS3W0wv6DTMDt22f-NC_-10" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" source="TS3W0wv6DTMDt22f-NC_-4" target="TS3W0wv6DTMDt22f-NC_-2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="TS3W0wv6DTMDt22f-NC_-11" value="authorize" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="TS3W0wv6DTMDt22f-NC_-10">
+          <mxGeometry x="0.0667" y="-1" relative="1" as="geometry">
+            <mxPoint x="-31" y="-8" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="TS3W0wv6DTMDt22f-NC_-4" value="&lt;div&gt;envoy&lt;/div&gt;&lt;div&gt;proxy&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="350" y="250" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="TS3W0wv6DTMDt22f-NC_-6" value="" style="endArrow=classic;html=1;rounded=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" target="TS3W0wv6DTMDt22f-NC_-4">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="130" y="280" as="sourcePoint" />
+            <mxPoint x="440" y="260" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="TS3W0wv6DTMDt22f-NC_-7" value="incomming connection" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="TS3W0wv6DTMDt22f-NC_-6">
+          <mxGeometry x="-0.4182" y="2" relative="1" as="geometry">
+            <mxPoint x="16" y="-8" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="TS3W0wv6DTMDt22f-NC_-12" value="IP block list" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;darkOpacity=0.05;size=17;" vertex="1" parent="1">
+          <mxGeometry x="372" y="90" width="80" height="50" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
