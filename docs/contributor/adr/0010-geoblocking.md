@@ -107,9 +107,9 @@ In order to ensure reliability and configurability, a new GeoBlocking custom res
 - performing configuration checks (like external traffic policy)
 - reporting geoblocking state
 
-There should be only one GeoBlocking resource. The controller should set the additional Geoblocking CR in the `Error` state, similarly to [APIGateway CR](https://github.com/kyma-project/api-gateway/blob/05ed57f3299f42c2565ed1b28b84dee808a5213b/controllers/operator/apigateway_controller.go#L100).
+There should be only one GeoBlocking resource. The controller should set the additional GeoBlocking CR in the `Error` state, similarly to [APIGateway CR](https://github.com/kyma-project/api-gateway/blob/05ed57f3299f42c2565ed1b28b84dee808a5213b/controllers/operator/apigateway_controller.go#L100).
 
-![Geoblocking controller](../../assets/geoblocking-cr-controller.drawio.svg)
+![GeoBlocking Controller](../../assets/geoblocking-cr-controller.drawio.svg)
 
 #### CR Examples
 
@@ -212,15 +212,15 @@ This includes at least the following details:
   - security context (user, etc.)
   - service account
   - configmap mount (ip allow / block list)
-  - secret mount (secrets for Geoblocking service)
+  - secret mount (secrets for SAP internal service)
   - priority class
 - Service:
   - selectors
   - ports
 
-#### Deployment stability
+#### Deployment Stability
 
-The ip-auth deployment stability is quite critical from system availability point of view. Thus, it requires at least the following:
+The ip-auth Deployment stability is quite critical from system availability point of view. Thus, it requires at least the following:
 - horizontal autoscaling
 - rolling updates (so there are always some pods available during upgrade)
 - readiness probe (container won't receive new requests if the IP range list is not available yet)
@@ -239,22 +239,22 @@ For now, we assume that the feature works with default Istio Ingress Gateway ins
 
 Geoblocking resources would be placed in the following namespaces:
 
-| Resource                                    | Created By                 | Namespace                          |
-| ------------------------------------------- | ------------------------------ | ---------------------------------- |
-| Geoblocking Operator (API Gateway Operator) | Power user / Lifecycle Manager | kyma-system                        |
-| Geoblocking CR                              | Power user                     | kyma-system                        |
-| ip-auth Deployment                          | Geoblocking Operator           | kyma-system                        |
-| ip-auth Service                             | Geoblocking Operator           | kyma-system                        |
-| ip-auth Secret                              | Power user                     | kyma-system                        |
-| IP ranges Config Map with input             | External customer              | kyma-system                        |
-| IP ranges Config Map with cache             | ip-auth                        | kyma-system                        |
-| Authorization Policy                        | Geoblocking Operator           | istio-system                       |
+| Resource                                    | Created By                     | Namespace                            |
+| ------------------------------------------- | ------------------------------ | ------------------------------------ |
+| GeoBlocking Operator (APIGateway Operator)  | Power user / Lifecycle Manager | `kyma-system`                        |
+| GeoBlocking CR                              | Power user                     | `kyma-system`                        |
+| ip-auth Deployment                          | GeoBlocking Operator           | `kyma-system`                        |
+| ip-auth Service                             | GeoBlocking Operator           | `kyma-system`                        |
+| ip-auth Secret                              | Power user                     | `kyma-system`                        |
+| IP ranges ConfigMap with input              | ip-auth or external customer   | `kyma-system`                        |
+| IP ranges ConfigMap with cache              | ip-auth or external customer   | `kyma-system`                        |
+| AuthorizationPolicy                         | GeoBlocking Operator           | `istio-system`                       |
 
 ![Geoblocking namespaces](../../assets/geoblocking-namespaces.drawio.svg)
 
-Consequently, two separate Service Accounts are required:
-- Geoblocking Operator is able to read CR, create/write ip-auth deployment, service, check existence of ip-auth secret, check existence of CM with ip-ranges, create/write Authorization Policy in istio-system namespace, read Istio configuration
-- IP-auth is able to read IP-auth secret (or have it mounted), read CM with IP ranges, create/write CM with IP ranges cache
+Consequently, two separate Service Accounts are required, so:
+- GeoBlocking Operator is able to read CR, create/write ip-auth Deployment, ip-auth Service, check if the ip-auth secret exists, check if ConfigMap with IP ranges exists, create/write Authorization Policy in the `istio-system` namespace, read the Istio configuration
+- ip-auth is able to read ip-auth Secret or have it mounted, read the ConfigMap with IP ranges, create/write the ConfigMap with IP ranges cache
 
 ## Considered Alternative Architectural Approaches
 
@@ -302,9 +302,9 @@ Decision: It doesn't make sense to expose so many detailed parameters, because t
 
 ### IP Range Allow/Block List Fallback/Caching
 
-The list of IP ranges is processed by each ip-auth container, stored in its memory, and regularly refreshed using a GeoBlocking Service. If the GeoBlocking Service doesn't work, then the ip-auth containers may work as before and the list is not refreshed.
+The list of IP ranges is processed by each ip-auth container, stored in its memory, and regularly refreshed using the SAP internal service. If the SAP internal service doesn't work, then the ip-auth containers may work as before and the list is not refreshed.
 
-However, the problem is when the ip-auth container needs to be restarted when the GeoBlocking Service is not available, so it can't download the list of IP ranges. This may be the case during an upgrade of ip-auth or in the event of runtime problems (for example, out of memory). It is not acceptable to allow the traffic in such a case. This means that the list of IP ranges should be stored in a way that allows it to persist through the Pods' restarts. This requirement is referred to as 'fallback'.
+However, the problem is when the ip-auth container needs to be restarted when the SAP internal service is not available, so the ip-auth container can't download the list of IP ranges. This may be the case during an upgrade of ip-auth or in the event of runtime problems (for example, out of memory). It is not acceptable to allow the traffic in such a case. This means that the list of IP ranges should be stored in a way that allows it to persist through the Pods' restarts. This requirement is referred to as 'fallback'.
 
 Another aspect is the reduction of the number of connections made to the SAP internal service. Multiple ip-auth Pods independently asking SAP internal service for policy updates would generate unnecessary load and it should be avoided if possible. This requirement is referred to as 'cache'.
 
@@ -314,31 +314,31 @@ The following options have been considered:
 | ------------------ | ------------------------------------------------------- | ------------------------------------------------------- |
 | Allow all fallback | Very simple                                             | Not acceptable from security perspective                |
 |                    |                                                         |                                                         |
-| No fallback        | Very simple                                             | Downtime if geoblocking service doesn't work            |
-|                    |                                                         | Every container causes load on geoblocking service      |
+| No fallback        | Very simple                                             | Downtime if the SAP internal service doesn't work       |
+|                    |                                                         | Every container causes load on the SAP internal service |
 |                    |                                                         |                                                         |
 | Caching service    | Extensibility (may cache more things in future)         | Complex - another component to take care                |
 |                    | Works well with restart / upgrade / scaling             |                                                         |
-|                    | No downtime if geoblocking service doesn't work         |                                                         |
-|                    | Less load on geoblocking service                        |                                                         |
+|                    | No downtime if the SAP internal service doesn't work    |                                                         |
+|                    | Less load on the SAP internal service                   |                                                         |
 |                    |                                                         |                                                         |
 | Config map         | Still simple                                            | Configmap capacity allows max ~50000 IP ranges          |
-|                    | Works well with restart / upgrade / scaling             | IP list integrity not guaranteed                        |
-|                    | No downtime if geoblocking service doesn't work         |                                                         |
-|                    | Less load on geoblocking service                        |                                                         |
+|                    | Works well with restart / upgrade / scaling             | IP range list integrity not guaranteed                  |
+|                    | No downtime if the SAP internal service doesn't work    |                                                         |
+|                    | Less load on the SAP internal service                   |                                                         |
 |                    |                                                         |                                                         |
 | Ephemeral volume   | Still simple                                            | Every container causes load on geoblocking service      |
-|                    | No downtime if geoblocking service doesn't work         | Doesn't help in case of restart / upgrade / scaling     |
+|                    | No downtime if the SAP internal service doesn't work    | Doesn't help in case of restart / upgrade / scaling     |
 |                    |                                                         |                                                         |
-| Persistent volume  | No downtime if geoblocking service doesn't work         | Depends on the cloud infrastructure (ReadWriteMany)     |
-|                    | Less load on geoblocking service                        |                                                         |
+| Persistent volume  | No downtime if the SAP internal service doesn't work    | Depends on the cloud infrastructure (ReadWriteMany)     |
+|                    | Less load on the SAP internal service                   |                                                         |
 |                    | Works well with restart / upgrade / scaling             |                                                         |
 
 Decision: Let's use a ConfigMap as a fallback and a cache for the IP range allow/block list. However, let's split it technically from the ConfigMap that contains IP ranges provided by the end-user, so:
 - The ConfigMap containing the custom IP range allow/block list is configured by the user. It becomes a contract.
 - The ConfigMap containing the IP range allow/block list downloaded from the SAP internal service is a Kyma internal resource, and the implementation may change at any time, so no other module should use it.
 
-Consequence: Config map capacity may be exceeded in future, which may require immediate attention. It would be good to observe the number of entries in the policy list to be able to react to potential capacity issue early. Another consequence is that power users with kyma-system namespace access would be able to modify the IP ranges cache, which is not intended, but it is not possible to additionally protect it.
+Consequence: Config map capacity may be exceeded in future, which may require immediate attention. It would be good to observe the number of entries in the policy list to be able to react to potential capacity issue early. Another consequence is that power users with `kyma-system` namespace access would be able to modify the IP ranges cache, which is not intended, but it is not possible to additionally protect it.
 
 ### ip-auth Deployment's Configurability
 
@@ -354,11 +354,11 @@ GeoBlocking Controller is responsible for the reconciliation of the GeoBlocking 
 
 However, some issues may be visible only in the ip-auth Service. A good example is a problem with the communication with the SAP internal service (like a wrong secret).
 
-There is no easy way to propagate such issues to the GeoBlocking CR. This would require a dedicated mechanism, like a 'health' endpoint exposed by ip-auth containers, so the GeoBlocking controller can analyze them.
+There is no easy way to propagate such issues to the GeoBlocking CR. This would require a dedicated mechanism, like a 'health' endpoint exposed by ip-auth containers, so the GeoBlocking Controller can analyze them.
 
 Decision: Don't implement additional mechanisms and follow the 'standard' approach, so the controller reports issues in the CR only from its own layer, while the ip-auth Service reports issues in its log or via liveness/readiness probes (like every other workload).
 
-Consequence: The GeoBlocking CR won't be responsible for presenting GeoBlocking 'health'. Support or developers must be aware that they should also inspect ip-auth logs in case of issues.
+Consequence: The GeoBlocking CR won't be responsible for presenting geoblocking 'health'. Support or developers must be aware that they should also inspect ip-auth logs in case of issues.
 
 ### Namespaces
 
@@ -407,4 +407,4 @@ There are several possibilities to do it:
 
 Decision: The end users must declare the ip-auth Service in the Istio CR because they need to modify the CR anyway (for example, configure the external traffic policy). GeoBlocking Operator should check whether it is properly configured by verifying the Authorizer's declaration, External Traffic Policy, etc.
 
-Consequence: GeoBlocking won't work OOTB after applying the GeoBlocking CR.
+Consequence: Geoblocking won't work OOTB after applying the GeoBlocking CR.
