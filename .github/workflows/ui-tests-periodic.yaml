@@ -5,9 +5,22 @@ on:
     - cron: '0 5 * * 1' # run every Monday at 5:00 AM
 
 jobs:
+  get-sha:
+    name: Get manager SHA
+    runs-on: ubuntu-latest
+    outputs:
+      sha: ${{ steps.get-sha.outputs.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: get-sha
+        uses: ./.github/actions/get-latest-sha
+
   run-ui-tests-periodic:
     name: Run UI tests
     runs-on: ubuntu-latest
+    needs: [ get-sha ]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -19,9 +32,8 @@ jobs:
         run: |
           sudo echo "127.0.0.1 local.kyma.dev" | sudo tee -a /etc/hosts
           wget -q -O - https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | sudo bash
-          sha=$(./scripts/get_latest_build_sha.sh)
-          docker pull europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:"$sha"
-          IMG=europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:"$sha" ./tests/ui/tests/scripts/k3d-ci-kyma-dashboard-integration.sh stage
+          docker pull europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:"${{ needs.get-sha.outputs.sha }}"
+          IMG=europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:"${{ needs.get-sha.outputs.sha }}" ./tests/ui/tests/scripts/k3d-ci-kyma-dashboard-integration.sh stage
       - uses: actions/upload-artifact@v4
         if: always()
         name: Export Cypress output
