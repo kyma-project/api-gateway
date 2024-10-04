@@ -1,6 +1,7 @@
 package gateway
 
 import (
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"testing"
 
 	certv1alpha1 "github.com/gardener/cert-management/pkg/apis/cert/v1alpha1"
@@ -36,6 +37,7 @@ func createFakeClient(objects ...client.Object) client.Client {
 	Expect(dnsv1alpha1.AddToScheme(scheme.Scheme)).Should(Succeed())
 	Expect(certv1alpha1.AddToScheme(scheme.Scheme)).Should(Succeed())
 	Expect(networkingv1beta1.AddToScheme(scheme.Scheme)).Should(Succeed())
+	Expect(apiextensionsv1.AddToScheme(scheme.Scheme)).Should(Succeed())
 
 	return fake.NewClientBuilder().WithScheme(scheme.Scheme).WithObjects(objects...).Build()
 }

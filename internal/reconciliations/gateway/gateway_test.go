@@ -3,6 +3,7 @@ package gateway
 import (
 	"context"
 	"github.com/kyma-project/api-gateway/internal/conditions"
+	v1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 
 	certv1alpha1 "github.com/gardener/cert-management/pkg/apis/cert/v1alpha1"
 	dnsv1alpha1 "github.com/gardener/external-dns-management/pkg/apis/dns/v1alpha1"
@@ -239,7 +240,10 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 			cm := getTestShootInfo()
 			igwService := getTestIstioIngressGatewayIpBasedService()
 
-			k8sClient := createFakeClient(&apiGateway, &cm, &igwService)
+			k8sClient := createFakeClient(&apiGateway, &cm, &igwService,
+				&v1.CustomResourceDefinition{ObjectMeta: metav1.ObjectMeta{Name: "dnsentries.dns.gardener.cloud"}},
+				&v1.CustomResourceDefinition{ObjectMeta: metav1.ObjectMeta{Name: "certificates.cert.gardener.cloud"}},
+			)
 
 			// when
 			status := ReconcileKymaGateway(context.Background(), k8sClient, &apiGateway, resourceListPath)
@@ -403,7 +407,9 @@ func testShouldDeleteKymaGatewayResources(updateApiGateway func(gw v1alpha1.APIG
 
 	cm := getTestShootInfo()
 	igwService := getTestIstioIngressGatewayIpBasedService()
-	objs = append(objs, &cm, &igwService)
+	objs = append(objs, &cm, &igwService,
+		&v1.CustomResourceDefinition{ObjectMeta: metav1.ObjectMeta{Name: "dnsentries.dns.gardener.cloud"}},
+		&v1.CustomResourceDefinition{ObjectMeta: metav1.ObjectMeta{Name: "certificates.cert.gardener.cloud"}})
 
 	k8sClient := createFakeClient(objs...)
 	status := ReconcileKymaGateway(context.Background(), k8sClient, &apiGateway, resourceListPath)

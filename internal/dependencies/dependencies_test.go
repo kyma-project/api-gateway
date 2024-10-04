@@ -49,7 +49,7 @@ var _ = Describe("Check", func() {
 				Expect(k8sClient.Create(context.Background(), &crd)).To(Succeed())
 			}
 			name, err := dependencies.APIRule().AreAvailable(context.Background(), k8sClient)
-			Expect(err).To(Not(HaveOccurred()))
+			Expect(err).ToNot(HaveOccurred())
 			Expect(name).To(BeEmpty())
 		})
 	})
@@ -82,16 +82,16 @@ var _ = Describe("Check", func() {
 				Expect(k8sClient.Create(context.Background(), &crd)).To(Succeed())
 			}
 			name, err := dependencies.ApiGateway().AreAvailable(context.Background(), k8sClient)
-			Expect(err).To(Not(HaveOccurred()))
+			Expect(err).ToNot(HaveOccurred())
 			Expect(name).To(BeEmpty())
 		})
 	})
 	Context("APIGateway Gardener dependencies", func() {
 		It("Should fail if required CRDs are missing", func() {
 			k8sClient := createFakeClient()
-			name, err := dependencies.GardenerAPIGateway().AreAvailable(context.Background(), k8sClient)
+			name, err := dependencies.Gardener().AreAvailable(context.Background(), k8sClient)
 			Expect(err).To(HaveOccurred())
-			Expect(name).To(Equal("gateways.networking.istio.io"))
+			Expect(name).To(Equal("dnsentries.dns.gardener.cloud"))
 		})
 
 		It("Should not fail if required CRDs are present", func() {
@@ -124,8 +124,8 @@ var _ = Describe("Check", func() {
 			for _, crd := range crds {
 				Expect(k8sClient.Create(context.Background(), &crd)).To(Succeed())
 			}
-			name, err := dependencies.GardenerAPIGateway().AreAvailable(context.Background(), k8sClient)
-			Expect(err).To(Not(HaveOccurred()))
+			name, err := dependencies.Gardener().AreAvailable(context.Background(), k8sClient)
+			Expect(err).ToNot(HaveOccurred())
 			Expect(name).To(BeEmpty())
 		})
 	})
