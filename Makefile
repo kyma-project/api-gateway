@@ -103,11 +103,17 @@ test-integration-v2alpha1: generate fmt vet ## Run API Gateway integration tests
 
 .PHONY: test-integration-ory
 test-integration-ory: generate fmt vet
+	kubectl create ns ext-auth --dry-run=client -o yaml | kubectl apply -f -
+	kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.23/samples/extauthz/ext-authz.yaml -n ext-auth
 	source ./tests/integration/env_vars.sh && go test -timeout 1h ./tests/integration -v -race -run TestOryJwt
+	kubectl delete ns ext-auth
 
 .PHONY: test-migration-zero-downtime
 test-migration-zero-downtime: generate fmt vet
+	kubectl create ns ext-auth --dry-run=client -o yaml | kubectl apply -f -
+	kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.23/samples/extauthz/ext-authz.yaml -n ext-auth
 	source ./tests/integration/env_vars.sh && ./tests/integration/scripts/test-zero-downtime.sh $(HANDLER)
+	kubectl delete ns ext-auth
 
 .PHONY: test-integration-istio
 test-integration-istio: generate fmt vet
