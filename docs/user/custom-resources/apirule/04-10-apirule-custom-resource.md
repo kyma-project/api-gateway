@@ -1,7 +1,7 @@
 # APIRule v1beta1 Custom Resource <!-- {docsify-ignore-all} -->
 
 > [!WARNING]
-> The APIRule in version `v1beta1` will be deprecated in 2024.
+> APIRule in version `v1beta1` will become deprecated on October 28, 2024. To prepare for the introduction of the stable APIRule in version `v2`, you can start testing the API and the migration procedure using version `v2alpha1`. APIRule `v2alpha1` was introduced for testing purposes only and is not meant for use in a production environment. For more information, see the [APIRule migration blog post](https://community.sap.com/t5/technology-blogs-by-sap/sap-btp-kyma-runtime-apirule-migration-noauth-and-jwt-handlers/ba-p/13882833).
 
 The `apirules.gateway.kyma-project.io` CustomResourceDefinition (CRD) describes the kind and the format of data the
 APIGateway Controller listens for. To get the up-to-date CRD in the `yaml` format, run the following command:
