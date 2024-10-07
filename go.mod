@@ -17,7 +17,7 @@ require (
 	github.com/thoas/go-funk v0.9.3
 	gitlab.com/rodrigoodhin/gocure v0.0.0-20230214115050-efed6aac536a
 	golang.org/x/net v0.29.0
-	golang.org/x/time v0.6.0
+	golang.org/x/time v0.7.0
 	google.golang.org/appengine v1.6.8
 	google.golang.org/protobuf v1.34.2
 	gopkg.in/yaml.v3 v3.0.1
