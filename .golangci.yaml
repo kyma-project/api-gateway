@@ -1,0 +1,25 @@
+linters:
+  enable:
+    - lll
+#  presets:
+#    - bugs
+#    - style
+#    - comment
+#    - error
+#    - import
+linters-settings:
+  lll:
+    line-length: 120
+    tab-width: 1
+
+issues:
+  exclude-rules:
+    - path: '(.+)(_test)|(scenario)(.+)\.go|tests/'
+      linters:
+        - lll
+    - linters:
+        - lll
+      source: "^//go:generate "
+    - linters:
+        - lll
+      source: "^// +kubebuilder:"
