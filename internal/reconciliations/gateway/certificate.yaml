@@ -12,3 +12,6 @@ metadata:
 spec:
   secretName: {{.SecretName}}
   commonName: "*.{{.Domain}}"
+  privateKey:
+    size: 4096
+
