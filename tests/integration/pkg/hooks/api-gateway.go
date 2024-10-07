@@ -51,7 +51,8 @@ var DeleteBlockingResourcesScenarioHook = func(ctx context.Context, sc *godog.Sc
 
 var ApiGatewayCrTearDownScenarioHook = func(ctx context.Context, sc *godog.Scenario, _ error) (context.Context, error) {
 	if apiGateways, ok := testcontext.GetApiGatewayCRsFromContext(ctx); ok {
-		// We can ignore a failed removal of the ApiGateway CR, because we need to run force remove in any case to make sure no resource is left before the next scenario
+		// We can ignore a failed removal of the ApiGateway CR, because we need to run force remove in any case to make
+		// sure no resource is left before the next scenario
 		for _, apiGateway := range apiGateways {
 			_ = retry.Do(func() error {
 				err := removeObjectFromCluster(ctx, apiGateway)
@@ -146,7 +147,8 @@ var ApiGatewayCrTearDownSuiteHook = func() error {
 		}, &apiGateway)
 
 		if err == nil {
-			return fmt.Errorf("ApiGatewayCrTearDownSuiteHook did not delete APIGateway CR, state: %s description: %s", apiGateway.Status.State, apiGateway.Status.Description)
+			return fmt.Errorf("ApiGatewayCrTearDownSuiteHook did not delete APIGateway CR, state: %s description: %s",
+				apiGateway.Status.State, apiGateway.Status.Description)
 		}
 
 		return nil
@@ -185,7 +187,8 @@ func forceApiGatewayCrRemoval(ctx context.Context, apiGateway *v1alpha1.APIGatew
 			return nil
 		}
 
-		return errors.New(fmt.Sprintf("apiGateway CR in status %s found (%s), skipping force removal", apiGateway.Status.State, apiGateway.Status.Description))
+		return errors.New(fmt.Sprintf("apiGateway CR in status %s found (%s), skipping force removal",
+			apiGateway.Status.State, apiGateway.Status.Description))
 	}, testcontext.GetRetryOpts()...)
 }
 

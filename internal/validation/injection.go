@@ -19,7 +19,7 @@ func NewInjectionValidator(ctx context.Context, client client.Client) *Injection
 	return &InjectionValidator{Ctx: ctx, Client: client}
 }
 
-func (v *InjectionValidator) Validate(attributePath string, selector *apiv1beta1.WorkloadSelector, workloadNamespace string) (problems []Failure, err error) {
+func (v *InjectionValidator) Validate(attributePath string, selector *apiv1beta1.WorkloadSelector, namespace string) (problems []Failure, err error) {
 	if selector == nil {
 		problems = append(problems, Failure{
 			AttributePath: attributePath + ".injection",
@@ -30,14 +30,20 @@ func (v *InjectionValidator) Validate(attributePath string, selector *apiv1beta1
 	}
 
 	var podList corev1.PodList
-	err = v.Client.List(v.Ctx, &podList, client.InNamespace(workloadNamespace), client.MatchingLabels(selector.MatchLabels))
+	err = v.Client.List(v.Ctx, &podList, client.InNamespace(namespace), client.MatchingLabels(selector.MatchLabels))
 	if err != nil {
 		return nil, err
 	}
 
 	for _, pod := range podList.Items {
 		if !containsSidecar(pod) {
-			problems = append(problems, Failure{AttributePath: attributePath, Message: fmt.Sprintf("Pod %s/%s does not have an injected istio sidecar", pod.Namespace, pod.Name)})
+			f := Failure{
+				AttributePath: attributePath,
+				Message: fmt.Sprintf("Pod %s/%s does not have an injected istio sidecar",
+					pod.Namespace,
+					pod.Name),
+			}
+			problems = append(problems, f)
 		}
 	}
 	return problems, nil

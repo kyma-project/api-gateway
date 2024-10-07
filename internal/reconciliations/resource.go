@@ -14,7 +14,8 @@ import (
 
 const (
 	disclaimerKey   = "apigateways.operator.kyma-project.io/managed-by-disclaimer"
-	disclaimerValue = "DO NOT EDIT - This resource is managed by Kyma.\nAny modifications are discarded and the resource is reverted to the original state."
+	disclaimerValue = `DO NOT EDIT - This resource is managed by Kyma.
+Any modifications are discarded and the resource is reverted to the original state.`
 
 	labelModuleKey   = "kyma-project.io/module"
 	labelModuleValue = "api-gateway"
@@ -22,8 +23,8 @@ const (
 	Namespace = "kyma-system"
 )
 
-func ApplyResource(ctx context.Context, k8sClient client.Client, resourceManifest []byte, templateValues map[string]string) error {
-	resource, err := CreateUnstructuredResource(resourceManifest, templateValues)
+func ApplyResource(ctx context.Context, k8sClient client.Client, manifest []byte, values map[string]string) error {
+	resource, err := CreateUnstructuredResource(manifest, values)
 	if err != nil {
 		return err
 	}
@@ -31,8 +32,8 @@ func ApplyResource(ctx context.Context, k8sClient client.Client, resourceManifes
 	return CreateOrUpdateResource(ctx, k8sClient, resource)
 }
 
-func CreateUnstructuredResource(resourceManifest []byte, templateValues map[string]string) (unstructured.Unstructured, error) {
-	resourceBuffer, err := applyTemplateValuesToResourceManifest(resourceManifest, templateValues)
+func CreateUnstructuredResource(manifest []byte, values map[string]string) (unstructured.Unstructured, error) {
+	resourceBuffer, err := applyTemplateValuesToResourceManifest(manifest, values)
 	if err != nil {
 		return unstructured.Unstructured{}, fmt.Errorf("failed to apply template values to resource manifest: %v", err)
 	}
@@ -45,15 +46,15 @@ func CreateUnstructuredResource(resourceManifest []byte, templateValues map[stri
 	return resource, nil
 }
 
-func applyTemplateValuesToResourceManifest(resourceManifest []byte, templateValues map[string]string) (bytes.Buffer, error) {
+func applyTemplateValuesToResourceManifest(manifest []byte, values map[string]string) (bytes.Buffer, error) {
 	var resourceBuffer bytes.Buffer
 
-	resourceTemplate, err := template.New("tmpl").Option("missingkey=error").Parse(string(resourceManifest))
+	resourceTemplate, err := template.New("tmpl").Option("missingkey=error").Parse(string(manifest))
 	if err != nil {
 		return resourceBuffer, err
 	}
 
-	err = resourceTemplate.Execute(&resourceBuffer, templateValues)
+	err = resourceTemplate.Execute(&resourceBuffer, values)
 	if err != nil {
 		return resourceBuffer, err
 	}

@@ -686,11 +686,12 @@ var _ = Describe("APIRule Conversion", func() {
 				// then
 				Expect(err).ToNot(HaveOccurred())
 				Expect(apiRuleV2Alpha1.Spec.Rules).To(HaveLen(1))
-				Expect(apiRuleV2Alpha1.Spec.Rules[0].Jwt).ToNot(BeNil())
-				Expect(apiRuleV2Alpha1.Spec.Rules[0].Jwt.Authentications).To(BeEmpty())
-				Expect(apiRuleV2Alpha1.Spec.Rules[0].Jwt.Authorizations).To(HaveLen(1))
-				Expect(apiRuleV2Alpha1.Spec.Rules[0].Jwt.Authorizations[0].RequiredScopes).To(ContainElements("scope1", "scope2"))
-				Expect(apiRuleV2Alpha1.Spec.Rules[0].Jwt.Authorizations[0].Audiences).To(ContainElements("aud1", "aud2"))
+				rule := apiRuleV2Alpha1.Spec.Rules[0]
+				Expect(rule.Jwt).ToNot(BeNil())
+				Expect(rule.Jwt.Authentications).To(BeEmpty())
+				Expect(rule.Jwt.Authorizations).To(HaveLen(1))
+				Expect(rule.Jwt.Authorizations[0].RequiredScopes).To(ContainElements("scope1", "scope2"))
+				Expect(rule.Jwt.Authorizations[0].Audiences).To(ContainElements("aud1", "aud2"))
 			})
 
 			It("should convert JWT to v2alpha1 when config stored as raw", func() {
