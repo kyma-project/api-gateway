@@ -79,6 +79,7 @@ type FlagVar struct {
 	rateLimiterBurst            int
 	reconciliationInterval      time.Duration
 	migrationInterval           time.Duration
+	logJson                     bool
 }
 
 func init() {
@@ -119,17 +120,19 @@ func defineFlagVar() *FlagVar {
 		"Indicates the time based reconciliation interval of APIRule.")
 	flag.DurationVar(&flagVar.migrationInterval, "migration-interval", 1*time.Minute,
 		"Indicates the time taken between steps of APIRule version migration.")
+	flag.BoolVar(&flagVar.logJson, "log-json", true,
+		"Project program logs as JSON.")
 
 	return flagVar
 }
 
 func main() {
 	flagVar := defineFlagVar()
+	flag.Parse()
 	opts := zap.Options{
-		Development: true,
+		Development: flagVar.logJson,
 	}
 	opts.BindFlags(flag.CommandLine)
-	flag.Parse()
 
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 	config := ctrl.GetConfigOrDie()
