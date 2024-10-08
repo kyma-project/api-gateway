@@ -1,4 +1,4 @@
-# Expose a Workload
+# Expose a Workload with Short Host Name
 
 This tutorial shows how to expose an unsecured instance of the HTTPBin Service using short host name without domain and call its endpoints.
 
