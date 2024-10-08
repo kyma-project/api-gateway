@@ -13,8 +13,6 @@ This tutorial shows how to expose an unsecured instance of the HTTPBin Service u
 
 ### Expose Your Workload
 
-#### **kubectl**
-
 1. Export the necessary values as environment variables:
 
   ```bash

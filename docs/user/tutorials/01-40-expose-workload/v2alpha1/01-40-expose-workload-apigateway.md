@@ -14,8 +14,6 @@ This tutorial shows how to expose an unsecured instance of the HTTPBin Service a
 
 ### Expose Your Workload
 
-#### **kubectl**
-
 1. Depending on whether you use your custom domain or a Kyma domain, export the necessary values as environment variables:
 
   <!-- tabs:start -->
