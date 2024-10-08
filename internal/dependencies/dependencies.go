@@ -20,11 +20,9 @@ func ApiGateway() Dependencies {
 	}
 }
 
-func GardenerAPIGateway() Dependencies {
+func Gardener() Dependencies {
 	return &dependencies{
 		CRDNames: []string{
-			"gateways.networking.istio.io",
-			"virtualservices.networking.istio.io",
 			"dnsentries.dns.gardener.cloud",
 			"certificates.cert.gardener.cloud",
 		},
