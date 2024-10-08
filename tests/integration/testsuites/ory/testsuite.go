@@ -180,7 +180,7 @@ func (t *testsuite) TearDown() {
 }
 
 func (t *testsuite) BeforeSuiteHooks() []func() error {
-	return []func() error{hooks.ApplyAndVerifyApiGatewayCrSuiteHook, hooks.ApplyExtAuthorizerIstioCR}
+	return []func() error{hooks.ApplyAndVerifyApiGatewayCrSuiteHook, hooks.ApplyExtAuthorizerIstioCR, hooks.ApplyExtAuthorizerHook(t)}
 }
 
 func (t *testsuite) AfterSuiteHooks() []func() error {
