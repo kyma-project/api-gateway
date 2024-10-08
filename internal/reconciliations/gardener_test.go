@@ -45,7 +45,7 @@ var _ = Describe("Gardener", func() {
 			Expect(err).Should(HaveOccurred())
 		})
 
-		It("should return an error if the Gardener shoot-info does not have a domain", func() {
+		It("should return an empty string and no error if shoot-info does not have a domain", func() {
 			// given
 			cm := corev1.ConfigMap{
 				ObjectMeta: metav1.ObjectMeta{
@@ -60,8 +60,8 @@ var _ = Describe("Gardener", func() {
 			_, err := reconciliations.GetGardenerDomain(context.Background(), k8sClient)
 
 			// then
-			Expect(err).To(HaveOccurred())
-			Expect(err.Error()).To(ContainSubstring("domain not found in Gardener shoot-info"))
+			Expect(err).Should(Succeed())
+			Expect(cm.Data["domain"]).Should(BeEmpty())
 		})
 	})
 })

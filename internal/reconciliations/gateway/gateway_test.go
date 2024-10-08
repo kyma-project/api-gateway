@@ -158,8 +158,12 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 			// given
 			apiGateway := getApiGateway(true)
 
-			cm := getTestShootInfo()
-			cm.Data = map[string]string{}
+			cm := corev1.ConfigMap{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "shoot-info",
+					Namespace: "kube-system",
+				},
+			}
 
 			k8sClient := createFakeClient(&apiGateway, &cm)
 

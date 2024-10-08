@@ -2,8 +2,6 @@ package reconciliations
 
 import (
 	"context"
-	"fmt"
-
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -14,10 +12,6 @@ func GetGardenerDomain(ctx context.Context, k8sClient client.Client) (string, er
 	cm, err := getGardenerShootInfo(ctx, k8sClient)
 	if err != nil {
 		return "", err
-	}
-
-	if _, ok := cm.Data["domain"]; !ok {
-		return "", fmt.Errorf("domain not found in Gardener shoot-info")
 	}
 
 	return cm.Data["domain"], nil
