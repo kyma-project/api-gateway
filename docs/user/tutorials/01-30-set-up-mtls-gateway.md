@@ -19,14 +19,14 @@ The procedure of setting up a working mTLS Gateway is described in the following
 
 * [Deploy a sample HTTPBin Service](./01-00-create-workload.md).
 * [Set up your custom domain](./01-10-setup-custom-domain-for-workload.md).
-  
+
 ## Steps
 
 ### Set Up an mTLS Gateway
 
 1. Create a DNS Entry and generate a wildcard certificate.
 
-    > [!NOTE] 
+    > [!NOTE]
     > This step is heavily dependent on the configuration of a hyperscaler. Always consult the official documentation of each cloud service.
 
     For Gardener shoot clusters, follow [Set Up a Custom Domain For a Workload](01-10-setup-custom-domain-for-workload.md).
@@ -50,7 +50,7 @@ The procedure of setting up a working mTLS Gateway is described in the following
       - **Credential Name**: `kyma-mtls-certs`
       - Add a host `*.{DOMAIN_TO_EXPOSE_WORKLOADS}`. Replace `{DOMAIN_TO_EXPOSE_WORKLOADS}` with the name of your custom domain.
     - Select **Create**.
-    
+
     > [!NOTE]
     >  The `kyma-mtls-certs` Secret must contain a valid certificate for your custom domain.
 4. Create a Secret containing the Root CA certificate.
@@ -65,7 +65,7 @@ The procedure of setting up a working mTLS Gateway is described in the following
 
 #### **kubectl**
 3. Export the name of your custom domain and the Gateway as environment variables. To set up Istio Gateway in mutual mode, apply the Gateway custom resource in a cluster.
-    
+
     ```bash
     export DOMAIN_TO_EXPOSE_WORKLOADS={DOMAIN_NAME}
     export GATEWAY=$NAMESPACE/httpbin-gateway
@@ -232,8 +232,8 @@ If successful, you get the code `418` response.
       \_;`"---"`|//
         |       ;/
         \_     _/
-          `"""` 
-    ```   
+          `"""`
+    ```
 
 If the commands return the expected results, you have set up the mTLS Gateway successfully.
 <!-- tabs:end -->

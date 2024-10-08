@@ -24,6 +24,25 @@ This tutorial shows how to expose an unsecured instance of the HTTPBin Service u
 
 2. Create custom Gateway specifying host domain:
 
+<!-- tabs:start -->
+#### **Kyma Dashboard**
+
+* Go to **Istio > Gateways** and select **Create**.
+* Provide the following configuration details:
+    - **Name**: `httpbin-gateway`
+    - **Namespace**: `{NAMESPACE_NAME}`
+    - In the `Servers` section, select **Add**. Then, use these values:
+      - **Port Number**: `80`
+      - **Name**: `http`
+      - **Protocol**: `HTTP`
+    - Use `httpbin.{KYMA_DOMAIN_NAME}` as **Host**.
+
+* Select **Create**.
+
+#### **kubectl**
+
+* To create a custom Gateway, run:
+
     ```bash
     cat <<EOF | kubectl apply -f -
     apiVersion: networking.istio.io/v1beta1
@@ -44,6 +63,8 @@ This tutorial shows how to expose an unsecured instance of the HTTPBin Service u
             protocol: HTTP
     EOF
     ```
+
+<!-- tabs:end -->
 
 3. To expose an instance of the HTTPBin Service, create the following APIRule referring created custom Gateway:
 
