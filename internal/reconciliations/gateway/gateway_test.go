@@ -153,6 +153,41 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 			Expect(secret.Data).To(HaveKey("tls.crt"))
 		})
 
+		It("Should create secret with default certificate and no Gardener resources "+
+			"when Kyma Gateway is enabled and no domain is defined in Gardener shoot-info", func() {
+			// given
+			apiGateway := getApiGateway(true)
+
+			cm := getTestShootInfo()
+			cm.Data = map[string]string{}
+
+			k8sClient := createFakeClient(&apiGateway, &cm)
+
+			// when
+			status := ReconcileKymaGateway(context.Background(), k8sClient, &apiGateway, resourceListPath)
+
+			// then
+			Expect(status.IsReady()).To(BeTrue())
+
+			secret := corev1.Secret{}
+			Expect(k8sClient.Get(context.Background(),
+				client.ObjectKey{Name: kymaGatewayCertSecretName, Namespace: certificateDefaultNamespace}, &secret)).
+				Should(Succeed())
+
+			Expect(secret.Data).To(HaveKey("tls.key"))
+			Expect(secret.Data).To(HaveKey("tls.crt"))
+
+			cert := certv1alpha1.Certificate{}
+			err := k8sClient.Get(context.Background(),
+				client.ObjectKey{Name: kymaGatewayCertificateName, Namespace: certificateDefaultNamespace}, &cert)
+			Expect(errors.IsNotFound(err)).To(BeTrue())
+
+			dnsEntry := dnsv1alpha1.DNSEntry{}
+			err = k8sClient.Get(context.Background(),
+				client.ObjectKey{Name: kymaGatewayDnsEntryName, Namespace: kymaGatewayDnsEntryNamespace}, &dnsEntry)
+			Expect(errors.IsNotFound(err)).To(BeTrue())
+		})
+
 		It("Should create secret with istio-healthz virtual service when EnableKymaGateway is true and no Gardener shoot-info exists", func() {
 			// given
 			apiGateway := getApiGateway(true)

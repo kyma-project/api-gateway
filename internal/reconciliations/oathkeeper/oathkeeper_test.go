@@ -222,6 +222,20 @@ var _ = Describe("Oathkeeper reconciliation", func() {
 			Expect(status.IsError()).To(BeTrue(), "%#v", status)
 			Expect(status.Description()).To(Equal("Oathkeeper did not reconcile successfully"))
 		})
+
+		It("Should not fail when Gardener shoot-info without domain exists", func() {
+			apiGateway := createApiGateway()
+			shootInfoCm := corev1.ConfigMap{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "shoot-info",
+					Namespace: "kube-system",
+				},
+				Data: map[string]string{},
+			}
+			k8sClient := createFakeClient(apiGateway, &shootInfoCm)
+			status := oathkeeper.Reconcile(context.Background(), k8sClient, apiGateway)
+			Expect(status.IsReady()).To(BeTrue(), "%#v", status)
+		})
 	})
 
 	Context("ReconcileAndVerifyReadiness", func() {
