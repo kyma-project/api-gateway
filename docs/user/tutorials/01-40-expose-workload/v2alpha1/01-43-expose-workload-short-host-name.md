@@ -74,23 +74,23 @@ To access your HTTPBin Service, use [Postman](https://www.postman.com) or [curl]
 <!-- tabs:start -->
 #### **Postman**
 
-- Enter the URL `http://httpbin.{DOMAIN_TO_EXPOSE_WORKLOADS}/ip` and replace the placeholder with the name of your domain. Call the endpoint by sending a `GET` request to the HTTPBin Service. If successful, the call returns the `200 OK` response code.
+- Enter the URL `https://httpbin.{DOMAIN_TO_EXPOSE_WORKLOADS}/ip` and replace the placeholder with the name of your domain. Call the endpoint by sending a `GET` request to the HTTPBin Service. If successful, the call returns the `200 OK` response code.
 
-- Enter the URL `http://httpbin.{DOMAIN_TO_EXPOSE_WORKLOADS}/post` and replace the placeholder with the name of your domain. Call the endpoint by sending a `POST` request to the HTTPBin Service. If successful, the call returns the `200 OK` response code.
+- Enter the URL `https://httpbin.{DOMAIN_TO_EXPOSE_WORKLOADS}/post` and replace the placeholder with the name of your domain. Call the endpoint by sending a `POST` request to the HTTPBin Service. If successful, the call returns the `200 OK` response code.
 
 #### **curl**
 
 - Send a `GET` request to the HTTPBin Service.
 
   ```bash
-  curl -ik -X GET http://httpbin.$DOMAIN_TO_EXPOSE_WORKLOADS/ip
+  curl -ik -X GET https://httpbin.$DOMAIN_TO_EXPOSE_WORKLOADS/ip
   ```
   If successful, the call returns the `200 OK` response code.
 
 - Send a `POST` request to the HTTPBin Service.
 
   ```bash
-  curl -ik -X POST http://httpbin.$DOMAIN_TO_EXPOSE_WORKLOADS/post -d "test data"
+  curl -ik -X POST https://httpbin.$DOMAIN_TO_EXPOSE_WORKLOADS/post -d "test data"
   ```
   If successful, the call returns the `200 OK` response code.
 
