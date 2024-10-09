@@ -7,6 +7,10 @@ spec:
   cloudProfileName: gcp
   region: ${GARDENER_REGION}
   purpose: evaluation
+  controlPlane:
+    highAvailability:
+      failureTolerance:
+        type: zone
   provider:
     type: gcp
     infrastructureConfig:

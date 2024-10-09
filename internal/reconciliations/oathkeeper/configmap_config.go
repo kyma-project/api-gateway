@@ -25,17 +25,12 @@ func reconcileOryOathkeeperConfigConfigMap(ctx context.Context, k8sClient client
 		return deleteConfigmap(ctx, k8sClient, configMapName, reconciliations.Namespace)
 	}
 
-	isGardenerCluster, err := reconciliations.RunsOnGardenerCluster(ctx, k8sClient)
-	if err != nil {
+	domain, err := reconciliations.GetGardenerDomain(ctx, k8sClient)
+	if err != nil && !k8serrors.IsNotFound(err) {
 		return err
 	}
-
-	domain := "local.kyma.dev"
-	if isGardenerCluster {
-		domain, err = reconciliations.GetGardenerDomain(ctx, k8sClient)
-		if err != nil {
-			return err
-		}
+	if domain == "" {
+		domain = "local.kyma.dev"
 	}
 
 	templateValues := make(map[string]string)
