@@ -28,7 +28,11 @@ var _ = Describe("Certificate Controller", func() {
 			agr := getReconciler(c, getTestScheme(), logr.Discard())
 
 			// when
-			result, err := agr.Reconcile(context.Background(), reconcile.Request{NamespacedName: types.NamespacedName{Namespace: testNamespace, Name: "api-gateway-webhook-certificate"}})
+			req := reconcile.Request{
+				NamespacedName: types.NamespacedName{
+					Namespace: testNamespace, Name: "api-gateway-webhook-certificate"},
+			}
+			result, err := agr.Reconcile(context.Background(), req)
 
 			// then
 			Expect(err).Should(HaveOccurred())

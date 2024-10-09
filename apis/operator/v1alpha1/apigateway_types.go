@@ -40,7 +40,8 @@ type APIGatewaySpec struct {
 
 // APIGatewayStatus defines the observed state of APIGateway
 type APIGatewayStatus struct {
-	// State signifies current state of APIGateway. Value can be one of ("Ready", "Processing", "Error", "Deleting", "Warning").
+	// State signifies current state of APIGateway.
+	// Value can be one of ("Ready", "Processing", "Error", "Deleting", "Warning").
 	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:Enum=Processing;Deleting;Ready;Error;Warning
 	State State `json:"state"`

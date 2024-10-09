@@ -27,7 +27,8 @@ var certificateManifest []byte
 
 func reconcileKymaGatewayCertificate(ctx context.Context, k8sClient client.Client, apiGatewayCR v1alpha1.APIGateway, domain string) error {
 	isEnabled := isKymaGatewayEnabled(apiGatewayCR)
-	ctrl.Log.Info("Reconciling Certificate", "KymaGatewayEnabled", isEnabled, "name", kymaGatewayCertificateName, "namespace", certificateDefaultNamespace)
+	ctrl.Log.Info("Reconciling Certificate", "KymaGatewayEnabled", isEnabled,
+		"name", kymaGatewayCertificateName, "namespace", certificateDefaultNamespace)
 
 	if !isEnabled || apiGatewayCR.IsInDeletion() {
 		return deleteCertificate(ctx, k8sClient, kymaGatewayCertificateName)

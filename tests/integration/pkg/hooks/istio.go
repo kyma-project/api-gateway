@@ -28,7 +28,8 @@ func IstioSkipVerifyJwksResolverSuiteHook(t testcontext.Testsuite) func() error 
 
 func IstioSkipVerifyJwksResolverSuiteHookTeardown(t testcontext.Testsuite) func() error {
 	return func() error {
-		return istio.RemoveEnvironmentVariableFromIstiodDeployment(t.ResourceManager(), t.K8sClient(), skipVerifyJwksResolverEnvVar)
+		return istio.RemoveEnvironmentVariableFromIstiodDeployment(t.ResourceManager(), t.K8sClient(),
+			skipVerifyJwksResolverEnvVar)
 	}
 }
 

@@ -80,7 +80,8 @@ func (apiRuleV2Alpha1 *APIRule) ConvertTo(hub conversion.Hub) error {
 		apiRuleBeta1.Spec.CorsPolicy.ExposeHeaders = apiRuleV2Alpha1.Spec.CorsPolicy.ExposeHeaders
 
 		if apiRuleV2Alpha1.Spec.CorsPolicy.MaxAge != nil {
-			apiRuleBeta1.Spec.CorsPolicy.MaxAge = &metav1.Duration{Duration: time.Duration(*apiRuleV2Alpha1.Spec.CorsPolicy.MaxAge) * time.Second}
+			age := &metav1.Duration{Duration: time.Duration(*apiRuleV2Alpha1.Spec.CorsPolicy.MaxAge) * time.Second}
+			apiRuleBeta1.Spec.CorsPolicy.MaxAge = age
 		}
 	}
 
@@ -191,7 +192,8 @@ func (apiRuleV2Alpha1 *APIRule) ConvertFrom(hub conversion.Hub) error {
 		return err
 	}
 	if !conversionPossible {
-		// We have to stop the conversion here, because we want to return an empty Spec in case we cannot fully convert the APIRule.
+		// We have to stop the conversion here, because we want to return an empty Spec in case we cannot fully convert
+		// the APIRule.
 		return nil
 	}
 
