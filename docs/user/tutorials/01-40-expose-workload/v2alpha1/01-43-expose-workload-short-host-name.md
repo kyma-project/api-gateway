@@ -1,6 +1,6 @@
 # Expose a Workload with Short Host Name
 
-This tutorial shows how to expose an unsecured instance of the HTTPBin Service using short host name without domain and call its endpoints.
+This tutorial demonstrates how to expose an unsecured instance of the HTTPBin Service using a short host name instead of the full domain name. Using a short host makes it simpler to apply APIRules because the domain name is automatically retrieved from the referenced Gateway, and you don’t have to manually set it in each APIRule. This might be particularly useful when reconfiguring resources in a new cluster, as it reduces the chance of errors and streamlines the process.
 
 > [!WARNING]
 >  Exposing a workload to the outside world is a potential security vulnerability, so tread carefully. In a production environment, always secure the workload you expose with [JWT](../../01-50-expose-and-secure-a-workload/v2alpha1/01-52-expose-and-secure-workload-jwt.md).
