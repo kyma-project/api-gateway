@@ -8,63 +8,30 @@ This tutorial shows how to expose an unsecured instance of the HTTPBin Service u
 ## Prerequisites
 
 * [Deploy a sample HTTPBin Service](../../01-00-create-workload.md).
+* [Set up your custom domain](../../01-10-setup-custom-domain-for-workload.md) or use a Kyma domain instead.
 
 ## Steps
 
 ### Expose Your Workload
 
-1. Export the necessary values as environment variables:
+1. Depending on whether you use your custom domain or a Kyma domain, export the necessary values as environment variables:
+
+  <!-- tabs:start -->
+  #### **Custom Domain**
+
+  ```bash
+  export DOMAIN_TO_EXPOSE_WORKLOADS={DOMAIN_NAME}
+  export GATEWAY=$NAMESPACE/httpbin-gateway
+  ```
+  #### **Kyma Domain**
 
   ```bash
   export DOMAIN_TO_EXPOSE_WORKLOADS={KYMA_DOMAIN_NAME}
-  export GATEWAY=$NAMESPACE/httpbin-gateway
+  export GATEWAY=kyma-system/kyma-gateway
   ```
+  <!-- tabs:end -->
 
-2. Create custom Gateway specifying host domain:
-
-<!-- tabs:start -->
-#### **Kyma Dashboard**
-
-* Go to **Istio > Gateways** and select **Create**.
-* Provide the following configuration details:
-    - **Name**: `httpbin-gateway`
-    - **Namespace**: `{NAMESPACE_NAME}`
-    - In the `Servers` section, select **Add**. Then, use these values:
-      - **Port Number**: `80`
-      - **Name**: `http`
-      - **Protocol**: `HTTP`
-    - Use `httpbin.{KYMA_DOMAIN_NAME}` as **Host**.
-
-* Select **Create**.
-
-#### **kubectl**
-
-* To create a custom Gateway, run:
-
-    ```bash
-    cat <<EOF | kubectl apply -f -
-    apiVersion: networking.istio.io/v1beta1
-    kind: Gateway
-    metadata:
-      name: httpbin-gateway
-      namespace: $NAMESPACE
-    spec:
-      selector:
-        app: istio-ingressgateway
-        istio: ingressgateway
-      servers:
-        - hosts:
-            - '*.$DOMAIN_TO_EXPOSE_WORKLOADS'
-          port:
-            name: http
-            number: 80
-            protocol: HTTP
-    EOF
-    ```
-
-<!-- tabs:end -->
-
-3. To expose an instance of the HTTPBin Service, create the following APIRule referring created custom Gateway:
+2. To expose an instance of the HTTPBin Service, create the following APIRule:
 
     ```bash
     cat <<EOF | kubectl apply -f -
@@ -96,6 +63,9 @@ This tutorial shows how to expose an unsecured instance of the HTTPBin Service u
 
 > [!NOTE]
 > If you don't specify a namespace for your Service, the default namespace is used.
+
+> [!NOTE]
+> Host domain name will be obtained from the referenced Gateway.
 
 ### Access Your Workload
 
