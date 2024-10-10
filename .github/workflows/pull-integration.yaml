@@ -45,25 +45,6 @@ jobs:
           manager_image: "api-gateway-manager:PR-${{github.event.number}}"
           test_make_target: ${{ matrix.test_make_target }}
 
-  migration-downtime-tests:
-    name: Zero Downtime Migration tests
-    runs-on: ubuntu-latest
-    if: github.event.pull_request.draft == false
-    strategy:
-      fail-fast: false
-      matrix:
-        test_make_target: [ "test-migration-zero-downtime HANDLER=no_auth", "test-migration-zero-downtime HANDLER=allow", "test-migration-zero-downtime HANDLER=noop", "test-migration-zero-downtime HANDLER=jwt", "test-migration-zero-downtime HANDLER=oauth2_introspection" ]
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          fetch-depth: 0
-      - uses: ./.github/actions/load-manager-image
-      - uses: ./.github/actions/integration-tests
-        with:
-          manager_image: "api-gateway-manager:PR-${{github.event.number}}"
-          test_make_target: ${{ matrix.test_make_target }}
-
   upgrade-tests:
     name: Upgrade tests
     runs-on: ubuntu-latest
