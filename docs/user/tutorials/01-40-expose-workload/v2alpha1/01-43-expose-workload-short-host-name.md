@@ -65,9 +65,6 @@ This tutorial demonstrates how to expose an unsecured instance of the HTTPBin Se
 > [!NOTE]
 > If you don't specify a namespace for your Service, the default namespace is used.
 
-> [!NOTE]
-> Host domain name will be obtained from the referenced Gateway.
-
 ### Access Your Workload
 
 To access your HTTPBin Service, use [Postman](https://www.postman.com) or [curl](https://curl.se).
