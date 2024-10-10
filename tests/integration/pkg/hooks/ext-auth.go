@@ -3,13 +3,14 @@ package hooks
 import (
 	"context"
 	_ "embed"
-	"fmt"
+	"errors"
 	"github.com/avast/retry-go/v4"
 	k8sclient "github.com/kyma-project/api-gateway/tests/integration/pkg/client"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/manifestprocessor"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/resource"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 	"log"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -17,15 +18,17 @@ import (
 	"time"
 )
 
-//go:embed manifests/istio-cr.yaml
-var istioCrManifest []byte
+//go:embed manifests/ext-auth-istio-cr.yaml
+var extAuthIstioCrManifest []byte
 
 //go:embed manifests/ext-auth.yaml
 var extAuthManifests []byte
 
+var namespaceGVK = schema.GroupVersionResource{Group: "", Version: "v1", Resource: "namespaces"}
+
 func applyExtAuthorizerIstioCR() error {
 	log.Printf("Apply Istio CR with External Authorizer config")
-	istioCr, err := getIstioCr()
+	istioCr, err := getExtAuthIstioCr()
 	if err != nil {
 		return err
 	}
@@ -45,13 +48,22 @@ func applyExtAuthorizerIstioCR() error {
 	}...)
 }
 
-func getIstioCr() (unstructured.Unstructured, error) {
+func getExtAuthIstioCr() (unstructured.Unstructured, error) {
 	var istioCr unstructured.Unstructured
-	err := yaml.Unmarshal(istioCrManifest, &istioCr)
+	err := yaml.Unmarshal(extAuthIstioCrManifest, &istioCr)
 	if err != nil {
 		return unstructured.Unstructured{}, err
 	}
 	return istioCr, nil
+}
+
+func getExtAuthNamespace(manifests []unstructured.Unstructured) (string, error) {
+	for _, manifest := range manifests {
+		if manifest.GetKind() == "Namespace" {
+			return manifest.GetName(), nil
+		}
+	}
+	return "", errors.New("there is no namespace defined in the Ext Auth resource")
 }
 
 func deployExtAuthorizer(resourceMgr *resource.Manager, k8sClient dynamic.Interface) error {
@@ -60,15 +72,17 @@ func deployExtAuthorizer(resourceMgr *resource.Manager, k8sClient dynamic.Interf
 		return err
 	}
 
-	if len(resources) == 0 || resources[0].GetKind() != "Namespace" {
-		return fmt.Errorf("First resource should be a namespace")
+	nsName, err := getExtAuthNamespace(resources)
+	if err != nil {
+		return err
 	}
 
-	log.Printf("Creating External Authorizer namespace and deployment")
+	log.Printf("Deploying External Authorizer namespace %s\n", nsName)
 	_, err = resourceMgr.CreateOrUpdateResources(k8sClient, resources...)
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -78,13 +92,13 @@ func removeExtAuthorizer(resourceMgr *resource.Manager, k8sClient dynamic.Interf
 		return err
 	}
 
-	if len(resources) == 0 || resources[0].GetKind() != "Namespace" {
-		return fmt.Errorf("First resource should be a namespace")
+	nsName, err := getExtAuthNamespace(resources)
+	if err != nil {
+		return err
 	}
 
-	nsResourceSchema, ns, name := resourceMgr.GetResourceSchemaAndNamespace(resources[0])
-	log.Printf("Deleting External Authorizer namespace, if exists: %s\n", name)
-	err = resourceMgr.DeleteResource(k8sClient, nsResourceSchema, ns, name)
+	log.Printf("Deleting External Authorizer namespace: %s\n", nsName)
+	err = resourceMgr.DeleteResource(k8sClient, namespaceGVK, "", nsName)
 	if err != nil {
 		return err
 	}
