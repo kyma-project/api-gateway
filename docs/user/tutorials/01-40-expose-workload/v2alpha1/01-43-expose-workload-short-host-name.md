@@ -57,7 +57,8 @@ This tutorial demonstrates how to expose an unsecured instance of the HTTPBin Se
           noAuth: true
     EOF
     ```
-
+    
+    The host domain name will be obtained from the referenced Gateway.
 > [!NOTE]
 > If you are using k3d, add `httpbin.kyma.local` to the entry with k3d IP in your system's `/etc/hosts` file.
 
