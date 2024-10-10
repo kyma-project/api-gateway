@@ -23,8 +23,8 @@ PARALLEL_REQUESTS=5
 
 HANDLER="$1"
 
-if [[ -z "$HANDLER" || ! "$HANDLER" =~ ^(jwt|noop|no_auth|allow)$ ]]; then
-  echo "zero-downtime: Handler not provided or invalid. Must be one of: jwt, noop, no_auth, allow"
+if [[ -z "$HANDLER" || ! "$HANDLER" =~ ^(jwt|noop|no_auth|allow|oauth2_introspection)$ ]]; then
+  echo "zero-downtime: Handler not provided or invalid. Must be one of: jwt, noop, no_auth, allow, oauth2_introspection"
   exit 1
 fi
 
@@ -45,7 +45,7 @@ run_zero_downtime_requests() {
   local url_under_test="https://$exposed_host/headers"
 
 
-  if [ "$handler" == "jwt" ]; then
+  if [ "$handler" == "jwt" ] || [ "$handler" == "oauth2_introspection" ]; then
     # Wait until the OAuth2 mock server host is available
     wait_for_url "https://oauth2-mock.$TEST_DOMAIN/.well-known/openid-configuration"
     token_url="https://oauth2-mock.$TEST_DOMAIN/oauth2/token"
@@ -108,7 +108,7 @@ wait_for_url() {
 
   # Wait for 1min
   while [[ $attempts -le 60 ]] ; do
-    response=$(curl -sk -o /dev/null -L -w "%{http_code}" "$url" -H "Authorization: Bearer $bearer_token" )
+    response=$(curl -sk -o /dev/null -L -w "%{http_code}" "$url" -H "x-ext-authz: allow" -H "Authorization: Bearer $bearer_token" )
   	if [ "$response" == "200" ]; then
       echo "zero-downtime: $url is available for requests"
   	  return 0
@@ -130,9 +130,9 @@ send_requests() {
   while true; do
 
     if [ -n "$bearer_token" ]; then
-      response=$(curl -sk -o /dev/null -w "%{http_code}" -H "Authorization: Bearer $bearer_token" "$url")
+      response=$(curl -sk -o /dev/null -w "%{http_code}" -H "x-ext-authz: allow" -H "Authorization: Bearer $bearer_token" "$url")
     else
-      response=$(curl -sk -o /dev/null -w "%{http_code}" "$url")
+      response=$(curl -sk -o /dev/null -w "%{http_code}" -H "x-ext-authz: allow" "$url")
     fi
     ((request_count = request_count + 1))
 

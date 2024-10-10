@@ -96,10 +96,7 @@ test-integration: test-integration-v2alpha1 test-integration-ory test-integratio
 
 .PHONY: test-integration-v2alpha1
 test-integration-v2alpha1: generate fmt vet ## Run API Gateway integration tests with v2alpha1 API.
-	kubectl create ns ext-auth --dry-run=client -o yaml | kubectl apply -f -
-	kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.23/samples/extauthz/ext-authz.yaml -n ext-auth
 	source ./tests/integration/env_vars.sh && go test -timeout 1h ./tests/integration -v -race -run TestV2alpha1
-	kubectl delete ns ext-auth
 
 .PHONY: test-integration-ory
 test-integration-ory: generate fmt vet

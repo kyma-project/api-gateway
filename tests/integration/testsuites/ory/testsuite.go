@@ -87,6 +87,7 @@ func (t *testsuite) InitScenarios(ctx *godog.ScenarioContext) {
 	initMigrationNoAuthV1beta1(ctx, t)
 	initMigrationNoopV1beta1(ctx, t)
 	initMigrationJwtV1beta1(ctx, t)
+	initMigrationOauth2IntrospectionJwtV1beta1(ctx, t)
 }
 
 func (t *testsuite) FeaturePath() []string {
@@ -179,11 +180,11 @@ func (t *testsuite) TearDown() {
 }
 
 func (t *testsuite) BeforeSuiteHooks() []func() error {
-	return []func() error{hooks.ApplyAndVerifyApiGatewayCrSuiteHook}
+	return []func() error{hooks.ExtAuthorizerInstallHook(t), hooks.ApplyAndVerifyApiGatewayCrSuiteHook}
 }
 
 func (t *testsuite) AfterSuiteHooks() []func() error {
-	return []func() error{hooks.DeleteBlockingResourcesSuiteHook, hooks.ApiGatewayCrTearDownSuiteHook}
+	return []func() error{hooks.DeleteBlockingResourcesSuiteHook, hooks.ApiGatewayCrTearDownSuiteHook, hooks.ExtAuthorizerRemoveHook(t)}
 }
 
 func NewTestsuite(httpClient *helpers.RetryableHttpClient, k8sClient dynamic.Interface, rm *resource.Manager, config testcontext.Config) testcontext.Testsuite {
