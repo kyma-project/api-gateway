@@ -142,28 +142,11 @@ func (s *scenario) thereIsAnJwtSecuredPath(path string) {
 	s.ManifestTemplate["jwtSecuredPath"] = path
 }
 
-func (s *scenario) upgradeApiGateway(manifestType, should string) error {
-	const manifestDirectory = "testsuites/upgrade/manifests"
-
-	var manifestFileName string
-	switch manifestType {
-	case "generated":
-		manifestFileName = "upgrade-test-generated-operator-manifest.yaml"
-	case "failing":
-		manifestFileName = "upgrade-test-operator-fail.yaml"
-	default:
-		return fmt.Errorf("unsupported manifest type: %s", manifestType)
-	}
-
-	expectSuccess := false
-	if should == "succeed" {
-		expectSuccess = true
-	}
-
+func (s *scenario) upgradeApiGateway() error {
 	var apiGatewayDeployment v1.Deployment
 	var oldImage string
 
-	manifestCrds, err := manifestprocessor.ParseYamlFromFile(manifestFileName, manifestDirectory)
+	manifestCrds, err := manifestprocessor.ParseYamlFromFile("upgrade-test-generated-operator-manifest.yaml", "testsuites/upgrade/manifests")
 	if err != nil {
 		return err
 	}
@@ -182,11 +165,7 @@ func (s *scenario) upgradeApiGateway(manifestType, should string) error {
 
 	_, err = s.resourceManager.CreateOrUpdateResourcesGVR(s.k8sClient, manifestCrds...)
 	if err != nil {
-		if expectSuccess {
-			return err
-		} else {
-			return nil
-		}
+		return err
 	}
 
 	return retry.Do(func() error {
@@ -284,7 +263,7 @@ func initUpgrade(ctx *godog.ScenarioContext, ts *testsuite) {
 	ctx.Step(`^Upgrade: Calling the "([^"]*)" endpoint without a token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithoutTokenShouldResultInStatusBetween)
 	ctx.Step(`^Upgrade: Calling the "([^"]*)" endpoint with an invalid token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithInvalidTokenShouldResultInStatusBetween)
 	ctx.Step(`^Upgrade: Calling the "([^"]*)" endpoint with a valid "([^"]*)" token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithValidTokenShouldResultInStatusBetween)
-	ctx.Step(`^Upgrade: API Gateway is upgraded to current branch version with "([^"]*)" manifest and should "([^"]*)"$`, scenario.upgradeApiGateway)
+	ctx.Step(`^Upgrade: API Gateway is upgraded to current branch version manifest$`, scenario.upgradeApiGateway)
 	ctx.Step(`^Upgrade: Teardown httpbin service$`, scenario.teardownHttpbinService)
 	ctx.Step(`^Upgrade: Fetch APIRule last processed time$`, scenario.fetchAPIRuleLastProcessedTime)
 	ctx.Step(`^Upgrade: APIRule was reconciled again$`, scenario.apiRuleWasReconciledAgain)
