@@ -18,7 +18,9 @@ package gateway
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"regexp"
 	"strings"
 	"time"
 
@@ -182,6 +184,19 @@ func (r *APIRuleReconciler) reconcileV2Alpha1APIRule(ctx context.Context, l logr
 	rule := gatewayv2alpha1.APIRule{}
 	if err := rule.ConvertFrom(toUpdate); err != nil {
 		return doneReconcileErrorRequeue(err, r.OnErrorReconcilePeriod)
+	}
+
+	if rule.Spec.Gateway == nil {
+		return doneReconcileErrorRequeue(errors.New("Spec.Gateway was nil, expected value"), r.OnErrorReconcilePeriod)
+	}
+
+	match, err := regexp.MatchString(`^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?/([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)$`, *rule.Spec.Gateway)
+	if err != nil {
+		return doneReconcileErrorRequeue(err, r.OnErrorReconcilePeriod)
+	}
+
+	if !match {
+		return doneReconcileErrorRequeue(fmt.Errorf("Spec.Gateway: %s is not in namespacedName format", *rule.Spec.Gateway), r.OnErrorReconcilePeriod)
 	}
 
 	gatewayName := strings.Split(*rule.Spec.Gateway, "/")
