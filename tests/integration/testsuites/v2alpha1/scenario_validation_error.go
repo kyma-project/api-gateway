@@ -7,6 +7,5 @@ import (
 func initValidationError(ctx *godog.ScenarioContext, ts *testsuite) {
 	scenario := ts.createScenario("validation-error.yaml", "validation-error")
 
-	ctx.Step(`ValidationError: The misconfigured APIRule is applied$`, scenario.theAPIRuleV2Alpha1IsAppliedExpectError)
-	ctx.Step(`ValidationError: APIRule has status "([^"]*)" with description containing "([^"]*)"$`, scenario.theAPIRuleHasStatusWithDesc)
+	ctx.Step(`ValidationError: The APIRule is applied and contains error status with "([^"]*)" message$`, scenario.theAPIRuleV2Alpha1IsAppliedExpectError)
 }
