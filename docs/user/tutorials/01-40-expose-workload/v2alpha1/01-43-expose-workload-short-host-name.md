@@ -67,16 +67,7 @@ This tutorial demonstrates how to expose an unsecured instance of the HTTPBin Se
 
 ### Access Your Workload
 
-To access your HTTPBin Service, use [Postman](https://www.postman.com) or [curl](https://curl.se).
-
-<!-- tabs:start -->
-#### **Postman**
-
-- Enter the URL `https://httpbin.{DOMAIN_TO_EXPOSE_WORKLOADS}/ip` and replace the placeholder with the name of your domain. Call the endpoint by sending a `GET` request to the HTTPBin Service. If successful, the call returns the `200 OK` response code.
-
-- Enter the URL `https://httpbin.{DOMAIN_TO_EXPOSE_WORKLOADS}/post` and replace the placeholder with the name of your domain. Call the endpoint by sending a `POST` request to the HTTPBin Service. If successful, the call returns the `200 OK` response code.
-
-#### **curl**
+To access your HTTPBin Service, use [curl](https://curl.se).
 
 - Send a `GET` request to the HTTPBin Service.
 
@@ -91,5 +82,3 @@ To access your HTTPBin Service, use [Postman](https://www.postman.com) or [curl]
   curl -ik -X POST https://httpbin.$DOMAIN_TO_EXPOSE_WORKLOADS/post -d "test data"
   ```
   If successful, the call returns the `200 OK` response code.
-
-<!-- tabs:end -->
