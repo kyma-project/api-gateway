@@ -2,6 +2,7 @@ package ory
 
 import (
 	_ "embed"
+
 	"github.com/cucumber/godog"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/helpers"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/manifestprocessor"
@@ -30,5 +31,5 @@ func (s *secureToUnsecureScenario) updateApiRuleToMakeEndpointUnsecured() error 
 	if err != nil {
 		return err
 	}
-	return helpers.ApplyApiRule(s.resourceManager.UpdateResources, s.resourceManager.UpdateResources, s.k8sClient, testcontext.GetRetryOpts(), r)
+	return helpers.ApplyApiRuleRetryOnError(s.resourceManager.UpdateResources, s.resourceManager.UpdateResources, s.k8sClient, testcontext.GetRetryOpts(), r)
 }

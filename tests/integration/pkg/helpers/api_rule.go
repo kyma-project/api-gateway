@@ -31,19 +31,18 @@ type apiRuleStatusV2Alpha1 struct {
 // RetryableApiRule wraps any function that modifies or creates an APIRule
 type RetryableApiRule func(k8sClient dynamic.Interface, resources ...unstructured.Unstructured) (*unstructured.Unstructured, error)
 
-// APIRuleWithRetries tries toExecute function and retries with onRetry if APIRule status is "ERROR"
-func ApplyApiRule(toExecute RetryableApiRule, onRetry RetryableApiRule, k8sClient dynamic.Interface, retryOpts []retry.Option, resources []unstructured.Unstructured) error {
+// APIRuleWithRetries tries toExecute function and retries with onRetry if APIRule status is "Error"
+func ApplyApiRuleRetryOnError(toExecute RetryableApiRule, onRetry RetryableApiRule, k8sClient dynamic.Interface, retryOpts []retry.Option, resources []unstructured.Unstructured) error {
 	res, err := toExecute(k8sClient, resources...)
 	if err != nil {
 		return err
 	}
 
-	apiStatus, err := GetAPIRuleStatus(res)
+	apiStatus, err := GetAPIRuleStatusV2Alpha1(res)
 	if err != nil {
 		return err
 	}
-
-	if apiStatus.Status.APIRuleStatus.Code == "ERROR" {
+	if apiStatus.Status.State == "Error" {
 		return retry.Do(func() error {
 			res, err := onRetry(k8sClient, resources...)
 			if err != nil {
@@ -57,9 +56,9 @@ func ApplyApiRule(toExecute RetryableApiRule, onRetry RetryableApiRule, k8sClien
 			if err != nil {
 				return err
 			}
-			if apiStatus.Status.APIRuleStatus.Code == "ERROR" {
-				log.Println("APIRule status not ok: " + apiStatus.Status.APIRuleStatus.Description)
-				return errors.New("APIRule status not ok: " + apiStatus.Status.APIRuleStatus.Description)
+			if apiStatus.Status.State == "Error" {
+				log.Println("APIRule status is Error: " + apiStatus.Status.Description)
+				return errors.New("APIRule status is Error: " + apiStatus.Status.Description)
 			}
 			return nil
 		}, retryOpts...)
@@ -67,7 +66,7 @@ func ApplyApiRule(toExecute RetryableApiRule, onRetry RetryableApiRule, k8sClien
 	return nil
 }
 
-func ApplyApiRuleV2Alpha1(toExecute RetryableApiRule, onRetry RetryableApiRule, k8sClient dynamic.Interface, retryOpts []retry.Option, resources []unstructured.Unstructured) error {
+func ApplyApiRuleV2Alpha1ExpectReady(toExecute RetryableApiRule, onRetry RetryableApiRule, k8sClient dynamic.Interface, retryOpts []retry.Option, resources []unstructured.Unstructured) error {
 	res, err := toExecute(k8sClient, resources...)
 	if err != nil {
 		return err

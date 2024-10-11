@@ -2,6 +2,7 @@ package ory
 
 import (
 	_ "embed"
+
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/helpers"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/manifestprocessor"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
@@ -31,5 +32,5 @@ func (u *unsecuredToSecured) secureWithOAuth2JWT() error {
 	if err != nil {
 		return err
 	}
-	return helpers.ApplyApiRule(u.resourceManager.UpdateResources, u.resourceManager.UpdateResources, u.k8sClient, testcontext.GetRetryOpts(), r)
+	return helpers.ApplyApiRuleRetryOnError(u.resourceManager.UpdateResources, u.resourceManager.UpdateResources, u.k8sClient, testcontext.GetRetryOpts(), r)
 }

@@ -4,6 +4,10 @@ import (
 	"context"
 	_ "embed"
 	"fmt"
+	"net/http"
+	"strings"
+	"time"
+
 	"github.com/avast/retry-go/v4"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/auth"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/helpers"
@@ -14,9 +18,6 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/dynamic"
-	"net/http"
-	"strings"
-	"time"
 )
 
 type scenario struct {
@@ -82,7 +83,7 @@ func (s *scenario) thereIsAHttpbinServiceAndApiRuleIsApplied() error {
 	if err != nil {
 		return err
 	}
-	return helpers.ApplyApiRule(s.resourceManager.CreateResources, s.resourceManager.UpdateResources, s.k8sClient, testcontext.GetRetryOpts(), r)
+	return helpers.ApplyApiRuleRetryOnError(s.resourceManager.CreateResources, s.resourceManager.UpdateResources, s.k8sClient, testcontext.GetRetryOpts(), r)
 }
 
 func (s *scenario) theAPIRuleIsApplied() error {
@@ -90,7 +91,7 @@ func (s *scenario) theAPIRuleIsApplied() error {
 	if err != nil {
 		return err
 	}
-	return helpers.ApplyApiRule(s.resourceManager.CreateResources, s.resourceManager.UpdateResources, s.k8sClient, testcontext.GetRetryOpts(), r)
+	return helpers.ApplyApiRuleRetryOnError(s.resourceManager.CreateResources, s.resourceManager.UpdateResources, s.k8sClient, testcontext.GetRetryOpts(), r)
 }
 
 func (s *scenario) theAPIRuleIsUpdated(manifest string) error {

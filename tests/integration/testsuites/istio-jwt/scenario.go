@@ -3,6 +3,10 @@ package istiojwt
 import (
 	"errors"
 	"fmt"
+	"net/http"
+	"net/url"
+	"strings"
+
 	"github.com/avast/retry-go/v4"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/auth"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/helpers"
@@ -11,9 +15,6 @@ import (
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
 	"golang.org/x/oauth2/clientcredentials"
 	"k8s.io/client-go/dynamic"
-	"net/http"
-	"net/url"
-	"strings"
 )
 
 type scenario struct {
@@ -36,7 +37,7 @@ func (s *scenario) theAPIRuleIsApplied() error {
 	if err != nil {
 		return err
 	}
-	return helpers.ApplyApiRule(s.resourceManager.CreateResources, s.resourceManager.UpdateResources, s.k8sClient, testcontext.GetRetryOpts(), r)
+	return helpers.ApplyApiRuleRetryOnError(s.resourceManager.CreateResources, s.resourceManager.UpdateResources, s.k8sClient, testcontext.GetRetryOpts(), r)
 }
 
 func (s *scenario) callingTheEndpointWithAValidToken(endpoint, tokenType, audOrClaim, par1, par2 string, lower, higher int) error {
