@@ -3,6 +3,7 @@ package helpers
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
 	"strings"
 
@@ -38,6 +39,40 @@ func ApplyApiRuleRetryOnError(toExecute RetryableApiRule, onRetry RetryableApiRu
 		return err
 	}
 
+	apiStatus, err := GetAPIRuleStatus(res)
+	if err != nil {
+		return err
+	}
+	if apiStatus.Status.APIRuleStatus.Code == "Error" {
+		return retry.Do(func() error {
+			res, err := onRetry(k8sClient, resources...)
+			if err != nil {
+				return err
+			}
+			js, err := json.Marshal(res)
+			if err != nil {
+				return err
+			}
+			err = json.Unmarshal(js, &apiStatus)
+			if err != nil {
+				return err
+			}
+			if apiStatus.Status.APIRuleStatus.Code == "Error" {
+				log.Printf("APIRule status is Error: %s", apiStatus.Status.APIRuleStatus.Description)
+				return fmt.Errorf("APIRule status is Error: %s", apiStatus.Status.APIRuleStatus.Description)
+			}
+			return nil
+		}, retryOpts...)
+	}
+	return nil
+}
+
+func ApplyApiRuleV2Alpha1RetryOnError(toExecute RetryableApiRule, onRetry RetryableApiRule, k8sClient dynamic.Interface, retryOpts []retry.Option, resources []unstructured.Unstructured) error {
+	res, err := toExecute(k8sClient, resources...)
+	if err != nil {
+		return err
+	}
+
 	apiStatus, err := GetAPIRuleStatusV2Alpha1(res)
 	if err != nil {
 		return err
@@ -57,8 +92,8 @@ func ApplyApiRuleRetryOnError(toExecute RetryableApiRule, onRetry RetryableApiRu
 				return err
 			}
 			if apiStatus.Status.State == "Error" {
-				log.Println("APIRule status is Error: " + apiStatus.Status.Description)
-				return errors.New("APIRule status is Error: " + apiStatus.Status.Description)
+				log.Printf("APIRule status is Error: %s", apiStatus.Status.Description)
+				return fmt.Errorf("APIRule status is Error: %s", apiStatus.Status.Description)
 			}
 			return nil
 		}, retryOpts...)
@@ -66,7 +101,7 @@ func ApplyApiRuleRetryOnError(toExecute RetryableApiRule, onRetry RetryableApiRu
 	return nil
 }
 
-func ApplyApiRuleV2Alpha1ExpectReady(toExecute RetryableApiRule, onRetry RetryableApiRule, k8sClient dynamic.Interface, retryOpts []retry.Option, resources []unstructured.Unstructured) error {
+func ApplyApiRuleV2Alpha1ExpectStatusAndDesc(toExecute RetryableApiRule, onRetry RetryableApiRule, k8sClient dynamic.Interface, retryOpts []retry.Option, resources []unstructured.Unstructured, status, descMessage string) error {
 	res, err := toExecute(k8sClient, resources...)
 	if err != nil {
 		return err
@@ -75,7 +110,7 @@ func ApplyApiRuleV2Alpha1ExpectReady(toExecute RetryableApiRule, onRetry Retryab
 	if err != nil {
 		return err
 	}
-	if apiStatus.Status.State != "Ready" {
+	if apiStatus.Status.State != status {
 		return retry.Do(func() error {
 			res, err := onRetry(k8sClient, resources...)
 			if err != nil {
@@ -89,46 +124,13 @@ func ApplyApiRuleV2Alpha1ExpectReady(toExecute RetryableApiRule, onRetry Retryab
 			if err != nil {
 				return err
 			}
-			if apiStatus.Status.State != "Ready" {
-				log.Println("APIRule status not Ready: " + apiStatus.Status.Description)
-				return errors.New("APIRule status not Ready: " + apiStatus.Status.Description)
+			if apiStatus.Status.State != status {
+				log.Printf("APIRule status not %s: %s", status, apiStatus.Status.Description)
+				return fmt.Errorf("APIRule status not %s: %s", status, apiStatus.Status.Description)
 			}
-			return nil
-		}, retryOpts...)
-	}
-	return nil
-}
-
-func ApplyApiRuleV2Alpha1ExpectError(toExecute RetryableApiRule, onRetry RetryableApiRule, k8sClient dynamic.Interface, retryOpts []retry.Option, resources []unstructured.Unstructured, errorMessage string) error {
-	res, err := toExecute(k8sClient, resources...)
-	if err != nil {
-		return err
-	}
-	apiStatus, err := GetAPIRuleStatusV2Alpha1(res)
-	if err != nil {
-		return err
-	}
-	if apiStatus.Status.State != "Error" {
-		return retry.Do(func() error {
-			res, err := onRetry(k8sClient, resources...)
-			if err != nil {
-				return err
-			}
-			js, err := json.Marshal(res)
-			if err != nil {
-				return err
-			}
-			err = json.Unmarshal(js, &apiStatus)
-			if err != nil {
-				return err
-			}
-			if apiStatus.Status.State != "Error" {
-				log.Println("APIRule status not Error: " + apiStatus.Status.Description)
-				return errors.New("APIRule status not Error: " + apiStatus.Status.Description)
-			}
-			if errorMessage != "" && !strings.Contains(apiStatus.Status.Description, errorMessage) {
-				log.Println("APIRule Error status description does not contain expected string: " + apiStatus.Status.Description)
-				return errors.New("APIRule Error status description does not contain expected string: " + apiStatus.Status.Description)
+			if descMessage != "" && !strings.Contains(apiStatus.Status.Description, descMessage) {
+				log.Printf("APIRule Status description does not contain expected string: %s", apiStatus.Status.Description)
+				return fmt.Errorf("APIRule Status description does not contain expected string: %s", apiStatus.Status.Description)
 			}
 			return nil
 		}, retryOpts...)

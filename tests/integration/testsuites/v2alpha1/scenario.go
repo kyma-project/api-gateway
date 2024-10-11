@@ -90,23 +90,15 @@ func (s *scenario) theAPIRuleIsApplied() error {
 	if err != nil {
 		return err
 	}
-	return helpers.ApplyApiRuleV2Alpha1ExpectReady(s.resourceManager.CreateResources, s.resourceManager.UpdateResources, s.k8sClient, testcontext.GetRetryOpts(), r)
+	return helpers.ApplyApiRuleV2Alpha1RetryOnError(s.resourceManager.CreateResources, s.resourceManager.UpdateResources, s.k8sClient, testcontext.GetRetryOpts(), r)
 }
 
-func (s *scenario) theAPIRuleV2Alpha1IsApplied() error {
+func (s *scenario) theAPIRuleIsAppliedExpectError(errorMessage string) error {
 	r, err := manifestprocessor.ParseFromFileWithTemplate(s.ApiResourceManifestPath, s.ApiResourceDirectory, s.ManifestTemplate)
 	if err != nil {
 		return err
 	}
-	return helpers.ApplyApiRuleV2Alpha1ExpectReady(s.resourceManager.CreateResources, s.resourceManager.UpdateResources, s.k8sClient, testcontext.GetRetryOpts(), r)
-}
-
-func (s *scenario) theAPIRuleV2Alpha1IsAppliedExpectError(errorMessage string) error {
-	r, err := manifestprocessor.ParseFromFileWithTemplate(s.ApiResourceManifestPath, s.ApiResourceDirectory, s.ManifestTemplate)
-	if err != nil {
-		return err
-	}
-	return helpers.ApplyApiRuleV2Alpha1ExpectError(s.resourceManager.CreateResources, s.resourceManager.UpdateResources, s.k8sClient, testcontext.GetRetryOpts(), r, errorMessage)
+	return helpers.ApplyApiRuleV2Alpha1ExpectStatusAndDesc(s.resourceManager.CreateResources, s.resourceManager.UpdateResources, s.k8sClient, testcontext.GetRetryOpts(), r, "Error", errorMessage)
 }
 
 func (s *scenario) specifiesCustomGateway(gatewayNamespace, gatewayName string) {

@@ -8,7 +8,7 @@ func initShortHost(ctx *godog.ScenarioContext, ts *testsuite) {
 	scenarioSuccess := ts.createScenario("short-host.yaml", "short-host")
 
 	ctx.Step(`^ShortHost: There is a httpbin service$`, scenarioSuccess.thereIsAHttpbinService)
-	ctx.Step(`^ShortHost: The APIRule is applied$`, scenarioSuccess.theAPIRuleV2Alpha1IsApplied)
+	ctx.Step(`^ShortHost: The APIRule is applied$`, scenarioSuccess.theAPIRuleIsApplied)
 	ctx.Step(`^ShortHost: Calling short host "([^"]*)" with path "([^"]*)" without a token should result in status between (\d+) and (\d+)$`, scenarioSuccess.callingShortHostWithoutTokenShouldResultInStatusBetween)
 	ctx.Step(`^ShortHost: Teardown httpbin service$`, scenarioSuccess.teardownHttpbinService)
 
@@ -16,7 +16,7 @@ func initShortHost(ctx *godog.ScenarioContext, ts *testsuite) {
 
 	ctx.Step(`^ShortHostError: There is a httpbin service$`, scenarioError.thereIsAHttpbinService)
 	ctx.Step(`^ShortHostError: Specifies custom Gateway "([^"]*)"/"([^"]*)"`, scenarioError.specifiesCustomGateway)
-	ctx.Step(`^ShortHostError: The APIRule is applied and contains error status with "([^"]*)" message$`, scenarioError.theAPIRuleV2Alpha1IsAppliedExpectError)
+	ctx.Step(`^ShortHostError: The APIRule is applied and contains error status with "([^"]*)" message$`, scenarioError.theAPIRuleIsAppliedExpectError)
 	ctx.Step(`^ShortHostError: Calling short host "([^"]*)" with path "([^"]*)" without a token should result in status between (\d+) and (\d+)$`, scenarioError.callingShortHostWithoutTokenShouldResultInStatusBetween)
 	ctx.Step(`^ShortHostError: Teardown httpbin service$`, scenarioError.teardownHttpbinService)
 }
