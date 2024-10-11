@@ -43,7 +43,7 @@ func ApplyApiRuleRetryOnError(toExecute RetryableApiRule, onRetry RetryableApiRu
 	if err != nil {
 		return err
 	}
-	if apiStatus.Status.APIRuleStatus.Code == "Error" {
+	if apiStatus.Status.APIRuleStatus.Code == "ERROR" {
 		return retry.Do(func() error {
 			res, err := onRetry(k8sClient, resources...)
 			if err != nil {
@@ -57,9 +57,9 @@ func ApplyApiRuleRetryOnError(toExecute RetryableApiRule, onRetry RetryableApiRu
 			if err != nil {
 				return err
 			}
-			if apiStatus.Status.APIRuleStatus.Code == "Error" {
-				log.Printf("APIRule status is Error: %s", apiStatus.Status.APIRuleStatus.Description)
-				return fmt.Errorf("APIRule status is Error: %s", apiStatus.Status.APIRuleStatus.Description)
+			if apiStatus.Status.APIRuleStatus.Code == "ERROR" {
+				log.Printf("APIRule status is ERROR: %s", apiStatus.Status.APIRuleStatus.Description)
+				return fmt.Errorf("APIRule status is ERROR: %s", apiStatus.Status.APIRuleStatus.Description)
 			}
 			return nil
 		}, retryOpts...)
