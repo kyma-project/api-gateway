@@ -1,0 +1,11 @@
+en:
+  useCorsPolicy: Use custom CORS policy
+  corsPolicy: CORS Policy
+  extAuth: External Authorization
+  jwt: JWT
+  jwksUri: JWKS URI
+  service-name: Service Name
+  status: Status
+  general: General
+  virtualService: Virtual Service
+  alert.spec.host: Host can not be a wildcard, replace with a RFC 1123 label or a valid, fully qualified domain name (FQDN)
