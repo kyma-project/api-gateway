@@ -126,7 +126,7 @@ func ApplyApiRuleV2Alpha1ExpectError(toExecute RetryableApiRule, onRetry Retryab
 				log.Println("APIRule status not Error: " + apiStatus.Status.Description)
 				return errors.New("APIRule status not Error: " + apiStatus.Status.Description)
 			}
-			if !strings.Contains(apiStatus.Status.Description, errorMessage) {
+			if errorMessage != "" && !strings.Contains(apiStatus.Status.Description, errorMessage) {
 				log.Println("APIRule Error status description does not contain expected string: " + apiStatus.Status.Description)
 				return errors.New("APIRule Error status description does not contain expected string: " + apiStatus.Status.Description)
 			}
