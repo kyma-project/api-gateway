@@ -17,6 +17,10 @@ var _ = Describe("IsFqdnHostName", func() {
 		Expect(IsFqdnHostName("host.example.com")).To(BeTrue())
 	})
 
+	It("Should be true if host is a valid FQDN with 1 char labels", func() {
+		Expect(IsFqdnHostName("a.b.ca")).To(BeTrue())
+	})
+
 	It("Should be false if host name has uppercase letters", func() {
 		Expect(IsFqdnHostName("host.exaMple.com")).To(BeFalse())
 	})
