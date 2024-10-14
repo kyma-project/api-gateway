@@ -73,6 +73,10 @@ var _ = Describe("IsFqdnHostName", func() {
 		Expect(IsFqdnHostName("host.example.-com")).To(BeFalse())
 		Expect(IsFqdnHostName("host.example.com-")).To(BeFalse())
 	})
+
+	It("Should be false if top level domain is too short", func() {
+		Expect(IsFqdnHostName("example.c")).To(BeFalse())
+	})
 })
 
 var _ = Describe("IsShortHostName", func() {
