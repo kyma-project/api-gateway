@@ -1613,32 +1613,6 @@ var _ = Describe("APIRule Controller", Serial, func() {
 		})
 
 		Context("rule path validation respected", func() {
-			It("should fail when path consists of a path and *", func() {
-				// given
-				apiRuleName := generateTestName(testNameBase, testIDLength)
-				serviceName := generateTestName(testServiceNameBase, testIDLength)
-				serviceHost := gatewayv2alpha1.Host("example.com")
-				serviceHosts := []*gatewayv2alpha1.Host{&serviceHost}
-
-				rule := testRulev2alpha1("/img*", []gatewayv2alpha1.HttpMethod{http.MethodGet})
-				rule.NoAuth = ptr.To(true)
-				apiRule := testApiRulev2alpha1(apiRuleName, testNamespace, serviceName, testNamespace, serviceHosts, testServicePort, []gatewayv2alpha1.Rule{rule})
-				svc := testService(serviceName, testNamespace, testServicePort)
-
-				Expect(c.Create(context.Background(), svc)).Should(Succeed())
-
-				// when
-				err := c.Create(context.Background(), apiRule)
-
-				// then
-				Expect(err).Should(HaveOccurred())
-				Expect(err.Error()).To(ContainSubstring("spec.rules[0].path: Invalid value: \"/img*\": spec.rules[0].path"))
-				defer func() {
-					apiRulev2alpha1Teardown(apiRule)
-					serviceTeardown(svc)
-				}()
-			})
-
 			It("should apply APIRule when path contains only /*", func() {
 				// given
 				apiRuleName := generateTestName(testNameBase, testIDLength)
@@ -1669,6 +1643,28 @@ var _ = Describe("APIRule Controller", Serial, func() {
 				serviceHosts := []*gatewayv2alpha1.Host{&serviceHost}
 
 				rule := testRulev2alpha1("/img-new/1", []gatewayv2alpha1.HttpMethod{http.MethodGet})
+				rule.NoAuth = ptr.To(true)
+				apiRule := testApiRulev2alpha1(apiRuleName, testNamespace, serviceName, testNamespace, serviceHosts, testServicePort, []gatewayv2alpha1.Rule{rule})
+				svc := testService(serviceName, testNamespace, testServicePort)
+
+				Expect(c.Create(context.Background(), svc)).Should(Succeed())
+
+				// when then
+				Expect(c.Create(context.Background(), apiRule)).Should(Succeed())
+				defer func() {
+					apiRulev2alpha1Teardown(apiRule)
+					serviceTeardown(svc)
+				}()
+			})
+
+			It("should apply APIRule when path contains subpath regex", func() {
+				// given
+				apiRuleName := generateTestName(testNameBase, testIDLength)
+				serviceName := generateTestName(testServiceNameBase, testIDLength)
+				serviceHost := gatewayv2alpha1.Host("example.com")
+				serviceHosts := []*gatewayv2alpha1.Host{&serviceHost}
+
+				rule := testRulev2alpha1("/callback/*", []gatewayv2alpha1.HttpMethod{http.MethodGet})
 				rule.NoAuth = ptr.To(true)
 				apiRule := testApiRulev2alpha1(apiRuleName, testNamespace, serviceName, testNamespace, serviceHosts, testServicePort, []gatewayv2alpha1.Rule{rule})
 				svc := testService(serviceName, testNamespace, testServicePort)

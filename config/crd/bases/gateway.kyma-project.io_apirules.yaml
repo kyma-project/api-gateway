@@ -522,9 +522,9 @@ spec:
                       type: boolean
                     path:
                       description: Specifies the path of the exposed service, allowing
-                        '/*' to match all paths and '/a-path' to match a specific
-                        path.
-                      pattern: ^(\/\*|\/[0-9a-zA-Z/()?!\\_-]+)$
+                        '/*' to match all paths, '/a-path' to match a specific path
+                        or a regex to match multiple paths.
+                      pattern: ^(\/[^\?\s#]+)(?:[\?#].*)?$
                       type: string
                     request:
                       description: Request allows modifying the request before it

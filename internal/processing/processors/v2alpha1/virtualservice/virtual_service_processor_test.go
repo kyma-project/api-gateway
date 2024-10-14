@@ -184,6 +184,34 @@ var _ = Describe("VirtualServiceProcessor", func() {
 		}, nil, "create")
 	})
 
+	It("should create a VirtualService with regex string match for path, when rule in APIRule spcifify sub-paths with '*'", func() {
+		apiRule := NewAPIRuleBuilder().
+			WithGateway("example/example").
+			WithHosts("example.com").
+			WithService("example-service", "example-namespace", 8080).
+			WithTimeout(180).
+			WithRules(
+				NewRuleBuilder().
+					WithMethods("GET").
+					WithPath("/callback/*").
+					NoAuth().Build(),
+			).
+			Build()
+
+		client := GetFakeClient()
+		processor := processors.NewVirtualServiceProcessor(GetTestConfig(), apiRule, nil)
+
+		checkVirtualServices(client, processor, []verifier{
+			func(vs *networkingv1beta1.VirtualService) {
+				Expect(vs.Spec.Hosts).To(ConsistOf("example.com"))
+				Expect(vs.Spec.Gateways).To(ConsistOf("example/example"))
+				Expect(vs.Spec.Http).To(HaveLen(1))
+
+				Expect(vs.Spec.Http[0].Match[0].Method.GetRegex()).To(Equal("^(GET)$"))
+				Expect(vs.Spec.Http[0].Match[0].Uri.GetRegex()).To(Equal("/callback/.*"))
+			},
+		}, nil, "create")
+	})
 })
 
 func checkVirtualServices(c client.Client, processor processors.VirtualServiceProcessor, verifiers []verifier, expectedError error, expectedActions ...string) {
