@@ -49,7 +49,7 @@ var _ = Describe("discover gateway", func() {
 		}
 
 		// when
-		gotGateway, gotErr := discoverGateway(k8sClientBuilder.Build(), context.Background(), logr.Discard(), apiRule)
+		gotGateway, _, gotErr := discoverGateway(k8sClientBuilder.Build(), context.Background(), logr.Discard(), apiRule)
 
 		// then
 
