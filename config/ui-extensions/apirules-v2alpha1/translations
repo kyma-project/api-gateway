@@ -1,11 +1,27 @@
 en:
   useCorsPolicy: Use custom CORS policy
   corsPolicy: CORS Policy
-  extAuth: External Authorization
+  rules: Rules
+  noAuth: No Auth
   jwt: JWT
+  authentications: Authentications
+  issuer: Issuer
   jwksUri: JWKS URI
-  service-name: Service Name
+  fromHeaders: From Headers
+  prefix: Prefix
+  fromParams: From Params
+  authorizations: Authorizations
+  requiredScopes: Required Scopes
+  audiences: Audiences
+  extAuth: External Authorization
+  authorizers: Authorizers
+  restrictions: Restrictions
+  service: Service
+  name: Name
+  port: Port
   status: Status
   general: General
+  host: Host
+  timeout: Timeout
   virtualService: Virtual Service
   alert.spec.host: Host can not be a wildcard, replace with a RFC 1123 label or a valid, fully qualified domain name (FQDN)

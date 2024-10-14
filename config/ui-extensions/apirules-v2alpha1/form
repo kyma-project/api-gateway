@@ -16,7 +16,6 @@
       subscribe:
         port: "$filter($relatedServices().items, function ($v) { $v.metadata.name = $root.spec.service.name and $v.metadata.namespace = $root.metadata.namespace }).spec.ports[0].port"
 - path: spec.gateway
-  name: gateway
   widget: ResourceRef
   defaultExpanded: true
   visibility: $canI('networking.istio.io/v1beta1', 'Gateway')
@@ -80,15 +79,10 @@
       placeholder: 300
       value:
         type: string
-- path: spec.host
-  name: host
-  enum: "$distinct($filter($relatedGateways().items, function ($v) { $v.metadata.namespace = $substringBefore($root.spec.gateway, '/') and $v.metadata.name = $substringAfter($root.spec.gateway, '/')}).spec.servers.hosts)"
-  subscribe:
-    host: "$string($filter($relatedGateways().items, function ($v) { $v.metadata.namespace = $substringBefore($root.spec.gateway, '/') and $v.metadata.name = $substringAfter($root.spec.gateway, '/')}).spec.servers[0].hosts[0])"
-- widget: Alert
-  severity: error
-  alert: '"alert.spec.host"'
-  visibility: '$substring(spec.host, 0, 1)="*"'
+- path: spec.hosts
+  widget: SimpleList
+  children:
+    - path: '[]'
 - path: spec.rules
   widget: GenericList
   defaultExpanded: true
