@@ -12,43 +12,6 @@ header:
     description: status.description
 
 body:
-  - widget: Panel
-    name: corsPolicy
-    source: spec.corsPolicy
-    visibility: $exists(spec.corsPolicy)
-    children:
-      - name: corsAllowMethods
-        source: allowMethods
-        widget: JoinedArray
-        visibility: '$not($count(allowMethods)=0)'
-      - name: corsAllowOriginsRegex
-        source: $join(allowOrigins.regex,",")
-        widget: Text
-        visibility: '$not($count(allowOrigins.regex)=0)'
-      - name: corsAllowOriginsPrefix
-        source: $join(allowOrigins.prefix,",")
-        widget: Text
-        visibility: '$not($count(allowOrigins.prefix)=0)'
-      - name: corsAllowOriginsExact
-        source: $join(allowOrigins.exact,",")
-        widget: Text
-        visibility: '$not($count(allowOrigins.exact)=0)'
-      - name: corsExposeHeaders
-        source: exposeHeaders
-        widget: JoinedArray
-        visibility: '$not($count(exposeHeaders)=0)'
-      - name: corsAllowHeaders
-        source: allowHeaders
-        widget: JoinedArray
-        visibility: '$not($count(allowHeaders)=0)'
-      - name: corsAllowCredentials
-        source: allowCredentials
-        widget: Badge
-        visibility: '$exists(allowCredentials)'
-      - name: corsMaxAge
-        source: maxAge
-        widget: Text
-        visibility: '$exists(maxAge)'
   - source: spec
     name: general
     widget: Panel
@@ -56,12 +19,17 @@ body:
     children:
     - source: timeout
       name: timeout
+    - source: gateway
+      name: gateway
+    - source: hosts
+      name: host
+      widget: JoinedArray
   - source: spec.service
     name: service
     widget: Panel
     children:
       - source: name
-        name: name
+        name: service.name
         widget: ResourceLink
         resource:
           name: $root.spec.service.name
@@ -105,7 +73,7 @@ body:
                 widget: Table
                 children:
                   - source: $item.name
-                    name: name
+                    name: fromHeaders.name
                   - source: $item.prefix
                     name: prefix
               - source: $item.fromParams
@@ -151,7 +119,7 @@ body:
                     widget: Table
                     children:
                       - source: $item.name
-                        name: name
+                        name: fromHeaders.name
                       - source: $item.prefix
                         name: prefix
                   - source: $item.fromParams
@@ -181,8 +149,45 @@ body:
               name: $item.service.name
               namespace: $root.metadata.namespace
               kind: '"Service"'
-          - name: service.port
+          - name: port
             source: $item.service.port
+  - widget: Panel
+    name: corsPolicy
+    source: spec.corsPolicy
+    visibility: $exists(spec.corsPolicy)
+    children:
+      - name: corsAllowMethods
+        source: allowMethods
+        widget: JoinedArray
+        visibility: '$not($count(allowMethods)=0)'
+      - name: corsAllowOriginsRegex
+        source: $join(allowOrigins.regex,",")
+        widget: Text
+        visibility: '$not($count(allowOrigins.regex)=0)'
+      - name: corsAllowOriginsPrefix
+        source: $join(allowOrigins.prefix,",")
+        widget: Text
+        visibility: '$not($count(allowOrigins.prefix)=0)'
+      - name: corsAllowOriginsExact
+        source: $join(allowOrigins.exact,",")
+        widget: Text
+        visibility: '$not($count(allowOrigins.exact)=0)'
+      - name: corsExposeHeaders
+        source: exposeHeaders
+        widget: JoinedArray
+        visibility: '$not($count(exposeHeaders)=0)'
+      - name: corsAllowHeaders
+        source: allowHeaders
+        widget: JoinedArray
+        visibility: '$not($count(allowHeaders)=0)'
+      - name: corsAllowCredentials
+        source: allowCredentials
+        widget: Badge
+        visibility: '$exists(allowCredentials)'
+      - name: corsMaxAge
+        source: maxAge
+        widget: Text
+        visibility: '$exists(maxAge)'
   - widget: ResourceList
     source: $virtualServices()
     name: virtualService

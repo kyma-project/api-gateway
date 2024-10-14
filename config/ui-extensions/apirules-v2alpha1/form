@@ -34,51 +34,6 @@
   visibility: $not($canI('networking.istio.io/v1beta1', 'Gateway'))
   overwrite: false
   trigger: [host]
-- var: useCorsPolicy
-  type: boolean
-  dynamicValue: '$boolean(spec.corsPolicy)'
-- path: spec.corsPolicy
-  visibility: '$useCorsPolicy'
-  name: corsPolicy
-  defaultExpanded: true
-  widget: FormGroup
-  children:
-    - path: allowMethods
-      widget: MultiCheckbox
-      options:
-        - key: GET
-        - key: POST
-        - key: PUT
-        - key: DELETE
-        - key: PATCH
-        - key: HEAD
-        - key: OPTIONS
-        - key: CONNECT
-        - key: TRACE
-    - path: allowOrigins
-      widget: GenericList
-      children:
-        - path: '[]'
-          widget: KeyValuePair
-          keyEnum:
-          - exact
-          - prefix
-          - regex
-    - path: allowHeaders
-      widget: SimpleList
-      children:
-        - path: '[]'
-    - path: exposeHeaders
-      widget: SimpleList
-      children:
-        - path: '[]'
-    - path: allowCredentials
-      value:
-        type: boolean
-    - path: maxAge
-      placeholder: 300
-      value:
-        type: string
 - path: spec.hosts
   widget: SimpleList
   children:
@@ -199,3 +154,48 @@
         - path: port
           subscribe:
             ruleServicePort: "$filter($relatedServices().items, function ($v) { $v.metadata.name = $item.service.name and $v.metadata.namespace = $root.metadata.namespace }).spec.ports[0].port"
+- var: useCorsPolicy
+  type: boolean
+  dynamicValue: '$boolean(spec.corsPolicy)'
+- path: spec.corsPolicy
+  visibility: '$useCorsPolicy'
+  name: corsPolicy
+  defaultExpanded: true
+  widget: FormGroup
+  children:
+    - path: allowMethods
+      widget: MultiCheckbox
+      options:
+        - key: GET
+        - key: POST
+        - key: PUT
+        - key: DELETE
+        - key: PATCH
+        - key: HEAD
+        - key: OPTIONS
+        - key: CONNECT
+        - key: TRACE
+    - path: allowOrigins
+      widget: GenericList
+      children:
+        - path: '[]'
+          widget: KeyValuePair
+          keyEnum:
+          - exact
+          - prefix
+          - regex
+    - path: allowHeaders
+      widget: SimpleList
+      children:
+        - path: '[]'
+    - path: exposeHeaders
+      widget: SimpleList
+      children:
+        - path: '[]'
+    - path: allowCredentials
+      value:
+        type: boolean
+    - path: maxAge
+      placeholder: 300
+      value:
+        type: string

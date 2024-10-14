@@ -1,6 +1,7 @@
 en:
   useCorsPolicy: Use custom CORS policy
   corsPolicy: CORS Policy
+  gateway: Gateway
   rules: Rules
   noAuth: No Auth
   jwt: JWT
@@ -8,6 +9,7 @@ en:
   issuer: Issuer
   jwksUri: JWKS URI
   fromHeaders: From Headers
+  fromHeaders.name: Name
   prefix: Prefix
   fromParams: From Params
   authorizations: Authorizations
@@ -17,7 +19,7 @@ en:
   authorizers: Authorizers
   restrictions: Restrictions
   service: Service
-  name: Name
+  service.name: Name
   port: Port
   status: Status
   general: General
