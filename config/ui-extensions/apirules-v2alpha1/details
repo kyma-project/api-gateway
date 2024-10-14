@@ -15,10 +15,10 @@ body:
   - source: spec
     name: general
     widget: Panel
-    visibility: $exists(spec.timeout)
     children:
     - source: timeout
       name: timeout
+      visibility: $exists(spec.timeout)
     - source: gateway
       name: gateway
     - source: hosts
