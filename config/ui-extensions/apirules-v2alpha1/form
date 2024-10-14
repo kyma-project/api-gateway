@@ -91,111 +91,123 @@
     methods: ['GET']
     noAuth: true
   children:
-    - path: '[].timeout'
-      value:
-        type: number
-    - path: '[].path'
-    - path: '[].noAuth'
-      type: boolean
-    - path: '[].jwt'
-      name: jwt
-      widget: FormGroup
+    - path: '[]'
       children:
-        - path: 'authentications'
-          required: true
-          widget: GenericList
-          children:
-            - path: '[].issuer'
-            - path: '[].jwksUri'
-              name: jwksUri
-            - path: '[].fromHeaders'
-              widget: GenericList
-              children:
-                - path: '[].name'
-                - path: '[].prefix'
-            - path: '[].fromParams'
-              widget: SimpleList
-              children:
-                - path: '[]'
-        - path: 'authorizations'
-          widget: GenericList
-          children:
-            - path: '[].requiredScopes'
-              widget: SimpleList
-              children:
-                - path: '[]'
-            - path: '[].audiences'
-              widget: SimpleList
-              children:
-                - path: '[]'
-    - path: '[].extAuth'
-      name: extAuth
-      widget: FormGroup
-      children:
-        - path: 'authorizers'
-          widget: SimpleList
-          children:
-            - path: '[]'
-        - path: 'restrictions'
-          widget: FormGroup
-          children:
-            - path: 'authentications'
-              required: true
-              widget: GenericList
-              children:
-                - path: '[].issuer'
-                - path: '[].jwksUri'
-                  name: jwksUri
-                - path: '[].fromHeaders'
-                  widget: GenericList
-                  children:
-                    - path: '[].name'
-                    - path: '[].prefix'
-                - path: '[].fromParams'
-                  widget: SimpleList
-                  children:
-                    - path: '[]'
-            - path: 'authorizations'
-              widget: GenericList
-              children:
-                - path: '[].requiredScopes'
-                  widget: SimpleList
-                  children:
-                    - path: '[]'
-                - path: '[].audiences'
-                  widget: SimpleList
-                  children:
-                    - path: '[]'
-    - path: '[].methods'
-      widget: MultiCheckbox
-      options:
-        - key: GET
-        - key: POST
-        - key: PUT
-        - key: DELETE
-        - key: PATCH
-        - key: HEAD
-        - key: OPTIONS
-        - key: CONNECT
-        - key: TRACE
-    - path: '[].request'
-      widget: FormGroup
-      children:
-        - path: cookies
-          widget: KeyValuePair
-        - path: headers
-          widget: KeyValuePair
-    - path: '[].service'
-      widget: FormGroup
-      required: false
-      children:
-        - path: name
-          widget: Resource
-          resource:
-            kind: Service
-            version: v1
-            scope: namespace
-          trigger: [ruleServicePort]
-        - path: port
-          subscribe:
-            ruleServicePort: "$filter($relatedServices().items, function ($v) { $v.metadata.name = $item.service.name and $v.metadata.namespace = $root.metadata.namespace }).spec.ports[0].port"
+      - path: 'timeout'
+        value:
+          type: number
+      - path: 'path'
+      - path: 'methods'
+        widget: MultiCheckbox
+        options:
+          - key: GET
+          - key: POST
+          - key: PUT
+          - key: DELETE
+          - key: PATCH
+          - key: HEAD
+          - key: OPTIONS
+          - key: CONNECT
+          - key: TRACE
+      - var: accessStrategy
+        type: string
+        simple: true
+        # No Auth is the fallback, because this is set as the default in the template
+        dynamicValue: '$boolean($item.noAuth) ? "No Auth" : ($exists($item.jwt) ? "JWT" : ($exists($item.extAuth) ? "Ext Auth" : "No Auth"))'
+        name: 'Access Strategy'
+        enum: ['No Auth', JWT, 'Ext Auth']
+      - path: 'noAuth'
+        visibility: "$accessStrategy = 'No Auth'"
+        type: boolean
+      - path: 'jwt'
+        name: jwt
+        visibility: "$accessStrategy = 'JWT'"
+        widget: FormGroup
+        children:
+          - path: 'authentications'
+            required: true
+            widget: GenericList
+            children:
+              - path: '[].issuer'
+              - path: '[].jwksUri'
+                name: jwksUri
+              - path: '[].fromHeaders'
+                widget: GenericList
+                children:
+                  - path: '[].name'
+                  - path: '[].prefix'
+              - path: '[].fromParams'
+                widget: SimpleList
+                children:
+                  - path: '[]'
+          - path: 'authorizations'
+            widget: GenericList
+            children:
+              - path: '[].requiredScopes'
+                widget: SimpleList
+                children:
+                  - path: '[]'
+              - path: '[].audiences'
+                widget: SimpleList
+                children:
+                  - path: '[]'
+      - path: 'extAuth'
+        name: extAuth
+        visibility: "$accessStrategy = 'Ext Auth'"
+        widget: FormGroup
+        children:
+          - path: 'authorizers'
+            widget: SimpleList
+            children:
+              - path: '[]'
+          - path: 'restrictions'
+            widget: FormGroup
+            children:
+              - path: 'authentications'
+                required: true
+                widget: GenericList
+                children:
+                  - path: '[].issuer'
+                  - path: '[].jwksUri'
+                    name: jwksUri
+                  - path: '[].fromHeaders'
+                    widget: GenericList
+                    children:
+                      - path: '[].name'
+                      - path: '[].prefix'
+                  - path: '[].fromParams'
+                    widget: SimpleList
+                    children:
+                      - path: '[]'
+              - path: 'authorizations'
+                widget: GenericList
+                children:
+                  - path: '[].requiredScopes'
+                    widget: SimpleList
+                    children:
+                      - path: '[]'
+                  - path: '[].audiences'
+                    widget: SimpleList
+                    children:
+                      - path: '[]'
+      - path: 'request'
+        widget: FormGroup
+        children:
+          - path: cookies
+            widget: KeyValuePair
+          - path: headers
+            widget: KeyValuePair
+      - path: 'service'
+        widget: FormGroup
+        required: false
+        children:
+          - path: name
+            widget: Resource
+            resource:
+              kind: Service
+              version: v1
+              scope: namespace
+            trigger: [ruleServicePort]
+          - path: port
+            subscribe:
+              ruleServicePort: "$filter($relatedServices().items, function ($v) { $v.metadata.name = $item.service.name and $v.metadata.namespace = $root.metadata.namespace }).spec.ports[0].port"
