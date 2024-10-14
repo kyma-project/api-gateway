@@ -18,7 +18,6 @@ package gateway
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"regexp"
 	"strings"
@@ -186,45 +185,12 @@ func (r *APIRuleReconciler) reconcileV2Alpha1APIRule(ctx context.Context, l logr
 		return doneReconcileErrorRequeue(err, r.OnErrorReconcilePeriod)
 	}
 
-	if rule.Spec.Gateway == nil {
-		return doneReconcileErrorRequeue(errors.New("Spec.Gateway was nil, expected value"), r.OnErrorReconcilePeriod)
-	}
-
-	match, err := regexp.MatchString(`^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?/([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)$`, *rule.Spec.Gateway)
+	gateway, err := discoverGateway(r.Client, ctx, l, &rule)
 	if err != nil {
 		return doneReconcileErrorRequeue(err, r.OnErrorReconcilePeriod)
 	}
 
-	if !match {
-		return doneReconcileErrorRequeue(fmt.Errorf("Spec.Gateway: %s is not in namespacedName format", *rule.Spec.Gateway), r.OnErrorReconcilePeriod)
-	}
-
-	gatewayName := strings.Split(*rule.Spec.Gateway, "/")
-	gatewayNN := types.NamespacedName{
-		Namespace: gatewayName[0],
-		Name:      gatewayName[1],
-	}
-	var gateway networkingv1beta1.Gateway
-	if err := r.Client.Get(ctx, gatewayNN, &gateway); err != nil {
-		v2Alpha1Status := status.ReconciliationV2alpha1Status{
-			ApiRuleStatus: &gatewayv2alpha1.APIRuleStatus{
-				State: gatewayv2alpha1.State(gatewayv2alpha1.Error),
-			},
-		}
-		s := v2Alpha1Status.GenerateStatusFromFailures([]validation.Failure{
-			{
-				AttributePath: "spec.gateway",
-				Message:       "Could not get specified Gateway",
-			},
-		})
-		if err := s.UpdateStatus(&rule.Status); err != nil {
-			l.Error(err, "Error updating APIRule status")
-			return doneReconcileErrorRequeue(err, r.OnErrorReconcilePeriod)
-		}
-		return r.convertAndUpdateStatus(ctx, l, rule)
-	}
-
-	cmd := r.getV2Alpha1Reconciliation(&apiRule, &rule, &gateway, migrate, &l)
+	cmd := r.getV2Alpha1Reconciliation(&apiRule, &rule, gateway, migrate, &l)
 
 	if name, err := dependencies.APIRule().AreAvailable(ctx, r.Client); err != nil {
 		s, err := handleDependenciesError(name, err).V2alpha1Status()
@@ -298,6 +264,50 @@ func handleDependenciesError(name string, err error) controllers.Status {
 	} else {
 		return controllers.ErrorStatus(err, "Error happened during discovering dependencies", nil)
 	}
+}
+
+func discoverGateway(client client.Client, ctx context.Context, l logr.Logger, rule *gatewayv2alpha1.APIRule) (*networkingv1beta1.Gateway, error) {
+	if rule.Spec.Gateway == nil {
+		return nil, fmt.Errorf("expected Gateway to be set")
+	}
+
+	// The regex pattern is the exact same as the one used in the APIRule validation
+	// Unfortunately usage of a constant is not possible here, as the Kubebuilder CRD validation interface is comment based
+	match, err := regexp.MatchString(`^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?/([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)$`, *rule.Spec.Gateway)
+	if err != nil {
+		return nil, err
+	}
+
+	if !match {
+		return nil, fmt.Errorf("expected Gateway %s to be in the namespace/name format", *rule.Spec.Gateway)
+	}
+
+	gatewayName := strings.Split(*rule.Spec.Gateway, "/")
+	gatewayNN := types.NamespacedName{
+		Namespace: gatewayName[0],
+		Name:      gatewayName[1],
+	}
+	var gateway networkingv1beta1.Gateway
+	if err := client.Get(ctx, gatewayNN, &gateway); err != nil {
+		v2Alpha1Status := status.ReconciliationV2alpha1Status{
+			ApiRuleStatus: &gatewayv2alpha1.APIRuleStatus{
+				State: gatewayv2alpha1.Error,
+			},
+		}
+		s := v2Alpha1Status.GenerateStatusFromFailures([]validation.Failure{
+			{
+				AttributePath: "spec.gateway",
+				Message:       "Could not get specified Gateway",
+			},
+		})
+		if err := s.UpdateStatus(&rule.Status); err != nil {
+			l.Error(err, "Error updating APIRule status")
+			return nil, err
+		}
+		return nil, err
+	}
+
+	return &gateway, nil
 }
 
 func (r *APIRuleReconciler) getV1Beta1Reconciliation(apiRule *gatewayv1beta1.APIRule, defaultDomainName string, namespacedLogger *logr.Logger) processing.ReconciliationCommand {
