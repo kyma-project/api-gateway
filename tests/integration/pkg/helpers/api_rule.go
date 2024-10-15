@@ -38,12 +38,30 @@ func ApplyApiRule(toExecute RetryableApiRule, onRetry RetryableApiRule, k8sClien
 		return err
 	}
 
-	apiStatus, err := GetAPIRuleStatus(res)
-	if err != nil {
-		return err
+	apiVersion := strings.Split(res.Object["apiVersion"].(string), "/")
+
+	var apiStatus any
+	var code, description string
+
+	if apiVersion[1] == "v1beta1" {
+		apiStatus, err := GetAPIRuleStatus(res)
+		if err != nil {
+			return err
+		}
+		code = apiStatus.Status.APIRuleStatus.Code
+		description = apiStatus.Status.APIRuleStatus.Description
+	} else if apiVersion[1] == "v2alpha1" {
+		apiStatus, err := GetAPIRuleStatusV2Alpha1(res)
+		if err != nil {
+			return err
+		}
+		code = apiStatus.Status.State
+		description = apiStatus.Status.Description
+	} else {
+		return errors.New("unsupported APIRule version")
 	}
 
-	if apiStatus.Status.APIRuleStatus.Code == "ERROR" {
+	if code == "ERROR" {
 		return retry.Do(func() error {
 			res, err := onRetry(k8sClient, resources...)
 			if err != nil {
@@ -57,9 +75,18 @@ func ApplyApiRule(toExecute RetryableApiRule, onRetry RetryableApiRule, k8sClien
 			if err != nil {
 				return err
 			}
-			if apiStatus.Status.APIRuleStatus.Code == "ERROR" {
-				log.Println("APIRule status not ok: " + apiStatus.Status.APIRuleStatus.Description)
-				return errors.New("APIRule status not ok: " + apiStatus.Status.APIRuleStatus.Description)
+			if apiVersion[1] == "v1beta1" {
+				code = apiStatus.(apiRuleStatus).Status.APIRuleStatus.Code
+				description = apiStatus.(apiRuleStatus).Status.APIRuleStatus.Description
+			} else if apiVersion[1] == "v2alpha1" {
+				code = apiStatus.(apiRuleStatusV2Alpha1).Status.State
+				description = apiStatus.(apiRuleStatusV2Alpha1).Status.Description
+			} else {
+				return errors.New("unsupported APIRule version")
+			}
+			if code == "ERROR" {
+				log.Println("APIRule status not ok: " + description)
+				return errors.New("APIRule status not ok: " + description)
 			}
 			return nil
 		}, retryOpts...)
