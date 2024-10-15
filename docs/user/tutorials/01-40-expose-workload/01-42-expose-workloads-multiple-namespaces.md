@@ -124,16 +124,7 @@ Create three namespaces. Deploy two instances of the HTTPBin Service, each in a 
 <!-- tabs:end -->
 
 ### Access Your Workloads
-To access your HTTPBin Services, use [Postman](https://www.postman.com) or [curl](https://curl.se).
-
-<!-- tabs:start -->
-#### **Postman**
-
-- Enter the URL `https://httpbin-services.{DOMAIN_TO_EXPOSE_WORKLOADS}/headers` and replace `{DOMAIN_TO_EXPOSE_WORKLOADS}` with your domain name. To call the endpoint, send a `GET` request to the HTTPBin Service. If successful, the call returns the `200 OK` response code.
-
-- Enter the URL `https://httpbin-services.{DOMAIN_TO_EXPOSE_WORKLOADS}/get` and replace `{DOMAIN_TO_EXPOSE_WORKLOADS}` with your domain name. To call the endpoint, send a `GET` request to the HTTPBin Service. If successful, the call returns the `200 OK` response code.
-
-#### **curl**
+To access your HTTPBin Services, use [curl](https://curl.se).
 
 To call the endpoints, send `GET` requests to the HTTPBin Services:
 
@@ -143,5 +134,3 @@ To call the endpoints, send `GET` requests to the HTTPBin Services:
   curl -ik -X GET https://httpbin-services.$DOMAIN_TO_EXPOSE_WORKLOADS/get
   ```
 If successful, the calls return the `200 OK` response code.
-
-<!-- tabs:end -->

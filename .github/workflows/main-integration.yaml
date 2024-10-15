@@ -31,38 +31,19 @@ jobs:
       tags: "${{ github.sha }}"
 
   get-sha:
-    name: Get SHA
+    name: Get manager SHA
     runs-on: ubuntu-latest
-    needs: [build]
+    needs: [ build ]
     # The additional if is required, because there are optional jobs
     if: ${{ always() && !failure() && !cancelled() }}
     outputs:
       sha: ${{ steps.get-sha.outputs.sha }}
     steps:
-      - name: Get SHA from latest run of main integration triggered by push
-        id: get-sha
-        uses: actions/github-script@v7
+      - uses: actions/checkout@v4
         with:
-          script: |
-            if (context.eventName !== 'schedule') {
-              core.setOutput('sha', context.sha);
-              return;
-            }
-            
-            const { data } = await github.rest.actions.listWorkflowRuns({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              workflow_id: 'main-integration.yaml',
-              branch: 'main',
-              status: 'success',
-              per_page: 40 
-            });
-            const pushRuns = data.workflow_runs.filter(run => run.event === 'push');
-            if (pushRuns.length === 0) {
-              throw new Error('No successful push runs found');
-            }
-            const latestRun = pushRuns[0];
-            core.setOutput('sha', latestRun.head_sha);
+          fetch-depth: 0
+      - id: get-sha
+        uses: ./.github/actions/get-latest-sha
 
   integration-tests:
     name: Integration tests
@@ -90,7 +71,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        test_make_target: [ "test-migration-zero-downtime HANDLER=no_auth", "test-migration-zero-downtime HANDLER=allow", "test-migration-zero-downtime HANDLER=noop", "test-migration-zero-downtime HANDLER=jwt" ]
+        test_make_target: [ "test-migration-zero-downtime HANDLER=no_auth", "test-migration-zero-downtime HANDLER=allow", "test-migration-zero-downtime HANDLER=noop", "test-migration-zero-downtime HANDLER=jwt", "test-migration-zero-downtime HANDLER=oauth2_introspection" ]
     steps:
       - uses: actions/checkout@v4
         with:

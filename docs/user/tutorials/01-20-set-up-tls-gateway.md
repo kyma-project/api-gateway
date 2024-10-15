@@ -6,14 +6,14 @@ This tutorial shows how to set up a TLS Gateway in simple mode.
 
 * [Deploy a sample HTTPBin Service](./01-00-create-workload.md).
 * [Set up your custom domain](./01-10-setup-custom-domain-for-workload.md).
-   
+
 ## Steps
 
 
 <!-- tabs:start -->
 #### **Kyma Dashboard**
 
-1. Go to **Istio > Gateways** and select **Create**. 
+1. Go to **Istio > Gateways** and select **Create**.
 2. Provide the following configuration details:
     - **Name**: `httpbin-gateway`
     - In the `Servers` section, select **Add**. Then, use these values:
@@ -22,10 +22,9 @@ This tutorial shows how to set up a TLS Gateway in simple mode.
       - **Protocol**: `HTTPS`
       - **TLS Mode**: `SIMPLE`
       - **Credential Name** is the name of the Secret that contains the credentials.
-    - Use `httpbin.{CUSTOM_DOMAIN}` as **Host**. Replace `{CUSTOM_DOMAIN}` with the name of your custom domain. 
+    - Use `httpbin.{CUSTOM_DOMAIN}` as **Host**. Replace `{CUSTOM_DOMAIN}` with the name of your custom domain.
 
 3. Select **Create**.
-
 
 #### **kubectl**
 

@@ -11,31 +11,6 @@ This tutorial shows how to expose and secure Services using APIGateway Controlle
 ## Steps
 
 ### Get the Tokens
-<!-- tabs:start -->
-#### **Postman**
-
-Follow the steps to get a token with the `read` scope:
-
-1. Enter your token endpoint URL.
-2. Go to the `Body` tab and select the `x-www-form-urlencoded` option. Add two key-value pairs to the body:
-    - **grant_type**: `client_credentials&scope=read`
-    - **client_id**: `{CLIENT_ID}`
-
-    Replace `{CLIENT_ID}` with your client ID.
-2. Go to the **Headers** tab and add the header:
-    - **Content-Type**: `application/x-www-form-urlencoded`
-3. Go to the `Authorization` tab and add the following values:
-    - **Type**: Basic
-    - **Username**: `{CLIENT_ID}`
-    - **Password**: `{CLIENT_SECRET}`
-
-    Replace `{CLIENT_ID}` and `{CLIENT_SECRET}` with your Client ID and Client Secret.
-4. Send a `POST` request and save your token.
-
-To get a token with the `read` scope, go to the `Body` tab and replace the **grant_type** value with `client_credentials&scope=write`. Send a `POST` request and save your token.
-
-
-#### **curl**
 
 1. Encode the client's credentials and export them as an environment variable:
 
@@ -69,8 +44,6 @@ To get a token with the `read` scope, go to the `Body` tab and replace the **gra
         ```shell
         export ACCESS_TOKEN_WRITE={ISSUED_WRITE_TOKEN}
         ```
-    <!-- tabs:end -->
-
 
 ### Expose and Secure Your Workload
 <!-- tabs:start -->
@@ -176,24 +149,7 @@ The exposed Service requires tokens with `read` scope for `GET` requests in the 
 
 ### Access the Secured Resources
 
-Follow the instructions to call the secured Service using the tokens issued for the client you registered. You can use [Postman](https://www.postman.com) or [curl](https://curl.se).
-
-<!-- tabs:start -->
-#### **Postman**
-Use the token with the `read` scope to access the HTTPBin Service:
-
-1. Create a new request and enter the URL `https://httpbin.{DOMAIN_TO_EXPOSE_WORKLOADS}/status/headers`. Replace `{DOMAIN_TO_EXPOSE_WORKLOADS}` with the name of your domain. 
-2. Go to the **Headers** tab. Add a new header with the key **Authorization** and the value `Bearer {ACCESS_TOKEN_READ}`. Replace `{ACCESS_TOKEN_READ}` with the Opaque token that has the `read` scope.
-4. To call the endpoint, send a `GET` request to the HTTPBin Service.
-
-
-Use the token with the `write` scope to access the HTTPBin Service:
-
-1. Create a new request and enter the URL `https://httpbin.{DOMAIN_TO_EXPOSE_WORKLOADS}/status/post`. Replace `{DOMAIN_TO_EXPOSE_WORKLOADS}` with the name of your domain. 
-2. Go to the **Headers** tab. Add a new header with the key **Authorization** and the value `Bearer {ACCESS_TOKEN_WRITE}`. Replace `{ACCESS_TOKEN_WRITE}` with the Opaque token that has the `write` scope.
-4. To call the endpoint, send a `POST` request to the HTTPBin Service.
-
-#### **curl**
+Follow the instructions to call the secured Service using the tokens issued for the client you registered.
 
 1. Send a `GET` request with a token that has the `read` scope to the HTTPBin Service:
 
@@ -206,7 +162,6 @@ Use the token with the `write` scope to access the HTTPBin Service:
     ```bash
     curl -ik -X POST https://httpbin.$DOMAIN_TO_EXPOSE_WORKLOADS/post -d "test data" -H "Authorization: Bearer $ACCESS_TOKEN_WRITE"
     ```
-<!-- tabs:end -->
 
 If successful, the calls return the code `200 OK` responses. If you call the Service without a token, you get the code `401 Unauthorized` response. If you call the Service or its secured endpoint with a token with the wrong scope, you get the code `403 Forbidden` response.
 

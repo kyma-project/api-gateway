@@ -33,7 +33,6 @@ import (
 	operatorv1alpha1 "github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
 	"github.com/kyma-project/api-gateway/controllers"
 	"github.com/kyma-project/api-gateway/internal/dependencies"
-	"github.com/kyma-project/api-gateway/internal/reconciliations"
 	"github.com/kyma-project/api-gateway/internal/reconciliations/gateway"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/client-go/util/retry"
@@ -111,19 +110,8 @@ func (r *APIGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	}
 
 	if !apiGatewayCR.IsInDeletion() {
-		isGardenerCluster, err := reconciliations.RunsOnGardenerCluster(ctx, r.Client)
-		if err != nil {
-			return r.requeueReconciliation(ctx, apiGatewayCR, controllers.ErrorStatus(err, "Error during discovering if cluster is Gardener", conditions.ReconcileFailed.Condition()))
-		}
-
-		if isGardenerCluster {
-			if name, dependenciesErr := dependencies.GardenerAPIGateway().AreAvailable(ctx, r.Client); dependenciesErr != nil {
-				return r.requeueReconciliation(ctx, apiGatewayCR, handleDependenciesError(name, dependenciesErr))
-			}
-		} else {
-			if name, dependenciesErr := dependencies.ApiGateway().AreAvailable(ctx, r.Client); dependenciesErr != nil {
-				return r.requeueReconciliation(ctx, apiGatewayCR, handleDependenciesError(name, dependenciesErr))
-			}
+		if name, dependenciesErr := dependencies.ApiGateway().AreAvailable(ctx, r.Client); dependenciesErr != nil {
+			return r.requeueReconciliation(ctx, apiGatewayCR, handleDependenciesError(name, dependenciesErr))
 		}
 	}
 

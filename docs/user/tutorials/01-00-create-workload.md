@@ -14,7 +14,7 @@ This tutorial explains how to create a sample HTTPBin Service Deployment.
     - In the `Labels` section, add the following labels:
       - **service**: `httpbin`
       - **app**:`httpbin`
-    - In the `Selectors` section, add the following selector: 
+    - In the `Selectors` section, add the following selector:
       - **app**: `httpbin`
     - In the `Ports` section, select **Add**. Then, use these values:
       - **Name**: `http`
@@ -91,13 +91,13 @@ This tutorial explains how to create a sample HTTPBin Service Deployment.
     ```
 
 4. Verify if an instance of the HTTPBin Service is successfully created.
-   
+
     ```shell
     kubectl get pods -l app=httpbin -n $NAMESPACE
     ```
-    
+
     You should get a result similar to this one:
-    
+
     ```shell
     NAME                        READY    STATUS     RESTARTS    AGE
     {SERVICE_NAME}-{SUFFIX}     2/2      Running    0           96s

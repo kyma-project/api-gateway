@@ -79,6 +79,7 @@ func (s *APIRuleStatus) ApiRuleStatusVersion() versions.Version {
 // APIRule is the Schema for ApiRule APIs.
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
+// +kubebuilder:resource:categories={kyma-api-gateway}
 // +kubebuilder:printcolumn:name="Status",type="string",JSONPath=".status.state"
 // +kubebuilder:printcolumn:name="Hosts",type="string",JSONPath=".spec.hosts"
 type APIRule struct {

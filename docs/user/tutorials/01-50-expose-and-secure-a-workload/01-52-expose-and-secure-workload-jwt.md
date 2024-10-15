@@ -81,27 +81,7 @@ This tutorial shows how to expose and secure Services using APIGateway Controlle
 
 ### Access the Secured Resources
 
-To access your HTTPBin Service, use [Postman](https://www.postman.com) or [curl](https://curl.se).
-
-<!-- tabs:start -->
-#### **Postman**
-
-1. Try to access the secured workload without credentials.
-    1. Enter the URL `https://httpbin.{DOMAIN_TO_EXPOSE_WORKLOADS}/headers` and replace `{DOMAIN_TO_EXPOSE_WORKLOADS}` with the name of your domain. 
-    2. To call the endpoint, send a `GET` request to the HTTPBin Service. 
-
-    You get the error `401 Unauthorized`.
-
-2. Now, access the secured workload using the correct JWT.
-    1. Enter the URL `https://httpbin.{DOMAIN_TO_EXPOSE_WORKLOADS}/headers` and replace `{DOMAIN_TO_EXPOSE_WORKLOADS}` with the name of your domain. 
-    2. Go to the **Headers** tab. 
-    3. Add a new header with the key **Authorization** and the value `Bearer {ACCESS_TOKEN}`. Replace `{ACCESS_TOKEN}` with your JWT.
-    4. To call the endpoint, send a `GET` request to the HTTPBin Service. 
-
-    If successful, you get the `200 OK` response code.
-
-
-#### **curl**
+To access your HTTPBin Service, use [curl](https://curl.se).
 
 1. To call the endpoint, send a `GET` request to the HTTPBin Service.
 
@@ -116,4 +96,3 @@ To access your HTTPBin Service, use [Postman](https://www.postman.com) or [curl]
     curl -ik -X GET https://httpbin.$DOMAIN_TO_EXPOSE_WORKLOADS/headers --header "Authorization:Bearer $ACCESS_TOKEN"
     ```
     You get the `200 OK` response code.
-<!-- tabs:end -->

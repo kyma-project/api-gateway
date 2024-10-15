@@ -33,7 +33,7 @@ export SECRET={SECRET_NAME}
 <!-- tabs:end -->
 
 ### Create a DNSProvider Custom Resource (CR)
-    
+
 <!-- tabs:start -->
   #### **Kyma Dashboard**
 
@@ -55,9 +55,9 @@ export SECRET={SECRET_NAME}
 
     ```bash
     export PROVIDER_TYPE={YOUR_PROVIDER_TYPE}
-    export DOMAIN_TO_EXPOSE_WORKLOADS={YOUR_DOMAIN_NAME} 
+    export DOMAIN_TO_EXPOSE_WORKLOADS={YOUR_DOMAIN_NAME}
     ````
-2. To create a DNSProvider CR, run: 
+2. To create a DNSProvider CR, run:
 
     ```bash
     cat <<EOF | kubectl apply -f -
@@ -85,7 +85,7 @@ export SECRET={SECRET_NAME}
 #### **Kyma Dashboard**
 1. In the `istio-system` namespace, go to **Discovery and Network > Services**. Select the `istio-ingressgateway` Service and copy its external IP address.
 2. In the namespace of your HTTPBin Deployment, go to **Configuration > DNS Entries**.
-3. Select **Create** and provide the details:      
+3. Select **Create** and provide the details:
     - **Name**:`dns-entry`
     - Add the annotation:
       - **dns.gardener.cloud/class**: `garden`
@@ -94,7 +94,7 @@ export SECRET={SECRET_NAME}
 4. Select **Create**.
 
 #### **kubectl**
-   
+
 1. Export the following values as environment variables:
 
     ```bash
@@ -156,14 +156,14 @@ export SECRET={SECRET_NAME}
     metadata:
       name: httpbin-cert
       namespace: istio-system
-    spec:  
+    spec:
       secretName: $TLS_SECRET
       commonName: $DOMAIN_TO_EXPOSE_WORKLOADS
     EOF
     ```
 
-3. To check the certificate status, run: 
-     
+3. To check the certificate status, run:
+
     ```bash
     kubectl get certificate httpbin-cert -n istio-system
     ```
