@@ -31,32 +31,28 @@ type apiRuleStatusV2Alpha1 struct {
 // RetryableApiRule wraps any function that modifies or creates an APIRule
 type RetryableApiRule func(k8sClient dynamic.Interface, resources ...unstructured.Unstructured) (*unstructured.Unstructured, error)
 
-// APIRuleWithRetries tries toExecute function and retries with onRetry if APIRule status is "ERROR"
+// APIRuleWithRetries tries toExecute function and retries with onRetry if APIRule status is "ERROR" or "Error"
 func ApplyApiRule(toExecute RetryableApiRule, onRetry RetryableApiRule, k8sClient dynamic.Interface, retryOpts []retry.Option, resources []unstructured.Unstructured) error {
 	res, err := toExecute(k8sClient, resources...)
 	if err != nil {
 		return err
 	}
 
-	apiVersion := strings.Split(res.Object["apiVersion"].(string), "/")
-
-	var apiStatus any
 	var code, description string
+	arVersion := strings.Split(res.Object["apiVersion"].(string), "/")
 
-	if apiVersion[1] == "v1beta1" {
-		apiStatus, err := GetAPIRuleStatus(res)
+	if arVersion[1] == "v1beta1" {
+		arStatus, err := GetAPIRuleStatus(res)
 		if err != nil {
 			return err
 		}
-		code = apiStatus.Status.APIRuleStatus.Code
-		description = apiStatus.Status.APIRuleStatus.Description
-	} else if apiVersion[1] == "v2alpha1" {
-		apiStatus, err := GetAPIRuleStatusV2Alpha1(res)
+		code = arStatus.Status.APIRuleStatus.Code
+	} else if arVersion[1] == "v2alpha1" {
+		arStatus, err := GetAPIRuleStatusV2Alpha1(res)
 		if err != nil {
 			return err
 		}
-		code = apiStatus.Status.State
-		description = apiStatus.Status.Description
+		code = arStatus.Status.State
 	} else {
 		return errors.New("unsupported APIRule version")
 	}
@@ -71,16 +67,22 @@ func ApplyApiRule(toExecute RetryableApiRule, onRetry RetryableApiRule, k8sClien
 			if err != nil {
 				return err
 			}
-			err = json.Unmarshal(js, &apiStatus)
-			if err != nil {
-				return err
-			}
-			if apiVersion[1] == "v1beta1" {
-				code = apiStatus.(apiRuleStatus).Status.APIRuleStatus.Code
-				description = apiStatus.(apiRuleStatus).Status.APIRuleStatus.Description
-			} else if apiVersion[1] == "v2alpha1" {
-				code = apiStatus.(apiRuleStatusV2Alpha1).Status.State
-				description = apiStatus.(apiRuleStatusV2Alpha1).Status.Description
+			if arVersion[1] == "v1beta1" {
+				var arStatus apiRuleStatus
+				err = json.Unmarshal(js, &arStatus)
+				if err != nil {
+					return err
+				}
+				code = arStatus.Status.APIRuleStatus.Code
+				description = arStatus.Status.APIRuleStatus.Description
+			} else if arVersion[1] == "v2alpha1" {
+				var arStatus apiRuleStatusV2Alpha1
+				err = json.Unmarshal(js, &arStatus)
+				if err != nil {
+					return err
+				}
+				code = arStatus.Status.State
+				description = arStatus.Status.Description
 			} else {
 				return errors.New("unsupported APIRule version")
 			}
