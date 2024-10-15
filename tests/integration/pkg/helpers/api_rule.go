@@ -3,6 +3,7 @@ package helpers
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
 	"strings"
 
@@ -58,7 +59,7 @@ func ApplyApiRule(toExecute RetryableApiRule, onRetry RetryableApiRule, k8sClien
 			}
 			code = arStatus.Status.State
 		} else {
-			return errors.New("unsupported APIRule version")
+			return fmt.Errorf("unsupported APIRule version: %s", apiVersion[1])
 		}
 	}
 
@@ -88,8 +89,6 @@ func ApplyApiRule(toExecute RetryableApiRule, onRetry RetryableApiRule, k8sClien
 				}
 				code = arStatus.Status.State
 				description = arStatus.Status.Description
-			} else {
-				return errors.New("unsupported APIRule version")
 			}
 			if code == "ERROR" || code == "Error" {
 				log.Println("APIRule status not ok: " + description)
