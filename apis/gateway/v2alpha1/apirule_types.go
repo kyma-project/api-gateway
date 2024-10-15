@@ -57,7 +57,7 @@ type APIRuleSpec struct {
 
 // Host is the URL of the exposed service. We support lowercase RFC 1123 labels and FQDN.
 // +kubebuilder:validation:MaxLength=255
-// +kubebuilder:validation:XValidation:rule=`self.matches('^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)(?:\\.[a-z0-9][a-z0-9-]{0,61}[a-z0-9])*$')`,message="Host must be a lowercase RFC 1123 label (must consist of lowercase alphanumeric characters or '-', and must start and end with an lowercase alphanumeric character) or a fully qualified domain name"
+// +kubebuilder:validation:XValidation:rule=`self.matches('^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)(?:(?:\\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)*(?:\\.[a-z0-9]{2,63}))?$')`,message="Host must be a lowercase RFC 1123 label (must consist of lowercase alphanumeric characters or '-', and must start and end with an lowercase alphanumeric character) or a fully qualified domain name"
 type Host string
 
 // APIRuleStatus describes the observed state of ApiRule.

@@ -234,8 +234,7 @@ func (r *APIRuleReconciler) reconcileV2Alpha1APIRule(ctx context.Context, l logr
 
 // convertAndUpdateStatus is a small helper function that converts APIRule
 // resource from convertible v2alpha1 to hub version v2alpha1
-func (r *APIRuleReconciler) convertAndUpdateStatus(ctx context.Context, l logr.Logger,
-	rule gatewayv2alpha1.APIRule) (ctrl.Result, error) {
+func (r *APIRuleReconciler) convertAndUpdateStatus(ctx context.Context, l logr.Logger, rule gatewayv2alpha1.APIRule) (ctrl.Result, error) {
 	l.Info("Converting APIRule v2alpha1 to v1beta1")
 	toUpdate := gatewayv1beta1.APIRule{}
 	if err := rule.ConvertTo(&toUpdate); err != nil {
