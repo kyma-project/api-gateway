@@ -173,6 +173,19 @@ body:
                   - source: $item.audiences
                     name: audiences
                     widget: JoinedArray
+      - source: $item.request
+        name: request
+        widget: Panel
+        visibility: $exists($item.request)
+        children:
+          - source: $item.request.cookies
+            name: cookies
+            widget: Labels
+            visibility: $exists($item.request.cookies)
+          - source: $item.request.headers
+            name: headers
+            widget: Labels
+            visibility: $exists($item.request.headers)
       - name: service
         source: $item.service
         widget: Panel

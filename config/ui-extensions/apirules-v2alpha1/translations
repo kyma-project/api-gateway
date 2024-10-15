@@ -18,6 +18,9 @@ en:
   extAuth: External Authorization
   authorizers: Authorizers
   restrictions: Restrictions
+  request: Request
+  cookies: Cookies
+  headers: Headers
   service: Service
   service.name: Name
   port: Port
