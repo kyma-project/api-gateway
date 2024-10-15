@@ -88,7 +88,7 @@ body:
       - source: $item.noAuth
         name: noAuth
         widget: Badge
-        visibility: $boolean($item.noAuth)
+        visibility: $exists($item.noAuth)
       - source: $item.jwt
         name: jwt
         widget: Panel
