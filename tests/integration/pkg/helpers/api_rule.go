@@ -61,7 +61,7 @@ func ApplyApiRule(toExecute RetryableApiRule, onRetry RetryableApiRule, k8sClien
 		return errors.New("unsupported APIRule version")
 	}
 
-	if code == "ERROR" {
+	if code == "ERROR" || code == "Error" {
 		return retry.Do(func() error {
 			res, err := onRetry(k8sClient, resources...)
 			if err != nil {
@@ -84,7 +84,7 @@ func ApplyApiRule(toExecute RetryableApiRule, onRetry RetryableApiRule, k8sClien
 			} else {
 				return errors.New("unsupported APIRule version")
 			}
-			if code == "ERROR" {
+			if code == "ERROR" || code == "Error" {
 				log.Println("APIRule status not ok: " + description)
 				return errors.New("APIRule status not ok: " + description)
 			}
