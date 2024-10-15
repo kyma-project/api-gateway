@@ -49,7 +49,7 @@ var _ = Describe("discover gateway", func() {
 		}
 
 		// when
-		gotGateway, _, gotErr := discoverGateway(k8sClientBuilder.Build(), context.Background(), logr.Discard(), apiRule)
+		gotGateway, gotErr := discoverGateway(k8sClientBuilder.Build(), context.Background(), logr.Discard(), apiRule)
 
 		// then
 
@@ -74,6 +74,11 @@ var _ = Describe("discover gateway", func() {
 		Entry("should return error when gateway is not in namespacedName format", &v2alpha1.APIRule{
 			Spec: v2alpha1.APIRuleSpec{
 				Gateway: ptr.To(fmt.Sprintf("%s.%s.svc.cluster.local", gatewayName, gatewayNamespace)),
+			},
+		}, false, true),
+		Entry("should return error when gateway is an empty string", &v2alpha1.APIRule{
+			Spec: v2alpha1.APIRuleSpec{
+				Gateway: ptr.To(""),
 			},
 		}, false, true),
 	)

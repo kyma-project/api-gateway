@@ -185,12 +185,13 @@ func (r *APIRuleReconciler) reconcileV2Alpha1APIRule(ctx context.Context, l logr
 		return doneReconcileErrorRequeue(err, r.OnErrorReconcilePeriod)
 	}
 
-	gateway, convertStatus, err := discoverGateway(r.Client, ctx, l, &rule)
-	if convertStatus {
-		return r.convertAndUpdateStatus(ctx, l, rule)
-	}
+	gateway, err := discoverGateway(r.Client, ctx, l, &rule)
 	if err != nil {
 		return doneReconcileErrorRequeue(err, r.OnErrorReconcilePeriod)
+	}
+
+	if gateway == nil {
+		return r.convertAndUpdateStatus(ctx, l, rule)
 	}
 
 	cmd := r.getV2Alpha1Reconciliation(&apiRule, &rule, gateway, migrate, &l)
@@ -269,20 +270,20 @@ func handleDependenciesError(name string, err error) controllers.Status {
 	}
 }
 
-func discoverGateway(client client.Client, ctx context.Context, l logr.Logger, rule *gatewayv2alpha1.APIRule) (*networkingv1beta1.Gateway, bool, error) {
+func discoverGateway(client client.Client, ctx context.Context, l logr.Logger, rule *gatewayv2alpha1.APIRule) (*networkingv1beta1.Gateway, error) {
 	if rule.Spec.Gateway == nil {
-		return nil, false, fmt.Errorf("expected Gateway to be set")
+		return nil, fmt.Errorf("expected Gateway to be set")
 	}
 
 	// The regex pattern is the exact same as the one used in the APIRule validation
 	// Unfortunately usage of a constant is not possible here, as the Kubebuilder CRD validation interface is comment based
 	match, err := regexp.MatchString(`^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?/([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)$`, *rule.Spec.Gateway)
 	if err != nil {
-		return nil, false, err
+		return nil, err
 	}
 
 	if !match {
-		return nil, false, fmt.Errorf("expected Gateway %s to be in the namespace/name format", *rule.Spec.Gateway)
+		return nil, fmt.Errorf("expected Gateway %s to be in the namespace/name format", *rule.Spec.Gateway)
 	}
 
 	gatewayName := strings.Split(*rule.Spec.Gateway, "/")
@@ -305,12 +306,12 @@ func discoverGateway(client client.Client, ctx context.Context, l logr.Logger, r
 		})
 		if err := s.UpdateStatus(&rule.Status); err != nil {
 			l.Error(err, "Error updating APIRule status")
-			return nil, false, err
+			return nil, err
 		}
-		return nil, true, err
+		return nil, nil
 	}
 
-	return &gateway, false, nil
+	return &gateway, nil
 }
 
 func (r *APIRuleReconciler) getV1Beta1Reconciliation(apiRule *gatewayv1beta1.APIRule, defaultDomainName string, namespacedLogger *logr.Logger) processing.ReconciliationCommand {
