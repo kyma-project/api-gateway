@@ -1,6 +1,7 @@
 module github.com/kyma-project/api-gateway
 
 go 1.22.5
+toolchain go1.23.2
 
 require (
 	github.com/avast/retry-go/v4 v4.6.0
@@ -12,7 +13,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/onsi/ginkgo/v2 v2.20.2
 	github.com/onsi/gomega v1.34.2
-	github.com/ory/oathkeeper-maester v0.1.10
+	github.com/ory/oathkeeper-maester v0.1.11
 	github.com/spf13/pflag v1.0.5
 	github.com/thoas/go-funk v0.9.3
 	gitlab.com/rodrigoodhin/gocure v0.0.0-20230214115050-efed6aac536a
