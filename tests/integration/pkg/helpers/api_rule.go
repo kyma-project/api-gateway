@@ -38,23 +38,28 @@ func ApplyApiRule(toExecute RetryableApiRule, onRetry RetryableApiRule, k8sClien
 		return err
 	}
 
-	var code, description string
-	arVersion := strings.Split(res.Object["apiVersion"].(string), "/")
+	var arVersion, code, description string
 
-	if arVersion[1] == "v1beta1" {
-		arStatus, err := GetAPIRuleStatus(res)
-		if err != nil {
-			return err
+	if res.Object != nil && res.Object["apiVersion"] != nil {
+		apiVersion := strings.Split(res.Object["apiVersion"].(string), "/")
+
+		if apiVersion[1] == "v1beta1" {
+			arVersion = apiVersion[1]
+			arStatus, err := GetAPIRuleStatus(res)
+			if err != nil {
+				return err
+			}
+			code = arStatus.Status.APIRuleStatus.Code
+		} else if apiVersion[1] == "v2alpha1" {
+			arVersion = apiVersion[1]
+			arStatus, err := GetAPIRuleStatusV2Alpha1(res)
+			if err != nil {
+				return err
+			}
+			code = arStatus.Status.State
+		} else {
+			return errors.New("unsupported APIRule version")
 		}
-		code = arStatus.Status.APIRuleStatus.Code
-	} else if arVersion[1] == "v2alpha1" {
-		arStatus, err := GetAPIRuleStatusV2Alpha1(res)
-		if err != nil {
-			return err
-		}
-		code = arStatus.Status.State
-	} else {
-		return errors.New("unsupported APIRule version")
 	}
 
 	if code == "ERROR" || code == "Error" {
@@ -67,7 +72,7 @@ func ApplyApiRule(toExecute RetryableApiRule, onRetry RetryableApiRule, k8sClien
 			if err != nil {
 				return err
 			}
-			if arVersion[1] == "v1beta1" {
+			if arVersion == "v1beta1" {
 				var arStatus apiRuleStatus
 				err = json.Unmarshal(js, &arStatus)
 				if err != nil {
@@ -75,7 +80,7 @@ func ApplyApiRule(toExecute RetryableApiRule, onRetry RetryableApiRule, k8sClien
 				}
 				code = arStatus.Status.APIRuleStatus.Code
 				description = arStatus.Status.APIRuleStatus.Description
-			} else if arVersion[1] == "v2alpha1" {
+			} else if arVersion == "v2alpha1" {
 				var arStatus apiRuleStatusV2Alpha1
 				err = json.Unmarshal(js, &arStatus)
 				if err != nil {
