@@ -15,6 +15,7 @@ on:
       - "OWNERS"
       - "CODEOWNERS"
       - ".github/**" #Ignoring since build job isn't triggered on the workflow directory changes
+      - "external-images.yaml"
     branches:
       - 'main'
 

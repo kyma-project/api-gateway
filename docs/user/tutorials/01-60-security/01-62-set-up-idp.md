@@ -45,7 +45,7 @@ k3d cluster create kyma \
 ```
 
 For managed Kubernetes, see the documentation related to your provider.
-For example, if you use Gardener as a managed Kubernetes offering, see the [OIDC Preset](https://github.com/gardener/gardener/blob/master/docs/usage/openidconnect-presets.md) documentation.
+For example, if you use Gardener as a managed Kubernetes offering, see the [OIDC Preset](https://github.com/gardener/gardener/blob/master/docs/usage/security/openidconnect-presets.md) documentation.
 
 ### Configure Role-Based Access to Identities Provided by Your OIDC Server
 

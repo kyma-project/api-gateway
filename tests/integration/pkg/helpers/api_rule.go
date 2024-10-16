@@ -3,12 +3,13 @@ package helpers
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
+	"log"
+	"strings"
 	"github.com/avast/retry-go/v4"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/resource"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/dynamic"
-	"log"
-	"strings"
 )
 
 type ApiRuleStatusV1beta1 struct {
@@ -160,12 +161,12 @@ func ApplyApiRuleV2Alpha1ExpectError(toExecute RetryableApiRule, onRetry Retryab
 				return err
 			}
 			if apiStatus.Status.State != "Error" {
-				log.Println("APIRule status not Error: " + apiStatus.Status.Description)
-				return errors.New("APIRule status not Error: " + apiStatus.Status.Description)
+				log.Printf("expected but APIRule status to be Error, got %s with desc: %s", apiStatus.Status.State, apiStatus.Status.Description)
+				return fmt.Errorf("expected but APIRule status to be Error, got %s with desc: %s", apiStatus.Status.State, apiStatus.Status.Description)
 			}
 			if !strings.Contains(apiStatus.Status.Description, errorMessage) {
-				log.Println("APIRule Error status description does not contain expected string: " + apiStatus.Status.Description)
-				return errors.New("APIRule Error status description does not contain expected string: " + apiStatus.Status.Description)
+				log.Printf("expected error description of the APIRule to be %s, got %s", errorMessage, apiStatus.Status.Description)
+				return fmt.Errorf("expected error description of the APIRule to be %s, got %s", errorMessage, apiStatus.Status.Description)
 			}
 			return nil
 		}, retryOpts...)
