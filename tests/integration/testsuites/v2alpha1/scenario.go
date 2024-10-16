@@ -90,6 +90,14 @@ func (s *scenario) theAPIRuleIsApplied() error {
 	if err != nil {
 		return err
 	}
+	return helpers.ApplyApiRule(s.resourceManager.CreateResources, s.resourceManager.UpdateResources, s.k8sClient, testcontext.GetRetryOpts(), r)
+}
+
+func (s *scenario) theMisconfiguredAPIRuleIsApplied() error {
+	r, err := manifestprocessor.ParseFromFileWithTemplate(s.ApiResourceManifestPath, s.ApiResourceDirectory, s.ManifestTemplate)
+	if err != nil {
+		return err
+	}
 	_, err = s.resourceManager.CreateResources(s.k8sClient, r...)
 	return err
 }
