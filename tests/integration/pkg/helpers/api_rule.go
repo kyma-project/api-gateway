@@ -3,16 +3,15 @@ package helpers
 import (
 	"encoding/json"
 	"errors"
-	"log"
-	"strings"
-
 	"github.com/avast/retry-go/v4"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/resource"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/dynamic"
+	"log"
+	"strings"
 )
 
-type apiRuleStatus struct {
+type ApiRuleStatusV1beta1 struct {
 	Status struct {
 		APIRuleStatus struct {
 			Code        string `json:"code"`
@@ -21,77 +20,84 @@ type apiRuleStatus struct {
 	} `json:"status"`
 }
 
-type apiRuleStatusV2Alpha1 struct {
+type ApiRuleStatusV2alpha1 struct {
 	Status struct {
 		State       string `json:"state"`
 		Description string `json:"description"`
 	} `json:"status"`
 }
 
+const (
+	errorV1beta1      = "ERROR"
+	errorV2alpha1     = "Error"
+	notReconciledCode = ""
+)
+
 // RetryableApiRule wraps any function that modifies or creates an APIRule
 type RetryableApiRule func(k8sClient dynamic.Interface, resources ...unstructured.Unstructured) (*unstructured.Unstructured, error)
 
-// APIRuleWithRetries tries toExecute function and retries with onRetry if APIRule status is "ERROR" or "Error"
+func getAPIRuleStatus(res *unstructured.Unstructured) (string, string, error) {
+	if res.Object == nil || res.Object["apiVersion"] == nil {
+		return "", "", errors.New("apiVersion not found in the APIRule object")
+	}
+
+	apiVersion := strings.Split(res.Object["apiVersion"].(string), "/")
+	apiRuleVersionVersion := apiVersion[1]
+
+	var description, code string
+
+	if apiRuleVersionVersion == "v1beta1" {
+		arStatus, err := GetAPIRuleStatusV1beta1(res)
+		if err != nil {
+			return "", "", err
+		}
+		code = arStatus.Status.APIRuleStatus.Code
+		description = arStatus.Status.APIRuleStatus.Description
+	} else if apiRuleVersionVersion == "v2alpha1" {
+		arStatus, err := GetAPIRuleStatusV2Alpha1(res)
+		if err != nil {
+			return "", "", err
+		}
+		code = arStatus.Status.State
+		description = arStatus.Status.Description
+	}
+
+	return code, description, nil
+}
+
+// ApplyApiRule tries toExecute function and retries with onRetry if APIRule status is in error status or has no status
+// code. This function works for both v1beta1 and v2alpha1 versions of APIRule.
 func ApplyApiRule(toExecute RetryableApiRule, onRetry RetryableApiRule, k8sClient dynamic.Interface, retryOpts []retry.Option, resources []unstructured.Unstructured) error {
 	res, err := toExecute(k8sClient, resources...)
 	if err != nil {
 		return err
 	}
-
-	var arVersion, code, description string
-
-	if res.Object != nil && res.Object["apiVersion"] != nil {
-		apiVersion := strings.Split(res.Object["apiVersion"].(string), "/")
-
-		if apiVersion[1] == "v1beta1" {
-			arVersion = apiVersion[1]
-			arStatus, err := GetAPIRuleStatus(res)
-			if err != nil {
-				return err
-			}
-			code = arStatus.Status.APIRuleStatus.Code
-		} else if apiVersion[1] == "v2alpha1" {
-			arVersion = apiVersion[1]
-			arStatus, err := GetAPIRuleStatusV2Alpha1(res)
-			if err != nil {
-				return err
-			}
-			code = arStatus.Status.State
-		}
+	code, _, err := getAPIRuleStatus(res)
+	if err != nil {
+		return err
 	}
 
-	if code == "ERROR" || code == "Error" {
+	if code == errorV1beta1 || code == errorV2alpha1 || code == notReconciledCode {
 		return retry.Do(func() error {
 			res, err := onRetry(k8sClient, resources...)
 			if err != nil {
 				return err
 			}
-			js, err := json.Marshal(res)
+
+			code, description, err := getAPIRuleStatus(res)
 			if err != nil {
 				return err
 			}
-			if arVersion == "v1beta1" {
-				var arStatus apiRuleStatus
-				err = json.Unmarshal(js, &arStatus)
-				if err != nil {
-					return err
-				}
-				code = arStatus.Status.APIRuleStatus.Code
-				description = arStatus.Status.APIRuleStatus.Description
-			} else if arVersion == "v2alpha1" {
-				var arStatus apiRuleStatusV2Alpha1
-				err = json.Unmarshal(js, &arStatus)
-				if err != nil {
-					return err
-				}
-				code = arStatus.Status.State
-				description = arStatus.Status.Description
+
+			switch code {
+			case notReconciledCode:
+				return errors.New("apirule not reconciled")
+			case errorV1beta1, errorV2alpha1:
+				log.Printf("APIRule status code is '%s' with description '%s'", code, description)
+				return errors.New("apirule in error state")
+			default:
+				return nil
 			}
-			if code == "ERROR" || code == "Error" {
-				log.Println("APIRule status not ok: " + description)
-				return errors.New("APIRule status not ok: " + description)
-			}
-			return nil
 		}, retryOpts...)
 	}
 	return nil
@@ -168,7 +174,7 @@ func ApplyApiRuleV2Alpha1ExpectError(toExecute RetryableApiRule, onRetry Retryab
 }
 
 func UpdateApiRule(resourceManager *resource.Manager, k8sClient dynamic.Interface, retryOpts []retry.Option, resources []unstructured.Unstructured) error {
-	status := apiRuleStatus{}
+	status := ApiRuleStatusV1beta1{}
 
 	res, err := resourceManager.UpdateResources(k8sClient, resources...)
 	if err != nil {
@@ -190,40 +196,40 @@ func UpdateApiRule(resourceManager *resource.Manager, k8sClient dynamic.Interfac
 	return nil
 }
 
-func GetAPIRuleStatus(apiRuleUnstructured *unstructured.Unstructured) (apiRuleStatus, error) {
+func GetAPIRuleStatusV1beta1(apiRuleUnstructured *unstructured.Unstructured) (ApiRuleStatusV1beta1, error) {
 	js, err := json.Marshal(apiRuleUnstructured)
 	if err != nil {
-		return apiRuleStatus{}, err
+		return ApiRuleStatusV1beta1{}, err
 	}
 
-	status := apiRuleStatus{}
+	status := ApiRuleStatusV1beta1{}
 
 	err = json.Unmarshal(js, &status)
 	if err != nil {
-		return apiRuleStatus{}, err
+		return ApiRuleStatusV1beta1{}, err
 	}
 
 	return status, nil
 }
 
-func GetAPIRuleStatusV2Alpha1(apiRuleUnstructured *unstructured.Unstructured) (apiRuleStatusV2Alpha1, error) {
+func GetAPIRuleStatusV2Alpha1(apiRuleUnstructured *unstructured.Unstructured) (ApiRuleStatusV2alpha1, error) {
 	js, err := json.Marshal(apiRuleUnstructured)
 	if err != nil {
-		return apiRuleStatusV2Alpha1{}, err
+		return ApiRuleStatusV2alpha1{}, err
 	}
 
-	status := apiRuleStatusV2Alpha1{}
+	status := ApiRuleStatusV2alpha1{}
 
 	err = json.Unmarshal(js, &status)
 	if err != nil {
-		return apiRuleStatusV2Alpha1{}, err
+		return ApiRuleStatusV2alpha1{}, err
 	}
 
 	return status, nil
 }
 
 func HasAPIRuleStatus(apiRuleUnstructured *unstructured.Unstructured, status string) (bool, error) {
-	apiRuleStatus, err := GetAPIRuleStatus(apiRuleUnstructured)
+	apiRuleStatus, err := GetAPIRuleStatusV1beta1(apiRuleUnstructured)
 	if err != nil {
 		return false, err
 	}
