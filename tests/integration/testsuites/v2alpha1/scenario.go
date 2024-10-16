@@ -90,7 +90,8 @@ func (s *scenario) theAPIRuleIsApplied() error {
 	if err != nil {
 		return err
 	}
-	return helpers.ApplyApiRule(s.resourceManager.CreateResources, s.resourceManager.UpdateResources, s.k8sClient, testcontext.GetRetryOpts(), r)
+	_, err = s.resourceManager.CreateResources(s.k8sClient, r...)
+	return err
 }
 
 func (s *scenario) theAPIRuleV2Alpha1IsApplied() error {

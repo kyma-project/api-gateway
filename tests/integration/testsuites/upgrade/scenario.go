@@ -52,7 +52,7 @@ func (s *scenario) theAPIRuleIsApplied() error {
 	if err != nil {
 		return err
 	}
-	return helpers.ApplyApiRule(s.resourceManager.CreateOrUpdateResources, s.resourceManager.UpdateResources, s.k8sClient, testcontext.GetRetryOpts(), r)
+	return helpers.ApplyApiRule(s.resourceManager.CreateResources, s.resourceManager.UpdateResources, s.k8sClient, testcontext.GetRetryOpts(), r)
 }
 
 func (s *scenario) callingTheEndpointWithValidTokenShouldResultInStatusBetween(endpoint, tokenType string, lower, higher int) error {
