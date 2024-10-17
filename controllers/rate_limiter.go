@@ -3,7 +3,7 @@ package controllers
 import (
 	"golang.org/x/time/rate"
 	"k8s.io/client-go/util/workqueue"
-	"sigs.k8s.io/controller-runtime/pkg/ratelimiter"
+	ctrl "sigs.k8s.io/controller-runtime"
 	"time"
 )
 
@@ -21,9 +21,11 @@ type RateLimiterConfig struct {
 	FailureMaxDelay  time.Duration
 }
 
-// NewRateLimiter returns a rate limiter for a client-go.workqueue.  It has both an overall (token bucket) and per-item (exponential) rate limiting.
-func NewRateLimiter(c RateLimiterConfig) ratelimiter.RateLimiter {
-	return workqueue.NewMaxOfRateLimiter(
-		workqueue.NewItemExponentialFailureRateLimiter(c.FailureBaseDelay, c.FailureMaxDelay),
-		&workqueue.BucketRateLimiter{Limiter: rate.NewLimiter(rate.Limit(c.Frequency), c.Burst)})
+// NewRateLimiter returns a rate limiter for a client-go workqueue.
+// It has both an overall (token bucket) and per-item (exponential) rate limiting.
+func NewRateLimiter(c RateLimiterConfig) workqueue.TypedRateLimiter[ctrl.Request] {
+	return workqueue.NewTypedMaxOfRateLimiter(
+		workqueue.NewTypedItemExponentialFailureRateLimiter[ctrl.Request](c.FailureBaseDelay, c.FailureMaxDelay),
+		&workqueue.TypedBucketRateLimiter[ctrl.Request]{Limiter: rate.NewLimiter(rate.Limit(c.Frequency), c.Burst)},
+	)
 }
