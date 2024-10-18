@@ -20,7 +20,7 @@ context("API Rule v2alpha1", () => {
         cy.deleteNamespace(namespaceName);
     });
 
-    it("should not display v1beta1 APIRule in v1alpha1 list", () => {
+    it("should not display v1beta1 APIRule in v2alpha1 list", () => {
         cy.createApiRule({
             name: apiRuleName,
             namespace: namespaceName,
