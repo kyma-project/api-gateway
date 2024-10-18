@@ -26,18 +26,24 @@
   overwrite: false
   toInternal:  '($values := $split($, "/"); { "namespace": $values[0], "name": $values[1] })'
   toExternal: 'namespace & "/" & name'
-  trigger: [host]
 - simple: true
   var: separator
   value: ""
 - path: spec.gateway
   visibility: $not($canI('networking.istio.io/v1beta1', 'Gateway'))
   overwrite: false
-  trigger: [host]
+- var: host
+  type: string
+  simple: true
+  dynamicValue: '$exists(spec.hosts) ? spec.hosts[0] : ""'
+  name: Host
+  required: true
+  trigger: [hostChanged]
 - path: spec.hosts
-  widget: SimpleList
-  children:
-    - path: '[]'
+  visibility: false
+  overwrite: false
+  subscribe:
+    hostChanged: "[$host]"
 - var: customCorsPolicy
   type: string
   simple: true
