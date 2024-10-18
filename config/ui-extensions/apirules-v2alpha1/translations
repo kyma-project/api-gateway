@@ -1,6 +1,14 @@
 en:
   useCorsPolicy: Use custom CORS policy
   corsPolicy: CORS Policy
+  corsAllowMethods: Allow Methods
+  corsAllowOrigins: Allow Origins
+  corsAllowHeaders: Allow Headers
+  corsExposeHeaders: Expose Headers
+  corsAllowCredentials: Allow Credentials
+  corsAllowOriginsRegex: origins allowed with regex match
+  corsAllowOriginsPrefix: origins allowed with prefix match
+  corsAllowOriginsExact: origins allowed with exact match
   gateway: Gateway
   rules: Rules
   noAuth: No Auth
@@ -29,4 +37,3 @@ en:
   host: Host
   timeout: Timeout
   virtualService: Virtual Service
-  alert.spec.host: Host can not be a wildcard, replace with a RFC 1123 label or a valid, fully qualified domain name (FQDN)

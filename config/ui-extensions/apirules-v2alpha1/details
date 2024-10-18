@@ -81,6 +81,8 @@ body:
       - source: $item.path
       - source: $item.methods
         widget: Badge
+      - source: '$boolean($item.noAuth) ? "No Auth" : ($exists($item.jwt) ? "JWT" : ($exists($item.extAuth) ? "Ext Auth" : ""))'
+        widget: Badge
     collapsible:
       - source: $item.timeout
         name: timeout

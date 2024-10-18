@@ -38,11 +38,14 @@
   widget: SimpleList
   children:
     - path: '[]'
-- var: useCorsPolicy
-  type: boolean
-  dynamicValue: '$boolean(spec.corsPolicy)'
+- var: customCorsPolicy
+  type: string
+  simple: true
+  dynamicValue: '$exists(spec.corsPolicy) ? "Yes" : "No"'
+  name: 'Custom CORS Policy'
+  enum: [Yes, No]
 - path: spec.corsPolicy
-  visibility: '$useCorsPolicy'
+  visibility: '$customCorsPolicy = "Yes"'
   name: corsPolicy
   defaultExpanded: true
   widget: FormGroup
@@ -89,7 +92,6 @@
   template:
     path: '/*'
     methods: ['GET']
-    noAuth: true
   children:
     - path: '[]'
       children:
@@ -112,13 +114,15 @@
       - var: accessStrategy
         type: string
         simple: true
-        # No Auth is the fallback, because this is set as the default in the template
-        dynamicValue: '$boolean($item.noAuth) ? "No Auth" : ($exists($item.jwt) ? "JWT" : ($exists($item.extAuth) ? "Ext Auth" : "No Auth"))'
+        dynamicValue: '$boolean($item.noAuth) ? "No Auth" : ($exists($item.jwt) ? "JWT" : ($exists($item.extAuth) ? "Ext Auth" : ""))'
         name: 'Access Strategy'
-        enum: ['No Auth', JWT, 'Ext Auth']
+        enum: ['No Auth', JWT, 'Ext Auth', '']
+        trigger: [accessStrategyChanged]
       - path: 'noAuth'
         visibility: "$accessStrategy = 'No Auth'"
         type: boolean
+        subscribe:
+            accessStrategyChanged: "$accessStrategy = 'No Auth' ? true : false"
       - path: 'jwt'
         name: jwt
         visibility: "$accessStrategy = 'JWT'"

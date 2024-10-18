@@ -1,4 +1,4 @@
-- name: Default gateway
+- name: Default
   default: true
   value:
     spec:
@@ -7,4 +7,3 @@
         - path: /*
           methods:
             - GET
-          noAuth: true
