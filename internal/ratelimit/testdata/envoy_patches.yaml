@@ -1,0 +1,70 @@
+- applyTo: HTTP_FILTER
+  match:
+    context: SIDECAR_INBOUND
+    listener:
+      filterChain:
+        filter:
+          name: "envoy.filters.network.http_connection_manager"
+  patch:
+    operation: INSERT_BEFORE
+    value:
+      name: envoy.filters.http.local_ratelimit
+      typed_config:
+        "@type": type.googleapis.com/udpa.type.v1.TypedStruct
+        type_url: type.googleapis.com/envoy.extensions.filters.http.local_ratelimit.v3.LocalRateLimit
+        value:
+          stat_prefix: http_local_rate_limiter
+- applyTo: HTTP_ROUTE
+  match:
+    context: SIDECAR_INBOUND
+  patch:
+    operation: MERGE
+    value:
+      route:
+        rate_limits:
+          - actions:
+              - request_headers:
+                  header_name: ":path"
+                  descriptor_key: "path"
+              - request_headers:
+                  header_name: "x-api-version"
+                  descriptor_key: "x-api-version"
+      typed_per_filter_config:
+        envoy.filters.http.local_ratelimit:
+          "@type": type.googleapis.com/udpa.type.v1.TypedStruct
+          type_url: type.googleapis.com/envoy.extensions.filters.http.local_ratelimit.v3.LocalRateLimit
+          value:
+            stat_prefix: rate_limit
+            enable_x_ratelimit_headers: DRAFT_VERSION_03
+            filter_enabled:
+              runtime_key: local_rate_limit_enabled
+              default_value:
+                numerator: 100
+                denominator: HUNDRED
+            filter_enforced:
+              runtime_key: local_rate_limit_enforced
+              default_value:
+                numerator: 100
+                denominator: HUNDRED
+            always_consume_default_token_bucket: false
+            token_bucket:
+              max_tokens: 10
+              tokens_per_fill: 5
+              fill_interval: 30s
+            descriptors:
+              - entries:
+                  - key: path
+                    value: /ip
+                token_bucket:
+                  max_tokens: 20
+                  tokens_per_fill: 10
+                  fill_interval: 30s
+              - entries:
+                  - key: x-api-version
+                    value: v1
+                  - key: path
+                    value: /headers
+                token_bucket:
+                  max_tokens: 2
+                  tokens_per_fill: 2
+                  fill_interval: 30s
