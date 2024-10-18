@@ -4,12 +4,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
-	"strings"
 	"github.com/avast/retry-go/v4"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/resource"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/dynamic"
+	"log"
+	"strings"
 )
 
 type ApiRuleStatusV1beta1 struct {
@@ -47,20 +47,23 @@ func getAPIRuleStatus(res *unstructured.Unstructured) (string, string, error) {
 
 	var description, code string
 
-	if apiRuleVersionVersion == "v1beta1" {
+	switch apiRuleVersionVersion {
+	case "v1beta1":
 		arStatus, err := GetAPIRuleStatusV1beta1(res)
 		if err != nil {
 			return "", "", err
 		}
 		code = arStatus.Status.APIRuleStatus.Code
 		description = arStatus.Status.APIRuleStatus.Description
-	} else if apiRuleVersionVersion == "v2alpha1" {
+	case "v2alpha1":
 		arStatus, err := GetAPIRuleStatusV2Alpha1(res)
 		if err != nil {
 			return "", "", err
 		}
 		code = arStatus.Status.State
 		description = arStatus.Status.Description
+	default:
+		return "", "", errors.New("unsupported APIRule version")
 	}
 
 	return code, description, nil
@@ -73,6 +76,11 @@ func ApplyApiRule(toExecute RetryableApiRule, onRetry RetryableApiRule, k8sClien
 	if err != nil {
 		return err
 	}
+
+	if res.GetObjectKind().GroupVersionKind().Kind != "APIRule" {
+		return errors.New("object is not an APIRule unintended usage of the function")
+	}
+
 	code, _, err := getAPIRuleStatus(res)
 	if err != nil {
 		return err
