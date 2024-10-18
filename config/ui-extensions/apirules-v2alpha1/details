@@ -87,10 +87,6 @@ body:
       - source: $item.timeout
         name: timeout
         visibility: $exists($item.timeout)
-      - source: $item.noAuth
-        name: noAuth
-        widget: Badge
-        visibility: $exists($item.noAuth)
       - source: $item.jwt
         name: jwt
         widget: Panel

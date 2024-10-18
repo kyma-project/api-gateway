@@ -127,6 +127,8 @@
       - path: 'noAuth'
         visibility: "$accessStrategy = 'No Auth'"
         type: boolean
+        visibility: false
+        overwrite: false
         subscribe:
             accessStrategyChanged: "$accessStrategy = 'No Auth' ? true : false"
       - path: 'jwt'
