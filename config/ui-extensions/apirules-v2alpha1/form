@@ -38,6 +38,7 @@
   dynamicValue: '$exists(spec.hosts) ? spec.hosts[0] : ""'
   name: Host
   required: true
+  description: "Host must be a lowercase RFC 1123 label (must consist of lowercase alphanumeric characters or '-', and must start and end with an lowercase alphanumeric character) or a fully qualified domain name."
   trigger: [hostChanged]
 - path: spec.hosts
   visibility: false
