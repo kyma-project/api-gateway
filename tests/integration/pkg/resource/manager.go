@@ -199,6 +199,11 @@ func (m *Manager) CreateOrUpdateResources(k8sClient dynamic.Interface, resources
 				return nil, fmt.Errorf(errorUpdatingResource, err)
 			}
 		}
+
+		gotRes, err = m.GetResource(k8sClient, resourceSchema, ns, res.GetName())
+		if err != nil {
+			return nil, fmt.Errorf(errorGettingResource, err)
+		}
 	}
 	return gotRes, nil
 }
