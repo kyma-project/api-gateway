@@ -1,3 +1,4 @@
 resources:
   - apigateways
   - apirules
+  - apirules-v2alpha1

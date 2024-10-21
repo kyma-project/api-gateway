@@ -1,0 +1,226 @@
+- path: spec.timeout
+  value:
+    type: number
+- path: spec.service
+  widget: FormGroup
+  defaultExpanded: true
+  children:
+    - path: name
+      widget: Resource
+      resource:
+        kind: Service
+        version: v1
+        scope: namespace
+      trigger: [port]
+    - path: port
+      subscribe:
+        port: "$filter($relatedServices().items, function ($v) { $v.metadata.name = $root.spec.service.name and $v.metadata.namespace = $root.metadata.namespace }).spec.ports[0].port"
+- path: spec.gateway
+  widget: ResourceRef
+  defaultExpanded: true
+  visibility: $canI('networking.istio.io/v1beta1', 'Gateway')
+  resource:
+    kind: Gateway
+    group: networking.istio.io
+    version: v1beta1
+  overwrite: false
+  toInternal:  '($values := $split($, "/"); { "namespace": $values[0], "name": $values[1] })'
+  toExternal: 'namespace & "/" & name'
+- simple: true
+  var: separator
+  value: ""
+- path: spec.gateway
+  visibility: $not($canI('networking.istio.io/v1beta1', 'Gateway'))
+  overwrite: false
+- var: host
+  type: string
+  simple: true
+  dynamicValue: '$exists(spec.hosts) ? spec.hosts[0] : ""'
+  name: Host
+  required: true
+  description: "Host must be a lowercase RFC 1123 label (must consist of lowercase alphanumeric characters or '-', and must start and end with an lowercase alphanumeric character) or a fully qualified domain name."
+  trigger: [hostChanged]
+- path: spec.hosts
+  visibility: false
+  overwrite: false
+  subscribe:
+    hostChanged: "[$host]"
+- var: customCorsPolicy
+  type: string
+  simple: true
+  dynamicValue: '$exists(spec.corsPolicy) ? "Yes" : "No"'
+  name: 'Custom CORS Policy'
+  enum: [Yes, No]
+- path: spec.corsPolicy
+  visibility: '$customCorsPolicy = "Yes"'
+  name: corsPolicy
+  defaultExpanded: true
+  widget: FormGroup
+  children:
+    - path: allowMethods
+      widget: MultiCheckbox
+      options:
+        - key: GET
+        - key: POST
+        - key: PUT
+        - key: DELETE
+        - key: PATCH
+        - key: HEAD
+        - key: OPTIONS
+        - key: CONNECT
+        - key: TRACE
+    - path: allowOrigins
+      widget: GenericList
+      children:
+        - path: '[]'
+          widget: KeyValuePair
+          keyEnum:
+          - exact
+          - prefix
+          - regex
+    - path: allowHeaders
+      widget: SimpleList
+      children:
+        - path: '[]'
+    - path: exposeHeaders
+      widget: SimpleList
+      children:
+        - path: '[]'
+    - path: allowCredentials
+      value:
+        type: boolean
+    - path: maxAge
+      placeholder: 300
+      value:
+        type: string
+- path: spec.rules
+  widget: GenericList
+  defaultExpanded: true
+  template:
+    path: '/*'
+    methods: ['GET']
+  children:
+    - path: '[]'
+      children:
+      - path: 'timeout'
+        value:
+          type: number
+      - path: 'path'
+      - path: 'methods'
+        widget: MultiCheckbox
+        options:
+          - key: GET
+          - key: POST
+          - key: PUT
+          - key: DELETE
+          - key: PATCH
+          - key: HEAD
+          - key: OPTIONS
+          - key: CONNECT
+          - key: TRACE
+      - var: accessStrategy
+        type: string
+        simple: true
+        dynamicValue: '$boolean($item.noAuth) ? "No Auth" : ($exists($item.jwt) ? "JWT" : ($exists($item.extAuth) ? "Ext Auth" : ""))'
+        name: 'Access Strategy'
+        enum: ['No Auth', JWT, 'Ext Auth', '']
+        trigger: [accessStrategyChanged]
+      - path: 'noAuth'
+        visibility: "$accessStrategy = 'No Auth'"
+        type: boolean
+        visibility: false
+        overwrite: false
+        subscribe:
+            accessStrategyChanged: "$accessStrategy = 'No Auth' ? true : false"
+      - path: 'jwt'
+        name: jwt
+        visibility: "$accessStrategy = 'JWT'"
+        widget: FormGroup
+        children:
+          - path: 'authentications'
+            required: true
+            widget: GenericList
+            children:
+              - path: '[].issuer'
+              - path: '[].jwksUri'
+                name: jwksUri
+              - path: '[].fromHeaders'
+                widget: GenericList
+                children:
+                  - path: '[].name'
+                  - path: '[].prefix'
+              - path: '[].fromParams'
+                widget: SimpleList
+                children:
+                  - path: '[]'
+          - path: 'authorizations'
+            widget: GenericList
+            children:
+              - path: '[].requiredScopes'
+                widget: SimpleList
+                children:
+                  - path: '[]'
+              - path: '[].audiences'
+                widget: SimpleList
+                children:
+                  - path: '[]'
+      - path: 'extAuth'
+        name: extAuth
+        visibility: "$accessStrategy = 'Ext Auth'"
+        widget: FormGroup
+        children:
+          - path: 'authorizers'
+            widget: SimpleList
+            children:
+              - path: '[]'
+          - path: 'restrictions'
+            widget: FormGroup
+            children:
+              - path: 'authentications'
+                required: true
+                widget: GenericList
+                children:
+                  - path: '[].issuer'
+                  - path: '[].jwksUri'
+                    name: jwksUri
+                  - path: '[].fromHeaders'
+                    widget: GenericList
+                    children:
+                      - path: '[].name'
+                      - path: '[].prefix'
+                  - path: '[].fromParams'
+                    widget: SimpleList
+                    children:
+                      - path: '[]'
+              - path: 'authorizations'
+                widget: GenericList
+                children:
+                  - path: '[].requiredScopes'
+                    widget: SimpleList
+                    children:
+                      - path: '[]'
+                  - path: '[].audiences'
+                    widget: SimpleList
+                    children:
+                      - path: '[]'
+      - path: 'request'
+        widget: FormGroup
+        children:
+          - path: cookies
+            widget: KeyValuePair
+          - path: headers
+            widget: KeyValuePair
+      - path: 'service'
+        widget: FormGroup
+        required: false
+        children:
+          - path: name
+            widget: Resource
+            resource:
+              kind: Service
+              version: v1
+              scope: namespace
+            trigger: [ruleServicePort]
+          - path: port
+            subscribe:
+              ruleServicePort: "$filter($relatedServices().items, function ($v) { $v.metadata.name = $item.service.name and $v.metadata.namespace = $root.metadata.namespace }).spec.ports[0].port"

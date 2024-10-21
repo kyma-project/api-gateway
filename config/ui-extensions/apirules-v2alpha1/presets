@@ -1,0 +1,9 @@
+- name: Default
+  default: true
+  value:
+    spec:
+      gateway: kyma-system/kyma-gateway
+      rules:
+        - path: /*
+          methods:
+            - GET

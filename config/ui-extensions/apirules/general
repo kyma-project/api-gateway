@@ -7,3 +7,4 @@ category: Discovery and Network
 scope: namespace
 description: '{{[APIRule](https://kyma-project.io/#/api-gateway/user/custom-resources/apirule/04-10-apirule-custom-resource)}} allows for exposing a service externally.'
 urlPath: apirules
+filter: "$filter(data, function($data) {$not($data.metadata.annotations.'gateway.kyma-project.io/original-version' = 'v2alpha1')})"
