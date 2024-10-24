@@ -119,6 +119,7 @@
           - key: CONNECT
           - key: TRACE
       - var: accessStrategy
+        required: true
         type: string
         simple: true
         dynamicValue: '$boolean($item.noAuth) ? "No Auth" : ($exists($item.jwt) ? "JWT" : ($exists($item.extAuth) ? "Ext Auth" : ""))'
