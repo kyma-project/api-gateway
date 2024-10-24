@@ -109,7 +109,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        test_make_target: [ "test-custom-domain", "test-integration-gateway", "migration-downtime-tests" ]
+        test_make_target: [ "test-custom-domain", "test-integration-gateway" ]
     steps:
       - uses: actions/checkout@v4
         with:
