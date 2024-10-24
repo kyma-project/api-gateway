@@ -146,7 +146,7 @@ jobs:
     name: Slack Notification
     runs-on: ubuntu-latest
     if: ${{ failure() }}
-    needs: [integration-tests, upgrade-tests, custom-domain-integration-gcp, custom-domain-integration-aws]
+    needs: [integration-tests, upgrade-tests, custom-domain-integration-gcp, custom-domain-integration-aws, migration-downtime-tests]
     steps:
       - uses: actions/checkout@v4
         with:
