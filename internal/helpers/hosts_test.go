@@ -17,6 +17,10 @@ var _ = Describe("IsFqdnHostName", func() {
 		Expect(IsFqdnHostName("host.example.com")).To(BeTrue())
 	})
 
+	It("Should be true if host is a valid FQDN with 1 char labels", func() {
+		Expect(IsFqdnHostName("a.b.ca")).To(BeTrue())
+	})
+
 	It("Should be false if host name has uppercase letters", func() {
 		Expect(IsFqdnHostName("host.exaMple.com")).To(BeFalse())
 	})
@@ -68,6 +72,10 @@ var _ = Describe("IsFqdnHostName", func() {
 		Expect(IsFqdnHostName("host.example-.com")).To(BeFalse())
 		Expect(IsFqdnHostName("host.example.-com")).To(BeFalse())
 		Expect(IsFqdnHostName("host.example.com-")).To(BeFalse())
+	})
+
+	It("Should be false if top level domain is too short", func() {
+		Expect(IsFqdnHostName("example.c")).To(BeFalse())
 	})
 })
 

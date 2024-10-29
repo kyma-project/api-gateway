@@ -5,7 +5,7 @@ This tutorial shows how to expose and secure a workload with mutual authenticati
 ## Prerequisites
 
 * [Deploy a sample HTTPBin Service](../01-00-create-workload.md).
-* [Set up your custom domain](../01-10-setup-custom-domain-for-workload.md).
+* [Set up your custom domain](../01-10-setup-custom-domain-for-workload.md) or use a Kyma domain instead.
 * [Set up a mutual TLS Gateway](../01-30-set-up-mtls-gateway.md) and export the bundle certificates.
 * Optionally, you can [create your own self-signed Client Root CA and certificate](../01-60-security/01-61-mtls-selfsign-client-certicate.md).
 

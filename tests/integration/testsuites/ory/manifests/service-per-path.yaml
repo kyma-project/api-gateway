@@ -1,29 +1,3 @@
-apiVersion: gateway.kyma-project.io/v1beta1
-kind: APIRule
-metadata:
-  name: "{{.NamePrefix}}-{{.TestID}}"
-  namespace: "{{.Namespace}}"
-spec:
-  gateway: "{{.GatewayNamespace}}/{{.GatewayName}}"
-  host: "httpbin-{{.TestID}}.{{.Domain}}"
-  service:
-    name: httpbin-{{.TestID}}
-    port: 8000
-  rules:
-    - path: /headers
-      methods: ["GET"]
-      accessStrategies:
-        - handler: noop
-      mutators: []
-    - path: /hello
-      methods: ["GET"]
-      accessStrategies:
-        - handler: noop
-      mutators: []
-      service:
-        name: helloworld-{{.TestID}}
-        port: 5000
----
 apiVersion: v1
 kind: Service
 metadata:
@@ -65,3 +39,29 @@ spec:
           imagePullPolicy: IfNotPresent #Always
           ports:
             - containerPort: 5000
+---
+apiVersion: gateway.kyma-project.io/v1beta1
+kind: APIRule
+metadata:
+  name: "{{.NamePrefix}}-{{.TestID}}"
+  namespace: "{{.Namespace}}"
+spec:
+  gateway: "{{.GatewayNamespace}}/{{.GatewayName}}"
+  host: "httpbin-{{.TestID}}.{{.Domain}}"
+  service:
+    name: httpbin-{{.TestID}}
+    port: 8000
+  rules:
+    - path: /headers
+      methods: ["GET"]
+      accessStrategies:
+        - handler: noop
+      mutators: []
+    - path: /hello
+      methods: ["GET"]
+      accessStrategies:
+        - handler: noop
+      mutators: []
+      service:
+        name: helloworld-{{.TestID}}
+        port: 5000

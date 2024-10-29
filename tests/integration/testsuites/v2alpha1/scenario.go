@@ -93,6 +93,15 @@ func (s *scenario) theAPIRuleIsApplied() error {
 	return helpers.ApplyApiRule(s.resourceManager.CreateResources, s.resourceManager.UpdateResources, s.k8sClient, testcontext.GetRetryOpts(), r)
 }
 
+func (s *scenario) theMisconfiguredAPIRuleIsApplied() error {
+	r, err := manifestprocessor.ParseFromFileWithTemplate(s.ApiResourceManifestPath, s.ApiResourceDirectory, s.ManifestTemplate)
+	if err != nil {
+		return err
+	}
+	_, err = s.resourceManager.CreateResources(s.k8sClient, r...)
+	return err
+}
+
 func (s *scenario) theAPIRuleV2Alpha1IsApplied() error {
 	r, err := manifestprocessor.ParseFromFileWithTemplate(s.ApiResourceManifestPath, s.ApiResourceDirectory, s.ManifestTemplate)
 	if err != nil {

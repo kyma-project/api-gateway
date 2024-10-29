@@ -70,8 +70,10 @@ runs:
         (kubectl logs -n kyma-system deployments/api-gateway-controller-manager || true) > logs/api-gateway-controller-manager.log
         (kubectl logs -n istio-system deployments/istio-ingressgateway || true) > logs/istio-ingressgateway.log
         (kubectl logs -n istio-system deployments/istiod || true) > logs/istiod.log
+        (kubectl logs -n kyma-system deployments/ory-oathkeeper || true) > logs/ory-oathkeeper.log
         (kubectl get --all-namespaces apirules.gateway.kyma-project.io -oyaml || true) > logs/apirules-dump.yaml
         (kubectl get --all-namespaces apigateways.operator.kyma-project.io -oyaml || true) > logs/gateway-dump.yaml
+        (kubectl get -n kyma-system deployment ory-oathkeeper -oyaml || true) > logs/ory-oathkeeper-dump.yaml
     - name: Uploads logs
       uses: actions/upload-artifact@v4
       if: failure()

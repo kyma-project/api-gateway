@@ -1500,6 +1500,27 @@ var _ = Describe("APIRule Controller", Serial, func() {
 				}()
 			})
 
+			It("should create an APIRule with host name that has 1 char labels and 2 chars top-level domain", func() {
+				// given
+				apiRuleName := generateTestName(testNameBase, testIDLength)
+				serviceName := testServiceNameBase
+				serviceHost := gatewayv2alpha1.Host("a.b.ca")
+				serviceHosts := []*gatewayv2alpha1.Host{&serviceHost}
+
+				rule := testRulev2alpha1("/img", []gatewayv2alpha1.HttpMethod{http.MethodGet})
+				rule.NoAuth = ptr.To(true)
+				apiRule := testApiRulev2alpha1(apiRuleName, testNamespace, serviceName, testNamespace, serviceHosts, testServicePort, []gatewayv2alpha1.Rule{rule})
+				svc := testService(serviceName, testNamespace, testServicePort)
+
+				// when
+				Expect(c.Create(context.Background(), svc)).Should(Succeed())
+				Expect(c.Create(context.Background(), apiRule)).Should(Succeed())
+				defer func() {
+					apiRulev2alpha1Teardown(apiRule)
+					serviceTeardown(svc)
+				}()
+			})
+
 			It("should create an APIRule with host name that has length of 255 characters", func() {
 				// given
 				apiRuleName := generateTestName(testNameBase, testIDLength)

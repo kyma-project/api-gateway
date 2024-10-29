@@ -1,0 +1,6 @@
+images:
+  - source: "oryd/oathkeeper:v0.38.25-beta.1"
+  - source: "oryd/oathkeeper-maester:v0.1.5"
+    amd64Only: true
+  - source: "busybox@sha256:3b3128d9df6bbbcc92e2358e596c9fbd722a437a62bafbc51607970e9e3b8869"
+    tag: "1.34.1-v1"
