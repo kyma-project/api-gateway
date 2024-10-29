@@ -96,7 +96,7 @@ var _ = Describe("Fully configured APIRule happy path", func() {
 				Expect(vs.Spec.Http).To(HaveLen(2))
 
 				Expect(vs.Spec.Http[0].Match[0].Method.GetRegex()).To(Equal("^(GET|POST)$"))
-				Expect(vs.Spec.Http[0].Match[0].Uri.GetRegex()).To(Equal("/"))
+				Expect(vs.Spec.Http[0].Match[0].Uri.GetRegex()).To(Equal("/$"))
 				Expect(vs.Spec.Http[0].Route[0].Destination.Host).To(Equal("another-service.another-namespace.svc.cluster.local"))
 				Expect(vs.Spec.Http[0].Route[0].Destination.Port.Number).To(Equal(uint32(9999)))
 
