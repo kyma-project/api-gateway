@@ -78,7 +78,7 @@ func deployExtAuthorizer(resourceMgr *resource.Manager, k8sClient dynamic.Interf
 	}
 
 	log.Printf("Deploying External Authorizer namespace %s\n", nsName)
-	_, err = resourceMgr.CreateOrUpdateResources(k8sClient, resources...)
+	_, err = resourceMgr.CreateResources(k8sClient, resources...)
 	if err != nil {
 		return err
 	}
