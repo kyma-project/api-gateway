@@ -521,10 +521,19 @@ spec:
                       description: Disables authorization when set to true.
                       type: boolean
                     path:
-                      description: Specifies the path of the exposed service, allowing
-                        '/*' to match all paths and '/a-path' to match a specific
-                        path.
-                      pattern: ^(\/\*|\/[0-9a-zA-Z/()?!\\_-]+)$
+                      description: |-
+                        Specifies the path of the exposed service
+                        Supported use cases are:
+
+
+                        - Exact path /* - matches all paths.
+
+
+                        - Usage of the `{*}` operator in any part of the path - match any path segment.
+
+
+                        - Usage of the `{**}` operator to match any path segment and all its sub-paths. Must be used as the last operator in the path.
+                      pattern: ^((\/[\w\.~\-]*)|(\/\{\*{1,2}\}))+$|^\/\*$
                       type: string
                     request:
                       description: Request allows modifying the request before it
