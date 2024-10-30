@@ -135,6 +135,43 @@ var _ = Describe("Validate rules", func() {
 		Expect(problems[0].Message).To(Equal("multiple rules defined for the same path and method"))
 	})
 
+	DescribeTable("should fail for invalid path", func(path string, shouldFail bool, expectedMessage string) {
+		//given
+		apiRule := &v2alpha1.APIRule{
+			Spec: v2alpha1.APIRuleSpec{
+				Service: getApiRuleService(sampleServiceName, uint32(8080)),
+				Hosts:   []*v2alpha1.Host{&host},
+				Rules: []v2alpha1.Rule{
+					{
+						NoAuth: ptr.To(true),
+						Path:   path,
+					},
+				},
+			},
+		}
+
+		service := getService(sampleServiceName)
+		fakeClient := createFakeClient(service)
+
+		//when
+		problems := validateRules(context.Background(), fakeClient, ".spec", apiRule)
+
+		//then
+		if shouldFail {
+			Expect(problems).To(HaveLen(1))
+			Expect(problems[0].AttributePath).To(Equal(".spec.rules[0].path"))
+			Expect(problems[0].Message).To(Equal(expectedMessage))
+		} else {
+			Expect(problems).To(HaveLen(0))
+		}
+
+	},
+		Entry("should fail when operator {**} exists after {**}", "/{**}/{**}", true, "Operator {**} was used after operator {**}. The {**} operator must be the last in the path."),
+		Entry("should fail when operator {**} exists after {**}", "/{**}/{**}/{**}", true, "Operator {**} was used after operator {**}. The {**} operator must be the last in the path."),
+		Entry("should fail when operator {*} exists after {**}", "/{**}/test/{*}", true, "Operator {*} was used after operator {**}. The {**} operator must be the last in the path."),
+		Entry("should not fail when operator {**} exists after {*}", "/test/{*}/{**}", false, ""),
+	)
+
 	It("should succeed for the same path but different methods", func() {
 		//given
 		apiRule := &v2alpha1.APIRule{

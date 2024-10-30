@@ -6,6 +6,7 @@ import (
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	"github.com/kyma-project/api-gateway/internal/validation"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"strings"
 )
 
 func validateRules(ctx context.Context, client client.Client, parentAttributePath string, apiRule *gatewayv2alpha1.APIRule) []validation.Failure {
@@ -48,12 +49,31 @@ func validateRules(ctx context.Context, client client.Client, parentAttributePat
 			problems = append(problems, extAuthFailures...)
 		}
 
+		problems = append(problems, validatePath(ruleAttributePath, rule.Path)...)
 	}
 
 	jwtAuthFailures := validateJwtAuthenticationEquality(rulesAttributePath, rules)
 	problems = append(problems, jwtAuthFailures...)
 
 	return problems
+}
+
+func validatePath(validationPath string, rulePath string) (problems []validation.Failure) {
+	problems = append(problems, validateEnvoyTemplate(validationPath+".path", rulePath)...)
+	return problems
+}
+
+func validateEnvoyTemplate(s string, path string) []validation.Failure {
+	segments := strings.Split(strings.TrimLeft(path, "/"), "/")
+	doubleAsteriskExists := false
+	for _, segment := range segments {
+		if segment == "{**}" && !doubleAsteriskExists {
+			doubleAsteriskExists = true
+		} else if (segment == "{*}" || segment == "{**}") && doubleAsteriskExists {
+			return []validation.Failure{{AttributePath: s, Message: fmt.Sprintf("Operator %s was used after operator {**}. The {**} operator must be the last in the path.", segment)}}
+		}
+	}
+	return nil
 }
 
 func hasPathAndMethodDuplicates(rules []gatewayv2alpha1.Rule) bool {
