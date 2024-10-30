@@ -243,12 +243,10 @@ func (r creator) generateAuthorizationPolicySpec(ctx context.Context, client cli
 
 // standardizeRulePath converts wildcard `/*` path to post Istio 1.22 Envoy template format `/{*}`.
 func standardizeRulePath(path string) string {
-	switch path {
-	case "/*":
+	if path == "/*" {
 		return "/{**}"
-	default:
-		return path
 	}
+	return path
 }
 
 func withTo(b *builders.RuleBuilder, rule gatewayv2alpha1.Rule) *builders.RuleBuilder {
