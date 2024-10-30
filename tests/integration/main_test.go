@@ -2,7 +2,6 @@ package api_gateway
 
 import (
 	"context"
-	"github.com/kyma-project/api-gateway/tests/integration/testsuites/v2alpha1"
 	"log"
 	"os"
 	"testing"
@@ -16,6 +15,7 @@ import (
 	istiojwt "github.com/kyma-project/api-gateway/tests/integration/testsuites/istio-jwt"
 	"github.com/kyma-project/api-gateway/tests/integration/testsuites/ory"
 	"github.com/kyma-project/api-gateway/tests/integration/testsuites/upgrade"
+	"github.com/kyma-project/api-gateway/tests/integration/testsuites/v2alpha1"
 
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 )

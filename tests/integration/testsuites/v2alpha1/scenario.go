@@ -64,6 +64,12 @@ func (s *scenario) callingTheEndpointWithMethodWithValidTokenShouldResultInStatu
 	return s.callingTheEndpointWithMethodWithValidToken(fmt.Sprintf("%s%s", s.Url, path), method, tokenType, asserter)
 }
 
+func (s *scenario) callingTheEndpointWithMethodShouldResultInStatusBetween(path string, method string, lower, higher int) error {
+	requestHeaders := make(map[string]string)
+	asserter := &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher}
+	return s.httpClient.CallEndpointWithHeadersAndMethod(requestHeaders, fmt.Sprintf("%s%s", s.Url, path), method, asserter)
+}
+
 func (s *scenario) callingTheEndpointWithMethodWithValidToken(url string, method string, tokenType string, asserter helpers.HttpResponseAsserter, additionalRequestHeaders ...map[string]string) error {
 	requestHeaders := make(map[string]string)
 	if len(additionalRequestHeaders) > 0 {
