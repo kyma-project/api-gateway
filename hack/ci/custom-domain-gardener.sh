@@ -112,6 +112,30 @@ export TEST_DOMAIN="${CLUSTER_NAME}.${GARDENER_PROJECT_NAME}.shoot.live.k8s-hana
 export TEST_CUSTOM_DOMAIN="goat.build.kyma-project.io"
 export IS_GARDENER=true
 
+if [ "$GARDENER_PROVIDER" == "aws" ]; then
+  export LOAD_BALANCER_ADR=$(kubectl get services --namespace istio-system istio-ingressgateway --output jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+elif [ "$GARDENER_PROVIDER" == "gcp" ]; then
+  export LOAD_BALANCER_ADR=$(kubectl get services --namespace istio-system istio-ingressgateway --output jsonpath='{.status.loadBalancer.ingress[0].ip}')
+else
+  echo "Unknown gardener provider"
+  exit 3
+fi
+echo "determined load balancer address: ${LOAD_BALANCER_ADR}"
+
+echo "waiting for the ingress gateway to respond"
+trial=1
+until curl -s "http://$LOAD_BALANCER_ADR:15021"
+do
+  if (( trial >= 60 ))
+  then
+     echo "exceeded number of trials while waiting for the ingress gateway, giving up..."
+     exit 4
+  fi
+  echo "ingress gateway does not respond, trying again..."
+  sleep 10
+  trial=$((trial + 1))
+done
+
 for make_target in "$@"
 do
     make $make_target
