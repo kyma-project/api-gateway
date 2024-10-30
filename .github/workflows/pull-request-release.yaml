@@ -7,35 +7,10 @@ on:
       - 'release-**'
 
 jobs:
-  check-build-image:
-    name: Check whether build image should run
-    environment: ${{ github.event.pull_request.author_association != 'COLLABORATOR' && github.event.pull_request.author_association != 'OWNER' && 'restricted' || 'internal' }}
-    outputs:
-      check: ${{ steps.changed-files.outputs.any_modified }}
-    runs-on: ubuntu-latest
-    if: ${{ github.event.pull_request.draft == false }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: tj-actions/changed-files@e9772d140489982e0e3704fea5ee93d536f1e275
-        id: changed-files
-        with:
-          files_ignore: |
-            docs/**
-            **/*.md
-            **/*.yaml
-            tests/performance/**
-            OWNERS
-            CODEOWNERS
-            .github/**
-            .reuse/**
-            external-images.yaml
-      - name: List all changed files
-        run: echo '${{ steps.changed-files.outputs.all_changed_files }}' >> $GITHUB_STEP_SUMMARY
   build-image:
     name: Build manager image
-    needs: [check-build-image]
-    if: ${{ needs.check-build-image.outputs.check == 'true' }}
     uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
+    if: github.event.pull_request.draft == false
     with:
       name: api-gateway-manager
       dockerfile: Dockerfile
@@ -43,111 +18,37 @@ jobs:
       build-args: |
         VERSION=PR-${{ github.event.number }}
 
-  check-unit-test:
-    outputs:
-      check: ${{ steps.changed-files.outputs.any_modified }}
-    name: Check whether unit test & lint should run based on the changed files
-    environment: ${{ github.event.pull_request.author_association != 'COLLABORATOR' && github.event.pull_request.author_association != 'OWNER' && 'restricted' || 'internal' }}
+  unit-tests:
+    name: Unit tests & lint
     if: github.event.pull_request.draft == false
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: tj-actions/changed-files@e9772d140489982e0e3704fea5ee93d536f1e275
-        id: changed-files
-        with:
-          files_ignore: |
-            docs/**
-            **/*.md
-            tests/performance/**
-            OWNERS
-            CODEOWNERS
-            sec-scanners-config.yaml
-            .github/**
-            .reuse/**
-            external-images.yaml
-      - name: List all changed files
-        run: echo '${{ steps.changed-files.outputs.all_changed_files }}' >> $GITHUB_STEP_SUMMARY
-  dispatch-unit-test:
-    name: Dispatch unit test
-    needs: [check-unit-test]
     uses: ./.github/workflows/pull-unit-lint.yaml
-    if: ${{ needs.check-unit-test.outputs.check == 'true' }}
     secrets: inherit
 
-  check-integration:
-    outputs:
-      check: ${{ steps.changed-files.outputs.any_modified }}
-    name: Check whether integration tests should run based on the changed files
-    environment: ${{ github.event.pull_request.author_association != 'COLLABORATOR' && github.event.pull_request.author_association != 'OWNER' && 'restricted' || 'internal' }}
+  integration-tests:
+    name: Integration tests
+    needs: [ build-image ]
     if: github.event.pull_request.draft == false
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: tj-actions/changed-files@e9772d140489982e0e3704fea5ee93d536f1e275
-        id: changed-files
-        with:
-          files_ignore: |
-            docs/**
-            **/*.md
-            tests/performance/**
-            OWNERS
-            CODEOWNERS
-            sec-scanners-config.yaml
-            .github/**
-            external-images.yaml
-      - name: List all changed files
-        run: echo '${{ steps.changed-files.outputs.all_changed_files }}' >> $GITHUB_STEP_SUMMARY
-  dispatch-integration:
-    name: Dispatch integration tests
-    needs: [ check-integration,build-image ]
     uses: ./.github/workflows/pull-integration-release.yaml
-    if: ${{ needs.check-integration.outputs.check == 'true' }}
     secrets: inherit
 
-  check-ui:
-    outputs:
-      check: ${{ steps.changed-files.outputs.any_modified }}
-    name: Check whether UI tests should run based on the changed files
-    environment: ${{ github.event.pull_request.author_association != 'COLLABORATOR' && github.event.pull_request.author_association != 'OWNER' && 'restricted' || 'internal' }}
+  ui-tests:
+    name: UI tests
+    needs: [build-image]
     if: github.event.pull_request.draft == false
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: tj-actions/changed-files@e9772d140489982e0e3704fea5ee93d536f1e275
-        id: changed-files
-        with:
-          files: |
-            config/ui-extensions/**
-            config/crd/**
-            tests/ui/**
-            .github/workflows/ui-tests.yaml
-      - name: List all changed files
-        run: echo '${{ steps.changed-files.outputs.all_changed_files }}' >> $GITHUB_STEP_SUMMARY
-  dispatch-ui:
-    name: Dispatch UI tests
-    needs: [check-ui,build-image]
     uses: ./.github/workflows/ui-tests.yaml
-    if: ${{ needs.check-ui.outputs.check == 'true' }}
     secrets: inherit
 
-  check-verify-pins:
-    outputs:
-      check: ${{ steps.changed-files.outputs.any_modified }}
-    name: Check whether to run verify-commit-pins
-    environment: ${{ github.event.pull_request.author_association != 'COLLABORATOR' && github.event.pull_request.author_association != 'OWNER' && 'restricted' || 'internal' }}
+  verify-pins:
+    name: Verify-commit-pins
+    if: github.event.pull_request.draft == false
+    uses: ./.github/workflows/verify-commit-pins.yaml
+    secrets: inherit
+
+  pull-request-status:
+    needs: [ build-image, unit-tests, integration-tests, ui-tests, verify-pins ]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: tj-actions/changed-files@e9772d140489982e0e3704fea5ee93d536f1e275
-        id: changed-files
-        with:
-          files: |
-            .github/workflows/**
-      - name: List all changed files
-        run: echo '${{ steps.changed-files.outputs.all_changed_files }}' >> $GITHUB_STEP_SUMMARY
-  dispatch-verify-pins:
-    name: Dispatch verify-commit-pins
-    needs: [check-verify-pins]
-    uses: ./.github/workflows/verify-commit-pins.yaml
-    if: ${{ needs.check-verify-pins.outputs.check == 'true' }}
-    secrets: inherit
+      - if: ${{ !(contains(needs.*.result, 'failure')) }}
+        run: exit 0
+      - if: ${{ contains(needs.*.result, 'failure') }}
+        run: exit 1

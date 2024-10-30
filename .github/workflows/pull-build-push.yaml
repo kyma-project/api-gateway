@@ -20,33 +20,11 @@ on:
       - 'main'
 
 jobs:
-  filter-changes:
-    name: List relevant VCS changes
-    outputs:
-      check: ${{ steps.changed-files.outputs.any_modified }}
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: tj-actions/changed-files@e9772d140489982e0e3704fea5ee93d536f1e275
-        id: changed-files
-        with:
-          files_ignore: |
-            docs/**
-            **/*.md
-            OWNERS
-            CODEOWNERS
-            sec-scanners-config.yaml
-            .github/**
-            .**
-      - name: List all changed files
-        run: echo '${{ steps.changed-files.outputs.all_changed_files }}'
-
   build-image:
     name: Build and push manager image
-    needs: [filter-changes]
     environment: ${{ github.event.pull_request.author_association != 'COLLABORATOR' && github.event.pull_request.author_association != 'OWNER' && 'restricted' || 'internal' }}
     runs-on: ubuntu-latest
-    if: ${{ github.event.pull_request.draft == false && needs.filter-changes.outputs.check == 'true' }}
+    if: ${{ github.event.pull_request.draft == false }}
     steps:
       - uses: actions/checkout@v4
         with:
