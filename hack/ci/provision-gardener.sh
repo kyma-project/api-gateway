@@ -95,7 +95,9 @@ until (kubectl --kubeconfig "${CLUSTER_NAME}_kubeconfig.yaml" get --raw "/readyz
   sleep 1
 done
 
+echo "waiting for shoot operations to be completed..."
+kubectl wait --kubeconfig "${GARDENER_KUBECONFIG}" --for=jsonpath='{.status.lastOperation.state}'=Succeeded --timeout=600s "shoots/${CLUSTER_NAME}"
+
 # replace the default kubeconfig
 mkdir -p ~/.kube
 mv "${CLUSTER_NAME}_kubeconfig.yaml" ~/.kube/config
-

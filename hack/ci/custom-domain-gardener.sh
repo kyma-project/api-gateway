@@ -78,9 +78,6 @@ CLUSTER_NAME=ag-$(echo $RANDOM | md5sum | head -c 7)
 export CLUSTER_NAME
 ./hack/ci/provision-gardener.sh
 
-echo "waiting for Gardener to finish shoot reconcile..."
-kubectl wait --kubeconfig "${GARDENER_KUBECONFIG}" --for=jsonpath='{.status.lastOperation.state}'=Succeeded --timeout=600s "shoots/${CLUSTER_NAME}"
-
 cat <<EOF > patch.yaml
 spec:
   extensions:
@@ -99,32 +96,35 @@ spec:
           enabled: true
 EOF
 
+echo "patching shoot for custom domain tests"
 kubectl patch shoot "${CLUSTER_NAME}" --patch-file patch.yaml --kubeconfig "${GARDENER_KUBECONFIG}"
 
-make install-istio
-make deploy
-
-echo "waiting for Gardener to finish shoot reconcile..."
+echo "waiting for shoot operations to be completed"
 kubectl wait --kubeconfig "${GARDENER_KUBECONFIG}" --for=jsonpath='{.status.lastOperation.state}'=Succeeded --timeout=600s "shoots/${CLUSTER_NAME}"
+
+echo "installing istio"
+make install-istio
+
+echo "deploying api-gateway"
+make deploy
 
 # KYMA_DOMAIN is required by the tests
 export TEST_DOMAIN="${CLUSTER_NAME}.${GARDENER_PROJECT_NAME}.shoot.live.k8s-hana.ondemand.com"
 export TEST_CUSTOM_DOMAIN="goat.build.kyma-project.io"
 export IS_GARDENER=true
 
-if [ "$GARDENER_PROVIDER" == "aws" ]; then
-  export LOAD_BALANCER_ADR=$(kubectl get services --namespace istio-system istio-ingressgateway --output jsonpath='{.status.loadBalancer.ingress[0].hostname}')
-elif [ "$GARDENER_PROVIDER" == "gcp" ]; then
-  export LOAD_BALANCER_ADR=$(kubectl get services --namespace istio-system istio-ingressgateway --output jsonpath='{.status.loadBalancer.ingress[0].ip}')
-else
-  echo "Unknown gardener provider"
-  exit 3
-fi
-echo "determined load balancer address: ${LOAD_BALANCER_ADR}"
+echo "waiting for the ingress gateway external address"
+[ "$GARDENER_PROVIDER" == "aws" ] && address_field="{.status.loadBalancer.ingress[0].hostname}" || address_field="{.status.loadBalancer.ingress[0].ip}"
+kubectl wait --timeout=300s --namespace istio-system services/istio-ingressgateway --for=jsonpath="${address_field}"
+ingress_external_address=$(kubectl get services --namespace istio-system istio-ingressgateway --output jsonpath="${address_field}")
+ingress_external_status_port=$(kubectl get services --namespace istio-system istio-ingressgateway --output jsonpath='{.spec.ports[?(@.name=="status-port")].targetPort}')
 
-echo "waiting for the ingress gateway to respond"
+echo "determined ingress external address: ${ingress_external_address} and external status port: ${ingress_external_status_port}"
+
+echo "waiting until it is possible to connect to the ingress gateway"
 trial=1
-until curl -s "http://$LOAD_BALANCER_ADR:15021"
+# check if it is possible to establish connection to the ingress gateway (the exact http status code doesn't matter)
+until curl --silent --output /dev/null "http://${ingress_external_address}:${ingress_external_status_port}"
 do
   if (( trial >= 60 ))
   then
