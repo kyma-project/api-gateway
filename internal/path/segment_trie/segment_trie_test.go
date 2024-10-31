@@ -31,6 +31,14 @@ func TestTableConflictChecking(t *testing.T) {
 			conflictNumber: 1,
 		},
 		{
+			name: "Conflict: exact with exact",
+			paths: []string{
+				"/abc/def/ghi",
+				"/abc/def/ghi",
+			},
+			conflictNumber: 1,
+		},
+		{
 			name: "Conflict: exact with double asterisk",
 			paths: []string{
 				"/abc/def/ghi",
