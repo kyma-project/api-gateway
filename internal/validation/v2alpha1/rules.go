@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
+	"github.com/kyma-project/api-gateway/internal/path/segment_trie"
+	"github.com/kyma-project/api-gateway/internal/path/token"
 	"github.com/kyma-project/api-gateway/internal/validation"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"strings"
@@ -19,8 +21,8 @@ func validateRules(ctx context.Context, client client.Client, parentAttributePat
 		return problems
 	}
 
-	if hasPathAndMethodDuplicates(rules) {
-		problems = append(problems, validation.Failure{AttributePath: rulesAttributePath, Message: "multiple rules defined for the same path and method"})
+	if path, method, conflict := hasPathByMethodConflict(rules); conflict {
+		problems = append(problems, validation.Failure{AttributePath: rulesAttributePath, Message: fmt.Sprintf("Path %s with method %s conflicts with at least one of the other defined paths", path, method)})
 	}
 
 	for i, rule := range rules {
@@ -97,27 +99,29 @@ func validateEnvoyTemplate(validationPath string, path string) []validation.Fail
 	return nil
 }
 
-func hasPathAndMethodDuplicates(rules []gatewayv2alpha1.Rule) bool {
-	duplicates := map[string]bool{}
-
-	if len(rules) > 1 {
-		for _, rule := range rules {
-			if len(rule.Methods) > 0 {
-				for _, method := range rule.Methods {
-					tmp := fmt.Sprintf("%s:%s", rule.Path, method)
-					if duplicates[tmp] {
-						return true
-					}
-					duplicates[tmp] = true
-				}
-			} else {
-				if duplicates[rule.Path] {
-					return true
-				}
-				duplicates[rule.Path] = true
-			}
+func hasPathByMethodConflict(rules []gatewayv2alpha1.Rule) (path string, method gatewayv2alpha1.HttpMethod, conflict bool) {
+	rulesByMethod := map[gatewayv2alpha1.HttpMethod][]gatewayv2alpha1.Rule{}
+	for _, rule := range rules {
+		for _, method := range rule.Methods {
+			rulesByMethod[method] = append(rulesByMethod[method], rule)
 		}
 	}
 
-	return false
+	for m, rules := range rulesByMethod {
+		trie := segment_trie.New()
+		for _, rule := range rules {
+			path = rule.Path
+			if rule.Path == "/*" {
+				path = "/{**}"
+			}
+
+			tokens := token.TokenizePath(path)
+			if trie.InsertAndCheckCollisions(tokens) != nil {
+				return rule.Path, m, true
+			}
+		}
+		println(trie.String())
+	}
+
+	return "", "", false
 }
