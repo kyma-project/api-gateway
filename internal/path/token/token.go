@@ -51,5 +51,6 @@ func TokenizePath(apiPath string) []Token {
 			tokens = append(tokens, Token{Type: IDENT, Literal: tok})
 		}
 	}
+
 	return tokens
 }
