@@ -4,7 +4,7 @@ go 1.23.2
 
 require (
 	github.com/avast/retry-go/v4 v4.6.0
-	github.com/cucumber/godog v0.14.1
+	github.com/cucumber/godog v0.15.0
 	github.com/gardener/cert-management v0.16.0
 	github.com/gardener/external-dns-management v0.22.0
 	github.com/go-jose/go-jose/v3 v3.0.3
