@@ -63,23 +63,37 @@ func validatePath(validationPath string, rulePath string) (problems []validation
 	return problems
 }
 
-func validateEnvoyTemplate(s string, path string) []validation.Failure {
-	segments := strings.Split(strings.TrimLeft(path, "/"), "/")
-
-	if strings.Count("{**}", path) > 1 {
+func validateEnvoyTemplate(validationPath string, path string) []validation.Failure {
+	if strings.Count(path, "{**}") == 0 {
 		return []validation.Failure{}
 	}
 
-	doubleAsteriskExists := false
-	for _, segment := range segments {
-		if (segment == "{*}" || segment == "{**}") && doubleAsteriskExists {
-			return []validation.Failure{{AttributePath: s, Message: fmt.Sprintf("Operator %s was used after operator {**}. The {**} operator must be the last in the path.", segment)}}
-		}
-
-		if segment == "{**}" {
-			doubleAsteriskExists = true
+	if strings.Count(path, "{**}") > 1 {
+		return []validation.Failure{
+			{
+				AttributePath: validationPath,
+				Message:       "Only one {**} operator is allowed in the path.",
+			},
 		}
 	}
+
+	segments := strings.Split(strings.TrimLeft(path, "/"), "/")
+
+	var last bool
+	for _, segment := range segments {
+		if segment == "{*}" || segment == "{**}" {
+			if last {
+				return []validation.Failure{
+					{
+						AttributePath: validationPath,
+						Message:       "The {**} operator must be the last operator in the path.",
+					},
+				}
+			}
+			last = segment == "{**}"
+		}
+	}
+
 	return nil
 }
 

@@ -166,10 +166,25 @@ var _ = Describe("Validate rules", func() {
 		}
 
 	},
-		Entry("should fail when operator {**} exists after {**}", "/{**}/{**}", true, "Operator {**} was used after operator {**}. The {**} operator must be the last in the path."),
-		Entry("should fail when operator {**} exists after {**}", "/{**}/{**}/{**}", true, "Operator {**} was used after operator {**}. The {**} operator must be the last in the path."),
-		Entry("should fail when operator {*} exists after {**}", "/{**}/test/{*}", true, "Operator {*} was used after operator {**}. The {**} operator must be the last in the path."),
-		Entry("should not fail when operator {**} exists after {*}", "/test/{*}/{**}", false, ""),
+		Entry(
+			"should fail when operator {**} exists after {**}",
+			"/{**}/{**}",
+			true,
+			"Only one {**} operator is allowed in the path."),
+		Entry(
+			"should fail when operator {**} exists after {**}",
+			"/{**}/{**}/{**}",
+			true,
+			"Only one {**} operator is allowed in the path."),
+		Entry(
+			"should fail when operator {*} exists after {**}",
+			"/{**}/test/{*}",
+			true,
+			"The {**} operator must be the last operator in the path."),
+		Entry("should not fail when operator {**} exists after {*}",
+			"/test/{*}/{**}",
+			false,
+			""),
 	)
 
 	It("should succeed for the same path but different methods", func() {
