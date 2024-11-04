@@ -166,6 +166,14 @@ var _ = Describe("Validate rules", func() {
 		}
 
 	},
+		Entry("should not fail for valid path",
+			"/test",
+			false,
+			""),
+		Entry("should not fail for valid path with {**}",
+			"/test/{**}",
+			false,
+			""),
 		Entry(
 			"should fail when operator {**} exists after {**}",
 			"/{**}/{**}",
