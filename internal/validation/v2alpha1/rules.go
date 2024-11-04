@@ -102,6 +102,10 @@ func validateEnvoyTemplate(validationPath string, path string) []validation.Fail
 func hasPathByMethodConflict(rules []gatewayv2alpha1.Rule) (path string, method gatewayv2alpha1.HttpMethod, conflict bool) {
 	rulesByMethod := map[gatewayv2alpha1.HttpMethod][]gatewayv2alpha1.Rule{}
 	for _, rule := range rules {
+		if len(rule.Methods) == 0 {
+			rulesByMethod["NO_METHODS"] = append(rulesByMethod["NO_METHODS"], rule)
+		}
+
 		for _, method := range rule.Methods {
 			rulesByMethod[method] = append(rulesByMethod[method], rule)
 		}

@@ -17,6 +17,12 @@ func TestSegmentTrie(t *testing.T) {
 }
 
 var _ = Describe("SegmentTrie", func() {
+	It("should not panic on a multiple operator path", func() {
+		trie := New()
+		err := trie.InsertAndCheckCollisions(token.TokenizePath("/abc/{**}/def/{**}"))
+		Expect(err).To(BeNil())
+	})
+
 	DescribeTable("Conflict Checking",
 		func(paths []string, conflictNumber int) {
 			trie := New()
