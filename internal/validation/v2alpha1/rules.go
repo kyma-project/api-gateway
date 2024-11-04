@@ -65,7 +65,7 @@ func validatePath(validationPath string, rulePath string) (problems []validation
 
 func validateEnvoyTemplate(validationPath string, path string) []validation.Failure {
 	if strings.Count(path, "{**}") == 0 {
-		return []validation.Failure{}
+		return nil
 	}
 
 	if strings.Count(path, "{**}") > 1 {
