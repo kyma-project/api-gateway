@@ -21,10 +21,6 @@ func validateRules(ctx context.Context, client client.Client, parentAttributePat
 		return problems
 	}
 
-	if path, method, conflict := hasPathByMethodConflict(rules); conflict {
-		problems = append(problems, validation.Failure{AttributePath: rulesAttributePath, Message: fmt.Sprintf("Path %s with method %s conflicts with at least one of the other defined paths", path, method)})
-	}
-
 	for i, rule := range rules {
 		ruleAttributePath := fmt.Sprintf("%s[%d]", rulesAttributePath, i)
 
@@ -52,6 +48,10 @@ func validateRules(ctx context.Context, client client.Client, parentAttributePat
 		}
 
 		problems = append(problems, validatePath(ruleAttributePath, rule.Path)...)
+	}
+
+	if path, method, conflict := hasPathByMethodConflict(rules); conflict {
+		problems = append(problems, validation.Failure{AttributePath: rulesAttributePath, Message: fmt.Sprintf("Path %s with method %s conflicts with at least one of the other defined paths", path, method)})
 	}
 
 	jwtAuthFailures := validateJwtAuthenticationEquality(rulesAttributePath, rules)
