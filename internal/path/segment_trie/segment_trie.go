@@ -61,10 +61,13 @@ func (t *SegmentTrie) InsertAndCheckCollisions(tokens []token.Token) error {
 		return nil
 	}
 	node := t.Root
-	pathExist := findExistingPath(node, false, tokens, 0)
-	if pathExist {
-		return errors.New("path collision detected")
+	if !t.Root.EndNode {
+		pathExist := findExistingPath(node, false, tokens, 0)
+		if pathExist {
+			return errors.New("path collision detected")
+		}
 	}
+
 	for i, tok := range tokens {
 		node.EndNode = false
 		if tok.Type == token.BRACED_DOUBLE_ASTERIX {

@@ -51,7 +51,15 @@ func validateRules(ctx context.Context, client client.Client, parentAttributePat
 	}
 
 	if path, method, conflict := hasPathByMethodConflict(rules); conflict {
-		problems = append(problems, validation.Failure{AttributePath: rulesAttributePath, Message: fmt.Sprintf("Path %s with method %s conflicts with at least one of the other defined paths", path, method)})
+		problems = append(problems,
+			validation.Failure{
+				AttributePath: rulesAttributePath,
+				Message: fmt.Sprintf(
+					"Path %s with method %s conflicts with at least one of the other defined paths",
+					path,
+					method),
+			},
+		)
 	}
 
 	jwtAuthFailures := validateJwtAuthenticationEquality(rulesAttributePath, rules)

@@ -36,6 +36,9 @@ var _ = Describe("SegmentTrie", func() {
 			}
 			Expect(errNumber).To(Equal(conflictNumber))
 		},
+		Entry("No conflict: only one double asterisk", []string{
+			"/{**}",
+		}, 0),
 		Entry("Conflict: exact with single asterisk", []string{
 			"/abc/def/ghi",
 			"/abc/{*}/ghi",
