@@ -9,13 +9,6 @@ import (
 	. "github.com/kyma-project/api-gateway/internal/path/segment_trie"
 )
 
-func handleError(trie *SegmentTrie, t *testing.T, err error) {
-	if err != nil {
-		t.Logf("Tree: %s", trie.String())
-		t.Errorf("Expected no error, got %s", err)
-	}
-}
-
 func TestTableConflictChecking(t *testing.T) {
 	tt := []struct {
 		name           string
