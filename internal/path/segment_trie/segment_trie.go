@@ -123,11 +123,7 @@ func findExistingPath(node *Node, isNodeDoubleAsterix bool, tokens []token.Token
 	}
 
 	if isNodeDoubleAsterix {
-		if hasAnySuffix(tokens, node.Suffixes) {
-			return true
-		} else {
-			return false
-		}
+		return hasAnySuffix(tokens, node.Suffixes)
 	}
 
 	switch tokens[cur].Type {
