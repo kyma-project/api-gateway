@@ -65,12 +65,19 @@ func validatePath(validationPath string, rulePath string) (problems []validation
 
 func validateEnvoyTemplate(s string, path string) []validation.Failure {
 	segments := strings.Split(strings.TrimLeft(path, "/"), "/")
+
+	if strings.Count("{**}", path) > 1 {
+		return []validation.Failure{}
+	}
+
 	doubleAsteriskExists := false
 	for _, segment := range segments {
-		if segment == "{**}" && !doubleAsteriskExists {
-			doubleAsteriskExists = true
-		} else if (segment == "{*}" || segment == "{**}") && doubleAsteriskExists {
+		if (segment == "{*}" || segment == "{**}") && doubleAsteriskExists {
 			return []validation.Failure{{AttributePath: s, Message: fmt.Sprintf("Operator %s was used after operator {**}. The {**} operator must be the last in the path.", segment)}}
+		}
+
+		if segment == "{**}" {
+			doubleAsteriskExists = true
 		}
 	}
 	return nil
