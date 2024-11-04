@@ -22,6 +22,10 @@ const (
 	SEPARATOR = "/"
 )
 
+const (
+	EMPTY_LITERAL = ""
+)
+
 type List []Token
 
 func (tk List) String() string {
@@ -40,7 +44,7 @@ func TokenizePath(apiPath string) []Token {
 	for _, tok := range strings.Split(apiPath, SEPARATOR) {
 		switch {
 		case tok == "":
-			tokens = append(tokens, Token{Type: EMPTY, Literal: ""})
+			tokens = append(tokens, Token{Type: EMPTY, Literal: EMPTY_LITERAL})
 		case tok == BRACED_ASTERIX:
 			tokens = append(tokens, Token{Type: BRACED_ASTERIX, Literal: BRACED_ASTERIX})
 		case tok == BRACED_DOUBLE_ASTERIX:

@@ -7,108 +7,72 @@ import (
 	"testing"
 
 	. "github.com/kyma-project/api-gateway/internal/path/segment_trie"
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 )
 
-func TestTableConflictChecking(t *testing.T) {
-	tt := []struct {
-		name           string
-		paths          []string
-		conflictNumber int
-	}{
-		{
-			name: "Conflict: exact with single asterisk",
-			paths: []string{
-				"/abc/def/ghi",
-				"/abc/{*}/ghi",
-			},
-			conflictNumber: 1,
-		},
-		{
-			name: "Conflict: exact with exact",
-			paths: []string{
-				"/abc/def/ghi",
-				"/abc/def/ghi",
-			},
-			conflictNumber: 1,
-		},
-		{
-			name: "Conflict: exact with double asterisk",
-			paths: []string{
-				"/abc/def/ghi",
-				"/abc/{**}/ghi",
-				"/abc/{**}",
-				"/{**}/ghi",
-				"/{**}",
-				"/{**}/def/ghi",
-			},
-			conflictNumber: 5,
-		},
-		{
-			name: "Conflict: double asterisk with single asterisk",
-			paths: []string{
-				"/abc/{**}/ghi",
-				"/abc/{*}/ghi",
-				"/{*}/{*}/ghi",
-			},
-			conflictNumber: 2,
-		},
-		{
-			name: "Conflict: double asterisk with double asterisk",
-			paths: []string{
-				"/abc/{**}/def/ghi",
-				"/abc/{**}/ghi",
-				"/abc/{**}",
-			},
-			conflictNumber: 2,
-		},
-		{
-			name: "No conflict: exact paths",
-			paths: []string{
-				"/abc/def/ghi",
-				"/abc/def/foo",
-				"/def/ghi",
-			},
-			conflictNumber: 0,
-		},
-		{
-			name: "No conflict: paths with single asterisk, but different suffix",
-			paths: []string{
-				"/abc/{*}/def",
-				"/abc/{*}/ghi",
-				"/abc/{*}/foo/bar",
-				"/abc/{*}",
-			},
-			conflictNumber: 0,
-		},
-		{
-			name: "No conflict: paths with double asterisk, but different suffix",
-			paths: []string{
-				"/abc/{**}/def",
-				"/abc/{**}/ghi",
-				"/abc/{**}/foo/bar",
-			},
-			conflictNumber: 0,
-		},
-	}
+func TestSegmentTrie(t *testing.T) {
+	RegisterFailHandler(Fail)
+	RunSpecs(t, "SegmentTrie Suite")
+}
 
-	for _, tc := range tt {
-		t.Run(tc.name, func(t *testing.T) {
+var _ = Describe("SegmentTrie", func() {
+	DescribeTable("Conflict Checking",
+		func(paths []string, conflictNumber int) {
 			trie := New()
 			errNumber := 0
-			for _, path := range tc.paths {
+			for _, path := range paths {
 				tokenizedPath := token.TokenizePath(path)
 				err := trie.InsertAndCheckCollisions(tokenizedPath)
 				if err != nil {
 					errNumber++
 				}
 			}
-			if errNumber != tc.conflictNumber {
-				t.Logf("Tree: %s", trie.String())
-				t.Errorf("Expected %d conflicts, got %d", tc.conflictNumber, errNumber)
-			}
-		})
-	}
-}
+			Expect(errNumber).To(Equal(conflictNumber))
+		},
+		Entry("Conflict: exact with single asterisk", []string{
+			"/abc/def/ghi",
+			"/abc/{*}/ghi",
+		}, 1),
+		Entry("Conflict: exact with exact", []string{
+			"/abc/def/ghi",
+			"/abc/def/ghi",
+		}, 1),
+		Entry("Conflict: exact with double asterisk", []string{
+			"/abc/def/ghi",
+			"/abc/{**}/ghi",
+			"/abc/{**}",
+			"/{**}/ghi",
+			"/{**}",
+			"/{**}/def/ghi",
+		}, 5),
+		Entry("Conflict: double asterisk with single asterisk", []string{
+			"/abc/{**}/ghi",
+			"/abc/{*}/ghi",
+			"/{*}/{*}/ghi",
+		}, 2),
+		Entry("Conflict: double asterisk with double asterisk", []string{
+			"/abc/{**}/def/ghi",
+			"/abc/{**}/ghi",
+			"/abc/{**}",
+		}, 2),
+		Entry("No conflict: exact paths", []string{
+			"/abc/def/ghi",
+			"/abc/def/foo",
+			"/def/ghi",
+		}, 0),
+		Entry("No conflict: paths with single asterisk, but different suffix", []string{
+			"/abc/{*}/def",
+			"/abc/{*}/ghi",
+			"/abc/{*}/foo/bar",
+			"/abc/{*}",
+		}, 0),
+		Entry("No conflict: paths with double asterisk, but different suffix", []string{
+			"/abc/{**}/def",
+			"/abc/{**}/ghi",
+			"/abc/{**}/foo/bar",
+		}, 0))
+})
 
 func BenchmarkSegmentTrieInsertion(b *testing.B) {
 	b.StopTimer()
