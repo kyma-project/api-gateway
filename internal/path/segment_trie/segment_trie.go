@@ -1,5 +1,18 @@
-// Package segment_trie provides a trie data structure for segmenting paths.
-// It is used to validate that no path conflicts occur in a APIRule.
+// Package segment_trie provides a trie data structure for storing URL paths.
+// It has the main purpose of checking for path collisions.
+//
+// The SegmentTrie is a trie data structure that segments paths into tokens.
+// Stored paths can contain the `{*}` and `{**}` operators:
+//   - operator `{*}` is used to match a single segment in a path, and may include a prefix and/or suffix.
+//   - operator `{**}` is used any number of segments in a path, and may include a prefix and/or suffix.
+//     It must be the last operator in the stored path (this is not validated but is assumed to be true).
+//
+// It does two things that are not done by a regular trie:
+//   - Nodes that are pointed to by `{**}` don't store their children,
+//     instead they store the path suffix that exists after `{**}`.
+//     Conflicts are checked by comparing the suffixes of paths with the same segments that precede `{**}`.
+//     This can be done, since the `{**}` operator must be the last in the path.
+//   - `{*}` nodes are stored just like any other exact segment node, but are always included in conflict search.
 package segment_trie
 
 import (
