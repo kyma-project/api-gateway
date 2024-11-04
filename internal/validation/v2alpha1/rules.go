@@ -120,7 +120,6 @@ func hasPathByMethodConflict(rules []gatewayv2alpha1.Rule) (path string, method 
 				return rule.Path, m, true
 			}
 		}
-		println(trie.String())
 	}
 
 	return "", "", false
