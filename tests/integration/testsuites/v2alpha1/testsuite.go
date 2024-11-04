@@ -91,6 +91,7 @@ func (t *testsuite) InitScenarios(ctx *godog.ScenarioContext) {
 	initValidationError(ctx, t)
 	initNoAuthWildcard(ctx, t)
 	initShortHost(ctx, t)
+	initExposeAsterisk(ctx, t)
 }
 
 func (t *testsuite) FeaturePath() []string {

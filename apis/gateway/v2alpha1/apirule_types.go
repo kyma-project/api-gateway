@@ -119,8 +119,17 @@ type Service struct {
 // Rule .
 // +kubebuilder:validation:XValidation:rule="((has(self.extAuth)?1:0)+(has(self.jwt)?1:0)+((has(self.noAuth)&&self.noAuth==true)?1:0))==1",message="One of the following fields must be set: noAuth, jwt, extAuth"
 type Rule struct {
-	// Specifies the path of the exposed service, allowing '/*' to match all paths and '/a-path' to match a specific path.
-	// +kubebuilder:validation:Pattern=^(\/\*|\/[0-9a-zA-Z/()?!\\_-]+)$
+	// Specifies the path on which the service is exposed.
+	// Supported configurations are:
+	//  - Exact path (e.g. /abc) - matches the specified path exactly.
+	//  - Usage of the `{*}` operator (e.g. `/foo/{*}` or `/foo/{*}/bar`) -
+	//  match any request that matches the pattern with exactly one path segment in the operator's place.
+	//  - Usage of the `{**}` operator (e.g. `/foo/{**}` or `/foo/{**}/bar`) -
+	//  match any request that matches the pattern with zero or more path segments in the operator's place.
+	//  The `{**}` operator must be the last operator in the path.
+	//  - Wildcard path `/*` - matches all paths. Equivalent to `/{**}` path.
+	//
+	// +kubebuilder:validation:Pattern=`^((\/[\w\.~\-]*)|(\/\{\*{1,2}\}))+$|^\/\*$`
 	Path string `json:"path"`
 	// Describes the service to expose. Overwrites the **spec** level service if defined.
 	// +optional

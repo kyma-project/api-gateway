@@ -18,6 +18,13 @@ import (
 
 const defaultHttpTimeout uint32 = 180
 
+var (
+	envoyTemplatesTranslation = map[string]string{
+		`{**}`: `[\w\.~\-\/]*`,
+		`{*}`:  `[\w\.~\-]*`,
+	}
+)
+
 func NewVirtualServiceProcessor(_ processing.ReconciliationConfig, apiRule *gatewayv2alpha1.APIRule, gateway *networkingv1beta1.Gateway) VirtualServiceProcessor {
 	return VirtualServiceProcessor{
 		ApiRule: apiRule,
@@ -145,7 +152,7 @@ func (r virtualServiceCreator) Create(api *gatewayv2alpha1.APIRule) (*networking
 		if rule.AppliesToAllPaths() {
 			matchBuilder.Uri().Prefix("/")
 		} else {
-			matchBuilder.Uri().Regex(rule.Path)
+			matchBuilder.Uri().Regex(prepareRegexPath(rule.Path))
 		}
 
 		httpRouteBuilder.Match(matchBuilder)
@@ -187,6 +194,14 @@ func (r virtualServiceCreator) Create(api *gatewayv2alpha1.APIRule) (*networking
 	vsBuilder.Spec(vsSpecBuilder)
 
 	return vsBuilder.Get(), nil
+}
+
+func prepareRegexPath(path string) string {
+	for key, replace := range envoyTemplatesTranslation {
+		path = strings.ReplaceAll(path, key, replace)
+	}
+
+	return fmt.Sprintf("%s$", path)
 }
 
 func GetVirtualServiceHttpTimeout(apiRuleSpec gatewayv2alpha1.APIRuleSpec, rule gatewayv2alpha1.Rule) uint32 {

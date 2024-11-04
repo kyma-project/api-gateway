@@ -6,6 +6,7 @@ import (
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	"github.com/kyma-project/api-gateway/internal/validation"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"strings"
 )
 
 func validateRules(ctx context.Context, client client.Client, parentAttributePath string, apiRule *gatewayv2alpha1.APIRule) []validation.Failure {
@@ -48,12 +49,52 @@ func validateRules(ctx context.Context, client client.Client, parentAttributePat
 			problems = append(problems, extAuthFailures...)
 		}
 
+		problems = append(problems, validatePath(ruleAttributePath, rule.Path)...)
 	}
 
 	jwtAuthFailures := validateJwtAuthenticationEquality(rulesAttributePath, rules)
 	problems = append(problems, jwtAuthFailures...)
 
 	return problems
+}
+
+func validatePath(validationPath string, rulePath string) (problems []validation.Failure) {
+	problems = append(problems, validateEnvoyTemplate(validationPath+".path", rulePath)...)
+	return problems
+}
+
+func validateEnvoyTemplate(validationPath string, path string) []validation.Failure {
+	if strings.Count(path, "{**}") == 0 {
+		return nil
+	}
+
+	if strings.Count(path, "{**}") > 1 {
+		return []validation.Failure{
+			{
+				AttributePath: validationPath,
+				Message:       "Only one {**} operator is allowed in the path.",
+			},
+		}
+	}
+
+	segments := strings.Split(strings.TrimLeft(path, "/"), "/")
+
+	var last bool
+	for _, segment := range segments {
+		if segment == "{*}" || segment == "{**}" {
+			if last {
+				return []validation.Failure{
+					{
+						AttributePath: validationPath,
+						Message:       "The {**} operator must be the last operator in the path.",
+					},
+				}
+			}
+			last = segment == "{**}"
+		}
+	}
+
+	return nil
 }
 
 func hasPathAndMethodDuplicates(rules []gatewayv2alpha1.Rule) bool {
