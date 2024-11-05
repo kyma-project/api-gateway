@@ -6,10 +6,31 @@ on:
   workflow_call:
 
 jobs:
+  changed-files:
+    name: Check changed files
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: tj-actions/changed-files@e9772d140489982e0e3704fea5ee93d536f1e275
+        id: changed-files
+        with:
+          files_ignore: |
+            docs/**
+            **/*.md
+            tests/performance/**
+            OWNERS
+            CODEOWNERS
+            sec-scanners-config.yaml
+            .github/**
+            .reuse/**
+            external-images.yaml
+      - name: List all changed files
+        run: echo '${{ steps.changed-files.outputs.all_changed_files }}' >> $GITHUB_STEP_SUMMARY
   lint:
     name: Golang lint check
     runs-on: ubuntu-latest
-    if: github.event.pull_request.draft == false
+    needs: [ changed-files ]
+    if: needs.changed-files.outputs.any_changed == 'true'
     steps:
       - uses: actions/checkout@v4
         with:
@@ -27,7 +48,8 @@ jobs:
   run-unit-tests:
     name: Run unit tests
     runs-on: ubuntu-latest
-    if: github.event.pull_request.draft == false
+    needs: [ changed-files ]
+    if: needs.changed-files.outputs.any_changed == 'true'
     steps:
       - uses: actions/checkout@v4
         with:
@@ -41,4 +63,3 @@ jobs:
           PULL_BASE_SHA=${{ github.event.pull_request.base.sha}} \
           PULL_NUMBER=${{ github.event.number }} \
           ./hack/ci/code-coverage-guard.sh
-

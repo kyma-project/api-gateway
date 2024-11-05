@@ -7,7 +7,6 @@ jobs:
   integration-tests:
     name: Integration tests
     runs-on: ubuntu-latest
-    if: github.event.pull_request.draft == false
     strategy:
       fail-fast: false
       matrix:
@@ -28,7 +27,6 @@ jobs:
   migration-downtime-tests:
     name: Zero Downtime Migration Tests
     runs-on: ubuntu-latest
-    if: github.event.pull_request.draft == false
     strategy:
       fail-fast: false
       matrix:
@@ -46,7 +44,6 @@ jobs:
   k8s-compatibility-check:
     name: Kubernetes version compatibility test
     runs-on: ubuntu-latest
-    if: github.event.pull_request.draft == false
     strategy:
       fail-fast: false
       matrix:
