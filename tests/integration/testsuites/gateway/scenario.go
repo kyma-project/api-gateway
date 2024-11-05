@@ -149,7 +149,14 @@ func (c *scenario) checkCustomAPIGatewayCRState(name, state, description string)
 		if !found {
 			return errors.New("status state not found")
 		} else if gatewayState != state {
-			return fmt.Errorf("gateway state %s, is not in the expected state %s", gatewayState, state)
+			gatewayDescription, found, err := unstructured.NestedString(gateway.Object, "status", "description")
+			if err != nil {
+				return fmt.Errorf("gateway state %s, is not in the expected state %s, no description found: %w", gatewayState, state, err)
+			}
+			if !found {
+				return fmt.Errorf("gateway state %s, is not in the expected state %s, no description found", gatewayState, state)
+			}
+			return fmt.Errorf("gateway state %s, is not in the expected state %s, description: %s", gatewayState, state, gatewayDescription)
 		}
 
 		if len(description) > 0 {
