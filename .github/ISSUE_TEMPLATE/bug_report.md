@@ -17,7 +17,7 @@ assignees: ''
 <!-- Provide a clear and concise description of the problem.
 Describe where it appears, when it occurred, and what it affects.  -->
 
-<!-- Provide relevant technical details such as the Kubernetes version, the cluster name and provider, the Kyma version, the browser name and version, or the operating system. -->
+<!-- Provide relevant technical details such as the Kubernetes version, the cluster name and provider, the module version, the browser name and version, or the operating system. -->
 
 **Expected result**
 
@@ -34,3 +34,7 @@ Describe where it appears, when it occurred, and what it affects.  -->
 **Troubleshooting**
 
 <!-- Describe the steps you have already taken to solve the issue. -->
+
+**DoD**
+
+- [ ] Add release notes.
