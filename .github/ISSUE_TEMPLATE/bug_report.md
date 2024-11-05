@@ -35,7 +35,8 @@ Describe where it appears, when it occurred, and what it affects.  -->
 
 <!-- Describe the steps you have already taken to solve the issue. -->
 
-**DoD:**
+**DoD [Developer & Reviewer]**
+<!-- The developer working on this issue must confirm that they have completed the following tasks. The reviewer must double-check that these tasks are completed. -->
 - [ ] Provide unit and integration tests.
 - [ ] Provide documentation.
 - [ ] Verify if the solution works for both open-source Kyma and SAP BTP, Kyma runtime.
