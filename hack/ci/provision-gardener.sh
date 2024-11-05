@@ -74,7 +74,7 @@ until (echo "$shoot_template" | kubectl --kubeconfig "${GARDENER_KUBECONFIG}" ap
   sleep 15
 done
 
-echo "waiting fo cluster to be ready..."
+echo "waiting for cluster to be ready..."
 kubectl wait  --kubeconfig "${GARDENER_KUBECONFIG}" --for=condition=EveryNodeReady shoot/${CLUSTER_NAME} --timeout=17m
 # create kubeconfig request, that creates a kubeconfig which is valid for one day
 kubectl create  --kubeconfig "${GARDENER_KUBECONFIG}" \
@@ -95,7 +95,9 @@ until (kubectl --kubeconfig "${CLUSTER_NAME}_kubeconfig.yaml" get --raw "/readyz
   sleep 1
 done
 
+echo "waiting for shoot operations to be completed..."
+kubectl wait --kubeconfig "${GARDENER_KUBECONFIG}" --for=jsonpath='{.status.lastOperation.state}'=Succeeded --timeout=600s "shoots/${CLUSTER_NAME}"
+
 # replace the default kubeconfig
 mkdir -p ~/.kube
 mv "${CLUSTER_NAME}_kubeconfig.yaml" ~/.kube/config
-
