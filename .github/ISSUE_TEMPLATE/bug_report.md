@@ -17,7 +17,7 @@ assignees: ''
 <!-- Provide a clear and concise description of the problem.
 Describe where it appears, when it occurred, and what it affects.  -->
 
-<!-- Provide relevant technical details such as the Kubernetes version, the cluster name and provider, the Kyma version, the browser name and version, or the operating system. -->
+<!-- Provide relevant technical details such as the Kubernetes version, the cluster name and provider, the module version, the browser name and version, or the operating system. -->
 
 **Expected result**
 
@@ -34,3 +34,12 @@ Describe where it appears, when it occurred, and what it affects.  -->
 **Troubleshooting**
 
 <!-- Describe the steps you have already taken to solve the issue. -->
+
+**DoD [Developer & Reviewer]**
+<!-- The developer working on this issue must confirm that they have completed the following tasks. The reviewer must double-check that these tasks are completed. -->
+- [ ] Provide unit and integration tests.
+- [ ] Provide documentation.
+- [ ] Verify if the solution works for both open-source Kyma and SAP BTP, Kyma runtime.
+- [ ] If you changed the resource limits, explain why it was needed.
+- [ ] Verify that your contributions don't decrease code coverage. If they do, explain why this is the case.
+- [ ] Add release notes.
