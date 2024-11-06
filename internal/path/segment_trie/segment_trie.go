@@ -55,7 +55,7 @@ func (t *SegmentTrie) InsertAndCheckCollisions(tokens []token.Token) error {
 
 	for i, tok := range tokens {
 		if tok.Type == token.BracedDoubleAsterix {
-			if _, ok := node.Children["{**}"]; !ok {
+			if n, ok := node.Children["{**}"]; !ok {
 				node.Children["{**}"] = &Node{
 					EndNode:  i == len(tokens)-1,
 					Children: make(map[string]*Node),
@@ -63,7 +63,7 @@ func (t *SegmentTrie) InsertAndCheckCollisions(tokens []token.Token) error {
 				}
 			} else {
 				suffixString := token.List(tokens[i:]).String()
-				node.Children["{**}"].Suffixes = append(node.Children["{**}"].Suffixes, suffixString)
+				n.Suffixes = append(n.Suffixes, suffixString)
 			}
 		} else {
 			if _, ok := node.Children[tok.Literal]; !ok {
@@ -84,17 +84,17 @@ func suffixExist(node *Node, suffix []token.Token, cur int) bool {
 		return true
 	}
 
-	if cnode, ok := node.Children["{**}"]; ok {
+	if cNode, ok := node.Children["{**}"]; ok {
 		tokensString := token.List(suffix).String()
-		for _, suffix := range cnode.Suffixes {
-			if strings.HasSuffix(tokensString, suffix) || strings.HasSuffix(suffix, tokensString) {
+		for _, nodeSuffix := range cNode.Suffixes {
+			if strings.HasSuffix(tokensString, nodeSuffix) || strings.HasSuffix(nodeSuffix, tokensString) {
 				return true
 			}
 		}
 	}
 
-	if _, ok := node.Children[suffix[cur].Literal]; ok {
-		if suffixExist(node.Children[suffix[cur].Literal], suffix, cur+1) {
+	if n, ok := node.Children[suffix[cur].Literal]; ok {
+		if suffixExist(n, suffix, cur+1) {
 			return true
 		}
 	}
@@ -120,28 +120,30 @@ func findExistingPath(node *Node, tokens []token.Token, cur int) bool {
 		return hasAnySuffix(tokens, node.Suffixes)
 	}
 
-	switch tokens[cur].Type {
+	tok := tokens[cur]
+
+	switch tok.Type {
 	case token.Ident:
-		if _, ok := node.Children[tokens[cur].Literal]; ok {
-			if findExistingPath(node.Children[tokens[cur].Literal], tokens, cur+1) {
+		if n, ok := node.Children[tok.Literal]; ok {
+			if findExistingPath(n, tokens, cur+1) {
 				return true
 			}
 		}
 
-		if _, ok := node.Children["{*}"]; ok {
-			if findExistingPath(node.Children["{*}"], tokens, cur+1) {
+		if n, ok := node.Children["{*}"]; ok {
+			if findExistingPath(n, tokens, cur+1) {
 				return true
 			}
 		}
 
-		if _, ok := node.Children["{**}"]; ok {
-			if findExistingPath(node.Children["{**}"], tokens, cur+1) {
+		if n, ok := node.Children["{**}"]; ok {
+			if findExistingPath(n, tokens, cur+1) {
 				return true
 			}
 		}
 	case token.BracedAsterix:
-		for _, node := range node.Children {
-			if findExistingPath(node, tokens, cur+1) {
+		for _, n := range node.Children {
+			if findExistingPath(n, tokens, cur+1) {
 				return true
 			}
 		}
