@@ -23,6 +23,12 @@ var _ = Describe("SegmentTrie", func() {
 		Expect(err).To(BeNil())
 	})
 
+	It("should return nil for empty path", func() {
+		trie := New()
+		err := trie.InsertAndCheckCollisions([]token.Token{})
+		Expect(err).To(BeNil())
+	})
+
 	DescribeTable("Conflict Checking",
 		func(paths []string, conflictNumber int) {
 			trie := New()
@@ -87,6 +93,22 @@ var _ = Describe("SegmentTrie", func() {
 			"/abc/{**}/def",
 			"/abc/{**}/ghi",
 			"/abc/{**}/foo/bar",
+		}, 0),
+		Entry("Conflict: exact path with single asterisk path", []string{
+			"/abc/{*}",
+			"/abc/def",
+		}, 1),
+		Entry("Conflict: exact path with double asterisk path", []string{
+			"/abc/{**}",
+			"/abc/def",
+		}, 1),
+		Entry("Conflict: double asterisk with a different containing the first one", []string{
+			"/abc/{**}/def",
+			"/abc/def/{**}/def",
+		}, 1),
+		Entry("No conflict: single double asterisk with single path", []string{
+			"/a/{**}/abc",
+			"/a/b/{**}/abc/abcd",
 		}, 0))
 })
 

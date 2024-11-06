@@ -74,9 +74,6 @@ func (t *SegmentTrie) InsertAndCheckCollisions(tokens []token.Token) error {
 			}
 		}
 
-		if _, ok := node.Children[tok.Literal]; !ok {
-			return errors.New("path collision detected")
-		}
 		node = node.Children[tok.Literal]
 	}
 	return nil
