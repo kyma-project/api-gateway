@@ -108,10 +108,6 @@ func suffixExist(node *Node, suffix []token.Token, cur int) bool {
 }
 
 func findExistingPath(node *Node, tokens []token.Token, cur int) bool {
-	if len(tokens) == 0 {
-		return node.EndNode
-	}
-
 	if cur >= len(tokens) {
 		return node.EndNode
 	}
@@ -155,9 +151,6 @@ func findExistingPath(node *Node, tokens []token.Token, cur int) bool {
 }
 
 func hasAnySuffix(tokens token.List, suffixes []string) bool {
-	if len(suffixes) == 0 {
-		return false
-	}
 	tokensString := tokens.String()
 
 	for _, suffix := range suffixes {
