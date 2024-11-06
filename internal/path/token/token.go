@@ -12,18 +12,16 @@ type Token struct {
 }
 
 const (
-	IDENT = "IDENT"
-	EMPTY = "EMPTY"
+	Ident = "IDENT"
+	Empty = "EMPTY"
 
-	BRACED_DOUBLE_ASTERIX = "{**}"
-	BRACED_ASTERIX        = "{*}"
-	ASTERISK              = "*"
+	BracedDoubleAsterix = "{**}"
+	BracedAsterix       = "{*}"
+	Asterix             = "*"
 
-	SEPARATOR = "/"
-)
+	Separator = "/"
 
-const (
-	EMPTY_LITERAL = ""
+	EmptyLiteral = ""
 )
 
 type List []Token
@@ -31,7 +29,7 @@ type List []Token
 func (tk List) String() string {
 	var sb strings.Builder
 	for _, t := range tk {
-		sb.WriteString(SEPARATOR)
+		sb.WriteString(Separator)
 		sb.WriteString(t.Literal)
 	}
 	return sb.String()
@@ -39,20 +37,20 @@ func (tk List) String() string {
 
 func TokenizePath(apiPath string) []Token {
 	var tokens []Token
-	apiPath = strings.TrimLeft(apiPath, SEPARATOR)
+	apiPath = strings.TrimLeft(apiPath, Separator)
 
-	for _, tok := range strings.Split(apiPath, SEPARATOR) {
+	for _, tok := range strings.Split(apiPath, Separator) {
 		switch {
 		case tok == "":
-			tokens = append(tokens, Token{Type: EMPTY, Literal: EMPTY_LITERAL})
-		case tok == BRACED_ASTERIX:
-			tokens = append(tokens, Token{Type: BRACED_ASTERIX, Literal: BRACED_ASTERIX})
-		case tok == BRACED_DOUBLE_ASTERIX:
-			tokens = append(tokens, Token{Type: BRACED_DOUBLE_ASTERIX, Literal: BRACED_DOUBLE_ASTERIX})
-		case tok == ASTERISK:
-			tokens = append(tokens, Token{Type: ASTERISK, Literal: ASTERISK})
+			tokens = append(tokens, Token{Type: Empty, Literal: EmptyLiteral})
+		case tok == BracedAsterix:
+			tokens = append(tokens, Token{Type: BracedAsterix, Literal: BracedAsterix})
+		case tok == BracedDoubleAsterix:
+			tokens = append(tokens, Token{Type: BracedDoubleAsterix, Literal: BracedDoubleAsterix})
+		case tok == Asterix:
+			tokens = append(tokens, Token{Type: Asterix, Literal: Asterix})
 		default:
-			tokens = append(tokens, Token{Type: IDENT, Literal: tok})
+			tokens = append(tokens, Token{Type: Ident, Literal: tok})
 		}
 	}
 

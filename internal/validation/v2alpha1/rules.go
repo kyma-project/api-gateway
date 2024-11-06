@@ -50,17 +50,7 @@ func validateRules(ctx context.Context, client client.Client, parentAttributePat
 		problems = append(problems, validatePath(ruleAttributePath, rule.Path)...)
 	}
 
-	if path, method, conflict := hasPathByMethodConflict(rules); conflict {
-		problems = append(problems,
-			validation.Failure{
-				AttributePath: rulesAttributePath,
-				Message: fmt.Sprintf(
-					"Path %s with method %s conflicts with at least one of the other defined paths",
-					path,
-					method),
-			},
-		)
-	}
+	problems = append(problems, hasPathByMethodConflict(rulesAttributePath, rules)...)
 
 	jwtAuthFailures := validateJwtAuthenticationEquality(rulesAttributePath, rules)
 	problems = append(problems, jwtAuthFailures...)
@@ -107,32 +97,42 @@ func validateEnvoyTemplate(validationPath string, path string) []validation.Fail
 	return nil
 }
 
-func hasPathByMethodConflict(rules []gatewayv2alpha1.Rule) (path string, method gatewayv2alpha1.HttpMethod, conflict bool) {
-	rulesByMethod := map[gatewayv2alpha1.HttpMethod][]gatewayv2alpha1.Rule{}
+const pathByMethodConflictTemplate = "Path %s with method %s conflicts with at least one of the other defined paths"
+
+func pathByMethodConflictValidationError(validationPath string, path string, method string) []validation.Failure {
+	return []validation.Failure{
+		{
+			AttributePath: validationPath,
+			Message:       fmt.Sprintf(pathByMethodConflictTemplate, path, method),
+		},
+	}
+}
+
+func hasPathByMethodConflict(validationPath string, rules []gatewayv2alpha1.Rule) []validation.Failure {
+	pathsByMethod := make(map[gatewayv2alpha1.HttpMethod][]string)
 	for _, rule := range rules {
 		if len(rule.Methods) == 0 {
-			rulesByMethod["NO_METHODS"] = append(rulesByMethod["NO_METHODS"], rule)
+			pathsByMethod["NO_METHODS"] = append(pathsByMethod["NO_METHODS"], rule.Path)
 		}
 
 		for _, method := range rule.Methods {
-			rulesByMethod[method] = append(rulesByMethod[method], rule)
+			pathsByMethod[method] = append(pathsByMethod[method], rule.Path)
 		}
 	}
 
-	for m, rules := range rulesByMethod {
+	for m, paths := range pathsByMethod {
 		trie := segment_trie.New()
-		for _, rule := range rules {
-			path = rule.Path
-			if rule.Path == "/*" {
+		for _, path := range paths {
+			if path == "/*" {
 				path = "/{**}"
 			}
 
 			tokens := token.TokenizePath(path)
 			if trie.InsertAndCheckCollisions(tokens) != nil {
-				return rule.Path, m, true
+				return pathByMethodConflictValidationError(validationPath, path, string(m))
 			}
 		}
 	}
 
-	return "", "", false
+	return nil
 }

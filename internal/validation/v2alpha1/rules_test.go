@@ -115,6 +115,11 @@ var _ = Describe("Validate rules", func() {
 						Methods: []v2alpha1.HttpMethod{http.MethodGet},
 					},
 					{
+						Path:    "/abc/def",
+						NoAuth:  ptr.To(true),
+						Methods: []v2alpha1.HttpMethod{http.MethodGet},
+					},
+					{
 						Path:    "/abc",
 						NoAuth:  ptr.To(true),
 						Methods: []v2alpha1.HttpMethod{http.MethodGet, http.MethodPost},

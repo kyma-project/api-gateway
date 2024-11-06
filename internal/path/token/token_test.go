@@ -26,56 +26,56 @@ var _ = Describe("Token", func() {
 		Entry(
 			"ident",
 			"/path",
-			[]Token{{Type: IDENT, Literal: "path"}},
+			[]Token{{Type: Ident, Literal: "path"}},
 		),
 		Entry(
 			"ident / empty",
 			"/path/",
-			[]Token{{Type: IDENT, Literal: "path"}, {Type: EMPTY, Literal: ""}},
+			[]Token{{Type: Ident, Literal: "path"}, {Type: Empty, Literal: ""}},
 		),
 		Entry(
 			"asterisk",
 			"/*",
-			[]Token{{Type: ASTERISK, Literal: "*"}},
+			[]Token{{Type: Asterix, Literal: "*"}},
 		),
 		Entry(
 			"braced double asterisk",
 			"/{**}",
-			[]Token{{Type: BRACED_DOUBLE_ASTERIX, Literal: "{**}"}},
+			[]Token{{Type: BracedDoubleAsterix, Literal: "{**}"}},
 		),
 		Entry(
 			"braced asterisk",
 			"/{*}",
-			[]Token{{Type: BRACED_ASTERIX, Literal: "{*}"}},
+			[]Token{{Type: BracedAsterix, Literal: "{*}"}},
 		),
 		Entry(
 			"ident / braced double asterisk",
 			"/path/{**}",
-			[]Token{{Type: IDENT, Literal: "path"}, {Type: BRACED_DOUBLE_ASTERIX, Literal: "{**}"}},
+			[]Token{{Type: Ident, Literal: "path"}, {Type: BracedDoubleAsterix, Literal: "{**}"}},
 		),
 		Entry(
 			"ident / braced asterisk",
 			"/path/{*}",
-			[]Token{{Type: IDENT, Literal: "path"}, {Type: BRACED_ASTERIX, Literal: "{*}"}},
+			[]Token{{Type: Ident, Literal: "path"}, {Type: BracedAsterix, Literal: "{*}"}},
 		),
 		Entry(
 			"ident / braced double asterisk / ident",
 			"/path/{**}/path2",
-			[]Token{{Type: IDENT, Literal: "path"}, {Type: BRACED_DOUBLE_ASTERIX, Literal: "{**}"}, {Type: IDENT, Literal: "path2"}},
+			[]Token{{Type: Ident, Literal: "path"}, {Type: BracedDoubleAsterix, Literal: "{**}"}, {Type: Ident, Literal: "path2"}},
 		),
 		Entry(
 			"ident / braced asterisk / ident",
 			"/path/{*}/path2",
-			[]Token{{Type: IDENT, Literal: "path"}, {Type: BRACED_ASTERIX, Literal: "{*}"}, {Type: IDENT, Literal: "path2"}},
+			[]Token{{Type: Ident, Literal: "path"}, {Type: BracedAsterix, Literal: "{*}"}, {Type: Ident, Literal: "path2"}},
 		),
 	)
 
 	Describe("TokenListString", func() {
 		It("should convert token list to string", func() {
 			tokens := List{
-				{Type: IDENT, Literal: "path"},
-				{Type: BRACED_DOUBLE_ASTERIX, Literal: "{**}"},
-				{Type: IDENT, Literal: "path2"},
+				{Type: Ident, Literal: "path"},
+				{Type: BracedDoubleAsterix, Literal: "{**}"},
+				{Type: Ident, Literal: "path2"},
 			}
 			expected := "/path/{**}/path2"
 			Expect(tokens.String()).To(Equal(expected))

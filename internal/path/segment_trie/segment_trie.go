@@ -31,26 +31,10 @@ type Node struct {
 	Suffixes []string         `json:"suffixes"`
 }
 
-func (n *Node) String() string {
-	if n.EndNode {
-		return "{}"
-	}
-	b := strings.Builder{}
-	b.WriteString("{")
-	for k, v := range n.Children {
-		b.WriteString(`"`)
-		b.WriteString(k)
-		b.WriteString(`":`)
-		b.WriteString(v.String())
-		b.WriteString(",")
-	}
-	return strings.Trim(b.String(), ",") + "}"
-}
-
 func New() *SegmentTrie {
 	return &SegmentTrie{
 		Root: &Node{
-			EndNode:  true,
+			EndNode:  false,
 			Children: map[string]*Node{},
 		},
 	}
@@ -60,30 +44,31 @@ func (t *SegmentTrie) InsertAndCheckCollisions(tokens []token.Token) error {
 	if len(tokens) == 0 {
 		return nil
 	}
+
 	node := t.Root
-	if !t.Root.EndNode {
-		pathExist := findExistingPath(node, false, tokens, 0)
+	if len(t.Root.Children) != 0 {
+		pathExist := findExistingPath(node, tokens, 0)
 		if pathExist {
 			return errors.New("path collision detected")
 		}
 	}
 
 	for i, tok := range tokens {
-		node.EndNode = false
-		if tok.Type == token.BRACED_DOUBLE_ASTERIX {
+		if tok.Type == token.BracedDoubleAsterix {
 			if _, ok := node.Children["{**}"]; !ok {
 				node.Children["{**}"] = &Node{
-					EndNode:  true,
+					EndNode:  i == len(tokens)-1,
 					Children: make(map[string]*Node),
 					Suffixes: []string{token.List(tokens[i+1:]).String()},
 				}
 			} else {
-				node.Children["{**}"].Suffixes = append(node.Children["{**}"].Suffixes, token.List(tokens[i:]).String())
+				suffixString := token.List(tokens[i:]).String()
+				node.Children["{**}"].Suffixes = append(node.Children["{**}"].Suffixes, suffixString)
 			}
 		} else {
 			if _, ok := node.Children[tok.Literal]; !ok {
 				node.Children[tok.Literal] = &Node{
-					EndNode:  true,
+					EndNode:  i == len(tokens)-1,
 					Children: make(map[string]*Node),
 				}
 			}
@@ -98,10 +83,6 @@ func (t *SegmentTrie) InsertAndCheckCollisions(tokens []token.Token) error {
 }
 
 func suffixExist(node *Node, suffix []token.Token, cur int) bool {
-	if len(suffix) == 0 {
-		return true
-	}
-
 	if cur >= len(suffix) {
 		return true
 	}
@@ -129,7 +110,7 @@ func suffixExist(node *Node, suffix []token.Token, cur int) bool {
 	return false
 }
 
-func findExistingPath(node *Node, isNodeDoubleAsterix bool, tokens []token.Token, cur int) bool {
+func findExistingPath(node *Node, tokens []token.Token, cur int) bool {
 	if len(tokens) == 0 {
 		return node.EndNode
 	}
@@ -138,36 +119,36 @@ func findExistingPath(node *Node, isNodeDoubleAsterix bool, tokens []token.Token
 		return node.EndNode
 	}
 
-	if isNodeDoubleAsterix {
+	if len(node.Suffixes) > 0 {
 		return hasAnySuffix(tokens, node.Suffixes)
 	}
 
 	switch tokens[cur].Type {
-	case token.IDENT:
+	case token.Ident:
 		if _, ok := node.Children[tokens[cur].Literal]; ok {
-			if findExistingPath(node.Children[tokens[cur].Literal], false, tokens, cur+1) {
+			if findExistingPath(node.Children[tokens[cur].Literal], tokens, cur+1) {
 				return true
 			}
 		}
 
 		if _, ok := node.Children["{*}"]; ok {
-			if findExistingPath(node.Children["{*}"], false, tokens, cur+1) {
+			if findExistingPath(node.Children["{*}"], tokens, cur+1) {
 				return true
 			}
 		}
 
 		if _, ok := node.Children["{**}"]; ok {
-			if findExistingPath(node.Children["{**}"], true, tokens, cur+1) {
+			if findExistingPath(node.Children["{**}"], tokens, cur+1) {
 				return true
 			}
 		}
-	case token.BRACED_ASTERIX:
-		for key, node := range node.Children {
-			if findExistingPath(node, key == "{**}", tokens, cur+1) {
+	case token.BracedAsterix:
+		for _, node := range node.Children {
+			if findExistingPath(node, tokens, cur+1) {
 				return true
 			}
 		}
-	case token.BRACED_DOUBLE_ASTERIX:
+	case token.BracedDoubleAsterix:
 		bracedAsterixSuffix := tokens[cur+1:]
 		return suffixExist(node, bracedAsterixSuffix, 0)
 	}
@@ -176,7 +157,7 @@ func findExistingPath(node *Node, isNodeDoubleAsterix bool, tokens []token.Token
 
 func hasAnySuffix(tokens token.List, suffixes []string) bool {
 	if len(suffixes) == 0 {
-		return true
+		return false
 	}
 	tokensString := tokens.String()
 
@@ -186,8 +167,4 @@ func hasAnySuffix(tokens token.List, suffixes []string) bool {
 		}
 	}
 	return false
-}
-
-func (t *SegmentTrie) String() string {
-	return t.Root.String()
 }

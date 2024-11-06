@@ -39,15 +39,21 @@ var _ = Describe("SegmentTrie", func() {
 		Entry("No conflict: only one double asterisk", []string{
 			"/{**}",
 		}, 0),
+		Entry("No conflict: prefix and double asterisk", []string{
+			"/abc/{**}",
+		}, 0),
 		Entry("Conflict: exact with single asterisk", []string{
 			"/abc/def/ghi",
 			"/abc/{*}/ghi",
 		}, 1),
 		Entry("Conflict: exact with exact", []string{
+			"/abc/def",
 			"/abc/def/ghi",
 			"/abc/def/ghi",
-		}, 1),
+			"/abc/def",
+		}, 2),
 		Entry("Conflict: exact with double asterisk", []string{
+			"/abc/def",
 			"/abc/def/ghi",
 			"/abc/{**}/ghi",
 			"/abc/{**}",
@@ -66,6 +72,7 @@ var _ = Describe("SegmentTrie", func() {
 			"/abc/{**}",
 		}, 2),
 		Entry("No conflict: exact paths", []string{
+			"/abc/def",
 			"/abc/def/ghi",
 			"/abc/def/foo",
 			"/def/ghi",
