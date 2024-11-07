@@ -23,7 +23,7 @@ jobs:
           client_id: ${{ secrets.CLIENT_ID }}
           client_secret: ${{ secrets.CLIENT_SECRET }}
           oidc_well_known_url: "${{ secrets.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
-          manager_image: "europe-docker.pkg.dev/kyma-project/dev/api-gateway-manager:PR-${{github.event.number}}"
+          manager_image: "europe-docker.pkg.dev/kyma-project/dev/api-gateway/pr/api-gateway-manager:PR-${{github.event.number}}"
           test_make_target: ${{ matrix.test_make_target }}
 
   migration-downtime-tests:
@@ -42,7 +42,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          manager_image: "europe-docker.pkg.dev/kyma-project/dev/api-gateway-manager:PR-${{github.event.number}}"
+          manager_image: "europe-docker.pkg.dev/kyma-project/dev/api-gateway/pr/api-gateway-manager:PR-${{github.event.number}}"
           test_make_target: ${{ matrix.test_make_target }}
 
   k8s-compatibility-check:
@@ -64,7 +64,7 @@ jobs:
           client_id: ${{ secrets.CLIENT_ID }}
           client_secret: ${{ secrets.CLIENT_SECRET }}
           oidc_well_known_url: "${{ secrets.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
-          manager_image: "europe-docker.pkg.dev/kyma-project/dev/api-gateway-manager:PR-${{github.event.number}}"
+          manager_image: "europe-docker.pkg.dev/kyma-project/dev/api-gateway/pr/api-gateway-manager:PR-${{github.event.number}}"
           test_make_target: ${{ matrix.test_make_target }}
 
   upgrade-tests:
@@ -79,7 +79,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          manager_image: "europe-docker.pkg.dev/kyma-project/dev/api-gateway-manager:PR-${{github.event.number}}"
+          manager_image: "europe-docker.pkg.dev/kyma-project/dev/api-gateway/pr/api-gateway-manager:PR-${{github.event.number}}"
           client_id: ${{ secrets.CLIENT_ID }}
           client_secret: ${{ secrets.CLIENT_SECRET }}
           oidc_well_known_url: "${{ secrets.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
@@ -101,7 +101,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          manager_image: "europe-docker.pkg.dev/kyma-project/dev/api-gateway-manager:PR-${{github.event.number}}"
+          manager_image: "europe-docker.pkg.dev/kyma-project/dev/api-gateway/pr/api-gateway-manager:PR-${{github.event.number}}"
           gardener_secret: ${{ secrets.GARDENER_TOKEN }}
           script: ./hack/ci/custom-domain-gardener-gcp.sh
           client_id: ${{ secrets.CLIENT_ID }}
@@ -126,7 +126,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          manager_image: "europe-docker.pkg.dev/kyma-project/dev/api-gateway-manager:PR-${{github.event.number}}"
+          manager_image: "europe-docker.pkg.dev/kyma-project/dev/api-gateway/pr/api-gateway-manager:PR-${{github.event.number}}"
           gardener_secret: ${{ secrets.GARDENER_TOKEN }}
           script: ./hack/ci/custom-domain-gardener-aws.sh
           client_id: ${{ secrets.CLIENT_ID }}

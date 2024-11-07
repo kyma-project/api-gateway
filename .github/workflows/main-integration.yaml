@@ -24,7 +24,7 @@ jobs:
     uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
     if: ${{ github.event_name != 'schedule' }}
     with:
-      name: api-gateway-manager
+      name: api-gateway/main/api-gateway-manager
       dockerfile: Dockerfile
       context: .
       build-args: |
@@ -60,7 +60,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:${{ needs.get-sha.outputs.sha }}"
+          manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway/main/api-gateway-manager:${{ needs.get-sha.outputs.sha }}"
           client_id: ${{ secrets.CLIENT_ID }}
           client_secret: ${{ secrets.CLIENT_SECRET }}
           oidc_well_known_url: "${{ secrets.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
@@ -83,7 +83,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:${{ needs.get-sha.outputs.sha }}"
+          manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway/main/api-gateway-manager:${{ needs.get-sha.outputs.sha }}"
           test_make_target: ${{ matrix.test_make_target }}
 
   upgrade-tests:
@@ -100,7 +100,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:${{ needs.get-sha.outputs.sha }}"
+          manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway/main/api-gateway-manager:${{ needs.get-sha.outputs.sha }}"
           client_id: ${{ secrets.CLIENT_ID }}
           client_secret: ${{ secrets.CLIENT_SECRET }}
           oidc_well_known_url: "${{ secrets.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
@@ -121,7 +121,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:${{ needs.get-sha.outputs.sha }}"
+          manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway/main/api-gateway-manager:${{ needs.get-sha.outputs.sha }}"
           gardener_secret: ${{ secrets.GARDENER_TOKEN }}
           script: ./hack/ci/custom-domain-gardener-gcp.sh
           client_id: ${{ secrets.CLIENT_ID }}
@@ -144,7 +144,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:${{ needs.get-sha.outputs.sha }}"
+          manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway/main/api-gateway-manager:${{ needs.get-sha.outputs.sha }}"
           gardener_secret: ${{ secrets.GARDENER_TOKEN }}
           script: ./hack/ci/custom-domain-gardener-aws.sh
           client_id: ${{ secrets.CLIENT_ID }}

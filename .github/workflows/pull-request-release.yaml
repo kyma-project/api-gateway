@@ -12,7 +12,7 @@ jobs:
     if: github.event.pull_request.draft == false
     uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
     with:
-      name: api-gateway-manager
+      name: api-gateway/pr/api-gateway-manager
       dockerfile: Dockerfile
       context: .
       build-args: |
