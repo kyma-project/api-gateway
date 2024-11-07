@@ -36,6 +36,10 @@ can be seen in the following diagram:
 
 [![Path trie](../assets/validation-trie.svg)](../assets/validation-trie.svg)
 
+Nodes marked with a double circle are nodes that can be the end of a path (have the boolean flag `EndNode==true`).
+Square nodes represent suffixes stored in the `{**}` operator nodes
+(they are not an actual node in the trie).
+
 ## Validation process
 
 The validation process is performed during the creation of the `trie` data structure.
