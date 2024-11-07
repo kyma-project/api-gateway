@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
+	"github.com/kyma-project/api-gateway/internal/path/segment_trie"
+	"github.com/kyma-project/api-gateway/internal/path/token"
 	"github.com/kyma-project/api-gateway/internal/validation"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"strings"
@@ -17,10 +19,6 @@ func validateRules(ctx context.Context, client client.Client, parentAttributePat
 	if len(rules) == 0 {
 		problems = append(problems, validation.Failure{AttributePath: rulesAttributePath, Message: "No rules defined"})
 		return problems
-	}
-
-	if hasPathAndMethodDuplicates(rules) {
-		problems = append(problems, validation.Failure{AttributePath: rulesAttributePath, Message: "multiple rules defined for the same path and method"})
 	}
 
 	for i, rule := range rules {
@@ -51,6 +49,8 @@ func validateRules(ctx context.Context, client client.Client, parentAttributePat
 
 		problems = append(problems, validatePath(ruleAttributePath, rule.Path)...)
 	}
+
+	problems = append(problems, hasPathByMethodConflict(rulesAttributePath, rules)...)
 
 	jwtAuthFailures := validateJwtAuthenticationEquality(rulesAttributePath, rules)
 	problems = append(problems, jwtAuthFailures...)
@@ -97,27 +97,42 @@ func validateEnvoyTemplate(validationPath string, path string) []validation.Fail
 	return nil
 }
 
-func hasPathAndMethodDuplicates(rules []gatewayv2alpha1.Rule) bool {
-	duplicates := map[string]bool{}
+const pathByMethodConflictTemplate = "Path %s with method %s conflicts with at least one of the other defined paths"
 
-	if len(rules) > 1 {
-		for _, rule := range rules {
-			if len(rule.Methods) > 0 {
-				for _, method := range rule.Methods {
-					tmp := fmt.Sprintf("%s:%s", rule.Path, method)
-					if duplicates[tmp] {
-						return true
-					}
-					duplicates[tmp] = true
-				}
-			} else {
-				if duplicates[rule.Path] {
-					return true
-				}
-				duplicates[rule.Path] = true
+func pathByMethodConflictValidationError(validationPath string, path string, method string) []validation.Failure {
+	return []validation.Failure{
+		{
+			AttributePath: validationPath,
+			Message:       fmt.Sprintf(pathByMethodConflictTemplate, path, method),
+		},
+	}
+}
+
+func hasPathByMethodConflict(validationPath string, rules []gatewayv2alpha1.Rule) []validation.Failure {
+	pathsByMethod := make(map[gatewayv2alpha1.HttpMethod][]string)
+	for _, rule := range rules {
+		if len(rule.Methods) == 0 {
+			pathsByMethod["NO_METHODS"] = append(pathsByMethod["NO_METHODS"], rule.Path)
+		}
+
+		for _, method := range rule.Methods {
+			pathsByMethod[method] = append(pathsByMethod[method], rule.Path)
+		}
+	}
+
+	for m, paths := range pathsByMethod {
+		trie := segment_trie.New()
+		for _, path := range paths {
+			if path == "/*" {
+				path = "/{**}"
+			}
+
+			tokens := token.TokenizePath(path)
+			if trie.InsertAndCheckCollisions(tokens) != nil {
+				return pathByMethodConflictValidationError(validationPath, path, string(m))
 			}
 		}
 	}
 
-	return false
+	return nil
 }

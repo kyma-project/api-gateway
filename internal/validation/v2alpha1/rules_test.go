@@ -115,6 +115,11 @@ var _ = Describe("Validate rules", func() {
 						Methods: []v2alpha1.HttpMethod{http.MethodGet},
 					},
 					{
+						Path:    "/abc/def",
+						NoAuth:  ptr.To(true),
+						Methods: []v2alpha1.HttpMethod{http.MethodGet},
+					},
+					{
 						Path:    "/abc",
 						NoAuth:  ptr.To(true),
 						Methods: []v2alpha1.HttpMethod{http.MethodGet, http.MethodPost},
@@ -132,7 +137,7 @@ var _ = Describe("Validate rules", func() {
 		//then
 		Expect(problems).To(HaveLen(1))
 		Expect(problems[0].AttributePath).To(Equal(".spec.rules"))
-		Expect(problems[0].Message).To(Equal("multiple rules defined for the same path and method"))
+		Expect(problems[0].Message).To(Equal("Path /abc with method GET conflicts with at least one of the other defined paths"))
 	})
 
 	DescribeTable("should fail for invalid path", func(path string, shouldFail bool, expectedMessage string) {
