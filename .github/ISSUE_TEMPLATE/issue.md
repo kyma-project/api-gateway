@@ -1,3 +1,17 @@
+---
+name: Issue
+about: Open a new issue
+title: ''
+labels: kind/feature
+assignees: ''
+
+---
+
+<!-- Thank you for your contribution. Before you submit the issue:
+1. Search open and closed issues for duplicates.
+2. Read the contributing guidelines.
+-->
+
 **Description**
 
 <!-- Provide a detailed description of what is required. Describe the background of the issue. -->
