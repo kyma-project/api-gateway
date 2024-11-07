@@ -34,7 +34,7 @@ An example of the data structure generated from paths:
 
 can be seen in the following diagram:
 
-[![Path trie](../assets/validation-trie.svg)](../assets/validation-trie.svg)
+[![Path trie](../assets/segment-trie.svg)](../assets/segment-trie.svg)
 
 Nodes marked with a double circle are nodes that can be the end of a path (have the boolean flag `EndNode==true`).
 Square nodes represent suffixes stored in the `{**}` operator nodes
@@ -82,3 +82,42 @@ In case the path that is currently being inserted contains the `{**}` operator,
 the algorithm is interrupted after the `{**}` operator is found (as it must be the last operator in the path).
 Then, the algorithm checks if there are any paths that end in the same suffix as the currently checked path.
 Example: if the path that is currently being inserted is `b/{**}/a/b`, the algorithm checks if there are any paths after `b` node that end in `/a/b`.
+
+<!---
+DOT source for the trie diagram:
+
+digraph Trie {
+    node [shape=circle, width=1];
+
+    "" -> "c" [label="c"];
+    "" -> "b" [label=" b"];
+    "" -> "d" [label="d"];
+
+    "c" -> "c/a" [label="a"];
+    
+    "c/a" [shape=doublecircle];
+
+    "b" -> "b/ar" [label="ar"];
+    "b" -> "b/{*}" [label=" {*}"];
+    "b/{*}" -> "b/{*}/c" [label=" c"];
+    "b" -> "b/{**}" [label="{**}"];
+    
+    "b/{**}" -> "/a/b"
+    "b/{**}" -> "/a/d"
+    
+    "/a/b" [shape=square,width=0.2]
+    "/a/d" [shape=square,width=0.2]
+
+    "b" [shape=doublecircle];
+    "b/{*}/c" [shape=doublecircle];
+    "b/ar" [shape=doublecircle];
+    "b/{**}" [shape=doublecircle];
+    
+    "d" -> "d/{**}" [label="{**}"];
+    
+    "d/{**}" [shape=doublecircle];
+    "d/{**}" -> "end"
+    
+    "end" [label="''", shape=square,width=0.2]
+}
+-->
