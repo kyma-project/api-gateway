@@ -40,7 +40,6 @@ runs:
         CLIENT_SECRET: ${{ inputs.client_secret }}
         OIDC_CONFIG_URL: ${{ inputs.oidc_well_known_url }}
         IMG: ${{ inputs.manager_image }}
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         if [ "${{ github.event_name }}" == "pull_request" ]; then
           k3d image import ${{ inputs.manager_image }} -c k3s-default

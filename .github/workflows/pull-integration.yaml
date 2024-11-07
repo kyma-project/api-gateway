@@ -42,6 +42,8 @@ jobs:
           fetch-depth: 0
       - uses: ./.github/actions/load-manager-image
       - uses: ./.github/actions/integration-tests
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           manager_image: "api-gateway-manager:PR-${{github.event.number}}"
           test_make_target: ${{ matrix.test_make_target }}
@@ -62,6 +64,8 @@ jobs:
           fetch-depth: 0
       - uses: ./.github/actions/load-manager-image
       - uses: ./.github/actions/k8s-compatibility-test
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           manager_image: "api-gateway-manager:PR-${{github.event.number}}"
           test_make_target: ${{ matrix.test_make_target }}
@@ -78,6 +82,8 @@ jobs:
           fetch-depth: 0
       - uses: ./.github/actions/load-manager-image
       - uses: ./.github/actions/upgrade-test
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           manager_image: "api-gateway-manager:PR-${{github.event.number}}"
           target_branch: ${{ github.base_ref }}
