@@ -60,6 +60,8 @@ jobs:
         with:
           go-version-file: 'go.mod'
       - name: Run tests
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           PULL_PULL_SHA=${{ github.event.pull_request.head.sha}} \
           PULL_BASE_SHA=${{ github.event.pull_request.base.sha}} \
