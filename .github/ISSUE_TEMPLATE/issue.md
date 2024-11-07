@@ -2,7 +2,7 @@
 name: Issue
 about: Open a new issue
 title: ''
-labels: kind/issue
+labels: kind/feature
 assignees: ''
 
 ---
