@@ -9,14 +9,30 @@ on:
 jobs:
   build-image:
     name: Build manager image
-    uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
     if: github.event.pull_request.draft == false
-    with:
-      name: api-gateway-manager
-      dockerfile: Dockerfile
-      context: .
-      build-args: |
-        VERSION=PR-${{ github.event.number }}
+    runs-on: ubuntu-latest
+    steps:
+      - id: build
+        uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
+        with:
+          name: api-gateway-manager
+          dockerfile: Dockerfile
+          context: .
+          build-args: |
+            VERSION=PR-${{ github.event.number }}
+      - id: save
+        run: |
+          # taking only first image is enough, because 'images' point to single image with multiple tags
+          img="$(echo ${{ steps.build.outputs.images }} | jq -r '.[0]')"
+          dest="api-gateway-manager:PR-${{ github.event.number }}"
+          docker pull "$img"
+          docker tag "$img" "$dest"
+          docker save "$dest" > /tmp/manager-image.tar
+      - id: upload
+        uses: actions/upload-artifact@v4
+        with:
+          path: /tmp/manager-image.tar
+          name: manager-image
 
   unit-tests:
     name: Unit tests & lint
