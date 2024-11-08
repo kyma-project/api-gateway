@@ -47,6 +47,7 @@ jobs:
   pull-request-status:
     needs: [ build-image, unit-tests, integration-tests, ui-tests, verify-pins ]
     runs-on: ubuntu-latest
+    if: always()
     steps:
       - if: ${{ !(contains(needs.*.result, 'failure')) }}
         run: exit 0

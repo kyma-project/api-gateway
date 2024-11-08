@@ -39,7 +39,6 @@ runs:
         CLIENT_ID: ${{ inputs.client_id }}
         CLIENT_SECRET: ${{ inputs.client_secret }}
         OIDC_CONFIG_URL: ${{ inputs.oidc_well_known_url }}
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         IMG: ${{ inputs.manager_image }}
       run: |
         if [ "${{ github.event_name }}" == "pull_request" ]; then
