@@ -78,30 +78,6 @@ CLUSTER_NAME=ag-$(echo $RANDOM | md5sum | head -c 7)
 export CLUSTER_NAME
 ./hack/ci/provision-gardener.sh
 
-cat <<EOF > patch.yaml
-spec:
-  extensions:
-    - type: shoot-dns-service
-      providerConfig:
-        apiVersion: service.dns.extensions.gardener.cloud/v1alpha1
-        dnsProviderReplication:
-          enabled: true
-        kind: DNSConfig
-        syncProvidersFromShootSpecDNS: true
-    - type: shoot-cert-service
-      providerConfig:
-        apiVersion: service.cert.extensions.gardener.cloud/v1alpha1
-        kind: CertConfig
-        shootIssuers:
-          enabled: true
-EOF
-
-echo "patching shoot for custom domain tests"
-kubectl patch shoot "${CLUSTER_NAME}" --patch-file patch.yaml --kubeconfig "${GARDENER_KUBECONFIG}"
-
-echo "waiting for shoot operations to be completed"
-kubectl wait --kubeconfig "${GARDENER_KUBECONFIG}" --for=jsonpath='{.status.lastOperation.state}'=Succeeded --timeout=600s "shoots/${CLUSTER_NAME}"
-
 echo "installing istio"
 make install-istio
 
