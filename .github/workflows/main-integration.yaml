@@ -57,6 +57,8 @@ jobs:
         with:
           fetch-depth: 0
       - uses: ./.github/actions/integration-tests
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:${{ needs.get-sha.outputs.sha }}"
           client_id: ${{ secrets.CLIENT_ID }}
@@ -78,6 +80,8 @@ jobs:
         with:
           fetch-depth: 0
       - uses: ./.github/actions/integration-tests
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:${{ needs.get-sha.outputs.sha }}"
           test_make_target: ${{ matrix.test_make_target }}
@@ -93,6 +97,8 @@ jobs:
         with:
           fetch-depth: 0
       - uses: ./.github/actions/upgrade-test
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:${{ needs.get-sha.outputs.sha }}"
           client_id: ${{ secrets.CLIENT_ID }}
@@ -112,6 +118,8 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
       - uses: ./.github/actions/integration-test-gardener
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:${{ needs.get-sha.outputs.sha }}"
           gardener_secret: ${{ secrets.GARDENER_TOKEN }}
@@ -133,6 +141,8 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
       - uses: ./.github/actions/integration-test-gardener
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:${{ needs.get-sha.outputs.sha }}"
           gardener_secret: ${{ secrets.GARDENER_TOKEN }}
