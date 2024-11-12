@@ -10,20 +10,22 @@ jobs:
   build-image:
     name: Build manager image
     if: github.event.pull_request.draft == false
+    uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
+    with:
+      name: api-gateway-manager
+      dockerfile: Dockerfile
+      context: .
+      build-args: |
+        VERSION=PR-${{ github.event.number }}
+
+  upload-image:
     runs-on: ubuntu-latest
+    needs: [ build-image ]
     steps:
-      - id: build
-        uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
-        with:
-          name: api-gateway-manager
-          dockerfile: Dockerfile
-          context: .
-          build-args: |
-            VERSION=PR-${{ github.event.number }}
       - id: save
         run: |
           # taking only first image is enough, because 'images' point to single image with multiple tags
-          img="$(echo ${{ steps.build.outputs.images }} | jq -r '.[0]')"
+          img="$(echo ${{ needs.build-image.outputs.images }} | jq -r '.[0]')"
           dest="api-gateway-manager:PR-${{ github.event.number }}"
           docker pull "$img"
           docker tag "$img" "$dest"
@@ -42,14 +44,14 @@ jobs:
 
   integration-tests:
     name: Integration tests
-    needs: [ build-image ]
+    needs: [ upload-image ]
     if: github.event.pull_request.draft == false
     uses: ./.github/workflows/pull-integration-release.yaml
     secrets: inherit
 
   ui-tests:
     name: UI tests
-    needs: [build-image]
+    needs: [upload-image]
     if: github.event.pull_request.draft == false
     uses: ./.github/workflows/ui-tests.yaml
     secrets: inherit
@@ -61,7 +63,7 @@ jobs:
     secrets: inherit
 
   pull-request-status:
-    needs: [ build-image, unit-tests, integration-tests, ui-tests, verify-pins ]
+    needs: [ build-image, upload-image, unit-tests, integration-tests, ui-tests, verify-pins ]
     runs-on: ubuntu-latest
     if: always()
     steps:
