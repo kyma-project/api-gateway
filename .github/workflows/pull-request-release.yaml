@@ -25,10 +25,10 @@ jobs:
       - id: save
         run: |
           # taking only first image is enough, because 'images' point to single image with multiple tags
-          img="$(echo ${{ needs.build-image.outputs.images }} | jq -r '.[0]')"
+          src="$(echo '${{ needs.build-image.outputs.images }}' | jq -r '.[0]')"
           dest="api-gateway-manager:PR-${{ github.event.number }}"
-          docker pull "$img"
-          docker tag "$img" "$dest"
+          docker pull "$src"
+          docker tag "$src" "$dest"
           docker save "$dest" > /tmp/manager-image.tar
       - id: upload
         uses: actions/upload-artifact@v4
