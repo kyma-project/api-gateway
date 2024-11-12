@@ -74,13 +74,14 @@ the algorithm performs the check similarly to the exact path validation.
 However, all the children of the current node are considered as possible paths that can be taken.
 The algorithm recursively checks all the children of the current node in a DFS fashion,
 and if any of them contain a valid path, the algorithm concludes that the paths conflict.
+Example: If the path that is currently being inserted is `b/{*}/a/b`, the algorithm performs DFS on all nodes after the first `b` node, looking for the `/a/b` path continuation.
 
 ### Paths that Contains the `{**}` Operator
 
 In case the path that is currently being inserted contains the `{**}` operator,
 the algorithm is interrupted after the `{**}` operator is found (as it must be the last operator in the path).
-Then, the algorithm checks if there are any paths that end in the same suffix as the currently checked path.
-Example: If the path that is currently being inserted is `b/{**}/a/b`, the algorithm checks if any paths after the `b` node end in `/a/b`.
+Then, the algorithm checks if there are any path that end in the same suffix as the currently checked path.
+Example: If the path that is currently being inserted is `b/{**}/a/b`, the algorithm checks if any path after the `b` node end in `/a/b`.
 
 <!---
 DOT source for the trie diagram:
