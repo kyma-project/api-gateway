@@ -64,6 +64,8 @@ If the third case occurs, and the current segment is a `{**}` operator, the algo
 The suffix search is performed from the segment that has the same index as the current segment in the checked exact path.
 If the suffix is found, the algorithm concludes that the paths conflict.
 
+Example: If the path that is currently being inserted is `/a/b/c`, and a path `/a/{**}` exists in the trie, the `{**}` suffixes are analysed if those conflict with the `/c` suffix.
+
 If the search did not finish in any of the cases above, the algorithm continues until there are no more segments in the checked path.
 Then, the algorithm checks if the current node is a possible end of the path. In the previously presented graph, those nodes are marked with a double circle.
 
