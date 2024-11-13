@@ -56,10 +56,12 @@ import (
 
 	certv1alpha1 "github.com/gardener/cert-management/pkg/apis/cert/v1alpha1"
 	dnsv1alpha1 "github.com/gardener/external-dns-management/pkg/apis/dns/v1alpha1"
-	operatorv1alpha1 "github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
 	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
+
+	operatorv1alpha1 "github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
+	"github.com/kyma-project/api-gateway/controllers/ratelimit"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -237,6 +239,11 @@ func main() {
 
 	if err = (&gatewayv1beta1.APIRule{}).SetupWebhookWithManager(mgr); err != nil {
 		setupLog.Error(err, "Unable to create webhook", "webhook", "APIRule")
+		os.Exit(1)
+	}
+
+	if err = ratelimit.Setup(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "RateLimit")
 		os.Exit(1)
 	}
 	//+kubebuilder:scaffold:builder

@@ -29,4 +29,13 @@ resources:
   kind: APIGateway
   path: github.com/kyma-project/api-gateway/apis/operator/v1alpha1
   version: v1alpha1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: kyma-project.io
+  group: ratelimit
+  kind: RateLimit
+  path: github.com/kyma-project/api-gateway/apis/ratelimit/v1alpha1
+  version: v1alpha1
 version: "3"
