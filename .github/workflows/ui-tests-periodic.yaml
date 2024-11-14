@@ -32,8 +32,8 @@ jobs:
         run: |
           sudo echo "127.0.0.1 local.kyma.dev" | sudo tee -a /etc/hosts
           wget -q -O - https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | sudo bash
-          docker pull europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:"${{ needs.get-sha.outputs.sha }}"
-          IMG=europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:"${{ needs.get-sha.outputs.sha }}" ./tests/ui/tests/scripts/k3d-ci-kyma-dashboard-integration.sh stage
+          docker pull europe-docker.pkg.dev/kyma-project/prod/api-gateway/main/api-gateway-manager:"${{ needs.get-sha.outputs.sha }}"
+          IMG=europe-docker.pkg.dev/kyma-project/prod/api-gateway/main/api-gateway-manager:"${{ needs.get-sha.outputs.sha }}" ./tests/ui/tests/scripts/k3d-ci-kyma-dashboard-integration.sh stage
       - uses: actions/upload-artifact@v4
         if: always()
         name: Export Cypress output

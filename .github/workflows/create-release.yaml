@@ -33,7 +33,7 @@ jobs:
       - name: Check security-scanner config
         shell: bash
         run: |
-          if [[ $( yq eval ".protecode[0]" sec-scanners-config.yaml ) == "europe-docker.pkg.dev/kyma-project/prod/api-gateway-manager:${{ github.event.inputs.name }}" ]]; then
+          if [[ $( yq eval ".protecode[0]" sec-scanners-config.yaml ) == "europe-docker.pkg.dev/kyma-project/prod/api-gateway/releases/api-gateway-manager:${{ github.event.inputs.name }}" ]]; then
             exit 0
           else
             echo "Error: api-gateway-manager image tag in sec-scanners-config doesn't match release ${{ github.event.inputs.name }}"
@@ -43,7 +43,7 @@ jobs:
     uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
     needs: [check-prerequisites]
     with:
-      name: api-gateway-manager
+      name: api-gateway/releases/api-gateway-manager
       dockerfile: Dockerfile
       context: .
       build-args: |
