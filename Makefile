@@ -89,7 +89,7 @@ vet: ## Run go vet against code.
 
 .PHONY: test
 test: manifests generate fmt vet envtest ## Generate manifests and run tests.
-	KUBEBUILDER_CONTROLPLANE_START_TIMEOUT=2m KUBEBUILDER_CONTROLPLANE_STOP_TIMEOUT=2m KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" go test $(shell go list ./... | grep -v /tests/integration) -coverprofile cover.out
+	KUBEBUILDER_CONTROLPLANE_START_TIMEOUT=2m KUBEBUILDER_CONTROLPLANE_STOP_TIMEOUT=2m KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" go test -tags ratelimit $(shell go list ./... | grep -v /tests/integration) -coverprofile cover.out
 
 .PHONY: test-integration
 test-integration: test-integration-v2alpha1 test-integration-ory test-integration-istio test-integration-gateway
@@ -134,15 +134,15 @@ install-istio: create-namespace
 
 .PHONY: build
 build: generate fmt vet ## Build manager binary.
-	go build -o bin/manager main.go
+	go build -tags ratelimit -o bin/manager main.go
 
 .PHONY: run
-run: manifests build
-	go run ./main.go
+run: manifests generate fmt vet
+	go run -tags ratelimit ./main.go
 
 .PHONY: docker-build
 docker-build:
-	IMG=$(IMG) docker build -t ${IMG} --build-arg TARGET_OS=${TARGET_OS} --build-arg TARGET_ARCH=${TARGET_ARCH} --build-arg VERSION=${VERSION} .
+	IMG=$(IMG) docker build -t ${IMG} --build-arg GO_BUILD_TAGS=ratelimit --build-arg TARGET_OS=${TARGET_OS} --build-arg TARGET_ARCH=${TARGET_ARCH} --build-arg VERSION=${VERSION} .
 
 .PHONY: docker-push
 docker-push: ## Push docker image with the manager.
