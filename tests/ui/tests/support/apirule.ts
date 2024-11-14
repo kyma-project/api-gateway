@@ -37,8 +37,7 @@ Cypress.Commands.add('apiRuleTypeRulePath', (path: string, ruleNumber: number = 
 Cypress.Commands.add('apiRuleSelectAccessStrategy', (strategy: ApiRuleAccessStrategy, ruleNumber: number = 0): void => {
     cy.inputClearAndType(`ui5-combobox[data-testid="spec.rules.${ruleNumber}.accessStrategies.0.handler"]:visible`, strategy);
 
-    cy.get('ui5-li:visible')
-        .contains(strategy)
+    cy.contains(strategy)
         .find('li')
         .click({force: true});
 });

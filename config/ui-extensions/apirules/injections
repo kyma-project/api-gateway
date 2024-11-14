@@ -1,0 +1,25 @@
+- title: APIRule v1beta1 Deprecation
+  description: |
+    APIRule CustomResourceDefinition v1beta1 has been deprecated and is scheduled for deletion.
+    For more details on the timeline and instructions on how to migrate to the newer version v2alpha1, follow the links:
+  widget: FeaturedCard
+  id: APIRulesDeprecationNotice
+  illustration: None
+  children:
+    - widget: Plain
+      children:
+        - widget: ExternalLinkButton
+          name: Deprecation Note
+          link: https://help.sap.com/whats-new/cf0cb2cb149647329b5d02aa96303f56?q=API+Gateway+module:+Deprecation+of+APIRule+v1beta1&locale=en-US&Software_Lifecycle=Deprecated
+        - widget: ExternalLinkButton
+          name: Deletion Note
+          link: https://help.sap.com/whats-new/cf0cb2cb149647329b5d02aa96303f56?locale=en-US&Component=Kyma+Runtime&Valid_as_Of=2025-05-12:2025-05-12
+        - widget: ExternalLinkButton
+          name: OAuth2 Migration
+          link: https://community.sap.com/t5/technology-blogs-by-sap/sap-btp-kyma-runtime-apirule-migration-ory-oathkeeper-based-oauth2-handlers/ba-p/13896184
+        - widget: ExternalLinkButton
+          name: JWT And NoAuth Migration
+          link: https://community.sap.com/t5/technology-blogs-by-sap/sap-btp-kyma-runtime-apirule-migration-noauth-and-jwt-handlers/ba-p/13882833
+  targets:
+    - slot: banner
+      location: apirules

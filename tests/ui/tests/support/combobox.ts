@@ -7,8 +7,7 @@ Cypress.Commands.add('chooseComboboxOption', (selector: string, optionText: stri
         .click({ force: true })
         .type(optionText, { force: true });
     cy.wait(200);
-    cy.get('ui5-li:visible', { timeout: 10000 })
-        .contains(optionText)
+    cy.contains(optionText)
         .find('li')
         .click({ force: true });
 });
