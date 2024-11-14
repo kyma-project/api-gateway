@@ -244,7 +244,7 @@ module-image: docker-build docker-push ## Build the Module Image and push it to 
 .PHONY: generate-manifests
 generate-manifests: kustomize module-version
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
-	$(KUSTOMIZE) build config/default > api-gateway-manager.yaml
+	$(KUSTOMIZE) build config/prod > api-gateway-manager.yaml
 
 .PHONY: get-latest-release
 get-latest-release:
