@@ -31,9 +31,9 @@ type Reconciler struct {
 	Scheme *runtime.Scheme
 }
 
-//+kubebuilder:rbac:groups=ratelimit.kyma-project.io,resources=ratelimits,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=ratelimit.kyma-project.io,resources=ratelimits/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=ratelimit.kyma-project.io,resources=ratelimits/finalizers,verbs=update
+// There should be no kubebuilder:rbac markers in this file as it's hard to modify the ClusterRole rules array in
+// kustomize. The roles are managed in the file config/dev/kustomization.yaml. Once this feature is ready for release,
+// the markers can be added again.
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -43,7 +43,7 @@ type Reconciler struct {
 //
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.14.1/pkg/reconcile
-func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+func (r *Reconciler) Reconcile(ctx context.Context, _ ctrl.Request) (ctrl.Result, error) {
 	_ = log.FromContext(ctx)
 
 	return ctrl.Result{}, nil
