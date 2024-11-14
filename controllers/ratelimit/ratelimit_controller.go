@@ -1,5 +1,3 @@
-//go:build ratelimit
-
 /*
 Copyright 2022.
 
@@ -20,30 +18,17 @@ package ratelimit
 
 import (
 	"context"
+	ratelimitv1alpha1 "github.com/kyma-project/api-gateway/apis/ratelimit/v1alpha1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
-	"sigs.k8s.io/controller-runtime/pkg/manager"
-
-	ratelimitv1alpha1 "github.com/kyma-project/api-gateway/apis/ratelimit/v1alpha1"
 )
-
-func init() {
-	utilruntime.Must(ratelimitv1alpha1.AddToScheme(scheme))
-}
 
 // Reconciler reconciles a RateLimit object
 type Reconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
-}
-
-func Setup(mgr manager.Manager) error {
-	return (&Reconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr)
 }
 
 //+kubebuilder:rbac:groups=ratelimit.kyma-project.io,resources=ratelimits,verbs=get;list;watch;create;update;patch;delete

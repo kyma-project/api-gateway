@@ -242,7 +242,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err = ratelimit.Setup(mgr); err != nil {
+	if err = ratelimit.Setup(mgr, scheme); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "RateLimit")
 		os.Exit(1)
 	}
