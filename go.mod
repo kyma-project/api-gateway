@@ -12,7 +12,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/onsi/ginkgo/v2 v2.21.0
 	github.com/onsi/gomega v1.35.1
-	github.com/ory/oathkeeper-maester v0.1.10
+	github.com/ory/oathkeeper-maester v0.1.11
 	github.com/spf13/pflag v1.0.5
 	github.com/thoas/go-funk v0.9.3
 	gitlab.com/rodrigoodhin/gocure v0.0.0-20230214115050-efed6aac536a
