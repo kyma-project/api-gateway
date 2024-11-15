@@ -1,4 +1,4 @@
-//go:build enable_dev_features
+//go:build dev_features
 
 package ratelimit
 
