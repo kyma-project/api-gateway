@@ -116,6 +116,11 @@ func (s *scenario) theAPIRuleV2Alpha1IsApplied() error {
 	return helpers.ApplyApiRuleV2Alpha1(s.resourceManager.CreateResources, s.resourceManager.UpdateResources, s.k8sClient, testcontext.GetRetryOpts(), r)
 }
 
+func (s *scenario) theAPIRuleTemplateFileIsSetTo(templateFileName string) {
+	s.ManifestTemplate["NamePrefix"] = strings.TrimRight(templateFileName, ".yaml")
+	s.ApiResourceManifestPath = templateFileName
+}
+
 func (s *scenario) theAPIRuleV2Alpha1IsAppliedExpectError(errorMessage string) error {
 	r, err := manifestprocessor.ParseFromFileWithTemplate(s.ApiResourceManifestPath, s.ApiResourceDirectory, s.ManifestTemplate)
 	if err != nil {
