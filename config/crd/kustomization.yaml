@@ -4,6 +4,7 @@
 resources:
 - bases/gateway.kyma-project.io_apirules.yaml
 - bases/operator.kyma-project.io_apigateways.yaml
+- bases/ratelimit.kyma-project.io_ratelimits.yaml
 #+kubebuilder:scaffold:crdkustomizeresource
 
 labels:
