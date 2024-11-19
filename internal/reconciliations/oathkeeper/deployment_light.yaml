@@ -29,27 +29,6 @@ spec:
       annotations:
         readiness.status.sidecar.istio.io/initialDelaySeconds: "10"
     spec:
-      affinity:
-        podAntiAffinity:
-          preferredDuringSchedulingIgnoredDuringExecution:
-          - podAffinityTerm:
-              labelSelector:
-                matchExpressions:
-                - key: app.kubernetes.io/name
-                  operator: In
-                  values:
-                  - oathkeeper
-              topologyKey: kubernetes.io/hostname
-            weight: 100
-          - podAffinityTerm:
-              labelSelector:
-                matchExpressions:
-                  - key: app.kubernetes.io/name
-                    operator: In
-                    values:
-                    - oathkeeper
-              topologyKey: topology.kubernetes.io/zone
-            weight: 100
       containers:
         - command:
             - oathkeeper
