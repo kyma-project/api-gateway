@@ -6,7 +6,7 @@ require (
 	github.com/avast/retry-go/v4 v4.6.0
 	github.com/cucumber/godog v0.15.0
 	github.com/gardener/cert-management v0.16.0
-	github.com/gardener/external-dns-management v0.22.0
+	github.com/gardener/external-dns-management v0.22.1
 	github.com/go-jose/go-jose/v3 v3.0.3
 	github.com/go-logr/logr v1.4.2
 	github.com/google/uuid v1.6.0
@@ -64,7 +64,7 @@ require (
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/prometheus/client_golang v1.20.5 // indirect
 	github.com/prometheus/client_model v0.6.1 // indirect
-	github.com/prometheus/common v0.59.1 // indirect
+	github.com/prometheus/common v0.60.0 // indirect
 	github.com/prometheus/procfs v0.15.1 // indirect
 	github.com/tdewolff/minify/v2 v2.10.0 // indirect
 	github.com/tdewolff/parse/v2 v2.5.27 // indirect
