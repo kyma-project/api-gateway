@@ -1,7 +1,8 @@
 Feature: Exposing endpoints with JWT
 
   Scenario: Calling a httpbin endpoint secured
-    Given There is a httpbin service
+    Given The APIRule template file is set to "ext-auth-jwt.yaml"
+    And There is a httpbin service
     And There is an endpoint secured with JWT on path "/ip"
     When The APIRule is applied
     Then Calling the "/ip" endpoint without a token should result in status between 400 and 403
@@ -10,7 +11,8 @@ Feature: Exposing endpoints with JWT
     And Teardown httpbin service
 
   Scenario: Calling a httpbin endpoint secured on all paths
-    Given There is a httpbin service
+    Given The APIRule template file is set to "ext-auth-jwt.yaml"
+    And There is a httpbin service
     And There is an endpoint secured with JWT on path "/*"
     When The APIRule is applied
     Then Calling the "/ip" endpoint without a token should result in status between 400 and 403
@@ -22,7 +24,8 @@ Feature: Exposing endpoints with JWT
     And Teardown httpbin service
 
   Scenario: Calling httpbin that has an endpoint secured by JWT and unrestricted endpoint
-    Given There is a httpbin service
+    Given The APIRule template file is set to "ext-auth-jwt.yaml"
+    And There is a httpbin service
     And There is an endpoint secured with JWT on path "/ip" and /headers endpoint exposed with noAuth
     When The APIRule is applied
     Then Calling the "/ip" endpoint with a valid "JWT" token should result in status between 200 and 299
@@ -30,7 +33,8 @@ Feature: Exposing endpoints with JWT
     And Teardown httpbin service
 
   Scenario: Calling a httpbin endpoint secured with JWT that requires scopes claims
-    Given There is a httpbin service
+    Given The APIRule template file is set to "ext-auth-jwt.yaml"
+    And There is a httpbin service
     And There is an endpoint secured with JWT on path "/ip" requiring scopes '["read", "write"]'
     And There is an endpoint secured with JWT on path "/get" requiring scopes '["test", "write"]'
     And There is an endpoint secured with JWT on path "/headers" requiring scopes '["read"]'
@@ -41,7 +45,8 @@ Feature: Exposing endpoints with JWT
     And Teardown httpbin service
 
   Scenario: Calling a httpbin endpoint secured with JWT that requires aud claim
-    Given There is a httpbin service
+    Given The APIRule template file is set to "ext-auth-jwt.yaml"
+    And There is a httpbin service
     And There is an endpoint secured with JWT on path "/get" requiring audiences '["https://example.com"]'
     And There is an endpoint secured with JWT on path "/ip" requiring audiences '["https://example.com", "https://example.com/user"]'
     And There is an endpoint secured with JWT on path "/cache" requiring audience '["https://example.com"]' or '["audienceNotInJWT"]'
@@ -54,21 +59,24 @@ Feature: Exposing endpoints with JWT
     And Teardown httpbin service
 
   Scenario: Exposing a JWT secured endpoint with unavailable issuer and jwks URL
-    Given There is a httpbin service
+    Given The APIRule template file is set to "ext-auth-jwt.yaml"
+    And There is a httpbin service
     Given There is an endpoint secured with JWT on path "/ip" with invalid issuer and jwks
     When The APIRule is applied
     And Calling the "/ip" endpoint with a valid "JWT" token should result in body containing "Jwt issuer is not configured"
     And Teardown httpbin service
 
   Scenario: Exposing a JWT secured endpoint where issuer URL doesn't belong to jwks URL
-    Given There is a httpbin service
+    Given The APIRule template file is set to "ext-auth-jwt.yaml"
+    And There is a httpbin service
     And There is an endpoint secured with JWT on path "/ip" with invalid issuer and jwks
     When The APIRule is applied
     And Calling the "/ip" endpoint with a valid "JWT" token should result in body containing "Jwt verification fails"
     And Teardown httpbin service
 
   Scenario: Exposing an endpoint secured with different JWT token from headers
-    Given There is a httpbin service
+    Given The APIRule template file is set to "ext-auth-jwt.yaml"
+    And There is a httpbin service
     When The APIRule is applied
     Then Calling the "/headers" endpoint without a token should result in status between 400 and 403
     And Calling the "/headers" endpoint with a valid "JWT" token from default header should result in status between 400 and 403
@@ -76,7 +84,8 @@ Feature: Exposing endpoints with JWT
     And Teardown httpbin service
 
   Scenario: Calling a httpbin endpoint secured with different JWT token from params
-    Given There is a httpbin service
+    Given The APIRule template file is set to "ext-auth-jwt.yaml"
+    And There is a httpbin service
     When The APIRule is applied
     And Calling the "/ip" endpoint without a token should result in status between 400 and 403
     And Calling the "/ip" endpoint with a valid "JWT" token from default header should result in status between 400 and 403
