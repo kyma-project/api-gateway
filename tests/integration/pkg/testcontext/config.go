@@ -2,10 +2,9 @@ package testcontext
 
 import (
 	"fmt"
-	"time"
-
 	"github.com/avast/retry-go/v4"
 	"github.com/vrischmann/envconfig"
+	"time"
 )
 
 const (
@@ -51,8 +50,8 @@ func GetRetryOpts() []retry.Option {
 		}
 
 		retryOpts = []retry.Option{
-			retry.Delay(time.Duration(config.ReqDelay) * time.Second),
-			retry.Attempts(60),
+			retry.Delay(500 * time.Millisecond),
+			retry.Attempts(30),
 			retry.DelayType(retry.FixedDelay),
 		}
 	}

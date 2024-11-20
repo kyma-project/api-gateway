@@ -106,8 +106,8 @@ func TestV2alpha1(t *testing.T) {
 func runTestsuite(t *testing.T, testsuite testcontext.Testsuite, config testcontext.Config) {
 	opts := createGoDogOpts(t, testsuite.FeaturePath(), config.TestConcurrency)
 	suite := godog.TestSuite{
-		Name: testsuite.Name(),
-		// We are not using ScenarioInitializer, as this function only needs to set up global resources
+		Name:                testsuite.Name(),
+		ScenarioInitializer: testsuite.InitScenarios,
 		TestSuiteInitializer: func(ctx *godog.TestSuiteContext) {
 			ctx.BeforeSuite(func() {
 				for _, hook := range testsuite.BeforeSuiteHooks() {
@@ -117,8 +117,6 @@ func runTestsuite(t *testing.T, testsuite testcontext.Testsuite, config testcont
 					}
 				}
 			})
-
-			testsuite.InitScenarios(ctx.ScenarioContext())
 
 			ctx.AfterSuite(func() {
 				for _, hook := range testsuite.AfterSuiteHooks() {

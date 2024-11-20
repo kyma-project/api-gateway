@@ -31,17 +31,11 @@ spec:
         version: v1
     spec:
       containers:
-      - image: eu.gcr.io/kyma-project/external/kennethreitz/httpbin:20201004
-        command:
-          - /bin/bash
-          - -c
-          - |
-            sleep 20
-            gunicorn -b 0.0.0.0:8000 httpbin:app -k gevent
-        imagePullPolicy: IfNotPresent
+      - image: docker.io/mccutchen/go-httpbin:v2.15.0
         name: httpbin
         ports:
-        - containerPort: 8000
+          - containerPort: 8080
+        imagePullPolicy: IfNotPresent
         securityContext:
           runAsUser: 65534
           runAsNonRoot: true

@@ -37,6 +37,7 @@ func (t *testsuite) createScenario() *scenario {
 	template["GatewayNamespace"] = t.config.GatewayNamespace
 	template["IssuerUrl"] = t.config.IssuerUrl
 	template["EncodedCredentials"] = base64.RawStdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", t.config.ClientID, t.config.ClientSecret)))
+	template["extAuthProvider"] = "sample-ext-authz-http"
 
 	return &scenario{
 		Namespace:            ns,
@@ -85,7 +86,7 @@ func (t *testsuite) K8sClient() dynamic.Interface {
 }
 
 func (t *testsuite) Setup() error {
-	namespace := fmt.Sprintf("%s-%s", t.name, helpers.GenerateRandomString(6))
+	namespace := fmt.Sprintf("%s-%s", t.name, helpers.GenerateRandomString())
 	log.Printf("Using namespace: %s\n", namespace)
 
 	// create common resources for all scenarios

@@ -11,6 +11,7 @@ import (
 
 func initScenario(ctx *godog.ScenarioContext, ts *testsuite) {
 	scenario := ts.createScenario()
+	fmt.Printf("Initialized scenario with testId: %s\n", scenario.TestID)
 
 	ctx.Step(`^APIRule has status "([^"]*)" with description containing "([^"]*)"$`, scenario.theAPIRuleHasStatusWithDesc)
 	ctx.Step(`^Calling short host "([^"]*)" with path "([^"]*)" without a token should result in status between (\d+) and (\d+)$`, scenario.callingShortHostWithoutTokenShouldResultInStatusBetween)

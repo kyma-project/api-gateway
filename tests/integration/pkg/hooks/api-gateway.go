@@ -105,7 +105,7 @@ var ApplyAndVerifyApiGatewayCrSuiteHook = func() error {
 		}
 
 		return nil
-	}, testcontext.GetRetryOpts()...)
+	}, retry.DelayType(retry.FixedDelay), retry.Delay(500), retry.Attempts(1200))
 
 	if err != nil {
 		return err

@@ -161,7 +161,7 @@ func (c *scenario) isDNSReady() error {
 		Factor:   2,
 		Steps:    10,
 	}, func() (done bool, err error) {
-		testName := helpers.GenerateRandomString(3)
+		testName := helpers.GenerateRandomString()
 		ips, err := net.LookupIP(fmt.Sprintf("%s.%s.%s", testName, c.testID, c.domain))
 		if err != nil {
 			return false, nil

@@ -121,7 +121,7 @@ func (t *testsuite) K8sClient() dynamic.Interface {
 }
 
 func (t *testsuite) Setup() error {
-	namespace := fmt.Sprintf("%s-%s", t.name, helpers.GenerateRandomString(6))
+	namespace := fmt.Sprintf("%s-%s", t.name, helpers.GenerateRandomString())
 	secondNamespace := fmt.Sprintf("%s-2", namespace)
 	log.Printf("Using namespace: %s\n", namespace)
 

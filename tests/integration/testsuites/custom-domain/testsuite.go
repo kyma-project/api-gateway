@@ -50,7 +50,7 @@ func (t *testsuite) K8sClient() dynamic.Interface {
 }
 
 func (t *testsuite) Setup() error {
-	namespace := fmt.Sprintf("%s-%s", t.name, helpers.GenerateRandomString(6))
+	namespace := fmt.Sprintf("%s-%s", t.name, helpers.GenerateRandomString())
 	log.Printf("Using namespace: %s\n", namespace)
 
 	var tokenURL string

@@ -9,7 +9,7 @@ Feature: Exposing endpoints with ExtAuth
     And Calling the "/headers" endpoint with header "x-ext-authz" with value "allow" should result in status between 200 and 299
 
   Scenario: Calling a httpbin endpoint secured with ExtAuth with JWT restrictions
-    Given The APIRule template file is set to "ext-auth-common.yaml"
+    Given The APIRule template file is set to "ext-auth-jwt.yaml"
     And There is a httpbin service
     And There is an endpoint secured with ExtAuth "sample-ext-authz-http" on path "/headers"
     And The endpoint has JWT restrictions
