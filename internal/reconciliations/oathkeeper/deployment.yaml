@@ -179,12 +179,18 @@ spec:
       affinity:
         podAntiAffinity:
           preferredDuringSchedulingIgnoredDuringExecution:
-            - weight: 100
-              podAffinityTerm:
+            - podAffinityTerm:
                 labelSelector:
                   matchLabels:
-                    app: oathkeeper
+                    app.kubernetes.io/name: oathkeeper
                 topologyKey: "kubernetes.io/hostname"
+              weight: 100
+            - podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app.kubernetes.io/name: oathkeeper
+                topologyKey: topology.kubernetes.io/zone
+              weight: 100
       volumes:
         - configMap:
             name: ory-oathkeeper-config

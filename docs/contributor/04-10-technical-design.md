@@ -3,6 +3,8 @@
 API Gateway Operator consists of two controllers that reconcile different CRs. To understand the reasons for using a single operator with multiple controllers instead of multiple operators, refer to the [Architecture Decision Record](https://github.com/kyma-project/api-gateway/issues/495).
 API Gateway Operator has a dependency on [Istio](https://istio.io/) and [Ory Oathkeeper](https://www.ory.sh/docs/oathkeeper), and it installs Ory Oathkeeper itself.
 
+Oathkeeper Deployment configures **PodAntiAffinity** to ensure that its Pods are evenly spread across all nodes and, if possible, across different zones. This guarantees High availability (HA) of the [Ory Oathkeeper](https://www.ory.sh/docs/oathkeeper) installation.
+
 The following diagram illustrates the APIRule reconciliation process and the resources created in the process:
 
 ![Kyma API Gateway Overview](../assets/operator-contributor-skr-overview.svg)
