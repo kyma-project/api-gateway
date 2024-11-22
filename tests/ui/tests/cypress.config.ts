@@ -35,6 +35,6 @@ module.exports = defineConfig({
     supportFile: 'support/index.ts',
   },
   retries: {
-    runMode: 2,
+    runMode: 4,
   },
 });

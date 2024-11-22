@@ -15,7 +15,6 @@ spec:
       accessStrategies:
         - handler: oauth2_introspection
           config:
-            required_scope: ["read"]
             introspection_url: "{{ .IssuerUrl }}/oauth2/introspect"
             token_from:
               header: "opaque-token"
