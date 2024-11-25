@@ -38,6 +38,7 @@ type scenario struct {
 	httpClient      *helpers.RetryableHttpClient
 	resourceManager *resource.Manager
 	config          testcontext.Config
+	gcpSAJson       []byte
 }
 
 func initScenario(ctx *godog.ScenarioContext, ts *testsuite) {
@@ -47,7 +48,6 @@ func initScenario(ctx *godog.ScenarioContext, ts *testsuite) {
 		log.Fatalf("could not initialize custom domain endpoint err=%s", err)
 	}
 
-	ctx.Step(`^there is a "([^"]*)" DNS cloud credentials secret in "([^"]*)" namespace$`, scenario.thereIsAnCloudCredentialsSecret)
 	ctx.Step(`^there is an "([^"]*)" service in "([^"]*)" namespace$`, scenario.thereIsAnExposedService)
 	ctx.Step(`^create custom domain resources$`, scenario.createResources)
 	ctx.Step(`^ensure that DNS record is ready$`, scenario.isDNSReady)
@@ -63,6 +63,11 @@ func createScenario(t *testsuite, namePrefix string) (*scenario, error) {
 	ns := t.namespace
 	testID := helpers.GenerateRandomTestId()
 	customDomainManifestDirectory := path.Dir(manifestsPath)
+
+	gcpSAJson, err := helpers.LoadFile(t.config.GCPServiceAccountJsonPath)
+	if err != nil {
+		return nil, fmt.Errorf("can't read GCP SA Account json file because of: %w", err)
+	}
 
 	// create common resources from files
 	commonResources, err := manifestprocessor.ParseFromFileWithTemplate("testing-app.yaml", customDomainManifestDirectory, struct {
@@ -89,8 +94,14 @@ func createScenario(t *testsuite, namePrefix string) (*scenario, error) {
 		Domain           string
 		GatewayName      string
 		GatewayNamespace string
-	}{Namespace: ns, NamePrefix: namePrefix, TestID: testID, Domain: fmt.Sprintf("%s.%s", testID, t.config.CustomDomain), GatewayName: fmt.Sprintf("%s-%s", namePrefix, testID),
-		GatewayNamespace: ns})
+	}{
+		Namespace:        ns,
+		NamePrefix:       namePrefix,
+		TestID:           testID,
+		Domain:           fmt.Sprintf("%s.%s", testID, t.config.CustomDomain),
+		GatewayName:      fmt.Sprintf("%s-%s", namePrefix, testID),
+		GatewayNamespace: ns,
+	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to process resource manifest files, details %s", err.Error())
 	}
@@ -103,7 +114,16 @@ func createScenario(t *testsuite, namePrefix string) (*scenario, error) {
 		GatewayNamespace   string
 		IssuerUrl          string
 		EncodedCredentials string
-	}{Namespace: ns, NamePrefix: namePrefix, TestID: testID, Domain: fmt.Sprintf("%s.%s", testID, t.config.CustomDomain), GatewayName: fmt.Sprintf("%s-%s", namePrefix, testID), GatewayNamespace: ns, IssuerUrl: t.config.IssuerUrl, EncodedCredentials: base64.RawStdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", t.config.ClientID, t.config.ClientSecret)))})
+	}{
+		Namespace:          ns,
+		NamePrefix:         namePrefix,
+		TestID:             testID,
+		Domain:             fmt.Sprintf("%s.%s", testID, t.config.CustomDomain),
+		GatewayName:        fmt.Sprintf("%s-%s", namePrefix, testID),
+		GatewayNamespace:   ns,
+		IssuerUrl:          t.config.IssuerUrl,
+		EncodedCredentials: base64.RawStdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", t.config.ClientID, t.config.ClientSecret))),
+	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to process resource manifest files, details %s", err.Error())
 	}
@@ -119,19 +139,29 @@ func createScenario(t *testsuite, namePrefix string) (*scenario, error) {
 		httpClient:      t.httpClient,
 		oauth2Cfg:       t.oauth2Cfg,
 		resourceManager: t.resourceManager,
+		gcpSAJson:       gcpSAJson,
 		config:          t.config,
 	}, nil
 }
 
 func (c *scenario) createResources() error {
 	customDomainResources, err := manifestprocessor.ParseFromFileWithTemplate("resources.yaml", manifestsPath, struct {
-		Namespace      string
-		NamePrefix     string
-		TestID         string
-		Domain         string
-		Subdomain      string
-		LoadBalancerIP string
-	}{Namespace: c.namespace, NamePrefix: "custom-domain", TestID: c.testID, Domain: c.domain, Subdomain: fmt.Sprintf("%s.%s", c.testID, c.domain), LoadBalancerIP: c.loadBalancerIP.String()})
+		Namespace            string
+		NamePrefix           string
+		TestID               string
+		Domain               string
+		Subdomain            string
+		LoadBalancerIP       string
+		EncodedSACredentials string
+	}{
+		Namespace:            c.namespace,
+		NamePrefix:           "custom-domain",
+		TestID:               c.testID,
+		Domain:               c.domain,
+		Subdomain:            fmt.Sprintf("%s.%s", c.testID, c.domain),
+		LoadBalancerIP:       c.loadBalancerIP.String(),
+		EncodedSACredentials: base64.RawStdEncoding.EncodeToString(c.gcpSAJson),
+	})
 	if err != nil {
 		return fmt.Errorf("failed to process common manifest files, details %s", err.Error())
 	}
@@ -139,17 +169,6 @@ func (c *scenario) createResources() error {
 
 	if err != nil {
 		return err
-	}
-
-	return nil
-}
-
-func (c *scenario) thereIsAnCloudCredentialsSecret(secretName string, secretNamespace string) error {
-	res := schema.GroupVersionResource{Group: "", Version: "v1", Resource: "secrets"}
-	_, err := c.k8sClient.Resource(res).Namespace(secretNamespace).Get(context.Background(), secretName, v1.GetOptions{})
-
-	if err != nil {
-		return fmt.Errorf("cloud credenials secret could not be found")
 	}
 
 	return nil
