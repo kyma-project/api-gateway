@@ -323,6 +323,90 @@ var _ = Describe("Oathkeeper reconciliation", func() {
 			Expect(status.Description()).To(Equal("Oathkeeper did not start successfully"))
 		})
 
+		It("Should add restart annotation to Oathkeeper deployment template when minimum replicas are not "+
+			"available after 5 minutes", func() {
+			apiGateway := createApiGateway()
+
+			oathkeeperDep := &appsv1.Deployment{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "ory-oathkeeper",
+					Namespace: reconciliations.Namespace,
+				},
+				Status: appsv1.DeploymentStatus{
+					Conditions: []appsv1.DeploymentCondition{
+						{
+							Type:   appsv1.DeploymentAvailable,
+							Status: corev1.ConditionFalse,
+							LastTransitionTime: metav1.Time{
+								Time: time.Now().Add(-6 * time.Minute),
+							},
+						},
+					},
+				},
+			}
+
+			k8sClient := createFakeClient(apiGateway, oathkeeperDep)
+			reconciler := oathkeeper.Reconciler{
+				ReadinessRetryConfig: oathkeeper.RetryConfig{
+					Attempts: 1,
+					Delay:    1 * time.Millisecond,
+				},
+			}
+			status := reconciler.ReconcileAndVerifyReadiness(context.Background(), k8sClient, apiGateway)
+
+			var updatedOathkeeperDeployment appsv1.Deployment
+			err := k8sClient.Get(context.Background(), types.NamespacedName{
+				Namespace: reconciliations.Namespace,
+				Name:      "ory-oathkeeper",
+			}, &updatedOathkeeperDeployment)
+			Expect(err).To(BeNil())
+
+			Expect(updatedOathkeeperDeployment.Spec.Template.ObjectMeta.Annotations["api-gateway-operator.kyma-project.io/restartedAt"]).NotTo(BeEmpty())
+			Expect(status.IsError()).To(BeTrue(), "%#v", status)
+			Expect(status.Description()).To(Equal("Oathkeeper did not start successfully"))
+		})
+
+		It("Should not add restart annotation to Oathkeeper deployment template when minimum replicas are not "+
+			"available after less than 5 minutes", func() {
+			apiGateway := createApiGateway()
+
+			oathkeeperDep := &appsv1.Deployment{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "ory-oathkeeper",
+					Namespace: reconciliations.Namespace,
+				},
+				Status: appsv1.DeploymentStatus{
+					Conditions: []appsv1.DeploymentCondition{
+						{
+							Type:   appsv1.DeploymentAvailable,
+							Status: corev1.ConditionFalse,
+							LastTransitionTime: metav1.Time{
+								Time: time.Now().Add(-3 * time.Minute),
+							},
+						},
+					},
+				},
+			}
+
+			k8sClient := createFakeClient(apiGateway, oathkeeperDep)
+			reconciler := oathkeeper.Reconciler{
+				ReadinessRetryConfig: oathkeeper.RetryConfig{
+					Attempts: 1,
+					Delay:    1 * time.Millisecond,
+				},
+			}
+			reconciler.ReconcileAndVerifyReadiness(context.Background(), k8sClient, apiGateway)
+
+			var updatedOathkeeperDeployment appsv1.Deployment
+			err := k8sClient.Get(context.Background(), types.NamespacedName{
+				Namespace: reconciliations.Namespace,
+				Name:      "ory-oathkeeper",
+			}, &updatedOathkeeperDeployment)
+			Expect(err).To(BeNil())
+
+			Expect(updatedOathkeeperDeployment.Spec.Template.ObjectMeta.Annotations["api-gateway-operator.kyma-project.io/restartedAt"]).To(BeEmpty())
+		})
+
 	})
 
 })

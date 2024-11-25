@@ -16,6 +16,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"strconv"
+	"time"
 )
 
 const (
@@ -132,6 +133,39 @@ func getReplicasForDeployment(ctx context.Context, k8sClient client.Client) (str
 func hasMinimumReplicasAvailable(dep appsv1.Deployment) bool {
 	for _, condition := range dep.Status.Conditions {
 		if condition.Type == appsv1.DeploymentAvailable && condition.Status == corev1.ConditionTrue {
+			return true
+		}
+	}
+
+	return false
+}
+
+func restartOathkeeper(ctx context.Context, k8sClient client.Client) error {
+	var dep appsv1.Deployment
+	err := k8sClient.Get(ctx, client.ObjectKey{
+		Namespace: reconciliations.Namespace,
+		Name:      deploymentName,
+	}, &dep)
+	if err != nil {
+		return fmt.Errorf("fetching Oathkeeper deployment: %w", err)
+	}
+
+	if isRestartRequired(dep) {
+		ctrl.Log.Info("Restarting Oathkeeper because minimum replicas are not available")
+		dep.Spec.Template.ObjectMeta.Annotations["api-gateway-operator.kyma-project.io/restartedAt"] = time.Now().Format(time.RFC3339)
+		err := k8sClient.Update(ctx, &dep)
+		if err != nil {
+			return fmt.Errorf("updating Oathkeeper deployment: %w", err)
+		}
+	}
+
+	return nil
+}
+
+func isRestartRequired(dep appsv1.Deployment) bool {
+	for _, condition := range dep.Status.Conditions {
+		if condition.Type == appsv1.DeploymentAvailable && condition.Status == corev1.ConditionFalse &&
+			time.Since(condition.LastTransitionTime.Time) > 5*time.Minute {
 			return true
 		}
 	}
