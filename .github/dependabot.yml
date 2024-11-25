@@ -3,9 +3,6 @@ updates:
   # main branch configuration
   - package-ecosystem: "gomod"
     directory: "/"
-    labels:
-      - "go"
-      - "area/dependency"
     schedule:
       interval: "daily"
     commit-message:
@@ -22,9 +19,6 @@ updates:
 
   - package-ecosystem: "docker"
     directory: "/"
-    labels:
-      - "docker"
-      - "area/dependency"
     schedule:
       interval: "daily"
     commit-message:
@@ -48,9 +42,6 @@ updates:
   - package-ecosystem: "gomod"
     directory: "/"
     target-branch: "release-2.10"
-    labels:
-      - "go"
-      - "area/dependency"
     schedule:
       interval: "daily"
     commit-message:
@@ -70,9 +61,6 @@ updates:
   - package-ecosystem: "docker"
     target-branch: "release-2.10"
     directory: "/"
-    labels:
-      - "docker"
-      - "area/dependency"
     schedule:
       interval: "daily"
     commit-message:
