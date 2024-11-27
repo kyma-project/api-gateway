@@ -27,7 +27,7 @@ Additionally, the metrics for rate limiting are also not in scope of this ADR.
 
 ## Decision
 
-New CRD will be introduced in the APIGateway module to allow rate limiting configuration.
+A new CRD will be introduced in the API Gateway module to allow rate limiting configuration.
 In the future, global rate limit might be introduced. The decision has not been made yet, so it has been decided to name
 the new CRD `RateLimit` not to indicate that global rate limit will be provided. By naming the current CRD, for
 example, `LocalRateLimit,` logical would be to expect also `GlobalRateLimit` to exist at some point.  
@@ -454,7 +454,7 @@ spec:
 
 ## Consequences
 
-New controller for the new RateLimit CRD needs to be implemented as a part of the APIGateway module. The new RateLimit CR can
+A new controller for the new RateLimit CRD must be implemented as a part of the API Gateway module. The new RateLimit CR can
 be used to set rate limits in the cluster's service mesh without having to worry about possible changes in the Istio
 EnvoyFilter resources. Nevertheless, EnvoyFilter is complex and since its API is not stable yet, the current RateLimit
 CR will be provided in `v1alpha1` version and might be changed in the future releases.    
