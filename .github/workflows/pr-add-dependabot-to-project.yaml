@@ -1,0 +1,105 @@
+name: Add dependabot PRs to Project
+on:
+  pull_request_target:
+    types:
+      - opened
+      - reopened
+      - synchronize
+
+jobs:
+  add-dependabot-pr:
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.user.login == 'dependabot[bot]'
+    steps:
+      - name: Get project data
+        env:
+          GH_TOKEN: ${{ secrets.PROJECT_ACCESS_CLASSIC }}
+          ORGANIZATION: kyma-project
+          PROJECT_NUMBER: 27
+        run: |
+          gh api graphql -f query='
+            query($org: String!, $number: Int!) {
+              organization(login: $org){
+                projectV2(number: $number) {
+                  id
+                  fields(first:20) {
+                    nodes {
+                      ... on ProjectV2Field {
+                        id
+                        name
+                      }
+                      ... on ProjectV2SingleSelectField {
+                        id
+                        name
+                        options {
+                          id
+                          name
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }' -f org=$ORGANIZATION -F number=$PROJECT_NUMBER > project_data.json
+          
+          echo 'PROJECT_ID='$(jq '.data.organization.projectV2.id' project_data.json) >> $GITHUB_ENV
+
+          echo 'READY_ID='$(jq '.data.organization.projectV2.fields.nodes[] | select(.name== "Ready") | .id' project_data.json) >> $GITHUB_ENV
+          echo 'SPRINT_OPTION_ID='$(jq '.data.organization.projectV2.fields.nodes[] | select(.name== "Ready") | .options[] | select(.name=="Sprint") |.id' project_data.json) >> $GITHUB_ENV
+
+          echo 'STATUS_ID='$(jq '.data.organization.projectV2.fields.nodes[] | select(.name== "Status") | .id' project_data.json) >> $GITHUB_ENV
+          echo 'REVIEW_OPTION_ID='$(jq '.data.organization.projectV2.fields.nodes[] | select(.name== "Status") | .options[] | select(.name=="Review") |.id' project_data.json) >> $GITHUB_ENV
+      - name: Add PR to project
+        env:
+          GH_TOKEN: ${{ secrets.PROJECT_ACCESS_CLASSIC }}
+          PR_ID: ${{ github.event.pull_request.node_id }}
+        run: |
+          item_id="$( gh api graphql -f query='
+            mutation($project:ID!, $pr:ID!) {
+              addProjectV2ItemById(input: {projectId: $project, contentId: $pr}) {
+                item {
+                  id
+                }
+              }
+            }' -f project=$PROJECT_ID -f pr=$PR_ID --jq '.data.addProjectV2ItemById.item.id')"
+
+          # Stores the ID of the created item as an environment variable.
+          echo 'ITEM_ID='$item_id >> $GITHUB_ENV
+      - name: Set fields
+        env:
+          GH_TOKEN: ${{ secrets.PROJECT_ACCESS_CLASSIC }}
+        run: |
+          gh api graphql -f query='
+            mutation (
+              $project: ID!
+              $item: ID!
+              $status_field: ID!
+              $status_value: String!
+              $ready_field: ID!
+              $ready_value: String!
+            ) {
+              set_status: updateProjectV2ItemFieldValue(input: {
+                projectId: $project
+                itemId: $item
+                fieldId: $status_field
+                value: {
+                  singleSelectOptionId: $status_value
+                  }
+              }) {
+                projectV2Item {
+                  id
+                  }
+              }
+              set_ready: updateProjectV2ItemFieldValue(input: {
+                projectId: $project
+                itemId: $item
+                fieldId: $ready_field
+                value: {
+                  singleSelectOptionId: $ready_value
+                }
+              }) {
+                projectV2Item {
+                  id
+                }
+              }
+            }' -f project=$PROJECT_ID -f item=$ITEM_ID -f status_field=$STATUS_ID -f status_value=${{ env.REVIEW_OPTION_ID }} -f ready_field=$READY_ID -f ready_value=${{ env.SPRINT_OPTION_ID }}
