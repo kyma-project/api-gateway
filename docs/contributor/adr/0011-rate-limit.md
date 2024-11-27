@@ -452,10 +452,6 @@ spec:
   enableResponseHeaders: true
 ```
 
-The following diagram illustrates Istio Controller technical design extended with the RateLimit controller loop.
-
-![Istio Controller overview with RateLimit](../../assets/istio-operator-overview-ratelimit.svg)
-
 ## Consequences
 
 New controller for the new RateLimit CRD needs to be implemented as a part of the APIGateway module. The new RateLimit CR can
