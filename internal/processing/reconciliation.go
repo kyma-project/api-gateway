@@ -62,7 +62,9 @@ func Reconcile(ctx context.Context, client client.Client, log *logr.Logger, cmd 
 
 		errorMap := applyChanges(ctx, client, objectChanges...)
 		if len(errorMap) > 0 {
-			l.Error(err, "Error during applying reconciliation")
+			aggregatedErrors := aggregateErrors(errorMap)
+			l.Error(err, fmt.Sprintf("Error during applying reconciliation %s", aggregatedErrors))
+
 			statusBase := cmd.GetStatusBase(string(gatewayv1beta1.StatusOK))
 			return statusBase.GetStatusForErrorMap(errorMap)
 		}
@@ -121,4 +123,15 @@ func objectToSelector(obj client.Object) status.ResourceSelector {
 	default:
 		return status.OnApiRule
 	}
+}
+
+// aggregateErrors aggregates all errors from the errorMap to a single slice
+func aggregateErrors(errorMap map[status.ResourceSelector][]error) []string {
+	var allErrors []string
+	for _, resourceErrors := range errorMap {
+		for _, singleError := range resourceErrors {
+			allErrors = append(allErrors, singleError.Error())
+		}
+	}
+	return allErrors
 }
