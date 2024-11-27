@@ -76,7 +76,11 @@ export PATH="${PATH}:${PWD}"
 
 CLUSTER_NAME=ag-$(echo $RANDOM | md5sum | head -c 7)
 export CLUSTER_NAME
+export CLUSTER_KUBECONFIG="${CLUSTER_NAME}_kubeconfig.yaml"
+
 ./hack/ci/provision-gardener.sh
+
+export KUBECONFIG="${CLUSTER_KUBECONFIG}"
 
 echo "installing istio"
 make install-istio
