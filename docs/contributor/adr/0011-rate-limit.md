@@ -97,7 +97,7 @@ Example for EnvoyFilter creation based on the RateLimit CR configuration:
 RateLimit CR
 
 ```yaml 
-apiVersion: operator.kyma-project.io/v1alpha1
+apiVersion: ratelimit.kyma-project.io/v1alpha1
 kind: RateLimit
 metadata:
   name: httpbin-local-rate-limit
@@ -234,7 +234,7 @@ Example for EnvoyFilter creation based on the RateLimit CR configuration:
 RateLimit CR
 
 ```yaml
-apiVersion: operator.kyma-project.io/v1alpha1
+apiVersion: ratelimit.kyma-project.io/v1alpha1
 kind: RateLimit
 metadata:
   name: httpbin-local-rate-limit
