@@ -21,7 +21,7 @@ type Config struct {
 	IssuerUrl        string `envconfig:"-"`
 	ClientID         string `envconfig:"TEST_CLIENT_ID,default=empty"`
 	ClientSecret     string `envconfig:"TEST_CLIENT_SECRET,default=empty"`
-	ReqTimeout       uint   `envconfig:"TEST_REQUEST_TIMEOUT,default=240"`
+	ReqAttempts      uint   `envconfig:"TEST_REQUEST_ATTEMPTS,default=60"`
 	ReqDelay         uint   `envconfig:"TEST_REQUEST_DELAY,default=5"`
 	Domain           string `envconfig:"TEST_DOMAIN,default=local.kyma.dev"`
 	GatewayName      string `envconfig:"TEST_GATEWAY_NAME,default=kyma-gateway"`
@@ -52,7 +52,7 @@ func GetRetryOpts() []retry.Option {
 
 		retryOpts = []retry.Option{
 			retry.Delay(time.Duration(config.ReqDelay) * time.Second),
-			retry.Attempts(60),
+			retry.Attempts(config.ReqAttempts),
 			retry.DelayType(retry.FixedDelay),
 		}
 	}
