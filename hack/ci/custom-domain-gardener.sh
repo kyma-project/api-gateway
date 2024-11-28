@@ -76,7 +76,9 @@ export PATH="${PATH}:${PWD}"
 
 CLUSTER_NAME=ag-$(echo $RANDOM | md5sum | head -c 7)
 export CLUSTER_NAME
-export CLUSTER_KUBECONFIG="${CLUSTER_NAME}_kubeconfig.yaml"
+
+TMP_FOLDER=$(mktemp -d)
+export CLUSTER_KUBECONFIG="${TMP_FOLDER}/${CLUSTER_NAME}_kubeconfig.yaml"
 
 ./hack/ci/provision-gardener.sh
 
