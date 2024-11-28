@@ -8,7 +8,7 @@ You cannot access Services or Functions using the created APIRules. Kyma Gateway
 
 The issue comes up if you either rename or duplicate the default `kyma-gateway`. Once you have multiple Gateway custom resources (CRs) pointing to the same host, the first Gateway CR created takes precedence over the others.
 
-## Remedy
+## Solution
 
 Having two Gateway CRs pointing to the same host is not recommended. To resolve the issue, choose one of the following solutions:
 

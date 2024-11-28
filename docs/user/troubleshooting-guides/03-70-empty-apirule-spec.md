@@ -19,7 +19,7 @@ There is an empty **spec** in an APIRule custom resource (CR), for example:
 
 The conversion from the APIRule CR in version `v1beta1` to version `v2alpha1` is not possible. It's only possible to convert the `noAuth` and `jwt` handlers from `v1beta1` to `v2alpha1`. Beware that the `jwt` handler with more than one `trusted_issuers` or `jwks_urls` also cannot be converted.
 
-## Remedy
+## Solution
 
 Get the APIRule in its original version:
   ```bash

@@ -10,7 +10,7 @@ This process can result in the following issues:
 - `Certificate is still not ready, status is {STATUS}. Exiting...` error occurs.
 - Certificates are no longer valid.
 
-## Remedy
+## Solution
 
 If any of these issues appears, follow these steps:
 
