@@ -28,7 +28,7 @@ func LogInfo() {
 
 		log.Printf("Pod %s status: %s", pod.Name, pod.Status.Phase)
 		for _, condition := range pod.Status.Conditions {
-			log.Printf("Pod %s condition: '%s', status: '%s', reasson: '%s' message: '%s'", pod.Name,
+			log.Printf("Pod %s condition: '%s', status: '%s', reason: '%s' message: '%s'", pod.Name,
 				condition.Type, condition.Status, condition.Reason, condition.Message)
 		}
 
