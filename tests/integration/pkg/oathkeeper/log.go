@@ -1,6 +1,7 @@
 package oathkeeper
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"io"
@@ -8,9 +9,12 @@ import (
 	v12 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"log"
+	"os"
 
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 )
+
+var logger = log.New(os.Stderr, "oathkeeper-log ", log.LstdFlags)
 
 func LogInfo() {
 	conf := config.GetConfigOrDie()
@@ -21,19 +25,19 @@ func LogInfo() {
 		LabelSelector: "app.kubernetes.io/name=oathkeeper",
 	})
 	if err != nil {
-		log.Printf("Fetching Oathkeeper pods for logging: %s", err.Error())
+		logger.Printf("Fetching Oathkeeper pods for logging: %s", err.Error())
 	}
 
 	for _, pod := range pods.Items {
 
-		log.Printf("Pod %s status: %s", pod.Name, pod.Status.Phase)
+		logger.Printf("Pod %s status: %s", pod.Name, pod.Status.Phase)
 		for _, condition := range pod.Status.Conditions {
-			log.Printf("Pod %s condition: '%s', status: '%s', reason: '%s' message: '%s'", pod.Name,
+			logger.Printf("Pod %s condition: '%s', status: '%s', reason: '%s' message: '%s'", pod.Name,
 				condition.Type, condition.Status, condition.Reason, condition.Message)
 		}
 
 		for _, containerStatus := range pod.Status.ContainerStatuses {
-			log.Printf("Pod %s container %s status: %v", pod.Name, containerStatus.Name, containerStatus.State)
+			logger.Printf("Pod %s container %s status: %v", pod.Name, containerStatus.Name, containerStatus.State)
 		}
 
 		writeLogs(ctx, k8sClient, pod, "oathkeeper")
@@ -49,20 +53,26 @@ func writeLogs(ctx context.Context, c *kubernetes.Clientset, pod corev1.Pod, con
 	})
 	logs, err := req.Stream(ctx)
 	if err != nil {
-		log.Printf("Fetching %s container logs: %s", container, err.Error())
+		logger.Printf("Fetching %s container logs: %s", container, err.Error())
 	}
 	defer func() {
 		e := logs.Close()
 		if e != nil {
-			log.Printf("error %s closing logs stream: %s", container, err.Error())
+			logger.Printf("error %s closing logs stream: %s", container, err.Error())
 		}
 	}()
 	buf := new(bytes.Buffer)
 	_, err = io.Copy(buf, logs)
 	if err != nil {
-		log.Printf("Copying %s container logs: %s", container, err.Error())
+		logger.Printf("Copying %s container logs: %s", container, err.Error())
 	}
-	str := buf.String()
-	log.Printf("Logs for container %s:", container)
-	log.Println(str)
+
+	scanner := bufio.NewScanner(buf)
+	logsLogger := log.New(os.Stderr, container+"-container ", log.LstdFlags)
+	for scanner.Scan() {
+		logsLogger.Println(scanner.Text())
+	}
+	if err := scanner.Err(); err != nil {
+		logger.Printf("Reading %s container logs: %s", container, err.Error())
+	}
 }
