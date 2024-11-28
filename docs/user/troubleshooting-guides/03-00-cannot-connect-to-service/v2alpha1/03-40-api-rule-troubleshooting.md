@@ -43,7 +43,7 @@ If your APIRule is missing the **issuer** configuration for the **jwt** access s
 {"code":"ERROR","description":"Validation error: Attribute \".spec.rules[0].jwt\": supplied config cannot be empty"}
 ```
 
-### Remedy
+### Solution
 
 Add JWT configuration for the **issuer** or ``. Here's an example of a valid configuration:
 
@@ -85,7 +85,7 @@ If the **issuer** contains `:`, it must be a valid URI. Otherwise, you get the f
 The APIRule "httpbin" is invalid: .spec.rules[0].jwt.authentications[0].issuer: value is empty or not a valid URI
 ```
 
-### Remedy
+### Solution
 
 The JWT **issuer** must not be empty and must be a valid URI, for example:
 
@@ -128,7 +128,7 @@ If you set the **noAuth** access strategy to `true` and define the **jwt** confi
 {"code":"ERROR","description":"Validation error: Attribute \".spec.rules[0].noAuth\": noAuth access strategy is not allowed in combination with other access strategies"}
 ```
 
-### Remedy
+### Solution
 
 Decide on one configuration you want to use. You can either use **noAuth** access to the specific path or restrict it using a JWT security token.
 
@@ -151,7 +151,7 @@ If your APIRule CR specifies a host that is already used by another APIRule or V
 {"code":"ERROR","description":"Validation error: Attribute \".spec.host\": This host is occupied by another Virtual Service"}
 ```
 
-### Remedy
+### Solution
 
 Use a different host for the second APIRule CR, for example:
 

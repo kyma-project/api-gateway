@@ -16,7 +16,7 @@ The error could result from:
 - VPN connection on - issues related to DNS servers managed by your VPN provider
 - Invalid DNS settings on your OS
 
-## Remedy
+## Solution
 
 - Wait for the DNSEntry custom resource to be created. Check if it has the `Ready` status using the following command:
 
