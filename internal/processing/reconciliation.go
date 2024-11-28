@@ -63,7 +63,7 @@ func Reconcile(ctx context.Context, client client.Client, log *logr.Logger, cmd 
 		errorMap := applyChanges(ctx, client, objectChanges...)
 		if len(errorMap) > 0 {
 			aggregatedErrors := aggregateErrors(errorMap)
-			l.Error(err, fmt.Sprintf("Error during applying reconciliation %s", aggregatedErrors))
+			l.Error(err, "Error during applying reconciliation", "objectErrors", aggregatedErrors)
 
 			statusBase := cmd.GetStatusBase(string(gatewayv1beta1.StatusOK))
 			return statusBase.GetStatusForErrorMap(errorMap)
