@@ -58,7 +58,7 @@ func EnsureOAuth2Server(resourceMgr *resource.Manager, k8sClient dynamic.Interfa
 		log.Printf("OAuth2 mock deployed")
 		return issuerUrl, tokenUrl, nil
 	} else {
-		log.Printf("OIDC url provided: %s, getting configuration", config.OIDCConfigUrl)
+		log.Printf("OIDC url provided, getting configuration")
 		oidcConfiguration, err := helpers.GetOIDCConfiguration(config.OIDCConfigUrl)
 		if err != nil {
 			return "", "", err

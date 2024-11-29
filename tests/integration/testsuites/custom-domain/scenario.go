@@ -160,7 +160,7 @@ func (c *scenario) createResources() error {
 		Domain:               c.domain,
 		Subdomain:            fmt.Sprintf("%s.%s", c.testID, c.domain),
 		LoadBalancerIP:       c.loadBalancerIP.String(),
-		EncodedSACredentials: base64.RawStdEncoding.EncodeToString(c.gcpSAJson),
+		EncodedSACredentials: base64.StdEncoding.EncodeToString(c.gcpSAJson),
 	})
 	if err != nil {
 		return fmt.Errorf("failed to process common manifest files, details %s", err.Error())
