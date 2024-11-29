@@ -92,6 +92,7 @@ make deploy
 
 # KYMA_DOMAIN is required by the tests
 export TEST_DOMAIN="${CLUSTER_NAME}.${GARDENER_PROJECT_NAME}.shoot.live.k8s-hana.ondemand.com"
+export KYMA_DOMAIN="${TEST_DOMAIN}"
 export TEST_CUSTOM_DOMAIN="goat.build.kyma-project.io"
 export IS_GARDENER=true
 
