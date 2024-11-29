@@ -39,7 +39,7 @@ func ApplyOAuth2MockServer(resourceMgr *resource.Manager, k8sClient dynamic.Inte
 	}
 
 	issuerUrl := fmt.Sprintf("http://mock-oauth2-server.%s.svc.cluster.local", namespace)
-	tokenUrl := fmt.Sprintf("https://oauth2-mock-%s.%s/oauth2/token", namespace, domain)
+	tokenUrl := fmt.Sprintf("https://oauth2-mock.%s/oauth2/token", domain)
 
 	return issuerUrl, tokenUrl, nil
 }

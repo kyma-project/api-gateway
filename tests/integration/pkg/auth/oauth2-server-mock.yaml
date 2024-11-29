@@ -54,7 +54,7 @@ spec:
   gateways:
     - kyma-system/kyma-gateway
   hosts:
-    - oauth2-mock-{{ .Namespace }}.{{ .Domain }}
+    - oauth2-mock.{{ .Domain }}
   http:
     - route:
         - destination:
