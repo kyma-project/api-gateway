@@ -1,26 +1,33 @@
-apiVersion: v1
-kind: Pod
+apiVersion: apps/v1
+kind: Deployment
 metadata:
-  name: mock-oauth2-server
+  name: mock-oauth2-server-deployment
   namespace: {{ .Namespace }}
-  labels:
-    sidecar.istio.io/inject: "false"
-    app: mock-oauth2-server
 spec:
-  containers:
-    - name: mock-oauth2-server
-      image: europe-central2-docker.pkg.dev/sap-se-cx-kyma-goat/networking-dev-tools/oauth2-mock:latest
-      imagePullPolicy: Always
-      env:
-        - name: iss
-          value: http://mock-oauth2-server.{{ .Namespace }}.svc.cluster.local
-        - name: PORT
-          value: "8000"
-      ports:
-        - containerPort: 8000
-          name: http
-          protocol: TCP
-  restartPolicy: Always
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mock-oauth2-server
+  template:
+    metadata:
+      labels:
+        sidecar.istio.io/inject: "false"
+        app: mock-oauth2-server
+    spec:
+      containers:
+        - name: mock-oauth2-server
+          image: europe-central2-docker.pkg.dev/sap-se-cx-kyma-goat/networking-dev-tools/oauth2-mock:latest
+          imagePullPolicy: Always
+          env:
+            - name: iss
+              value: http://mock-oauth2-server.{{ .Namespace }}.svc.cluster.local
+            - name: PORT
+              value: "8000"
+          ports:
+            - containerPort: 8000
+              name: http
+              protocol: TCP
+      restartPolicy: Always
 ---
 apiVersion: v1
 kind: Service
@@ -47,7 +54,7 @@ spec:
   gateways:
     - kyma-system/kyma-gateway
   hosts:
-    - oauth2-mock.{{ .Domain }}
+    - oauth2-mock-{{ .Namespace }}.{{ .Domain }}
   http:
     - route:
         - destination:
