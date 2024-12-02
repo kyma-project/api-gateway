@@ -121,6 +121,10 @@ func (s *scenario) theAPIRuleTemplateFileIsSetTo(templateFileName string) {
 	s.ApiResourceManifestPath = templateFileName
 }
 
+func (s *scenario) templateValueIsSetTo(key, value string) {
+	s.ManifestTemplate[key] = value
+}
+
 func (s *scenario) theAPIRuleV2Alpha1IsAppliedExpectError(errorMessage string) error {
 	r, err := manifestprocessor.ParseFromFileWithTemplate(s.ApiResourceManifestPath, s.ApiResourceDirectory, s.ManifestTemplate)
 	if err != nil {

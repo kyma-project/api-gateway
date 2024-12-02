@@ -114,14 +114,21 @@ func runTestsuite(t *testing.T, testsuite testcontext.Testsuite) {
 			})
 
 			ctx.AfterSuite(func() {
-				log.Printf("Executing after suite hooks")
-				for _, hook := range testsuite.AfterSuiteHooks() {
-					err := hook()
-					if err != nil {
-						t.Fatalf("Cannot run after suite hooks: %s", err.Error())
+				if t.Failed() {
+					log.Printf("Test suite failed, skipping after suite on success hooks")
+				} else {
+					log.Printf("Executing after suite on success hooks")
+					for _, hook := range testsuite.AfterSuiteHooks() {
+						err := hook()
+						if err != nil {
+							t.Fatalf("Cannot run after suite hooks: %s", err.Error())
+						}
 					}
+					log.Printf("After suite hooks executed")
+
+					log.Printf("Tearing down test suite")
+					testsuite.TearDown()
 				}
-				log.Printf("After suite hooks executed")
 			})
 		},
 		Options: &opts,
@@ -159,8 +166,6 @@ func createGoDogOpts(t *testing.T, featuresPath []string, concurrency int) godog
 }
 
 func cleanUp(c testcontext.Testsuite, orgJwtHandler string) {
-	c.TearDown()
-
 	_, err := SwitchJwtHandler(c, orgJwtHandler)
 	if err != nil {
 		log.Print(err.Error())

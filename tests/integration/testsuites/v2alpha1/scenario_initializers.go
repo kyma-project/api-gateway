@@ -11,7 +11,6 @@ import (
 
 func initScenario(ctx *godog.ScenarioContext, ts *testsuite) {
 	scenario := ts.createScenario()
-	fmt.Printf("Initialized scenario with testId: %s\n", scenario.TestID)
 
 	ctx.Step(`^APIRule has status "([^"]*)" with description containing "([^"]*)"$`, scenario.theAPIRuleHasStatusWithDesc)
 	ctx.Step(`^Calling short host "([^"]*)" with path "([^"]*)" without a token should result in status between (\d+) and (\d+)$`, scenario.callingShortHostWithoutTokenShouldResultInStatusBetween)
@@ -37,6 +36,7 @@ func initScenario(ctx *godog.ScenarioContext, ts *testsuite) {
 	ctx.Step(`^Specifies custom Gateway "([^"]*)"/"([^"]*)"`, scenario.specifiesCustomGateway)
 	ctx.Step(`^Teardown helloworld service$`, scenario.teardownHelloworldCustomLabelService)
 	ctx.Step(`^Teardown httpbin service$`, scenario.teardownHttpbinService)
+	ctx.Step(`^Template value "([^"]*)" is set to "([^"]*)"$`, scenario.templateValueIsSetTo)
 	ctx.Step(`^The APIRule is applied and contains error status with "([^"]*)" message$`, scenario.theAPIRuleV2Alpha1IsAppliedExpectError)
 	ctx.Step(`^The APIRule is applied$`, scenario.theAPIRuleV2Alpha1IsApplied)
 	ctx.Step(`^The APIRule template file is set to "([^"]*)"$`, scenario.theAPIRuleTemplateFileIsSetTo)

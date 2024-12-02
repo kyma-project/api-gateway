@@ -36,7 +36,7 @@ Feature: Exposing services in APIRule
 
   Scenario: Calling a helloworld endpoint with custom label selector service
     Given The APIRule template file is set to "service-custom-label-selector.yaml"
-    And There is a httpbin service
+    And There is a helloworld service with custom label selector name "custom-name"
     And There is an endpoint secured with JWT on path "/hello"
     When The APIRule is applied
     Then Calling the "/hello" endpoint without a token should result in status between 400 and 403

@@ -76,6 +76,7 @@ Feature: Exposing endpoints with JWT
 
   Scenario: Exposing an endpoint secured with different JWT token from headers
     Given The APIRule template file is set to "jwt-token-from-header.yaml"
+    And Template value "JWTHeaderName" is set to "x-jwt-token"
     And There is a httpbin service
     When The APIRule is applied
     Then Calling the "/headers" endpoint without a token should result in status between 400 and 403
@@ -85,6 +86,7 @@ Feature: Exposing endpoints with JWT
 
   Scenario: Calling a httpbin endpoint secured with different JWT token from params
     Given The APIRule template file is set to "jwt-token-from-param.yaml"
+    And Template value "FromParamName" is set to "jwt_token"
     And There is a httpbin service
     When The APIRule is applied
     And Calling the "/ip" endpoint without a token should result in status between 400 and 403
