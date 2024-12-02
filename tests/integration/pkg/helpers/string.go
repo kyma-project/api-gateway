@@ -7,7 +7,7 @@ import (
 )
 
 func GenerateRandomTestId() string {
-	return GenerateRandomString()
+	return GenerateRandomString(8)
 }
 
 var (
@@ -15,10 +15,10 @@ var (
 	rMutex = &sync.Mutex{}
 )
 
-func GenerateRandomString() string {
+func GenerateRandomString(length int) string {
 	letterRunes := []rune("abcdefghijklmnopqrstuvwxyz")
 
-	b := make([]rune, 10)
+	b := make([]rune, length)
 
 	rMutex.Lock()
 	for i := range b {

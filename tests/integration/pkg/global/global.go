@@ -13,7 +13,7 @@ import (
 const globalCommonsFileName = "global-commons.yaml"
 
 func GenerateNamespaceName(testsuiteName string) string {
-	return fmt.Sprintf("%s-%s", testsuiteName, helpers.GenerateRandomString())
+	return fmt.Sprintf("%s-%s", testsuiteName, helpers.GenerateRandomString(6))
 }
 
 func getGlobalResources(resourceMgr *resource.Manager, k8sClient dynamic.Interface, namespace string, manifestsDir string) ([]unstructured.Unstructured, error) {

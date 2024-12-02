@@ -59,7 +59,6 @@ type testsuite struct {
 	config          testcontext.Config
 	oauth2Cfg       *clientcredentials.Config
 	jwtConfig       *clientcredentials.Config
-	failed          bool
 }
 
 func (t *testsuite) InitScenarios(ctx *godog.ScenarioContext) {
