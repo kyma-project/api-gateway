@@ -116,7 +116,10 @@ func ApplyAndVerifyApiGateway(scaleDownOathkeeper bool) error {
 				client.Merge.Type(),
 				[]byte(`{"spec":{"replicas":0}}`),
 			))
-		})
+		}, testcontext.GetRetryOpts()...)
+		if err != nil {
+			return err
+		}
 	}
 
 	err = retry.Do(func() error {

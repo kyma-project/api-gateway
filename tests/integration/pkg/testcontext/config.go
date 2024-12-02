@@ -51,8 +51,8 @@ func GetRetryOpts() []retry.Option {
 		var config = GetConfig()
 
 		retryOpts = []retry.Option{
-			retry.Delay(time.Second),
-			retry.Attempts(30),
+			retry.Delay(time.Duration(config.ReqDelay) * time.Second),
+			retry.Attempts(config.ReqAttempts),
 			retry.DelayType(retry.FixedDelay),
 		}
 
