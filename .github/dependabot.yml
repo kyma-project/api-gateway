@@ -3,9 +3,6 @@ updates:
   # main branch configuration
   - package-ecosystem: "gomod"
     directory: "/"
-    labels:
-      - "go"
-      - "area/dependency"
     schedule:
       interval: "daily"
     commit-message:
@@ -22,9 +19,6 @@ updates:
 
   - package-ecosystem: "docker"
     directory: "/"
-    labels:
-      - "docker"
-      - "area/dependency"
     schedule:
       interval: "daily"
     commit-message:
@@ -47,10 +41,7 @@ updates:
   # release branch configuration
   - package-ecosystem: "gomod"
     directory: "/"
-    target-branch: "release-2.9"
-    labels:
-      - "go"
-      - "area/dependency"
+    target-branch: "release-2.10"
     schedule:
       interval: "daily"
     commit-message:
@@ -68,11 +59,8 @@ updates:
       - dependency-name: "istio.io/api"
 
   - package-ecosystem: "docker"
-    target-branch: "release-2.9"
+    target-branch: "release-2.10"
     directory: "/"
-    labels:
-      - "docker"
-      - "area/dependency"
     schedule:
       interval: "daily"
     commit-message:

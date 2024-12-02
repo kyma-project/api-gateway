@@ -1,16 +1,12 @@
 package gateway
 
 import (
-	"context"
 	_ "embed"
-	"fmt"
 	"github.com/cucumber/godog"
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/global"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/helpers"
-	"github.com/kyma-project/api-gateway/tests/integration/pkg/manifestprocessor"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/resource"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 	"log"
 )
@@ -40,6 +36,12 @@ func (t *testsuite) Name() string {
 	return t.name
 }
 
+func (t *testsuite) ValidateAndFixConfig() error {
+	return t.config.ValidateCommon(t.resourceManager, t.k8sClient)
+}
+
+func (t *testsuite) TestConcurrency() int { return t.config.TestConcurrency }
+
 func (t *testsuite) ResourceManager() *resource.Manager {
 	return t.resourceManager
 }
@@ -49,41 +51,20 @@ func (t *testsuite) K8sClient() dynamic.Interface {
 }
 
 func (t *testsuite) Setup() error {
-	namespace := fmt.Sprintf("%s-%s", t.name, helpers.GenerateRandomString())
-	log.Printf("Using namespace: %s\n", namespace)
-
-	// create common resources for all scenarios
-	globalCommonResources, err := manifestprocessor.ParseFromFileWithTemplate("global-commons.yaml", manifestsPath, struct {
-		Namespace string
-	}{
-		Namespace: namespace,
-	})
-	if err != nil {
-		return err
-	}
-
-	// delete test namespace if the previous test namespace persists
-	nsResourceSchema, ns, name := t.resourceManager.GetResourceSchemaAndNamespace(globalCommonResources[0])
-	log.Printf("Delete test namespace, if exists: %s\n", name)
-	err = t.resourceManager.DeleteResource(t.k8sClient, nsResourceSchema, ns, name)
-	if err != nil {
-		return err
-	}
-
-	log.Printf("Creating common tests resources")
-	_, err = t.resourceManager.CreateResources(t.k8sClient, globalCommonResources...)
-	if err != nil {
-		return err
-	}
-
+	namespace := global.GenerateNamespaceName(t.name)
 	t.namespace = namespace
+	log.Printf("Using namespace: %s", namespace)
+
+	err := global.CreateGlobalResources(t.resourceManager, t.k8sClient, namespace, manifestsPath)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
 
 func (t *testsuite) TearDown() {
-	res := schema.GroupVersionResource{Group: "", Version: "v1", Resource: "namespaces"}
-	err := t.k8sClient.Resource(res).Delete(context.Background(), t.namespace, v1.DeleteOptions{})
+	err := global.DeleteGlobalResources(t.resourceManager, t.k8sClient, t.namespace, manifestsPath)
 	if err != nil {
 		log.Print(err.Error())
 	}

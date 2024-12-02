@@ -76,7 +76,13 @@ export PATH="${PATH}:${PWD}"
 
 CLUSTER_NAME=ag-$(echo $RANDOM | md5sum | head -c 7)
 export CLUSTER_NAME
+
+TMP_FOLDER=$(mktemp -d)
+export CLUSTER_KUBECONFIG="${TMP_FOLDER}/${CLUSTER_NAME}_kubeconfig.yaml"
+
 ./hack/ci/provision-gardener.sh
+
+export KUBECONFIG="${CLUSTER_KUBECONFIG}"
 
 echo "installing istio"
 make install-istio
@@ -86,6 +92,7 @@ make deploy
 
 # KYMA_DOMAIN is required by the tests
 export TEST_DOMAIN="${CLUSTER_NAME}.${GARDENER_PROJECT_NAME}.shoot.live.k8s-hana.ondemand.com"
+export KYMA_DOMAIN="${TEST_DOMAIN}"
 export TEST_CUSTOM_DOMAIN="goat.build.kyma-project.io"
 export IS_GARDENER=true
 

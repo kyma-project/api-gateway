@@ -1,10 +1,10 @@
 package istiojwt
 
 import (
-	"context"
 	_ "embed"
 	"encoding/base64"
 	"fmt"
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/global"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/hooks"
 	"log"
 	"path"
@@ -12,13 +12,10 @@ import (
 	"github.com/cucumber/godog"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/auth"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/helpers"
-	"github.com/kyma-project/api-gateway/tests/integration/pkg/manifestprocessor"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/resource"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/clientcredentials"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 )
 
@@ -112,6 +109,12 @@ func (t *testsuite) Name() string {
 	return t.name
 }
 
+func (t *testsuite) ValidateAndFixConfig() error {
+	return t.config.ValidateCommon(t.resourceManager, t.k8sClient)
+}
+
+func (t *testsuite) TestConcurrency() int { return t.config.TestConcurrency }
+
 func (t *testsuite) ResourceManager() *resource.Manager {
 	return t.resourceManager
 }
@@ -121,71 +124,36 @@ func (t *testsuite) K8sClient() dynamic.Interface {
 }
 
 func (t *testsuite) Setup() error {
-	namespace := fmt.Sprintf("%s-%s", t.name, helpers.GenerateRandomString())
+	namespace := global.GenerateNamespaceName(t.name)
+	t.namespace = namespace
+	log.Printf("Using namespace: %s", namespace)
+
 	secondNamespace := fmt.Sprintf("%s-2", namespace)
-	log.Printf("Using namespace: %s\n", namespace)
+	t.secondNamespace = secondNamespace
 
-	// create common resources for all scenarios
-	globalCommonResources, err := manifestprocessor.ParseFromFileWithTemplate("global-commons.yaml", manifestsDirectory, struct {
-		Namespace string
-	}{
-		Namespace: namespace,
-	})
+	err := global.CreateGlobalResources(t.resourceManager, t.k8sClient, namespace, manifestsDirectory)
 	if err != nil {
 		return err
 	}
 
-	// delete test namespace if the previous test namespace persists
-	nsResourceSchema, ns, name := t.resourceManager.GetResourceSchemaAndNamespace(globalCommonResources[0])
-	log.Printf("Delete test namespace, if exists: %s\n", name)
-	err = t.resourceManager.DeleteResource(t.k8sClient, nsResourceSchema, ns, name)
+	issuerUrl, tokenUrl, err := auth.EnsureOAuth2Server(t.resourceManager, t.k8sClient, namespace, t.config, testcontext.GetRetryOpts())
 	if err != nil {
 		return err
 	}
-
-	log.Printf("Creating common tests resources")
-	_, err = t.resourceManager.CreateResources(t.k8sClient, globalCommonResources...)
-	if err != nil {
-		return err
-	}
-
-	var tokenURL string
-	if t.config.OIDCConfigUrl == "empty" {
-		issuerUrl, err := auth.ApplyOAuth2MockServer(t.resourceManager, t.k8sClient, namespace, t.config.Domain)
-		if err != nil {
-			return err
-		}
-		t.config.IssuerUrl = fmt.Sprintf("http://mock-oauth2-server.%s.svc.cluster.local", namespace)
-		tokenURL = fmt.Sprintf("%s/oauth2/token", issuerUrl)
-	} else {
-		oidcConfiguration, err := helpers.GetOIDCConfiguration(t.config.OIDCConfigUrl)
-		if err != nil {
-			return err
-		}
-		t.config.IssuerUrl = oidcConfiguration.Issuer
-		tokenURL = oidcConfiguration.TokenEndpoint
-	}
+	t.config.IssuerUrl = issuerUrl
 
 	t.oauth2Cfg = &clientcredentials.Config{
 		ClientID:     t.config.ClientID,
 		ClientSecret: t.config.ClientSecret,
-		TokenURL:     tokenURL,
+		TokenURL:     tokenUrl,
 		AuthStyle:    oauth2.AuthStyleInHeader,
 	}
 
-	t.namespace = namespace
-	t.secondNamespace = secondNamespace
 	return nil
 }
 
 func (t *testsuite) TearDown() {
-	res := schema.GroupVersionResource{Group: "", Version: "v1", Resource: "namespaces"}
-	err := t.k8sClient.Resource(res).Delete(context.Background(), t.namespace, v1.DeleteOptions{})
-	if err != nil {
-		log.Print(err.Error())
-	}
-
-	err = t.k8sClient.Resource(res).Delete(context.Background(), t.secondNamespace, v1.DeleteOptions{})
+	err := global.DeleteGlobalResources(t.resourceManager, t.k8sClient, t.namespace, manifestsDirectory)
 	if err != nil {
 		log.Print(err.Error())
 	}

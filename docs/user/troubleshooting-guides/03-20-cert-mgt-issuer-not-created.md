@@ -8,7 +8,7 @@ When you try to create an Issuer custom resource (CR) using `cert.gardener.cloud
 
 The namespace in which the Issuer CR was created is incorrect. By default, `cert-management` watches the `default` namespace for all Issuer CRs.
 
-## Remedy
+## Solution
 
 Make sure that you created the Issuer CR in the `default` namespace. Run:
 

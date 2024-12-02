@@ -39,7 +39,7 @@ If your APIRule is missing the **trusted_issuers** configuration for the JWT han
 {"code":"ERROR","desc":"Validation error: Attribute \".spec.rules[0].accessStrategies[0].config\": supplied config cannot be empty"}
 ```
 
-### Remedy
+### Solution
 
 Add JWT configuration for the **trusted_issuers** or ``. Here's an example of a valid configuration:
 
@@ -84,7 +84,7 @@ If the **trusted_issuers** URL is an unsecured HTTP URL, or the **trusted_issuer
 The APIRule "httpbin" is invalid: spec.rules[0].accessStrategies[0].config.trusted_issuers[0]: Invalid value: "some-url": spec.rules[0].accessStrategies[0].config.trusted_issuers[0] in body should match '^(https://|file://).*$'
 ```
 
-### Remedy
+### Solution
 
 The JWT **trusted-issuers** must be a valid HTTPS URL, for example:
 
@@ -124,7 +124,7 @@ The handlers' combination in the above example is not supported. If an APIRule h
 {"code":"ERROR","desc":"Validation error: Attribute \".spec.rules[0].accessStrategies.accessStrategies[0].handler\": allow access strategy is not allowed in combination with other access strategies"}
 ```
 
-### Remedy
+### Solution
 
 Decide on one configuration you want to use. You can either `allow` access to the specific path or restrict it using the JWT security token. Defining both configuration methods on the same path is not allowed.
 
@@ -147,7 +147,7 @@ If your APIRule specifies a host that is already used by another APIRule or Virt
 {"code":"ERROR","desc":"Validation error: Attribute \".spec.host\": This host is occupied by another Virtual Service"}
 ```
 
-### Remedy
+### Solution
 
 Use a different host for the second APIRule, for example:
 
@@ -181,7 +181,7 @@ If your APIRule uses either the `noop`, `allow`, or `no_auth` handler and has so
 {"code":"ERROR","desc":"Validation error: Attribute \".spec.rules[0].accessStrategies[0].config\": strategy: noop does not support configuration"}
 ```
 
-### Remedy
+### Solution
 
 Use the `noop`, `allow`, and `no_auth` handlers without any further configuration, for example:
 

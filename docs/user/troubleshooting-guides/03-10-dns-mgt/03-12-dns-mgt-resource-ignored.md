@@ -13,6 +13,6 @@ The following annotation was added to the CR(s).
      dns.gardener.cloud/class: garden
 ```
 
-## Remedy
+## Solution
 
 Remove the **metadata.annotations.dns.gardener.cloud/class** parameter from the DNSProvider and/or DNSEntry CR.

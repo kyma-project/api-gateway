@@ -56,7 +56,7 @@ runs:
         CLIENT_ID: ${{ inputs.client_id }}
         CLIENT_SECRET: ${{ inputs.client_secret }}
         OIDC_CONFIG_URL: ${{ inputs.oidc_well_known_url }}
-        TEST_SA_ACCESS_KEY_PATH: "service-account.json"
+        TEST_SA_ACCESS_KEY_PATH: "${{ github.workspace }}/service-account.json"
         GARDENER_KUBECONFIG: "gardener_kubeconfig.yaml"
       run: |
         EXPORT_RESULT=true \
