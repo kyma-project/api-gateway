@@ -31,8 +31,8 @@ github.com/fsnotify/fsnotify v1.7.0 h1:8JEhPFa5W2WU7YfeZzPNqzMP6Lwt7L2715Ggo0nos
 github.com/fsnotify/fsnotify v1.7.0/go.mod h1:40Bi/Hjc2AVfZrqy+aj+yEI+/bRxZnMJyTJwOpGvigM=
 github.com/fxamacker/cbor/v2 v2.7.0 h1:iM5WgngdRBanHcxugY4JySA0nk1wZorNOpTgCMedv5E=
 github.com/fxamacker/cbor/v2 v2.7.0/go.mod h1:pxXPTn3joSm21Gbwsv0w9OSA2y1HFR9qXEeXQVeNoDQ=
-github.com/gardener/cert-management v0.17.0 h1:i9NLW42+nUjGuV1Zqap1WrKa2L+iD8swmOJLjDn2n8s=
-github.com/gardener/cert-management v0.17.0/go.mod h1:cwSsyN935017HojKVuWqw2TBhiaxSisX132D9Tn+n9I=
+github.com/gardener/cert-management v0.17.1 h1:vawZGN+rsCRMviacnnMSWELbuIJsNXHaqaLbZ4hYADw=
+github.com/gardener/cert-management v0.17.1/go.mod h1:cwSsyN935017HojKVuWqw2TBhiaxSisX132D9Tn+n9I=
 github.com/gardener/external-dns-management v0.22.1 h1:WEwCDOersJ7ezeDJelbGVac1BTmEveJuds3JlJc84Xg=
 github.com/gardener/external-dns-management v0.22.1/go.mod h1:2P7PamBPMKIOZMYRhl/VFhxZEBn4VUTdjESjKPxvOXA=
 github.com/go-jose/go-jose/v3 v3.0.3 h1:fFKWeig/irsp7XD2zBxvnmA/XaRWp5V3CBsZXJF7G7k=
