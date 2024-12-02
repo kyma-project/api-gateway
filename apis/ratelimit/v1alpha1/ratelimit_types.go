@@ -18,7 +18,6 @@ package v1alpha1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"time"
 )
 
 // +kubebuilder:validation:XValidation:rule="((has(self.path)?1:0)+(has(self.headers)?1:0))==1",message="path or headers must be set"
@@ -26,26 +25,23 @@ type Bucket struct {
 	Path    string            `json:"path,omitempty"`
 	Headers map[string]string `json:"headers,omitempty"`
 	// +kubebuilder:validation:Required
-	MaxTokens int64 `json:"maxTokens"`
-	// +kubebuilder:validation:Required
-	TokensPerFill int64 `json:"tokensPerFill"`
-	// +kubebuilder:validation:Requiredg
-	FillInterval time.Duration `json:"fillInterval"`
+	DefaultBucket BucketTokenSpec `json:"bucket"`
 }
 
-type DefaultBucket struct {
+type BucketTokenSpec struct {
 	// +kubebuilder:validation:Required
 	MaxTokens int64 `json:"maxTokens"`
 	// +kubebuilder:validation:Required
 	TokensPerFill int64 `json:"tokensPerFill"`
 	// +kubebuilder:validation:Required
-	FillInterval time.Duration `json:"fillInterval"`
+	// +kubebuilder:validation:Format=duration
+	FillInterval *metav1.Duration `json:"fillInterval"`
 }
 
 type Local struct {
 	// +kubebuilder:validation:Required
-	DefaultBucket DefaultBucket `json:"defaultBucket"`
-	Buckets       []Bucket      `json:"buckets,omitempty"`
+	DefaultBucket BucketTokenSpec `json:"defaultBucket"`
+	Buckets       []Bucket        `json:"buckets,omitempty"`
 }
 
 // RateLimitSpec defines the desired state of RateLimit
@@ -89,20 +85,3 @@ type RateLimitList struct {
 func init() {
 	SchemeBuilder.Register(&RateLimit{}, &RateLimitList{})
 }
-
-// check if any workload exists with the given selector
-// then we take all the selectors from the workload
-// then we check if for those other selectors other ratelimits exists (if any RateLimit CR has a selector that is on the workload
-// if yes then download other selectors, if no warning state something like there is no workload with the given selector
-// check if for other selectors other
-
-// First RateLimit CR: selectorLabels: app=boo
-// Second RateLimit CR: selectorLabels: app=boo app=poo -> got into the warning state because EF is already applied to both workloads
-
-// 1 pod: boo, poo -> First RL CR
-// 2 pod: boo -> First RL CR
-
-// Read selectors from RateLimit CR
-// Check if any workload exists with the given selector
-// Take all the workloads with the given selectors -> might have zoo + check if the workload is ingress-gateway or has sidecar injected
-// Check if any other already existing RateLimit CRs applies to those workloads

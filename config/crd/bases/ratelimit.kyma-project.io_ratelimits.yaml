@@ -39,10 +39,71 @@ spec:
           spec:
             description: RateLimitSpec defines the desired state of RateLimit
             properties:
-              foo:
-                description: Foo is an example field of RateLimit. Edit ratelimit_types.go
-                  to remove/update
-                type: string
+              enableResponseHeaders:
+                type: boolean
+              enforce:
+                type: boolean
+              local:
+                properties:
+                  buckets:
+                    items:
+                      properties:
+                        bucket:
+                          properties:
+                            fillInterval:
+                              format: duration
+                              type: string
+                            maxTokens:
+                              format: int64
+                              type: integer
+                            tokensPerFill:
+                              format: int64
+                              type: integer
+                          required:
+                          - fillInterval
+                          - maxTokens
+                          - tokensPerFill
+                          type: object
+                        headers:
+                          additionalProperties:
+                            type: string
+                          type: object
+                        path:
+                          type: string
+                      required:
+                      - bucket
+                      type: object
+                      x-kubernetes-validations:
+                      - message: path or headers must be set
+                        rule: ((has(self.path)?1:0)+(has(self.headers)?1:0))==1
+                    type: array
+                  defaultBucket:
+                    properties:
+                      fillInterval:
+                        format: duration
+                        type: string
+                      maxTokens:
+                        format: int64
+                        type: integer
+                      tokensPerFill:
+                        format: int64
+                        type: integer
+                    required:
+                    - fillInterval
+                    - maxTokens
+                    - tokensPerFill
+                    type: object
+                required:
+                - defaultBucket
+                type: object
+              selectorLabels:
+                additionalProperties:
+                  type: string
+                minProperties: 1
+                type: object
+            required:
+            - local
+            - selectorLabels
             type: object
           status:
             description: RateLimitStatus defines the observed state of RateLimit
