@@ -159,6 +159,7 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		l.Error(err, "Error updating APIRule status")
 		// Quick retry if the object has been modified
 		if strings.Contains(err.Error(), "the object has been modified") {
+			r.Metrics.IncreaseApiRuleObjectModifiedErrorsCounter()
 			return doneReconcileErrorRequeue(err, 10*time.Second)
 		}
 		return doneReconcileErrorRequeue(err, r.OnErrorReconcilePeriod)

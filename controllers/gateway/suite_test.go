@@ -3,6 +3,7 @@ package gateway_test
 import (
 	"context"
 	"fmt"
+	"github.com/kyma-project/api-gateway/internal/metrics"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -71,9 +72,9 @@ var (
 	TestAllowHeaders = []string{"header1", "header2"}
 
 	defaultCorsPolicy = builders.CorsPolicy().
-				AllowHeaders(TestAllowHeaders...).
-				AllowMethods(TestAllowMethods...).
-				AllowOrigins(TestAllowOrigins...)
+		AllowHeaders(TestAllowHeaders...).
+		AllowMethods(TestAllowMethods...).
+		AllowOrigins(TestAllowOrigins...)
 )
 
 func TestAPIs(t *testing.T) {
@@ -153,7 +154,9 @@ var _ = BeforeSuite(func(specCtx SpecContext) {
 		ErrorReconciliationPeriod: 2,
 	}
 
-	apiReconciler := gateway.NewApiRuleReconciler(mgr, reconcilerConfig)
+	apiGatewayMetrics := metrics.NewApiGatewayMetrics()
+
+	apiReconciler := gateway.NewApiRuleReconciler(mgr, reconcilerConfig, apiGatewayMetrics)
 	rateLimiterCfg := controllers.RateLimiterConfig{
 		Burst:            200,
 		Frequency:        30,
