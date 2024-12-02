@@ -1,6 +1,5 @@
 Feature: Exposing endpoint with a custom domain
   Scenario: Register new custom domain on the cluster
-    Given there is a "google-credentials" DNS cloud credentials secret in "default" namespace
     Then there is an "istio-ingressgateway" service in "istio-system" namespace
     And create custom domain resources
     And ensure that DNS record is ready

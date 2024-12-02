@@ -34,6 +34,7 @@ function check_required_files() {
 
 requiredVars=(
     CLUSTER_NAME
+    CLUSTER_KUBECONFIG
     GARDENER_PROVIDER
     GARDENER_REGION
     GARDENER_KUBECONFIG
@@ -81,11 +82,11 @@ kubectl create  --kubeconfig "${GARDENER_KUBECONFIG}" \
     -f <(printf '{"spec":{"expirationSeconds":86400}}') \
     --raw "/apis/core.gardener.cloud/v1beta1/namespaces/garden-${GARDENER_PROJECT_NAME}/shoots/${CLUSTER_NAME}/adminkubeconfig" | \
     jq -r ".status.kubeconfig" | \
-    base64 -d > "${CLUSTER_NAME}_kubeconfig.yaml"
+    base64 -d > "${CLUSTER_KUBECONFIG}"
 
 # wait until apiserver /readyz endpoint returns "ok"
 timeout=0
-until (kubectl --kubeconfig "${CLUSTER_NAME}_kubeconfig.yaml" get --raw "/readyz"); do
+until (kubectl --kubeconfig "${CLUSTER_KUBECONFIG}" get --raw "/readyz"); do
   timeout+=1
   # 10 minutes
   if [[ $timeout -gt 600 ]]; then
@@ -97,7 +98,3 @@ done
 
 echo "waiting for shoot operations to be completed..."
 kubectl wait --kubeconfig "${GARDENER_KUBECONFIG}" --for=jsonpath='{.status.lastOperation.state}'=Succeeded --timeout=600s "shoots/${CLUSTER_NAME}"
-
-# replace the default kubeconfig
-mkdir -p ~/.kube
-mv "${CLUSTER_NAME}_kubeconfig.yaml" ~/.kube/config

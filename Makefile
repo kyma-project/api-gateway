@@ -26,11 +26,6 @@ SHELL = /usr/bin/env bash -o pipefail
 
 APP_NAME = api-gateway-manager
 
-# Image URL to use all building/pushing image targets
-IMG_REGISTRY_PORT ?= $(MODULE_REGISTRY_PORT)
-IMG_REGISTRY ?= op-skr-registry.localhost:$(IMG_REGISTRY_PORT)/unsigned/operator-images
-IMG ?= $(IMG_REGISTRY)/$(MODULE_NAME)-operator:$(MODULE_VERSION)
-
 COMPONENT_CLI_VERSION ?= latest
 
 # Upgrade integration test variables
@@ -57,6 +52,10 @@ VERSION ?= dev
 .PHONY: help
 help: ## Display this help.
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z_0-9-]+:.*?##/ { printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
+
+.PHONY: img-check
+img-check:
+	$(if $(IMG),,$(error IMG must be set))
 
 ##@ Development
 
@@ -120,9 +119,7 @@ test-upgrade: generate fmt vet generate-upgrade-test-manifest install-istio depl
 
 .PHONY: test-custom-domain
 test-custom-domain: generate fmt vet
-	source ./tests/integration/env_vars_custom_domain.sh && bash -c "trap 'kubectl delete secret google-credentials -n default' EXIT; \
-             kubectl create secret generic google-credentials -n default --from-file=serviceaccount.json=${TEST_SA_ACCESS_KEY_PATH}; \
-             GODEBUG=netdns=cgo CGO_ENABLED=1 go test -timeout 1h ./tests/integration -run "^TestCustomDomain$$" -v -race"
+	source ./tests/integration/env_vars_custom_domain.sh && GODEBUG=netdns=cgo CGO_ENABLED=1 go test -timeout 1h ./tests/integration -run "^TestCustomDomain$$" -v -race
 
 .PHONY: install-istio
 install-istio: create-namespace
@@ -141,11 +138,11 @@ run: manifests generate fmt vet
 	go run -tags dev_features ./main.go
 
 .PHONY: docker-build
-docker-build:
+docker-build: img-check
 	IMG=$(IMG) docker build -t ${IMG} --build-arg GO_BUILD_TAGS=dev_features --build-arg TARGET_OS=${TARGET_OS} --build-arg TARGET_ARCH=${TARGET_ARCH} --build-arg VERSION=${VERSION} .
 
 .PHONY: docker-push
-docker-push: ## Push docker image with the manager.
+docker-push: img-check ## Push docker image with the manager.
 	docker push ${IMG}
 
 ##@ Local
@@ -186,7 +183,7 @@ create-namespace:
 	kubectl label namespace kyma-system istio-injection=enabled --overwrite
 
 .PHONY: deploy
-deploy: manifests kustomize module-version create-namespace ## Deploy controller to the K8s cluster specified in ~/.kube/config.
+deploy: img-check manifests kustomize module-version create-namespace ## Deploy controller to the K8s cluster specified in ~/.kube/config.
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
 	$(KUSTOMIZE) build config/dev | kubectl apply -f -
 
@@ -238,11 +235,11 @@ $(ENVTEST): $(LOCALBIN)
 	test -s $(LOCALBIN)/setup-envtest || GOBIN=$(LOCALBIN) go install sigs.k8s.io/controller-runtime/tools/setup-envtest@latest
 
 .PHONY: module-image
-module-image: docker-build docker-push ## Build the Module Image and push it to a registry defined in IMG_REGISTRY
+module-image: img-check docker-build docker-push ## Build the Module Image and push it to the registry
 	echo "built and pushed module image $(IMG)"
 
 .PHONY: generate-manifests
-generate-manifests: kustomize module-version
+generate-manifests: img-check kustomize module-version
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
 	$(KUSTOMIZE) build config/prod > api-gateway-manager.yaml
 

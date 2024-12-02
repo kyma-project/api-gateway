@@ -78,6 +78,15 @@ var ApplyAndVerifyApiGatewayCrSuiteHook = func() error {
 		return err
 	}
 
+	var existingGateway v1alpha1.APIGateway
+	err = k8sClient.Get(context.Background(), client.ObjectKey{
+		Namespace: apiGateway.GetNamespace(),
+		Name:      apiGateway.GetName(),
+	}, &existingGateway)
+	if err == nil {
+		return fmt.Errorf("apigateway with name '%s' already exists", existingGateway.Name)
+	}
+
 	err = retry.Do(func() error {
 		err := k8sClient.Create(context.Background(), &apiGateway)
 		if err != nil {
