@@ -70,7 +70,7 @@ var ApiGatewayCrTearDownScenarioHook = func(ctx context.Context, sc *godog.Scena
 	return ctx, nil
 }
 
-func ApplyAndVerifyApiGateway(scaleDownOathkeeper bool) error {
+func applyAndVerifyApiGateway(scaleDownOathkeeper bool) error {
 	log.Printf("Creating APIGateway CR %s", ApiGatewayCRName)
 	k8sClient := k8sclient.GetK8sClient()
 
@@ -137,7 +137,7 @@ func ApplyAndVerifyApiGateway(scaleDownOathkeeper bool) error {
 		}
 
 		return nil
-	}, retry.DelayType(retry.FixedDelay), retry.Delay(500), retry.Attempts(1200))
+	}, testcontext.GetRetryOpts()...)
 
 	if err != nil {
 		return err
@@ -149,11 +149,11 @@ func ApplyAndVerifyApiGateway(scaleDownOathkeeper bool) error {
 }
 
 var ApplyAndVerifyApiGatewayCrSuiteHook = func() error {
-	return ApplyAndVerifyApiGateway(false)
+	return applyAndVerifyApiGateway(false)
 }
 
 var ApplyAndVerifyApiGatewayWithoutOathkeeperCrSuiteHook = func() error {
-	return ApplyAndVerifyApiGateway(true)
+	return applyAndVerifyApiGateway(true)
 }
 
 var DeleteBlockingResourcesSuiteHook = func() error {
