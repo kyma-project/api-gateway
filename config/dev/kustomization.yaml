@@ -10,7 +10,7 @@ patches:
         path: /rules/-
         value:
           apiGroups:
-            - ratelimit.kyma-project.io
+            - gateway.kyma-project.io
           resources:
             - ratelimits
           verbs:
@@ -31,7 +31,7 @@ patches:
         path: /rules/-
         value:
           apiGroups:
-            - ratelimit.kyma-project.io
+            - gateway.kyma-project.io
           resources:
             - ratelimits/finalizers
           verbs:
@@ -46,7 +46,7 @@ patches:
         path: /rules/-
         value:
           apiGroups:
-            - ratelimit.kyma-project.io
+            - gateway.kyma-project.io
           resources:
             - ratelimits/status
           verbs:

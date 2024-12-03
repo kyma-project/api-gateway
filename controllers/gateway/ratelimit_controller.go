@@ -14,19 +14,19 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package ratelimit
+package gateway
 
 import (
 	"context"
-	ratelimitv1alpha1 "github.com/kyma-project/api-gateway/apis/ratelimit/v1alpha1"
+	ratelimitv1alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v1alpha1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
-// Reconciler reconciles a RateLimit object
-type Reconciler struct {
+// RateLimitReconciler reconciles a RateLimit object
+type RateLimitReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
 }
@@ -35,22 +35,14 @@ type Reconciler struct {
 // kustomize. The roles are managed in the file config/dev/kustomization.yaml. Once this feature is ready for release,
 // the markers can be added again.
 
-// Reconcile is part of the main kubernetes reconciliation loop which aims to
-// move the current state of the cluster closer to the desired state.
-// the RateLimit object against the actual cluster state, and then
-// perform operations to make the cluster state reflect the state specified by
-// the user.
-//
-// For more details, check Reconcile and its Result here:
-// - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.14.1/pkg/reconcile
-func (r *Reconciler) Reconcile(ctx context.Context, _ ctrl.Request) (ctrl.Result, error) {
-	_ = log.FromContext(ctx)
-
+func (r *RateLimitReconciler) Reconcile(ctx context.Context, _ ctrl.Request) (ctrl.Result, error) {
+	l := log.FromContext(ctx)
+	l.Info("###################### RateLimitReconciler.Reconcile ######################")
 	return ctrl.Result{}, nil
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *Reconciler) SetupWithManager(mgr ctrl.Manager) error {
+func (r *RateLimitReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&ratelimitv1alpha1.RateLimit{}).
 		Complete(r)

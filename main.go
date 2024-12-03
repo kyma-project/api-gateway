@@ -61,7 +61,6 @@ import (
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 
 	operatorv1alpha1 "github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
-	"github.com/kyma-project/api-gateway/controllers/ratelimit"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -242,7 +241,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err = ratelimit.Setup(mgr, scheme); err != nil {
+	if err = gateway.SetupRateLimit(mgr, scheme); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "RateLimit")
 		os.Exit(1)
 	}

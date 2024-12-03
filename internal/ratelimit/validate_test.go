@@ -2,7 +2,7 @@ package ratelimit_test
 
 import (
 	"context"
-	"github.com/kyma-project/api-gateway/apis/ratelimit/v1alpha1"
+	"github.com/kyma-project/api-gateway/apis/gateway/v1alpha1"
 	ratelimitvalidator "github.com/kyma-project/api-gateway/internal/ratelimit"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"

@@ -1,8 +1,8 @@
-package ratelimit_test
+package gateway_test
 
 import (
 	"context"
-	"github.com/kyma-project/api-gateway/controllers/ratelimit"
+	"github.com/kyma-project/api-gateway/controllers/gateway"
 	"k8s.io/apimachinery/pkg/runtime"
 
 	"k8s.io/apimachinery/pkg/types"
@@ -15,7 +15,7 @@ import (
 var _ = Describe("Rate Limit Controller", func() {
 	It("Dummy test", func() {
 
-		r := ratelimit.Reconciler{
+		r := gateway.RateLimitReconciler{
 			Scheme: runtime.NewScheme(),
 		}
 
