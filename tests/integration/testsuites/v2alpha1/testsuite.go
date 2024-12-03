@@ -21,33 +21,32 @@ import (
 
 const manifestsDirectory = "testsuites/v2alpha1/manifests/"
 
-func (t *testsuite) createScenario(templateFileName string, scenarioName string) *scenario {
+func (t *testsuite) createScenario() *scenario {
 	ns := t.namespace
 	testId := helpers.GenerateRandomTestId()
 
 	template := make(map[string]string)
 	template["Namespace"] = ns
-	template["NamePrefix"] = scenarioName
 	template["TestID"] = testId
 	template["Domain"] = t.config.Domain
 	template["GatewayName"] = t.config.GatewayName
 	template["GatewayNamespace"] = t.config.GatewayNamespace
 	template["IssuerUrl"] = t.config.IssuerUrl
 	template["EncodedCredentials"] = base64.RawStdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", t.config.ClientID, t.config.ClientSecret)))
+	template["extAuthProvider"] = "sample-ext-authz-http"
 
 	return &scenario{
-		Namespace:               ns,
-		TestID:                  testId,
-		Domain:                  t.config.Domain,
-		ManifestTemplate:        template,
-		ApiResourceManifestPath: templateFileName,
-		ApiResourceDirectory:    path.Dir(manifestsDirectory),
-		k8sClient:               t.K8sClient(),
-		oauth2Cfg:               t.oauth2Cfg,
-		httpClient:              t.httpClient,
-		resourceManager:         t.ResourceManager(),
-		config:                  t.config,
-		jwtConfig:               t.jwtConfig,
+		Namespace:            ns,
+		TestID:               testId,
+		Domain:               t.config.Domain,
+		ManifestTemplate:     template,
+		ApiResourceDirectory: path.Dir(manifestsDirectory),
+		k8sClient:            t.K8sClient(),
+		oauth2Cfg:            t.oauth2Cfg,
+		httpClient:           t.httpClient,
+		resourceManager:      t.ResourceManager(),
+		config:               t.config,
+		jwtConfig:            t.jwtConfig,
 	}
 }
 
@@ -63,31 +62,7 @@ type testsuite struct {
 }
 
 func (t *testsuite) InitScenarios(ctx *godog.ScenarioContext) {
-	initExposeMethodsOnPathsNoAuthHandler(ctx, t)
-	initExposeMethodsOnPathsJwtHandler(ctx, t)
-	initDefaultCors(ctx, t)
-	initCustomCors(ctx, t)
-	initJwtCommon(ctx, t)
-	initJwtWildcard(ctx, t)
-	initJwtAndAllow(ctx, t)
-	initJwtScopes(ctx, t)
-	initJwtAudience(ctx, t)
-	initJwtUnavailableIssuer(ctx, t)
-	initJwtIssuerJwksNotMatch(ctx, t)
-	initJwtFromHeader(ctx, t)
-	initJwtFromParam(ctx, t)
-	initRequestHeaders(ctx, t)
-	initRequestCookies(ctx, t)
-	initServiceFallback(ctx, t)
-	initServiceTwoNamespaces(ctx, t)
-	initServiceDifferentSameMethods(ctx, t)
-	initServiceCustomLabelSelector(ctx, t)
-	initExtAuthCommon(ctx, t)
-	initExtAuthJwt(ctx, t)
-	initValidationError(ctx, t)
-	initNoAuthWildcard(ctx, t)
-	initShortHost(ctx, t)
-	initExposeAsterisk(ctx, t)
+	initScenario(ctx, t)
 }
 
 func (t *testsuite) FeaturePath() []string {
@@ -154,7 +129,7 @@ func (t *testsuite) TearDown() {
 }
 
 func (t *testsuite) BeforeSuiteHooks() []func() error {
-	return []func() error{hooks.ExtAuthorizerInstallHook(t), hooks.ApplyAndVerifyApiGatewayCrSuiteHook}
+	return []func() error{hooks.ExtAuthorizerInstallHook(t), hooks.ApplyAndVerifyApiGatewayWithoutOathkeeperCrSuiteHook}
 }
 
 func (t *testsuite) AfterSuiteHooks() []func() error {

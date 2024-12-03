@@ -99,8 +99,8 @@ func TestV2alpha1(t *testing.T) {
 func runTestsuite(t *testing.T, testsuite testcontext.Testsuite) {
 	opts := createGoDogOpts(t, testsuite.FeaturePath(), testsuite.TestConcurrency())
 	suite := godog.TestSuite{
-		Name: testsuite.Name(),
-		// We are not using ScenarioInitializer, as this function only needs to set up global resources
+		Name:                testsuite.Name(),
+		ScenarioInitializer: testsuite.InitScenarios,
 		TestSuiteInitializer: func(ctx *godog.TestSuiteContext) {
 			ctx.BeforeSuite(func() {
 				log.Printf("Executing before suite hooks")
@@ -113,17 +113,22 @@ func runTestsuite(t *testing.T, testsuite testcontext.Testsuite) {
 				log.Printf("Before suite hooks finished")
 			})
 
-			testsuite.InitScenarios(ctx.ScenarioContext())
-
 			ctx.AfterSuite(func() {
-				log.Printf("Executing after suite hooks")
-				for _, hook := range testsuite.AfterSuiteHooks() {
-					err := hook()
-					if err != nil {
-						t.Fatalf("Cannot run after suite hooks: %s", err.Error())
+				if t.Failed() {
+					log.Printf("Test suite failed, skipping after suite on success hooks")
+				} else {
+					log.Printf("Executing after suite on success hooks")
+					for _, hook := range testsuite.AfterSuiteHooks() {
+						err := hook()
+						if err != nil {
+							t.Fatalf("Cannot run after suite hooks: %s", err.Error())
+						}
 					}
+					log.Printf("After suite hooks executed")
+
+					log.Printf("Tearing down test suite")
+					testsuite.TearDown()
 				}
-				log.Printf("After suite hooks executed")
 			})
 		},
 		Options: &opts,
@@ -161,8 +166,6 @@ func createGoDogOpts(t *testing.T, featuresPath []string, concurrency int) godog
 }
 
 func cleanUp(c testcontext.Testsuite, orgJwtHandler string) {
-	c.TearDown()
-
 	_, err := SwitchJwtHandler(c, orgJwtHandler)
 	if err != nil {
 		log.Print(err.Error())
