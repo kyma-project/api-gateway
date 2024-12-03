@@ -12,36 +12,30 @@ import (
 func Validate(ctx context.Context, k8sClient client.Client, rl v1alpha1.RateLimit) error {
 	selectors := rl.Spec.SelectorLabels
 
-	podList := v1.PodList{}
-	err := k8sClient.List(ctx, &podList, client.MatchingLabels(selectors))
+	matchingPods := v1.PodList{}
+	err := k8sClient.List(ctx, &matchingPods, client.InNamespace(rl.Namespace), client.MatchingLabels(selectors))
 	if err != nil {
 		return err
 	}
-	if len(podList.Items) == 0 {
+
+	if len(matchingPods.Items) == 0 {
 		// in case there is no pods matching for the given selectors declared in the RateLimit CR
 		// we want to set the RateLimit CR to the warning state, therefore we fail validation returning an error
 		return errors.New("no pods found with the given selectors")
 	}
 
-	// do it by a namespace
-	rateLimitList := v1alpha1.RateLimitList{}
-	err = k8sClient.List(ctx, &rateLimitList)
-	if err != nil {
-		return err
-	}
-
-	if !isIngressGateway(podList.Items) {
-		err = validateSidecarInjectionEnabled(podList.Items)
+	if isIngressGateway(matchingPods.Items) {
+		if !isRlInIngressGatewayNamespace(rl) {
+			return fmt.Errorf("rateLimit CR is matching istio ingress gateway pod but it is not in the istio-system namespace")
+		}
+	} else {
+		err = validateSidecarInjectionEnabled(matchingPods.Items)
 		if err != nil {
 			return err
 		}
-	} else {
-		if !isRlInIngressGatewayNamespace(rateLimitList.Items) {
-			return fmt.Errorf("rateLimit CR is matching istio ingress gateway pod but it is not in the istio-system namespace")
-		}
 	}
 
-	err = validateConflicts(rl, podList.Items, rateLimitList.Items)
+	err = validateConflicts(rl, matchingPods, k8sClient)
 	if err != nil {
 		return err
 	}
@@ -76,11 +70,9 @@ func validateSidecarInjectionEnabled(podList []v1.Pod) error {
 	return nil
 }
 
-func isRlInIngressGatewayNamespace(rateLimits []v1alpha1.RateLimit) bool {
-	for _, rl := range rateLimits {
-		if rl.Namespace != "istio-system" {
-			return false
-		}
+func isRlInIngressGatewayNamespace(rl v1alpha1.RateLimit) bool {
+	if rl.Namespace != "istio-system" {
+		return false
 	}
 	return true
 }
@@ -95,33 +87,37 @@ func isIngressGateway(pods []v1.Pod) bool {
 	return true
 }
 
-func validateConflicts(rl v1alpha1.RateLimit, podList []v1.Pod, rateLimitList []v1alpha1.RateLimit) error {
-	// if there is only one RateLimit CR then there won't be any conflicts
-	// we take pods that are matching the selectors from the RateLimit CR
-	// then we check if any other RateLimit is matching any other selector on the pods
-	// if yes then we return an error
-	// if no then we return nil
-	if len(rateLimitList) < 2 {
-		// we return nil here because if there is no other RateLimit CRs then there won't be any conflicting ones
-		return nil
+func validateConflicts(rl v1alpha1.RateLimit, matchingPods v1.PodList, k8sClient client.Client) error {
+	otherRateLimitsInTheNamespace := v1alpha1.RateLimitList{}
+	err := k8sClient.List(context.TODO(), &otherRateLimitsInTheNamespace, client.InNamespace(rl.Namespace))
+	if err != nil {
+		return err
 	}
 
-	// iterate over all rate limits
-	// get all pods that are matching the selectors from the RateLimit CR (append map with the names of all pods)
-	// check if pod names are unique
+	podMap := map[string]v1.Pod{}
 
-	for _, pod := range podList {
-		for _, rateLimit := range rateLimitList {
-			// we want to skip the RateLimit CR that we are currently validating
-			if rateLimit.Name == rl.Name {
-				continue
-			}
-			for key, value := range rateLimit.Spec.SelectorLabels {
-				if v, ok := pod.Labels[key]; ok && v == value {
-					return fmt.Errorf("RateLimit CR %s already matches pod: %s in namespace: %s", rateLimit.Name, pod.Name, pod.Namespace)
-				}
+	for _, pod := range matchingPods.Items {
+		podMap[pod.Name] = pod
+	}
+
+	for _, otherRL := range otherRateLimitsInTheNamespace.Items {
+		if otherRL.Name == rl.Name {
+			continue
+		}
+
+		otherRLSelectors := otherRL.Spec.SelectorLabels
+		otherRLMatchingPods := v1.PodList{}
+		err := k8sClient.List(context.TODO(), &otherRLMatchingPods, client.InNamespace(rl.Namespace), client.MatchingLabels(otherRLSelectors))
+		if err != nil {
+			return err
+		}
+
+		for _, pod := range otherRLMatchingPods.Items {
+			if _, ok := podMap[pod.Name]; ok {
+				return fmt.Errorf("conflict detected between RateLimit CRs: %s and %s", rl.Name, otherRL.Name)
 			}
 		}
 	}
+
 	return nil
 }
