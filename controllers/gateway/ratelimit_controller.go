@@ -36,9 +36,9 @@ type RateLimitReconciler struct {
 // the markers can be added again.
 
 func (r *RateLimitReconciler) Reconcile(ctx context.Context, _ ctrl.Request) (ctrl.Result, error) {
-	l := log.FromContext(ctx)
-	l.Info("###################### RateLimitReconciler.Reconcile ######################")
-	return ctrl.Result{}, nil
+	_ = log.FromContext(ctx)
+
+	return ctrl.Result{RequeueAfter: defaultReconciliationPeriod}, nil
 }
 
 // SetupWithManager sets up the controller with the Manager.
