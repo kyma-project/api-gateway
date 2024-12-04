@@ -21,8 +21,7 @@ import (
 )
 
 func TestIstioJwt(t *testing.T) {
-	config := testcontext.GetConfig()
-	ts, err := testcontext.New(config, istiojwt.NewTestsuite)
+	ts, err := testcontext.New(istiojwt.NewTestsuite)
 	if err != nil {
 		t.Fatalf("Failed to create Istio JWT testsuite %s", err.Error())
 	}
@@ -32,23 +31,20 @@ func TestIstioJwt(t *testing.T) {
 		t.Fatalf("unable to switch to Istio jwtHandler")
 	}
 	defer cleanUp(ts, originalJwtHandler)
-	runTestsuite(t, ts, config)
+	runTestsuite(t, ts)
 }
 
 func TestCustomDomain(t *testing.T) {
-	config := testcontext.GetConfig()
-	ts, err := testcontext.New(config, customdomain.NewTestsuite)
+	ts, err := testcontext.New(customdomain.NewTestsuite)
 	if err != nil {
 		t.Fatalf("Failed to create Custom domain testsuite %s", err.Error())
 	}
 	defer ts.TearDown()
-	runTestsuite(t, ts, config)
+	runTestsuite(t, ts)
 }
 
 func TestUpgrade(t *testing.T) {
-	config := testcontext.GetConfig()
-	config.TestConcurrency = 1
-	ts, err := testcontext.New(config, upgrade.NewTestsuite)
+	ts, err := testcontext.New(upgrade.NewTestsuite)
 
 	if err != nil {
 		t.Fatalf("Failed to create Upgrade testsuite %s", err.Error())
@@ -60,12 +56,11 @@ func TestUpgrade(t *testing.T) {
 	}
 	defer cleanUp(ts, originalJwtHandler)
 	defer ts.TearDown()
-	runTestsuite(t, ts, config)
+	runTestsuite(t, ts)
 }
 
 func TestOryJwt(t *testing.T) {
-	config := testcontext.GetConfig()
-	ts, err := testcontext.New(config, ory.NewTestsuite)
+	ts, err := testcontext.New(ory.NewTestsuite)
 	if err != nil {
 		t.Fatalf("Failed to create Ory testsuite %s", err.Error())
 	}
@@ -75,22 +70,20 @@ func TestOryJwt(t *testing.T) {
 		t.Fatalf("unable to switch to Ory jwtHandler")
 	}
 	defer cleanUp(ts, originalJwtHandler)
-	runTestsuite(t, ts, config)
+	runTestsuite(t, ts)
 }
 
 func TestGateway(t *testing.T) {
-	config := testcontext.GetConfig()
-	ts, err := testcontext.New(config, gateway.NewTestsuite)
+	ts, err := testcontext.New(gateway.NewTestsuite)
 	if err != nil {
 		t.Fatalf("Failed to create Gateway testsuite %s", err.Error())
 	}
 	defer ts.TearDown()
-	runTestsuite(t, ts, config)
+	runTestsuite(t, ts)
 }
 
 func TestV2alpha1(t *testing.T) {
-	config := testcontext.GetConfig()
-	ts, err := testcontext.New(config, v2alpha1.NewTestsuite)
+	ts, err := testcontext.New(v2alpha1.NewTestsuite)
 	if err != nil {
 		t.Fatalf("Failed to create v2alpha1 testsuite %s", err.Error())
 	}
@@ -100,39 +93,50 @@ func TestV2alpha1(t *testing.T) {
 		t.Fatalf("unable to switch to Ory jwtHandler")
 	}
 	defer cleanUp(ts, originalJwtHandler)
-	runTestsuite(t, ts, config)
+	runTestsuite(t, ts)
 }
 
-func runTestsuite(t *testing.T, testsuite testcontext.Testsuite, config testcontext.Config) {
-	opts := createGoDogOpts(t, testsuite.FeaturePath(), config.TestConcurrency)
+func runTestsuite(t *testing.T, testsuite testcontext.Testsuite) {
+	opts := createGoDogOpts(t, testsuite.FeaturePath(), testsuite.TestConcurrency())
 	suite := godog.TestSuite{
-		Name: testsuite.Name(),
-		// We are not using ScenarioInitializer, as this function only needs to set up global resources
+		Name:                testsuite.Name(),
+		ScenarioInitializer: testsuite.InitScenarios,
 		TestSuiteInitializer: func(ctx *godog.TestSuiteContext) {
 			ctx.BeforeSuite(func() {
+				log.Printf("Executing before suite hooks")
 				for _, hook := range testsuite.BeforeSuiteHooks() {
 					err := hook()
 					if err != nil {
 						t.Fatalf("Cannot run before suite hooks: %s", err.Error())
 					}
 				}
+				log.Printf("Before suite hooks finished")
 			})
 
-			testsuite.InitScenarios(ctx.ScenarioContext())
-
 			ctx.AfterSuite(func() {
-				for _, hook := range testsuite.AfterSuiteHooks() {
-					err := hook()
-					if err != nil {
-						t.Fatalf("Cannot run after suite hooks: %s", err.Error())
+				if t.Failed() {
+					log.Printf("Test suite failed, skipping after suite on success hooks")
+				} else {
+					log.Printf("Executing after suite on success hooks")
+					for _, hook := range testsuite.AfterSuiteHooks() {
+						err := hook()
+						if err != nil {
+							t.Fatalf("Cannot run after suite hooks: %s", err.Error())
+						}
 					}
+					log.Printf("After suite hooks executed")
+
+					log.Printf("Tearing down test suite")
+					testsuite.TearDown()
 				}
 			})
 		},
 		Options: &opts,
 	}
 
+	log.Printf("Starting godog test suite: %s", suite.Name)
 	testExitCode := suite.Run()
+	log.Printf("Godog test suite: %s has been finished with exit code: %d", suite.Name, testExitCode)
 
 	if shouldExportResults() {
 		generateReport(testsuite)
@@ -162,9 +166,6 @@ func createGoDogOpts(t *testing.T, featuresPath []string, concurrency int) godog
 }
 
 func cleanUp(c testcontext.Testsuite, orgJwtHandler string) {
-
-	c.TearDown()
-
 	_, err := SwitchJwtHandler(c, orgJwtHandler)
 	if err != nil {
 		log.Print(err.Error())

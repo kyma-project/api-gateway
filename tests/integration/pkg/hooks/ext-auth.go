@@ -4,8 +4,10 @@ import (
 	"context"
 	_ "embed"
 	"errors"
+	"fmt"
 	"github.com/avast/retry-go/v4"
 	k8sclient "github.com/kyma-project/api-gateway/tests/integration/pkg/client"
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/helpers"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/manifestprocessor"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/resource"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
@@ -15,8 +17,9 @@ import (
 	"log"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/yaml"
-	"time"
 )
+
+const authorizerDeploymentName = "ext-authz"
 
 //go:embed manifests/ext-auth-istio-cr.yaml
 var extAuthIstioCrManifest []byte
@@ -41,11 +44,7 @@ func applyExtAuthorizerIstioCR() error {
 			return nil
 		})
 		return err
-	}, []retry.Option{
-		retry.Delay(time.Duration(2) * time.Second),
-		retry.Attempts(5),
-		retry.DelayType(retry.FixedDelay),
-	}...)
+	}, testcontext.GetRetryOpts()...)
 }
 
 func getExtAuthIstioCr() (unstructured.Unstructured, error) {
@@ -82,6 +81,13 @@ func deployExtAuthorizer(resourceMgr *resource.Manager, k8sClient dynamic.Interf
 	if err != nil {
 		return err
 	}
+
+	log.Printf("Waiting for External Authorizer deployment")
+	err = helpers.WaitForDeployment(resourceMgr, k8sClient, nsName, authorizerDeploymentName, testcontext.GetRetryOpts())
+	if err != nil {
+		return fmt.Errorf("external Authorizer deployment can't start")
+	}
+	log.Printf("External Authorizer deployment finished")
 
 	return nil
 }

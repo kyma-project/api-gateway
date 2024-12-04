@@ -1,3 +1,14 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: google-credentials
+  namespace: "{{.Namespace}}"
+  labels:
+    owner: "custom-domain-test"
+type: Opaque
+data:
+  serviceaccount.json: "{{.EncodedSACredentials}}"
+---
 apiVersion: dns.gardener.cloud/v1alpha1
 kind: DNSProvider
 metadata:
@@ -11,7 +22,6 @@ spec:
   type: google-clouddns
   secretRef:
     name: google-credentials
-    namespace: default
   domains:
     include:
       - "{{.Domain}}"

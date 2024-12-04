@@ -12,7 +12,7 @@ curl: (7) Failed to connect to httpbin.mydomain.com port 443: Connection refused
 
 DNS resolves to an incorrect IP address.
 
-## Remedy
+## Solution
 
 Check if the IP address provided as the value of the **spec.targets** parameter of the DNSEntry custom resource is the IP address of the Ingress Gateway you are using. To check the Ingress Gateway IP, run:
 

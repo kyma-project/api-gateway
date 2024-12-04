@@ -40,7 +40,7 @@ When you try to reach your Service, you get the `500 Internal Server Error` resp
 Having multiple APIRules defined under the same host URL carries the risk of errors for specific paths due to the configuration overlap in Oathkeeper.
 The root cause of the problem is the lack of support for the negative lookahead in the Golang language. For more information, see [the issue](https://github.com/ory/oathkeeper/issues/157) reported in the Ory Oathkeeper project.
 
-## Remedy
+## Solution
 
 To resolve the issue, follow these guidelines:
 

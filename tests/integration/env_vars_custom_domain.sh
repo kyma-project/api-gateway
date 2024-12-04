@@ -2,6 +2,11 @@
 
 set -eo pipefail
 
+if [[ -z ${KUBECONFIG} ]]; then
+  >&2 echo "Environment variable KUBECONFIG is required but not set"
+  exit 2
+fi
+
 if [[ -z ${TEST_DOMAIN} ]]; then
   >&2 echo "Environment variable TEST_DOMAIN is required but not set"
   exit 2
@@ -34,4 +39,4 @@ export TEST_CLIENT_ID="${CLIENT_ID}"
 export TEST_CLIENT_SECRET="${CLIENT_SECRET}"
 export TEST_CONCURRENCY="1"
 export EXPORT_RESULT="true"
-export TEST_REQUEST_TIMEOUT="400"
+export TEST_REQUEST_ATTEMPTS="120"

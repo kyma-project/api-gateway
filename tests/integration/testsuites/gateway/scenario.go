@@ -11,6 +11,7 @@ import (
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/helpers"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/hooks"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/manifestprocessor"
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/oathkeeper"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/resource"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
 	oryv1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
@@ -176,7 +177,7 @@ func (c *scenario) checkCustomAPIGatewayCRState(name, state, description string)
 }
 
 func (c *scenario) checkAPIGatewayCRState(state, description string) error {
-	return retry.Do(func() error {
+	err := retry.Do(func() error {
 		res := schema.GroupVersionResource{Group: "operator.kyma-project.io", Version: "v1alpha1", Resource: "apigateways"}
 		gateway, err := c.k8sClient.Resource(res).Get(context.Background(), hooks.ApiGatewayCRName, metav1.GetOptions{})
 		if err != nil {
@@ -207,6 +208,12 @@ func (c *scenario) checkAPIGatewayCRState(state, description string) error {
 		}
 		return nil
 	}, testcontext.GetRetryOpts()...)
+
+	if err != nil {
+		oathkeeper.LogInfo()
+	}
+
+	return err
 }
 
 func (c *scenario) thereIsAGateway(name string, namespace string) error {

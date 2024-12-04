@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	appsv1 "k8s.io/api/apps/v1"
 	"log"
 	"os"
 
@@ -69,13 +70,22 @@ var ApiGatewayCrTearDownScenarioHook = func(ctx context.Context, sc *godog.Scena
 	return ctx, nil
 }
 
-var ApplyAndVerifyApiGatewayCrSuiteHook = func() error {
+func applyAndVerifyApiGateway(scaleDownOathkeeper bool) error {
 	log.Printf("Creating APIGateway CR %s", ApiGatewayCRName)
 	k8sClient := k8sclient.GetK8sClient()
 
 	apiGateway, err := createApiGatewayCRObjectFromTemplate(ApiGatewayCRName)
 	if err != nil {
 		return err
+	}
+
+	var existingGateway v1alpha1.APIGateway
+	err = k8sClient.Get(context.Background(), client.ObjectKey{
+		Namespace: apiGateway.GetNamespace(),
+		Name:      apiGateway.GetName(),
+	}, &existingGateway)
+	if err == nil {
+		return fmt.Errorf("apigateway with name '%s' already exists", existingGateway.Name)
 	}
 
 	err = retry.Do(func() error {
@@ -88,6 +98,28 @@ var ApplyAndVerifyApiGatewayCrSuiteHook = func() error {
 
 	if err != nil {
 		return err
+	}
+
+	if scaleDownOathkeeper {
+		// scale down oathkeeper if needed -> this saves up time if the test does not depend on oathkeeper, as APIGateway will become Ready faster
+		err = retry.Do(func() error {
+			oathkeeperDeployment := &appsv1.Deployment{}
+			err := k8sClient.Get(context.Background(), client.ObjectKey{
+				Namespace: "kyma-system",
+				Name:      "ory-oathkeeper",
+			}, oathkeeperDeployment)
+			if err != nil {
+				return err
+			}
+
+			return k8sClient.Patch(context.Background(), oathkeeperDeployment, client.RawPatch(
+				client.Merge.Type(),
+				[]byte(`{"spec":{"replicas":0}}`),
+			))
+		}, testcontext.GetRetryOpts()...)
+		if err != nil {
+			return err
+		}
 	}
 
 	err = retry.Do(func() error {
@@ -114,6 +146,14 @@ var ApplyAndVerifyApiGatewayCrSuiteHook = func() error {
 	log.Printf("APIGateway CR %s in state %s", ApiGatewayCRName, apiGateway.Status.State)
 
 	return nil
+}
+
+var ApplyAndVerifyApiGatewayCrSuiteHook = func() error {
+	return applyAndVerifyApiGateway(false)
+}
+
+var ApplyAndVerifyApiGatewayWithoutOathkeeperCrSuiteHook = func() error {
+	return applyAndVerifyApiGateway(true)
 }
 
 var DeleteBlockingResourcesSuiteHook = func() error {

@@ -15,7 +15,7 @@
 
 The Secret `api-gateway-webhook-certificate` was deleted, or the automatic certificate rotation did not work.
 
-## Remedy
+## Solution
 
 Restart `api-gateway-controller-manager` to recreate the Secret:
 
