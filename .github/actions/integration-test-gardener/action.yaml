@@ -58,14 +58,18 @@ runs:
         OIDC_CONFIG_URL: ${{ inputs.oidc_well_known_url }}
         TEST_SA_ACCESS_KEY_PATH: "${{ github.workspace }}/service-account.json"
         GARDENER_KUBECONFIG: "gardener_kubeconfig.yaml"
+        PERSISTENT_CLUSTER_KUBECONFIG: "cluster_kubeconfig.yaml"
       run: |
         EXPORT_RESULT=true \
         ${{ inputs.script }} ${{ inputs.test_make_target }}
-    - shell: bash
-      name: gather deployment logs
+    - name: Gather deployment logs
+      shell: bash
+      env:
+        PERSISTENT_CLUSTER_KUBECONFIG: "cluster_kubeconfig.yaml"
       if: failure()
       run: |
         mkdir logs
+        export KUBECONFIG="${PERSISTENT_CLUSTER_KUBECONFIG}"
         (kubectl logs -n kyma-system deployments/istio-controller-manager || true) > logs/istio-controller-manager.log
         (kubectl logs -n kyma-system deployments/api-gateway-controller-manager || true) > logs/api-gateway-controller-manager.log
         (kubectl logs -n istio-system deployments/istio-ingressgateway || true) > logs/istio-ingressgateway.log

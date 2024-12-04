@@ -78,7 +78,12 @@ CLUSTER_NAME=ag-$(echo $RANDOM | md5sum | head -c 7)
 export CLUSTER_NAME
 
 TMP_FOLDER=$(mktemp -d)
-export CLUSTER_KUBECONFIG="${TMP_FOLDER}/${CLUSTER_NAME}_kubeconfig.yaml"
+
+if [ -z "${PERSISTENT_CLUSTER_KUBECONFIG}" ]; then
+    export CLUSTER_KUBECONFIG="${PERSISTENT_CLUSTER_KUBECONFIG}"
+else
+    export CLUSTER_KUBECONFIG="${TMP_FOLDER}/${CLUSTER_NAME}_kubeconfig.yaml"
+fi
 
 ./hack/ci/provision-gardener.sh
 
