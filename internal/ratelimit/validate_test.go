@@ -196,6 +196,13 @@ var _ = Describe("RateLimit CR Validation", func() {
 				Labels:    commonSelectors,
 			},
 		}
+		testPod2 := v1.Pod{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "test-pod2",
+				Namespace: "test-namespace",
+				Labels:    commonSelectors,
+			},
+		}
 		rlCR := v1alpha1.RateLimit{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "test-rl",
@@ -205,10 +212,11 @@ var _ = Describe("RateLimit CR Validation", func() {
 				SelectorLabels: commonSelectors,
 			},
 		}
-		c := fake.NewClientBuilder().WithScheme(sc).WithObjects(&rlCR, &testPod).Build()
+		c := fake.NewClientBuilder().WithScheme(sc).WithObjects(&rlCR, &testPod, &testPod2).Build()
 
 		err := ratelimitvalidator.Validate(context.Background(), c, rlCR)
 		Expect(err).To(HaveOccurred())
+		Expect(err.Error()).To(Equal("sidecar injection is not enabled for the following pods: test-namespace/test-pod, test-namespace/test-pod2"))
 	})
 
 	It("Should pass if the selected pod is a part of the istio ingress-gateway and RateLimit CR is in the ingress gateway namespace", func() {
