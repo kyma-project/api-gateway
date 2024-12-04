@@ -2,6 +2,7 @@ package ratelimit_test
 
 import (
 	"context"
+	"fmt"
 	"github.com/kyma-project/api-gateway/apis/gateway/v1alpha1"
 	ratelimitvalidator "github.com/kyma-project/api-gateway/internal/ratelimit"
 	. "github.com/onsi/ginkgo/v2"
@@ -98,65 +99,10 @@ var _ = Describe("RateLimit CR Validation", func() {
 		Expect(err).ToNot(HaveOccurred())
 	})
 
-	It("Should fail if there is already a RateLimit CR assigned to the matching pod with the same selector", func() {
-		//given
-		commonSelectors := map[string]string{
-			"app": "test",
-		}
-		testPod := v1.Pod{
+	It("Should fail if there is no pods matching for the selectors in RateLimit CR", func() {
+		rlCR := v1alpha1.RateLimit{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      "test-pod",
-				Namespace: "test-namespace",
-				Labels:    commonSelectors,
-				Annotations: map[string]string{
-					"sidecar.istio.io/status": "test",
-				},
-			},
-		}
-		oldRL := v1alpha1.RateLimit{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "old-rl",
-				Namespace: "test-namespace",
-			},
-			Spec: v1alpha1.RateLimitSpec{
-				SelectorLabels: commonSelectors,
-			},
-		}
-		c := fake.NewClientBuilder().WithScheme(sc).WithObjects(&oldRL, &testPod).Build()
-
-		// when
-		newRL := v1alpha1.RateLimit{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "new-rl",
-				Namespace: "test-namespace",
-			},
-			Spec: v1alpha1.RateLimitSpec{
-				SelectorLabels: commonSelectors,
-			},
-		}
-		err := ratelimitvalidator.Validate(context.Background(), c, newRL)
-
-		//then
-		Expect(err).To(HaveOccurred())
-	})
-
-	It("Should fail if there is already a RateLimit CR assigned to the matching pod with a different selector", func() {
-		testPod := v1.Pod{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "test-pod",
-				Namespace: "test-namespace",
-				Labels: map[string]string{
-					"app":  "test",
-					"app2": "test2",
-				},
-				Annotations: map[string]string{
-					"sidecar.istio.io/status": "test",
-				},
-			},
-		}
-		oldRL := v1alpha1.RateLimit{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "old-rl",
+				Name:      "test-rl",
 				Namespace: "test-namespace",
 			},
 			Spec: v1alpha1.RateLimitSpec{
@@ -165,7 +111,64 @@ var _ = Describe("RateLimit CR Validation", func() {
 				},
 			},
 		}
-		c := fake.NewClientBuilder().WithScheme(sc).WithObjects(&oldRL, &testPod).Build()
+		c := fake.NewClientBuilder().WithScheme(sc).WithObjects(&rlCR).Build()
+
+		err := ratelimitvalidator.Validate(context.Background(), c, rlCR)
+		Expect(err).To(HaveOccurred())
+		Expect(err.Error()).To(Equal(fmt.Sprintf("no pods found with the given selectors: %v in namespace %s", rlCR.Spec.SelectorLabels, rlCR.Namespace)))
+	})
+
+	It("Should fail if there are already a RateLimit CRs assigned to the matching pods", func() {
+		//given
+		testPod1 := v1.Pod{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "test-pod1",
+				Namespace: "test-namespace",
+				Labels: map[string]string{
+					"rateLimitSelector": "ratelimit",
+					"otherSelector":     "other1",
+				},
+				Annotations: map[string]string{
+					"sidecar.istio.io/status": "test",
+				},
+			},
+		}
+		testPod2 := v1.Pod{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "test-pod2",
+				Namespace: "test-namespace",
+				Labels: map[string]string{
+					"rateLimitSelector": "ratelimit",
+					"otherSelector2":    "other2",
+				},
+				Annotations: map[string]string{
+					"sidecar.istio.io/status": "test",
+				},
+			},
+		}
+		existingRL1 := v1alpha1.RateLimit{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "existingRL1",
+				Namespace: "test-namespace",
+			},
+			Spec: v1alpha1.RateLimitSpec{
+				SelectorLabels: map[string]string{
+					"otherSelector": "other1",
+				},
+			},
+		}
+		existingRL2 := v1alpha1.RateLimit{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "existingRL2",
+				Namespace: "test-namespace",
+			},
+			Spec: v1alpha1.RateLimitSpec{
+				SelectorLabels: map[string]string{
+					"otherSelector2": "other2",
+				},
+			},
+		}
+		c := fake.NewClientBuilder().WithScheme(sc).WithObjects(&existingRL1, &existingRL2, &testPod1, &testPod2).Build()
 
 		// when
 		newRL := v1alpha1.RateLimit{
@@ -175,7 +178,7 @@ var _ = Describe("RateLimit CR Validation", func() {
 			},
 			Spec: v1alpha1.RateLimitSpec{
 				SelectorLabels: map[string]string{
-					"app2": "test2",
+					"rateLimitSelector": "ratelimit", // should be common for both pods
 				},
 			},
 		}
@@ -183,6 +186,7 @@ var _ = Describe("RateLimit CR Validation", func() {
 
 		//then
 		Expect(err).To(HaveOccurred())
+		Expect(err.Error()).To(Equal(fmt.Sprintf("conflicting with the following RateLimit CRs: %s, %s", existingRL1.Name, existingRL2.Name)))
 	})
 
 	It("Should fail if the pod is not sidecar-enabled", func() {
@@ -259,7 +263,7 @@ var _ = Describe("RateLimit CR Validation", func() {
 		Expect(err).ToNot(HaveOccurred())
 	})
 
-	It("Should fail if the selected pod is a part of the istio ingress-gateway but the RateLimit CR is in different namespace", func() {
+	It("Should fail if the selected pod is a part of the Istio ingress-gateway but the RateLimit CR is in a different namespace", func() {
 		ingressGatewaySelectors := map[string]string{
 			"app":   "istio-ingressgateway",
 			"istio": "ingressgateway",
@@ -297,5 +301,6 @@ var _ = Describe("RateLimit CR Validation", func() {
 		err := ratelimitvalidator.Validate(context.Background(), c, rlCR)
 
 		Expect(err).To(HaveOccurred())
+		Expect(err.Error()).To(Equal(fmt.Sprintf("no pods found with the given selectors: %v in namespace %s", rlCR.Spec.SelectorLabels, rlCR.Namespace)))
 	})
 })
