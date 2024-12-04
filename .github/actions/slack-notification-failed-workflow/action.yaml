@@ -16,7 +16,5 @@ runs:
         webhook-type: webhook-trigger
         payload-templated: true
         payload: |
-          {
-            "repository": "${{ github.repository }}",
-            "workflow": "${{ github.workflow }}"
-          }
+          repository: ${{ github.repository }},
+          workflow: ${{ github.workflow }}

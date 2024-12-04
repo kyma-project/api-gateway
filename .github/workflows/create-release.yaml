@@ -121,7 +121,5 @@ jobs:
           webhook-type: webhook-trigger
           payload-templated: true
           payload: |
-            {
-              "repository": "${{ github.repository }}",
-              "release": "${{ inputs.name }}"
-            }
+            repository: ${{ github.repository }},
+            workflow: ${{ github.workflow }}
