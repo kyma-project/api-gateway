@@ -19,6 +19,7 @@ package gateway
 import (
 	"context"
 	ratelimitv1alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v1alpha1"
+	"github.com/kyma-project/api-gateway/internal/ratelimit"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -35,8 +36,19 @@ type RateLimitReconciler struct {
 // kustomize. The roles are managed in the file config/dev/kustomization.yaml. Once this feature is ready for release,
 // the markers can be added again.
 
-func (r *RateLimitReconciler) Reconcile(ctx context.Context, _ ctrl.Request) (ctrl.Result, error) {
-	_ = log.FromContext(ctx)
+func (r *RateLimitReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+	l := log.FromContext(ctx).WithValues("namespace", req.Namespace, "RateLimit", req.Name)
+	l.Info("Starting reconciliation")
+
+	rateLimit := ratelimitv1alpha1.RateLimit{}
+	if err := r.Get(ctx, req.NamespacedName, &rateLimit); err != nil {
+		return ctrl.Result{}, client.IgnoreNotFound(err)
+	}
+
+	err := ratelimit.Validate(ctx, r.Client, rateLimit)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
 
 	return ctrl.Result{RequeueAfter: defaultReconciliationPeriod}, nil
 }
