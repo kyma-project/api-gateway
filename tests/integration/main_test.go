@@ -106,9 +106,18 @@ func TestV2alpha1(t *testing.T) {
 func runTestsuite(t *testing.T, testsuite testcontext.Testsuite, config testcontext.Config) {
 	opts := createGoDogOpts(t, testsuite.FeaturePath(), config.TestConcurrency)
 	suite := godog.TestSuite{
-		Name:                testsuite.Name(),
-		ScenarioInitializer: testsuite.InitScenarios,
+		Name: testsuite.Name(),
+		ScenarioInitializer: func() func(*godog.ScenarioContext) {
+			if testsuite.Name() == "v2alpha1" {
+				return testsuite.InitScenarios
+			}
+			return nil
+		}(),
 		TestSuiteInitializer: func(ctx *godog.TestSuiteContext) {
+			if testsuite.Name() != "v2alpha1" {
+				testsuite.InitScenarios(ctx.ScenarioContext())
+			}
+
 			ctx.BeforeSuite(func() {
 				for _, hook := range testsuite.BeforeSuiteHooks() {
 					err := hook()
