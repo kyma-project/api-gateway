@@ -33,7 +33,7 @@ APIRule Controller has a conditional dependency to APIGateway Controller in term
 >**NOTE:** For now, you can only use the default domain in APIGateway CR. The option to configure your own domain will be added at a later time. See the [epic task](https://github.com/kyma-project/api-gateway/issues/130).
 
 ### Reconciliation
-APIRule Controller reconciles APIRule CR with each change. If you don't make any changes, the process occurs at the default interval of 10 hours.
+APIRule Controller reconciles APIRule CR with each change. If you don't make any changes, the process occurs at the default interval of 30 minutes.
 You can use the [API Gateway Operator parameters](../user/technical-reference/05-00-api-gateway-operator-parameters.md) to adjust this interval.
 In the event of a failure during the reconciliation, APIRule Controller performs the reconciliation again after one minute.
 
@@ -58,3 +58,12 @@ The controller is responsible for handling the Secret `api-gateway-webhook-certi
 
 ### Reconciliation
 Certificate Controller reconciles a Secret CR with each change. If you don't make any changes, the process occurs at the default interval of 1 hour. This code verifies whether the Certificate is currently valid and will not expire within the next 14 days. If the Certificate does not meet these criteria, it is renewed. In the event of a failure during the reconciliation, Certificate Controller performs the reconciliation again with the predefined rate limiter.
+
+## RateLimit Controller
+
+RateLimit Controller is a [Kubernetes controller](https://kubernetes.io/docs/concepts/architecture/controller/), which is implemented using the [Kubebuilder](https://book.kubebuilder.io/) framework.
+The controller is responsible for handling the [RateLimit CR](../user/custom-resources/ratelimit/04-00-ratelimit.md).
+
+### Reconciliation
+RateLimit Controller reconciles the RateLimit CR with each change. If you don't make any changes, the process occurs at the default interval of 30 minutes.
+In the event of a failure during the reconciliation, RateLimit Controller performs the reconciliation again with the predefined rate limiter.
