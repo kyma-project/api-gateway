@@ -22,7 +22,7 @@ func initOAuth2JWTOnePath(ctx *godog.ScenarioContext, ts *testsuite) {
 func (s *scenario) callingTheEndpointWithValidOauthTokenInTokenFromHeader(path string, tokenHeader string, lower, higher int) error {
 	asserter := &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher}
 
-	token, err := auth.GetAccessToken(*s.oauth2Cfg)
+	token, err := auth.GetAccessToken(*s.oauth2Cfg, "")
 	if err != nil {
 		return err
 	}
