@@ -3,7 +3,7 @@ package ratelimit
 import (
 	"context"
 	"fmt"
-	"github.com/kyma-project/api-gateway/apis/gateway/v1alpha1"
+	"github.com/kyma-project/api-gateway/apis/gateway/ratelimit/v1alpha1"
 	v1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"strings"

@@ -44,11 +44,14 @@ spec:
               enforce:
                 type: boolean
               local:
+                description: Local represents the local rate limit configuration.
                 properties:
                   buckets:
                     items:
+                      description: Bucket represents a rate limit bucket configuration.
                       properties:
                         bucket:
+                          description: BucketTokenSpec defines the token bucket specification.
                           properties:
                             fillInterval:
                               format: duration
@@ -78,6 +81,7 @@ spec:
                         rule: ((has(self.path)?1:0)+(has(self.headers)?1:0))==1
                     type: array
                   defaultBucket:
+                    description: BucketTokenSpec defines the token bucket specification.
                     properties:
                       fillInterval:
                         format: duration

@@ -14,17 +14,20 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package gateway
+package ratelimit
 
 import (
 	"context"
-	ratelimitv1alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v1alpha1"
+	ratelimitv1alpha1 "github.com/kyma-project/api-gateway/apis/gateway/ratelimit/v1alpha1"
 	"github.com/kyma-project/api-gateway/internal/ratelimit"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+	"time"
 )
+
+const defaultReconciliationPeriod = 30 * time.Minute
 
 // RateLimitReconciler reconciles a RateLimit object
 type RateLimitReconciler struct {

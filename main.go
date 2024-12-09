@@ -20,6 +20,7 @@ import (
 	"context"
 	"crypto/tls"
 	"flag"
+	"github.com/kyma-project/api-gateway/controllers/gateway/ratelimit"
 	"os"
 	"time"
 
@@ -244,7 +245,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err = gateway.SetupRateLimit(mgr, scheme); err != nil {
+	if err = ratelimit.SetupRateLimit(mgr, scheme); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "RateLimit")
 		os.Exit(1)
 	}

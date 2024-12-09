@@ -3,7 +3,7 @@ package ratelimit_test
 import (
 	"context"
 	"fmt"
-	"github.com/kyma-project/api-gateway/apis/gateway/v1alpha1"
+	ratelimitv1alpha1 "github.com/kyma-project/api-gateway/apis/gateway/ratelimit/v1alpha1"
 	ratelimitvalidator "github.com/kyma-project/api-gateway/internal/ratelimit"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -19,7 +19,7 @@ var sc *runtime.Scheme
 func init() {
 	sc = runtime.NewScheme()
 	_ = scheme.AddToScheme(sc)
-	_ = v1alpha1.AddToScheme(sc)
+	_ = ratelimitv1alpha1.AddToScheme(sc)
 }
 
 var _ = Describe("RateLimit CR Validation", func() {
@@ -28,12 +28,12 @@ var _ = Describe("RateLimit CR Validation", func() {
 			"app": "test",
 		}
 
-		rlCR := v1alpha1.RateLimit{
+		rlCR := ratelimitv1alpha1.RateLimit{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "test-rl",
 				Namespace: "test-namespace",
 			},
-			Spec: v1alpha1.RateLimitSpec{
+			Spec: ratelimitv1alpha1.RateLimitSpec{
 				SelectorLabels: commonSelectors,
 			},
 		}
@@ -59,7 +59,7 @@ var _ = Describe("RateLimit CR Validation", func() {
 			"app": "test",
 		}
 
-		rlCR := v1alpha1.RateLimit{
+		rlCR := ratelimitv1alpha1.RateLimit{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "test-rl",
 				Namespace: "test-namespace",
@@ -67,16 +67,16 @@ var _ = Describe("RateLimit CR Validation", func() {
 					"sidecar.istio.io/status": "test",
 				},
 			},
-			Spec: v1alpha1.RateLimitSpec{
+			Spec: ratelimitv1alpha1.RateLimitSpec{
 				SelectorLabels: commonSelectors,
 			},
 		}
-		rlCR2 := v1alpha1.RateLimit{
+		rlCR2 := ratelimitv1alpha1.RateLimit{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "test-rl2",
 				Namespace: "test-namespace",
 			},
-			Spec: v1alpha1.RateLimitSpec{
+			Spec: ratelimitv1alpha1.RateLimitSpec{
 				SelectorLabels: map[string]string{
 					"app": "test2",
 				},
@@ -100,12 +100,12 @@ var _ = Describe("RateLimit CR Validation", func() {
 	})
 
 	It("Should fail if there is no pods matching for the selectors in RateLimit CR", func() {
-		rlCR := v1alpha1.RateLimit{
+		rlCR := ratelimitv1alpha1.RateLimit{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "test-rl",
 				Namespace: "test-namespace",
 			},
-			Spec: v1alpha1.RateLimitSpec{
+			Spec: ratelimitv1alpha1.RateLimitSpec{
 				SelectorLabels: map[string]string{
 					"app": "test",
 				},
@@ -146,23 +146,23 @@ var _ = Describe("RateLimit CR Validation", func() {
 				},
 			},
 		}
-		existingRL1 := v1alpha1.RateLimit{
+		existingRL1 := ratelimitv1alpha1.RateLimit{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "existingRL1",
 				Namespace: "test-namespace",
 			},
-			Spec: v1alpha1.RateLimitSpec{
+			Spec: ratelimitv1alpha1.RateLimitSpec{
 				SelectorLabels: map[string]string{
 					"otherSelector": "other1",
 				},
 			},
 		}
-		existingRL2 := v1alpha1.RateLimit{
+		existingRL2 := ratelimitv1alpha1.RateLimit{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "existingRL2",
 				Namespace: "test-namespace",
 			},
-			Spec: v1alpha1.RateLimitSpec{
+			Spec: ratelimitv1alpha1.RateLimitSpec{
 				SelectorLabels: map[string]string{
 					"otherSelector2": "other2",
 				},
@@ -171,12 +171,12 @@ var _ = Describe("RateLimit CR Validation", func() {
 		c := fake.NewClientBuilder().WithScheme(sc).WithObjects(&existingRL1, &existingRL2, &testPod1, &testPod2).Build()
 
 		// when
-		newRL := v1alpha1.RateLimit{
+		newRL := ratelimitv1alpha1.RateLimit{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "new-rl",
 				Namespace: "test-namespace",
 			},
-			Spec: v1alpha1.RateLimitSpec{
+			Spec: ratelimitv1alpha1.RateLimitSpec{
 				SelectorLabels: map[string]string{
 					"rateLimitSelector": "ratelimit", // should be common for both pods
 				},
@@ -207,12 +207,12 @@ var _ = Describe("RateLimit CR Validation", func() {
 				Labels:    commonSelectors,
 			},
 		}
-		rlCR := v1alpha1.RateLimit{
+		rlCR := ratelimitv1alpha1.RateLimit{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "test-rl",
 				Namespace: "test-namespace",
 			},
-			Spec: v1alpha1.RateLimitSpec{
+			Spec: ratelimitv1alpha1.RateLimitSpec{
 				SelectorLabels: commonSelectors,
 			},
 		}
@@ -229,12 +229,12 @@ var _ = Describe("RateLimit CR Validation", func() {
 			"istio": "ingressgateway",
 		}
 
-		rlCR := v1alpha1.RateLimit{
+		rlCR := ratelimitv1alpha1.RateLimit{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "test-rl",
 				Namespace: "istio-system",
 			},
-			Spec: v1alpha1.RateLimitSpec{
+			Spec: ratelimitv1alpha1.RateLimitSpec{
 				SelectorLabels: map[string]string{
 					"istio": "ingressgateway",
 				},
@@ -269,12 +269,12 @@ var _ = Describe("RateLimit CR Validation", func() {
 			"istio": "ingressgateway",
 		}
 
-		rlCR := v1alpha1.RateLimit{
+		rlCR := ratelimitv1alpha1.RateLimit{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "test-rl",
 				Namespace: "test-namespace",
 			},
-			Spec: v1alpha1.RateLimitSpec{
+			Spec: ratelimitv1alpha1.RateLimitSpec{
 				SelectorLabels: map[string]string{
 					"istio": "ingressgateway",
 				},

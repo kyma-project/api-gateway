@@ -1,9 +1,9 @@
-package gateway_test
+package ratelimit_test
 
 import (
 	"context"
-	ratelimitv1alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v1alpha1"
-	"github.com/kyma-project/api-gateway/controllers/gateway"
+	ratelimitv1alpha1 "github.com/kyma-project/api-gateway/apis/gateway/ratelimit/v1alpha1"
+	"github.com/kyma-project/api-gateway/controllers/gateway/ratelimit"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
@@ -13,6 +13,7 @@ import (
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	"testing"
 )
 
 var _ = Describe("Rate Limit Controller", func() {
@@ -20,7 +21,7 @@ var _ = Describe("Rate Limit Controller", func() {
 
 		fakeClient := fake.NewClientBuilder().WithScheme(getTestScheme()).WithObjects().Build()
 
-		r := gateway.RateLimitReconciler{
+		r := ratelimit.RateLimitReconciler{
 			Scheme: getTestScheme(),
 			Client: fakeClient,
 		}
@@ -40,4 +41,10 @@ func getTestScheme() *runtime.Scheme {
 	Expect(apiextensionsv1.AddToScheme(s)).Should(Succeed())
 
 	return s
+}
+
+func TestAPIs(t *testing.T) {
+	RegisterFailHandler(Fail)
+
+	RunSpecs(t, "RateLimit Controller Suite")
 }

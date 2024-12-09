@@ -1,6 +1,6 @@
 //go:build !dev_features
 
-package gateway
+package ratelimit
 
 import (
 	"k8s.io/apimachinery/pkg/runtime"
