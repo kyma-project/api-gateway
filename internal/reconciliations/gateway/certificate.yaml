@@ -12,6 +12,8 @@ metadata:
 spec:
   secretName: {{.SecretName}}
   commonName: "*.{{.Domain}}"
+  issuerRef:
+    name: garden
   privateKey:
     size: 4096
 
