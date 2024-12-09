@@ -7,6 +7,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 )
 
-func SetupRateLimit(_ manager.Manager, _ *runtime.Scheme) error {
+func Setup(_ manager.Manager, _ *runtime.Scheme) error {
 	return nil
 }
