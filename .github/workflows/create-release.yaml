@@ -122,4 +122,4 @@ jobs:
           payload-templated: true
           payload: |
             repository: ${{ github.repository }},
-            workflow: ${{ github.workflow }}
+            release: ${{ inputs.name }}
