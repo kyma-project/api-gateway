@@ -9,6 +9,18 @@ import (
 	"strings"
 )
 
+// Validate checks the validity of the given RateLimit custom resource.
+// It ensures that there are pods matching the specified selector labels in the same namespace.
+// If no matching pods are found, or if the sidecar injection is not enabled for the pods,
+// or if there are conflicting RateLimit resources, an error is returned.
+//
+// Parameters:
+// - ctx: The context for the validation operation.
+// - k8sClient: The Kubernetes client used to interact with the cluster.
+// - rl: The RateLimit custom resource to validate.
+//
+// Returns:
+// - An error if the validation fails, otherwise nil.
 func Validate(ctx context.Context, k8sClient client.Client, rl v1alpha1.RateLimit) error {
 	selectors := rl.Spec.SelectorLabels
 

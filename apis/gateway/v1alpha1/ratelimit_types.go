@@ -20,6 +20,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+// Bucket represents a rate limit bucket configuration.
 // +kubebuilder:validation:XValidation:rule="((has(self.path)?1:0)+(has(self.headers)?1:0))==1",message="path or headers must be set"
 type Bucket struct {
 	Path    string            `json:"path,omitempty"`
@@ -28,6 +29,7 @@ type Bucket struct {
 	DefaultBucket BucketTokenSpec `json:"bucket"`
 }
 
+// BucketTokenSpec defines the token bucket specification.
 type BucketTokenSpec struct {
 	// +kubebuilder:validation:Required
 	MaxTokens int64 `json:"maxTokens"`
@@ -38,6 +40,7 @@ type BucketTokenSpec struct {
 	FillInterval *metav1.Duration `json:"fillInterval"`
 }
 
+// Local represents the local rate limit configuration.
 type Local struct {
 	// +kubebuilder:validation:Required
 	DefaultBucket BucketTokenSpec `json:"defaultBucket"`

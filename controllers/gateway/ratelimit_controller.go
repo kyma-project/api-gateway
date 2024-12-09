@@ -36,6 +36,11 @@ type RateLimitReconciler struct {
 // kustomize. The roles are managed in the file config/dev/kustomization.yaml. Once this feature is ready for release,
 // the markers can be added again.
 
+// Reconcile is part of the main Kubernetes reconciliation loop which aims to
+// move the current state of the cluster closer to the desired state.
+// In this function, the RateLimit object is fetched and validated.
+// If the object is not found, it is ignored. If validation fails, an error is returned.
+// Otherwise, the function returns a result with a requeue period.
 func (r *RateLimitReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	l := log.FromContext(ctx).WithValues("namespace", req.Namespace, "RateLimit", req.Name)
 	l.Info("Starting reconciliation")
