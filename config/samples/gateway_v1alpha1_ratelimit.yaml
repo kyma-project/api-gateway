@@ -1,4 +1,4 @@
-apiVersion: ratelimit.kyma-project.io/v1alpha1
+apiVersion: gateway.kyma-project.io/v1alpha1
 kind: RateLimit
 metadata:
   labels:
@@ -9,4 +9,3 @@ metadata:
     app.kubernetes.io/created-by: api-gateway
   name: ratelimit-sample
 spec:
-
