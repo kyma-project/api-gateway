@@ -34,8 +34,8 @@ resources:
     namespaced: true
   controller: true
   domain: kyma-project.io
-  group: ratelimit
+  group: gateway
   kind: RateLimit
-  path: github.com/kyma-project/api-gateway/apis/ratelimit/v1alpha1
+  path: github.com/kyma-project/api-gateway/apis/gateway/ratelimit/v1alpha1
   version: v1alpha1
 version: "3"

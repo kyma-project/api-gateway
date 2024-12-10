@@ -18,15 +18,19 @@ package ratelimit
 
 import (
 	"context"
-	ratelimitv1alpha1 "github.com/kyma-project/api-gateway/apis/ratelimit/v1alpha1"
+	ratelimitv1alpha1 "github.com/kyma-project/api-gateway/apis/gateway/ratelimit/v1alpha1"
+	"github.com/kyma-project/api-gateway/internal/ratelimit"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+	"time"
 )
 
-// Reconciler reconciles a RateLimit object
-type Reconciler struct {
+const defaultReconciliationPeriod = 30 * time.Minute
+
+// RateLimitReconciler reconciles a RateLimit object
+type RateLimitReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
 }
@@ -35,22 +39,30 @@ type Reconciler struct {
 // kustomize. The roles are managed in the file config/dev/kustomization.yaml. Once this feature is ready for release,
 // the markers can be added again.
 
-// Reconcile is part of the main kubernetes reconciliation loop which aims to
+// Reconcile is part of the main Kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
-// the RateLimit object against the actual cluster state, and then
-// perform operations to make the cluster state reflect the state specified by
-// the user.
-//
-// For more details, check Reconcile and its Result here:
-// - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.14.1/pkg/reconcile
-func (r *Reconciler) Reconcile(ctx context.Context, _ ctrl.Request) (ctrl.Result, error) {
-	_ = log.FromContext(ctx)
+// In this function, the RateLimit object is fetched and validated.
+// If the object is not found, it is ignored. If validation fails, an error is returned.
+// Otherwise, the function returns a result with a requeue period.
+func (r *RateLimitReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+	l := log.FromContext(ctx).WithValues("namespace", req.Namespace, "RateLimit", req.Name)
+	l.Info("Starting reconciliation")
 
-	return ctrl.Result{}, nil
+	rateLimit := ratelimitv1alpha1.RateLimit{}
+	if err := r.Get(ctx, req.NamespacedName, &rateLimit); err != nil {
+		return ctrl.Result{}, client.IgnoreNotFound(err)
+	}
+
+	err := ratelimit.Validate(ctx, r.Client, rateLimit)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
+	return ctrl.Result{RequeueAfter: defaultReconciliationPeriod}, nil
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *Reconciler) SetupWithManager(mgr ctrl.Manager) error {
+func (r *RateLimitReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&ratelimitv1alpha1.RateLimit{}).
 		Complete(r)

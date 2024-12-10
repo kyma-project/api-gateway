@@ -20,6 +20,7 @@ import (
 	"context"
 	"crypto/tls"
 	"flag"
+	"github.com/kyma-project/api-gateway/controllers/gateway/ratelimit"
 	"os"
 	"time"
 
@@ -62,7 +63,6 @@ import (
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 
 	operatorv1alpha1 "github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
-	"github.com/kyma-project/api-gateway/controllers/ratelimit"
 	//+kubebuilder:scaffold:imports
 )
 

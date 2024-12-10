@@ -20,16 +20,42 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
+// Bucket represents a rate limit bucket configuration.
+// +kubebuilder:validation:XValidation:rule="((has(self.path)?1:0)+(has(self.headers)?1:0))==1",message="path or headers must be set"
+type Bucket struct {
+	Path    string            `json:"path,omitempty"`
+	Headers map[string]string `json:"headers,omitempty"`
+	// +kubebuilder:validation:Required
+	DefaultBucket BucketTokenSpec `json:"bucket"`
+}
+
+// BucketTokenSpec defines the token bucket specification.
+type BucketTokenSpec struct {
+	// +kubebuilder:validation:Required
+	MaxTokens int64 `json:"maxTokens"`
+	// +kubebuilder:validation:Required
+	TokensPerFill int64 `json:"tokensPerFill"`
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:Format=duration
+	FillInterval *metav1.Duration `json:"fillInterval"`
+}
+
+// Local represents the local rate limit configuration.
+type Local struct {
+	// +kubebuilder:validation:Required
+	DefaultBucket BucketTokenSpec `json:"defaultBucket"`
+	Buckets       []Bucket        `json:"buckets,omitempty"`
+}
 
 // RateLimitSpec defines the desired state of RateLimit
 type RateLimitSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
-
-	// Foo is an example field of RateLimit. Edit ratelimit_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:MinProperties=1
+	SelectorLabels map[string]string `json:"selectorLabels"`
+	// +kubebuilder:validation:Required
+	Local                 Local `json:"local"`
+	EnableResponseHeaders bool  `json:"enableResponseHeaders,omitempty"`
+	Enforce               bool  `json:"enforce,omitempty"`
 }
 
 // RateLimitStatus defines the observed state of RateLimit
