@@ -48,11 +48,11 @@ jobs:
       tags: "${{ github.event.inputs.name }}"
 
   unit-tests:
-    uses: ./.github/workflows/unit-lint.yaml
+    uses: ./.github/workflows/call-unit-lint.yaml
 
   integration-tests:
     needs: build-image
-    uses: ./.github/workflows/integration-release.yaml
+    uses: ./.github/workflows/call-integration-release.yaml
     with:
       image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway/releases/api-gateway-manager:${{ github.event.inputs.name }}"
     secrets: inherit

@@ -46,27 +46,27 @@ jobs:
   unit-tests:
     name: Unit tests & lint
     if: github.event.pull_request.draft == false
-    uses: ./.github/workflows/unit-lint.yaml
+    uses: ./.github/workflows/call-unit-lint.yaml
     secrets: inherit
 
   integration-tests:
     name: Integration tests
     if: github.event.pull_request.draft == false
     needs: [build-image]
-    uses: ./.github/workflows/pull-integration.yaml
+    uses: ./.github/workflows/call-pull-integration.yaml
     secrets: inherit
 
   ui-tests:
     name: UI tests
     if: github.event.pull_request.draft == false
     needs: [build-image]
-    uses: ./.github/workflows/ui-tests.yaml
+    uses: ./.github/workflows/call-ui-tests.yaml
     secrets: inherit
 
   verify-pins:
     name: Verify-commit-pins
     if: github.event.pull_request.draft == false
-    uses: ./.github/workflows/verify-commit-pins.yaml
+    uses: ./.github/workflows/call-verify-commit-pins.yaml
     secrets: inherit
 
   pull-request-status:
