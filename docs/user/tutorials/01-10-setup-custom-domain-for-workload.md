@@ -160,6 +160,8 @@ export SECRET={SECRET_NAME}
     spec:
       secretName: $TLS_SECRET
       commonName: $DOMAIN_TO_EXPOSE_WORKLOADS
+      issuerRef:
+        name: garden
     EOF
     ```
 
