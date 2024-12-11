@@ -7,9 +7,15 @@ inputs:
   gardener_secret:
     description: "Kubeconfig secret for Gardener"
     required: true
-  script:
-    description: "Entry point script for test"
+  gardener_provider:
+    description: "Gardener provider to use"
     required: true
+  gardener_project_name:
+    required: true
+    description: "Name of the gardener project"
+  test_custom_domain:
+    required: true
+    description: "The custom domain used by tests"
   test_make_target:
     description: 'Make target for integration tests to run'
     default: 'test-custom-domain test-integration-gateway'
@@ -28,6 +34,9 @@ inputs:
 runs:
   using: "composite"
   steps:
+    - name: Generate cluster name
+      shell: bash
+      run: echo CLUSTER_NAME=ag-$(echo $RANDOM | md5sum | head -c 7) >> $GITHUB_ENV
     - uses: actions/setup-go@v5
       with:
         go-version-file: "go.mod"
@@ -41,14 +50,21 @@ runs:
       shell: bash
       env:
         GARDENER_TOKEN: ${{ inputs.gardener_secret }}
-      run: |
-        ./hack/ci/gardener_kubeconfig.sh
+      run: "${{ github.workspace }}/hack/ci/gardener_kubeconfig.sh"
+    - name: Provision cluster
+      shell: bash
+      env:
+        GARDENER_KUBECONFIG: "${{ github.workspace }}/gardener_kubeconfig.yaml"
+        CLUSTER_KUBECONFIG: "${{ github.workspace }}/${{ env.CLUSTER_NAME }}_kubeconfig.yaml"
+        GARDENER_PROVIDER: ${{ inputs.gardener_provider }}
+        GARDENER_PROJECT_NAME: ${{ inputs.gardener_project_name }}
+      run: "${{ github.workspace }}/hack/ci/provision-gardener.sh"
     - name: Prepare DNS SA secret
       shell: bash
       env:
         DNS_SA_BASE64: ${{ inputs.dns_secret_json }}
       run: |
-        echo "$DNS_SA_BASE64" | base64 --decode >> service-account.json
+        echo "$DNS_SA_BASE64" | base64 --decode >> "${{ github.workspace }}/service-account.json"
     - name: Run integration tests
       shell: bash
       env:
@@ -57,19 +73,15 @@ runs:
         CLIENT_SECRET: ${{ inputs.client_secret }}
         OIDC_CONFIG_URL: ${{ inputs.oidc_well_known_url }}
         TEST_SA_ACCESS_KEY_PATH: "${{ github.workspace }}/service-account.json"
-        GARDENER_KUBECONFIG: "gardener_kubeconfig.yaml"
-        PERSISTENT_CLUSTER_KUBECONFIG: "cluster_kubeconfig.yaml"
-      run: |
-        EXPORT_RESULT=true \
-        ${{ inputs.script }} ${{ inputs.test_make_target }}
+        CLUSTER_KUBECONFIG: "${{ github.workspace }}/${{ env.CLUSTER_NAME }}_kubeconfig.yaml"
+        TEST_CUSTOM_DOMAIN: ${{ inputs.test_custom_domain }}
+      run: EXPORT_RESULT=true "${{ github.workspace }}/hack/ci/custom-domain-gardener.sh" ${{ inputs.test_make_target }}
     - name: Gather deployment logs
       shell: bash
-      env:
-        PERSISTENT_CLUSTER_KUBECONFIG: "cluster_kubeconfig.yaml"
-      if: failure()
+      if: always()
       run: |
         mkdir logs
-        export KUBECONFIG="${PERSISTENT_CLUSTER_KUBECONFIG}"
+        export KUBECONFIG="${{ github.workspace }}/${{ env.CLUSTER_NAME }}_kubeconfig.yaml"
         (kubectl logs -n kyma-system deployments/istio-controller-manager || true) > logs/istio-controller-manager.log
         (kubectl logs -n kyma-system deployments/api-gateway-controller-manager || true) > logs/api-gateway-controller-manager.log
         (kubectl logs -n istio-system deployments/istio-ingressgateway || true) > logs/istio-ingressgateway.log
@@ -80,7 +92,7 @@ runs:
         (kubectl get -n kyma-system deployment ory-oathkeeper -oyaml || true) > logs/ory-oathkeeper-dump.yaml
     - name: Uploads logs
       uses: actions/upload-artifact@v4
-      if: failure()
+      if: always()
       with:
         name: logs-${{ github.job }}-${{ inputs.test_make_target }}
         path: logs/
@@ -89,3 +101,10 @@ runs:
       with:
         name: html-reports-${{ github.job }}-${{ inputs.test_make_target }}
         path: tests/integration/reports/
+    - name: Deprovision cluster
+      if: always()
+      shell: bash
+      env:
+        GARDENER_KUBECONFIG: "${{ github.workspace }}/gardener_kubeconfig.yaml"
+        GARDENER_PROJECT_NAME: ${{ inputs.gardener_project_name }}
+      run: "${{ github.workspace }}/hack/ci/deprovision-gardener.sh"

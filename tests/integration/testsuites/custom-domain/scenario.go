@@ -245,7 +245,7 @@ func (c *scenario) callingTheEndpointWithAValidTokenShouldResultInStatusBetween(
 
 	requestHeaders := make(map[string]string)
 
-	token, err := auth.GetAccessToken(*c.oauth2Cfg, strings.ToLower("Opaque"))
+	token, err := auth.GetAccessTokenWithRetries(*c.oauth2Cfg, strings.ToLower("Opaque"), testcontext.GetRetryOpts())
 	if err != nil {
 		return fmt.Errorf("failed to fetch an id_token: %s", err.Error())
 	}
