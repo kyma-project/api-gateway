@@ -22,7 +22,7 @@ on:
 jobs:
   build-image:
     name: Build and push manager image
-    environment: ${{ github.event.pull_request.author_association != 'COLLABORATOR' && github.event.pull_request.author_association != 'OWNER' && 'restricted' || 'internal' }}
+    environment: ${{ github.event.pull_request.author_association != 'MEMBER' && github.event.pull_request.author_association != 'COLLABORATOR' && github.event.pull_request.author_association != 'OWNER' && 'restricted' || 'internal' }}
     runs-on: ubuntu-latest
     if: ${{ github.event.pull_request.draft == false }}
     steps:
