@@ -1,0 +1,96 @@
+name: 'Integration tests (Gardener)'
+description: 'Runs integration tests on Gardener'
+inputs:
+  manager_image:
+    description: "Manager image used for test"
+    required: true
+  gardener_secret:
+    description: "Kubeconfig secret for Gardener"
+    required: true
+  gardener_provider:
+    description: "Gardener provider to use"
+    required: true
+  gardener_project_name:
+    required: true
+    description: "Name of the gardener project"
+  test_make_target:
+    description: 'Make target for integration tests to run'
+    default: 'test-integration'
+  client_id:
+    description: "Client id for oidc"
+    required: true
+  client_secret:
+    description: "Client secret for oidc"
+    required: true
+  oidc_well_known_url:
+    description: "OIDC well known URL"
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - name: Generate cluster name
+      shell: bash
+      run: echo CLUSTER_NAME=ag-$(echo $RANDOM | md5sum | head -c 7) >> $GITHUB_ENV
+    - uses: actions/setup-go@v5
+      with:
+        go-version-file: "go.mod"
+    - name: Checkout to PR branch # to remove after getting rid of pull_request_target
+      shell: bash
+      if: github.event_name == 'pull_request' || github.event_name == 'pull_request_target'
+      run: |
+        git fetch origin pull/${{ github.event.number }}/head:PR-${{ github.event.number }}
+        git checkout PR-${{ github.event.number }}
+    - name: Prepare gardener kubeconfig
+      shell: bash
+      env:
+        GARDENER_TOKEN: ${{ inputs.gardener_secret }}
+      run: "${{ github.workspace }}/hack/ci/gardener_kubeconfig.sh"
+    - name: Provision cluster
+      shell: bash
+      env:
+        GARDENER_KUBECONFIG: "${{ github.workspace }}/gardener_kubeconfig.yaml"
+        CLUSTER_KUBECONFIG: "${{ github.workspace }}/${{ env.CLUSTER_NAME }}_kubeconfig.yaml"
+        GARDENER_PROVIDER: ${{ inputs.gardener_provider }}
+        GARDENER_PROJECT_NAME: ${{ inputs.gardener_project_name }}
+      run: "${{ github.workspace }}/hack/ci/provision-gardener.sh"
+    - name: Run integration tests
+      shell: bash
+      env:
+        IMG: ${{ inputs.manager_image }}
+        CLIENT_ID: ${{ inputs.client_id }}
+        CLIENT_SECRET: ${{ inputs.client_secret }}
+        OIDC_CONFIG_URL: ${{ inputs.oidc_well_known_url }}
+        CLUSTER_KUBECONFIG: "${{ github.workspace }}/${{ env.CLUSTER_NAME }}_kubeconfig.yaml"
+      run: EXPORT_RESULT=true "${{ github.workspace }}/hack/ci/int-tests-gardener.sh" ${{ inputs.test_make_target }}
+    - name: Gather deployment logs
+      shell: bash
+      if: always()
+      run: |
+        mkdir logs
+        export KUBECONFIG="${{ github.workspace }}/${{ env.CLUSTER_NAME }}_kubeconfig.yaml"
+        (kubectl logs -n kyma-system deployments/istio-controller-manager || true) > logs/istio-controller-manager.log
+        (kubectl logs -n kyma-system deployments/api-gateway-controller-manager || true) > logs/api-gateway-controller-manager.log
+        (kubectl logs -n istio-system deployments/istio-ingressgateway || true) > logs/istio-ingressgateway.log
+        (kubectl logs -n istio-system deployments/istiod || true) > logs/istiod.log
+        (kubectl logs -n kyma-system deployments/ory-oathkeeper || true) > logs/ory-oathkeeper.log
+        (kubectl get --all-namespaces apirules.gateway.kyma-project.io -oyaml || true) > logs/apirules-dump.yaml
+        (kubectl get --all-namespaces apigateways.operator.kyma-project.io -oyaml || true) > logs/gateway-dump.yaml
+        (kubectl get -n kyma-system deployment ory-oathkeeper -oyaml || true) > logs/ory-oathkeeper-dump.yaml
+    - name: Uploads logs
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: logs-${{ github.job }}-${{ inputs.test_make_target }}
+        path: logs/
+    - name: Uploads artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: html-reports-${{ github.job }}-${{ inputs.test_make_target }}
+        path: tests/integration/reports/
+    - name: Deprovision cluster
+      if: always()
+      shell: bash
+      env:
+        GARDENER_KUBECONFIG: "${{ github.workspace }}/gardener_kubeconfig.yaml"
+        GARDENER_PROJECT_NAME: ${{ inputs.gardener_project_name }}
+      run: "${{ github.workspace }}/hack/ci/deprovision-gardener.sh"
