@@ -6,8 +6,6 @@
 # - IMG - API gateway image to be deployed (by make deploy)
 # - CLUSTER_NAME - Gardener cluster name
 # - CLUSTER_KUBECONFIG - Gardener cluster kubeconfig path
-# - TEST_SA_ACCESS_KEY_PATH - path to the GCP Service account json file
-# - TEST_CUSTOM_DOMAIN - a domain used by tests (a subdomain is created during tests execution)
 
 set -eo pipefail
 

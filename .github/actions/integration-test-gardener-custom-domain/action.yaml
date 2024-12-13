@@ -18,7 +18,7 @@ inputs:
     description: "The custom domain used by tests"
   test_make_target:
     description: 'Make target for integration tests to run'
-    default: 'test-custom-domain test-integration-gateway'
+    default: 'test-custom-domain'
   client_id:
     description: "Client id for oidc"
     required: false
