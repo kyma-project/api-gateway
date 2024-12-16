@@ -1,37 +1,42 @@
-# Ory Limitations
+# Default Configuration and Limitations
 
-## Resource Configuration
-The resources of the Ory components are configured differently based on the size of the cluster. Smaller clusters are defined as having less than 5 CPU capability or less than 10 Gi of memory capability, while larger clusters exceed these values.
+## APIRule Controller Limitations
+
+APIRule Controller relies on Istio and Ory custom resources to provide routing capabilities. In terms of persistence, the controller depends only on APIRules stored in the Kubernetes cluster.
+In terms of the resource configuration, the following requirements are set on APIGateway Controller:
+- CPU Requests: 10m
+- CPU Limits: 100m
+- Memory Requests: 64Mi
+- Memory Limits: 128Mi
+
+The number of APIRule custom resources you can create is not limited.
+
+## Ory Resources' Configuration
+
+The configuration of Ory resources depends on the cluster capabilities. If your cluster has less than 5 total virtual CPU cores or its total memory capacity is less than 10 gigabytes, the default setup for resources is lighter. If your cluster exceeds both of these thresholds, the higher resource configuration is applied.
 
 The default configuration for larger clusters includes the following settings for the Ory components' resources:
 
-| Component          |          | CPU         | Memory |
-|--------------------|----------|-------------|--------|
-| Oathkeeper         | Limits   | 10 (10000m) | 512Mi  |
-| Oathkeeper         | Requests | 100m        | 64Mi   |
-| Oathkeeper Maester | Limits   | 400m        | 1Gi    |
-| Oathkeeper Maester | Requests | 10m         | 32Mi   |
+| Component          | CPU Requests | CPU Limits | Memory Requests | Memory Limits |
+|--------------------|--------------|------------|-----------------|---------------|
+| Oathkeeper         | 100m         | 10000m     | 64Mi            | 512Mi         |
+| Oathkeeper Maester | 10m          | 400m       | 32Mi            | 1Gi           |
 
 The default configuration for smaller clusters includes the following settings for the Ory components' resources:
 
-| Component          |          | CPU  | Memory |
-|--------------------|----------|------|--------|
-| Oathkeeper         | Limits   | 100m | 128Mi  |
-| Oathkeeper         | Requests | 10m  | 64Mi   |
-| Oathkeeper Maester | Limits   | 100m | 50Mi   |
-| Oathkeeper Maester | Requests | 10m  | 20Mi   |
+| Component          | CPU Requests | CPU Limits | Memory Requests | Memory Limits |
+|--------------------|--------------|------------|-----------------|---------------|
+| Oathkeeper         | 10m          | 100m       | 64Mi            | 128Mi         |
+| Oathkeeper Maester | 10m          | 100m       | 20Mi            | 50Mi          |
 
 
 ## Autoscaling Configuration
 
 The default configuration in terms of autoscaling of Ory components is as follows:
 
-| Component          | Min replicas       | Max replicas       |
-|--------------------|--------------------|--------------------|
-| Oathkeeper         | 3                  | 10                 |
-| Oathkeeper Maester | Same as Oathkeeper | Same as Oathkeeper |
+| Component          | Min replicas | Max replicas |
+|--------------------|--------------|--------------|
+| Oathkeeper         | 3            | 10           |
+| Oathkeeper Maester | 3            | 10           |
 
-Oathkeeper Maester is set up as a separate container in the same Pod as Oathkeeper. Because of that, their autoscaling configuration is similar.
-
-The autoscaling is based on CPU utilization, with HorizontalPodAutoscaler set up for 80% CPU request average utilization.
-
+Oathkeeper Maester is a separate container running in the same Pod as Oathkeeper. Because of that, their autoscaling configuration is similar.The autoscaling configuration is based on CPU utilization, with HorizontalPodAutoscaler set up for 80% average CPU request utilization.
