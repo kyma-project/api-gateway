@@ -111,7 +111,7 @@ test-integration-istio: generate fmt vet
 
 .PHONY: test-integration-gateway
 test-integration-gateway: generate fmt vet
-	IS_GARDENER=$(IS_GARDENER) source ./tests/integration/env_vars.sh && TEST_CONCURRENCY=1 go test -timeout 1h ./tests/integration -run "^TestGateway$$" -v -race
+	go test -timeout 1h ./tests/integration -run TestGateway -v -race
 
 .PHONY: test-upgrade
 test-upgrade: generate fmt vet generate-upgrade-test-manifest install-istio deploy-latest-release ## Run API Gateway upgrade tests.

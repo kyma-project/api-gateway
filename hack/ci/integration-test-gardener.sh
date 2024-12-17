@@ -6,8 +6,6 @@
 # - IMG - API gateway image to be deployed (by make deploy)
 # - CLUSTER_NAME - Gardener cluster name
 # - CLUSTER_KUBECONFIG - Gardener cluster kubeconfig path
-# - TEST_SA_ACCESS_KEY_PATH - path to the GCP Service account json file
-# - TEST_CUSTOM_DOMAIN - a domain used by tests (a subdomain is created during tests execution)
 
 set -eo pipefail
 
@@ -47,7 +45,6 @@ export GARDENER_PROVIDER=$(kubectl get configmap -n kube-system shoot-info -o js
 echo "Gardener provider: ${GARDENER_PROVIDER}"
 
 export TEST_DOMAIN="${CLUSTER_DOMAIN}"
-export KYMA_DOMAIN="${CLUSTER_DOMAIN}"
 export IS_GARDENER=true # this variable is used in tests to make decisions based on the fact that the tests are running in Gardener
 
 # Add pwd to path to be able to use binaries downloaded in scripts
