@@ -6,7 +6,7 @@ inputs:
     required: true
   test_make_target:
     description: 'Make target for integration tests to run'
-    default: 'test-integration'
+    required: true
   client_id:
     description: "Client id for oidc"
     required: false
