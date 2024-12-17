@@ -47,7 +47,7 @@ jobs:
         uses: ./.github/actions/get-latest-sha
 
   e2e-tests-k3d:
-    name: Integration tests K3D
+    name: E2E tests K3D
     runs-on: ubuntu-latest
     needs: [get-sha]
     # The additional if is required, because there are optional jobs
@@ -71,7 +71,7 @@ jobs:
           test_make_target: ${{ matrix.test_make_target }}
 
   e2e-tests-aws:
-    name: Integration tests AWS
+    name: E2E tests AWS
     runs-on: ubuntu-latest
     needs: [ get-sha ]
     # The additional if is required, because there are optional jobs
@@ -167,7 +167,7 @@ jobs:
           target_branch: ${{github.ref_name}}
 
   e2e-custom-domain-gcp:
-    name: Custom domain integration GCP
+    name: E2E custom domain tests GCP
     runs-on: ubuntu-latest
     needs: [get-sha]
     # The additional if is required, because there are optional jobs
@@ -193,7 +193,7 @@ jobs:
           test_make_target: 'test-custom-domain'
 
   e2e-custom-domain-aws:
-    name: Custom domain integration AWS
+    name: E2E custom domain tests AWS
     runs-on: ubuntu-latest
     needs: [get-sha]
     # The additional if is required, because there are optional jobs
@@ -222,7 +222,7 @@ jobs:
     name: Slack Notification
     runs-on: ubuntu-latest
     if: ${{ failure() }}
-    needs: [integration-tests, integration-tests-aws, upgrade-tests, custom-domain-integration-gcp, custom-domain-integration-aws, migration-downtime-tests, migration-downtime-tests-aws]
+    needs: [e2e-tests-k3d, e2e-tests-aws, upgrade-tests, e2e-custom-domain-gcp, e2e-custom-domain-aws, migration-downtime-tests, migration-downtime-tests-aws]
     steps:
       - uses: actions/checkout@v4
         with:
