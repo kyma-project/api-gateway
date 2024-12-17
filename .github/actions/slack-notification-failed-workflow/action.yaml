@@ -18,4 +18,4 @@ runs:
         payload: |
           repository: ${{ github.repository }},
           workflow: ${{ github.workflow }},
-          actor: ${{ github.actor }},
+          owner: ${{ github.actor }},

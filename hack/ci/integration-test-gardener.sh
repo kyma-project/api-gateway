@@ -6,6 +6,8 @@
 # - IMG - API gateway image to be deployed (by make deploy)
 # - CLUSTER_NAME - Gardener cluster name
 # - CLUSTER_KUBECONFIG - Gardener cluster kubeconfig path
+# - TEST_SA_ACCESS_KEY_PATH - path to the GCP Service account json file
+# - TEST_CUSTOM_DOMAIN - a domain used by tests (a subdomain is created during tests execution)
 
 set -eo pipefail
 
@@ -31,12 +33,11 @@ requiredVars=(
     IMG
     CLUSTER_NAME
     CLUSTER_KUBECONFIG
-    TEST_SA_ACCESS_KEY_PATH
 )
 
 check_required_vars "${requiredVars[@]}"
 
-echo "Executing integration tests in cluster ${CLUSTER_NAME}, kubeconfig ${CLUSTER_KUBECONFIG}"
+echo "Executing tests in cluster ${CLUSTER_NAME}, kubeconfig ${CLUSTER_KUBECONFIG}"
 export KUBECONFIG="${CLUSTER_KUBECONFIG}"
 
 export CLUSTER_DOMAIN=$(kubectl get configmap -n kube-system shoot-info -o jsonpath="{.data.domain}")
@@ -45,11 +46,9 @@ echo "Cluster domain: ${CLUSTER_DOMAIN}"
 export GARDENER_PROVIDER=$(kubectl get configmap -n kube-system shoot-info -o jsonpath="{.data.provider}")
 echo "Gardener provider: ${GARDENER_PROVIDER}"
 
-echo "Custom domain: ${TEST_CUSTOM_DOMAIN}"
-
 export TEST_DOMAIN="${CLUSTER_DOMAIN}"
-export KYMA_DOMAIN="${CLUSTER_DOMAIN}" # it is required by env_vars.sh
-export IS_GARDENER=true
+export KYMA_DOMAIN="${CLUSTER_DOMAIN}"
+export IS_GARDENER=true # this variable is used in tests to make decisions based on the fact that the tests are running in Gardener
 
 # Add pwd to path to be able to use binaries downloaded in scripts
 export PATH="${PATH}:${PWD}"
@@ -84,10 +83,7 @@ do
 done
 echo "Ingress gateway responded"
 
-echo "Executing tests"
-for make_target in "$@"
-do
-    echo "Executing make target $make_target"
-    make $make_target
-done
+echo "Executing tests..."
+echo "Executing make target $make_target"
+make $make_target
 echo "Tests finished"

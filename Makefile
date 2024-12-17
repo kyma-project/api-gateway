@@ -95,19 +95,19 @@ test-integration: test-integration-v2alpha1 test-integration-ory test-integratio
 
 .PHONY: test-integration-v2alpha1
 test-integration-v2alpha1: generate fmt vet ## Run API Gateway integration tests with v2alpha1 API.
-	source ./tests/integration/env_vars.sh && go test -timeout 1h ./tests/integration -v -race -run TestV2alpha1
+	go test -timeout 1h ./tests/integration -v -race -run TestV2alpha1
 
 .PHONY: test-integration-ory
 test-integration-ory: generate fmt vet
-	source ./tests/integration/env_vars.sh && go test -timeout 1h ./tests/integration -v -race -run TestOryJwt
+	go test -timeout 1h ./tests/integration -v -race -run TestOryJwt
 
 .PHONY: test-migration-zero-downtime
 test-migration-zero-downtime: generate fmt vet
-	source ./tests/integration/env_vars.sh && ./tests/integration/scripts/test-zero-downtime.sh $(HANDLER)
+	./tests/integration/scripts/test-zero-downtime.sh $(HANDLER)
 
 .PHONY: test-integration-istio
 test-integration-istio: generate fmt vet
-	source ./tests/integration/env_vars.sh && go test -timeout 1h ./tests/integration -v -race -run TestIstioJwt
+	go test -timeout 1h ./tests/integration -v -race -run TestIstioJwt
 
 .PHONY: test-integration-gateway
 test-integration-gateway: generate fmt vet
@@ -115,11 +115,11 @@ test-integration-gateway: generate fmt vet
 
 .PHONY: test-upgrade
 test-upgrade: generate fmt vet generate-upgrade-test-manifest install-istio deploy-latest-release ## Run API Gateway upgrade tests.
-	source ./tests/integration/env_vars.sh && go test -timeout 1h ./tests/integration -v -race -run TestUpgrade .
+	go test -timeout 1h ./tests/integration -v -race -run TestUpgrade .
 
 .PHONY: test-custom-domain
 test-custom-domain: generate fmt vet
-	source ./tests/integration/env_vars_custom_domain.sh && GODEBUG=netdns=cgo CGO_ENABLED=1 go test -timeout 1h ./tests/integration -run "^TestCustomDomain$$" -v -race
+	GODEBUG=netdns=cgo CGO_ENABLED=1 go test -timeout 1h ./tests/integration -run "^TestCustomDomain$$" -v -race
 
 .PHONY: install-istio
 install-istio: create-namespace
