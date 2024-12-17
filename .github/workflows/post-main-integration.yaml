@@ -107,7 +107,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        test_make_target: [ "test-migration-zero-downtime HANDLER=no_auth", "test-migration-zero-downtime HANDLER=allow", "test-migration-zero-downtime HANDLER=noop", "test-migration-zero-downtime HANDLER=jwt", "test-migration-zero-downtime HANDLER=oauth2_introspection" ]
+        handler: [ "no_auth", "allow", "noop", "jwt", "oauth2_introspection" ]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -115,9 +115,10 @@ jobs:
       - uses: ./.github/actions/integration-tests
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          HANDLER: ${{ matrix.handler }}
         with:
           manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway/main/api-gateway-manager:${{ needs.get-sha.outputs.sha }}"
-          test_make_target: ${{ matrix.test_make_target }}
+          test_make_target: test-migration-zero-downtime
 
   migration-downtime-tests-aws:
     name: Zero Downtime Migration Tests
@@ -128,7 +129,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        test_make_target: [ "test-migration-zero-downtime HANDLER=no_auth", "test-migration-zero-downtime HANDLER=allow", "test-migration-zero-downtime HANDLER=noop", "test-migration-zero-downtime HANDLER=jwt", "test-migration-zero-downtime HANDLER=oauth2_introspection" ]
+        handler: [ "no_auth", "allow", "noop", "jwt", "oauth2_introspection" ]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -136,6 +137,7 @@ jobs:
       - uses: ./.github/actions/integration-test-gardener
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          HANDLER: ${{ matrix.handler }}
         with:
           manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway/main/api-gateway-manager:${{ needs.get-sha.outputs.sha }}"
           gardener_secret: ${{ secrets.GARDENER_TOKEN }}
@@ -144,9 +146,9 @@ jobs:
           client_id: ${{ secrets.CLIENT_ID }}
           client_secret: ${{ secrets.CLIENT_SECRET }}
           oidc_well_known_url: "${{ secrets.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
-          test_make_target: ${{ matrix.test_make_target }}
+          test_make_target: test-migration-zero-downtime
 
-  upgrade-tests:
+  upgrade-tests-k3d:
     name: Upgrade tests
     runs-on: ubuntu-latest
     needs: [get-sha]
@@ -222,7 +224,7 @@ jobs:
     name: Slack Notification
     runs-on: ubuntu-latest
     if: ${{ failure() }}
-    needs: [e2e-tests-k3d, e2e-tests-aws, upgrade-tests, e2e-custom-domain-gcp, e2e-custom-domain-aws, migration-downtime-tests, migration-downtime-tests-aws]
+    needs: [e2e-tests-k3d, e2e-tests-aws, upgrade-tests-k3d, e2e-custom-domain-gcp, e2e-custom-domain-aws, migration-downtime-tests, migration-downtime-tests-aws]
     steps:
       - uses: actions/checkout@v4
         with:
