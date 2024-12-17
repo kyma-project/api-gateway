@@ -8,8 +8,8 @@ on:
         required: true
         type: string
 jobs:
-  integration-tests:
-    name: Integration tests
+  e2e-tests-k3d:
+    name: E2E tests K3D
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -89,8 +89,8 @@ jobs:
           oidc_well_known_url: "${{ secrets.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
           target_branch: ${{ github.base_ref }}
 
-  custom-domain-gcp:
-    name: Custom domain GCP
+  e2e-custom-domain-gcp:
+    name: E2E custom domain tests GCP
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -116,8 +116,8 @@ jobs:
           test_make_target: ${{ matrix.test_make_target }}
           test_custom_domain: ${{ vars.TEST_CUSTOM_DOMAIN }}
 
-  custom-domain-aws:
-    name: Custom domain AWS
+  e2e-custom-domain-aws:
+    name: E2E custom domain tests AWS
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
