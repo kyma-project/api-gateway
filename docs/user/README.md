@@ -4,7 +4,7 @@
 
 API Gateway is a Kyma module, which provides functionalities that allow you to expose and secure APIs by using [Ory Oathkeeper](https://www.ory.sh/docs/oathkeeper) and [Istio](https://istio.io/) resources.
 
-By default, the API Gateway module is automatically added once you create a Kyma runtime instance. To use the API Gateway module, the Istio module must be also added.
+To use the API Gateway module, the Istio module must be also added. By default, both the API Gateway and Istio modules are automatically added once you create a Kyma runtime instance. 
 
 ## Features
 
