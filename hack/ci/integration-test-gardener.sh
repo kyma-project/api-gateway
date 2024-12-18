@@ -37,6 +37,11 @@ check_required_vars "${requiredVars[@]}"
 
 make_target="$1"
 
+if [ -z "$make_target" ]; then
+    echo "Make target is required as parameter"
+    exit 3
+fi
+
 echo "Make target: $make_target"
 
 echo "Executing tests in cluster ${CLUSTER_NAME}, kubeconfig ${CLUSTER_KUBECONFIG}"
