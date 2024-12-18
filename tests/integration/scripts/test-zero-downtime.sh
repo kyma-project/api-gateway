@@ -28,6 +28,8 @@ if [[ -z "$HANDLER" || ! "$HANDLER" =~ ^(jwt|noop|no_auth|allow|oauth2_introspec
   exit 1
 fi
 
+echo "zero-downtime: Running zero downtime tests for handler '$HANDLER'"
+
 # Function to run zero downtime requests to the exposed host of the APIRule
 run_zero_downtime_requests() {
   local handler="$1"

@@ -125,7 +125,7 @@ jobs:
           HANDLER: ${{ matrix.handler }}
         with:
           manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway/main/api-gateway-manager:${{ needs.get-sha.outputs.sha }}"
-          test_make_target: test-migration-zero-downtime
+          test_make_target: test-migration-zero-downtime-${{ matrix.handler }}
 
   migration-downtime-tests-aws:
     name: Zero Downtime Migration Tests AWS
@@ -152,7 +152,7 @@ jobs:
           gardener_provider: aws
           client_id: ${{ secrets.CLIENT_ID }}
           client_secret: ${{ secrets.CLIENT_SECRET }}
-          test_make_target: test-migration-zero-downtime
+          test_make_target: test-migration-zero-downtime-{{ matrix.handler }}
 
   upgrade-tests-k3d:
     name: Upgrade tests
