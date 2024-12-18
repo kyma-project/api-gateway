@@ -47,7 +47,7 @@ jobs:
         uses: ./.github/actions/get-latest-sha
 
   unit-tests:
-    name: Unit tests & lint
+    name: Unit, integration tests & lint
     if: ${{ always() && !failure() && !cancelled() }}
     needs: [get-sha]
     uses: ./.github/workflows/call-unit-lint.yaml

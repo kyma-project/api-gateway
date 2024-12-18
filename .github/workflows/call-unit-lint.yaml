@@ -1,7 +1,7 @@
 # Jobs defined in this file are responsible for things that do not require container image
 # but still relevant to the codebase such as unit tests, linting etc
 
-name: Pull Request unit & lint
+name: Pull Request unit, integration & lint
 on:
   workflow_call:
 
