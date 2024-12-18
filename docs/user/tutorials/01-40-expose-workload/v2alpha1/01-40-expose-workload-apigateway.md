@@ -59,9 +59,6 @@ This tutorial shows how to expose an unsecured instance of the HTTPBin Service a
     ```
 
 > [!NOTE]
-> If you are using k3d, add `httpbin.kyma.local` to the entry with k3d IP in your system's `/etc/hosts` file.
-
-> [!NOTE]
 > If you don't specify a namespace for your Service, the default namespace is used.
 
 ### Access Your Workload
