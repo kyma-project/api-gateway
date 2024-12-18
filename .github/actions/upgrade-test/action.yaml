@@ -36,7 +36,7 @@ runs:
     - name: Run test
       shell: bash
       env:
-        KYMA_DOMAIN: "local.kyma.dev"
+        TEST_DOMAIN: "local.kyma.dev"
         TEST_UPGRADE_IMG: ${{ inputs.manager_image }}
         CLIENT_ID: ${{ inputs.client_id }}
         CLIENT_SECRET: ${{ inputs.client_secret }}
