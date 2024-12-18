@@ -72,9 +72,9 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway/main/api-gateway-manager:${{ needs.get-sha.outputs.sha }}"
-          client_id: ${{ secrets.CLIENT_ID }}
-          client_secret: ${{ secrets.CLIENT_SECRET }}
-          oidc_well_known_url: "${{ secrets.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
+          test_client_id: ${{ secrets.CLIENT_ID }}
+          test_client_secret: ${{ secrets.CLIENT_SECRET }}
+          test_oidc_well_known_url: "${{ secrets.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
           test_make_target: ${{ matrix.test_make_target }}
 
   e2e-tests-aws:
@@ -100,9 +100,9 @@ jobs:
           gardener_secret: ${{ secrets.GARDENER_TOKEN }}
           gardener_project_name: ${{ vars.GARDENER_PROJECT_NAME }}
           gardener_provider: aws
-          client_id: ${{ secrets.CLIENT_ID }}
-          client_secret: ${{ secrets.CLIENT_SECRET }}
-          oidc_well_known_url: "${{ secrets.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
+          test_client_id: ${{ secrets.CLIENT_ID }}
+          test_client_secret: ${{ secrets.CLIENT_SECRET }}
+          test_oidc_well_known_url: "${{ secrets.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
           test_make_target: ${{ matrix.test_make_target }}
 
   migration-downtime-tests:
@@ -149,9 +149,9 @@ jobs:
           gardener_secret: ${{ secrets.GARDENER_TOKEN }}
           gardener_project_name: ${{ vars.GARDENER_PROJECT_NAME }}
           gardener_provider: aws
-          client_id: ${{ secrets.CLIENT_ID }}
-          client_secret: ${{ secrets.CLIENT_SECRET }}
-          oidc_well_known_url: "${{ secrets.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
+          test_client_id: ${{ secrets.CLIENT_ID }}
+          test_client_secret: ${{ secrets.CLIENT_SECRET }}
+          test_oidc_well_known_url: "${{ secrets.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
           test_make_target: test-migration-zero-downtime-${{ matrix.handler }}
 
   upgrade-tests-k3d:
@@ -169,9 +169,9 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway/main/api-gateway-manager:${{ needs.get-sha.outputs.sha }}"
-          client_id: ${{ secrets.CLIENT_ID }}
-          client_secret: ${{ secrets.CLIENT_SECRET }}
-          oidc_well_known_url: "${{ secrets.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
+          test_client_id: ${{ secrets.CLIENT_ID }}
+          test_client_secret: ${{ secrets.CLIENT_SECRET }}
+          test_oidc_well_known_url: "${{ secrets.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
           target_branch: ${{github.ref_name}}
 
   e2e-custom-domain-gcp:
@@ -193,9 +193,9 @@ jobs:
           gardener_secret: ${{ secrets.GARDENER_TOKEN }}
           gardener_project_name: ${{ vars.GARDENER_PROJECT_NAME }}
           gardener_provider: gcp
-          client_id: ${{ secrets.CLIENT_ID }}
-          client_secret: ${{ secrets.CLIENT_SECRET }}
-          oidc_well_known_url: "${{ secrets.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
+          test_client_id: ${{ secrets.CLIENT_ID }}
+          test_client_secret: ${{ secrets.CLIENT_SECRET }}
+          test_oidc_well_known_url: "${{ secrets.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
           dns_secret_json: ${{ secrets.DNS_SECRET_JSON }}
           test_custom_domain: ${{ vars.TEST_CUSTOM_DOMAIN }}
           test_make_target: 'test-custom-domain'
@@ -219,9 +219,9 @@ jobs:
           gardener_secret: ${{ secrets.GARDENER_TOKEN }}
           gardener_project_name: ${{ vars.GARDENER_PROJECT_NAME }}
           gardener_provider: aws
-          client_id: ${{ secrets.CLIENT_ID }}
-          client_secret: ${{ secrets.CLIENT_SECRET }}
-          oidc_well_known_url: "${{ secrets.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
+          test_client_id: ${{ secrets.CLIENT_ID }}
+          test_client_secret: ${{ secrets.CLIENT_SECRET }}
+          test_oidc_well_known_url: "${{ secrets.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
           dns_secret_json: ${{ secrets.DNS_SECRET_JSON }}
           test_custom_domain: ${{ vars.TEST_CUSTOM_DOMAIN }}
           test_make_target: 'test-custom-domain'

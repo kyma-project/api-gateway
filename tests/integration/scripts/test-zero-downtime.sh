@@ -48,7 +48,7 @@ run_zero_downtime_requests() {
 
 
   if [ "$handler" == "jwt" ] || [ "$handler" == "oauth2_introspection" ]; then
-    if [ -z "${OIDC_CONFIG_URL}" ]; then
+    if [ -z "${TEST_OIDC_CONFIG_URL}" ]; then
       echo "zero-downtime: No OIDC_CONFIG_URL provided, assuming oauth mock"
       # Wait until the OAuth2 mock server host is available
       wait_for_url "https://oauth2-mock.${TEST_DOMAIN}/.well-known/openid-configuration"
@@ -59,11 +59,11 @@ run_zero_downtime_requests() {
       bearer_token=$(curl --fail --silent -kX POST "$token_url" -d "grant_type=client_credentials" -d "token_format=jwt" \
         -H "Content-Type: application/x-www-form-urlencoded" | jq -r ".access_token")
     else
-      echo "zero-downtime: OIDC_CONFIG_URL provided, getting token url"
-      token_url=$(curl --fail --silent "${OIDC_CONFIG_URL}/.well-known/openid-configuration" | jq -r .token_endpoint)
+      echo "zero-downtime: TEST_OIDC_CONFIG_URL provided, getting token url"
+      token_url=$(curl --fail --silent "${TEST_OIDC_CONFIG_URL}/.well-known/openid-configuration" | jq -r .token_endpoint)
 
       echo "zero-downtime: Getting access token"
-      bearer_token=$(curl --fail --silent -kX POST "$token_url" -u "${CLIENT_ID}:${CLIENT_SECRET}" -d "grant_type=client_credentials" -d "token_format=jwt" \
+      bearer_token=$(curl --fail --silent -kX POST "$token_url" -u "${TEST_CLIENT_ID}:${TEST_CLIENT_SECRET}" -d "grant_type=client_credentials" -d "token_format=jwt" \
         -H "Content-Type: application/x-www-form-urlencoded" | jq -r ".access_token")
     fi
   fi

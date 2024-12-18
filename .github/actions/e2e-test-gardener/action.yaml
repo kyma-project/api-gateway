@@ -19,13 +19,13 @@ inputs:
   test_make_target:
     description: 'Make target for integration tests to run'
     required: true
-  client_id:
+  test_client_id:
     description: "Client id for oidc"
     required: false
-  client_secret:
+  test_client_secret:
     description: "Client secret for oidc"
     required: false
-  oidc_well_known_url:
+  test_oidc_well_known_url:
     description: "OIDC well known URL"
     required: false
   dns_secret_json:
@@ -69,9 +69,9 @@ runs:
       shell: bash
       env:
         IMG: ${{ inputs.manager_image }}
-        CLIENT_ID: ${{ inputs.client_id }}
-        CLIENT_SECRET: ${{ inputs.client_secret }}
-        OIDC_CONFIG_URL: ${{ inputs.oidc_well_known_url }}
+        TEST_CLIENT_ID: ${{ inputs.test_client_id }}
+        TEST_CLIENT_SECRET: ${{ inputs.test_client_secret }}
+        TEST_OIDC_CONFIG_URL: ${{ inputs.test_oidc_well_known_url }}
         TEST_SA_ACCESS_KEY_PATH: "${{ github.workspace }}/service-account.json"
         CLUSTER_KUBECONFIG: "${{ github.workspace }}/${{ env.CLUSTER_NAME }}_kubeconfig.yaml"
         TEST_CUSTOM_DOMAIN: ${{ inputs.test_custom_domain }}
