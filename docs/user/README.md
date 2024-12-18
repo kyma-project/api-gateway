@@ -2,7 +2,7 @@
 
 ## What Is API Gateway?
 
-API Gateway is a Kyma module, which provides functionalities that allow you to expose and secure APIs by using [Ory Oathkeeper](https://www.ory.sh/docs/oathkeeper) and [Istio](https://istio.io/) resources.
+API Gateway is a Kyma module, which provides functionalities that allow you to expose and secure APIs.
 
 To use the API Gateway module, the Istio module must be also added. By default, both the API Gateway and Istio modules are automatically added once you create a Kyma runtime instance. 
 
@@ -12,7 +12,7 @@ The API Gateway module offers the following features:
 
 - Ory Oathkeeper installation: The module simplifies and manages the installation of Ory Oathkeeper.
 - API Exposure:  The module combines ORY Oathkeeper and Istio capabilities to offer the APIRule CustomResourceDefinition. By creating APIRule custom resources, you can easily and securely expose your workloads.
-- Kyma Gateway installation: The module installs the default simple TLS Kyma Gateway known as Kyma Gateway.
+- Kyma Gateway installation: The module installs the default simple TLS Kyma Gateway.
 
 ## Architecture
 
@@ -20,7 +20,7 @@ The API Gateway module offers the following features:
 
 ### API Gateway Operator
 
-Within the API Gateway module, API Gateway Operator manages the application of API Gateway's configuration and handles resource reconciliation. It contains two controllers: [APIGateway Controller](./00-10-overview-api-gateway-controller.md), which applies the configuration specified in the [APIGateway custom resource (CR)](./custom-resources/apigateway/), and [APIRule Controller](./00-20-overview-api-rule-controller.md), which applies the configuration specified in the [APIRule CR](./custom-resources/apirule/).
+Within the API Gateway module, API Gateway Operator manages the application of API Gateway's configuration and handles resource reconciliation. It contains two controllers: APIGateway Controller and APIRule Controller.
 
 
 ### APIGateway Controller
