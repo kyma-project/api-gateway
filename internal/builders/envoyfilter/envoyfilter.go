@@ -52,7 +52,8 @@ func (e *Builder) WithConfigPatch(patch *ConfigPatch) *Builder {
 }
 
 // Build returns EnvoyFilter generated from the configuration provided to the builder.
-func (e *Builder) Build(f *apiv1alpha3.EnvoyFilter) *apiv1alpha3.EnvoyFilter {
+func (e *Builder) Build() *apiv1alpha3.EnvoyFilter {
+	f := apiv1alpha3.EnvoyFilter{}
 	if len(e.name) > 0 {
 		f.Name = e.name
 	}
@@ -70,7 +71,7 @@ func (e *Builder) Build(f *apiv1alpha3.EnvoyFilter) *apiv1alpha3.EnvoyFilter {
 	}
 
 	f.Spec.ConfigPatches = e.ConfigPatches
-	return f
+	return &f
 }
 
 // NewEnvoyFilterBuilder returns EnvoyFilterBuilder for building istio EnvoyFilters
