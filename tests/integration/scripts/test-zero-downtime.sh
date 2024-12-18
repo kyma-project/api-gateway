@@ -59,8 +59,16 @@ run_zero_downtime_requests() {
       bearer_token=$(curl --fail --silent -kX POST "$token_url" -d "grant_type=client_credentials" -d "token_format=jwt" \
         -H "Content-Type: application/x-www-form-urlencoded" | jq -r ".access_token")
     else
+      if [ -z "$TEST_CLIENT_ID" ] || [ -z "$TEST_CLIENT_SECRET" ]; then
+        echo "No client ID or secret, failing"
+        exit 3
+      fi
       echo "zero-downtime: TEST_OIDC_CONFIG_URL provided, getting token url"
-      token_url=$(curl --fail --silent "${TEST_OIDC_CONFIG_URL}/.well-known/openid-configuration" | jq -r .token_endpoint)
+      token_url=$(curl --fail --silent "${TEST_OIDC_CONFIG_URL}" | jq -r .token_endpoint)
+      if [ -z "$token_url" ]; then
+        echo "Can't get token url"
+        exit 4
+      fi
 
       echo "zero-downtime: Getting access token"
       bearer_token=$(curl --fail --silent -kX POST "$token_url" -u "${TEST_CLIENT_ID}:${TEST_CLIENT_SECRET}" -d "grant_type=client_credentials" -d "token_format=jwt" \
@@ -173,7 +181,7 @@ start() {
 
   echo "zero-downtime: Starting integration test scenario for handler '$handler'"
 
-  go test -timeout 15m ./tests/integration -v -race -run "TestOryJwt/Migrate_v1beta1_APIRule_with_${handler}_handler" && test_exit_code=$? || test_exit_code=$?
+  go test -count=1 -timeout 15m ./tests/integration -v -race -run "TestOryJwt/Migrate_v1beta1_APIRule_with_${handler}_handler" && test_exit_code=$? || test_exit_code=$?
   if [ $test_exit_code -ne 0 ]; then
     echo "zero-downtime: Test execution failed"
     return 1
