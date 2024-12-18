@@ -29,7 +29,6 @@ APIGateway Controller manages the installation of [Ory Oathkeeper](https://www.o
 - Installing, upgrading, and uninstalling Ory Oathkeeper
 - Configuring Kyma Gateway
 - Managing Certificate and DNSEntry resources
-- Configuring Istio Gateways
 
 ### APIRule Controller
 
