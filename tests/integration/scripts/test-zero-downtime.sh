@@ -48,14 +48,24 @@ run_zero_downtime_requests() {
 
 
   if [ "$handler" == "jwt" ] || [ "$handler" == "oauth2_introspection" ]; then
-    # Wait until the OAuth2 mock server host is available
-    wait_for_url "https://oauth2-mock.$TEST_DOMAIN/.well-known/openid-configuration"
-    token_url="https://oauth2-mock.$TEST_DOMAIN/oauth2/token"
+    if [ -z "${OIDC_CONFIG_URL}" ]; then
+      echo "zero-downtime: No OIDC_CONFIG_URL provided, assuming oauth mock"
+      # Wait until the OAuth2 mock server host is available
+      wait_for_url "https://oauth2-mock.${TEST_DOMAIN}/.well-known/openid-configuration"
+      token_url="https://oauth2-mock.${TEST_DOMAIN}/oauth2/token"
 
-    # Get the access token from the OAuth2 mock server
-    echo "zero-downtime: Getting access token from URL '$token_url'"
-    bearer_token=$(curl -kX POST "$token_url" -d "grant_type=client_credentials" -d "token_format=jwt" \
-      -H "Content-Type: application/x-www-form-urlencoded" | jq ".access_token" | tr -d '"')
+      # Get the access token from the OAuth2 mock server
+      echo "zero-downtime: Getting access token from URL '$token_url'"
+      bearer_token=$(curl --fail --silent -kX POST "$token_url" -d "grant_type=client_credentials" -d "token_format=jwt" \
+        -H "Content-Type: application/x-www-form-urlencoded" | jq -r ".access_token")
+    else
+      echo "zero-downtime: OIDC_CONFIG_URL provided, getting token url"
+      token_url=$(curl --fail --silent "${OIDC_CONFIG_URL}/.well-known/openid-configuration" | jq -r .token_endpoint)
+
+      echo "zero-downtime: Getting access token"
+      bearer_token=$(curl --fail --silent -kX POST "$token_url" -u "${CLIENT_ID}:${CLIENT_SECRET}" -d "grant_type=client_credentials" -d "token_format=jwt" \
+        -H "Content-Type: application/x-www-form-urlencoded" | jq -r ".access_token")
+    fi
   fi
 
   # Wait until the host in the APIRule is available. This may take a very long time because the httpbin application
