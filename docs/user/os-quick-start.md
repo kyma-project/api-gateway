@@ -123,22 +123,22 @@ This quick start guide shows how to create a sample HTTPBin workload and expose 
 1. In the `api-gateway-tutorial` namespace, go to **Discovery and Network > API Rules**.
 2. Choose **Create**.
 3. Provide the following details.
-  - **Name**: `httpbin`
-  - In the `Service` section, add:
-    - **Service Name**: `httpbin`
-    - **Port**: `8000`
-  - In the **Gateway** section, add:
-    - **Namespace**: `api-gateway-tutorial`
-    - **Name**: `kyma-gateway`
-    - **Host**: `httpbin.local.kyma.dev`
-  - In the **Rules** section, use the following configuration for the first Rule:
-    - **Path**: `/.*`
-    - **Handler**: `no_auth`
-    - **Methods**: `GET`
-  - Create one more Rule with the configuration:
-    - **Path**: `/post`
-    - **Handler**: `no_auth`
-    - **Methods**: `POST`
+     - **Name**: `httpbin`
+     - In the `Service` section, add:
+       - **Service Name**: `httpbin`
+       - **Port**: `8000`
+     - In the **Gateway** section, add:
+       - **Namespace**: `api-gateway-tutorial`
+       - **Name**: `kyma-gateway`
+       - **Host**: `httpbin.local.kyma.dev`
+     - In the **Rules** section, use the following configuration for the first Rule:
+       - **Path**: `/.*`
+       - **Handler**: `no_auth`
+       - **Methods**: `GET`
+     - Create one more Rule with the configuration:
+       - **Path**: `/post`
+       - **Handler**: `no_auth`
+       - **Methods**: `POST`
 4.  Choose **Create**.
 
 #### **kubectl**
