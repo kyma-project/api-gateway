@@ -35,6 +35,10 @@ requiredVars=(
 
 check_required_vars "${requiredVars[@]}"
 
+make_target="$1"
+
+echo "Make target: $make_target"
+
 echo "Executing tests in cluster ${CLUSTER_NAME}, kubeconfig ${CLUSTER_KUBECONFIG}"
 export KUBECONFIG="${CLUSTER_KUBECONFIG}"
 
@@ -82,5 +86,5 @@ echo "Ingress gateway responded"
 
 echo "Executing tests..."
 echo "Executing make target $make_target"
-make $make_target
+make "$make_target"
 echo "Tests finished"
