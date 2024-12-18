@@ -152,7 +152,6 @@ jobs:
           gardener_provider: aws
           client_id: ${{ secrets.CLIENT_ID }}
           client_secret: ${{ secrets.CLIENT_SECRET }}
-          oidc_well_known_url: "${{ secrets.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
           test_make_target: test-migration-zero-downtime
 
   upgrade-tests-k3d:
