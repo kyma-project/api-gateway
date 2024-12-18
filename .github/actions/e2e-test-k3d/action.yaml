@@ -1,4 +1,4 @@
-name: 'Integration tests (k3d)'
+name: 'E2E tests (k3d)'
 description: 'Runs integration tests on k3d'
 inputs:
   manager_image:

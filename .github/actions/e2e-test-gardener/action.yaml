@@ -1,4 +1,4 @@
-name: 'Integration tests (Gardener)'
+name: 'E2E tests (Gardener)'
 description: 'Runs integration tests on Gardener'
 inputs:
   manager_image:
