@@ -20,17 +20,22 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// Bucket represents a rate limit bucket configuration.
+const (
+	StatusReady = "Ready"
+	StatusError = "Error"
+)
+
+// BucketConfig represents a rate limit bucket configuration.
 // +kubebuilder:validation:XValidation:rule="((has(self.path)?1:0)+(has(self.headers)?1:0))==1",message="path or headers must be set"
-type Bucket struct {
+type BucketConfig struct {
 	Path    string            `json:"path,omitempty"`
 	Headers map[string]string `json:"headers,omitempty"`
 	// +kubebuilder:validation:Required
-	DefaultBucket BucketTokenSpec `json:"bucket"`
+	Bucket BucketSpec `json:"bucket"`
 }
 
-// BucketTokenSpec defines the token bucket specification.
-type BucketTokenSpec struct {
+// BucketSpec defines the token bucket specification.
+type BucketSpec struct {
 	// +kubebuilder:validation:Required
 	MaxTokens int64 `json:"maxTokens"`
 	// +kubebuilder:validation:Required
@@ -40,11 +45,11 @@ type BucketTokenSpec struct {
 	FillInterval *metav1.Duration `json:"fillInterval"`
 }
 
-// Local represents the local rate limit configuration.
-type Local struct {
+// LocalConfig represents the local rate limit configuration.
+type LocalConfig struct {
 	// +kubebuilder:validation:Required
-	DefaultBucket BucketTokenSpec `json:"defaultBucket"`
-	Buckets       []Bucket        `json:"buckets,omitempty"`
+	DefaultBucket BucketSpec     `json:"defaultBucket"`
+	Buckets       []BucketConfig `json:"buckets,omitempty"`
 }
 
 // RateLimitSpec defines the desired state of RateLimit
@@ -53,21 +58,38 @@ type RateLimitSpec struct {
 	// +kubebuilder:validation:MinProperties=1
 	SelectorLabels map[string]string `json:"selectorLabels"`
 	// +kubebuilder:validation:Required
-	Local                 Local `json:"local"`
-	EnableResponseHeaders bool  `json:"enableResponseHeaders,omitempty"`
-	Enforce               bool  `json:"enforce,omitempty"`
+	Local LocalConfig `json:"local"`
+	// EnableResponseHeaders enables x-rate-limit response headers. The default value is false.
+	EnableResponseHeaders bool `json:"enableResponseHeaders,omitempty"`
+	// Enforce specifies whether the rate limit should be enforced. The default value is `true`.
+	//+kubebuilder:default:=true
+	Enforce bool `json:"enforce,omitempty"`
 }
 
 // RateLimitStatus defines the observed state of RateLimit
 type RateLimitStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	// Description defines the description of current State of RateLimit.
+	Description string `json:"description,omitempty"`
+	// State describes the overall status of RateLimit. Values are `Ready`, `Processing` and `Error`
+	State string `json:"state,omitempty"`
+}
+
+func (s *RateLimitStatus) Error(err error) {
+	s.State = StatusError
+	s.Description = err.Error()
+}
+
+func (s *RateLimitStatus) Ready() {
+	s.State = StatusReady
+	s.Description = "Finished reconciliation"
 }
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 
 // RateLimit is the Schema for the ratelimits API
+// +kubebuilder:printcolumn:name="Status",type="string",JSONPath=".status.state"
+// +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp"
 type RateLimit struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
