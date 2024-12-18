@@ -1,4 +1,4 @@
-# Quick Start for Open-Source Kyma
+# Quick Start Guide for Open-Source Kyma
 
 Follow the steps to get started with the open-source API Gateway module.
 
