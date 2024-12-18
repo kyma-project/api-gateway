@@ -1,4 +1,4 @@
-name: 'Integration tests (Gardener)'
+name: 'E2E tests (Gardener)'
 description: 'Runs integration tests on Gardener'
 inputs:
   manager_image:
@@ -14,23 +14,23 @@ inputs:
     required: true
     description: "Name of the gardener project"
   test_custom_domain:
-    required: true
+    required: false
     description: "The custom domain used by tests"
   test_make_target:
     description: 'Make target for integration tests to run'
-    default: 'test-custom-domain test-integration-gateway'
-  client_id:
+    required: true
+  test_client_id:
     description: "Client id for oidc"
     required: false
-  client_secret:
+  test_client_secret:
     description: "Client secret for oidc"
     required: false
-  oidc_well_known_url:
+  test_oidc_well_known_url:
     description: "OIDC well known URL"
     required: false
   dns_secret_json:
     description: "Secret json for DNS provider"
-    required: true
+    required: false
 runs:
   using: "composite"
   steps:
@@ -69,13 +69,13 @@ runs:
       shell: bash
       env:
         IMG: ${{ inputs.manager_image }}
-        CLIENT_ID: ${{ inputs.client_id }}
-        CLIENT_SECRET: ${{ inputs.client_secret }}
-        OIDC_CONFIG_URL: ${{ inputs.oidc_well_known_url }}
+        TEST_CLIENT_ID: ${{ inputs.test_client_id }}
+        TEST_CLIENT_SECRET: ${{ inputs.test_client_secret }}
+        TEST_OIDC_CONFIG_URL: ${{ inputs.test_oidc_well_known_url }}
         TEST_SA_ACCESS_KEY_PATH: "${{ github.workspace }}/service-account.json"
         CLUSTER_KUBECONFIG: "${{ github.workspace }}/${{ env.CLUSTER_NAME }}_kubeconfig.yaml"
         TEST_CUSTOM_DOMAIN: ${{ inputs.test_custom_domain }}
-      run: EXPORT_RESULT=true "${{ github.workspace }}/hack/ci/custom-domain-gardener.sh" ${{ inputs.test_make_target }}
+      run: EXPORT_RESULT=true "${{ github.workspace }}/hack/ci/integration-test-gardener.sh" ${{ inputs.test_make_target }}
     - name: Gather deployment logs
       shell: bash
       if: always()
@@ -99,7 +99,7 @@ runs:
     - name: Uploads artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: html-reports-${{ github.job }}-${{ inputs.test_make_target }}
+        name: html-reports_${{ github.job }}_${{ github.run_id }}_${{ inputs.test_make_target }}_${{ inputs.gardener_provider }}
         path: tests/integration/reports/
     - name: Deprovision cluster
       if: always()

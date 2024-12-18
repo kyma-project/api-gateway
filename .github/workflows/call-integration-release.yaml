@@ -8,8 +8,8 @@ on:
         required: true
         type: string
 jobs:
-  integration-tests:
-    name: Integration tests
+  e2e-tests-k3d:
+    name: E2E tests K3D
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -20,13 +20,13 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
-      - uses: ./.github/actions/integration-tests
+      - uses: ./.github/actions/e2e-test-k3d
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          client_id: ${{ secrets.CLIENT_ID }}
-          client_secret: ${{ secrets.CLIENT_SECRET }}
-          oidc_well_known_url: "${{ secrets.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
+          test_client_id: ${{ secrets.CLIENT_ID }}
+          test_client_secret: ${{ secrets.CLIENT_SECRET }}
+          test_oidc_well_known_url: "${{ secrets.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
           manager_image: ${{ inputs.image }}
           test_make_target: ${{ matrix.test_make_target }}
 
@@ -42,7 +42,7 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
-      - uses: ./.github/actions/integration-tests
+      - uses: ./.github/actions/e2e-test-k3d
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -65,9 +65,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          client_id: ${{ secrets.CLIENT_ID }}
-          client_secret: ${{ secrets.CLIENT_SECRET }}
-          oidc_well_known_url: "${{ secrets.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
+          test_client_id: ${{ secrets.CLIENT_ID }}
+          test_client_secret: ${{ secrets.CLIENT_SECRET }}
+          test_oidc_well_known_url: "${{ secrets.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
           manager_image: ${{ inputs.image }}
           test_make_target: ${{ matrix.test_make_target }}
 
@@ -84,13 +84,13 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           manager_image: ${{ inputs.image }}
-          client_id: ${{ secrets.CLIENT_ID }}
-          client_secret: ${{ secrets.CLIENT_SECRET }}
-          oidc_well_known_url: "${{ secrets.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
+          test_client_id: ${{ secrets.CLIENT_ID }}
+          test_client_secret: ${{ secrets.CLIENT_SECRET }}
+          test_oidc_well_known_url: "${{ secrets.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
           target_branch: ${{ github.base_ref }}
 
-  custom-domain-gcp:
-    name: Custom domain GCP
+  e2e-custom-domain-gcp:
+    name: E2E custom domain tests GCP
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -101,7 +101,7 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
-      - uses: ./.github/actions/integration-test-gardener
+      - uses: ./.github/actions/e2e-test-gardener
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -109,15 +109,15 @@ jobs:
           gardener_secret: ${{ secrets.GARDENER_TOKEN }}
           gardener_project_name: ${{ vars.GARDENER_PROJECT_NAME }}
           gardener_provider: gcp
-          client_id: ${{ secrets.CLIENT_ID }}
-          client_secret: ${{ secrets.CLIENT_SECRET }}
-          oidc_well_known_url: "${{ secrets.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
+          test_client_id: ${{ secrets.CLIENT_ID }}
+          test_client_secret: ${{ secrets.CLIENT_SECRET }}
+          test_oidc_well_known_url: "${{ secrets.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
           dns_secret_json: ${{ secrets.DNS_SECRET_JSON }}
           test_make_target: ${{ matrix.test_make_target }}
           test_custom_domain: ${{ vars.TEST_CUSTOM_DOMAIN }}
 
-  custom-domain-aws:
-    name: Custom domain AWS
+  e2e-custom-domain-aws:
+    name: E2E custom domain tests AWS
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -128,7 +128,7 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
-      - uses: ./.github/actions/integration-test-gardener
+      - uses: ./.github/actions/e2e-test-gardener
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -136,9 +136,9 @@ jobs:
           gardener_secret: ${{ secrets.GARDENER_TOKEN }}
           gardener_project_name: ${{ vars.GARDENER_PROJECT_NAME }}
           gardener_provider: aws
-          client_id: ${{ secrets.CLIENT_ID }}
-          client_secret: ${{ secrets.CLIENT_SECRET }}
-          oidc_well_known_url: "${{ secrets.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
+          test_client_id: ${{ secrets.CLIENT_ID }}
+          test_client_secret: ${{ secrets.CLIENT_SECRET }}
+          test_oidc_well_known_url: "${{ secrets.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
           dns_secret_json: ${{ secrets.DNS_SECRET_JSON }}
           test_make_target: ${{ matrix.test_make_target }}
           test_custom_domain: ${{ vars.TEST_CUSTOM_DOMAIN }}

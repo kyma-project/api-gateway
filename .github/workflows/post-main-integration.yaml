@@ -46,24 +46,64 @@ jobs:
       - id: get-sha
         uses: ./.github/actions/get-latest-sha
 
-  integration-tests:
-    name: Integration tests
+  unit-tests:
+    name: Unit, integration tests & lint
+    if: ${{ always() && !failure() && !cancelled() }}
+    needs: [get-sha]
+    uses: ./.github/workflows/call-unit-lint.yaml
+    secrets: inherit
+
+  e2e-tests-k3d:
+    name: E2E tests K3D
     runs-on: ubuntu-latest
     needs: [get-sha]
     # The additional if is required, because there are optional jobs
     if: ${{ always() && !failure() && !cancelled() }}
+    strategy:
+      fail-fast: false
+      matrix:
+        test_make_target: [ "test-integration-ory", "test-integration-istio", "test-integration-v2alpha1", "test-integration-gateway" ]
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: ./.github/actions/integration-tests
+      - uses: ./.github/actions/e2e-test-k3d
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway/main/api-gateway-manager:${{ needs.get-sha.outputs.sha }}"
-          client_id: ${{ secrets.CLIENT_ID }}
-          client_secret: ${{ secrets.CLIENT_SECRET }}
-          oidc_well_known_url: "${{ secrets.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
+          test_client_id: ${{ secrets.CLIENT_ID }}
+          test_client_secret: ${{ secrets.CLIENT_SECRET }}
+          test_oidc_well_known_url: "${{ secrets.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
+          test_make_target: ${{ matrix.test_make_target }}
+
+  e2e-tests-aws:
+    name: E2E tests AWS
+    runs-on: ubuntu-latest
+    needs: [ get-sha ]
+    # The additional if is required, because there are optional jobs
+    if: ${{ always() && !failure() && !cancelled() }}
+    strategy:
+      fail-fast: false
+      matrix:
+        test_make_target: [ "test-integration-ory", "test-integration-istio", "test-integration-v2alpha1", "test-integration-gateway" ]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+      - uses: ./.github/actions/e2e-test-gardener
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway/main/api-gateway-manager:${{ needs.get-sha.outputs.sha }}"
+          gardener_secret: ${{ secrets.GARDENER_TOKEN }}
+          gardener_project_name: ${{ vars.GARDENER_PROJECT_NAME }}
+          gardener_provider: aws
+          test_client_id: ${{ secrets.CLIENT_ID }}
+          test_client_secret: ${{ secrets.CLIENT_SECRET }}
+          test_oidc_well_known_url: "${{ secrets.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
+          test_make_target: ${{ matrix.test_make_target }}
 
   migration-downtime-tests:
     name: Zero Downtime Migration Tests
@@ -74,19 +114,47 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        test_make_target: [ "test-migration-zero-downtime HANDLER=no_auth", "test-migration-zero-downtime HANDLER=allow", "test-migration-zero-downtime HANDLER=noop", "test-migration-zero-downtime HANDLER=jwt", "test-migration-zero-downtime HANDLER=oauth2_introspection" ]
+        handler: [ "no_auth", "allow", "noop", "jwt", "oauth2_introspection" ]
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: ./.github/actions/integration-tests
+      - uses: ./.github/actions/e2e-test-k3d
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          HANDLER: ${{ matrix.handler }}
+        with:
+          manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway/main/api-gateway-manager:${{ needs.get-sha.outputs.sha }}"
+          test_make_target: test-migration-zero-downtime-${{ matrix.handler }}
+
+  migration-downtime-tests-aws:
+    name: Zero Downtime Migration Tests AWS
+    runs-on: ubuntu-latest
+    needs: [ get-sha ]
+    # The additional if is required, because there are optional jobs
+    if: ${{ always() && !failure() && !cancelled() }}
+    strategy:
+      fail-fast: false
+      matrix:
+        handler: [ "no_auth", "allow", "noop", "jwt", "oauth2_introspection" ]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/e2e-test-gardener
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway/main/api-gateway-manager:${{ needs.get-sha.outputs.sha }}"
-          test_make_target: ${{ matrix.test_make_target }}
+          gardener_secret: ${{ secrets.GARDENER_TOKEN }}
+          gardener_project_name: ${{ vars.GARDENER_PROJECT_NAME }}
+          gardener_provider: aws
+          test_client_id: ${{ secrets.CLIENT_ID }}
+          test_client_secret: ${{ secrets.CLIENT_SECRET }}
+          test_oidc_well_known_url: "${{ secrets.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
+          test_make_target: test-migration-zero-downtime-${{ matrix.handler }}
 
-  upgrade-tests:
+  upgrade-tests-k3d:
     name: Upgrade tests
     runs-on: ubuntu-latest
     needs: [get-sha]
@@ -101,13 +169,13 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway/main/api-gateway-manager:${{ needs.get-sha.outputs.sha }}"
-          client_id: ${{ secrets.CLIENT_ID }}
-          client_secret: ${{ secrets.CLIENT_SECRET }}
-          oidc_well_known_url: "${{ secrets.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
+          test_client_id: ${{ secrets.CLIENT_ID }}
+          test_client_secret: ${{ secrets.CLIENT_SECRET }}
+          test_oidc_well_known_url: "${{ secrets.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
           target_branch: ${{github.ref_name}}
 
-  custom-domain-integration-gcp:
-    name: Custom domain integration GCP
+  e2e-custom-domain-gcp:
+    name: E2E custom domain tests GCP
     runs-on: ubuntu-latest
     needs: [get-sha]
     # The additional if is required, because there are optional jobs
@@ -117,7 +185,7 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
-      - uses: ./.github/actions/integration-test-gardener
+      - uses: ./.github/actions/e2e-test-gardener
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -125,14 +193,15 @@ jobs:
           gardener_secret: ${{ secrets.GARDENER_TOKEN }}
           gardener_project_name: ${{ vars.GARDENER_PROJECT_NAME }}
           gardener_provider: gcp
-          client_id: ${{ secrets.CLIENT_ID }}
-          client_secret: ${{ secrets.CLIENT_SECRET }}
-          oidc_well_known_url: "${{ secrets.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
+          test_client_id: ${{ secrets.CLIENT_ID }}
+          test_client_secret: ${{ secrets.CLIENT_SECRET }}
+          test_oidc_well_known_url: "${{ secrets.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
           dns_secret_json: ${{ secrets.DNS_SECRET_JSON }}
           test_custom_domain: ${{ vars.TEST_CUSTOM_DOMAIN }}
+          test_make_target: 'test-custom-domain'
 
-  custom-domain-integration-aws:
-    name: Custom domain integration AWS
+  e2e-custom-domain-aws:
+    name: E2E custom domain tests AWS
     runs-on: ubuntu-latest
     needs: [get-sha]
     # The additional if is required, because there are optional jobs
@@ -142,7 +211,7 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
-      - uses: ./.github/actions/integration-test-gardener
+      - uses: ./.github/actions/e2e-test-gardener
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -150,17 +219,18 @@ jobs:
           gardener_secret: ${{ secrets.GARDENER_TOKEN }}
           gardener_project_name: ${{ vars.GARDENER_PROJECT_NAME }}
           gardener_provider: aws
-          client_id: ${{ secrets.CLIENT_ID }}
-          client_secret: ${{ secrets.CLIENT_SECRET }}
-          oidc_well_known_url: "${{ secrets.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
+          test_client_id: ${{ secrets.CLIENT_ID }}
+          test_client_secret: ${{ secrets.CLIENT_SECRET }}
+          test_oidc_well_known_url: "${{ secrets.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
           dns_secret_json: ${{ secrets.DNS_SECRET_JSON }}
           test_custom_domain: ${{ vars.TEST_CUSTOM_DOMAIN }}
+          test_make_target: 'test-custom-domain'
 
   slack_failed_notification:
     name: Slack Notification
     runs-on: ubuntu-latest
     if: ${{ failure() }}
-    needs: [integration-tests, upgrade-tests, custom-domain-integration-gcp, custom-domain-integration-aws, migration-downtime-tests]
+    needs: [e2e-tests-k3d, e2e-tests-aws, upgrade-tests-k3d, e2e-custom-domain-gcp, e2e-custom-domain-aws, migration-downtime-tests, migration-downtime-tests-aws]
     steps:
       - uses: actions/checkout@v4
         with:

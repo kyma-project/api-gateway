@@ -4,13 +4,13 @@ inputs:
   manager_image:
     description: 'Manager image used for test'
     required: true
-  client_id:
+  test_client_id:
     description: "Client id for oidc"
     required: false
-  client_secret:
+  test_client_secret:
     description: "Client secret for oidc"
     required: false
-  oidc_well_known_url:
+  test_oidc_well_known_url:
     description: "OIDC well known URL"
     required: false
   target_branch:
@@ -36,11 +36,11 @@ runs:
     - name: Run test
       shell: bash
       env:
-        KYMA_DOMAIN: "local.kyma.dev"
+        TEST_DOMAIN: "local.kyma.dev"
         TEST_UPGRADE_IMG: ${{ inputs.manager_image }}
-        CLIENT_ID: ${{ inputs.client_id }}
-        CLIENT_SECRET: ${{ inputs.client_secret }}
-        OIDC_CONFIG_URL: ${{ inputs.oidc_well_known_url }}
+        TEST_CLIENT_ID: ${{ inputs.test_client_id }}
+        TEST_CLIENT_SECRET: ${{ inputs.test_client_secret }}
+        TEST_OIDC_CONFIG_URL: ${{ inputs.test_oidc_well_known_url }}
       run: |
         if [ "${{ github.event_name }}" == "pull_request" ]; then
           k3d image import ${{ inputs.manager_image }} -c k3s-default
@@ -50,5 +50,5 @@ runs:
     - name: Uploads artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: html-reports-${{ github.job }}
+        name: html-reports_${{ github.job }}_${{ github.action }}_${{ inputs.test_make_target }}
         path: tests/integration/reports/

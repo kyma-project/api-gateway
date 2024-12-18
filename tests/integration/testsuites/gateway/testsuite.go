@@ -37,6 +37,7 @@ func (t *testsuite) Name() string {
 }
 
 func (t *testsuite) ValidateAndFixConfig() error {
+	t.config.EnforceSerialRun()
 	return t.config.ValidateCommon(t.resourceManager, t.k8sClient)
 }
 
