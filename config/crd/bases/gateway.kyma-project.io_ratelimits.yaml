@@ -47,6 +47,8 @@ spec:
             description: RateLimitSpec defines the desired state of RateLimit
             properties:
               enableResponseHeaders:
+                description: EnableResponseHeaders enables x-rate-limit response headers.
+                  The default value is false.
                 type: boolean
               enforce:
                 default: true

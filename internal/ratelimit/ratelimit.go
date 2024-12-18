@@ -259,10 +259,13 @@ func (rl *RateLimit) WithDefaultBucket(bucket Bucket) *RateLimit {
 	return rl
 }
 
-// AddToEnvoyFilter parses RateLimit configuration, then applies the parsed ConfigPatches directly into the
-// networkingv1alpha3.EnvoyFilter struct.
-func (rl *RateLimit) AddToEnvoyFilter(filter *networkingv1alpha3.EnvoyFilter) {
-	filter.Spec.ConfigPatches = append(filter.Spec.ConfigPatches, localHttpFilterPatch(), rl.RateLimitConfigPatch())
+// SetConfigPatches parses RateLimit configuration, then applies the parsed ConfigPatches directly into the
+// networkingv1alpha3.EnvoyFilter struct, replacing previous configuration.
+func (rl *RateLimit) SetConfigPatches(filter *networkingv1alpha3.EnvoyFilter) {
+	filter.Spec.ConfigPatches = []*envoyfilter.ConfigPatch{
+		localHttpFilterPatch(),
+		rl.RateLimitConfigPatch(),
+	}
 }
 
 // NewLocalRateLimit returns RateLimit struct for configuring local rate limits

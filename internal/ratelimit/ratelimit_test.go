@@ -105,7 +105,7 @@ var _ = Describe("RateLimit", func() {
 				For(d1).
 				For(d0).
 				WithDefaultBucket(b)
-			rl.AddToEnvoyFilter(ef)
+			rl.SetConfigPatches(ef)
 			Expect(ef.Spec.ConfigPatches).To(HaveLen(2))
 		})
 	})
@@ -210,8 +210,15 @@ var _ = Describe("RateLimit", func() {
 		ef := envoyfilter.NewEnvoyFilterBuilder().
 			WithName("httpbin-local-rate-limit").
 			WithNamespace("default").
-			WithWorkloadSelector("app", "httpbin").Build()
-		rl.AddToEnvoyFilter(ef)
+			WithWorkloadSelector("app", "httpbin").
+			WithConfigPatch(&envoyfilter.ConfigPatch{}).
+			WithConfigPatch(&envoyfilter.ConfigPatch{}).
+			WithConfigPatch(&envoyfilter.ConfigPatch{}).
+			Build()
+		rl.SetConfigPatches(ef)
+		It("builds EnvoyFilter with exactly 2 ConfigPatches", func() {
+			Expect(ef.Spec.ConfigPatches).To(HaveLen(2))
+		})
 		It("builds EnvoyFilter with expected configuration", func() {
 			f, err := os.ReadFile("testdata/envoy_patches.yaml")
 			Expect(err).Should(Succeed())

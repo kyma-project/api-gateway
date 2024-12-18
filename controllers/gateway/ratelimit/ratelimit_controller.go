@@ -18,9 +18,11 @@ package ratelimit
 
 import (
 	"context"
+	"fmt"
 	ratelimitv1alpha1 "github.com/kyma-project/api-gateway/apis/gateway/ratelimit/v1alpha1"
 	"github.com/kyma-project/api-gateway/internal/builders/envoyfilter"
 	"github.com/kyma-project/api-gateway/internal/ratelimit"
+	"istio.io/api/networking/v1alpha3"
 	networkingv1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -49,7 +51,7 @@ type RateLimitReconciler struct {
 // If the object is not found, it is ignored. If validation fails, an error is returned.
 // Otherwise, the function returns a result with a requeue period.
 func (r *RateLimitReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	l := log.FromContext(ctx).WithValues("namespace", req.Namespace, "RateLimit", req.Name)
+	l := log.FromContext(ctx)
 	l.Info("Starting reconciliation")
 
 	rl := ratelimitv1alpha1.RateLimit{}
@@ -60,7 +62,7 @@ func (r *RateLimitReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	l.Info("Validating RateLimit resource")
 	err := ratelimit.Validate(ctx, r.Client, rl)
 	if err != nil {
-		rl.Status.Error(err)
+		rl.Status.Error(fmt.Errorf("failed to validate RateLimit: %w", err))
 		if err := r.Status().Update(ctx, &rl); err != nil {
 			return ctrl.Result{}, err
 		}
@@ -70,9 +72,6 @@ func (r *RateLimitReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	builder := envoyfilter.NewEnvoyFilterBuilder().
 		WithName(rl.Name).
 		WithNamespace(rl.Namespace)
-	for k, v := range rl.Spec.SelectorLabels {
-		builder.WithWorkloadSelector(k, v)
-	}
 	ef := builder.Build()
 
 	l.Info("Updating EnvoyFilter resource to desired state", "EnvoyFilter.Name", ef.Name)
@@ -81,6 +80,7 @@ func (r *RateLimitReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 			return err
 		}
 		// build desired configuration
+		ef.Spec.WorkloadSelector = &v1alpha3.WorkloadSelector{Labels: rl.Spec.SelectorLabels}
 		defaultBucket := ratelimit.Bucket{
 			MaxTokens:     rl.Spec.Local.DefaultBucket.MaxTokens,
 			TokensPerFill: rl.Spec.Local.DefaultBucket.TokensPerFill,
@@ -105,11 +105,11 @@ func (r *RateLimitReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 			}
 			limit.For(d)
 		}
-		limit.AddToEnvoyFilter(ef)
+		limit.SetConfigPatches(ef)
 		return nil
 	}); err != nil {
 		l.Error(err, "Failed to create EnvoyFilter", "EnvoyFilter.Name", ef.Name)
-		rl.Status.Error(err)
+		rl.Status.Error(fmt.Errorf("failed to create EnvoyFilter: %w", err))
 		if err := r.Status().Update(ctx, &rl); err != nil {
 			return ctrl.Result{}, err
 		}
