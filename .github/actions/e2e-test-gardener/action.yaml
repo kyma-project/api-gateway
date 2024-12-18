@@ -99,7 +99,7 @@ runs:
     - name: Uploads artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: html-reports-${{ github.job }}-${{ inputs.test_make_target }}
+        name: html-reports_${{ github.job }}_${{ github.action }}_${{ inputs.test_make_target }}
         path: tests/integration/reports/
     - name: Deprovision cluster
       if: always()
