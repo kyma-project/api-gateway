@@ -127,7 +127,7 @@ This quick start guide shows how to create a sample HTTPBin workload and expose 
   - In the `Service` section, add:
     - **Service Name**: `httpbin`
     - **Port**: `8000`
-  - In the **Service** section, add:
+  - In the **Gateway** section, add:
     - **Namespace**: `api-gateway-tutorial`
     - **Name**: `kyma-gateway`
     - **Host**: `httpbin.local.kyma.dev`

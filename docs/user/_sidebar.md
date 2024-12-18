@@ -1,7 +1,6 @@
 * [Back to Kyma Home](/)
 * [API Gateway Module](/api-gateway/user/README.md)
-* [APIGateway Controller](/api-gateway/user/00-10-overview-api-gateway-controller.md)
-* [APIRule Controller](/api-gateway/user/00-20-overview-api-rule-controller.md)
+* [Quick Start Guide](/api-gateway/user/os-quick-start.md)
 * [Tutorials](/api-gateway/user/tutorials/README.md)
   * [Create a Workload](/api-gateway/user/tutorials/01-00-create-workload.md)
   * [Set Up a Custom Domain](/api-gateway/user/tutorials/01-10-setup-custom-domain-for-workload.md)
