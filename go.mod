@@ -6,7 +6,7 @@ require (
 	github.com/avast/retry-go/v4 v4.6.0
 	github.com/cucumber/godog v0.15.0
 	github.com/gardener/cert-management v0.17.1
-	github.com/gardener/external-dns-management v0.22.1
+	github.com/gardener/external-dns-management v0.22.2
 	github.com/go-jose/go-jose/v3 v3.0.3
 	github.com/go-logr/logr v1.4.2
 	github.com/google/uuid v1.6.0
@@ -21,7 +21,7 @@ require (
 	golang.org/x/net v0.32.0
 	golang.org/x/time v0.8.0
 	google.golang.org/appengine v1.6.8
-	google.golang.org/protobuf v1.35.2
+	google.golang.org/protobuf v1.36.0
 	gopkg.in/yaml.v3 v3.0.1
 	istio.io/api v1.23.3
 	istio.io/client-go v1.23.3
