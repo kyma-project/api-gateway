@@ -75,7 +75,7 @@ runs:
         TEST_SA_ACCESS_KEY_PATH: "${{ github.workspace }}/service-account.json"
         CLUSTER_KUBECONFIG: "${{ github.workspace }}/${{ env.CLUSTER_NAME }}_kubeconfig.yaml"
         TEST_CUSTOM_DOMAIN: ${{ inputs.test_custom_domain }}
-      run: EXPORT_RESULT=true "${{ github.workspace }}/hack/ci/custom-domain-gardener.sh" ${{ inputs.test_make_target }}
+      run: EXPORT_RESULT=true "${{ github.workspace }}/hack/ci/integration-test-gardener.sh" ${{ inputs.test_make_target }}
     - name: Gather deployment logs
       shell: bash
       if: always()

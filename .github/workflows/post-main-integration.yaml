@@ -46,6 +46,13 @@ jobs:
       - id: get-sha
         uses: ./.github/actions/get-latest-sha
 
+  unit-tests:
+    name: Unit tests & lint
+    if: ${{ always() && !failure() && !cancelled() }}
+    needs: [get-sha]
+    uses: ./.github/workflows/call-unit-lint.yaml
+    secrets: inherit
+
   e2e-tests-k3d:
     name: E2E tests K3D
     runs-on: ubuntu-latest
