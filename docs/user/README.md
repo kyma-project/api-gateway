@@ -2,16 +2,16 @@
 
 ## What Is API Gateway?
 
-API Gateway is a Kyma module, which provides functionalities that allow you to expose and secure APIs.
+API Gateway is a Kyma module with which you can expose and secure APIs.
 
-To use the API Gateway module, the Istio module must be also added. By default, both the API Gateway and Istio modules are automatically added once you create a Kyma runtime instance. 
+To use the API Gateway module, you must also add the Istio module. By default, both the API Gateway and Istio modules are automatically added when you create a Kyma runtime instance. 
 
 ## Features
 
 The API Gateway module offers the following features:
 
 - Ory Oathkeeper installation: The module simplifies and manages the installation of Ory Oathkeeper.
-- API Exposure:  The module combines ORY Oathkeeper and Istio capabilities to offer the APIRule CustomResourceDefinition. By creating APIRule custom resources, you can easily and securely expose your workloads.
+- API Exposure: The module combines ORY Oathkeeper and Istio capabilities to offer the APIRule CustomResourceDefinition. By creating APIRule custom resources, you can easily and securely expose your workloads.
 - Kyma Gateway installation: The module installs the default simple TLS Kyma Gateway.
 
 ## Architecture

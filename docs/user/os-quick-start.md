@@ -19,21 +19,19 @@ This quick start guide shows how to create a sample HTTPBin workload and expose 
 1. In Kyma dashboard, go to **Namespaces** and choose **Create**.
 1. Provide the name `api-gateway-tutorial` and switch the toggle to enable Istio sidecar proxy injection.
 2. Choose **Create**.
-3. In the created namespace, go to **Workloads > Deployemnts** and choose **Create**.
-1. Select the HTTPBin template.
-2. Choose **Create**.
+3. In the created namespace, go to **Workloads > Deployments** and choose **Create**.
+1. Select the HTTPBin template and choose **Create**.
 3. Go to **Configuration > Service Accounts** and choose **Create**. 
-4. Enter `httpbin` as your Service Account's name.
-5. Choose **Create**.
+4. Enter `httpbin` as your Service Account's name and choose **Create**.
 6. Go to **Discovery and Network > Services** and choose **Create**. 
 7. Provide the following configuration details:
     - **Name**: `httpbin`
-    - In the `Labels` section, add the following labels:
+    - Add the following labels:
       - **service**: `httpbin`
       - **app**:`httpbin`
-    - In the `Selectors` section, add the following selector:
+    - Add the following selector:
       - **app**: `httpbin`
-    - In the `Ports` section, select **Add**. Then, use these values:
+    - Add a port with the following values:
       - **Name**: `http`
       - **Protocol**: `TCP`
       - **Port**: `8000`
@@ -122,20 +120,20 @@ This quick start guide shows how to create a sample HTTPBin workload and expose 
 
 1. In the `api-gateway-tutorial` namespace, go to **Discovery and Network > API Rules**.
 2. Choose **Create**.
-3. Provide the following details.
+3. Provide the following details:
      - **Name**: `httpbin`
-     - In the `Service` section, add:
+     - Add a service with the following values:
        - **Service Name**: `httpbin`
        - **Port**: `8000`
-     - In the **Gateway** section, add:
+     - Add a gateway with the following values:
        - **Namespace**: `kyma-system`
        - **Name**: `kyma-gateway`
        - **Host**: `httpbin.local.kyma.dev`
-     - In the **Rules** section, use the following configuration for the first Rule:
+     - Add one Rule with the following configuration:
        - **Path**: `/.*`
        - **Handler**: `no_auth`
        - **Methods**: `GET`
-     - Create one more Rule with the configuration:
+     - Create one more Rule with the following configuration:
        - **Path**: `/post`
        - **Handler**: `no_auth`
        - **Methods**: `POST`

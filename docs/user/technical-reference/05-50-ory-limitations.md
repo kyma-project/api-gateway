@@ -9,11 +9,11 @@ In terms of the resource configuration, the following requirements are set on AP
 - Memory Requests: 64Mi
 - Memory Limits: 128Mi
 
-The number of APIRule custom resources you can create is not limited.
+You can create an unlimited number of APIRule custom resources.
 
 ## Ory Resources' Configuration
 
-The configuration of Ory resources depends on the cluster capabilities. If your cluster has less than 5 total virtual CPU cores or its total memory capacity is less than 10 gigabytes, the default setup for resources is lighter. If your cluster exceeds both of these thresholds, the higher resource configuration is applied.
+The configuration of Ory resources depends on the cluster capabilities. If your cluster has fewer than 5 total virtual CPU cores or its total memory capacity is less than 10 gigabytes, the default setup for resources is lighter. If your cluster exceeds both of these thresholds, the higher resource configuration is applied.
 
 The default configuration for larger clusters includes the following settings for the Ory components' resources:
 
