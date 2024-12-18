@@ -20,7 +20,7 @@ The API Gateway module offers the following features:
 
 ### API Gateway Operator
 
-Within the API Gateway moule, API Gateway Operator manages the application of API Gateway's configuration and handles resource reconciliation. It contains two controllers: [APIGateway Controller](./00-10-overview-api-gateway-controller.md), which applies the configuration specified in the [APIGateway custom resource (CR)](./custom-resources/apigateway/), and [APIRule Controller](./00-20-overview-api-rule-controller.md), which applies the configuration specified in the [APIRule CR](./custom-resources/apirule/).
+Within the API Gateway module, API Gateway Operator manages the application of API Gateway's configuration and handles resource reconciliation. It contains two controllers: [APIGateway Controller](./00-10-overview-api-gateway-controller.md), which applies the configuration specified in the [APIGateway custom resource (CR)](./custom-resources/apigateway/), and [APIRule Controller](./00-20-overview-api-rule-controller.md), which applies the configuration specified in the [APIRule CR](./custom-resources/apirule/).
 
 
 ### APIGateway Controller
