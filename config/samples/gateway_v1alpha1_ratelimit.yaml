@@ -9,3 +9,27 @@ metadata:
     app.kubernetes.io/created-by: api-gateway
   name: ratelimit-sample
 spec:
+  selectorLabels:
+    app: httpbin
+  enableResponseHeaders: true
+  local:
+    defaultBucket:
+      maxTokens: 100
+      tokensPerFill: 50
+      fillInterval: 30s
+    buckets:
+      - path: /headers
+        bucket:
+          maxTokens: 2
+          tokensPerFill: 2
+          fillInterval: 30s
+      - path: /anything
+        bucket:
+          maxTokens: 2
+          tokensPerFill: 2
+          fillInterval: 30s
+      - path: /ip
+        bucket:
+          maxTokens: 50
+          tokensPerFill: 10
+          fillInterval: 30s

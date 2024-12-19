@@ -97,16 +97,16 @@ var _ = Describe("RateLimit", func() {
 			},
 		}
 		It("adds 2 ConfigPatches to the EnvoyFilterBuilder", func() {
-			builder := envoyfilter.NewEnvoyFilterBuilder().
+			ef := envoyfilter.NewEnvoyFilterBuilder().
 				WithName("httpbin-local-rate-limit").
 				WithNamespace("default").
-				WithWorkloadSelector("app", "httpbin")
+				WithWorkloadSelector("app", "httpbin").Build()
 			rl := NewLocalRateLimit().
 				For(d1).
 				For(d0).
 				WithDefaultBucket(b)
-			rl.AddToEnvoyFilter(builder)
-			Expect(builder.ConfigPatches).To(HaveLen(2))
+			rl.SetConfigPatches(ef)
+			Expect(ef.Spec.ConfigPatches).To(HaveLen(2))
 		})
 	})
 	Context("RateLimitConfigPatch", func() {
@@ -204,12 +204,21 @@ var _ = Describe("RateLimit", func() {
 		rl := NewLocalRateLimit().
 			For(d1).
 			For(d0).
-			WithDefaultBucket(bucket)
-		builder := envoyfilter.NewEnvoyFilterBuilder().
+			WithDefaultBucket(bucket).
+			Enforce(true).
+			EnableResponseHeaders(true)
+		ef := envoyfilter.NewEnvoyFilterBuilder().
 			WithName("httpbin-local-rate-limit").
 			WithNamespace("default").
-			WithWorkloadSelector("app", "httpbin")
-		rl.AddToEnvoyFilter(builder)
+			WithWorkloadSelector("app", "httpbin").
+			WithConfigPatch(&envoyfilter.ConfigPatch{}).
+			WithConfigPatch(&envoyfilter.ConfigPatch{}).
+			WithConfigPatch(&envoyfilter.ConfigPatch{}).
+			Build()
+		rl.SetConfigPatches(ef)
+		It("builds EnvoyFilter with exactly 2 ConfigPatches", func() {
+			Expect(ef.Spec.ConfigPatches).To(HaveLen(2))
+		})
 		It("builds EnvoyFilter with expected configuration", func() {
 			f, err := os.ReadFile("testdata/envoy_patches.yaml")
 			Expect(err).Should(Succeed())
@@ -217,8 +226,7 @@ var _ = Describe("RateLimit", func() {
 			exp, err := yaml.YAMLToJSON(f)
 			Expect(err).To(Succeed())
 			Expect(json.Unmarshal(exp, &fi)).Should(Succeed())
-			result := builder.Build()
-			got, err := json.Marshal(result.Spec.ConfigPatches)
+			got, err := json.Marshal(ef.Spec.ConfigPatches)
 			Expect(err).Should(Succeed())
 			// This may fail if struct gets marshalled in not expected order.
 			// However, I don't have much idea how to cover if marshaled structure is compatible with Envoy's

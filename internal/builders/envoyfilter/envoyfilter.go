@@ -7,8 +7,6 @@ import (
 
 type ConfigPatch = networkingv1alpha3.EnvoyFilter_EnvoyConfigObjectPatch
 
-type BuilderOption func(*Builder)
-
 type Builder struct {
 	name          string
 	namespace     string
@@ -56,9 +54,12 @@ func (e *Builder) WithConfigPatch(patch *ConfigPatch) *Builder {
 // Build returns EnvoyFilter generated from the configuration provided to the builder.
 func (e *Builder) Build() *apiv1alpha3.EnvoyFilter {
 	f := apiv1alpha3.EnvoyFilter{}
-	f.Name = e.name
-	f.Namespace = e.namespace
-
+	if len(e.name) > 0 {
+		f.Name = e.name
+	}
+	if len(e.namespace) > 0 {
+		f.Namespace = e.namespace
+	}
 	if len(e.selectors) > 0 {
 		f.Spec.WorkloadSelector = &networkingv1alpha3.WorkloadSelector{
 			Labels: e.selectors,

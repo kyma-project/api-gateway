@@ -4,6 +4,7 @@ import (
 	"github.com/kyma-project/api-gateway/internal/builders/envoyfilter"
 	"google.golang.org/protobuf/types/known/structpb"
 	"istio.io/api/networking/v1alpha3"
+	networkingv1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
 	"slices"
 	"time"
 )
@@ -16,11 +17,13 @@ const (
 
 // RateLimit contains configuration for Rate Limiting service, exposing functions to manage Envoy's settings.
 type RateLimit struct {
-	limitType     string
-	limityTypeUrl string
-	actions       []Action
-	descriptors   []Descriptor
-	defaultBucket Bucket
+	limitType             string
+	limityTypeUrl         string
+	enforce               bool
+	enableResponseHeaders bool
+	actions               []Action
+	descriptors           []Descriptor
+	defaultBucket         Bucket
 }
 
 // Action implements Envoy's Action API fields needed for Rate Limit configuration.
@@ -93,8 +96,8 @@ func (e DescriptorEntry) Value() *structpb.Value {
 // Bucket implements token_bucket fields from Envoy API.
 // See: https://www.envoyproxy.io/docs/envoy/latest/api-v3/extensions/filters/http/local_ratelimit/v3/local_rate_limit.proto#envoy-v3-api-msg-extensions-filters-http-local-ratelimit-v3-localratelimit
 type Bucket struct {
-	MaxTokens     int
-	TokensPerFill int
+	MaxTokens     int64
+	TokensPerFill int64
 	FillInterval  time.Duration
 }
 
@@ -166,8 +169,13 @@ func (rl *RateLimit) RateLimitConfigPatch() *envoyfilter.ConfigPatch {
 						"@type":    structpb.NewStringValue(rl.limitType),
 						"type_url": structpb.NewStringValue(rl.limityTypeUrl),
 						"value": structpb.NewStructValue(&structpb.Struct{Fields: map[string]*structpb.Value{
-							"stat_prefix":                structpb.NewStringValue("rate_limit"),
-							"enable_x_ratelimit_headers": structpb.NewStringValue("DRAFT_VERSION_03"),
+							"stat_prefix": structpb.NewStringValue("rate_limit"),
+							"enable_x_ratelimit_headers": func() *structpb.Value {
+								if rl.enableResponseHeaders {
+									return structpb.NewStringValue("DRAFT_VERSION_03")
+								}
+								return structpb.NewStringValue("OFF")
+							}(),
 							"filter_enabled": structpb.NewStructValue(&structpb.Struct{Fields: map[string]*structpb.Value{
 								"runtime_key": structpb.NewStringValue("local_rate_limit_enabled"),
 								"default_value": structpb.NewStructValue(&structpb.Struct{Fields: map[string]*structpb.Value{
@@ -178,7 +186,12 @@ func (rl *RateLimit) RateLimitConfigPatch() *envoyfilter.ConfigPatch {
 							"filter_enforced": structpb.NewStructValue(&structpb.Struct{Fields: map[string]*structpb.Value{
 								"runtime_key": structpb.NewStringValue("local_rate_limit_enforced"),
 								"default_value": structpb.NewStructValue(&structpb.Struct{Fields: map[string]*structpb.Value{
-									"numerator":   structpb.NewNumberValue(float64(100)),
+									"numerator": func() *structpb.Value {
+										if rl.enforce {
+											return structpb.NewNumberValue(float64(100))
+										}
+										return structpb.NewNumberValue(float64(0))
+									}(),
 									"denominator": structpb.NewStringValue("HUNDRED"),
 								}}),
 							}}),
@@ -208,6 +221,19 @@ func hasHeader(header RequestHeader, actions []Action) bool {
 	return false
 }
 
+// Enforce sets if the RateLimit configuration shouild be enforced or not.
+func (rl *RateLimit) Enforce(enforce bool) *RateLimit {
+	rl.enforce = enforce
+	return rl
+}
+
+// EnableResponseHeaders enables sending `X-Rate-Limit` headers in the response.
+// See: https://www.envoyproxy.io/docs/envoy/latest/api-v3/extensions/filters/http/ratelimit/v3/rate_limit.proto#rate-limit-proto
+func (rl *RateLimit) EnableResponseHeaders(enable bool) *RateLimit {
+	rl.enableResponseHeaders = enable
+	return rl
+}
+
 // For adds rate limit for specific descriptor. From this descriptor a RequestHeader is created, that is then added
 // to the Action list.
 func (rl *RateLimit) For(descriptor Descriptor) *RateLimit {
@@ -233,11 +259,13 @@ func (rl *RateLimit) WithDefaultBucket(bucket Bucket) *RateLimit {
 	return rl
 }
 
-// AddToEnvoyFilter parses RateLimit configuration, then applies the parsed ConfigPatches directly into the
-// envoyfilter.Builder struct.
-func (rl *RateLimit) AddToEnvoyFilter(filter *envoyfilter.Builder) {
-	filter.WithConfigPatch(localHttpFilterPatch())
-	filter.WithConfigPatch(rl.RateLimitConfigPatch())
+// SetConfigPatches parses RateLimit configuration, then applies the parsed ConfigPatches directly into the
+// networkingv1alpha3.EnvoyFilter struct, replacing previous configuration.
+func (rl *RateLimit) SetConfigPatches(filter *networkingv1alpha3.EnvoyFilter) {
+	filter.Spec.ConfigPatches = []*envoyfilter.ConfigPatch{
+		localHttpFilterPatch(),
+		rl.RateLimitConfigPatch(),
+	}
 }
 
 // NewLocalRateLimit returns RateLimit struct for configuring local rate limits
