@@ -12,7 +12,7 @@ runs:
     - name: Notify
       uses: slackapi/slack-github-action@e28cf165c92ffef168d23c5c9000cffc8a25e117 # v1.24.0
       with:
-        webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+        webhook: ${{ inputs.SLACK_WEBHOOK_URL }}
         webhook-type: webhook-trigger
         payload-templated: true
         payload: |
