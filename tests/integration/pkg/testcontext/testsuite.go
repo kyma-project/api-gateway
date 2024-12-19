@@ -2,6 +2,7 @@ package testcontext
 
 import (
 	"crypto/tls"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -59,18 +60,21 @@ func New(factory TestsuiteFactory) (Testsuite, error) {
 
 	config := GetConfig()
 	if err := envconfig.Init(&config); err != nil {
-		log.Fatalf("Unable to setup config: %v", err)
+		return nil, fmt.Errorf("unable to setup config: %w", err)
 	}
 	ctx := factory(retryingHttpClient, k8sClient, rm, config)
 	log.Printf("Validating test configuration")
 	err = ctx.ValidateAndFixConfig()
 	if err != nil {
-		log.Fatalf("tests are not configured properly: %s", err)
+		return nil, fmt.Errorf("tests are not configured properly: %w", err)
 	}
 	log.Printf("Test configuration validated")
 
 	log.Printf("Setting up the test suite")
 	err = ctx.Setup()
+	if err != nil {
+		return nil, fmt.Errorf("can't setup test suite: %w", err)
+	}
 	log.Printf("Test suite setup finished")
 
 	return ctx, err

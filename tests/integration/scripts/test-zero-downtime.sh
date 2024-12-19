@@ -28,6 +28,8 @@ if [[ -z "$HANDLER" || ! "$HANDLER" =~ ^(jwt|noop|no_auth|allow|oauth2_introspec
   exit 1
 fi
 
+echo "zero-downtime: Running zero downtime tests for handler '$HANDLER'"
+
 # Function to run zero downtime requests to the exposed host of the APIRule
 run_zero_downtime_requests() {
   local handler="$1"
@@ -46,14 +48,32 @@ run_zero_downtime_requests() {
 
 
   if [ "$handler" == "jwt" ] || [ "$handler" == "oauth2_introspection" ]; then
-    # Wait until the OAuth2 mock server host is available
-    wait_for_url "https://oauth2-mock.$TEST_DOMAIN/.well-known/openid-configuration"
-    token_url="https://oauth2-mock.$TEST_DOMAIN/oauth2/token"
+    if [ -z "${TEST_OIDC_CONFIG_URL}" ]; then
+      echo "zero-downtime: No OIDC_CONFIG_URL provided, assuming oauth mock"
+      # Wait until the OAuth2 mock server host is available
+      wait_for_url "https://oauth2-mock.${TEST_DOMAIN}/.well-known/openid-configuration"
+      token_url="https://oauth2-mock.${TEST_DOMAIN}/oauth2/token"
 
-    # Get the access token from the OAuth2 mock server
-    echo "zero-downtime: Getting access token from URL '$token_url'"
-    bearer_token=$(curl -kX POST "$token_url" -d "grant_type=client_credentials" -d "token_format=jwt" \
-      -H "Content-Type: application/x-www-form-urlencoded" | jq ".access_token" | tr -d '"')
+      # Get the access token from the OAuth2 mock server
+      echo "zero-downtime: Getting access token from URL '$token_url'"
+      bearer_token=$(curl --fail --silent -kX POST "$token_url" -d "grant_type=client_credentials" -d "token_format=jwt" \
+        -H "Content-Type: application/x-www-form-urlencoded" | jq -r ".access_token")
+    else
+      if [ -z "$TEST_CLIENT_ID" ] || [ -z "$TEST_CLIENT_SECRET" ]; then
+        echo "No client ID or secret, failing"
+        exit 3
+      fi
+      echo "zero-downtime: TEST_OIDC_CONFIG_URL provided, getting token url"
+      token_url=$(curl --fail --silent "${TEST_OIDC_CONFIG_URL}" | jq -r .token_endpoint)
+      if [ -z "$token_url" ]; then
+        echo "Can't get token url"
+        exit 4
+      fi
+
+      echo "zero-downtime: Getting access token"
+      bearer_token=$(curl --fail --silent -kX POST "$token_url" -u "${TEST_CLIENT_ID}:${TEST_CLIENT_SECRET}" -d "grant_type=client_credentials" -d "token_format=jwt" \
+        -H "Content-Type: application/x-www-form-urlencoded" | jq -r ".access_token")
+    fi
   fi
 
   # Wait until the host in the APIRule is available. This may take a very long time because the httpbin application
@@ -161,7 +181,7 @@ start() {
 
   echo "zero-downtime: Starting integration test scenario for handler '$handler'"
 
-  go test -timeout 15m ./tests/integration -v -race -run "TestOryJwt/Migrate_v1beta1_APIRule_with_${handler}_handler" && test_exit_code=$? || test_exit_code=$?
+  go test -count=1 -timeout 15m ./tests/integration -v -race -run "TestOryJwt/Migrate_v1beta1_APIRule_with_${handler}_handler" && test_exit_code=$? || test_exit_code=$?
   if [ $test_exit_code -ne 0 ]; then
     echo "zero-downtime: Test execution failed"
     return 1

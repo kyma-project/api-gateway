@@ -17,4 +17,5 @@ runs:
         payload-templated: true
         payload: |
           repository: ${{ github.repository }},
-          workflow: ${{ github.workflow }}
+          workflow: ${{ github.workflow }},
+          owner: ${{ github.actor }}

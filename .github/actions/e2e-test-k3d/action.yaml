@@ -1,4 +1,4 @@
-name: 'Integration tests (k3d)'
+name: 'E2E tests (k3d)'
 description: 'Runs integration tests on k3d'
 inputs:
   manager_image:
@@ -6,14 +6,14 @@ inputs:
     required: true
   test_make_target:
     description: 'Make target for integration tests to run'
-    default: 'test-integration'
-  client_id:
+    required: true
+  test_client_id:
     description: "Client id for oidc"
     required: false
-  client_secret:
+  test_client_secret:
     description: "Client secret for oidc"
     required: false
-  oidc_well_known_url:
+  test_oidc_well_known_url:
     description: "OIDC well known URL"
     required: false
 runs:
@@ -35,10 +35,10 @@ runs:
     - name: Run integration tests
       shell: bash
       env:
-        KYMA_DOMAIN: "local.kyma.dev"
-        CLIENT_ID: ${{ inputs.client_id }}
-        CLIENT_SECRET: ${{ inputs.client_secret }}
-        OIDC_CONFIG_URL: ${{ inputs.oidc_well_known_url }}
+        TEST_DOMAIN: "local.kyma.dev"
+        TEST_CLIENT_ID: ${{ inputs.test_client_id }}
+        TEST_CLIENT_SECRET: ${{ inputs.test_client_secret }}
+        TEST_OIDC_CONFIG_URL: ${{ inputs.test_oidc_well_known_url }}
         IMG: ${{ inputs.manager_image }}
       run: |
         if [ "${{ github.event_name }}" == "pull_request" ]; then
@@ -62,7 +62,7 @@ runs:
     - name: Uploads artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: html-reports-${{ github.job }}-${{ inputs.test_make_target }}
+        name: html-reports_${{ github.job }}_${{ github.action }}_${{ inputs.test_make_target }}
         path: tests/integration/reports/
     - name: Uploads logs
       uses: actions/upload-artifact@v4
