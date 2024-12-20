@@ -11,7 +11,6 @@ on:
       - "**/*.md"
       - "CODEOWNERS"
       - "sec-scanners-config.yaml"
-      - ".github/**" #Ignoring since build job isn't triggered on the workflow directory changes
       - "external-images.yaml"
     branches:
       - main
