@@ -78,13 +78,13 @@ The following table lists the fields of the **status** section.
 
 ## APIRule CR's State
 
-|     Code     | Description                              |
-|:------------:|:-----------------------------------------|
-|   `Ready`    | Controller finished reconciliation.      |
-| `Processing` | Controller is reconciling resources.     |
-|  `Deleting`  | Controller is deleting resources.        |
-|   `Error`    | An error occurred during reconciliation. |
-|  `Warning`   | Controller is misconfigured.             |
+|     Code     | Description                                                                                                                                                                                                         |
+|:------------:|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+|   `Ready`    | Controller finished reconciliation.                                                                                                                                                                                 |
+| `Processing` | Controller is reconciling resources.                                                                                                                                                                                |
+|  `Deleting`  | Controller is deleting resources.                                                                                                                                                                                   |
+|   `Error`    | An error occurred during the reconciliation. The error is rather related to the API Gateway module than the configuration of your resources.                                                                        |
+|  `Warning`   | An issue occurred during the reconciliation that requires your attention. Check the status.description message to identify the issue and make the necessary corrections to the APIRule CR or any related resources. |
 
 ## Sample Custom Resource
 
