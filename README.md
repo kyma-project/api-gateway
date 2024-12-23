@@ -4,7 +4,6 @@
 
 API Gateway is a Kyma module with which you can expose and secure APIs.
 
-# Features
 
 The API Gateway module offers the following features:
 
