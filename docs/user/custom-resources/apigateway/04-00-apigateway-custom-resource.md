@@ -36,9 +36,9 @@ This table lists the parameters of the given resource together with their descri
 
 |     Code     | Description                                                                                                                                                                                                         |
 |:------------:|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-|   `Ready`    | Controller finished reconciliation.                                                                                                                                                                                 |
-| `Processing` | Controller is reconciling resources.                                                                                                                                                                                |
-|  `Deleting`  | Controller is deleting resources.                                                                                                                                                                                   |
+|   `Ready`    | APIGateway Controller finished reconciliation.                                                                                                                                                                                 |
+| `Processing` | APIGateway Controller is reconciling resources.                                                                                                                                                                                |
+|  `Deleting`  | APIGateway Controller is deleting resources.                                                                                                                                                                                   |
 |   `Error`    | An error occurred during the reconciliation. The error is rather related to the API Gateway module than the configuration of your resources.                                                                        |
 |  `Warning`   | An issue occurred during the reconciliation that requires your attention. Check the status.description message to identify the issue and make the necessary corrections to the APIGateway CR or any related resources. |
 
