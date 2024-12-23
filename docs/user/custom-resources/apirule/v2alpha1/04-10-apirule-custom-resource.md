@@ -73,8 +73,18 @@ The following table lists the fields of the **status** section.
 
 | Field                  | Description                                                                                                                       |
 |:-----------------------|:----------------------------------------------------------------------------------------------------------------------------------|
-| **status.state**       | Defines the reconciliation state of the APIRule. The possible states are `Ready`, `Warning`, `Error`, `Processing` or `Deleting`. |
-| **status.description** | Detailed description of **status.state**.                                                                                         |
+| **status.state**       | Defines the reconciliation state of the APIRule. The possible states are `Ready`, `Warning`, `Error`, `Processing`, or `Deleting`. |
+| **status.description** | Contains a detailed description of **status.state**.                                                                                         |
+
+## APIRule CR's State
+
+|     Code     | Description                                                                                                                                                                                                         |
+|:------------:|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+|   `Ready`    | APIRule Controller finished reconciliation.                                                                                                                                                                                 |
+| `Processing` | APIRule Controller is reconciling resources.                                                                                                                                                                                |
+|  `Deleting`  | APIRule Controller is deleting resources.                                                                                                                                                                                   |
+|   `Error`    | An error occurred during the reconciliation. The error is rather related to the API Gateway module than the configuration of your resources.                                                                        |
+|  `Warning`   | An issue occurred during the reconciliation that requires your attention. Check the status.description message to identify the issue and make the necessary corrections to the APIRule CR or any related resources. |
 
 ## Sample Custom Resource
 

@@ -31,3 +31,30 @@ This table lists the parameters of the given resource together with their descri
 | **conditions.reason**             | string     | Defines the reason for the condition status change.                                                                                |
 | **conditions.status** (required)  | string     | Represents the status of the condition. The value is either `True`, `False`, or `Unknown`.                                         |
 | **conditions.type**               | string     | Provides a short description of the condition.                                                                                     |
+
+## APIGateway CR's State
+
+|     Code     | Description                                                                                                                                                                                                         |
+|:------------:|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+|   `Ready`    | APIGateway Controller finished reconciliation.                                                                                                                                                                                 |
+| `Processing` | APIGateway Controller is reconciling resources.                                                                                                                                                                                |
+|  `Deleting`  | APIGateway Controller is deleting resources.                                                                                                                                                                                   |
+|   `Error`    | An error occurred during the reconciliation. The error is rather related to the API Gateway module than the configuration of your resources.                                                                        |
+|  `Warning`   | An issue occurred during the reconciliation that requires your attention. Check the status.description message to identify the issue and make the necessary corrections to the APIGateway CR or any related resources. |
+
+## APIGateway CR's Status Conditions
+
+| CR state   | Type  | Status  | Reason                           | Message                                                                      |
+|------------|-------|---------|----------------------------------|------------------------------------------------------------------------------|
+| `Ready`      | `Ready` | `Unknown` | `ReconcileProcessing`              | Reconciliation processing.                                                    |
+| `Ready`      | `Ready` | `True`    | `ReconcileSucceeded`               | Reconciliation succeeded.                                                     |
+| `Error`      | `Ready` | `False`   | `ReconcileFailed`                  | Reconciliation failed.                                                        |
+| `Error`      | `Ready` | `False`   | `OlderCRExists`                    | APIGateway CR is not the oldest one and does not represent the module state. |
+| `Error`      | `Ready` | `False`   | `CustomResourceMisconfigured`      | APIGateway CR has invalid configuration.                                     |
+| `Error`      | `Ready` | `False`   | `DependenciesMissing`              | Module dependencies missing.                                                  |
+| `Processing` | `Ready` | `False`   | `KymaGatewayReconcileSucceeded`    | Kyma Gateway reconciliation succeeded.                                        |
+| `Error`      | `Ready` | `False`   | `KymaGatewayReconcileFailed`       | Kyma Gateway reconciliation failed.                                           |
+| `Warning`    | `Ready` | `False`   | `KymaGatewayDeletionBlocked`       | Kyma Gateway deletion blocked because of the existing custom resources: ...  |
+| `Processing` | `Ready` | `False`   | `OathkeeperReconcileSucceeded`     | Ory Oathkeeper reconciliation succeeded.                                      |
+| `Error`      | `Ready` | `False`   | `OathkeeperReconcileFailed`        | Ory Oathkeeper reconciliation failed.                                         |
+| `Warning`    | `Ready` | `False`   | `DeletionBlockedExistingResources` | API Gateway deletion blocked because of the existing custom resources: ...   |
