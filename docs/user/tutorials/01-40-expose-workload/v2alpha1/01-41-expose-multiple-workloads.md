@@ -7,47 +7,29 @@ This tutorial shows how to expose multiple workloads on different paths by defin
 
 ## Prerequisites
 
-* [Deploy two instances of a sample HTTPBin Service](../../01-00-create-workload.md) in one namespace.
-* [Set up your custom domain](../../01-10-setup-custom-domain-for-workload.md) or use a Kyma domain instead.
+* You have deployed two workloads in one namespace.
+* You have [set up your custom domain](../../01-10-setup-custom-domain-for-workload.md). Alternatively, you can use the default domain of your Kyma cluster and the default Gateway `kyma-system/kyma-gateway`.
 
-## Define Multiple Services on Different Paths
+  >**NOTE**: As Kyma domain is a widlcard domain, which uses a simple TLS gateway, it recommended that you set up your custom domain istead for use in a production environment.
+  >**TIP**: To learn what is the default domain of your Kyma cluster, run  `kubectl get gateway -n kyma-system kyma-gateway -o jsonpath='{.spec.servers[0].hosts}`.
 
-Follow the instructions to expose the instances of the HTTPBin Service on different paths at the `spec.rules` level without a root Service defined.
+## Context
+Follow the instructions to expose two workloads on different paths at the `spec.rules` level without a root Service defined. You can also define a Service at the root level. Such a definition is applied to all the paths specified at `spec.rules` that do not have their own Services defined.
 
-#### **kubectl**
-1. Export the names of two deployed HTTPBin Services as environment variables:
+> [!NOTE]
+>Services defined at the `spec.rules` level have precedence over Service definition at the `spec.service` level.
 
-  ```bash
-  export FIRST_SERVICE={SERVICE_NAME}
-  export SECOND_SERVICE={SERVICE_NAME}
-  ```
+## Steps
 
-2. Depending on whether you use your custom domain or a Kyma domain, export the necessary values as environment variables:
-
-  <!-- tabs:start -->
-  #### **Custom Domain**
-
-  ```bash
-  export DOMAIN_TO_EXPOSE_WORKLOADS={DOMAIN_NAME}
-  export GATEWAY=$NAMESPACE/httpbin-gateway
-  ```
-  #### **Kyma Domain**
-
-  ```bash
-  export DOMAIN_TO_EXPOSE_WORKLOADS={KYMA_DOMAIN_NAME}
-  export GATEWAY=kyma-system/kyma-gateway
-  ```
-  <!-- tabs:end -->
-
-3. To expose the instances of the HTTPBin Service, create the following APIRule:
+- To define multiple services on different paths, create the following APIRule:
 
     ```bash
     cat <<EOF | kubectl apply -f -
     apiVersion: gateway.kyma-project.io/v2alpha1
     kind: APIRule
     metadata:
-      name: multiple-services
-      namespace: $NAMESPACE
+      name: {APIRULE_NAME}
+      namespace: {APIRULE_NAMESPACE}
       labels:
         app: multiple-services
         example: multiple-services
@@ -70,42 +52,8 @@ Follow the instructions to expose the instances of the HTTPBin Service on differ
           port: 8000
     EOF
     ```
-
-## Define a Service at the Root Level
-
-You can also define a Service at the root level. Such a definition is applied to all the paths specified at `spec.rules` that do not have their own Services defined.
-
-> [!NOTE]
->Services defined at the `spec.rules` level have precedence over Service definition at the `spec.service` level.
-
-#### **kubectl**
-
-1. Export the names of the two deployed HTTPBin Services as environment variables:
-
-  ```bash
-  export FIRST_SERVICE={SERVICE_NAME}
-  export SECOND_SERVICE={SERVICE_NAME}
-  ```
-
-2. Depending on whether you use your custom domain or a Kyma domain, export the necessary values as environment variables:
-
-  <!-- tabs:start -->
-  #### **Custom Domain**
-
-  ```bash
-  export DOMAIN_TO_EXPOSE_WORKLOADS={DOMAIN_NAME}
-  export GATEWAY=$NAMESPACE/httpbin-gateway
-  ```
-  #### **Kyma Domain**
-
-  ```bash
-  export DOMAIN_TO_EXPOSE_WORKLOADS={KYMA_DOMAIN_NAME}
-  export GATEWAY=kyma-system/kyma-gateway
-  ```
-  <!-- tabs:end -->
-
-
-3. To expose the instances of the HTTPBin Service, create the following APIRule:
+    
+- To define a service at the root level, create the following APIRule:
 
     ```bash
     cat <<EOF | kubectl apply -f -
@@ -138,13 +86,12 @@ You can also define a Service at the root level. Such a definition is applied to
     ```
 
 ## Access Your Workloads
-To access your HTTPBin Services, use [curl](https://curl.se).
 
-To call the endpoints, send `GET` requests to the HTTPBin Services:
+To call the endpoints, send `GET` requests to the exposed workloads:
 
   ```bash
-  curl -ik -X GET https://multiple-services.$DOMAIN_TO_EXPOSE_WORKLOADS/headers
+  curl -ik -X GET https://{SUBDOMAIN}.{DOMAIN_NAME}/headers
 
-  curl -ik -X GET https://multiple-services.$DOMAIN_TO_EXPOSE_WORKLOADS/get
+  curl -ik -X GET https://{SUBDOMAIN}.{DOMAIN_NAME}/get
   ```
 If successful, the calls return the `200 OK` response code.
