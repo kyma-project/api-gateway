@@ -4,9 +4,14 @@ This tutorial shows how to expose and secure Services using APIGateway Controlle
 
 ## Prerequisites
 
-* [Deploy a sample HTTPBin Service](../../01-00-create-workload.md).
+* You have a deployed workload.
+* You have [set up your custom domain](../../01-10-setup-custom-domain-for-workload.md). Alternatively, you can use the default domain of your Kyma cluster and the default Gateway `kyma-system/kyma-gateway`.
+
+  >**NOTE**: As Kyma domain is a widlcard domain, which uses a simple TLS gateway, it recommended that you set up your custom domain istead for use in a production environment.
+  >**TIP**: To learn what is the default domain of your Kyma cluster, run  `kubectl get gateway -n kyma-system kyma-gateway -o jsonpath='{.spec.servers[0].hosts}`.
+
 * [Obtain a JSON Web Token (JWT)](../01-51-get-jwt.md).
-* [Set up your custom domain](../../01-10-setup-custom-domain-for-workload.md) or use a Kyma domain instead.
+
 
 ## Steps
 
@@ -14,24 +19,7 @@ This tutorial shows how to expose and secure Services using APIGateway Controlle
 
 #### **kubectl**
 
-1. Depending on whether you use your custom domain or a Kyma domain, export the necessary values as environment variables:
-
-    <!-- tabs:start -->
-    #### **Custom Domain**
-
-    ```bash
-    export DOMAIN_TO_EXPOSE_WORKLOADS={DOMAIN_NAME}
-    export GATEWAY=$NAMESPACE/httpbin-gateway
-    ```
-    #### **Kyma Domain**
-
-    ```bash
-    export DOMAIN_TO_EXPOSE_WORKLOADS={KYMA_DOMAIN_NAME}
-    export GATEWAY=kyma-system/kyma-gateway
-    ```
-    <!-- tabs:end -->
-
-2. To expose and secure the Service, create the following APIRule:
+To expose and secure the Service, create the following APIRule:
 
     ```bash
     cat <<EOF | kubectl apply -f -
@@ -59,8 +47,6 @@ This tutorial shows how to expose and secure Services using APIGateway Controlle
     ```
 
 ### Access the Secured Resources
-
-To access your HTTPBin Service, use [curl](https://curl.se).
 
 1. To call the endpoint, send a `GET` request to the HTTPBin Service.
 

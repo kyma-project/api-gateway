@@ -17,7 +17,7 @@ This tutorial shows how to expose an unsecured instance of the HTTPBin Service a
 
 ### Expose a Workload
 
-To simply expose your workload, create an APIRule CR. You can adjust the configuration, if needed.
+To expose your workload, create an APIRule CR. You can adjust the configuration, if needed.
 
 ```bash
 cat <<EOF | kubectl apply -f -

@@ -16,47 +16,89 @@ This tutorial shows how to expose Service endpoints in multiple namespaces.
 
 ## Steps
 
-1. Create a saprate namespace for the APIRule CR:
+<!-- tabs:start -->
+#### **Kyma Dashboard**
 
-Expose the HTTPBin services in their respective namespaces by creating an APIRule custom resource (CR) in its own namespace. Run:
+1. Create a namespace with enabled the Istio sidecar proxy injection.
+2. In the created namespace, go to **Discovery and Network > API Rules v2alpha1** and choose **Create**.
+3. Switch to the `YAML` section.
+4. Paste the follwing APIRule CR and replace the placeholders:
+    ```YAML
+    apiVersion: gateway.kyma-project.io/v2alpha1
+    kind: APIRule
+    metadata:
+      name: {APIRULE_NAME}
+      namespace: {APIRULE_NAMESPACE}
+    spec:
+      hosts:
+        - {SUBDOMAIN}.{DOMAIN_NAME}
+      gateway: {GATEWAY_NAMESPACE}/{GATEWAY_NAME}
+      rules:
+        - path: /headers
+          methods: ["GET"]
+          service:
+            name: {FIRST_SERVICE_NAME}
+            namespace: {FIRST_SERVICE_NAMESPACE}
+            port: {FIRST_SERVICE_PORT}
+          noAuth: true
+        - path: /get
+          methods: ["GET"]
+          service:
+            name: {SECOND_SERVICE_NAME}
+            namespace: {SECOND_SERVICE_NAMESPACE}
+            port: {SECOND_SERVICE_PORT}
+          noAuth: true
+    ```
+5. Choose **Create**.
+
+#### **kubectl**
+
+<!-- tabs:end -->
+
+1. Create a saprate namespace for the APIRule CR with enabled Istio sidecar proxy injection.
+    ```bash
+    export NAMESPACE=api-gateway-tutorial
+    kubectl create ns $NAMESPACE
+    kubectl label namespace $NAMESPACE istio-injection=enabled --overwrite
+    ```
+2. Expose the services in their respective namespaces by creating an APIRule custom resource (CR) in its own namespace. Run:
 
     ```bash
     cat <<EOF | kubectl apply -f -
     apiVersion: gateway.kyma-project.io/v2alpha1
     kind: APIRule
     metadata:
-      name: httpbin-services
-      namespace: $NAMESPACE_APIRULE
+      name: {APIRULE_NAME}
+      namespace: $NAMESPACE
     spec:
       hosts:
-        - httpbin-services.$DOMAIN_TO_EXPOSE_WORKLOADS
-      gateway: $GATEWAY
+        - {SUBDOMAIN}.{DOMAIN_NAME}
+      gateway: {GATEWAY_NAMESPACE}/{GATEWAY_NAME}
       rules:
         - path: /headers
           methods: ["GET"]
           service:
-            name: $FIRST_SERVICE
-            namespace: $NAMESPACE_FIRST_SERVICE
-            port: 8000
+            name: {FIRST_SERVICE_NAME}
+            namespace: {FIRST_SERVICE_NAMESPACE}
+            port: {FIRST_SERVICE_PORT}
           noAuth: true
         - path: /get
           methods: ["GET"]
           service:
-            name: $SECOND_SERVICE
-            namespace: $NAMESPACE_SECOND_SERVICE
-            port: 8000
+            name: {SECOND_SERVICE_NAME}
+            namespace: {SECOND_SERVICE_NAMESPACE}
+            port: {SECOND_SERVICE_PORT}
           noAuth: true
     EOF
     ```
 
 ### Access Your Workloads
-To access your HTTPBin Services, use [curl](https://curl.se).
 
-To call the endpoints, send `GET` requests to the HTTPBin Services:
+To call the endpoints, send `GET` requests to the services:
 
   ```bash
-  curl -ik -X GET https://httpbin-services.$DOMAIN_TO_EXPOSE_WORKLOADS/headers
+  curl -ik -X GET https://{SUBDOMAIN}.{DOMAIN_NAME}/headers
 
-  curl -ik -X GET https://httpbin-services.$DOMAIN_TO_EXPOSE_WORKLOADS/get
+  curl -ik -X GET https://{SUBDOMAIN}.{DOMAIN_NAME}/get
   ```
 If successful, the calls return the `200 OK` response code.

@@ -48,30 +48,18 @@ spec:
 EOF
 ```
 
-Option | Description
----------|----------
- APIRULE_NAME | Choose a name for the APIRule CR.
- APIRULE_NAMESPACE | Choose the namespace for the APIRule CR.
- SUBDOMAIN | Choose the subdomain name. When using a short host you are not required to specify the full domain.
- SERVICE_NAME | The name of the service to be exposed.
- SERVICE_NAMESPACE | The namespace of the service to be exposed.
- SERVICE_PORT | The port of the service to be exposed.
- NAMESPACE/GATEWAY | The namespace and name of the Istio Gateway to be used.
-    
-The host domain name is obtained from the referenced Gateway.
-
 ### Access Your Workload
 
 - Replace the placeholder and send a `GET` request to the service.
 
   ```bash
-  curl -ik -X GET https://{FULL_DOMAIN_NAME}/ip
+  curl -ik -X GET https://{SUBDOMAIN}.{DOMAIN_NAME}/ip
   ```
   If successful, the call returns the `200 OK` response code.
 
 - Replace the placeholder and send a `POST` request to the service.
 
   ```bash
-  curl -ik -X POST https://{FULL_DOMAIN_NAME}/post -d "test data"
+  curl -ik -X POST https://{SUBDOMAIN}.{DOMAIN_NAME}/post -d "test data"
   ```
   If successful, the call returns the `200 OK` response code.
