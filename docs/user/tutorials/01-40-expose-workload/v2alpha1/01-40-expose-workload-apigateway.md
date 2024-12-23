@@ -15,9 +15,9 @@ This tutorial shows how to expose an unsecured instance of the HTTPBin Service a
 
 ## Steps
 
-### Expose Your Workload
+### Expose a Workload
 
-To expose your workload, create an APIRule CR. You can adjust the configuration, if needed.
+To simply expose your workload, create an APIRule CR. You can adjust the configuration, if needed.
 
 ```bash
 cat <<EOF | kubectl apply -f -
@@ -56,8 +56,6 @@ NAMESPACE/GATEWAY | The namespace and name of the Istio Gateway to be used.
 
 
 ### Access Your Workload
-
-To access your HTTPBin Service, [curl](https://curl.se).
 
 - Send a `GET` request to the HTTPBin Service.
 
