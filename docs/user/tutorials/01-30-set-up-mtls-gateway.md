@@ -17,7 +17,6 @@ The procedure of setting up a working mTLS Gateway is described in the following
 
 ## Prerequisites
 
-* [Deploy a sample HTTPBin Service](./01-00-create-workload.md).
 * [Set up your custom domain](./01-10-setup-custom-domain-for-workload.md).
 
 ## Steps
@@ -110,88 +109,13 @@ The procedure of setting up a working mTLS Gateway is described in the following
     ```
 <!-- tabs:end -->
 
-### Expose Workloads Behind Your mTLS Gateway
-
-To expose a custom workload, create an APIRule. You can either use version `v1beta1` or `v2alpha1`.
-
-### Use APIRule `v1beta1`
-
-<!-- tabs:start -->
-#### **Kyma Dashboard**
-1. Go to the `default` namespace.
-2. Go to **Discovery and Network > API Rules** and select **Create**.
-3. Provide the following configuration details.
-    - **Name**: `httpbin-mtls`
-    - In the Gateway section, select:
-      - **Namespace**: `default`
-      - **Gateway**: `kyma-mtls-gateway`
-    - Add the host `httpbin.{DOMAIN_TO_EXPOSE_WORKLOADS}`. Replace `{DOMAIN_TO_EXPOSE_WORKLOADS}` with the name of your custom domain.
-    - In the `Rules` section, select:
-      - **Path**: `/.*`
-      - **Handler**: `no_auth`
-      - **Methods**: `GET`
-      - Add the `httpbin` Service on port `8000`.
-
-#### **kubectl**
-Run the following command:
-
-```bash
-cat <<EOF | kubectl apply -f -
-apiVersion: gateway.kyma-project.io/v1beta1
-kind: APIRule
-metadata:
-  labels:
-    app.kubernetes.io/name: httpbin-mtls
-  name: httpbin-mtls
-  namespace: default
-spec:
-  gateway: default/kyma-mtls-gateway
-  host: httpbin.$DOMAIN_TO_EXPOSE_WORKLOADS
-  rules:
-  - accessStrategies:
-    - handler: no_auth
-    methods:
-    - GET
-    path: /.*
-  service:
-    name: httpbin
-    port: 8000
-EOF
-```
-<!-- tabs:end -->
-
-### Use APIRule `v2alpha1`
-
-```bash
-cat <<EOF | kubectl apply -f -
-apiVersion: gateway.kyma-project.io/v2alpha1
-kind: APIRule
-metadata:
-  labels:
-    app.kubernetes.io/name: httpbin-mtls
-  name: httpbin-mtls
-  namespace: default
-spec:
-  hosts:
-    - httpbin.$DOMAIN_TO_EXPOSE_WORKLOADS
-  gateway: default/kyma-mtls-gateway
-  rules:
-    - path: /.*
-      methods: ["GET"]
-      noAuth: true
-  service:
-  name: httpbin
-  port: 8000
-EOF
-```
-
-This configuration uses the newly created Gateway `kyma-mtls-gateway` and exposes all workloads behind mTLS.
-
 ### Verify the Connection
 
-1. Run the following command without providing the generated client certificate:
+To verify the connection, create and expose a sample workload using the cretied mTLS Gateway.
+
+1. Call the endpoints without providing the generated client certificate:
     ```bash
-    curl -X GET https://httpbin.$DOMAIN_TO_EXPOSE_WORKLOADS/status/418
+    curl -X GET https://{SUBDOMAIN}.{DOMAIN_NAME}/status/418
     ```
     You get:
     ```bash
@@ -200,7 +124,7 @@ This configuration uses the newly created Gateway `kyma-mtls-gateway` and expose
 
 2. Provide the client and Root CA certificates in the command:
     ```bash
-    curl --cert client.crt --key client.key --cacert cacert.crt -X GET https://httpbin.$DOMAIN_TO_EXPOSE_WORKLOADS/status/418
+    curl --cert client.crt --key client.key --cacert cacert.crt -X GET https://{SUBDOMAIN}.{DOMAIN_NAME}/status/418
     ```
     You get:
     ```bash
