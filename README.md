@@ -4,7 +4,6 @@
 
 API Gateway is a Kyma module with which you can expose and secure APIs.
 
-
 The API Gateway module offers the following features:
 
 - Ory Oathkeeper installation: The module simplifies and manages the installation of Ory Oathkeeper.
