@@ -8,13 +8,17 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
+	"time"
 )
+
+const defaultReconciliationPeriod = 3 * time.Minute
 
 func Setup(mgr manager.Manager, scheme *runtime.Scheme) error {
 	utilruntime.Must(ratelimitv1alpha1.AddToScheme(scheme))
 	utilruntime.Must(networkingv1alpha3.AddToScheme(scheme))
 	return (&RateLimitReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
+		Client:          mgr.GetClient(),
+		Scheme:          mgr.GetScheme(),
+		ReconcilePeriod: defaultReconciliationPeriod,
 	}).SetupWithManager(mgr)
 }

@@ -21,8 +21,9 @@ import (
 )
 
 const (
-	StatusReady = "Ready"
-	StatusError = "Error"
+	StatusReady   = "Ready"
+	StatusWarning = "Warning"
+	StatusError   = "Error"
 )
 
 // BucketConfig represents a rate limit bucket configuration.
@@ -70,7 +71,7 @@ type RateLimitSpec struct {
 type RateLimitStatus struct {
 	// Description defines the description of current State of RateLimit.
 	Description string `json:"description,omitempty"`
-	// State describes the overall status of RateLimit. Values are `Ready`, `Processing` and `Error`
+	// State describes the overall status of RateLimit. Values are `Ready`, `Processing`, `Warning` and `Error`
 	State string `json:"state,omitempty"`
 }
 
@@ -82,6 +83,11 @@ func (s *RateLimitStatus) Error(err error) {
 func (s *RateLimitStatus) Ready() {
 	s.State = StatusReady
 	s.Description = "Finished reconciliation"
+}
+
+func (s *RateLimitStatus) Warning(err error) {
+	s.State = StatusWarning
+	s.Description = err.Error()
 }
 
 //+kubebuilder:object:root=true
