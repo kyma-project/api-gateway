@@ -73,8 +73,18 @@ The following table lists the fields of the **status** section.
 
 | Field                  | Description                                                                                                                       |
 |:-----------------------|:----------------------------------------------------------------------------------------------------------------------------------|
-| **status.state**       | Defines the reconciliation state of the APIRule. The possible states are `Ready`, `Warning`, `Error`, `Processing` or `Deleting`. |
-| **status.description** | Detailed description of **status.state**.                                                                                         |
+| **status.state**       | Defines the reconciliation state of the APIRule. The possible states are `Ready`, `Warning`, `Error`, `Processing`, or `Deleting`. |
+| **status.description** | Contains a detailed description of **status.state**.                                                                                         |
+
+## APIRule CR's State
+
+|     Code     | Description                              |
+|:------------:|:-----------------------------------------|
+|   `Ready`    | Controller finished reconciliation.      |
+| `Processing` | Controller is reconciling resources.     |
+|  `Deleting`  | Controller is deleting resources.        |
+|   `Error`    | An error occurred during reconciliation. |
+|  `Warning`   | Controller is misconfigured.             |
 
 ## Sample Custom Resource
 
