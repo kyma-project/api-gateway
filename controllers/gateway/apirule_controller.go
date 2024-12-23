@@ -136,7 +136,7 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 			l.Error(err, "Error updating APIRule status")
 			return doneReconcileErrorRequeue(err, r.OnErrorReconcilePeriod)
 		}
-		return r.updateStatus(ctx, l, &apiRule)
+		return r.updateStatus(ctx, l, &apiRule, s.HasError())
 	}
 
 	l.Info("Validating APIRule config")
@@ -150,7 +150,7 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 			l.Error(err, "Error updating APIRule status")
 			return doneReconcileErrorRequeue(err, r.OnErrorReconcilePeriod)
 		}
-		return r.updateStatus(ctx, l, &apiRule)
+		return r.updateStatus(ctx, l, &apiRule, s.HasError())
 	}
 
 	l.Info("Reconciling APIRule sub-resources")
@@ -164,7 +164,7 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		}
 		return doneReconcileErrorRequeue(err, r.OnErrorReconcilePeriod)
 	}
-	return r.updateStatus(ctx, l, &apiRule)
+	return r.updateStatus(ctx, l, &apiRule, s.HasError())
 }
 
 func (r *APIRuleReconciler) reconcileV2Alpha1APIRule(ctx context.Context, l logr.Logger, apiRule gatewayv1beta1.APIRule) (ctrl.Result, error) {
@@ -245,7 +245,7 @@ func (r *APIRuleReconciler) convertAndUpdateStatus(ctx context.Context, l logr.L
 	if err := rule.ConvertTo(&toUpdate); err != nil {
 		return doneReconcileErrorRequeue(err, r.OnErrorReconcilePeriod)
 	}
-	return r.updateStatus(ctx, l, &toUpdate)
+	return r.updateStatus(ctx, l, &toUpdate, false)
 }
 
 func (r *APIRuleReconciler) updateResourceRequeue(ctx context.Context,
