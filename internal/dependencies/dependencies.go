@@ -29,6 +29,14 @@ func Gardener() Dependencies {
 	}
 }
 
+func RateLimit() Dependencies {
+	return &dependencies{
+		CRDNames: []string{
+			"envoyfilters.networking.istio.io",
+		},
+	}
+}
+
 func APIRule() Dependencies {
 	return &dependencies{
 		CRDNames: []string{

@@ -21,9 +21,9 @@ import (
 	"fmt"
 	ratelimitv1alpha1 "github.com/kyma-project/api-gateway/apis/gateway/ratelimit/v1alpha1"
 	"github.com/kyma-project/api-gateway/internal/builders/envoyfilter"
+	"github.com/kyma-project/api-gateway/internal/dependencies"
 	"github.com/kyma-project/api-gateway/internal/ratelimit"
 	"istio.io/api/networking/v1alpha3"
-	networkingv1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -33,17 +33,16 @@ import (
 	"time"
 )
 
-const defaultReconciliationPeriod = 30 * time.Minute
-
 // RateLimitReconciler reconciles a RateLimit object
 type RateLimitReconciler struct {
 	client.Client
-	Scheme *runtime.Scheme
+	Scheme          *runtime.Scheme
+	ReconcilePeriod time.Duration
 }
 
-// There should be no kubebuilder:rbac markers in this file as it's hard to modify the ClusterRole rules array in
-// kustomize. The roles are managed in the file config/dev/kustomization.yaml. Once this feature is ready for release,
-// the markers can be added again.
+//+kubebuilder:rbac:groups=gateway.kyma-project.io,resources=ratelimits,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=gateway.kyma-project.io,resources=ratelimits/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=networking.istio.io,resources=envoyfilters,verbs=get;list;watch;create;update;patch;delete
 
 // Reconcile is part of the main Kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -57,6 +56,14 @@ func (r *RateLimitReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	rl := ratelimitv1alpha1.RateLimit{}
 	if err := r.Get(ctx, req.NamespacedName, &rl); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
+	}
+
+	if d, err := dependencies.RateLimit().AreAvailable(ctx, r.Client); err != nil {
+		rl.Status.Error(fmt.Errorf("dependency missing '%s': %w", d, err))
+		if err := r.Status().Update(ctx, &rl); err != nil {
+			return ctrl.Result{}, err
+		}
+		return ctrl.Result{}, err
 	}
 
 	l.Info("Validating RateLimit resource")
@@ -121,7 +128,7 @@ func (r *RateLimitReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	if err := r.Status().Update(ctx, &rl); err != nil {
 		return ctrl.Result{}, err
 	}
-	return ctrl.Result{RequeueAfter: defaultReconciliationPeriod}, nil
+	return ctrl.Result{RequeueAfter: r.ReconcilePeriod}, nil
 }
 
 func (r *RateLimitReconciler) createOrUpdate(ctx context.Context, obj client.Object, mutate func() error) error {
@@ -151,6 +158,5 @@ func (r *RateLimitReconciler) createOrUpdate(ctx context.Context, obj client.Obj
 func (r *RateLimitReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&ratelimitv1alpha1.RateLimit{}).
-		Owns(&networkingv1alpha3.EnvoyFilter{}).
 		Complete(r)
 }

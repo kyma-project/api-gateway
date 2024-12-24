@@ -55,8 +55,9 @@ var _ = BeforeSuite(func() {
 	c, err = ctrlclient.New(cfg, ctrlclient.Options{Scheme: s})
 	Expect(err).ToNot(HaveOccurred())
 	rec := &ratelimit.RateLimitReconciler{
-		Client: c,
-		Scheme: s,
+		Client:          c,
+		Scheme:          s,
+		ReconcilePeriod: time.Second,
 	}
 	Expect(rec.SetupWithManager(mgr)).Should(Succeed())
 	go func() {
