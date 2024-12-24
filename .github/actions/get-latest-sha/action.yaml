@@ -20,7 +20,7 @@ runs:
           const { data } = await github.rest.actions.listWorkflowRuns({
             owner: context.repo.owner,
             repo: context.repo.repo,
-            workflow_id: 'main-integration.yaml',
+            workflow_id: 'post-main-integration.yaml',
             branch: 'main',
             status: 'success',
             per_page: 40 

@@ -25,7 +25,7 @@ COPY manifests/ manifests/
 # was called. For example, if we call make docker-build in a local env which has the Apple Silicon M1 SO
 # the docker BUILDPLATFORM arg will be linux/arm64 when for Apple x86 it will be linux/amd64. Therefore,
 # by leaving it empty we can ensure that the container and binary shipped on it will have the same platform.
-RUN CGO_ENABLED=0 GOOS=${TARGET_OS:-linux} GOARCH=${TARGET_ARCH:-amd64} go build -tags ${GO_BUILD_TAGS} -ldflags="-X 'github.com/kyma-project/api-gateway/internal/version.version=${VERSION:-}'" -a -o manager main.go
+RUN CGO_ENABLED=0 GOOS=${TARGET_OS:-linux} GOARCH=${TARGET_ARCH:-amd64} go build -tags ${GO_BUILD_TAGS} -ldflags="-s -w -X 'github.com/kyma-project/api-gateway/internal/version.version=${VERSION:-}'" -o manager main.go
 
 
 # Use distroless as minimal base image to package the manager binary
