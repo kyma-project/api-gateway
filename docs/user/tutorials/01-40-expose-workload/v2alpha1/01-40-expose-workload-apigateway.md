@@ -14,7 +14,7 @@ This tutorial shows how to expose an unsecured instance of the HTTPBin Service a
   > As Kyma domain is a widlcard domain, which uses a simple TLS gateway, it recommended that you set up your custom domain istead for use in a production environment.
 
   > [!TIP]
-  > To learn what is the default domain of your Kyma cluster, run  `kubectl get gateway -n kyma-system kyma-gateway -o jsonpath='{.spec.servers[0].hosts}`.
+  > To learn what is the default domain of your Kyma cluster, run `kubectl get gateway -n kyma-system kyma-gateway -o jsonpath='{.spec.servers[0].hosts}`.
 
 ## Steps
 
@@ -68,25 +68,25 @@ Option | Description
 ---------|----------
 APIRULE_NAME | Choose a name for the APIRule CR.
 APIRULE_NAMESPACE | Choose the namespace for the APIRule CR.
-SUBDOMAIN.DOMAIN | The name of your subdomain and domain.
-SERVICE_NAME | The name of the service to be exposed.
-SERVICE_NAMESPACE | The namespace of the service to be exposed.
-SERVICE_PORT | The port of the service to be exposed.
-NAMESPACE/GATEWAY | The namespace and name of the Istio Gateway to be used.
+SUBDOMAIN.DOMAIN | Add the name of your subdomain and domain.
+SERVICE_NAME | Add the name of the service to be exposed.
+SERVICE_NAMESPACE | Add the namespace of the service to be exposed.
+SERVICE_PORT | Add the port of the service to be exposed.
+NAMESPACE/GATEWAY | Add the namespace and name of the Istio Gateway to be used.
 
 <!-- tabs:end -->
 
 
 ### Access Your Workload
 
-- Send a `GET` request to the HTTPBin Service.
+- Send a `GET` request to the exposed workload:
 
   ```bash
   curl -ik -X GET https://{SUBDOMAIN}.{DOMAIN_NAME}/ip
   ```
   If successful, the call returns the `200 OK` response code.
 
-- Send a `POST` request to the HTTPBin Service.
+- Send a `POST` request to the exposed workload:
 
   ```bash
   curl -ik -X POST https://{SUBDOMAIN}.{DOMAIN_NAME}/post -d "test data"

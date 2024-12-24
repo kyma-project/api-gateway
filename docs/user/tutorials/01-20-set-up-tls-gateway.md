@@ -14,14 +14,14 @@ This tutorial shows how to set up a TLS Gateway in simple mode.
 
 1. Go to **Istio > Gateways** and select **Create**.
 2. Provide the following configuration details:
-    - **Name**: `httpbin-gateway`
-    - In the `Servers` section, select **Add**. Then, use these values:
+    - **Name**: `example-gateway`
+    - Add a server with the following values:
       - **Port Number**: `443`
       - **Name**: `https`
       - **Protocol**: `HTTPS`
       - **TLS Mode**: `SIMPLE`
       - **Credential Name** is the name of the Secret that contains the credentials.
-    - Use `{SUBDOMAIN }.{CUSTOM_DOMAIN}` as **Host**.
+    - Use `{SUBDOMAIN}.{CUSTOM_DOMAIN}` as a host.
 
 3. Select **Create**.
 

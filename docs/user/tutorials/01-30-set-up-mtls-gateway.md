@@ -1,6 +1,8 @@
 # Set Up an mTLS Gateway and Expose Workloads Behind It
 
-This document showcases how to set up an mTLS Gateway in Istio and expose it with an APIRule.
+Learn how to set up an mTLS Gateway in Istio and use it to expose a workload.
+
+## Context
 
 <!-- markdown-link-check-disable-next-line -->
 According to the official [CloudFlare documentation](https://cloudflare.com/learning/access-management/what-is-mutual-tls/):
@@ -26,7 +28,7 @@ The procedure of setting up a working mTLS Gateway is described in the following
 1. Create a DNS Entry and generate a wildcard certificate.
 
     > [!NOTE]
-    > This step is heavily dependent on the configuration of a hyperscaler. Always consult the official documentation of each cloud service.
+    > How to perform this step varies significantly based on the configuration of a hyperscaler. Always consult the official documentation of each cloud service.
 
     For Gardener shoot clusters, follow [Set Up a Custom Domain For a Workload](01-10-setup-custom-domain-for-workload.md).
 
@@ -39,7 +41,7 @@ The procedure of setting up a working mTLS Gateway is described in the following
 <!-- tabs:start -->
 #### **Kyma Dashboard**
 
-3. Set up Istio Gateway in mutual mode. To do this, go to **Istio > Gateways** and select **Create**. Then, provide the following configuration details:
+3. Set up Istio Gateway in mutual mode. To do this, go to **Istio > Gateways** and choose **Create**. Then, provide the following configuration details:
     - **Name**: `kyma-mtls-gateway`
     - Add a server with the following configuration:
       - **Port Number**: `443`
@@ -47,7 +49,7 @@ The procedure of setting up a working mTLS Gateway is described in the following
       - **Protocol**: `HTTPS`
       - **TLS Mode**: `MUTUAL`
       - **Credential Name**: `kyma-mtls-certs`
-      - Add a host `*.{DOMAIN_TO_EXPOSE_WORKLOADS}`. Replace `{DOMAIN_TO_EXPOSE_WORKLOADS}` with the name of your custom domain.
+      - Add a host `*.{DOMAIN_NAME}`. Replace `{DOMAIN_NAME}` with the name of your custom domain.
     - Select **Create**.
 
     > [!NOTE]
@@ -57,18 +59,13 @@ The procedure of setting up a working mTLS Gateway is described in the following
     In order for the `MUTUAL` mode to work correctly, you must apply a Root CA in a cluster. This Root CA must follow the [Istio naming convention](https://istio.io/latest/docs/reference/config/networking/gateway/#ServerTLSSettings) so Istio can use it.
     Create an Opaque Secret containing the previously generated Root CA certificate in the `istio-system` namespace.
 
-    Go to **Configuration > Secrets** and select **Create**. Provide the following configuration details.
+    Go to **Configuration > Secrets** and choose **Create**. Provide the following configuration details.
     - **Name**: `kyma-mtls-certs-cacert`
       - **Type**: `Opaque`
       - In the `Data` section, choose **Read value from file**. Select the file that contains your Root CA certificate.
 
 #### **kubectl**
-3. Export the name of your custom domain and the Gateway as environment variables. To set up Istio Gateway in mutual mode, apply the Gateway custom resource in a cluster.
-
-    ```bash
-    export DOMAIN_TO_EXPOSE_WORKLOADS={DOMAIN_NAME}
-    export GATEWAY=$NAMESPACE/httpbin-gateway
-    ```
+1. To set up Istio Gateway in mutual mode, apply the Gateway custom resource.
 
     > [!NOTE]
     >  The `kyma-mtls-certs` Secret must contain a valid certificate you created for your custom domain within the default namespace.
@@ -93,11 +90,11 @@ The procedure of setting up a working mTLS Gateway is described in the following
             mode: MUTUAL
             credentialName: kyma-mtls-certs
           hosts:
-            - "*.$DOMAIN_TO_EXPOSE_WORKLOADS"
+            - "*.{DOMAIN_NAME}"
     EOF
     ```
 
-4. Create a Secret containing the Root CA certificate.
+2. Create a Secret containing the Root CA certificate.
 
     In order for the `MUTUAL` mode to work correctly, you must apply a Root CA in a cluster. This Root CA must follow the [Istio naming convention](https://istio.io/latest/docs/reference/config/networking/gateway/#ServerTLSSettings) so Istio can use it.
     Create an Opaque Secret containing the previously generated Root CA certificate in the `istio-system` namespace. 
@@ -109,9 +106,100 @@ The procedure of setting up a working mTLS Gateway is described in the following
     ```
 <!-- tabs:end -->
 
-### Verify the Connection
+## Expose Workloads Behind Your mTLS Gateway
 
-To verify the connection, create and expose a sample workload using the cretied mTLS Gateway.
+To expose a custom workload, create an APIRule. You can either use version `v1beta1` or `v2alpha1`.
+
+### Use APIRule `v1beta1`
+
+<!-- tabs:start -->
+#### **Kyma Dashboard**
+1. Go to the `default` namespace.
+2. Go to **Discovery and Network > API Rules** and select **Create**.
+3. Add the name `apirule-mtls`.
+4. Add a Gateway with the following values:
+   - **Namespace**: `default`
+   - **Gateway**: `kyma-mtls-gateway`
+5. Add the host `{SUBDOMAIN}.{DOMAIN_TO_EXPOSE_WORKLOADS}`.
+6. Add a rule with the following values:
+   - **Path**: `/.*`
+   - **Handler**: `no_auth`
+   - **Methods**: `GET`
+   - Select the name and port of your service.
+
+#### **kubectl**
+Run the following command:
+
+```bash
+cat <<EOF | kubectl apply -f -
+apiVersion: gateway.kyma-project.io/v1beta1
+kind: APIRule
+metadata:
+  labels:
+    app.kubernetes.io/name: apirule-mtls
+  name: apirule-mtls
+  namespace: default
+spec:
+  gateway: default/kyma-mtls-gateway
+  host: {SUBDOMAIN}.{DOMAIN_NAME}
+  rules:
+  - accessStrategies:
+    - handler: no_auth
+    methods:
+    - GET
+    path: /.*
+  service:
+    name: {SERVICE_NAME}
+    port: {SERVICE_PORT}
+EOF
+```
+<!-- tabs:end -->
+
+### Use APIRule `v2alpha1`
+
+<!-- tabs:start -->
+#### **Kyma Dashboard**
+1. Go to the `default` namespace.
+2. Go to **Discovery and Network > API Rules v2alpha1** and choose **Create**.
+3. Provide the following configuration details.
+    - **Name**: `apirule-mtls`
+4. Add a Gateway with the following values:
+   - **Namespace**: `default`
+   - **Gateway**: `kyma-mtls-gateway`
+5. Add the host `{SUBDOMAIN}.{DOMAIN_TO_EXPOSE_WORKLOADS}`.
+6. Add a rule with the following values:
+   - **Path**: `/.*`
+   - **Handler**: `no_auth`
+   - **Methods**: `GET`
+   - Select the name and port of your service.
+
+#### **kubectl**
+
+```bash
+cat <<EOF | kubectl apply -f -
+apiVersion: gateway.kyma-project.io/v2alpha1
+kind: APIRule
+metadata:
+  labels:
+    app.kubernetes.io/name: apirule-mtls
+  name: apirule-mtls
+  namespace: default
+spec:
+  hosts:
+    - {SUBDOMAIN}.{DOMAIN_NAME}
+  gateway: default/kyma-mtls-gateway
+  rules:
+    - path: /.*
+      methods: ["GET"]
+      noAuth: true
+  service:
+  name: {SERVICE_NAME}
+  port: {SERVICE_PORT}
+EOF
+```
+<!-- tabs:end -->
+
+### Verify the Connection
 
 1. Call the endpoints without providing the generated client certificate:
     ```bash

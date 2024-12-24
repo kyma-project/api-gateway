@@ -28,13 +28,14 @@ Learn how to expose two workloads on different paths at the `spec.rules` level w
 #### **Kyma Dashboard**
 
 1. Go to **Discovery and Network > API Rules v2alpha1** and choose **Create**.
-2. Provide all the required configuration details.
-3. Add a rule with the configuration details of the first service.
-4. Add another rule with the configuration details of the second service.
-5. Choose **Create**.
+2. Provide the name of the APIRule CR.
+3. Add a Gateway.
+4. Add a rule with the configuration details of the first service.
+5. Add another rule with the configuration details of the second service.
+6. Choose **Create**.
 
 #### **kubectl**
-To expose multiple services on different paths, create an APIRule CR and define each of your services on separate **spec.rules** level.
+Replace the placeholders and run the following command:
 
   ```bash
   cat <<EOF | kubectl apply -f -
@@ -76,14 +77,15 @@ You can also define a Service at the root level. Such a definition is applied to
 #### **Kyma Dashboard**
 
 1. Go to **Discovery and Network > API Rules v2alpha1** and choose **Create**.
-2. Provide all the required configuration details.
-3. Define a service in the `Service` section.
-4. Add one rule wihout a service definition.
-5. Add another rule with the name and port of the second service.
-6. Choose **Create**.
+2. Provide the name of the APIRule CR.
+3. Add a Gateway.
+4. Define a service in the `Service` section.
+5. Add one rule wihout a service definition.
+6. Add another rule with the name and port of the second service.
+7. Choose **Create**.
 
 #### **kubectl**
-
+Replace the placeholders and run the following command:
 ```bash
 cat <<EOF | kubectl apply -f -
 apiVersion: gateway.kyma-project.io/v2alpha1
@@ -111,3 +113,14 @@ spec:
 EOF
 ```
 <!-- tabs:end -->
+
+## Access Your Workloads
+
+To call the endpoints, send `GET` requests to exposed the services:
+
+  ```bash
+  curl -ik -X GET https://{SUBDOMAIN}.{DOMAIN_NAME}/headers
+
+  curl -ik -X GET https://{SUBDOMAIN}.{DOMAIN_NAME}/get
+  ```
+If successful, the calls return the `200 OK` response code.

@@ -8,7 +8,7 @@ This tutorial shows how to expose Service endpoints in multiple namespaces.
 
 ##  Prerequisites
 
-* You have deployed two workloads in separate namespaces.
+* You have deployed two workloads in different namespaces.
 * You have [set up your custom domain](../../01-10-setup-custom-domain-for-workload.md). Alternatively, you can use the default domain of your Kyma cluster and the default Gateway `kyma-system/kyma-gateway`.
 
   > [!NOTE]
@@ -60,7 +60,7 @@ This tutorial shows how to expose Service endpoints in multiple namespaces.
 
 1. Create a saprate namespace for the APIRule CR with enabled Istio sidecar proxy injection.
     ```bash
-    export NAMESPACE=api-gateway-tutorial
+    export NAMESPACE={NAMESPACE_NAME}
     kubectl create ns $NAMESPACE
     kubectl label namespace $NAMESPACE istio-injection=enabled --overwrite
     ```
@@ -97,7 +97,7 @@ This tutorial shows how to expose Service endpoints in multiple namespaces.
 
 ### Access Your Workloads
 
-To call the endpoints, send `GET` requests to the services:
+To call the endpoints, send `GET` requests to exposed the services:
 
   ```bash
   curl -ik -X GET https://{SUBDOMAIN}.{DOMAIN_NAME}/headers

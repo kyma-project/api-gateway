@@ -2,9 +2,6 @@
 
 This tutorial shows how to set up a custom domain and prepare a certificate required for exposing a workload. It uses the Gardener [External DNS Management](https://github.com/gardener/external-dns-management) and [Certificate Management](https://github.com/gardener/cert-management) components.
 
-> [!NOTE]
-> Skip this tutorial if you use a Kyma domain instead of your custom domain.
-
 ## Prerequisites
 
 * You have a custom domain.
@@ -19,10 +16,10 @@ Create a Secret containing credentials for the DNS cloud service provider accoun
 <!-- tabs:start -->
 #### **Kyma Dashboard**
 
-1. Select the namespace you want to use.
+1. Choose the namespace you want to use.
 2. Go to **Configuration > Secrets**.
-3. Select **Create** and provide your configuration details.
-4. Select **Create**.
+3. Choose **Create** and provide your configuration details.
+4. Choose **Create**.
 
 #### **kubectl**
 Use `kubectl apply` to create a Secret containing the credentials and export its name as an environment variable:
@@ -38,7 +35,7 @@ export SECRET={SECRET_NAME}
   #### **Kyma Dashboard**
 
 1. Go to **Configuration > DNS Providers**.
-2. Select **Create** and provide the details:
+2. Choose **Create** and provide the details:
     - **Name**: `dns-provider`
     - **Type**: is the type of your DNS cloud service provider.
     - Add the following annotation:
@@ -47,11 +44,11 @@ export SECRET={SECRET_NAME}
       - **Namespace** is the name of the namespace in which you created the Secret containing the credentials. 
       - **Name** is the name of the Secret.
     - In the `Include Domains` section, add your custom domain.
-3. Select **Create**.
+3. Choose **Create**.
 
 #### **kubectl**
 
-1. Export the following values as environment variables. Replace **PROVIDER_TYPE** with the type of your DNS cloud service provider. **DOMAIN_NAME** value specifies the name of your custom domain, for example, `mydomain.com`.
+1. Export the type of your DNS cloud service provider and the name of your custom domain as environment variables:
 
     ```bash
     export PROVIDER_TYPE={YOUR_PROVIDER_TYPE}
@@ -85,13 +82,13 @@ export SECRET={SECRET_NAME}
 #### **Kyma Dashboard**
 1. In the `istio-system` namespace, go to **Discovery and Network > Services**. Select the `istio-ingressgateway` Service and copy its external IP address.
 2. In the namespace of your HTTPBin Deployment, go to **Configuration > DNS Entries**.
-3. Select **Create** and provide the details:
+3. Choose **Create** and provide the details:
     - **Name**:`dns-entry`
     - Add the annotation:
       - **dns.gardener.cloud/class**: `garden`
     - For **DNSName**, use `*.{DOMAIN_TO_EXPOSE_WORKLOADS}`. Replace `{DOMAIN_TO_EXPOSE_WORKLOADS}` with the name of your custom domain.
     - Paste the external IP address of the `istio-ingressgateway` Service in the **Target** field.
-4. Select **Create**.
+4. Choose **Create**.
 
 #### **kubectl**
 
@@ -133,11 +130,11 @@ export SECRET={SECRET_NAME}
 
 1. Go to the `istio-system` namespace.
 2. Go to **Configuration > Certificates**.
-3. Select **Create** and provide the details:
-    - **Name**:`httpbin-cert`
+3. Choose **Create** and provide the details:
+    - **Name**:`my-cert`
     - **Secret Name** is the name of your TLS Secret.
     - **Common Name** is the name of your custom domain.
-4. Select **Create**.
+4. Choose **Create**.
 
 #### **kubectl**
 
@@ -154,7 +151,7 @@ export SECRET={SECRET_NAME}
     apiVersion: cert.gardener.cloud/v1alpha1
     kind: Certificate
     metadata:
-      name: httpbin-cert
+      name: my-cert
       namespace: istio-system
     spec:
       secretName: $TLS_SECRET
@@ -174,4 +171,4 @@ export SECRET={SECRET_NAME}
 ### Next Steps
 [Set Up a TLS Gateway](./01-20-set-up-tls-gateway.md) or [Set up an mTLS Gateway](./01-30-set-up-mtls-gateway.md).
 
-Visit the [Gardener external DNS management documentation](https://github.com/gardener/external-dns-management/tree/master/examples) to see more examples of CRs for Services and Ingresses.
+For more examples of CRs for Services and Ingresses, see the [Gardener external DNS management documentation](https://github.com/gardener/external-dns-management/tree/master/examples).

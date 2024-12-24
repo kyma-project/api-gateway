@@ -5,9 +5,16 @@ Learn how to expose and secure services using APIGateway Controller and OAuth2.0
 
 ## Prerequisites
 
-* [Deploy a sample HTTPBin Service](../../01-00-create-workload.md).
-* [Set up your custom domain](../../01-10-setup-custom-domain-for-workload.md) or use a Kyma domain instead.
-* [Obtain a JSON Web Token (JWT)](../01-51-get-jwt.md).
+* You have a deployed workload.
+* You have [set up your custom domain](../../01-10-setup-custom-domain-for-workload.md). Alternatively, you can use the default domain of your Kyma cluster and the default Gateway `kyma-system/kyma-gateway`.
+
+  > [!NOTE]
+  > As Kyma domain is a widlcard domain, which uses a simple TLS gateway, it recommended that you set up your custom domain istead for use in a production environment.
+
+  > [!TIP]
+  > To learn what is the default domain of your Kyma cluster, run  `kubectl get gateway -n kyma-system kyma-gateway -o jsonpath='{.spec.servers[0].hosts}`.
+
+* You have a JSON Web Token (JWT). See [Obtain a JWT](../01-51-get-jwt.md).
 
 ## Steps
 
@@ -15,55 +22,30 @@ Learn how to expose and secure services using APIGateway Controller and OAuth2.0
 
 #### **kubectl**
 
-1. Depending on whether you use your custom domain or a Kyma domain, export the necessary values as environment variables:
-
-<!-- tabs:start -->
-#### **Custom Domain**
-
-```bash
-export DOMAIN_TO_EXPOSE_WORKLOADS={DOMAIN_NAME}
-export GATEWAY=$NAMESPACE/httpbin-gateway
-```
-#### **Kyma Domain**
-
-```bash
-export DOMAIN_TO_EXPOSE_WORKLOADS={KYMA_DOMAIN_NAME}
-export GATEWAY=kyma-system/kyma-gateway
-```
-<!-- tabs:end -->
-
-2. Export the following environment variables for use in the `oauth2-proxy` configuration:
-
+1. Replace the placeholders and define the `oauth2-proxy` configuration for your authorization server.
+  
     >[!TIP]
     > To generate `COOKIE_SECRET` and `CLIENT_SECRET`, you can use the command `openssl rand -base64 32 | head -c 32 | base64`.
-
-    ```bash
-    export CLIENT_ID={CLIENT_ID/APPLICATION_AUDIENCE}
-    export CLIENT_SECRET={CLIENT_SECRET}
-    export COOKIE_SECRET={COOKIE_SECRET}
-    export OIDC_ISSUER_URL={OIDC_ISSUER_URL}
-    export TOKEN_SCOPES={TOKEN_SCOPES}
-    ```
-3. Define `oauth2-proxy` configuration for your authorization server.
-    
+  
     >[!TIP]
     >You can adapt this configuration to better suit your needs. See the [additional configuration parameters](https://oauth2-proxy.github.io/oauth2-proxy/configuration/overview/#config-options).
+
     ```bash
     cat <<EOF > values.yaml
     config:
-      clientID: $CLIENT_ID
-      clientSecret: $CLIENT_SECRET
+      clientID: {CLIENT_ID}
+      clientSecret: {CLIENT_SECRET}
       cookieName: ""
-      cookieSecret: $COOKIE_SECRET
+      cookieSecret: {COOKIE_SECRET}
     
     extraArgs: 
       auth-logging: true
-      cookie-domain: "$DOMAIN_TO_EXPOSE_WORKLOADS"
+      cookie-domain: "{DOMAIN_TO_EXPOSE_WORKLOADS}"
       cookie-samesite: lax
       cookie-secure: false
       force-json-errors: true
       login-url: static://401
-      oidc-issuer-url: $OIDC_ISSUER_URL
+      oidc-issuer-url: {OIDC_ISSUER_URL}
       pass-access-token: true
       pass-authorization-header: true
       pass-host-header: true 
@@ -71,7 +53,7 @@ export GATEWAY=kyma-system/kyma-gateway
       provider: oidc
       request-logging: true
       reverse-proxy: true
-      scope: "$TOKEN_SCOPES"
+      scope: "{TOKEN_SCOPES}"
       set-authorization-header: true
       set-xauthrequest: true
       skip-jwt-bearer-tokens: true
@@ -79,11 +61,11 @@ export GATEWAY=kyma-system/kyma-gateway
       skip-provider-button: true
       standard-logging: true
       upstream: static://200
-      whitelist-domain: "*.$DOMAIN_TO_EXPOSE_WORKLOADS:*"
+      whitelist-domain: "*.{DOMAIN_TO_EXPOSE_WORKLOADS}:*"
     EOF
     ```
 
-4. To install `oauth2-proxy` with your configuration, use [oauth2-proxy helm chart](https://github.com/oauth2-proxy/manifests):
+2. To install `oauth2-proxy` with your configuration, use [oauth2-proxy helm chart](https://github.com/oauth2-proxy/manifests):
 
     ```bash
     kubectl create namespace oauth2-proxy
@@ -105,15 +87,15 @@ export GATEWAY=kyma-system/kyma-gateway
     apiVersion: gateway.kyma-project.io/v2alpha1
     kind: APIRule
     metadata:
-      name: httpbin
-      namespace: $NAMESPACE
+      name: {APIRULE_NAME}
+      namespace: {APIRULE_NAMESPACE}
     spec:
       hosts: 
-        - httpbin.$DOMAIN_TO_EXPOSE_WORKLOADS
+        - {SUBDOMAIN}.{DOMAIN_TO_EXPOSE_WORKLOADS}
       service:
-        name: httpbin
-        port: 8000
-      gateway: $GATEWAY
+        name: {SERVICE_NAME}
+        port: {SERVICE_PORT}
+      gateway: {GATEWAY_NAME}/{GATEWAY_NAMESPACE}
       rules:
         - extAuth:
             authorizers:
@@ -131,14 +113,14 @@ To access your HTTPBin Service use [curl](https://curl.se).
 1. To call the endpoint, send a `GET` request to the HTTPBin Service.
 
     ```bash
-    curl -ik -X GET https://httpbin.$DOMAIN_TO_EXPOSE_WORKLOADS/headers
+    curl -ik -X GET https://{SUBDOMAIN}.{DOMAIN_TO_EXPOSE_WORKLOADS}/headers
     ```
     You get the error `401 Unauthorized`.
 
 2. Now, access the secured workload using the correct JWT.
 
     ```bash
-    curl -ik -X GET https://httpbin.$DOMAIN_TO_EXPOSE_WORKLOADS/headers --header "Authorization:Bearer $ACCESS_TOKEN"
+    curl -ik -X GET https://{SUBDOMAIN}.{DOMAIN_TO_EXPOSE_WORKLOADS}/headers --header "Authorization:Bearer {ACCESS_TOKEN}"
     ```
     You get the `200 OK` response code.
 
