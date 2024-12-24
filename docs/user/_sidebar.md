@@ -2,7 +2,6 @@
 * [API Gateway Module](/api-gateway/user/README.md)
 * [Quick Start Guide](/api-gateway/user/os-quick-start.md)
 * [Tutorials](/api-gateway/user/tutorials/README.md)
-  * [Create a Workload](/api-gateway/user/tutorials/01-00-create-workload.md)
   * [Set Up a Custom Domain](/api-gateway/user/tutorials/01-10-setup-custom-domain-for-workload.md)
   * [Set Up a TLS Gateway](/api-gateway/user/tutorials/01-20-set-up-tls-gateway.md)
   * [Set Up an mTLS Gateway](/api-gateway/user/tutorials/01-30-set-up-mtls-gateway.md)
