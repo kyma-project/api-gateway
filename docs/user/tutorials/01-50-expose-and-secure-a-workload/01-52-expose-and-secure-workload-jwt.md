@@ -6,7 +6,13 @@ This tutorial shows how to expose and secure Services using APIGateway Controlle
 
 * [Deploy a sample HTTPBin Service](../01-00-create-workload.md).
 * [Obtain a JSON Web Token (JWT)](./01-51-get-jwt.md).
-* [Set up your custom domain](../01-10-setup-custom-domain-for-workload.md) or use a Kyma domain instead.
+* [Set Up Your Custom Domain](../../01-10-setup-custom-domain-for-workload.md). Alternatively, you can use the default domain of your Kyma cluster and the default Gateway `kyma-system/kyma-gateway`.
+
+  > [!NOTE]
+  > Bacuse the default Kyma domain is a widlcard domain, which uses a simple TLS Gateway, it is recommended that you set up your custom domain for use in a production environment.
+
+  > [!TIP]
+  > To learn what is the default domain of your Kyma cluster, run `kubectl get gateway -n kyma-system kyma-gateway -o jsonpath='{.spec.servers[0].hosts}`.
 
 ## Steps
 

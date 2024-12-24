@@ -9,12 +9,12 @@ Learn how to expose an unsecured Service instance using a short host name instea
 
 * You have a deployed workload.
 * You have [set up your custom domain](../../01-10-setup-custom-domain-for-workload.md). Alternatively, you can use the default domain of your Kyma cluster and the default Gateway `kyma-system/kyma-gateway`.
-
+  
   > [!NOTE]
-  > As Kyma domain is a widlcard domain, which uses a simple TLS gateway, it recommended that you set up your custom domain istead for use in a production environment.
+  > Bacuse the default Kyma domain is a widlcard domain, which uses a simple TLS Gateway, it is recommended that you set up your custom domain for use in a production environment.
 
   > [!TIP]
-  > To learn what is the default domain of your Kyma cluster, run  `kubectl get gateway -n kyma-system kyma-gateway -o jsonpath='{.spec.servers[0].hosts}`.
+  > To learn what is the default domain of your Kyma cluster, run `kubectl get gateway -n kyma-system kyma-gateway -o jsonpath='{.spec.servers[0].hosts}`.
 
 * To test access to the exposed service, you must install [curl](https://curl.se).
 
