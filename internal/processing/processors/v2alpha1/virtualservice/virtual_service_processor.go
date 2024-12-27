@@ -20,8 +20,8 @@ const defaultHttpTimeout uint32 = 180
 
 var (
 	envoyTemplatesTranslation = map[string]string{
-		`{**}`: `[\w\.~\-\/]*`,
-		`{*}`:  `[\w\.~\-]*`,
+		`{**}`: `([A-Za-z0-9-._~!$&'()*+,;=:@/]|%[0-9a-fA-F]{2})*`,
+		`{*}`:  `([A-Za-z0-9-._~!$&'()*+,;=:@]|%[0-9a-fA-F]{2})+`,
 	}
 )
 
@@ -201,7 +201,7 @@ func prepareRegexPath(path string) string {
 		path = strings.ReplaceAll(path, key, replace)
 	}
 
-	return fmt.Sprintf("%s$", path)
+	return fmt.Sprintf("^%s$", path)
 }
 
 func GetVirtualServiceHttpTimeout(apiRuleSpec gatewayv2alpha1.APIRuleSpec, rule gatewayv2alpha1.Rule) uint32 {
