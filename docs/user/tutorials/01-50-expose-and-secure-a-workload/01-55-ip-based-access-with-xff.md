@@ -39,7 +39,7 @@ To use the XFF header, you must configure the corresponding settings in the Isti
       >Default Istio installation profile configures PodAntiAffinity to ensure that Ingress Gateway Pods are evenly spread across all nodes and, if possible, across different zones. This guarantees that the above requirement is satisfied if your IngressGateway autoscaling configuration minReplicas is equal to or greater than the number of nodes. You can configure autoscaling options in the Istio CR using the field **spec.config.components.ingressGateway.k8s.hpaSpec.minReplicas**.<br>
       
       >[!TIP]
-      > If you use a GCP or Azure cluster, you can find your load balancer's IP address in the field status.loadBalancer.ingress of the ingress-gateway Service.
+      > If you use a GCP or Azure cluster, you can find your load balancer's IP address in the field **status.loadBalancer.ingress** of the `ingress-gateway` Service.
    5. Choose **Save**.
 2. To expose your workload, create an APIRule custom resource. 
      1. Go to **Discovery and Network > API Rules** and choose **Create**.
