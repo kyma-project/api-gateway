@@ -17,9 +17,9 @@ Expose your workload and configure IP-based access using the X-Forwarded-For (XF
 
 ## Context
 
-The X-Forwarded-For (XFF) header is a standard HTTP header that conveys the client IP address and the chain of intermediary proxies that the request traverses to reach the Istio service mesh. This is particularly useful when an application must be provided with the client IP address of an originating request, for example, for access control.
+The XFF header is a standard HTTP header that conveys the client IP address and the chain of intermediary proxies that the request traverses to reach the Istio service mesh. This is particularly useful when an application must be provided with the client IP address of an originating request, for example, for access control.
 
-However, there are some technical limitations to be aware of when using the XFF header. The header might not include all IP addresses if an intermediary proxy does not support modifying the header. Due to [technical limitations of AWS Classic ELBs](https://docs.aws.amazon.com/elasticloadbalancing/latest/classic/enable-proxy-protocol.html#proxy-protocol), when using an IPv4 connection, the header does not include the public IP of the load balancer in front of Istio Ingress Gateway. Moreover, Istio Ingress Gateway's Envoy does not append the private IP address of the load balancer to the XFF header, effectively removing this information from the request. For more information on XFF, see the [IETF’s RFC documentation](https://datatracker.ietf.org/doc/html/rfc7239) and [Envoy documentation](https://www.envoyproxy.io/docs/envoy/latest/configuration/http/http_conn_man/headers#x-forwarded-for).
+However, there are some technical limitations when using the XFF header. The header might not include all IP addresses if an intermediary proxy does not support modifying the header. Due to [technical limitations of AWS Classic ELBs](https://docs.aws.amazon.com/elasticloadbalancing/latest/classic/enable-proxy-protocol.html#proxy-protocol), when using an IPv4 connection, the header does not include the public IP of the load balancer in front of Istio Ingress Gateway. Moreover, Istio Ingress Gateway's Envoy does not append the private IP address of the load balancer to the XFF header, effectively removing this information from the request. For more information on XFF, see the [IETF’s RFC documentation](https://datatracker.ietf.org/doc/html/rfc7239) and [Envoy documentation](https://www.envoyproxy.io/docs/envoy/latest/configuration/http/http_conn_man/headers#x-forwarded-for).
 
 To use the XFF header, you must configure the corresponding settings in the Istio custom resource (CR). Then, expose your workload using an APIRule CR and create an AuthorizationPolicy resource with allowed IP addresses specified in the **remoteIpBlocks** field. To learn how to do this, follow the procedure.
 
@@ -32,14 +32,14 @@ To use the XFF header, you must configure the corresponding settings in the Isti
    2. Select the Istio module and choose **Edit**.
    3. In the `General` section, set the number of trusted proxies to `1`.
      Due to the variety of network topologies, the Istio CR must specify the number of trusted proxies deployed in front of the Istio Ingress Gateway proxy in the Istio CR so that the client address can be extracted correctly.
-   4. If you use a GCP or Azure cluster, navigate to the Gateway section and set the Gateway traffic policy to Local. If you use a different cloud service provider, skip this step.
+   4. If you use a GCP or Azure cluster, navigate to the Gateway section and set the Gateway traffic policy to `Local`. If you use a different cloud service provider, skip this step.
       >[!WARNING]
-      > For production Deployments, deploying Istio Ingress Gateway Pod to multiple nodes is strongly recommended if you enable externalTrafficPolicy : Local. For more information, see [Network Load Balancer](https://istio.io/latest/docs/tasks/security/authorization/authz-ingress/#network).
+      > For production Deployments, deploying Istio Ingress Gateway Pod to multiple nodes is strongly recommended if you enable `externalTrafficPolicy : Local`. For more information, see [Network Load Balancer](https://istio.io/latest/docs/tasks/security/authorization/authz-ingress/#network).
       >
-      >Default Istio installation profile configures PodAntiAffinity to ensure that Ingress Gateway Pods are evenly spread across all nodes and, if possible, across different zones. This guarantees that the above requirement is satisfied if your IngressGateway autoscaling configuration minReplicas is equal to or greater than the number of nodes. You can configure autoscaling options in the Istio CR using the field spec.config.components.ingressGateway.k8s.hpaSpec.minReplicas.<br>
+      >Default Istio installation profile configures PodAntiAffinity to ensure that Ingress Gateway Pods are evenly spread across all nodes and, if possible, across different zones. This guarantees that the above requirement is satisfied if your IngressGateway autoscaling configuration minReplicas is equal to or greater than the number of nodes. You can configure autoscaling options in the Istio CR using the field **spec.config.components.ingressGateway.k8s.hpaSpec.minReplicas**.<br>
       
       >[!TIP]
-      > If you use a GCP or Azure cluster, you can find your load balancer's IP address in the field status.loadBalancer.ingress of the ingress-gateway Service.
+      > If you use a GCP or Azure cluster, you can find your load balancer's IP address in the field **status.loadBalancer.ingress** of the `ingress-gateway` Service.
    5. Choose **Save**.
 2. To expose your workload, create an APIRule custom resource. 
      1. Go to **Discovery and Network > API Rules v2alpha1** and choose **Create**.
@@ -72,9 +72,9 @@ To use the XFF header, you must configure the corresponding settings in the Isti
       > You can check your public IP address at https://api.ipify.org.
 
 3. To configure IP-based access to the exposed workload, create an AuthorizationPolicy resource.
-    1. Go to **Istio > Authorization Policies** and choose `Create`.
+    1. Go to **Istio > Authorization Policies** and choose **Create**.
     2. Add a selector to specify the workload for which access should be configured.
-    3. Add a rule with a `From` field.
+    3. Add a rule with a **From** field.
     4. In the **RemoteIpBlocks** field, specify the IP addresses that should be allowed access to the workload.
     5. Choose **Create**.
 
@@ -87,13 +87,13 @@ To use the XFF header, you must configure the corresponding settings in the Isti
        ```
        Due to the variety of network topologies, the Istio CR must specify the configuration property **numTrustedProxies**, so that the client IP address can be extracted correctly.
 
-   2. If you use a GCP or Azure cluster, run the following command to set the traffic policy to Local. If you use a different cloud service provider, skip this step.
+   2. If you use a GCP or Azure cluster, run the following command to set the traffic policy to `Local`. If you use a different cloud service provider, skip this step.
 
        ```bash
        kubectl patch istios/default -n kyma-system --type merge -p '{"spec":{"config":{"gatewayExternalTrafficPolicy": "Local"}}}'
        ```
        >[!WARNING]
-       > For production Deployments, it is strongly recommended to deploy Istio Ingress Gateway Pod to multiple nodes if you `enable externalTrafficPolicy : Local`. For more information, see [Network Load Balancer](https://istio.io/latest/docs/tasks/security/authorization/authz-ingress/#network).
+       > For production Deployments, deploying Istio Ingress Gateway Pod to multiple nodes is strongly recommended if you enable `externalTrafficPolicy : Local`. For more information, see [Network Load Balancer](https://istio.io/latest/docs/tasks/security/authorization/authz-ingress/#network).
        >
        >Default Istio installation profile configures **PodAntiAffinity** to ensure that Ingress Gateway Pods are evenly spread across all nodes and, if possible, across different zones. This guarantees that the above requirement is satisfied if your IngressGateway autoscaling configuration **minReplicas** is equal to or greater than the number of nodes. You can configure autoscaling options in the Istio CR using the field **spec.config.components.ingressGateway.k8s.hpaSpec.minReplicas**.
        
@@ -152,7 +152,7 @@ To use the XFF header, you must configure the corresponding settings in the Isti
 
 3. To configure IP-based access to the exposed workload, create an AuthorizationPolicy resource.
 
-  The selector to specifies the workload for which access should be configured, and the **RemoteIpBlocks** field, specifies the IP addresses, for which access should be allowed.
+  The selector specifies the workload for which access should be configured, and the **RemoteIpBlocks** field specifies the IP addresses for which access should be allowed.
     
     ```bash
     apiVersion: security.istio.io/v1beta1
