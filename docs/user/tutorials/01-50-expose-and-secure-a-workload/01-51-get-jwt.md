@@ -31,5 +31,3 @@ You use an OpenID Connect-compliant (OIDC-compliant) identity provider.
       ```bash
       curl -X POST "$TOKEN_ENDPOINT" -d "grant_type=client_credentials" -d "client_id=$CLIENT_ID" -H "Content-Type: application/x-www-form-urlencoded" -H "Authorization: Basic $ENCODED_CREDENTIALS"
       ```
-
-6. Save your JWT. 
