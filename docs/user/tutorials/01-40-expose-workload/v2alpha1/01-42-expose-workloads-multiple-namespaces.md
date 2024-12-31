@@ -1,6 +1,6 @@
 # Expose Workloads in Multiple Namespaces With a Single APIRule Definition
 
-This tutorial shows how to expose Service endpoints in multiple namespaces.
+Learn how to expose Service endpoints in multiple namespaces.
 
 > [!WARNING]
 >  Exposing a workload to the outside world causes a potential security vulnerability, so be careful. In a production environment, secure the workload you expose with [JWT](../../01-50-expose-and-secure-a-workload/v2alpha1/01-52-expose-and-secure-workload-jwt.md).
@@ -23,7 +23,7 @@ This tutorial shows how to expose Service endpoints in multiple namespaces.
 <!-- tabs:start -->
 #### **Kyma Dashboard**
 
-1. Create a namespace with enabled the Istio sidecar proxy injection.
+1. Create a namespace with the Istio sidecar proxy injection enabled.
 2. In the created namespace, go to **Discovery and Network > API Rules v2alpha1** and choose **Create**.
 3. Switch to the `YAML` section.
 4. Paste the follwing APIRule custom resource (CR) and replace the placeholders:
@@ -59,7 +59,7 @@ This tutorial shows how to expose Service endpoints in multiple namespaces.
 
 <!-- tabs:end -->
 
-1. Create a saprate namespace for the APIRule CR with enabled Istio sidecar proxy injection.
+1. Create a separate namespace for the APIRule CR with enabled Istio sidecar proxy injection.
     ```bash
     export NAMESPACE={NAMESPACE_NAME}
     kubectl create ns $NAMESPACE
@@ -98,7 +98,7 @@ This tutorial shows how to expose Service endpoints in multiple namespaces.
 
 ### Access Your Workloads
 
-To call the endpoints, send `GET` requests to exposed the services:
+To call the endpoints, send `GET` requests to the exposed services:
 
   ```bash
   curl -ik -X GET https://{SUBDOMAIN}.{DOMAIN_NAME}/headers
