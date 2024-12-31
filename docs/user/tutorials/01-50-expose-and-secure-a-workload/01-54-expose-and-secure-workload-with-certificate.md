@@ -6,12 +6,13 @@ This tutorial shows how to expose and secure a workload with mutual authenticati
 
 * [Deploy a sample HTTPBin Service](../01-00-create-workload.md).
 * [Set Up Your Custom Domain](../../01-10-setup-custom-domain-for-workload.md). Alternatively, you can use the default domain of your Kyma cluster and the default Gateway `kyma-system/kyma-gateway`.
-
+  
   > [!NOTE]
-  > Bacuse the default Kyma domain is a widlcard domain, which uses a simple TLS Gateway, it is recommended that you set up your custom domain for use in a production environment.
+  > Because the default Kyma domain is a wildcard domain, which uses a simple TLS Gateway, it is recommended that you set up your custom domain for use in a production environment.
 
   > [!TIP]
-  > To learn what is the default domain of your Kyma cluster, run `kubectl get gateway -n kyma-system kyma-gateway -o jsonpath='{.spec.servers[0].hosts}`.
+  > To learn what the default domain of your Kyma cluster is, run `kubectl get gateway -n kyma-system kyma-gateway -o jsonpath='{.spec.servers[0].hosts}`.
+  
 * [Set up a mutual TLS Gateway](../01-30-set-up-mtls-gateway.md) and export the bundle certificates.
 * Optionally, you can [create your own self-signed Client Root CA and certificate](../01-60-security/01-61-mtls-selfsign-client-certicate.md).
 

@@ -16,7 +16,7 @@ Create a Secret containing credentials for the DNS cloud service provider accoun
 <!-- tabs:start -->
 #### **Kyma Dashboard**
 
-1. Choose the namespace you want to use.
+1. Select the namespace you want to use.
 2. Go to **Configuration > Secrets**.
 3. Choose **Create** and provide your configuration details.
 4. Choose **Create**.
@@ -48,11 +48,12 @@ export SECRET={SECRET_NAME}
 
 #### **kubectl**
 
-1. Export the type of your DNS cloud service provider and the name of your custom domain as environment variables:
+1. Export the following values as environment variables: the type of your DNS cloud service provider, the name of your custom domain, and the name of the namespace you want to use.
 
     ```bash
     export PROVIDER_TYPE={YOUR_PROVIDER_TYPE}
     export DOMAIN_TO_EXPOSE_WORKLOADS={YOUR_DOMAIN_NAME}
+    export NAMESPACE={YOUR_NAMESPACE}
     ````
 2. To create a DNSProvider CR, run:
 
@@ -169,6 +170,6 @@ export SECRET={SECRET_NAME}
 <!-- tabs:end -->
 
 ### Next Steps
-[Set Up a TLS Gateway](./01-20-set-up-tls-gateway.md) or [Set up an mTLS Gateway](./01-30-set-up-mtls-gateway.md).
+[Set up a TLS Gateway](./01-20-set-up-tls-gateway.md) or [set up an mTLS Gateway](./01-30-set-up-mtls-gateway.md).
 
 For more examples of CRs for Services and Ingresses, see the [Gardener external DNS management documentation](https://github.com/gardener/external-dns-management/tree/master/examples).

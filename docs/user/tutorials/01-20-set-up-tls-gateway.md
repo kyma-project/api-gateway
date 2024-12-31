@@ -31,6 +31,7 @@ This tutorial shows how to set up a TLS Gateway in simple mode.
 
     ```bash
     export DOMAIN_TO_EXPOSE_WORKLOADS={DOMAIN_NAME}
+    export NAMESPACE={YOUR_NAMESPACE}
     export GATEWAY=$NAMESPACE/example-gateway
     ```
 
