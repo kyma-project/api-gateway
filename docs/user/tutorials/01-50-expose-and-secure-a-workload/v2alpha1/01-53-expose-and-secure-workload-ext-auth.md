@@ -6,7 +6,7 @@ Learn how to expose and secure services using APIGateway Controller and OAuth2.0
 ## Prerequisites
 
 * You have a deployed workload.
-* To use CLI instructions, you must install [kubectl](https://kubernetes.io/docs/tasks/tools/#kubectl) and [curl](https://curl.se/). Alternatively, you can use Kyma dashboard.
+* To use CLI instructions, you must install [kubectl](https://kubernetes.io/docs/tasks/tools/#kubectl) and [curl](https://curl.se/).
 * You have [set up your custom domain](../../01-10-setup-custom-domain-for-workload.md). Alternatively, you can use the default domain of your Kyma cluster and the default Gateway `kyma-system/kyma-gateway`.
   
   > [!NOTE]
@@ -20,8 +20,6 @@ Learn how to expose and secure services using APIGateway Controller and OAuth2.0
 ## Steps
 
 ### Expose and Secure Your Workload
-
-#### **kubectl**
 
 1. Replace the placeholders and define the `oauth2-proxy` configuration for your authorization server.
   
@@ -75,13 +73,13 @@ Learn how to expose and secure services using APIGateway Controller and OAuth2.0
     ```
 
 
-5. Register `oauth2-proxy` as an authorization provider in the Istio module:
+3. Register `oauth2-proxy` as an authorization provider in the Istio module:
 
     ```bash
     kubectl patch istio -n kyma-system default --type merge --patch '{"spec":{"config":{"authorizers":[{"name":"oauth2-proxy","port":80,"service":"oauth2-proxy.oauth2-proxy.svc.cluster.local","headers":{"inCheck":{"include":["x-forwarded-for", "cookie", "authorization"]}}}]}}}'
     ```
 
-6. To expose and secure the Service, create the following APIRule:
+4. To expose and secure the Service, create the following APIRule:
 
     ```bash
     cat <<EOF | kubectl apply -f -

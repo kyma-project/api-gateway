@@ -58,12 +58,12 @@ This tutorial shows how to expose Service endpoints in multiple namespaces using
             - handler: no_auth
     ```
 3. Replace the placeholders:
-  - `{NAMESPACE_APIRULE}` is the namespace in which you create the APIRule.
-  - `{DOMAIN_TO_EXPOSE_WORKLOADS}` is the name of your Kyma or custom domain.
-  - `{GATEWAY}` is `{NAMESPACE_APIRULE}/httpbin-gateway` if you're using a custom domain or `kyma-system/kyma-gateway` if you're using a Kyma domain.
-  - `{FIRST_SERVICE}` and `{NAMESPACE_FIRST_SERVICE}` are the name and namespace of the first Service you deployed.
-  - `{SECOND_SERVICE}` and `{NAMESPACE_SECOND_SERVICE}` are the name and namespace of the second Service you deployed.
-3. To create the APIRule, select **Create**.
+    - `{NAMESPACE_APIRULE}` is the namespace in which you create the APIRule.
+    - `{DOMAIN_TO_EXPOSE_WORKLOADS}` is the name of your Kyma or custom domain.
+    - `{GATEWAY}` is `{NAMESPACE_APIRULE}/httpbin-gateway` if you're using a custom domain or `kyma-system/kyma-gateway` if you're using a Kyma domain.
+    - `{FIRST_SERVICE}` and `{NAMESPACE_FIRST_SERVICE}` are the name and namespace of the first Service you deployed.
+    - `{SECOND_SERVICE}` and `{NAMESPACE_SECOND_SERVICE}` are the name and namespace of the second Service you deployed.
+4. To create the APIRule, select **Create**.
 
 #### **kubectl**
 
