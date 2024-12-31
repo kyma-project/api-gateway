@@ -8,6 +8,7 @@ Learn how to expose multiple workloads on different paths by defining a Service 
 ## Prerequisites
 
 * You have deployed two workloads in one namespace.
+* To use CLI instructions, you must install [kubectl](https://kubernetes.io/docs/tasks/tools/#kubectl) and [curl](https://curl.se/). Alternatively, you can use Kyma dashboard.
 * You have [set up your custom domain](../../01-10-setup-custom-domain-for-workload.md). Alternatively, you can use the default domain of your Kyma cluster and the default Gateway `kyma-system/kyma-gateway`.
   
   > [!NOTE]
@@ -15,7 +16,6 @@ Learn how to expose multiple workloads on different paths by defining a Service 
 
   > [!TIP]
   > To learn what the default domain of your Kyma cluster is, run `kubectl get gateway -n kyma-system kyma-gateway -o jsonpath='{.spec.servers[0].hosts}`.
-
 
 ## Define Multiple Services on Different Paths
 
@@ -30,8 +30,8 @@ Learn how to expose two Services on different paths at the `spec.rules` level wi
 1. Go to **Discovery and Network > API Rules v2alpha1** and choose **Create**.
 2. Provide the name of the APIRule CR.
 3. Add a Gateway.
-4. Add a rule with the configuration details of the first service.
-5. Add another rule with the configuration details of the second service.
+4. Add a rule with the configuration details of the first Service.
+5. Add another rule with the configuration details of the second Service.
 6. Choose **Create**.
 
 #### **kubectl**
@@ -79,9 +79,16 @@ You can also define a Service at the root level. Such a definition is applied to
 1. Go to **Discovery and Network > API Rules v2alpha1** and choose **Create**.
 2. Provide the name of the APIRule CR.
 3. Add a Gateway.
-4. Define a service in the `Service` section.
-5. Add one rule wihout a service definition.
-6. Add another rule with the name and port of the second service.
+4. Define a Service in the `Service` section.
+5. Add one rule wihout a Service definition. Use the following configuration:
+  - **Path**: `/headers`
+  - **Handler**: `No Auth`
+  - **Methods**: `GET`
+6. Add another rule with the Service definition. Use the following configuration:
+  - **Path**: `/get`
+  - **Handler**: `No Auth`
+  - **Methods**: `POST`
+  - Add the name and namespace of the Second namespace.
 7. Choose **Create**.
 
 #### **kubectl**

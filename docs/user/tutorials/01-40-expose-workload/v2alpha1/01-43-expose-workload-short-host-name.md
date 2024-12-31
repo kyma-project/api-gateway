@@ -8,6 +8,7 @@ Learn how to expose an unsecured Service instance using a short host name instea
 ## Prerequisites
 
 * You have a deployed workload.
+* To use CLI instructions, you must install [kubectl](https://kubernetes.io/docs/tasks/tools/#kubectl) and [curl](https://curl.se/). Alternatively, you can use Kyma dashboard.
 * You have [set up your custom domain](../../01-10-setup-custom-domain-for-workload.md). Alternatively, you can use the default domain of your Kyma cluster and the default Gateway `kyma-system/kyma-gateway`.
   
   > [!NOTE]
@@ -15,8 +16,6 @@ Learn how to expose an unsecured Service instance using a short host name instea
 
   > [!TIP]
   > To learn what the default domain of your Kyma cluster is, run `kubectl get gateway -n kyma-system kyma-gateway -o jsonpath='{.spec.servers[0].hosts}`.
-
-* To test access to the exposed service, you must install [curl](https://curl.se).
 
 ## Context
 Using a short host makes it simpler to apply APIRules because the domain name is automatically retrieved from the referenced Gateway, and you don’t have to manually set it in each APIRule. This might be particularly useful when reconfiguring resources in a new cluster, as it reduces the chance of errors and streamlines the process.

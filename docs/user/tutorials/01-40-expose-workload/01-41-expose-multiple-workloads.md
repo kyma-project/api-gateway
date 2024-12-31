@@ -25,23 +25,23 @@ Follow the instructions to expose the instances of the HTTPBin Service on differ
 1. Go to **Discovery and Network > APIRules** and select **Create**. 
 2. Provide the following configuration details:
     - **Name**: `multiple-services`
-    - To fill in the `Gateway` section, use these values:
+    - Add a Gateway with the following values:
       - **Namespace** is the name of the namespace in which you deployed an instance of the HTTPBin Service. If you use a Kyma domain, select the `kyma-system` namespace.
       - **Name** is the Gateway's name. If you use a Kyma domain, select `kyma-gateway`. 
       - In the **Host** field, enter `httpbin.{DOMAIN_TO_EXPORT_WORKLOADS}`. Replace the placeholder with the name of your domain.
-    - To expose the first service, add a Rule with the following configuration:
+    - To expose the first Service, add a rule with the following configuration:
       - **Path**: `/headers`
       - **Handler**: `no_auth`
       - **Methods**: `GET`
       - In the `Service` section, select the name of the first Service you deployed and use port `8000`.
-    - To expose the second service, add a Rule with the following configuration:
+    - To expose the second Service, add a rule with the following configuration:
       - **Path**: `/get`
       - **Handler**: `no_auth`
       - **Methods**: `GET`
       - In the `Service` section, select the name of the second Service you deployed and use port `8000`.
       <!-- tabs:end -->
 
-3. To create the APIRule, select **Create**.  
+3. To create the APIRule, choose **Create**.  
 
 
 #### **kubectl**
@@ -122,16 +122,16 @@ You can also define a Service at the root level. Such a definition is applied to
       - **Namespace** is the name of the namespace in which you deployed an instance of the HTTPBin Service. If you use a Kyma domain, select the `kyma-system` namespace.
       - **Name** is the Gateway's name. If you use a Kyma domain, select `kyma-gateway`. 
       - In the **Host** field, enter `httpbin.{DOMAIN_TO_EXPORT_WORKLOADS}`. Replace the placeholder with the name of your domain.
-    - Add a Rule with the following configuration:
+    - Add a rule with the following configuration:
       - **Path**: `/headers`
       - **Handler**: `no_auth`
       - **Methods**: `GET`
       - Leave the `Service` section empty.
-    - Add another Rule with the following configuration:
+    - Add another rule with the following configuration:
       - **Path**: `/get`
       - **Handler**: `no_auth`
       - **Methods**: `GET`
-      - In the `Service` section, select the name of the second service you deployed and use port `8000`.
+      - In the `Service` section, select the name of the second Service you deployed and use port `8000`.
   
 3. To create the APIRule, select **Create**.
 

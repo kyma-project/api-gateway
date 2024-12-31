@@ -8,6 +8,7 @@ This tutorial shows how to expose an unsecured instance of the HTTPBin Service a
 ## Prerequisites
 
 * You have a deployed workload.
+* To use CLI instructions, you must install [kubectl](https://kubernetes.io/docs/tasks/tools/#kubectl) and [curl](https://curl.se/). Alternatively, you can use Kyma dashboard.
 * You have [set up your custom domain](../../01-10-setup-custom-domain-for-workload.md). Alternatively, you can use the default domain of your Kyma cluster and the default Gateway `kyma-system/kyma-gateway`.
   
   > [!NOTE]

@@ -128,7 +128,7 @@ To expose a custom workload, create an APIRule. You can either use version `v1be
    - **Path**: `/.*`
    - **Handler**: `no_auth`
    - **Methods**: `GET`
-   - Select the name and port of your service.
+   - Select the name and port of your Service.
 
 #### **kubectl**
 Run the following command:
