@@ -3,7 +3,7 @@
 This tutorial shows how to expose an unsecured instance of the HTTPBin Service and call its endpoints.
 
 > [!WARNING]
->  Exposing a workload to the outside world is a potential security vulnerability, so tread carefully. In a production environment, always secure the workload you expose with [JWT](../../01-50-expose-and-secure-a-workload/v2alpha1/01-52-expose-and-secure-workload-jwt.md).
+>  Exposing a workload to the outside world is a potential security vulnerability, so be careful. In a production environment, always secure the workload you expose with [JWT](../../01-50-expose-and-secure-a-workload/v2alpha1/01-52-expose-and-secure-workload-jwt.md).
 
 ## Prerequisites
 
@@ -27,11 +27,11 @@ This tutorial shows how to expose an unsecured instance of the HTTPBin Service a
 4. Add a Gateway.
 5. Add a rule with the following configuration:
     - **Path**: `/.*`
-    - **Handler**: `no_auth`
+    - **Handler**: `No Auth`
     - **Methods**: `GET`
 6. Add one more rule with the following configuration:
     - **Path**: `/post`
-    - **Handler**: `no_auth`
+    - **Handler**: `No Auth`
     - **Methods**: `POST`
 7. Choose **Create**.
 
@@ -63,16 +63,6 @@ spec:
       noAuth: true
 EOF
 ```
-
-Option | Description
----------|----------
-APIRULE_NAME | Choose a name for the APIRule CR.
-APIRULE_NAMESPACE | Choose the namespace for the APIRule CR.
-SUBDOMAIN.DOMAIN | Add the name of your subdomain and domain.
-SERVICE_NAME | Add the name of the service to be exposed.
-SERVICE_NAMESPACE | Add the namespace of the service to be exposed.
-SERVICE_PORT | Add the port of the service to be exposed.
-NAMESPACE/GATEWAY | Add the namespace and name of the Istio Gateway to be used.
 
 <!-- tabs:end -->
 

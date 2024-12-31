@@ -3,7 +3,7 @@
 Learn how to expose multiple workloads on different paths by defining a Service at the root level and by defining Services on each path separately.
 
 > [!WARNING]
->  Exposing a workload to the outside world is always a potential security vulnerability, so tread carefully. In a production environment, remember to secure the workload you expose with [JWT](../../01-50-expose-and-secure-a-workload/v2alpha1/01-52-expose-and-secure-workload-jwt.md).
+>  Exposing a workload to the outside world is always a potential security vulnerability, so be careful. In a production environment, remember to secure the workload you expose with [JWT](../../01-50-expose-and-secure-a-workload/v2alpha1/01-52-expose-and-secure-workload-jwt.md).
 
 ## Prerequisites
 
@@ -20,7 +20,7 @@ Learn how to expose multiple workloads on different paths by defining a Service 
 ## Define Multiple Services on Different Paths
 
 ## Context
-Learn how to expose two workloads on different paths at the `spec.rules` level without a root Service defined. You can also define a Service at the root level. Such a definition is applied to all the paths specified at `spec.rules` that do not have their own Services defined. Services defined at the `spec.rules` level have precedence over Service definition at the `spec.service` level.
+Learn how to expose two Services on different paths at the `spec.rules` level without a root Service defined.
 
 ## Steps
 

@@ -3,7 +3,7 @@
 This tutorial shows how to expose Service endpoints in multiple namespaces using APIGateway Controller.
 
 > [!WARNING]
->  Exposing a workload to the outside world causes a potential security vulnerability, so tread carefully. In a production environment, secure the workload you expose with [OAuth2](../01-50-expose-and-secure-a-workload/01-50-expose-and-secure-workload-oauth2.md) or [JWT](../01-50-expose-and-secure-a-workload/01-52-expose-and-secure-workload-jwt.md).
+>  Exposing a workload to the outside world causes a potential security vulnerability, so be careful. In a production environment, secure the workload you expose with [OAuth2](../01-50-expose-and-secure-a-workload/01-50-expose-and-secure-workload-oauth2.md) or [JWT](../01-50-expose-and-secure-a-workload/01-52-expose-and-secure-workload-jwt.md).
 
 
 ##  Prerequisites

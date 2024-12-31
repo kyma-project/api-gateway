@@ -3,7 +3,7 @@
 This tutorial shows how to expose Service endpoints in multiple namespaces.
 
 > [!WARNING]
->  Exposing a workload to the outside world causes a potential security vulnerability, so tread carefully. In a production environment, secure the workload you expose with [JWT](../../01-50-expose-and-secure-a-workload/v2alpha1/01-52-expose-and-secure-workload-jwt.md).
+>  Exposing a workload to the outside world causes a potential security vulnerability, so be careful. In a production environment, secure the workload you expose with [JWT](../../01-50-expose-and-secure-a-workload/v2alpha1/01-52-expose-and-secure-workload-jwt.md).
 
 
 ##  Prerequisites
@@ -25,7 +25,7 @@ This tutorial shows how to expose Service endpoints in multiple namespaces.
 1. Create a namespace with enabled the Istio sidecar proxy injection.
 2. In the created namespace, go to **Discovery and Network > API Rules v2alpha1** and choose **Create**.
 3. Switch to the `YAML` section.
-4. Paste the follwing APIRule CR and replace the placeholders:
+4. Paste the follwing APIRule custom resource (CR) and replace the placeholders:
     ```YAML
     apiVersion: gateway.kyma-project.io/v2alpha1
     kind: APIRule
@@ -64,7 +64,7 @@ This tutorial shows how to expose Service endpoints in multiple namespaces.
     kubectl create ns $NAMESPACE
     kubectl label namespace $NAMESPACE istio-injection=enabled --overwrite
     ```
-2. Expose the services in their respective namespaces by creating an APIRule custom resource (CR) in its own namespace. Run:
+2. Expose the Services in their respective namespaces by creating an APIRule custom resource (CR) in its own namespace. Run:
 
     ```bash
     cat <<EOF | kubectl apply -f -
