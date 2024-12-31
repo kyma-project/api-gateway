@@ -164,8 +164,7 @@ EOF
 #### **Kyma Dashboard**
 1. Go to the `default` namespace.
 2. Go to **Discovery and Network > API Rules v2alpha1** and choose **Create**.
-3. Provide the following configuration details.
-    - **Name**: `apirule-mtls`
+3. Add the name `apirule-mtls`.
 4. Add a Gateway with the following values:
    - **Namespace**: `default`
    - **Gateway**: `kyma-mtls-gateway`
@@ -174,7 +173,7 @@ EOF
    - **Path**: `/.*`
    - **Handler**: `noAuth`
    - **Methods**: `GET`
-   - Select the name and port of your service.
+   - Select the name and port of your Service.
 
 #### **kubectl**
 Run the following command:
