@@ -1,0 +1,418 @@
+##################################################################################################
+# namespaces
+##################################################################################################
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: sidecar-enabled
+  labels:
+    istio-injection: enabled
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: functions
+  labels:
+    istio-injection: enabled
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: sidecar-disabled
+---
+##################################################################################################
+# httpbin1
+##################################################################################################
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: httpbin1
+  namespace: sidecar-enabled
+---
+apiVersion: gateway.kyma-project.io/v1beta1
+kind: APIRule
+metadata:
+  name: httpbin1
+  namespace: sidecar-enabled
+spec:
+  gateway: kyma-system/kyma-gateway
+  host: httpbin1
+  service:
+    name: httpbin1
+    port: 8000
+  rules:
+    - path: /.*
+      methods:
+        - GET
+        - POST
+        - PUT
+        - DELETE
+      accessStrategies:
+        - handler: no_auth
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: httpbin1
+  namespace: sidecar-enabled
+  labels:
+    app: httpbin1
+    service: httpbin1
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 8080
+  selector:
+    app: httpbin1
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin1
+  namespace: sidecar-enabled
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin1
+      version: v1
+  template:
+    metadata:
+      labels:
+        app: httpbin1
+        version: v1
+    spec:
+      serviceAccountName: httpbin1
+      containers:
+      - image: docker.io/mccutchen/go-httpbin:v2.15.0
+        imagePullPolicy: IfNotPresent
+        name: httpbin1
+        ports:
+        - containerPort: 8080
+---
+##################################################################################################
+# httpbin2
+##################################################################################################
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: httpbin2
+  namespace: sidecar-enabled
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: httpbin2
+  namespace: sidecar-enabled
+  labels:
+    app: httpbin2
+    service: httpbin2
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 8080
+  selector:
+    app: httpbin2
+---
+apiVersion: gateway.kyma-project.io/v1beta1
+kind: APIRule
+metadata:
+  name: httpbin2
+  namespace: sidecar-enabled
+spec:
+  gateway: kyma-system/kyma-gateway
+  host: httpbin2
+  service:
+    name: httpbin2
+    port: 8000
+  rules:
+    - path: /.*
+      methods:
+        - POST
+      accessStrategies:
+        - handler: no_auth
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin2
+  namespace: sidecar-enabled
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin2
+      version: v1
+  template:
+    metadata:
+      labels:
+        app: httpbin2
+        version: v1
+    spec:
+      serviceAccountName: httpbin2
+      containers:
+      - image: docker.io/mccutchen/go-httpbin:v2.15.0
+        imagePullPolicy: IfNotPresent
+        name: httpbin2
+        ports:
+        - containerPort: 8080
+---
+##################################################################################################
+# httpbin3
+##################################################################################################
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: httpbin3
+  namespace: sidecar-enabled
+---
+apiVersion: gateway.kyma-project.io/v1beta1
+kind: APIRule
+metadata:
+  name: httpbin3
+  namespace: sidecar-enabled
+spec:
+  gateway: kyma-system/kyma-gateway
+  host: httpbin3
+  service:
+    name: httpbin3
+    port: 8000
+  rules:
+    - path: /headers
+      methods:
+        - GET
+        - POST
+        - PUT
+        - DELETE
+      accessStrategies:
+        - handler: no_auth
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: httpbin3
+  namespace: sidecar-enabled
+  labels:
+    app: httpbin3
+    service: httpbin3
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 8080
+  selector:
+    app: httpbin3
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin3
+  namespace: sidecar-enabled
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin3
+      version: v1
+  template:
+    metadata:
+      labels:
+        app: httpbin3
+        version: v1
+    spec:
+      serviceAccountName: httpbin3
+      containers:
+      - image: docker.io/mccutchen/go-httpbin:v2.15.0
+        imagePullPolicy: IfNotPresent
+        name: httpbin3
+        ports:
+        - containerPort: 8080
+---
+##################################################################################################
+# httpbin4
+##################################################################################################
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: httpbin4
+  namespace: sidecar-enabled
+---
+apiVersion: gateway.kyma-project.io/v2alpha1
+kind: APIRule
+metadata:
+  name: httpbin4
+  namespace: sidecar-enabled
+spec:
+  gateway: kyma-system/kyma-gateway
+  hosts:
+  - httpbin4
+  service:
+    name: httpbin4
+    port: 8000
+  rules:
+    - path: /anything/{**}
+      methods:
+        - GET
+        - POST
+        - PUT
+        - DELETE
+      jwt:
+        authentications:
+        - issuer: "http://mock-oauth2-server.mock-oauth2.svc.cluster.local"
+          jwksUri: "http://mock-oauth2-server.mock-oauth2.svc.cluster.local/oauth2/certs"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: httpbin4
+  namespace: sidecar-enabled
+  labels:
+    app: httpbin4
+    service: httpbin4
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 8080
+  selector:
+    app: httpbin4
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin4
+  namespace: sidecar-enabled
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin4
+      version: v1
+  template:
+    metadata:
+      labels:
+        app: httpbin4
+        version: v1
+    spec:
+      serviceAccountName: httpbin4
+      containers:
+      - image: docker.io/mccutchen/go-httpbin:v2.15.0
+        imagePullPolicy: IfNotPresent
+        name: httpbin4
+        ports:
+        - containerPort: 8080
+---
+##################################################################################################
+# httpbin5
+##################################################################################################
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: httpbin5
+  namespace: sidecar-enabled
+---
+apiVersion: gateway.kyma-project.io/v1beta1
+kind: APIRule
+metadata:
+  name: httpbin5
+  namespace: sidecar-enabled
+spec:
+  gateway: kyma-system/kyma-gateway
+  host: httpbin5
+  service:
+    name: httpbin5
+    port: 8000
+  rules:
+    - path: /.*
+      methods:
+        - GET
+        - POST
+        - PUT
+        - DELETE
+      accessStrategies:
+        - handler: no_auth
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: httpbin5
+  namespace: sidecar-enabled
+  labels:
+    app: httpbin5
+    service: httpbin5
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 8080
+  selector:
+    app: httpbin5
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin5
+  namespace: sidecar-enabled
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin5
+      version: v1
+  template:
+    metadata:
+      labels:
+        app: httpbin5
+        version: v1
+    spec:
+      serviceAccountName: httpbin5
+      containers:
+      - image: not-a-pod
+        imagePullPolicy: IfNotPresent
+        name: httpbin5
+        ports:
+        - containerPort: 8080
+---
+##################################################################################################
+# function
+##################################################################################################
+apiVersion: serverless.kyma-project.io/v1alpha2
+kind: Function
+metadata:
+  name: function
+  namespace: functions
+spec:
+  runtime: nodejs20
+  source:
+    inline:
+      source: |
+        module.exports = {
+          main: function(event, context) {
+            return 'Hello World!'
+          }
+        }
+---
+apiVersion: gateway.kyma-project.io/v1beta1
+kind: APIRule
+metadata:
+  name: function
+  namespace: functions
+spec:
+  gateway: kyma-system/kyma-gateway
+  host: function
+  service:
+    name: function
+    port: 80
+  rules:
+    - path: /.*
+      methods:
+        - GET
+        - POST
+        - PUT
+        - DELETE
+      accessStrategies:
+        - handler: no_auth
+
