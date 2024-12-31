@@ -3,15 +3,23 @@
 This tutorial shows how to expose Service endpoints in multiple namespaces using APIGateway Controller.
 
 > [!WARNING]
->  Exposing a workload to the outside world causes a potential security vulnerability, so tread carefully. In a production environment, secure the workload you expose with [OAuth2](../01-50-expose-and-secure-a-workload/01-50-expose-and-secure-workload-oauth2.md) or [JWT](../01-50-expose-and-secure-a-workload/01-52-expose-and-secure-workload-jwt.md).
+>  Exposing a workload to the outside world causes a potential security vulnerability, so be careful. In a production environment, secure the workload you expose with [OAuth2](../01-50-expose-and-secure-a-workload/01-50-expose-and-secure-workload-oauth2.md) or [JWT](../01-50-expose-and-secure-a-workload/01-52-expose-and-secure-workload-jwt.md).
 
 
 ##  Prerequisites
 
-Create three namespaces. Deploy two instances of the HTTPBin Service, each in a separate namespace. To learn how to do it, follow the [Create a Workload](../01-00-create-workload.md) tutorial. Reserve the third namespace for creating an APIRule.
+* Create three namespaces. Deploy two instances of the HTTPBin Service, each in a separate namespace. To learn how to do it, follow the [Create a Workload](../01-00-create-workload.md) tutorial. Reserve the third namespace for creating an APIRule.
 
-> [!NOTE]
-> Remember to enable automatic Istio sidecar proxy injection in each namespace. See [Enable Sidecar Injection for a Namespace](https://kyma-project.io/#/istio/user/tutorials/01-40-enable-sidecar-injection?id=enable-sidecar-injection-for-a-namespace).
+  > [!NOTE]
+  > Remember to enable automatic Istio sidecar proxy injection in each namespace. See [Enable Sidecar Injection for a Namespace](https://kyma-project.io/#/istio/user/tutorials/01-40-enable-sidecar-injection?id=enable-sidecar-injection-for-a-namespace).
+
+* [Set Up Your Custom Domain](../../01-10-setup-custom-domain-for-workload.md). Alternatively, you can use the default domain of your Kyma cluster and the default Gateway `kyma-system/kyma-gateway`.
+  
+  > [!NOTE]
+  > Because the default Kyma domain is a wildcard domain, which uses a simple TLS Gateway, it is recommended that you set up your custom domain for use in a production environment.
+
+  > [!TIP]
+  > To learn what the default domain of your Kyma cluster is, run `kubectl get gateway -n kyma-system kyma-gateway -o jsonpath='{.spec.servers[0].hosts}`.
 
 ## Steps
 
@@ -50,12 +58,12 @@ Create three namespaces. Deploy two instances of the HTTPBin Service, each in a 
             - handler: no_auth
     ```
 3. Replace the placeholders:
-  - `{NAMESPACE_APIRULE}` is the namespace in which you create the APIRule.
-  - `{DOMAIN_TO_EXPOSE_WORKLOADS}` is the name of your Kyma or custom domain.
-  - `{GATEWAY}` is `{NAMESPACE_APIRULE}/httpbin-gateway` if you're using a custom domain or `kyma-system/kyma-gateway` if you're using a Kyma domain.
-  - `{FIRST_SERVICE}` and `{NAMESPACE_FIRST_SERVICE}` are the name and namespace of the first Service you deployed.
-  - `{SECOND_SERVICE}` and `{NAMESPACE_SECOND_SERVICE}` are the name and namespace of the second Service you deployed.
-3. To create the APIRule, select **Create**.
+    - `{NAMESPACE_APIRULE}` is the namespace in which you create the APIRule.
+    - `{DOMAIN_TO_EXPOSE_WORKLOADS}` is the name of your Kyma or custom domain.
+    - `{GATEWAY}` is `{NAMESPACE_APIRULE}/httpbin-gateway` if you're using a custom domain or `kyma-system/kyma-gateway` if you're using a Kyma domain.
+    - `{FIRST_SERVICE}` and `{NAMESPACE_FIRST_SERVICE}` are the name and namespace of the first Service you deployed.
+    - `{SECOND_SERVICE}` and `{NAMESPACE_SECOND_SERVICE}` are the name and namespace of the second Service you deployed.
+4. To create the APIRule, select **Create**.
 
 #### **kubectl**
 
