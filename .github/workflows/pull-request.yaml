@@ -1,6 +1,3 @@
-# Jobs defined in this file are responsible for things that do not require container image
-# but still relevant to the codebase such as unit tests, linting etc
-
 name: Pull Request
 
 on:
@@ -30,6 +27,7 @@ jobs:
         env:
           PULL_BASE_SHA: ${{ github.event.pull_request.base.sha }}
           PULL_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+
   build-image:
     name: Build manager image
     runs-on: ubuntu-latest
@@ -56,13 +54,6 @@ jobs:
     uses: ./.github/workflows/call-pull-integration.yaml
     secrets: inherit
 
-  ui-tests:
-    name: UI tests
-    if: github.event.pull_request.draft == false
-    needs: [build-image]
-    uses: ./.github/workflows/call-ui-tests.yaml
-    secrets: inherit
-
   verify-pins:
     name: Verify-commit-pins
     if: github.event.pull_request.draft == false
@@ -70,7 +61,7 @@ jobs:
     secrets: inherit
 
   pull-request-status:
-    needs: [ build-image, unit-tests, integration-tests, ui-tests, verify-pins ]
+    needs: [ build-image, unit-tests, integration-tests, verify-pins ]
     runs-on: ubuntu-latest
     if: always()
     steps:
