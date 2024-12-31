@@ -26,7 +26,7 @@ Learn how to expose Service endpoints in multiple namespaces.
 1. Create a namespace with the Istio sidecar proxy injection enabled.
 2. In the created namespace, go to **Discovery and Network > API Rules v2alpha1** and choose **Create**.
 3. Switch to the `YAML` section.
-4. Paste the follwing APIRule custom resource (CR) and replace the placeholders:
+4. Paste the following APIRule custom resource (CR) and replace the placeholders:
     ```YAML
     apiVersion: gateway.kyma-project.io/v2alpha1
     kind: APIRule
