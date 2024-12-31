@@ -130,7 +130,7 @@ spec:
                 type: string
               state:
                 description: State describes the overall status of RateLimit. Values
-                  are `Ready`, `Processing` and `Error`
+                  are `Ready`, `Processing`, `Warning` and `Error`
                 type: string
             type: object
         type: object

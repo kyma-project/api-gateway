@@ -2,21 +2,19 @@
 
 # API Gateway
 
-## What Is API Gateway?
+API Gateway is a Kyma module with which you can expose and secure APIs.
 
-API Gateway provides functionalities that allow you to expose and secure APIs by using [Ory Oathkeeper](https://www.ory.sh/docs/oathkeeper) and the [Istio service mesh](https://istio.io/) resources.
+The API Gateway module offers the following features:
 
-## Kyma API Gateway Operator
-
-Kyma API Gateway Operator is an extension to the Kyma runtime that manages the application of API Gateway's configuration and handles resource reconciliation. Within Kyma API Gateway Operator, there are two controllers: [APIGateway Controller](./docs/user/00-10-overview-api-gateway-controller.md), which applies the configuration specified in [APIGateway custom resource (CR)](./docs/user/custom-resources/apigateway/), and [APIRule Controller](./docs/user/00-20-overview-api-rule-controller.md), which applies the configuration specified in [APIRule CR](./docs/user/custom-resources/apirule/).
-
-![Kyma API Gateway Operator Overview](./docs/assets/operator-overview.svg)
+- Ory Oathkeeper installation: The module simplifies and manages the installation of Ory Oathkeeper.
+- API Exposure: The module combines ORY Oathkeeper and Istio capabilities to offer the APIRule CustomResourceDefinition. By creating APIRule custom resources, you can easily and securely expose your workloads.
+- Kyma Gateway installation: The module installs the default simple TLS Kyma Gateway.
 
 ## Installation
 
 ### Prerequisites
 
-To use API Gateway, you must install Istio and Ory Oathkeeper in your cluster. Learn more about the [API Gateway's dependencies](./docs/contributor/01-20-api-gateway-dependencies.md) and [APIrules' dependencies](./docs/contributor/01-30-api-rule-dependencies.md).
+To use the API Gateway module, you must install Istio and Ory Oathkeeper in your cluster. Learn more about the [API Gateway's dependencies](./docs/contributor/01-20-api-gateway-dependencies.md) and [APIrules' dependencies](./docs/contributor/01-30-api-rule-dependencies.md).
 
 ### Procedure
 1. Create the `kyma-system` namespace and label it with `istio-injection=enabled`:
@@ -57,7 +55,7 @@ To use API Gateway, you must install Istio and Ory Oathkeeper in your cluster. L
    default   Ready
    ```
 
-For more installation options, visit the [installation guide](./docs/contributor/01-00-installation.md).
+For more installation options, see the [installation guide](./docs/contributor/01-00-installation.md).
 
 ## Useful Links
 

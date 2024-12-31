@@ -11,7 +11,7 @@ require (
 	github.com/go-logr/logr v1.4.2
 	github.com/google/uuid v1.6.0
 	github.com/onsi/ginkgo/v2 v2.22.1
-	github.com/onsi/gomega v1.36.1
+	github.com/onsi/gomega v1.36.2
 	github.com/ory/oathkeeper-maester v0.1.10
 	github.com/prometheus/client_golang v1.20.5
 	github.com/prometheus/client_model v0.6.1
@@ -21,7 +21,7 @@ require (
 	golang.org/x/net v0.33.0
 	golang.org/x/time v0.8.0
 	google.golang.org/appengine v1.6.8
-	google.golang.org/protobuf v1.36.0
+	google.golang.org/protobuf v1.36.1
 	gopkg.in/yaml.v3 v3.0.1
 	istio.io/api v1.23.3
 	istio.io/client-go v1.23.3
