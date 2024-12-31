@@ -123,7 +123,7 @@ EOF
 
 ## Access Your Workloads
 
-To call the endpoints, send `GET` requests to the exposed services:
+To call the endpoints, send `GET` requests to the exposed Services:
 
   ```bash
   curl -ik -X GET https://{SUBDOMAIN}.{DOMAIN_NAME}/headers
