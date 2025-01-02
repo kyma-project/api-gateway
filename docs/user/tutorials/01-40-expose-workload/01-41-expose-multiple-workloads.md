@@ -7,7 +7,7 @@ This tutorial shows how to expose multiple workloads on different paths by defin
 ## Prerequisites
 
 * [Deploy two instances of a sample HTTPBin Service](../01-00-create-workload.md) in one namespace. 
-* [Set Up Your Custom Domain](../../01-10-setup-custom-domain-for-workload.md). Alternatively, you can use the default domain of your Kyma cluster and the default Gateway `kyma-system/kyma-gateway`.
+* [Set Up Your Custom Domain](../01-10-setup-custom-domain-for-workload.md). Alternatively, you can use the default domain of your Kyma cluster and the default Gateway `kyma-system/kyma-gateway`.
   
   > [!NOTE]
   > Because the default Kyma domain is a wildcard domain, which uses a simple TLS Gateway, it is recommended that you set up your custom domain for use in a production environment.

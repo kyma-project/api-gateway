@@ -7,7 +7,7 @@ Follow the steps to get started with the open-source API Gateway module.
 You have created a k3d cluster and added the Istio and API Gateway modules. See [Quick Install](https://kyma-project.io/#/02-get-started/01-quick-install).
 
 ## Context
-This quick start guide shows how to create a sample HTTPBin workload and expose it to the internet using the APIRule custom resource (CR). For this purpose, the guide uses a wildcard public domain `*.local.kyma.dev`.
+This quick start guide shows how to create a sample HTTPBin workload and expose it to the internet using the APIRule custom resource (CR). For this purpose, the guide uses a wildcard public domain `*.local.kyma.dev`. The domain is registered in public DNS and points to the local host `127.0.0.1`.
 
 ## Procedure
 

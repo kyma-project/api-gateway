@@ -13,7 +13,7 @@ This tutorial shows how to expose Service endpoints in multiple namespaces using
   > [!NOTE]
   > Remember to enable automatic Istio sidecar proxy injection in each namespace. See [Enable Sidecar Injection for a Namespace](https://kyma-project.io/#/istio/user/tutorials/01-40-enable-sidecar-injection?id=enable-sidecar-injection-for-a-namespace).
 
-* [Set Up Your Custom Domain](../../01-10-setup-custom-domain-for-workload.md). Alternatively, you can use the default domain of your Kyma cluster and the default Gateway `kyma-system/kyma-gateway`.
+* [Set Up Your Custom Domain](../01-10-setup-custom-domain-for-workload.md). Alternatively, you can use the default domain of your Kyma cluster and the default Gateway `kyma-system/kyma-gateway`.
   
   > [!NOTE]
   > Because the default Kyma domain is a wildcard domain, which uses a simple TLS Gateway, it is recommended that you set up your custom domain for use in a production environment.
