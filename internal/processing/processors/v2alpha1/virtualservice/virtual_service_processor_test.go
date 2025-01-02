@@ -96,7 +96,7 @@ var _ = Describe("Fully configured APIRule happy path", func() {
 				Expect(vs.Spec.Http).To(HaveLen(2))
 
 				Expect(vs.Spec.Http[0].Match[0].Method.GetRegex()).To(Equal("^(GET|POST)$"))
-				Expect(vs.Spec.Http[0].Match[0].Uri.GetRegex()).To(Equal("/$"))
+				Expect(vs.Spec.Http[0].Match[0].Uri.GetRegex()).To(Equal("^/$"))
 				Expect(vs.Spec.Http[0].Route[0].Destination.Host).To(Equal("another-service.another-namespace.svc.cluster.local"))
 				Expect(vs.Spec.Http[0].Route[0].Destination.Port.Number).To(Equal(uint32(9999)))
 
@@ -154,6 +154,74 @@ var _ = Describe("VirtualServiceProcessor", func() {
 		Expect(result).To(HaveLen(1))
 		Expect(result[0].Action.String()).To(Equal("create"))
 	})
+
+	It("should create a VirtualService with prefix match for wildcard path /*", func() {
+		// given
+		apiRule := NewAPIRuleBuilder().
+			WithGateway("example/example").
+			WithHosts("example.com").
+			WithService("example-service", "example-namespace", 8080).
+			WithTimeout(180).
+			WithRules(
+				NewRuleBuilder().
+					WithMethods("GET").
+					WithPath("/*").
+					NoAuth().Build(),
+			).
+			Build()
+
+		client := GetFakeClient()
+		processor := processors.NewVirtualServiceProcessor(GetTestConfig(), apiRule, nil)
+
+		// when
+		checkVirtualServices(client, processor, []verifier{
+			func(vs *networkingv1beta1.VirtualService) {
+				Expect(vs.Spec.Hosts).To(ConsistOf("example.com"))
+				Expect(vs.Spec.Gateways).To(ConsistOf("example/example"))
+				Expect(vs.Spec.Http).To(HaveLen(1))
+
+				Expect(vs.Spec.Http[0].Match[0].Method.GetRegex()).To(Equal("^(GET)$"))
+				Expect(vs.Spec.Http[0].Match[0].Uri.GetPrefix()).To(Equal("/"))
+			},
+		}, nil, "create")
+	})
+
+	DescribeTable("should create a VirtualService with correct regex for path",
+		func(path string, expectedRegex string) {
+			// given
+			apiRule := NewAPIRuleBuilder().
+				WithGateway("example/example").
+				WithHosts("example.com").
+				WithService("example-service", "example-namespace", 8080).
+				WithTimeout(180).
+				WithRules(
+					NewRuleBuilder().
+						WithMethods("GET").
+						WithPath(path).
+						NoAuth().Build(),
+				).
+				Build()
+
+			client := GetFakeClient()
+			processor := processors.NewVirtualServiceProcessor(GetTestConfig(), apiRule, nil)
+
+			// when
+			checkVirtualServices(client, processor, []verifier{
+				func(vs *networkingv1beta1.VirtualService) {
+					Expect(vs.Spec.Hosts).To(ConsistOf("example.com"))
+					Expect(vs.Spec.Gateways).To(ConsistOf("example/example"))
+					Expect(vs.Spec.Http).To(HaveLen(1))
+
+					Expect(vs.Spec.Http[0].Match[0].Method.GetRegex()).To(Equal("^(GET)$"))
+					Expect(vs.Spec.Http[0].Match[0].Uri.GetRegex()).To(Equal(expectedRegex))
+				},
+			}, nil, "create")
+		},
+		Entry("path is /", "/", "^/$"),
+		Entry("path is /test", "/test", "^/test$"),
+		Entry("path is /test/{*}", "/test/{*}", "^/test/([A-Za-z0-9-._~!$&'()*+,;=:@]|%[0-9a-fA-F]{2})+$"),
+		Entry("path is /test/{**}", "/test/{**}", "^/test/([A-Za-z0-9-._~!$&'()*+,;=:@/]|%[0-9a-fA-F]{2})*$"),
+	)
 
 	It("should create a VirtualService with '/' prefix, when rule in APIRule applies to all paths", func() {
 		apiRule := NewAPIRuleBuilder().
