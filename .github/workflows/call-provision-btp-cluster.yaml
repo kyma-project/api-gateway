@@ -3,10 +3,6 @@ name: Provision BTP Cluster
 on:
   workflow_dispatch:
     inputs:
-      cleanup:
-        description: 'Flag to remove the BTP subaccount after the test'
-        required: false
-        type: boolean
       btp_kyma_plan:
         description: 'Service plan of the kyma environment'
         required: true
@@ -48,19 +44,3 @@ jobs:
           kubectl apply -f ./.github/actions/create-sap-btp-kyma/mock-oauth2.yaml
           kubectl apply -f ./.github/actions/create-sap-btp-kyma/deployments.yaml
           kubectl apply -f ./.github/actions/create-sap-btp-kyma/jobs.yaml
-      - name: Cleanup resources
-        if: ${{ inputs.cleanup }}
-        shell: bash
-        run: |
-          kubectl delete -f ./.github/actions/create-sap-btp-kyma/mock-oauth2.yaml
-          kubectl delete -f ./.github/actions/create-sap-btp-kyma/deployments.yaml
-          kubectl delete -f ./.github/actions/create-sap-btp-kyma/jobs.yaml
-      - uses: kyma-project/terraform-module/.github/actions/force-delete-sap-btp-subaccount@6af78799edd07b5301494de20aaecee28f51af27
-        if: ${{ inputs.cleanup }}
-        with:
-          btp_subaccount_id: ${{ steps.create-btp-resources.outputs.subaccount_id }}
-          btp_backend_url: ${{ secrets.BTP_BACKEND_URL}}
-          btp_user: ${{ secrets.BTP_BOT_USER}}
-          btp_password: ${{ secrets.BTP_BOT_PASSWORD}}
-          btp_global_account: ${{ secrets.BTP_GLOBAL_ACCOUNT }}
-          btp_idp_tenant: ${{ secrets.BTP_CUSTOM_IAS_TENANT }}
