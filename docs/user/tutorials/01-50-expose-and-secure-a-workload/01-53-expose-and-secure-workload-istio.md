@@ -6,7 +6,7 @@ This tutorial shows how to expose and secure a workload using Istio's built-in s
 
 * [Deploy a sample HTTPBin Service](../01-00-create-workload.md).
 * [Obtain a JSON Web Token (JWT)](./01-51-get-jwt.md).
-* [Set Up Your Custom Domain](../../01-10-setup-custom-domain-for-workload.md). Alternatively, you can use the default domain of your Kyma cluster and the default Gateway `kyma-system/kyma-gateway`.
+* [Set Up Your Custom Domain](../01-10-setup-custom-domain-for-workload.md). Alternatively, you can use the default domain of your Kyma cluster and the default Gateway `kyma-system/kyma-gateway`.
   
   > [!NOTE]
   > Because the default Kyma domain is a wildcard domain, which uses a simple TLS Gateway, it is recommended that you set up your custom domain for use in a production environment.
