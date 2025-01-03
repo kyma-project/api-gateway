@@ -1,0 +1,96 @@
+# Original action created by Otters team in https://github.com/kyma-project/terraform-module
+
+name: 'Create SAP BTP Kyma Environment'
+description: 'Action for creating Kyma environment in the SAP BTP Platform'
+
+inputs:
+  btp_subaccount_name:
+    description: 'Name of the new SAP BTP subaccount to be created'
+    required: true
+  btp_backend_url:
+    description: 'URL of the BTP CLI API'
+    required: true
+  btp_user: 
+    description: 'SAP BTP username on behalf of whom the BTP platform resources are created'
+    required: true
+  btp_password: 
+    description: 'SAP BTP user password'
+    required: true
+  btp_global_account:
+    description: 'Global account in the context of which the BTP platform resources are created'
+    required: true
+  btp_idp_tenant: 
+    description: 'Identity provider that recognizes identity of the given username'
+    required: true
+  btp_subaccount_region: 
+    description: 'Region of the new SAP BTP platform where new subaccount will be created'
+    required: true
+  btp_kyma_region: 
+    description: 'Region where Kyma environment will be created'
+    required: true
+  btp_kyma_plan: 
+    description: 'Service plan of the kyma environment'
+    required: true
+  btp_kyma_modules:
+    description: 'String representation of the requested kyma modules list that should be pre-installed on the kyma environments'
+    required: false
+    default: "[{\"name\":\"serverless\", \"channel\":\"fast\"},{\"name\":\"istio\", \"channel\":\"fast\"},{\"name\":\"api-gateway\", \"channel\":\"fast\"},{\"name\":\"btp-operator\", \"channel\":\"fast\"}]"
+  btp_kyma_autoscaler_min:
+    description: 'Minimum numbers of worker nodes the new kyma environment shoud start with'
+    required: false
+    default: '3'
+  btp_kyma_administrators:
+    description: 'String representation of the kyma admin list'
+    required: false
+    default: "[]"
+
+outputs:
+  subaccount_id: 
+    value: ${{ steps.create-btp-resources.outputs.subaccount_id }}
+    description: "ID of the created SAP BTP subaccount"
+
+runs:
+  using: 'composite'
+  steps:
+    - name: ensure terraform cli
+      shell: bash
+      run: |
+        if ! which terraform; then
+          sudo apt-get update && sudo apt-get install -y gnupg software-properties-common
+          wget -O- https://apt.releases.hashicorp.com/gpg | \
+          gpg --dearmor | \
+          sudo tee /usr/share/keyrings/hashicorp-archive-keyring.gpg > /dev/null
+          gpg --no-default-keyring \
+          --keyring /usr/share/keyrings/hashicorp-archive-keyring.gpg \
+          --fingerprint
+          echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] \
+          https://apt.releases.hashicorp.com $(lsb_release -cs) main" | \
+          sudo tee /etc/apt/sources.list.d/hashicorp.list
+          sudo apt update
+          sudo apt-get install terraform
+        fi
+        terraform -help
+    - name: Create btp resources
+      id: create-btp-resources
+      run: |
+        terraform -chdir=${{ github.action_path }} init 
+        terraform -chdir=${{ github.action_path }} apply -auto-approve 
+        SUBACCOUNT_ID=$(terraform -chdir=${{ github.action_path }} output -raw subaccount_id)
+        echo ${SUBACCOUNT_ID}
+        echo "subaccount_id=$SUBACCOUNT_ID" >> "$GITHUB_OUTPUT"
+        echo "KUBECONFIG=${{ github.action_path }}/kubeconfig.yaml" >> "$GITHUB_ENV"
+      shell: bash
+      env:
+        TF_VAR_BTP_NEW_SUBACCOUNT_NAME: ${{ inputs.btp_subaccount_name }}
+        TF_VAR_BTP_NEW_SUBACCOUNT_REGION: ${{ inputs.btp_subaccount_region }}
+        TF_VAR_BTP_BACKEND_URL: ${{ inputs.btp_backend_url }}
+        TF_VAR_BTP_BOT_USER: ${{ inputs.btp_user }}
+        TF_VAR_BTP_BOT_PASSWORD: ${{ inputs.btp_password }}
+        TF_VAR_BTP_CUSTOM_IAS_TENANT: ${{ inputs.btp_idp_tenant }}
+        TF_VAR_BTP_GLOBAL_ACCOUNT: ${{ inputs.btp_global_account }}
+        TF_VAR_BTP_KYMA_PLAN: ${{ inputs.btp_kyma_plan }}
+        TF_VAR_BTP_KYMA_REGION: ${{ inputs.btp_kyma_region }}
+        TF_VAR_BTP_KYMA_MODULES_STRINGIFIED: ${{ inputs.btp_kyma_modules }}
+        TF_VAR_BTP_KYMA_AUTOSCALER_MIN: ${{ inputs.btp_kyma_autoscaler_min }}
+        TF_VAR_BTP_KYMA_CUSTOM_ADMINISTRATORS: ${{ inputs.btp_kyma_administrators }}
+        
