@@ -31,8 +31,8 @@ type scenario struct {
 	testID          string
 	namespace       string
 	url             string
-	apiResourceOne  []unstructured.Unstructured
-	apiResourceTwo  []unstructured.Unstructured
+	apiResourceOne  unstructured.Unstructured
+	apiResourceTwo  unstructured.Unstructured
 	k8sClient       dynamic.Interface
 	oauth2Cfg       *clientcredentials.Config
 	httpClient      *helpers.RetryableHttpClient
@@ -87,7 +87,7 @@ func createScenario(t *testsuite, namePrefix string) (*scenario, error) {
 	}
 
 	// create api-rule from file
-	accessRuleOne, err := manifestprocessor.ParseFromFileWithTemplate("no-access-strategy.yaml", customDomainManifestDirectory, struct {
+	accessRuleOne, err := manifestprocessor.ParseSingleEntryFromFileWithTemplate("no-access-strategy.yaml", customDomainManifestDirectory, struct {
 		Namespace        string
 		NamePrefix       string
 		TestID           string
@@ -105,7 +105,7 @@ func createScenario(t *testsuite, namePrefix string) (*scenario, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to process resource manifest files, details %s", err.Error())
 	}
-	accessRuleTwo, err := manifestprocessor.ParseFromFileWithTemplate("oauth-strategy.yaml", customDomainManifestDirectory, struct {
+	accessRuleTwo, err := manifestprocessor.ParseSingleEntryFromFileWithTemplate("oauth-strategy.yaml", customDomainManifestDirectory, struct {
 		Namespace          string
 		NamePrefix         string
 		TestID             string
@@ -224,7 +224,7 @@ func (c *scenario) thereIsAnExposedService(svcName string, svcNamespace string) 
 }
 
 func (c *scenario) thereIsAnUnsecuredEndpoint() error {
-	return helpers.ApplyApiRule(c.resourceManager.CreateResources, c.resourceManager.UpdateResources, c.k8sClient, testcontext.GetRetryOpts(), c.apiResourceOne)
+	return helpers.ApplyApiRule(c.resourceManager, c.k8sClient, testcontext.GetRetryOpts(), c.apiResourceOne)
 }
 
 func (c *scenario) callingTheEndpointWithAnyTokenShouldResultInStatusBetween(endpoint string, arg1, arg2 int) error {
@@ -232,7 +232,7 @@ func (c *scenario) callingTheEndpointWithAnyTokenShouldResultInStatusBetween(end
 }
 
 func (c *scenario) secureWithOAuth2() error {
-	return helpers.ApplyApiRule(c.resourceManager.UpdateResources, c.resourceManager.UpdateResources, c.k8sClient, testcontext.GetRetryOpts(), c.apiResourceTwo)
+	return helpers.ApplyApiRule(c.resourceManager, c.k8sClient, testcontext.GetRetryOpts(), c.apiResourceTwo)
 }
 
 func (c *scenario) callingTheEndpointWithAInvalidTokenShouldResultInStatusBetween(endpoint string, lower int, higher int) error {
