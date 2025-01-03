@@ -92,28 +92,28 @@ func (s *scenario) callingTheEndpointWithMethodWithValidToken(url string, method
 }
 
 func (s *scenario) theAPIRuleIsApplied() error {
-	r, err := manifestprocessor.ParseFromFileWithTemplate(s.ApiResourceManifestPath, s.ApiResourceDirectory, s.ManifestTemplate)
+	res, err := manifestprocessor.ParseSingleEntryFromFileWithTemplate(s.ApiResourceManifestPath, s.ApiResourceDirectory, s.ManifestTemplate)
 	if err != nil {
 		return err
 	}
-	return helpers.ApplyApiRule(s.resourceManager.CreateResources, s.resourceManager.UpdateResources, s.k8sClient, testcontext.GetRetryOpts(), r)
+	return helpers.ApplyApiRule(s.resourceManager, s.k8sClient, testcontext.GetRetryOpts(), res)
 }
 
 func (s *scenario) theMisconfiguredAPIRuleIsApplied() error {
-	r, err := manifestprocessor.ParseFromFileWithTemplate(s.ApiResourceManifestPath, s.ApiResourceDirectory, s.ManifestTemplate)
+	res, err := manifestprocessor.ParseSingleEntryFromFileWithTemplate(s.ApiResourceManifestPath, s.ApiResourceDirectory, s.ManifestTemplate)
 	if err != nil {
 		return err
 	}
-	_, err = s.resourceManager.CreateResources(s.k8sClient, r...)
+	_, err = s.resourceManager.CreateResources(s.k8sClient, res)
 	return err
 }
 
 func (s *scenario) theAPIRuleV2Alpha1IsApplied() error {
-	r, err := manifestprocessor.ParseFromFileWithTemplate(s.ApiResourceManifestPath, s.ApiResourceDirectory, s.ManifestTemplate)
+	res, err := manifestprocessor.ParseSingleEntryFromFileWithTemplate(s.ApiResourceManifestPath, s.ApiResourceDirectory, s.ManifestTemplate)
 	if err != nil {
 		return err
 	}
-	return helpers.ApplyApiRuleV2Alpha1(s.resourceManager.CreateResources, s.resourceManager.UpdateResources, s.k8sClient, testcontext.GetRetryOpts(), r)
+	return helpers.ApplyApiRuleV2Alpha1(s.resourceManager, s.k8sClient, testcontext.GetRetryOpts(), res)
 }
 
 func (s *scenario) theAPIRuleTemplateFileIsSetTo(templateFileName string) {
@@ -126,11 +126,11 @@ func (s *scenario) templateValueIsSetTo(key, value string) {
 }
 
 func (s *scenario) theAPIRuleV2Alpha1IsAppliedExpectError(errorMessage string) error {
-	r, err := manifestprocessor.ParseFromFileWithTemplate(s.ApiResourceManifestPath, s.ApiResourceDirectory, s.ManifestTemplate)
+	res, err := manifestprocessor.ParseSingleEntryFromFileWithTemplate(s.ApiResourceManifestPath, s.ApiResourceDirectory, s.ManifestTemplate)
 	if err != nil {
 		return err
 	}
-	return helpers.ApplyApiRuleV2Alpha1ExpectError(s.resourceManager.CreateResources, s.resourceManager.UpdateResources, s.k8sClient, testcontext.GetRetryOpts(), r, errorMessage)
+	return helpers.ApplyApiRuleV2Alpha1ExpectError(s.resourceManager, s.k8sClient, testcontext.GetRetryOpts(), res, errorMessage)
 }
 
 func (s *scenario) specifiesCustomGateway(gatewayNamespace, gatewayName string) {
@@ -139,18 +139,18 @@ func (s *scenario) specifiesCustomGateway(gatewayNamespace, gatewayName string) 
 }
 
 func (s *scenario) theAPIRuleHasStatusWithDesc(expectedState, expectedDescription string) error {
-	resourceManifest, err := manifestprocessor.ParseFromFileWithTemplate(s.ApiResourceManifestPath, s.ApiResourceDirectory, s.ManifestTemplate)
+	res, err := manifestprocessor.ParseSingleEntryFromFileWithTemplate(s.ApiResourceManifestPath, s.ApiResourceDirectory, s.ManifestTemplate)
 	if err != nil {
 		return err
 	}
 
-	groupVersionResource, err := resource.GetGvrFromUnstructured(s.resourceManager, resourceManifest[0])
+	groupVersionResource, err := resource.GetGvrFromUnstructured(s.resourceManager, res)
 	if err != nil {
 		return err
 	}
 
 	return retry.Do(func() error {
-		apiRule, err := s.resourceManager.GetResource(s.k8sClient, *groupVersionResource, resourceManifest[0].GetNamespace(), resourceManifest[0].GetName())
+		apiRule, err := s.resourceManager.GetResource(s.k8sClient, *groupVersionResource, res.GetNamespace(), res.GetName())
 		if err != nil {
 			return err
 		}
