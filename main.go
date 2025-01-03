@@ -33,6 +33,7 @@ import (
 
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
+	apiGatewayMetrics "github.com/kyma-project/api-gateway/internal/metrics"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
@@ -217,7 +218,9 @@ func main() {
 		FailureMaxDelay:  flagVar.rateLimiterFailureMaxDelay,
 	}
 
-	if err := gateway.NewApiRuleReconciler(mgr, reconcileConfig).SetupWithManager(mgr, rateLimiterCfg); err != nil {
+	apiGatewayMetrics := apiGatewayMetrics.NewApiGatewayMetrics()
+
+	if err := gateway.NewApiRuleReconciler(mgr, reconcileConfig, apiGatewayMetrics).SetupWithManager(mgr, rateLimiterCfg); err != nil {
 		setupLog.Error(err, "Unable to create controller", "controller", "APIRule")
 		os.Exit(1)
 	}

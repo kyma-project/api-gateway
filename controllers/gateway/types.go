@@ -6,6 +6,7 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/kyma-project/api-gateway/internal/helpers"
+	"github.com/kyma-project/api-gateway/internal/metrics"
 	"github.com/kyma-project/api-gateway/internal/processing"
 	"istio.io/api/networking/v1beta1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -23,6 +24,7 @@ type APIRuleReconciler struct {
 	ReconcilePeriod          time.Duration
 	OnErrorReconcilePeriod   time.Duration
 	MigrationReconcilePeriod time.Duration
+	Metrics                  *metrics.ApiGatewayMetrics
 }
 
 type ApiRuleReconcilerConfiguration struct {
@@ -34,7 +36,7 @@ type ApiRuleReconcilerConfiguration struct {
 	MigrationReconciliationPeriod                        uint
 }
 
-func NewApiRuleReconciler(mgr manager.Manager, config ApiRuleReconcilerConfiguration) *APIRuleReconciler {
+func NewApiRuleReconciler(mgr manager.Manager, config ApiRuleReconcilerConfiguration, apiGatewayMetrics *metrics.ApiGatewayMetrics) *APIRuleReconciler {
 	return &APIRuleReconciler{
 		Client: mgr.GetClient(),
 		Log:    mgr.GetLogger().WithName("apirule-controller"),
@@ -52,6 +54,7 @@ func NewApiRuleReconciler(mgr manager.Manager, config ApiRuleReconcilerConfigura
 		ReconcilePeriod:          time.Duration(config.ReconciliationPeriod) * time.Second,
 		OnErrorReconcilePeriod:   time.Duration(config.ErrorReconciliationPeriod) * time.Second,
 		MigrationReconcilePeriod: time.Duration(config.MigrationReconciliationPeriod) * time.Second,
+		Metrics:                  apiGatewayMetrics,
 	}
 }
 

@@ -4,3 +4,10 @@ metadata:
   name: "{{.Namespace}}"
   labels:
     istio-injection: enabled
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: "{{.Namespace}}-2"
+  labels:
+    istio-injection: enabled
