@@ -78,57 +78,57 @@ func (s *scenario) thereIsAHttpbinServiceAndApiRuleIsApplied() error {
 		return err
 	}
 
-	r, err := manifestprocessor.ParseFromFileWithTemplate(s.ApiResourceManifestPath, s.ApiResourceDirectory, s.ManifestTemplate)
+	res, err := manifestprocessor.ParseSingleEntryFromFileWithTemplate(s.ApiResourceManifestPath, s.ApiResourceDirectory, s.ManifestTemplate)
 	if err != nil {
 		return err
 	}
-	return helpers.ApplyApiRule(s.resourceManager.CreateResources, s.resourceManager.UpdateResources, s.k8sClient, testcontext.GetRetryOpts(), r)
+	return helpers.ApplyApiRule(s.resourceManager, s.k8sClient, testcontext.GetRetryOpts(), res)
 }
 
 func (s *scenario) theAPIRuleIsApplied() error {
-	r, err := manifestprocessor.ParseFromFileWithTemplate(s.ApiResourceManifestPath, s.ApiResourceDirectory, s.ManifestTemplate)
+	res, err := manifestprocessor.ParseSingleEntryFromFileWithTemplate(s.ApiResourceManifestPath, s.ApiResourceDirectory, s.ManifestTemplate)
 	if err != nil {
 		return err
 	}
-	return helpers.ApplyApiRule(s.resourceManager.CreateResources, s.resourceManager.UpdateResources, s.k8sClient, testcontext.GetRetryOpts(), r)
+	return helpers.ApplyApiRule(s.resourceManager, s.k8sClient, testcontext.GetRetryOpts(), res)
 }
 
 func (s *scenario) theAPIRuleIsUpdated(manifest string) error {
-	resourceManifest, err := manifestprocessor.ParseFromFileWithTemplate(manifest, s.ApiResourceDirectory, s.ManifestTemplate)
+	res, err := manifestprocessor.ParseSingleEntryFromFileWithTemplate(manifest, s.ApiResourceDirectory, s.ManifestTemplate)
 	if err != nil {
 		return err
 	}
-	return helpers.UpdateApiRule(s.resourceManager, s.k8sClient, testcontext.GetRetryOpts(), resourceManifest)
+	return helpers.UpdateApiRule(s.resourceManager, s.k8sClient, testcontext.GetRetryOpts(), res)
 }
 
 func (s *scenario) theAPIRuleIsDeletedUsingv2alpha1Version() error {
-	resourceManifest, err := manifestprocessor.ParseFromFileWithTemplate(s.ApiResourceManifestPath, s.ApiResourceDirectory, s.ManifestTemplate)
+	res, err := manifestprocessor.ParseSingleEntryFromFileWithTemplate(s.ApiResourceManifestPath, s.ApiResourceDirectory, s.ManifestTemplate)
 	if err != nil {
 		return err
 	}
 
-	groupVersionResource, err := resource.GetGvrFromUnstructured(s.resourceManager, resourceManifest[0])
+	groupVersionResource, err := resource.GetGvrFromUnstructured(s.resourceManager, res)
 	if err != nil {
 		return err
 	}
 	groupVersionResource.Version = "v2alpha1"
 
-	return s.resourceManager.DeleteResource(s.k8sClient, *groupVersionResource, resourceManifest[0].GetNamespace(), resourceManifest[0].GetName())
+	return s.resourceManager.DeleteResource(s.k8sClient, *groupVersionResource, res.GetNamespace(), res.GetName())
 }
 
 func (s *scenario) theAPIRuleHasStatus(expectedStatus string) error {
-	resourceManifest, err := manifestprocessor.ParseFromFileWithTemplate(s.ApiResourceManifestPath, s.ApiResourceDirectory, s.ManifestTemplate)
+	res, err := manifestprocessor.ParseSingleEntryFromFileWithTemplate(s.ApiResourceManifestPath, s.ApiResourceDirectory, s.ManifestTemplate)
 	if err != nil {
 		return err
 	}
 
-	groupVersionResource, err := resource.GetGvrFromUnstructured(s.resourceManager, resourceManifest[0])
+	groupVersionResource, err := resource.GetGvrFromUnstructured(s.resourceManager, res)
 	if err != nil {
 		return err
 	}
 
 	return retry.Do(func() error {
-		apiRule, err := s.resourceManager.GetResource(s.k8sClient, *groupVersionResource, resourceManifest[0].GetNamespace(), resourceManifest[0].GetName())
+		apiRule, err := s.resourceManager.GetResource(s.k8sClient, *groupVersionResource, res.GetNamespace(), res.GetName())
 		if err != nil {
 			return err
 		}
@@ -151,18 +151,18 @@ func (s *scenario) theAPIRuleHasStatus(expectedStatus string) error {
 }
 
 func (s *scenario) theAPIRuleIsNotFound() error {
-	resourceManifest, err := manifestprocessor.ParseFromFileWithTemplate(s.ApiResourceManifestPath, s.ApiResourceDirectory, s.ManifestTemplate)
+	res, err := manifestprocessor.ParseSingleEntryFromFileWithTemplate(s.ApiResourceManifestPath, s.ApiResourceDirectory, s.ManifestTemplate)
 	if err != nil {
 		return err
 	}
 
-	gvr, err := resource.GetGvrFromUnstructured(s.resourceManager, resourceManifest[0])
+	gvr, err := resource.GetGvrFromUnstructured(s.resourceManager, res)
 	if err != nil {
 		return err
 	}
 
 	return retry.Do(func() error {
-		_, err = s.k8sClient.Resource(*gvr).Namespace(resourceManifest[0].GetNamespace()).Get(context.Background(), resourceManifest[0].GetName(), metav1.GetOptions{})
+		_, err = s.k8sClient.Resource(*gvr).Namespace(res.GetNamespace()).Get(context.Background(), res.GetName(), metav1.GetOptions{})
 
 		if apierrors.IsNotFound(err) {
 			return nil
@@ -171,7 +171,7 @@ func (s *scenario) theAPIRuleIsNotFound() error {
 			return err
 		}
 
-		return fmt.Errorf("expected that APIRule %s not to exist, but it exists", resourceManifest[0].GetName())
+		return fmt.Errorf("expected that APIRule %s not to exist, but it exists", res.GetName())
 	}, testcontext.GetRetryOpts()...)
 }
 
@@ -204,6 +204,19 @@ func (s *scenario) thereIsAHttpbinService() error {
 	return nil
 }
 
+func (s *scenario) thereIsAHelloWorldService() error {
+	resources, err := manifestprocessor.ParseFromFileWithTemplate("testing-app-helloworld.yaml", s.ApiResourceDirectory, s.ManifestTemplate)
+	if err != nil {
+		return err
+	}
+	_, err = s.resourceManager.CreateResources(s.k8sClient, resources...)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // teardownHttpbinService deletes the httpbin service and reset the url in the scenario. This should be considered a temporary solution
 // to reduce resource consumption until we implement a better way to clean up the resources by a scenario. If the test fails before this step the teardown won't be executed.
 func (s *scenario) teardownHttpbinService() error {
@@ -217,6 +230,19 @@ func (s *scenario) teardownHttpbinService() error {
 	}
 
 	s.Url = ""
+
+	return nil
+}
+
+func (s *scenario) teardownHelloWorldService() error {
+	resources, err := manifestprocessor.ParseFromFileWithTemplate("testing-app-helloworld.yaml", s.ApiResourceDirectory, s.ManifestTemplate)
+	if err != nil {
+		return err
+	}
+	err = s.resourceManager.DeleteResources(s.k8sClient, resources...)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
