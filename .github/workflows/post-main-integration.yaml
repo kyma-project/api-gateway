@@ -21,7 +21,7 @@ jobs:
   build:
     name: build api-gateway image
     uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
-    if: ${{ github.event_name != 'schedule' }}
+    if: false
     with:
       name: api-gateway/main/api-gateway-manager
       dockerfile: Dockerfile
