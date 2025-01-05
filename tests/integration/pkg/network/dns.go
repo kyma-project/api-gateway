@@ -3,12 +3,16 @@ package network
 import (
 	"context"
 	_ "embed"
+	"fmt"
 	k8sclient "github.com/kyma-project/api-gateway/tests/integration/pkg/client"
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/helpers"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/manifestprocessor"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/resource"
 	appsv1 "k8s.io/api/apps/v1"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/dynamic"
 	"log"
+	"net"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"time"
 )
@@ -65,4 +69,32 @@ func restartCoreDnsPods() error {
 	dep.Spec.Template.ObjectMeta.Annotations["kubectl.kubernetes.io/restartedAt"] = time.Now().Format(time.RFC3339)
 
 	return c.Patch(context.Background(), dep, patch)
+}
+
+// function waits until the given domain points to the given IP
+// the domain must be a wildcard one because the function probes the <randomHost>.<domain>
+func WaitUntilDNSReady(domain string, expectedIP net.IP) error {
+	err := wait.ExponentialBackoff(wait.Backoff{
+		Duration: time.Second,
+		Factor:   2,
+		Steps:    10,
+	}, func() (done bool, err error) {
+		randomHost := helpers.GenerateRandomString(3)
+		ips, err := net.LookupIP(fmt.Sprintf("%s.%s", randomHost, domain))
+		if err != nil {
+			return false, nil
+		}
+		if len(ips) != 0 {
+			for _, ip := range ips {
+				if ip.Equal(expectedIP) {
+					return true, nil
+				}
+			}
+		}
+		return false, err
+	})
+	if err != nil {
+		return fmt.Errorf("DNS record could not be looked up: %s", err)
+	}
+	return nil
 }
