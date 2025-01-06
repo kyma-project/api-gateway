@@ -23,6 +23,10 @@ PARALLEL_REQUESTS=5
 
 HANDLER="$1"
 
+TEST_OIDC_CONFIG_URL=${TEST_OIDC_CONFIG_URL:-}
+TEST_CLIENT_ID=${TEST_CLIENT_ID:-}
+TEST_CLIENT_SECRET=${TEST_CLIENT_SECRET:-}
+
 if [[ -z "$HANDLER" || ! "$HANDLER" =~ ^(jwt|noop|no_auth|allow|oauth2_introspection)$ ]]; then
   echo "zero-downtime: Handler not provided or invalid. Must be one of: jwt, noop, no_auth, allow, oauth2_introspection"
   exit 1
@@ -79,13 +83,15 @@ run_zero_downtime_requests() {
   # Wait until the host in the APIRule is available. This may take a very long time because the httpbin application
   # used in the integration tests takes a very long time to start successfully processing requests, even though it is
   # already ready.
+  echo "zero-downtime: Waiting until $url_under_test is available"
   wait_for_url "$url_under_test" "$bearer_token"
 
   echo "zero-downtime: Sending requests to $url_under_test"
 
   # Run the send_requests function in parallel processes
   for (( i = 0; i < PARALLEL_REQUESTS; i++ )); do
-    send_requests "$url_under_test" "$bearer_token" &
+    echo "zero-downtime: Starting thread $i"
+    send_requests "$i" "$url_under_test" "$bearer_token" &
     request_pids[$i]=$!
   done
 
@@ -143,9 +149,11 @@ wait_for_url() {
 
 # Function to send requests to a given url with optional bearer token
 send_requests() {
-  local url="$1"
-  local bearer_token="$2"
+  local thread="$1"
+  local url="$2"
+  local bearer_token="$3"
   local request_count=0
+  echo "zero-downtime: staring thread ${thread}, sending requests to ${url}"
 
   while true; do
 
@@ -154,6 +162,8 @@ send_requests() {
     else
       response=$(curl -sk -o /dev/null -w "%{http_code}" -H "x-ext-authz: allow" "$url")
     fi
+    echo "zero-downtime: thread ${thread}, request ${request_count}, response: ${response}"
+
     ((request_count = request_count + 1))
 
     if [ "$response" != "200" ]; then
@@ -162,10 +172,10 @@ send_requests() {
       # is exposed. This was the most reliable way to detect when to stop the requests, since only sending requests
       # when the APIRule exists led to flaky results.
       if kubectl get apirules -A -l test=v1beta1-migration --ignore-not-found | grep -q .; then
-        echo "zero-downtime: Test failed after $request_count requests. Canceling requests because of HTTP status code $response"
+        echo "zero-downtime: thread ${thread}, test failed after $request_count requests. Canceling requests because of HTTP status code $response"
         exit 1
       else
-        echo "zero-downtime: Test successful after $request_count requests. Stopping requests because APIRule is deleted."
+        echo "zero-downtime: thread ${thread}, test successful after $request_count requests. Stopping requests because APIRule is deleted."
         exit 0
       fi
     fi
