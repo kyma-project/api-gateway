@@ -5,7 +5,7 @@ metadata:
   namespace: "{{.Namespace}}"
 spec:
   gateway: "{{.GatewayNamespace}}/{{.GatewayName}}"
-  host: "httpbin-{{.TestID}}.{{.Domain}}"
+  host: "httpbin-{{.TestID}}.{{.Subdomain}}"
   service:
     name: httpbin-{{.TestID}}
     port: 8000

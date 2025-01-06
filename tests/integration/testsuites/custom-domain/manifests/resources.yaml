@@ -12,7 +12,7 @@ data:
 apiVersion: dns.gardener.cloud/v1alpha1
 kind: DNSProvider
 metadata:
-  name: "{{.NamePrefix}}-{{.TestID}}"
+  name: "{{.NamePrefix}}-{{.SuiteID}}"
   namespace: "{{.Namespace}}"
   labels:
     owner: "custom-domain-test"
@@ -24,12 +24,12 @@ spec:
     name: google-credentials
   domains:
     include:
-      - "{{.Domain}}"
+      - "{{.ParentDomain}}"
 ---
 apiVersion: dns.gardener.cloud/v1alpha1
 kind: DNSEntry
 metadata:
-  name: "{{.NamePrefix}}-{{.TestID}}"
+  name: "{{.NamePrefix}}-{{.SuiteID}}"
   namespace: "{{.Namespace}}"
   labels:
     owner: "custom-domain-test"
@@ -44,12 +44,12 @@ spec:
 apiVersion: cert.gardener.cloud/v1alpha1
 kind: Certificate
 metadata:
-  name: "{{.NamePrefix}}-{{.TestID}}"
+  name: "{{.NamePrefix}}-{{.SuiteID}}"
   namespace: "istio-system"
   labels:
     owner: "custom-domain-test"
 spec:
-  secretName: "{{.NamePrefix}}-{{.TestID}}"
+  secretName: "{{.NamePrefix}}-{{.SuiteID}}"
   commonName: "*.{{.Subdomain}}"
   issuerRef:
     name: garden
@@ -57,7 +57,7 @@ spec:
 apiVersion: networking.istio.io/v1beta1
 kind: Gateway
 metadata:
-  name: "{{.NamePrefix}}-{{.TestID}}"
+  name: "{{.NamePrefix}}-{{.SuiteID}}"
   namespace: "{{.Namespace}}"
   labels:
     owner: "custom-domain-test"
@@ -68,9 +68,9 @@ spec:
     - hosts:
         - '*.{{.Subdomain}}'
       port:
-        name: httpbin-{{.TestID}}
+        name: httpbin-{{.SuiteID}}
         number: 443
         protocol: HTTPS
       tls:
-        credentialName: "{{.NamePrefix}}-{{.TestID}}"
+        credentialName: "{{.NamePrefix}}-{{.SuiteID}}"
         mode: SIMPLE

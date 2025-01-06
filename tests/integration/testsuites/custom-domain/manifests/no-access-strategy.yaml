@@ -8,7 +8,7 @@ spec:
     name: httpbin-{{.TestID}}
     port: 8000
   gateway: "{{.GatewayNamespace}}/{{.GatewayName}}"
-  host: "httpbin-{{.TestID}}.{{.Domain}}"
+  host: "httpbin-{{.TestID}}.{{.Subdomain}}"
   rules:
   - path: /.*
     methods: ["GET"]

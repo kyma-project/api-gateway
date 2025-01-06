@@ -26,9 +26,9 @@ func initSecuredToUnsecuredEndpoint(ctx *godog.ScenarioContext, ts *testsuite) {
 }
 
 func (s *secureToUnsecureScenario) updateApiRuleToMakeEndpointUnsecured() error {
-	r, err := manifestprocessor.ParseFromFileWithTemplate("secured-to-unsecured-2.yaml", s.ApiResourceDirectory, s.ManifestTemplate)
+	res, err := manifestprocessor.ParseSingleEntryFromFileWithTemplate("secured-to-unsecured-2.yaml", s.ApiResourceDirectory, s.ManifestTemplate)
 	if err != nil {
 		return err
 	}
-	return helpers.ApplyApiRule(s.resourceManager.UpdateResources, s.resourceManager.UpdateResources, s.k8sClient, testcontext.GetRetryOpts(), r)
+	return helpers.UpdateApiRule(s.resourceManager, s.k8sClient, testcontext.GetRetryOpts(), res)
 }
