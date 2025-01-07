@@ -4,12 +4,12 @@ import (
 	"context"
 	_ "embed"
 	"fmt"
+	"github.com/avast/retry-go/v4"
 	k8sclient "github.com/kyma-project/api-gateway/tests/integration/pkg/client"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/helpers"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/manifestprocessor"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/resource"
 	appsv1 "k8s.io/api/apps/v1"
-	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/dynamic"
 	"log"
 	"net"
@@ -73,28 +73,33 @@ func restartCoreDnsPods() error {
 
 // function waits until the given domain points to the given IP
 // the domain must be a wildcard one because the function probes the <randomHost>.<domain>
-func WaitUntilDNSReady(domain string, expectedIP net.IP) error {
-	err := wait.ExponentialBackoff(wait.Backoff{
-		Duration: time.Second,
-		Factor:   2,
-		Steps:    10,
-	}, func() (done bool, err error) {
-		randomHost := helpers.GenerateRandomString(3)
-		ips, err := net.LookupIP(fmt.Sprintf("%s.%s", randomHost, domain))
+func WaitUntilDNSReady(domain string, expectedIP net.IP, retryOpts []retry.Option) error {
+	return retry.Do(func() error {
+		ready, err := isDNSReady(domain, expectedIP)
 		if err != nil {
-			return false, nil
+			return fmt.Errorf("error while checking if domain %s is ready: %w", domain, err)
 		}
-		if len(ips) != 0 {
-			for _, ip := range ips {
-				if ip.Equal(expectedIP) {
-					return true, nil
-				}
+		if !ready {
+			return fmt.Errorf("domain %s is not ready yet", domain)
+		}
+		return nil
+	}, retryOpts...)
+}
+
+// function checks whether the given domain points to the given IP
+// the domain must be a wildcard one because the function probes the <randomHost>.<domain>
+func isDNSReady(domain string, expectedIP net.IP) (bool, error) {
+	randomHost := helpers.GenerateRandomString(3)
+	ips, err := net.LookupIP(fmt.Sprintf("%s.%s", randomHost, domain))
+	if err != nil {
+		return false, nil
+	}
+	if len(ips) != 0 {
+		for _, ip := range ips {
+			if ip.Equal(expectedIP) {
+				return true, nil
 			}
 		}
-		return false, err
-	})
-	if err != nil {
-		return fmt.Errorf("DNS record could not be looked up: %s", err)
 	}
-	return nil
+	return false, err
 }

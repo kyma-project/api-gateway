@@ -5,6 +5,7 @@ import (
 	_ "embed"
 	"encoding/base64"
 	"fmt"
+	"github.com/avast/retry-go/v4"
 	"github.com/cucumber/godog"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/auth"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/global"
@@ -21,6 +22,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 	"log"
+	"time"
 )
 
 const ingressServiceName = "istio-ingressgateway"
@@ -197,7 +199,7 @@ func (t *testsuite) createCustomDomainResources() error {
 	log.Printf("Custom domain resources created")
 
 	log.Printf("Waiting until the wildcard DNS record %s points to IP %s", t.subdomainForTests, loadBalancerIP)
-	err = network.WaitUntilDNSReady(t.subdomainForTests, loadBalancerIP)
+	err = network.WaitUntilDNSReady(t.subdomainForTests, loadBalancerIP, t.getDomainRetryOpts())
 	if err != nil {
 		return err
 	}
@@ -214,4 +216,18 @@ func (t *testsuite) deleteCustomDomainResources() error {
 	}
 	log.Printf("Custom domain resources deleted")
 	return nil
+}
+
+func (t *testsuite) getDomainRetryOpts() []retry.Option {
+	retryOpts := []retry.Option{
+		retry.Delay(time.Duration(10) * time.Second),
+		retry.Attempts(100),
+		retry.DelayType(retry.FixedDelay),
+	}
+
+	if t.config.DebugLogging {
+		retryOpts = append(retryOpts, retry.OnRetry(func(n uint, err error) { log.Printf("Trial #%d failed, error: %s\n", n, err) }))
+	}
+
+	return retryOpts
 }
