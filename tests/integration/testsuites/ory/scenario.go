@@ -82,7 +82,7 @@ func (s *scenario) thereIsAHttpbinServiceAndApiRuleIsApplied() error {
 	if err != nil {
 		return err
 	}
-	return helpers.ApplyApiRule(s.resourceManager, s.k8sClient, testcontext.GetRetryOpts(), res)
+	return helpers.CreateApiRule(s.resourceManager, s.k8sClient, testcontext.GetRetryOpts(), res)
 }
 
 func (s *scenario) theAPIRuleIsApplied() error {
@@ -90,7 +90,7 @@ func (s *scenario) theAPIRuleIsApplied() error {
 	if err != nil {
 		return err
 	}
-	return helpers.ApplyApiRule(s.resourceManager, s.k8sClient, testcontext.GetRetryOpts(), res)
+	return helpers.CreateApiRule(s.resourceManager, s.k8sClient, testcontext.GetRetryOpts(), res)
 }
 
 func (s *scenario) theAPIRuleIsUpdated(manifest string) error {

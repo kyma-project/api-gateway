@@ -36,7 +36,7 @@ func (s *scenario) theAPIRuleIsApplied() error {
 	if err != nil {
 		return err
 	}
-	return helpers.ApplyApiRule(s.resourceManager, s.k8sClient, testcontext.GetRetryOpts(), res)
+	return helpers.CreateApiRule(s.resourceManager, s.k8sClient, testcontext.GetRetryOpts(), res)
 }
 
 func (s *scenario) theAPIRulesAreApplied() error {
@@ -45,7 +45,7 @@ func (s *scenario) theAPIRulesAreApplied() error {
 		return err
 	}
 	for _, apiRule := range apiRules {
-		err := helpers.ApplyApiRule(s.resourceManager, s.k8sClient, testcontext.GetRetryOpts(), apiRule)
+		err := helpers.CreateApiRule(s.resourceManager, s.k8sClient, testcontext.GetRetryOpts(), apiRule)
 		if err != nil {
 			return err
 		}

@@ -67,9 +67,9 @@ func getAPIRuleStatus(res *unstructured.Unstructured) (string, string, error) {
 	return code, description, nil
 }
 
-// ApplyApiRule creates APIRule and waits for its status
+// CreateApiRule creates APIRule and waits for its status
 // This function works for both v1beta1 and v2alpha1 versions of APIRule.
-func ApplyApiRule(resourceMgr *resource.Manager, k8sClient dynamic.Interface, retryOpts []retry.Option, apiRuleResource unstructured.Unstructured) error {
+func CreateApiRule(resourceMgr *resource.Manager, k8sClient dynamic.Interface, retryOpts []retry.Option, apiRuleResource unstructured.Unstructured) error {
 	if apiRuleResource.GetObjectKind().GroupVersionKind().Kind != "APIRule" {
 		return fmt.Errorf("object with name %s is not an APIRule unintended usage of the function", apiRuleResource.GetName())
 	}
@@ -118,7 +118,7 @@ func ApplyApiRule(resourceMgr *resource.Manager, k8sClient dynamic.Interface, re
 	return nil
 }
 
-func ApplyApiRuleV2Alpha1(resourceMgr *resource.Manager, k8sClient dynamic.Interface, retryOpts []retry.Option, apiRuleResource unstructured.Unstructured) error {
+func CreateApiRuleV2Alpha1(resourceMgr *resource.Manager, k8sClient dynamic.Interface, retryOpts []retry.Option, apiRuleResource unstructured.Unstructured) error {
 	if apiRuleResource.GetObjectKind().GroupVersionKind().Kind != "APIRule" {
 		return fmt.Errorf("object with name %s is not an APIRule unintended usage of the function", apiRuleResource.GetName())
 	}
@@ -164,7 +164,7 @@ func ApplyApiRuleV2Alpha1(resourceMgr *resource.Manager, k8sClient dynamic.Inter
 	return nil
 }
 
-func ApplyApiRuleV2Alpha1ExpectError(resourceMgr *resource.Manager, k8sClient dynamic.Interface, retryOpts []retry.Option, apiRuleResource unstructured.Unstructured, errorMessage string) error {
+func CreateApiRuleV2Alpha1ExpectError(resourceMgr *resource.Manager, k8sClient dynamic.Interface, retryOpts []retry.Option, apiRuleResource unstructured.Unstructured, errorMessage string) error {
 	if apiRuleResource.GetObjectKind().GroupVersionKind().Kind != "APIRule" {
 		return errors.New("object is not an APIRule unintended usage of the function")
 	}
