@@ -132,8 +132,8 @@ wait_for_url() {
 
   echo "zero-downtime: Waiting for URL '$url' to be available"
 
-  # Wait for 1min
-  while [[ $attempts -le 60 ]] ; do
+  # Wait for 10min
+  while [[ $attempts -le 600 ]] ; do
     response=$(curl -sk -o /dev/null -L -w "%{http_code}" "$url" -H "x-ext-authz: allow" -H "Authorization: Bearer $bearer_token" )
   	if [ "$response" == "200" ]; then
       echo "zero-downtime: $url is available for requests"
