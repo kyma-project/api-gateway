@@ -129,7 +129,7 @@ type Rule struct {
 	//  The `{**}` operator must be the last operator in the path.
 	//  - Wildcard path `/*` - matches all paths. Equivalent to `/{**}` path.
 	//
-	// +kubebuilder:validation:Pattern=`^((\/[\w\.~\-]*)|(\/\{\*{1,2}\}))+$|^\/\*$`
+	// +kubebuilder:validation:Pattern=`^((\/([A-Za-z0-9-._~!$&'()+,;=:@]|%[0-9a-fA-F]{2})*)|(\/\{\*{1,2}\}))+$|^\/\*$`
 	Path string `json:"path"`
 	// Describes the service to expose. Overwrites the **spec** level service if defined.
 	// +optional
