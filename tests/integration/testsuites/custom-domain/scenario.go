@@ -116,7 +116,7 @@ func createScenario(t *testsuite, namePrefix string) (*scenario, error) {
 }
 
 func (c *scenario) thereIsAnUnsecuredEndpoint() error {
-	return helpers.ApplyApiRule(c.resourceManager, c.k8sClient, testcontext.GetRetryOpts(), c.apiResourceOne)
+	return helpers.CreateApiRule(c.resourceManager, c.k8sClient, testcontext.GetRetryOpts(), c.apiResourceOne)
 }
 
 func (c *scenario) callingTheEndpointWithAnyTokenShouldResultInStatusBetween(endpoint string, arg1, arg2 int) error {
@@ -124,7 +124,7 @@ func (c *scenario) callingTheEndpointWithAnyTokenShouldResultInStatusBetween(end
 }
 
 func (c *scenario) secureWithOAuth2() error {
-	return helpers.ApplyApiRule(c.resourceManager, c.k8sClient, testcontext.GetRetryOpts(), c.apiResourceTwo)
+	return helpers.CreateApiRule(c.resourceManager, c.k8sClient, testcontext.GetRetryOpts(), c.apiResourceTwo)
 }
 
 func (c *scenario) callingTheEndpointWithAInvalidTokenShouldResultInStatusBetween(endpoint string, lower int, higher int) error {

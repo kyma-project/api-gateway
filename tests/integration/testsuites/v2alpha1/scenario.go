@@ -96,7 +96,7 @@ func (s *scenario) theAPIRuleIsApplied() error {
 	if err != nil {
 		return err
 	}
-	return helpers.ApplyApiRule(s.resourceManager, s.k8sClient, testcontext.GetRetryOpts(), res)
+	return helpers.CreateApiRule(s.resourceManager, s.k8sClient, testcontext.GetRetryOpts(), res)
 }
 
 func (s *scenario) theMisconfiguredAPIRuleIsApplied() error {
@@ -113,7 +113,7 @@ func (s *scenario) theAPIRuleV2Alpha1IsApplied() error {
 	if err != nil {
 		return err
 	}
-	return helpers.ApplyApiRuleV2Alpha1(s.resourceManager, s.k8sClient, testcontext.GetRetryOpts(), res)
+	return helpers.CreateApiRuleV2Alpha1(s.resourceManager, s.k8sClient, testcontext.GetRetryOpts(), res)
 }
 
 func (s *scenario) theAPIRuleTemplateFileIsSetTo(templateFileName string) {
@@ -130,7 +130,7 @@ func (s *scenario) theAPIRuleV2Alpha1IsAppliedExpectError(errorMessage string) e
 	if err != nil {
 		return err
 	}
-	return helpers.ApplyApiRuleV2Alpha1ExpectError(s.resourceManager, s.k8sClient, testcontext.GetRetryOpts(), res, errorMessage)
+	return helpers.CreateApiRuleV2Alpha1ExpectError(s.resourceManager, s.k8sClient, testcontext.GetRetryOpts(), res, errorMessage)
 }
 
 func (s *scenario) specifiesCustomGateway(gatewayNamespace, gatewayName string) {
