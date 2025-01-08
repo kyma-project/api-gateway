@@ -36,6 +36,18 @@ func ParseFromFileWithTemplate(fileName string, directory string, templateData i
 	return ParseWithTemplate(rawData, templateData)
 }
 
+func ParseSingleEntryFromFileWithTemplate(fileName string, directory string, templateData interface{}) (unstructured.Unstructured, error) {
+	result, err := ParseFromFileWithTemplate(fileName, directory, templateData)
+	if err != nil {
+		return unstructured.Unstructured{}, err
+	}
+
+	if len(result) > 1 {
+		return unstructured.Unstructured{}, fmt.Errorf("Template in file %s contains more than one entry", fileName)
+	}
+	return result[0], nil
+}
+
 func ParseWithTemplate(manifest []byte, templateData interface{}) ([]unstructured.Unstructured, error) {
 	man, err := parseTemplateWithData(string(manifest), templateData)
 	if err != nil {

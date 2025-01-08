@@ -1,9 +1,12 @@
 package helpers
 
 import (
+	"context"
 	"fmt"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"log"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/dynamic"
 	"net"
 )
 
@@ -14,7 +17,6 @@ func GetLoadBalancerIp(loadBalancerIngress map[string]interface{}) (net.IP, erro
 	if err == nil {
 		return loadBalancerIP, nil
 	} else {
-		log.Printf("Falling back to reading DNS based load balancer IP, because of: %s\n", err)
 		return getDnsBasedLoadBalancerIp(loadBalancerIngress)
 	}
 }
@@ -47,4 +49,20 @@ func getDnsBasedLoadBalancerIp(lbIngress map[string]interface{}) (net.IP, error)
 	}
 
 	return ips[0], nil
+}
+
+func GetLoadBalancerIngress(k8sClient dynamic.Interface, svcName string, svcNamespace string) (map[string]interface{}, error) {
+	res := schema.GroupVersionResource{Group: "", Version: "v1", Resource: "services"}
+	svc, err := k8sClient.Resource(res).Namespace(svcNamespace).Get(context.Background(), svcName, v1.GetOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("service %s was not found in namespace %s: %w", svcName, svcNamespace, err)
+	}
+
+	ingress, found, err := unstructured.NestedSlice(svc.Object, "status", "loadBalancer", "ingress")
+	if err != nil || !found {
+		return nil, fmt.Errorf("could not get load balancer status from the service %s: %w", svcName, err)
+	}
+	loadBalancerIngress, _ := ingress[0].(map[string]interface{})
+
+	return loadBalancerIngress, nil
 }

@@ -27,9 +27,9 @@ func initUnsecuredToSecured(ctx *godog.ScenarioContext, ts *testsuite) {
 }
 
 func (u *unsecuredToSecured) secureWithOAuth2JWT() error {
-	r, err := manifestprocessor.ParseFromFileWithTemplate("unsecured-to-secured-2.yaml", u.ApiResourceDirectory, u.ManifestTemplate)
+	r, err := manifestprocessor.ParseSingleEntryFromFileWithTemplate("unsecured-to-secured-2.yaml", u.ApiResourceDirectory, u.ManifestTemplate)
 	if err != nil {
 		return err
 	}
-	return helpers.ApplyApiRule(u.resourceManager.UpdateResources, u.resourceManager.UpdateResources, u.k8sClient, testcontext.GetRetryOpts(), r)
+	return helpers.UpdateApiRule(u.resourceManager, u.k8sClient, testcontext.GetRetryOpts(), r)
 }

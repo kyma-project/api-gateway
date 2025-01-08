@@ -23,7 +23,7 @@ func (s *StatusPredicate) Assert(response http.Response) (bool, string) {
 		return true, ""
 	}
 
-	return false, fmt.Sprintf("Status code %d is not between %d and %d", response.StatusCode, s.LowerStatusBound, s.UpperStatusBound)
+	return false, fmt.Sprintf("Status code %d on url %s is not between %d and %d", response.StatusCode, response.Request.URL, s.LowerStatusBound, s.UpperStatusBound)
 }
 
 // BodyContainsPredicate is a struct representing desired HTTP response body containing expected strings
@@ -35,7 +35,7 @@ type BodyContainsPredicate struct {
 func (s *BodyContainsPredicate) Assert(response http.Response) (bool, string) {
 	bodyBytes, err := io.ReadAll(response.Body)
 	if err != nil {
-		return false, "Failed to read response body"
+		return false, fmt.Sprintf("Failed to read response body from url %s", response.Request.URL)
 	}
 
 	bodyString := string(bodyBytes)
@@ -50,7 +50,7 @@ func (s *BodyContainsPredicate) Assert(response http.Response) (bool, string) {
 	if len(notContained) == 0 {
 		return true, ""
 	} else {
-		return false, fmt.Sprintf("Body didn't contain '%s'", strings.Join(notContained, "', '"))
+		return false, fmt.Sprintf("Body got from url %s didn't contain '%s'", response.Request.URL, strings.Join(notContained, "', '"))
 	}
 
 }

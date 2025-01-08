@@ -4,7 +4,7 @@ Feature: Exposing different endpoints with different handlers
     Given NoAuth_JWT: There is a httpbin service
     And NoAuth_JWT: There is an endpoint secured with JWT on path "/ip" requiring scopes '["read", "write"]'
     And NoAuth_JWT: There is an endpoint secured with NoAuth on path "/get"
-    When NoAuth_JWT: The APIRule is applied
+    When NoAuth_JWT: The APIRules are applied
     Then NoAuth_JWT: Calling the "/ip" endpoint without a token should result in status between 400 and 403
     And NoAuth_JWT: Calling the "/ip" endpoint with an invalid token should result in status between 400 and 403
     And NoAuth_JWT: Calling the "/ip" endpoint with a valid "JWT" token with "scopes" "read" and "write" should result in status between 200 and 299

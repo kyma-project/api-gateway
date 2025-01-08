@@ -34,12 +34,10 @@ const (
 	notReconciledCode = ""
 )
 
-// RetryableApiRule wraps any function that modifies or creates an APIRule
-type RetryableApiRule func(k8sClient dynamic.Interface, resources ...unstructured.Unstructured) (*unstructured.Unstructured, error)
-
 func getAPIRuleStatus(res *unstructured.Unstructured) (string, string, error) {
+	apiRuleName := res.GetName()
 	if res.Object == nil || res.Object["apiVersion"] == nil {
-		return "", "", errors.New("apiVersion not found in the APIRule object")
+		return "", "", fmt.Errorf("apiVersion not found in the APIRule %s object", apiRuleName)
 	}
 
 	apiVersion := strings.Split(res.Object["apiVersion"].(string), "/")
@@ -63,47 +61,55 @@ func getAPIRuleStatus(res *unstructured.Unstructured) (string, string, error) {
 		code = arStatus.Status.State
 		description = arStatus.Status.Description
 	default:
-		return "", "", errors.New("unsupported APIRule version")
+		return "", "", fmt.Errorf("APIRule %s has unsupported version", apiRuleName)
 	}
 
 	return code, description, nil
 }
 
-// ApplyApiRule tries toExecute function and retries with onRetry if APIRule status is in error status or has no status
-// code. This function works for both v1beta1 and v2alpha1 versions of APIRule.
-func ApplyApiRule(toExecute RetryableApiRule, onRetry RetryableApiRule, k8sClient dynamic.Interface, retryOpts []retry.Option, resources []unstructured.Unstructured) error {
-	res, err := toExecute(k8sClient, resources...)
+// CreateApiRule creates APIRule and waits for its status
+// This function works for both v1beta1 and v2alpha1 versions of APIRule.
+func CreateApiRule(resourceMgr *resource.Manager, k8sClient dynamic.Interface, retryOpts []retry.Option, apiRuleResource unstructured.Unstructured) error {
+	if apiRuleResource.GetObjectKind().GroupVersionKind().Kind != "APIRule" {
+		return fmt.Errorf("object with name %s is not an APIRule unintended usage of the function", apiRuleResource.GetName())
+	}
+
+	resourceSchema, ns, _ := resourceMgr.GetResourceSchemaAndNamespace(apiRuleResource)
+	apiRuleName := apiRuleResource.GetName()
+
+	err := resourceMgr.CreateResource(k8sClient, resourceSchema, ns, apiRuleResource)
 	if err != nil {
 		return err
 	}
 
-	if res.GetObjectKind().GroupVersionKind().Kind != "APIRule" {
-		return errors.New("object is not an APIRule unintended usage of the function")
+	currentApiRule, err := resourceMgr.GetResource(k8sClient, resourceSchema, ns, apiRuleName)
+	if err != nil {
+		return err
 	}
 
-	code, _, err := getAPIRuleStatus(res)
+	code, _, err := getAPIRuleStatus(currentApiRule)
 	if err != nil {
 		return err
 	}
 
 	if code == errorV1beta1 || code == errorV2alpha1 || code == notReconciledCode {
 		return retry.Do(func() error {
-			res, err := onRetry(k8sClient, resources...)
+			currentApiRule, err = resourceMgr.GetResource(k8sClient, resourceSchema, ns, apiRuleName)
 			if err != nil {
 				return err
 			}
 
-			code, description, err := getAPIRuleStatus(res)
+			code, description, err := getAPIRuleStatus(currentApiRule)
 			if err != nil {
 				return err
 			}
 
 			switch code {
 			case notReconciledCode:
-				return errors.New("apirule not reconciled")
+				return fmt.Errorf("APIRule %s not reconciled", apiRuleName)
 			case errorV1beta1, errorV2alpha1:
-				log.Printf("APIRule status code is '%s' with description '%s'", code, description)
-				return errors.New("apirule in error state")
+				log.Printf("APIRule %s status code is '%s' with description '%s'", apiRuleName, code, description)
+				return fmt.Errorf("APIRule %s in error state", apiRuleName)
 			default:
 				return nil
 			}
@@ -112,22 +118,35 @@ func ApplyApiRule(toExecute RetryableApiRule, onRetry RetryableApiRule, k8sClien
 	return nil
 }
 
-func ApplyApiRuleV2Alpha1(toExecute RetryableApiRule, onRetry RetryableApiRule, k8sClient dynamic.Interface, retryOpts []retry.Option, resources []unstructured.Unstructured) error {
-	res, err := toExecute(k8sClient, resources...)
+func CreateApiRuleV2Alpha1(resourceMgr *resource.Manager, k8sClient dynamic.Interface, retryOpts []retry.Option, apiRuleResource unstructured.Unstructured) error {
+	if apiRuleResource.GetObjectKind().GroupVersionKind().Kind != "APIRule" {
+		return fmt.Errorf("object with name %s is not an APIRule unintended usage of the function", apiRuleResource.GetName())
+	}
+
+	resourceSchema, ns, _ := resourceMgr.GetResourceSchemaAndNamespace(apiRuleResource)
+	apiRuleName := apiRuleResource.GetName()
+
+	err := resourceMgr.CreateResource(k8sClient, resourceSchema, ns, apiRuleResource)
 	if err != nil {
 		return err
 	}
-	apiStatus, err := GetAPIRuleStatusV2Alpha1(res)
+
+	currentApiRule, err := resourceMgr.GetResource(k8sClient, resourceSchema, ns, apiRuleName)
+	if err != nil {
+		return err
+	}
+	apiStatus, err := GetAPIRuleStatusV2Alpha1(currentApiRule)
 	if err != nil {
 		return err
 	}
 	if apiStatus.Status.State != "Ready" {
 		return retry.Do(func() error {
-			res, err := onRetry(k8sClient, resources...)
+			currentApiRule, err = resourceMgr.GetResource(k8sClient, resourceSchema, ns, apiRuleName)
 			if err != nil {
 				return err
 			}
-			js, err := json.Marshal(res)
+
+			js, err := json.Marshal(currentApiRule)
 			if err != nil {
 				return err
 			}
@@ -136,8 +155,8 @@ func ApplyApiRuleV2Alpha1(toExecute RetryableApiRule, onRetry RetryableApiRule, 
 				return err
 			}
 			if apiStatus.Status.State != "Ready" {
-				log.Println("APIRule status not Ready: " + apiStatus.Status.Description)
-				return errors.New("APIRule status not Ready: " + apiStatus.Status.Description)
+				log.Printf("APIRule %s status not Ready, but is: %s\n", apiRuleName, apiStatus.Status.Description)
+				return fmt.Errorf("APIRule %s status not Ready, but is: %s", apiRuleName, apiStatus.Status.Description)
 			}
 			return nil
 		}, retryOpts...)
@@ -145,22 +164,35 @@ func ApplyApiRuleV2Alpha1(toExecute RetryableApiRule, onRetry RetryableApiRule, 
 	return nil
 }
 
-func ApplyApiRuleV2Alpha1ExpectError(toExecute RetryableApiRule, onRetry RetryableApiRule, k8sClient dynamic.Interface, retryOpts []retry.Option, resources []unstructured.Unstructured, errorMessage string) error {
-	res, err := toExecute(k8sClient, resources...)
+func CreateApiRuleV2Alpha1ExpectError(resourceMgr *resource.Manager, k8sClient dynamic.Interface, retryOpts []retry.Option, apiRuleResource unstructured.Unstructured, errorMessage string) error {
+	if apiRuleResource.GetObjectKind().GroupVersionKind().Kind != "APIRule" {
+		return errors.New("object is not an APIRule unintended usage of the function")
+	}
+
+	resourceSchema, ns, _ := resourceMgr.GetResourceSchemaAndNamespace(apiRuleResource)
+	apiRuleName := apiRuleResource.GetName()
+
+	err := resourceMgr.CreateResource(k8sClient, resourceSchema, ns, apiRuleResource)
 	if err != nil {
 		return err
 	}
-	apiStatus, err := GetAPIRuleStatusV2Alpha1(res)
+
+	currentApiRule, err := resourceMgr.GetResource(k8sClient, resourceSchema, ns, apiRuleName)
+	if err != nil {
+		return err
+	}
+
+	apiStatus, err := GetAPIRuleStatusV2Alpha1(currentApiRule)
 	if err != nil {
 		return err
 	}
 	if apiStatus.Status.State != "Error" {
 		return retry.Do(func() error {
-			res, err := onRetry(k8sClient, resources...)
+			currentApiRule, err = resourceMgr.GetResource(k8sClient, resourceSchema, ns, apiRuleName)
 			if err != nil {
 				return err
 			}
-			js, err := json.Marshal(res)
+			js, err := json.Marshal(currentApiRule)
 			if err != nil {
 				return err
 			}
@@ -169,12 +201,12 @@ func ApplyApiRuleV2Alpha1ExpectError(toExecute RetryableApiRule, onRetry Retryab
 				return err
 			}
 			if apiStatus.Status.State != "Error" {
-				log.Printf("expected but APIRule status to be Error, got %s with desc: %s", apiStatus.Status.State, apiStatus.Status.Description)
-				return fmt.Errorf("expected but APIRule status to be Error, got %s with desc: %s", apiStatus.Status.State, apiStatus.Status.Description)
+				log.Printf("expected APIRule %s status to be Error, got %s with desc: %s", apiRuleName, apiStatus.Status.State, apiStatus.Status.Description)
+				return fmt.Errorf("expected APIRule %s status to be Error, got %s with desc: %s", apiRuleName, apiStatus.Status.State, apiStatus.Status.Description)
 			}
 			if !strings.Contains(apiStatus.Status.Description, errorMessage) {
-				log.Printf("expected error description of the APIRule to be %s, got %s", errorMessage, apiStatus.Status.Description)
-				return fmt.Errorf("expected error description of the APIRule to be %s, got %s", errorMessage, apiStatus.Status.Description)
+				log.Printf("expected error description of the APIRule %s to be %s, got %s", apiRuleName, errorMessage, apiStatus.Status.Description)
+				return fmt.Errorf("expected error description of the APIRule %s to be %s, got %s", apiRuleName, errorMessage, apiStatus.Status.Description)
 			}
 			return nil
 		}, retryOpts...)
@@ -182,15 +214,23 @@ func ApplyApiRuleV2Alpha1ExpectError(toExecute RetryableApiRule, onRetry Retryab
 	return nil
 }
 
-func UpdateApiRule(resourceManager *resource.Manager, k8sClient dynamic.Interface, retryOpts []retry.Option, resources []unstructured.Unstructured) error {
+func UpdateApiRule(resourceMgr *resource.Manager, k8sClient dynamic.Interface, retryOpts []retry.Option, apiRuleResource unstructured.Unstructured) error {
+	resourceSchema, ns, _ := resourceMgr.GetResourceSchemaAndNamespace(apiRuleResource)
+	apiRuleName := apiRuleResource.GetName()
+
 	status := ApiRuleStatusV1beta1{}
 
-	res, err := resourceManager.UpdateResources(k8sClient, resources...)
+	err := resourceMgr.UpdateResource(k8sClient, resourceSchema, ns, apiRuleName, apiRuleResource)
 	if err != nil {
 		return err
 	}
 
-	js, err := json.Marshal(res)
+	currentApiRule, err := resourceMgr.GetResource(k8sClient, resourceSchema, ns, apiRuleName)
+	if err != nil {
+		return err
+	}
+
+	js, err := json.Marshal(currentApiRule)
 	if err != nil {
 		return err
 	}
