@@ -22,7 +22,6 @@ runs:
             repo: context.repo.repo,
             workflow_id: 'post-main-integration.yaml',
             branch: 'main',
-            status: 'success',
             per_page: 40 
           });
           const pushRuns = data.workflow_runs.filter(run => run.event === 'push');
