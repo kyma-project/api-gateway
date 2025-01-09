@@ -1,0 +1,71 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: mock-oauth2
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mock-oauth2-server-deployment
+  namespace: mock-oauth2
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mock-oauth2-server
+  template:
+    metadata:
+      labels:
+        sidecar.istio.io/inject: "false"
+        app: mock-oauth2-server
+    spec:
+      containers:
+        - name: mock-oauth2-server
+          image: europe-central2-docker.pkg.dev/sap-se-cx-kyma-goat/networking-dev-tools/oauth2-mock:latest
+          imagePullPolicy: Always
+          env:
+            - name: iss
+              value: http://mock-oauth2-server.mock-oauth2.svc.cluster.local
+            - name: PORT
+              value: "8000"
+          ports:
+            - containerPort: 8000
+              name: http
+              protocol: TCP
+      restartPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mock-oauth2-server
+  namespace: mock-oauth2
+spec:
+  selector:
+    app: mock-oauth2-server
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: http
+  type: ClusterIP
+---
+apiVersion: gateway.kyma-project.io/v1beta1
+kind: APIRule
+metadata:
+  name: mock-oauth2
+  namespace: mock-oauth2
+spec:
+  gateway: kyma-system/kyma-gateway
+  host: mock-oauth2
+  service:
+    name: mock-oauth2-server
+    port: 80
+  rules:
+    - path: /.*
+      methods:
+        - GET
+        - POST
+        - PUT
+        - DELETE
+      accessStrategies:
+        - handler: no_auth
+
