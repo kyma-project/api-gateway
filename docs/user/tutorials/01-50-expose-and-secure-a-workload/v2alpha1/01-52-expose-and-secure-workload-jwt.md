@@ -28,7 +28,7 @@ This tutorial shows how to expose and secure Services using APIGateway Controlle
     - **Access Strategy**: `jwt`
     - In the `JWT` section, add an authentication with your issuer and JSON Web Key Set URIs.
     - **Method**: `GET`
-    - **Path**: `/.*`
+    - **Path**: `/*`
 4. Choose **Create**.  
 
 #### **kubectl**
@@ -56,7 +56,7 @@ To expose and secure your Service, create the following APIRule:
                  jwksUri: {JWKS_URI}
           methods:
             - GET
-          path: /.*
+          path: /*
     EOF
     ```
 <!-- tabs:end -->
