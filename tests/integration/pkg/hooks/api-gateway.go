@@ -5,6 +5,8 @@ import (
 	"context"
 	"fmt"
 	appsv1 "k8s.io/api/apps/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"log"
 	"os"
 
@@ -26,6 +28,19 @@ import (
 const templateFileName string = "pkg/hooks/manifests/apigateway.yaml"
 const ApiGatewayCRName string = "default"
 
+const (
+	kymaDNSName          = "kyma-gateway"
+	kymaDNSNamespace     = "kyma-system"
+	kymaGatewayName      = "kyma-gateway"
+	kymaGatewayNamespace = "kyma-system"
+	kymaCertName         = "kyma-tls-cert"
+	kymaCertNamespace    = "istio-system"
+)
+
+var dnsKind = schema.GroupVersionKind{Group: "dns.gardener.cloud", Version: "v1alpha1", Kind: "DNSEntry"}
+var gatewayKind = schema.GroupVersionKind{Group: "networking.istio.io", Version: "v1alpha3", Kind: "Gateway"}
+var certKind = schema.GroupVersionKind{Group: "cert.gardener.cloud", Version: "v1alpha1", Kind: "Certificate"}
+
 var ApplyApiGatewayCrScenarioHook = func(ctx context.Context, sc *godog.Scenario) (context.Context, error) {
 	k8sClient, err := testcontext.GetK8sClientFromContext(ctx)
 	if err != nil {
@@ -46,7 +61,7 @@ var ApplyApiGatewayCrScenarioHook = func(ctx context.Context, sc *godog.Scenario
 	return ctx, err
 }
 
-var DeleteBlockingResourcesScenarioHook = func(ctx context.Context, sc *godog.Scenario) (context.Context, error) {
+var DeleteBlockingResourcesScenarioHook = func(ctx context.Context, sc *godog.Scenario, _ error) (context.Context, error) {
 	return ctx, deleteBlockingResources(ctx)
 }
 
@@ -330,4 +345,62 @@ func deleteBlockingResources(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+func waitUntilObjectIsRemoved(ctx context.Context, gvk schema.GroupVersionKind, objectName string, namespace string) error {
+	c, err := testcontext.GetK8sClientFromContext(ctx)
+	if err != nil {
+		return err
+	}
+
+	unstructuredObj := unstructured.Unstructured{}
+	unstructuredObj.SetGroupVersionKind(gvk)
+
+	err = c.Get(ctx, client.ObjectKey{Namespace: namespace, Name: objectName}, &unstructuredObj)
+
+	if k8serrors.IsNotFound(err) {
+		return nil
+	}
+
+	if err != nil {
+		return fmt.Errorf("error while getting object [kind: %s, name: %s, namespace: %s]: %w", gvk, objectName, namespace, err)
+	}
+
+	if unstructuredObj.GetDeletionTimestamp() == nil {
+		return fmt.Errorf("object [kind: %s, name: %s, namespace: %s] has no deletion timestamp", gvk, objectName, namespace)
+	}
+
+	return retry.Do(func() error {
+		err = c.Get(ctx, client.ObjectKey{Namespace: namespace, Name: objectName}, &unstructuredObj)
+
+		if k8serrors.IsNotFound(err) {
+			return nil
+		}
+
+		if err != nil {
+			return fmt.Errorf("error while getting object [kind: %s, name: %s, namespace: %s]: %w", gvk, objectName, namespace, err)
+		}
+
+		return fmt.Errorf("object [kind: %s, name: %s, namespace: %s] still exists", gvk, objectName, namespace)
+
+	}, testcontext.GetRetryOpts()...)
+}
+
+var WaitUntilApiGatewayDepsAreRemovedHook = func(ctx context.Context, sc *godog.Scenario, _ error) (context.Context, error) {
+	err := waitUntilObjectIsRemoved(ctx, dnsKind, kymaDNSName, kymaDNSNamespace)
+	if err != nil {
+		return ctx, err
+	}
+
+	err = waitUntilObjectIsRemoved(ctx, gatewayKind, kymaGatewayName, kymaGatewayNamespace)
+	if err != nil {
+		return ctx, err
+	}
+
+	err = waitUntilObjectIsRemoved(ctx, certKind, kymaCertName, kymaCertNamespace)
+	if err != nil {
+		return ctx, err
+	}
+
+	return ctx, nil
 }
