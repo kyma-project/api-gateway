@@ -49,7 +49,9 @@ func initScenario(ctx *godog.ScenarioContext, ts *testsuite) {
 	ctx.Before(hooks.ApplyApiGatewayCrScenarioHook)
 	ctx.After(hooks.ApiGatewayCrTearDownScenarioHook)
 	ctx.After(hooks.DeleteBlockingResourcesScenarioHook)
-	ctx.After(hooks.WaitUntilApiGatewayDepsAreRemovedHook)
+	if ts.config.IsGardener {
+		ctx.After(hooks.WaitUntilApiGatewayDepsAreRemovedHook)
+	}
 
 	ctx.Step(`^APIGateway CR "([^"]*)" is applied`, scenario.applyAPIGatewayCR)
 	ctx.Step(`^APIGateway CR "([^"]*)" "([^"]*)" present$`, scenario.thereIsAnAPIGatewayCR)
