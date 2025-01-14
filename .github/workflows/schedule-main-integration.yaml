@@ -12,7 +12,6 @@ jobs:
   get-sha:
     name: Get manager SHA
     runs-on: ubuntu-latest
-    needs: [ build ]
     # The additional if is required, because there are optional jobs
     if: ${{ always() && !failure() && !cancelled() }}
     outputs:
@@ -26,7 +25,7 @@ jobs:
 
 #############################################
 #
-# Integration tests
+# E2E tests
 # Run on: AWS, K3D
 #
 #############################################
@@ -162,9 +161,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          test_client_id: ${{ secrets.CLIENT_ID }}
-          test_client_secret: ${{ secrets.CLIENT_SECRET }}
-          test_oidc_well_known_url: "${{ secrets.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
           manager_image: ${{ inputs.image }}
           test_make_target: ${{ matrix.test_make_target }}
 
@@ -189,8 +185,11 @@ jobs:
           test_oidc_well_known_url: "${{ secrets.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
           manager_image: ${{ inputs.image }}
           test_make_target: ${{ matrix.test_make_target }}
+          gardener_secret: ${{ secrets.GARDENER_TOKEN }}
+          gardener_project_name: ${{ vars.GARDENER_PROJECT_NAME }}
+          gardener_provider: gcp
 
-#############################################
+  #############################################
 #
 # Upgrade tests
 # Run on: K3D
@@ -280,7 +279,7 @@ jobs:
     name: Slack Notification
     runs-on: ubuntu-latest
     if: ${{ failure() }}
-    needs: [e2e-tests-k3d, e2e-tests-aws, upgrade-tests-k3d, e2e-custom-domain-gcp, e2e-custom-domain-aws, migration-downtime-tests, migration-downtime-tests-aws]
+    needs: [e2e-tests-k3d, e2e-tests-aws, upgrade-tests-k3d, e2e-custom-domain-gcp, e2e-custom-domain-aws, migration-downtime-tests-k3d, migration-downtime-tests-aws]
     steps:
       - uses: actions/checkout@v4
         with:
