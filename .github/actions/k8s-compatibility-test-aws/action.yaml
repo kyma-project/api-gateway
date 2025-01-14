@@ -67,7 +67,7 @@ runs:
       run: |
         set -eou pipefail
         GO111MODULE=on go install github.com/prometheus/prom2json/cmd/prom2json@v1.3.3
-        kubectl get --context k3d-k3s-default --raw /metrics | prom2json | jq '.[] | select(.name=="apiserver_requested_deprecated_apis").metrics[].labels' > deprecations.txt
+        kubectl get --raw /metrics | prom2json | jq '.[] | select(.name=="apiserver_requested_deprecated_apis").metrics[].labels' > deprecations.txt
       shell: bash
     - uses: actions/upload-artifact@v4
       with:
