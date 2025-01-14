@@ -33,6 +33,7 @@ import (
 	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
 	operatorv1alpha1 "github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
 	"github.com/kyma-project/api-gateway/controllers"
+	"github.com/kyma-project/api-gateway/controllers/gateway/ratelimit"
 	"github.com/kyma-project/api-gateway/internal/dependencies"
 	"github.com/kyma-project/api-gateway/internal/reconciliations/gateway"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -224,17 +225,17 @@ func (r *APIGatewayReconciler) reconcileFinalizer(ctx context.Context, apiGatewa
 				"There are ORY Oathkeeper Rule(s) that block the deletion of API-Gateway CR. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning",
 				conditions.DeletionBlockedExistingResources.AdditionalMessage(": "+strings.Join(oryRulesFound, ", ")).Condition())
 		}
-
-		rateLimiterRules, err := rateLimitsExists(ctx, r.Client)
-		if err != nil {
-			return controllers.ErrorStatus(err, "Error during listing existing Rate Limit", conditions.ReconcileFailed.Condition())
+		if ratelimit.RateLimiterEnabled {
+			rateLimiterRules, err := rateLimitsExists(ctx, r.Client)
+			if err != nil {
+				return controllers.ErrorStatus(err, "Error during listing existing Rate Limit", conditions.ReconcileFailed.Condition())
+			}
+			if len(rateLimiterRules) > 0 {
+				return controllers.WarningStatus(errors.New("could not delete API-Gateway CR since there are RateLimit(s) that block its deletion"),
+					"There are RateLimit(s) that block the deletion of API-Gateway CR. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning",
+					conditions.DeletionBlockedExistingResources.AdditionalMessage(": "+strings.Join(rateLimiterRules, ", ")).Condition())
+			}
 		}
-		if len(rateLimiterRules) > 0 {
-			return controllers.WarningStatus(errors.New("could not delete API-Gateway CR since there are RateLimit(s) that block its deletion"),
-				"There are RateLimit(s) that block the deletion of API-Gateway CR. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning",
-				conditions.DeletionBlockedExistingResources.AdditionalMessage(": "+strings.Join(rateLimiterRules, ", ")).Condition())
-		}
-
 		if err := removeFinalizer(ctx, r.Client, apiGatewayCR); err != nil {
 			ctrl.Log.Error(err, "Error happened during API-Gateway CR finalizer removal")
 			return controllers.ErrorStatus(err, "Could not remove finalizer", conditions.ReconcileFailed.Condition())

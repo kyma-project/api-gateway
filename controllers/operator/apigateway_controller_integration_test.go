@@ -3,6 +3,7 @@ package operator
 import (
 	"context"
 	"fmt"
+	"github.com/kyma-project/api-gateway/controllers/gateway/ratelimit"
 	"math/rand"
 	"time"
 
@@ -156,40 +157,40 @@ var _ = Describe("API Gateway Controller", Serial, func() {
 				g.Expect(apiGateway.Status.Description).To(Equal("There are APIRule(s) that block the deletion of API-Gateway CR. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning"))
 			}, eventuallyTimeout).Should(Succeed())
 		})
+		if ratelimit.RateLimiterEnabled {
+			It("Should set APIGateway CR in Warning state on deletion when RateLimit(s) exist", func() {
+				// given
+				apiGateway := v1alpha1.APIGateway{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: generateName(),
+					},
+				}
+				rateLimit := getRateLimit()
 
-		It("Should set APIGateway CR in Warning state on deletion when RateLimit(s) exist", func() {
-			// given
-			apiGateway := v1alpha1.APIGateway{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: generateName(),
-				},
-			}
-			rateLimit := getRateLimit()
+				By("Creating RateLimit")
+				Expect(k8sClient.Create(context.Background(), &rateLimit)).Should(Succeed())
+				By("Creating APIGateway")
+				Expect(k8sClient.Create(context.Background(), &apiGateway)).Should(Succeed())
 
-			By("Creating RateLimit")
-			Expect(k8sClient.Create(context.Background(), &rateLimit)).Should(Succeed())
-			By("Creating APIGateway")
-			Expect(k8sClient.Create(context.Background(), &apiGateway)).Should(Succeed())
+				By("Verifying that APIGateway CR reconciliation was successful")
+				Eventually(func(g Gomega) {
+					g.Expect(k8sClient.Get(context.Background(), client.ObjectKey{Name: apiGateway.Name}, &apiGateway)).Should(Succeed())
+					g.Expect(apiGateway.Status.State).To(Equal(v1alpha1.Ready))
+				}, eventuallyTimeout).Should(Succeed())
 
-			By("Verifying that APIGateway CR reconciliation was successful")
-			Eventually(func(g Gomega) {
-				g.Expect(k8sClient.Get(context.Background(), client.ObjectKey{Name: apiGateway.Name}, &apiGateway)).Should(Succeed())
-				g.Expect(apiGateway.Status.State).To(Equal(v1alpha1.Ready))
-			}, eventuallyTimeout).Should(Succeed())
+				// when
+				By("Deleting APIGateway")
+				Expect(k8sClient.Delete(context.Background(), &apiGateway)).Should(Succeed())
 
-			// when
-			By("Deleting APIGateway")
-			Expect(k8sClient.Delete(context.Background(), &apiGateway)).Should(Succeed())
-
-			// then
-			By("Verifying that APIGateway CR has Warning state")
-			Eventually(func(g Gomega) {
-				g.Expect(k8sClient.Get(context.Background(), client.ObjectKey{Name: apiGateway.Name}, &apiGateway)).Should(Succeed())
-				g.Expect(apiGateway.Status.State).To(Equal(v1alpha1.Warning))
-				g.Expect(apiGateway.Status.Description).To(Equal("There are RateLimit(s) that block the deletion of API-Gateway CR. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning"))
-			}, eventuallyTimeout).Should(Succeed())
-		})
-
+				// then
+				By("Verifying that APIGateway CR has Warning state")
+				Eventually(func(g Gomega) {
+					g.Expect(k8sClient.Get(context.Background(), client.ObjectKey{Name: apiGateway.Name}, &apiGateway)).Should(Succeed())
+					g.Expect(apiGateway.Status.State).To(Equal(v1alpha1.Warning))
+					g.Expect(apiGateway.Status.Description).To(Equal("There are RateLimit(s) that block the deletion of API-Gateway CR. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning"))
+				}, eventuallyTimeout).Should(Succeed())
+			})
+		}
 		It("should update lastTransitionTime of Ready condition when only reason or message changed", func() {
 			// given
 			blockingApiRule := getApiRule()
