@@ -61,11 +61,11 @@ runs:
         TEST_OIDC_CONFIG_URL: ${{ inputs.test_oidc_well_known_url }}
         CLUSTER_KUBECONFIG: "${{ github.workspace }}/${{ env.CLUSTER_NAME }}_kubeconfig.yaml"
         IMG: ${{ inputs.manager_image }}
-      run: |
-        EXPORT_RESULT=true make install-istio deploy ${{ inputs.test_make_target }}
+      run: EXPORT_RESULT=true "${{ github.workspace }}/hack/ci/integration-test-gardener.sh" ${{ inputs.test_make_target }}
     - name: Check deprecations
       run: |
         set -eou pipefail
+        export KUBECONFIG="${{ github.workspace }}/${{ env.CLUSTER_NAME }}_kubeconfig.yaml"
         GO111MODULE=on go install github.com/prometheus/prom2json/cmd/prom2json@v1.3.3
         kubectl get --raw /metrics | prom2json | jq '.[] | select(.name=="apiserver_requested_deprecated_apis").metrics[].labels' > deprecations.txt
       shell: bash
