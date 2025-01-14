@@ -46,9 +46,12 @@ func initScenario(ctx *godog.ScenarioContext, ts *testsuite) {
 		log.Fatalf("could not initialize custom domain endpoint err=%s", err)
 	}
 
-	ctx.Before(hooks.DeleteBlockingResourcesScenarioHook)
 	ctx.Before(hooks.ApplyApiGatewayCrScenarioHook)
 	ctx.After(hooks.ApiGatewayCrTearDownScenarioHook)
+	ctx.After(hooks.DeleteBlockingResourcesScenarioHook)
+	if ts.config.IsGardener {
+		ctx.After(hooks.WaitUntilApiGatewayDepsAreRemovedHook)
+	}
 
 	ctx.Step(`^APIGateway CR "([^"]*)" is applied`, scenario.applyAPIGatewayCR)
 	ctx.Step(`^APIGateway CR "([^"]*)" "([^"]*)" present$`, scenario.thereIsAnAPIGatewayCR)
