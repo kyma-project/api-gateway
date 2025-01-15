@@ -154,8 +154,8 @@ To use the XFF header, you must configure the corresponding settings in the Isti
 
 3. To configure IP-based access to the exposed workload, create an AuthorizationPolicy resource.
 
-  The selector specifies the workload for which access should be configured, and the **RemoteIpBlocks** field specifies the IP addresses for which access should be allowed.
-    
+    The selector specifies the workload for which access should be configured, and the **RemoteIpBlocks** field specifies the IP addresses for which access should be allowed.
+
     ```bash
     cat <<EOF | kubectl apply -f -
     apiVersion: security.istio.io/v1beta1
