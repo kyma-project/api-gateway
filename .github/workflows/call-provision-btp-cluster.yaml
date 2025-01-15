@@ -6,10 +6,34 @@ on:
       btp_kyma_plan:
         description: 'Service plan of the kyma environment'
         required: true
-        type: string
+        type: choice
+        default: "aws"
+        options:
+          - aws
+          - azure
+          - azure_lite
+          - gcp
+          - sap-converged-cloud
+          - trial
+
       btp_kyma_region:
         description: 'Region where Kyma environment will be created'
         required: true
+        type: choice
+        default: "eu-central-1"
+        options:
+          - eastus
+          - eu-central-1
+          - europe-west3
+          - eu-de-2
+          - us-east-1
+          - westeurope
+
+      custom_administrators:
+        description: 'List of custom administrators.
+         Provide as a JSON array of strings (e.g. ["abc.def@example.com", "bbb.def@example.com"])'
+        required: false
+        default: "[]"
         type: string
 
 jobs:
@@ -20,9 +44,6 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.ref }}
           repository: ${{ github.event.pull_request.head.repo.full_name }}
-      - name: generate random cluster name
-        id: vars
-        run: echo "sha_short=$(uuidgen)" >> $GITHUB_OUTPUT
       - uses: ./.github/actions/create-sap-btp-kyma
         id: create-btp-resources
         with:
@@ -31,16 +52,21 @@ jobs:
           btp_kyma_autoscaler_min: 4
 
           btp_global_account: '${{ secrets.BTP_GLOBAL_ACCOUNT }}'
-          btp_subaccount_name: gha-${{ steps.vars.outputs.sha_short }}-${{ github.run_attempt }}
+          btp_subaccount_name: gha-${{ github.job }}-${{ github.run_id }}-${{ github.run_attempt }}
           btp_subaccount_region: '${{ secrets.BTP_SUBACCOUNT_REGION }}'
           btp_backend_url: '${{ secrets.BTP_BACKEND_URL}}'
 
           btp_idp_tenant: '${{ secrets.BTP_CUSTOM_IAS_TENANT }}'
           btp_user: '${{ secrets.BTP_BOT_USER}}'
           btp_password: '${{ secrets.BTP_BOT_PASSWORD}}'
+
+          btp_kyma_administrators: '${{ inputs.custom_administrators }}'
       - name: deploy resources
         shell: bash
         run: |
           kubectl apply -f ./.github/actions/create-sap-btp-kyma/mock-oauth2.yaml
           kubectl apply -f ./.github/actions/create-sap-btp-kyma/deployments.yaml
           kubectl apply -f ./.github/actions/create-sap-btp-kyma/jobs.yaml
+      - name: Output subaccount name
+        shell: bash
+        run: echo "subaccount_name=gha-${{ github.job }}-${{ github.run_id }}-${{ github.run_attempt }}" >> $GITHUB_STEP_SUMMARY
