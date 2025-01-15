@@ -106,23 +106,25 @@ To use the XFF header, you must configure the corresponding settings in the Isti
     
     ```bash
     cat <<EOF | kubectl apply -f -
-    apiVersion: gateway.kyma-project.io/v2alpha1
-    kind: APIRule
+    apiVersion: networking.istio.io/v1alpha3
+    kind: VirtualService
     metadata:
-      name: {APIRULE_NAME}
-      namespace: {APIRULE_NAMESPACE}
+      name: {VIRTUALSERVICE_NAME}
+      namespace: {VIRTUALSERVICE_NAMESPACE}
     spec:
       hosts:
-        - {SUBDOMAIN}.{DOMAIN}
-      service:
-        name: {SERVICE_NAME}
-        namespace: {SERVICE_NAMESPACE}
-        port: {SERVICE_PORT}
-      gateway: {GATEWAY_NAMESPACE}/{GATEWAY_NAME}
-      rules:
-        - path: /headers
-          methods: ["GET"]
-          noAuth: true
+      - "{SERVICE_NAME}.{DOMAIN_NAME}"
+      gateways:
+      - {GATEWAY_NAME}/{GATEWAY_NAMESPACE}
+      http:
+      - match:
+        - uri:
+            prefix: /
+        route:
+        - destination:
+            port:
+              number: {SERVICE_PORT}
+            host: {SERVICE_NAME}.{SERVICE_NAMESPACE}.svc.cluster.local
     EOF
     ```
    
@@ -155,6 +157,7 @@ To use the XFF header, you must configure the corresponding settings in the Isti
   The selector specifies the workload for which access should be configured, and the **RemoteIpBlocks** field specifies the IP addresses for which access should be allowed.
     
     ```bash
+    cat <<EOF | kubectl apply -f -
     apiVersion: security.istio.io/v1beta1
     kind: AuthorizationPolicy
     metadata:
@@ -171,6 +174,7 @@ To use the XFF header, you must configure the corresponding settings in the Isti
       selector:
         matchLabels:
           {KEY}: {VALUE}
+    EOF
     ```
 <!-- tabs:end -->
 

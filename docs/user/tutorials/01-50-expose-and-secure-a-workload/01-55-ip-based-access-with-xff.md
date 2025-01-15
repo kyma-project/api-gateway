@@ -100,29 +100,31 @@ To use the XFF header, you must configure the corresponding settings in the Isti
        >[!TIP]
        > If you use a Google Cloud or Azure cluster, you can find your load balancer's IP address in the field **status.loadBalancer.ingress** of the `ingress-gateway` Service.
 
-2. To expose your workload, create an APIRule custom resource. 
+2. To expose your workload, create a VirtualService resource. 
   
-    You can adjust this sample configuration and use another access strategy, according to your needs.
+    You can adjust this sample configuration according to your needs.
     
     ```bash
     cat <<EOF | kubectl apply -f -
-    apiVersion: gateway.kyma-project.io/v1beta1
-    kind: APIRule
+    apiVersion: networking.istio.io/v1alpha3
+    kind: VirtualService
     metadata:
-      name: {APIRULE_NAME}
-      namespace: {APIRULE_NAMESPACE}
+      name: {VIRTUALSERVICE_NAME}
+      namespace: {VIRTUALSERVICE_NAMESPACE}
     spec:
-      host: {SUBDOMAIN}.{DOMAIN}
-      service:
-        name: {SERVICE_NAME}
-        namespace: {SERVICE_NAMESPACE}
-        port: {SERVICE_PORT}
-      gateway: {GATEWAY_NAME}/{GATEWAY_NAMESPACE}
-      rules:
-        - path: /headers
-          methods: ["GET"]
-          accessStrategies:
-            - handler: no_auth
+      hosts:
+      - "{SERVICE_NAME}.{DOMAIN_NAME}"
+      gateways:
+      - {GATEWAY_NAME}/{GATEWAY_NAMESPACE}
+      http:
+      - match:
+        - uri:
+            prefix: /
+        route:
+        - destination:
+            port:
+              number: {SERVICE_PORT}
+            host: {SERVICE_NAME}.{SERVICE_NAMESPACE}.svc.cluster.local
     EOF
     ```
    
@@ -155,6 +157,7 @@ To use the XFF header, you must configure the corresponding settings in the Isti
   The selector specifies the workload for which access should be configured, and the **RemoteIpBlocks** field specifies the IP addresses for which access should be allowed.
     
     ```bash
+    cat <<EOF | kubectl apply -f -
     apiVersion: security.istio.io/v1beta1
     kind: AuthorizationPolicy
     metadata:
@@ -171,6 +174,7 @@ To use the XFF header, you must configure the corresponding settings in the Isti
       selector:
         matchLabels:
           {KEY}: {VALUE}
+    EOF
     ```
 <!-- tabs:end -->
 
