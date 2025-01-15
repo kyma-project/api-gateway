@@ -20,4 +20,4 @@ runs:
           workflow: ${{ github.workflow }},
           owner: ${{ github.actor }}
           attempt: ${{ github.run_number }}
-          link: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}/attempts/${{ github.run_number }}
+          link: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}/attempts/${{ github.run_attempt }}
