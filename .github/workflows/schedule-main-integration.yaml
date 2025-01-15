@@ -1,36 +1,17 @@
-name: Post Main Workflow
+name: Schedule Daily - Main branch image
 
 permissions:
   id-token: write # This is required for requesting the JWT token
   contents: read # This is required for actions/checkout
 
 on:
-  push:
-    paths-ignore:
-      - "docs/**"
-      - "**/*.md"
-      - "CODEOWNERS"
-      - "sec-scanners-config.yaml"
-      - "external-images.yaml"
-    branches:
-      - main
+  schedule:
+    - cron: '0 5 * * *' # Run every day at 05:00 AM
 
 jobs:
-  build:
-    name: build api-gateway image
-    uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
-    with:
-      name: api-gateway/main/api-gateway-manager
-      dockerfile: Dockerfile
-      context: .
-      build-args: |
-        VERSION=${{ github.sha }}
-      tags: "${{ github.sha }}"
-
   get-sha:
     name: Get manager SHA
     runs-on: ubuntu-latest
-    needs: [ build ]
     # The additional if is required, because there are optional jobs
     if: ${{ always() && !failure() && !cancelled() }}
     outputs:
@@ -42,15 +23,15 @@ jobs:
       - id: get-sha
         uses: ./.github/actions/get-latest-sha
 
-  unit-tests:
-    name: Unit, integration tests & lint
-    if: ${{ always() && !failure() && !cancelled() }}
-    needs: [get-sha]
-    uses: ./.github/workflows/call-unit-lint.yaml
-    secrets: inherit
+#############################################
+#
+# E2E tests
+# Run on: AWS, K3D
+#
+#############################################
 
   e2e-tests-k3d:
-    name: E2E tests K3D
+    name: E2E tests - K3D
     runs-on: ubuntu-latest
     needs: [get-sha]
     # The additional if is required, because there are optional jobs
@@ -74,9 +55,9 @@ jobs:
           test_make_target: ${{ matrix.test_make_target }}
 
   e2e-tests-aws:
-    name: E2E tests AWS
+    name: E2E tests - AWS
     runs-on: ubuntu-latest
-    needs: [ get-sha ]
+    needs: [get-sha]
     # The additional if is required, because there are optional jobs
     if: ${{ always() && !failure() && !cancelled() }}
     strategy:
@@ -101,8 +82,15 @@ jobs:
           test_oidc_well_known_url: "${{ secrets.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
           test_make_target: ${{ matrix.test_make_target }}
 
-  migration-downtime-tests:
-    name: Zero Downtime Migration Tests
+#############################################
+#
+# Zero downtime tests
+# Run on: AWS, K3D
+#
+#############################################
+
+  migration-downtime-tests-k3d:
+    name: Zero Downtime Migration Tests - K3D
     runs-on: ubuntu-latest
     needs: [get-sha]
     # The additional if is required, because there are optional jobs
@@ -124,9 +112,9 @@ jobs:
           test_make_target: test-migration-zero-downtime-${{ matrix.handler }}
 
   migration-downtime-tests-aws:
-    name: Zero Downtime Migration Tests AWS
+    name: Zero Downtime Migration Tests - AWS
     runs-on: ubuntu-latest
-    needs: [ get-sha ]
+    needs: [get-sha]
     # The additional if is required, because there are optional jobs
     if: ${{ always() && !failure() && !cancelled() }}
     strategy:
@@ -150,8 +138,68 @@ jobs:
           test_oidc_well_known_url: "${{ secrets.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
           test_make_target: test-migration-zero-downtime-${{ matrix.handler }}
 
+#############################################
+#
+# Kubernetes version compatibility tests
+# Run on: AWS, K3D
+#
+#############################################
+
+  k8s-compatibility-check-k3d:
+    name: Kubernetes version compatibility test - K3D
+    runs-on: ubuntu-latest
+    needs: [get-sha]
+    strategy:
+      fail-fast: false
+      matrix:
+        test_make_target: [ "test-integration-ory", "test-integration-istio", "test-integration-v2alpha1", "test-integration-gateway" ]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+      - uses: ./.github/actions/k8s-compatibility-test
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway/main/api-gateway-manager:${{needs.get-sha.outputs.sha }}"
+          test_make_target: ${{ matrix.test_make_target }}
+
+  k8s-compatibility-check-aws:
+    name: Kubernetes version compatibility test - AWS
+    runs-on: ubuntu-latest
+    needs: [get-sha]
+    strategy:
+      fail-fast: false
+      matrix:
+        test_make_target: [ "test-integration-ory", "test-integration-istio", "test-integration-v2alpha1", "test-integration-gateway" ]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+      - uses: ./.github/actions/k8s-compatibility-test-aws
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          test_client_id: ${{ secrets.CLIENT_ID }}
+          test_client_secret: ${{ secrets.CLIENT_SECRET }}
+          test_oidc_well_known_url: "${{ secrets.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
+          manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway/main/api-gateway-manager:${{ needs.get-sha.outputs.sha }}"
+          test_make_target: ${{ matrix.test_make_target }}
+          gardener_secret: ${{ secrets.GARDENER_TOKEN }}
+          gardener_project_name: ${{ vars.GARDENER_PROJECT_NAME }}
+          gardener_provider: gcp
+
+  #############################################
+#
+# Upgrade tests
+# Run on: K3D
+#
+#############################################
+
   upgrade-tests-k3d:
-    name: Upgrade tests
+    name: Upgrade tests - K3D
     runs-on: ubuntu-latest
     needs: [get-sha]
     # The additional if is required, because there are optional jobs
@@ -170,8 +218,15 @@ jobs:
           test_oidc_well_known_url: "${{ secrets.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
           target_branch: ${{github.ref_name}}
 
+#############################################
+#
+# Custom domain tests
+# Run on: AWS, GCP
+#
+#############################################
+
   e2e-custom-domain-gcp:
-    name: E2E custom domain tests GCP
+    name: E2E custom domain tests - GCP
     runs-on: ubuntu-latest
     needs: [get-sha]
     # The additional if is required, because there are optional jobs
@@ -197,7 +252,7 @@ jobs:
           test_make_target: 'test-custom-domain'
 
   e2e-custom-domain-aws:
-    name: E2E custom domain tests AWS
+    name: E2E custom domain tests - AWS
     runs-on: ubuntu-latest
     needs: [get-sha]
     # The additional if is required, because there are optional jobs
@@ -226,7 +281,7 @@ jobs:
     name: Slack Notification
     runs-on: ubuntu-latest
     if: ${{ failure() }}
-    needs: [e2e-tests-k3d, e2e-tests-aws, upgrade-tests-k3d, e2e-custom-domain-gcp, e2e-custom-domain-aws, migration-downtime-tests, migration-downtime-tests-aws]
+    needs: [e2e-tests-k3d, e2e-tests-aws, upgrade-tests-k3d, e2e-custom-domain-gcp, e2e-custom-domain-aws, migration-downtime-tests-k3d, migration-downtime-tests-aws]
     steps:
       - uses: actions/checkout@v4
         with:
