@@ -21,7 +21,7 @@ The XFF header is a standard HTTP header that conveys the client IP address and 
 
 However, there are some technical limitations when using the XFF header. The header might not include all IP addresses if an intermediary proxy does not support modifying the header. Due to [technical limitations of AWS Classic ELBs](https://docs.aws.amazon.com/elasticloadbalancing/latest/classic/enable-proxy-protocol.html#proxy-protocol), when using an IPv4 connection, the header does not include the public IP of the load balancer in front of Istio Ingress Gateway. Moreover, Istio Ingress Gateway's Envoy does not append the private IP address of the load balancer to the XFF header, effectively removing this information from the request. For more information on XFF, see the [IETF’s RFC documentation](https://datatracker.ietf.org/doc/html/rfc7239) and [Envoy documentation](https://www.envoyproxy.io/docs/envoy/latest/configuration/http/http_conn_man/headers#x-forwarded-for).
 
-To use the XFF header, you must configure the corresponding settings in the Istio custom resource (CR). Then, expose your workload using an APIRule CR and create an AuthorizationPolicy resource with allowed IP addresses specified in the **remoteIpBlocks** field. To learn how to do this, follow the procedure.
+To use the XFF header, you must configure the corresponding settings in the Istio custom resource (CR). Then, expose your workload using a VirtualService and create an AuthorizationPolicy resource with allowed IP addresses specified in the **remoteIpBlocks** field. To learn how to do this, follow the procedure.
 
 ## Procedure
 
@@ -41,10 +41,31 @@ To use the XFF header, you must configure the corresponding settings in the Isti
       >[!TIP]
       > If you use a Google Cloud or Azure cluster, you can find your load balancer's IP address in the field **status.loadBalancer.ingress** of the `ingress-gateway` Service.
    5. Choose **Save**.
-2. To expose your workload, create an APIRule custom resource. 
-     1. Go to **Discovery and Network > API Rules v2alpha1** and choose **Create**.
-     2. Provide all the required configuration details.
-     3. Choose **Create**.
+2. To expose your workload, create a VirtualService resource. 
+    1. Go to **Istio > Virtual Services** and choose **Create**.
+    2. Switch to the `YAML` section and paste the following configuration:
+        ```yaml
+        apiVersion: networking.istio.io/v1alpha3
+        kind: VirtualService
+        metadata:
+          name: {VIRTUALSERVICE_NAME}
+          namespace: {VIRTUALSERVICE_NAMESPACE}
+        spec:
+          hosts:
+          - "{SERVICE_NAME}.{DOMAIN_NAME}"
+          gateways:
+          - {GATEWAY_NAME}/{GATEWAY_NAMESPACE}
+          http:
+          - match:
+            - uri:
+                prefix: /
+            route:
+            - destination:
+                port:
+                  number: {SERVICE_PORT}
+                host: {SERVICE_NAME}.{SERVICE_NAMESPACE}.svc.cluster.local
+        ```
+    3. Replace the placeholders and choose **Create**.
    
     **Step result:** When you go to `https:/{SUBDOMAIN}.{DOMAIN}/{PATH}`, the response contains the **X-Forwarded-For** and **X-Envoy-External-Address** headers with your public IP address. See an example response for the Client IP `165.1.187.197`:
       ```json
@@ -100,29 +121,31 @@ To use the XFF header, you must configure the corresponding settings in the Isti
        >[!TIP]
        > If you use a Google Cloud or Azure cluster, you can find your load balancer's IP address in the field **status.loadBalancer.ingress** of the `ingress-gateway` Service.
 
-2. To expose your workload, create an APIRule custom resource. 
+2. To expose your workload, create a VirtualService resource. 
   
     You can adjust this sample configuration and use another access strategy, according to your needs.
     
     ```bash
     cat <<EOF | kubectl apply -f -
-    apiVersion: gateway.kyma-project.io/v2alpha1
-    kind: APIRule
+    apiVersion: networking.istio.io/v1alpha3
+    kind: VirtualService
     metadata:
-      name: {APIRULE_NAME}
-      namespace: {APIRULE_NAMESPACE}
+      name: {VIRTUALSERVICE_NAME}
+      namespace: {VIRTUALSERVICE_NAMESPACE}
     spec:
       hosts:
-        - {SUBDOMAIN}.{DOMAIN}
-      service:
-        name: {SERVICE_NAME}
-        namespace: {SERVICE_NAMESPACE}
-        port: {SERVICE_PORT}
-      gateway: {GATEWAY_NAMESPACE}/{GATEWAY_NAME}
-      rules:
-        - path: /headers
-          methods: ["GET"]
-          noAuth: true
+      - "{SERVICE_NAME}.{DOMAIN_NAME}"
+      gateways:
+      - {GATEWAY_NAME}/{GATEWAY_NAMESPACE}
+      http:
+      - match:
+        - uri:
+            prefix: /
+        route:
+        - destination:
+            port:
+              number: {SERVICE_PORT}
+            host: {SERVICE_NAME}.{SERVICE_NAMESPACE}.svc.cluster.local
     EOF
     ```
    
@@ -152,9 +175,10 @@ To use the XFF header, you must configure the corresponding settings in the Isti
 
 3. To configure IP-based access to the exposed workload, create an AuthorizationPolicy resource.
 
-  The selector specifies the workload for which access should be configured, and the **RemoteIpBlocks** field specifies the IP addresses for which access should be allowed.
-    
+    The selector specifies the workload for which access should be configured, and the **RemoteIpBlocks** field specifies the IP addresses for which access should be allowed.
+
     ```bash
+    cat <<EOF | kubectl apply -f -
     apiVersion: security.istio.io/v1beta1
     kind: AuthorizationPolicy
     metadata:
@@ -171,6 +195,7 @@ To use the XFF header, you must configure the corresponding settings in the Isti
       selector:
         matchLabels:
           {KEY}: {VALUE}
+    EOF
     ```
 <!-- tabs:end -->
 
