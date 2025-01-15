@@ -3,6 +3,7 @@ package operator
 import (
 	"context"
 	"fmt"
+	"github.com/kyma-project/api-gateway/controllers/gateway/ratelimit"
 	"math/rand"
 	"time"
 
@@ -13,6 +14,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/utils/ptr"
 
+	ratelimitv1alpha1 "github.com/kyma-project/api-gateway/apis/gateway/ratelimit/v1alpha1"
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
 	. "github.com/onsi/ginkgo/v2"
@@ -28,6 +30,7 @@ var _ = Describe("API Gateway Controller", Serial, func() {
 	AfterEach(func() {
 		deleteApiRules()
 		deleteVirtualServices()
+		deleteRateLimitRules()
 		deleteApiGateways()
 	})
 
@@ -154,7 +157,40 @@ var _ = Describe("API Gateway Controller", Serial, func() {
 				g.Expect(apiGateway.Status.Description).To(Equal("There are APIRule(s) that block the deletion of API-Gateway CR. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning"))
 			}, eventuallyTimeout).Should(Succeed())
 		})
+		if ratelimit.RateLimiterEnabled {
+			It("Should set APIGateway CR in Warning state on deletion when RateLimit(s) exist", func() {
+				// given
+				apiGateway := v1alpha1.APIGateway{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: generateName(),
+					},
+				}
+				rateLimit := getRateLimit()
 
+				By("Creating RateLimit")
+				Expect(k8sClient.Create(context.Background(), &rateLimit)).Should(Succeed())
+				By("Creating APIGateway")
+				Expect(k8sClient.Create(context.Background(), &apiGateway)).Should(Succeed())
+
+				By("Verifying that APIGateway CR reconciliation was successful")
+				Eventually(func(g Gomega) {
+					g.Expect(k8sClient.Get(context.Background(), client.ObjectKey{Name: apiGateway.Name}, &apiGateway)).Should(Succeed())
+					g.Expect(apiGateway.Status.State).To(Equal(v1alpha1.Ready))
+				}, eventuallyTimeout).Should(Succeed())
+
+				// when
+				By("Deleting APIGateway")
+				Expect(k8sClient.Delete(context.Background(), &apiGateway)).Should(Succeed())
+
+				// then
+				By("Verifying that APIGateway CR has Warning state")
+				Eventually(func(g Gomega) {
+					g.Expect(k8sClient.Get(context.Background(), client.ObjectKey{Name: apiGateway.Name}, &apiGateway)).Should(Succeed())
+					g.Expect(apiGateway.Status.State).To(Equal(v1alpha1.Warning))
+					g.Expect(apiGateway.Status.Description).To(Equal("There are RateLimit(s) that block the deletion of API-Gateway CR. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning"))
+				}, eventuallyTimeout).Should(Succeed())
+			})
+		}
 		It("should update lastTransitionTime of Ready condition when only reason or message changed", func() {
 			// given
 			blockingApiRule := getApiRule()
@@ -559,5 +595,57 @@ func deleteVirtualServices() {
 		for _, item := range list.Items {
 			virtualServiceTeardown(item)
 		}
+	}, eventuallyTimeout).Should(Succeed())
+}
+
+func getRateLimit() ratelimitv1alpha1.RateLimit {
+	return ratelimitv1alpha1.RateLimit{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test",
+			Namespace: "default",
+		},
+		Spec: ratelimitv1alpha1.RateLimitSpec{
+			SelectorLabels: map[string]string{"app": "test"},
+			Local: ratelimitv1alpha1.LocalConfig{
+				DefaultBucket: ratelimitv1alpha1.BucketSpec{
+					MaxTokens:     1,
+					TokensPerFill: 1,
+					FillInterval: &metav1.Duration{
+						Duration: 60 * time.Second,
+					},
+				},
+			},
+			EnableResponseHeaders: false,
+			Enforce:               false,
+		},
+	}
+}
+
+func deleteRateLimitRules() {
+	Eventually(func(g Gomega) {
+		By("Checking if RateLimit exists as part of teardown")
+		list := ratelimitv1alpha1.RateLimitList{}
+		Expect(k8sClient.List(context.Background(), &list)).Should(Succeed())
+
+		for _, rateLimit := range list.Items {
+			rateLimitTeardown(&rateLimit)
+		}
+	}, eventuallyTimeout).Should(Succeed())
+}
+
+func rateLimitTeardown(rateLimit *ratelimitv1alpha1.RateLimit) {
+	By(fmt.Sprintf("Deleting RateLimit %s as part of teardown", rateLimit.GetName()))
+	Eventually(func(g Gomega) {
+		err := k8sClient.Delete(context.Background(), rateLimit)
+
+		if err != nil {
+			Expect(errors.IsNotFound(err)).To(BeTrue())
+		}
+
+		r := ratelimitv1alpha1.RateLimit{}
+
+		err = k8sClient.Get(context.Background(), client.ObjectKey{Name: rateLimit.Name, Namespace: rateLimit.Namespace}, &r)
+		g.Expect(errors.IsNotFound(err)).To(BeTrue())
+
 	}, eventuallyTimeout).Should(Succeed())
 }

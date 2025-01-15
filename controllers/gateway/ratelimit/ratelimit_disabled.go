@@ -7,6 +7,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 )
 
+const RateLimiterEnabled = false
+
 func Setup(_ manager.Manager, _ *runtime.Scheme) error {
 	return nil
 }

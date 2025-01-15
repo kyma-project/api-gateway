@@ -11,7 +11,11 @@ import (
 	"time"
 )
 
-const defaultReconciliationPeriod = 3 * time.Minute
+const (
+	RateLimiterEnabled = true
+
+	defaultReconciliationPeriod = 3 * time.Minute
+)
 
 func Setup(mgr manager.Manager, scheme *runtime.Scheme) error {
 	utilruntime.Must(ratelimitv1alpha1.AddToScheme(scheme))
