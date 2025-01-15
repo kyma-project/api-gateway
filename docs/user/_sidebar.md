@@ -29,7 +29,7 @@
       * [Secure a Workload with JWT](/api-gateway/user/tutorials/01-50-expose-and-secure-a-workload/01-52-expose-and-secure-workload-jwt.md)
       * [Secure a Workload with Istio](/api-gateway/user/tutorials/01-50-expose-and-secure-a-workload/01-53-expose-and-secure-workload-istio.md)
       * [Secure a Workload with a Certificate](/api-gateway/user/tutorials/01-50-expose-and-secure-a-workload/01-54-expose-and-secure-workload-with-certificate.md)
-      * [Configure IP-Based Access with XFF](/api-gateway/user/tutorials/01-50-expose-and-secure-a-workload/01-55-ip-based-access-with-xff.md)
+      * [Configure IP-Based Access with XFF](/api-gateway/user/tutorials/01-50-expose-and-secure-a-workload/v2alpha1/01-55-ip-based-access-with-xff.md)
   * [Security](/api-gateway/user/tutorials/01-60-security/README.md)
     * [Prepare Self-Signed Root CA and Client Certificates](/api-gateway/user/tutorials/01-60-security/01-61-mtls-selfsign-client-certicate.md)
     * [Set Up a Custom Identity Provider](/api-gateway/user/tutorials/01-60-security/01-62-set-up-idp.md)
