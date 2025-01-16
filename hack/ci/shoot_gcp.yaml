@@ -2,6 +2,8 @@ apiVersion: core.gardener.cloud/v1beta1
 kind: Shoot
 metadata:
   name: ${CLUSTER_NAME}
+  annotations:
+    kyma-project.io/pipeline-link: "${PIPELINE_LINK}"
 spec:
   secretBindingName: ${GARDENER_PROVIDER_SECRET_NAME}
   cloudProfileName: gcp

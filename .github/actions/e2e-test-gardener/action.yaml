@@ -58,6 +58,7 @@ runs:
         CLUSTER_KUBECONFIG: "${{ github.workspace }}/${{ env.CLUSTER_NAME }}_kubeconfig.yaml"
         GARDENER_PROVIDER: ${{ inputs.gardener_provider }}
         GARDENER_PROJECT_NAME: ${{ inputs.gardener_project_name }}
+        PIPELINE_LINK: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}/attempts/${{ github.run_attempt }}
       run: "${{ github.workspace }}/hack/ci/provision-gardener.sh"
     - name: Prepare DNS SA secret
       shell: bash
@@ -90,6 +91,13 @@ runs:
         (kubectl get --all-namespaces apirules.gateway.kyma-project.io -oyaml || true) > logs/apirules-dump.yaml
         (kubectl get --all-namespaces apigateways.operator.kyma-project.io -oyaml || true) > logs/gateway-dump.yaml
         (kubectl get -n kyma-system deployment ory-oathkeeper -oyaml || true) > logs/ory-oathkeeper-dump.yaml
+    - name: Gather Gardener logs
+      shell: bash
+      if: always()
+      env:
+        GARDENER_KUBECONFIG: "${{ github.workspace }}/gardener_kubeconfig.yaml"
+      run: |
+        (kubectl --kubeconfig "${GARDENER_KUBECONFIG}" get shoot "${{ env.CLUSTER_NAME }}" -o yaml || true) > logs/shoot.yaml
     - name: Uploads logs
       uses: actions/upload-artifact@v4
       if: always()

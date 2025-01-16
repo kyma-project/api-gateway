@@ -52,6 +52,7 @@ runs:
         CLUSTER_KUBECONFIG: "${{ github.workspace }}/${{ env.CLUSTER_NAME }}_kubeconfig.yaml"
         GARDENER_PROVIDER: ${{ inputs.gardener_provider }}
         GARDENER_PROJECT_NAME: ${{ inputs.gardener_project_name }}
+        PIPELINE_LINK: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}/attempts/${{ github.run_attempt }}
       run: "${{ github.workspace }}/hack/ci/provision-gardener.sh"
     - name: Deploy APIGateway manager and run tests
       shell: bash

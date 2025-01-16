@@ -94,9 +94,18 @@ done
 echo "Shoot template applied"
 
 echo "Waiting for cluster to be ready..."
-kubectl wait  --kubeconfig "${GARDENER_KUBECONFIG}" --for=condition=EveryNodeReady shoot/${CLUSTER_NAME} --timeout=25m
-# create kubeconfig request, that creates a kubeconfig which is valid for one day
+kubectl_wait_code=0
+kubectl wait --kubeconfig "${GARDENER_KUBECONFIG}" --for=condition=EveryNodeReady shoot/${CLUSTER_NAME} --timeout=25m || kubectl_wait_code=$?
+if [ "${kubectl_wait_code}" -ne 0 ]; then
+    echo "Timed out waiting for nodes to be ready"
+    echo "Shoot last operation:"
+    kubectl --kubeconfig "${GARDENER_KUBECONFIG}" get shoot "${CLUSTER_NAME}" -o jsonpath='{.status.lastOperation}' | jq
+    echo "Shoot status conditions:"
+    kubectl --kubeconfig "${GARDENER_KUBECONFIG}" get shoot "${CLUSTER_NAME}" -o jsonpath='{.status.conditions}' | jq
+    exit 3
+fi
 
+# create kubeconfig request, that creates a kubeconfig which is valid for one day
 echo "Storing kubeconfig in ${CLUSTER_KUBECONFIG}"
 kubectl create  --kubeconfig "${GARDENER_KUBECONFIG}" \
     -f <(printf '{"spec":{"expirationSeconds":86400}}') \
@@ -112,12 +121,22 @@ until (kubectl --kubeconfig "${CLUSTER_KUBECONFIG}" get --raw "/readyz"); do
   # 10 minutes
   if [[ $timeout -gt 600 ]]; then
     echo "Timed out waiting for API Server to be ready"
-    exit 1
+    exit 4
   fi
   sleep 1
 done
 echo "API Server is ready"
 
 echo "Waiting for shoot operations to be completed..."
-kubectl wait --kubeconfig "${GARDENER_KUBECONFIG}" --for=jsonpath='{.status.lastOperation.state}'=Succeeded --timeout=600s "shoots/${CLUSTER_NAME}"
+kubectl_wait_code=0
+kubectl wait --kubeconfig "${GARDENER_KUBECONFIG}" --for=jsonpath='{.status.lastOperation.state}'=Succeeded --timeout=600s "shoots/${CLUSTER_NAME}" || kubectl_wait_code=$?
+if [ "${kubectl_wait_code}" -ne 0 ]; then
+  echo "Timed out waiting for the shoot provisioning"
+  echo "Shoot last operation:"
+  kubectl --kubeconfig "${GARDENER_KUBECONFIG}" get shoot "${CLUSTER_NAME}" -o jsonpath='{.status.lastOperation}' | jq
+  echo "Shoot status conditions:"
+  kubectl --kubeconfig "${GARDENER_KUBECONFIG}" get shoot "${CLUSTER_NAME}" -o jsonpath='{.status.conditions}' | jq
+  exit 5
+fi
+
 echo "Shoot provisioning finished"
