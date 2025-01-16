@@ -11,10 +11,8 @@ on:
         options:
           - aws
           - azure
-          - azure_lite
           - gcp
           - sap-converged-cloud
-          - trial
 
       custom_administrators:
         description: 'List of custom administrators.
@@ -42,17 +40,11 @@ jobs:
             "azure")
               echo "region=westeurope" >> $GITHUB_OUTPUT
               ;;
-            "azure_lite")
-              echo "region=westeurope" >> $GITHUB_OUTPUT
-              ;;
             "gcp")
               echo "region=europe-west3" >> $GITHUB_OUTPUT
               ;;
             "sap-converged-cloud")
               echo "region=eu-de-1" >> $GITHUB_OUTPUT
-              ;;
-            "trial")
-              echo "region=us-east-1" >> $GITHUB_OUTPUT
               ;;
             *)
               exit 1
