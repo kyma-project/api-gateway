@@ -98,6 +98,8 @@ kubectl_wait_code=0
 kubectl wait --kubeconfig "${GARDENER_KUBECONFIG}" --for=condition=EveryNodeReady shoot/${CLUSTER_NAME} --timeout=25m || kubectl_wait_code=$?
 if [ "${kubectl_wait_code}" -ne 0 ]; then
     echo "Timed out waiting for nodes to be ready"
+    echo "Shoot last operation:"
+    kubectl --kubeconfig "${GARDENER_KUBECONFIG}" get shoot "${CLUSTER_NAME}" -o jsonpath='{.status.lastOperation}' | jq
     echo "Shoot status conditions:"
     kubectl --kubeconfig "${GARDENER_KUBECONFIG}" get shoot "${CLUSTER_NAME}" -o jsonpath='{.status.conditions}' | jq
     exit 3
@@ -130,6 +132,8 @@ kubectl_wait_code=0
 kubectl wait --kubeconfig "${GARDENER_KUBECONFIG}" --for=jsonpath='{.status.lastOperation.state}'=Succeeded --timeout=600s "shoots/${CLUSTER_NAME}" || kubectl_wait_code=$?
 if [ "${kubectl_wait_code}" -ne 0 ]; then
   echo "Timed out waiting for the shoot provisioning"
+  echo "Shoot last operation:"
+  kubectl --kubeconfig "${GARDENER_KUBECONFIG}" get shoot "${CLUSTER_NAME}" -o jsonpath='{.status.lastOperation}' | jq
   echo "Shoot status conditions:"
   kubectl --kubeconfig "${GARDENER_KUBECONFIG}" get shoot "${CLUSTER_NAME}" -o jsonpath='{.status.conditions}' | jq
   exit 5
