@@ -79,16 +79,16 @@ func (h *RetryableHttpClient) CallEndpointWithHeadersAndMethod(requestHeaders ma
 		req.Header.Set(headerName, headerValue)
 	}
 
-	return h.CallEndpointWithRequest(req, url, validator)
+	return h.CallEndpointWithRequestRetry(req, validator)
 }
 
-func (h *RetryableHttpClient) CallEndpointWithRequest(req *http.Request, url string, validator HttpResponseAsserter) error {
+func (h *RetryableHttpClient) CallEndpointWithRequestRetry(req *http.Request, validator HttpResponseAsserter) error {
 	err := h.withRetries(func() (*http.Response, error) {
 		return h.client.Do(req)
 	}, validator)
 
 	if err != nil {
-		return fmt.Errorf("error calling endpoint %s err=%s", url, err)
+		return fmt.Errorf("error calling endpoint %s err=%s", req.URL, err)
 	}
 
 	return nil
@@ -115,6 +115,10 @@ func (h *RetryableHttpClient) withRetries(httpCall func() (*http.Response, error
 	}
 
 	return nil
+}
+
+func (h *RetryableHttpClient) GetHttpClient() *http.Client {
+	return h.client
 }
 
 type OIDCConfiguration struct {
