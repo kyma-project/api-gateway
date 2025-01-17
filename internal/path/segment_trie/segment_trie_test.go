@@ -52,11 +52,11 @@ var _ = Describe("SegmentTrie", func() {
 			"/abc",
 			"/abc/{**}",
 		}, 0),
-		Entry("No conflict: path without / at end and same path with double asterisk", []string{
+		Entry("No conflict: path without / at end and same path with single asterisk", []string{
 			"/abc",
 			"/abc/{*}",
 		}, 0),
-		Entry("Conflict: path with / at end and same path with double asterisk", []string{
+		Entry("Conflict: path with / at end and same path with single asterisk", []string{
 			"/abc/",
 			"/abc/{*}",
 		}, 1),
