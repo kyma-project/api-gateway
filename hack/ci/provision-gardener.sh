@@ -95,7 +95,7 @@ echo "Shoot template applied"
 
 echo "Waiting for cluster to be ready..."
 kubectl_wait_code=0
-kubectl wait --kubeconfig "${GARDENER_KUBECONFIG}" --for=condition=EveryNodeReady shoot/${CLUSTER_NAME} --timeout=25m || kubectl_wait_code=$?
+kubectl wait --kubeconfig "${GARDENER_KUBECONFIG}" --for=condition=EveryNodeReady shoot/${CLUSTER_NAME} --timeout=30m || kubectl_wait_code=$?
 if [ "${kubectl_wait_code}" -ne 0 ]; then
     echo "Timed out waiting for nodes to be ready"
     echo "Shoot last operation:"
