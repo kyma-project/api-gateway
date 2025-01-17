@@ -1,4 +1,4 @@
-name: Schedule Daily - Main branch image
+name: Schedule Daily
 
 permissions:
   id-token: write # This is required for requesting the JWT token
