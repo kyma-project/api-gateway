@@ -144,6 +144,9 @@ func findExistingPath(node *Node, tokens []token.Token, cur int) bool {
 			}
 		}
 	case token.BracedDoubleAsterix:
+		if node.EndNode {
+			return false
+		}
 		bracedAsterixSuffix := tokens[cur+1:]
 		return suffixExist(node, bracedAsterixSuffix, 0)
 	}
