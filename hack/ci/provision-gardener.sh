@@ -86,23 +86,23 @@ until (echo "$shoot_template" | kubectl --kubeconfig "${GARDENER_KUBECONFIG}" ap
   retries+=1
   if [[ retries -gt 2 ]]; then
     echo "Could not apply shoot spec after 3 tries, exiting"
-    exit 1
+    exit 3
   fi
   echo "Failed, retrying in 15s"
   sleep 15
 done
 echo "Shoot template applied"
 
-echo "Waiting for cluster to be ready..."
+echo "Waiting for shoot operations to be completed..."
 kubectl_wait_code=0
-kubectl wait --kubeconfig "${GARDENER_KUBECONFIG}" --for=condition=EveryNodeReady shoot/${CLUSTER_NAME} --timeout=25m || kubectl_wait_code=$?
+kubectl wait --kubeconfig "${GARDENER_KUBECONFIG}" --for=jsonpath='{.status.lastOperation.state}'=Succeeded --timeout=30m "shoots/${CLUSTER_NAME}" || kubectl_wait_code=$?
 if [ "${kubectl_wait_code}" -ne 0 ]; then
-    echo "Timed out waiting for nodes to be ready"
-    echo "Shoot last operation:"
-    kubectl --kubeconfig "${GARDENER_KUBECONFIG}" get shoot "${CLUSTER_NAME}" -o jsonpath='{.status.lastOperation}' | jq
-    echo "Shoot status conditions:"
-    kubectl --kubeconfig "${GARDENER_KUBECONFIG}" get shoot "${CLUSTER_NAME}" -o jsonpath='{.status.conditions}' | jq
-    exit 3
+  echo "Timed out waiting for the shoot provisioning, kubectl exit code: ${kubectl_wait_code}"
+  echo "Shoot last operation:"
+  kubectl --kubeconfig "${GARDENER_KUBECONFIG}" get shoot "${CLUSTER_NAME}" -o jsonpath='{.status.lastOperation}' | jq
+  echo "Shoot status conditions:"
+  kubectl --kubeconfig "${GARDENER_KUBECONFIG}" get shoot "${CLUSTER_NAME}" -o jsonpath='{.status.conditions}' | jq
+  exit 4
 fi
 
 # create kubeconfig request, that creates a kubeconfig which is valid for one day
@@ -112,31 +112,5 @@ kubectl create  --kubeconfig "${GARDENER_KUBECONFIG}" \
     --raw "/apis/core.gardener.cloud/v1beta1/namespaces/garden-${GARDENER_PROJECT_NAME}/shoots/${CLUSTER_NAME}/adminkubeconfig" | \
     jq -r ".status.kubeconfig" | \
     base64 -d > "${CLUSTER_KUBECONFIG}"
-
-echo "Wait until API Server is ready"
-# wait until apiserver /readyz endpoint returns "ok"
-timeout=0
-until (kubectl --kubeconfig "${CLUSTER_KUBECONFIG}" get --raw "/readyz"); do
-  timeout+=1
-  # 10 minutes
-  if [[ $timeout -gt 600 ]]; then
-    echo "Timed out waiting for API Server to be ready"
-    exit 4
-  fi
-  sleep 1
-done
-echo "API Server is ready"
-
-echo "Waiting for shoot operations to be completed..."
-kubectl_wait_code=0
-kubectl wait --kubeconfig "${GARDENER_KUBECONFIG}" --for=jsonpath='{.status.lastOperation.state}'=Succeeded --timeout=600s "shoots/${CLUSTER_NAME}" || kubectl_wait_code=$?
-if [ "${kubectl_wait_code}" -ne 0 ]; then
-  echo "Timed out waiting for the shoot provisioning"
-  echo "Shoot last operation:"
-  kubectl --kubeconfig "${GARDENER_KUBECONFIG}" get shoot "${CLUSTER_NAME}" -o jsonpath='{.status.lastOperation}' | jq
-  echo "Shoot status conditions:"
-  kubectl --kubeconfig "${GARDENER_KUBECONFIG}" get shoot "${CLUSTER_NAME}" -o jsonpath='{.status.conditions}' | jq
-  exit 5
-fi
 
 echo "Shoot provisioning finished"
