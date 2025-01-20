@@ -7,6 +7,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"strings"
+	"time"
 )
 
 // Validate checks the validity of the given RateLimit custom resource.
@@ -23,6 +24,10 @@ import (
 // - An error if the validation fails, otherwise nil.
 func Validate(ctx context.Context, k8sClient client.Client, rl v1alpha1.RateLimit) error {
 	selectors := rl.Spec.SelectorLabels
+
+	if err := validateIntervals(rl); err != nil {
+		return err
+	}
 
 	matchingPods := v1.PodList{}
 	err := k8sClient.List(ctx, &matchingPods, client.InNamespace(rl.Namespace), client.MatchingLabels(selectors))
@@ -48,6 +53,20 @@ func Validate(ctx context.Context, k8sClient client.Client, rl v1alpha1.RateLimi
 		return err
 	}
 
+	return nil
+}
+
+func validateIntervals(rl v1alpha1.RateLimit) error {
+	if rl.Spec.Local.DefaultBucket.FillInterval != nil &&
+		rl.Spec.Local.DefaultBucket.FillInterval.Duration < 50*time.Millisecond {
+		return fmt.Errorf("default_bucket: fill_interval must be greater or equal 50ms")
+	}
+	for i, b := range rl.Spec.Local.Buckets {
+		if b.Bucket.FillInterval != nil &&
+			b.Bucket.FillInterval.Duration < 50*time.Millisecond {
+			return fmt.Errorf("bucket '[%d]': fill_interval must be greater or equal 50ms", i)
+		}
+	}
 	return nil
 }
 
