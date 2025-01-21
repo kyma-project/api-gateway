@@ -139,7 +139,7 @@ export SECRET={SECRET_NAME}
 
 #### **kubectl**
 
-1. Export the name of your TLS Secret as an environment variable, that you would like to create:
+1. Export the name of the TLS Secret that you would like to create:
 
     ```bash
     export TLS_SECRET={TLS_SECRET_NAME}
