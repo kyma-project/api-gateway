@@ -139,7 +139,7 @@ export SECRET={SECRET_NAME}
 
 #### **kubectl**
 
-1. Export the name of your TLS Secret as an environment variable:
+1. Export the name of your TLS Secret as an environment variable, that you would like to create:
 
     ```bash
     export TLS_SECRET={TLS_SECRET_NAME}
@@ -165,7 +165,7 @@ export SECRET={SECRET_NAME}
 3. To check the certificate status, run:
 
     ```bash
-    kubectl get certificate httpbin-cert -n istio-system
+    kubectl get certificate my-cert -n istio-system
     ```
 <!-- tabs:end -->
 
