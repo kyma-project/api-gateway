@@ -89,8 +89,8 @@ spec:
                       - bucket
                       type: object
                       x-kubernetes-validations:
-                      - message: path or headers must be set
-                        rule: ((has(self.path)?1:0)+(has(self.headers)?1:0))==1
+                      - message: At least one of 'path' or 'headers' must be set
+                        rule: has(self.path) || has(self.headers)
                     type: array
                   defaultBucket:
                     description: BucketSpec defines the token bucket specification.
