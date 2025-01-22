@@ -321,7 +321,7 @@ var _ = Describe("RateLimit CR Validation", func() {
 
 		err := ratelimitvalidator.Validate(context.Background(), c, rlCR)
 		Expect(err).To(HaveOccurred())
-		Expect(err.Error()).To(ContainSubstring("fill_interval must be greater or equal 50ms"))
+		Expect(err.Error()).To(ContainSubstring("default_bucket: fill_interval must be greater or equal 50ms"))
 	})
 	It("Should fail if exact bucket fill interval lower than 50ms", func() {
 		rlCR := ratelimitv1alpha1.RateLimit{
