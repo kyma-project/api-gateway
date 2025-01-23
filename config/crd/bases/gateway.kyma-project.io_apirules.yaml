@@ -531,7 +531,7 @@ spec:
                          match any request that matches the pattern with zero or more path segments in the operator's place.
                          The `{**}` operator must be the last operator in the path.
                          - Wildcard path `/*` - matches all paths. Equivalent to `/{**}` path.
-                      pattern: ^((\/[\w\.~\-]*)|(\/\{\*{1,2}\}))+$|^\/\*$
+                      pattern: ^((\/([A-Za-z0-9-._~!$&'()+,;=:@]|%[0-9a-fA-F]{2})*)|(\/\{\*{1,2}\}))+$|^\/\*$
                       type: string
                     request:
                       description: Request allows modifying the request before it
