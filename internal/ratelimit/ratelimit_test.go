@@ -193,13 +193,13 @@ var _ = Describe("RateLimit", func() {
 			Bucket: Bucket{
 				MaxTokens:     20,
 				TokensPerFill: 10,
-				FillInterval:  30 * time.Second,
+				FillInterval:  1 * time.Hour,
 			},
 		}
 		bucket := Bucket{
 			MaxTokens:     10,
 			TokensPerFill: 5,
-			FillInterval:  30 * time.Second,
+			FillInterval:  50 * time.Millisecond,
 		}
 		rl := NewLocalRateLimit().
 			For(d1).

@@ -50,7 +50,7 @@
             token_bucket:
               max_tokens: 10
               tokens_per_fill: 5
-              fill_interval: 30s
+              fill_interval: 0.050000s
             descriptors:
               - entries:
                   - key: path
@@ -58,7 +58,7 @@
                 token_bucket:
                   max_tokens: 20
                   tokens_per_fill: 10
-                  fill_interval: 30s
+                  fill_interval: 3600.000000s
               - entries:
                   - key: x-api-version
                     value: v1
@@ -67,4 +67,4 @@
                 token_bucket:
                   max_tokens: 2
                   tokens_per_fill: 2
-                  fill_interval: 30s
+                  fill_interval: 30.000000s

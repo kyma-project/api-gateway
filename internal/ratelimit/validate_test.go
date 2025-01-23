@@ -12,6 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
+	"time"
 )
 
 var sc *runtime.Scheme
@@ -302,5 +303,50 @@ var _ = Describe("RateLimit CR Validation", func() {
 
 		Expect(err).To(HaveOccurred())
 		Expect(err.Error()).To(Equal(fmt.Sprintf("no pods found with the given selectors: %v in namespace %s", rlCR.Spec.SelectorLabels, rlCR.Namespace)))
+	})
+	It("Should fail if default bucket fill interval lower than 50ms", func() {
+		rlCR := ratelimitv1alpha1.RateLimit{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "test-rl",
+				Namespace: "test-namespace",
+			},
+			Spec: ratelimitv1alpha1.RateLimitSpec{
+				SelectorLabels: map[string]string{
+					"app": "test",
+				},
+				Local: ratelimitv1alpha1.LocalConfig{DefaultBucket: ratelimitv1alpha1.BucketSpec{FillInterval: &metav1.Duration{Duration: 0}}},
+			},
+		}
+		c := fake.NewClientBuilder().WithScheme(sc).WithObjects(&rlCR).Build()
+
+		err := ratelimitvalidator.Validate(context.Background(), c, rlCR)
+		Expect(err).To(HaveOccurred())
+		Expect(err.Error()).To(ContainSubstring("default_bucket: fill_interval must be greater or equal 50ms"))
+	})
+	It("Should fail if exact bucket fill interval lower than 50ms", func() {
+		rlCR := ratelimitv1alpha1.RateLimit{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "test-rl",
+				Namespace: "test-namespace",
+			},
+			Spec: ratelimitv1alpha1.RateLimitSpec{
+				SelectorLabels: map[string]string{
+					"app": "test",
+				},
+				Local: ratelimitv1alpha1.LocalConfig{
+					DefaultBucket: ratelimitv1alpha1.BucketSpec{FillInterval: &metav1.Duration{Duration: 60 * time.Minute}},
+					Buckets: []ratelimitv1alpha1.BucketConfig{
+						{
+							Bucket: ratelimitv1alpha1.BucketSpec{FillInterval: &metav1.Duration{Duration: 0}},
+						},
+					},
+				},
+			},
+		}
+		c := fake.NewClientBuilder().WithScheme(sc).WithObjects(&rlCR).Build()
+
+		err := ratelimitvalidator.Validate(context.Background(), c, rlCR)
+		Expect(err).To(HaveOccurred())
+		Expect(err.Error()).To(ContainSubstring("bucket '[0]': fill_interval must be greater or equal 50ms"))
 	})
 })

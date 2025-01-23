@@ -1,6 +1,7 @@
 package ratelimit
 
 import (
+	"fmt"
 	"github.com/kyma-project/api-gateway/internal/builders/envoyfilter"
 	"google.golang.org/protobuf/types/known/structpb"
 	"istio.io/api/networking/v1alpha3"
@@ -104,7 +105,7 @@ type Bucket struct {
 func (b Bucket) Value() *structpb.Value {
 	return structpb.NewStructValue(&structpb.Struct{
 		Fields: map[string]*structpb.Value{
-			"fill_interval":   structpb.NewStringValue(b.FillInterval.String()),
+			"fill_interval":   structpb.NewStringValue(fmt.Sprintf("%fs", b.FillInterval.Seconds())),
 			"max_tokens":      structpb.NewNumberValue(float64(b.MaxTokens)),
 			"tokens_per_fill": structpb.NewNumberValue(float64(b.TokensPerFill))},
 	})
@@ -221,7 +222,7 @@ func hasHeader(header RequestHeader, actions []Action) bool {
 	return false
 }
 
-// Enforce sets if the RateLimit configuration shouild be enforced or not.
+// Enforce sets if the RateLimit configuration should be enforced or not.
 func (rl *RateLimit) Enforce(enforce bool) *RateLimit {
 	rl.enforce = enforce
 	return rl
