@@ -57,14 +57,26 @@ func Validate(ctx context.Context, k8sClient client.Client, rl v1alpha1.RateLimi
 }
 
 func validateIntervals(rl v1alpha1.RateLimit) error {
-	if rl.Spec.Local.DefaultBucket.FillInterval != nil &&
-		rl.Spec.Local.DefaultBucket.FillInterval.Duration < 50*time.Millisecond {
-		return fmt.Errorf("default_bucket: fill_interval must be greater or equal 50ms")
+	if rl.Spec.Local.DefaultBucket.FillInterval == nil {
+		// API validation ensures that this field is not empty
+		return nil
 	}
+	globalFillInterval := rl.Spec.Local.DefaultBucket.FillInterval.Duration
+	if globalFillInterval < 50*time.Millisecond {
+		return fmt.Errorf("defaultBucket: fillInterval must be greater or equal 50ms")
+	}
+
 	for i, b := range rl.Spec.Local.Buckets {
-		if b.Bucket.FillInterval != nil &&
-			b.Bucket.FillInterval.Duration < 50*time.Millisecond {
-			return fmt.Errorf("bucket '[%d]': fill_interval must be greater or equal 50ms", i)
+		if b.Bucket.FillInterval == nil {
+			// API validation ensures that this field is not empty
+			return nil
+		}
+		bucketFillInterval := b.Bucket.FillInterval.Duration
+		if bucketFillInterval < 50*time.Millisecond {
+			return fmt.Errorf("bucket '[%d]': fillInterval must be greater or equal 50ms", i)
+		}
+		if bucketFillInterval%globalFillInterval != 0 {
+			return fmt.Errorf("bucket '[%d]': fillInterval must be a multiple of defaultBucket fillInterval", i)
 		}
 	}
 	return nil
