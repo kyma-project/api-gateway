@@ -2,7 +2,6 @@ package ratelimit
 
 import (
 	_ "embed"
-	"fmt"
 	"log"
 	"path"
 
@@ -19,7 +18,7 @@ const manifestsDirectory = "testsuites/rate-limit/manifests/"
 
 func (t *testsuite) createScenario() *scenario {
 	testId := helpers.GenerateRandomTestId()
-	t.namespace = global.GenerateNamespaceName(fmt.Sprintf("%s-%s", t.name, testId))
+	t.namespace = global.GenerateNamespaceName(t.name)
 	log.Printf("Using namespace: %s", t.namespace)
 	err := global.CreateGlobalResources(t.resourceManager, t.k8sClient, t.namespace, manifestsDirectory)
 	if err != nil {
@@ -83,7 +82,6 @@ func (t *testsuite) K8sClient() dynamic.Interface {
 }
 
 func (t *testsuite) Setup() error {
-	fmt.Printf("setup test with namespace: %s", t.namespace)
 	return nil
 }
 

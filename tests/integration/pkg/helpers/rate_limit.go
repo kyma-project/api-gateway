@@ -14,7 +14,6 @@ var rateLimitGVR = schema.GroupVersionResource{Group: "gateway.kyma-project.io",
 
 func WaitForRateLimit(resourceMgr *resource.Manager, k8sClient dynamic.Interface, namespace string, rateLimitName string, retryOpts []retry.Option) error {
 	err := retry.Do(func() error {
-
 		status, err := resourceMgr.GetStatus(k8sClient, rateLimitGVR, namespace, rateLimitName)
 		if err != nil {
 			return err
@@ -27,7 +26,7 @@ func WaitForRateLimit(resourceMgr *resource.Manager, k8sClient dynamic.Interface
 			return fmt.Errorf("conditions not found for the ratelimit: %s", rateLimitName)
 		}
 		if state != "Ready" {
-			return fmt.Errorf("status of RateLimit is %s state instead of ready", state)
+			return fmt.Errorf("status of RateLimit is %s state instead of Ready", state)
 		}
 		return nil
 	}, retryOpts...)
