@@ -5,5 +5,5 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 images:
 - name: controller
-  newName: docker.io/asiabodora216/istio-manager
-  newTag: 0.0.1
+  newName: api-gateway-controller
+  newTag: latest
