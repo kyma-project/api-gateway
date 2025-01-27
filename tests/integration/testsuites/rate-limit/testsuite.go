@@ -18,12 +18,6 @@ const manifestsDirectory = "testsuites/rate-limit/manifests/"
 
 func (t *testsuite) createScenario() *scenario {
 	testId := helpers.GenerateRandomTestId()
-	t.namespace = global.GenerateNamespaceName(t.name)
-	log.Printf("Using namespace: %s", t.namespace)
-	err := global.CreateGlobalResources(t.resourceManager, t.k8sClient, t.namespace, manifestsDirectory)
-	if err != nil {
-		return nil
-	}
 
 	template := make(map[string]string)
 	template["Namespace"] = t.namespace
@@ -82,6 +76,12 @@ func (t *testsuite) K8sClient() dynamic.Interface {
 }
 
 func (t *testsuite) Setup() error {
+	t.namespace = global.GenerateNamespaceName(t.name)
+	log.Printf("Using namespace: %s", t.namespace)
+	err := global.CreateGlobalResources(t.resourceManager, t.k8sClient, t.namespace, manifestsDirectory)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
