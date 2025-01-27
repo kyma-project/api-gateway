@@ -242,6 +242,165 @@ var _ = Describe("Rate Limit Controller", func() {
 			return ef.Generation > observedGeneration
 		}).Should(BeTrue())
 	})
+	Context("RateLimit CRD validation", func() {
+		It("should fail if path and headers are empty", func() {
+			namespace := ns.Name
+			By("Creating test pod")
+			pod := &corev1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-pod",
+					Namespace: namespace,
+					Annotations: map[string]string{
+						"sidecar.istio.io/status": "",
+					},
+					Labels: map[string]string{
+						"app": "test",
+					},
+				},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:  "test",
+							Image: "busybox",
+						},
+					}}}
+			Expect(c.Create(ctx, pod)).Should(Succeed())
+			By("Creating RateLimit resource")
+			rl := &ratelimitv1alpha1.RateLimit{
+				ObjectMeta: metav1.ObjectMeta{
+					GenerateName: "rate-limit-",
+					Namespace:    ns.Name,
+				},
+				Spec: ratelimitv1alpha1.RateLimitSpec{
+					EnableResponseHeaders: false,
+					SelectorLabels:        map[string]string{"app": "test"},
+					Local: ratelimitv1alpha1.LocalConfig{
+						DefaultBucket: ratelimitv1alpha1.BucketSpec{
+							MaxTokens:     20,
+							TokensPerFill: 20,
+							FillInterval:  &metav1.Duration{Duration: time.Minute * 5},
+						},
+						Buckets: []ratelimitv1alpha1.BucketConfig{
+							{
+								Bucket: ratelimitv1alpha1.BucketSpec{
+									MaxTokens:     20,
+									TokensPerFill: 20,
+									FillInterval:  &metav1.Duration{Duration: time.Minute * 5},
+								},
+							},
+						},
+					},
+				}}
+			err := c.Create(ctx, rl)
+			Expect(err).ShouldNot(Succeed())
+			Expect(err.Error()).To(ContainSubstring("At least one of 'path' or 'headers' must be set"))
+		})
+		It("should pass if path and headers are defined", func() {
+			namespace := ns.Name
+			By("Creating test pod")
+			pod := &corev1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-pod",
+					Namespace: namespace,
+					Annotations: map[string]string{
+						"sidecar.istio.io/status": "",
+					},
+					Labels: map[string]string{
+						"app": "test",
+					},
+				},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:  "test",
+							Image: "busybox",
+						},
+					}}}
+			Expect(c.Create(ctx, pod)).Should(Succeed())
+			By("Creating RateLimit resource")
+			rl := &ratelimitv1alpha1.RateLimit{
+				ObjectMeta: metav1.ObjectMeta{
+					GenerateName: "rate-limit-",
+					Namespace:    ns.Name,
+				},
+				Spec: ratelimitv1alpha1.RateLimitSpec{
+					EnableResponseHeaders: false,
+					SelectorLabels:        map[string]string{"app": "test"},
+					Local: ratelimitv1alpha1.LocalConfig{
+						DefaultBucket: ratelimitv1alpha1.BucketSpec{
+							MaxTokens:     20,
+							TokensPerFill: 20,
+							FillInterval:  &metav1.Duration{Duration: time.Minute * 5},
+						},
+						Buckets: []ratelimitv1alpha1.BucketConfig{
+							{
+								Path: "/anything",
+								Headers: map[string]string{
+									"X-Foo": "bar",
+								},
+								Bucket: ratelimitv1alpha1.BucketSpec{
+									MaxTokens:     20,
+									TokensPerFill: 20,
+									FillInterval:  &metav1.Duration{Duration: time.Minute * 5},
+								},
+							},
+						},
+					},
+				}}
+			Expect(c.Create(ctx, rl)).Should(Succeed())
+		})
+		It("should pass if only path is defined", func() {
+			namespace := ns.Name
+			By("Creating test pod")
+			pod := &corev1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-pod",
+					Namespace: namespace,
+					Annotations: map[string]string{
+						"sidecar.istio.io/status": "",
+					},
+					Labels: map[string]string{
+						"app": "test",
+					},
+				},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:  "test",
+							Image: "busybox",
+						},
+					}}}
+			Expect(c.Create(ctx, pod)).Should(Succeed())
+			By("Creating RateLimit resource")
+			rl := &ratelimitv1alpha1.RateLimit{
+				ObjectMeta: metav1.ObjectMeta{
+					GenerateName: "rate-limit-",
+					Namespace:    ns.Name,
+				},
+				Spec: ratelimitv1alpha1.RateLimitSpec{
+					EnableResponseHeaders: false,
+					SelectorLabels:        map[string]string{"app": "test"},
+					Local: ratelimitv1alpha1.LocalConfig{
+						DefaultBucket: ratelimitv1alpha1.BucketSpec{
+							MaxTokens:     20,
+							TokensPerFill: 20,
+							FillInterval:  &metav1.Duration{Duration: time.Minute * 5},
+						},
+						Buckets: []ratelimitv1alpha1.BucketConfig{
+							{
+								Path: "/anything",
+								Bucket: ratelimitv1alpha1.BucketSpec{
+									MaxTokens:     20,
+									TokensPerFill: 20,
+									FillInterval:  &metav1.Duration{Duration: time.Minute * 5},
+								},
+							},
+						},
+					},
+				}}
+			Expect(c.Create(ctx, rl)).Should(Succeed())
+		})
+	})
 })
 
 func getTestScheme() *runtime.Scheme {

@@ -35,30 +35,30 @@ This tutorial shows how to expose and secure Services using APIGateway Controlle
 
 To expose and secure your Service, create the following APIRule:
 
-    ```bash
-    cat <<EOF | kubectl apply -f -
-    apiVersion: gateway.kyma-project.io/v2alpha1
-    kind: APIRule
-    metadata:
-      name: {APIRULE_NAME}
-      namespace: {APIRULE_NAMESPACE}
-    spec:
-      hosts:
-        - {SUBDOMAIN}.{DOMAIN_NAME}
-      service:
-        name: {SERVICE_NAME}
-        port: {SERVICE_PORT}
-      gateway: {GATEWAY_NAME}/{GATEWAY_NAMESPACE}
-      rules:
-        - jwt:
-            authentications:
-              -  issuer: {ISSUER}
-                 jwksUri: {JWKS_URI}
-          methods:
-            - GET
-          path: /*
-    EOF
-    ```
+```bash
+cat <<EOF | kubectl apply -f -
+apiVersion: gateway.kyma-project.io/v2alpha1
+kind: APIRule
+metadata:
+  name: {APIRULE_NAME}
+  namespace: {APIRULE_NAMESPACE}
+spec:
+  hosts:
+    - {SUBDOMAIN}.{DOMAIN_NAME}
+  service:
+    name: {SERVICE_NAME}
+    port: {SERVICE_PORT}
+  gateway: {GATEWAY_NAME}/{GATEWAY_NAMESPACE}
+  rules:
+    - jwt:
+        authentications:
+          -  issuer: {ISSUER}
+              jwksUri: {JWKS_URI}
+      methods:
+        - GET
+      path: /*
+EOF
+```
 <!-- tabs:end -->
 
 
@@ -67,13 +67,13 @@ To expose and secure your Service, create the following APIRule:
 1. To call the endpoint, send a `GET` request to the HTTPBin Service.
 
     ```bash
-    curl -ik -X GET https://httpbin.$DOMAIN_TO_EXPOSE_WORKLOADS/headers
+    curl -ik -X GET https://{SUBDOMAIN}.{DOMAIN_NAME}/headers
     ```
     You get the error `401 Unauthorized`.
 
 2. Now, access the secured workload using the correct JWT.
 
     ```bash
-    curl -ik -X GET https://httpbin.$DOMAIN_TO_EXPOSE_WORKLOADS/headers --header "Authorization:Bearer $ACCESS_TOKEN"
+    curl -ik -X GET https://{SUBDOMAIN}.{DOMAIN_NAME}/headers --header "Authorization:Bearer $ACCESS_TOKEN"
     ```
     You get the `200 OK` response code.

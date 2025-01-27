@@ -13,3 +13,7 @@ Browse the API Gateway Security tutorials to learn how to prepare certificates a
 
 - [Prepare Self-Signed Root CA and Client Certificates](./01-60-security/01-61-mtls-selfsign-client-certicate.md)
 - [Set Up a Custom Identity Provider](./01-60-security/01-62-set-up-idp.md)
+
+Browse rate limit tutorials to learn how to configure rate limit for a workload:
+
+- [Set up rate limits](./01-70-rate-limit.md)
