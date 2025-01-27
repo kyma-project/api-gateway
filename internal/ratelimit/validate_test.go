@@ -321,7 +321,7 @@ var _ = Describe("RateLimit CR Validation", func() {
 
 		err := ratelimitvalidator.Validate(context.Background(), c, rlCR)
 		Expect(err).To(HaveOccurred())
-		Expect(err.Error()).To(ContainSubstring("default_bucket: fill_interval must be greater or equal 50ms"))
+		Expect(err.Error()).To(ContainSubstring("defaultBucket: fillInterval must be greater or equal 50ms"))
 	})
 	It("Should fail if exact bucket fill interval lower than 50ms", func() {
 		rlCR := ratelimitv1alpha1.RateLimit{
@@ -347,6 +347,32 @@ var _ = Describe("RateLimit CR Validation", func() {
 
 		err := ratelimitvalidator.Validate(context.Background(), c, rlCR)
 		Expect(err).To(HaveOccurred())
-		Expect(err.Error()).To(ContainSubstring("bucket '[0]': fill_interval must be greater or equal 50ms"))
+		Expect(err.Error()).To(ContainSubstring("bucket '[0]': fillInterval must be greater or equal 50ms"))
+	})
+	It("Should fail if exact bucket fill interval is not a multiple of defaultBucket fill interval", func() {
+		rlCR := ratelimitv1alpha1.RateLimit{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "test-rl",
+				Namespace: "test-namespace",
+			},
+			Spec: ratelimitv1alpha1.RateLimitSpec{
+				SelectorLabels: map[string]string{
+					"app": "test",
+				},
+				Local: ratelimitv1alpha1.LocalConfig{
+					DefaultBucket: ratelimitv1alpha1.BucketSpec{FillInterval: &metav1.Duration{Duration: 10 * time.Minute}},
+					Buckets: []ratelimitv1alpha1.BucketConfig{
+						{
+							Bucket: ratelimitv1alpha1.BucketSpec{FillInterval: &metav1.Duration{Duration: 30 * time.Second}},
+						},
+					},
+				},
+			},
+		}
+		c := fake.NewClientBuilder().WithScheme(sc).WithObjects(&rlCR).Build()
+
+		err := ratelimitvalidator.Validate(context.Background(), c, rlCR)
+		Expect(err).To(HaveOccurred())
+		Expect(err.Error()).To(ContainSubstring("bucket '[0]': fillInterval must be a multiple of defaultBucket fillInterval"))
 	})
 })
