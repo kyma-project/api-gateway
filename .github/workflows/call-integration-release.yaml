@@ -14,7 +14,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        test_make_target: [ "test-integration-ory", "test-integration-istio", "test-integration-v2alpha1", "test-integration-gateway" ]
+        test_make_target: [ "test-integration-ory", "test-integration-istio", "test-integration-v2alpha1", "test-integration-gateway", "test-integration-rate-limit" ]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -55,7 +55,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        test_make_target: [ "test-integration-ory", "test-integration-istio", "test-integration-v2alpha1", "test-integration-gateway" ]
+        test_make_target: [ "test-integration-ory", "test-integration-istio", "test-integration-v2alpha1", "test-integration-gateway", "test-integration-rate-limit" ]
     steps:
       - uses: actions/checkout@v4
         with:
