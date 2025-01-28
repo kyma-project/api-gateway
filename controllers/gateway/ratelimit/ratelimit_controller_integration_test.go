@@ -3,6 +3,7 @@ package ratelimit_test
 import (
 	"context"
 	ratelimitv1alpha1 "github.com/kyma-project/api-gateway/apis/gateway/ratelimit/v1alpha1"
+	"github.com/kyma-project/api-gateway/controllers"
 	"github.com/kyma-project/api-gateway/controllers/gateway/ratelimit"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -57,7 +58,13 @@ var _ = BeforeSuite(func() {
 		Scheme:          s,
 		ReconcilePeriod: time.Second,
 	}
-	Expect(rec.SetupWithManager(mgr)).Should(Succeed())
+	rateLimiterCfg := controllers.RateLimiterConfig{
+		Burst:            200,
+		Frequency:        30,
+		FailureBaseDelay: 1 * time.Second,
+		FailureMaxDelay:  10 * time.Second,
+	}
+	Expect(rec.SetupWithManager(mgr, rateLimiterCfg)).Should(Succeed())
 	go func() {
 		defer GinkgoRecover()
 		Expect(mgr.Start(ctx)).Should(Succeed())
