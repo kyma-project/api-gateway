@@ -1,5 +1,3 @@
-//go:build dev_features
-
 package ratelimit_test
 
 import (
