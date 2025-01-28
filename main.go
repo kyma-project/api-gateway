@@ -20,6 +20,7 @@ import (
 	"context"
 	"crypto/tls"
 	"flag"
+	ratelimitv1alpha1 "github.com/kyma-project/api-gateway/apis/gateway/ratelimit/v1alpha1"
 	"github.com/kyma-project/api-gateway/controllers/gateway/ratelimit"
 	"os"
 	"time"
@@ -59,6 +60,7 @@ import (
 	certv1alpha1 "github.com/gardener/cert-management/pkg/apis/cert/v1alpha1"
 	dnsv1alpha1 "github.com/gardener/external-dns-management/pkg/apis/dns/v1alpha1"
 	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
+	networkingv1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 
@@ -97,6 +99,9 @@ func init() {
 	utilruntime.Must(securityv1beta1.AddToScheme(scheme))
 	utilruntime.Must(operatorv1alpha1.AddToScheme(scheme))
 	utilruntime.Must(apiextensionsv1.AddToScheme(scheme))
+
+	utilruntime.Must(ratelimitv1alpha1.AddToScheme(scheme))
+	utilruntime.Must(networkingv1alpha3.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
 }
 
@@ -245,7 +250,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err = ratelimit.Setup(mgr, scheme); err != nil {
+	if err = ratelimit.NewRateLimitReconciler(mgr).SetupWithManager(mgr, rateLimiterCfg); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "RateLimit")
 		os.Exit(1)
 	}

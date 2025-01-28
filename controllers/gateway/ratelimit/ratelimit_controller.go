@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 	ratelimitv1alpha1 "github.com/kyma-project/api-gateway/apis/gateway/ratelimit/v1alpha1"
+	"github.com/kyma-project/api-gateway/controllers"
 	"github.com/kyma-project/api-gateway/internal/builders/envoyfilter"
 	"github.com/kyma-project/api-gateway/internal/dependencies"
 	"github.com/kyma-project/api-gateway/internal/ratelimit"
@@ -28,9 +29,15 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"time"
+)
+
+const (
+	defaultReconciliationPeriod = 3 * time.Minute
 )
 
 // RateLimitReconciler reconciles a RateLimit object
@@ -155,8 +162,19 @@ func (r *RateLimitReconciler) createOrUpdate(ctx context.Context, obj client.Obj
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *RateLimitReconciler) SetupWithManager(mgr ctrl.Manager) error {
+func (r *RateLimitReconciler) SetupWithManager(mgr ctrl.Manager, c controllers.RateLimiterConfig) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&ratelimitv1alpha1.RateLimit{}).
+		WithOptions(controller.Options{
+			RateLimiter: controllers.NewRateLimiter(c),
+		}).
 		Complete(r)
+}
+
+func NewRateLimitReconciler(mgr manager.Manager) *RateLimitReconciler {
+	return &RateLimitReconciler{
+		Client:          mgr.GetClient(),
+		Scheme:          mgr.GetScheme(),
+		ReconcilePeriod: defaultReconciliationPeriod,
+	}
 }

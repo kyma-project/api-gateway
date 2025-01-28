@@ -88,7 +88,7 @@ vet: ## Run go vet against code.
 
 .PHONY: test
 test: manifests generate fmt vet envtest ## Generate manifests and run tests.
-	KUBEBUILDER_CONTROLPLANE_START_TIMEOUT=2m KUBEBUILDER_CONTROLPLANE_STOP_TIMEOUT=2m KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" go test -tags dev_features $(shell go list ./... | grep -v /tests/integration) -coverprofile cover.out
+	KUBEBUILDER_CONTROLPLANE_START_TIMEOUT=2m KUBEBUILDER_CONTROLPLANE_STOP_TIMEOUT=2m KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" go test $(shell go list ./... | grep -v /tests/integration) -coverprofile cover.out
 
 .PHONY: test-integration
 test-integration: test-integration-v2alpha1 test-integration-ory test-integration-istio test-integration-gateway
@@ -131,15 +131,15 @@ install-istio: create-namespace
 
 .PHONY: build
 build: generate fmt vet ## Build manager binary.
-	go build -tags dev_features -o bin/manager main.go
+	go build -o bin/manager main.go
 
 .PHONY: run
 run: manifests generate fmt vet
-	go run -tags dev_features ./main.go
+	go run ./main.go
 
 .PHONY: docker-build
 docker-build: img-check
-	IMG=$(IMG) docker build -t ${IMG} --build-arg GO_BUILD_TAGS=dev_features --build-arg TARGET_OS=${TARGET_OS} --build-arg TARGET_ARCH=${TARGET_ARCH} --build-arg VERSION=${VERSION} .
+	IMG=$(IMG) docker build -t ${IMG} --build-arg TARGET_OS=${TARGET_OS} --build-arg TARGET_ARCH=${TARGET_ARCH} --build-arg VERSION=${VERSION} .
 
 .PHONY: docker-push
 docker-push: img-check ## Push docker image with the manager.
@@ -185,11 +185,11 @@ create-namespace:
 .PHONY: deploy
 deploy: img-check manifests kustomize module-version create-namespace ## Deploy controller to the K8s cluster specified in ~/.kube/config.
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
-	$(KUSTOMIZE) build config/dev | kubectl apply -f -
+	$(KUSTOMIZE) build config/default | kubectl apply -f -
 
 .PHONY: undeploy
 undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/config. Call with ignore-not-found=true to ignore resource not found errors during deletion.
-	$(KUSTOMIZE) build config/dev | kubectl delete --ignore-not-found=$(ignore-not-found) -f -
+	$(KUSTOMIZE) build config/default | kubectl delete --ignore-not-found=$(ignore-not-found) -f -
 
 ##@ Build Dependencies
 
@@ -241,7 +241,7 @@ module-image: img-check docker-build docker-push ## Build the Module Image and p
 .PHONY: generate-manifests
 generate-manifests: img-check kustomize module-version
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
-	$(KUSTOMIZE) build config/prod > api-gateway-manager.yaml
+	$(KUSTOMIZE) build config/default > api-gateway-manager.yaml
 
 .PHONY: get-latest-release
 get-latest-release:
