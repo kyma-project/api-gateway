@@ -39,3 +39,14 @@ This means that the `Processing` state would only be set initially when installi
 Consequences: As the initial installation could be considered the most important moment to observe the `Processing` state,
 this solution would be a good compromise between the removal of the state and keeping it in the API.
 However, this would mean that the `Processing` state handling logic cannot be entirely removed from the module.
+
+### Solution 4
+
+Proposal: Same as 3, but switch back to `Processing` when user changes configuration of the APIGateway Custom Resource.
+
+Consequences: This is technically harder to implement as it requires retention of the previously applied state.
+
+
+## Decision
+
+The team decided to start with solution 3 with possibility to extend the logic further to solution 4 later, if needed.
