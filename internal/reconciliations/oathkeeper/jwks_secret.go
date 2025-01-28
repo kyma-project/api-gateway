@@ -24,7 +24,7 @@ import (
 )
 
 const (
-	jwksAlg  = "RSA256"
+	jwksAlg  = "RS256"
 	jwksBits = 2048
 )
 
