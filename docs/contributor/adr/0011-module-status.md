@@ -50,3 +50,4 @@ Consequences: This is technically harder to implement as it requires retention o
 ## Decision
 
 The team decided to start with solution 3 with possibility to extend the logic further to solution 4 later, if needed.
+This decision was discussed with lead Kyma Architect, and as a general guidance, the processing state should only happen in case the module might not be available (a possible downtime), which means it is NOT ready. As is the case for APIGateway, this state should generally never occur unless the module user changes the configuration (e.g. disabling default Kyma gateway), so the module should be considered `Ready` almost always.
