@@ -2,8 +2,10 @@ package ratelimit
 
 import (
 	"fmt"
-
+	"github.com/avast/retry-go/v4"
 	"k8s.io/client-go/dynamic"
+	"net/http"
+	"net/url"
 
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/helpers"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/manifestprocessor"
@@ -25,42 +27,59 @@ type scenario struct {
 	config                  testcontext.Config
 }
 
-func (s *scenario) callingEndpointWithHeadersNTimesShouldResultWithStatusCode(endpoint string, n, expectedStatusCode int) error {
-	url := s.Url + endpoint
-	headers := map[string]string{
-		"X-Rate-Limited": "true",
+func (s *scenario) callingEndpointWithHeadersNTimesShouldResultWithStatusCode(endpoint, method string, n, expectedStatusCode int) error {
+	endpointUrl, err := url.Parse(s.Url + endpoint)
+	if err != nil {
+		return err
 	}
-	for i := 0; i < n; i++ {
-		if i == n-1 {
-			err := s.httpClient.CallEndpointWithHeadersWithRetries(headers, url, &helpers.StatusPredicate{LowerStatusBound: expectedStatusCode, UpperStatusBound: expectedStatusCode})
-			if err != nil {
-				return err
-			}
-			return nil
-		}
-		err := s.httpClient.CallEndpointWithHeadersWithRetries(headers, url, &helpers.StatusPredicate{LowerStatusBound: 200, UpperStatusBound: 200})
+	httpClient := s.httpClient.HttpClient()
+	req := &http.Request{
+		URL:    endpointUrl,
+		Method: method,
+		Header: map[string][]string{
+			"X-Rate-Limited": {"true"},
+		},
+	}
+	err = retry.Do(func() error {
+		response, err := httpClient.Do(req)
 		if err != nil {
 			return err
 		}
+		if response.StatusCode != expectedStatusCode {
+			return fmt.Errorf("status code %d is not match expected status code  %d", response.StatusCode, expectedStatusCode)
+		}
+		return nil
+	}, testcontext.GetRetryOpts()...,
+	)
+	if err != nil {
+		return err
 	}
 	return nil
 }
 
-func (s *scenario) callingEndpointNTimesShouldResultWithStatusCode(endpoint string, n, expectedStatusCode int) error {
-	url := s.Url + endpoint
-
-	for i := 0; i < n; i++ {
-		if i == n-1 {
-			err := s.httpClient.CallEndpointWithRetries(url, &helpers.StatusPredicate{LowerStatusBound: expectedStatusCode, UpperStatusBound: expectedStatusCode})
-			if err != nil {
-				return err
-			}
-			return nil
-		}
-		err := s.httpClient.CallEndpointWithRetries(url, &helpers.StatusPredicate{LowerStatusBound: 200, UpperStatusBound: 200})
+func (s *scenario) callingEndpointNTimesShouldResultWithStatusCode(endpoint, method string, n, expectedStatusCode int) error {
+	endpointUrl, err := url.Parse(s.Url + endpoint)
+	if err != nil {
+		return err
+	}
+	httpClient := s.httpClient.HttpClient()
+	req := &http.Request{
+		URL:    endpointUrl,
+		Method: method,
+	}
+	err = retry.Do(func() error {
+		response, err := httpClient.Do(req)
 		if err != nil {
 			return err
 		}
+		if response.StatusCode != expectedStatusCode {
+			return fmt.Errorf("status code %d is not match expected status code  %d", response.StatusCode, expectedStatusCode)
+		}
+		return nil
+	}, testcontext.GetRetryOpts()...,
+	)
+	if err != nil {
+		return err
 	}
 	return nil
 }

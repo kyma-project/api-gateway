@@ -117,6 +117,10 @@ func (h *RetryableHttpClient) withRetries(httpCall func() (*http.Response, error
 	return nil
 }
 
+func (h *RetryableHttpClient) HttpClient() *http.Client {
+	return h.client
+}
+
 type OIDCConfiguration struct {
 	Issuer                                string   `json:"issuer"`
 	AuthorizationEndpoint                 string   `json:"authorization_endpoint"`
