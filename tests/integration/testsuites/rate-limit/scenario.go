@@ -2,10 +2,7 @@ package ratelimit
 
 import (
 	"fmt"
-	"net/http"
-	"net/url"
 
-	"github.com/pkg/errors"
 	"k8s.io/client-go/dynamic"
 
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/helpers"
@@ -28,52 +25,43 @@ type scenario struct {
 	config                  testcontext.Config
 }
 
-func (s *scenario) callingEndpointWithHeadersNTimesShouldResultWithStatusCode(endpoint, method string, n, expectedStatusCode int) error {
-	endpointUrl, err := url.Parse(s.Url + endpoint)
-	if err != nil {
-		return err
-	}
-	httpClient := s.httpClient.GetHttpClient()
-	req := &http.Request{
-		URL:    endpointUrl,
-		Method: method,
-		Header: map[string][]string{
-			"X-Rate-Limited": {"true"},
-		},
+func (s *scenario) callingEndpointWithHeadersNTimesShouldResultWithStatusCode(endpoint string, n, expectedStatusCode int) error {
+	url := s.Url + endpoint
+	headers := map[string]string{
+		"X-Rate-Limited": "true",
 	}
 	for i := 0; i < n; i++ {
-		response, httpErr := httpClient.Do(req)
-		if httpErr != nil && (i != n-1 || response == nil) {
+		if i == n-1 {
+			err := s.httpClient.CallEndpointWithHeadersWithRetries(headers, url, &helpers.StatusPredicate{LowerStatusBound: expectedStatusCode, UpperStatusBound: expectedStatusCode})
+			if err != nil {
+				return err
+			}
+			return nil
+		}
+		err := s.httpClient.CallEndpointWithHeadersWithRetries(headers, url, &helpers.StatusPredicate{LowerStatusBound: 200, UpperStatusBound: 200})
+		if err != nil {
 			return err
 		}
-		if n-1 == i && response.StatusCode != expectedStatusCode {
-			return errors.New(fmt.Sprintf("Status code %d on url %s is not match expected status code  %d", response.StatusCode, response.Request.URL, expectedStatusCode))
-		}
 	}
-
 	return nil
 }
 
-func (s *scenario) callingEndpointNTimesShouldResultWithStatusCode(endpoint, method string, n, expectedStatusCode int) error {
-	endpointUrl, err := url.Parse(s.Url + endpoint)
-	if err != nil {
-		return err
-	}
-	httpClient := s.httpClient.GetHttpClient()
-	req := &http.Request{
-		URL:    endpointUrl,
-		Method: method,
-	}
+func (s *scenario) callingEndpointNTimesShouldResultWithStatusCode(endpoint string, n, expectedStatusCode int) error {
+	url := s.Url + endpoint
+
 	for i := 0; i < n; i++ {
-		response, httpErr := httpClient.Do(req)
-		if httpErr != nil && (i != n-1 || response == nil) {
+		if i == n-1 {
+			err := s.httpClient.CallEndpointWithRetries(url, &helpers.StatusPredicate{LowerStatusBound: expectedStatusCode, UpperStatusBound: expectedStatusCode})
+			if err != nil {
+				return err
+			}
+			return nil
+		}
+		err := s.httpClient.CallEndpointWithRetries(url, &helpers.StatusPredicate{LowerStatusBound: 200, UpperStatusBound: 200})
+		if err != nil {
 			return err
 		}
-		if n-1 == i && response.StatusCode != expectedStatusCode {
-			return errors.New(fmt.Sprintf("Status code %d on url %s is not match expected status code %d", response.StatusCode, response.Request.URL, expectedStatusCode))
-		}
 	}
-
 	return nil
 }
 
