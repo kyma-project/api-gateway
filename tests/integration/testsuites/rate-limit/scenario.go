@@ -27,7 +27,7 @@ type scenario struct {
 	config                  testcontext.Config
 }
 
-func (s *scenario) callingEndpointWithHeadersNTimesShouldResultWithStatusCode(endpoint, method string, n, expectedStatusCode int) error {
+func (s *scenario) callingEndpointWithHeadersNTimesShouldResultWithStatusCode(endpoint string, expectedStatusCode int) error {
 	endpointUrl, err := url.Parse(s.Url + endpoint)
 	if err != nil {
 		return err
@@ -35,7 +35,7 @@ func (s *scenario) callingEndpointWithHeadersNTimesShouldResultWithStatusCode(en
 	httpClient := s.httpClient.HttpClient()
 	req := &http.Request{
 		URL:    endpointUrl,
-		Method: method,
+		Method: http.MethodGet,
 		Header: map[string][]string{
 			"X-Rate-Limited": {"true"},
 		},
@@ -57,7 +57,7 @@ func (s *scenario) callingEndpointWithHeadersNTimesShouldResultWithStatusCode(en
 	return nil
 }
 
-func (s *scenario) callingEndpointNTimesShouldResultWithStatusCode(endpoint, method string, n, expectedStatusCode int) error {
+func (s *scenario) callingEndpointNTimesShouldResultWithStatusCode(endpoint string, expectedStatusCode int) error {
 	endpointUrl, err := url.Parse(s.Url + endpoint)
 	if err != nil {
 		return err
@@ -65,7 +65,7 @@ func (s *scenario) callingEndpointNTimesShouldResultWithStatusCode(endpoint, met
 	httpClient := s.httpClient.HttpClient()
 	req := &http.Request{
 		URL:    endpointUrl,
-		Method: method,
+		Method: http.MethodGet,
 	}
 	err = retry.Do(func() error {
 		response, err := httpClient.Do(req)
