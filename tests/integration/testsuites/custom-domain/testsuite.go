@@ -210,9 +210,12 @@ func (t *testsuite) createCustomDomainResources() error {
 
 func (t *testsuite) deleteCustomDomainResources() error {
 	log.Printf("Deleting custom domain resources")
-	err := t.resourceManager.DeleteResources(t.k8sClient, t.customDomainResources...)
-	if err != nil {
-		return err
+	// reverse order - secret should be created at the beginning, but deleted at the end, etc.
+	for i := len(t.customDomainResources) - 1; i >= 0; i-- {
+		err := t.resourceManager.DeleteResources(t.k8sClient, t.customDomainResources[i])
+		if err != nil {
+			return err
+		}
 	}
 	log.Printf("Custom domain resources deleted")
 	return nil
