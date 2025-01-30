@@ -1,6 +1,9 @@
-# Rate Limiting Configuration
+# Local Rate Limiting Configuration
 
 The RateLimit custom resource (CR) allows you to apply local rate limit configuration for specific paths of an exposed application.
+
+> [!NOTE]
+> Local rate limits apply rate limits to the traffic that go to a workload. If configured improperly, an attacker can exhaust all tokens and cause Denial-of-Service attack, making service inaccessible.
 
 ## Prerequisites
 
