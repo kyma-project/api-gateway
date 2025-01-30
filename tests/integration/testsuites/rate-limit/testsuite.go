@@ -2,6 +2,8 @@ package ratelimit
 
 import (
 	_ "embed"
+	"fmt"
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/manifestprocessor"
 	"log"
 	"path"
 
@@ -81,6 +83,16 @@ func (t *testsuite) Setup() error {
 	if err != nil {
 		return err
 	}
+	apiGateway, err := manifestprocessor.ParseFromFileWithTemplate("api-gateway.yaml", manifestsDirectory, struct{}{})
+	if err != nil {
+		return err
+	}
+
+	_, err = t.resourceManager.CreateResourcesWithoutNS(t.k8sClient, apiGateway...)
+	if err != nil {
+		return fmt.Errorf("could not create APIGateway, details %s", err.Error())
+	}
+
 	return nil
 }
 
