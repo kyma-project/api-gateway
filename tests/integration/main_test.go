@@ -14,6 +14,7 @@ import (
 	"github.com/kyma-project/api-gateway/tests/integration/testsuites/gateway"
 	istiojwt "github.com/kyma-project/api-gateway/tests/integration/testsuites/istio-jwt"
 	"github.com/kyma-project/api-gateway/tests/integration/testsuites/ory"
+	ratelimit "github.com/kyma-project/api-gateway/tests/integration/testsuites/rate-limit"
 	"github.com/kyma-project/api-gateway/tests/integration/testsuites/upgrade"
 	"github.com/kyma-project/api-gateway/tests/integration/testsuites/v2alpha1"
 
@@ -93,6 +94,15 @@ func TestV2alpha1(t *testing.T) {
 		t.Fatalf("unable to switch to Ory jwtHandler")
 	}
 	defer cleanUp(ts, originalJwtHandler)
+	runTestsuite(t, ts)
+}
+
+func TestRateLimit(t *testing.T) {
+	ts, err := testcontext.New(ratelimit.NewTestsuite)
+	if err != nil {
+		t.Fatalf("Failed to create ratelimit testsuite %s", err.Error())
+	}
+	defer ts.TearDown()
 	runTestsuite(t, ts)
 }
 

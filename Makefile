@@ -121,6 +121,10 @@ test-upgrade: generate fmt vet generate-upgrade-test-manifest install-istio depl
 test-custom-domain: generate fmt vet
 	GODEBUG=netdns=cgo CGO_ENABLED=1 go test -timeout 1h ./tests/integration -run "^TestCustomDomain$$" -v -race
 
+.PHONY: test-integration-rate-limit
+test-integration-rate-limit: generate fmt vet
+	go test -timeout 1h ./tests/integration -run TestRateLimit -v -race
+
 .PHONY: install-istio
 install-istio: create-namespace
 	kubectl apply -f https://github.com/kyma-project/istio/releases/latest/download/istio-manager.yaml
