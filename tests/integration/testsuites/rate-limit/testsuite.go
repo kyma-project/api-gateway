@@ -3,7 +3,9 @@ package ratelimit
 import (
 	_ "embed"
 	"fmt"
+	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/manifestprocessor"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"log"
 	"path"
 
@@ -100,6 +102,15 @@ func (t *testsuite) TearDown() {
 	err := global.DeleteGlobalResources(t.resourceManager, t.k8sClient, t.namespace, manifestsDirectory)
 	if err != nil {
 		log.Print(err.Error())
+	}
+
+	err = t.resourceManager.DeleteResourceWithoutNS(t.k8sClient, schema.GroupVersionResource{
+		Group:    v1alpha1.GroupVersion.Group,
+		Version:  v1alpha1.GroupVersion.Version,
+		Resource: "apigateways",
+	}, "default")
+	if err != nil {
+		log.Printf("Could not remove APIGateway, details: %s,", err.Error())
 	}
 }
 
