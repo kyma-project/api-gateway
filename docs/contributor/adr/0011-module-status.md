@@ -1,7 +1,7 @@
 # Module Status Handling
 
 ## Status
-Proposed
+Accepted
 
 ## Context
 
