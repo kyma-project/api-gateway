@@ -10,9 +10,14 @@ From the monitoring and kubernetes API standpoint, this is not easy to properly 
 as there is no possibility to observe module readiness, signified by module CR being in `Ready` state,
 without having in mind the periodic switch to the `Processing` state.
 
-## Proposal
+## Decision
 
 This ADR proposes changes to handling the state of the module CR, with three different solutions possible:
+
+The team decided to improve on the state transition logic, with the `Processing` state only being set when the module is installed/reconfigured and there is a downtime possibility.
+This decision was discussed with lead Kyma Architect, and as a general guidance, the processing state should only happen in case the module is possibly NOT ready. As is the case for APIGateway, this state should generally never occur unless the module user changes the configuration (e.g. disabling default Kyma gateway), so the module should be considered `Ready` almost always.
+
+## Discussed alternative solutions
 
 ### Solution 1
 
@@ -42,12 +47,6 @@ However, this would mean that the `Processing` state handling logic cannot be en
 
 ### Solution 4
 
-Proposal: Same as 3, but switch back to `Processing` when user changes configuration of the APIGateway Custom Resource.
+Proposal: Same as 3, but switch back to `Processing` when user changes ANY configuration of the APIGateway Custom Resource.
 
-Consequences: This is technically harder to implement as it requires retention of the previously applied state.
-
-
-## Decision
-
-The team decided to start with solution 3 with possibility to extend the logic further to solution 4 later, if needed.
-This decision was discussed with lead Kyma Architect, and as a general guidance, the processing state should only happen in case the module might not be available (a possible downtime), which means it is NOT ready. As is the case for APIGateway, this state should generally never occur unless the module user changes the configuration (e.g. disabling default Kyma gateway), so the module should be considered `Ready` almost always.
+Consequences: This solution would be similiar to the one in the decision, but as it might not always be that the configuration actually can cause downtime, it is not really necessary to always set the state to processing.
