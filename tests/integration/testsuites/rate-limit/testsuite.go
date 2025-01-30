@@ -25,7 +25,6 @@ func (t *testsuite) createScenario() *scenario {
 	template["Domain"] = t.config.Domain
 	template["GatewayName"] = t.config.GatewayName
 	template["GatewayNamespace"] = t.config.GatewayNamespace
-	template["IssuerUrl"] = t.config.IssuerUrl
 
 	return &scenario{
 		Namespace:            t.namespace,
