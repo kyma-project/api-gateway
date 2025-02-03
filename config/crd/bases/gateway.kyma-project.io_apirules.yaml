@@ -301,6 +301,369 @@ spec:
     - jsonPath: .spec.hosts
       name: Hosts
       type: string
+    name: v2
+    schema:
+      openAPIV3Schema:
+        description: APIRule is the Schema for the apirules API
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: APIRuleSpec defines the desired state of ApiRule.
+            properties:
+              corsPolicy:
+                description: Specifies CORS headers configuration that will be sent
+                  downstream
+                properties:
+                  allowCredentials:
+                    type: boolean
+                  allowHeaders:
+                    items:
+                      type: string
+                    type: array
+                  allowMethods:
+                    items:
+                      type: string
+                    type: array
+                  allowOrigins:
+                    items:
+                      additionalProperties:
+                        type: string
+                      type: object
+                    type: array
+                  exposeHeaders:
+                    items:
+                      type: string
+                    type: array
+                  maxAge:
+                    format: int64
+                    minimum: 1
+                    type: integer
+                type: object
+              gateway:
+                description: Specifies the Istio Gateway to be used.
+                maxLength: 127
+                type: string
+                x-kubernetes-validations:
+                - message: Gateway must be in the namespace/name format
+                  rule: self.matches('^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?/([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)$')
+              hosts:
+                description: Specifies the URLs of the exposed service.
+                items:
+                  description: Host is the URL of the exposed service. We support
+                    lowercase RFC 1123 labels and FQDN.
+                  maxLength: 255
+                  type: string
+                  x-kubernetes-validations:
+                  - message: Host must be a lowercase RFC 1123 label (must consist
+                      of lowercase alphanumeric characters or '-', and must start
+                      and end with an lowercase alphanumeric character) or a fully
+                      qualified domain name
+                    rule: self.matches('^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)(?:(?:\\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)*(?:\\.[a-z0-9]{2,63}))?$')
+                maxItems: 1
+                minItems: 1
+                type: array
+              rules:
+                description: Represents the array of Oathkeeper access rules to be
+                  applied.
+                items:
+                  description: Rule .
+                  properties:
+                    extAuth:
+                      description: Specifies external authorization configuration.
+                      properties:
+                        authorizers:
+                          description: Specifies the name of the external authorization
+                            handler.
+                          items:
+                            type: string
+                          minItems: 1
+                          type: array
+                        restrictions:
+                          description: Specifies JWT configuration for the external
+                            authorization handler.
+                          properties:
+                            authentications:
+                              items:
+                                description: JwtAuthentication Config for Jwt Istio
+                                  authentication
+                                properties:
+                                  fromHeaders:
+                                    items:
+                                      description: JwtHeader for specifying from header
+                                        for the Jwt token
+                                      properties:
+                                        name:
+                                          type: string
+                                        prefix:
+                                          type: string
+                                      required:
+                                      - name
+                                      type: object
+                                    type: array
+                                  fromParams:
+                                    items:
+                                      type: string
+                                    type: array
+                                  issuer:
+                                    type: string
+                                  jwksUri:
+                                    type: string
+                                required:
+                                - issuer
+                                - jwksUri
+                                type: object
+                              type: array
+                            authorizations:
+                              items:
+                                description: JwtAuthorization contains scopes and
+                                  audiences required for the JWT token.
+                                properties:
+                                  audiences:
+                                    items:
+                                      type: string
+                                    type: array
+                                  requiredScopes:
+                                    items:
+                                      type: string
+                                    type: array
+                                type: object
+                              type: array
+                          type: object
+                      required:
+                      - authorizers
+                      type: object
+                    jwt:
+                      description: Specifies the Istio JWT access strategy.
+                      properties:
+                        authentications:
+                          items:
+                            description: JwtAuthentication Config for Jwt Istio authentication
+                            properties:
+                              fromHeaders:
+                                items:
+                                  description: JwtHeader for specifying from header
+                                    for the Jwt token
+                                  properties:
+                                    name:
+                                      type: string
+                                    prefix:
+                                      type: string
+                                  required:
+                                  - name
+                                  type: object
+                                type: array
+                              fromParams:
+                                items:
+                                  type: string
+                                type: array
+                              issuer:
+                                type: string
+                              jwksUri:
+                                type: string
+                            required:
+                            - issuer
+                            - jwksUri
+                            type: object
+                          type: array
+                        authorizations:
+                          items:
+                            description: JwtAuthorization contains scopes and audiences
+                              required for the JWT token.
+                            properties:
+                              audiences:
+                                items:
+                                  type: string
+                                type: array
+                              requiredScopes:
+                                items:
+                                  type: string
+                                type: array
+                            type: object
+                          type: array
+                      type: object
+                    methods:
+                      description: Represents the list of allowed HTTP request methods
+                        available for the **spec.rules.path**.
+                      items:
+                        description: 'HttpMethod specifies the HTTP request method.
+                          The list of supported methods is defined in RFC 9910: HTTP
+                          Semantics and RFC 5789: PATCH Method for HTTP.'
+                        enum:
+                        - GET
+                        - HEAD
+                        - POST
+                        - PUT
+                        - DELETE
+                        - CONNECT
+                        - OPTIONS
+                        - TRACE
+                        - PATCH
+                        type: string
+                      minItems: 1
+                      type: array
+                    noAuth:
+                      description: Disables authorization when set to true.
+                      type: boolean
+                    path:
+                      description: |-
+                        Specifies the path on which the service is exposed.
+                        Supported configurations are:
+                         - Exact path (e.g. /abc) - matches the specified path exactly.
+                         - Usage of the `{*}` operator (e.g. `/foo/{*}` or `/foo/{*}/bar`) -
+                         match any request that matches the pattern with exactly one path segment in the operator's place.
+                         - Usage of the `{**}` operator (e.g. `/foo/{**}` or `/foo/{**}/bar`) -
+                         match any request that matches the pattern with zero or more path segments in the operator's place.
+                         The `{**}` operator must be the last operator in the path.
+                         - Wildcard path `/*` - matches all paths. Equivalent to `/{**}` path.
+                      pattern: ^((\/([A-Za-z0-9-._~!$&'()+,;=:@]|%[0-9a-fA-F]{2})*)|(\/\{\*{1,2}\}))+$|^\/\*$
+                      type: string
+                    request:
+                      description: Request allows modifying the request before it
+                        is forwarded to the service.
+                      properties:
+                        cookies:
+                          additionalProperties:
+                            type: string
+                          description: Cookies allow modifying the request cookies
+                            before it is forwarded to the service.
+                          type: object
+                        headers:
+                          additionalProperties:
+                            type: string
+                          description: Headers allow modifying the request headers
+                            before it is forwarded to the service.
+                          type: object
+                      type: object
+                    service:
+                      description: Describes the service to expose. Overwrites the
+                        **spec** level service if defined.
+                      properties:
+                        external:
+                          description: Specifies if the service is internal (in cluster)
+                            or external.
+                          type: boolean
+                        name:
+                          description: Specifies the name of the exposed service.
+                          type: string
+                        namespace:
+                          description: Specifies the Namespace of the exposed service.
+                            If not defined, it defaults to the APIRule Namespace.
+                          pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$
+                          type: string
+                        port:
+                          description: Specifies the communication port of the exposed
+                            service.
+                          format: int32
+                          maximum: 65535
+                          minimum: 1
+                          type: integer
+                      required:
+                      - name
+                      - port
+                      type: object
+                    timeout:
+                      description: Timeout for HTTP requests in seconds. The timeout
+                        can be configured up to 3900 seconds (65 minutes).
+                      maximum: 3900
+                      minimum: 1
+                      type: integer
+                  required:
+                  - methods
+                  - path
+                  type: object
+                  x-kubernetes-validations:
+                  - message: 'One of the following fields must be set: noAuth, jwt,
+                      extAuth'
+                    rule: ((has(self.extAuth)?1:0)+(has(self.jwt)?1:0)+((has(self.noAuth)&&self.noAuth==true)?1:0))==1
+                minItems: 1
+                type: array
+              service:
+                description: Describes the service to expose.
+                properties:
+                  external:
+                    description: Specifies if the service is internal (in cluster)
+                      or external.
+                    type: boolean
+                  name:
+                    description: Specifies the name of the exposed service.
+                    type: string
+                  namespace:
+                    description: Specifies the Namespace of the exposed service. If
+                      not defined, it defaults to the APIRule Namespace.
+                    pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$
+                    type: string
+                  port:
+                    description: Specifies the communication port of the exposed service.
+                    format: int32
+                    maximum: 65535
+                    minimum: 1
+                    type: integer
+                required:
+                - name
+                - port
+                type: object
+              timeout:
+                description: Timeout for HTTP requests in seconds. The timeout can
+                  be configured up to 3900 seconds (65 minutes).
+                maximum: 3900
+                minimum: 1
+                type: integer
+            required:
+            - gateway
+            - hosts
+            - rules
+            type: object
+          status:
+            description: APIRuleStatus describes the observed state of ApiRule.
+            properties:
+              description:
+                description: Description of APIRule status
+                type: string
+              lastProcessedTime:
+                format: date-time
+                type: string
+              state:
+                description: |-
+                  State signifies current state of APIRule.
+                  Value can be one of ("Ready", "Processing", "Error", "Deleting", "Warning").
+                enum:
+                - Processing
+                - Deleting
+                - Ready
+                - Error
+                - Warning
+                type: string
+            required:
+            - state
+            type: object
+        type: object
+    served: true
+    storage: false
+    subresources:
+      status: {}
+  - additionalPrinterColumns:
+    - jsonPath: .status.state
+      name: Status
+      type: string
+    - jsonPath: .spec.hosts
+      name: Hosts
+      type: string
     name: v2alpha1
     schema:
       openAPIV3Schema:
