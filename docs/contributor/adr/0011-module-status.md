@@ -5,48 +5,39 @@ Accepted
 
 ## Context
 
-Currently, APIGateway module sets the state `Processing` on the APIGateway Custom Resource whenever there is reconciliation / installation happening.
-From the monitoring and kubernetes API standpoint, this is not easy to properly handle,
-as there is no possibility to observe module readiness, signified by module CR being in `Ready` state,
-without having in mind the periodic switch to the `Processing` state.
+Currently, the API Gateway module sets the state `Processing` on the APIGateway custom resource during reconciliation or installation.
+From the monitoring and Kubernetes API standpoint, this can be challenging to handle properly. This is because it is not possible to observe the module's readiness, signified by the module CR being in the `Ready` state, without considering the periodic switch to the `Processing` state. This ADR proposes changes to handling the state of the module CR.
 
-## Decision
+## Decision                                                                                                                                                                                                                                                                                                                                                                                                                             
+The team decided to improve the state transition logic, with the `Processing` state only being set when the module is installed or reconfigured and there is a downtime possibility.
+This decision was discussed with lead Kyma Architect. As general guidance, the processing state should only be set in case the module is possibly NOT ready. As is the case for the API Gateway module, this state should not occur unless the module's user changes the configuration (for example, disables default Kyma Gateway). The module should almost always be considered `Ready`.
 
-This ADR proposes changes to handling the state of the module CR, with three different solutions possible:
+## Consequences
+As the initial installation could be considered the most important moment to observe the `Processing` state,
+this solution is a good compromise between completely removing the state and keeping it in the API. However, the logic for handling
+the `Processing` state cannot be entirely removed from the module.
 
-The team decided to improve on the state transition logic, with the `Processing` state only being set when the module is installed/reconfigured and there is a downtime possibility.
-This decision was discussed with lead Kyma Architect, and as a general guidance, the processing state should only happen in case the module is possibly NOT ready. As is the case for APIGateway, this state should generally never occur unless the module user changes the configuration (e.g. disabling default Kyma gateway), so the module should be considered `Ready` almost always.
-
-## Discussed alternative solutions
+## Alternative Solutions
+See the alternative solutions that the team proposed and discussed but chose not to pursue.
 
 ### Solution 1
 
-Proposal: Remove the `Processing` state entirely from the module API.
+Proposal: Remove the `Processing` state entirely from the module's API.
 
-Consequences: From technical standpoint, this would be a breaking change, as there might be users relying on the `Processing` state,
+Consequences: From a technical standpoint, this would be a breaking change, as there might be users relying on the `Processing` state,
 for example, to determine if the module is being installed or not.
 However, as the purpose of the `Processing` state is not clear, it might be a good idea to remove it entirely.
 
 ### Solution 2
 
-Proposal: Do a `soft` removal of the `Processing` state. 
+Proposal: Perform a `soft` removal of the `Processing` state. 
 This would mean that this state is still present in the API, but will never be set by the module.
 
-Consequences: This would be a less breaking change than the first solution, as the `Processing` state would still be present in the API,
-but the installation would not be possible to observe in this state.
+Consequences: This approach would be less disruptive than the first solution, as the `Processing` state would remain in the API. 
+However, the installation process would no longer be indicated by this state.
 
 ### Solution 3
 
-Proposal: Improve on the state transition logic.
-A simple solution would be not to switch the module state to `Processing` after `Ready` or `Error` has occurred.
-This means that the `Processing` state would only be set initially when installing the module for the first time.
+Proposal: Improve the state transition logic, and set the `Processing` state when the module is installed or the user changes ANY configuration of the APIGateway custom resource.
 
-Consequences: As the initial installation could be considered the most important moment to observe the `Processing` state,
-this solution would be a good compromise between the removal of the state and keeping it in the API.
-However, this would mean that the `Processing` state handling logic cannot be entirely removed from the module.
-
-### Solution 4
-
-Proposal: Same as 3, but switch back to `Processing` when user changes ANY configuration of the APIGateway Custom Resource.
-
-Consequences: This solution would be similiar to the one in the decision, but as it might not always be that the configuration actually can cause downtime, it is not really necessary to always set the state to processing.
+Consequences: This solution would be similar to the one in the decision. Since not all configuration changes necessarily cause downtime, setting the state to `Processing` is not always mandatory.
