@@ -6,7 +6,7 @@ Accepted
 ## Context
 
 Currently, the API Gateway module sets the state `Processing` on the APIGateway custom resource during reconciliation or installation.
-From the monitoring and Kubernetes API standpoint, this can be challenging to handle properly. This is because it is not possible to observe the module's readiness, signified by the module CR being in the `Ready` state, without considering the periodic switch to the `Processing` state. This ADR proposes changes to handling the state of the module CR.
+From the monitoring and Kubernetes API standpoint, this is not easy to handle properly. This is because it is not possible to observe the module's readiness, signified by the module CR being in the `Ready` state, without considering the periodic switch to the `Processing` state. This ADR proposes changes to handling the state of the module CR.
 
 ## Decision                                                                                                                                                                                                                                                                                                                                                                                                                             
 The team decided to improve the state transition logic, with the `Processing` state only being set when the module is installed or reconfigured and there is a downtime possibility.
