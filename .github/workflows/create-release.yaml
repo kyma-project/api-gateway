@@ -25,10 +25,22 @@ jobs:
 
       - name: Install yq
         shell: bash
+        env:
+          VERSION: "v4.45.1"
+          BINARY: "yq_linux_amd64"
+          EXPECTED_CHECKSUM: "654d2943ca1d3be2024089eb4f270f4070f491a0610481d128509b2834870049"
         run: |
-          sudo add-apt-repository ppa:rmescandon/yq
-          sudo apt update
-          sudo apt install yq -y
+          wget https://github.com/mikefarah/yq/releases/download/${VERSION}/${BINARY} -O ./yq && chmod +x ./yq
+          
+          echo "Generating downloaded yq binary sha256 checksum..."
+          generated_checksum=$(shasum -a256 ./yq | awk '{ print $1 }')
+          
+          if [ "$generated_checksum" == "$EXPECTED_CHECKSUM" ]; then
+            echo "Checksums match."
+          else
+            echo "Checksums do not match."
+            exit 1
+          fi
 
       - name: Check security-scanner config
         shell: bash
