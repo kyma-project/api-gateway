@@ -27,6 +27,12 @@ type ApiRuleStatusV2alpha1 struct {
 		Description string `json:"description"`
 	} `json:"status"`
 }
+type ApiRuleStatusV2 struct {
+	Status struct {
+		State       string `json:"state"`
+		Description string `json:"description"`
+	} `json:"status"`
+}
 
 const (
 	errorV1beta1      = "ERROR"
@@ -214,6 +220,102 @@ func CreateApiRuleV2Alpha1ExpectError(resourceMgr *resource.Manager, k8sClient d
 	return nil
 }
 
+func CreateApiRuleV2(resourceMgr *resource.Manager, k8sClient dynamic.Interface, retryOpts []retry.Option, apiRuleResource unstructured.Unstructured) error {
+	if apiRuleResource.GetObjectKind().GroupVersionKind().Kind != "APIRule" {
+		return fmt.Errorf("object with name %s is not an APIRule unintended usage of the function", apiRuleResource.GetName())
+	}
+
+	resourceSchema, ns, _ := resourceMgr.GetResourceSchemaAndNamespace(apiRuleResource)
+	apiRuleName := apiRuleResource.GetName()
+
+	err := resourceMgr.CreateResource(k8sClient, resourceSchema, ns, apiRuleResource)
+	if err != nil {
+		return err
+	}
+
+	currentApiRule, err := resourceMgr.GetResource(k8sClient, resourceSchema, ns, apiRuleName)
+	if err != nil {
+		return err
+	}
+	apiStatus, err := GetAPIRuleStatusV2Alpha1(currentApiRule)
+	if err != nil {
+		return err
+	}
+	if apiStatus.Status.State != "Ready" {
+		return retry.Do(func() error {
+			currentApiRule, err = resourceMgr.GetResource(k8sClient, resourceSchema, ns, apiRuleName)
+			if err != nil {
+				return err
+			}
+
+			js, err := json.Marshal(currentApiRule)
+			if err != nil {
+				return err
+			}
+			err = json.Unmarshal(js, &apiStatus)
+			if err != nil {
+				return err
+			}
+			if apiStatus.Status.State != "Ready" {
+				log.Printf("APIRule %s status not Ready, but is: %s\n", apiRuleName, apiStatus.Status.Description)
+				return fmt.Errorf("APIRule %s status not Ready, but is: %s", apiRuleName, apiStatus.Status.Description)
+			}
+			return nil
+		}, retryOpts...)
+	}
+	return nil
+}
+
+func CreateApiRuleV2ExpectError(resourceMgr *resource.Manager, k8sClient dynamic.Interface, retryOpts []retry.Option, apiRuleResource unstructured.Unstructured, errorMessage string) error {
+	if apiRuleResource.GetObjectKind().GroupVersionKind().Kind != "APIRule" {
+		return errors.New("object is not an APIRule unintended usage of the function")
+	}
+
+	resourceSchema, ns, _ := resourceMgr.GetResourceSchemaAndNamespace(apiRuleResource)
+	apiRuleName := apiRuleResource.GetName()
+
+	err := resourceMgr.CreateResource(k8sClient, resourceSchema, ns, apiRuleResource)
+	if err != nil {
+		return err
+	}
+
+	currentApiRule, err := resourceMgr.GetResource(k8sClient, resourceSchema, ns, apiRuleName)
+	if err != nil {
+		return err
+	}
+
+	apiStatus, err := GetAPIRuleStatusV2Alpha1(currentApiRule)
+	if err != nil {
+		return err
+	}
+	if apiStatus.Status.State != "Error" {
+		return retry.Do(func() error {
+			currentApiRule, err = resourceMgr.GetResource(k8sClient, resourceSchema, ns, apiRuleName)
+			if err != nil {
+				return err
+			}
+			js, err := json.Marshal(currentApiRule)
+			if err != nil {
+				return err
+			}
+			err = json.Unmarshal(js, &apiStatus)
+			if err != nil {
+				return err
+			}
+			if apiStatus.Status.State != "Error" {
+				log.Printf("expected APIRule %s status to be Error, got %s with desc: %s", apiRuleName, apiStatus.Status.State, apiStatus.Status.Description)
+				return fmt.Errorf("expected APIRule %s status to be Error, got %s with desc: %s", apiRuleName, apiStatus.Status.State, apiStatus.Status.Description)
+			}
+			if !strings.Contains(apiStatus.Status.Description, errorMessage) {
+				log.Printf("expected error description of the APIRule %s to be %s, got %s", apiRuleName, errorMessage, apiStatus.Status.Description)
+				return fmt.Errorf("expected error description of the APIRule %s to be %s, got %s", apiRuleName, errorMessage, apiStatus.Status.Description)
+			}
+			return nil
+		}, retryOpts...)
+	}
+	return nil
+}
+
 func UpdateApiRule(resourceMgr *resource.Manager, k8sClient dynamic.Interface, retryOpts []retry.Option, apiRuleResource unstructured.Unstructured) error {
 	resourceSchema, ns, _ := resourceMgr.GetResourceSchemaAndNamespace(apiRuleResource)
 	apiRuleName := apiRuleResource.GetName()
@@ -272,6 +374,22 @@ func GetAPIRuleStatusV2Alpha1(apiRuleUnstructured *unstructured.Unstructured) (A
 	err = json.Unmarshal(js, &status)
 	if err != nil {
 		return ApiRuleStatusV2alpha1{}, err
+	}
+
+	return status, nil
+}
+
+func GetAPIRuleStatusV2(apiRuleUnstructured *unstructured.Unstructured) (ApiRuleStatusV2, error) {
+	js, err := json.Marshal(apiRuleUnstructured)
+	if err != nil {
+		return ApiRuleStatusV2{}, err
+	}
+
+	status := ApiRuleStatusV2{}
+
+	err = json.Unmarshal(js, &status)
+	if err != nil {
+		return ApiRuleStatusV2{}, err
 	}
 
 	return status, nil

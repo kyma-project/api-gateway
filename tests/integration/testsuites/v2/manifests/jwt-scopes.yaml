@@ -1,0 +1,37 @@
+apiVersion: gateway.kyma-project.io/v2
+kind: APIRule
+metadata:
+  name: "{{.NamePrefix}}-{{.TestID}}"
+  namespace: "{{.Namespace}}"
+spec:
+  gateway: "{{.GatewayNamespace}}/{{.GatewayName}}"
+  hosts:
+    - "httpbin-{{.TestID}}.{{.Domain}}"
+  service:
+    name: httpbin-{{.TestID}}
+    port: 8000
+  rules:
+    - path: /ip
+      methods: ["GET"]
+      jwt:
+        authentications:
+          - issuer: "{{ .IssuerUrl }}"
+            jwksUri: "{{ .IssuerUrl }}/oauth2/certs"
+        authorizations:
+          - requiredScopes: {{ .ipRequiredScopes }}
+    - path: /headers
+      methods: ["GET"]
+      jwt:
+        authentications:
+          - issuer: "{{ .IssuerUrl }}"
+            jwksUri: "{{ .IssuerUrl }}/oauth2/certs"
+        authorizations:
+          - requiredScopes: {{ .headersRequiredScopes }}
+    - path: /get
+      methods: ["GET"]
+      jwt:
+        authentications:
+          - issuer: "{{ .IssuerUrl }}"
+            jwksUri: "{{ .IssuerUrl }}/oauth2/certs"
+        authorizations:
+          - requiredScopes: {{ .getRequiredScopes }}

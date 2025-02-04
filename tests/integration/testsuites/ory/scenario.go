@@ -116,6 +116,7 @@ func (s *scenario) theAPIRuleIsDeletedUsingv2alpha1Version() error {
 	return s.resourceManager.DeleteResource(s.k8sClient, *groupVersionResource, res.GetNamespace(), res.GetName())
 }
 
+// @todo validate if this function need something to work with the new version v2 of the APIRule
 func (s *scenario) theAPIRuleHasStatus(expectedStatus string) error {
 	res, err := manifestprocessor.ParseSingleEntryFromFileWithTemplate(s.ApiResourceManifestPath, s.ApiResourceDirectory, s.ManifestTemplate)
 	if err != nil {
