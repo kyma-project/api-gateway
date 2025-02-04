@@ -60,13 +60,6 @@ func (ap *AuthorizationPolicyBuilder) WithLabel(key, val string) *AuthorizationP
 	return ap
 }
 
-func (ap *AuthorizationPolicyBuilder) WithLabels(labels map[string]string) *AuthorizationPolicyBuilder {
-	for k, v := range labels {
-		ap.value.Labels[k] = v
-	}
-	return ap
-}
-
 func (ap *AuthorizationPolicyBuilder) WithSpec(val *v1beta1.AuthorizationPolicy) *AuthorizationPolicyBuilder {
 	ap.value.Spec = *val.DeepCopy()
 	return ap
