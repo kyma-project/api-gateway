@@ -20,6 +20,18 @@ func NewProcessor(log *logr.Logger, rule *gatewayv2alpha1.APIRule) Processor {
 	}
 }
 
+// NewProcessorWithoutInternalTraffic returns a Processor with the desired state handling for AuthorizationPolicy.
+// This processor will not create AuthorizationPolicy for internal traffic.
+func NewProcessorWithoutInternalTraffic(log *logr.Logger, rule *gatewayv2alpha1.APIRule) Processor {
+	return Processor{
+		apiRule: rule,
+		creator: creator{
+			disallowInternalTraffic: true,
+		},
+		Log: log,
+	}
+}
+
 // NewMigrationProcessor returns a Processor with the desired state handling for AuthorizationPolicy when in the migration process from v1beta1 to v2alpha1.
 func NewMigrationProcessor(log *logr.Logger, rule *gatewayv2alpha1.APIRule, oryPassthrough bool) Processor {
 	return Processor{

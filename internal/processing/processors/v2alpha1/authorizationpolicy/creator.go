@@ -29,16 +29,31 @@ type Creator interface {
 type creator struct {
 	// Controls that requests to Ory Oathkeeper are also permitted when
 	// migrating from APIRule v1beta1 to v2alpha1.
-	oryPassthrough bool
+	oryPassthrough          bool
+	disallowInternalTraffic bool
 }
 
 // Create returns the AuthorizationPolicy using the configuration of the APIRule.
 func (r creator) Create(ctx context.Context, client client.Client, apiRule *gatewayv2alpha1.APIRule) (hashbasedstate.Desired, error) {
 	state := hashbasedstate.NewDesired()
+	selectorAllowed := make(map[gatewayv2alpha1.PodSelector]bool)
 	for _, rule := range apiRule.Spec.Rules {
-		aps, err := r.generateAuthorizationPolicies(ctx, client, apiRule, rule)
+		selector, err := gatewayv2alpha1.GetSelectorForRule(ctx, client, apiRule, rule)
 		if err != nil {
 			return state, err
+		}
+		var aps *securityv1beta1.AuthorizationPolicyList
+		if _, ok := selectorAllowed[selector]; ok || r.disallowInternalTraffic {
+			aps, err = r.generateAuthorizationPolicies(ctx, client, apiRule, rule, false)
+			if err != nil {
+				return state, err
+			}
+		} else {
+			aps, err = r.generateAuthorizationPolicies(ctx, client, apiRule, rule, true)
+			if err != nil {
+				return state, err
+			}
+			selectorAllowed[selector] = true
 		}
 
 		for _, ap := range aps.Items {
@@ -53,7 +68,33 @@ func (r creator) Create(ctx context.Context, client client.Client, apiRule *gate
 	return state, nil
 }
 
-func (r creator) generateAuthorizationPolicies(ctx context.Context, client client.Client, api *gatewayv2alpha1.APIRule, rule gatewayv2alpha1.Rule) (*securityv1beta1.AuthorizationPolicyList, error) {
+func (r creator) generateAllowForInternalTraffic(ctx context.Context, k8sClient client.Client, api *gatewayv2alpha1.APIRule, rule gatewayv2alpha1.Rule) (*securityv1beta1.AuthorizationPolicy, error) {
+	podSelector, err := gatewayv2alpha1.GetSelectorForRule(ctx, k8sClient, api, rule)
+	if err != nil {
+		return nil, err
+	}
+
+	apBuilder, err := baseAuthorizationPolicyBuilder(api, rule)
+	if err != nil {
+		return nil, fmt.Errorf("error creating base AuthorizationPolicy builder: %w", err)
+	}
+
+	apBuilder.WithSpec(
+		builders.NewAuthorizationPolicySpecBuilder().
+			WithSelector(podSelector.Selector).
+			WithAction(v1beta1.AuthorizationPolicy_ALLOW).
+			WithRule(builders.NewRuleBuilder().
+				WithFrom(
+					builders.NewFromBuilder().
+						ExcludingIngressGatewaySource().
+						Get()).
+				Get()).
+			Get())
+
+	return apBuilder.Get(), nil
+}
+
+func (r creator) generateAuthorizationPolicies(ctx context.Context, client client.Client, api *gatewayv2alpha1.APIRule, rule gatewayv2alpha1.Rule, allowInternalTraffic bool) (*securityv1beta1.AuthorizationPolicyList, error) {
 	authorizationPolicyList := securityv1beta1.AuthorizationPolicyList{}
 
 	var jwtAuthorizations []*gatewayv2alpha1.JwtAuthorization
@@ -100,6 +141,21 @@ func (r creator) generateAuthorizationPolicies(ctx context.Context, client clien
 			}
 
 			authorizationPolicyList.Items = append(authorizationPolicyList.Items, ap)
+		}
+	}
+
+	if allowInternalTraffic {
+		internalTrafficAp, err := r.generateAllowForInternalTraffic(ctx, client, api, rule)
+		if err != nil {
+			return &authorizationPolicyList, err
+		}
+
+		if internalTrafficAp != nil {
+			err = hashbasedstate.AddLabelsToAuthorizationPolicy(internalTrafficAp, baseHashIndex+1+len(jwtAuthorizations))
+			if err != nil {
+				return &authorizationPolicyList, err
+			}
+			authorizationPolicyList.Items = append(authorizationPolicyList.Items, internalTrafficAp)
 		}
 	}
 
@@ -191,7 +247,7 @@ func (r creator) generateAuthorizationPolicy(ctx context.Context, client client.
 }
 
 func (r creator) generateExtAuthAuthorizationPolicySpec(ctx context.Context, client client.Client, api *gatewayv2alpha1.APIRule, rule gatewayv2alpha1.Rule, providerName string) (*v1beta1.AuthorizationPolicy, error) {
-	podSelector, err := gatewayv2alpha1.GetSelectorFromService(ctx, client, api, rule)
+	podSelector, err := gatewayv2alpha1.GetSelectorForRule(ctx, client, api, rule)
 	if err != nil {
 		return nil, err
 	}
@@ -205,7 +261,7 @@ func (r creator) generateExtAuthAuthorizationPolicySpec(ctx context.Context, cli
 }
 
 func (r creator) generateAuthorizationPolicySpec(ctx context.Context, client client.Client, api *gatewayv2alpha1.APIRule, rule gatewayv2alpha1.Rule, authorization *gatewayv2alpha1.JwtAuthorization) (*v1beta1.AuthorizationPolicy, error) {
-	podSelector, err := gatewayv2alpha1.GetSelectorFromService(ctx, client, api, rule)
+	podSelector, err := gatewayv2alpha1.GetSelectorForRule(ctx, client, api, rule)
 	if err != nil {
 		return nil, err
 	}

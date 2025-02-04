@@ -33,15 +33,23 @@ type PodSelector struct {
 	Namespace string
 }
 
-func GetSelectorFromService(ctx context.Context, client client.Client, apiRule *APIRule, rule Rule) (PodSelector, error) {
-
-	var service *Service
+func getServiceFromRule(apiRule APIRule, rule Rule) *Service {
 	if rule.Service != nil {
-		service = rule.Service
-	} else {
-		service = apiRule.Spec.Service
+		return rule.Service
 	}
+	return apiRule.Spec.Service
+}
 
+func GetSelectorForRule(ctx context.Context, client client.Client, apiRule *APIRule, rule Rule) (PodSelector, error) {
+	service := getServiceFromRule(*apiRule, rule)
+	serviceNamespace, err := FindServiceNamespace(apiRule, rule)
+	if err != nil {
+		return PodSelector{}, fmt.Errorf("finding service namespace: %w", err)
+	}
+	return GetSelectorFromService(ctx, client, service, serviceNamespace)
+}
+
+func GetSelectorFromService(ctx context.Context, client client.Client, service *Service, defaultNamespace string) (PodSelector, error) {
 	if service == nil || service.Name == nil {
 		return PodSelector{}, fmt.Errorf("service name is required but missing")
 	}
@@ -49,12 +57,7 @@ func GetSelectorFromService(ctx context.Context, client client.Client, apiRule *
 	if service.Namespace != nil {
 		serviceNamespacedName.Namespace = *service.Namespace
 	} else {
-		ns, err := FindServiceNamespace(apiRule, rule)
-		if err != nil {
-			return PodSelector{}, fmt.Errorf("finding service namespace: %w", err)
-		}
-
-		serviceNamespacedName.Namespace = ns
+		serviceNamespacedName.Namespace = defaultNamespace
 	}
 
 	if serviceNamespacedName.Namespace == "" {

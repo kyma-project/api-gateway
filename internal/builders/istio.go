@@ -60,6 +60,13 @@ func (ap *AuthorizationPolicyBuilder) WithLabel(key, val string) *AuthorizationP
 	return ap
 }
 
+func (ap *AuthorizationPolicyBuilder) WithLabels(labels map[string]string) *AuthorizationPolicyBuilder {
+	for k, v := range labels {
+		ap.value.Labels[k] = v
+	}
+	return ap
+}
+
 func (ap *AuthorizationPolicyBuilder) WithSpec(val *v1beta1.AuthorizationPolicy) *AuthorizationPolicyBuilder {
 	ap.value.Spec = *val.DeepCopy()
 	return ap
@@ -188,6 +195,12 @@ func (rf *FromBuilder) WithForcedJWTAuthorizationV2alpha1(authentications []*gat
 	}
 
 	source := v1beta1.Source{RequestPrincipals: requestPrincipals}
+	rf.value.Source = &source
+	return rf
+}
+
+func (rf *FromBuilder) ExcludingIngressGatewaySource() *FromBuilder {
+	source := v1beta1.Source{NotPrincipals: []string{istioIngressGatewayPrincipal}}
 	rf.value.Source = &source
 	return rf
 }

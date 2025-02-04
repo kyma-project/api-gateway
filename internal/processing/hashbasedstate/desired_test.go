@@ -15,7 +15,7 @@ var _ = Describe("Desired state", func() {
 			ap := securityv1beta1.AuthorizationPolicy{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: map[string]string{
-						"gateway.kyma-project.io/hash": "56fggdf4",
+						"gateway.kyma-project.io/Hash": "56fggdf4",
 					},
 				},
 			}
