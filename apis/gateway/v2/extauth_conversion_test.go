@@ -3,16 +3,17 @@ package v2_test
 import (
 	apirulev1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	apirulev2 "github.com/kyma-project/api-gateway/apis/gateway/v2"
+	builder "github.com/kyma-project/api-gateway/internal/builders/builders_test/v2_test"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
 
 const annotationKey = "gateway.kyma-project.io/v2-rules"
 
-var dummyExtAuthRule = v2.NewRuleBuilder().
+var dummyExtAuthRule = builder.NewRuleBuilder().
 	WithPath("/test").
 	WithMethods("GET").
-	WithExtAuth(v2.NewExtAuthBuilder().
+	WithExtAuth(builder.NewExtAuthBuilder().
 		WithAuthorizers("test-authorizer").
 		WithRestriction(&apirulev2.JwtConfig{
 			Authentications: []*apirulev2.JwtAuthentication{
@@ -36,7 +37,7 @@ var dummyExtAuthRule = v2.NewRuleBuilder().
 var _ = Describe("ExtAuthStorage", func() {
 	It("Should store extAuth in v1beta1 through annotation and a rule with only handler name set", func() {
 		// given
-		v2APIRule := v2.NewAPIRuleBuilderWithDummyData().WithRules(dummyExtAuthRule).Build()
+		v2APIRule := builder.NewAPIRuleBuilderWithDummyData().WithRules(dummyExtAuthRule).Build()
 
 		// when
 		var betaConverted apirulev1beta1.APIRule
@@ -59,7 +60,7 @@ var _ = Describe("ExtAuthConversion", func() {
 
 	DescribeTable("Should convert back and forth correctly with ExtAuth set", func(expectedRules []*apirulev2.Rule) {
 		// given
-		v2APIRule := v2.NewAPIRuleBuilderWithDummyData().WithRules(expectedRules...).Build()
+		v2APIRule := builder.NewAPIRuleBuilderWithDummyData().WithRules(expectedRules...).Build()
 		var betaConverted apirulev1beta1.APIRule
 		err := v2APIRule.ConvertTo(&betaConverted)
 		Expect(err).ToNot(HaveOccurred())
@@ -95,18 +96,18 @@ var _ = Describe("ExtAuthConversion", func() {
 		Entry("Should convert APIRule with no ExtAuth", []*apirulev2.Rule{}),
 		Entry("Should convert APIRule with only ExtAuth", []*apirulev2.Rule{dummyExtAuthRule}),
 		Entry("Should preserve order of rules when ExtAuth is in the middle", []*apirulev2.Rule{
-			v2.NewRuleBuilder().
+			builder.NewRuleBuilder().
 				WithPath("/first").
 				NoAuth().
 				Build(),
 			dummyExtAuthRule,
-			v2.NewRuleBuilder().
+			builder.NewRuleBuilder().
 				WithPath("/third").
 				NoAuth().
 				Build(),
 		}),
 		Entry("Should preserve order of rules when ExtAuth is at the end", []*apirulev2.Rule{
-			v2.NewRuleBuilder().
+			builder.NewRuleBuilder().
 				WithPath("/first").
 				NoAuth().
 				Build(),
@@ -114,7 +115,7 @@ var _ = Describe("ExtAuthConversion", func() {
 		}),
 		Entry("Should preserve order of rules when ExtAuth is at the beginning", []*apirulev2.Rule{
 			dummyExtAuthRule,
-			v2.NewRuleBuilder().
+			builder.NewRuleBuilder().
 				WithPath("/second").
 				NoAuth().
 				Build(),
