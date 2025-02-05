@@ -304,7 +304,7 @@ spec:
     name: v2
     schema:
       openAPIV3Schema:
-        description: APIRule is the Schema for the apirules API
+        description: APIRule is the Schema for ApiRule APIs.
         properties:
           apiVersion:
             description: |-
