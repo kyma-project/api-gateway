@@ -3,38 +3,40 @@ header:
     widget: Badge
     highlights:
       positive:
-        - 'OK'
+        - 'Ready'
       negative:
-        - 'ERROR'
-      critical:
-        - 'SKIPPED'
-    source: 'status.APIRuleStatus.code ? status.APIRuleStatus.code : "UNKNOWN"'
-    description: status.APIRuleStatus.desc
-  - name: host
-    widget: ExternalLink
-    source: 'spec.host'
-    link: 'status.APIRuleStatus.code = "OK" ? "https://" & $virtualServices().items[0].spec.hosts[0] : ""'
+        - 'Error'
+      warning:
+        - 'Warning'
+    source: 'status.state ? status.state : "Unknown"'
+    description: status.description
+
 body:
-  - simple: true
-    widget: Alert
-    severity: warning
-    source: '"alert.spec.jwks_url_http"'
-    visibility: '$count(spec.rules.accessStrategies.config.jwks_urls)>0 and $reduce(spec.rules.accessStrategies.config.jwks_urls,function($i, $j){$i or $substringBefore($j,"://")="http"},false)'
-  - simple: true
-    widget: Alert
-    severity: warning
-    source: '"alert.spec.trusted_issuers_http"'
-    visibility: '$count(spec.rules.accessStrategies.config.trusted_issuers)>0 and $reduce(spec.rules.accessStrategies.config.trusted_issuers,function($i, $j){$i or $substringBefore($j,"://")="http"},false)'
-  - simple: true
-    widget: Alert
-    severity: warning
-    source: '"alert.corsPolicy"'
-    visibility: '$not($exists(spec.corsPolicy))'
-  - simple: true
-    widget: Alert
-    severity: warning
-    source: '"alert.gateway.details"'
-    visibility: '$not($exists($match(spec.gateway,/^[a-z0-9_]+(-[a-z0-9_]+)*\/[a-z0-9_]+(-[a-z0-9_]+)*$/))[0])'
+  - source: spec
+    name: general
+    widget: Panel
+    children:
+    - source: timeout
+      name: timeout
+      visibility: $exists(spec.timeout)
+    - source: gateway
+      name: gateway
+    - source: hosts
+      name: host
+      widget: JoinedArray
+  - source: spec.service
+    name: service
+    widget: Panel
+    children:
+      - source: name
+        name: service.name
+        widget: ResourceLink
+        resource:
+          name: $root.spec.service.name
+          namespace: $root.metadata.namespace
+          kind: '"Service"'
+      - source: port
+        name: port
   - widget: Panel
     name: corsPolicy
     source: spec.corsPolicy
@@ -72,84 +74,116 @@ body:
         source: maxAge
         widget: Text
         visibility: '$exists(maxAge)'
-  - name: general
-    source: spec
-    widget: Panel
-    visibility: $exists(spec.timeout)
-    children:
-    - source: timeout
-      name: details.timeout
-  - name: service
-    source: spec.service
-    widget: Panel
-    children:
-      - name: service.name
-        source: name
-        widget: ResourceLink
-        resource:
-          name: $root.spec.service.name
-          namespace: $root.metadata.namespace
-          kind: '"Service"'
-      - name: service.port
-        source: port
   - source: spec.rules
     widget: Table
     name: rules
     children:
       - source: $item.path
-        name: rules.path
       - source: $item.methods
-        name: rules.methods
+        widget: Badge
+      - source: '$boolean($item.noAuth) ? "No Auth" : ($exists($item.jwt) ? "JWT" : ($exists($item.extAuth) ? "Ext Auth" : ""))'
         widget: Badge
     collapsible:
-      - name: general
-        source: $item
-        widget: Panel
+      - source: $item.timeout
+        name: timeout
         visibility: $exists($item.timeout)
+      - source: $item.jwt
+        name: jwt
+        widget: Panel
+        visibility: $exists($item.jwt)
         children:
-        - source: $item.timeout
-          name: details.timeout
-      - source: $item.accessStrategies
-        widget: Table
-        disablePadding: true
-        name: accessStrategies
+          - source: $item.jwt.authentications
+            name: authentications
+            widget: Table
+            children:
+              - source: $item.issuer
+                name: issuer
+              - source: $item.jwksUri
+                name: jwksUri
+            collapsible:
+              - source: $item.fromHeaders
+                name: fromHeaders
+                visibility: $exists($item.fromHeaders)
+                widget: Table
+                children:
+                  - source: $item.name
+                    name: fromHeaders.name
+                  - source: $item.prefix
+                    name: prefix
+              - source: $item.fromParams
+                name: fromParams
+                visibility: $exists($item.fromParams)
+                widget: JoinedArray
+          - source: $item.jwt.authorizations
+            name: authorizations
+            visibility: $exists($item.jwt.authorizations)
+            widget: Table
+            collapsible:
+              - source: $item.requiredScopes
+                name: requiredScopes
+                widget: JoinedArray
+              - source: $item.audiences
+                name: audiences
+                widget: JoinedArray
+      - source: $item.extAuth
+        name: extAuth
+        widget: Panel
+        visibility: $exists($item.extAuth)
         children:
-          - source: $item.handler
-            name: accessStrategies.handlers
-            widget: Badge
-          - source: $item.config.required_scope
-            name: accessStrategies.required_scope
+          - source: $item.extAuth.authorizers
+            name: authorizers
             widget: JoinedArray
-          - source: $item.config.jwks_urls
-            name: accessStrategies.jwks_urls
-            widget: JoinedArray
-          - source: $item.config.trusted_issuers
-            name: accessStrategies.trusted_issuers
-            widget: JoinedArray
-          - source: $item.config.introspection_url
-            name: accessStrategies.introspection_url
-            widget: Text
-          - source: $item.config.introspection_request_headers
-            name: accessStrategies.introspection_request_headers
+          - source: $item.extAuth.restrictions
+            name: restrictions
+            widget: Panel
+            visibility: $exists($item.extAuth.restrictions)
+            children:
+              - source: $item.extAuth.restrictions.authentications
+                name: authentications
+                widget: Table
+                children:
+                  - source: $item.issuer
+                    name: issuer
+                  - source: $item.jwksUri
+                    name: jwksUri
+                collapsible:
+                  - source: $item.fromHeaders
+                    name: fromHeaders
+                    visibility: $exists($item.fromHeaders)
+                    widget: Table
+                    children:
+                      - source: $item.name
+                        name: fromHeaders.name
+                      - source: $item.prefix
+                        name: prefix
+                  - source: $item.fromParams
+                    name: fromParams
+                    visibility: $exists($item.fromParams)
+                    widget: JoinedArray
+              - source: $item.extAuth.restrictions.authorizations
+                name: authorizations
+                visibility: $exists($item.extAuth.restrictions.authorizations)
+                widget: Table
+                collapsible:
+                  - source: $item.requiredScopes
+                    name: requiredScopes
+                    widget: JoinedArray
+                  - source: $item.audiences
+                    name: audiences
+                    widget: JoinedArray
+      - source: $item.request
+        name: request
+        widget: Panel
+        visibility: $exists($item.request)
+        children:
+          - source: $item.request.cookies
+            name: cookies
             widget: Labels
-          - source: $item.config.token_from
-            name: accessStrategies.token_from
+            visibility: $exists($item.request.cookies)
+          - source: $item.request.headers
+            name: headers
             widget: Labels
-      - source: $item.mutators
-        widget: Table
-        disablePadding: true
-        name: mutators
-        visibility: $exists($item.mutators)
-        children:
-          - source: $item.handler
-            name: mutators.handlers
-            widget: Badge
-          - source: $item.config
-            name: mutators.config
-            widget: CodeViewer
-            description: "Configuration for {{[Ory Oathkeeper Rule mutators]https://www.ory.sh/docs/oathkeeper/pipeline/mutator}}"
-            language: "'yaml'"
-            visibility: '$exists($value)'
+            visibility: $exists($item.request.headers)
       - name: service
         source: $item.service
         widget: Panel
@@ -162,7 +196,7 @@ body:
               name: $item.service.name
               namespace: $root.metadata.namespace
               kind: '"Service"'
-          - name: service.port
+          - name: port
             source: $item.service.port
   - widget: ResourceList
     source: $virtualServices()
