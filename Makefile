@@ -127,7 +127,7 @@ test-integration-rate-limit: generate fmt vet
 
 .PHONY: test-integration-v2
 test-integration-v2: generate fmt vet ## Run API Gateway integration tests with v2 API.
-	go test -timeout 1h ./tests/integration -v -race -run TestV2
+	go test -timeout 1h ./tests/integration -v -race -run "^TestV2$$"
 
 .PHONY: install-istio
 install-istio: create-namespace
