@@ -66,6 +66,13 @@ func getAPIRuleStatus(res *unstructured.Unstructured) (string, string, error) {
 		}
 		code = arStatus.Status.State
 		description = arStatus.Status.Description
+	case "v2":
+		arStatus, err := GetAPIRuleStatusV2(res)
+		if err != nil {
+			return "", "", err
+		}
+		code = arStatus.Status.State
+		description = arStatus.Status.Description
 	default:
 		return "", "", fmt.Errorf("APIRule %s has unsupported version", apiRuleName)
 	}
@@ -284,7 +291,7 @@ func CreateApiRuleV2ExpectError(resourceMgr *resource.Manager, k8sClient dynamic
 		return err
 	}
 
-	apiStatus, err := GetAPIRuleStatusV2Alpha1(currentApiRule)
+	apiStatus, err := GetAPIRuleStatusV2(currentApiRule)
 	if err != nil {
 		return err
 	}
