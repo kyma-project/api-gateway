@@ -10,7 +10,7 @@ export interface NavigationCommands {
 
 Cypress.Commands.add('navigateToApiRule', (name: string, namespace: string) : void => {
     cy.wrap(getK8sCurrentContext()).then((context) => {
-        cy.visit(`${config.clusterAddress}/cluster/${context}/namespaces/${namespace}/apirules/${name}`)
+        cy.visit(`${config.clusterAddress}/cluster/${context}/namespaces/${namespace}/apirules-v1beta1/${name}`)
     });
     // Waiting to avoid dashboard rendering timing issues
     cy.wait(5000);
@@ -18,7 +18,7 @@ Cypress.Commands.add('navigateToApiRule', (name: string, namespace: string) : vo
 
 Cypress.Commands.add('navigateToApiRuleList', (namespace: string) : void => {
     cy.wrap(getK8sCurrentContext()).then((context) => {
-        cy.visit(`${config.clusterAddress}/cluster/${context}/namespaces/${namespace}/apirules`)
+        cy.visit(`${config.clusterAddress}/cluster/${context}/namespaces/${namespace}/apirules-v1beta1`)
     });
     // Waiting to avoid dashboard rendering timing issues
     cy.wait(5000);
