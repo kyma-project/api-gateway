@@ -59,7 +59,7 @@ jobs:
 
           btp_global_account: '${{ secrets.BTP_GLOBAL_ACCOUNT }}'
           btp_subaccount_name: gha-${{ github.job }}-${{ github.run_id }}-${{ github.run_attempt }}
-          btp_subaccount_region: '${{ secrets.BTP_SUBACCOUNT_REGION }}'
+          btp_subaccount_region: ${{ inputs.btp_kyma_plan == 'sap-converged-cloud' && secrets.BTP_CC_SUBACCOUNT_REGION || secrets.BTP_SUBACCOUNT_REGION }}
           btp_backend_url: '${{ secrets.BTP_BACKEND_URL}}'
 
           btp_idp_tenant: '${{ secrets.BTP_CUSTOM_IAS_TENANT }}'
