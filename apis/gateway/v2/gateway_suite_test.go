@@ -1,7 +1,7 @@
 package v2_test
 
 import (
-	"github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
+	"github.com/kyma-project/api-gateway/apis/gateway/v2"
 	"github.com/kyma-project/api-gateway/tests"
 	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
@@ -34,7 +34,7 @@ func createFakeClient(objs ...client.Object) client.Client {
 	Expect(err).NotTo(HaveOccurred())
 	err = securityv1beta1.AddToScheme(scheme)
 	Expect(err).NotTo(HaveOccurred())
-	err = v2alpha1.AddToScheme(scheme)
+	err = v2.AddToScheme(scheme)
 	Expect(err).NotTo(HaveOccurred())
 	err = corev1.AddToScheme(scheme)
 	Expect(err).NotTo(HaveOccurred())
