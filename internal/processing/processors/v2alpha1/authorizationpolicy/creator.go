@@ -44,7 +44,7 @@ func (r creator) Create(ctx context.Context, client client.Client, apiRule *gate
 		}
 		var aps *securityv1beta1.AuthorizationPolicyList
 		_, selectorAlreadyAllowed := selectorAllowed[selector]
-		aps, err = r.generateAuthorizationPolicies(ctx, client, apiRule, rule, !selectorAlreadyAllowed && r.allowInternalTraffic)
+		aps, err = r.generateAuthorizationPolicies(ctx, client, selector, apiRule, rule, !selectorAlreadyAllowed && r.allowInternalTraffic)
 		if err != nil {
 			return state, err
 		}
@@ -62,12 +62,7 @@ func (r creator) Create(ctx context.Context, client client.Client, apiRule *gate
 	return state, nil
 }
 
-func (r creator) generateAllowForInternalTraffic(ctx context.Context, k8sClient client.Client, api *gatewayv2alpha1.APIRule, rule gatewayv2alpha1.Rule) (*securityv1beta1.AuthorizationPolicy, error) {
-	podSelector, err := gatewayv2alpha1.GetSelectorFromService(ctx, k8sClient, api, rule)
-	if err != nil {
-		return nil, err
-	}
-
+func (r creator) generateAllowForInternalTraffic(podSelector gatewayv2alpha1.PodSelector, api *gatewayv2alpha1.APIRule, rule gatewayv2alpha1.Rule) (*securityv1beta1.AuthorizationPolicy, error) {
 	apBuilder, err := baseAuthorizationPolicyBuilder(api, rule)
 	if err != nil {
 		return nil, fmt.Errorf("error creating base AuthorizationPolicy builder: %w", err)
@@ -88,7 +83,7 @@ func (r creator) generateAllowForInternalTraffic(ctx context.Context, k8sClient 
 	return apBuilder.Get(), nil
 }
 
-func (r creator) generateAuthorizationPolicies(ctx context.Context, client client.Client, api *gatewayv2alpha1.APIRule, rule gatewayv2alpha1.Rule, allowInternalTraffic bool) (*securityv1beta1.AuthorizationPolicyList, error) {
+func (r creator) generateAuthorizationPolicies(ctx context.Context, client client.Client, podSelector gatewayv2alpha1.PodSelector, api *gatewayv2alpha1.APIRule, rule gatewayv2alpha1.Rule, allowInternalTraffic bool) (*securityv1beta1.AuthorizationPolicyList, error) {
 	authorizationPolicyList := securityv1beta1.AuthorizationPolicyList{}
 
 	var jwtAuthorizations []*gatewayv2alpha1.JwtAuthorization
@@ -139,7 +134,7 @@ func (r creator) generateAuthorizationPolicies(ctx context.Context, client clien
 	}
 
 	if allowInternalTraffic {
-		internalTrafficAp, err := r.generateAllowForInternalTraffic(ctx, client, api, rule)
+		internalTrafficAp, err := r.generateAllowForInternalTraffic(podSelector, api, rule)
 		if err != nil {
 			return &authorizationPolicyList, err
 		}
