@@ -53,7 +53,7 @@ func generateRequestAuthentication(ctx context.Context, client client.Client, ap
 
 func generateRequestAuthenticationSpec(ctx context.Context, client client.Client, api *gatewayv2alpha1.APIRule, rule gatewayv2alpha1.Rule) (*v1beta1.RequestAuthentication, error) {
 
-	s, err := gatewayv2alpha1.GetSelectorForRule(ctx, client, api, rule)
+	s, err := gatewayv2alpha1.GetSelectorFromService(ctx, client, api, rule)
 	if err != nil {
 		return nil, err
 	}

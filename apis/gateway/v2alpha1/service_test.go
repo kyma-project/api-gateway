@@ -63,16 +63,16 @@ var _ = Describe("Service", func() {
 		),
 	)
 
-	Context("GetSelectorForRule", func() {
+	Context("GetSelectorFromService", func() {
 
 		It("should return error when service is not set", func() {
-			_, err := v2alpha1.GetSelectorForRule(context.Background(), createFakeClient(), &v2alpha1.APIRule{}, v2alpha1.Rule{})
+			_, err := v2alpha1.GetSelectorFromService(context.Background(), createFakeClient(), &v2alpha1.APIRule{}, v2alpha1.Rule{})
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(Equal("service name is required but missing"))
 		})
 
 		It("should return error when service name is not set", func() {
-			_, err := v2alpha1.GetSelectorForRule(context.Background(), createFakeClient(), &v2alpha1.APIRule{}, v2alpha1.Rule{
+			_, err := v2alpha1.GetSelectorFromService(context.Background(), createFakeClient(), &v2alpha1.APIRule{}, v2alpha1.Rule{
 				Service: &v2alpha1.Service{},
 			})
 			Expect(err).To(HaveOccurred())
@@ -80,7 +80,7 @@ var _ = Describe("Service", func() {
 		})
 
 		It("should return error when service is not found", func() {
-			_, err := v2alpha1.GetSelectorForRule(context.Background(), createFakeClient(), &v2alpha1.APIRule{}, v2alpha1.Rule{
+			_, err := v2alpha1.GetSelectorFromService(context.Background(), createFakeClient(), &v2alpha1.APIRule{}, v2alpha1.Rule{
 				Service: &v2alpha1.Service{
 					Name: ptr.To("test-service"),
 				},
@@ -96,7 +96,7 @@ var _ = Describe("Service", func() {
 				build()
 
 			fakeClient := createFakeClient(s)
-			selector, err := v2alpha1.GetSelectorForRule(context.Background(), fakeClient, &v2alpha1.APIRule{}, v2alpha1.Rule{
+			selector, err := v2alpha1.GetSelectorFromService(context.Background(), fakeClient, &v2alpha1.APIRule{}, v2alpha1.Rule{
 				Service: &v2alpha1.Service{
 					Name:      ptr.To("test-service"),
 					Namespace: ptr.To("test-namespace"),
@@ -114,7 +114,7 @@ var _ = Describe("Service", func() {
 				build()
 
 			fakeClient := createFakeClient(s)
-			selector, err := v2alpha1.GetSelectorForRule(context.Background(), fakeClient, &v2alpha1.APIRule{}, v2alpha1.Rule{
+			selector, err := v2alpha1.GetSelectorFromService(context.Background(), fakeClient, &v2alpha1.APIRule{}, v2alpha1.Rule{
 				Service: &v2alpha1.Service{
 					Name:      ptr.To("test-service"),
 					Namespace: ptr.To("test-namespace"),
@@ -133,7 +133,7 @@ var _ = Describe("Service", func() {
 				build()
 
 			fakeClient := createFakeClient(s)
-			selector, err := v2alpha1.GetSelectorForRule(context.Background(), fakeClient,
+			selector, err := v2alpha1.GetSelectorFromService(context.Background(), fakeClient,
 				&v2alpha1.APIRule{
 					ObjectMeta: v1.ObjectMeta{
 						Namespace: "apirule-namespace",
@@ -163,7 +163,7 @@ var _ = Describe("Service", func() {
 				build()
 
 			fakeClient := createFakeClient(s)
-			selector, err := v2alpha1.GetSelectorForRule(context.Background(), fakeClient,
+			selector, err := v2alpha1.GetSelectorFromService(context.Background(), fakeClient,
 				&v2alpha1.APIRule{
 					ObjectMeta: v1.ObjectMeta{
 						Namespace: "apirule-namespace",
@@ -188,7 +188,7 @@ var _ = Describe("Service", func() {
 				build()
 
 			fakeClient := createFakeClient(s)
-			selector, err := v2alpha1.GetSelectorForRule(context.Background(), fakeClient,
+			selector, err := v2alpha1.GetSelectorFromService(context.Background(), fakeClient,
 				&v2alpha1.APIRule{
 					ObjectMeta: v1.ObjectMeta{
 						Namespace: "apirule-namespace",
@@ -213,7 +213,7 @@ var _ = Describe("Service", func() {
 				build()
 
 			fakeClient := createFakeClient(s)
-			selector, err := v2alpha1.GetSelectorForRule(context.Background(), fakeClient,
+			selector, err := v2alpha1.GetSelectorFromService(context.Background(), fakeClient,
 				&v2alpha1.APIRule{
 					ObjectMeta: v1.ObjectMeta{
 						Namespace: "apirule-namespace",
@@ -242,7 +242,7 @@ var _ = Describe("Service", func() {
 				build()
 
 			fakeClient := createFakeClient(s)
-			selector, err := v2alpha1.GetSelectorForRule(context.Background(), fakeClient,
+			selector, err := v2alpha1.GetSelectorFromService(context.Background(), fakeClient,
 				&v2alpha1.APIRule{
 					ObjectMeta: v1.ObjectMeta{
 						Namespace: "apirule-namespace",

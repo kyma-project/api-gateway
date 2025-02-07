@@ -38,7 +38,7 @@ func (r creator) Create(ctx context.Context, client client.Client, apiRule *gate
 	state := hashbasedstate.NewDesired()
 	selectorAllowed := make(map[gatewayv2alpha1.PodSelector]bool)
 	for _, rule := range apiRule.Spec.Rules {
-		selector, err := gatewayv2alpha1.GetSelectorForRule(ctx, client, apiRule, rule)
+		selector, err := gatewayv2alpha1.GetSelectorFromService(ctx, client, apiRule, rule)
 		if err != nil {
 			return state, err
 		}
@@ -69,7 +69,7 @@ func (r creator) Create(ctx context.Context, client client.Client, apiRule *gate
 }
 
 func (r creator) generateAllowForInternalTraffic(ctx context.Context, k8sClient client.Client, api *gatewayv2alpha1.APIRule, rule gatewayv2alpha1.Rule) (*securityv1beta1.AuthorizationPolicy, error) {
-	podSelector, err := gatewayv2alpha1.GetSelectorForRule(ctx, k8sClient, api, rule)
+	podSelector, err := gatewayv2alpha1.GetSelectorFromService(ctx, k8sClient, api, rule)
 	if err != nil {
 		return nil, err
 	}
@@ -247,7 +247,7 @@ func (r creator) generateAuthorizationPolicy(ctx context.Context, client client.
 }
 
 func (r creator) generateExtAuthAuthorizationPolicySpec(ctx context.Context, client client.Client, api *gatewayv2alpha1.APIRule, rule gatewayv2alpha1.Rule, providerName string) (*v1beta1.AuthorizationPolicy, error) {
-	podSelector, err := gatewayv2alpha1.GetSelectorForRule(ctx, client, api, rule)
+	podSelector, err := gatewayv2alpha1.GetSelectorFromService(ctx, client, api, rule)
 	if err != nil {
 		return nil, err
 	}
@@ -261,7 +261,7 @@ func (r creator) generateExtAuthAuthorizationPolicySpec(ctx context.Context, cli
 }
 
 func (r creator) generateAuthorizationPolicySpec(ctx context.Context, client client.Client, api *gatewayv2alpha1.APIRule, rule gatewayv2alpha1.Rule, authorization *gatewayv2alpha1.JwtAuthorization) (*v1beta1.AuthorizationPolicy, error) {
-	podSelector, err := gatewayv2alpha1.GetSelectorForRule(ctx, client, api, rule)
+	podSelector, err := gatewayv2alpha1.GetSelectorFromService(ctx, client, api, rule)
 	if err != nil {
 		return nil, err
 	}
