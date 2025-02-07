@@ -58,7 +58,7 @@ var _ = Describe("Reconciliation", func() {
 			}
 
 			// then
-			Expect(createdObjects).To(HaveLen(2))
+			Expect(createdObjects).To(HaveLen(3))
 
 			Expect(createdObjects[0]).To(BeAssignableToTypeOf(&networkingv1beta1.VirtualService{}))
 			Expect(createdObjects[1]).To(BeAssignableToTypeOf(&securityv1beta1.AuthorizationPolicy{}))
@@ -88,7 +88,7 @@ var _ = Describe("Reconciliation", func() {
 			}
 
 			// then
-			Expect(createdObjects).To(HaveLen(3))
+			Expect(createdObjects).To(HaveLen(4))
 
 			vsCreated, apCreated, raCreated := false, false, false
 
@@ -180,7 +180,7 @@ var _ = Describe("Reconciliation", func() {
 			}
 
 			// then
-			Expect(createdObjects).To(HaveLen(3))
+			Expect(createdObjects).To(HaveLen(4))
 
 			vsCreated, raCreated, apCreated := false, false, false
 
@@ -248,7 +248,7 @@ var _ = Describe("Reconciliation", func() {
 			}
 
 			// then
-			Expect(createdObjects).To(HaveLen(5))
+			Expect(createdObjects).To(HaveLen(6))
 
 			vsCreated, apCreated := false, false
 			numberOfCreatedRequestAuthentications := 0
@@ -324,7 +324,7 @@ var _ = Describe("Reconciliation", func() {
 			}
 
 			// then
-			Expect(createdObjects).To(HaveLen(4))
+			Expect(createdObjects).To(HaveLen(5))
 
 			vsCreated, raCreated, apCreated := false, false, false
 
@@ -423,17 +423,23 @@ var _ = Describe("Reconciliation", func() {
 					case v1beta12.AuthorizationPolicy_ALLOW:
 						Expect(obj.Spec.Rules).To(HaveLen(1))
 
-						if expectedOathkeeperPassthrough {
-							Expect(obj.Spec.Rules[0].From).To(HaveLen(2))
-							Expect(obj.Spec.Rules[0].From[0].Source.Principals).To(HaveLen(1))
-							Expect(obj.Spec.Rules[0].From[0].Source.Principals[0]).To(Equal("cluster.local/ns/kyma-system/sa/oathkeeper-maester-account"))
+						if obj.Spec.Rules[0].To != nil {
+							if expectedOathkeeperPassthrough {
+								Expect(obj.Spec.Rules[0].From).To(HaveLen(2))
+								Expect(obj.Spec.Rules[0].From[0].Source.Principals).To(HaveLen(1))
+								Expect(obj.Spec.Rules[0].From[0].Source.Principals[0]).To(Equal("cluster.local/ns/kyma-system/sa/oathkeeper-maester-account"))
 
-							Expect(obj.Spec.Rules[0].From[1].Source.Principals).To(HaveLen(1))
-							Expect(obj.Spec.Rules[0].From[1].Source.Principals[0]).To(Equal("cluster.local/ns/istio-system/sa/istio-ingressgateway-service-account"))
+								Expect(obj.Spec.Rules[0].From[1].Source.Principals).To(HaveLen(1))
+								Expect(obj.Spec.Rules[0].From[1].Source.Principals[0]).To(Equal("cluster.local/ns/istio-system/sa/istio-ingressgateway-service-account"))
+							} else {
+								Expect(obj.Spec.Rules[0].From).To(HaveLen(1))
+								Expect(obj.Spec.Rules[0].From[0].Source.Principals).To(HaveLen(1))
+								Expect(obj.Spec.Rules[0].From[0].Source.Principals[0]).To(Equal("cluster.local/ns/istio-system/sa/istio-ingressgateway-service-account"))
+							}
 						} else {
 							Expect(obj.Spec.Rules[0].From).To(HaveLen(1))
-							Expect(obj.Spec.Rules[0].From[0].Source.Principals).To(HaveLen(1))
-							Expect(obj.Spec.Rules[0].From[0].Source.Principals[0]).To(Equal("cluster.local/ns/istio-system/sa/istio-ingressgateway-service-account"))
+							Expect(obj.Spec.Rules[0].From[0].Source.NotPrincipals).To(HaveLen(1))
+							Expect(obj.Spec.Rules[0].From[0].Source.NotPrincipals[0]).To(Equal("cluster.local/ns/istio-system/sa/istio-ingressgateway-service-account"))
 						}
 					}
 					apNumber++
@@ -447,9 +453,9 @@ var _ = Describe("Reconciliation", func() {
 			Expect(apNumber).To(Equal(numAPActions))
 			Expect(ruleNumber).To(Equal(numRuleActions))
 		},
-			Entry("Step 1: Create AuthorizationPolicies and RequestAuthentications", "", 1, 0, 0, 0, true),
-			Entry("Step 2: Switch VirtualServices", "apply-istio-authorization", 1, 0, 1, 0, true),
-			Entry("Step 3: Remove OryRule", "vs-switch-to-service", 1, 0, 1, 1, false))
+			Entry("Step 1: Create AuthorizationPolicies and RequestAuthentications", "", 2, 0, 0, 0, true),
+			Entry("Step 2: Switch VirtualServices", "apply-istio-authorization", 2, 0, 1, 0, true),
+			Entry("Step 3: Remove OryRule", "vs-switch-to-service", 2, 0, 1, 1, false))
 	})
 
 	Context("validation", func() {
