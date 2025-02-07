@@ -2,7 +2,7 @@
 name: Feature request
 about: Suggest an improvement to the project
 title: ''
-labels: kind/feature
+type: Feature
 assignees: ''
 
 ---
@@ -19,14 +19,6 @@ assignees: ''
 **Reasons**
 
 <!-- Explain why we should add this feature. Provide use cases to illustrate its benefits. -->
-
-**DoD:**
-- [ ] Provide unit and integration tests.
-- [ ] Provide documentation.
-- [ ] Verify if the solution works for both open-source Kyma and SAP BTP, Kyma runtime.
-- [ ] If you changed the resource limits, explain why it was needed.
-- [ ] Verify that your contributions don't decrease code coverage. If they do, explain why this is the case.
-- [ ] Add release notes.
 
 **Attachments**
 

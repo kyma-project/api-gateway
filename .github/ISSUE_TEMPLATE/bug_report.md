@@ -2,7 +2,7 @@
 name: Bug report
 about: Report a bug in the project
 title: ''
-labels: kind/bug
+type: Bug
 assignees: ''
 
 ---
@@ -34,12 +34,3 @@ Describe where it appears, when it occurred, and what it affects.  -->
 **Troubleshooting**
 
 <!-- Describe the steps you have already taken to solve the issue. -->
-
-**DoD [Developer & Reviewer]**
-<!-- The developer working on this issue must confirm that they have completed the following tasks. The reviewer must double-check that these tasks are completed. -->
-- [ ] Provide unit and integration tests.
-- [ ] Provide documentation.
-- [ ] Verify if the solution works for both open-source Kyma and SAP BTP, Kyma runtime.
-- [ ] If you changed the resource limits, explain why it was needed.
-- [ ] Verify that your contributions don't decrease code coverage. If they do, explain why this is the case.
-- [ ] Add release notes.
