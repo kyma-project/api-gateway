@@ -29,8 +29,8 @@ type Creator interface {
 type creator struct {
 	// Controls that requests to Ory Oathkeeper are also permitted when
 	// migrating from APIRule v1beta1 to v2alpha1.
-	oryPassthrough          bool
-	disallowInternalTraffic bool
+	oryPassthrough       bool
+	allowInternalTraffic bool
 }
 
 // Create returns the AuthorizationPolicy using the configuration of the APIRule.
@@ -43,18 +43,12 @@ func (r creator) Create(ctx context.Context, client client.Client, apiRule *gate
 			return state, err
 		}
 		var aps *securityv1beta1.AuthorizationPolicyList
-		if _, ok := selectorAllowed[selector]; ok || r.disallowInternalTraffic {
-			aps, err = r.generateAuthorizationPolicies(ctx, client, apiRule, rule, false)
-			if err != nil {
-				return state, err
-			}
-		} else {
-			aps, err = r.generateAuthorizationPolicies(ctx, client, apiRule, rule, true)
-			if err != nil {
-				return state, err
-			}
-			selectorAllowed[selector] = true
+		_, selectorAlreadyAllowed := selectorAllowed[selector]
+		aps, err = r.generateAuthorizationPolicies(ctx, client, apiRule, rule, !selectorAlreadyAllowed && r.allowInternalTraffic)
+		if err != nil {
+			return state, err
 		}
+		selectorAllowed[selector] = true
 
 		for _, ap := range aps.Items {
 			h := hashbasedstate.NewAuthorizationPolicy(ap)

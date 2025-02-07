@@ -15,8 +15,10 @@ import (
 func NewProcessor(log *logr.Logger, rule *gatewayv2alpha1.APIRule) Processor {
 	return Processor{
 		apiRule: rule,
-		creator: creator{},
-		Log:     log,
+		creator: creator{
+			allowInternalTraffic: true,
+		},
+		Log: log,
 	}
 }
 
@@ -26,7 +28,7 @@ func NewProcessorWithoutInternalTraffic(log *logr.Logger, rule *gatewayv2alpha1.
 	return Processor{
 		apiRule: rule,
 		creator: creator{
-			disallowInternalTraffic: true,
+			allowInternalTraffic: false,
 		},
 		Log: log,
 	}
@@ -37,7 +39,8 @@ func NewMigrationProcessor(log *logr.Logger, rule *gatewayv2alpha1.APIRule, oryP
 	return Processor{
 		apiRule: rule,
 		creator: creator{
-			oryPassthrough: oryPassthrough,
+			oryPassthrough:       oryPassthrough,
+			allowInternalTraffic: true,
 		},
 		Log: log,
 	}
