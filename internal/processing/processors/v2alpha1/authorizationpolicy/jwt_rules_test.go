@@ -34,7 +34,7 @@ var _ = Describe("Processing JWT rules", func() {
 		svc := newServiceBuilderWithDummyData().build()
 
 		client := getFakeClient(svc)
-		processor := authorizationpolicy.NewProcessor(&testLogger, apiRule)
+		processor := authorizationpolicy.NewProcessorWithoutInternalTraffic(&testLogger, apiRule)
 
 		// when
 		result, err := processor.EvaluateReconciliation(context.Background(), client)
@@ -106,7 +106,7 @@ var _ = Describe("Processing JWT rules", func() {
 		apiRule := newAPIRuleBuilderWithDummyData().withRules(jwtRule).build()
 		svc := newServiceBuilderWithDummyData().build()
 		client := getFakeClient(svc)
-		processor := authorizationpolicy.NewProcessor(&testLogger, apiRule)
+		processor := authorizationpolicy.NewProcessorWithoutInternalTraffic(&testLogger, apiRule)
 
 		// when
 		result, err := processor.EvaluateReconciliation(context.Background(), client)
@@ -175,7 +175,7 @@ var _ = Describe("Processing JWT rules", func() {
 		apiRule := newAPIRuleBuilderWithDummyData().withRules(ruleJwt).build()
 		svc := newServiceBuilderWithDummyData().build()
 		client := getFakeClient(svc)
-		processor := authorizationpolicy.NewProcessor(&testLogger, apiRule)
+		processor := authorizationpolicy.NewProcessorWithoutInternalTraffic(&testLogger, apiRule)
 
 		// when
 		result, err := processor.EvaluateReconciliation(context.Background(), client)
@@ -256,7 +256,7 @@ var _ = Describe("Processing JWT rules", func() {
 				withRules(rules...).
 				build()
 
-			processor := authorizationpolicy.NewProcessor(&testLogger, apiRule)
+			processor := authorizationpolicy.NewProcessorWithoutInternalTraffic(&testLogger, apiRule)
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.Background(), ctrlClient)
@@ -313,7 +313,7 @@ var _ = Describe("Processing JWT rules", func() {
 			apiRule := newAPIRuleBuilderWithDummyData().
 				withServiceName(serviceName).
 				withRules(jwtRule).build()
-			processor := authorizationpolicy.NewProcessor(&testLogger, apiRule)
+			processor := authorizationpolicy.NewProcessorWithoutInternalTraffic(&testLogger, apiRule)
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.Background(), ctrlClient)
@@ -369,7 +369,7 @@ var _ = Describe("Processing JWT rules", func() {
 				build()
 
 			apiRule := newAPIRuleBuilderWithDummyData().withRules(jwtRule).build()
-			processor := authorizationpolicy.NewProcessor(&testLogger, apiRule)
+			processor := authorizationpolicy.NewProcessorWithoutInternalTraffic(&testLogger, apiRule)
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.Background(), ctrlClient)
@@ -424,7 +424,7 @@ var _ = Describe("Processing JWT rules", func() {
 				build()
 
 			apiRule := newAPIRuleBuilderWithDummyData().withRules(jwtRule).build()
-			processor := authorizationpolicy.NewProcessor(&testLogger, apiRule)
+			processor := authorizationpolicy.NewProcessorWithoutInternalTraffic(&testLogger, apiRule)
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.Background(), ctrlClient)
@@ -491,7 +491,7 @@ var _ = Describe("Processing JWT rules", func() {
 				build()
 
 			apiRule := newAPIRuleBuilderWithDummyData().withRules(jwtRule).build()
-			processor := authorizationpolicy.NewProcessor(&testLogger, apiRule)
+			processor := authorizationpolicy.NewProcessorWithoutInternalTraffic(&testLogger, apiRule)
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.Background(), ctrlClient)
