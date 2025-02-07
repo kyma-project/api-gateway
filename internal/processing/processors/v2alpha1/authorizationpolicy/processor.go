@@ -15,8 +15,22 @@ import (
 func NewProcessor(log *logr.Logger, rule *gatewayv2alpha1.APIRule) Processor {
 	return Processor{
 		apiRule: rule,
-		creator: creator{},
-		Log:     log,
+		creator: creator{
+			allowInternalTraffic: true,
+		},
+		Log: log,
+	}
+}
+
+// NewProcessorWithoutInternalTraffic returns a Processor with the desired state handling for AuthorizationPolicy.
+// This processor will not create AuthorizationPolicy for internal traffic.
+func NewProcessorWithoutInternalTraffic(log *logr.Logger, rule *gatewayv2alpha1.APIRule) Processor {
+	return Processor{
+		apiRule: rule,
+		creator: creator{
+			allowInternalTraffic: false,
+		},
+		Log: log,
 	}
 }
 
@@ -25,7 +39,8 @@ func NewMigrationProcessor(log *logr.Logger, rule *gatewayv2alpha1.APIRule, oryP
 	return Processor{
 		apiRule: rule,
 		creator: creator{
-			oryPassthrough: oryPassthrough,
+			oryPassthrough:       oryPassthrough,
+			allowInternalTraffic: true,
 		},
 		Log: log,
 	}
