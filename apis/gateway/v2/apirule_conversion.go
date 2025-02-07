@@ -32,7 +32,7 @@ func convertMap(m map[v1beta1.StatusCode]State) map[State]v1beta1.StatusCode {
 // The 2 => 1 map is generated automatically based on 1 => 2 map
 var v2to1beta1statusConversionMap = convertMap(beta1toV2StatusConversionMap)
 
-const v2RulesAnnotationKey = "gateway.kyma-project.io/v2-rules"
+const v2RulesAnnotationKey = "gateway.kyma-project.io/v2alpha1-rules"
 
 // ConvertTo Converts this ApiRule (v2) to the Hub version (v1beta1)
 func (apiRule *APIRule) ConvertTo(hub conversion.Hub) error {
