@@ -192,6 +192,12 @@ func (rf *FromBuilder) WithForcedJWTAuthorizationV2alpha1(authentications []*gat
 	return rf
 }
 
+func (rf *FromBuilder) ExcludingIngressGatewaySource() *FromBuilder {
+	source := v1beta1.Source{NotPrincipals: []string{istioIngressGatewayPrincipal}}
+	rf.value.Source = &source
+	return rf
+}
+
 func (rf *FromBuilder) WithIngressGatewaySource() *FromBuilder {
 	source := v1beta1.Source{Principals: []string{istioIngressGatewayPrincipal}}
 	rf.value.Source = &source
