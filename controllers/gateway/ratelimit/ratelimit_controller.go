@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 	ratelimitv1alpha1 "github.com/kyma-project/api-gateway/apis/gateway/ratelimit/v1alpha1"
+	operatorv1alpha1 "github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
 	"github.com/kyma-project/api-gateway/controllers"
 	"github.com/kyma-project/api-gateway/internal/builders/envoyfilter"
 	"github.com/kyma-project/api-gateway/internal/dependencies"
@@ -70,6 +71,31 @@ func (r *RateLimitReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		if err := r.Status().Update(ctx, &rl); err != nil {
 			return ctrl.Result{}, err
 		}
+		return ctrl.Result{}, err
+	}
+
+	existingAPIGateways := &operatorv1alpha1.APIGatewayList{}
+	if err := r.Client.List(ctx, existingAPIGateways); err != nil {
+		l.Info("Unable to list APIGateway CRs")
+		return ctrl.Result{}, err
+	}
+	// todo: status ready
+	if len(existingAPIGateways.Items) < 1 {
+		rl.Status.Error(fmt.Errorf("failed to create RateLimit CR because of lacking APIGateway CR in the cluster"))
+		if err := r.Status().Update(ctx, &rl); err != nil {
+			return ctrl.Result{}, err
+		}
+		err := fmt.Errorf("no APIGateway CR in the cluster")
+		return ctrl.Result{}, err
+	}
+
+	latestCr := getLatestAPIGatewayCR(existingAPIGateways)
+	if latestCr.Status.State != operatorv1alpha1.Ready {
+		rl.Status.Error(fmt.Errorf("failed to create RateLimit CR because APIGateway CR is in %s state", latestCr.Status.State))
+		if err := r.Status().Update(ctx, &rl); err != nil {
+			return ctrl.Result{}, err
+		}
+		err := fmt.Errorf("APIGateway CR %s/%s is in %s state", latestCr.Namespace, latestCr.Name, latestCr.Status.State)
 		return ctrl.Result{}, err
 	}
 
@@ -177,4 +203,16 @@ func NewRateLimitReconciler(mgr manager.Manager) *RateLimitReconciler {
 		Scheme:          mgr.GetScheme(),
 		ReconcilePeriod: defaultReconciliationPeriod,
 	}
+}
+
+func getLatestAPIGatewayCR(apigatewayCRs *operatorv1alpha1.APIGatewayList) *operatorv1alpha1.APIGateway {
+	oldest := apigatewayCRs.Items[0]
+	for _, item := range apigatewayCRs.Items {
+		timestamp := &item.CreationTimestamp
+		if !(oldest.CreationTimestamp.Before(timestamp)) {
+			oldest = item
+		}
+	}
+
+	return &oldest
 }

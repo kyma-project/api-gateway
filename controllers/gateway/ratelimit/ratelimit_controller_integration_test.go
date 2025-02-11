@@ -3,6 +3,7 @@ package ratelimit_test
 import (
 	"context"
 	ratelimitv1alpha1 "github.com/kyma-project/api-gateway/apis/gateway/ratelimit/v1alpha1"
+	apigatewayv1alpha1 "github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
 	"github.com/kyma-project/api-gateway/controllers"
 	"github.com/kyma-project/api-gateway/controllers/gateway/ratelimit"
 	. "github.com/onsi/ginkgo/v2"
@@ -78,7 +79,14 @@ var _ = AfterSuite(func() {
 })
 var _ = Describe("Rate Limit Controller", func() {
 	var ns *corev1.Namespace
+	var apigateway *apigatewayv1alpha1.APIGateway
 	BeforeEach(func() {
+
+		apigateway = &apigatewayv1alpha1.APIGateway{
+			ObjectMeta: metav1.ObjectMeta{
+				GenerateName: "custom-apigateway-",
+			},
+		}
 		ns = &corev1.Namespace{
 			ObjectMeta: metav1.ObjectMeta{
 				GenerateName: "ratelimit-test-",
@@ -86,6 +94,73 @@ var _ = Describe("Rate Limit Controller", func() {
 		}
 		Expect(c.Create(ctx, ns)).Should(Succeed())
 		Expect(ns.Name).ToNot(BeEmpty())
+
+		Expect(c.Create(ctx, apigateway)).Should(Succeed())
+		Expect(apigateway.Name).ToNot(BeEmpty())
+
+		apigateway.Status.State = apigatewayv1alpha1.Ready
+		Expect(c.Status().Update(ctx, apigateway)).Should(Succeed())
+		Expect(apigateway.Status.State).Should(Equal(apigatewayv1alpha1.Ready))
+	})
+	It("should reconcile RateLimitCR Status to Error state when APIGatewayCR is not in the cluster", func() {
+		namespace := ns.Name
+		err := c.Delete(ctx, apigateway)
+		Expect(err).ToNot(HaveOccurred())
+
+		By("Creating test pod")
+		pod := &corev1.Pod{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "test-pod",
+				Namespace: namespace,
+				Annotations: map[string]string{
+					"sidecar.istio.io/status": "",
+				},
+				Labels: map[string]string{
+					"app": "test",
+				},
+			},
+			Spec: corev1.PodSpec{
+				Containers: []corev1.Container{
+					{
+						Name:  "test",
+						Image: "busybox",
+					},
+				}}}
+		Expect(c.Create(ctx, pod)).Should(Succeed())
+
+		By("Creating RateLimit resource")
+		rl := &ratelimitv1alpha1.RateLimit{
+			ObjectMeta: metav1.ObjectMeta{
+				GenerateName: "rate-limit-",
+				Namespace:    namespace,
+			},
+			Spec: ratelimitv1alpha1.RateLimitSpec{
+				EnableResponseHeaders: true,
+				SelectorLabels:        map[string]string{"app": "test"},
+				Local: ratelimitv1alpha1.LocalConfig{
+					DefaultBucket: ratelimitv1alpha1.BucketSpec{
+						MaxTokens:     20,
+						TokensPerFill: 20,
+						FillInterval:  &metav1.Duration{Duration: time.Minute * 5},
+					},
+				},
+			}}
+		Expect(c.Create(ctx, rl)).Should(Succeed())
+		Expect(rl.Name).ShouldNot(BeEmpty())
+		Eventually(func() string {
+			Expect(c.Get(ctx, ctrlclient.ObjectKeyFromObject(rl), rl)).Should(Succeed())
+			return rl.Status.State
+		}).Should(Equal("Error"))
+
+		By("Checking that EnvoyFilter is not created")
+		ef := &networkingv1alpha3.EnvoyFilter{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      rl.Name,
+				Namespace: rl.Namespace,
+			},
+		}
+		Eventually(c.Get(ctx, ctrlclient.ObjectKeyFromObject(ef), ef)).Should(Not(Succeed()))
+
 	})
 	It("should reconcile RateLimit Status to Error state when validation fails", func() {
 		By("Creating RateLimit resource without matching pods")
@@ -414,6 +489,7 @@ func getTestScheme() *runtime.Scheme {
 	Expect(apiextensionsv1.AddToScheme(s)).Should(Succeed())
 	Expect(networkingv1alpha3.AddToScheme(s)).Should(Succeed())
 	Expect(ratelimitv1alpha1.AddToScheme(s)).Should(Succeed())
+	Expect(apigatewayv1alpha1.AddToScheme(s)).Should(Succeed())
 	return s
 }
 
