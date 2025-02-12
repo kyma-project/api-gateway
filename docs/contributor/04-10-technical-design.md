@@ -32,6 +32,9 @@ APIRule Controller has a conditional dependency to APIGateway Controller in term
 
 >**NOTE:** For now, you can only use the default domain in APIGateway CR. The option to configure your own domain will be added at a later time. See the [epic task](https://github.com/kyma-project/api-gateway/issues/130).
 
+### Versions of APIRule CRDs
+The latest version of the APIRules CRD is `v2`. The APIRule resource is stored and served as version `v1beta1`. APIRule `v2` is an exact copy of version `v2alpha1`, with the only difference being the version of the CRD.
+
 ### Reconciliation
 APIRule Controller reconciles APIRule CR with each change. If you don't make any changes, the process occurs at the default interval of 30 minutes.
 You can use the [API Gateway Operator parameters](../user/technical-reference/05-00-api-gateway-operator-parameters.md) to adjust this interval.
@@ -49,7 +52,7 @@ annotation `gateway.kyma-project.io/original-version: v2alpha1` on the APIRule.
 The processor is selected based on the following rules:
 - If the handler in the `api-gateway-config` ConfigMap is set to `istio`, the APIRule reconciliation uses the `NewIstioReconciliation` in the [istio](../../internal/processing/processors/istio) package. 
 - If the handler in the `api-gateway-config` ConfigMap is set to `ory`, the APIRule reconciliation uses the `NewOryReconciliation` in the [ory](../../internal/processing/processors/ory) package.
-- If the annotation `gateway.kyma-project.io/original-version: v2alpha1` is present on the APIRule, the APIRule reconciliation uses the `NewReconciliation` in the [v2alpha1](../../internal/processing/processors/v2alpha1) package.
+- If the annotation `gateway.kyma-project.io/original-version: v2alpha1` or `v2`  are present on the APIRule, the APIRule reconciliation uses the `NewReconciliation` in the [v2alpha1](../../internal/processing/processors/v2alpha1) package.
 
 ## Certificate Controller
 
