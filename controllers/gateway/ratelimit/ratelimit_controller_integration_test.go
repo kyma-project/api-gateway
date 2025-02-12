@@ -80,18 +80,23 @@ var _ = AfterSuite(func() {
 var _ = Describe("Rate Limit Controller", func() {
 	var ns *corev1.Namespace
 	var apigateway *apigatewayv1alpha1.APIGateway
-	BeforeEach(func() {
 
+	apigatewayGenerateName := "custom-apigateway-"
+	nsGenerateName := "ratelimit-test-"
+
+	BeforeEach(func() {
 		apigateway = &apigatewayv1alpha1.APIGateway{
 			ObjectMeta: metav1.ObjectMeta{
-				GenerateName: "custom-apigateway-",
+				GenerateName: apigatewayGenerateName,
 			},
 		}
+
 		ns = &corev1.Namespace{
 			ObjectMeta: metav1.ObjectMeta{
-				GenerateName: "ratelimit-test-",
+				GenerateName: nsGenerateName,
 			},
 		}
+
 		Expect(c.Create(ctx, ns)).Should(Succeed())
 		Expect(ns.Name).ToNot(BeEmpty())
 
@@ -102,281 +107,19 @@ var _ = Describe("Rate Limit Controller", func() {
 		Expect(c.Status().Update(ctx, apigateway)).Should(Succeed())
 		Expect(apigateway.Status.State).Should(Equal(apigatewayv1alpha1.Ready))
 	})
-	It("should reconcile RateLimitCR Status to Error state when APIGatewayCR is not in the cluster", func() {
-		namespace := ns.Name
-		err := c.Delete(ctx, apigateway)
-		Expect(err).ToNot(HaveOccurred())
 
-		By("Creating test pod")
-		pod := &corev1.Pod{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "test-pod",
-				Namespace: namespace,
-				Annotations: map[string]string{
-					"sidecar.istio.io/status": "",
-				},
-				Labels: map[string]string{
-					"app": "test",
-				},
-			},
-			Spec: corev1.PodSpec{
-				Containers: []corev1.Container{
-					{
-						Name:  "test",
-						Image: "busybox",
-					},
-				}}}
-		Expect(c.Create(ctx, pod)).Should(Succeed())
+	When("APIGatewayCR is missing", func() {
+		AfterEach(func() {
+			Expect(c.Delete(ctx, apigateway)).Should(Not(Succeed()))
 
-		By("Creating RateLimit resource")
-		rl := &ratelimitv1alpha1.RateLimit{
-			ObjectMeta: metav1.ObjectMeta{
-				GenerateName: "rate-limit-",
-				Namespace:    namespace,
-			},
-			Spec: ratelimitv1alpha1.RateLimitSpec{
-				EnableResponseHeaders: true,
-				SelectorLabels:        map[string]string{"app": "test"},
-				Local: ratelimitv1alpha1.LocalConfig{
-					DefaultBucket: ratelimitv1alpha1.BucketSpec{
-						MaxTokens:     20,
-						TokensPerFill: 20,
-						FillInterval:  &metav1.Duration{Duration: time.Minute * 5},
-					},
-				},
-			}}
-		Expect(c.Create(ctx, rl)).Should(Succeed())
-		Expect(rl.Name).ShouldNot(BeEmpty())
-		Eventually(func() string {
-			Expect(c.Get(ctx, ctrlclient.ObjectKeyFromObject(rl), rl)).Should(Succeed())
-			return rl.Status.State
-		}).Should(Equal("Error"))
-
-		By("Checking that EnvoyFilter is not created")
-		ef := &networkingv1alpha3.EnvoyFilter{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      rl.Name,
-				Namespace: rl.Namespace,
-			},
-		}
-		Eventually(c.Get(ctx, ctrlclient.ObjectKeyFromObject(ef), ef)).Should(Not(Succeed()))
-
-	})
-	It("should reconcile RateLimit Status to Error state when validation fails", func() {
-		By("Creating RateLimit resource without matching pods")
-		namespace := ns.Name
-		rl := &ratelimitv1alpha1.RateLimit{
-			ObjectMeta: metav1.ObjectMeta{
-				GenerateName: "rate-limit-",
-				Namespace:    namespace,
-			},
-			Spec: ratelimitv1alpha1.RateLimitSpec{
-				EnableResponseHeaders: true,
-				SelectorLabels:        map[string]string{"app": "test"},
-				Local: ratelimitv1alpha1.LocalConfig{
-					DefaultBucket: ratelimitv1alpha1.BucketSpec{
-						MaxTokens:     20,
-						TokensPerFill: 20,
-						FillInterval:  &metav1.Duration{Duration: time.Minute * 5},
-					},
-				},
-			}}
-		Expect(c.Create(ctx, rl)).Should(Succeed())
-		Expect(rl.Name).ShouldNot(BeEmpty())
-		Eventually(func() string {
-			Expect(c.Get(ctx, ctrlclient.ObjectKeyFromObject(rl), rl)).Should(Succeed())
-			return rl.Status.State
-		}).Should(Equal("Error"))
-	})
-	It("should reconcile RateLimit Status to Ready state when resource is created", func() {
-		namespace := ns.Name
-		By("Creating test pod")
-		pod := &corev1.Pod{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "test-pod",
-				Namespace: namespace,
-				Annotations: map[string]string{
-					"sidecar.istio.io/status": "",
-				},
-				Labels: map[string]string{
-					"app": "test",
-				},
-			},
-			Spec: corev1.PodSpec{
-				Containers: []corev1.Container{
-					{
-						Name:  "test",
-						Image: "busybox",
-					},
-				}}}
-		Expect(c.Create(ctx, pod)).Should(Succeed())
-
-		By("Creating RateLimit resource")
-		rl := &ratelimitv1alpha1.RateLimit{
-			ObjectMeta: metav1.ObjectMeta{
-				GenerateName: "rate-limit-",
-				Namespace:    namespace,
-			},
-			Spec: ratelimitv1alpha1.RateLimitSpec{
-				EnableResponseHeaders: true,
-				SelectorLabels:        map[string]string{"app": "test"},
-				Local: ratelimitv1alpha1.LocalConfig{
-					DefaultBucket: ratelimitv1alpha1.BucketSpec{
-						MaxTokens:     20,
-						TokensPerFill: 20,
-						FillInterval:  &metav1.Duration{Duration: time.Minute * 5},
-					},
-				},
-			}}
-		Expect(c.Create(ctx, rl)).Should(Succeed())
-		Expect(rl.Name).ShouldNot(BeEmpty())
-		Eventually(func() string {
-			Expect(c.Get(ctx, ctrlclient.ObjectKeyFromObject(rl), rl)).Should(Succeed())
-			return rl.Status.State
-		}).Should(Equal("Ready"))
-
-		By("Checking that EnvoyFilter got created")
-		ef := &networkingv1alpha3.EnvoyFilter{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      rl.Name,
-				Namespace: rl.Namespace,
-			},
-		}
-		Eventually(c.Get(ctx, ctrlclient.ObjectKeyFromObject(ef), ef)).Should(Succeed())
-		By("Checking the OwnerReference of EnvoyFilter")
-		expectedOwnerReference := metav1.OwnerReference{
-			Kind:               "RateLimit",
-			Name:               rl.Name,
-			UID:                rl.UID,
-			APIVersion:         "gateway.kyma-project.io/v1alpha1",
-			Controller:         ptr.To(true),
-			BlockOwnerDeletion: ptr.To(true),
-		}
-		Expect(ef.OwnerReferences).To(ContainElement(expectedOwnerReference))
-
-	})
-	It("should reconcile state to Ready when RateLimit is modified with new configuration", func() {
-		namespace := ns.Name
-		By("Creating test pod")
-		pod := &corev1.Pod{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "test-pod",
-				Namespace: namespace,
-				Annotations: map[string]string{
-					"sidecar.istio.io/status": "",
-				},
-				Labels: map[string]string{
-					"app": "test",
-				},
-			},
-			Spec: corev1.PodSpec{
-				Containers: []corev1.Container{
-					{
-						Name:  "test",
-						Image: "busybox",
-					},
-				}}}
-		Expect(c.Create(ctx, pod)).Should(Succeed())
-		By("Creating RateLimit resource")
-		rl := &ratelimitv1alpha1.RateLimit{
-			ObjectMeta: metav1.ObjectMeta{
-				GenerateName: "rate-limit-",
-				Namespace:    ns.Name,
-			},
-			Spec: ratelimitv1alpha1.RateLimitSpec{
-				EnableResponseHeaders: false,
-				SelectorLabels:        map[string]string{"app": "test"},
-				Local: ratelimitv1alpha1.LocalConfig{
-					DefaultBucket: ratelimitv1alpha1.BucketSpec{
-						MaxTokens:     20,
-						TokensPerFill: 20,
-						FillInterval:  &metav1.Duration{Duration: time.Minute * 5},
-					},
-				},
-			}}
-		Expect(c.Create(ctx, rl)).Should(Succeed())
-		Expect(rl.Name).ShouldNot(BeEmpty())
-		Eventually(func() string {
-			Expect(c.Get(ctx, ctrlclient.ObjectKeyFromObject(rl), rl)).Should(Succeed())
-			return rl.Status.State
-		}).Should(Equal("Ready"))
-		By("Checking that EnvoyFilter got created")
-		ef := &networkingv1alpha3.EnvoyFilter{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      rl.Name,
-				Namespace: rl.Namespace,
-			},
-		}
-		Eventually(c.Get(ctx, ctrlclient.ObjectKeyFromObject(ef), ef)).Should(Succeed())
-		observedGeneration := ef.Generation
-		By("Modifying RateLimit with 'enableResponseHeaders' set to true")
-		rl.Spec.EnableResponseHeaders = true
-		Expect(c.Update(ctx, rl)).Should(Succeed())
-		Eventually(func() string {
-			Expect(c.Get(ctx, ctrlclient.ObjectKeyFromObject(rl), rl)).Should(Succeed())
-			return rl.Status.State
-		}).Should(Equal("Ready"))
-		By("Checking that EnvoyFilter got updated")
-		Eventually(func() bool {
-			Expect(c.Get(ctx, ctrlclient.ObjectKeyFromObject(ef), ef)).Should(Succeed())
-			return ef.Generation > observedGeneration
-		}).Should(BeTrue())
-	})
-	Context("RateLimit CRD validation", func() {
-		It("should fail if path and headers are empty", func() {
-			namespace := ns.Name
-			By("Creating test pod")
-			pod := &corev1.Pod{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-pod",
-					Namespace: namespace,
-					Annotations: map[string]string{
-						"sidecar.istio.io/status": "",
-					},
-					Labels: map[string]string{
-						"app": "test",
-					},
-				},
-				Spec: corev1.PodSpec{
-					Containers: []corev1.Container{
-						{
-							Name:  "test",
-							Image: "busybox",
-						},
-					}}}
-			Expect(c.Create(ctx, pod)).Should(Succeed())
-			By("Creating RateLimit resource")
-			rl := &ratelimitv1alpha1.RateLimit{
-				ObjectMeta: metav1.ObjectMeta{
-					GenerateName: "rate-limit-",
-					Namespace:    ns.Name,
-				},
-				Spec: ratelimitv1alpha1.RateLimitSpec{
-					EnableResponseHeaders: false,
-					SelectorLabels:        map[string]string{"app": "test"},
-					Local: ratelimitv1alpha1.LocalConfig{
-						DefaultBucket: ratelimitv1alpha1.BucketSpec{
-							MaxTokens:     20,
-							TokensPerFill: 20,
-							FillInterval:  &metav1.Duration{Duration: time.Minute * 5},
-						},
-						Buckets: []ratelimitv1alpha1.BucketConfig{
-							{
-								Bucket: ratelimitv1alpha1.BucketSpec{
-									MaxTokens:     20,
-									TokensPerFill: 20,
-									FillInterval:  &metav1.Duration{Duration: time.Minute * 5},
-								},
-							},
-						},
-					},
-				}}
-			err := c.Create(ctx, rl)
-			Expect(err).ShouldNot(Succeed())
-			Expect(err.Error()).To(ContainSubstring("At least one of 'path' or 'headers' must be set"))
+			Expect(c.Delete(ctx, ns)).Should(Succeed())
 		})
-		It("should pass if path and headers are defined", func() {
+
+		It("should reconcile RateLimitCR Status to Error state when APIGatewayCR is not in the cluster", func() {
 			namespace := ns.Name
+			err := c.Delete(ctx, apigateway)
+			Expect(err).ToNot(HaveOccurred())
+
 			By("Creating test pod")
 			pod := &corev1.Pod{
 				ObjectMeta: metav1.ObjectMeta{
@@ -397,39 +140,144 @@ var _ = Describe("Rate Limit Controller", func() {
 						},
 					}}}
 			Expect(c.Create(ctx, pod)).Should(Succeed())
+
 			By("Creating RateLimit resource")
 			rl := &ratelimitv1alpha1.RateLimit{
 				ObjectMeta: metav1.ObjectMeta{
 					GenerateName: "rate-limit-",
-					Namespace:    ns.Name,
+					Namespace:    namespace,
 				},
 				Spec: ratelimitv1alpha1.RateLimitSpec{
-					EnableResponseHeaders: false,
+					EnableResponseHeaders: true,
 					SelectorLabels:        map[string]string{"app": "test"},
 					Local: ratelimitv1alpha1.LocalConfig{
 						DefaultBucket: ratelimitv1alpha1.BucketSpec{
 							MaxTokens:     20,
 							TokensPerFill: 20,
 							FillInterval:  &metav1.Duration{Duration: time.Minute * 5},
-						},
-						Buckets: []ratelimitv1alpha1.BucketConfig{
-							{
-								Path: "/anything",
-								Headers: map[string]string{
-									"X-Foo": "bar",
-								},
-								Bucket: ratelimitv1alpha1.BucketSpec{
-									MaxTokens:     20,
-									TokensPerFill: 20,
-									FillInterval:  &metav1.Duration{Duration: time.Minute * 5},
-								},
-							},
 						},
 					},
 				}}
 			Expect(c.Create(ctx, rl)).Should(Succeed())
+			Expect(rl.Name).ShouldNot(BeEmpty())
+			Eventually(func() string {
+				Expect(c.Get(ctx, ctrlclient.ObjectKeyFromObject(rl), rl)).Should(Succeed())
+				return rl.Status.State
+			}).Should(Equal("Error"))
+
+			By("Checking that EnvoyFilter is not created")
+			ef := &networkingv1alpha3.EnvoyFilter{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      rl.Name,
+					Namespace: rl.Namespace,
+				},
+			}
+			Eventually(c.Get(ctx, ctrlclient.ObjectKeyFromObject(ef), ef)).Should(Not(Succeed()))
+
 		})
-		It("should pass if only path is defined", func() {
+	})
+
+	When("APIGatewayCR is not missing", func() {
+		AfterEach(func() {
+			Expect(c.Delete(ctx, apigateway)).Should(Succeed())
+
+			Expect(c.Delete(ctx, ns)).Should(Succeed())
+		})
+
+		It("should reconcile RateLimit Status to Error state when validation fails", func() {
+			By("Creating RateLimit resource without matching pods")
+			namespace := ns.Name
+			rl := &ratelimitv1alpha1.RateLimit{
+				ObjectMeta: metav1.ObjectMeta{
+					GenerateName: "rate-limit-",
+					Namespace:    namespace,
+				},
+				Spec: ratelimitv1alpha1.RateLimitSpec{
+					EnableResponseHeaders: true,
+					SelectorLabels:        map[string]string{"app": "test"},
+					Local: ratelimitv1alpha1.LocalConfig{
+						DefaultBucket: ratelimitv1alpha1.BucketSpec{
+							MaxTokens:     20,
+							TokensPerFill: 20,
+							FillInterval:  &metav1.Duration{Duration: time.Minute * 5},
+						},
+					},
+				}}
+			Expect(c.Create(ctx, rl)).Should(Succeed())
+			Expect(rl.Name).ShouldNot(BeEmpty())
+			Eventually(func() string {
+				Expect(c.Get(ctx, ctrlclient.ObjectKeyFromObject(rl), rl)).Should(Succeed())
+				return rl.Status.State
+			}).Should(Equal("Error"))
+		})
+		It("should reconcile RateLimit Status to Ready state when resource is created", func() {
+			namespace := ns.Name
+			By("Creating test pod")
+			pod := &corev1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-pod",
+					Namespace: namespace,
+					Annotations: map[string]string{
+						"sidecar.istio.io/status": "",
+					},
+					Labels: map[string]string{
+						"app": "test",
+					},
+				},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:  "test",
+							Image: "busybox",
+						},
+					}}}
+			Expect(c.Create(ctx, pod)).Should(Succeed())
+
+			By("Creating RateLimit resource")
+			rl := &ratelimitv1alpha1.RateLimit{
+				ObjectMeta: metav1.ObjectMeta{
+					GenerateName: "rate-limit-",
+					Namespace:    namespace,
+				},
+				Spec: ratelimitv1alpha1.RateLimitSpec{
+					EnableResponseHeaders: true,
+					SelectorLabels:        map[string]string{"app": "test"},
+					Local: ratelimitv1alpha1.LocalConfig{
+						DefaultBucket: ratelimitv1alpha1.BucketSpec{
+							MaxTokens:     20,
+							TokensPerFill: 20,
+							FillInterval:  &metav1.Duration{Duration: time.Minute * 5},
+						},
+					},
+				}}
+			Expect(c.Create(ctx, rl)).Should(Succeed())
+			Expect(rl.Name).ShouldNot(BeEmpty())
+			Eventually(func() string {
+				Expect(c.Get(ctx, ctrlclient.ObjectKeyFromObject(rl), rl)).Should(Succeed())
+				return rl.Status.State
+			}).Should(Equal("Ready"))
+
+			By("Checking that EnvoyFilter got created")
+			ef := &networkingv1alpha3.EnvoyFilter{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      rl.Name,
+					Namespace: rl.Namespace,
+				},
+			}
+			Eventually(c.Get(ctx, ctrlclient.ObjectKeyFromObject(ef), ef)).Should(Succeed())
+			By("Checking the OwnerReference of EnvoyFilter")
+			expectedOwnerReference := metav1.OwnerReference{
+				Kind:               "RateLimit",
+				Name:               rl.Name,
+				UID:                rl.UID,
+				APIVersion:         "gateway.kyma-project.io/v1alpha1",
+				Controller:         ptr.To(true),
+				BlockOwnerDeletion: ptr.To(true),
+			}
+			Expect(ef.OwnerReferences).To(ContainElement(expectedOwnerReference))
+
+		})
+		It("should reconcile state to Ready when RateLimit is modified with new configuration", func() {
 			namespace := ns.Name
 			By("Creating test pod")
 			pod := &corev1.Pod{
@@ -466,19 +314,194 @@ var _ = Describe("Rate Limit Controller", func() {
 							TokensPerFill: 20,
 							FillInterval:  &metav1.Duration{Duration: time.Minute * 5},
 						},
-						Buckets: []ratelimitv1alpha1.BucketConfig{
-							{
-								Path: "/anything",
-								Bucket: ratelimitv1alpha1.BucketSpec{
-									MaxTokens:     20,
-									TokensPerFill: 20,
-									FillInterval:  &metav1.Duration{Duration: time.Minute * 5},
-								},
-							},
-						},
 					},
 				}}
 			Expect(c.Create(ctx, rl)).Should(Succeed())
+			Expect(rl.Name).ShouldNot(BeEmpty())
+			Eventually(func() string {
+				Expect(c.Get(ctx, ctrlclient.ObjectKeyFromObject(rl), rl)).Should(Succeed())
+				return rl.Status.State
+			}).Should(Equal("Ready"))
+			By("Checking that EnvoyFilter got created")
+			ef := &networkingv1alpha3.EnvoyFilter{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      rl.Name,
+					Namespace: rl.Namespace,
+				},
+			}
+			Eventually(c.Get(ctx, ctrlclient.ObjectKeyFromObject(ef), ef)).Should(Succeed())
+			observedGeneration := ef.Generation
+			By("Modifying RateLimit with 'enableResponseHeaders' set to true")
+			rl.Spec.EnableResponseHeaders = true
+			Expect(c.Update(ctx, rl)).Should(Succeed())
+			Eventually(func() string {
+				Expect(c.Get(ctx, ctrlclient.ObjectKeyFromObject(rl), rl)).Should(Succeed())
+				return rl.Status.State
+			}).Should(Equal("Ready"))
+			By("Checking that EnvoyFilter got updated")
+			Eventually(func() bool {
+				Expect(c.Get(ctx, ctrlclient.ObjectKeyFromObject(ef), ef)).Should(Succeed())
+				return ef.Generation > observedGeneration
+			}).Should(BeTrue())
+		})
+		Context("RateLimit CRD validation", func() {
+			It("should fail if path and headers are empty", func() {
+				namespace := ns.Name
+				By("Creating test pod")
+				pod := &corev1.Pod{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-pod",
+						Namespace: namespace,
+						Annotations: map[string]string{
+							"sidecar.istio.io/status": "",
+						},
+						Labels: map[string]string{
+							"app": "test",
+						},
+					},
+					Spec: corev1.PodSpec{
+						Containers: []corev1.Container{
+							{
+								Name:  "test",
+								Image: "busybox",
+							},
+						}}}
+				Expect(c.Create(ctx, pod)).Should(Succeed())
+				By("Creating RateLimit resource")
+				rl := &ratelimitv1alpha1.RateLimit{
+					ObjectMeta: metav1.ObjectMeta{
+						GenerateName: "rate-limit-",
+						Namespace:    ns.Name,
+					},
+					Spec: ratelimitv1alpha1.RateLimitSpec{
+						EnableResponseHeaders: false,
+						SelectorLabels:        map[string]string{"app": "test"},
+						Local: ratelimitv1alpha1.LocalConfig{
+							DefaultBucket: ratelimitv1alpha1.BucketSpec{
+								MaxTokens:     20,
+								TokensPerFill: 20,
+								FillInterval:  &metav1.Duration{Duration: time.Minute * 5},
+							},
+							Buckets: []ratelimitv1alpha1.BucketConfig{
+								{
+									Bucket: ratelimitv1alpha1.BucketSpec{
+										MaxTokens:     20,
+										TokensPerFill: 20,
+										FillInterval:  &metav1.Duration{Duration: time.Minute * 5},
+									},
+								},
+							},
+						},
+					}}
+				err := c.Create(ctx, rl)
+				Expect(err).ShouldNot(Succeed())
+				Expect(err.Error()).To(ContainSubstring("At least one of 'path' or 'headers' must be set"))
+			})
+			It("should pass if path and headers are defined", func() {
+				namespace := ns.Name
+				By("Creating test pod")
+				pod := &corev1.Pod{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-pod",
+						Namespace: namespace,
+						Annotations: map[string]string{
+							"sidecar.istio.io/status": "",
+						},
+						Labels: map[string]string{
+							"app": "test",
+						},
+					},
+					Spec: corev1.PodSpec{
+						Containers: []corev1.Container{
+							{
+								Name:  "test",
+								Image: "busybox",
+							},
+						}}}
+				Expect(c.Create(ctx, pod)).Should(Succeed())
+				By("Creating RateLimit resource")
+				rl := &ratelimitv1alpha1.RateLimit{
+					ObjectMeta: metav1.ObjectMeta{
+						GenerateName: "rate-limit-",
+						Namespace:    ns.Name,
+					},
+					Spec: ratelimitv1alpha1.RateLimitSpec{
+						EnableResponseHeaders: false,
+						SelectorLabels:        map[string]string{"app": "test"},
+						Local: ratelimitv1alpha1.LocalConfig{
+							DefaultBucket: ratelimitv1alpha1.BucketSpec{
+								MaxTokens:     20,
+								TokensPerFill: 20,
+								FillInterval:  &metav1.Duration{Duration: time.Minute * 5},
+							},
+							Buckets: []ratelimitv1alpha1.BucketConfig{
+								{
+									Path: "/anything",
+									Headers: map[string]string{
+										"X-Foo": "bar",
+									},
+									Bucket: ratelimitv1alpha1.BucketSpec{
+										MaxTokens:     20,
+										TokensPerFill: 20,
+										FillInterval:  &metav1.Duration{Duration: time.Minute * 5},
+									},
+								},
+							},
+						},
+					}}
+				Expect(c.Create(ctx, rl)).Should(Succeed())
+			})
+			It("should pass if only path is defined", func() {
+				namespace := ns.Name
+				By("Creating test pod")
+				pod := &corev1.Pod{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-pod",
+						Namespace: namespace,
+						Annotations: map[string]string{
+							"sidecar.istio.io/status": "",
+						},
+						Labels: map[string]string{
+							"app": "test",
+						},
+					},
+					Spec: corev1.PodSpec{
+						Containers: []corev1.Container{
+							{
+								Name:  "test",
+								Image: "busybox",
+							},
+						}}}
+				Expect(c.Create(ctx, pod)).Should(Succeed())
+				By("Creating RateLimit resource")
+				rl := &ratelimitv1alpha1.RateLimit{
+					ObjectMeta: metav1.ObjectMeta{
+						GenerateName: "rate-limit-",
+						Namespace:    ns.Name,
+					},
+					Spec: ratelimitv1alpha1.RateLimitSpec{
+						EnableResponseHeaders: false,
+						SelectorLabels:        map[string]string{"app": "test"},
+						Local: ratelimitv1alpha1.LocalConfig{
+							DefaultBucket: ratelimitv1alpha1.BucketSpec{
+								MaxTokens:     20,
+								TokensPerFill: 20,
+								FillInterval:  &metav1.Duration{Duration: time.Minute * 5},
+							},
+							Buckets: []ratelimitv1alpha1.BucketConfig{
+								{
+									Path: "/anything",
+									Bucket: ratelimitv1alpha1.BucketSpec{
+										MaxTokens:     20,
+										TokensPerFill: 20,
+										FillInterval:  &metav1.Duration{Duration: time.Minute * 5},
+									},
+								},
+							},
+						},
+					}}
+				Expect(c.Create(ctx, rl)).Should(Succeed())
+			})
 		})
 	})
 })

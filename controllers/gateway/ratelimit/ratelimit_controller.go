@@ -79,9 +79,9 @@ func (r *RateLimitReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		l.Info("Unable to list APIGateway CRs")
 		return ctrl.Result{}, err
 	}
-	// todo: status ready
+
 	if len(existingAPIGateways.Items) < 1 {
-		rl.Status.Error(fmt.Errorf("failed to create RateLimit CR because of lacking APIGateway CR in the cluster"))
+		rl.Status.Error(fmt.Errorf("failed to reconcile RateLimit CR because of missing APIGateway CR in the cluster"))
 		if err := r.Status().Update(ctx, &rl); err != nil {
 			return ctrl.Result{}, err
 		}
