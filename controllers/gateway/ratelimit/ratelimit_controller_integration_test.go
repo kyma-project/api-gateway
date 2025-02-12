@@ -163,7 +163,7 @@ var _ = Describe("Rate Limit Controller", func() {
 			Eventually(func() string {
 				Expect(c.Get(ctx, ctrlclient.ObjectKeyFromObject(rl), rl)).Should(Succeed())
 				return rl.Status.State
-			}).Should(Equal("Error"))
+			}).Should(Equal("Warning"))
 
 			By("Checking that EnvoyFilter is not created")
 			ef := &networkingv1alpha3.EnvoyFilter{

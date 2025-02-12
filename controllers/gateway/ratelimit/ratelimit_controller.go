@@ -81,7 +81,7 @@ func (r *RateLimitReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	}
 
 	if len(existingAPIGateways.Items) < 1 {
-		rl.Status.Error(fmt.Errorf("failed to reconcile RateLimit CR because of missing APIGateway CR in the cluster"))
+		rl.Status.Warning(fmt.Errorf("failed to reconcile RateLimit CR because of missing APIGateway CR in the cluster"))
 		if err := r.Status().Update(ctx, &rl); err != nil {
 			return ctrl.Result{}, err
 		}
@@ -89,9 +89,9 @@ func (r *RateLimitReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return ctrl.Result{}, err
 	}
 
-	latestCr := getLatestAPIGatewayCR(existingAPIGateways)
+	latestCr := operatorv1alpha1.GetOldestAPIGatewayCR(existingAPIGateways)
 	if latestCr.Status.State != operatorv1alpha1.Ready {
-		rl.Status.Error(fmt.Errorf("failed to create RateLimit CR because APIGateway CR is in %s state", latestCr.Status.State))
+		rl.Status.Warning(fmt.Errorf("failed to create RateLimit CR because APIGateway CR is in %s state", latestCr.Status.State))
 		if err := r.Status().Update(ctx, &rl); err != nil {
 			return ctrl.Result{}, err
 		}
@@ -203,16 +203,4 @@ func NewRateLimitReconciler(mgr manager.Manager) *RateLimitReconciler {
 		Scheme:          mgr.GetScheme(),
 		ReconcilePeriod: defaultReconciliationPeriod,
 	}
-}
-
-func getLatestAPIGatewayCR(apigatewayCRs *operatorv1alpha1.APIGatewayList) *operatorv1alpha1.APIGateway {
-	oldest := apigatewayCRs.Items[0]
-	for _, item := range apigatewayCRs.Items {
-		timestamp := &item.CreationTimestamp
-		if !(oldest.CreationTimestamp.Before(timestamp)) {
-			oldest = item
-		}
-	}
-
-	return &oldest
 }
