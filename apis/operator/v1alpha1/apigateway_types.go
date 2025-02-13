@@ -85,3 +85,15 @@ func (a *APIGateway) IsInDeletion() bool {
 func (a *APIGateway) HasFinalizer() bool {
 	return len(a.Finalizers) > 0
 }
+
+func GetOldestAPIGatewayCR(apigatewayCRs *APIGatewayList) *APIGateway {
+	oldest := apigatewayCRs.Items[0]
+	for _, item := range apigatewayCRs.Items {
+		timestamp := &item.CreationTimestamp
+		if !(oldest.CreationTimestamp.Before(timestamp)) {
+			oldest = item
+		}
+	}
+
+	return &oldest
+}
