@@ -103,7 +103,8 @@ func (r *APIGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	}
 
 	if len(existingAPIGateways.Items) > 1 {
-		oldestCr := r.getOldestCR(existingAPIGateways)
+		oldestCr := operatorv1alpha1.GetOldestAPIGatewayCR(existingAPIGateways)
+
 		if apiGatewayCR.GetUID() != oldestCr.GetUID() {
 			err := fmt.Errorf("stopped APIGateway CR reconciliation: only APIGateway CR %s reconciles the module", oldestCr.GetName())
 			return r.terminateReconciliation(ctx, apiGatewayCR, controllers.WarningStatus(err, err.Error(), conditions.OlderCRExists.Condition()))
@@ -352,16 +353,4 @@ func removeFinalizer(ctx context.Context, apiClient client.Client, apiGatewayCR 
 		ctrl.Log.Info("Successfully removed API-Gateway CR finalizer")
 		return nil
 	})
-}
-
-func (r *APIGatewayReconciler) getOldestCR(apigatewayCRs *operatorv1alpha1.APIGatewayList) *operatorv1alpha1.APIGateway {
-	oldest := apigatewayCRs.Items[0]
-	for _, item := range apigatewayCRs.Items {
-		timestamp := &item.CreationTimestamp
-		if !(oldest.CreationTimestamp.Before(timestamp)) {
-			oldest = item
-		}
-	}
-
-	return &oldest
 }
