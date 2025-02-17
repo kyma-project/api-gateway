@@ -32,7 +32,7 @@ spec:
         sidecar.istio.io/inject: "true"
     spec:
       containers:
-      - image: eu.gcr.io/kyma-project/external/kennethreitz/httpbin:20201004
+      - image: europe-docker.pkg.dev/kyma-project/prod/external/kennethreitz/httpbin
         command:
           - /bin/bash
           - -c
