@@ -16,7 +16,7 @@ kubectl get crd apirules.gateway.kyma-project.io -o yaml
 
 ## Specification of APIRule v2 Custom Resource
 
-This table lists all parameters of APIRule `v2alpha1` CRD together with their descriptions:
+This table lists all parameters of APIRule `v2` CRD together with their descriptions:
 
 **Spec:**
 
