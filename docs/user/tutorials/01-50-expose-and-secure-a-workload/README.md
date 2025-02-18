@@ -25,4 +25,5 @@ Expose and secure a workload with APIRule in version `v1beta1`:
 - [Expose and Secure a Workload with Istio](./v1beta1-deprecated/01-53-expose-and-secure-workload-istio.md)
 
 [Expose and Secure a Workload with a Certificate](./01-54-expose-and-secure-workload-with-certificate.md)
+
 [Use the XFF Header to Configure IP-Based Access to a Workload](./01-55-ip-based-access-with-xff.md)
