@@ -17,7 +17,7 @@
       * [Expose Multiple Workloads](/api-gateway/user/tutorials/01-40-expose-workload/v2alpha1/01-41-expose-multiple-workloads.md)
       * [Expose Workloads in Multiple Namespaces](/api-gateway/user/tutorials/01-40-expose-workload/v2alpha1/01-42-expose-workloads-multiple-namespaces.md)
       * [Use a Short Host](/api-gateway/user/tutorials/01-40-expose-workload/v2alpha1/01-43-expose-workload-short-host-name.md)
-    * Use APIRule v1beta1
+    * [Use APIRule v1beta1](/api-gateway/user/tutorials/01-40-expose-workload/README.md)
       * [Expose a Workload](/api-gateway/user/tutorials/01-40-expose-workload/v1beta1-deprecated/01-40-expose-workload-apigateway.md)
       * [Expose Multiple Workloads](/api-gateway/user/tutorials/01-40-expose-workload/v1beta1-deprecated/01-41-expose-multiple-workloads.md)
       * [Expose Workloads in Multiple Namespaces](/api-gateway/user/tutorials/01-40-expose-workload/v1beta1-deprecated/01-42-expose-workloads-multiple-namespaces.md)
