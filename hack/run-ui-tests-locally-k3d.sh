@@ -91,4 +91,4 @@ build_and_run_busola
 echo "Second process finished"
 
 cd tests/ui/tests
-npm ci && npm run "test:local"
+npm ci && npm run "test"
