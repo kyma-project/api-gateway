@@ -3,7 +3,7 @@
 This tutorial shows how to expose an unsecured instance of the HTTPBin Service and call its endpoints.
 
 > [!WARNING]
->  Exposing a workload to the outside world is a potential security vulnerability, so tread carefully. In a production environment, always secure the workload you expose with [OAuth2](../01-50-expose-and-secure-a-workload/01-50-expose-and-secure-workload-oauth2.md) or [JWT](../01-50-expose-and-secure-a-workload/01-52-expose-and-secure-workload-jwt.md).
+>  Exposing a workload to the outside world is a potential security vulnerability, so be careful. In a production environment, always secure the workload you expose with [OAuth2](../01-50-expose-and-secure-a-workload/01-50-expose-and-secure-workload-oauth2.md) or [JWT](../01-50-expose-and-secure-a-workload/01-52-expose-and-secure-workload-jwt.md).
 
 ## Prerequisites
 
@@ -17,7 +17,7 @@ This tutorial shows how to expose an unsecured instance of the HTTPBin Service a
 <!-- tabs:start -->
 #### **Kyma Dashboard**
 
-1. Go to **Discovery and Network > API Rules** and select **Create**.
+1. Go to **Discovery and Network > API Rules v1beta1** and select **Create**.
 2. Provide the following configuration details.
   - **Name**: `httpbin`
   - In the `Service` section, select:

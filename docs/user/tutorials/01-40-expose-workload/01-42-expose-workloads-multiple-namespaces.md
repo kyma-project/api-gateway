@@ -1,19 +1,16 @@
 # Expose Workloads in Multiple Namespaces With a Single APIRule Definition
 
-This tutorial shows how to expose Service endpoints in multiple namespaces using APIGateway Controller.
+Learn how to expose Service endpoints in multiple namespaces.
 
 > [!WARNING]
->  Exposing a workload to the outside world causes a potential security vulnerability, so be careful. In a production environment, secure the workload you expose with [OAuth2](../01-50-expose-and-secure-a-workload/01-50-expose-and-secure-workload-oauth2.md) or [JWT](../01-50-expose-and-secure-a-workload/01-52-expose-and-secure-workload-jwt.md).
+>  Exposing a workload to the outside world causes a potential security vulnerability, so be careful. In a production environment, secure the workload you expose with [JWT](../../01-50-expose-and-secure-a-workload/v2alpha1/01-52-expose-and-secure-workload-jwt.md).
 
 
 ##  Prerequisites
 
-* Create three namespaces. Deploy two instances of the HTTPBin Service, each in a separate namespace. To learn how to do it, follow the [Create a Workload](../01-00-create-workload.md) tutorial. Reserve the third namespace for creating an APIRule.
-
-  > [!NOTE]
-  > Remember to enable automatic Istio sidecar proxy injection in each namespace. See [Enable Sidecar Injection for a Namespace](https://kyma-project.io/#/istio/user/tutorials/01-40-enable-sidecar-injection?id=enable-sidecar-injection-for-a-namespace).
-
-* [Set Up Your Custom Domain](../01-10-setup-custom-domain-for-workload.md). Alternatively, you can use the default domain of your Kyma cluster and the default Gateway `kyma-system/kyma-gateway`.
+* You have deployed two workloads in different namespaces.
+* To use CLI instructions, you must install [kubectl](https://kubernetes.io/docs/tasks/tools/#kubectl) and [curl](https://curl.se/). Alternatively, you can use Kyma dashboard.
+* You have [set up your custom domain](../../01-10-setup-custom-domain-for-workload.md). Alternatively, you can use the default domain of your Kyma cluster and the default Gateway `kyma-system/kyma-gateway`.
   
   > [!NOTE]
   > Because the default Kyma domain is a wildcard domain, which uses a simple TLS Gateway, it is recommended that you set up your custom domain for use in a production environment.
@@ -23,122 +20,89 @@ This tutorial shows how to expose Service endpoints in multiple namespaces using
 
 ## Steps
 
-### Expose Your Workloads
-
 <!-- tabs:start -->
 #### **Kyma Dashboard**
 
-1. Go to **Discovery and Network > APIRules** and select **Create**.
-2. Switch to the `YAML` tab and paste the following configuration into the editor:
-    ```yaml
-    apiVersion: gateway.kyma-project.io/v1beta1
+1. Create a namespace with the Istio sidecar proxy injection enabled.
+2. In the created namespace, go to **Discovery and Network > API Rules** and choose **Create**.
+3. Switch to the `YAML` section.
+4. Paste the following APIRule custom resource (CR) and replace the placeholders:
+    ```YAML
+    apiVersion: gateway.kyma-project.io/v2
     kind: APIRule
     metadata:
-      name: httpbin-services
-      namespace: {NAMESPACE_APIRULE}
+      name: {APIRULE_NAME}
+      namespace: {APIRULE_NAMESPACE}
     spec:
-      host: httpbin-services.{DOMAIN_TO_EXPOSE_WORKLOADS}
-      gateway: {GATEWAY}
+      hosts:
+        - {SUBDOMAIN}.{DOMAIN_NAME}
+      gateway: {GATEWAY_NAMESPACE}/{GATEWAY_NAME}
       rules:
         - path: /headers
           methods: ["GET"]
           service:
-            name: {FIRST_SERVICE}
-            namespace: {NAMESPACE_FIRST_SERVICE}
-            port: 8000
-          accessStrategies:
-            - handler: no_auth
+            name: {FIRST_SERVICE_NAME}
+            namespace: {FIRST_SERVICE_NAMESPACE}
+            port: {FIRST_SERVICE_PORT}
+          noAuth: true
         - path: /get
           methods: ["GET"]
           service:
-            name: {SECOND_SERVICE}
-            namespace: {NAMESPACE_SECOND_SERVICE}
-            port: 8000
-          accessStrategies:
-            - handler: no_auth
+            name: {SECOND_SERVICE_NAME}
+            namespace: {SECOND_SERVICE_NAMESPACE}
+            port: {SECOND_SERVICE_PORT}
+          noAuth: true
     ```
-3. Replace the placeholders:
-    - `{NAMESPACE_APIRULE}` is the namespace in which you create the APIRule.
-    - `{DOMAIN_TO_EXPOSE_WORKLOADS}` is the name of your Kyma or custom domain.
-    - `{GATEWAY}` is `{NAMESPACE_APIRULE}/httpbin-gateway` if you're using a custom domain or `kyma-system/kyma-gateway` if you're using a Kyma domain.
-    - `{FIRST_SERVICE}` and `{NAMESPACE_FIRST_SERVICE}` are the name and namespace of the first Service you deployed.
-    - `{SECOND_SERVICE}` and `{NAMESPACE_SECOND_SERVICE}` are the name and namespace of the second Service you deployed.
-4. To create the APIRule, select **Create**.
+5. Choose **Create**.
 
 #### **kubectl**
 
-1. Export the namespaces' and Services' names as environment variables:
+<!-- tabs:end -->
 
+1. Create a separate namespace for the APIRule CR with enabled Istio sidecar proxy injection.
     ```bash
-    export FIRST_SERVICE={SERVICE_NAME}
-    export SECOND_SERVICE={SERVICE_NAME}
-    export NAMESPACE_FIRST_SERVICE={NAMESPACE_NAME}
-    export NAMESPACE_SECOND_SERVICE={NAMESPACE_NAME}
-    export NAMESPACE_APIRULE={NAMESPACE_NAME}
+    export NAMESPACE={NAMESPACE_NAME}
+    kubectl create ns $NAMESPACE
+    kubectl label namespace $NAMESPACE istio-injection=enabled --overwrite
     ```
-  
-2. Depending on whether you use your custom domain or a Kyma domain, export the necessary values as environment variables:
-  
-    <!-- tabs:start -->
-    #### **Custom Domain**
-    
-    ```bash
-    export DOMAIN_TO_EXPOSE_WORKLOADS={DOMAIN_NAME}
-    export GATEWAY=$NAMESPACE/httpbin-gateway
-    ```
-    #### **Kyma Domain**
-
-    ```bash
-    export DOMAIN_TO_EXPOSE_WORKLOADS={KYMA_DOMAIN_NAME}
-    export GATEWAY=kyma-system/kyma-gateway
-    ```
-    <!-- tabs:end -->
-
-3. Expose the HTTPBin Services in their respective namespaces by creating an APIRule custom resource (CR) in its own namespace. Run:
+2. Expose the Services in their respective namespaces by creating an APIRule custom resource (CR) in its own namespace. Run:
 
     ```bash
     cat <<EOF | kubectl apply -f -
-    apiVersion: gateway.kyma-project.io/v1beta1
+    apiVersion: gateway.kyma-project.io/v2
     kind: APIRule
     metadata:
-      name: httpbin-services
-      namespace: $NAMESPACE_APIRULE
+      name: {APIRULE_NAME}
+      namespace: $NAMESPACE
     spec:
-      host: httpbin-services.$DOMAIN_TO_EXPOSE_WORKLOADS
-      gateway: $GATEWAY
+      hosts:
+        - {SUBDOMAIN}.{DOMAIN_NAME}
+      gateway: {GATEWAY_NAMESPACE}/{GATEWAY_NAME}
       rules:
         - path: /headers
           methods: ["GET"]
           service:
-            name: $FIRST_SERVICE
-            namespace: $NAMESPACE_FIRST_SERVICE
-            port: 8000
-          accessStrategies:
-            - handler: no_auth
+            name: {FIRST_SERVICE_NAME}
+            namespace: {FIRST_SERVICE_NAMESPACE}
+            port: {FIRST_SERVICE_PORT}
+          noAuth: true
         - path: /get
           methods: ["GET"]
           service:
-            name: $SECOND_SERVICE
-            namespace: $NAMESPACE_SECOND_SERVICE
-            port: 8000
-          accessStrategies:
-            - handler: no_auth
+            name: {SECOND_SERVICE_NAME}
+            namespace: {SECOND_SERVICE_NAMESPACE}
+            port: {SECOND_SERVICE_PORT}
+          noAuth: true
     EOF
     ```
 
-    > [!NOTE]
-    > If you are using k3d, add `httpbin.kyma.local` to the entry with k3d IP in your system's `/etc/hosts` file.
-
-<!-- tabs:end -->
-
 ### Access Your Workloads
-To access your HTTPBin Services, use [curl](https://curl.se).
 
-To call the endpoints, send `GET` requests to the HTTPBin Services:
+To call the endpoints, send `GET` requests to the exposed Services:
 
   ```bash
-  curl -ik -X GET https://httpbin-services.$DOMAIN_TO_EXPOSE_WORKLOADS/headers
+  curl -ik -X GET https://{SUBDOMAIN}.{DOMAIN_NAME}/headers
 
-  curl -ik -X GET https://httpbin-services.$DOMAIN_TO_EXPOSE_WORKLOADS/get
+  curl -ik -X GET https://{SUBDOMAIN}.{DOMAIN_NAME}/get
   ```
 If successful, the calls return the `200 OK` response code.

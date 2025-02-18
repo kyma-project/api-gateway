@@ -111,14 +111,21 @@ The procedure of setting up a working mTLS Gateway is described in the following
 
 ## Expose Workloads Behind Your mTLS Gateway
 
-To expose a custom workload, create an APIRule. You can either use version `v1beta1` or `v2alpha1`.
+To expose a custom workload, create an APIRule. You can either use version `v2`, `v2alpha1`, or `v1beta1`.
 
-### Use APIRule `v1beta1`
+> [!WARNING]
+> APIRule CR in version `v1beta1` has been deprecated. Version `v2alpha1`, introduced for testing purposes, will become deprecated on March 31, 2025 and removed on June 16, 2025. The stable APIRule `v2` is planned to be introduced on March 31, 2025, in the regular channel.
+> 
+> To migrate your APIRule CRs to version `v2`, follow the prcedure described in the blog posts [APIRule migration - noAuth and jwt handlers](https://community.sap.com/t5/technology-blogs-by-sap/sap-btp-kyma-runtime-apirule-migration-noauth-and-jwt-handlers/ba-p/13882833) and [APIRule migration - Ory Oathkeeper based OAuth2 handlers](https://community.sap.com/t5/technology-blogs-by-sap/sap-btp-kyma-runtime-apirule-migration-ory-oathkeeper-based-oauth2-handlers/ba-p/13896184). Since the APIRule CRD `v2alpha1` is identical to `v2`, the migration procedure for both versions is the same. 
+> 
+> For more information on the timelines, see [APIRule migration - timelines](https://community.sap.com/t5/technology-blogs-by-sap/sap-btp-kyma-runtime-apirule-migration-timelines/ba-p/13995712).
+
+### Use APIRule `v2`
 
 <!-- tabs:start -->
 #### **Kyma Dashboard**
 1. Go to the `default` namespace.
-2. Go to **Discovery and Network > API Rules** and select **Create**.
+2. Go to **Discovery and Network > API Rules** and choose **Create**.
 3. Add the name `apirule-mtls`.
 4. Add a Gateway with the following values:
    - **Namespace**: `default`
@@ -126,7 +133,7 @@ To expose a custom workload, create an APIRule. You can either use version `v1be
 5. Add the host `{SUBDOMAIN}.{DOMAIN_TO_EXPOSE_WORKLOADS}`.
 6. Add a rule with the following values:
    - **Path**: `/.*`
-   - **Handler**: `no_auth`
+   - **Handler**: `noAuth`
    - **Methods**: `GET`
    - Select the name and port of your Service.
 
@@ -135,7 +142,7 @@ Run the following command:
 
 ```bash
 cat <<EOF | kubectl apply -f -
-apiVersion: gateway.kyma-project.io/v1beta1
+apiVersion: gateway.kyma-project.io/v2
 kind: APIRule
 metadata:
   labels:
@@ -143,17 +150,16 @@ metadata:
   name: apirule-mtls
   namespace: default
 spec:
+  hosts:
+    - {SUBDOMAIN}.{DOMAIN_NAME}
   gateway: default/kyma-mtls-gateway
-  host: {SUBDOMAIN}.{DOMAIN_NAME}
   rules:
-  - accessStrategies:
-    - handler: no_auth
-    methods:
-    - GET
-    path: /.*
+    - path: /.*
+      methods: ["GET"]
+      noAuth: true
   service:
-    name: {SERVICE_NAME}
-    port: {SERVICE_PORT}
+  name: {SERVICE_NAME}
+  port: {SERVICE_PORT}
 EOF
 ```
 <!-- tabs:end -->
@@ -198,6 +204,51 @@ spec:
   service:
   name: {SERVICE_NAME}
   port: {SERVICE_PORT}
+EOF
+```
+<!-- tabs:end -->
+
+### Use APIRule `v1beta1`
+
+<!-- tabs:start -->
+#### **Kyma Dashboard**
+1. Go to the `default` namespace.
+2. Go to **Discovery and Network > API Rules** and select **Create**.
+3. Add the name `apirule-mtls`.
+4. Add a Gateway with the following values:
+   - **Namespace**: `default`
+   - **Gateway**: `kyma-mtls-gateway`
+5. Add the host `{SUBDOMAIN}.{DOMAIN_TO_EXPOSE_WORKLOADS}`.
+6. Add a rule with the following values:
+   - **Path**: `/.*`
+   - **Handler**: `no_auth`
+   - **Methods**: `GET`
+   - Select the name and port of your Service.
+
+#### **kubectl**
+Run the following command:
+
+```bash
+cat <<EOF | kubectl apply -f -
+apiVersion: gateway.kyma-project.io/v1beta1
+kind: APIRule
+metadata:
+  labels:
+    app.kubernetes.io/name: apirule-mtls
+  name: apirule-mtls
+  namespace: default
+spec:
+  gateway: default/kyma-mtls-gateway
+  host: {SUBDOMAIN}.{DOMAIN_NAME}
+  rules:
+  - accessStrategies:
+    - handler: no_auth
+    methods:
+    - GET
+    path: /.*
+  service:
+    name: {SERVICE_NAME}
+    port: {SERVICE_PORT}
 EOF
 ```
 <!-- tabs:end -->

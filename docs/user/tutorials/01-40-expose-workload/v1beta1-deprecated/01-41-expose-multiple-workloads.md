@@ -16,7 +16,7 @@ Follow the instructions to expose the instances of the HTTPBin Service on differ
 <!-- tabs:start -->
 #### **Kyma Dashboard**
 
-1. Go to **Discovery and Network > APIRules** and select **Create**. 
+1. Go to **Discovery and Network > API Rules v1beta1** and select **Create**. 
 2. Provide the following configuration details:
     - **Name**: `multiple-services`
     - To fill in the `Gateway` section, use these values:

@@ -20,7 +20,7 @@ Create three namespaces. Deploy two instances of the HTTPBin Service, each in a 
 <!-- tabs:start -->
 #### **Kyma Dashboard**
 
-1. Go to **Discovery and Network > APIRules** and select **Create**.
+1. Go to **Discovery and Network > API Rules v1beta1** and select **Create**.
 2. Switch to the `YAML` tab and paste the following configuration into the editor:
     ```yaml
     apiVersion: gateway.kyma-project.io/v1beta1

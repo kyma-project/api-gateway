@@ -15,7 +15,7 @@ This tutorial shows how to expose and secure Services using APIGateway Controlle
 <!-- tabs:start -->
 #### **Kyma Dashboard**
 
-1. Go to **Discovery and Network > API Rules** and select **Create**. 
+1. Go to **Discovery and Network > API Rules v1beta1** and select **Create**. 
 2. Provide the following configuration details:
     - **Name**: `httpbin`
     - **Service Name**: `httpbin`
