@@ -1,6 +1,6 @@
 # Get a JSON Web Token (JWT)
 
-Learn how to get a JSON Web Token (JWT), which you can use to access secured endpoints created in the [Expose and secure a workload with Istio](./01-53-expose-and-secure-workload-istio.md) and [Expose and secure a workload with JWT](./01-52-expose-and-secure-workload-jwt.md) tutorials.
+Learn how to get a JSON Web Token (JWT), which you can use to access secured endpoints.
 
 ## Prerequisites
 

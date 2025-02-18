@@ -30,7 +30,7 @@ Make sure that you are using an access token with proper scopes, and it is activ
       }
       ```
 
-3. Generate a [new JWT](../../tutorials/01-50-expose-and-secure-a-workload/01-51-get-jwt.md) if needed.
+3. Generate a [new JWT](../../../tutorials/01-50-expose-and-secure-a-workload/01-51-get-jwt.md) if needed.
 
 ### Opaque Access Token
 
@@ -59,4 +59,4 @@ Make sure that you are using an access token with proper scopes, and it is activ
       curl -X POST "$INTROSPECTION_URL" -H "Authorization: Basic $ENCODED_CREDENTIALS" -F "token={ACCESS_TOKEN}"
       ```
 
-5. Generate a [new access token](../../tutorials/01-50-expose-and-secure-a-workload/01-50-expose-and-secure-workload-oauth2.md) if needed.
+5. Generate a [new access token](../../../tutorials/01-50-expose-and-secure-a-workload/v1beta1-deprecated/01-50-expose-and-secure-workload-oauth2.md) if needed.

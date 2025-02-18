@@ -4,9 +4,9 @@ This tutorial shows how to expose and secure Services using APIGateway Controlle
 
 ## Prerequisites
 
-* [Deploy a sample HTTPBin Service](../01-00-create-workload.md).
-* [Obtain a JSON Web Token (JWT)](./01-51-get-jwt.md).
-* [Set up your custom domain](../01-10-setup-custom-domain-for-workload.md) or use a Kyma domain instead.
+* [Deploy a sample HTTPBin Service](../../01-00-create-workload.md).
+* [Obtain a JSON Web Token (JWT)](../01-51-get-jwt.md).
+* [Set up your custom domain](../../01-10-setup-custom-domain-for-workload.md) or use a Kyma domain instead.
 
 ## Steps
 

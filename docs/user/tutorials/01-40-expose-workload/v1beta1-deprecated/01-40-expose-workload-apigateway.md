@@ -3,12 +3,12 @@
 This tutorial shows how to expose an unsecured instance of the HTTPBin Service and call its endpoints.
 
 > [!WARNING]
->  Exposing a workload to the outside world is a potential security vulnerability, so be careful. In a production environment, always secure the workload you expose with [OAuth2](../01-50-expose-and-secure-a-workload/01-50-expose-and-secure-workload-oauth2.md) or [JWT](../01-50-expose-and-secure-a-workload/01-52-expose-and-secure-workload-jwt.md).
+>  Exposing a workload to the outside world is a potential security vulnerability, so be careful. In a production environment, always secure the workload you expose with [OAuth2](../../01-50-expose-and-secure-a-workload/v1beta1-deprecated/01-50-expose-and-secure-workload-oauth2.md) or [JWT](../../01-50-expose-and-secure-a-workload/v1beta1-deprecated/01-50-expose-and-secure-workload-oauth2.md).
 
 ## Prerequisites
 
-* [Deploy a sample HTTPBin Service](../01-00-create-workload.md).
-* [Set up your custom domain](../01-10-setup-custom-domain-for-workload.md) or use a Kyma domain instead.
+* [Deploy a sample HTTPBin Service](../../01-00-create-workload.md).
+* [Set up your custom domain](../../01-10-setup-custom-domain-for-workload.md) or use a Kyma domain instead.
 
 ## Steps
 

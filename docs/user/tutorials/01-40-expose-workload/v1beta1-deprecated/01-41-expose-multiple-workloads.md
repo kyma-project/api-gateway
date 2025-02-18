@@ -2,12 +2,12 @@
 
 This tutorial shows how to expose multiple workloads on different paths by defining a Service at the root level and by defining Services on each path separately.
 
-> [!WARNING] Exposing a workload to the outside world is always a potential security vulnerability, so tread carefully. In a production environment, remember to secure the workload you expose with [OAuth2](../01-50-expose-and-secure-a-workload/01-50-expose-and-secure-workload-oauth2.md) or [JWT](../01-50-expose-and-secure-a-workload/01-52-expose-and-secure-workload-jwt.md).
+> [!WARNING] Exposing a workload to the outside world is always a potential security vulnerability, so tread carefully. In a production environment, remember to secure the workload you expose with [OAuth2](../../01-50-expose-and-secure-a-workload/v1beta1-deprecated/01-50-expose-and-secure-workload-oauth2.md) or [JWT](../../01-50-expose-and-secure-a-workload/v1beta1-deprecated/01-52-expose-and-secure-workload-jwt.md).
 
 ## Prerequisites
 
-* [Deploy two instances of a sample HTTPBin Service](../01-00-create-workload.md) in one namespace. 
-* [Set up your custom domain](../01-10-setup-custom-domain-for-workload.md) or use a Kyma domain instead. 
+* [Deploy two instances of a sample HTTPBin Service](../../01-00-create-workload.md) in one namespace. 
+* [Set up your custom domain](../../01-10-setup-custom-domain-for-workload.md) or use a Kyma domain instead. 
 
 ## Define Multiple Services on Different Paths
 

@@ -114,7 +114,7 @@ The procedure of setting up a working mTLS Gateway is described in the following
 To expose a custom workload, create an APIRule. You can either use version `v2`, `v2alpha1`, or `v1beta1`.
 
 > [!WARNING]
-> APIRule CR in version `v1beta1` has been deprecated. Version `v2alpha1`, introduced for testing purposes, will become deprecated on March 31, 2025 and removed on June 16, 2025. The stable APIRule `v2` is planned to be introduced on March 31, 2025, in the regular channel.
+> APIRule CR in version `v1beta1` has been deprecated and will be removed on May 12, 2025. Version `v2alpha1`, introduced for testing purposes, will become deprecated on March 31, 2025 and removed on June 16, 2025. The stable APIRule `v2` is planned to be introduced on March 31, 2025, in the regular channel.
 > 
 > To migrate your APIRule CRs to version `v2`, follow the prcedure described in the blog posts [APIRule migration - noAuth and jwt handlers](https://community.sap.com/t5/technology-blogs-by-sap/sap-btp-kyma-runtime-apirule-migration-noauth-and-jwt-handlers/ba-p/13882833) and [APIRule migration - Ory Oathkeeper based OAuth2 handlers](https://community.sap.com/t5/technology-blogs-by-sap/sap-btp-kyma-runtime-apirule-migration-ory-oathkeeper-based-oauth2-handlers/ba-p/13896184). Since the APIRule CRD `v2alpha1` is identical to `v2`, the migration procedure for both versions is the same. 
 > 

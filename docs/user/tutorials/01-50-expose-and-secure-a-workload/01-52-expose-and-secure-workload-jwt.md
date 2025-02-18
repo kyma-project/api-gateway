@@ -5,7 +5,7 @@ This tutorial shows how to expose and secure Services using APIGateway Controlle
 ## Prerequisites
 
 * You have a deployed workload.
-* You have [set up your custom domain](../../01-10-setup-custom-domain-for-workload.md). Alternatively, you can use the default domain of your Kyma cluster and the default Gateway `kyma-system/kyma-gateway`.
+* You have [set up your custom domain](../01-10-setup-custom-domain-for-workload.md). Alternatively, you can use the default domain of your Kyma cluster and the default Gateway `kyma-system/kyma-gateway`.
   
   > [!NOTE]
   > Because the default Kyma domain is a wildcard domain, which uses a simple TLS Gateway, it is recommended that you set up your custom domain for use in a production environment.
@@ -13,7 +13,7 @@ This tutorial shows how to expose and secure Services using APIGateway Controlle
   > [!TIP]
   > To learn what the default domain of your Kyma cluster is, run `kubectl get gateway -n kyma-system kyma-gateway -o jsonpath='{.spec.servers[0].hosts}`.
 
-* You have a JSON Web Token. See [Obtain a JWT](../01-51-get-jwt.md).
+* You have a JSON Web Token. See [Obtain a JWT](../01-50-expose-and-secure-a-workload/01-51-get-jwt.md).
 * To use CLI instructions, you must install [kubectl](https://kubernetes.io/docs/tasks/tools/#kubectl) and [curl](https://curl.se/). Alternatively, you can use Kyma dashboard.
 
 

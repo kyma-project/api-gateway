@@ -4,8 +4,8 @@ This tutorial shows how to expose and secure Services using APIGateway Controlle
 
 ## Prerequisites
 
-* [Deploy a sample HTTPBin Service](../01-00-create-workload.md).
-* [Set Up Your Custom Domain](../01-10-setup-custom-domain-for-workload.md). Alternatively, you can use the default domain of your Kyma cluster and the default Gateway `kyma-system/kyma-gateway`.
+* [Deploy a sample HTTPBin Service](../../01-00-create-workload.md).
+* [Set Up Your Custom Domain](../../01-10-setup-custom-domain-for-workload.md). Alternatively, you can use the default domain of your Kyma cluster and the default Gateway `kyma-system/kyma-gateway`.
   
   > [!NOTE]
   > Because the default Kyma domain is a wildcard domain, which uses a simple TLS Gateway, it is recommended that you set up your custom domain for use in a production environment.
@@ -172,4 +172,4 @@ Follow the instructions to call the secured Service using the tokens issued for 
 
 If successful, the calls return the code `200 OK` responses. If you call the Service without a token, you get the code `401 Unauthorized` response. If you call the Service or its secured endpoint with a token with the wrong scope, you get the code `403 Forbidden` response.
 
-To learn more about the security options, read the document describing [authorization configuration](../../custom-resources/apirule/04-50-apirule-authorizations.md).
+To learn more about the security options, read the document describing [authorization configuration](../../../custom-resources/apirule/v1beta1-deprecated/04-50-apirule-authorizations.md).

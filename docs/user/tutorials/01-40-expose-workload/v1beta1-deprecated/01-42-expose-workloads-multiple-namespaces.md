@@ -3,12 +3,12 @@
 This tutorial shows how to expose Service endpoints in multiple namespaces using APIGateway Controller.
 
 > [!WARNING]
->  Exposing a workload to the outside world causes a potential security vulnerability, so tread carefully. In a production environment, secure the workload you expose with [OAuth2](../01-50-expose-and-secure-a-workload/01-50-expose-and-secure-workload-oauth2.md) or [JWT](../01-50-expose-and-secure-a-workload/01-52-expose-and-secure-workload-jwt.md).
+>  Exposing a workload to the outside world causes a potential security vulnerability, so tread carefully. In a production environment, secure the workload you expose with [OAuth2](../../) or [JWT](../../01-50-expose-and-secure-a-workload/v1beta1-deprecated/01-52-expose-and-secure-workload-jwt.md).
 
 
 ##  Prerequisites
 
-Create three namespaces. Deploy two instances of the HTTPBin Service, each in a separate namespace. To learn how to do it, follow the [Create a Workload](../01-00-create-workload.md) tutorial. Reserve the third namespace for creating an APIRule.
+Create three namespaces. Deploy two instances of the HTTPBin Service, each in a separate namespace. To learn how to do it, follow the [Create a Workload](../../01-00-create-workload.md) tutorial. Reserve the third namespace for creating an APIRule.
 
 > [!NOTE]
 > Remember to enable automatic Istio sidecar proxy injection in each namespace. See [Enable Sidecar Injection for a Namespace](https://kyma-project.io/#/istio/user/tutorials/01-40-enable-sidecar-injection?id=enable-sidecar-injection-for-a-namespace).
