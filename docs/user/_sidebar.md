@@ -46,6 +46,8 @@
     * [Kyma Gateway](/api-gateway/user/custom-resources/apigateway/04-10-kyma-gateway.md)
     * [Oathkeeper Dependency](/api-gateway/user/custom-resources/apigateway/04-20-oathkeeper.md)
   * [APIRule Custom Resource](/api-gateway/user/custom-resources/apirule/README.md)
+    * [v2](/api-gateway/user/custom-resources/apirule/04-10-apirule-custom-resource.md)
+      * [APIRule Access Strategies](/api-gateway/user/custom-resources/apirule/04-15-api-rule-access-strategies.md)
     * [v2alpha1](/api-gateway/user/custom-resources/apirule/v2alpha1/04-10-apirule-custom-resource.md)
       * [APIRule Access Strategies](/api-gateway/user/custom-resources/apirule/v2alpha1/04-15-api-rule-access-strategies.md)
     * [v1beta1](/api-gateway/user/custom-resources/apirule/04-10-apirule-custom-resource.md)
