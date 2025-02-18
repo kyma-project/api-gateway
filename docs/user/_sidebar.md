@@ -25,7 +25,7 @@
     * [Use APIRule v2](/api-gateway/user/tutorials/01-50-expose-and-secure-a-workload/README.md)
       * [Get JSON Web Tokens (JWT)](/api-gateway/user/tutorials/01-50-expose-and-secure-a-workload/01-51-get-jwt.md)
       * [Secure a Workload with JWT](/api-gateway/user/tutorials/01-50-expose-and-secure-a-workload/01-52-expose-and-secure-workload-jwt.md)
-      * [Secure a Workload with extAuth](/api-gateway/user/tutorials/01-50-expose-and-secure-a-workload/v2alpha1/01-53-expose-and-secure-workload-ext-auth.md)
+      * [Secure a Workload with extAuth](/api-gateway/user/tutorials/01-50-expose-and-secure-a-workload/01-53-expose-and-secure-workload-ext-auth.md)
     * [Use APIRule v2alpha1](/api-gateway/user/tutorials/01-50-expose-and-secure-a-workload/README.md)
       * [Get JSON Web Tokens (JWT)](/api-gateway/user/tutorials/01-50-expose-and-secure-a-workload/v2alpha1/01-51-get-jwt.md)
       * [Secure a Workload with JWT](/api-gateway/user/tutorials/01-50-expose-and-secure-a-workload/v2alpha1/01-52-expose-and-secure-workload-jwt.md)
