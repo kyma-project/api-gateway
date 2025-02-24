@@ -1,12 +1,11 @@
 # Expose and Secure a Workload with JWT
 
-This tutorial shows how to expose and secure Services using APIGateway Controller. The Controller reacts to an instance of the APIRule custom resource (CR) and creates an Istio VirtualService and [Oathkeeper Access Rules](https://www.ory.sh/docs/oathkeeper/api-access-rules) according to the details specified in the CR. To interact with the secured workloads, the tutorial uses a JWT token.
+This tutorial shows how to expose and secure Services using APIGateway Controller. The Controller reacts to an instance of the APIRule custom resource (CR) and creates an Istio [VirtualService](https://istio.io/latest/docs/reference/config/networking/virtual-service/), [Authorization Policy](https://istio.io/latest/docs/reference/config/security/authorization-policy/) and [Request Authentication](https://istio.io/latest/docs/reference/config/security/request_authentication/) according to the details specified in the CR. To interact with the secured workloads, the tutorial uses a JWT token.
 
 ## Prerequisites
 
-* [Deploy a sample HTTPBin Service](../01-00-create-workload.md).
-* [Obtain a JSON Web Token (JWT)](./01-51-get-jwt.md).
-* [Set Up Your Custom Domain](../01-10-setup-custom-domain-for-workload.md). Alternatively, you can use the default domain of your Kyma cluster and the default Gateway `kyma-system/kyma-gateway`.
+* You have a deployed workload.
+* You have [set up your custom domain](../01-10-setup-custom-domain-for-workload.md). Alternatively, you can use the default domain of your Kyma cluster and the default Gateway `kyma-system/kyma-gateway`.
   
   > [!NOTE]
   > Because the default Kyma domain is a wildcard domain, which uses a simple TLS Gateway, it is recommended that you set up your custom domain for use in a production environment.
@@ -14,91 +13,67 @@ This tutorial shows how to expose and secure Services using APIGateway Controlle
   > [!TIP]
   > To learn what the default domain of your Kyma cluster is, run `kubectl get gateway -n kyma-system kyma-gateway -o jsonpath='{.spec.servers[0].hosts}`.
 
-## Steps
+* You have a JSON Web Token. See [Obtain a JWT](../01-50-expose-and-secure-a-workload/01-51-get-jwt.md).
+* To use CLI instructions, you must install [kubectl](https://kubernetes.io/docs/tasks/tools/#kubectl) and [curl](https://curl.se/). Alternatively, you can use Kyma dashboard.
 
-### Expose and Secure Your Workload
+
+## Steps
 
 <!-- tabs:start -->
 #### **Kyma Dashboard**
 
-1. Go to **Discovery and Network > API Rules** and select **Create**. 
-2. Provide the following configuration details:
-    - **Name**: `httpbin`
-    - **Service Name**: `httpbin`
-    - **Port**: `8000`
-    - To fill in the `Gateway` section, use these values:
-      - **Namespace** is the name of the namespace in which you deployed an instance of the HTTPBin Service. If you use a Kyma domain, select the `kyma-system` namespace.
-      - **Name** is the Gateway's name. If you use a Kyma domain, select `kyma-gateway`. 
-      - In the **Host** field, enter `httpbin.{DOMAIN_TO_EXPORT_WORKLOADS}`. Replace the placeholder with the name of your domain.
-    - Add an access strategy with the following configuration:
-      - **Handler**: `jwt`
-      - In the `jwks_uri` section, add your JSON Web Key Set URIs.
-      - **Method**: `GET`
-      - **Path**: `/.*`
-
-3. To create the APIRule, select **Create**.  
+1. Go to **Discovery and Network > API Rules** and choose **Create**. 
+2. Provide all the required configuration details.
+3. Add a rule with the following configuration.
+    - **Access Strategy**: `jwt`
+    - In the `JWT` section, add an authentication with your issuer and JSON Web Key Set URIs.
+    - **Method**: `GET`
+    - **Path**: `/*`
+4. Choose **Create**.  
 
 #### **kubectl**
 
-1. Depending on whether you use your custom domain or a Kyma domain, export the necessary values as environment variables:
-  
-    <!-- tabs:start -->
-    #### **Custom Domain**
-        
-    ```bash
-    export DOMAIN_TO_EXPOSE_WORKLOADS={DOMAIN_NAME}
-    export GATEWAY=$NAMESPACE/httpbin-gateway
-    ```
-    #### **Kyma Domain**
+To expose and secure your Service, create the following APIRule:
 
-    ```bash
-    export DOMAIN_TO_EXPOSE_WORKLOADS={KYMA_DOMAIN_NAME}
-    export GATEWAY=kyma-system/kyma-gateway
-    ```
-    <!-- tabs:end --> 
-
-2. To expose and secure the Service, create the following APIRule:
-    
-    ```bash
-    cat <<EOF | kubectl apply -f -
-    apiVersion: gateway.kyma-project.io/v1beta1
-    kind: APIRule
-    metadata:
-      name: httpbin
-      namespace: $NAMESPACE
-    spec:
-      host: httpbin.$DOMAIN_TO_EXPOSE_WORKLOADS   
-      service:
-        name: httpbin
-        port: 8000
-      gateway: $GATEWAY
-      rules:
-        - accessStrategies:
-          - handler: jwt
-            config:
-              jwks_urls:
-              - $JWKS_URI
-          methods:
-            - GET
-          path: /.*
-    EOF
-    ```
+```bash
+cat <<EOF | kubectl apply -f -
+apiVersion: gateway.kyma-project.io/v2
+kind: APIRule
+metadata:
+  name: {APIRULE_NAME}
+  namespace: {APIRULE_NAMESPACE}
+spec:
+  hosts:
+    - {SUBDOMAIN}.{DOMAIN_NAME}
+  service:
+    name: {SERVICE_NAME}
+    port: {SERVICE_PORT}
+  gateway: {GATEWAY_NAME}/{GATEWAY_NAMESPACE}
+  rules:
+    - jwt:
+        authentications:
+          -  issuer: {ISSUER}
+              jwksUri: {JWKS_URI}
+      methods:
+        - GET
+      path: /*
+EOF
+```
 <!-- tabs:end -->
 
-### Access the Secured Resources
 
-To access your HTTPBin Service, use [curl](https://curl.se).
+### Access the Secured Resources
 
 1. To call the endpoint, send a `GET` request to the HTTPBin Service.
 
     ```bash
-    curl -ik -X GET https://httpbin.$DOMAIN_TO_EXPOSE_WORKLOADS/headers
+    curl -ik -X GET https://{SUBDOMAIN}.{DOMAIN_NAME}/headers
     ```
     You get the error `401 Unauthorized`.
 
 2. Now, access the secured workload using the correct JWT.
 
     ```bash
-    curl -ik -X GET https://httpbin.$DOMAIN_TO_EXPOSE_WORKLOADS/headers --header "Authorization:Bearer $ACCESS_TOKEN"
+    curl -ik -X GET https://{SUBDOMAIN}.{DOMAIN_NAME}/headers --header "Authorization:Bearer $ACCESS_TOKEN"
     ```
     You get the `200 OK` response code.

@@ -16,4 +16,4 @@ Browse the API Gateway Security tutorials to learn how to prepare certificates a
 
 Browse rate limit tutorials to learn how to configure rate limit for a workload:
 
-- [Set up local rate limits](./01-70-local-rate-limit)
+- [Set up local rate limits](./01-70-local-rate-limit.md)
