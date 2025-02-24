@@ -1,0 +1,329 @@
+- simple: true
+  required: false
+  path: spec.timeout
+  name: timeout
+  inputInfo: inputInfo.timeout
+  value:
+    type: number
+- simple: true
+  required: false
+  path: spec.service
+  name: service
+  widget: FormGroup
+  defaultExpanded: true
+  children:
+    - simple: true
+      required: false
+      path: name
+      name: service-name
+      widget: Resource
+      resource:
+        kind: Service
+        version: v1
+        scope: namespace
+      trigger: [port]
+    - simple: true
+      required: false
+      path: port
+      name: service.port
+      subscribe:
+        port: "$filter($relatedServices().items, function ($v) { $v.metadata.name = $root.spec.service.name and $v.metadata.namespace = $root.metadata.namespace }).spec.ports[0].port"
+- simple: true
+  widget: Alert
+  severity: warning
+  alert: '"alert.gateway.form"'
+  visibility: '$not($exists($match(spec.gateway,/^[a-z0-9_]+(-[a-z0-9_]+)*\/[a-z0-9_]+(-[a-z0-9_]+)*$/))[0])'
+- simple: true
+  required: true
+  path: spec.gateway
+  name: gateway
+  widget: ResourceRef
+  defaultExpanded: true
+  visibility: $canI('networking.istio.io/v1beta1', 'Gateway')
+  resource:
+    kind: Gateway
+    group: networking.istio.io
+    version: v1beta1
+  overwrite: false
+  toInternal:  '($values := $split($, "/"); { "namespace": $values[0], "name": $values[1] })'
+  toExternal: 'namespace & "/" & name'
+  trigger: [host]
+- simple: true
+  var: separator
+  value: ""
+- simple: true
+  required: true
+  path: spec.gateway
+  name: gateway
+  visibility: $not($canI('networking.istio.io/v1beta1', 'Gateway'))
+  inputInfo: inputInfo.gateway
+  overwrite: false
+  trigger: [host]
+- simple: true
+  widget: Alert
+  severity: warning
+  alert: '"alert.corsPolicy"'
+  visibility: '$not($useCorsPolicy)'
+- var: useCorsPolicy
+  name: useCorsPolicy
+  simple: true
+  type: boolean
+  dynamicValue: '$boolean(spec.corsPolicy)'
+- simple: true
+  visibility: '$useCorsPolicy'
+  required: false
+  path: spec.corsPolicy
+  name: corsPolicy
+  defaultExpanded: true
+  inputInfo: inputInfo.corsPolicy
+  widget: FormGroup
+  children:
+    - simple: true
+      required: false
+      path: allowMethods
+      name: corsAllowMethods
+      widget: MultiCheckbox
+      options:
+        - key: GET
+        - key: POST
+        - key: PUT
+        - key: DELETE
+        - key: PATCH
+        - key: HEAD
+        - key: OPTIONS
+        - key: CONNECT
+        - key: TRACE
+    - simple: true
+      required: false
+      path: allowOrigins
+      name: corsAllowOrigins
+      widget: GenericList
+      children:
+        - path: '[]'
+          widget: KeyValuePair
+          keyEnum:
+          - exact
+          - prefix
+          - regex
+          simple: true
+    - simple: true
+      required: false
+      path: allowHeaders
+      name: corsAllowHeaders
+      widget: SimpleList
+      children:
+        - path: '[]'
+          simple: true
+    - simple: true
+      required: false
+      path: exposeHeaders
+      name: corsExposeHeaders
+      widget: SimpleList
+      children:
+        - path: '[]'
+          simple: true
+    - simple: true
+      required: false
+      path: allowCredentials
+      name: corsAllowCredentials
+      value:
+        type: boolean
+    - simple: true
+      required: false
+      path: maxAge
+      name: corsMaxAge
+      placeholder: 300s
+      value:
+        type: string
+- simple: true
+  required: true
+  path: spec.host
+  name: host
+  enum: "$distinct($filter($relatedGateways().items, function ($v) { $v.metadata.namespace = $substringBefore($root.spec.gateway, '/') and $v.metadata.name = $substringAfter($root.spec.gateway, '/')}).spec.servers.hosts)"
+  subscribe:
+    host: "$string($filter($relatedGateways().items, function ($v) { $v.metadata.namespace = $substringBefore($root.spec.gateway, '/') and $v.metadata.name = $substringAfter($root.spec.gateway, '/')}).spec.servers[0].hosts[0])"
+- simple: true
+  widget: Alert
+  severity: error
+  alert: '"alert.spec.host"'
+  visibility: '$substring(spec.host, 0, 1)="*"'
+- simple: true
+  required: true
+  path: spec.rules
+  name: rules
+  widget: GenericList
+  defaultExpanded: true
+  template:
+    path: '/.*'
+    methods: ['GET']
+    accessStrategies:
+      - handler: 'no_auth'
+  children:
+    - simple: true
+      required: false
+      path: '[].timeout'
+      name: timeout
+      inputInfo: inputInfo.timeout
+      value:
+        type: number
+    - simple: true
+      required: true
+      path: '[].path'
+      name: path
+      inputInfo: inputInfo.path
+    - required: true
+      simple: true
+      path: '[].accessStrategies'
+      name: accessStrategies
+      widget: GenericList
+      defaultExpanded: true
+      template:
+        handler: 'no_auth'
+      children:
+        - required: true
+          simple: true
+          path: '[].handler'
+          name: accessStrategies.handler
+          enum:
+            - allow
+            - no_auth
+            - noop
+            - jwt
+            - oauth2_introspection
+        - path: '[].config'
+          simple: true
+          name: accessStrategies.config
+          type: object
+          properties:
+            jwks_urls:
+              type: array
+              items:
+                type: string
+                pattern: ^(https://|file://).*$
+            trusted_issuers:
+              type: array
+              items:
+                type: string
+                pattern: ^(https://|file://).*$
+            required_scope:
+              type: array
+              items:
+                type: string
+            introspection_url:
+              type: string
+              pattern: ^(https://|http://).*$
+            introspection_request_headers:
+              type: map
+            token_from:
+              type: map
+          children:
+            - simple: true
+              widget: Alert
+              severity: warning
+              alert: '"alert.spec.jwks_url_http"'
+              visibility: '$reduce($item.config.jwks_urls,function($i, $j){$i or $substringBefore($j,"://")="http"},false)'
+            - path: jwks_urls
+              name: accessStrategies.jwks_urls
+              inputInfo: inputInfo.jwks_urls
+              simple: true
+              widget: SimpleList
+              visibility: '$item.handler="jwt"'
+              children:
+                - path: '[]'
+                  simple: true
+            - simple: true
+              widget: Alert
+              severity: warning
+              alert: '"alert.spec.trusted_issuers_http"'
+              visibility: '$reduce($item.config.trusted_issuers,function($i, $j){$i or $substringBefore($j,"://")="http"},false)'
+            - path: trusted_issuers
+              name: accessStrategies.trusted_issuers
+              inputInfo: inputInfo.trusted_issuers
+              simple: true
+              widget: SimpleList
+              visibility: '$item.handler="jwt"'
+              children:
+                - path: '[]'
+                  simple: true
+            - path: introspection_url
+              name: accessStrategies.introspection_url
+              inputInfo: inputInfo.introspection_url
+              simple: true
+              visibility: '$item.handler="oauth2_introspection"'
+            - path: introspection_request_headers
+              name: accessStrategies.introspection_request_headers
+              simple: true
+              inputInfo: inputInfo.introspection_request_headers
+              widget: KeyValuePair
+              visibility: '$item.handler="oauth2_introspection"'
+            - path: required_scope
+              name: accessStrategies.required_scope
+              simple: true
+              widget: SimpleList
+              visibility: '$item.handler="oauth2_introspection" or $item.handler="oauth2_client_credentials" or $item.handler="jwt"'
+              children:
+                - path: '[]'
+                  simple: true
+            - path: token_from
+              name: accessStrategies.token_from
+              simple: true
+              inputInfo: inputInfo.token_from
+              widget: KeyValuePair
+              visibility: '$item.handler!="allow" and $item.handler!="no_auth" and $item.handler!="noop"'
+              keyEnum:
+              - header
+              - query_parameter
+              - cookie
+    - required: true
+      simple: true
+      path: '[].methods'
+      name: rules.methods
+      widget: MultiCheckbox
+      options:
+        - key: GET
+        - key: POST
+        - key: PUT
+        - key: DELETE
+        - key: PATCH
+        - key: HEAD
+        - key: OPTIONS
+        - key: CONNECT
+        - key: TRACE
+    - path: '[].mutators'
+      name: mutators
+      widget: GenericList
+      children:
+        - path: '[].config'
+          widget: CodeEditor
+          description: "Configuration for {{[Ory Oathkeeper Rule mutators]https://www.ory.sh/docs/oathkeeper/pipeline/mutator}}"
+          language: "'yaml'"
+        - required: true
+          path: '[].handler'
+          name: accessStrategies.handler
+          enum:
+          - noop
+          - id_token
+          - header
+          - cookie
+    - path: '[].service'
+      simple: true
+      name: service
+      widget: FormGroup
+      required: false
+      children:
+        - simple: true
+          required: false
+          path: name
+          name: service-name
+          widget: Resource
+          resource:
+            kind: Service
+            version: v1
+            scope: namespace
+          trigger: [accessStrategyPort]
+        - simple: true
+          required: false
+          path: port
+          name: service.port
+          subscribe:
+            accessStrategyPort: "$filter($relatedServices().items, function ($v) { $v.metadata.name = $item.service.name and $v.metadata.namespace = $root.metadata.namespace }).spec.ports[0].port"
