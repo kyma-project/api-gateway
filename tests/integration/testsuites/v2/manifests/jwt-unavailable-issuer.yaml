@@ -1,0 +1,19 @@
+apiVersion: gateway.kyma-project.io/v2
+kind: APIRule
+metadata:
+  name: "{{.NamePrefix}}-{{.TestID}}"
+  namespace: "{{.Namespace}}"
+spec:
+  gateway: "{{.GatewayNamespace}}/{{.GatewayName}}"
+  hosts:
+    - "httpbin-{{.TestID}}.{{.Domain}}"
+  service:
+    name: httpbin-{{.TestID}}
+    port: 8000
+  rules:
+    - path: /ip
+      methods: ["GET"]
+      jwt:
+        authentications:
+          - issuer: "https://not-available-goatstest.accounts400.ondemand.com"
+            jwksUri: "https://not-available-goatstest.accounts400.ondemand.com/oauth2/certs"

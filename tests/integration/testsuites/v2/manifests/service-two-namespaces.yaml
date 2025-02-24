@@ -1,0 +1,29 @@
+apiVersion: gateway.kyma-project.io/v2
+kind: APIRule
+metadata:
+  name: "{{.NamePrefix}}-{{.TestID}}"
+  namespace: "{{.Namespace}}"
+spec:
+  gateway: "{{.GatewayNamespace}}/{{.GatewayName}}"
+  hosts:
+    - "httpbin-{{.TestID}}.{{.Domain}}"
+  service:
+    name: httpbin-{{.TestID}}
+    port: 8000
+  rules:
+    - path: {{ .jwtSecuredPath }}
+      methods: ["GET"]
+      jwt:
+        authentications:
+          - issuer: "{{ .IssuerUrl }}"
+            jwksUri: "{{ .IssuerUrl }}/oauth2/certs"
+    - path: {{ .otherNamespacePath }}
+      service:
+        namespace: "{{.Namespace}}-2"
+        name: helloworld-{{.TestID}}
+        port: 5000
+      methods: ["GET"]
+      jwt:
+        authentications:
+          - issuer: "{{ .IssuerUrl }}"
+            jwksUri: "{{ .IssuerUrl }}/oauth2/certs"

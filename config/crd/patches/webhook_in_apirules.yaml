@@ -16,3 +16,4 @@ spec:
       conversionReviewVersions:
         - v1beta1
         - v2alpha1
+        - v2
