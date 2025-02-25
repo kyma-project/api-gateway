@@ -22,4 +22,5 @@
           link: https://community.sap.com/t5/technology-blogs-by-sap/sap-btp-kyma-runtime-apirule-migration-noauth-and-jwt-handlers/ba-p/13882833
   targets:
     - slot: banner
-      location: apirules
+      location: apirules-v1beta1
+
