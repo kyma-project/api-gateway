@@ -16,6 +16,7 @@ import (
 	"github.com/kyma-project/api-gateway/tests/integration/testsuites/ory"
 	ratelimit "github.com/kyma-project/api-gateway/tests/integration/testsuites/rate-limit"
 	"github.com/kyma-project/api-gateway/tests/integration/testsuites/upgrade"
+	v2 "github.com/kyma-project/api-gateway/tests/integration/testsuites/v2"
 	"github.com/kyma-project/api-gateway/tests/integration/testsuites/v2alpha1"
 
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
@@ -103,6 +104,20 @@ func TestRateLimit(t *testing.T) {
 		t.Fatalf("Failed to create ratelimit testsuite %s", err.Error())
 	}
 	defer ts.TearDown()
+	runTestsuite(t, ts)
+}
+
+func TestV2(t *testing.T) {
+	ts, err := testcontext.New(v2.NewTestsuite)
+	if err != nil {
+		t.Fatalf("Failed to create v2 testsuite %s", err.Error())
+	}
+	originalJwtHandler, err := SwitchJwtHandler(ts, "ory")
+	if err != nil {
+		log.Print(err.Error())
+		t.Fatalf("unable to switch to Ory jwtHandler")
+	}
+	defer cleanUp(ts, originalJwtHandler)
 	runTestsuite(t, ts)
 }
 

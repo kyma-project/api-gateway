@@ -3,7 +3,7 @@ module github.com/kyma-project/api-gateway
 go 1.23.2
 
 require (
-	github.com/avast/retry-go/v4 v4.6.0
+	github.com/avast/retry-go/v4 v4.6.1
 	github.com/cucumber/godog v0.15.0
 	github.com/gardener/cert-management v0.17.5
 	github.com/gardener/external-dns-management v0.23.1
@@ -13,7 +13,7 @@ require (
 	github.com/onsi/ginkgo/v2 v2.22.2
 	github.com/onsi/gomega v1.36.2
 	github.com/ory/oathkeeper-maester v0.1.10
-	github.com/prometheus/client_golang v1.20.5
+	github.com/prometheus/client_golang v1.21.0
 	github.com/prometheus/client_model v0.6.1
 	github.com/spf13/pflag v1.0.6
 	github.com/thoas/go-funk v0.9.3
@@ -92,7 +92,7 @@ require (
 	github.com/vrischmann/envconfig v1.4.1
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/exp v0.0.0-20250128182459-e0ece0dbea4c
-	golang.org/x/oauth2 v0.26.0
+	golang.org/x/oauth2 v0.27.0
 	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/api v0.32.2
 	k8s.io/apiextensions-apiserver v0.32.2
