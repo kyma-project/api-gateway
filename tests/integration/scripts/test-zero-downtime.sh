@@ -41,11 +41,11 @@ run_zero_downtime_requests() {
   wait_for_api_rule_to_exist
   echo "zero-downtime: APIRule found, waiting for status OK"
 
-  kubectl wait --for='jsonpath={.status.APIRuleStatus.code}=OK' --timeout=5m apirules -A -l test=v1beta1-migration
+  kubectl wait --for='jsonpath={.status.APIRuleStatus.code}=OK' --timeout=5m apirules.v1beta1.gateway.kyma-project.io -A -l test=v1beta1-migration
   echo "zero-downtime: APIRule status is OK"
 
   # Get the host set in the APIRule
-  exposed_host=$(kubectl get apirules -A -l test=v1beta1-migration -o jsonpath='{.items[0].spec.host}')
+  exposed_host=$(kubectl get apirules.v1beta1.gateway.kyma-project.io -A -l test=v1beta1-migration -o jsonpath='{.items[0].spec.host}')
   echo "zero-downtime: APIRule host is ${exposed_host}"
 
   local url_under_test="https://${exposed_host}/headers"
@@ -111,7 +111,7 @@ wait_for_api_rule_to_exist() {
   echo "zero-downtime: Waiting for the APIRule to exist"
   # Wait for 5min
   while [[ $attempts -le 300 ]] ; do
-    apirule=$(kubectl get apirules -A -l test=v1beta1-migration --ignore-not-found) && kubectl_exit_code=$? || kubectl_exit_code=$?
+    apirule=$(kubectl get apirules.v1beta1.gateway.kyma-project.io -A -l test=v1beta1-migration --ignore-not-found) && kubectl_exit_code=$? || kubectl_exit_code=$?
     if [ "${kubectl_exit_code}" -ne 0 ]; then
         echo "zero-downtime: kubectl failed when listing apirules, exit code: $kubectl_exit_code"
         exit 2
@@ -177,7 +177,7 @@ send_requests() {
       # Let's sleep here few seconds to avoid the race condition - when the APIRule still exists, but is being deleted
       # (so it is not effective anymore)
       sleep 2
-      if kubectl get apirules -A -l test=v1beta1-migration --ignore-not-found | grep -q .; then
+      if kubectl get apirules.v1beta1.gateway.kyma-project.io -A -l test=v1beta1-migration --ignore-not-found | grep -q .; then
         echo "zero-downtime: thread ${thread}, test failed after ${request_count} requests. Canceling requests because of curl exit code ${curl_exit_code}"
         exit 1
       elif [ $request_count -lt 10 ]; then
