@@ -1,0 +1,11 @@
+- name: Default gateway
+  default: true
+  value:
+    spec:
+      gateway: kyma-system/kyma-gateway
+      rules:
+        - path: /.*
+          methods:
+            - GET
+          accessStrategies:
+            - handler: no_auth

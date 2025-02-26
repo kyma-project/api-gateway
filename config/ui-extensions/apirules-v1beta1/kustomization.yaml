@@ -1,5 +1,5 @@
 configMapGenerator:
-  - name: apirule-ui.operator.kyma-project.io
+  - name: apirule-v1beta1-ui.operator.kyma-project.io
     namespace: kyma-system
     files:
       - general
@@ -9,6 +9,7 @@ configMapGenerator:
       - translations
       - presets
       - dataSources
+      - injections
     options:
       disableNameSuffixHash: true
       labels:
