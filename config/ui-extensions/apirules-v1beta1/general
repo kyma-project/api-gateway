@@ -1,0 +1,10 @@
+resource:
+  kind: APIRule
+  group: gateway.kyma-project.io
+  version: v1beta1
+name: API Rules v1beta1
+category: Discovery and Network
+scope: namespace
+description: '{{[APIRule](https://kyma-project.io/#/api-gateway/user/custom-resources/apirule/v1beta1/04-10-apirule-custom-resource)}} allows for exposing a service externally.'
+urlPath: apirules-v1beta1
+filter: "$filter(data, function($data) {$not($data.metadata.annotations.'gateway.kyma-project.io/original-version' = 'v2alpha1')})"

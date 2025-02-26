@@ -1,4 +1,6 @@
-- name: service
+- name: host
+  source: spec.host
+- name: service-name
   source: '$string(spec.service.name) ? ($string(spec.service.name) & " (port: " & $string(spec.service.port) & ")") : ""'
   widget: ResourceLink
   resource:
@@ -9,10 +11,10 @@
   widget: Badge
   highlights:
     positive:
-      - 'Ready'
+      - 'OK'
     negative:
-      - 'Error'
-    warning:
-      - 'Warning'
-  source: 'status.state ? status.state : "Unknown"'
-  description: status.description
+      - 'ERROR'
+    critical:
+      - 'SKIPPED'
+  source: 'status.APIRuleStatus.code ? status.APIRuleStatus.code : "UNKNOWN"'
+  description: status.APIRuleStatus.desc
