@@ -16,7 +16,7 @@ See the changes introduced in new versions:
 > [!WARNING]
 > APIRule CR in version `v1beta1` has been deprecated and will be removed on May 12, 2025. Version `v2alpha1`, introduced for testing purposes, will become deprecated on March 31, 2025 and removed on June 16, 2025. The stable APIRule `v2` is planned to be introduced on March 31, 2025, in the regular channel.
 > 
-> To migrate your APIRule CRs to version `v2`, follow the prcedure described in the blog posts [APIRule migration - noAuth and jwt handlers](https://community.sap.com/t5/technology-blogs-by-sap/sap-btp-kyma-runtime-apirule-migration-noauth-and-jwt-handlers/ba-p/13882833) and [APIRule migration - Ory Oathkeeper based OAuth2 handlers](https://community.sap.com/t5/technology-blogs-by-sap/sap-btp-kyma-runtime-apirule-migration-ory-oathkeeper-based-oauth2-handlers/ba-p/13896184). Since the APIRule CRD `v2alpha1` is identical to `v2`, the migration procedure for both versions is the same. 
+> To migrate your APIRule CRs to version `v2`, follow the procedure described in the blog posts [APIRule migration - noAuth and jwt handlers](https://community.sap.com/t5/technology-blogs-by-sap/sap-btp-kyma-runtime-apirule-migration-noauth-and-jwt-handlers/ba-p/13882833) and [APIRule migration - Ory Oathkeeper based OAuth2 handlers](https://community.sap.com/t5/technology-blogs-by-sap/sap-btp-kyma-runtime-apirule-migration-ory-oathkeeper-based-oauth2-handlers/ba-p/13896184). Since the APIRule CRD `v2alpha1` is identical to `v2`, the migration procedure for both versions is the same. 
 > 
 > For more information on the timelines, see [APIRule migration - timelines](https://community.sap.com/t5/technology-blogs-by-sap/sap-btp-kyma-runtime-apirule-migration-timelines/ba-p/13995712).
 
@@ -29,7 +29,7 @@ To use APIRules in versions `v2` or `v2alpha1`, the workload that an APIRule exp
 
 ## Internal Traffic to Workloads Is Blocked by Default
 
-By default, the access to the workload from internal traffic is blocked. This approach aligns with Kyma's principle of being "secure by default". In one of the future releases of the API Gateway module, the APIRule CR will contain a new field **internalTraffic** set to `Deny` by default. This field will allow you to permit traffic from the CR. For more information on this topic, see issue [#1632](https://github.com/orgs/kyma-project/projects/27/views/1?pane=issue&itemId=94714927&issue=kyma-project%7Capi-gateway%7C1632).
+By default, the access to the workload from internal traffic is blocked. This approach aligns with Kyma's principle of being "secure by default". In one of the future releases of the API Gateway module, the APIRule CR will contain a new field **internalTraffic** set to `Deny` by default. This field will allow you to permit traffic from the CR. For more information on this topic, see issue [#1632](https://github.com/kyma-project/api-gateway/issues/1632).
 
 **Required action**: ...
 
@@ -48,7 +48,7 @@ Versions `v2` and `v2alpha1` do not apply these default values. If the **corsPol
 
 ## Path Specification Must Not Contain Regexp
 
-APIRule v2alpha1 does not support for regexp in the **spec.rules.path** field of APIRule CR. Instead, it supports use of the `{*}` and `{**}` operators. See the supported configurations:
+APIRule v2alpha1 does not support regexp in the **spec.rules.path** field of APIRule CR. Instead, it supports use of the `{*}` and `{**}` operators. See the supported configurations:
 - Use the exact path (for example, `/abc`). It matches the specified path exactly.
 - Use the `{*}` operator (for example, `/foo/{*}` or `/foo/{*}/bar`).  This operator represents any request that matches the given pattern, with exactly one path segment replacing the operator.
 - Use the `{**}` operator (for example, `/foo/{**}` or `/foo/{**}/bar`). This operator represents any request that matches the pattern with zero or more path segments in the operator’s place. It must be the last operator in the path.
@@ -79,17 +79,17 @@ Starting from version 3.1.0 of the API Gateway module, Oathkeeper will be moved 
 As a consequence, APIRule `v2` and `v2alpha1` does not use Oathkeeper-based Access Rules. The incompatible Oathkeeper-based Access Rules will be retained, but will not be managed anymore. For more information on access strategies available in APIRules v2, see [API proposal for configuration of external authorizer based authorization in APIRules](https://github.com/kyma-project/api-gateway/issues/938).
 
 ### Removed Support for Oathkeeper OAuth2 Handlers
-The APIRule CR in versions `v2` and `v2alpha1` do not support Oathkeeper OAuth2 handlers. Instead, it introduces the **extAuth** access strategy, which you can use to configure an external authorizer.
+The APIRule CR in versions `v2` and `v2alpha1` does not support Oathkeeper OAuth2 handlers. Instead, it introduces the **extAuth** access strategy, which you can use to configure an external authorizer.
 
 **Required action**: Migrate your Oathkeeper-based OAuth2 handlers to the **extAuth** access strategy. To learn how to do this, see [SAP BTP, Kyma runtime: APIRule migration - Ory Oathkeeper-based OAuth2 handlers](https://community.sap.com/t5/technology-blogs-by-sap/sap-btp-kyma-runtime-apirule-migration-ory-oathkeeper-based-oauth2-handlers/ba-p/13896184) and [Configuration of the extAuth Access Strategy](https://kyma-project.io/#/api-gateway/user/custom-resources/apirule/v2alpha1/04-15-api-rule-access-strategies).
 
 ### Removed Support for Oathkeeper Mutators
-The APIRule CR in versions `v2` and `v2alpha1` do not support Oathkeeper mutators. Instead, it introduces the **extAuth** access strategy, which you can use to configure an external authorizer.
+The APIRule CR in versions `v2` and `v2alpha1` does not support Oathkeeper mutators. Instead, it introduces the **extAuth** access strategy, which you can use to configure an external authorizer.
 
 **Required action**: Migrate your rules that use Oathkeeper mutators to the **extAuth** access strategy. For more information, see [Configuration of the extAuth Access Strategy](https://kyma-project.io/#/api-gateway/user/custom-resources/apirule/v2alpha1/04-15-api-rule-access-strategies).
 
 ## Removed Support for Opaque Tokens
 
-The APIRule CR in versions `v2` and `v2alpha1` do not support the usage of Opaque tokens. Instead, it introduces the **extAuth** access strategy, which you can use to configure an external authorizer.
+The APIRule CR in versions `v2` and `v2alpha1` does not support the usage of Opaque tokens. Instead, it introduces the **extAuth** access strategy, which you can use to configure an external authorizer.
 
 **Required action**: Migrate your rules that use Opaque tokens to the **extAuth** access strategy. For more information, see [Configuration of the extAuth Access Strategy](https://kyma-project.io/#/api-gateway/user/custom-resources/apirule/v2alpha1/04-15-api-rule-access-strategies).
