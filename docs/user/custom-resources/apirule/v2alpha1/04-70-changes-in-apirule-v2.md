@@ -1,6 +1,6 @@
-# Changes Introduced in APIRule v2
+# Changes Introduced in APIRule v2alpha1 and v2
 
-This document presents all significant changes that APIRule `v2alpha1` introduces. Consider these changes when migrating to the newer version. APIRule `v1alpha2` is planned to be promoted to the stable version `v2` with minimum to no changes. 
+This document presents all significant changes that APIRule `v2alpha1` introduces. Since version `v2alpha1` is identical to the stable version `v2`, you must consider these changes when migrating either to version `v2` or `v2alpha1`.
 
 See the changes introduced in new versions:
 - [A Workload Must Be in the Istio Service Mesh](#a-workload-must-be-in-the-istio-service-mesh)
@@ -23,7 +23,7 @@ See the changes introduced in new versions:
 
 ## A Workload Must Be in the Istio Service Mesh
 
-To use APIRules in version `v2`, the workload that an APIRule exposes must be in the Istio service mesh. If the workload is not inside the Istio service mesh, the APIRule will not work as expected.
+To use APIRules in versions `v2` or `v2alpha1`, the workload that an APIRule exposes must be in the Istio service mesh. If the workload is not inside the Istio service mesh, the APIRule will not work as expected.
 
 **Required action**: To add a workload to the Istio service mesh, [enable Istio sidecar proxy injection](https://kyma-project.io/#/istio/user/tutorials/01-40-enable-sidecar-injection).
 
@@ -42,7 +42,7 @@ Access-Control-Allow-Methods: "GET,POST,PUT,DELETE,PATCH"
 Access-Control-Allow-Headers: "Authorization,Content-Type,*"
 ```
 
-Version `v2` does not apply these default values. If the **corsPolicy** field is empty, the CORS configuration is not applied. For more information, see [architecture decision record #752](https://github.com/kyma-project/api-gateway/issues/752).
+Versions `v2` and `v2alpha1` do not apply these default values. If the **corsPolicy** field is empty, the CORS configuration is not applied. For more information, see [architecture decision record #752](https://github.com/kyma-project/api-gateway/issues/752).
 
 **Required action**: If you want to use default CORS values defined in `v1beta1` APIRule, you must explicitly define them in **corsPolicy** field.
 
@@ -60,7 +60,7 @@ For more information on the APIRule specification, see [APIRule v2alpha1 Custom 
 
 ## JWT Configuration Requires Explicit Issuer URL
 
-APIRule `v2` introduces an additional mandatory configuration filed for JWT-based authorization - **issuer**. You must provide explicit issuer URL in the APIRule CR. See an example configuration:
+Versions `v2` and `v2alpha1` of APIRule introduce an additional mandatory configuration filed for JWT-based authorization - **issuer**. You must provide explicit issuer URL in the APIRule CR. See an example configuration:
 
 ```yaml
 rules:
@@ -76,20 +76,20 @@ If you use Cloud Identity Services, you can find the issuer URL in the OIDC well
 ## Oathkeeper Removal
 Starting from version 3.1.0 of the API Gateway module, Oathkeeper will be moved to its own namespace. Oathkeeper support will be removed in a later version. Between the release 3.1.0 and the actual removal, Oathkeeper will be installed in the clusters, but the API Gateway module will neither use it nor manage it.
 
-As a consequence, APIRule `v2` does not use Oathkeeper-based Access Rules. The incompatible Oathkeeper-based Access Rules will be retained, but will not be managed anymore. For more information on access strategies available in APIRules v2, see [API proposal for configuration of external authorizer based authorization in APIRules](https://github.com/kyma-project/api-gateway/issues/938).
+As a consequence, APIRule `v2` and `v2alpha1` does not use Oathkeeper-based Access Rules. The incompatible Oathkeeper-based Access Rules will be retained, but will not be managed anymore. For more information on access strategies available in APIRules v2, see [API proposal for configuration of external authorizer based authorization in APIRules](https://github.com/kyma-project/api-gateway/issues/938).
 
 ### Removed Support for Oathkeeper OAuth2 Handlers
-APIRule in version `v2` does not support Oathkeeper OAuth2 handlers. Instead, it introduces the **extAuth** access strategy, which you can use to configure an external authorizer.
+The APIRule CR in versions `v2` and `v2alpha1` do not support Oathkeeper OAuth2 handlers. Instead, it introduces the **extAuth** access strategy, which you can use to configure an external authorizer.
 
 **Required action**: Migrate your Oathkeeper-based OAuth2 handlers to the **extAuth** access strategy. To learn how to do this, see [SAP BTP, Kyma runtime: APIRule migration - Ory Oathkeeper-based OAuth2 handlers](https://community.sap.com/t5/technology-blogs-by-sap/sap-btp-kyma-runtime-apirule-migration-ory-oathkeeper-based-oauth2-handlers/ba-p/13896184) and [Configuration of the extAuth Access Strategy](https://kyma-project.io/#/api-gateway/user/custom-resources/apirule/v2alpha1/04-15-api-rule-access-strategies).
 
 ### Removed Support for Oathkeeper Mutators
-APIRule in version `v2` does not support Oathkeeper mutators. Instead, it introduces the **extAuth** access strategy, which you can use to configure an external authorizer.
+The APIRule CR in versions `v2` and `v2alpha1` do not support Oathkeeper mutators. Instead, it introduces the **extAuth** access strategy, which you can use to configure an external authorizer.
 
 **Required action**: Migrate your rules that use Oathkeeper mutators to the **extAuth** access strategy. For more information, see [Configuration of the extAuth Access Strategy](https://kyma-project.io/#/api-gateway/user/custom-resources/apirule/v2alpha1/04-15-api-rule-access-strategies).
 
 ## Removed Support for Opaque Tokens
 
-APIRule in version `v2` does not support the usage of Opaque tokens. Instead, it introduces the **extAuth** access strategy, which you can use to configure an external authorizer.
+The APIRule CR in versions `v2` and `v2alpha1` do not support the usage of Opaque tokens. Instead, it introduces the **extAuth** access strategy, which you can use to configure an external authorizer.
 
 **Required action**: Migrate your rules that use Opaque tokens to the **extAuth** access strategy. For more information, see [Configuration of the extAuth Access Strategy](https://kyma-project.io/#/api-gateway/user/custom-resources/apirule/v2alpha1/04-15-api-rule-access-strategies).
