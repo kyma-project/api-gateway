@@ -45,7 +45,7 @@ Versions `v2` and `v2alpha1` do not apply these default values. If the **corsPol
 
 ## Path Specification Must Not Contain Regexp
 
-APIRule v2alpha1 does not support regexp in the **spec.rules.path** field of APIRule CR. Instead, it supports use of the `{*}` and `{**}` operators. See the supported configurations:
+APIRule in versions `v2` and `v2alpha1` does not support regexp in the **spec.rules.path** field of APIRule CR. Instead, it supports the use of the `{*}` and `{**}` operators. See the supported configurations:
 - Use the exact path (for example, `/abc`). It matches the specified path exactly.
 - Use the `{*}` operator (for example, `/foo/{*}` or `/foo/{*}/bar`).  This operator represents any request that matches the given pattern, with exactly one path segment replacing the operator.
 - Use the `{**}` operator (for example, `/foo/{**}` or `/foo/{**}/bar`). This operator represents any request that matches the pattern with zero or more path segments in the operator’s place. It must be the last operator in the path.
