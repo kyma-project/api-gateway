@@ -1,6 +1,8 @@
 # Changes Introduced in APIRule v2
 
-This document presents all significant changes that APIRule `v2alpha1` introduces. Consider these changes when migrating to the newer version. APIRule `v1alpha2` is planned to be promoted to the stable version `v2` with minimum to no changes. See the introduced in new versions:
+This document presents all significant changes that APIRule `v2alpha1` introduces. Consider these changes when migrating to the newer version. APIRule `v1alpha2` is planned to be promoted to the stable version `v2` with minimum to no changes. 
+
+See the changes introduced in new versions:
 - [A Workload Must Be in the Istio Service Mesh](#a-workload-must-be-in-the-istio-service-mesh)
 - [Internal Traffic to Workloads Is Blocked by Default](#internal-traffic-to-workloads-is-blocked-by-default)
 - [CORS Policy Is Not Applied by Default](#cors-policy-is-not-applied-by-default)
