@@ -79,9 +79,9 @@ The APIRule CR in versions `v2` and `v2alpha1` does not support Oathkeeper OAuth
 **Required action**: Migrate your Oathkeeper-based OAuth2 handlers to use an external authorizer. To learn how to do this, see [SAP BTP, Kyma runtime: APIRule migration - Ory Oathkeeper-based OAuth2 handlers](https://community.sap.com/t5/technology-blogs-by-sap/sap-btp-kyma-runtime-apirule-migration-ory-oathkeeper-based-oauth2-handlers/ba-p/13896184) and [Configuration of the extAuth Access Strategy](https://kyma-project.io/#/api-gateway/user/custom-resources/apirule/v2alpha1/04-15-api-rule-access-strategies).
 
 ### Removed Support for Oathkeeper Mutators
-The APIRule CR in versions `v2` and `v2alpha1` does not support Oathkeeper mutators. Instead, it introduces the **extAuth** field, which you can use to configure an external authorizer.
+The APIRule CR in versions `v2` and `v2alpha1` does not support Oathkeeper mutators. Request mutators are replaced with request modifiers defined in the **spec.rule.request** section of APIRule CR. This section contains the request modification rules applied before forwarding the request to the target workload. Token mutators are not supported in APIRules `v2` and `v2alpha1`. For that, you must define your own **extAuth** configuration.
 
-**Required action**: Migrate your rules that use Oathkeeper mutators to use an external authorizer. For more information, see [Configuration of the extAuth Access Strategy](https://kyma-project.io/#/api-gateway/user/custom-resources/apirule/v2alpha1/04-15-api-rule-access-strategies).
+**Required action**: Migrate your rules that rely on Oathkeeper mutators to use request modifiers or an external authorizer. For more information, see [Configuration of the extAuth Access Strategy](https://kyma-project.io/#/api-gateway/user/custom-resources/apirule/v2alpha1/04-15-api-rule-access-strategies) and [APIRule v2alpha1 Custom Resource](https://kyma-project.io/#/api-gateway/user/custom-resources/apirule/v2alpha1/04-10-apirule-custom-resource).
 
 ## Removed Support for Opaque Tokens
 
