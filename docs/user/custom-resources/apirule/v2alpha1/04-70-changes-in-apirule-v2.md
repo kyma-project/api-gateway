@@ -1,6 +1,6 @@
 # Changes Introduced in APIRule v2alpha1 and v2
 
-This document presents all significant changes that APIRule `v2alpha1` introduces. Since version `v2alpha1` is identical to the stable version `v2`, you must consider these changes when migrating either to version `v2` or `v2alpha1`.
+This document presents all the significant changes that APIRule `v2alpha1` introduces. Since version `v2alpha1` is identical to the stable version `v2`, you must consider these changes when migrating either to version `v2` or `v2alpha1`.
 
 See the changes introduced in new versions:
 - [A Workload Must Be in the Istio Service Mesh](#a-workload-must-be-in-the-istio-service-mesh)
@@ -28,11 +28,11 @@ To use APIRules in versions `v2` or `v2alpha1`, the workload that an APIRule exp
 
 ## Internal Traffic to Workloads Is Blocked by Default
 
-By default, the access to the workload from internal traffic is blocked. This approach aligns with Kyma's principle of being "secure by default". In one of the future releases of the API Gateway module, the APIRule CR will contain a new field **internalTraffic** set to `Deny` by default. This field will allow you to permit traffic from the CR. For more information on this topic, see issue [#1632](https://github.com/kyma-project/api-gateway/issues/1632).
+By default, the access to the workload from internal traffic is blocked. This approach aligns with Kyma's "secure by default" principle. In one of the future releases of the API Gateway module, the APIRule CR will contain a new field **internalTraffic** set to `Deny` by default. This field will allow you to permit traffic from the CR. For more information on this topic, see issue [#1632](https://github.com/kyma-project/api-gateway/issues/1632).
 
 ## CORS Policy Is Not Applied by Default
 
-Version v1beta1 applied the following CORS onfiguration by default:
+Version v1beta1 applied the following CORS configuration by default:
 ```yaml
 Access-Control-Allow-Origins: "*"
 Access-Control-Allow-Methods: "GET,POST,PUT,DELETE,PATCH"
@@ -41,7 +41,7 @@ Access-Control-Allow-Headers: "Authorization,Content-Type,*"
 
 Versions `v2` and `v2alpha1` do not apply these default values. If the **corsPolicy** field is empty, the CORS configuration is not applied. For more information, see [architecture decision record #752](https://github.com/kyma-project/api-gateway/issues/752).
 
-**Required action**: If you want to use default CORS values defined in `v1beta1` APIRule, you must explicitly define them in **corsPolicy** field.
+**Required action**: If you want to use default CORS values defined in the APIRule `v1beta1`, you must explicitly define them in the **corsPolicy** field.
 
 ## Path Specification Must Not Contain Regexp
 
@@ -49,7 +49,7 @@ APIRule in versions `v2` and `v2alpha1` does not support regexp in the **spec.ru
 - Use the exact path (for example, `/abc`). It matches the specified path exactly.
 - Use the `{*}` operator (for example, `/foo/{*}` or `/foo/{*}/bar`).  This operator represents any request that matches the given pattern, with exactly one path segment replacing the operator.
 - Use the `{**}` operator (for example, `/foo/{**}` or `/foo/{**}/bar`). This operator represents any request that matches the pattern with zero or more path segments in the operator’s place. It must be the last operator in the path.
-- Use the wildcard path `/*`, which matches all paths. It’s equivalent to the `/{**}` path. If your configuration in APIRule `v1beta1` used such a path as `/foo(.*)`, when migrating to the new versions, you must define configurations for two spearate paths: `/foo` and `/foo/{**}`.
+- Use the wildcard path `/*`, which matches all paths. It’s equivalent to the `/{**}` path. If your configuration in APIRule `v1beta1` used such a path as `/foo(.*)`, when migrating to the new versions, you must define configurations for two separate paths: `/foo` and `/foo/{**}`.
 
 For more information on the APIRule specification, see [APIRule v2alpha1 Custom Resource](https://kyma-project.io/#/api-gateway/user/custom-resources/apirule/v2alpha1/04-10-apirule-custom-resource).
 
@@ -57,7 +57,7 @@ For more information on the APIRule specification, see [APIRule v2alpha1 Custom 
 
 ## JWT Configuration Requires Explicit Issuer URL
 
-Versions `v2` and `v2alpha1` of APIRule introduce an additional mandatory configuration filed for JWT-based authorization - **issuer**. You must provide explicit issuer URL in the APIRule CR. See an example configuration:
+Versions `v2` and `v2alpha1` of APIRule introduce an additional mandatory configuration filed for JWT-based authorization - **issuer**. You must provide an explicit issuer URL in the APIRule CR. See an example configuration:
 
 ```yaml
 rules:
