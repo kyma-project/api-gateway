@@ -2,7 +2,7 @@
 
 This document presents all the significant changes that APIRule `v2alpha1` introduces. Since version `v2alpha1` is identical to the stable version `v2`, you must consider these changes when migrating either to version `v2` or `v2alpha1`.
 
-See the changes introduced in new versions:
+See the changes introduced in the new versions:
 - [A Workload Must Be in the Istio Service Mesh](#a-workload-must-be-in-the-istio-service-mesh)
 - [Internal Traffic to Workloads Is Blocked by Default](#internal-traffic-to-workloads-is-blocked-by-default)
 - [CORS Policy Is Not Applied by Default](#cors-policy-is-not-applied-by-default)
@@ -14,7 +14,7 @@ See the changes introduced in new versions:
 - [Removed Support for Opaque Tokens](#removed-support-for-opaque-tokens)
 
 > [!WARNING]
-> APIRule CR in version `v1beta1` has been deprecated and will be removed on May 12, 2025. Version `v2alpha1`, introduced for testing purposes, will become deprecated on March 31, 2025 and removed on June 16, 2025. The stable APIRule `v2` is planned to be introduced on March 31, 2025, in the regular channel.
+> APIRule CR in version `v1beta1` has been deprecated and will be removed on May 12, 2025. Version `v2alpha1`, introduced for testing purposes, will become deprecated on March 31, 2025, and removed on June 16, 2025. The stable APIRule `v2` is planned to be introduced in the regular channel on March 31, 2025.
 > 
 > To migrate your APIRule CRs to version `v2`, follow the procedure described in the blog posts [APIRule migration - noAuth and jwt handlers](https://community.sap.com/t5/technology-blogs-by-sap/sap-btp-kyma-runtime-apirule-migration-noauth-and-jwt-handlers/ba-p/13882833) and [APIRule migration - Ory Oathkeeper based OAuth2 handlers](https://community.sap.com/t5/technology-blogs-by-sap/sap-btp-kyma-runtime-apirule-migration-ory-oathkeeper-based-oauth2-handlers/ba-p/13896184). Since the APIRule CRD `v2alpha1` is identical to `v2`, the migration procedure for both versions is the same. 
 > 
@@ -22,7 +22,7 @@ See the changes introduced in new versions:
 
 ## A Workload Must Be in the Istio Service Mesh
 
-To use APIRules in versions `v2` or `v2alpha1`, the workload that an APIRule exposes must be in the Istio service mesh. If the workload is not inside the Istio service mesh, the APIRule will not work as expected.
+To use APIRules in versions `v2` or `v2alpha1`, the workload that an APIRule exposes must be in the Istio service mesh. If the workload is not inside the Istio service mesh, the APIRule does not work as expected.
 
 **Required action**: To add a workload to the Istio service mesh, [enable Istio sidecar proxy injection](https://kyma-project.io/#/istio/user/tutorials/01-40-enable-sidecar-injection).
 
@@ -41,7 +41,7 @@ Access-Control-Allow-Headers: "Authorization,Content-Type,*"
 
 Versions `v2` and `v2alpha1` do not apply these default values. If the **corsPolicy** field is empty, the CORS configuration is not applied. For more information, see [architecture decision record #752](https://github.com/kyma-project/api-gateway/issues/752).
 
-**Required action**: If you want to use default CORS values defined in the APIRule `v1beta1`, you must explicitly define them in the **corsPolicy** field.
+**Required action**: To use default CORS values defined in the APIRule `v1beta1`, you must explicitly define them in the **corsPolicy** field.
 
 ## Path Specification Must Not Contain Regexp
 
