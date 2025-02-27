@@ -66,34 +66,36 @@ jobs:
           manager_image: ${{ inputs.image }}
           test_make_target: test-migration-zero-downtime-${{ matrix.handler }}
 
-    migration-downtime-tests-aws:
-      name: Zero Downtime Migration Tests AWS
-      runs-on: ubuntu-latest
-      needs: [ build ]
-      strategy:
-        fail-fast: false
-        matrix:
-          handler: [ "no_auth", "allow", "noop", "jwt", "oauth2_introspection" ]
-      steps:
-        - uses: actions/checkout@v4
-        - uses: ./.github/actions/e2e-test-gardener
-          env:
-            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          with:
-            manager_image: ${{ inputs.image }}
-            gardener_secret: ${{ secrets.GARDENER_TOKEN }}
-            gardener_project_name: ${{ vars.GARDENER_PROJECT_NAME }}
-            gardener_provider: aws
-            test_client_id: ${{ secrets.CLIENT_ID }}
-            test_client_secret: ${{ secrets.CLIENT_SECRET }}
-            test_oidc_well_known_url: "${{ secrets.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
-            test_make_target: test-migration-zero-downtime-${{ matrix.handler }}
+  migration-downtime-tests-aws:
+    name: Zero Downtime Migration Tests AWS
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        handler: [ "no_auth", "allow", "noop", "jwt", "oauth2_introspection" ]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/e2e-test-gardener
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          manager_image: ${{ inputs.image }}
+          gardener_secret: ${{ secrets.GARDENER_TOKEN }}
+          gardener_project_name: ${{ vars.GARDENER_PROJECT_NAME }}
+          gardener_provider: aws
+          test_client_id: ${{ secrets.CLIENT_ID }}
+          test_client_secret: ${{ secrets.CLIENT_SECRET }}
+          test_oidc_well_known_url: "${{ secrets.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
+          test_make_target: test-migration-zero-downtime-${{ matrix.handler }}
 
   upgrade-tests:
     name: Upgrade tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
       - uses: ./.github/actions/upgrade-test
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

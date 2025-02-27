@@ -123,6 +123,9 @@ jobs:
     needs: [ build ]
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
       - uses: ./.github/actions/upgrade-test
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
