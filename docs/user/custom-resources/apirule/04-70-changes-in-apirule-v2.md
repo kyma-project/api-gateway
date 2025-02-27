@@ -32,7 +32,7 @@ By default, the access to the workload from internal traffic is blocked. This ap
 
 ## CORS Policy Is Not Applied by Default
 
-Version v1beta1 applied the following CORS configuration by default:
+Version `v1beta1` applied the following CORS configuration by default:
 ```yaml
 Access-Control-Allow-Origins: "*"
 Access-Control-Allow-Methods: "GET,POST,PUT,DELETE,PATCH"
