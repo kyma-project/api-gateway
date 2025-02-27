@@ -44,18 +44,9 @@ jobs:
 
   integration-tests:
     name: Integration tests
-    needs: [ upload-image ]
     if: github.event.pull_request.draft == false
-    uses: ./.github/workflows/call-integration-release.yaml
-    with:
-      image: "europe-docker.pkg.dev/kyma-project/dev/api-gateway/pr/api-gateway-manager:PR-${{github.event.number}}"
-    secrets: inherit
-
-  ui-tests:
-    name: UI tests
-    needs: [upload-image]
-    if: github.event.pull_request.draft == false
-    uses: ./.github/workflows/call-ui-tests.yaml
+    needs: [ build-image ]
+    uses: ./.github/workflows/call-pull-integration.yaml
     secrets: inherit
 
   verify-pins:
@@ -65,7 +56,7 @@ jobs:
     secrets: inherit
 
   pull-request-status:
-    needs: [ build-image, upload-image, unit-tests, integration-tests, ui-tests, verify-pins ]
+    needs: [ build-image, upload-image, unit-tests, integration-tests, verify-pins ]
     runs-on: ubuntu-latest
     if: always()
     steps:
