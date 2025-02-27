@@ -22,7 +22,7 @@ This tutorial shows how to expose an unsecured instance of the HTTPBin Service a
 <!-- tabs:start -->
 #### **Kyma Dashboard**
 
-1. Go to **Discovery and Network > API Rules v2alpha2** and select **Create**.
+1. Go to **Discovery and Network > API Rules v2alpha1** and select **Create**.
 2. Provide the name of the APIRule CR.
 3. Add the name and port of the service you want to expose.
 4. Add a Gateway.

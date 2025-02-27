@@ -1,9 +1,9 @@
-# Expose a Workload
+# Expose a Workload with Short Host Name
 
-This tutorial shows how to expose an unsecured instance of the HTTPBin Service and call its endpoints.
+Learn how to expose an unsecured Service instance using a short host name instead of the full domain name. 
 
 > [!WARNING]
->  Exposing a workload to the outside world is a potential security vulnerability, so be careful. In a production environment, always secure the workload you expose with [JWT](../01-50-expose-and-secure-a-workload/v2alpha1/01-52-expose-and-secure-workload-jwt.md).
+>  Exposing a workload to the outside world is a potential security vulnerability, so be careful. In a production environment, always secure the workload you expose with [JWT](../01-50-expose-and-secure-a-workload/01-52-expose-and-secure-workload-jwt.md).
 
 ## Prerequisites
 
@@ -17,39 +17,24 @@ This tutorial shows how to expose an unsecured instance of the HTTPBin Service a
   > [!TIP]
   > To learn what the default domain of your Kyma cluster is, run `kubectl get gateway -n kyma-system kyma-gateway -o jsonpath='{.spec.servers[0].hosts}`.
 
+## Context
+Using a short host makes it simpler to apply APIRules because the domain name is automatically retrieved from the referenced Gateway, and you don’t have to manually set it in each APIRule. This might be particularly useful when reconfiguring resources in a new cluster, as it reduces the chance of errors and streamlines the process.
+
 ## Steps
 
-<!-- tabs:start -->
-#### **Kyma Dashboard**
-
-1. Go to **Discovery and Network > API Rules** and select **Create**.
-2. Provide the name of the APIRule CR.
-3. Add the name and port of the service you want to expose.
-4. Add a Gateway.
-5. Add a rule with the following configuration:
-    - **Path**: `/.*`
-    - **Handler**: `No Auth`
-    - **Methods**: `GET`
-6. Add one more rule with the following configuration:
-    - **Path**: `/post`
-    - **Handler**: `No Auth`
-    - **Methods**: `POST`
-7. Choose **Create**.
-
-#### **kubectl**
-
-To expose your workload, create an APIRule CR. You can adjust the configuration, if needed.
+### Expose Your Workload
+To expose your workload using a short host, replace placeholders and create the following APIRule CR. You can adjust the configuration, if needed.
 
 ```bash
 cat <<EOF | kubectl apply -f -
-apiVersion: gateway.kyma-project.io/v2
+apiVersion: gateway.kyma-project.io/v2alpha1
 kind: APIRule
 metadata:
   name: {APIRULE_NAME}
   namespace: {APIRULE_NAMESPACE}
 spec:
   hosts:
-    - {SUBDOMAIN}.{DOMAIN_NAME}
+    - {SUBDOMAIN}
   service:
     name: {SERVICE_NAME}
     namespace: {SERVICE_NAMESPACE}
@@ -65,19 +50,16 @@ spec:
 EOF
 ```
 
-<!-- tabs:end -->
-
-
 ### Access Your Workload
 
-- Send a `GET` request to the exposed workload:
+- Replace the placeholder and send a `GET` request to the service.
 
   ```bash
   curl -ik -X GET https://{SUBDOMAIN}.{DOMAIN_NAME}/ip
   ```
   If successful, the call returns the `200 OK` response code.
 
-- Send a `POST` request to the exposed workload:
+- Replace the placeholder and send a `POST` request to the service.
 
   ```bash
   curl -ik -X POST https://{SUBDOMAIN}.{DOMAIN_NAME}/post -d "test data"

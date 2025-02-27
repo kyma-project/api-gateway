@@ -1,68 +1,32 @@
-# Issues When Creating an APIRule in Version v1beta1
+# Issues When Creating an APIRule Custom Resource in Version v2
 
 ## Symptom
 
-When you create an APIRule, an instant validation error appears, or the APIRule custom resource (CR) has the `ERROR` status, for example:
+When you create an APIRule custom resource (CR), an instant validation error appears, or the APIRule CR has the `ERROR` status, for example:
 
 ```bash
-kubectl get apirules.v1beta1.gateway.kyma-project.io httpbin
+kubectl get apirules httpbin
 
 NAME      STATUS   HOST
 httpbin   ERROR    httpbin.xxx.shoot.canary.k8s-hana.ondemand.com
 ```
 
-The error may result in an inconsistent state of the APIRule resource in which Ory CR, Istio CR, or both are missing. Your Service then cannot be properly exposed.
-To check the error message of the APIRule resource, run:
+The error may signify that your APIRule CR is in an inconsistent state and the service cannot be properly exposed.
+To check the error message of the APIRule CR, run:
+
 
 ```bash
-kubectl get apirules.v1beta1.gateway.kyma-project.io -n <namespace> <api-rule-name> -o=jsonpath='{.status.APIRuleStatus}'
+kubectl get apirules -n <namespace> <api-rule-name> -o=jsonpath='{.status.description}'
 ```
+
 ---
-## JWT Handler's **trusted_issuers** Configuration Is Missing
+## The **issuer** Configuration of **jwt** Access Strategy Is Missing
 ### Cause
 
-The following APIRule is missing the **trusted_issuers** configuration for the JWT handler:
+The following APIRule is missing the **issuer** configuration for the **jwt** access strategy:
 
 ```yaml
-spec:
-  ...
-  rules:
-    - path: /.*
-      methods: ["GET"]
-      accessStrategies:
-        - handler: jwt
-```
-
-If your APIRule is missing the **trusted_issuers** configuration for the JWT handler, the following `APIRuleStatus` error appears:
-
-```
-{"code":"ERROR","desc":"Validation error: Attribute \".spec.rules[0].accessStrategies[0].config\": supplied config cannot be empty"}
-```
-
-### Solution
-
-Add JWT configuration for the **trusted_issuers** or ``. Here's an example of a valid configuration:
-
-```yaml
-spec:
-  ...
-  rules:
-    - path: /.*
-      methods: ["GET"]
-      accessStrategies:
-        - handler: jwt
-          config:
-            trusted_issuers: ["https://dev.kyma.local"]
-```
----
-## Invalid **trusted_issuers** for the JWT Handler
-### Cause
-
-Here's an example of an APIRule with the **trusted_issuers** URL configured:
-
-```bash
-cat <<EOF | kubectl apply -f -
-apiVersion: gateway.kyma-project.io/v1beta1
+apiVersion: gateway.kyma-project.io/v2
 kind: APIRule
 metadata:
   ...
@@ -70,23 +34,18 @@ spec:
   ...
   rules:
     - path: /.*
-      methods: ["GET"]
-      accessStrategies:
-        - handler: jwt
-          config:
-            trusted_issuers: ["http://unsecured.or.not.valid.url"]
-EOF
+      jwt:
 ```
 
-If the **trusted_issuers** URL is an unsecured HTTP URL, or the **trusted_issuers** URL is not valid, you get an instant error, and the APIRule resource is not created:
+If your APIRule is missing the **issuer** configuration for the **jwt** access strategy, the following error appears:
 
 ```
-The APIRule "httpbin" is invalid: spec.rules[0].accessStrategies[0].config.trusted_issuers[0]: Invalid value: "some-url": spec.rules[0].accessStrategies[0].config.trusted_issuers[0] in body should match '^(https://|file://).*$'
+{"code":"ERROR","description":"Validation error: Attribute \".spec.rules[0].jwt\": supplied config cannot be empty"}
 ```
 
 ### Solution
 
-The JWT **trusted-issuers** must be a valid HTTPS URL, for example:
+Add JWT configuration for the **issuer** or ``. Here's an example of a valid configuration:
 
 ```yaml
 spec:
@@ -94,45 +53,90 @@ spec:
   rules:
     - path: /.*
       methods: ["GET"]
-      accessStrategies:
-        - handler: jwt
-          config:
-            trusted_issuers: ["https://dev.kyma.local"]
+      jwt:
+        authentications:
+          - issuer: "https://dev.kyma.local"
+            jwksUri: "https://example.com/.well-known/jwks.json"
 ```
----
-## Unsupported Handlers' Combination
+
+## Invalid **issuer** for the **jwt** Access Strategy
 ### Cause
 
-The following APIRule has both `allow` and `jwt` handlers defined on the same path:
+Here's an example of the APIRule CR with an invalid **issuer** URL configured:
+
+```yaml
+apiVersion: gateway.kyma-project.io/v2
+kind: APIRule
+metadata:
+  ...
+spec:
+  ...
+  rules:
+    - path: /.*
+      jwt:
+        authentications:
+          - issuer: ://unsecured.or.not.valid.url
+            jwksUri: https://example.com/.well-known/jwks.json
+```
+
+If the **issuer** contains `:`, it must be a valid URI. Otherwise, you get the following error, and the APIRule CR is not created:
+
+```
+The APIRule "httpbin" is invalid: .spec.rules[0].jwt.authentications[0].issuer: value is empty or not a valid URI
+```
+
+### Solution
+
+The JWT **issuer** must not be empty and must be a valid URI, for example:
+
+```yaml
+apiVersion: gateway.kyma-project.io/v2
+kind: APIRule
+metadata:
+  ...
+spec:
+  ...
+  rules:
+    - path: /.*
+      jwt:
+        authentications:
+          - issuer: https://dev.kyma.local
+            jwksUri: https://dev.kyma.local/.well-known/jwks.json
+```
+
+---
+## Both **noAuth** and **jwt** Access Strategies Defined on the Same Path
+### Cause
+
+The following APIRule CR has both **noAuth** and **jwt** access strategies defined on the same path:
 
 ```yaml
 spec:
   ...
   rules:
     - path: /.*
-      methods: ["GET"]
-      accessStrategies:
-        - handler: allow
-        - handler: jwt
-          config:
-            trusted_issuers: ["https://dev.kyma.local"]
+      noAuth: true
+      jwt:
+        authentications:
+          - issuer: https://dev.kyma.local
+            jwksUri: https://dev.kyma.local/.well-known/jwks.json
 ```
 
-The handlers' combination in the above example is not supported. If an APIRule has an unsupported handlers' combination defined **on the same path**, the following `APIRuleStatus` error appears:
+If you set the **noAuth** access strategy to `true` and define the **jwt** configuration on the same path, you get the following error:
 
 ```
-{"code":"ERROR","desc":"Validation error: Attribute \".spec.rules[0].accessStrategies.accessStrategies[0].handler\": allow access strategy is not allowed in combination with other access strategies"}
+{"code":"ERROR","description":"Validation error: Attribute \".spec.rules[0].noAuth\": noAuth access strategy is not allowed in combination with other access strategies"}
 ```
 
 ### Solution
 
-Decide on one configuration you want to use. You can either `allow` access to the specific path or restrict it using the JWT security token. Defining both configuration methods on the same path is not allowed.
+Decide on one configuration you want to use. You can either use **noAuth** access to the specific path or restrict it using a JWT security token.
 
 ---
 ## Occupied Host
 ### Cause
 
-The following APIRules use the same host:
+The following APIRule CRs use the same host:
 
 ```yaml
 spec:
@@ -141,56 +145,18 @@ spec:
   host: httpbin.xxx.shoot.canary.k8s-hana.ondemand.com
 ```
 
-If your APIRule specifies a host that is already used by another APIRule or Virtual Service, the following `APIRuleStatus` error appears:
+If your APIRule CR specifies a host that is already used by another APIRule or Virtual Service, the following error appears:
 
 ```
-{"code":"ERROR","desc":"Validation error: Attribute \".spec.host\": This host is occupied by another Virtual Service"}
+{"code":"ERROR","description":"Validation error: Attribute \".spec.host\": This host is occupied by another Virtual Service"}
 ```
 
 ### Solution
 
-Use a different host for the second APIRule, for example:
+Use a different host for the second APIRule CR, for example:
 
 ```yaml
 spec:
   ...
   host: httpbin-new.xxx.shoot.canary.k8s-hana.ondemand.com
-```
-
----
-## Configuration of `noop`, `allow`, and `no_auth` Handlers 
-### Cause
-
-In the following APIRule, the `noop` handler has the **trusted-issuers** field configured:
-
-```yaml
-spec:
-  ...
-  rules:
-    - path: /.*
-      methods: ["GET"]
-      accessStrategies:
-        - handler: noop
-          config:
-            trusted_issuers: ["https://dex.kyma.local"]
-```
-
-If your APIRule uses either the `noop`, `allow`, or `no_auth` handler and has some further handler's configuration defined, you get the following `APIRuleStatus` error:
-
-```
-{"code":"ERROR","desc":"Validation error: Attribute \".spec.rules[0].accessStrategies[0].config\": strategy: noop does not support configuration"}
-```
-
-### Solution
-
-Use the `noop`, `allow`, and `no_auth` handlers without any further configuration, for example:
-
-```yaml
-spec:
-  ...
-  rules:
-    - path: /.*
-      methods: ["GET"]
-      accessStrategies:
-        - handler: noop
 ```
