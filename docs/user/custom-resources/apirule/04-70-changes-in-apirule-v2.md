@@ -8,7 +8,7 @@ See the changes introduced in the new versions:
 - [CORS Policy Is Not Applied by Default](#cors-policy-is-not-applied-by-default)
 - [Path Specification Must Not Contain Regexp](#path-specification-must-not-contain-regexp)
 - [JWT Configuration Requires Explicit Issuer URL](#jwt-configuration-requires-explicit-issuer-url)
-- [Oathkeeper Removal](#oathkeeper-removal)
+- [Removed Support for Oathkeeper](#removed-support-for-oathkeeper)
   - [Removed Support for Oathkeeper OAuth2 Handlers](#removed-support-for-oathkeeper-oauth2-handlers)
   - [Removed Support for Oathkeeper Mutators](#removed-support-for-oathkeeper-mutators)
 - [Removed Support for Opaque Tokens](#removed-support-for-opaque-tokens)
@@ -70,7 +70,7 @@ If you use Cloud Identity Services, you can find the issuer URL in the OIDC well
 
 **Required action**: Add the **issuer** field to your APIRule specification when migrating to the new version. For more information on migration procedure for the `jwt` handler, see [SAP BTP, Kyma runtime: APIRule migration - noAuth and jwt handlers](https://community.sap.com/t5/technology-blogs-by-sap/sap-btp-kyma-runtime-apirule-migration-noauth-and-jwt-handlers/ba-p/13882833).
 
-## Oathkeeper Removal
+## Removed Support for Oathkeeper
 In one of the releases after 3.1.0, Oathkeeper will be moved to its own namespace. Support for Oathkeeper will be removed later. Once the support is removed, Oathkeeper will be installed in the clusters, but the API Gateway module will neither use it nor manage it.
 
 ### Removed Support for Oathkeeper OAuth2 Handlers
