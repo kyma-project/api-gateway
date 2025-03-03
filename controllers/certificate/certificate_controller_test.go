@@ -3,6 +3,8 @@ package certificate_test
 import (
 	"context"
 	goerrors "errors"
+	admissionregistrationv1 "k8s.io/api/admissionregistration/v1"
+	"k8s.io/utils/ptr"
 	"time"
 
 	"github.com/go-logr/logr"
@@ -105,7 +107,25 @@ var _ = Describe("Certificate Controller", func() {
 			secret := getSecret(certificate, key)
 			crd := getCRD(certificate)
 
-			c := createFakeClient(secret)
+			mutatingWebhookConfig := &admissionregistrationv1.MutatingWebhookConfiguration{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "api-gateway-mutating-webhook-configuration",
+				},
+				Webhooks: []admissionregistrationv1.MutatingWebhook{
+					{
+						Name: "api-gateway-mutating-webhook",
+						ClientConfig: admissionregistrationv1.WebhookClientConfig{
+							Service: &admissionregistrationv1.ServiceReference{
+								Namespace: "kyma-system",
+								Name:      "api-gateway-",
+								Path:      ptr.To("/mutate-gateway-kyma-project-io-v1beta1-apirule"),
+							},
+						},
+					},
+				},
+			}
+
+			c := createFakeClient(secret, mutatingWebhookConfig)
 			Expect(c.Create(context.Background(), crd)).To(Succeed())
 
 			agr := getReconciler(c, getTestScheme(), logr.Discard())
@@ -133,7 +153,25 @@ var _ = Describe("Certificate Controller", func() {
 
 			crd := getCRD([]byte{})
 
-			c := createFakeClient(secret)
+			mutatingWebhookConfig := &admissionregistrationv1.MutatingWebhookConfiguration{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "api-gateway-mutating-webhook-configuration",
+				},
+				Webhooks: []admissionregistrationv1.MutatingWebhook{
+					{
+						Name: "api-gateway-mutating-webhook",
+						ClientConfig: admissionregistrationv1.WebhookClientConfig{
+							Service: &admissionregistrationv1.ServiceReference{
+								Namespace: "kyma-system",
+								Name:      "api-gateway-",
+								Path:      ptr.To("/mutate-gateway-kyma-project-io-v1beta1-apirule"),
+							},
+						},
+					},
+				},
+			}
+
+			c := createFakeClient(secret, mutatingWebhookConfig)
 			Expect(c.Create(context.Background(), crd)).To(Succeed())
 
 			agr := getReconciler(c, getTestScheme(), logr.Discard())
@@ -159,7 +197,25 @@ var _ = Describe("Certificate Controller", func() {
 			secret := getSecret([]byte{1, 2, 3}, []byte{3, 2, 1})
 			crd := getCRD([]byte{})
 
-			c := createFakeClient(secret)
+			mutatingWebhookConfig := &admissionregistrationv1.MutatingWebhookConfiguration{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "api-gateway-mutating-webhook-configuration",
+				},
+				Webhooks: []admissionregistrationv1.MutatingWebhook{
+					{
+						Name: "api-gateway-mutating-webhook",
+						ClientConfig: admissionregistrationv1.WebhookClientConfig{
+							Service: &admissionregistrationv1.ServiceReference{
+								Namespace: "kyma-system",
+								Name:      "api-gateway-",
+								Path:      ptr.To("/mutate-gateway-kyma-project-io-v1beta1-apirule"),
+							},
+						},
+					},
+				},
+			}
+
+			c := createFakeClient(secret, mutatingWebhookConfig)
 			Expect(c.Create(context.Background(), crd)).To(Succeed())
 
 			agr := getReconciler(c, getTestScheme(), logr.Discard())

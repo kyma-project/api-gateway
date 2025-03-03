@@ -9,6 +9,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/pem"
+	admissionregistrationv1 "k8s.io/api/admissionregistration/v1"
 	"time"
 
 	. "github.com/onsi/gomega"
@@ -38,7 +39,25 @@ var _ = Describe("InitialiseCertificateSecret", func() {
 			},
 		}
 
-		c := createFakeClient(deployment)
+		mutatingWebhookConfig := &admissionregistrationv1.MutatingWebhookConfiguration{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "api-gateway-mutating-webhook-configuration",
+			},
+			Webhooks: []admissionregistrationv1.MutatingWebhook{
+				{
+					Name: "api-gateway-mutating-webhook",
+					ClientConfig: admissionregistrationv1.WebhookClientConfig{
+						Service: &admissionregistrationv1.ServiceReference{
+							Namespace: "kyma-system",
+							Name:      "api-gateway-",
+							Path:      ptr.To("/mutate-gateway-kyma-project-io-v1beta1-apirule"),
+						},
+					},
+				},
+			},
+		}
+
+		c := createFakeClient(deployment, mutatingWebhookConfig)
 
 		crd := getCRD([]byte{})
 		Expect(c.Create(context.Background(), crd)).To(Succeed())
@@ -70,8 +89,25 @@ var _ = Describe("InitialiseCertificateSecret", func() {
 
 		secret := getSecret(cert, key)
 		crd := getCRD(cert)
+		mutatingWebhookConfig := &admissionregistrationv1.MutatingWebhookConfiguration{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "api-gateway-mutating-webhook-configuration",
+			},
+			Webhooks: []admissionregistrationv1.MutatingWebhook{
+				{
+					Name: "api-gateway-mutating-webhook",
+					ClientConfig: admissionregistrationv1.WebhookClientConfig{
+						Service: &admissionregistrationv1.ServiceReference{
+							Namespace: "kyma-system",
+							Name:      "api-gateway-",
+							Path:      ptr.To("/mutate-gateway-kyma-project-io-v1beta1-apirule"),
+						},
+					},
+				},
+			},
+		}
 
-		c := createFakeClient(secret)
+		c := createFakeClient(secret, mutatingWebhookConfig)
 		Expect(c.Create(context.Background(), crd)).To(Succeed())
 
 		// when

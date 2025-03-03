@@ -11,7 +11,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package v1beta1
+package v2alpha1
 
 import (
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -20,5 +20,6 @@ import (
 func (r *APIRule) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(r).
+		WithDefaulter(&MutatingWebhook{}).
 		Complete()
 }
