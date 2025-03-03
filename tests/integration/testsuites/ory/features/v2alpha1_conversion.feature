@@ -111,6 +111,7 @@ Feature: APIRules v2alpha1 conversion
     Then deleteAllowV1beta1: APIRule is not found
 
   Scenario: Delete v1beta1 APIRule with handler that is supported in v2alpha1
+    Given deleteNoAuthV1beta1: There is a httpbin service with Istio injection enabled
     Given deleteNoAuthV1beta1: The APIRule is applied
     And deleteNoAuthV1beta1: APIRule has status "OK"
     When deleteNoAuthV1beta1: The APIRule is deleted using v2alpha1

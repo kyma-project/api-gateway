@@ -18,7 +18,7 @@ func initMigrationJwtV1beta1(ctx *godog.ScenarioContext, ts *testsuite) {
 
 	ctx.Step(`^migrationJwtV1beta1: There is a httpbin service with Istio injection enabled$`, scenario.thereIsAHttpbinServiceWithIstioInjection)
 	ctx.Step(`^migrationJwtV1beta1: The APIRule is applied$`, scenario.theAPIRuleIsApplied)
-	ctx.Step(`^migrationJwtV1beta1: The APIRule is updated using manifest "([^"]*)"$`, scenario.theAPIRuleIsUpdated)
+	ctx.Step(`^migrationJwtV1beta1: The APIRule is updated using manifest "([^"]*)"$`, scenario.theAPIRuleIsUpdatedToV2alpha1)
 	ctx.Step(`^migrationJwtV1beta1: APIRule has status "([^"]*)"$`, scenario.theAPIRuleHasStatus)
 	ctx.Step(`^migrationJwtV1beta1: VirtualService owned by APIRule has httpbin service as destination$`, scenario.thereIsApiRuleVirtualServiceWithHttpbinServiceDestination)
 	ctx.Step(`^migrationJwtV1beta1: Resource of Kind "([^"]*)" owned by APIRule does not exist$`, scenario.resourceOwnedByApiRuleDoesNotExist)
@@ -64,7 +64,7 @@ func (s *scenario) thereIsApiRuleVirtualServiceWithHttpbinServiceDestination() e
 
 func (s *scenario) resourceOwnedByApiRuleDoesNotExist(resourceKind string) error {
 	res := resource.GetResourceGvr(resourceKind)
-	ownerLabelSelector := fmt.Sprintf("apirule.gateway.kyma-project.io/v1beta1=%s-%s.%s", s.name, s.TestID, s.Namespace)
+	ownerLabelSelector := fmt.Sprintf("apirule.gateway.kyma-project.io/v2alpha1=%s-%s.%s", s.name, s.TestID, s.Namespace)
 	return retry.Do(func() error {
 		list, err := s.k8sClient.Resource(res).Namespace(s.Namespace).List(context.Background(), metav1.ListOptions{LabelSelector: ownerLabelSelector})
 		if err != nil {
