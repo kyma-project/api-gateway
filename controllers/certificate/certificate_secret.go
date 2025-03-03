@@ -69,10 +69,20 @@ func InitialiseCertificateSecret(ctx context.Context, client client.Client, log 
 			if err := updateCertificateInCRD(ctx, client, certificate); err != nil {
 				return errors.Wrap(err, "failed to update certificate into CRD")
 			}
+			if err := updateCertificateInMutatingWebhookConfigurationCR(ctx, client, certificate); err != nil {
+				return errors.Wrap(err, "failed to update certificate into MutatingWebhookConfiguration CR")
+			}
 		} else {
 			return errors.Wrap(err, "failed to get certificate secret")
 		}
 	} else {
+		if certificate, ok := secret.Data[certificateName]; ok {
+			if err := updateCertificateInMutatingWebhookConfigurationCR(ctx, client, certificate); err != nil {
+				return errors.Wrap(err, "failed to update certificate into MutatingWebhookConfiguration CR during initialization")
+			}
+			log.Info("MutatingWebhookConfiguration updated with CABundle")
+		}
+
 		log.Info("Certificate secret found", "namespace", secretNamespace, "name", secretName)
 	}
 
