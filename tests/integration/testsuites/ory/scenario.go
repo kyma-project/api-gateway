@@ -100,6 +100,14 @@ func (s *scenario) theAPIRuleIsUpdated(manifest string) error {
 	return helpers.UpdateApiRule(s.resourceManager, s.k8sClient, testcontext.GetRetryOpts(), res)
 }
 
+func (s *scenario) theAPIRuleIsUpdatedToV2alpha1(manifest string) error {
+	res, err := manifestprocessor.ParseSingleEntryFromFileWithTemplate(manifest, s.ApiResourceDirectory, s.ManifestTemplate)
+	if err != nil {
+		return err
+	}
+	return helpers.UpdateApiRuleV2alpha1(s.resourceManager, s.k8sClient, testcontext.GetRetryOpts(), res)
+}
+
 func (s *scenario) theAPIRuleIsDeletedUsingv2alpha1Version() error {
 	res, err := manifestprocessor.ParseSingleEntryFromFileWithTemplate(s.ApiResourceManifestPath, s.ApiResourceDirectory, s.ManifestTemplate)
 	if err != nil {

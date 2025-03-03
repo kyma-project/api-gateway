@@ -1,5 +1,6 @@
 resources:
 - service.yaml
+- apirule_mutating_webhook.yaml
 
 labels:
   - pairs:

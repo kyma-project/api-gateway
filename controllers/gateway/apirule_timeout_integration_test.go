@@ -48,8 +48,8 @@ var _ = Describe("APIRule timeout", Serial, func() {
 				Expect(c.Create(context.Background(), svc)).Should(Succeed())
 				Expect(c.Create(context.Background(), apiRule)).Should(Succeed())
 				defer func() {
-					apiRuleTeardown(apiRule)
-					serviceTeardown(svc)
+					deleteResource(apiRule)
+					deleteResource(svc)
 				}()
 
 				expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusOK)
@@ -106,8 +106,8 @@ var _ = Describe("APIRule timeout", Serial, func() {
 				Expect(c.Create(context.Background(), svc)).Should(Succeed())
 				Expect(c.Create(context.Background(), apiRule)).Should(Succeed())
 				defer func() {
-					apiRuleTeardown(apiRule)
-					serviceTeardown(svc)
+					deleteResource(apiRule)
+					deleteResource(svc)
 				}()
 
 				expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusOK)
@@ -139,8 +139,8 @@ var _ = Describe("APIRule timeout", Serial, func() {
 				Expect(c.Create(context.Background(), svc)).Should(Succeed())
 				Expect(c.Create(context.Background(), apiRule)).Should(Succeed())
 				defer func() {
-					apiRuleTeardown(apiRule)
-					serviceTeardown(svc)
+					deleteResource(apiRule)
+					deleteResource(svc)
 				}()
 
 				expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusOK)

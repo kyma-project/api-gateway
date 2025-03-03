@@ -25,6 +25,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	gikgotypes "github.com/onsi/ginkgo/v2/types"
 	. "github.com/onsi/gomega"
+	admissionregistrationv1 "k8s.io/api/admissionregistration/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
@@ -66,5 +67,6 @@ func getTestScheme() *runtime.Scheme {
 	utilruntime.Must(corev1.AddToScheme(s))
 	utilruntime.Must(appsv1.AddToScheme(s))
 	utilruntime.Must(apiextensionsv1.AddToScheme(s))
+	utilruntime.Must(admissionregistrationv1.AddToScheme(s))
 	return s
 }

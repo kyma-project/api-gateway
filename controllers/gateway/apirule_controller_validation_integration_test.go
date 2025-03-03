@@ -355,8 +355,8 @@ func testConfigWithServiceAndHost(serviceName string, host string, accessStrateg
 	Expect(c.Create(context.Background(), svc)).Should(Succeed())
 	Expect(c.Create(context.Background(), instance)).Should(Succeed())
 	defer func() {
-		apiRuleTeardown(instance)
-		serviceTeardown(svc)
+		deleteResource(instance)
+		deleteResource(svc)
 	}()
 
 	// then
