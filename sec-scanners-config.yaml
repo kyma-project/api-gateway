@@ -1,11 +1,18 @@
 module-name: api-gateway
-protecode:
+kind: kyma
+bdba:
   - europe-docker.pkg.dev/kyma-project/prod/api-gateway/main/api-gateway-manager:873846790fc81622fafbf70a746e66f5b6332154
   - europe-docker.pkg.dev/kyma-project/prod/external/oryd/oathkeeper:v0.38.25-beta.1
   - europe-docker.pkg.dev/kyma-project/prod/external/oryd/oathkeeper-maester:v0.1.5
-whitesource:
+mend:
   language: golang-mod
   subprojects: false
+  exclude:
+    - "**/tests/**"
+    - "**/test/**"
+    - "**/*_test.go"
+checkmarx-one:
+  preset: go-default
   exclude:
     - "**/tests/**"
     - "**/test/**"
