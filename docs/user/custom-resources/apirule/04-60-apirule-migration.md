@@ -4,6 +4,8 @@ Authorization and authentication mechanism implemented in `v2alpha1` APIRule use
 As a result, temporal downtime could occur as there is a propagation delay for the Istio configuration to apply to the Envoy sidecar proxies.
 To make sure that the migration can be completed without any downtime, a migration procedure has been implemented as part of APIRule reconciliation.
 
+Before any modifications, consult the documentation of changes introduced in the new version of APIRule `v2alpha1` in the [APIRule v2 Changes](04-70-changes-in-apirule-v2.md) document.
+
 ## Possible Scenarios
 
 - In case you use Istio JWT as the authentication mechanism in version `v1beta1`, no special steps are required for the migration. Updating the version of an existing APIRule to `v2alpha1` will not change the authentication mechanism, as it was already using Istio JWT.
@@ -13,5 +15,23 @@ To make sure that the migration can be completed without any downtime, a migrati
 
 The migration procedure consists of the following steps, which are executed in a time-separated manner, with a one-minute delay between each step:
 1. The resource owner updates the APIRule to version `v2alpha1`. As an immediate result, new Istio Authorization Policy and Istio Authentication Policy resources are created.
-2. The Istio VirtualService resource is updated to point directly to target Service, bypassing Ory Oathkeeper.
-3. The Ory Oathkeeper resource is deleted.
+2. To retain APIRule V1 CORS configuration, the resource owner needs to update the APIRule with the CORS configuration.
+3. To retain APIRule V1 internal traffic policy, Apply the following AuthorizationPolicy. Remember to change selector label to the one pointing to the target workload:
+    ```yaml
+    apiVersion: security.istio.io/v1
+    kind: AuthorizationPolicy
+    metadata:
+      name: allow-internal
+      namespace: ${NAMESPACE}
+    spec:
+      selector:
+        matchLabels:
+          ${KEY}: ${TARGET_WORKLOAD}
+      action: ALLOW
+      rules:
+      - from:
+        - source:
+            notPrincipals: ["cluster.local/ns/istio-system/sa/istio-ingressgateway-service-account"]
+    ```
+4. The Istio VirtualService resource is updated to point directly to target Service, bypassing Ory Oathkeeper.
+5. The Ory Oathkeeper resource is deleted.

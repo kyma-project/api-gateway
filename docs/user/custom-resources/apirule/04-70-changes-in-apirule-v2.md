@@ -43,6 +43,14 @@ Versions `v2` and `v2alpha1` do not apply these default values. If the **corsPol
 
 **Required action**: To use default CORS values defined in the APIRule `v1beta1`, you must explicitly define them in the **corsPolicy** field.
 
+The following snippet shows an example of the default CORS configuration in the APIRule CR:
+```yaml
+corsPolicy:
+  allowOrigins: ["*"]
+  allowMethods: ["GET", "POST", "PUT", "DELETE", "PATCH"]
+  allowHeaders: ["Authorization", "Content-Type", "*"]
+```
+
 ## Path Specification Must Not Contain Regexp
 
 APIRule in versions `v2` and `v2alpha1` does not support regexp in the **spec.rules.path** field of APIRule CR. Instead, it supports the use of the `{*}` and `{**}` operators. See the supported configurations:
