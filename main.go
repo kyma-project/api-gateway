@@ -20,10 +20,11 @@ import (
 	"context"
 	"crypto/tls"
 	"flag"
-	ratelimitv1alpha1 "github.com/kyma-project/api-gateway/apis/gateway/ratelimit/v1alpha1"
-	"github.com/kyma-project/api-gateway/controllers/gateway/ratelimit"
 	"os"
 	"time"
+
+	ratelimitv1alpha1 "github.com/kyma-project/api-gateway/apis/gateway/ratelimit/v1alpha1"
+	"github.com/kyma-project/api-gateway/controllers/gateway/ratelimit"
 
 	"github.com/kyma-project/api-gateway/internal/reconciliations/oathkeeper"
 	"github.com/kyma-project/api-gateway/internal/version"
@@ -64,6 +65,7 @@ import (
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 
+	gatewayv2 "github.com/kyma-project/api-gateway/apis/gateway/v2"
 	operatorv1alpha1 "github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
 	//+kubebuilder:scaffold:imports
 )
@@ -102,6 +104,7 @@ func init() {
 
 	utilruntime.Must(ratelimitv1alpha1.AddToScheme(scheme))
 	utilruntime.Must(networkingv1alpha3.AddToScheme(scheme))
+	utilruntime.Must(gatewayv2.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
 }
 

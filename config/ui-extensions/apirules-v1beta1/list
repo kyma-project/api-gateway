@@ -1,0 +1,20 @@
+- name: host
+  source: spec.host
+- name: service-name
+  source: '$string(spec.service.name) ? ($string(spec.service.name) & " (port: " & $string(spec.service.port) & ")") : ""'
+  widget: ResourceLink
+  resource:
+    name: $root.spec.service.name
+    namespace: $root.metadata.namespace
+    kind: '"Service"'
+- name: status
+  widget: Badge
+  highlights:
+    positive:
+      - 'OK'
+    negative:
+      - 'ERROR'
+    critical:
+      - 'SKIPPED'
+  source: 'status.APIRuleStatus.code ? status.APIRuleStatus.code : "UNKNOWN"'
+  description: status.APIRuleStatus.desc

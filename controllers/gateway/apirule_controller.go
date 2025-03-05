@@ -121,7 +121,7 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		return r.updateResourceRequeue(ctx, l, n)
 	}
 
-	if r.isApiRuleConvertedFromV2alpha1(apiRule) {
+	if r.isApiRuleConvertedFromV2alpha1(apiRule) || r.isApiRuleConvertedFromV2(apiRule) {
 		return r.reconcileV2Alpha1APIRule(ctx, l, apiRule)
 	}
 
@@ -352,6 +352,17 @@ func (r *APIRuleReconciler) isApiRuleConvertedFromV2alpha1(apiRule gatewayv1beta
 	if apiRule.Annotations != nil {
 		if originalVersion, ok := apiRule.Annotations["gateway.kyma-project.io/original-version"]; ok && originalVersion == "v2alpha1" {
 			r.Log.Info("ApiRule is converted from v2alpha1", "name", apiRule.Name, "namespace", apiRule.Namespace)
+			return true
+		}
+	}
+	return false
+}
+
+func (r *APIRuleReconciler) isApiRuleConvertedFromV2(apiRule gatewayv1beta1.APIRule) bool {
+	// If the ApiRule is not found, we don't need to do anything. If it's found and converted, CM reconciliation is not needed.
+	if apiRule.Annotations != nil {
+		if originalVersion, ok := apiRule.Annotations["gateway.kyma-project.io/original-version"]; ok && originalVersion == "v2" {
+			r.Log.Info("ApiRule is converted from v2", "name", apiRule.Name, "namespace", apiRule.Namespace)
 			return true
 		}
 	}

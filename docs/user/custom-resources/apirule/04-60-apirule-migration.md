@@ -12,6 +12,7 @@ To make sure that the migration can be completed without any downtime, a migrati
 ## Migration Procedure
 
 The migration procedure consists of the following steps, which are executed in a time-separated manner, with a one-minute delay between each step:
+
 1. The resource owner updates the APIRule to version `v2`. As an immediate result, new Istio Authorization Policy and Istio Authentication Policy resources are created.
 2. The Istio VirtualService resource is updated to point directly to target Service, bypassing Ory Oathkeeper.
 3. The Ory Oathkeeper resource is deleted.
