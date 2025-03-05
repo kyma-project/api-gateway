@@ -19,10 +19,12 @@ package operator
 import (
 	"context"
 	"fmt"
-	"github.com/kyma-project/api-gateway/internal/conditions"
-	"k8s.io/apimachinery/pkg/api/meta"
 	"strings"
 	"time"
+
+	"github.com/kyma-project/api-gateway/internal/conditions"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/meta"
 
 	oryv1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
 
@@ -38,6 +40,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/client-go/util/retry"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -78,7 +81,23 @@ func NewAPIGatewayReconciler(mgr manager.Manager, oathkeeperReconciler ReadyVeri
 func (r *APIGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	r.log.Info("Received reconciliation request", "name", req.Name)
 
+	existingAPIGateways := &operatorv1alpha1.APIGatewayList{}
+	if err := r.Client.List(ctx, existingAPIGateways); err != nil {
+		r.log.Info("Unable to list APIGateway CRs")
+		return ctrl.Result{}, err
+	}
+
 	apiGatewayCR := operatorv1alpha1.APIGateway{}
+	if req.Name == "istio-ingressgateway" && req.Namespace == "istio-system" {
+		if api := operatorv1alpha1.GetOldestAPIGatewayCR(existingAPIGateways); api != nil {
+			r.log.Info("Recieved reconciliation request on change of istio-ingressgateway service")
+			apiGatewayCR = *api
+		} else {
+			r.log.Info("Skipped reconciliation, because no APIGateway CR was found")
+			return ctrl.Result{}, nil
+		}
+	}
+
 	if err := r.Client.Get(ctx, req.NamespacedName, &apiGatewayCR); err != nil {
 		if apierrors.IsNotFound(err) {
 			r.log.Info("Skipped reconciliation, because ApiGateway CR was not found")
@@ -86,12 +105,6 @@ func (r *APIGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		}
 		r.log.Info("Could not get APIGateway CR")
 		return ctrl.Result{}, err
-	}
-
-	existingAPIGateways := &operatorv1alpha1.APIGatewayList{}
-	if err := r.Client.List(ctx, existingAPIGateways); err != nil {
-		r.log.Info("Unable to list APIGateway CRs")
-		return r.requeueReconciliation(ctx, apiGatewayCR, controllers.ErrorStatus(err, "Unable to list APIGateway CRs", conditions.ReconcileFailed.Condition()))
 	}
 
 	if len(existingAPIGateways.Items) > 1 {
@@ -150,8 +163,8 @@ func handleDependenciesError(name string, err error) controllers.Status {
 // SetupWithManager sets up the controller with the Manager.
 func (r *APIGatewayReconciler) SetupWithManager(mgr ctrl.Manager, c controllers.RateLimiterConfig) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&operatorv1alpha1.APIGateway{}).
-		WithEventFilter(predicate.GenerationChangedPredicate{}).
+		For(&operatorv1alpha1.APIGateway{}, builder.WithPredicates(predicate.GenerationChangedPredicate{})).
+		Watches(&corev1.Service{}, IngressGatewayEventHandler{}).
 		WithOptions(controller.Options{
 			RateLimiter: controllers.NewRateLimiter(c),
 		}).
