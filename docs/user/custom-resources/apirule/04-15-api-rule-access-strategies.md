@@ -1,39 +1,155 @@
-# APIRule Access Strategies
+# APIRule v2 Access Strategies
 
-APIRule allows you to define the security configuration for an exposed endpoint using the concept of access strategies. You can specify access strategies in the **rules.accessStrategies** section of an APIRule.
+APIRule allows you to define the security configuration for an exposed endpoint using the concept of access strategies. The supported access strategies for APIRule `v2` are **noAuth** and **jwt**.
 
-Every **accessStrategy** contains two fields: **handler** and **config**. These fields determine which handler should be used and provide configuration options specific to the selected handler. The supported handlers are:
-- `allow`
-- `no_auth`
-- `noop`
-- `unauthorized`
-- `anonymous`
-- `cookie_session`
-- `bearer_token`
-- `oauth2_client_credentials`
-- `oauth2_introspection`
-- `jwt`
+## Configuration of the **noAuth** Access Strategy
 
-## Handler Configuration
+The intended functionality of this access strategy is to provide a simple configuration for exposing workloads.
+It only allows access to the specified HTTP methods of the exposed workload.
 
-### The `allow` Handler
+```yaml
+...
+rules:
+  - path: /headers
+    methods: ["GET"]
+    noAuth: true
+```
 
-The intended functionality of this handler is to provide a simple configuration for exposing workloads. It does not use Oathkeeper configuration and instead relies only on Istio VirtualService.
+## Configuration of the **jwt** Access Strategy
 
-The `allow` handler allows access to the exposed workload with all HTTP methods. You must not configure the **config** field when using this handler.
+In version `v2` of the APIRule CR, you can use this access strategy only with the Istio JWT configuration. Additionally, defining only one issuer is supported.
 
-### The `no_auth` Handler
+```yaml
+...
+rules:
+  - path: /headers
+    methods: ["GET"]
+    jwt:
+      authentications:
+        - issuer: https://example.com
+          jwksUri: https://example.com/.well-known/jwks.json
+      authorizations:
+        - audiences: ["app1"]
+```
 
-The intended functionality of this handler is to provide a simple configuration for exposing workloads. It does not use Oathkeeper configuration and instead relies only on Istio VirtualService.
+### Authentications
+Under the hood, an authentications array creates a corresponding **requestPrincipals** array in the Istio’s Authorization Policy resource. Every **requestPrincipals** string is formatted as `<ISSUSER>/*`.
 
-The `no_auth` handler only allows access to the specified HTTP methods of the exposed workload. You must not configure the **config** field when using this handler.
+### Authorizations
+The authorizations field is optional. When not defined, the authorization is satisfied if the JWT is valid. You can define multiple authorizations for an access strategy. The request is allowed if at least one of them is satisfied.
 
-### The `jwt` Handler
+The **requiredScopes** and **audiences** fields are optional. If the **requiredScopes** field is defined, the JWT must contain all the scopes in the scp, scope, or scopes claims to be authorized. If the **audiences** field is defined, the JWT has to contain all the audiences in the aud claim to be authorized.
 
-By default, the `jwt` handler is configured in the same way as in the [Ory Oathkeeper JWT authenticator configuration](https://www.ory.sh/docs/oathkeeper/pipeline/authn#jwt). However, you can also use this handler with the Istio JWT configuration currently being developed. To learn more about this functionality, see [JWT Access Strategy](04-20-apirule-istio-jwt-access-strategy.md).
+In the following example, the APIRule has two defined Issuers. The first Issuer, called `ISSUER`, uses a JWT token extracted from the HTTP header. The header is named `X-JWT-Assertion` and has a prefix of `Kyma`. The second Issuer, called `ISSUER2`, uses a JWT token extracted from a URL parameter named `jwt-token`.
+**requiredScopes** defined in the **authorizations** field allow only for JWTs that have the claims **scp**, **scope**, or **scopes** with a value of `test` and an audience of either `example.com` or `example.org`. Alternatively, the JWTs can have the same claims with the `read` and `write` values.
 
-### Other Handlers
+```yaml
+apiVersion: gateway.kyma-project.io/v2
+kind: APIRule
+metadata:
+  name: service-config
+spec:
+  gateway: kyma-system/kyma-gateway
+  hosts:
+    - app1.example.com
+  service:
+    name: httpbin
+    port: 8000
+  rules:
+    - path: /headers
+      methods: ["GET"]
+      jwt:
+        authentications:
+          - issuer: $ISSUER
+            jwksUri: $JWKS_URI
+            fromHeaders:
+            - name: X-JWT-Assertion
+              prefix: "Kyma "
+          - issuer: $ISSUER2
+            jwksUri: $JWKS_URI2
+            fromParameters:
+            - "jwt_token"
+        authorizations:
+          - requiredScopes: ["test"]
+            audiences: ["example.com", "example.org"]
+          - requiredScopes: ["read", "write"]
+```
 
-Except for the `allow`, `no_auth`, and `jwt` handlers, which use the default configuration, all the other handlers are based on the configuration documented in [Ory Oathkeeper Authenticators](https://www.ory.sh/docs/oathkeeper/pipeline/authn). Ory Oathkeeper is responsible for handling requests that use these handlers so their configuration and capabilities align with what is described in the documentation.
+## Configuration of the **extAuth** Access Strategy
 
-When using those handlers keep in mind that Ory stack as part of API Gateway is deprecated and will not be supported in the future.
+**extAuth** is an access strategy allowing for providing custom authentication and authorization logic. To use it, you must first define the authorization provider in the Istio configuration, most commonly in the Istio custom resource (CR). For example, the following Istio CR defines a provider named `ext-auth-provider`.
+
+```yaml
+apiVersion: operator.kyma-project.io/v1alpha2
+kind: Istio
+metadata:
+  name: default
+  namespace: kyma-system
+spec:
+  config:
+    authorizers:
+    - headers:
+        inCheck:
+          include:
+          - x-ext-authz
+      name: ext-auth-provider
+      port: 8000
+      service: ext-auth-provider.provider-system.svc.cluster.local
+```
+
+Once you define the provider in the Istio configuration, you can reference it in the APIRule CR.
+
+### Securing an Endpoint with **extAuth**
+This configuration allows access to the `/get` path of the `user-service` service. Based on this APIRule, a `CUSTOM` Istio AuthorizationPolicy is created with the `ext-auth-provider` provider, securing access.
+
+```yaml
+apiVersion: gateway.kyma-project.io/v2
+kind: APIRule
+metadata:
+  name: ext-authz
+  namespace: user-system
+spec:
+  hosts:
+    - na.example.com
+  service:
+    name: user-service
+    port: 8000
+  gateway: kyma-system/kyma-gateway
+  rules:
+    - path: "/get"
+      methods: ["GET"]
+      extAuth:
+        authorizers:
+        - x-ext-authz
+```
+
+### Securing an Endpoint with **extAuth** and JWT Restrictions
+
+This configuration allows access to the `/get` path of the `user-service` service, as in the example in the previous section. The access is further restricted by the JWT configuration, specified in the `restrictions` field.
+
+```yaml
+apiVersion: gateway.kyma-project.io/v2
+kind: APIRule
+metadata:
+  name: ext-authz
+  namespace: user-system
+spec:
+  hosts:
+    - na.example.com
+  service:
+    name: user-service
+    port: 8000
+  gateway: kyma-system/kyma-gateway
+  rules:
+    - path: "/get"
+      methods: ["GET"]
+      extAuth:
+        authorizers:
+          - x-ext-authz
+        restrictions:
+          authentications:
+            - issuer: https://example.com
+              jwksUri: https://example.com/.well-known/jwks.json
+          authorizations:
+            - audiences: ["app1"]
+```

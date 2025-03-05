@@ -10,11 +10,11 @@ The error `401 Unauthorized` occurs when you try to access a Service that requir
 
 ## Solution
 
-Make sure that you are using an access token with proper scopes, and it is active. Depending on the type of your access token, follow the relevant steps.
+Make sure that you are using an active JSON Web Token (JWT) with proper scopes.
 
-### JSON Web Token
+### Remedy
 
-1. Decode the JSON Web Token (JWT).
+1. Decode the JWT.
 
 2. Check the validity and scopes of the JWT:
 
@@ -30,33 +30,4 @@ Make sure that you are using an access token with proper scopes, and it is activ
       }
       ```
 
-3. Generate a [new JWT](../../tutorials/01-50-expose-and-secure-a-workload/01-51-get-jwt.md) if needed.
-
-### Opaque Access Token
-
-1. Export the credentials of your Oauth2 client as environment variables:
-
-      ```bash
-      export CLIENT_ID={CLIENT_ID}
-      export CLIENT_SECRET={CLIENT_SECRET}
-      ```
-
-2. Encode your client credentials and export them as an environment variable:
-
-      ```bash
-      export ENCODED_CREDENTIALS=$(echo -n "$CLIENT_ID:$CLIENT_SECRET" | base64)
-      ```
-
-3. Export the introspection URL. You can find it in the well-known OPENID configuration.
-
-      ```bash
-      export INTROSPECTION_URL={INTROSPECTION_URL}
-      ```
-
-4. Check the access token's status:
-
-      ```bash
-      curl -X POST "$INTROSPECTION_URL" -H "Authorization: Basic $ENCODED_CREDENTIALS" -F "token={ACCESS_TOKEN}"
-      ```
-
-5. Generate a [new access token](../../tutorials/01-50-expose-and-secure-a-workload/01-50-expose-and-secure-workload-oauth2.md) if needed.
+3. [Generate a new JWT](../../tutorials/01-50-expose-and-secure-a-workload/01-51-get-jwt.md) if needed.

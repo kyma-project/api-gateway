@@ -90,7 +90,7 @@ spec:
 
 ### Templating Support
 
-The Ory Access Rules have support for templating in mutators. Simple cases can be implemented with the help of EnvoyFilter, such as the one presented in [id-token-envoyfilter](id-token-envoyfilter) directory.
+The Ory Access Rules have support for templating in mutators. Simple cases can be implemented with the help of EnvoyFilter, such as the one presented in [id-token-envoyfilter](../id-token-envoyfilter/) directory.
 
 ### Header Mutator
 
