@@ -1,4 +1,4 @@
-name: [PART 1] Release Api Gateway
+name: PART 1 Release Api Gateway
 
 on:
   workflow_dispatch:
