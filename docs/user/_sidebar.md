@@ -54,7 +54,7 @@
       * [APIRule Access Strategies](/api-gateway/user/custom-resources/apirule/04-15-api-rule-access-strategies.md)
       * [Istio JWT Access Strategy](/api-gateway/user/custom-resources/apirule/v1beta1-deprecated/04-20-apirule-istio-jwt-access-strategy.md)
       * [Comparison of Access Strategies](/api-gateway/user/custom-resources/apirule/v1beta1-deprecated/04-30-apirule-jwt-ory-and-istio-comparison.md)
-      * [APIRule Mutators](/api-gateway/user/custom-resources/apirule/v1beta1-deprecated.04-40-apirule-mutators.md)
+      * [APIRule Mutators](/api-gateway/user/custom-resources/apirule/v1beta1-deprecated/04-40-apirule-mutators.md)
       * [APIRule Authorizations](/api-gateway/user/custom-resources/apirule/v1beta1-deprecated/04-50-apirule-authorizations.md)
     * [APIRule Migration Procedure](/api-gateway/user/custom-resources/apirule/04-60-apirule-migration.md)
     * [Changes in APIRule v2alpha1 and v2](/api-gateway/user/custom-resources/apirule/04-70-changes-in-apirule-v2.md)
