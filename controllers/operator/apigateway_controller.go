@@ -49,9 +49,11 @@ import (
 )
 
 const (
-	APIGatewayResourceListDefaultPath       = "manifests/controlled_resources_list.yaml"
-	ApiGatewayFinalizer                     = "gateways.operator.kyma-project.io/api-gateway"
-	defaultApiGatewayReconciliationInterval = time.Hour * 10
+	APIGatewayResourceListDefaultPath = "manifests/controlled_resources_list.yaml"
+	ApiGatewayFinalizer               = "gateways.operator.kyma-project.io/api-gateway"
+	//defaultApiGatewayReconciliationInterval = time.Hour * 10
+	// Temporarily reduced the interval to 1 hour to make sure that NLB migration does
+	defaultApiGatewayReconciliationInterval = time.Hour
 )
 
 func NewAPIGatewayReconciler(mgr manager.Manager, oathkeeperReconciler ReadyVerifyingReconciler) *APIGatewayReconciler {
@@ -89,22 +91,22 @@ func (r *APIGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 
 	apiGatewayCR := operatorv1alpha1.APIGateway{}
 	if req.Name == "istio-ingressgateway" && req.Namespace == "istio-system" {
+		r.log.Info("Recieved reconciliation request on change of istio-ingressgateway service")
 		if api := operatorv1alpha1.GetOldestAPIGatewayCR(existingAPIGateways); api != nil {
-			r.log.Info("Recieved reconciliation request on change of istio-ingressgateway service")
 			apiGatewayCR = *api
 		} else {
 			r.log.Info("Skipped reconciliation, because no APIGateway CR was found")
 			return ctrl.Result{}, nil
 		}
-	}
-
-	if err := r.Client.Get(ctx, req.NamespacedName, &apiGatewayCR); err != nil {
-		if apierrors.IsNotFound(err) {
-			r.log.Info("Skipped reconciliation, because ApiGateway CR was not found")
-			return ctrl.Result{}, nil
+	} else {
+		if err := r.Client.Get(ctx, req.NamespacedName, &apiGatewayCR); err != nil {
+			if apierrors.IsNotFound(err) {
+				r.log.Info("Skipped reconciliation, because ApiGateway CR was not found")
+				return ctrl.Result{}, nil
+			}
+			r.log.Info("Could not get APIGateway CR")
+			return ctrl.Result{}, err
 		}
-		r.log.Info("Could not get APIGateway CR")
-		return ctrl.Result{}, err
 	}
 
 	if len(existingAPIGateways.Items) > 1 {
