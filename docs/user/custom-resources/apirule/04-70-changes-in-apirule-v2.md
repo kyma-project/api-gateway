@@ -34,22 +34,15 @@ By default, the access to the workload from internal traffic is blocked. This ap
 
 Version `v1beta1` applied the following CORS configuration by default:
 ```yaml
-Access-Control-Allow-Origins: "*"
-Access-Control-Allow-Methods: "GET,POST,PUT,DELETE,PATCH"
-Access-Control-Allow-Headers: "Authorization,Content-Type,*"
-```
-
-Versions `v2` and `v2alpha1` do not apply these default values. If the **corsPolicy** field is empty, the CORS configuration is not applied. For more information, see [architecture decision record #752](https://github.com/kyma-project/api-gateway/issues/752).
-
-**Required action**: To use default CORS values defined in the APIRule `v1beta1`, you must explicitly define them in the **corsPolicy** field.
-
-The following snippet shows an example of the default CORS configuration in the APIRule CR:
-```yaml
 corsPolicy:
   allowOrigins: ["*"]
   allowMethods: ["GET", "POST", "PUT", "DELETE", "PATCH"]
   allowHeaders: ["Authorization", "Content-Type", "*"]
 ```
+
+Versions `v2` and `v2alpha1` do not apply these default values. If the **corsPolicy** field is empty, the CORS configuration is not applied. For more information, see [architecture decision record #752](https://github.com/kyma-project/api-gateway/issues/752).
+
+**Required action**: To use default CORS values defined in the APIRule `v1beta1`, you must explicitly define them in the **corsPolicy** field.
 
 ## Path Specification Must Not Contain Regexp
 
