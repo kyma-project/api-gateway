@@ -1,5 +1,9 @@
 name: "Create release"
 
+permissions:
+  id-token: write # This is required by image-builder
+  contents: write # Read is required by image-builder, write is required to push artifact
+
 on:
   workflow_dispatch:
     inputs:
