@@ -14,9 +14,9 @@ Before any modifications, consult the documentation of changes introduced in the
 ## Migration Procedure
 
 The migration procedure consists of the following steps, which are executed in a time-separated manner, with a one-minute delay between each step:
-1. The resource owner updates the APIRule to version `v2alpha1`. As an immediate result, new Istio Authorization Policy and Istio Authentication Policy resources are created.
-2. To retain APIRule V1 CORS configuration, the resource owner needs to update the APIRule with the CORS configuration.
-3. To retain APIRule V1 internal traffic policy, Apply the following AuthorizationPolicy. Remember to change selector label to the one pointing to the target workload:
+1. As the resource owner, you must update the APIRule to version `v2alpha1`. As an immediate result, new Istio Authorization Policy and Istio Authentication Policy resources are created.
+2. To retain the APIRule `v1` CORS configuration, update the APIRule with the CORS configuration.
+3. To retain APIRule `v1` internal traffic policy, apply the following AuthorizationPolicy. Remember to change the selector label to the one pointing to the target workload:
     ```yaml
     apiVersion: security.istio.io/v1
     kind: AuthorizationPolicy
@@ -33,5 +33,5 @@ The migration procedure consists of the following steps, which are executed in a
         - source:
             notPrincipals: ["cluster.local/ns/istio-system/sa/istio-ingressgateway-service-account"]
     ```
-4. The Istio VirtualService resource is updated to point directly to target Service, bypassing Ory Oathkeeper.
+4. The Istio VirtualService resource is updated to point directly to the target Service, bypassing Ory Oathkeeper.
 5. The Ory Oathkeeper resource is deleted.
