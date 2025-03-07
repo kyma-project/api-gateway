@@ -1907,6 +1907,47 @@ var _ = Describe("APIRule Controller", Serial, func() {
 		verifyRequestAuthenticationCount(c, apiRuleNameMatchingLabels, 0)
 		verifyAuthorizationPolicyCount(c, apiRuleNameMatchingLabels, 0)
 	})
+
+	It("should update APIRule subresources when exposed service is updated", func() {
+		updateJwtHandlerTo(helpers.JWT_HANDLER_ISTIO)
+
+		apiRuleName := generateTestName(testNameBase, testIDLength)
+		serviceName := testServiceNameBase
+		serviceHost := "httpbin-recreate-resources.kyma.local"
+
+		rule := testRule("/img", methodsGet, nil, testIstioJWTHandlerWithScopes(testIssuer, testJwksUri, []string{"scope-a"}))
+		apiRule := testApiRule(apiRuleName, testNamespace, serviceName, testNamespace, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule})
+		svc := testService(serviceName, testNamespace, testServicePort)
+
+		// when
+		Expect(c.Create(ctx, svc)).Should(Succeed())
+		Expect(c.Create(ctx, apiRule)).Should(Succeed())
+		defer func() {
+			apiRuleTeardown(apiRule)
+			serviceTeardown(svc)
+		}()
+
+		expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusOK)
+		ap := &securityv1beta1.AuthorizationPolicy{}
+		Eventually(func() {
+			aps := securityv1beta1.AuthorizationPolicyList{}
+			Expect(c.List(ctx, &aps, matchingLabelsFunc(apiRule.Name, apiRule.Namespace))).Should(Succeed())
+			Expect(aps.Items).To(HaveLen(1))
+			ap = aps.Items[0]
+		})
+		By("Updating service")
+		svc.Spec.Selector = map[string]string{
+			"app": serviceName + "-updated",
+		}
+		Expect(c.Update(ctx, svc)).Should(Succeed())
+
+		By("Verifying that resources are updated selectors")
+		Eventually(func() {
+			got := securityv1beta1.AuthorizationPolicy{}
+			Expect(c.Get(ctx, client.ObjectKeyFromObject(ap), &got)).Should(Succeed())
+			Expect(got.Spec.Selector.MatchLabels["app"]).To(Equal(serviceName + "-updated"))
+		})
+	})
 })
 
 func verifyVirtualServiceCount(c client.Client, option client.ListOption, count int) {
