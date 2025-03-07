@@ -83,14 +83,15 @@ func NewAPIGatewayReconciler(mgr manager.Manager, oathkeeperReconciler ReadyVeri
 func (r *APIGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	r.log.Info("Received reconciliation request", "name", req.Name)
 
-	existingAPIGateways := &operatorv1alpha1.APIGatewayList{}
-	if err := r.Client.List(ctx, existingAPIGateways); err != nil {
-		r.log.Info("Unable to list APIGateway CRs")
-		return ctrl.Result{}, err
-	}
-
 	apiGatewayCR := operatorv1alpha1.APIGateway{}
+	existingAPIGateways := &operatorv1alpha1.APIGatewayList{}
+
 	if req.Name == "istio-ingressgateway" && req.Namespace == "istio-system" {
+		if err := r.Client.List(ctx, existingAPIGateways); err != nil {
+			r.log.Info("Unable to list APIGateway CRs")
+			return ctrl.Result{}, err
+		}
+
 		r.log.Info("Recieved reconciliation request on change of istio-ingressgateway service")
 		if api := operatorv1alpha1.GetOldestAPIGatewayCR(existingAPIGateways); api != nil {
 			apiGatewayCR = *api
@@ -106,6 +107,11 @@ func (r *APIGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 			}
 			r.log.Info("Could not get APIGateway CR")
 			return ctrl.Result{}, err
+		}
+
+		if err := r.Client.List(ctx, existingAPIGateways); err != nil {
+			r.log.Info("Unable to list APIGateway CRs")
+			return r.requeueReconciliation(ctx, apiGatewayCR, controllers.ErrorStatus(err, "Unable to list APIGateway CRs", conditions.ReconcileFailed.Condition()))
 		}
 	}
 
