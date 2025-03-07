@@ -1,5 +1,9 @@
 name: Release Pull Request
 
+permissions:
+  id-token: write # This is required by image-builder
+  contents: read # Read is required by image-builder
+
 on:
   pull_request_target:
     types: [ synchronize, opened, reopened, ready_for_review ]
