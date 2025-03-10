@@ -4,11 +4,12 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"log"
+	"os"
+
 	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"log"
-	"os"
 
 	"github.com/avast/retry-go/v4"
 	"github.com/cucumber/godog"
@@ -298,7 +299,7 @@ func deleteBlockingResources(ctx context.Context) error {
 				}
 			}
 			err := k8sClient.Delete(ctx, &apiRule)
-			if err != nil {
+			if client.IgnoreNotFound(err) != nil {
 				return fmt.Errorf("failed to delete APIRule %s", apiRule.GetName())
 			}
 			return nil
@@ -317,7 +318,7 @@ func deleteBlockingResources(ctx context.Context) error {
 	for _, vs := range vsList.Items {
 		err = retry.Do(func() error {
 			err := k8sClient.Delete(ctx, vs)
-			if err != nil {
+			if client.IgnoreNotFound(err) != nil {
 				return fmt.Errorf("failed to delete VirtualService %s", vs.GetName())
 			}
 			return nil
@@ -333,7 +334,7 @@ func deleteBlockingResources(ctx context.Context) error {
 		for _, oryRule := range oryRuleList.Items {
 			err = retry.Do(func() error {
 				err := k8sClient.Delete(ctx, &oryRule)
-				if err != nil {
+				if client.IgnoreNotFound(err) != nil {
 					return fmt.Errorf("failed to delete ORY Oathkeeper Rule %s", oryRule.GetName())
 				}
 				return nil
