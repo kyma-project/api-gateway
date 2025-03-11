@@ -19,6 +19,9 @@ package operator
 import (
 	"context"
 	"fmt"
+	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"strings"
 	"time"
 
@@ -84,35 +87,19 @@ func (r *APIGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	r.log.Info("Received reconciliation request", "name", req.Name)
 
 	apiGatewayCR := operatorv1alpha1.APIGateway{}
-	existingAPIGateways := &operatorv1alpha1.APIGatewayList{}
-
-	if req.Name == "istio-ingressgateway" && req.Namespace == "istio-system" {
-		if err := r.Client.List(ctx, existingAPIGateways); err != nil {
-			r.log.Info("Unable to list APIGateway CRs")
-			return ctrl.Result{}, err
-		}
-
-		r.log.Info("Recieved reconciliation request on change of istio-ingressgateway service")
-		if api := operatorv1alpha1.GetOldestAPIGatewayCR(existingAPIGateways); api != nil {
-			apiGatewayCR = *api
-		} else {
-			r.log.Info("Skipped reconciliation, because no APIGateway CR was found")
+	if err := r.Client.Get(ctx, req.NamespacedName, &apiGatewayCR); err != nil {
+		if apierrors.IsNotFound(err) {
+			r.log.Info("Skipped reconciliation, because ApiGateway CR was not found")
 			return ctrl.Result{}, nil
 		}
-	} else {
-		if err := r.Client.Get(ctx, req.NamespacedName, &apiGatewayCR); err != nil {
-			if apierrors.IsNotFound(err) {
-				r.log.Info("Skipped reconciliation, because ApiGateway CR was not found")
-				return ctrl.Result{}, nil
-			}
-			r.log.Info("Could not get APIGateway CR")
-			return ctrl.Result{}, err
-		}
+		r.log.Info("Could not get APIGateway CR")
+		return ctrl.Result{}, err
+	}
 
-		if err := r.Client.List(ctx, existingAPIGateways); err != nil {
-			r.log.Info("Unable to list APIGateway CRs")
-			return r.requeueReconciliation(ctx, apiGatewayCR, controllers.ErrorStatus(err, "Unable to list APIGateway CRs", conditions.ReconcileFailed.Condition()))
-		}
+	existingAPIGateways := &operatorv1alpha1.APIGatewayList{}
+	if err := r.Client.List(ctx, existingAPIGateways); err != nil {
+		r.log.Info("Unable to list APIGateway CRs")
+		return r.requeueReconciliation(ctx, apiGatewayCR, controllers.ErrorStatus(err, "Unable to list APIGateway CRs", conditions.ReconcileFailed.Condition()))
 	}
 
 	if len(existingAPIGateways.Items) > 1 {
@@ -172,7 +159,29 @@ func handleDependenciesError(name string, err error) controllers.Status {
 func (r *APIGatewayReconciler) SetupWithManager(mgr ctrl.Manager, c controllers.RateLimiterConfig) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&operatorv1alpha1.APIGateway{}, builder.WithPredicates(predicate.GenerationChangedPredicate{})).
-		Watches(&corev1.Service{}, IngressGatewayEventHandler{}).
+		Watches(&corev1.Service{}, handler.EnqueueRequestsFromMapFunc(func(ctx context.Context, obj client.Object) []reconcile.Request {
+			if obj.GetNamespace() != "istio-system" {
+				return nil
+			}
+
+			if obj.GetName() != "istio-ingressgateway" {
+				return nil
+			}
+
+			apiGatewayList := &operatorv1alpha1.APIGatewayList{}
+			if err := r.Client.List(ctx, apiGatewayList); err != nil {
+				ctrl.Log.Error(err, "Error during listing APIGateway CRs")
+				return nil
+			}
+
+			apiGateway := operatorv1alpha1.GetOldestAPIGatewayCR(apiGatewayList)
+			if apiGateway == nil {
+				ctrl.Log.Info("No APIGateway CR found")
+				return nil
+			}
+
+			return []reconcile.Request{{NamespacedName: types.NamespacedName{Namespace: apiGateway.Namespace, Name: apiGateway.Name}}}
+		})).
 		WithOptions(controller.Options{
 			RateLimiter: controllers.NewRateLimiter(c),
 		}).
