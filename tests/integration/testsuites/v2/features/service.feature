@@ -19,8 +19,8 @@ Feature: Exposing services in APIRule
     When The APIRule is applied
     Then Calling the "/get" endpoint with a valid "JWT" token should result in status between 200 and 299
     And Calling the "/hello" endpoint with a valid "JWT" token should result in status between 200 and 299
-    And Calling the "/get" endpoint without token should result in status between 400 and 403
-    And Calling the "/hello" endpoint without token should result in status between 400 and 403
+    And Calling the "/get" endpoint without a token should result in status between 400 and 403
+    And Calling the "/hello" endpoint without a token should result in status between 400 and 403
     And Teardown httpbin service
 
   Scenario: Exposing different services with same methods
