@@ -581,6 +581,40 @@ var _ = Describe("APIRule Conversion", func() {
 			Expect(apiRuleBeta1.Spec.Rules[1].AccessStrategies[0].Handler.Name).To(Equal("jwt"))
 			Expect(apiRuleBeta1.Spec.Rules[1].AccessStrategies[0].Config).ToNot(BeNil())
 		})
+		It("should convert rule with ExtAuth to v1beta1", func() {
+			// given
+			apiRuleV2alpha1 := v2alpha1.APIRule{
+				Spec: v2alpha1.APIRuleSpec{
+					Hosts: []*v2alpha1.Host{&host1},
+					Rules: []v2alpha1.Rule{
+						{
+							ExtAuth: &v2alpha1.ExtAuth{
+								ExternalAuthorizers: []string{"sample-ext-authz-http"},
+								Restrictions: &v2alpha1.JwtConfig{
+									Authentications: []*v2alpha1.JwtAuthentication{
+										{
+											Issuer:  "issuer",
+											JwksUri: "jwksUri",
+										},
+									},
+									Authorizations: []*v2alpha1.JwtAuthorization{},
+								},
+							},
+						}},
+				},
+			}
+			apiRuleBeta1 := v1beta1.APIRule{}
+
+			// when
+			err := apiRuleBeta1.ConvertFrom(&apiRuleV2alpha1)
+
+			// then
+			Expect(err).ToNot(HaveOccurred())
+			Expect(apiRuleBeta1.Spec.Rules).To(HaveLen(1))
+			Expect(apiRuleBeta1.Spec.Rules[0].AccessStrategies).To(HaveLen(1))
+			Expect(apiRuleBeta1.Spec.Rules[0].AccessStrategies[0].Handler.Name).To(Equal("ext-auth"))
+			Expect(apiRuleBeta1.Spec.Rules[0].AccessStrategies[0].Config).ToNot(BeNil())
+		})
 
 		It("should convert CORS maxAge from seconds as uint64 to duration", func() {
 			// given
