@@ -201,7 +201,7 @@ func (s *scenario) callingTheEndpointWithoutTokenShouldResultInStatusBetween(pat
 }
 
 func (s *scenario) inClusterCallingTheEndpointWithoutTokenShouldSucceed(path string) error {
-	curlCommand := []string{"curl", "-sSL", "-m", "10", fmt.Sprintf("https://httpbin-%s.%s%s", s.TestID, s.Domain, path)}
+	curlCommand := []string{"curl", "-sSL", "-m", "10", fmt.Sprintf("http://httpbin-%s.%s.svc.cluster.local:8000%s", s.TestID, s.Namespace, path)}
 
 	log, err := helpers.RunCurlInPod(s.Namespace, curlCommand)
 	if err != nil {
