@@ -102,6 +102,7 @@ func GetK8sClient() client.Client {
 	return c
 }
 
+// GetK8SConfig returns a Kubernetes client configuration.
 func GetK8SConfig() (*rest.Config, error) {
 	config, err := loadKubeConfigOrDie()
 	if err != nil {

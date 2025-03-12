@@ -21,13 +21,14 @@ var (
 	}
 )
 
+// RunCurlInPod runs a curl command in a pod and returns the output and also error if the command fails.
 func RunCurlInPod(namespace string, command []string) ([]byte, error) {
 	ctx := context.Background()
 	cfg, err := client.GetK8SConfig()
 	if err != nil {
 		return nil, err
 	}
-	
+
 	c, err := kubernetes.NewForConfig(cfg)
 	if err != nil {
 		return nil, err
