@@ -200,6 +200,17 @@ func (s *scenario) callingTheEndpointWithoutTokenShouldResultInStatusBetween(pat
 	return s.httpClient.CallEndpointWithRetries(fmt.Sprintf("%s/%s", s.Url, strings.TrimLeft(path, "/")), &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher})
 }
 
+func (s *scenario) inClusterCallingTheEndpointWithoutTokenShouldSucceed(path string) error {
+	curlCommand := []string{"curl", "-sSL", "-m", "10", fmt.Sprintf("http://httpbin-%s.%s.svc.cluster.local:8000%s", s.TestID, s.Namespace, path)}
+
+	log, err := helpers.RunCurlInPod(s.Namespace, curlCommand)
+	if err != nil {
+		return fmt.Errorf("%s, %s", err, log)
+	}
+
+	return nil
+}
+
 func (s *scenario) callingShortHostWithoutTokenShouldResultInStatusBetween(host, path string, lower, higher int) error {
 	gatewayHost, err := s.getGatewayHost(s.config.GatewayName, s.config.GatewayNamespace)
 	if err != nil {

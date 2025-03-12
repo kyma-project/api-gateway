@@ -29,7 +29,7 @@ Feature: Exposing endpoints with JWT
     And There is an endpoint secured with JWT on path "/ip" and /headers endpoint exposed with noAuth
     When The APIRule is applied
     Then Calling the "/ip" endpoint with a valid "JWT" token should result in status between 200 and 299
-    And Calling the "/headers" endpoint without token should result in status between 200 and 299
+    And Calling the "/headers" endpoint without a token should result in status between 200 and 299
     And Teardown httpbin service
 
   Scenario: Calling a httpbin endpoint secured with JWT that requires scopes claims
