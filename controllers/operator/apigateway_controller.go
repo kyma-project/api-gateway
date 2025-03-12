@@ -170,13 +170,11 @@ func (r *APIGatewayReconciler) SetupWithManager(mgr ctrl.Manager, c controllers.
 
 			apiGatewayList := &operatorv1alpha1.APIGatewayList{}
 			if err := r.Client.List(ctx, apiGatewayList); err != nil {
-				ctrl.Log.Error(err, "Error during listing APIGateway CRs")
 				return nil
 			}
 
 			apiGateway := operatorv1alpha1.GetOldestAPIGatewayCR(apiGatewayList)
 			if apiGateway == nil {
-				ctrl.Log.Info("No APIGateway CR found")
 				return nil
 			}
 
