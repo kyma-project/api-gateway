@@ -10,7 +10,7 @@ require (
 	github.com/go-jose/go-jose/v3 v3.0.4
 	github.com/go-logr/logr v1.4.2
 	github.com/google/uuid v1.6.0
-	github.com/onsi/ginkgo/v2 v2.22.2
+	github.com/onsi/ginkgo/v2 v2.23.0
 	github.com/onsi/gomega v1.36.2
 	github.com/ory/oathkeeper-maester v0.1.10
 	github.com/prometheus/client_golang v1.21.1
@@ -19,7 +19,7 @@ require (
 	github.com/thoas/go-funk v0.9.3
 	gitlab.com/rodrigoodhin/gocure v0.0.0-20230214115050-efed6aac536a
 	golang.org/x/net v0.36.0
-	golang.org/x/time v0.10.0
+	golang.org/x/time v0.11.0
 	google.golang.org/appengine v1.6.8
 	google.golang.org/protobuf v1.36.5
 	gopkg.in/yaml.v3 v3.0.1
@@ -27,7 +27,7 @@ require (
 	istio.io/client-go v1.24.2
 	k8s.io/apimachinery v0.32.2
 	k8s.io/client-go v0.32.2
-	sigs.k8s.io/controller-runtime v0.20.2
+	sigs.k8s.io/controller-runtime v0.20.3
 	sigs.k8s.io/yaml v1.4.0
 )
 
@@ -75,7 +75,7 @@ require (
 	golang.org/x/sys v0.30.0 // indirect
 	golang.org/x/term v0.29.0 // indirect
 	golang.org/x/text v0.22.0 // indirect
-	golang.org/x/tools v0.29.0 // indirect
+	golang.org/x/tools v0.30.0 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.4.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20241209162323-e6fa225c2576 // indirect
 	gopkg.in/evanphx/json-patch.v4 v4.12.0 // indirect
