@@ -110,7 +110,7 @@ func (r *APIRule) ConvertTo(hub conversion.Hub) error {
 
 			if len(ruleV1beta1.AccessStrategies) > 0 {
 				for _, strategy := range ruleV1beta1.AccessStrategies {
-					if slices.Contains([]string{AccessStrategyNoAuth}, strategy.Handler.Name) {
+					if strategy.Handler.Name == AccessStrategyNoAuth {
 						ruleV2alpha1.NoAuth = ptr.To(true)
 					}
 				}
