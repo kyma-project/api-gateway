@@ -354,17 +354,19 @@ func (r *APIRuleReconciler) SetupWithManager(mgr ctrl.Manager, c controllers.Rat
 			var requests []reconcile.Request
 
 			for _, apiRule := range apiRules.Items {
+				// match if service is exposed by an APIRule
+				// and add APIRule to the reconciliation queue
 				matches := func(target *gatewayv1beta1.Service) bool {
 					if target == nil {
 						return false
 					}
-					var matchesName, matchesNs bool
+
+					matchesNs := apiRule.Namespace == obj.GetNamespace()
 					if target.Namespace != nil {
 						matchesNs = *target.Namespace == obj.GetNamespace()
 					}
-					if target.Namespace == nil {
-						matchesNs = apiRule.Namespace == obj.GetNamespace()
-					}
+
+					var matchesName bool
 					if target.Name != nil {
 						matchesName = *target.Name == obj.GetName()
 					}
