@@ -19,10 +19,15 @@ package operator
 import (
 	"context"
 	"fmt"
-	"github.com/kyma-project/api-gateway/internal/conditions"
-	"k8s.io/apimachinery/pkg/api/meta"
+	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"strings"
 	"time"
+
+	"github.com/kyma-project/api-gateway/internal/conditions"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/meta"
 
 	oryv1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
 
@@ -38,6 +43,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/client-go/util/retry"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -46,9 +52,11 @@ import (
 )
 
 const (
-	APIGatewayResourceListDefaultPath       = "manifests/controlled_resources_list.yaml"
-	ApiGatewayFinalizer                     = "gateways.operator.kyma-project.io/api-gateway"
-	defaultApiGatewayReconciliationInterval = time.Hour * 10
+	APIGatewayResourceListDefaultPath = "manifests/controlled_resources_list.yaml"
+	ApiGatewayFinalizer               = "gateways.operator.kyma-project.io/api-gateway"
+	//defaultApiGatewayReconciliationInterval = time.Hour * 10
+	// Temporarily reduced the interval to 1 hour to make sure that NLB migration does
+	defaultApiGatewayReconciliationInterval = time.Hour
 )
 
 func NewAPIGatewayReconciler(mgr manager.Manager, oathkeeperReconciler ReadyVerifyingReconciler) *APIGatewayReconciler {
@@ -150,8 +158,28 @@ func handleDependenciesError(name string, err error) controllers.Status {
 // SetupWithManager sets up the controller with the Manager.
 func (r *APIGatewayReconciler) SetupWithManager(mgr ctrl.Manager, c controllers.RateLimiterConfig) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&operatorv1alpha1.APIGateway{}).
-		WithEventFilter(predicate.GenerationChangedPredicate{}).
+		For(&operatorv1alpha1.APIGateway{}, builder.WithPredicates(predicate.GenerationChangedPredicate{})).
+		Watches(&corev1.Service{}, handler.EnqueueRequestsFromMapFunc(func(ctx context.Context, obj client.Object) []reconcile.Request {
+			if obj.GetNamespace() != "istio-system" {
+				return nil
+			}
+
+			if obj.GetName() != "istio-ingressgateway" {
+				return nil
+			}
+
+			apiGatewayList := &operatorv1alpha1.APIGatewayList{}
+			if err := r.Client.List(ctx, apiGatewayList); err != nil {
+				return nil
+			}
+
+			apiGateway := operatorv1alpha1.GetOldestAPIGatewayCR(apiGatewayList)
+			if apiGateway == nil {
+				return nil
+			}
+
+			return []reconcile.Request{{NamespacedName: types.NamespacedName{Namespace: apiGateway.Namespace, Name: apiGateway.Name}}}
+		})).
 		WithOptions(controller.Options{
 			RateLimiter: controllers.NewRateLimiter(c),
 		}).
