@@ -358,6 +358,58 @@ var _ = Describe("APIRule Conversion", func() {
 			}))
 
 		})
+
+		It("should store rules in annotation", func() {
+			var headerConfig, cookieConfig runtime.RawExtension
+			_ = convertOverJson(map[string]string{
+				"header1": "value1",
+			}, &headerConfig)
+
+			_ = convertOverJson(map[string]string{
+				"cookie1": "value2",
+			}, &cookieConfig)
+
+			apiRuleV1beta1 := v1beta1.APIRule{
+				Status: testV1StatusOK,
+				Spec: v1beta1.APIRuleSpec{
+					Rules: []v1beta1.Rule{
+						{
+							Path: "/path1",
+							Service: &v1beta1.Service{
+								Name: ptr.To("service"),
+							},
+							Methods: []v1beta1.HttpMethod{"GET", "POST"},
+							AccessStrategies: []*v1beta1.Authenticator{
+								{Handler: &v1beta1.Handler{Name: v1beta1.AccessStrategyJwt, Config: nil}},
+							},
+							Mutators: []*v1beta1.Mutator{
+								{
+									Handler: &v1beta1.Handler{
+										Name:   v1beta1.HeaderMutator,
+										Config: &headerConfig,
+									},
+								},
+								{
+									Handler: &v1beta1.Handler{
+										Name:   v1beta1.CookieMutator,
+										Config: &cookieConfig,
+									},
+								},
+							},
+						},
+					},
+				},
+			}
+			apiRuleV2alpha1 := v2alpha1.APIRule{}
+
+			// when
+			err := apiRuleV1beta1.ConvertTo(&apiRuleV2alpha1)
+
+			// then
+			Expect(err).ToNot(HaveOccurred())
+			Expect(apiRuleV2alpha1.Annotations["gateway.kyma-project.io/v1beta1-rules"]).To(BeEquivalentTo(`[{"path":"/path1","service":{"name":"service","port":null},"methods":["GET","POST"],"accessStrategies":[{"handler":"jwt"}],"mutators":[{"handler":"header","config":{"header1":"value1"}},{"handler":"cookie","config":{"cookie1":"value2"}}]}]`))
+		})
+
 	})
 
 	Describe("v2alpha1 to v1beta1", func() {
@@ -755,6 +807,26 @@ var _ = Describe("APIRule Conversion", func() {
 				}
 			}
 			Expect(correctMutators).To(Equal(2))
+		})
+		It("should convert rules from annotation", func() {
+			// given
+			apiRuleV2alpha1 := v2alpha1.APIRule{
+				ObjectMeta: metav1.ObjectMeta{
+					Annotations: map[string]string{
+						"gateway.kyma-project.io/original-version": "v1beta1",
+						"gateway.kyma-project.io/v1beta1-rules":    `[{"path":"/path1","service":{"name":"service","port":null},"methods":["GET","POST"],"accessStrategies":[{"handler":"jwt"}],"mutators":[{"handler":"header","config":{"header1":"value1"}},{"handler":"cookie","config":{"cookie1":"value2"}}]}]`,
+					},
+				},
+			}
+
+			apiRuleBeta1 := v1beta1.APIRule{}
+
+			// when
+			err := apiRuleBeta1.ConvertFrom(&apiRuleV2alpha1)
+
+			// then
+			Expect(err).ToNot(HaveOccurred())
+			Expect(apiRuleBeta1.Spec.Rules).To(HaveLen(1))
 		})
 	})
 })

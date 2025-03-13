@@ -196,7 +196,7 @@ func (r *APIRule) ConvertFrom(hub conversion.Hub) error {
 
 	// if the original version is v1beta1, we need to convert the spec from the annotation to not lose any data
 	if apiRule.Annotations["gateway.kyma-project.io/original-version"] == "v1beta1" {
-		err := convertOverJson(apiRule.Annotations[v1beta1RulesAnnotationKey], &r.Spec.Rules)
+		err := json.Unmarshal([]byte(apiRule.Annotations[v1beta1RulesAnnotationKey]), &r.Spec.Rules)
 		if err != nil {
 			return err
 		}
