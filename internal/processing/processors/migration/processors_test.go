@@ -25,13 +25,7 @@ var _ = Describe("NewMigrationProcessors", func() {
 			},
 		}
 
-		apiruleBeta := &gatewayv1beta1.APIRule{
-			ObjectMeta: metav1.ObjectMeta{
-				Annotations: map[string]string{},
-			},
-		}
-
-		processors := NewMigrationProcessors(apirule, apiruleBeta, config, &log)
+		processors := NewMigrationProcessors(apirule, config, &log)
 		Expect(processors).To(HaveLen(2))
 		Expect(processors[0]).To(BeAssignableToTypeOf(authorizationpolicy.Processor{}))
 		Expect(processors[1]).To(BeAssignableToTypeOf(requestauthentication.Processor{}))
@@ -46,14 +40,8 @@ var _ = Describe("NewMigrationProcessors", func() {
 				},
 			},
 		}
-		apiruleBeta := &gatewayv1beta1.APIRule{
-			ObjectMeta: metav1.ObjectMeta{
-				Annotations: map[string]string{
-					"gateway.kyma-project.io/migration-step": annotation,
-				},
-			},
-		}
-		processors := NewMigrationProcessors(apirule, apiruleBeta, config, &log)
+
+		processors := NewMigrationProcessors(apirule, config, &log)
 		// then
 		Expect(len(processors)).To(Equal(len(expectedProcessors)))
 		for i, processor := range expectedProcessors {

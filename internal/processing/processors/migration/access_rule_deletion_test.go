@@ -2,7 +2,7 @@ package migration
 
 import (
 	"context"
-	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
+	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	"github.com/kyma-project/api-gateway/internal/processing"
 	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -16,7 +16,7 @@ import (
 var _ = Describe("RuleDeletionProcessor", func() {
 	It("should delete Ory Rules owned by the APIRule by ownership label", func() {
 		// given
-		apiRule := &gatewayv1beta1.APIRule{
+		apiRule := &gatewayv2alpha1.APIRule{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "test-api-rule",
 				Namespace: "test-namespace",
@@ -70,7 +70,7 @@ var _ = Describe("RuleDeletionProcessor", func() {
 
 	It("should not delete Ory Rules not owned by the APIRule", func() {
 		// given
-		apiRule := &gatewayv1beta1.APIRule{
+		apiRule := &gatewayv2alpha1.APIRule{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "test-api-rule",
 				Namespace: "test-namespace",
