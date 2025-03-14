@@ -16,7 +16,8 @@ import (
 )
 
 const (
-	v1beta1RulesAnnotationKey = "gateway.kyma-project.io/v1beta1-rules"
+	v1beta1RulesAnnotationKey    = "gateway.kyma-project.io/v1beta1-rules"
+	originalVersionAnnotationKey = "gateway.kyma-project.io/original-version"
 )
 
 var v1beta1toV2alpha1StatusConversionMap = map[StatusCode]v2alpha1.State{
@@ -42,8 +43,8 @@ func (r *APIRule) ConvertTo(hub conversion.Hub) error {
 		apiRule.Annotations = make(map[string]string)
 	}
 
-	if !slices.Contains([]string{"v2", "v2alpha1"}, r.Annotations["gateway.kyma-project.io/original-version"]) {
-		apiRule.Annotations["gateway.kyma-project.io/original-version"] = "v1beta1"
+	if !slices.Contains([]string{"v2", "v2alpha1"}, r.Annotations[originalVersionAnnotationKey]) {
+		apiRule.Annotations[originalVersionAnnotationKey] = "v1beta1"
 	}
 	marshaledRules, err := json.Marshal(r.Spec.Rules)
 	if err != nil {
@@ -195,7 +196,7 @@ func (r *APIRule) ConvertFrom(hub conversion.Hub) error {
 	}
 
 	// if the original version is v1beta1, we need to convert the spec from the annotation to not lose any data
-	if apiRule.Annotations["gateway.kyma-project.io/original-version"] == "v1beta1" {
+	if apiRule.Annotations[originalVersionAnnotationKey] == "v1beta1" {
 		err := json.Unmarshal([]byte(apiRule.Annotations[v1beta1RulesAnnotationKey]), &r.Spec.Rules)
 		if err != nil {
 			return err

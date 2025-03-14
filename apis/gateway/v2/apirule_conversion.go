@@ -11,7 +11,13 @@ import (
 // ConvertTo Converts this ApiRule (v2) to the Hub version (v2alpha1)
 func (apiRule *APIRule) ConvertTo(hub conversion.Hub) error {
 	apiRuleV2alpha1 := hub.(*v2alpha1.APIRule)
-	err := convertOverJson(apiRule, &apiRuleV2alpha1)
+	apiRuleV2alpha1.ObjectMeta = apiRule.ObjectMeta
+	err := convertOverJson(apiRule.Status, &apiRuleV2alpha1.Status)
+	if err != nil {
+		return err
+	}
+
+	err = convertOverJson(apiRule.Spec, &apiRuleV2alpha1.Spec)
 	if err != nil {
 		return err
 	}
@@ -22,7 +28,14 @@ func (apiRule *APIRule) ConvertTo(hub conversion.Hub) error {
 // ConvertFrom converts from the Hub version (v2alpha1) into this ApiRule (v2)
 func (apiRule *APIRule) ConvertFrom(hub conversion.Hub) error {
 	apiRuleV2alpha1 := hub.(*v2alpha1.APIRule)
-	err := convertOverJson(apiRuleV2alpha1, &apiRule)
+	apiRule.ObjectMeta = apiRuleV2alpha1.ObjectMeta
+
+	err := convertOverJson(apiRuleV2alpha1.Status, &apiRule.Status)
+	if err != nil {
+		return err
+	}
+
+	err = convertOverJson(apiRuleV2alpha1.Spec, &apiRule.Spec)
 	if err != nil {
 		return err
 	}
