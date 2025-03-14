@@ -214,7 +214,7 @@ func (r *APIRuleReconciler) reconcileV1Beta1(ctx context.Context, l logr.Logger,
 		if err != nil {
 			return doneReconcileErrorRequeue(err, r.OnErrorReconcilePeriod)
 		}
-		if err := s.UpdateStatus(&apiRule.Status); err != nil {
+		if err := s.UpdateStatus(&rule.Status); err != nil {
 			l.Error(err, "Error updating APIRule status")
 			return doneReconcileErrorRequeue(err, r.OnErrorReconcilePeriod)
 		}
@@ -237,7 +237,7 @@ func (r *APIRuleReconciler) reconcileV1Beta1(ctx context.Context, l logr.Logger,
 
 	l.Info("Reconciling APIRule sub-resources")
 	s := processing.Reconcile(ctx, r.Client, &l, cmd)
-	if err := s.UpdateStatus(&apiRule.Status); err != nil {
+	if err := s.UpdateStatus(&rule.Status); err != nil {
 		l.Error(err, "Error updating APIRule status")
 		// Quick retry if the object has been modified
 		if strings.Contains(err.Error(), "the object has been modified") {
