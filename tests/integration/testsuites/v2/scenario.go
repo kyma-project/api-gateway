@@ -200,8 +200,32 @@ func (s *scenario) callingTheEndpointWithoutTokenShouldResultInStatusBetween(pat
 	return s.httpClient.CallEndpointWithRetries(fmt.Sprintf("%s/%s", s.Url, strings.TrimLeft(path, "/")), &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher})
 }
 
-func (s *scenario) inClusterCallingTheEndpointWithoutTokenShouldSucceed(path string) error {
-	curlCommand := []string{"curl", "-sSL", "-m", "10", fmt.Sprintf("http://httpbin-%s.%s.svc.cluster.local:8000%s", s.TestID, s.Namespace, path)}
+func (s *scenario) inClusterCallingTheEndpointWithoutTokenShouldFail(path string) error {
+	curlCommand := []string{"curl", "--fail-with-body", "-sSL", "-m", "10", fmt.Sprintf("http://httpbin-%s.%s.svc.cluster.local:8000%s", s.TestID, s.Namespace, path)}
+
+	log, err := helpers.RunCurlInPod(s.Namespace, curlCommand)
+	if err != nil {
+		return nil
+	}
+
+	return fmt.Errorf("%s, %s", "Request should fail, but it succeeded", log)
+}
+
+func (s *scenario) inClusterCallingTheEndpointWithTokenShouldSucceed(path, tokenType string) error {
+	var headers string
+	switch tokenType {
+	case "JWT":
+		tokenJwt, err := auth.GetAccessToken(*s.jwtConfig, "jwt")
+		if err != nil {
+			return fmt.Errorf("failed to fetch an id_token: %s", err.Error())
+		}
+
+		headers = fmt.Sprintf("%s: Bearer %s", testcontext.AuthorizationHeaderName, tokenJwt)
+	default:
+		return fmt.Errorf("unsupported token type: %s", tokenType)
+	}
+
+	curlCommand := []string{"curl", "--fail-with-body", "-sSL", "-m", "10", "-H", headers, fmt.Sprintf("http://httpbin-%s.%s.svc.cluster.local:8000%s", s.TestID, s.Namespace, path)}
 
 	log, err := helpers.RunCurlInPod(s.Namespace, curlCommand)
 	if err != nil {
