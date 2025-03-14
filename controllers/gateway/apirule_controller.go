@@ -88,13 +88,11 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	}
 
 	isCMReconcile := req.NamespacedName.String() == types.NamespacedName{Namespace: helpers.CM_NS, Name: helpers.CM_NAME}.String()
-
 	if r.reconcileConfigMap(ctx, isCMReconcile) {
 		return doneReconcileNoRequeue()
 	}
 
 	apiRule := gatewayv2alpha1.APIRule{}
-
 	if err := r.Client.Get(ctx, req.NamespacedName, &apiRule); err != nil {
 		if apierrs.IsNotFound(err) {
 			return doneReconcileNoRequeue()
@@ -186,20 +184,6 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 func (r *APIRuleReconciler) reconcileV1Beta1(ctx context.Context, l logr.Logger, apiRule gatewayv2alpha1.APIRule, defaultDomainName string) (ctrl.Result, error) {
 	l.Info("Reconciling v1beta1 APIRule")
 	toUpdate := apiRule.DeepCopy()
-	migrate, err := apiRuleNeedsMigration(ctx, r.Client, toUpdate)
-	if err != nil {
-		return doneReconcileErrorRequeue(err, r.OnErrorReconcilePeriod)
-	}
-	l.Info("APIRule v1beta one need migration", "migration", migrate)
-	if migrate {
-		migration.ApplyMigrationAnnotation(l, toUpdate)
-		// should not conflict with future status updates as long as there are
-		// no Update() calls to the resource after that
-		if err := r.Update(ctx, toUpdate); err != nil {
-			l.Error(err, "Failed to update migration annotation")
-			return doneReconcileErrorRequeue(err, r.OnErrorReconcilePeriod)
-		}
-	}
 	l.Info("APIRule conversion from v2alpha1 to v1beta1")
 	// convert v2alpha1 to v1beta1
 	rule := gatewayv1beta1.APIRule{}
