@@ -13,5 +13,5 @@ Feature: Exposing endpoints with NoAuth
     Given The APIRule template file is set to "no-auth-wildcard.yaml"
     And There is a httpbin service
     When The APIRule is applied
-    Then In-cluster calling the "/status/200" endpoint without a token should succeed
-    And In-cluster calling the "/headers" endpoint without a token should succeed
+    Then In-cluster calling the "/status/200" endpoint without a token should fail
+    And In-cluster calling the "/headers" endpoint without a token should fail
