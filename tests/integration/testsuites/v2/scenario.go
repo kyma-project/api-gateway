@@ -201,7 +201,7 @@ func (s *scenario) callingTheEndpointWithoutTokenShouldResultInStatusBetween(pat
 }
 
 func (s *scenario) inClusterCallingTheEndpointWithoutTokenShouldFail(path string) error {
-	curlCommand := []string{"curl", "--fail-with-body", "-sSL", "-m", "10", fmt.Sprintf("http://httpbin-%s.%s.svc.cluster.local:8000%s", s.TestID, s.Namespace, path)}
+	curlCommand := []string{"curl", "--fail-with-body", "--retry 5", "-sSL", "-m", "10", fmt.Sprintf("http://httpbin-%s.%s.svc.cluster.local:8000%s", s.TestID, s.Namespace, path)}
 
 	log, err := helpers.RunCurlInPod(s.Namespace, curlCommand)
 	if err != nil {
@@ -225,7 +225,7 @@ func (s *scenario) inClusterCallingTheEndpointWithTokenShouldSucceed(path, token
 		return fmt.Errorf("unsupported token type: %s", tokenType)
 	}
 
-	curlCommand := []string{"curl", "--fail-with-body", "-sSL", "-m", "10", "-H", headers, fmt.Sprintf("http://httpbin-%s.%s.svc.cluster.local:8000%s", s.TestID, s.Namespace, path)}
+	curlCommand := []string{"curl", "--fail-with-body", "--retry 5", "-sSL", "-m", "10", "-H", headers, fmt.Sprintf("http://httpbin-%s.%s.svc.cluster.local:8000%s", s.TestID, s.Namespace, path)}
 
 	log, err := helpers.RunCurlInPod(s.Namespace, curlCommand)
 	if err != nil {
