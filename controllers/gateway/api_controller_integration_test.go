@@ -1922,8 +1922,8 @@ var _ = Describe("APIRule Controller", Serial, func() {
 		Expect(c.Create(ctx, svc)).Should(Succeed())
 		Expect(c.Create(ctx, apiRule)).Should(Succeed())
 		defer func() {
-			apiRuleTeardown(apiRule)
-			serviceTeardown(svc)
+			deleteResource(apiRule)
+			deleteResource(svc)
 		}()
 
 		expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusOK)
