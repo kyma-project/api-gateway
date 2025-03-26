@@ -3,6 +3,8 @@ package operator
 import (
 	"context"
 	"fmt"
+	dnsv1alpha1 "github.com/gardener/external-dns-management/pkg/apis/dns/v1alpha1"
+	corev1 "k8s.io/api/core/v1"
 	"math/rand"
 	"time"
 
@@ -53,6 +55,88 @@ var _ = Describe("API Gateway Controller", Serial, func() {
 				g.Expect(created.ObjectMeta.Finalizers[0]).To(Equal(ApiGatewayFinalizer))
 				g.Expect(created.Status.State).To(Equal(v1alpha1.Ready))
 			}, eventuallyTimeout).Should(Succeed())
+
+			Expect(k8sClient.Delete(context.Background(), &apiGateway)).Should(Succeed())
+		})
+
+		It("Should set DNSEntry according to istio-ingressgateway svc", func() {
+			// given
+			apiGateway := v1alpha1.APIGateway{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: generateName(),
+				},
+			}
+
+			// when
+			Expect(k8sClient.Create(context.Background(), &apiGateway)).Should(Succeed())
+			Eventually(func(g Gomega) {
+				created := v1alpha1.APIGateway{}
+				g.Expect(k8sClient.Get(context.Background(), client.ObjectKey{Name: apiGateway.Name}, &created)).Should(Succeed())
+				g.Expect(created.ObjectMeta.Finalizers).To(HaveLen(1))
+				g.Expect(created.ObjectMeta.Finalizers[0]).To(Equal(ApiGatewayFinalizer))
+				g.Expect(created.Status.State).To(Equal(v1alpha1.Ready))
+			}, eventuallyTimeout).Should(Succeed())
+
+			ingressGatewaySvc := corev1.Service{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "istio-ingressgateway",
+					Namespace: "istio-system",
+				},
+				Spec: corev1.ServiceSpec{
+					Ports: []corev1.ServicePort{
+						{
+							Name: "http",
+							Port: 80,
+						},
+					},
+				},
+				Status: corev1.ServiceStatus{
+					LoadBalancer: corev1.LoadBalancerStatus{
+						Ingress: []corev1.LoadBalancerIngress{
+							{
+								Hostname: "example1.com",
+							},
+						},
+					},
+				},
+			}
+			Expect(k8sClient.Create(context.Background(), &ingressGatewaySvc)).Should(Succeed())
+			Eventually(func(g Gomega) {
+				dnsEntry := dnsv1alpha1.DNSEntry{}
+				Expect(dnsEntry.Spec.Targets).To(HaveLen(1))
+				Expect(dnsEntry.Spec.Targets[0]).To(Equal("example1.com"))
+			})
+
+			updatedIngressGatewaySvc := corev1.Service{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "istio-ingressgateway",
+					Namespace: "istio-system",
+				},
+				Spec: corev1.ServiceSpec{
+					Ports: []corev1.ServicePort{
+						{
+							Name: "http",
+							Port: 80,
+						},
+					},
+				},
+				Status: corev1.ServiceStatus{
+					LoadBalancer: corev1.LoadBalancerStatus{
+						Ingress: []corev1.LoadBalancerIngress{
+							{
+								Hostname: "example2.com",
+							},
+						},
+					},
+				},
+			}
+			Expect(k8sClient.Update(context.Background(), &updatedIngressGatewaySvc)).Should(Succeed())
+
+			Eventually(func(g Gomega) {
+				dnsEntry := dnsv1alpha1.DNSEntry{}
+				Expect(dnsEntry.Spec.Targets).To(HaveLen(1))
+				Expect(dnsEntry.Spec.Targets[0]).To(Equal("example2.com"))
+			})
 
 			Expect(k8sClient.Delete(context.Background(), &apiGateway)).Should(Succeed())
 		})
