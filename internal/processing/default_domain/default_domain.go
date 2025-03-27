@@ -42,10 +42,10 @@ func GetHostLocalDomain(host string, namespace string) string {
 
 func HandleDefaultDomainError(log logr.Logger, err error) (finishReconciliation bool) {
 	if apierrs.IsNotFound(err) {
-		log.Error(err, "Default domain wasn't found. APIRules will require full host")
+		log.Info("Default domain wasn't found. APIRules will require full host")
 		return false
 	} else {
-		log.Error(err, "Error getting default domain")
+		log.Info("Error getting default domain")
 		return true
 	}
 }
