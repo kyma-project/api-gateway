@@ -3,7 +3,7 @@ name: PR Integration
 on:
   workflow_call:
 
-jobs:g
+jobs:
   integration-tests:
     name: Integration tests
     runs-on: ubuntu-latest
