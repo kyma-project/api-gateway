@@ -1947,45 +1947,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 			Expect(got.Spec.Selector.MatchLabels["app"]).To(Equal(serviceName + "-updated"))
 		})
 	})
-	Context("for v1beta1 migration to from", func() {
-		It("should convert jwt to v2 supported jwt", func() {
-			configJSON := fmt.Sprintf(`{"jwks": ["%s"]}`, testJwksUri)
 
-			handler := &gatewayv1beta1.Handler{
-				Name: "jwt",
-				Config: &runtime.RawExtension{
-					Raw: []byte(configJSON),
-				},
-			}
-			rule := testRule("/headers", methodsGet, nil, handler)
-
-			apiRuleV1 := testApiRule("jwt-migration", testNamespace, testServiceNameBase, testNamespace, "httpbin-istio-jwt-happy-base.kyma.local", testServicePort, []gatewayv1beta1.Rule{rule})
-
-			Expect(c.Create(ctx, apiRuleV1)).Should(Succeed())
-
-			host := gatewayv2alpha1.Host("httpbin-istio-jwt-happy-base.kyma.local")
-			ruleV2 := testRulev2alpha1("/headers", []gatewayv2alpha1.HttpMethod{http.MethodGet})
-			jwt := gatewayv2alpha1.JwtAuthentication{
-				Issuer:  testIssuer,
-				JwksUri: testJwksUri,
-			}
-
-			ruleV2.Jwt = &gatewayv2alpha1.JwtConfig{
-				Authentications: []*gatewayv2alpha1.JwtAuthentication{
-					&jwt,
-				},
-			}
-
-			apiRuleV2 := testApiRulev2alpha1("jwt-migration", testNamespace, testServiceNameBase, testNamespace, []*gatewayv2alpha1.Host{&host}, testServicePort, []gatewayv2alpha1.Rule{ruleV2})
-			expectApiRuleStatus("jwt-migration", gatewayv1beta1.StatusOK)
-			Expect(c.Get(ctx, client.ObjectKeyFromObject(apiRuleV1), apiRuleV1)).Should(Succeed())
-			Expect(c.Update(ctx, apiRuleV2)).Should(Succeed())
-			apiRuleV2.ObjectMeta.ResourceVersion = apiRuleV1.ObjectMeta.ResourceVersion
-			expectApiRuleV2Status("jwt-migration", gatewayv2alpha1.Ready)
-			verifyRequestAuthenticationCount(c, matchingLabelsFunc(apiRuleV2.Name, apiRuleV2.Namespace), 1)
-			deleteResource(apiRuleV1)
-		})
-	})
 })
 
 func verifyVirtualServiceCount(c client.Client, option client.ListOption, count int) {
