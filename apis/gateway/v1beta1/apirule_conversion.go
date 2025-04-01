@@ -12,6 +12,7 @@ import (
 
 const (
 	v1beta1SpecAnnotationKey     = "gateway.kyma-project.io/v1beta1-spec"
+	v2alpha1RulesAnnotationKey   = "gateway.kyma-project.io/v2alpha1-rules"
 	originalVersionAnnotationKey = "gateway.kyma-project.io/original-version"
 )
 
@@ -44,14 +45,14 @@ func (r *APIRule) ConvertTo(hub conversion.Hub) error {
 	if err != nil {
 		return err
 	}
-	if !slices.Contains([]string{"v2", "v2alpha1"}, r.Annotations[originalVersionAnnotationKey]) {
+	if !r.isV2OriginalVersion() {
 		apiRule.Annotations[originalVersionAnnotationKey] = "v1beta1"
+		marshaledSpec, err := json.Marshal(r.Spec)
+		if err != nil {
+			return err
+		}
+		apiRule.Annotations[v1beta1SpecAnnotationKey] = string(marshaledSpec)
 	}
-	marshaledSpec, err := json.Marshal(r.Spec)
-	if err != nil {
-		return err
-	}
-	apiRule.Annotations[v1beta1SpecAnnotationKey] = string(marshaledSpec)
 
 	if !convertible {
 		// We have to stop the conversion here, because we want to return an empty Spec in case we cannot fully convert the APIRule.
@@ -88,6 +89,14 @@ func (r *APIRule) ConvertTo(hub conversion.Hub) error {
 	if r.Spec.Host != nil {
 		host := v2alpha1.Host(*r.Spec.Host)
 		apiRule.Spec.Hosts = []*v2alpha1.Host{&host}
+	}
+
+	if _, ok := r.Annotations[v2alpha1RulesAnnotationKey]; ok && r.isV2OriginalVersion() {
+		err := json.Unmarshal([]byte(r.Annotations[v2alpha1RulesAnnotationKey]), &apiRule.Spec.Rules)
+		if err != nil {
+			return err
+		}
+		return nil
 	}
 
 	if len(r.Spec.Rules) > 0 {
@@ -151,6 +160,10 @@ func (r *APIRule) ConvertTo(hub conversion.Hub) error {
 	}
 
 	return nil
+}
+
+func (r *APIRule) isV2OriginalVersion() bool {
+	return slices.Contains([]string{"v2", "v2alpha1"}, r.Annotations[originalVersionAnnotationKey])
 }
 
 func convertV1beta1StatusToV2alpha1Status(state APIRuleStatus) v2alpha1.APIRuleStatus {
@@ -228,7 +241,9 @@ func convertOverJson(src any, dst any) error {
 func isConvertible(apiRule *APIRule) (bool, error) {
 	for _, rule := range apiRule.Spec.Rules {
 
-		// todo add conversion from annotation for original version v2alpha1 v2
+		if slices.Contains([]string{"v2", "v2alpha1"}, apiRule.Annotations[originalVersionAnnotationKey]) {
+			return true, nil
+		}
 
 		if !IsConvertiblePath(rule.Path) {
 			return false, nil
