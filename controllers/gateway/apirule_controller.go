@@ -202,7 +202,7 @@ func (r *APIRuleReconciler) reconcileV2Alpha1APIRule(ctx context.Context, l logr
 		}
 	}
 
-	gateway, err := discoverGateway(r.Client, ctx, l, rule)
+	gateway, err := discoverGateway(r.Client, ctx, l, toUpdate)
 	if err != nil {
 		return doneReconcileErrorRequeue(err, r.OnErrorReconcilePeriod)
 	}
