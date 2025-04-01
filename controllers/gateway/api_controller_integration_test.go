@@ -2351,16 +2351,6 @@ func expectApiRuleStatus(apiRuleName string, statusCode gatewayv1beta1.StatusCod
 	}, eventuallyTimeout).Should(Succeed())
 }
 
-func expectApiRuleV2Status(apiRuleName string, statusCode gatewayv2alpha1.State) {
-	By(fmt.Sprintf("Verifying that ApiRule v2 %s has status %s", apiRuleName, statusCode))
-	Eventually(func(g Gomega) {
-		expectedApiRule := gatewayv2alpha1.APIRule{}
-		g.Expect(c.Get(context.Background(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &expectedApiRule)).Should(Succeed())
-		g.Expect(expectedApiRule.Status).NotTo(BeNil())
-		g.Expect(expectedApiRule.Status.State).To(Equal(statusCode))
-	}, eventuallyTimeout).Should(Succeed())
-}
-
 func virtualService(name string, host string) *networkingv1beta1.VirtualService {
 	vs := &networkingv1beta1.VirtualService{}
 	vs.ObjectMeta = metav1.ObjectMeta{
