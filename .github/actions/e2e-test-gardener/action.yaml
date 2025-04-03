@@ -110,7 +110,7 @@ runs:
         name: html-reports_${{ github.job }}_${{ github.run_id }}_${{ inputs.test_make_target }}_${{ inputs.gardener_provider }}
         path: tests/integration/reports/
     - name: Deprovision cluster
-      if: ${{ !failure() }}
+      if: success()
       shell: bash
       env:
         GARDENER_KUBECONFIG: "${{ github.workspace }}/gardener_kubeconfig.yaml"
