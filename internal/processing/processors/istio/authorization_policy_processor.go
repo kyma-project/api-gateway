@@ -3,6 +3,7 @@ package istio
 import (
 	"context"
 	"fmt"
+
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 
 	"github.com/go-logr/logr"
@@ -160,17 +161,14 @@ func generateAuthorizationPolicySpec(ctx context.Context, client client.Client, 
 func withTo(b *builders.RuleBuilder, rule gatewayv1beta1.Rule) *builders.RuleBuilder {
 	// APIRule and VirtualService supported a regex match. Since AuthorizationPolicy supports only prefix, suffix and wildcard
 	// and we have clusters with "/.*" in APIRule, we need special handling of this case.
+	path := rule.Path
 	if rule.Path == "/.*" {
-		return b.WithTo(
-			builders.NewToBuilder().
-				WithOperation(builders.NewOperationBuilder().
-					WithMethods(rule.Methods).WithPath("/*").Get()).
-				Get())
+		path = "/*"
 	}
 	return b.WithTo(
 		builders.NewToBuilder().
 			WithOperation(builders.NewOperationBuilder().
-				WithMethods(rule.Methods).WithPath(rule.Path).Get()).
+				WithMethods(rule.Methods).WithPath(path).Get()).
 			Get())
 }
 

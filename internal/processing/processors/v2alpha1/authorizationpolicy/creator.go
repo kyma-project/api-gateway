@@ -3,6 +3,7 @@ package authorizationpolicy
 import (
 	"context"
 	"fmt"
+
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 
 	"github.com/kyma-project/api-gateway/internal/builders"
@@ -196,11 +197,15 @@ func (r creator) generateExtAuthAuthorizationPolicySpec(ctx context.Context, cli
 		return nil, err
 	}
 
+	var hosts []string
+	for _, h := range api.Spec.Hosts {
+		hosts = append(hosts, string(*h))
+	}
 	authorizationPolicySpecBuilder := builders.NewAuthorizationPolicySpecBuilder().WithSelector(podSelector.Selector)
 	return authorizationPolicySpecBuilder.
 		WithAction(v1beta1.AuthorizationPolicy_CUSTOM).
 		WithProvider(providerName).
-		WithRule(baseExtAuthRuleBuilder(rule).Get()).
+		WithRule(baseExtAuthRuleBuilder(rule, hosts).Get()).
 		Get(), nil
 }
 
@@ -212,11 +217,14 @@ func (r creator) generateAuthorizationPolicySpec(ctx context.Context, client cli
 
 	authorizationPolicySpecBuilder := builders.NewAuthorizationPolicySpecBuilder().
 		WithSelector(podSelector.Selector)
-
+	var hosts []string
+	for _, h := range api.Spec.Hosts {
+		hosts = append(hosts, string(*h))
+	}
 	// If RequiredScopes are configured, we need to generate a separate Rule for each scopeKey in defaultScopeKeys
 	if len(authorization.RequiredScopes) > 0 {
 		for _, scopeKey := range defaultScopeKeys {
-			ruleBuilder := baseRuleBuilder(rule, r.oryPassthrough)
+			ruleBuilder := baseRuleBuilder(rule, hosts, r.oryPassthrough)
 			for _, scope := range authorization.RequiredScopes {
 				ruleBuilder.WithWhenCondition(
 					builders.NewConditionBuilder().WithKey(scopeKey).WithValues([]string{scope}).Get())
@@ -230,7 +238,7 @@ func (r creator) generateAuthorizationPolicySpec(ctx context.Context, client cli
 			authorizationPolicySpecBuilder.WithRule(ruleBuilder.Get())
 		}
 	} else { // Only one AP rule should be generated for other scenarios
-		ruleBuilder := baseRuleBuilder(rule, r.oryPassthrough)
+		ruleBuilder := baseRuleBuilder(rule, hosts, r.oryPassthrough)
 		for _, aud := range authorization.Audiences {
 			ruleBuilder.WithWhenCondition(
 				builders.NewConditionBuilder().WithKey(audienceKey).WithValues([]string{aud}).Get())
@@ -241,48 +249,46 @@ func (r creator) generateAuthorizationPolicySpec(ctx context.Context, client cli
 	return authorizationPolicySpecBuilder.Get(), nil
 }
 
-// standardizeRulePath converts wildcard `/*` path to post Istio 1.22 Envoy template format `/{**}`.
-func standardizeRulePath(path string) string {
+func withTo(b *builders.RuleBuilder, hosts []string, rule gatewayv2alpha1.Rule) *builders.RuleBuilder {
+	path := rule.Path
 	if path == "/*" {
-		return "/{**}"
+		path = "/{**}"
 	}
-	return path
-}
-
-func withTo(b *builders.RuleBuilder, rule gatewayv2alpha1.Rule) *builders.RuleBuilder {
 	return b.WithTo(
 		builders.NewToBuilder().
 			WithOperation(builders.NewOperationBuilder().
-				WithMethodsV2alpha1(rule.Methods).WithPath(standardizeRulePath(rule.Path)).Get()).
+				Hosts(hosts...).
+				WithMethodsV2alpha1(rule.Methods).WithPath(path).Get()).
 			Get())
 }
 
 func withFrom(b *builders.RuleBuilder, rule gatewayv2alpha1.Rule, oryPassthrough bool) *builders.RuleBuilder {
+	b.WithFrom(builders.NewFromBuilder().WithIngressGatewaySource().Get())
 	if rule.Jwt != nil {
 		return b.WithFrom(builders.NewFromBuilder().WithForcedJWTAuthorizationV2alpha1(rule.Jwt.Authentications).Get())
-	} else if rule.ExtAuth != nil && rule.ExtAuth.Restrictions != nil {
+	}
+	if rule.ExtAuth != nil && rule.ExtAuth.Restrictions != nil {
 		return b.WithFrom(builders.NewFromBuilder().WithForcedJWTAuthorizationV2alpha1(rule.ExtAuth.Restrictions.Authentications).Get())
 	}
 
 	if oryPassthrough {
 		b.WithFrom(builders.NewFromBuilder().WithOathkeeperProxySource().Get())
 	}
-
-	return b.WithFrom(builders.NewFromBuilder().WithIngressGatewaySource().Get())
+	return b
 }
 
 // baseExtAuthRuleBuilder returns ruleBuilder with To
-func baseExtAuthRuleBuilder(rule gatewayv2alpha1.Rule) *builders.RuleBuilder {
+func baseExtAuthRuleBuilder(rule gatewayv2alpha1.Rule, hosts []string) *builders.RuleBuilder {
 	builder := builders.NewRuleBuilder()
-	builder = withTo(builder, rule)
+	builder = withTo(builder, hosts, rule)
 
 	return builder
 }
 
 // baseRuleBuilder returns ruleBuilder with To and From
-func baseRuleBuilder(rule gatewayv2alpha1.Rule, oryPassthrough bool) *builders.RuleBuilder {
+func baseRuleBuilder(rule gatewayv2alpha1.Rule, hosts []string, oryPassthrough bool) *builders.RuleBuilder {
 	builder := builders.NewRuleBuilder()
-	builder = withTo(builder, rule)
+	builder = withTo(builder, hosts, rule)
 	builder = withFrom(builder, rule, oryPassthrough)
 
 	return builder

@@ -3,6 +3,7 @@ package builders
 import (
 	"encoding/json"
 	"fmt"
+
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 
@@ -233,6 +234,11 @@ func NewOperationBuilder() *OperationBuilder {
 
 type OperationBuilder struct {
 	value *v1beta1.Operation
+}
+
+func (o *OperationBuilder) Hosts(hosts ...string) *OperationBuilder {
+	o.value.Hosts = append(o.value.Hosts, hosts...)
+	return o
 }
 
 func (o *OperationBuilder) Get() *v1beta1.Operation {
