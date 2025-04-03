@@ -1,0 +1,29 @@
+name: Schedule cleanup garden
+
+permissions:
+  contents: read # This is required for actions/checkout
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 * * * *' # Run every hour
+
+jobs:
+  cleanup-garden:
+    name: Cleanup garden
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Prepare gardener kubeconfig
+        shell: bash
+        env:
+          GARDENER_TOKEN: ${{ secrets.GARDENER_TOKEN }}
+        run: "${{ github.workspace }}/hack/ci/gardener_kubeconfig.sh"
+      - name: Cleanup garden
+        shell: bash
+        env:
+          GARDENER_KUBECONFIG: "${{ github.workspace }}/gardener_kubeconfig.yaml"
+          GARDENER_PROJECT_NAME: ${{ vars.GARDENER_PROJECT_NAME }}
+        run: "${{ github.workspace }}/hack/ci/cleanup-garden.sh"
