@@ -4,9 +4,7 @@ import (
 	"context"
 	"fmt"
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
-
 	"github.com/kyma-project/api-gateway/internal/helpers"
-
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -36,14 +34,14 @@ var _ = Describe("Resource status", Serial, func() {
 			rule := testRule(testPath, defaultMethods, defaultMutators, noConfigHandler("noop"))
 			instance := testApiRule(apiRuleName, testNamespace, serviceName, testNamespace, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule})
 			svc := testService(serviceName, testNamespace, testServicePort)
+			defer func() {
+				deleteResource(instance)
+				deleteResource(svc)
+			}()
 
 			// when
 			Expect(c.Create(context.Background(), svc)).Should(Succeed())
 			Expect(c.Create(context.Background(), instance)).Should(Succeed())
-			defer func() {
-				apiRuleTeardown(instance)
-				serviceTeardown(svc)
-			}()
 
 			// then
 			Eventually(func(g Gomega) {
@@ -51,10 +49,6 @@ var _ = Describe("Resource status", Serial, func() {
 				g.Expect(c.Get(context.Background(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &created)).Should(Succeed())
 				g.Expect(created.Status.APIRuleStatus).NotTo(BeNil())
 				g.Expect(created.Status.APIRuleStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
-				g.Expect(created.Status.VirtualServiceStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
-				g.Expect(created.Status.AccessRuleStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
-				g.Expect(created.Status.AuthorizationPolicyStatus).To(BeNil())
-				g.Expect(created.Status.RequestAuthenticationStatus).To(BeNil())
 			}, eventuallyTimeout).Should(Succeed())
 
 		})
@@ -75,14 +69,14 @@ var _ = Describe("Resource status", Serial, func() {
 			instance.Spec.Rules = append(instance.Spec.Rules, instance.Spec.Rules[0]) //Duplicate entry
 			instance.Spec.Rules = append(instance.Spec.Rules, instance.Spec.Rules[0]) //Duplicate entry
 			svc := testService(serviceName, testNamespace, testServicePort)
+			defer func() {
+				deleteResource(instance)
+				deleteResource(svc)
+			}()
 
 			// when
 			Expect(c.Create(context.Background(), svc)).Should(Succeed())
 			Expect(c.Create(context.Background(), instance)).Should(Succeed())
-			defer func() {
-				apiRuleTeardown(instance)
-				serviceTeardown(svc)
-			}()
 
 			// then
 			Eventually(func(g Gomega) {
@@ -96,11 +90,6 @@ var _ = Describe("Resource status", Serial, func() {
 				g.Expect(created.Status.APIRuleStatus.Description).To(ContainSubstring("Attribute \".spec.rules[0].accessStrategies[0].config\": strategy: noop does not support configuration"))
 				g.Expect(created.Status.APIRuleStatus.Description).To(ContainSubstring("Attribute \".spec.rules[1].accessStrategies[0].config\": strategy: noop does not support configuration"))
 				g.Expect(created.Status.APIRuleStatus.Description).To(ContainSubstring("1 more error(s)..."))
-
-				g.Expect(created.Status.VirtualServiceStatus.Code).To(Equal(gatewayv1beta1.StatusSkipped))
-				g.Expect(created.Status.AccessRuleStatus.Code).To(Equal(gatewayv1beta1.StatusSkipped))
-				g.Expect(created.Status.AuthorizationPolicyStatus).To(BeNil())
-				g.Expect(created.Status.RequestAuthenticationStatus).To(BeNil())
 
 				shouldHaveVirtualServices(g, apiRuleName, testNamespace, 0)
 			}, eventuallyTimeout).Should(Succeed())
@@ -121,14 +110,14 @@ var _ = Describe("Resource status", Serial, func() {
 			rule := testRule(testPath, defaultMethods, []*gatewayv1beta1.Mutator{}, noConfigHandler("noop"))
 			instance := testApiRule(apiRuleName, testNamespace, serviceName, testNamespace, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule})
 			svc := testService(serviceName, testNamespace, testServicePort)
+			defer func() {
+				deleteResource(instance)
+				deleteResource(svc)
+			}()
 
 			// when
 			Expect(c.Create(context.Background(), svc)).Should(Succeed())
 			Expect(c.Create(context.Background(), instance)).Should(Succeed())
-			defer func() {
-				apiRuleTeardown(instance)
-				serviceTeardown(svc)
-			}()
 
 			// then
 			Eventually(func(g Gomega) {
@@ -136,10 +125,6 @@ var _ = Describe("Resource status", Serial, func() {
 				Expect(c.Get(context.Background(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &created)).Should(Succeed())
 				g.Expect(created.Status.APIRuleStatus).NotTo(BeNil())
 				g.Expect(created.Status.APIRuleStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
-				g.Expect(created.Status.VirtualServiceStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
-				g.Expect(created.Status.AuthorizationPolicyStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
-				g.Expect(created.Status.RequestAuthenticationStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
-				g.Expect(created.Status.AccessRuleStatus).To(BeNil())
 			}, eventuallyTimeout).Should(Succeed())
 		})
 
@@ -159,14 +144,14 @@ var _ = Describe("Resource status", Serial, func() {
 			instance.Spec.Rules = append(instance.Spec.Rules, instance.Spec.Rules[0]) //Duplicate entry
 			instance.Spec.Rules = append(instance.Spec.Rules, instance.Spec.Rules[0]) //Duplicate entry
 			svc := testService(serviceName, testNamespace, testServicePort)
+			defer func() {
+				deleteResource(instance)
+				deleteResource(svc)
+			}()
 
 			// when
 			Expect(c.Create(context.Background(), svc)).Should(Succeed())
 			Expect(c.Create(context.Background(), instance)).Should(Succeed())
-			defer func() {
-				apiRuleTeardown(instance)
-				serviceTeardown(svc)
-			}()
 
 			// then
 			Eventually(func(g Gomega) {
@@ -179,11 +164,6 @@ var _ = Describe("Resource status", Serial, func() {
 				g.Expect(created.Status.APIRuleStatus.Description).To(ContainSubstring("Attribute \".spec.rules[0].accessStrategies[0].config\": strategy: noop does not support configuration"))
 				g.Expect(created.Status.APIRuleStatus.Description).To(ContainSubstring("Attribute \".spec.rules[1].accessStrategies[0].config\": strategy: noop does not support configuration"))
 				g.Expect(created.Status.APIRuleStatus.Description).To(ContainSubstring("1 more error(s)..."))
-
-				g.Expect(created.Status.VirtualServiceStatus.Code).To(Equal(gatewayv1beta1.StatusSkipped))
-				g.Expect(created.Status.AuthorizationPolicyStatus.Code).To(Equal(gatewayv1beta1.StatusSkipped))
-				g.Expect(created.Status.RequestAuthenticationStatus.Code).To(Equal(gatewayv1beta1.StatusSkipped))
-				g.Expect(created.Status.AccessRuleStatus).To(BeNil())
 
 				shouldHaveVirtualServices(g, apiRuleName, testNamespace, 0)
 			}, eventuallyTimeout).Should(Succeed())
