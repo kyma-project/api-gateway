@@ -114,7 +114,7 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		return r.reconcileAPIRuleDeletion(ctx, l, &apiRule)
 	}
 
-	if r.isApiRuleConvertedFromV2alpha1(apiRule) {
+	if r.isAPIRuleV2alpha1Compatible(apiRule) {
 		return r.reconcileV2Alpha1APIRule(ctx, l, apiRule)
 	}
 
@@ -167,28 +167,34 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	return r.convertAndUpdateStatus(ctx, l, apiRule, s.HasError())
 }
 
-func (r *APIRuleReconciler) reconcileV2Alpha1APIRule(ctx context.Context, l logr.Logger, apiRule gatewayv1beta1.APIRule) (ctrl.Result, error) {
+func (r *APIRuleReconciler) reconcileV2Alpha1APIRule(ctx context.Context, l logr.Logger, apiRuleV1beta1 gatewayv1beta1.APIRule) (ctrl.Result, error) {
 	l.Info("Reconciling v2alpha1 APIRule")
-	rule := &gatewayv2alpha1.APIRule{}
+	apiRule := &gatewayv2alpha1.APIRule{}
 
-	if err := r.Client.Get(ctx, client.ObjectKey{Namespace: apiRule.Namespace, Name: apiRule.Name}, rule); err != nil {
+	if err := r.Client.Get(ctx, client.ObjectKey{Namespace: apiRuleV1beta1.Namespace, Name: apiRuleV1beta1.Name}, apiRule); err != nil {
 		if apierrs.IsNotFound(err) {
 			return doneReconcileNoRequeue()
 		}
 		l.Error(err, "Error while getting APIRule v2alpha1")
 		return doneReconcileErrorRequeue(err, errorReconciliationPeriod)
 	}
+	if originalVersionPresent(apiRule) {
+		l.Info("APIRule v1beta1 was migrated to v2alpha1, removing original version annotation")
+		n := apiRule.DeepCopy()
+		delete(apiRule.GetAnnotations(), "gateway.kyma-project.io/original-version")
+		return r.updateResourceRequeue(ctx, l, n)
+	}
 
-	toUpdate := rule.DeepCopy()
+	toUpdate := apiRule.DeepCopy()
 
-	if !controllerutil.ContainsFinalizer(rule, apiGatewayFinalizer) {
+	if !controllerutil.ContainsFinalizer(apiRule, apiGatewayFinalizer) {
 		l.Info("APIRule is missing a finalizer, adding")
-		n := rule.DeepCopy()
+		n := apiRule.DeepCopy()
 		controllerutil.AddFinalizer(n, apiGatewayFinalizer)
 		return r.updateResourceRequeue(ctx, l, n)
 	}
 
-	migrate, err := apiRuleNeedsMigration(ctx, r.Client, &apiRule)
+	migrate, err := apiRuleNeedsMigration(ctx, r.Client, &apiRuleV1beta1)
 	if err != nil {
 		return doneReconcileErrorRequeue(err, r.OnErrorReconcilePeriod)
 	}
@@ -211,7 +217,7 @@ func (r *APIRuleReconciler) reconcileV2Alpha1APIRule(ctx context.Context, l logr
 		return r.updateStatus(ctx, l, toUpdate, true)
 	}
 
-	cmd := r.getV2Alpha1Reconciliation(&apiRule, toUpdate, gateway, migrate, &l)
+	cmd := r.getV2Alpha1Reconciliation(&apiRuleV1beta1, toUpdate, gateway, migrate, &l)
 
 	if name, err := dependencies.APIRule().AreAvailable(ctx, r.Client); err != nil {
 		s, err := handleDependenciesError(name, err).V2alpha1Status()
@@ -247,6 +253,14 @@ func (r *APIRuleReconciler) reconcileV2Alpha1APIRule(ctx context.Context, l logr
 		return doneReconcileErrorRequeue(err, r.OnErrorReconcilePeriod)
 	}
 	return r.updateStatus(ctx, l, toUpdate, s.HasError())
+}
+
+func originalVersionPresent(rule *gatewayv2alpha1.APIRule) bool {
+	if rule.GetAnnotations() == nil {
+		return false
+	}
+	_, ok := rule.GetAnnotations()["gateway.kyma-project.io/original-version"]
+	return ok
 }
 
 func (r *APIRuleReconciler) updateResourceRequeue(ctx context.Context,
@@ -399,13 +413,12 @@ func (r *APIRuleReconciler) SetupWithManager(mgr ctrl.Manager, c controllers.Rat
 		Complete(r)
 }
 
-func (r *APIRuleReconciler) isApiRuleConvertedFromV2alpha1(apiRule gatewayv1beta1.APIRule) bool {
-	// If the ApiRule is not found, we don't need to do anything. If it's found and converted, CM reconciliation is not needed.
-	if apiRule.Annotations != nil {
-		if originalVersion, ok := apiRule.Annotations["gateway.kyma-project.io/original-version"]; ok && originalVersion == "v1beta1" && len(apiRule.Spec.Rules) > 0 {
-			r.Log.Info("ApiRule is converted from v1beta", "name", apiRule.Name, "namespace", apiRule.Namespace)
-			return false
-		}
+func (r *APIRuleReconciler) isAPIRuleV2alpha1Compatible(apiRule gatewayv1beta1.APIRule) bool {
+	// rules will be empty only for APIRule converted by v1beta1 conversion webhook
+	// APIRule without rules can't be saved to etcd (due to validation error on CRD)
+	if len(apiRule.Spec.Rules) > 0 {
+		r.Log.Info("ApiRule is converted from v1beta", "name", apiRule.Name, "namespace", apiRule.Namespace)
+		return false
 	}
 	return true
 }
