@@ -8,7 +8,7 @@ on:
       - 'sec-scanners-config.yaml'
 
 jobs:
-  check-prerequisitese: 
+  check-prerequisites: 
     name: check-prerequisites
     runs-on: ubuntu-latest
     steps:
@@ -22,7 +22,7 @@ jobs:
         shell: bash
         run: |
             LATEST=$(curl -s https://api.github.com/repos/kyma-project/api-gateway/releases/latest | grep '"tag_name"' | cut -d '"' -f 4)
-            echo "Latest release before relesing: $LATEST"
+            echo "Latest release before releasing: $LATEST"
             echo "latest_before=$LATEST" >> $GITHUB_ENV
       - name: Determine if this is a patch release
         id: check_patch
