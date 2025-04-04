@@ -8,21 +8,21 @@ on:
       - 'sec-scanners-config.yaml'
 
 jobs:
-  check-prerequisites: 
+  check-prerequisitese: 
     name: check-prerequisites
     runs-on: ubuntu-latest
     steps:
       - name: Get current release from sec-scanners-config.yaml file
         shell: bash
         run: |
-            CURRENT=$(cat sec-scanners-config.yaml | grep europe-docker.pkg.dev/kyma-project/prod/api-gateway/releases/api-gateway-manager | cut -d ":" -f2
+            CURRENT=$(cat sec-scanners-config.yaml | grep api-gateway-manager | cut -d ":" -f2)
             echo "Current release: $CURRENT"
             echo "current_release=$CURRENT" >> $GITHUB_ENV
       - name: Get latest release before releasing
         shell: bash
         run: |
             LATEST=$(curl -s https://api.github.com/repos/kyma-project/api-gateway/releases/latest | grep '"tag_name"' | cut -d '"' -f 4)
-            echo "Latest release before releasing: $LATEST"
+            echo "Latest release before relesing: $LATEST"
             echo "latest_before=$LATEST" >> $GITHUB_ENV
       - name: Determine if this is a patch release
         id: check_patch
@@ -155,7 +155,7 @@ jobs:
                   echo "No action needed: $CURRENT_RELEASE is the latest"
           fi         
           
-      - name: Update Dependabot for major/minor releases #PR to main
+      - name: Update Dependabot for major/minor releases
         if: env.is_patch == 'false'
         env:
           GH_TOKEN: ${{ secrets.GOAT_BOT_REPO_ACCESS }}
@@ -165,7 +165,7 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           
           git checkout -b dependabot-config/$CURRENT_RELEASE
-          sed -i "s|release-.*|$CURRENT_RELEASE|g" .github/dependabot.yml
+          sed -i "s|release\-.*|release\-$CURRENT_RELEASE\"|g" .github/dependabot.yml
           git add .
           if git diff-index --quiet HEAD; then
             echo "Error: No changes detected"
