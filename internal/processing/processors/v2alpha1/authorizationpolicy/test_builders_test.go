@@ -1,11 +1,14 @@
 package authorizationpolicy_test
 
 import (
+	"net/http"
+
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
+	"istio.io/api/networking/v1alpha3"
+	"istio.io/client-go/pkg/apis/networking/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
-	"net/http"
 )
 
 type ruleBuilder struct {
@@ -313,4 +316,43 @@ func newServiceBuilderWithDummyData() *serviceBuilder {
 		withNamespace("example-namespace").
 		addSelector("app", "example-service")
 
+}
+
+type gatewayBuilder struct {
+	gateway *v1beta1.Gateway
+	hosts   []string
+}
+
+func newGatewayBuilder() *gatewayBuilder {
+	return &gatewayBuilder{
+		gateway: &v1beta1.Gateway{
+			Spec: v1alpha3.Gateway{
+				Servers: []*v1alpha3.Server{},
+			},
+		},
+	}
+}
+
+func (g *gatewayBuilder) withHost(host string) *gatewayBuilder {
+	g.hosts = append(g.hosts, host)
+	return g
+}
+
+func (g *gatewayBuilder) build() *v1beta1.Gateway {
+	var server v1alpha3.Server
+	if len(g.hosts) > 0 {
+		server.Hosts = g.hosts
+	}
+	g.gateway.Spec.Servers = append(g.gateway.Spec.Servers, &server)
+	return g.gateway
+}
+
+/*
+newGatewayBuilderWithDummyData returns a gatewayBuilder pre-filled with placeholder data:
+
+Host: example-host.example.com
+*/
+func newGatewayBuilderWithDummyData() *gatewayBuilder {
+	return newGatewayBuilder().
+		withHost("example-host.example.com")
 }

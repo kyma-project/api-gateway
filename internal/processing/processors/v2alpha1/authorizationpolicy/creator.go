@@ -2,7 +2,13 @@ package authorizationpolicy
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"strings"
+
+	"github.com/kyma-project/api-gateway/internal/helpers"
+	"github.com/kyma-project/api-gateway/internal/processing/default_domain"
+	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 
@@ -31,6 +37,7 @@ type creator struct {
 	// Controls that requests to Ory Oathkeeper are also permitted when
 	// migrating from APIRule v1beta1 to v2alpha1.
 	oryPassthrough bool
+	gateway        *networkingv1beta1.Gateway
 }
 
 // Create returns the AuthorizationPolicy using the configuration of the APIRule.
@@ -196,16 +203,11 @@ func (r creator) generateExtAuthAuthorizationPolicySpec(ctx context.Context, cli
 	if err != nil {
 		return nil, err
 	}
-
-	var hosts []string
-	for _, h := range api.Spec.Hosts {
-		hosts = append(hosts, string(*h))
-	}
 	authorizationPolicySpecBuilder := builders.NewAuthorizationPolicySpecBuilder().WithSelector(podSelector.Selector)
 	return authorizationPolicySpecBuilder.
 		WithAction(v1beta1.AuthorizationPolicy_CUSTOM).
 		WithProvider(providerName).
-		WithRule(baseExtAuthRuleBuilder(rule, hosts).Get()).
+		WithRule(baseExtAuthRuleBuilder(rule, nil).Get()).
 		Get(), nil
 }
 
@@ -218,8 +220,27 @@ func (r creator) generateAuthorizationPolicySpec(ctx context.Context, client cli
 	authorizationPolicySpecBuilder := builders.NewAuthorizationPolicySpecBuilder().
 		WithSelector(podSelector.Selector)
 	var hosts []string
+	gatewayDomain := ""
 	for _, h := range api.Spec.Hosts {
-		hosts = append(hosts, string(*h))
+		if helpers.IsShortHostName(string(*h)) {
+			if gatewayDomain == "" {
+				if r.gateway == nil {
+					return nil, errors.New("gateway must be provided when using short host name")
+				}
+				for _, server := range r.gateway.Spec.Servers {
+					if len(server.Hosts) > 0 {
+						gatewayDomain = strings.TrimPrefix(server.Hosts[0], "*.")
+						break
+					}
+				}
+			}
+			if gatewayDomain == "" {
+				return nil, errors.New("gateway with host definition must be provided when using short host name")
+			}
+			hosts = append(hosts, default_domain.GetHostWithDomain(string(*h), gatewayDomain))
+		} else {
+			hosts = append(hosts, string(*h))
+		}
 	}
 	// If RequiredScopes are configured, we need to generate a separate Rule for each scopeKey in defaultScopeKeys
 	if len(authorization.RequiredScopes) > 0 {
@@ -263,18 +284,28 @@ func withTo(b *builders.RuleBuilder, hosts []string, rule gatewayv2alpha1.Rule) 
 }
 
 func withFrom(b *builders.RuleBuilder, rule gatewayv2alpha1.Rule, oryPassthrough bool) *builders.RuleBuilder {
-	b.WithFrom(builders.NewFromBuilder().WithIngressGatewaySource().Get())
 	if rule.Jwt != nil {
-		return b.WithFrom(builders.NewFromBuilder().WithForcedJWTAuthorizationV2alpha1(rule.Jwt.Authentications).Get())
+		return b.WithFrom(builders.NewFromBuilder().
+			WithForcedJWTAuthorizationV2alpha1(rule.Jwt.Authentications).
+			WithIngressGatewaySource().
+			Get())
 	}
 	if rule.ExtAuth != nil && rule.ExtAuth.Restrictions != nil {
-		return b.WithFrom(builders.NewFromBuilder().WithForcedJWTAuthorizationV2alpha1(rule.ExtAuth.Restrictions.Authentications).Get())
+		return b.WithFrom(builders.NewFromBuilder().
+			WithForcedJWTAuthorizationV2alpha1(rule.ExtAuth.Restrictions.Authentications).
+			WithIngressGatewaySource().
+			Get())
 	}
 
 	if oryPassthrough {
-		b.WithFrom(builders.NewFromBuilder().WithOathkeeperProxySource().Get())
+		b.WithFrom(builders.NewFromBuilder().
+			WithOathkeeperProxySource().
+			WithIngressGatewaySource().
+			Get())
 	}
-	return b
+	return b.WithFrom(builders.NewFromBuilder().
+		WithIngressGatewaySource().
+		Get())
 }
 
 // baseExtAuthRuleBuilder returns ruleBuilder with To

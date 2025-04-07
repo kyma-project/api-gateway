@@ -150,10 +150,12 @@ func NewFromBuilder() *FromBuilder {
 }
 
 type FromBuilder struct {
-	value *v1beta1.Rule_From
+	value  *v1beta1.Rule_From
+	source v1beta1.Source
 }
 
 func (rf *FromBuilder) Get() *v1beta1.Rule_From {
+	rf.value.Source = &rf.source
 	return rf.value
 }
 
@@ -175,8 +177,7 @@ func (rf *FromBuilder) WithForcedJWTAuthorization(accessStrategies []*gatewayv1b
 			break
 		}
 	}
-	source := v1beta1.Source{RequestPrincipals: requestPrincipals}
-	rf.value.Source = &source
+	rf.source.RequestPrincipals = append(rf.source.RequestPrincipals, requestPrincipals...)
 	return rf
 }
 
@@ -188,20 +189,17 @@ func (rf *FromBuilder) WithForcedJWTAuthorizationV2alpha1(authentications []*gat
 		requestPrincipals = append(requestPrincipals, fmt.Sprintf("%s/*", authentication.Issuer))
 	}
 
-	source := v1beta1.Source{RequestPrincipals: requestPrincipals}
-	rf.value.Source = &source
+	rf.source.RequestPrincipals = append(rf.source.RequestPrincipals, requestPrincipals...)
 	return rf
 }
 
 func (rf *FromBuilder) WithIngressGatewaySource() *FromBuilder {
-	source := v1beta1.Source{Principals: []string{istioIngressGatewayPrincipal}}
-	rf.value.Source = &source
+	rf.source.Principals = append(rf.source.Principals, istioIngressGatewayPrincipal)
 	return rf
 }
 
 func (rf *FromBuilder) WithOathkeeperProxySource() *FromBuilder {
-	source := v1beta1.Source{Principals: []string{oathkeeperMaesterAccountPrincipal}}
-	rf.value.Source = &source
+	rf.source.Principals = append(rf.source.Principals, oathkeeperMaesterAccountPrincipal)
 	return rf
 }
 
