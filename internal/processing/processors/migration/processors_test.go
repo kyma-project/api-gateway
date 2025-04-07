@@ -10,6 +10,8 @@ import (
 	v2alpha1VirtualService "github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1/virtualservice"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	networkingv1alpha3 "istio.io/api/networking/v1alpha3"
+	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -31,7 +33,15 @@ var _ = Describe("NewMigrationProcessors", func() {
 			},
 		}
 
-		processors := NewMigrationProcessors(apirule, apiruleBeta, config, &log)
+		gateway := &networkingv1beta1.Gateway{
+			Spec: networkingv1alpha3.Gateway{
+				Servers: []*networkingv1alpha3.Server{
+					{Hosts: []string{"*"}},
+				},
+			},
+		}
+
+		processors := NewMigrationProcessors(apirule, apiruleBeta, gateway, config, &log)
 		Expect(processors).To(HaveLen(2))
 		Expect(processors[0]).To(BeAssignableToTypeOf(authorizationpolicy.Processor{}))
 		Expect(processors[1]).To(BeAssignableToTypeOf(requestauthentication.Processor{}))
@@ -53,7 +63,15 @@ var _ = Describe("NewMigrationProcessors", func() {
 				},
 			},
 		}
-		processors := NewMigrationProcessors(apirule, apiruleBeta, config, &log)
+		gateway := &networkingv1beta1.Gateway{
+			Spec: networkingv1alpha3.Gateway{
+				Servers: []*networkingv1alpha3.Server{
+					{Hosts: []string{"*"}},
+				},
+			},
+		}
+
+		processors := NewMigrationProcessors(apirule, apiruleBeta, gateway, config, &log)
 		// then
 		Expect(len(processors)).To(Equal(len(expectedProcessors)))
 		for i, processor := range expectedProcessors {
