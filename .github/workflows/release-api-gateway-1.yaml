@@ -49,7 +49,7 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           
           git checkout -b sec-scanners-config/$IMAGE_TAG
-          sed -i "s|main\/api-gateway-manager.*|releases\/api-gateway-manager\:$IMAGE_TAG|g" sec-scanners-config.yaml
+          sed 's/\(releases\|main\)\/api-gateway-manager.*/releases\/api-gateway-manager\:$IMAGE_TAG/g' sec-scanners-config.yaml
           git add .
           if git diff-index --quiet HEAD; then
             echo "Error: No changes detected"
