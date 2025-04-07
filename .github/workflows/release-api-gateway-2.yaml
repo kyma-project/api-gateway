@@ -31,7 +31,7 @@ jobs:
       - name: Determine if this is a patch release
         id: check_patch
         run: |
-          if [[ "${{ env.current_release }} }}" =~ ^[0-9]+\.[0-9]+\.[1-9][0-9]*$ ]]; then
+          if [[ "$current_release" =~ ^[0-9]+\.[0-9]+\.[1-9][0-9]*$ ]]; then
             echo "is_patch=true" >> $GITHUB_ENV
           else
             echo "is_patch=false" >> $GITHUB_ENV
@@ -44,8 +44,8 @@ jobs:
       dockerfile: Dockerfile
       context: .
       build-args: |
-        VERSION=${{ env.current_release }}
-      tags: "${{ env.current_release }}"
+        VERSION=$current_release
+      tags: "$current_release"
 
   unit-tests:
     uses: ./.github/workflows/call-unit-lint.yaml
@@ -54,7 +54,7 @@ jobs:
     needs: build-image
     uses: ./.github/workflows/call-integration-release.yaml
     with:
-      image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway/releases/api-gateway-manager:${{ env.current_release }}"
+      image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway/releases/api-gateway-manager:$current_release"
     secrets: inherit
  
   create-draft:
@@ -70,20 +70,20 @@ jobs:
       - name: Create changelog
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: ./scripts/create_changelog.sh ${{ env.current_release }}
+        run: ./scripts/create_changelog.sh $current_release
 
       - name: Create draft release
         id: create-draft
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          RELEASE_ID=$(./scripts/create_draft_release.sh ${{ env.current_release }})
+          RELEASE_ID=$(./scripts/create_draft_release.sh $current_release)
           echo "release_id=$RELEASE_ID" >> $GITHUB_OUTPUT
 
       - name: Create lightweight tag
         run: |
-          git tag ${{ env.current_release }}
-          git push origin ${{ env.current_release }}
+          git tag $current_release
+          git push origin $current_release
 
     outputs:
       release_id: ${{ steps.create-draft.outputs.release_id }}
@@ -102,7 +102,7 @@ jobs:
       - name: Publish release assets
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: ./scripts/publish_assets.sh ${{ env.current_release }} ${{ needs.create-draft.outputs.release_id }}
+        run: ./scripts/publish_assets.sh $current_release ${{ needs.create-draft.outputs.release_id }}
 
       - name: Publish release
         env:
@@ -122,7 +122,7 @@ jobs:
           payload-templated: true
           payload: |
             repository: ${{ github.repository }},
-            release: ${{ env.current_release }}
+            release: $current_release
 
   post-release-adjustments:
     runs-on: ubuntu-latest
@@ -133,8 +133,8 @@ jobs:
         if: env.is_patch == 'true'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          LATEST_BEFORE: ${{ env.latest_before }}
-          CURRENT_RELEASE: ${{ env.current_release }}
+          LATEST_BEFORE: $latest_before
+          CURRENT_RELEASE: $current_release
         run: |
           if [ "$(printf '%s\n' "$CURRENT_RELEASE" "$LATEST_BEFORE" | sort -V | head -n1)" = "$CURRENT_RELEASE" ]; then 
           echo "$LATEST_BEFORE should be marked as latest release"
@@ -163,7 +163,7 @@ jobs:
         if: env.is_patch == 'false'
         env:
           GH_TOKEN: ${{ secrets.GOAT_BOT_REPO_ACCESS }}
-          CURRENT_RELEASE: ${{ env.current_release }}
+          CURRENT_RELEASE: $current_release
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
