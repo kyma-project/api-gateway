@@ -416,10 +416,13 @@ func (r *APIRuleReconciler) SetupWithManager(mgr ctrl.Manager, c controllers.Rat
 func (r *APIRuleReconciler) isAPIRuleV2alpha1Compatible(apiRule gatewayv1beta1.APIRule) bool {
 	// rules will be empty only for APIRule converted by v1beta1 conversion webhook
 	// APIRule without rules can't be saved to etcd (due to validation error on CRD)
-	if len(apiRule.Spec.Rules) > 0 {
-		r.Log.Info("ApiRule is converted from v1beta", "name", apiRule.Name, "namespace", apiRule.Namespace)
-		return false
+	if apiRule.Annotations != nil {
+		if originalVersion, ok := apiRule.Annotations["gateway.kyma-project.io/original-version"]; ok && originalVersion == "v1beta1" && len(apiRule.Spec.Rules) > 0 {
+			r.Log.Info("ApiRule is converted from v1beta", "name", apiRule.Name, "namespace", apiRule.Namespace)
+			return false
+		}
 	}
+
 	return true
 }
 
