@@ -263,6 +263,7 @@ func withTo(b *builders.RuleBuilder, hosts []string, rule gatewayv2alpha1.Rule) 
 }
 
 func withFrom(b *builders.RuleBuilder, rule gatewayv2alpha1.Rule, oryPassthrough bool) *builders.RuleBuilder {
+	b.WithFrom(builders.NewFromBuilder().WithIngressGatewaySource().Get())
 	if rule.Jwt != nil {
 		return b.WithFrom(builders.NewFromBuilder().WithForcedJWTAuthorizationV2alpha1(rule.Jwt.Authentications).Get())
 	}
@@ -273,8 +274,7 @@ func withFrom(b *builders.RuleBuilder, rule gatewayv2alpha1.Rule, oryPassthrough
 	if oryPassthrough {
 		b.WithFrom(builders.NewFromBuilder().WithOathkeeperProxySource().Get())
 	}
-
-	return b.WithFrom(builders.NewFromBuilder().WithIngressGatewaySource().Get())
+	return b
 }
 
 // baseExtAuthRuleBuilder returns ruleBuilder with To
