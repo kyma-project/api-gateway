@@ -178,12 +178,6 @@ func (r *APIRuleReconciler) reconcileV2Alpha1APIRule(ctx context.Context, l logr
 		l.Error(err, "Error while getting APIRule v2alpha1")
 		return doneReconcileErrorRequeue(err, errorReconciliationPeriod)
 	}
-	if originalVersionPresent(apiRule) {
-		l.Info("APIRule v1beta1 was migrated to v2alpha1, removing original version annotation")
-		n := apiRule.DeepCopy()
-		delete(apiRule.GetAnnotations(), "gateway.kyma-project.io/original-version")
-		return r.updateResourceRequeue(ctx, l, n)
-	}
 
 	toUpdate := apiRule.DeepCopy()
 
@@ -253,14 +247,6 @@ func (r *APIRuleReconciler) reconcileV2Alpha1APIRule(ctx context.Context, l logr
 		return doneReconcileErrorRequeue(err, r.OnErrorReconcilePeriod)
 	}
 	return r.updateStatus(ctx, l, toUpdate, s.HasError())
-}
-
-func originalVersionPresent(rule *gatewayv2alpha1.APIRule) bool {
-	if rule.GetAnnotations() == nil {
-		return false
-	}
-	_, ok := rule.GetAnnotations()["gateway.kyma-project.io/original-version"]
-	return ok
 }
 
 func (r *APIRuleReconciler) updateResourceRequeue(ctx context.Context,
@@ -414,10 +400,10 @@ func (r *APIRuleReconciler) SetupWithManager(mgr ctrl.Manager, c controllers.Rat
 }
 
 func (r *APIRuleReconciler) isAPIRuleV2alpha1Compatible(apiRule gatewayv1beta1.APIRule) bool {
-	// rules will be empty only for APIRule converted by v1beta1 conversion webhook
-	// APIRule without rules can't be saved to etcd (due to validation error on CRD)
 	if apiRule.Annotations != nil {
-		if originalVersion, ok := apiRule.Annotations["gateway.kyma-project.io/original-version"]; ok && originalVersion == "v1beta1" && len(apiRule.Spec.Rules) > 0 {
+		// rules will be empty only for APIRule converted by v1beta1 conversion webhook
+		// APIRule without rules can't be saved to etcd (due to validation error on CRD)
+		if originalVersion, ok := apiRule.Annotations["gateway.kyma-project.io/original-version"]; ok && originalVersion == "v1beta1" {
 			r.Log.Info("ApiRule is converted from v1beta", "name", apiRule.Name, "namespace", apiRule.Namespace)
 			return false
 		}
@@ -429,7 +415,6 @@ func (r *APIRuleReconciler) isAPIRuleV2alpha1Compatible(apiRule gatewayv1beta1.A
 // convertAndUpdateStatus is a small helper function that converts APIRule
 // resource from convertible v1beta1 to hub version v2alpha1
 func (r *APIRuleReconciler) convertAndUpdateStatus(ctx context.Context, l logr.Logger, rule gatewayv1beta1.APIRule, hasError bool) (ctrl.Result, error) {
-	l.Info("Converting APIRule v1beta1 to v2alpha1 ", "rule", rule)
 	toUpdate := gatewayv2alpha1.APIRule{}
 	if err := rule.ConvertTo(&toUpdate); err != nil {
 		return doneReconcileErrorRequeue(err, r.OnErrorReconcilePeriod)

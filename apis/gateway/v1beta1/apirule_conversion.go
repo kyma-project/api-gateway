@@ -45,16 +45,17 @@ func (r *APIRule) ConvertTo(hub conversion.Hub) error {
 	if err != nil {
 		return err
 	}
-	if !r.isV2OriginalVersion() {
-		apiRule.Annotations[originalVersionAnnotationKey] = "v1beta1"
-		marshaledSpec, err := json.Marshal(r.Spec)
-		if err != nil {
-			return err
-		}
-		apiRule.Annotations[v1beta1SpecAnnotationKey] = string(marshaledSpec)
-	}
 
 	if !convertible {
+		if !r.isV2OriginalVersion() {
+			apiRule.Annotations[originalVersionAnnotationKey] = "v1beta1"
+			marshaledSpec, err := json.Marshal(r.Spec)
+			if err != nil {
+				return err
+			}
+			apiRule.Annotations[v1beta1SpecAnnotationKey] = string(marshaledSpec)
+		}
+
 		// We have to stop the conversion here, because we want to return an empty Spec in case we cannot fully convert the APIRule.
 		return nil
 	}
@@ -112,16 +113,6 @@ func (r *APIRule) ConvertTo(hub conversion.Hub) error {
 				for _, strategy := range ruleV1beta1.AccessStrategies {
 					if strategy.Handler.Name == AccessStrategyNoAuth {
 						ruleV2alpha1.NoAuth = ptr.To(true)
-					}
-					if strategy.Handler.Name == AccessStrategyJwt {
-						jwtConfig, err := convertToJwtConfig(strategy)
-						if err != nil {
-							return err
-						}
-						err = convertOverJson(jwtConfig, &ruleV2alpha1.Jwt)
-						if err != nil {
-							return err
-						}
 					}
 				}
 			}
@@ -206,13 +197,12 @@ func convertV2alpha1StatusToV1beta1Status(state v2alpha1.APIRuleStatus) APIRuleS
 // ConvertFrom converts from the Hub version (v2alpha1) into this APIRule (v1beta1)
 func (r *APIRule) ConvertFrom(hub conversion.Hub) error {
 	apiRule := hub.(*v2alpha1.APIRule)
-
 	r.ObjectMeta = apiRule.ObjectMeta
 
 	r.Status = convertV2alpha1StatusToV1beta1Status(apiRule.Status)
 
 	// if the original version is v1beta1, we need to convert the spec from the annotation to not lose any data
-	if apiRule.Annotations[originalVersionAnnotationKey] == "v1beta1" && len(apiRule.Spec.Rules) == 0 {
+	if apiRule.Annotations[originalVersionAnnotationKey] == "v1beta1" {
 		err := json.Unmarshal([]byte(apiRule.Annotations[v1beta1SpecAnnotationKey]), &r.Spec)
 		if err != nil {
 			return err
@@ -251,7 +241,7 @@ func isConvertible(apiRule *APIRule) (bool, error) {
 
 		for _, accessStrategy := range rule.AccessStrategies {
 
-			if accessStrategy.Handler.Name == AccessStrategyNoAuth || accessStrategy.Handler.Name == "ext-auth" {
+			if accessStrategy.Handler.Name == AccessStrategyNoAuth {
 				continue
 			}
 			return false, nil
