@@ -374,4 +374,32 @@ var _ = Describe("Validate rules", func() {
 		Expect(problems[0].AttributePath).To(Equal(".spec.rules[0].injection"))
 		Expect(problems[0].Message).To(Equal("Service cannot have empty label selectors when the API Rule strategy is JWT"))
 	})
+
+	It("should invoke sidecar injection validation on noAuth expsed workload", func() {
+		//given
+		apiRule := &v2alpha1.APIRule{
+			Spec: v2alpha1.APIRuleSpec{
+				Service: getApiRuleService(sampleServiceName, uint32(8080)),
+				Hosts:   []*v2alpha1.Host{&host},
+				Rules: []v2alpha1.Rule{
+					{
+						Path:   "/abc",
+						NoAuth: ptr.To(true),
+					},
+				},
+			},
+		}
+
+		service := getService(sampleServiceName)
+		service.Spec.Selector = map[string]string{}
+		fakeClient := createFakeClient(service)
+
+		//when
+		problems := validateRules(context.Background(), fakeClient, ".spec", apiRule)
+
+		// then
+		Expect(problems).To(HaveLen(1))
+		Expect(problems[0].AttributePath).To(Equal(".spec.rules[0].injection"))
+		Expect(problems[0].Message).To(Equal("Service cannot have empty label selectors when the API Rule strategy is JWT"))
+	})
 })
