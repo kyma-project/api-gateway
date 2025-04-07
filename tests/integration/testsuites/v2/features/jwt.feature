@@ -99,5 +99,5 @@ Feature: Exposing endpoints with JWT
     And There is a httpbin service
     And There is an endpoint secured with JWT on path "/*"
     When The APIRule is applied
-    Then In-cluster calling the "/status/200" endpoint with a valid "JWT" token should succeed
-    And In-cluster calling the "/headers" endpoint with a valid "JWT" token should succeed
+    Then In-cluster calling the "/status/200" endpoint with a valid "JWT" token should fail
+    And In-cluster calling the "/headers" endpoint with a valid "JWT" token should fail
