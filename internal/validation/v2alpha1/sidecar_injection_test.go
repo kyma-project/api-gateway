@@ -403,6 +403,6 @@ var _ = Describe("Sidecar injection validation", func() {
 
 		//then
 		Expect(problems).To(HaveLen(1))
-		Expect(problems[0].Message).To(Equal("Service cannot have empty label selectors when the API Rule strategy is JWT"))
+		Expect(problems[0].Message).To(Equal("Target service label selectors are not defined"))
 	})
 })
