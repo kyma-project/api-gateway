@@ -183,7 +183,7 @@ var _ = BeforeSuite(func(specCtx SpecContext) {
 	}
 
 	Expect(apiReconciler.SetupWithManager(mgr, rateLimiterCfg)).Should(Succeed())
-	Expect((&gatewayv1beta1.APIRule{}).SetupWebhookWithManager(mgr)).Should(Succeed())
+	Expect((&gatewayv2alpha1.APIRule{}).SetupWebhookWithManager(mgr)).Should(Succeed())
 
 	go func() {
 		defer GinkgoRecover()
