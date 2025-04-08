@@ -41,21 +41,21 @@ func (r *APIRule) ConvertTo(hub conversion.Hub) error {
 	}
 	apiRule.Status = convertV1beta1StatusToV2alpha1Status(r.Status)
 
+	if !r.isV2OriginalVersion() {
+		apiRule.Annotations[originalVersionAnnotationKey] = "v1beta1"
+		marshaledSpec, err := json.Marshal(r.Spec)
+		if err != nil {
+			return err
+		}
+		apiRule.Annotations[v1beta1SpecAnnotationKey] = string(marshaledSpec)
+	}
+
 	convertible, err := isConvertible(r)
 	if err != nil {
 		return err
 	}
 
 	if !convertible {
-		if !r.isV2OriginalVersion() {
-			apiRule.Annotations[originalVersionAnnotationKey] = "v1beta1"
-			marshaledSpec, err := json.Marshal(r.Spec)
-			if err != nil {
-				return err
-			}
-			apiRule.Annotations[v1beta1SpecAnnotationKey] = string(marshaledSpec)
-		}
-
 		// We have to stop the conversion here, because we want to return an empty Spec in case we cannot fully convert the APIRule.
 		return nil
 	}
