@@ -24,8 +24,8 @@ spec:
       name: Host
       type: string
     deprecated: true
-    deprecationWarning: This version of APIRule is deprecated and will be removed
-      in future releases. Please use v2 instead.
+    deprecationWarning: v1beta1 version of APIRule is deprecated and will be removed
+      in future releases. Use version v2 instead.
     name: v1beta1
     schema:
       openAPIV3Schema:
