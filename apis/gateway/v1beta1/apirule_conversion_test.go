@@ -14,6 +14,8 @@ import (
 
 var _ = Describe("APIRule Conversion", func() {
 	host1string := "host1"
+	namespace := "test-namespace"
+	var port uint32 = 8080
 	testV1StatusOK := v1beta1.APIRuleStatus{
 		APIRuleStatus: &v1beta1.APIRuleResourceStatus{
 			Code:        v1beta1.StatusOK,
@@ -58,7 +60,7 @@ var _ = Describe("APIRule Conversion", func() {
 			Expect(err).ToNot(HaveOccurred())
 			Expect(apiRuleV2alpha1.Annotations).To(HaveKeyWithValue("gateway.kyma-project.io/original-version", "v1beta1"))
 		})
-		It("should have origin version annotation", func() {
+		It("should have origin version annotation not changed (already v2alpha1)", func() {
 			// given
 			objectMetadata := testObjectMeta
 			objectMetadata.Annotations = map[string]string{
@@ -369,9 +371,6 @@ var _ = Describe("APIRule Conversion", func() {
 				"cookie1": "value2",
 			}, &cookieConfig)
 
-			namespace := "test-namespace"
-			var port uint32 = 8080
-
 			apiRuleV1beta1 := v1beta1.APIRule{
 				Status: testV1StatusOK,
 				Spec: v1beta1.APIRuleSpec{
@@ -419,7 +418,40 @@ var _ = Describe("APIRule Conversion", func() {
 			Expect(err).ToNot(HaveOccurred())
 			Expect(apiRuleV2alpha1.Annotations["gateway.kyma-project.io/v1beta1-spec"]).To(BeEquivalentTo(`{"host":"host1","service":{"name":"service-test","namespace":"test-namespace","port":8080},"gateway":"gateway-test","rules":[{"path":"/path1","service":{"name":"service","port":null},"methods":["GET","POST"],"accessStrategies":[{"handler":"jwt"}],"mutators":[{"handler":"header","config":{"header1":"value1"}},{"handler":"cookie","config":{"cookie1":"value2"}}]}]}`))
 		})
+		It("should convert spec from annotation for v2alpha1 stored in v1beta1", func() {
+			v1alpha1AnnotationRules := `[{"path":"/*","methods":["GET"],"noAuth":true}]`
 
+			namespace := "test-namespace"
+			var port uint32 = 80
+
+			apiRuleV1beta1 := v1beta1.APIRule{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test",
+					Namespace: namespace,
+					Annotations: map[string]string{
+						"gateway.kyma-project.io/original-version": "v2alpha1",
+						"gateway.kyma-project.io/v2alpha1-rules":   v1alpha1AnnotationRules,
+					},
+				},
+				Status: testV1StatusOK,
+				Spec: v1beta1.APIRuleSpec{
+					Host:    &host1string,
+					Gateway: ptr.To("gateway-test"),
+					Service: &v1beta1.Service{
+						Name:      ptr.To("service-test"),
+						Port:      &port,
+						Namespace: &namespace,
+					},
+				}}
+			apiRuleV2alpha1 := v2alpha1.APIRule{}
+			// when
+			err := apiRuleV1beta1.ConvertTo(&apiRuleV2alpha1)
+			// then
+			Expect(err).ToNot(HaveOccurred())
+			Expect(apiRuleV2alpha1.Spec.Rules).To(HaveLen(1))
+			Expect(apiRuleV2alpha1.Spec.Rules[0].NoAuth).To(Equal(ptr.To(true)))
+			Expect(apiRuleV2alpha1.Spec.Rules[0].Methods).To(Equal([]v2alpha1.HttpMethod{"GET"}))
+		})
 	})
 
 	Describe("v2alpha1 to v1beta1", func() {
