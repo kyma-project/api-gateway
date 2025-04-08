@@ -51,7 +51,7 @@ jobs:
           git checkout -f sec-scanners-config/release
           git reset --hard origin/main
           sed -i "s/\(releases\|main\)\/api-gateway-manager.*/releases\/api-gateway-manager\:$IMAGE_TAG/g" sec-scanners-config.yaml
-          git add .
+          git add ./sec-scanners-config.yaml
           if git diff-index --quiet HEAD; then
             echo "Error: No changes detected"
             exit 1
