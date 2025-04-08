@@ -2,6 +2,8 @@ package authorizationpolicy_test
 
 import (
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
+	"istio.io/api/networking/v1alpha3"
+	"istio.io/client-go/pkg/apis/networking/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
@@ -313,4 +315,37 @@ func newServiceBuilderWithDummyData() *serviceBuilder {
 		withNamespace("example-namespace").
 		addSelector("app", "example-service")
 
+}
+
+type gatewayBuilder struct {
+	gateway *v1beta1.Gateway
+}
+
+func newGatewayBuilder() *gatewayBuilder {
+	return &gatewayBuilder{
+		gateway: &v1beta1.Gateway{
+			Spec: v1alpha3.Gateway{
+				Servers: []*v1alpha3.Server{},
+			},
+		},
+	}
+}
+
+func (g *gatewayBuilder) withHost(host string) *gatewayBuilder {
+	g.gateway.Spec.Servers[0].Hosts = []string{host}
+	return g
+}
+
+func (g *gatewayBuilder) build() *v1beta1.Gateway {
+	return g.gateway
+}
+
+/*
+newGatewayBuilderWithDummyData returns a gatewayBuilder pre-filled with placeholder data:
+
+Host: example-host.example.com
+*/
+func newGatewayBuilderWithDummyData() *gatewayBuilder {
+	return newGatewayBuilder().
+		withHost("example-host.example.com")
 }

@@ -28,8 +28,9 @@ var _ = Describe("Processing", func() {
 			withRules(ruleJwt).
 			build()
 		svc := newServiceBuilderWithDummyData().build()
+		gateway := newGatewayBuilderWithDummyData().build()
 		client := getFakeClient(svc)
-		processor := authorizationpolicy.NewProcessor(&testLogger, apiRule)
+		processor := authorizationpolicy.NewProcessor(&testLogger, apiRule, gateway)
 
 		// when
 		result, err := processor.EvaluateReconciliation(context.Background(), client)
@@ -53,8 +54,9 @@ var _ = Describe("Processing", func() {
 			withRules(ruleJwt).
 			build()
 		svc := newServiceBuilderWithDummyData().build()
+		gateway := newGatewayBuilderWithDummyData().build()
 		client := getFakeClient(svc)
-		processor := authorizationpolicy.NewProcessor(&testLogger, apiRule)
+		processor := authorizationpolicy.NewProcessor(&testLogger, apiRule, gateway)
 
 		// when
 		result, err := processor.EvaluateReconciliation(context.Background(), client)
@@ -92,8 +94,9 @@ var _ = Describe("Processing", func() {
 			withNamespace(specServiceNamespace).
 			addSelector("app", ruleServiceName).
 			build()
+		gateway := newGatewayBuilderWithDummyData().build()
 		client := getFakeClient(svc)
-		processor := authorizationpolicy.NewProcessor(&testLogger, apiRule)
+		processor := authorizationpolicy.NewProcessor(&testLogger, apiRule, gateway)
 
 		// when
 		result, err := processor.EvaluateReconciliation(context.Background(), client)
@@ -128,8 +131,9 @@ var _ = Describe("Processing", func() {
 			withNamespace(ruleServiceNamespace).
 			addSelector("app", ruleServiceName).
 			build()
+		gateway := newGatewayBuilderWithDummyData().build()
 		client := getFakeClient(svc)
-		processor := authorizationpolicy.NewProcessor(&testLogger, apiRule)
+		processor := authorizationpolicy.NewProcessor(&testLogger, apiRule, gateway)
 
 		// when
 		result, err := processor.EvaluateReconciliation(context.Background(), client)
@@ -155,9 +159,10 @@ var _ = Describe("Processing", func() {
 			withRules(rule).
 			build()
 		svc := newServiceBuilderWithDummyData().build()
+		gateway := newGatewayBuilderWithDummyData().build()
 		client := getFakeClient(svc)
 
-		processor := authorizationpolicy.NewProcessor(&testLogger, apiRule)
+		processor := authorizationpolicy.NewProcessor(&testLogger, apiRule, gateway)
 
 		// when
 		result, err := processor.EvaluateReconciliation(context.Background(), client)
@@ -180,9 +185,10 @@ var _ = Describe("Processing", func() {
 			withRules(rule).
 			build()
 		svc := newServiceBuilderWithDummyData().build()
+		gateway := newGatewayBuilderWithDummyData().build()
 		client := getFakeClient(existingAp, svc)
 
-		processor := authorizationpolicy.NewProcessor(&testLogger, apiRule)
+		processor := authorizationpolicy.NewProcessor(&testLogger, apiRule, gateway)
 
 		// when
 		result, err := processor.EvaluateReconciliation(context.Background(), client)
@@ -203,7 +209,8 @@ var _ = Describe("Processing", func() {
 		apiRule := newAPIRuleBuilderWithDummyData().build()
 		svc := newServiceBuilderWithDummyData().build()
 		ctrlClient := getFakeClient(existingAp, svc)
-		processor := authorizationpolicy.NewProcessor(&testLogger, apiRule)
+		gateway := newGatewayBuilderWithDummyData().build()
+		processor := authorizationpolicy.NewProcessor(&testLogger, apiRule, gateway)
 
 		// when
 		result, err := processor.EvaluateReconciliation(context.Background(), ctrlClient)
@@ -234,7 +241,8 @@ var _ = Describe("Processing", func() {
 			apiRule := newAPIRuleBuilderWithDummyData().
 				withRules(existingRule, newRule).
 				build()
-			processor := authorizationpolicy.NewProcessor(&testLogger, apiRule)
+			gateway := newGatewayBuilderWithDummyData().build()
+			processor := authorizationpolicy.NewProcessor(&testLogger, apiRule, gateway)
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.Background(), ctrlClient)
@@ -264,7 +272,8 @@ var _ = Describe("Processing", func() {
 			apiRule := newAPIRuleBuilderWithDummyData().
 				withRules(existingRule, newRule).
 				build()
-			processor := authorizationpolicy.NewProcessor(&testLogger, apiRule)
+			gateway := newGatewayBuilderWithDummyData().build()
+			processor := authorizationpolicy.NewProcessor(&testLogger, apiRule, gateway)
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.Background(), ctrlClient)
@@ -299,7 +308,8 @@ var _ = Describe("Processing", func() {
 				addSelector("app", "new-service").
 				build()
 			ctrlClient := getFakeClient(existingAp, svc1, svc2)
-			processor := authorizationpolicy.NewProcessor(&testLogger, apiRule)
+			gateway := newGatewayBuilderWithDummyData().build()
+			processor := authorizationpolicy.NewProcessor(&testLogger, apiRule, gateway)
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.Background(), ctrlClient)
@@ -327,7 +337,8 @@ var _ = Describe("Processing", func() {
 			apiRule := newAPIRuleBuilderWithDummyData().
 				withRules(rule).
 				build()
-			processor := authorizationpolicy.NewProcessor(&testLogger, apiRule)
+			gateway := newGatewayBuilderWithDummyData().build()
+			processor := authorizationpolicy.NewProcessor(&testLogger, apiRule, gateway)
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.Background(), ctrlClient)
@@ -362,7 +373,8 @@ var _ = Describe("Processing", func() {
 			apiRule := newAPIRuleBuilderWithDummyData().
 				withRules(unchangedRule, updatedRule).
 				build()
-			processor := authorizationpolicy.NewProcessor(&testLogger, apiRule)
+			gateway := newGatewayBuilderWithDummyData().build()
+			processor := authorizationpolicy.NewProcessor(&testLogger, apiRule, gateway)
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.Background(), ctrlClient)
@@ -401,7 +413,8 @@ var _ = Describe("Processing", func() {
 				withRules(movedRule).
 				withServiceNamespace(specNewServiceNamespace).
 				build()
-			processor := authorizationpolicy.NewProcessor(&testLogger, apiRule)
+			gateway := newGatewayBuilderWithDummyData().build()
+			processor := authorizationpolicy.NewProcessor(&testLogger, apiRule, gateway)
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.Background(), ctrlClient)
@@ -433,7 +446,8 @@ var _ = Describe("Processing", func() {
 			apiRule := newAPIRuleBuilderWithDummyData().
 				withRules(movedRule).
 				build()
-			processor := authorizationpolicy.NewProcessor(&testLogger, apiRule)
+			gateway := newGatewayBuilderWithDummyData().build()
+			processor := authorizationpolicy.NewProcessor(&testLogger, apiRule, gateway)
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.Background(), ctrlClient)
@@ -477,7 +491,8 @@ var _ = Describe("Processing", func() {
 			apiRule := newAPIRuleBuilderWithDummyData().
 				withRules(unchangedRule, updatedRule).
 				build()
-			processor := authorizationpolicy.NewProcessor(&testLogger, apiRule)
+			gateway := newGatewayBuilderWithDummyData().build()
+			processor := authorizationpolicy.NewProcessor(&testLogger, apiRule, gateway)
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.Background(), ctrlClient)
@@ -506,8 +521,9 @@ var _ = Describe("Processing", func() {
 				addSelector("custom", "example-service").
 				build()
 			client := getFakeClient(svc)
+			gateway := newGatewayBuilderWithDummyData().build()
 
-			processor := authorizationpolicy.NewProcessor(&testLogger, apiRule)
+			processor := authorizationpolicy.NewProcessor(&testLogger, apiRule, gateway)
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.Background(), client)
@@ -539,8 +555,9 @@ var _ = Describe("Processing", func() {
 				addSelector("custom", "example-service").
 				build()
 			client := getFakeClient(svc)
+			gateway := newGatewayBuilderWithDummyData().build()
 
-			processor := authorizationpolicy.NewProcessor(&testLogger, apiRule)
+			processor := authorizationpolicy.NewProcessor(&testLogger, apiRule, gateway)
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.Background(), client)
@@ -569,8 +586,9 @@ var _ = Describe("Processing", func() {
 				addSelector("second-custom", "blah").
 				build()
 			client := getFakeClient(svc)
+			gateway := newGatewayBuilderWithDummyData().build()
 
-			processor := authorizationpolicy.NewProcessor(&testLogger, apiRule)
+			processor := authorizationpolicy.NewProcessor(&testLogger, apiRule, gateway)
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.Background(), client)
@@ -616,7 +634,8 @@ var _ = Describe("Processing", func() {
 			apiRule := newAPIRuleBuilderWithDummyData().
 				withRules(rule).
 				build()
-			processor := authorizationpolicy.NewProcessor(&testLogger, apiRule)
+			gateway := newGatewayBuilderWithDummyData().build()
+			processor := authorizationpolicy.NewProcessor(&testLogger, apiRule, gateway)
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.Background(), ctrlClient)

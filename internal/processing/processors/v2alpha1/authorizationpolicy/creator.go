@@ -2,7 +2,12 @@ package authorizationpolicy
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"github.com/kyma-project/api-gateway/internal/helpers"
+	"github.com/kyma-project/api-gateway/internal/processing/default_domain"
+	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
+	"strings"
 
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 
@@ -31,6 +36,7 @@ type creator struct {
 	// Controls that requests to Ory Oathkeeper are also permitted when
 	// migrating from APIRule v1beta1 to v2alpha1.
 	oryPassthrough bool
+	gateway        *networkingv1beta1.Gateway
 }
 
 // Create returns the AuthorizationPolicy using the configuration of the APIRule.
@@ -218,7 +224,27 @@ func (r creator) generateAuthorizationPolicySpec(ctx context.Context, client cli
 	authorizationPolicySpecBuilder := builders.NewAuthorizationPolicySpecBuilder().
 		WithSelector(podSelector.Selector)
 	var hosts []string
+	gatewayDomain := ""
 	for _, h := range api.Spec.Hosts {
+		if helpers.IsShortHostName(string(*h)) {
+			if gatewayDomain == "" {
+				if r.gateway == nil {
+					return nil, errors.New("gateway must be provided when using short host name")
+				}
+				for _, server := range r.gateway.Spec.Servers {
+					if len(server.Hosts) > 0 {
+						gatewayDomain = strings.TrimPrefix(server.Hosts[0], "*.")
+						break
+					}
+				}
+			}
+			if gatewayDomain == "" {
+				return nil, errors.New("gateway with host definition must be provided when using short host name")
+			}
+			hosts = append(hosts, default_domain.GetHostWithDomain(string(*h), gatewayDomain))
+		} else {
+			hosts = append(hosts, string(*h))
+		}
 		hosts = append(hosts, string(*h))
 	}
 	// If RequiredScopes are configured, we need to generate a separate Rule for each scopeKey in defaultScopeKeys

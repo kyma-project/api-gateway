@@ -54,10 +54,10 @@ func NewReconciliation(apiRuleV2alpha1 *gatewayv2alpha1.APIRule, apiRuleV1beta1 
 	var processors []processing.ReconciliationProcessor
 	if needsMigration {
 		log.Info("APIRule needs migration")
-		processors = append(processors, migration.NewMigrationProcessors(apiRuleV2alpha1, apiRuleV1beta1, config, log)...)
+		processors = append(processors, migration.NewMigrationProcessors(apiRuleV2alpha1, apiRuleV1beta1, gateway, config, log)...)
 	} else {
 		processors = append(processors, v2alpha1VirtualService.NewVirtualServiceProcessor(config, apiRuleV2alpha1, gateway))
-		processors = append(processors, authorizationpolicy.NewProcessor(log, apiRuleV2alpha1))
+		processors = append(processors, authorizationpolicy.NewProcessor(log, apiRuleV2alpha1, gateway))
 		processors = append(processors, requestauthentication.NewProcessor(apiRuleV2alpha1))
 	}
 

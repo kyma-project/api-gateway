@@ -8,12 +8,13 @@ import (
 	"github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1/authorizationpolicy"
 	"github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1/requestauthentication"
 	"github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1/virtualservice"
+	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // NewMigrationProcessors returns a list of processors that should be executed during the migration process.
 // Which processors are returned depends on the current migration step indicated by the "api-gateway.kyma-project.io/migration-step" APIRule annotation.
-func NewMigrationProcessors(apiRuleV2alpha1 *gatewayv2alpha1.APIRule, apiRuleV1beta1 *gatewayv1beta1.APIRule, config processing.ReconciliationConfig, log *logr.Logger) []processing.ReconciliationProcessor {
+func NewMigrationProcessors(apiRuleV2alpha1 *gatewayv2alpha1.APIRule, apiRuleV1beta1 *gatewayv1beta1.APIRule, gateway *networkingv1beta1.Gateway, config processing.ReconciliationConfig, log *logr.Logger) []processing.ReconciliationProcessor {
 	step := nextMigrationStep(apiRuleV1beta1)
 	log.Info("Migrating APIRule from v1beta1 to v2alpha1", "step", step)
 	var processors []processing.ReconciliationProcessor
@@ -25,7 +26,7 @@ func NewMigrationProcessors(apiRuleV2alpha1 *gatewayv2alpha1.APIRule, apiRuleV1b
 		processors = append(processors, virtualservice.NewVirtualServiceProcessor(config, apiRuleV2alpha1, nil))
 		fallthrough // We want to also use the processors from the previous steps
 	case applyIstioAuthorizationMigrationStep: // Step 1
-		processors = append(processors, authorizationpolicy.NewMigrationProcessor(log, apiRuleV2alpha1, step != removeOryRule))
+		processors = append(processors, authorizationpolicy.NewMigrationProcessor(log, apiRuleV2alpha1, step != removeOryRule, gateway))
 		processors = append(processors, requestauthentication.NewProcessor(apiRuleV2alpha1))
 	}
 	return processors

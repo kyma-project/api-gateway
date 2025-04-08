@@ -3,14 +3,13 @@ package authorizationpolicy_test
 import (
 	"context"
 	"fmt"
-	"net/http"
-
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	"github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1/authorizationpolicy"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"istio.io/api/security/v1beta1"
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
+	"net/http"
 )
 
 var _ = Describe("Processing JWT rules", func() {
@@ -33,9 +32,10 @@ var _ = Describe("Processing JWT rules", func() {
 			withRules(ruleJwt, ruleJwt2).
 			build()
 		svc := newServiceBuilderWithDummyData().build()
+		gateway := newGatewayBuilderWithDummyData().build()
 
 		client := getFakeClient(svc)
-		processor := authorizationpolicy.NewProcessor(&testLogger, apiRule)
+		processor := authorizationpolicy.NewProcessor(&testLogger, apiRule, gateway)
 
 		// when
 		result, err := processor.EvaluateReconciliation(context.Background(), client)
@@ -106,8 +106,9 @@ var _ = Describe("Processing JWT rules", func() {
 
 		apiRule := newAPIRuleBuilderWithDummyData().withRules(jwtRule).build()
 		svc := newServiceBuilderWithDummyData().build()
+		gateway := newGatewayBuilderWithDummyData().build()
 		client := getFakeClient(svc)
-		processor := authorizationpolicy.NewProcessor(&testLogger, apiRule)
+		processor := authorizationpolicy.NewProcessor(&testLogger, apiRule, gateway)
 
 		// when
 		result, err := processor.EvaluateReconciliation(context.Background(), client)
@@ -175,8 +176,9 @@ var _ = Describe("Processing JWT rules", func() {
 
 		apiRule := newAPIRuleBuilderWithDummyData().withRules(ruleJwt).build()
 		svc := newServiceBuilderWithDummyData().build()
+		gateway := newGatewayBuilderWithDummyData().build()
 		client := getFakeClient(svc)
-		processor := authorizationpolicy.NewProcessor(&testLogger, apiRule)
+		processor := authorizationpolicy.NewProcessor(&testLogger, apiRule, gateway)
 
 		// when
 		result, err := processor.EvaluateReconciliation(context.Background(), client)
@@ -257,7 +259,8 @@ var _ = Describe("Processing JWT rules", func() {
 				withRules(rules...).
 				build()
 
-			processor := authorizationpolicy.NewProcessor(&testLogger, apiRule)
+			gateway := newGatewayBuilderWithDummyData().build()
+			processor := authorizationpolicy.NewProcessor(&testLogger, apiRule, gateway)
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.Background(), ctrlClient)
@@ -314,7 +317,8 @@ var _ = Describe("Processing JWT rules", func() {
 			apiRule := newAPIRuleBuilderWithDummyData().
 				withServiceName(serviceName).
 				withRules(jwtRule).build()
-			processor := authorizationpolicy.NewProcessor(&testLogger, apiRule)
+			gateway := newGatewayBuilderWithDummyData().build()
+			processor := authorizationpolicy.NewProcessor(&testLogger, apiRule, gateway)
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.Background(), ctrlClient)
@@ -370,7 +374,8 @@ var _ = Describe("Processing JWT rules", func() {
 				build()
 
 			apiRule := newAPIRuleBuilderWithDummyData().withRules(jwtRule).build()
-			processor := authorizationpolicy.NewProcessor(&testLogger, apiRule)
+			gateway := newGatewayBuilderWithDummyData().build()
+			processor := authorizationpolicy.NewProcessor(&testLogger, apiRule, gateway)
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.Background(), ctrlClient)
@@ -425,7 +430,8 @@ var _ = Describe("Processing JWT rules", func() {
 				build()
 
 			apiRule := newAPIRuleBuilderWithDummyData().withRules(jwtRule).build()
-			processor := authorizationpolicy.NewProcessor(&testLogger, apiRule)
+			gateway := newGatewayBuilderWithDummyData().build()
+			processor := authorizationpolicy.NewProcessor(&testLogger, apiRule, gateway)
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.Background(), ctrlClient)
@@ -492,7 +498,8 @@ var _ = Describe("Processing JWT rules", func() {
 				build()
 
 			apiRule := newAPIRuleBuilderWithDummyData().withRules(jwtRule).build()
-			processor := authorizationpolicy.NewProcessor(&testLogger, apiRule)
+			gateway := newGatewayBuilderWithDummyData().build()
+			processor := authorizationpolicy.NewProcessor(&testLogger, apiRule, gateway)
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.Background(), ctrlClient)
