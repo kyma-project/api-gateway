@@ -3,8 +3,9 @@ package authorizationpolicy_test
 import (
 	"context"
 	"fmt"
-	"github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1/authorizationpolicy"
 	"net/http"
+
+	"github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1/authorizationpolicy"
 
 	"github.com/kyma-project/api-gateway/internal/processing"
 	. "github.com/onsi/ginkgo/v2"
@@ -169,7 +170,7 @@ var _ = Describe("Processing", func() {
 
 	It("should update AP when path, methods and service name didn't change", func() {
 		// given: Cluster state
-		existingAp := getAuthorizationPolicy("ap1", apiRuleNamespace, serviceName, []string{http.MethodGet, http.MethodPost})
+		existingAp := getAuthorizationPolicy("ap1", apiRuleNamespace, serviceName, []string{"example-host.example.com"}, []string{http.MethodGet, http.MethodPost})
 
 		// given: New resources
 		rule := newJwtRuleBuilderWithDummyData().
@@ -196,7 +197,7 @@ var _ = Describe("Processing", func() {
 
 	It("should delete AP when there is no desired AP", func() {
 		//given: Cluster state
-		existingAp := getAuthorizationPolicy("ap1", apiRuleNamespace, serviceName, []string{http.MethodGet, http.MethodPost})
+		existingAp := getAuthorizationPolicy("ap1", apiRuleNamespace, serviceName, []string{"example-host.example.com"}, []string{http.MethodGet, http.MethodPost})
 
 		// given: New resources
 		apiRule := newAPIRuleBuilderWithDummyData().build()
@@ -218,7 +219,7 @@ var _ = Describe("Processing", func() {
 	When("AP with RuleTo exists", func() {
 		It("should create new AP and update existing AP when new rule with same methods and service but different path is added to ApiRule", func() {
 			// given: Cluster state
-			existingAp := getAuthorizationPolicy("ap1", apiRuleNamespace, serviceName, []string{http.MethodGet, http.MethodPost})
+			existingAp := getAuthorizationPolicy("ap1", apiRuleNamespace, serviceName, []string{"example-host.example.com"}, []string{http.MethodGet, http.MethodPost})
 			svc := newServiceBuilderWithDummyData().build()
 			ctrlClient := getFakeClient(existingAp, svc)
 
@@ -249,7 +250,7 @@ var _ = Describe("Processing", func() {
 
 		It("should create new AP and update existing AP when new rule with same path and service but different methods is added to ApiRule", func() {
 			// given: Cluster state
-			existingAp := getAuthorizationPolicy("ap1", apiRuleNamespace, serviceName, []string{http.MethodGet, http.MethodPost})
+			existingAp := getAuthorizationPolicy("ap1", apiRuleNamespace, serviceName, []string{"example-host.example.com"}, []string{http.MethodGet, http.MethodPost})
 			svc := newServiceBuilderWithDummyData().build()
 			ctrlClient := getFakeClient(existingAp, svc)
 
@@ -279,7 +280,7 @@ var _ = Describe("Processing", func() {
 
 		It("should create new AP and update existing AP when new rule with same path and methods, but different service is added to ApiRule", func() {
 			//given: Cluster state
-			existingAp := getAuthorizationPolicy("ap1", apiRuleNamespace, serviceName, []string{http.MethodGet, http.MethodPost})
+			existingAp := getAuthorizationPolicy("ap1", apiRuleNamespace, serviceName, []string{"example-host.example.com"}, []string{http.MethodGet, http.MethodPost})
 			// given: New resources
 			existingRule := newJwtRuleBuilderWithDummyData().
 				withMethods(http.MethodGet, http.MethodPost).
@@ -314,7 +315,7 @@ var _ = Describe("Processing", func() {
 
 		It("should recreate AP when path in ApiRule changed", func() {
 			// given: Cluster state
-			existingAp := getAuthorizationPolicy("ap1", apiRuleNamespace, serviceName, []string{http.MethodGet, http.MethodPost})
+			existingAp := getAuthorizationPolicy("ap1", apiRuleNamespace, serviceName, []string{"example-host.example.com"}, []string{http.MethodGet, http.MethodPost})
 			svc := newServiceBuilderWithDummyData().build()
 			ctrlClient := getFakeClient(existingAp, svc)
 
@@ -345,8 +346,8 @@ var _ = Describe("Processing", func() {
 	When("Two AP with different methods for same path and service exist", func() {
 		It("should create new AP, delete old AP and update unchanged AP with matching method, when path has changed", func() {
 			// given: Cluster state
-			unchangedAp := getAuthorizationPolicy("unchanged-ap", apiRuleNamespace, serviceName, []string{http.MethodDelete})
-			toBeUpdateAp := getAuthorizationPolicy("to-be-updated-ap", apiRuleNamespace, serviceName, []string{http.MethodGet})
+			unchangedAp := getAuthorizationPolicy("unchanged-ap", apiRuleNamespace, serviceName, []string{"example-host.example.com"}, []string{http.MethodDelete})
+			toBeUpdateAp := getAuthorizationPolicy("to-be-updated-ap", apiRuleNamespace, serviceName, []string{"example-host.example.com"}, []string{http.MethodGet})
 			svc := newServiceBuilderWithDummyData().build()
 			ctrlClient := getFakeClient(toBeUpdateAp, unchangedAp, svc)
 
@@ -380,7 +381,7 @@ var _ = Describe("Processing", func() {
 	When("Namespace changes", func() {
 		It("should create new AP in new namespace and delete old AP when namespace is on APIRule spec level", func() {
 			// given: Cluster state
-			oldAP := getAuthorizationPolicy("unchanged-ap", apiRuleNamespace, serviceName, []string{http.MethodDelete})
+			oldAP := getAuthorizationPolicy("unchanged-ap", apiRuleNamespace, serviceName, []string{"example-host.example.com"}, []string{http.MethodDelete})
 
 			svc := newServiceBuilderWithDummyData().build()
 			specNewServiceNamespace := "new-namespace"
@@ -416,7 +417,7 @@ var _ = Describe("Processing", func() {
 
 		It("should create new AP in new namespace and delete old AP when namespace on rule level", func() {
 			// given: Cluster state
-			oldAP := getAuthorizationPolicy("unchanged-ap", apiRuleNamespace, serviceName, []string{http.MethodDelete})
+			oldAP := getAuthorizationPolicy("unchanged-ap", apiRuleNamespace, serviceName, []string{"example-host.example.com"}, []string{http.MethodDelete})
 			ruleServiceNamespace := "new-namespace"
 			svc := newServiceBuilderWithDummyData().
 				withNamespace(ruleServiceNamespace).
@@ -450,8 +451,8 @@ var _ = Describe("Processing", func() {
 	When("Two AP with same RuleTo for different services exist", func() {
 		It("should update unchanged AP and update AP with matching service, when path has changed", func() {
 			// given: Cluster state
-			unchangedAp := getAuthorizationPolicy("unchanged-ap", apiRuleNamespace, "first-service", []string{http.MethodGet})
-			toBeUpdateAp := getAuthorizationPolicy("to-be-updated-ap", apiRuleNamespace, "second-service", []string{http.MethodGet})
+			unchangedAp := getAuthorizationPolicy("unchanged-ap", apiRuleNamespace, "first-service", []string{"example-host.example.com"}, []string{http.MethodGet})
+			toBeUpdateAp := getAuthorizationPolicy("to-be-updated-ap", apiRuleNamespace, "second-service", []string{"example-host.example.com"}, []string{http.MethodGet})
 			svc1 := newServiceBuilder().
 				withName("first-service").
 				withNamespace(apiRuleNamespace).
@@ -593,7 +594,7 @@ var _ = Describe("Processing", func() {
 			// given: Cluster state
 			serviceName := serviceName
 
-			ap := getAuthorizationPolicy("ap", apiRuleNamespace, serviceName, []string{http.MethodGet})
+			ap := getAuthorizationPolicy("ap", apiRuleNamespace, serviceName, []string{"example-host.example.com"}, []string{http.MethodGet})
 			ap.Spec.Rules[0].When = []*v1beta1.Condition{
 				{
 					Key:    "request.auth.claims[aud]",

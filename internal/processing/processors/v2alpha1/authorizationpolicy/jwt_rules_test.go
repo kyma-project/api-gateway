@@ -3,13 +3,14 @@ package authorizationpolicy_test
 import (
 	"context"
 	"fmt"
+	"net/http"
+
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	"github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1/authorizationpolicy"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"istio.io/api/security/v1beta1"
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
-	"net/http"
 )
 
 var _ = Describe("Processing JWT rules", func() {
@@ -218,8 +219,8 @@ var _ = Describe("Processing JWT rules", func() {
 	When("Two AP for different services with JWT handler exist", func() {
 		It("should update APs and update principal when handler changed for one of the AP to noAuth", func() {
 			// given: Cluster state
-			beingUpdatedAp := getAuthorizationPolicy("being-updated-ap", apiRuleNamespace, "test-service", []string{http.MethodGet, http.MethodPost})
-			jwtSecuredAp := getAuthorizationPolicy("jwt-secured-ap", apiRuleNamespace, "jwt-secured-service", []string{http.MethodGet, http.MethodPost})
+			beingUpdatedAp := getAuthorizationPolicy("being-updated-ap", apiRuleNamespace, "test-service", []string{"example-host.example.com"}, []string{http.MethodGet, http.MethodPost})
+			jwtSecuredAp := getAuthorizationPolicy("jwt-secured-ap", apiRuleNamespace, "jwt-secured-service", []string{"example-host.example.com"}, []string{http.MethodGet, http.MethodPost})
 			svc1 := newServiceBuilder().
 				withName("test-service").
 				withNamespace("example-namespace").
@@ -277,7 +278,7 @@ var _ = Describe("Processing JWT rules", func() {
 			// given: Cluster state
 			serviceName := "test-service"
 
-			ap1 := getAuthorizationPolicy("ap1", apiRuleNamespace, serviceName, []string{"GET"})
+			ap1 := getAuthorizationPolicy("ap1", apiRuleNamespace, serviceName, []string{"example-host.example.com"}, []string{"GET"})
 			ap1.Spec.Rules[0].When = []*v1beta1.Condition{
 				{
 					Key:    "request.auth.claims[aud]",
@@ -285,7 +286,7 @@ var _ = Describe("Processing JWT rules", func() {
 				},
 			}
 
-			ap2 := getAuthorizationPolicy("ap2", apiRuleNamespace, serviceName, []string{"GET"})
+			ap2 := getAuthorizationPolicy("ap2", apiRuleNamespace, serviceName, []string{"example-host.example.com"}, []string{"GET"})
 			ap2.Spec.Rules[0].When = []*v1beta1.Condition{
 				{
 					Key:    "request.auth.claims[aud]",
@@ -334,7 +335,7 @@ var _ = Describe("Processing JWT rules", func() {
 			// given: Cluster state
 			serviceName := "test-service"
 
-			ap1 := getAuthorizationPolicy("ap1", apiRuleNamespace, serviceName, []string{"GET"})
+			ap1 := getAuthorizationPolicy("ap1", apiRuleNamespace, serviceName, []string{"example-host.example.com"}, []string{"GET"})
 			ap1.Spec.Rules[0].When = []*v1beta1.Condition{
 				{
 					Key:    "request.auth.claims[aud]",
@@ -342,7 +343,7 @@ var _ = Describe("Processing JWT rules", func() {
 				},
 			}
 
-			ap2 := getAuthorizationPolicy("ap2", apiRuleNamespace, serviceName, []string{"GET"})
+			ap2 := getAuthorizationPolicy("ap2", apiRuleNamespace, serviceName, []string{"example-host.example.com"}, []string{"GET"})
 			ap2.Spec.Rules[0].When = []*v1beta1.Condition{
 				{
 					Key:    "request.auth.claims[aud]",
@@ -391,7 +392,7 @@ var _ = Describe("Processing JWT rules", func() {
 			// given: Cluster state
 			serviceName := "test-service"
 
-			ap1 := getAuthorizationPolicy("ap1", apiRuleNamespace, serviceName, []string{"GET"})
+			ap1 := getAuthorizationPolicy("ap1", apiRuleNamespace, serviceName, []string{"example-host.example.com"}, []string{"GET"})
 			ap1.Spec.Rules[0].When = []*v1beta1.Condition{
 				{
 					Key:    "request.auth.claims[aud]",
@@ -399,7 +400,7 @@ var _ = Describe("Processing JWT rules", func() {
 				},
 			}
 
-			ap2 := getAuthorizationPolicy("ap2", apiRuleNamespace, serviceName, []string{"GET"})
+			ap2 := getAuthorizationPolicy("ap2", apiRuleNamespace, serviceName, []string{"example-host.example.com"}, []string{"GET"})
 			ap2.Spec.Rules[0].When = []*v1beta1.Condition{
 				{
 					Key:    "request.auth.claims[aud]",
@@ -447,7 +448,7 @@ var _ = Describe("Processing JWT rules", func() {
 			// given: Cluster state
 			serviceName := "test-service"
 
-			ap1 := getAuthorizationPolicy("ap1", apiRuleNamespace, serviceName, []string{"GET"})
+			ap1 := getAuthorizationPolicy("ap1", apiRuleNamespace, serviceName, []string{"example-host.example.com"}, []string{"GET"})
 			ap1.Spec.Rules[0].When = []*v1beta1.Condition{
 				{
 					Key:    "request.auth.claims[aud]",
@@ -455,7 +456,7 @@ var _ = Describe("Processing JWT rules", func() {
 				},
 			}
 
-			ap2 := getAuthorizationPolicy("ap2", apiRuleNamespace, serviceName, []string{"GET"})
+			ap2 := getAuthorizationPolicy("ap2", apiRuleNamespace, serviceName, []string{"example-host.example.com"}, []string{"GET"})
 			ap2.Spec.Rules[0].When = []*v1beta1.Condition{
 				{
 					Key:    "request.auth.claims[aud]",
@@ -465,7 +466,7 @@ var _ = Describe("Processing JWT rules", func() {
 			// We need to set the index to 1 as this is expected to be the second authorization configured in the rule.
 			ap2.Labels["gateway.kyma-project.io/index"] = "1"
 
-			ap3 := getAuthorizationPolicy("ap3", apiRuleNamespace, serviceName, []string{"GET"})
+			ap3 := getAuthorizationPolicy("ap3", apiRuleNamespace, serviceName, []string{"example-host.example.com"}, []string{"GET"})
 			ap3.Spec.Rules[0].When = []*v1beta1.Condition{
 				{
 					Key:    "request.auth.claims[aud]",

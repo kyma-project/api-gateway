@@ -2,6 +2,7 @@ package authorizationpolicy
 
 import (
 	"context"
+
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 
 	"github.com/go-logr/logr"
