@@ -29,14 +29,12 @@ func validateRules(ctx context.Context, client client.Client, parentAttributePat
 		}
 
 		problems = append(problems, validateJwt(ruleAttributePath, &rule)...)
-		if rule.NoAuth == nil || !*rule.NoAuth {
-			injectionFailures, err := validateSidecarInjection(ctx, client, ruleAttributePath, apiRule, rule)
-			if err != nil {
-				problems = append(problems, validation.Failure{AttributePath: ruleAttributePath, Message: fmt.Sprintf("Failed to execute sidecar injection validation, err: %s", err)})
-			}
-
-			problems = append(problems, injectionFailures...)
+		injectionFailures, err := validateSidecarInjection(ctx, client, ruleAttributePath, apiRule, rule)
+		if err != nil {
+			problems = append(problems, validation.Failure{AttributePath: ruleAttributePath, Message: fmt.Sprintf("Failed to execute sidecar injection validation, err: %s", err)})
 		}
+
+		problems = append(problems, injectionFailures...)
 
 		if rule.ExtAuth != nil {
 			extAuthFailures, err := validateExtAuthProviders(ctx, client, ruleAttributePath, rule)
