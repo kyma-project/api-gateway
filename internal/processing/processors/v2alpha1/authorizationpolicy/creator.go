@@ -219,6 +219,7 @@ func (r creator) generateAuthorizationPolicySpec(ctx context.Context, client cli
 
 	authorizationPolicySpecBuilder := builders.NewAuthorizationPolicySpecBuilder().
 		WithSelector(podSelector.Selector)
+	// When short host is used in the APIRule we pull it from the gateway, in the future we should refactor it so that only gateway host is passed from the processors.go
 	var hosts []string
 	gatewayDomain := ""
 	for _, h := range api.Spec.Hosts {
@@ -300,7 +301,6 @@ func withFrom(b *builders.RuleBuilder, rule gatewayv2alpha1.Rule, oryPassthrough
 	if oryPassthrough {
 		b.WithFrom(builders.NewFromBuilder().
 			WithOathkeeperProxySource().
-			WithIngressGatewaySource().
 			Get())
 	}
 	return b.WithFrom(builders.NewFromBuilder().
