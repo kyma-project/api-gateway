@@ -4,10 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
+
 	"github.com/kyma-project/api-gateway/internal/helpers"
 	"github.com/kyma-project/api-gateway/internal/processing/default_domain"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
-	"strings"
 
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 
@@ -202,16 +203,11 @@ func (r creator) generateExtAuthAuthorizationPolicySpec(ctx context.Context, cli
 	if err != nil {
 		return nil, err
 	}
-
-	var hosts []string
-	for _, h := range api.Spec.Hosts {
-		hosts = append(hosts, string(*h))
-	}
 	authorizationPolicySpecBuilder := builders.NewAuthorizationPolicySpecBuilder().WithSelector(podSelector.Selector)
 	return authorizationPolicySpecBuilder.
 		WithAction(v1beta1.AuthorizationPolicy_CUSTOM).
 		WithProvider(providerName).
-		WithRule(baseExtAuthRuleBuilder(rule, hosts).Get()).
+		WithRule(baseExtAuthRuleBuilder(rule, nil).Get()).
 		Get(), nil
 }
 
@@ -245,7 +241,6 @@ func (r creator) generateAuthorizationPolicySpec(ctx context.Context, client cli
 		} else {
 			hosts = append(hosts, string(*h))
 		}
-		hosts = append(hosts, string(*h))
 	}
 	// If RequiredScopes are configured, we need to generate a separate Rule for each scopeKey in defaultScopeKeys
 	if len(authorization.RequiredScopes) > 0 {
