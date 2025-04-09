@@ -16,10 +16,13 @@ jobs:
     name: check-prerequisites
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+        with:
+           fetch-depth: 0
       - name: Get current release from sec-scanners-config.yaml file
         shell: bash
         run: |
-            CURRENT=$(cat "${{ github.workspace }}/sec-scanners-config.yaml" | grep api-gateway-manager | cut -d ":" -f2)
+            CURRENT=$(cat ./sec-scanners-config.yaml | grep api-gateway-manager | cut -d ":" -f2)
             echo "Current release: $CURRENT"
             echo "current_release=$CURRENT" >> $GITHUB_ENV
       - name: Get latest release before releasing
@@ -35,7 +38,7 @@ jobs:
             echo "is_patch=true" >> $GITHUB_ENV
           else
             echo "is_patch=false" >> $GITHUB_ENV
-
+          fi
   build-image:
     uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
     needs: [check-prerequisites]
