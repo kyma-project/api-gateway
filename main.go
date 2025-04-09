@@ -248,7 +248,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err = (&gatewayv1beta1.APIRule{}).SetupWebhookWithManager(mgr); err != nil {
+	if err = (&gatewayv2alpha1.APIRule{}).SetupWebhookWithManager(mgr); err != nil {
 		setupLog.Error(err, "Unable to create webhook", "webhook", "APIRule")
 		os.Exit(1)
 	}

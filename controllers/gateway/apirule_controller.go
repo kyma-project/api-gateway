@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 	"regexp"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"strings"
 	"time"
 
@@ -37,7 +38,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
@@ -114,15 +114,15 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		return r.reconcileAPIRuleDeletion(ctx, l, &apiRule)
 	}
 
+	if r.isAPIRuleV2alpha1Compatible(apiRule) {
+		return r.reconcileV2Alpha1APIRule(ctx, l, apiRule)
+	}
+
 	if !controllerutil.ContainsFinalizer(&apiRule, apiGatewayFinalizer) {
 		l.Info("APIRule is missing a finalizer, adding")
 		n := apiRule.DeepCopy()
 		controllerutil.AddFinalizer(n, apiGatewayFinalizer)
 		return r.updateResourceRequeue(ctx, l, n)
-	}
-
-	if r.isApiRuleConvertedFromV2alpha1(apiRule) || r.isApiRuleConvertedFromV2(apiRule) {
-		return r.reconcileV2Alpha1APIRule(ctx, l, apiRule)
 	}
 
 	l.Info("Reconciling v1beta1 APIRule", "jwtHandler", r.Config.JWTHandler)
@@ -136,7 +136,7 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 			l.Error(err, "Error updating APIRule status")
 			return doneReconcileErrorRequeue(err, r.OnErrorReconcilePeriod)
 		}
-		return r.updateStatus(ctx, l, &apiRule, s.HasError())
+		return r.convertAndUpdateStatus(ctx, l, apiRule, s.HasError())
 	}
 
 	l.Info("Validating APIRule config")
@@ -150,7 +150,7 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 			l.Error(err, "Error updating APIRule status")
 			return doneReconcileErrorRequeue(err, r.OnErrorReconcilePeriod)
 		}
-		return r.updateStatus(ctx, l, &apiRule, s.HasError())
+		return r.convertAndUpdateStatus(ctx, l, apiRule, s.HasError())
 	}
 
 	l.Info("Reconciling APIRule sub-resources")
@@ -164,13 +164,31 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		}
 		return doneReconcileErrorRequeue(err, r.OnErrorReconcilePeriod)
 	}
-	return r.updateStatus(ctx, l, &apiRule, s.HasError())
+	return r.convertAndUpdateStatus(ctx, l, apiRule, s.HasError())
 }
 
-func (r *APIRuleReconciler) reconcileV2Alpha1APIRule(ctx context.Context, l logr.Logger, apiRule gatewayv1beta1.APIRule) (ctrl.Result, error) {
+func (r *APIRuleReconciler) reconcileV2Alpha1APIRule(ctx context.Context, l logr.Logger, apiRuleV1beta1 gatewayv1beta1.APIRule) (ctrl.Result, error) {
 	l.Info("Reconciling v2alpha1 APIRule")
+	apiRule := &gatewayv2alpha1.APIRule{}
+
+	if err := r.Client.Get(ctx, client.ObjectKey{Namespace: apiRuleV1beta1.Namespace, Name: apiRuleV1beta1.Name}, apiRule); err != nil {
+		if apierrs.IsNotFound(err) {
+			return doneReconcileNoRequeue()
+		}
+		l.Error(err, "Error while getting APIRule v2alpha1")
+		return doneReconcileErrorRequeue(err, errorReconciliationPeriod)
+	}
+
 	toUpdate := apiRule.DeepCopy()
-	migrate, err := apiRuleNeedsMigration(ctx, r.Client, toUpdate)
+
+	if !controllerutil.ContainsFinalizer(apiRule, apiGatewayFinalizer) {
+		l.Info("APIRule is missing a finalizer, adding")
+		n := apiRule.DeepCopy()
+		controllerutil.AddFinalizer(n, apiGatewayFinalizer)
+		return r.updateResourceRequeue(ctx, l, n)
+	}
+
+	migrate, err := apiRuleNeedsMigration(ctx, r.Client, &apiRuleV1beta1)
 	if err != nil {
 		return doneReconcileErrorRequeue(err, r.OnErrorReconcilePeriod)
 	}
@@ -184,33 +202,27 @@ func (r *APIRuleReconciler) reconcileV2Alpha1APIRule(ctx context.Context, l logr
 		}
 	}
 
-	// convert v1beta1 to v2alpha1
-	rule := gatewayv2alpha1.APIRule{}
-	if err := rule.ConvertFrom(toUpdate); err != nil {
-		return doneReconcileErrorRequeue(err, r.OnErrorReconcilePeriod)
-	}
-
-	gateway, err := discoverGateway(r.Client, ctx, l, &rule)
+	gateway, err := discoverGateway(r.Client, ctx, l, toUpdate)
 	if err != nil {
 		return doneReconcileErrorRequeue(err, r.OnErrorReconcilePeriod)
 	}
 
 	if gateway == nil {
-		return r.convertAndUpdateStatus(ctx, l, rule, true)
+		return r.updateStatus(ctx, l, toUpdate, true)
 	}
 
-	cmd := r.getV2Alpha1Reconciliation(&apiRule, &rule, gateway, migrate, &l)
+	cmd := r.getV2Alpha1Reconciliation(&apiRuleV1beta1, toUpdate, gateway, migrate, &l)
 
 	if name, err := dependencies.APIRule().AreAvailable(ctx, r.Client); err != nil {
 		s, err := handleDependenciesError(name, err).V2alpha1Status()
 		if err != nil {
 			return doneReconcileErrorRequeue(err, r.OnErrorReconcilePeriod)
 		}
-		if err := s.UpdateStatus(&rule.Status); err != nil {
+		if err := s.UpdateStatus(&toUpdate.Status); err != nil {
 			l.Error(err, "Error updating APIRule status")
 			return doneReconcileErrorRequeue(err, r.OnErrorReconcilePeriod)
 		}
-		return r.convertAndUpdateStatus(ctx, l, rule, s.HasError())
+		return r.updateStatus(ctx, l, toUpdate, s.HasError())
 	}
 
 	l.Info("Validating APIRule config")
@@ -220,32 +232,21 @@ func (r *APIRuleReconciler) reconcileV2Alpha1APIRule(ctx context.Context, l logr
 			"Configuration validation failed", "failures", failures)
 		s := cmd.GetStatusBase(string(gatewayv2alpha1.Error)).
 			GenerateStatusFromFailures(failures)
-		if err := s.UpdateStatus(&rule.Status); err != nil {
+		if err := s.UpdateStatus(&toUpdate.Status); err != nil {
 			l.Error(err, "Error updating APIRule status")
 			return doneReconcileErrorRequeue(err, r.OnErrorReconcilePeriod)
 		}
-		return r.convertAndUpdateStatus(ctx, l, rule, s.HasError())
+		return r.updateStatus(ctx, l, toUpdate, s.HasError())
 	}
 
 	l.Info("Reconciling APIRule sub-resources")
 	s := processing.Reconcile(ctx, r.Client, &l, cmd)
 
-	if err := s.UpdateStatus(&rule.Status); err != nil {
+	if err := s.UpdateStatus(&toUpdate.Status); err != nil {
 		l.Error(err, "Error updating APIRule status")
 		return doneReconcileErrorRequeue(err, r.OnErrorReconcilePeriod)
 	}
-	return r.convertAndUpdateStatus(ctx, l, rule, s.HasError())
-}
-
-// convertAndUpdateStatus is a small helper function that converts APIRule
-// resource from convertible v2alpha1 to hub version v2alpha1
-func (r *APIRuleReconciler) convertAndUpdateStatus(ctx context.Context, l logr.Logger, rule gatewayv2alpha1.APIRule, hasError bool) (ctrl.Result, error) {
-	l.Info("Converting APIRule v2alpha1 to v1beta1")
-	toUpdate := gatewayv1beta1.APIRule{}
-	if err := rule.ConvertTo(&toUpdate); err != nil {
-		return doneReconcileErrorRequeue(err, r.OnErrorReconcilePeriod)
-	}
-	return r.updateStatus(ctx, l, &toUpdate, hasError)
+	return r.updateStatus(ctx, l, toUpdate, s.HasError())
 }
 
 func (r *APIRuleReconciler) updateResourceRequeue(ctx context.Context,
@@ -398,24 +399,25 @@ func (r *APIRuleReconciler) SetupWithManager(mgr ctrl.Manager, c controllers.Rat
 		Complete(r)
 }
 
-func (r *APIRuleReconciler) isApiRuleConvertedFromV2alpha1(apiRule gatewayv1beta1.APIRule) bool {
-	// If the ApiRule is not found, we don't need to do anything. If it's found and converted, CM reconciliation is not needed.
+func (r *APIRuleReconciler) isAPIRuleV2alpha1Compatible(apiRule gatewayv1beta1.APIRule) bool {
 	if apiRule.Annotations != nil {
-		if originalVersion, ok := apiRule.Annotations["gateway.kyma-project.io/original-version"]; ok && originalVersion == "v2alpha1" {
-			r.Log.Info("ApiRule is converted from v2alpha1", "name", apiRule.Name, "namespace", apiRule.Namespace)
-			return true
+		// rules will be empty only for APIRule converted by v1beta1 conversion webhook
+		// APIRule without rules can't be saved to etcd (due to validation error on CRD)
+		if originalVersion, ok := apiRule.Annotations["gateway.kyma-project.io/original-version"]; ok && originalVersion == "v1beta1" {
+			r.Log.Info("ApiRule is converted from v1beta", "name", apiRule.Name, "namespace", apiRule.Namespace)
+			return false
 		}
 	}
-	return false
+
+	return true
 }
 
-func (r *APIRuleReconciler) isApiRuleConvertedFromV2(apiRule gatewayv1beta1.APIRule) bool {
-	// If the ApiRule is not found, we don't need to do anything. If it's found and converted, CM reconciliation is not needed.
-	if apiRule.Annotations != nil {
-		if originalVersion, ok := apiRule.Annotations["gateway.kyma-project.io/original-version"]; ok && originalVersion == "v2" {
-			r.Log.Info("ApiRule is converted from v2", "name", apiRule.Name, "namespace", apiRule.Namespace)
-			return true
-		}
+// convertAndUpdateStatus is a small helper function that converts APIRule
+// resource from convertible v1beta1 to hub version v2alpha1
+func (r *APIRuleReconciler) convertAndUpdateStatus(ctx context.Context, l logr.Logger, rule gatewayv1beta1.APIRule, hasError bool) (ctrl.Result, error) {
+	toUpdate := gatewayv2alpha1.APIRule{}
+	if err := rule.ConvertTo(&toUpdate); err != nil {
+		return doneReconcileErrorRequeue(err, r.OnErrorReconcilePeriod)
 	}
-	return false
+	return r.updateStatus(ctx, l, &toUpdate, hasError)
 }
