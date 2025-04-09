@@ -3,6 +3,7 @@ package v2alpha1
 import (
 	"encoding/json"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/utils/ptr"
 	"slices"
 	"time"
 
@@ -189,20 +190,35 @@ func (apiRuleV2Alpha1 *APIRule) ConvertFrom(hub conversion.Hub) error {
 			LastProcessedTime: apiRuleBeta1.Status.LastProcessedTime,
 		}
 	}
+
+	conversionPossible, err := isFullConversionPossible(apiRuleBeta1)
+	if err != nil {
+		return err
+	}
+
 	// if "v2", "v2alpha1" we are sure that resource is v2
 	if originalVersion, ok := apiRuleBeta1.Annotations[originalVersionAnnotationKey]; !ok || !slices.Contains([]string{"v2", "v2alpha1"}, originalVersion) {
 		if apiRuleV2Alpha1.Annotations == nil {
 			apiRuleV2Alpha1.Annotations = make(map[string]string)
 		}
-		apiRuleV2Alpha1.Annotations[originalVersionAnnotationKey] = "v1beta1"
+
 		marshaledSpec, err := json.Marshal(apiRuleBeta1.Spec)
 		if err != nil {
 			return err
 		}
 		apiRuleV2Alpha1.Annotations[v1beta1SpecAnnotationKey] = string(marshaledSpec)
-		return nil
+
+		if !conversionPossible {
+			// if conversion is not possible, we set the original version to v1beta1 to indicate that this APIRule should be treated as v1beta1
+			// in n+2 versions should be converted to v1beta1 and reconciled like v1beta1
+			apiRuleV2Alpha1.Annotations[originalVersionAnnotationKey] = "v1beta1"
+			return nil
+		}
+		// in other cases we can postpone adding the original version annotation
+		// this will be treated as v2alpha1 because the conversion is possible
 	}
-	err := convertOverJson(apiRuleBeta1.Spec.Gateway, &apiRuleV2Alpha1.Spec.Gateway)
+
+	err = convertOverJson(apiRuleBeta1.Spec.Gateway, &apiRuleV2Alpha1.Spec.Gateway)
 	if err != nil {
 		return err
 	}
@@ -246,7 +262,62 @@ func (apiRuleV2Alpha1 *APIRule) ConvertFrom(hub conversion.Hub) error {
 		}
 
 		apiRuleV2Alpha1.Spec.Rules = v2alpha1Rules
+	} else if len(apiRuleBeta1.Spec.Rules) > 0 && conversionPossible {
+		apiRuleV2Alpha1.Spec.Rules = []Rule{}
+		for _, ruleBeta1 := range apiRuleBeta1.Spec.Rules {
+			ruleV1Alpha2 := Rule{}
+			err = convertOverJson(ruleBeta1, &ruleV1Alpha2)
+			if err != nil {
+				return err
+			}
+			for _, accessStrategy := range ruleBeta1.AccessStrategies {
+				if accessStrategy.Handler.Name == v1beta1.AccessStrategyNoAuth {
+					ruleV1Alpha2.NoAuth = ptr.To(true)
+				}
+
+				if accessStrategy.Handler.Name == v1beta1.AccessStrategyJwt {
+					jwtConfig, err := convertToJwtConfig(accessStrategy)
+					if err != nil {
+						return err
+					}
+					err = convertOverJson(jwtConfig, &ruleV1Alpha2.Jwt)
+					if err != nil {
+						return err
+					}
+				}
+			}
+
+			if ruleBeta1.Mutators != nil {
+				ruleV1Alpha2.Request = &Request{}
+			}
+
+			for _, mutator := range ruleBeta1.Mutators {
+				switch mutator.Handler.Name {
+				case v1beta1.HeaderMutator:
+					var configStruct map[string]string
+
+					err := json.Unmarshal(mutator.Handler.Config.Raw, &configStruct)
+					if err != nil {
+						return err
+					}
+
+					ruleV1Alpha2.Request.Headers = configStruct
+				case v1beta1.CookieMutator:
+					var configStruct map[string]string
+
+					err := json.Unmarshal(mutator.Handler.Config.Raw, &configStruct)
+					if err != nil {
+						return err
+					}
+
+					ruleV1Alpha2.Request.Cookies = configStruct
+				}
+			}
+			apiRuleV2Alpha1.Spec.Rules = append(apiRuleV2Alpha1.Spec.Rules, ruleV1Alpha2)
+		}
+
 	}
+
 	return nil
 }
 

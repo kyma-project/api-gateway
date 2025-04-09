@@ -3,6 +3,8 @@ package v2
 import (
 	"encoding/json"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/utils/ptr"
+	"slices"
 	"time"
 
 	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
@@ -189,25 +191,26 @@ func (apiRule *APIRule) ConvertFrom(hub conversion.Hub) error {
 		}
 	}
 
-	if originalVersion, ok := apiRuleBeta1.Annotations[originalVersionAnnotationKey]; !ok || originalVersion == "v1beta1" {
+	conversionPossible, err := isFullConversionPossible(apiRuleBeta1)
+	if err != nil {
+		return err
+	}
+
+	if originalVersion, ok := apiRuleBeta1.Annotations[originalVersionAnnotationKey]; !ok || !slices.Contains([]string{"v2", "v2alpha1"}, originalVersion) {
 		if apiRule.Annotations == nil {
 			apiRule.Annotations = make(map[string]string)
 		}
-		apiRule.Annotations[originalVersionAnnotationKey] = "v1beta1"
 		marshaledSpec, err := json.Marshal(apiRuleBeta1.Spec)
 		if err != nil {
 			return err
 		}
 		apiRule.Annotations[v1beta1SpecAnnotationKey] = string(marshaledSpec)
-	}
 
-	conversionPossible, err := isFullConversionPossible(apiRuleBeta1)
-	if err != nil {
-		return err
-	}
-	if !conversionPossible {
-		// We have to stop the conversion here, because we want to return an empty Spec in case we cannot fully convert the APIRule.
-		return nil
+		if !conversionPossible {
+			apiRule.Annotations[originalVersionAnnotationKey] = "v1beta1"
+			return nil
+		}
+
 	}
 
 	err = convertOverJson(apiRuleBeta1.Spec.Rules, &apiRule.Spec.Rules)
@@ -258,7 +261,62 @@ func (apiRule *APIRule) ConvertFrom(hub conversion.Hub) error {
 		}
 
 		apiRule.Spec.Rules = v2Rules
+	} else if len(apiRuleBeta1.Spec.Rules) > 0 {
+		apiRule.Spec.Rules = []Rule{}
+		for _, ruleBeta1 := range apiRuleBeta1.Spec.Rules {
+			ruleV1Alpha2 := Rule{}
+			err = convertOverJson(ruleBeta1, &ruleV1Alpha2)
+			if err != nil {
+				return err
+			}
+			for _, accessStrategy := range ruleBeta1.AccessStrategies {
+				if accessStrategy.Handler.Name == v1beta1.AccessStrategyNoAuth {
+					ruleV1Alpha2.NoAuth = ptr.To(true)
+				}
+
+				if accessStrategy.Handler.Name == v1beta1.AccessStrategyJwt {
+					jwtConfig, err := convertToJwtConfig(accessStrategy)
+					if err != nil {
+						return err
+					}
+					err = convertOverJson(jwtConfig, &ruleV1Alpha2.Jwt)
+					if err != nil {
+						return err
+					}
+				}
+			}
+
+			if ruleBeta1.Mutators != nil {
+				ruleV1Alpha2.Request = &Request{}
+			}
+
+			for _, mutator := range ruleBeta1.Mutators {
+				switch mutator.Handler.Name {
+				case v1beta1.HeaderMutator:
+					var configStruct map[string]string
+
+					err := json.Unmarshal(mutator.Handler.Config.Raw, &configStruct)
+					if err != nil {
+						return err
+					}
+
+					ruleV1Alpha2.Request.Headers = configStruct
+				case v1beta1.CookieMutator:
+					var configStruct map[string]string
+
+					err := json.Unmarshal(mutator.Handler.Config.Raw, &configStruct)
+					if err != nil {
+						return err
+					}
+
+					ruleV1Alpha2.Request.Cookies = configStruct
+				}
+			}
+			apiRule.Spec.Rules = append(apiRule.Spec.Rules, ruleV1Alpha2)
+		}
+
 	}
+
 	return nil
 }
 
