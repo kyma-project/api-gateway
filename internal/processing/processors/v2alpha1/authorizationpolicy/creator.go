@@ -300,7 +300,6 @@ func withFrom(b *builders.RuleBuilder, rule gatewayv2alpha1.Rule, oryPassthrough
 	if oryPassthrough {
 		b.WithFrom(builders.NewFromBuilder().
 			WithOathkeeperProxySource().
-			WithIngressGatewaySource().
 			Get())
 	}
 	return b.WithFrom(builders.NewFromBuilder().
