@@ -23,7 +23,7 @@ func (v *InjectionValidator) Validate(attributePath string, selector *apiv1beta1
 	if selector == nil {
 		problems = append(problems, Failure{
 			AttributePath: attributePath + ".injection",
-			Message:       "Service cannot have empty label selectors when the API Rule strategy is JWT",
+			Message:       "Target service label selectors are not defined",
 		})
 
 		return problems, nil

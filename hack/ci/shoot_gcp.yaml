@@ -4,6 +4,8 @@ metadata:
   name: ${CLUSTER_NAME}
   annotations:
     kyma-project.io/pipeline-link: "${PIPELINE_LINK}"
+  labels:
+    kyma-project.io/created-by-tests-of-module: "apigateway"
 spec:
   secretBindingName: ${GARDENER_PROVIDER_SECRET_NAME}
   cloudProfileName: gcp

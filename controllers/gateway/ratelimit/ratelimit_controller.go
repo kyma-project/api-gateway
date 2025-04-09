@@ -90,6 +90,15 @@ func (r *RateLimitReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	}
 
 	latestCr := operatorv1alpha1.GetOldestAPIGatewayCR(existingAPIGateways)
+	if latestCr == nil {
+		rl.Status.Warning(fmt.Errorf("failed to reconcile RateLimit CR because of missing APIGateway CR in the cluster"))
+		if err := r.Status().Update(ctx, &rl); err != nil {
+			return ctrl.Result{}, err
+		}
+		err := fmt.Errorf("no APIGateway CR in the cluster")
+		return ctrl.Result{}, err
+	}
+
 	if latestCr.Status.State != operatorv1alpha1.Ready {
 		rl.Status.Warning(fmt.Errorf("failed to create RateLimit CR because APIGateway CR is in %s state", latestCr.Status.State))
 		if err := r.Status().Update(ctx, &rl); err != nil {

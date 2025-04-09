@@ -12,13 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: tj-actions/changed-files@e9772d140489982e0e3704fea5ee93d536f1e275
-        id: changed
-        with:
-          files: |
-            .github/workflows/**
       - uses: zgosalvez/github-actions-ensure-sha-pinned-actions@3c16e895bb662b4d7e284f032cbe8835a57773cc # 3.0.11
-        if: ${{ steps.changed.outputs.any_modified == 'true' }}
         with:
           # We only want to allow official GitHub Actions
           allowlist: |
