@@ -32,7 +32,11 @@ func convertMap(m map[v1beta1.StatusCode]State) map[State]v1beta1.StatusCode {
 // The 2 => 1 map is generated automatically based on 1 => 2 map
 var v2to1beta1statusConversionMap = convertMap(beta1toV2StatusConversionMap)
 
-const v2RulesAnnotationKey = "gateway.kyma-project.io/v2alpha1-rules"
+const (
+	v2RulesAnnotationKey         = "gateway.kyma-project.io/v2alpha1-rules"
+	originalVersionAnnotationKey = "gateway.kyma-project.io/original-version"
+	v1beta1SpecAnnotationKey     = "gateway.kyma-project.io/v1beta1-spec"
+)
 
 // ConvertTo Converts this ApiRule (v2) to the Hub version (v1beta1)
 func (apiRule *APIRule) ConvertTo(hub conversion.Hub) error {
@@ -42,7 +46,7 @@ func (apiRule *APIRule) ConvertTo(hub conversion.Hub) error {
 	if apiRuleBeta1.Annotations == nil {
 		apiRuleBeta1.Annotations = make(map[string]string)
 	}
-	apiRuleBeta1.Annotations["gateway.kyma-project.io/original-version"] = "v2"
+	apiRuleBeta1.Annotations[originalVersionAnnotationKey] = "v2"
 
 	err := convertOverJson(apiRule.Spec.Rules, &apiRuleBeta1.Spec.Rules)
 	if err != nil {
@@ -184,6 +188,18 @@ func (apiRule *APIRule) ConvertFrom(hub conversion.Hub) error {
 			Description:       apiRuleBeta1.Status.APIRuleStatus.Description,
 			LastProcessedTime: apiRuleBeta1.Status.LastProcessedTime,
 		}
+	}
+
+	if originalVersion, ok := apiRuleBeta1.Annotations[originalVersionAnnotationKey]; !ok || originalVersion == "v1beta1" {
+		if apiRule.Annotations == nil {
+			apiRule.Annotations = make(map[string]string)
+		}
+		apiRule.Annotations[originalVersionAnnotationKey] = "v1beta1"
+		marshaledSpec, err := json.Marshal(apiRuleBeta1.Spec)
+		if err != nil {
+			return err
+		}
+		apiRule.Annotations[v1beta1SpecAnnotationKey] = string(marshaledSpec)
 	}
 
 	conversionPossible, err := isFullConversionPossible(apiRuleBeta1)
