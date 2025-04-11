@@ -1,7 +1,7 @@
 module-name: api-gateway
 kind: kyma
 bdba:
-  - europe-docker.pkg.dev/kyma-project/prod/api-gateway/main/api-gateway-manager:af95abef29b8d4ff6448221a98d8e43e0a7d8f0c
+  - europe-docker.pkg.dev/kyma-project/prod/api-gateway/main/api-gateway-manager:ee4f86fe02255c708f28a000f22e3876f57d4e80
   - europe-docker.pkg.dev/kyma-project/prod/external/oryd/oathkeeper:v0.38.25-beta.1
   - europe-docker.pkg.dev/kyma-project/prod/external/oryd/oathkeeper-maester:v0.1.5
 mend:
