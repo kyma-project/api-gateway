@@ -8,7 +8,6 @@ import (
 	"github.com/kyma-project/api-gateway/internal/builders"
 	"github.com/kyma-project/api-gateway/internal/processing"
 	"github.com/kyma-project/api-gateway/internal/processing/status"
-	v1beta1Status "github.com/kyma-project/api-gateway/internal/processing/status"
 	"github.com/kyma-project/api-gateway/internal/validation"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -245,7 +244,7 @@ func testLogger() *logr.Logger {
 }
 
 func mockStatusBase(statusCode gatewayv1beta1.StatusCode) status.ReconciliationStatus {
-	return v1beta1Status.ReconciliationV1beta1Status{
+	return status.ReconciliationV1beta1Status{
 		ApiRuleStatus: &gatewayv1beta1.APIRuleResourceStatus{
 			Code: statusCode,
 		},

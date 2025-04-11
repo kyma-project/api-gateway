@@ -321,11 +321,11 @@ func isFullConversionPossible(apiRule *v1beta1.APIRule) (bool, error) {
 	for _, rule := range apiRule.Spec.Rules {
 		for _, accessStrategy := range rule.AccessStrategies {
 
-			if accessStrategy.Handler.Name == v1beta1.AccessStrategyNoAuth || accessStrategy.Handler.Name == "ext-auth" {
+			if accessStrategy.Name == v1beta1.AccessStrategyNoAuth || accessStrategy.Name == "ext-auth" {
 				continue
 			}
 
-			if accessStrategy.Handler.Name == v1beta1.AccessStrategyJwt {
+			if accessStrategy.Name == v1beta1.AccessStrategyJwt {
 				isConvertible, err := isConvertibleJwtConfig(accessStrategy)
 				if err != nil {
 					return false, err
