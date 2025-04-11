@@ -325,7 +325,7 @@ func isFullConversionPossible(apiRule *v1beta1.APIRule) (bool, error) {
 				continue
 			}
 
-			if accessStrategy.Handler.Name == v1beta1.AccessStrategyJwt {
+			if accessStrategy.Name == v1beta1.AccessStrategyJwt {
 				isConvertible, err := isConvertibleJwtConfig(accessStrategy)
 				if err != nil {
 					return false, err

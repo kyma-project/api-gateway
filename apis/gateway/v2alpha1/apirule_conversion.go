@@ -252,11 +252,11 @@ func (apiRuleV2Alpha1 *APIRule) ConvertFrom(hub conversion.Hub) error {
 				return err
 			}
 			for _, accessStrategy := range ruleBeta1.AccessStrategies {
-				if accessStrategy.Handler.Name == v1beta1.AccessStrategyNoAuth {
+				if accessStrategy.Name == v1beta1.AccessStrategyNoAuth {
 					ruleV1Alpha2.NoAuth = ptr.To(true)
 				}
 
-				if accessStrategy.Handler.Name == v1beta1.AccessStrategyJwt {
+				if accessStrategy.Name == v1beta1.AccessStrategyJwt {
 					jwtConfig, err := convertToJwtConfig(accessStrategy)
 					if err != nil {
 						return err
