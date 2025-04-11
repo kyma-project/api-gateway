@@ -30,8 +30,9 @@ var _ = Describe("Processing NoAuth rules", func() {
 			withRules(ruleNoAuth, ruleJwt).
 			build()
 		svc := newServiceBuilderWithDummyData().build()
+		gateway := newGatewayBuilderWithDummyData().build()
 		client := getFakeClient(svc)
-		processor := authorizationpolicy.NewProcessor(&testLogger, apiRule)
+		processor := authorizationpolicy.NewProcessor(&testLogger, apiRule, gateway)
 
 		// when
 		results, err := processor.EvaluateReconciliation(context.Background(), client)
