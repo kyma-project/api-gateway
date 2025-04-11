@@ -76,12 +76,12 @@ func getStringMatch(raw string) []*v1beta1.StringMatch {
 		matchType := matchTypePair[0]
 		value := matchTypePair[1]
 		var stringMatch *v1beta1.StringMatch
-		switch {
-		case matchType == "regex":
+		switch matchType {
+		case "regex":
 			stringMatch = regex(value)
-		case matchType == "prefix":
+		case "prefix":
 			stringMatch = prefix(value)
-		case matchType == "exact":
+		case "exact":
 			stringMatch = exact(value)
 		}
 		result = append(result, stringMatch)

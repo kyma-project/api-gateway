@@ -38,7 +38,7 @@ func (r accessRuleCreator) Create(api *gatewayv1beta1.APIRule) map[string]*rulev
 
 func filterAccessStrategies(accessStrategies []*gatewayv1beta1.Authenticator) []*gatewayv1beta1.Authenticator {
 	filterFunc := func(auth *gatewayv1beta1.Authenticator) bool {
-		return auth.Handler.Name == gatewayv1beta1.AccessStrategyNoop || auth.Handler.Name == gatewayv1beta1.AccessStrategyOauth2Introspection
+		return auth.Name == gatewayv1beta1.AccessStrategyNoop || auth.Name == gatewayv1beta1.AccessStrategyOauth2Introspection
 	}
 
 	return filterGeneric(accessStrategies, filterFunc)

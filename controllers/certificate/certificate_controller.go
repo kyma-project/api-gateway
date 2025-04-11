@@ -11,7 +11,6 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/kyma-project/api-gateway/controllers"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
@@ -54,7 +53,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 	r.Log.Info("Received reconciliation request", "namespace", req.Namespace, "name", req.Name)
 
 	secret := &corev1.Secret{}
-	err := r.Client.Get(ctx, types.NamespacedName{Namespace: secretNamespace, Name: secretName}, secret)
+	err := r.Get(ctx, types.NamespacedName{Namespace: secretNamespace, Name: secretName}, secret)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
@@ -76,14 +75,16 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, c controllers.RateLimiterConfig) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&corev1.Secret{}).
-		WithEventFilter(predicate.NewPredicateFuncs(func(o client.Object) bool { return o.GetName() == secretName && o.GetNamespace() == secretNamespace })).
+		WithEventFilter(predicate.NewPredicateFuncs(func(o ctrlclient.Object) bool {
+			return o.GetName() == secretName && o.GetNamespace() == secretNamespace
+		})).
 		WithOptions(controller.Options{
 			RateLimiter: controllers.NewRateLimiter(c),
 		}).
 		Complete(r)
 }
 
-func verifyCertificateSecret(ctx context.Context, client client.Client, secret *corev1.Secret, log logr.Logger) error {
+func verifyCertificateSecret(ctx context.Context, client ctrlclient.Client, secret *corev1.Secret, log logr.Logger) error {
 	log.Info("Verifying certficate secret", "namespace", secretNamespace, "name", secretName)
 
 	err := verifySecret(secret)
@@ -103,7 +104,7 @@ func verifyCertificateSecret(ctx context.Context, client client.Client, secret *
 	return nil
 }
 
-func generateNewCertificateSecret(ctx context.Context, client client.Client, secret *corev1.Secret) error {
+func generateNewCertificateSecret(ctx context.Context, client ctrlclient.Client, secret *corev1.Secret) error {
 	certificate, key, err := generateNewCertificate(serviceName, secret.Namespace)
 	if err != nil {
 		return errors.Wrap(err, "failed to generate certificate")
@@ -135,7 +136,7 @@ func generateNewCertificate(serviceName, namespace string) ([]byte, []byte, erro
 	return GenerateSelfSignedCertificate(commonName, nil, []string{}, maxAge)
 }
 
-func updateCertificateInCRD(ctx context.Context, client client.Client, certificate []byte) error {
+func updateCertificateInCRD(ctx context.Context, client ctrlclient.Client, certificate []byte) error {
 	crd := &apiextensionsv1.CustomResourceDefinition{}
 	err := client.Get(ctx, types.NamespacedName{Name: apiRuleCRDName}, crd)
 	if err != nil {

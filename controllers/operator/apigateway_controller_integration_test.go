@@ -8,10 +8,8 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"github.com/kyma-project/api-gateway/internal/reconciliations/gateway"
 	. "github.com/onsi/gomega"
-	"istio.io/client-go/pkg/apis/networking/v1alpha3"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/utils/ptr"
 
@@ -362,7 +360,7 @@ var _ = Describe("API Gateway Controller", Serial, func() {
 				g.Expect(k8sClient.Get(context.Background(), client.ObjectKey{Name: apiGateway.Name}, &created)).Should(Succeed())
 				g.Expect(created.Status.State).To(Equal(v1alpha1.Ready))
 
-				kymaGw := v1alpha3.Gateway{}
+				kymaGw := networkingv1alpha3.Gateway{}
 				g.Expect(k8sClient.Get(context.Background(), client.ObjectKey{Name: "kyma-gateway", Namespace: "kyma-system"}, &kymaGw)).Should(Succeed())
 			}, eventuallyTimeout).Should(Succeed())
 		})
@@ -384,7 +382,7 @@ var _ = Describe("API Gateway Controller", Serial, func() {
 				g.Expect(k8sClient.Get(context.Background(), client.ObjectKey{Name: apiGateway.Name}, &created)).Should(Succeed())
 				g.Expect(created.Status.State).To(Equal(v1alpha1.Ready))
 
-				kymaGw := v1alpha3.Gateway{}
+				kymaGw := networkingv1alpha3.Gateway{}
 				err := k8sClient.Get(context.Background(), client.ObjectKey{Name: "kyma-gateway", Namespace: "kyma-system"}, &kymaGw)
 				g.Expect(err).To(HaveOccurred())
 				g.Expect(errors.IsNotFound(err)).To(BeTrue())
@@ -410,7 +408,7 @@ var _ = Describe("API Gateway Controller", Serial, func() {
 				g.Expect(k8sClient.Get(context.Background(), client.ObjectKey{Name: apiGateway.Name}, &apiGateway)).Should(Succeed())
 				g.Expect(apiGateway.Status.State).To(Equal(v1alpha1.Ready))
 
-				kymaGw := v1alpha3.Gateway{}
+				kymaGw := networkingv1alpha3.Gateway{}
 				g.Expect(k8sClient.Get(context.Background(), client.ObjectKey{Name: "kyma-gateway", Namespace: "kyma-system"}, &kymaGw)).Should(Succeed())
 			}, eventuallyTimeout).Should(Succeed())
 
@@ -428,7 +426,7 @@ var _ = Describe("API Gateway Controller", Serial, func() {
 				g.Expect(k8sClient.Get(context.Background(), client.ObjectKey{Name: apiGateway.Name}, &apiGateway)).Should(Succeed())
 				g.Expect(apiGateway.Status.State).To(Equal(v1alpha1.Ready))
 
-				kymaGw := v1alpha3.Gateway{}
+				kymaGw := networkingv1alpha3.Gateway{}
 				err := k8sClient.Get(context.Background(), client.ObjectKey{Name: "kyma-gateway", Namespace: "kyma-system"}, &kymaGw)
 				g.Expect(err).To(HaveOccurred())
 				g.Expect(errors.IsNotFound(err)).To(BeTrue())
@@ -566,7 +564,7 @@ func apiGatewayTeardown(apiGateway *v1alpha1.APIGateway) {
 func deleteApiRules() {
 	Eventually(func(g Gomega) {
 		By("Checking if APIRules exists as part of teardown")
-		list := v1beta1.APIRuleList{}
+		list := gatewayv1beta1.APIRuleList{}
 		Expect(k8sClient.List(context.Background(), &list)).Should(Succeed())
 
 		for _, item := range list.Items {
@@ -601,7 +599,7 @@ func virtualServiceTeardown(vs *networkingv1beta1.VirtualService) {
 	}, eventuallyTimeout).Should(Succeed())
 }
 
-func apiRuleTeardown(apiRule *v1beta1.APIRule) {
+func apiRuleTeardown(apiRule *gatewayv1beta1.APIRule) {
 	By(fmt.Sprintf("Deleting APIRule %s as part of teardown", apiRule.Name))
 	err := k8sClient.Delete(context.Background(), apiRule)
 
@@ -610,7 +608,7 @@ func apiRuleTeardown(apiRule *v1beta1.APIRule) {
 	}
 
 	Eventually(func(g Gomega) {
-		a := v1beta1.APIRule{}
+		a := gatewayv1beta1.APIRule{}
 		err := k8sClient.Get(context.Background(), client.ObjectKey{Name: apiRule.Name, Namespace: apiRule.Namespace}, &a)
 		g.Expect(errors.IsNotFound(err)).To(BeTrue())
 	}, eventuallyTimeout).Should(Succeed())

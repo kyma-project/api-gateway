@@ -26,7 +26,6 @@ import (
 	"github.com/kyma-project/api-gateway/internal/reconciliations/oathkeeper"
 
 	ratelimitv1alpha1 "github.com/kyma-project/api-gateway/apis/gateway/ratelimit/v1alpha1"
-	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	operatorv1alpha1 "github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
 	"github.com/kyma-project/api-gateway/controllers"
@@ -238,7 +237,6 @@ func createFakeClient(objects ...client.Object) client.Client {
 func getTestScheme() *runtime.Scheme {
 	s := runtime.NewScheme()
 	utilruntime.Must(corev1.AddToScheme(s))
-	utilruntime.Must(v1beta1.AddToScheme(s))
 	utilruntime.Must(appsv1.AddToScheme(s))
 	utilruntime.Must(rbacv1.AddToScheme(s))
 	utilruntime.Must(policyv1.AddToScheme(s))

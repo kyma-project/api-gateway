@@ -392,17 +392,17 @@ var _ = Describe("APIRule Conversion", func() {
 			correctMutators := 0
 
 			for _, mutator := range apiRuleBeta1.Spec.Rules[0].Mutators {
-				if mutator.Handler.Name == v1beta1.HeaderMutator {
+				if mutator.Name == v1beta1.HeaderMutator {
 					correctMutators++
-					Expect(mutator.Handler.Config.Raw).ToNot(BeNil())
-					err := json.Unmarshal(mutator.Handler.Config.Raw, &configMap)
+					Expect(mutator.Config.Raw).ToNot(BeNil())
+					err := json.Unmarshal(mutator.Config.Raw, &configMap)
 					Expect(err).ToNot(HaveOccurred())
 					Expect(configMap).To(HaveKeyWithValue("header1", "value1"))
 				}
-				if mutator.Handler.Name == v1beta1.CookieMutator {
+				if mutator.Name == v1beta1.CookieMutator {
 					correctMutators++
-					Expect(mutator.Handler.Config.Raw).ToNot(BeNil())
-					err := json.Unmarshal(mutator.Handler.Config.Raw, &configMap)
+					Expect(mutator.Config.Raw).ToNot(BeNil())
+					err := json.Unmarshal(mutator.Config.Raw, &configMap)
 					Expect(err).ToNot(HaveOccurred())
 					Expect(configMap).To(HaveKeyWithValue("cookie1", "value1"))
 				}

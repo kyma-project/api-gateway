@@ -87,7 +87,7 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		return doneReconcileErrorRequeue(err, errorReconciliationPeriod)
 	}
 
-	isCMReconcile := req.NamespacedName.String() == types.NamespacedName{
+	isCMReconcile := req.String() == types.NamespacedName{
 		Namespace: helpers.CM_NS, Name: helpers.CM_NAME}.String()
 
 	finishReconcile := r.reconcileConfigMap(ctx, isCMReconcile)
@@ -97,7 +97,7 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 
 	apiRule := gatewayv1beta1.APIRule{}
 
-	if err := r.Client.Get(ctx, req.NamespacedName, &apiRule); err != nil {
+	if err := r.Get(ctx, req.NamespacedName, &apiRule); err != nil {
 		if apierrs.IsNotFound(err) {
 			return doneReconcileNoRequeue()
 		}
@@ -321,8 +321,8 @@ func discoverGateway(client client.Client, ctx context.Context, l logr.Logger, r
 func (r *APIRuleReconciler) getV1Beta1Reconciliation(apiRule *gatewayv1beta1.APIRule, defaultDomainName string, namespacedLogger *logr.Logger) processing.ReconciliationCommand {
 	config := r.ReconciliationConfig
 	config.DefaultDomainName = defaultDomainName
-	switch {
-	case r.Config.JWTHandler == helpers.JWT_HANDLER_ISTIO:
+	switch r.Config.JWTHandler {
+	case helpers.JWT_HANDLER_ISTIO:
 		return istio.NewIstioReconciliation(apiRule, config, namespacedLogger)
 	default:
 		return ory.NewOryReconciliation(apiRule, config, namespacedLogger)

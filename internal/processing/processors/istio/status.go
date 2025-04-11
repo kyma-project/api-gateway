@@ -2,11 +2,10 @@ package istio
 
 import (
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
-	"github.com/kyma-project/api-gateway/internal/processing/status"
 	v1beta1Status "github.com/kyma-project/api-gateway/internal/processing/status"
 )
 
-func (r Reconciliation) GetStatusBase(statusCode string) status.ReconciliationStatus {
+func (r Reconciliation) GetStatusBase(statusCode string) v1beta1Status.ReconciliationStatus {
 	return v1beta1Status.ReconciliationV1beta1Status{
 		ApiRuleStatus: &gatewayv1beta1.APIRuleResourceStatus{
 			Code: gatewayv1beta1.StatusCode(statusCode),

@@ -266,10 +266,8 @@ var _ = Describe("Reconciliation", func() {
 						Expect(http.Route[0].Destination.Host).To(Equal("example-service.some-namespace.svc.cluster.local"))
 
 						switch http.Match[0].Uri.MatchType.(*v1beta1.StringMatch_Regex).Regex {
-						case "^/test$":
-							break
-						case "^/different-path$":
-							break
+						case "^/test$": // no-op
+						case "^/different-path$": // no-op
 						default:
 							Fail("Unexpected match type")
 						}
@@ -342,10 +340,8 @@ var _ = Describe("Reconciliation", func() {
 						Expect(http.Route[0].Destination.Host).To(Equal("example-service.some-namespace.svc.cluster.local"))
 
 						switch http.Match[0].Uri.MatchType.(*v1beta1.StringMatch_Regex).Regex {
-						case "^/test$":
-							break
-						case "^/different-path$":
-							break
+						case "^/test$": // no-op
+						case "^/different-path$": // no-op
 						default:
 							Fail("Unexpected match type")
 						}
