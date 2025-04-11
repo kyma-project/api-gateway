@@ -86,7 +86,7 @@ func (r *APIGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	r.log.Info("Received reconciliation request", "name", req.Name)
 
 	apiGatewayCR := operatorv1alpha1.APIGateway{}
-	if err := r.Client.Get(ctx, req.NamespacedName, &apiGatewayCR); err != nil {
+	if err := r.Get(ctx, req.NamespacedName, &apiGatewayCR); err != nil {
 		if apierrors.IsNotFound(err) {
 			r.log.Info("Skipped reconciliation, because ApiGateway CR was not found")
 			return ctrl.Result{}, nil
@@ -96,7 +96,7 @@ func (r *APIGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	}
 
 	existingAPIGateways := &operatorv1alpha1.APIGatewayList{}
-	if err := r.Client.List(ctx, existingAPIGateways); err != nil {
+	if err := r.List(ctx, existingAPIGateways); err != nil {
 		r.log.Info("Unable to list APIGateway CRs")
 		return r.requeueReconciliation(ctx, apiGatewayCR, controllers.ErrorStatus(err, "Unable to list APIGateway CRs", conditions.ReconcileFailed.Condition()))
 	}
@@ -230,7 +230,7 @@ func (r *APIGatewayReconciler) terminateReconciliation(ctx context.Context, apiG
 func (r *APIGatewayReconciler) reconcileFinalizer(ctx context.Context, apiGatewayCR *operatorv1alpha1.APIGateway) controllers.Status {
 	if !apiGatewayCR.IsInDeletion() && !hasFinalizer(apiGatewayCR) {
 		controllerutil.AddFinalizer(apiGatewayCR, ApiGatewayFinalizer)
-		if err := r.Client.Update(ctx, apiGatewayCR); err != nil {
+		if err := r.Update(ctx, apiGatewayCR); err != nil {
 			ctrl.Log.Error(err, "Failed to add API-Gateway CR finalizer")
 			return controllers.ErrorStatus(err, "Could not add API-Gateway CR finalizer", conditions.ReconcileFailed.Condition())
 		}

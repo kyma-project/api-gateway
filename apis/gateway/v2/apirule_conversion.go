@@ -277,7 +277,7 @@ func (apiRule *APIRule) ConvertFrom(hub conversion.Hub) error {
 				case v1beta1.HeaderMutator:
 					var configStruct map[string]string
 
-					err := json.Unmarshal(mutator.Handler.Config.Raw, &configStruct)
+					err := json.Unmarshal(mutator.Config.Raw, &configStruct)
 					if err != nil {
 						return err
 					}
@@ -286,7 +286,7 @@ func (apiRule *APIRule) ConvertFrom(hub conversion.Hub) error {
 				case v1beta1.CookieMutator:
 					var configStruct map[string]string
 
-					err := json.Unmarshal(mutator.Handler.Config.Raw, &configStruct)
+					err := json.Unmarshal(mutator.Config.Raw, &configStruct)
 					if err != nil {
 						return err
 					}
@@ -321,7 +321,7 @@ func isFullConversionPossible(apiRule *v1beta1.APIRule) (bool, error) {
 	for _, rule := range apiRule.Spec.Rules {
 		for _, accessStrategy := range rule.AccessStrategies {
 
-			if accessStrategy.Handler.Name == v1beta1.AccessStrategyNoAuth || accessStrategy.Handler.Name == "ext-auth" {
+			if accessStrategy.Name == v1beta1.AccessStrategyNoAuth || accessStrategy.Name == "ext-auth" {
 				continue
 			}
 
