@@ -35,7 +35,6 @@ import (
 
 	ratelimitv1alpha1 "github.com/kyma-project/api-gateway/apis/gateway/ratelimit/v1alpha1"
 	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
-	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
 	operatorv1alpha1 "github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
 	"github.com/kyma-project/api-gateway/controllers"
 	"github.com/kyma-project/api-gateway/internal/dependencies"
@@ -202,7 +201,7 @@ func (r *APIGatewayReconciler) requeueReconciliation(ctx context.Context, cr ope
 	return ctrl.Result{}, status.NestedError()
 }
 
-func (r *APIGatewayReconciler) finishReconcile(ctx context.Context, cr v1alpha1.APIGateway) (ctrl.Result, error) {
+func (r *APIGatewayReconciler) finishReconcile(ctx context.Context, cr operatorv1alpha1.APIGateway) (ctrl.Result, error) {
 	if err := controllers.UpdateApiGatewayStatus(ctx, r.Client, &cr, controllers.ReadyStatus(conditions.ReconcileSucceeded.Condition())); err != nil {
 		r.log.Error(err, "Update status failed")
 		return ctrl.Result{}, err
