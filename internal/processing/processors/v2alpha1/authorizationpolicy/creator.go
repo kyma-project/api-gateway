@@ -141,7 +141,7 @@ func (r creator) generateAuthorizationPolicyForEmptyAuthorizations(ctx context.C
 }
 
 func baseAuthorizationPolicyBuilder(apiRule *gatewayv2alpha1.APIRule, rule gatewayv2alpha1.Rule) (*builders.AuthorizationPolicyBuilder, error) {
-	namePrefix := fmt.Sprintf("%s-", apiRule.ObjectMeta.Name)
+	namePrefix := fmt.Sprintf("%s-", apiRule.Name)
 	namespace, err := gatewayv2alpha1.FindServiceNamespace(apiRule, rule)
 	if err != nil {
 		return nil, fmt.Errorf("finding service namespace: %w", err)
@@ -150,7 +150,7 @@ func baseAuthorizationPolicyBuilder(apiRule *gatewayv2alpha1.APIRule, rule gatew
 	return builders.NewAuthorizationPolicyBuilder().
 			WithGenerateName(namePrefix).
 			WithNamespace(namespace).
-			WithLabel(processing.OwnerLabel, fmt.Sprintf("%s.%s", apiRule.ObjectMeta.Name, apiRule.ObjectMeta.Namespace)),
+			WithLabel(processing.OwnerLabel, fmt.Sprintf("%s.%s", apiRule.Name, apiRule.Namespace)),
 		nil
 }
 

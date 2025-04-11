@@ -13,7 +13,7 @@ func entry(value string, valid bool) TableEntry {
 
 var _ = Describe("Label validation function", func() {
 
-	var commonEntries []TableEntry = []TableEntry{
+	var commonEntries = []TableEntry{
 		entry(" we-trim-whitespaces   ", true),
 		entry("a1b", true),
 		entry("aaa", true),
