@@ -225,7 +225,7 @@ func (apiRuleV2Alpha1 *APIRule) ConvertFrom(hub conversion.Hub) error {
 		// In consequence, the conversion drops any values smaller than 1 second.
 		// https://fetch.spec.whatwg.org/#http-responses
 		if apiRuleBeta1.Spec.CorsPolicy.MaxAge != nil {
-			maxAge := uint64(apiRuleBeta1.Spec.CorsPolicy.MaxAge.Duration.Seconds())
+			maxAge := uint64(apiRuleBeta1.Spec.CorsPolicy.MaxAge.Seconds())
 			apiRuleV2Alpha1.Spec.CorsPolicy.MaxAge = &maxAge
 		}
 	}

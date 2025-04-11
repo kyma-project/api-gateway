@@ -24,9 +24,9 @@ func (r *Rule) GetCookieMutator() (CookieMutatorConfig, error) {
 	}
 
 	for _, mutator := range r.Mutators {
-		if mutator.Handler.Name == CookieMutator {
+		if mutator.Name == CookieMutator {
 
-			err := json.Unmarshal(mutator.Handler.Config.Raw, &mutatorConfig)
+			err := json.Unmarshal(mutator.Config.Raw, &mutatorConfig)
 
 			if err != nil {
 				return mutatorConfig, err
@@ -47,8 +47,8 @@ func (r *Rule) GetHeaderMutator() (HeaderMutatorConfig, error) {
 	}
 
 	for _, mutator := range r.Mutators {
-		if mutator.Handler.Name == HeaderMutator {
-			err := json.Unmarshal(mutator.Handler.Config.Raw, &mutatorConfig)
+		if mutator.Name == HeaderMutator {
+			err := json.Unmarshal(mutator.Config.Raw, &mutatorConfig)
 
 			if err != nil {
 				return mutatorConfig, err
