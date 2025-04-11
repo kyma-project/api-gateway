@@ -97,7 +97,7 @@ func generateAuthorizationPolicies(ctx context.Context, client client.Client, ap
 }
 
 func generateAuthorizationPolicy(ctx context.Context, client client.Client, api *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rule, authorization *gatewayv1beta1.JwtAuthorization) (*securityv1beta1.AuthorizationPolicy, error) {
-	namePrefix := fmt.Sprintf("%s-", api.ObjectMeta.Name)
+	namePrefix := fmt.Sprintf("%s-", api.Name)
 	namespace := helpers.FindServiceNamespace(api, &rule)
 
 	spec, err := generateAuthorizationPolicySpec(ctx, client, api, rule, authorization)
@@ -109,7 +109,7 @@ func generateAuthorizationPolicy(ctx context.Context, client client.Client, api 
 		WithGenerateName(namePrefix).
 		WithNamespace(namespace).
 		WithSpec(builders.NewAuthorizationPolicySpecBuilder().FromAP(spec).Get()).
-		WithLabel(processing.OwnerLabel, fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace))
+		WithLabel(processing.OwnerLabel, fmt.Sprintf("%s.%s", api.Name, api.Namespace))
 
 	return apBuilder.Get(), nil
 }

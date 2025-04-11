@@ -273,11 +273,11 @@ func (apiRuleV2Alpha1 *APIRule) ConvertFrom(hub conversion.Hub) error {
 			}
 
 			for _, mutator := range ruleBeta1.Mutators {
-				switch mutator.Handler.Name {
+				switch mutator.Name {
 				case v1beta1.HeaderMutator:
 					var configStruct map[string]string
 
-					err := json.Unmarshal(mutator.Handler.Config.Raw, &configStruct)
+					err := json.Unmarshal(mutator.Config.Raw, &configStruct)
 					if err != nil {
 						return err
 					}
@@ -286,7 +286,7 @@ func (apiRuleV2Alpha1 *APIRule) ConvertFrom(hub conversion.Hub) error {
 				case v1beta1.CookieMutator:
 					var configStruct map[string]string
 
-					err := json.Unmarshal(mutator.Handler.Config.Raw, &configStruct)
+					err := json.Unmarshal(mutator.Config.Raw, &configStruct)
 					if err != nil {
 						return err
 					}
