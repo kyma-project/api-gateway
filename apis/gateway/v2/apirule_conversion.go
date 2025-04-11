@@ -3,11 +3,12 @@ package v2
 import (
 	"encoding/json"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/utils/ptr"
+	"slices"
 	"time"
 
 	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
 )
 
@@ -32,7 +33,11 @@ func convertMap(m map[v1beta1.StatusCode]State) map[State]v1beta1.StatusCode {
 // The 2 => 1 map is generated automatically based on 1 => 2 map
 var v2to1beta1statusConversionMap = convertMap(beta1toV2StatusConversionMap)
 
-const v2RulesAnnotationKey = "gateway.kyma-project.io/v2alpha1-rules"
+const (
+	v2RulesAnnotationKey         = "gateway.kyma-project.io/v2alpha1-rules"
+	originalVersionAnnotationKey = "gateway.kyma-project.io/original-version"
+	v1beta1SpecAnnotationKey     = "gateway.kyma-project.io/v1beta1-spec"
+)
 
 // ConvertTo Converts this ApiRule (v2) to the Hub version (v1beta1)
 func (apiRule *APIRule) ConvertTo(hub conversion.Hub) error {
@@ -42,7 +47,7 @@ func (apiRule *APIRule) ConvertTo(hub conversion.Hub) error {
 	if apiRuleBeta1.Annotations == nil {
 		apiRuleBeta1.Annotations = make(map[string]string)
 	}
-	apiRuleBeta1.Annotations["gateway.kyma-project.io/original-version"] = "v2"
+	apiRuleBeta1.Annotations[originalVersionAnnotationKey] = "v2"
 
 	err := convertOverJson(apiRule.Spec.Rules, &apiRuleBeta1.Spec.Rules)
 	if err != nil {
@@ -190,9 +195,22 @@ func (apiRule *APIRule) ConvertFrom(hub conversion.Hub) error {
 	if err != nil {
 		return err
 	}
-	if !conversionPossible {
-		// We have to stop the conversion here, because we want to return an empty Spec in case we cannot fully convert the APIRule.
-		return nil
+
+	if originalVersion, ok := apiRuleBeta1.Annotations[originalVersionAnnotationKey]; !ok || !slices.Contains([]string{"v2", "v2alpha1"}, originalVersion) {
+		if apiRule.Annotations == nil {
+			apiRule.Annotations = make(map[string]string)
+		}
+		marshaledSpec, err := json.Marshal(apiRuleBeta1.Spec)
+		if err != nil {
+			return err
+		}
+		apiRule.Annotations[v1beta1SpecAnnotationKey] = string(marshaledSpec)
+
+		if !conversionPossible {
+			apiRule.Annotations[originalVersionAnnotationKey] = "v1beta1"
+			return nil
+		}
+
 	}
 
 	err = convertOverJson(apiRuleBeta1.Spec.Rules, &apiRule.Spec.Rules)
