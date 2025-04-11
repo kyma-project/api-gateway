@@ -87,6 +87,10 @@ func (a *APIGateway) HasFinalizer() bool {
 }
 
 func GetOldestAPIGatewayCR(apigatewayCRs *APIGatewayList) *APIGateway {
+	if len(apigatewayCRs.Items) == 0 {
+		return nil
+	}
+
 	oldest := apigatewayCRs.Items[0]
 	for _, item := range apigatewayCRs.Items {
 		timestamp := &item.CreationTimestamp
