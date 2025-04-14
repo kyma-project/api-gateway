@@ -18,12 +18,12 @@ var (
 // If the change for some reason has to be done, please remove the version from the OwnerLabel constant.
 func GetOwnerLabelsV2alpha1(api *gatewayv2alpha1.APIRule) map[string]string {
 	return map[string]string{
-		OwnerLabel: fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace),
+		OwnerLabel: fmt.Sprintf("%s.%s", api.Name, api.Namespace),
 	}
 }
 
 func GetOwnerLabels(api *gatewayv1beta1.APIRule) map[string]string {
 	labels := make(map[string]string)
-	labels[OwnerLabel] = fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace)
+	labels[OwnerLabel] = fmt.Sprintf("%s.%s", api.Name, api.Namespace)
 	return labels
 }
