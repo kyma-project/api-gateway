@@ -43,7 +43,7 @@ func ParseSingleEntryFromFileWithTemplate(fileName string, directory string, tem
 	}
 
 	if len(result) > 1 {
-		return unstructured.Unstructured{}, fmt.Errorf("Template in file %s contains more than one entry", fileName)
+		return unstructured.Unstructured{}, fmt.Errorf("template in file %s contains more than one entry", fileName)
 	}
 	return result[0], nil
 }

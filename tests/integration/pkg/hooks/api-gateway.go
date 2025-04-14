@@ -73,7 +73,7 @@ var ApiGatewayCrTearDownScenarioHook = func(ctx context.Context, sc *godog.Scena
 			_ = retry.Do(func() error {
 				err := removeObjectFromCluster(ctx, apiGateway)
 				if err != nil {
-					return fmt.Errorf("Failed to delete ApiGateway CR %s", apiGateway.GetName())
+					return fmt.Errorf("failed to delete ApiGateway CR %s", apiGateway.GetName())
 				}
 				return nil
 			}, testcontext.GetRetryOpts()...)

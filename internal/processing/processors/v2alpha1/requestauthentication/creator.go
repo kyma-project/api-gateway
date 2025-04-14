@@ -46,7 +46,7 @@ func generateRequestAuthentication(ctx context.Context, client client.Client, ap
 		WithGenerateName(namePrefix).
 		WithNamespace(namespace).
 		WithSpec(builders.NewRequestAuthenticationSpecBuilder().WithFrom(spec).Get()).
-		WithLabel(processing.OwnerLabel, fmt.Sprintf("%s.%s", apiRule.ObjectMeta.Name, apiRule.ObjectMeta.Namespace))
+		WithLabel(processing.OwnerLabel, fmt.Sprintf("%s.%s", apiRule.Name, apiRule.Namespace))
 
 	return raBuilder.Get(), nil
 }
