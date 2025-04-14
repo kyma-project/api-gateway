@@ -208,12 +208,12 @@ func (a *apiRuleBuilder) withGateway(gateway string) *apiRuleBuilder {
 }
 
 func (a *apiRuleBuilder) withName(name string) *apiRuleBuilder {
-	a.apiRule.ObjectMeta.Name = name
+	a.apiRule.Name = name
 	return a
 }
 
 func (a *apiRuleBuilder) withNamespace(namespace string) *apiRuleBuilder {
-	a.apiRule.ObjectMeta.Namespace = namespace
+	a.apiRule.Namespace = namespace
 	return a
 }
 
