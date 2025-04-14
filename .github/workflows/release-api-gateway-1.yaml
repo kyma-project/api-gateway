@@ -19,24 +19,23 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.GOAT_BOT_REPO_ACCESS }}
 
-      - name: Determine if this is a patch release
-        id: check_patch
-        run: |
-          if [[ "${{ github.event.inputs.name }}" =~ ^[0-9]+\.[0-9]+\.[1-9][0-9]*$ ]]; then
-            echo "is_patch=true" >> $GITHUB_ENV
-          else
-            echo "is_patch=false" >> $GITHUB_ENV
-          fi
-
-      - name: Create a release branch
+      - name: Check if release branch exists
         run: |
           major_minor=$(echo "${{ github.event.inputs.name }}" | grep -Eo '^[0-9]+\.[0-9]+')
           branch_name="release-$major_minor"
           echo "branch_name=$branch_name" >> $GITHUB_ENV
-          if [[ "${{ env.is_patch }}" == "false" ]]; then
+          
+          if git ls-remote --heads origin "$branch_name" | grep -q "$branch_name"; then
+            echo "branch_exists=true" >> $GITHUB_ENV
+          else
+            echo "branch_exists=false" >> $GITHUB_ENV
+          fi
+
+      - name: Create a release branch
+        if: env.branch_exists == 'false'
+        run: |
             git checkout -b "$branch_name"
             git push origin "$branch_name"
-          fi
 
       - name: Update sec-scanners-config
         env:
