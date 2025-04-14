@@ -96,7 +96,7 @@ type virtualServiceCreator struct {
 
 // Create returns the Virtual Service using the configuration of the APIRule.
 func (r virtualServiceCreator) Create(api *gatewayv2alpha1.APIRule) (*networkingv1beta1.VirtualService, error) {
-	virtualServiceNamePrefix := fmt.Sprintf("%s-", api.ObjectMeta.Name)
+	virtualServiceNamePrefix := fmt.Sprintf("%s-", api.Name)
 
 	vsSpecBuilder := builders.VirtualServiceSpec()
 	gatewayDomain := ""
