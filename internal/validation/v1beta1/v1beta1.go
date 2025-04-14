@@ -323,6 +323,6 @@ func hasPathAndMethodDuplicates(rules []gatewayv1beta1.Rule) bool {
 func getOwnerLabels(api *gatewayv1beta1.APIRule) map[string]string {
 	OwnerLabelv1beta1 := fmt.Sprintf("%s.%s", "apirule", gatewayv1beta1.GroupVersion.String())
 	labels := make(map[string]string)
-	labels[OwnerLabelv1beta1] = fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace)
+	labels[OwnerLabelv1beta1] = fmt.Sprintf("%s.%s", api.Name, api.Namespace)
 	return labels
 }
