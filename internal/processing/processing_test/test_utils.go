@@ -151,7 +151,7 @@ func GetAPIRuleFor(rules []apirulev1beta1.Rule, namespace ...string) *apirulev1b
 		},
 	}
 	if len(namespace) > 0 {
-		apiRule.ObjectMeta.Namespace = namespace[0]
+		apiRule.Namespace = namespace[0]
 	}
 	return &apiRule
 }
@@ -169,7 +169,7 @@ func GetService(name string, namespace ...string) *corev1.Service {
 		},
 	}
 	if len(namespace) > 0 {
-		svc.ObjectMeta.Namespace = namespace[0]
+		svc.Namespace = namespace[0]
 	}
 	return svc
 }
