@@ -259,7 +259,7 @@ func (v *APIRuleValidator) validateAccessStrategy(attributePath string, accessSt
 			}
 		}
 	default:
-		return []validation.Failure{{AttributePath: attributePath + ".handler", Message: fmt.Sprintf("Unsupported accessStrategy: %s", accessStrategy.Handler.Name)}}
+		return []validation.Failure{{AttributePath: attributePath + ".handler", Message: fmt.Sprintf("Unsupported accessStrategy: %s", accessStrategy.Name)}}
 	}
 
 	return append(problems, vld.Validate(attributePath, accessStrategy.Handler)...)
