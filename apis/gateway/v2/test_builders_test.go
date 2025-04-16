@@ -18,12 +18,12 @@ func newServiceBuilder() *serviceBuilder {
 }
 
 func (b *serviceBuilder) withName(name string) *serviceBuilder {
-	b.service.ObjectMeta.Name = name
+	b.service.Name = name
 	return b
 }
 
 func (b *serviceBuilder) withNamespace(namespace string) *serviceBuilder {
-	b.service.ObjectMeta.Namespace = namespace
+	b.service.Namespace = namespace
 	return b
 }
 

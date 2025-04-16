@@ -225,7 +225,7 @@ func (apiRuleV2Alpha1 *APIRule) ConvertFrom(hub conversion.Hub) error {
 		// In consequence, the conversion drops any values smaller than 1 second.
 		// https://fetch.spec.whatwg.org/#http-responses
 		if apiRuleBeta1.Spec.CorsPolicy.MaxAge != nil {
-			maxAge := uint64(apiRuleBeta1.Spec.CorsPolicy.MaxAge.Duration.Seconds())
+			maxAge := uint64(apiRuleBeta1.Spec.CorsPolicy.MaxAge.Seconds())
 			apiRuleV2Alpha1.Spec.CorsPolicy.MaxAge = &maxAge
 		}
 	}
@@ -252,11 +252,11 @@ func (apiRuleV2Alpha1 *APIRule) ConvertFrom(hub conversion.Hub) error {
 				return err
 			}
 			for _, accessStrategy := range ruleBeta1.AccessStrategies {
-				if accessStrategy.Handler.Name == v1beta1.AccessStrategyNoAuth {
+				if accessStrategy.Name == v1beta1.AccessStrategyNoAuth {
 					ruleV1Alpha2.NoAuth = ptr.To(true)
 				}
 
-				if accessStrategy.Handler.Name == v1beta1.AccessStrategyJwt {
+				if accessStrategy.Name == v1beta1.AccessStrategyJwt {
 					jwtConfig, err := convertToJwtConfig(accessStrategy)
 					if err != nil {
 						return err
@@ -273,11 +273,11 @@ func (apiRuleV2Alpha1 *APIRule) ConvertFrom(hub conversion.Hub) error {
 			}
 
 			for _, mutator := range ruleBeta1.Mutators {
-				switch mutator.Handler.Name {
+				switch mutator.Name {
 				case v1beta1.HeaderMutator:
 					var configStruct map[string]string
 
-					err := json.Unmarshal(mutator.Handler.Config.Raw, &configStruct)
+					err := json.Unmarshal(mutator.Config.Raw, &configStruct)
 					if err != nil {
 						return err
 					}
@@ -286,7 +286,7 @@ func (apiRuleV2Alpha1 *APIRule) ConvertFrom(hub conversion.Hub) error {
 				case v1beta1.CookieMutator:
 					var configStruct map[string]string
 
-					err := json.Unmarshal(mutator.Handler.Config.Raw, &configStruct)
+					err := json.Unmarshal(mutator.Config.Raw, &configStruct)
 					if err != nil {
 						return err
 					}
@@ -321,11 +321,11 @@ func isFullConversionPossible(apiRule *v1beta1.APIRule) (bool, error) {
 	for _, rule := range apiRule.Spec.Rules {
 		for _, accessStrategy := range rule.AccessStrategies {
 
-			if accessStrategy.Handler.Name == v1beta1.AccessStrategyNoAuth || accessStrategy.Handler.Name == "ext-auth" {
+			if accessStrategy.Name == v1beta1.AccessStrategyNoAuth || accessStrategy.Name == "ext-auth" {
 				continue
 			}
 
-			if accessStrategy.Handler.Name == v1beta1.AccessStrategyJwt {
+			if accessStrategy.Name == v1beta1.AccessStrategyJwt {
 				isConvertible, err := isConvertibleJwtConfig(accessStrategy)
 				if err != nil {
 					return false, err

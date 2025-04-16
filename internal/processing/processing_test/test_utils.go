@@ -8,14 +8,12 @@ import (
 
 	"github.com/kyma-project/api-gateway/internal/processing"
 	"github.com/onsi/gomega"
-	. "github.com/onsi/gomega"
 	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
 	"istio.io/api/networking/v1beta1"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -133,12 +131,12 @@ func GetJwtRuleWithService(jwtIssuer, jwksUri, serviceName string, namespace ...
 
 func GetAPIRuleFor(rules []apirulev1beta1.Rule, namespace ...string) *apirulev1beta1.APIRule {
 	apiRule := apirulev1beta1.APIRule{
-		ObjectMeta: v1.ObjectMeta{
+		ObjectMeta: metav1.ObjectMeta{
 			Name:      ApiName,
 			UID:       ApiUID,
 			Namespace: ApiNamespace,
 		},
-		TypeMeta: v1.TypeMeta{
+		TypeMeta: metav1.TypeMeta{
 			APIVersion: ApiAPIVersion,
 			Kind:       ApiKind,
 		},
@@ -153,7 +151,7 @@ func GetAPIRuleFor(rules []apirulev1beta1.Rule, namespace ...string) *apirulev1b
 		},
 	}
 	if len(namespace) > 0 {
-		apiRule.ObjectMeta.Namespace = namespace[0]
+		apiRule.Namespace = namespace[0]
 	}
 	return &apiRule
 }
@@ -171,7 +169,7 @@ func GetService(name string, namespace ...string) *corev1.Service {
 		},
 	}
 	if len(namespace) > 0 {
-		svc.ObjectMeta.Namespace = namespace[0]
+		svc.Namespace = namespace[0]
 	}
 	return svc
 }
@@ -194,7 +192,7 @@ var ActionToString = func(a processing.Action) string { return a.String() }
 
 func GetRawConfig(config any) *runtime.RawExtension {
 	bytes, err := json.Marshal(config)
-	Expect(err).To(BeNil())
+	gomega.Expect(err).To(gomega.BeNil())
 	return &runtime.RawExtension{
 		Raw: bytes,
 	}

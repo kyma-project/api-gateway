@@ -75,7 +75,7 @@ func (r *RateLimitReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	}
 
 	existingAPIGateways := &operatorv1alpha1.APIGatewayList{}
-	if err := r.Client.List(ctx, existingAPIGateways); err != nil {
+	if err := r.List(ctx, existingAPIGateways); err != nil {
 		l.Info("Unable to list APIGateway CRs")
 		return ctrl.Result{}, err
 	}

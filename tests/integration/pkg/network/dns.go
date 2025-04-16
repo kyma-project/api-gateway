@@ -63,10 +63,10 @@ func restartCoreDnsPods() error {
 
 	patch := client.StrategicMergeFrom(dep.DeepCopy())
 
-	if dep.Spec.Template.ObjectMeta.Annotations == nil {
-		dep.Spec.Template.ObjectMeta.Annotations = make(map[string]string)
+	if dep.Spec.Template.Annotations == nil {
+		dep.Spec.Template.Annotations = make(map[string]string)
 	}
-	dep.Spec.Template.ObjectMeta.Annotations["kubectl.kubernetes.io/restartedAt"] = time.Now().Format(time.RFC3339)
+	dep.Spec.Template.Annotations["kubectl.kubernetes.io/restartedAt"] = time.Now().Format(time.RFC3339)
 
 	return c.Patch(context.Background(), dep, patch)
 }

@@ -1158,10 +1158,10 @@ func getService(name string, namespace ...string) *corev1.Service {
 		},
 	}
 	if len(namespace) > 0 {
-		svc.ObjectMeta.Namespace = namespace[0]
+		svc.Namespace = namespace[0]
 	}
-	if svc.ObjectMeta.Namespace == "" {
-		svc.ObjectMeta.Namespace = "default"
+	if svc.Namespace == "" {
+		svc.Namespace = "default"
 	}
 	return &svc
 }

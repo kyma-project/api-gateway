@@ -111,14 +111,14 @@ func HasPathDuplicates(rules []gatewayv1beta1.Rule) bool {
 }
 
 func GenerateAccessRule(api *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rule, accessStrategies []*gatewayv1beta1.Authenticator, defaultDomainName string) *rulev1alpha1.Rule {
-	namePrefix := fmt.Sprintf("%s-", api.ObjectMeta.Name)
-	namespace := api.ObjectMeta.Namespace
+	namePrefix := fmt.Sprintf("%s-", api.Name)
+	namespace := api.Namespace
 
 	arBuilder := builders.AccessRule().
 		GenerateName(namePrefix).
 		Namespace(namespace).
 		Spec(builders.AccessRuleSpec().From(GenerateAccessRuleSpec(api, rule, accessStrategies, defaultDomainName))).
-		Label(processing.OwnerLabel, fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace))
+		Label(processing.OwnerLabel, fmt.Sprintf("%s.%s", api.Name, api.Namespace))
 
 	return arBuilder.Get()
 }

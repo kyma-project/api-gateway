@@ -230,7 +230,7 @@ var _ = Describe("Validate hosts", func() {
 			},
 		}
 		if useVsOwnerLabel {
-			virtualService2.ObjectMeta.Labels = getMapWithOwnerLabel(apiRule)
+			virtualService2.Labels = getMapWithOwnerLabel(apiRule)
 		}
 		virtualServiceList := networkingv1beta1.VirtualServiceList{
 			Items: []*networkingv1beta1.VirtualService{

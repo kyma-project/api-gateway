@@ -40,14 +40,14 @@ func TokenizePath(apiPath string) []Token {
 	apiPath = strings.TrimLeft(apiPath, Separator)
 
 	for _, tok := range strings.Split(apiPath, Separator) {
-		switch {
-		case tok == "":
+		switch tok {
+		case "":
 			tokens = append(tokens, Token{Type: Empty, Literal: EmptyLiteral})
-		case tok == BracedAsterix:
+		case BracedAsterix:
 			tokens = append(tokens, Token{Type: BracedAsterix, Literal: BracedAsterix})
-		case tok == BracedDoubleAsterix:
+		case BracedDoubleAsterix:
 			tokens = append(tokens, Token{Type: BracedDoubleAsterix, Literal: BracedDoubleAsterix})
-		case tok == Asterix:
+		case Asterix:
 			tokens = append(tokens, Token{Type: Asterix, Literal: Asterix})
 		default:
 			tokens = append(tokens, Token{Type: Ident, Literal: tok})

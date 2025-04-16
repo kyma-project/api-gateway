@@ -231,7 +231,7 @@ func (v *APIRuleValidator) validateAccessStrategy(attributePath string, accessSt
 	var problems []validation.Failure
 	var vld handlerValidator
 
-	switch accessStrategy.Handler.Name {
+	switch accessStrategy.Name {
 	case gatewayv1beta1.AccessStrategyAllow:
 		vld = vldNoConfig
 	case gatewayv1beta1.AccessStrategyNoAuth:
@@ -259,7 +259,7 @@ func (v *APIRuleValidator) validateAccessStrategy(attributePath string, accessSt
 			}
 		}
 	default:
-		return []validation.Failure{{AttributePath: attributePath + ".handler", Message: fmt.Sprintf("Unsupported accessStrategy: %s", accessStrategy.Handler.Name)}}
+		return []validation.Failure{{AttributePath: attributePath + ".handler", Message: fmt.Sprintf("Unsupported accessStrategy: %s", accessStrategy.Name)}}
 	}
 
 	return append(problems, vld.Validate(attributePath, accessStrategy.Handler)...)
@@ -323,6 +323,6 @@ func hasPathAndMethodDuplicates(rules []gatewayv1beta1.Rule) bool {
 func getOwnerLabels(api *gatewayv1beta1.APIRule) map[string]string {
 	OwnerLabelv1beta1 := fmt.Sprintf("%s.%s", "apirule", gatewayv1beta1.GroupVersion.String())
 	labels := make(map[string]string)
-	labels[OwnerLabelv1beta1] = fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace)
+	labels[OwnerLabelv1beta1] = fmt.Sprintf("%s.%s", api.Name, api.Namespace)
 	return labels
 }

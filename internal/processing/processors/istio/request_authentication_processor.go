@@ -40,7 +40,7 @@ func (r requestAuthenticationCreator) Create(ctx context.Context, client client.
 }
 
 func generateRequestAuthentication(ctx context.Context, client client.Client, api *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rule) (*securityv1beta1.RequestAuthentication, error) {
-	namePrefix := fmt.Sprintf("%s-", api.ObjectMeta.Name)
+	namePrefix := fmt.Sprintf("%s-", api.Name)
 	namespace := helpers.FindServiceNamespace(api, &rule)
 
 	spec, err := generateRequestAuthenticationSpec(ctx, client, api, rule)
@@ -52,7 +52,7 @@ func generateRequestAuthentication(ctx context.Context, client client.Client, ap
 		WithGenerateName(namePrefix).
 		WithNamespace(namespace).
 		WithSpec(builders.NewRequestAuthenticationSpecBuilder().WithFrom(spec).Get()).
-		WithLabel(processing.OwnerLabel, fmt.Sprintf("%s.%s", api.ObjectMeta.Name, api.ObjectMeta.Namespace))
+		WithLabel(processing.OwnerLabel, fmt.Sprintf("%s.%s", api.Name, api.Namespace))
 
 	return raBuilder.Get(), nil
 }

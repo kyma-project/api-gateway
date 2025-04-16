@@ -127,5 +127,5 @@ func ownedBy(vs *networkingv1beta1.VirtualService, apiRule *gatewayv2alpha1.APIR
 func getExpectedOwnerLabel(apiRule *gatewayv2alpha1.APIRule) (string, string) {
 	// the label must use version v1beta1 for backward compatibility
 	return fmt.Sprintf("%s.%s", "apirule", gatewayv1beta1.GroupVersion.String()),
-		fmt.Sprintf("%s.%s", apiRule.ObjectMeta.Name, apiRule.ObjectMeta.Namespace)
+		fmt.Sprintf("%s.%s", apiRule.Name, apiRule.Namespace)
 }
