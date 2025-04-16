@@ -52,8 +52,8 @@ spec:
   rules:
     - jwt:
         authentications:
-          -  issuer: {ISSUER}
-              jwksUri: {JWKS_URI}
+          - issuer: {ISSUER}
+            jwksUri: {JWKS_URI}
       methods:
         - GET
       path: /*
