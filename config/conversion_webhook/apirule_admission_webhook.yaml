@@ -8,8 +8,8 @@ webhooks:
   - name: "originalversion.apirule.gateway.kyma-project.io"
     rules:
       - apiGroups:   ["gateway.kyma-project.io"]
-        apiVersions: ["*"]
-        operations:  ["*"]
+        apiVersions: ["v2alpha1"]
+        operations:  ["CREATE","UPDATE"]
         resources:   ["apirules"]
         scope:       "*"
     clientConfig:
