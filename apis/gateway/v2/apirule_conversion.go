@@ -195,8 +195,8 @@ func (apiRule *APIRule) ConvertFrom(hub conversion.Hub) error {
 
 	// if "v2", "v2alpha1" we are sure that resource is v2
 	if !isV2OriginalVersion(apiRuleBeta1) {
-		if apiRuleBeta1.Annotations == nil {
-			apiRuleBeta1.Annotations = make(map[string]string)
+		if apiRule.Annotations == nil {
+			apiRule.Annotations = make(map[string]string)
 		}
 		marshaledSpec, err := json.Marshal(apiRuleBeta1.Spec)
 		if err != nil {
