@@ -435,6 +435,7 @@ var _ = Describe("APIRule Conversion", func() {
 					Host: &host1string,
 					Rules: []v1beta1.Rule{
 						{
+							Path: "/path1",
 							AccessStrategies: []*v1beta1.Authenticator{
 								{
 									Handler: &v1beta1.Handler{
@@ -455,6 +456,34 @@ var _ = Describe("APIRule Conversion", func() {
 			Expect(err).ToNot(HaveOccurred())
 			Expect(apiRuleV2.Spec.Rules).To(HaveLen(1))
 			Expect(*apiRuleV2.Spec.Rules[0].NoAuth).To(BeTrue())
+		})
+		It("should not convert NoAuth to v2 when path is regex", func() {
+			// given
+			apiRuleBeta1 := v1beta1.APIRule{
+				Spec: v1beta1.APIRuleSpec{
+					Host: &host1string,
+					Rules: []v1beta1.Rule{
+						{
+							Path: "/.*",
+							AccessStrategies: []*v1beta1.Authenticator{
+								{
+									Handler: &v1beta1.Handler{
+										Name: "no_auth",
+									},
+								},
+							},
+						},
+					},
+				},
+			}
+			apiRuleV2 := v2.APIRule{}
+
+			// when
+			err := apiRuleV2.ConvertFrom(&apiRuleBeta1)
+
+			// then
+			Expect(err).ToNot(HaveOccurred())
+			Expect(apiRuleV2.Spec.Rules).To(HaveLen(0))
 		})
 
 		It("should convert rule with nested data to v2", func() {
@@ -501,6 +530,7 @@ var _ = Describe("APIRule Conversion", func() {
 					Host: &host1string,
 					Rules: []v1beta1.Rule{
 						{
+							Path: "/path1",
 							AccessStrategies: []*v1beta1.Authenticator{
 								{
 									Handler: &v1beta1.Handler{
@@ -510,6 +540,7 @@ var _ = Describe("APIRule Conversion", func() {
 							},
 						},
 						{
+							Path: "/path2",
 							AccessStrategies: []*v1beta1.Authenticator{
 								{
 									Handler: &v1beta1.Handler{
@@ -574,6 +605,7 @@ var _ = Describe("APIRule Conversion", func() {
 						Host: &host1string,
 						Rules: []v1beta1.Rule{
 							{
+								Path: "/path1",
 								AccessStrategies: []*v1beta1.Authenticator{
 									{
 										Handler: &v1beta1.Handler{
@@ -623,6 +655,7 @@ var _ = Describe("APIRule Conversion", func() {
 						Host: &host1string,
 						Rules: []v1beta1.Rule{
 							{
+								Path: "/path1",
 								AccessStrategies: []*v1beta1.Authenticator{
 									{
 										Handler: &v1beta1.Handler{
@@ -666,6 +699,7 @@ var _ = Describe("APIRule Conversion", func() {
 						Host: &host1string,
 						Rules: []v1beta1.Rule{
 							{
+								Path: "/path1",
 								AccessStrategies: []*v1beta1.Authenticator{
 									{
 										Handler: &v1beta1.Handler{
@@ -723,6 +757,7 @@ var _ = Describe("APIRule Conversion", func() {
 						Host: &host1string,
 						Rules: []v1beta1.Rule{
 							{
+								Path: "/path1",
 								AccessStrategies: []*v1beta1.Authenticator{
 									{
 										Handler: &v1beta1.Handler{
