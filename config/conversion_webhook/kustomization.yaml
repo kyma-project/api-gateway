@@ -1,6 +1,6 @@
 resources:
 - service.yaml
-- apirule_admission_webhook.yaml
+- apirule_mutating_webhook.yaml
 
 labels:
   - pairs:
