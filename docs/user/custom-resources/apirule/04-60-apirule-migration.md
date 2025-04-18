@@ -15,7 +15,7 @@ Before any modifications, consult the documentation of changes introduced in the
 
 The migration procedure consists of the following steps, which are executed in a time-separated manner, with a one-minute delay between each step:
 1.  As the resource owner, you must update the APIRule to version `v2`. As an immediate result, new Istio Authorization Policy and Istio Authentication Policy resources are created.
-2. To retain the APIRule `v1beta1` CORS configuration, update the APIRule with the CORS configuration. For preflight requests to work, your APIRule needs to explicitly allow the `"OPTIONS"` method in the **rules.methods** field.
+2. To retain the APIRule `v1beta1` CORS configuration, update the APIRule with the CORS configuration. For preflight requests to work, you must explicitly allow the `"OPTIONS"` method in the **rules.methods** field of your APIRule.
 3. To retain APIRule `v1beta1` internal traffic policy, apply the following AuthorizationPolicy. Remember to change the selector label to the one pointing to the target workload:
     ```yaml
     apiVersion: security.istio.io/v1
