@@ -16,6 +16,11 @@ func (apiRule *APIRule) ConvertTo(hub conversion.Hub) error {
 	if err != nil {
 		return err
 	}
+	if apiRuleV2alpha1.Annotations == nil {
+		apiRuleV2alpha1.Annotations = make(map[string]string)
+	}
+
+	apiRuleV2alpha1.Annotations["gateway.kyma-project.io/original-version"] = "v2"
 
 	err = convertOverJson(apiRule.Spec, &apiRuleV2alpha1.Spec)
 	if err != nil {

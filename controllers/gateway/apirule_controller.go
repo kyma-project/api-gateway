@@ -184,7 +184,6 @@ func (r *APIRuleReconciler) reconcileV2Alpha1APIRule(ctx context.Context, l logr
 
 	toUpdate := apiRule.DeepCopy()
 	l.Info("APIRule v2", "apirule", apiRule)
-	l.Info("APIRule v2 deepCopy", "apirule", toUpdate)
 	if !controllerutil.ContainsFinalizer(apiRule, apiGatewayFinalizer) {
 		l.Info("APIRule is missing a finalizer, adding")
 		n := apiRule.DeepCopy()
