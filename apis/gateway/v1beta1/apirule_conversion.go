@@ -88,7 +88,7 @@ func (r *APIRule) ConvertTo(hub conversion.Hub) error {
 		// In consequence, the conversion drops any values smaller than 1 second.
 		// https://fetch.spec.whatwg.org/#http-responses
 		if r.Spec.CorsPolicy.MaxAge != nil {
-			maxAge := uint64(r.Spec.CorsPolicy.MaxAge.Duration.Seconds())
+			maxAge := uint64(r.Spec.CorsPolicy.MaxAge.Seconds())
 			apiRule.Spec.CorsPolicy.MaxAge = &maxAge
 		}
 	}
@@ -113,11 +113,11 @@ func (r *APIRule) ConvertTo(hub conversion.Hub) error {
 				return err
 			}
 			for _, accessStrategy := range ruleBeta1.AccessStrategies {
-				if accessStrategy.Handler.Name == AccessStrategyNoAuth {
+				if accessStrategy.Name == AccessStrategyNoAuth {
 					ruleV2Alpha1.NoAuth = ptr.To(true)
 				}
 
-				if accessStrategy.Handler.Name == AccessStrategyJwt {
+				if accessStrategy.Name == AccessStrategyJwt {
 					jwtConfig, err := convertToJwtConfig(accessStrategy)
 					if err != nil {
 						return err
@@ -134,11 +134,11 @@ func (r *APIRule) ConvertTo(hub conversion.Hub) error {
 			}
 
 			for _, mutator := range ruleBeta1.Mutators {
-				switch mutator.Handler.Name {
+				switch mutator.Name {
 				case HeaderMutator:
 					var configStruct map[string]string
 
-					err := json.Unmarshal(mutator.Handler.Config.Raw, &configStruct)
+					err := json.Unmarshal(mutator.Config.Raw, &configStruct)
 					if err != nil {
 						return err
 					}
@@ -147,7 +147,7 @@ func (r *APIRule) ConvertTo(hub conversion.Hub) error {
 				case CookieMutator:
 					var configStruct map[string]string
 
-					err := json.Unmarshal(mutator.Handler.Config.Raw, &configStruct)
+					err := json.Unmarshal(mutator.Config.Raw, &configStruct)
 					if err != nil {
 						return err
 					}
@@ -250,11 +250,11 @@ func isFullConversionPossible(apiRule *APIRule) (bool, error) {
 			return false, nil
 		}
 		for _, accessStrategy := range rule.AccessStrategies {
-			if accessStrategy.Handler.Name == AccessStrategyNoAuth {
+			if accessStrategy.Name == AccessStrategyNoAuth {
 				continue
 			}
 
-			if accessStrategy.Handler.Name == AccessStrategyJwt {
+			if accessStrategy.Name == AccessStrategyJwt {
 				isConvertible, err := isConvertibleJwtConfig(accessStrategy)
 				if err != nil {
 					return false, err
