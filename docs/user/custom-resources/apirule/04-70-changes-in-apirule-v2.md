@@ -46,7 +46,7 @@ corsPolicy:
 
 Versions `v2` and `v2alpha1` do not apply these default values. If the **corsPolicy** field is empty, the CORS configuration is not applied. For more information, see [architecture decision record #752](https://github.com/kyma-project/api-gateway/issues/752).
 
-**Required action**: To use default CORS values defined in the APIRule `v1beta1`, you must explicitly define them in the **corsPolicy** field. For preflight requests to work, your APIRule needs to distinctly list `"OPTIONS"` in a **rules.methods** field.
+**Required action**: To use default CORS values defined in the APIRule `v1beta1`, you must explicitly define them in the **corsPolicy** field. For preflight requests to work, your APIRule needs to explicitly allow the `"OPTIONS"` method in the **rules.methods** field.
 
 ## Path Specification Must Not Contain Regexp
 
