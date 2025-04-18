@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"testing"
 	"time"
 
@@ -14,6 +15,7 @@ import (
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
+	gatewayv2 "github.com/kyma-project/api-gateway/apis/gateway/v2"
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	"github.com/kyma-project/api-gateway/controllers"
 	"github.com/kyma-project/api-gateway/controllers/gateway"
@@ -89,31 +91,45 @@ var _ = BeforeSuite(func(specCtx SpecContext) {
 	logf.SetLogger(zap.New(zap.UseDevMode(true), zap.WriteTo(GinkgoWriter)))
 	ctx, cancel = context.WithCancel(context.Background())
 
-	By("Bootstrapping test environment")
-	testEnv = &envtest.Environment{
-		CRDDirectoryPaths: []string{
-			filepath.FromSlash("../../config/crd/bases"),
-			filepath.FromSlash("../../hack/crds"),
-		},
-	}
-
-	var err error
-	cfg, err = testEnv.Start()
-	Expect(err).ToNot(HaveOccurred())
-	Expect(cfg).ToNot(BeNil())
-
 	s := runtime.NewScheme()
 
 	Expect(gatewayv1beta1.AddToScheme(s)).Should(Succeed())
 	Expect(gatewayv2alpha1.AddToScheme(s)).Should(Succeed())
+	Expect(gatewayv2.AddToScheme(s)).Should(Succeed())
 	Expect(rulev1alpha1.AddToScheme(s)).Should(Succeed())
 	Expect(networkingv1beta1.AddToScheme(s)).Should(Succeed())
 	Expect(securityv1beta1.AddToScheme(s)).Should(Succeed())
 	Expect(corev1.AddToScheme(s)).Should(Succeed())
 	Expect(apiextensionsv1.AddToScheme(s)).Should(Succeed())
 
+	By("Bootstrapping test environment")
+	testEnv = &envtest.Environment{
+		CRDInstallOptions: envtest.CRDInstallOptions{Scheme: s},
+		CRDDirectoryPaths: []string{
+			filepath.FromSlash("../../config/crd/bases"),
+			filepath.FromSlash("../../hack/crds"),
+		},
+		WebhookInstallOptions: envtest.WebhookInstallOptions{
+			Paths: []string{
+				filepath.FromSlash("../../config/crd/"),
+			},
+		},
+	}
+
+	webhookInstallOptions := &testEnv.WebhookInstallOptions
+
+	var err error
+	cfg, err = testEnv.Start()
+	Expect(err).ToNot(HaveOccurred())
+	Expect(cfg).ToNot(BeNil())
+
 	mgr, err := ctrl.NewManager(cfg, ctrl.Options{
 		Scheme: s,
+		WebhookServer: webhook.NewServer(webhook.Options{
+			Host:    webhookInstallOptions.LocalServingHost,
+			Port:    webhookInstallOptions.LocalServingPort,
+			CertDir: webhookInstallOptions.LocalServingCertDir,
+		}),
 		Metrics: metricsserver.Options{
 			BindAddress: "0",
 		},
@@ -167,6 +183,7 @@ var _ = BeforeSuite(func(specCtx SpecContext) {
 	}
 
 	Expect(apiReconciler.SetupWithManager(mgr, rateLimiterCfg)).Should(Succeed())
+	Expect((&gatewayv2alpha1.APIRule{}).SetupWebhookWithManager(mgr)).Should(Succeed())
 
 	go func() {
 		defer GinkgoRecover()
