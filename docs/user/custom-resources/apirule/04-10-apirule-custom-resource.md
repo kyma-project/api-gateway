@@ -123,3 +123,28 @@ spec:
       methods: [ "GET" ]
       noAuth: true
 ```
+
+This sample APIRule illustrates an example of explicitly defined corsPolicy with working preflight requests:
+
+```yaml
+apiVersion: gateway.kyma-project.io/v2
+kind: APIRule
+metadata:
+  name: service-exposed
+spec:
+  gateway: kyma-system/kyma-gateway
+  hosts:
+    - foo
+  service:
+    name: foo-service
+    namespace: foo-namespace
+    port: 8080
+  timeout: 360
+  rules:
+    - path: /*
+      methods: [ "GET", "OPTIONS" ]
+      noAuth: true
+  corsPolicy:
+    allowOrigins:
+      - regex: .*
+```
