@@ -22,10 +22,10 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 		apiRule := newAPIRuleBuilderWithDummyData().
 			withRules(rule).
 			build()
-
 		svc := newServiceBuilderWithDummyData().build()
+		gateway := newGatewayBuilderWithDummyData().build()
 		client := getFakeClient(svc)
-		processor := authorizationpolicy.NewProcessor(&testLogger, apiRule)
+		processor := authorizationpolicy.NewProcessor(&testLogger, apiRule, gateway)
 
 		// when
 		result, err := processor.EvaluateReconciliation(context.Background(), client)
@@ -53,8 +53,9 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			withRules(rule).
 			build()
 		svc := newServiceBuilderWithDummyData().build()
+		gateway := newGatewayBuilderWithDummyData().build()
 		client := getFakeClient(svc)
-		processor := authorizationpolicy.NewProcessor(&testLogger, apiRule)
+		processor := authorizationpolicy.NewProcessor(&testLogger, apiRule, gateway)
 
 		// when
 		result, err := processor.EvaluateReconciliation(context.Background(), client)

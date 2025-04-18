@@ -3,6 +3,7 @@ package builders
 import (
 	"encoding/json"
 	"fmt"
+
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 
@@ -149,10 +150,12 @@ func NewFromBuilder() *FromBuilder {
 }
 
 type FromBuilder struct {
-	value *v1beta1.Rule_From
+	value  *v1beta1.Rule_From
+	source v1beta1.Source
 }
 
 func (rf *FromBuilder) Get() *v1beta1.Rule_From {
+	rf.value.Source = &rf.source
 	return rf.value
 }
 
@@ -174,8 +177,7 @@ func (rf *FromBuilder) WithForcedJWTAuthorization(accessStrategies []*gatewayv1b
 			break
 		}
 	}
-	source := v1beta1.Source{RequestPrincipals: requestPrincipals}
-	rf.value.Source = &source
+	rf.source.RequestPrincipals = append(rf.source.RequestPrincipals, requestPrincipals...)
 	return rf
 }
 
@@ -187,20 +189,17 @@ func (rf *FromBuilder) WithForcedJWTAuthorizationV2alpha1(authentications []*gat
 		requestPrincipals = append(requestPrincipals, fmt.Sprintf("%s/*", authentication.Issuer))
 	}
 
-	source := v1beta1.Source{RequestPrincipals: requestPrincipals}
-	rf.value.Source = &source
+	rf.source.RequestPrincipals = append(rf.source.RequestPrincipals, requestPrincipals...)
 	return rf
 }
 
 func (rf *FromBuilder) WithIngressGatewaySource() *FromBuilder {
-	source := v1beta1.Source{Principals: []string{istioIngressGatewayPrincipal}}
-	rf.value.Source = &source
+	rf.source.Principals = append(rf.source.Principals, istioIngressGatewayPrincipal)
 	return rf
 }
 
 func (rf *FromBuilder) WithOathkeeperProxySource() *FromBuilder {
-	source := v1beta1.Source{Principals: []string{oathkeeperMaesterAccountPrincipal}}
-	rf.value.Source = &source
+	rf.source.Principals = append(rf.source.Principals, oathkeeperMaesterAccountPrincipal)
 	return rf
 }
 
@@ -233,6 +232,11 @@ func NewOperationBuilder() *OperationBuilder {
 
 type OperationBuilder struct {
 	value *v1beta1.Operation
+}
+
+func (o *OperationBuilder) Hosts(hosts ...string) *OperationBuilder {
+	o.value.Hosts = append(o.value.Hosts, hosts...)
+	return o
 }
 
 func (o *OperationBuilder) Get() *v1beta1.Operation {

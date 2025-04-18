@@ -2,7 +2,9 @@ package authorizationpolicy
 
 import (
 	"context"
+
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
+	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 
 	"github.com/go-logr/logr"
 	"github.com/kyma-project/api-gateway/internal/processing"
@@ -12,20 +14,21 @@ import (
 )
 
 // NewProcessor returns a Processor with the desired state handling for AuthorizationPolicy.
-func NewProcessor(log *logr.Logger, rule *gatewayv2alpha1.APIRule) Processor {
+func NewProcessor(log *logr.Logger, rule *gatewayv2alpha1.APIRule, gateway *networkingv1beta1.Gateway) Processor {
 	return Processor{
 		apiRule: rule,
-		creator: creator{},
+		creator: creator{gateway: gateway},
 		Log:     log,
 	}
 }
 
 // NewMigrationProcessor returns a Processor with the desired state handling for AuthorizationPolicy when in the migration process from v1beta1 to v2alpha1.
-func NewMigrationProcessor(log *logr.Logger, rule *gatewayv2alpha1.APIRule, oryPassthrough bool) Processor {
+func NewMigrationProcessor(log *logr.Logger, rule *gatewayv2alpha1.APIRule, oryPassthrough bool, gateway *networkingv1beta1.Gateway) Processor {
 	return Processor{
 		apiRule: rule,
 		creator: creator{
 			oryPassthrough: oryPassthrough,
+			gateway:        gateway,
 		},
 		Log: log,
 	}

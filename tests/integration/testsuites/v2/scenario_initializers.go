@@ -31,7 +31,7 @@ func initScenario(ctx *godog.ScenarioContext, ts *testsuite) {
 	ctx.Step(`^Calling the "([^"]*)" endpoint with header "([^"]*)" with value "([^"]*)" should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithHeader)
 	ctx.Step(`^Calling the "([^"]*)" endpoint without a token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithoutTokenShouldResultInStatusBetween)
 	ctx.Step(`^In-cluster calling the "([^"]*)" endpoint without a token should fail$`, scenario.inClusterCallingTheEndpointWithoutTokenShouldFail)
-	ctx.Step(`^In-cluster calling the "([^"]*)" endpoint with a valid "([^"]*)" token should succeed$`, scenario.inClusterCallingTheEndpointWithTokenShouldSucceed)
+	ctx.Step(`^In-cluster calling the "([^"]*)" endpoint with a valid "([^"]*)" token should fail$`, scenario.inClusterCallingTheEndpointWithTokenShouldFail)
 	ctx.Step(`^Preflight calling the "([^"]*)" endpoint with header Origin:"([^"]*)" should result in status code (\d+) and no response header "([^"]*)"$`, scenario.preflightEndpointCallNoResponseHeader)
 	ctx.Step(`^Preflight calling the "([^"]*)" endpoint with header Origin:"([^"]*)" should result in status code (\d+) and response header "([^"]*)" with value "([^"]*)"$`, scenario.preflightEndpointCallResponseHeaders)
 	ctx.Step(`^Specifies custom Gateway "([^"]*)"/"([^"]*)"`, scenario.specifiesCustomGateway)
