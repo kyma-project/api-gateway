@@ -32,9 +32,10 @@ var _ = Describe("Processing JWT rules", func() {
 			withRules(ruleJwt, ruleJwt2).
 			build()
 		svc := newServiceBuilderWithDummyData().build()
+		gateway := newGatewayBuilderWithDummyData().build()
 
 		client := getFakeClient(svc)
-		processor := authorizationpolicy.NewProcessor(&testLogger, apiRule)
+		processor := authorizationpolicy.NewProcessor(&testLogger, apiRule, gateway)
 
 		// when
 		result, err := processor.EvaluateReconciliation(context.Background(), client)
@@ -105,8 +106,9 @@ var _ = Describe("Processing JWT rules", func() {
 
 		apiRule := newAPIRuleBuilderWithDummyData().withRules(jwtRule).build()
 		svc := newServiceBuilderWithDummyData().build()
+		gateway := newGatewayBuilderWithDummyData().build()
 		client := getFakeClient(svc)
-		processor := authorizationpolicy.NewProcessor(&testLogger, apiRule)
+		processor := authorizationpolicy.NewProcessor(&testLogger, apiRule, gateway)
 
 		// when
 		result, err := processor.EvaluateReconciliation(context.Background(), client)
@@ -174,8 +176,9 @@ var _ = Describe("Processing JWT rules", func() {
 
 		apiRule := newAPIRuleBuilderWithDummyData().withRules(ruleJwt).build()
 		svc := newServiceBuilderWithDummyData().build()
+		gateway := newGatewayBuilderWithDummyData().build()
 		client := getFakeClient(svc)
-		processor := authorizationpolicy.NewProcessor(&testLogger, apiRule)
+		processor := authorizationpolicy.NewProcessor(&testLogger, apiRule, gateway)
 
 		// when
 		result, err := processor.EvaluateReconciliation(context.Background(), client)
@@ -218,8 +221,8 @@ var _ = Describe("Processing JWT rules", func() {
 	When("Two AP for different services with JWT handler exist", func() {
 		It("should update APs and update principal when handler changed for one of the AP to noAuth", func() {
 			// given: Cluster state
-			beingUpdatedAp := getAuthorizationPolicy("being-updated-ap", apiRuleNamespace, "test-service", []string{http.MethodGet, http.MethodPost})
-			jwtSecuredAp := getAuthorizationPolicy("jwt-secured-ap", apiRuleNamespace, "jwt-secured-service", []string{http.MethodGet, http.MethodPost})
+			beingUpdatedAp := getAuthorizationPolicy("being-updated-ap", apiRuleNamespace, "test-service", []string{"example-host.example.com"}, []string{http.MethodGet, http.MethodPost})
+			jwtSecuredAp := getAuthorizationPolicy("jwt-secured-ap", apiRuleNamespace, "jwt-secured-service", []string{"example-host.example.com"}, []string{http.MethodGet, http.MethodPost})
 			svc1 := newServiceBuilder().
 				withName("test-service").
 				withNamespace("example-namespace").
@@ -256,7 +259,8 @@ var _ = Describe("Processing JWT rules", func() {
 				withRules(rules...).
 				build()
 
-			processor := authorizationpolicy.NewProcessor(&testLogger, apiRule)
+			gateway := newGatewayBuilderWithDummyData().build()
+			processor := authorizationpolicy.NewProcessor(&testLogger, apiRule, gateway)
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.Background(), ctrlClient)
@@ -277,7 +281,7 @@ var _ = Describe("Processing JWT rules", func() {
 			// given: Cluster state
 			serviceName := "test-service"
 
-			ap1 := getAuthorizationPolicy("ap1", apiRuleNamespace, serviceName, []string{"GET"})
+			ap1 := getAuthorizationPolicy("ap1", apiRuleNamespace, serviceName, []string{"example-host.example.com"}, []string{"GET"})
 			ap1.Spec.Rules[0].When = []*v1beta1.Condition{
 				{
 					Key:    "request.auth.claims[aud]",
@@ -285,7 +289,7 @@ var _ = Describe("Processing JWT rules", func() {
 				},
 			}
 
-			ap2 := getAuthorizationPolicy("ap2", apiRuleNamespace, serviceName, []string{"GET"})
+			ap2 := getAuthorizationPolicy("ap2", apiRuleNamespace, serviceName, []string{"example-host.example.com"}, []string{"GET"})
 			ap2.Spec.Rules[0].When = []*v1beta1.Condition{
 				{
 					Key:    "request.auth.claims[aud]",
@@ -313,7 +317,8 @@ var _ = Describe("Processing JWT rules", func() {
 			apiRule := newAPIRuleBuilderWithDummyData().
 				withServiceName(serviceName).
 				withRules(jwtRule).build()
-			processor := authorizationpolicy.NewProcessor(&testLogger, apiRule)
+			gateway := newGatewayBuilderWithDummyData().build()
+			processor := authorizationpolicy.NewProcessor(&testLogger, apiRule, gateway)
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.Background(), ctrlClient)
@@ -334,7 +339,7 @@ var _ = Describe("Processing JWT rules", func() {
 			// given: Cluster state
 			serviceName := "test-service"
 
-			ap1 := getAuthorizationPolicy("ap1", apiRuleNamespace, serviceName, []string{"GET"})
+			ap1 := getAuthorizationPolicy("ap1", apiRuleNamespace, serviceName, []string{"example-host.example.com"}, []string{"GET"})
 			ap1.Spec.Rules[0].When = []*v1beta1.Condition{
 				{
 					Key:    "request.auth.claims[aud]",
@@ -342,7 +347,7 @@ var _ = Describe("Processing JWT rules", func() {
 				},
 			}
 
-			ap2 := getAuthorizationPolicy("ap2", apiRuleNamespace, serviceName, []string{"GET"})
+			ap2 := getAuthorizationPolicy("ap2", apiRuleNamespace, serviceName, []string{"example-host.example.com"}, []string{"GET"})
 			ap2.Spec.Rules[0].When = []*v1beta1.Condition{
 				{
 					Key:    "request.auth.claims[aud]",
@@ -369,7 +374,8 @@ var _ = Describe("Processing JWT rules", func() {
 				build()
 
 			apiRule := newAPIRuleBuilderWithDummyData().withRules(jwtRule).build()
-			processor := authorizationpolicy.NewProcessor(&testLogger, apiRule)
+			gateway := newGatewayBuilderWithDummyData().build()
+			processor := authorizationpolicy.NewProcessor(&testLogger, apiRule, gateway)
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.Background(), ctrlClient)
@@ -391,7 +397,7 @@ var _ = Describe("Processing JWT rules", func() {
 			// given: Cluster state
 			serviceName := "test-service"
 
-			ap1 := getAuthorizationPolicy("ap1", apiRuleNamespace, serviceName, []string{"GET"})
+			ap1 := getAuthorizationPolicy("ap1", apiRuleNamespace, serviceName, []string{"example-host.example.com"}, []string{"GET"})
 			ap1.Spec.Rules[0].When = []*v1beta1.Condition{
 				{
 					Key:    "request.auth.claims[aud]",
@@ -399,7 +405,7 @@ var _ = Describe("Processing JWT rules", func() {
 				},
 			}
 
-			ap2 := getAuthorizationPolicy("ap2", apiRuleNamespace, serviceName, []string{"GET"})
+			ap2 := getAuthorizationPolicy("ap2", apiRuleNamespace, serviceName, []string{"example-host.example.com"}, []string{"GET"})
 			ap2.Spec.Rules[0].When = []*v1beta1.Condition{
 				{
 					Key:    "request.auth.claims[aud]",
@@ -424,7 +430,8 @@ var _ = Describe("Processing JWT rules", func() {
 				build()
 
 			apiRule := newAPIRuleBuilderWithDummyData().withRules(jwtRule).build()
-			processor := authorizationpolicy.NewProcessor(&testLogger, apiRule)
+			gateway := newGatewayBuilderWithDummyData().build()
+			processor := authorizationpolicy.NewProcessor(&testLogger, apiRule, gateway)
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.Background(), ctrlClient)
@@ -447,7 +454,7 @@ var _ = Describe("Processing JWT rules", func() {
 			// given: Cluster state
 			serviceName := "test-service"
 
-			ap1 := getAuthorizationPolicy("ap1", apiRuleNamespace, serviceName, []string{"GET"})
+			ap1 := getAuthorizationPolicy("ap1", apiRuleNamespace, serviceName, []string{"example-host.example.com"}, []string{"GET"})
 			ap1.Spec.Rules[0].When = []*v1beta1.Condition{
 				{
 					Key:    "request.auth.claims[aud]",
@@ -455,7 +462,7 @@ var _ = Describe("Processing JWT rules", func() {
 				},
 			}
 
-			ap2 := getAuthorizationPolicy("ap2", apiRuleNamespace, serviceName, []string{"GET"})
+			ap2 := getAuthorizationPolicy("ap2", apiRuleNamespace, serviceName, []string{"example-host.example.com"}, []string{"GET"})
 			ap2.Spec.Rules[0].When = []*v1beta1.Condition{
 				{
 					Key:    "request.auth.claims[aud]",
@@ -465,7 +472,7 @@ var _ = Describe("Processing JWT rules", func() {
 			// We need to set the index to 1 as this is expected to be the second authorization configured in the rule.
 			ap2.Labels["gateway.kyma-project.io/index"] = "1"
 
-			ap3 := getAuthorizationPolicy("ap3", apiRuleNamespace, serviceName, []string{"GET"})
+			ap3 := getAuthorizationPolicy("ap3", apiRuleNamespace, serviceName, []string{"example-host.example.com"}, []string{"GET"})
 			ap3.Spec.Rules[0].When = []*v1beta1.Condition{
 				{
 					Key:    "request.auth.claims[aud]",
@@ -491,7 +498,8 @@ var _ = Describe("Processing JWT rules", func() {
 				build()
 
 			apiRule := newAPIRuleBuilderWithDummyData().withRules(jwtRule).build()
-			processor := authorizationpolicy.NewProcessor(&testLogger, apiRule)
+			gateway := newGatewayBuilderWithDummyData().build()
+			processor := authorizationpolicy.NewProcessor(&testLogger, apiRule, gateway)
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.Background(), ctrlClient)
