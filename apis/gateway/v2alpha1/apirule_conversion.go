@@ -2,7 +2,6 @@ package v2alpha1
 
 import (
 	"encoding/json"
-	"regexp"
 	"slices"
 	"time"
 
@@ -367,10 +366,4 @@ func isFullConversionPossible(apiRule *v1beta1.APIRule) (bool, error) {
 	}
 
 	return true, nil
-}
-
-func isConvertiblePath(path string) bool {
-	validIstioPathPattern := `^((\/([A-Za-z0-9-._~!$&'()+,;=:@]|%[0-9a-fA-F]{2})*)|(\/\{\*{1,2}\}))+$|^\/\*$`
-	validPathRegex := regexp.MustCompile(validIstioPathPattern)
-	return validPathRegex.MatchString(path)
 }
