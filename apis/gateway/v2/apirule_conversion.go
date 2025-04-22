@@ -322,6 +322,9 @@ func (apiRule *APIRule) ConvertFrom(hub conversion.Hub) error {
 }
 
 func isV2OriginalVersion(apiRule *v1beta1.APIRule) bool {
+	if apiRule.Annotations == nil {
+		return false
+	}
 	if originalVersion, ok := apiRule.Annotations[originalVersionAnnotationKey]; ok && slices.Contains([]string{"v2alpha1", "v2"}, originalVersion) {
 		return true
 	}
