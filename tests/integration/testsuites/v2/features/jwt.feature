@@ -29,7 +29,7 @@ Feature: Exposing endpoints with JWT
     And There is an endpoint secured with JWT on path "/ip" and /headers endpoint exposed with noAuth
     When The APIRule is applied
     Then Calling the "/ip" endpoint with a valid "JWT" token should result in status between 200 and 299
-    And Calling the "/headers" endpoint without token should result in status between 200 and 299
+    And Calling the "/headers" endpoint without a token should result in status between 200 and 299
     And Teardown httpbin service
 
   Scenario: Calling a httpbin endpoint secured with JWT that requires scopes claims
@@ -93,3 +93,11 @@ Feature: Exposing endpoints with JWT
     And Calling the "/ip" endpoint with a valid "JWT" token from default header should result in status between 400 and 403
     And Calling the "/ip" endpoint with a valid "JWT" token from parameter "jwt_token" should result in status between 200 and 299
     And Teardown httpbin service
+
+  Scenario: In-cluster calling a httpbin endpoint secured with JWT
+    Given The APIRule template file is set to "jwt-common.yaml"
+    And There is a httpbin service
+    And There is an endpoint secured with JWT on path "/*"
+    When The APIRule is applied
+    Then In-cluster calling the "/status/200" endpoint with a valid "JWT" token should fail
+    And In-cluster calling the "/headers" endpoint with a valid "JWT" token should fail
