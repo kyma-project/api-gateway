@@ -253,15 +253,20 @@ func (apiRule *APIRule) ConvertFrom(hub conversion.Hub) error {
 		apiRule.Spec.Hosts = []*Host{new(Host)}
 		*apiRule.Spec.Hosts[0] = Host(*apiRuleBeta1.Spec.Host)
 	}
+	if apiRuleBeta1.Annotations != nil {
+		if annotation, ok := apiRuleBeta1.Annotations[v2RulesAnnotationKey]; ok {
 
-	if annotation, ok := apiRuleBeta1.Annotations[v2RulesAnnotationKey]; ok {
-		var v2Rules []Rule
-		err := json.Unmarshal([]byte(annotation), &v2Rules)
-		if err != nil {
-			return err
+			var v2Rules []Rule
+			err := json.Unmarshal([]byte(annotation), &v2Rules)
+			if err != nil {
+				return err
+			}
+
+			apiRule.Spec.Rules = v2Rules
+			return nil
 		}
-		apiRule.Spec.Rules = v2Rules
-	} else if len(apiRuleBeta1.Spec.Rules) > 0 {
+	}
+	if len(apiRuleBeta1.Spec.Rules) > 0 {
 		apiRule.Spec.Rules = []Rule{}
 		for _, ruleBeta1 := range apiRuleBeta1.Spec.Rules {
 			ruleV1Alpha2 := Rule{}

@@ -249,15 +249,20 @@ func (apiRuleV2Alpha1 *APIRule) ConvertFrom(hub conversion.Hub) error {
 		*apiRuleV2Alpha1.Spec.Hosts[0] = Host(*apiRuleBeta1.Spec.Host)
 	}
 	// is v2alpha1 or v2
-	if annotation, ok := apiRuleBeta1.Annotations[v2alpha1RulesAnnotationKey]; ok {
-		var v2alpha1Rules []Rule
-		err := json.Unmarshal([]byte(annotation), &v2alpha1Rules)
-		if err != nil {
-			return err
-		}
+	if apiRuleBeta1.Annotations != nil {
+		if annotation, ok := apiRuleBeta1.Annotations[v2alpha1RulesAnnotationKey]; ok {
 
-		apiRuleV2Alpha1.Spec.Rules = v2alpha1Rules
-	} else if len(apiRuleBeta1.Spec.Rules) > 0 {
+			var v2alpha1Rules []Rule
+			err := json.Unmarshal([]byte(annotation), &v2alpha1Rules)
+			if err != nil {
+				return err
+			}
+
+			apiRuleV2Alpha1.Spec.Rules = v2alpha1Rules
+			return nil
+		}
+	}
+	if len(apiRuleBeta1.Spec.Rules) > 0 {
 		// is v1beta1 and is convertible
 		apiRuleV2Alpha1.Spec.Rules = []Rule{}
 		for _, ruleBeta1 := range apiRuleBeta1.Spec.Rules {
