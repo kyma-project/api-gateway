@@ -208,7 +208,7 @@ func (apiRuleV2Alpha1 *APIRule) ConvertFrom(hub conversion.Hub) error {
 			return err
 		}
 		if !conversionPossible {
-			// if conversion is not possible, we end conversion with an empty spec, this will not
+			// if conversion is not possible, we end conversion with an empty spec
 			return nil
 		}
 	}
