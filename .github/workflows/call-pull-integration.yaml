@@ -23,3 +23,21 @@ jobs:
         with:
           manager_image: "api-gateway-manager:PR-${{github.event.number}}"
           test_make_target: ${{ matrix.test_make_target }}
+
+  migration-downtime-tests:
+    name: Zero Downtime Migration Tests
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        handler: [ "no_auth", "allow", "noop", "jwt", "oauth2_introspection" ]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/load-manager-image
+      - uses: ./.github/actions/e2e-test-k3d
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          HANDLER: ${{ matrix.handler }}
+        with:
+          manager_image: "api-gateway-manager:PR-${{github.event.number}}"
+          test_make_target: test-migration-zero-downtime-${{ matrix.handler }}
