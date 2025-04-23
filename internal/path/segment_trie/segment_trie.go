@@ -18,7 +18,6 @@ package segment_trie
 import (
 	"errors"
 	"github.com/kyma-project/api-gateway/internal/path/token"
-	"strings"
 )
 
 type SegmentTrie struct {
@@ -62,7 +61,7 @@ func (t *SegmentTrie) InsertAndCheckCollisions(tokens []token.Token) error {
 					Suffixes: []string{token.List(tokens[i+1:]).String()},
 				}
 			} else {
-				suffixString := token.List(tokens[i:]).String()
+				suffixString := token.List(tokens[i+1:]).String()
 				n.Suffixes = append(n.Suffixes, suffixString)
 			}
 		} else {
@@ -76,35 +75,8 @@ func (t *SegmentTrie) InsertAndCheckCollisions(tokens []token.Token) error {
 
 		node = node.Children[tok.Literal]
 	}
+
 	return nil
-}
-
-func suffixExist(node *Node, suffix []token.Token, cur int) bool {
-	if cur >= len(suffix) {
-		return true
-	}
-
-	if cNode, ok := node.Children["{**}"]; ok {
-		tokensString := token.List(suffix).String()
-		for _, nodeSuffix := range cNode.Suffixes {
-			if strings.HasSuffix(tokensString, nodeSuffix) || strings.HasSuffix(nodeSuffix, tokensString) {
-				return true
-			}
-		}
-	}
-
-	if n, ok := node.Children[suffix[cur].Literal]; ok {
-		if suffixExist(n, suffix, cur+1) {
-			return true
-		}
-	}
-
-	for k, v := range node.Children {
-		if k != "{**}" && suffixExist(v, suffix, cur) {
-			return true
-		}
-	}
-	return false
 }
 
 func findExistingPath(node *Node, tokens []token.Token, cur int) bool {
@@ -112,54 +84,31 @@ func findExistingPath(node *Node, tokens []token.Token, cur int) bool {
 		return node.EndNode
 	}
 
-	if len(node.Suffixes) > 0 {
-		return hasAnySuffix(tokens, node.Suffixes)
-	}
-
 	tok := tokens[cur]
 
-	switch tok.Type {
-	case token.Ident:
-		if n, ok := node.Children[tok.Literal]; ok {
-			if findExistingPath(n, tokens, cur+1) {
-				return true
-			}
-		}
-
-		if n, ok := node.Children["{*}"]; ok {
-			if findExistingPath(n, tokens, cur+1) {
-				return true
-			}
-		}
-
-		if n, ok := node.Children["{**}"]; ok {
-			if findExistingPath(n, tokens, cur+1) {
-				return true
-			}
-		}
-	case token.BracedAsterix:
-		for _, n := range node.Children {
-			if findExistingPath(n, tokens, cur+1) {
-				return true
-			}
-		}
-	case token.BracedDoubleAsterix:
-		if node.EndNode {
-			return false
-		}
-		bracedAsterixSuffix := tokens[cur+1:]
-		return suffixExist(node, bracedAsterixSuffix, 0)
-	}
-	return false
-}
-
-func hasAnySuffix(tokens token.List, suffixes []string) bool {
-	tokensString := tokens.String()
-
-	for _, suffix := range suffixes {
-		if strings.HasSuffix(tokensString, suffix) {
+	if next, ok := node.Children[tok.Literal]; ok {
+		if findExistingPath(next, tokens, cur+1) {
 			return true
 		}
 	}
+
+	if next, ok := node.Children["{*}"]; ok {
+		if findExistingPath(next, tokens, cur+1) {
+			return true
+		}
+	}
+
+	if next, ok := node.Children["{**}"]; ok {
+		suffix := token.List(tokens[cur+1:]).String()
+		for _, s := range next.Suffixes {
+			if s == suffix {
+				return true
+			}
+			if s == "" && suffix != "" {
+				return true
+			}
+		}
+	}
+
 	return false
 }
