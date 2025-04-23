@@ -214,11 +214,7 @@ func (apiRule *APIRule) ConvertFrom(hub conversion.Hub) error {
 		}
 	}
 
-	err := convertOverJson(apiRuleBeta1.Spec.Rules, &apiRule.Spec.Rules)
-	if err != nil {
-		return err
-	}
-	err = convertOverJson(apiRuleBeta1.Spec.Gateway, &apiRule.Spec.Gateway)
+	err := convertOverJson(apiRuleBeta1.Spec.Gateway, &apiRule.Spec.Gateway)
 	if err != nil {
 		return err
 	}
