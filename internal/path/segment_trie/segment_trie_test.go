@@ -100,6 +100,11 @@ var _ = Describe("SegmentTrie", func() {
 			"/abc/{**}/ghi",
 			"/abc/{**}",
 		}, 0),
+		Entry("Multiple conflicts: double asterisk covering another double asterisk", []string{
+			"/abc/{**}",
+			"/abc/{**}/ghi",
+			"/abc/{**}/def/ghi",
+		}, 2),
 		Entry("No conflict: exact paths", []string{
 			"/abc/def",
 			"/abc/def/ghi",
