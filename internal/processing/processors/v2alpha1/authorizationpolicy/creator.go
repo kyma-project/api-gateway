@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"golang.org/x/exp/slices"
 	"strings"
 
 	"github.com/kyma-project/api-gateway/internal/helpers"
@@ -343,8 +344,20 @@ func generateNotPaths(rules []gatewayv2alpha1.Rule, currentRule gatewayv2alpha1.
 		if rule.Path == currentRule.Path {
 			continue
 		}
-		notPaths = append(notPaths, rule.Path)
+		if methodsContainsAny(rule.Methods, currentRule.Methods) {
+			notPaths = append(notPaths, rule.Path)
+		}
 	}
 
 	return notPaths
+}
+
+func methodsContainsAny(methods, currentRuleMethods []gatewayv2alpha1.HttpMethod) bool {
+	for _, method := range methods {
+		if slices.Contains(currentRuleMethods, method) {
+			return true
+		}
+	}
+
+	return false
 }
