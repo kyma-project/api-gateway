@@ -337,7 +337,7 @@ func generateNotPaths(rules []gatewayv2alpha1.Rule, currentRule gatewayv2alpha1.
 	var notPaths []string
 
 	for _, rule := range rules {
-		if standardizeRulePath(rule.Path) == "/{**}" {
+		if standardizeRulePath(rule.Path) == "/{**}" || rule.Path == "/" {
 			continue
 		}
 		if rule.Path == currentRule.Path {

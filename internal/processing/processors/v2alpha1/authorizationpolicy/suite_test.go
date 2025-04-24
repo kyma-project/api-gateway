@@ -86,7 +86,8 @@ var getAuthorizationPolicy = func(name string, namespace string, serviceName str
 
 	return &ap
 }
-var getActionMatcher = func(action string, namespace string, serviceName string, principalsName string, principals types.GomegaMatcher, methods types.GomegaMatcher, paths types.GomegaMatcher) types.GomegaMatcher {
+
+var getActionMatcher = func(action string, namespace string, serviceName string, principalsName string, principals types.GomegaMatcher, methods types.GomegaMatcher, paths types.GomegaMatcher, notPaths types.GomegaMatcher) types.GomegaMatcher {
 	return PointTo(MatchFields(IgnoreExtras, Fields{
 		"Action": WithTransform(ActionToString, Equal(action)),
 		"Obj": PointTo(MatchFields(IgnoreExtras, Fields{
@@ -109,8 +110,9 @@ var getActionMatcher = func(action string, namespace string, serviceName string,
 						"To": ContainElements(
 							PointTo(MatchFields(IgnoreExtras, Fields{
 								"Operation": PointTo(MatchFields(IgnoreExtras, Fields{
-									"Methods": methods,
-									"Paths":   paths,
+									"Methods":  methods,
+									"Paths":    paths,
+									"NotPaths": notPaths,
 								})),
 							})),
 						),
@@ -120,6 +122,7 @@ var getActionMatcher = func(action string, namespace string, serviceName string,
 		})),
 	}))
 }
+
 var getAudienceMatcher = func(action string, hashLabelValue string, indexLabelValue string, audiences []string) types.GomegaMatcher {
 	var audiencesMatchers []types.GomegaMatcher
 
