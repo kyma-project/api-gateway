@@ -211,7 +211,7 @@ func (s *scenario) inClusterCallingTheEndpointWithoutTokenShouldFail(path string
 	return fmt.Errorf("%s, %s", "Request should fail, but it succeeded", log)
 }
 
-func (s *scenario) inClusterCallingTheEndpointWithTokenShouldSucceed(path, tokenType string) error {
+func (s *scenario) inClusterCallingTheEndpointWithTokenShouldFail(path, tokenType string) error {
 	var headers string
 	switch tokenType {
 	case "JWT":
@@ -229,10 +229,10 @@ func (s *scenario) inClusterCallingTheEndpointWithTokenShouldSucceed(path, token
 
 	log, err := helpers.RunCurlInPod(s.Namespace, curlCommand)
 	if err != nil {
-		return fmt.Errorf("%s, %s", err, log)
+		return nil
 	}
 
-	return nil
+	return fmt.Errorf("%s, %s", "Request should fail, but it succeeded", log)
 }
 
 func (s *scenario) callingShortHostWithoutTokenShouldResultInStatusBetween(host, path string, lower, higher int) error {

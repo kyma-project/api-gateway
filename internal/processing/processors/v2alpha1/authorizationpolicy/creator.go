@@ -2,7 +2,14 @@ package authorizationpolicy
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"strings"
+
+	"github.com/kyma-project/api-gateway/internal/helpers"
+	"github.com/kyma-project/api-gateway/internal/processing/default_domain"
+	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
+
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 
 	"github.com/kyma-project/api-gateway/internal/builders"
@@ -30,6 +37,7 @@ type creator struct {
 	// Controls that requests to Ory Oathkeeper are also permitted when
 	// migrating from APIRule v1beta1 to v2alpha1.
 	oryPassthrough bool
+	gateway        *networkingv1beta1.Gateway
 }
 
 // Create returns the AuthorizationPolicy using the configuration of the APIRule.
@@ -201,7 +209,7 @@ func (r creator) generateExtAuthAuthorizationPolicySpec(ctx context.Context, cli
 	return authorizationPolicySpecBuilder.
 		WithAction(v1beta1.AuthorizationPolicy_CUSTOM).
 		WithProvider(providerName).
-		WithRule(baseExtAuthRuleBuilder(rule, notPaths).Get()).
+		WithRule(baseExtAuthRuleBuilder(rule, nil, notPaths).Get()).
 		Get(), nil
 }
 
@@ -213,11 +221,34 @@ func (r creator) generateAuthorizationPolicySpec(ctx context.Context, client cli
 
 	authorizationPolicySpecBuilder := builders.NewAuthorizationPolicySpecBuilder().
 		WithSelector(podSelector.Selector)
-
+	// When short host is used in the APIRule we pull it from the gateway, in the future we should refactor it so that only gateway host is passed from the processors.go
+	var hosts []string
+	gatewayDomain := ""
+	for _, h := range api.Spec.Hosts {
+		if helpers.IsShortHostName(string(*h)) {
+			if gatewayDomain == "" {
+				if r.gateway == nil {
+					return nil, errors.New("gateway must be provided when using short host name")
+				}
+				for _, server := range r.gateway.Spec.Servers {
+					if len(server.Hosts) > 0 {
+						gatewayDomain = strings.TrimPrefix(server.Hosts[0], "*.")
+						break
+					}
+				}
+			}
+			if gatewayDomain == "" {
+				return nil, errors.New("gateway with host definition must be provided when using short host name")
+			}
+			hosts = append(hosts, default_domain.GetHostWithDomain(string(*h), gatewayDomain))
+		} else {
+			hosts = append(hosts, string(*h))
+		}
+	}
 	// If RequiredScopes are configured, we need to generate a separate Rule for each scopeKey in defaultScopeKeys
 	if len(authorization.RequiredScopes) > 0 {
 		for _, scopeKey := range defaultScopeKeys {
-			ruleBuilder := baseRuleBuilder(rule, r.oryPassthrough, notPaths)
+			ruleBuilder := baseRuleBuilder(rule, hosts, r.oryPassthrough, notPaths)
 			for _, scope := range authorization.RequiredScopes {
 				ruleBuilder.WithWhenCondition(
 					builders.NewConditionBuilder().WithKey(scopeKey).WithValues([]string{scope}).Get())
@@ -231,7 +262,7 @@ func (r creator) generateAuthorizationPolicySpec(ctx context.Context, client cli
 			authorizationPolicySpecBuilder.WithRule(ruleBuilder.Get())
 		}
 	} else { // Only one AP rule should be generated for other scenarios
-		ruleBuilder := baseRuleBuilder(rule, r.oryPassthrough, notPaths)
+		ruleBuilder := baseRuleBuilder(rule, hosts, r.oryPassthrough, notPaths)
 		for _, aud := range authorization.Audiences {
 			ruleBuilder.WithWhenCondition(
 				builders.NewConditionBuilder().WithKey(audienceKey).WithValues([]string{aud}).Get())
@@ -250,10 +281,11 @@ func standardizeRulePath(path string) string {
 	return path
 }
 
-func withTo(b *builders.RuleBuilder, rule gatewayv2alpha1.Rule, notPaths []string) *builders.RuleBuilder {
+func withTo(b *builders.RuleBuilder, hosts []string, rule gatewayv2alpha1.Rule, notPaths []string) *builders.RuleBuilder {
 	return b.WithTo(
 		builders.NewToBuilder().
 			WithOperation(builders.NewOperationBuilder().
+				Hosts(hosts...).
 				WithMethodsV2alpha1(rule.Methods).
 				WithPath(standardizeRulePath(rule.Path)).
 				WithNotPaths(notPaths).Get()).
@@ -262,30 +294,40 @@ func withTo(b *builders.RuleBuilder, rule gatewayv2alpha1.Rule, notPaths []strin
 
 func withFrom(b *builders.RuleBuilder, rule gatewayv2alpha1.Rule, oryPassthrough bool) *builders.RuleBuilder {
 	if rule.Jwt != nil {
-		return b.WithFrom(builders.NewFromBuilder().WithForcedJWTAuthorizationV2alpha1(rule.Jwt.Authentications).Get())
-	} else if rule.ExtAuth != nil && rule.ExtAuth.Restrictions != nil {
-		return b.WithFrom(builders.NewFromBuilder().WithForcedJWTAuthorizationV2alpha1(rule.ExtAuth.Restrictions.Authentications).Get())
+		return b.WithFrom(builders.NewFromBuilder().
+			WithForcedJWTAuthorizationV2alpha1(rule.Jwt.Authentications).
+			WithIngressGatewaySource().
+			Get())
+	}
+	if rule.ExtAuth != nil && rule.ExtAuth.Restrictions != nil {
+		return b.WithFrom(builders.NewFromBuilder().
+			WithForcedJWTAuthorizationV2alpha1(rule.ExtAuth.Restrictions.Authentications).
+			WithIngressGatewaySource().
+			Get())
 	}
 
 	if oryPassthrough {
-		b.WithFrom(builders.NewFromBuilder().WithOathkeeperProxySource().Get())
+		b.WithFrom(builders.NewFromBuilder().
+			WithOathkeeperProxySource().
+			Get())
 	}
-
-	return b.WithFrom(builders.NewFromBuilder().WithIngressGatewaySource().Get())
+	return b.WithFrom(builders.NewFromBuilder().
+		WithIngressGatewaySource().
+		Get())
 }
 
 // baseExtAuthRuleBuilder returns ruleBuilder with To
-func baseExtAuthRuleBuilder(rule gatewayv2alpha1.Rule, notPaths []string) *builders.RuleBuilder {
+func baseExtAuthRuleBuilder(rule gatewayv2alpha1.Rule, hosts, notPaths []string) *builders.RuleBuilder {
 	builder := builders.NewRuleBuilder()
-	builder = withTo(builder, rule, notPaths)
+	builder = withTo(builder, hosts, rule, notPaths)
 
 	return builder
 }
 
 // baseRuleBuilder returns ruleBuilder with To and From
-func baseRuleBuilder(rule gatewayv2alpha1.Rule, oryPassthrough bool, notPaths []string) *builders.RuleBuilder {
+func baseRuleBuilder(rule gatewayv2alpha1.Rule, hosts []string, oryPassthrough bool, notPaths []string) *builders.RuleBuilder {
 	builder := builders.NewRuleBuilder()
-	builder = withTo(builder, rule, notPaths)
+	builder = withTo(builder, hosts, rule, notPaths)
 	builder = withFrom(builder, rule, oryPassthrough)
 
 	return builder

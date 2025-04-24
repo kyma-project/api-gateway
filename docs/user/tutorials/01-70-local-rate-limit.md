@@ -1,4 +1,4 @@
-# Local Rate Limiting Configuration
+# Configuring Local Rate Limiting
 
 The RateLimit custom resource (CR) allows you to apply local rate limit configuration for specific paths of an exposed application.
 

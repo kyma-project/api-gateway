@@ -2,6 +2,8 @@ package authorizationpolicy_test
 
 import (
 	"fmt"
+	"testing"
+
 	"github.com/kyma-project/api-gateway/internal/processing"
 	"github.com/kyma-project/api-gateway/internal/processing/hashbasedstate"
 	"github.com/kyma-project/api-gateway/tests"
@@ -16,7 +18,6 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
-	"testing"
 
 	. "github.com/onsi/ginkgo/v2"
 	ginkgotypes "github.com/onsi/ginkgo/v2/types"
@@ -40,7 +41,7 @@ var serviceName = "example-service"
 var testLogger = ctrl.Log.WithName("istio-test")
 var testExpectedScopeKeys = []string{"request.auth.claims[scp]", "request.auth.claims[scope]", "request.auth.claims[scopes]"}
 
-var getAuthorizationPolicy = func(name string, namespace string, serviceName string, methods []string) *securityv1beta1.AuthorizationPolicy {
+var getAuthorizationPolicy = func(name string, namespace string, serviceName string, hosts, methods []string) *securityv1beta1.AuthorizationPolicy {
 	ap := securityv1beta1.AuthorizationPolicy{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
@@ -67,6 +68,7 @@ var getAuthorizationPolicy = func(name string, namespace string, serviceName str
 					To: []*v1beta1.Rule_To{
 						{
 							Operation: &v1beta1.Operation{
+								Hosts:   hosts,
 								Methods: methods,
 								Paths:   []string{"/"},
 							},
