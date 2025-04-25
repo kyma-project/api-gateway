@@ -2,11 +2,12 @@ package v2alpha1
 
 import (
 	"encoding/json"
-	"k8s.io/apimachinery/pkg/runtime"
+	"slices"
 	"time"
 
 	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
 )
@@ -32,7 +33,11 @@ func convertMap(m map[v1beta1.StatusCode]State) map[State]v1beta1.StatusCode {
 // The 2 => 1 map is generated automatically based on 1 => 2 map
 var alpha1to1beta1statusConversionMap = convertMap(beta1toV2alpha1StatusConversionMap)
 
-const v2alpha1RulesAnnotationKey = "gateway.kyma-project.io/v2alpha1-rules"
+const (
+	v2alpha1RulesAnnotationKey   = "gateway.kyma-project.io/v2alpha1-rules"
+	originalVersionAnnotationKey = "gateway.kyma-project.io/original-version"
+	v1beta1SpecAnnotationKey     = "gateway.kyma-project.io/v1beta1-spec"
+)
 
 // ConvertTo Converts this ApiRule (v2alpha1) to the Hub version (v1beta1)
 func (apiRuleV2Alpha1 *APIRule) ConvertTo(hub conversion.Hub) error {
@@ -42,7 +47,7 @@ func (apiRuleV2Alpha1 *APIRule) ConvertTo(hub conversion.Hub) error {
 	if apiRuleBeta1.Annotations == nil {
 		apiRuleBeta1.Annotations = make(map[string]string)
 	}
-	apiRuleBeta1.Annotations["gateway.kyma-project.io/original-version"] = "v2alpha1"
+	apiRuleBeta1.Annotations[originalVersionAnnotationKey] = "v2alpha1"
 
 	err := convertOverJson(apiRuleV2Alpha1.Spec.Rules, &apiRuleBeta1.Spec.Rules)
 	if err != nil {
@@ -172,7 +177,7 @@ func (apiRuleV2Alpha1 *APIRule) ConvertTo(hub conversion.Hub) error {
 	return nil
 }
 
-// Converts from the Hub version (v1beta1) into this ApiRule (v2alpha1)
+// ConvertFrom Converts from the Hub version (v1beta1) into this ApiRule (v2alpha1)
 func (apiRuleV2Alpha1 *APIRule) ConvertFrom(hub conversion.Hub) error {
 	apiRuleBeta1 := hub.(*v1beta1.APIRule)
 
@@ -186,20 +191,29 @@ func (apiRuleV2Alpha1 *APIRule) ConvertFrom(hub conversion.Hub) error {
 		}
 	}
 
-	conversionPossible, err := isFullConversionPossible(apiRuleBeta1)
-	if err != nil {
-		return err
-	}
-	if !conversionPossible {
-		// We have to stop the conversion here, because we want to return an empty Spec in case we cannot fully convert the APIRule.
-		return nil
+	// if "v2", "v2alpha1" we are sure that resource is v2
+	if !isV2OriginalVersion(apiRuleBeta1) {
+		if apiRuleV2Alpha1.Annotations == nil {
+			apiRuleV2Alpha1.Annotations = make(map[string]string)
+		}
+		marshaledSpec, err := json.Marshal(apiRuleBeta1.Spec)
+		if err != nil {
+			return err
+		}
+		// we set the original version to v1beta1 to indicate that this APIRule is v1beta1
+		apiRuleV2Alpha1.Annotations[originalVersionAnnotationKey] = "v1beta1"
+		apiRuleV2Alpha1.Annotations[v1beta1SpecAnnotationKey] = string(marshaledSpec)
+		conversionPossible, err := isFullConversionPossible(apiRuleBeta1)
+		if err != nil {
+			return err
+		}
+		if !conversionPossible {
+			// if conversion is not possible, we end conversion with an empty spec
+			return nil
+		}
 	}
 
-	err = convertOverJson(apiRuleBeta1.Spec.Rules, &apiRuleV2Alpha1.Spec.Rules)
-	if err != nil {
-		return err
-	}
-	err = convertOverJson(apiRuleBeta1.Spec.Gateway, &apiRuleV2Alpha1.Spec.Gateway)
+	err := convertOverJson(apiRuleBeta1.Spec.Gateway, &apiRuleV2Alpha1.Spec.Gateway)
 	if err != nil {
 		return err
 	}
@@ -225,7 +239,7 @@ func (apiRuleV2Alpha1 *APIRule) ConvertFrom(hub conversion.Hub) error {
 		// In consequence, the conversion drops any values smaller than 1 second.
 		// https://fetch.spec.whatwg.org/#http-responses
 		if apiRuleBeta1.Spec.CorsPolicy.MaxAge != nil {
-			maxAge := uint64(apiRuleBeta1.Spec.CorsPolicy.MaxAge.Duration.Seconds())
+			maxAge := uint64(apiRuleBeta1.Spec.CorsPolicy.MaxAge.Seconds())
 			apiRuleV2Alpha1.Spec.CorsPolicy.MaxAge = &maxAge
 		}
 	}
@@ -234,34 +248,40 @@ func (apiRuleV2Alpha1 *APIRule) ConvertFrom(hub conversion.Hub) error {
 		apiRuleV2Alpha1.Spec.Hosts = []*Host{new(Host)}
 		*apiRuleV2Alpha1.Spec.Hosts[0] = Host(*apiRuleBeta1.Spec.Host)
 	}
+	// is v2alpha1 or v2
+	if apiRuleBeta1.Annotations != nil {
+		if annotation, ok := apiRuleBeta1.Annotations[v2alpha1RulesAnnotationKey]; ok {
 
-	if annotation, ok := apiRuleBeta1.Annotations[v2alpha1RulesAnnotationKey]; ok {
-		var v2alpha1Rules []Rule
-		err := json.Unmarshal([]byte(annotation), &v2alpha1Rules)
-		if err != nil {
-			return err
+			var v2alpha1Rules []Rule
+			err := json.Unmarshal([]byte(annotation), &v2alpha1Rules)
+			if err != nil {
+				return err
+			}
+
+			apiRuleV2Alpha1.Spec.Rules = v2alpha1Rules
+			return nil
 		}
-
-		apiRuleV2Alpha1.Spec.Rules = v2alpha1Rules
-	} else if len(apiRuleBeta1.Spec.Rules) > 0 {
+	}
+	if len(apiRuleBeta1.Spec.Rules) > 0 {
+		// is v1beta1 and is convertible
 		apiRuleV2Alpha1.Spec.Rules = []Rule{}
 		for _, ruleBeta1 := range apiRuleBeta1.Spec.Rules {
-			ruleV1Alpha2 := Rule{}
-			err = convertOverJson(ruleBeta1, &ruleV1Alpha2)
+			ruleV2Alpha1 := Rule{}
+			err = convertOverJson(ruleBeta1, &ruleV2Alpha1)
 			if err != nil {
 				return err
 			}
 			for _, accessStrategy := range ruleBeta1.AccessStrategies {
-				if accessStrategy.Handler.Name == v1beta1.AccessStrategyNoAuth {
-					ruleV1Alpha2.NoAuth = ptr.To(true)
+				if accessStrategy.Name == v1beta1.AccessStrategyNoAuth {
+					ruleV2Alpha1.NoAuth = ptr.To(true)
 				}
 
-				if accessStrategy.Handler.Name == v1beta1.AccessStrategyJwt {
+				if accessStrategy.Name == v1beta1.AccessStrategyJwt {
 					jwtConfig, err := convertToJwtConfig(accessStrategy)
 					if err != nil {
 						return err
 					}
-					err = convertOverJson(jwtConfig, &ruleV1Alpha2.Jwt)
+					err = convertOverJson(jwtConfig, &ruleV2Alpha1.Jwt)
 					if err != nil {
 						return err
 					}
@@ -269,37 +289,47 @@ func (apiRuleV2Alpha1 *APIRule) ConvertFrom(hub conversion.Hub) error {
 			}
 
 			if ruleBeta1.Mutators != nil {
-				ruleV1Alpha2.Request = &Request{}
+				ruleV2Alpha1.Request = &Request{}
 			}
 
 			for _, mutator := range ruleBeta1.Mutators {
-				switch mutator.Handler.Name {
+				switch mutator.Name {
 				case v1beta1.HeaderMutator:
 					var configStruct map[string]string
 
-					err := json.Unmarshal(mutator.Handler.Config.Raw, &configStruct)
+					err := json.Unmarshal(mutator.Config.Raw, &configStruct)
 					if err != nil {
 						return err
 					}
 
-					ruleV1Alpha2.Request.Headers = configStruct
+					ruleV2Alpha1.Request.Headers = configStruct
 				case v1beta1.CookieMutator:
 					var configStruct map[string]string
 
-					err := json.Unmarshal(mutator.Handler.Config.Raw, &configStruct)
+					err := json.Unmarshal(mutator.Config.Raw, &configStruct)
 					if err != nil {
 						return err
 					}
 
-					ruleV1Alpha2.Request.Cookies = configStruct
+					ruleV2Alpha1.Request.Cookies = configStruct
 				}
 			}
-			apiRuleV2Alpha1.Spec.Rules = append(apiRuleV2Alpha1.Spec.Rules, ruleV1Alpha2)
+			apiRuleV2Alpha1.Spec.Rules = append(apiRuleV2Alpha1.Spec.Rules, ruleV2Alpha1)
 		}
 
 	}
 
 	return nil
+}
+
+func isV2OriginalVersion(apiRule *v1beta1.APIRule) bool {
+	if apiRule.Annotations == nil {
+		return false
+	}
+	if originalVersion, ok := apiRule.Annotations[originalVersionAnnotationKey]; ok && slices.Contains([]string{"v2alpha1", "v2"}, originalVersion) {
+		return true
+	}
+	return false
 }
 
 func convertOverJson(src any, dst any) error {
@@ -316,16 +346,19 @@ func convertOverJson(src any, dst any) error {
 	return nil
 }
 
-// isFullConversionPossible checks if the APIRule can be fully converted to v2alpha1 by evaluating the access strategies.
+// isFullConversionPossible checks if the APIRule can be fully converted to v2alpha1 by evaluating the access strategies and path.
 func isFullConversionPossible(apiRule *v1beta1.APIRule) (bool, error) {
 	for _, rule := range apiRule.Spec.Rules {
+		if !isConvertiblePath(rule.Path) {
+			return false, nil
+		}
 		for _, accessStrategy := range rule.AccessStrategies {
 
-			if accessStrategy.Handler.Name == v1beta1.AccessStrategyNoAuth || accessStrategy.Handler.Name == "ext-auth" {
+			if accessStrategy.Name == v1beta1.AccessStrategyNoAuth || accessStrategy.Name == "ext-auth" {
 				continue
 			}
 
-			if accessStrategy.Handler.Name == v1beta1.AccessStrategyJwt {
+			if accessStrategy.Name == v1beta1.AccessStrategyJwt {
 				isConvertible, err := isConvertibleJwtConfig(accessStrategy)
 				if err != nil {
 					return false, err
