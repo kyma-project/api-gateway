@@ -32,7 +32,7 @@ runs:
     - name: Create Cluster
       uses: ./.github/actions/provision-k3d-cluster
       with:
-        version: "1.31.6"
+        version: "1.31.7"
     - name: Run test
       shell: bash
       env:
