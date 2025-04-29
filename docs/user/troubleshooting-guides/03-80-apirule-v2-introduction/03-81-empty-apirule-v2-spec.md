@@ -1,4 +1,4 @@
-# APIRule `v1beta1` Contains an Empty Spec
+# APIRule `v2` Contains an Empty Spec
 
 ## Symptoms
 There is an empty **spec** in an APIRule custom resource (CR), for example:
