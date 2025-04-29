@@ -1,4 +1,4 @@
-# APIRule `v1beta1` contains a changed status schema
+# APIRule `v1beta1` Contains a Changed Status Schema
 
 ## Symptoms
 There is a changed schema of **status** in an APIRule custom resource (CR), for example:
