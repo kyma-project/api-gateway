@@ -1,4 +1,4 @@
-# Blocked in-cluster communication
+# Blocked In-Cluster Communication
 
 ## Symptoms
 After switching from APIRule `v1beta1` to version `v2`, in-cluster communication is blocked.
