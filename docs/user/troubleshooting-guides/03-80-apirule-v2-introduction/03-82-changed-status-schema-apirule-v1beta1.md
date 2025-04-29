@@ -15,7 +15,7 @@ kubectl get apirules.gateway.kyma-project.io -n $NAMESPACE $APIRULE_NAME -oyaml
 
 ## Cause
 The conversion from the APIRule CR in version `v1beta1` to version `v2` is not possible. 
-Schema of the `status.state` field in the `v2` APIRule custom resource introduces unified approach as in the API Gateway custom resource.
+The schema of the **status.state** field in the `v2` APIRule CR introduces a unified approach, similar to the one used in the API Gateway CR.
 The possible states of **status.state** field are  `Ready`, `Warning`, `Error`, `Processing`, or `Deleting`.
 
 ## Solution
