@@ -2,11 +2,13 @@ package v2
 
 import (
 	"encoding/json"
-	"k8s.io/apimachinery/pkg/runtime"
+
+	"slices"
 	"time"
 
 	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
 )
@@ -32,7 +34,11 @@ func convertMap(m map[v1beta1.StatusCode]State) map[State]v1beta1.StatusCode {
 // The 2 => 1 map is generated automatically based on 1 => 2 map
 var v2to1beta1statusConversionMap = convertMap(beta1toV2StatusConversionMap)
 
-const v2RulesAnnotationKey = "gateway.kyma-project.io/v2alpha1-rules"
+const (
+	v2RulesAnnotationKey         = "gateway.kyma-project.io/v2alpha1-rules"
+	originalVersionAnnotationKey = "gateway.kyma-project.io/original-version"
+	v1beta1SpecAnnotationKey     = "gateway.kyma-project.io/v1beta1-spec"
+)
 
 // ConvertTo Converts this ApiRule (v2) to the Hub version (v1beta1)
 func (apiRule *APIRule) ConvertTo(hub conversion.Hub) error {
@@ -42,7 +48,7 @@ func (apiRule *APIRule) ConvertTo(hub conversion.Hub) error {
 	if apiRuleBeta1.Annotations == nil {
 		apiRuleBeta1.Annotations = make(map[string]string)
 	}
-	apiRuleBeta1.Annotations["gateway.kyma-project.io/original-version"] = "v2"
+	apiRuleBeta1.Annotations[originalVersionAnnotationKey] = "v2"
 
 	err := convertOverJson(apiRule.Spec.Rules, &apiRuleBeta1.Spec.Rules)
 	if err != nil {
@@ -186,20 +192,29 @@ func (apiRule *APIRule) ConvertFrom(hub conversion.Hub) error {
 		}
 	}
 
-	conversionPossible, err := isFullConversionPossible(apiRuleBeta1)
-	if err != nil {
-		return err
-	}
-	if !conversionPossible {
-		// We have to stop the conversion here, because we want to return an empty Spec in case we cannot fully convert the APIRule.
-		return nil
+	// if "v2", "v2alpha1" we are sure that resource is v2
+	if !isV2OriginalVersion(apiRuleBeta1) {
+		if apiRule.Annotations == nil {
+			apiRule.Annotations = make(map[string]string)
+		}
+		marshaledSpec, err := json.Marshal(apiRuleBeta1.Spec)
+		if err != nil {
+			return err
+		}
+		// we set the original version to v1beta1 to indicate that this APIRule is v1beta1
+		apiRule.Annotations[originalVersionAnnotationKey] = "v1beta1"
+		apiRule.Annotations[v1beta1SpecAnnotationKey] = string(marshaledSpec)
+		conversionPossible, err := isFullConversionPossible(apiRuleBeta1)
+		if err != nil {
+			return err
+		}
+		if !conversionPossible {
+			// if conversion is not possible, we end conversion with an empty spec
+			return nil
+		}
 	}
 
-	err = convertOverJson(apiRuleBeta1.Spec.Rules, &apiRule.Spec.Rules)
-	if err != nil {
-		return err
-	}
-	err = convertOverJson(apiRuleBeta1.Spec.Gateway, &apiRule.Spec.Gateway)
+	err := convertOverJson(apiRuleBeta1.Spec.Gateway, &apiRule.Spec.Gateway)
 	if err != nil {
 		return err
 	}
@@ -234,16 +249,20 @@ func (apiRule *APIRule) ConvertFrom(hub conversion.Hub) error {
 		apiRule.Spec.Hosts = []*Host{new(Host)}
 		*apiRule.Spec.Hosts[0] = Host(*apiRuleBeta1.Spec.Host)
 	}
+	if apiRuleBeta1.Annotations != nil {
+		if annotation, ok := apiRuleBeta1.Annotations[v2RulesAnnotationKey]; ok {
 
-	if annotation, ok := apiRuleBeta1.Annotations[v2RulesAnnotationKey]; ok {
-		var v2Rules []Rule
-		err := json.Unmarshal([]byte(annotation), &v2Rules)
-		if err != nil {
-			return err
+			var v2Rules []Rule
+			err := json.Unmarshal([]byte(annotation), &v2Rules)
+			if err != nil {
+				return err
+			}
+
+			apiRule.Spec.Rules = v2Rules
+			return nil
 		}
-
-		apiRule.Spec.Rules = v2Rules
-	} else if len(apiRuleBeta1.Spec.Rules) > 0 {
+	}
+	if len(apiRuleBeta1.Spec.Rules) > 0 {
 		apiRule.Spec.Rules = []Rule{}
 		for _, ruleBeta1 := range apiRuleBeta1.Spec.Rules {
 			ruleV1Alpha2 := Rule{}
@@ -302,6 +321,16 @@ func (apiRule *APIRule) ConvertFrom(hub conversion.Hub) error {
 	return nil
 }
 
+func isV2OriginalVersion(apiRule *v1beta1.APIRule) bool {
+	if apiRule.Annotations == nil {
+		return false
+	}
+	if originalVersion, ok := apiRule.Annotations[originalVersionAnnotationKey]; ok && slices.Contains([]string{"v2alpha1", "v2"}, originalVersion) {
+		return true
+	}
+	return false
+}
+
 func convertOverJson(src any, dst any) error {
 	data, err := json.Marshal(src)
 	if err != nil {
@@ -316,11 +345,13 @@ func convertOverJson(src any, dst any) error {
 	return nil
 }
 
-// isFullConversionPossible checks if the APIRule can be fully converted to v2 by evaluating the access strategies.
+// isFullConversionPossible checks if the APIRule can be fully converted to v2 by evaluating the access strategies and path.
 func isFullConversionPossible(apiRule *v1beta1.APIRule) (bool, error) {
 	for _, rule := range apiRule.Spec.Rules {
+		if !isConvertiblePath(rule.Path) {
+			return false, nil
+		}
 		for _, accessStrategy := range rule.AccessStrategies {
-
 			if accessStrategy.Name == v1beta1.AccessStrategyNoAuth || accessStrategy.Name == "ext-auth" {
 				continue
 			}
@@ -337,7 +368,6 @@ func isFullConversionPossible(apiRule *v1beta1.APIRule) (bool, error) {
 
 			return false, nil
 		}
-
 	}
 
 	return true, nil

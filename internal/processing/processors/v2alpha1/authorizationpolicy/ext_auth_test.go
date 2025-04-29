@@ -32,8 +32,9 @@ var _ = Describe("Processing ExtAuth rules", func() {
 			build()
 
 		svc := newServiceBuilderWithDummyData().build()
+		gateway := newGatewayBuilderWithDummyData().build()
 		client := getFakeClient(svc)
-		processor := authorizationpolicy.NewProcessor(&testLogger, apiRule)
+		processor := authorizationpolicy.NewProcessor(&testLogger, apiRule, gateway)
 
 		// when
 		results, err := processor.EvaluateReconciliation(context.Background(), client)
@@ -83,8 +84,9 @@ var _ = Describe("Processing ExtAuth rules", func() {
 			withRules(ruleJwt).
 			build()
 		svc := newServiceBuilderWithDummyData().build()
+		gateway := newGatewayBuilderWithDummyData().build()
 		client := getFakeClient(svc)
-		processor := authorizationpolicy.NewProcessor(&testLogger, apiRule)
+		processor := authorizationpolicy.NewProcessor(&testLogger, apiRule, gateway)
 
 		// when
 		results, err := processor.EvaluateReconciliation(context.Background(), client)
