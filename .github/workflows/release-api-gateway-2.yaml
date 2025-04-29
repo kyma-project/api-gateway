@@ -27,7 +27,7 @@ jobs:
       - name: Get current release from sec-scanners-config.yaml file
         id: set-release
         run: |
-          CURRENT=$(grep api-gateway-manager ./sec-scanners-config.yaml | cut -d ":" -f2 | xargs)
+          CURRENT=$(grep api-gateway-manager ./sec-scanners-config.yaml | cut -d ":" -f2 )
           echo "Current release: $CURRENT"
           echo "current_release=$CURRENT" >> $GITHUB_OUTPUT
 
@@ -75,7 +75,8 @@ jobs:
     outputs:
       release_id: ${{ steps.create-draft.outputs.release_id }}
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -103,14 +104,15 @@ jobs:
     needs: [create-draft]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
       - name: Publish release assets
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: ./scripts/publish_assets.sh ${{ needs.check-prerequisites.outputs.current_release }} ${{ needs.create-draft.outputs.release_id }}
+        run: ./scripts/publish_assets.sh ${{ needs.create-draft.outputs.release_id }}
 
       - name: Publish release
         env:
