@@ -97,6 +97,14 @@ func (apiRuleV2Alpha1 *APIRule) ConvertTo(hub conversion.Hub) error {
 		apiRuleBeta1.Spec.Host = &strHost
 	}
 
+	if _, ok := apiRuleV2Alpha1.Annotations[v1beta1SpecAnnotationKey]; ok && len(apiRuleV2Alpha1.Spec.Rules) == 0 {
+		err = json.Unmarshal([]byte(apiRuleV2Alpha1.Annotations[v1beta1SpecAnnotationKey]), &apiRuleBeta1.Spec)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+
 	if len(apiRuleV2Alpha1.Spec.Rules) > 0 {
 		marshaledApiRules, err := json.Marshal(apiRuleV2Alpha1.Spec.Rules)
 		if err != nil {
