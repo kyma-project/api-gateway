@@ -47,7 +47,9 @@ func (apiRuleV2Alpha1 *APIRule) ConvertTo(hub conversion.Hub) error {
 	if apiRuleBeta1.Annotations == nil {
 		apiRuleBeta1.Annotations = make(map[string]string)
 	}
-	apiRuleBeta1.Annotations[originalVersionAnnotationKey] = "v2alpha1"
+	if _, ok := apiRuleBeta1.Annotations[originalVersionAnnotationKey]; !ok {
+		apiRuleBeta1.Annotations[originalVersionAnnotationKey] = "v2alpha1"
+	}
 
 	err := convertOverJson(apiRuleV2Alpha1.Spec.Rules, &apiRuleBeta1.Spec.Rules)
 	if err != nil {
