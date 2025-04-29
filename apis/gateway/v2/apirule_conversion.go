@@ -48,7 +48,10 @@ func (apiRule *APIRule) ConvertTo(hub conversion.Hub) error {
 	if apiRuleBeta1.Annotations == nil {
 		apiRuleBeta1.Annotations = make(map[string]string)
 	}
-	apiRuleBeta1.Annotations[originalVersionAnnotationKey] = "v2"
+
+	if _, ok := apiRuleBeta1.Annotations[originalVersionAnnotationKey]; !ok {
+		apiRuleBeta1.Annotations[originalVersionAnnotationKey] = "v2"
+	}
 
 	err := convertOverJson(apiRule.Spec.Rules, &apiRuleBeta1.Spec.Rules)
 	if err != nil {
@@ -197,13 +200,16 @@ func (apiRule *APIRule) ConvertFrom(hub conversion.Hub) error {
 		if apiRule.Annotations == nil {
 			apiRule.Annotations = make(map[string]string)
 		}
-		marshaledSpec, err := json.Marshal(apiRuleBeta1.Spec)
-		if err != nil {
-			return err
+
+		if len(apiRuleBeta1.Spec.Rules) != 0 {
+			marshaledSpec, err := json.Marshal(apiRuleBeta1.Spec)
+			if err != nil {
+				return err
+			}
+			apiRule.Annotations[originalVersionAnnotationKey] = "v1beta1"
+			apiRule.Annotations[v1beta1SpecAnnotationKey] = string(marshaledSpec)
 		}
 		// we set the original version to v1beta1 to indicate that this APIRule is v1beta1
-		apiRule.Annotations[originalVersionAnnotationKey] = "v1beta1"
-		apiRule.Annotations[v1beta1SpecAnnotationKey] = string(marshaledSpec)
 		conversionPossible, err := isFullConversionPossible(apiRuleBeta1)
 		if err != nil {
 			return err
