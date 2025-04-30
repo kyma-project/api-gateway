@@ -212,10 +212,11 @@ func (apiRuleV2Alpha1 *APIRule) ConvertFrom(hub conversion.Hub) error {
 			if err != nil {
 				return err
 			}
+			// we set the original version to v1beta1 to indicate that this APIRule is v1beta1
 			apiRuleV2Alpha1.Annotations[originalVersionAnnotationKey] = "v1beta1"
 			apiRuleV2Alpha1.Annotations[v1beta1SpecAnnotationKey] = string(marshaledSpec)
 		}
-		// we set the original version to v1beta1 to indicate that this APIRule is v1beta1
+
 		conversionPossible, err := isFullConversionPossible(apiRuleBeta1)
 		if err != nil {
 			return err
