@@ -104,6 +104,10 @@ func (r *APIGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 
 	if len(existingAPIGateways.Items) > 1 {
 		oldestCr := operatorv1alpha1.GetOldestAPIGatewayCR(existingAPIGateways)
+		if oldestCr == nil {
+			err := fmt.Errorf("stopped APIGateway CR reconciliation: no oldest APIGateway CR found")
+			return r.terminateReconciliation(ctx, apiGatewayCR, controllers.WarningStatus(err, err.Error(), conditions.ReconcileFailed.Condition()))
+		}
 
 		if apiGatewayCR.GetUID() != oldestCr.GetUID() {
 			err := fmt.Errorf("stopped APIGateway CR reconciliation: only APIGateway CR %s reconciles the module", oldestCr.GetName())
