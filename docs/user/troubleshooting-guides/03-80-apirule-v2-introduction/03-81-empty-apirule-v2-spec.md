@@ -20,8 +20,7 @@ kubectl get apirules.gateway.kyma-project.io -n $NAMESPACE $APIRULE_NAME -oyaml
 
 ## Cause
 
-The APIRule was originally created using version `v1beta1` and has not yet been migrated 
-to the version `v2` by the user. 
+The APIRule was originally created using version `v1beta1`, and you haven't yet migrated it to version `v2`. 
 Since the latest stable version of the APIRule in the Kubernetes API is now `v2`, running the `kubectl get` 
 command without specifying a version of APIRule assumes version `v2`.  
 
