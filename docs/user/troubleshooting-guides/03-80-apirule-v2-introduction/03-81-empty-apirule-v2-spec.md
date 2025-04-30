@@ -21,18 +21,18 @@ kubectl get apirules.gateway.kyma-project.io -n $NAMESPACE $APIRULE_NAME -oyaml
 ## Cause
 
 The APIRule was originally created using version `v1beta1` and has not yet been migrated 
-to version `v2` by the user. 
+to the version `v2` by the user. 
 Since the latest stable version of the APIRule in the Kubernetes API is now `v2`, running the `kubectl get` 
 command without specifying a version of APIRule assumes version `v2`.  
 
 To display the resource in version `v2`, a conversion from `v1beta1` to `v2` is performed. 
-This conversion only affects the displayed resource's textual format and does not modify the resource in the cluster. If the conversion is fully possible, the **spec** is presented in the output. 
+This conversion only affects the displayed resource's textual format and does not modify the resource in the cluster. If the full conversion is possible, the **spec** is presented in the output. 
 However, if the conversion cannot be fully completed, the **spec** appears empty, and the original **spec** is stored in the resource's annotations. 
 
 
 ## Solution
 
-Get the APIRule in its original version:
+Specify explicitly `v1beta1` version when requesting the APIRule resource:
   ```bash
   kubectl get apirules.v1beta1.gateway.kyma-project.io -n $NAMESPACE $APIRULE_NAME -oyaml
   ```
