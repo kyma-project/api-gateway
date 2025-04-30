@@ -5,13 +5,19 @@ After switching from APIRule `v1beta1` to version `v2`, in-cluster communication
 
 ## Cause
 
-By default, the access to the workload from internal traffic is blocked.
+By default, the access to the workload from internal traffic is blocked if APIRule CR in versions `v2` or `v2alpha1` is applied.
 This approach aligns with Kyma's "secure by default" principle.
-In one of the future releases of the API Gateway module, the APIRule custom resource (CR) will contain a new field **internalTraffic** set to `Deny` by default. This field will allow you to permit traffic from the CR. For more information on this topic, see issue [#1632](https://github.com/kyma-project/api-gateway/issues/1632).
 
 ## Solution
+To allow internal traffic, you need to create an **AuthorizationPolicy**.
+The **AuthorizationPolicy** works by blocking all traffic unless it matches an `ALLOW` rule.
+This means internal traffic is blocked by default unless explicitly allowed by an ALLOW-type **AuthorizationPolicy**.
 
-To retain APIRule `v1beta1` internal traffic policy, apply the following AuthorizationPolicy. Remember to change the selector label to the one pointing to the target workload:
+
+Below is an example of **AuthorizationPolicy** configuration where **notPrincipals** is set to requests coming from `istio-ingressgateway` to `${TARGET_WORKLOAD}`. 
+This ensures that internal traffic is explicitly allowed, as it does not originate from `istio-ingressgateway`.
+
+**Note:** Replace `${NAMESPACE}`, `${KEY}`, and `${TARGET_WORKLOAD}` with the appropriate values for your environment.
 ```yaml
 apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy

@@ -20,9 +20,15 @@ kubectl get apirules.gateway.kyma-project.io -n $NAMESPACE $APIRULE_NAME -oyaml
 
 ## Cause
 
-The conversion from the APIRule CR in version `v1beta1` to version `v2` is not possible. 
-It's only possible to convert the `noAuth` and `jwt` handlers from `v1beta1` to `v2`. 
-Beware that the `jwt` handler with more than one `trusted_issuers` or `jwks_urls` also cannot be converted.
+The APIRule was originally created using version `v1beta1` and has not yet been migrated 
+to version `v2` by the user. 
+Since the latest stable version of the APIRule in the Kubernetes API is now `v2`, running the `kubectl get` 
+command without specifying a version of APIRule assumes version `v2`.  
+
+To display the resource in version `v2`, a conversion from `v1beta1` to `v2` is performed. 
+This conversion only affects the displayed resource's textual format and does not modify the resource in the cluster. If the conversion is fully possible, the **spec** is presented in the output. 
+However, if the conversion cannot be fully completed, the **spec** appears empty, and the original **spec** is stored in the resource's annotations. 
+
 
 ## Solution
 
