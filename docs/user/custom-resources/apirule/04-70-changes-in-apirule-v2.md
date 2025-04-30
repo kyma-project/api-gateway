@@ -28,8 +28,7 @@ To use APIRules in versions `v2` or `v2alpha1`, the workload that an APIRule exp
 
 ## Internal Traffic to Workloads Is Blocked by Default
 
-By default, the access to the workload from internal traffic is blocked. This approach aligns with Kyma's "secure by default" principle. In one of the future releases of the API Gateway module, the APIRule CR will contain a new field **internalTraffic** set to `Deny` by default. This field will allow you to permit traffic from the CR. For more information on this topic, see issue [#1632](https://github.com/kyma-project/api-gateway/issues/1632).
-
+By default, the access to the workload from internal traffic is blocked if APIRule CR in versions `v2` or `v2alpha1` is applied. This approach aligns with Kyma's "secure by default" principle. 
 ## CORS Policy Is Not Applied by Default
 
 Version `v1beta1` applied the following CORS configuration by default:
