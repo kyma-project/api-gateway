@@ -57,9 +57,11 @@ var _ = Describe("Validate rules", func() {
 		problems := validateRules(context.Background(), fakeClient, ".spec", apiRule)
 
 		//then
-		Expect(problems).To(HaveLen(1))
+		Expect(problems).To(HaveLen(2))
 		Expect(problems[0].AttributePath).To(Equal(".spec.rules[0].service"))
 		Expect(problems[0].Message).To(Equal("The rule must define a service, because no service is defined on spec level"))
+		Expect(problems[1].AttributePath).To(Equal(".spec.rules[0]"))
+		Expect(problems[1].Message).To(Equal("Failed to execute sidecar injection validation, err: service name is required but missing"))
 	})
 
 	It("should report multiple problem at once", func() {
@@ -234,7 +236,7 @@ var _ = Describe("Validate rules", func() {
 		Expect(problems).To(HaveLen(0))
 	})
 
-	It("should not fail with service without labels selector by when NoAuth is used", func() {
+	It("should fail with service without labels selector when NoAuth is used", func() {
 		//given
 		apiRule := &v2alpha1.APIRule{
 			Spec: v2alpha1.APIRuleSpec{
@@ -258,10 +260,12 @@ var _ = Describe("Validate rules", func() {
 		problems := validateRules(context.Background(), fakeClient, ".spec", apiRule)
 
 		//then
-		Expect(problems).To(HaveLen(0))
+		Expect(problems).To(HaveLen(1))
+		Expect(problems[0].AttributePath).To(Equal(".spec.rules[0].injection"))
+		Expect(problems[0].Message).To(Equal("Target service label selectors are not defined"))
 	})
 
-	It("should not fail with service on path level when NoAuth is used", func() {
+	It("should fail with service on path level when NoAuth is used", func() {
 		//given
 		apiRule := &v2alpha1.APIRule{
 			Spec: v2alpha1.APIRuleSpec{
@@ -285,7 +289,9 @@ var _ = Describe("Validate rules", func() {
 		problems := validateRules(context.Background(), fakeClient, ".spec", apiRule)
 
 		//then
-		Expect(problems).To(HaveLen(0))
+		Expect(problems).To(HaveLen(1))
+		Expect(problems[0].AttributePath).To(Equal(".spec.rules[0].injection"))
+		Expect(problems[0].Message).To(Equal("Target service label selectors are not defined"))
 	})
 
 	It("should succeed with service without namespace", func() {
@@ -372,6 +378,34 @@ var _ = Describe("Validate rules", func() {
 		// then
 		Expect(problems).To(HaveLen(1))
 		Expect(problems[0].AttributePath).To(Equal(".spec.rules[0].injection"))
-		Expect(problems[0].Message).To(Equal("Service cannot have empty label selectors when the API Rule strategy is JWT"))
+		Expect(problems[0].Message).To(Equal("Target service label selectors are not defined"))
+	})
+
+	It("should invoke sidecar injection validation on noAuth expsed workload", func() {
+		//given
+		apiRule := &v2alpha1.APIRule{
+			Spec: v2alpha1.APIRuleSpec{
+				Service: getApiRuleService(sampleServiceName, uint32(8080)),
+				Hosts:   []*v2alpha1.Host{&host},
+				Rules: []v2alpha1.Rule{
+					{
+						Path:   "/abc",
+						NoAuth: ptr.To(true),
+					},
+				},
+			},
+		}
+
+		service := getService(sampleServiceName)
+		service.Spec.Selector = map[string]string{}
+		fakeClient := createFakeClient(service)
+
+		//when
+		problems := validateRules(context.Background(), fakeClient, ".spec", apiRule)
+
+		// then
+		Expect(problems).To(HaveLen(1))
+		Expect(problems[0].AttributePath).To(Equal(".spec.rules[0].injection"))
+		Expect(problems[0].Message).To(Equal("Target service label selectors are not defined"))
 	})
 })
