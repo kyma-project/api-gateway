@@ -23,6 +23,9 @@ spec:
     - jsonPath: .spec.host
       name: Host
       type: string
+    deprecated: true
+    deprecationWarning: Version v1beta1 of APIRule is deprecated and will be removed
+      in future releases. Use version v2 instead.
     name: v1beta1
     schema:
       openAPIV3Schema:

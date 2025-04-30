@@ -85,6 +85,7 @@ func (s *APIRuleStatus) ApiRuleStatusVersion() versions.Version {
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Status",type="string",JSONPath=".status.APIRuleStatus.code"
 // +kubebuilder:printcolumn:name="Host",type="string",JSONPath=".spec.host"
+// +kubebuilder:deprecatedversion:warning="Version v1beta1 of APIRule is deprecated and will be removed in future releases. Use version v2 instead."
 type APIRule struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
