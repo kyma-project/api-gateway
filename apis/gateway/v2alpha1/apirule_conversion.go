@@ -47,7 +47,10 @@ func (apiRuleV2Alpha1 *APIRule) ConvertTo(hub conversion.Hub) error {
 	if apiRuleBeta1.Annotations == nil {
 		apiRuleBeta1.Annotations = make(map[string]string)
 	}
-	apiRuleBeta1.Annotations[originalVersionAnnotationKey] = "v2alpha1"
+
+	if _, ok := apiRuleBeta1.Annotations[originalVersionAnnotationKey]; !ok {
+		apiRuleBeta1.Annotations[originalVersionAnnotationKey] = "v2alpha1"
+	}
 
 	err := convertOverJson(apiRuleV2Alpha1.Spec.Rules, &apiRuleBeta1.Spec.Rules)
 	if err != nil {
@@ -93,6 +96,14 @@ func (apiRuleV2Alpha1 *APIRule) ConvertTo(hub conversion.Hub) error {
 		// Only one host is supported in v1beta1, so we use the first one from the list
 		strHost := string(*apiRuleV2Alpha1.Spec.Hosts[0])
 		apiRuleBeta1.Spec.Host = &strHost
+	}
+
+	if _, ok := apiRuleV2Alpha1.Annotations[v1beta1SpecAnnotationKey]; ok && len(apiRuleV2Alpha1.Spec.Rules) == 0 {
+		err = json.Unmarshal([]byte(apiRuleV2Alpha1.Annotations[v1beta1SpecAnnotationKey]), &apiRuleBeta1.Spec)
+		if err != nil {
+			return err
+		}
+		return nil
 	}
 
 	if len(apiRuleV2Alpha1.Spec.Rules) > 0 {
@@ -191,18 +202,23 @@ func (apiRuleV2Alpha1 *APIRule) ConvertFrom(hub conversion.Hub) error {
 		}
 	}
 
+
 	// if "v2", "v2alpha1" we are sure that resource is v2
 	if !isV2OriginalVersion(apiRuleBeta1) {
 		if apiRuleV2Alpha1.Annotations == nil {
 			apiRuleV2Alpha1.Annotations = make(map[string]string)
 		}
-		marshaledSpec, err := json.Marshal(apiRuleBeta1.Spec)
-		if err != nil {
-			return err
+
+		if len(apiRuleBeta1.Spec.Rules) != 0 {
+			marshaledSpec, err := json.Marshal(apiRuleBeta1.Spec)
+			if err != nil {
+				return err
+			}
+			// we set the original version to v1beta1 to indicate that this APIRule is v1beta1
+			apiRuleV2Alpha1.Annotations[originalVersionAnnotationKey] = "v1beta1"
+			apiRuleV2Alpha1.Annotations[v1beta1SpecAnnotationKey] = string(marshaledSpec)
 		}
-		// we set the original version to v1beta1 to indicate that this APIRule is v1beta1
-		apiRuleV2Alpha1.Annotations[originalVersionAnnotationKey] = "v1beta1"
-		apiRuleV2Alpha1.Annotations[v1beta1SpecAnnotationKey] = string(marshaledSpec)
+
 		conversionPossible, err := isFullConversionPossible(apiRuleBeta1)
 		if err != nil {
 			return err
