@@ -205,10 +205,11 @@ func GetVirtualServiceHttpTimeout(apiRuleSpec gatewayv2alpha1.APIRuleSpec, rule 
 // For example, if the short host name is "foo" and the gateway defines itself to ".*.example.com"
 // the resulting FQDN will be "foo.example.com".
 // For FQDN host names, it will just return the host name as is.
+//
 // Returns:
-// - a slice of FQDN host names
-// - the domain used by the gateway
-// - an error if the gateway is not provided and short host names are used
+//   - a slice of FQDN host names.
+//   - the domain used by the gateway.
+//   - an error if the gateway is not provided and short host names are used.
 func getHostsAndDomainFromAPIRule(api *gatewayv2alpha1.APIRule, r virtualServiceCreator) ([]string, string, error) {
 	var hosts []string
 	var gatewayDomain string
