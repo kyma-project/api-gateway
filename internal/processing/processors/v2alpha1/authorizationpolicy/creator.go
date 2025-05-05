@@ -295,12 +295,27 @@ func withTo(b *builders.RuleBuilder, hosts []string, rule gatewayv2alpha1.Rule, 
 
 func withFrom(b *builders.RuleBuilder, rule gatewayv2alpha1.Rule, oryPassthrough bool) *builders.RuleBuilder {
 	if rule.Jwt != nil {
+		// only viable when migration step is happening. Do not add ingressgateway source during migration
+		if oryPassthrough {
+			return b.WithFrom(builders.NewFromBuilder().
+				WithForcedJWTAuthorizationV2alpha1(rule.Jwt.Authentications).
+				Get())
+		}
+
 		return b.WithFrom(builders.NewFromBuilder().
 			WithForcedJWTAuthorizationV2alpha1(rule.Jwt.Authentications).
 			WithIngressGatewaySource().
 			Get())
 	}
+
 	if rule.ExtAuth != nil && rule.ExtAuth.Restrictions != nil {
+		// only viable when migration step is happening. Do not add ingressgateway source during migration
+		if oryPassthrough {
+			b.WithFrom(builders.NewFromBuilder().
+				WithForcedJWTAuthorizationV2alpha1(rule.ExtAuth.Restrictions.Authentications).
+				Get())
+		}
+
 		return b.WithFrom(builders.NewFromBuilder().
 			WithForcedJWTAuthorizationV2alpha1(rule.ExtAuth.Restrictions.Authentications).
 			WithIngressGatewaySource().
@@ -312,6 +327,7 @@ func withFrom(b *builders.RuleBuilder, rule gatewayv2alpha1.Rule, oryPassthrough
 			WithOathkeeperProxySource().
 			Get())
 	}
+
 	return b.WithFrom(builders.NewFromBuilder().
 		WithIngressGatewaySource().
 		Get())
@@ -329,6 +345,12 @@ func baseExtAuthRuleBuilder(rule gatewayv2alpha1.Rule, hosts, notPaths []string)
 func baseRuleBuilder(rule gatewayv2alpha1.Rule, hosts []string, oryPassthrough bool, notPaths []string) *builders.RuleBuilder {
 	builder := builders.NewRuleBuilder()
 	builder = withTo(builder, hosts, rule, notPaths)
+	// If the migration is happening, do not add hosts to the rule, to allow internal traffic during migration step
+	if oryPassthrough {
+		builder = withTo(builder, nil, rule, notPaths)
+	} else {
+		builder = withTo(builder, hosts, rule, notPaths)
+	}
 	builder = withFrom(builder, rule, oryPassthrough)
 
 	return builder
