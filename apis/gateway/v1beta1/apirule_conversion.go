@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	"k8s.io/utils/ptr"
-	"regexp"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
 	"slices"
 )
@@ -257,7 +256,7 @@ func convertOverJson(src any, dst any) error {
 // isFullConversionPossible checks if the APIRule can be fully converted to v2 by evaluating the access strategies and path.
 func isFullConversionPossible(apiRule *APIRule) (bool, error) {
 	for _, rule := range apiRule.Spec.Rules {
-		if !IsConvertiblePath(rule.Path) {
+		if !isConvertiblePath(rule.Path) {
 			return false, nil
 		}
 		for _, accessStrategy := range rule.AccessStrategies {
@@ -280,11 +279,4 @@ func isFullConversionPossible(apiRule *APIRule) (bool, error) {
 	}
 
 	return true, nil
-}
-
-// IsConvertiblePath checks if the path is convertible to v2alpha1.
-func IsConvertiblePath(path string) bool {
-	validIstioPathPattern := `^((\/([A-Za-z0-9-._~!$&'()+,;=:@]|%[0-9a-fA-F]{2})*)|(\/\{\*{1,2}\}))+$|^\/\*$`
-	validPathRegex := regexp.MustCompile(validIstioPathPattern)
-	return validPathRegex.MatchString(path)
 }
