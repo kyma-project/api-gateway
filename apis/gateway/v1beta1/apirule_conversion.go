@@ -31,31 +31,31 @@ var alpha1to1beta1statusConversionMap = map[v2alpha1.State]StatusCode{
 }
 
 // ConvertTo Converts APIRule (v1beta1) to the Hub version (v2alpha1)
-func (r *APIRule) ConvertTo(hub conversion.Hub) error {
-	apiRule := hub.(*v2alpha1.APIRule)
-	apiRule.ObjectMeta = r.ObjectMeta
-	apiRule.Status = convertV1beta1StatusToV2alpha1Status(r.Status)
+func (ruleV1 *APIRule) ConvertTo(hub conversion.Hub) error {
+	ruleV2 := hub.(*v2alpha1.APIRule)
+	ruleV2.ObjectMeta = ruleV1.ObjectMeta
+	ruleV2.Status = convertV1beta1StatusToV2alpha1Status(ruleV1.Status)
 
 	// if "v2", "v2alpha1" we are sure that resource is v2
 	// if is not set and this method is ConvertTo, this means that we are converting from v1beta1 to v2alpha1
 	//	 when client will apply new resource without specifying original-version
 
-	if r.Annotations == nil {
-		r.Annotations = make(map[string]string)
+	if ruleV1.Annotations == nil {
+		ruleV1.Annotations = make(map[string]string)
 	}
-	if originalVersion, ok := r.Annotations[originalVersionAnnotationKey]; !ok || !slices.Contains([]string{"v2", "v2alpha1"}, originalVersion) {
-		if apiRule.Annotations == nil {
-			apiRule.Annotations = make(map[string]string)
+	if originalVersion, ok := ruleV1.Annotations[originalVersionAnnotationKey]; !ok || !slices.Contains([]string{"v2", "v2alpha1"}, originalVersion) {
+		if ruleV2.Annotations == nil {
+			ruleV2.Annotations = make(map[string]string)
 		}
 
-		marshaledSpec, err := json.Marshal(r.Spec)
+		marshaledSpec, err := json.Marshal(ruleV1.Spec)
 		if err != nil {
 			return err
 		}
-		apiRule.Annotations[v1beta1SpecAnnotationKey] = string(marshaledSpec)
-		apiRule.Annotations[originalVersionAnnotationKey] = "v1beta1"
+		ruleV2.Annotations[v1beta1SpecAnnotationKey] = string(marshaledSpec)
+		ruleV2.Annotations[originalVersionAnnotationKey] = "v1beta1"
 
-		conversionPossible, err := isFullConversionPossible(r)
+		conversionPossible, err := isFullConversionPossible(ruleV1)
 		if err != nil {
 			return err
 		}
@@ -66,53 +66,53 @@ func (r *APIRule) ConvertTo(hub conversion.Hub) error {
 		}
 	}
 
-	err := convertOverJson(r.Spec.Gateway, &apiRule.Spec.Gateway)
+	err := convertOverJson(ruleV1.Spec.Gateway, &ruleV2.Spec.Gateway)
 	if err != nil {
 		return err
 	}
-	err = convertOverJson(r.Spec.Service, &apiRule.Spec.Service)
+	err = convertOverJson(ruleV1.Spec.Service, &ruleV2.Spec.Service)
 	if err != nil {
 		return err
 	}
-	err = convertOverJson(r.Spec.Timeout, &apiRule.Spec.Timeout)
+	err = convertOverJson(ruleV1.Spec.Timeout, &ruleV2.Spec.Timeout)
 	if err != nil {
 		return err
 	}
 
-	if r.Spec.CorsPolicy != nil {
-		apiRule.Spec.CorsPolicy = &v2alpha1.CorsPolicy{}
-		apiRule.Spec.CorsPolicy.AllowHeaders = r.Spec.CorsPolicy.AllowHeaders
-		apiRule.Spec.CorsPolicy.AllowMethods = r.Spec.CorsPolicy.AllowMethods
-		apiRule.Spec.CorsPolicy.AllowOrigins = v2alpha1.StringMatch(r.Spec.CorsPolicy.AllowOrigins)
-		apiRule.Spec.CorsPolicy.AllowCredentials = r.Spec.CorsPolicy.AllowCredentials
-		apiRule.Spec.CorsPolicy.ExposeHeaders = r.Spec.CorsPolicy.ExposeHeaders
+	if ruleV1.Spec.CorsPolicy != nil {
+		ruleV2.Spec.CorsPolicy = &v2alpha1.CorsPolicy{}
+		ruleV2.Spec.CorsPolicy.AllowHeaders = ruleV1.Spec.CorsPolicy.AllowHeaders
+		ruleV2.Spec.CorsPolicy.AllowMethods = ruleV1.Spec.CorsPolicy.AllowMethods
+		ruleV2.Spec.CorsPolicy.AllowOrigins = v2alpha1.StringMatch(ruleV1.Spec.CorsPolicy.AllowOrigins)
+		ruleV2.Spec.CorsPolicy.AllowCredentials = ruleV1.Spec.CorsPolicy.AllowCredentials
+		ruleV2.Spec.CorsPolicy.ExposeHeaders = ruleV1.Spec.CorsPolicy.ExposeHeaders
 		// metav1.Duration type for seconds is float64,
 		// however the Access-Control-Max-Age header is specified in seconds without decimals.
 		// In consequence, the conversion drops any values smaller than 1 second.
 		// https://fetch.spec.whatwg.org/#http-responses
-		if r.Spec.CorsPolicy.MaxAge != nil {
-			maxAge := uint64(r.Spec.CorsPolicy.MaxAge.Seconds())
-			apiRule.Spec.CorsPolicy.MaxAge = &maxAge
+		if ruleV1.Spec.CorsPolicy.MaxAge != nil {
+			maxAge := uint64(ruleV1.Spec.CorsPolicy.MaxAge.Seconds())
+			ruleV2.Spec.CorsPolicy.MaxAge = &maxAge
 		}
 	}
 
-	if r.Spec.Host != nil {
-		host := v2alpha1.Host(*r.Spec.Host)
-		apiRule.Spec.Hosts = []*v2alpha1.Host{&host}
+	if ruleV1.Spec.Host != nil {
+		host := v2alpha1.Host(*ruleV1.Spec.Host)
+		ruleV2.Spec.Hosts = []*v2alpha1.Host{&host}
 	}
 
-	if r.Annotations != nil {
-		if _, ok := r.Annotations[v2alpha1RulesAnnotationKey]; ok && r.isV2OriginalVersion() {
-			err := json.Unmarshal([]byte(r.Annotations[v2alpha1RulesAnnotationKey]), &apiRule.Spec.Rules)
+	if ruleV1.Annotations != nil {
+		if _, ok := ruleV1.Annotations[v2alpha1RulesAnnotationKey]; ok && ruleV1.isV2OriginalVersion() {
+			err := json.Unmarshal([]byte(ruleV1.Annotations[v2alpha1RulesAnnotationKey]), &ruleV2.Spec.Rules)
 			if err != nil {
 				return err
 			}
 			return nil
 		}
 	}
-	if len(r.Spec.Rules) > 0 {
-		apiRule.Spec.Rules = []v2alpha1.Rule{}
-		for _, ruleBeta1 := range r.Spec.Rules {
+	if len(ruleV1.Spec.Rules) > 0 {
+		ruleV2.Spec.Rules = []v2alpha1.Rule{}
+		for _, ruleBeta1 := range ruleV1.Spec.Rules {
 			ruleV2Alpha1 := v2alpha1.Rule{}
 			err = convertOverJson(ruleBeta1, &ruleV2Alpha1)
 			if err != nil {
@@ -165,7 +165,7 @@ func (r *APIRule) ConvertTo(hub conversion.Hub) error {
 					ruleV2Alpha1.Request.Cookies = cookiesRaw.Cookies
 				}
 			}
-			apiRule.Spec.Rules = append(apiRule.Spec.Rules, ruleV2Alpha1)
+			ruleV2.Spec.Rules = append(ruleV2.Spec.Rules, ruleV2Alpha1)
 		}
 
 	}
@@ -173,11 +173,11 @@ func (r *APIRule) ConvertTo(hub conversion.Hub) error {
 	return nil
 }
 
-func (r *APIRule) isV2OriginalVersion() bool {
-	if r.Annotations == nil {
+func (ruleV1 *APIRule) isV2OriginalVersion() bool {
+	if ruleV1.Annotations == nil {
 		return false
 	}
-	if originalVersion, ok := r.Annotations[originalVersionAnnotationKey]; ok {
+	if originalVersion, ok := ruleV1.Annotations[originalVersionAnnotationKey]; ok {
 		return slices.Contains([]string{"v2", "v2alpha1"}, originalVersion)
 	}
 	return false
@@ -221,15 +221,15 @@ func convertV2alpha1StatusToV1beta1Status(state v2alpha1.APIRuleStatus) APIRuleS
 }
 
 // ConvertFrom converts from the Hub version (v2alpha1) into this APIRule (v1beta1)
-func (r *APIRule) ConvertFrom(hub conversion.Hub) error {
-	apiRule := hub.(*v2alpha1.APIRule)
-	r.ObjectMeta = apiRule.ObjectMeta
+func (ruleV1 *APIRule) ConvertFrom(hub conversion.Hub) error {
+	ruleV2 := hub.(*v2alpha1.APIRule)
+	ruleV1.ObjectMeta = ruleV2.ObjectMeta
 
-	r.Status = convertV2alpha1StatusToV1beta1Status(apiRule.Status)
+	ruleV1.Status = convertV2alpha1StatusToV1beta1Status(ruleV2.Status)
 
 	// if the original version is v1beta1, we need to convert the spec from the annotation to not lose any data
-	if apiRule.Annotations[originalVersionAnnotationKey] == "v1beta1" {
-		err := json.Unmarshal([]byte(apiRule.Annotations[v1beta1SpecAnnotationKey]), &r.Spec)
+	if ruleV2.Annotations[originalVersionAnnotationKey] == "v1beta1" {
+		err := json.Unmarshal([]byte(ruleV2.Annotations[v1beta1SpecAnnotationKey]), &ruleV1.Spec)
 		if err != nil {
 			return err
 		}
@@ -254,8 +254,8 @@ func convertOverJson(src any, dst any) error {
 }
 
 // isFullConversionPossible checks if the APIRule can be fully converted to v2 by evaluating the access strategies and path.
-func isFullConversionPossible(apiRule *APIRule) (bool, error) {
-	for _, rule := range apiRule.Spec.Rules {
+func isFullConversionPossible(ruleV1 *APIRule) (bool, error) {
+	for _, rule := range ruleV1.Spec.Rules {
 		if !isConvertiblePath(rule.Path) {
 			return false, nil
 		}
