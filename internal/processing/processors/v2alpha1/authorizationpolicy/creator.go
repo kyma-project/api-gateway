@@ -344,7 +344,6 @@ func baseExtAuthRuleBuilder(rule gatewayv2alpha1.Rule, hosts, notPaths []string)
 // baseRuleBuilder returns ruleBuilder with To and From
 func baseRuleBuilder(rule gatewayv2alpha1.Rule, hosts []string, oryPassthrough bool, notPaths []string) *builders.RuleBuilder {
 	builder := builders.NewRuleBuilder()
-	builder = withTo(builder, hosts, rule, notPaths)
 	// If the migration is happening, do not add hosts to the rule, to allow internal traffic during migration step
 	if oryPassthrough {
 		builder = withTo(builder, nil, rule, notPaths)
