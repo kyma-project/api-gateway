@@ -10,7 +10,6 @@ type MutatingWebhook struct {
 
 func (in *MutatingWebhook) Default(_ context.Context, obj runtime.Object) error {
 	apiRule := obj.(*APIRule)
-	// TODO add logger
 
 	if apiRule.Annotations == nil {
 		apiRule.Annotations = map[string]string{}
