@@ -64,7 +64,7 @@ func (s *scenario) thereIsApiRuleVirtualServiceWithHttpbinServiceDestination() e
 
 func (s *scenario) resourceOwnedByApiRuleDoesNotExist(resourceKind string) error {
 	res := resource.GetResourceGvr(resourceKind)
-	ownerLabelSelector := fmt.Sprintf("apirule.gateway.kyma-project.io/v2alpha1=%s-%s.%s", s.name, s.TestID, s.Namespace)
+	ownerLabelSelector := fmt.Sprintf("apirule.gateway.kyma-project.io/v1beta1=%s-%s.%s", s.name, s.TestID, s.Namespace)
 	return retry.Do(func() error {
 		list, err := s.k8sClient.Resource(res).Namespace(s.Namespace).List(context.Background(), metav1.ListOptions{LabelSelector: ownerLabelSelector})
 		if err != nil {
