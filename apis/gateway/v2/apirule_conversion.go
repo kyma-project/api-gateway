@@ -9,20 +9,20 @@ import (
 )
 
 // ConvertTo Converts this ApiRule (v2) to the Hub version (v2alpha1)
-func (apiRule *APIRule) ConvertTo(hub conversion.Hub) error {
-	apiRuleV2alpha1 := hub.(*v2alpha1.APIRule)
-	apiRuleV2alpha1.ObjectMeta = apiRule.ObjectMeta
-	err := convertOverJson(apiRule.Status, &apiRuleV2alpha1.Status)
+func (ruleV2 *APIRule) ConvertTo(hub conversion.Hub) error {
+	ruleV2alpha1 := hub.(*v2alpha1.APIRule)
+	ruleV2alpha1.ObjectMeta = ruleV2.ObjectMeta
+	err := convertOverJson(ruleV2.Status, &ruleV2alpha1.Status)
 	if err != nil {
 		return err
 	}
-	if apiRuleV2alpha1.Annotations == nil {
-		apiRuleV2alpha1.Annotations = make(map[string]string)
+	if ruleV2alpha1.Annotations == nil {
+		ruleV2alpha1.Annotations = make(map[string]string)
 	}
 
-	apiRuleV2alpha1.Annotations["gateway.kyma-project.io/original-version"] = "v2"
+	ruleV2alpha1.Annotations["gateway.kyma-project.io/original-version"] = "v2"
 
-	err = convertOverJson(apiRule.Spec, &apiRuleV2alpha1.Spec)
+	err = convertOverJson(ruleV2.Spec, &ruleV2alpha1.Spec)
 	if err != nil {
 		return err
 	}
@@ -31,16 +31,16 @@ func (apiRule *APIRule) ConvertTo(hub conversion.Hub) error {
 }
 
 // ConvertFrom converts from the Hub version (v2alpha1) into this ApiRule (v2)
-func (apiRule *APIRule) ConvertFrom(hub conversion.Hub) error {
-	apiRuleV2alpha1 := hub.(*v2alpha1.APIRule)
-	apiRule.ObjectMeta = apiRuleV2alpha1.ObjectMeta
+func (ruleV2 *APIRule) ConvertFrom(hub conversion.Hub) error {
+	ruleV2alpha1 := hub.(*v2alpha1.APIRule)
+	ruleV2.ObjectMeta = ruleV2alpha1.ObjectMeta
 
-	err := convertOverJson(apiRuleV2alpha1.Status, &apiRule.Status)
+	err := convertOverJson(ruleV2alpha1.Status, &ruleV2.Status)
 	if err != nil {
 		return err
 	}
 
-	err = convertOverJson(apiRuleV2alpha1.Spec, &apiRule.Spec)
+	err = convertOverJson(ruleV2alpha1.Spec, &ruleV2.Spec)
 	if err != nil {
 		return err
 	}
