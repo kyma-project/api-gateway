@@ -2,7 +2,7 @@
 
 ## Symptoms
 
-When you run the following command, you see no hosts listed for the APIRule on list:
+When you run the following command, you see no hosts listed for an APIRule:
 ```bash
 kubectl get apirules.gateway.kyma-project.io -n {NAMESPACE}
 NAME                       STATUS   HOSTS
@@ -12,10 +12,10 @@ httpbin-v2                 Ready    ["httpbin-v2.local.kyma.dev"]
 ```
 
 ## Causes
-From time of release of Api Gateway v3.0.0, the `hosts` field is not displayed in the list of APIRules for default version v2, when resources are APIRules v1beta1 on the list and are not convertible or updated to v2 version.
+After the release of API Gateway 3.0.0, running the command `kubectl get apirules.gateway.kyma-project.io -n {NAMESPACE}` without specifying a version returns a list of APIRules for the default version `v2`. However, for resources that were originally created in version `v1beta1` and are not convertible or updated to version `v2`, the **hosts** field is not displayed in the APIRules list.
 
 ## Solution
-To get the list of host, run the following command:
+To get the list of hosts, run the following command:
 ```bash
 kubectl get apirules.v1beta1.gateway.kyma-project.io -n {NAMESPACE}
 NAME                       STATUS   HOST
@@ -23,4 +23,4 @@ httpbin-v1-beta-1          OK       httpbin
 httpbin-v2-shorthost       OK       httpbin-shorthost
 httpbin-v2                 OK       httpbin-v2.local.kyma.dev
 ```
-This command lists the APIRules in the v1beta1 version. Calling `kubectl get apirules.v1beta1.gateway.kyma-project.io -n {NAMESPACE}` with specified version of resource, returns the list of APIRules converted to that version which display original host from `v1beta1` version of APIRule.
+When you run `kubectl get apirules.v1beta1.gateway.kyma-project.io -n {NAMESPACE}` with the specified version of the resource, the command returns the list of APIRules in version `v1beta1`. The original host used in APIRule `v1beta1` is displayed in the list.
