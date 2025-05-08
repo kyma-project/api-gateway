@@ -52,6 +52,8 @@ var _ = Describe("Processing ExtAuth rules", func() {
 				Expect(ap.Spec.Rules[0].To).To(HaveLen(1))
 				Expect(ap.Spec.Rules[0].To[0].Operation.Paths).To(HaveLen(1))
 				Expect(ap.Spec.Rules[0].To[0].Operation.Paths[0]).To(Equal(headersPath))
+				Expect(ap.Spec.Rules[0].To[0].Operation.Hosts).To(HaveLen(1))
+				Expect(ap.Spec.Rules[0].To[0].Operation.Hosts[0]).To(Equal("example-host.example.com"))
 
 				Expect(ap.Spec.GetProvider().Name).To(Equal(extAuthAuthorizer))
 			case v1beta1.AuthorizationPolicy_ALLOW:
@@ -59,6 +61,8 @@ var _ = Describe("Processing ExtAuth rules", func() {
 				Expect(ap.Spec.Rules[0].To).To(HaveLen(1))
 				Expect(ap.Spec.Rules[0].To[0].Operation.Paths).To(HaveLen(1))
 				Expect(ap.Spec.Rules[0].To[0].Operation.Paths[0]).To(Equal(headersPath))
+				Expect(ap.Spec.Rules[0].To[0].Operation.Hosts).To(HaveLen(1))
+				Expect(ap.Spec.Rules[0].To[0].Operation.Hosts[0]).To(Equal("example-host.example.com"))
 			default:
 				Fail("Expected Custom or Allow AuthorizationPolicy")
 			}
