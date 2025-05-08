@@ -1,4 +1,4 @@
-# Missing hosts in APIRules list
+# Missing Hosts in APIRules List
 
 ## Symptoms
 
