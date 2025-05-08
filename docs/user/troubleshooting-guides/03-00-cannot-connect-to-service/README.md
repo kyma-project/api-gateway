@@ -9,7 +9,7 @@ If you have issues creating an APIRule custom resource (CR) or you've exposed a 
 > [!WARNING]
 > APIRule CR in versions `v1beta1` and `v2alpha1` have been deprecated and will be removed in upcoming releases.
 >
-> After careful consideration, we decided that the deletion of `v1beta1` planned for end of May will be postponed. A new target date will be announced in the future.
+> After careful consideration, we have decided that the deletion of `v1beta1` planned for end of May will be postponed. A new target date will be announced in the future.
 > 
 > **Required action**: Migrate all your APIRule custom resources (CRs) to version `v2`.
 > 
