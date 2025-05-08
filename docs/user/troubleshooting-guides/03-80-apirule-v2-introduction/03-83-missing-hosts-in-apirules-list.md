@@ -5,6 +5,8 @@
 When you run the following command, you see no hosts listed for an APIRule:
 ```bash
 kubectl get apirules.gateway.kyma-project.io -n {NAMESPACE}
+```
+```bash
 NAME                       STATUS   HOSTS
 httpbin-v1-beta-1          Ready    
 httpbin-v2-shorthost       Ready    ["httpbin-shorthost"]
