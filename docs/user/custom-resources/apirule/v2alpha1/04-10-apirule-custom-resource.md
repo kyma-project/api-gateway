@@ -1,7 +1,7 @@
 # APIRule v2alpha1 Custom Resource <!-- {docsify-ignore-all} -->
 
 > [!WARNING]
-> APIRule CR in versions `v1beta1` and `v2alpha1` have been deprecated and will be removed in upcoming releases.
+> APIRule CRs in versions `v1beta1` and `v2alpha1` have been deprecated and will be removed in upcoming releases.
 >
 > After careful consideration, we have decided that the deletion of `v1beta1` planned for end of May will be postponed. A new target date will be announced in the future.
 > 

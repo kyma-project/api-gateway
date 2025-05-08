@@ -114,7 +114,7 @@ The procedure of setting up a working mTLS Gateway is described in the following
 To expose a custom workload, create an APIRule. You can either use version `v2`, `v2alpha1`, or `v1beta1`.
 
 > [!WARNING]
-> APIRule CR in versions `v1beta1` and `v2alpha1` have been deprecated and will be removed in upcoming releases.
+> APIRule CRs in versions `v1beta1` and `v2alpha1` have been deprecated and will be removed in upcoming releases.
 >
 > After careful consideration, we have decided that the deletion of `v1beta1` planned for end of May will be postponed. A new target date will be announced in the future.
 > 

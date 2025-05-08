@@ -14,7 +14,7 @@ See the changes introduced in the new versions:
 - [Removed Support for Opaque Tokens](#removed-support-for-opaque-tokens)
 
 > [!WARNING]
-> APIRule CR in versions `v1beta1` and `v2alpha1` have been deprecated and will be removed in upcoming releases.
+> APIRule CRs in versions `v1beta1` and `v2alpha1` have been deprecated and will be removed in upcoming releases.
 >
 > After careful consideration, we have decided that the deletion of `v1beta1` planned for end of May will be postponed. A new target date will be announced in the future.
 > 
