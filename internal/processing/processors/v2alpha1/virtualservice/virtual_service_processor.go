@@ -2,7 +2,6 @@ package virtualservice
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -99,28 +98,13 @@ func (r virtualServiceCreator) Create(api *gatewayv2alpha1.APIRule) (*networking
 	virtualServiceNamePrefix := fmt.Sprintf("%s-", api.ObjectMeta.Name)
 
 	vsSpecBuilder := builders.VirtualServiceSpec()
-	gatewayDomain := ""
+	hosts, gatewayDomain, err := getHostsAndDomainFromAPIRule(api, r)
+	if err != nil {
+		return nil, fmt.Errorf("getting hosts from api rule: %w", err)
+	}
 
-	for _, host := range api.Spec.Hosts {
-		if helpers.IsShortHostName(string(*host)) {
-			if gatewayDomain == "" {
-				if r.gateway == nil {
-					return nil, errors.New("gateway must be provided when using short host name")
-				}
-				for _, server := range r.gateway.Spec.Servers {
-					if len(server.Hosts) > 0 {
-						gatewayDomain = strings.TrimPrefix(server.Hosts[0], "*.")
-						break
-					}
-				}
-			}
-			if gatewayDomain == "" {
-				return nil, errors.New("gateway with host definition must be provided when using short host name")
-			}
-			vsSpecBuilder.AddHost(default_domain.GetHostWithDomain(string(*host), gatewayDomain))
-		} else {
-			vsSpecBuilder.AddHost(string(*host))
-		}
+	for _, host := range hosts {
+		vsSpecBuilder.AddHost(host)
 	}
 
 	vsSpecBuilder.Gateway(*api.Spec.Gateway)
@@ -213,4 +197,50 @@ func GetVirtualServiceHttpTimeout(apiRuleSpec gatewayv2alpha1.APIRuleSpec, rule 
 		return uint32(*apiRuleSpec.Timeout)
 	}
 	return defaultHttpTimeout
+}
+
+// getHostsAndDomainFromAPIRule extracts all FQDNs for which the APIRule should match.
+// If the APIRule contains short host names, it will use the domain of the specified gateway to generate FQDNs for them.
+// This is done by concatenating the short host name with the wildcard domain of the gateway.
+// For example, if the short host name is "foo" and the gateway defines itself to ".*.example.com"
+// the resulting FQDN will be "foo.example.com".
+// For FQDN host names, it will just return the host name as is.
+//
+// Returns:
+//   - a slice of FQDN host names.
+//   - the domain used by the gateway.
+//   - an error if the gateway is not provided and short host names are used.
+func getHostsAndDomainFromAPIRule(api *gatewayv2alpha1.APIRule, r virtualServiceCreator) ([]string, string, error) {
+	var hosts []string
+	var gatewayDomain string
+
+	if r.gateway != nil {
+		for _, server := range r.gateway.Spec.Servers {
+			if len(server.Hosts) > 0 {
+				gatewayDomain = strings.TrimPrefix(server.Hosts[0], "*.")
+
+				// This break statement here ensures that the host used for the gateway is the first one.
+				// Possibly it might be better to return an error if there are multiple different hosts in the same gateway.
+				break
+			}
+		}
+	}
+
+	for _, h := range api.Spec.Hosts {
+		host := string(*h)
+		if !helpers.IsShortHostName(host) {
+			hosts = append(hosts, host)
+		} else {
+			if r.gateway == nil {
+				return nil, "", fmt.Errorf("gateway must be provided when using short host name")
+			}
+
+			if gatewayDomain == "" {
+				return nil, "", fmt.Errorf("gateway with host definition must be provided when using short host name")
+			}
+			hosts = append(hosts, default_domain.GetHostWithDomain(host, gatewayDomain))
+		}
+	}
+
+	return hosts, gatewayDomain, nil
 }
