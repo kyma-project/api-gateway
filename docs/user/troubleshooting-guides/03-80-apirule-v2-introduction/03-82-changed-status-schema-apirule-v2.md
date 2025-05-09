@@ -16,7 +16,7 @@ kubectl get apirules.gateway.kyma-project.io -n $NAMESPACE $APIRULE_NAME -oyaml
 
 ## Cause
 The schema of the **status.state** field in the `v2` APIRule CR introduces a unified approach, similar to the one used in the API Gateway CR.
-The possible states of **status.state** field are  `Ready`, `Warning`, `Error`, `Processing`, or `Deleting`.
+The possible states of the **status.state** field are  `Ready`, `Warning`, `Error`, `Processing`, or `Deleting`.
 
 ## Solution
 
