@@ -1,6 +1,6 @@
 # APIRule `v2` Contains an Empty Spec
 
-## Symptoms
+## Symptom
 There is an empty **spec** in an APIRule custom resource (CR), for example:
 
   ```bash
