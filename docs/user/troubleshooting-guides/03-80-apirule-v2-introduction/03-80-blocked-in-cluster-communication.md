@@ -12,7 +12,7 @@ This approach aligns with Kyma's "secure by default" principle.
 
 If an APIRule is applied, internal traffic is blocked by default. To allow it, you must create an ALLOW-type AuthorizationPolicy.
 
-See the following example of an AuthorizationPolicy that allows internal traffic to the given workload. Note that it excludes traffic coming from istio-ingressgateway not to interfere with policies applied by APIRule to external traffic.
+See the following example of an AuthorizationPolicy that allows internal traffic to the given workload. Note that it excludes traffic coming from `istio-ingressgateway` not to interfere with policies applied by APIRule to external traffic.
 
 To use this code sample, replace `${NAMESPACE}`, `${KEY}`, and `${TARGET_WORKLOAD}` with the values appropriate for your environment.
 
