@@ -150,7 +150,7 @@ var _ = Describe("SegmentTrie", func() {
 			"/a/{**}/abc",
 			"/a/b/{**}/abc/abcd",
 		}, 0),
-		Entry("No conflict: exact with single and double asterisk with with / at end", []string{
+		Entry("No conflict: exact with single and double asterisk and with / at end of path", []string{
 			"/anything/one",
 			"/anything/one/two",
 			"/anything/{*}/one",
