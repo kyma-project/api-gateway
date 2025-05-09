@@ -1,6 +1,6 @@
 # APIRule `v2` Contains a Changed Status Schema
 
-## Symptoms
+## Symptom
 There is a changed schema of **status** in an APIRule custom resource (CR), for example:
 
 

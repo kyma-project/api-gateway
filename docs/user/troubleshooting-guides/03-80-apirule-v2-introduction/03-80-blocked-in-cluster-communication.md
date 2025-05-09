@@ -1,6 +1,6 @@
 # Blocked In-Cluster Communication
 
-## Symptoms
+## Symptom
 After switching from APIRule `v1beta1` to version `v2`, in-cluster communication is blocked.
 
 ## Cause
