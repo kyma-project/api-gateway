@@ -20,7 +20,7 @@ kubectl get apirules.v2alpha1.gateway.kyma-project.io -n $NAMESPACE $APIRULE_NAM
 
 ## Cause
 
-The APIRule was originally created using version `v1beta1`, and you haven't yet migrated it neither to version `v2alpha1` nor `v2`. When you try to display it specifying version `v2alpha1` in the command, a conversion from `v1beta1` to `v2alpha1` is performed. This conversion only affects the displayed resource's textual format and does not modify the resource in the cluster. 
+The APIRule was originally created using version `v1beta1`, and you haven't migrated it to version `v2alpha1` or `v2`. When you try to display it specifying version `v2alpha1` in the command, a conversion from `v1beta1` to `v2alpha1` is performed. This conversion only affects the displayed resource's textual format and does not modify the resource in the cluster. 
 
 If the full conversion is possible, the **spec** is presented in the output. 
 However, if the conversion cannot be fully completed, the **spec** appears empty, and the original **spec** is stored in the resource's annotations.
