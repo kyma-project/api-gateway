@@ -1,6 +1,6 @@
 # Missing Hosts in APIRules List
 
-## Symptoms
+## Symptom
 
 When you run the following command, you see no hosts listed for an APIRule:
 ```bash
@@ -20,6 +20,8 @@ After the release of API Gateway 3.0.0, running the command `kubectl get apirule
 To get the list of hosts, run the following command:
 ```bash
 kubectl get apirules.v1beta1.gateway.kyma-project.io -n {NAMESPACE}
+```
+```bash
 NAME                       STATUS   HOST
 httpbin-v1-beta-1          OK       httpbin
 httpbin-v2-shorthost       OK       httpbin-shorthost

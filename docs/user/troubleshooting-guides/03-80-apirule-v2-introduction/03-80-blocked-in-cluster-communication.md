@@ -1,6 +1,6 @@
 # Blocked In-Cluster Communication
 
-## Symptoms
+## Symptom
 After switching from APIRule `v1beta1` to version `v2`, in-cluster communication is blocked.
 
 ## Cause
@@ -9,13 +9,13 @@ By default, the access to the workload from internal traffic is blocked if APIRu
 This approach aligns with Kyma's "secure by default" principle.
 
 ## Solution
-To allow internal traffic, you must create an **AuthorizationPolicy**.
-If APIRule is applied, internal traffic is blocked by default. To allow it, you need to create an ALLOW-type AuthorizationPolicy.
 
-See the following example of an **AuthorizationPolicy** that allows internal traffic to the given workload. 
-Note that it excludes traffic coming from `istio-ingressgateway` not to interfere with policies applied by APIRule to external traffic.
-  
-> [!NOTE] Replace `${NAMESPACE}`, `${KEY}`, and `${TARGET_WORKLOAD}` with the appropriate values for your environment.
+If an APIRule is applied, internal traffic is blocked by default. To allow it, you must create an ALLOW-type AuthorizationPolicy.
+
+See the following example of an AuthorizationPolicy that allows internal traffic to the given workload. Note that it excludes traffic coming from `istio-ingressgateway` not to interfere with policies applied by APIRule to external traffic.
+
+To use this code sample, replace `${NAMESPACE}`, `${KEY}`, and `${TARGET_WORKLOAD}` with the values appropriate for your environment.
+
 ```yaml
 apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
