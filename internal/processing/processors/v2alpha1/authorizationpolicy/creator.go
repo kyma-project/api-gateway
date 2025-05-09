@@ -357,15 +357,17 @@ func baseRuleBuilder(rule gatewayv2alpha1.Rule, hosts []string, oryPassthrough b
 
 func generateNotPaths(rules []gatewayv2alpha1.Rule, currentRule gatewayv2alpha1.Rule) []string {
 	var notPaths []string
+	beforeCurrentRule := true
 
 	for _, rule := range rules {
 		if standardizeRulePath(rule.Path) == "/{**}" || rule.Path == "/" {
 			continue
 		}
 		if rule.Path == currentRule.Path {
+			beforeCurrentRule = false
 			continue
 		}
-		if methodsContainsAny(rule.Methods, currentRule.Methods) {
+		if methodsContainsAny(rule.Methods, currentRule.Methods) && beforeCurrentRule {
 			notPaths = append(notPaths, rule.Path)
 		}
 	}
