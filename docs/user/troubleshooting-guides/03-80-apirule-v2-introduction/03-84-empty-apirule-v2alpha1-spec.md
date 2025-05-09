@@ -25,6 +25,8 @@ The APIRule was originally created using version `v1beta1`, and you haven't migr
 If the full conversion is possible, the **spec** is presented in the output. 
 However, if the conversion cannot be fully completed, the **spec** appears empty, and the original **spec** is stored in the resource's annotations.
 
+If your APIRule was originally created using version `v1beta1`, and you try to display it specifying version `v2alpha1` in the command, you also get an APIRule in verison v2alpha1 containin an empty spec.
+
 ## Solution
 
 Specify explicitly `v1beta1` version when requesting the APIRule resource:
