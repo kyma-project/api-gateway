@@ -142,10 +142,10 @@ var _ = Describe("SegmentTrie", func() {
 			"/abc/{**}",
 			"/bca/{**}/abc",
 		}, 0),
-		Entry("No conflict: double asterisk with a different containing the first one", []string{
+		Entry("Conflict: double asterisk with a different containing the first one", []string{
 			"/abc/{**}/def",
 			"/abc/def/{**}/def",
-		}, 0),
+		}, 1),
 		Entry("No conflict: single double asterisk with single path", []string{
 			"/a/{**}/abc",
 			"/a/b/{**}/abc/abcd",

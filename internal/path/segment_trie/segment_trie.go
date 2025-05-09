@@ -99,13 +99,15 @@ func findExistingPath(node *Node, tokens []token.Token, cur int) bool {
 	}
 
 	if next, ok := node.Children["{**}"]; ok {
-		suffix := token.List(tokens[cur+1:]).String()
-		for _, s := range next.Suffixes {
-			if s == suffix {
-				return true
-			}
-			if s == "" && suffix != "" {
-				return true
+		for i := cur; i <= len(tokens); i++ {
+			suffix := token.List(tokens[i:]).String()
+			for _, s := range next.Suffixes {
+				if s == suffix {
+					return true
+				}
+				if s == "" {
+					return true
+				}
 			}
 		}
 	}
