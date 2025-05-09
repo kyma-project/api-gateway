@@ -1,11 +1,13 @@
 package client
 
 import (
+	v2 "github.com/kyma-project/api-gateway/apis/gateway/v2"
 	"os"
 
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
+	"github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	oryv1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	"k8s.io/client-go/discovery"
@@ -87,6 +89,14 @@ func GetK8sClient() client.Client {
 		panic(err)
 	}
 	err = v1beta1.AddToScheme(c.Scheme())
+	if err != nil {
+		panic(err)
+	}
+	err = v2alpha1.AddToScheme(c.Scheme())
+	if err != nil {
+		panic(err)
+	}
+	err = v2.AddToScheme(c.Scheme())
 	if err != nil {
 		panic(err)
 	}

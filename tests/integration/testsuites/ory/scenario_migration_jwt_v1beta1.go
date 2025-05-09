@@ -18,7 +18,7 @@ func initMigrationJwtV1beta1(ctx *godog.ScenarioContext, ts *testsuite) {
 
 	ctx.Step(`^migrationJwtV1beta1: There is a httpbin service with Istio injection enabled$`, scenario.thereIsAHttpbinServiceWithIstioInjection)
 	ctx.Step(`^migrationJwtV1beta1: The APIRule is applied$`, scenario.theAPIRuleIsApplied)
-	ctx.Step(`^migrationJwtV1beta1: The APIRule is updated using manifest "([^"]*)"$`, scenario.theAPIRuleIsUpdated)
+	ctx.Step(`^migrationJwtV1beta1: The APIRule is updated using manifest "([^"]*)"$`, scenario.theAPIRuleIsUpdatedToV2alpha1)
 	ctx.Step(`^migrationJwtV1beta1: APIRule has status "([^"]*)"$`, scenario.theAPIRuleHasStatus)
 	ctx.Step(`^migrationJwtV1beta1: VirtualService owned by APIRule has httpbin service as destination$`, scenario.thereIsApiRuleVirtualServiceWithHttpbinServiceDestination)
 	ctx.Step(`^migrationJwtV1beta1: Resource of Kind "([^"]*)" owned by APIRule does not exist$`, scenario.resourceOwnedByApiRuleDoesNotExist)

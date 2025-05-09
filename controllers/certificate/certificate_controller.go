@@ -16,6 +16,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
 	"github.com/pkg/errors"
+	admissionregistrationv1 "k8s.io/api/admissionregistration/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/util/cert"
@@ -35,7 +36,8 @@ const (
 	secretName      = "api-gateway-webhook-certificate"
 	serviceName     = "api-gateway-webhook-service"
 
-	apiRuleCRDName = "apirules.gateway.kyma-project.io"
+	apiRuleCRDName                          = "apirules.gateway.kyma-project.io"
+	apiRuleMutatingWebhookConfigurationName = "api-gateway-mutating-webhook-configuration"
 )
 
 func NewCertificateReconciler(mgr manager.Manager) *Reconciler {
@@ -48,6 +50,7 @@ func NewCertificateReconciler(mgr manager.Manager) *Reconciler {
 
 // +kubebuilder:rbac:groups="",resources=secrets,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups="apiextensions.k8s.io",resources=customresourcedefinitions,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups="admissionregistration.k8s.io",resources=mutatingwebhookconfigurations,verbs=get;list;watch;update;patch
 
 func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	r.Log.Info("Received reconciliation request", "namespace", req.Namespace, "name", req.Name)
@@ -85,7 +88,7 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, c controllers.RateLimite
 }
 
 func verifyCertificateSecret(ctx context.Context, client ctrlclient.Client, secret *corev1.Secret, log logr.Logger) error {
-	log.Info("Verifying certficate secret", "namespace", secretNamespace, "name", secretName)
+	log.Info("Verifying certificate secret", "namespace", secretNamespace, "name", secretName)
 
 	err := verifySecret(secret)
 	if err == nil {
@@ -126,7 +129,9 @@ func generateNewCertificateSecret(ctx context.Context, client ctrlclient.Client,
 	if err := updateCertificateInCRD(ctx, client, certificate); err != nil {
 		return errors.Wrap(err, "failed to update certificate into CRD")
 	}
-
+	if err := updateCertificateInMutatingWebhookConfigurationCR(ctx, client, certificate); err != nil {
+		return errors.Wrap(err, "failed to update certificate into MutatingWebhookConfiguration CR")
+	}
 	return nil
 }
 
@@ -182,4 +187,39 @@ func parseCertificateSecret(secret *corev1.Secret, log logr.Logger) error {
 
 	log.Info("Certificate validity", "validFrom", certs[0].NotBefore, "validUntil", certs[0].NotAfter)
 	return nil
+}
+
+func updateCertificateInMutatingWebhookConfigurationCR(ctx context.Context, client ctrlclient.Client, certificate []byte) error {
+	cr := &admissionregistrationv1.MutatingWebhookConfiguration{}
+	err := client.Get(ctx, types.NamespacedName{Name: apiRuleMutatingWebhookConfigurationName}, cr)
+	if err != nil {
+		return errors.Wrap(err, "failed to get MutatingWebhookConfiguration CR")
+	}
+
+	if contains, reason := containsMutatingWebhookClientConfig(cr); !contains {
+		return errors.Errorf("can not add certificate into CRD: %s", reason)
+	}
+
+	mergeFrom := ctrlclient.StrategicMergeFrom(cr.DeepCopy())
+	for key := range cr.Webhooks {
+		cr.Webhooks[key].ClientConfig.CABundle = certificate
+	}
+	if err := client.Patch(ctx, cr, mergeFrom); err != nil {
+		return errors.Wrap(err, "failed to update MutatingWebhookConfiguration CR with new certificate")
+	}
+
+	return nil
+}
+
+func containsMutatingWebhookClientConfig(cr *admissionregistrationv1.MutatingWebhookConfiguration) (bool, string) {
+	if len(cr.Webhooks) < 1 {
+		return false, "webhooks not found in MutatingWebhookClientConfig CR"
+	}
+
+	for _, webhook := range cr.Webhooks {
+		if webhook.ClientConfig.Service == nil {
+			return false, "client config for mutating webhook not found in MutatingWebhookClientConfig CR"
+		}
+	}
+	return true, ""
 }
