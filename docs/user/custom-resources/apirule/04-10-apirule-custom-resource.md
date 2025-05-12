@@ -1,10 +1,11 @@
 # APIRule v2 Custom Resource <!-- {docsify-ignore-all} -->
 
 > [!WARNING]
-> APIRule CR in version `v1beta1` has been deprecated and will be removed in upcoming releases. Version `v2alpha1`, introduced for testing purposes, will become deprecated after the stable APIRule `v2` is promoted to the regular channel.
-> - After careful consideration, we have decided to postpone the release of API Gateway 3.0.0 (which contains the APIRules `v2` upgrade) to **May 5th**.
-> - Additionally, the planned deletion of `v1beta1` for end of May will also be postponed. A new target date will be announced in the future.
-> - **Required action**: Migrate all your APIRule custom resources (CRs) to version `v2`.
+> APIRule CRs in versions `v1beta1` and `v2alpha1` have been deprecated and will be removed in upcoming releases.
+>
+> After careful consideration, we have decided that the deletion of `v1beta1` planned for end of May will be postponed. A new target date will be announced in the future.
+> 
+> **Required action**: Migrate all your APIRule custom resources (CRs) to version `v2`.
 > 
 > To migrate your APIRule CRs from version `v2alpha1` to version `v2`, you must update the version in APIRule CRs’ metadata.
 > 

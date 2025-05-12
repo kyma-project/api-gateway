@@ -2,7 +2,6 @@ package authorizationpolicy
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"golang.org/x/exp/slices"
 	"strings"
@@ -206,11 +205,16 @@ func (r creator) generateExtAuthAuthorizationPolicySpec(ctx context.Context, cli
 		return nil, err
 	}
 
+	hosts, err := getHostsFromAPIRule(api, r)
+	if err != nil {
+		return nil, err
+	}
+
 	authorizationPolicySpecBuilder := builders.NewAuthorizationPolicySpecBuilder().WithSelector(podSelector.Selector)
 	return authorizationPolicySpecBuilder.
 		WithAction(v1beta1.AuthorizationPolicy_CUSTOM).
 		WithProvider(providerName).
-		WithRule(baseExtAuthRuleBuilder(rule, nil, notPaths).Get()).
+		WithRule(baseExtAuthRuleBuilder(rule, hosts, notPaths).Get()).
 		Get(), nil
 }
 
@@ -222,30 +226,12 @@ func (r creator) generateAuthorizationPolicySpec(ctx context.Context, client cli
 
 	authorizationPolicySpecBuilder := builders.NewAuthorizationPolicySpecBuilder().
 		WithSelector(podSelector.Selector)
-	// When short host is used in the APIRule we pull it from the gateway, in the future we should refactor it so that only gateway host is passed from the processors.go
-	var hosts []string
-	gatewayDomain := ""
-	for _, h := range api.Spec.Hosts {
-		if helpers.IsShortHostName(string(*h)) {
-			if gatewayDomain == "" {
-				if r.gateway == nil {
-					return nil, errors.New("gateway must be provided when using short host name")
-				}
-				for _, server := range r.gateway.Spec.Servers {
-					if len(server.Hosts) > 0 {
-						gatewayDomain = strings.TrimPrefix(server.Hosts[0], "*.")
-						break
-					}
-				}
-			}
-			if gatewayDomain == "" {
-				return nil, errors.New("gateway with host definition must be provided when using short host name")
-			}
-			hosts = append(hosts, default_domain.GetHostWithDomain(string(*h), gatewayDomain))
-		} else {
-			hosts = append(hosts, string(*h))
-		}
+
+	hosts, err := getHostsFromAPIRule(api, r)
+	if err != nil {
+		return nil, err
 	}
+
 	// If RequiredScopes are configured, we need to generate a separate Rule for each scopeKey in defaultScopeKeys
 	if len(authorization.RequiredScopes) > 0 {
 		for _, scopeKey := range defaultScopeKeys {
@@ -274,6 +260,51 @@ func (r creator) generateAuthorizationPolicySpec(ctx context.Context, client cli
 	return authorizationPolicySpecBuilder.Get(), nil
 }
 
+// getHostsFromAPIRule extracts all FQDNs for which the APIRule should match.
+// If the APIRule contains short host names, it will use the domain of the specified gateway to generate FQDNs for them.
+// This is done by concatenating the short host name with the wildcard domain of the gateway.
+// For example, if the short host name is "foo" and the gateway defines itself to ".*.example.com"
+// the resulting FQDN will be "foo.example.com".
+// For FQDN host names, it will just return the host name as is.
+//
+// Returns:
+//   - a slice of FQDN host names.
+//   - an error if the gateway is not provided and short host names are used.
+func getHostsFromAPIRule(api *gatewayv2alpha1.APIRule, r creator) ([]string, error) {
+	var hosts []string
+	var gatewayDomain string
+
+	if r.gateway != nil {
+		for _, server := range r.gateway.Spec.Servers {
+			if len(server.Hosts) > 0 {
+				gatewayDomain = strings.TrimPrefix(server.Hosts[0], "*.")
+
+				// This break statement here ensures that the host used for the gateway is the first one.
+				// Possibly it might be better to return an error if there are multiple different hosts in the same gateway.
+				break
+			}
+		}
+	}
+
+	for _, h := range api.Spec.Hosts {
+		host := string(*h)
+		if !helpers.IsShortHostName(host) {
+			hosts = append(hosts, host)
+		} else {
+			if r.gateway == nil {
+				return nil, fmt.Errorf("gateway must be provided when using short host name")
+			}
+
+			if gatewayDomain == "" {
+				return nil, fmt.Errorf("gateway with host definition must be provided when using short host name")
+			}
+			hosts = append(hosts, default_domain.GetHostWithDomain(host, gatewayDomain))
+		}
+	}
+
+	return hosts, nil
+}
+
 // standardizeRulePath converts wildcard `/*` path to post Istio 1.22 Envoy template format `/{**}`.
 func standardizeRulePath(path string) string {
 	if path == "/*" {
@@ -283,6 +314,11 @@ func standardizeRulePath(path string) string {
 }
 
 func withTo(b *builders.RuleBuilder, hosts []string, rule gatewayv2alpha1.Rule, notPaths []string) *builders.RuleBuilder {
+	path := rule.Path
+	if path == "/*" {
+		path = "/{**}"
+	}
+
 	return b.WithTo(
 		builders.NewToBuilder().
 			WithOperation(builders.NewOperationBuilder().

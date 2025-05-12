@@ -1,10 +1,11 @@
 # APIRule v1beta1 Custom Resource <!-- {docsify-ignore-all} -->
 
 > [!WARNING]
-> APIRule CR in version `v1beta1` has been deprecated and will be removed in upcoming releases. Version `v2alpha1`, introduced for testing purposes, will become deprecated after the stable APIRule `v2` is promoted to the regular channel.
-> - After careful consideration, we have decided to postpone the release of API Gateway 3.0.0 (which contains the APIRules `v2` upgrade) to **May 5th**.
-> - Additionally, the planned deletion of `v1beta1` for end of May will also be postponed. A new target date will be announced in the future.
-> - **Required action**: Migrate all your APIRule custom resources (CRs) to version `v2`.
+> APIRule CRs in versions `v1beta1` and `v2alpha1` have been deprecated and will be removed in upcoming releases.
+>
+> After careful consideration, we have decided that the deletion of `v1beta1` planned for end of May will be postponed. A new target date will be announced in the future.
+> 
+> **Required action**: Migrate all your APIRule custom resources (CRs) to version `v2`.
 > 
 > To migrate your APIRule CRs from version `v2alpha1` to version `v2`, you must update the version in APIRule CRs’ metadata.
 > 
@@ -44,8 +45,8 @@ This table lists all parameters of APIRule CRD together with their descriptions:
 | **rules.service**               |  **NO**   | Services definitions at this level have higher precedence than the Service definition at the **spec.service** level.                                                                                                                                                                                                                         |
 | **rules.path**                  |  **YES**  | Specifies the path of the exposed Service.                                                                                                                                                                                                                                                                                                   |
 | **rules.methods**               |  **NO**   | Specifies the list of HTTP request methods available for **spec.rules.path**. The list of supported methods is defined in [RFC 9910: HTTP Semantics](https://www.rfc-editor.org/rfc/rfc9110.html) and [RFC 5789: PATCH Method for HTTP](https://www.rfc-editor.org/rfc/rfc5789.html).                                                        |
-| **rules.mutators**              |  **NO**   | Specifies the list of the [Oathkeeper](https://www.ory.sh/docs/next/oathkeeper/pipeline/mutator) or Istio mutators.                                                                                                                                                                                                                          |
-| **rules.accessStrategies**      |  **YES**  | Specifies the list of access strategies. Supported are the [Oathkeeper's](https://www.ory.sh/docs/next/oathkeeper/pipeline/authn) `oauth2_introspection`, `jwt`, `noop`, `allow`, and `no_auth`. We also support `jwt` as [Istio](https://istio.io/latest/docs/tasks/security/authorization/authz-jwt/) access strategy.                     |
+| **rules.mutators**              |  **NO**   | Specifies the list of the [Oathkeeper](https://www.ory.sh/docs/oathkeeper/pipeline/mutator) or Istio mutators.                                                                                                                                                                                                                          |
+| **rules.accessStrategies**      |  **YES**  | Specifies the list of access strategies. Supported are the [Oathkeeper's](https://www.ory.sh/docs/oathkeeper/pipeline/authn/) `oauth2_introspection`, `jwt`, `noop`, `allow`, and `no_auth`. We also support `jwt` as [Istio](https://istio.io/latest/docs/tasks/security/authorization/authz-jwt/) access strategy.                     |
 | **rules.timeout**               |  **NO**   | Specifies the timeout, in seconds, for HTTP requests made to **spec.rules.path**. The maximum timeout is limited to 3900 seconds (65 minutes). Timeout definitions set at this level take precedence over any timeout defined at the **spec.timeout** level.                                                                                 |
 
 > [!WARNING]
