@@ -314,7 +314,6 @@ func standardizeRulePath(path string) string {
 }
 
 func withTo(b *builders.RuleBuilder, hosts []string, rule gatewayv2alpha1.Rule, notPaths []string) *builders.RuleBuilder {
-
 	return b.WithTo(
 		builders.NewToBuilder().
 			WithOperation(builders.NewOperationBuilder().
