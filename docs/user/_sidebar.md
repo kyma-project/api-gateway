@@ -64,7 +64,6 @@
   * [Ory Limitations](/api-gateway/user/technical-reference/05-50-ory-limitations.md)
   * [Api Gateway Request Flow](/api-gateway/user/technical-reference/05-10-api-gateway-request-flow.md)
 * [Troubleshooting Guides](/api-gateway/user/troubleshooting-guides/README.md)
-  * [APIRule Contains Empty **spec**](/api-gateway/user/troubleshooting-guides/03-81-empty-apirule-spec.md)
   * [Certificate Issuer Not Created](/api-gateway/user/troubleshooting-guides/03-20-cert-mgt-issuer-not-created.md)
   * [Kyma Gateway Not Reachable](/api-gateway/user/troubleshooting-guides/03-30-gateway-not-reachable.md)
   * [Issues with Gardener Certificates](/api-gateway/user/troubleshooting-guides/03-50-certificates-gardener.md)
