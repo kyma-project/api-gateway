@@ -7,12 +7,10 @@
 //   - operator `{**}` is used any number of segments in a path, and may include a prefix and/or suffix.
 //     It must be the last operator in the stored path (this is not validated but is assumed to be true).
 //
-// It does two things that are not done by a regular trie:
-//   - Nodes that are pointed to by `{**}` don't store their children,
-//     instead they store the path suffix that exists after `{**}`.
-//     Conflicts are checked by comparing the suffixes of paths with the same segments that precede `{**}`.
-//     This can be done, since the `{**}` operator must be the last in the path.
-//   - `{*}` nodes are stored just like any other exact segment node, but are always included in conflict search.
+// During insertion, the trie is first traversed to detect collisions: literal and `{*}` nodes are
+// matched segment by segment, and any `{**}` node checks its stored suffixes against the remaining
+// path, to catch overlapping multi-segment matches. If any path already in the trie can match the new
+// token sequence under these rules, insertion fails with a collision error.
 package segment_trie
 
 import (
