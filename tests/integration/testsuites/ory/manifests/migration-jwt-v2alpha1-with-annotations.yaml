@@ -5,6 +5,8 @@ metadata:
   namespace: "{{.Namespace}}"
   labels:
     test: v1beta1-migration
+  annotations:
+    gateway.kyma-project.io/original-version: v1beta1
 spec:
   service:
     name: httpbin-{{.TestID}}
@@ -15,4 +17,7 @@ spec:
   rules:
     - path: /headers
       methods: ["GET"]
-      noAuth: true
+      jwt:
+        authentications:
+          - issuer: "{{ .IssuerUrl }}"
+            jwksUri: "{{ .IssuerUrl }}/oauth2/certs"

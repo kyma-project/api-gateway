@@ -49,9 +49,8 @@ func (apiRule *APIRule) ConvertTo(hub conversion.Hub) error {
 		apiRuleBeta1.Annotations = make(map[string]string)
 	}
 
-	if _, ok := apiRuleBeta1.Annotations[originalVersionAnnotationKey]; !ok {
-		apiRuleBeta1.Annotations[originalVersionAnnotationKey] = "v2"
-	}
+	// overwrite original version annotation to indicate that it was converted from v2
+	apiRuleBeta1.Annotations[originalVersionAnnotationKey] = "v2"
 
 	err := convertOverJson(apiRule.Spec.Rules, &apiRuleBeta1.Spec.Rules)
 	if err != nil {
@@ -97,6 +96,17 @@ func (apiRule *APIRule) ConvertTo(hub conversion.Hub) error {
 		// Only one host is supported in v1beta1, so we use the first one from the list
 		strHost := string(*apiRule.Spec.Hosts[0])
 		apiRuleBeta1.Spec.Host = &strHost
+	}
+
+	// this is an additional protection to not lose data in case of race conditions
+	// it may happen when the storage version is being switched while the old controller is running
+	// if rules are empty, then let's restore spec from v1beta1 backup
+	if _, ok := apiRule.Annotations[v1beta1SpecAnnotationKey]; ok && len(apiRule.Spec.Rules) == 0 {
+		err = json.Unmarshal([]byte(apiRule.Annotations[v1beta1SpecAnnotationKey]), &apiRuleBeta1.Spec)
+		if err != nil {
+			return err
+		}
+		return nil
 	}
 
 	if len(apiRule.Spec.Rules) > 0 {
