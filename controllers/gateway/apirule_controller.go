@@ -339,7 +339,11 @@ func (r *APIRuleReconciler) getV2Alpha1Reconciliation(apiRulev1beta1 *gatewayv1b
 func (r *APIRuleReconciler) SetupWithManager(mgr ctrl.Manager, c controllers.RateLimiterConfig) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		// We need to filter for generation changes, because we had an issue that on Azure clusters the APIRules were constantly reconciled.
-		For(&gatewayv1beta1.APIRule{}, builder.WithPredicates(predicate.GenerationChangedPredicate{})).
+		For(&gatewayv1beta1.APIRule{}, builder.WithPredicates(
+			predicate.Or(
+				predicate.GenerationChangedPredicate{},
+				predicate.AnnotationChangedPredicate{},
+			))).
 		Watches(&corev1.ConfigMap{}, &handler.EnqueueRequestForObject{}, builder.WithPredicates(&isApiGatewayConfigMapPredicate{Log: r.Log})).
 		WithOptions(controller.Options{
 			RateLimiter: controllers.NewRateLimiter(c),
