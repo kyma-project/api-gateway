@@ -101,6 +101,7 @@ jobs:
 
   publish-release:
     name: Publish release
+    if: always()
     needs: [create-draft]
     runs-on: ubuntu-latest
     steps:
@@ -137,7 +138,7 @@ jobs:
   post-release-adjustments:
     runs-on: ubuntu-latest
     needs: [check-prerequisites, publish-release]
-    if: success()
+    if: always()
     steps:
       - name: Adjust latest tag if needed
         if: ${{ needs.check-prerequisites.outputs.is_patch == 'true' }}
