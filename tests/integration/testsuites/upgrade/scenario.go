@@ -266,8 +266,8 @@ func (s *scenario) apiRuleWasReconciledAgain() error {
 				return err
 			}
 
-			if apiRuleStructured.Status.LastProcessedTime.After(s.apiRuleLastProcessedTime) {
-				return fmt.Errorf("APIRule is still not reconciled again")
+			if !apiRuleStructured.Status.LastProcessedTime.After(s.apiRuleLastProcessedTime) {
+				return fmt.Errorf("APIRule %s is still not reconciled again", name)
 			}
 		}
 		return nil
