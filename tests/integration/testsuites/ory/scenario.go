@@ -16,7 +16,6 @@ import (
 	"k8s.io/client-go/dynamic"
 	"net/http"
 	"strings"
-	"time"
 )
 
 type scenario struct {
@@ -286,8 +285,4 @@ func (s *scenario) preflightEndpointCallNoResponseHeader(endpoint, origin string
 		}
 		return nil
 	}, testcontext.GetRetryOpts()...)
-}
-
-func (s *scenario) waitForSeconds(seconds int) {
-	time.Sleep(time.Duration(seconds) * time.Second)
 }

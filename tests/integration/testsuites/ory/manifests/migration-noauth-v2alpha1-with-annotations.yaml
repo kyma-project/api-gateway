@@ -5,6 +5,8 @@ metadata:
   namespace: "{{.Namespace}}"
   labels:
     test: v1beta1-migration
+  annotations:
+    gateway.kyma-project.io/original-version: v1beta1
 spec:
   service:
     name: httpbin-{{.TestID}}
