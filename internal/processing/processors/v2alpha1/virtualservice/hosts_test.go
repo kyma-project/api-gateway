@@ -2,6 +2,7 @@ package virtualservice_test
 
 import (
 	"errors"
+	"fmt"
 
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	processors "github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1/virtualservice"
@@ -83,7 +84,8 @@ var _ = Describe("Hosts", func() {
 		Entry("should return error when short host is used but no gateway available",
 			NewAPIRuleBuilder().WithGateway("gateway-ns/gateway-name").WithHost("example").Build(),
 			nil,
-			[]verifier{}, errors.New("gateway must be provided when using short host name")),
+			[]verifier{}, fmt.Errorf("getting hosts from api rule: %w",
+				errors.New("gateway must be provided when using short host name"))),
 
 		Entry("should return error when short host is used but gateway do not have servers defined",
 			NewAPIRuleBuilder().WithGateway("gateway-ns/gateway-name").WithHost("example").Build(),
@@ -93,7 +95,8 @@ var _ = Describe("Hosts", func() {
 					Servers: []*apinetworkingv1beta1.Server{},
 				},
 			},
-			[]verifier{}, errors.New("gateway with host definition must be provided when using short host name")),
+			[]verifier{}, fmt.Errorf("getting hosts from api rule: %w",
+				errors.New("gateway with host definition must be provided when using short host name"))),
 
 		Entry("should return error when short host is used but gateway do not have hosts defined",
 			NewAPIRuleBuilder().WithGateway("gateway-ns/gateway-name").WithHost("example").Build(),
@@ -107,6 +110,7 @@ var _ = Describe("Hosts", func() {
 					},
 				},
 			},
-			[]verifier{}, errors.New("gateway with host definition must be provided when using short host name")),
+			[]verifier{}, fmt.Errorf("getting hosts from api rule: %w",
+				errors.New("gateway with host definition must be provided when using short host name"))),
 	)
 })
