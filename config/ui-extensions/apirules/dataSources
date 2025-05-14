@@ -16,3 +16,17 @@ virtualServices:
     version: v1beta1
     namespace: null
   filter: '$item.metadata.labels."apirule.gateway.kyma-project.io/v1beta1" = $root.metadata.name & "." & $root.metadata.namespace'
+relatedRequestAuthentications:
+  resource:
+    kind: RequestAuthentication
+    group: security.istio.io
+    version: v1
+    namespace: null
+  filter: '$item.metadata.labels."apirule.gateway.kyma-project.io/v1beta1" = $root.metadata.name & "." & $root.metadata.namespace'
+relatedAuthorizationPolicies:
+  resource:
+    kind: AuthorizationPolicy
+    group: security.istio.io
+    version: v1
+    namespace: null
+  filter: '$item.metadata.labels."apirule.gateway.kyma-project.io/v1beta1" = $root.metadata.name & "." & $root.metadata.namespace'
