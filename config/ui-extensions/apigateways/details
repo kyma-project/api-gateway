@@ -15,14 +15,7 @@ status:
         - 'Deleting'
   body:
     - source: spec.enableKymaGateway
-      name: enableKymaGateway
-      visibility: '$exists($value)'
-      widget: Badge
-      highlights:
-        success:
-        - 'True'
-        error:
-        - 'False'
+      name: Enable Kyma Gateway
 body:
 - source: status.conditions
   widget: Table
