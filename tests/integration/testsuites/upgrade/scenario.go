@@ -189,7 +189,7 @@ func (s *scenario) upgradeApiGateway() error {
 
 	oldImage = apiGatewayDeployment.Spec.Template.Spec.Containers[0].Image
 
-	_, err = s.resourceManager.CreateOrUpdateResourcesGVR(s.k8sClient, manifestCrds...)
+	_, err = s.resourceManager.ApplyResourcesGVR(s.k8sClient, manifestCrds...)
 	if err != nil {
 		return err
 	}

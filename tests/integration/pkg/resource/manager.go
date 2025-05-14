@@ -111,6 +111,7 @@ func NewManager(retryOpts []retry.Option) *Manager {
 const errorCreatingResource = "error creating resource: %w"
 const errorGettingResource = "error getting resource: %w"
 const errorUpdatingResource = "error updating resource: %w"
+const errorApplyingResource = "error applying resource: %w"
 
 func (m *Manager) CreateResources(k8sClient dynamic.Interface, resources ...unstructured.Unstructured) (*unstructured.Unstructured, error) {
 	gotRes := &unstructured.Unstructured{}
@@ -356,6 +357,40 @@ func (m *Manager) UpdateResourceWithoutNS(client dynamic.Interface, resourceSche
 
 		return nil
 	}, m.retryOptions...)
+}
+
+// ApplyResource updates a given k8s resource
+func (m *Manager) ApplyResource(client dynamic.Interface, resourceSchema schema.GroupVersionResource, namespace string, name string, updateTo unstructured.Unstructured) error {
+	return retry.Do(func() error {
+		toUpdate, err := client.Resource(resourceSchema).Namespace(namespace).Get(context.Background(), name, metav1.GetOptions{})
+		if err != nil {
+			return err
+		}
+		updateTo.SetResourceVersion(toUpdate.GetResourceVersion())
+		_, err = client.Resource(resourceSchema).Namespace(namespace).Apply(context.Background(), name, &updateTo, metav1.ApplyOptions{FieldManager: "tests", Force: true})
+		if err != nil {
+			return err
+		}
+
+		return nil
+	}, m.retryOptions...)
+}
+
+func (m *Manager) ApplyResourcesGVR(client dynamic.Interface, resources ...unstructured.Unstructured) (*unstructured.Unstructured, error) {
+	gotRes := &unstructured.Unstructured{}
+	for _, res := range resources {
+		gvr, err := GetGvrFromUnstructured(m, res)
+		if err != nil {
+			return nil, err
+		}
+		_, err = client.Resource(*gvr).Namespace(res.GetNamespace()).Get(context.Background(), res.GetName(), metav1.GetOptions{})
+
+		err = m.ApplyResource(client, *gvr, res.GetNamespace(), res.GetName(), res)
+		if err != nil {
+			return nil, fmt.Errorf(errorApplyingResource, err)
+		}
+	}
+	return gotRes, nil
 }
 
 // DeleteResource deletes a given k8s resource
