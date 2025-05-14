@@ -359,19 +359,12 @@ func (m *Manager) UpdateResourceWithoutNS(client dynamic.Interface, resourceSche
 	}, m.retryOptions...)
 }
 
-// ApplyResource updates a given k8s resource
-func (m *Manager) ApplyResource(client dynamic.Interface, resourceSchema schema.GroupVersionResource, namespace string, name string, updateTo unstructured.Unstructured) error {
+func (m *Manager) ApplyResource(client dynamic.Interface, resourceSchema schema.GroupVersionResource, namespace string, name string, applyTo unstructured.Unstructured) error {
 	return retry.Do(func() error {
-		toUpdate, err := client.Resource(resourceSchema).Namespace(namespace).Get(context.Background(), name, metav1.GetOptions{})
+		_, err := client.Resource(resourceSchema).Namespace(namespace).Apply(context.Background(), name, &applyTo, metav1.ApplyOptions{FieldManager: "tests", Force: true})
 		if err != nil {
 			return err
 		}
-		updateTo.SetResourceVersion(toUpdate.GetResourceVersion())
-		_, err = client.Resource(resourceSchema).Namespace(namespace).Apply(context.Background(), name, &updateTo, metav1.ApplyOptions{FieldManager: "tests", Force: true})
-		if err != nil {
-			return err
-		}
-
 		return nil
 	}, m.retryOptions...)
 }
@@ -383,7 +376,6 @@ func (m *Manager) ApplyResourcesGVR(client dynamic.Interface, resources ...unstr
 		if err != nil {
 			return nil, err
 		}
-		_, err = client.Resource(*gvr).Namespace(res.GetNamespace()).Get(context.Background(), res.GetName(), metav1.GetOptions{})
 
 		err = m.ApplyResource(client, *gvr, res.GetNamespace(), res.GetName(), res)
 		if err != nil {
