@@ -48,7 +48,7 @@ import (
 )
 
 const (
-	eventuallyTimeout    = time.Second * 60
+	eventuallyTimeout    = time.Second * 5
 	testNamespace        = "atgo-system"
 	testGatewayURL       = "kyma-system/kyma-gateway"
 	testOathkeeperSvcURL = "oathkeeper.kyma-system.svc.cluster.local"
@@ -127,7 +127,6 @@ var _ = BeforeSuite(func(specCtx SpecContext) {
 								Service: &v1.ServiceReference{
 									Name:      "api-gateway-webhook-service",
 									Namespace: "kyma-system",
-									Port:      ptr.To(int32(9443)),
 									Path:      ptr.To("/mutate-gateway-kyma-project-io-v2alpha1-apirule"),
 								},
 							},
