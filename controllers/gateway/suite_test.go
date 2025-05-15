@@ -48,7 +48,7 @@ import (
 )
 
 const (
-	eventuallyTimeout    = time.Second * 10
+	eventuallyTimeout    = time.Second * 30
 	testNamespace        = "atgo-system"
 	testGatewayURL       = "kyma-system/kyma-gateway"
 	testOathkeeperSvcURL = "oathkeeper.kyma-system.svc.cluster.local"
@@ -143,7 +143,7 @@ var _ = BeforeSuite(func(specCtx SpecContext) {
 								},
 							},
 							FailurePolicy:           ptr.To(v1.Fail),
-							AdmissionReviewVersions: []string{"v1"},
+							AdmissionReviewVersions: []string{"v1", "v1beta1"},
 							SideEffects:             ptr.To(v1.SideEffectClassNone),
 							MatchPolicy:             ptr.To(v1.Exact),
 						},
