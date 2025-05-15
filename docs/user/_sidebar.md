@@ -86,6 +86,6 @@
   * [APIRule v2 Introduction](/api-gateway/user/troubleshooting-guides/03-80-apirule-v2-introduction/README.md)
     * [Blocked In-Cluster Communication](/api-gateway/user/troubleshooting-guides/03-80-apirule-v2-introduction/03-80-blocked-in-cluster-communication.md)
     * [APIRule `v2` Contains an Empty Spec](/api-gateway/user/troubleshooting-guides/03-80-apirule-v2-introduction/03-81-empty-apirule-v2-spec.md)
-    * [APIRule `v2alpha1` Contains an Empty Spec](/api-gateway/user/troubleshooting-guides/03-80-apirule-v2-introduction/03-81-empty-apirule-v2-spec.md)
+    * [APIRule `v2alpha1` Contains an Empty Spec](/api-gateway/user/troubleshooting-guides/03-80-apirule-v2-introduction/03-84-empty-apirule-v2alpha1-spec.md)
     * [APIRule `v2` Contains a Changed Status Schema](/api-gateway/user/troubleshooting-guides/03-80-apirule-v2-introduction/03-82-changed-status-schema-apirule-v2.md)
     * [Missing Hosts in APIRules List](/api-gateway/user/troubleshooting-guides/03-80-apirule-v2-introduction/03-83-missing-hosts-in-apirules-list.md)
