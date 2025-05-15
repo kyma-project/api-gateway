@@ -362,7 +362,14 @@ func testConfigWithServiceAndHost(serviceName string, host string, accessStrateg
 	// then
 	Eventually(func(g Gomega) {
 		created := gatewayv1beta1.APIRule{}
-		g.Expect(c.Get(context.Background(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &created)).Should(Succeed())
+		g.Expect(func() error {
+			err := c.Get(context.Background(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &created)
+			if err != nil {
+				fmt.Println("Error: ", err)
+			}
+			return err
+		}()).Should(Succeed())
+
 		g.Expect(created.Status.APIRuleStatus).NotTo(BeNil())
 		g.Expect(created.Status.APIRuleStatus.Code).To(Equal(expectedStatusCode))
 		for _, expected := range expectedValidationErrors {
