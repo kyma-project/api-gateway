@@ -2345,7 +2345,13 @@ func expectApiRuleStatus(apiRuleName string, statusCode gatewayv1beta1.StatusCod
 	By(fmt.Sprintf("Verifying that ApiRule v1beta1 %s has status %s", apiRuleName, statusCode))
 	Eventually(func(g Gomega) {
 		expectedApiRule := gatewayv1beta1.APIRule{}
-		g.Expect(c.Get(context.Background(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &expectedApiRule)).Should(Succeed())
+		g.Expect(func() error {
+			err := c.Get(context.Background(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &expectedApiRule)
+			if err != nil {
+				fmt.Println("Error getting APIRule:", err)
+			}
+			return err
+		}()).Should(Succeed())
 		g.Expect(expectedApiRule.Status.APIRuleStatus).NotTo(BeNil())
 		g.Expect(expectedApiRule.Status.APIRuleStatus.Code).To(Equal(statusCode))
 	}, eventuallyTimeout).Should(Succeed())
