@@ -27,8 +27,8 @@ require (
 	gopkg.in/yaml.v3 v3.0.1
 	istio.io/api v1.25.2
 	istio.io/client-go v1.25.1
-	k8s.io/apimachinery v0.33.0
-	k8s.io/client-go v0.32.4
+	k8s.io/apimachinery v0.33.1
+	k8s.io/client-go v0.32.5
 	sigs.k8s.io/controller-runtime v0.20.4
 	sigs.k8s.io/yaml v1.4.0
 )
@@ -96,7 +96,7 @@ require (
 	golang.org/x/exp v0.0.0-20250408133849-7e4ce0ab07d0
 	golang.org/x/oauth2 v0.28.0
 	gopkg.in/yaml.v2 v2.4.0
-	k8s.io/api v0.32.4
-	k8s.io/apiextensions-apiserver v0.32.4
+	k8s.io/api v0.32.5
+	k8s.io/apiextensions-apiserver v0.32.5
 	k8s.io/utils v0.0.0-20250321185631-1f6e0b77f77e
 )
