@@ -1,19 +1,50 @@
-header:
-  - name: status
-    widget: Badge
-    highlights:
-      positive:
-        - 'OK'
-      negative:
-        - 'ERROR'
-      critical:
-        - 'SKIPPED'
-    source: 'status.APIRuleStatus.code ? status.APIRuleStatus.code : "UNKNOWN"'
-    description: status.APIRuleStatus.desc
-  - name: host
-    widget: ExternalLink
-    source: 'spec.host'
-    link: 'status.APIRuleStatus.code = "OK" ? "https://" & $virtualServices().items[0].spec.hosts[0] : ""'
+resourceGraph:
+  dataSources:
+    - source: relatedRequestAuthentications
+    - source: virtualServices
+status:
+  header:
+    - name: status
+      widget: Badge
+      highlights:
+        positive:
+          - 'OK'
+        negative:
+          - 'ERROR'
+        critical:
+          - 'SKIPPED'
+      source: 'status.APIRuleStatus.code ? status.APIRuleStatus.code : "UNKNOWN"'
+      description: status.APIRuleStatus.desc
+  body:
+    - name: Virtual Service Status
+      source: 'status.virtualServiceStatus.code ? status.virtualServiceStatus.code : "UNKNOWN"'
+      widget: Badge
+      highlights:
+        positive:
+          - 'OK'
+        negative:
+          - 'ERROR'
+        critical:
+          - 'SKIPPED'
+      fullWidth: true
+      description: status.virtualServiceStatus.desc
+    - name: Access Rule Status
+      source: 'status.accessRuleStatus.code ? status.accessRuleStatus.code : "UNKNOWN"'
+      widget: Badge
+      highlights:
+        positive:
+          - 'OK'
+        negative:
+          - 'ERROR'
+        critical:
+          - 'SKIPPED'
+      description: status.accessRuleStatus.desc
+    - source: '$readableTimestamp(status.lastProcessedTime)'
+      name: Last Processed Time
+    - name: host
+      widget: ExternalLink
+      source: 'spec.host'
+      link: 'status.APIRuleStatus.code = "OK" ? "https://" & $virtualServices().items[0].spec.hosts[0] : ""'
 body:
   - simple: true
     widget: Alert

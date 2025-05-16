@@ -1,23 +1,22 @@
-header:
-- name: Ready
-  source: status.state
-  widget: Badge
-  description: status.description
-  highlights:
-    positive:
-    - 'Ready'
-    negative:
-    - 'Error'
-    critical:
-    - 'Warning'
+status:
+  header:
+    - source: status.state
+      name: State
+      widget: Badge
+      highlights:
+        positive:
+        - 'Ready'
+        negative:
+        - 'Error'
+        critical:
+        - 'Warning'
+        informative:
+        - 'Processing'
+        - 'Deleting'
+  body:
+    - source: spec.enableKymaGateway
+      name: Enable Kyma Gateway
 body:
-- widget: Panel
-  name: Configuration
-  children:
-  - source: spec.enableKymaGateway
-    name: enableKymaGateway
-    visibility: '$exists($value)'
-
 - source: status.conditions
   widget: Table
   name: Reconciliation Conditions

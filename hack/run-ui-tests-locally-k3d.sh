@@ -34,7 +34,7 @@ if [[ "$response" != "n" ]]; then
   k3d registry delete registry.localhost || true
 fi
 
-k3d cluster create kyma --port 80:80@loadbalancer --port 443:443@loadbalancer --k3s-arg "--disable=traefik@server:0" --k3s-arg '--tls-san=host.docker.internal@server:*'
+k3d cluster create kyma --port 80:80@loadbalancer --port 443:443@loadbalancer --k3s-arg "--disable=traefik@server:0" --k3s-arg '--tls-san=host.docker.internal@server:*' --image 'rancher/k3s:v1.31.7-k3s1'
 
 if [[ -n "$LOCAL_IMAGE" ]]; then
   k3d image import "$IMG" -c kyma
@@ -73,7 +73,7 @@ k3d registry create registry.localhost
 
 docker kill kyma-dashboard || true
 echo "Running kyma-dashboard with image $DASHBOARD_IMAGE..."
-docker run -d --rm -e DOCKER_DESKTOP_CLUSTER=true --env ENVIRONMENT=PROD -p 3001:3001 --name kyma-dashboard "$DASHBOARD_IMAGE"
+docker run -d --rm -e DOCKER_DESKTOP_CLUSTER=true --env ENVIRONMENT=prod -p 3001:3001 --name kyma-dashboard "$DASHBOARD_IMAGE"
 
 echo "Waiting for the server to be up..."
 while [[ "$(curl -s -o /dev/null -w ''%{http_code}'' "$CYPRESS_DOMAIN")" != "200" ]]; do sleep 5; done
