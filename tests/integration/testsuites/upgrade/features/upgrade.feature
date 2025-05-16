@@ -6,9 +6,11 @@ Feature: Upgrading API Gateway version
     And Upgrade: The APIRule is applied
     And Upgrade: Calling the "/ip" endpoint with a valid "JWT" token should result in status between 200 and 299
     And Upgrade: Fetch APIRule last processed time
+    And Upgrade: APIRules have correct version annotation
     When Upgrade: API Gateway is upgraded to current branch version manifest
     And Upgrade: APIRule was reconciled again
-    Then Upgrade: Calling the "/ip" endpoint without a token should result in status between 400 and 403
+    Then Upgrade: APIRules have correct version annotation
+    And Upgrade: Calling the "/ip" endpoint without a token should result in status between 400 and 403
     And Upgrade: Calling the "/ip" endpoint with an invalid token should result in status between 400 and 403
     And Upgrade: Calling the "/ip" endpoint with a valid "JWT" token should result in status between 200 and 299
     And Upgrade: Teardown httpbin service

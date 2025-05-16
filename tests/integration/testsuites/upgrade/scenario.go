@@ -3,6 +3,9 @@ package upgrade
 import (
 	"errors"
 	"fmt"
+	apirulev2 "github.com/kyma-project/api-gateway/apis/gateway/v2"
+	apirulev2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"strings"
 	"time"
 
@@ -28,7 +31,30 @@ var deploymentGVR = schema.GroupVersionResource{
 	Resource: "deployments",
 }
 
-const apiGatewayNS, apiGatewayName = "kyma-system", "api-gateway-controller-manager"
+var apiRuleV1GVR = schema.GroupVersionResource{
+	Group:    apirulev1beta1.GroupVersion.Group,
+	Version:  apirulev1beta1.GroupVersion.Version,
+	Resource: "apirules",
+}
+
+var apiRuleV2Alpha1GVR = schema.GroupVersionResource{
+	Group:    apirulev2alpha1.GroupVersion.Group,
+	Version:  apirulev2alpha1.GroupVersion.Version,
+	Resource: "apirules",
+}
+
+var apiRuleV2GVR = schema.GroupVersionResource{
+	Group:    apirulev2.GroupVersion.Group,
+	Version:  apirulev2.GroupVersion.Version,
+	Resource: "apirules",
+}
+
+const (
+	apiGatewayNS                   = "kyma-system"
+	apiGatewayName                 = "api-gateway-controller-manager"
+	originalVersionAnnotationKey   = "gateway.kyma-project.io/original-version"
+	originalVersionAnnotationValue = "v1beta1"
+)
 
 type scenario struct {
 	Namespace                string
@@ -163,7 +189,7 @@ func (s *scenario) upgradeApiGateway() error {
 
 	oldImage = apiGatewayDeployment.Spec.Template.Spec.Containers[0].Image
 
-	_, err = s.resourceManager.CreateOrUpdateResourcesGVR(s.k8sClient, manifestCrds...)
+	_, err = s.resourceManager.ApplyResourcesGVR(s.k8sClient, manifestCrds...)
 	if err != nil {
 		return err
 	}
@@ -201,11 +227,8 @@ func (s *scenario) fetchAPIRuleLastProcessedTime() error {
 	return retry.Do(func() error {
 		for _, apiRule := range apiRules {
 			var apiRuleStructured apirulev1beta1.APIRule
-			res, err := s.resourceManager.GetResource(s.k8sClient, schema.GroupVersionResource{
-				Group:    apirulev1beta1.GroupVersion.Group,
-				Version:  apirulev1beta1.GroupVersion.Version,
-				Resource: "apirules",
-			}, apiRule.GetNamespace(), apiRule.GetName(), retry.Attempts(1))
+			name := apiRule.GetName()
+			res, err := s.resourceManager.GetResource(s.k8sClient, apiRuleV1GVR, apiRule.GetNamespace(), name, testcontext.GetRetryOpts()...)
 
 			if err != nil {
 				return err
@@ -231,11 +254,8 @@ func (s *scenario) apiRuleWasReconciledAgain() error {
 	return retry.Do(func() error {
 		for _, apiRule := range apiRules {
 			var apiRuleStructured apirulev1beta1.APIRule
-			res, err := s.resourceManager.GetResource(s.k8sClient, schema.GroupVersionResource{
-				Group:    apirulev1beta1.GroupVersion.Group,
-				Version:  apirulev1beta1.GroupVersion.Version,
-				Resource: "apirules",
-			}, apiRule.GetNamespace(), apiRule.GetName(), retry.Attempts(1))
+			name := apiRule.GetName()
+			res, err := s.resourceManager.GetResource(s.k8sClient, apiRuleV1GVR, apiRule.GetNamespace(), name, testcontext.GetRetryOpts()...)
 
 			if err != nil {
 				return err
@@ -246,12 +266,56 @@ func (s *scenario) apiRuleWasReconciledAgain() error {
 				return err
 			}
 
-			if apiRuleStructured.Status.LastProcessedTime.After(s.apiRuleLastProcessedTime) {
-				return fmt.Errorf("APIRule is still not reconciled again")
+			if !apiRuleStructured.Status.LastProcessedTime.After(s.apiRuleLastProcessedTime) {
+				return fmt.Errorf("APIRule %s is still not reconciled again", name)
 			}
 		}
 		return nil
 	}, testcontext.GetRetryOpts()...)
+}
+
+func (s *scenario) apiRulesHaveCorrectVersionAnnotation() error {
+	apiRules, err := manifestprocessor.ParseFromFileWithTemplate(s.ApiResourceManifestPath, s.ApiResourceDirectory, s.ManifestTemplate)
+	if err != nil {
+		return err
+	}
+
+	return retry.Do(func() error {
+		for _, apiRule := range apiRules {
+			name := apiRule.GetName()
+
+			res, err := s.resourceManager.GetResource(s.k8sClient, apiRuleV2Alpha1GVR, apiRule.GetNamespace(), name, testcontext.GetRetryOpts()...)
+			if err != nil {
+				return err
+			}
+			err = validateVersionAnnotation(res)
+			if err != nil {
+				return err
+			}
+
+			res, err = s.resourceManager.GetResource(s.k8sClient, apiRuleV2GVR, apiRule.GetNamespace(), name, testcontext.GetRetryOpts()...)
+			if err != nil {
+				return err
+			}
+			err = validateVersionAnnotation(res)
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	}, testcontext.GetRetryOpts()...)
+}
+
+func validateVersionAnnotation(res *unstructured.Unstructured) error {
+	name := res.GetName()
+	result, ok := res.GetAnnotations()[originalVersionAnnotationKey]
+	if !ok {
+		return fmt.Errorf("APIRule %s is missing annotation %s", name, originalVersionAnnotationKey)
+	}
+	if result != originalVersionAnnotationValue {
+		return fmt.Errorf("APIRule %s has the wrong annotation %s value %s", name, originalVersionAnnotationKey, result)
+	}
+	return nil
 }
 
 func initUpgrade(ctx *godog.ScenarioContext, ts *testsuite) {
@@ -267,4 +331,5 @@ func initUpgrade(ctx *godog.ScenarioContext, ts *testsuite) {
 	ctx.Step(`^Upgrade: Teardown httpbin service$`, scenario.teardownHttpbinService)
 	ctx.Step(`^Upgrade: Fetch APIRule last processed time$`, scenario.fetchAPIRuleLastProcessedTime)
 	ctx.Step(`^Upgrade: APIRule was reconciled again$`, scenario.apiRuleWasReconciledAgain)
+	ctx.Step(`^Upgrade: APIRules have correct version annotation$`, scenario.apiRulesHaveCorrectVersionAnnotation)
 }
