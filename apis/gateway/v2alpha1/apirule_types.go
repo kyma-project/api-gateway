@@ -77,6 +77,7 @@ func (s *APIRuleStatus) ApiRuleStatusVersion() versions.Version {
 }
 
 // APIRule is the Schema for ApiRule APIs.
+// +kubebuilder:storageversion
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:categories={kyma-api-gateway}
@@ -139,7 +140,7 @@ type Rule struct {
 	Methods []HttpMethod `json:"methods"`
 	// Disables authorization when set to true.
 	// +optional
-	NoAuth *bool `json:"noAuth"`
+	NoAuth *bool `json:"noAuth,omitempty"`
 	// Specifies the Istio JWT access strategy.
 	// +optional
 	Jwt *JwtConfig `json:"jwt,omitempty"`

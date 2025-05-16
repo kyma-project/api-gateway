@@ -196,6 +196,7 @@ func main() {
 						This can probably be enabled again when reconciliation only uses v2alpha1.
 					*/
 					&gatewayv2alpha1.APIRule{},
+					&gatewayv2.APIRule{},
 					&corev1.Secret{},
 				},
 			},
@@ -226,9 +227,14 @@ func main() {
 		FailureMaxDelay:  flagVar.rateLimiterFailureMaxDelay,
 	}
 
-	apiGatewayMetrics := apiGatewayMetrics.NewApiGatewayMetrics()
+	metrics := apiGatewayMetrics.NewApiGatewayMetrics()
 
-	if err := gateway.NewApiRuleReconciler(mgr, reconcileConfig, apiGatewayMetrics).SetupWithManager(mgr, rateLimiterCfg); err != nil {
+	if err := (&gatewayv2alpha1.APIRule{}).SetupWebhookWithManager(mgr); err != nil {
+		setupLog.Error(err, "Unable to create webhook", "webhook", "APIRule")
+		os.Exit(1)
+	}
+
+	if err = gateway.NewApiRuleReconciler(mgr, reconcileConfig, metrics).SetupWithManager(mgr, rateLimiterCfg); err != nil {
 		setupLog.Error(err, "Unable to create controller", "controller", "APIRule")
 		os.Exit(1)
 	}
@@ -245,11 +251,6 @@ func main() {
 
 	if err = certificate.ReadCertificateSecret(context.Background(), k8sClient, setupLog); err != nil {
 		setupLog.Error(err, "Unable to read certificate secret", "webhook", "certificate")
-		os.Exit(1)
-	}
-
-	if err = (&gatewayv1beta1.APIRule{}).SetupWebhookWithManager(mgr); err != nil {
-		setupLog.Error(err, "Unable to create webhook", "webhook", "APIRule")
 		os.Exit(1)
 	}
 
