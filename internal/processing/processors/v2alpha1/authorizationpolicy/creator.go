@@ -3,6 +3,7 @@ package authorizationpolicy
 import (
 	"context"
 	"fmt"
+	"golang.org/x/exp/slices"
 	"strings"
 
 	"github.com/kyma-project/api-gateway/internal/helpers"
@@ -43,7 +44,8 @@ type creator struct {
 func (r creator) Create(ctx context.Context, client client.Client, apiRule *gatewayv2alpha1.APIRule) (hashbasedstate.Desired, error) {
 	state := hashbasedstate.NewDesired()
 	for _, rule := range apiRule.Spec.Rules {
-		aps, err := r.generateAuthorizationPolicies(ctx, client, apiRule, rule)
+		notPaths := generateNotPaths(apiRule.Spec.Rules, rule)
+		aps, err := r.generateAuthorizationPolicies(ctx, client, apiRule, rule, notPaths)
 		if err != nil {
 			return state, err
 		}
@@ -60,7 +62,7 @@ func (r creator) Create(ctx context.Context, client client.Client, apiRule *gate
 	return state, nil
 }
 
-func (r creator) generateAuthorizationPolicies(ctx context.Context, client client.Client, api *gatewayv2alpha1.APIRule, rule gatewayv2alpha1.Rule) (*securityv1beta1.AuthorizationPolicyList, error) {
+func (r creator) generateAuthorizationPolicies(ctx context.Context, client client.Client, api *gatewayv2alpha1.APIRule, rule gatewayv2alpha1.Rule, notPaths []string) (*securityv1beta1.AuthorizationPolicyList, error) {
 	authorizationPolicyList := securityv1beta1.AuthorizationPolicyList{}
 
 	var jwtAuthorizations []*gatewayv2alpha1.JwtAuthorization
@@ -74,7 +76,7 @@ func (r creator) generateAuthorizationPolicies(ctx context.Context, client clien
 		if rule.ExtAuth.Restrictions != nil {
 			jwtAuthorizations = append(jwtAuthorizations, rule.ExtAuth.Restrictions.Authorizations...)
 		}
-		policies, err := r.generateExtAuthAuthorizationPolicies(ctx, client, api, rule)
+		policies, err := r.generateExtAuthAuthorizationPolicies(ctx, client, api, rule, notPaths)
 		if err != nil {
 			return &authorizationPolicyList, err
 		}
@@ -83,7 +85,7 @@ func (r creator) generateAuthorizationPolicies(ctx context.Context, client clien
 	}
 
 	if len(jwtAuthorizations) == 0 {
-		ap, err := r.generateAuthorizationPolicyForEmptyAuthorizations(ctx, client, api, rule)
+		ap, err := r.generateAuthorizationPolicyForEmptyAuthorizations(ctx, client, api, rule, notPaths)
 		if err != nil {
 			return &authorizationPolicyList, err
 		}
@@ -96,7 +98,7 @@ func (r creator) generateAuthorizationPolicies(ctx context.Context, client clien
 		authorizationPolicyList.Items = append(authorizationPolicyList.Items, ap)
 	} else {
 		for indexInYaml, authorization := range jwtAuthorizations {
-			ap, err := r.generateAuthorizationPolicy(ctx, client, api, rule, authorization)
+			ap, err := r.generateAuthorizationPolicy(ctx, client, api, rule, authorization, notPaths)
 			if err != nil {
 				return &authorizationPolicyList, err
 			}
@@ -113,9 +115,9 @@ func (r creator) generateAuthorizationPolicies(ctx context.Context, client clien
 	return &authorizationPolicyList, nil
 }
 
-func (r creator) generateExtAuthAuthorizationPolicies(ctx context.Context, client client.Client, api *gatewayv2alpha1.APIRule, rule gatewayv2alpha1.Rule) (authorizationPolicyList []*securityv1beta1.AuthorizationPolicy, _ error) {
+func (r creator) generateExtAuthAuthorizationPolicies(ctx context.Context, client client.Client, api *gatewayv2alpha1.APIRule, rule gatewayv2alpha1.Rule, notPaths []string) (authorizationPolicyList []*securityv1beta1.AuthorizationPolicy, _ error) {
 	for i, authorizer := range rule.ExtAuth.ExternalAuthorizers {
-		policy, err := r.generateExtAuthAuthorizationPolicy(ctx, client, api, rule, authorizer)
+		policy, err := r.generateExtAuthAuthorizationPolicy(ctx, client, api, rule, authorizer, notPaths)
 		if err != nil {
 			return authorizationPolicyList, err
 		}
@@ -131,9 +133,9 @@ func (r creator) generateExtAuthAuthorizationPolicies(ctx context.Context, clien
 	return authorizationPolicyList, nil
 }
 
-func (r creator) generateAuthorizationPolicyForEmptyAuthorizations(ctx context.Context, client client.Client, api *gatewayv2alpha1.APIRule, rule gatewayv2alpha1.Rule) (*securityv1beta1.AuthorizationPolicy, error) {
+func (r creator) generateAuthorizationPolicyForEmptyAuthorizations(ctx context.Context, client client.Client, api *gatewayv2alpha1.APIRule, rule gatewayv2alpha1.Rule, notPaths []string) (*securityv1beta1.AuthorizationPolicy, error) {
 	// In case of NoAuth, it will create an ALLOW AuthorizationPolicy bypassing any other AuthorizationPolicies.
-	ap, err := r.generateAuthorizationPolicy(ctx, client, api, rule, &gatewayv2alpha1.JwtAuthorization{})
+	ap, err := r.generateAuthorizationPolicy(ctx, client, api, rule, &gatewayv2alpha1.JwtAuthorization{}, notPaths)
 	if err != nil {
 		return nil, err
 	}
@@ -161,8 +163,8 @@ func baseAuthorizationPolicyBuilder(apiRule *gatewayv2alpha1.APIRule, rule gatew
 		nil
 }
 
-func (r creator) generateExtAuthAuthorizationPolicy(ctx context.Context, client client.Client, api *gatewayv2alpha1.APIRule, rule gatewayv2alpha1.Rule, authorizerName string) (*securityv1beta1.AuthorizationPolicy, error) {
-	spec, err := r.generateExtAuthAuthorizationPolicySpec(ctx, client, api, rule, authorizerName)
+func (r creator) generateExtAuthAuthorizationPolicy(ctx context.Context, client client.Client, api *gatewayv2alpha1.APIRule, rule gatewayv2alpha1.Rule, authorizerName string, notPaths []string) (*securityv1beta1.AuthorizationPolicy, error) {
+	spec, err := r.generateExtAuthAuthorizationPolicySpec(ctx, client, api, rule, authorizerName, notPaths)
 	if err != nil {
 		return nil, err
 	}
@@ -178,8 +180,8 @@ func (r creator) generateExtAuthAuthorizationPolicy(ctx context.Context, client 
 	return apBuilder.Get(), nil
 }
 
-func (r creator) generateAuthorizationPolicy(ctx context.Context, client client.Client, apiRule *gatewayv2alpha1.APIRule, rule gatewayv2alpha1.Rule, authorization *gatewayv2alpha1.JwtAuthorization) (*securityv1beta1.AuthorizationPolicy, error) {
-	spec, err := r.generateAuthorizationPolicySpec(ctx, client, apiRule, rule, authorization)
+func (r creator) generateAuthorizationPolicy(ctx context.Context, client client.Client, apiRule *gatewayv2alpha1.APIRule, rule gatewayv2alpha1.Rule, authorization *gatewayv2alpha1.JwtAuthorization, notPaths []string) (*securityv1beta1.AuthorizationPolicy, error) {
+	spec, err := r.generateAuthorizationPolicySpec(ctx, client, apiRule, rule, authorization, notPaths)
 	if err != nil {
 		return nil, err
 	}
@@ -197,24 +199,26 @@ func (r creator) generateAuthorizationPolicy(ctx context.Context, client client.
 	return apBuilder.Get(), nil
 }
 
-func (r creator) generateExtAuthAuthorizationPolicySpec(ctx context.Context, client client.Client, api *gatewayv2alpha1.APIRule, rule gatewayv2alpha1.Rule, providerName string) (*v1beta1.AuthorizationPolicy, error) {
+func (r creator) generateExtAuthAuthorizationPolicySpec(ctx context.Context, client client.Client, api *gatewayv2alpha1.APIRule, rule gatewayv2alpha1.Rule, providerName string, notPaths []string) (*v1beta1.AuthorizationPolicy, error) {
 	podSelector, err := gatewayv2alpha1.GetSelectorFromService(ctx, client, api, rule)
 	if err != nil {
 		return nil, err
 	}
+
 	hosts, err := getHostsFromAPIRule(api, r)
 	if err != nil {
 		return nil, err
 	}
+
 	authorizationPolicySpecBuilder := builders.NewAuthorizationPolicySpecBuilder().WithSelector(podSelector.Selector)
 	return authorizationPolicySpecBuilder.
 		WithAction(v1beta1.AuthorizationPolicy_CUSTOM).
 		WithProvider(providerName).
-		WithRule(baseExtAuthRuleBuilder(rule, hosts).Get()).
+		WithRule(baseExtAuthRuleBuilder(rule, hosts, notPaths).Get()).
 		Get(), nil
 }
 
-func (r creator) generateAuthorizationPolicySpec(ctx context.Context, client client.Client, api *gatewayv2alpha1.APIRule, rule gatewayv2alpha1.Rule, authorization *gatewayv2alpha1.JwtAuthorization) (*v1beta1.AuthorizationPolicy, error) {
+func (r creator) generateAuthorizationPolicySpec(ctx context.Context, client client.Client, api *gatewayv2alpha1.APIRule, rule gatewayv2alpha1.Rule, authorization *gatewayv2alpha1.JwtAuthorization, notPaths []string) (*v1beta1.AuthorizationPolicy, error) {
 	podSelector, err := gatewayv2alpha1.GetSelectorFromService(ctx, client, api, rule)
 	if err != nil {
 		return nil, err
@@ -231,7 +235,7 @@ func (r creator) generateAuthorizationPolicySpec(ctx context.Context, client cli
 	// If RequiredScopes are configured, we need to generate a separate Rule for each scopeKey in defaultScopeKeys
 	if len(authorization.RequiredScopes) > 0 {
 		for _, scopeKey := range defaultScopeKeys {
-			ruleBuilder := baseRuleBuilder(rule, hosts, r.oryPassthrough)
+			ruleBuilder := baseRuleBuilder(rule, hosts, r.oryPassthrough, notPaths)
 			for _, scope := range authorization.RequiredScopes {
 				ruleBuilder.WithWhenCondition(
 					builders.NewConditionBuilder().WithKey(scopeKey).WithValues([]string{scope}).Get())
@@ -245,7 +249,7 @@ func (r creator) generateAuthorizationPolicySpec(ctx context.Context, client cli
 			authorizationPolicySpecBuilder.WithRule(ruleBuilder.Get())
 		}
 	} else { // Only one AP rule should be generated for other scenarios
-		ruleBuilder := baseRuleBuilder(rule, hosts, r.oryPassthrough)
+		ruleBuilder := baseRuleBuilder(rule, hosts, r.oryPassthrough, notPaths)
 		for _, aud := range authorization.Audiences {
 			ruleBuilder.WithWhenCondition(
 				builders.NewConditionBuilder().WithKey(audienceKey).WithValues([]string{aud}).Get())
@@ -301,16 +305,22 @@ func getHostsFromAPIRule(api *gatewayv2alpha1.APIRule, r creator) ([]string, err
 	return hosts, nil
 }
 
-func withTo(b *builders.RuleBuilder, hosts []string, rule gatewayv2alpha1.Rule) *builders.RuleBuilder {
-	path := rule.Path
+// standardizeRulePath converts wildcard `/*` path to post Istio 1.22 Envoy template format `/{**}`.
+func standardizeRulePath(path string) string {
 	if path == "/*" {
-		path = "/{**}"
+		return "/{**}"
 	}
+	return path
+}
+
+func withTo(b *builders.RuleBuilder, hosts []string, rule gatewayv2alpha1.Rule, notPaths []string) *builders.RuleBuilder {
 	return b.WithTo(
 		builders.NewToBuilder().
 			WithOperation(builders.NewOperationBuilder().
 				Hosts(hosts...).
-				WithMethodsV2alpha1(rule.Methods).WithPath(path).Get()).
+				WithMethodsV2alpha1(rule.Methods).
+				WithPath(standardizeRulePath(rule.Path)).
+				WithNotPaths(notPaths).Get()).
 			Get())
 }
 
@@ -355,23 +365,53 @@ func withFrom(b *builders.RuleBuilder, rule gatewayv2alpha1.Rule, oryPassthrough
 }
 
 // baseExtAuthRuleBuilder returns ruleBuilder with To
-func baseExtAuthRuleBuilder(rule gatewayv2alpha1.Rule, hosts []string) *builders.RuleBuilder {
+func baseExtAuthRuleBuilder(rule gatewayv2alpha1.Rule, hosts, notPaths []string) *builders.RuleBuilder {
 	builder := builders.NewRuleBuilder()
-	builder = withTo(builder, hosts, rule)
+	builder = withTo(builder, hosts, rule, notPaths)
 
 	return builder
 }
 
 // baseRuleBuilder returns ruleBuilder with To and From
-func baseRuleBuilder(rule gatewayv2alpha1.Rule, hosts []string, oryPassthrough bool) *builders.RuleBuilder {
+func baseRuleBuilder(rule gatewayv2alpha1.Rule, hosts []string, oryPassthrough bool, notPaths []string) *builders.RuleBuilder {
 	builder := builders.NewRuleBuilder()
 	// If the migration is happening, do not add hosts to the rule, to allow internal traffic during migration step
 	if oryPassthrough {
-		builder = withTo(builder, nil, rule)
+		builder = withTo(builder, nil, rule, notPaths)
 	} else {
-		builder = withTo(builder, hosts, rule)
+		builder = withTo(builder, hosts, rule, notPaths)
 	}
 	builder = withFrom(builder, rule, oryPassthrough)
 
 	return builder
+}
+
+func generateNotPaths(rules []gatewayv2alpha1.Rule, currentRule gatewayv2alpha1.Rule) []string {
+	var notPaths []string
+	beforeCurrentRule := true
+
+	for _, rule := range rules {
+		if standardizeRulePath(rule.Path) == "/{**}" || rule.Path == "/" {
+			continue
+		}
+		if rule.Path == currentRule.Path {
+			beforeCurrentRule = false
+			continue
+		}
+		if methodsContainsAny(rule.Methods, currentRule.Methods) && beforeCurrentRule {
+			notPaths = append(notPaths, rule.Path)
+		}
+	}
+
+	return notPaths
+}
+
+func methodsContainsAny(methods, currentRuleMethods []gatewayv2alpha1.HttpMethod) bool {
+	for _, method := range methods {
+		if slices.Contains(currentRuleMethods, method) {
+			return true
+		}
+	}
+
+	return false
 }

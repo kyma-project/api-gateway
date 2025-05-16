@@ -269,8 +269,8 @@ var _ = Describe("Processing JWT rules", func() {
 			Expect(err).To(BeNil())
 			Expect(result).To(HaveLen(2))
 
-			updatedNoopMatcher := getActionMatcher("update", apiRuleNamespace, "test-service", "Principals", ContainElements("cluster.local/ns/istio-system/sa/istio-ingressgateway-service-account"), ContainElements("GET", "POST"), ContainElements("/"))
-			updatedNotChangedMatcher := getActionMatcher("update", apiRuleNamespace, "jwt-secured-service", "RequestPrincipals", ContainElements("https://oauth2.example.com//*"), ContainElements("GET", "POST"), ContainElements("/"))
+			updatedNoopMatcher := getActionMatcher("update", apiRuleNamespace, "test-service", "Principals", ContainElements("cluster.local/ns/istio-system/sa/istio-ingressgateway-service-account"), ContainElements("GET", "POST"), ContainElements("/"), BeNil())
+			updatedNotChangedMatcher := getActionMatcher("update", apiRuleNamespace, "jwt-secured-service", "RequestPrincipals", ContainElements("https://oauth2.example.com//*"), ContainElements("GET", "POST"), ContainElements("/"), BeNil())
 			Expect(result).To(ContainElements(updatedNoopMatcher, updatedNotChangedMatcher))
 		})
 

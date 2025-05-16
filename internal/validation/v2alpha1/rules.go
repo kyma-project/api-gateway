@@ -95,7 +95,7 @@ func validateEnvoyTemplate(validationPath string, path string) []validation.Fail
 	return nil
 }
 
-const pathByMethodConflictTemplate = "Path %s with method %s conflicts with at least one of the other defined paths"
+const pathByMethodConflictTemplate = "Path %s with method %s conflicts with at least one of the previous rule paths"
 
 func pathByMethodConflictValidationError(validationPath string, path string, method string) []validation.Failure {
 	return []validation.Failure{

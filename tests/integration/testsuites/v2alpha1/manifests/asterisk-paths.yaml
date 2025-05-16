@@ -11,15 +11,27 @@ spec:
   hosts:
     - "httpbin-{{.TestID}}.{{.Domain}}"
   rules:
+    - path: /anything/one
+      methods: ["GET"]
+      noAuth: true
+    - path: /anything/one/two
+      methods: ["GET"]
+      noAuth: true
     - path: /anything/{*}/one
+      methods: ["GET"]
+      noAuth: true
+    - path: /anything/{*}/one/{**}/two
+      methods: ["DELETE"]
+      noAuth: true
+    - path: /anything/{*}/{*}/two
       methods: ["GET"]
       noAuth: true
     - path: /anything/{**}/two
       methods: ["POST"]
       noAuth: true
+    - path: /anything/
+      methods: ["GET"]
+      noAuth: true
     - path: /anything/{**}
       methods: ["PUT"]
-      noAuth: true
-    - path: /anything/{*}/one/{**}/two
-      methods: ["DELETE"]
       noAuth: true
