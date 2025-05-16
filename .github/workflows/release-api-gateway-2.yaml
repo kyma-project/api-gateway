@@ -15,30 +15,38 @@ jobs:
   check-prerequisites: 
     name: check-prerequisites
     runs-on: ubuntu-latest
+    outputs:
+      current_release: ${{ steps.set-release.outputs.current_release }}
+      latest_before: ${{ steps.get-latest.outputs.latest_before }}
+      is_patch: ${{ steps.check_patch.outputs.is_patch }}
     steps:
       - uses: actions/checkout@v4
         with:
-           fetch-depth: 0
+          fetch-depth: 0
+
       - name: Get current release from sec-scanners-config.yaml file
-        shell: bash
+        id: set-release
         run: |
-            CURRENT=$(cat ./sec-scanners-config.yaml | grep api-gateway-manager | cut -d ":" -f2)
-            echo "Current release: $CURRENT"
-            echo "current_release=$CURRENT" >> $GITHUB_ENV
+          CURRENT=$(grep api-gateway-manager ./sec-scanners-config.yaml | cut -d ":" -f2 )
+          echo "Current release: $CURRENT"
+          echo "current_release=$CURRENT" >> $GITHUB_OUTPUT
+
       - name: Get latest release before releasing
-        shell: bash
+        id: get-latest
         run: |
-            LATEST=$(curl -s https://api.github.com/repos/kyma-project/api-gateway/releases/latest | grep '"tag_name"' | cut -d '"' -f 4)
-            echo "Latest release before releasing: $LATEST"
-            echo "latest_before=$LATEST" >> $GITHUB_ENV
+          LATEST=$(curl -s https://api.github.com/repos/kyma-project/api-gateway/releases/latest | grep '"tag_name"' | cut -d '"' -f 4)
+          echo "Latest release before releasing: $LATEST"
+          echo "latest_before=$LATEST" >> $GITHUB_OUTPUT
+
       - name: Determine if this is a patch release
         id: check_patch
         run: |
-          if [[ "$current_release" =~ ^[0-9]+\.[0-9]+\.[1-9][0-9]*$ ]]; then
-            echo "is_patch=true" >> $GITHUB_ENV
+          if [[ "${{ steps.set-release.outputs.current_release }}" =~ ^[0-9]+\.[0-9]+\.[1-9][0-9]*$ ]]; then
+            echo "is_patch=true" >> $GITHUB_OUTPUT
           else
-            echo "is_patch=false" >> $GITHUB_ENV
+            echo "is_patch=false" >> $GITHUB_OUTPUT
           fi
+
   build-image:
     uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
     needs: [check-prerequisites]
@@ -47,23 +55,25 @@ jobs:
       dockerfile: Dockerfile
       context: .
       build-args: |
-        VERSION=$current_release
-      tags: "$current_release"
+        VERSION=${{ needs.check-prerequisites.outputs.current_release }}
+      tags: "${{ needs.check-prerequisites.outputs.current_release }}"
 
   unit-tests:
     uses: ./.github/workflows/call-unit-lint.yaml
 
   integration-tests:
-    needs: build-image
+    needs: [build-image, check-prerequisites]
     uses: ./.github/workflows/call-integration-release.yaml
     with:
-      image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway/releases/api-gateway-manager:$current_release"
+      image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway/releases/api-gateway-manager:${{ needs.check-prerequisites.outputs.current_release }}"
     secrets: inherit
- 
+
   create-draft:
     name: Create draft release
     runs-on: ubuntu-latest
-    needs: [build-image, unit-tests, integration-tests]
+    needs: [check-prerequisites, build-image, unit-tests, integration-tests]
+    outputs:
+      release_id: ${{ steps.create-draft.outputs.release_id }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -73,29 +83,26 @@ jobs:
       - name: Create changelog
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: ./scripts/create_changelog.sh $current_release
+          RELEASE: ${{ needs.check-prerequisites.outputs.current_release }}
+        run: ./scripts/create_changelog.sh $RELEASE
 
       - name: Create draft release
         id: create-draft
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          RELEASE_ID=$(./scripts/create_draft_release.sh $current_release)
+          RELEASE_ID=$(./scripts/create_draft_release.sh ${{ needs.check-prerequisites.outputs.current_release }})
           echo "release_id=$RELEASE_ID" >> $GITHUB_OUTPUT
 
       - name: Create lightweight tag
         run: |
-          git tag $current_release
-          git push origin $current_release
-
-    outputs:
-      release_id: ${{ steps.create-draft.outputs.release_id }}
+          git tag ${{ needs.check-prerequisites.outputs.current_release }}
+          git push origin ${{ needs.check-prerequisites.outputs.current_release }}
 
   publish-release:
     name: Publish release
     needs: [create-draft]
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -105,7 +112,7 @@ jobs:
       - name: Publish release assets
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: ./scripts/publish_assets.sh $current_release ${{ needs.create-draft.outputs.release_id }}
+        run: ./scripts/publish_assets.sh ${{ needs.create-draft.outputs.release_id }}
 
       - name: Publish release
         env:
@@ -114,63 +121,55 @@ jobs:
 
   notify:
     runs-on: ubuntu-latest
-    needs: publish-release
+    needs: [check-prerequisites, publish-release]
     if: success()
     steps:
       - name: Notify
-        uses: slackapi/slack-github-action@485a9d42d3a73031f12ec201c457e2162c45d02d # v2.0.0
+        uses: slackapi/slack-github-action@b0fa283ad8fea605de13dc3f449259339835fc52
         with:
           webhook: ${{ secrets.SLACK_RELEASE_WEBHOOK }}
           webhook-type: webhook-trigger
           payload-templated: true
           payload: |
             repository: ${{ github.repository }},
-            release: $current_release
+            release: ${{ needs.check-prerequisites.outputs.current_release }}
 
   post-release-adjustments:
     runs-on: ubuntu-latest
-    needs: publish-release
+    needs: [check-prerequisites, publish-release]
     if: success()
     steps:
       - name: Adjust latest tag if needed
-        if: env.is_patch == 'true'
+        if: ${{ needs.check-prerequisites.outputs.is_patch == 'true' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          LATEST_BEFORE: $latest_before
-          CURRENT_RELEASE: $current_release
+          LATEST_BEFORE: ${{ needs.check-prerequisites.outputs.latest_before }}
+          CURRENT_RELEASE: ${{ needs.check-prerequisites.outputs.current_release }}
         run: |
           if [ "$(printf '%s\n' "$CURRENT_RELEASE" "$LATEST_BEFORE" | sort -V | head -n1)" = "$CURRENT_RELEASE" ]; then 
-          echo "$LATEST_BEFORE should be marked as latest release"
-          
-          RELEASE_ID=$(curl -L \
-          -X GET \
-          -H "Accept: application/vnd.github+json" \
-          -H "Authorization: Bearer ${GITHUB_TOKEN}" \
-          -H "X-GitHub-Api-Version: 2022-11-28" \
-          https://api.github.com/repos/kyma-project/api-gateway/releases/tags/${LATEST_BEFORE} | jq -r '.id')
+            echo "$LATEST_BEFORE should be marked as latest release"
+            RELEASE_ID=$(curl -s \
+              -H "Accept: application/vnd.github+json" \
+              -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+              https://api.github.com/repos/kyma-project/api-gateway/releases/tags/${LATEST_BEFORE} | jq -r '.id')
 
-
-          curl -L \
-          -X PATCH \
-          -H "Accept: application/vnd.github+json" \
-          -H "Authorization: Bearer ${GITHUB_TOKEN}" \
-          -H "X-GitHub-Api-Version: 2022-11-28" \
-          https://api.github.com/repos/kyma-project/api-gateway/releases/$RELEASE_ID \
-          -d '{"make_latest":"true"}'
-
+            curl -X PATCH \
+              -H "Accept: application/vnd.github+json" \
+              -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+              https://api.github.com/repos/kyma-project/api-gateway/releases/$RELEASE_ID \
+              -d '{"make_latest":"true"}'
           else
-                  echo "No action needed: $CURRENT_RELEASE is the latest"
-          fi         
-          
+            echo "No action needed: $CURRENT_RELEASE is the latest"
+          fi
+
       - name: Update Dependabot for major/minor releases
-        if: env.is_patch == 'false'
+        if: ${{ needs.check-prerequisites.outputs.is_patch == 'false' }}
         env:
           GH_TOKEN: ${{ secrets.GOAT_BOT_REPO_ACCESS }}
-          CURRENT_RELEASE: $current_release
+          CURRENT_RELEASE: ${{ needs.check-prerequisites.outputs.current_release }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          
           git checkout -b dependabot-config/$CURRENT_RELEASE
           sed -i "s|release\-.*|release\-$CURRENT_RELEASE\"|g" .github/dependabot.yml
           git add .
@@ -182,5 +181,4 @@ jobs:
           git push -f -u origin dependabot-config/$CURRENT_RELEASE
           gh pr create --base main --head dependabot-config/$CURRENT_RELEASE --fill || true 
 
-          # Delete sec-scanners-config/$CURRENT_RELEASE branch from first part of the release
           gh api --method DELETE repos/${{ github.repository }}/git/refs/heads/sec-scanners-config/$CURRENT_RELEASE || echo "Failed to delete branch"
