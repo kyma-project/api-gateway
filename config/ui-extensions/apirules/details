@@ -205,7 +205,6 @@ body:
     name: virtualService
     disableCreate: true
 resourceGraph:
-  depth: 1
   dataSources:
     - source: virtualServices
     - source: relatedAuthorizationPolicies

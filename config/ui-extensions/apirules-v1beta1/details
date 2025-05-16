@@ -1,5 +1,4 @@
 resourceGraph:
-  depth: 1
   dataSources:
     - source: relatedRequestAuthentications
     - source: virtualServices
