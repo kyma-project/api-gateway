@@ -39,7 +39,7 @@ func validateHosts(parentAttributePath string, vsList networkingv1beta1.VirtualS
 				hostAttributePath := fmt.Sprintf("%s[%d]", hostsAttributePath, hostIndex)
 				failures = append(failures, validation.Failure{
 					AttributePath: hostAttributePath,
-					Message:       "Lowercase RFC 1123 label is only supported as the APIRule host when selected Gateway has a single host definition matching *.<fqdn> format",
+					Message:       "Lowercase RFC 1123 label (short host) is only supported as the APIRule host when selected Gateway has a single host definition matching *.<fqdn> format",
 				})
 			}
 			gatewayDomain = getGatewayDomain(gateway)

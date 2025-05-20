@@ -198,7 +198,45 @@ var _ = Describe("Validate hosts", func() {
 		//then
 		Expect(problems).To(HaveLen(1))
 		Expect(problems[0].AttributePath).To(Equal(".spec.hosts[0]"))
-		Expect(problems[0].Message).To(Equal("Lowercase RFC 1123 label is only supported as the APIRule host when selected Gateway has a single host definition matching *.<fqdn> format"))
+		Expect(problems[0].Message).To(Equal("Lowercase RFC 1123 label (short host) is only supported as the APIRule host when selected Gateway has a single host definition matching *.<fqdn> format"))
+	})
+
+	It("Should fail if host is a short host name and referenced Gateway doesn't have wildcard host definition", func() {
+		//given
+		apiRule := &v2alpha1.APIRule{
+			Spec: v2alpha1.APIRuleSpec{
+				Gateway: ptr.To("gateway-ns/gateway-name"),
+				Hosts: []*v2alpha1.Host{
+					ptr.To(v2alpha1.Host("short-name-host")),
+				},
+			},
+		}
+
+		gwList := networkingv1beta1.GatewayList{
+			Items: []*networkingv1beta1.Gateway{
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "gateway-name",
+						Namespace: "gateway-ns",
+					},
+					Spec: v1beta1.Gateway{
+						Servers: []*v1beta1.Server{
+							{
+								Hosts: []string{"random.example.com"},
+							},
+						},
+					},
+				},
+			},
+		}
+
+		//when
+		problems := validateHosts(".spec", networkingv1beta1.VirtualServiceList{}, gwList, apiRule)
+
+		//then
+		Expect(problems).To(HaveLen(1))
+		Expect(problems[0].AttributePath).To(Equal(".spec.hosts[0]"))
+		Expect(problems[0].Message).To(Equal("Lowercase RFC 1123 label (short host) is only supported as the APIRule host when selected Gateway has a single host definition matching *.<fqdn> format"))
 	})
 
 	validateHostsHelper := func(hosts []*v2alpha1.Host, useVsOwnerLabel bool) []validation.Failure {
