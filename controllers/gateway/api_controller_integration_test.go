@@ -2,6 +2,7 @@ package gateway_test
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"math/rand"
 	"net/http"
@@ -10,27 +11,22 @@ import (
 
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
-	apinetworkingv1beta1 "istio.io/api/networking/v1beta1"
-
-	gomegatypes "github.com/onsi/gomega/types"
-	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/utils/ptr"
-
-	"encoding/json"
-
 	"github.com/kyma-project/api-gateway/internal/builders"
 	"github.com/kyma-project/api-gateway/internal/helpers"
 	"github.com/kyma-project/api-gateway/internal/processing"
-
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	. "github.com/onsi/gomega/gstruct"
+	gomegatypes "github.com/onsi/gomega/types"
 	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
+	apinetworkingv1beta1 "istio.io/api/networking/v1beta1"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -823,7 +819,15 @@ var _ = Describe("APIRule Controller", Serial, func() {
 						serviceName := testServiceNameBase
 						serviceHost := "httpbin4.kyma.local"
 
-						apiRule := testApiRule(apiRuleName, testNamespace, serviceName, testNamespace, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule1, rule2, rule3, rule4})
+						apiRule := testApiRule(
+							apiRuleName,
+							testNamespace,
+							serviceName,
+							testNamespace,
+							serviceHost,
+							testServicePort,
+							[]gatewayv1beta1.Rule{rule1, rule2, rule3, rule4},
+						)
 						svc := testService(serviceName, testNamespace, testServicePort)
 
 						// when
@@ -1589,7 +1593,9 @@ var _ = Describe("APIRule Controller", Serial, func() {
 					serviceTeardown(svc)
 				}()
 				Expect(err).Should(HaveOccurred())
-				Expect(err.Error()).To(ContainSubstring("spec.hosts[0]: Invalid value: \"string\": Host must be a lowercase RFC 1123 label (must consist of lowercase alphanumeric characters or '-', and must start and end with an lowercase alphanumeric character) or a fully qualified domain name"))
+				Expect(
+					err.Error(),
+				).To(ContainSubstring("spec.hosts[0]: Invalid value: \"string\": Host must be a lowercase RFC 1123 label (must consist of lowercase alphanumeric characters or '-', and must start and end with an lowercase alphanumeric character) or a fully qualified domain name"))
 			}
 
 			It("should not create an APIRule with an empty host", func() {
@@ -2032,7 +2038,12 @@ func testApiRule(name, namespace, serviceName, serviceNamespace, serviceHost str
 	}
 }
 
-func testApiRulev2alpha1(name, namespace, serviceName, serviceNamespace string, serviceHosts []*gatewayv2alpha1.Host, servicePort uint32, rules []gatewayv2alpha1.Rule) *gatewayv2alpha1.APIRule {
+func testApiRulev2alpha1(
+	name, namespace, serviceName, serviceNamespace string,
+	serviceHosts []*gatewayv2alpha1.Host,
+	servicePort uint32,
+	rules []gatewayv2alpha1.Rule,
+) *gatewayv2alpha1.APIRule {
 	var gateway = testGatewayURL
 
 	return &gatewayv2alpha1.APIRule{

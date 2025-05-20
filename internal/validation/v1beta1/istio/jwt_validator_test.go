@@ -2,6 +2,7 @@ package istio
 
 import (
 	"encoding/json"
+
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	processingtest "github.com/kyma-project/api-gateway/internal/processing/processing_test"
 	"github.com/kyma-project/api-gateway/internal/types/ory"

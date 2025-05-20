@@ -2,12 +2,13 @@ package ratelimit
 
 import (
 	"fmt"
+	"slices"
+	"time"
+
 	"github.com/kyma-project/api-gateway/internal/builders/envoyfilter"
 	"google.golang.org/protobuf/types/known/structpb"
 	"istio.io/api/networking/v1alpha3"
 	networkingv1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
-	"slices"
-	"time"
 )
 
 const (

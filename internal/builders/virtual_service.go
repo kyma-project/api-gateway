@@ -2,14 +2,15 @@ package builders
 
 import (
 	"fmt"
+	"strings"
+	"time"
+
 	apirulev1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	apirulev2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	"google.golang.org/protobuf/types/known/durationpb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 	"istio.io/api/networking/v1beta1"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
-	"strings"
-	"time"
 )
 
 // VirtualService returns builder for istio.io/client-go/pkg/apis/networking/v1beta1/VirtualService type

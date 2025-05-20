@@ -11,10 +11,9 @@ import (
 	"github.com/kyma-project/api-gateway/internal/processing/default_domain"
 	"github.com/kyma-project/api-gateway/internal/validation"
 	"google.golang.org/appengine/log"
+	apiv1beta1 "istio.io/api/type/v1beta1"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-
-	apiv1beta1 "istio.io/api/type/v1beta1"
 )
 
 // APIRuleValidator is used to validate github.com/kyma-project/api-gateway/api/v1beta1/APIRule instances
@@ -156,7 +155,10 @@ func (v *APIRuleValidator) validateRules(ctx context.Context, client client.Clie
 	for i, r := range rules {
 		attributePathWithRuleIndex := fmt.Sprintf("%s[%d]", attributePath, i)
 		if checkForService && r.Service == nil {
-			problems = append(problems, validation.Failure{AttributePath: attributePathWithRuleIndex + ".service", Message: "No service defined with no main service on spec level"})
+			problems = append(
+				problems,
+				validation.Failure{AttributePath: attributePathWithRuleIndex + ".service", Message: "No service defined with no main service on spec level"},
+			)
 		}
 		if r.Service != nil {
 			labelSelector, err := helpers.GetLabelSelectorFromService(ctx, client, r.Service, api, &r)
@@ -168,7 +170,9 @@ func (v *APIRuleValidator) validateRules(ctx context.Context, client client.Clie
 					l.Info("Couldn't get label selectors for service", "error", err)
 				}
 			}
-			problems = append(problems, v.validateAccessStrategies(attributePathWithRuleIndex+".accessStrategies", r.AccessStrategies, labelSelector, helpers.FindServiceNamespace(api, &r))...)
+			problems = append(
+				problems,
+				v.validateAccessStrategies(attributePathWithRuleIndex+".accessStrategies", r.AccessStrategies, labelSelector, helpers.FindServiceNamespace(api, &r))...)
 			for namespace, services := range v.ServiceBlockList {
 				for _, svc := range services {
 					serviceNamespace := helpers.FindServiceNamespace(api, &r)
@@ -208,7 +212,12 @@ func (v *APIRuleValidator) validateRules(ctx context.Context, client client.Clie
 	return problems
 }
 
-func (v *APIRuleValidator) validateAccessStrategies(attributePath string, accessStrategies []*gatewayv1beta1.Authenticator, selector *apiv1beta1.WorkloadSelector, namespace string) []validation.Failure {
+func (v *APIRuleValidator) validateAccessStrategies(
+	attributePath string,
+	accessStrategies []*gatewayv1beta1.Authenticator,
+	selector *apiv1beta1.WorkloadSelector,
+	namespace string,
+) []validation.Failure {
 	var problems []validation.Failure
 
 	if len(accessStrategies) == 0 {
@@ -227,7 +236,12 @@ func (v *APIRuleValidator) validateAccessStrategies(attributePath string, access
 	return problems
 }
 
-func (v *APIRuleValidator) validateAccessStrategy(attributePath string, accessStrategy *gatewayv1beta1.Authenticator, selector *apiv1beta1.WorkloadSelector, namespace string) []validation.Failure {
+func (v *APIRuleValidator) validateAccessStrategy(
+	attributePath string,
+	accessStrategy *gatewayv1beta1.Authenticator,
+	selector *apiv1beta1.WorkloadSelector,
+	namespace string,
+) []validation.Failure {
 	var problems []validation.Failure
 	var vld handlerValidator
 
@@ -253,7 +267,10 @@ func (v *APIRuleValidator) validateAccessStrategy(attributePath string, accessSt
 		if v.InjectionValidator != nil {
 			injectionProblems, err := v.InjectionValidator.Validate(attributePath+".injection", selector, namespace)
 			if err != nil {
-				problems = append(problems, validation.Failure{AttributePath: attributePath + ".handler", Message: fmt.Sprintf("Could not find pod for selected service, err: %s", err)})
+				problems = append(
+					problems,
+					validation.Failure{AttributePath: attributePath + ".handler", Message: fmt.Sprintf("Could not find pod for selected service, err: %s", err)},
+				)
 			} else {
 				problems = append(problems, injectionProblems...)
 			}

@@ -92,7 +92,15 @@ func createCACertificate(host string, validFrom time.Time, maxAge time.Duration)
 	return caKey, caCertificate, caDERBytes, nil
 }
 
-func createCertificate(host string, validFrom time.Time, maxAge time.Duration, alternateIPs []net.IP, alternateDNS []string, caKey *rsa.PrivateKey, caCertificate *x509.Certificate) (*rsa.PrivateKey, []byte, error) {
+func createCertificate(
+	host string,
+	validFrom time.Time,
+	maxAge time.Duration,
+	alternateIPs []net.IP,
+	alternateDNS []string,
+	caKey *rsa.PrivateKey,
+	caCertificate *x509.Certificate,
+) (*rsa.PrivateKey, []byte, error) {
 	certKey, err := rsa.GenerateKey(rand.Reader, keySize)
 	if err != nil {
 		return nil, nil, err

@@ -2,38 +2,87 @@ package v2
 
 import (
 	"fmt"
+	"net/http"
+	"strings"
+
 	"github.com/cucumber/godog"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/helpers"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/manifestprocessor"
-	"net/http"
-	"strings"
 )
 
 func initScenario(ctx *godog.ScenarioContext, ts *testsuite) {
 	scenario := ts.createScenario()
 
 	ctx.Step(`^APIRule has status "([^"]*)" with description containing "([^"]*)"$`, scenario.theAPIRuleHasStatusWithDesc)
-	ctx.Step(`^Calling short host "([^"]*)" with path "([^"]*)" without a token should result in status between (\d+) and (\d+)$`, scenario.callingShortHostWithoutTokenShouldResultInStatusBetween)
+	ctx.Step(
+		`^Calling short host "([^"]*)" with path "([^"]*)" without a token should result in status between (\d+) and (\d+)$`,
+		scenario.callingShortHostWithoutTokenShouldResultInStatusBetween,
+	)
 	ctx.Step(`^Calling the "([^"]*)" endpoint should return response with header "([^"]*)" with value "([^"]*)"$`, scenario.callingTheEndpointShouldResultInBodyContaining)
-	ctx.Step(`^Calling the "([^"]*)" endpoint with "([^"]*)" method should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithMethodShouldResultInStatusBetween)
-	ctx.Step(`^Calling the "([^"]*)" endpoint with "([^"]*)" method with a valid "([^"]*)" token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithMethodWithValidTokenShouldResultInStatusBetween)
-	ctx.Step(`^Calling the "([^"]*)" endpoint with "([^"]*)" method with any token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithMethodWithInvalidTokenShouldResultInStatusBetween)
-	ctx.Step(`^Calling the "([^"]*)" endpoint with a valid "([^"]*)" token from default header should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithValidTokenShouldResultInStatusBetween)
-	ctx.Step(`^Calling the "([^"]*)" endpoint with a valid "([^"]*)" token from header "([^"]*)" and prefix "([^"]*)" should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithValidTokenFromHeaderShouldResultInStatusBetween)
-	ctx.Step(`^Calling the "([^"]*)" endpoint with a valid "([^"]*)" token from parameter "([^"]*)" should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithValidTokenFromParameterShouldResultInStatusBetween)
-	ctx.Step(`^Calling the "([^"]*)" endpoint with a valid "([^"]*)" token should result in body containing "([^"]*)"$`, scenario.callingTheEndpointWithValidTokenShouldResultInBodyContaining)
-	ctx.Step(`^Calling the "([^"]*)" endpoint with a valid "([^"]*)" token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithValidTokenShouldResultInStatusBetween)
-	ctx.Step(`^Calling the "([^"]*)" endpoint with a valid "([^"]*)" token with "([^"]*)" "([^"]*)" and "([^"]*)" should result in status between (\d+) and (\d+)`, scenario.callingTheEndpointWithAValidToken)
-	ctx.Step(`^Calling the "([^"]*)" endpoint with an invalid token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithInvalidTokenShouldResultInStatusBetween)
-	ctx.Step(`^Calling the "([^"]*)" endpoint with header "([^"]*)" with value "([^"]*)" and a valid "([^"]*)" token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithHeaderAndValidJwt)
-	ctx.Step(`^Calling the "([^"]*)" endpoint with header "([^"]*)" with value "([^"]*)" and an invalid "([^"]*)" token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithHeaderAndInvalidJwt)
-	ctx.Step(`^Calling the "([^"]*)" endpoint with header "([^"]*)" with value "([^"]*)" and no token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithHeader)
+	ctx.Step(
+		`^Calling the "([^"]*)" endpoint with "([^"]*)" method should result in status between (\d+) and (\d+)$`,
+		scenario.callingTheEndpointWithMethodShouldResultInStatusBetween,
+	)
+	ctx.Step(
+		`^Calling the "([^"]*)" endpoint with "([^"]*)" method with a valid "([^"]*)" token should result in status between (\d+) and (\d+)$`,
+		scenario.callingTheEndpointWithMethodWithValidTokenShouldResultInStatusBetween,
+	)
+	ctx.Step(
+		`^Calling the "([^"]*)" endpoint with "([^"]*)" method with any token should result in status between (\d+) and (\d+)$`,
+		scenario.callingTheEndpointWithMethodWithInvalidTokenShouldResultInStatusBetween,
+	)
+	ctx.Step(
+		`^Calling the "([^"]*)" endpoint with a valid "([^"]*)" token from default header should result in status between (\d+) and (\d+)$`,
+		scenario.callingTheEndpointWithValidTokenShouldResultInStatusBetween,
+	)
+	ctx.Step(
+		`^Calling the "([^"]*)" endpoint with a valid "([^"]*)" token from header "([^"]*)" and prefix "([^"]*)" should result in status between (\d+) and (\d+)$`,
+		scenario.callingTheEndpointWithValidTokenFromHeaderShouldResultInStatusBetween,
+	)
+	ctx.Step(
+		`^Calling the "([^"]*)" endpoint with a valid "([^"]*)" token from parameter "([^"]*)" should result in status between (\d+) and (\d+)$`,
+		scenario.callingTheEndpointWithValidTokenFromParameterShouldResultInStatusBetween,
+	)
+	ctx.Step(
+		`^Calling the "([^"]*)" endpoint with a valid "([^"]*)" token should result in body containing "([^"]*)"$`,
+		scenario.callingTheEndpointWithValidTokenShouldResultInBodyContaining,
+	)
+	ctx.Step(
+		`^Calling the "([^"]*)" endpoint with a valid "([^"]*)" token should result in status between (\d+) and (\d+)$`,
+		scenario.callingTheEndpointWithValidTokenShouldResultInStatusBetween,
+	)
+	ctx.Step(
+		`^Calling the "([^"]*)" endpoint with a valid "([^"]*)" token with "([^"]*)" "([^"]*)" and "([^"]*)" should result in status between (\d+) and (\d+)`,
+		scenario.callingTheEndpointWithAValidToken,
+	)
+	ctx.Step(
+		`^Calling the "([^"]*)" endpoint with an invalid token should result in status between (\d+) and (\d+)$`,
+		scenario.callingTheEndpointWithInvalidTokenShouldResultInStatusBetween,
+	)
+	ctx.Step(
+		`^Calling the "([^"]*)" endpoint with header "([^"]*)" with value "([^"]*)" and a valid "([^"]*)" token should result in status between (\d+) and (\d+)$`,
+		scenario.callingTheEndpointWithHeaderAndValidJwt,
+	)
+	ctx.Step(
+		`^Calling the "([^"]*)" endpoint with header "([^"]*)" with value "([^"]*)" and an invalid "([^"]*)" token should result in status between (\d+) and (\d+)$`,
+		scenario.callingTheEndpointWithHeaderAndInvalidJwt,
+	)
+	ctx.Step(
+		`^Calling the "([^"]*)" endpoint with header "([^"]*)" with value "([^"]*)" and no token should result in status between (\d+) and (\d+)$`,
+		scenario.callingTheEndpointWithHeader,
+	)
 	ctx.Step(`^Calling the "([^"]*)" endpoint with header "([^"]*)" with value "([^"]*)" should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithHeader)
 	ctx.Step(`^Calling the "([^"]*)" endpoint without a token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithoutTokenShouldResultInStatusBetween)
 	ctx.Step(`^In-cluster calling the "([^"]*)" endpoint without a token should fail$`, scenario.inClusterCallingTheEndpointWithoutTokenShouldFail)
 	ctx.Step(`^In-cluster calling the "([^"]*)" endpoint with a valid "([^"]*)" token should fail$`, scenario.inClusterCallingTheEndpointWithTokenShouldFail)
-	ctx.Step(`^Preflight calling the "([^"]*)" endpoint with header Origin:"([^"]*)" should result in status code (\d+) and no response header "([^"]*)"$`, scenario.preflightEndpointCallNoResponseHeader)
-	ctx.Step(`^Preflight calling the "([^"]*)" endpoint with header Origin:"([^"]*)" should result in status code (\d+) and response header "([^"]*)" with value "([^"]*)"$`, scenario.preflightEndpointCallResponseHeaders)
+	ctx.Step(
+		`^Preflight calling the "([^"]*)" endpoint with header Origin:"([^"]*)" should result in status code (\d+) and no response header "([^"]*)"$`,
+		scenario.preflightEndpointCallNoResponseHeader,
+	)
+	ctx.Step(
+		`^Preflight calling the "([^"]*)" endpoint with header Origin:"([^"]*)" should result in status code (\d+) and response header "([^"]*)" with value "([^"]*)"$`,
+		scenario.preflightEndpointCallResponseHeaders,
+	)
 	ctx.Step(`^Specifies custom Gateway "([^"]*)"/"([^"]*)"`, scenario.specifiesCustomGateway)
 	ctx.Step(`^Teardown helloworld service$`, scenario.teardownHelloworldCustomLabelService)
 	ctx.Step(`^Teardown httpbin service$`, scenario.teardownHttpbinService)
@@ -41,7 +90,10 @@ func initScenario(ctx *godog.ScenarioContext, ts *testsuite) {
 	ctx.Step(`^The APIRule is applied and contains error status with "([^"]*)" message$`, scenario.theAPIRulev2IsAppliedExpectError)
 	ctx.Step(`^The APIRule is applied$`, scenario.theAPIRulev2IsApplied)
 	ctx.Step(`^The APIRule template file is set to "([^"]*)"$`, scenario.theAPIRuleTemplateFileIsSetTo)
-	ctx.Step(`^The APIRule with following CORS setup is applied AllowOrigins:'(\[.*\])', AllowMethods:'(\[.*\])', AllowHeaders:'(\[.*\])', AllowCredentials:"([^"]*)", ExposeHeaders:'(\[.*\])', MaxAge:"([^"]*)"$`, scenario.applyApiRuleWithCustomCORS)
+	ctx.Step(
+		`^The APIRule with following CORS setup is applied AllowOrigins:'(\[.*\])', AllowMethods:'(\[.*\])', AllowHeaders:'(\[.*\])', AllowCredentials:"([^"]*)", ExposeHeaders:'(\[.*\])', MaxAge:"([^"]*)"$`,
+		scenario.applyApiRuleWithCustomCORS,
+	)
 	ctx.Step(`^The APIRule with service on root level is applied$`, scenario.theAPIRuleIsApplied)
 	ctx.Step(`^The APIRule without CORS set up is applied$`, scenario.theAPIRuleIsApplied)
 	ctx.Step(`^The endpoint has JWT restrictions$`, scenario.theEndpointHasJwtRestrictionsWithScope)

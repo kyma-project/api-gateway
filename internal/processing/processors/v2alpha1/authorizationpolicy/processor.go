@@ -3,12 +3,11 @@ package authorizationpolicy
 import (
 	"context"
 
-	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
-	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
-
 	"github.com/go-logr/logr"
+	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	"github.com/kyma-project/api-gateway/internal/processing"
 	"github.com/kyma-project/api-gateway/internal/processing/hashbasedstate"
+	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )

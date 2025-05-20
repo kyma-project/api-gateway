@@ -3,8 +3,8 @@ package requestauthentication
 import (
 	"context"
 	"fmt"
-	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 
+	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	"github.com/kyma-project/api-gateway/internal/builders"
 	"github.com/kyma-project/api-gateway/internal/processing"
 	"github.com/kyma-project/api-gateway/internal/processing/processors"
@@ -30,7 +30,12 @@ func (r requestAuthenticationCreator) Create(ctx context.Context, client client.
 	return requestAuthentications, nil
 }
 
-func generateRequestAuthentication(ctx context.Context, client client.Client, apiRule *gatewayv2alpha1.APIRule, rule gatewayv2alpha1.Rule) (*securityv1beta1.RequestAuthentication, error) {
+func generateRequestAuthentication(
+	ctx context.Context,
+	client client.Client,
+	apiRule *gatewayv2alpha1.APIRule,
+	rule gatewayv2alpha1.Rule,
+) (*securityv1beta1.RequestAuthentication, error) {
 	namePrefix := fmt.Sprintf("%s-", apiRule.Name)
 	namespace, err := gatewayv2alpha1.FindServiceNamespace(apiRule, rule)
 	if err != nil {

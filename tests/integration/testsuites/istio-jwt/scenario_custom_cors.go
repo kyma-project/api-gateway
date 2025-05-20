@@ -9,9 +9,18 @@ func initCustomCors(ctx *godog.ScenarioContext, ts *testsuite) {
 	scenario := ts.createScenario("istio-custom-cors.yaml", "istio-custom-cors")
 
 	ctx.Step(`^CustomCORS: There is an httpbin service$`, scenario.thereIsAHttpbinService)
-	ctx.Step(`^CustomCORS: The APIRule with following CORS setup is applied AllowOrigins:'(\[.*\])', AllowMethods:'(\[.*\])', AllowHeaders:'(\[.*\])', AllowCredentials:"([^"]*)", ExposeHeaders:'(\[.*\])', MaxAge:"([^"]*)"$`, scenario.applyApiRuleWithCustomCORS)
-	ctx.Step(`^CustomCORS: Preflight calling the "([^"]*)" endpoint with header Origin:"([^"]*)" should result in status code (\d+) and response header "([^"]*)" with value "([^"]*)"$`, scenario.preflightEndpointCallResponseHeaders)
-	ctx.Step(`^CustomCORS: Preflight calling the "([^"]*)" endpoint with header Origin:"([^"]*)" should result in status code (\d+) and no response header "([^"]*)"$`, scenario.preflightEndpointCallNoResponseHeader)
+	ctx.Step(
+		`^CustomCORS: The APIRule with following CORS setup is applied AllowOrigins:'(\[.*\])', AllowMethods:'(\[.*\])', AllowHeaders:'(\[.*\])', AllowCredentials:"([^"]*)", ExposeHeaders:'(\[.*\])', MaxAge:"([^"]*)"$`,
+		scenario.applyApiRuleWithCustomCORS,
+	)
+	ctx.Step(
+		`^CustomCORS: Preflight calling the "([^"]*)" endpoint with header Origin:"([^"]*)" should result in status code (\d+) and response header "([^"]*)" with value "([^"]*)"$`,
+		scenario.preflightEndpointCallResponseHeaders,
+	)
+	ctx.Step(
+		`^CustomCORS: Preflight calling the "([^"]*)" endpoint with header Origin:"([^"]*)" should result in status code (\d+) and no response header "([^"]*)"$`,
+		scenario.preflightEndpointCallNoResponseHeader,
+	)
 	ctx.Step(`^CustomCORS: Teardown httpbin service$`, scenario.teardownHttpbinService)
 }
 

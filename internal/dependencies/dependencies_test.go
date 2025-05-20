@@ -2,6 +2,7 @@ package dependencies_test
 
 import (
 	"context"
+
 	"github.com/kyma-project/api-gateway/internal/dependencies"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"

@@ -8,6 +8,7 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
+
 	"github.com/go-jose/go-jose/v3"
 	"github.com/google/uuid"
 	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"

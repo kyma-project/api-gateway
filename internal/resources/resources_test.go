@@ -25,17 +25,19 @@ var _ = Describe("Resources", func() {
 	Expect(networkingv1alpha3.AddToScheme(sc)).To(Succeed())
 	Expect(networkingv1beta1.AddToScheme(sc)).To(Succeed())
 
-	DescribeTable("FindUserCreatedResourcesDescribe", func(ctx context.Context, logger logr.Logger, c client.Client, configuration resourceFinderConfiguration, conditionResult bool, want []Resource, wantErr bool) {
-		i := &ResourcesFinder{
-			ctx:           ctx,
-			logger:        logger,
-			client:        c,
-			configuration: configuration,
-		}
-		got, err := i.FindUserCreatedResources(func(ctx context.Context, c client.Client, res Resource) bool { return conditionResult })
-		Expect(err != nil).To(Equal(wantErr))
-		Expect(got).To(BeEquivalentTo(want))
-	},
+	DescribeTable(
+		"FindUserCreatedResourcesDescribe",
+		func(ctx context.Context, logger logr.Logger, c client.Client, configuration resourceFinderConfiguration, conditionResult bool, want []Resource, wantErr bool) {
+			i := &ResourcesFinder{
+				ctx:           ctx,
+				logger:        logger,
+				client:        c,
+				configuration: configuration,
+			}
+			got, err := i.FindUserCreatedResources(func(ctx context.Context, c client.Client, res Resource) bool { return conditionResult })
+			Expect(err != nil).To(Equal(wantErr))
+			Expect(got).To(BeEquivalentTo(want))
+		},
 		Entry("Should get nothing if there are only managed API-Gateway resources present", context.Background(),
 			logr.Discard(),
 			fake.NewClientBuilder().WithScheme(sc).WithObjects(&v1beta1.APIRule{
@@ -63,7 +65,8 @@ var _ = Describe("Resources", func() {
 			true,
 			nil,
 			false,
-		), Entry("Should get resource if there is a customer resource present", context.Background(),
+		),
+		Entry("Should get resource if there is a customer resource present", context.Background(),
 			logr.Discard(),
 			fake.NewClientBuilder().WithScheme(sc).WithObjects(&v1beta1.APIRule{
 				ObjectMeta: metav1.ObjectMeta{
@@ -106,7 +109,8 @@ var _ = Describe("Resources", func() {
 				},
 			},
 			false,
-		), Entry("Should get resource if there is a customer resource present in a specific version only", context.Background(),
+		),
+		Entry("Should get resource if there is a customer resource present in a specific version only", context.Background(),
 			logr.Discard(),
 			fake.NewClientBuilder().WithScheme(sc).WithObjects(&networkingv1beta1.VirtualService{
 				ObjectMeta: metav1.ObjectMeta{
@@ -145,7 +149,8 @@ var _ = Describe("Resources", func() {
 				},
 			},
 			false,
-		), Entry("Should not get resource if there is a customer resource present but condition check returns false", context.Background(),
+		),
+		Entry("Should not get resource if there is a customer resource present but condition check returns false", context.Background(),
 			logr.Discard(),
 			fake.NewClientBuilder().WithScheme(sc).WithObjects(&v1beta1.APIRule{
 				ObjectMeta: metav1.ObjectMeta{
@@ -166,7 +171,8 @@ var _ = Describe("Resources", func() {
 			false,
 			nil,
 			false,
-		))
+		),
+	)
 })
 
 var _ = Describe("NewResourcesFinderFromConfigYaml", func() {

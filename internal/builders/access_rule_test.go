@@ -3,14 +3,13 @@ package builders
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"net/http"
 
-	"k8s.io/apimachinery/pkg/runtime"
-
+	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	internalTypes "github.com/kyma-project/api-gateway/internal/types/ory"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
 var _ = Describe("Builder for", func() {

@@ -5,11 +5,10 @@ import (
 	"fmt"
 
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
-	"github.com/kyma-project/api-gateway/internal/processing/default_domain"
-
 	"github.com/kyma-project/api-gateway/internal/builders"
 	"github.com/kyma-project/api-gateway/internal/helpers"
 	"github.com/kyma-project/api-gateway/internal/processing"
+	"github.com/kyma-project/api-gateway/internal/processing/default_domain"
 	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -123,7 +122,12 @@ func GenerateAccessRule(api *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rule, a
 	return arBuilder.Get()
 }
 
-func GenerateAccessRuleSpec(api *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rule, accessStrategies []*gatewayv1beta1.Authenticator, defaultDomainName string) *rulev1alpha1.RuleSpec {
+func GenerateAccessRuleSpec(
+	api *gatewayv1beta1.APIRule,
+	rule gatewayv1beta1.Rule,
+	accessStrategies []*gatewayv1beta1.Authenticator,
+	defaultDomainName string,
+) *rulev1alpha1.RuleSpec {
 	accessRuleSpec := builders.AccessRuleSpec().
 		Match(builders.Match().
 			URL(fmt.Sprintf("<http|https>://%s<%s>", default_domain.GetHostWithDomain(*api.Spec.Host, defaultDomainName), rule.Path)).

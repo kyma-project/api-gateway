@@ -1,6 +1,8 @@
 package controllers
 
 import (
+	"testing"
+
 	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
 	"github.com/kyma-project/api-gateway/tests"
 	. "github.com/onsi/ginkgo/v2"
@@ -9,7 +11,6 @@ import (
 	"k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
-	"testing"
 )
 
 func TestValidators(t *testing.T) {

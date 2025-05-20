@@ -3,8 +3,8 @@ package processors
 import (
 	"context"
 	"fmt"
-	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 
+	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"github.com/kyma-project/api-gateway/internal/processing"
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
@@ -39,11 +39,19 @@ func (r RequestAuthenticationProcessor) EvaluateReconciliation(ctx context.Conte
 	return changes, nil
 }
 
-func (r RequestAuthenticationProcessor) getDesiredState(ctx context.Context, client ctrlclient.Client, api *gatewayv1beta1.APIRule) (map[string]*securityv1beta1.RequestAuthentication, error) {
+func (r RequestAuthenticationProcessor) getDesiredState(
+	ctx context.Context,
+	client ctrlclient.Client,
+	api *gatewayv1beta1.APIRule,
+) (map[string]*securityv1beta1.RequestAuthentication, error) {
 	return r.Creator.Create(ctx, client, api)
 }
 
-func (r RequestAuthenticationProcessor) getActualState(ctx context.Context, client ctrlclient.Client, api *gatewayv1beta1.APIRule) (map[string]*securityv1beta1.RequestAuthentication, error) {
+func (r RequestAuthenticationProcessor) getActualState(
+	ctx context.Context,
+	client ctrlclient.Client,
+	api *gatewayv1beta1.APIRule,
+) (map[string]*securityv1beta1.RequestAuthentication, error) {
 	labels := processing.GetOwnerLabels(api)
 
 	var raList securityv1beta1.RequestAuthenticationList
@@ -61,7 +69,10 @@ func (r RequestAuthenticationProcessor) getActualState(ctx context.Context, clie
 	return requestAuthentications, nil
 }
 
-func (r RequestAuthenticationProcessor) getObjectChanges(desiredRas map[string]*securityv1beta1.RequestAuthentication, actualRas map[string]*securityv1beta1.RequestAuthentication) []*processing.ObjectChange {
+func (r RequestAuthenticationProcessor) getObjectChanges(
+	desiredRas map[string]*securityv1beta1.RequestAuthentication,
+	actualRas map[string]*securityv1beta1.RequestAuthentication,
+) []*processing.ObjectChange {
 	raChanges := make(map[string]*processing.ObjectChange)
 
 	for path, rule := range desiredRas {

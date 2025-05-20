@@ -3,8 +3,8 @@ package istio
 import (
 	"context"
 	"fmt"
-	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 
+	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"github.com/kyma-project/api-gateway/internal/builders"
 	"github.com/kyma-project/api-gateway/internal/helpers"
 	"github.com/kyma-project/api-gateway/internal/processing"
@@ -39,7 +39,12 @@ func (r requestAuthenticationCreator) Create(ctx context.Context, client client.
 	return requestAuthentications, nil
 }
 
-func generateRequestAuthentication(ctx context.Context, client client.Client, api *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rule) (*securityv1beta1.RequestAuthentication, error) {
+func generateRequestAuthentication(
+	ctx context.Context,
+	client client.Client,
+	api *gatewayv1beta1.APIRule,
+	rule gatewayv1beta1.Rule,
+) (*securityv1beta1.RequestAuthentication, error) {
 	namePrefix := fmt.Sprintf("%s-", api.Name)
 	namespace := helpers.FindServiceNamespace(api, &rule)
 

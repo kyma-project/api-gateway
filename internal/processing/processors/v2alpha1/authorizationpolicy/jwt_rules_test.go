@@ -3,13 +3,14 @@ package authorizationpolicy_test
 import (
 	"context"
 	"fmt"
+	"net/http"
+
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	"github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1/authorizationpolicy"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"istio.io/api/security/v1beta1"
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
-	"net/http"
 )
 
 var _ = Describe("Processing JWT rules", func() {
@@ -221,8 +222,20 @@ var _ = Describe("Processing JWT rules", func() {
 	When("Two AP for different services with JWT handler exist", func() {
 		It("should update APs and update principal when handler changed for one of the AP to noAuth", func() {
 			// given: Cluster state
-			beingUpdatedAp := getAuthorizationPolicy("being-updated-ap", apiRuleNamespace, "test-service", []string{"example-host.example.com"}, []string{http.MethodGet, http.MethodPost})
-			jwtSecuredAp := getAuthorizationPolicy("jwt-secured-ap", apiRuleNamespace, "jwt-secured-service", []string{"example-host.example.com"}, []string{http.MethodGet, http.MethodPost})
+			beingUpdatedAp := getAuthorizationPolicy(
+				"being-updated-ap",
+				apiRuleNamespace,
+				"test-service",
+				[]string{"example-host.example.com"},
+				[]string{http.MethodGet, http.MethodPost},
+			)
+			jwtSecuredAp := getAuthorizationPolicy(
+				"jwt-secured-ap",
+				apiRuleNamespace,
+				"jwt-secured-service",
+				[]string{"example-host.example.com"},
+				[]string{http.MethodGet, http.MethodPost},
+			)
 			svc1 := newServiceBuilder().
 				withName("test-service").
 				withNamespace("example-namespace").
@@ -269,8 +282,24 @@ var _ = Describe("Processing JWT rules", func() {
 			Expect(err).To(BeNil())
 			Expect(result).To(HaveLen(2))
 
-			updatedNoopMatcher := getActionMatcher("update", apiRuleNamespace, "test-service", "Principals", ContainElements("cluster.local/ns/istio-system/sa/istio-ingressgateway-service-account"), ContainElements("GET", "POST"), ContainElements("/"))
-			updatedNotChangedMatcher := getActionMatcher("update", apiRuleNamespace, "jwt-secured-service", "RequestPrincipals", ContainElements("https://oauth2.example.com//*"), ContainElements("GET", "POST"), ContainElements("/"))
+			updatedNoopMatcher := getActionMatcher(
+				"update",
+				apiRuleNamespace,
+				"test-service",
+				"Principals",
+				ContainElements("cluster.local/ns/istio-system/sa/istio-ingressgateway-service-account"),
+				ContainElements("GET", "POST"),
+				ContainElements("/"),
+			)
+			updatedNotChangedMatcher := getActionMatcher(
+				"update",
+				apiRuleNamespace,
+				"jwt-secured-service",
+				"RequestPrincipals",
+				ContainElements("https://oauth2.example.com//*"),
+				ContainElements("GET", "POST"),
+				ContainElements("/"),
+			)
 			Expect(result).To(ContainElements(updatedNoopMatcher, updatedNotChangedMatcher))
 		})
 

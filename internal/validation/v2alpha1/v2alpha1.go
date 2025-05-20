@@ -25,7 +25,12 @@ func NewAPIRuleValidator(apiRule *gatewayv2alpha1.APIRule) validation.ApiRuleVal
 	}
 }
 
-func (a *APIRuleValidator) Validate(ctx context.Context, client client.Client, vsList networkingv1beta1.VirtualServiceList, gwList networkingv1beta1.GatewayList) []validation.Failure {
+func (a *APIRuleValidator) Validate(
+	ctx context.Context,
+	client client.Client,
+	vsList networkingv1beta1.VirtualServiceList,
+	gwList networkingv1beta1.GatewayList,
+) []validation.Failure {
 	var failures []validation.Failure
 
 	if reflect.DeepEqual(a.ApiRule.Spec, gatewayv2alpha1.APIRuleSpec{}) {

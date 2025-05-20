@@ -23,12 +23,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/kyma-project/api-gateway/internal/reconciliations/oathkeeper"
-
 	ratelimitv1alpha1 "github.com/kyma-project/api-gateway/apis/gateway/ratelimit/v1alpha1"
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	operatorv1alpha1 "github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
 	"github.com/kyma-project/api-gateway/controllers"
+	"github.com/kyma-project/api-gateway/internal/reconciliations/oathkeeper"
 	"github.com/kyma-project/api-gateway/internal/resources"
 	"github.com/kyma-project/api-gateway/tests"
 	. "github.com/onsi/ginkgo/v2"
@@ -49,17 +48,15 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/client-go/rest"
 	"k8s.io/client-go/util/retry"
 	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client/fake"
-	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
-
-	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
-	//+kubebuilder:scaffold:imports
+	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 )
 
 const (
@@ -257,7 +254,11 @@ func getTestScheme() *runtime.Scheme {
 type oathkeeperReconcilerWithoutVerification struct {
 }
 
-func (o oathkeeperReconcilerWithoutVerification) ReconcileAndVerifyReadiness(ctx context.Context, client client.Client, apiGateway *operatorv1alpha1.APIGateway) controllers.Status {
+func (o oathkeeperReconcilerWithoutVerification) ReconcileAndVerifyReadiness(
+	ctx context.Context,
+	client client.Client,
+	apiGateway *operatorv1alpha1.APIGateway,
+) controllers.Status {
 	// We don't want to wait for Oathkeeper to be ready in the tests, because the implemented logic doesn't work in unit and envTest-based tests.
 	return oathkeeper.Reconcile(ctx, client, apiGateway)
 }

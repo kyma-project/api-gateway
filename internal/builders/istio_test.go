@@ -1,11 +1,12 @@
 package builders
 
 import (
+	"net/http"
+
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"k8s.io/apimachinery/pkg/runtime"
-	"net/http"
 )
 
 var _ = Describe("Builder for", func() {
@@ -25,7 +26,9 @@ var _ = Describe("Builder for", func() {
 			testScopeB := "scope-b"
 			testAuthorization := gatewayv1beta1.JwtAuthorization{RequiredScopes: []string{testScopeA, testScopeB}}
 			testExpectedScopeKeys := []string{"request.auth.claims[scp]"}
-			testRaw := runtime.RawExtension{Raw: []byte(`{"authentications": [{"issuer": "testIssuer", "jwksUri": "testJwksUri"}], "authorizations": [{"requiredScopes": ["test"]}]}`)}
+			testRaw := runtime.RawExtension{
+				Raw: []byte(`{"authentications": [{"issuer": "testIssuer", "jwksUri": "testJwksUri"}], "authorizations": [{"requiredScopes": ["test"]}]}`),
+			}
 			testHandler := gatewayv1beta1.Handler{Name: "jwt", Config: &testRaw}
 			testAuthenticator := gatewayv1beta1.Authenticator{Handler: &testHandler}
 			testAccessStrategies := []*gatewayv1beta1.Authenticator{&testAuthenticator}
@@ -94,7 +97,9 @@ var _ = Describe("Builder for", func() {
 		})
 
 		It("should build an RequestAuthentication with 2 JwtRules", func() {
-			testRaw := runtime.RawExtension{Raw: []byte(`{"authentications": [{"issuer": "testIssuer1", "jwksUri": "testJwksUri1"}, {"issuer": "testIssuer2", "jwksUri": "testJwksUri2"}]}`)}
+			testRaw := runtime.RawExtension{
+				Raw: []byte(`{"authentications": [{"issuer": "testIssuer1", "jwksUri": "testJwksUri1"}, {"issuer": "testIssuer2", "jwksUri": "testJwksUri2"}]}`),
+			}
 			testHandler := gatewayv1beta1.Handler{Config: &testRaw}
 			testAuthenticator := gatewayv1beta1.Authenticator{Handler: &testHandler}
 			testAccessStrategies := []*gatewayv1beta1.Authenticator{&testAuthenticator}
@@ -121,7 +126,11 @@ var _ = Describe("Builder for", func() {
 		})
 
 		It("should build an RequestAuthentication with fromHeaders", func() {
-			testRaw := runtime.RawExtension{Raw: []byte(`{"authentications": [{"issuer": "testIssuer", "jwksUri": "testJwksUri", "fromHeaders": [{"Name": "testHeader1"}, {"Name": "testHeader2", "Prefix": "testPrefix2"}]}]}`)}
+			testRaw := runtime.RawExtension{
+				Raw: []byte(
+					`{"authentications": [{"issuer": "testIssuer", "jwksUri": "testJwksUri", "fromHeaders": [{"Name": "testHeader1"}, {"Name": "testHeader2", "Prefix": "testPrefix2"}]}]}`,
+				),
+			}
 			testHandler := gatewayv1beta1.Handler{Config: &testRaw}
 			testAuthenticator := gatewayv1beta1.Authenticator{Handler: &testHandler}
 			testAccessStrategies := []*gatewayv1beta1.Authenticator{&testAuthenticator}

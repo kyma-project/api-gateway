@@ -3,11 +3,11 @@ package oathkeeper
 import (
 	"context"
 	"errors"
-	"github.com/kyma-project/api-gateway/internal/conditions"
 	"time"
 
 	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
 	"github.com/kyma-project/api-gateway/controllers"
+	"github.com/kyma-project/api-gateway/internal/conditions"
 	"github.com/kyma-project/api-gateway/internal/reconciliations/oathkeeper/maester"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"

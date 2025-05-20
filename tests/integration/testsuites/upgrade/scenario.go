@@ -3,23 +3,22 @@ package upgrade
 import (
 	"errors"
 	"fmt"
-	apirulev2 "github.com/kyma-project/api-gateway/apis/gateway/v2"
-	apirulev2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"strings"
 	"time"
-
-	v1 "k8s.io/api/apps/v1"
 
 	"github.com/avast/retry-go/v4"
 	"github.com/cucumber/godog"
 	apirulev1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
+	apirulev2 "github.com/kyma-project/api-gateway/apis/gateway/v2"
+	apirulev2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/auth"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/helpers"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/manifestprocessor"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/resource"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
 	"golang.org/x/oauth2/clientcredentials"
+	v1 "k8s.io/api/apps/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
@@ -91,7 +90,13 @@ func (s *scenario) callingTheEndpointWithValidTokenShouldResultInStatusBetween(e
 	return s.callingEndpointWithHeadersWithRetries(fmt.Sprintf("%s/%s", s.Url, strings.TrimLeft(endpoint, "/")), tokenType, asserter, nil, &tokenFrom)
 }
 
-func (s *scenario) callingEndpointWithHeadersWithRetries(url string, tokenType string, asserter helpers.HttpResponseAsserter, requestHeaders map[string]string, tokenFrom *tokenFrom) error {
+func (s *scenario) callingEndpointWithHeadersWithRetries(
+	url string,
+	tokenType string,
+	asserter helpers.HttpResponseAsserter,
+	requestHeaders map[string]string,
+	tokenFrom *tokenFrom,
+) error {
 	if requestHeaders == nil {
 		requestHeaders = make(map[string]string)
 	}
@@ -124,12 +129,19 @@ func (s *scenario) callingEndpointWithHeadersWithRetries(url string, tokenType s
 }
 
 func (s *scenario) callingTheEndpointWithoutTokenShouldResultInStatusBetween(endpoint string, lower, higher int) error {
-	return s.httpClient.CallEndpointWithRetries(fmt.Sprintf("%s/%s", s.Url, strings.TrimLeft(endpoint, "/")), &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher})
+	return s.httpClient.CallEndpointWithRetries(
+		fmt.Sprintf("%s/%s", s.Url, strings.TrimLeft(endpoint, "/")),
+		&helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher},
+	)
 }
 
 func (s *scenario) callingTheEndpointWithInvalidTokenShouldResultInStatusBetween(path string, lower, higher int) error {
 	requestHeaders := map[string]string{testcontext.AuthorizationHeaderName: testcontext.AnyToken}
-	return s.httpClient.CallEndpointWithHeadersWithRetries(requestHeaders, fmt.Sprintf("%s%s", s.Url, path), &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher})
+	return s.httpClient.CallEndpointWithHeadersWithRetries(
+		requestHeaders,
+		fmt.Sprintf("%s%s", s.Url, path),
+		&helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher},
+	)
 }
 
 func (s *scenario) thereIsAHttpbinService() error {
@@ -324,9 +336,18 @@ func initUpgrade(ctx *godog.ScenarioContext, ts *testsuite) {
 	ctx.Step(`^Upgrade: There is a httpbin service$`, scenario.thereIsAHttpbinService)
 	ctx.Step(`^Upgrade: There is an endpoint secured with JWT on path "([^"]*)"`, scenario.thereIsAnJwtSecuredPath)
 	ctx.Step(`^Upgrade: The APIRule is applied$`, scenario.theAPIRuleIsApplied)
-	ctx.Step(`^Upgrade: Calling the "([^"]*)" endpoint without a token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithoutTokenShouldResultInStatusBetween)
-	ctx.Step(`^Upgrade: Calling the "([^"]*)" endpoint with an invalid token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithInvalidTokenShouldResultInStatusBetween)
-	ctx.Step(`^Upgrade: Calling the "([^"]*)" endpoint with a valid "([^"]*)" token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithValidTokenShouldResultInStatusBetween)
+	ctx.Step(
+		`^Upgrade: Calling the "([^"]*)" endpoint without a token should result in status between (\d+) and (\d+)$`,
+		scenario.callingTheEndpointWithoutTokenShouldResultInStatusBetween,
+	)
+	ctx.Step(
+		`^Upgrade: Calling the "([^"]*)" endpoint with an invalid token should result in status between (\d+) and (\d+)$`,
+		scenario.callingTheEndpointWithInvalidTokenShouldResultInStatusBetween,
+	)
+	ctx.Step(
+		`^Upgrade: Calling the "([^"]*)" endpoint with a valid "([^"]*)" token should result in status between (\d+) and (\d+)$`,
+		scenario.callingTheEndpointWithValidTokenShouldResultInStatusBetween,
+	)
 	ctx.Step(`^Upgrade: API Gateway is upgraded to current branch version manifest$`, scenario.upgradeApiGateway)
 	ctx.Step(`^Upgrade: Teardown httpbin service$`, scenario.teardownHttpbinService)
 	ctx.Step(`^Upgrade: Fetch APIRule last processed time$`, scenario.fetchAPIRuleLastProcessedTime)

@@ -4,6 +4,9 @@ import (
 	"context"
 	_ "embed"
 	"fmt"
+	"net/http"
+	"strings"
+
 	"github.com/avast/retry-go/v4"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/auth"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/helpers"
@@ -14,8 +17,6 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/dynamic"
-	"net/http"
-	"strings"
 )
 
 type scenario struct {
@@ -142,7 +143,13 @@ func (s *scenario) theAPIRuleHasStatus(expectedStatus string) error {
 			if err != nil {
 				return fmt.Errorf("APIRule %s not in expected status %s. Error getting status: %w", apiRule.GetName(), expectedStatus, err)
 			}
-			return fmt.Errorf("APIRule %s not in expected status %s. Status: %s, Desc:\n%s", apiRule.GetName(), expectedStatus, s.Status.APIRuleStatus.Code, s.Status.APIRuleStatus.Description)
+			return fmt.Errorf(
+				"APIRule %s not in expected status %s. Status: %s, Desc:\n%s",
+				apiRule.GetName(),
+				expectedStatus,
+				s.Status.APIRuleStatus.Code,
+				s.Status.APIRuleStatus.Description,
+			)
 		}
 
 		return nil
@@ -176,16 +183,28 @@ func (s *scenario) theAPIRuleIsNotFound() error {
 
 func (s *scenario) callingTheEndpointWithMethodWithInvalidTokenShouldResultInStatusBetween(path string, method string, lower, higher int) error {
 	requestHeaders := map[string]string{testcontext.AuthorizationHeaderName: testcontext.AnyToken}
-	return s.httpClient.CallEndpointWithHeadersAndMethod(requestHeaders, fmt.Sprintf("%s%s", s.Url, path), method, &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher})
+	return s.httpClient.CallEndpointWithHeadersAndMethod(
+		requestHeaders,
+		fmt.Sprintf("%s%s", s.Url, path),
+		method,
+		&helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher},
+	)
 }
 
 func (s *scenario) callingTheEndpointWithInvalidTokenShouldResultInStatusBetween(path string, lower, higher int) error {
 	requestHeaders := map[string]string{testcontext.AuthorizationHeaderName: testcontext.AnyToken}
-	return s.httpClient.CallEndpointWithHeadersWithRetries(requestHeaders, fmt.Sprintf("%s%s", s.Url, path), &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher})
+	return s.httpClient.CallEndpointWithHeadersWithRetries(
+		requestHeaders,
+		fmt.Sprintf("%s%s", s.Url, path),
+		&helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher},
+	)
 }
 
 func (s *scenario) callingTheEndpointWithoutTokenShouldResultInStatusBetween(path string, lower, higher int) error {
-	return s.httpClient.CallEndpointWithRetries(fmt.Sprintf("%s/%s", s.Url, strings.TrimLeft(path, "/")), &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher})
+	return s.httpClient.CallEndpointWithRetries(
+		fmt.Sprintf("%s/%s", s.Url, strings.TrimLeft(path, "/")),
+		&helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher},
+	)
 }
 
 func (s *scenario) thereIsAHttpbinService() error {

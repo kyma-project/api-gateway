@@ -3,11 +3,12 @@ package helpers
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/avast/retry-go/v4"
-	"github.com/pkg/errors"
 	"io"
 	"net/http"
 	"time"
+
+	"github.com/avast/retry-go/v4"
+	"github.com/pkg/errors"
 )
 
 type RetryableHttpClient struct {

@@ -4,15 +4,15 @@ import (
 	"context"
 	_ "embed"
 	"fmt"
-	"github.com/kyma-project/api-gateway/internal/conditions"
-	"github.com/kyma-project/api-gateway/internal/dependencies"
-	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"strings"
 
 	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
 	"github.com/kyma-project/api-gateway/controllers"
+	"github.com/kyma-project/api-gateway/internal/conditions"
+	"github.com/kyma-project/api-gateway/internal/dependencies"
 	"github.com/kyma-project/api-gateway/internal/reconciliations"
 	"github.com/kyma-project/api-gateway/internal/resources"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -87,9 +87,11 @@ func ReconcileKymaGateway(ctx context.Context, k8sClient client.Client, apiGatew
 				}
 			}
 
-			return controllers.WarningStatus(fmt.Errorf("could not delete Kyma Gateway since there are %d custom resource(s) present that block its deletion", len(clientResources)),
+			return controllers.WarningStatus(
+				fmt.Errorf("could not delete Kyma Gateway since there are %d custom resource(s) present that block its deletion", len(clientResources)),
 				"There are custom resources that block the deletion of Kyma Gateway. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning",
-				conditions.KymaGatewayDeletionBlocked.AdditionalMessage(": "+strings.Join(blockingResources, ", ")).Condition())
+				conditions.KymaGatewayDeletionBlocked.AdditionalMessage(": "+strings.Join(blockingResources, ", ")).Condition(),
+			)
 		}
 	}
 

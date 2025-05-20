@@ -2,18 +2,17 @@ package validation_test
 
 import (
 	"context"
+
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"github.com/kyma-project/api-gateway/internal/validation"
-
-	"istio.io/api/type/v1beta1"
-	"sigs.k8s.io/controller-runtime/pkg/client/fake"
-
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	"istio.io/api/type/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
 var _ = Describe("Istio injection validation", func() {
@@ -41,7 +40,11 @@ var _ = Describe("Istio injection validation", func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		//when
-		problems, err := (&validation.InjectionValidator{Ctx: context.Background(), Client: k8sFakeClient}).Validate("some.attribute", &v1beta1.WorkloadSelector{MatchLabels: map[string]string{"app": "test"}}, "default")
+		problems, err := (&validation.InjectionValidator{Ctx: context.Background(), Client: k8sFakeClient}).Validate(
+			"some.attribute",
+			&v1beta1.WorkloadSelector{MatchLabels: map[string]string{"app": "test"}},
+			"default",
+		)
 		Expect(err).NotTo(HaveOccurred())
 
 		//then
@@ -73,7 +76,11 @@ var _ = Describe("Istio injection validation", func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		//when
-		problems, err := (&validation.InjectionValidator{Ctx: context.Background(), Client: k8sFakeClient}).Validate("some.attribute", &v1beta1.WorkloadSelector{MatchLabels: map[string]string{"app": "test"}}, "test")
+		problems, err := (&validation.InjectionValidator{Ctx: context.Background(), Client: k8sFakeClient}).Validate(
+			"some.attribute",
+			&v1beta1.WorkloadSelector{MatchLabels: map[string]string{"app": "test"}},
+			"test",
+		)
 		Expect(err).NotTo(HaveOccurred())
 
 		//then
@@ -96,7 +103,11 @@ var _ = Describe("Istio injection validation", func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		//when
-		problems, err := (&validation.InjectionValidator{Ctx: context.Background(), Client: k8sFakeClient}).Validate("some.attribute", &v1beta1.WorkloadSelector{MatchLabels: map[string]string{"app": "test"}}, "default")
+		problems, err := (&validation.InjectionValidator{Ctx: context.Background(), Client: k8sFakeClient}).Validate(
+			"some.attribute",
+			&v1beta1.WorkloadSelector{MatchLabels: map[string]string{"app": "test"}},
+			"default",
+		)
 		Expect(err).NotTo(HaveOccurred())
 
 		//then
@@ -124,7 +135,11 @@ var _ = Describe("Istio injection validation", func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		//when
-		problems, err := (&validation.InjectionValidator{Ctx: context.Background(), Client: k8sFakeClient}).Validate("some.attribute", &v1beta1.WorkloadSelector{MatchLabels: map[string]string{"app": "test-injected"}}, "default")
+		problems, err := (&validation.InjectionValidator{Ctx: context.Background(), Client: k8sFakeClient}).Validate(
+			"some.attribute",
+			&v1beta1.WorkloadSelector{MatchLabels: map[string]string{"app": "test-injected"}},
+			"default",
+		)
 		Expect(err).NotTo(HaveOccurred())
 
 		//then

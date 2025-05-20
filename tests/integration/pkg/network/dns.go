@@ -4,6 +4,10 @@ import (
 	"context"
 	_ "embed"
 	"fmt"
+	"log"
+	"net"
+	"time"
+
 	"github.com/avast/retry-go/v4"
 	k8sclient "github.com/kyma-project/api-gateway/tests/integration/pkg/client"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/helpers"
@@ -11,10 +15,7 @@ import (
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/resource"
 	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/client-go/dynamic"
-	"log"
-	"net"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"time"
 )
 
 //go:embed coredns-custom.yml

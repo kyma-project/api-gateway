@@ -2,10 +2,10 @@ package gateway
 
 import (
 	"context"
-	"istio.io/client-go/pkg/apis/networking/v1beta1"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	"istio.io/client-go/pkg/apis/networking/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 

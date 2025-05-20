@@ -2,9 +2,10 @@ package status
 
 import (
 	"fmt"
+	"strings"
+
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	"github.com/kyma-project/api-gateway/internal/validation"
-	"strings"
 )
 
 type ReconciliationV2alpha1Status struct {

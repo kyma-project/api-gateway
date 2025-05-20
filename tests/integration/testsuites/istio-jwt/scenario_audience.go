@@ -14,7 +14,10 @@ func initAudience(ctx *godog.ScenarioContext, ts *testsuite) {
 	ctx.Step(`^Audiences: There is an endpoint secured with JWT on path "([^"]*)" requiring audiences '(\[.*\])'$`, scenario.thereIsAnEndpointWithAudiences)
 	ctx.Step(`^Audiences: There is an endpoint secured with JWT on path "([^"]*)" requiring audience '(\[.*\])' or '(\[.*\])'$`, scenario.emptyStep)
 	ctx.Step(`^Audiences: The APIRule is applied$`, scenario.theAPIRuleIsApplied)
-	ctx.Step(`^Audiences: Calling the "([^"]*)" endpoint with a valid "([^"]*)" token with "([^"]*)" "([^"]*)" and "([^"]*)" should result in status between (\d+) and (\d+)`, scenario.callingTheEndpointWithAValidToken)
+	ctx.Step(
+		`^Audiences: Calling the "([^"]*)" endpoint with a valid "([^"]*)" token with "([^"]*)" "([^"]*)" and "([^"]*)" should result in status between (\d+) and (\d+)`,
+		scenario.callingTheEndpointWithAValidToken,
+	)
 	ctx.Step(`^Audiences: Teardown httpbin service$`, scenario.teardownHttpbinService)
 }
 

@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"strings"
 
+	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	oryjwt "github.com/kyma-project/api-gateway/internal/types/ory"
 	"github.com/kyma-project/api-gateway/internal/validation"
 )
@@ -44,15 +44,24 @@ func checkForOryConfig(attributePath string, handler *gatewayv1beta1.Handler) (p
 	}
 
 	if len(template.JWKSUrls) > 0 {
-		problems = append(problems, validation.Failure{AttributePath: attributePath + ".config" + ".jwks_urls", Message: "Configuration for jwks_urls is not supported with Istio handler"})
+		problems = append(
+			problems,
+			validation.Failure{AttributePath: attributePath + ".config" + ".jwks_urls", Message: "Configuration for jwks_urls is not supported with Istio handler"},
+		)
 	}
 
 	if len(template.RequiredScopes) > 0 {
-		problems = append(problems, validation.Failure{AttributePath: attributePath + ".config" + ".required_scopes", Message: "Configuration for required_scopes is not supported with Istio handler"})
+		problems = append(
+			problems,
+			validation.Failure{AttributePath: attributePath + ".config" + ".required_scopes", Message: "Configuration for required_scopes is not supported with Istio handler"},
+		)
 	}
 
 	if len(template.TrustedIssuers) > 0 {
-		problems = append(problems, validation.Failure{AttributePath: attributePath + ".config" + ".trusted_issuers", Message: "Configuration for trusted_issuers is not supported with Istio handler"})
+		problems = append(
+			problems,
+			validation.Failure{AttributePath: attributePath + ".config" + ".trusted_issuers", Message: "Configuration for trusted_issuers is not supported with Istio handler"},
+		)
 	}
 
 	return problems

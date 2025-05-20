@@ -3,22 +3,22 @@ package ory_test
 import (
 	"context"
 	"fmt"
-	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
-	"github.com/kyma-project/api-gateway/internal/builders"
-	v1beta12 "istio.io/api/networking/v1beta1"
-	"k8s.io/utils/ptr"
 	"net/http"
 	"time"
 
+	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
+	"github.com/kyma-project/api-gateway/internal/builders"
 	"github.com/kyma-project/api-gateway/internal/processing"
 	. "github.com/kyma-project/api-gateway/internal/processing/processing_test"
 	"github.com/kyma-project/api-gateway/internal/processing/processors/ory"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
+	v1beta12 "istio.io/api/networking/v1beta1"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
@@ -730,38 +730,41 @@ var _ = Describe("Virtual Service Processor", func() {
 			Expect(vs.Spec.Http[0].Timeout.AsDuration()).To(Equal(20 * time.Second))
 		})
 
-		It("should set timeout on rule with explicit timeout configuration and on rule that doesn't have timeout when there are multiple rules and timeout on api rule spec is configured", func() {
-			// given
-			strategies := []*v1beta1.Authenticator{
-				{
-					Handler: &v1beta1.Handler{
-						Name: v1beta1.AccessStrategyAllow,
+		It(
+			"should set timeout on rule with explicit timeout configuration and on rule that doesn't have timeout when there are multiple rules and timeout on api rule spec is configured",
+			func() {
+				// given
+				strategies := []*v1beta1.Authenticator{
+					{
+						Handler: &v1beta1.Handler{
+							Name: v1beta1.AccessStrategyAllow,
+						},
 					},
-				},
-			}
-			ruleWithoutTimeout := GetRuleFor("/api-rule-spec-timeout", ApiMethods, []*v1beta1.Mutator{}, strategies)
-			ruleWithTimeout := GetRuleFor("/rule-timeout", ApiMethods, []*v1beta1.Mutator{}, strategies)
-			ruleWithTimeout.Timeout = &timeout20s
-			rules := []v1beta1.Rule{ruleWithoutTimeout, ruleWithTimeout}
+				}
+				ruleWithoutTimeout := GetRuleFor("/api-rule-spec-timeout", ApiMethods, []*v1beta1.Mutator{}, strategies)
+				ruleWithTimeout := GetRuleFor("/rule-timeout", ApiMethods, []*v1beta1.Mutator{}, strategies)
+				ruleWithTimeout.Timeout = &timeout20s
+				rules := []v1beta1.Rule{ruleWithoutTimeout, ruleWithTimeout}
 
-			apiRule := GetAPIRuleFor(rules)
-			apiRule.Spec.Timeout = &timeout10s
-			client := GetFakeClient()
-			processor := ory.NewVirtualServiceProcessor(GetTestConfig(), apiRule)
+				apiRule := GetAPIRuleFor(rules)
+				apiRule.Spec.Timeout = &timeout10s
+				client := GetFakeClient()
+				processor := ory.NewVirtualServiceProcessor(GetTestConfig(), apiRule)
 
-			// when
-			result, err := processor.EvaluateReconciliation(context.Background(), client)
+				// when
+				result, err := processor.EvaluateReconciliation(context.Background(), client)
 
-			// then
-			Expect(err).To(BeNil())
-			Expect(result).To(HaveLen(1))
+				// then
+				Expect(err).To(BeNil())
+				Expect(result).To(HaveLen(1))
 
-			vs := result[0].Obj.(*networkingv1beta1.VirtualService)
-			Expect(len(vs.Spec.Http)).To(Equal(2))
+				vs := result[0].Obj.(*networkingv1beta1.VirtualService)
+				Expect(len(vs.Spec.Http)).To(Equal(2))
 
-			Expect(getTimeoutByPath(vs, "/api-rule-spec-timeout")).To(Equal(10 * time.Second))
-			Expect(getTimeoutByPath(vs, "/rule-timeout")).To(Equal(20 * time.Second))
-		})
+				Expect(getTimeoutByPath(vs, "/api-rule-spec-timeout")).To(Equal(10 * time.Second))
+				Expect(getTimeoutByPath(vs, "/rule-timeout")).To(Equal(20 * time.Second))
+			},
+		)
 
 		It("should set timeout on rule with explicit timeout configuration and default timeout on rule that doesn't have a timeout when there are multiple rules", func() {
 			// given

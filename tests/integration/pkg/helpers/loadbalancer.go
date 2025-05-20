@@ -3,11 +3,12 @@ package helpers
 import (
 	"context"
 	"fmt"
+	"net"
+
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
-	"net"
 )
 
 // GetLoadBalancerIp returns the IP of the load balancer from the load balancer ingress object

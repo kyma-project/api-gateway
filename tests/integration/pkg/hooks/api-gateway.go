@@ -7,10 +7,6 @@ import (
 	"log"
 	"os"
 
-	appsv1 "k8s.io/api/apps/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-
 	"github.com/avast/retry-go/v4"
 	"github.com/cucumber/godog"
 	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
@@ -19,11 +15,13 @@ import (
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
 	oryv1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
 	"github.com/pkg/errors"
+	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
+	appsv1 "k8s.io/api/apps/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
-
-	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 )
 
 const templateFileName string = "pkg/hooks/manifests/apigateway.yaml"

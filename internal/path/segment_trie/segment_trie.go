@@ -17,8 +17,9 @@ package segment_trie
 
 import (
 	"errors"
-	"github.com/kyma-project/api-gateway/internal/path/token"
 	"strings"
+
+	"github.com/kyma-project/api-gateway/internal/path/token"
 )
 
 type SegmentTrie struct {

@@ -2,11 +2,12 @@ package gateway
 
 import (
 	"context"
+	"time"
+
 	"github.com/go-logr/logr"
 	"github.com/kyma-project/api-gateway/internal/processing/processors/migration"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"time"
 )
 
 func doneReconcileNoRequeue() (ctrl.Result, error) {

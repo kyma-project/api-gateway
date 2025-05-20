@@ -3,19 +3,16 @@ package processing_test
 import (
 	"context"
 	"fmt"
-	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 
+	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
+	"github.com/kyma-project/api-gateway/internal/processing"
+	testUtils "github.com/kyma-project/api-gateway/internal/processing/processing_test"
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
-
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
-
-	"github.com/kyma-project/api-gateway/internal/processing"
-	testUtils "github.com/kyma-project/api-gateway/internal/processing/processing_test"
 )
 
 var _ = Describe("APIRule subresources deletion", func() {

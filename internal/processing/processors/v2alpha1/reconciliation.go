@@ -4,15 +4,14 @@ import (
 	"context"
 	"errors"
 
-	"github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1/authorizationpolicy"
-	"github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1/requestauthentication"
-	v2alpha1VirtualService "github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1/virtualservice"
-
 	"github.com/go-logr/logr"
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	"github.com/kyma-project/api-gateway/internal/processing"
 	"github.com/kyma-project/api-gateway/internal/processing/processors/migration"
+	"github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1/authorizationpolicy"
+	"github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1/requestauthentication"
+	v2alpha1VirtualService "github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1/virtualservice"
 	"github.com/kyma-project/api-gateway/internal/validation"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -50,7 +49,15 @@ func (r Reconciliation) GetProcessors() []processing.ReconciliationProcessor {
 	return r.processors
 }
 
-func NewReconciliation(apiRuleV2alpha1 *gatewayv2alpha1.APIRule, apiRuleV1beta1 *gatewayv1beta1.APIRule, gateway *networkingv1beta1.Gateway, validator validation.ApiRuleValidator, config processing.ReconciliationConfig, log *logr.Logger, needsMigration bool) Reconciliation {
+func NewReconciliation(
+	apiRuleV2alpha1 *gatewayv2alpha1.APIRule,
+	apiRuleV1beta1 *gatewayv1beta1.APIRule,
+	gateway *networkingv1beta1.Gateway,
+	validator validation.ApiRuleValidator,
+	config processing.ReconciliationConfig,
+	log *logr.Logger,
+	needsMigration bool,
+) Reconciliation {
 	var processors []processing.ReconciliationProcessor
 	if needsMigration {
 		log.Info("APIRule needs migration")

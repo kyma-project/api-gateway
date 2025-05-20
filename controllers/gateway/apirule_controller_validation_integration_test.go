@@ -4,12 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
-	"k8s.io/apimachinery/pkg/runtime"
 
+	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"github.com/kyma-project/api-gateway/internal/helpers"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -324,14 +324,26 @@ var _ = Describe("Apirule controller validation", Serial, Ordered, func() {
 
 })
 
-func testConfig(accessStrategies []*gatewayv1beta1.Authenticator, mutators []*gatewayv1beta1.Mutator, expectedStatusCode gatewayv1beta1.StatusCode, expectedValidationErrors []string) {
+func testConfig(
+	accessStrategies []*gatewayv1beta1.Authenticator,
+	mutators []*gatewayv1beta1.Mutator,
+	expectedStatusCode gatewayv1beta1.StatusCode,
+	expectedValidationErrors []string,
+) {
 	// given
 	serviceName := generateTestName("httpbin", 5)
 	serviceHost := fmt.Sprintf("%s.kyma.local", serviceName)
 	testConfigWithServiceAndHost(serviceName, serviceHost, accessStrategies, mutators, expectedStatusCode, expectedValidationErrors)
 }
 
-func testConfigWithServiceAndHost(serviceName string, host string, accessStrategies []*gatewayv1beta1.Authenticator, mutators []*gatewayv1beta1.Mutator, expectedStatusCode gatewayv1beta1.StatusCode, expectedValidationErrors []string) {
+func testConfigWithServiceAndHost(
+	serviceName string,
+	host string,
+	accessStrategies []*gatewayv1beta1.Authenticator,
+	mutators []*gatewayv1beta1.Mutator,
+	expectedStatusCode gatewayv1beta1.StatusCode,
+	expectedValidationErrors []string,
+) {
 	// given
 	const (
 		testNameBase           = "status-test"

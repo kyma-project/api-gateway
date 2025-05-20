@@ -21,9 +21,18 @@ func initv2alpha1IstioJWT(ctx *godog.ScenarioContext, ts *testsuite) {
 	ctx.Step(`^v2alpha1IstioJWT: There is a httpbin service$`, scenario.thereIsAHttpbinService)
 	ctx.Step(`^v2alpha1IstioJWT: There is an endpoint secured with JWT on path "([^"]*)"`, scenario.thereIsAnJwtSecuredPath)
 	ctx.Step(`^v2alpha1IstioJWT: The APIRule is applied$`, scenario.theAPIRuleIsApplied)
-	ctx.Step(`^v2alpha1IstioJWT: Calling the "([^"]*)" endpoint without a token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithoutTokenShouldResultInStatusBetween)
-	ctx.Step(`^v2alpha1IstioJWT: Calling the "([^"]*)" endpoint with an invalid token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithInvalidTokenShouldResultInStatusBetween)
-	ctx.Step(`^v2alpha1IstioJWT: Calling the "([^"]*)" endpoint with a valid "([^"]*)" token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithValidTokenShouldResultInStatusBetween)
+	ctx.Step(
+		`^v2alpha1IstioJWT: Calling the "([^"]*)" endpoint without a token should result in status between (\d+) and (\d+)$`,
+		scenario.callingTheEndpointWithoutTokenShouldResultInStatusBetween,
+	)
+	ctx.Step(
+		`^v2alpha1IstioJWT: Calling the "([^"]*)" endpoint with an invalid token should result in status between (\d+) and (\d+)$`,
+		scenario.callingTheEndpointWithInvalidTokenShouldResultInStatusBetween,
+	)
+	ctx.Step(
+		`^v2alpha1IstioJWT: Calling the "([^"]*)" endpoint with a valid "([^"]*)" token should result in status between (\d+) and (\d+)$`,
+		scenario.callingTheEndpointWithValidTokenShouldResultInStatusBetween,
+	)
 	ctx.Step(`^v2alpha1IstioJWT: Teardown httpbin service$`, scenario.teardownHttpbinService)
 }
 
@@ -32,7 +41,10 @@ func initv2alpha1NoAuthHandler(ctx *godog.ScenarioContext, ts *testsuite) {
 
 	ctx.Step(`^v2alpha1NoAuthHandler: There is a httpbin service$`, scenario.thereIsAHttpbinService)
 	ctx.Step(`^v2alpha1NoAuthHandler: The APIRule is applied$`, scenario.theAPIRuleIsApplied)
-	ctx.Step(`^v2alpha1NoAuthHandler: Calling the "([^"]*)" endpoint with "([^"]*)" method with any token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithMethodWithInvalidTokenShouldResultInStatusBetween)
+	ctx.Step(
+		`^v2alpha1NoAuthHandler: Calling the "([^"]*)" endpoint with "([^"]*)" method with any token should result in status between (\d+) and (\d+)$`,
+		scenario.callingTheEndpointWithMethodWithInvalidTokenShouldResultInStatusBetween,
+	)
 	ctx.Step(`^v2alpha1NoAuthHandler: Teardown httpbin service$`, scenario.teardownHttpbinService)
 }
 
@@ -43,7 +55,10 @@ func initv2alpha1NoAuthHandlerRecover(ctx *godog.ScenarioContext, ts *testsuite)
 	ctx.Step(`^v2alpha1NoAuthHandlerRecover: The APIRule is applied$`, scenario.theAPIRuleIsApplied)
 	ctx.Step(`^v2alpha1NoAuthHandlerRecover: Certificate secret is reset$`, scenario.certificateSecretReset)
 	ctx.Step(`^v2alpha1NoAuthHandlerRecover: Certificate secret is rotated$`, scenario.certificateSecretRotated)
-	ctx.Step(`^v2alpha1NoAuthHandlerRecover: Calling the "([^"]*)" endpoint with "([^"]*)" method with any token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithMethodWithInvalidTokenShouldResultInStatusBetween)
+	ctx.Step(
+		`^v2alpha1NoAuthHandlerRecover: Calling the "([^"]*)" endpoint with "([^"]*)" method with any token should result in status between (\d+) and (\d+)$`,
+		scenario.callingTheEndpointWithMethodWithInvalidTokenShouldResultInStatusBetween,
+	)
 	ctx.Step(`^v2alpha1NoAuthHandlerRecover: Teardown httpbin service$`, scenario.teardownHttpbinService)
 }
 

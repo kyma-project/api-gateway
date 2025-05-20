@@ -6,21 +6,19 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/kyma-project/api-gateway/internal/conditions"
-
 	"github.com/go-logr/logr"
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	operatorv1alpha1 "github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
+	"github.com/kyma-project/api-gateway/internal/conditions"
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
+	. "github.com/onsi/gomega/gstruct"
 	oryv1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
-	. "github.com/onsi/gomega/gstruct"
 )
 
 var _ = Describe("API-Gateway Controller", func() {
@@ -209,7 +207,10 @@ var _ = Describe("API-Gateway Controller", func() {
 			}
 
 			// when
-			result, err := agr.Reconcile(context.Background(), reconcile.Request{NamespacedName: types.NamespacedName{Namespace: testNamespace, Name: fmt.Sprintf("%s-2", apiGatewayCRName)}})
+			result, err := agr.Reconcile(
+				context.Background(),
+				reconcile.Request{NamespacedName: types.NamespacedName{Namespace: testNamespace, Name: fmt.Sprintf("%s-2", apiGatewayCRName)}},
+			)
 
 			// then
 			Expect(err).ToNot(HaveOccurred())
@@ -217,7 +218,9 @@ var _ = Describe("API-Gateway Controller", func() {
 
 			Expect(c.Get(context.Background(), client.ObjectKeyFromObject(secondApiGatewayCR), secondApiGatewayCR)).Should(Succeed())
 			Expect(secondApiGatewayCR.Status.State).To(Equal(operatorv1alpha1.Warning))
-			Expect(secondApiGatewayCR.Status.Description).To(Equal(fmt.Sprintf("stopped APIGateway CR reconciliation: only APIGateway CR %s reconciles the module", apiGatewayCRName)))
+			Expect(
+				secondApiGatewayCR.Status.Description,
+			).To(Equal(fmt.Sprintf("stopped APIGateway CR reconciliation: only APIGateway CR %s reconciles the module", apiGatewayCRName)))
 			Expect(secondApiGatewayCR.Status.Conditions).To(ContainElement(MatchFields(IgnoreExtras, Fields{
 				"Type":   Equal(conditions.OlderCRExists.Condition().Type),
 				"Status": Equal(metav1.ConditionFalse),
@@ -333,13 +336,17 @@ var _ = Describe("API-Gateway Controller", func() {
 
 			Expect(c.Get(context.Background(), client.ObjectKeyFromObject(apiGatewayCR), apiGatewayCR)).Should(Succeed())
 			Expect(apiGatewayCR.Status.State).To(Equal(operatorv1alpha1.Warning))
-			Expect(apiGatewayCR.Status.Description).To(Equal("There are APIRule(s) that block the deletion of API-Gateway CR. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning"))
+			Expect(
+				apiGatewayCR.Status.Description,
+			).To(Equal("There are APIRule(s) that block the deletion of API-Gateway CR. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning"))
 			Expect(apiGatewayCR.GetObjectMeta().GetFinalizers()).To(ContainElement(ApiGatewayFinalizer))
 
 			Expect(apiGatewayCR.Status.Conditions).To(ContainElement(MatchFields(IgnoreExtras, Fields{
-				"Type":    Equal(conditions.DeletionBlockedExistingResources.Condition().Type),
-				"Message": Equal("API Gateway deletion blocked because of the existing custom resources: default/api-rule-0, default/api-rule-1, default/api-rule-2, default/api-rule-3, default/api-rule-4"),
-				"Status":  Equal(metav1.ConditionFalse),
+				"Type": Equal(conditions.DeletionBlockedExistingResources.Condition().Type),
+				"Message": Equal(
+					"API Gateway deletion blocked because of the existing custom resources: default/api-rule-0, default/api-rule-1, default/api-rule-2, default/api-rule-3, default/api-rule-4",
+				),
+				"Status": Equal(metav1.ConditionFalse),
 			})))
 		})
 
@@ -384,13 +391,17 @@ var _ = Describe("API-Gateway Controller", func() {
 
 			Expect(c.Get(context.Background(), client.ObjectKeyFromObject(apiGatewayCR), apiGatewayCR)).Should(Succeed())
 			Expect(apiGatewayCR.Status.State).To(Equal(operatorv1alpha1.Warning))
-			Expect(apiGatewayCR.Status.Description).To(Equal("There are ORY Oathkeeper Rule(s) that block the deletion of API-Gateway CR. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning"))
+			Expect(
+				apiGatewayCR.Status.Description,
+			).To(Equal("There are ORY Oathkeeper Rule(s) that block the deletion of API-Gateway CR. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning"))
 			Expect(apiGatewayCR.GetObjectMeta().GetFinalizers()).To(ContainElement(ApiGatewayFinalizer))
 
 			Expect(apiGatewayCR.Status.Conditions).To(ContainElement(MatchFields(IgnoreExtras, Fields{
-				"Type":    Equal(conditions.DeletionBlockedExistingResources.Condition().Type),
-				"Message": Equal("API Gateway deletion blocked because of the existing custom resources: default/ory-rule-0, default/ory-rule-1, default/ory-rule-2, default/ory-rule-3, default/ory-rule-4"),
-				"Status":  Equal(metav1.ConditionFalse),
+				"Type": Equal(conditions.DeletionBlockedExistingResources.Condition().Type),
+				"Message": Equal(
+					"API Gateway deletion blocked because of the existing custom resources: default/ory-rule-0, default/ory-rule-1, default/ory-rule-2, default/ory-rule-3, default/ory-rule-4",
+				),
+				"Status": Equal(metav1.ConditionFalse),
 			})))
 		})
 	})

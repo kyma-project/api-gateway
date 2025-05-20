@@ -13,7 +13,10 @@ func initRequiredScopes(ctx *godog.ScenarioContext, ts *testsuite) {
 	ctx.Step(`^Scopes: There is a httpbin service$`, scenario.thereIsAHttpbinService)
 	ctx.Step(`^Scopes: There is an endpoint secured with JWT on path "([^"]*)" requiring scopes '(\[.*\])'$`, scenario.thereIsAnEndpointWithRequiredScopes)
 	ctx.Step(`^Scopes: The APIRule is applied$`, scenario.theAPIRuleIsApplied)
-	ctx.Step(`^Scopes: Calling the "([^"]*)" endpoint with a valid "([^"]*)" token with "([^"]*)" "([^"]*)" and "([^"]*)" should result in status between (\d+) and (\d+)`, scenario.callingTheEndpointWithAValidToken)
+	ctx.Step(
+		`^Scopes: Calling the "([^"]*)" endpoint with a valid "([^"]*)" token with "([^"]*)" "([^"]*)" and "([^"]*)" should result in status between (\d+) and (\d+)`,
+		scenario.callingTheEndpointWithAValidToken,
+	)
 	ctx.Step(`^Scopes: Teardown httpbin service$`, scenario.teardownHttpbinService)
 }
 

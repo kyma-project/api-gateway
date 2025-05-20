@@ -2,9 +2,9 @@ package authorizationpolicy_test
 
 import (
 	"context"
-	"github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1/authorizationpolicy"
 
 	"github.com/kyma-project/api-gateway/internal/builders"
+	"github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1/authorizationpolicy"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"

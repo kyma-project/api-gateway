@@ -2,10 +2,10 @@ package oathkeeper_test
 
 import (
 	"context"
-	"github.com/kyma-project/api-gateway/internal/conditions"
 	"time"
 
 	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
+	"github.com/kyma-project/api-gateway/internal/conditions"
 	"github.com/kyma-project/api-gateway/internal/reconciliations"
 	"github.com/kyma-project/api-gateway/internal/reconciliations/oathkeeper"
 	. "github.com/onsi/ginkgo/v2"

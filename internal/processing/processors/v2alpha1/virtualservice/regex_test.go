@@ -1,9 +1,10 @@
 package virtualservice
 
 import (
+	"regexp"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"regexp"
 )
 
 var _ = Describe("Envoy templates regex matching", func() {

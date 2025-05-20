@@ -3,11 +3,12 @@ package ratelimit
 import (
 	"context"
 	"fmt"
+	"strings"
+	"time"
+
 	"github.com/kyma-project/api-gateway/apis/gateway/ratelimit/v1alpha1"
 	v1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"strings"
-	"time"
 )
 
 // Validate checks the validity of the given RateLimit custom resource.

@@ -5,23 +5,21 @@ import (
 	"fmt"
 	"net/http"
 
-	oryv1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
-	v1beta12 "istio.io/api/security/v1beta1"
-
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
+	. "github.com/kyma-project/api-gateway/internal/processing/processing_test"
 	"github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1"
 	"github.com/kyma-project/api-gateway/internal/validation"
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
+	oryv1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
 	"istio.io/api/networking/v1beta1"
+	v1beta12 "istio.io/api/security/v1beta1"
+	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/utils/ptr"
-
-	. "github.com/kyma-project/api-gateway/internal/processing/processing_test"
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
-	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -124,7 +122,11 @@ var _ = Describe("Reconciliation", func() {
 			// given
 			// v1beta1 Rule
 			jwtConfigJSON := fmt.Sprintf(`{"authentications": [{"issuer": "%s", "jwksUri": "%s"}]}`, jwtIssuer, jwksUri)
-			differentJwtConfigJSON := fmt.Sprintf(`{"authentications": [{"issuer": "%s", "jwksUri": "%s"}]}`, "https://different.com/", "https://different.com/.well-known/jwks.json")
+			differentJwtConfigJSON := fmt.Sprintf(
+				`{"authentications": [{"issuer": "%s", "jwksUri": "%s"}]}`,
+				"https://different.com/",
+				"https://different.com/.well-known/jwks.json",
+			)
 			authenticatorsV1beta1 := []*gatewayv1beta1.Authenticator{
 				{
 					Handler: &gatewayv1beta1.Handler{
@@ -227,10 +229,16 @@ var _ = Describe("Reconciliation", func() {
 		It("with two JWT rules in v1beta1 and v2alpha1 should provide VirtualService, AuthorizationPolicy and two RequestAuthentication", func() {
 			// given
 
-			rulesV1beta1 := []gatewayv1beta1.Rule{getJwtV1beta1Rule(path, jwtIssuer, jwksUri), getJwtV1beta1Rule("/different-path", "https://different.com/", "https://different.com/.well-known/jwks.json")}
+			rulesV1beta1 := []gatewayv1beta1.Rule{
+				getJwtV1beta1Rule(path, jwtIssuer, jwksUri),
+				getJwtV1beta1Rule("/different-path", "https://different.com/", "https://different.com/.well-known/jwks.json"),
+			}
 			v1beta1ApiRule := GetAPIRuleFor(rulesV1beta1)
 
-			rulesV2alpha1 := []gatewayv2alpha1.Rule{getJwtV2alpha1Rule(path, jwtIssuer, jwksUri), getJwtV2alpha1Rule("/different-path", "https://different.com/", "https://different.com/.well-known/jwks.json")}
+			rulesV2alpha1 := []gatewayv2alpha1.Rule{
+				getJwtV2alpha1Rule(path, jwtIssuer, jwksUri),
+				getJwtV2alpha1Rule("/different-path", "https://different.com/", "https://different.com/.well-known/jwks.json"),
+			}
 			v2alpha1ApiRule := getV2alpha1APIRuleFor("test-apirule", "some-namespace", rulesV2alpha1)
 
 			service := GetService(ServiceName)
@@ -454,7 +462,10 @@ var _ = Describe("Reconciliation", func() {
 			rulesV1beta1 := []gatewayv1beta1.Rule{getJwtV1beta1Rule(path, jwtIssuer, jwksUri), getNoAuthV1beta1Rule("/different-path")}
 			v1beta1ApiRule := GetAPIRuleFor(rulesV1beta1)
 
-			rulesV2alpha1 := []gatewayv2alpha1.Rule{getJwtV2alpha1Rule(path, jwtIssuer, jwksUri), getJwtV2alpha1Rule("/different-path", "https://different.com/", "https://different.com/.well-known/jwks.json")}
+			rulesV2alpha1 := []gatewayv2alpha1.Rule{
+				getJwtV2alpha1Rule(path, jwtIssuer, jwksUri),
+				getJwtV2alpha1Rule("/different-path", "https://different.com/", "https://different.com/.well-known/jwks.json"),
+			}
 			v2alpha1ApiRule := getV2alpha1APIRuleFor("test-apirule", "some-namespace", rulesV2alpha1)
 
 			service := GetService(ServiceName)
@@ -477,7 +488,10 @@ var _ = Describe("Reconciliation", func() {
 			rulesV1beta1 := []gatewayv1beta1.Rule{getJwtV1beta1Rule(path, jwtIssuer, jwksUri), getNoAuthV1beta1Rule("/different-path")}
 			v1beta1ApiRule := GetAPIRuleFor(rulesV1beta1)
 
-			rulesV2alpha1 := []gatewayv2alpha1.Rule{getJwtV2alpha1Rule(path, jwtIssuer, jwksUri), getJwtV2alpha1Rule("/different-path", "https://different.com/", "https://different.com/.well-known/jwks.json")}
+			rulesV2alpha1 := []gatewayv2alpha1.Rule{
+				getJwtV2alpha1Rule(path, jwtIssuer, jwksUri),
+				getJwtV2alpha1Rule("/different-path", "https://different.com/", "https://different.com/.well-known/jwks.json"),
+			}
 			v2alpha1ApiRule := getV2alpha1APIRuleFor("test-apirule", "some-namespace", rulesV2alpha1)
 
 			service := GetService(ServiceName)

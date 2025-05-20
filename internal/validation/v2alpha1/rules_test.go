@@ -2,12 +2,13 @@ package v2alpha1
 
 import (
 	"context"
+	"net/http"
+
 	"github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
-	"net/http"
 )
 
 var _ = Describe("Validate rules", func() {

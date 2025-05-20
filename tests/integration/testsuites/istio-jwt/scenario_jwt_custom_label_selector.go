@@ -2,6 +2,7 @@ package istiojwt
 
 import (
 	"fmt"
+
 	"github.com/cucumber/godog"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/manifestprocessor"
 )
@@ -12,8 +13,14 @@ func initCustomLabelSelector(ctx *godog.ScenarioContext, ts *testsuite) {
 	ctx.Step(`^CustomLabelSelector: There is a helloworld service with custom label selector name "([^"]*)"$`, scenario.thereIsHelloworldCustomLabelService)
 	ctx.Step(`^CustomLabelSelector: There is an endpoint secured with JWT on path "([^"]*)"`, scenario.thereIsAnJwtSecuredPath)
 	ctx.Step(`^CustomLabelSelector: The APIRule is applied$`, scenario.theAPIRuleIsApplied)
-	ctx.Step(`^CustomLabelSelector: Calling the "([^"]*)" endpoint without a token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithoutTokenShouldResultInStatusBetween)
-	ctx.Step(`^CustomLabelSelector: Calling the "([^"]*)" endpoint with a valid "([^"]*)" token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithValidTokenShouldResultInStatusBetween)
+	ctx.Step(
+		`^CustomLabelSelector: Calling the "([^"]*)" endpoint without a token should result in status between (\d+) and (\d+)$`,
+		scenario.callingTheEndpointWithoutTokenShouldResultInStatusBetween,
+	)
+	ctx.Step(
+		`^CustomLabelSelector: Calling the "([^"]*)" endpoint with a valid "([^"]*)" token should result in status between (\d+) and (\d+)$`,
+		scenario.callingTheEndpointWithValidTokenShouldResultInStatusBetween,
+	)
 	ctx.Step(`^CustomLabelSelector: Teardown helloworld service$`, scenario.teardownHelloworldCustomLabelService)
 }
 

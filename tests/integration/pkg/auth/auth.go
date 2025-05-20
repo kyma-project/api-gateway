@@ -4,12 +4,12 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
-	"github.com/avast/retry-go/v4"
 	"net/http"
 	"net/http/cookiejar"
 	"net/url"
 	"time"
 
+	"github.com/avast/retry-go/v4"
 	"golang.org/x/net/publicsuffix"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/clientcredentials"

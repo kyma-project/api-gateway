@@ -9,6 +9,9 @@ func initExposeMethodsOnPathsJwtHandler(ctx *godog.ScenarioContext, ts *testsuit
 
 	ctx.Step(`^ExposeMethodsOnPathsJwtHandler: There is a httpbin service$`, scenario.thereIsAHttpbinService)
 	ctx.Step(`^ExposeMethodsOnPathsJwtHandler: The APIRule is applied$`, scenario.theAPIRuleIsApplied)
-	ctx.Step(`^ExposeMethodsOnPathsJwtHandler: Calling the "([^"]*)" endpoint with "([^"]*)" method with a valid "([^"]*)" token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithMethodWithValidTokenShouldResultInStatusBetween)
+	ctx.Step(
+		`^ExposeMethodsOnPathsJwtHandler: Calling the "([^"]*)" endpoint with "([^"]*)" method with a valid "([^"]*)" token should result in status between (\d+) and (\d+)$`,
+		scenario.callingTheEndpointWithMethodWithValidTokenShouldResultInStatusBetween,
+	)
 	ctx.Step(`^ExposeMethodsOnPathsJwtHandler: Teardown httpbin service$`, scenario.teardownHttpbinService)
 }

@@ -12,7 +12,12 @@ import (
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 )
 
-func validateHosts(parentAttributePath string, vsList networkingv1beta1.VirtualServiceList, gwList networkingv1beta1.GatewayList, apiRule *gatewayv2alpha1.APIRule) []validation.Failure {
+func validateHosts(
+	parentAttributePath string,
+	vsList networkingv1beta1.VirtualServiceList,
+	gwList networkingv1beta1.GatewayList,
+	apiRule *gatewayv2alpha1.APIRule,
+) []validation.Failure {
 	var failures []validation.Failure
 	hostsAttributePath := parentAttributePath + ".hosts"
 

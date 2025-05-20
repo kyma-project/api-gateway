@@ -3,6 +3,7 @@ package v2alpha1
 import (
 	"encoding/json"
 	"errors"
+
 	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"github.com/kyma-project/api-gateway/internal/types/ory"
 )

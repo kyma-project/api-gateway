@@ -2,11 +2,12 @@ package istio
 
 import (
 	"fmt"
+	"log"
+
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/resource"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
-	"log"
 )
 
 // PatchIstiodDeploymentWithEnvironmentVariables patches the istiod deployment with the given environment variables.

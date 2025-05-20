@@ -1,9 +1,10 @@
 package v2alpha1_test
 
 import (
+	"net/http"
+
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	"k8s.io/utils/ptr"
-	"net/http"
 )
 
 type RuleBuilder struct {

@@ -3,19 +3,18 @@ package ratelimit
 import (
 	_ "embed"
 	"fmt"
-	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
-	"github.com/kyma-project/api-gateway/tests/integration/pkg/manifestprocessor"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"log"
 	"path"
 
 	"github.com/cucumber/godog"
-	"k8s.io/client-go/dynamic"
-
+	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/global"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/helpers"
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/manifestprocessor"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/resource"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/dynamic"
 )
 
 const manifestsDirectory = "testsuites/rate-limit/manifests/"

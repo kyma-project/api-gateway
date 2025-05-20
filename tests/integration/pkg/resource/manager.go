@@ -9,7 +9,6 @@ import (
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/client"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
@@ -418,7 +417,13 @@ func (m *Manager) DeleteResourceWithoutNS(client dynamic.Interface, resourceSche
 }
 
 // GetResource returns chosen k8s object
-func (m *Manager) GetResource(client dynamic.Interface, resourceSchema schema.GroupVersionResource, namespace string, resourceName string, opts ...retry.Option) (*unstructured.Unstructured, error) {
+func (m *Manager) GetResource(
+	client dynamic.Interface,
+	resourceSchema schema.GroupVersionResource,
+	namespace string,
+	resourceName string,
+	opts ...retry.Option,
+) (*unstructured.Unstructured, error) {
 	var res *unstructured.Unstructured
 	if len(opts) == 0 {
 		err := retry.Do(
@@ -452,7 +457,12 @@ func (m *Manager) GetResource(client dynamic.Interface, resourceSchema schema.Gr
 }
 
 // GetResourceWithoutNS returns chosen k8s object without namespace
-func (m *Manager) GetResourceWithoutNS(client dynamic.Interface, resourceSchema schema.GroupVersionResource, resourceName string, opts ...retry.Option) (*unstructured.Unstructured, error) {
+func (m *Manager) GetResourceWithoutNS(
+	client dynamic.Interface,
+	resourceSchema schema.GroupVersionResource,
+	resourceName string,
+	opts ...retry.Option,
+) (*unstructured.Unstructured, error) {
 	var res *unstructured.Unstructured
 	if len(opts) == 0 {
 		err := retry.Do(
@@ -485,7 +495,12 @@ func (m *Manager) GetResourceWithoutNS(client dynamic.Interface, resourceSchema 
 	return res, nil
 }
 
-func (m *Manager) List(client dynamic.Interface, resourceSchema schema.GroupVersionResource, namespace string, listOptions metav1.ListOptions) (*unstructured.UnstructuredList, error) {
+func (m *Manager) List(
+	client dynamic.Interface,
+	resourceSchema schema.GroupVersionResource,
+	namespace string,
+	listOptions metav1.ListOptions,
+) (*unstructured.UnstructuredList, error) {
 	var res *unstructured.UnstructuredList
 
 	err := retry.Do(

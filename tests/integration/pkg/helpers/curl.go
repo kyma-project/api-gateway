@@ -3,9 +3,9 @@ package helpers
 import (
 	"context"
 	"fmt"
-	"github.com/kyma-project/api-gateway/tests/integration/pkg/client"
 	"time"
 
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/client"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"

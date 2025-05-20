@@ -2,14 +2,14 @@ package ory
 
 import (
 	"context"
+
 	"github.com/go-logr/logr"
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"github.com/kyma-project/api-gateway/internal/processing"
 	"github.com/kyma-project/api-gateway/internal/validation"
+	oryValidation "github.com/kyma-project/api-gateway/internal/validation/v1beta1/ory"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-
-	oryValidation "github.com/kyma-project/api-gateway/internal/validation/v1beta1/ory"
 )
 
 type Reconciliation struct {

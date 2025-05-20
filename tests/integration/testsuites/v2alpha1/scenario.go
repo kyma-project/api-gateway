@@ -48,7 +48,15 @@ func (s *scenario) callingTheEndpointWithAValidToken(endpoint, tokenType, audOrC
 		AsHeader: true,
 	}
 	if audOrClaim == "audiences" {
-		return s.callingEndpointWithMethodAndHeaders(fmt.Sprintf("%s/%s", s.Url, strings.TrimLeft(endpoint, "/")), http.MethodGet, tokenType, asserter, nil, &tokenFrom, helpers.RequestOptions{Audiences: []string{par1, par2}})
+		return s.callingEndpointWithMethodAndHeaders(
+			fmt.Sprintf("%s/%s", s.Url, strings.TrimLeft(endpoint, "/")),
+			http.MethodGet,
+			tokenType,
+			asserter,
+			nil,
+			&tokenFrom,
+			helpers.RequestOptions{Audiences: []string{par1, par2}},
+		)
 	} else {
 		return s.callingEndpointWithMethodAndHeaders(fmt.Sprintf("%s/%s", s.Url, strings.TrimLeft(endpoint, "/")), http.MethodGet, tokenType, asserter, nil, &tokenFrom, helpers.RequestOptions{Scopes: []string{par1, par2}})
 	}
@@ -70,7 +78,13 @@ func (s *scenario) callingTheEndpointWithMethodShouldResultInStatusBetween(path 
 	return s.httpClient.CallEndpointWithHeadersAndMethod(requestHeaders, fmt.Sprintf("%s%s", s.Url, path), method, asserter)
 }
 
-func (s *scenario) callingTheEndpointWithMethodWithValidToken(url string, method string, tokenType string, asserter helpers.HttpResponseAsserter, additionalRequestHeaders ...map[string]string) error {
+func (s *scenario) callingTheEndpointWithMethodWithValidToken(
+	url string,
+	method string,
+	tokenType string,
+	asserter helpers.HttpResponseAsserter,
+	additionalRequestHeaders ...map[string]string,
+) error {
 	requestHeaders := make(map[string]string)
 	if len(additionalRequestHeaders) > 0 {
 		requestHeaders = additionalRequestHeaders[0]
@@ -162,7 +176,14 @@ func (s *scenario) theAPIRuleHasStatusWithDesc(expectedState, expectedDescriptio
 
 		hasExpected := apiRuleStatus.Status.State == expectedState && strings.Contains(apiRuleStatus.Status.Description, expectedDescription)
 		if !hasExpected {
-			return fmt.Errorf("APIRule %s not in expected status %s or not containing description %s. Status: %s, Description:\n%s", apiRule.GetName(), expectedState, expectedDescription, apiRuleStatus.Status.State, apiRuleStatus.Status.Description)
+			return fmt.Errorf(
+				"APIRule %s not in expected status %s or not containing description %s. Status: %s, Description:\n%s",
+				apiRule.GetName(),
+				expectedState,
+				expectedDescription,
+				apiRuleStatus.Status.State,
+				apiRuleStatus.Status.Description,
+			)
 		}
 
 		return nil
@@ -188,16 +209,28 @@ func (s *scenario) getGatewayHost(name, namespace string) (string, error) {
 
 func (s *scenario) callingTheEndpointWithMethodWithInvalidTokenShouldResultInStatusBetween(path string, method string, lower, higher int) error {
 	requestHeaders := map[string]string{testcontext.AuthorizationHeaderName: testcontext.AnyToken}
-	return s.httpClient.CallEndpointWithHeadersAndMethod(requestHeaders, fmt.Sprintf("%s%s", s.Url, path), method, &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher})
+	return s.httpClient.CallEndpointWithHeadersAndMethod(
+		requestHeaders,
+		fmt.Sprintf("%s%s", s.Url, path),
+		method,
+		&helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher},
+	)
 }
 
 func (s *scenario) callingTheEndpointWithInvalidTokenShouldResultInStatusBetween(path string, lower, higher int) error {
 	requestHeaders := map[string]string{testcontext.AuthorizationHeaderName: testcontext.AnyToken}
-	return s.httpClient.CallEndpointWithHeadersWithRetries(requestHeaders, fmt.Sprintf("%s%s", s.Url, path), &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher})
+	return s.httpClient.CallEndpointWithHeadersWithRetries(
+		requestHeaders,
+		fmt.Sprintf("%s%s", s.Url, path),
+		&helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher},
+	)
 }
 
 func (s *scenario) callingTheEndpointWithoutTokenShouldResultInStatusBetween(path string, lower, higher int) error {
-	return s.httpClient.CallEndpointWithRetries(fmt.Sprintf("%s/%s", s.Url, strings.TrimLeft(path, "/")), &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher})
+	return s.httpClient.CallEndpointWithRetries(
+		fmt.Sprintf("%s/%s", s.Url, strings.TrimLeft(path, "/")),
+		&helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher},
+	)
 }
 
 func (s *scenario) callingShortHostWithoutTokenShouldResultInStatusBetween(host, path string, lower, higher int) error {
@@ -205,22 +238,39 @@ func (s *scenario) callingShortHostWithoutTokenShouldResultInStatusBetween(host,
 	if err != nil {
 		return err
 	}
-	return s.httpClient.CallEndpointWithRetries(fmt.Sprintf("https://%s.%s/%s", host, gatewayHost, strings.TrimLeft(path, "/")), &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher})
+	return s.httpClient.CallEndpointWithRetries(
+		fmt.Sprintf("https://%s.%s/%s", host, gatewayHost, strings.TrimLeft(path, "/")),
+		&helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher},
+	)
 }
 
 func (s *scenario) callingTheEndpointWithHeader(path, headerName, value string, lower, higher int) error {
 	requestHeaders := map[string]string{headerName: value}
-	return s.httpClient.CallEndpointWithHeadersWithRetries(requestHeaders, fmt.Sprintf("%s/%s", s.Url, strings.TrimLeft(path, "/")), &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher})
+	return s.httpClient.CallEndpointWithHeadersWithRetries(
+		requestHeaders,
+		fmt.Sprintf("%s/%s", s.Url, strings.TrimLeft(path, "/")),
+		&helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher},
+	)
 }
 
 func (s *scenario) callingTheEndpointWithHeaderAndInvalidJwt(path, headerName, _, value string, lower, higher int) error {
 	requestHeaders := map[string]string{headerName: value, testcontext.AuthorizationHeaderName: testcontext.AnyToken}
-	return s.httpClient.CallEndpointWithHeadersWithRetries(requestHeaders, fmt.Sprintf("%s/%s", s.Url, strings.TrimLeft(path, "/")), &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher})
+	return s.httpClient.CallEndpointWithHeadersWithRetries(
+		requestHeaders,
+		fmt.Sprintf("%s/%s", s.Url, strings.TrimLeft(path, "/")),
+		&helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher},
+	)
 }
 
 func (s *scenario) callingTheEndpointWithHeaderAndValidJwt(path, headerName, value, tokenType string, lower, higher int) error {
 	requestHeaders := map[string]string{headerName: value}
-	return s.callingTheEndpointWithMethodWithValidToken(fmt.Sprintf("%s/%s", s.Url, strings.TrimLeft(path, "/")), http.MethodGet, tokenType, &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher}, requestHeaders)
+	return s.callingTheEndpointWithMethodWithValidToken(
+		fmt.Sprintf("%s/%s", s.Url, strings.TrimLeft(path, "/")),
+		http.MethodGet,
+		tokenType,
+		&helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher},
+		requestHeaders,
+	)
 }
 
 func (s *scenario) thereIsAnJwtSecuredPath(path string) {
@@ -313,7 +363,15 @@ func (s *scenario) preflightEndpointCallNoResponseHeader(endpoint, origin string
 	}, testcontext.GetRetryOpts()...)
 }
 
-func (s *scenario) callingEndpointWithMethodAndHeaders(endpointUrl string, method string, tokenType string, asserter helpers.HttpResponseAsserter, requestHeaders map[string]string, tokenFrom *tokenFrom, options ...helpers.RequestOptions) error {
+func (s *scenario) callingEndpointWithMethodAndHeaders(
+	endpointUrl string,
+	method string,
+	tokenType string,
+	asserter helpers.HttpResponseAsserter,
+	requestHeaders map[string]string,
+	tokenFrom *tokenFrom,
+	options ...helpers.RequestOptions,
+) error {
 	if requestHeaders == nil {
 		requestHeaders = make(map[string]string)
 	}

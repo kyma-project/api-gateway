@@ -5,9 +5,8 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1/authorizationpolicy"
-
 	"github.com/kyma-project/api-gateway/internal/processing"
+	"github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1/authorizationpolicy"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	. "github.com/onsi/gomega/gstruct"
@@ -197,7 +196,15 @@ var _ = Describe("Processing", func() {
 		Expect(err).To(BeNil())
 		Expect(result).To(HaveLen(1))
 
-		updateMatcher := getActionMatcher("update", apiRuleNamespace, serviceName, "RequestPrincipals", ContainElements("https://oauth2.example.com//*"), ContainElements(http.MethodGet, http.MethodPost), ContainElements("/"))
+		updateMatcher := getActionMatcher(
+			"update",
+			apiRuleNamespace,
+			serviceName,
+			"RequestPrincipals",
+			ContainElements("https://oauth2.example.com//*"),
+			ContainElements(http.MethodGet, http.MethodPost),
+			ContainElements("/"),
+		)
 		Expect(result).To(ContainElements(updateMatcher))
 	})
 
@@ -219,7 +226,15 @@ var _ = Describe("Processing", func() {
 		Expect(err).To(BeNil())
 		Expect(result).To(HaveLen(1))
 
-		resultMatcher := getActionMatcher("delete", apiRuleNamespace, serviceName, "RequestPrincipals", ContainElements("*"), ContainElements(http.MethodGet, http.MethodPost), ContainElements("/"))
+		resultMatcher := getActionMatcher(
+			"delete",
+			apiRuleNamespace,
+			serviceName,
+			"RequestPrincipals",
+			ContainElements("*"),
+			ContainElements(http.MethodGet, http.MethodPost),
+			ContainElements("/"),
+		)
 		Expect(result).To(ContainElements(resultMatcher))
 	})
 
@@ -251,8 +266,24 @@ var _ = Describe("Processing", func() {
 			Expect(err).To(BeNil())
 			Expect(result).To(HaveLen(2))
 
-			updateExistingApMatcher := getActionMatcher("update", apiRuleNamespace, serviceName, "RequestPrincipals", ContainElements("https://oauth2.example.com//*"), ContainElements(http.MethodGet, http.MethodPost), ContainElements("/"))
-			newApMatcher := getActionMatcher("create", apiRuleNamespace, serviceName, "RequestPrincipals", ContainElements("https://oauth2.example.com//*"), ContainElements(http.MethodGet, http.MethodPost), ContainElements("/new-path"))
+			updateExistingApMatcher := getActionMatcher(
+				"update",
+				apiRuleNamespace,
+				serviceName,
+				"RequestPrincipals",
+				ContainElements("https://oauth2.example.com//*"),
+				ContainElements(http.MethodGet, http.MethodPost),
+				ContainElements("/"),
+			)
+			newApMatcher := getActionMatcher(
+				"create",
+				apiRuleNamespace,
+				serviceName,
+				"RequestPrincipals",
+				ContainElements("https://oauth2.example.com//*"),
+				ContainElements(http.MethodGet, http.MethodPost),
+				ContainElements("/new-path"),
+			)
 			Expect(result).To(ContainElements(updateExistingApMatcher, newApMatcher))
 		})
 
@@ -282,8 +313,24 @@ var _ = Describe("Processing", func() {
 			Expect(err).To(BeNil())
 			Expect(result).To(HaveLen(2))
 
-			updateExistingApMatcher := getActionMatcher("update", apiRuleNamespace, serviceName, "RequestPrincipals", ContainElements("https://oauth2.example.com//*"), ContainElements(http.MethodGet, http.MethodPost), ContainElements("/"))
-			newApMatcher := getActionMatcher("create", apiRuleNamespace, serviceName, "RequestPrincipals", ContainElements("https://oauth2.example.com//*"), ContainElements(http.MethodDelete), ContainElements("/"))
+			updateExistingApMatcher := getActionMatcher(
+				"update",
+				apiRuleNamespace,
+				serviceName,
+				"RequestPrincipals",
+				ContainElements("https://oauth2.example.com//*"),
+				ContainElements(http.MethodGet, http.MethodPost),
+				ContainElements("/"),
+			)
+			newApMatcher := getActionMatcher(
+				"create",
+				apiRuleNamespace,
+				serviceName,
+				"RequestPrincipals",
+				ContainElements("https://oauth2.example.com//*"),
+				ContainElements(http.MethodDelete),
+				ContainElements("/"),
+			)
 			Expect(result).To(ContainElements(updateExistingApMatcher, newApMatcher))
 		})
 
@@ -318,8 +365,24 @@ var _ = Describe("Processing", func() {
 			Expect(err).To(BeNil())
 			Expect(result).To(HaveLen(2))
 
-			updateExistingApMatcher := getActionMatcher("update", apiRuleNamespace, serviceName, "RequestPrincipals", ContainElements("https://oauth2.example.com//*"), ContainElements(http.MethodGet, http.MethodPost), ContainElements("/"))
-			newApMatcher := getActionMatcher("create", apiRuleNamespace, "new-service", "RequestPrincipals", ContainElements("https://oauth2.example.com//*"), ContainElements(http.MethodGet, http.MethodPost), ContainElements("/"))
+			updateExistingApMatcher := getActionMatcher(
+				"update",
+				apiRuleNamespace,
+				serviceName,
+				"RequestPrincipals",
+				ContainElements("https://oauth2.example.com//*"),
+				ContainElements(http.MethodGet, http.MethodPost),
+				ContainElements("/"),
+			)
+			newApMatcher := getActionMatcher(
+				"create",
+				apiRuleNamespace,
+				"new-service",
+				"RequestPrincipals",
+				ContainElements("https://oauth2.example.com//*"),
+				ContainElements(http.MethodGet, http.MethodPost),
+				ContainElements("/"),
+			)
 			Expect(result).To(ContainElements(updateExistingApMatcher, newApMatcher))
 		})
 
@@ -347,8 +410,24 @@ var _ = Describe("Processing", func() {
 			Expect(err).To(BeNil())
 			Expect(result).To(HaveLen(2))
 
-			existingApMatcher := getActionMatcher("delete", apiRuleNamespace, serviceName, "RequestPrincipals", ContainElements("*"), ContainElements(http.MethodGet, http.MethodPost), ContainElements("/"))
-			newApMatcher := getActionMatcher("create", apiRuleNamespace, serviceName, "RequestPrincipals", ContainElements("https://oauth2.example.com//*"), ContainElements(http.MethodGet, http.MethodPost), ContainElements("/new-path"))
+			existingApMatcher := getActionMatcher(
+				"delete",
+				apiRuleNamespace,
+				serviceName,
+				"RequestPrincipals",
+				ContainElements("*"),
+				ContainElements(http.MethodGet, http.MethodPost),
+				ContainElements("/"),
+			)
+			newApMatcher := getActionMatcher(
+				"create",
+				apiRuleNamespace,
+				serviceName,
+				"RequestPrincipals",
+				ContainElements("https://oauth2.example.com//*"),
+				ContainElements(http.MethodGet, http.MethodPost),
+				ContainElements("/new-path"),
+			)
 			Expect(result).To(ContainElements(existingApMatcher, newApMatcher))
 		})
 
@@ -383,9 +462,33 @@ var _ = Describe("Processing", func() {
 			Expect(err).To(BeNil())
 			Expect(result).To(HaveLen(3))
 
-			updateUnchangedApMatcher := getActionMatcher("update", apiRuleNamespace, serviceName, "RequestPrincipals", ContainElements("https://oauth2.example.com//*"), ContainElements(http.MethodDelete), ContainElements("/"))
-			deleteMatcher := getActionMatcher("delete", apiRuleNamespace, serviceName, "RequestPrincipals", ContainElements("*"), ContainElements(http.MethodGet), ContainElements("/"))
-			createdMatcher := getActionMatcher("create", apiRuleNamespace, serviceName, "RequestPrincipals", ContainElements("https://oauth2.example.com//*"), ContainElements(http.MethodGet), ContainElements("/new-path"))
+			updateUnchangedApMatcher := getActionMatcher(
+				"update",
+				apiRuleNamespace,
+				serviceName,
+				"RequestPrincipals",
+				ContainElements("https://oauth2.example.com//*"),
+				ContainElements(http.MethodDelete),
+				ContainElements("/"),
+			)
+			deleteMatcher := getActionMatcher(
+				"delete",
+				apiRuleNamespace,
+				serviceName,
+				"RequestPrincipals",
+				ContainElements("*"),
+				ContainElements(http.MethodGet),
+				ContainElements("/"),
+			)
+			createdMatcher := getActionMatcher(
+				"create",
+				apiRuleNamespace,
+				serviceName,
+				"RequestPrincipals",
+				ContainElements("https://oauth2.example.com//*"),
+				ContainElements(http.MethodGet),
+				ContainElements("/new-path"),
+			)
 			Expect(result).To(ContainElements(updateUnchangedApMatcher, deleteMatcher, createdMatcher))
 		})
 	})
@@ -423,8 +526,24 @@ var _ = Describe("Processing", func() {
 			Expect(err).To(BeNil())
 			Expect(result).To(HaveLen(2))
 
-			deleteMatcher := getActionMatcher("delete", apiRuleNamespace, serviceName, "RequestPrincipals", ContainElements("*"), ContainElements(http.MethodDelete), ContainElements("/"))
-			createMatcher := getActionMatcher("create", specNewServiceNamespace, serviceName, "RequestPrincipals", ContainElements("https://oauth2.example.com//*"), ContainElements(http.MethodDelete), ContainElements("/"))
+			deleteMatcher := getActionMatcher(
+				"delete",
+				apiRuleNamespace,
+				serviceName,
+				"RequestPrincipals",
+				ContainElements("*"),
+				ContainElements(http.MethodDelete),
+				ContainElements("/"),
+			)
+			createMatcher := getActionMatcher(
+				"create",
+				specNewServiceNamespace,
+				serviceName,
+				"RequestPrincipals",
+				ContainElements("https://oauth2.example.com//*"),
+				ContainElements(http.MethodDelete),
+				ContainElements("/"),
+			)
 			Expect(result).To(ContainElements(deleteMatcher, createMatcher))
 		})
 
@@ -456,8 +575,24 @@ var _ = Describe("Processing", func() {
 			Expect(err).To(BeNil())
 			Expect(result).To(HaveLen(2))
 
-			deleteMatcher := getActionMatcher("delete", apiRuleNamespace, serviceName, "RequestPrincipals", ContainElements("*"), ContainElements(http.MethodDelete), ContainElements("/"))
-			createMatcher := getActionMatcher("create", ruleServiceNamespace, serviceName, "RequestPrincipals", ContainElements("https://oauth2.example.com//*"), ContainElements(http.MethodDelete), ContainElements("/"))
+			deleteMatcher := getActionMatcher(
+				"delete",
+				apiRuleNamespace,
+				serviceName,
+				"RequestPrincipals",
+				ContainElements("*"),
+				ContainElements(http.MethodDelete),
+				ContainElements("/"),
+			)
+			createMatcher := getActionMatcher(
+				"create",
+				ruleServiceNamespace,
+				serviceName,
+				"RequestPrincipals",
+				ContainElements("https://oauth2.example.com//*"),
+				ContainElements(http.MethodDelete),
+				ContainElements("/"),
+			)
 			Expect(result).To(ContainElements(deleteMatcher, createMatcher))
 		})
 	})
@@ -501,9 +636,33 @@ var _ = Describe("Processing", func() {
 			Expect(err).To(BeNil())
 			Expect(result).To(HaveLen(3))
 
-			updateUnchangedApMatcher := getActionMatcher("update", apiRuleNamespace, "first-service", "RequestPrincipals", ContainElements("https://oauth2.example.com//*"), ContainElements(http.MethodGet), ContainElements("/"))
-			deleteMatcher := getActionMatcher("delete", apiRuleNamespace, "second-service", "RequestPrincipals", ContainElements("*"), ContainElements(http.MethodGet), ContainElements("/"))
-			createdApMatcher := getActionMatcher("create", apiRuleNamespace, "second-service", "RequestPrincipals", ContainElements("https://oauth2.example.com//*"), ContainElements(http.MethodGet), ContainElements("/new-path"))
+			updateUnchangedApMatcher := getActionMatcher(
+				"update",
+				apiRuleNamespace,
+				"first-service",
+				"RequestPrincipals",
+				ContainElements("https://oauth2.example.com//*"),
+				ContainElements(http.MethodGet),
+				ContainElements("/"),
+			)
+			deleteMatcher := getActionMatcher(
+				"delete",
+				apiRuleNamespace,
+				"second-service",
+				"RequestPrincipals",
+				ContainElements("*"),
+				ContainElements(http.MethodGet),
+				ContainElements("/"),
+			)
+			createdApMatcher := getActionMatcher(
+				"create",
+				apiRuleNamespace,
+				"second-service",
+				"RequestPrincipals",
+				ContainElements("https://oauth2.example.com//*"),
+				ContainElements(http.MethodGet),
+				ContainElements("/new-path"),
+			)
 			Expect(result).To(ContainElements(updateUnchangedApMatcher, deleteMatcher, createdApMatcher))
 		})
 	})

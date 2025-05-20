@@ -1,10 +1,11 @@
 package envoyfilter
 
 import (
+	"testing"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	networkingv1alpha3 "istio.io/api/networking/v1alpha3"
-	"testing"
 )
 
 var _ = Describe("EnvoyFilterBuilder", func() {

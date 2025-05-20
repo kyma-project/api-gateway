@@ -3,6 +3,10 @@ package istiojwt
 import (
 	"errors"
 	"fmt"
+	"net/http"
+	"net/url"
+	"strings"
+
 	"github.com/avast/retry-go/v4"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/auth"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/helpers"
@@ -11,9 +15,6 @@ import (
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
 	"golang.org/x/oauth2/clientcredentials"
 	"k8s.io/client-go/dynamic"
-	"net/http"
-	"net/url"
-	"strings"
 )
 
 type scenario struct {
@@ -61,7 +62,15 @@ func (s *scenario) callingTheEndpointWithAValidToken(endpoint, tokenType, audOrC
 		AsHeader: true,
 	}
 	if audOrClaim == "audiences" {
-		return s.callingEndpointWithMethodAndHeaders(fmt.Sprintf("%s/%s", s.Url, strings.TrimLeft(endpoint, "/")), http.MethodGet, tokenType, asserter, nil, &tokenFrom, helpers.RequestOptions{Audiences: []string{par1, par2}})
+		return s.callingEndpointWithMethodAndHeaders(
+			fmt.Sprintf("%s/%s", s.Url, strings.TrimLeft(endpoint, "/")),
+			http.MethodGet,
+			tokenType,
+			asserter,
+			nil,
+			&tokenFrom,
+			helpers.RequestOptions{Audiences: []string{par1, par2}},
+		)
 	} else {
 		return s.callingEndpointWithMethodAndHeaders(fmt.Sprintf("%s/%s", s.Url, strings.TrimLeft(endpoint, "/")), http.MethodGet, tokenType, asserter, nil, &tokenFrom, helpers.RequestOptions{Scopes: []string{par1, par2}})
 	}
@@ -118,10 +127,23 @@ func (s *scenario) callingTheEndpointWithValidTokenShouldResultInBodyContaining(
 
 func (s *scenario) callingTheEndpointWithMethodWithInvalidTokenShouldResultInStatusBetween(path string, method string, lower, higher int) error {
 	requestHeaders := map[string]string{testcontext.AuthorizationHeaderName: testcontext.AnyToken}
-	return s.httpClient.CallEndpointWithHeadersAndMethod(requestHeaders, fmt.Sprintf("%s%s", s.Url, path), method, &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher})
+	return s.httpClient.CallEndpointWithHeadersAndMethod(
+		requestHeaders,
+		fmt.Sprintf("%s%s", s.Url, path),
+		method,
+		&helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher},
+	)
 }
 
-func (s *scenario) callingEndpointWithMethodAndHeaders(endpointUrl string, method string, tokenType string, asserter helpers.HttpResponseAsserter, requestHeaders map[string]string, tokenFrom *tokenFrom, options ...helpers.RequestOptions) error {
+func (s *scenario) callingEndpointWithMethodAndHeaders(
+	endpointUrl string,
+	method string,
+	tokenType string,
+	asserter helpers.HttpResponseAsserter,
+	requestHeaders map[string]string,
+	tokenFrom *tokenFrom,
+	options ...helpers.RequestOptions,
+) error {
 	if requestHeaders == nil {
 		requestHeaders = make(map[string]string)
 	}
@@ -170,11 +192,17 @@ func (s *scenario) callingEndpointWithMethodAndHeaders(endpointUrl string, metho
 }
 
 func (s *scenario) callingTheEndpointWithoutTokenShouldResultInStatusBetween(endpoint string, lower, higher int) error {
-	return s.httpClient.CallEndpointWithRetries(fmt.Sprintf("%s/%s", s.Url, strings.TrimLeft(endpoint, "/")), &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher})
+	return s.httpClient.CallEndpointWithRetries(
+		fmt.Sprintf("%s/%s", s.Url, strings.TrimLeft(endpoint, "/")),
+		&helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher},
+	)
 }
 
 func (s *scenario) callingPrefixWithoutTokenShouldResultInStatusBetween(endpoint, host string, lower, higher int) error {
-	return s.httpClient.CallEndpointWithRetries(fmt.Sprintf("%s/%s", fmt.Sprintf("https://%s-%s.%s", host, s.TestID, s.Domain), strings.TrimLeft(endpoint, "/")), &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher})
+	return s.httpClient.CallEndpointWithRetries(
+		fmt.Sprintf("%s/%s", fmt.Sprintf("https://%s-%s.%s", host, s.TestID, s.Domain), strings.TrimLeft(endpoint, "/")),
+		&helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher},
+	)
 }
 
 func (s *scenario) thereAreTwoNamespaces() error {

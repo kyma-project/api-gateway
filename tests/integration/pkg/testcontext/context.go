@@ -2,9 +2,9 @@ package testcontext
 
 import (
 	"context"
-	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
 	"testing"
 
+	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
 	"github.com/pkg/errors"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )

@@ -3,6 +3,8 @@ package ratelimit_test
 import (
 	"context"
 	"fmt"
+	"time"
+
 	ratelimitv1alpha1 "github.com/kyma-project/api-gateway/apis/gateway/ratelimit/v1alpha1"
 	ratelimitvalidator "github.com/kyma-project/api-gateway/internal/ratelimit"
 	. "github.com/onsi/ginkgo/v2"
@@ -12,7 +14,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
-	"time"
 )
 
 var sc *runtime.Scheme

@@ -2,9 +2,9 @@ package processors
 
 import (
 	"context"
-	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"time"
 
+	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"github.com/kyma-project/api-gateway/internal/processing"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"

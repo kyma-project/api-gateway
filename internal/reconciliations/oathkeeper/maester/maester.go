@@ -3,6 +3,7 @@ package maester
 import (
 	"context"
 	"errors"
+
 	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )

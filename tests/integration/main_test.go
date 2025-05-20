@@ -18,7 +18,6 @@ import (
 	"github.com/kyma-project/api-gateway/tests/integration/testsuites/upgrade"
 	v2 "github.com/kyma-project/api-gateway/tests/integration/testsuites/v2"
 	"github.com/kyma-project/api-gateway/tests/integration/testsuites/v2alpha1"
-
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 )
 

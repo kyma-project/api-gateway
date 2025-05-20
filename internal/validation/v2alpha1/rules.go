@@ -3,12 +3,13 @@ package v2alpha1
 import (
 	"context"
 	"fmt"
+	"strings"
+
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	"github.com/kyma-project/api-gateway/internal/path/segment_trie"
 	"github.com/kyma-project/api-gateway/internal/path/token"
 	"github.com/kyma-project/api-gateway/internal/validation"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"strings"
 )
 
 func validateRules(ctx context.Context, client client.Client, parentAttributePath string, apiRule *gatewayv2alpha1.APIRule) []validation.Failure {
@@ -25,7 +26,10 @@ func validateRules(ctx context.Context, client client.Client, parentAttributePat
 		ruleAttributePath := fmt.Sprintf("%s[%d]", rulesAttributePath, i)
 
 		if apiRule.Spec.Service == nil && rule.Service == nil {
-			problems = append(problems, validation.Failure{AttributePath: ruleAttributePath + ".service", Message: "The rule must define a service, because no service is defined on spec level"})
+			problems = append(
+				problems,
+				validation.Failure{AttributePath: ruleAttributePath + ".service", Message: "The rule must define a service, because no service is defined on spec level"},
+			)
 		}
 
 		problems = append(problems, validateJwt(ruleAttributePath, &rule)...)
@@ -39,7 +43,10 @@ func validateRules(ctx context.Context, client client.Client, parentAttributePat
 		if rule.ExtAuth != nil {
 			extAuthFailures, err := validateExtAuthProviders(ctx, client, ruleAttributePath, rule)
 			if err != nil {
-				problems = append(problems, validation.Failure{AttributePath: ruleAttributePath, Message: fmt.Sprintf("Failed to execute external auth provider validation, err: %s", err)})
+				problems = append(
+					problems,
+					validation.Failure{AttributePath: ruleAttributePath, Message: fmt.Sprintf("Failed to execute external auth provider validation, err: %s", err)},
+				)
 			}
 
 			problems = append(problems, extAuthFailures...)

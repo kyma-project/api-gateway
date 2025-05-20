@@ -2,12 +2,12 @@ package v2_test
 
 import (
 	"context"
-	"github.com/kyma-project/api-gateway/apis/gateway/v2"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/utils/ptr"
 
+	v2 "github.com/kyma-project/api-gateway/apis/gateway/v2"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/ptr"
 )
 
 var _ = Describe("Service", func() {

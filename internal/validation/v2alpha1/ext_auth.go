@@ -2,6 +2,7 @@ package v2alpha1
 
 import (
 	"context"
+
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	"github.com/kyma-project/api-gateway/internal/validation"
 	"gopkg.in/yaml.v3"

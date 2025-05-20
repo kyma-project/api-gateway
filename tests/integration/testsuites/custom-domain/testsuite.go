@@ -5,6 +5,9 @@ import (
 	_ "embed"
 	"encoding/base64"
 	"fmt"
+	"log"
+	"time"
+
 	"github.com/avast/retry-go/v4"
 	"github.com/cucumber/godog"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/auth"
@@ -21,8 +24,6 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
-	"log"
-	"time"
 )
 
 const ingressServiceName = "istio-ingressgateway"

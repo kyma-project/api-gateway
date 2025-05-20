@@ -3,9 +3,9 @@ package processing_test
 import (
 	"encoding/json"
 	"fmt"
-	apirulev1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"net/http"
 
+	apirulev1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"github.com/kyma-project/api-gateway/internal/processing"
 	"github.com/onsi/gomega"
 	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
@@ -94,7 +94,13 @@ func GetRuleFor(path string, methods []apirulev1beta1.HttpMethod, mutators []*ap
 	}
 }
 
-func GetRuleWithServiceFor(path string, methods []apirulev1beta1.HttpMethod, mutators []*apirulev1beta1.Mutator, accessStrategies []*apirulev1beta1.Authenticator, service *apirulev1beta1.Service) apirulev1beta1.Rule {
+func GetRuleWithServiceFor(
+	path string,
+	methods []apirulev1beta1.HttpMethod,
+	mutators []*apirulev1beta1.Mutator,
+	accessStrategies []*apirulev1beta1.Authenticator,
+	service *apirulev1beta1.Service,
+) apirulev1beta1.Rule {
 	return apirulev1beta1.Rule{
 		Path:             path,
 		Methods:          methods,

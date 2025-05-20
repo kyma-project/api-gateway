@@ -5,16 +5,14 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/kyma-project/api-gateway/internal/helpers"
-	"github.com/kyma-project/api-gateway/internal/processing/default_domain"
-	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
-
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
-
 	"github.com/kyma-project/api-gateway/internal/builders"
+	"github.com/kyma-project/api-gateway/internal/helpers"
 	"github.com/kyma-project/api-gateway/internal/processing"
+	"github.com/kyma-project/api-gateway/internal/processing/default_domain"
 	"github.com/kyma-project/api-gateway/internal/processing/hashbasedstate"
 	"istio.io/api/security/v1beta1"
+	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -60,7 +58,12 @@ func (r creator) Create(ctx context.Context, client client.Client, apiRule *gate
 	return state, nil
 }
 
-func (r creator) generateAuthorizationPolicies(ctx context.Context, client client.Client, api *gatewayv2alpha1.APIRule, rule gatewayv2alpha1.Rule) (*securityv1beta1.AuthorizationPolicyList, error) {
+func (r creator) generateAuthorizationPolicies(
+	ctx context.Context,
+	client client.Client,
+	api *gatewayv2alpha1.APIRule,
+	rule gatewayv2alpha1.Rule,
+) (*securityv1beta1.AuthorizationPolicyList, error) {
 	authorizationPolicyList := securityv1beta1.AuthorizationPolicyList{}
 
 	var jwtAuthorizations []*gatewayv2alpha1.JwtAuthorization
@@ -113,7 +116,12 @@ func (r creator) generateAuthorizationPolicies(ctx context.Context, client clien
 	return &authorizationPolicyList, nil
 }
 
-func (r creator) generateExtAuthAuthorizationPolicies(ctx context.Context, client client.Client, api *gatewayv2alpha1.APIRule, rule gatewayv2alpha1.Rule) (authorizationPolicyList []*securityv1beta1.AuthorizationPolicy, _ error) {
+func (r creator) generateExtAuthAuthorizationPolicies(
+	ctx context.Context,
+	client client.Client,
+	api *gatewayv2alpha1.APIRule,
+	rule gatewayv2alpha1.Rule,
+) (authorizationPolicyList []*securityv1beta1.AuthorizationPolicy, _ error) {
 	for i, authorizer := range rule.ExtAuth.ExternalAuthorizers {
 		policy, err := r.generateExtAuthAuthorizationPolicy(ctx, client, api, rule, authorizer)
 		if err != nil {
@@ -131,7 +139,12 @@ func (r creator) generateExtAuthAuthorizationPolicies(ctx context.Context, clien
 	return authorizationPolicyList, nil
 }
 
-func (r creator) generateAuthorizationPolicyForEmptyAuthorizations(ctx context.Context, client client.Client, api *gatewayv2alpha1.APIRule, rule gatewayv2alpha1.Rule) (*securityv1beta1.AuthorizationPolicy, error) {
+func (r creator) generateAuthorizationPolicyForEmptyAuthorizations(
+	ctx context.Context,
+	client client.Client,
+	api *gatewayv2alpha1.APIRule,
+	rule gatewayv2alpha1.Rule,
+) (*securityv1beta1.AuthorizationPolicy, error) {
 	// In case of NoAuth, it will create an ALLOW AuthorizationPolicy bypassing any other AuthorizationPolicies.
 	ap, err := r.generateAuthorizationPolicy(ctx, client, api, rule, &gatewayv2alpha1.JwtAuthorization{})
 	if err != nil {
@@ -161,7 +174,13 @@ func baseAuthorizationPolicyBuilder(apiRule *gatewayv2alpha1.APIRule, rule gatew
 		nil
 }
 
-func (r creator) generateExtAuthAuthorizationPolicy(ctx context.Context, client client.Client, api *gatewayv2alpha1.APIRule, rule gatewayv2alpha1.Rule, authorizerName string) (*securityv1beta1.AuthorizationPolicy, error) {
+func (r creator) generateExtAuthAuthorizationPolicy(
+	ctx context.Context,
+	client client.Client,
+	api *gatewayv2alpha1.APIRule,
+	rule gatewayv2alpha1.Rule,
+	authorizerName string,
+) (*securityv1beta1.AuthorizationPolicy, error) {
 	spec, err := r.generateExtAuthAuthorizationPolicySpec(ctx, client, api, rule, authorizerName)
 	if err != nil {
 		return nil, err
@@ -178,7 +197,13 @@ func (r creator) generateExtAuthAuthorizationPolicy(ctx context.Context, client 
 	return apBuilder.Get(), nil
 }
 
-func (r creator) generateAuthorizationPolicy(ctx context.Context, client client.Client, apiRule *gatewayv2alpha1.APIRule, rule gatewayv2alpha1.Rule, authorization *gatewayv2alpha1.JwtAuthorization) (*securityv1beta1.AuthorizationPolicy, error) {
+func (r creator) generateAuthorizationPolicy(
+	ctx context.Context,
+	client client.Client,
+	apiRule *gatewayv2alpha1.APIRule,
+	rule gatewayv2alpha1.Rule,
+	authorization *gatewayv2alpha1.JwtAuthorization,
+) (*securityv1beta1.AuthorizationPolicy, error) {
 	spec, err := r.generateAuthorizationPolicySpec(ctx, client, apiRule, rule, authorization)
 	if err != nil {
 		return nil, err
@@ -197,7 +222,13 @@ func (r creator) generateAuthorizationPolicy(ctx context.Context, client client.
 	return apBuilder.Get(), nil
 }
 
-func (r creator) generateExtAuthAuthorizationPolicySpec(ctx context.Context, client client.Client, api *gatewayv2alpha1.APIRule, rule gatewayv2alpha1.Rule, providerName string) (*v1beta1.AuthorizationPolicy, error) {
+func (r creator) generateExtAuthAuthorizationPolicySpec(
+	ctx context.Context,
+	client client.Client,
+	api *gatewayv2alpha1.APIRule,
+	rule gatewayv2alpha1.Rule,
+	providerName string,
+) (*v1beta1.AuthorizationPolicy, error) {
 	podSelector, err := gatewayv2alpha1.GetSelectorFromService(ctx, client, api, rule)
 	if err != nil {
 		return nil, err
@@ -214,7 +245,13 @@ func (r creator) generateExtAuthAuthorizationPolicySpec(ctx context.Context, cli
 		Get(), nil
 }
 
-func (r creator) generateAuthorizationPolicySpec(ctx context.Context, client client.Client, api *gatewayv2alpha1.APIRule, rule gatewayv2alpha1.Rule, authorization *gatewayv2alpha1.JwtAuthorization) (*v1beta1.AuthorizationPolicy, error) {
+func (r creator) generateAuthorizationPolicySpec(
+	ctx context.Context,
+	client client.Client,
+	api *gatewayv2alpha1.APIRule,
+	rule gatewayv2alpha1.Rule,
+	authorization *gatewayv2alpha1.JwtAuthorization,
+) (*v1beta1.AuthorizationPolicy, error) {
 	podSelector, err := gatewayv2alpha1.GetSelectorFromService(ctx, client, api, rule)
 	if err != nil {
 		return nil, err

@@ -3,19 +3,18 @@ package requestauthentication_test
 import (
 	"context"
 	"fmt"
-	"github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1/requestauthentication"
 	"net/http"
 
 	"github.com/kyma-project/api-gateway/internal/processing"
-	"istio.io/api/security/v1beta1"
-	typev1beta1 "istio.io/api/type/v1beta1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
+	"github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1/requestauthentication"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	. "github.com/onsi/gomega/gstruct"
 	gomegatypes "github.com/onsi/gomega/types"
+	"istio.io/api/security/v1beta1"
+	typev1beta1 "istio.io/api/type/v1beta1"
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 var _ = Describe("Processing with existing RequestAuthentication", func() {

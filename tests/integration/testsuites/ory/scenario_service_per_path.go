@@ -2,6 +2,7 @@ package ory
 
 import (
 	_ "embed"
+
 	"github.com/cucumber/godog"
 )
 
@@ -17,8 +18,14 @@ func initServicePerPath(ctx *godog.ScenarioContext, ts *testsuite) {
 	ctx.Step(`^Service per path: There is a httpbin service`, scenario.thereIsAHttpbinService)
 	ctx.Step(`^Service per path: There is a helloworld service`, scenario.thereIsAHelloWorldService)
 	ctx.Step(`^Service per path: The APIRule .* is applied$`, scenario.theAPIRuleIsApplied)
-	ctx.Step(`^Service per path: Calling the endpoint "([^"]*)" and "([^"]*)" with any token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointsWithInvalidTokenShouldResultInStatusBetween)
-	ctx.Step(`^Service per path: Calling the endpoint "([^"]*)" and "([^"]*)" without a token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointsWithoutTokenShouldResultInStatusBetween)
+	ctx.Step(
+		`^Service per path: Calling the endpoint "([^"]*)" and "([^"]*)" with any token should result in status between (\d+) and (\d+)$`,
+		scenario.callingTheEndpointsWithInvalidTokenShouldResultInStatusBetween,
+	)
+	ctx.Step(
+		`^Service per path: Calling the endpoint "([^"]*)" and "([^"]*)" without a token should result in status between (\d+) and (\d+)$`,
+		scenario.callingTheEndpointsWithoutTokenShouldResultInStatusBetween,
+	)
 	ctx.Step(`^Service per path: Teardown httpbin service$`, scenario.teardownHttpbinService)
 	ctx.Step(`^Service per path: Teardown helloworld service$`, scenario.teardownHelloWorldService)
 }

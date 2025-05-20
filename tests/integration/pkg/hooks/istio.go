@@ -2,6 +2,7 @@ package hooks
 
 import (
 	_ "embed"
+
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/istio"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
 )

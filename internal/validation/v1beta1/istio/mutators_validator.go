@@ -3,6 +3,7 @@ package istio
 import (
 	"encoding/json"
 	"fmt"
+
 	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"github.com/kyma-project/api-gateway/internal/processing"
 	"github.com/kyma-project/api-gateway/internal/validation"

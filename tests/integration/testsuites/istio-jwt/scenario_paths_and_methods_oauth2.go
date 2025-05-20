@@ -9,6 +9,9 @@ func initExposeMethodsOnPathsOAuth2Handler(ctx *godog.ScenarioContext, ts *tests
 
 	ctx.Step(`^ExposeMethodsOnPathsOAuth2Handler: There is a httpbin service$`, scenario.thereIsAHttpbinService)
 	ctx.Step(`^ExposeMethodsOnPathsOAuth2Handler: The APIRule is applied$`, scenario.theAPIRuleIsApplied)
-	ctx.Step(`^ExposeMethodsOnPathsOAuth2Handler: Calling the "([^"]*)" endpoint with "([^"]*)" method with a valid "([^"]*)" token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithMethodWithValidTokenShouldResultInStatusBetween)
+	ctx.Step(
+		`^ExposeMethodsOnPathsOAuth2Handler: Calling the "([^"]*)" endpoint with "([^"]*)" method with a valid "([^"]*)" token should result in status between (\d+) and (\d+)$`,
+		scenario.callingTheEndpointWithMethodWithValidTokenShouldResultInStatusBetween,
+	)
 	ctx.Step(`^ExposeMethodsOnPathsOAuth2Handler: Teardown httpbin service$`, scenario.teardownHttpbinService)
 }

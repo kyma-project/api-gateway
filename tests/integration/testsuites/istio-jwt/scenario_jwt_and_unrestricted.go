@@ -2,8 +2,9 @@ package istiojwt
 
 import (
 	"fmt"
-	"github.com/cucumber/godog"
 	"strings"
+
+	"github.com/cucumber/godog"
 )
 
 func initJwtAndAllow(ctx *godog.ScenarioContext, ts *testsuite) {
@@ -13,8 +14,14 @@ func initJwtAndAllow(ctx *godog.ScenarioContext, ts *testsuite) {
 	ctx.Step(`^JwtAndUnrestricted: There is an endpoint secured with JWT on path "([^"]*)"$`, scenario.thereIsAnJwtSecuredPath)
 	ctx.Step(`^JwtAndUnrestricted: There is an endpoint with handler "([^"]*)" on path "([^"]*)"$`, scenario.thereIsAnEndpointWithHandler)
 	ctx.Step(`^JwtAndUnrestricted: The APIRule is applied$`, scenario.theAPIRuleIsApplied)
-	ctx.Step(`^JwtAndUnrestricted: Calling the "([^"]*)" endpoint with a valid "([^"]*)" token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithValidTokenShouldResultInStatusBetween)
-	ctx.Step(`^JwtAndUnrestricted: Calling the "([^"]*)" endpoint without token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithoutTokenShouldResultInStatusBetween)
+	ctx.Step(
+		`^JwtAndUnrestricted: Calling the "([^"]*)" endpoint with a valid "([^"]*)" token should result in status between (\d+) and (\d+)$`,
+		scenario.callingTheEndpointWithValidTokenShouldResultInStatusBetween,
+	)
+	ctx.Step(
+		`^JwtAndUnrestricted: Calling the "([^"]*)" endpoint without token should result in status between (\d+) and (\d+)$`,
+		scenario.callingTheEndpointWithoutTokenShouldResultInStatusBetween,
+	)
 	ctx.Step(`^JwtAndUnrestricted: Teardown httpbin service$`, scenario.teardownHttpbinService)
 }
 

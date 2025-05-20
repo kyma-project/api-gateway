@@ -1,14 +1,14 @@
 package segment_trie_test
 
 import (
-	"github.com/kyma-project/api-gateway/internal/path/token"
-	"github.com/thoas/go-funk"
 	"strings"
 	"testing"
 
 	. "github.com/kyma-project/api-gateway/internal/path/segment_trie"
+	"github.com/kyma-project/api-gateway/internal/path/token"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	"github.com/thoas/go-funk"
 )
 
 func TestSegmentTrie(t *testing.T) {

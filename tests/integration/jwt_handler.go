@@ -2,18 +2,17 @@ package api_gateway
 
 import (
 	"fmt"
-	"github.com/avast/retry-go/v4"
 	"log"
 	"strings"
 	"time"
 
+	"github.com/avast/retry-go/v4"
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/client"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/resource"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
-
-	"github.com/kyma-project/api-gateway/tests/integration/pkg/client"
 )
 
 const (

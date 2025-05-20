@@ -2,13 +2,14 @@ package gateway
 
 import (
 	_ "embed"
+	"log"
+
 	"github.com/cucumber/godog"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/global"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/helpers"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/resource"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
 	"k8s.io/client-go/dynamic"
-	"log"
 )
 
 type testsuite struct {
@@ -26,7 +27,11 @@ func (t *testsuite) InitScenarios(ctx *godog.ScenarioContext) {
 
 func (t *testsuite) FeaturePath() []string {
 	if t.config.IsGardener {
-		return []string{"testsuites/gateway/features/deletion.feature", "testsuites/gateway/features/kyma_gateway.feature", "testsuites/gateway/features/kyma_gateway_gardener.feature"}
+		return []string{
+			"testsuites/gateway/features/deletion.feature",
+			"testsuites/gateway/features/kyma_gateway.feature",
+			"testsuites/gateway/features/kyma_gateway_gardener.feature",
+		}
 	}
 
 	return []string{"testsuites/gateway/features/deletion.feature", "testsuites/gateway/features/kyma_gateway.feature", "testsuites/gateway/features/kyma_gateway_k3d.feature"}

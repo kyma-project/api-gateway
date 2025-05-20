@@ -2,9 +2,9 @@ package v1beta1
 
 import (
 	"fmt"
+
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"github.com/kyma-project/api-gateway/internal/validation"
-
 	"golang.org/x/exp/slices"
 )
 
@@ -21,7 +21,9 @@ func CheckForExclusiveAccessStrategy(accessStrategies []*gatewayv1beta1.Authenti
 
 	if handlerIndex > -1 {
 		path := fmt.Sprintf("%s[%d]%s", attributePath+".accessStrategies", handlerIndex, ".handler")
-		return []validation.Failure{{AttributePath: path, Message: fmt.Sprintf("%s access strategy is not allowed in combination with other access strategies", exclusiveAccessStrategy)}}
+		return []validation.Failure{
+			{AttributePath: path, Message: fmt.Sprintf("%s access strategy is not allowed in combination with other access strategies", exclusiveAccessStrategy)},
+		}
 	}
 
 	return nil
@@ -33,9 +35,16 @@ func CheckForSecureAndUnsecureAccessStrategies(accessStrategies []*gatewayv1beta
 
 	for _, r := range accessStrategies {
 		switch r.Name {
-		case gatewayv1beta1.AccessStrategyOauth2ClientCredentials, gatewayv1beta1.AccessStrategyOauth2Introspection, gatewayv1beta1.AccessStrategyJwt, gatewayv1beta1.AccessStrategyCookieSession:
+		case gatewayv1beta1.AccessStrategyOauth2ClientCredentials,
+			gatewayv1beta1.AccessStrategyOauth2Introspection,
+			gatewayv1beta1.AccessStrategyJwt,
+			gatewayv1beta1.AccessStrategyCookieSession:
 			containsSecureAccessStrategy = true
-		case gatewayv1beta1.AccessStrategyNoop, gatewayv1beta1.AccessStrategyNoAuth, gatewayv1beta1.AccessStrategyAllow, gatewayv1beta1.AccessStrategyUnauthorized, gatewayv1beta1.AccessStrategyAnonymous:
+		case gatewayv1beta1.AccessStrategyNoop,
+			gatewayv1beta1.AccessStrategyNoAuth,
+			gatewayv1beta1.AccessStrategyAllow,
+			gatewayv1beta1.AccessStrategyUnauthorized,
+			gatewayv1beta1.AccessStrategyAnonymous:
 			containsUnsecureAccessStrategy = true
 		}
 	}

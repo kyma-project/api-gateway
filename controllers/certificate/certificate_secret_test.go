@@ -11,6 +11,9 @@ import (
 	"encoding/pem"
 	"time"
 
+	"github.com/go-logr/logr"
+	"github.com/kyma-project/api-gateway/controllers/certificate"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/pkg/errors"
 	appsv1 "k8s.io/api/apps/v1"
@@ -21,10 +24,6 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/util/cert"
 	"k8s.io/utils/ptr"
-
-	"github.com/go-logr/logr"
-	"github.com/kyma-project/api-gateway/controllers/certificate"
-	. "github.com/onsi/ginkgo/v2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 

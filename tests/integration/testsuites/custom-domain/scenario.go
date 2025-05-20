@@ -3,6 +3,10 @@ package customdomain
 import (
 	"encoding/base64"
 	"fmt"
+	"log"
+	"path"
+	"strings"
+
 	"github.com/cucumber/godog"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/auth"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/helpers"
@@ -12,9 +16,6 @@ import (
 	"golang.org/x/oauth2/clientcredentials"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/dynamic"
-	"log"
-	"path"
-	"strings"
 )
 
 const manifestsPath = "testsuites/custom-domain/manifests/"
@@ -44,10 +45,19 @@ func initScenario(ctx *godog.ScenarioContext, ts *testsuite) {
 
 	ctx.Step(`^there is an unsecured endpoint$`, scenario.thereIsAnUnsecuredEndpoint)
 	ctx.Step(`^calling the "([^"]*)" endpoint with any token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithAnyTokenShouldResultInStatusBetween)
-	ctx.Step(`^calling the "([^"]*)" endpoint without a token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithoutATokenShouldResultInStatusBetween)
+	ctx.Step(
+		`^calling the "([^"]*)" endpoint without a token should result in status between (\d+) and (\d+)$`,
+		scenario.callingTheEndpointWithoutATokenShouldResultInStatusBetween,
+	)
 	ctx.Step(`^endpoint is secured with OAuth2$`, scenario.secureWithOAuth2)
-	ctx.Step(`^calling the "([^"]*)" endpoint with an invalid token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithAInvalidTokenShouldResultInStatusBetween)
-	ctx.Step(`^calling the "([^"]*)" endpoint with a valid token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithAValidTokenShouldResultInStatusBetween)
+	ctx.Step(
+		`^calling the "([^"]*)" endpoint with an invalid token should result in status between (\d+) and (\d+)$`,
+		scenario.callingTheEndpointWithAInvalidTokenShouldResultInStatusBetween,
+	)
+	ctx.Step(
+		`^calling the "([^"]*)" endpoint with a valid token should result in status between (\d+) and (\d+)$`,
+		scenario.callingTheEndpointWithAValidTokenShouldResultInStatusBetween,
+	)
 	ctx.Step(`^there is a httpbin service$`, scenario.thereIsAHttpbinService)
 	ctx.Step(`^teardown httpbin service$`, scenario.teardownHttpbinService)
 }
@@ -120,7 +130,11 @@ func (c *scenario) thereIsAnUnsecuredEndpoint() error {
 }
 
 func (c *scenario) callingTheEndpointWithAnyTokenShouldResultInStatusBetween(endpoint string, arg1, arg2 int) error {
-	return c.httpClient.CallEndpointWithHeadersWithRetries(map[string]string{testcontext.AuthorizationHeaderName: testcontext.AnyToken}, fmt.Sprintf("%s/%s", c.url, strings.TrimLeft(endpoint, "/")), &helpers.StatusPredicate{LowerStatusBound: arg1, UpperStatusBound: arg2})
+	return c.httpClient.CallEndpointWithHeadersWithRetries(
+		map[string]string{testcontext.AuthorizationHeaderName: testcontext.AnyToken},
+		fmt.Sprintf("%s/%s", c.url, strings.TrimLeft(endpoint, "/")),
+		&helpers.StatusPredicate{LowerStatusBound: arg1, UpperStatusBound: arg2},
+	)
 }
 
 func (c *scenario) secureWithOAuth2() error {
@@ -128,7 +142,11 @@ func (c *scenario) secureWithOAuth2() error {
 }
 
 func (c *scenario) callingTheEndpointWithAInvalidTokenShouldResultInStatusBetween(endpoint string, lower int, higher int) error {
-	return c.httpClient.CallEndpointWithHeadersWithRetries(map[string]string{testcontext.AuthorizationHeaderName: testcontext.AnyToken}, fmt.Sprintf("%s/%s", c.url, strings.TrimLeft(endpoint, "/")), &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher})
+	return c.httpClient.CallEndpointWithHeadersWithRetries(
+		map[string]string{testcontext.AuthorizationHeaderName: testcontext.AnyToken},
+		fmt.Sprintf("%s/%s", c.url, strings.TrimLeft(endpoint, "/")),
+		&helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher},
+	)
 }
 
 func (c *scenario) callingTheEndpointWithAValidTokenShouldResultInStatusBetween(endpoint string, lower int, higher int) error {
@@ -147,7 +165,10 @@ func (c *scenario) callingTheEndpointWithAValidTokenShouldResultInStatusBetween(
 }
 
 func (c *scenario) callingTheEndpointWithoutATokenShouldResultInStatusBetween(endpoint string, lower int, higher int) error {
-	return c.httpClient.CallEndpointWithRetries(fmt.Sprintf("%s/%s", c.url, strings.TrimLeft(endpoint, "/")), &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher})
+	return c.httpClient.CallEndpointWithRetries(
+		fmt.Sprintf("%s/%s", c.url, strings.TrimLeft(endpoint, "/")),
+		&helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher},
+	)
 }
 
 func (s *scenario) thereIsAHttpbinService() error {

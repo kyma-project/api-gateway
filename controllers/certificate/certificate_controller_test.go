@@ -7,7 +7,8 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/kyma-project/api-gateway/controllers/certificate"
-
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -15,9 +16,6 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("Certificate Controller", func() {
@@ -28,7 +26,10 @@ var _ = Describe("Certificate Controller", func() {
 			agr := getReconciler(c, getTestScheme(), logr.Discard())
 
 			// when
-			result, err := agr.Reconcile(context.Background(), reconcile.Request{NamespacedName: types.NamespacedName{Namespace: testNamespace, Name: "api-gateway-webhook-certificate"}})
+			result, err := agr.Reconcile(
+				context.Background(),
+				reconcile.Request{NamespacedName: types.NamespacedName{Namespace: testNamespace, Name: "api-gateway-webhook-certificate"}},
+			)
 
 			// then
 			Expect(err).Should(HaveOccurred())
@@ -49,7 +50,10 @@ var _ = Describe("Certificate Controller", func() {
 			agr := getReconciler(fc, getTestScheme(), logr.Discard())
 
 			// when
-			result, err := agr.Reconcile(context.Background(), reconcile.Request{NamespacedName: types.NamespacedName{Namespace: testNamespace, Name: "api-gateway-webhook-certificate"}})
+			result, err := agr.Reconcile(
+				context.Background(),
+				reconcile.Request{NamespacedName: types.NamespacedName{Namespace: testNamespace, Name: "api-gateway-webhook-certificate"}},
+			)
 
 			// then
 			Expect(err).To(HaveOccurred())
@@ -67,7 +71,10 @@ var _ = Describe("Certificate Controller", func() {
 			agr := getReconciler(c, getTestScheme(), logr.Discard())
 
 			// when
-			result, err := agr.Reconcile(context.Background(), reconcile.Request{NamespacedName: types.NamespacedName{Namespace: testNamespace, Name: "api-gateway-webhook-certificate"}})
+			result, err := agr.Reconcile(
+				context.Background(),
+				reconcile.Request{NamespacedName: types.NamespacedName{Namespace: testNamespace, Name: "api-gateway-webhook-certificate"}},
+			)
 
 			// then
 			Expect(err).ShouldNot(HaveOccurred())
@@ -111,7 +118,10 @@ var _ = Describe("Certificate Controller", func() {
 			agr := getReconciler(c, getTestScheme(), logr.Discard())
 
 			// when
-			result, err := agr.Reconcile(context.Background(), reconcile.Request{NamespacedName: types.NamespacedName{Namespace: testNamespace, Name: "api-gateway-webhook-certificate"}})
+			result, err := agr.Reconcile(
+				context.Background(),
+				reconcile.Request{NamespacedName: types.NamespacedName{Namespace: testNamespace, Name: "api-gateway-webhook-certificate"}},
+			)
 
 			// then
 			Expect(err).ShouldNot(HaveOccurred())
@@ -139,7 +149,10 @@ var _ = Describe("Certificate Controller", func() {
 			agr := getReconciler(c, getTestScheme(), logr.Discard())
 
 			// when
-			result, err := agr.Reconcile(context.Background(), reconcile.Request{NamespacedName: types.NamespacedName{Namespace: testNamespace, Name: "api-gateway-webhook-certificate"}})
+			result, err := agr.Reconcile(
+				context.Background(),
+				reconcile.Request{NamespacedName: types.NamespacedName{Namespace: testNamespace, Name: "api-gateway-webhook-certificate"}},
+			)
 
 			// then
 			Expect(err).ShouldNot(HaveOccurred())
@@ -165,7 +178,10 @@ var _ = Describe("Certificate Controller", func() {
 			agr := getReconciler(c, getTestScheme(), logr.Discard())
 
 			// when
-			result, err := agr.Reconcile(context.Background(), reconcile.Request{NamespacedName: types.NamespacedName{Namespace: testNamespace, Name: "api-gateway-webhook-certificate"}})
+			result, err := agr.Reconcile(
+				context.Background(),
+				reconcile.Request{NamespacedName: types.NamespacedName{Namespace: testNamespace, Name: "api-gateway-webhook-certificate"}},
+			)
 
 			// then
 			Expect(err).ShouldNot(HaveOccurred())

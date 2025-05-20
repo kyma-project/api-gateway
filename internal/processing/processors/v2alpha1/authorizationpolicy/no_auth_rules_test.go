@@ -2,6 +2,7 @@ package authorizationpolicy_test
 
 import (
 	"context"
+
 	"github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1/authorizationpolicy"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"

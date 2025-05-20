@@ -14,7 +14,14 @@ func checkModuleAnnotationsAndLabels(obj *unstructured.Unstructured) error {
 	}
 
 	if isOperatorResource(obj) {
-		requiredOperatorResourceLabels := []string{"app.kubernetes.io/name", "app.kubernetes.io/instance", "app.kubernetes.io/version", "app.kubernetes.io/component", "app.kubernetes.io/part-of", "kyma-project.io/module"}
+		requiredOperatorResourceLabels := []string{
+			"app.kubernetes.io/name",
+			"app.kubernetes.io/instance",
+			"app.kubernetes.io/version",
+			"app.kubernetes.io/component",
+			"app.kubernetes.io/part-of",
+			"kyma-project.io/module",
+		}
 
 		labels := obj.GetLabels()
 		for _, label := range requiredOperatorResourceLabels {

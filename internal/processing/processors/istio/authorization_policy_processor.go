@@ -4,9 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
-
 	"github.com/go-logr/logr"
+	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"github.com/kyma-project/api-gateway/internal/builders"
 	"github.com/kyma-project/api-gateway/internal/helpers"
 	"github.com/kyma-project/api-gateway/internal/processing"
@@ -59,7 +58,12 @@ func (r authorizationPolicyCreator) Create(ctx context.Context, client client.Cl
 	return state, nil
 }
 
-func generateAuthorizationPolicies(ctx context.Context, client client.Client, api *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rule) (*securityv1beta1.AuthorizationPolicyList, error) {
+func generateAuthorizationPolicies(
+	ctx context.Context,
+	client client.Client,
+	api *gatewayv1beta1.APIRule,
+	rule gatewayv1beta1.Rule,
+) (*securityv1beta1.AuthorizationPolicyList, error) {
 	authorizationPolicyList := securityv1beta1.AuthorizationPolicyList{}
 	ruleAuthorizations := rule.GetJwtIstioAuthorizations()
 
@@ -97,7 +101,13 @@ func generateAuthorizationPolicies(ctx context.Context, client client.Client, ap
 	return &authorizationPolicyList, nil
 }
 
-func generateAuthorizationPolicy(ctx context.Context, client client.Client, api *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rule, authorization *gatewayv1beta1.JwtAuthorization) (*securityv1beta1.AuthorizationPolicy, error) {
+func generateAuthorizationPolicy(
+	ctx context.Context,
+	client client.Client,
+	api *gatewayv1beta1.APIRule,
+	rule gatewayv1beta1.Rule,
+	authorization *gatewayv1beta1.JwtAuthorization,
+) (*securityv1beta1.AuthorizationPolicy, error) {
 	namePrefix := fmt.Sprintf("%s-", api.Name)
 	namespace := helpers.FindServiceNamespace(api, &rule)
 
@@ -115,7 +125,13 @@ func generateAuthorizationPolicy(ctx context.Context, client client.Client, api 
 	return apBuilder.Get(), nil
 }
 
-func generateAuthorizationPolicySpec(ctx context.Context, client client.Client, api *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rule, authorization *gatewayv1beta1.JwtAuthorization) (*v1beta1.AuthorizationPolicy, error) {
+func generateAuthorizationPolicySpec(
+	ctx context.Context,
+	client client.Client,
+	api *gatewayv1beta1.APIRule,
+	rule gatewayv1beta1.Rule,
+	authorization *gatewayv1beta1.JwtAuthorization,
+) (*v1beta1.AuthorizationPolicy, error) {
 	var service *gatewayv1beta1.Service
 	if rule.Service != nil {
 		service = rule.Service

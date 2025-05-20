@@ -4,12 +4,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
+	"strings"
+
 	"github.com/avast/retry-go/v4"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/resource"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/dynamic"
-	"log"
-	"strings"
 )
 
 type ApiRuleStatusV1beta1 struct {
@@ -177,7 +178,13 @@ func CreateApiRuleV2Alpha1(resourceMgr *resource.Manager, k8sClient dynamic.Inte
 	return nil
 }
 
-func CreateApiRuleV2Alpha1ExpectError(resourceMgr *resource.Manager, k8sClient dynamic.Interface, retryOpts []retry.Option, apiRuleResource unstructured.Unstructured, errorMessage string) error {
+func CreateApiRuleV2Alpha1ExpectError(
+	resourceMgr *resource.Manager,
+	k8sClient dynamic.Interface,
+	retryOpts []retry.Option,
+	apiRuleResource unstructured.Unstructured,
+	errorMessage string,
+) error {
 	if apiRuleResource.GetObjectKind().GroupVersionKind().Kind != "APIRule" {
 		return errors.New("object is not an APIRule unintended usage of the function")
 	}
@@ -273,7 +280,13 @@ func CreateApiRuleV2(resourceMgr *resource.Manager, k8sClient dynamic.Interface,
 	return nil
 }
 
-func CreateApiRuleV2ExpectError(resourceMgr *resource.Manager, k8sClient dynamic.Interface, retryOpts []retry.Option, apiRuleResource unstructured.Unstructured, errorMessage string) error {
+func CreateApiRuleV2ExpectError(
+	resourceMgr *resource.Manager,
+	k8sClient dynamic.Interface,
+	retryOpts []retry.Option,
+	apiRuleResource unstructured.Unstructured,
+	errorMessage string,
+) error {
 	if apiRuleResource.GetObjectKind().GroupVersionKind().Kind != "APIRule" {
 		return errors.New("object is not an APIRule unintended usage of the function")
 	}

@@ -1,14 +1,15 @@
 package ratelimit
 
 import (
+	"os"
+	"testing"
+	"time"
+
 	"github.com/kyma-project/api-gateway/internal/builders/envoyfilter"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"k8s.io/apimachinery/pkg/util/json"
-	"os"
 	"sigs.k8s.io/yaml"
-	"testing"
-	"time"
 )
 
 var _ = Describe("RateLimit", func() {

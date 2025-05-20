@@ -18,36 +18,33 @@ package operator
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"k8s.io/apimachinery/pkg/types"
-	"sigs.k8s.io/controller-runtime/pkg/handler"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"strings"
 	"time"
-
-	"github.com/kyma-project/api-gateway/internal/conditions"
-	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/meta"
-
-	oryv1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
-
-	"errors"
 
 	ratelimitv1alpha1 "github.com/kyma-project/api-gateway/apis/gateway/ratelimit/v1alpha1"
 	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	operatorv1alpha1 "github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
 	"github.com/kyma-project/api-gateway/controllers"
+	"github.com/kyma-project/api-gateway/internal/conditions"
 	"github.com/kyma-project/api-gateway/internal/dependencies"
 	"github.com/kyma-project/api-gateway/internal/reconciliations/gateway"
+	oryv1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
+	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/util/retry"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
 const (
@@ -152,7 +149,11 @@ func (r *APIGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 
 func handleDependenciesError(name string, err error) controllers.Status {
 	if apierrors.IsNotFound(err) {
-		return controllers.ErrorStatus(err, fmt.Sprintf("CRD %s is not present. Make sure to install required dependencies for the component", name), conditions.DependenciesMissing.Condition())
+		return controllers.ErrorStatus(
+			err,
+			fmt.Sprintf("CRD %s is not present. Make sure to install required dependencies for the component", name),
+			conditions.DependenciesMissing.Condition(),
+		)
 	} else {
 		return controllers.ErrorStatus(err, "Error happened during discovering dependencies", conditions.ReconcileFailed.Condition())
 	}
@@ -242,9 +243,11 @@ func (r *APIGatewayReconciler) reconcileFinalizer(ctx context.Context, apiGatewa
 			return controllers.ErrorStatus(err, "Error during listing existing APIRules", conditions.ReconcileFailed.Condition())
 		}
 		if len(apiRulesFound) > 0 {
-			return controllers.WarningStatus(errors.New("could not delete API-Gateway CR since there are APIRule(s) that block its deletion"),
+			return controllers.WarningStatus(
+				errors.New("could not delete API-Gateway CR since there are APIRule(s) that block its deletion"),
 				"There are APIRule(s) that block the deletion of API-Gateway CR. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning",
-				conditions.DeletionBlockedExistingResources.AdditionalMessage(": "+strings.Join(apiRulesFound, ", ")).Condition())
+				conditions.DeletionBlockedExistingResources.AdditionalMessage(": "+strings.Join(apiRulesFound, ", ")).Condition(),
+			)
 		}
 
 		oryRulesFound, err := oryRulesExist(ctx, r.Client)
@@ -252,18 +255,22 @@ func (r *APIGatewayReconciler) reconcileFinalizer(ctx context.Context, apiGatewa
 			return controllers.ErrorStatus(err, "Error during listing existing ORY Oathkeeper Rules", conditions.ReconcileFailed.Condition())
 		}
 		if len(oryRulesFound) > 0 {
-			return controllers.WarningStatus(errors.New("could not delete API-Gateway CR since there are ORY Oathkeeper Rule(s) that block its deletion"),
+			return controllers.WarningStatus(
+				errors.New("could not delete API-Gateway CR since there are ORY Oathkeeper Rule(s) that block its deletion"),
 				"There are ORY Oathkeeper Rule(s) that block the deletion of API-Gateway CR. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning",
-				conditions.DeletionBlockedExistingResources.AdditionalMessage(": "+strings.Join(oryRulesFound, ", ")).Condition())
+				conditions.DeletionBlockedExistingResources.AdditionalMessage(": "+strings.Join(oryRulesFound, ", ")).Condition(),
+			)
 		}
 		rateLimiterRules, err := rateLimitsExists(ctx, r.Client)
 		if err != nil {
 			return controllers.ErrorStatus(err, "Error during listing existing Rate Limit", conditions.ReconcileFailed.Condition())
 		}
 		if len(rateLimiterRules) > 0 {
-			return controllers.WarningStatus(errors.New("could not delete API-Gateway CR since there are RateLimit(s) that block its deletion"),
+			return controllers.WarningStatus(
+				errors.New("could not delete API-Gateway CR since there are RateLimit(s) that block its deletion"),
 				"There are RateLimit(s) that block the deletion of API-Gateway CR. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning",
-				conditions.DeletionBlockedExistingResources.AdditionalMessage(": "+strings.Join(rateLimiterRules, ", ")).Condition())
+				conditions.DeletionBlockedExistingResources.AdditionalMessage(": "+strings.Join(rateLimiterRules, ", ")).Condition(),
+			)
 		}
 		if err := removeFinalizer(ctx, r.Client, apiGatewayCR); err != nil {
 			ctrl.Log.Error(err, "Error happened during API-Gateway CR finalizer removal")

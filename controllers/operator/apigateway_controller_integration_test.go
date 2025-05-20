@@ -3,24 +3,23 @@ package operator
 import (
 	"context"
 	"fmt"
-	dnsv1alpha1 "github.com/gardener/external-dns-management/pkg/apis/dns/v1alpha1"
-	corev1 "k8s.io/api/core/v1"
 	"math/rand"
 	"time"
 
-	"github.com/kyma-project/api-gateway/internal/reconciliations/gateway"
-	. "github.com/onsi/gomega"
-	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/utils/ptr"
-
+	dnsv1alpha1 "github.com/gardener/external-dns-management/pkg/apis/dns/v1alpha1"
 	ratelimitv1alpha1 "github.com/kyma-project/api-gateway/apis/gateway/ratelimit/v1alpha1"
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
+	"github.com/kyma-project/api-gateway/internal/reconciliations/gateway"
 	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 	apinetworkingv1beta1 "istio.io/api/networking/v1beta1"
 	networkingv1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -203,7 +202,8 @@ var _ = Describe("API Gateway Controller", Serial, func() {
 				deleted := v1alpha1.APIGateway{}
 				defaultGateway := networkingv1alpha3.Gateway{}
 				g.Expect(errors.IsNotFound(k8sClient.Get(context.Background(), client.ObjectKey{Name: apiGateway.Name}, &deleted))).Should(BeTrue())
-				g.Expect(errors.IsNotFound(k8sClient.Get(context.Background(), client.ObjectKey{Name: kymaGatewayName, Namespace: kymaNamespace}, &defaultGateway))).Should(BeTrue())
+				g.Expect(errors.IsNotFound(k8sClient.Get(context.Background(), client.ObjectKey{Name: kymaGatewayName, Namespace: kymaNamespace}, &defaultGateway))).
+					Should(BeTrue())
 			}, eventuallyTimeout).Should(Succeed())
 		})
 
@@ -235,7 +235,8 @@ var _ = Describe("API Gateway Controller", Serial, func() {
 			Eventually(func(g Gomega) {
 				g.Expect(k8sClient.Get(context.Background(), client.ObjectKey{Name: apiGateway.Name}, &apiGateway)).Should(Succeed())
 				g.Expect(apiGateway.Status.State).To(Equal(v1alpha1.Warning))
-				g.Expect(apiGateway.Status.Description).To(Equal("There are APIRule(s) that block the deletion of API-Gateway CR. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning"))
+				g.Expect(apiGateway.Status.Description).
+					To(Equal("There are APIRule(s) that block the deletion of API-Gateway CR. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning"))
 			}, eventuallyTimeout).Should(Succeed())
 		})
 		It("Should set APIGateway CR in Warning state on deletion when RateLimit(s) exist", func() {
@@ -267,7 +268,8 @@ var _ = Describe("API Gateway Controller", Serial, func() {
 			Eventually(func(g Gomega) {
 				g.Expect(k8sClient.Get(context.Background(), client.ObjectKey{Name: apiGateway.Name}, &apiGateway)).Should(Succeed())
 				g.Expect(apiGateway.Status.State).To(Equal(v1alpha1.Warning))
-				g.Expect(apiGateway.Status.Description).To(Equal("There are RateLimit(s) that block the deletion of API-Gateway CR. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning"))
+				g.Expect(apiGateway.Status.Description).
+					To(Equal("There are RateLimit(s) that block the deletion of API-Gateway CR. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning"))
 			}, eventuallyTimeout).Should(Succeed())
 		})
 		It("should update lastTransitionTime of Ready condition when only reason or message changed", func() {
@@ -473,7 +475,8 @@ var _ = Describe("API Gateway Controller", Serial, func() {
 				g.Expect(deleted.ObjectMeta.Finalizers).To(ContainElement(ApiGatewayFinalizer))
 				g.Expect(deleted.ObjectMeta.Finalizers).To(ContainElement(gateway.KymaGatewayFinalizer))
 				g.Expect(deleted.Status.State).To(Equal(v1alpha1.Warning))
-				g.Expect(deleted.Status.Description).To(Equal("There are APIRule(s) that block the deletion of API-Gateway CR. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning"))
+				g.Expect(deleted.Status.Description).
+					To(Equal("There are APIRule(s) that block the deletion of API-Gateway CR. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning"))
 			}, eventuallyTimeout).Should(Succeed())
 		})
 
@@ -516,7 +519,8 @@ var _ = Describe("API Gateway Controller", Serial, func() {
 				g.Expect(deleted.ObjectMeta.Finalizers).To(HaveLen(1))
 				g.Expect(deleted.ObjectMeta.Finalizers).To(ContainElement(gateway.KymaGatewayFinalizer))
 				g.Expect(deleted.Status.State).To(Equal(v1alpha1.Warning))
-				g.Expect(deleted.Status.Description).To(Equal("There are custom resources that block the deletion of Kyma Gateway. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning"))
+				g.Expect(deleted.Status.Description).
+					To(Equal("There are custom resources that block the deletion of Kyma Gateway. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning"))
 			}, eventuallyTimeout).Should(Succeed())
 		})
 	})

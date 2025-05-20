@@ -3,6 +3,7 @@ package requestauthentication
 import (
 	"context"
 	"fmt"
+
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	"github.com/kyma-project/api-gateway/internal/processing"
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
@@ -62,7 +63,10 @@ func (r Processor) getActualState(ctx context.Context, client ctrlclient.Client,
 	return requestAuthentications, nil
 }
 
-func (r Processor) getObjectChanges(desiredRas map[string]*securityv1beta1.RequestAuthentication, actualRas map[string]*securityv1beta1.RequestAuthentication) []*processing.ObjectChange {
+func (r Processor) getObjectChanges(
+	desiredRas map[string]*securityv1beta1.RequestAuthentication,
+	actualRas map[string]*securityv1beta1.RequestAuthentication,
+) []*processing.ObjectChange {
 	raChanges := make(map[string]*processing.ObjectChange)
 
 	for path, rule := range desiredRas {

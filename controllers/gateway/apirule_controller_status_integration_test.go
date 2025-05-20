@@ -3,10 +3,9 @@ package gateway_test
 import (
 	"context"
 	"fmt"
+
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
-
 	"github.com/kyma-project/api-gateway/internal/helpers"
-
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -93,8 +92,10 @@ var _ = Describe("Resource status", Serial, func() {
 				g.Expect(created.Status.APIRuleStatus.Code).To(Equal(gatewayv1beta1.StatusError))
 				g.Expect(created.Status.APIRuleStatus.Description).To(ContainSubstring("Multiple validation errors:"))
 				g.Expect(created.Status.APIRuleStatus.Description).To(ContainSubstring("Attribute \".spec.rules\": multiple rules defined for the same path and method"))
-				g.Expect(created.Status.APIRuleStatus.Description).To(ContainSubstring("Attribute \".spec.rules[0].accessStrategies[0].config\": strategy: noop does not support configuration"))
-				g.Expect(created.Status.APIRuleStatus.Description).To(ContainSubstring("Attribute \".spec.rules[1].accessStrategies[0].config\": strategy: noop does not support configuration"))
+				g.Expect(created.Status.APIRuleStatus.Description).
+					To(ContainSubstring("Attribute \".spec.rules[0].accessStrategies[0].config\": strategy: noop does not support configuration"))
+				g.Expect(created.Status.APIRuleStatus.Description).
+					To(ContainSubstring("Attribute \".spec.rules[1].accessStrategies[0].config\": strategy: noop does not support configuration"))
 				g.Expect(created.Status.APIRuleStatus.Description).To(ContainSubstring("1 more error(s)..."))
 
 				g.Expect(created.Status.VirtualServiceStatus.Code).To(Equal(gatewayv1beta1.StatusSkipped))
@@ -176,8 +177,10 @@ var _ = Describe("Resource status", Serial, func() {
 				g.Expect(created.Status.APIRuleStatus.Code).To(Equal(gatewayv1beta1.StatusError))
 				g.Expect(created.Status.APIRuleStatus.Description).To(ContainSubstring("Multiple validation errors:"))
 				g.Expect(created.Status.APIRuleStatus.Description).To(ContainSubstring("Attribute \".spec.rules\": multiple rules defined for the same path and method"))
-				g.Expect(created.Status.APIRuleStatus.Description).To(ContainSubstring("Attribute \".spec.rules[0].accessStrategies[0].config\": strategy: noop does not support configuration"))
-				g.Expect(created.Status.APIRuleStatus.Description).To(ContainSubstring("Attribute \".spec.rules[1].accessStrategies[0].config\": strategy: noop does not support configuration"))
+				g.Expect(created.Status.APIRuleStatus.Description).
+					To(ContainSubstring("Attribute \".spec.rules[0].accessStrategies[0].config\": strategy: noop does not support configuration"))
+				g.Expect(created.Status.APIRuleStatus.Description).
+					To(ContainSubstring("Attribute \".spec.rules[1].accessStrategies[0].config\": strategy: noop does not support configuration"))
 				g.Expect(created.Status.APIRuleStatus.Description).To(ContainSubstring("1 more error(s)..."))
 
 				g.Expect(created.Status.VirtualServiceStatus.Code).To(Equal(gatewayv1beta1.StatusSkipped))

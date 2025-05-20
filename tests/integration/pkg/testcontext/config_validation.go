@@ -2,10 +2,11 @@ package testcontext
 
 import (
 	"fmt"
+	"log"
+
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/helpers"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/resource"
 	"k8s.io/client-go/dynamic"
-	"log"
 )
 
 func (c *Config) RequireDomain() error {
