@@ -56,18 +56,18 @@ var _ = Describe("SegmentTrie", func() {
 			"/abc",
 			"/abc/{*}",
 		}, 0),
-		Entry("Conflict: path with / at end and same path with single asterisk", []string{
+		Entry("No conflict: path with / at end and same path with single asterisk", []string{
 			"/abc/",
 			"/abc/{*}",
-		}, 1),
-		Entry("Conflict: path with / at end and same path with double asterisk", []string{
+		}, 0),
+		Entry("No conflict: path with / at end and same path with double asterisk", []string{
 			"/abc/",
 			"/abc/{**}",
-		}, 1),
-		Entry("Conflict: exact with single asterisk", []string{
+		}, 0),
+		Entry("No conflict: exact with single asterisk", []string{
 			"/abc/def/ghi",
 			"/abc/{*}/ghi",
-		}, 1),
+		}, 0),
 		Entry("Conflict: exact with exact", []string{
 			"/abc/def",
 			"/abc/def/ghi",
@@ -82,16 +82,28 @@ var _ = Describe("SegmentTrie", func() {
 			"/{**}/ghi",
 			"/{**}",
 			"/{**}/def/ghi",
-		}, 5),
+		}, 1),
+		Entry("Conflict: exact with double asterisk", []string{
+			"/{**}",
+			"/{**}/def/ghi",
+		}, 1),
+		Entry("No conflict: double asterisk with single asterisk", []string{
+			"/abc/{**}/ghi",
+			"/{*}/{*}/ghi",
+		}, 0),
 		Entry("Conflict: double asterisk with single asterisk", []string{
 			"/abc/{**}/ghi",
 			"/abc/{*}/ghi",
-			"/{*}/{*}/ghi",
-		}, 2),
-		Entry("Conflict: double asterisk with double asterisk", []string{
+		}, 1),
+		Entry("No conflict: double asterisk with double asterisk", []string{
 			"/abc/{**}/def/ghi",
 			"/abc/{**}/ghi",
 			"/abc/{**}",
+		}, 0),
+		Entry("Multiple conflicts: double asterisk covering another double asterisk", []string{
+			"/abc/{**}",
+			"/abc/{**}/ghi",
+			"/abc/{**}/def/ghi",
 		}, 2),
 		Entry("No conflict: exact paths", []string{
 			"/abc/def",
@@ -118,6 +130,18 @@ var _ = Describe("SegmentTrie", func() {
 			"/abc/{**}",
 			"/abc/def",
 		}, 1),
+		Entry("No conflict: single asterisk path with exact path", []string{
+			"/abc/def",
+			"/abc/{*}",
+		}, 0),
+		Entry("No conflict: single asterisk path with exact path", []string{
+			"/abc/def",
+			"/abc/{*}",
+		}, 0),
+		Entry("No conflict: double asterisk path different prefixes", []string{
+			"/abc/{**}",
+			"/bca/{**}/abc",
+		}, 0),
 		Entry("Conflict: double asterisk with a different containing the first one", []string{
 			"/abc/{**}/def",
 			"/abc/def/{**}/def",
@@ -125,6 +149,19 @@ var _ = Describe("SegmentTrie", func() {
 		Entry("No conflict: single double asterisk with single path", []string{
 			"/a/{**}/abc",
 			"/a/b/{**}/abc/abcd",
+		}, 0),
+		Entry("No conflict: exact with single and double asterisk and with / at end of path", []string{
+			"/anything/one",
+			"/anything/one/two",
+			"/anything/{*}/one",
+			"/anything/{*}/one/{**}/two",
+			"/anything/{*}/{*}/two",
+			"/anything/{**}/two",
+			"/anything/",
+			"/anything/{**}",
+			"/one/{**}/two",
+			"/{**}/one",
+			"/*",
 		}, 0))
 })
 
