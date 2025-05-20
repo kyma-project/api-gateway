@@ -26,7 +26,7 @@ The modified trie algorithm performs two actions that are not included in the re
 
 During insertion, the trie is first traversed to detect collisions: literal and `{*}` nodes are
 matched segment by segment, and any `{**}` node checks its stored suffixes against the remaining
-path, to catch overlapping multi-segment matches. If any path that is already in the trie can match the new
+path to catch overlapping multi-segment matches. If any path that is already in the trie matches the new
 token sequence under these rules, insertion fails with a collision error.
 
 See the diagram, which illustrates an example data structure generated from the following paths:
