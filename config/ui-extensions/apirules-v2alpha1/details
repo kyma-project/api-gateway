@@ -1,29 +1,31 @@
-header:
-  - name: status
-    widget: Badge
-    highlights:
-      positive:
-        - 'Ready'
-      negative:
-        - 'Error'
-      warning:
-        - 'Warning'
-    source: 'status.state ? status.state : "Unknown"'
-    description: status.description
-
-body:
-  - source: spec
-    name: general
-    widget: Panel
-    children:
-    - source: timeout
-      name: timeout
-      visibility: $exists(spec.timeout)
-    - source: gateway
+status:
+  header:
+    - name: status
+      widget: Badge
+      highlights:
+        positive:
+          - 'Ready'
+        negative:
+          - 'Error'
+        warning:
+          - 'Warning'
+        informative:
+          - 'Processing'
+          - 'Deleting'
+      source: 'status.state ? status.state : "Unknown"'
+      description: status.description
+  body:
+    - source: spec.gateway
       name: gateway
-    - source: hosts
+    - source: spec.hosts
       name: host
       widget: JoinedArray
+    - source: spec.timeout
+      name: timeout
+      visibility: $exists(spec.timeout)
+    - source: '$readableTimestamp(status.lastProcessedTime)'
+      name: Last Processed Time
+body:
   - source: spec.service
     name: service
     widget: Panel
@@ -202,3 +204,8 @@ body:
     source: $virtualServices()
     name: virtualService
     disableCreate: true
+resourceGraph:
+  dataSources:
+    - source: virtualServices
+    - source: relatedAuthorizationPolicies
+    - source: relatedRequestAuthentications
