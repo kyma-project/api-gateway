@@ -1,6 +1,6 @@
 # Path Conflict Validation in APIRule `v2alpha1` and `v2`
 
-APIRule `v2alpha1` and `v2` introduce support for wildcard paths in the **path** field of the APIRule CustomResourceDefinition. 
+APIRules `v2alpha1` and `v2` introduce support for wildcard paths in the **path** field of the APIRule CustomResourceDefinition. 
 This allows you to define a single APIRule that matches multiple request paths.
 However, this also introduces the possibility of path conflicts. 
 A path conflict occurs when two or more APIRule resources match the same path.
