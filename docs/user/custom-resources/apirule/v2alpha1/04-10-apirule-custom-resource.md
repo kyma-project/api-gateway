@@ -86,7 +86,7 @@ The following table lists the fields of the **status** section.
 | **status.state**       | Defines the reconciliation state of the APIRule. The possible states are `Ready`, `Warning`, `Error`, `Processing`, or `Deleting`. |
 | **status.description** | Contains a detailed description of **status.state**.                                                                                         |
 
-**Significance of Rules Path Order:**  
+### Significance of Rules Path Order
 Operators `{*}` and `{**}` allow you to define a single APIRule that matches multiple request paths.
 However, this also introduces the possibility of path conflicts.
 A path conflict occurs when two or more APIRule resources match the same path. This is why the order of rules is important.
