@@ -87,7 +87,7 @@ A path conflict occurs when two or more APIRule resources match the same path. T
 
 Rules defined earlier in the list have a higher priority than those defined later. Therefore, we recommend defining rules from the most specific path to the most general.
 
-Example of a valid `rules.path` order, listed from the most specific to the most general:
+See an example of a valid **rules.path** order, listed from the most specific to the most general:
 - `/anything/one`
 - `/anything/one/two`
 - `/anything/{*}/one`
