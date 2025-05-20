@@ -78,9 +78,9 @@ Then, the algorithm checks if the current node is a possible end of the path. In
 ### Paths that Contain the `{*}` Operator
 
 In case the path that is currently being inserted contains the `{*}` operator,
-the algorithm performs the check similarly to the exact path validation, as the order of `rule.paths` is significant. Paths should be listed from the most specific to the most general.
+the algorithm performs the check similarly to the exact path validation, as the order of **rule.paths** is significant. Paths should be listed from the most specific to the most general.
 
-Example: If the path that is currently being inserted is `/b/{*}/a/b`, the algorithm checks if exactly same path exists in the trie.
+Example: If the path that is currently being inserted is `/b/{*}/a/b`, the algorithm checks if the same path exists in the trie.
 
 ### Paths that Contains the `{**}` Operator
 
