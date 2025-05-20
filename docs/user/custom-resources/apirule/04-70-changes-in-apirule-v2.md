@@ -59,7 +59,7 @@ APIRule in versions `v2` and `v2alpha1` does not support regexp in the **spec.ru
 
 
 
-> [!NOTE] The order of rules in the APIRule CR is important. Rules defined earlier in the list have a higher priority than those defined later. Therefore, we recommend defining `rules` from the most specific `path` to the most general.
+> [!NOTE] The order of rules in the APIRule CR is important. Rules defined earlier in the list have a higher priority than those defined later. Therefore, we recommend defining rules from the most specific path to the most general.
 
 Operators allow you to define a single APIRule that matches multiple request paths.
 However, this also introduces the possibility of path conflicts.
