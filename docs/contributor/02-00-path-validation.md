@@ -88,7 +88,7 @@ In case the path that is currently being inserted contains the `{**}` operator,
 the algorithm is interrupted after the `{**}` operator is found (as it must be the last operator in the path).
 Then, the algorithm checks if there are any path that end in the same suffix as the currently checked path.
 
-Example: If the path that is currently being inserted is `/b/{**}/a/b`, the algorithm checks if any path after the `b` node ends in `/a/b` or is empty for example if path like `/b/{**}` already exists in the trie.
+Example: If the path that is currently being inserted is `/b/{**}/a/b`, the algorithm checks if any path after the `b` node ends in `/a/b` or is empty. For example, if a path like `/b/{**}` already exists in the trie.
 
 <!---
 DOT source for the trie diagram:
