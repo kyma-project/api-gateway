@@ -258,6 +258,11 @@ func (o *OperationBuilder) WithPath(val string) *OperationBuilder {
 	return o
 }
 
+func (o *OperationBuilder) WithNotPaths(val []string) *OperationBuilder {
+	o.value.NotPaths = append(o.value.NotPaths, val...)
+	return o
+}
+
 // NewConditionBuilder returns builder for istio.io/apis/security/v1beta1/Condition type
 func NewConditionBuilder() *ConditionBuilder {
 	return &ConditionBuilder{

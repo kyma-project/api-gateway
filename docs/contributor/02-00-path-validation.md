@@ -1,6 +1,6 @@
-# Path Conflict Validation in APIRule `v2alpha1`
+# Path Conflict Validation in APIRules `v2alpha1` and `v2`
 
-APIRule `v2alpha1` introduces support for wildcard paths in the **path** field of the APIRule CustomResourceDefinition. 
+APIRules `v2alpha1` and `v2` introduce support for wildcard paths in the **path** field of the APIRule CustomResourceDefinition. 
 This allows you to define a single APIRule that matches multiple request paths.
 However, this also introduces the possibility of path conflicts. 
 A path conflict occurs when two or more APIRule resources match the same path.
@@ -12,7 +12,7 @@ defined in the `internal/path/segment_trie.go` file.
 Stored paths can contain the `{*}` and `{**}` operators:
   - The operator `{*}` is used to match a single segment in a path and may include a prefix and/or suffix.
   - The operator `{**}` is used to match any number of segments in a path and may include a prefix and/or suffix.
-    It must be the last operator in the stored path (this is not validated but is assumed to be true).
+    It must be the last operator in the stored path (this is not validated here but is assumed to be true).
 
 The modified trie algorithm performs two actions that are not included in the regular version:
   - Nodes that are pointed to by `{**}` don't store their children.
@@ -22,6 +22,12 @@ The modified trie algorithm performs two actions that are not included in the re
     New paths starting with the same pattern before `{**}` are stored in the same node, and the suffix list is updated.
     This can be done since the `{**}` operator must be the last operator in any path.
   - `{*}` nodes are stored just like any other exact segment node but are always included in path search.
+
+
+During insertion, the trie is first traversed to detect collisions: literal and `{*}` nodes are
+matched segment by segment, and any `{**}` node checks its stored suffixes against the remaining
+path to catch overlapping multi-segment matches. If any path that is already in the trie matches the new
+token sequence under these rules, insertion fails with a collision error.
 
 See the diagram, which illustrates an example data structure generated from the following paths:
 - `"c/a"`
@@ -72,18 +78,17 @@ Then, the algorithm checks if the current node is a possible end of the path. In
 ### Paths that Contain the `{*}` Operator
 
 In case the path that is currently being inserted contains the `{*}` operator,
-the algorithm performs the check similarly to the exact path validation.
-However, all the children of the current node are considered as possible paths that can be taken.
-The algorithm recursively checks all the children of the current node in a DFS fashion,
-and if any of them contain a valid path, the algorithm concludes that the paths conflict.
-Example: If the path that is currently being inserted is `b/{*}/a/b`, the algorithm performs DFS on all nodes after the first `b` node, looking for the `/a/b` path continuation.
+the algorithm performs the check similarly to the exact path validation, as the order of **rule.paths** is significant. Paths should be listed from the most specific to the most general.
+
+Example: If the path that is currently being inserted is `/b/{*}/a/b`, the algorithm checks if the same path exists in the trie.
 
 ### Paths that Contains the `{**}` Operator
 
 In case the path that is currently being inserted contains the `{**}` operator,
 the algorithm is interrupted after the `{**}` operator is found (as it must be the last operator in the path).
-Then, the algorithm checks if there are any path that end in the same suffix as the currently checked path.
-Example: If the path that is currently being inserted is `b/{**}/a/b`, the algorithm checks if any path after the `b` node end in `/a/b`.
+Then, the algorithm checks if there are any paths that end in the same suffix as the currently checked path.
+
+Example: If the path that is currently being inserted is `/b/{**}/a/b`, the algorithm checks if any path after the `b` node ends in `/a/b` or is empty. For example, if a path like `/b/{**}` already exists in the trie.
 
 <!---
 DOT source for the trie diagram:
