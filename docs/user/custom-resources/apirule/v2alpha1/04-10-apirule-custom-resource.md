@@ -91,7 +91,7 @@ Operators `{*}` and `{**}` allow to define a single APIRule that matches multipl
 However, this also introduces the possibility of path conflicts.
 A path conflict occurs when two or more APIRule resources match the same path. This is why rule order is important.
 
-Rules defined earlier in the list have a higher priority than those defined later. Therefore, we recommend defining `rules` from the most specific `path` to the most general.
+Rules defined earlier in the list have a higher priority than those defined later. Therefore, we recommend defining rules from the most specific path to the most general.
 
 See an example of a valid **rules.path** order, listed from the most specific to the most general:
 - `/anything/one`
