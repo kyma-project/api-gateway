@@ -281,7 +281,7 @@ jobs:
     name: Slack Notification
     runs-on: ubuntu-latest
     if: ${{ failure() }}
-    needs: [e2e-tests-k3d, e2e-tests-aws, upgrade-tests-k3d, e2e-custom-domain-gcp, e2e-custom-domain-aws, migration-downtime-tests-k3d, migration-downtime-tests-aws]
+    needs: [e2e-tests-k3d, e2e-tests-aws, upgrade-tests-k3d, e2e-custom-domain-gcp, e2e-custom-domain-aws, migration-downtime-tests-k3d, migration-downtime-tests-aws, k8s-compatibility-check-k3d, k8s-compatibility-check-aws]
     steps:
       - uses: actions/checkout@v4
         with:
