@@ -81,7 +81,7 @@ The following table lists the fields of the **status** section.
 | **status.description** | Detailed description of **status.state**.                                                                                         |
 
 **Significance of Rules Path Order:**  
-Operators `{*}` and `{**}` allow to define a single APIRule that matches multiple request paths.
+Operators `{*}` and `{**}` allow you to define a single APIRule that matches multiple request paths.
 However, this also introduces the possibility of path conflicts.
 A path conflict occurs when two or more APIRule resources match the same path. This is why rule order is important.
 
