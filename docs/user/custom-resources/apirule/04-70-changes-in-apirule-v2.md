@@ -63,7 +63,7 @@ APIRule in versions `v2` and `v2alpha1` does not support regexp in the **spec.ru
 
 Operators allow you to define a single APIRule that matches multiple request paths.
 However, this also introduces the possibility of path conflicts.
-A path conflict occurs when two or more APIRule resources match the same path. This is why the order of rules is important.
+A path conflict occurs when two or more APIRule resources match the same path and share at least one common HTTP method. This is why the order of rules is important.
 
 
 For more information on the APIRule specification, see [APIRule v2alpha1 Custom Resource](https://kyma-project.io/#/api-gateway/user/custom-resources/apirule/v2alpha1/04-10-apirule-custom-resource) and [APIRule v2 Custom Resource](https://kyma-project.io/#/api-gateway/user/custom-resources/apirule/04-10-apirule-custom-resource).
