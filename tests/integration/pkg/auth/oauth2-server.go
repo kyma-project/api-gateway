@@ -6,11 +6,12 @@ import (
 	"log"
 
 	"github.com/avast/retry-go/v4"
+	"k8s.io/client-go/dynamic"
+
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/helpers"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/manifestprocessor"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/resource"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
-	"k8s.io/client-go/dynamic"
 )
 
 const oauthServerMockDeploymentName = "mock-oauth2-server-deployment"
@@ -20,7 +21,6 @@ var oauth2ServerMockManifest []byte
 
 // ApplyOAuth2MockServer creates OAuth2  mock server deployment, service and virtual service. Returns the issuer URL of the mock server.
 func ApplyOAuth2MockServer(resourceMgr *resource.Manager, k8sClient dynamic.Interface, namespace string, domain string) (string, string, error) {
-
 	templateData := struct {
 		Domain    string
 		Namespace string

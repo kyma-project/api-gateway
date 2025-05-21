@@ -476,7 +476,6 @@ func (c *scenario) namespacedResourceIsPresent(isPresent, kind, name, namespace 
 			return err
 		}
 		return fmt.Errorf("choose between %s and %s", is, isNo)
-
 	}, testcontext.GetRetryOpts()...)
 }
 

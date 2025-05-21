@@ -67,7 +67,6 @@ func GetTestingFromContext(ctx context.Context) (*testing.T, error) {
 		return v, errors.New("testing.T not found in context")
 	}
 	return v, nil
-
 }
 
 func SetTestingInContext(ctx context.Context, testing *testing.T) context.Context {

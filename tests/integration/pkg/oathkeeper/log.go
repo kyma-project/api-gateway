@@ -29,7 +29,6 @@ func LogInfo() {
 	}
 
 	for _, pod := range pods.Items {
-
 		logger.Printf("Pod %s status: %s", pod.Name, pod.Status.Phase)
 		for _, condition := range pod.Status.Conditions {
 			logger.Printf("Pod %s condition: '%s', status: '%s', reason: '%s' message: '%s'", pod.Name,
@@ -47,7 +46,6 @@ func LogInfo() {
 }
 
 func writeLogs(ctx context.Context, c *kubernetes.Clientset, pod corev1.Pod, container string) {
-
 	req := c.CoreV1().Pods(pod.Namespace).GetLogs(pod.Name, &corev1.PodLogOptions{
 		Container: container,
 	})

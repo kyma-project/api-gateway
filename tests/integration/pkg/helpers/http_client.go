@@ -96,9 +96,7 @@ func (h *RetryableHttpClient) CallEndpointWithRequestRetry(req *http.Request, va
 }
 
 func (h *RetryableHttpClient) withRetries(httpCall func() (*http.Response, error), validator HttpResponseAsserter) error {
-
 	if err := retry.Do(func() error {
-
 		response, callErr := httpCall()
 		if callErr != nil {
 			return callErr

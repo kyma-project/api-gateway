@@ -95,7 +95,6 @@ type Manager struct {
 }
 
 func NewManager(retryOpts []retry.Option) *Manager {
-
 	mapper, err := client.GetDiscoveryMapper()
 	if err != nil {
 		panic(err)

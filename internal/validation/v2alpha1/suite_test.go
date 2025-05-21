@@ -5,7 +5,6 @@ import (
 	"os"
 	"testing"
 
-	"github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	. "github.com/onsi/ginkgo/v2"
 	"github.com/onsi/ginkgo/v2/reporters"
 	"github.com/onsi/ginkgo/v2/types"
@@ -20,6 +19,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
+
+	"github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 )
 
 func Test(t *testing.T) {
@@ -112,8 +113,6 @@ func getHosts(hosts ...string) []*v2alpha1.Host {
 	var h []*v2alpha1.Host
 	for _, host := range hosts {
 		h = append(h, ptr.To(v2alpha1.Host(host)))
-
 	}
-
 	return h
 }

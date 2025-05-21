@@ -47,7 +47,6 @@ func (s *scenario) callingTheEndpointWithMethodWithValidTokenShouldResultInStatu
 }
 
 func (s *scenario) callingTheEndpointWithMethodWithValidToken(url string, method string, tokenType string, asserter helpers.HttpResponseAsserter) error {
-
 	requestHeaders := make(map[string]string)
 
 	switch tokenType {

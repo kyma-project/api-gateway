@@ -48,7 +48,6 @@ func (m mutatorsValidator) Validate(attributePath string, rule v1beta1.Rule) []v
 }
 
 func validateHeaderMutator(handlerPath string, mutator *v1beta1.Mutator) []validation.Failure {
-
 	configPath := fmt.Sprintf("%s%s", handlerPath, ".config")
 
 	if mutator.Config == nil {
@@ -80,14 +79,11 @@ func validateHeaderMutator(handlerPath string, mutator *v1beta1.Mutator) []valid
 				{AttributePath: attrPath, Message: "cannot be empty"},
 			}
 		}
-
 	}
-
 	return nil
 }
 
 func validateCookieMutator(handlerPath string, mutator *v1beta1.Mutator) []validation.Failure {
-
 	configPath := fmt.Sprintf("%s%s", handlerPath, ".config")
 
 	if mutator.Config == nil {
@@ -118,9 +114,7 @@ func validateCookieMutator(handlerPath string, mutator *v1beta1.Mutator) []valid
 				{AttributePath: attrPath, Message: "cannot be empty"},
 			}
 		}
-
 	}
-
 	return nil
 }
 

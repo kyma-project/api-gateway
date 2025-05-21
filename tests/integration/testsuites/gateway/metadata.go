@@ -8,7 +8,6 @@ import (
 )
 
 func checkModuleAnnotationsAndLabels(obj *unstructured.Unstructured) error {
-
 	if isManagedByGardener(obj) {
 		return nil
 	}
