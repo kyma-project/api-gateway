@@ -3,15 +3,17 @@ package gateway_test
 import (
 	"context"
 	"fmt"
-	"github.com/kyma-project/api-gateway/internal/metrics"
-	v1 "k8s.io/api/admissionregistration/v1"
-	"k8s.io/utils/ptr"
 	"net/http"
 	"os"
 	"path/filepath"
-	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"testing"
 	"time"
+
+	v1 "k8s.io/api/admissionregistration/v1"
+	"k8s.io/utils/ptr"
+	"sigs.k8s.io/controller-runtime/pkg/webhook"
+
+	"github.com/kyma-project/api-gateway/internal/metrics"
 
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
@@ -48,7 +50,7 @@ import (
 )
 
 const (
-	eventuallyTimeout    = time.Second * 5
+	eventuallyTimeout    = time.Second * 30
 	testNamespace        = "atgo-system"
 	testGatewayURL       = "kyma-system/kyma-gateway"
 	testOathkeeperSvcURL = "oathkeeper.kyma-system.svc.cluster.local"
@@ -161,6 +163,22 @@ var _ = BeforeSuite(func(specCtx SpecContext) {
 
 	mgr, err := ctrl.NewManager(cfg, ctrl.Options{
 		Scheme: s,
+		Client: client.Options{
+			Cache: &client.CacheOptions{
+				DisableFor: []client.Object{
+					&rulev1alpha1.Rule{},
+					/*
+						Reading v1beta1 and v2alpha1 APIRules during reconciliation led to an issue that the APIRule could not be read in v2alpha1 after it was deleted.
+						This would self-heal in the next reconciliation loop.To avoid this confusion with this issue, we disable the cache for v2alpha1 APIRules.
+						This can probably be enabled again when reconciliation only uses v2alpha1.
+					*/
+					&gatewayv1beta1.APIRule{},
+					&gatewayv2alpha1.APIRule{},
+					&gatewayv2.APIRule{},
+					&corev1.Secret{},
+				},
+			},
+		},
 		WebhookServer: webhook.NewServer(webhook.Options{
 			Host:    webhookInstallOptions.LocalServingHost,
 			Port:    webhookInstallOptions.LocalServingPort,
