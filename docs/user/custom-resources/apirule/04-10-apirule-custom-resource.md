@@ -98,7 +98,7 @@ See an example of a valid **rules.path** order, listed from the most specific to
 - `/anything/{**}`
 - `/{**}`
 
-Understanding the relationship between paths and methods in a rule is crucial to avoid unexpected behavior. For instance, the following APIRule configuration excludes the `POST` and `GET` methods for the path `/anything/one` with `noAuth`. This happens because the rule with the path `/anything/{**}` shares at least one common method (`GET`) with a preceding rule.
+Understanding the relationship between paths and methods in a rule is crucial to avoid unexpected behavior. For example, the following APIRule configuration excludes the `POST` and `GET` methods for the path `/anything/one` with `noAuth`. This happens because the rule with the path `/anything/{**}` shares at least one common method (`GET`) with a preceding rule.
 
 ```yaml
 ...
@@ -116,7 +116,7 @@ rules:
     noAuth: true
     path: /anything/{**}
 ```
-To get the `POST` method to work on the path `/anything/one`, you need to define separate rules for overlapping methods and paths as shown below:
+To use the `POST` method on the path `/anything/one`, you must define separate rules for overlapping methods and paths. See the following example:
 ```yaml
 ...
 rules:
