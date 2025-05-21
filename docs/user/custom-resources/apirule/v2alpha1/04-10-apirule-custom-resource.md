@@ -33,7 +33,7 @@ This table lists all parameters of APIRule `v2alpha1` CRD together with their de
 | **timeout**                                      |  **NO**  | Specifies the timeout for HTTP requests in seconds for all Access Rules. The value can be overridden for each Access Rule. </br> If no timeout is specified, the default timeout of 180 seconds applies.                                                                                                                                                                                                                                                                                                                                                                                                                | The maximum timeout is limited to 3900 seconds (65 minutes).                                                          |
 | **rules**                                        | **YES**  | Specifies the list of Access Rules.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     | None                                                                                                                  |
 | **rules.service**                                |  **NO**  | Services definitions at this level have higher precedence than the Service definition at the **spec.service** level.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    | None                                                                                                                  |
-| **rules.path**                                   | **YES**  | Specifies the path on which the service is exposed. The supported configurations are:<ul><li>Exact path (e.g. `/abc`) - matches the specified path exactly.</li><li>Usage of the `{*}` operator (e.g. `/foo/{*}` or `/foo/{*}/bar`) - matches any request that matches the pattern with exactly one path segment in the operator's place.</li><li>Usage of the `{**}` operator (e.g. `/foo/{**}` or `/foo/{**}/bar`) - matches any request that matches the pattern with zero or more path segments in the operator's place. `{**}` must be the last operator in the path.</li><li>Wildcard path `/*` - matches all paths. It's equivalent to the `/{**}` path.</li></ul>| The value might contain operators `{*}` and/or `{**}`. It can also be a wildcard match `/*`                                    |
+| **rules.path**                                   | **YES**  | Specifies the path on which the service is exposed. The supported configurations are:<ul><li>Exact path (e.g. `/abc`) - matches the specified path exactly.</li><li>Usage of the `{*}` operator (e.g. `/foo/{*}` or `/foo/{*}/bar`) - matches any request that matches the pattern with exactly one path segment in the operator's place.</li><li>Usage of the `{**}` operator (e.g. `/foo/{**}` or `/foo/{**}/bar`) - matches any request that matches the pattern with zero or more path segments in the operator's place. `{**}` must be the last operator in the path.</li><li>Wildcard path `/*` - matches all paths. It's equivalent to the `/{**}` path.</li></ul>| The value might contain operators `{*}` and/or `{**}`. It can also be a wildcard match `/*`. The order of rules in the APIRule CR is important. Rules defined earlier in the list have a higher priority than those defined later.                                    |
 | **rules.methods**                                |  **NO**  | Specifies the list of HTTP request methods available for **spec.rules.path**. The list of supported methods is defined in [RFC 9910: HTTP Semantics](https://www.rfc-editor.org/rfc/rfc9110.html) and [RFC 5789: PATCH Method for HTTP](https://www.rfc-editor.org/rfc/rfc5789.html).                                                                                                                                                                                                                                                                                                                                   | None                                                                                                                  |
 | **rules.noAuth**                                 |  **NO**  | Setting `noAuth` to `true` disables authorization.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | Must be set to true if jwt and extAuth are not specified.                                                             |
 | **rules.request**                                |  **NO**  | Defines request modification rules, which are applied before forwarding the request to the target workload.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             | None                                                                                                                  |
@@ -75,6 +75,63 @@ The following table lists the fields of the **status** section.
 |:-----------------------|:----------------------------------------------------------------------------------------------------------------------------------|
 | **status.state**       | Defines the reconciliation state of the APIRule. The possible states are `Ready`, `Warning`, `Error`, `Processing`, or `Deleting`. |
 | **status.description** | Contains a detailed description of **status.state**.                                                                                         |
+
+### Significance of Rules Path Order
+Operators `{*}` and `{**}` allow you to define a single APIRule that matches multiple request paths.
+However, this also introduces the possibility of path conflicts.
+A path conflict occurs when two or more APIRule resources match the same path and share at least one common HTTP method. This is why the order of rules is important.
+
+Rules defined earlier in the list have a higher priority than those defined later. Therefore, we recommend defining rules from the most specific path to the most general.
+
+See an example of a valid **rules.path** order, listed from the most specific to the most general:
+- `/anything/one`
+- `/anything/one/two`
+- `/anything/{*}/one`
+- `/anything/{*}/one/{**}/two`
+- `/anything/{*}/{*}/two`
+- `/anything/{**}/two`
+- `/anything/`
+- `/anything/{**}`
+- `/{**}`
+
+Understanding the relationship between paths and methods in a rule is crucial to avoid unexpected behavior. For example, the following APIRule configuration excludes the `POST` and `GET` methods for the path `/anything/one` with `noAuth`. This happens because the rule with the path `/anything/{**}` shares at least one common method (`GET`) with a preceding rule.
+
+```yaml
+...
+rules:
+  - methods:
+    - GET
+    jwt:
+      authentications:
+        - issuer: https://example.com
+          jwksUri: https://example.com/.well-known/jwks.json
+    path: /anything/one
+  - methods:
+    - GET
+    - POST
+    noAuth: true
+    path: /anything/{**}
+```
+To use the `POST` method on the path `/anything/one`, you must define separate rules for overlapping methods and paths. See the following example:
+```yaml
+...
+rules:
+  - methods:
+      - GET
+    jwt:
+      authentications:
+        - issuer: https://example.com
+          jwksUri: https://example.com/.well-known/jwks.json
+    path: /anything/one
+  - methods:
+      - GET
+    noAuth: true
+    path: /anything/{**}
+  - methods:
+      - POST
+    noAuth: true
+    path: /anything/{**}
+```
 
 ## APIRule CR's State
 
