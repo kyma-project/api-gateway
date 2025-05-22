@@ -27,7 +27,7 @@ func doneReconcileErrorRequeue(err error, reconcilerPeriod time.Duration) (ctrl.
 	if reconcilerPeriod != 0 {
 		after = reconcilerPeriod
 	}
-	return ctrl.Result{RequeueAfter: after}, err
+	return ctrl.Result{RequeueAfter: after, Requeue: true}, err
 }
 
 func doneReconcileMigrationRequeue(reconcilerPeriod time.Duration) (ctrl.Result, error) {

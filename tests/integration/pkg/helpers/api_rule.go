@@ -354,6 +354,37 @@ func UpdateApiRule(resourceMgr *resource.Manager, k8sClient dynamic.Interface, r
 	return nil
 }
 
+func UpdateApiRuleV2alpha1(resourceMgr *resource.Manager, k8sClient dynamic.Interface, retryOpts []retry.Option, apiRuleResource unstructured.Unstructured) error {
+	resourceSchema, ns, _ := resourceMgr.GetResourceSchemaAndNamespace(apiRuleResource)
+	apiRuleName := apiRuleResource.GetName()
+
+	status := ApiRuleStatusV2alpha1{}
+
+	err := resourceMgr.UpdateResource(k8sClient, resourceSchema, ns, apiRuleName, apiRuleResource)
+	if err != nil {
+		return err
+	}
+
+	currentApiRule, err := resourceMgr.GetResource(k8sClient, resourceSchema, ns, apiRuleName)
+	if err != nil {
+		return err
+	}
+
+	js, err := json.Marshal(currentApiRule)
+	if err != nil {
+		return err
+	}
+	err = json.Unmarshal(js, &status)
+	if err != nil {
+		return err
+	}
+	if status.Status.State != "Ready" {
+		log.Println("APIRule v2alpha1 status not ok: " + status.Status.Description)
+		return errors.New("APIRule v2alpha1 status not ok: " + status.Status.Description)
+	}
+	return nil
+}
+
 func GetAPIRuleStatusV1beta1(apiRuleUnstructured *unstructured.Unstructured) (ApiRuleStatusV1beta1, error) {
 	js, err := json.Marshal(apiRuleUnstructured)
 	if err != nil {

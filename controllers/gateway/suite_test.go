@@ -3,17 +3,23 @@ package gateway_test
 import (
 	"context"
 	"fmt"
-	"github.com/kyma-project/api-gateway/internal/metrics"
 	"net/http"
 	"os"
 	"path/filepath"
 	"testing"
 	"time"
 
+	v1 "k8s.io/api/admissionregistration/v1"
+	"k8s.io/utils/ptr"
+	"sigs.k8s.io/controller-runtime/pkg/webhook"
+
+	"github.com/kyma-project/api-gateway/internal/metrics"
+
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
+	gatewayv2 "github.com/kyma-project/api-gateway/apis/gateway/v2"
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	"github.com/kyma-project/api-gateway/controllers"
 	"github.com/kyma-project/api-gateway/controllers/gateway"
@@ -44,7 +50,7 @@ import (
 )
 
 const (
-	eventuallyTimeout    = time.Second * 5
+	eventuallyTimeout    = time.Second * 30
 	testNamespace        = "atgo-system"
 	testGatewayURL       = "kyma-system/kyma-gateway"
 	testOathkeeperSvcURL = "oathkeeper.kyma-system.svc.cluster.local"
@@ -74,9 +80,9 @@ var (
 	TestAllowHeaders = []string{"header1", "header2"}
 
 	defaultCorsPolicy = builders.CorsPolicy().
-				AllowHeaders(TestAllowHeaders...).
-				AllowMethods(TestAllowMethods...).
-				AllowOrigins(TestAllowOrigins...)
+		AllowHeaders(TestAllowHeaders...).
+		AllowMethods(TestAllowMethods...).
+		AllowOrigins(TestAllowOrigins...)
 )
 
 func TestAPIs(t *testing.T) {
@@ -89,31 +95,95 @@ var _ = BeforeSuite(func(specCtx SpecContext) {
 	logf.SetLogger(zap.New(zap.UseDevMode(true), zap.WriteTo(GinkgoWriter)))
 	ctx, cancel = context.WithCancel(context.Background())
 
-	By("Bootstrapping test environment")
-	testEnv = &envtest.Environment{
-		CRDDirectoryPaths: []string{
-			filepath.FromSlash("../../config/crd/bases"),
-			filepath.FromSlash("../../hack/crds"),
-		},
-	}
-
-	var err error
-	cfg, err = testEnv.Start()
-	Expect(err).ToNot(HaveOccurred())
-	Expect(cfg).ToNot(BeNil())
-
 	s := runtime.NewScheme()
 
 	Expect(gatewayv1beta1.AddToScheme(s)).Should(Succeed())
 	Expect(gatewayv2alpha1.AddToScheme(s)).Should(Succeed())
+	Expect(gatewayv2.AddToScheme(s)).Should(Succeed())
 	Expect(rulev1alpha1.AddToScheme(s)).Should(Succeed())
 	Expect(networkingv1beta1.AddToScheme(s)).Should(Succeed())
 	Expect(securityv1beta1.AddToScheme(s)).Should(Succeed())
 	Expect(corev1.AddToScheme(s)).Should(Succeed())
 	Expect(apiextensionsv1.AddToScheme(s)).Should(Succeed())
 
+	By("Bootstrapping test environment")
+	testEnv = &envtest.Environment{
+		CRDInstallOptions: envtest.CRDInstallOptions{Scheme: s},
+		CRDDirectoryPaths: []string{
+			filepath.FromSlash("../../config/crd/bases"),
+			filepath.FromSlash("../../hack/crds"),
+		},
+		WebhookInstallOptions: envtest.WebhookInstallOptions{
+			Paths: []string{
+				filepath.FromSlash("../../config/crd/"),
+			},
+			MutatingWebhooks: []*v1.MutatingWebhookConfiguration{
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "originalversion.apirule.gateway.kyma-project.io",
+					},
+					Webhooks: []v1.MutatingWebhook{
+						{
+							Name: "test.example.com",
+							ClientConfig: v1.WebhookClientConfig{
+								Service: &v1.ServiceReference{
+									Name:      "api-gateway-webhook-service",
+									Namespace: "kyma-system",
+									Path:      ptr.To("/mutate-gateway-kyma-project-io-v2alpha1-apirule"),
+								},
+							},
+							Rules: []v1.RuleWithOperations{
+								{
+									Operations: []v1.OperationType{v1.Create, v1.Update},
+									Rule: v1.Rule{
+										APIGroups:   []string{"gateway.kyma-project.io"},
+										APIVersions: []string{"v2alpha1"},
+										Resources:   []string{"apirules"},
+										Scope:       ptr.To(v1.AllScopes),
+									},
+								},
+							},
+							FailurePolicy:           ptr.To(v1.Fail),
+							AdmissionReviewVersions: []string{"v1", "v1beta1"},
+							SideEffects:             ptr.To(v1.SideEffectClassNone),
+							MatchPolicy:             ptr.To(v1.Exact),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	webhookInstallOptions := &testEnv.WebhookInstallOptions
+
+	var err error
+	cfg, err = testEnv.Start()
+	Expect(err).ToNot(HaveOccurred())
+	Expect(cfg).ToNot(BeNil())
+
 	mgr, err := ctrl.NewManager(cfg, ctrl.Options{
 		Scheme: s,
+		Client: client.Options{
+			Cache: &client.CacheOptions{
+				DisableFor: []client.Object{
+					&rulev1alpha1.Rule{},
+					/*
+						Reading v1beta1 and v2alpha1 APIRules during reconciliation led to an issue that the APIRule could not be read in v2alpha1 after it was deleted.
+						This would self-heal in the next reconciliation loop.To avoid this confusion with this issue, we disable the cache for v2alpha1 APIRules.
+						This can probably be enabled again when reconciliation only uses v2alpha1.
+					*/
+					&gatewayv1beta1.APIRule{},
+					&gatewayv2alpha1.APIRule{},
+					&gatewayv2.APIRule{},
+					&corev1.Secret{},
+				},
+			},
+		},
+		WebhookServer: webhook.NewServer(webhook.Options{
+			Host:    webhookInstallOptions.LocalServingHost,
+			Port:    webhookInstallOptions.LocalServingPort,
+			CertDir: webhookInstallOptions.LocalServingCertDir,
+		}),
 		Metrics: metricsserver.Options{
 			BindAddress: "0",
 		},
@@ -167,6 +237,7 @@ var _ = BeforeSuite(func(specCtx SpecContext) {
 	}
 
 	Expect(apiReconciler.SetupWithManager(mgr, rateLimiterCfg)).Should(Succeed())
+	Expect((&gatewayv2alpha1.APIRule{}).SetupWebhookWithManager(mgr)).Should(Succeed())
 
 	go func() {
 		defer GinkgoRecover()
