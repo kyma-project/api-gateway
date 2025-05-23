@@ -11,7 +11,7 @@ This tutorial shows how to expose and secure Services using APIGateway Controlle
   > Because the default Kyma domain is a wildcard domain, which uses a simple TLS Gateway, it is recommended that you set up your custom domain for use in a production environment.
 
   > [!TIP]
-  > To learn what the default domain of your Kyma cluster is, run `kubectl get gateway -n kyma-system kyma-gateway -o jsonpath='{.spec.servers[0].hosts}`.
+  > To learn what the default domain of your Kyma cluster is, run `kubectl get gateway -n kyma-system kyma-gateway -o jsonpath='{.spec.servers[0].hosts}'`.
 
 * Configure your client ID and client Secret using an OAuth2-compliant provider.
 
