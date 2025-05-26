@@ -80,9 +80,9 @@ var (
 	TestAllowHeaders = []string{"header1", "header2"}
 
 	defaultCorsPolicy = builders.CorsPolicy().
-		AllowHeaders(TestAllowHeaders...).
-		AllowMethods(TestAllowMethods...).
-		AllowOrigins(TestAllowOrigins...)
+				AllowHeaders(TestAllowHeaders...).
+				AllowMethods(TestAllowMethods...).
+				AllowOrigins(TestAllowOrigins...)
 )
 
 func TestAPIs(t *testing.T) {

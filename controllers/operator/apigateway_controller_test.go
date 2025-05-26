@@ -49,7 +49,6 @@ var _ = Describe("API-Gateway Controller", func() {
 			// then
 			Expect(err).ShouldNot(HaveOccurred())
 			Expect(result).Should(Equal(reconcile.Result{
-				Requeue:      true,
 				RequeueAfter: defaultApiGatewayReconciliationInterval,
 			}))
 		})
@@ -95,7 +94,6 @@ var _ = Describe("API-Gateway Controller", func() {
 			// then
 			Expect(err).ShouldNot(HaveOccurred())
 			Expect(result).Should(Equal(reconcile.Result{
-				Requeue:      true,
 				RequeueAfter: defaultApiGatewayReconciliationInterval,
 			}))
 
@@ -127,7 +125,6 @@ var _ = Describe("API-Gateway Controller", func() {
 			// then
 			Expect(err).ShouldNot(HaveOccurred())
 			Expect(result).Should(Equal(reconcile.Result{
-				Requeue:      true,
 				RequeueAfter: defaultApiGatewayReconciliationInterval,
 			}))
 
@@ -173,7 +170,7 @@ var _ = Describe("API-Gateway Controller", func() {
 
 			// then
 			Expect(err).ToNot(HaveOccurred())
-			Expect(result.Requeue).To(BeTrue())
+			Expect(result.RequeueAfter).To(Equal(time.Hour * 1))
 
 			Expect(c.Get(context.Background(), client.ObjectKeyFromObject(apiGatewayCR), apiGatewayCR)).Should(Succeed())
 			Expect(apiGatewayCR.Status.State).To(Equal(operatorv1alpha1.Ready))
@@ -213,7 +210,7 @@ var _ = Describe("API-Gateway Controller", func() {
 
 			// then
 			Expect(err).ToNot(HaveOccurred())
-			Expect(result.Requeue).To(BeFalse())
+			Expect(result.RequeueAfter).To(Equal(time.Duration(0)))
 
 			Expect(c.Get(context.Background(), client.ObjectKeyFromObject(secondApiGatewayCR), secondApiGatewayCR)).Should(Succeed())
 			Expect(secondApiGatewayCR.Status.State).To(Equal(operatorv1alpha1.Warning))
@@ -251,7 +248,7 @@ var _ = Describe("API-Gateway Controller", func() {
 
 			// then
 			Expect(err).To(HaveOccurred())
-			Expect(result.Requeue).To(BeFalse())
+			Expect(result.RequeueAfter).To(Equal(time.Duration(0)))
 
 			Expect(c.Get(context.Background(), client.ObjectKeyFromObject(apiGatewayCR), apiGatewayCR)).Should(Succeed())
 			Expect(apiGatewayCR.Status.State).To(Equal(operatorv1alpha1.Error))
