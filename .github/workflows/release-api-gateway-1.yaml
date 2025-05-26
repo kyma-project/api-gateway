@@ -42,6 +42,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GOAT_BOT_REPO_ACCESS }}
           IMAGE_TAG: ${{ github.event.inputs.name }}
           REL_BRANCH: ${{ env.branch_name}}
+          BRANCH_EXISTS: ${{ env.branch_exists }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
