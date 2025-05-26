@@ -3,7 +3,6 @@ package processing_test
 import (
 	"encoding/json"
 	"fmt"
-	apirulev1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"net/http"
 
 	"github.com/kyma-project/api-gateway/internal/processing"

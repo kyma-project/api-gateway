@@ -25,7 +25,6 @@ resources:
   - ../rbac
   - ../manager
   - ../scheduling
-  - ../ui-extensions
   - ../conversion_webhook
 
 patchesStrategicMerge:

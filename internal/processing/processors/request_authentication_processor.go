@@ -3,7 +3,7 @@ package processors
 import (
 	"context"
 	"fmt"
-	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
+	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 
 	"github.com/kyma-project/api-gateway/internal/processing"
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
@@ -14,14 +14,14 @@ const RequestAuthenticationAppSelectorLabel = "app"
 
 // RequestAuthenticationProcessor is the generic processor that handles the Istio Request Authentications in the reconciliation of API Rule.
 type RequestAuthenticationProcessor struct {
-	ApiRule *gatewayv1beta1.APIRule
+	ApiRule *gatewayv2alpha1.APIRule
 	Creator RequestAuthenticationCreator
 }
 
 // RequestAuthenticationCreator provides the creation of RequestAuthentications using the configuration in the given APIRule.
 // The key of the map is expected to be unique and comparable with the
 type RequestAuthenticationCreator interface {
-	Create(ctx context.Context, client ctrlclient.Client, api *gatewayv1beta1.APIRule) (map[string]*securityv1beta1.RequestAuthentication, error)
+	Create(ctx context.Context, client ctrlclient.Client, api *gatewayv2alpha1.APIRule) (map[string]*securityv1beta1.RequestAuthentication, error)
 }
 
 func (r RequestAuthenticationProcessor) EvaluateReconciliation(ctx context.Context, client ctrlclient.Client) ([]*processing.ObjectChange, error) {
@@ -39,11 +39,11 @@ func (r RequestAuthenticationProcessor) EvaluateReconciliation(ctx context.Conte
 	return changes, nil
 }
 
-func (r RequestAuthenticationProcessor) getDesiredState(ctx context.Context, client ctrlclient.Client, api *gatewayv1beta1.APIRule) (map[string]*securityv1beta1.RequestAuthentication, error) {
+func (r RequestAuthenticationProcessor) getDesiredState(ctx context.Context, client ctrlclient.Client, api *gatewayv2alpha1.APIRule) (map[string]*securityv1beta1.RequestAuthentication, error) {
 	return r.Creator.Create(ctx, client, api)
 }
 
-func (r RequestAuthenticationProcessor) getActualState(ctx context.Context, client ctrlclient.Client, api *gatewayv1beta1.APIRule) (map[string]*securityv1beta1.RequestAuthentication, error) {
+func (r RequestAuthenticationProcessor) getActualState(ctx context.Context, client ctrlclient.Client, api *gatewayv2alpha1.APIRule) (map[string]*securityv1beta1.RequestAuthentication, error) {
 	labels := processing.GetOwnerLabels(api)
 
 	var raList securityv1beta1.RequestAuthenticationList

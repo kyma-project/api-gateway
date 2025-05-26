@@ -13,7 +13,6 @@ import (
 
 	"github.com/avast/retry-go/v4"
 	"github.com/cucumber/godog"
-	apirulev1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/auth"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/helpers"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/manifestprocessor"
@@ -226,7 +225,7 @@ func (s *scenario) fetchAPIRuleLastProcessedTime() error {
 
 	return retry.Do(func() error {
 		for _, apiRule := range apiRules {
-			var apiRuleStructured apirulev1beta1.APIRule
+			var apiRuleStructured apirulev2alpha1.APIRule
 			name := apiRule.GetName()
 			res, err := s.resourceManager.GetResource(s.k8sClient, apiRuleV1GVR, apiRule.GetNamespace(), name, testcontext.GetRetryOpts()...)
 
@@ -253,7 +252,7 @@ func (s *scenario) apiRuleWasReconciledAgain() error {
 
 	return retry.Do(func() error {
 		for _, apiRule := range apiRules {
-			var apiRuleStructured apirulev1beta1.APIRule
+			var apiRuleStructured apirulev2alpha1.APIRule
 			name := apiRule.GetName()
 			res, err := s.resourceManager.GetResource(s.k8sClient, apiRuleV1GVR, apiRule.GetNamespace(), name, testcontext.GetRetryOpts()...)
 

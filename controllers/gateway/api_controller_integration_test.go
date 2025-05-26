@@ -8,7 +8,6 @@ import (
 	"strings"
 	"time"
 
-	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	apinetworkingv1beta1 "istio.io/api/networking/v1beta1"
 
@@ -47,10 +46,10 @@ var _ = Describe("APIRule Controller", Serial, func() {
 		defaultHttpTimeout         = time.Second * 180
 	)
 
-	var methodsGet = []gatewayv1beta1.HttpMethod{http.MethodGet}
-	var methodsPut = []gatewayv1beta1.HttpMethod{http.MethodPut}
-	var methodsDelete = []gatewayv1beta1.HttpMethod{http.MethodDelete}
-	var methodsPost = []gatewayv1beta1.HttpMethod{http.MethodPost}
+	var methodsGet = []gatewayv2alpha1.HttpMethod{http.MethodGet}
+	var methodsPut = []gatewayv2alpha1.HttpMethod{http.MethodPut}
+	var methodsDelete = []gatewayv2alpha1.HttpMethod{http.MethodDelete}
+	var methodsPost = []gatewayv2alpha1.HttpMethod{http.MethodPost}
 
 	Context("check default domain logic", func() {
 		It("should have an error when creating an APIRule without a domain in cluster without kyma-gateway", func() {
@@ -64,7 +63,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 
 			By("Creating APIRule")
 
-			apiRule := testApiRule(apiRuleName, testNamespace, serviceName, testNamespace, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule1})
+			apiRule := testApiRule(apiRuleName, testNamespace, serviceName, testNamespace, serviceHost, testServicePort, []gatewayv2alpha1.Rule{rule1})
 			svc := testService(serviceName, testNamespace, testServicePort)
 			defer func() {
 				deleteResource(apiRule)
@@ -75,12 +74,12 @@ var _ = Describe("APIRule Controller", Serial, func() {
 			Expect(c.Create(context.Background(), svc)).Should(Succeed())
 			Expect(c.Create(context.Background(), apiRule)).Should(Succeed())
 
-			expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusError)
+			expectApiRuleStatus(apiRuleName, gatewayv2alpha1.StatusError)
 
 			By("Setting a full host for the APIRule should resolve the error")
 
 			By("Updating APIRule")
-			existingInstance := gatewayv1beta1.APIRule{}
+			existingInstance := gatewayv2alpha1.APIRule{}
 			Expect(c.Get(context.Background(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &existingInstance)).Should(Succeed())
 
 			serviceHost = fmt.Sprintf("%s.local.kyma.dev", serviceName)
@@ -147,7 +146,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 			serviceName := generateTestName(testServiceNameBase, testIDLength)
 			serviceHost := serviceName
 
-			apiRule := testApiRule(apiRuleName, testNamespace, serviceName, testNamespace, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule1})
+			apiRule := testApiRule(apiRuleName, testNamespace, serviceName, testNamespace, serviceHost, testServicePort, []gatewayv2alpha1.Rule{rule1})
 			svc := testService(serviceName, testNamespace, testServicePort)
 			defer func() {
 				deleteResource(apiRule)
@@ -157,7 +156,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 			Expect(c.Create(context.Background(), svc)).Should(Succeed())
 			Expect(c.Create(context.Background(), apiRule)).Should(Succeed())
 
-			expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusOK)
+			expectApiRuleStatus(apiRuleName, gatewayv2alpha1.Ready)
 
 			By("Verifying APIRule after update")
 
@@ -180,9 +179,9 @@ var _ = Describe("APIRule Controller", Serial, func() {
 		It("should create, update and delete rules depending on patch match", func() {
 			updateJwtHandlerTo(helpers.JWT_HANDLER_ORY)
 
-			rule1 := testRule("/rule1", methodsGet, defaultMutators, noConfigHandler(gatewayv1beta1.AccessStrategyNoop))
-			rule2 := testRule("/rule2", methodsPut, defaultMutators, noConfigHandler(gatewayv1beta1.AccessStrategyUnauthorized))
-			rule3 := testRule("/rule3", methodsDelete, defaultMutators, noConfigHandler(gatewayv1beta1.AccessStrategyAnonymous))
+			rule1 := testRule("/rule1", methodsGet, defaultMutators, noConfigHandler(gatewayv2alpha1.AccessStrategyNoop))
+			rule2 := testRule("/rule2", methodsPut, defaultMutators, noConfigHandler(gatewayv2alpha1.AccessStrategyUnauthorized))
+			rule3 := testRule("/rule3", methodsDelete, defaultMutators, noConfigHandler(gatewayv2alpha1.AccessStrategyAnonymous))
 
 			apiRuleName := generateTestName(testNameBase, testIDLength)
 			serviceName := generateTestName(testServiceNameBase, testIDLength)
@@ -196,7 +195,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 
 			By("Creating APIRule")
 
-			apiRule := testApiRule(apiRuleName, testNamespace, serviceName, testNamespace, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule1, rule2, rule3})
+			apiRule := testApiRule(apiRuleName, testNamespace, serviceName, testNamespace, serviceHost, testServicePort, []gatewayv2alpha1.Rule{rule1, rule2, rule3})
 			svc := testService(serviceName, testNamespace, testServicePort)
 			defer func() {
 				deleteResource(apiRule)
@@ -207,7 +206,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 			Expect(c.Create(context.Background(), svc)).Should(Succeed())
 			Expect(c.Create(context.Background(), apiRule)).Should(Succeed())
 
-			expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusOK)
+			expectApiRuleStatus(apiRuleName, gatewayv2alpha1.Ready)
 
 			By("Verifying created access rules")
 			Eventually(func(g Gomega) {
@@ -224,11 +223,11 @@ var _ = Describe("APIRule Controller", Serial, func() {
 			}, eventuallyTimeout).Should(Succeed())
 
 			By("Updating APIRule")
-			existingInstance := gatewayv1beta1.APIRule{}
+			existingInstance := gatewayv2alpha1.APIRule{}
 			Expect(c.Get(context.Background(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &existingInstance)).Should(Succeed())
 
 			rule4 := testRule("/rule4", methodsPost, defaultMutators, noConfigHandler("cookie_session"))
-			existingInstance.Spec.Rules = []gatewayv1beta1.Rule{rule1, rule4}
+			existingInstance.Spec.Rules = []gatewayv2alpha1.Rule{rule1, rule4}
 			newServiceName := serviceName + "new"
 			newServicePort := testServicePort + 3
 			existingInstance.Spec.Service.Name = &newServiceName
@@ -271,7 +270,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 						serviceHost := fmt.Sprintf("%s.kyma.local", serviceName)
 
 						rule := testRule(testPath, defaultMethods, defaultMutators, testOauthHandler(defaultScopes))
-						apiRule := testApiRule(apiRuleName, testNamespace, serviceName, testNamespace, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule})
+						apiRule := testApiRule(apiRuleName, testNamespace, serviceName, testNamespace, serviceHost, testServicePort, []gatewayv2alpha1.Rule{rule})
 						svc := testService(serviceName, testNamespace, testServicePort)
 						defer func() {
 							deleteResource(apiRule)
@@ -282,7 +281,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 						Expect(c.Create(context.Background(), svc)).Should(Succeed())
 						Expect(c.Create(context.Background(), apiRule)).Should(Succeed())
 
-						expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusOK)
+						expectApiRuleStatus(apiRuleName, gatewayv2alpha1.Ready)
 
 						matchingLabels := matchingLabelsFunc(apiRuleName, testNamespace)
 
@@ -374,7 +373,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 
 							rule1 := testRule("/img", methodsGet, defaultMutators, testOryJWTHandler(testIssuer, defaultScopes))
 							rule2 := testRule("/headers", methodsGet, defaultMutators, testOryJWTHandler(testIssuer, defaultScopes))
-							apiRule := testApiRule(apiRuleName, testNamespace, serviceName, testNamespace, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule1, rule2})
+							apiRule := testApiRule(apiRuleName, testNamespace, serviceName, testNamespace, serviceHost, testServicePort, []gatewayv2alpha1.Rule{rule1, rule2})
 							svc := testService(serviceName, testNamespace, testServicePort)
 							defer func() {
 								deleteResource(apiRule)
@@ -385,7 +384,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 							Expect(c.Create(context.Background(), svc)).Should(Succeed())
 							Expect(c.Create(context.Background(), apiRule)).Should(Succeed())
 
-							expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusOK)
+							expectApiRuleStatus(apiRuleName, gatewayv2alpha1.Ready)
 
 							matchingLabels := matchingLabelsFunc(apiRuleName, testNamespace)
 
@@ -516,7 +515,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 
 							rule1 := testRule("/img", methodsGet, nil, testIstioJWTHandlerWithScopes(testIssuer, testJwksUri, []string{"scope-a", "scope-b"}))
 							rule2 := testRule("/headers", methodsGet, nil, testIstioJWTHandlerWithScopes(testIssuer, testJwksUri, []string{"scope-c"}))
-							apiRule := testApiRule(apiRuleName, testNamespace, serviceName, testNamespace, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule1, rule2})
+							apiRule := testApiRule(apiRuleName, testNamespace, serviceName, testNamespace, serviceHost, testServicePort, []gatewayv2alpha1.Rule{rule1, rule2})
 							svc := testService(serviceName, testNamespace, testServicePort)
 
 							defer func() {
@@ -528,7 +527,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 							Expect(c.Create(context.Background(), svc)).Should(Succeed())
 							Expect(c.Create(context.Background(), apiRule)).Should(Succeed())
 
-							expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusOK)
+							expectApiRuleStatus(apiRuleName, gatewayv2alpha1.Ready)
 
 							ApiRuleNameMatchingLabels := matchingLabelsFunc(apiRuleName, testNamespace)
 
@@ -636,7 +635,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 							serviceName := generateTestName(testServiceNameBase, testIDLength)
 							serviceHost := fmt.Sprintf("%s.kyma.local", serviceName)
 
-							authorizations := []*gatewayv1beta1.JwtAuthorization{
+							authorizations := []*gatewayv2alpha1.JwtAuthorization{
 								{
 									RequiredScopes: []string{"scope-a", "scope-b"},
 								},
@@ -644,7 +643,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 
 							testIstioJWTHandlerWithAuthorizations(testIssuer, testJwksUri, authorizations)
 							rule := testRule("/img", methodsGet, nil, testIstioJWTHandlerWithAuthorizations(testIssuer, testJwksUri, authorizations))
-							apiRule := testApiRule(apiRuleName, testNamespace, serviceName, testNamespace, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule})
+							apiRule := testApiRule(apiRuleName, testNamespace, serviceName, testNamespace, serviceHost, testServicePort, []gatewayv2alpha1.Rule{rule})
 							svc := testService(serviceName, testNamespace, testServicePort)
 
 							By(fmt.Sprintf("Creating APIRule %s", apiRuleName))
@@ -658,18 +657,18 @@ var _ = Describe("APIRule Controller", Serial, func() {
 							Expect(c.Create(context.Background(), apiRule)).Should(Succeed())
 
 							Eventually(func(g Gomega) {
-								createdApiRule := gatewayv1beta1.APIRule{}
+								createdApiRule := gatewayv2alpha1.APIRule{}
 								g.Expect(c.Get(context.Background(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &createdApiRule)).Should(Succeed())
 								g.Expect(createdApiRule.Status.APIRuleStatus).NotTo(BeNil())
-								g.Expect(createdApiRule.Status.APIRuleStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
-								g.Expect(createdApiRule.Status.APIRuleStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
+								g.Expect(createdApiRule.Status.APIRuleStatus.Code).To(Equal(gatewayv2alpha1.Ready))
+								g.Expect(createdApiRule.Status.APIRuleStatus.Code).To(Equal(gatewayv2alpha1.Ready))
 							}, eventuallyTimeout).Should(Succeed())
 
 							// when
-							updatedApiRule := gatewayv1beta1.APIRule{}
+							updatedApiRule := gatewayv2alpha1.APIRule{}
 							Expect(c.Get(context.Background(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &updatedApiRule)).Should(Succeed())
 
-							updatedAuthorizations := []*gatewayv1beta1.JwtAuthorization{
+							updatedAuthorizations := []*gatewayv2alpha1.JwtAuthorization{
 								{
 									RequiredScopes: []string{"scope-a", "scope-c"},
 								},
@@ -681,7 +680,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 								},
 							}
 							ruleWithScopes := testRule("/img", methodsGet, nil, testIstioJWTHandlerWithAuthorizations(testIssuer, testJwksUri, updatedAuthorizations))
-							updatedApiRule.Spec.Rules = []gatewayv1beta1.Rule{ruleWithScopes}
+							updatedApiRule.Spec.Rules = []gatewayv2alpha1.Rule{ruleWithScopes}
 
 							By(fmt.Sprintf("Updating APIRule %s with new Authorizations for /img path", apiRuleName))
 							Expect(c.Update(context.Background(), &updatedApiRule)).Should(Succeed())
@@ -716,7 +715,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 					serviceHost := fmt.Sprintf("%s.kyma.local", serviceName)
 
 					rule1 := testRule("/img", methodsGet, nil, testIstioJWTHandler(testIssuer, testJwksUri))
-					apiRule := testApiRule(apiRuleName, testNamespace, serviceName, testNamespace, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule1})
+					apiRule := testApiRule(apiRuleName, testNamespace, serviceName, testNamespace, serviceHost, testServicePort, []gatewayv2alpha1.Rule{rule1})
 					svc := testService(serviceName, testNamespace, testServicePort)
 					delete(svc.Spec.Selector, "app")
 					svc.Spec.Selector["custom"] = serviceName
@@ -729,7 +728,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 					Expect(c.Create(context.Background(), svc)).Should(Succeed())
 					Expect(c.Create(context.Background(), apiRule)).Should(Succeed())
 
-					expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusOK)
+					expectApiRuleStatus(apiRuleName, gatewayv2alpha1.Ready)
 
 					ApiRuleNameMatchingLabels := matchingLabelsFunc(apiRuleName, testNamespace)
 
@@ -762,7 +761,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 					serviceHost := fmt.Sprintf("%s.kyma.local", serviceName)
 
 					rule1 := testRule("/img", methodsGet, nil, testIstioJWTHandler(testIssuer, testJwksUri))
-					apiRule := testApiRule(apiRuleName, testNamespace, serviceName, testNamespace, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule1})
+					apiRule := testApiRule(apiRuleName, testNamespace, serviceName, testNamespace, serviceHost, testServicePort, []gatewayv2alpha1.Rule{rule1})
 					svc := testService(serviceName, testNamespace, testServicePort)
 					delete(svc.Spec.Selector, "app")
 					svc.Spec.Selector["custom"] = serviceName
@@ -776,7 +775,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 					Expect(c.Create(context.Background(), svc)).Should(Succeed())
 					Expect(c.Create(context.Background(), apiRule)).Should(Succeed())
 
-					expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusOK)
+					expectApiRuleStatus(apiRuleName, gatewayv2alpha1.Ready)
 
 					ApiRuleNameMatchingLabels := matchingLabelsFunc(apiRuleName, testNamespace)
 
@@ -815,14 +814,14 @@ var _ = Describe("APIRule Controller", Serial, func() {
 						oauthHandler := testOauthHandler(defaultScopes)
 						rule1 := testRule("/img", methodsGet, defaultMutators, jwtHandler)
 						rule2 := testRule("/headers", methodsGet, defaultMutators, oauthHandler)
-						rule3 := testRule("/status", methodsGet, defaultMutators, noConfigHandler(gatewayv1beta1.AccessStrategyNoop))
-						rule4 := testRule("/favicon", methodsGet, nil, noConfigHandler(gatewayv1beta1.AccessStrategyAllow))
+						rule3 := testRule("/status", methodsGet, defaultMutators, noConfigHandler(gatewayv2alpha1.AccessStrategyNoop))
+						rule4 := testRule("/favicon", methodsGet, nil, noConfigHandler(gatewayv2alpha1.AccessStrategyAllow))
 
 						apiRuleName := generateTestName(testNameBase, testIDLength)
 						serviceName := testServiceNameBase
 						serviceHost := "httpbin4.kyma.local"
 
-						apiRule := testApiRule(apiRuleName, testNamespace, serviceName, testNamespace, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule1, rule2, rule3, rule4})
+						apiRule := testApiRule(apiRuleName, testNamespace, serviceName, testNamespace, serviceHost, testServicePort, []gatewayv2alpha1.Rule{rule1, rule2, rule3, rule4})
 						svc := testService(serviceName, testNamespace, testServicePort)
 						defer func() {
 							deleteResource(apiRule)
@@ -833,7 +832,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 						Expect(c.Create(context.Background(), svc)).Should(Succeed())
 						Expect(c.Create(context.Background(), apiRule)).Should(Succeed())
 
-						expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusOK)
+						expectApiRuleStatus(apiRuleName, gatewayv2alpha1.Ready)
 
 						matchingLabels := matchingLabelsFunc(apiRuleName, testNamespace)
 
@@ -947,14 +946,14 @@ var _ = Describe("APIRule Controller", Serial, func() {
 							It("should create a VS, but no access rule for allow and no_auth handler", func() {
 								updateJwtHandlerTo(jwtHandler)
 
-								rule1 := testRule("/favicon", methodsGet, nil, noConfigHandler(gatewayv1beta1.AccessStrategyAllow))
-								rule2 := testRule("/anything", methodsGet, nil, noConfigHandler(gatewayv1beta1.AccessStrategyNoAuth))
+								rule1 := testRule("/favicon", methodsGet, nil, noConfigHandler(gatewayv2alpha1.AccessStrategyAllow))
+								rule2 := testRule("/anything", methodsGet, nil, noConfigHandler(gatewayv2alpha1.AccessStrategyNoAuth))
 
 								apiRuleName := generateTestName(testNameBase, testIDLength)
 								serviceName := testServiceNameBase
 								serviceHost := "httpbin4.kyma.local"
 
-								apiRule := testApiRule(apiRuleName, testNamespace, serviceName, testNamespace, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule1, rule2})
+								apiRule := testApiRule(apiRuleName, testNamespace, serviceName, testNamespace, serviceHost, testServicePort, []gatewayv2alpha1.Rule{rule1, rule2})
 								svc := testService(serviceName, testNamespace, testServicePort)
 
 								defer func() {
@@ -966,7 +965,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 								Expect(c.Create(context.Background(), svc)).Should(Succeed())
 								Expect(c.Create(context.Background(), apiRule)).Should(Succeed())
 
-								expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusOK)
+								expectApiRuleStatus(apiRuleName, gatewayv2alpha1.Ready)
 
 								matchingLabels := matchingLabelsFunc(apiRuleName, testNamespace)
 
@@ -1026,7 +1025,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 					testServiceHost := fmt.Sprintf("httpbin-%s.kyma.local", apiRuleName)
 
 					rule := testRule("/img", methodsGet, nil, testOryJWTHandler(testIssuer, defaultScopes))
-					apiRule := testApiRule(apiRuleName, testNamespace, testServiceNameBase, testNamespace, testServiceHost, testServicePort, []gatewayv1beta1.Rule{rule})
+					apiRule := testApiRule(apiRuleName, testNamespace, testServiceNameBase, testNamespace, testServiceHost, testServicePort, []gatewayv2alpha1.Rule{rule})
 					svc := testService(testServiceNameBase, testNamespace, testServicePort)
 
 					By("Creating ApiRule with Rule using Ory JWT handler configuration")
@@ -1039,16 +1038,16 @@ var _ = Describe("APIRule Controller", Serial, func() {
 					Expect(c.Create(context.Background(), svc)).Should(Succeed())
 					Expect(c.Create(context.Background(), apiRule)).Should(Succeed())
 
-					expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusOK)
+					expectApiRuleStatus(apiRuleName, gatewayv2alpha1.Ready)
 
 					// when
 					updateJwtHandlerTo(helpers.JWT_HANDLER_ISTIO)
 
 					// then
 					Eventually(func(g Gomega) {
-						apiRule := gatewayv1beta1.APIRule{}
+						apiRule := gatewayv2alpha1.APIRule{}
 						g.Expect(c.Get(context.Background(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &apiRule)).Should(Succeed())
-						g.Expect(apiRule.Status.APIRuleStatus.Code).To(Equal(gatewayv1beta1.StatusError))
+						g.Expect(apiRule.Status.APIRuleStatus.Code).To(Equal(gatewayv2alpha1.StatusError))
 						g.Expect(apiRule.Status.APIRuleStatus.Description).To(ContainSubstring("Multiple validation errors"))
 
 						shouldHaveRules(g, apiRuleName, testNamespace, 1)
@@ -1063,7 +1062,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 					testServiceHost := fmt.Sprintf("httpbin-%s.kyma.local", apiRuleName)
 
 					rule := testRule("/img", methodsGet, nil, testOryJWTHandler(testIssuer, defaultScopes))
-					apiRule := testApiRule(apiRuleName, testNamespace, testServiceNameBase, testNamespace, testServiceHost, testServicePort, []gatewayv1beta1.Rule{rule})
+					apiRule := testApiRule(apiRuleName, testNamespace, testServiceNameBase, testNamespace, testServiceHost, testServicePort, []gatewayv2alpha1.Rule{rule})
 					svc := testService(testServiceNameBase, testNamespace, testServicePort)
 
 					By("Creating ApiRule with Rule using Ory JWT handler")
@@ -1076,22 +1075,22 @@ var _ = Describe("APIRule Controller", Serial, func() {
 					Expect(c.Create(context.Background(), svc)).Should(Succeed())
 					Expect(c.Create(context.Background(), apiRule)).Should(Succeed())
 
-					expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusOK)
+					expectApiRuleStatus(apiRuleName, gatewayv2alpha1.Ready)
 					updateJwtHandlerTo(helpers.JWT_HANDLER_ISTIO)
-					expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusError)
+					expectApiRuleStatus(apiRuleName, gatewayv2alpha1.StatusError)
 
 					// when
 					By("Updating JWT handler configuration in ApiRule to be valid for istio")
 					istioJwtRule := testRule("/img", methodsGet, nil, testIstioJWTHandler(testIssuer, testJwksUri))
 					Eventually(func(g Gomega) {
-						updatedApiRule := gatewayv1beta1.APIRule{}
+						updatedApiRule := gatewayv2alpha1.APIRule{}
 						g.Expect(c.Get(context.Background(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &updatedApiRule)).Should(Succeed())
-						updatedApiRule.Spec.Rules = []gatewayv1beta1.Rule{istioJwtRule}
+						updatedApiRule.Spec.Rules = []gatewayv2alpha1.Rule{istioJwtRule}
 						g.Expect(c.Update(context.Background(), &updatedApiRule)).Should(Succeed())
 					}, eventuallyTimeout).Should(Succeed())
 
 					// then
-					expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusOK)
+					expectApiRuleStatus(apiRuleName, gatewayv2alpha1.Ready)
 
 					Eventually(func(g Gomega) {
 						shouldHaveRequestAuthentications(g, apiRuleName, testNamespace, 1)
@@ -1112,7 +1111,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 					testServiceHost := fmt.Sprintf("httpbin-%s.kyma.local", apiRuleName)
 
 					rule := testRule("/img", methodsGet, nil, testIstioJWTHandler(testIssuer, testJwksUri))
-					apiRule := testApiRule(apiRuleName, testNamespace, testServiceNameBase, testNamespace, testServiceHost, testServicePort, []gatewayv1beta1.Rule{rule})
+					apiRule := testApiRule(apiRuleName, testNamespace, testServiceNameBase, testNamespace, testServiceHost, testServicePort, []gatewayv2alpha1.Rule{rule})
 					svc := testService(testServiceNameBase, testNamespace, testServicePort)
 
 					By("Creating ApiRule with Rule using Istio JWT handler configuration")
@@ -1126,16 +1125,16 @@ var _ = Describe("APIRule Controller", Serial, func() {
 					Expect(c.Create(context.Background(), apiRule)).Should(Succeed())
 
 					By("Waiting until reconciliation of API Rule has finished")
-					expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusOK)
+					expectApiRuleStatus(apiRuleName, gatewayv2alpha1.Ready)
 
 					// when
 					updateJwtHandlerTo(helpers.JWT_HANDLER_ORY)
 
 					// then
 					Eventually(func(g Gomega) {
-						apiRule := gatewayv1beta1.APIRule{}
+						apiRule := gatewayv2alpha1.APIRule{}
 						g.Expect(c.Get(context.Background(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &apiRule)).Should(Succeed())
-						g.Expect(apiRule.Status.APIRuleStatus.Code).To(Equal(gatewayv1beta1.StatusError))
+						g.Expect(apiRule.Status.APIRuleStatus.Code).To(Equal(gatewayv2alpha1.StatusError))
 						g.Expect(apiRule.Status.APIRuleStatus.Description).To(ContainSubstring("Validation error"))
 
 						shouldHaveRequestAuthentications(g, apiRuleName, testNamespace, 1)
@@ -1151,7 +1150,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 					testServiceHost := fmt.Sprintf("httpbin-%s.kyma.local", apiRuleName)
 
 					rule := testRule("/img", methodsGet, nil, testIstioJWTHandler(testIssuer, testJwksUri))
-					apiRule := testApiRule(apiRuleName, testNamespace, testServiceNameBase, testNamespace, testServiceHost, testServicePort, []gatewayv1beta1.Rule{rule})
+					apiRule := testApiRule(apiRuleName, testNamespace, testServiceNameBase, testNamespace, testServiceHost, testServicePort, []gatewayv2alpha1.Rule{rule})
 					svc := testService(testServiceNameBase, testNamespace, testServicePort)
 
 					By("Creating ApiRule with Rule using JWT handler configuration")
@@ -1165,29 +1164,29 @@ var _ = Describe("APIRule Controller", Serial, func() {
 					Expect(c.Create(context.Background(), apiRule)).Should(Succeed())
 
 					By("Waiting until reconciliation of API Rule has finished")
-					expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusOK)
+					expectApiRuleStatus(apiRuleName, gatewayv2alpha1.Ready)
 					updateJwtHandlerTo(helpers.JWT_HANDLER_ORY)
 
 					By("Waiting until reconciliation of API Rule has finished")
 					Eventually(func(g Gomega) {
-						apiRule := gatewayv1beta1.APIRule{}
+						apiRule := gatewayv2alpha1.APIRule{}
 						g.Expect(c.Get(context.Background(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &apiRule)).Should(Succeed())
 						g.Expect(apiRule.Status.APIRuleStatus).NotTo(BeNil())
-						g.Expect(apiRule.Status.APIRuleStatus.Code).To(Equal(gatewayv1beta1.StatusError))
+						g.Expect(apiRule.Status.APIRuleStatus.Code).To(Equal(gatewayv2alpha1.StatusError))
 					}, eventuallyTimeout).Should(Succeed())
 
 					// when
 					By("Updating JWT handler in ApiRule to be valid for ory")
 					Eventually(func(g Gomega) {
 						oryJwtRule := testRule("/img", methodsGet, nil, testOryJWTHandler(testIssuer, defaultScopes))
-						updatedApiRule := gatewayv1beta1.APIRule{}
+						updatedApiRule := gatewayv2alpha1.APIRule{}
 						Expect(c.Get(context.Background(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &updatedApiRule)).Should(Succeed())
-						updatedApiRule.Spec.Rules = []gatewayv1beta1.Rule{oryJwtRule}
+						updatedApiRule.Spec.Rules = []gatewayv2alpha1.Rule{oryJwtRule}
 						Expect(c.Update(context.Background(), &updatedApiRule)).Should(Succeed())
 					}, eventuallyTimeout).Should(Succeed())
 
 					// then
-					expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusOK)
+					expectApiRuleStatus(apiRuleName, gatewayv2alpha1.Ready)
 
 					Eventually(func(g Gomega) {
 						shouldHaveRequestAuthentications(g, apiRuleName, testNamespace, 0)
@@ -1744,7 +1743,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 
 		By("Creating APIRule")
 		rule := testRule("/headers", methodsGet, nil, testIstioJWTHandler(testIssuer, testJwksUri))
-		apiRule := testApiRule(apiRuleName, testNamespace, serviceName, testNamespace, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule})
+		apiRule := testApiRule(apiRuleName, testNamespace, serviceName, testNamespace, serviceHost, testServicePort, []gatewayv2alpha1.Rule{rule})
 		svc := testService(serviceName, testNamespace, testServicePort)
 		defer func() {
 			deleteResource(apiRule)
@@ -1754,7 +1753,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 		Expect(c.Create(context.Background(), svc)).Should(Succeed())
 		Expect(c.Create(context.Background(), apiRule)).Should(Succeed())
 
-		expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusError)
+		expectApiRuleStatus(apiRuleName, gatewayv2alpha1.StatusError)
 
 		By("Verifying virtual service for APIRule has not been created")
 		verifyVirtualServiceCount(c, apiRuleLabelMatcher, 0)
@@ -1763,7 +1762,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 		deleteResource(vs)
 
 		By("Waiting until APIRule is reconciled after error")
-		expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusOK)
+		expectApiRuleStatus(apiRuleName, gatewayv2alpha1.Ready)
 
 		By("Verifying virtual service for APIRule has been created")
 		verifyVirtualServiceCount(c, apiRuleLabelMatcher, 1)
@@ -1780,7 +1779,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 
 		By(fmt.Sprintf("Creating APIRule with host %s", serviceHost))
 		rule := testRule("/headers", methodsGet, nil, testIstioJWTHandler(testIssuer, testJwksUri))
-		apiRule := testApiRule(apiRuleName, testNamespace, serviceName, testNamespace, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule})
+		apiRule := testApiRule(apiRuleName, testNamespace, serviceName, testNamespace, serviceHost, testServicePort, []gatewayv2alpha1.Rule{rule})
 		svc := testService(serviceName, testNamespace, testServicePort)
 
 		defer func() {
@@ -1792,7 +1791,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 		Expect(c.Create(context.Background(), svc)).Should(Succeed())
 		Expect(c.Create(context.Background(), apiRule)).Should(Succeed())
 
-		expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusOK)
+		expectApiRuleStatus(apiRuleName, gatewayv2alpha1.Ready)
 
 		By(fmt.Sprintf("Creating virtual service for host %s", serviceHost))
 		vs := virtualService(vsName, serviceHost)
@@ -1808,11 +1807,11 @@ var _ = Describe("APIRule Controller", Serial, func() {
 		}, eventuallyTimeout).Should(Succeed())
 
 		By("Waiting until APIRule is reconciled after error")
-		expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusError)
+		expectApiRuleStatus(apiRuleName, gatewayv2alpha1.StatusError)
 
 		By("Verifying APIRule status description")
 		Eventually(func(g Gomega) {
-			expectedApiRule := gatewayv1beta1.APIRule{}
+			expectedApiRule := gatewayv2alpha1.APIRule{}
 			g.Expect(c.Get(context.Background(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &expectedApiRule)).Should(Succeed())
 			g.Expect(expectedApiRule.Status.APIRuleStatus).NotTo(BeNil())
 			g.Expect(expectedApiRule.Status.APIRuleStatus.Description).To(ContainSubstring("This host is occupied by another Virtual Service"))
@@ -1827,7 +1826,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 		serviceHost := "httpbin-recreate-resources.kyma.local"
 
 		rule := testRule("/img", methodsGet, nil, testIstioJWTHandlerWithScopes(testIssuer, testJwksUri, []string{"scope-a"}))
-		apiRule := testApiRule(apiRuleName, testNamespace, serviceName, testNamespace, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule})
+		apiRule := testApiRule(apiRuleName, testNamespace, serviceName, testNamespace, serviceHost, testServicePort, []gatewayv2alpha1.Rule{rule})
 		svc := testService(serviceName, testNamespace, testServicePort)
 		defer func() {
 			deleteResource(apiRule)
@@ -1838,7 +1837,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 		Expect(c.Create(context.Background(), svc)).Should(Succeed())
 		Expect(c.Create(context.Background(), apiRule)).Should(Succeed())
 
-		expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusOK)
+		expectApiRuleStatus(apiRuleName, gatewayv2alpha1.Ready)
 
 		apiRuleNameMatchingLabels := matchingLabelsFunc(apiRuleName, testNamespace)
 
@@ -1882,7 +1881,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 		serviceHost := "httpbin-delete-resources.kyma.local"
 
 		rule := testRule("/img", methodsGet, nil, testIstioJWTHandlerWithScopes(testIssuer, testJwksUri, []string{"scope-a"}))
-		apiRule := testApiRule(apiRuleName, testNamespace, serviceName, testNamespace, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule})
+		apiRule := testApiRule(apiRuleName, testNamespace, serviceName, testNamespace, serviceHost, testServicePort, []gatewayv2alpha1.Rule{rule})
 		svc := testService(serviceName, testNamespace, testServicePort)
 		defer func() {
 			deleteResource(apiRule)
@@ -1892,7 +1891,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 		Expect(c.Create(context.Background(), svc)).Should(Succeed())
 		Expect(c.Create(context.Background(), apiRule)).Should(Succeed())
 
-		expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusOK)
+		expectApiRuleStatus(apiRuleName, gatewayv2alpha1.Ready)
 		apiRuleNameMatchingLabels := matchingLabelsFunc(apiRuleName, testNamespace)
 
 		verifyVirtualServiceCount(c, apiRuleNameMatchingLabels, 1)
@@ -1915,7 +1914,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 		serviceHost := "httpbin-recreate-resources.kyma.local"
 
 		rule := testRule("/img", methodsGet, nil, testIstioJWTHandlerWithScopes(testIssuer, testJwksUri, []string{"scope-a"}))
-		apiRule := testApiRule(apiRuleName, testNamespace, serviceName, testNamespace, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule})
+		apiRule := testApiRule(apiRuleName, testNamespace, serviceName, testNamespace, serviceHost, testServicePort, []gatewayv2alpha1.Rule{rule})
 		svc := testService(serviceName, testNamespace, testServicePort)
 
 		// when
@@ -1926,7 +1925,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 			deleteResource(svc)
 		}()
 
-		expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusOK)
+		expectApiRuleStatus(apiRuleName, gatewayv2alpha1.Ready)
 		ap := &securityv1beta1.AuthorizationPolicy{}
 		Eventually(func() {
 			aps := securityv1beta1.AuthorizationPolicyList{}
@@ -1991,12 +1990,12 @@ func toCSVList(input []string) string {
 	return res
 }
 
-func testRule(path string, methods []gatewayv1beta1.HttpMethod, mutators []*gatewayv1beta1.Mutator, handler *gatewayv1beta1.Handler) gatewayv1beta1.Rule {
-	return gatewayv1beta1.Rule{
+func testRule(path string, methods []gatewayv2alpha1.HttpMethod, mutators []*gatewayv2alpha1.Mutator, handler *gatewayv2alpha1.Handler) gatewayv2alpha1.Rule {
+	return gatewayv2alpha1.Rule{
 		Path:     path,
 		Methods:  methods,
 		Mutators: mutators,
-		AccessStrategies: []*gatewayv1beta1.Authenticator{
+		AccessStrategies: []*gatewayv2alpha1.Authenticator{
 			{
 				Handler: handler,
 			},
@@ -2011,25 +2010,25 @@ func testRulev2alpha1(path string, methods []gatewayv2alpha1.HttpMethod) gateway
 	}
 }
 
-func testApiRule(name, namespace, serviceName, serviceNamespace, serviceHost string, servicePort uint32, rules []gatewayv1beta1.Rule) *gatewayv1beta1.APIRule {
+func testApiRule(name, namespace, serviceName, serviceNamespace, serviceHost string, servicePort uint32, rules []gatewayv2alpha1.Rule) *gatewayv2alpha1.APIRule {
 	var gateway = testGatewayURL
 
-	return &gatewayv1beta1.APIRule{
+	return &gatewayv2alpha1.APIRule{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: namespace,
 		},
-		Spec: gatewayv1beta1.APIRuleSpec{
+		Spec: gatewayv2alpha1.APIRuleSpec{
 			Host:    &serviceHost,
 			Gateway: &gateway,
-			Service: &gatewayv1beta1.Service{
+			Service: &gatewayv2alpha1.Service{
 				Name:      &serviceName,
 				Namespace: &serviceNamespace,
 				Port:      &servicePort,
 			},
 			Rules: rules,
 		},
-		Status: gatewayv1beta1.APIRuleStatus{
+		Status: gatewayv2alpha1.APIRuleStatus{
 			APIRuleStatus: nil,
 		},
 	}
@@ -2098,14 +2097,14 @@ func testService(name, namespace string, servicePort uint32) *corev1.Service {
 	}
 }
 
-func testOryJWTHandler(issuer string, scopes []string) *gatewayv1beta1.Handler {
+func testOryJWTHandler(issuer string, scopes []string) *gatewayv2alpha1.Handler {
 	configJSON := fmt.Sprintf(`{
 			"trusted_issuers": ["%s"],
 			"jwks": [],
 			"required_scope": [%s]
 		}`, issuer, toCSVList(scopes))
 
-	return &gatewayv1beta1.Handler{
+	return &gatewayv2alpha1.Handler{
 		Name: "jwt",
 		Config: &runtime.RawExtension{
 			Raw: []byte(configJSON),
@@ -2113,9 +2112,9 @@ func testOryJWTHandler(issuer string, scopes []string) *gatewayv1beta1.Handler {
 	}
 }
 
-func testIstioJWTHandler(issuer string, jwksUri string) *gatewayv1beta1.Handler {
-	bytes, err := json.Marshal(gatewayv1beta1.JwtConfig{
-		Authentications: []*gatewayv1beta1.JwtAuthentication{
+func testIstioJWTHandler(issuer string, jwksUri string) *gatewayv2alpha1.Handler {
+	bytes, err := json.Marshal(gatewayv2alpha1.JwtConfig{
+		Authentications: []*gatewayv2alpha1.JwtAuthentication{
 			{
 				Issuer:  issuer,
 				JwksUri: jwksUri,
@@ -2123,7 +2122,7 @@ func testIstioJWTHandler(issuer string, jwksUri string) *gatewayv1beta1.Handler 
 		},
 	})
 	Expect(err).To(BeNil())
-	return &gatewayv1beta1.Handler{
+	return &gatewayv2alpha1.Handler{
 		Name: "jwt",
 		Config: &runtime.RawExtension{
 			Raw: bytes,
@@ -2131,22 +2130,22 @@ func testIstioJWTHandler(issuer string, jwksUri string) *gatewayv1beta1.Handler 
 	}
 }
 
-func testIstioJWTHandlerWithScopes(issuer string, jwksUri string, authorizationScopes []string) *gatewayv1beta1.Handler {
-	bytes, err := json.Marshal(gatewayv1beta1.JwtConfig{
-		Authentications: []*gatewayv1beta1.JwtAuthentication{
+func testIstioJWTHandlerWithScopes(issuer string, jwksUri string, authorizationScopes []string) *gatewayv2alpha1.Handler {
+	bytes, err := json.Marshal(gatewayv2alpha1.JwtConfig{
+		Authentications: []*gatewayv2alpha1.JwtAuthentication{
 			{
 				Issuer:  issuer,
 				JwksUri: jwksUri,
 			},
 		},
-		Authorizations: []*gatewayv1beta1.JwtAuthorization{
+		Authorizations: []*gatewayv2alpha1.JwtAuthorization{
 			{
 				RequiredScopes: authorizationScopes,
 			},
 		},
 	})
 	Expect(err).To(BeNil())
-	return &gatewayv1beta1.Handler{
+	return &gatewayv2alpha1.Handler{
 		Name: "jwt",
 		Config: &runtime.RawExtension{
 			Raw: bytes,
@@ -2154,9 +2153,9 @@ func testIstioJWTHandlerWithScopes(issuer string, jwksUri string, authorizationS
 	}
 }
 
-func testIstioJWTHandlerWithAuthorizations(issuer string, jwksUri string, authorizations []*gatewayv1beta1.JwtAuthorization) *gatewayv1beta1.Handler {
-	bytes, err := json.Marshal(gatewayv1beta1.JwtConfig{
-		Authentications: []*gatewayv1beta1.JwtAuthentication{
+func testIstioJWTHandlerWithAuthorizations(issuer string, jwksUri string, authorizations []*gatewayv2alpha1.JwtAuthorization) *gatewayv2alpha1.Handler {
+	bytes, err := json.Marshal(gatewayv2alpha1.JwtConfig{
+		Authentications: []*gatewayv2alpha1.JwtAuthentication{
 			{
 				Issuer:  issuer,
 				JwksUri: jwksUri,
@@ -2165,7 +2164,7 @@ func testIstioJWTHandlerWithAuthorizations(issuer string, jwksUri string, author
 		Authorizations: authorizations,
 	})
 	Expect(err).To(BeNil())
-	return &gatewayv1beta1.Handler{
+	return &gatewayv2alpha1.Handler{
 		Name: "jwt",
 		Config: &runtime.RawExtension{
 			Raw: bytes,
@@ -2173,12 +2172,12 @@ func testIstioJWTHandlerWithAuthorizations(issuer string, jwksUri string, author
 	}
 }
 
-func testOauthHandler(scopes []string) *gatewayv1beta1.Handler {
+func testOauthHandler(scopes []string) *gatewayv2alpha1.Handler {
 	configJSON := fmt.Sprintf(`{
 		"required_scope": [%s]
 	}`, toCSVList(scopes))
 
-	return &gatewayv1beta1.Handler{
+	return &gatewayv2alpha1.Handler{
 		Name: "oauth2_introspection",
 		Config: &runtime.RawExtension{
 			Raw: []byte(configJSON),
@@ -2186,8 +2185,8 @@ func testOauthHandler(scopes []string) *gatewayv1beta1.Handler {
 	}
 }
 
-func noConfigHandler(name string) *gatewayv1beta1.Handler {
-	return &gatewayv1beta1.Handler{
+func noConfigHandler(name string) *gatewayv2alpha1.Handler {
+	return &gatewayv2alpha1.Handler{
 		Name: name,
 	}
 }
@@ -2227,7 +2226,7 @@ func getRuleList(g Gomega, matchingLabels client.ListOption) []rulev1alpha1.Rule
 	return res.Items
 }
 
-func verifyRuleList(g Gomega, ruleList []rulev1alpha1.Rule, pathToURLFunc func(string) string, expected ...gatewayv1beta1.Rule) {
+func verifyRuleList(g Gomega, ruleList []rulev1alpha1.Rule, pathToURLFunc func(string) string, expected ...gatewayv2alpha1.Rule) {
 	g.Expect(ruleList).To(HaveLen(len(expected)))
 
 	actual := make(map[string]rulev1alpha1.Rule)
@@ -2240,13 +2239,13 @@ func verifyRuleList(g Gomega, ruleList []rulev1alpha1.Rule, pathToURLFunc func(s
 		ruleUrl := pathToURLFunc(expected[i].Path)
 		g.Expect(actual[ruleUrl]).ToNot(BeNil())
 		g.Expect(actual[ruleUrl].Spec.Match).ToNot(BeNil())
-		g.Expect(actual[ruleUrl].Spec.Match.Methods).To(Equal(gatewayv1beta1.ConvertHttpMethodsToStrings(expected[i].Methods)))
+		g.Expect(actual[ruleUrl].Spec.Match.Methods).To(Equal(gatewayv2alpha1.ConvertHttpMethodsToStrings(expected[i].Methods)))
 		verifyAccessStrategies(g, actual[ruleUrl].Spec.Authenticators, expected[i].AccessStrategies)
 		verifyMutators(g, actual[ruleUrl].Spec.Mutators, expected[i].Mutators)
 	}
 }
 
-func verifyMutators(g Gomega, actual []*rulev1alpha1.Mutator, expected []*gatewayv1beta1.Mutator) {
+func verifyMutators(g Gomega, actual []*rulev1alpha1.Mutator, expected []*gatewayv2alpha1.Mutator) {
 	if expected == nil {
 		g.Expect(actual).To(BeNil())
 	} else {
@@ -2256,7 +2255,7 @@ func verifyMutators(g Gomega, actual []*rulev1alpha1.Mutator, expected []*gatewa
 	}
 }
 
-func verifyAccessStrategies(g Gomega, actual []*rulev1alpha1.Authenticator, expected []*gatewayv1beta1.Authenticator) {
+func verifyAccessStrategies(g Gomega, actual []*rulev1alpha1.Authenticator, expected []*gatewayv2alpha1.Authenticator) {
 	if expected == nil {
 		g.Expect(actual).To(BeNil())
 	} else {
@@ -2266,7 +2265,7 @@ func verifyAccessStrategies(g Gomega, actual []*rulev1alpha1.Authenticator, expe
 	}
 }
 
-func verifyHandler(g Gomega, actual *rulev1alpha1.Handler, expected *gatewayv1beta1.Handler) {
+func verifyHandler(g Gomega, actual *rulev1alpha1.Handler, expected *gatewayv2alpha1.Handler) {
 	if expected == nil {
 		g.Expect(actual).To(BeNil())
 	} else {
@@ -2341,10 +2340,10 @@ func deleteResource(object client.Object) {
 	}, eventuallyTimeout).Should(Succeed())
 }
 
-func expectApiRuleStatus(apiRuleName string, statusCode gatewayv1beta1.StatusCode) {
+func expectApiRuleStatus(apiRuleName string, statusCode gatewayv2alpha1.StatusCode) {
 	By(fmt.Sprintf("Verifying that ApiRule v1beta1 %s has status %s", apiRuleName, statusCode))
 	Eventually(func(g Gomega) {
-		expectedApiRule := gatewayv1beta1.APIRule{}
+		expectedApiRule := gatewayv2alpha1.APIRule{}
 		g.Expect(func() error {
 			err := c.Get(context.Background(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &expectedApiRule)
 			if err != nil {

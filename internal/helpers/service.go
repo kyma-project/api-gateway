@@ -3,8 +3,7 @@ package helpers
 import (
 	"context"
 	"fmt"
-
-	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
+	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 
 	apiv1beta1 "istio.io/api/type/v1beta1"
 	corev1 "k8s.io/api/core/v1"
@@ -12,7 +11,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func FindServiceNamespace(api *gatewayv1beta1.APIRule, rule *gatewayv1beta1.Rule) string {
+func FindServiceNamespace(api *gatewayv2alpha1.APIRule, rule *gatewayv2alpha1.Rule) string {
 	// Fallback direction for the upstream service namespace: Rule.Service > Spec.Service > APIRule
 	if rule != nil && rule.Service != nil && rule.Service.Namespace != nil {
 		return *rule.Service.Namespace
@@ -23,7 +22,7 @@ func FindServiceNamespace(api *gatewayv1beta1.APIRule, rule *gatewayv1beta1.Rule
 	return api.Namespace
 }
 
-func GetLabelSelectorFromService(ctx context.Context, client client.Client, service *gatewayv1beta1.Service, api *gatewayv1beta1.APIRule, rule *gatewayv1beta1.Rule) (*apiv1beta1.WorkloadSelector, error) {
+func GetLabelSelectorFromService(ctx context.Context, client client.Client, service *gatewayv2alpha1.Service, api *gatewayv2alpha1.APIRule, rule *gatewayv2alpha1.Rule) (*apiv1beta1.WorkloadSelector, error) {
 	workloadSelector := apiv1beta1.WorkloadSelector{}
 
 	if service == nil || service.Name == nil {

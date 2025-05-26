@@ -2,7 +2,7 @@ package processors
 
 import (
 	"context"
-	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
+	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	"time"
 
 	"github.com/kyma-project/api-gateway/internal/processing"
@@ -14,13 +14,13 @@ const defaultHttpTimeout = time.Second * 180
 
 // VirtualServiceProcessor is the generic processor that handles the Virtual Service in the reconciliation of API Rule.
 type VirtualServiceProcessor struct {
-	ApiRule *gatewayv1beta1.APIRule
+	ApiRule *gatewayv2alpha1.APIRule
 	Creator VirtualServiceCreator
 }
 
 // VirtualServiceCreator provides the creation of a Virtual Service using the configuration in the given APIRule.
 type VirtualServiceCreator interface {
-	Create(api *gatewayv1beta1.APIRule) (*networkingv1beta1.VirtualService, error)
+	Create(api *gatewayv2alpha1.APIRule) (*networkingv1beta1.VirtualService, error)
 }
 
 func (r VirtualServiceProcessor) EvaluateReconciliation(ctx context.Context, client ctrlclient.Client) ([]*processing.ObjectChange, error) {
@@ -39,11 +39,11 @@ func (r VirtualServiceProcessor) EvaluateReconciliation(ctx context.Context, cli
 	return []*processing.ObjectChange{changes}, nil
 }
 
-func (r VirtualServiceProcessor) getDesiredState(api *gatewayv1beta1.APIRule) (*networkingv1beta1.VirtualService, error) {
+func (r VirtualServiceProcessor) getDesiredState(api *gatewayv2alpha1.APIRule) (*networkingv1beta1.VirtualService, error) {
 	return r.Creator.Create(api)
 }
 
-func (r VirtualServiceProcessor) getActualState(ctx context.Context, client ctrlclient.Client, api *gatewayv1beta1.APIRule) (*networkingv1beta1.VirtualService, error) {
+func (r VirtualServiceProcessor) getActualState(ctx context.Context, client ctrlclient.Client, api *gatewayv2alpha1.APIRule) (*networkingv1beta1.VirtualService, error) {
 	labels := processing.GetOwnerLabels(api)
 
 	var vsList networkingv1beta1.VirtualServiceList
@@ -67,7 +67,7 @@ func (r VirtualServiceProcessor) getObjectChanges(desiredVs *networkingv1beta1.V
 	}
 }
 
-func GetVirtualServiceHttpTimeout(apiRuleSpec gatewayv1beta1.APIRuleSpec, rule gatewayv1beta1.Rule) time.Duration {
+func GetVirtualServiceHttpTimeout(apiRuleSpec gatewayv2alpha1.APIRuleSpec, rule gatewayv2alpha1.Rule) time.Duration {
 	if rule.Timeout != nil {
 		return time.Duration(*rule.Timeout) * time.Second
 	}

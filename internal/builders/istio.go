@@ -1,10 +1,8 @@
 package builders
 
 import (
-	"encoding/json"
 	"fmt"
 
-	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 
 	"istio.io/api/security/v1beta1"
@@ -159,28 +157,6 @@ func (rf *FromBuilder) Get() *v1beta1.Rule_From {
 	return rf.value
 }
 
-// WithForcedJWTAuthorization adds RequestPrincipals = "ISSUER/*" for every issuer, forcing requests to use JWT authorization
-func (rf *FromBuilder) WithForcedJWTAuthorization(accessStrategies []*gatewayv1beta1.Authenticator) *FromBuilder {
-	// Only support one source at the moment
-	var requestPrincipals []string
-	for _, strategy := range accessStrategies {
-		if strategy.Name == "jwt" {
-			authentications := &Authentications{
-				Authentications: []*Authentication{},
-			}
-			if strategy.Config != nil {
-				_ = json.Unmarshal(strategy.Config.Raw, authentications)
-			}
-			for _, authentication := range authentications.Authentications {
-				requestPrincipals = append(requestPrincipals, fmt.Sprintf("%s/*", authentication.Issuer))
-			}
-			break
-		}
-	}
-	rf.source.RequestPrincipals = append(rf.source.RequestPrincipals, requestPrincipals...)
-	return rf
-}
-
 // WithForcedJWTAuthorizationV2alpha1 adds RequestPrincipals = "ISSUER/*" for every issuer, forcing requests to use JWT authorization
 func (rf *FromBuilder) WithForcedJWTAuthorizationV2alpha1(authentications []*gatewayv2alpha1.JwtAuthentication) *FromBuilder {
 	// Only support one source at the moment
@@ -243,8 +219,8 @@ func (o *OperationBuilder) Get() *v1beta1.Operation {
 	return o.value
 }
 
-func (o *OperationBuilder) WithMethods(val []gatewayv1beta1.HttpMethod) *OperationBuilder {
-	o.value.Methods = gatewayv1beta1.ConvertHttpMethodsToStrings(val)
+func (o *OperationBuilder) WithMethods(val []gatewayv2alpha1.HttpMethod) *OperationBuilder {
+	o.value.Methods = gatewayv2alpha1.ConvertHttpMethodsToStrings(val)
 	return o
 }
 
@@ -407,37 +383,6 @@ func (jr *JwtRuleBuilder) FromV2Alpha1(jwt *gatewayv2alpha1.JwtConfig) *JwtRuleB
 		}
 		*jr.value = append(*jr.value, &jwtRule)
 
-	}
-	return jr
-}
-
-func (jr *JwtRuleBuilder) From(val []*gatewayv1beta1.Authenticator) *JwtRuleBuilder {
-	for _, accessStrategy := range val {
-		authentications := &Authentications{
-			Authentications: []*Authentication{},
-		}
-		if accessStrategy.Config != nil {
-			_ = json.Unmarshal(accessStrategy.Config.Raw, authentications)
-		}
-		for _, authentication := range authentications.Authentications {
-			jwtRule := v1beta1.JWTRule{
-				Issuer:  authentication.Issuer,
-				JwksUri: authentication.JwksUri,
-				// We decided to change the default behavior of Istio to provide the same behavior as ORY
-				// so there's no breaking change
-				ForwardOriginalToken: true,
-			}
-			for _, fromHeader := range authentication.FromHeaders {
-				jwtRule.FromHeaders = append(jwtRule.FromHeaders, &v1beta1.JWTHeader{
-					Name:   fromHeader.Name,
-					Prefix: fromHeader.Prefix,
-				})
-			}
-			if authentication.FromParams != nil {
-				jwtRule.FromParams = authentication.FromParams
-			}
-			*jr.value = append(*jr.value, &jwtRule)
-		}
 	}
 	return jr
 }

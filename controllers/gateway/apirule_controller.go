@@ -24,12 +24,9 @@ import (
 	"strings"
 	"time"
 
-	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	"github.com/kyma-project/api-gateway/controllers"
 	"github.com/kyma-project/api-gateway/internal/dependencies"
-	"github.com/kyma-project/api-gateway/internal/processing/default_domain"
-	"github.com/kyma-project/api-gateway/internal/processing/processors/istio"
 	"github.com/kyma-project/api-gateway/internal/processing/processors/migration"
 	v2alpha1Processing "github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1"
 	"github.com/kyma-project/api-gateway/internal/processing/status"
@@ -44,7 +41,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 
 	"github.com/kyma-project/api-gateway/internal/helpers"
-	"github.com/kyma-project/api-gateway/internal/processing/processors/ory"
 	"github.com/kyma-project/api-gateway/internal/validation"
 
 	"github.com/go-logr/logr"
@@ -82,11 +78,6 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	l.Info("Starting reconciliation")
 	ctx = logr.NewContext(ctx, r.Log)
 
-	defaultDomainName, err := default_domain.GetDomainFromKymaGateway(ctx, r.Client)
-	if err != nil && default_domain.HandleDefaultDomainError(l, err) {
-		return doneReconcileErrorRequeue(err, errorReconciliationPeriod)
-	}
-
 	isCMReconcile := req.String() == types.NamespacedName{
 		Namespace: helpers.CM_NS, Name: helpers.CM_NAME}.String()
 
@@ -94,82 +85,26 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	if finishReconcile {
 		return doneReconcileNoRequeue()
 	}
-	apiRuleV2alpha1 := &gatewayv2alpha1.APIRule{}
+	apiRule := &gatewayv2alpha1.APIRule{}
 
-	if err := r.Get(ctx, req.NamespacedName, apiRuleV2alpha1); err != nil {
+	if err := r.Get(ctx, req.NamespacedName, apiRule); err != nil {
 		if apierrs.IsNotFound(err) {
 			return doneReconcileNoRequeue()
 		}
 		l.Error(err, "Error while getting APIRule v2alpha1")
 		return doneReconcileErrorRequeue(err, errorReconciliationPeriod)
 	}
-	apiRule := gatewayv1beta1.APIRule{}
-	err = apiRule.ConvertFrom(apiRuleV2alpha1)
-	if err != nil {
-		l.Error(err, "Error while converting APIRule v2alpha1 to v1beta1")
-		return doneReconcileErrorRequeue(err, errorReconciliationPeriod)
-	}
 
 	// assign LastProcessedTime and ObservedGeneration early to indicate that
 	// resource got reconciled
 	apiRule.Status.LastProcessedTime = metav1.Now()
-	apiRule.Status.ObservedGeneration = apiRule.Generation
 
 	if !apiRule.DeletionTimestamp.IsZero() {
 		l.Info("APIRule is marked for deletion, deleting")
-		return r.reconcileAPIRuleDeletion(ctx, l, &apiRule)
-	}
-	if isAPIRuleV2(apiRuleV2alpha1) {
-		return r.reconcileV2Alpha1APIRule(ctx, l, apiRuleV2alpha1, apiRule)
+		return r.reconcileAPIRuleDeletion(ctx, l, apiRule)
 	}
 
-	if !controllerutil.ContainsFinalizer(&apiRule, apiGatewayFinalizer) {
-		l.Info("APIRule is missing a finalizer, adding")
-		n := apiRule.DeepCopy()
-		controllerutil.AddFinalizer(n, apiGatewayFinalizer)
-		return r.updateResourceRequeue(ctx, l, n)
-	}
-
-	l.Info("Reconciling v1beta1 APIRule", "jwtHandler", r.Config.JWTHandler)
-	cmd := r.getV1Beta1Reconciliation(&apiRule, defaultDomainName, &l)
-	if name, err := dependencies.APIRule().AreAvailable(ctx, r.Client); err != nil {
-		s, err := handleDependenciesError(name, err).V1beta1Status()
-		if err != nil {
-			return doneReconcileErrorRequeue(err, r.OnErrorReconcilePeriod)
-		}
-		if err := s.UpdateStatus(&apiRule.Status); err != nil {
-			l.Error(err, "Error updating APIRule status")
-			return doneReconcileErrorRequeue(err, r.OnErrorReconcilePeriod)
-		}
-		return r.convertAndUpdateStatus(ctx, l, apiRule, s.HasError())
-	}
-
-	l.Info("Validating APIRule config")
-	failures := validation.ValidateConfig(r.Config)
-	if len(failures) > 0 {
-		l.Error(fmt.Errorf("validation has failures"),
-			"Configuration validation failed", "failures", failures)
-		s := cmd.GetStatusBase(string(gatewayv1beta1.StatusSkipped)).
-			GenerateStatusFromFailures(failures)
-		if err := s.UpdateStatus(&apiRule.Status); err != nil {
-			l.Error(err, "Error updating APIRule status")
-			return doneReconcileErrorRequeue(err, r.OnErrorReconcilePeriod)
-		}
-		return r.convertAndUpdateStatus(ctx, l, apiRule, s.HasError())
-	}
-
-	l.Info("Reconciling APIRule sub-resources")
-	s := processing.Reconcile(ctx, r.Client, &l, cmd)
-	if err := s.UpdateStatus(&apiRule.Status); err != nil {
-		l.Error(err, "Error updating APIRule status")
-		// Quick retry if the object has been modified
-		if strings.Contains(err.Error(), "the object has been modified") {
-			r.Metrics.IncreaseApiRuleObjectModifiedErrorsCounter()
-			return doneReconcileErrorRequeue(err, 0)
-		}
-		return doneReconcileErrorRequeue(err, r.OnErrorReconcilePeriod)
-	}
-	return r.convertAndUpdateStatus(ctx, l, apiRule, s.HasError())
+	return r.reconcileV2Alpha1APIRule(ctx, l, apiRule)
 }
 
 func isAPIRuleV2(apiRule *gatewayv2alpha1.APIRule) bool {
@@ -179,7 +114,7 @@ func isAPIRuleV2(apiRule *gatewayv2alpha1.APIRule) bool {
 	return true
 }
 
-func (r *APIRuleReconciler) reconcileV2Alpha1APIRule(ctx context.Context, l logr.Logger, apiRule *gatewayv2alpha1.APIRule, apiRuleV1beta1 gatewayv1beta1.APIRule) (ctrl.Result, error) {
+func (r *APIRuleReconciler) reconcileV2Alpha1APIRule(ctx context.Context, l logr.Logger, apiRule *gatewayv2alpha1.APIRule) (ctrl.Result, error) {
 	l.Info("Reconciling v2alpha1 APIRule")
 
 	toUpdate := apiRule.DeepCopy()
@@ -191,7 +126,7 @@ func (r *APIRuleReconciler) reconcileV2Alpha1APIRule(ctx context.Context, l logr
 		return r.updateResourceRequeue(ctx, l, n)
 	}
 
-	migrate, err := apiRuleNeedsMigration(ctx, r.Client, &apiRuleV1beta1)
+	migrate, err := apiRuleNeedsMigration(ctx, r.Client, apiRule)
 	if err != nil {
 		return doneReconcileErrorRequeue(err, r.OnErrorReconcilePeriod)
 	}
@@ -215,7 +150,7 @@ func (r *APIRuleReconciler) reconcileV2Alpha1APIRule(ctx context.Context, l logr
 		return r.updateStatus(ctx, l, toUpdate, true)
 	}
 
-	cmd := r.getV2Alpha1Reconciliation(&apiRuleV1beta1, toUpdate, gateway, migrate, &l)
+	cmd := r.getV2Alpha1Reconciliation(apiRule, gateway, migrate, &l)
 
 	if name, err := dependencies.APIRule().AreAvailable(ctx, r.Client); err != nil {
 		s, err := handleDependenciesError(name, err).V2alpha1Status()
@@ -262,7 +197,7 @@ func (r *APIRuleReconciler) updateResourceRequeue(ctx context.Context,
 	return ctrl.Result{Requeue: true}, nil
 }
 
-func apiRuleNeedsMigration(ctx context.Context, k8sClient client.Client, apiRule *gatewayv1beta1.APIRule) (bool, error) {
+func apiRuleNeedsMigration(ctx context.Context, k8sClient client.Client, apiRule *gatewayv2alpha1.APIRule) (bool, error) {
 	var ownedRules rulev1alpha1.RuleList
 	labels := processing.GetOwnerLabels(apiRule)
 	if err := k8sClient.List(ctx, &ownedRules, client.MatchingLabels(labels)); err != nil {
@@ -323,35 +258,24 @@ func discoverGateway(client client.Client, ctx context.Context, l logr.Logger, r
 	return &gateway, nil
 }
 
-func (r *APIRuleReconciler) getV1Beta1Reconciliation(apiRule *gatewayv1beta1.APIRule, defaultDomainName string, namespacedLogger *logr.Logger) processing.ReconciliationCommand {
-	config := r.ReconciliationConfig
-	config.DefaultDomainName = defaultDomainName
-	switch r.Config.JWTHandler {
-	case helpers.JWT_HANDLER_ISTIO:
-		return istio.NewIstioReconciliation(apiRule, config, namespacedLogger)
-	default:
-		return ory.NewOryReconciliation(apiRule, config, namespacedLogger)
-	}
-}
-
-func (r *APIRuleReconciler) getV2Alpha1Reconciliation(apiRulev1beta1 *gatewayv1beta1.APIRule, apiRulev2alpha1 *gatewayv2alpha1.APIRule, gateway *networkingv1beta1.Gateway, needsMigration bool, namespacedLogger *logr.Logger) processing.ReconciliationCommand {
+func (r *APIRuleReconciler) getV2Alpha1Reconciliation(apiRulev2alpha1 *gatewayv2alpha1.APIRule, gateway *networkingv1beta1.Gateway, needsMigration bool, namespacedLogger *logr.Logger) processing.ReconciliationCommand {
 	config := r.ReconciliationConfig
 	v2alpha1Validator := v2alpha1.NewAPIRuleValidator(apiRulev2alpha1)
-	return v2alpha1Processing.NewReconciliation(apiRulev2alpha1, apiRulev1beta1, gateway, v2alpha1Validator, config, namespacedLogger, needsMigration)
+	return v2alpha1Processing.NewReconciliation(apiRulev2alpha1, gateway, v2alpha1Validator, config, namespacedLogger, needsMigration)
 }
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *APIRuleReconciler) SetupWithManager(mgr ctrl.Manager, c controllers.RateLimiterConfig) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		// We need to filter for generation changes, because we had an issue that on Azure clusters the APIRules were constantly reconciled.
-		For(&gatewayv1beta1.APIRule{}, builder.WithPredicates(
+		For(&gatewayv2alpha1.APIRule{}, builder.WithPredicates(
 			predicate.Or(
 				predicate.GenerationChangedPredicate{},
 				predicate.AnnotationChangedPredicate{},
 			))).
 		Watches(&corev1.ConfigMap{}, &handler.EnqueueRequestForObject{}, builder.WithPredicates(&isApiGatewayConfigMapPredicate{Log: r.Log})).
 		Watches(&corev1.Service{}, handler.EnqueueRequestsFromMapFunc(func(ctx context.Context, obj client.Object) []reconcile.Request {
-			var apiRules gatewayv1beta1.APIRuleList
+			var apiRules gatewayv2alpha1.APIRuleList
 			if err := r.Client.List(ctx, &apiRules); err != nil {
 				return nil
 			}
@@ -365,7 +289,7 @@ func (r *APIRuleReconciler) SetupWithManager(mgr ctrl.Manager, c controllers.Rat
 			for _, apiRule := range apiRules.Items {
 				// match if service is exposed by an APIRule
 				// and add APIRule to the reconciliation queue
-				matches := func(target *gatewayv1beta1.Service) bool {
+				matches := func(target *gatewayv2alpha1.Service) bool {
 					if target == nil {
 						return false
 					}
@@ -409,10 +333,6 @@ func (r *APIRuleReconciler) SetupWithManager(mgr ctrl.Manager, c controllers.Rat
 
 // convertAndUpdateStatus is a small helper function that converts APIRule
 // resource from convertible v1beta1 to hub version v2alpha1
-func (r *APIRuleReconciler) convertAndUpdateStatus(ctx context.Context, l logr.Logger, rule gatewayv1beta1.APIRule, hasError bool) (ctrl.Result, error) {
-	toUpdate := gatewayv2alpha1.APIRule{}
-	if err := rule.ConvertTo(&toUpdate); err != nil {
-		return doneReconcileErrorRequeue(err, r.OnErrorReconcilePeriod)
-	}
+func (r *APIRuleReconciler) convertAndUpdateStatus(ctx context.Context, l logr.Logger, toUpdate gatewayv2alpha1.APIRule, hasError bool) (ctrl.Result, error) {
 	return r.updateStatus(ctx, l, &toUpdate, hasError)
 }

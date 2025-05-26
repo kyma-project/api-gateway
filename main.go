@@ -34,7 +34,6 @@ import (
 	"github.com/kyma-project/api-gateway/controllers/gateway"
 	"github.com/kyma-project/api-gateway/controllers/operator"
 
-	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	apiGatewayMetrics "github.com/kyma-project/api-gateway/internal/metrics"
 
@@ -91,7 +90,6 @@ type FlagVar struct {
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 
-	utilruntime.Must(gatewayv1beta1.AddToScheme(scheme))
 	utilruntime.Must(gatewayv2alpha1.AddToScheme(scheme))
 	utilruntime.Must(dnsv1alpha1.AddToScheme(scheme))
 	utilruntime.Must(certv1alpha1.AddToScheme(scheme))
@@ -195,7 +193,6 @@ func main() {
 						This would self-heal in the next reconciliation loop.To avoid this confusion with this issue, we disable the cache for v2alpha1 APIRules.
 						This can probably be enabled again when reconciliation only uses v2alpha1.
 					*/
-					&gatewayv1beta1.APIRule{},
 					&gatewayv2alpha1.APIRule{},
 					&gatewayv2.APIRule{},
 					&corev1.Secret{},

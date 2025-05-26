@@ -2,7 +2,6 @@ package builders
 
 import (
 	"fmt"
-	apirulev1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	apirulev2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	"google.golang.org/protobuf/types/known/durationpb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
@@ -171,9 +170,9 @@ func (mr *matchRequest) MethodRegExV2Alpha1(httpMethods ...apirulev2alpha1.HttpM
 }
 
 // MethodRegEx sets the HTTP method regex in the HTTPMatchRequest for the given HTTP methods in the format "^(PUT|POST|GET)$".
-func (mr *matchRequest) MethodRegEx(httpMethods ...apirulev1beta1.HttpMethod) *matchRequest {
+func (mr *matchRequest) MethodRegEx(httpMethods ...apirulev2alpha1.HttpMethod) *matchRequest {
 
-	methodStrings := apirulev1beta1.ConvertHttpMethodsToStrings(httpMethods)
+	methodStrings := apirulev2alpha1.ConvertHttpMethodsToStrings(httpMethods)
 	methodsWithSeparator := strings.Join(methodStrings, "|")
 
 	mr.value.Method = &v1beta1.StringMatch{
@@ -303,7 +302,7 @@ func (cp *corsPolicy) FromV2Alpha1ApiRuleCorsPolicy(corsPolicy apirulev2alpha1.C
 	return cp
 }
 
-func (cp *corsPolicy) FromApiRuleCorsPolicy(corsPolicy apirulev1beta1.CorsPolicy) *corsPolicy {
+func (cp *corsPolicy) FromApiRuleCorsPolicy(corsPolicy apirulev2alpha1.CorsPolicy) *corsPolicy {
 	if len(corsPolicy.AllowOrigins) == 0 {
 		cp.value.AllowOrigins = nil
 	} else {
@@ -328,7 +327,7 @@ func (cp *corsPolicy) FromApiRuleCorsPolicy(corsPolicy apirulev1beta1.CorsPolicy
 	}
 
 	if corsPolicy.MaxAge != nil {
-		cp.value.MaxAge = durationpb.New(corsPolicy.MaxAge.Duration)
+		cp.value.MaxAge = durationpb.New(time.Duration(*corsPolicy.MaxAge) * time.Second)
 	}
 
 	return cp
