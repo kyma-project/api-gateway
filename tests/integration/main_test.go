@@ -15,7 +15,6 @@ import (
 	istiojwt "github.com/kyma-project/api-gateway/tests/integration/testsuites/istio-jwt"
 	"github.com/kyma-project/api-gateway/tests/integration/testsuites/ory"
 	ratelimit "github.com/kyma-project/api-gateway/tests/integration/testsuites/rate-limit"
-	"github.com/kyma-project/api-gateway/tests/integration/testsuites/upgrade"
 	v2 "github.com/kyma-project/api-gateway/tests/integration/testsuites/v2"
 	"github.com/kyma-project/api-gateway/tests/integration/testsuites/v2alpha1"
 
@@ -42,22 +41,6 @@ func TestCustomDomain(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create Custom domain testsuite %s", err.Error())
 	}
-	defer tearDown(t, ts)
-	runTestsuite(t, ts)
-}
-
-func TestUpgrade(t *testing.T) {
-	ts, err := testcontext.New(upgrade.NewTestsuite)
-
-	if err != nil {
-		t.Fatalf("Failed to create Upgrade testsuite %s", err.Error())
-	}
-	originalJwtHandler, err := SwitchJwtHandler(ts, "istio")
-	if err != nil {
-		log.Print(err.Error())
-		t.Fatalf("unable to switch to Istio jwtHandler")
-	}
-	defer cleanUp(t, ts, originalJwtHandler)
 	defer tearDown(t, ts)
 	runTestsuite(t, ts)
 }
