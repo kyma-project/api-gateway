@@ -139,6 +139,12 @@ jobs:
     needs: [check-prerequisites, publish-release]
     if: success()
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GOAT_BOT_REPO_ACCESS }}
+          
       - name: Adjust latest tag if needed
         if: ${{ needs.check-prerequisites.outputs.is_patch == 'true' }}
         env:
