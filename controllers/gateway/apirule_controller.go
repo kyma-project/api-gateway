@@ -259,7 +259,7 @@ func (r *APIRuleReconciler) updateResourceRequeue(ctx context.Context,
 	if err := r.Update(ctx, rule); err != nil {
 		return doneReconcileErrorRequeue(err, r.OnErrorReconcilePeriod)
 	}
-	return ctrl.Result{RequeueAfter: r.ReconcilePeriod}, nil
+	return ctrl.Result{RequeueAfter: r.MigrationReconcilePeriod}, nil
 }
 
 func apiRuleNeedsMigration(ctx context.Context, k8sClient client.Client, apiRule *gatewayv1beta1.APIRule) (bool, error) {
